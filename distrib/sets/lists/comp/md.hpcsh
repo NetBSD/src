@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.12 2002/09/07 12:48:52 gehenna Exp $
+# $NetBSD: md.hpcsh,v 1.13 2003/01/18 17:50:25 thorpej Exp $
 ./usr/include/hpcsh	comp-c-include
 ./usr/include/hpcsh/ansi.h	comp-c-include
 ./usr/include/hpcsh/aout_machdep.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/hpcsh/limits.h	comp-c-include
 ./usr/include/hpcsh/lock.h	comp-c-include
 ./usr/include/hpcsh/math.h	comp-c-include
+./usr/include/hpcsh/mcontext.h	comp-c-include
 ./usr/include/hpcsh/param.h	comp-c-include
 ./usr/include/hpcsh/pcb.h	comp-c-include
 ./usr/include/hpcsh/pmap.h	comp-c-include

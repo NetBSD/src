@@ -1,4 +1,4 @@
-# $NetBSD: md.playstation2,v 1.2 2002/08/07 21:21:00 briggs Exp $
+# $NetBSD: md.playstation2,v 1.3 2003/01/18 17:50:28 thorpej Exp $
 ./usr/include/playstation2	comp-c-include
 ./usr/include/playstation2/_G_config.h	comp-c-include
 ./usr/include/playstation2/ansi.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/playstation2/lock.h	comp-c-include
 ./usr/include/playstation2/locore.h	comp-c-include
 ./usr/include/playstation2/math.h	comp-c-include
+./usr/include/playstation2/mcontext.h	comp-c-include
 ./usr/include/playstation2/mips_opcode.h	comp-c-include
 ./usr/include/playstation2/param.h	comp-c-include
 ./usr/include/playstation2/pcb.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.4 2002/09/30 18:43:50 agc Exp $
+# $NetBSD: md.hpcarm,v 1.5 2003/01/18 17:50:24 thorpej Exp $
 ./usr/include/hpcarm	comp-c-include
 ./usr/include/hpcarm/ansi.h	comp-c-include
 ./usr/include/hpcarm/aout_machdep.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/hpcarm/limits.h	comp-c-include
 ./usr/include/hpcarm/lock.h	comp-c-include
 ./usr/include/hpcarm/math.h	comp-c-include
+./usr/include/hpcarm/mcontext.h	comp-c-include
 ./usr/include/hpcarm/param.h	comp-c-include
 ./usr/include/hpcarm/pcb.h	comp-c-include
 ./usr/include/hpcarm/pmap.h	comp-c-include

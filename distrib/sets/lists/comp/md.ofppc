@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.1 2002/09/21 17:28:42 chs Exp $
+# $NetBSD: md.ofppc,v 1.2 2003/01/18 17:50:28 thorpej Exp $
 ./usr/include/ofppc	comp-c-include
 ./usr/include/ofppc/_G_config.h	comp-c-include
 ./usr/include/ofppc/ansi.h	comp-c-include
@@ -29,6 +29,7 @@
 ./usr/include/ofppc/limits.h	comp-c-include
 ./usr/include/ofppc/lock.h	comp-c-include
 ./usr/include/ofppc/math.h	comp-c-include
+./usr/include/ofppc/mcontext.h	comp-c-include
 ./usr/include/ofppc/param.h	comp-c-include
 ./usr/include/ofppc/pcb.h	comp-c-include
 ./usr/include/ofppc/pmap.h	comp-c-include

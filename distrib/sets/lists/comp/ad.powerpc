@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.29 2002/11/04 19:58:36 briggs Exp $
+# $NetBSD: ad.powerpc,v 1.30 2003/01/18 17:50:20 thorpej Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
@@ -34,6 +34,7 @@
 ./usr/include/powerpc/limits.h	comp-c-include
 ./usr/include/powerpc/lock.h	comp-c-include
 ./usr/include/powerpc/math.h	comp-c-include
+./usr/include/powerpc/mcontext.h	comp-c-include
 ./usr/include/powerpc/mpc6xx	comp-c-include
 ./usr/include/powerpc/mpc6xx/bat.h	comp-c-include
 ./usr/include/powerpc/mpc6xx/hid.h	comp-c-include

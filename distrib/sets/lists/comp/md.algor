@@ -1,4 +1,4 @@
-# $NetBSD: md.algor,v 1.4 2002/08/07 21:20:52 briggs Exp $
+# $NetBSD: md.algor,v 1.5 2003/01/18 17:50:21 thorpej Exp $
 ./usr/include/algor			comp-c-include
 ./usr/include/algor/_G_config.h		comp-c-include
 ./usr/include/algor/ansi.h		comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/algor/lock.h		comp-c-include
 ./usr/include/algor/locore.h		comp-c-include
 ./usr/include/algor/math.h		comp-c-include
+./usr/include/algor/mcontext.h		comp-c-include
 ./usr/include/algor/mips_opcode.h	comp-c-include
 ./usr/include/algor/param.h		comp-c-include
 ./usr/include/algor/pcb.h		comp-c-include

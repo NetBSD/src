@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.22 2002/08/07 21:20:57 briggs Exp $
+# $NetBSD: md.macppc,v 1.23 2003/01/18 17:50:26 thorpej Exp $
 ./usr/include/macppc	comp-c-include
 ./usr/include/macppc/_G_config.h	comp-c-include
 ./usr/include/macppc/adbsys.h	comp-c-include
@@ -35,6 +35,7 @@
 ./usr/include/macppc/limits.h	comp-c-include
 ./usr/include/macppc/lock.h	comp-c-include
 ./usr/include/macppc/math.h	comp-c-include
+./usr/include/macppc/mcontext.h	comp-c-include
 ./usr/include/macppc/param.h	comp-c-include
 ./usr/include/macppc/pcb.h	comp-c-include
 ./usr/include/macppc/pio.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.5 2002/08/07 21:20:54 briggs Exp $
+# $NetBSD: md.evbarm,v 1.6 2003/01/18 17:50:23 thorpej Exp $
 ./usr/include/evbarm			comp-c-include
 ./usr/include/evbarm/_G_config.h	comp-c-include
 ./usr/include/evbarm/ansi.h		comp-c-include
@@ -29,6 +29,7 @@
 ./usr/include/evbarm/limits.h		comp-c-include
 ./usr/include/evbarm/lock.h		comp-c-include
 ./usr/include/evbarm/math.h		comp-c-include
+./usr/include/evbarm/mcontext.h		comp-c-include
 ./usr/include/evbarm/param.h		comp-c-include
 ./usr/include/evbarm/pcb.h		comp-c-include
 ./usr/include/evbarm/pmap.h		comp-c-include

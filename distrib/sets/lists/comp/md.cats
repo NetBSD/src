@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.4 2002/09/28 16:02:54 chris Exp $
+# $NetBSD: md.cats,v 1.5 2003/01/18 17:50:22 thorpej Exp $
 ./usr/include/cats			comp-c-include
 ./usr/include/cats/_G_config.h		comp-c-include
 ./usr/include/cats/ansi.h		comp-c-include
@@ -29,6 +29,7 @@
 ./usr/include/cats/limits.h		comp-c-include
 ./usr/include/cats/lock.h		comp-c-include
 ./usr/include/cats/math.h		comp-c-include
+./usr/include/cats/mcontext.h		comp-c-include
 ./usr/include/cats/param.h		comp-c-include
 ./usr/include/cats/pcb.h		comp-c-include
 ./usr/include/cats/pmap.h		comp-c-include

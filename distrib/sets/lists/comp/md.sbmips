@@ -1,4 +1,4 @@
-# $NetBSD: md.sbmips,v 1.3 2002/08/07 21:21:01 briggs Exp $
+# $NetBSD: md.sbmips,v 1.4 2003/01/18 17:50:29 thorpej Exp $
 ./usr/include/sbmips	comp-c-include
 ./usr/include/sbmips/_G_config.h	comp-c-include
 ./usr/include/sbmips/ansi.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/sbmips/lock.h	comp-c-include
 ./usr/include/sbmips/locore.h	comp-c-include
 ./usr/include/sbmips/math.h	comp-c-include
+./usr/include/sbmips/mcontext.h	comp-c-include
 ./usr/include/sbmips/mips_opcode.h	comp-c-include
 ./usr/include/sbmips/param.h	comp-c-include
 ./usr/include/sbmips/pcb.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.dreamcast,v 1.5 2002/09/07 12:48:52 gehenna Exp $
+# $NetBSD: md.dreamcast,v 1.6 2003/01/18 17:50:23 thorpej Exp $
 ./usr/include/dreamcast				comp-c-include
 ./usr/include/dreamcast/_G_config.h		comp-c-include
 ./usr/include/dreamcast/ansi.h			comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/dreamcast/limits.h		comp-c-include
 ./usr/include/dreamcast/lock.h			comp-c-include
 ./usr/include/dreamcast/math.h			comp-c-include
+./usr/include/dreamcast/mcontext.h			comp-c-include
 ./usr/include/dreamcast/param.h			comp-c-include
 ./usr/include/dreamcast/pcb.h			comp-c-include
 ./usr/include/dreamcast/pmap.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.13 2002/08/07 21:20:53 briggs Exp $
+# $NetBSD: md.arc,v 1.14 2003/01/18 17:50:21 thorpej Exp $
 ./usr/include/arc			comp-c-include
 ./usr/include/arc/_G_config.h		comp-c-include
 ./usr/include/arc/ansi.h		comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/arc/limits.h		comp-c-include
 ./usr/include/arc/lock.h		comp-c-include
 ./usr/include/arc/math.h		comp-c-include
+./usr/include/arc/mcontext.h		comp-c-include
 ./usr/include/arc/mips_opcode.h		comp-c-include
 ./usr/include/arc/mouse.h		comp-c-include
 ./usr/include/arc/param.h		comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.mvmeppc,v 1.3 2002/08/07 21:20:58 briggs Exp $
+# $NetBSD: md.mvmeppc,v 1.4 2003/01/18 17:50:26 thorpej Exp $
 ./usr/include/mvmeppc	comp-c-include
 ./usr/include/mvmeppc/_G_config.h	comp-c-include
 ./usr/include/mvmeppc/ansi.h	comp-c-include
@@ -33,6 +33,7 @@
 ./usr/include/mvmeppc/limits.h	comp-c-include
 ./usr/include/mvmeppc/lock.h	comp-c-include
 ./usr/include/mvmeppc/math.h	comp-c-include
+./usr/include/mvmeppc/mcontext.h	comp-c-include
 ./usr/include/mvmeppc/param.h	comp-c-include
 ./usr/include/mvmeppc/pcb.h	comp-c-include
 ./usr/include/mvmeppc/pio.h	comp-c-include
