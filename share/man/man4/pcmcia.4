@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.14 2000/03/20 18:28:28 augustss Exp $
+.\" $NetBSD: pcmcia.4,v 1.15 2000/04/13 19:40:03 jhawk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 12, 2000
+.Dd April 13, 2000
 .Dt PCMCIA 4
 .Os
 .Sh NAME
@@ -113,6 +113,7 @@ Digital Hinote Ultra Mobile Media Adapter
 .\"
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr options 4 ,
 .Xr aic 4 ,
 .Xr awi 4 ,
 .Xr cardbus 4 ,
@@ -137,3 +138,30 @@ The
 .Nm
 driver appeared in
 .Nx 1.3 .
+.Sh BUGS
+.Ss IO space conflicts
+.Nx 
+probes the pcmcia IO bus width and uses that information to decide
+where to map PCMCIA IO space. For 10-bit wide cards, 0x300-0x3ff is
+used, and this is satisfactory. For 12-bit wide cards, however,
+it would nice to use 0x400-0xfff, however this causes some problems
+for some specific PCMCIA devices, as well as some specific laptops;
+consequently, 0x300-0x3ff is used.
+.Pp
+Unfortunately, the choice of 0x300-0x3ff causes problems as well.
+In particular, a number of video devices are mapped in that range,
+and may conflict. In the event that pcmcia devices are mapped
+in 0x300 and appear to be nonfunctional, remapping to 0x400-0xfff
+may be appropriate; consult 
+.Cd options PCIC_ISA_ALLOC_IOBASE
+and
+.Cd options PCIC_ISA_ALLOC_IOSIZE
+in
+.Xr options 4 .
+Example:
+.Bd -literal -offset indent
+# Avoid pcmcia bus space conflicts with the default io space
+# allocation on 12-bit wide busses (base 0x300 size 0xff).
+options PCIC_ISA_ALLOC_IOBASE=0x400
+options PCIC_ISA_ALLOC_IOSIZE=0xbff
+.Ed
