@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.5 2001/04/17 15:49:02 toshii Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.6 2001/04/17 15:58:51 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -124,32 +124,42 @@ clockintr(arg)
 {
 	struct clockframe *frame = arg;
 	u_int32_t oscr, nextmatch, oldmatch;
+	int s;
 
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
 			SAOST_SR, 1);
 
-	hardclock(frame);
-
 	/* schedule next clock intr */
 	oldmatch = saost_sc->sc_clock_count;
 	nextmatch = oldmatch + TIMER_FREQUENCY / hz;
+
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR0,
+			  nextmatch);
 	oscr = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
 				SAOST_CR);
-	/* XXX it will take some time to return from intr */
-	oscr += 100;
+
 	if ((nextmatch > oldmatch &&
 	     (oscr > nextmatch || oscr < oldmatch)) ||
 	    (nextmatch < oldmatch && oscr > nextmatch && oscr < oldmatch)) {
-		/* we were late to handle this intr */
-		/* XXX adjust clock to compensate lost hardclock() calls */
+		/*
+		 * we couldn't set the matching register in time.
+		 * just set it to some value so that next interrupt happens.
+		 * XXX is it possible to compansate lost interrupts?
+		 */
 
-		/* XXX is this ok? */
-		nextmatch = oscr + TIMER_FREQUENCY / hz;
+		s = splhigh();
+		oscr = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
+					SAOST_CR);
+		nextmatch = oscr + 10;
+		bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
+				  SAOST_MR0, nextmatch);
+		splx(s);
 	}
+
 	saost_sc->sc_clock_count = nextmatch;
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR0,
-			  nextmatch);
-	return(-1);
+	hardclock(frame);
+
+	return(1);
 }
 
 static int
@@ -158,32 +168,42 @@ statintr(arg)
 {
 	struct clockframe *frame = arg;
 	u_int32_t oscr, nextmatch, oldmatch;
+	int s;
 
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
 			SAOST_SR, 2);
 
-	statclock(frame);
-
 	/* schedule next clock intr */
 	oldmatch = saost_sc->sc_statclock_count;
 	nextmatch = oldmatch + saost_sc->sc_statclock_step;
+
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR1,
+			  nextmatch);
 	oscr = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
 				SAOST_CR);
-	/* XXX it will take some time to return from intr */
-	oscr += 100;
+
 	if ((nextmatch > oldmatch &&
 	     (oscr > nextmatch || oscr < oldmatch)) ||
 	    (nextmatch < oldmatch && oscr > nextmatch && oscr < oldmatch)) {
 		/*
-		 * XXX silently drop timed out statclock() calls,
-		 * XXX but we should compensate them.
+		 * we couldn't set the matching register in time.
+		 * just set it to some value so that next interrupt happens.
+		 * XXX is it possible to compansate lost interrupts?
 		 */
-		nextmatch = oscr + saost_sc->sc_statclock_step;
+
+		s = splhigh();
+		oscr = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
+					SAOST_CR);
+		nextmatch = oscr + 10;
+		bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
+				  SAOST_MR1, nextmatch);
+		splx(s);
 	}
-	saost_sc->sc_clock_count = nextmatch;
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR1,
-			  nextmatch);
-	return(-1);
+
+	saost_sc->sc_statclock_count = nextmatch;
+	statclock(frame);
+
+	return(1);
 }
 
 
@@ -216,6 +236,7 @@ cpu_initclocks()
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
 	saost_sc->sc_clock_count = TIMER_FREQUENCY / hz;
 	saost_sc->sc_statclock_count = TIMER_FREQUENCY / stathz;
+
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 3);
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR0,
 			  saost_sc->sc_clock_count);
