@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.51 1998/03/31 21:12:15 pk Exp $
+#	$NetBSD: files.sparc,v 1.52 1998/04/18 19:03:00 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -77,10 +77,10 @@ attach sbus at mainbus with sbus_mainbus
 attach sbus at iommu with sbus_iommu
 file	arch/sparc/dev/sbus.c			sbus
 
-#device xbox class dull {}
-#attach xbox at sbus
-#attach sbus at xbox with sbus_xbox
-#file	arch/sparc/dev/xbox.c			xbox
+device xbox {}
+attach xbox at sbus
+attach sbus at xbox with sbus_xbox
+file	arch/sparc/dev/xbox.c			xbox
 
 #
 # Console (zs) related stuff
