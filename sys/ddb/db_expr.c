@@ -1,4 +1,4 @@
-/*	$NetBSD: db_expr.c,v 1.5 1996/02/05 01:56:58 christos Exp $	*/
+/*	$NetBSD: db_expr.c,v 1.6 1997/02/03 19:56:04 cgd Exp $	*/
 
 /* 
  * Mach Operating System
@@ -212,7 +212,7 @@ db_shift_expr(valuep)
 		lhs <<= rhs;
 	    else {
 		/* Shift right is unsigned */
-		lhs = (unsigned) lhs >> rhs;
+		lhs = (unsigned long) lhs >> rhs;
 	    }
 	    t = db_read_token();
 	}

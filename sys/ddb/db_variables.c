@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.9 1997/01/09 05:37:02 thorpej Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.10 1997/02/03 19:56:07 cgd Exp $	*/
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 #endif
 int		db_onpanic = DDB_ONPANIC;
 
-extern unsigned int	db_maxoff;
+extern unsigned int db_maxoff;
 
 extern int	db_radix;
 extern int	db_max_width;
@@ -57,7 +57,7 @@ extern int	db_max_line;
 
 struct db_variable db_vars[] = {
 	{ "radix",	&db_radix, FCN_NULL },
-	{ "maxoff",	(int *)&db_maxoff, FCN_NULL },
+	{ "maxoff",	&db_maxoff, FCN_NULL },
 	{ "maxwidth",	&db_max_width, FCN_NULL },
 	{ "tabstops",	&db_tab_stop_width, FCN_NULL },
 	{ "lines",	&db_max_line, FCN_NULL },
@@ -88,8 +88,7 @@ ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &db_radix));
 
 	case DDBCTL_MAXOFF:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    (int *)db_maxoff));
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &db_maxoff));
 
 	case DDBCTL_MAXWIDTH:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.8 1996/02/05 01:57:05 christos Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.9 1997/02/03 19:56:05 cgd Exp $	*/
 
 /* 
  * Mach Operating System
@@ -137,7 +137,7 @@ db_lex()
 
 	if (c >= '0' && c <= '9') {
 	    /* number */
-	    int	r, digit = 0;
+	    db_expr_t	r, digit = 0;
 
 	    if (c > '0')
 		r = db_radix;

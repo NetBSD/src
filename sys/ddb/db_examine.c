@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.12 1997/02/03 19:56:03 cgd Exp $	*/
 
 /*
  * Mach Operating System
@@ -261,7 +261,7 @@ db_search_cmd(daddr, have_addr, dcount, modif)
 	int		size;
 	db_expr_t	value;
 	db_expr_t	mask;
-	unsigned int	count;
+	db_expr_t	count;
 
 	t = db_read_token();
 	if (t == tSLASH) {
