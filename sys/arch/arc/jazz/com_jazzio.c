@@ -1,4 +1,4 @@
-/*	$NetBSD: com_jazzio.c,v 1.5 2003/07/15 00:04:49 lukem Exp $	*/
+/*	$NetBSD: com_jazzio.c,v 1.6 2003/08/07 16:26:50 agc Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -50,11 +50,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -74,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.5 2003/07/15 00:04:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.6 2003/08/07 16:26:50 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

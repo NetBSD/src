@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.42 2003/05/18 12:59:05 yamt Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.43 2003/08/07 16:34:34 agc Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.42 2003/05/18 12:59:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.43 2003/08/07 16:34:34 agc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.53 2002/11/05 21:46:42 perry Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.54 2003/08/07 16:33:24 agc Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.53 2002/11/05 21:46:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.54 2003/08/07 16:33:24 agc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

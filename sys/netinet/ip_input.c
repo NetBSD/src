@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.171 2003/07/14 16:39:43 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.172 2003/08/07 16:33:12 agc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,11 +78,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -102,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.171 2003/07/14 16:39:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.172 2003/08/07 16:33:12 agc Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
