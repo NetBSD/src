@@ -1,7 +1,7 @@
-/*	$NetBSD: nubus.c,v 1.28 1996/12/16 16:17:10 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.29 1996/12/17 06:47:39 scottr Exp $	*/
 
 /*
- * Copyright (c) 1995 Allen Briggs.  All rights reserved.
+ * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,9 +32,19 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/dmap.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_map.h>
 
 #include <machine/autoconf.h>
+#include <machine/vmparam.h>
+#include <machine/param.h>
 #include <machine/cpu.h>
+#include <machine/pte.h>
 
 #include <vm/vm.h>
 
@@ -61,6 +71,9 @@ static u_char	GetByte __P((nubus_slot *fmt, u_long ptr));
 #endif
 static u_long	GetLong __P((nubus_slot *fmt, u_long ptr));
 
+static int	nubus_peek __P((vm_offset_t, int));
+static char	*nubus_mapin __P((int, int));
+
 struct cfattach nubus_ca = {
 	sizeof(struct nubus_softc), nubus_match, nubus_attach
 };
@@ -75,11 +88,14 @@ nubus_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	static int nubus_matched = 0;
 
-	if (ca->ca_bustype != BUS_NUBUS)
-		return 0;
-	return 1;
+	/* Allow only one instance. */
+	if (nubus_matched)
+		return (0);
+
+	nubus_matched = 1;
+	return (1);
 }
 
 static void
@@ -219,7 +235,7 @@ probe_slot(slot, fmt)
 
 		rom_probe--;
 
-		data = bus_peek(BUS_NUBUS, (vm_offset_t) rom_probe, 1);
+		data = nubus_peek((vm_offset_t) rom_probe, 1);
 		if (data == -1)
 			continue;
 
@@ -256,7 +272,7 @@ probe_slot(slot, fmt)
 	 * to work.
 	 */
 	hdr = (vm_offset_t)
-		bus_mapin(BUS_NUBUS,NUBUS_SLOT_TO_PADDR(fmt->slot),NBMEMSIZE);
+		nubus_mapin(NUBUS_SLOT_TO_PADDR(fmt->slot), NBMEMSIZE);
 	if (hdr == NULL) {
 		printf("Failed to map %d bytes for NuBUS slot %d probe.  ",
 			NBMEMSIZE, fmt->slot);
@@ -641,3 +657,99 @@ static	char		name_ret[64];
 
 	return name_ret;
 }
+
+/*
+ * bus_*() functions adapted from sun3 generic "bus" support
+ * by Allen Briggs.
+ */
+
+vm_offset_t tmp_vpages[1];
+
+/*
+ * Read addr with size len (1,2,4) into val.
+ * If this generates a bus error, return -1
+ *
+ *	Create a temporary mapping,
+ *	Try the access using peek_*
+ *	Clean up temp. mapping
+ */
+static int
+nubus_peek(paddr, sz)
+	vm_offset_t paddr;
+	int sz;
+{
+	int off, pte, rv;
+	vm_offset_t pgva;
+	caddr_t va;
+
+	off = paddr & PGOFSET;
+	paddr -= off;
+	pte = (paddr & PG_FRAME) | (PG_V | PG_W | PG_CI);
+
+	pgva = tmp_vpages[0];
+	va = (caddr_t)pgva + off;
+
+	mac68k_set_pte(pgva, pte);
+	TBIS(pgva);
+
+	/*
+	 * OK, try the access using one of the assembly routines
+	 * that will set pcb_onfault and catch any bus errors.
+	 */
+	rv = -1;
+	switch (sz) {
+	case 1:
+		if (!badbaddr(va))
+			rv = *((u_char *) va);
+		break;
+	case 2:
+		if (!badwaddr(va))
+			rv = *((u_int16_t *) va);
+		break;
+	case 4:
+		if (!badladdr(va))
+			rv = *((u_int32_t *) va);
+		break;
+	default:
+		printf("bus_peek: invalid size=%d\n", sz);
+		rv = -1;
+	}
+
+	mac68k_set_pte(pgva, PG_NV);
+	TBIS(pgva);
+
+	return rv;
+}
+
+static char *
+nubus_mapin(paddr, sz)
+	int paddr, sz;
+{
+	int off, pa, pmt=0;
+	vm_offset_t va, retval;
+
+	off = paddr & PGOFSET;
+	pa = paddr - off;
+	sz += off;
+	sz = mac68k_round_page(sz);
+
+	/* Get some kernel virtual address space. */
+	va = kmem_alloc_wait(kernel_map, sz);
+	if (va == 0)
+		panic("bus_mapin");
+	retval = va + off;
+
+	/* Map it to the specified bus. */
+#if 0	/* XXX */
+	/* This has a problem with wrap-around... */
+	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
+#else
+	do {
+		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE);
+		va += NBPG;
+		pa += NBPG;
+	} while ((sz -= NBPG) > 0);
+#endif
+
+	return ((char*)retval);
+}	
