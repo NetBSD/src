@@ -78,17 +78,22 @@ NetBSD 1.0 Release Contents:
 The NetBSD 1.0 release is organized in the following way:
 
 .../NetBSD-1.0/
-		BUGS			Known bugs list (incomplete).
+		BUGS			Known bugs list (incomplete
+					and out of date).
 
 		CHANGES			Changes since NetBSD's last
 					release (and before).
 
 		LAST_MINUTE		Last minute changes.
 
+		MIRRORS			A list of sites that mirror
+					the NetBSD 1.0 distribution.
+
 		README.files		README describing the
 					distribution's contents.
 
-		TODO			NetBSD's todo list.
+		TODO			NetBSD's todo list (incomplete
+					and out of date).
 
 		patches/		Post-release source code
 					patches.
