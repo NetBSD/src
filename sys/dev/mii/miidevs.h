@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.38 2002/06/22 14:36:26 fvdl Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.39 2002/06/25 12:26:28 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.38 2002/06/22 14:35:52 fvdl Exp 
+ *	NetBSD: miidevs,v 1.39 2002/06/25 12:25:56 drochner Exp 
  */
 
 /*-
@@ -78,16 +78,15 @@
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
 
-/* in the 79c873, AMD uses another OUI (which matches reversed Davicom!) */
-#define	MII_OUI_xxAMD	0x000676	/* Advanced Micro Devices */
-
 /* Some Intel 82553's use an alternative OUI. */
 #define	MII_OUI_xxINTEL	0x001f00	/* Intel */
 
 /* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
 #define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
+#define	MII_OUI_xxDAVICOM	0x000676	/* Davicom Semiconductor */
 #define	MII_OUI_yyINTEL	0x005500	/* Intel */
+#define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
 #define	MII_OUI_xxMYSON	0x00032d	/* Myson Technology */
 #define	MII_OUI_xxNATSEMI	0x1000e8	/* National Semiconductor */
 #define	MII_OUI_xxQUALSEMI	0x00068a	/* Quality Semiconductor */
@@ -98,11 +97,8 @@
 #define	MII_OUI_xxXAQTI	0xace000	/* XaQti Corp. */
 
 /* Don't know what's going on here. */
-#define	MII_OUI_xxDAVICOM	0x000602	/* Davicom Semiconductor */
 #define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
 #define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
-
-#define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
 
 /*
  * List of known models.  Grouped by oui.
@@ -116,8 +112,7 @@
 #define	MII_STR_ALTIMA_AC101	"AC101 10/100 media interface"
 
 /* Advanced Micro Devices PHYs */
-#define	MII_MODEL_xxAMD_79C873	0x0000
-#define	MII_STR_xxAMD_79C873	"Am79C873 10/100 media interface"
+/* see Davicom DM9101 for Am79C873 */
 #define	MII_MODEL_yyAMD_79C972_10T	0x0001
 #define	MII_STR_yyAMD_79C972_10T	"Am79C972 internal 10BASE-T interface"
 #define	MII_MODEL_yyAMD_79c973phy	0x0036
@@ -146,8 +141,9 @@
 #define	MII_STR_BROADCOM_BCM5701	"BCM5701 1000BASE-T media interface"
 
 /* Davicom Semiconductor PHYs */
+/* AMD Am79C873 seems to be a relabeled DM9101 */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
-#define	MII_STR_xxDAVICOM_DM9101	"DM9101 10/100 media interface"
+#define	MII_STR_xxDAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1890	0x0002
