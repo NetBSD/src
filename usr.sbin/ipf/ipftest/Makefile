@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2004/03/28 09:17:33 martti Exp $
+#	$NetBSD: Makefile,v 1.24 2004/03/29 02:30:08 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,7 @@ CLEANFILES+=	ippool_y.c ippool_y.h
 CLEANFILES+=	ippool_l.c ippool_l.h
 
 ipnat_y.c ipnat_y.h: ipnat_y.y ipnat_l.h
-	yacc -d ${NETBSDSRCDIR}/dist/ipf/tools/ipnat_y.y
+	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/tools/ipnat_y.y
 	sed -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.c/ipnat_y.c/' \
 	    -e s/\"ipnat_y.y\"/\"..\\/tools\\/ipnat_y.y\"/ \
@@ -47,7 +47,7 @@ ipnat_l.h: lexer.c
 		${NETBSDSRCDIR}/dist/ipf/tools/lexer.h > ipnat_l.h
 
 ippool_y.c ippool_y.h: ippool_y.y ippool_l.h
-	yacc -d ${NETBSDSRCDIR}/dist/ipf/tools/ippool_y.y
+	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/tools/ippool_y.y
 	sed -e 's/yy/ippool_yy/g' \
 	    -e 's/"ippool_y.y"/"..\/tools\/ippool_y.y"/' \
 		y.tab.c > ippool_y.c
@@ -65,7 +65,7 @@ ippool_l.h: lexer.h
 		${NETBSDSRCDIR}/dist/ipf/tools/lexer.h > ippool_l.h
 
 ipf_y.c ipf_y.h: ipf_y.y ipf_l.h
-	yacc -d ${NETBSDSRCDIR}/dist/ipf/tools/ipf_y.y
+	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/tools/ipf_y.y
 	sed -e 's/yy/ipf_yy/g' \
 	    -e 's/"ipf_y.y"/"..\/tools\/ipf_y.y"/' \
 		y.tab.c > ipf_y.c

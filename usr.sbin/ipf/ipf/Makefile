@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2004/03/28 09:01:27 martti Exp $
+#	$NetBSD: Makefile,v 1.17 2004/03/29 02:30:08 jmc Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -13,7 +13,7 @@ CLEANFILES+=	ipf_y.c ipf_y.h
 CLEANFILES+=	ipf_l.c ipf_l.h
 
 ipf_y.c ipf_y.h: ipf_y.y ipf_l.h
-	yacc -d ${NETBSDSRCDIR}/dist/ipf/tools/ipf_y.y
+	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/tools/ipf_y.y
 	sed -e 's/yy/ipf_yy/g' \
 	    -e 's/"ipf_y.y"/"..\/tools\/ipf_y.y"/' \
 		y.tab.c > ipf_y.c

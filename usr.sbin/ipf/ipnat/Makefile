@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2004/03/28 09:18:55 martti Exp $
+#	$NetBSD: Makefile,v 1.19 2004/03/29 02:30:09 jmc Exp $
 
 PROG=		ipnat
 SRCS=		ipnat.c ipnat_y.c ipnat_l.c
@@ -11,7 +11,7 @@ CLEANFILES+=	ipnat_y.c ipnat_y.h
 CLEANFILES+=	ipnat_l.c ipnat_l.h
 
 ipnat_y.c ipnat_y.h: ipnat_y.y ipnat_l.h
-	yacc -d ${NETBSDSRCDIR}/dist/ipf/tools/ipnat_y.y
+	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/tools/ipnat_y.y
 	sed -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.c/ipnat_y.c/' \
 	    -e s/\"ipnat_y.y\"/\"..\\/tools\\/ipnat_y.y\"/ \
