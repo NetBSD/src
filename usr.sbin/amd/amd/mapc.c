@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: mapc.c,v 1.2 1993/12/07 21:18:21 mycroft Exp $
+ * $Id: mapc.c,v 1.3 1993/12/10 09:39:27 mycroft Exp $
  *
  */
 
@@ -283,14 +283,6 @@ FILE *fp;
 	}
 }
 
-static Const char *reg_error = "?";
-void regerror P((Const char *m));
-void regerror(m)
-Const char *m;
-{
-	reg_error = m;
-}
-
 /*
  * Add key and val to the map m.
  * key and val are assumed to be safe copies
@@ -312,14 +304,22 @@ char *val;
 #ifdef HAS_REGEXP
 	if (MAPC_ISRE(m)) {
 		char keyb[MAXPATHLEN];
-		regexp *re;
+		regex_t *re = malloc(sizeof(regex_t));
+		int error;
+		if (re == 0) {
+			plog(XLOG_USER, "no memory for regexp \"%s\"", keyb);
+			return;
+		}
 		/*
 		 * Make sure the string is bound to the start and end
 		 */
 		sprintf(keyb, "^%s$", key);
-		re = regcomp(keyb);
-		if (re == 0) {
+		error = regcomp(re, keyb, REG_EXTENDED|REG_NOSUB);
+		if (error) {
+			char reg_error[100];
+			(void) regerror(error, re, reg_error, sizeof reg_error);
 			plog(XLOG_USER, "error compiling RE \"%s\": %s", keyb, reg_error);
+			free(re);
 			return;
 		} else {
 			free(key);
@@ -653,7 +653,7 @@ int recurse;
 		for (i = 0; i < NKVHASH; i++) {
 			k = m->kvhash[i];
 			while (k) {
-				if (regexec((regexp *) k->key, key))
+				if (!regexec((regex_t *) k->key, key, 0, 0, 0))
 					break;
 				k = k->next;
 			}
