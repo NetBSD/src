@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.45 2002/09/23 03:40:28 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.46 2002/10/06 05:23:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.45 2002/09/23 03:40:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.46 2002/10/06 05:23:55 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -628,7 +628,7 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 	RF_RowCol_t srow = reconDesc->srow;
 	RF_RowCol_t scol = reconDesc->scol;
 	RF_ReconMap_t *mapPtr;
-
+	RF_ReconCtrl_t *tmp_reconctrl;
 	RF_ReconEvent_t *event;
 	struct timeval etime, elpsd;
 	unsigned long xor_s, xor_resid_us;
@@ -659,11 +659,14 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 	case 1:
 
+		/* allocate our RF_ReconCTRL_t before we protect raidPtr->reconControl[row] */
+		tmp_reconctrl = rf_MakeReconControl(reconDesc, row, col, srow, scol);
+
 		RF_LOCK_MUTEX(raidPtr->mutex);
 
 		/* create the reconstruction control pointer and install it in
 		 * the right slot */
-		raidPtr->reconControl[row] = rf_MakeReconControl(reconDesc, row, col, srow, scol);
+		raidPtr->reconControl[row] = tmp_reconctrl;
 		mapPtr = raidPtr->reconControl[row]->reconMap;
 		raidPtr->status[row] = rf_rs_reconstructing;
 		raidPtr->Disks[row][col].status = rf_ds_reconstructing;
