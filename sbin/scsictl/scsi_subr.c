@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.4 2001/05/15 15:11:02 bouyer Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.5 2001/09/05 16:25:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,9 +117,9 @@ scsi_mode_sense(fd, pgcode, pctl, buf, len)
 }
 
 void
-scsi_mode_select(fd, pgcode, pctl, buf, len)
+scsi_mode_select(fd, byte2, buf, len)
 	int fd;
-	u_int8_t pgcode, pctl;
+	u_int8_t byte2;
 	void *buf;
 	size_t len;
 {
@@ -128,6 +128,7 @@ scsi_mode_select(fd, pgcode, pctl, buf, len)
 	memset(&cmd, 0, sizeof(cmd));
 
 	cmd.opcode = MODE_SELECT;
+	cmd.byte2 = SMS_PF | byte2;
 	cmd.u_len.scsi.length = len;
 
 	scsi_command(fd, &cmd, sizeof(cmd), buf, len, 10000, SCCMD_WRITE);
