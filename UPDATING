@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.28 2001/07/26 08:51:17 assar Exp $
+$NetBSD: UPDATING,v 1.29 2001/07/31 22:53:21 bjh21 Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,11 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20010731:
+	Bootloader update on ELF platforms.  DDB in kernels from before
+	this will be unable to read symbol tables provided by newer
+	bootloaders.
 
 20010726:
 	Texinfo was updated to 4.0.  To avoid failures when trying to
