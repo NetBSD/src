@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.149 2003/02/03 23:16:30 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.150 2003/02/26 21:28:24 fvdl Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2003/02/03 23:16:30 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2003/02/26 21:28:24 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -297,7 +297,7 @@ struct pmap_tlb_shootdown_q {
 	__cpu_simple_lock_t pq_slock;	/* spin lock on queue */
 	int pq_flushg;		/* pending flush global */
 	int pq_flushu;		/* pending flush user */
-} pmap_tlb_shootdown_q[I386_MAXPROCS];
+} pmap_tlb_shootdown_q[X86_MAXPROCS];
 
 #define	PMAP_TLB_MAXJOBS	16
 
@@ -400,7 +400,7 @@ struct pool pmap_pmap_pool;
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * I386_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
+ * X86_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
  * due to false sharing.
  */
 
@@ -627,7 +627,7 @@ pmap_apte_flush(struct pmap *pmap)
 			pq->pq_flushu++;
 			__cpu_simple_unlock(&pq->pq_slock);
 			splx(s);
-			i386_send_ipi(ci, I386_IPI_TLB);
+			x86_send_ipi(ci, X86_IPI_TLB);
 		}
 	}
 #endif
@@ -732,7 +732,7 @@ pmap_kenter_pa(va, pa, prot)
 	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
 	     PG_V | pmap_pg_g;
 
-	opte = i386_atomic_testset_ul(pte, npte); /* zap! */
+	opte = x86_atomic_testset_ul(pte, npte); /* zap! */
 #ifdef LARGEPAGES
 	/* XXX For now... */
 	if (opte & PG_PS)
@@ -776,7 +776,7 @@ pmap_kremove(va, len)
 			pte = vtopte(va);
 		else
 			pte = kvtopte(va);
-		opte = i386_atomic_testset_ul(pte, 0); /* zap! */
+		opte = x86_atomic_testset_ul(pte, 0); /* zap! */
 #ifdef LARGEPAGES
 		/* XXX For now... */
 		if (opte & PG_PS)
@@ -863,7 +863,7 @@ pmap_bootstrap(kva_start)
 	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_cr3 + KERNBASE);
 	kpm->pm_pdirpa = (u_int32_t) lwp0.l_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
-		i386_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
+		x86_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
 	/*
 	 * the above is just a rough estimate and not critical to the proper
@@ -885,8 +885,8 @@ pmap_bootstrap(kva_start)
 		/* add PG_G attribute to already mapped kernel pages */
 		for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
 		     kva += PAGE_SIZE)
-			if (pmap_valid_entry(PTE_BASE[i386_btop(kva)]))
-				PTE_BASE[i386_btop(kva)] |= PG_G;
+			if (pmap_valid_entry(PTE_BASE[x86_btop(kva)]))
+				PTE_BASE[x86_btop(kva)] |= PG_G;
 	}
 
 #ifdef LARGEPAGES
@@ -935,7 +935,7 @@ pmap_bootstrap(kva_start)
 	 * mapping.
 	 */
 
-	pte = PTE_BASE + i386_btop(virtual_avail);
+	pte = PTE_BASE + x86_btop(virtual_avail);
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -954,8 +954,8 @@ pmap_bootstrap(kva_start)
 
 	ptpp = (caddr_t) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
 
-	virtual_avail += PAGE_SIZE * I386_MAXPROCS * NPTECL;
-	pte += I386_MAXPROCS * NPTECL;
+	virtual_avail += PAGE_SIZE * X86_MAXPROCS * NPTECL;
+	pte += X86_MAXPROCS * NPTECL;
 #else
 	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;  /* allocate */
 	virtual_avail += PAGE_SIZE; pte++;			     /* advance */
@@ -1025,7 +1025,7 @@ pmap_bootstrap(kva_start)
 
 	__cpu_simple_lock_init(&pmap_tlb_shootdown_job_lock);
 
-	for (i = 0; i < I386_MAXPROCS; i++) {
+	for (i = 0; i < X86_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
 		__cpu_simple_lock_init(&pmap_tlb_shootdown_q[i].pq_slock);
 	}
@@ -1339,7 +1339,7 @@ pmap_free_pv_doit(pv)
 {
 	struct pv_page *pvp;
 
-	pvp = (struct pv_page *) i386_trunc_page(pv);
+	pvp = (struct pv_page *) x86_trunc_page(pv);
 	pv_nfpvents++;
 	pvp->pvinfo.pvpi_nfree++;
 
@@ -1888,7 +1888,7 @@ pmap_activate(l)
 		/*
 		 * mark the pmap in use by this processor.
 		 */
-		i386_atomic_setbits_l(&pmap->pm_cpus, (1U << cpu_number()));
+		x86_atomic_setbits_l(&pmap->pm_cpus, (1U << cpu_number()));
 
 #ifdef KSTACK_CHECK_DR0
 		/*
@@ -1915,7 +1915,7 @@ pmap_deactivate(l)
 	/*
 	 * mark the pmap no longer in use by this processor.
 	 */
-	i386_atomic_clearbits_l(&pmap->pm_cpus, (1U << cpu_number()));
+	x86_atomic_clearbits_l(&pmap->pm_cpus, (1U << cpu_number()));
 }
 
 /*
@@ -1949,7 +1949,7 @@ pmap_extract(pmap, va, pap)
 #endif
 
 		ptes = pmap_map_ptes(pmap);
-		pte = ptes[i386_btop(va)];
+		pte = ptes[x86_btop(va)];
 		pmap_unmap_ptes(pmap);
 
 		if (__predict_true((pte & PG_V) != 0)) {
@@ -2167,7 +2167,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		}
 
 		/* atomically save the old PTE and zap! it */
-		opte = i386_atomic_testset_ul(pte, 0);
+		opte = x86_atomic_testset_ul(pte, 0);
 
 		if (opte & PG_W)
 			pmap->pm_stats.wired_count--;
@@ -2184,7 +2184,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 
 		if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
-			if (vm_physseg_find(i386_btop(opte & PG_FRAME), &off)
+			if (vm_physseg_find(x86_btop(opte & PG_FRAME), &off)
 			    != -1)
 				panic("pmap_remove_ptes: managed page without "
 				      "PG_PVLIST for 0x%lx", startva);
@@ -2192,7 +2192,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 			continue;
 		}
 
-		bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
+		bank = vm_physseg_find(x86_btop(opte & PG_FRAME), &off);
 #ifdef DIAGNOSTIC
 		if (bank == -1)
 			panic("pmap_remove_ptes: unmanaged page marked "
@@ -2249,7 +2249,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	}
 
 	/* atomically save the old PTE and zap! it */
-	opte = i386_atomic_testset_ul(pte, 0);
+	opte = x86_atomic_testset_ul(pte, 0);
 
 	if (opte & PG_W)
 		pmap->pm_stats.wired_count--;
@@ -2266,14 +2266,14 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 
 	if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
-		if (vm_physseg_find(i386_btop(opte & PG_FRAME), &off) != -1)
+		if (vm_physseg_find(x86_btop(opte & PG_FRAME), &off) != -1)
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
 #endif
 		return(TRUE);
 	}
 
-	bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
+	bank = vm_physseg_find(x86_btop(opte & PG_FRAME), &off);
 #ifdef DIAGNOSTIC
 	if (bank == -1)
 		panic("pmap_remove_pte: unmanaged page marked "
@@ -2363,7 +2363,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-			    &ptes[i386_btop(sva)], sva, &cpumask, flags);
+			    &ptes[x86_btop(sva)], sva, &cpumask, flags);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -2372,7 +2372,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 
 			if (result && ptp && ptp->wire_count <= 1) {
 				/* zap! */
-				opte = i386_atomic_testset_ul(
+				opte = x86_atomic_testset_ul(
 				    &pmap->pm_pdir[pdei(sva)], 0);
 #if defined(MULTIPROCESSOR)
 				/*
@@ -2414,7 +2414,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 	for (/* null */ ; sva < eva ; sva = blkendva) {
 
 		/* determine range of block */
-		blkendva = i386_round_pdr(sva+1);
+		blkendva = x86_round_pdr(sva+1);
 		if (blkendva > eva)
 			blkendva = eva;
 
@@ -2461,12 +2461,12 @@ pmap_do_remove(pmap, sva, eva, flags)
 			}
 		}
 		pmap_remove_ptes(pmap, ptp,
-		    (vaddr_t)&ptes[i386_btop(sva)], sva, blkendva, &cpumask, flags);
+		    (vaddr_t)&ptes[x86_btop(sva)], sva, blkendva, &cpumask, flags);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
 			/* zap! */
-			opte = i386_atomic_testset_ul(
+			opte = x86_atomic_testset_ul(
 			    &pmap->pm_pdir[pdei(sva)], 0);
 #if defined(MULTIPROCESSOR)
 			/*
@@ -2555,7 +2555,7 @@ pmap_page_remove(pg)
 #endif
 
 		/* atomically save the old PTE and zap! it */
-		opte = i386_atomic_testset_ul(&ptes[i386_btop(pve->pv_va)], 0);
+		opte = x86_atomic_testset_ul(&ptes[x86_btop(pve->pv_va)], 0);
 
 		if (opte & PG_W)
 			pve->pv_pmap->pm_stats.wired_count--;
@@ -2571,7 +2571,7 @@ pmap_page_remove(pg)
 			pve->pv_ptp->wire_count--;
 			if (pve->pv_ptp->wire_count <= 1) {
 				/* zap! */
-				opte = i386_atomic_testset_ul(
+				opte = x86_atomic_testset_ul(
 				    &pve->pv_pmap->pm_pdir[pdei(pve->pv_va)],
 				    0);
 				pmap_tlb_shootdown(curpcb->pcb_pmap,
@@ -2661,7 +2661,7 @@ pmap_test_attrs(pg, testbits)
 	for (pve = pvh->pvh_list; pve != NULL && (*myattrs & testbits) == 0;
 	     pve = pve->pv_next) {
 		ptes = pmap_map_ptes(pve->pv_pmap);
-		pte = ptes[i386_btop(pve->pv_va)];
+		pte = ptes[x86_btop(pve->pv_va)];
 		pmap_unmap_ptes(pve->pv_pmap);
 		*myattrs |= pte;
 	}
@@ -2720,10 +2720,10 @@ pmap_clear_attrs(pg, clearbits)
 #endif
 
 		ptes = pmap_map_ptes(pve->pv_pmap);	/* locks pmap */
-		opte = ptes[i386_btop(pve->pv_va)];
+		opte = ptes[x86_btop(pve->pv_va)];
 		if (opte & clearbits) {
 			result |= (opte & clearbits);
-			i386_atomic_clearbits_l(&ptes[i386_btop(pve->pv_va)],
+			x86_atomic_clearbits_l(&ptes[x86_btop(pve->pv_va)],
 			    (opte & clearbits));	/* zap! */
 			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, opte,
 			    &cpumask);
@@ -2808,14 +2808,14 @@ pmap_write_protect(pmap, sva, eva, prot)
 			panic("pmap_write_protect: PTE space");
 #endif
 
-		spte = &ptes[i386_btop(sva)];
-		epte = &ptes[i386_btop(blockend)];
+		spte = &ptes[x86_btop(sva)];
+		epte = &ptes[x86_btop(blockend)];
 
 		for (/*null */; spte < epte ; spte++) {
 			if ((*spte & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
-				i386_atomic_clearbits_l(spte, PG_RW); /* zap! */
+				x86_atomic_clearbits_l(spte, PG_RW); /* zap! */
 				pmap_tlb_shootdown(pmap,
-				    i386_ptob(spte - ptes), *spte, &cpumask);
+				    x86_ptob(spte - ptes), *spte, &cpumask);
 			}
 		}
 	}
@@ -2849,11 +2849,11 @@ pmap_unwire(pmap, va)
 		ptes = pmap_map_ptes(pmap);		/* locks pmap */
 
 #ifdef DIAGNOSTIC
-		if (!pmap_valid_entry(ptes[i386_btop(va)]))
+		if (!pmap_valid_entry(ptes[x86_btop(va)]))
 			panic("pmap_unwire: invalid (unmapped) va 0x%lx", va);
 #endif
-		if ((ptes[i386_btop(va)] & PG_W) != 0) {
-			ptes[i386_btop(va)] &= ~PG_W;
+		if ((ptes[x86_btop(va)] & PG_W) != 0) {
+			ptes[x86_btop(va)] &= ~PG_W;
 			pmap->pm_stats.wired_count--;
 		}
 #ifdef DIAGNOSTIC
@@ -2959,7 +2959,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			panic("pmap_enter: get ptp failed");
 		}
 	}
-	opte = ptes[i386_btop(va)];		/* old PTE */
+	opte = ptes[x86_btop(va)];		/* old PTE */
 
 	/*
 	 * is there currently a valid mapping at our VA?
@@ -3098,7 +3098,7 @@ enter_now:
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
 
-	ptes[i386_btop(va)] = npte;		/* zap! */
+	ptes[x86_btop(va)] = npte;		/* zap! */
 
 	/*
 	 * If we changed anything other than modified/used bits,
@@ -3250,7 +3250,7 @@ pmap_dump(pmap, sva, eva)
 	for (/* null */ ; sva < eva ; sva = blkendva) {
 
 		/* determine range of block */
-		blkendva = i386_round_pdr(sva+1);
+		blkendva = x86_round_pdr(sva+1);
 		if (blkendva > eva)
 			blkendva = eva;
 
@@ -3258,7 +3258,7 @@ pmap_dump(pmap, sva, eva)
 		if (!pmap_valid_entry(pmap->pm_pdir[pdei(sva)]))
 			continue;
 
-		pte = &ptes[i386_btop(sva)];
+		pte = &ptes[x86_btop(sva)];
 		for (/* null */; sva < blkendva ; sva += PAGE_SIZE, pte++) {
 			if (!pmap_valid_entry(*pte))
 				continue;
@@ -3307,8 +3307,8 @@ pmap_tlb_shootnow(int32_t cpumask)
 		if (ci == self)
 			continue;
 		if (cpumask & (1U << ci->ci_cpuid))
-			if (i386_send_ipi(ci, I386_IPI_TLB) != 0)
-				i386_atomic_clearbits_l(&self->ci_tlb_ipi_mask,
+			if (x86_send_ipi(ci, X86_IPI_TLB) != 0)
+				x86_atomic_clearbits_l(&self->ci_tlb_ipi_mask,
 				    (1U << ci->ci_cpuid));
 	}
 
@@ -3486,7 +3486,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 
 #ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
-		i386_atomic_clearbits_l(&ci->ci_tlb_ipi_mask,
+		x86_atomic_clearbits_l(&ci->ci_tlb_ipi_mask,
 		    (1U << cpu_id));
 #endif
 	__cpu_simple_unlock(&pq->pq_slock);

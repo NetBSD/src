@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.9 2001/11/20 08:43:27 lukem Exp $	*/
+/*	$NetBSD: consinit.c,v 1.10 2003/02/26 21:28:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2001/11/20 08:43:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.10 2003/02/26 21:28:21 fvdl Exp $");
 
 #include "opt_kgdb.h"
 
@@ -155,16 +155,16 @@ consinit()
 #if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
 #if (NVGA > 0)
-		if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
+		if (!vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
 				  -1, 1))
 			goto dokbd;
 #endif
 #if (NEGA > 0)
-		if (!ega_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
+		if (!ega_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM))
 			goto dokbd;
 #endif
 #if (NPCDISPLAY > 0)
-		if (!pcdisplay_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
+		if (!pcdisplay_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM))
 			goto dokbd;
 #endif
 #if (NPC > 0)
@@ -173,7 +173,7 @@ consinit()
 		if (0) goto dokbd; /* XXX stupid gcc */
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 #if NPCKBC == 0 && NUKBD > 0
@@ -184,7 +184,7 @@ dokbd:
 #endif /* PC | VT | VGA | PCDISPLAY */
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = I386_BUS_SPACE_IO;
+		bus_space_tag_t tag = X86_BUS_SPACE_IO;
 
 		if (comcnattach(tag, consinfo->addr, consinfo->speed,
 				COM_FREQ, comcnmode))
@@ -220,7 +220,7 @@ kgdb_port_init()
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {
-		bus_space_tag_t tag = I386_BUS_SPACE_IO;
+		bus_space_tag_t tag = X86_BUS_SPACE_IO;
 
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ, 
 		    comkgdbmode);

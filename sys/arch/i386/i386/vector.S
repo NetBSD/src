@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.6 2003/02/04 14:17:11 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.7 2003/02/26 21:28:25 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -171,7 +171,7 @@ IDTVEC(intr_lapic_ipi)
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
         sti
 	pushl	%ebx
-	call	_C_LABEL(i386_ipi_handler)
+	call	_C_LABEL(x86_ipi_handler)
 	jmp	_C_LABEL(Xdoreti)
 2:
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
@@ -234,8 +234,8 @@ IDTVEC(intr_lapic_ltimer)
 #endif /* NLAPIC > 0 */
 
 #ifdef MULTIPROCESSOR
-#define LOCK_KERNEL	call _C_LABEL(i386_intlock)
-#define UNLOCK_KERNEL	call _C_LABEL(i386_intunlock)
+#define LOCK_KERNEL	call _C_LABEL(x86_intlock)
+#define UNLOCK_KERNEL	call _C_LABEL(x86_intunlock)
 #else
 #define LOCK_KERNEL
 #define UNLOCK_KERNEL
@@ -520,16 +520,16 @@ IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintlock)
+	call	_C_LABEL(x86_softintlock)
 #endif
 	movl	CPUVAR(ISOURCES) + SIR_SERIAL * 4, %edi
 	addl	$1,IS_EVCNTLO(%edi)
 	adcl	$0,IS_EVCNTHI(%edi)
-	pushl	$I386_SOFTINTR_SOFTSERIAL
+	pushl	$X86_SOFTINTR_SOFTSERIAL
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_softintunlock)
+	call	_C_LABEL(x86_softintunlock)
 #endif
 	decl	CPUVAR(IDEPTH)
 	jmp	*%esi
@@ -538,7 +538,7 @@ IDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_softintlock)
+	call	_C_LABEL(x86_softintlock)
 #endif
 	movl	CPUVAR(ISOURCES) + SIR_NET * 4, %edi
 	addl	$1,IS_EVCNTLO(%edi)
@@ -556,11 +556,11 @@ IDTVEC(softnet)
 1:
 #include <net/netisr_dispatch.h>
 	
-	pushl	$I386_SOFTINTR_SOFTNET
+	pushl	$X86_SOFTINTR_SOFTNET
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_softintunlock)	
+	call	_C_LABEL(x86_softintunlock)	
 #endif
 	decl	CPUVAR(IDEPTH)
 	jmp	*%esi
@@ -569,17 +569,17 @@ IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_softintlock)
+	call	_C_LABEL(x86_softintlock)
 #endif
 	movl	CPUVAR(ISOURCES) + SIR_CLOCK * 4, %edi
 	addl	$1,IS_EVCNTLO(%edi)
 	adcl	$0,IS_EVCNTHI(%edi)
 
-	pushl	$I386_SOFTINTR_SOFTCLOCK
+	pushl	$X86_SOFTINTR_SOFTCLOCK
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
 #ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_softintunlock)		
+	call	_C_LABEL(x86_softintunlock)		
 #endif
 	decl	CPUVAR(IDEPTH)
 	jmp	*%esi

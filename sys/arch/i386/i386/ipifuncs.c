@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.7 2003/02/05 12:18:02 nakayama Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.8 2003/02/26 21:28:22 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ void i386_reload_mtrr(struct cpu_info *);
 #define i386_reload_mtrr NULL
 #endif
 
-void (*ipifunc[I386_NIPI])(struct cpu_info *) =
+void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
 #if defined(I586_CPU) || defined(I686_CPU)
@@ -122,11 +122,6 @@ i386_ipi_synch_fpu(struct cpu_info *ci)
 }
 #endif
 
-void
-i386_spurious (void)
-{
-}
-
 #ifdef MTRR
 
 /*
@@ -141,99 +136,3 @@ i386_reload_mtrr(struct cpu_info *ci)
 		mtrr_reload_cpu(ci);
 }
 #endif
-
-int
-i386_send_ipi(struct cpu_info *ci, int ipimask)
-{
-	int ret;
-
-	i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
-
-	/* Don't send IPI to cpu which isn't (yet) running. */
-	if (!(ci->ci_flags & CPUF_RUNNING))
-		return ENOENT;
-
-	ret = i386_ipi(LAPIC_IPI_VECTOR, ci->ci_apicid, LAPIC_DLMODE_FIXED);
-	if (ret != 0) {
-		printf("ipi of %x from %s to %s failed\n",
-		    ipimask,
-		    curcpu()->ci_dev->dv_xname,
-		    ci->ci_dev->dv_xname);
-	}
-
-	return ret;
-}
-
-void
-i386_self_ipi (int vector)
-{
-	i82489_writereg(LAPIC_ICRLO,
-	    vector | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT | LAPIC_DEST_SELF);
-}
-
-
-void
-i386_broadcast_ipi (int ipimask)
-{
-	struct cpu_info *ci, *self = curcpu();
-	int count = 0;
-
-	CPU_INFO_ITERATOR cii;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (ci == self)
-			continue;
-		if ((ci->ci_flags & CPUF_RUNNING) == 0)
-			continue;
-		i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
-		count++;
-	}
-	if (!count)
-		return;
-
-	i82489_writereg(LAPIC_ICRLO,
-	    LAPIC_IPI_VECTOR | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT |
-	    LAPIC_DEST_ALLEXCL);
-}
-
-void
-i386_multicast_ipi(int cpumask, int ipimask)
-{
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	cpumask &= ~(1U << cpu_number());
-	if (cpumask == 0)
-		return;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if ((cpumask & (1U << ci->ci_cpuid)) == 0)
-			continue;
-		i386_send_ipi(ci, ipimask);
-	}
-}
-
-void
-i386_ipi_handler(void)
-{
-	struct cpu_info *ci = curcpu();
-	u_int32_t pending;
-	int bit;
-
-	pending = i386_atomic_testset_ul(&ci->ci_ipis, 0);
-
-#if 0
-	printf("%s: pending IPIs: %x\n", ci->ci_dev->dv_xname, pending);
-#endif
-
-	for (bit = 0; bit < I386_NIPI && pending; bit++) {
-		if (pending & (1<<bit)) {
-			pending &= ~(1<<bit);
-			ci->ci_ipi_events[bit].ev_count++;
-			(*ipifunc[bit])(ci);
-		}
-	}
-#if 0
-	Debugger();
-#endif
-}

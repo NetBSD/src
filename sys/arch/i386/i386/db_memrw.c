@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.14 2003/01/06 20:30:31 wiz Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.15 2003/02/26 21:28:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.14 2003/01/06 20:30:31 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.15 2003/02/26 21:28:21 fvdl Exp $");
 
 #include "opt_largepages.h"
 
@@ -131,7 +131,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			pgva = (vaddr_t)dst & PG_LGFRAME;
 		else
 #endif
-			pgva = i386_trunc_page(dst);
+			pgva = x86_trunc_page(dst);
 
 		/*
 		 * Compute number of bytes that can be written

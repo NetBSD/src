@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.75 2002/11/26 19:50:24 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.76 2003/02/26 21:28:21 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.75 2002/11/26 19:50:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.76 2003/02/26 21:28:21 fvdl Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -1426,7 +1426,7 @@ apmattach(parent, self, aux)
 		 * implementation on i386 so it can be done without
 		 * extent checking.
 		 */
-		if (_i386_memio_map(I386_BUS_SPACE_MEM,
+		if (_x86_memio_map(X86_BUS_SPACE_MEM,
 		    apminfo.apm_data_seg_base,
 		    apminfo.apm_data_seg_len, 0, &memh)) {
 			printf("couldn't map data segment");

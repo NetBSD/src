@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.9 2003/02/14 05:38:39 tshiozak Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.10 2003/02/26 21:28:20 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.9 2003/02/14 05:38:39 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.10 2003/02/26 21:28:20 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ acpi_md_OsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress,
     UINT32 Length, void **LogicalAddress)
 {
 
-	if (_i386_memio_map(I386_BUS_SPACE_MEM, PhysicalAddress, Length,
+	if (_x86_memio_map(X86_BUS_SPACE_MEM, PhysicalAddress, Length,
 	    0, (bus_space_handle_t *) LogicalAddress) == 0)
 		return (AE_OK);
 
@@ -159,7 +159,7 @@ void
 acpi_md_OsUnmapMemory(void *LogicalAddress, UINT32 Length)
 {
 
-	(void) _i386_memio_unmap(I386_BUS_SPACE_MEM,
+	(void) _x86_memio_unmap(X86_BUS_SPACE_MEM,
 	    (bus_space_handle_t) LogicalAddress, Length, NULL);
 }
 
