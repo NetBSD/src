@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.119 2003/04/03 22:52:32 taca Exp $
+# $NetBSD: mi,v 1.120 2003/04/18 05:19:59 thorpej Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -126,6 +126,7 @@
 ./etc/rc.d/ntpdate			etc-ntp-rc
 ./etc/rc.d/poffd			etc-sys-rc
 ./etc/rc.d/postfix			etc-postfix-rc
+./etc/rc.d/powerd			etc-sysutil-rc
 ./etc/rc.d/ppp				etc-ppp-rc
 ./etc/rc.d/pwcheck			etc-sys-rc
 ./etc/rc.d/quota			etc-sys-rc
