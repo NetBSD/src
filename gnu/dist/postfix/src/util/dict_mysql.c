@@ -274,14 +274,14 @@ static MYSQL_RES *plmysql_query(PLMYSQL *PLDB,
 	if (res == 0 && host->stat == STATACTIVE) {
 	    if (!(mysql_query(host->db, query))) {
 		if ((res = mysql_store_result(host->db)) == 0) {
-		    msg_warn("%s", mysql_error(host->db));
+		    msg_warn("mysql query failed: %s", mysql_error(host->db));
 		    plmysql_down_host(host);
 		} else {
 		    if (msg_verbose)
 			msg_info("dict_mysql: successful query from host %s", host->hostname);
 		}
 	    } else {
-		msg_warn("%s", mysql_error(host->db));
+		msg_warn("mysql query failed: %s", mysql_error(host->db));
 		plmysql_down_host(host);
 	    }
 	}
@@ -323,7 +323,8 @@ static void plmysql_connect_single(HOST *host, char *dbname, char *username, cha
 		     host->hostname);
 	host->stat = STATACTIVE;
     } else {
-	msg_warn("%s", mysql_error(host->db));
+	msg_warn("connect to mysql server %s: %s",
+		 host->hostname, mysql_error(host->db));
 	plmysql_down_host(host);
     }
     if (hostname)
@@ -366,7 +367,7 @@ DICT   *dict_mysql_open(const char *name, int unused_open_flags, int dict_flags)
     if (dict_mysql->pldb == NULL)
 	msg_fatal("couldn't intialize pldb!\n");
     dict_register(name, (DICT *) dict_mysql);
-    return (DICT_DEBUG(&dict_mysql->dict));
+    return (DICT_DEBUG (&dict_mysql->dict));
 }
 
 /* mysqlname_parse - parse mysql configuration file */

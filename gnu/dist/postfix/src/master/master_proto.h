@@ -32,6 +32,14 @@ typedef struct MASTER_STATUS {
 extern int master_notify(int, int);	/* encapsulate status msg */
 
  /*
+  * File descriptors inherited from the master process. The flow control pipe
+  * is read by receive processes and is written to by send processes. If
+  * receive processes get too far ahead they will pause for a brief moment.
+  */
+#define MASTER_FLOW_READ	3
+#define MASTER_FLOW_WRITE	4
+
+ /*
   * File descriptors inherited from the master process. All processes that
   * provide a given service share the same status file descriptor, and listen
   * on the same service socket(s). The kernel decides what process gets the
@@ -41,8 +49,8 @@ extern int master_notify(int, int);	/* encapsulate status msg */
   * actually the lowest-numbered descriptor of a sequence of descriptors to
   * listen on.
   */
-#define MASTER_STATUS_FD	3	/* shared channel to parent */
-#define MASTER_LISTEN_FD	4	/* accept connections here */
+#define MASTER_STATUS_FD	5	/* shared channel to parent */
+#define MASTER_LISTEN_FD	6	/* accept connections here */
 
 /* LICENSE
 /* .ad

@@ -58,10 +58,13 @@
 #include <msg.h>
 #include <trigger.h>
 #include <events.h>
+#include <set_eugid.h>
+#include <set_ugid.h>
 
 /* Global library. */
 
 #include <mail_proto.h>			/* triggers */
+#include <mail_params.h>
 
 /* Application-specific. */
 
@@ -101,8 +104,30 @@ static void master_wakeup_timer_event(int unused_event, char *context)
 	case MASTER_SERV_TYPE_UNIX:
 	    status = LOCAL_TRIGGER(serv->name, &wakeup, sizeof(wakeup), BRIEFLY);
 	    break;
+
+	    /*
+	     * If someone compromises the postfix account then this must not
+	     * overwrite files outside the chroot jail. Countermeasures:
+	     * 
+	     * - Limit the damage by accessing the FIFO as postfix not root.
+	     * 
+	     * - Have fifo_trigger() call safe_open() so we won't follow
+	     * arbitrary hard/symlinks to files in/outside the chroot jail.
+	     * 
+	     * - All non-chroot postfix-related files must be root owned (or
+	     * postfix check complains).
+	     * 
+	     * - The postfix user and group ID must not be shared with other
+	     * applications (says the INSTALL documentation).
+	     * 
+	     * Result of a discussion with Michael Tokarev, who received his
+	     * insights from Solar Designer, who tested Postfix with a kernel
+	     * module that is paranoid about open() calls.
+	     */
 	case MASTER_SERV_TYPE_FIFO:
+	    set_eugid(var_owner_uid, var_owner_gid);
 	    status = fifo_trigger(serv->name, &wakeup, sizeof(wakeup), BRIEFLY);
+	    set_ugid(getuid(), getgid());
 	    break;
 	default:
 	    msg_panic("%s: unknown service type: %d", myname, serv->type);

@@ -73,6 +73,7 @@ sendmail.o: ../../include/set_ugid.h
 sendmail.o: ../../include/connect.h
 sendmail.o: ../../include/mail_queue.h
 sendmail.o: ../../include/mail_proto.h
+sendmail.o: ../../include/attr.h
 sendmail.o: ../../include/mail_params.h
 sendmail.o: ../../include/record.h
 sendmail.o: ../../include/rec_type.h
@@ -86,4 +87,4 @@ sendmail.o: ../../include/tok822.h
 sendmail.o: ../../include/resolve_clnt.h
 sendmail.o: ../../include/mail_flush.h
 sendmail.o: ../../include/mail_stream.h
-sendmail.o: ../../include/smtp_stream.h
+sendmail.o: ../../include/verp_sender.h

@@ -35,6 +35,11 @@ extern int mail_copy(const char *, const char *, VSTREAM *, VSTREAM *,
 				    MAIL_COPY_RETURN_PATH | MAIL_COPY_BLANK)
 #define MAIL_COPY_NONE		0	/* all turned off */
 
+#define MAIL_COPY_STAT_OK	0
+#define MAIL_COPY_STAT_CORRUPT	(1<<0)
+#define MAIL_COPY_STAT_READ	(1<<1)
+#define MAIL_COPY_STAT_WRITE	(1<<2)
+
 /* LICENSE
 /* .ad
 /* .fi

@@ -33,6 +33,7 @@ extern int flush_purge(void);
 #define FLUSH_STAT_FAIL		-1	/* request failed */
 #define FLUSH_STAT_OK		0	/* request executed */
 #define FLUSH_STAT_BAD		3	/* invalid parameter */
+#define FLUSH_STAT_DENY		4	/* request denied */
 
 
 /* LICENSE

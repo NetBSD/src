@@ -1,15 +1,12 @@
 <html> <head> </head> <body> <pre>
 
-
-
 POSTALIAS(1)                                         POSTALIAS(1)
-
 
 <b>NAME</b>
        postalias - Postfix alias database maintenance
 
 <b>SYNOPSIS</b>
-       <b>postalias</b> [<b>-Ninrvw</b>] [<b>-c</b> <i>config_dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
+       <b>postalias</b> [<b>-Nfinrvw</b>] [<b>-c</b> <i>config_dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
        [<i>file_type</i>:]<i>file_name</i> ...
 
 <b>DESCRIPTION</b>
@@ -37,8 +34,16 @@ POSTALIAS(1)                                         POSTALIAS(1)
               directory.
 
        <b>-d</b> <i>key</i> Search the specified maps for <i>key</i>  and  remove  one
-              entry  per map.  The exit status is non-zero if the
-              requested information was not found.
+              entry  per  map.   The exit status is zero when the
+              requested information was found.
+
+              If a key value of <b>-</b> is specified, the program reads
+              key values from the standard input stream. The exit
+              status is zero when at least one of  the  requested
+              keys was found.
+
+       <b>-f</b>     Do not fold the lookup key to lower case while cre-
+              ating or querying a map.
 
        <b>-i</b>     Incremental mode. Read entries from standard  input
               and  do  not  truncate  an  existing  database.  By
@@ -52,26 +57,20 @@ POSTALIAS(1)                                         POSTALIAS(1)
 
        <b>-q</b> <i>key</i> Search the specified maps for  <i>key</i>  and  print  the
               first  value  found  on the standard output stream.
-              The exit status is non-zero if the requested infor-
-              mation was not found.
+              The exit status is zero when the requested informa-
+              tion was found.
+
+              If a key value of <b>-</b> is specified, the program reads
+              key values  from  the  standard  input  stream  and
+              prints  one  line of <i>key:</i> <i>value</i> output for each key
+              that was found. The exit status  is  zero  when  at
+              least one of the requested keys was found.
 
        <b>-r</b>     When  updating a table, do not warn about duplicate
               entries; silently replace them.
 
-       <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.
-
-
-
-                                                                1
-
-
-
-
-
-POSTALIAS(1)                                         POSTALIAS(1)
-
-
-              Multiple  <b>-v</b> options make the software increasingly
+       <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
+              tiple  <b>-v</b>  options  make  the software increasingly
               verbose.
 
        <b>-w</b>     When updating a table, do not warn about  duplicate
@@ -113,10 +112,6 @@ POSTALIAS(1)                                         POSTALIAS(1)
        cess  (including  successful <b>postmap</b> <b>-q</b> lookup) and termi-
        nates with non-zero exit status in case of failure.
 
-<b>BUGS</b>
-       The "delete key" support is limited to one  delete  opera-
-       tion per command invocation.
-
 <b>ENVIRONMENT</b>
        <b>MAIL</b><i>_</i><b>CONFIG</b>
               Directory with Postfix configuration files.
@@ -124,26 +119,13 @@ POSTALIAS(1)                                         POSTALIAS(1)
        <b>MAIL</b><i>_</i><b>VERBOSE</b>
               Enable verbose logging for debugging purposes.
 
-
-
-
-
-                                                                2
-
-
-
-
-
-POSTALIAS(1)                                         POSTALIAS(1)
-
-
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this program. See the Postfix <b>main.cf</b> file  for  syntax
+       The following <b>main.cf</b> parameters are  especially  relevant
+       to  this  program. See the Postfix <b>main.cf</b> file for syntax
        details and for default values.
 
        <b>database</b><i>_</i><b>type</b>
-              Default  alias database type. On many UNIX systems,
+              Default alias database type. On many UNIX  systems,
               the default type is either <b>dbm</b> or <b>hash</b>.
 
 <b>STANDARDS</b>
@@ -154,7 +136,7 @@ POSTALIAS(1)                                         POSTALIAS(1)
        <a href="sendmail.1.html">sendmail(1)</a> mail posting and compatibility interface.
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -163,38 +145,6 @@ POSTALIAS(1)                                         POSTALIAS(1)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                3
-
+                                                                1
 
 </pre> </body> </html>

@@ -38,7 +38,7 @@
 /*	if mail is undeliverable it will be added back to the logfile.
 /* .sp
 /*	If the destination is not eligible for a fast flush logfile,
-/*	this request triggers delivery of all queued mail.
+/*	this request is rejected (see below for status codes).
 /* .IP \fBTRIGGER_REQ_WAKEUP\fR
 /*	This wakeup request from the master is an alternative way to
 /*	request \fBFLUSH_REQ_REFRESH\fR.
@@ -66,6 +66,10 @@
 /*	request parameter value).
 /* .IP \fBFLUSH_STAT_FAIL\fR
 /*	The request failed.
+/* .IP \fBFLUSH_STAT_DENY\fR
+/*	The request was denied because the destination domain is not
+/*	eligible for fast flush service, or because the fast flush
+/*	service is disabled.
 /* SECURITY
 /* .ad
 /* .fi
@@ -106,6 +110,10 @@
 /* .IP \fBfast_flush_purge_time\fR
 /*	Remove an empty "fast flush" logfile that was not updated in
 /*	this amount of time (default time unit: days).
+/* .IP \fBparent_domain_matches_subdomains\fR
+/*	List of Postfix features that use \fIdomain.name\fR patterns
+/*	to match \fIsub.domain.name\fR (as opposed to
+/*	requiring \fI.domain.name\fR patterns).
 /* SEE ALSO
 /*	smtpd(8) Postfix SMTP server
 /*	qmgr(8) Postfix queue manager
@@ -156,6 +164,7 @@
 #include <mail_scan_dir.h>
 #include <maps.h>
 #include <domain_list.h>
+#include <match_parent_style.h>
 
 /* Single server skeleton. */
 
@@ -243,10 +252,10 @@ static int flush_add_service(const char *site, const char *queue_id)
 	msg_info("%s: site %s queue_id %s", myname, site, queue_id);
 
     /*
-     * If this site is not eligible for logging, just ignore the request.
+     * If this site is not eligible for logging, deny the request.
      */
     if (flush_policy_ok(site) == 0)
-	return (FLUSH_STAT_OK);
+	return (FLUSH_STAT_DENY);
 
     /*
      * Map site to path and update log.
@@ -319,10 +328,10 @@ static int flush_send_service(const char *site)
 	msg_info("%s: site %s", myname, site);
 
     /*
-     * If this site is not eligible for logging, deliver all queued mail.
+     * If this site is not eligible for logging, deny the request.
      */
     if (flush_policy_ok(site) == 0)
-	return (mail_flush_deferred());
+	return (FLUSH_STAT_DENY);
 
     /*
      * Map site name to path name and flush the log.
@@ -507,6 +516,51 @@ static int flush_refresh_service(int max_age)
     return (FLUSH_STAT_OK);
 }
 
+/* flush_request_receive - receive request */
+
+static int flush_request_receive(VSTREAM *client_stream, VSTRING *request)
+{
+    int     count;
+
+    /*
+     * Kluge: choose the protocol depending on the request size.
+     */
+    if (read_wait(vstream_fileno(client_stream), var_ipc_timeout) < 0) {
+	msg_warn("timeout while waiting for data from %s",
+		 VSTREAM_PATH(client_stream));
+	return (-1);
+    }
+    if ((count = peekfd(vstream_fileno(client_stream))) < 0) {
+	msg_warn("cannot examine read buffer of %s: %m",
+		 VSTREAM_PATH(client_stream));
+	return (-1);
+    }
+
+    /*
+     * Short request: master trigger. Use the string+null protocol.
+     */
+    if (count <= 2) {
+	if (vstring_get_null(request, client_stream) == VSTREAM_EOF) {
+	    msg_warn("end-of-input while reading request from %s: %m",
+		     VSTREAM_PATH(client_stream));
+	    return (-1);
+	}
+    }
+
+    /*
+     * Long request: real flush client. Use the attribute list protocol.
+     */
+    else {
+	if (attr_scan(client_stream,
+		      ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
+		      ATTR_TYPE_STR, MAIL_ATTR_REQ, request,
+		      ATTR_TYPE_END) != 1) {
+	    return (-1);
+	}
+    }
+    return (0);
+}
+
 /* flush_service - perform service for client */
 
 static void flush_service(VSTREAM *client_stream, char *unused_service,
@@ -536,31 +590,46 @@ static void flush_service(VSTREAM *client_stream, char *unused_service,
      * All connection-management stuff is handled by the common code in
      * single_server.c.
      */
-    if (mail_scan(client_stream, "%s", request) == 1) {
+    if (flush_request_receive(client_stream, request) == 0) {
 	if (STREQ(STR(request), FLUSH_REQ_ADD)) {
 	    site = vstring_alloc(10);
 	    queue_id = vstring_alloc(10);
-	    if (mail_command_read(client_stream, "%s %s", site, queue_id) == 2
+	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
+			  ATTR_TYPE_STR, MAIL_ATTR_SITE, site,
+			  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, queue_id,
+			  ATTR_TYPE_END) == 2
 		&& mail_queue_id_ok(STR(queue_id)))
 		status = flush_add_service(lowercase(STR(site)), STR(queue_id));
-	    mail_print(client_stream, "%d", status);
+	    attr_print(client_stream, ATTR_FLAG_NONE,
+		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
+		       ATTR_TYPE_END);
 	} else if (STREQ(STR(request), FLUSH_REQ_SEND)) {
 	    site = vstring_alloc(10);
-	    if (mail_command_read(client_stream, "%s", site) == 1)
+	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
+			  ATTR_TYPE_STR, MAIL_ATTR_SITE, site,
+			  ATTR_TYPE_END) == 1)
 		status = flush_send_service(lowercase(STR(site)));
-	    mail_print(client_stream, "%d", status);
+	    attr_print(client_stream, ATTR_FLAG_NONE,
+		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
+		       ATTR_TYPE_END);
 	} else if (STREQ(STR(request), FLUSH_REQ_REFRESH)
 		   || STREQ(STR(request), wakeup)) {
-	    mail_print(client_stream, "%d", FLUSH_STAT_OK);
+	    attr_print(client_stream, ATTR_FLAG_NONE,
+		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, FLUSH_STAT_OK,
+		       ATTR_TYPE_END);
 	    vstream_fflush(client_stream);
 	    (void) flush_refresh_service(var_fflush_refresh);
 	} else if (STREQ(STR(request), FLUSH_REQ_PURGE)) {
-	    mail_print(client_stream, "%d", FLUSH_STAT_OK);
+	    attr_print(client_stream, ATTR_FLAG_NONE,
+		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, FLUSH_STAT_OK,
+		       ATTR_TYPE_END);
 	    vstream_fflush(client_stream);
 	    (void) flush_refresh_service(0);
 	}
     } else
-	mail_print(client_stream, "%d", status);
+	attr_print(client_stream, ATTR_FLAG_NONE,
+		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
+		   ATTR_TYPE_END);
     vstring_free(request);
     if (site)
 	vstring_free(site);
@@ -572,7 +641,8 @@ static void flush_service(VSTREAM *client_stream, char *unused_service,
 
 static void pre_jail_init(char *unused_name, char **unused_argv)
 {
-    flush_domains = domain_list_init(var_fflush_domains);
+    flush_domains = domain_list_init(match_parent_style(VAR_FFLUSH_DOMAINS),
+				     var_fflush_domains);
 }
 
 /* main - pass control to the single-threaded skeleton */

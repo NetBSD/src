@@ -91,6 +91,7 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream)
     state->recursion = 0;
     state->msg_size = 0;
     state->junk_cmds = 0;
+    state->warn_if_reject = 0;
 
 #ifdef USE_SASL_AUTH
     if (SMTPD_STAND_ALONE(state))

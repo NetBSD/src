@@ -123,11 +123,17 @@ VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
 
     for (;;) {
 	stream = clnt_stream_access(rewrite_clnt_stream);
-	if (mail_print(stream, "%s %s %s", REWRITE_ADDR, rule, addr),
+	if (attr_print(stream, ATTR_FLAG_NONE,
+		       ATTR_TYPE_STR, MAIL_ATTR_REQ, REWRITE_ADDR,
+		       ATTR_TYPE_STR, MAIL_ATTR_RULE, rule,
+		       ATTR_TYPE_STR, MAIL_ATTR_ADDR, addr,
+		       ATTR_TYPE_END),
 	    vstream_fflush(stream)) {
 	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: bad write: %m", myname);
-	} else if (mail_scan(stream, "%s", result) != 1) {
+	} else if (attr_scan(stream, ATTR_FLAG_STRICT,
+			     ATTR_TYPE_STR, MAIL_ATTR_ADDR, result,
+			     ATTR_TYPE_END) != 1) {
 	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: bad read: %m", myname);
 	} else {

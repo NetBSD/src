@@ -69,6 +69,7 @@
 
 #include <msg.h>
 #include <iostuff.h>
+#include <name_mask.h>
 
 /* Global library. */
 
@@ -106,6 +107,7 @@ char   *var_prop_extension;		/* propagate unmatched extension */
 char   *var_always_bcc;			/* big brother */
 int     var_extra_rcpt_limit;		/* recipient extract limit */
 char   *var_rcpt_witheld;		/* recipients not disclosed */
+char   *var_masq_classes;		/* what to masquerade */
 
 CONFIG_INT_TABLE cleanup_int_table[] = {
     VAR_HOPCOUNT_LIMIT, DEF_HOPCOUNT_LIMIT, &var_hopcount_limit, 1, 0,
@@ -133,6 +135,7 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
     VAR_PROP_EXTENSION, DEF_PROP_EXTENSION, &var_prop_extension, 0, 0,
     VAR_ALWAYS_BCC, DEF_ALWAYS_BCC, &var_always_bcc, 0, 0,
     VAR_RCPT_WITHELD, DEF_RCPT_WITHELD, &var_rcpt_witheld, 1, 0,
+    VAR_MASQ_CLASSES, DEF_MASQ_CLASSES, &var_masq_classes, 0, 0,
     0,
 };
 
@@ -146,6 +149,7 @@ MAPS   *cleanup_header_checks;
 MAPS   *cleanup_body_checks;
 MAPS   *cleanup_virtual_maps;
 ARGV   *cleanup_masq_domains;
+int     cleanup_masq_flags;
 
  /*
   * Address extension propagation restrictions.
@@ -164,9 +168,17 @@ void    cleanup_all(void)
 
 void    cleanup_pre_jail(char *unused_name, char **unused_argv)
 {
+    static NAME_MASK masq_class_table[] = {
+	MASQ_CLASS_ENV_FROM, CLEANUP_MASQ_FLAG_ENV_FROM,
+	MASQ_CLASS_ENV_RCPT, CLEANUP_MASQ_FLAG_ENV_RCPT,
+	MASQ_CLASS_HDR_FROM, CLEANUP_MASQ_FLAG_HDR_FROM,
+	MASQ_CLASS_HDR_RCPT, CLEANUP_MASQ_FLAG_HDR_RCPT,
+	0,
+    };
+
     if (*var_canonical_maps)
 	cleanup_comm_canon_maps =
-	maps_create(VAR_CANONICAL_MAPS, var_canonical_maps, DICT_FLAG_LOCK);
+	    maps_create(VAR_CANONICAL_MAPS, var_canonical_maps, DICT_FLAG_LOCK);
     if (*var_send_canon_maps)
 	cleanup_send_canon_maps =
 	    maps_create(VAR_SEND_CANON_MAPS, var_send_canon_maps,
@@ -186,6 +198,9 @@ void    cleanup_pre_jail(char *unused_name, char **unused_argv)
     if (*var_body_checks)
 	cleanup_body_checks =
 	    maps_create(VAR_BODY_CHECKS, var_body_checks, DICT_FLAG_LOCK);
+    if (*var_masq_classes)
+	cleanup_masq_flags = name_mask(VAR_MASQ_CLASSES, masq_class_table,
+				       var_masq_classes);
 }
 
 /* cleanup_post_jail - initialize after entering the chroot jail */

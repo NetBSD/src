@@ -15,9 +15,9 @@
   * External interface.
   */
 typedef struct MATCH_LIST MATCH_LIST;
-typedef int (*MATCH_LIST_FN) (const char *, const char *);
+typedef int (*MATCH_LIST_FN) (int, const char *, const char *);
 
-extern MATCH_LIST *match_list_init(const char *, int,...);
+extern MATCH_LIST *match_list_init(int, const char *, int,...);
 extern int match_list_match(MATCH_LIST *,...);
 extern void match_list_free(MATCH_LIST *);
 

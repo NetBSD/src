@@ -21,7 +21,8 @@
   */
 #define CONF_ENV_PATH	"MAIL_CONFIG"	/* config database */
 #define CONF_ENV_VERB	"MAIL_VERBOSE"	/* verbose mode on */
-#define CONF_ENV_DEBUG	"MAIL_DEBUG"	/* verbose mode on */
+#define CONF_ENV_DEBUG	"MAIL_DEBUG"	/* live debugging */
+#define CONF_ENV_LOGTAG	"MAIL_LOGTAG"	/* instance name */
 
  /*
   * External representation for booleans.

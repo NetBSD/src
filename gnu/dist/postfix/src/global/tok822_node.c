@@ -57,7 +57,7 @@ TOK822 *tok822_alloc(int type, const char *strval)
     TOK822 *tp;
 
 #define CONTAINER_TOKEN(x) \
-	((x) == TOK822_ADDR || (x) == TOK822_COMMENT || (x) == TOK822_STARTGRP)
+	((x) == TOK822_ADDR || (x) == TOK822_STARTGRP)
 
     tp = (TOK822 *) mymalloc(sizeof(*tp));
     tp->type = type;

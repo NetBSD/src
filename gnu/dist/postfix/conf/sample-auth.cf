@@ -70,7 +70,7 @@ smtpd_sasl_security_options = noanonymous
 # By default, the local authentication realm name is the name of the
 # machine.
 # 
-# smtpd_sasl_local_domain = $mydomain
+#smtpd_sasl_local_domain = $mydomain
 smtpd_sasl_local_domain = $myhostname
 
 # SMTP CLIENT CONTROLS

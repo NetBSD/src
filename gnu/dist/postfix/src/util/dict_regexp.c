@@ -356,14 +356,8 @@ DICT   *dict_regexp_open(const char *map, int unused_flags, int dict_flags)
     if ((map_fp = vstream_fopen(map, O_RDONLY, 0)) == 0) {
 	msg_fatal("open %s: %m", map);
     }
-    while (readlline(line_buffer, map_fp, &lineno, READLL_STRIPNL)) {
+    while (readlline(line_buffer, map_fp, &lineno)) {
 	p = vstring_str(line_buffer);
-
-	if (*p == '#')				/* Skip comments */
-	    continue;
-
-	if (*p == 0)				/* Skip blank lines */
-	    continue;
 
 	trimblanks(p, 0)[0] = 0;		/* Trim space at end */
 

@@ -1,0 +1,60 @@
+#!/bin/sh
+
+# Written by Gerben Wierda, Oct 2001. I waive every copyright on this and
+# I also do not give any warranty.
+
+. ./defines
+
+if [ ! -e ${SENDMAILBACKUPDIR}/sendmail ]
+then
+	echo "Something is wrong: there is no existing postfix binary backup"
+	exit 1;
+else
+	echo "Restoring sendmail versions of sendmail programs from backup..."
+	(cd ${SENDMAILBACKUPDIR}; tar cf - sendmail) | (cd /usr/sbin; tar xf -) 
+	(cd ${SENDMAILBACKUPDIR}; tar cf - newaliases) | (cd /usr/bin; tar xf -) 
+	(cd ${SENDMAILBACKUPDIR}; tar cf - mailq) | (cd /usr/bin; tar xf -)
+fi
+
+if [ -e "${SSI}" ]
+then
+	echo "Sendmail StartupItem already exists."
+else
+	if [ -e "${SSIDISABLED}" ]
+	then
+		echo "Reinstating disabled Sendmail StartupItem..."
+		mv "${SSIDISABLED}" "${SSI}"
+	else
+		echo "Something is wrong. I cannot find ${SSIDISABLED}"
+		echo "Postfix will be uninstalled, Sendmail not reinstalled."
+	fi
+fi
+
+if [ -e "${PSI}" ]
+then
+	if [ ! -d "${SIDISABLEDDIR}" ]
+	then
+		mkdir -p "${SIDISABLEDDIR}"
+	fi
+	echo "Moving existing Postfix StartupItem to ${SIDISABLEDDIR}..."
+	if [ -e "${PSIDISABLED}" ]
+	then
+		echo "Something is wrong. A disabled Postfix StartupItem already exists."
+		DATETIME=`date +"%Y%b%e-%H%M%S"`
+		echo "Moving Postfix to Postfix.${DATETIME}"
+		mv "${PSI}" "${PSIDISABLED}.${DATETIME}"
+		echo "You should have just one ${PSIDISABLED}"
+	else
+		mv "${PSI}" "${PSIDISABLED}"
+	fi
+fi
+
+. /etc/hostconfig
+
+if [ "${MAILSERVER:=-NO-}" = "-YES-" ]
+then
+	echo "Sendmail will start on reboot"
+else
+	echo "Note: Sendmail needs MAILSERVER set to -YES- in /etc/hostconfig"
+	echo "Sendmail will NOT start on reboot"
+fi

@@ -13,8 +13,9 @@ format of Postfix access table
 .ad
 .fi
 The optional \fBaccess\fR table directs the Postfix SMTP server
-to selectively reject or accept mail from or to specific hosts,
-domains, networks, host addresses or mail addresses.
+to selectively reject or accept mail. Access can be allowed or
+denied for specific host names, domain names, networks, host
+network addresses or mail addresses.
 
 Normally, the \fBaccess\fR table is specified as a text file
 that serves as input to the \fBpostmap\fR(1) command.
@@ -35,29 +36,66 @@ the lookups are done in a slightly different way as described below.
 .ad
 .fi
 The format of the access table is as follows:
-.IP "blanks and comments"
-Blank lines are ignored, as are lines beginning with `#'.
-.IP "leading whitespace"
-Lines that begin with whitespace continue the previous line.
 .IP "\fIpattern action\fR"
 When \fIpattern\fR matches a mail address, domain or host address,
 perform the corresponding \fIaction\fR.
-.SH PATTERNS
+.IP "blank lines and comments"
+Empty lines and whitespace-only lines are ignored, as
+are lines whose first non-whitespace character is a `#'.
+.IP "multi-line text"
+A logical line starts with non-whitespace text. A line that
+starts with whitespace continues a logical line.
+.SH EMAIL ADDRESS PATTERNS
 .na
 .nf
 .ad
 .fi
 With lookups from indexed files such as DB or DBM, or from networked
-tables such as NIS, LDAP or SQL, patterns are tried in the order as
-listed below:
+tables such as NIS, LDAP or SQL, the following lookup patterns are
+examined in the order as listed:
 .IP \fIuser\fR@\fIdomain\fR
 Matches the specified mail address.
 .IP \fIdomain.name\fR
-Matches the \fIdomain.name\fR itself and any subdomain thereof,
-either in hostnames or in mail addresses. Top-level domains will
-never be matched.
+Matches \fIdomain.name\fR as the domain part of an email address.
+.sp
+The pattern \fIdomain.name\fR also matches subdomains, but only
+when the string \fBsmtpd_access_maps\fR is listed in the Postfix
+\fBparent_domain_matches_subdomains\fR configuration setting.
+Otherwise, specify \fI.domain.name\fR (note the initial dot) in
+order to match subdomains.
 .IP \fIuser\fR@
 Matches all mail addresses with the specified user part.
+.PP
+Note: lookup of the null sender address may not be possible with
+all supported types of lookup table. A workaround is to specify
+\fBsmtpd_null_access_lookup_key = <>\fR in the Postfix \fBmain.cf\fR
+file, and to specify \fB<>\fR as the left-hand field in the access
+table.
+.SH ADDRESS EXTENSION
+.na
+.nf
+.fi
+.ad
+When a mail address localpart contains the optional recipient delimiter
+(e.g., \fIuser+foo\fR@\fIdomain\fR), the lookup order becomes:
+\fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR, \fIdomain\fR,
+\fIuser+foo\fR@, and \fIuser\fR@.
+.SH HOST NAME/ADDRESS PATTERNS
+.na
+.nf
+.ad
+.fi
+With lookups from indexed files such as DB or DBM, or from networked
+tables such as NIS, LDAP or SQL, the following lookup patterns are
+examined in the order as listed:
+.IP \fIdomain.name\fR
+Matches \fIdomain.name\fR.
+.sp
+The pattern \fIdomain.name\fR also matches subdomains, but only
+when the string \fBsmtpd_access_maps\fR is listed in the Postfix
+\fBparent_domain_matches_subdomains\fR configuration setting.
+Otherwise, specify \fI.domain.name\fR (note the initial dot) in
+order to match subdomains.
 .IP \fInet.work.addr.ess\fR
 .IP \fInet.work.addr\fR
 .IP \fInet.work\fR
@@ -94,13 +132,14 @@ Each pattern is a regular expression that is applied to the entire
 string being looked up. Depending on the application, that string
 is an entire client hostname, an entire client IP address, or an
 entire mail address. Thus, no parent domain or parent network search
-is done, and \fIuser@domain\fR mail addresses are not broken up into
-their \fIuser@\fR and \fIdomain\fR constituent parts.
+is done, \fIuser@domain\fR mail addresses are not broken up into
+their \fIuser@\fR and \fIdomain\fR constituent parts, nor is
+\fIuser+foo\fR broken up into \fIuser\fR and \fIfoo\fR.
 
 Patterns are applied in the order as specified in the table, until a
 pattern is found that matches the search string.
 
-Actions are the same as with normal indexed file lookups, with
+Actions are the same as with indexed file lookups, with
 the additional feature that parenthesized substrings from the
 pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 .SH BUGS

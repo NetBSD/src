@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 PICKUP(8)                                               PICKUP(8)
-
 
 <b>NAME</b>
        pickup - Postfix local mail pickup
@@ -13,66 +10,55 @@ PICKUP(8)                                               PICKUP(8)
 
 <b>DESCRIPTION</b>
        The  <b>pickup</b>  daemon waits for hints that new mail has been
-       dropped into the world-writable  <b>maildrop</b>  directory,  and
-       feeds  it into the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon.  Ill-formatted files
-       are deleted without notifying the originator.   This  pro-
-       gram expects to be run from the <a href="master.8.html"><b>master</b>(8)</a> process manager.
+       dropped into the <b>maildrop</b> directory, and feeds it into the
+       <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon.  Ill-formatted files are deleted with-
+       out notifying the originator.  This program expects to  be
+       run from the <a href="master.8.html"><b>master</b>(8)</a> process manager.
 
 <b>STANDARDS</b>
        None. The <b>pickup</b> daemon does not interact with the outside
        world.
 
 <b>SECURITY</b>
-       The  <b>pickup</b>  daemon runs with superuser privileges so that
+       The <b>pickup</b> daemon runs with superuser privileges  so  that
        it 1) can open a queue file with the rights of the submit-
-       ting  user and 2) can access the Postfix private IPC chan-
+       ting user and 2) can access the Postfix private IPC  chan-
        nels.  On the positive side, the program can run chrooted,
        opens no files for writing, is careful about what files it
-       opens for reading, and does not actually  touch  any  data
+       opens  for  reading,  and does not actually touch any data
        that is sent to its public service endpoint.
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
-       The  <b>pickup</b> daemon copies mail from file to the <a href="cleanup.8.html"><b>cleanup</b>(8)</a>
-       daemon.  It could avoid message copying overhead by  send-
-       ing  a  file descriptor instead of file data, but then the
-       already complex <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon would have to deal  with
+       The <b>pickup</b> daemon copies mail from file to the  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>
+       daemon.   It could avoid message copying overhead by send-
+       ing a file descriptor instead of file data, but  then  the
+       already  complex <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon would have to deal with
        unfiltered user data.
 
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this program. See the Postfix <b>main.cf</b> file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
+       The following <b>main.cf</b> parameters are  especially  relevant
+       to  this  program. See the Postfix <b>main.cf</b> file for syntax
+       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
        command after a configuration change.
 
 <b>Content</b> <b>inspection</b> <b>controls</b>
        <b>content</b><i>_</i><b>filter</b>
-              The name of a mail delivery transport that  filters
+              The  name of a mail delivery transport that filters
               mail and that either bounces mail or re-injects the
-              result back into Postfix.  This parameter uses  the
-              same  syntax  as  the  right-hand side of a Postfix
+              result  back into Postfix.  This parameter uses the
+              same syntax as the right-hand  side  of  a  Postfix
               transport table.
 
 <b>Miscellaneous</b>
        <b>always</b><i>_</i><b>bcc</b>
-              Address to send a copy of each message that  enters
+              Address  to send a copy of each message that enters
               the system.
 
-
-
-                                                                1
-
-
-
-
-
-PICKUP(8)                                               PICKUP(8)
-
-
        <b>mail</b><i>_</i><b>owner</b>
-              The  process  privileges  used  while not opening a
+              The process privileges used  while  not  opening  a
               <b>maildrop</b> file.
 
        <b>queue</b><i>_</i><b>directory</b>
@@ -81,10 +67,11 @@ PICKUP(8)                                               PICKUP(8)
 <b>SEE</b> <b>ALSO</b>
        <a href="cleanup.8.html">cleanup(8)</a> message canonicalization
        <a href="master.8.html">master(8)</a> process manager
+       <a href="sendmail.1.html">sendmail(1)</a>, postdrop(8) mail posting agent
        syslogd(8) system logging
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -93,42 +80,6 @@ PICKUP(8)                                               PICKUP(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                2
-
+                                                                1
 
 </pre> </body> </html>

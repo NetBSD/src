@@ -29,6 +29,11 @@ extern int bounce_append_service(char *, char *, char *, char *);
 extern int bounce_notify_service(char *, char *, char *, char *, int);
 
  /*
+  * bounce_notify_verp.c
+  */
+extern int bounce_notify_verp(char *, char *, char *, char *, char *, int);
+
+ /*
   * bounce_cleanup.c
   */
 extern VSTRING *bounce_cleanup_path;
@@ -51,7 +56,7 @@ typedef struct {
     VSTREAM *orig_fp;			/* open queue file */
     long    orig_offs;			/* start of content */
     time_t  arrival_time;		/* time of arrival */
-    BOUNCE_LOG *log_handle;			/* open logfile */
+    BOUNCE_LOG *log_handle;		/* open logfile */
 } BOUNCE_INFO;
 
 extern BOUNCE_INFO *bounce_mail_init(const char *, const char *, const char *, int);
