@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.45 1997/07/14 20:46:20 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.46 1997/10/10 01:53:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -537,6 +537,7 @@ extern struct nfsnodehashhead *nfsnodehashtbl;
 extern u_long nfsnodehash;
 
 LIST_HEAD(nfsnodehashhead, nfsnode);
+u_long nfsdirhashmask;
 
 int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
 
@@ -1119,6 +1120,104 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 	return (0);
 }
 
+u_long
+nfs_dirhash(off)
+	off_t off;
+{
+	int i;
+	char *cp = (char *)&off;
+	u_long sum = 0L;
+
+	for (i = 0 ; i < sizeof (off); i++)
+		sum += *cp++;
+
+	return sum;
+}
+
+
+struct nfsdircache *
+nfs_lookdircache(vp, off, en, blkno, alloc)
+	struct vnode *vp;
+	off_t off;
+	daddr_t blkno;
+	int en, alloc;
+{
+	struct nfsnode *np = VTONFS(vp);
+	struct nfsdirhashhead *ndhp;
+	struct nfsdircache *ndp, *first;
+
+	if (!np->n_dircache) {
+		np->n_dircachesize = 0;
+		np->n_dircache =
+			hashinit(NFS_DIRHASHSIZ, M_NFSDIROFF, &nfsdirhashmask);
+		TAILQ_INIT(&np->n_dirchain);
+	}
+
+	ndhp = NFSDIRHASH(np, off);
+	for (ndp = ndhp->lh_first; ndp; ndp = ndp->dc_hash.le_next)
+		if (ndp->dc_cookie == off)
+			break;
+
+	if (!alloc || ndp)
+		return ndp;
+	MALLOC(ndp, struct nfsdircache *, sizeof (*ndp), M_NFSDIROFF, M_WAITOK);
+	ndp->dc_cookie = off;
+
+	/*
+	 * If the entry number is 0, we are at the start of a new block, so
+	 * allocate a new blocknumber.
+	 */
+	if (en == 0)
+		ndp->dc_blkno = np->n_dblkno++;
+	else
+		ndp->dc_blkno = blkno;
+	ndp->dc_entry = en;
+
+	/*
+	 * If the maximum directory cookie cache size has been reached
+	 * for this node, take one off the front. The idea is that
+	 * directories are typically read front-to-back once, so that
+	 * the oldest entries can be thrown away without much performance
+	 * loss.
+	 */
+	if (np->n_dircachesize == NFS_MAXDIRCACHE) {
+		first = np->n_dirchain.tqh_first;
+		TAILQ_REMOVE(&np->n_dirchain, first, dc_chain);
+		LIST_REMOVE(first, dc_hash);
+		FREE(first, M_NFSDIROFF);
+	} else
+		np->n_dircachesize++;
+		
+	LIST_INSERT_HEAD(ndhp, ndp, dc_hash);
+	TAILQ_INSERT_TAIL(&np->n_dirchain, ndp, dc_chain);
+	return ndp;
+}
+
+void
+nfs_invaldircache(vp)
+	struct vnode *vp;
+{
+	struct nfsnode *np = VTONFS(vp);
+	struct nfsdircache *ndp = NULL;
+
+#ifdef DIAGNOSTIC
+	if (vp->v_type != VDIR)
+		panic("nfs: invaldircache: not dir");
+#endif
+
+	if (!np->n_dircache)
+		return;
+
+	while ((ndp = np->n_dirchain.tqh_first)) {
+		TAILQ_REMOVE(&np->n_dirchain, ndp, dc_chain);
+		LIST_REMOVE(ndp, dc_hash);
+		FREE(ndp, M_NFSDIROFF);
+	}
+
+	np->n_dblkno = 0;
+	np->n_dircachesize = 0;
+}
+
 /*
  * Called once before VFS init to initialize shared and
  * server-specific data structures.
@@ -1134,10 +1233,6 @@ nfs_init()
 	if (sizeof (struct nfsnode) > NFS_NODEALLOC) {
 		printf("struct nfsnode bloated (> %dbytes)\n", NFS_NODEALLOC);
 		printf("Try reducing NFS_SMALLFH\n");
-	}
-	if (sizeof (struct nfsmount) > NFS_MNTALLOC) {
-		printf("struct nfsmount bloated (> %dbytes)\n", NFS_MNTALLOC);
-		printf("Try reducing NFS_MUIDHASHSIZ\n");
 	}
 	if (sizeof (struct nfssvc_sock) > NFS_SVCALLOC) {
 		printf("struct nfssvc_sock bloated (> %dbytes)\n",NFS_SVCALLOC);
@@ -1336,7 +1431,10 @@ nfs_loadattrcache(vpp, fp, vaper)
 		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
 		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 		fxdr_hyper(&fp->fa3_size, &vap->va_size);
-		vap->va_blocksize = NFS_FABLKSIZE;
+		if (vtyp == VDIR)
+			vap->va_blocksize = NFS_DIRFRAGSIZ;
+		else
+			vap->va_blocksize = NFS_FABLKSIZE;
 		fxdr_hyper(&fp->fa3_used, &vap->va_bytes);
 		vap->va_fileid = fxdr_unsigned(int32_t,
 		    fp->fa3_fileid.nfsuquad[1]);
@@ -1349,7 +1447,11 @@ nfs_loadattrcache(vpp, fp, vaper)
 		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
 		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 		vap->va_size = fxdr_unsigned(u_int32_t, fp->fa2_size);
-		vap->va_blocksize = fxdr_unsigned(int32_t, fp->fa2_blocksize);
+		if (vtyp == VDIR)
+			vap->va_blocksize = NFS_DIRFRAGSIZ;
+		else
+			vap->va_blocksize =
+				fxdr_unsigned(int32_t, fp->fa2_blocksize);
 		vap->va_bytes = fxdr_unsigned(int32_t, fp->fa2_blocks)
 		    * NFS_FABLKSIZE;
 		vap->va_fileid = fxdr_unsigned(int32_t, fp->fa2_fileid);
@@ -1979,87 +2081,6 @@ netaddr_match(family, haddr, nam)
 	return (0);
 }
 
-static nfsuint64 nfs_nullcookie = {{ 0, 0 }};
-/*
- * This function finds the directory cookie that corresponds to the
- * logical byte offset given.
- */
-nfsuint64 *
-nfs_getcookie(np, off, add)
-	register struct nfsnode *np;
-	off_t off;
-	int add;
-{
-	register struct nfsdmap *dp, *dp2;
-	register int pos;
-
-	pos = off / NFS_DIRBLKSIZ;
-	if (pos == 0) {
-#ifdef DIAGNOSTIC
-		if (add)
-			panic("nfs getcookie add at 0");
-#endif
-		return (&nfs_nullcookie);
-	}
-	pos--;
-	dp = np->n_cookies.lh_first;
-	if (!dp) {
-		if (add) {
-			MALLOC(dp, struct nfsdmap *, sizeof (struct nfsdmap),
-				M_NFSDIROFF, M_WAITOK);
-			dp->ndm_eocookie = 0;
-			LIST_INSERT_HEAD(&np->n_cookies, dp, ndm_list);
-		} else
-			return ((nfsuint64 *)0);
-	}
-	while (pos >= NFSNUMCOOKIES) {
-		pos -= NFSNUMCOOKIES;
-		if (dp->ndm_list.le_next) {
-			if (!add && dp->ndm_eocookie < NFSNUMCOOKIES &&
-				pos >= dp->ndm_eocookie)
-				return ((nfsuint64 *)0);
-			dp = dp->ndm_list.le_next;
-		} else if (add) {
-			MALLOC(dp2, struct nfsdmap *, sizeof (struct nfsdmap),
-				M_NFSDIROFF, M_WAITOK);
-			dp2->ndm_eocookie = 0;
-			LIST_INSERT_AFTER(dp, dp2, ndm_list);
-			dp = dp2;
-		} else
-			return ((nfsuint64 *)0);
-	}
-	if (pos >= dp->ndm_eocookie) {
-		if (add)
-			dp->ndm_eocookie = pos + 1;
-		else
-			return ((nfsuint64 *)0);
-	}
-	return (&dp->ndm_cookies[pos]);
-}
-
-/*
- * Invalidate cached directory information, except for the actual directory
- * blocks (which are invalidated separately).
- * Done mainly to avoid the use of stale offset cookies.
- */
-void
-nfs_invaldir(vp)
-	register struct vnode *vp;
-{
-#ifdef notdef /* XXX */
-	register struct nfsnode *np = VTONFS(vp);
-
-#ifdef DIAGNOSTIC
-	if (vp->v_type != VDIR)
-		panic("nfs: invaldir not dir");
-#endif
-	np->n_direofoffset = 0;
-	np->n_cookieverf.nfsuquad[0] = 0;
-	np->n_cookieverf.nfsuquad[1] = 0;
-	if (np->n_cookies.lh_first)
-		np->n_cookies.lh_first->ndm_eocookie = 0;
-#endif
-}
 
 /*
  * The write verifier has changed (probably due to a server reboot), so all
@@ -2160,4 +2181,75 @@ nfsrv_setcred(incred, outcred)
 	for (i = 0; i < incred->cr_ngroups; i++)
 		outcred->cr_groups[i] = incred->cr_groups[i];
 	nfsrvw_sort(outcred->cr_groups, outcred->cr_ngroups);
+}
+
+/*
+ * Heuristic to see if the server XDR encodes directory cookies or not.
+ * it is not supposed to, but a lot of servers may do this. Also, since
+ * most/all servers will implement V2 as well, it is expected that they
+ * may return just 32 bits worth of cookie information, so we need to
+ * find out in which 32 bits this information is available. We do this
+ * to avoid trouble with emulated binaries that can't handle 64 bit
+ * directory offsets.
+ */
+
+void
+nfs_cookieheuristic(vp, flagp, p, cred)
+	struct vnode *vp;
+	int *flagp;
+	struct proc *p;
+	struct ucred *cred;
+{
+	struct uio auio;
+	struct iovec aiov;
+	caddr_t buf, cp;
+	struct dirent *dp;
+	off_t *cookies, *cop;
+	int error, eof, nc, len;
+
+	nc = NFS_DIRFRAGSIZ / 16;
+	MALLOC(buf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
+	MALLOC(cookies, off_t *, nc * sizeof (off_t), M_TEMP, M_WAITOK);
+
+	aiov.iov_base = buf;
+	aiov.iov_len = NFS_DIRFRAGSIZ;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_procp = p;
+	auio.uio_resid = NFS_DIRFRAGSIZ;
+	auio.uio_offset = 0;
+
+	error = VOP_READDIR(vp, &auio, cred, &eof, cookies, nc);
+
+	len = NFS_DIRFRAGSIZ - auio.uio_resid;
+	if (error || len == 0) {
+		FREE(buf, M_TEMP);
+		FREE(cookies, M_TEMP);
+		return;
+	}
+
+	/*
+	 * Find the first valid entry and look at its offset cookie.
+	 */
+
+	cp = buf;
+	for (cop = cookies; len > 0; len -= dp->d_reclen) {
+		dp = (struct dirent *)cp;
+		if (dp->d_fileno != 0)
+			break;
+		cop++;
+		cp += dp->d_reclen;
+	}
+
+	if (len > 0 && len > dp->d_reclen) {
+		if ((*cop >> 32) != 0 && (*cop & 0xffffffffLL) == 0) {
+			*flagp |= NFSMNT_SWAPCOOKIE;
+			nfs_invaldircache(vp);
+			nfs_vinvalbuf(vp, 0, cred, p, 1);
+		}
+	}
+	FREE(buf, M_TEMP);
+	FREE(cookies, M_TEMP);
 }
