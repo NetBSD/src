@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.17 1997/06/27 17:01:55 lukem Exp $	*/
+/*	$NetBSD: su.c,v 1.18 1997/07/02 05:42:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-static char rcsid[] = "$NetBSD: su.c,v 1.17 1997/06/27 17:01:55 lukem Exp $";
+static char rcsid[] = "$NetBSD: su.c,v 1.18 1997/07/02 05:42:13 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,10 @@ static int koktologin __P((char *, char *, char *));
 
 #else
 #define	ARGSTR	"-flm"
+#endif
+
+#ifndef	SUGROUP
+#define	SUGROUP	"wheel"
 #endif
 
 
@@ -172,21 +176,21 @@ main(argc, argv)
 	    if (!use_kerberos || kerberos(username, user, pwd->pw_uid))
 #endif
 	    {
-		/* only allow those in group zero to su to root,
-		   but only if that group has any members. */
-		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0)) &&
-		    *gr->gr_mem) {
-			gid_t groups[NGROUPS];
-			int ngroups;
+		/* Only allow those in group SUGROUP to su to root,
+		   but only if that group has any members.
+		   If SUGROUP has no members, allow anyone to su root */
+		if (pwd->pw_uid == 0 &&
+		    (gr = getgrnam(SUGROUP)) && *gr->gr_mem) {
+			char **g;
 
-			ngroups = getgroups(NGROUPS, groups);
-			while (--ngroups >= 0)
-				if (groups[ngroups] == gr->gr_gid)
+			for (g = gr->gr_mem; ; g++) {
+				if (*g == NULL)
+					errx(1,
+	    "you are not listed in the correct secondary group (%s) to su %s.",
+					    SUGROUP, user);
+				if (strcmp(username, *g) == 0)
 					break;
-			if (ngroups < 0)
-				errx(1, 
-			    "you are not in the correct group to su %s.",
-					    user);
+			}
 		}
 		/* if target requires a password, verify it */
 		if (*pwd->pw_passwd) {
