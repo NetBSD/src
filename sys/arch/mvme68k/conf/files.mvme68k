@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.23 1999/02/14 17:54:27 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.24 1999/02/20 00:44:31 scw Exp $
 
 # config file for mvme68k
 
@@ -43,7 +43,6 @@ file arch/mvme68k/dev/lpt.c			lpt needs-flag
 file arch/mvme68k/dev/lpt_pcc.c			lpt_pcc
 file arch/mvme68k/dev/lpt_pcctwo.c		lpt_pcctwo
 
-
 # device defined in sys/conf/files
 attach le at pcc with le_pcc: le24
 file arch/mvme68k/dev/if_le.c			le
@@ -74,6 +73,10 @@ file arch/mvme68k/dev/md_root.c		memory_disk_hooks
 attach vmechip at pcc with vmechip_pcc
 file arch/mvme68k/dev/vme_pcc.c			vmechip_pcc
 
+# MVME-1[67] VME controller chip
+attach vmechip at mainbus with vmetwo
+file arch/mvme68k/dev/vme_two.c			vmetwo
+
 include "../../../dev/scsipi/files.scsipi"
 
 major { vnd = 6 }
@@ -89,6 +92,15 @@ file arch/mvme68k/dev/sbic.c			sbic
 device wdsc: sbic, scsi
 attach wdsc at pcc with wdsc_pcc
 file arch/mvme68k/dev/wdsc.c			wdsc_pcc
+
+# NCR53C710 SCSI ...
+define siop
+file arch/mvme68k/dev/siop.c			siop
+
+# ... on everything else
+device ncrsc: siop, scsi
+attach ncrsc at pcctwo with ncrsc_pcctwo
+file arch/mvme68k/dev/ncrsc_pcctwo.c		ncrsc_pcctwo
 
 file arch/mvme68k/mvme68k/autoconf.c
 file arch/mvme68k/mvme68k/clock.c
