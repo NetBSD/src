@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.676 2004/06/18 15:02:29 christos Exp $
+#	$NetBSD: files,v 1.677 2004/06/22 14:17:07 itojun Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -127,6 +127,7 @@ include "netiso/files.netiso"
 include "netnatm/files.netnatm"
 include "netns/files.netns"
 include "netsmb/files.netsmb"
+include "net/files.pf"
 
 defflag				IPX		# IPX network stack
 defflag				PFIL_HOOKS	# pfil(9)
