@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25 2001/09/05 14:03:48 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.25.14.1 2002/05/17 15:40:49 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -224,9 +224,6 @@ struct fd_softc {
 	int sc_active;		/* number of active I/O operations */
 };
 
-bdev_decl(fd);
-cdev_decl(fd);
-
 /* floppy driver configuration */
 int	fdmatch __P((struct device *, struct cfdata *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
@@ -237,9 +234,24 @@ struct cfattach fd_ca = {
 
 extern struct cfdriver fd_cd;
 
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_strategy(fdstrategy);
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
+
 void fdgetdisklabel __P((dev_t));
 int fd_get_parms __P((struct fd_softc *));
-void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
 int fdprint __P((void *, const char *));
 
@@ -1534,27 +1546,6 @@ fdcretry(fdc)
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
-}
-
-int
-fdsize(dev)
-	dev_t dev;
-{
-
-	/* Swapping to floppies would not make sense. */
-	return (-1);
-}
-
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return (EINVAL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.5 2000/05/27 04:52:33 thorpej Exp $	*/
+/*	$NetBSD: crx.c,v 1.5.20.1 2002/05/17 15:40:47 gehenna Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -55,13 +55,20 @@
 #include <machine/ka820.h>
 #include <vax/vax/crx.h>
 
+dev_type_open(crxopen);
+dev_type_close(crxclose);
+dev_type_read(crxrw);
+
+const struct cdevsw crx_cdevsw = {
+	crxopen, crxclose, crxrw, crxrw, noioctl,
+	nostop, notty, nopoll, nommap,
+};
+
 extern struct	rx50device *rx50device_ptr;
 #define rxaddr	rx50device_ptr
 extern struct	ka820port *ka820port_ptr;
 
 #define	rx50unit(dev)	minor(dev)
-
-cdev_decl(crx);
 
 struct rx50state {
 	short	rs_flags;	/* see below */
@@ -128,7 +135,6 @@ crxclose(dev, flags, fmt, p)
 /*
  * Perform a read (uio->uio_rw==UIO_READ) or write (uio->uio_rw==UIO_WRITE).
  */
-int	crxrw __P((dev_t, struct uio *, int));
 int
 crxrw(dev, uio, flags)
 	dev_t dev;

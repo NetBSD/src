@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.6 2002/03/24 18:04:42 uch Exp $ */
+/* $NetBSD: wdog.c,v 1.6.2.1 2002/05/17 15:40:53 gehenna Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -37,9 +37,9 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
-#include <machine/conf.h>
 #include <machine/intr.h>
 
 #include <sh3/frame.h>
@@ -61,6 +61,15 @@ struct cfattach wdog_ca = {
 };
 
 extern struct cfdriver wdog_cd;
+
+dev_type_open(wdogopen);
+dev_type_close(wdogclose);
+dev_type_ioctl(wdogioctl);
+
+const struct cdevsw wdog_cdevsw = {
+	wdogopen, wdogclose, noread, nowrite, wdogioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 void
 wdog_wr_cnt(unsigned char x)

@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.1 2002/04/19 01:43:50 wiz Exp $        */
+/*      $NetBSD: opms.c,v 1.1.2.1 2002/05/17 15:40:52 gehenna Exp $        */
 
 /*
  * Copyright 1997
@@ -109,6 +109,7 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 #include <machine/kerndebug.h>
 
 #include <dev/isa/isavar.h>
@@ -117,7 +118,6 @@
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/mouse.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <shark/shark/i8042reg.h>
@@ -198,6 +198,17 @@ struct cfattach opms_ca =
 };
 
 extern struct cfdriver opms_cd;
+
+dev_type_open(opmsopen);
+dev_type_close(opmsclose);
+dev_type_read(opmsread);
+dev_type_ioctl(opmsioctl);
+dev_type_poll(opmspoll);
+
+const struct cdevsw opms_cdevsw = {
+	opmsopen, opmsclose, opmsread, nowrite, opmsioctl,
+	nostop, notty, opmspoll, nommap,
+};
 
 /* variable to control which debugs printed if kernel compiled with 
 ** option KERNEL_DEBUG. 

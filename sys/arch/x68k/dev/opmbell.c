@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.8 2001/12/27 02:23:25 wiz Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.8.8.1 2002/05/17 15:40:46 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -96,7 +96,6 @@ static struct opm_voice vtab[NBELL];
 
 #define UNIT(x)		minor(x)
 
-cdev_decl(bell);
 void bell_on __P((struct bell_softc *sc));
 void bell_off __P((struct bell_softc *sc));
 void opm_bell __P((void));
@@ -106,6 +105,15 @@ int opm_bell_setup __P((struct bell_info *));
 int bellmstohz __P((int));
 
 void bellattach __P((int));
+
+dev_type_open(bellopen);
+dev_type_close(bellclose);
+dev_type_ioctl(bellioctl);
+
+const struct cdevsw bell_cdevsw = {
+	bellopen, bellclose, noread, nowrite, bellioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 void
 bellattach(num)

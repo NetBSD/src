@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.20 2002/03/15 05:55:36 gmcgarry Exp $	*/
+/*	$NetBSD: ppi.c,v 1.20.4.1 2002/05/17 15:40:59 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.20 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.20.4.1 2002/05/17 15:40:59 gehenna Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,17 @@ struct cfattach ppi_ca = {
 
 extern struct cfdriver ppi_cd;
 
+dev_type_open(ppiopen);
+dev_type_close(ppiclose);
+dev_type_read(ppiread);
+dev_type_write(ppiwrite);
+dev_type_ioctl(ppiioctl);
+
+const struct cdevsw ppi_cdevsw = {
+	ppiopen, ppiclose, ppiread, ppiwrite, ppiioctl,
+	nostop, notty, nopoll, nommap,
+};
+
 void	ppistart __P((void *));
 void	ppinoop __P((void *));
 
@@ -129,9 +140,6 @@ void	ppitimo __P((void *));
 int	ppirw __P((dev_t, struct uio *));
 int	ppihztoms __P((int));
 int	ppimstohz __P((int));
-
-bdev_decl(ppi);
-cdev_decl(ppi);
 
 #define UNIT(x)		minor(x)
 

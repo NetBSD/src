@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.1 2002/02/10 01:58:08 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.1.10.1 2002/05/17 15:40:52 gehenna Exp $	*/
 
 /*
  * Copyright 1997
@@ -598,14 +598,6 @@ static unsigned char hatStack[HATSTACKSIZE];   /* actual stack used during a FIQ
 int     scrprobe    __P((struct device *, void *, void *));
 void    scrattach   __P((struct device *, struct device *, void *));
 
-/* driver entry points routines */
-int     scropen     __P((dev_t dev, int flag, int mode, struct proc *p));
-int     scrclose    __P((dev_t dev, int flag, int mode, struct proc *p));
-int     scrread     __P((dev_t dev, struct uio *uio, int flag));
-int     scrwrite    __P((dev_t dev, struct uio *uio, int flag));
-int     scrioctl    __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc  *p));
-void    scrstop     __P((struct tty *tp, int flag));
-
 static void   initStates           __P((struct scr_softc * sc)); 
 
 
@@ -656,10 +648,6 @@ static void scrUntimeout   __P((void (*func)(struct scr_softc*,int), struct scr_
 
 
 
-/* Declare the cdevsw and bdevsw entrypoint routines 
-*/
-cdev_decl(scr);
-bdev_decl(scr);
 
 
 struct cfattach scr_ca =
@@ -669,6 +657,14 @@ struct cfattach scr_ca =
 
 extern struct cfdriver scr_cd;
 
+dev_type_open(scropen);
+dev_type_close(scrclose);
+dev_type_ioctl(scrioctl);
+
+const struct cdevsw scr_cdevsw = {
+	scropen, scrclose, noread, nowrite, scrioctl,
+	nostop, notty, nopoll, nommap, D_TTY
+};
 
 /*
 **++
@@ -997,214 +993,6 @@ int scrclose(dev, flag, mode, p)
     KERN_DEBUG (scrdebug, SCRCLOSE_DEBUG_INFO,("scrclose exiting\n"));
     return(0);
 }
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**      scrwrite
-**
-**      not supported
-**
-**  FORMAL PARAMETERS:
-**      
-**      dev  - input : Device identifier consisting of major and minor numbers.
-**      uio  - input : Pointer to the user I/O information (ie. write data).
-**      flag - input : Information on how the I/O should be done (eg. blocking
-**                     or non-blocking).
-**
-**  IMPLICIT INPUTS:
-**
-**
-**  IMPLICIT OUTPUTS:
-**
-**      none
-**
-**  FUNCTION VALUE:
-**
-**      Returns ENODEV
-**
-**  SIDE EFFECTS:
-**
-**      none
-**--
-*/
-int
-scrwrite(dev, uio, flag)
-dev_t      dev;
-struct uio *uio;
-int        flag;
-{
-    return ENODEV;
-} 
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**      scrread
-**
-**      not supported
-**
-**  FORMAL PARAMETERS:
-**      
-**      dev  - input : Device identifier consisting of major and minor numbers.
-**      uio  - input : Pointer to the user I/O information (ie. read buffer).
-**      flag - input : Information on how the I/O should be done (eg. blocking
-**                     or non-blocking).
-**
-**  IMPLICIT INPUTS:
-**
-**
-**  IMPLICIT OUTPUTS:
-**
-**      none
-**
-**  FUNCTION VALUE:
-**
-**      Returns ENODEV
-**
-**  SIDE EFFECTS:
-**
-**      none
-**--
-*/
-int
-scrread(dev, uio, flag)
-dev_t       dev;
-struct uio  *uio;
-int         flag;
-{
-    return ENODEV;
-} 
-
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**      scrpoll
-**
-**      not supported
-**
-**  FORMAL PARAMETERS:
-**      
-**      dev  - input : Device identifier consisting of major and minor numbers.
-**      events -input: Events to poll for
-**      p    - input : Process requesting the poll.
-**
-**  IMPLICIT INPUTS:
-**
-**
-**  IMPLICIT OUTPUTS:
-**
-**      none
-**
-**  FUNCTION VALUE:
-**
-**      Returns ENODEV
-**
-**  SIDE EFFECTS:
-**
-**      none
-**--
-*/
-int
-scrpoll(dev, events, p)
-dev_t       dev;
-int         events;
-struct proc *p;
-{
-    return ENODEV;
-} 
-
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**     scrstop
-**
-**     should not be called
-**  
-**  FORMAL PARAMETERS:
-**
-**     tp   - Pointer to our tty structure.
-**     flag - Ignored.
-**
-**  IMPLICIT INPUTS:
-**
-**     none.
-**
-**  IMPLICIT OUTPUTS:
-**
-**     none.
-**
-**  FUNCTION VALUE:
-**
-**     none.
-**
-**  SIDE EFFECTS:
-**
-**     none.
-**--
-*/
-void scrstop(tp, flag)
-    struct tty *tp;
-    int flag;
-{
-    panic("scrstop: not implemented");
-} 
-
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**      tty
-**
-**      should not be called
-**
-**  FORMAL PARAMETERS:
-**
-**      dev - input : Device identifier consisting of major and minor numbers.
-**
-**  IMPLICIT INPUTS:
-**
-**
-**  IMPLICIT OUTPUTS:
-**
-**      none
-**
-**  FUNCTION VALUE:
-**
-**      null
-**
-**  SIDE EFFECTS:
-**
-**      none.
-**--
-*/
-struct tty * scrtty(dev)
-    dev_t   dev;
-{
-    panic("scrtty: not implemented");
-    return NULL;
-} 
-
-
-
-
 
 /*
 **++

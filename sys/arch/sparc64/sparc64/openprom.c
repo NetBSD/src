@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.6 2002/01/10 20:38:11 briggs Exp $ */
+/*	$NetBSD: openprom.c,v 1.6.8.1 2002/05/17 15:40:50 gehenna Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,9 +56,16 @@
 #include <machine/bsd_openprom.h>
 #include <machine/openpromio.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/ofw/openfirm.h>
+
+dev_type_open(openpromopen);
+dev_type_ioctl(openpromioctl);
+
+const struct cdevsw openprom_cdevsw = {
+	openpromopen, nullclose, noread, nowrite, openpromioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 static	int lastnode;			/* speed hack */
 extern	int optionsnode;		/* node ID of ROM's options */
@@ -77,16 +84,6 @@ openpromopen(dev, flags, mode, p)
 	if (cputyp==CPU_SUN4)
 		return (ENODEV);
 #endif
-
-	return (0);
-}
-
-int
-openpromclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.14 2001/05/14 14:43:45 ragge Exp $ */
+/*	$NetBSD: ctu.c,v 1.14.16.1 2002/05/17 15:40:47 gehenna Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -87,7 +87,24 @@ static	void ctustart(void);
 static	void ctuwatch(void *);
 static	u_short ctu_cksum(unsigned short *, int);
 
-bdev_decl(ctu);
+dev_type_open(ctuopen);
+dev_type_close(ctuclose);
+#if 0 /* not yet */
+dev_type_read(cturead);
+dev_type_write(ctuwrite);
+#endif
+dev_type_strategy(ctustrategy);
+
+const struct bdevsw ctu_bdevsw = {
+	ctuopen, ctuclose, ctustrategy, noioctl, nodump, nosize, D_TAPE
+};
+
+#if 0 /* not yet */
+const struct cdevsw ctu_cdevsw = {
+	ctuopen, ctuclose, cturead, ctuwrite, noioctl,
+	nostop, notty, nopoll, nommap, D_TAPE
+};
+#endif
 
 static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
 
@@ -220,21 +237,6 @@ ctustart()
 	rsp->rsp_sum = ctu_cksum((unsigned short *)rsp, 6);
 	tu_sc.sc_state = TU_WORKING;
 	ctutintr(NULL);
-}
-
-int
-ctuioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
-{
-	return ENOTTY;
-}
-
-/*
- * Not bloody likely... 
- */
-int
-ctudump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
-{
-	return 0;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.49 2002/04/08 21:41:44 gmcgarry Exp $	*/
+/*	$NetBSD: rd.c,v 1.49.2.1 2002/05/17 15:40:58 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.49 2002/04/08 21:41:44 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.49.2.1 2002/05/17 15:40:58 gehenna Exp $");                                                  
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -256,9 +256,6 @@ struct rdidentinfo rdidentinfo[] = {
 };
 int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
 
-bdev_decl(rd);
-cdev_decl(rd);
-
 int	rdident __P((struct device *, struct rd_softc *,
 	    struct hpibbus_attach_args *));
 void	rdreset __P((struct rd_softc *));
@@ -288,6 +285,24 @@ struct cfattach rd_ca = {
 };
 
 extern struct cfdriver rd_cd;
+
+dev_type_open(rdopen);
+dev_type_close(rdclose);
+dev_type_read(rdread);
+dev_type_write(rdwrite);
+dev_type_ioctl(rdioctl);
+dev_type_strategy(rdstrategy);
+dev_type_dump(rddump);
+dev_type_size(rdsize);
+
+const struct bdevsw rd_bdevsw = {
+	rdopen, rdclose, rdstrategy, rdioctl, rddump, rdsize, D_DISK
+};
+
+const struct cdevsw rd_cdevsw = {
+	rdopen, rdclose, rdread, rdwrite, rdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 int
 rdmatch(parent, match, aux)

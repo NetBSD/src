@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.7 2001/04/30 17:12:03 wiz Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.7.16.1 2002/05/17 15:40:56 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -57,7 +57,16 @@
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
 
-cdev_decl(grf);
+dev_type_open(grfopen);
+dev_type_close(grfclose);
+dev_type_ioctl(grfioctl);
+dev_type_poll(grfpoll);
+dev_type_mmap(grfmmap);
+
+const struct cdevsw grf_cdevsw = {
+	grfopen, grfclose, noread, nowrite, grfioctl,
+	nostop, notty, grfpoll, grfmmap,
+};
 
 void	grf_scinit __P((struct grf_softc *, const char *, int));
 void	grf_init __P((int));
@@ -207,24 +216,6 @@ grfclose(dev, flag, mode, p)
 		rv = ENXIO;
 
 	return rv;
-}
-
-int
-grfread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
-{
-	return ENXIO;
-}
-
-int
-grfwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
-{
-	return ENXIO;
 }
 
 int

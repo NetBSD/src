@@ -1,4 +1,4 @@
-/*	$NetBSD: olms.c,v 1.4 2002/01/07 21:47:01 thorpej Exp $	*/
+/*	$NetBSD: olms.c,v 1.4.10.1 2002/05/17 15:40:57 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.4 2002/01/07 21:47:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.4.10.1 2002/05/17 15:40:57 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,12 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.4 2002/01/07 21:47:01 thorpej Exp $");
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/mouse.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -83,6 +83,17 @@ struct cfattach olms_ca = {
 };
 
 extern struct cfdriver olms_cd;
+
+dev_type_open(lmsopen);
+dev_type_close(lmsclose);
+dev_type_read(lmsread);
+dev_type_ioctl(lmsioctl);
+dev_type_poll(lmspoll);
+
+const struct cdevsw olms_cdevsw = {
+	lmsopen, lmsclose, lmsread, nowrite, lmsioctl,
+	nostop, notty, lmspoll, nommap,
+};
 
 #define	LMSUNIT(dev)	(minor(dev))
 

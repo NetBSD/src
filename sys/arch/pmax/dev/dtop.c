@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.58 2002/03/17 19:40:48 atatat Exp $	*/
+/*	$NetBSD: dtop.c,v 1.58.4.1 2002/05/17 15:40:54 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.58 2002/03/17 19:40:48 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.58.4.1 2002/05/17 15:40:54 gehenna Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -114,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.58 2002/03/17 19:40:48 atatat Exp $");
 #include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 
-#include <machine/conf.h>
 #include <machine/dc7085cons.h>		/*  mdmctl bits same on dtop and dc? */
 
 #include <machine/pmioctl.h>
@@ -232,6 +231,20 @@ struct cfattach dtop_ca = {
 };
 
 extern struct cfdriver dtop_cd;
+
+dev_type_open(dtopopen);
+dev_type_close(dtopclose);
+dev_type_read(dtopread);
+dev_type_write(dtopwrite);
+dev_type_ioctl(dtopioctl);
+dev_type_stop(dtopstop);
+dev_type_tty(dtoptty);
+dev_type_poll(dtoppoll);
+
+const struct cdevsw dtop_cdevsw = {
+	dtopopen, dtopclose, dtopread, dtopwrite, dtopioctl,
+	dtopstop, dtoptty, dtoppoll, nommap, D_TTY
+};
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
 void	(*dtopDivertXInput) __P((int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.11 2000/11/20 08:24:23 chs Exp $	*/
+/*	$NetBSD: crl.c,v 1.11.16.1 2002/05/17 15:40:47 gehenna Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -70,10 +70,14 @@ void	crlintr __P((void *));
 void	crlattach __P((void));
 static	void crlstart __P((void));
 
-int	crlopen __P((dev_t, int, struct proc *));
-int	crlclose __P((dev_t, int, struct proc *));
-int	crlrw __P((dev_t, struct uio *, int));
+dev_type_open(crlopen);
+dev_type_close(crlclose);
+dev_type_read(crlrw);
 
+const struct cdevsw crl_cdevsw = {
+	crlopen, crlclose, crlrw, crlrw, noioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 struct	ivec_dsp crl_intr;
 
@@ -87,9 +91,9 @@ crlattach()
 
 /*ARGSUSED*/
 int
-crlopen(dev, flag, p)
+crlopen(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
+	int flag, mode;
 	struct proc *p;
 {
 	if (vax_cputype != VAX_8600)
@@ -103,9 +107,9 @@ crlopen(dev, flag, p)
 
 /*ARGSUSED*/
 int
-crlclose(dev, flag, p)
+crlclose(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
+	int flag, mode;
 	struct proc *p;
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.11 2000/05/27 10:25:15 jdolecek Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.11.20.1 2002/05/17 15:40:56 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -190,11 +190,6 @@ static diskZone_t diskZones[] = {
 	{16,  8, 672, 799}
 };
 
-/* disk(9) framework device switch */
-struct dkdriver fd_dkDriver = {
-	fdstrategy
-};
-
 /* Drive format codes/indexes */
 enum {
 	IWM_400K_GCR = 0,
@@ -258,7 +253,26 @@ struct cfattach fd_ca = {
 	fd_attach
 };
 
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_strategy(fdstrategy);
 
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
+
+/* disk(9) framework device switch */
+struct dkdriver fd_dkDriver = {
+	fdstrategy
+};
 
 /***  Configure the IWM controller  ***/
 
@@ -973,31 +987,6 @@ fdioctl(dev, cmd, data, flags, proc)
 		break;
 	}
 	return result;
-}
-
-
-/*
- * fddump -- We don't dump to a floppy disk.
- */
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-	return ENXIO;
-}
-
-
-/*
- * fdsize -- We don't dump to a floppy disk.
- */
-int
-fdsize(dev)
-	dev_t dev;
-{
-	return -1;
 }
 
 

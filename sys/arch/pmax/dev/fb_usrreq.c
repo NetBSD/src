@@ -1,4 +1,17 @@
-/*	$NetBSD: fb_usrreq.c,v 1.22 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.22.16.1 2002/05/17 15:40:54 gehenna Exp $	*/
+
+#include <sys/conf.h>
+
+dev_type_open(fbopen);
+dev_type_close(fbclose);
+dev_type_ioctl(fbioctl);
+dev_type_poll(fbpoll);
+dev_type_mmap(fbmmap);
+
+const struct cdevsw fb_cdevsw = {
+	fbopen, fbclose, noread, nowrite, fbioctl,
+	nostop, notty, fbpoll, fbmmap,
+};
 
 /*ARGSUSED*/
 int

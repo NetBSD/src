@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.14 2002/03/11 16:27:02 pk Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.14.4.1 2002/05/17 15:40:51 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,17 @@
 #include <sparc/dev/tctrlvar.h>
 #include <sparc/sparc/auxiotwo.h>
 
-cdev_decl(tctrl);
-
 extern struct cfdriver tctrl_cd;
+
+dev_type_open(tctrlopen);
+dev_type_close(tctrlclose);
+dev_type_ioctl(tctrlioctl);
+dev_type_poll(tctrlpoll);
+
+const struct cdevsw tctrl_cdevsw = {
+	tctrlopen, tctrlclose, noread, nowrite, tctrlioctl,
+	nostop, notty, tctrlpoll, nommap,
+};
 
 static const char *tctrl_ext_statuses[16] = {
 	"main power available",
