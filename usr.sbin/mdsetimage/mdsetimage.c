@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.14 2001/03/21 23:27:33 cgd Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -42,7 +42,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.14 2001/03/21 23:27:33 cgd Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -152,7 +152,7 @@ main(argc, argv)
 		errx(1, "fs image is too big");
 	if (fssb.st_size > md_root_size)
 		errx(1, "fs image (%lld bytes) too big for buffer (%lu bytes)",
-		     (long long)fssb.st_size, (unsigned long)md_root_size);
+		    (long long)fssb.st_size, (unsigned long)md_root_size);
 
 	if (verbose)
 		fprintf(stderr, "copying image from %s into %s\n", fsfile,
@@ -181,7 +181,9 @@ static void
 usage()
 {
 
-	fprintf(stderr, "usage: %s kernel_file fsimage_file\n", getprogname());
+	fprintf(stderr,
+	    "usage: %s kernel_file fsimage_file\n",
+	    getprogname());
 	exit(1);
 }
 
