@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.11 1994/06/29 06:45:37 cgd Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.12 1995/10/05 05:26:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 
 #if !defined(_ANSI_SOURCE)
 #define	ARG_MAX		 (256 * 1024)	/* max bytes for an exec function */
-#define	CHILD_MAX		   40	/* max simultaneous processes */
+#define	CHILD_MAX		   80	/* max simultaneous processes */
 #define	LINK_MAX		32767	/* max file link count */
 #define	MAX_CANON		  255	/* max bytes in term canon input line */
 #define	MAX_INPUT		  255	/* max bytes in terminal input */
