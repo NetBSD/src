@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.139 2003/10/17 14:20:12 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.140 2003/10/18 04:03:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.139 2003/10/17 14:20:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.140 2003/10/18 04:03:22 simonb Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -2155,7 +2155,6 @@ lfs_cluster_aiodone(struct buf *bp)
 	struct vnode *vp, *devvp;
 	struct inode *ip;
 	int s, error=0;
-	char *cp;
 
 	if (bp->b_flags & B_ERROR)
 		error = bp->b_error;
@@ -2164,7 +2163,6 @@ lfs_cluster_aiodone(struct buf *bp)
 	fs = cl->fs;
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
-	cp = (char *)bp->b_data + cl->bufsize;
 	/* Put the pages back, and release the buffer */
 	while (cl->bufcount--) {
 		tbp = cl->bpp[cl->bufcount];
