@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: setjmp.s,v 1.2 92/06/25 03:18:43 torek Exp
- * $Id: setjmp.S,v 1.1 1993/10/07 00:21:40 cgd Exp $
+ * $Id: setjmp.S,v 1.2 1993/12/08 11:25:12 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -67,11 +67,19 @@ ENTRY(setjmp)
 	clr	%o1		/* sigprocmask(SIG_BLOCK, (sigset_t *)NULL) */
 	t	ST_SYSCALL
 	st	%o0, [%o2 + 4]	/* sc.sc_mask = current mask; */
+#if USE_SIGALTSTACK
 	mov	SYS_sigaltstack, %g1
+#else
+	mov	SYS_sigstack, %g1
+#endif
 	clr	%o0		/* sigstack(NULL, &foo) */
 	add	%sp, 0x48, %o1	/* (foo being in arg dump area) */
 	t	ST_SYSCALL
+#if USE_SIGALTSTACK
 	ld	[%sp + 0x50], %o0	/* foo.ss_flags */
+#else
+	ld	[%sp + 0x4c], %o0	/* foo.ss_flags */
+#endif
 	and	%o0, 1, %o1	/* onstack = foo.ss_flags & 1; */
 	st	%o0, [%o2 + 0]	/* sc.sc_onstack = current onstack; */
 	st	%sp, [%o2 + 8]	/* sc.sc_sp = sp (both ours and caller's) */
