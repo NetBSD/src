@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.12 2002/06/27 06:26:54 junyoung Exp $ */
+/* $NetBSD: vgavar.h,v 1.13 2002/06/28 22:24:11 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -186,12 +186,18 @@ _vga_crtc_write(struct vga_handle *vh, int reg, u_int8_t val)
 
 int	vga_common_probe(bus_space_tag_t, bus_space_tag_t);
 void	vga_common_attach(struct vga_softc *, bus_space_tag_t,
-			  bus_space_tag_t, int, const struct vga_funcs *);
+			  bus_space_tag_t, int, int, const struct vga_funcs *);
+#define VGA_QUIRK_ONEFONT	0x01
+#define VGA_QUIRK_NOFASTSCROLL	0x02
 int	vga_is_console(bus_space_tag_t, int);
 
 int	vga_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 
 struct wsscreen_descr;
 void 	vga_loadchars(struct vga_handle *, int, int, int, int, char *);
+void 	vga_readoutchars(struct vga_handle *, int, int, int, int, char *);
+#ifdef VGA_CONSOLE_ATI_BROKEN_FONTSEL
+void 	vga_copyfont01(struct vga_handle *);
+#endif
 void 	vga_setfontset(struct vga_handle *, int, int);
 void 	vga_setscreentype(struct vga_handle *, const struct wsscreen_descr *);
