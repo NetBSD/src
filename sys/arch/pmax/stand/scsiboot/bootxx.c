@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.16 1999/03/31 07:23:28 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.17 1999/03/31 07:43:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ loadfile(fname)
 	return (ehdr.e_entry);
 
 cerr:
-#ifndef UFS_NOCLOSE
+#ifndef LIBSA_NO_FS_CLOSE
 	(void) close(fd);
 #endif
 err:
