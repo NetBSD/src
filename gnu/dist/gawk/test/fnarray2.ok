@@ -1,3 +1,0 @@
-gawk: fnarray2.awk:3: 	r = ++pile[c]
-gawk: fnarray2.awk:3: 	            ^ use of non-array as array
-EXIT CODE: 1

@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.197 2004/03/26 08:58:35 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.198 2004/03/26 17:16:24 jdolecek Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -230,18 +230,6 @@ flex 2.5.4a contains only copyright notice changes over version 2.5.4;
 internally not even the version number changed.
 Newer flex will be found in:
 	http://sourceforge.net/projects/lex/
-
-Package:	gawk
-Version:	3.1.3
-Current Vers:	3.1.3
-Maintainer:	Arnold Robbins <arnold@skeeve.atl.ga.us>,
-Maintainer:	David Trueman <david@cs.dal.ca>
-Archive Site:	ftp://ftp.gnu.org/gnu/gawk/
-Mailing List:	bug-gawk@gnu.org
-Responsible:
-Notes:
-Replaced by nawk. gawk sources will be removed from tree
-after some grace period. 
 
 Package:	gcc
 Version:	2.95.3/3.3.3

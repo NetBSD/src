@@ -1,8 +1,0 @@
-#: guide.awk:4
-msgid "Don't Panic"
-msgstr ""
-
-#: guide.awk:5
-msgid "The Answer Is"
-msgstr ""
-
