@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2004/03/28 09:01:28 martti Exp $
+#	$NetBSD: Makefile,v 1.17 2004/03/28 09:21:10 martti Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/ipsend
 CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/iplang
 
 CLEANFILES+=	iplang_y.c iplang_y.h
+CLEANFILES+=	iplang_l.c
 
 .PATH:		${NETBSDSRCDIR}/dist/ipf/ipsend \
 		${NETBSDSRCDIR}/dist/ipf/iplang
