@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.49 2002/10/04 15:42:17 tsutsui Exp $
+$NetBSD: isapnpdevs,v 1.50 2002/10/05 14:57:15 tsutsui Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ driver	com	National Semiconductor Serial
 driver	cs	Cirrus Logic Crystal CS89x0 Ethernet
 driver	ep	3Com 3CXXX Ethernet
 driver	ess	ESS Audio Drive
+driver	fmv	Fujitsu FMV-18x Ethernet
 driver	joy	Generic Joystick
 driver	gus	Gravis Ultrasound
 driver	le	Lance Ethernet
@@ -125,6 +126,12 @@ devlogic	ep	TCM5098		0	3Com 3c509B-8
  */
 devlogic	ess	ESS1868		0	ESS1868
 devlogic	ess	ESS1869		0	ESS1869
+
+/*
+ * fmv
+ */
+devlogic	fmv	FUJ01C1		0	Fujitsu FMV-183
+devlogic	fmv	FUJ01D1		0	Fujitsu FMV-184
 
 /*
  * joy
