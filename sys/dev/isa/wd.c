@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.159 1997/06/18 22:17:14 pk Exp $	*/
+/*	$NetBSD: wd.c,v 1.160 1997/06/24 00:20:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1481,7 +1481,8 @@ wdsize(dev)
 	if (wd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = wd->sc_dk.dk_label->d_partitions[part].p_size;
+		size = wd->sc_dk.dk_label->d_partitions[part].p_size *
+		    (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	if (omask == 0 && wdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 	return (size);
