@@ -1,8 +1,8 @@
-/*
+/*-
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,11 +35,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
- *
- * $Id: mapc.c,v 1.3 1993/12/10 09:39:27 mycroft Exp $
- *
+ * $Id: mapc.c,v 1.4 1994/06/13 19:47:43 mycroft Exp $
  */
+
+#ifndef lint
+static char sccsid[] = "@(#)mapc.c	8.1 (Berkeley) 6/6/93";
+#endif /* not lint */
 
 /*
  * Mount map cache
@@ -283,6 +284,14 @@ FILE *fp;
 	}
 }
 
+static Const char *reg_error = "?";
+void regerror P((Const char *m));
+void regerror(m)
+Const char *m;
+{
+	reg_error = m;
+}
+
 /*
  * Add key and val to the map m.
  * key and val are assumed to be safe copies
@@ -304,22 +313,14 @@ char *val;
 #ifdef HAS_REGEXP
 	if (MAPC_ISRE(m)) {
 		char keyb[MAXPATHLEN];
-		regex_t *re = malloc(sizeof(regex_t));
-		int error;
-		if (re == 0) {
-			plog(XLOG_USER, "no memory for regexp \"%s\"", keyb);
-			return;
-		}
+		regexp *re;
 		/*
 		 * Make sure the string is bound to the start and end
 		 */
 		sprintf(keyb, "^%s$", key);
-		error = regcomp(re, keyb, REG_EXTENDED|REG_NOSUB);
-		if (error) {
-			char reg_error[100];
-			(void) regerror(error, re, reg_error, sizeof reg_error);
+		re = regcomp(keyb);
+		if (re == 0) {
 			plog(XLOG_USER, "error compiling RE \"%s\": %s", keyb, reg_error);
-			free(re);
 			return;
 		} else {
 			free(key);
@@ -653,7 +654,7 @@ int recurse;
 		for (i = 0; i < NKVHASH; i++) {
 			k = m->kvhash[i];
 			while (k) {
-				if (!regexec((regex_t *) k->key, key, 0, 0, 0))
+				if (regexec((regexp *) k->key, key))
 					break;
 				k = k->next;
 			}

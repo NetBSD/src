@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)ufs_ops.c	8.1 (Berkeley) 6/6/93
  *
- * $Id: ufs_ops.c,v 1.2 1994/04/14 03:21:21 cgd Exp $
+ * $Id: ufs_ops.c,v 1.3 1994/06/13 19:48:04 mycroft Exp $
  *
  */
 
@@ -95,7 +95,7 @@ char *opts;
 	/*
 	 * Figure out the name of the file system type.
 	 */
-#if defined(M_NEWTYPE) || defined(__NetBSD__)
+#ifdef M_NEWTYPE
 	char *type = MOUNT_TYPE_UFS;
 #else
 	int type = MOUNT_TYPE_UFS;

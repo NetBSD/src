@@ -1,22 +1,15 @@
-#	%W% (Berkeley) %G%
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG = amq
-SRCS = amq.c amq_clnt.c misc_rpc.c
-MAN8 = amq.0
-CFLAGS+=-I${.CURDIR}/../config
+SRCS = amq.c amq_clnt.c amq_xdr.c misc_rpc.c
+LDADD+=-lrpc
 CFLAGS+=-I${.CURDIR}/../include
+CFLAGS+=-I${.CURDIR}/../rpcx
+CFLAGS+=-I${.CURDIR}/../config
 CFLAGS+=-DARCH_REP=\"${MACHINE}\"
-CFLAGS+=-DOS_REP=\"${OS}\"
-CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
-# arguably XXX -- for broken (?) rpcgen #include lines
-CFLAGS+=-I${DESTDIR}/usr/include/rpcsvc
-DPADD+=	${LIBRPCSVC}
-LDADD+=	-lrpcsvc
-.PATH: ${.CURDIR}/../amd
-
-amq_clnt.c: ${DESTDIR}/usr/include/rpcsvc/amq.x
-	rpcgen -l -o ${.TARGET} ${.ALLSRC}
-CLEANFILES+=amq_clnt.c
+CFLAGS+=-DOS_REP=\"bsd44\"
+CFLAGS+=-DOS_HDR=\"os-bsd44.h\"
+.PATH: ${.CURDIR}/../rpcx ${.CURDIR}/../amd
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
