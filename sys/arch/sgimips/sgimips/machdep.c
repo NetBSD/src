@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2003/12/10 00:00:51 lonewolf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 2003/12/14 05:33:22 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2003/12/10 00:00:51 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2003/12/14 05:33:22 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -254,10 +254,6 @@ mach_init(argc, argv, magic, btinfo)
 
 	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS((vaddr_t) kernel_text));
 	kernendpfn = atop(MIPS_KSEG0_TO_PHYS(kernend));
-
-#if 1 /* skidt? */
-	ARCBIOS->FlushAllCaches();
-#endif
 
 	cpufreq = ARCBIOS->GetEnvironmentVariable("cpufreq");
 
