@@ -1,4 +1,4 @@
-/* $NetBSD: apicvar.h,v 1.2 2002/10/01 12:57:02 fvdl Exp $ */
+/* $NetBSD: apicvar.h,v 1.3 2003/01/07 18:48:44 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct apic_attach_args {
 #define IOAPIC_PICMODE		0x01
 #define IOAPIC_VWIRE		0x02
 	paddr_t apic_address;
+	int apic_vecbase;
 };
 
 void apic_format_redir __P((char *, char *, int, u_int32_t, u_int32_t));

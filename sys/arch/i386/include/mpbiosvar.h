@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosvar.h,v 1.3 2002/10/06 20:39:33 fvdl Exp $ */
+/* $NetBSD: mpbiosvar.h,v 1.4 2003/01/07 18:48:45 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,40 +47,13 @@
 #if !defined(_LOCORE)
 
 #include <machine/mpbiosreg.h>
-
-struct mp_bus
-{
-	char *mb_name;		/* XXX bus name */
-	int mb_idx;		/* XXX bus index */
-	void (*mb_intr_print) __P((int));
-	void (*mb_intr_cfg) __P((const struct mpbios_int *, u_int32_t *));
-	struct mp_intr_map *mb_intrs;
-	u_int32_t mb_data;	/* random bus-specific datum. */
-};
-
-struct mp_intr_map
-{
-	struct mp_intr_map *next;
-	struct mp_bus *bus;
-	int bus_pin;
-	struct ioapic_softc *ioapic;
-	int ioapic_pin;
-	int ioapic_ih;		/* int handle, for apic_intr_est */
-	int type;		/* from mp spec intr record */
- 	int flags;		/* from mp spec intr record */
-	u_int32_t redir;
-	int cpu_id;
-};
+#include <machine/mpconfig.h>
 
 #if defined(_KERNEL)
-extern int mp_verbose;
-extern struct mp_bus *mp_busses;
-extern struct mp_intr_map *mp_intrs;
-extern int mp_nintr;
-extern int mp_isa_bus, mp_eisa_bus;
-
 void mpbios_scan __P((struct device *));
 int mpbios_probe __P((struct device *));
+
+extern int mpbios_scanned;
 #endif
 
 #endif

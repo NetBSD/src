@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93 2002/12/16 18:31:08 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.94 2003/01/07 18:48:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -261,6 +261,8 @@ do {									\
 #define aston(ci)		(curcpu()->ci_astpending = 1)
 
 #endif
+
+extern u_int32_t cpus_attached;
 
 #define	curpcb			curcpu()->ci_curpcb
 #define	curproc			curcpu()->ci_curproc
