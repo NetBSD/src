@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.56 2003/01/18 08:02:52 thorpej Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.57 2003/02/27 16:04:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.56 2003/01/18 08:02:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.57 2003/02/27 16:04:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,8 +214,14 @@ linux_sys_open(l, v, retval)
 		fp = fd_getfile(fdp, *retval);
 
                 /* ignore any error, just give it a try */
-                if (fp != NULL && fp->f_type == DTYPE_VNODE)
-                        (fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, p);
+                if (fp != NULL) {
+			FILE_USE(fp);
+			if (fp->f_type == DTYPE_VNODE) {
+				(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY,
+				    (caddr_t) 0, p);
+			}
+			FILE_UNUSE(fp, p);
+		}
         }
 	return 0;
 }
