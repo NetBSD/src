@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.17 2003/02/04 01:21:06 thorpej Exp $	*/
+/*	$NetBSD: callout.h,v 1.18 2003/07/20 16:25:58 he Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ struct callout {
 
 #define	CALLOUT_PENDING		0x0002	/* callout is on the queue */
 #define	CALLOUT_FIRED		0x0004	/* callout has fired */
+#define	CALLOUT_INVOKING	0x0008	/* callout function is being invoked */
 
 #define	CALLOUT_INITIALIZER_SETFUNC(func, arg)				\
 				{ { NULL, NULL }, func, arg, 0, 0 }
@@ -100,6 +101,8 @@ int	callout_hardclock(void);
 
 #define	callout_pending(c)	((c)->c_flags & CALLOUT_PENDING)
 #define	callout_expired(c)	((c)->c_flags & CALLOUT_FIRED)
+#define	callout_invoking(c)	((c)->c_flags & CALLOUT_INVOKING)
+#define	callout_ack(c)		((c)->c_flags &= ~CALLOUT_INVOKING)
 #endif /* _KERNEL */
 
 #endif /* !_SYS_CALLOUT_H_ */
