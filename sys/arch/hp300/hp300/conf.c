@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.3 1994/01/11 16:40:19 mycroft Exp $
+ *	$Id: conf.c,v 1.4 1994/01/26 14:28:56 brezak Exp $
  */
 
 #include "sys/param.h"
@@ -307,7 +307,7 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_tape_init(NCT,ct),		/* 7: cs80 cartridge tape */
 	cdev_disk_init(NSD,sd),		/* 8: scsi disk */
-	cdev_disk_init(NSD,rd),		/* 9: hpib disk */
+	cdev_disk_init(NRD,rd),		/* 9: hpib disk */
 	cdev_grf_init(1,grf),		/* 10: frame buffer */
 	cdev_ppi_init(NPPI,ppi),	/* 11: printer/plotter interface */
 	cdev_tty_init(NDCA,dca),	/* 12: built-in single-port serial */
