@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.6 2004/12/25 12:32:22 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.7 2004/12/25 13:25:16 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.6 2004/12/25 12:32:22 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.7 2004/12/25 13:25:16 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1313,9 +1313,8 @@ audio_calc_blksize(struct audio_softc *sc, int mode)
 		rb = &sc->sc_rr;
 	}
 
-	rb->blksize = parm->hw_sample_rate * audio_blk_ms / 1000 *
-	     parm->hw_channels * parm->precision / NBBY *
-	     parm->factor;
+	rb->blksize = parm->sample_rate * audio_blk_ms / 1000 *
+	     parm->channels * parm->precision / NBBY;
 
 	DPRINTF(("audio_calc_blksize: %s blksize=%d\n",
 		 mode == AUMODE_PLAY ? "play" : "record", rb->blksize));
@@ -1327,7 +1326,7 @@ audio_fill_silence(struct audio_params *params, uint8_t *p, int n)
 	uint8_t auzero0, auzero1 = 0; /* initialize to please gcc */
 	int nfill = 1;
 
-	switch (params->hw_encoding) {
+	switch (params->encoding) {
 	case AUDIO_ENCODING_ULAW:
 		auzero0 = 0x7f;
 		break;
@@ -1347,8 +1346,8 @@ audio_fill_silence(struct audio_params *params, uint8_t *p, int n)
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (params->hw_precision > 8) {
-			nfill = (params->hw_precision + NBBY - 1)/ NBBY;
+		if (params->precision > 8) {
+			nfill = (params->precision + NBBY - 1)/ NBBY;
 			auzero0 = 0x80;
 			auzero1 = 0;
 		} else
@@ -1363,7 +1362,7 @@ audio_fill_silence(struct audio_params *params, uint8_t *p, int n)
 		while (--n >= 0)
 			*p++ = auzero0; /* XXX memset */
 	} else /* nfill must no longer be 2 */ {
-		if (params->hw_encoding == AUDIO_ENCODING_ULINEAR_LE) {
+		if (params->encoding == AUDIO_ENCODING_ULINEAR_LE) {
 			int k = nfill;
 			while (--k > 0)
 				*p++ = auzero1;
@@ -2066,7 +2065,7 @@ audio_pint(void *v)
 	const struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	uint8_t *inp;
-	int cc, ccr;
+	int cc;
 	int blksize;
 	int error;
 
@@ -2078,7 +2077,7 @@ audio_pint(void *v)
 	cb->s.outp += blksize;
 	if (cb->s.outp >= cb->s.end)
 		cb->s.outp = cb->s.start;
-	cb->stamp += blksize / sc->sc_pparams.factor;
+	cb->stamp += blksize;
 	if (cb->mmapped) {
 		DPRINTFN(5, ("audio_pint: mmapped outp=%p cc=%d inp=%p\n",
 			     cb->s.outp, blksize, cb->s.inp));
@@ -2129,12 +2128,11 @@ audio_pint(void *v)
 		} else {
 			inp = cb->s.inp;
 			cc = blksize - (inp - cb->s.start) % blksize;
-			ccr = cc / sc->sc_pparams.factor;
 			if (cb->pause)
-				cb->pdrops += ccr;
+				cb->pdrops += cc;
 			else {
-				cb->drops += ccr;
-				sc->sc_playdrop += ccr;
+				cb->drops += cc;
+				sc->sc_playdrop += cc;
 			}
 			audio_pint_silence(sc, cb, inp, cc);
 			inp += cc;
@@ -2780,8 +2778,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	}
 
 	if (modechange) {
-		int orig_p_channels, orig_p_rate;
-		int orig_r_channels, orig_r_rate;
 		int indep;
 
 		indep = hw->get_props(sc->hw_hdl) & AUDIO_PROP_INDEPENDENT;
@@ -2795,10 +2791,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		rfilters.req_size = 0;
 		/* Some device drivers change channels/sample_rate and change
 		 * no channels/sample_rate. */
-		orig_p_channels = pp.channels;
-		orig_p_rate = pp.sample_rate;
-		orig_r_channels = rp.channels;
-		orig_r_rate = rp.sample_rate;
 		error = hw->set_params(sc->hw_hdl, setmode,
 		    sc->sc_mode & (AUMODE_PLAY | AUMODE_RECORD), &pp, &rp,
 		    &pfilters, &rfilters);
@@ -2806,19 +2798,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			return error;
 
 		if (np) {
-			if (orig_p_channels != pp.channels)
-				pp.hw_channels = pp.channels;
-			if (orig_p_rate != pp.sample_rate)
-				pp.hw_sample_rate = pp.sample_rate;
 			error = auconv_check_params(&pp);
 			if (error)
 				return error;
 		}
 		if (nr) {
-			if (orig_r_channels != rp.channels)
-				rp.hw_channels = rp.channels;
-			if (orig_r_rate != rp.sample_rate)
-				rp.hw_sample_rate = rp.sample_rate;
 			error = auconv_check_params(&rp);
 			if (error)
 				return error;
