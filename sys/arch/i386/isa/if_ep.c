@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.42.2.6 1994/08/26 12:44:11 mycroft Exp $
+ *	$Id: if_ep.c,v 1.42.2.7 1994/10/06 04:04:13 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -83,7 +83,7 @@ struct ep_softc {
 	struct intrhand sc_ih;
 
 	struct arpcom sc_arpcom;	/* Ethernet common part		*/
-	short   ep_iobase;		/* i/o bus address		*/
+	u_short	ep_iobase;		/* i/o bus address		*/
 	char    ep_connectors;		/* Connectors on this card.	*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/

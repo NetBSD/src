@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.33 1994/06/29 06:44:41 cgd Exp $	*/
+/*	$NetBSD: mount.h,v 1.33.2.1 1994/10/06 04:16:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -200,6 +200,7 @@ struct vfsops {
 				    int *exflagsp, struct ucred **credanonp));
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
 	int	(*vfs_init)	__P((void));
+	int	vfs_refcount;
 };
 
 #define VFS_MOUNT(MP, PATH, DATA, NDP, P) \

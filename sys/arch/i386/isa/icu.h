@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.13 1994/04/07 06:50:35 mycroft Exp $
+ *	$Id: icu.h,v 1.13.2.1 1994/10/06 04:03:57 mycroft Exp $
  */
 
 /*
@@ -42,8 +42,8 @@
  * W. Jolitz 8/89
  */
 
-#ifndef	__ICU__
-#define	__ICU__
+#ifndef	_I386_ISA_ICU_H_
+#define	_I386_ISA_ICU_H_
 
 #ifndef	LOCORE
 
@@ -52,20 +52,21 @@
  */
 extern	unsigned imen;		/* interrupt mask enable */
 
-#define	INTREN(s)	do{imen &= ~(s); SET_ICUS();}while(0)
-#define	INTRDIS(s)	do{imen |= (s); SET_ICUS();}while(0)
-#define	INTRMASK(msk,s)	(msk |= (s))
+#define	INTRUNMASK(msk,s)	(msk &= ~(s))
+#define	INTREN(s)		(INTRUNMASK(imen, s), SET_ICUS())
+#define	INTRMASK(msk,s)		(msk |= (s))
+#define	INTRDIS(s)		(INTRMASK(imen, s), SET_ICUS())
 #if 0
-#define SET_ICUS()	do{outb(IO_ICU1 + 1, imen); outb(IU_ICU2 + 1, imen >> 8);}while(0)
+#define SET_ICUS()	(outb(IO_ICU1 + 1, imen), outb(IU_ICU2 + 1, imen >> 8))
 #else
 /*
  * XXX - IO_ICU* are defined in isa.h, not icu.h, and nothing much bothers to
  * include isa.h, while too many things include icu.h.
  */
-#define SET_ICUS()	do{outb(0x21, imen); outb(0xa1, imen >> 8);}while(0)
+#define SET_ICUS()	(outb(0x21, imen), outb(0xa1, imen >> 8))
 #endif
 
-#endif
+#endif /* !LOCORE */
 
 /*
  * Interrupt enable bits -- in order of priority
@@ -94,4 +95,4 @@ extern	unsigned imen;		/* interrupt mask enable */
 #define	ICU_OFFSET	32		/* 0-31 are processor exceptions */
 #define	ICU_LEN		16		/* 32-47 are ISA interrupts */
 
-#endif	__ICU__
+#endif /* !_I386_ISA_ICU_H_ */

@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)getnetgrent.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: getnetgrent.c,v 1.1.1.1 1994/05/17 13:30:51 mycroft Exp $";
+static char *rcsid = "$Id: getnetgrent.c,v 1.1.1.1.2.1 1994/10/06 04:29:12 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -249,6 +249,8 @@ parse_netgrp(group)
 			if (parse_netgrp(spos))
 				return (1);
 		}
+		if (pos == 0)
+			break;
 		while (*pos == ' ' || *pos == ',' || *pos == '\t')
 			pos++;
 	}

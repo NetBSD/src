@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)read.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: read.2,v 1.4 1993/11/25 00:39:26 jtc Exp $
+.\"	$Id: read.2,v 1.4.2.1 1994/10/06 04:37:01 mycroft Exp $
 .\"
 .Dd March 10, 1991
 .Dt READ 2
@@ -146,7 +146,8 @@ may return one of the following errors:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa Iovcnt
-was less than or equal to 0, or greater than 16.
+was less than or equal to 0, or greater than
+.Dv {UIO_MAXIOV} .
 .It Bq Er EINVAL
 One of the
 .Fa iov_len
