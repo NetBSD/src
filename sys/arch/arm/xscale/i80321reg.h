@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.3 2002/04/16 17:36:06 thorpej Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.3.4.1 2002/11/11 22:32:13 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -81,6 +81,9 @@
 
 #define	VERDE_MCU_BASE			0x0500
 #define	VERDE_MCU_SIZE			0x0100
+
+#define	VERDE_SSP_BASE			0x0600
+#define	VERDE_SSP_SIZE			0x0100
 
 #define	VERDE_AAU_BASE			0x0800
 #define	VERDE_AAU_SIZE			0x0100
@@ -288,8 +291,8 @@
 #define	TISR_TMR0		(1U << 0)
 #define	TISR_TMR1		(1U << 1)
 
-#define	WTDCR_ENABLE1		0x1e1e1e1e
-#define	WTDCR_ENABLE2		0xe1e1e1e1
+#define	WDTCR_ENABLE1		0x1e1e1e1e
+#define	WDTCR_ENABLE2		0xe1e1e1e1
 
 /*
  * Interrupt Controller Unit.
@@ -393,44 +396,61 @@ struct dma_chain_desc {
 #define	DMA_DCR_TTYPE_MW2	0x0f	/* Memory Write */
 
 /*
- * Application Accelerator Unit
+ * SSP Serial Port
  */
 
-struct aau_chain_princ {
-	uint32_t	acd_nda;	/* next descriptor address */
-	uint32_t	acd_sar[4];	/* source address 0..3 */
-	uint32_t	acd_dar;	/* destination address */
-	uint32_t	acd_bc;		/* byte count */
-	uint32_t	acd_dc;		/* descriptor control */
-} __attribute__((__packed__));
+#define	SSP_SSCR0	0x00		/* SSC control 0 */
+#define	SSP_SSCR1	0x04		/* SSC control 1 */
+#define	SSP_SSSR	0x08		/* SSP status */
+#define	SSP_SSITR	0x0c		/* SSP interrupt test */
+#define	SSP_SSDR	0x10		/* SSP data */
 
-struct aau_chain_mini {
-	uint32_t	acd_sar[4];	/* source address 4..7 */
-} __attribute__((__packed__));
+#define	SSP_SSCR0_DSIZE(x)	((x) - 1)/* data size: 4..16 */
+#define	SSP_SSCR0_FRF_SPI	(0 << 4) /* Motorola Serial Periph Iface */
+#define	SSP_SSCR0_FRF_SSP	(1U << 4)/* TI Sync. Serial Protocol */
+#define	SSP_SSCR0_FRF_UWIRE	(2U << 4)/* NatSemi Microwire */
+#define	SSP_SSCR0_FRF_rsvd	(3U << 4)/* reserved */
+#define	SSP_SSCR0_ECS		(1U << 6)/* external clock select */
+#define	SSP_SSCR0_SSE		(1U << 7)/* sync. serial port enable */
+#define	SSP_SSCR0_SCR(x)	((x) << 8)/* serial clock rate */
+					  /* bit rate = 3.6864 * 10e6 /
+					        (2 * (SCR + 1)) */
 
-struct aau_chain_ext {
-	uint32_t	acd_edc;	/* extended descriptor control */
-	uint32_t	acd_sar[8];	/* source address n..n+7 */
-} __attribute__((__packed__));
+#define	SSP_SSCR1_RIE		(1U << 0)/* Rx FIFO interrupt enable */
+#define	SSP_SSCR1_TIE		(1U << 1)/* Tx FIFO interrupt enable */
+#define	SSP_SSCR1_LBM		(1U << 2)/* loopback mode enable */
+#define	SSP_SSCR1_SPO		(1U << 3)/* Moto SPI SSCLK pol. (1 = high) */
+#define	SSP_SSCR1_SPH		(1U << 4)/* Moto SPI SSCLK phase:
+					    0 = inactive full at start,
+						1/2 at end of frame
+					    1 = inactive 1/2 at start,
+						full at end of frame */
+#define	SSP_SSCR1_MWDS		(1U << 5)/* Microwire data size:
+					    0 = 8 bit
+					    1 = 16 bit */
+#define	SSP_SSCR1_TFT		(((x) - 1) << 6) /* Tx FIFO threshold */
+#define	SSP_SSCR1_RFT		(((x) - 1) << 10)/* Rx FIFO threshold */
+#define	SSP_SSCR1_EFWR		(1U << 14)/* enab. FIFO write/read */
+#define	SSP_SSCR1_STRF		(1U << 15)/* FIFO write/read FIFO select:
+					     0 = Tx FIFO
+					     1 = Rx FIFO */
 
-struct aau_chain_desc8 {
-	struct aau_chain_princ acd8_princ;	/* 0..3 */
-	struct aau_chain_mini acd8_mini;	/* 4..7 */
-} __attribute__((__packed__));
+#define	SSP_SSSR_TNF		(1U << 2)/* Tx FIFO not full */
+#define	SSP_SSSR_RNE		(1U << 3)/* Rx FIFO not empty */
+#define	SSP_SSSR_BSY		(1U << 4)/* SSP is busy */
+#define	SSP_SSSR_TFS		(1U << 5)/* Tx FIFO service request */
+#define	SSP_SSSR_RFS		(1U << 6)/* Rx FIFO service request */
+#define	SSP_SSSR_ROR		(1U << 7)/* Rx FIFO overrun */
+#define	SSP_SSSR_TFL(x)		(((x) >> 8) & 0xf) /* Tx FIFO level */
+#define	SSP_SSSR_RFL(x)		(((x) >> 12) & 0xf)/* Rx FIFO level */
 
-struct aau_chain_desc16 {
-	struct aau_chain_princ acd16_princ;	/* 0..3 */
-	struct aau_chain_mini acd16_mini;	/* 4..7 */
-	struct aau_chain_ext acd16_ext0;	/* 8..15 */
-} __attribute__((__packed__));
+#define	SSP_SSITR_TTFS		(1U << 5)/* Test Tx FIFO service */
+#define	SSP_SSITR_TRFS		(1U << 6)/* Test Rx FIFO service */
+#define	SSP_SSITR_TROR		(1U << 7)/* Test Rx overrun */
 
-struct aau_chain_desc32 {
-	struct aau_chain_princ acd32_princ;	/* 0..3 */
-	struct aau_chain_mini acd32_mini;	/* 4..7 */
-	struct aau_chain_ext acd32_ext0;	/* 8..15 */
-	struct aau_chain_ext acd32_ext1;	/* 16..23 */
-	struct aau_chain_ext acd32_ext2;	/* 24..31 */
-} __attribute__((__packed__));
+/*
+ * Application Accelerator Unit
+ */
 
 #define	AAU_ACR		0x00		/* accelerator control */
 #define	AAU_ASR		0x04		/* accelerator status */
@@ -453,22 +473,5 @@ struct aau_chain_desc32 {
 #define	AAU_ASR_AAF	(1U << 10)	/* acellerator active */
 
 #define	AAU_ABCR_MASK	0x00ffffff	/* 24-bit count */
-
-#define	AAU_CMD_NULL	0		/* disregard this block */
-#define	AAU_CMD_XOR	1		/* XOR */
-#define	AAU_CMD_FILL	7		/* block fill */
-
-#define	AAU_ADCR_IE	(1U << 0)	/* interrupt enable */
-#define	AAU_ADCR_BxCMD(b, x) ((x) << (((b) * 3) + 1)) /* block 0..7 command */
-#define	AAU_ADCR_SBCI_0	0		/* no supplemental blocks */
-#define	AAU_ADCR_SBCI_4	(1U << 25)	/* 4 supplemental blocks */
-#define	AAU_ADCR_SBCI_12 (2U << 25)	/* 12 supplemental blocks */
-#define	AAU_ADCR_SBCI_28 (3U << 25)	/* 28 supplemental blocks */
-#define	AAU_ADCR_TC	(1U << 28)	/* transfer complete */
-#define	AAU_ADCR_PBAD	(1U << 29)	/* computed parity bad */
-#define	AAU_ADCR_PE	(1U << 30)	/* parity computation enable */
-#define	AAU_ADCR_DWE	(1U << 31)	/* destination write enable */
-
-#define	AAU_EDCR_BxCMD(b, x) ((x) << (((b) * 3) + 1))
 
 #endif /* _ARM_XSCALE_I80321REG_H_ */
