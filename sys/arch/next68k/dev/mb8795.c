@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.35 2005/01/19 01:58:21 chs Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.36 2005/01/30 19:10:16 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.35 2005/01/19 01:58:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.36 2005/01/30 19:10:16 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -327,8 +327,8 @@ mb8795_rint(struct mb8795_softc *sc)
 		s = spldma();
 
 		while ((m = MBDMA_RX_MBUF (sc))) {
-			m->m_pkthdr.len = m->m_len;
-			m->m_flags |= M_HASFCS;
+			/* CRC is included with the packet; trim it. */
+			m->m_pkthdr.len = m->m_len = m->m_len - ETHER_CRC_LEN;
 			m->m_pkthdr.rcvif = ifp;
 			
 			/* Find receive length, keep crc */
