@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.12 1999/09/20 20:35:43 tron Exp $	*/
+/*	$NetBSD: rwho.c,v 1.13 2000/09/06 12:13:48 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: rwho.c,v 1.12 1999/09/20 20:35:43 tron Exp $");
+__RCSID("$NetBSD: rwho.c,v 1.13 2000/09/06 12:13:48 mjl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,12 +52,16 @@ __RCSID("$NetBSD: rwho.c,v 1.12 1999/09/20 20:35:43 tron Exp $");
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+void usage(void);
+int utmpcmp(const void *, const void *);
 
 DIR	*dirp;
 
@@ -83,9 +87,7 @@ time_t	now;
 int	aflg;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	struct dirent *dp;
@@ -95,6 +97,8 @@ main(argc, argv)
 	struct myutmp *mp;
 	int f, n, i, nhosts;
 
+	setlocale(LC_TIME, "");
+
 	while ((ch = getopt(argc, argv, "a")) != -1)
 		switch((char)ch) {
 		case 'a':
@@ -102,13 +106,15 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: rwho [-a]\n");
-			exit(1);
+			usage();
 		}
-	if (chdir(_PATH_RWHODIR) || (dirp = opendir(".")) == NULL) {
-		perror(_PATH_RWHODIR);
-		exit(1);
-	}
+
+	if(optind != argc)
+		usage();
+
+	if (chdir(_PATH_RWHODIR) || (dirp = opendir(".")) == NULL)
+		err(1, "%s", _PATH_RWHODIR);
+
 	mp = myutmp;
 	nhosts = 0;
 	(void)time(&now);
@@ -135,10 +141,9 @@ main(argc, argv)
 				we++;
 				continue;
 			}
-			if (nusers >= NUSERS) {
-				printf("too many users\n");
-				exit(1);
-			}
+			if (nusers >= NUSERS)
+				err(1, "too many users");
+
 			mp->myutmp = we->we_utmp; mp->myidle = we->we_idle;
 			(void) strcpy(mp->myhost, w->wd_hostname);
 			nusers++; we++; mp++;
@@ -158,13 +163,15 @@ main(argc, argv)
 	}
 	mp = myutmp;
 	for (i = 0; i < nusers; i++) {
-		char buf[BUFSIZ];
+		char buf[BUFSIZ], cbuf[80];
+		strftime(cbuf, sizeof(cbuf), "%c", localtime((time_t *)&mp->myutmp.out_time));
+/*		cbuf = ctime((time_t *)&mp->myutmp.out_time); */
 		(void)sprintf(buf, "%s:%s", mp->myhost, mp->myutmp.out_line);
 		printf("%-8.8s %-*s %.12s",
 		   mp->myutmp.out_name,
 		   width,
 		   buf,
-		   ctime((time_t *)&mp->myutmp.out_time)+4);
+		   cbuf + 4);
 		mp->myidle /= 60;
 		if (mp->myidle) {
 			if (aflg) {
@@ -185,8 +192,7 @@ main(argc, argv)
 }
 
 int
-utmpcmp(v1, v2)
-	const void *v1, *v2;
+utmpcmp(const void *v1, const void *v2)
 {
 	const struct myutmp *u1, *u2;
 	int rc;
@@ -202,3 +208,9 @@ utmpcmp(v1, v2)
 	return (strncmp(u1->myutmp.out_line, u2->myutmp.out_line, 8));
 }
 
+void
+usage(void)
+{
+	fprintf(stderr, "usage: rwho [-a]\n");
+	exit(1);
+}
