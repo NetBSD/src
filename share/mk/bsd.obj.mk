@@ -1,4 +1,4 @@
-#	$Id: bsd.obj.mk,v 1.4 1993/11/07 09:45:04 cgd Exp $
+#	$Id: bsd.obj.mk,v 1.5 1994/06/30 05:21:31 cgd Exp $
 
 .if !target(obj)
 .if defined(NOOBJ)
@@ -23,7 +23,7 @@ __usrobjdirpf=
 .endif
 .endif
 
-obj:
+obj: _SUBDIRUSE
 	@cd ${.CURDIR}; rm -f ${__objdir} > /dev/null 2>&1 || true; \
 	here=`pwd`; subdir=`echo $$here | sed 's,^${BSDSRCDIR}/,,'`; \
 	if test $$here != $$subdir ; then \

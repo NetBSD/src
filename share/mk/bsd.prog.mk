@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.42 1994/06/28 05:16:12 jtc Exp $
+#	$Id: bsd.prog.mk,v 1.43 1994/06/30 05:21:32 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -75,14 +75,14 @@ MAN1=	${PROG}.0
 .endif
 
 .MAIN: all
-all: ${PROG}
+all: ${PROG} _SUBDIRUSE
 
 .if !target(clean)
-clean:
+clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core ${PROG} ${OBJS} ${CLEANFILES}
 .endif
 
-cleandir: clean
+cleandir: _SUBDIRUSE clean
 
 .if !target(install)
 .if !target(beforeinstall)
@@ -123,7 +123,7 @@ realinstall: beforeinstall
 .endif
 
 .if !target(lint)
-lint: ${SRCS}
+lint: ${SRCS} _SUBDIRUSE
 .if defined(PROG)
 	@${LINT} ${LINTFLAGS} ${CFLAGS} ${.ALLSRC} | more 2>&1
 .endif
