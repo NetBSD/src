@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.12 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.13 1999/08/02 19:32:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@ struct ugen_endpoint {
 	usb_endpoint_descriptor_t *edesc;
 	usbd_interface_handle iface;
 	int state;
-#define UGEN_OPEN	0x01	/* device is open */
 #define	UGEN_ASLP	0x02	/* waiting for data */
 #define UGEN_SHORT_OK	0x04	/* short xfers are OK */
 	usbd_pipe_handle pipeh;
@@ -96,6 +95,7 @@ struct ugen_softc {
 	bdevice sc_dev;		/* base device */
 	struct usbd_device *sc_udev;
 
+	char sc_is_open[USB_MAX_ENDPOINTS];
 	struct ugen_endpoint sc_endpoints[USB_MAX_ENDPOINTS][2];
 #define OUT 0			/* index order is important, from UE_OUT */
 #define IN  1			/* from UE_IN */
@@ -234,28 +234,31 @@ ugenopen(dev, flag, mode, p)
 	if (sc->sc_dying)
 		return (ENXIO);
 
+	if (sc->sc_is_open[endpt])
+		return (EBUSY);
+
 	if (endpt == USB_CONTROL_ENDPOINT) {
-		/*if ((flag & (FWRITE|FREAD)) != (FWRITE|FREAD))
-		  return (EACCES);*/
-		sce = &sc->sc_endpoints[USB_CONTROL_ENDPOINT][OUT];
-		if (sce->state & UGEN_OPEN)
-			return (EBUSY);
-	} else {
-		switch (flag & (FWRITE|FREAD)) {
-		case FWRITE:
-			dir = OUT;
-			break;
-		case FREAD:
-			dir = IN;
-			break;
-		default:
-			return (EACCES);
+		sc->sc_is_open[USB_CONTROL_ENDPOINT] = 1;
+		return (0);
+	}
+	/* Make sure there are pipes for all directions. */
+	for (dir = OUT; dir <= IN; dir++) {
+		if (flag & (dir == OUT ? FWRITE : FREAD)) {
+			sce = &sc->sc_endpoints[endpt][dir];
+			if (sce == 0 || sce->edesc == 0)
+				return (ENXIO);
 		}
+	}
+
+	/* Actually open the pipes. */
+	/* XXX Should back out properly if it fails. */
+	for (dir = OUT; dir <= IN; dir++) {
+		if (!(flag & (dir == OUT ? FWRITE : FREAD)))
+			continue;
 		sce = &sc->sc_endpoints[endpt][dir];
+		sce->state = 0;
 		DPRINTFN(5, ("ugenopen: sc=%p, endpt=%d, dir=%d, sce=%p\n", 
 			     sc, endpt, dir, sce));
-		if (sce->state & UGEN_OPEN)
-			return (EBUSY);
 		edesc = sce->edesc;
 		if (!edesc)
 			return (ENXIO);
@@ -300,7 +303,7 @@ ugenopen(dev, flag, mode, p)
 			return (EINVAL);
 		}
 	}
-	sce->state |= UGEN_OPEN;
+	sc->sc_is_open[endpt] = 1;
 	return (0);
 }
 
@@ -316,37 +319,42 @@ ugenclose(dev, flag, mode, p)
 	struct ugen_endpoint *sce;
 	int dir;
 
-	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d\n", flag, mode));
+	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
+		     flag, mode, UGENUNIT(dev), endpt));
+
+#ifdef DIAGNOSTIC
+	if (!sc->sc_is_open[endpt]) {
+		printf("ugenclose: not open\n");
+		return (EINVAL);
+	}
+#endif
 
 	if (endpt == USB_CONTROL_ENDPOINT) {
 		DPRINTFN(5, ("ugenclose: close control\n"));
-		sc->sc_endpoints[endpt][OUT].state = 0;
+		sc->sc_is_open[endpt] = 0;
 		return (0);
 	}
 
-	flag = FWRITE | FREAD;	/* XXX bug if generic open/close */
-
-	/* The open modes have been joined, so check for both modes. */
 	for (dir = OUT; dir <= IN; dir++) {
-		if (flag & (dir == OUT ? FWRITE : FREAD)) {
-			sce = &sc->sc_endpoints[endpt][dir];
-			if (!sce || !sce->pipeh || sce->state == 0)
-				continue;
-			DPRINTFN(5, ("ugenclose: endpt=%d dir=%d sce=%p\n", 
-				     endpt, dir, sce));
-			sce->state = 0;
-
-			usbd_abort_pipe(sce->pipeh);
-			usbd_close_pipe(sce->pipeh);
-			sce->pipeh = 0;
-
-			if (sce->ibuf) {
-				free(sce->ibuf, M_USBDEV);
-				sce->ibuf = 0;
-				clfree(&sce->q);
-			}
+		if (!(flag & (dir == OUT ? FWRITE : FREAD)))
+			continue;
+		sce = &sc->sc_endpoints[endpt][dir];
+		if (!sce || !sce->pipeh)
+			continue;
+		DPRINTFN(5, ("ugenclose: endpt=%d dir=%d sce=%p\n", 
+			     endpt, dir, sce));
+		
+		usbd_abort_pipe(sce->pipeh);
+		usbd_close_pipe(sce->pipeh);
+		sce->pipeh = 0;
+		
+		if (sce->ibuf) {
+			free(sce->ibuf, M_USBDEV);
+			sce->ibuf = 0;
+			clfree(&sce->q);
 		}
 	}
+	sc->sc_is_open[endpt] = 0;
 
 	return (0);
 }
@@ -427,8 +435,11 @@ ugen_do_read(sc, endpt, uio, flag)
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
 			DPRINTFN(1, ("ugenread: start transfer %d bytes\n",n));
 			tn = n;
-			r = usbd_bulk_transfer(reqh, sce->pipeh, 0, buf, 
-					       &tn, "ugenrb");
+			r = usbd_bulk_transfer(
+				reqh, sce->pipeh,
+				sce->state & UGEN_SHORT_OK ? 
+				    USBD_SHORT_XFER_OK : 0, 
+				buf, &tn, "ugenrb");
 			if (r != USBD_NORMAL_COMPLETION) {
 				if (r == USBD_INTERRUPTED)
 					error = EINTR;
@@ -770,6 +781,8 @@ ugen_do_ioctl(sc, endpt, cmd, addr, flag, p)
 		return (0);
 	case USB_SET_SHORT_XFER:
 		/* This flag only affects read */
+		if (endpt == USB_CONTROL_ENDPOINT)
+			return (EINVAL);
 		sce = &sc->sc_endpoints[endpt][IN];
 #ifdef DIAGNOSTIC
 		if (!sce->pipeh) {
@@ -1027,6 +1040,7 @@ ugenpoll(dev, events, p)
 	if (sc->sc_dying)
 		return (EIO);
 
+	/* XXX always IN */
 	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
 #ifdef DIAGNOSTIC
 	if (!sce->edesc) {
