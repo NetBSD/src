@@ -534,6 +534,7 @@
 ./usr/sbin/ntptime
 ./usr/sbin/ntptrace
 ./usr/sbin/pac
+./usr/sbin/pawd
 ./usr/sbin/pkg_add
 ./usr/sbin/pkg_create
 ./usr/sbin/pkg_delete
