@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.15 1996/11/13 06:53:23 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.16 1996/11/13 17:42:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -646,8 +646,11 @@ apmprobe(parent, match, aux)
 	struct apmregs regs;
 	u_int okbases[] = { 0, biosbasemem*1024 };
 	u_int oklimits[] = { NBPG, IOM_END-1 };
-	char bits[128];
 	register u_int i;
+/* XXX the DPRINTF() conditional */
+#if defined(DEBUG) || defined(APMDEBUG)
+	char bits[128];
+#endif
 
 	if (apminited)
 		return 0;
