@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.245 2004/06/01 04:40:52 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.246 2004/06/01 17:54:16 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3444,3 +3444,8 @@ sbin/scsictl/scsictl.c				1.24
 	Increase the SCSI command timeout for device start & stop from 10
 	to 30 seconds. PR#25734
 	[fair, ticket #431]
+
+lib/libc/sys/close.2				patch
+
+	Dont refer to errno as "global integer variable".
+	[kleink, ticket #432]
