@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.13 1993/11/13 06:22:41 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.14 1993/11/13 20:08:24 mycroft Exp $
  */
 
 /*
@@ -176,7 +176,9 @@ trap(frame)
 	if (curproc == 0)
 		goto we_re_toast;
 
-	if (curpcb->pcb_onfault && type != T_PAGEFLT) {
+	/* fusubail is used by [fs]uswintr to avoid page faulting */
+	if (curpcb->pcb_onfault &&
+	    (type != T_PAGEFLT || curpcb->pcb_onfault == fusubail)) {
 	    copyfault:
 		frame.tf_eip = (int)curpcb->pcb_onfault;
 		return;
@@ -214,6 +216,7 @@ trap(frame)
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		       type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, eva, cpl);
+
 		panic("trap");
 		/*NOTREACHED*/
 
@@ -291,10 +294,6 @@ trap(frame)
 		extern vm_map_t kernel_map;
 		unsigned nss, v;
 
-		/* fusubail is used by [fs]uswintr to avoid page faulting */
-		if (curpcb->pcb_onfault == fusubail)
-			goto copyfault;
-
 		va = trunc_page((vm_offset_t)eva);
 		/*
 		 * It is only a kernel address space fault iff:
@@ -361,8 +360,6 @@ trap(frame)
 				goto copyfault;
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
-			printf("  type %x, code %x\n",
-			       type, code);
 			goto we_re_toast;
 		}
 		i = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
