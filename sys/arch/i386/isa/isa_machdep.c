@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.45.2.3 2000/08/07 01:09:00 sommerfeld Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.45.2.4 2000/08/21 02:25:16 sommerfeld Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -109,6 +109,8 @@
 #if NMCA > 0
 #include <machine/mca_machdep.h>		/* for MCA_system */
 #endif
+
+#include "eisa.h"		/* XXX */
 
 /*
  * ISA can only DMA to 0-16M.
@@ -507,8 +509,8 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	
 	if (mp_busses != NULL) {
 		int mpspec_pin = irq;
-		int bus = mp_isa_bus;
 		int airq;
+		int bus = mp_isa_bus;
 		
 		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
 			if (mip->bus_pin == mpspec_pin) {
@@ -516,11 +518,22 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 				break;
 			}
 		}
+#if NEISA > 0
+		if (mip == NULL && (mp_eisa_bus != -1)) {
+			bus = mp_eisa_bus;
+			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
+			     mip=mip->next) {
+				if (mip->bus_pin == mpspec_pin) {
+					airq = mip->ioapic_ih | irq;
+					break;
+				}
+			}
+		}
+#endif
 		if (mip == NULL)
 			printf("isa_intr_establish: no MP mapping found\n");
-		else {
+		else
 			return apic_intr_establish (airq, type, level, ih_fun, ih_arg);
-		}
 	}
 #endif
 
