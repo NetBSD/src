@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.4 1998/02/07 11:09:33 mrg Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.5 1998/02/07 17:00:44 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -544,6 +544,7 @@ struct pglist *pglst;
 	 * add block to cluster
 	 */
 	swpps[swcpages] = p;
+	uvmexp.pageouts++;
 	if (anon)
 	  anon->an_swslot = swslot + swcpages;
 	else
