@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.133 2000/12/29 10:00:08 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.134 2001/01/22 08:37:54 toshii Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1003,7 +1003,6 @@ audio_open(dev, sc, flags, ifmt, p)
 	ai.play.channels      = sc->sc_pparams.channels;
 	ai.play.precision     = sc->sc_pparams.precision;
 	ai.mode		      = mode;
-	sc->sc_pr.blksize = sc->sc_rr.blksize = 0; /* force recalculation */
 	error = audiosetinfo(sc, &ai);
 	if (error)
 		goto bad;
