@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.34 2001/10/14 12:36:09 blymn Exp $
+.\"	$NetBSD: curses.3,v 1.35 2001/10/14 19:58:16 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ must be called before any of the other routines that deal with color are used.
 .%T Screen Updating and Cursor Movement Optimization: A Library Package
 .%A Ken Arnold
 .Re
-.Sh AUTHOR
+.Sh AUTHORS
 .An Ken Arnold
 .Sh FUNCTIONS
 .Bl -column "subwin(win,lines,cols,begin_y,begin_x)"
@@ -108,9 +108,9 @@ and applies this rendition to
 .It color_content(c, r, g, b)	get rgb values of color
 .It copywin(srcwin, dstwin, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, overlay)
  Copy rectangle from
-.Em srcwin 
-to 
-.Em dstwin.
+.Em srcwin
+to
+.Em dstwin .
 If overlay is true then copy is nondestructive.
 .It curs_set(vis)	change cursor visibility, 0 is invisible, 1 is
 normal, 2 is high visibility.  Returns previous value on success.
@@ -124,9 +124,9 @@ milliseconds using terminal pad character.
 .It delwin(win)	delete
 .Em win
 .It derwin(win,lines,cols,begin_y,begin_x)\ 	create a subwindow
-relative to 
-.Em win.
-.It doupdate()	make current screen look like virtual screen 
+relative to
+.Em win .
+.It doupdate()	make current screen look like virtual screen
 .It dupwin(win)	duplicate
 .Em win
 .It echo()	set echo mode
@@ -219,12 +219,12 @@ is always ignored.
 .It mvderwin(win, y, x)		move window to (y,x) within parent window.
 .It mvgetnstr(str, len)	move to
 .Em y ,
-.Em x 
+.Em x
 and get a string of maximun n characters through
 .Em stdscr
 .It mvgetstr(str, n)	move to
 .Em y ,
-.Em x 
+.Em x
 and get a string through
 .Em stdscr
 .It mvhline(y, x, ch, count)	move to
@@ -235,37 +235,37 @@ and draw a horizontal line of character
 for
 .Em count
 characters.
-.It mvvline(y, x, ch, count)	move to 
+.It mvvline(y, x, ch, count)	move to
 .Em y ,
 .Em x
-and draw a vertical line of character 
+and draw a vertical line of character
 .Em ch
 for
 .Em count
 characters.
 .It mvwgetnstr(str, len)	move to
 .Em y ,
-.Em x 
+.Em x
 and get a string of maximun n characters through
 .Em win
 .It mvwgetstr(str, n)	move to
 .Em y ,
-.Em x 
+.Em x
 and get a string through
 .Em win
-.It mvwhline(win, y, x, ch, count)	move to 
+.It mvwhline(win, y, x, ch, count)	move to
 .Em y ,
 .Em x
-and draw a horizontal line of character 
+and draw a horizontal line of character
 .Em ch
 for
 .Em count
 characters on window
 .Em win .
-.It mvwvline(win, y, x, ch, count)	move to 
+.It mvwvline(win, y, x, ch, count)	move to
 .Em y ,
 .Em x
-and draw a vertical line of character 
+and draw a vertical line of character
 .Em ch
 for
 .Em count
@@ -417,7 +417,7 @@ n lines
 .Em win
 .It wtimeout(win,delay)	set blocking or non-blocking read for
 .Em win
-.It wtouchln(win, line, n, changed)	If 
+.It wtouchln(win, line, n, changed)	If
 .Em changed
 is 1 then touch
 .Em n
@@ -425,7 +425,7 @@ lines starting at
 .Em line
 in window
 .Em win .
-If 
+If
 .Em changed
 is 0 then untouch
 .Em n
