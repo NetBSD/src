@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.35 2000/08/17 04:15:43 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.36 2000/08/19 19:36:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ struct simplelock {
 
 #ifdef LOCKDEBUG
 #define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, NULL, 0,	\
-				  0, { NULL, NULL }, 0 }
+				  0, { NULL, NULL }, LK_NOCPU }
 #else
 #define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
 #endif
