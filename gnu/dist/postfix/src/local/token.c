@@ -98,6 +98,7 @@
 #include <tok822.h>
 #include <mail_params.h>
 #include <bounce.h>
+#include <defer.h>
 
 /* Application-specific. */
 
@@ -207,6 +208,10 @@ int     deliver_token_stream(LOCAL_STATE state, USER_ATTR usr_attr,
 		break;
 	}
     }
+    if (vstream_ferror(fp))
+	status = defer_append(BOUNCE_FLAG_KEEP,
+			      BOUNCE_ATTR(state.msg_attr),
+			      "error reading .forward file: %m");
     vstring_free(buf);
     return (status);
 }

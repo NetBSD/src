@@ -16,7 +16,6 @@ extern void smtpd_check_init(void);
 extern char *smtpd_check_client(SMTPD_STATE *);
 extern char *smtpd_check_helo(SMTPD_STATE *, char *);
 extern char *smtpd_check_mail(SMTPD_STATE *, char *);
-extern char *smtpd_check_rcptmap(SMTPD_STATE *, char *);
 extern char *smtpd_check_size(SMTPD_STATE *, off_t);
 extern char *smtpd_check_rcpt(SMTPD_STATE *, char *);
 extern char *smtpd_check_etrn(SMTPD_STATE *, char *);

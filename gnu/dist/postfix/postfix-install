@@ -81,36 +81,37 @@
 #	The built-in default directory name is the current directory.
 #	This parameter setting is not recorded in the installed main.cf file.
 # .IP config_directory
-#	The destination directory for Postfix configuration files.
+#	The final destination directory for Postfix configuration files.
 #	The built-in default directory name is /etc/postfix.
-#	This parameter setting is not recorded in the installed main.cf file.
+#	This parameter setting is not recorded in the installed main.cf file
+#	and can be changed only by recompiling Postfix.
 # .IP daemon_directory
-#	The destination directory for Postfix daemon programs. This directory
-#	should not be in the command search path of any users.
+#	The final destination directory for Postfix daemon programs. This
+#	directory should not be in the command search path of any users.
 #	The built-in default directory name is /usr/libexec/postfix.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP command_directory
-#	The destination directory for Postfix administrative commands. This
-#	directory should be in the command search path of adminstrative users.
-#	The built-in default directory name is system dependent.
+#	The final destination directory for Postfix administrative commands.
+#	This directory should be in the command search path of adminstrative
+#	users. The built-in default directory name is system dependent.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP queue_directory
-#	The destination directory for Postfix queues.
+#	The final destination directory for Postfix queues.
 #	The built-in default directory name is /var/spool/postfix.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP sendmail_path
-#	The full destination pathname for the Postfix sendmail command.
+#	The final destination pathname for the Postfix sendmail command.
 #	This is the Sendmail-compatible mail posting interface.
 #	The built-in default pathname is system dependent.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP newaliases_path
-#	The full destination pathname for the Postfix newaliases command.
+#	The final destination pathname for the Postfix newaliases command.
 #	This is the Sendmail-compatible command to build alias databases
 #	for the Postfix local delivery agent.
 #	The built-in default pathname is system dependent.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP mailq_path
-#	The full destination pathname for the Postfix mailq command.
+#	The final destination pathname for the Postfix mailq command.
 #	This is the Sendmail-compatible command to list the mail queue.
 #	The built-in default pathname is system dependent.
 #	This parameter setting is recorded in the installed main.cf file.
@@ -286,30 +287,30 @@ distribution to other machines."
 tempdir_prompt="a directory for scratch files while installing
 Postfix.  You must have write permission in this directory."
 
-config_directory_prompt="the destination directory for installed
-Postfix configuration files."
+config_directory_prompt="the final destination directory for
+installed Postfix configuration files."
 
-daemon_directory_prompt="the destination directory for installed
-Postfix daemon programs.  This directory should not be in the
-command search path of any users."
+daemon_directory_prompt="the final destination directory for
+installed Postfix daemon programs.  This directory should not be
+in the command search path of any users."
 
-command_directory_prompt="the destination directory for installed
-Postfix administrative commands.  This directory should be in the
-command search path of adminstrative users."
+command_directory_prompt="the final destination directory for
+installed Postfix administrative commands.  This directory should
+be in the command search path of adminstrative users."
 
-queue_directory_prompt="the destination directory for Postfix
+queue_directory_prompt="the final destination directory for Postfix
 queues."
 
-sendmail_path_prompt="the full destination pathname for the installed
-Postfix sendmail command. This is the Sendmail-compatible mail
-posting interface."
+sendmail_path_prompt="the final destination pathname for the
+installed Postfix sendmail command. This is the Sendmail-compatible
+mail posting interface."
 
-newaliases_path_prompt="the full destination pathname for the
+newaliases_path_prompt="the final destination pathname for the
 installed Postfix newaliases command.  This is the Sendmail-compatible
 command to build alias databases for the Postfix local delivery
 agent."
 
-mailq_path_prompt="the full destination pathname for the installed
+mailq_path_prompt="the final destination pathname for the installed
 Postfix mailq command.  This is the Sendmail-compatible mail queue
 listing command."
 

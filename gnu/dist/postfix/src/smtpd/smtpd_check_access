@@ -50,6 +50,7 @@ dsn.rfc-ignorant.org	$rbl_code client=$client
 rejecttext@bad.domain	reject text
 filter@filter.domain	filter
 filtertext@filter.domain	filter text
+filtertexttext@filter.domain	filter text:text
 hold@hold.domain	hold
 holdtext@hold.domain	hold text
 discard@hold.domain	discard

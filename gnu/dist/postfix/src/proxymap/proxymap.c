@@ -78,6 +78,8 @@
 /*	The proxymap server opens only tables that are approved via the
 /*	\fBproxy_read_maps\fR configuration parameter, does not talk to
 /*	users, and can run at fixed low privilege, chrooted or not.
+/*	However, running the proxymap server chrooted severely limits
+/*	usability, because it can open only chrooted tables.
 /*
 /*	The proxymap server is not a trusted daemon process, and must
 /*	not be used to look up sensitive information such as user or
@@ -348,7 +350,7 @@ DICT   *dict_proxy_open(const char *map, int open_flags, int dict_flags)
 
 static void post_jail_init(char *unused_name, char **unused_argv)
 {
-    const char *sep = " \t\r\n";
+    const char *sep = ", \t\r\n";
     char   *saved_filter;
     char   *bp;
     char   *type_name;

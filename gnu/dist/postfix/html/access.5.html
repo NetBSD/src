@@ -34,63 +34,33 @@ ACCESS(5)                                               ACCESS(5)
        different way as described below.
 
 <b>TABLE</b> <b>FORMAT</b>
-       The format of the access table is as follows:
+       The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <i>pattern</i> <i>action</i>
               When <i>pattern</i> matches a mail address, domain or host
               address, perform the corresponding <i>action</i>.
 
        blank lines and comments
-              Empty  lines and whitespace-only lines are ignored,
-              as are lines whose first  non-whitespace  character
+              Empty lines and whitespace-only lines are  ignored,
+              as  are  lines whose first non-whitespace character
               is a `#'.
 
        multi-line text
-              A  logical  line starts with non-whitespace text. A
-              line that starts with whitespace continues a  logi-
+              A logical line starts with non-whitespace  text.  A
+              line  that starts with whitespace continues a logi-
               cal line.
 
 <b>EMAIL</b> <b>ADDRESS</b> <b>PATTERNS</b>
        With lookups from indexed files such as DB or DBM, or from
-       networked tables such as NIS, LDAP or SQL,  the  following
-       lookup patterns are examined in the order as listed:
+       networked  tables  such  as NIS, LDAP or SQL, patterns are
+       tried in the order as listed below:
 
        <i>user</i>@<i>domain</i>
               Matches the specified mail address.
 
        <i>domain.tld</i>
-              Matches  <i>domain.tld</i>  as the domain part of an email
+              Matches <i>domain.tld</i> as the domain part of  an  email
               address.
-
-              The pattern <i>domain.tld</i> also matches subdomains, but
-              only when the string <b>smtpd</b><i>_</i><b>access</b><i>_</i><b>maps</b> is listed in
-              the Postfix  <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>  con-
-              figuration setting.  Otherwise, specify <i>.domain.tld</i>
-              (note the initial dot) in  order  to  match  subdo-
-              mains.
-
-       <i>user</i>@  Matches  all mail addresses with the specified user
-              part.
-
-       Note: lookup of the null sender address  is  not  possible
-       with  some types of lookup table. By default, Postfix uses
-       &lt;&gt; as the lookup key for  such  addresses.  The  value  is
-       specified  with the <b>smtpd</b><i>_</i><b>null</b><i>_</i><b>access</b><i>_</i><b>lookup</b><i>_</i><b>key</b> parameter
-       in the Postfix <b>main.cf</b> file.
-
-<b>ADDRESS</b> <b>EXTENSION</b>
-       When a mail address localpart contains the optional recip-
-       ient  delimiter  (e.g., <i>user+foo</i>@<i>domain</i>), the lookup order
-       becomes: <i>user+foo</i>@<i>domain</i>, <i>user</i>@<i>domain</i>, <i>domain</i>,  <i>user+foo</i>@,
-       and <i>user</i>@.
-
-<b>HOST</b> <b>NAME/ADDRESS</b> <b>PATTERNS</b>
-       With lookups from indexed files such as DB or DBM, or from
-       networked tables such as NIS, LDAP or SQL,  the  following
-       lookup patterns are examined in the order as listed:
-
-       <i>domain.tld</i>
-              Matches <i>domain.tld</i>.
 
               The pattern <i>domain.tld</i> also matches subdomains, but
               only when the string <b>smtpd</b><i>_</i><b>access</b><i>_</i><b>maps</b> is listed in
@@ -99,15 +69,50 @@ ACCESS(5)                                               ACCESS(5)
               (note  the  initial  dot)  in order to match subdo-
               mains.
 
+       <i>user</i>@  Matches all mail addresses with the specified  user
+              part.
+
+       Note:  lookup  of  the null sender address is not possible
+       with some types of lookup table. By default, Postfix  uses
+       &lt;&gt;  as  the  lookup  key  for such addresses. The value is
+       specified with the <b>smtpd</b><i>_</i><b>null</b><i>_</i><b>access</b><i>_</i><b>lookup</b><i>_</i><b>key</b>  parameter
+       in the Postfix <b>main.cf</b> file.
+
+<b>ADDRESS</b> <b>EXTENSION</b>
+       When a mail address localpart contains the optional recip-
+       ient delimiter (e.g., <i>user+foo</i>@<i>domain</i>), the  lookup  order
+       becomes:  <i>user+foo</i>@<i>domain</i>, <i>user</i>@<i>domain</i>, <i>domain</i>, <i>user+foo</i>@,
+       and <i>user</i>@.
+
+<b>HOST</b> <b>NAME/ADDRESS</b> <b>PATTERNS</b>
+       With lookups from indexed files such as DB or DBM, or from
+       networked  tables  such as NIS, LDAP or SQL, the following
+       lookup patterns are examined in the order as listed:
+
+       <i>domain.tld</i>
+              Matches <i>domain.tld</i>.
+
+              The pattern <i>domain.tld</i> also matches subdomains, but
+              only when the string <b>smtpd</b><i>_</i><b>access</b><i>_</i><b>maps</b> is listed in
+              the Postfix  <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>  con-
+              figuration setting.  Otherwise, specify <i>.domain.tld</i>
+              (note the initial dot) in  order  to  match  subdo-
+              mains.
+
        <i>net.work.addr.ess</i>
 
        <i>net.work.addr</i>
 
        <i>net.work</i>
 
-       <i>net</i>    Matches any host address in the specified  network.
-              A  network  address  is  a  sequence of one or more
+       <i>net</i>    Matches  any host address in the specified network.
+              A network address is a  sequence  of  one  or  more
               octets separated by ".".
+
+              Note:  CIDR  notation (network/netmask) is not sup-
+              ported with lookups from indexed files such  as  DB
+              or  DBM, or from networked tables such as NIS, LDAP
+              or SQL.
 
 <b>ACTIONS</b>
        [<b>45</b>]<i>NN</i> <i>text</i>

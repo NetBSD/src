@@ -121,8 +121,19 @@ static void master_sigchld(int sig, int code, struct sigcontext * scp)
 
 static void master_sigchld(int unused_sig)
 {
+    int     saved_errno = errno;
+
+    /*
+     * WARNING WARNING WARNING.
+     * 
+     * This code runs at unpredictable moments, as a signal handler. Don't put
+     * any code here other than for setting a global flag, or code that is
+     * intended to be run within a signal handler. Restore errno in case we
+     * are interrupting the epilog of a failed system call.
+     */
     if (write(SIG_PIPE_WRITE_FD, "", 1) != 1)
 	msg_warn("write to SIG_PIPE_WRITE_FD failed: %m");
+    errno = saved_errno;
 }
 
 /* master_sig_event - called upon return from select() */

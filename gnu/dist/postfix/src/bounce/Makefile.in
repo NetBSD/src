@@ -126,6 +126,7 @@ bounce_notify_util.o: ../../include/vstring.h
 bounce_notify_util.o: ../../include/vbuf.h
 bounce_notify_util.o: ../../include/vstream.h
 bounce_notify_util.o: ../../include/line_wrap.h
+bounce_notify_util.o: ../../include/stringops.h
 bounce_notify_util.o: ../../include/mail_queue.h
 bounce_notify_util.o: ../../include/quote_822_local.h
 bounce_notify_util.o: ../../include/quote_flags.h

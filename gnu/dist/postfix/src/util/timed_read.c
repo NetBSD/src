@@ -48,23 +48,36 @@
 
 #include <sys_defs.h>
 #include <unistd.h>
+#include <errno.h>
 
 /* Utility library. */
 
-#include "iostuff.h"
+#include <msg.h>
+#include <iostuff.h>
 
 /* timed_read - read with deadline */
 
 int     timed_read(int fd, void *buf, unsigned len,
 		           int timeout, void *unused_context)
 {
+    int     ret;
 
     /*
      * Wait for a limited amount of time for something to happen. If nothing
      * happens, report an ETIMEDOUT error.
+     * 
+     * XXX Solaris 8 read() fails with EAGAIN after read-select() returns
+     * success.
      */
-    if (timeout > 0 && read_wait(fd, timeout) < 0)
-	return (-1);
-    else
-	return (read(fd, buf, len));
+    for (;;) {
+	if (timeout > 0 && read_wait(fd, timeout) < 0)
+	    return (-1);
+	if ((ret = read(fd, buf, len)) < 0 && timeout > 0 && errno == EAGAIN) {
+	    msg_warn("read() returns EAGAIN on a readable file descriptor!");
+	    msg_warn("pausing to avoid going into a tight select/read loop!");
+	    sleep(1);
+	} else {
+	    return (ret);
+	}
+    }
 }

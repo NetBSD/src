@@ -89,6 +89,7 @@
 #include <vstream.h>
 #include <set_ugid.h>
 #include <safe_open.h>
+#include <watchdog.h>
 #include <stringops.h>
 
 /* Global library. */
@@ -178,6 +179,8 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	if ((type = rec_get(qfile, buf, var_line_limit)) < 0
 	    || strchr(expected, type) == 0)
 	    return (file_read_error(info, type));
+	if (msg_verbose)
+	    msg_info("%s: read %c %s", info->id, type, vstring_str(buf));
 	if (type == *expected)
 	    break;
 	if (type == REC_TYPE_FROM)
@@ -193,6 +196,8 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	    if (info->rcpt == 0)
 		info->rcpt = mystrdup(vstring_str(buf));
 	if (type == REC_TYPE_TIME)
+	    continue;
+	if (type == REC_TYPE_SIZE)
 	    continue;
 	if (type == REC_TYPE_ATTR) {
 	    if ((error_text = split_nameval(vstring_str(buf), &attr_name,
@@ -472,6 +477,10 @@ static void pickup_service(char *unused_buf, int unused_len,
      * still being written, or garbage. Leave it up to the sysadmin to remove
      * garbage. Keep scanning the queue directory until we stop removing
      * files from it.
+     * 
+     * When we find a file, stroke the watchdog so that it will not bark while
+     * some application is keeping us busy by injecting lots of mail into the
+     * maildrop directory.
      */
     queue_name = MAIL_QUEUE_MAILDROP;		/* XXX should be a list */
     do {
@@ -481,6 +490,7 @@ static void pickup_service(char *unused_buf, int unused_len,
 	    if (mail_open_ok(queue_name, id, &info.st, &path) == MAIL_OPEN_YES) {
 		pickup_init(&info);
 		info.path = mystrdup(path);
+		watchdog_pat();
 		if (pickup_file(&info) == REMOVE_MESSAGE_FILE) {
 		    if (REMOVE(info.path))
 			msg_warn("remove %s: %m", info.path);

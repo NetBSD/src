@@ -160,8 +160,11 @@ static void cleanup_extracted_process(CLEANUP_STATE *state, int type, char *buf,
 	myfree(state->orig_rcpt);
 	state->orig_rcpt = 0;
 	return;
+    } else if (type == REC_TYPE_DONE) {
+	return;
     } else if (type == REC_TYPE_ORCP) {
 	state->orig_rcpt = mystrdup(buf);
+	return;
     }
     if (type != REC_TYPE_END) {
 	cleanup_out(state, type, buf, len);

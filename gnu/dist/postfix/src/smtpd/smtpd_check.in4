@@ -11,6 +11,7 @@ sender_restrictions hash:./smtpd_check_access
 mail rejecttext@bad.domain
 mail filter@filter.domain
 mail filtertext@filter.domain
+mail filtertexttext@filter.domain
 mail hold@hold.domain
 mail holdtext@hold.domain
 mail discard@hold.domain

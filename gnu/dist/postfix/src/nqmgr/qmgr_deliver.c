@@ -275,7 +275,7 @@ static void qmgr_deliver_update(int unused_event, char *context)
      * No problems detected. Mark the transport and queue as alive. The queue
      * itself won't go away before we dispose of the current queue entry.
      */
-    if (status == 0) {
+    if (VSTRING_LEN(reason) == 0) {
 	qmgr_transport_unthrottle(transport);
 	qmgr_queue_unthrottle(queue);
     }

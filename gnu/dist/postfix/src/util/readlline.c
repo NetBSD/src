@@ -101,6 +101,7 @@ VSTRING *readlline(VSTRING *buf, VSTREAM *fp, int *lineno)
 		break;
 	}
     }
+    VSTRING_TERMINATE(buf);
 
     /*
      * Invalid input: continuing text without preceding text. Allowing this
@@ -118,6 +119,5 @@ VSTRING *readlline(VSTRING *buf, VSTREAM *fp, int *lineno)
     /*
      * Done.
      */
-    VSTRING_TERMINATE(buf);
     return (LEN(buf) > 0 ? buf : 0);
 }

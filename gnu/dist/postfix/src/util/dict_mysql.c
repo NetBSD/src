@@ -127,6 +127,7 @@ typedef struct {
 static PLMYSQL *plmysql_init(char *hostnames[], int);
 static MYSQL_RES *plmysql_query(PLMYSQL *, const char *, char *, char *, char *);
 static void plmysql_dealloc(PLMYSQL *);
+static void plmysql_close_host(HOST *);
 static void plmysql_down_host(HOST *);
 static void plmysql_connect_single(HOST *, char *, char *, char *);
 static int plmysql_ready_reconn(HOST *);
@@ -246,7 +247,7 @@ static MYSQL_RES *plmysql_query(PLMYSQL *PLDB,
 	    if (msg_verbose)
 		msg_info("dict_mysql: closing unnessary connection to %s",
 			 host->hostname);
-	    plmysql_down_host(host);
+	    plmysql_close_host(host);
 	}
 	/* try to connect for the first time if we don't have a result yet */
 	if (res == 0 && host->stat == STATUNTRIED) {
@@ -331,18 +332,24 @@ static void plmysql_connect_single(HOST *host, char *dbname, char *username, cha
 	myfree(hostname);
 }
 
+/* plmysql_close_host - close an established MySQL connection */
+static void plmysql_close_host(HOST *host)
+{
+    mysql_close(host->db);
+    host->db = 0;
+    host->stat = STATUNTRIED;
+}
+
 /*
- * plmysql_down_host - mark a HOST down update ts if marked down
- * for the first time so that we'll know when to retry the connection
+ * plmysql_down_host - close a failed connection AND set a "stay away from 
+ * this host" timer
  */
 static void plmysql_down_host(HOST *host)
 {
-    if (host->stat != STATFAIL) {
-	host->ts = time((time_t *) 0) + RETRY_CONN_INTV;
-	host->stat = STATFAIL;
-    }
     mysql_close(host->db);
     host->db = 0;
+    host->ts = time((time_t *) 0) + RETRY_CONN_INTV;
+    host->stat = STATFAIL;
 }
 
 /**********************************************************************

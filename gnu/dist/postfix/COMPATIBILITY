@@ -31,7 +31,6 @@ mailertable	yes (it's called transport)
 mailq		yes
 majordomo	yes (edit approve script to delete /^delivered-to:/i)
 mime		yes (including 8bit to quoted-printable conversion)
-mime conversion	not yet; postfix uses just-send-eight
 mysql tables	yes (contributed)
 netinfo tables	yes (contributed)
 newaliases	yes (main alias database only)

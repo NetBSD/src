@@ -337,6 +337,10 @@ static int deliver_message(DELIVER_REQUEST *request, char **unused_argv)
 	    lmtp_quit(state);
 	    lmtp_chat_reset(state);
 	    state->session = lmtp_session_free(state->session);
+#ifdef USE_SASL_AUTH
+	    if (var_lmtp_sasl_enable)
+		lmtp_sasl_cleanup(state);
+#endif
 	}
 
 	/*
@@ -346,6 +350,10 @@ static int deliver_message(DELIVER_REQUEST *request, char **unused_argv)
 	else if (lmtp_rset(state) != 0) {
 	    lmtp_chat_reset(state);
 	    state->session = lmtp_session_free(state->session);
+#ifdef USE_SASL_AUTH
+	    if (var_lmtp_sasl_enable)
+		lmtp_sasl_cleanup(state);
+#endif
 	}
 
 	/*
@@ -380,6 +388,10 @@ static int deliver_message(DELIVER_REQUEST *request, char **unused_argv)
 	 */
 	else if (lmtp_lhlo(state) != 0) {
 	    state->session = lmtp_session_free(state->session);
+#ifdef USE_SASL_AUTH
+	    if (var_lmtp_sasl_enable)
+		lmtp_sasl_cleanup(state);
+#endif
 	}
 
 	/*

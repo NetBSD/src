@@ -142,7 +142,7 @@
 /*	configuration parameter.
 /* .IP \fBvirtual_minimum_uid\fR
 /*	Specifies a minimum uid that will be accepted as a return from
-/*	a \fBvirtual_owner_maps\fR or \fBvirtual_uid_maps\fR lookup.
+/*	a \fBvirtual_uid_maps\fR lookup.
 /*	Returned values less than this will be rejected, and the message
 /*	will be deferred.
 /* .IP \fBvirtual_uid_maps\fR

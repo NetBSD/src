@@ -64,6 +64,7 @@ pickup.o: ../../include/vbuf.h
 pickup.o: ../../include/vstream.h
 pickup.o: ../../include/set_ugid.h
 pickup.o: ../../include/safe_open.h
+pickup.o: ../../include/watchdog.h
 pickup.o: ../../include/stringops.h
 pickup.o: ../../include/mail_queue.h
 pickup.o: ../../include/mail_open_ok.h

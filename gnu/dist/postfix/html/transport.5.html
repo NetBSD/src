@@ -17,25 +17,44 @@ TRANSPORT(5)                                         TRANSPORT(5)
        relay hosts. The mapping is used by the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>
        daemon.
 
-       Normally, the <b>transport</b> table is specified as a text  file
-       that  serves  as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a> command.  The
-       result, an indexed file in <b>dbm</b> or <b>db</b> format, is  used  for
-       fast  searching  by  the  mail system. Execute the command
-       <b>postmap</b> <b>/etc/postfix/transport</b> in  order  to  rebuild  the
+       This mapping overrides the default routing that  is  built
+       into Postfix:
+
+       <b>mydestination</b>
+              A  list of domains that is by default delivered via
+              <b>$local</b><i>_</i><b>transport</b>.
+
+       <b>virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>
+              A list of domains that is by default delivered  via
+              <b>$virtual</b><i>_</i><b>transport</b>.
+
+       <b>relay</b><i>_</i><b>domains</b>
+              A  list of domains that is by default delivered via
+              <b>$relay</b><i>_</i><b>transport</b>.
+
+       any other destination
+              Mail for any other destination is by default deliv-
+              ered via <b>$default</b><i>_</i><b>transport</b>.
+
+       Normally,  the <b>transport</b> table is specified as a text file
+       that serves as  input  to  the  <a href="postmap.1.html"><b>postmap</b>(1)</a>  command.   The
+       result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
+       fast searching by the mail  system.  Execute  the  command
+       <b>postmap</b>  <b>/etc/postfix/transport</b>  in  order  to rebuild the
        indexed file after changing the transport table.
 
-       When  the  table  is provided via other means such as NIS,
-       LDAP or SQL, the same lookups are  done  as  for  ordinary
+       When the table is provided via other means  such  as  NIS,
+       LDAP  or  SQL,  the  same lookups are done as for ordinary
        indexed files.
 
-       Alternatively,  the  table  can  be provided as a regular-
+       Alternatively, the table can be  provided  as  a  regular-
        expression map where patterns are given as regular expres-
-       sions.  In  that  case, the lookups are done in a slightly
-       different way as described in section "REGULAR  EXPRESSION
+       sions. In that case, the lookups are done  in  a  slightly
+       different  way as described in section "REGULAR EXPRESSION
        TABLES".
 
 <b>TABLE</b> <b>FORMAT</b>
-       The format of the transport table is as follows:
+       The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <i>pattern</i> <i>result</i>
               When  <i>pattern</i>  matches  the  recipient  address  or

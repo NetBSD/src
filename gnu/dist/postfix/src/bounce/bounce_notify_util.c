@@ -151,6 +151,7 @@
 #include <vstring.h>
 #include <vstream.h>
 #include <line_wrap.h>
+#include <stringops.h>
 
 /* Global library. */
 

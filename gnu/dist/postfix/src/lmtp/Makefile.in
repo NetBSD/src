@@ -130,6 +130,7 @@ lmtp_connect.o: ../../include/iostuff.h
 lmtp_connect.o: ../../include/timed_connect.h
 lmtp_connect.o: ../../include/stringops.h
 lmtp_connect.o: ../../include/host_port.h
+lmtp_connect.o: ../../include/sane_connect.h
 lmtp_connect.o: ../../include/mail_params.h
 lmtp_connect.o: ../../include/mail_proto.h
 lmtp_connect.o: ../../include/attr.h

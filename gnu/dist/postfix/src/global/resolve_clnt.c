@@ -59,8 +59,8 @@
 /* .IP RESOLVE_CLASS_LOCAL
 /*	The address domain matches $mydestination or $inet_interfaces.
 /* .IP RESOLVE_CLASS_ALIAS
-/*	The address domain matches $virtual_alias_domains (simulated
-/*	virtual domains, where each address is redirected to a real
+/*	The address domain matches $virtual_alias_domains (virtual
+/*	alias domains, where each address is redirected to a real
 /*	local or remote address).
 /* .IP RESOLVE_CLASS_VIRTUAL
 /*	The address domain matches $virtual_mailbox_domains (true

@@ -808,7 +808,25 @@ int     smtp_xfer(SMTP_STATE *state)
 		prev_type = rec_type;
 	    }
 
-	    if (prev_type == REC_TYPE_CONT)	/* missing newline at end */
+	    if (state->mime_state) {
+
+		/*
+		 * The cleanup server normally ends MIME content with a
+		 * normal text record. The following code is needed to flush
+		 * an internal buffer when someone submits 8-bit mail not
+		 * ending in newline via /usr/sbin/sendmail while MIME input
+		 * processing is turned off, and MIME 8bit->7bit conversion
+		 * is requested upon delivery.
+		 */
+		mime_errs =
+		    mime_state_update(state->mime_state, rec_type, "", 0);
+		if (mime_errs) {
+		    smtp_mesg_fail(state, 554,
+				   "MIME 7-bit conversion failed: %s",
+				   mime_state_error(mime_errs));
+		    RETURN(0);
+		}
+	    } else if (prev_type == REC_TYPE_CONT)	/* missing newline */
 		smtp_fputs("", 0, session->stream);
 	    if ((state->features & SMTP_FEATURE_MAYBEPIX) != 0
 		&& request->arrival_time < vstream_ftime(session->stream)

@@ -285,33 +285,16 @@ int     mail_queue_id_ok(const char *queue_id)
 {
     const char *cp;
 
-    if (*queue_id == 0 || strlen(queue_id) > 100)
+    if (*queue_id == 0 || strlen(queue_id) > VALID_HOSTNAME_LEN)
 	return (0);
 
     /*
-     * OK if in in time+inum form.
+     * OK if in time+inum form or in host_domain_tld form.
      */
-    for (cp = queue_id; /* void */ ; cp++) {
-	if (*cp == 0)
-	    return (1);
-	if (!ISALNUM(*cp))
-	    break;
-    }
-
-    /*
-     * BAD if in time.pid form.
-     */
-    for (cp = queue_id; /* void */ ; cp++) {
-	if (*cp == 0)
+    for (cp = queue_id; *cp; cp++)
+	if (!ISALNUM(*cp) && *cp != '_')
 	    return (0);
-	if (!ISDIGIT(*cp) && *cp != '.')
-	    break;
-    }
-
-    /*
-     * OK if in valid hostname form.
-     */
-    return (valid_hostname(queue_id, DO_GRIPE));
+    return (1);
 }
 
 /* mail_queue_enter - make mail queue entry with locally-unique name */

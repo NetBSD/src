@@ -48,23 +48,42 @@
 
 #include <sys_defs.h>
 #include <unistd.h>
+#include <errno.h>
 
 /* Utility library. */
 
-#include "iostuff.h"
+#include <msg.h>
+#include <iostuff.h>
 
 /* timed_write - write with deadline */
 
 int     timed_write(int fd, void *buf, unsigned len,
 		            int timeout, void *unused_context)
 {
+    int     ret;
 
     /*
      * Wait for a limited amount of time for something to happen. If nothing
      * happens, report an ETIMEDOUT error.
+     * 
+     * XXX Solaris 8 read() fails with EAGAIN after read-select() returns
+     * success. The code below exists just in case their write implementation
+     * is equally broken.
+     * 
+     * This condition may also be found on systems where select() returns
+     * success on pipes with less than PIPE_BUF bytes of space, and with
+     * badly designed software where multiple writers are fighting for access
+     * to the same resource.
      */
-    if (timeout > 0 && write_wait(fd, timeout) < 0)
-	return (-1);
-    else
-	return (write(fd, buf, len));
+    for (;;) {
+	if (timeout > 0 && write_wait(fd, timeout) < 0)
+	    return (-1);
+	if ((ret = write(fd, buf, len)) < 0 && timeout > 0 && errno == EAGAIN) {
+	    msg_warn("write() returns EAGAIN on a writable file descriptor!");
+	    msg_warn("pausing to avoid going into a tight select/write loop!");
+	    sleep(1);
+	} else {
+	    return (ret);
+	}
+    }
 }

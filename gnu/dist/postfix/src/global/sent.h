@@ -35,6 +35,5 @@ extern int vsent(const char *, const char *, const char *, const char *,
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*--*/
-/**INDENT** Error@17: Unmatched #endif */
 
 #endif
