@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.93 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.94 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -272,3 +272,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[thorpej 20030131]
 	inetd(8): Use kqueue(2) for enhanced performance and scalability.
 		[tron 20030212]
+	/etc/security, security.conf(5): Allow more flexibility in warnings
+		from check_passwd and check_mtree.  [jhawk 20030213]
