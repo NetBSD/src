@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.27 2004/03/26 19:55:13 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.27.2.1 2004/07/14 09:00:12 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -470,6 +470,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 
 	do {
 		set_ptn_menu(&pi);
+		current_cylsize = dlcylsize;
 		process_menu(pi.menu_no, &pi);
 	} while (pi.free_space < 0 || pi.free_parts < 0);
 
