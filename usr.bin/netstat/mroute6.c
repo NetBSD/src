@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute6.c,v 1.3 1999/11/19 10:44:34 bouyer Exp $	*/
+/*	$NetBSD: mroute6.c,v 1.4 1999/12/02 14:31:22 tron Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -78,9 +78,9 @@
 
 #include <netinet/in.h>
 
-#define KERNEL 1
+#define _KERNEL 1
 #include <netinet6/ip6_mroute.h>
-#undef KERNEL
+#undef _KERNEL
 
 #include <stdio.h>
 #include "netstat.h"
