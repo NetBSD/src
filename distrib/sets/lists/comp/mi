@@ -226,6 +226,7 @@
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofisa
 ./usr/include/dev/ofisa/ofisavar.h
+./usr/include/dev/ofw/ofw_pci.h
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/if_devar.h
