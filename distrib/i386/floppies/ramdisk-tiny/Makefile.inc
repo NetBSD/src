@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2000/11/01 07:57:58 garbled Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2001/10/10 05:13:53 enami Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -16,7 +16,7 @@ MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
-MTREE=		${COMMONDIR}/mtree.conf
+MTREECONF=	${COMMONDIR}/mtree.conf
 
 CRUNCHGEN?=	crunchgen
 
@@ -28,7 +28,7 @@ realall: ${AUXTARGETS} ${CBIN}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	mtree -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/08/23 17:19:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2001/10/10 05:13:55 enami Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -49,7 +49,7 @@ MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
-MTREE=		mtree.conf
+MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
 DISKTYPE?=	miniroot
@@ -63,14 +63,14 @@ netbsd.INSTALL: ${KERN} ${IMAGE}
 	mv netbsd.tmp ${.TARGET}
 
 
-${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} dot.profile
+${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS} dot.profile
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
 	-disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
 	#newfs -B ${FS_END} -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	newfs -B ${FS_END} -m 0 -o space ${VND_RDEV} ${DISKTYPE}
 	mount -o softdep ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
+	mtree -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
