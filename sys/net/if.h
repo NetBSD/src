@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.52 2000/07/04 19:09:17 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.53 2000/07/20 18:40:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -117,6 +117,13 @@ struct ether_header;
 struct ifnet;
 
 /*
+ * Length of interface external name, including terminating '\0'.
+ * Note: this is the same size as a generic device's external name.
+ */
+#define	IFNAMSIZ	16
+#define	IF_NAMESIZE	IFNAMSIZ
+
+/*
  * Structure describing a `cloning' interface.
  */
 struct if_clone {
@@ -130,6 +137,15 @@ struct if_clone {
 
 #define	IF_CLONE_INITIALIZER(name, create, destroy)			\
 	{ { 0 }, name, sizeof(name) - 1, create, destroy }
+
+/*
+ * Structure used to query names of interface cloners.
+ */
+struct if_clonereq {
+	int	ifcr_total;		/* total cloners (out) */
+	int	ifcr_count;		/* room for this many in user buffer */
+	char	*ifcr_buffer;		/* buffer for cloner names */
+};
 
 /*
  * Structure defining statistics and other data kept regarding a network
@@ -198,13 +214,6 @@ struct if_data14 {
  * (Would like to call this struct ``if'', but C isn't PL/1.)
  */
 TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
-
-/*
- * Length of interface external name, including terminating '\0'.
- * Note: this is the same size as a generic device's external name.
- */
-#define	IFNAMSIZ	16
-#define	IF_NAMESIZE	IFNAMSIZ
 
 struct ifnet {				/* and the entries */
 	void	*if_softc;		/* lower-level data for this if */
