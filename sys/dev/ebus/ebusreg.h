@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusreg.h,v 1.4 2002/03/21 04:15:29 uwe Exp $	*/
+/*	$NetBSD: ebusreg.h,v 1.5 2005/01/11 04:23:14 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -73,37 +73,37 @@
  */
 
 struct ebus_regs {
-	u_int32_t	hi;		/* high bits of physaddr */
-	u_int32_t	lo;
-	u_int32_t	size;
+	uint32_t	hi;		/* high bits of physaddr */
+	uint32_t	lo;
+	uint32_t	size;
 };
 
 #define	EBUS_ADDR_FROM_REG(reg)		BUS_ADDR((reg)->hi, (reg)->lo)
 
 
 struct ebus_ranges {
-	u_int32_t	child_hi;	/* child high phys addr */
-	u_int32_t	child_lo;	/* child low phys addr */
-	u_int32_t	phys_hi;	/* parent high phys addr */
-	u_int32_t	phys_mid;	/* parent mid phys addr */
-	u_int32_t	phys_lo;	/* parent low phys addr */
-	u_int32_t	size;
+	uint32_t	child_hi;	/* child high phys addr */
+	uint32_t	child_lo;	/* child low phys addr */
+	uint32_t	phys_hi;	/* parent high phys addr */
+	uint32_t	phys_mid;	/* parent mid phys addr */
+	uint32_t	phys_lo;	/* parent low phys addr */
+	uint32_t	size;
 };
 
 
 /* NB: ms-IIep PROMs lack these interrupt-related properties */
 struct ebus_interrupt_map {
-	u_int32_t	hi;		/* high phys addr mask */
-	u_int32_t	lo;		/* low phys addr mask */
-	u_int32_t	intr;		/* interrupt mask */
+	uint32_t	hi;		/* high phys addr mask */
+	uint32_t	lo;		/* low phys addr mask */
+	uint32_t	intr;		/* interrupt mask */
 	int32_t		cnode;		/* child node */
-	u_int32_t	cintr;		/* child interrupt */
+	uint32_t	cintr;		/* child interrupt */
 };
 
 struct ebus_interrupt_map_mask {
-	u_int32_t	hi;		/* high phys addr */
-	u_int32_t	lo;		/* low phys addr */
-	u_int32_t	intr;		/* interrupt */
+	uint32_t	hi;		/* high phys addr */
+	uint32_t	lo;		/* low phys addr */
+	uint32_t	intr;		/* interrupt */
 };
 
 
