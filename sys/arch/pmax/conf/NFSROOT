@@ -3,9 +3,9 @@
 # via NFS booting: root and swap on NFS, but disk drivers included too.
 # Prune out other optiosn to stay small and avoid PROM tftp bugs.
 #
-# 	$NetBSD: NFSROOT,v 1.2 1996/11/16 23:10:50 jonathan Exp $
+# 	$NetBSD: NFSROOT,v 1.3 1996/12/03 01:18:20 cgd Exp $
 #
-include		"std.pmax"
+include		"arch/pmax/conf/std.pmax"
 
 maxusers	8
 
@@ -92,21 +92,21 @@ config		nfsnetbsd	root on nfs swap on nfs
 ########################################################################
 
 # TC bus and supported options. (All but PMAXes have a turbochannel.)
-include	"tc.std"
+include	"arch/pmax/conf/tc.std"
 
 # ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0)
-include "builtin.ioasic"
+include "arch/pmax/conf/builtin.ioasic"
 
 # MAXINE-only ioasic baseboard devices and on-baseboard "options"
-include	"builtin.maxine"
+include	"arch/pmax/conf/builtin.maxine"
 
 # 5000/200-only (aka 3MAX aka KN02) baseboard devices.
 # (KN02 has turbochannel but no	IOASIC).
-include	"builtin.3max"
+include	"arch/pmax/conf/builtin.3max"
 
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
 # (may also be present on a 5100).
-include "builtin.3100"
+include "arch/pmax/conf/builtin.3100"
 
 ########################################################################
 # SCSI configuration                                                   #
@@ -117,7 +117,7 @@ oldscsibus*	at asc?
 #
 # SCSI configuration for old 4.4bsd/pmax DECstation SCSI driver
 #
-include "scsi.pmax"
+include "arch/pmax/conf/scsi.pmax"
 #include "mi.scsi"		# not yet supported on DECstations
 
 
