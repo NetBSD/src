@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.30 2003/08/07 16:44:25 agc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.31 2004/03/22 18:57:10 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,9 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.30 2003/08/07 16:44:25 agc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.31 2004/03/22 18:57:10 jdc Exp $");
 #endif
 #endif				/* not lint */
+
+#include <sys/ioctl.h>
 
 #include <errno.h>
 #include <signal.h>
@@ -45,6 +47,8 @@ __RCSID("$NetBSD: tstp.c,v 1.30 2003/08/07 16:44:25 agc Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
+
+static struct sigaction	otsa, owsa;
 
 /*
  * stop_signal_handler --
@@ -87,16 +91,17 @@ __stop_signal_handler(/*ARGSUSED*/int signo)
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
-static void (*otstpfn)
-__P((int)) = SIG_DFL;
-
 /*
  * Set the TSTP handler.
  */
 void
 __set_stophandler(void)
 {
-	otstpfn = signal(SIGTSTP, __stop_signal_handler);
+	struct sigaction sa;
+	sa.sa_handler = __stop_signal_handler;
+	sa.sa_flags = SA_RESTART;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGTSTP, &sa, &otsa);
 }
 
 /*
@@ -105,9 +110,54 @@ __set_stophandler(void)
 void
 __restore_stophandler(void)
 {
-	(void) signal(SIGTSTP, otstpfn);
+	sigaction(SIGTSTP, &otsa, NULL);
 }
 
+/*
+ * winch_signal_handler --
+ *	Handle winch signals by pushing KEY_RESIZE into the input stream.
+ */
+void
+__winch_signal_handler(/*ARGSUSED*/int signo)
+{
+	struct winsize win;
+
+	if (ioctl(fileno(_cursesi_screen->outfd), TIOCGWINSZ, &win) != -1 &&
+	    win.ws_row != 0 && win.ws_col != 0) {
+		LINES = win.ws_row;
+		COLS = win.ws_col;
+	}
+	/*
+	 * If there was a previous handler, call that,
+	 * otherwise tell getch() to send KEY_RESIZE.
+	 */
+	if (owsa.sa_handler != __winch_signal_handler)
+		owsa.sa_handler(signo);
+	else
+		_cursesi_screen->resized = 1;
+}
+
+/*
+ * Set the WINCH handler.
+ */
+void
+__set_winchhandler(void)
+{
+	struct sigaction sa;
+	sa.sa_handler = __winch_signal_handler;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGWINCH, &sa, &owsa);
+}
+
+/*
+ * Restore the TSTP handler.
+ */
+void
+__restore_winchhandler(void)
+{
+	sigaction(SIGTSTP, &owsa, NULL);
+}
 
 /* To allow both SIGTSTP and endwin() to come back nicely, we provide
    the following routines. */
@@ -123,6 +173,7 @@ __stopwin(void)
 			 &_cursesi_screen->save_termios);
 
 	__restore_stophandler();
+	__restore_winchhandler();
 
 	if (curscr != NULL) {
 		__unsetattr(0);
@@ -150,11 +201,27 @@ __stopwin(void)
 void
 __restartwin(void)
 {
+	struct winsize win;
+
 	if (!_cursesi_screen->endwin)
 		return;
 
-	/* Reset the curses SIGTSTP signal handler. */
+	/* Reset the curses SIGTSTP and SIGWINCH signal handlers. */
 	__set_stophandler();
+	__set_winchhandler();
+
+	/* Check to see if the window size has changed */
+	if (ioctl(fileno(_cursesi_screen->outfd), TIOCGWINSZ, &win) != -1 &&
+	    win.ws_row != 0 && win.ws_col != 0) {
+		if (win.ws_row != LINES) {
+			LINES = win.ws_row;
+			_cursesi_screen->resized = 1;
+		}
+		if (win.ws_col != COLS) {
+			COLS = win.ws_col;
+			_cursesi_screen->resized = 1;
+		}
+	}
 
 	/* save the new "default" terminal state */
 	(void) tcgetattr(fileno(_cursesi_screen->infd),
