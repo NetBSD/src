@@ -27,10 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: pathnames.h,v 1.2 1997/10/18 04:37:22 lukem Exp $
+ *	$NetBSD: pathnames.h,v 1.3 1997/10/24 01:31:39 mrg Exp $
  */
 
-#define	_MAN_SECTIONS		"12345678"	/* l, n, o, and p, too? */
+#define	_MAN_SECTIONS		"123456789"	/* l, n, o, and p, too? */
 #define	_PATH_MAKEWHATIS	"/usr/libexec/makewhatis"
 #define	_PATH_MANPAGES		"man"
 #define	_PATH_CATPAGES		"cat"
