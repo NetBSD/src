@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.163 2004/03/05 07:27:22 dbj Exp $	*/
+/*	$NetBSD: tty.c,v 1.164 2004/03/09 05:30:24 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.163 2004/03/05 07:27:22 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.164 2004/03/09 05:30:24 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -677,6 +677,7 @@ int
 ttyinput(int c, struct tty *tp)
 {
 	int error;
+	int s;
 
 	/*
 	 * Unless the receiver is enabled, drop incoming data.
@@ -684,9 +685,11 @@ ttyinput(int c, struct tty *tp)
 	if (!ISSET(tp->t_cflag, CREAD))
 		return (0);
 
+	s = spltty();
 	TTY_LOCK(tp);
 	error = ttyinput_wlock(c, tp);
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (error);
 }
 
@@ -1521,11 +1524,14 @@ ttylclose(struct tty *tp, int flag)
  * Returns 0 if the line should be turned off, otherwise 1.
  *
  * Must be called at spltty().
+ * XXX except that it is often isn't, which should be fixed.
  */
 int
 ttymodem(struct tty *tp, int flag)
 {
+	int s;
 
+	s = spltty();
 	TTY_LOCK(tp);
 	if (flag == 0) {
 		if (ISSET(tp->t_state, TS_CARR_ON)) {
@@ -1539,6 +1545,7 @@ ttymodem(struct tty *tp, int flag)
 					    SIGHUP);
 				ttyflush(tp, FREAD | FWRITE);
 				TTY_UNLOCK(tp);
+				splx(s);
 				return (0);
 			}
 		}
@@ -1552,6 +1559,7 @@ ttymodem(struct tty *tp, int flag)
 		}
 	}
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (1);
 }
 
@@ -1560,11 +1568,14 @@ ttymodem(struct tty *tp, int flag)
  * Return argument flag, to turn off device on carrier drop.
  *
  * Must be called at spltty().
+ * XXX except that it is often isn't, which should be fixed.
  */
 int
 nullmodem(struct tty *tp, int flag)
 {
+	int s;
 
+	s = spltty();
 	TTY_LOCK(tp);
 	if (flag)
 		SET(tp->t_state, TS_CARR_ON);
@@ -1574,10 +1585,12 @@ nullmodem(struct tty *tp, int flag)
 			if (tp->t_session && tp->t_session->s_leader)
 				psignal(tp->t_session->s_leader, SIGHUP);
 			TTY_UNLOCK(tp);
+			splx(s);
 			return (0);
 		}
 	}
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (1);
 }
 
