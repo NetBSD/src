@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/02/11 21:36:36 tv Exp $
+#	$NetBSD: Makefile,v 1.18 2002/02/27 17:57:05 tv Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,15 +9,11 @@ LIB=		objc
 
 .if defined(USE_NEW_TOOLCHAIN)
 
-.if exists(${.CURDIR}/${MACHINE_ARCH}.mk)
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
 # Machine-independent definitions (include file names).
 .include "${.CURDIR}/defs.mk"
-
-# Machine-dependent definitions (object files, -Ds).
-.include "${.CURDIR}/${MACHINE_ARCH}.mk"
 
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
@@ -42,9 +38,6 @@ runtime-info.h:
 .include <bsd.lib.mk>
 
 ${OBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk runtime-info.h
-.else
-.include <bsd.prog.mk> # do nothing
-.endif
 
 .else
 #
