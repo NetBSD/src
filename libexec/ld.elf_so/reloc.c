@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.45 2001/12/14 00:53:06 thorpej Exp $	 */
+/*	$NetBSD: reloc.c,v 1.46 2001/12/16 08:23:25 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -149,11 +149,6 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 
 #if !defined(__sparc__) && !defined(__x86_64__)
 
-#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
-extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
-extern Elf_Dyn   _DYNAMIC;
-#endif
-
 int
 _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Obj_Entry *obj;
@@ -283,6 +278,24 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    defobj->strtab + def->st_name, obj->path,
 		    (void *)*where, defobj->path));
 		break;
+
+	case R_TYPE(RELATIVE):
+	    {
+		extern Elf_Addr	_GLOBAL_OFFSET_TABLE_[];
+		extern Elf_Addr	_GOT_END_[];
+
+		/* This is the ...iffy hueristic. */
+		if (!dodebug ||
+		    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
+		    (caddr_t)where >= (caddr_t)_GOT_END_) {
+			*where += (Elf_Addr)(obj->relocbase + rela->r_addend);
+			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+			    (void *)*where));
+		} else
+			rdbg(dodebug, ("RELATIVE in %s stays at %p",
+			    obj->path, (void *)*where));
+		break;
+	    }
 #endif /* __alpha__ */
 
 #if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
@@ -299,18 +312,13 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    (void *)*where, defobj->path));
 		break;
 
+#if !defined(__alpha__)
 	case R_TYPE(RELATIVE):
-		if (!dodebug ||
-		    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
-		    (caddr_t)where >= (caddr_t)&_DYNAMIC) {
-			*where += (Elf_Addr)obj->relocbase;
-			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
-			    (void *)*where));
-		}
-		else
-			rdbg(dodebug, ("RELATIVE in %s stays at %p",
-			    obj->path, (void *)*where));
+		*where += (Elf_Addr)obj->relocbase;
+		rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+		    (void *)*where));
 		break;
+#endif /* ! __alpha__ */
 
 	case R_TYPE(COPY):
 		/*
