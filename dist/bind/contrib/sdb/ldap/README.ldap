@@ -1,0 +1,40 @@
+This is an attempt at an LDAP back-end for BIND 9 using the new simplified
+database interface "sdb". This is the nineth release (0.9) and seems to
+be pretty stable. Note that since version 0.4 a new schema is used.
+It is not backwards compatible with versions before 0.4.
+
+In 0.9 the code has been cleaned up a bit and should be slightly faster
+than previous versions. It also fixes an error with zone transfers (AXFR)
+and entries with multiple relativeDomainName values. The problem was
+that it would only use the first value in the result. There's no need
+to upgrade unless you use such entries.
+
+0.8 uses asynchronous LDAP search which should give better performance.
+Thanks to Ashley Burston for providing patch. Another new feature is
+allowing filters in URLs. The syntax is as in RFC 2255. Few people will
+need this, but if you have say an internal and external version of the
+same zone, you could stick say o=internal and o=external into different
+entries, and specify for instance ldap://host/base???(o=internal)
+Some error logging has also been added.
+
+0.7 allows space and other characters to be used in URLs by use of %-quoting.
+For instance space can be written as %20. It also fixes a problem with some
+servers and/or APIs that do not preserve attribute casing.
+
+0.6 fixes some memory leaks present in older versions unless compiled with
+the RFC 1823 API.
+
+The big changes in 0.5 are thread support and improved connection handling.
+Multiple threads can now access the back-end simultaneously, and rather than
+having one connection per zone, there is now one connection per thread per
+LDAP server. This should help people with multiple CPUs and people with a
+huge number of zones. One final change is support for literal IPv6 addresses
+in LDAP URLs. At least OpenLDAP 2 has IPv6 support, so if you use OpenLDAP 2
+libraries and server, you got all you need.
+
+If you have bug reports, fixes, comments, questions or whatever, please
+contact me. See also http://www.venaas.no/ldap/bind-sdb/ for information.
+
+See INSTALL for how to build, install and use.
+
+Stig Venaas <venaas@uninett.no> 2001-12-29
