@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.7 1999/07/22 03:59:42 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.8 1999/07/22 12:56:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,6 +118,11 @@ extern struct in6pcb rawin6pcb;
 extern struct inpcbhead ripcb;
 #endif
 extern u_int icmp6errratelim;
+#ifdef __NetBSD__
+static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
+extern int pmtu_expire;
+#endif
+
 static int icmp6_rip6_input __P((struct mbuf **, int));
 static int icmp6_ratelimit __P((const struct in6_addr *, const int, const int));
 static struct mbuf * ni6_input __P((struct mbuf *, int));
@@ -125,6 +130,8 @@ static int ni6_addrs __P((struct icmp6_nodeinfo *, struct mbuf *,
 			  struct ifnet **));
 static int ni6_store_addrs __P((struct icmp6_nodeinfo *, struct icmp6_nodeinfo *,
 				struct ifnet *, int));
+static struct rtentry *icmp6_mtudisc_clone __P((struct sockaddr *));
+static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 
 #ifdef COMPAT_RFC1885
 static struct route_in6 icmp6_reflect_rt;
@@ -135,6 +142,9 @@ void
 icmp6_init()
 {
 	mld6_init();
+#ifdef __NetBSD__
+	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
+#endif
 }
 
 /*
@@ -394,17 +404,25 @@ icmp6_input(mp, offp, proto)
 		sin6.sin6_family = PF_INET6;
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_addr = ((struct ip6_hdr *)(icmp6 + 1))->ip6_dst;
-		rt = rtalloc1((struct sockaddr *)&sin6, 0
+#ifdef __NetBSD__
+		rt = rtalloc1((struct sockaddr *)&sin6, 1);	/*clone*/
+		if (!rt || (rt->rt_flags & RTF_HOST) == 0) {
+			if (rt)
+				RTFREE(rt);
+			rt = icmp6_mtudisc_clone((struct sockaddr *)&sin6);
+		}
+#endif
 #ifdef __FreeBSD__
-			      , RTF_CLONING | RTF_PRCLONING
+		rt = rtalloc1((struct sockaddr *)&sin6, 0,
+			RTF_CLONING | RTF_PRCLONING);
 #endif /*__FreeBSD__*/
-			      );
 #ifdef __bsdi__
 		bcopy(&sin6, &ro6.ro_dst, sizeof(struct sockaddr_in6));
 		ro6.ro_rt = 0;
 		rtcalloc((struct route *)&ro6);
 		rt = ro6.ro_rt;
 #endif /*__bsdi__*/
+
 		if (rt && (rt->rt_flags & RTF_HOST)
 		    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) {
 			if (mtu < IPV6_MMTU) {
@@ -1860,6 +1878,64 @@ icmp6_ratelimit(dst, type, code)
 	/* it is okay to send this */
 	return 0;
 }
+
+#ifdef __NetBSD__
+static struct rtentry *
+icmp6_mtudisc_clone(dst)
+	struct sockaddr *dst;
+{
+	struct rtentry *rt;
+	int    error;
+
+	rt = rtalloc1(dst, 1);
+	if (rt == 0)
+		return NULL;
+    
+	/* If we didn't get a host route, allocate one */
+	if ((rt->rt_flags & RTF_HOST) == 0) {
+		struct rtentry *nrt;
+
+		error = rtrequest((int) RTM_ADD, dst, 
+		    (struct sockaddr *) rt->rt_gateway,
+		    (struct sockaddr *) 0, 
+		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
+		if (error) {
+			rtfree(rt);
+			rtfree(nrt);
+			return NULL;
+		}
+		nrt->rt_rmx = rt->rt_rmx;
+		rtfree(rt);
+		rt = nrt;
+	}
+	error = rt_timer_add(rt, icmp6_mtudisc_timeout,
+			icmp6_mtudisc_timeout_q);
+	if (error) {
+		rtfree(rt);
+		return NULL;
+	}
+
+	return rt;	/* caller need to call rtfree() */
+}
+
+static void
+icmp6_mtudisc_timeout(rt, r)
+	struct rtentry *rt;
+	struct rttimer *r;
+{
+	if (rt == NULL)
+		panic("icmp6_mtudisc_timeout: bad route to timeout");
+	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) == 
+	    (RTF_DYNAMIC | RTF_HOST)) {
+		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+	} else {
+		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
+			rt->rt_rmx.rmx_mtu = 0;
+		}
+	}
+}
+#endif /*__NetBSD__*/
 
 #ifdef __bsdi__
 void

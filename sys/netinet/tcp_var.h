@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.63 1999/07/14 22:37:15 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.64 1999/07/22 12:56:56 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -637,14 +637,23 @@ void	 tcp_input __P((struct mbuf *, ...));
 u_long	 tcp_mss_to_advertise __P((const struct ifnet *));
 void	 tcp_mss_from_peer __P((struct tcpcb *, int));
 void	 tcp_mtudisc __P((struct inpcb *, int));
+#if defined(INET6) && !defined(TCP6)
+void	 tcp6_mtudisc __P((struct in6pcb *, int));
+#endif
 struct tcpcb *
 	 tcp_newtcpcb __P((int, void *));
 void	 tcp_notify __P((struct inpcb *, int));
+#if defined(INET6) && !defined(TCP6)
+void	 tcp6_notify __P((struct in6pcb *, int));
+#endif
 u_int	 tcp_optlen __P((struct tcpcb *));
 int	 tcp_output __P((struct tcpcb *));
 void	 tcp_pulloutofband __P((struct socket *,
 	    struct tcphdr *, struct mbuf *));
 void	 tcp_quench __P((struct inpcb *, int));
+#if defined(INET6) && !defined(TCP6)
+void	 tcp6_quench __P((struct in6pcb *, int));
+#endif
 int	 tcp_reass __P((struct tcpcb *, struct tcphdr *, struct mbuf *, int *));
 int	 tcp_respond __P((struct tcpcb *, struct mbuf *, struct mbuf *,
 	    struct tcphdr *, tcp_seq, tcp_seq, int));

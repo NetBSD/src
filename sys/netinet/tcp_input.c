@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.88 1999/07/17 12:53:05 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.89 1999/07/22 12:56:56 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1132,6 +1132,8 @@ after_listen:
 				sowwakeup(so);
 				if (so->so_snd.sb_cc)
 					(void) tcp_output(tp);
+				if (tcp_saveti)
+					m_freem(tcp_saveti);
 				return;
 			}
 		} else if (th->th_ack == tp->snd_una &&
@@ -1157,6 +1159,8 @@ after_listen:
 			TCP_SETUP_ACK(tp, th);
 			if (tp->t_flags & TF_ACKNOW)
 				(void) tcp_output(tp);
+			if (tcp_saveti)
+				m_freem(tcp_saveti);
 			return;
 		}
 	}
@@ -1940,7 +1944,6 @@ dodata:							/* XXX */
 	}
 	if (so->so_options & SO_DEBUG) {
 		tcp_trace(TA_INPUT, ostate, tp, tcp_saveti, 0);
-		m_freem(tcp_saveti);
 	}
 
 	/*
@@ -1948,6 +1951,8 @@ dodata:							/* XXX */
 	 */
 	if (needoutput || (tp->t_flags & TF_ACKNOW))
 		(void) tcp_output(tp);
+	if (tcp_saveti)
+		m_freem(tcp_saveti);
 	return;
 
 badsyn:
@@ -1968,6 +1973,8 @@ dropafterack:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
+	if (tcp_saveti)
+		m_freem(tcp_saveti);
 	return;
 
 dropwithreset:
@@ -2015,6 +2022,8 @@ dropwithreset:
 		(void)tcp_respond(tp, m, m, th, th->th_seq + tlen, (tcp_seq)0,
 		    TH_RST|TH_ACK);
 	}
+	if (tcp_saveti)
+		m_freem(tcp_saveti);
 	return;
 
 drop:
@@ -2030,11 +2039,11 @@ drop:
 #endif
 		else
 			so = NULL;
-		if (so && (so->so_options & SO_DEBUG) != 0) {
+		if (so && (so->so_options & SO_DEBUG) != 0)
 			tcp_trace(TA_DROP, ostate, tp, tcp_saveti, 0);
-			m_freem(tcp_saveti);
-		}
 	}
+	if (tcp_saveti)
+		m_freem(tcp_saveti);
 	m_freem(m);
 	return;
 }
