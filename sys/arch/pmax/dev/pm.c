@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.20 1997/06/15 17:59:03 mhitch Exp $	*/
+/*	$NetBSD: pm.c,v 1.21 1997/06/16 02:53:55 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
@@ -69,8 +70,8 @@
 
 #include <vm/vm.h>
 
-#include <sys/device.h>
 #include <machine/autoconf.h>
+#include <machine/bus.h>		/* XXX wbflush() */
 
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
@@ -82,7 +83,6 @@
 #include <pmax/dev/pmreg.h>
 #include <pmax/dev/bt478var.h>
 
-#include <machine/locore.h>	/* XXX wbflush() */
 
 /*
  * These need to be mapped into user space.

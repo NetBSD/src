@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.7 1997/06/15 17:58:58 mhitch Exp $	*/
+/*	$NetBSD: bt478.c,v 1.8 1997/06/16 02:53:32 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,22 +62,23 @@
 #include <sys/device.h>
 #include <sys/select.h>
 
+#include <machine/bus.h>			/*  wbflush() */
+
 #include <mips/cpuregs.h>
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
-#include <pmax/dev/bt478.h>
+#include <pmax/dev/bt478.h>			/* chipset definitions */
 #include <pmax/dev/bt478var.h>
 #include <pmax/pmax/kn01.h>
 
-#include <machine/locore.h>	/* XXX wbflush() */
+
 
 /*
  * Forward references.
  */
-
 
 
 /* XXX qvss ioctl interface uses this */

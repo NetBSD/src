@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.24 1997/06/15 17:59:04 mhitch Exp $	*/
+/*	$NetBSD: sii.c,v 1.25 1997/06/16 02:54:00 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,14 +60,14 @@
 #endif
 
 #include <machine/autoconf.h>
-
-#include <machine/locore.h>	/* XXX wbflush() */
+#include <machine/bus.h>		/* XXX wbflush() */
 
 /* old 4.4bsd/pmax scsi drivers */
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
-#include <pmax/dev/siireg.h>
-#include <pmax/dev/siivar.h>
+
+#include <pmax/dev/siireg.h>		/* device registers */
+#include <pmax/dev/siivar.h>		/* softc and prototypes */
 
 
 /* Machine-indepedent back-end attach entry point */
@@ -76,7 +76,6 @@ void	siiattach __P((struct siisoftc *sc));
 /*
  * Autoconfig definition of driver front-end
  */
-#include <machine/machConst.h>
 int	old_siimatch  __P((struct device * parent, void *cfdata, void *aux));
 void	old_siiattach __P((struct device *parent, struct device *self, void *aux));
 

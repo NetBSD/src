@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.24 1997/06/15 17:59:01 mhitch Exp $	*/
+/*	$NetBSD: mfb.c,v 1.25 1997/06/16 02:53:47 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -92,15 +92,15 @@
 #include <sys/systm.h>
 
 #include <dev/tc/tcvar.h>
-#include <machine/autoconf.h>
 
-#include <mips/cpuregs.h>		/* mips cached->uncached */
+#include <machine/autoconf.h>
+#include <machine/bus.h>		/* XXX wbflush() */
+#include <mips/cpuregs.h>		/* XXX mips cached->uncached */
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 #include <pmax/dev/cfbvar.h>		/* XXX dev/tc ? */ 
 
-#include <machine/locore.h>	/* XXX wbflush() */
 
 #include <pmax/pmax/pmaxtype.h>
 
