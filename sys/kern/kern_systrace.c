@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.2 2002/06/18 01:24:15 thorpej Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.3 2002/06/27 13:22:54 christos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2 2002/06/18 01:24:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.3 2002/06/27 13:22:54 christos Exp $");
 
 #include "opt_systrace.h"
 
@@ -53,9 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2 2002/06/18 01:24:15 thorpej Ex
 #include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
+#include <sys/ptrace.h>
 #include <sys/systrace.h>
-
-#include <miscfs/procfs/procfs.h>
 
 #ifdef __NetBSD__
 #define	SYSTRACE_LOCK(fst, p)	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL)
@@ -968,7 +967,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	uio.uio_segflg = UIO_USERSPACE;
 	uio.uio_procp = p;
 
-	error = procfs_domem(p, t, NULL, &uio);
+	error = process_domem(p, t, &uio);
 	io->strio_len -= uio.uio_resid;
  out:
 
