@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.23 1996/03/14 19:33:46 christos Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.24 1996/05/26 23:57:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -787,7 +787,7 @@ sunos_sys_ioctl(p, v, retval)
 		}
                 return (*ctl)(fp, TIOCFLUSH, (caddr_t)&tmp, p);
 	    }
-	case _IO('S', 9):	/* I_SIGSET */
+	case _IO('S', 9):	/* I_SETSIG */
 	    {
 		int on = 1;
 		if (((int)SCARG(uap, data) & (SUNOS_S_HIPRI|SUNOS_S_INPUT)) ==
