@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.13.2.2 1997/11/17 16:33:13 mrg Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.13.2.3 1997/11/25 03:32:14 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.3 1997/11/12 10:53:29 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.6 1997/11/24 11:35:13 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -319,6 +319,7 @@ int mode;
 			break;
 		}
 		ret = nat_flushtable();
+		(void) ap_unload();
 		IWCOPY((caddr_t)&ret, data, sizeof(ret));
 		break;
 	case SIOCCNATL :
@@ -515,16 +516,12 @@ struct in_addr *inp;
 /*
  * Create a new NAT table entry.
  */
-#ifdef __STDC__
-nat_t *nat_new(ipnat_t *np, ip_t *ip, fr_info_t *fin, u_short flags, int direction)
-#else
 nat_t *nat_new(np, ip, fin, flags, direction)
 ipnat_t *np;
 ip_t *ip;
 fr_info_t *fin;
 u_short flags;
 int direction;
-#endif
 {
 	register u_long sum1, sum2, sumd;
 	u_short port = 0, sport = 0, dport = 0, nport = 0;
@@ -611,7 +608,7 @@ int direction;
 		 * internal port.
 		 */
 		in.s_addr = ntohl(np->in_inip);
-		if (!(nport = htons(np->in_pnext)))
+		if (!(nport = np->in_pnext))
 			nport = dport;
 
 		nat->nat_inip.s_addr = htonl(in.s_addr);
@@ -1085,7 +1082,7 @@ fr_info_t *fin;
 			(void) ap_check(ip, tcp, fin, nat);
 			nat_stats.ns_mapped[1]++;
 			MUTEX_EXIT(&ipf_nat);
-			return 1;
+			return -2;
 		}
 	MUTEX_EXIT(&ipf_nat);
 	return 0;
@@ -1214,7 +1211,7 @@ fr_info_t *fin;
 			}
 			nat_stats.ns_mapped[0]++;
 			MUTEX_EXIT(&ipf_nat);
-			return 1;
+			return -2;
 		}
 	MUTEX_EXIT(&ipf_nat);
 	return 0;
@@ -1259,6 +1256,9 @@ void ip_natexpire()
 		nat_delete(nat);
 		nat_stats.ns_expire++;
 	}
+
+	ap_expire();
+
 	MUTEX_EXIT(&ipf_nat);
 	SPL_X(s);
 }
