@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gprof.h	8.1 (Berkeley) 6/6/93
- *	$Id: gprof.h,v 1.9 1994/05/17 03:36:02 cgd Exp $
+ *	$Id: gprof.h,v 1.10 1994/06/09 06:08:35 phil Exp $
  */
 
 #include <sys/types.h>
@@ -62,6 +62,9 @@
 #endif
 #if pmax
 #   include "pmax.h"
+#endif
+#if ns32k
+#   include "ns32k.h"
 #endif
 
 
