@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.373 2004/04/08 05:36:00 matt Exp $
+$NetBSD: usbdevs,v 1.374 2004/05/24 19:00:42 tsarna Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ $NetBSD: usbdevs,v 1.373 2004/04/08 05:36:00 matt Exp $
  * make the device recognised by the appropriate device driver.
  */
 
+vendor EGALAX2		0x0123  eGalax, Inc.
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
 vendor MITSUMI		0x03ee	Mitsumi
@@ -360,6 +361,7 @@ vendor MSI		0x0db0	Micro Star International
 vendor HAWKING		0x0e66	Hawking Technologies
 vendor OTI		0x0ea0	Ours Technology Inc.
 vendor PILOTECH		0x0eaf  Pilotech
+vendor EGALAX		0x0eef  eGalax, Inc.
 vendor QUALCOMM		0x1004	Qualcomm
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
@@ -686,6 +688,11 @@ product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
 product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
 product DLINK DSB650		0xabc1	10/100 ethernet adapter
+
+/* eGalax Products */
+product EGALAX TPANEL		0x0001	Touch Panel
+product EGALAX TPANEL2		0x0002	Touch Panel
+product EGALAX2 TPANEL		0x0001	Touch Panel
 
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
