@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.40 1997/10/23 02:06:28 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.41 1998/01/22 23:39:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -126,7 +126,6 @@ struct nv assyms[] = {
 	def1(IC_CLEAR),
 
 	/* sun3 control space isms */
-	def1(CONTEXT_0),
 	def1(CONTEXT_REG),
 	def1(CONTEXT_NUM),
 	def1(SYSTEM_ENAB),
@@ -134,10 +133,10 @@ struct nv assyms[] = {
 	def1(SEGMAP_BASE),
 
 	/* sun3 memory map */
-	def1(DVMA_SPACE_START),
+	def1(USRSTACK),
 	def1(MONSTART),
 	def1(PROM_BASE),
-	def1(USRSTACK),
+	def1(MONEND),
 
 	/* kernel-isms */
 	def1(KERNBASE),
