@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.pri.c,v 1.2 1993/08/02 17:19:16 mycroft Exp $";
+static char rcsid[] = "$Id: hack.pri.c,v 1.3 1993/12/02 03:07:18 mycroft Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -15,7 +15,7 @@ extern char *CD;
 
 swallowed()
 {
-	char *ulook = "|@|";
+	char ulook[] = "|@|";
 	ulook[1] = u.usym;
 
 	cls();
