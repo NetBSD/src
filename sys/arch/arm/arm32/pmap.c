@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 2003/03/23 15:59:23 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.128 2003/03/27 19:42:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2003/03/23 15:59:23 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2003/03/27 19:42:30 mycroft Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -309,7 +309,6 @@ __inline static void 	 pmap_clearbit(struct vm_page *, unsigned int);
 
 extern paddr_t physical_start;
 extern paddr_t physical_end;
-extern unsigned int free_pages;
 extern int max_processes;
 
 vaddr_t virtual_avail;
