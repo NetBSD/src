@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.45 1998/11/12 19:54:42 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.46 1998/12/04 11:00:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -512,7 +512,10 @@ ffs_mountfs(devvp, mp, p)
 	} else {
 		error = EINVAL;
 		goto out;
-	
+	}
+	if (fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
+		error = EINVAL;
+		goto out;
 	}
 
 	fs = malloc((u_long)sbsize, M_UFSMNT, M_WAITOK);
@@ -521,9 +524,12 @@ ffs_mountfs(devvp, mp, p)
 	if (needswap)
 		ffs_sb_swap((struct fs*)bp->b_data, fs, 0);
 #endif
-		
-	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
-	    fs->fs_bsize < sizeof(struct fs)) {
+
+	 /* make sure cylinder group summary area is a reasonable size. */
+	if (fs->fs_cgsize == 0 || fs->fs_cpg == 0 ||
+	    fs->fs_ncg > fs->fs_ncyl / fs->fs_cpg + 1 ||
+	    fs->fs_cssize >
+	    fragroundup(fs, fs->fs_ncg * sizeof(struct csum))) {
 		error = EINVAL;		/* XXX needs translation */
 		goto out2;
 	}
