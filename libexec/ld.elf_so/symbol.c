@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.30 2003/07/15 07:39:55 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.31 2003/07/24 10:12:26 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -58,8 +58,7 @@
  * this.  It is specified by the System V ABI.
  */
 unsigned long
-_rtld_elf_hash(name)
-	const char *name;
+_rtld_elf_hash(const char *name)
 {
 	const unsigned char *p = (const unsigned char *) name;
 	unsigned long   h = 0;
@@ -79,7 +78,7 @@ _rtld_elf_hash(name)
 
 const Elf_Sym *
 _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
-  const Obj_Entry **defobj_out, bool in_plt)
+    const Obj_Entry **defobj_out, bool in_plt)
 {
 	const Elf_Sym *symp;
 	const Elf_Sym *def;
@@ -115,11 +114,8 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
  * eliminates many recomputations of the hash value.
  */
 const Elf_Sym *
-_rtld_symlook_obj(name, hash, obj, in_plt)
-	const char *name;
-	unsigned long hash;
-	const Obj_Entry *obj;
-	bool in_plt;
+_rtld_symlook_obj(const char *name, unsigned long hash,
+    const Obj_Entry *obj, bool in_plt)
 {
 	unsigned long symnum;
 
@@ -166,11 +162,8 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
  * defining object via the reference parameter DEFOBJ_OUT.
  */
 const Elf_Sym *
-_rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
-	unsigned long symnum;
-	const Obj_Entry *refobj;
-	const Obj_Entry **defobj_out;
-	bool in_plt;
+_rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
+    const Obj_Entry **defobj_out, bool in_plt)
 {
 	const Elf_Sym  *ref;
 	const Elf_Sym  *def;
