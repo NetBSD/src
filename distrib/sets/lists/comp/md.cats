@@ -1,6 +1,5 @@
-# $NetBSD: md.cats,v 1.5 2003/01/18 17:50:22 thorpej Exp $
+# $NetBSD: md.cats,v 1.6 2003/09/21 20:16:11 matt Exp $
 ./usr/include/cats			comp-c-include
-./usr/include/cats/_G_config.h		comp-c-include
 ./usr/include/cats/ansi.h		comp-c-include
 ./usr/include/cats/aout_machdep.h	comp-c-include
 ./usr/include/cats/asm.h		comp-c-include

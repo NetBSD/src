@@ -1,6 +1,5 @@
-# $NetBSD: md.shark,v 1.4 2003/01/18 17:50:29 thorpej Exp $
+# $NetBSD: md.shark,v 1.5 2003/09/21 20:16:12 matt Exp $
 ./usr/include/shark			comp-c-include
-./usr/include/shark/_G_config.h		comp-c-include
 ./usr/include/shark/ansi.h		comp-c-include
 ./usr/include/shark/aout_machdep.h	comp-c-include
 ./usr/include/shark/asm.h		comp-c-include
