@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.4 1993/11/15 08:20:05 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.5 1993/11/15 21:51:30 cgd Exp $";
 #endif
 
 #include <sys/param.h>
@@ -198,7 +198,7 @@ CLIENT *clnt;
 	}
 
 	if(ntohs(fromsin->sin_port) >= IPPORT_RESERVED)
-		return (void &)&res;
+		return (void *)&res;
 
 	if(argp->ypsetdom_vers != YPVERS)
 		return (void *)&res;
