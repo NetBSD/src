@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/10/22 05:19:31 jmc Exp $
+#	$NetBSD: Makefile,v 1.16 2001/10/24 00:07:39 tv Exp $
 
 PROG=	lint1
 SRCS=	cgram.y scan.l mem1.c mem.c err.c main1.c decl.c tree.c func.c \
@@ -7,7 +7,7 @@ MAN=	lint.7
 LDADD+=	-ll
 DPADD+=	${LIBL}
 YHEADER=1
-CPPFLAGS+=-I${.CURDIR} -I.
+CPPFLAGS+=-I${.CURDIR} -I. -I${.CURDIR}/arch/${MACHINE_ARCH}
 LINTFLAGS=-aehpz
 WFORMAT=1		#hopeless
 BINDIR=	/usr/libexec
@@ -16,8 +16,6 @@ scan.c: cgram.h
 
 lint.7:	${PROG}
 	sh ${.CURDIR}/makeman ${.OBJDIR}/${PROG} -m > ${.TARGET}
-
-realall: lint.7
 
 CLEANFILES+=${MAN}
 
