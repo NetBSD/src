@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.6 2001/11/12 23:16:36 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/01/18 20:39:17 thorpej Exp $
 
-CPPFLAGS+=	-I${.CURDIR}/../lint1/arch/${MACHINE_CPU}
+.PATH:		${.CURDIR}/../common
+
+CPPFLAGS+=	-I${.CURDIR}/../arch/${MACHINE_CPU}
+CPPFLAGS+=	-I${.CURDIR}/../common
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
