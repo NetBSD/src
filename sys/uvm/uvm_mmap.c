@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.19 1999/03/25 18:48:53 mrg Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.19.2.1 1999/07/07 00:08:57 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -393,6 +393,21 @@ is_anon:		/* label for SunOS style /dev/zero */
 		handle = NULL;
 		maxprot = VM_PROT_ALL;
 		pos = 0;
+	}
+
+	/*
+	 * XXX (in)sanity check.  We don't do proper datasize checking
+	 * XXX for anonymous (or private writable) mmap().  However,
+	 * XXX know that if we're trying to allocate more than the amount
+	 * XXX remaining under our current data size limit, _that_ should
+	 * XXX be disallowed.
+	 */
+	if ((flags & MAP_ANON) != 0 ||
+	    ((flags & MAP_PRIVATE) != 0 && (prot & PROT_WRITE) != 0)) {
+		if (size >
+		    (p->p_rlimit[RLIMIT_DATA].rlim_cur - ctob(p->p_vmspace->vm_dsize))) {
+			return (ENOMEM);
+		}
 	}
 
 	/*
