@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 1999/01/24 02:39:30 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.38 1999/03/08 04:36:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.37 1999/01/24 02:39:30 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 1999/03/08 04:36:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,9 +65,9 @@ __RCSID("$NetBSD: main.c,v 1.37 1999/01/24 02:39:30 lukem Exp $");
 #include "ftp_var.h"
 #include "pathnames.h"
 
-#define FTP_PROXY	"ftp_proxy"	/* env var with ftp proxy location */
-#define HTTP_PROXY	"http_proxy"	/* env var with http proxy location */
-#define NO_PROXY	"no_proxy"	/* env var with list of non-proxied 
+#define FTP_PROXY	"ftp_proxy"	/* env var with FTP proxy location */
+#define HTTP_PROXY	"http_proxy"	/* env var with HTTP proxy location */
+#define NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
 
 int main __P((int, char **));
@@ -299,7 +299,6 @@ main(argc, argv)
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
-			anonftp = 1;	/* Handle "automatic" transfers. */
 			rval = auto_fetch(argc, argv, outfile);
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);
@@ -402,7 +401,7 @@ cmdscanner(top)
 	struct cmd *c;
 	int num;
 
-	if (!top 
+	if (!top
 #ifndef SMALL
 	    && !editing
 #endif /* !SMALL */
@@ -469,7 +468,7 @@ cmdscanner(top)
 			 * false positive if prog != "ftp", so treat
 			 * such commands as invalid.
 			 */
-			if (strchr(margv[0], ':') != NULL || 
+			if (strchr(margv[0], ':') != NULL ||
 			    el_parse(el, margc, margv) != 0)
 #endif /* !SMALL */
 				fputs("?Invalid command.\n", ttyout);
@@ -563,7 +562,7 @@ makeargv()
 					cursor_argo = ap-argbase; \
 					cursor_pos = NULL; \
 				} }
-						
+
 #endif /* !SMALL */
 
 /*
@@ -746,11 +745,11 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-AadeginptvV] [-r retry] [-P port] [host [port]]\n"
-	    "       %s [-f] [-o outfile] file:///file\n"
-	    "       %s [-f] [-o outfile] ftp://host[:port]/path[/]\n"
-	    "       %s [-f] [-o outfile] http://host[:port]/file\n"
-	    "       %s [-f] [-o outfile] host:path[/]\n",
+"usage: %s [-AadeginptvV] [-r retry] [-P port] [host [port]]\n"
+"       %s [-f] [-o outfile] file:///file\n"
+"       %s [-f] [-o outfile] ftp://[user[:pass]@]host[:port]/path[/]\n"
+"       %s [-f] [-o outfile] http://host[:port]/path\n"
+"       %s [-f] [-o outfile] host:path[/]\n",
 	    __progname, __progname, __progname, __progname, __progname);
 	exit(1);
 }
