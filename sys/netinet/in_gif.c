@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.37 2005/01/31 23:49:36 kim Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.38 2005/02/01 12:56:30 he Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.37 2005/01/31 23:49:36 kim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.38 2005/02/01 12:56:30 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -99,7 +99,9 @@ in_gif_output(ifp, family, m)
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
+#if NBRIDGE > 0
 	struct etherip_header eiphdr;
+#endif
 	int proto, error;
 	u_int8_t tos;
 
