@@ -19,7 +19,7 @@ struct cd_data {
 	int		openparts;		/* one bit for each open partition */
 };
 
-int cdattach(int, struct scsi_switch *, int, int);
+int cdattach(int, struct scsi_switch *, int, int *);
 int cdopen(dev_t);
 struct scsi_xfer * cd_get_xs(int, int);
 void cd_free_xs(int, struct scsi_xfer *, int);

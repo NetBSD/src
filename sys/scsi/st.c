@@ -1,7 +1,7 @@
 /*
  * Written by Julian Elischer (julian@tfs.com)
- * Hacked by Theo de Raadt <deraadt@fsa.ca>
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
+ * Hacked by Theo de Raadt <deraadt@fsa.ca>
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
@@ -68,7 +68,7 @@ static int next_st_unit = 0;
  * A device suitable for this driver
  */
 int
-stattach(int masunit, struct scsi_switch *sw, int physid, int unit)
+stattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 {
 	struct st_data *st;
 	unsigned char *tbl;
@@ -78,14 +78,19 @@ stattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 	lun = physid & 7;
 
 	/*printf("stattach: st%d at %s%d target %d lun %d\n",
-		unit, sw->name, masunit, targ, lun);*/
+		*unit, sw->name, masunit, targ, lun);*/
 
-	if(unit >= NST)
-		return -1;
-	if(st_data[unit])
-		return -1;
+	if(*unit==-1) {
+		for(i=0; i<NST && *unit==-1; i++)
+			if(st_data[*unit]==NULL)
+				*unit = i;
+	}
+	if(*unit >= NST || *unit==-1)
+		return 0;
+	if(st_data[*unit])
+		return 0;
 
-	st = st_data[unit] = (struct st_data *)malloc(sizeof *st,
+	st = st_data[*unit] = (struct st_data *)malloc(sizeof *st,
 		M_TEMP, M_NOWAIT);
 	bzero(st, sizeof *st);
 
@@ -99,13 +104,13 @@ stattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	if( st_mode_sense(unit, SCSI_NOSLEEP |  SCSI_NOMASK | SCSI_SILENT))
+	if( st_mode_sense(*unit, SCSI_NOSLEEP |  SCSI_NOMASK | SCSI_SILENT))
 		printf("st%d at %s%d targ %d lun %d: %d blocks of %d bytes\n",
-			unit, sw->name, masunit, targ, lun,
+			*unit, sw->name, masunit, targ, lun,
 			st->numblks, st->blksiz);
 	else
 		printf("st%d at %s%d targ %d lun %d: offline\n",
-			unit, sw->name, masunit, targ, lun);
+			*unit, sw->name, masunit, targ, lun);
 
 	/*
 	 * Set up the bufs for this device
@@ -114,7 +119,7 @@ stattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 	st->buf_queue.b_actf = 0;
 	st->buf_queue.b_actl = 0;
 	st->initialized = 1;
-	return 0;
+	return 1;
 }
 
 /*

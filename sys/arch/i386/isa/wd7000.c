@@ -578,35 +578,15 @@ wds_getvers(int unit)
 int
 wdsattach(struct isa_device *dev)
 {
-	int unit = dev->id_unit;
-	extern struct isa_device isa_biotab_dktp[];
-	struct isa_device *dvp;
+	int masunit = dev->id_masunit;
+	int r;
 
 	if(wds_getvers(unit)==-1)
 		printf("wds%d: getvers failed\n", unit);
 
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &wdsdriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid == -1)
-			continue;
-		scsi_attach(dev->id_unit, wds[unit].devs, &wds_switch,
-			&dvp->id_physid, &dvp->id_unit, 0);
-	}
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &wdsdriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid != -1)
-			continue;
-		scsi_attach(dev->id_unit, wds[unit].devs, &wds_switch,
-			&dvp->id_physid, &dvp->id_unit, 0);
-	}
-	scsi_warn(dev->id_unit, wds[unit].devs, &wds_switch);
-	return 0;
+	r = scsi_attach(masunit, wds[masunit].devs, &wds_switch,
+		&dev->id_physid, &dev->id_unit, dev->id_flags);
+	return r;
 }
 
 int

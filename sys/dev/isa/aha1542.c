@@ -16,7 +16,13 @@
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.7  1993/04/19 06:02:16  mycroft
+ * Revision 1.8  1993/05/04 08:32:40  deraadt
+ * support for making dev->id_alive be set, this is for iostat to
+ * find disk devices. wee bit of a kludge. sub-device attach()
+ * routines must now return 1 for successful attach(), 0 otherwise.
+ * Other bsd's do this too..
+ *
+ * Revision 1.7  1993/04/19  06:02:16  mycroft
  * Fix subtle word-size error.
  *
  * Revision 1.6  1993/04/15  07:57:50  deraadt
@@ -519,24 +525,22 @@ ahaattach(struct isa_device *dev)
 {
 	static int firsttime;
 	int masunit = dev->id_masunit;
-	int id = dev->id_unit;
+	int r;
 
 	if(!firsttime) {
 		firsttime = 1;
 		printf("aha%d: bus speed %dns\n", masunit, speed[masunit]);
 	}
 
-	scsi_attach(masunit, aha_scsi_dev[masunit], &aha_switch,
-		&dev->id_physid, &id, dev->id_flags);
-
-	/*scsi_warn(dev->id_unit, aha_scsi_dev[unit], &aha_switch);*/
+	r = scsi_attach(masunit, aha_scsi_dev[masunit], &aha_switch,
+		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
 	if(masunit==0 && firsttime==1) {
 		firsttime = 2;
 		aha_timeout(0);
 	}
-	return;
+	return r;
 }
 
 
