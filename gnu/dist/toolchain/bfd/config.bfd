@@ -126,15 +126,15 @@ case "${targ}" in
 
   armeb-*-netbsdelf*)
     targ_defvec=bfd_elf32_bigarm_vec
-    targ_selvecs="bfd_elf32_littlearm_vec armnetbsd_vec"
+    targ_selvecs="bfd_elf32_littlearm_vec armnetbsd_vec armcoff_little_vec armcoff_big_vec"
     ;;
   arm-*-netbsdelf*)
     targ_defvec=bfd_elf32_littlearm_vec
-    targ_selvecs="bfd_elf32_bigarm_vec armnetbsd_vec"
+    targ_selvecs="bfd_elf32_bigarm_vec armnetbsd_vec armcoff_little_vec armcoff_big_vec"
     ;;
   arm-*-netbsd* | arm-*-openbsd*)
     targ_defvec=armnetbsd_vec
-    targ_selvecs="bfd_elf32_littlearm_vec bfd_elf32_bigarm_vec"
+    targ_selvecs="bfd_elf32_littlearm_vec bfd_elf32_bigarm_vec armcoff_little_vec armcoff_big_vec"
     targ_underscore=yes
     ;;
   arm-*-riscix*)
