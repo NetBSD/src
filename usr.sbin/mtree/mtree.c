@@ -38,32 +38,41 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mtree.c	5.8 (Berkeley) 5/25/90";*/
-static char rcsid[] = "$Id: mtree.c,v 1.2 1993/08/01 17:58:25 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)mtree.c	5.10 (Berkeley) 4/17/92"; */
+static char *rcsid = "$Id: mtree.c,v 1.3 1993/11/02 07:51:12 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <fts.h>
 #include "mtree.h"
+#include "extern.h"
 
-NODE *root;
-int exitval;
-int cflag, dflag, eflag, rflag, uflag;
+extern int crc_total;
 
+int ftsoptions = FTS_PHYSICAL;
+int cflag, dflag, eflag, rflag, sflag, uflag;
+u_short keys;
+char fullpath[MAXPATHLEN];
+
+static void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern int ftsoptions, optind;
+	extern int optind;
 	extern char *optarg;
 	int ch;
-	char *dir;
+	char *dir, *p;
 
-	dir = (char *)NULL;
-	while ((ch = getopt(argc, argv, "cdef:p:rux")) != EOF)
+	dir = NULL;
+	keys = KEYDEFAULT;
+	while ((ch = getopt(argc, argv, "cdef:K:k:p:rs:ux")) != EOF)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -75,11 +84,19 @@ main(argc, argv)
 			eflag = 1;
 			break;
 		case 'f':
-			if (!(freopen(optarg, "r", stdin))) {
-				(void)fprintf(stderr,
-				    "mtree: can't read %s.\n", optarg);
-				exit(1);
-			}
+			if (!(freopen(optarg, "r", stdin)))
+				err("%s: %s", optarg, strerror(errno));
+			break;
+		case 'K':
+			while ((p = strsep(&optarg, " \t,")) != NULL)
+				if (*p != '\0')
+					keys |= parsekey(p, NULL);
+			break;
+		case 'k':
+			keys = F_TYPE;
+			while ((p = strsep(&optarg, " \t,")) != NULL)
+				if (*p != '\0')
+					keys |= parsekey(p, NULL);
 			break;
 		case 'p':
 			dir = optarg;
@@ -87,6 +104,11 @@ main(argc, argv)
 		case 'r':
 			rflag = 1;
 			break;
+		case 's':
+			sflag = 1;
+			crc_total = ~strtol(optarg, &p, 0);
+			if (*p)
+				err("illegal seed value -- %s", optarg);
 		case 'u':
 			uflag = 1;
 			break;
@@ -98,28 +120,28 @@ main(argc, argv)
 			usage();
 		}
 	argc -= optind;
+	argv += optind;
+
 	if (argc)
 		usage();
 
-	if (!cflag)
-		spec();
+	if (dir && chdir(dir))
+		err("%s: %s", dir, strerror(errno));
 
-	if (dir && chdir(dir)) {
-		(void)fprintf(stderr,
-		    "mtree: %s: %s\n", dir, strerror(errno));
-		exit(1);
-	}
+	if ((cflag || sflag) && !getwd(fullpath))
+		err("%s", fullpath);
 
-	if (cflag)
+	if (cflag) {
 		cwalk();
-	else
-		verify();
-	exit(exitval);
+		exit(0);
+	}
+	exit(verify());
 }
 
+static void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: mtree [-cderux] [-p path] [-f spec]\n");
+"usage: mtree [-cderux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
 	exit(1);
 }
