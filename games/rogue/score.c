@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.9 2001/08/09 13:02:49 wiz Exp $	*/
+/*	$NetBSD: score.c,v 1.10 2002/07/07 09:35:08 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.9 2001/08/09 13:02:49 wiz Exp $");
+__RCSID("$NetBSD: score.c,v 1.10 2002/07/07 09:35:08 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ put_scores(monster, other)
 	char buf[128];
 	FILE *fp;
 	long s;
-	boolean pause = score_only;
+	boolean dopause = score_only;
 
 	md_lock(1);
 
@@ -322,7 +322,7 @@ put_scores(monster, other)
 	refresh();
 	fclose(fp);
 	message("", 0);
-	if (pause) {
+	if (dopause) {
 		message("", 0);
 	}
 	clean_up("");
