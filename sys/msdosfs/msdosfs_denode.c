@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.36 1999/03/24 05:51:27 mrg Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.36.4.1 1999/08/01 05:17:45 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -117,7 +117,7 @@ loop:
 			return (dep);
 		}
 	}
-	simple_lock(&msdosfs_ihash_slock);
+	simple_unlock(&msdosfs_ihash_slock);
 	return (NULL);
 }
 
@@ -317,6 +317,7 @@ deget(pmp, dirclust, diroffset, depp)
 		nvp->v_type = VREG;
 	VREF(ldep->de_devvp);
 	*depp = ldep;
+	nvp->v_uvm.u_size = ldep->de_FileSize;
 	return (0);
 }
 
@@ -422,7 +423,7 @@ detrunc(dep, length, flags, cred, p)
 #endif
 			return (error);
 		}
-		uvm_vnp_uncache(DETOV(dep));	/* what's this for? */
+
 		/*
 		 * is this the right place for it?
 		 */
