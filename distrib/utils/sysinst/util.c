@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6.2.11 1998/02/08 06:35:34 mellon Exp $	*/
+/*	$NetBSD: util.c,v 1.6.2.12 1998/03/09 22:11:24 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -244,10 +244,13 @@ get_via_cdrom(void)
 	/* Get CD-rom device name and path within CD-rom */
 	process_menu (MENU_cdromsource);
 
-	/* Fill in final default path. */
+	/* Fill in final default path, similar to ftp path
+	   because we expect the CDROM structure to be the
+	   same as the ftp site.  */
 	strncat (cdrom_dir, rel, STRSIZE-strlen(cdrom_dir));
 	strcat  (cdrom_dir, "/");
 	strncat (cdrom_dir, machine, STRSIZE-strlen(cdrom_dir));
+	strncat (cdrom_dir, ftp_prefix, STRSIZE-strlen(cdrom_dir));
 
 again:
 	run_prog("/sbin/umount /mnt2  2> /dev/null");
@@ -522,11 +525,14 @@ void get_and_unpack_sets(int success_msg, int failure_msg)
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void) mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IXOTH|S_IXOTH);
 
+	/* Find out which files to "get" if we get files. */
+	process_menu (MENU_distset);
+
 	/* Get the distribution files */
 	process_menu (MENU_distmedium);
+
 	if (nodist)
 		return;
-
 
 	if (got_dist) {
 
