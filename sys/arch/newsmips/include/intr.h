@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 1999/12/31 08:15:48 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -113,7 +113,8 @@ extern int news5000_intr __P((u_int, u_int, u_int, u_int));
 
 /* handle software interrupts */
 extern void (*mips_software_intr) __P((int));
-extern void news3400_softintr __P((int));
+
+#define SOFTISR_ZS	0x01
 
 extern void (*enable_intr) __P((void));
 extern void (*disable_intr) __P((void));
