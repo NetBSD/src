@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.13.2.3 1999/04/09 04:35:33 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.13.2.4 1999/04/29 05:32:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -211,9 +211,6 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 					bpp, &newb);
 				if (error)
 					return (error);
-				ip->i_ffs_db[lbn] = ufs_rw32(newb,
-					UFS_MPNEEDSWAP(vp->v_mount));
-				ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			}
 		} else {
 
@@ -231,11 +228,6 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 				nsize, cred, &newb);
 			if (error)
 				return (error);
-
-			ip->i_ffs_db[lbn] = ufs_rw32(newb,
-				UFS_MPNEEDSWAP(vp->v_mount));
-			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-
 			if (bpp != NULL) {
 				bp = getblk(vp, lbn, nsize, 0, 0);
 				bp->b_blkno = fsbtodb(fs, newb);
@@ -243,12 +235,15 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 					clrbuf(bp);
 				*bpp = bp;
 			}
-			if (blknop != NULL) {
-				*blknop = fsbtodb(fs, newb);
-			}
-			if (alloced != NULL) {
-				*alloced = TRUE;
-			}
+		}
+		ip->i_ffs_db[lbn] = ufs_rw32(newb, UFS_MPNEEDSWAP(vp->v_mount));
+		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+
+		if (blknop != NULL) {
+			*blknop = fsbtodb(fs, newb);
+		}
+		if (alloced != NULL) {
+			*alloced = TRUE;
 		}
 		return (0);
 	}
@@ -460,6 +455,16 @@ ffs_balloc_range(ip, off, len, cred, flags)
 		if ((error = ffs_balloc(ip, lbn, bsize, cred, NULL, &blkno,
 					flags, &alloced))) {
 			return error;
+		}
+
+		/*
+		 * bump file size now.
+		 * ffs_balloc() needs to know in the case where we loop here.
+		 */
+
+		if (ip->i_ffs_size < lblktosize(fs, lbn) + bsize) {
+			ip->i_ffs_size = lblktosize(fs, lbn) + bsize;
+			uvm_vnp_setsize(ip->i_vnode, ip->i_ffs_size);
 		}
 
 		/*
