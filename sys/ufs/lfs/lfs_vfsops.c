@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.102 2003/03/02 04:34:31 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.103 2003/03/08 02:55:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.102 2003/03/02 04:34:31 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.103 2003/03/08 02:55:49 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1811,17 +1811,23 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		for (i = 0; i < npages; i++) {
 			pg = pgs[i];
 
-			if (pg->flags & PG_WANTED)
-				wakeup(pg);
 			if (pg->flags & PG_PAGEOUT)
 				uvmexp.paging--;
 			if (pg->flags & PG_DELWRI) {
 				uvm_pageunwire(pg);
-				uvm_pageactivate(pg);
 			}
-			pg->flags &= ~(PG_BUSY|PG_CLEAN|PG_WANTED|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
-			UVM_PAGE_OWN(pg, NULL);
+			uvm_pageactivate(pg);
+			pg->flags &= ~(PG_CLEAN|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
+#ifdef DEBUG_LFS
+			printf("pg[%d]->flags = %x\n", i, pg->flags);
+			printf("pg[%d]->pqflags = %x\n", i, pg->pqflags);
+			printf("pg[%d]->uanon = %p\n", i, pg->uanon);
+			printf("pg[%d]->uobject = %p\n", i, pg->uobject);
+			printf("pg[%d]->wire_count = %d\n", i, pg->wire_count);
+			printf("pg[%d]->loan_count = %d\n", i, pg->loan_count);
+#endif
 		}
+		/* uvm_pageunbusy takes care of PG_BUSY, PG_WANTED */
 		uvm_page_unbusy(pgs, npages);
 		uvm_unlock_pageq();
 		simple_unlock(&vp->v_interlock);
