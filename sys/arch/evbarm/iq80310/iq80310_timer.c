@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.4 2001/11/23 19:36:49 thorpej Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.5 2001/11/26 18:01:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -159,22 +159,29 @@ cpu_initclocks(void)
 	if (hz < 50 || COUNTS_PER_SEC % hz) {
 		printf("Cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
-		tick = 1000000 / hz;
+	}
+	tick = 1000000 / hz;	/* number of microseconds between interrupts */
+	tickfix = 1000000 - (hz * tick);
+	if (tickfix) {
+		int ftp;
+
+		ftp = min(ffs(tickfix), ffs(hz));
+		tickfix >>= (ftp - 1);
+		tickfixinterval = hz >> (ftp - 1);
 	}
 
 	/*
 	 * We only have one timer available; stathz and profhz are
-	 * always equal to hz.
+	 * always left as 0 (the upper-layer clock code deals with
+	 * this situation).
 	 */
 	if (stathz != 0)
-		printf("Cannot get %d Hz statclock; using %d Hz\n",
-		    stathz, hz);
-	stathz = hz;
+		printf("Cannot get %d Hz statclock\n", stathz);
+	stathz = 0;
 
 	if (profhz != 0)
-		printf("Cannot get %d Hz profclock; using %d Hz\n",
-		    profhz, hz);
-	profhz = hz;
+		printf("Cannot get %d Hz profclock\n", profhz);
+	profhz = 0;
 
 	/* Report the clock frequency. */
 	printf("clock: hz=%d stathz=%d profhz=%d\n", hz, stathz, profhz);
