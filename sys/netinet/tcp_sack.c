@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.3 2005/03/06 23:05:56 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.4 2005/03/06 23:06:40 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.3 2005/03/06 23:05:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.4 2005/03/06 23:06:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -239,8 +239,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	 * sends us a sack option with invalid length, don't
 	 * update the scoreboard.
 	 */
-	if (!TCP_SACK_ENABLED(tp) ||
-			(optlen % 8 != 2 || optlen < 10)) {
+	if (!TCP_SACK_ENABLED(tp) || (optlen % 8 != 2 || optlen < 10)) {
 		return;
 	}
 
@@ -258,9 +257,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		left = ntohl(left);
 		right = ntohl(right);
 
-		if ((SEQ_LEQ(right, acked)) ||
-				SEQ_GEQ(left, tp->snd_max) ||
-				SEQ_GEQ(left, right)) {
+		if (SEQ_LEQ(right, acked) || SEQ_GEQ(left, tp->snd_max) ||
+		    SEQ_GEQ(left, right)) {
 			/* SACK entry that's old, or invalid. */
 			i--;
 			num_sack_blks--;
@@ -373,7 +371,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			 * Need to append new hole at end.
 			 */
 			tmp = (struct sackhole *)
-				pool_get(&sackhole_pool, PR_NOWAIT);
+			    pool_get(&sackhole_pool, PR_NOWAIT);
 			if (tmp == NULL)
 				continue; /* ENOBUFS */
 			tmp->start = tp->rcv_lastsack;
