@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1998/08/22 19:03:46 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1998/08/22 20:08:21 tv Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -16,16 +16,8 @@ VERSION=2.8.1
 # Distribution name
 DIST_NAME=binutils-${VERSION}
 
-# Override this to make cross tools. (Not yet guaranteed.)
-TARGET_ARCH?=${MACHINE_GNU_ARCH}
-
-# XXX. Need to pull proper target definition from <bsd.own.mk>.
 .include <bsd.own.mk>
-.if (${OBJECT_FMT} == "a.out")
-TARGET=a.out-${TARGET_ARCH}-netbsd
-.else
-TARGET=${TARGET_ARCH}-unknown-netbsd
-.endif
+TARGET=${MACHINE_GNU_ARCH}--netbsd
 
 INCLS+=	-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../common
 
