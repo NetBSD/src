@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.7 2001/11/25 15:55:55 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.8 2002/02/10 12:26:03 chris Exp $	*/
 
 #ifndef _CATS_CONF_H
 #define	_CATS_CONF_H
@@ -12,5 +12,7 @@
 #define	CONF_HAVE_USB
 #define	CONF_HAVE_SCSIPI
 #define	CONF_HAVE_WSCONS
+
+#include <arm/conf.h>
 
 #endif	/* _CATS_CONF_H */

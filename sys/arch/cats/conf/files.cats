@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.18 2002/02/10 10:41:34 tsutsui Exp $
+#	$NetBSD: files.cats,v 1.19 2002/02/10 12:26:03 chris Exp $
 #
 # CATS-specific configuration info
 #
@@ -33,13 +33,13 @@ major	{wd = 16}
 #
 device	todclock
 attach	todclock at todservice
-file	arch/arm32/dev/todclock.c		todclock	needs-count
+file	arch/arm/footbridge/todclock.c			todclock	needs-count
 
 # ISA DMA glue
-file	arch/arm32/isa/isadma_machdep.c		isadma
+file	arch/arm/footbridge/isa/isadma_machdep.c	isadma
 
 # Game adapter (joystick)
-file	arch/arm32/isa/joy_timer.c		joy
+file	arch/arm/footbridge/isa/joy_timer.c		joy
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
@@ -72,22 +72,22 @@ file	arch/arm/arm32/intr.c
 file	arch/arm/arm32/spl.S
 
 # ISA Plug 'n Play autoconfiguration glue.
-file	arch/arm32/isa/isapnp_machdep.c		isapnp
+file	arch/arm/footbridge/isa/isapnp_machdep.c	isapnp
 
 # ISA support.
-file	arch/arm32/isa/isa_io.c				isa
-file	arch/arm32/isa/isa_io_asm.S			isa
+file	arch/arm/footbridge/isa/isa_io.c		isa
+file	arch/arm/footbridge/isa/isa_io_asm.S		isa
 
 # CATS boards have an EBSA285 based core with an ISA bus
 file	arch/cats/isa/isa_machdep.c			isa
 
 device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
-file	arch/arm32/isa/sysbeep_isa.c			sysbeep_isa
+file	arch/arm/footbridge/isa/sysbeep_isa.c		sysbeep_isa
 
 device dsrtc: todservice
 attach dsrtc at isa
-file	arch/arm32/isa/dsrtc.c				dsrtc
+file	arch/arm/footbridge/isa/dsrtc.c			dsrtc
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
 
