@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.3 2003/07/30 18:49:28 jonathan Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.4 2003/11/16 00:22:09 jonathan Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
@@ -60,6 +60,8 @@
 #define HIFN_3DES_KEY_LENGTH		24
 #define HIFN_MAX_CRYPT_KEY_LENGTH	HIFN_3DES_KEY_LENGTH
 #define HIFN_IV_LENGTH			8
+#define	HIFN_AES_IV_LENGTH		16
+#define HIFN_MAX_IV_LENGTH		HIFN_AES_IV_LENGTH
 
 /*
  *  Length values for authentication
@@ -104,7 +106,7 @@ struct hifn_dma {
 struct hifn_session {
 	int hs_state;
 	int hs_prev_op; /* XXX collapse into hs_flags? */
-	u_int8_t hs_iv[HIFN_IV_LENGTH];
+	u_int8_t hs_iv[HIFN_MAX_IV_LENGTH];
 };
 
 /* We use a state machine on sessions */
@@ -152,11 +154,13 @@ struct hifn_softc {
 	int sc_maxses;
 	int sc_ramsize;
 	int sc_flags;
-#define	HIFN_HAS_RNG		1
-#define	HIFN_HAS_PUBLIC		2
-#define	HIFN_IS_7811		4
-#define	HIFN_NO_BURSTWRITE	8
-#define	HIFN_HAS_LEDS		16
+#define	HIFN_HAS_RNG		0x01
+#define	HIFN_HAS_PUBLIC		0x02
+#define	HIFN_HAS_AES		0x04	/* includes AES support */
+#define	HIFN_IS_7811		0x08	/* Hifn 7811 part */
+#define	HIFN_IS_7956		0x10	/* Hifn 7956/7955 don't have SDRAM */
+#define	HIFN_NO_BURSTWRITE	0x20
+#define	HIFN_HAS_LEDS		0x40
 	struct callout		sc_rngto;	/* rng timeout */
 	struct callout		sc_tickto;	/* led-clear timeout */
 	int			sc_rngfirst;
@@ -258,7 +262,7 @@ struct hifn_softc {
 struct hifn_command {
 	u_int16_t session_num;
 	u_int16_t base_masks, cry_masks, mac_masks, comp_masks;
-	u_int8_t iv[HIFN_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
+	u_int8_t iv[HIFN_MAX_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
 	int cklen;
 	int sloplen, slopidx;
 
