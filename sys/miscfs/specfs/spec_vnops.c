@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.34 1996/10/13 02:21:41 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.35 1997/04/02 17:09:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,6 +49,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
+#include <sys/lockf.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -661,4 +662,24 @@ spec_pathconf(v)
 		return (EINVAL);
 	}
 	/* NOTREACHED */
+}
+
+/* 
+ * Advisory record locking support.
+ */
+int
+spec_advlock(v)
+	void *v;
+{
+	struct vop_advlock_args /* {
+		struct vnode *a_vp;
+		caddr_t a_id;
+		int a_op;
+		struct flock *a_fl;
+		int a_flags;
+	} */ *ap = v;
+	register struct vnode *vp = ap->a_vp;
+
+	return (lf_advlock(&vp->v_speclockf, (off_t)0, ap->a_id, ap->a_op,
+	                   ap->a_fl, ap->a_flags));
 }
