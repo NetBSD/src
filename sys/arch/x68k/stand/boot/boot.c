@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2001/09/27 10:14:49 minoura Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2001/09/28 15:11:19 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -198,7 +198,6 @@ boot(char *arg)
 	}
 }
 		
-
 int
 bootmenu(void)
 {
@@ -226,6 +225,7 @@ bootmenu(void)
 		exit(1);
 	}
 
+	printf("Please use the absolute unit# (e.g. SCSI ID) instead of the NetBSD ones.\n");
 	for (;;) {
 		char *p, *options;
 
@@ -278,6 +278,6 @@ bootmain(int bootdev)
 		default_kernel[2] = '0' + B_X68K_SCSI_ID(bootdev);
 		default_kernel[3] = 'a';
 	}
-	printf("NetBSD/x68k bootstrap loader version %s\n\n", BOOT_VERS);
+	print_title("NetBSD/x68k bootstrap loader version %s", BOOT_VERS);
 	bootmenu();
 }
