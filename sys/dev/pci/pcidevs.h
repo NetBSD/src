@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.212 2000/03/31 04:45:30 tsarna Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.213 2000/04/03 15:05:05 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.204 2000/03/30 17:34:53 joda Exp 
+ *	NetBSD: pcidevs,v 1.206 2000/04/03 15:04:42 joda Exp 
  */
 
 /*
@@ -1166,7 +1166,19 @@
 #define	PCI_PRODUCT_NUMBER9_I128_2	0x2339		/* Imagine-128 II */
 
 /* Nvidia Corporationn products */
-#define	PCI_PRODUCT_NVIDIA_RIVATNT	0x0020		/* Riva TNT */
+#define	PCI_PRODUCT_NVIDIA_RIVATNT	0x0020		/* RIVA TNT */
+#define	PCI_PRODUCT_NVIDIA_RIVATNT2	0x0028		/* RIVA TNT2 */
+#define	PCI_PRODUCT_NVIDIA_RIVATNT2U	0x0029		/* RIVA TNT2 Ultra */
+#define	PCI_PRODUCT_NVIDIA_VANTA	0x002C		/* Vanta */
+#define	PCI_PRODUCT_NVIDIA_RIVATNT2M64	0x002D		/* RIVA TNT2 Model 64 */
+#define	PCI_PRODUCT_NVIDIA_ALADDINTNT2	0x00A0		/* Aladdin TNT2 */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE256	0x0100		/* GeForce 256 */
+#define	PCI_PRODUCT_NVIDIA_GEFORCEDDR	0x0101		/* GeForce DDR */
+#define	PCI_PRODUCT_NVIDIA_QUADRO	0x0103		/* Quadro */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE2	0x0150		/* GeForce2 GTS */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE2DDR	0x0151		/* GeForce2 GTS (DDR) */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE2BR	0x0152		/* GeForce2 GTS */
+#define	PCI_PRODUCT_NVIDIA_QUADRO2	0x0153		/* Quadro2 */
 
 /* Nvidia Corporation & SGS Thomson Microelectric */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */
