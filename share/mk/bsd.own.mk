@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.394 2003/11/24 05:44:59 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.395 2003/11/27 13:09:37 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -33,26 +33,24 @@ TOOLCHAIN_MISSING=	no
 #
 # not working:
 #
-#    ${MACHINE_ARCH} == "sh3eb" ||
-#    ${MACHINE_ARCH} == "vax" ||
-# mostly working:
-#    ${MACHINE_ARCH} == "sh3el" ||
-.if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "armeb" || \
-    ${MACHINE_ARCH} == "hppa" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "m68000" || \
-    ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "x86_64"
-HAVE_GCC3?=	yes
-.else
+.if ${MACHINE_ARCH} == "sh3el" || \
+    ${MACHINE_ARCH} == "sh3eb" || \
+    ${MACHINE_ARCH} == "vax"
 HAVE_GCC3?=	no
+.else
+HAVE_GCC3?=	yes
+.endif
+
+#
+# Transitional for toolchain upgrade to binutils 2.14
+#
+#HAVE_BINUTILS214?=	no	# for now
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "armeb"
+HAVE_BINUTILS214?=	yes
+.else
+HAVE_BINUTILS214?=	no
 .endif
 
 # Do we want to use tools/toolchain or not?
@@ -60,32 +58,6 @@ HAVE_GCC3?=	no
 USE_TOOLS_TOOLCHAIN=no
 .endif
 USE_TOOLS_TOOLCHAIN?=yes
-
-#
-# Transitional for toolchain upgrade to GDB5.3
-#
-# not ported:
-#    ${MACHINE_ARCH} == "hppa" ||
-# XXX m68000 not actually tested but does build.
-.if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "armeb" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "m68000" || \
-    ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sh3eb" || \
-    ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "vax" || \
-    ${MACHINE_ARCH} == "x86_64"
-HAVE_GDB53?=	yes
-.else
-HAVE_GDB53?=	no
-.endif
 
 #
 # XXX TEMPORARY: If ns32k and not using an external toolchain, then we have
