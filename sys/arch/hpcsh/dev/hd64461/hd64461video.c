@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.16 2002/10/02 15:45:20 thorpej Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.17 2003/04/27 04:11:32 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -636,6 +636,8 @@ hd64461video_bitblit(void *ctx, int xs, int ys, int xd, int yd, int h, int w)
 	// BitBLT mode (on screen to on screen)
 	r = HD64461_LCDBBTMDR_SET(0,
 	    HD64461_LCDBBTMDR_ON_SCREEN_TO_ON_SCREEN);
+	if (condition_a)	/* reverse direction */
+	    r |= HD64461_LCDBBTMDR_SCANDRCT_RL_BT;
 	hd64461_reg_write_2(HD64461_LCDBBTMDR_REG16, r);
 
 	// Kick.
