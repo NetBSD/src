@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.42 2003/08/31 22:40:49 fvdl Exp $	*/
+/*	$NetBSD: ufs.c,v 1.43 2004/03/20 14:24:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -496,6 +496,9 @@ ffs_find_superblock(struct open_file *f, struct fs *fs)
 		    sblock_try[i] / DEV_BSIZE, SBLOCKSIZE, fs, &buf_size);
 		if (rc != 0 || buf_size != SBLOCKSIZE)
 			return rc;
+		if (fs->fs_sblockloc != sblock_try[i])
+			/* an alternate superblock - try again */
+			continue;
 		if (fs->fs_magic == FS_UFS2_MAGIC) {
 			return 0;
 		}
