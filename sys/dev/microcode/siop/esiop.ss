@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.8 2002/04/24 08:00:08 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.9 2002/04/24 09:43:14 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -81,7 +81,8 @@ ABSOLUTE f_cmd_free	= 0x01 ; this slot is free
 ABSOLUTE f_cmd_ignore	= 0x02 ; this slot is not free but don't start it
 ; offsets in a cmd slot
 ABSOLUTE o_cmd_dsa	= 0; also holds f_cmd_*
-ABSOLUTE o_cmd_id	= 4;
+; size of a cmd slot (for DSA increments)
+ABSOLUTE cmd_slot_size	= 4;
 
 ; SCRATCHE1: last status
 
@@ -192,21 +193,31 @@ script_sched:
 	MOVE SFBR to DSA2;
 	MOVE SCRATCHD3 to SFBR;
 	MOVE SFBR to DSA3;
-	LOAD SCRATCHA0,4, from o_cmd_dsa; /* get flags */
-	MOVE SCRATCHA0 & f_cmd_free to SFBR;
+	LOAD DSA0,4, from o_cmd_dsa; get DSA and flags for this slot
+	MOVE DSA0 to SFBR; to avoid another load later
+	MOVE SFBR to SCRATCHA0; to avoid another load later
+	MOVE DSA0 & f_cmd_free to SFBR; check flags
 	JUMP REL(no_cmd), IF NOT 0x0;
-	MOVE SCRATCHA0 & f_cmd_ignore to SFBR;
+	MOVE DSA0 & f_cmd_ignore to SFBR;
 	JUMP REL(ignore_cmd), IF NOT 0x0;
 ; this slot is busy, attempt to exec command
-	SELECT ATN FROM o_cmd_id, REL(reselect);
+	SELECT ATN FROM t_id, REL(reselect);
 ; select either succeeded or timed out.
 ; if timed out the STO interrupt will be posted at the first SCSI bus access
 ; waiting for a valid phase, so we have to do it now. If not a MSG_OUT phase,
 ; this is an error anyway (we selected with ATN)
 	INT int_err, WHEN NOT MSG_OUT;
+	MOVE SCRATCHD0 to SFBR; restore scheduler DSA
+	MOVE SFBR to DSA0;
+	MOVE SCRATCHD1 to SFBR;
+	MOVE SFBR to DSA1;
+	MOVE SCRATCHD2 to SFBR;
+	MOVE SFBR to DSA2;
+	MOVE SCRATCHD3 to SFBR;
+	MOVE SFBR to DSA3;
 ignore_cmd:
 	MOVE SCRATCHE0 + 1 to SCRATCHE0;
-	MOVE SCRATCHD0 + 8 to SCRATCHD0; sizeof (esiop_cmd_slot)
+	MOVE SCRATCHD0 + cmd_slot_size to SCRATCHD0; 
 	MOVE SCRATCHD1 + 0 to SCRATCHD1 WITH CARRY;
 	MOVE SCRATCHD2 + 0 to SCRATCHD2 WITH CARRY;
 	MOVE SCRATCHD3 + 0 to SCRATCHD3 WITH CARRY;
@@ -223,17 +234,17 @@ cmdr3:
 	MOVE 0xff to SCRATCHD3;
 	MOVE 0x00 to SCRATCHE0;
 handle_cmd:
-	MOVE SCRATCHA0 | f_cmd_free to SCRATCHA0;
-	STORE noflush SCRATCHA0, 4, FROM o_cmd_dsa;
+	MOVE SCRATCHA0 | f_cmd_free to SCRATCHA0; mark slot as free
+	STORE noflush SCRATCHA0, 1, FROM o_cmd_dsa;
 	MOVE SCRATCHA0 & f_cmd_ignore to SFBR;
-	JUMP REL(script_sched), IF NOT 0x00; /* next command if ignore */
+	JUMP REL(script_sched), IF NOT 0x00; next command if ignore
 
 ; a NOP by default; patched with MOVE GPREG & 0xfe to GPREG on compile-time
 ; option "SIOP_SYMLED"
 led_on1:
 	NOP;
-	LOAD DSA0, 4, FROM o_cmd_dsa; /* load new DSA */
-	MOVE DSA0 & 0xfe to DSA0; /* clear f_cmd_free */
+	LOAD DSA0, 4, FROM o_cmd_dsa; reload DSA for this command
+	MOVE DSA0 & 0xfe to DSA0; clear f_cmd_free
 	MOVE 0x00 TO SCRATCHA1;
 	MOVE 0xff TO SCRATCHE1;
 	LOAD SCRATCHC0, 4, FROM tlq_offset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.7 2002/04/23 20:41:16 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.8 2002/04/24 09:43:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.7 2002/04/23 20:41:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.8 2002/04/24 09:43:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,6 @@ void	esiop_dump_script __P((struct esiop_softc *));
 void	esiop_morecbd __P((struct esiop_softc *));
 void	esiop_moretagtbl __P((struct esiop_softc *));
 void	siop_add_reselsw __P((struct esiop_softc *, int));
-void	esiop_update_scntl3 __P((struct esiop_softc *,
-			struct siop_common_target *));
 struct esiop_cmd * esiop_cmd_find __P((struct esiop_softc *, int, u_int32_t));
 void	esiop_target_register __P((struct esiop_softc *, u_int32_t));
 
@@ -210,7 +208,7 @@ esiop_reset(sc)
 	sc->sc_free_offset += 2;
 	/* then we have the scheduler ring */
 	sc->sc_shedoffset = sc->sc_free_offset;
-	sc->sc_free_offset += A_ncmd_slots * 2;
+	sc->sc_free_offset += A_ncmd_slots * CMD_SLOTSIZE;
 	/* then the targets DSA table */
 	sc->sc_target_table_offset = sc->sc_free_offset;
 	sc->sc_free_offset += sc->sc_c.sc_chan.chan_ntargets;
@@ -287,8 +285,8 @@ esiop_reset(sc)
 	addr = sc->sc_c.sc_scriptaddr + sc->sc_shedoffset * sizeof(u_int32_t);
 	/* init scheduler */
 	for (i = 0; i < A_ncmd_slots; i++) {
-		esiop_script_write(sc, sc->sc_shedoffset + i * 2, A_f_cmd_free);
-		esiop_script_write(sc, sc->sc_shedoffset + i * 2 + 1, 0);
+		esiop_script_write(sc,
+		    sc->sc_shedoffset + i * CMD_SLOTSIZE, A_f_cmd_free);
 	}
 	sc->sc_currschedslot = 0;
 	bus_space_write_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SCRATCHE, 0);
@@ -607,23 +605,23 @@ none:
 			    sc->sc_c.sc_rh, SIOP_SCRATCHE);
 			esiop_script_sync(sc,
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-			target = esiop_script_read(sc,
-			    sc->sc_shedoffset + slot * 2 + 1) & 0x00ff0000;
-			target = (target >> 16) & 0xff;
+			target = bus_space_read_1(sc->sc_c.sc_rt,
+			    sc->sc_c.sc_rh, SIOP_SDID);
 			esiop_cmd = esiop_cmd_find(sc, target,
 			    esiop_script_read(sc,
-				sc->sc_shedoffset + slot * 2) & ~0x3);
+			    sc->sc_shedoffset + slot * CMD_SLOTSIZE) & ~0x3);
 			/*
 			 * mark this slot as free, and advance to next slot
 			 */
-			esiop_script_write(sc, sc->sc_shedoffset + slot * 2,
+			esiop_script_write(sc,
+			    sc->sc_shedoffset + slot * CMD_SLOTSIZE,
 			    A_f_cmd_free);
 			addr = bus_space_read_4(sc->sc_c.sc_rt,
 				    sc->sc_c.sc_rh, SIOP_SCRATCHD);
 			if (slot < (A_ncmd_slots - 1)) {
 				bus_space_write_1(sc->sc_c.sc_rt,
 				    sc->sc_c.sc_rh, SIOP_SCRATCHE, slot + 1);
-				addr = addr + 8;
+				addr = addr + sizeof(struct esiop_slot);
 			} else {
 				bus_space_write_1(sc->sc_c.sc_rt,
 				    sc->sc_c.sc_rh, SIOP_SCRATCHE, 0);
@@ -901,16 +899,12 @@ scintr:
 			if (esiop_cmd->cmd_tables->msg_in[2] == MSG_EXT_PPR) {
 				switch (siop_ppr_neg(&esiop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
-					esiop_update_scntl3(sc,
-					    esiop_cmd->cmd_c.siop_target);
 					esiop_table_sync(esiop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_send_msgout);
 					return(1);
 				case SIOP_NEG_ACK:
-					esiop_update_scntl3(sc,
-					    esiop_cmd->cmd_c.siop_target);
 					CALL_SCRIPT(Ent_msgin_ack);
 					return(1);
 				default:
@@ -922,16 +916,12 @@ scintr:
 			if (esiop_cmd->cmd_tables->msg_in[2] == MSG_EXT_WDTR) {
 				switch (siop_wdtr_neg(&esiop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
-					esiop_update_scntl3(sc,
-					    esiop_cmd->cmd_c.siop_target);
 					esiop_table_sync(esiop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_send_msgout);
 					return(1);
 				case SIOP_NEG_ACK:
-					esiop_update_scntl3(sc,
-					    esiop_cmd->cmd_c.siop_target);
 					CALL_SCRIPT(Ent_msgin_ack);
 					return(1);
 				default:
@@ -943,16 +933,12 @@ scintr:
 			if (esiop_cmd->cmd_tables->msg_in[2] == MSG_EXT_SDTR) {
 				switch (siop_sdtr_neg(&esiop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
-					esiop_update_scntl3(sc,
-					    esiop_cmd->cmd_c.siop_target);
 					esiop_table_sync(esiop_cmd,
 					    BUS_DMASYNC_PREREAD |
 					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_send_msgout);
 					return(1);
 				case SIOP_NEG_ACK:
-					esiop_update_scntl3(sc,
-					    esiop_cmd->cmd_c.siop_target);
 					CALL_SCRIPT(Ent_msgin_ack);
 					return(1);
 				default:
@@ -1194,7 +1180,7 @@ esiop_unqueue(sc, target, lun)
 		esiop_cmd = esiop_lun->tactive[tag];
 		for (slot = 0; slot < A_ncmd_slots; slot++) {
 			slotdsa = esiop_script_read(sc,
-			    sc->sc_shedoffset + slot * 2);
+			    sc->sc_shedoffset + slot * CMD_SLOTSIZE);
 			if (slotdsa & A_f_cmd_free)
 				continue;
 			if ((slotdsa & ~A_f_cmd_free) == esiop_cmd->cmd_c.dsa)
@@ -1203,7 +1189,7 @@ esiop_unqueue(sc, target, lun)
 		if (slot >  ESIOP_NTAG)
 			continue; /* didn't find it */
 		/* Mark this slot as ignore */
-		esiop_script_write(sc, sc->sc_shedoffset + slot * 2,
+		esiop_script_write(sc, sc->sc_shedoffset + slot * CMD_SLOTSIZE,
 		    esiop_cmd->cmd_c.dsa | A_f_cmd_ignore);
 		/* ask to requeue */
 		esiop_cmd->cmd_c.xs->error = XS_REQUEUE;
@@ -1547,7 +1533,7 @@ esiop_start(sc, esiop_cmd)
 	 * free slot, unless we have filled the queue. Check this.
 	 */
 	slot = sc->sc_currschedslot;
-	if ((esiop_script_read(sc, sc->sc_shedoffset + slot * 2) &
+	if ((esiop_script_read(sc, sc->sc_shedoffset + slot * CMD_SLOTSIZE) &
 	    A_f_cmd_free) == 0) {
 		/*
 		 * no more free slot, no need to continue. freeze the queue
@@ -1615,10 +1601,8 @@ esiop_start(sc, esiop_cmd)
 		esiop_lun->lun_flags &= ~LUNF_TAGTABLE;
 
 	}
-	/* scheduler slot: ID, then DSA */
-	esiop_script_write(sc, sc->sc_shedoffset + slot * 2 + 1, 
-	    sc->sc_c.targets[target]->id);
-	esiop_script_write(sc, sc->sc_shedoffset + slot * 2,
+	/* scheduler slot: DSA */
+	esiop_script_write(sc, sc->sc_shedoffset + slot * CMD_SLOTSIZE,
 	    esiop_cmd->cmd_c.dsa);
 	/* handle timeout */
 	if ((esiop_cmd->cmd_c.xs->xs_control & XS_CTL_POLL) == 0) {
@@ -1905,29 +1889,6 @@ bad2:
 bad3:
 	free(newtblblk, M_DEVBUF);
 	return;
-}
-
-void
-esiop_update_scntl3(sc, _siop_target)
-	struct esiop_softc *sc;
-	struct siop_common_target *_siop_target;
-{
-	int slot;
-	u_int32_t slotid, id;
-
-	struct esiop_target *esiop_target = (struct esiop_target *)_siop_target;
-	esiop_script_write(sc, esiop_target->lun_table_offset,
-	    esiop_target->target_c.id);
-	id  = esiop_target->target_c.id & 0x00ff0000;
-	/* There may be other commands waiting in the scheduler. handle them */
-	for (slot = 0; slot < A_ncmd_slots; slot++) {
-		slotid =
-		    esiop_script_read(sc, sc->sc_shedoffset + slot * 2 + 1);
-		if ((slotid & 0x00ff0000) == id)
-			esiop_script_write(sc, sc->sc_shedoffset + slot * 2 + 1,
-			    esiop_target->target_c.id);
-	}
-	esiop_script_sync(sc, BUS_DMASYNC_PREWRITE);
 }
 
 void
