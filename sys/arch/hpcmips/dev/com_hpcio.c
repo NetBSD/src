@@ -1,4 +1,4 @@
-/*	$NetBSD: com_hpcio.c,v 1.1 2002/01/04 14:11:51 takemura Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.2 2002/01/05 00:40:38 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
@@ -235,10 +235,8 @@ com_hpcio_common_probe(bus_space_tag_t iot, int iobase, int *alignment)
 	 * try byte aligned register
 	 */
 	*alignment = COM_HPCIO_BYTE_ALIGNMENT;
-	if (bus_space_map(iot, iobase, 1, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+	if (bus_space_map(iot, iobase, 1, 0, &ioh))
 		return 0;
-	}
 	rv = comprobe1(iot, ioh);
 	bus_space_unmap(iot, ioh, 1);
 
@@ -250,10 +248,8 @@ com_hpcio_common_probe(bus_space_tag_t iot, int iobase, int *alignment)
 	 */
 	*alignment = COM_HPCIO_HALFWORD_ALIGNMENT;
 	com_hpcio_iot_init(&tmpiot, iot);
-	if (bus_space_map(&tmpiot, iobase, 1, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+	if (bus_space_map(&tmpiot, iobase, 1, 0, &ioh))
 		return 0;
-	}
 	rv = comprobe1(&tmpiot, ioh);
 	bus_space_unmap(&tmpiot, ioh, 1);
 
