@@ -42,7 +42,8 @@
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 #
-# Call units:
+# Graphics devices:
+#	grf*	Bitmapped graphics device
 #
 # Special purpose devices:
 #	bpf*	packet filter
@@ -218,6 +219,12 @@ cd*)
 		;;
 	esac
 	umask 77
+	;;
+
+grf*)
+	unit=`expr $i : 'grf\(.*\)'`
+	rm -f grf$unit
+	mknod grf$unit c 23 $unit
 	;;
 
 bpf*)
