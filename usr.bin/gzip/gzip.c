@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.67 2004/09/11 11:07:44 dsl Exp $	*/
+/*	$NetBSD: gzip.c,v 1.68 2004/10/08 12:46:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.67 2004/09/11 11:07:44 dsl Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.68 2004/10/08 12:46:24 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -678,6 +678,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 	int flags = 0, skip_count = 0;
 	int error, done_reading = 0;
 	uLong crc;
+	ssize_t wr;
 
 #define ADVANCE()       { z.next_in++; z.avail_in--; }
 
@@ -849,13 +850,12 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		case GZSTATE_READ:
 			error = inflate(&z, Z_FINISH);
 			/* Z_BUF_ERROR goes with Z_FINISH... */
-			if (error == Z_STREAM_END || error == Z_BUF_ERROR) {
-				ssize_t wr = BUFLEN - z.avail_out;
+			if (error != Z_STREAM_END && error != Z_BUF_ERROR)
+				/* Just need more input */
+				break;
+			wr = BUFLEN - z.avail_out;
 
-				/* Nothing left? */
-				if (wr == 0)
-					goto stop;
-
+			if (wr != 0) {
 				crc = crc32(crc, (const Bytef *)outbufp, (unsigned)wr);
 				if (
 #ifndef SMALL
@@ -870,17 +870,17 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 				out_tot += wr;
 				out_sub_tot += wr;
-
-				if (error == Z_STREAM_END) {
-					inflateEnd(&z);
-					state++;
-				}
-
-				z.next_out = outbufp;
-				z.avail_out = BUFLEN;
-
-				break;
 			}
+
+			if (error == Z_STREAM_END) {
+				inflateEnd(&z);
+				state++;
+			}
+
+			z.next_out = outbufp;
+			z.avail_out = BUFLEN;
+
+			break;
 		case GZSTATE_CRC:
 			{
 				static int empty_buffer = 0;
