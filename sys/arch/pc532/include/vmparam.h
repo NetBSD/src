@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 1996/02/01 00:03:43 phil Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 1996/12/07 09:25:00 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -141,9 +141,13 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xFDC00000)
-#define VM_MAX_ADDRESS		((vm_offset_t)0xFDFF7000)
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xFE000000)
+/* PTDPTDI << PDSHIFT */
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xF7C00000)
+/* PTDPTDI << PDSHIFT + PTDPTDI << PGSHIFT */
+#define VM_MAX_ADDRESS		((vm_offset_t)0xF7FDF000)
+/* KPTDI << PDSHIFT */
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xF8000000)
+/* APTDPTDI << PDSHIFT */
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xFF800000)
 
 /* virtual sizes (bytes) for various kernel submaps */
