@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.7 2001/04/04 19:52:18 ross Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.8 2001/04/08 08:01:36 ross Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -256,7 +256,7 @@ osf1_sys_fstat(p, v, retval)
 		break;
 
 	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub);
+		error = soo_stat((struct socket *)fp->f_data, &ub, p);
 		break;
 
 	default:
@@ -302,7 +302,7 @@ osf1_sys_fstat2(p, v, retval)
 		break;
 
 	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub);
+		error = soo_stat((struct socket *)fp->f_data, &ub, p);
 		break;
 
 	default:
