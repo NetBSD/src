@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.117 2002/11/20 04:29:31 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.118 2002/11/24 11:37:56 scw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.117 2002/11/20 04:29:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.118 2002/11/24 11:37:56 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1232,13 +1232,13 @@ static int
 sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 {
 #ifdef SYSVMSG
-	struct msg_sysctl_info *msgsi;
+	struct msg_sysctl_info *msgsi = NULL;
 #endif
 #ifdef SYSVSEM
-	struct sem_sysctl_info *semsi;
+	struct sem_sysctl_info *semsi = NULL;
 #endif
 #ifdef SYSVSHM
-	struct shm_sysctl_info *shmsi;
+	struct shm_sysctl_info *shmsi = NULL;
 #endif
 	size_t infosize, dssize, tsize, buflen;
 	void *buf = NULL;
@@ -1450,6 +1450,9 @@ sysctl_doeproc(int *name, u_int namelen, void *vwhere, size_t *sizep)
 		op = name[1];
 		if (op != KERN_PROC_ALL)
 			arg = name[2];
+		else
+			arg = 0;		/* Quell compiler warning */
+		elem_size = elem_count = 0;	/* Ditto */
 	} else {
 		if (namelen != 5)
 			return (EINVAL);
