@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.54 2002/05/30 12:56:34 leo Exp $
+.\"	$NetBSD: contents,v 1.55 2002/06/04 11:17:11 leo Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -796,25 +796,30 @@ distribution tree. These kernels are generally named something like
 or some other suitable name. Please note that these kernels are simply
 gzipped and are not in tar archives.
 .Pp
-There are three atari floppy images to be found in the
+There are six atari floppy images to be found in the
 .Pa atari/installation/floppies
 subdirectory of the
 .Nx \*V
-distribution. One of them is a bootable
+distribution. three of them are bootable
 .Tn TOS
-kernel floppy and the other
-two are installation floppies. They are described in more detail below.
+kernel floppies and the other
+three are installation floppies. They are described in more detail below.
 There are gzipped versions of each available, for easier downloading.
 (The gzipped versions have the
 .Pa \&.gz
 extension added to their names.)
 .(tag indent
-.It Em Bootable\ Kernel\ floppy
-This
+.It Em Bootable\ Kernel\ floppies
+These
 .Tn TOS
-disk contains the loadbsd and chg_pid programs
-and a kernel. It is setup so that you can insert it
-int your floppy drive, and start the programs from GEM.
+disks contains the 
+.Tn TOS
+support programs (like
+.Ic loadbsd.ttp
+and
+.Ic chg_pid.ttp
+- see below) and a kernel. They are setup such that you can insert them'into
+your floppy drive, and start the programs from GEM.
 .Pp
 For the TT030 and Falcon, the (720 KB) floppy is named
 .Pa boot.fs
@@ -824,7 +829,10 @@ the kernel supplied is
 For the Hades, you need the
 .Pa hades-boot.fs
 floppy (1.44 MB), the kernel is
-.Li HADES .
+.Li HADES . 
+For the Milan, you need the
+.Pa milan-boot.fs
+floppy (1.44 MB), the kernel is MILAN-PCIIDE.
 .It Em Installation\ floppy:
 This disk contains a
 .Bx
@@ -906,6 +914,22 @@ kernel from
 .Tn MiNT ,
 .Tn MultiTOS ,
 etc.).
+.It
+The
+.Ic chg_pid.ttp
+program can be used to change the id of an
+.Tn AHDI
+compatible partition. This allows you to reserve a partition for use by
+.Nx*M
+(id: NBD), or for use as a swap (id: SWP) partition.
+.It
+The
+.Ic file2swp.ttp
+program can be used to transfer an installation filesystem image, like
+.Pa sysinst.fs
+to a partition with id SWP. In this way, you can run the installation from
+the swap partition instead of a memory disk. This is a necessity for small
+memory systems.
 .bullet)
 .\}
 .
