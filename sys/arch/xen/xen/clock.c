@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2004/04/24 19:32:37 cl Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2004/07/16 22:36:33 tls Exp $	*/
 
 /*
  *
@@ -31,9 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2004/04/24 19:32:37 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2004/07/16 22:36:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +122,10 @@ fstime:
 void
 resettodr()
 {
+#ifdef DOM0OPS
+	dom0_op_t op;
+	int s;
+#endif
 #ifdef DEBUG_CLOCK
 	struct clock_ymdhms dt;
 #endif
@@ -137,6 +142,19 @@ resettodr()
 
 	printf("setclock: %d/%d/%d %02d:%02d:%02d\n", dt.dt_year,
 	    dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
+#endif
+#ifdef DOM0OPS
+	if (xen_start_info.dom_id == 0) {
+		s = splclock();
+
+		op.cmd = DOM0_SETTIME;
+		op.u.settime.secs	 = time.tv_sec - rtc_offset * 60;
+		op.u.settime.usecs	 = time.tv_usec;
+		op.u.settime.system_time = shadow_system_time;
+		HYPERVISOR_dom0_op(&op);
+
+		splx(s);
+	}
 #endif
 }
 
