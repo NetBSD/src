@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.26 1994/12/14 19:45:30 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.27 1995/04/19 18:50:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,13 +63,13 @@
  * pts == /dev/tty[pqrs]?
  * ptc == /dev/pty[pqrs]?
  */
-struct	tty *pt_tty[NPTY];	/* XXX */
-struct	pt_ioctl {
+struct	pt_softc {
+	struct	tty *pt_tty;
 	int	pt_flags;
 	struct	selinfo pt_selr, pt_selw;
 	u_char	pt_send;
 	u_char	pt_ucntl;
-} pt_ioctl[NPTY];		/* XXX */
+} pt_softc[NPTY];		/* XXX */
 int	npty = NPTY;		/* for pstat -t */
 
 #define	PF_PKT		0x08		/* packet mode */
@@ -82,27 +82,18 @@ void	ptsstop __P((struct tty *, int));
 
 /*
  * Establish n (or default if n is 1) ptys in the system.
- *
- * XXX cdevsw & pstat require the array `pty[]' to be an array
  */
 void
 ptyattach(n)
 	int n;
 {
 #ifdef notyet
-	char *mem;
-	register u_long ntb;
 #define	DEFAULT_NPTY	32
 
 	/* maybe should allow 0 => none? */
 	if (n <= 1)
 		n = DEFAULT_NPTY;
-	ntb = n * sizeof(struct tty);
-	mem = malloc(ntb + ALIGNBYTES + n * sizeof(struct pt_ioctl),
-	    M_DEVBUF, M_WAITOK);
-	pt_tty = (struct tty *)mem;
-	mem = (char *)ALIGN(mem + ntb);
-	pt_ioctl = (struct pt_ioctl *)mem;
+	pt_softc = malloc(n * sizeof(struct pt_softc), M_DEVBUF, M_WAITOK);
 	npty = n;
 #endif
 }
@@ -113,15 +104,17 @@ ptsopen(dev, flag, devtype, p)
 	int flag, devtype;
 	struct proc *p;
 {
+	struct pt_softc *pti;
 	register struct tty *tp;
 	int error;
 
 	if (minor(dev) >= npty)
 		return (ENXIO);
-	if (!pt_tty[minor(dev)]) {
-		tp = pt_tty[minor(dev)] = ttymalloc();
+	pti = &pt_softc[minor(dev)];
+	if (pti->pt_tty) {
+		tp = pti->pt_tty = ttymalloc();
 	} else
-		tp = pt_tty[minor(dev)];
+		tp = pti->pt_tty;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);		/* Set up default chars */
@@ -153,10 +146,10 @@ ptsclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp;
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
 	int err;
 
-	tp = pt_tty[minor(dev)];
 	err = (*linesw[tp->t_line].l_close)(tp, flag);
 	err |= ttyclose(tp);
 	ptcwakeup(tp, FREAD|FWRITE);
@@ -169,8 +162,8 @@ ptsread(dev, uio, flag)
 	int flag;
 {
 	struct proc *p = curproc;
-	register struct tty *tp = pt_tty[minor(dev)];
-	register struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
 	int error = 0;
 
 again:
@@ -220,9 +213,9 @@ ptswrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp;
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
 
-	tp = pt_tty[minor(dev)];
 	if (tp->t_oproc == 0)
 		return (EIO);
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -236,7 +229,7 @@ void
 ptsstart(tp)
 	struct tty *tp;
 {
-	register struct pt_ioctl *pti = &pt_ioctl[minor(tp->t_dev)];
+	register struct pt_softc *pti = &pt_softc[minor(tp->t_dev)];
 
 	if (tp->t_state & TS_TTSTOP)
 		return;
@@ -251,7 +244,7 @@ ptcwakeup(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct pt_ioctl *pti = &pt_ioctl[minor(tp->t_dev)];
+	struct pt_softc *pti = &pt_softc[minor(tp->t_dev)];
 
 	if (flag & FREAD) {
 		selwakeup(&pti->pt_selr);
@@ -272,21 +265,21 @@ ptcopen(dev, flag, devtype, p)
 	int flag, devtype;
 	struct proc *p;
 {
+	struct pt_softc *pti;
 	register struct tty *tp;
-	struct pt_ioctl *pti;
 
 	if (minor(dev) >= npty)
 		return (ENXIO);
-	if(!pt_tty[minor(dev)]) {
-		tp = pt_tty[minor(dev)] = ttymalloc();
+	pti = &pt_softc[minor(dev)];
+	if (pti->pt_tty) {
+		tp = pti->pt_tty = ttymalloc();
 	} else
-		tp = pt_tty[minor(dev)];
+		tp = pti->pt_tty;
 	if (tp->t_oproc)
 		return (EIO);
 	tp->t_oproc = ptsstart;
 	(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 	tp->t_lflag &= ~EXTPROC;
-	pti = &pt_ioctl[minor(dev)];
 	pti->pt_flags = 0;
 	pti->pt_send = 0;
 	pti->pt_ucntl = 0;
@@ -297,9 +290,9 @@ int
 ptcclose(dev)
 	dev_t dev;
 {
-	register struct tty *tp;
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
 
-	tp = pt_tty[minor(dev)];
 	(void)(*linesw[tp->t_line].l_modem)(tp, 0);
 	tp->t_state &= ~TS_CARR_ON;
 	tp->t_oproc = 0;		/* mark closed */
@@ -311,8 +304,8 @@ ptcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = pt_tty[minor(dev)];
-	struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
 	char buf[BUFSIZ];
 	int error = 0, cc;
 
@@ -377,7 +370,7 @@ ptsstop(tp, flush)
 	register struct tty *tp;
 	int flush;
 {
-	struct pt_ioctl *pti = &pt_ioctl[minor(tp->t_dev)];
+	struct pt_softc *pti = &pt_softc[minor(tp->t_dev)];
 	int flag;
 
 	/* note: FLUSHREAD and FLUSHWRITE already ok */
@@ -401,8 +394,8 @@ ptcselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	register struct tty *tp = pt_tty[minor(dev)];
-	struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
 	int s;
 
 	if ((tp->t_state&TS_CARR_ON) == 0)
@@ -455,12 +448,12 @@ ptcwrite(dev, uio, flag)
 	register struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = pt_tty[minor(dev)];
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
 	register u_char *cp;
 	register int cc = 0;
 	u_char locbuf[BUFSIZ];
 	int cnt = 0;
-	struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
 	int error = 0;
 
 again:
@@ -545,8 +538,8 @@ ptyioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct tty *tp = pt_tty[minor(dev)];
-	register struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
 	register u_char *cc = tp->t_cc;
 	int stop, error;
 
