@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.73 2002/07/24 02:50:22 lukem Exp $
+.\"	$NetBSD: contents,v 1.74 2002/07/26 02:45:37 rafal Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -948,16 +948,15 @@ form a gzipped tar file.
 .Pp
 The instructions given for extracting the source sets work equally
 well for the binary sets, but it is worth noting that if you use that
-method, the files are
-.Pa / Ns No -relative
-and therefore are extracted
-.Em below
-the current directory.
-That is, if you want to extract the binaries into your system, i.e.
+method, the filenames stored in the sets are relative and therefore
+the files are extracted
+.Em below the current directory .
+Therefore, if you want to extract the binaries into your system, i.e.
 replace the system binaries with them, you have to run the
 .Ic "tar -xpf"
-command from
-.Pa / .
+command from the root directory (
+.Pa / 
+) of your system.
 .
 .
 .\" ---------------------------- MD DISCUSSION
