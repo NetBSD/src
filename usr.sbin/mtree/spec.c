@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.56 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: spec.c,v 1.57 2004/07/22 16:51:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.56 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: spec.c,v 1.57 2004/07/22 16:51:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,12 +96,15 @@ __RCSID("$NetBSD: spec.c,v 1.56 2004/06/20 22:20:18 jmc Exp $");
 #include "pack_dev.h"
 
 size_t	mtree_lineno;			/* Current spec line number */
-int	Wflag;				/* Don't "whack" permissions */
+int	mtree_Mflag;			/* Merge duplicate entries */
+int	mtree_Wflag;			/* Don't "whack" permissions */
 
 static	dev_t	parsedev(char *);
 static	void	replacenode(NODE *, NODE *);
 static	void	set(char *, NODE *);
 static	void	unset(char *, NODE *);
+
+#define REPLACEPTR(x,v)	do { if ((x)) free((x)); (x) = (v); } while (0)
 
 NODE *
 spec(FILE *fp)
@@ -274,6 +277,27 @@ noparent:		mtree_err("no parent node");
 	return (root);
 }
 
+void
+free_nodes(NODE *root)
+{
+	NODE	*cur, *next;
+
+	if (root == NULL)
+		return;
+
+	next = NULL;
+	for (cur = root; cur != NULL; cur = next) {
+		next = cur->next;
+		free_nodes(cur->child);
+		REPLACEPTR(cur->slink, NULL);
+		REPLACEPTR(cur->md5digest, NULL);
+		REPLACEPTR(cur->rmd160digest, NULL);
+		REPLACEPTR(cur->sha1digest, NULL);
+		REPLACEPTR(cur->tags, NULL);
+		REPLACEPTR(cur, NULL);
+	}
+}
+
 /*
  * dump_nodes --
  *	dump the NODEs from `cur', based in the directory `dir'.
@@ -414,11 +438,26 @@ static void
 replacenode(NODE *cur, NODE *new)
 {
 
-	if (cur->type != new->type)
-		mtree_err("existing entry for `%s', type `%s' does not match type `%s'",
-		    cur->name, nodetype(cur->type), nodetype(new->type));
 #define REPLACE(x)	cur->x = new->x
-#define REPLACESTR(x)	if (cur->x) free(cur->x); cur->x = new->x
+#define REPLACESTR(x)	REPLACEPTR(cur->x,new->x)
+
+	if (cur->type != new->type) {
+		if (mtree_Mflag) {
+				/*
+				 * merge entries with different types; we
+				 * don't want children retained in this case.
+				 */
+			REPLACE(type);
+			free_nodes(cur->child);
+			cur->child = NULL;
+		} else {
+			mtree_err(
+			    "existing entry for `%s', type `%s'"
+			    " does not match type `%s'",
+			    cur->name, nodetype(cur->type),
+			    nodetype(new->type));
+		}
+	}
 
 	REPLACE(st_size);
 	REPLACE(st_mtimespec);
@@ -484,7 +523,7 @@ set(char *t, NODE *ip)
 				mtree_err("invalid gid `%s'", val);
 			break;
 		case F_GNAME:
-			if (Wflag)	/* don't parse if whacking */
+			if (mtree_Wflag)	/* don't parse if whacking */
 				break;
 			if (gid_from_group(val, &gid) == -1)
 				mtree_err("unknown group `%s'", val);
@@ -565,7 +604,7 @@ set(char *t, NODE *ip)
 				mtree_err("invalid uid `%s'", val);
 			break;
 		case F_UNAME:
-			if (Wflag)	/* don't parse if whacking */
+			if (mtree_Wflag)	/* don't parse if whacking */
 				break;
 			if (uid_from_user(val, &uid) == -1)
 				mtree_err("unknown user `%s'", val);
