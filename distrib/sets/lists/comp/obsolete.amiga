@@ -1,0 +1,2 @@
+# $NetBSD: obsolete.amiga,v 1.1 2001/09/19 16:40:52 thorpej Exp $
+/usr/include/amiga/fbio.h
