@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 1999/03/13 13:16:29 drochner Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14 1999/03/23 22:15:36 simonb Exp $	*/
 
 /* 
  * Mach Operating System
@@ -43,7 +43,7 @@
 #include <mips/mips_opcode.h>
 #include <dev/cons.h>
 
-#include <mips/db_machdep.h>
+#include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
