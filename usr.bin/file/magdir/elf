@@ -49,7 +49,10 @@
 >>18	leshort		1		AT&T WE32100 - invalid byte order,
 >>18	leshort		2		SPARC - invalid byte order,
 >>18	leshort		3		Intel 80386,
->>18	leshort		4		Motorola 68000 - invalid byte order,
+>>18	leshort		4		Motorola
+>>>36	lelong		&0x01000000	68000 - invalid byte order,
+>>>36	lelong		&0x00810000	CPU32 - invalid byte order,
+>>>36	lelong		0		68020 - invalid byte order,
 >>18	leshort		5		Motorola 88000 - invalid byte order,
 >>18	leshort		6		Intel 80486,
 >>18	leshort		7		Intel 80860,
@@ -118,7 +121,10 @@
 >>18	beshort		1		AT&T WE32100,
 >>18	beshort		2		SPARC,
 >>18	beshort		3		Intel 80386 - invalid byte order,
->>18	beshort		4		Motorola 68000,
+>>18	beshort		4		Motorola
+>>>36	belong		&0x01000000	68000,
+>>>36	belong		&0x00810000	CPU32,
+>>>36	belong		0		68020,
 >>18	beshort		5		Motorola 88000,
 >>18	beshort		6		Intel 80486 - invalid byte order,
 >>18	beshort		7		Intel 80860,
