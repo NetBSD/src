@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.69 1997/10/18 23:31:37 is Exp $
+#	$NetBSD: files.amiga,v 1.70 1997/10/19 19:20:34 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -135,6 +135,12 @@ device	grfet: grfbus
 attach	grfet at zbus
 file	arch/amiga/dev/grf_et.c		grfet needs-flag
 file	arch/amiga/dev/ite_et.c		grfet & ite
+
+# CyberVison 64/3D grf (ite7 grf7)
+device	grfcv3d: grfbus
+attach	grfcv3d at zbus
+file	arch/amiga/dev/grf_cv3d.c	grfcv3d needs-flag
+file	arch/amiga/dev/ite_cv3d.c	grfcv3d & ite
 
 # device defined in sys/conf/files
 # A2065, Ameristar, Ariadne ethernet cards
