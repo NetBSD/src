@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.43 1997/06/10 19:01:00 veego Exp $	*/
+/*	$NetBSD: grf.c,v 1.44 1997/08/03 06:25:56 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,6 +95,10 @@ struct cfattach grf_ca = {
 };
 
 #ifdef DEBUG
+#define	GRF_DEBUG
+#endif
+
+#ifdef GRF_DEBUG
 #define GDB_DEVNO	0x01
 #define GDB_MMAP	0x02
 #define GDB_IOMAP	0x04
@@ -186,7 +190,7 @@ grfclose(dev, flag, mode, p)
 
 	gp = grf_cd.cd_devs[GRFUNIT(dev)];
 
-	(void) grfoff(dev);
+	(void)grfoff(dev);
 	gp->sc_flags &= GF_ALIVE;
 
 	return (0);
@@ -214,12 +218,12 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCGINFO: /* XXX - This should go away as soon as X and	*/
 			  /*       dt are fixed to use GRFIOC*MODE*	*/
 		{ struct grfinfo *g;
-		  g = (struct grfinfo *) data;
+		  g = (struct grfinfo *)data;
 		  bzero(data, sizeof(struct grfinfo));
 		  g->gd_id = gm->mode_id;
 		  g->gd_fbaddr = gm->fbbase;
 		  g->gd_fbsize = gm->fbsize;
-		  g->gd_colors = 1 << (u_int32_t) gm->psize;
+		  g->gd_colors = 1 << (u_int32_t)gm->psize;
 		  g->gd_planes = gm->psize;
 		  g->gd_fbwidth = g->gd_dwidth = gm->width;
 		  g->gd_fbheight = g->gd_dheight = gm->height;
@@ -234,10 +238,10 @@ grfioctl(dev, cmd, data, flag, p)
 		error = grfoff(dev);
 		break;
 	case GRFIOCMAP:
-		error = grfmap(dev, (caddr_t *) data, p);
+		error = grfmap(dev, (caddr_t *)data, p);
 		break;
 	case GRFIOCUNMAP:
-		error = grfunmap(dev, *(caddr_t *) data, p);
+		error = grfunmap(dev, *(caddr_t *)data, p);
 		break;
 
 	case GRFIOCGMODE:
@@ -277,11 +281,25 @@ grfmmap(dev, off, prot)
 	int off;
 	int prot;
 {
-	int     unit = GRFUNIT(dev);
-	struct grf_softc *gp;
+	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
+	struct grfmode *gm = gp->sc_grfmode;
+	u_long addr;
 
-	gp = grf_cd.cd_devs[unit];
-	return (grfaddr(gp, off));
+#ifdef GRF_DEBUG
+	if (grfdebug & GDB_MMAP)
+		printf("grfmmap(%x): off %x, prot %x\n", dev, off, prot);
+#endif
+
+	if (off < m68k_round_page(gm->fbsize + gm->fboff))
+		addr = m68k_btop((*gp->sc_phys)(gp) + off);
+	else
+		addr = (-1);	/* XXX bogus */
+
+#ifdef GRF_DEBUG
+	if (grfdebug & GDB_MMAP)
+		printf("grfmmap(%x): returning addr 0x%08lx\n", dev, addr);
+#endif
+	return (int)addr;
 }
 
 int
@@ -300,7 +318,7 @@ grfon(dev)
 	 */
 	iteoff(unit, 3);
 
-	return (*gp->sc_mode) (gp, GM_GRFON, NULL);
+	return (*gp->sc_mode)(gp, GM_GRFON, NULL);
 }
 
 int
@@ -313,9 +331,9 @@ grfoff(dev)
 
 	gp = grf_cd.cd_devs[unit];
 
-	(void) grfunmap(dev, (caddr_t) 0, curproc);
+	(void) grfunmap(dev, (caddr_t)0, curproc);
 
-	error = (*gp->sc_mode) (gp, GM_GRFOFF, NULL);
+	error = (*gp->sc_mode)(gp, GM_GRFOFF, NULL);
 
 	/* XXX: see comment for iteoff above */
 	iteon(unit, 2);
@@ -324,59 +342,42 @@ grfoff(dev)
 }
 
 int
-grfaddr(gp, off)
-	struct grf_softc *gp;
-	register int off;
-{
-	register struct grfmode *gm = gp->sc_grfmode;
-	u_long	addr;
-
-	if (off < m68k_round_page(gm->fbsize + gm->fboff)) {
-		addr = (u_long)(*gp->sc_phys)(gp, (vm_offset_t)gm->fbbase)+off;
-		return m68k_btop(addr);
-	}
-	/* bogus */
-	return (-1);
-}
-
-int
 grfmap(dev, addrp, p)
 	dev_t dev;
 	caddr_t *addrp;
 	struct proc *p;
 {
-	extern u_int32_t mac68k_vidphys;
 	struct grf_softc *gp;
+	struct grfmode *gm;
 	struct specinfo si;
 	struct vnode vn;
-	int len, error;
-	int flags;
+	u_long len, ofs;
+	int error, flags;
 
 	gp = grf_cd.cd_devs[GRFUNIT(dev)];
-#ifdef DEBUG
+	gm = gp->sc_grfmode;
+#ifdef GRF_DEBUG
 	if (grfdebug & GDB_MMAP)
 		printf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
 #endif
-	len = m68k_round_page(gp->sc_grfmode->fbsize + gp->sc_grfmode->fboff);
-	flags = MAP_SHARED | MAP_FIXED;
 
-	if (gp->sc_slot == NULL)
-		*addrp = (caddr_t) m68k_trunc_page(mac68k_vidphys);
-	else
-		*addrp = (caddr_t) m68k_trunc_page(
-		    NUBUS_SLOT2PA(gp->sc_slot->slot));
+	*addrp = (*gp->sc_phys)(gp);
+	ofs = (u_long)*addrp & PGOFSET;
+	*addrp = (caddr_t)m68k_trunc_page(*addrp);
+	len = m68k_round_page(ofs + gm->fboff + gm->fbsize);
+	flags = MAP_SHARED | MAP_FIXED;
 
 	vn.v_type = VCHR;	/* XXX */
 	vn.v_specinfo = &si;	/* XXX */
 	vn.v_rdev = dev;	/* XXX */
 
-	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *) addrp,
-	    (vm_size_t) len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t) &vn, 0);
+	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
+	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
 
 	/* Offset into page: */
-	*addrp += (unsigned long) gp->sc_grfmode->fboff & 0xfff;
+	*addrp += (unsigned long)gm->fboff + ofs;
 
-#ifdef DEBUG
+#ifdef GRF_DEBUG
 	if (grfdebug & GDB_MMAP)
 		printf("grfmap(%d): returning addr %p\n", p->p_pid, *addrp);
 #endif
@@ -396,7 +397,7 @@ grfunmap(dev, addr, p)
 
 	gp = grf_cd.cd_devs[GRFUNIT(dev)];
 
-#ifdef DEBUG
+#ifdef GRF_DEBUG
 	if (grfdebug & GDB_MMAP)
 		printf("grfunmap(%d): dev %x addr %p\n", p->p_pid, dev, addr);
 #endif
@@ -406,7 +407,7 @@ grfunmap(dev, addr, p)
 
 	size = round_page(gp->sc_grfmode->fbsize);
 
-	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t) addr, size);
+	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t)addr, size);
 
 	return (rv == KERN_SUCCESS ? 0 : EINVAL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.28 1997/07/26 08:21:15 scottr Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.29 1997/08/03 06:25:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -194,7 +194,7 @@ bad:
 
 	gm = &sc->curr_mode;
 	gm->mode_id = mode;
-	gm->fbbase = (caddr_t)(sc->sc_handle + image.offset); /* XXX evil! */
+	gm->fbbase = (caddr_t)sc->sc_handle; /* XXX evil! */
 	gm->fboff = image.offset;
 	gm->rowbytes = image.rowbytes;
 	gm->width = image.right - image.left;
@@ -300,12 +300,10 @@ grfmv_mode(gp, cmd, arg)
 }
 
 static caddr_t
-grfmv_phys(gp, addr)
+grfmv_phys(gp)
 	struct grf_softc *gp;
-	vm_offset_t addr;
 {
-	return (caddr_t)(NUBUS_SLOT2PA(gp->sc_slot->slot) +
-	    (addr - gp->sc_handle));	/* XXX evil hack */
+	return (caddr_t)NUBUS_SLOT2PA(gp->sc_slot->slot);
 }
 
 /* Interrupt handlers... */
