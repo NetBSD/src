@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.422 2004/08/30 10:15:33 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.423 2004/08/30 11:53:03 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6981,4 +6981,53 @@ sys/nfs/nfsnode.h				1.48
 	Remember which credential worked in per-file basis and try it first
 	next time to minimize number of retries. Fixes PR/23716 and PR/24987.
 	[yamt, ticket #803]
+
+regress/sys/kern/ipf/expected/i1		1.1.1.3
+regress/sys/kern/ipf/expected/i14		1.1.1.2
+regress/sys/kern/ipf/expected/i2		1.1.1.2
+regress/sys/kern/ipf/expected/i3		1.1.1.3
+regress/sys/kern/ipf/expected/i4		1.1.1.2
+regress/sys/kern/ipf/expected/i6		1.1.1.2
+regress/sys/kern/ipf/expected/i9		1.1.1.3
+regress/sys/kern/ipf/expected/in2		1.1.1.3
+regress/sys/kern/ipf/expected/ipv6.1		1.1.1.2
+regress/sys/kern/ipf/expected/ipv6.2		1.1.1.3
+regress/sys/kern/ipf/expected/ipv6.3		1.1.1.2
+regress/sys/kern/ipf/expected/n7		1.1.1.2
+regress/sys/kern/ipf/expected/n8		1.1.1.2
+regress/sys/kern/ipf/expected/n9		1.1.1.2
+regress/sys/kern/ipf/expected/ni1		1.1.1.3
+regress/sys/kern/ipf/expected/ni2		1.1.1.3
+regress/sys/kern/ipf/expected/ni4		1.1.1.3
+regress/sys/kern/ipf/expected/ni6		1.1.1.2
+regress/sys/kern/ipf/input/f12			1.1.1.3
+regress/sys/kern/ipf/input/f13			1.1.1.4
+regress/sys/kern/ipf/input/f17			1.1.1.3
+regress/sys/kern/ipf/input/ipv6.2		1.1.1.2
+regress/sys/kern/ipf/input/ipv6.3		1.1.1.2
+regress/sys/kern/ipf/input/l1			1.1.1.3
+regress/sys/kern/ipf/input/n8			1.1.1.2
+regress/sys/kern/ipf/input/n9			1.1.1.2
+regress/sys/kern/ipf/input/ni1			1.1.1.3
+regress/sys/kern/ipf/input/ni2			1.1.1.3
+regress/sys/kern/ipf/input/ni4			1.1.1.2
+regress/sys/kern/ipf/input/ni5			1.1.1.3
+regress/sys/kern/ipf/input/ni6			1.1.1.2
+regress/sys/kern/ipf/regress/i1			1.1.1.3
+regress/sys/kern/ipf/regress/i11		1.1.1.3
+regress/sys/kern/ipf/regress/i14		1.1.1.2
+regress/sys/kern/ipf/regress/i2			1.1.1.2
+regress/sys/kern/ipf/regress/i3			1.1.1.2
+regress/sys/kern/ipf/regress/i4			1.1.1.2
+regress/sys/kern/ipf/regress/i6			1.1.1.2
+regress/sys/kern/ipf/regress/i9			1.1.1.3
+regress/sys/kern/ipf/regress/in1		1.1.1.3
+regress/sys/kern/ipf/regress/in2		1.1.1.3
+regress/sys/kern/ipf/regress/ipv6.2		1.1.1.2
+regress/sys/kern/ipf/regress/ipv6.3		1.1.1.2
+regress/sys/kern/ipf/regress/n7			1.1.1.2
+regress/sys/kern/ipf/test.format		1.1.1.2
+
+	Updated regression tests for IPFilter 4.1.3.
+	[martti, ticket #769]
 
