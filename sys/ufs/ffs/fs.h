@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.31 2003/04/05 11:12:42 he Exp $	*/
+/*	$NetBSD: fs.h,v 1.32 2003/04/05 13:37:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -321,6 +321,7 @@ struct fs {
 
 #define fs_old_postbloff	fs_spare5[0]
 #define fs_old_rotbloff		fs_spare5[1]
+#define fs_old_postbl_start	fs_maxbsize
 
 #define FS_42POSTBLFMT		-1	/* 4.2BSD rotational table format */
 #define FS_DYNAMICPOSTBLFMT	1	/* dynamic rotational table format */
@@ -329,7 +330,7 @@ struct fs {
  * File system identification
  */
 #define	FS_UFS1_MAGIC	0x011954	/* UFS1 fast file system magic number */
-#define	FS_UFS2_MAGIC	0x19540119	/* UFS1 fast file system magic number */
+#define	FS_UFS2_MAGIC	0x19540119	/* UFS2 fast file system magic number */
 #define FS_UFS1_MAGIC_SWAPPED	0x54190100
 #define FS_UFS2_MAGIC_SWAPPED	0x19015419
 #define	FS_OKAY		0x7c269d38	/* superblock checksum */
@@ -454,22 +455,40 @@ struct ocg {
 
 
 /*
- * Macros for access to cylinder group array structures
+ * Macros for access to cylinder group array structures.
  */
-#define	cg_inosused(cgp, ns) \
+#define	cg_inosused_new(cgp, ns) \
     ((u_int8_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_iusedoff, (ns))))
-#define	cg_blksfree(cgp, ns) \
+#define	cg_blksfree_new(cgp, ns) \
     ((u_int8_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_freeoff, (ns))))
-#define	cg_chkmagic(cgp, ns) \
+#define	cg_chkmagic_new(cgp, ns) \
     (ufs_rw32((cgp)->cg_magic, (ns)) == CG_MAGIC)
+
+#define cg_inosused_old(cgp, ns) \
+    (((struct ocg *)(cgp))->cg_iused)
+#define cg_blksfree_old(cgp, ns) \
+    (((struct ocg *)(cgp))->cg_free)
+#define cg_chkmagic_old(cgp, ns) \
+    (ufs_rw32(((struct ocg *)(cgp))->cg_magic, (ns)) == CG_MAGIC)
+
+#define cg_inosused(cgp, ns) \
+    ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
+      cg_inosused_old(cgp, ns) : cg_inosused_new(cgp, ns))
+#define cg_blksfree(cgp, ns) \
+    ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
+      cg_blksfree_old(cgp, ns) : cg_blksfree_new(cgp, ns))
+#define cg_chkmagic(cgp, ns) \
+    (cg_chkmagic_new(cgp, ns) || cg_chkmagic_old(cgp, ns))
+
 #define	cg_clustersfree(cgp, ns) \
     ((u_int8_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_clusteroff, (ns))))
 #define	cg_clustersum(cgp, ns) \
     ((int32_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_clustersumoff, (ns))))
+    
 
 /*
  * Turn file system block numbers into disk block addresses.

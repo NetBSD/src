@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.110 2003/04/02 10:39:38 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.111 2003/04/05 13:37:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.110 2003/04/02 10:39:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.111 2003/04/05 13:37:36 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -461,13 +461,16 @@ ffs_reload(mountp, cred, p)
 	daddr_t sblockloc;
 	int i, blks, size, error;
 	int32_t *lp;
+	struct ufsmount *ump;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
+
+	ump = VFSTOUFS(mountp);
 	/*
 	 * Step 1: invalidate all cached meta-data.
 	 */
-	devvp = VFSTOUFS(mountp)->um_devvp;
+	devvp = ump->um_devvp;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
 	VOP_UNLOCK(devvp, 0);
@@ -476,7 +479,7 @@ ffs_reload(mountp, cred, p)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	fs = VFSTOUFS(mountp)->um_fs;
+	fs = ump->um_fs;
 	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, p) != 0)
 		size = DEV_BSIZE;
 	else
@@ -489,8 +492,12 @@ ffs_reload(mountp, cred, p)
 	}
 	newfs = malloc(fs->fs_sbsize, M_UFSMNT, M_WAITOK);
 	memcpy(newfs, bp->b_data, fs->fs_sbsize);
+#ifdef SUPPORT_42POSTBLFMT_WRITE
+	if (fs->fs_old_postblformat == FS_42POSTBLFMT)
+		memcpy(ump->um_opostsave, &newfs->fs_old_postbl_start, 256);
+#endif
 #ifdef FFS_EI
-	if (VFSTOUFS(mountp)->um_flags & UFS_NEEDSWAP) {
+	if (ump->um_flags & UFS_NEEDSWAP) {
 		ffs_sb_swap((struct fs*)bp->b_data, newfs);
 		fs->fs_flags |= FS_SWAPPED;
 	}
@@ -757,6 +764,23 @@ ffs_mountfs(devvp, mp, p)
 
 	fs = malloc((u_long)sbsize, M_UFSMNT, M_WAITOK);
 	memcpy(fs, bp->b_data, sbsize);
+
+	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
+	memset(ump, 0, sizeof *ump);
+	ump->um_fs = fs;
+
+	if (fs->fs_old_postblformat == FS_42POSTBLFMT) {
+#ifdef SUPPORT_FS_42POSTBLFMT_WRITE
+		ump->um_opostsave = malloc(256, M_UFSMNT, M_WAITOK);
+		memcpy(ump->um_opostsave, &fs->fs_old_postbl_start, 256);
+#else
+		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+			error = EROFS;
+			goto out2;
+		}
+#endif
+	}
+
 #ifdef FFS_EI
 	if (needswap) {
 		ffs_sb_swap((struct fs*)bp->b_data, fs);
@@ -769,9 +793,6 @@ ffs_mountfs(devvp, mp, p)
 		fs->fs_pendinginodes = 0;
 	}
 
-	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	memset(ump, 0, sizeof *ump);
-	ump->um_fs = fs;
 	ump->um_fstype = fstype;
 	if (fs->fs_sbsize < SBLOCKSIZE)
 		bp->b_flags |= B_INVAL;
@@ -945,6 +966,9 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 {
 	off_t maxfilesize;
 
+	if (fs->fs_magic != FS_UFS1_MAGIC)
+		return;
+
 	/*
 	 * If not yet done, update fs_flags location and value of fs_sblockloc.
 	 */
@@ -953,32 +977,41 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 		fs->fs_old_flags |= FS_FLAGS_UPDATED;
 		fs->fs_sblockloc = sblockloc;
 	}
+
 	/*
-	 * If not yet done, update UFS1 superblock with new wider fields.
+	 * If the new fields haven't been set yet, or if the filesystem
+	 * was mounted and modified by an old kernel, use the old csum
+	 * totals.
 	 */
-	if (fs->fs_magic == FS_UFS1_MAGIC && fs->fs_size != fs->fs_old_size) {
-		fs->fs_maxbsize = fs->fs_bsize;
-		fs->fs_time = fs->fs_old_time;
-		fs->fs_size = fs->fs_old_size;
-		fs->fs_dsize = fs->fs_old_dsize;
-		fs->fs_csaddr = fs->fs_old_csaddr;
+	if (fs->fs_maxbsize != fs->fs_bsize || fs->fs_time < fs->fs_old_time) {
 		fs->fs_cstotal.cs_ndir = fs->fs_old_cstotal.cs_ndir;
 		fs->fs_cstotal.cs_nbfree = fs->fs_old_cstotal.cs_nbfree;
 		fs->fs_cstotal.cs_nifree = fs->fs_old_cstotal.cs_nifree;
 		fs->fs_cstotal.cs_nffree = fs->fs_old_cstotal.cs_nffree;
 	}
-	if (fs->fs_magic == FS_UFS1_MAGIC &&
-	    fs->fs_old_inodefmt < FS_44INODEFMT) {
+
+	/*
+	 * If not yet done, update UFS1 superblock with new wider fields.
+	 */
+	if (fs->fs_maxbsize != fs->fs_bsize) {
+		fs->fs_maxbsize = fs->fs_bsize;
+		fs->fs_time = fs->fs_old_time;
+		fs->fs_size = fs->fs_old_size;
+		fs->fs_dsize = fs->fs_old_dsize;
+		fs->fs_csaddr = fs->fs_old_csaddr;
+	}
+
+	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
 		fs->fs_maxfilesize = (u_quad_t) 1LL << 39;
 		fs->fs_qbmask = ~fs->fs_bmask;
 		fs->fs_qfmask = ~fs->fs_fmask;
 	}
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
-		ump->um_savedmaxfilesize = fs->fs_maxfilesize;
-		maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;
-		if (fs->fs_maxfilesize > maxfilesize)
-			fs->fs_maxfilesize = maxfilesize;
-	}
+
+	ump->um_savedmaxfilesize = fs->fs_maxfilesize;
+	maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;
+	if (fs->fs_maxfilesize > maxfilesize)
+		fs->fs_maxfilesize = maxfilesize;
+
 	/* Compatibility for old filesystems */
 	if (fs->fs_avgfilesize <= 0)
 		fs->fs_avgfilesize = AVFILESIZ;
@@ -1004,18 +1037,19 @@ ffs_oldfscompat_write(fs, ump)
 	struct fs *fs;
 	struct ufsmount *ump;
 {
-
+	if (fs->fs_magic != FS_UFS1_MAGIC)
+		return;
 	/*
 	 * Copy back UFS2 updated fields that UFS1 inspects.
 	 */
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
-		fs->fs_old_time = fs->fs_time;
-		fs->fs_old_cstotal.cs_ndir = fs->fs_cstotal.cs_ndir;
-		fs->fs_old_cstotal.cs_nbfree = fs->fs_cstotal.cs_nbfree;
-		fs->fs_old_cstotal.cs_nifree = fs->fs_cstotal.cs_nifree;
-		fs->fs_old_cstotal.cs_nffree = fs->fs_cstotal.cs_nffree;
-		fs->fs_maxfilesize = ump->um_savedmaxfilesize;
-	}
+
+	fs->fs_old_time = fs->fs_time;
+	fs->fs_old_cstotal.cs_ndir = fs->fs_cstotal.cs_ndir;
+	fs->fs_old_cstotal.cs_nbfree = fs->fs_cstotal.cs_nbfree;
+	fs->fs_old_cstotal.cs_nifree = fs->fs_cstotal.cs_nifree;
+	fs->fs_old_cstotal.cs_nffree = fs->fs_cstotal.cs_nffree;
+	fs->fs_maxfilesize = ump->um_savedmaxfilesize;
+
 #if 0
 	if (bigcgs) {
 		fs->fs_cgsize = fs->fs_save_cgsize;
@@ -1081,6 +1115,10 @@ ffs_unmount(mp, mntflags, p)
 	vput(ump->um_devvp);
 	free(fs->fs_csp, M_UFSMNT);
 	free(fs, M_UFSMNT);
+#ifdef SUPPORT_FS_42POSTBLFMT_WRITE
+	if (ump->um_opostsave != NULL)
+		free(ump->um_opostsave, M_UFSMNT);
+#endif
 	free(ump, M_UFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
@@ -1545,9 +1583,13 @@ ffs_sbupdate(mp, waitfor)
 	ffs_oldfscompat_write((struct fs *)bp->b_data, mp);
 #ifdef FFS_EI
 	if (mp->um_flags & UFS_NEEDSWAP)
-		ffs_sb_swap(fs, (struct fs*)bp->b_data);
+		ffs_sb_swap(fs, (struct fs *)bp->b_data);
 #endif
-
+#ifdef SUPPORT_FS_42POSTBLFMT_WRITE
+	if (fs->fs_old_postblformat == FS_42POSTBLFMT)
+		memcpy(&((struct fs *)bp->b_data)->fs_old_postbl_start,
+		    mp->um_opostsave, 256);
+#endif
 	fs->fs_flags |= saveflag;
 
 	if (waitfor == MNT_WAIT)

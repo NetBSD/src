@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.11 2003/04/02 10:39:46 fvdl Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.12 2003/04/05 13:37:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -99,6 +99,9 @@ struct ufsmount {
 	char	um_qflags[MAXQUOTAS];		/* quota specific flags */
 	struct	netexport um_export;		/* export information */
 	u_int64_t um_savedmaxfilesize;		/* XXX - limit maxfilesize */
+#ifdef SUPPORT_42POSTBLFMT_WRITE /* untested */
+	void	*um_opostsave;			/* save 4.2 rotbl */
+#endif
 };
 
 /* UFS-specific flags */
