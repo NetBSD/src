@@ -1,4 +1,4 @@
-/*  $NetBSD: clmpccreg.h,v 1.2 1999/08/01 09:35:05 scw Exp $ */
+/*  $NetBSD: clmpccreg.h,v 1.3 1999/11/28 12:23:18 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -203,6 +203,12 @@
 #define CLMPCC_COR2_RtsAO       (1 << 2)    /* RTS Automatic Output Enable */
 #define CLMPCC_COR2_CtsAE       (1 << 1)    /* CTS Automatic Enable */
 #define CLMPCC_COR2_DsrAE       (1 << 1)    /* DSR Automatic Enable */
+
+/* Embedded transmit commands */
+#define	CLMPCC_ETC_MAGIC		0x00		/* Introduces a command */
+#define	CLMPCC_ETC_SEND_BREAK	0x81		/* Send a BREAK character */
+#define	CLMPCC_ETC_DELAY		0x82		/* Insert a delay */
+#define	CLMPCC_ETC_STOP_BREAK	0x83		/* Stop sending BREAK */
 
 /* Channel Option Register #3 (Async options) */
 #define CLMPCC_COR3_ESCDE       (1 << 7)    /* Ext Special Char Detect Enab */
