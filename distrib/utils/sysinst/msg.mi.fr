@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.43.2.2 2003/02/10 06:04:59 jmc Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.43.2.3 2003/02/23 09:14:32 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -560,8 +560,8 @@ message distdir
 {Quel répertoire dois je utiliser pour %s ?}
 
 message verboseextract
-{Pendant la procédure d'extraction des fichiers, qu'est-ce que vous voulez
-voir pendant qu'ils seront extraits ?
+{Pendant la procédure d'extraction des fichiers, voulez vous voir leur
+nom apparaître au fur et à mesure qu'ils seront extraits ?
 }
 
 message badls
