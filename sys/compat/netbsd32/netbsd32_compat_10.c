@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.12 2002/03/16 20:43:54 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.13 2002/04/29 09:53:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.12 2002/03/16 20:43:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.13 2002/04/29 09:53:41 mrg Exp $");
 
-#if defined(_KERNEL_OPT)
+#ifdef _KERNEL_OPT
 #include "opt_sysv.h"
-#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -51,14 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.12 2002/03/16 20:43:54 chri
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if defined(SYSVSEM) || !defined(_KERNEL)
 int
-netbsd32_compat_10_sys_semsys(p, v, retval)
+compat_10_netbsd32_sys_semsys(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_compat_10_sys_semsys_args /* {
+	struct compat_10_netbsd32_sys_semsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
@@ -120,14 +119,14 @@ netbsd32_compat_10_sys_semsys(p, v, retval)
 }
 #endif
 
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if defined(SYSVSHM) || !defined(_KERNEL)
 int
-netbsd32_compat_10_sys_shmsys(p, v, retval)
+compat_10_netbsd32_sys_shmsys(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_compat_10_sys_shmsys_args /* {
+	struct compat_10_netbsd32_sys_shmsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
@@ -182,14 +181,14 @@ netbsd32_compat_10_sys_shmsys(p, v, retval)
 }
 #endif
 
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if defined(SYSVMSG) || !defined(_KERNEL)
 int
-netbsd32_compat_10_sys_msgsys(p, v, retval)
+compat_10_netbsd32_sys_msgsys(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_compat_10_sys_msgsys_args /* {
+	struct compat_10_netbsd32_sys_msgsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
