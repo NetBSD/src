@@ -882,14 +882,18 @@
 #define VERSION "6.0.6"
 
 /* Define name of host machine's cpu (eg. sparc) */
-#define HOST_CPU "i386"
+#define HOST_CPU MACHINE
 
 /* Define name of host machine's architecture (eg. sun4) */
-#define HOST_ARCH "i386"
+#define HOST_ARCH MACHINE_ARCH
 
 /* Define name of host machine's vendor (eg. sun) */
 #define HOST_VENDOR "unknown"
 
+/* We pick some parameters from our local config file */
+#include <config_local.h>
+
+#if 0
 /* Define name and version of host machine (eg. solaris2.5.1) */
 #define HOST_OS "netbsdelf1.5V"
 
@@ -910,6 +914,7 @@
 
 /* Define configuration date */
 #define CONFIG_DATE "Sun May 13 16:00:07 CEST 2001"
+#endif
 
 /* what type of network transport type is in use?  TLI or sockets? */
 /* #undef HAVE_TRANSPORT_TYPE_TLI */
