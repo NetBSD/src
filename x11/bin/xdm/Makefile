@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/19 00:30:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2004/04/29 05:19:23 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,6 @@ SRCS=		access.c auth.c choose.c daemon.c dm.c dpylist.c \
 		Login.c greet.c verify.c
 
 CPPFLAGS.auth.c=	-DBSD44SOCKETS
-CPPFLAGS.genauth.c=	-DARC4_RANDOM
 CPPFLAGS.socket.c=	-DBSD44SOCKETS
 CPPFLAGS.xdmcp.c=	-DBSD44SOCKETS
 CPPFLAGS.xdmshell.c=	-DHAS_VFORK
