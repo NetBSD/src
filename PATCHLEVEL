@@ -53,3 +53,9 @@ cause them to not work on file systems with type `ffs' in fstab.
 [kernel/sun3]: Try to deal with Sun3/50 SCSI DMA hardware bug
 
 [kernel/hp300]: Fix incorrect value in HP-IB command stream.
+
+[kernel/sparc]: Fix panic if more than one framebuffer is found
+on a sun4 system.
+
+[kernel/sparc]: Fix oversight that caused rconsole to not attach to
+cgsix-based consoles.
