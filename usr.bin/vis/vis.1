@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1991, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,11 +29,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)vis.1	5.2 (Berkeley) 4/23/91
+.\"     @(#)vis.1	8.4 (Berkeley) 4/19/94
 .\"
-.Dd April 23, 1991
+.Dd April 19, 1994
 .Dt VIS 1
-.Os
+.Os BSD 4.4
 .Sh NAME
 .Nm vis
 .Nd display non-printable characters in a visual format
@@ -54,8 +54,7 @@ A detailed description of the
 various visual formats is given in
 .Xr vis 3 .
 .Pp
-Options supported by
-.Nm vis :
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl b
 Turns off prepending of backslash before up-arrow control sequences
@@ -78,13 +77,13 @@ when inverting the file back to its original form with
 If the last character in the encoded file does not end in a newline,
 a hidden newline sequence is appended to the output.
 This makes
-the output usuable with various editors and other utilities which
+the output usable with various editors and other utilities which
 typically don't work with partial lines.
 .It Fl f
 Same as
 .Fl F .
 .It Fl l
-Mark newlines with the visable sequence
+Mark newlines with the visible sequence
 .Ql \e$ ,
 followed by the newline.
 .It Fl n
@@ -116,10 +115,10 @@ Tabs are also encoded.
 White space (space-tab-newline) is also encoded.
 .El
 .Sh SEE ALSO
-.Xr unvis 1
+.Xr unvis 1 ,
 .Xr vis 3
 .Sh HISTORY
 The
 .Nm
-command is
-.Ud .
+command appears in
+.Bx 4.4 .
