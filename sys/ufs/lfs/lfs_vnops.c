@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.139 2005/03/24 04:00:33 chs Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.140 2005/03/25 01:45:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.139 2005/03/24 04:00:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.140 2005/03/25 01:45:05 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1754,12 +1754,12 @@ lfs_putpages(void *v)
 		int locked;
 
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VDIROP\n"));
-		lfs_writer_enter(fs, "ppdirop");
 		locked = VOP_ISLOCKED(vp) && /* XXX */
 			vp->v_lock.lk_lockholder == curproc->p_pid;
+		simple_unlock(&vp->v_interlock);
+		lfs_writer_enter(fs, "ppdirop");
 		if (locked)
 			VOP_UNLOCK(vp, 0);
-		simple_unlock(&vp->v_interlock);
 
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
 
