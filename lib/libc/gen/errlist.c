@@ -1,4 +1,4 @@
-/*	$NetBSD: errlist.c,v 1.7 1998/02/06 08:44:21 mikel Exp $	*/
+/*	$NetBSD: errlist.c,v 1.8 1998/02/08 19:07:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: errlist.c,v 1.7 1998/02/06 08:44:21 mikel Exp $");
+__RCSID("$NetBSD: errlist.c,v 1.8 1998/02/08 19:07:13 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -147,5 +147,6 @@ const char *const _sys_errlist[] = {
 
 /* SystemV IPC */
 	"Identifier removed",			/* 82 - EIDRM */
+	"No message of desired type",		/* 83 - ENOMSG */
 };
 const int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };

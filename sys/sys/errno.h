@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.17 1998/02/06 08:20:35 mikel Exp $	*/
+/*	$NetBSD: errno.h,v 1.18 1998/02/08 19:04:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -175,7 +175,8 @@ __END_DECLS
 
 /* SystemV IPC */
 #define	EIDRM		82		/* Identifier removed */
-#define	ELAST		82		/* Must equal largest errno */
+#define	ENOMSG		83		/* No message of desired type */
+#define	ELAST		83		/* Must equal largest errno */
 #endif /* _POSIX_SOURCE */
 
 #ifdef _KERNEL
