@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.44 2000/06/08 03:10:06 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -140,13 +140,17 @@ struct cpu_info {
 #define	CPUF_RUNNING	0x04		/* CPU is running */
 
 #if defined(MULTIPROCESSOR)
-extern	u_long cpus_running;
+extern	__volatile u_long cpus_running;
+extern	__volatile u_long cpus_paused;
 extern	struct cpu_info cpu_info[];
 
 #define	curcpu()		((struct cpu_info *)alpha_pal_rdval())
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
 void	cpu_boot_secondary_processors(void);
+
+void	cpu_pause_resume(unsigned long, int);
+void	cpu_pause_resume_all(int);
 #else /* ! MULTIPROCESSOR */
 extern	struct cpu_info cpu_info_store;
 
