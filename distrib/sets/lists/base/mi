@@ -181,7 +181,6 @@
 ./usr/bin/gzip
 ./usr/bin/head
 ./usr/bin/hexdump
-./usr/bin/host
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent
@@ -645,6 +644,7 @@
 ./usr/share/man/cat3f
 ./usr/share/man/cat4
 ./usr/share/man/cat4/amiga
+./usr/share/man/cat4/arm32
 ./usr/share/man/cat4/atari
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/i386
@@ -659,6 +659,7 @@
 ./usr/share/man/cat7
 ./usr/share/man/cat8
 ./usr/share/man/cat8/amiga
+./usr/share/man/cat8/arm32
 ./usr/share/man/cat8/atari
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/i386
@@ -676,6 +677,7 @@
 ./usr/share/man/man3f
 ./usr/share/man/man4
 ./usr/share/man/man4/amiga
+./usr/share/man/man4/arm32
 ./usr/share/man/man4/atari
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/i386
@@ -690,6 +692,7 @@
 ./usr/share/man/man7
 ./usr/share/man/man8
 ./usr/share/man/man8/amiga
+./usr/share/man/man8/arm32
 ./usr/share/man/man8/atari
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/i386
@@ -761,6 +764,13 @@
 ./usr/share/tabset/zenith29
 ./usr/share/tmac
 ./usr/share/tmac/mm
+./usr/share/vi
+./usr/share/vi/catalog
+./usr/share/vi/catalog/dutch
+./usr/share/vi/catalog/english
+./usr/share/vi/catalog/german
+./usr/share/vi/catalog/ru_SU.KOI8-R
+./usr/share/vi/catalog/swedish
 ./usr/share/zoneinfo
 ./usr/share/zoneinfo/Africa
 ./usr/share/zoneinfo/Africa/Abidjan
@@ -965,7 +975,6 @@
 ./usr/share/zoneinfo/Asia/Tel_Aviv
 ./usr/share/zoneinfo/Asia/Thimbu
 ./usr/share/zoneinfo/Asia/Tokyo
-./usr/share/zoneinfo/Asia/Tomsk
 ./usr/share/zoneinfo/Asia/Ujung_Pandang
 ./usr/share/zoneinfo/Asia/Ulan_Bator
 ./usr/share/zoneinfo/Asia/Urumqi
