@@ -63,6 +63,7 @@ port-sun2
 port-sun3
 port-vax
 port-x68k
+port-xen
 security
 standards
 toolchain
