@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.55 2000/01/25 09:23:59 enami Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.56 2000/02/01 05:28:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@
 /* XXX these should eventually move to subr_autoconf.c */
 static int findblkmajor __P((const char *));
 static const char *findblkname __P((int));
+static struct device *finddevice __P((const char *));
 static struct device *getdisk __P((char *, int, int, dev_t *, int));
 static struct device *parsedisk __P((char *, int, int, dev_t *));
 static int getstr __P((char *, int));
@@ -749,10 +750,7 @@ setroot(bootdv, bootpartition)
 		 * If it's a network interface, we can bail out
 		 * early.
 		 */
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next)
-			if (strcmp(dv->dv_xname, rootspec) == 0)
-				break;
+		dv = finddevice(rootspec);
 		if (dv != NULL && dv->dv_class == DV_IFNET) {
 			rootdv = dv;
 			goto haveroot;
@@ -767,13 +765,7 @@ setroot(bootdv, bootpartition)
 		memset(buf, 0, sizeof(buf));
 		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
 
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
-			if (strcmp(buf, dv->dv_xname) == 0) {
-				rootdv = dv;
-				break;
-			}
-		}
+		rootdv = finddevice(buf);
 		if (rootdv == NULL) {
 			printf("device %s (0x%x) not configured\n",
 			    buf, rootdev);
@@ -838,14 +830,8 @@ setroot(bootdv, bootpartition)
 		memset(buf, 0, sizeof(buf));
 		sprintf(buf, "%s%d", dumpdevname, DISKUNIT(dumpdev));
 
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
-			if (strcmp(buf, dv->dv_xname) == 0) {
-				dumpdv = dv;
-				break;
-			}
-		}
-		if (dv == NULL) {
+		dumpdv = finddevice(buf);
+		if (dumpdv == NULL) {
 			/*
 			 * Device not configured.
 			 */
@@ -892,6 +878,19 @@ findblkname(maj)
 		if (dev_name2blk[i].d_maj == maj)
 			return (dev_name2blk[i].d_name);
 	return (NULL);
+}
+
+static struct device *
+finddevice(name)
+	const char *name;
+{
+	struct device *dv;
+
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list))
+		if (strcmp(dv->dv_xname, name) == 0)
+			break;
+	return (dv);
 }
 
 static struct device *
@@ -964,9 +963,9 @@ parsedisk(str, len, defpart, devp)
 		}
 #endif
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_class == DV_DISK &&
-		    strcmp(str, dv->dv_xname) == 0) {
+	dv = finddevice(str);
+	if (dv != NULL) {
+		if (dv->dv_class == DV_DISK) {
 #ifdef MEMORY_DISK_HOOKS
  gotdisk:
 #endif
@@ -974,14 +973,10 @@ parsedisk(str, len, defpart, devp)
 			if (majdev < 0)
 				panic("parsedisk");
 			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
-			break;
 		}
 
-		if (dv->dv_class == DV_IFNET &&
-		    strcmp(str, dv->dv_xname) == 0) {
+		if (dv->dv_class == DV_IFNET)
 			*devp = NODEV;
-			break;
-		}
 	}
 
 	*cp = c;
