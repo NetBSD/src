@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6.2.1 2000/07/09 21:45:35 he Exp $
+#	$NetBSD: Makefile.inc,v 1.6.2.2 2000/07/27 17:55:55 he Exp $
 #
 #	etc.x68k/Makefile.inc -- x68k-specific etc Makefile targets
 #
@@ -15,7 +15,8 @@ INSTALLATION_DIRS+=   installation/floppy     \
 
 snap_md_post:
 .ifndef UPDATE
-	cd ${.CURDIR}/../distrib/${MACHINE}/floppies && ${MAKE} clean
+	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 .endif
-	cd ${.CURDIR}/../distrib/${MACHINE}/floppies && \
-		${MAKE} depend && ${MAKE} ${_J} && ${MAKE} release
+	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
+	cd ${.CURDIR}/../distrib/${MACHINE} && ${MAKE} release
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/floppy '*.gz' '*.fs'
