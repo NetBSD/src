@@ -1,0 +1,2 @@
+# $NetBSD: obsolete.sparc64,v 1.1 2001/09/19 16:46:49 thorpej Exp $
+/usr/include/sparc64/fbio.h
