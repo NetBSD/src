@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 2002/09/01 11:40:54 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 2002/09/02 14:02:03 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -102,6 +102,10 @@ static void print_a_reg(const char *, register_t, int);
 /* Used to trap faults while probing */
 label_t *onfault;
 
+#ifdef DEBUG
+static int trap_debug;
+#endif
+
 void
 userret(struct proc *p)
 {
@@ -136,9 +140,12 @@ trap(struct proc *p, struct trapframe *tf)
 
 	traptype = tf->tf_state.sf_expevt;
 	if (USERMODE(tf)) {
+		KDASSERT(p != NULL);
 		traptype |= T_USER;
 		p->p_md.md_regs = tf;
-	}
+	} else
+	if (p == NULL)
+		p = &proc0;
 
 	vaddr = (vaddr_t) tf->tf_state.sf_tea;
 
@@ -153,11 +160,11 @@ trap(struct proc *p, struct trapframe *tf)
 			(uintptr_t)tf->tf_state.sf_spc,
 			(uintptr_t)tf->tf_state.sf_tea,
 			(u_int)tf->tf_state.sf_tra);
-		if (curproc != NULL)
+		if (p != NULL)
 			printf("pid=%d cmd=%s, usp=0x%lx ",
 			    p->p_pid, p->p_comm, (uintptr_t)tf->tf_caller.r15);
 		else
-			printf("curproc == NULL ");
+			printf("no process context ");
 		printf("ksp=0x%lx\n", (vaddr_t)tf);
 #if defined(DDB)
 		kdb_trap(traptype, tf);
@@ -401,6 +408,70 @@ panic_trap(struct cpu_info *ci, struct trapframe *tf,
 	    (uintptr_t)tf->tf_state.sf_tea, (u_int)tf->tf_state.sf_tra);
 
 	panic("panic_trap");
+}
+
+void panic_critical_fault(struct trapframe *, struct exc_scratch_frame *);
+void
+panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es)
+{
+	extern int sh5_vector_table;
+	uintptr_t vector;
+
+	printf("\nFAULT IN CRITICAL SECTION!\n");
+
+	printf("Post Fault State: %s\n",
+	    trap_type((int)tf->tf_state.sf_expevt));
+
+	printf("SSR=0x%x, SPC=0x%lx, TEA=0x%lx\n\n",
+	    (u_int)tf->tf_state.sf_ssr, (uintptr_t)tf->tf_state.sf_spc,
+	    (uintptr_t)tf->tf_state.sf_tea);
+
+	printf("Pre Fault State: ");
+
+	vector = (uintptr_t)tf->tf_state.sf_tea - (uintptr_t)&sh5_vector_table;
+	vector &= ~0xff;
+
+	switch (vector) {
+	case 0x0:	printf("panic handler\n");	/* Can't happen */
+			break;
+
+	case 0x100:	printf("General exception handler\n");
+			printf("\t%s in %s mode\n",
+	    		    trap_type((int)es->es_expevt),
+			    (es->es_ssr & SH5_CONREG_SR_MD)?"kernel":"user");
+			break;
+
+	case 0x200:	printf("debug interrupt handler\n"); /* Can't happen */
+			break;
+
+	case 0x600:	printf("H/W interrupt handler\n");
+			break;
+
+	default:	printf("Not sure. Probably Ltlbmiss_dotrap\n");
+			break;
+	}
+
+	printf("STACKPTR=0x%x, SSR=0x%x, SPC=0x%lx\n",
+	    (u_int)tf->tf_caller.r15, (u_int)es->es_ssr, (uintptr_t)es->es_spc);
+	printf("TEA=0x%lx, TRA=0x%x, INTEVT=0x%lx\n\n",
+	    (uintptr_t)es->es_tea, (u_int)es->es_tra, (u_int)es->es_intevt);
+
+	printf("Exception temporaries:\n");
+	printf("r0=0x%08x%08x, r1=0x%08x%08x, r2=0x%08x%08x\n",
+	    (u_int)(tf->tf_caller.r0 >> 32), (u_int)tf->tf_caller.r0,
+	    (u_int)(tf->tf_caller.r1 >> 32), (u_int)tf->tf_caller.r1,
+	    (u_int)(tf->tf_caller.r2 >> 32), (u_int)tf->tf_caller.r2);
+
+	printf("\nPre-exception Context:\n");
+	tf->tf_caller.r0 = es->es_r[0];
+	tf->tf_caller.r1 = es->es_r[1];
+	tf->tf_caller.r2 = es->es_r[2];
+	tf->tf_caller.r15 = es->es_r15;
+	tf->tf_caller.tr0 = es->es_tr0;
+
+	dump_trapframe(tf);
+
+	panic("panic_critical_fault");
 }
 
 const char *
