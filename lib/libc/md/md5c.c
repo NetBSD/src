@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.12 1999/09/16 11:45:10 lukem Exp $	*/
+/*	$NetBSD: md5c.c,v 1.13 1999/09/16 17:08:04 sommerfeld Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -30,8 +30,8 @@
  */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
+#include <lib/libkern/libkern.h>
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/md5.h>
 #define _DIAGASSERT(x)	(void)0
 #else
@@ -42,16 +42,7 @@
 #include <md5.h>
 #endif /* _KERNEL || _STANDALONE */
 
-/*
- * XXX Kludge until there is resolution regarding mem*() functions
- * XXX in the kernel.
- */
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define	memcpy(s, d, l)		bcopy((d), (s), (l))
-#define	ZEROIZE(d, l)		bzero((d), (l))
-#else
 #define	ZEROIZE(d, l)		memset((d), 0, (l))
-#endif /* _KERNEL || _STANDALONE */
 
 typedef unsigned char *POINTER;
 typedef u_int16_t UINT2;
