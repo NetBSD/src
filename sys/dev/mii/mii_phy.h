@@ -1,4 +1,4 @@
-/*  $NetBSD: mii_phy.h,v 1.1 1997/10/17 17:34:00 bouyer Exp $   */
+/*	$NetBSD: mii_phy.h,v 1.2 1997/11/17 08:59:15 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -40,14 +40,14 @@ typedef struct _mii_phy {
 	int  (*phy_status) __P((int, void*));
 	void (*phy_pdown) __P((void*));
 	u_int32_t phy_media;
-#define PHY_AUI         0x01
-#define PHY_BNC         0x02
-#define PHY_10baseT     0x04
-#define PHY_10baseTfd   0x08
-#define PHY_100baseTx   0x10 
-#define PHY_100baseTxfd 0x20
-#define PHY_100baseT4   0x40
+#define	PHY_AUI         0x01
+#define	PHY_BNC         0x02
+#define	PHY_10baseT     0x04
+#define	PHY_10baseTfd   0x08
+#define	PHY_100baseTx   0x10 
+#define	PHY_100baseTxfd 0x20
+#define	PHY_100baseT4   0x40
 } mii_phy_t;
 
-int mii_readreg __P((void *, u_int16_t, u_int16_t));
-void mii_writereg __P((void *, u_int16_t, u_int16_t, u_int16_t));
+int	mii_readreg __P((void *, u_int16_t, u_int16_t));
+void	mii_writereg __P((void *, u_int16_t, u_int16_t, u_int16_t));
