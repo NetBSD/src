@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1997/05/08 21:12:25 gwr Exp $
+#	$NetBSD: Makefile,v 1.11 1997/10/10 09:26:39 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	lpd
-CFLAGS+=-I${.CURDIR}/../common_source
 MAN=	lpd.8
-SRCS=	lpd.c printjob.c recvjob.c displayq.c rmjob.c startdaemon.c \
-	lpdchar.c common.c key.c modes.c ttcompat.c
-.PATH:	${.CURDIR}/../common_source
+SRCS=	lpd.c printjob.c recvjob.c lpdchar.c key.c modes.c ttcompat.c
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>
