@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.44 1994/05/05 07:48:20 mycroft Exp $
+ *	$Id: fd.c,v 1.45 1994/05/11 09:31:42 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -1097,6 +1097,15 @@ fdfinish(fd, bp)
 	/* turn off motor 5s from now */
 	timeout(fd_motor_off, fd, 5 * hz);
 	fdc->sc_state = DEVIDLE;
+}
+
+int
+fdsize(dev)
+	dev_t dev;
+{
+
+	/* Swapping to floppies would not make sense. */
+	return -1;
 }
 
 int
