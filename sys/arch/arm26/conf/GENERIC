@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21 2001/06/02 10:47:55 bjh21 Exp $
+# $NetBSD: GENERIC,v 1.22 2001/06/24 10:34:26 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -136,22 +136,30 @@ ei*		at podulebus0 slot ?	# Acorn AKA25 (Ether1)
 ea*		at podulebus0 slot ?	# Atomwide Ether3
 eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
-#dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
-#wd*		at dtide? channel ? drive ?
+dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
+wd*		at dtide? channel ? drive ? # IDE hard discs
+atapibus*	at dtide? channel ?	# ATAPI devices
+
+hcide*		at podulebus0 slot ?	# HCCS IDE interface
+wd*		at hcide? channel ? drive ? # IDE hard discs
+atapibus*	at hcide? channel ?	# ATAPI devices
 
 hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
 scsibus*	at hcsc?
+
+oak*		at podulebus0 slot ?	# Oak Solutions 16-bit SCSI interface
+scsibus*	at oak?
 
 upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 com0		at upc0			# Serial port
 lpt0		at upc0			# Parallel port
 wdc0		at upc0			# IDE controller
-
 wd*		at wdc? drive ?		# IDE hard discs
-#atapibus*	at wdc?			# ATAPI devices
-#cd*     	at atapibus? drive ?	# ATAPI CD-ROM drives
-#sd*     	at atapibus? drive ? 	# ATAPI disk drives
-#uk*     	at atapibus? drive ?	# ATAPI unknown
+atapibus*	at wdc?			# ATAPI devices
+
+cd*     	at atapibus? drive ?	# ATAPI CD-ROM drives
+sd*     	at atapibus? drive ? 	# ATAPI disk drives
+uk*     	at atapibus? drive ?	# ATAPI unknown
 
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
 st*		at scsibus? target ? lun ?	# SCSI tape drives
