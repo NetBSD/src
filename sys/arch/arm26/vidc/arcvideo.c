@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.9 2001/01/07 15:56:03 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.10 2001/01/22 23:29:34 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.9 2001/01/07 15:56:03 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.10 2001/01/22 23:29:34 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -96,6 +96,7 @@ struct arcvideo_softc {
 	u_int32_t		sc_vidc_ctl;
 	struct device		*sc_ioc;
 	struct irq_handler	*sc_irq;
+	struct evcnt		sc_intrcnt;
 	int			sc_flags;
 #define AV_VIDEO_ON	0x01
 };
@@ -158,10 +159,13 @@ arcvideo_attach(struct device *parent, struct device *self, void *aux)
 		/* ioc0 exists */
 		sc->sc_ioc = ioc_cd.cd_devs[0];
 		sc->sc_irq = irq_establish(IOC_IRQ_IR, IPL_TTY, arcvideo_intr,
-		    self, self->dv_xname);
+		    self, NULL);
 		if (bootverbose)
 			printf(": VSYNC interrupts at %s",
 			    irq_string(sc->sc_irq));
+		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		    sc->sc_dev.dv_xname, "vsync intr");
+		irq_disable(sc->sc_irq);
 	} else
 #endif /* NIOC > 0 */
 		if (bootverbose)
@@ -296,8 +300,9 @@ arcvideo_await_vsync(struct device *self)
 static int
 arcvideo_intr(void *cookie)
 {
-/*	struct arcvideo_softc *sc = cookie; */
+	struct arcvideo_softc *sc = cookie;
 
+	sc->sc_intrcnt.ev_count++;
 	return IRQ_HANDLED;
 }
 
