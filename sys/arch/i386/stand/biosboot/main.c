@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2001/06/01 23:26:30 jdolecek Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2001/06/02 14:56:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -297,7 +297,7 @@ command_help(arg)
 
 	printf("commands are:\n"
 	    "boot [xdNx:][filename] [-adsvq]\n"
-	    "     (ex. \"sd0a:netbsd.old -s\"\n"
+	    "     (ex. \"hd0a:netbsd.old -s\"\n"
 	    "ls [path]\n"
 	    "dev xd[N[x]]:\n"
 #ifdef SUPPORT_SERIAL
