@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.71 1997/09/06 01:14:48 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.72 1997/10/07 22:40:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2154,8 +2154,8 @@ audiosetinfo(sc, ai)
 		blks = ai->hiwat;
 		if (blks > sc->sc_pr.maxblks)
 			blks = sc->sc_pr.maxblks;
-		if (blks < 1)
-			blks = 1;
+		if (blks < 2)
+			blks = 2;
 		sc->sc_pr.usedhigh = blks * sc->sc_pr.blksize;
 	}
 	if (ai->lowat != ~0) {
@@ -2163,6 +2163,10 @@ audiosetinfo(sc, ai)
 		if (blks > sc->sc_pr.maxblks - 1)
 			blks = sc->sc_pr.maxblks - 1;
 		sc->sc_pr.usedlow = blks * sc->sc_pr.blksize;
+	}
+	if (ai->hiwat != ~0 || ai->lowat != ~0) {
+		if (sc->sc_pr.usedlow > sc->sc_pr.usedhigh - sc->sc_pr.blksize)
+			sc->sc_pr.usedlow = sc->sc_pr.usedhigh - sc->sc_pr.blksize;
 	}
 
 	return (0);
