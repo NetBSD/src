@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.11 1996/08/20 18:24:46 abrown Exp $	*/
+/*	$NetBSD: compress.c,v 1.12 1997/01/16 04:51:29 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: compress.c,v 1.11 1996/08/20 18:24:46 abrown Exp $";
+static char rcsid[] = "$NetBSD: compress.c,v 1.12 1997/01/16 04:51:29 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ compress(in, out, bits)
 	struct stat isb, sb;
 	FILE *ifp, *ofp;
 	int exists, isreg, oreg;
-	u_char buf[1024];
+	u_char buf[BUFSIZ];
 
 	if (!isstdout) {
 		exists = !stat(out, &sb);
@@ -221,7 +221,7 @@ compress(in, out, bits)
 			return;
 		oreg = !exists || S_ISREG(sb.st_mode);
 	} else
-		oreg = 1;
+		oreg = 0;
 
 	ifp = ofp = NULL;
 	if ((ifp = fopen(in, "r")) == NULL) {
@@ -263,7 +263,7 @@ compress(in, out, bits)
 	}
 	ofp = NULL;
 
-	if (isreg) {
+	if (isreg && oreg) {
 		if (stat(out, &sb)) {
 			cwarn("%s", out);
 			goto err;
@@ -312,7 +312,7 @@ decompress(in, out, bits)
 	struct stat sb;
 	FILE *ifp, *ofp;
 	int exists, isreg, oreg;
-	u_char buf[1024];
+	u_char buf[BUFSIZ];
 
 	if (!isstdout) {
 		exists = !stat(out, &sb);
@@ -320,7 +320,7 @@ decompress(in, out, bits)
 			return;
 		oreg = !exists || S_ISREG(sb.st_mode);
 	} else
-		oreg = 1;
+		oreg = 0;
 
 	ifp = ofp = NULL;
 	if ((ofp = fopen(out, "w")) == NULL) {
@@ -361,7 +361,7 @@ decompress(in, out, bits)
 		goto err;
 	}
 
-	if (isreg) {
+	if (isreg && oreg) {
 		setfile(out, &sb);
 
 		if (unlink(in))
