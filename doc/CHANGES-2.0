@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.10 2004/03/30 06:05:04 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.11 2004/03/31 08:11:35 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -89,3 +89,39 @@ sys/arch/powerpc/fpu/fpu_emu.c			1.11
 
 	Make the "cond" variable an unsigned variable. PR#24938
 	[simonb, ticket #18]
+
+sys/compat/darwin/darwin_sysctl.c		1.24
+
+	Fix undefined variable.
+	[jmc, ticket #15]
+
+share/mk/bsd.files.mk				1.34-1.35
+
+	Include <bsd.sys.mk> because uue files need TOOL_UUDECODE and in the
+	USETOOLS=no case this never gets defined.
+	Also pull in bsd.obj.mk for something which is just using files to
+	install a uuencoded file
+	[jmc, ticket #16]
+
+usr.sbin/ipf/ipf/Makefile			1.19
+usr.sbin/ipf/ipftest/Makefile			1.26
+usr.sbin/ipf/ipmon/Makefile			1.19
+usr.sbin/ipf/ipnat/Makefile			1.21
+usr.sbin/ipf/ippool/Makefile			1.5
+usr.sbin/ipf/ipsend/Makefile			1.22
+
+	Add -I. to CPPFLAGS or else the generated .c files lose.
+	[jmc, ticket #19]
+
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/Banner.uue	delete
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/banner.uue	1.1
+distrib/acorn32/stand/Makefile				1.11
+
+	Rename Banner.uue to banner.uue so it doesn't lose on .PATH lookups
+	[jmc, ticket #20]
+
+distrib/hp300/miniroot/list			1.12
+
+	Catch up with the removal of gawk, so that the miniroot builds again.
+	[he, ticket #24]
+
