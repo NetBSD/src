@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.166 2003/10/08 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.167 2003/10/12 14:32:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.166 2003/10/08 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.167 2003/10/12 14:32:05 pk Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -137,10 +137,12 @@ ksiginfo_put(struct proc *p, const ksiginfo_t *ksi)
 {
 	ksiginfo_t *kp;
 	struct sigaction *sa = &SIGACTION_PS(p->p_sigacts, ksi->ksi_signo);
+	int s;
 
 	if ((sa->sa_flags & SA_SIGINFO) == 0)
 		return;
 
+	s = splsoftclock();
 	simple_lock(&p->p_sigctx.ps_silock);
 #ifdef notyet	/* XXX: QUEUING */
 	if (ksi->ksi_signo < SIGRTMIN)
@@ -152,8 +154,7 @@ ksiginfo_put(struct proc *p, const ksiginfo_t *ksi)
 				(void)memcpy(&sv, &kp->ksi_list, sizeof(sv));
 				*kp = *ksi;
 				(void)memcpy(&kp->ksi_list, &sv, sizeof(sv));
-				simple_unlock(&p->p_sigctx.ps_silock);
-				return;
+				goto out;
 			}
 		}
 	}
@@ -163,11 +164,13 @@ ksiginfo_put(struct proc *p, const ksiginfo_t *ksi)
 		printf("Out of memory allocating siginfo for pid %d\n",
 		    p->p_pid);
 #endif
-		return;
+		goto out;
 	}
 	*kp = *ksi;
 	CIRCLEQ_INSERT_TAIL(&p->p_sigctx.ps_siginfo, kp, ksi_list);
+out:
 	simple_unlock(&p->p_sigctx.ps_silock);
+	splx(s);
 }
 
 /*
