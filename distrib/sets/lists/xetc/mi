@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.2 2004/01/30 08:44:11 lukem Exp $
+# $NetBSD: mi,v 1.2.4.1 2005/01/30 15:01:18 he Exp $
 ./etc/fonts/fonts.conf
 ./etc/fonts/fonts.dtd
 ./etc/mtree/set.xetc				xetc-sys-root
@@ -32,6 +32,9 @@
 ./usr/X11R6/lib/X11/xdm/Xsetup_0
 ./usr/X11R6/lib/X11/xdm/Xwilling
 ./usr/X11R6/lib/X11/xdm/chooser
+./usr/X11R6/lib/X11/xdm/pixmaps/NetBSD.xpm
+./usr/X11R6/lib/X11/xdm/pixmaps/NetBSDbw.xpm
+./usr/X11R6/lib/X11/xdm/pixmaps/NetBSDinv.xpm
 ./usr/X11R6/lib/X11/xdm/pixmaps/XFree86.xpm
 ./usr/X11R6/lib/X11/xdm/pixmaps/XFree86bw.xpm
 ./usr/X11R6/lib/X11/xdm/xdm-config
