@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.21 2001/02/19 06:25:55 jmc Exp $
+#	$NetBSD: list,v 1.22 2002/01/01 18:51:40 chs Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
@@ -37,7 +37,7 @@ COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
-COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
+COPY	${ARCHDIR}/../ramdisk/termcap.src usr/share/misc/termcap
 
 # and the magic file
 COPY	${DESTDIR}/usr/share/misc/magic usr/share/misc/magic
