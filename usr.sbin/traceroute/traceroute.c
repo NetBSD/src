@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.50 2002/08/01 09:02:18 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.51 2002/08/01 09:03:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.50 2002/08/01 09:02:18 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.51 2002/08/01 09:03:50 itojun Exp $");
 #endif
 #endif
 
@@ -1398,7 +1398,10 @@ in_cksum2(u_int16_t seed, u_int16_t *addr, int len)
 {
 	int nleft = len;
 	u_int16_t *w = addr;
-	u_int16_t answer;
+	union {
+		u_int16_t w;
+		u_int8_t b[2];
+	} answer;
 	int32_t sum = seed;
 
 	/*
@@ -1413,16 +1416,19 @@ in_cksum2(u_int16_t seed, u_int16_t *addr, int len)
 	}
 
 	/* mop up an odd byte, if necessary */
-	if (nleft == 1)
-		sum += *(u_char *)w;
+	if (nleft == 1) {
+		answer.b[0] = *(u_char *)w;
+		answer.b[1] = 0;
+		sum += answer.w;
+	}
 
 	/*
 	 * add back carry outs from top 16 bits to low 16 bits
 	 */
 	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
 	sum += (sum >> 16);			/* add carry */
-	answer = sum;				/* truncate to 16 bits */
-	return (answer);
+	answer.w = sum;				/* truncate to 16 bits */
+	return (answer.w);
 }
 
 /*
