@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock_hpc.c,v 1.2 2002/01/14 16:23:28 pooka Exp $	*/
+/*	$NetBSD: dsclock_hpc.c,v 1.3 2002/03/13 13:12:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -6,10 +6,10 @@
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Portions of this code are derived from software contributed to The 
- * NetBSD Foundation by Jason R. Thorpe of the Numerical Aerospace 
+ * Portions of this code are derived from software contributed to The
+ * NetBSD Foundation by Jason R. Thorpe of the Numerical Aerospace
  * Simulation Facility, NASA Ames Research Center.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -20,7 +20,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -49,11 +49,11 @@
 #include <sgimips/sgimips/clockvar.h>
 
 struct dsclock_softc {
-        struct device sc_dev;
+	struct device sc_dev;
 
 	/* RTC registers */
-        bus_space_tag_t         sc_rtct;
-        bus_space_handle_t      sc_rtch;
+	bus_space_tag_t sc_rtct;
+	bus_space_handle_t sc_rtch;
 };
 
 static void	dsclock_init(struct device *);
@@ -67,7 +67,7 @@ const struct clockfns dsclock_clockfns = {
 };
 
 struct cfattach dsclock_ca = {
-        sizeof(struct dsclock_softc), dsclock_match, dsclock_attach
+	sizeof(struct dsclock_softc), dsclock_match, dsclock_attach
 };
 
 #define	ds1286_write(dev, reg, datum)					\
@@ -75,7 +75,7 @@ struct cfattach dsclock_ca = {
 #define	ds1286_read(dev, reg)						\
     (bus_space_read_1(dev->sc_rtct, dev->sc_rtch, reg))
 
-static int 
+static int
 dsclock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
@@ -95,13 +95,13 @@ dsclock_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-        sc->sc_rtct = haa->ha_st;
-        if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
-                                       haa->ha_devoff, 0x1ffff, 
-                                       &sc->sc_rtch)) != 0) {
-                printf(": unable to map RTC registers, error = %d\n", err);
-                return;
-        }
+	sc->sc_rtct = haa->ha_st;
+	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
+				       haa->ha_devoff, 0x1ffff,
+				       &sc->sc_rtch)) != 0) {
+		printf(": unable to map RTC registers, error = %d\n", err);
+		return;
+	}
 
 	clockattach(&sc->sc_dev, &dsclock_clockfns);
 }
@@ -117,7 +117,7 @@ dsclock_init(struct device *dev)
 static void
 dsclock_get(struct device *dev, struct clock_ymdhms * dt)
 {
-        struct dsclock_softc *sc = (struct dsclock_softc *)dev;
+	struct dsclock_softc *sc = (struct dsclock_softc *)dev;
 	ds_todregs regs;
 	int s;
 
@@ -129,18 +129,18 @@ dsclock_get(struct device *dev, struct clock_ymdhms * dt)
 	dt->dt_min = FROMBCD(regs[DS_MIN]);
 
 	if (regs[DS_HOUR] & DS_HOUR_12MODE) {
-	    dt->dt_hour = FROMBCD(regs[DS_HOUR] & DS_HOUR_12HR_MASK) +
+		dt->dt_hour = FROMBCD(regs[DS_HOUR] & DS_HOUR_12HR_MASK) +
 			((regs[DS_HOUR] & DS_HOUR_12HR_PM) ? 12 : 0);
 
-	    /* 
-	     * In AM/PM mode, hour range is 01-12, so adding in 12 hours
-	     * for PM gives us 01-24, whereas we want 00-23, so map hour
-	     * 24 to hour 0.
-	     */
-	    if (dt->dt_hour == 24)
-		dt->dt_hour = 0;
+		/*
+		 * In AM/PM mode, hour range is 01-12, so adding in 12 hours
+		 * for PM gives us 01-24, whereas we want 00-23, so map hour
+		 * 24 to hour 0.
+		 */
+		if (dt->dt_hour == 24)
+			dt->dt_hour = 0;
 	} else {
-	    dt->dt_hour = FROMBCD(regs[DS_HOUR] & DS_HOUR_24HR_MASK);
+		 dt->dt_hour = FROMBCD(regs[DS_HOUR] & DS_HOUR_24HR_MASK);
 	}
 
 	dt->dt_wday = FROMBCD(regs[DS_DOW]);
@@ -155,7 +155,7 @@ dsclock_get(struct device *dev, struct clock_ymdhms * dt)
 static void
 dsclock_set(struct device *dev, struct clock_ymdhms * dt)
 {
-        struct dsclock_softc *sc = (struct dsclock_softc *)dev;
+	struct dsclock_softc *sc = (struct dsclock_softc *)dev;
 	ds_todregs regs;
 	int s;
 

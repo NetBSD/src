@@ -1,14 +1,14 @@
-/*	$NetBSD: if_sq.c,v 1.9 2001/11/20 16:10:49 rafal Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.10 2002/03/13 13:12:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Portions of this code are derived from software contributed to The 
- * NetBSD Foundation by Jason R. Thorpe of the Numerical Aerospace 
+ * Portions of this code are derived from software contributed to The
+ * NetBSD Foundation by Jason R. Thorpe of the Numerical Aerospace
  * Simulation Facility, NASA Ames Research Center.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -35,10 +35,10 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -55,9 +55,9 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -167,11 +167,11 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	char* macaddr;
 	struct sq_softc *sc = (void *)self;
 	struct hpc_attach_args *haa = aux;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	sc->sc_hpct = haa->ha_st;
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
-				       haa->ha_dmaoff, 
+				       haa->ha_dmaoff,
 				       HPC_ENET_REGS_SIZE,
 				       &sc->sc_hpch)) != 0) {
 		printf(": unable to map HPC DMA registers, error = %d\n", err);
@@ -180,7 +180,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_regt = haa->ha_st;
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
-				       haa->ha_devoff, 
+				       haa->ha_devoff,
 				       HPC_ENET_DEVREGS_SIZE,
 				       &sc->sc_regh)) != 0) {
 		printf(": unable to map Seeq registers, error = %d\n", err);
@@ -189,16 +189,16 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = haa->ha_dmat;
 
-	if ((err = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct sq_control), 
-				    PAGE_SIZE, PAGE_SIZE, &sc->sc_cdseg, 
+	if ((err = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct sq_control),
+				    PAGE_SIZE, PAGE_SIZE, &sc->sc_cdseg,
 				    1, &sc->sc_ncdseg, BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to allocate control data, error = %d\n", err);
 		goto fail_0;
 	}
 
 	if ((err = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_ncdseg,
-				  sizeof(struct sq_control), 
-				  (caddr_t *)&sc->sc_control, 
+				  sizeof(struct sq_control),
+				  (caddr_t *)&sc->sc_control,
 				  BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf(": unable to map control data, error = %d\n", err);
 		goto fail_1;
@@ -213,7 +213,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((err = bus_dmamap_load(sc->sc_dmat, sc->sc_cdmap, sc->sc_control,
-				   sizeof(struct sq_control), 
+				   sizeof(struct sq_control),
 				   NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to load DMA map for control data, error "
 			"= %d\n", err);
@@ -224,10 +224,10 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Create transmit buffer DMA maps */
 	for (i = 0; i < SQ_NTXDESC; i++) {
-	    if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 
-					 0, BUS_DMA_NOWAIT, 
+	    if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+					 0, BUS_DMA_NOWAIT,
 					 &sc->sc_txmap[i])) != 0) {
-		    printf(": unable to create tx DMA map %d, error = %d\n", 
+		    printf(": unable to create tx DMA map %d, error = %d\n",
 			   i, err);
 		    goto fail_4;
 	    }
@@ -235,10 +235,10 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Create transmit buffer DMA maps */
 	for (i = 0; i < SQ_NRXDESC; i++) {
-	    if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 
-					 0, BUS_DMA_NOWAIT, 
+	    if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+					 0, BUS_DMA_NOWAIT,
 					 &sc->sc_rxmap[i])) != 0) {
-		    printf(": unable to create rx DMA map %d, error = %d\n", 
+		    printf(": unable to create rx DMA map %d, error = %d\n",
 			   i, err);
 		    goto fail_5;
 	    }
@@ -284,7 +284,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 
 	enaddr_aton(macaddr, sc->sc_enaddr);
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname, 
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 					   ether_sprintf(sc->sc_enaddr));
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -318,7 +318,7 @@ fail_6:
 	}
 fail_5:
 	for (i = 0; i < SQ_NRXDESC; i++) {
-	    if (sc->sc_rxmap[i] !=  NULL)
+	    if (sc->sc_rxmap[i] != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_rxmap[i]);
 	}
 fail_4:
@@ -330,7 +330,7 @@ fail_4:
 fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdmap);
 fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) sc->sc_control, 
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) sc->sc_control,
 				      sizeof(struct sq_control));
 fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_ncdseg);
@@ -379,7 +379,7 @@ sq_init(struct ifnet *ifp)
 	sq_set_filter(sc);
 
 	/* Set up Seeq transmit command register */
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCMD, 
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCMD,
 						    TXCMD_IE_UFLOW |
 						    TXCMD_IE_COLL |
 						    TXCMD_IE_16COLL |
@@ -391,19 +391,19 @@ sq_init(struct ifnet *ifp)
 	/* Set up HPC ethernet DMA config */
 	reg = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_DMACFG);
 	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_DMACFG,
-			    	reg | ENETR_DMACFG_FIX_RXDC | 
-				ENETR_DMACFG_FIX_INTR | 
+			    	reg | ENETR_DMACFG_FIX_RXDC |
+				ENETR_DMACFG_FIX_INTR |
 				ENETR_DMACFG_FIX_EOP);
 
 	/* Pass the start of the receive ring to the HPC */
-        bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_NDBP, 
+	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_NDBP,
 						    SQ_CDRXADDR(sc, 0));
 
 	/* And turn on the HPC ethernet receive channel */
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL, 
+	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL,
 						    ENETR_CTL_ACTIVE);
 
-        ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return 0;
@@ -507,7 +507,7 @@ sq_start(struct ifnet *ifp)
 		 * short on resources.  In this case, we'll copy and try
 		 * again.
 		 */
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0, 
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 						      BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
@@ -528,7 +528,7 @@ sq_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 
-			if ((err = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, 
+			if ((err = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 						m, BUS_DMA_NOWAIT)) != 0) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, err);
@@ -578,13 +578,13 @@ sq_start(struct ifnet *ifp)
 		for (nexttx = sc->sc_nexttx, seg = 0, totlen = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = SQ_NEXTTX(nexttx)) {
-			sc->sc_txdesc[nexttx].hdd_bufptr = 
+			sc->sc_txdesc[nexttx].hdd_bufptr =
 					    dmamap->dm_segs[seg].ds_addr;
-			sc->sc_txdesc[nexttx].hdd_ctl = 
+			sc->sc_txdesc[nexttx].hdd_ctl =
 					    dmamap->dm_segs[seg].ds_len;
-			sc->sc_txdesc[nexttx].hdd_descptr= 
+			sc->sc_txdesc[nexttx].hdd_descptr=
 					    SQ_CDTXADDR(sc, SQ_NEXTTX(nexttx));
-			lasttx = nexttx; 
+			lasttx = nexttx;
 			totlen += dmamap->dm_segs[seg].ds_len;
 		}
 
@@ -598,7 +598,7 @@ sq_start(struct ifnet *ifp)
 		}
 
 #if 0
-		printf("%s: transmit %d-%d, len %d\n", sc->sc_dev.dv_xname, 
+		printf("%s: transmit %d-%d, len %d\n", sc->sc_dev.dv_xname,
 						       sc->sc_nexttx, lasttx,
 						       totlen);
 #endif
@@ -645,7 +645,7 @@ sq_start(struct ifnet *ifp)
 
 	if (sc->sc_nfreetx != ofree) {
 #if 0
-		printf("%s: %d packets enqueued, first %d, INTR on %d\n", 
+		printf("%s: %d packets enqueued, first %d, INTR on %d\n",
 			    sc->sc_dev.dv_xname, lasttx - firsttx + 1,
 			    firsttx, lasttx);
 #endif
@@ -655,24 +655,24 @@ sq_start(struct ifnet *ifp)
 		 * last packet we enqueued, mark it as the last
 		 * descriptor.
 		 */
-		sc->sc_txdesc[lasttx].hdd_ctl |= (HDD_CTL_INTR | 
+		sc->sc_txdesc[lasttx].hdd_ctl |= (HDD_CTL_INTR |
 						  HDD_CTL_EOCHAIN);
-		SQ_CDTXSYNC(sc, lasttx, 1, 
+		SQ_CDTXSYNC(sc, lasttx, 1,
 				BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		/* 
+		/*
 		 * There is a potential race condition here if the HPC
-		 * DMA channel is active and we try and either update 
-		 * the 'next descriptor' pointer in the HPC PIO space 
+		 * DMA channel is active and we try and either update
+		 * the 'next descriptor' pointer in the HPC PIO space
 		 * or the 'next descriptor' pointer in a previous desc-
 		 * riptor.
 		 *
-		 * To avoid this, if the channel is active, we rely on 
+		 * To avoid this, if the channel is active, we rely on
 		 * the transmit interrupt routine noticing that there
-		 * are more packets to send and restarting the HPC DMA 
+		 * are more packets to send and restarting the HPC DMA
 		 * engine, rather than mucking with the DMA state here.
 		 */
-		status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, 
+		status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
 						       HPC_ENETX_CTL);
 
 		if ((status & ENETX_CTL_ACTIVE) != 0) {
@@ -714,11 +714,11 @@ sq_stop(struct ifnet *ifp, int disable)
 
 	/* Clear Seeq transmit/receive command registers */
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCMD, 0);
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_RXCMD, 0); 
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_RXCMD, 0);
 
 	sq_reset(sc);
 
-        ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 }
 
@@ -731,7 +731,7 @@ sq_watchdog(struct ifnet *ifp)
 
 	status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETX_CTL);
 	log(LOG_ERR, "%s: device timeout (prev %d, next %d, free %d, "
-		     "status %08x)\n", sc->sc_dev.dv_xname, sc->sc_prevtx, 
+		     "status %08x)\n", sc->sc_dev.dv_xname, sc->sc_prevtx,
 				       sc->sc_nexttx, sc->sc_nfreetx, status);
 
 	sq_trace_dump(sc);
@@ -749,9 +749,9 @@ void sq_trace_dump(struct sq_softc* sc)
 	int i;
 
 	for(i = 0; i < sq_trace_idx; i++) {
-		printf("%s: [%d] action %d, buf %d, free %d, status %08x\n", 
+		printf("%s: [%d] action %d, buf %d, free %d, status %08x\n",
 			sc->sc_dev.dv_xname, i, sq_trace[i].action,
-			sq_trace[i].bufno, sq_trace[i].freebuf, 
+			sq_trace[i].bufno, sq_trace[i].freebuf,
 			sq_trace[i].status);
 	}
 }
@@ -764,7 +764,7 @@ sq_intr(void * arg)
 	int handled = 0;
 	u_int32_t stat;
 
-        stat = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_RESET);
+	stat = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_RESET);
 
 	if ((stat & 2) == 0) {
 		printf("%s: Unexpected interrupt!\n", sc->sc_dev.dv_xname);
@@ -809,101 +809,102 @@ sq_rxintr(struct sq_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	for(i = sc->sc_nextrx;; i = SQ_NEXTRX(i)) {
-	    SQ_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		SQ_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	    /* If this is a CPU-owned buffer, we're at the end of the list */
-	    if (sc->sc_rxdesc[i].hdd_ctl & HDD_CTL_OWN) {
+		/* If this is a CPU-owned buffer, we're at the end of the list */
+		if (sc->sc_rxdesc[i].hdd_ctl & HDD_CTL_OWN) {
 #if 0
-		u_int32_t reg;
+			u_int32_t reg;
 
-		reg = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL);
-		printf("%s: rxintr: done at %d (ctl %08x)\n", 
-				sc->sc_dev.dv_xname, i, reg);
+			reg = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
+			    HPC_ENETR_CTL);
+			printf("%s: rxintr: done at %d (ctl %08x)\n",
+			    sc->sc_dev.dv_xname, i, reg);
 #endif
-		break;
-	    }
+			break;
+		}
 
-	    count++;
+		count++;
 
-	    m = sc->sc_rxmbuf[i];
-	    framelen = m->m_ext.ext_size - 
-			HDD_CTL_BYTECNT(sc->sc_rxdesc[i].hdd_ctl) - 3;
+		m = sc->sc_rxmbuf[i];
+		framelen = m->m_ext.ext_size -
+		    HDD_CTL_BYTECNT(sc->sc_rxdesc[i].hdd_ctl) - 3;
 
-	    /* Now sync the actual packet data */
-	    bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
-			    sc->sc_rxmap[i]->dm_mapsize, BUS_DMASYNC_POSTREAD);
-
-	    pktstat = *((u_int8_t*)m->m_data + framelen + 2);
-
-	    if ((pktstat & RXSTAT_GOOD) == 0) {
-		ifp->if_ierrors++;
-
-		if (pktstat & RXSTAT_OFLOW)
-		    printf("%s: receive FIFO overflow\n", sc->sc_dev.dv_xname);
-
+		/* Now sync the actual packet data */
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
-				sc->sc_rxmap[i]->dm_mapsize, 
-				BUS_DMASYNC_PREREAD);
-		SQ_INIT_RXDESC(sc, i);
-		continue;
-	    }
+		    sc->sc_rxmap[i]->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-	    if (sq_add_rxbuf(sc, i) != 0) {
-		ifp->if_ierrors++;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
-				sc->sc_rxmap[i]->dm_mapsize, 
-				BUS_DMASYNC_PREREAD);
-		SQ_INIT_RXDESC(sc, i);
-		continue;
-	    }
+		pktstat = *((u_int8_t*)m->m_data + framelen + 2);
+
+		if ((pktstat & RXSTAT_GOOD) == 0) {
+			ifp->if_ierrors++;
+
+			if (pktstat & RXSTAT_OFLOW)
+				printf("%s: receive FIFO overflow\n",
+				    sc->sc_dev.dv_xname);
+
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
+			    sc->sc_rxmap[i]->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
+			SQ_INIT_RXDESC(sc, i);
+			continue;
+		}
+
+		if (sq_add_rxbuf(sc, i) != 0) {
+			ifp->if_ierrors++;
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
+			    sc->sc_rxmap[i]->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
+			SQ_INIT_RXDESC(sc, i);
+			continue;
+		}
 
 
-	    m->m_data += 2;
-	    m->m_pkthdr.rcvif = ifp;
-	    m->m_pkthdr.len = m->m_len = framelen;
+		m->m_data += 2;
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = framelen;
 
-	    ifp->if_ipackets++;
+		ifp->if_ipackets++;
 
 #if 0
-	    printf("%s: sq_rxintr: buf %d len %d\n", sc->sc_dev.dv_xname, 
-						     i, framelen);
+		printf("%s: sq_rxintr: buf %d len %d\n", sc->sc_dev.dv_xname,
+		    i, framelen);
 #endif
 
 #if NBPFILTER > 0
-	    if (ifp->if_bpf)
-		    bpf_mtap(ifp->if_bpf, m);
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
 #endif
-	    (*ifp->if_input)(ifp, m);
+		(*ifp->if_input)(ifp, m);
 	}
 
 
 	/* If anything happened, move ring start/end pointers to new spot */
 	if (i != sc->sc_nextrx) {
-	    new_end = SQ_PREVRX(i);
-	    sc->sc_rxdesc[new_end].hdd_ctl |= HDD_CTL_EOCHAIN;
-	    SQ_CDRXSYNC(sc, new_end, BUS_DMASYNC_PREREAD | 
-				     BUS_DMASYNC_PREWRITE);
+		new_end = SQ_PREVRX(i);
+		sc->sc_rxdesc[new_end].hdd_ctl |= HDD_CTL_EOCHAIN;
+		SQ_CDRXSYNC(sc, new_end, BUS_DMASYNC_PREREAD |
+		    BUS_DMASYNC_PREWRITE);
 
-	    orig_end = SQ_PREVRX(sc->sc_nextrx);
-	    sc->sc_rxdesc[orig_end].hdd_ctl &= ~HDD_CTL_EOCHAIN;
-	    SQ_CDRXSYNC(sc, orig_end, BUS_DMASYNC_PREREAD | 
-				      BUS_DMASYNC_PREWRITE);
+		orig_end = SQ_PREVRX(sc->sc_nextrx);
+		sc->sc_rxdesc[orig_end].hdd_ctl &= ~HDD_CTL_EOCHAIN;
+		SQ_CDRXSYNC(sc, orig_end, BUS_DMASYNC_PREREAD |
+		    BUS_DMASYNC_PREWRITE);
 
-	    sc->sc_nextrx = i;
+		sc->sc_nextrx = i;
 	}
 
-	status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, 
-					       HPC_ENETR_CTL);
+	status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL);
 
 	/* If receive channel is stopped, restart it... */
 	if ((status & ENETR_CTL_ACTIVE) == 0) {
-	    /* Pass the start of the receive ring to the HPC */
-	    bus_space_write_4(sc->sc_hpct, sc->sc_hpch, 
-			      HPC_ENETR_NDBP, SQ_CDRXADDR(sc, sc->sc_nextrx));
+		/* Pass the start of the receive ring to the HPC */
+		bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
+		    HPC_ENETR_NDBP, SQ_CDRXADDR(sc, sc->sc_nextrx));
 
-	    /* And turn on the HPC ethernet receive channel */
-	    bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL, 
-							ENETR_CTL_ACTIVE);
+		/* And turn on the HPC ethernet receive channel */
+		bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL,
+		    ENETR_CTL_ACTIVE);
 	}
 
 	return count;
@@ -921,29 +922,29 @@ sq_txintr(struct sq_softc *sc)
 	SQ_TRACE(SQ_TXINTR_ENTER, sc->sc_prevtx, status, sc->sc_nfreetx);
 
 	if ((status & (ENETX_CTL_ACTIVE | TXSTAT_GOOD)) == 0) {
-		if (status & TXSTAT_COLL) 
-		    ifp->if_collisions++;
+		if (status & TXSTAT_COLL)
+			ifp->if_collisions++;
 
 		if (status & TXSTAT_UFLOW) {
-		    printf("%s: transmit underflow\n", sc->sc_dev.dv_xname);
-		    ifp->if_oerrors++;
+			printf("%s: transmit underflow\n", sc->sc_dev.dv_xname);
+			ifp->if_oerrors++;
 		}
 
 		if (status & TXSTAT_16COLL) {
-		    printf("%s: max collisions reached\n", sc->sc_dev.dv_xname);
-		    ifp->if_oerrors++;
-		    ifp->if_collisions += 16;
+			printf("%s: max collisions reached\n", sc->sc_dev.dv_xname);
+			ifp->if_oerrors++;
+			ifp->if_collisions += 16;
 		}
 	}
 
 	i = sc->sc_prevtx;
 	while (sc->sc_nfreetx < SQ_NTXDESC) {
-		/* 
-		 * Check status first so we don't end up with a case of 
+		/*
+		 * Check status first so we don't end up with a case of
 		 * the buffer not being finished while the DMA channel
 		 * has gone idle.
 		 */
-		status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, 
+		status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
 							HPC_ENETX_CTL);
 
 		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
@@ -951,27 +952,32 @@ sq_txintr(struct sq_softc *sc)
 
 		/* If not yet transmitted, try and start DMA engine again */
 		if ((sc->sc_txdesc[i].hdd_ctl & HDD_CTL_XMITDONE) == 0) {
-		    if ((status & ENETX_CTL_ACTIVE) == 0) {
-			SQ_TRACE(SQ_RESTART_DMA, i, status, sc->sc_nfreetx);
+			if ((status & ENETX_CTL_ACTIVE) == 0) {
+				SQ_TRACE(SQ_RESTART_DMA, i, status,
+				    sc->sc_nfreetx);
 
-			bus_space_write_4(sc->sc_hpct, sc->sc_hpch, 
+				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
 					  HPC_ENETX_NDBP, SQ_CDTXADDR(sc, i));
 
-			/* Kick DMA channel into life */
-			bus_space_write_4(sc->sc_hpct, sc->sc_hpch, 
+				/* Kick DMA channel into life */
+				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
 					  HPC_ENETX_CTL, ENETX_CTL_ACTIVE);
 
-			/* Set a watchdog timer in case the chip flakes out. */
-			ifp->if_timer = 5;
-		    } else {
-			SQ_TRACE(SQ_TXINTR_BUSY, i, status, sc->sc_nfreetx);
-		    }
-		    break;
+				/*
+				 * Set a watchdog timer in case the chip
+				 * flakes out.
+				 */
+				ifp->if_timer = 5;
+			} else {
+				SQ_TRACE(SQ_TXINTR_BUSY, i, status,
+				    sc->sc_nfreetx);
+			}
+			break;
 		}
 
 		/* Sync the packet data, unload DMA map, free mbuf */
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_txmap[i], 0, 
-				sc->sc_txmap[i]->dm_mapsize, 
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_txmap[i], 0,
+				sc->sc_txmap[i]->dm_mapsize,
 				BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_txmap[i]);
 		m_freem(sc->sc_txmbuf[i]);
@@ -989,32 +995,32 @@ sq_txintr(struct sq_softc *sc)
 
 	/* If we have buffers free, let upper layers know */
 	if (sc->sc_nfreetx > 0)
-	    ifp->if_flags &= ~IFF_OACTIVE;
+		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* If all packets have left the coop, cancel watchdog */
 	if (sc->sc_nfreetx == SQ_NTXDESC)
-	    ifp->if_timer = 0;
+		ifp->if_timer = 0;
 
 	SQ_TRACE(SQ_TXINTR_EXIT, sc->sc_prevtx, status, sc->sc_nfreetx);
-    	sq_start(ifp);
+	sq_start(ifp);
 
 	return 1;
 }
 
 
-void 
+void
 sq_reset(struct sq_softc *sc)
 {
 	/* Stop HPC dma channels */
 	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_CTL, 0);
 	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETX_CTL, 0);
 
-        bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_RESET, 3);
-        delay(20);
-        bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_RESET, 0);
+	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_RESET, 3);
+	delay(20);
+	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_RESET, 0);
 }
 
-/* sq_add_rxbuf: Add a receive buffer to the indicated descriptor.  */
+/* sq_add_rxbuf: Add a receive buffer to the indicated descriptor. */
 int
 sq_add_rxbuf(struct sq_softc *sc, int idx)
 {
@@ -1036,15 +1042,15 @@ sq_add_rxbuf(struct sq_softc *sc, int idx)
 
 	sc->sc_rxmbuf[idx] = m;
 
-	if ((err = bus_dmamap_load(sc->sc_dmat, sc->sc_rxmap[idx], 
-				   m->m_ext.ext_buf, m->m_ext.ext_size, 
+	if ((err = bus_dmamap_load(sc->sc_dmat, sc->sc_rxmap[idx],
+				   m->m_ext.ext_buf, m->m_ext.ext_size,
 				   NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, err);
 		panic("sq_add_rxbuf");	/* XXX */
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[idx], 0, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[idx], 0,
 			sc->sc_rxmap[idx]->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	SQ_INIT_RXDESC(sc, idx);
@@ -1052,13 +1058,13 @@ sq_add_rxbuf(struct sq_softc *sc, int idx)
 	return 0;
 }
 
-void 	
+void
 sq_dump_buffer(u_int32_t addr, u_int32_t len)
 {
 	int i;
 	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1((caddr_t)addr);
 
-	if (len == 0) 
+	if (len == 0)
 		return;
 
 	printf("%p: ", physaddr);
@@ -1073,7 +1079,7 @@ sq_dump_buffer(u_int32_t addr, u_int32_t len)
 }
 
 
-void	
+void
 enaddr_aton(const char* str, u_int8_t* eaddr)
 {
 	int i;

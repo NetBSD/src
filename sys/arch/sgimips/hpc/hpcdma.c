@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.3 2001/11/18 08:16:16 thorpej Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.4 2002/03/13 13:12:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -117,7 +117,7 @@ void
 hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 {
 	struct hpc_dma_desc *hva, *hpa;
-	bus_dma_segment_t   *segp;
+	bus_dma_segment_t *segp;
 	int i;
 
 	KASSERT(dmamap->dm_nsegs <= sc->sc_ndesc);

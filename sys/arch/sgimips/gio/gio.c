@@ -1,9 +1,9 @@
-/*	$NetBSD: gio.c,v 1.1 2000/06/14 16:51:00 soren Exp $	*/
+/*	$NetBSD: gio.c,v 1.2 2002/03/13 13:12:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -53,21 +53,21 @@ static int	gio_print(void *, const char *);
 static int	gio_search(struct device *, struct cfdata *, void *);
 
 struct cfattach gio_ca = {
-        sizeof(struct gio_softc), gio_match, gio_attach 
+	sizeof(struct gio_softc), gio_match, gio_attach
 };
 
 static int
 gio_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
-	void *aux;                                      
+	void *aux;
 {
 	struct giobus_attach_args *gba = aux;
 
 	if (strcmp(gba->gba_busname, match->cf_driver->cd_name) != 0)
 		return 0;
 
-        return 1;
+	return 1;
 }
 
 static void
@@ -104,9 +104,9 @@ gio_print(aux, pnp)
 static int
 gio_search(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf; 
+	struct cfdata *cf;
 	void *aux;
-{ 
+{
 	struct gio_attach_args *ga = aux;
 
 	do {

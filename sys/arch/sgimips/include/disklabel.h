@@ -1,9 +1,9 @@
-/*	$NetBSD: disklabel.h,v 1.4 2002/01/28 23:09:55 lukem Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5 2002/03/13 13:12:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -109,7 +109,7 @@ struct sgilabel {
 #define SGI_PTYPE_VOLUME	6
 #define SGI_PTYPE_EFS		7
 #define SGI_PTYPE_LVOL		8
-#define SGI_PTYPE_RLVOL     	9
+#define SGI_PTYPE_RLVOL		9
 #define SGI_PTYPE_XFS		10
 #define SGI_PTYPE_XFSLOG	11
 #define SGI_PTYPE_XLV		12

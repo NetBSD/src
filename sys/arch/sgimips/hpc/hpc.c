@@ -1,11 +1,11 @@
-/*	$NetBSD: hpc.c,v 1.6 2002/01/25 04:54:31 rafal Exp $	*/
+/*	$NetBSD: hpc.c,v 1.7 2002/03/13 13:12:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * Copyright (c) 2001 Rafal K. Boni
  * Copyright (c) 2001 Jason R. Thorpe
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -21,7 +21,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -118,7 +118,7 @@ int	hpc_submatch(struct device *, struct cfdata *, void *);
 int	hpc_power_intr(void *);
 
 struct cfattach hpc_ca = {
-        sizeof(struct hpc_softc), hpc_match, hpc_attach 
+	sizeof(struct hpc_softc), hpc_match, hpc_attach
 };
 
 int
@@ -130,7 +130,7 @@ hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (badaddr((void*)MIPS_PHYS_TO_KSEG1(ga->ga_addr), sizeof(u_int32_t)))
 		return 0;
 
-        return 1;
+	return 1;
 }
 
 void
@@ -180,11 +180,11 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		(void) config_found_sm(self, &ha, hpc_print, hpc_submatch);
 	}
 
-	/* 
-	 * XXX: Only attach the powerfail interrupt once, since the 
+	/*
+	 * XXX: Only attach the powerfail interrupt once, since the
 	 * interrupt code doesn't let you share interrupt just yet.
 	 *
-	 * Since the powerfail interrupt is hardcoded to read from 
+	 * Since the powerfail interrupt is hardcoded to read from
 	 * a specific register anyway (XXX#2!), we don't care when
 	 * it gets attached, as long as it only happens once.
 	 */

@@ -1,9 +1,9 @@
-/*	$NetBSD: com_mace.c,v 1.2 2001/10/08 15:53:07 pooka Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.3 2002/03/13 13:12:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -81,7 +81,7 @@ com_mace_match(parent, match, aux)
 	return 1;
 }
 
-extern void *   crime_intr_establish(int, int, int, int (*)(void *), void *);
+extern void *crime_intr_establish(int, int, int, int (*)(void *), void *);
 
 int console = 0;
 
@@ -123,8 +123,8 @@ console = 1;
 	else
 		rate = 9600;
 
-	delay(10000); 
-	/* if console    & dbaud */
+	delay(10000);
+	/* if console & dbaud */
 	if (console == 0) {
 		comcnattach(sc->sc_iot, sc->sc_ioh, rate, COM_FREQ, CONMODE);
 		console = 1;

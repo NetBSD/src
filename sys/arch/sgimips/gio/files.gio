@@ -1,6 +1,6 @@
-# $NetBSD: files.gio,v 1.2 2001/05/11 05:04:34 thorpej Exp $
+# $NetBSD: files.gio,v 1.3 2002/03/13 13:12:26 simonb Exp $
 
-device  gio {[slot = -1], [addr = -1]}
+device	gio {[slot = -1], [addr = -1]}
 attach	gio at giobus
 
 file	arch/sgimips/gio/gio.c		gio needs-flag
