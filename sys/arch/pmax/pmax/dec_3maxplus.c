@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.20 1999/05/26 04:23:59 nisimura Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.21 1999/05/29 07:10:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.20 1999/05/26 04:23:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.21 1999/05/29 07:10:36 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -140,6 +140,9 @@ dec_3maxplus_init()
 {
 	u_int32_t prodtype;
 
+	/* Initialise ioasic_base early on so we can determine product type */
+	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
+
 	prodtype = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
 	prodtype &= KN03_INTR_PROD_JUMPER;
 
@@ -171,7 +174,7 @@ dec_3maxplus_os_init()
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
-	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
+	/* XXX: ioasic_base initialised in dec_3maxplus_init() */
 	mips_hardware_intr = dec_3maxplus_intr;
 	tc_enable_interrupt = dec_3maxplus_enable_intr;	/* XXX */
 	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
