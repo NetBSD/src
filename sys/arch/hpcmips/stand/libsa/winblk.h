@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.h,v 1.1.1.1 1999/09/16 12:23:29 takemura Exp $	*/
+/*	$NetBSD: winblk.h,v 1.2 2000/01/16 03:07:26 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.

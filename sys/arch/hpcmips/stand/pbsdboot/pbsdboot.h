@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.5 1999/10/30 11:03:40 uch Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.6 2000/01/16 03:07:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
