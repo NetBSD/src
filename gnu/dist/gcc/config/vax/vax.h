@@ -144,6 +144,10 @@ extern int target_flags;
 
 /* Let's keep the stack somewhat aligned.  */
 #define STACK_BOUNDARY 32
+
+/* The table of an ADDR_DIFF_VEC must be contiguous with the case
+   opcode, it is part of the case instruction.  */
+#define ADDR_VEC_ALIGN(ADDR_VEC) 0
 
 /* Standard register usage.  */
 
@@ -344,7 +348,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
    return an rtx for the address of the word in the frame
    that holds the dynamic chain--the previous frame's address.  */
 #define DYNAMIC_CHAIN_ADDRESS(frame) \
-gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
+gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 
 /* If we generate an insn to push BYTES bytes,
    this says how many the stack pointer really advances by.
@@ -446,7 +450,7 @@ gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
 /* This macro generates the assembly code for function entry.
    FILE is a stdio stream to output the code to.
    SIZE is an int: how many units of temporary storage to allocate,
-   adjusted by STARTING_FRAME_OFFSET to accomodate vms.h.
+   adjusted by STARTING_FRAME_OFFSET to accommodate vms.h.
    Refer to the array `regs_ever_live' to determine which registers
    to save; `regs_ever_live[I]' is nonzero if register number I
    is ever used in the function.  This macro is responsible for
@@ -529,10 +533,10 @@ gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
 #define TRAMPOLINE_TEMPLATE(FILE)					\
 {									\
   ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x8fd0));	\
+  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x8fd0));	\
   ASM_OUTPUT_INT (FILE, const0_rtx);					\
   ASM_OUTPUT_BYTE  (FILE, 0x50+STATIC_CHAIN_REGNUM);			\
-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x9f17));	\
+  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x9f17));	\
   ASM_OUTPUT_INT (FILE, const0_rtx);					\
 }
 
@@ -813,10 +817,11 @@ gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE HImode
 
-/* Define this if the case instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-#define CASE_VECTOR_PC_RELATIVE
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+#define CASE_VECTOR_PC_RELATIVE 1
 
 /* Define this if the case instruction drops through after the table
    when the index is out of range.  Don't define it if the case insn
@@ -1158,7 +1163,7 @@ do { char dstr[30];							\
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   fprintf (FILE, "\t.word L%d-L%d\n", VALUE, REL)
 
 /* This is how to output an assembler line
@@ -1220,7 +1225,7 @@ do {						\
   fprintf (FILE, "\t.word 0x0ffc\n");		\
   fprintf (FILE, "\taddl2 $%d,4(ap)\n", DELTA);	\
   fprintf (FILE, "\tjmp ");			\
-  assemble_name (FILE, IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (FUNCTION))); \
+  assemble_name (FILE,  XSTR (XEXP (DECL_RTL (FUNCTION), 0), 0)); \
   fprintf (FILE, "+2\n");			\
 } while (0)
 

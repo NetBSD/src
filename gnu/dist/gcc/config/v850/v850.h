@@ -1,6 +1,5 @@
-/* Definitions of target machine for GNU compiler. 
-   NEC V850 series
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+/* Definitions of target machine for GNU compiler. NEC V850 series
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Jeff Law (law@cygnus.com).
 
 This file is part of GNU CC.
@@ -79,11 +78,11 @@ extern int target_flags;
      * Doubles are normally 4 byte aligned, except in argument
      lists where they are 8 byte aligned.  Is the alignment
      in the argument list based on the first parameter,
-     first stack parameter, etc etc.
+     first stack parameter, etc., etc.
 
      * Passing/returning of large structures probably isn't the same
      as GHS.  We don't have enough documentation on their conventions
-     to be compatable.
+     to be compatible.
 
      * Tests of SETUP_INCOMING_VARARGS need to be made runtime checks
      since it depends on TARGET_GHS.  */
@@ -209,6 +208,8 @@ extern struct small_memory_info small_memory[(int)SMALL_MEMORY_max];
    LEVEL is the optimization level specified; 2 if `-O2' is
    specified, 1 if `-O' is specified, and 0 if neither is specified.
 
+   SIZE is non-zero if `-Os' is specified, 0 otherwise.  
+
    You should not use this macro to change options that are not
    machine-specific.  These should uniformly selected by the same
    optimization level on all supported machines.  Use this macro to
@@ -217,7 +218,7 @@ extern struct small_memory_info small_memory[(int)SMALL_MEMORY_max];
    *Do not examine `write_symbols' in this macro!* The debugging
    options are not supposed to alter the generated code. */
 
-#define OPTIMIZATION_OPTIONS(LEVEL)					\
+#define OPTIMIZATION_OPTIONS(LEVEL,SIZE)				\
 {									\
   if (LEVEL)								\
     target_flags |= (MASK_EP | MASK_PROLOG_FUNCTION);			\
@@ -348,7 +349,7 @@ extern struct small_memory_info small_memory[(int)SMALL_MEMORY_max];
 
    On the 850, we make the return registers first, then all of the volatile
    registers, then the saved registers in reverse order to better save the
-   registers with an out of line function , and finnally the fixed
+   registers with an out of line function, and finally the fixed
    registers.  */
 
 #define REG_ALLOC_ORDER							\
@@ -1007,7 +1008,7 @@ do {									\
    switch on CODE. 
 
    There aren't DImode MOD, DIV or MULT operations, so call them
-   very expensive.  Everything else is pretty much a costant cost.  */
+   very expensive.  Everything else is pretty much a constant cost.  */
 
 #define RTX_COSTS(RTX,CODE,OUTER_CODE)					\
   case MOD:								\
@@ -1197,11 +1198,10 @@ do { char dstr[30];					\
 #define ASM_CLOSE_PAREN ")"
 
 /* This says how to output the assembler to define a global
-   uninitialized but not common symbol.
-   Try to use asm_output_bss to implement this macro.  */
+   uninitialized but not common symbol.  */
 
-#define ASM_OUTPUT_BSS(FILE, DECL, NAME, SIZE, ROUNDED) \
-  asm_output_bss ((FILE), (DECL), (NAME), (SIZE), (ROUNDED))
+#define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
+  asm_output_aligned_bss ((FILE), (DECL), (NAME), (SIZE), (ALIGN))
 
 /* This is how to output the definition of a user-level label named NAME,
    such as the label on a static function or variable NAME.  */
@@ -1287,7 +1287,7 @@ do { char dstr[30];					\
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
   fprintf (FILE, "\t%s .L%d-.L%d\n",					\
 	   (TARGET_BIG_SWITCH ? ".long" : ".short"),			\
 	   VALUE, REL)
@@ -1296,7 +1296,7 @@ do { char dstr[30];					\
   if ((LOG) != 0)			\
     fprintf (FILE, "\t.align %d\n", (LOG))
 
-/* We don't have to worry about dbx compatability for the v850.  */
+/* We don't have to worry about dbx compatibility for the v850.  */
 #define DEFAULT_GDB_EXTENSIONS 1
 
 /* Use stabs debugging info by default.  */
@@ -1318,14 +1318,15 @@ do { char dstr[30];					\
    jumps to the default label instead.  */
 /* #define CASE_DROPS_THROUGH */
 
-/* We must use a PC relative entry for small tables.  It would be more
-   efficient to use an absolute entry for big tables, but this is not
-   a runtime choice yet.  */
-#define CASE_VECTOR_PC_RELATIVE
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+#define CASE_VECTOR_PC_RELATIVE 1
 
 /* The switch instruction requires that the jump table immediately follow
    it. */
-#define JUMP_TABLES_IN_TEXT_SECTION
+#define JUMP_TABLES_IN_TEXT_SECTION 1
 
 /* svr4.h defines this assuming that 4 byte alignment is required.  */
 #undef ASM_OUTPUT_BEFORE_CASE_LABEL
@@ -1386,7 +1387,7 @@ v850_valid_machine_decl_attribute (DECL, ATTRIBUTES, IDENTIFIER, ARGS)
 /* Tell compiler we want to support GHS pragmas */
 #define HANDLE_GHS_PRAGMA
 
-/* The assembler op to to start the file.  */
+/* The assembler op to start the file.  */
 
 #define FILE_ASM_OP "\t.file\n"
 

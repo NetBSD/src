@@ -480,11 +480,11 @@ enum reg_class { NO_REGS, GENERAL_REGS,
 
 #define TRAMPOLINE_TEMPLATE(FILE)					\
 {									\
-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x844f));	\
+  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x844f));				\
   ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
   ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-  ASM_OUTPUT_CHAR (FILE, gen_rtx (CONST_INT, VOIDmode, 0x48));		\
-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x247f));	\
+  ASM_OUTPUT_CHAR (FILE, GEN_INT (0x48));				\
+  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x247f));				\
   ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
   ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
 }
@@ -625,10 +625,11 @@ enum reg_class { NO_REGS, GENERAL_REGS,
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE SImode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/* #define CASE_VECTOR_PC_RELATIVE */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
@@ -888,7 +889,7 @@ do {							\
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   fprintf (FILE, "\t.word .L%d-.L%d\n", VALUE, REL)
 
 /* This is how to output an assembler line
