@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/10 17:53:50 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/11 17:37:34 tv Exp $
 
 LIB=		bfd
 
@@ -46,7 +46,11 @@ CPPFLAGS+= 	-DHAVE_CONFIG_H -I. -I${.CURDIR} \
 DPSRCS+=	bfd.h elf32-target.h elf64-target.h targmatch.h
 CLEANFILES+=	bfd.h elf32-target.h elf64-target.h targmatch.h
 
-.PATH:		${DIST}/bfd ${DIST}/opcodes ${DIST}/libiberty ${DIST}/include
+TEXINFO=	bfd.texinfo
+INFOFLAGS=	-I${DIST}/bfd/doc
+
+.PATH:		${DIST}/bfd ${DIST}/opcodes ${DIST}/libiberty ${DIST}/include \
+		${DIST}/bfd/doc
 
 bfd.h: bfd-in2.h bfd-h.sed
 	sed -f ${.ALLSRC:M*.sed} ${.ALLSRC:M*.h} >$@
@@ -171,6 +175,7 @@ SRCS+=			cpu-vax.c vaxnetbsd.c vax-dis.c aout32.c
 SRCS != (for i in ${SRCS}; do echo $$i; done) | sort | uniq
 SELECT_VECS != (for i in ${SELECT_VECS}; do echo $$i; done) | sort | uniq
 
+.include <bsd.info.mk>
 .include <bsd.lib.mk>
 
 ${OBJS} ${SOBJS}: bfd.h elf32-target.h elf64-target.h
