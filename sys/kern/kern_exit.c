@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.98 2002/08/07 11:13:41 briggs Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.99 2002/08/13 05:42:27 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.98 2002/08/07 11:13:41 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.99 2002/08/13 05:42:27 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -225,6 +225,12 @@ exit1(struct proc *p, int rv)
 	systrace_sys_exit(p);
 #endif
 	/*
+	 * If emulation has process exit hook, call it now.
+	 */
+	if (p->p_emul->e_proc_exit)
+		(*p->p_emul->e_proc_exit)(p);
+
+	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
 	 */
 	p->p_stat = SDEAD;
@@ -323,12 +329,6 @@ exit1(struct proc *p, int rv)
 	 * Release the process's signal state.
 	 */
 	sigactsfree(p);
-
-	/*
-	 * If emulation has process exit hook, call it now.
-	 */
-	if (p->p_emul->e_proc_exit)
-		(*p->p_emul->e_proc_exit)(p);
 
 	/*
 	 * Clear curproc after we've done all operations
