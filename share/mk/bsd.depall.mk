@@ -1,5 +1,5 @@
-#	$NetBSD: bsd.depall.mk,v 1.1 1999/09/14 01:31:11 perry Exp $
+#	$NetBSD: bsd.depall.mk,v 1.2 2000/01/22 19:31:01 mycroft Exp $
 
-dependall: depend
+dependall: realdepend
 	@cd ${.CURDIR}; \
-	${MAKE} all
+	${MAKE} realall

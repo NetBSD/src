@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.130 1999/11/30 16:16:43 sommerfeld Exp $
+#	$NetBSD: bsd.own.mk,v 1.131 2000/01/22 19:31:02 mycroft Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -147,7 +147,7 @@ TARGETS+=	all clean cleandir depend dependall distclean includes \
 		install lint obj regress tags
 .PHONY:		all clean cleandir depend dependall distclean includes \
 		install lint obj regress tags beforedepend afterdepend \
-		beforeinstall afterinstall realinstall
+		beforeinstall afterinstall realinstall realdepend realall
 
 # set NEED_OWN_INSTALL_TARGET, if it's not already set, to yes
 # this is used by bsd.pkg.mk to stop "install" being defined
@@ -162,6 +162,12 @@ realinstall:	.NOTMAIN beforeinstall
 afterinstall:	.NOTMAIN subdir-install realinstall
 .endif
 .endif
+all:		.NOTMAIN realall subdir-all
+subdir-all:	.NOTMAIN
+realall:	.NOTMAIN
+depend:		.NOTMAIN realdepend subdir-depend
+subdir-depend:	.NOTMAIN
+realdepend:	.NOTMAIN
 
 # Define MKxxx variables (which are either yes or no) for users
 # to set in /etc/mk.conf and override on the make commandline.
