@@ -1,7 +1,7 @@
-/*	$NetBSD: becc.c,v 1.1 2003/01/25 01:57:17 thorpej Exp $	*/
+/*	$NetBSD: becc.c,v 1.2 2003/03/25 19:45:52 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -76,7 +76,11 @@ struct becc_softc *becc_softc;
 
 static int becc_pcibus_print(void *, const char *);
 
+static int becc_search(struct device *, struct cfdata *, void *);
+static int becc_print(void *, const char *);
+
 static void becc_pci_dma_init(struct becc_softc *);
+static void becc_local_dma_init(struct becc_softc *);
 
 /*
  * becc_attach:
@@ -96,7 +100,7 @@ becc_attach(struct becc_softc *sc)
 	 * This allows the BECC to return the requested 4-byte word
 	 * first when filling a cache line.
 	 */
-	__asm __volatile("mrc p13, 0, %0, c1, c1, 0" : "=r" (reg) );
+	__asm __volatile("mrc p13, 0, %0, c1, c1, 0" : "=r" (reg));
 	__asm __volatile("mcr p13, 0, %0, c1, c1, 0" : : "r" (reg | BCUMOD_AF));
 
 	/*
@@ -190,6 +194,14 @@ becc_attach(struct becc_softc *sc)
 
 	/* Initialize the DMA tags. */
 	becc_pci_dma_init(sc);
+	becc_local_dma_init(sc);
+
+	/*
+	 * Attach any on-chip peripherals.  We used indirect config, since
+	 * the BECC is a soft-core with a variety of peripherals, depending
+	 * on configuration.
+	 */
+	config_search(becc_search, &sc->sc_dev, NULL);
 
 	/*
 	 * Attach the PCI bus.
@@ -223,6 +235,38 @@ becc_pcibus_print(void *aux, const char *pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 
 	printf(" bus %d", pba->pba_bus);
+
+	return (UNCONF);
+}
+
+/*
+ * becc_search:
+ *
+ *	Indirect autoconfiguration glue for BECC.
+ */
+static int
+becc_search(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct becc_softc *sc = (void *) parent;
+	struct becc_attach_args ba;
+
+	ba.ba_dmat = &sc->sc_local_dmat;
+
+	if (config_match(parent, cf, &ba) > 0)
+		config_attach(parent, cf, &ba, becc_print);
+
+	return (0);
+}
+
+/*
+ * becc_print:
+ *
+ *	Autoconfiguration cfprint routine when attaching
+ *	to the BECC.
+ */
+static int
+becc_print(void *aux, const char *pnp)
+{
 
 	return (UNCONF);
 }
@@ -262,6 +306,36 @@ becc_pci_dma_init(struct becc_softc *sc)
 
 	dmat->_ranges = dr;
 	dmat->_nranges = i;
+
+	dmat->_dmamap_create = _bus_dmamap_create;
+	dmat->_dmamap_destroy = _bus_dmamap_destroy;
+	dmat->_dmamap_load = _bus_dmamap_load;
+	dmat->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
+	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
+	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
+	dmat->_dmamap_unload = _bus_dmamap_unload;
+	dmat->_dmamap_sync_pre = _bus_dmamap_sync;
+	dmat->_dmamap_sync_post = NULL;
+
+	dmat->_dmamem_alloc = _bus_dmamem_alloc;
+	dmat->_dmamem_free = _bus_dmamem_free;
+	dmat->_dmamem_map = _bus_dmamem_map;
+	dmat->_dmamem_unmap = _bus_dmamem_unmap;
+	dmat->_dmamem_mmap = _bus_dmamem_mmap;
+}
+
+/*
+ * becc_local_dma_init:
+ *
+ *	Initialize the local DMA tag.
+ */
+static void
+becc_local_dma_init(struct becc_softc *sc)
+{
+	bus_dma_tag_t dmat = &sc->sc_local_dmat;
+
+	dmat->_ranges = NULL;
+	dmat->_nranges = 0;
 
 	dmat->_dmamap_create = _bus_dmamap_create;
 	dmat->_dmamap_destroy = _bus_dmamap_destroy;
