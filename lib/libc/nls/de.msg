@@ -66,7 +66,7 @@ $ EPIPE
 $ EDOM
 33 Numerisches Argument ausserhalb des Wertebereichs
 $ ERANGE
-34 Ergebnis zu groß
+34 Ergebnis zu groß oder zu klein
 $ EAGAIN, EWOULDBLOCK
 35 Resource vorübergehend nicht verfügbar
 $ EINPROGRESS
