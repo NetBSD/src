@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.6 2000/10/10 12:55:18 lukem Exp $
+.\"	$NetBSD: install,v 1.7 2000/10/29 14:08:06 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@ The miniroot's install program will:
 Allow you to place disklabels on additional disks.
 Note that partition sizes and offsets are expressed
 in sectors. When you fill out the disklabel, you will
-need to specify partition types and filesystem parameters.
+need to specify partition types and file system parameters.
 If you're unsure what these values should be, use the
 following:
 .(disp
@@ -59,18 +59,37 @@ cpg: 0 (or blank)
 .disp)
 .Pp
 You will also need to specify the number of partitions.
-The number of partitions is determined by the `index' of
-the last partition letter, where a == 1, b == 2, etc.
-Therefore, if the last filled partition is partition `g',
+The number of partitions is determined by the
+.Sq index
+of
+the last partition letter, where
+.Li a
+=
+.Li 1 ,
+.Li b
+=
+.Li 2 ,
+etc.
+Therefore, if the last filled partition is partition
+.Sq Li g ,
 there are 7 partitions. Any partitions with size of 0
 may be removed from the list.
 .Pp
-If the disk is the boot disk, you _must_ offset the root
-partition (`a') one cylinder, as the hp300 boot code
+If the disk is the boot disk, you
+.Em must
+offset the root partition
+.Pq Pa /
+.Pq Sq Li a
+one cylinder, as the \*M boot code
 if large enough to spill past the label area. In this case,
-the `c' partition must be fstype `boot'.
+the
+.Sq Li c
+partition must be fstype
+.Li boot .
 .Pp
-Anything after a `#' is a comment.
+Anything after a
+.Sq Li #
+is a comment.
 .Pp
 The following is an example disklabel partition map:
 .(disp
@@ -84,32 +103,38 @@ f:   102592   244160    4.2BSD     1024  4096    16   # (Cyl.  545 - 773)
 g:   949760   346752    4.2BSD     1024  8192    16   # (Cyl.  774 - 2893)
 .disp)
 .It
-Create filesystems on target partitions.
+Create file systems on target partitions.
 .It
 Allow you to set up your system's network configuration.
 Remember to specify host names without the domain name
-appended to the end. For example use `foo' instead of
-`foo.bar.org'. If, during the process of configuring
+appended to the end. For example use
+.Li foo
+instead of
+.Li foo.bar.org .
+If, during the process of configuring
 the network interfaces, you make a mistake, you will
 be able to re-configure that interface by simply selecting
 it for configuration again.
 .It
-Mount target filesystems. You will be given the opportunity
+Mount target file systems. You will be given the opportunity
 to manually edit the resulting
 .Pa /etc/fstab .
 .It
 Extract binary sets from the media of your choice.
 .It
 Copy configuration information gathered during the
-installation process to your root filesystem.
+installation process to your root file system
+.Pq Pa / .
 .It
-Make device nodes in your root filesystem.
+Make device nodes in your root file system under
+.Pa /dev .
 .It
-Copy a new kernel onto your root partition.
+Copy a new kernel onto your root partition
+.Pq Pa / .
 .It
 Install a new boot block.
 .It
-Check your filesystems for integrity.
+Check your file systems for integrity.
 .enum)
 .Pp
 First-time installation on a system through a method other than the

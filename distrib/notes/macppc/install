@@ -1,137 +1,190 @@
-.\"	$NetBSD: install,v 1.3 2000/10/27 00:42:57 mbw Exp $
+.\"	$NetBSD: install,v 1.4 2000/10/29 14:08:08 lukem Exp $
 .
 .Ss2 Booting the installer
 .
 The syntax of the Open Firmware
-.Pa `boot'
+.Ic boot
 command is:
-.br
-.Nm boot
-.Ar device Ns
-.Op Ar :partition 
-.Op Ar ,filename
-.Op Fl as No | Ar kernel_location No Op Ar Fl as
 .Pp
-where the `-a' flag will ask you for the location of the next item to load (i.e. 
-.Pa `ofwboot.xcf' 
-will ask where the kernel is, or the kernel will ask where the root filesystem is).
-The `-s' flag will boot in `single-user mode'.  The `kernel_location' is either
-a filename if the kernel is on the same partition as the bootloader, or another
-complete device:partition,filename.  And, there's no reason (other than OF 
-bugginess) that you can't specify an entirely different device for the kernel.
-For instance, you could have a MacOS drive on your ultra0 (ATA) bus, and a 
+.Dl boot device[:partition][,filename] [kernel_location] [-as]
+.Pp
+where the
+.Fl a
+flag will ask you for the location of the next item to load (i.e.
+.Pa ofwboot.xcf
+will ask where the kernel is, or the kernel will ask where the root
+file system is).
+The
+.Fl s
+flag will boot into
+.Sq single-user
+mode.
+.Li kernel_location
+is either a filename if the kernel is on the same partition as the
+bootloader, or another complete
+.Sq Li device:partition,filename .
+And, there's no reason (other than Open Firmware bugginess) that you can't
+specify an entirely different device for the kernel.
+For instance, you could have a
+.Tn MacOS
+drive on your
+.Em ultra0
+(ATA) bus, and a
 .Nx
-drive on your ultra1 bus.
+drive on your
+.Em ultra1
+bus.
 .Pp
 The exact command you will be using depends on which version of Open Firmware
-your machine has and which device you will be booting from.  You can find out
-what device aliases OF has on your machine by typing:
-.br
+your machine has and which device you will be booting from. You can find out
+what device aliases Open Firmware has on your machine by typing:
+.Pp
 .Dl 0 > Ic devalias
 .Pp
-To get a complete listing of what hardware is recognized by OF, type:
+To get a complete listing of what hardware is recognized by Open
+Firmware, type:
+.Pp
 .Dl 0 > Ic dev / ls
 .Pp
 To determine if a device is bootable, type:
+.Pp
 .Dl 0 > Ic dev /path/to/device
 .Dl 0 > Ic words
+.Pp
 If the word
-.Pa `open'
+.Sq open
 is in the list of words, then this device might be bootable.
 .Pp
 SCSI disks are usually of the form:
-.Nm boot
-.Ar scsi_devalias Ns No /sd@ Ns Ar i:p
-.br
-where `scsi_devalias' is the Open Firmware
-.Pa `devalias'
-for your SCSI interface, `i' is the SCSI ID, and `p' is the partition.
 .Pp
-.(bullet -compact -offset indent
+.Dl boot scsi_devalias/sd@i:p
+.Pp
+where
+.Sq Li scsi_devalias
+is the Open Firmware
+.Sq devalias
+for your SCSI interface,
+.Sq Li i
+is the SCSI ID, and
+.Sq Li p
+is the partition.
+.Pp
+.(bullet
 .Em Floppy disk
-.br
-The floppy disk has a `partition zero' bootloader.  All you need to do is:
-.br
+.Pp
+The floppy disk has a
+.Sq partition zero
+bootloader. All you need to do is:
+.Pp
 .Dl 0 > Ic boot fd:0
 .Pp
 You can eject a floppy by typing:
-.Dl 0 > Ic eject fd
 .Pp
+.Dl 0 > Ic eject fd
 .It
 .Em Ethernet
-.br
-You only specify that you are booting from the ethernet:
-.Dl 0 > Ic boot enet Li    # for OF 1.x and 2.x
-.Dl 0 > Ic boot enet:0 Li  # for OF 3
-To make configuring your netboot server easier, you may specify the 
-bootloader filename and the kernel name:
-.Dl 0 > Ic boot enet:,ofwboot.xcf enet:,netbsd.ram.gz Li      # for OF 1.x and 2.x
-.Dl 0 > Ic boot enet:0,ofwboot.xcf enet:0,netbsd.ram.gz Li    # for OF 3
 .Pp
+You only specify that you are booting from the ethernet:
+.Pp
+.(bullet -offset indent
+Open Firmware 1, Open Firmware 2
+.Pp
+.Dl 0 > Ic "boot enet"
+.It
+Open Firmware 3
+.Pp
+.Dl 0 > Ic "boot enet:0"
+.bullet)
+.Pp
+To make configuring your netboot server easier, you may specify the
+bootloader filename and the kernel name:
+.Pp
+.(bullet -offset indent
+Open Firmware 1, Open Firmware 2
+.Pp
+.Dl 0 > Ic boot "enet:,ofwboot.xcf enet:,netbsd.ram.gz"
+.It
+Open Firmware 3
+.Pp
+.Dl 0 > Ic boot "enet:0,ofwboot.xcf enet:0,netbsd.ram.gz"
+.bullet)
 .It
 .Em CD-ROM
-.br
-OF doesn't understand long filenames (created with the RockRidge and Joliet 
-extensions), so you may need to figure out what your file is called.  For instance,
-Toast for MacOS creates CDs with long filenames, but uses `DOS' style short names
-as well.  Instead of referencing 
-.Pa `netbsd-GENERIC'
+.Pp
+Open Firmware doesn't understand long filenames (created with the RockRidge
+and Joliet extensions), so you may need to figure out what your file is
+called. For instance,
+.Ic Toast
+for
+.Tn MacOS
+creates CDs with long filenames, but uses
+.Tn MS-DOS
+style short names
+as well. Instead of referencing
+.Pa netbsd-GENERIC
 you would need to open
-.Pa `NETBSD-G.ENE'
+.Pa NETBSD-G.ENE
 .Pp
 The
-.Pa mkisofs
+.Ic mkisofs
 and
-.Pa mkhybrid
-programs have a similar problem.  For them, 
-.Pa `netbsd.ram.gz'
+.Ic mkhybrid
+programs have a similar problem. For them,
+.Pa netbsd.ram.gz
 becomes
-.Pa `NETBSD_RAM.GZ'
+.Pa NETBSD_RAM.GZ
 .Pp
 Another thing to note is that you
 .Em must
 use capital letters when specifying the filename to load.
-Also, keep in mind what format your CD-R has to be for your version of OF 
-(pure ISO versus hybrid ISO/HFS) before giving up.
+Also, keep in mind what format your CD-R has to be for your version of
+Open Firmware (pure ISO versus hybrid ISO/HFS) before giving up.
 .Pp
 Here are some examples of what you might use to boot from CD-ROM:
-.Dl 0 > Ic boot scsi-int/sd@3:0,OFWBOOT.XCF NETBSD.RAM
-.Dl 0 > Ic boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.RAM
-.Dl 0 > Ic boot scsi-ext/sd@3:0,OFWBOOT.XCF NETBSD.RAM
-.Dl 0 > Ic boot ata/atapi-disk:0,OFWBOOT.XCF NETBSD.RAM
-.Dl 0 > Ic boot ide1/disk@0:0,OFWBOOT.XCF NETBSD.RAM
-.Dl 0 > Ic boot cd:0,OFWBOOT.XCF NETBSD.RAM
 .Pp
+.Dl 0 > Ic "boot scsi-int/sd@3:0,OFWBOOT.XCF NETBSD.RAM"
+.Dl 0 > Ic "boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.RAM"
+.Dl 0 > Ic "boot scsi-ext/sd@3:0,OFWBOOT.XCF NETBSD.RAM"
+.Dl 0 > Ic "boot ata/atapi-disk:0,OFWBOOT.XCF NETBSD.RAM"
+.Dl 0 > Ic "boot ide1/disk@0:0,OFWBOOT.XCF NETBSD.RAM"
+.Dl 0 > Ic "boot cd:0,OFWBOOT.XCF NETBSD.RAM"
 .It
-.Em IDE or SCSI drive with a `partition zero' bootloader
+.Em IDE or SCSI drive with a
+.Sq partition zero
+bootloader
 .br
-(OF 1.x and 2.x only).
-.br
-You do not specify a file to load, since the `partition zero' booloader knows
-what to do.  You would boot such a system if you have dumped the boot floppy
-image to your drive, or if you have an already-installed
+(Open Firmware 1 and 2 only).
+.Pp
+You do not specify a file to load, since the
+.Sq partition zero
+booloader knows what to do. You would boot such a system if you have dumped
+the boot floppy image to your drive, or if you have an already-installed
 .Nx*M
 system
 .Pp
-Remember, that SCSI Zip disks are usually ID 5 or 6.  Internal hard drives 
-are usually SCSI ID 0.
+Remember, that SCSI Zip disks are usually ID 5 or 6.
+Internal hard drives are usually SCSI ID 0.
 .Pp
 Here are some examples of what you might use to boot from such a drive:
-.Dl 0 > Ic boot scsi-int/sd@0:0
-.Dl 0 > Ic boot scsi/sd@0:0
-.Dl 0 > Ic boot scsi-ext/sd@0:0
-.Dl 0 > Ic boot ata/ata-disk@0:0
-.Dl 0 > Ic boot ata/ATA-Disk@0:0
-.Dl 0 > Ic boot ide0/disk@0:0
-.Dl 0 > Ic boot zip:0
 .Pp
+.Dl 0 > Ic "boot scsi-int/sd@0:0"
+.Dl 0 > Ic "boot scsi/sd@0:0"
+.Dl 0 > Ic "boot scsi-ext/sd@0:0"
+.Dl 0 > Ic "boot ata/ata-disk@0:0"
+.Dl 0 > Ic "boot ata/ATA-Disk@0:0"
+.Dl 0 > Ic "boot ide0/disk@0:0"
+.Dl 0 > Ic "boot zip:0"
 .It
 .Em IDE or SCSI drive from an HFS(+) partition
 .br
-(OF 2.4 and 3 only).
-.br
- MacOS drives have several system-level `partitions' reserved for MacOS drivers.
-You may find that your first HFS(+) partition might be as high as partition 9.  
+(Open Firmware 2.4 and 3 only)
+.Pp
+.Tn MacOS
+drives have several system-level
+.Sq partitions reserved for
+.Tn MacOS
+drivers.
+You may find that your first HFS(+) partition might be as high as partition 9.
 You may need to keep trying higher partition numbers until you find the one
 that has your bootloader.
 .Pp
@@ -139,13 +192,14 @@ Also, since the bootloader is on a different partition from the
 .Nx
 kernel, you will need to specify where to find the kernel.
 .Pp
-Remember, that SCSI Zip disks are usually ID 5 or 6.  Internal hard drives 
+Remember, that SCSI Zip disks are usually ID 5 or 6. Internal hard drives
 are usually SCSI ID 0.
 .Pp
 Here are some examples of what you might use to boot from such a drive:
-.Dl 0 > Ic boot scsi/sd@0:9,ofwboot.xcf scsi/sd@0:10,netbsd
-.Dl 0 > Ic boot ide0/disk@0:7,ofwboot.xcf ide0/disk@0:9,ofwboot.xcf
-.Dl 0 > Ic boot hd:8,ofwboot.xcf ultra1:3,netbsd
+.Pp
+.Dl 0 > Ic "boot scsi/sd@0:9,ofwboot.xcf scsi/sd@0:10,netbsd"
+.Dl 0 > Ic "boot ide0/disk@0:7,ofwboot.xcf ide0/disk@0:9,ofwboot.xcf"
+.Dl 0 > Ic "boot hd:8,ofwboot.xcf ultra1:3,netbsd"
 .bullet)
 .
 .Ss2 Common Problems and Error Messages
@@ -153,106 +207,109 @@ See the
 .Nx*M
 FAQ for a thorough list.
 .Lk http://www.netbsd.org/Ports/macppc/faq.html
-.(bullet -compact -offset indent
-.Pa `DEFAULT CATCH!'
 .Pp
-If your machine is Open Firmware version 1.0.5 or 2.X, this error does 
-sometimes appear randomly. You might try the boot command a second time (this is known to
-work on some models). Otherwise, if you are not using a serial console, there
-might be a conflict between the screen driver and Open Firmware which prevents OF
-from loading 
+.(bullet
+.Dq Li "DEFAULT CATCH!"
+.Pp
+If your machine is Open Firmware version 1.0.5 or 2.X, this error does
+sometimes appear randomly. You might try the boot command a second time (this
+is known to work on some models). Otherwise, if you are not using a serial
+console, there might be a conflict between the screen driver and Open
+Firmware which prevents Open Firmware from loading
 .Pa ofwboot.xcf
 There are several models that cannot be booted while
-using the screen and keyboard. The only known workaround is to use a serial console
-(i.e. set your input and output devices to ttya or ttyb).
-.Dl 0 > Ic setenv output-device ttya
-.Dl 0 > Ic setenv input-device ttya
-.Dl 0 > Ic reset-all
+using the screen and keyboard. The only known workaround is to use a serial
+console (i.e. set your input and output devices to ttya or ttyb).
 .Pp
+.Dl 0 > Ic "setenv output-device ttya"
+.Dl 0 > Ic "setenv input-device ttya"
+.Dl 0 > Ic "reset-all"
 .It
-.Pa `CLAIM failed'
+.Dq Li "CLAIM failed"
 .Pp
-This is a general message from Open Firmware to the effect that it failed 
-to allocate some memory. There are several known causes for this to happen. 
+This is a general message from Open Firmware to the effect that it failed
+to allocate some memory. There are several known causes for this to happen.
 .Pp
 This often means that the memory is messed up. If you tried something and
-it failed, then you tried another and got a 
-.Pa `CLAIM failed'
+it failed, then you tried another and got a
+.Dq Li "CLAIM failed"
 message, then this is an indication that you should reboot between attempts
 .Pp
-If your machine is Open Firmware version 1.0.5 or 2.X, this error does 
-sometimes appear randomly. You might try the boot command a second time (this is known to
-work on some models). Otherwise, if you are not using a serial console, there
-might be a conflict between the screen driver and Open Firmware which prevents OF
-from loading 
+If your machine is Open Firmware version 1.0.5 or 2.X, this error does
+sometimes appear randomly. You might try the boot command a second time (this
+is known to work on some models). Otherwise, if you are not using a serial
+console, there might be a conflict between the screen driver and Open
+Firmware which prevents Open Firmware from loading
 .Pa ofwboot.xcf
-There are several models that cannot be booted while
-using the screen and keyboard. The only known workaround is to use a serial console
+There are several models that cannot be booted while using the screen and
+keyboard. The only known workaround is to use a serial console
 (i.e. set your input and output devices to ttya or ttyb).
-.Dl 0 > Ic setenv output-device ttya
-.Dl 0 > Ic setenv input-device ttya
-.Dl 0 > Ic reset-all
 .Pp
+.Dl 0 > Ic "setenv output-device ttya"
+.Dl 0 > Ic "setenv input-device ttya"
+.Dl 0 > Ic "reset-all"
 .It
-.Pa `can't OPEN'
+.Dq Li "can't OPEN"
 .Pp
-OF either can't open the device you specified (because it is not present or
-the device path is mistyped) or the file you specified.  Check your typing
-and check to make sure that the media has the files you think it has.
-.Pp
+Open Firmware either can't open the device you specified (because it is not
+present or the device path is mistyped) or the file you specified. Check your
+typing and check to make sure that the media has the files you think it has.
 .It
-.Pa `unrecognized Client Program formatstate not valid'
+.Dq Li "unrecognized Client Program formatstate not valid"
 .Pp
 This is a general Open Firmware error message indicating that the filename
-you tried to open either doesn't exist or is in the wrong format.  For 
-OF 1.x and 2.x machines, it must be an XCOFF file (such as
-.Pa `ofwboot.xcf')
-and for OF 3 machines, it must be either XCOFF or ELF (such as a kernel).
-.Pp
+you tried to open either doesn't exist or is in the wrong format. For
+Open Firmware 1 and 2.machines, it must be an XCOFF file (such as
+.Pa ofwboot.xcf )
+and for Open Firmware 3 machines, it must be either XCOFF or ELF (such as
+a kernel).
 .It
 Black screen
 .Pp
-You need a serial console.  See the section entitled
+You need a serial console. See the section entitled
 .Sx Open Firmware 1.0.5 or 2.0.x System Preparation
-.Pp
 .It
 Grey screen with flashing question mark
 .Pp
 You mistyped the path to a device, and your system defaulted to
-booting into MacOS.  The flashing question mark means that the MacOS
-ROM has loaded and is looking for a bootable MacOS filesystem.
-.Pp
+booting into
+.Tn MacOS .
+The flashing question mark means that the
+.Tn MacOS
+ROM has loaded and is looking for a bootable
+.Tn MacOS
+file system.
 .It
 .Pa ofwboot.xcf
 hangs before the copyright notice and the kernel configuration
 .Pp
-You forgot to set 
-.Pa `real-base'
-in OF or it got erased by your booting into MacOS.
-.Dl 0 > Ic setenv load-base 600000
-.Dl 0 > Ic setenv real-base F00000
-.Dl 0 > Ic reset-all
+You forgot to set
+.Dq Li real-base
+in Open Firmware or it got erased by your booting into
+.Tn MacOS .
 .Pp
+.Dl 0 > "Ic setenv load-base 600000"
+.Dl 0 > "Ic setenv real-base F00000"
+.Dl 0 > "Ic reset-all"
 .It
 After the kernel loads, the first key you press repeats forever
 .Pp
-Press the shift key first.
-.Pp
+Press
+.Key SHIFT
+first.
 .It
 Hang after configuring devices, but before doing anything else
 .Pp
 Plug the USB keyboard directly into the computer (i.e. not through a hub)
-.Pp
 .It
-.Pa `pciide0:0:0: lost interrupt'
+.Dq Li "pciide0:0:0: lost interrupt"
 .Pp
-See 
+See
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#pciide-lost-interrupt
-.Pp
 .It
-.Pa `Panic: mesh: FIFO != 0'
+.Dq Li "Panic: mesh: FIFO != 0"
 .Pp
-Try unplugging your Zip drive.  If that doesn't work, see
+Try unplugging your Zip drive. If that doesn't work, see
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#mesh-fifo
 .bullet)
 .

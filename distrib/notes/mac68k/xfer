@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.16 2000/10/10 12:55:19 lukem Exp $
+.\"	$NetBSD: xfer,v 1.17 2000/10/29 14:08:07 lukem Exp $
 .
 Installation is currently only supported from the local Macintosh hard
 drive, from a CD-ROM, or from an AppleShare volume (however, you may upgrade
@@ -25,8 +25,12 @@ Fetch and Anarchie work fine, but be sure to specify a binary file
 transfer.
 .It
 The files should not be unpacked.  If you have the Internet Config
-extension installed, you can disable this in the "Helpers" dialog
-by removing the entry associated with ".tgz" files.  Other FTP
+extension installed, you can disable this in the
+.Dq "Helpers"
+dialog
+by removing the entry associated with
+.Dq ".tgz"
+files.  Other FTP
 clients may require separate changes; consult your package's
 documentation.
 .It
@@ -34,8 +38,10 @@ If you are installing from a CD-ROM, the distribution sets are
 already in the proper format and no special handling is required.
 .bullet)
 .Pp
-You will also need to collect the MacOS installation tools from the
-.Pa mac68k/installation/misc No subdirectory of the
+You will also need to collect the
+.Tn MacOS
+installation tools from the
+.Pa \*M/installation/misc No subdirectory of the
 .Nx \*V
 distribution:
 Mkfs,

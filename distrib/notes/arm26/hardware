@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.2 2000/10/10 12:55:16 lukem Exp $
+.\"	$NetBSD: hardware,v 1.3 2000/10/29 14:08:05 lukem Exp $
 .
 .Nx*M
 \*V should support all common Acorn machines fitted with
@@ -21,7 +21,7 @@ Standard keyboard
 .It
 Standard mouse
 .It
-Expansion Cards (aka
+Expansion Cards (AKA
 .Dq podules ) .
 .(bullet -compact
 Acorn AKA25 Ethernet (Ether1,

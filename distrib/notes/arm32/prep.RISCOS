@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.4 2000/10/10 12:55:17 lukem Exp $
+	$NetBSD: prep.RISCOS,v 1.5 2000/10/29 14:08:05 lukem Exp $
 
 These instructions are specific to NetBSD/arm32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+) running RiscOS, but may be relevant to futures
@@ -190,7 +190,7 @@ Here is the procedure you should use:
 		Set up the RISC OS partitions as RiscOs: and the
 		remaining one as Empty:
 
-		Click on each figure and press return
+		Click on each figure and press RETURN
 
 		Click on partition drive
 
@@ -373,7 +373,7 @@ a certain setup.
    device configured (eg *con. IDEdiscs 2) even if it has no RiscOS
    section.
 2) If you have RISC OS 3.5 without the new FileCore, then you must
-   also have the NetBSD filesystem *completely* below the 511 MB
+   also have the NetBSD file system *completely* below the 511 MB
    boundary of the device.
 3) You must know the SWI base of the <filesys>_DiscOp SWI. Here
    <filesys> is SCSIFS, SCSI or ADFS depending upon which controller
@@ -394,17 +394,17 @@ To mount a Unix partition:
 2) Run a unixfs_mount command to mount the partition.
 3) Open the root directory by double-clicking on the openroot file.
 4) Open the distrib directory and just copy the sets to this.
-5) Shut down unixfs by double-clicking on the kill_unixfs file. THIS
-   STEP IS VERY IMPORTANT as it works like dismount onMS-DOS floppies.
+5) Shut down unixfs by double-clicking on the kill_unixfs file.
+   THIS STEP IS VERY IMPORTANT as it works like dismount on MS-DOS floppies.
 
 The difficult step here is step number 2). If you are using an
 ADFS IDE disc, then you can just double-click on one of the
 following obey files (always choose the RiscOS disc number that
 corresponds to the *first* disc on the NetBSD device):
-- MountHD4a (ADFS::4 drive, not disc, root filesystem)
-- MountHD4e (ADFS::4 drive, not disc, /usr filesystem)
-- MountHD5a (ADFS::5 drive, not disc, root filesystem)
-- MountHD5e (ADFS::5 drive, not disc, /usr filesystem)
+- MountHD4a (ADFS::4 drive, not disc, root file system)
+- MountHD4e (ADFS::4 drive, not disc, /usr file system)
+- MountHD5a (ADFS::5 drive, not disc, root file system)
+- MountHD5e (ADFS::5 drive, not disc, /usr file system)
 
 If you are not using an ADFS IDE device, you need to create such
 an obey file yourself. We recommend that you copy one of the
@@ -441,13 +441,13 @@ When you have calculated the figure to give to unixfs_mount you
 just change it in the copy of the file you made above and run it by
 double-clicking on it.
 
-When you have mounted the unixfs filesystem, you can open the
+When you have mounted the unixfs file system, you can open the
 directory and copy the sets to it.
 Don't forget to copy the file "checksums" too. As its name suggests, it
 contains checksums to check if the files are OK.
 
 When you are finished with the transfer, run the file
-kill_unixfs to dismount the unixfs filesystem.
+kill_unixfs to dismount the unixfs file system.
 
 Appendix A - Device naming
 
@@ -461,14 +461,14 @@ the dominant operating systems in the UNIX market today are
 based on System V (Sun Solaris, SGI Irix, HP HP-UX 10.xx, Linux
 etc.). Some of them are actually hybrids of both.
 
-The filesystem in UNIX use the slash character (/) as the
+The file system in UNIX use the slash character (/) as the
 directory separator. The top (or bottom if you like) directory
 is called the root and is denoted by only the slash (/). All
 absolute filenames are adressed starting with the root, so the
 temporary directory is called /tmp.
 
 The devices in UNIX are addressed as special files in the
-filesystem, and they all start with /dev, so e.g. the quadrature
+file system, and they all start with /dev, so e.g. the quadrature
 mouse is called /dev/quadmouse.
 
 Also some devices can be adressed in two different ways; as a
