@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.3 1996/02/27 22:32:11 jtc Exp $	*/
+/*	$NetBSD: gdt.h,v 1.4 1996/08/25 23:39:51 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define	MAXGDTSIZ	8192		/* max # entries in an i386 GDT */
+extern union descriptor *dynamic_gdt;
 
 void tss_alloc __P((struct pcb *));
 void tss_free __P((struct pcb *));
