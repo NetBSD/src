@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.80 2001/03/11 05:18:51 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.81 2001/03/13 03:44:23 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.81 $"
 
 maxusers	8
 
@@ -94,7 +94,7 @@ config		netbsd		root on ? type ?
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
-options 	WSDISPLAY_DEFAULTSCREENS=4
+#options 	WSDISPLAY_DEFAULTSCREENS=4
 #options 	FONT_VT220L8x8
 options 	FONT_VT220L8x10
 # compatibility to other console drivers
