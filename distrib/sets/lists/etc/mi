@@ -9,6 +9,7 @@
 ./etc/csh.logout
 ./etc/daily
 ./etc/daily.conf
+./etc/dhclient-script
 ./etc/disktab
 ./etc/dm.conf
 ./etc/dumpdates
