@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.4 1997/01/11 06:48:02 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.5 1997/01/11 09:57:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.4 1997/01/11 06:48:02 lukem Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.5 1997/01/11 09:57:08 lukem Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -198,7 +198,7 @@ parse__escape(ptr)
 	    break;
 	}
     }
-    else if (*p == '^' && isalpha((unsigned char) *p)) {
+    else if (*p == '^' && isalpha((unsigned char) p[1])) {
 	p++;
 	c = (*p == '?') ? '\177' : (*p & 0237);
     }
