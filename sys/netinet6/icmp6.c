@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.67 2001/10/15 11:12:44 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.68 2001/10/18 09:09:25 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2471,7 +2471,6 @@ icmp6_redirect_output(m0, rt)
 	struct nd_redirect *nd_rd;
 	size_t maxlen;
 	u_char *p;
-	struct ifnet *outif = NULL;
 	struct sockaddr_in6 src_sa;
 
 	icmp6_errcount(&icmp6stat.icp6s_outerrhist, ND_REDIRECT, 0);
@@ -2724,12 +2723,10 @@ noredhdropt:;
 #ifdef IPSEC
 	/* Don't lookup socket */
 	(void)ipsec_setsocket(m, NULL);
-#endif /*IPSEC*/
-	ip6_output(m, NULL, NULL, 0, NULL, &outif);
-	if (outif) {
-		icmp6_ifstat_inc(outif, ifs6_out_msg);
-		icmp6_ifstat_inc(outif, ifs6_out_redirect);
-	}
+#endif /* IPSEC */
+	ip6_output(m, NULL, NULL, 0, NULL, NULL);
+	icmp6_ifstat_inc(ifp, ifs6_out_msg);
+	icmp6_ifstat_inc(ifp, ifs6_out_redirect);
 	icmp6stat.icp6s_outhist[ND_REDIRECT]++;
 
 	return;

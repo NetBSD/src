@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.14 2001/10/16 06:24:45 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.15 2001/10/18 09:09:26 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -383,7 +383,6 @@ mld6_sendpkt(in6m, type, dst)
 	struct ip6_moptions im6o;
 	struct in6_ifaddr *ia;
 	struct ifnet *ifp = in6m->in6m_ifp;
-	struct ifnet *outif = NULL;
 
 	/*
 	 * At first, find a link local address on the outgoing interface
@@ -453,19 +452,17 @@ mld6_sendpkt(in6m, type, dst)
 	/* increment output statictics */
 	icmp6stat.icp6s_outhist[type]++;
 
-	ip6_output(mh, &ip6_opts, NULL, 0, &im6o, &outif);
-	if (outif) {
-		icmp6_ifstat_inc(outif, ifs6_out_msg);
-		switch(type) {
-		 case MLD6_LISTENER_QUERY:
-			 icmp6_ifstat_inc(outif, ifs6_out_mldquery);
-			 break;
-		 case MLD6_LISTENER_REPORT:
-			 icmp6_ifstat_inc(outif, ifs6_out_mldreport);
-			 break;
-		 case MLD6_LISTENER_DONE:
-			 icmp6_ifstat_inc(outif, ifs6_out_mlddone);
-			 break;
-		}
+	ip6_output(mh, &ip6_opts, NULL, 0, &im6o, NULL);
+	icmp6_ifstat_inc(ifp, ifs6_out_msg);
+	switch(type) {
+	case MLD6_LISTENER_QUERY:
+		icmp6_ifstat_inc(ifp, ifs6_out_mldquery);
+		break;
+	case MLD6_LISTENER_REPORT:
+		icmp6_ifstat_inc(ifp, ifs6_out_mldreport);
+		break;
+	case MLD6_LISTENER_DONE:
+		icmp6_ifstat_inc(ifp, ifs6_out_mlddone);
+		break;
 	}
 }
