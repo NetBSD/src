@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.48 2003/10/23 17:14:54 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.49 2003/10/24 04:06:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.48 2003/10/23 17:14:54 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.49 2003/10/24 04:06:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,18 +576,19 @@ auich_reset_codec(void *v)
 
 	for (i = 500000; i >= 0; i--) {
 		status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
-		if (status & ICH_PCR)
+		if (status & (ICH_PCR | ICH_SCR | ICH_S2CR))
 			break;
 		DELAY(1);
 	}
 	if (i <= 0) {
-		printf("%s: auich_reset_codec: time out for the primary codec\n", 
-		       sc->sc_dev.dv_xname);
+		printf("%s: auich_reset_codec: time out\n", sc->sc_dev.dv_xname);
+		/* XXX: should not attach the audio device */
+	} else {
 		if (status & ICH_SCR)
-			printf("%s: auich_reset_codec: The 2nd codec is ready.\n",
+			printf("%s: The 2nd codec is ready.\n",
 			       sc->sc_dev.dv_xname);
 		if (status & ICH_S2CR)
-			printf("%s: auich_reset_codec: The 3rd codec is ready.\n",
+			printf("%s: The 3rd codec is ready.\n",
 			       sc->sc_dev.dv_xname);
 	}
 }
