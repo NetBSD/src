@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.16 2002/03/14 22:26:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2002/04/10 15:34:59 lukem Exp $
 
-.include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	4480k
@@ -11,7 +11,7 @@ WARNS=		1
 
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
-MTREECONF=	${DISTRIBDIR}/common/mtree.common #${.CURDIR}/mtree.conf
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	minimal
 IMAGEDEPENDS=	${CRUNCHBIN} \
