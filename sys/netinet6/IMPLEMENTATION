@@ -1,4 +1,4 @@
-$NetBSD: IMPLEMENTATION,v 1.9 2000/02/26 08:49:49 itojun Exp $
+$NetBSD: IMPLEMENTATION,v 1.10 2000/02/28 13:48:51 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -92,8 +92,7 @@ RFC2732: Format for Literal IPv6 Addresses in URL's
     * The spec is implemented in programs that handle URLs
       (like freebsd ftpio(3) and fetch(1), or netbsd ftp(1))
 draft-ietf-ipngwg-router-renum-08: Router renumbering for IPv6
-draft-ietf-ipngwg-icmp-namelookups-02: IPv6 Name Lookups Through ICMP
-draft-ietf-ipngwg-icmp-name-lookups-03: IPv6 Name Lookups Through ICMP
+draft-ietf-ipngwg-icmp-name-lookups-05: IPv6 Name Lookups Through ICMP
 draft-ietf-pim-ipv6-01.txt: PIM for IPv6
     * pim6dd implements dense mode.  pim6sd implements sparse mode.
 draft-ietf-dhc-dhcpv6-14.txt: DHCPv6
