@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.46 1999/01/23 06:13:30 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.47 1999/02/27 06:39:36 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,8 +52,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.46 1999/01/23 06:13:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.47 1999/02/27 06:39:36 scottr Exp $");
 
+#include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
 #include "opt_uvm.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 1999/01/31 18:12:14 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 1999/02/27 06:39:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
+#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_compat_hpux.h"

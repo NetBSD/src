@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.275 1999/02/19 16:31:08 tron Exp $
+#	$NetBSD: files,v 1.276 1999/02/27 06:39:34 scottr Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -98,6 +98,10 @@ defopt	QUOTA
 defopt	opt_ffs.h	FFS_EI LIFFS
 
 # Not entirely MI, but present on multiple arch's
+# buffer cache size options
+defopt	opt_bufcache.h	BUFCACHE BUFPAGES
+
+# PC-style MBR handling
 defopt	opt_mbr.h	COMPAT_386BSD_MBRPART BIOS_VERBOSE
 
 # debugging options
