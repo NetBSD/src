@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.4 2004/04/22 00:17:12 itojun Exp $ */
+/*	$NetBSD: if_dge.c,v 1.5 2004/05/10 02:36:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.4 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.5 2004/05/10 02:36:56 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -389,10 +389,10 @@ do {									\
 	__n = (n);							\
 									\
 	/* If it will wrap around, sync to the end of the ring. */	\
-	if ((__x + __n) > DGE_NTXDESC) {					\
+	if ((__x + __n) > DGE_NTXDESC) {				\
 		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
 		    DGE_CDTXOFF(__x), sizeof(struct dge_tdes) *		\
-		    (DGE_NTXDESC - __x), (ops));				\
+		    (DGE_NTXDESC - __x), (ops));			\
 		__n -= (DGE_NTXDESC - __x);				\
 		__x = 0;						\
 	}								\
@@ -450,10 +450,10 @@ do {									\
 	 */								\
 	__m->m_data = __m->m_ext.ext_buf + (sc)->sc_align_tweak;	\
 									\
-	__rxd->dr_baddrl =					\
+	__rxd->dr_baddrl =						\
 	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr +		\
 		(sc)->sc_align_tweak);					\
-	__rxd->dr_baddrh = 0;					\
+	__rxd->dr_baddrh = 0;						\
 	__rxd->dr_len = 0;						\
 	__rxd->dr_cksum = 0;						\
 	__rxd->dr_status = 0;						\
@@ -2432,4 +2432,3 @@ dge_xgmii_mediachange(struct ifnet *ifp)
 {
 	return 0;
 }
-
