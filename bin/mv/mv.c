@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.10 1997/01/09 16:44:06 tls Exp $	*/
+/*	$NetBSD: mv.c,v 1.11 1997/07/20 19:07:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: mv.c,v 1.10 1997/01/09 16:44:06 tls Exp $";
+__RCSID("$NetBSD: mv.c,v 1.11 1997/07/20 19:07:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ int	copy __P((char *, char *));
 int	do_move __P((char *, char *));
 int	fastcopy __P((char *, char *, struct stat *));
 void	usage __P((void));
+int	main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -248,7 +249,7 @@ fastcopy(from, to, sbp)
 		return (1);
 	}
 	if (!blen && !(bp = malloc(blen = sbp->st_blksize))) {
-		warn(NULL);
+		warn("%s", "");
 		return (1);
 	}
 	while ((nread = read(from_fd, bp, blen)) > 0)
