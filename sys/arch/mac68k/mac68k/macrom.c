@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.35 1997/05/12 07:29:31 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.36 1997/07/10 18:00:40 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -48,13 +48,14 @@
 #include "opt_mrg_adb.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#include <sys/systm.h>
 
+#include <vm/vm.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
-#include <vm/lock.h>
 #include <vm/pmap.h>
 
 #include <machine/cpu.h>
