@@ -1,0 +1,35 @@
+# $NetBSD: ISDN,v 1.1 2001/01/21 22:23:07 is Exp $
+
+# install kernel with ISDN
+
+include "arch/amiga/conf/GENERIC"
+
+# BSC ISDN Master/ITH ISDN Master II/VMC ISDN Blaster at Z-bus:
+
+aster* at zbus?
+isic* at aster? port ?
+
+# ISDN user land devices, drivers and pseudo-devices.
+# All these are needed, but you may adjust the count of the
+# pseudo-devices.
+
+pseudo-device   "i4b"
+
+# userland driver to do ISDN tracing
+pseudo-device   "i4btrc"        2
+
+# userland driver to control the whole thing
+pseudo-device   "i4bctl"
+
+# userland driver for access to raw B channel
+pseudo-device   "i4brbch"       4
+
+# userland driver for telephony
+pseudo-device   "i4btel"        2
+
+# network driver for IP over raw HDLC ISDN
+options IPR_VJ                  # compile support for VJ compression
+pseudo-device   "i4bipr"        2
+
+# synchronous PPP over ISDN
+pseudo-device   i4bisppp        2
