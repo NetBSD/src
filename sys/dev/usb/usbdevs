@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.134 2000/12/08 08:13:34 itojun Exp $
+$NetBSD: usbdevs,v 1.135 2000/12/13 02:47:26 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -597,7 +597,8 @@ product MCT HUB0100		0x0100	Hub
 product MCT USB232		0x0210	USB-232 Interface
 
 /* Melco, Inc products */
-product MELCO LUATX		0x0001	LU-ATX Ethernet
+product MELCO LUATX1		0x0001	LUA-TX Ethernet
+product MELCO LUATX5		0x0005	LUA-TX Ethernet
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
