@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.31 2003/08/07 10:04:14 agc Exp $	*/
+/*	$NetBSD: optr.c,v 1.32 2004/03/15 01:06:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.31 2003/08/07 10:04:14 agc Exp $");
+__RCSID("$NetBSD: optr.c,v 1.32 2004/03/15 01:06:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,9 @@ query(char *question)
 	 * for operator input.
 	 */
 	if (tstart_writing != 0)
-	    tstart_writing += (when_answered - firstprompt);
+		tstart_writing += (when_answered - firstprompt);
+	if (tstart_volume != 0)
+		tstart_volume += (when_answered - firstprompt);
 	return(back);
 }
 

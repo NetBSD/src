@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.42 2004/02/18 10:45:21 hannken Exp $	*/
+/*	$NetBSD: tape.c,v 1.43 2004/03/15 01:06:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.42 2004/02/18 10:45:21 hannken Exp $");
+__RCSID("$NetBSD: tape.c,v 1.43 2004/03/15 01:06:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,6 @@ struct slave *slp;
 
 char	(*nextblock)[TP_BSIZE];
 
-static time_t tstart_volume;	/* time of volume start */
 static int64_t tapea_volume;	/* value of spcl.c_tapea at volume start */
 
 int master;		/* pid of master, for sending error signals */
