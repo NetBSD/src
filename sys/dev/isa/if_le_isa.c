@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.11 1997/06/06 23:43:52 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.12 1997/09/10 03:05:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -191,6 +191,7 @@ depca_isa_probe(lesc, ia)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	bus_space_handle_t memh;
+	u_int8_t csr;
 #if 0
 	u_int32_t sum, rom_sum;
 	u_int8_t x;
@@ -204,9 +205,19 @@ depca_isa_probe(lesc, ia)
 	if (ia->ia_maddr == MADDRUNK || ia->ia_msize == -1)
 		goto bad;
 
+	switch (ia->ia_msize) {
+	case 65536:
+		csr = DEPCA_CSR_SHE;
+		break;
+	case 32768:
+		csr = DEPCA_CSR_SHE | DEPCA_CSR_LOW32K;
+		break;
+	default:
+		goto bad;
+	}
+
 	/* Map card RAM. */
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize,
-	    0, &memh))
+	if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
 		goto bad;
 
 	/* Just needed to check mapability; don't need it anymore. */
@@ -286,12 +297,12 @@ found:
 	}
 #endif
 
-	bus_space_write_1(iot, ioh, DEPCA_CSR, DEPCA_CSR_NORMAL);
-
 	/*
 	 * XXX INDIRECT BROKENNESS!
 	 * XXX Should always unmap, and re-map in if_le_isa_attach().
 	 */
+
+	bus_space_write_1(iot, ioh, DEPCA_CSR, DEPCA_CSR_DUM | csr);
 
 	ia->ia_iosize = 16;
 	ia->ia_drq = DRQUNK;
