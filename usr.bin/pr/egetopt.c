@@ -1,4 +1,4 @@
-/*	$NetBSD: egetopt.c,v 1.2 1997/01/09 15:01:33 tls Exp $	*/
+/*	$NetBSD: egetopt.c,v 1.3 1997/10/19 12:41:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -37,9 +37,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/* from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$NetBSD: egetopt.c,v 1.2 1997/01/09 15:01:33 tls Exp $";
+#if 0
+from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: egetopt.c,v 1.3 1997/10/19 12:41:58 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <ctype.h>
@@ -76,9 +80,9 @@ egetopt(nargc, nargv, ostr)
 	const char *ostr;
 {
 	static char *place = EMSG;	/* option letter processing */
-	register char *oli;		/* option letter list index */
+	char *oli;			/* option letter list index */
 	static int delim;		/* which option delimeter */
-	register char *p;
+	char *p;
 	static char savec = '\0';
 
 	if (savec != '\0') {
@@ -93,7 +97,7 @@ egetopt(nargc, nargv, ostr)
 		if ((eoptind >= nargc) ||
 		    ((*(place = nargv[eoptind]) != '-') && (*place != '+'))) {
 			place = EMSG;
-			return (EOF);
+			return (-1);
 		}
 
 		delim = (int)*place;
@@ -103,7 +107,7 @@ egetopt(nargc, nargv, ostr)
 			 */
 			++eoptind;
 			place = EMSG;
-			return (EOF);
+			return (-1);
 		}
 	}
 
@@ -114,10 +118,10 @@ egetopt(nargc, nargv, ostr)
 	    !(oli = strchr(ostr, eoptopt))) {
 		/*
 		 * if the user didn't specify '-' as an option,
-		 * assume it means EOF when by itself.
+		 * assume it means -1 when by itself.
 		 */
 		if ((eoptopt == (int)'-') && !*place)
-			return (EOF);
+			return (-1);
 		if (strchr(ostr, '#') && (isdigit(eoptopt) ||
 		    (((eoptopt == (int)'-') || (eoptopt == (int)'+')) &&
 		      isdigit(*place)))) {
