@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.3 2001/03/31 11:37:52 aymeric Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.4 2001/04/30 21:34:12 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -512,15 +512,6 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 	case E_EOF:
 		F_SET(sp, SC_EXIT_FORCE);
 		return (1);
-	case E_INTERRUPT:
-		/*
-		 * !!!
-		 * Historically, <interrupt> exited the user from text input
-		 * mode or cancelled a colon command, and returned to command
-		 * mode.  It also beeped the terminal, but that seems a bit
-		 * excessive.
-		 */
-		goto k_escape;
 	case E_REPAINT:
 		if (vs_repaint(sp, &ev))
 			return (1);
@@ -528,10 +519,26 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 	case E_WRESIZE:
 		/* <resize> interrupts the input mode. */
 		v_emsg(sp, NULL, VIM_WRESIZE);
-		goto k_escape;
+	/* FALLTHROUGH */
 	default:
-		v_event_err(sp, evp);
-		goto k_escape;
+		if (evp->e_event != E_INTERRUPT && evp->e_event != E_WRESIZE)
+			v_event_err(sp, evp);
+		/*
+		 * !!!
+		 * Historically, <interrupt> exited the user from text input
+		 * mode or cancelled a colon command, and returned to command
+		 * mode.  It also beeped the terminal, but that seems a bit
+		 * excessive.
+		 */
+		/*
+		 * Morph into escape key, this is consistent with what other
+		 * vi's do. -aymeric
+		 */
+		evp->e_event = E_CHARACTER;
+		evp->e_c = 033;
+		evp->e_flags = 0;
+		evp->e_value = K_ESCAPE;
+		break;
 	}
 
 	/*
