@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.25 1994/05/04 01:39:05 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.26 1994/05/07 00:39:58 cgd Exp $
  */
 
 /*
@@ -69,9 +69,10 @@ int mmapdebug = 0;
 static boolean_t vm_map_is_allocated
 		    __P((vm_map_t, vm_offset_t, vm_offset_t, boolean_t));
 
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 /* ARGSUSED */
 int
-getpagesize(p, uap, retval)
+ogetpagesize(p, uap, retval)
 	struct proc *p;
 	void *uap;
 	int *retval;
@@ -80,6 +81,7 @@ getpagesize(p, uap, retval)
 	*retval = NBPG * CLSIZE;
 	return (0);
 }
+#endif
 
 struct sbrk_args {
 	int	incr;
@@ -506,6 +508,36 @@ mincore(p, uap, retval)
 	return (EOPNOTSUPP);
 }
 
+struct mlock_args {
+	caddr_t	addr;
+	size_t	len;
+};
+int
+mlock(p, uap, retval)
+	struct proc *p;
+	struct mlock_args *uap;
+	int *retval;
+{
+
+	/* Not yet implemented */
+	return (EOPNOTSUPP);
+}
+
+struct munlock_args {
+	caddr_t	addr;
+	size_t	len;
+};
+int
+munlock(p, uap, retval)
+	struct proc *p;
+	struct munlock_args *uap;
+	int *retval;
+{
+
+	/* Not yet implemented */
+	return (EOPNOTSUPP);
+}
+
 /*
  * Internal version of mmap.
  * Currently used by mmap, exec, and sys5 shared memory.
@@ -782,7 +814,7 @@ out:
 /*
  * Internal bastardized version of MACHs vm_region system call.
  * Given address and size it returns map attributes as well
- * as the (locked) object mapped at that location. 
+ * as the (locked) object mapped at that location.
  */
 int
 vm_region(map, addr, size, prot, max_prot, inheritance, shared, object, objoff)
