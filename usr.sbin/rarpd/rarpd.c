@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.21 1997/10/18 11:18:39 lukem Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.22 1997/11/24 18:43:16 is Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.21 1997/10/18 11:18:39 lukem Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.22 1997/11/24 18:43:16 is Exp $");
 #endif
 
 
@@ -102,7 +102,13 @@ int	rarp_open __P((char *));
 void	rarp_process __P((struct if_info *, u_char *));
 void	rarp_reply __P((struct if_info *, struct ether_header *, u_long));
 void	rarperr __P((int, const char *,...));
-void	update_arptab __P((u_char *, u_long));
+
+#if defined(__NetBSD__)
+#include "mkarp.h"
+#else
+void  update_arptab __P((u_char *, u_long));
+#endif
+
 void	usage __P((void));
 
 static int	bpf_open __P((void));
@@ -708,6 +714,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
  * host (i.e. the guy running rarpd), won't try to ARP for the hardware
  * address of the guy being booted (he cannot answer the ARP).
  */
+#ifndef __NetBSD__
 void
 update_arptab(ep, ipaddr)
 	u_char *ep;
@@ -735,6 +742,8 @@ update_arptab(ep, ipaddr)
 	(void) close(s);
 #endif
 }
+#endif
+
 /*
  * Build a reverse ARP packet and sent it out on the interface.
  * 'ep' points to a valid ARPOP_REVREQUEST.  The ARPOP_REVREPLY is built
@@ -784,7 +793,7 @@ rarp_reply(ii, ep, ipaddr)
 	int     len;
 
 #ifdef __NetBSD__
-	update_arptab(ar_sha(ap), ipaddr);
+	(void)mkarp(ar_sha(ap), ipaddr);
 #else
 	update_arptab((u_char *) & ap->arp_sha, ipaddr);
 #endif
