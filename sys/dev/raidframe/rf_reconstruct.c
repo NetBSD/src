@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.8 1999/08/14 03:10:04 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.9 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -86,8 +86,10 @@
 #define DDprintf7(s,a,b,c,d,e,f,g) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),NULL)
 #define DDprintf8(s,a,b,c,d,e,f,g,h) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),(void *)((unsigned long)h))
 
+#if 0
 static RF_Thread_t recon_thr_handle;
 static int recon_thread_initialized = 0;
+#endif
 
 static RF_FreeList_t *rf_recond_freelist;
 #define RF_MAX_FREE_RECOND  4
@@ -218,10 +220,12 @@ rf_ConfigureReconstruction(listp)
 		rf_ShutdownReconstruction(NULL);
 		return (rc);
 	}
+#if 0
 	if (!recon_thread_initialized) {
-		RF_CREATE_THREAD(recon_thr_handle, rf_ReconKernelThread, NULL);
+		RF_CREATE_THREAD(recon_thr_handle, rf_ReconKernelThread, NULL, "raid_recon");
 		recon_thread_initialized = 1;
 	}
+#endif
 	return (0);
 }
 
