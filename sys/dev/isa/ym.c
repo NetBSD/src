@@ -1,4 +1,4 @@
-/* $NetBSD: ym.c,v 1.5 1998/08/25 22:34:31 pk Exp $ */
+/* $NetBSD: ym.c,v 1.6 1998/10/11 17:02:36 augustss Exp $ */
 
 
 /*
@@ -114,7 +114,7 @@ ym_attach(sc)
 					         IPL_AUDIO, ad1848_isa_intr,
 					         &sc->sc_ad1848);
 
-	ad1848_attach(ac);
+	ad1848_isa_attach(&sc->sc_ad1848);
 	printf("\n");
 	ac->parent = sc;
 
