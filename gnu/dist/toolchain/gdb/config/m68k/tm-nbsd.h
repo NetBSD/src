@@ -21,9 +21,6 @@
 #ifndef TM_NBSD_H
 #define TM_NBSD_H
 
-#include <sys/param.h>
-#include <machine/vmparam.h>
-
 /* Define BPT_VECTOR if it is different than the default.
    This is the vector number used by traps to indicate a breakpoint. */
 
