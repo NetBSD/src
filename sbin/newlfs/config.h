@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)config.h	8.2 (Berkeley) 4/22/94
+ *	from: @(#)config.h	8.2 (Berkeley) 4/22/94
+ *	$Id: config.h,v 1.1 1994/06/08 19:31:17 mycroft Exp $
  */
 
 /*

@@ -1,5 +1,5 @@
 .\" Copyright (c) 1986, 1993
-.\"  The Regents of the University of California.  All rights reserved.
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)0.t	8.1 (Berkeley) 6/8/93
+.\"	from: @(#)0.t	8.1 (Berkeley) 6/8/93
+.\"	$Id: 0.t,v 1.1 1994/06/08 19:00:49 mycroft Exp $
 .\"
 .if n .ND
 .TL
