@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.2 2002/07/10 19:09:35 drochner Exp $ */
+/* $NetBSD: kvm86.c,v 1.3 2002/07/14 14:39:45 drochner Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.2 2002/07/10 19:09:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.3 2002/07/14 14:39:45 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,6 +247,7 @@ kvm86_bioscall(intno, tf)
 #ifdef KVM86_IOPL3
 	tf->tf_eflags |= PSL_IOPL;
 #endif
+	tf->tf_ds = tf->tf_es = tf->tf_fs = tf->tf_gs = 0;
 
 	kvm86_prepare(bioscallvmd); /* XXX */
 	return (kvm86_call(tf));
@@ -267,7 +268,7 @@ kvm86_bioscall_simple(intno, r)
 	tf.tf_edx = r->EDX;
 	tf.tf_esi = r->ESI;
 	tf.tf_edi = r->EDI;
-	tf.tf_es = r->ES;
+	tf.tf_vm86_es = r->ES;
 
 	res = kvm86_bioscall(intno, &tf);
 
@@ -277,7 +278,7 @@ kvm86_bioscall_simple(intno, r)
 	r->EDX = tf.tf_edx;
 	r->ESI = tf.tf_esi;
 	r->EDI = tf.tf_edi;
-	r->ES = tf.tf_es;
+	r->ES = tf.tf_vm86_es;
 	r->EFLAGS = tf.tf_eflags;
 
 	return (res);

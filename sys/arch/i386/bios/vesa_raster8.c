@@ -1,4 +1,4 @@
-/* $NetBSD: vesa_raster8.c,v 1.1 2002/07/10 19:15:42 drochner Exp $ */
+/* $NetBSD: vesa_raster8.c,v 1.2 2002/07/14 14:39:44 drochner Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ vesaraster8_attach(parent, dev, aux)
 	memset(&tf, 0, sizeof(struct trapframe));
 	tf.tf_eax = 0x4f01; /* function code */
 	tf.tf_ecx = sc->sc_mode;
-	tf.tf_es = 0;
+	tf.tf_vm86_es = 0;
 	tf.tf_edi = 0x2000; /* buf ptr */
 
 	res = kvm86_bioscall(0x10, &tf);
@@ -131,7 +131,7 @@ vb8test(sc)
 	tf.tf_eax = 0x4f04; /* function code */
 	tf.tf_edx = 0x0001; /* save */
 	tf.tf_ecx = 0x000f; /* all (but framebuffer) */
-	tf.tf_es = 0;
+	tf.tf_vm86_es = 0;
 	tf.tf_ebx = 0x3000; /* buffer */
 
 	res = kvm86_bioscall(0x10, &tf);
@@ -168,7 +168,7 @@ back:
 	tf.tf_eax = 0x4f04; /* function code */
 	tf.tf_edx = 0x0002; /* restore */
 	tf.tf_ecx = 0x000f;
-	tf.tf_es = 0;
+	tf.tf_vm86_es = 0;
 	tf.tf_ebx = 0x3000; /* buffer */
 
 	res = kvm86_bioscall(0x10, &tf);
