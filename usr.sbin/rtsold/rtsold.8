@@ -1,5 +1,5 @@
-.\"	$NetBSD: rtsold.8,v 1.12 2000/10/15 12:25:17 bjh21 Exp $
-.\"	$KAME: rtsold.8,v 1.14 2000/08/13 18:06:39 itojun Exp $
+.\"	$NetBSD: rtsold.8,v 1.13 2001/08/22 05:24:37 itojun Exp $
+.\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -37,10 +37,10 @@
 .Nd router solicitation daemon
 .\"
 .Sh SYNOPSIS
-.Nm
+.Nm rtsold
 .Op Fl dDfm1
 .Ar interface ...
-.Nm ""
+.Nm rtsold
 .Op Fl dDfm1
 .Fl a
 .Nm rtsol
@@ -131,7 +131,8 @@ Upon receipt of signal
 will dump the current internal state into
 .Pa /var/run/rtsold.dump .
 .\"
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width indent
 .It Fl a
 Autoprobe outgoing interface.
