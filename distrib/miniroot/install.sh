@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.18 1997/11/25 12:29:33 pk Exp $
+#	$NetBSD: install.sh,v 1.19 1999/02/07 19:39:07 is Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -138,7 +138,7 @@ echo	"${ROOTDISK}a	/" > ${FILESYSTEMS}
 resp="X"	# force at least one iteration
 while [ "X$resp" != X"done" ]; do
 	echo	""
-	echo -n	"Device name? [done] "
+	echo -n	"Device name? [RETURN if you already entered all devices] "
 	getresp "done"
 	case "$resp" in
 	done)
