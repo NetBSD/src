@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 1998/09/07 08:11:20 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 1998/09/07 08:15:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,7 +49,6 @@ char   *getline __P((char *, int, FILE *));
 void	logwtmp __P((const char *, const char *, const char *));
 void	lreply __P((int, const char *, ...));
 void	makedir __P((char *));
-void	nack __P((char *));
 void	parse_conf __P((char *));
 void	pass __P((char *));
 void	passive __P((void));
