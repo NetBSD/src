@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxreg.h,v 1.7 2003/11/01 22:41:42 tsutsui Exp $ */
+/*	$NetBSD: mk48txxreg.h,v 1.8 2004/12/30 12:36:29 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,11 +54,16 @@
 
 /*
  * The first bank of eight registers at offset (nvramsz - 16) is
- * available only on recenter (which??) MK48Txx models.
+ * available only on more recent (which??) MK48Txx models.
  */
-#define MK48TXX_X0	0	/* find out later */
-				/* ... */
-#define MK48TXX_X7	7	/* find out later */
+#define MK48TXX_IFLAGS	0	/* flags */
+/*			1	   unused on MK48T59 */
+#define MK48TXX_IASEC	2	/* alarm seconds (0..59; BCD) */
+#define MK48TXX_IAMIN	3	/* alarm minutes (0..59; BCD) */
+#define MK48TXX_IAHOUR	4	/* alarm hour (0..23; BCD) */
+#define MK48TXX_IADAY	5	/* alarm day (1..31; BCD) */
+#define MK48TXX_IINTR	6	/* interrupts */
+#define MK48TXX_IWDOG	7	/* watchdog */
 #define MK48TXX_ICSR	8	/* control register */
 #define MK48TXX_ISEC	9	/* seconds (0..59; BCD) */
 #define MK48TXX_IMIN	10	/* minutes (0..59; BCD) */
@@ -68,9 +73,37 @@
 #define MK48TXX_IMON	14	/* month (1..12; BCD) */
 #define MK48TXX_IYEAR	15	/* year (0..99; BCD) */
 
+/* Bits in the flags register */
+#define MK48TXX_FLAGS_WDF	0x80	/* watchdog flag */
+#define MK48TXX_FLAGS_ALARM	0x40	/* alarm flag */
+#define MK48TXX_FLAGS_BATTLOW	0x10	/* battery low */
+
+/* Bits in the interrupt register */
+#define MK48TXX_INTR_AFE	0x80	/* alarm flag enable */
+#define MK48TXX_INTR_ABE	0x20	/* alarm in battery backup enable */
+
+/* Bits in the watchdog register */
+#define MK48TXX_WDOG_WDS	0x80	/* watchdog steering */
+#define MK48TXX_WDOG_BMB_MASK	0x7c	/* watchdog multiplier bits */
+#define MK48TXX_WDOG_BMB_SHIFT	2
+#define MK48TXX_WDOG_RES_MASK	0x03	/* watchdog resolution bits */
+#define MK48TXX_WDOG_RES_1_16S	0x00	/*   1/16 seconds */
+#define MK48TXX_WDOG_RES_1_4S	0x01	/*   1/4 seconds */
+#define MK48TXX_WDOG_RES_1S	0x02	/*   1 second */
+#define MK48TXX_WDOG_RES_4S	0x03	/*   4 seconds */
+
 /* Bits in the control register */
 #define MK48TXX_CSR_WRITE	0x80	/* want to write */
 #define MK48TXX_CSR_READ	0x40	/* want to read (freeze clock) */
+
+/* Bit in the weekday register */
+#define MK48TXX_WDAY_FT		0x40	/* freq test: toggle sec[0] at 512Hz */
+					/* next two are on MK48T59 only */
+#define MK48TXX_WDAY_CEB	0x20	/* century enable */
+#define MK48TXX_WDAY_CB		0x10	/* century bit */
+
+/* Bit in the seconds register */
+#define MK48TXX_SEC_STOP	0x80	/* stop the oscillator */
 
 #define MK48T02_CLKSZ		2048
 #define MK48T02_CLKOFF		0x7f0
