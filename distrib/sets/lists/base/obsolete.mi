@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.76 2003/10/02 14:46:51 kleink Exp $
+# $NetBSD: obsolete.mi,v 1.77 2003/12/05 11:04:58 drochner Exp $
 ./bin/rcorder
 ./dev/i4b
 ./dev/i4bctl
@@ -99,6 +99,7 @@
 ./usr/sbin/nslookup
 ./usr/sbin/nsquery
 ./usr/sbin/nstest
+./usr/sbin/ntptimeset
 ./usr/sbin/pim6dd
 ./usr/sbin/pim6sd
 ./usr/sbin/pim6stat
