@@ -5,7 +5,7 @@
 #	written by Yasha (ITOH Yasufumi)
 #	public domain
 #
-#	$NetBSD: makedoscalls.awk,v 1.2 1999/11/11 08:14:43 itohy Exp $
+#	$NetBSD: makedoscalls.awk,v 1.3 2000/06/19 03:43:12 itohy Exp $
 
 BEGIN {
 	errno_nomem = 8		# errno for "Cannot allocate memory"
@@ -228,6 +228,7 @@ $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 	}
 
 	if (svreg)	print "\tmoveml\t%sp@+,%d2-%d7/%a2-%a6"
+	if (ptrval)	print "#ifdef __SVR4_ABI__\n\tmoveal\t%d0,%a0\n#endif"
 	if (opt_e) {
 		if (e_strict) {
 			print "\tcmpil\t#0xffffff00,%d0"
@@ -256,9 +257,6 @@ $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 	}
 	if (super)
 		print "\tjmp\t%a1@"
-	else {
-		if (ptrval)
-			print "#ifdef __SVR4_ABI__\n\tmoveal\t%d0,%a0\n#endif"
+	else
 		print "\trts"
-	}
 }
