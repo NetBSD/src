@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_window.3,v 1.6 2003/03/17 08:39:54 wiz Exp $
+.\"	$NetBSD: curses_window.3,v 1.7 2003/04/08 05:53:49 jdc Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd December 4, 2002
+.Dd April 7, 2003
 .Dt CURSES_WINDOW 3
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nm dupwin ,
 .Nm delwin ,
 .Nm derwin ,
+.Nm mvwin ,
 .Nm mvderwin ,
 .Nm newwin ,
 .Nm overlay ,
@@ -68,6 +69,8 @@
 .Fn derwin "WINDOW *win" "int lines" "int cols" "int y" "int x"
 .Ft int
 .Fn delwin "WINDOW *win"
+.Ft int
+.Fn mvwin "WINDOW *win" "int y" "int x"
 .Ft int
 .Fn mvderwin "WINDOW *win" "int y" "int x"
 .Ft WINDOW *
@@ -141,6 +144,16 @@ A window may deleted and all resources freed by calling the
 function with the pointer to the window to be deleted in
 .Fa win .
 .Pp
+A window can be moved to a new position by calling the
+.Fn mvwin
+function.  The
+.Fa y
+and
+.Fa x
+positions are the new origin of the window on the screen.
+If the new position would cause the any part of the window to lie outside
+the screen, it is an error and the window is not moved.
+.Pp
 A subwindow can be moved relative to the parent window by calling the
 .Fn mvderwin
 function, the
@@ -151,6 +164,8 @@ positions are relative to the origin of the parent window.
 If the given window in
 .Fa win
 is not a subwindow then an error will be returned.
+If the new position would cause the any part of the window to lie outside
+the parent window, it is an error and the window is not moved.
 .Pp
 The
 .Fn newwin
