@@ -1,11 +1,16 @@
-# $NetBSD: GENERIC,v 1.47 1998/01/22 23:00:25 gwr Exp $
+# $NetBSD: GENERIC,v 1.47.2.1 1998/01/27 19:14:00 gwr Exp $
 
-# GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
+# GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3"
 
-# Machines to be supported by this kernel
+# Machines to be supported by this kernel.  Note:
+# The SUN3 and SUN3X options are mutually exclusive!
+# (Your kernel will only run on one or the other.)
+makeoptions	MACHTYPE=sun3
+options 	_SUN3_
+
 options 	FPU_EMULATE
 options 	HAVECACHE		# Sun3/260 VAC
 
@@ -75,6 +80,22 @@ options 	NFS_BOOT_RWSIZE=1024
 
 config		netbsd root on ? type ?
 
+# On-board I/O space (required)
+include "arch/sun3/conf/obio.sun3"
+
+# On-board memory (optional)
+# See frame-buffers
+obmem0 at mainbus?
+
+# VME bus support (optional)
+# One unit for each address space
+vme0 at mainbus? # A16/D16
+vme1 at mainbus? # A16/D32
+vme2 at mainbus? # A24/D16
+vme3 at mainbus? # A24/D32
+vme4 at mainbus? # A32/D16
+vme5 at mainbus? # A32/D32
+
 #
 # Serial ports
 #
@@ -89,11 +110,15 @@ ms0	at zsc0 channel 1	# mouse
 #
 
 # Intel Ethernet (onboard, or VME)
-ie0 at obio0 addr   0x0C0000 level 3
-ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
+ie0 at obio0 addr 0x0C0000 ipl 3
+ie1 at vme2  addr 0xe88000 ipl 3 vect 0x75
 
 # Lance Ethernet (only onboard)
-le0 at obio0 addr   0x120000 level 3
+le0 at obio0 addr 0x120000 ipl 3
+
+# All Sun3 machines with an "le" (3/50, 3/60) should be
+# presumed to have the old, buggy LANCE chip. (Rev. C)
+options 	LANCE_REVC_BUG
 
 #
 # Disk and tape devices
@@ -110,27 +135,26 @@ le0 at obio0 addr   0x120000 level 3
 #
 # For example: "flags 0x1000f" would disable DMA interrupts,
 # and disable disconnect/reselect for targets 0-3
-si0 at obio0 addr   0x140000 level 2
-si0 at vmes0 addr 0xff200000 level 2 vect 0x40
-si1 at vmes0 addr 0xff204000 level 2 vect 0x41
+si0 at obio0 addr 0x140000 ipl 2
+si0 at vme2  addr 0x200000 ipl 2 vect 0x40
+si1 at vme2  addr 0x204000 ipl 2 vect 0x41
 
-# Xylogics 450/451 controllers
-xyc0 at vmes0 addr 0xffffee40 level 2 vect 0x48
-xyc1 at vmes0 addr 0xffffee48 level 2 vect 0x49
+# Xylogics 450/451 controllers (VME A16/D16)
+xyc0 at vme0 addr 0xee40 ipl 2 vect 0x48
+xyc1 at vme0 addr 0xee48 ipl 2 vect 0x49
 xy* at xyc? drive ?
 
-# Xylogics 7053 controllers
-xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
-xdc1 at vmel0 addr 0xffffee90 level 2 vect 0x45
+# Xylogics 7053 controllers (VME A16/D32)
+xdc0 at vme1 addr 0xee80 ipl 2 vect 0x44
+xdc1 at vme1 addr 0xee90 ipl 2 vect 0x45
 xd* at xdc? drive ?
 
 # Xylogics 472 tape controllers?
 
-#
-# Sun3/E stuff
-#
-sebuf0 at vmes0 addr 0xff300000 level 2 vect 0x74
-sebuf1 at vmes0 addr 0xff340000 level 2 vect 0x76
+# Sun3/E SCSI+Ethernet board (VME A24/D16)
+# Note: the board uses vect and vect+1
+sebuf0 at vme2 addr 0x300000 ipl 2 vect 0x74 # and 0x75
+sebuf1 at vme2 addr 0x340000 ipl 2 vect 0x76 # and 0x77
 si* at sebuf?
 ie* at sebuf?
 
@@ -158,11 +182,11 @@ bwtwo0 at obmem0 addr ?
 # 3/60 plug-in color frame buffer overlay plane
 #bwtwo1 at obmem0 addr 0xff400000
 
-# Sun-3 color board, or CG5 8-bit VME frame buffer.
-cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
+# Sun-3 color board, or CG5 8-bit frame buffer (VME A24/D16).
+cgtwo0 at vme2 addr 0x400000 ipl 4 vect 0xA8
 
-# Support for the CG9 24-bit VME frame buffer.
-# cgnine0 at vmel0 addr 0x08000000
+# Support for the CG9 24-bit frame buffer (VME A32/D32).
+# cgnine0 at vme5 addr 0x08000000 ipl 4 vect 0xAA
 
 #
 # SCSI infrastructure
@@ -189,6 +213,6 @@ pseudo-device	tun		2	# network tunneling over tty
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
