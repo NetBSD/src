@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.131 2001/07/04 23:33:18 mbw Exp $
+.\"	$NetBSD: main,v 1.132 2001/07/05 05:03:03 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -135,10 +135,13 @@ CD image,
 .Pa sparc_bootable.iso
 or the floppy disk images,
 .Pa install/floppy/disk1.gz No and Pa install/floppy/disk2 .
-You need either the pair of floppies or the CD to boot your system,
-unless you plan to netboot the installation kernel, which requires
-a local rarp, tftp, bootparams and NFS server and is not covered in
-further detail here.
+You need either the pair of floppies or the CD to boot your system.
+.\}
+.if \n[macppc]:\n[sparc] \{\
+Alternatively, you may netboot the installation kernel, which requires
+several local netboot services.  The details are not covered here, as
+setting up a netboot server is hardly 
+.Dq quick .
 .\}
 .It
 The actual binary distribution is in the

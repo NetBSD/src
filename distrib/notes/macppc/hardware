@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.16 2001/06/30 19:00:39 mbw Exp $
+.\"$NetBSD: hardware,v 1.17 2001/07/05 05:03:02 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -123,6 +123,14 @@ There have been some reports that PowerBook G4 (Titanium) models that have
 BootROM version 4.1.8 do not boot
 .Nx No .
 .Note)
+.(Note
+Some iMac (Bondi Blue) and PowerMacintosh G3 (Blue and
+White) machines have keyboard problems.  There is a workaround for the
+PowerMacintosh described in the NetBSD/macppc FAQ.  There is no known 
+workaround for the iMac machines encountering this problem.
+See
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#usb-keyboard-problems
+.Note)
 .tag)
 .
 .Ss2 Unsupported models
@@ -153,6 +161,11 @@ part of the upgrade)
 Systems released in the second half of 2001 and later (future releases of
 .Nx*M
 will support these systems)
+.It
+Systems released before the second half of 2001, but not listed
+above.  These models might work, but have not been tested as of the
+release of
+.Nx \*V .
 .bullet)
 .
 .Ss2 Supported devices
@@ -334,6 +347,18 @@ Serial ports
 .(bullet -compact
 On-board serial ports (the modem and printer ports)
 .Pq Em ttya No and Em ttyb
+.br
+.Em ttya 
+is the mini-DIN 8 serial port with the
+.Sq Modem
+icon, and 
+.Em ttyb
+is has the
+.Sq Printer
+icon.  Some models with internal modems have the serial port with the
+.Sq Modem
+icon covered over, and the modem is 
+.Em ttya .
 .(Note
 The on-board serial ports can be used for console (38400 bps, 8 bits, no
 parity, 1 stop bit, no handshaking), although many users have
