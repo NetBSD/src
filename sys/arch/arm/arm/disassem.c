@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.8 2001/01/13 16:52:01 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.9 2001/01/18 21:41:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: disassem.c,v 1.8 2001/01/13 16:52:01 bjh21 Exp $");
+__RCSID("$NetBSD: disassem.c,v 1.9 2001/01/18 21:41:09 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>
@@ -71,13 +71,15 @@ __RCSID("$NetBSD: disassem.c,v 1.8 2001/01/13 16:52:01 bjh21 Exp $");
  * n - n register (bits 16-19)
  * s - s register (bits 8-11)
  * o - indirect register rn (bits 16-19) (used by swap)
- * m - m register (bits 0-4)
+ * m - m register (bits 0-3)
  * a - address operand of ldr/str instruction
  * l - register list for ldm/stm instruction
  * f - 1st fp operand (register) (bits 12-14)
  * g - 2nd fp operand (register) (bits 16-18)
  * h - 3rd fp operand (register/immediate) (bits 0-4)
  * b - branch address
+ * t - thumb branch address (bits 24, 0-23)
+ * k - breakpoint comment (bits 0-3, 8-19)
  * X - block transfer type
  * Y - block transfer type (r13 base)
  * c - comment field bits(0-23)
@@ -110,6 +112,7 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fffffff, 0x0ff00000, "imb",	"c" },		/* Before swi */
     { 0x0fffffff, 0x0ff00001, "imbrange",	"c" },	/* Before swi */
     { 0x0f000000, 0x0f000000, "swi",	"c" },
+    { 0xfe000000, 0xfa000000, "blx",	"t" },		/* Before b and bl */
     { 0x0f000000, 0x0a000000, "b",	"b" },
     { 0x0f000000, 0x0b000000, "bl",	"b" },
     { 0x0fe000f0, 0x00000090, "mul",	"Snms" },
@@ -137,6 +140,9 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },	/* Before data processing */
     { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },	/* Before data processing */
     { 0x0ffffff0, 0x012fff10, "bx",	"m" },
+    { 0x0fff0ff0, 0x016f0f10, "clz",	"dm" },
+    { 0x0ffffff0, 0x012fff30, "blx",	"m" },
+    { 0xfff000f0, 0xe1200070, "bkpt",	"k" },
     { 0x0de00000, 0x00000000, "and",	"Sdn2" },
     { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
     { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
@@ -194,10 +200,15 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0ff0ff10, 0x0eb0f110, "cnf",	"PRgh" },
     { 0x0ff0ff10, 0x0ed0f110, "cmfe",	"PRgh" },
     { 0x0ff0ff10, 0x0ef0f110, "cnfe",	"PRgh" },
+    { 0xff100010, 0xfe000010, "mcr2",	"#z" },
     { 0x0f100010, 0x0e000010, "mcr",	"#z" },
+    { 0xff100010, 0xfe100010, "mrc2",	"#z" },
     { 0x0f100010, 0x0e100010, "mrc",	"#z" },
+    { 0xff000010, 0xfe000000, "cdp2",	"#y" },
     { 0x0f000010, 0x0e000000, "cdp",	"#y" },
+    { 0xfe100090, 0xfc100000, "ldc2",	"L#v" },
     { 0x0e100090, 0x0c100000, "ldc",	"L#v" },
+    { 0xfe100090, 0xfc000000, "stc2",	"L#v" },
     { 0x0e100090, 0x0c000000, "stc",	"L#v" },
     { 0x00000000, 0x00000000, NULL,	NULL }
 };
@@ -283,7 +294,11 @@ disasm(const disasm_interface_t *di, vm_offset_t loc, int altfmt)
 		return(loc + INSN_SIZE);
 	}
 
-	di->di_printf("%s%s", i_ptr->name, insn_condition(insn));
+	/* If instruction forces condition code, don't print it. */
+	if ((i_ptr->mask & 0xf0000000) == 0xf0000000)
+		di->di_printf("%s", i_ptr->name);
+	else
+		di->di_printf("%s%s", i_ptr->name, insn_condition(insn));
 
 	f_ptr = i_ptr->format;
 
@@ -363,6 +378,14 @@ disasm(const disasm_interface_t *di, vm_offset_t loc, int altfmt)
 				branch |= 0xfc000000;
 			di->di_printaddr(loc + 8 + branch);
 			break;
+		/* t - blx address */
+		case 't':
+			branch = ((insn << 2) & 0x03ffffff) |
+			    (insn >> 23 & 0x00000002);
+			if (branch & 0x02000000)
+				branch |= 0xfc000000;
+			di->di_printaddr(loc + 8 + branch);
+			break;
 		/* X - block transfer type */
 		case 'X':
 			di->di_printf("%s", insn_blktrans(insn));
@@ -374,6 +397,11 @@ disasm(const disasm_interface_t *di, vm_offset_t loc, int altfmt)
 		/* c - comment field bits(0-23) */
 		case 'c':
 			di->di_printf("0x%08x", (insn & 0x00ffffff));
+			break;
+		/* k - breakpoint comment (bits 0-3, 8-19) */
+		case 'k':
+			di->di_printf("0x%04x",
+			    (insn & 0x000fff00) >> 4 | (insn & 0x0000000f));
 			break;
 		/* p - saved or current status register */
 		case 'p':
