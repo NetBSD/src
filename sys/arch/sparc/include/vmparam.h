@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 1994/11/20 20:53:38 deraadt Exp $ */
+/*	$NetBSD: vmparam.h,v 1.6 1995/07/05 18:04:48 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,3 +137,5 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
+
+#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
