@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.1 1998/08/28 21:33:11 perry Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.2 1998/09/08 14:13:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vasprintf.c,v 1.1 1998/08/28 21:33:11 perry Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.2 1998/09/08 14:13:36 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -54,7 +54,7 @@ vasprintf(str, fmt, ap)
 		errno = ENOMEM;
 		return (-1);
 	}
-	f._bf._size = f._w = 127;		/* Leave room for the NULL */
+	f._bf._size = f._w = 127;		/* Leave room for the NUL */
 	ret = vfprintf(&f, fmt, ap);
 	*f._p = '\0';
 	_base = realloc(f._bf._base, f._bf._size + 1);
