@@ -3,5 +3,5 @@
 
 #include "version.h"
 const char version[] = "5.0-nb1";
-const char host_name[] = "arm-unknown-netbsdelfX";
-const char target_name[] = "arm-unknown-netbsdelfX";
+const char host_name[] = "arm-unknown-netbsdelfY";
+const char target_name[] = "arm-unknown-netbsdelfY";
