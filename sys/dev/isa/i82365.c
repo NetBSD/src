@@ -12,13 +12,11 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 
 #include <dev/ic/i82365reg.h>
+#include <dev/ic/i82365var.h>
 
 #ifdef PCICDEBUG
 int	pcic_debug = 0;
@@ -26,14 +24,6 @@ int	pcic_debug = 0;
 #else
 #define DPRINTF(arg)
 #endif
-
-/* This is sort of arbitrary.  It merely needs to be "enough".
-   It can be overridden in the conf file, anyway. */
-
-#define PCIC_MEM_PAGES	4
-#define PCIC_MEMSIZE	PCIC_MEM_PAGES*PCIC_MEM_PAGESIZE
-
-#define PCIC_NSLOTS	4
 
 #define PCIC_FLAG_SOCKETP	0x0001
 #define PCIC_FLAG_CARDP		0x0002
@@ -44,57 +34,11 @@ int	pcic_debug = 0;
 #define PCIC_VENDOR_CIRRUS_PD6710	3
 #define PCIC_VENDOR_CIRRUS_PD672X	4
 
-struct pcic_handle {
-    struct pcic_softc *sc;
-    int vendor;
-    int sock;
-    int flags;
-    int memalloc;
-    int ioalloc;
-    struct device *pcmcia;
-};
-
-struct pcic_softc {
-    struct device dev;
-
-    isa_chipset_tag_t ic;
-
-    bus_space_tag_t memt;
-    bus_space_tag_t memh;
-    bus_space_tag_t iot;
-    bus_space_tag_t ioh;
-
-    /* this needs to be large enough to hold PCIC_MEM_PAGES bits */
-    int subregionmask;
-
-    /* used by memory window mapping functions */
-    bus_addr_t membase;
-
-    int irq;
-    void *ih;
-
-    struct pcic_handle handle[PCIC_NSLOTS];
-};
-
-#define C0SA PCIC_CHIP0_BASE+PCIC_SOCKETA_INDEX
-#define C0SB PCIC_CHIP0_BASE+PCIC_SOCKETB_INDEX
-#define C1SA PCIC_CHIP1_BASE+PCIC_SOCKETA_INDEX
-#define C1SB PCIC_CHIP1_BASE+PCIC_SOCKETB_INDEX
-
 /* Individual drivers will allocate their own memory and io regions.
    Memory regions must be a multiple of 4k, aligned on a 4k boundary. */
 
 #define PCIC_MEM_ALIGN	PCIC_MEM_PAGESIZE
 
-int pcic_probe __P((struct device *, void *, void *));
-void pcic_attach __P((struct device *, struct device *, void *));
-
-int pcic_ident_ok __P((int));
-int pcic_vendor __P((struct pcic_handle *));
-char *pcic_vendor_to_string __P((int));
-static inline int pcic_read __P((struct pcic_handle *, int));
-static inline void pcic_write __P((struct pcic_handle *, int, int));
-static inline void pcic_wait_ready __P((struct pcic_handle *));
 void pcic_attach_socket __P((struct pcic_handle *));
 void pcic_init_socket __P((struct pcic_handle *));
 
@@ -104,98 +48,14 @@ int pcic_submatch __P((struct device *, void *, void *));
 int pcic_submatch __P((struct device *, struct cfdata *, void *));
 #endif
 int pcic_print __P((void *arg, const char *pnp));
-int pcic_intr __P((void *arg));
 int pcic_intr_socket __P((struct pcic_handle *));
-
-int pcic_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t, 
-			     struct pcmcia_mem_handle *));
-void pcic_chip_mem_free __P((pcmcia_chipset_handle_t,
-			     struct pcmcia_mem_handle *));
-int pcic_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-			   bus_size_t, struct pcmcia_mem_handle *,
-			   bus_addr_t *, int *));
-void pcic_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
-
-int pcic_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
-			    struct pcmcia_io_handle *));
-void pcic_chip_io_free __P((pcmcia_chipset_handle_t,
-			    struct pcmcia_io_handle *));
-int pcic_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
-			  struct pcmcia_io_handle *, int *));
-void pcic_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
-
-void *pcic_chip_intr_establish __P((pcmcia_chipset_handle_t,
-				    struct pcmcia_function *, int,
-				    int (*)(void *), void *));
-void pcic_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
-
-void pcic_chip_socket_enable __P((pcmcia_chipset_handle_t));
-void pcic_chip_socket_disable __P((pcmcia_chipset_handle_t));
 
 void pcic_attach_card(struct pcic_handle *);
 void pcic_detach_card(struct pcic_handle *);
 
-static struct pcmcia_chip_functions pcic_functions = {
-    pcic_chip_mem_alloc,
-    pcic_chip_mem_free,
-    pcic_chip_mem_map,
-    pcic_chip_mem_unmap,
-
-    pcic_chip_io_alloc,
-    pcic_chip_io_free,
-    pcic_chip_io_map,
-    pcic_chip_io_unmap,
-
-    pcic_chip_intr_establish,
-    pcic_chip_intr_disestablish,
-
-    pcic_chip_socket_enable,
-    pcic_chip_socket_disable,
-};
-
 struct cfdriver pcic_cd = {
 	NULL, "pcic", DV_DULL
 };
-
-struct cfattach pcic_ca = {
-	sizeof(struct pcic_softc), pcic_probe, pcic_attach
-};
-
-static inline int
-pcic_read(h, idx)
-     struct pcic_handle *h;
-     int idx;
-{
-    if (idx != -1)
-	bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_INDEX, h->sock+idx);
-    return(bus_space_read_1(h->sc->iot, h->sc->ioh, PCIC_REG_DATA));
-}
-
-static inline void
-pcic_write(h, idx, data)
-     struct pcic_handle *h;
-     int idx;
-     int data;
-{
-    if (idx != -1)
-	bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_INDEX, h->sock+idx);
-    bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_DATA, (data));
-}
-
-static inline void
-pcic_wait_ready(h)
-     struct pcic_handle *h;
-{
-    int i;
-
-    for (i=0; i<10000; i++) {
-	if (pcic_read(h, PCIC_IF_STATUS) & PCIC_IF_STATUS_READY)
-	    return;
-	delay(500);
-    }
-
-    DPRINTF(("pcic_wait_ready ready never happened\n"));
-}
 
 int
 pcic_ident_ok(ident)
@@ -223,8 +83,8 @@ pcic_vendor(h)
 {
     int reg;
 
-    /* I can't claim to understand this; I'm just doing what the
-       linux driver does */
+    /* the chip_id of the cirrus toggles between 11 and 00
+       after a write.  weird. */
 
     pcic_write(h, PCIC_CIRRUS_CHIP_INFO, 0);
     reg = pcic_read(h, -1);
@@ -239,6 +99,8 @@ pcic_vendor(h)
 		return(PCIC_VENDOR_CIRRUS_PD6710);
 	}
     }
+
+    /* XXX how do I identify the GD6729? */
 
     reg = pcic_read(h, PCIC_IDENT);
 
@@ -268,115 +130,11 @@ pcic_vendor_to_string(vendor)
     return("Unknown controller");
 }
 
-int
-pcic_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-    struct isa_attach_args *ia = aux;
-    bus_space_tag_t iot = ia->ia_iot;
-    bus_space_handle_t ioh, memh;
-    int val, found;
-
-    DPRINTF(("pcic_probe %x\n", ia->ia_iobase));
-
-    if (bus_space_map(iot, ia->ia_iobase, PCIC_IOSIZE, 0, &ioh))
-	return (0);
-
-    if (ia->ia_msize == -1)
-	ia->ia_msize = PCIC_MEMSIZE;
-
-    if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
-	return (0);
-
-    found = 0;
-
-    /* this could be done with a loop, but it would violate the
-       abstraction */
-
-    bus_space_write_1(iot, ioh, PCIC_REG_INDEX, C0SA+PCIC_IDENT);
-
-    val = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
-
-    DPRINTF(("c0sa ident = %02x, ", val));
-
-    if (pcic_ident_ok(val))
-	found++;
-
-
-    bus_space_write_1(iot, ioh, PCIC_REG_INDEX, C0SB+PCIC_IDENT);
-
-    val = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
-
-    DPRINTF(("c0sb ident = %02x, ", val));
-
-    if (pcic_ident_ok(val))
-	found++;
-
-
-    bus_space_write_1(iot, ioh, PCIC_REG_INDEX, C1SA+PCIC_IDENT);
-
-    val = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
-
-    DPRINTF(("c1sa ident = %02x, ", val));
-
-    if (pcic_ident_ok(val))
-	found++;
-
-
-    bus_space_write_1(iot, ioh, PCIC_REG_INDEX, C1SB+PCIC_IDENT);
-
-    val = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
-
-    DPRINTF(("c1sb ident = %02x\n", val));
-
-    if (pcic_ident_ok(val))
-	found++;
-
-
-    bus_space_unmap(iot, ioh, PCIC_IOSIZE);
-    bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
-
-    if (!found)
-	return(0);
-
-    ia->ia_iosize = PCIC_IOSIZE;
-
-    return(1);
-}
-
 void
-pcic_attach(parent, self, aux)
-     struct device *parent, *self;
-     void *aux;
+pcic_attach(sc)
+     struct pcic_softc *sc;
 {
-    struct pcic_softc *sc = (void *)self;
-    struct isa_attach_args *ia = aux;
-    isa_chipset_tag_t ic = ia->ia_ic;
-    bus_space_tag_t iot = ia->ia_iot;
-    bus_space_tag_t memt = ia->ia_memt;
-    bus_space_handle_t ioh;
-    bus_space_handle_t memh;
     int vendor, count, i;
-
-    /* Map i/o space. */
-    if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
-	panic("pcic_attach: can't map i/o space");
-
-    /* Map mem space. */
-    if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
-	panic("pcic_attach: can't map i/o space");
-
-    sc->subregionmask = (1<<(ia->ia_msize/PCIC_MEM_PAGESIZE))-1;
-
-    sc->ic = ic;
-
-    sc->iot = iot;
-    sc->ioh = ioh;
-    sc->memt = memt;
-    sc->memh = memh;
-
-    sc->membase = ia->ia_maddr;
 
     /* now check for each controller/socket */
 
@@ -424,20 +182,6 @@ pcic_attach(parent, self, aux)
     if (count == 0)
 	panic("pcic_attach: attach found no sockets");
 
-    /* allocate an irq.  it will be used by both controllers.  I could
-       use two different interrupts, but interrupts are relatively
-       scarce, shareable, and for PCIC controllers, very infrequent. */
-
-    if ((sc->irq = ia->ia_irq) == IRQUNK) {
-	/* XXX CHECK RETURN VALUE */
-	(void) isa_intr_alloc(ic,
-			      PCIC_CSC_INTR_IRQ_VALIDMASK,
-			      IST_EDGE, &sc->irq);
-	printf(": using irq %d", sc->irq);
-    }
-
-    printf("\n");
-
     /* establish the interrupt */
 
     /* XXX block interrupts? */
@@ -446,8 +190,6 @@ pcic_attach(parent, self, aux)
 	pcic_write(&sc->handle[i], PCIC_CSC_INTR, 0);
 	pcic_read(&sc->handle[i], PCIC_CSC);
     }
-
-    sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY, pcic_intr, sc);
 
     if ((sc->handle[0].flags & PCIC_FLAG_SOCKETP) ||
 	(sc->handle[1].flags & PCIC_FLAG_SOCKETP)) {
@@ -469,14 +211,10 @@ pcic_attach(parent, self, aux)
 		   PCIC_GLOBAL_CTL_EXPLICIT_CSC_ACK);
 #endif
 
-	if (sc->handle[0].flags & PCIC_FLAG_SOCKETP) {
+	if (sc->handle[0].flags & PCIC_FLAG_SOCKETP)
 	    sc->handle[0].vendor = vendor;
-	    pcic_attach_socket(&sc->handle[0]);
-	}
-	if (sc->handle[1].flags & PCIC_FLAG_SOCKETP) {
+	if (sc->handle[1].flags & PCIC_FLAG_SOCKETP)
 	    sc->handle[1].vendor = vendor;
-	    pcic_attach_socket(&sc->handle[1]);
-	}
     }
 
     if ((sc->handle[2].flags & PCIC_FLAG_SOCKETP) ||
@@ -499,15 +237,22 @@ pcic_attach(parent, self, aux)
 		   PCIC_GLOBAL_CTL_EXPLICIT_CSC_ACK);
 #endif
 
-	if (sc->handle[2].flags & PCIC_FLAG_SOCKETP) {
-	    pcic_attach_socket(&sc->handle[2]);
+	if (sc->handle[2].flags & PCIC_FLAG_SOCKETP)
 	    sc->handle[2].vendor = vendor;
-	}
-	if (sc->handle[3].flags & PCIC_FLAG_SOCKETP) {
-	    pcic_attach_socket(&sc->handle[3]);
+	if (sc->handle[3].flags & PCIC_FLAG_SOCKETP)
 	    sc->handle[3].vendor = vendor;
-	}
     }
+}
+
+void
+pcic_attach_sockets(sc)
+     struct pcic_softc *sc;
+{
+    int i;
+
+    for (i=0; i<PCIC_NSLOTS; i++)
+	if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
+	    pcic_attach_socket(&sc->handle[i]);
 }
 
 void
@@ -523,7 +268,7 @@ pcic_attach_socket(h)
 
    /* now, config one pcmcia device per socket */
 
-   paa.pct = (pcmcia_chipset_tag_t) &pcic_functions;
+   paa.pct = (pcmcia_chipset_tag_t) h->sc->pct;
    paa.pch = (pcmcia_chipset_handle_t) h;
 
    h->pcmcia = config_found_sm(&h->sc->dev, &paa, pcic_print, pcic_submatch);
@@ -699,6 +444,9 @@ pcic_intr_socket(h)
 	DPRINTF(("%s: %02x CD %x\n", h->sc->dev.dv_xname, h->sock,
 		 statreg));
 
+	/* XXX This should probably schedule something to happen after
+	   the interrupt handler completes */
+
 	if ((statreg & PCIC_IF_STATUS_CARDDETECT_MASK) ==
 	    PCIC_IF_STATUS_CARDDETECT_PRESENT) {
 	    if (!(h->flags & PCIC_FLAG_CARDP))
@@ -842,6 +590,7 @@ int pcic_chip_mem_alloc(pch, size, pcmhp)
 
     addr = 0;		/* XXX gcc -Wuninitialized */
     mhandle = 0;	/* XXX gcc -Wuninitialized */
+
     for (i=0; i<(PCIC_MEM_PAGES+1-sizepg); i++) {
 	if ((h->sc->subregionmask & (mask<<i)) == (mask<<i)) {
 	    if (bus_space_subregion(h->sc->memt, h->sc->memh,
@@ -1089,8 +838,7 @@ int pcic_chip_io_alloc(pch, start, size, pcihp)
     int flags = 0;
 
     /* 
-     * Allocate some arbitrary I/O space.  XXX There really should be a
-     * generic isa interface to this, but there isn't currently one
+     * Allocate some arbitrary I/O space.
      */
 
     iot = h->sc->iot;
@@ -1246,69 +994,7 @@ void pcic_chip_io_unmap(pch, window)
     reg &= ~io_map_index[window].ioenable;
     pcic_write(h, PCIC_ADDRWIN_ENABLE, reg);
 
-    h->ioalloc &= ~(1 << window);
-}
-
-/* allow patching or kernel option file override of available IRQs.
-   Useful if order of probing would screw up other devices, or if PCIC
-   hardware/cards have trouble with certain interrupt lines. */
-
-#ifndef PCIC_INTR_ALLOC_MASK
-#define	PCIC_INTR_ALLOC_MASK	0xffff
-#endif
-
-int	pcic_intr_alloc_mask = PCIC_INTR_ALLOC_MASK;
-
-void *
-pcic_chip_intr_establish(pch, pf, ipl, fct, arg)
-     pcmcia_chipset_handle_t pch;
-     struct pcmcia_function *pf;
-     int ipl;
-     int (*fct)(void *);
-     void *arg;
-{
-    struct pcic_handle *h = (struct pcic_handle *) pch;
-    int irq, ist;
-    void *ih;
-    int reg;
-
-    if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
-	ist = IST_LEVEL;
-    else if (pf->cfe->flags & PCMCIA_CFE_IRQPULSE)
-	ist = IST_PULSE;
-    else
-	ist = IST_LEVEL;
-
-    if (isa_intr_alloc(h->sc->ic,
-    		       PCIC_INTR_IRQ_VALIDMASK & pcic_intr_alloc_mask,
-    		       ist, &irq))
-	return(NULL);
-    if (!(ih = isa_intr_establish(h->sc->ic, irq, ist, ipl, fct, arg)))
-	return(NULL);
-
-    reg = pcic_read(h, PCIC_INTR);
-    reg &= ~PCIC_INTR_IRQ_MASK;
-    reg |= PCIC_INTR_ENABLE;
-    reg |= irq;
-    pcic_write(h, PCIC_INTR, reg);
-
-    printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
-
-    return(ih);
-}
-
-void pcic_chip_intr_disestablish(pch, ih)
-     pcmcia_chipset_handle_t pch;
-     void *ih;
-{
-    struct pcic_handle *h = (struct pcic_handle *) pch;
-    int reg;
-
-    reg = pcic_read(h, PCIC_INTR);
-    reg &= ~(PCIC_INTR_IRQ_MASK|PCIC_INTR_ENABLE);
-    pcic_write(h, PCIC_INTR, reg);
-
-    isa_intr_disestablish(h->sc->ic, ih);
+    h->ioalloc &= ~(1<<window);
 }
 
 void
