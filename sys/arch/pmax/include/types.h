@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 1995/06/28 02:56:03 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.10 1995/07/06 03:39:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,6 +40,8 @@
 
 #ifndef	_MACHTYPES_H_
 #define	_MACHTYPES_H_
+
+#include <sys/cdefs.h>
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 typedef struct _physadr {
