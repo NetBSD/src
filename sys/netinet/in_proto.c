@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.54 2001/12/21 06:30:43 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.55 2002/03/04 13:24:12 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.54 2001/12/21 06:30:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.55 2002/03/04 13:24:12 sommerfeld Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -134,11 +134,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.54 2001/12/21 06:30:43 itojun Exp $")
 #ifdef EON
 #include <netiso/eonvar.h>
 #endif /* EON */
-
-#include "ipip.h"
-#if NIPIP > 0 || defined(MROUTING)
-#include <netinet/ip_ipip.h>
-#endif /* NIPIP > 0 || MROUTING */
 
 #include "gre.h"
 #if NGRE > 0
@@ -258,15 +253,6 @@ struct protosw inetsw[] = {
   rip_init,	0,		0,		0,
 },
 };
-
-#if NIPIP > 0
-struct protosw ipip_protosw =
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
-  ipip_input,	rip_output,	0,		rip_ctloutput,
-  rip_usrreq,	/* XXX */
-  0,		0,		0,		0,
-};
-#endif /* NIPIP */
 
 struct domain inetdomain =
     { PF_INET, "internet", 0, 0, 0, 
