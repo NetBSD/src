@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ucontext.h,v 1.5 1999/01/21 23:22:35 christos Exp $	 */
+/*	$NetBSD: svr4_ucontext.h,v 1.6 1999/01/26 18:41:03 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -64,7 +64,9 @@ typedef struct svr4_ucontext {
 	svr4_sigset_t		 uc_sigmask;
 	struct svr4_sigaltstack	 uc_stack;
 	svr4_mcontext_t		 uc_mcontext;
+#ifdef SVR4_UC_MACHINE_PAD
 	long			 uc_pad[SVR4_UC_MACHINE_PAD];
+#endif
 } svr4_ucontext_t;
 
 #define SVR4_UC_GETREGSET	0
