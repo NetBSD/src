@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.112 2001/08/08 21:22:35 david Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.113 2001/08/09 01:25:35 david Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.112 2001/08/08 21:22:35 david Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.113 2001/08/09 01:25:35 david Exp $");
 #endif
 #endif /* not lint */
 
@@ -599,8 +599,10 @@ main(argc, argv)
 		argc--, argv++;
 	}
 
-	/* See if multiple alias, -alias, or delete commands were
-	specified. More than one constitutes an invalid command line */
+	/* 
+	 * See if multiple alias, -alias, or delete commands were
+	 * specified. More than one constitutes an invalid command line
+	 */
 
 	if (conflicting > 1) 
 		err(1, "Only one use of alias, -alias or delete is valid.");
@@ -1093,9 +1095,10 @@ notealias(addr, param)
 		clearaddr = 1;
 		newaddr = 0;
 		conflicting++;
-	} else
+	} else {
 		clearaddr = 0;
 		conflicting++;
+	}
 }
 
 /*ARGSUSED*/
