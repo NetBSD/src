@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.20 2001/05/19 17:19:00 sommerfeld Exp $ */
+/* $NetBSD: decl.c,v 1.21 2001/05/24 11:56:36 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: decl.c,v 1.20 2001/05/19 17:19:00 sommerfeld Exp $");
+__RCSID("$NetBSD: decl.c,v 1.21 2001/05/24 11:56:36 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -540,7 +540,7 @@ settdsym(tp, sym)
  * (and not the declarator) in the top element of the declaration stack.
  * Also detect multiple qualifiers of the same kind.
 
- * The rememberd qualifier is used by deftyp() to construct the type
+ * The remembered qualifier is used by deftyp() to construct the type
  * for all declarators.
  */
 void
