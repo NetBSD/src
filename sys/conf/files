@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.671 2004/05/03 20:10:35 petrov Exp $
+#	$NetBSD: files,v 1.672 2004/05/27 02:56:38 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1010,6 +1010,7 @@ defpseudo md:		disk
 defpseudo fss:		disk
 
 defpseudo pty:		tty
+defpseudo ptm:		tty
 defpseudo tb:		tty
 defpseudo rnd
 defpseudo ksyms
@@ -1194,7 +1195,7 @@ file	kern/sysv_sem.c			sysvsem
 file	kern/sysv_shm.c			sysvshm
 file	kern/tty.c
 file	kern/tty_conf.c
-file	kern/tty_pty.c			pty			needs-flag
+file	kern/tty_pty.c			pty | ptm		needs-flag
 file	kern/tty_subr.c
 file	kern/tty_tb.c			tb			needs-count
 file	kern/tty_tty.c
