@@ -1,4 +1,4 @@
-#	$NetBSD: std.pc532,v 1.13 2000/06/22 20:27:55 fvdl Exp $
+#	$NetBSD: std.pc532,v 1.14 2001/07/09 16:09:02 wiz Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
@@ -27,5 +27,5 @@ scn5		at mainbus? flags 0x0 # addr 0x28000028
 scn6		at mainbus? flags 0x0 # addr 0x28000030
 scn7		at mainbus? flags 0x0 # addr 0x28000038
 
-options 	EXEC_AOUT	# #! scripts
-options 	EXEC_SCRIPT	# a.out executables
+options 	EXEC_AOUT	# a.out executables
+options 	EXEC_SCRIPT	# #! scripts
