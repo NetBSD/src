@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.54 2004/08/13 13:34:42 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.55 2004/08/18 19:10:15 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.54 2004/08/13 13:34:42 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.55 2004/08/18 19:10:15 he Exp $");
 #endif
 #endif
 
@@ -51,6 +51,7 @@ pkg_do(char *pkg)
 	struct stat sb;
 	char   *cp = NULL;
 	int     code = 0;
+	char flist[sizeof(ALL_FNAMES)];
 
 	if (IS_URL(pkg)) {
 		if ((cp = fileGetURL(pkg)) != NULL) {
@@ -107,7 +108,6 @@ pkg_do(char *pkg)
 				 * compress an average of 75%, but we're only unpacking the + files
 				 * needed so be very optimistic.
 				 */
-				char flist[sizeof(ALL_FNAMES)];
 
 				/* Determine which +-files to unpack - not all may be present! */
 				strcat(flist, CONTENTS_FNAME); strcat(flist, " ");
