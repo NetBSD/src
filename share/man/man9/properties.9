@@ -1,4 +1,4 @@
-.\" $NetBSD: properties.9,v 1.1 2001/10/04 18:56:43 eeh Exp $
+.\" $NetBSD: properties.9,v 1.2 2001/10/04 19:39:41 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Eduardo Horvath
 .\" All rights reserved.
@@ -47,9 +47,9 @@
 .Sh SYNOPSIS
 .Fd #include <sys/properties.h>
 .Pp
-.Va typedef void *propdb_t
+.Va typedef void *propdb_t;
 .Pp
-.Va typedef int64_t opaque_t
+.Va typedef int64_t opaque_t;
 .Ft propdb_t
 .Fn propdb_create "const char *name"
 .Ft void
@@ -72,57 +72,57 @@
 The
 .Nx
 property management routines allow kernel subsystems to associate
-.Po name, value
-.Pc pairs with arbitrary keys in a generalized manner.
+.Po name , value Pc
+pairs with arbitrary keys in a generalized manner.
 .Pp
 A database is a container for a set of properties.  It is created with
 .Fn propdb_create
-and discarded with 
+and discarded with
 .Fn propdb_destroy .
 Kernel subsystems should create their own databases to prevent possible
 namespace conflicts.
 .Pp
-A property is a tuple that consists of an opaque identifier 
+A property is a tuple that consists of an opaque identifier
 .Po often a pointer to a kernel data structure
-.Pc , string, and an arbitrary amount of data.  This
-association is established by 
-.Fn prop_set , 
-retrieved by 
-.Fn prop_get , 
+.Pc ,
+string, and an arbitrary amount of data.  This
+association is established by
+.Fn prop_set ,
+retrieved by
+.Fn prop_get ,
 and destroyed by
 .Fn prop_delete .
 .Pp
-A system call interface makes use of the existing 
+A system call interface makes use of the existing
 .Ic sysctl
 interface, and is provided
 primarily for diagnostic purposes.
-.Pp
 .Sh TYPES
-Several types are defined in 
+Several types are defined in
 .Pa Aq sys/properties.h .
-.Pp 
+.Pp
 .Bl -ohang -compact
 .It Fa propdb_t
-.Pp 
-The 
+.Pp
+The
 .Fa probdb_t
 type is used to contain a handle for a property database.
 .Pp
 .It Fa opaque_t
-.Pp 
-The 
+.Pp
+The
 .Fa opaque_t
 type is a 64-bit scalar type used to store arbitrary object identifiers.
 .Pp
 The
 .Nm
-makes no type distinctions, but it does associate a type datum with each 
+makes no type distinctions, but it does associate a type datum with each
 property.  Users of the interface can use that field to help determine what
 information is stored in the value field of the property.  There are three
 base types:
 .El
 .Pp
-.Bl -tag -width "PROP_ELSZ(type)" -compact -offset indent
+.Bl -tag -width "PROP_ELSZ(type)  " -compact -offset indent
 .It PROP_INT
 Property is an integer type.
 .It PROP_STRING
@@ -133,30 +133,27 @@ Property is an aggregation of different types.
 .Pp
 Which can be further modified:
 .Pp
-.Bl -tag -width "PROP_ELSZ(type)" -compact -offset indent
+.Bl -tag -width "PROP_ELSZ(type)  " -compact -offset indent
 .It PROP_ARRAY
 Property is an array of values.
 .It PROP_CONST
 Property value has static storage and is maintained outside the database.
-.It PROP_ELSZ
-.Pq Fa size
+.It PROP_ELSZ Pq Fa size
 Encode element size into the type field.  This is primarily used to describe
 the size of individual elements of an array.
 .El
-.Pp
 .Sh FUNCTIONS
-.Pp
 .Bl -tag -width indent
 .It Fn "propdb_t propdb_create" "const char *name"
 .Pp
-Allocate and initialize a kernel database object, and associate 
+Allocate and initialize a kernel database object, and associate
 .Fa name
-with the database.  
-.Fa name 
-may later be used to access this database from userland throught the 
+with the database.
+.Fa name
+may later be used to access this database from userland throught the
 userland database query interface.  This operation may block.
-Returns 
-.Li NULL 
+Returns
+.Li NULL
 on failure.
 .Pp
 .It Fn "void propdb_destroy" "propdb_t db"
@@ -165,132 +162,131 @@ routine deallocates all properties contained within the database.
 .Pp
 .It Fn "int prop_set" "propdb_t db" "opaque_t object" "const char *name" \
 "void *val" "size_t len" "int type" "int wait"
-Create a property 
+Create a property
 .Fa name
-associated with 
-.Fa object 
-inside database 
-.Fa db , 
+associated with
+.Fa object
+inside database
+.Fa db ,
 with a
 .Fa len
-byte value copied from location 
-.Fa val .  
-The database must already have been initialized with 
-.Fn propdb_create .  
+byte value copied from location
+.Fa val .
+The database must already have been initialized with
+.Fn propdb_create .
 .Fa object
 is treated as an opaque value.  If
 .Fa len
-is 
+is
 .Li 0
 then no data is copied.  This can be used to create properties which
-convey information by their presence or absence.  The 
-.Fa type 
-field is used to identify what the format of the object is.  This value 
-is usually only used to help programs dump property values into human 
-readable formats.  However, if 
-.Li PROP_CONST 
-is specified in the 
+convey information by their presence or absence.  The
 .Fa type
-field, no storage is allocated for the value, and when the property is 
-queried it will copy 
-.Fa len 
-bytes directly from the location specified by 
-.Fa val , 
-so that data cannot be freed or the kernel may panic.  If 
+field is used to identify what the format of the object is.  This value
+is usually only used to help programs dump property values into human
+readable formats.  However, if
+.Li PROP_CONST
+is specified in the
+.Fa type
+field, no storage is allocated for the value, and when the property is
+queried it will copy
+.Fa len
+bytes directly from the location specified by
+.Fa val ,
+so that data cannot be freed or the kernel may panic.  If
 .Fa wait
-is zero then 
+is zero then
 .Fn prop_set
-will not sleep for resource shortage.  Returns 
-.Li 0 
+will not sleep for resource shortage.  Returns
+.Li 0
 on success, or an error value.
 .Pp
 .It Fn "size_t prop_get" "propdb_t db" "opaque_t object" "const char *name" \
 "void *val" "size_t len" "int *type"
-Retrieve a property called 
+Retrieve a property called
 .Fa name
-associated with 
-.Fa object .  
-.Fa name 
-is a pointer to a string.  The property that matches both 
+associated with
+.Fa object .
+.Fa name
+is a pointer to a string.  The property that matches both
 .Fa object
-and 
-.Fa name 
-will be selected, and the data and type information associated with that 
-property will be returned in the buffers pointed to by 
+and
+.Fa name
+will be selected, and the data and type information associated with that
+property will be returned in the buffers pointed to by
 .Fa val
-and 
-.Fa type 
+and
+.Fa type
 as appropriate.
 .Pp
-Returns 
-.Li -1 
-if the property cannot be found, otherwise it returns the length of the 
-value data, and copies up to 
-.Fa len 
-bytes of the property data to the location pointed to by 
-.Fa val .  
-If 
+Returns
+.Li \-1
+if the property cannot be found, otherwise it returns the length of the
+value data, and copies up to
+.Fa len
+bytes of the property data to the location pointed to by
+.Fa val .
+If
 .Fa type
-is not 
+is not
 .Li NULL ,
-the type information associated with that property is stored in the location 
+the type information associated with that property is stored in the location
 it points to.
 .Pp
 .It Fn "int prop_delete" "propdb_t db" "opaque_t object" "const char *name"
-Remove a property from a database.  If a 
-.Li NULL 
-is supplied for 
+Remove a property from a database.  If a
+.Li NULL
+is supplied for
 .Fa name ,
-.Fn prop_delete 
-will remove all properties associated with 
-.Fa object .  
+.Fn prop_delete
+will remove all properties associated with
+.Fa object .
 It returns the number of properties deleted.
 .Pp
 .It Fn "int prop_copy" "propdb_t db" "opaque_t source" "opaque_t dest" \
 "int wait"
-Copy all properties associated with 
+Copy all properties associated with
 .Fa source
-to 
+to
 .Fa dest
-structure.  If 
+structure.  If
 .Fa wait
-is zero then 
-.Fn prop_copy 
-will not sleep for resource shortage.  Returns 
-.Li 0 
+is zero then
+.Fn prop_copy
+will not sleep for resource shortage.  Returns
+.Li 0
 on success or an error value.  The state of properties is undefined if the
 operation fails.
 .It Fn "size_t prop_objs" "propdb_t db" "opaque_t *objects" "size_t len"
 Get a list of objects identifiers from a database.  An array of object
-idientifiers will be copied into the buffer pointed to by 
-.Fa objects 
-up to 
+idientifiers will be copied into the buffer pointed to by
+.Fa objects
+up to
 .Fa len
 bytes.  It returns the amount of memory needed to store the entire list.
 .Pp
 .It Fn "size_t prop_list" "propdb_t db" "opaque_t object" "char *names" \
 "size_t len"
 Get a list of an object's properties from the database.  It queries the
-database to locate all properties associated with 
+database to locate all properties associated with
 .Pa object
-objedt identifier, and copies up to 
-.Pa len 
-bytes of 
-.Li NUL 
-terminated property names into the buffer pointed to by 
-.Pa names .  
+objedt identifier, and copies up to
+.Pa len
+bytes of
+.Li NUL
+terminated property names into the buffer pointed to by
+.Pa names .
 Partial strings are not copied, and another NUL character to indicate the
 termination of the list.  It returns the size needed to hold the
 entire list.
 .El
-.Pp
-.Sh AUTHORS
-The
-.Nx
-property management system was developed by Eduardo Horvath <eeh@netbsd.org>
-.Sh SEE ALSO
 .Sh HISTORY
 The
 .Nx
 property management system first appeared in
 .Nx 1.6 .
+.Sh AUTHORS
+The
+.Nx
+property management system was developed by
+.An Eduardo Horvath Aq eeh@netbsd.org .
