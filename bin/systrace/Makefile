@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/08/19 09:56:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2003/08/01 10:49:26 lukem Exp $
 #	$OpenBSD: Makefile,v 1.4 2002/06/05 17:34:56 mickey Exp $
 
 .include <bsd.own.mk>
@@ -13,5 +13,7 @@ SRCS=	filter.c intercept-translate.c intercept.c \
 CPPFLAGS+= -I. -I${.CURDIR} -I${NETBSDSRCDIR}/sys
 
 YHEADER=yes
+
+lex.c: parse.h
 
 .include <bsd.prog.mk>
