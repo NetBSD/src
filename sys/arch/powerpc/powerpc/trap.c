@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 2002/11/13 09:33:20 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.74 2002/11/25 02:07:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,7 +60,6 @@
 #ifndef MULTIPROCESSOR
 volatile int astpending;
 volatile int want_resched;
-extern int intr_depth;
 #endif
 
 static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
