@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.43 2004/01/04 00:21:29 dbj Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.44 2004/03/20 14:09:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.43 2004/01/04 00:21:29 dbj Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.44 2004/03/20 14:09:44 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,10 +190,13 @@ dumpfs(const char *name)
 		default:
 			continue;
 		}
+		fix_superblock(&afs, opostblsave);
+		if (sblock_try[i] != afs.fs_sblockloc)
+			/* This must be an alternate superblock */
+			continue;
 		break;
 	}
 
-	fix_superblock(&afs, opostblsave);
 
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 
