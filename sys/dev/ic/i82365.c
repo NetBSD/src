@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.77 2003/12/28 01:21:37 christos Exp $	*/
+/*	$NetBSD: i82365.c,v 1.78 2004/06/20 18:09:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.77 2003/12/28 01:21:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.78 2004/06/20 18:09:46 thorpej Exp $");
 
 #define	PCICDEBUG
 
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.77 2003/12/28 01:21:37 christos Exp $")
 
 #include <dev/ic/i82365reg.h>
 #include <dev/ic/i82365var.h>
-
-#include "locators.h"
 
 #ifdef PCICDEBUG
 int	pcic_debug = 0;
@@ -643,46 +641,46 @@ pcic_submatch(parent, cf, aux)
 
 	switch (h->sock) {
 	case C0SA:
-		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		if (cf->pcmciabuscf_controller !=
 		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 0)
+		    cf->pcmciabuscf_controller != 0)
 			return 0;
-		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		if (cf->pcmciabuscf_socket !=
 		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 0)
+		    cf->pcmciabuscf_socket != 0)
 			return 0;
 
 		break;
 	case C0SB:
-		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		if (cf->pcmciabuscf_controller !=
 		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 0)
+		    cf->pcmciabuscf_controller != 0)
 			return 0;
-		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		if (cf->pcmciabuscf_socket !=
 		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 1)
+		    cf->pcmciabuscf_socket != 1)
 			return 0;
 
 		break;
 	case C1SA:
-		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		if (cf->pcmciabuscf_controller !=
 		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 1)
+		    cf->pcmciabuscf_controller != 1)
 			return 0;
-		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		if (cf->pcmciabuscf_socket !=
 		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 0)
+		    cf->pcmciabuscf_socket != 0)
 			return 0;
 
 		break;
 	case C1SB:
-		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		if (cf->pcmciabuscf_controller !=
 		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 1)
+		    cf->pcmciabuscf_controller != 1)
 			return 0;
-		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		if (cf->pcmciabuscf_socket !=
 		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 1)
+		    cf->pcmciabuscf_socket != 1)
 			return 0;
 
 		break;
