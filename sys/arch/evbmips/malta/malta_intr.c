@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.1 2002/03/07 14:44:04 simonb Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.2 2002/04/08 14:08:27 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -197,10 +197,36 @@ malta_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	curcpu()->ci_cpu_freq = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16/*Hz*/;
 
 	/* Compute the number of ticks for hz. */
-	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / hz;
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
 
 	/* Compute the delay divisor. */
-	curcpu()->ci_divisor_delay = (curcpu()->ci_cpu_freq / 1000000) / 2;
+	curcpu()->ci_divisor_delay =
+	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
+
+	/*
+	 * To implement a more accurate microtime using the CP0 COUNT
+	 * register we need to divide that register by the number of
+	 * cycles per MHz.  But...
+	 *
+	 * DIV and DIVU are expensive on MIPS (eg 75 clocks on the
+	 * R4000).  MULT and MULTU are only 12 clocks on the same CPU.
+	 * On the SB1 these appear to be 40-72 clocks for DIV/DIVU and 3
+	 * clocks for MUL/MULTU.
+	 *
+	 * The strategy we use to to calculate the reciprical of cycles
+	 * per MHz, scaled by 1<<32.  Then we can simply issue a MULTU
+	 * and pluck of the HI register and have the results of the
+	 * division.
+	 */
+	curcpu()->ci_divisor_recip =
+	    0x100000000ULL / curcpu()->ci_divisor_delay;
+
+	/*
+	 * Get correct cpu frequency if the CPU runs at twice the
+	 * external/cp0-count frequency.
+	 */
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+		curcpu()->ci_cpu_freq *= 2;
 
 #ifdef DEBUG
 	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
