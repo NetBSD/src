@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.79 2004/05/10 20:32:07 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.80 2004/05/19 07:36:14 dyoung Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.79 2004/05/10 20:32:07 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.80 2004/05/19 07:36:14 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2294,8 +2294,8 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 		return -1;
 	}
 	if (le16toh(boot->mbr_magic) != MBR_MAGIC) {
-		warnx("%spartition table invalid, no magic in sector %"PRIdaddr,
-		    tabletype, offset);
+		warnx("%s partition table invalid, "
+		    "no magic in sector %"PRIdaddr, tabletype, offset);
 		return -1;
 	}
 #ifdef BOOTSEL
