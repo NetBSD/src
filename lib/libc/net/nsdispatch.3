@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.11 2002/02/07 07:00:21 ross Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.12 2002/09/04 01:07:12 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,7 +88,7 @@ set to the name of the source,
 .Va cb
 defined as a function which handles that source, and
 .Va cb_data
-is used to pass arbritrary data to the callback function.
+is used to pass arbitrary data to the callback function.
 The last entry in
 .Va dtab
 should contain
@@ -160,7 +160,7 @@ list of the type
 .Va va_list .
 .Ss Valid source types
 Whilst there is support for arbitrary sources, the following
-#defines for commonly implementated sources are available:
+#defines for commonly implemented sources are available:
 .Bl -column NS_COMPAT COMPAT -offset indent
 .Sy #define	value
 .It NSSRC_FILES	"files"
