@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.335 2001/06/20 05:46:24 imp Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.336 2001/06/20 16:33:11 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.331 2001/06/20 05:44:33 imp Exp 
+ *	NetBSD: pcidevs,v 1.332 2001/06/20 16:32:32 thorpej Exp 
  */
 
 /*
@@ -4940,6 +4940,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Schneider & Koch",
 	    "SK-NET FDDI-xP",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE,
+	    0,
+	    "Schneider & Koch",
+	    "SK-NET GE",
 	},
 	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
