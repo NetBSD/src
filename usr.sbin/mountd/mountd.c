@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.43 1998/03/01 02:25:50 fvdl Exp $	*/
+/*	$NetBSD: mountd.c,v 1.44 1998/07/13 14:24:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.43 1998/03/01 02:25:50 fvdl Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.44 1998/07/13 14:24:24 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,7 @@ int	xdr_mlist __P((XDR *, caddr_t));
 struct exportlist *exphead;
 struct mountlist *mlhead;
 struct grouplist *grphead;
-char exname[MAXPATHLEN];
+char *exname;
 struct ucred def_anon = {
 	1,
 	(uid_t) -2,
@@ -254,6 +254,7 @@ main(argc, argv)
 	char **argv;
 {
 	SVCXPRT *udptransp, *tcptransp;
+	FILE *pidfile;
 	int c;
 
 	while ((c = getopt(argc, argv, "dnr")) != -1)
@@ -261,13 +262,12 @@ main(argc, argv)
 		case 'd':
 			debug = 1;
 			break;
-		case 'n':
-			break;
-		case 'r':
 			/* Compatibility */
+		case 'n':
+		case 'r':
 			break;
 		default:
-			fprintf(stderr, "Usage: mountd [-dn] [export_file]\n");
+			fprintf(stderr, "Usage: mountd [-d] [export_file]\n");
 			exit(1);
 		};
 	argc -= optind;
@@ -275,11 +275,10 @@ main(argc, argv)
 	grphead = (struct grouplist *)NULL;
 	exphead = (struct exportlist *)NULL;
 	mlhead = (struct mountlist *)NULL;
-	if (argc == 1) {
-		strncpy(exname, *argv, MAXPATHLEN-1);
-		exname[MAXPATHLEN-1] = '\0';
-	} else
-		strcpy(exname, _PATH_EXPORTS);
+	if (argc == 1)
+		exname = *argv;
+	else
+		exname = _PATH_EXPORTS;
 	openlog("mountd", LOG_PID, LOG_DAEMON);
 	if (debug)
 		fprintf(stderr, "Getting export list.\n");
@@ -296,11 +295,10 @@ main(argc, argv)
 	}
 	signal(SIGHUP, (void (*) __P((int))) get_exportlist);
 	signal(SIGTERM, (void (*) __P((int))) send_umntall);
-	{ FILE *pidfile = fopen(_PATH_MOUNTDPID, "w");
-	  if (pidfile != NULL) {
+	pidfile = fopen(_PATH_MOUNTDPID, "w");
+	if (pidfile != NULL) {
 		fprintf(pidfile, "%d\n", getpid());
 		fclose(pidfile);
-	  }
 	}
 	if ((udptransp = svcudp_create(RPC_ANYSOCK)) == NULL ||
 	    (tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL) {
@@ -394,7 +392,7 @@ mntsrv(rqstp, transp)
 				       "Refused mount RPC from host %s port %d",
 				       inet_ntoa(saddr), sport);
 				svcerr_weakauth(transp);
-				return;
+				goto out;
 			}
 			if (hostset & DP_HOSTSET)
 				fhr.fhr_flag = hostset;
@@ -409,8 +407,7 @@ mntsrv(rqstp, transp)
 				if (!svc_sendreply(transp, xdr_long,
 				    (caddr_t)&bad))
 					syslog(LOG_ERR, "Can't send reply");
-				sigprocmask(SIG_UNBLOCK, &sighup_mask, NULL);
-				return;
+				goto out;
 			}
 			if (!svc_sendreply(transp, xdr_fhs, (caddr_t)&fhr))
 				syslog(LOG_ERR, "Can't send reply");
@@ -428,6 +425,7 @@ mntsrv(rqstp, transp)
 			if (!svc_sendreply(transp, xdr_long, (caddr_t)&bad))
 				syslog(LOG_ERR, "Can't send reply");
 		}
+out:
 		sigprocmask(SIG_UNBLOCK, &sighup_mask, NULL);
 		return;
 	case RPCMNT_DUMP:
@@ -486,6 +484,7 @@ xdr_dir(xdrsp, dirp)
 	XDR *xdrsp;
 	char *dirp;
 {
+
 	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
 }
 
@@ -497,7 +496,7 @@ xdr_fhs(xdrsp, cp)
 	XDR *xdrsp;
 	caddr_t cp;
 {
-	register struct fhreturn *fhrp = (struct fhreturn *)cp;
+	struct fhreturn *fhrp = (struct fhreturn *)cp;
 	long ok = 0, len, auth;
 
 	if (!xdr_long(xdrsp, &ok))
@@ -588,7 +587,7 @@ errout:
 
 /*
  * Called from xdr_explist() to traverse the tree and export the
- * directory paths.
+ * directory paths.  Assumes SIGHUP has already been masked.
  */
 int
 put_exlist(dp, xdrsp, adp, putdefp)
