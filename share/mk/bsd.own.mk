@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.41 1997/05/26 03:58:33 cjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.42 1997/05/26 20:53:28 pk Exp $
 
 # This file may be included multiple times without harm.
 
@@ -15,7 +15,6 @@
 BUILDCONF != \
     d=${.CURDIR}; \
     while [ $$d != / ]; do \
-echo $$d >>/tmp/z; \
 	if [ -f $$d/Build.conf ]; then \
 	    break; \
 	fi; \
