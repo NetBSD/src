@@ -304,18 +304,28 @@ output_15 (operands, insn)
 	return "movf %1,tos\n\tmovd tos,%0";
       return "movf %1,%0";
     }
+  if (GET_CODE (operands[0]) == REG
+      && REGNO (operands[0]) == FRAME_POINTER_REGNUM)
+    return "lprd fp,%1";
+  if (GET_CODE (operands[1]) == CONST_DOUBLE)
+    operands[1]
+      = gen_rtx (CONST_INT, VOIDmode, CONST_DOUBLE_LOW (operands[1]));
   if (GET_CODE (operands[1]) == CONST_INT)
     {
       int i = INTVAL (operands[1]);
-      if (i <= 7 && i >= -8)
-	return "movqd %1,%0";
-      if (i < 0x4000 && i >= -0x4000 && ! TARGET_32532)
+      if (! TARGET_32532)
+	{
+	  if (i <= 7 && i >= -8)
+	    return "movqd %1,%0";
+	  if (i < 0x4000 && i >= -0x4000)
 #if defined (GNX_V3) || defined (UTEK_ASM)
-	return "addr %c1,%0";
+	    return "addr %c1,%0";
 #else
-	return "addr @%c1,%0";
+	    return "addr @%c1,%0";
 #endif
-      return "movd %1,%0";
+	}
+      else
+        return output_move_dconst(i, "%$%1,%0");
     }
   else if (GET_CODE (operands[1]) == REG)
     {
@@ -339,6 +349,7 @@ output_15 (operands, insn)
     }
   else if (GET_CODE (operands[1]) == MEM)
     return "movd %1,%0";
+
   /* Check if this effective address can be
      calculated faster by pulling it apart.  */
   if (REG_P (operands[0])
@@ -589,8 +600,8 @@ output_63 (operands, insn)
 {
   if (GET_CODE (operands[1]) == CONST_INT
       && INTVAL (operands[1]) >-9 && INTVAL(operands[1]) < 8)
-    return "addqw %1,%0";
-  return "addw %1,%0";
+    return "addqw %2,%0";
+  return "addw %2,%0";
 }
 }
 
@@ -619,8 +630,8 @@ output_65 (operands, insn)
 {
   if (GET_CODE (operands[1]) == CONST_INT
       && INTVAL (operands[1]) >-9 && INTVAL(operands[1]) < 8)
-    return "addqb %1,%0";
-  return "addb %1,%0";
+    return "addqb %2,%0";
+  return "addb %2,%0";
 }
 }
 
@@ -633,8 +644,8 @@ output_68 (operands, insn)
 {
   if (GET_CODE(operands[0]) == CONST_INT && INTVAL(operands[0]) < 64
       && INTVAL(operands[0]) > -64 && ! TARGET_32532)
-    return "adjspb %0";
-  return "adjspd %0";
+    return "adjspb %$%0";
+  return "adjspd %$%0";
 }
 }
 
@@ -681,8 +692,8 @@ output_71 (operands, insn)
 {
   if (GET_CODE (operands[1]) == CONST_INT
       && INTVAL (operands[1]) >-8 && INTVAL(operands[1]) < 9)
-    return "addqw %$%n1,%0";
-  return "subw %1,%0";
+    return "addqw %$%n2,%0";
+  return "subw %2,%0";
 }
 }
 
@@ -712,8 +723,8 @@ output_73 (operands, insn)
 {
   if (GET_CODE (operands[1]) == CONST_INT
       && INTVAL (operands[1]) >-8 && INTVAL(operands[1]) < 9)
-    return "addqb %$%n1,%0";
-  return "subb %1,%0";
+    return "addqb %$%n2,%0";
+  return "subb %2,%0";
 }
 }
 
@@ -1220,7 +1231,7 @@ output_197 (operands, insn)
 {
   ASM_OUTPUT_INTERNAL_LABEL (asm_out_file, "LI",
 			     CODE_LABEL_NUMBER (operands[1]));
-  return "casew %0";
+  return "cased %0";
 }
 }
 
@@ -1305,6 +1316,141 @@ output_203 (operands, insn)
   else if (cc_prev_status.flags & CC_Z_IN_NOT_F)
     return "sfcb %0";
   else return "sneb %0";
+}
+}
+
+static char *
+output_228 (operands, insn)
+     rtx *operands;
+     rtx insn;
+{
+
+{
+  return "movqb 0,%0; ffsd %1,%0; bfs 1f; addqb 1,%0; 1:";
+}
+}
+
+static char *
+output_229 (operands, insn)
+     rtx *operands;
+     rtx insn;
+{
+
+{
+  return "movqw 0,%0; ffsd %1,%0; bfs 1f; addqw 1,%0; 1:";
+}
+}
+
+static char *
+output_230 (operands, insn)
+     rtx *operands;
+     rtx insn;
+{
+
+{
+  return "movqd 0,%0; ffsd %1,%0; bfs 1f; addqd 1,%0; 1:";
+}
+}
+
+static char *
+output_231 (operands, insn)
+     rtx *operands;
+     rtx insn;
+{
+
+{
+  if (GET_CODE (operands[1]) == CONST_INT)
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), "%$%1,tos"),
+			 operands);
+  else
+	output_asm_insn ("movzwd %1,tos", operands);
+  return "";
+}
+}
+
+static char *
+output_232 (operands, insn)
+     rtx *operands;
+     rtx insn;
+{
+
+{
+  if (GET_CODE (operands[1]) == CONST_INT)
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), "%$%1,tos"),
+			 operands);
+  else
+	output_asm_insn ("movzbd %1,tos", operands);
+  return "";
+}
+}
+
+static char *
+output_233 (operands, insn)
+     rtx *operands;
+     rtx insn;
+{
+
+{
+  if (GET_CODE (operands[1]) == CONST_INT)
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), "%$%1,tos"),
+			 operands);
+  else
+	output_asm_insn ("movxbd %1,tos", operands);
+  return "";
+}
+}
+
+static char *
+output_234 (operands, insn)
+     rtx *operands;
+     rtx insn;
+{
+
+{
+  if (GET_CODE (operands[1]) == CONST_INT)
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), "%$%1,tos"),
+			 operands);
+  else
+	output_asm_insn ("movzbd %1,tos", operands);
+  return "";
+}
+}
+
+static char *
+output_235 (operands, insn)
+     rtx *operands;
+     rtx insn;
+{
+
+{
+  if (GET_CODE (operands[1]) == CONST_INT)
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), "%$%1,0(sp)"),
+			 operands);
+  else
+	output_asm_insn ("movd %1,0(sp)", operands);
+  return "";
+}
+}
+
+static char *
+output_236 (operands, insn)
+     rtx *operands;
+     rtx insn;
+{
+
+{
+  if (GET_CODE (operands[1]) == CONST_INT)
+	output_asm_insn (output_move_dconst (INTVAL (operands[1]), "%$%1,4(sp)"),
+			 operands);
+  else
+	output_asm_insn ("movd %1,4(sp)", operands);
+
+  if (GET_CODE (operands[3]) == CONST_INT)
+	output_asm_insn (output_move_dconst (INTVAL (operands[3]), "%$%3,0(sp)"),
+			 operands);
+  else
+	output_asm_insn ("movd %3,0(sp)", operands);
+  return "";
 }
 }
 
@@ -1538,6 +1684,15 @@ char * const insn_template[] =
     "slsd %0",
     "slsw %0",
     "slsb %0",
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
   };
 
 char *(*const insn_outfun[])() =
@@ -1770,6 +1925,15 @@ char *(*const insn_outfun[])() =
     0,
     0,
     0,
+    output_228,
+    output_229,
+    output_230,
+    output_231,
+    output_232,
+    output_233,
+    output_234,
+    output_235,
+    output_236,
   };
 
 rtx (*const insn_gen_function[]) () =
@@ -2000,6 +2164,15 @@ rtx (*const insn_gen_function[]) () =
     0,
     0,
     gen_sleu,
+    0,
+    0,
+    gen_ffsqi2,
+    gen_ffshi2,
+    gen_ffssi2,
+    0,
+    0,
+    0,
+    0,
     0,
     0,
   };
@@ -2233,7 +2406,16 @@ char *insn_name[] =
     "sleu-1",
     "sleu",
     "sleu+1",
-    "sleu+2",
+    "ffsqi2-1",
+    "ffsqi2",
+    "ffshi2",
+    "ffssi2",
+    "ffssi2+1",
+    "ffssi2+2",
+    "ffssi2+3",
+    "ffssi2+4",
+    "ffssi2+5",
+    "ffssi2+6",
   };
 char **insn_name_ptr = insn_name;
 
@@ -2467,6 +2649,15 @@ const int insn_n_operands[] =
     1,
     1,
     1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    4,
   };
 
 const int insn_n_dups[] =
@@ -2699,6 +2890,15 @@ const int insn_n_dups[] =
     0,
     0,
     0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
   };
 
 char *const insn_operand_constraint[][MAX_RECOG_OPERANDS] =
@@ -2713,12 +2913,12 @@ char *const insn_operand_constraint[][MAX_RECOG_OPERANDS] =
     { "g", "g", },
     { "fmF", "fmF", },
     { "fmF", "fmF", },
-    { "=&fg<", "fFg", },
+    { "=fg<", "fFg", },
     { "=fg<", "fFg", },
     { "=m", "m", },
-    { "=&g<,*f,g", "gF,g,*f", },
+    { "=g<,*f,g", "gF,g,*f", },
     { "rmn", },
-    { "=g<,g<,*f,g", "g,?xy,g,*f", },
+    { "=g<,g<,*f,g,x", "g,?xy,g,*f,rmn", },
     { "=g<,*f,g", "g,g,*f", },
     { "+r", "g", },
     { "=g<,*f,g", "g,g,*f", },
@@ -2931,6 +3131,15 @@ char *const insn_operand_constraint[][MAX_RECOG_OPERANDS] =
     { "=g<", },
     { "=g<", },
     { "=g<", },
+    { "=g", "g", },
+    { "=g", "g", },
+    { "=g", "g", },
+    { "=m", "g", },
+    { "=m", "g", },
+    { "=m", "g", },
+    { "=m", "g", },
+    { "=m", "g", },
+    { "=m", "g", "=m", "g", },
   };
 
 const enum machine_mode insn_operand_mode[][MAX_RECOG_OPERANDS] =
@@ -3132,7 +3341,7 @@ const enum machine_mode insn_operand_mode[][MAX_RECOG_OPERANDS] =
     { QImode, QImode, },
     { VOIDmode },
     { SImode, },
-    { HImode, },
+    { SImode, },
     { SImode, },
     { HImode, },
     { QImode, },
@@ -3163,6 +3372,15 @@ const enum machine_mode insn_operand_mode[][MAX_RECOG_OPERANDS] =
     { SImode, },
     { HImode, },
     { QImode, },
+    { QImode, SImode, },
+    { HImode, SImode, },
+    { SImode, SImode, },
+    { VOIDmode, VOIDmode, },
+    { VOIDmode, VOIDmode, },
+    { VOIDmode, VOIDmode, },
+    { VOIDmode, VOIDmode, },
+    { VOIDmode, VOIDmode, },
+    { VOIDmode, VOIDmode, VOIDmode, VOIDmode, },
   };
 
 const char insn_operand_strict_low[][MAX_RECOG_OPERANDS] =
@@ -3395,6 +3613,15 @@ const char insn_operand_strict_low[][MAX_RECOG_OPERANDS] =
     { 0, },
     { 0, },
     { 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, 0, 0, },
   };
 
 extern int nonimmediate_operand ();
@@ -3636,6 +3863,15 @@ int (*const insn_operand_predicate[][MAX_RECOG_OPERANDS])() =
     { general_operand, },
     { general_operand, },
     { general_operand, },
+    { general_operand, general_operand, },
+    { general_operand, general_operand, },
+    { general_operand, general_operand, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, },
+    { 0, 0, 0, 0, },
   };
 
 const int insn_n_alternatives[] =
@@ -3655,7 +3891,7 @@ const int insn_n_alternatives[] =
     1,
     3,
     1,
-    4,
+    5,
     3,
     1,
     3,
@@ -3836,6 +4072,15 @@ const int insn_n_alternatives[] =
     1,
     1,
     0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
     1,
     1,
     1,
