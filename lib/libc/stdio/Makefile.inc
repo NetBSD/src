@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$Id: Makefile.inc,v 1.7 1994/12/22 10:14:48 cgd Exp $
+#	$Id: Makefile.inc,v 1.9 1995/02/02 02:16:48 jtc Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
