@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.88 1998/07/09 02:45:45 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.89 1998/07/09 09:27:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -62,8 +62,6 @@
 
 #include "audio.h"
 #if NAUDIO > 0
-
-#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
