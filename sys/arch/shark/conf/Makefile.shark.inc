@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.shark.inc,v 1.4.2.1 2004/09/13 17:32:19 tron Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.4.2.1.2.1 2005/02/06 07:45:26 jmc Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
+CPPFLAGS+=		-I$S/dist/ipf
 GENASSYM_EXTRAS+=	${THISARM}/shark/genassym.cf
 
 .if (${OBJECT_FMT} == "ELF")

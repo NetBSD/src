@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.cats.inc,v 1.15.2.1 2004/09/13 17:32:25 tron Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.15.2.1.2.1 2005/02/06 07:45:24 jmc Exp $
 
 MACHINE_ARCH=	arm
 CPPFLAGS+=	-D${MACHINE}
+CPPFLAGS+=	-I$S/dist/ipf
 
 .if (${OBJECT_FMT} == "ELF")
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.34 2003/10/05 16:53:15 tsutsui Exp $
+#	$NetBSD: Makefile.mips,v 1.34.4.1 2005/02/06 07:45:25 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -113,3 +113,8 @@ mips32_subr.o mips3_subr.o mips5900_subr.o mips64_subr.o mipsX_subr.o: assym.h
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

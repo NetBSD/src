@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.29 2004/01/06 18:44:57 briggs Exp $
+#	$NetBSD: Makefile.powerpc,v 1.29.4.1 2005/02/06 07:45:25 jmc Exp $
 #
 # Makefile for NetBSD
 #
@@ -120,3 +120,8 @@ setfault.o: assym.h
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.15 2002/11/26 18:51:14 thorpej Exp $
+#	$NetBSD: Makefile.luna68k,v 1.15.10.1 2005/02/06 07:45:25 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -87,3 +87,8 @@ machdep.c trap.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

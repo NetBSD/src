@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.72 2003/12/10 04:59:35 simonb Exp $
+#	$NetBSD: Makefile.vax,v 1.72.4.1 2005/02/06 07:45:26 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -101,3 +101,8 @@ unimpl_emul.o: assym.h
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf
