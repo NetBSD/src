@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.49 2003/08/10 20:17:23 jdolecek Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.50 2004/08/01 10:32:40 jdolecek Exp $ */
 
 /*
  * System call numbers.
@@ -556,6 +556,12 @@
 
 /* syscall: "getfsuid" ret: "int" args: */
 #define	LINUX_SYS_getfsuid	216
+
+/* syscall: "mincore" ret: "int" args: "void *" "size_t" "char *" */
+#define	LINUX_SYS_mincore	218
+
+/* syscall: "madvise" ret: "int" args: "void *" "size_t" "int" */
+#define	LINUX_SYS_madvise	219
 
 /* syscall: "getdents64" ret: "int" args: "int" "struct linux_dirent64 *" "unsigned int" */
 #define	LINUX_SYS_getdents64	220

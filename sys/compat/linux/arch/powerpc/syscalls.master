@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.16 2003/08/10 20:16:26 jdolecek Exp $  
+	$NetBSD: syscalls.master,v 1.17 2004/08/01 10:32:40 jdolecek Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -374,5 +374,5 @@
 			    struct linux_dirent64 *dent, unsigned int count); }
 203	UNIMPL		pivot_root
 204	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
-205	UNIMPL		madvise
-206	UNIMPL		mincore
+205	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
+206	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }

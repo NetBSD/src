@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42 2003/01/18 08:02:46 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.43 2004/08/01 10:36:35 jdolecek Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -179,8 +179,7 @@
 73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
 74	STD		{ int linux_sys_mprotect(const void *start, \
 			    unsigned long len, int prot); }
-; Linux sys_madvise just returns 0.
-75	UNIMPL		madvise
+75	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 76	UNIMPL		vhangup
 77	UNIMPL
 78	UNIMPL
@@ -601,7 +600,7 @@
 372	UNIMPL		getresgid
 373	UNIMPL		sys_dipc
 374	UNIMPL		pivot_root
-375	UNIMPL		mincore
+375	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 376	UNIMPL		pciconfig_iobase
 377	STD		{ int linux_sys_getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
