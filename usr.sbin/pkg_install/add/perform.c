@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.90 2003/12/20 00:47:18 grant Exp $	*/
+/*	$NetBSD: perform.c,v 1.91 2003/12/20 03:31:56 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.90 2003/12/20 00:47:18 grant Exp $");
+__RCSID("$NetBSD: perform.c,v 1.91 2003/12/20 03:31:56 grant Exp $");
 #endif
 #endif
 
@@ -110,7 +110,7 @@ pkg_do(const char *pkg)
 	int	replacing = 0;
 	char   *where_to;
 	char   dbdir[FILENAME_MAX];
-	const char *exact, *extra1, *extra2;
+	const char *exact, *extra1;
 	FILE   *cfile;
 	int     errc;
 	plist_t *p;
@@ -176,11 +176,10 @@ pkg_do(const char *pkg)
 						goto bomb;
 					}
 				}
-				extra1 = "--fast-read";
-				extra2 = CONTENTS_FNAME;
+				extra1 = CONTENTS_FNAME;
 			} else {
 			        /* some values for stdin */
-				extra1 = extra2 = NULL;
+				extra1 = NULL;
 				sb.st_size = 100000;	/* Make up a plausible average size */
 			}
 			Home = make_playpen(playpen, sizeof(playpen), sb.st_size * 4);
@@ -188,7 +187,7 @@ pkg_do(const char *pkg)
 				warnx("unable to make playpen for %ld bytes",
 				      (long) (sb.st_size * 4));
 			where_to = Home;
-			if (unpack(pkg, extra1, extra2)) {
+			if (unpack(pkg, extra1)) {
 				warnx("unable to extract table of contents file from `%s' - not a package?",
 				      pkg);
 				goto bomb;
@@ -249,7 +248,7 @@ pkg_do(const char *pkg)
 				goto success;
 
 			/* Finally unpack the whole mess */
-			if (unpack(pkg, NULL, NULL)) {
+			if (unpack(pkg, NULL)) {
 				warnx("unable to extract `%s'!", pkg);
 				goto bomb;
 			}
