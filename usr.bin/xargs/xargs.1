@@ -41,7 +41,7 @@
 xargs \- construct argument list(s) and execute utility.
 .SH SYNOPSIS
 .ft B
-xargs [\-ft] [[\-x] \-n number] [\-s size] [utility [argument ...]]
+xargs [\-t] [[\-x] \-n number] [\-s size] [utility [argument ...]]
 .ft R
 .SH DESCRIPTION
 The
@@ -69,21 +69,6 @@ up to the matching double quote.
 Any single character, including newlines, may be escaped by a backslash.
 .PP
 The options are as follows:
-.TP
-\-f
-Force
-.I xargs
-to ignore the exit status returned by
-.IR utility .
-By default,
-.I xargs
-will exit immediately if
-.I utility
-exits with a non-zero exit status.
-This does not include ignoring
-.I utility
-exiting due to a signal or without calling
-.IR exit (2).
 .TP
 \-n number
 Set the maximum number of arguments taken from standard input for each
