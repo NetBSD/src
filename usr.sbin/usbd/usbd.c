@@ -1,4 +1,4 @@
-/*	$NetBSD: usbd.c,v 1.4 1998/12/09 00:57:19 augustss Exp $	*/
+/*	$NetBSD: usbd.c,v 1.5 1999/06/06 03:40:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <util.h>
 #include <sys/time.h>
 #include <dev/usb/usb.h>
 
@@ -153,8 +154,10 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
-	if (!debug)
+	if (!debug) {
 		daemon(0, 0);
+		pidfile(NULL);
+	}
 
 	for (;;) {
 		FD_ZERO(&fdset);
