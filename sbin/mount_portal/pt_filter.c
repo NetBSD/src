@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.1 1999/08/16 06:55:27 bgrayson Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.2 1999/08/17 15:05:15 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.1 1999/08/16 06:55:27 bgrayson Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.2 1999/08/17 15:05:15 kleink Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -144,8 +144,8 @@ portal_rfilter(pcr, key, v, kso, fdp)
 	fill_cmd(v + 2, path, cmd, FILTER_CMD_SIZE);
 	if (strlen(cmd) >= FILTER_CMD_SIZE) {
 		syslog(LOG_WARNING,
-		    "Warning:  potential overflow on string!  Length was %d\n",
-		    strlen(cmd));
+		    "Warning:  potential overflow on string!  Length was %lu\n",
+		    (unsigned long)strlen(cmd));
 		return -1;
 	}
 #ifdef DEBUG
@@ -203,8 +203,8 @@ portal_wfilter(pcr, key, v, kso, fdp)
 	fill_cmd(v + 2, path, cmd, FILTER_CMD_SIZE);
 	if (strlen(cmd) >= FILTER_CMD_SIZE) {
 		syslog(LOG_WARNING,
-		    "Warning:  potential overflow on string!  Length was %d\n",
-		    strlen(cmd));
+		    "Warning:  potential overflow on string!  Length was %lu\n",
+		    (unsigned long)strlen(cmd));
 		return -1;
 	}
 	fp = popen(cmd, "w");
