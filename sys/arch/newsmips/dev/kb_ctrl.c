@@ -1,3 +1,5 @@
+/*	$NetBSD: kb_ctrl.c,v 1.3 1998/12/26 00:53:49 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,6 +58,8 @@
 #include <newsmips/dev/kbreg.h>
 #endif
 
+#include "fb.h"
+
 extern int tmode;
 extern int kbd_status;
 
@@ -83,11 +87,16 @@ Key_table *key_table_addr = default_table;
 #include <machine/mouse.h>
 #include <newsmips/dev/scc.h>
 
-extern int bmcnrint();
+extern int bmcnrint __P((char));
 extern void rst_dimmer_cnt __P((void));
 extern int kbd_encode __P((int));
 extern int mskeytrigger __P((int, int, int));
 extern int kbd_ioctl(), kbd_string(), kbd_repeat();
+
+#if NFB == 0
+#define bmcnrint(x)
+#define rst_dimmer_cnt()
+#endif
 
 int
 kbd_open(chan)
