@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.3 2000/10/12 03:15:21 onoe Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -140,12 +140,13 @@ sn_ap_getaddr(sc, lladdr)
 }
 
 #define APSONIC_INT_MASK	0x00007f00	/* XXX */
+#define	APSONIC_INT_REG(base)	(((u_long)(base) & 0xffc00000) | 0x00100000)
 
 void
 sn_md_init(sc)
 	struct sn_softc *sc;
 {
-	u_int *reg = (u_int *)(sc->sc_hwbase - 0x00100000);
+	u_int *reg = (u_int *)APSONIC_INT_REG(sc->sc_hwbase);
 
 	*reg = APSONIC_INT_MASK;
 	wbflush();
