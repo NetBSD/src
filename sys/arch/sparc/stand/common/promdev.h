@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.h,v 1.6 1999/04/30 09:29:40 christos Exp $ */
+/*	$NetBSD: promdev.h,v 1.7 1999/05/27 14:04:25 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,8 +46,8 @@ struct promdata {
 #define DT_NET		2
 #define DT_BYTE		3
 	/* Hooks for netif.c */
-	int	(*xmit) __P((struct promdata *, void *, size_t));
-	int	(*recv) __P((struct promdata *, void *, size_t));
+	ssize_t	(*xmit) __P((struct promdata *, void *, size_t));
+	ssize_t	(*recv) __P((struct promdata *, void *, size_t));
 };
 
 #define DDB_MAGIC0	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
