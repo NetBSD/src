@@ -1,4 +1,4 @@
-/*	$NetBSD: from.c,v 1.11 2000/09/08 13:11:03 mjl Exp $	*/
+/*	$NetBSD: from.c,v 1.12 2000/09/08 13:14:33 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: from.c,v 1.11 2000/09/08 13:11:03 mjl Exp $");
+__RCSID("$NetBSD: from.c,v 1.12 2000/09/08 13:14:33 mjl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (!freopen(file, "r", stdin))
-		err(1, "can't read %s", file);
+		errx(1, "can't read %s", file);
 
 	for (newline = 1; fgets(buf, sizeof(buf), stdin);) {
 		if (*buf == '\n') {
