@@ -75,5 +75,5 @@
 #define PACKAGE "file"
 
 /* Version number of package */
-#define VERSION "3.31"
+#define VERSION "3.32"
 
