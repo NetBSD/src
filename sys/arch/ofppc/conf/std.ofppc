@@ -1,12 +1,8 @@
-#	$NetBSD: std.ofppc,v 1.4 1999/11/15 19:00:29 fvdl Exp $
+#	$NetBSD: std.ofppc,v 1.4.4.1 2000/06/23 14:36:12 fvdl Exp $
 #
 # standard, required NetBSD/ofppc 'options'
 
 machine		ofppc powerpc
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts

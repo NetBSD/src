@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc64,v 1.7 2000/06/19 23:30:32 eeh Exp $
+#	$NetBSD: std.sparc64,v 1.7.2.1 2000/06/23 14:36:14 fvdl Exp $
 
 #
 # Mandatory NetBSD/sparc kernel options.
@@ -6,9 +6,5 @@
 
 machine		sparc64		# Machine architecture; required by config(8)
 makeoptions	MACHINE=sparc64
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 options 	EXEC_SCRIPT	# execve(2) support for scripts

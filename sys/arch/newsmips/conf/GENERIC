@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.22 2000/06/14 22:02:33 veego Exp $
+# 	$NetBSD: GENERIC,v 1.22.2.1 2000/06/23 14:36:12 fvdl Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.22.2.1 $"
 
 maxusers	16
 
@@ -60,7 +60,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 
 # Networking options
 options 	INET		# Internet protocols

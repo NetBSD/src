@@ -1,12 +1,8 @@
-#	$NetBSD: std.atari,v 1.17 2000/01/26 14:56:43 leo Exp $
+#	$NetBSD: std.atari,v 1.17.4.1 2000/06/23 14:36:08 fvdl Exp $
 #
 # standard atari information
 #
 machine		atari m68k
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 options 	EXEC_SCRIPT		# Support #!
 options 	EXEC_AOUT		# a.out format executables

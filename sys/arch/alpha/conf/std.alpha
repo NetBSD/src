@@ -1,12 +1,8 @@
-# $NetBSD: std.alpha,v 1.18 1999/11/15 19:00:25 fvdl Exp $
+# $NetBSD: std.alpha,v 1.18.4.1 2000/06/23 14:36:06 fvdl Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 
 machine		alpha
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 # standard ("mandatory") kernel options.
 
