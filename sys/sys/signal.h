@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.23 1997/05/14 16:12:15 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.24 1997/11/25 19:32:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -140,11 +140,24 @@ typedef	void (*sig_t) __P((int));	/* type of signal function */
 /*
  * Structure used in sigaltstack call.
  */
-struct	sigaltstack {
+#ifdef _KERNEL
+struct sigaltstack13 {
 	char	*ss_sp;			/* signal stack base */
 	int	ss_size;		/* signal stack length */
 	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
 };
+#endif
+
+typedef struct
+#ifndef _XOPEN_SOURCE
+               sigaltstack
+#endif /* !defined(_XOPEN_SOURCE) */
+			   {
+	void	*ss_sp;			/* signal stack base */
+	size_t	ss_size;		/* signal stack length */
+	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
+} stack_t;
+
 #define SS_ONSTACK	0x0001	/* take signals on alternate stack */
 #define SS_DISABLE	0x0004	/* disable taking signals on alternate stack */
 #define	MINSIGSTKSZ	8192			/* minimum allowable stack */
