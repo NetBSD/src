@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.33 1994/06/29 06:43:14 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.34 1994/07/04 20:39:53 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -75,9 +75,10 @@ int     Debugger();
 #define	SDOUTSTANDING	2
 #define	SDRETRIES	4
 
-#define MAKESDDEV(maj, unit, part)	(makedev(maj,(unit<<3)|part))
-#define SDPART(z)	(minor(z) & 0x07)
-#define SDUNIT(z)	(minor(z) >> 3)
+#define MAKESDDEV(maj, unit, part) \
+    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
+#define SDPART(z)	(minor(z) % MAXPARTITIONS)
+#define SDUNIT(z)	(minor(z) / MAXPARTITIONS)
 #ifndef RAW_PART
 #define	RAW_PART	3		/* XXX should be 2 */
 #endif 
