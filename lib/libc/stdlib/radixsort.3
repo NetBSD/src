@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)radixsort.3	5.5 (Berkeley) 4/19/91
-.\"	$Id: radixsort.3,v 1.2 1993/08/01 07:44:21 mycroft Exp $
+.\"     from: @(#)radixsort.3	8.2 (Berkeley) 1/27/94
+.\"	$Id: radixsort.3,v 1.3 1994/06/16 05:26:40 mycroft Exp $
 .\"
-.Dd April 19, 1991
+.Dd January 27, 1994
 .Dt RADIXSORT 3
 .Os
 .Sh NAME
@@ -42,27 +42,23 @@
 .Fd #include <limits.h>
 .Fd #include <stdlib.h>
 .Ft int
-.Fn radixsort "u_char **base" "int nmemb" "u_char *table" "u_char endbyte"
+.Fn radixsort "u_char **base" "int nmemb" "u_char *table" "u_int endbyte"
+.Ft int
+.Fn sradixsort "u_char **base" "int nmemb" "u_char *table" "u_int endbyte"
 .Sh DESCRIPTION
 The
 .Fn radixsort
-function
-is a modified radix sort.
+and
+.Fn sradixsort
+functions
+are implementations of radix sort.
 .Pp
-The
-.Fn radixsort
-function sorts an array of
-.Fa nmemb
-pointers to byte strings, the initial member of which is referenced
-by
+These functions sort an array of pointers to byte strings, the initial
+member of which is referenced by
 .Fa base .
 The byte strings may contain any values; the end of each string
 is denoted by the user-specified value
 .Fa endbyte .
-The contents of the array are sorted in ascending order according
-to the
-.Tn ASCII
-order of the byte strings they reference.
 .Pp
 Applications may specify a sort order by providing the
 .Fa table
@@ -74,38 +70,58 @@ must reference an array of
 .Dv UCHAR_MAX
 + 1 bytes which contains the sort
 weight of each possible byte value.
-The end-of-string byte must have a sort weight of 0.
+The end-of-string byte must have a sort weight of 0 or 255
+(for sorting in reverse order).
 More than one byte may have the same sort weight.
 The
 .Fa table
 argument
 is useful for applications which wish to sort different characters
-equally; for example, providing a table with the same weights
+equally, for example, providing a table with the same weights
 for A-Z as for a-z will result in a case-insensitive sort.
+If
+.Fa table
+is NULL, the contents of the array are sorted in ascending order
+according to the
+.Tn ASCII
+order of the byte strings they reference and
+.Fa endbyte
+has a sorting weight of 0.
+.Pp
+The
+.Fn sradixsort
+function is stable, that is, if two elements compare as equal, their
+order in the sorted array is unchanged.
+The
+.Fn sradixsort
+function uses additional memory sufficient to hold
+.Fa nmemb
+pointers.
 .Pp
 The
 .Fn radixsort
-function
-is stable, that is, if two elements compare as equal, their order in
-the sorted array is unchanged.
+function is not stable, but uses no additional memory.
 .Pp
-The
-.Fn radixsort
-function
-is a variant of most-significant-byte radix sorting; in particular, see
-D.E. Knuth's Algorithm R and section 5.2.5, exercise 10.
-The
-.Fn radixsort
-function
-takes linear time relative to the number of bytes in the strings.
+These functions are variants of most-significant-byte radix sorting; in
+particular, see D.E. Knuth's Algorithm R and section 5.2.5, exercise 10.
+They take linear time relative to the number of bytes in the strings.
 .Sh RETURN VALUES
 Upon successful completion 0 is returned.
 Otherwise, \-1 is returned and the global variable 
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-The
-.Fn radixsort
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value of the
+.Fa endbyte
+element of
+.Fa table
+is not 0 or 255.
+.El
+.Pp
+Additionally, the
+.Fn sradixsort
 function
 may fail and set
 .Va errno
@@ -131,14 +147,15 @@ for any of the errors specified for the library routine
 .%V Vol. 16
 .%N No. 6
 .Re
+.Rs
+.%A McIlroy, P.
+.%D 1993
+.%B "Engineering Radix Sort"
+.%T "Computing Systems"
+.%V Vol. 6:1
+.%P pp. 5-27
+.Re
 .Sh HISTORY
 The
 .Fn radixsort
-function is
-.Ud .
-.Sh BUGS
-The
-.Fa nmemb
-argument
-must be less than the maximum integer,
-.Dv INT_MAX .
+function first appeared in 4.4BSD.
