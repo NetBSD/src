@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.2 1998/10/05 01:03:52 mark Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.2.22.1 2000/12/15 04:23:05 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -63,10 +63,15 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 {
 #if NISA > 0
 	int irq;
+	void *cookie;
 
 	irq = PCIIDE_COMPAT_IRQ(chan);
-	return (isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg));
-
+	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg);
+	if (cookie == NULL)
+		return (NULL);
+	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
+	    PCIIDE_CHANNEL_NAME(chan), irq);
+	return (cookie);
 #else
 	panic("pciide_machdep_compat_intr_establish() called\n");
 #endif
