@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: duplicate_name.c,v 1.5 2001/05/11 09:16:46 assar Exp $"
-        "$NetBSD: duplicate_name.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: duplicate_name.c,v 1.2 2002/11/28 11:21:17 elric Exp $");
 
 OM_uint32 gss_duplicate_name (
             OM_uint32 * minor_status,
@@ -44,7 +44,7 @@ OM_uint32 gss_duplicate_name (
 {
   krb5_error_code kret;
 
-  gssapi_krb5_init ();
+  GSSAPI_KRB5_INIT_MS(minor_status);
 
   kret = krb5_copy_principal (gssapi_krb5_context,
 			      src_name,
