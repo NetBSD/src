@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)test.c	5.4 (Berkeley) 2/12/93";*/
-static char *rcsid = "$Id: test.c,v 1.7 1993/09/23 22:47:45 mycroft Exp $";
+static char *rcsid = "$Id: test.c,v 1.8 1993/09/23 22:49:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -161,7 +161,7 @@ main(argc, argv)
 		}
 		break;
 	case 4:				/* % test ! arg1 op arg2 */
-		if (IS_BANG(argv[1])) {
+		if (IS_BANG(argv[1]) && lookup_op(argv[3], andor_op) < 0) {
 			ret_val = posix_binary_op(&argv[2]);
 			if (ret_val >= 0)
 				return (!ret_val);
