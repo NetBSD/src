@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 1996/08/23 11:21:01 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 1996/09/10 08:45:16 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -271,6 +271,8 @@ void	physcopyseg __P((vm_offset_t, vm_offset_t));
 u_int	probeva __P((u_int, u_int));
 void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
+int	suline __P((caddr_t, caddr_t));
+int	susword __P((caddr_t, u_int));
 void	switch_exit __P((struct proc *));
 void	DCIAS __P((vm_offset_t));
 void	DCIA __P((void));
