@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.11 1996/10/13 03:06:38 christos Exp $ */
+/* $NetBSD: if_ea.c,v 1.12 1996/10/14 23:50:20 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -92,6 +92,7 @@
 
 #include <arm32/podulebus/if_eareg.h>
 #include <arm32/podulebus/podulebus.h>
+#include <arm32/podulebus/podules.h>
 
 #define ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1514
@@ -112,9 +113,6 @@
 #else
 #define dprintf(x)
 #endif
-
-#define MY_MANUFACTURER 0x11
-#define MY_PODULE       0xa4
 
 /*
  * per-line info and status
@@ -254,8 +252,8 @@ eaprobe(parent, match, aux)
 	
 /* Look for a network slot interface */
 
-	if ((matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
-	    && (matchpodule(pa, 0x53, MY_PODULE, -1) == 0))
+	if ((matchpodule(pa, MANUFACTURER_ATOMWIDE, PODULE_ATOMWIDE_ETHER3, -1) == 0)
+	    && (matchpodule(pa, MANUFACTURER_ANT, PODULE_ANT_ETHER3, -1) == 0))
 		return(0);
 
 	iobase = pa->pa_podule->mod_base + EA_8005_BASE;
@@ -1264,10 +1262,10 @@ eagetpackets(sc)
 		if (len > ETHER_MAX_LEN) {
 			++sc->sc_arpcom.ac_if.if_ierrors;
 			printf("rx packet size error len=%d\n", len);
-/*			sc->sc_config2 |= EA_CFG2_OUTPUT;
+			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 			ea_reinit(sc);
-			return;*/
+			return;
 			addr = ptr;
 			continue;
 		}
