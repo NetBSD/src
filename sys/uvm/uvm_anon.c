@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.21.4.1 2002/03/11 21:28:52 thorpej Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.21.4.2 2002/03/12 00:39:05 thorpej Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.21.4.1 2002/03/11 21:28:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.21.4.2 2002/03/12 00:39:05 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -76,7 +76,7 @@ uvm_anon_init()
 {
 	int nanon = uvmexp.free - (uvmexp.free / 16); /* XXXCDC ??? */
 
-	simple_lock_init(&uvm.afreelock);
+	mutex_init(&uvm.afree_mutex, MUTEX_DEFAULT, 0);
 	LIST_INIT(&anonblock_list);
 
 	/*
@@ -99,19 +99,19 @@ uvm_anon_add(count)
 	struct vm_anon *anon;
 	int lcv, needed;
 
-	simple_lock(&uvm.afreelock);
+	mutex_enter(&uvm.afree_mutex);
 	uvmexp.nanonneeded += count;
 	needed = uvmexp.nanonneeded - uvmexp.nanon;
-	simple_unlock(&uvm.afreelock);
+	mutex_exit(&uvm.afree_mutex);
 
 	if (needed <= 0) {
 		return 0;
 	}
 	anon = (void *)uvm_km_alloc(kernel_map, sizeof(*anon) * needed);
 	if (anon == NULL) {
-		simple_lock(&uvm.afreelock);
+		mutex_enter(&uvm.afree_mutex);
 		uvmexp.nanonneeded -= count;
-		simple_unlock(&uvm.afreelock);
+		mutex_exit(&uvm.afree_mutex);
 		return ENOMEM;
 	}
 	MALLOC(anonblock, void *, sizeof(*anonblock), M_UVMAMAP, M_WAITOK);
@@ -121,7 +121,7 @@ uvm_anon_add(count)
 	LIST_INSERT_HEAD(&anonblock_list, anonblock, list);
 	memset(anon, 0, sizeof(*anon) * needed);
 
-	simple_lock(&uvm.afreelock);
+	mutex_enter(&uvm.afree_mutex);
 	uvmexp.nanon += needed;
 	uvmexp.nfreeanon += needed;
 	for (lcv = 0; lcv < needed; lcv++) {
@@ -130,7 +130,7 @@ uvm_anon_add(count)
 		uvm.afree = &anon[lcv];
 		simple_lock_init(&uvm.afree->an_lock);
 	}
-	simple_unlock(&uvm.afreelock);
+	mutex_exit(&uvm.afree_mutex);
 	return 0;
 }
 
@@ -146,9 +146,9 @@ uvm_anon_remove(count)
 	 * XXX someday we might want to try to free anons.
 	 */
 
-	simple_lock(&uvm.afreelock);
+	mutex_enter(&uvm.afree_mutex);
 	uvmexp.nanonneeded -= count;
-	simple_unlock(&uvm.afreelock);
+	mutex_exit(&uvm.afree_mutex);
 }
 
 /*
@@ -161,7 +161,7 @@ uvm_analloc()
 {
 	struct vm_anon *a;
 
-	simple_lock(&uvm.afreelock);
+	mutex_enter(&uvm.afree_mutex);
 	a = uvm.afree;
 	if (a) {
 		uvm.afree = a->u.an_nxt;
@@ -172,7 +172,7 @@ uvm_analloc()
 		LOCK_ASSERT(simple_lock_held(&a->an_lock) == 0);
 		simple_lock(&a->an_lock);
 	}
-	simple_unlock(&uvm.afreelock);
+	mutex_exit(&uvm.afree_mutex);
 	return(a);
 }
 
@@ -277,11 +277,11 @@ uvm_anfree(anon)
 	 * free the anon itself.
 	 */
 
-	simple_lock(&uvm.afreelock);
+	mutex_enter(&uvm.afree_mutex);
 	anon->u.an_nxt = uvm.afree;
 	uvm.afree = anon;
 	uvmexp.nfreeanon++;
-	simple_unlock(&uvm.afreelock);
+	mutex_exit(&uvm.afree_mutex);
 	UVMHIST_LOG(maphist,"<- done!",0,0,0,0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.31.6.4 2002/03/12 00:35:30 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.31.6.5 2002/03/12 00:39:04 thorpej Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@ struct uvm {
 
 	/* anon stuff */
 	struct vm_anon *afree;		/* anon free list */
-	struct simplelock afreelock; 	/* lock on anon free list */
+	kmutex_t afree_mutex;		/* mutex on anon free list */
 
 	/* static kernel map entry pool */
 	struct vm_map_entry *kentry_free;	/* free page pool */
