@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.70 2000/01/25 06:53:26 jlam Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.71 2000/01/25 08:07:14 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.68 2000/01/25 01:15:06 sommerfeld Exp 
+ *	NetBSD: pcmciadevs,v 1.70 2000/01/25 08:06:49 mycroft Exp 
  */
 
 /*-
@@ -610,6 +610,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "SVEC/Hawking Technology",
 	    "SVEC PCMCIA Lan Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_PN650TX,
+	    PCMCIA_CIS_SVEC_PN650TX,
+	    0,
+	    "SVEC/Hawking Technology",
+	    "SVEC PN650TX 10/100 Dual Speed Fast Ethernet PC Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMBICOM_AMB8002T,
