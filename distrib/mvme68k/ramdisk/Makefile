@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/10/21 03:30:36 chs Exp $
+#	$NetBSD: Makefile,v 1.13 2001/10/21 23:23:21 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,6 +21,7 @@ VND_CDEV=       /dev/${VND}c
 VND_CRDEV=      /dev/r${VND}c
 
 CRUNCHGEN?=	crunchgen
+MDSETIMAGE?=	mdsetimage
 MTREE?=		mtree
 
 # These are all the parameters for the root fs: (384K)
@@ -33,7 +34,7 @@ CLEANFILES=	netbsd-rd ${IMAGE}
 
 netbsd-rd:	${IMAGE}
 	cp ${KERNEL} netbsd-tmp
-	mdsetimage netbsd-tmp ${IMAGE}
+	${MDSETIMAGE} netbsd-tmp ${IMAGE}
 	-mv -f netbsd-tmp $@
 
 ${IMAGE}:	${TREE} ${LISTS} ${CBIN}

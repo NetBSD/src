@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/03/05 05:07:45 wdk Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/21 23:23:21 jmc Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -6,6 +6,7 @@
 
 DISKBINDIR=	${RELEASEDIR}/installation/diskimage
 KERNBINDIR=	${RELEASEDIR}/binary/kernel
+MDSETIMAGE?=	mdsetimage
 
 IMAGE=		diskimage
 IMAGESIZE=	4096 # 512 byte blocks, update disktab.diskimage if changed
@@ -34,7 +35,7 @@ realall:	${IMAGE}.gz
 
 netbsd.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd
-	mdsetimage -v netbsd ${RAMDISK}
+	${MDSETIMAGE} -v netbsd ${RAMDISK}
 .ifdef ECOFF_KERNEL
 	elf2ecoff netbsd netbsd.ecoff
 	rm -f netbsd.ecoff.gz

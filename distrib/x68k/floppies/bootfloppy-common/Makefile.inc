@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2000/11/28 03:03:26 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2001/10/21 23:23:24 jmc Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -18,6 +18,7 @@ KERN?=		netbsd-xxx
 KERNNAME?=	netbsd.xxx
 GZNAME?=	${KERNNAME}.gz
 MDEC=		${DESTDIR}/usr/mdec
+MDSETIMAGE?=	mdsetimage
 
 LISTS=		${COMMONDIR}/list
 .if ${RAMDISKDIR} != ""
@@ -61,7 +62,7 @@ unconfig:
 ${KERNNAME}: ${KERN} ${RAMDISK}
 	-/bin/rm -f netbsd.tmp*
 	cp ${KERN} netbsd.tmp
-	mdsetimage -v netbsd.tmp ${RAMDISK}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
 	mv -f netbsd.tmp ${.TARGET}
 .else
 ${KERNNAME}: ${KERN}
@@ -86,4 +87,5 @@ release:
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
 
+.include <bsd.own.mk>
 .include <bsd.obj.mk>

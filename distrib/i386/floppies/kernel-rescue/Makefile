@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/06/24 12:09:04 veego Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/21 23:23:20 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -7,6 +7,7 @@ TOP=		${.CURDIR}/..
 .include <bsd.own.mk>
 
 MDEC=		${DESTDIR}/usr/mdec
+MDSETIMAGE?=	${DESTDIR}/usr/sbin/mdsetimage
 STRIP?=		strip
 
 RAMDISK_T!=	cd ${.CURDIR}/../ramdisk-rescuetiny/; \
@@ -18,7 +19,7 @@ RAMDISK_S!=	cd ${.CURDIR}/../ramdisk-rescuesmall/; \
 
 netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
 	cp ${KERNOBJDIR}/INSTALL_TINY/netbsd netbsd.tmp
-	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_T}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_T}
 	nm netbsd.tmp > netbsd.INSTALL_TINY.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
@@ -26,7 +27,7 @@ netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
 
 netbsd.INSTALL_SMALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_SMALL/netbsd ${RAMDISK_S}
 	cp ${KERNOBJDIR}/INSTALL_SMALL/netbsd netbsd.tmp
-	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_S}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_S}
 	nm netbsd.tmp > netbsd.INSTALL_SMALL.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
