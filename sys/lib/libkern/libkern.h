@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.25 1999/04/12 17:23:23 drochner Exp $	*/
+/*	$NetBSD: libkern.h,v 1.26 1999/05/07 14:49:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -172,3 +172,5 @@ char	*strncpy __P((char *, const char *, size_t));
 char	*strrchr __P((const char *, int));
 int	 strncasecmp __P((const char *, const char *, size_t));
 u_int32_t inet_addr __P((const char *));
+char *intoa __P((u_int32_t));
+#define inet_ntoa(a) intoa((a).s_addr)
