@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.2 1999/03/25 00:41:47 mrg Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.3 1999/08/09 12:16:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct cfattach cgsix_obio_ca = {
 /*
  * Match a cgsix.
  */
-int
+static int
 cgsixmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -106,7 +106,7 @@ cgsixmatch(parent, cf, aux)
 				cg6_pfour_probe, NULL));
 }
 
-int
+static int
 cg6_pfour_probe(vaddr, arg)
 	void *vaddr;
 	void *arg;
@@ -119,7 +119,7 @@ cg6_pfour_probe(vaddr, arg)
 /*
  * Attach a display.
  */
-void
+static void
 cgsixattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -133,11 +133,6 @@ cgsixattach(parent, self, aux)
 	int constype, isconsole;
 	char *name;
 	extern struct tty *fbconstty;
-
-	if (uoba->uoba_isobio4 == 0) {
-		(*cgsix_sbus_ca.ca_attach)(parent, self, aux);
-		return;
-	}
 
 	oba = &uoba->uoba_oba4;
 
