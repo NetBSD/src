@@ -1,4 +1,4 @@
-#	$NetBSD: std.atari,v 1.20 2001/04/05 12:21:30 leo Exp $
+#	$NetBSD: std.atari,v 1.21 2001/09/08 11:19:06 thomas Exp $
 #
 # standard atari information
 #
@@ -7,7 +7,7 @@ machine		atari m68k
 options		_ATARIHW_		# Original Atari like mainboard hw.
 
 options 	EXEC_SCRIPT		# Support #!
-options 	EXEC_AOUT		# a.out format executables
+options 	EXEC_ELF32		# 32-bit ELF executables
 
 mainbus0	at root
 
