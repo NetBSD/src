@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)from.c	5.7 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: from.c,v 1.3 1994/01/25 08:44:44 deraadt Exp $";
+static char rcsid[] = "$Id: from.c,v 1.4 1994/09/15 02:02:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -100,11 +100,12 @@ main(argc, argv)
 					exit(1);
 				}
 				(void)sprintf(file = buf, "%s/%s",
-					      _PATH_MAILDIR, pwd->pw_name);
+				    _PATH_MAILDIR, pwd->pw_name);
 			}
+		} else {
+			(void)sprintf(buf, "%s/%s", _PATH_MAILDIR, file);
+			file = buf;
 		}
-		else
-			(void)sprintf(file = buf, "%s/%s", _PATH_MAILDIR, file);
 	}
 	if (!freopen(file, "r", stdin)) {
 		(void)fprintf(stderr, "from: can't read %s.\n", file);
