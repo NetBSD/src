@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/10/20 11:54:26 ragge Exp $
+#	$NetBSD: Makefile,v 1.16 1998/02/28 12:10:13 ragge Exp $
 #
 
 INCPATH=-I. -I../../../../.. -I../../../.. -I../../.. -I../.. -I../../../lib/libsa
@@ -9,9 +9,9 @@ AS=	as
 BINOWN=	bin
 BINGRP=	bin
 S=      ../../..
-RELOC=	100000
-XXRPB=	0F4240
-CFLAGS+=-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC} -DXXRPB=0x$(XXRPB)
+RELOC=	200000
+XXRPB=	1F4240
+CFLAGS+=-O ${INCPATH} -DSTANDALONE -DXXRPB=0x$(XXRPB)
 
 DEVS=	autoconf.o hp.o ra.o tmscp.o ctu.o mfm.o rom.o romread.o \
 	scsi_low.o scsi_hi.o sd.o netio.o if_le.o
@@ -50,7 +50,7 @@ srt0.o:	srt0.s
 # 
 
 xxboot:	start.o bootxx.o romread.o libsvax.a ${SALIB}
-	ld -N -Ttext ${RELOC} -o a.out start.o bootxx.o romread.o ${LIBS}
+	ld -N -Ttext 100000 -o a.out start.o bootxx.o romread.o ${LIBS}
 	@strip a.out
 	@size a.out
 	@dd if=a.out of=xxboot bs=32 skip=1
