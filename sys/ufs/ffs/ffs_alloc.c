@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.74 2004/01/13 13:38:18 soren Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.74.2.1 2004/04/27 17:55:26 jdc Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.74 2004/01/13 13:38:18 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.74.2.1 2004/04/27 17:55:26 jdc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1266,6 +1266,10 @@ gotit:
 	    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
 		int cylno;
 		cylno = old_cbtocylno(fs, bno);
+		KASSERT(cylno >= 0);
+		KASSERT(cylno < fs->fs_old_ncyl);
+		KASSERT(old_cbtorpos(fs, bno) >= 0);
+		KASSERT(fs->fs_old_nrpos == 0 || old_cbtorpos(fs, bno) < fs->fs_old_nrpos);
 		ufs_add16(old_cg_blks(fs, cgp, cylno, needswap)[old_cbtorpos(fs, bno)], -1,
 		    needswap);
 		ufs_add32(old_cg_blktot(cgp, needswap)[cylno], -1, needswap);
@@ -1582,6 +1586,10 @@ ffs_blkfree(ip, bno, size)
 		if ((fs->fs_magic == FS_UFS1_MAGIC) &&
 		    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
 			i = old_cbtocylno(fs, cgbno);
+			KASSERT(i >= 0);
+			KASSERT(i < fs->fs_old_ncyl);
+			KASSERT(old_cbtorpos(fs, cgbno) >= 0);
+			KASSERT(fs->fs_old_nrpos == 0 || old_cbtorpos(fs, cgbno) < fs->fs_old_nrpos);
 			ufs_add16(old_cg_blks(fs, cgp, i, needswap)[old_cbtorpos(fs, cgbno)], 1,
 			    needswap);
 			ufs_add32(old_cg_blktot(cgp, needswap)[i], 1, needswap);
@@ -1629,6 +1637,10 @@ ffs_blkfree(ip, bno, size)
 			if ((fs->fs_magic == FS_UFS1_MAGIC) &&
 			    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
 				i = old_cbtocylno(fs, bbase);
+				KASSERT(i >= 0);
+				KASSERT(i < fs->fs_old_ncyl);
+				KASSERT(old_cbtorpos(fs, bbase) >= 0);
+				KASSERT(fs->fs_old_nrpos == 0 || old_cbtorpos(fs, bbase) < fs->fs_old_nrpos);
 				ufs_add16(old_cg_blks(fs, cgp, i, needswap)[old_cbtorpos(fs,
 				    bbase)], 1, needswap);
 				ufs_add32(old_cg_blktot(cgp, needswap)[i], 1, needswap);
