@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.28 1999/01/08 19:22:35 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.29 1999/02/17 01:25:32 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1796,7 +1796,7 @@ ess_malloc(addr, size, pool, flags)
 {
 	struct ess_softc *sc = addr;
 
-	return isa_malloc(sc->sc_ic, 4, size, pool, flags);
+	return isa_malloc(sc->sc_ic, min(sc->sc_in.drq, sc->sc_out.drq), size, pool, flags);
 }
 
 void
