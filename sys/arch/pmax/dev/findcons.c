@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.6 1998/04/19 01:27:02 jonathan Exp $	*/
+/*	$NetBSD: findcons.c,v 1.7 1998/05/23 18:21:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.6 1998/04/19 01:27:02 jonathan Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.7 1998/05/23 18:21:43 matt Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ struct consdev cd;
 #include <pmax/dev/xcfbvar.h>
 #endif
 
+#define NWS	 (NXCFB + NPM + NMFB + NSFB + NCFB)
 /*
  *  XXX Major device numbers for possible console devices.
  */
@@ -154,7 +155,7 @@ dc_ds_kbd(kbd_slot)
 	int kbd_slot;
 {
 
-#if NDC_DS > 0
+#if NDC_DS > 0 && NWS > 0
 	if (systype == DS_PMAX) {
 		cd.cn_getc = LKgetc;
 		lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
@@ -171,7 +172,7 @@ int
 dc_ioasic_kbd(kbd_slot)
 	int kbd_slot;
 {
-#if NDC_IOASIC > 0
+#if NDC_IOASIC > 0 && NWS > 0
 	if (kbd_slot == 7) {
 		cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 		cd.cn_getc = LKgetc;
@@ -191,7 +192,7 @@ int
 scc_kbd(kbd_slot)
 	int kbd_slot;
 {
-#if NSCC > 0
+#if NSCC > 0 && NWS > 0
 	if (kbd_slot == 3) {
 		cd.cn_dev =  makedev(SCCDEV, SCCKBD_PORT);
 		lk_divert(sccGetc, makedev(SCCDEV, SCCKBD_PORT));
