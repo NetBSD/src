@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.76 1999/10/21 14:37:58 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.77 1999/11/28 20:04:22 bouyer Exp $ */
 
 
 /*
@@ -312,17 +312,17 @@ wdcattach(chp)
 			continue;
 
 		/* Issue a IDENTIFY command, to try to detect slave ghost */
-		if (ata_get_params(&chp->ch_drive[i], AT_POLL, &params) ==
-		    CMD_OK) {
+		error = ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
+		if (error == CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
 			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
 			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
 		} else {
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
-			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed\n",
+			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed (%d)\n",
 			    chp->wdc->sc_dev.dv_xname,
-			    chp->channel, i), DEBUG_PROBE);
+			    chp->channel, i, error), DEBUG_PROBE);
 			if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) == 0)
 				continue;
 			/*
@@ -821,10 +821,10 @@ wdcwait(chp, mask, bits, timeout)
 			break;
 		if (++time > timeout) {
 			WDCDEBUG_PRINT(("wdcwait: timeout, status %x "
-			    "error %x\n", status,
+			    "error %x (mask 0x%x bits 0x%x)\n", status,
 			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-				wd_error)),
-			    DEBUG_STATUS);
+				wd_error), mask, bits),
+			    DEBUG_STATUS | DEBUG_PROBE);
 			return -1;
 		}
 		delay(WDCDELAY);
