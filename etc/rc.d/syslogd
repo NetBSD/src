@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: syslogd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: syslogd,v 1.2 2000/04/30 13:23:35 lukem Exp $
 #
 
 # PROVIDE: syslogd
@@ -14,6 +14,7 @@ command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/syslog.conf"
 start_precmd="syslogd_precmd"
+extra_commands="reload"
 
 syslogd_precmd()
 {
@@ -26,4 +27,4 @@ syslogd_precmd()
 	return 0
 }
 
-run_rc_command "$1" "reload"
+run_rc_command "$1"
