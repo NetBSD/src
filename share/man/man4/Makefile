@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.306 2003/12/14 01:38:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.307 2004/01/07 14:34:09 augustss Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 adw.4 agp.4 \
@@ -89,6 +89,9 @@ MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 stf.4
 MAN+=	daic.4 isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \
 	ifpci.4 isic.4 iwic.4 isdncapi.4 iavc.4
 
+# Sandburst devices
+MAN+= sbpt.4 sbqeif.4 sbthin.4
+
 MLINKS+=bha.4 bt.4
 MLINKS+=cardbus.4 cbb.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
@@ -106,6 +109,7 @@ MLINKS+=ata.4 atabus.4
 MLINKS+=scsi.4 atapi.4
 MLINKS+=mii.4 phy.4
 MLINKS+=usb.4 uhub.4
+MLINKS+=usb.4 usbtask.4
 MLINKS+=url.4 urlphy.4
 MLINKS+=ntwoc.4 ntwo.4
 MLINKS+=scsi.4 scsibus.4
