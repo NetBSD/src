@@ -350,6 +350,44 @@ the current time and the time that the lease expires.
 Any number between zero and the maximum representable size may be
 specified as a numeric expression.
 .RE
+.SH
+FUNCTIONS
+Functions may be defined with the \fBdefine\fR statement.  A function
+definition may occur anywhere that regular statement may appear.
+Functions occupy the same namespace as variables, and obey the same
+scoping rules.
+.PP
+.nf
+define set-hostname(prefix) {
+  option host-name
+    concat (prefix, binary-to-ascii (16, 32, "", leased-address));
+}
+.fi
+.PP
+A function may return a value when used in an expression with the
+\fBreturn\fR statement.  A function with no return statement has a
+value of null.
+.PP
+.nf
+define make-hostname(prefix) {
+  return concat (prefix, binary-to-ascii (16, 32, "", leased-address));
+}
+
+option host-name make-hostname("dyn-");
+.fi
+.PP
+.RE
+.SH REFERENCE: LOGGING
+Logging statements may be used to send information to the standard logging
+channels.  A logging statement includes an optional priority (\fBfatal\fR,
+\fBerror\fR, \fBinfo\fR, or \fBdebug\fR), and a data expression.
+.PP
+.B log (\fIpriority\fB, \fIdata-expr\FB)\fR
+.PP
+Logging statements take only a single data expression argument, so if you
+want to output multiple data values, you will need to use the \fBconcat\fR
+operator to concatenate them.
+.RE
 .SH REFERENCE: DYNAMIC DNS UPDATES
 .PP
 The DHCP client and server have the ability to dynamically update the

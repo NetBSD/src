@@ -139,6 +139,7 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 	isc_result_t status;
 	int bytes_copied = 0;
 	unsigned copy_len;
+	int sig_flags = SIG_MODE_UPDATE;
 	omapi_connection_object_t *c;
 
 	/* Make sure len is valid. */
@@ -177,6 +178,17 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 		if (copy_len > (len - bytes_copied))
 			copy_len = len - bytes_copied;
 
+		if (c -> out_key) {
+			if (!c -> out_context)
+				sig_flags |= SIG_MODE_INIT;
+			status = omapi_connection_sign_data
+				(sig_flags, c -> out_key, &c -> out_context,
+				 &bufp [bytes_copied], copy_len,
+				 (omapi_typed_data_t **)0);
+			if (status != ISC_R_SUCCESS)
+				return status;
+		}
+
 		memcpy (&buffer -> buf [buffer -> tail],
 			&bufp [bytes_copied], copy_len);
 		buffer -> tail += copy_len;
@@ -200,7 +212,9 @@ isc_result_t omapi_connection_copyout (unsigned char *buf,
 	unsigned first_byte;
 	omapi_buffer_t *buffer;
 	unsigned char *bufp;
+	int sig_flags = SIG_MODE_UPDATE;
 	omapi_connection_object_t *c;
+	isc_result_t status;
 
 	if (!h || h -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
@@ -231,6 +245,21 @@ isc_result_t omapi_connection_copyout (unsigned char *buf,
 			if (bytes_this_copy > bytes_remaining)
 				bytes_this_copy = bytes_remaining;
 			if (bufp) {
+				if (c -> in_key) {
+					if (!c -> in_context)
+						sig_flags |= SIG_MODE_INIT;
+					status = omapi_connection_sign_data
+						(sig_flags,
+						 c -> in_key,
+						 &c -> in_context,
+						 (unsigned char *)
+						 &buffer -> buf [first_byte],
+						 bytes_this_copy,
+						 (omapi_typed_data_t **)0);
+					if (status != ISC_R_SUCCESS)
+						return status;
+				}
+
 				memcpy (bufp, &buffer -> buf [first_byte],
 					bytes_this_copy);
 				bufp += bytes_this_copy;

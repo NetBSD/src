@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.8 2000/07/08 20:40:23 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.1.1.9 2000/09/04 23:10:15 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1137,7 +1137,7 @@ int parse_base64 (data, cfile)
 {
 	enum dhcp_token token;
 	const char *val;
-	int i, j;
+	int i, j, k;
 	unsigned acc = 0;
 	static unsigned char
 		from64 [] = {64, 64, 64, 64, 64, 64, 64, 64,  /*  \"#$%&' */
@@ -1152,9 +1152,15 @@ int parse_base64 (data, cfile)
 			     33, 34, 35, 36, 37, 38, 39, 40,  /* hijklmno */
 			     41, 42, 43, 44, 45, 46, 47, 48,  /* pqrstuvw */
 			     59, 50, 51, 64, 64, 64, 64, 64}; /* xyz{|}~  */
+	struct string_list *bufs = (struct string_list *)0,
+			   *last = (struct string_list *)0,
+			   *t;
+	int cc = 0;
+	int terminated = 0;
 	
-	token = next_token (&val, cfile);
+	token = peek_token (&val, cfile);
 	if (token == STRING) {
+		token = next_token (&val, cfile);
 		data -> len = strlen (val) + 1;
 		if (!buffer_allocate (&data -> buffer, data -> len, MDL)) {
 			parse_warn (cfile, "can't allocate string buffer");
@@ -1166,7 +1172,30 @@ int parse_base64 (data, cfile)
 		return 1;
 	}
 
-	data -> len = strlen (val);
+	/* It's possible for a + or a / to cause a base64 quantity to be
+	   tokenized into more than one token, so we have to parse them all
+	   in before decoding. */
+	do {
+		int l;
+
+		token = next_token (&val, cfile);
+		l = strlen (val);
+		t = dmalloc (l + sizeof *t, MDL);
+		if (!t)
+			log_fatal ("no memory for base64 buffer.");
+		memset (t, 0, (sizeof *t) - 1);
+		strcpy (t -> string, val);
+		cc += l;
+		if (last)
+			last -> next = t;
+		else
+			bufs = t;
+		last = t;
+		token = peek_token (&val, cfile);
+	} while (token == NUMBER_OR_NAME || token == NAME || token == EQUAL ||
+		 token == NUMBER || token == PLUS || token == SLASH);
+
+	data -> len = cc;
 	data -> len = (data -> len * 3) / 4;
 	if (!buffer_allocate (&data -> buffer, data -> len, MDL)) {
 		parse_warn (cfile, "can't allocate buffer for base64 data.");
@@ -1175,43 +1204,71 @@ int parse_base64 (data, cfile)
 		return 0;
 	}
 		
-	j = 0;
-	for (i = 0; val [i] != '=' && val [i]; i++) {
-		unsigned foo = val [i];
+	j = k = 0;
+	for (t = bufs; t; t = t -> next) {
+	    for (i = 0; t -> string [i]; i++) {
+		unsigned foo = t -> string [i];
+		if (terminated && foo != '=') {
+			parse_warn (cfile,
+				    "stuff after base64 '=' terminator: %s.",
+				    &t -> string [i]);
+			goto bad;
+		}
 		if (foo < ' ' || foo > 'z') {
 		      bad64:
 			parse_warn (cfile,
-				    "invalid base64 character %d.", val [i]);
+				    "invalid base64 character %d.",
+				    t -> string [i]);
+		      bad:
 			data_string_forget (data, MDL);
-			return 0;
+			goto out;
 		}
-		foo = from64 [foo - ' '];
-		if (foo == 64)
-			goto bad64;
-		acc = (acc << 6) + foo;
-		switch (i % 4) {
-		      case 0:
-			break;
-		      case 1:
-			data -> buffer -> data [j++] = (acc >> 4);
-			acc = acc & 0x0f;
-			break;
-
-		      case 2:
-			data -> buffer -> data [j++] = (acc >> 2);
-			acc = acc & 0x03;
-			break;
-		      case 3:
-			data -> buffer -> data [j++] = acc;
-			acc = 0;
-			break;
+		if (foo == '=')
+			terminated = 1;
+		else {
+			foo = from64 [foo - ' '];
+			if (foo == 64)
+				goto bad64;
+			acc = (acc << 6) + foo;
+			switch (k % 4) {
+			      case 0:
+				break;
+			      case 1:
+				data -> buffer -> data [j++] = (acc >> 4);
+				acc = acc & 0x0f;
+				break;
+				
+			      case 2:
+				data -> buffer -> data [j++] = (acc >> 2);
+				acc = acc & 0x03;
+				break;
+			      case 3:
+				data -> buffer -> data [j++] = acc;
+				acc = 0;
+				break;
+			}
+		}
+		k++;
+	    }
+	}
+	if (k % 4) {
+		if (acc) {
+			parse_warn (cfile,
+				    "partial base64 value left over: %d.",
+				    acc);
 		}
 	}
-	if (i % 4)
-		parse_warn (cfile, "partial base64 value left over: %d.", acc);
 	data -> len = j;
 	data -> data = data -> buffer -> data;
-	return 1;
+      out:
+	for (t = bufs; t; t = last) {
+		last = t -> next;
+		dfree (t, MDL);
+	}
+	if (data -> len)
+		return 1;
+	else
+		return 0;
 }
 
 
@@ -1650,6 +1707,92 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		parse_semi (cfile);
 		break;
 
+	      case RETURN:
+		token = next_token (&val, cfile);
+
+		if (!executable_statement_allocate (result, MDL))
+			log_fatal ("no memory for return statement.");
+		(*result) -> op = return_statement;
+
+		if (!parse_expression (&(*result) -> data.retval,
+				       cfile, lose, context_data,
+				       (struct expression **)0, expr_none)) {
+			if (!*lose)
+				parse_warn (cfile,
+					    "expecting data expression.");
+			else
+				*lose = 1;
+			skip_to_semi (cfile);
+			executable_statement_dereference (result, MDL);
+			return 0;
+		}
+		parse_semi (cfile);
+		break;
+
+	      case LOG:
+		token = next_token (&val, cfile);
+
+		if (!executable_statement_allocate (result, MDL))
+			log_fatal ("no memory for log statement.");
+		(*result) -> op = log_statement;
+
+		token = next_token (&val, cfile);
+		if (token != LPAREN) {
+			parse_warn (cfile, "left parenthesis expected.");
+			skip_to_semi (cfile);
+			*lose = 1;
+			return 0;
+		}
+
+		token = peek_token (&val, cfile);
+		i = 1;
+		if (token == FATAL) {
+			(*result) -> data.log.priority = log_priority_fatal;
+		} else if (token == ERROR) {
+			(*result) -> data.log.priority = log_priority_error;
+		} else if (token == TOKEN_DEBUG) {
+			(*result) -> data.log.priority = log_priority_debug;
+		} else if (token == INFO) {
+			(*result) -> data.log.priority = log_priority_info;
+		} else {
+			(*result) -> data.log.priority = log_priority_debug;
+			i = 0;
+		}
+		if (i) {
+			token = next_token (&val, cfile);
+			token = next_token (&val, cfile);
+			if (token != COMMA) {
+				parse_warn (cfile, "comma expected.");
+				skip_to_semi (cfile);
+				*lose = 1;
+				return 0;
+			}
+		}
+
+		if (!(parse_data_expression
+		      (&(*result) -> data.log.expr, cfile, lose))) {
+			skip_to_semi (cfile);
+			*lose = 1;
+			return 0;
+		}
+
+		token = next_token (&val, cfile);
+		if (token != RPAREN) {
+			parse_warn (cfile, "right parenthesis expected.");
+			skip_to_semi (cfile);
+			*lose = 1;
+			return 0;
+		}
+
+		token = next_token (&val, cfile);
+		if (token != SEMI) {
+			parse_warn (cfile, "semicolon expected.");
+			skip_to_semi (cfile);
+			*lose = 1;
+			return 0;
+		}
+		break;
+			
 		/* Not really a statement, but we parse it here anyway
 		   because it's appropriate for all DHCP agents with
 		   parsers. */
@@ -1661,6 +1804,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		zone -> name = parse_host_name (cfile);
 		if (!zone -> name) {
 		      badzone:
+			parse_warn (cfile, "expecting hostname.");
 			*lose = 1;
 			skip_to_semi (cfile);
 			dns_zone_dereference (&zone, MDL);
@@ -1693,7 +1837,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			return 0;
 		}
 		return 1;
-			
+
 	      default:
 		if (config_universe && is_identifier (token)) {
 			option = (struct option *)0;
@@ -1706,6 +1850,31 @@ int parse_executable_statement (result, cfile, lose, case_context)
 					 supersede_option_statement);
 			}
 		}
+
+		if (token == NUMBER_OR_NAME || token == NAME) {
+			/* This is rather ugly.  Since function calls are
+			   data expressions, fake up an eval statement. */
+			if (!executable_statement_allocate (result, MDL))
+				log_fatal ("no memory for eval statement.");
+			(*result) -> op = eval_statement;
+
+			if (!parse_expression (&(*result) -> data.eval,
+					       cfile, lose, context_data,
+					       (struct expression **)0,
+					       expr_none)) {
+				if (!*lose)
+					parse_warn (cfile, "expecting "
+						    "function call.");
+				else
+					*lose = 1;
+				skip_to_semi (cfile);
+				executable_statement_dereference (result, MDL);
+				return 0;
+			}
+			parse_semi (cfile);
+			break;
+		}
+
 		*lose = 0;
 		return 0;
 	}
@@ -1806,7 +1975,8 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
 			    skip_to_semi (cfile);
 			    return 0;
 		    }
-		    if (tsig_key_lookup (&zone -> key, val) != ISC_R_SUCCESS)
+		    if (omapi_auth_key_lookup_name (&zone -> key, val) !=
+			ISC_R_SUCCESS)
 			    parse_warn (cfile, "unknown key %s", val);
 		    if (!parse_semi (cfile))
 			    return 0;
@@ -1839,7 +2009,8 @@ int parse_key (struct parse *cfile)
 	int token;
 	const char *val;
 	int done = 0;
-	struct tsig_key *key;
+	struct auth_key *key;
+	struct data_string ds;
 	isc_result_t status;
 
 	token = next_token (&val, cfile);
@@ -1848,8 +2019,8 @@ int parse_key (struct parse *cfile)
 		skip_to_semi (cfile);
 		return 0;
 	}
-	key = (struct tsig_key *)0;
-	if (!tsig_key_allocate (&key, MDL))
+	key = (struct auth_key *)0;
+	if (omapi_auth_key_new (&key, MDL) != ISC_R_SUCCESS)
 		log_fatal ("no memory for tsig key");
 	key -> name = dmalloc (strlen (val) + 1, MDL);
 	if (!key -> name)
@@ -1883,13 +2054,23 @@ int parse_key (struct parse *cfile)
 			break;
 
 		      case SECRET:
-			if (key -> key.buffer) {
+			if (key -> key) {
 				parse_warn (cfile, "key %s: too many secrets",
 					    key -> name);
 				goto rbad;
 			}
-			if (!parse_base64 (&key -> key, cfile))
+
+			memset (&ds, 0, sizeof(ds));
+			if (!parse_base64 (&ds, cfile))
 				goto rbad;
+			status = omapi_data_string_new (&key -> key, ds.len,
+							MDL);
+			if (status != ISC_R_SUCCESS)
+				goto rbad;
+			memcpy (key -> key -> value,
+				ds.buffer -> data, ds.len);
+			data_string_forget (&ds, MDL);
+
 			if (!parse_semi (cfile))
 				goto rbad;
 			break;
@@ -1910,7 +2091,7 @@ int parse_key (struct parse *cfile)
 		token = next_token (&val, cfile);
 
 	/* Remember the key. */
-	status = enter_tsig_key (key);
+	status = omapi_auth_key_enter (key);
 	if (status != ISC_R_SUCCESS) {
 		parse_warn (cfile, "tsig key %s: %s",
 			    key -> name, isc_result_totext (status));
@@ -1921,7 +2102,7 @@ int parse_key (struct parse *cfile)
       rbad:
 	skip_to_rbrace (cfile, 1);
       bad:
-	tsig_key_dereference (&key, MDL);
+	omapi_auth_key_dereference (&key, MDL);
 	return 0;
 }
 /*
@@ -3526,6 +3707,18 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 
 	      case PERCENT:
 		next_op = expr_remainder;
+		break;
+
+	      case AMPERSAND:
+		next_op = expr_binary_and;
+		break;
+
+	      case PIPE:
+		next_op = expr_binary_or;
+		break;
+
+	      case CARET:
+		next_op = expr_binary_xor;
 		break;
 
 	      default:

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: upf.c,v 1.1.1.9 2000/06/10 18:04:53 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: upf.c,v 1.1.1.10 2000/09/04 23:10:17 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -265,28 +265,33 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct sockaddr_in *to;
 	struct hardware *hto;
 {
-	unsigned bufp = 0;
-	unsigned char buf [256];
-	struct iovec iov [2];
+	unsigned hbufp = 0, ibufp = 0;
+	double hw [4];
+	double ip [32];
+	struct iovec iov [3];
 	int result;
+	int fudge;
 
 	if (!strcmp (interface -> name, "fallback"))
 		return send_fallback (interface, packet, raw,
 				      len, from, to, hto);
 
 	/* Assemble the headers... */
-	assemble_hw_header (interface, buf, &bufp, hto);
-	assemble_udp_ip_header (interface, buf, &bufp, from.s_addr,
+	assemble_hw_header (interface, (unsigned char *)hw, &hbufp, hto);
+	assemble_udp_ip_header (interface,
+				(unsigned char *)ip, &ibufp, from.s_addr,
 				to -> sin_addr.s_addr, to -> sin_port,
 				(unsigned char *)raw, len);
 
 	/* Fire it off */
-	iov [0].iov_base = (char *)buf;
-	iov [0].iov_len = bufp;
-	iov [1].iov_base = (char *)raw;
-	iov [1].iov_len = len;
+	iov [0].iov_base = ((char *)hw);
+	iov [0].iov_len = hbufp;
+	iov [1].iov_base = ((char *)ip);
+	iov [1].iov_len = ibufp;
+	iov [2].iov_base = (char *)raw;
+	iov [2].iov_len = len;
 
-	result = writev(interface -> wfdesc, iov, 2);
+	result = writev(interface -> wfdesc, iov, 3);
 	if (result < 0)
 		log_error ("send_packet: %m");
 	return result;
@@ -348,6 +353,12 @@ int can_unicast_without_arp (ip)
 }
 
 int can_receive_unicast_unconfigured (ip)
+	struct interface_info *ip;
+{
+	return 1;
+}
+
+int supports_multiple_interfaces (ip)
 	struct interface_info *ip;
 {
 	return 1;

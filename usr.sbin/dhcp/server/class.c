@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: class.c,v 1.1.1.2 2000/06/10 18:05:30 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: class.c,v 1.1.1.3 2000/09/04 23:10:37 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 
 #endif /* not lint */
 
@@ -84,7 +84,8 @@ void classification_setup ()
 void classify_client (packet)
 	struct packet *packet;
 {
-	execute_statements (packet, (struct lease *)0, packet -> options,
+	execute_statements ((struct binding_value **)0,
+			    packet, (struct lease *)0, packet -> options,
 			    (struct option_state *)0, &global_scope,
 			    default_classification_rules);
 }

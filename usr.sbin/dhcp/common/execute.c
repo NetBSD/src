@@ -43,23 +43,24 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: execute.c,v 1.1.1.4 2000/07/08 20:40:19 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: execute.c,v 1.1.1.5 2000/09/04 23:10:11 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
 
-int execute_statements (packet, lease, in_options, out_options, scope,
+int execute_statements (result, packet, lease, in_options, out_options, scope,
 			statements)
+	struct binding_value **result;
 	struct packet *packet;
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *out_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct executable_statement *statements;
 {
 	struct executable_statement *r, *e, *next;
-	int result;
+	int rc;
 	int status;
 	unsigned long num;
 	struct binding_scope *outer;
@@ -74,7 +75,7 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 	next = (struct executable_statement *)0;
 	e = (struct executable_statement *)0;
 	executable_statement_reference (&r, statements, MDL);
-	while (r) {
+	while (r && !(result && *result)) {
 		if (r -> next)
 			executable_statement_reference (&next, r -> next, MDL);
 		switch (r -> op) {
@@ -82,8 +83,9 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: statements");
 #endif
-			status = execute_statements (packet, lease, in_options,
-						     out_options, scope,
+			status = execute_statements (result, packet, lease,
+						     in_options, out_options,
+						     scope,
 						     r -> data.statements);
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: statements returns %d", status);
@@ -147,7 +149,7 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 #endif
 			if (status) {
 				if (!(execute_statements
-				      (packet, lease,
+				      (result, packet, lease,
 				       in_options, out_options, scope, e))) {
 					executable_statement_dereference
 						(&e, MDL);
@@ -163,21 +165,22 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 			break;
 
 		      case if_statement:
-			status = evaluate_boolean_expression
-				(&result, packet, lease, in_options,
-				 out_options, scope, r -> data.ie.expr);
+			status = (evaluate_boolean_expression
+				  (&rc, packet, lease, in_options,
+				   out_options, scope, r -> data.ie.expr));
 			
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: if %s", (status
-					      ? (result ? "true" : "false")
+					      ? (rc ? "true" : "false")
 					      : "NULL"));
 #endif
 			/* XXX Treat NULL as false */
 			if (!status)
-				result = 0;
+				rc = 0;
 			if (!execute_statements
-			    (packet, lease, in_options, out_options, scope,
-			     result ? r -> data.ie.true : r -> data.ie.false))
+			    (result, packet, lease,
+			     in_options, out_options, scope,
+			     rc ? r -> data.ie.true : r -> data.ie.false))
 				return 0;
 			break;
 
@@ -188,6 +191,16 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 				 out_options, scope, r -> data.eval);
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: evaluate: %s",
+				   (status ? "succeeded" : "failed"));
+#endif
+			break;
+
+		      case return_statement:
+			status = evaluate_expression
+				(result, packet, lease, in_options,
+				 out_options, scope, r -> data.retval);
+#if defined (DEBUG_EXPRESSIONS)
+			log_debug ("exec: return: %s",
 				   (status ? "succeeded" : "failed"));
 #endif
 			break;
@@ -244,7 +257,22 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 			break;
 
 		      case set_statement:
-			binding = find_binding (scope, r -> data.set.name);
+		      case define_statement:
+			if (!scope) {
+				log_error ("set %s: no scope",
+					   r -> data.set.name);
+				status = 0;
+				break;
+			}
+			if (!*scope) {
+			    if (!binding_scope_allocate (scope, MDL)) {
+				log_error ("set %s: can't allocate scope",
+					   r -> data.set.name);
+				status = 0;
+				break;
+			    }
+			}
+			binding = find_binding (*scope, r -> data.set.name);
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: set %s", r -> data.set.name);
 #endif
@@ -259,15 +287,8 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 				    if (binding -> name) {
 					strcpy (binding -> name,
 						r -> data.set.name);
-					if (lease) {
-					    binding -> next =
-						    lease -> scope.bindings;
-					    lease -> scope.bindings = binding;
-					} else {
-					    binding -> next =
-						    global_scope.bindings;
-					    global_scope.bindings = binding;
-					}
+					binding -> next = (*scope) -> bindings;
+					(*scope) -> bindings = binding;
 				    } else {
 				       badalloc:
 					dfree (binding, MDL);
@@ -279,10 +300,27 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 				if (binding -> value)
 					binding_value_dereference
 						(&binding -> value, MDL);
-				status = (evaluate_expression
-					  (&binding -> value, packet, lease,
-					   in_options, out_options,
-					   scope, r -> data.set.expr));
+				if (r -> op == set_statement) {
+					status = (evaluate_expression
+						  (&binding -> value, packet,
+						   lease, in_options,
+						   out_options, scope,
+						   r -> data.set.expr));
+				} else {
+				    if (!(binding_value_allocate
+					  (&binding -> value, MDL))) {
+					    dfree (binding, MDL);
+					    binding = (struct binding *)0;
+				    }
+				    if (binding -> value) {
+				        binding -> value -> type =
+						binding_function;
+					(fundef_reference
+					 (&binding -> value -> value.fundef,
+					  r -> data.set.expr -> data.func,
+					  MDL));
+				    }
+				}
 			}
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: set %s%s", r -> data.set.name,
@@ -291,7 +329,11 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 			break;
 
 		      case unset_statement:
-			binding = find_binding (scope, r -> data.unset);
+			if (!scope || !*scope) {
+				status = 0;
+				break;
+			}
+			binding = find_binding (*scope, r -> data.unset);
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: unset %s", r -> data.unset);
 #endif
@@ -357,13 +399,50 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 				e = e -> data.let.statements;
 				goto next_let;
 			} else if (ns) {
-				ns -> outer = scope;
+				if (scope && *scope)
+				    	binding_scope_reference (&ns -> outer,
+								 *scope, MDL);
 				execute_statements
-				      (packet, lease, in_options, out_options,
-				       ns, e -> data.let.statements);
+				      (result, packet, lease,
+				       in_options, out_options,
+				       &ns, e -> data.let.statements);
 			}
 			if (ns)
 				binding_scope_dereference (&ns, MDL);
+			break;
+
+		      case log_statement:
+			memset (&ds, 0, sizeof ds);
+			status = (evaluate_data_expression
+				  (&ds, packet, lease, in_options,
+				   out_options, scope, r -> data.log.expr));
+			
+#if defined (DEBUG_EXPRESSIONS)
+			log_debug ("exec: log");
+#endif
+
+			if (status) {
+				switch (r -> data.log.priority) {
+				case log_priority_fatal:
+					log_fatal ("%.*s", (int)ds.len,
+						   ds.buffer -> data);
+					break;
+				case log_priority_error:
+					log_error ("%.*s", (int)ds.len,
+						   ds.buffer -> data);
+					break;
+				case log_priority_debug:
+					log_debug ("%.*s", (int)ds.len,
+						   ds.buffer -> data);
+					break;
+				case log_priority_info:
+					log_info ("%.*s", (int)ds.len,
+						  ds.buffer -> data);
+					break;
+				}
+				data_string_forget (&ds, MDL);
+			}
+
 			break;
 
 		      default:
@@ -386,13 +465,14 @@ int execute_statements (packet, lease, in_options, out_options, scope,
    specific scopes, so we recursively traverse the scope list, executing
    the most outer scope first. */
 
-void execute_statements_in_scope (packet, lease, in_options, out_options,
-				  scope, group, limiting_group)
+void execute_statements_in_scope (result, packet, lease, in_options,
+				  out_options, scope, group, limiting_group)
+	struct binding_value **result;
 	struct packet *packet;
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *out_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct group *group;
 	struct group *limiting_group;
 {
@@ -431,11 +511,11 @@ void execute_statements_in_scope (packet, lease, in_options, out_options,
 	}
 
 	if (group -> next)
-		execute_statements_in_scope (packet, lease,
+		execute_statements_in_scope (result, packet, lease,
 					     in_options, out_options, scope,
 					     group -> next, limiting_group);
-	execute_statements (packet, lease, in_options, out_options, scope,
-			    group -> statements);
+	execute_statements (result, packet, lease, in_options, out_options,
+			    scope, group -> statements);
 }
 
 /* Dereference or free any subexpressions of a statement being freed. */
@@ -519,6 +599,12 @@ int executable_statement_dereference (ptr, file, line)
 		break;
 
 	      case eval_statement:
+		if ((*ptr) -> data.eval)
+			expression_dereference (&(*ptr) -> data.eval,
+						file, line);
+		break;
+
+	      case return_statement:
 		if ((*ptr) -> data.eval)
 			expression_dereference (&(*ptr) -> data.eval,
 						file, line);
@@ -675,6 +761,11 @@ void write_statements (file, statements, indent)
 			fprintf (file, ";");
 			break;
 
+		      case return_statement:
+			indent_spaces (file, indent);
+			fprintf (file, "return;");
+			break;
+
 		      case add_statement:
 			indent_spaces (file, indent);
 			fprintf (file, "add \"%s\"", r -> data.add -> name);
@@ -771,7 +862,7 @@ int find_matching_case (struct executable_statement **ep,
 			struct packet *packet, struct lease *lease,
 			struct option_state *in_options,
 			struct option_state *out_options,
-			struct binding_scope *scope,
+			struct binding_scope **scope,
 			struct expression *expr,
 			struct executable_statement *stmt)
 {

@@ -51,7 +51,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.1.1.11 2000/07/20 05:49:35 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.1.1.12 2000/09/04 23:10:15 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -131,9 +131,12 @@ int if_register_socket (info)
 			(char *)&flag, sizeof flag) < 0)
 		log_fatal ("Can't set SO_REUSEADDR option on dhcp socket: %m");
 
-	/* Set the BROADCAST option so that we can broadcast DHCP responses. */
-	if (setsockopt (sock, SOL_SOCKET, SO_BROADCAST,
-			(char *)&flag, sizeof flag) < 0)
+	/* Set the BROADCAST option so that we can broadcast DHCP responses.
+	   We shouldn't do this for fallback devices, and we can detect that
+	   a device is a fallback because it has no ifp structure. */
+	if (info -> ifp &&
+	    (setsockopt (sock, SOL_SOCKET, SO_BROADCAST,
+			 (char *)&flag, sizeof flag) < 0))
 		log_fatal ("Can't set SO_BROADCAST option on dhcp socket: %m");
 
 	/* Bind the socket to this interface's IP address. */
@@ -328,6 +331,16 @@ int can_receive_unicast_unconfigured (ip)
 	struct interface_info *ip;
 {
 #if defined (SOCKET_CAN_RECEIVE_UNICAST_UNCONFIGURED)
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+int supports_multiple_interfaces (ip)
+	struct interface_info *ip;
+{
+#if defined (SO_BINDTODEVICE)
 	return 1;
 #else
 	return 0;

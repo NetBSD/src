@@ -53,6 +53,7 @@ omapi_object_type_t *omapi_type_protocol_listener;
 omapi_object_type_t *omapi_type_waiter;
 omapi_object_type_t *omapi_type_remote;
 omapi_object_type_t *omapi_type_message;
+omapi_object_type_t *omapi_type_auth_key;
 
 omapi_object_type_t *omapi_object_types;
 int omapi_object_type_count;
@@ -61,6 +62,8 @@ static int ot_max;
 isc_result_t omapi_init (void)
 {
 	isc_result_t status;
+
+	dst_init();
 
 	/* Register all the standard object types... */
 	status = omapi_object_type_register (&omapi_type_connection,
@@ -156,6 +159,19 @@ isc_result_t omapi_init (void)
 					     omapi_waiter_signal_handler, 0,
 					     0, 0, 0, 0, 0, 0,
 					     sizeof (omapi_waiter_object_t));
+	if (status != ISC_R_SUCCESS)
+		return status;
+
+	status = omapi_object_type_register (&omapi_type_auth_key,
+					     "authenticator",
+					     0,
+					     omapi_auth_key_get_value,
+					     omapi_auth_key_destroy,
+					     0,
+					     omapi_auth_key_stuff_values,
+					     omapi_auth_key_lookup,
+					     0, 0, 0, 0, 0,
+					     sizeof (omapi_auth_key_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -630,12 +646,11 @@ isc_result_t omapi_make_int_value (omapi_value_t **vp,
 		return status;
 	}
 	status = omapi_typed_data_new (file, line, &(*vp) -> value,
-				       omapi_datatype_int);
+				       omapi_datatype_int, value);
 	if (status != ISC_R_SUCCESS) {
 		omapi_value_dereference (vp, file, line);
 		return status;
 	}
-	(*vp) -> value -> u.integer = value;
 	return ISC_R_SUCCESS;
 }
 
@@ -645,6 +660,36 @@ isc_result_t omapi_make_uint_value (omapi_value_t **vp,
 				    const char *file, int line)
 {
 	return omapi_make_int_value (vp, name, (int)value, file, line);
+}
+
+isc_result_t omapi_make_object_value (omapi_value_t **vp,
+				      omapi_data_string_t *name,
+				      omapi_object_t *value,
+				      const char *file, int line)
+{
+	isc_result_t status;
+	
+	status = omapi_value_new (vp, file, line);
+	if (status != ISC_R_SUCCESS)
+		return status;
+	
+	status = omapi_data_string_reference (&(*vp) -> name,
+                                              name, file, line);
+	if (status != ISC_R_SUCCESS) {
+		omapi_value_dereference (vp, file, line);
+		return status;
+	}
+	
+	if (value) {
+		status = omapi_typed_data_new (file, line, &(*vp) -> value,
+					       omapi_datatype_object, value);
+		if (status != ISC_R_SUCCESS) {
+			omapi_value_dereference (vp, file, line);
+			return status;
+		}
+	}
+	
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t omapi_make_handle_value (omapi_value_t **vp,

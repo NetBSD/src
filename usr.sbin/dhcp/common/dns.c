@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.6 2000/07/08 20:40:18 mellon Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.7 2000/09/04 23:10:10 mellon Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -158,7 +158,7 @@ isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 	     strlen (zone -> key -> name) > NS_MAXDNAME) ||
 	    (!zone -> key -> algorithm ||
 	     strlen (zone -> key -> algorithm) > NS_MAXDNAME) ||
-	    (!zone -> key -> key.len)) {
+	    (!zone -> key)) {
 		dns_zone_dereference (&zone, MDL);
 		return ISC_R_INVALIDKEY;
 	}
@@ -169,7 +169,7 @@ isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 		return ISC_R_NOMEMORY;
 	}
 	memset (tkey, 0, sizeof *tkey);
-	tkey -> data = dmalloc (zone -> key -> key.len, MDL);
+	tkey -> data = dmalloc (zone -> key -> key -> len, MDL);
 	if (!tkey -> data) {
 		dfree (tkey, MDL);
 		goto nomem;
@@ -177,8 +177,8 @@ isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 	strcpy (tkey -> name, zone -> key -> name);
 	strcpy (tkey -> alg, zone -> key -> algorithm);
 	memcpy (tkey -> data,
-		zone -> key -> key.data, zone -> key -> key.len);
-	tkey -> len = zone -> key -> key.len;
+		zone -> key -> key -> value, zone -> key -> key -> len);
+	tkey -> len = zone -> key -> key -> len;
 	*key = tkey;
 	return ISC_R_SUCCESS;
 }
@@ -249,44 +249,6 @@ isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 	return status;
 }
 
-isc_result_t enter_tsig_key (struct tsig_key *tkey)
-{
-	struct tsig_key *tk = (struct tsig_key *)0;
-
-	if (tsig_key_hash) {
-		tsig_key_hash_lookup (&tk, tsig_key_hash,
-				      tkey -> name, 0, MDL);
-		if (tk == tkey) {
-			tsig_key_dereference (&tk, MDL);
-			return ISC_R_SUCCESS;
-		}
-		if (tk) {
-			tsig_key_hash_delete (tsig_key_hash,
-					      tkey -> name, 0, MDL);
-			tsig_key_dereference (&tk, MDL);
-		}
-	} else {
-		tsig_key_hash =
-			new_hash ((hash_reference)tsig_key_reference,
-				  (hash_dereference)tsig_key_dereference, 1);
-		if (!tsig_key_hash)
-			return ISC_R_NOMEMORY;
-	}
-	tsig_key_hash_add (tsig_key_hash, tkey -> name, 0, tkey, MDL);
-	return ISC_R_SUCCESS;
-	
-}
-
-isc_result_t tsig_key_lookup (struct tsig_key **tkey, const char *name) {
-	struct tsig_key *tk;
-
-	if (!tsig_key_hash)
-		return ISC_R_NOTFOUND;
-	if (!tsig_key_hash_lookup (tkey, tsig_key_hash, name, 0, MDL))
-		return ISC_R_NOTFOUND;
-	return ISC_R_SUCCESS;
-}
-
 int dns_zone_dereference (ptr, file, line)
 	struct dns_zone **ptr;
 	const char *file;
@@ -326,7 +288,7 @@ int dns_zone_dereference (ptr, file, line)
 	if (dns_zone -> name)
 		dfree (dns_zone -> name, file, line);
 	if (dns_zone -> key)
-		tsig_key_dereference (&dns_zone -> key, file, line);
+		omapi_auth_key_dereference (&dns_zone -> key, file, line);
 	if (dns_zone -> primary)
 		option_cache_dereference (&dns_zone -> primary, file, line);
 	if (dns_zone -> secondary)
@@ -447,4 +409,3 @@ void repudiate_zone (struct dns_zone **zone)
 #endif /* NSUPDATE */
 
 HASH_FUNCTIONS (dns_zone, const char *, struct dns_zone)
-HASH_FUNCTIONS (tsig_key, const char *, struct tsig_key)

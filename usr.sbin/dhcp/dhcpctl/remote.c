@@ -44,6 +44,56 @@
 #include <omapip/omapip_p.h>
 #include "dhcpctl.h"
 
+/* dhcpctl_new_authenticator
+
+   synchronous - creates an authenticator object.
+   returns nonzero status code if the object couldn't be created
+   stores handle to authenticator through h if successful, and returns zero.
+   name is the authenticator name (NUL-terminated string).
+   algorithm is the NUL-terminated string name of the algorithm to use
+   (currently, only "hmac-md5" is supported).
+   secret and secret_len is the key secret. */
+
+dhcpctl_status dhcpctl_new_authenticator (dhcpctl_handle *h,
+					  const char *name,
+					  const char *algorithm,
+					  const char *secret,
+					  unsigned secret_len)
+{
+	struct auth_key *key = (struct auth_key *)0;
+	isc_result_t status;
+
+	status = omapi_auth_key_new (&key, MDL);
+	if (status != ISC_R_SUCCESS)
+		return status;
+
+	key -> name = dmalloc (strlen (name) + 1, MDL);
+	if (!key -> name) {
+		omapi_auth_key_dereference (&key, MDL);
+		return ISC_R_NOMEMORY;
+	}
+	strcpy (key -> name, name);
+
+	key -> algorithm = dmalloc (strlen (algorithm) + 1, MDL);
+	if (!key -> algorithm) {
+		omapi_auth_key_dereference (&key, MDL);
+		return ISC_R_NOMEMORY;
+	}
+	strcpy (key -> algorithm, algorithm);
+
+	status = omapi_data_string_new (&key -> key, secret_len, MDL);
+	if (status != ISC_R_SUCCESS) {
+		omapi_auth_key_dereference (&key, MDL);
+		return status;
+	}
+	memcpy (key -> key -> value, secret, secret_len);
+	key -> key -> len = secret_len;
+
+	*h = (dhcpctl_handle) key;
+	return ISC_R_SUCCESS;
+}
+
+
 /* dhcpctl_new_object
 
    synchronous - creates a local handle for a host entry.

@@ -51,10 +51,14 @@ OMAPI_OBJECT_ALLOC (omapi_protocol_listener, omapi_protocol_listener_object_t,
 isc_result_t omapi_protocol_connect (omapi_object_t *h,
 				     const char *server_name,
 				     unsigned port,
-				     omapi_object_t *authinfo)
+				     omapi_object_t *a)
 {
 	isc_result_t status;
 	omapi_protocol_object_t *obj;
+
+#ifdef DEBUG_PROTOCOL
+	log_debug ("omapi_protocol_connect(%s port=%d)", server_name, port);
+#endif
 
 	obj = (omapi_protocol_object_t *)0;
 	status = omapi_protocol_allocate (&obj, MDL);
@@ -78,8 +82,30 @@ isc_result_t omapi_protocol_connect (omapi_object_t *h,
 		return status;
 	}
 
-	if (authinfo)
-		omapi_object_reference (&obj -> authinfo, authinfo, MDL);
+	/* If we were passed a default authenticator, store it now.  We'll
+	   open it once we're connected. */
+	if (a) {
+		obj -> default_auth =
+			dmalloc (sizeof(omapi_remote_auth_t), MDL);
+		if (!obj -> default_auth) {
+			omapi_protocol_dereference (&obj, MDL);
+			return ISC_R_NOMEMORY;
+		}
+
+		obj -> default_auth -> next = (omapi_remote_auth_t *)0;
+		status = omapi_object_reference (&obj -> default_auth -> a,
+						 a, MDL);
+		if (status != ISC_R_SUCCESS) {
+			dfree (obj -> default_auth, MDL);
+			omapi_protocol_dereference (&obj, MDL);
+			return status;
+		}
+
+		obj -> insecure = 0;
+	} else {
+		obj -> insecure = 1;
+	}
+
 	omapi_protocol_dereference (&obj, MDL);
 	return ISC_R_SUCCESS;
 }
@@ -91,6 +117,10 @@ isc_result_t omapi_protocol_send_intro (omapi_object_t *h,
 {
 	isc_result_t status;
 	omapi_protocol_object_t *p;
+
+#ifdef DEBUG_PROTOCOL
+	log_debug ("omapi_protocol_send_intro()");
+#endif
 
 	if (h -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
@@ -128,8 +158,11 @@ isc_result_t omapi_protocol_send_message (omapi_object_t *po,
 	omapi_protocol_object_t *p;
 	omapi_object_t *c;
 	omapi_message_object_t *m, *om;
+	omapi_remote_auth_t *ra;
+	omapi_value_t *signature;
 	isc_result_t status;
 	u_int32_t foo;
+	unsigned auth_len;
 
 	if (po -> type != omapi_type_protocol ||
 	    !po -> outer || po -> outer -> type != omapi_type_connection ||
@@ -142,12 +175,65 @@ isc_result_t omapi_protocol_send_message (omapi_object_t *po,
 	m = (omapi_message_object_t *)mo;
 	om = (omapi_message_object_t *)omo;
 
-	/* XXX Write the authenticator length */
-	status = omapi_connection_put_uint32 (c, 0);
-	if (status != ISC_R_SUCCESS)
+#ifdef DEBUG_PROTOCOL
+	log_debug ("omapi_protocol_send_message()"
+		   "op=%ld  handle=%#lx  id=%#lx  rid=%#lx",
+		   (long)m -> op,
+		   (long)(m -> object ? m -> object -> handle : m -> handle),
+		   (long)p -> next_xid, (long)m -> rid);
+#endif
+
+	/* Find the authid to use for this message. */
+	if (id) {
+		for (ra = p -> remote_auth_list; ra; ra = ra -> next) {
+			if (ra -> a == id) {
+				break;
+			}
+		}
+
+		if (!ra)
+			return ISC_R_KEY_UNKNOWN;
+	} else if (p -> remote_auth_list) {
+		ra = p -> default_auth;
+	} else {
+		ra = (omapi_remote_auth_t *)0;
+	}
+
+	if (ra) {
+		m -> authid = ra -> remote_handle;
+		status = omapi_object_reference (&m -> id_object,
+						 ra -> a, MDL);
+		if (status != ISC_R_SUCCESS)
+			return status;
+	}
+
+	/* Write the ID of the authentication key we're using. */
+	status = omapi_connection_put_uint32 (c, ra ? ra -> remote_handle : 0);
+	if (status != ISC_R_SUCCESS) {
+		omapi_disconnect (c, 1);
 		return status;
-	/* XXX Write the ID of the authentication key we're using. */
-	status = omapi_connection_put_uint32 (c, 0);
+	}
+
+	/* Activate the authentication key on the connection. */
+	auth_len = 0;
+	if (ra) {
+		status = omapi_set_object_value (c, (omapi_object_t *)0,
+						 "output-authenticator",
+						 ra -> a);
+		if (status != ISC_R_SUCCESS) {
+			omapi_disconnect (c, 1);
+			return status;
+		}
+
+		status = omapi_connection_output_auth_length (c, &auth_len);
+		if (status != ISC_R_SUCCESS) {
+			omapi_disconnect (c, 1);
+			return status;
+		}
+	}
+
+	/* Write the authenticator length */
+	status = omapi_connection_put_uint32 (c, auth_len);
 	if (status != ISC_R_SUCCESS) {
 		omapi_disconnect (c, 1);
 		return status;
@@ -223,7 +309,35 @@ isc_result_t omapi_protocol_send_message (omapi_object_t *po,
 		return status;
 	}
 
-	/* XXX Write the authenticator... */
+	if (ra) {
+		/* Calculate the message signature. */
+		signature = (omapi_value_t *)0;
+		status = omapi_get_value_str (c, (omapi_object_t *)0,
+					      "output-signature", &signature);
+		if (status != ISC_R_SUCCESS) {
+			omapi_disconnect (c, 1);
+			return status;
+		}
+
+		/* Write the authenticator... */
+		status = (omapi_connection_copyin
+			  (c, signature -> value -> u.buffer.value,
+			   signature -> value -> u.buffer.len));
+		omapi_value_dereference (&signature, MDL);
+		if (status != ISC_R_SUCCESS) {
+			omapi_disconnect (c, 1);
+			return status;
+		}
+
+		/* Dectivate the authentication key on the connection. */
+		status = omapi_set_value_str (c, (omapi_object_t *)0,
+						 "output-authenticator",
+						 (omapi_typed_data_t *)0);
+		if (status != ISC_R_SUCCESS) {
+			omapi_disconnect (c, 1);
+			return status;
+		}
+	}
 
 	return ISC_R_SUCCESS;
 }
@@ -235,6 +349,7 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 	isc_result_t status;
 	omapi_protocol_object_t *p;
 	omapi_object_t *c;
+	omapi_value_t *signature;
 	u_int16_t nlen;
 	u_int32_t vlen;
 	u_int32_t th;
@@ -255,6 +370,19 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 			return status;
 		}
 		return ISC_R_SUCCESS;
+	}
+
+	/* Should only receive these when opening the initial authenticator. */
+	if (!strcmp (name, "status")) {
+		status = va_arg (ap, isc_result_t);
+		if (status != ISC_R_SUCCESS) {
+			omapi_signal_in (h -> inner, "status", status,
+					 (omapi_object_t *)0);
+			omapi_disconnect (p -> outer, 1);
+			return status;
+		} else {
+			return omapi_signal_in (h -> inner, "ready");
+		}
 	}
 
 	/* Not a signal we recognize? */
@@ -291,7 +419,18 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 			return ISC_R_PROTOCOLERROR;
 		}
 
-		status = omapi_signal_in (h -> inner, "ready");
+		if (p -> default_auth) {
+			status = omapi_protocol_send_open
+				(h, (omapi_object_t *)0, "authenticator",
+				 p -> default_auth -> a,
+				 OMAPI_NOTIFY_PROTOCOL);
+			if (status != ISC_R_SUCCESS) {
+				omapi_disconnect (c, 1);
+				return status;
+			}
+		} else {
+			status = omapi_signal_in (h -> inner, "ready");
+		}
 
 	      to_header_wait:
 		/* The next thing we're expecting is a message header. */
@@ -313,10 +452,29 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 			return status;
 		}
 
+		p -> verify_result = ISC_R_SUCCESS;
+
 		/* Swap in the header... */
 		omapi_connection_get_uint32 (c, &p -> message -> authid);
 
-		/* XXX bind the authenticator here! */
+		/* Bind the authenticator to the message object. */
+		if (p -> message -> authid) {
+			status = (omapi_protocol_lookup_auth
+				  (&p -> message -> id_object, h,
+				   p -> message -> authid));
+			if (status != ISC_R_SUCCESS)
+				p -> verify_result = status;
+
+			/* Activate the authentication key. */
+			status = omapi_set_object_value
+				(c, (omapi_object_t *)0, "input-authenticator",
+				 p -> message -> id_object);
+			if (status != ISC_R_SUCCESS) {
+				omapi_disconnect (c, 1);
+				return status;
+			}
+		}
+
 		omapi_connection_get_uint32 (c, &p -> message -> authlen);
 		omapi_connection_get_uint32 (c, &p -> message -> op);
 		omapi_connection_get_uint32 (c, &th);
@@ -462,31 +620,71 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 
 	      signature_wait:
 	      case omapi_protocol_signature_wait:
+		if (p -> message -> id_object) {
+			/* Compute the signature of the message. */
+			signature = (omapi_value_t *)0;
+			status = omapi_get_value_str (c, (omapi_object_t *)0,
+						      "input-signature",
+						      &signature);
+			if (status != ISC_R_SUCCESS) {
+				omapi_disconnect (c, 1);
+				return status;
+			}
+
+			/* Disable the authentication key on the connection. */
+			status = omapi_set_value_str (c, (omapi_object_t *)0,
+						      "input-authenticator",
+						      (omapi_typed_data_t *)0);
+			if (status != ISC_R_SUCCESS) {
+				omapi_value_dereference (&signature, MDL);
+				omapi_disconnect (c, 1);
+				return status;
+			}
+		}
+
+		/* Read the authenticator. */
 		status = omapi_typed_data_new (MDL,
 					       &p -> message -> authenticator,
 					       omapi_datatype_data,
 					       p -> message -> authlen);
 			
 		if (status != ISC_R_SUCCESS) {
+			omapi_value_dereference (&signature, MDL);
 			omapi_disconnect (c, 1);
 			return ISC_R_NOMEMORY;
 		}
 		omapi_connection_copyout
 			(p -> message -> authenticator -> u.buffer.value, c,
 			 p -> message -> authlen);
-		/* XXX now do something to verify the signature. */
+
+		/* Verify the signature. */
+		if (p -> message -> id_object &&
+		    ((signature -> value -> u.buffer.len !=
+		      p -> message -> authlen) ||
+		     (memcmp (signature -> value -> u.buffer.value,
+			      p -> message -> authenticator -> u.buffer.value,
+			      p -> message -> authlen) != 0))) {
+			/* Invalid signature. */
+			p -> verify_result = ISC_R_INVALIDKEY;
+		}
+
+		omapi_value_dereference (&signature, MDL);
 
 		/* Process the message. */
 	      message_done:
-		status = omapi_message_process ((omapi_object_t *)p -> message,
-						h);
+		if (p -> verify_result != ISC_R_SUCCESS) {
+			status = omapi_protocol_send_status
+				(h, (omapi_object_t *)0, p -> verify_result,
+				 p -> message -> id, (char *)0);
+		} else {
+			status = omapi_message_process
+				((omapi_object_t *)p -> message, h);
+		}
 		if (status != ISC_R_SUCCESS) {
 			omapi_disconnect (c, 1);
 			return ISC_R_NOMEMORY;
 		}
 
-		/* XXX unbind the authenticator. */
-	      auth_unbind:
 		omapi_message_dereference (&p -> message, MDL);
 
 		/* Now wait for the next message. */
@@ -499,13 +697,115 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 	return ISC_R_SUCCESS;
 }
 
+isc_result_t omapi_protocol_add_auth (omapi_object_t *po,
+				      omapi_object_t *ao,
+				      omapi_handle_t handle)
+{
+	omapi_protocol_object_t *p;
+	omapi_remote_auth_t *r;
+	isc_result_t status;
+
+	if (ao -> type != omapi_type_auth_key &&
+	    (!ao -> inner || ao -> inner -> type != omapi_type_auth_key))
+		return ISC_R_INVALIDARG;
+
+	if (po -> type != omapi_type_protocol)
+		return ISC_R_INVALIDARG;
+	p = (omapi_protocol_object_t *)po;
+
+#ifdef DEBUG_PROTOCOL
+	log_debug ("omapi_protocol_add_auth(name=%s)",
+		   ((omapi_auth_key_t *)ao) -> name);
+#endif
+
+	if (p -> verify_auth) {
+		status = (p -> verify_auth) (po, (omapi_auth_key_t *)ao);
+		if (status != ISC_R_SUCCESS)
+			return status;
+	}
+
+	/* If omapi_protocol_connect() was called with a default
+	   authenticator, p -> default_auth will already be set,
+	   but p -> remote_auth_list will not yet be initialized. */
+	if (p -> default_auth && !p -> remote_auth_list) {
+		if (p -> default_auth -> a != ao) {
+			/* Something just went horribly wrong. */
+			omapi_disconnect (p -> outer, 1);
+			return ISC_R_UNEXPECTED;
+		}
+
+		p -> remote_auth_list = p -> default_auth;
+		p -> default_auth -> remote_handle = handle;
+
+		return omapi_signal_in (p -> inner, "ready");
+	}
+
+	r = dmalloc (sizeof(*r), MDL);
+	if (!r)
+		return ISC_R_NOMEMORY;
+
+	status = omapi_object_reference (&r -> a, ao, MDL);
+	if (status != ISC_R_SUCCESS) {
+		dfree (r, MDL);
+		return status;
+	}
+
+	r -> remote_handle = handle;
+	r -> next = p -> remote_auth_list;
+	p -> remote_auth_list = r;
+
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t omapi_protocol_lookup_auth (omapi_object_t **a,
+					 omapi_object_t *po,
+					 omapi_handle_t handle)
+{
+	omapi_protocol_object_t *p;
+	omapi_remote_auth_t *r;
+
+	if (po -> type != omapi_type_protocol)
+		return ISC_R_INVALIDARG;
+	p = (omapi_protocol_object_t *)po;
+
+	for (r = p -> remote_auth_list; r; r = r -> next)
+		if (r -> remote_handle == handle)
+			return omapi_object_reference (a, r -> a, MDL);
+
+	return ISC_R_NOTFOUND;
+}
+
 isc_result_t omapi_protocol_set_value (omapi_object_t *h,
 				       omapi_object_t *id,
 				       omapi_data_string_t *name,
 				       omapi_typed_data_t *value)
 {
+	omapi_protocol_object_t *p;
+	omapi_remote_auth_t *r;
+
 	if (h -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
+	p = (omapi_protocol_object_t *)h;
+
+	if (omapi_ds_strcmp (name, "default-authenticator") == 0) {
+		if (value -> type != omapi_datatype_object)
+			return ISC_R_INVALIDARG;
+
+		if (!value || !value -> u.object) {
+			p -> default_auth = (omapi_remote_auth_t *)0;
+		} else {
+			for (r = p -> remote_auth_list; r; r = r -> next)
+				if (r -> a == value -> u.object)
+					break;
+
+			if (!r)
+				return ISC_R_KEY_UNKNOWN;
+
+			p -> default_auth = r;
+		}
+
+		return ISC_R_SUCCESS;
+	}
 
 	if (h -> inner && h -> inner -> type -> set_value)
 		return (*(h -> inner -> type -> set_value))
@@ -518,8 +818,19 @@ isc_result_t omapi_protocol_get_value (omapi_object_t *h,
 				       omapi_data_string_t *name,
 				       omapi_value_t **value)
 {
+	omapi_protocol_object_t *p;
+
 	if (h -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
+	p = (omapi_protocol_object_t *)h;
+
+	if (omapi_ds_strcmp (name, "default-authenticator") == 0) {
+		if (!p -> default_auth)
+			return ISC_R_NOTFOUND;
+
+		return omapi_make_object_value (value, name,
+						p -> default_auth -> a, MDL);
+	}
 	
 	if (h -> inner && h -> inner -> type -> get_value)
 		return (*(h -> inner -> type -> get_value))
@@ -536,8 +847,19 @@ isc_result_t omapi_protocol_destroy (omapi_object_t *h,
 	p = (omapi_protocol_object_t *)h;
 	if (p -> message)
 		omapi_message_dereference (&p -> message, file, line);
-	if (p -> authinfo)
-		return omapi_object_dereference (&p -> authinfo, file, line);
+
+	/* This will happen if: 1) A default authenticator is supplied to
+	   omapi_protocol_connect(), and 2) something goes wrong before
+	   the authenticator can be opened. */
+	if (p -> default_auth && !p -> remote_auth_list)
+		dfree (p -> default_auth, file, line);
+
+	while (p -> remote_auth_list) {
+		omapi_remote_auth_t *r = p -> remote_auth_list -> next;
+		omapi_object_dereference (&r -> a, file, line);
+		dfree (r, file, line);
+		p -> remote_auth_list = r;
+	}
 	return ISC_R_SUCCESS;
 }
 
@@ -558,6 +880,46 @@ isc_result_t omapi_protocol_stuff_values (omapi_object_t *c,
 								p -> inner);
 	return ISC_R_SUCCESS;
 }
+
+/* Returns a boolean indicating whether this protocol requires that
+   messages be authenticated or not. */
+
+isc_boolean_t omapi_protocol_authenticated (omapi_object_t *h)
+{
+	if (h -> type != omapi_type_protocol)
+		return isc_boolean_false;
+	if (((omapi_protocol_object_t *)h) -> insecure)
+		return isc_boolean_false;
+	else
+		return isc_boolean_true;
+}
+
+/* Sets the address and authenticator verification callbacks.  The handle
+   is to a listener object, not a protocol object. */
+
+isc_result_t omapi_protocol_configure_security (omapi_object_t *h,
+						isc_result_t (*verify_addr)
+						 (omapi_object_t *,
+						  omapi_addr_t *),
+						isc_result_t (*verify_auth)
+						 (omapi_object_t *,
+						  omapi_auth_key_t *))
+{
+	omapi_protocol_listener_object_t *l;
+
+	if (h -> outer && h -> outer -> type == omapi_type_protocol_listener)
+		h = h -> outer;
+
+	if (h -> type != omapi_type_protocol_listener)
+		return ISC_R_INVALIDARG;
+	l = (omapi_protocol_listener_object_t *)h;
+
+	l -> verify_auth = verify_auth;
+	l -> insecure = 0;
+
+	return omapi_listener_configure_security (h -> outer, verify_addr);
+}
+					      
 
 /* Set up a listener for the omapi protocol.    The handle stored points to
    a listener object, not a protocol object. */
@@ -585,6 +947,9 @@ isc_result_t omapi_protocol_listen (omapi_object_t *h,
 		omapi_protocol_listener_dereference (&obj, MDL);
 		return status;
 	}
+
+	/* What a terrible default. */
+	obj -> insecure = 1;
 
 	status = omapi_listen ((omapi_object_t *)obj, port, max);
 	omapi_protocol_listener_dereference (&obj, MDL);
@@ -622,6 +987,9 @@ isc_result_t omapi_protocol_listener_signal (omapi_object_t *o,
 	status = omapi_protocol_allocate (&obj, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
+
+	obj -> verify_auth = p -> verify_auth;
+	obj -> insecure = p -> insecure;
 
 	status = omapi_object_reference (&obj -> outer, c, MDL);
 	if (status != ISC_R_SUCCESS) {
@@ -751,6 +1119,70 @@ isc_result_t omapi_protocol_send_status (omapi_object_t *po,
 
 	status = omapi_protocol_send_message (po, id, mo, (omapi_object_t *)0);
 	omapi_message_dereference (&message, MDL);
+	return status;
+}
+
+/* The OMAPI_NOTIFY_PROTOCOL flag will cause the notify-object for the
+   message to be set to the protocol object.  This is used when opening
+   the default authenticator. */
+
+isc_result_t omapi_protocol_send_open (omapi_object_t *po,
+				       omapi_object_t *id,
+				       const char *type,
+				       omapi_object_t *object,
+				       unsigned flags)
+{
+	isc_result_t status;
+	omapi_message_object_t *message = (omapi_message_object_t *)0;
+	omapi_object_t *mo;
+
+	if (po -> type != omapi_type_protocol)
+		return ISC_R_INVALIDARG;
+
+	status = omapi_message_new ((omapi_object_t **)&message, MDL);
+	mo = (omapi_object_t *)message;
+
+	if (status == ISC_R_SUCCESS)
+		status = omapi_set_int_value (mo, (omapi_object_t *)0,
+					      "op", OMAPI_OP_OPEN);
+
+	if (status == ISC_R_SUCCESS)
+		status = omapi_set_object_value (mo, (omapi_object_t *)0,
+						 "object", object);
+
+	if ((flags & OMAPI_CREATE) && (status == ISC_R_SUCCESS))
+		status = omapi_set_boolean_value (mo, (omapi_object_t *)0,
+						  "create", 1);
+
+	if ((flags & OMAPI_UPDATE) && (status == ISC_R_SUCCESS))
+		status = omapi_set_boolean_value (mo, (omapi_object_t *)0,
+						  "update", 1);
+
+	if ((flags & OMAPI_EXCL) && (status == ISC_R_SUCCESS))
+		status = omapi_set_boolean_value (mo, (omapi_object_t *)0,
+						  "exclusive", 1);
+
+	if ((flags & OMAPI_NOTIFY_PROTOCOL) && (status == ISC_R_SUCCESS))
+		status = omapi_set_object_value (mo, (omapi_object_t *)0,
+						 "notify-object", po);
+
+	if (type && (status == ISC_R_SUCCESS))
+		status = omapi_set_string_value (mo, (omapi_object_t *)0,
+						 "type", type);
+
+	if (status == ISC_R_SUCCESS)
+		status = omapi_message_register (mo);
+
+	if (status == ISC_R_SUCCESS) {
+		status = omapi_protocol_send_message (po, id, mo,
+						      (omapi_object_t *)0);
+		if (status != ISC_R_SUCCESS)
+			omapi_message_unregister (mo);
+	}
+
+	if (message)
+		omapi_message_dereference (&message, MDL);
+
 	return status;
 }
 

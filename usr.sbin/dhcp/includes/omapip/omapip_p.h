@@ -68,8 +68,11 @@
 #include "cdefs.h"
 #include "osdep.h"
 
+#include <isc/dst.h>
 #include <isc/result.h>
 
+#include <omapip/convert.h>
+#include <omapip/hash.h>
 #include <omapip/omapip.h>
 
 /* OMAPI protocol header, version 1.00 */
@@ -125,12 +128,17 @@ typedef struct __omapi_message_object {
 	u_int32_t rid;
 } omapi_message_object_t;
 
+typedef struct __omapi_remote_auth {
+	struct __omapi_remote_auth *next;
+	omapi_handle_t remote_handle;
+	omapi_object_t *a;
+} omapi_remote_auth_t;
+
 typedef struct {
 	OMAPI_OBJECT_PREAMBLE;
 	u_int32_t header_size;		
 	u_int32_t protocol_version;
 	u_int32_t next_xid;
-	omapi_object_t *authinfo; /* Default authinfo to use. */
 
 	omapi_protocol_state_t state;	/* Input state. */
 	int reading_message_values;	/* True if reading message-specific
@@ -138,10 +146,24 @@ typedef struct {
 	omapi_message_object_t *message;	/* Incoming message. */
 	omapi_data_string_t *name;	/* Incoming name. */
 	omapi_typed_data_t *value;	/* Incoming value. */
+	isc_result_t verify_result;
+	omapi_remote_auth_t *default_auth; /* Default authinfo to use. */
+	omapi_remote_auth_t *remote_auth_list;	/* Authenticators active on
+						   this connection. */
+
+	isc_boolean_t insecure;		/* Set to allow unauthenticated
+					   messages. */
+
+	isc_result_t (*verify_auth) (omapi_object_t *, omapi_auth_key_t *);
 } omapi_protocol_object_t;
 
 typedef struct {
 	OMAPI_OBJECT_PREAMBLE;
+
+	isc_boolean_t insecure;		/* Set to allow unauthenticated
+					   messages. */
+
+	isc_result_t (*verify_auth) (omapi_object_t *, omapi_auth_key_t *);
 } omapi_protocol_listener_object_t;
 
 #include <omapip/buffer.h>
@@ -150,6 +172,7 @@ typedef struct __omapi_listener_object {
 	OMAPI_OBJECT_PREAMBLE;
 	int socket;		/* Connection socket. */
 	struct sockaddr_in address;
+	isc_result_t (*verify_addr) (omapi_object_t *, omapi_addr_t *);
 } omapi_listener_object_t;
 
 typedef struct __omapi_connection_object {
@@ -168,6 +191,12 @@ typedef struct __omapi_connection_object {
 	omapi_buffer_t *outbufs;
 	omapi_listener_object_t *listener;	/* Listener that accepted this
 						   connection, if any. */
+	DST_KEY *in_key;	/* Authenticator signing incoming
+				   data. */
+	void *in_context;	/* Input hash context. */
+	DST_KEY *out_key;	/* Authenticator signing outgoing
+				   data. */
+	void *out_context;	/* Output hash context. */
 } omapi_connection_object_t;
 
 typedef struct __omapi_io_object {
@@ -189,6 +218,7 @@ typedef struct __omapi_generic_object {
 typedef struct __omapi_waiter_object {
 	OMAPI_OBJECT_PREAMBLE;
 	int ready;
+	isc_result_t waitstatus;
 	struct __omapi_waiter_object *next;
 } omapi_waiter_object_t;
 
@@ -223,6 +253,13 @@ OMAPI_OBJECT_ALLOC_DECL (omapi_generic,
 			 omapi_generic_object_t, omapi_type_generic)
 OMAPI_OBJECT_ALLOC_DECL (omapi_message,
 			 omapi_message_object_t, omapi_type_message)
+
+isc_result_t omapi_connection_sign_data (int mode,
+					 DST_KEY *key,
+					 void **context,
+					 const unsigned char *data,
+					 const unsigned len,
+					 omapi_typed_data_t **result);
 
 extern int log_priority;
 extern int log_perror;

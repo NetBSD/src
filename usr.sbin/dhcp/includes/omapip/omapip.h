@@ -154,6 +154,18 @@ typedef struct {
 	omapi_addr_t *addresses;
 } omapi_addr_list_t;
 
+typedef struct auth_key {
+	OMAPI_OBJECT_PREAMBLE;
+	char *name;
+	char *algorithm;
+	omapi_data_string_t *key;
+} omapi_auth_key_t;
+
+#define OMAPI_CREATE          1
+#define OMAPI_UPDATE          2
+#define OMAPI_EXCL            4
+#define OMAPI_NOTIFY_PROTOCOL 8
+
 #define OMAPI_OBJECT_ALLOC(name, stype, type) \
 isc_result_t name##_allocate (stype **p, const char *file, int line)	      \
 {									      \
@@ -184,9 +196,21 @@ isc_result_t omapi_protocol_connect (omapi_object_t *,
 isc_result_t omapi_connect_list (omapi_object_t *, omapi_addr_list_t *,
 				 omapi_addr_t *);
 isc_result_t omapi_protocol_listen (omapi_object_t *, unsigned, int);
+isc_boolean_t omapi_protocol_authenticated (omapi_object_t *);
+isc_result_t omapi_protocol_configure_security (omapi_object_t *,
+						isc_result_t (*)
+						(omapi_object_t *,
+						 omapi_addr_t *),
+						isc_result_t (*)
+						(omapi_object_t *,
+						 omapi_auth_key_t *));
 isc_result_t omapi_protocol_accept (omapi_object_t *);
 isc_result_t omapi_protocol_send_intro (omapi_object_t *, unsigned, unsigned);
 isc_result_t omapi_protocol_ready (omapi_object_t *);
+isc_result_t omapi_protocol_add_auth (omapi_object_t *, omapi_object_t *,
+				      omapi_handle_t);
+isc_result_t omapi_protocol_lookup_auth (omapi_object_t **, omapi_object_t *,
+					 omapi_handle_t);
 isc_result_t omapi_protocol_set_value (omapi_object_t *, omapi_object_t *,
 				       omapi_data_string_t *,
 				       omapi_typed_data_t *);
@@ -221,6 +245,9 @@ isc_result_t omapi_protocol_listener_stuff (omapi_object_t *,
 					    omapi_object_t *);
 isc_result_t omapi_protocol_send_status (omapi_object_t *, omapi_object_t *,
 					 isc_result_t, unsigned, const char *);
+isc_result_t omapi_protocol_send_open (omapi_object_t *, omapi_object_t *,
+				       const char *, omapi_object_t *,
+				       unsigned);
 isc_result_t omapi_protocol_send_update (omapi_object_t *, omapi_object_t *,
 					 unsigned, omapi_object_t *);
 
@@ -232,6 +259,8 @@ isc_result_t omapi_connection_connect (omapi_object_t *);
 isc_result_t omapi_connection_reader (omapi_object_t *);
 isc_result_t omapi_connection_writer (omapi_object_t *);
 isc_result_t omapi_connection_reaper (omapi_object_t *);
+isc_result_t omapi_connection_output_auth_length (omapi_object_t *,
+                                                  unsigned *);
 isc_result_t omapi_connection_set_value (omapi_object_t *, omapi_object_t *,
 					 omapi_data_string_t *,
 					 omapi_typed_data_t *);
@@ -257,6 +286,10 @@ isc_result_t omapi_listen_addr (omapi_object_t *,
 isc_result_t omapi_listener_accept (omapi_object_t *);
 int omapi_listener_readfd (omapi_object_t *);
 isc_result_t omapi_accept (omapi_object_t *);
+isc_result_t omapi_listener_configure_security (omapi_object_t *,
+						isc_result_t (*)
+						(omapi_object_t *,
+						 omapi_addr_t *));
 isc_result_t omapi_listener_set_value (omapi_object_t *, omapi_object_t *,
 				       omapi_data_string_t *,
 				       omapi_typed_data_t *);
@@ -324,6 +357,22 @@ isc_result_t omapi_message_register (omapi_object_t *);
 isc_result_t omapi_message_unregister (omapi_object_t *);
 isc_result_t omapi_message_process (omapi_object_t *, omapi_object_t *);
 
+OMAPI_OBJECT_ALLOC_DECL (omapi_auth_key,
+			 omapi_auth_key_t, omapi_type_auth_key)
+isc_result_t omapi_auth_key_new (omapi_auth_key_t **, const char *, int);
+isc_result_t omapi_auth_key_destroy (omapi_object_t *, const char *, int);
+isc_result_t omapi_auth_key_enter (omapi_auth_key_t *);
+isc_result_t omapi_auth_key_lookup_name (omapi_auth_key_t **, const char *);
+isc_result_t omapi_auth_key_lookup (omapi_object_t **,
+				    omapi_object_t *,
+				    omapi_object_t *);
+isc_result_t omapi_auth_key_get_value (omapi_object_t *, omapi_object_t *,
+				       omapi_data_string_t *,
+				       omapi_value_t **); 
+isc_result_t omapi_auth_key_stuff_values (omapi_object_t *,
+					  omapi_object_t *,
+					  omapi_object_t *);
+
 extern omapi_object_type_t *omapi_type_connection;
 extern omapi_object_type_t *omapi_type_listener;
 extern omapi_object_type_t *omapi_type_io_object;
@@ -333,6 +382,7 @@ extern omapi_object_type_t *omapi_type_protocol_listener;
 extern omapi_object_type_t *omapi_type_waiter;
 extern omapi_object_type_t *omapi_type_remote;
 extern omapi_object_type_t *omapi_type_message;
+extern omapi_object_type_t *omapi_type_auth_key;
 
 extern omapi_object_type_t *omapi_object_types;
 
@@ -408,6 +458,8 @@ isc_result_t omapi_make_int_value (omapi_value_t **, omapi_data_string_t *,
 				   int, const char *, int);
 isc_result_t omapi_make_uint_value (omapi_value_t **, omapi_data_string_t *,
 				    unsigned int, const char *, int);
+isc_result_t omapi_make_object_value (omapi_value_t **, omapi_data_string_t *,
+				      omapi_object_t *, const char *, int);
 isc_result_t omapi_make_handle_value (omapi_value_t **, omapi_data_string_t *,
 				      omapi_object_t *, const char *, int);
 isc_result_t omapi_make_string_value (omapi_value_t **, omapi_data_string_t *,
