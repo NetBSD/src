@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.24 2002/09/27 15:35:37 provos Exp $ */
+/* $NetBSD: pci_550.c,v 1.25 2005/03/29 04:06:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.24 2002/09/27 15:35:37 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.25 2005/03/29 04:06:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -419,7 +419,8 @@ dec_550_iointr(arg, vec)
 		    "dec 550 irq");
 		if (ALPHA_SHARED_INTR_DISABLE(dec_550_pci_intr, irq))
 			dec_550_intr_disable(irq);
-	}
+	} else
+		alpha_shared_intr_reset_strays(dec_550_pci_intr, irq);
 }
 
 void
