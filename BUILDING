@@ -541,7 +541,7 @@ BUILDING
                If you see build failures with -j, please save complete build
                logs so the failures can be analyzed.
 
-     -M obj    Set MAKEOBJDIRPREFIX to obj.
+     -M obj    Set MAKEOBJDIRPREFIX to obj.  Unsets MAKEOBJDIR.
 
      -m mach   Set the value of MACHINE to mach.  This will also override any
                value of MACHINE_ARCH in the process environment with a value
@@ -572,7 +572,8 @@ BUILDING
      -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
                place the built object files under obj.  For instance, a set-
                ting of /usr/obj will place build-time files under
-               /usr/obj/bin, /usr/obj/lib, and so forth.
+               /usr/obj/bin, /usr/obj/lib, /usr/obj/usr.bin, and so forth.
+               Unsets MAKEOBJDIRPREFIX.
 
      -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
                automatically set to ``yes'' (which is opposite to the default
@@ -593,13 +594,17 @@ BUILDING
      -u        Set MKUPDATE=yes.
 
      -V var=[value]
-               Set the variable var to value (which is optional).
+               Set the environment variable var to an optional value.  This is
+               propagated to the nbmake wrapper.
 
      -w wrapper
                Create the nbmake wrapper script (see below) in a custom loca-
                tion, specified by wrapper.  This allows, for instance, to
                place the wrapper in PATH automatically.  Note that wrapper is
                the full name of the file, not just a directory name.
+
+     -Z var    Unset ("zap") the environment variable var.  This is propagated
+               to the nbmake wrapper.
 
    The "nbmake-MACHINE" wrapper script
      If using the build.sh script to build NetBSD, a nbmake-MACHINE script
@@ -609,6 +614,9 @@ BUILDING
      nbmake-MACHINE can be invoked in lieu of make(1), and will instead call
      the up-to-date version of ``nbmake'' installed into TOOLDIR/bin with sev-
      eral key variables pre-set, including MACHINE, MACHINE_ARCH, and TOOLDIR.
+     build.sh will also set variables specified with -V, and unset variables
+     specified with -Z.
+
      This script can be symlinked into a directory listed in PATH, or called
      with an absolute path.
 
@@ -655,4 +663,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                           July 18, 2003                          NetBSD
+NetBSD                           July 29, 2003                          NetBSD
