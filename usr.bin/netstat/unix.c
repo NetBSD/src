@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
+/*	$NetBSD: unix.c,v 1.13.6.1 1996/12/11 03:35:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $";
+static char *rcsid = "$NetBSD: unix.c,v 1.13.6.1 1996/12/11 03:35:26 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,20 +106,15 @@ unixdomainpr(so, soaddr)
 	register struct socket *so;
 	caddr_t soaddr;
 {
-	struct unpcb unpcb, *unp = &unpcb;
-	struct mbuf mbuf, *m;
-	struct sockaddr_un *sa;
+	struct unpcb unp;
+	struct sockaddr_un sun;
 	static int first = 1;
 
-	if (kread((u_long)so->so_pcb, (char *)unp, sizeof (*unp)))
+	if (kread((u_long)so->so_pcb, (char *)&unp, sizeof (unp)))
 		return;
-	if (unp->unp_addr) {
-		m = &mbuf;
-		if (kread((u_long)unp->unp_addr, (char *)m, sizeof (*m)))
-			m = (struct mbuf *)0;
-		sa = (struct sockaddr_un *)(m->m_dat);
-	} else
-		m = (struct mbuf *)0;
+	if (unp.unp_addr)
+		if (kread((u_long)unp.unp_addr, (char *)&sun, sizeof (sun)))
+			unp.unp_addr = 0;
 	if (first) {
 		printf("Active UNIX domain sockets\n");
 		printf(
@@ -130,11 +125,9 @@ unixdomainpr(so, soaddr)
 	}
 	printf("%8x %-6.6s %6d %6d %8x %8x %8x %8x",
 	    soaddr, socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
-	    unp->unp_vnode, unp->unp_conn,
-	    unp->unp_refs, unp->unp_nextref);
-	if (m)
-		printf(" %.*s",
-		    m->m_len - (int)(sizeof(*sa) - sizeof(sa->sun_path)),
-		    sa->sun_path);
+	    unp.unp_vnode, unp.unp_conn,
+	    unp.unp_refs, unp.unp_nextref);
+	if (unp.unp_addr)
+		printf(" %.*s", sizeof(sun.sun_path), sun.sun_path);
 	putchar('\n');
 }

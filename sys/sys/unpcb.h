@@ -1,4 +1,4 @@
-/*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
+/*	$NetBSD: unpcb.h,v 1.6.8.1 1996/12/11 03:32:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@ struct	unpcb {
 	struct	unpcb *unp_conn;	/* control block of connected socket */
 	struct	unpcb *unp_refs;	/* referencing socket linked list */
 	struct 	unpcb *unp_nextref;	/* link in unp_refs list */
-	struct	mbuf *unp_addr;		/* bound address of socket */
+	struct	sockaddr_un *unp_addr;	/* bound address of socket */
 	int	unp_cc;			/* copy of rcv.sb_cc */
 	int	unp_mbcnt;		/* copy of rcv.sb_mbcnt */
 };
