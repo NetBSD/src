@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.14 1994/10/26 08:46:20 cgd Exp $	*/
+/*	$NetBSD: ser.c,v 1.15 1994/11/03 16:15:27 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -145,12 +145,12 @@ static unsigned char ser_init_bytes[]={
 	11, 0x50,	/* clock control. */
 	12, 0x04,	/* time constant LB. */
 	13, 0x00,	/* time constant HB. */
-	14, 0x82,	/* miscellaneous control.  Bit d0 (BR gen enable)
+	14, 0x00,	/* miscellaneous control.  Bit d0 (BR gen enable)
 			   must be set to 0 at this time. */
 	 3, 0xc1,	/* set d0 (rx enable). */
 	 5, 0xea,	/* set d3 (tx enable). */
 	 0, 0x80,	/* reset txCRC. */
-	14, 0x83,	/* BR gen enable.  Enable DPLL. */
+	14, 0x01,	/* BR gen enable.  Enable DPLL. */
 	 1, 0x00,	/* make sure DMA not set. */
 	15, 0x00,	/* disable external interrupts. */
 	 0, 0x10,	/* reset ext/status twice. */
@@ -192,8 +192,8 @@ static	int initted=0;
 		if (ser_init_bytes[i] == 13)	/* baud rate high byte */
 			ser_init_bytes[i+1] = ((spd>>8) & 0xff);
 		if (!running_interrupts) {
-			if (   ser_init_bytes[i]   == 0x00
-			    && ser_init_bytes[i+1] == 0x10)
+			if (   ser_init_bytes[i]   == 0x01
+			    && ser_init_bytes[i+1] == 0x0a)
 				break;
 		}
 		SER_DOCNTL(0, ser_init_bytes[i], ser_init_bytes[i + 1]);
