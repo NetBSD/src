@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.14.4.9 2005/02/16 14:01:47 bouyer Exp $
+#	$NetBSD: files.xen,v 1.14.4.10 2005/03/08 14:05:01 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -104,14 +104,12 @@ define hypervisorbus {}
 # System bus types
 #
 
-device mainbus: isabus, eisabus, mcabus, pcibus, acpibus,
-	cpubus, apmbus, pnpbiosbus, vesabiosbus,
-	hypervisorbus
+device mainbus: cpubus, hypervisorbus
 attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
 # Xen hypervisor
-device	hypervisor { }: pcibus
+device	hypervisor { }: isabus, pcibus
 attach hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
@@ -143,6 +141,16 @@ include "dev/pci/files.pci"
 include "dev/pci/files.agp"
 file 	arch/i386/pci/agp_machdep.c	agp
 file	arch/xen/xen/pciide_machdep.c	pciide_common
+#
+# Machine-independent ISA devices
+#
+include "dev/isa/files.isa"
+
+#
+# Machine-independent USB drivers
+#
+
+include "dev/usb/files.usb"
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
@@ -150,6 +158,11 @@ device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb			needs-flag
 file	arch/i386/pci/pchb_rnd.c	pchb & rnd
+
+# PCI-ISA bridges
+device  pcib: isabus
+attach  pcib at pci
+file    arch/xen/xen/pcib.c            pcib
 
 # CPUS
 
@@ -246,6 +259,7 @@ file 	arch/xen/i386/xen_shm_machdep.c	dom0ops
 file	arch/xen/xen/xbdback.c		dom0ops
 file	arch/xen/xen/xennetback.c	dom0ops
 file	arch/xen/xen/pci_machdep.c	hypervisor & dom0ops
+file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 
 include "arch/xen/conf/majors.i386"

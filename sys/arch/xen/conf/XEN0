@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.1.2.3 2005/01/31 17:21:16 bouyer Exp $
+# $NetBSD: XEN0,v 1.1.2.4 2005/03/08 14:05:01 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -74,11 +74,11 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
-#file-system 	MFS		# memory file system
+file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
-#file-system 	NTFS		# Windows/NT file system (experimental)
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system 	MSDOSFS		# MS-DOS file system
+file-system 	NTFS		# Windows/NT file system (experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
@@ -89,9 +89,9 @@ file-system 	PROCFS		# /proc
 #file-system 	UNION		# union file system
 #file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 
-#options 	QUOTA		# UFS quotas
-#options 	SOFTDEP		# FFS soft updates support.
-#options 	NFSSERVER	# Network File System server
+options 	QUOTA		# UFS quotas
+options 	SOFTDEP		# FFS soft updates support.
+options 	NFSSERVER	# Network File System server
 
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -138,15 +138,6 @@ xencons*	at hypervisor?		# Xen virtual console
 #wd*		at hypervisor?		# Xen vbd (wd identity)
 #sd*		at hypervisor?		# Xen vbd (sd identity)
 #cd*		at hypervisor?		# Xen vbd (cd identity)
-
-#xenkbc* 	at hypervisor?		# Xen Keyboard/Mouse Interface
-#pckbd*		at xenkbc?		# Keyboard
-#vga*		at hypervisor?		# Xen VGA display
-#pms*		at xenkbc?		# PS/2 Mouse for wsmouse
-
-#wskbd*		at pckbd? console ?
-#wsdisplay*	at vga? console ?
-#wsmouse*	at pms? mux 0
 
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
@@ -289,28 +280,149 @@ ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-#pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 agp* 	at pchb?
+
 # ISA bus support
-#isa0	at pcib?
+isa0	at pcib?
+isa0	at hypervisor?
 
 # wscons
-#pckbc0		at isa?			# pc keyboard controller
-#pckbd*		at pckbc?		# PC keyboard
-#pms*		at pckbc?		# PS/2 mouse for wsmouse
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 #vga0		at isa?
-#vga*		at pci? dev ? function ?
+vga*		at pci? dev ? function ?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 #machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
-#wsdisplay*	at vga? console ?
+wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
 #wsdisplay* 	at machfb? console ?
-#wskbd*		at pckbd? console ?
-#wsmouse*	at pms? mux 0
+wskbd*		at pckbd? console ?
+wsmouse*	at pms? mux 0
+
+# USB Controller and Devices
+
+# PCI USB controllers
+ehci*   at pci? dev ? function ?        # Enhanced Host Controller
+ohci*   at pci? dev ? function ?        # Open Host Controller
+uhci*   at pci? dev ? function ?        # Universal Host Controller (Intel)
+
+# USB bus support
+usb*    at ehci?
+usb*    at ohci?
+usb*    at uhci?
+#usb*   at slhci?
+
+# USB Hubs
+uhub*   at usb?
+uhub*   at uhub? port ? configuration ? interface ?
+
+# USB HID device
+uhidev* at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*    at uhidev? reportid ?
+wsmouse* at ums? mux 0
+
+# USB eGalax touch-panel
+uep*    at uhub? port ?
+wsmouse* at uep? mux 0
+
+# USB Keyboards
+ukbd*   at uhidev? reportid ?
+wskbd*  at ukbd? console ? mux 1
+
+# USB Generic HID devices
+uhid*   at uhidev? reportid ?
+
+# USB Printer
+ulpt*   at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem* at uhub? port ? configuration ?
+ucom*   at umodem?
+
+# USB Mass Storage
+umass*  at uhub? port ? configuration ? interface ?
+scsibus* at umass?
+wd*     at umass?
+
+# USB audio
+uaudio* at uhub? port ? configuration ?
+
+# USB MIDI
+umidi* at uhub? port ? configuration ?
+
+# USB IrDA
+# USB-IrDA bridge spec
+uirda* at uhub? port ? configuration ? interface ?
+irframe* at uirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir* at uhub? port ?
+irframe* at ustir?
+
+# USB Ethernet adapters
+aue*    at uhub? port ?         # ADMtek AN986 Pegasus based adapters
+axe*    at uhub? port ?         # ASIX AX88172 based adapters
+cdce*   at uhub? port ?         # CDC, Ethernet Networking Control Model
+cue*    at uhub? port ?         # CATC USB-EL1201A based adapters
+kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
+udav*   at uhub? port ?         # Davicom DM9601 based adapters
+url*    at uhub? port ?         # Realtek RTL8150L based adapters
+
+# USB 802.11b adapters
+atu*    at uhub? port ?         # Atmel AT76C50XX based adapters
+
+# Prolific PL2301/PL2302 host-to-host adapter
+upl*    at uhub? port ?
+
+# Serial adapters
+ubsa*   at uhub? port ?         # Belkin serial adapter
+ucom*   at ubsa? portno ?
+
+uftdi*  at uhub? port ?         # FTDI FT8U100AX serial adapter
+ucom*   at uftdi? portno ?
+
+umct*   at uhub? port ?         # MCT USB-RS232 serial adapter
+ucom*   at umct? portno ?
+
+uplcom* at uhub? port ?         # I/O DATA USB-RSAQ2 serial adapter
+ucom*   at uplcom? portno ?
+
+uvscom* at uhub? port ?         # SUNTAC Slipper U VS-10U serial adapter
+ucom*   at uvscom? portno ?
+
+# Diamond Multimedia Rio 500
+urio*   at uhub? port ?
+
+# USB Handspring Visor
+uvisor* at uhub? port ?
+ucom*   at uvisor?
+
+# USB scanners
+uscanner* at uhub? port ?
+
+# USB scanners that use SCSI emulation, e.g., HP5300
+usscanner* at uhub? port ?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
+
+# D-Link DSB-R100 USB radio
+udsbr*  at uhub? port ?
+radio*  at udsbr?
+
+# USB Generic driver
+ugen*   at uhub? port ?
+
+# Audio support
+audio*  at audiobus?
 
 include	"arch/xen/conf/GENERIC.local"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.8.2.5 2005/02/16 14:01:47 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.8.2.6 2005/03/08 14:05:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8.2.5 2005/02/16 14:01:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8.2.6 2005/03/08 14:05:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8.2.5 2005/02/16 14:01:47 bouyer Ex
 #include "xencons.h"
 #include "xennet.h"
 #include "xbd.h"
-#include "xenkbc.h"
-#include "vga_xen.h"
 #include "npx.h"
 
 #include "opt_xen.h"
@@ -92,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8.2.5 2005/02/16 14:01:47 bouyer Ex
 #include <miscfs/kernfs/kernfs.h>
 #include <machine/kernfs_machdep.h>
 #include <dev/pci/pcivar.h>
+#include <dev/isa/isavar.h>
 #endif
 
 #if NXENNET > 0
@@ -109,16 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8.2.5 2005/02/16 14:01:47 bouyer Ex
 #include <machine/xbdvar.h>
 #endif
 
-#if NXENKBC > 0
-#include <dev/pckbport/pckbportvar.h>
-#include <machine/xenkbcvar.h>
-#endif
-
-#if NVGA_XEN > 0
-#include <machine/bus.h>
-#include <machine/vga_xenvar.h>
-#endif
-
 int	hypervisor_match(struct device *, struct cfdata *, void *);
 void	hypervisor_attach(struct device *, struct device *, void *);
 
@@ -129,12 +118,6 @@ static int hypervisor_print(void *, const char *);
 
 union hypervisor_attach_cookie {
 	const char *hac_device;		/* first elem of all */
-#if NXENKBC > 0
-	struct xenkbc_attach_args hac_xenkbc;
-#endif
-#if NVGA_XEN > 0
-	struct xen_vga_attach_args hac_vga_xen;
-#endif
 #if NXENCONS > 0
 	struct xencons_attach_args hac_xencons;
 #endif
@@ -148,7 +131,6 @@ union hypervisor_attach_cookie {
 	struct xen_npx_attach_args hac_xennpx;
 #endif
 };
-
 
 /*
  * Probe for the hypervisor; always succeeds.
@@ -185,24 +167,13 @@ hypervisor_attach(parent, self, aux)
 {
 #ifdef DOM0OPS
 	struct pcibus_attach_args pba;
+	struct isabus_attach_args iba;
 #endif
 	union hypervisor_attach_cookie hac;
 
 	printf("\n");
 
 	init_events();
-
-#if NXENKBC > 0
-	hac.hac_xenkbc.xa_device = "xenkbc";
-	config_found(self, &hac.hac_xenkbc, hypervisor_print);
-#endif
-
-#if NVGA_XEN > 0
-	hac.hac_vga_xen.xa_device = "vga_xen";
-	hac.hac_vga_xen.xa_iot = X86_BUS_SPACE_IO;
-	hac.hac_vga_xen.xa_memt = X86_BUS_SPACE_MEM;
-	config_found(self, &hac.hac_vga_xen, hypervisor_print);
-#endif
 
 #if NXENCONS > 0
 	hac.hac_xencons.xa_device = "xencons";
@@ -259,6 +230,12 @@ hypervisor_attach(parent, self, aux)
 				    pcibusprint);
 			}
 		}
+		iba._iba_busname = "isa";
+		iba.iba_iot = X86_BUS_SPACE_IO;
+		iba.iba_memt = X86_BUS_SPACE_MEM;
+		iba.iba_dmat = &isa_bus_dma_tag;
+		iba.iba_ic = NULL; /* No isa DMA yet */
+		config_found_ia(self, "isabus", &iba, isabusprint);
 
 		xenkernfs_init();
 		xenprivcmd_init();
