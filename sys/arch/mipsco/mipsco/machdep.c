@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2000/08/12 22:58:53 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2000/08/12 22:58:53 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2000/08/15 04:56:46 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -154,6 +154,7 @@ static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
 static int	unimpl_memsize __P((caddr_t));
 static unsigned	unimpl_clkread __P((void));
 static void	unimpl_todr __P((struct clock_ymdhms *));
+static void	unimpl_intr_establish __P((int, int (*)__P((void *)), void *));
 
 struct platform platform = {
 	"iobus not set",
@@ -163,6 +164,7 @@ struct platform platform = {
 	unimpl_clkread,
 	unimpl_todr,
 	unimpl_todr,
+	unimpl_intr_establish,
 };
 
 struct consdev *cn_tab = NULL;
@@ -629,6 +631,15 @@ unimpl_todr(dt)
 	struct clock_ymdhms *dt;
 {
 	panic("sysconf.init didn't init TOD");
+}
+
+void
+unimpl_intr_establish(level, func, arg)
+	int level;
+	int (*func) __P((void *));
+	void *arg;
+{
+	panic("sysconf.init didn't init intr_establish\n");
 }
 
 void
