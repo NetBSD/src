@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.6 1996/01/24 19:52:57 gwr Exp $ */
+/*	$NetBSD: zsvar.h,v 1.7 1996/02/25 22:03:23 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,17 +162,22 @@ struct zs_chanstate {
  * On the SparcStation the 1.6 microsecond recovery time is
  * handled in hardware. On the older Sun4 machine it isn't, and
  * software must deal with the problem.
+ *
+ * However, it *is* a problem on some Sun4m's (i.e. the SS20) (XXX: why?). 
+ * Thus we leave in the delay.
+ *
+ * %%%: Think about this more.
  */
-#ifdef SUN4
+#if defined(SUN4)
+
 #define	ZS_READ(c, r)		zs_read(c, r)
 #define	ZS_WRITE(c, r, v)	zs_write(c, r, v)
-#if defined(SUN4C) || defined(SUN4M)
-#define	ZS_DELAY()		(cputyp == CPU_SUN4 ? delay(1) : 0)
-#else
-#define	ZS_DELAY()		delay(1)
-#endif
-#else
+#define	ZS_DELAY()		(CPU_ISSUN4C ? (0) : delay(1))
+
+#else /* SUN4 */
+
 #define	ZS_READ(c, r)		((c)->zc_csr = (r), (c)->zc_csr)
 #define	ZS_WRITE(c, r, v)	((c)->zc_csr = (r), (c)->zc_csr = (v))
-#define	ZS_DELAY()
-#endif
+#define	ZS_DELAY()		(CPU_ISSUN4M ? delay(1) : 0)
+
+#endif /* SUN4 */
