@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2001/02/19 22:56:22 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2002/11/18 04:28:03 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2001/02/19 22:56:22 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2002/11/18 04:28:03 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ char	*usedinomap;
 ino_t	maxino;
 time_t	dumptime;
 time_t	dumpdate;
+size_t	pagesize;
 FILE 	*terminal;
 char	*tmpdir;
 
@@ -177,6 +178,7 @@ main(argc, argv)
 	if (signal(SIGTERM, onintr) == SIG_IGN)
 		(void) signal(SIGTERM, SIG_IGN);
 	setlinebuf(stderr);
+	pagesize = sysconf(_SC_PAGESIZE);
 
 	atexit(cleanup);
 
