@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 1995/07/23 20:21:17 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.22 1995/08/01 06:58:57 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,15 +87,17 @@
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
-extern void MachKernGenException();
-extern void MachUserGenException();
-extern void MachKernIntr();
-extern void MachUserIntr();
-extern void MachTLBModException();
-extern void MachTLBMissException();
-extern unsigned MachEmulateBranch();
+/*
+ * Exception-handling functions, called via machExceptionTable from locore
+ */
+extern void MachKernGenException __P((void));
+extern void MachUserGenException __P((void));
+extern void MachKernIntr __P((void));
+extern void MachUserIntr __P((void));
+extern void MachTLBModException  __P((void));
+extern void MachTLBMissException __P((void));
 
-void (*machExceptionTable[])() = {
+void (*machExceptionTable[]) __P((void)) = {
 /*
  * The kernel exception handlers.
  */
@@ -166,24 +168,45 @@ struct trapdebug {		/* trap history buffer for debugging */
 	u_int	code;
 } trapdebug[TRAPSIZE], *trp = trapdebug;
 
+void trapDump __P((char * msg));
+void cpu_getregs __P((int *regs));
 #endif	/* DEBUG */
+
+
+/* extern functions used but not declared elsewhere */
+extern void MachFPInterrupt __P((u_int status, u_int cause, u_int pc));
+extern void clearsoftclock __P((void));
+extern void clearsoftnet __P((void));
+extern void splx __P((int));
+extern int splhigh __P((void));
+extern void MachTLBUpdate __P((u_int, u_int));
+extern void MachSwitchFPState __P((struct proc *from, struct user *to));
+
+/* only called by locore */
+extern u_int trap __P((u_int status, u_int cause, u_int vaddr,  u_int pc,
+			 int args));
+/* (called by locore and kadb */
+extern u_int MachEmulateBranch  __P((u_int*, u_int, u_int, int));
 
 
 #ifdef DEBUG /* stack trace code, also useful to DDB one day */
-extern void stacktrace();
-extern void logstacktrace();
+extern void stacktrace __P(()); /*XXX*/
+extern void logstacktrace __P(()); /*XXX*/
 
 /* extern functions printed by name in stack backtraces */
-extern void idle(),  cpu_switch(), splx(), MachEmptyWriteBuffer();
-extern void MachUTLBMiss();
+extern void idle __P((void)),  cpu_switch __P(( struct proc *p));
+extern void MachEmptyWriteBuffer __P((void));
+extern void MachUTLBMiss __P((void));
+extern void setsoftclock __P((void));
 #endif	/* DEBUG */
 
 
-static void pmax_errintr();
-static void kn02_errintr(), kn02ba_errintr();
+
+static void pmax_errintr __P((void));
+static void kn02_errintr __P((void)), kn02ba_errintr __P((void));
 
 #ifdef DS5000_240
-static void kn03_errintr();
+static void kn03_errintr __P ((void));
 extern u_long kn03_tc3_imask;
 
 /*
@@ -197,11 +220,15 @@ u_long latched_cycle_cnt;	/*
 				 */
 #endif /*DS5000_240*/
 
-static unsigned kn02ba_recover_erradr();
+static unsigned kn02ba_recover_erradr __P((u_int phys, u_int mer));
 extern tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 extern u_long kmin_tc3_imask, xine_tc3_imask;
 extern const struct callback *callv;
-int (*pmax_hardware_intr)() = (int (*)())0;
+
+int (*pmax_hardware_intr) __P((u_int mask, u_int pc, u_int status,
+			       u_int cause)) =
+	( int (*) __P((u_int, u_int, u_int, u_int)) ) 0;
+
 extern volatile struct chiptime *Mach_clock_addr;
 extern u_long intrcnt[];
 extern u_long kernelfaults;
@@ -214,7 +241,7 @@ u_long kernelfaults = 0;
  * In the case of a kernel trap, we return the pc where to resume if
  * ((struct pcb *)UADDR)->pcb_onfault is set, otherwise, return old pc.
  */
-unsigned
+u_int
 trap(statusReg, causeReg, vadr, pc, args)
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned causeReg;	/* cause register at time of exception */
@@ -666,7 +693,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 			i = SIGILL;	/* only FPU instructions allowed */
 			break;
 		}
-		MachSwitchFPState(machFPCurProcPtr, p->p_md.md_regs);
+		MachSwitchFPState(machFPCurProcPtr,
+				  (struct user*)p->p_md.md_regs);
 		machFPCurProcPtr = p;
 		p->p_md.md_regs[PS] |= MACH_SR_COP_1_BIT;
 		p->p_md.md_flags |= MDP_FPUSED;
@@ -781,6 +809,7 @@ out:
  * Called from MachKernIntr() or MachUserIntr()
  * Note: curproc might be NULL.
  */
+void
 interrupt(statusReg, causeReg, pc)
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned causeReg;	/* cause register at time of exception */
@@ -865,6 +894,7 @@ interrupt(statusReg, causeReg, pc)
 /*
  * Handle pmax (DECstation 2100/3100) interrupts.
  */
+int
 pmax_intr(mask, pc, statusReg, causeReg)
 	unsigned mask;
 	unsigned pc;
@@ -902,12 +932,12 @@ pmax_intr(mask, pc, statusReg, causeReg)
 #endif
 #if NDC > 0
 	if (mask & MACH_INT_MASK_2) {
-		intrcnt[4];
+		intrcnt[4]++;
 		dcintr(0);
 	}
 #endif
 	if (mask & MACH_INT_MASK_4) {
-		intrcnt[5];
+		intrcnt[5]++;
 		pmax_errintr();
 	}
 	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
@@ -918,6 +948,7 @@ pmax_intr(mask, pc, statusReg, causeReg)
  * Handle hardware interrupts for the KN02. (DECstation 5000/200)
  * Returns spl value.
  */
+int
 kn02_intr(mask, pc, statusReg, causeReg)
 	unsigned mask;
 	unsigned pc;
@@ -989,6 +1020,7 @@ kn02_intr(mask, pc, statusReg, causeReg)
 /*
  * 3min hardware interrupts. (DECstation 5000/1xx)
  */
+int
 kmin_intr(mask, pc, statusReg, causeReg)
 	unsigned mask;
 	unsigned pc;
@@ -1082,6 +1114,7 @@ kmin_intr(mask, pc, statusReg, causeReg)
 /*
  * Maxine hardware interrupts. (Personal DECstation 5000/xx)
  */
+int
 xine_intr(mask, pc, statusReg, causeReg)
 	unsigned mask;
 	unsigned pc;
@@ -1207,6 +1240,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 /*
  * 3Max+ hardware interrupts. (DECstation 5000/240) UNTESTED!!
  */
+int
 kn03_intr(mask, pc, statusReg, causeReg)
 	unsigned mask;
 	unsigned pc;
@@ -1341,6 +1375,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
  * This is called from MachUserIntr() if astpending is set.
  * This is very similar to the tail of trap().
  */
+void
 softintr(statusReg, pc)
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned pc;		/* program counter where to continue */
@@ -1381,6 +1416,7 @@ softintr(statusReg, pc)
 }
 
 #ifdef DEBUG
+void
 trapDump(msg)
 	char *msg;
 {
@@ -1536,10 +1572,16 @@ kn02ba_recover_erradr(phys, mer)
 	return ((phys & KMIN_AER_ADDR_MASK) | mer);
 }
 
+
+/*
+ * forward declaration
+ */
+static unsigned GetBranchDest __P((InstFmt *InstPtr));
+
 /*
  * Return the resulting PC as if the branch was executed.
  */
-unsigned
+u_int
 MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	unsigned *regsPtr;
 	unsigned instPC;
@@ -1549,9 +1591,6 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	InstFmt inst;
 	unsigned retAddr;
 	int condition;
-	extern unsigned GetBranchDest();
-
-
 	inst = *(InstFmt *)instPC;
 #if 0
 	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
@@ -1662,18 +1701,21 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	return (retAddr);
 }
 
-unsigned
+static unsigned
 GetBranchDest(InstPtr)
 	InstFmt *InstPtr;
 {
 	return ((unsigned)InstPtr + 4 + ((short)InstPtr->IType.imm << 2));
 }
 
+#ifdef DEBUG
+
 /*
  * This routine is called by procxmt() to single step one instruction.
  * We do this by storing a break instruction after the current instruction,
  * resuming execution, and then restoring the old instruction.
  */
+int
 cpu_singlestep(p)
 	register struct proc *p;
 {
@@ -1716,7 +1758,7 @@ cpu_singlestep(p)
 	return (0);
 }
 
-#ifdef DEBUG
+int
 kdbpeek(addr)
 {
 	if (addr & 3) {
@@ -1761,7 +1803,6 @@ stacktrace_subr(a0, a1, a2, a3, printfn)
 	InstFmt i;
 	int more, stksize;
 	int regs[3];
-	extern setsoftclock();
 	extern char start[], edata[];
 	unsigned int frames =  0;
 
