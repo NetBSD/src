@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.1 2001/06/19 00:20:11 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.2 2002/06/25 01:24:49 thorpej Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -65,10 +65,10 @@ struct netbsd32_sigcontext {
 #define sc_ps sc_eflags
 
 struct netbsd32_sigframe {
+	uint32_t sf_ra;
 	int	sf_signum;
 	int	sf_code;
-	u_int32_t sf_scp;		/* struct  sigcontext *sf_scp */
-	u_int32_t sf_handler;		/* sig_t sf_handler; */
+	uint32_t sf_scp;
 	struct	netbsd32_sigcontext sf_sc;
 };
 

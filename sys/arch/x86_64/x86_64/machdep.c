@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2002/06/18 08:35:14 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2002/06/25 01:24:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -516,10 +516,7 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
+	frame.sf_ra = (uint64_t) p->p_sigctx.ps_sigcode;
 
 	/* Save register context. */
 	__asm("movl %%gs,%0" : "=r" (frame.sf_sc.sc_gs));
@@ -575,7 +572,11 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 #endif
-	tf->tf_rip = (u_int64_t)p->p_sigctx.ps_sigcode;
+	tf->tf_rdi = sig;
+	tf->tf_rsi = code;
+	tf->tf_rdx = (int64_t) &fp->sf_sc;
+
+	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_rsp = (u_int64_t)fp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.7 2002/06/14 18:28:20 eeh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.8 2002/06/25 01:24:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -152,10 +152,10 @@ netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
+	frame.sf_ra = (uint32_t)(u_long)p->p_sigctx.ps_sigcode;
 	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = (u_int32_t)(u_long)&fp->sf_sc;
-	frame.sf_handler = (u_int32_t)(u_long)catcher;
 
 	/*
 	 * XXXfvdl these need to be saved and restored for USER_LDT.
@@ -216,7 +216,7 @@ netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
 #endif
-	tf->tf_rip = (u_int64_t)p->p_sigctx.ps_sigcode;
+	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_rsp = (u_int64_t)fp;

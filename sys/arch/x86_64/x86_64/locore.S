@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2002/06/12 19:13:27 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2002/06/25 01:24:50 thorpej Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -660,21 +660,18 @@ longmode_hi:
 
 /*
  * Signal trampoline; copied to top of user stack.
- * XXXfvdl might as well do away with the frame here.
  */
 NENTRY(sigcode)
-	movq	SIGF_SIGNUM(%rsp),%rdi	# handler(sig, code, scp)
-	movq	SIGF_CODE(%rsp),%rsi
-	movq	SIGF_SCP(%rsp),%rdx
-	call	*SIGF_HANDLER(%rsp)
-	leaq	SIGF_SC(%rsp),%rax	# scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	movl	SC_FS(%rax),%ecx	# XXXfvdl these are wrong
-	movl	SC_GS(%rax),%edx
+	/*
+	 * Handler has returned here as if we called it.  The sigcontext
+	 * is now the first thing on the stack.
+	 */
+	movl	SC_FS(%rsp),%ecx	/* XXXfvdl these are wrong */
+	movl	SC_GS(%rsp),%edx
 	movl	%ecx,%fs
 	movl	%edx,%gs
-	movq	%rax,%rdi
-	pushq	%rax
+	movq	%rsp,%rdi
+	pushq	%rdi			/* fake return address */
 	movq	$SYS___sigreturn14,%rax
 	syscall
 	movq	$SYS_exit,%rax
