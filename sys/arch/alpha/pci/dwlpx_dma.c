@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.1.2.1 1997/05/23 21:44:45 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.1.2.2 1997/06/03 07:05:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPEDWLPXL, EXEMPLARY, OR
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPEDWLPxL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.1.2.1 1997/05/23 21:44:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.1.2.2 1997/06/03 07:05:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,12 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.1.2.1 1997/05/23 21:44:45 thorpej Ex
 
 bus_dma_tag_t dwlpx_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
 
-int	dwlpx_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
 int	dwlpx_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
 
-void	dwlpx_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
+void	dwlpx_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 int	dwlpx_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
@@ -90,12 +88,12 @@ int	dwlpx_bus_dmamap_load_raw_direct __P((bus_dma_tag_t, bus_dmamap_t,
 int	dwlpx_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 
-void	dwlpx_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+void	dwlpx_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 /*
  * The direct-mapped DMA window begins at this PCI address.
  */
-#define	DWLPX_DIRECT_MAPPED_BASE 0x40000000
+#define	DWLPx_DIRECT_MAPPED_BASE 0x40000000
 
 void
 dwlpx_dma_init(ccp)
@@ -103,6 +101,7 @@ dwlpx_dma_init(ccp)
 {
 	char *exname;
 	bus_dma_tag_t t;
+	u_int32_t *page_table;
 	int i;
 
 	/*
@@ -111,13 +110,13 @@ dwlpx_dma_init(ccp)
 	t = &ccp->cc_dmat_direct;
 	t->_cookie = ccp;
 	t->_get_tag = dwlpx_dma_get_tag;
-	t->_dmamap_create = dwlpx_bus_dmamap_create;
-	t->_dmamap_destroy = dwlpx_bus_dmamap_destroy;
+	t->_dmamap_create = _bus_dmamap_create;
+	t->_dmamap_destroy = _bus_dmamap_destroy;
 	t->_dmamap_load = dwlpx_bus_dmamap_load_direct;
 	t->_dmamap_load_mbuf = dwlpx_bus_dmamap_load_mbuf_direct;
 	t->_dmamap_load_uio = dwlpx_bus_dmamap_load_uio_direct;
 	t->_dmamap_load_raw = dwlpx_bus_dmamap_load_raw_direct;
-	t->_dmamap_unload = dwlpx_bus_dmamap_unload;
+	t->_dmamap_unload = _bus_dmamap_unload;
 	t->_dmamap_sync = NULL;		/* Nothing to do. */
 
 	t->_dmamem_alloc = _bus_dmamem_alloc;
@@ -133,12 +132,12 @@ dwlpx_dma_init(ccp)
 	t->_cookie = ccp;
 	t->_get_tag = dwlpx_dma_get_tag;
 	t->_dmamap_create = dwlpx_bus_dmamap_create_sgmap;
-	t->_dmamap_destroy = dwlpx_bus_dmamap_destroy;
+	t->_dmamap_destroy = dwlpx_bus_dmamap_destroy_sgmap;
 	t->_dmamap_load = dwlpx_bus_dmamap_load_sgmap;
 	t->_dmamap_load_mbuf = dwlpx_bus_dmamap_load_mbuf_sgmap;
 	t->_dmamap_load_uio = dwlpx_bus_dmamap_load_uio_sgmap;
 	t->_dmamap_load_raw = dwlpx_bus_dmamap_load_raw_sgmap;
-	t->_dmamap_unload = dwlpx_bus_dmamap_unload;
+	t->_dmamap_unload = dwlpx_bus_dmamap_unload_sgmap;
 	t->_dmamap_sync = NULL;		/* Nothing to do. */
 
 	t->_dmamem_alloc = _bus_dmamem_alloc;
@@ -148,40 +147,83 @@ dwlpx_dma_init(ccp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Initialize the SGMAP.
+	 * A few notes about SGMAP-mapped DMA on the DWLPx:
+	 *
+	 * The DWLPx has PCIA-resident SRAM that is used for
+	 * the SGMAP page table; there is no TLB.  The DWLPA
+	 * has room for 32K entries, yielding a total of 256M
+	 * of sgva space.  The DWLPB has 32K entries or 128K
+	 * entries, depending on TBIT, yielding wither 256M or
+	 * 1G of sgva space.
+	 *
+	 * This sgva space must be shared across all windows
+	 * that wish to use SGMAP-mapped DMA; make sure to
+	 * adjust the "sgvabase" argument to alpha_sgmap_init()
+	 * accordingly if you create more than one SGMAP-mapped
+	 * window.  Note that sgvabase != window base.  The former
+	 * is used to compute indexes into the page table only.
+	 *
+	 * In the current implementation, we follow the lead of
+	 * the workstation chipsets; the first window is an 8M
+	 * window SGMAP-mapped mapped at 8M, and the second window
+	 * is a 1G window direct-mapped mapped at 1G.
+	 */
+
+	/*
+	 * Initialize the SGMAP for window A:
+	 *
+	 *	Size: 8M
+	 *	Window base: 8M
+	 *	SGVA base: 0
 	 */
 	exname = malloc(16, M_DEVBUF, M_NOWAIT);
 	if (exname == NULL)
 		panic("dwlpx_dma_init");
-	sprintf(exname, "%s_sgmap", ccp->cc_sc->dwlpx_dev.dv_xname);
-	pci_dma_sgmap_init(t, &ccp->cc_sgmap, exname,
-	    (8*1024*1024), (8*1024*1024));
+	sprintf(exname, "%s_sgmap_a", ccp->cc_sc->dwlpx_dev.dv_xname);
+	alpha_sgmap_init(t, &ccp->cc_sgmap, exname,
+	    (8*1024*1024), 0, (8*1024*1024), sizeof(u_int32_t),
+	    (void *)(PCIA_SGMAP_PT + ccp->cc_sysbase));
 
 	/*
-	 * Set up DMA windows for this DWLPX.
-	 *
-	 * Basically, we set up for a 1GB direct mapped window,
-	 * starting from PCI address 0x40000000. And that's it.
+	 * Initialize the page table.
+	 */
+	page_table = (u_int32_t *)(PCIA_SGMAP_PT + ccp->cc_sysbase);
+	for (i = 0; i < (32*1024); i++)
+		page_table[i] = 0;
+	alpha_mb();
+
+	/*
+	 * Set up DMA windows for this DWLPx.
 	 *
 	 * Do this even for all HPCs- even for the nonexistent
 	 * one on hose zero of a KFTIA.
 	 */
 	for (i = 0; i < NHPC; i++) {
-		REGVAL(PCIA_WMASK_A(i) + ccp->cc_sysbase) = 0;
+		REGVAL(PCIA_WMASK_A(i) + ccp->cc_sysbase) = PCIA_WMASK_8M;
 		REGVAL(PCIA_TBASE_A(i) + ccp->cc_sysbase) = 0;
-		REGVAL(PCIA_WBASE_A(i) + ccp->cc_sysbase) = 0;
-		REGVAL(PCIA_WMASK_B(i) + ccp->cc_sysbase) = 0x3fff0000;
+		alpha_mb();
+		REGVAL(PCIA_WBASE_A(i) + ccp->cc_sysbase) =
+		    (8*1024*1024) | PCIA_WBASE_W_EN | PCIA_WBASE_SG_EN;
+		alpha_mb();
+
+		REGVAL(PCIA_WMASK_B(i) + ccp->cc_sysbase) = PCIA_WMASK_1G;
 		REGVAL(PCIA_TBASE_B(i) + ccp->cc_sysbase) = 0;
-		REGVAL(PCIA_WBASE_B(i) + ccp->cc_sysbase) = 0x40000002;
+		alpha_mb();
+		REGVAL(PCIA_WBASE_B(i) + ccp->cc_sysbase) =
+		    DWLPx_DIRECT_MAPPED_BASE | PCIA_WBASE_W_EN;
+		alpha_mb();
+
 		REGVAL(PCIA_WMASK_C(i) + ccp->cc_sysbase) = 0;
 		REGVAL(PCIA_TBASE_C(i) + ccp->cc_sysbase) = 0;
+		alpha_mb();
 		REGVAL(PCIA_WBASE_C(i) + ccp->cc_sysbase) = 0;
+		alpha_mb();
 	}
 
 	/* XXX XXX BEGIN XXX XXX */
 	{							/* XXX */
 		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = DWLPX_DIRECT_MAPPED_BASE;	/* XXX */
+		alpha_XXX_dmamap_or = DWLPx_DIRECT_MAPPED_BASE;	/* XXX */
 	}							/* XXX */
 	/* XXX XXX END XXX XXX */
 }
@@ -222,43 +264,8 @@ dwlpx_dma_get_tag(t, bustype)
 }
 
 /*
- * Create a DWLPX DMA map.
+ * Create a DWLPx SGMAP-mapped DMA map.
  */
-int
-dwlpx_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
-{
-	struct alpha_pci_dma_cookie *a;
-	bus_dmamap_t map;
-	int error;
-
-	/* Call common function to create the basic map. */
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary,
-	    flags, dmamp);
-	if (error)
-		return (error);
-
-	map = *dmamp;
-
-	/* Allocate PCI-specific housekeeping stuff. */
-	a = malloc(sizeof(struct alpha_pci_dma_cookie), M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
-	if (a == NULL) {
-		_bus_dmamap_destroy(t, map);
-		return (ENOMEM);
-	}
-	bzero(a, sizeof(struct alpha_pci_dma_cookie));
-	map->_dm_cookie = a;
-
-	return (0);
-}
-
 int
 dwlpx_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
     flags, dmamp)
@@ -271,45 +278,56 @@ dwlpx_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 	bus_dmamap_t *dmamp;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a;
+	struct alpha_sgmap_cookie *a;
 	bus_dmamap_t map;
 	int error;
 
-	error = dwlpx_bus_dmamap_create(t, size, nsegments, maxsegsz,
+	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
 	    boundary, flags, dmamp);
 	if (error)
 		return (error);
 
 	map = *dmamp;
-	a = map->_dm_cookie;
 
-	if (flags & BUS_DMA_ALLOCNOW)
-		error = pci_dma_sgmap_alloc(map, round_page(size),
-		    &ccp->cc_sgmap, a, flags);
+	a = malloc(sizeof(struct alpha_sgmap_cookie), M_DEVBUF,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+	if (a == NULL) {
+		_bus_dmamap_destroy(t, map);
+		return (ENOMEM);
+	}
+	bzero(a, sizeof(struct alpha_sgmap_cookie));
+	map->_dm_sgcookie = a;
+
+	if (flags & BUS_DMA_ALLOCNOW) {
+		error = alpha_sgmap_alloc(map, round_page(size),
+		    &ccp->cc_sgmap, flags);
+		if (error)
+			dwlpx_bus_dmamap_destroy_sgmap(t, map);
+	}
 
 	return (error);
 }
 
 /*
- * Destroy a DWLPX DMA map.
+ * Destroy a DWLPx SGMAP-mapped DMA map.
  */
 void
-dwlpx_bus_dmamap_destroy(t, map)
+dwlpx_bus_dmamap_destroy_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
+	struct alpha_sgmap_cookie *a = map->_dm_sgcookie;
 
 	if (a->apdc_flags & APDC_HAS_SGMAP)
-		pci_dma_sgmap_free(&ccp->cc_sgmap, a);
+		alpha_sgmap_free(&ccp->cc_sgmap, a);
 
-	free(map->_dm_cookie, M_DEVBUF);
+	free(a, M_DEVBUF);
 	_bus_dmamap_destroy(t, map);
 }
 
 /*
- * Load a DWLPX direct-mapped DMA map with a linear buffer.
+ * Load a DWLPx direct-mapped DMA map with a linear buffer.
  */
 int
 dwlpx_bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
@@ -322,11 +340,11 @@ dwlpx_bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 {
 
 	return (_bus_dmamap_load_direct_common(t, map, buf, buflen, p,
-	    flags, DWLPX_DIRECT_MAPPED_BASE));
+	    flags, DWLPx_DIRECT_MAPPED_BASE));
 }
 
 /*
- * Load a DWLPX SGMAP-mapped DMA map with a linear buffer.
+ * Load a DWLPx SGMAP-mapped DMA map with a linear buffer.
  */
 int
 dwlpx_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
@@ -338,22 +356,13 @@ dwlpx_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	int flags;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
-	int error;
 
-	error = pci_dma_sgmap_load(t, map, buf, buflen, p, flags,
-	    &ccp->cc_sgmap, a);
-	if (error == 0) {
-		/*
-		 * Invalidate DWLPX TLB.
-		 */
-		/* XXX implement XXX */
-	}
-	return (error);
+	return (pci_pte32_sgmap_load(t, map, buf, buflen, p, flags,
+	    &ccp->cc_sgmap));
 }
 
 /*
- * Load a DWLPX direct-mapped DMA map with an mbuf chain.
+ * Load a DWLPx direct-mapped DMA map with an mbuf chain.
  */
 int
 dwlpx_bus_dmamap_load_mbuf_direct(t, map, m, flags)
@@ -364,11 +373,11 @@ dwlpx_bus_dmamap_load_mbuf_direct(t, map, m, flags)
 {
 
 	return (_bus_dmamap_load_mbuf_direct_common(t, map, m,
-	    flags, DWLPX_DIRECT_MAPPED_BASE));
+	    flags, DWLPx_DIRECT_MAPPED_BASE));
 }
 
 /*
- * Load a DWLPX SGMAP-mapped DMA map with an mbuf chain.
+ * Load a DWLPx SGMAP-mapped DMA map with an mbuf chain.
  */
 int
 dwlpx_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
@@ -378,21 +387,12 @@ dwlpx_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	int flags;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
-	int error;
 
-	error = pci_dma_sgmap_load_mbuf(t, map, m, flags, &ccp->cc_sgmap, a);
-	if (error == 0) {
-		/*
-		 * Invalidate DWLPX TLB.
-		 */
-		/* XXX implement XXX */
-	}
-	return (error);
+	return (pci_pte32_sgmap_load_mbuf(t, map, m, flags, &ccp->cc_sgmap));
 }
 
 /*
- * Load a DWLPX direct-mapped DMA map with a uio.
+ * Load a DWLPx direct-mapped DMA map with a uio.
  */
 int
 dwlpx_bus_dmamap_load_uio_direct(t, map, uio, flags)
@@ -403,11 +403,11 @@ dwlpx_bus_dmamap_load_uio_direct(t, map, uio, flags)
 {
 
 	return (_bus_dmamap_load_uio_direct_common(t, map, uio,
-	    flags, DWLPX_DIRECT_MAPPED_BASE));
+	    flags, DWLPx_DIRECT_MAPPED_BASE));
 }
 
 /*
- * Load a DWLPX SGMAP-mapped DMA map with a uio.
+ * Load a DWLPx SGMAP-mapped DMA map with a uio.
  */
 int
 dwlpx_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
@@ -417,21 +417,12 @@ dwlpx_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	int flags;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
-	int error;
 
-	error = pci_dma_sgmap_load_uio(t, map, uio, flags, &ccp->cc_sgmap, a);
-	if (error == 0) {
-		/*
-		 * Invalidate DWLPX TLB.
-		 */
-		/* XXX implement XXX */
-	}
-	return (error);
+	return (pci_pte32_sgmap_load_uio(t, map, uio, flags, &ccp->cc_sgmap));
 }
 
 /*
- * Load a DWLPX direct-mapped DMA map with raw memory.
+ * Load a DWLPx direct-mapped DMA map with raw memory.
  */
 int
 dwlpx_bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
@@ -444,11 +435,11 @@ dwlpx_bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
 {
 
 	return (_bus_dmamap_load_raw_direct_common(t, map, segs, nsegs,
-	    size, flags, DWLPX_DIRECT_MAPPED_BASE));
+	    size, flags, DWLPx_DIRECT_MAPPED_BASE));
 }
 
 /*
- * Load a DWLPX SGMAP-mapped DMA map with raw memory.
+ * Load a DWLPx SGMAP-mapped DMA map with raw memory.
  */
 int
 dwlpx_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
@@ -460,39 +451,26 @@ dwlpx_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	int flags;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
-	int error;
 
-	error = pci_dma_sgmap_load_raw(t, map, segs, nsegs, size, flags,
-	    &ccp->cc_sgmap, a);
-	if (error == 0) {
-		/*
-		 * Invalidate DWLPX TLB.
-		 */
-		/* XXX implement XXX */
-	}
-	return (error);
+	return (pci_pte32_sgmap_load_raw(t, map, segs, nsegs, size, flags,
+	    &ccp->cc_sgmap));
 }
 
 /*
- * Unload a DWLPX DMA map.
+ * Unload a DWLPx DMA map.
  */
 void
-dwlpx_bus_dmamap_unload(t, map)
+dwlpx_bus_dmamap_unload_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
 
 	/*
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	if (a->apdc_flags & APDC_USING_SGMAP) {
-		pci_dma_sgmap_unload(t, map, &ccp->cc_sgmap, a);
-		/* XXX invalidate TLB */
-	}
+	pci_pte32_sgmap_unload(t, map, &ccp->cc_sgmap);
 
 	/*
 	 * Do the generic bits of the unload.
