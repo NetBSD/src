@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.7 1994/01/13 23:49:13 mycroft Exp $
+ *	$Id: locore.s,v 1.8 1994/01/26 02:43:43 brezak Exp $
  */
 
 #include "assym.s"
@@ -727,6 +727,7 @@ _Umap:	.long	0
 /*
  * Initialization
  *
+ * A4 contains the address of the end of the symtab
  * A5 contains physical load point from boot
  * VBR contains zero from ROM.  Exceptions will continue to vector
  * through ROM until MMU is turned on at which time they will vector
@@ -743,6 +744,8 @@ start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 	RELOC(tmpstk, a0)
 	movl	a0,sp			| give ourselves a temporary stack
+	RELOC(_esym, a0)
+	movl	a4,a0@			| store end of symbol table
 	RELOC(_lowram, a0)
 	movl	a5,a0@			| store start of physical memory
 	movl	#CACHE_OFF,d0
@@ -824,7 +827,13 @@ Lstart1:
  * after the MMU is turned on.
  */
 	.globl	_Sysseg, _Sysmap, _Sysptmap, _Sysptsize
+#ifdef DDB
+	RELOC(_esym,a0)			| end of static kernel text/data/syms
+	movl	a0@,d5
+	jne	Lstart2
+#endif
 	movl	#_end,d5		| end of static kernel text/data
+Lstart2:
 	addl	#NBPG-1,d5
 	andl	#PG_FRAME,d5		| round to a page
 	movl	d5,a4
