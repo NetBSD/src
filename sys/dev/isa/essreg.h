@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.5 $ (SHARK) $Date: 1998/08/09 02:05:53 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.6 $ (SHARK) $Date: 1998/08/09 02:54:50 $
 **
 **++
 **
@@ -125,7 +125,9 @@
 #define   ESS_DRQ_CTRL_EXT	0x40
 #define ESS_XCMD_VOLIN_CTRL	0xB4	/* stereo input volume control */
 #define ESS_XCMD_AUDIO1_CTRL1	0xB7	/* */
+#define	  ESS_AUDIO1_CTRL1_FIFO_CONNECT	0x80	/* 1=connected */
 #define	  ESS_AUDIO1_CTRL1_FIFO_SIGNED	0x20	/* 0=unsigned/1=signed */
+#define	  ESS_AUDIO1_CTRL1_FIFO_STEREO	0x08	/* 0=mono/1=stereo */
 #define	  ESS_AUDIO1_CTRL1_FIFO_SIZE	0x04	/* 0=8-bit/1=16-bit */
 #define ESS_XCMD_AUDIO1_CTRL2	0xB8	/* */
 #define	  ESS_AUDIO1_CTRL2_FIFO_ENABLE	0x01	/* 0=disable/1=enable */
