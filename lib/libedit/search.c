@@ -43,7 +43,9 @@ static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
  */
 #include "sys.h"
 #include <stdlib.h>
-#ifdef REGEXP
+#if defined(REGEX)
+#include <regex.h>
+#elif defined(REGEXP)
 #include <regexp.h>
 #endif
 #include "el.h"
@@ -102,31 +104,42 @@ el_match(str, pat)
     const char *str;
     const char *pat;
 {
-#ifndef REGEXP
+#if defined (REGEX)
+    regex_t re;
+    int rv;
+#elif defined (REGEXP)
+    regexp *rp;
+    int rv;
+#else 
     extern char *re_comp __P((const char *));
     extern int re_exec __P((const char *));
-#else
-    regexp *re;
-    int rv;
 #endif
 
     if (strstr(str, pat) != NULL)
 	return 1;
-#ifndef REGEXP
+
+#if defined(REGEX)
+    if (regcomp(&re, pat, 0) == 0) {
+	rv = regexec(&re, str, 0, NULL, 0) == 0;
+	regfree(&re);
+    } else {
+	rv = 0;
+    }
+    return rv;
+#elif defined(REGEXP)
+    if ((re = regcomp(pat)) != NULL) {
+	rv = regexec(re, str);
+	free((ptr_t) re);
+    } else {
+	rv = 0;
+    }
+    return rv;
+#else
     if (re_comp(pat) != NULL)
 	return 0;
     else
     return re_exec(str) == 1;
-#else
-    if ((re = regcomp(pat)) != NULL) {
-	rv = regexec(re, str);
-	free((ptr_t) re);
-    }
-    else
-	rv = 0;
-    return rv;
 #endif
-   
 }
 
 
