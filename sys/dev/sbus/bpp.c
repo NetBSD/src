@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.4 2000/06/14 08:01:26 pk Exp $ */
+/*	$NetBSD: bpp.c,v 1.5 2000/07/09 20:57:41 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,9 +51,10 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <machine/conf.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
@@ -185,7 +186,7 @@ bppattach(parent, self, aux)
 	if (sa->sa_nintr) {
 		sc->sc_intrchain = bppintr;
 		sc->sc_intrchainarg = dsc;
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY, 0,
 					 lsi64854_pp_intr, sc);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.19 2000/06/29 07:40:08 mrg Exp $ */
+/*	$NetBSD: tcx.c,v 1.20 2000/07/09 20:57:47 pk Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -60,15 +60,16 @@
 #include <sys/syslog.h>
 #endif
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/fbvar.h>
-#include <machine/cpu.h>
-#include <machine/conf.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/tcxreg.h>
 #include <sparc/dev/sbusvar.h>
+
+#include <machine/conf.h>
 
 /* per-display variables */
 struct tcx_softc {

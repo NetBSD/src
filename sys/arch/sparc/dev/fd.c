@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.83 2000/06/29 07:40:07 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.84 2000/07/09 20:57:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,8 +103,8 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/intr.h>
 #include <machine/conf.h>
 
 #include <sparc/sparc/auxreg.h>
@@ -641,15 +641,15 @@ fdcattach(fdc, pri)
 	}
 
 #ifdef FDC_C_HANDLER
-	(void)bus_intr_establish(fdc->sc_bustag, pri, 0,
+	(void)bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO, 0,
 				 fdc_c_hwintr, fdc);
 #else
 	fdciop = &fdc->sc_io;
-	(void)bus_intr_establish(fdc->sc_bustag, pri,
+	(void)bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
 				 BUS_INTR_ESTABLISH_FASTTRAP,
 				 (int (*) __P((void *)))fdchwintr, NULL);
 #endif
-	(void)bus_intr_establish(fdc->sc_bustag, PIL_FDSOFT,
+	(void)bus_intr_establish(fdc->sc_bustag, PIL_FDSOFT, IPL_BIO,
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 fdcswintr, fdc);
 

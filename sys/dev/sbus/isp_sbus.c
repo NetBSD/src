@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.27 2000/07/05 22:10:56 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.28 2000/07/09 20:57:43 pk Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -39,10 +39,9 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
+#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/param.h>
-#include <machine/vmparam.h>
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/microcode/isp/asm_sbus.h>
@@ -227,7 +226,7 @@ isp_sbus_attach(parent, self, aux)
 	}
 
 	/* Establish interrupt channel */
-	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, 0,
+	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO, 0,
 	    (int(*)__P((void*)))isp_intr, sbc);
 	ENABLE_INTS(isp);
 

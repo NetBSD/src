@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.5 2000/06/04 19:15:01 cgd Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.6 2000/07/09 20:57:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,8 +86,9 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -186,7 +187,7 @@ com_obio_attach(parent, self, aux)
 	com_attach_subr(sc);
 
 	if (sa->sa_nintr != 0) {
-		(void)bus_intr_establish(sc->sc_iot, sa->sa_pri,
+		(void)bus_intr_establish(sc->sc_iot, sa->sa_pri, IPL_SERIAL,
 					 0, comintr, sc);
 		evcnt_attach_dynamic(&osc->osc_intrcnt, EVCNT_TYPE_INTR, NULL,
 		    osc->osc_com.sc_dev.dv_xname, "intr");

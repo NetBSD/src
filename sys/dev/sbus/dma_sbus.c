@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.4 2000/01/11 12:59:43 pk Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,8 +74,8 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -101,7 +101,8 @@ int	dmaprint_sbus	__P((void *, const char *));
 
 void	*dmabus_intr_establish __P((
 		bus_space_tag_t,
-		int,			/*level*/
+		int,			/*bus interrupt priority*/
+		int,			/*`device class' level*/
 		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
 		void *));		/*handler arg*/
@@ -236,8 +237,9 @@ dmaattach_sbus(parent, self, aux)
 }
 
 void *
-dmabus_intr_establish(t, level, flags, handler, arg)
+dmabus_intr_establish(t, pri, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int pri;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
@@ -252,7 +254,8 @@ dmabus_intr_establish(t, level, flags, handler, arg)
 		handler = lsi64854_enet_intr;
 		arg = sc;
 	}
-	return (bus_intr_establish(sc->sc_bustag, level, flags, handler, arg));
+	return (bus_intr_establish(sc->sc_bustag, pri, level, flags,
+				   handler, arg));
 }
 
 bus_space_tag_t

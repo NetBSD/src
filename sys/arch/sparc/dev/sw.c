@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.2 2000/06/29 14:06:41 pk Exp $	*/
+/*	$NetBSD: sw.c,v 1.3 2000/07/09 20:57:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,8 +103,8 @@
 #include <sys/buf.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -294,8 +294,7 @@ sw_attach(parent, self, aux)
 	if (oba->oba_pri == -1)
 		oba->oba_pri = 3;
 
-	(void)bus_intr_establish(oba->oba_bustag,
-				 oba->oba_pri, 0,
+	(void)bus_intr_establish(oba->oba_bustag, oba->oba_pri, IPL_BIO, 0,
 				 sw_intr, sc);
 
 	printf(" pri %d\n", oba->oba_pri);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.14 2000/06/04 19:15:12 cgd Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.15 2000/07/09 20:57:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -45,8 +45,10 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/bus.h>
+#include <machine/intr.h>
+
+#include <dev/sbus/sbusvar.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -134,7 +136,7 @@ cs4231_attach_sbus(parent, self, aux)
 	/* Establish interrupt channel */
 	if (sa->sa_nintr)
 		bus_intr_establish(sa->sa_bustag,
-				   sa->sa_pri, 0,
+				   sa->sa_pri, IPL_AUDIO, 0,
 				   cs4231_intr, sc);
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,

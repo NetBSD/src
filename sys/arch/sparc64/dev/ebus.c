@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.14 2000/06/29 07:37:54 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.15 2000/07/09 20:57:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -102,7 +102,7 @@ static int ebus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 static int _ebus_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				bus_size_t, int, vaddr_t,
 				bus_space_handle_t *));
-static void *ebus_intr_establish __P((bus_space_tag_t, int, int,
+static void *ebus_intr_establish __P((bus_space_tag_t, int, int, int,
 				int (*) __P((void *)), void *));
 
 static int ebus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
@@ -516,14 +516,15 @@ ebus_bus_mmap(t, btype, paddr, flags, hp)
  * install an interrupt handler for a PCI device
  */
 void *
-ebus_intr_establish(t, level, flags, handler, arg)
+ebus_intr_establish(t, pri, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int pri;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
 	void *arg;
 {
-	return (bus_intr_establish(t->parent, level, flags, handler, arg));
+	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));
 }
 
 /*
