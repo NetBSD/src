@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.29 2000/03/30 09:27:12 augustss Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.30 2001/07/09 10:54:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -113,9 +113,7 @@ int	disk_count;		/* number of drives in global disklist */
  * The bufq points to the last such ordered request.
  */
 void
-disksort_cylinder(bufq, bp)
-	struct buf_queue *bufq;
-	struct buf *bp;
+disksort_cylinder(struct buf_queue *bufq, struct buf *bp)
 {
 	struct buf *bq, *nbq;
 
@@ -216,9 +214,7 @@ insert:	BUFQ_INSERT_AFTER(bufq, bq, bp);
  * The bufq points to the last such ordered request.
  */
 void
-disksort_blkno(bufq, bp)
-	struct buf_queue *bufq;
-	struct buf *bp;
+disksort_blkno(struct buf_queue *bufq, struct buf *bp)
 {
 	struct buf *bq, *nbq;
 
@@ -299,9 +295,7 @@ insert:	BUFQ_INSERT_AFTER(bufq, bq, bp);
  * the tail of the queue.
  */
 void
-disksort_tail(bufq, bp)
-	struct buf_queue *bufq;
-	struct buf *bp;
+disksort_tail(struct buf_queue *bufq, struct buf *bp)
 {
 
 	BUFQ_INSERT_TAIL(bufq, bp);
@@ -311,8 +305,7 @@ disksort_tail(bufq, bp)
  * Compute checksum for disk label.
  */
 u_int
-dkcksum(lp)
-	struct disklabel *lp;
+dkcksum(struct disklabel *lp)
 {
 	u_short *start, *end;
 	u_short sum = 0;
@@ -339,14 +332,11 @@ hp0g: hard error reading fsbn 12345 of 12344-12347 (hp0 bn %d cn %d tn %d sn %d)
  * or addlog, respectively.  There is no trailing space.
  */
 void
-diskerr(bp, dname, what, pri, blkdone, lp)
-	struct buf *bp;
-	char *dname, *what;
-	int pri, blkdone;
-	struct disklabel *lp;
+diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
+    struct disklabel *lp)
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
-	void (*pr) __P((const char *, ...));
+	void (*pr)(const char *, ...);
 	char partname = 'a' + part;
 	int sn;
 
@@ -382,7 +372,7 @@ diskerr(bp, dname, what, pri, blkdone, lp)
  * Initialize the disklist.  Called by main() before autoconfiguration.
  */
 void
-disk_init()
+disk_init(void)
 {
 
 	TAILQ_INIT(&disklist);
@@ -394,8 +384,7 @@ disk_init()
  * name provided.
  */
 struct disk *
-disk_find(name)
-	char *name;
+disk_find(char *name)
 {
 	struct disk *diskp;
 
@@ -414,8 +403,7 @@ disk_find(name)
  * Attach a disk.
  */
 void
-disk_attach(diskp)
-	struct disk *diskp;
+disk_attach(struct disk *diskp)
 {
 	int s;
 
@@ -451,8 +439,7 @@ disk_attach(diskp)
  * Detach a disk.
  */
 void
-disk_detach(diskp)
-	struct disk *diskp;
+disk_detach(struct disk *diskp)
 {
 
 	/*
@@ -474,8 +461,7 @@ disk_detach(diskp)
  * 0 to 1, set the timestamp.
  */
 void
-disk_busy(diskp)
-	struct disk *diskp;
+disk_busy(struct disk *diskp)
 {
 	int s;
 
@@ -495,9 +481,7 @@ disk_busy(diskp)
  * time, and reset the timestamp.
  */
 void
-disk_unbusy(diskp, bcount)
-	struct disk *diskp;
-	long bcount;
+disk_unbusy(struct disk *diskp, long bcount)
 {
 	int s;
 	struct timeval dv_time, diff_time;
@@ -528,8 +512,7 @@ disk_unbusy(diskp, bcount)
  * may skew any pending transfer results.
  */
 void
-disk_resetstat(diskp)
-	struct disk *diskp;
+disk_resetstat(struct disk *diskp)
 {
 	int s = splbio(), t;
 
