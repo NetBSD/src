@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.63 2000/01/19 20:05:43 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.64 2000/01/28 15:08:37 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.63 2000/01/19 20:05:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.64 2000/01/28 15:08:37 takemura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -148,7 +148,8 @@ mips_locore_jumpvec_t mips1_locore_vec =
 	mips1_TLBUpdate,
 	mips1_wbflush,
 	mips1_proc_trampoline,
-	mips1_cpu_switch_resume
+	mips1_cpu_switch_resume,
+	mips_idle
 };
 
 static void
@@ -205,7 +206,8 @@ mips_locore_jumpvec_t mips3_locore_vec =
 	mips3_TLBUpdate,
 	mips3_wbflush,
 	mips3_proc_trampoline,
-	mips3_cpu_switch_resume
+	mips3_cpu_switch_resume,
+	mips_idle
 };
 
 /*----------------------------------------------------------------------------

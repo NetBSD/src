@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.84 2000/01/09 08:01:54 shin Exp $	*/
+/*	$NetBSD: locore.S,v 1.85 2000/01/28 15:08:37 takemura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -259,7 +259,7 @@ END(remrunqueue)
  * Note: this is really a part of cpu_switch() but defined here for kernel
  * profiling.
  */
-LEAF(idle)
+LEAF(mips_idle)
 	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	nop
@@ -285,7 +285,7 @@ LEAF(idle)
 	la	ra, sw1
 	j	ra
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-END(idle)
+END(mips_idle)
 
 /*
  * cpu_switch(struct proc *)
@@ -315,11 +315,17 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	lw	t1, _C_LABEL(whichqs)
 	addu	t0, t0, 1
 	sw	t0, uvmexp+UVMEXP_SWTCH
-	beq	t1, zero, _C_LABEL(idle)
+	bne	t1, zero, 1f
+	lw	t2, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_IDLE
+	jal	ra, t2
+	nop
+1:
 	mtc0	zero, MIPS_COP_0_STATUS
 /*
  * Entered here from idle() and switch_exit().
  */
+.global cpu_switch1;
+cpu_switch1:
 sw1:
 	nop					# wait for intrs disabled
 	nop
@@ -328,7 +334,11 @@ sw1:
 
 	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
-	beq	t0, zero, _C_LABEL(idle)	# if none, idle
+	bne	t0, zero, 1f
+	lw	t3, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_IDLE
+	jal	ra, t3
+	nop
+1:
 	move	t3, t0				# t3 = saved whichqs
 1:
 	addu	t2, t2, 1
