@@ -262,7 +262,7 @@ write_bignum(FILE *f, BIGNUM *num)
 	return 1;
 }
 
-/* returns 1 ok, -1 error, 0 type mismatch */
+/* returns 1 ok, -1 error */
 int
 key_read(Key *ret, char **cpp)
 {
@@ -317,7 +317,7 @@ key_read(Key *ret, char **cpp)
 		} else if (ret->type != type) {
 			/* is a key, but different type */
 			debug3("key_read: type mismatch");
-			return 0;
+			return -1;
 		}
 		len = 2*strlen(cp);
 		blob = xmalloc(len);
