@@ -1,4 +1,4 @@
-.\"     $NetBSD: newbtconf.8,v 1.2 2000/08/22 12:06:46 lukem Exp $
+.\"     $NetBSD: newbtconf.8,v 1.3 2000/08/26 13:45:20 enami Exp $
 .\"
 .\" Copyright (c) 1999 Darren Reed.  All rights reserved.
 .\"
@@ -62,8 +62,8 @@ points to.
 Through doing this and reloading
 .Pa /etc/rc.conf
 in
-.Pa /etc/rc after
-the link has
+.Pa /etc/rc
+after the link has
 been established, the resulting run-time configuration is effectively
 controlled without the need to directly edit any files.
 The default boot-up environment is selected by manually directing which
@@ -80,7 +80,7 @@ is not automatically updated.
 .Pp
 By default, NetBSD only has one boot-up configuration - that set in the
 file
-.Pa "/etc/rc.conf" .
+.Pa /etc/rc.conf .
 In order to initialize the system for operating in a
 manner which supports multiple boot configurations,
 .Nm
@@ -137,11 +137,14 @@ By default, this step
 will use the current configuration files as the basis for this setup unless
 a second parameter is given - that of the configuration to use as the basis
 for the new one.
-Upon completion, a new directory, /etc/etc.<newname>, will have been
-created, priming the directory with the appropriate files for editing.
+Upon completion, a new directory,
+.Pa /etc/etc.<newname> ,
+will have been created,
+priming the directory with the appropriate files for editing.
 For example, if we do
 .Nm
-\fInonet\fP \fInetwork\fP it would create a directory named /etc/etc.nonet
+\fInonet\fP \fInetwork\fP it would create a directory named
+.Pa /etc/etc.nonet
 and copy all the files from
 .Pa /etc/etc.network
 into that directory.
@@ -152,13 +155,15 @@ Which configuration [network] ?
 .Ed
 .Pp
 To setup the system for booting into the "nonet" configuration, the files
-in /etc/etc.nonet need be edited.
+in
+.Pa /etc/etc.nonet
+need be edited.
 .Pp
 If you wanted to make "nonet" the default configuration when booting, you
 would need delete the symbolic link
 .Pa /etc/etc.default
 and create a new symbolic link (with the same name) to
-.Pa "/etc/etc.nonet" .
+.Pa /etc/etc.nonet .
 Booting up after having made such a change would
 result in the following being displayed:
 .Bd -literal
