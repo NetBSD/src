@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.21 2001/09/16 16:34:44 wiz Exp $	*/
+/*	$NetBSD: tree.c,v 1.22 2001/11/17 04:35:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.21 2001/09/16 16:34:44 wiz Exp $");
+__RCSID("$NetBSD: tree.c,v 1.22 2001/11/17 04:35:32 perry Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2608,6 +2608,12 @@ plength(type_t *tp)
 }
 
 /*
+ * XXX
+ * Note: There appear to be a number of bugs in detecting overflow in
+ * this function. An audit and a set of proper regression tests are needed.
+ *     --Perry Metzger, Nov. 16, 2001
+ */
+/*
  * Do only as much as necessary to compute constant expressions.
  * Called only if the operator allows folding and (both) operands
  * are constants.
@@ -2630,6 +2636,7 @@ fold(tnode_t *tn)
 	if (modtab[tn->tn_op].m_binary)
 		ur = sr = tn->tn_right->tn_val->v_quad;
 
+	mask = qlmasks[size(t)];
 	ovfl = 0;
 
 	switch (tn->tn_op) {
@@ -2645,9 +2652,17 @@ fold(tnode_t *tn)
 		q = ~sl;
 		break;
 	case MULT:
-		q = utyp ? ul * ur : sl * sr;
-		if (msb(q, t, -1) != (msb(sl, t, -1) ^ msb(sr, t, -1)))
-			ovfl = 1;
+		if (utyp) {
+			q = ul * ur;
+			if (q != (q & mask))
+				ovfl = 1;
+			else if ((ul != 0) && ((q / ul) != ur))
+				ovfl = 1;
+		} else {
+			q = sl * sr;
+			if (msb(q, t, -1) != (msb(sl, t, -1) ^ msb(sr, t, -1)))
+				ovfl = 1;
+		}
 		break;
 	case DIV:
 		if (sr == 0) {
@@ -2692,7 +2707,7 @@ fold(tnode_t *tn)
 		break;
 	case SHR:
 		/*
-		 * The sign must be explizitly extended because
+		 * The sign must be explicitly extended because
 		 * shifts of signed values are implementation dependent.
 		 */
 		q = ul >> sr;
@@ -2728,8 +2743,6 @@ fold(tnode_t *tn)
 	default:
 		lerror("fold() 5");
 	}
-
-	mask = qlmasks[size(t)];
 
 	/* XXX does not work for quads. */
 	if (ovfl || ((q | mask) != ~(u_quad_t)0 && (q & ~mask) != 0)) {
