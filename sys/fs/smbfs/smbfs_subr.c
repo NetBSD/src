@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.4 2003/02/17 09:55:49 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.5 2003/02/20 15:34:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -273,8 +273,6 @@ smb_fphelp(struct mbchain *mbp, struct smb_vc *vcp, struct smbnode *np,
 		*npp++ = np;
 		np = np->n_parent;
 	}
-/*	if (i == 0)
-		return smb_put_dmem(mbp, vcp, "\\", 2, caseopt);*/
 	while (i--) {
 		np = *--npp;
 		error = mb_put_uint8(mbp, '\\');
