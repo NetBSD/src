@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.1 2004/04/01 11:53:46 tron Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.2 2004/05/30 11:22:07 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1003,6 +1003,10 @@ frdest_t *fdp;
 		}
 	}
 #endif
+#ifdef USE_INET6
+	if (fin->fin_v == 6)
+		return ipfr_fastroute6(m0, mpp, fin, fdp);
+#endif
 
 	hlen = fin->fin_hlen;
 	ip = mtod(m0, struct ip *);
@@ -1014,10 +1018,6 @@ frdest_t *fdp;
 	m0->m_pkthdr.csuminfo = 0;
 #endif /* __NetBSD__ && M_CSUM_IPv4 */
 
-#ifdef USE_INET6
-	if (fin->fin_v == 6)
-		return ipfr_fastroute6(m0, mpp, fin, fdp);
-#endif
 	/*
 	 * Route packet.
 	 */
@@ -1025,14 +1025,13 @@ frdest_t *fdp;
 	bzero((caddr_t)ro, sizeof (*ro));
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
+	dst->sin_addr = ip->ip_dst;
 
 	fr = fin->fin_fr;
 	if (fdp)
 		ifp = fdp->fd_ifp;
-	else {
+	else
 		ifp = fin->fin_ifp;
-		dst->sin_addr = ip->ip_dst;
-	}
 
 	if ((ifp == NULL) && (!fr || !(fr->fr_flags & FR_FASTROUTE))) {
 		error = -2;
@@ -1047,27 +1046,26 @@ frdest_t *fdp;
 		if ((ifp != NULL) && (fdp == &fr->fr_tif))
 			return -1;
 		dst->sin_addr = ip->ip_dst;
-	} else if (fdp) {
-		if (fdp->fd_ip.s_addr) {
+	} else if (fdp != NULL) {
+		if (fdp->fd_ip.s_addr != 0)
 			dst->sin_addr = fdp->fd_ip;
-			ip->ip_dst = fdp->fd_ip;
-		} else
-			dst->sin_addr = ip->ip_dst;
 	}
 
 	dst->sin_len = sizeof(*dst);
 	rtalloc(ro);
-	if (!ifp) {
-		if (ro->ro_rt == 0 || (ifp = ro->ro_rt->rt_ifp) == 0) {
-			if (in_localaddr(ip->ip_dst))
-				error = EHOSTUNREACH;
-			else
-				error = ENETUNREACH;
-			goto bad;
-		}
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = (struct sockaddr_in *)&ro->ro_rt->rt_gateway;
+
+	if ((ifp == NULL) && (ro->ro_rt != NULL))
+		ifp = ro->ro_rt->rt_ifp;
+
+	if ((ro->ro_rt == NULL) || (ifp == NULL)) {
+		if (in_localaddr(ip->ip_dst))
+			error = EHOSTUNREACH;
+		else
+			error = ENETUNREACH;
+		goto bad;
 	}
+	if (ro->ro_rt->rt_flags & RTF_GATEWAY)
+		dst = (struct sockaddr_in *)&ro->ro_rt->rt_gateway;
 	if (ro->ro_rt)
 		ro->ro_rt->rt_use++;
 
@@ -1076,8 +1074,9 @@ frdest_t *fdp;
 	 * go back through output filtering and miss their chance to get
 	 * NAT'd and counted.
 	 */
-	fin->fin_ifp = ifp;
 	if (fin->fin_out == 0) {
+		sifp = fin->fin_ifp;
+		fin->fin_ifp = ifp;
 		fin->fin_out = 1;
 		(void) fr_acctpkt(fin, NULL);
 		fin->fin_fr = NULL;
@@ -1087,6 +1086,7 @@ frdest_t *fdp;
 			(void) fr_checkstate(fin, &pass);
 		}
 		(void) fr_checknatout(fin, NULL);
+		fin->fin_ifp = sifp;
 	} else
 		ip->ip_sum = 0;
 	/*
