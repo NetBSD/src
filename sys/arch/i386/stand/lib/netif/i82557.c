@@ -1,4 +1,4 @@
-/* $NetBSD: i82557.c,v 1.5 2001/07/25 12:47:34 drochner Exp $ */
+/* $NetBSD: i82557.c,v 1.6 2002/01/24 02:44:11 gson Exp $ */
 
 /*
  * Copyright (c) 1998, 1999
@@ -415,8 +415,8 @@ EtherReceive(pkt, maxlen)
 		if (len <= maxlen) {
 			memcpy(pkt, (caddr_t)(rfa + 1), maxlen);
 #if 0
-			printf("rfa status=%x, len=%x, i=%d\n",
-			       rfa->rfa_status, len, i);
+			printf("rfa status=%x, len=%x\n",
+			       rfa->rfa_status, len);
 #endif
 		} else
 			len = 0;
