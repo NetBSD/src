@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)exect.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: exect.S,v 1.1 1993/11/25 23:39:26 paulus Exp $"
+	.asciz "$Id: exect.S,v 1.2 1994/08/04 05:02:44 chopps Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -47,7 +47,4 @@
 ENTRY(exect)
 	movl	#SYS_execve,d0
 	trap	#0
-#ifdef	PIC
-	movl	d0,sp@-
-#endif
 	jra	cerror		/* exect(file, argv, env) */

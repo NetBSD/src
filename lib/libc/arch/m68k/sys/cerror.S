@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)cerror.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: cerror.S,v 1.2 1994/04/02 05:37:04 cgd Exp $"
+	.asciz "$Id: cerror.S,v 1.3 1994/08/04 05:02:42 chopps Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -50,8 +50,7 @@ cerror:
 	movl	#__GLOBAL_OFFSET_TABLE_,a0
 	lea	pc@(0,a0:l),a0
 	movl	a0@(_errno:w),a0
-| Note: error # passed in on stack, because we might come in via the binder
-	movl	sp@+,a0@
+	movl	d0,a0@
 #else
 	movl	d0,_errno
 #endif

@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)syscall.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: syscall.S,v 1.1 1993/11/25 23:39:38 paulus Exp $"
+	.asciz "$Id: syscall.S,v 1.2 1994/08/04 05:02:49 chopps Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -49,7 +49,4 @@ ENTRY(syscall)
 	jcs	err
 	rts
 err:
-#ifdef	PIC
-	movl	d0,sp@-
-#endif
 	jra	cerror
