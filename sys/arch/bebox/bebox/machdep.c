@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1998/02/03 04:38:54 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 1998/02/12 05:16:06 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -109,6 +109,7 @@ int astpending;
 char *bootpath;
 
 vm_offset_t msgbuf_vaddr, msgbuf_paddr;
+vm_offset_t avail_end;			/* XXX temporary */
 
 caddr_t allocsys __P((caddr_t));
 
@@ -158,6 +159,7 @@ initppc(startkernel, endkernel, args, btinfo)
 		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
 		availmemr[0].size = meminfo->memsize - availmemr[0].start;
 	}
+	avail_end = physmemr[0].start + physmemr[0].size;    /* XXX temporary */
 
 	/*
 	 * Get CPU clock
