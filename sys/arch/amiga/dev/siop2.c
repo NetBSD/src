@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.8 1999/03/28 20:09:09 is Exp $	*/
+/*	$NetBSD: siop2.c,v 1.9 1999/03/28 20:29:51 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -1119,11 +1119,11 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 			adjust = ((dfifo - (dbc & 0x7f)) & 0x7f);
 			if (sstat0 & SIOP_SSTAT0_OLF)	/* sstat0 SODL lsb */
 				++adjust;
-			if (sstat0 & SIOP_SSTAT0_ILF)	/* sstat0 SODR lsb */
+			if (sstat0 & SIOP_SSTAT0_ORF)	/* sstat0 SODR lsb */
 				++adjust;
 			if (sstat2 & SIOP_SSTAT2_OLF1)	/* sstat2 SODL msb */
 				++adjust;
-			if (sstat2 & SIOP_SSTAT2_ILF1)	/* sstat2 SODR msb */
+			if (sstat2 & SIOP_SSTAT2_ORF1)	/* sstat2 SODR msb */
 				++adjust;
 			acb->iob_curlen = *((long *)&rp->siop_dcmd) & 0xffffff;
 			acb->iob_curlen += adjust;
