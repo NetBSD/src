@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.31 2000/06/17 21:44:46 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.31.2.1 2000/11/01 14:55:22 tv Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -67,6 +67,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[B]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
