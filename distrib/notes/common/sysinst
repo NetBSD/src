@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.2.2.6 2000/08/26 19:02:36 he Exp $
+.\" $NetBSD: sysinst,v 1.2.2.7 2000/09/11 11:12:54 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -130,8 +130,9 @@ The kernel selects a free interrupt according to a mask of allowable
 interrupts, stored in the kernel global variable
 .Va pcic_isa_intr_alloc_mask .
 This mask is a logical-or of power-of-2s of allowable interrupts:
+.ne 6P
 .Bd -literal -offset 04n
-.Em "IRQ Val      IRQ Val      IRQ Val       IRQ Val"
+IRQ Val      IRQ Val      IRQ Val       IRQ Val
  0  0x0001    4  0x0010    8  0x0100    12  0x1000
  1  0x0002    5  0x0020    9  0x0200    13  0x2000
  2  0x0004    6  0x0040   10  0x0400    14  0x4000
