@@ -227,21 +227,19 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
 	struct addrinfo hints, *res;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = sa->sa_family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE|AI_NUMERICHOST;
 	snprintf(hbufl, sizeof(hbufl)-1, "%s", var_smtp_bind_addr);
-	if (getaddrinfo(hbufl, NULL, &hints, &res)) {
-	    msg_fatal("%s: bad %s parameter: %s",
-	        myname, VAR_SMTP_BIND_ADDR, var_smtp_bind_addr);
+	if (getaddrinfo(hbufl, NULL, &hints, &res) == 0) {
+	    (void)getnameinfo(res->ai_addr, res->ai_addrlen, hbufl,
+	        sizeof(hbufl), NULL, 0, NI_NUMERICHOST);
+	    if (bind(sock, res->ai_addr, res->ai_addrlen) < 0)
+		msg_warn("%s: bind %s: %m", myname, hbufl);
+	    freeaddrinfo(res);
+	    if (msg_verbose)
+		msg_info("%s: bind %s", myname, hbufl);
 	}
-	(void)getnameinfo(res->ai_addr, res->ai_addrlen, hbufl, sizeof(hbufl),
-	    NULL, 0, NI_NUMERICHOST);
-	if (bind(sock, res->ai_addr, res->ai_addrlen) < 0)
-	    msg_warn("%s: bind %s: %m", myname, hbufl);
-	freeaddrinfo(res);
-	if (msg_verbose)
-	    msg_info("%s: bind %s", myname, hbufl);
 #endif
     }
 
@@ -282,16 +280,16 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
 	    hbufl, sizeof(hbufl), NULL, 0, NI_NUMERICHOST);
 	hbufl[sizeof(hbufl)-1] = 0;
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = sa->sa_family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE|AI_NUMERICHOST;
-	if (getaddrinfo(hbufl, NULL, &hints, &res))
-	    msg_warn("%s: getaddrinfo %s: %m", myname, hbufl);
-	if (bind(sock, res->ai_addr, res->ai_addrlen) < 0)
-	    msg_warn("%s: bind %s: %m", myname, hbufl);
-	freeaddrinfo(res);
-	if (msg_verbose)
-	    msg_info("%s: bind %s", myname, hbufl);
+	if (getaddrinfo(hbufl, NULL, &hints, &res) == 0) {
+	    if (bind(sock, res->ai_addr, res->ai_addrlen) < 0)
+		msg_warn("%s: bind %s: %m", myname, hbufl);
+	    freeaddrinfo(res);
+	    if (msg_verbose)
+		msg_info("%s: bind %s", myname, hbufl);
+	}
 #endif
     }
 
