@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.19 1998/08/08 23:58:40 mycroft Exp $ */
+/* $NetBSD: if_ie.c,v 1.20 1999/01/09 21:18:54 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -539,6 +539,7 @@ host2ie(sc, src, dest, size)
 	int size;
 {
 	int cnt;
+	char *sptr = src;
 
 #ifdef DIAGNOSTIC
 	if (size & 1)
@@ -550,8 +551,8 @@ host2ie(sc, src, dest, size)
 		if (cnt > size)
 			cnt = size;
 		setpage(sc, dest);
-		PWriteShorts(src, (char *)sc->sc_ram + IE_COFF2POFF(dest), cnt);
-		src+=cnt;
+		PWriteShorts(sptr, (char *)sc->sc_ram + IE_COFF2POFF(dest), cnt);
+		sptr+=cnt;
 		dest+=cnt;
 		size-=cnt;
 	}
@@ -565,6 +566,7 @@ ie2host(sc, src, dest, size)
 	int size;
 {
 	int cnt;
+	char *dptr = dest;
 
 #ifdef DIAGNOSTIC
 	if (size & 1)
@@ -576,9 +578,9 @@ ie2host(sc, src, dest, size)
 		if (cnt > size)
 			cnt = size;
 		setpage(sc, src);
-		ReadShorts((char *)sc->sc_ram + IE_COFF2POFF(src), dest, cnt);
+		ReadShorts((char *)sc->sc_ram + IE_COFF2POFF(src), dptr, cnt);
 		src+=cnt;
-		dest+=cnt;
+		dptr+=cnt;
 		size-=cnt;
 	}
 }
