@@ -1,7 +1,7 @@
-/*	$NetBSD: inp.c,v 1.10 2002/03/16 22:36:42 kristerw Exp $	*/
+/*	$NetBSD: inp.c,v 1.11 2003/05/29 00:59:24 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.10 2002/03/16 22:36:42 kristerw Exp $");
+__RCSID("$NetBSD: inp.c,v 1.11 2003/05/29 00:59:24 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -22,7 +22,7 @@ static bool rev_in_string(char *);
 
 /* Input-file-with-indexable-lines abstract type. */
 
-static long i_size;			/* Size of the input file */
+static size_t i_size;			/* Size of the input file */
 static char *i_womp;			/* Plan a buffer for entire file */
 static char **i_ptr;			/* Pointers to lines in i_womp */
 
@@ -104,7 +104,7 @@ plan_a(char *filename)
 		struct stat cstat;
 		char *cs = NULL;
 		char *filebase;
-		int pathlen;
+		size_t pathlen;
 
 		filebase = basename(filename);
 		pathlen = filebase - filename;
@@ -359,7 +359,7 @@ static bool
 rev_in_string(char *string)
 {
 	char *s;
-	int patlen;
+	size_t patlen;
 
 	if (revision == NULL)
 		return TRUE;
