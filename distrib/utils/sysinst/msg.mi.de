@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.8 2004/06/05 15:35:51 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.9 2004/06/05 21:18:59 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -501,27 +501,13 @@ message ftpsource
 Dies sind die Daten zum Aufbau einer ftp Verbindung.
 Falls der Benutzer "ftp" ist benötigen Sie kein Passwort.
 
-Server:		%s
-Verzeichnis:	%s
-Benutzer:	%s
-Passwort:	%s
+Server:		%s 
+Basispfad:	%s 
+Verzeichnis:	%s 
+Benutzer:	%s 
+Passwort:	%s 
 Proxy:		%s
 }
-
-message host
-{Server}
-
-message dir
-{Verzeichnis}
-
-message user
-{Benutzer}
-
-message passwd
-{Passwort}
-
-message proxy
-{Proxy}
 
 message email
 {E-Mail Adresse}
@@ -534,7 +520,8 @@ message nfssource
 finden ist. 
 (Das Verzeichnis muss .tgz Dateien enthalten und NFS mountbar sein)
 
-Server:		%s
+Server:		%s 
+Basispfad:	%s 
 Verzeichnis:	%s
 }
 
@@ -546,7 +533,7 @@ message cdromsource
 an, in dem die Distribution zu finden ist.
 (Das Verzeichnis muss .tgz Dateien enthalten)
 
-Laufwerk:	%s
+Laufwerk:	%s 
 Verzeichnis:	%s
 }
 
@@ -557,6 +544,7 @@ Verzeichnis an, in dem die Distribution zu finden ist.
 
 Laufwerk:	%s 
 Dateisystem:	%s 
+Basispfad:	%s 
 Verzeichnis:	%s
 }
 
@@ -565,6 +553,7 @@ message localdir
 die Distribution zu finden ist.
 (Das Verzeichnis muss .tgz Dateien enthalten)
 
+Basispfad:	%s 
 Verzeichnis:	%s
 }
 
@@ -633,7 +622,7 @@ message net_media
 {Art der Netzwerkverbindung}
 
 message netok
-{Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen. Sind diese OK?
+{Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen.
 
 DNS Domäne:		%s 
 Hostname:		%s 
@@ -650,6 +639,9 @@ message netokv6
 IPv6 Autokonfiguration:	%s 
 IPv6 Nameserver:	%s 
 }
+
+message netok_ok
+{Sind diese OK?}
 
 message netagain
 {Bitte geben Sie die Informationen über Ihr Netzwerk erneut an. Diese werden
@@ -670,12 +662,9 @@ message realdir
 {Konnte nicht in das Verzeichnis %s: %s wechseln. Installation abgebrochen.
 }
 
-message ftperror_cont
-{Ftp (das Programm) hat einen Fehler gefunden. Drücken Sie die Eingabetaste, um
-forzufahren.}
-
 message ftperror
-{Ftp konnte eine Datei nicht runterladen. Wollen Sie es erneut versuchen?}
+{Ftp konnte eine Datei nicht runterladen.
+Wollen Sie es erneut versuchen?}
 
 message distdir
 {Welches Verzeichnis möchten Sie für %s nutzen?}
@@ -690,9 +679,10 @@ message verboseextract
 }
 
 message notarfile
-{Das Release Paket %s existiert nicht.
+{Das Release Paket %s existiert nicht.}
 
-Möchten Sie dennoch mit der Extraktion fortfahren?}
+message notarfile_ok
+{Möchten Sie dennoch mit der Extraktion fortfahren?}
 
 message endtarok
 {Alle Distributionspakete wurden erfolgreich entpackt.}
@@ -943,8 +933,8 @@ message choose_timezone
 Drücken Sie die Eingabetaste, um einen Eintrag anzuwählen. Betätigen Sie danach
 die Taste 'x' gefolgt von der Eingabetaste, um das Menü zu verlassen.
 
- Vorgabe:	%s
- Ausgewählt:	%s
+ Vorgabe:	%s 
+ Ausgewählt:	%s 
  Lokale Zeit:	%s %s
 }
 
@@ -1007,7 +997,7 @@ message Pick_an_option {Wählen Sie eine an- oder abzuschaltende Option.}
 message Scripting {Skripting}
 message Logging {Logging}
 
-message Status  { Status: }
+message Status  {  Status: }
 message Command {Kommando: }
 message Running {Wird ausgeführt}
 message Finished {Beendet}
@@ -1050,6 +1040,8 @@ message Custom_installation {Benutzerdefinierte Installation}
 message Change {Ändern}
 message hidden {** versteckt **}
 message Host {Host}
+message Base_dir {Basispfad}
+message Set_dir {Verzeichnis}
 message Directory {Verzeichnis}
 message User {Benutzer}
 message Password {Passwort}
@@ -1069,17 +1061,15 @@ message Blowfish_2_7_round {Blowfish mit 2^7 Wiederholungen}
 message do_not_change {Beibehalten}
 message Device {Gerät}
 message File_system {Dateisystem}
-message Change_directory_path {Verzeichnis ändern}
 message Select_IPv6_DNS_server {  Auswählen eines IPv6 DNS Servers}
 message other {andere }
 message Perform_IPv6_autoconfiguration {IPv6 automatisch konfigurieren?}
 message Perform_DHCP_autoconfiguration {Konfiguration per DHCP ermitteln?}
 message Root_shell {Root Shell}
 message Select_set_extraction_verbosity {Wählen Sie, welche Ausgaben Sie während des Extrahierens sehen möchten}
-message Progress_bar_recommended {Fortschrittsbalken (empfohlen)
-}
+message Progress_bar {Fortschrittsbalken (empfohlen)}
 message Silent {Nichts (schnell)}
-message Verbose_file_name_listing_slow {Alle installierten Dateien (langsam))}
+message Verbose {Alle installierten Dateien (langsam))}
 
 .if AOUT2ELF
 message aoutfail
