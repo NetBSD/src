@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.5 2001/12/02 09:22:39 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.6 2001/12/08 11:17:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.5 2001/12/02 09:22:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.6 2001/12/08 11:17:37 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE 32
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.5 2001/12/02 09:22:39 manu Exp $")
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/file.h>
+#include <sys/sysctl.h>
 #include <sys/exec_elf.h>
 
 #include <uvm/uvm_extern.h>
@@ -70,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.5 2001/12/02 09:22:39 manu Exp $")
 
 static int irix_syssgi_mapelf __P((int, Elf_Phdr *, int, 
     struct proc *, register_t *));
+static int irix_syssgi_sysconf __P((int name, struct proc *, register_t *));
 
 int
 irix_sys_syssgi(p, v, retval)
@@ -147,6 +149,11 @@ irix_sys_syssgi(p, v, retval)
 		 */
 		break;
 
+	case IRIX_SGI_SYSCONF:		/* POSIX sysconf */
+		arg1 = SCARG(uap, arg1); /* system variable name */
+		return irix_syssgi_sysconf((int)arg1, p, retval);	
+		break;
+
 	default:
 		printf("Warning: call to unimplemented syssgi() command %d\n",
 		    request);
@@ -181,7 +188,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	struct exec_vmcmd *base_vcp = NULL;
 	struct vnode *vp;
 
-#ifdef INSANE_DEBUG_IRIX
+#ifdef INSANE_DEBUG_IRIX 
 	printf("irix_syssgi_mapelf(): fd = %d, *ph = %p, count = %d\n",
 	    fd, ph, count);
 #endif
@@ -255,7 +262,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		}
 
 		if (psize > 0) {
-#ifdef INSANE_DEBUG_IRIX
+#ifdef INSANE_DEBUG_IRIX 
 			printf("irix_mapelf(): psize > 0; NEW_VMCMD2\n");
 			printf("psize = 0x%lx, uaddr = 0x%lx\n", psize, uaddr);
 			printf("vp = %p, offset = 0x%lx\n", vp, offset);
@@ -266,7 +273,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 			    uaddr, vp, offset, prot, flags);
 		}
 		if (psize < size) {
-#ifdef INSANE_DEBUG_IRIX
+#ifdef INSANE_DEBUG_IRIX 
 			printf("irix_mapelf(): psize < size; NEW_VMCMD2\n");
 #endif
 			NEW_VMCMD2(&vcset, vmcmd_map_readvn, size - psize,
@@ -281,7 +288,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		rf = round_page(uaddr + size);
 
 		if (rm != rf) {
-#ifdef INSANE_DEBUG_IRIX
+#ifdef INSANE_DEBUG_IRIX 
 			printf("irix_mapelf(): rm != rf; NEW_VMCMD2\n");
 #endif
 			NEW_VMCMD2(&vcset, vmcmd_map_zero, rm - rf, rf, NULLVP,
@@ -321,5 +328,41 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	*retval = (register_t)kph->p_vaddr;	
 bad:
 	free(kph, M_TEMP);
+	return error;
+}
+
+
+
+static int
+irix_syssgi_sysconf(name, p, retval)
+	int name;
+	struct proc *p;
+	register_t *retval;
+{
+	int error = 0;
+	int mib[2], value;
+	int len = sizeof(value);
+
+	switch (name) {
+	case IRIX_SC_CLK_TCK:
+		*retval = hz;
+		return 0;
+		break;
+
+	case IRIX_SC_PAGESIZE:
+		mib[0] = CTL_HW;
+		mib[1] = HW_PAGESIZE;
+		break;
+
+	default:
+		printf("Warning: syssgi(SYSCONF) unsupported variable %d\n",
+		    name);
+		    return EINVAL;
+		break;
+	}
+
+	error = kern_sysctl(mib, 2, &value, &len, NULL, 0, p);
+	if (error == 0)
+		*retval = (register_t)value;
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.h,v 1.1 2001/11/28 12:00:54 manu Exp $ */
+/*	$NetBSD: irix_syssgi.h,v 1.2 2001/12/08 11:17:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -298,5 +298,109 @@
 #define	IRIX_SGI_SETWAITJOBPID		1219
 #define	IRIX_SGI_WAITJOB		1220
 #define	IRIX_SGI_IP30MISC		1250
+
+/* From IRIX's <sys/unistd.h> */
+#define IRIX_SC_ARG_MAX             1
+#define IRIX_SC_CHILD_MAX           2
+#define IRIX_SC_CLK_TCK             3
+#define IRIX_SC_NGROUPS_MAX         4
+#define IRIX_SC_OPEN_MAX            5
+#define IRIX_SC_JOB_CONTROL         6
+#define IRIX_SC_SAVED_IDS           7
+#define IRIX_SC_VERSION             8
+#define IRIX_SC_PASS_MAX            9
+#define IRIX_SC_LOGNAME_MAX         10
+#define IRIX_SC_PAGESIZE            11
+#define IRIX_SC_PAGE_SIZE           IRIX_SC_PAGESIZE
+#define IRIX_SC_XOPEN_VERSION       12
+#define IRIX_SC_NACLS_MAX   13
+#define IRIX_SC_NPROC_CONF  14
+#define IRIX_SC_NPROC_ONLN  15
+#define IRIX_SC_STREAM_MAX  16
+#define IRIX_SC_TZNAME_MAX  17
+#define IRIX_SC_RTSIG_MAX           20
+#define IRIX_SC_SIGQUEUE_MAX        21
+#define IRIX_SC_REALTIME_SIGNALS    23
+#define IRIX_SC_PRIORITIZED_IO      24
+#define IRIX_SC_ACL                 25
+#define IRIX_SC_AUDIT               26
+#define IRIX_SC_INF                 27
+#define IRIX_SC_MAC                 28
+#define IRIX_SC_CAP                 29
+#define IRIX_SC_IP_SECOPTS          30
+#define IRIX_SC_KERN_POINTERS       31
+#define IRIX_SC_DELAYTIMER_MAX      32
+#define IRIX_SC_MQ_OPEN_MAX         33
+#define IRIX_SC_MQ_PRIO_MAX         34
+#define IRIX_SC_SEM_NSEMS_MAX       35
+#define IRIX_SC_SEM_VALUE_MAX       36
+#define IRIX_SC_TIMER_MAX           37
+#define IRIX_SC_FSYNC               38
+#define IRIX_SC_MAPPED_FILES        39
+#define IRIX_SC_MEMLOCK             40
+#define IRIX_SC_MEMLOCK_RANGE       41
+#define IRIX_SC_MEMORY_PROTECTION   42
+#define IRIX_SC_MESSAGE_PASSING     43
+#define IRIX_SC_PRIORITYIRIX_SCHEDULING 44
+#define IRIX_SC_SEMAPHORES          45
+#define IRIX_SC_SHARED_MEMORY_OBJECTS 46
+#define IRIX_SC_SYNCHRONIZED_IO     47
+#define IRIX_SC_TIMERS              48
+#define IRIX_SC_ASYNCHRONOUS_IO     64
+#define IRIX_SC_ABI_ASYNCHRONOUS_IO 65
+#define IRIX_SC_AIO_LISTIO_MAX      66
+#define IRIX_SC_AIO_MAX             67
+#define IRIX_SC_AIO_PRIO_DELTA_MAX  68
+#define IRIX_SC_XOPEN_SHM           75
+#define IRIX_SC_XOPEN_CRYPT         76
+#define IRIX_SC_BC_BASE_MAX         77
+#define IRIX_SC_BC_DIM_MAX          78
+#define IRIX_SC_BCIRIX_SCALE_MAX        79
+#define IRIX_SC_BC_STRING_MAX       80
+#define IRIX_SC_COLL_WEIGHTS_MAX    81
+#define IRIX_SC_EXPR_NEST_MAX       82
+#define IRIX_SC_LINE_MAX            83
+#define IRIX_SC_RE_DUP_MAX          84
+#define IRIX_SC_2_C_BIND            85
+#define IRIX_SC_2_C_DEV             86
+#define IRIX_SC_2_C_VERSION         87
+#define IRIX_SC_2_FORT_DEV          88
+#define IRIX_SC_2_FORT_RUN          89
+#define IRIX_SC_2_LOCALEDEF         90
+#define IRIX_SC_2_SW_DEV            91
+#define IRIX_SC_2_UPE               92
+#define IRIX_SC_2_VERSION           93
+#define IRIX_SC_2_CHAR_TERM         94
+#define IRIX_SC_XOPEN_ENH_I18N      95
+#define IRIX_SC_IOV_MAX             96
+#define IRIX_SC_ATEXIT_MAX          97
+#define IRIX_SC_XOPEN_UNIX          98
+#define IRIX_SC_XOPEN_XCU_VERSION   99
+#define IRIX_SC_GETGR_R_SIZE_MAX    100
+#define IRIX_SC_GETPW_R_SIZE_MAX    101
+#define IRIX_SC_LOGIN_NAME_MAX      102
+#define IRIX_SC_THREAD_DESTRUCTOR_ITERATIONS        103
+#define IRIX_SC_THREAD_KEYS_MAX     104
+#define IRIX_SC_THREAD_STACK_MIN    105
+#define IRIX_SC_THREAD_THREADS_MAX  106
+#define IRIX_SC_TTY_NAME_MAX        107
+#define IRIX_SC_THREADS             108
+#define IRIX_SC_THREAD_ATTR_STACKADDR       109
+#define IRIX_SC_THREAD_ATTR_STACKSIZE       110
+#define IRIX_SC_THREAD_PRIORITYIRIX_SCHEDULING  111
+#define IRIX_SC_THREAD_PRIO_INHERIT 112
+#define IRIX_SC_THREAD_PRIO_PROTECT 113
+#define IRIX_SC_THREAD_PROCESS_SHARED       114
+#define IRIX_SC_THREAD_SAFE_FUNCTIONS       115
+#define IRIX_SC_KERN_SIM                    116
+#define IRIX_SC_MMAP_FIXED_ALIGNMENT        117
+#define IRIX_SC_SOFTPOWER                   118
+#define IRIX_SC_XBS5_ILP32_OFF32            119
+#define IRIX_SC_XBS5_ILP32_OFFBIG           120
+#define IRIX_SC_XBS5_LP64_OFF64             121
+#define IRIX_SC_XBS5_LPBIG_OFFBIG           122
+#define IRIX_SC_XOPEN_LEGACY                123
+#define IRIX_SC_XOPEN_REALTIME              124
+
 
 #endif /* _IRIX_TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.6 2001/12/04 22:13:41 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.7 2001/12/08 11:17:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.6 2001/12/04 22:13:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.7 2001/12/08 11:17:37 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -55,13 +55,15 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.6 2001/12/04 22:13:41 manu Exp $");
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_exec.h>
+#include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_errno.h>
 
 static int ELFNAME2(irix,mipsopt_signature) __P((struct proc *, 
     struct exec_package *epp, Elf_Ehdr *eh));
 
-extern char sigcode[], esigcode[];
 extern struct sysent irix_sysent[];
+extern const char * const irix_syscallnames[];
+extern char irix_sigcode[], irix_esigcode[];
 
 #ifndef __HAVE_SYSCALL_INTERN
 void irix_syscall __P((void));
@@ -84,10 +86,10 @@ const struct emul emul_irix = {
 #else
 	NULL,
 #endif
-	sendsig,
+	irix_sendsig,
 	trapsignal,
-	sigcode,
-	esigcode,
+	irix_sigcode,
+	irix_esigcode,
 	setregs,
 	NULL,
 	NULL,
