@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.14.4.5 2005/01/20 12:31:35 bouyer Exp $
+#	$NetBSD: files.xen,v 1.14.4.6 2005/01/31 17:21:16 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -127,6 +127,9 @@ device	xencons: tty
 attach	xencons at hypervisor
 file	arch/xen/xen/xencons.c		xencons needs-flag
 
+# Xen event peudo-device
+defpseudo xenevt
+
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
@@ -242,5 +245,6 @@ file	arch/xen/xen/machmem.c		dom0ops
 file	arch/xen/xen/privcmd.c		dom0ops
 file	arch/xen/xen/vfr.c		dom0ops
 file	arch/xen/xen/pci_machdep.c	hypervisor & dom0ops
+file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 
 include "arch/xen/conf/majors.i386"
