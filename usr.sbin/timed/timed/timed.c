@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -833,9 +833,11 @@ date()
 	return (tm);
 #else
 	struct	timeval tv;
+	time_t t;
 
 	(void)gettimeofday(&tv, (struct timezone *)0);
-	return (ctime(&tv.tv_sec));
+	t = tv.tv_sec;
+	return (ctime(&t));
 #endif /* sgi */
 }
 

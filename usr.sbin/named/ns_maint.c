@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ns_maint.c	4.39 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: ns_maint.c,v 1.2 1993/08/01 17:57:42 mycroft Exp $";
+static char rcsid[] = "$Id: ns_maint.c,v 1.3 1995/06/07 17:40:54 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -80,8 +80,12 @@ ns_maint()
 	gettime(&tt);
 
 #ifdef DEBUG
-	if (debug)
-		fprintf(ddt,"\nns_maint(); now %s", ctime(&tt.tv_sec));
+	if (debug) {
+		time_t now;
+
+		now = tt.tv_sec;
+		fprintf(ddt,"\nns_maint(); now %s", ctime(&now));
+	}
 #endif
 
 	xfers_deferred = 0;

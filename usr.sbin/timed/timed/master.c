@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)master.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "globals.h"
@@ -86,6 +86,7 @@ master()
 #define POLLRATE 4
 	int polls;
 	struct timeval wait, ntime;
+	time_t tmpt;
 	struct tsp *msg, *answer, to;
 	char newdate[32];
 	struct sockaddr_in taddr;
@@ -182,7 +183,8 @@ loop:
 #ifdef sgi
 			(void)cftime(newdate, "%D %T", &msg->tsp_time.tv_sec);
 #else
-			(void)strcpy(newdate, ctime(&msg->tsp_time.tv_sec));
+			tmpt = msg->tsp_time.tv_sec;
+			(void)strcpy(newdate, ctime(&tmpt));
 #endif /* sgi */
 			if (!good_host_name(msg->tsp_name)) {
 				syslog(LOG_NOTICE,
@@ -203,7 +205,8 @@ loop:
 #ifdef sgi
 			(void)cftime(newdate, "%D %T", &msg->tsp_time.tv_sec);
 #else
-			(void)strcpy(newdate, ctime(&msg->tsp_time.tv_sec));
+			tmpt = msg->tsp_time.tv_sec;
+			(void)strcpy(newdate, ctime(&tmpt));
 #endif /* sgi */
 			htp = findhost(msg->tsp_name);
 			if (htp == 0) {
