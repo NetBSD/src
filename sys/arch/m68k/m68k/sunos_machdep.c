@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.12 1996/10/13 03:19:22 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.13 1997/10/17 02:50:50 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,8 @@
 #include <compat/sunos/sunos_syscallargs.h>
 
 #include <machine/reg.h>
+
+#include <vm/vm.h>
 
 #ifdef DEBUG
 extern int sigdebug;
