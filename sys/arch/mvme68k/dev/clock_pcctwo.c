@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.6 2001/05/31 18:46:07 scw Exp $ */
+/*	$NetBSD: clock_pcctwo.c,v 1.7 2001/07/06 19:00:13 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ clock_pcctwo_profintr(frame)
 	    PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC | PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_ICSR,
 	    clock_pcctwo_sc->sc_clock_lvl);
-	__asm __volatile("movw %0,%%sr" : : "di" (s));
+	splx(s);
 
 	for (cr = PCCTWO_TT_CTRL_OVF(cr); cr; cr--)
 		hardclock(frame);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2001/05/31 18:46:07 scw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2001/07/06 19:00:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
  * Derived from the mainbus code in mvme68k/autoconf.c by Chuck Cranor.
  */
 
+#include "vmetwo.h"
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -54,6 +56,13 @@
 
 #include <mvme68k/dev/mainbus.h>
 
+#if defined(MVME162) || defined(MVME172) || defined(MVME167) || defined(MVME177)
+#if NVMETWO == 0
+#include <dev/vme/vmevar.h>
+#include <mvme68k/dev/mvmebus.h>
+#include <mvme68k/dev/vme_twovar.h>
+#endif
+#endif
 
 void mainbus_attach __P((struct device *, struct device *, void *));
 int mainbus_match __P((struct device *, struct cfdata *, void *));
@@ -175,6 +184,24 @@ mainbus_attach(parent, self, args)
 
 		(void) config_found(self, &ma, mainbus_print);
 	}
+
+	/*
+	 * On mvme162 and up, if the kernel config file had no vmetwo0
+	 * device, we have to do some manual initialisation on the
+	 * VMEChip2 to get local interrupts working (ABORT switch,
+	 * hardware assisted soft interrupts).
+	 */
+#if defined(MVME162) || defined(MVME172) || defined(MVME167) || defined(MVME177)
+#if NVMETWO == 0
+#if defined(MVME147)
+	if (machineid != MVME_147)
+#endif
+	{
+		(void) vmetwo_probe(&_mainbus_space_tag,
+		    intiobase_phys + MAINBUS_VMETWO_OFFSET);
+	}
+#endif
+#endif
 
 	/*
 	 * Attach Industry Pack modules on mvme162 and mvme172
