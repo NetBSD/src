@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.20 2001/07/22 22:53:02 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.21 2001/09/09 10:46:36 pooka Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -45,9 +45,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.33 2001/07/22 21:04:15 christos Exp ")
+FILE_RCSID("@(#)Id: print.c,v 1.34 2001/08/07 16:01:26 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.20 2001/07/22 22:53:02 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.21 2001/09/09 10:46:36 pooka Exp $");
 #endif
 #endif  /* lint */
 
@@ -241,10 +241,24 @@ fmttime(v, local)
 {
 	char *pp, *rt;
 	time_t t = (time_t)v;
+	struct tm *tm;
+
 	if (local) {
 		pp = ctime(&t);
 	} else {
-		struct tm *tm;
+#ifndef HAVE_DAYLIGHT
+		static int daylight = 0;
+#ifdef HAVE_TM_ISDST
+		static time_t now = (time_t)0;
+
+		if (now == (time_t)0) {
+			struct tm *tm1;
+			(void)time(&now);
+			tm1 = localtime(&now);
+			daylight = tm1->tm_isdst;
+		}
+#endif /* HAVE_TM_ISDST */
+#endif /* HAVE_DAYLIGHT */
 		if (daylight)
 			t += 3600;
 		tm = gmtime(&t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.16 2000/11/23 23:21:14 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.17 2001/09/09 10:46:36 pooka Exp $	*/
 
 /*
  * ASCII magic -- file types that we know based on keywords
@@ -50,9 +50,9 @@
 #include <sys/cdefs.h>
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.29 2000/08/05 19:00:11 christos Exp ")
+FILE_RCSID("@(#)Id: ascmagic.c,v 1.30 2001/07/26 13:15:49 christos Exp ")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.16 2000/11/23 23:21:14 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.17 2001/09/09 10:46:36 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -115,9 +115,12 @@ ascmagic(buf, nbytes)
 		return 1;
 	}
 
-	/* Undo the NUL-termination kindly provided by process() */
+	/*
+	 * Undo the NUL-termination kindly provided by process()
+	 * but leave at least one byte to look at
+	 */
 
-	while (nbytes > 0 && buf[nbytes - 1] == '\0')
+	while (nbytes > 1 && buf[nbytes - 1] == '\0')
 		nbytes--;
 
 	/*

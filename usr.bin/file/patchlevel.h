@@ -1,13 +1,18 @@
-/*	$NetBSD: patchlevel.h,v 1.15 2001/07/22 22:53:02 pooka Exp $	*/
+/*	$NetBSD: patchlevel.h,v 1.16 2001/09/09 10:46:36 pooka Exp $	*/
 
 #define	FILE_VERSION_MAJOR	3
-#define	patchlevel		36
+#define	patchlevel		37
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
- * Id: patchlevel.h,v 1.36 2001/07/22 21:04:15 christos Exp 
+ * Id: patchlevel.h,v 1.37 2001/09/03 14:44:22 christos Exp 
  *
  * Log: patchlevel.h,v 
+ * Revision 1.37  2001/09/03 14:44:22  christos
+ * daylight/tm_isdst detection
+ * magic fixes
+ * don't eat the whole file if it has only nulls
+ *
  * Revision 1.36  2001/07/22 21:04:15  christos
  * - magic fixes
  * - add new operators, pascal strings, UTC date printing, $HOME/.magic
