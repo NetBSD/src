@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fdesc.c,v 1.9 1997/09/16 12:26:56 lukem Exp $	*/
+/*	$NetBSD: mount_fdesc.c,v 1.9.4.1 1999/09/05 15:07:35 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.3 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_fdesc.c,v 1.9 1997/09/16 12:26:56 lukem Exp $");
+__RCSID("$NetBSD: mount_fdesc.c,v 1.9.4.1 1999/09/05 15:07:35 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ main(argc, argv)
 		usage();
 
 	if (mount(MOUNT_FDESC, argv[1], mntflags, NULL))
-		err(1, "%s", "");
+		err(1, "fdesc on %s", argv[1]);
 	exit(0);
 }
 
