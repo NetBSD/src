@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.37 2001/11/13 13:14:44 lukem Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.38 2002/03/20 17:42:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.37 2001/11/13 13:14:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.38 2002/03/20 17:42:23 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -1018,8 +1018,12 @@ smc91cxx_read(sc)
 	}
 
 	/*
-	 * Pull the packet off the interface.
+	 * Pull the packet off the interface.  Make sure the payload
+	 * is aligned.
 	 */
+	m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t) +
+	    sizeof(struct ether_header)) - sizeof(struct ether_header);
+
 	eh = mtod(m, struct ether_header *);
 	data = mtod(m, u_int8_t *);
 	if (packetlen > 1)
