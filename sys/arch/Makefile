@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/03/04 19:46:09 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 1999/11/20 16:35:24 eeh Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes.
@@ -11,6 +11,9 @@ ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/}
 .if exists(${ARCHSUBDIR})
 SUBDIR+= ${ARCHSUBDIR}
 .endif
+.endif
+.if ${MACHINE} == sparc
+SUBDIR+= sparc64
 .endif
 
 #SUBDIR= alpha amiga arm32 atari bebox hp300 i386 m68k mac68k macppc mips \
