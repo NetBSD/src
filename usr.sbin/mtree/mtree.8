@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.3 1995/03/07 21:12:09 cgd Exp $
+.\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -115,19 +115,22 @@ Ignore any file hierarchy below this file.
 The file group as a numeric value.
 .It Cm gname
 The file group as a symbolic name.
+.It Cm link
+The file the symbolic link is expected to reference.
 .It Cm mode
 The current file's permissions as a numeric (octal) or symbolic
 value.
 .It Cm nlink
 The number of hard links the file is expected to have.
+.It Cm optional
+The file is optional; don't complain about the file if it's
+not in the file hierarchy.
 .It Cm uid
 The file owner as a numeric value.
 .It Cm uname
-The file group as a symbolic name.
+The file owner as a symbolic name.
 .It Cm size
 The size, in bytes, of the file.
-.It Cm link
-The file the symbolic link is expected to reference.
 .It Cm time
 The last modification time of the file.
 .It Cm type
@@ -153,10 +156,10 @@ socket
 .Pp
 The default set of keywords are
 .Cm gid ,
+.Cm link ,
 .Cm mode ,
 .Cm nlink ,
 .Cm size ,
-.Cm slink ,
 .Cm time ,
 and
 .Cm uid .
