@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie507.h,v 1.4 1994/10/27 04:17:39 cgd Exp $	*/
+/*	$NetBSD: if_ie507.h,v 1.5 1995/01/23 04:50:10 mycroft Exp $	*/
 
 /*
  * Definitions for 3C507
@@ -10,7 +10,9 @@
 #define	IE507_MADDR	14	/* shared memory configuration */
 #define	IE507_IRQ	15	/* IRQ configuration */
 
+#define	EL_CTRL_BNK0	0x00	/* register bank 0 */
 #define	EL_CTRL_BNK1	0x01	/* register bank 1 */
+#define	EL_CTRL_BNK2	0x02	/* register bank 2 */
 #define	EL_CTRL_IEN	0x04	/* interrupt enable */
 #define	EL_CTRL_INTL	0x08	/* interrupt active latch */
 #define	EL_CTRL_16BIT	0x10	/* bus width; clear = 8-bit, set = 16-bit */
