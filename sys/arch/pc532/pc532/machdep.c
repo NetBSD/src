@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 1997/09/19 13:55:03 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 1997/09/23 13:48:15 phil Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -206,7 +206,7 @@ cpu_startup()
 	 */
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG),
+		pmap_enter(pmap_kernel(), (vm_offset_t)(msgbufaddr + i * NBPG),
 			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
