@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.44 1997/12/28 04:28:17 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.45 1998/02/01 14:10:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.44 1997/12/28 04:28:17 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.45 1998/02/01 14:10:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,7 +334,7 @@ main(argc, argv)
 		    error_message(kerror));
 		exit(0);
 	}
-#endif KERBEROS5
+#endif /* KERBEROS5 */
 
 	/* If logins are disabled, print out the message. */
 	if ((fd = fopen(_PATH_NOLOGIN,"r")) != NULL) {
@@ -642,13 +642,16 @@ pass(passwd)
 		rval = 1;
 
 skip:
+		if (pw->pw_expire && time(NULL) >= pw->pw_expire)
+			rval = 2;
 		/*
-		 * If rval == 1, the user failed the authentication check
+		 * If rval > 0, the user failed the authentication check
 		 * above.  If rval == 0, either Kerberos or local authentication
 		 * succeeded.
 		 */
 		if (rval) {
-			reply(530, "Login incorrect.");
+			reply(530, rval == 2 ? "Password expired." :
+			    "Login incorrect.");
 			if (logging) {
 				syslog(LOG_NOTICE,
 				    "FTP LOGIN FAILED FROM %s", remotehost);
@@ -1345,7 +1348,7 @@ fatal(s)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 reply(int n, const char *fmt, ...)
 #else
 reply(n, fmt, va_alist)
@@ -1355,7 +1358,7 @@ reply(n, fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -1371,7 +1374,7 @@ reply(n, fmt, va_alist)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 lreply(int n, const char *fmt, ...)
 #else
 lreply(n, fmt, va_alist)
@@ -1381,7 +1384,7 @@ lreply(n, fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
