@@ -30,7 +30,7 @@
  */
 
 /*
- * $Id: esp.c,v 1.9 1994/10/15 05:48:59 deraadt Exp $
+ * $Id: esp.c,v 1.10 1994/10/15 08:57:27 deraadt Exp $
  *
  * Based on aic6360 by Jarle Greipsland
  *
@@ -372,8 +372,10 @@ espattach(parent, self, aux)
 
 	/* add me to the sbus structures */
 	sc->sc_sd.sd_reset = (void *) esp_reset;
+#if defined(SUN4C) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
+#endif /* SUN4C || SUN4M */
 
 	/* and the interuppts */
 	sc->sc_ih.ih_fun = (void *) espintr;
