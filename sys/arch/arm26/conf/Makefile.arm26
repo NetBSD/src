@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.3 2000/09/18 18:33:33 bjh21 Exp $
+#	$NetBSD: Makefile.arm26,v 1.4 2000/12/17 15:52:40 jdolecek Exp $
 
 # Makefile for NetBSD/arm26
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/arm26/conf/Makefile.arm26
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
