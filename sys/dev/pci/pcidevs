@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.511 2003/03/06 22:09:46 bouyer Exp $
+$NetBSD: pcidevs,v 1.512 2003/03/06 22:25:23 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1998,7 +1998,6 @@ product SIS 640			0x0640	SiS 640 Host Bridge
 product SIS 645			0x0645	SiS 645 Host Bridge
 product SIS 646			0x0646	SiS 646 Host Bridge
 product SIS 648			0x0648	SiS 648 Host Bridge
-product SIS 645			0x0645	SiS 645 Host Bridge
 product SIS 650			0x0650	SiS 650 Host Bridge
 product SIS 651			0x0651	SiS 651 Host Bridge
 product SIS 652			0x0652	SiS 652 Host Bridge
