@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.7 1994/06/29 06:46:04 cgd Exp $	*/
+/*	$NetBSD: uio.h,v 1.8 1995/02/08 15:07:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -53,7 +53,6 @@ enum	uio_rw { UIO_READ, UIO_WRITE };
 enum uio_seg {
 	UIO_USERSPACE,		/* from user data space */
 	UIO_SYSSPACE,		/* from system space */
-	UIO_USERISPACE		/* from user I space */
 };
 
 #ifdef KERNEL
