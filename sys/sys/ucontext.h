@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.4 2003/10/13 18:50:43 fvdl Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.5 2004/07/18 21:26:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -58,6 +58,10 @@ struct __ucontext {
 	long		__uc_pad[_UC_MACHINE_PAD];
 #endif
 };
+
+#ifndef _UC_UCONTEXT_ALIGN
+#define _UC_UCONTEXT_ALIGN (~0)
+#endif
 
 #if defined(COMPAT_NETBSD32) && defined(_KERNEL)
 
