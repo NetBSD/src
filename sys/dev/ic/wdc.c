@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.43 1998/11/19 22:50:21 kenh Exp $ */
+/*	$NetBSD: wdc.c,v 1.44 1998/11/20 01:22:37 thorpej Exp $ */
 
 
 /*
@@ -304,7 +304,7 @@ void
 wdcattach(chp)
 	struct channel_softc *chp;
 {
-	int channel_flags, ctrl_flags, i;
+	int channel_flags, ctrl_flags, i, error;
 	struct ata_atapi_attach aa_link;
 
 	LIST_INIT(&xfer_free_list);
@@ -318,8 +318,17 @@ wdcattach(chp)
 			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
 	}
 
-	if (wdcprobe(chp) == 0)
-		return; /* If no drives, abort attach here */
+	if ((error = wdc_addref(chp)) != 0) {
+		printf("%s: unable to enable controller\n",
+		    chp->wdc->sc_dev.dv_xname);
+		return;
+	}
+
+	if (wdcprobe(chp) == 0) {
+		/* If no drives, abort attach here. */
+		wdc_delref(chp);
+		return;
+	}
 
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
@@ -398,6 +407,7 @@ wdcattach(chp)
 			}
 		}
 	}
+	wdc_delref(chp);
 }
 
 /*
@@ -1168,4 +1178,38 @@ wdcbit_bucket(chp, size)
 		(void)bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wd_data);
 	if (size)
 		(void)bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_data);
+}
+
+int
+wdc_addref(chp)
+	struct channel_softc *chp;
+{
+	struct wdc_softc *wdc = chp->wdc; 
+	struct scsipi_adapter *adapter = &wdc->sc_atapi_adapter;
+	int s, error = 0;
+
+	s = splbio();
+	if (adapter->scsipi_refcnt++ == 0 &&
+	    adapter->scsipi_enable != NULL) {
+		error = (*adapter->scsipi_enable)(wdc, 1);
+		if (error)
+			adapter->scsipi_refcnt--;
+	}
+	splx(s);
+	return (error);
+}
+
+void
+wdc_delref(chp)
+	struct channel_softc *chp;
+{
+	struct wdc_softc *wdc = chp->wdc;
+	struct scsipi_adapter *adapter = &wdc->sc_atapi_adapter;
+	int s;
+
+	s = splbio();
+	if (adapter->scsipi_refcnt-- == 1 &&
+	    adapter->scsipi_enable != NULL)
+		(void) (*adapter->scsipi_enable)(wdc, 0);
+	splx(s);
 }
