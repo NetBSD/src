@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1997/10/13 00:21:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 1997/10/19 10:53:14 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,7 +65,6 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
-#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -77,6 +76,12 @@
 #include <sys/shm.h>
 #endif
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+
+#include <sys/sysctl.h>
+
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/prom.h>
@@ -87,7 +92,6 @@
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
-#include <vm/vm_kern.h>
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
