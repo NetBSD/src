@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.4 2001/11/19 23:30:07 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.5 2001/12/05 05:13:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -106,7 +106,7 @@ cpu_attach_common(struct device *self, int id)
 			printf(": more than %d cpus?\n", CPU_MAXNUM);
 			panic("cpuattach");
 		}
-#ifdef MULTIPROCESSOR
+#ifndef MULTIPROCESSOR
 		printf(" not configured\n");
 		return NULL;
 #endif
