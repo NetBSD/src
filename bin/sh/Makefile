@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2003/11/16 14:14:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.74 2004/01/16 23:24:38 dsl Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -40,7 +40,7 @@ CPPFLAGS+=-DSMALL
 	${NETBSDSRCDIR}/usr.bin/printf \
 	${NETBSDSRCDIR}/bin/kill
 
-CLEANFILES+= mkinit mkinit.lo mknodes mknodes.lo mksyntax mksyntax.lo
+CLEANFILES+= mkinit mkinit.lo mksyntax mksyntax.lo
 CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
 CLEANFILES+= trace
 
@@ -62,9 +62,9 @@ init.c: mkinit ${SHSRCS}
 
 nodes.h: nodes.c
 
-nodes.c: mknodes nodetypes nodes.c.pat
+nodes.c: mknodes.sh nodetypes nodes.c.pat
 	${_MKTARGET_CREATE}
-	./${.ALLSRC}
+	${HOST_SH} ${.ALLSRC} ${.OBJDIR}
 	[ -f nodes.h ]
 
 syntax.h: syntax.c
