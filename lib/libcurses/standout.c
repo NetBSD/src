@@ -1,3 +1,5 @@
+/*	$NetBSD: standout.c,v 1.7 1997/07/22 07:37:05 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)standout.c	8.3 (Berkeley) 8/10/94";
+#else
+__RCSID("$NetBSD: standout.c,v 1.7 1997/07/22 07:37:05 mikel Exp $");
+#endif
 #endif /* not lint */
 
 #include "curses.h"
@@ -49,7 +56,7 @@ wstandout(win)
 	 * If standout/standend strings, or can underline, set the
 	 * screen standout bit.
 	 */
-	if (SO != NULL && SE != NULL || UC != NULL)
+	if ((SO != NULL && SE != NULL) || UC != NULL)
 		win->flags |= __WSTANDOUT;
 	return (1);
 }
