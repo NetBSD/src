@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.5 2000/01/26 16:21:32 bouyer Exp $	*/
+/*	$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.5 2000/01/26 16:21:32 bouyer Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: pass2.c,v 1.5 2000/01/26 16:21:32 bouyer Exp $");
 #include <ufs/ext2fs/ext2fs.h>
 
 #include <ufs/ufs/dinode.h> /* for IFMT & friends */
-#include <ufs/ufs/dir.h> /* for IFTODT & friends */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -227,9 +226,9 @@ pass2check(idesc)
 		}
 		if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 		    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)
-		    && (dirp->e2d_type != IFTODT(EXT2_IFDIR))) {
+		    && (dirp->e2d_type != EXT2_FT_DIR)) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '.'");
-			dirp->e2d_type = IFTODT(EXT2_IFDIR);
+			dirp->e2d_type = EXT2_FT_DIR;
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
@@ -240,7 +239,7 @@ pass2check(idesc)
 	proto.e2d_namlen = 1;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
-		proto.e2d_type = IFTODT(EXT2_IFDIR);
+		proto.e2d_type = EXT2_FT_DIR;
 	else
 		proto.e2d_type = 0;
 	(void)strcpy(proto.e2d_name, ".");
@@ -275,7 +274,7 @@ chk1:
 	proto.e2d_namlen = 2;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
-		proto.e2d_type = IFTODT(EXT2_IFDIR);
+		proto.e2d_type = EXT2_FT_DIR;
 	else
 		proto.e2d_type = 0;
 	(void)strcpy(proto.e2d_name, "..");
@@ -298,9 +297,9 @@ chk1:
 		inp->i_dotdot = fs2h32(dirp->e2d_ino);
 		if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 		    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)
-		    && dirp->e2d_type != IFTODT(EXT2_IFDIR)) {
+		    && dirp->e2d_type != EXT2_FT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '..'");
-			dirp->e2d_type = IFTODT(EXT2_IFDIR);
+			dirp->e2d_type = EXT2_FT_DIR;
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
@@ -415,8 +414,10 @@ again:
 			if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 			    (sblock.e2fs.e2fs_features_incompat &
 				EXT2F_INCOMPAT_FTYPE) &&
-			    dirp->e2d_type != typemap[fs2h32(dirp->e2d_ino)]) {
-				dirp->e2d_type = typemap[fs2h32(dirp->e2d_ino)];
+			    dirp->e2d_type !=
+				inot2ext2dt(typemap[fs2h32(dirp->e2d_ino)])) {
+				dirp->e2d_type =
+				    inot2ext2dt(typemap[fs2h32(dirp->e2d_ino)]);
 				fileerror(idesc->id_number,
 				    fs2h32(dirp->e2d_ino),
 				    "BAD TYPE VALUE");

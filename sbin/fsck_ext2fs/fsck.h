@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.3 2000/01/26 16:21:31 bouyer Exp $	*/
+/*	$NetBSD: fsck.h,v 1.4 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -179,7 +179,6 @@ int	fswritefd;		/* file descriptor for writing file system */
 int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 
 daddr_t	maxfsblock;		/* number of blocks in the file system */
-daddr_t cgoverhead;		/* overhead per cg */
 char	*blockmap;		/* ptr to primary blk allocation map */
 ino_t	maxino;			/* number of inodes in file system */
 ino_t	lastino;		/* last inode in use */
@@ -212,3 +211,4 @@ struct inoinfo *getinoinfo __P((ino_t));
 void getblk __P((struct bufarea *, daddr_t, long));
 ino_t allocino __P((ino_t, int));
 void copyback_sb __P((struct bufarea*));
+daddr_t cgoverhead __P((int));	/* overhead per cg */
