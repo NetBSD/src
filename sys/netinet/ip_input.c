@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.81 1999/03/26 08:51:36 proff Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.82 1999/03/27 01:24:49 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -588,6 +588,9 @@ found:
 	/*
 	 * Switch out to protocol's input routine.
 	 */
+#if IFA_STATS
+	ia->ia_ifa.ifa_data.ifad_inbytes += ip->ip_len;
+#endif
 	ipstat.ips_delivered++;
 	(*inetsw[ip_protox[ip->ip_p]].pr_input)(m, hlen);
 	goto next;

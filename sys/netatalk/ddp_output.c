@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.1 1997/04/02 21:31:10 christos Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.2 1999/03/27 01:24:50 aidan Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -199,6 +199,10 @@ ddp_route(m, ro)
 		gate = *satosat(ro->ro_rt->rt_gateway);
 	}
 	ro->ro_rt->rt_use++;
+
+#if IFA_STATS
+	aa->aa_ifa.ifa_data.ifad_outbytes += m->m_pkthdr.len;
+#endif
 
 	/* XXX */
 	return ((*ifp->if_output) (ifp, m, (struct sockaddr *) &gate, NULL));
