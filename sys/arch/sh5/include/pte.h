@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 2002/11/23 09:25:54 scw Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 2002/12/06 10:10:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -64,8 +64,8 @@ typedef u_int16_t	tlbcookie_t;
  * XXX: Don't change the ordering of this structure. XXX
  */
 typedef struct pte {
-	ptel_t	ptel;
-	tlbcookie_t tlbcookie;
+	volatile ptel_t	ptel;
+	volatile tlbcookie_t tlbcookie;
 	vsid_t	vsid;
 	pteh_t	pteh;
 } pte_t;
@@ -81,8 +81,8 @@ typedef struct pte {
  * code otherwise.
  */
 typedef struct kpte {
-	ptel_t ptel;
-	tlbcookie_t tlbcookie;
+	volatile ptel_t ptel;
+	volatile tlbcookie_t tlbcookie;
 } __attribute__ ((__packed__)) kpte_t;
 
 /*
