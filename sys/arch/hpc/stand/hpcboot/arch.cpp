@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.8 2003/12/18 12:25:03 uwe Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.9 2004/02/27 04:22:26 uwe Exp $	 */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -127,7 +127,6 @@ Architecture::systemInfo(void)
 {
 	u_int32_t val = 0;
 	SYSTEM_INFO si;
-	HDC hdc;
 	BOOL (*getVersionEx)(LPOSVERSIONINFO);
 	
 	//
@@ -168,8 +167,6 @@ Architecture::systemInfo(void)
 	FrameBufferInfo fb(0, 0);
 	DPRINTF((TEXT("Display: %dx%d %dbpp\n"), fb.width(), fb.height(),
 	    fb.bpp()));
-
-	ReleaseDC(0, hdc);
 }
 
 BOOL(*Architecture::_load_LockPages(void))(LPVOID, DWORD, PDWORD, int)
