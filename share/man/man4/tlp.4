@@ -1,6 +1,6 @@
-.\"	$NetBSD: tlp.4,v 1.5 2000/02/28 13:44:53 enami Exp $
+.\"	$NetBSD: tlp.4,v 1.6 2000/05/26 16:41:52 thorpej Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -297,6 +297,35 @@ A list of boards which include the AL981 is not yet available.
 .Pp
 Support for the AL981 has not yet been tested.  If you have a board
 which uses this chip, please contact the author (listed below).
+.It
+.Em Xircom X3201-3
+-- This chip is a CardBus 21143 clone with a loosely-coupled modem
+function (the modem is on a separate CardBus function, but the MAC
+portion includes a shadow of its interrupt status).  Media is provided
+by an IEEE 802.3u-compliant PHY conntected to an MII interface.  These
+chips have no SROM; instead, the MAC address must be obtained from the
+card's CIS information.  Unlike most other Tulip-like chips, the X3201-3
+requires that transmit buffers be aligned to a 4-byte boundary.  This
+virtually ensures that each outgoing packet must be copied into an aligned
+buffer, since the Ethernet header is 14 bytes long.
+.Pp
+This chip also supports ACPI power management.
+.Pp
+This chip is found in Xircom RealPort(tm) 10/100 CardBus Ethernet/Modem
+cards, as well as some Intel OEM'd RealPort(tm) cards.
+.It
+.Em Davicom DM9102 and DM9102A
+-- These chips are 21104A-like with a few minor exceptions.  Media is
+provided by an internal IEEE 802.3u-compliant PHY accessed as if it
+were connected to a normal MII interface.  The DM9102A also provides
+an external MII interface, to which a HomePNA 1 PHY is typically
+connected.  The DM9102A also includes support for CardBus.
+.Pp
+This chip also supports ACPI power management and Wake-On-LAN.
+.Pp
+A complete list of boards with the DM9102 and DM9102A is not available.
+However, the DM9102 is often found on PC motherboards that include a
+built-in Ethernet interface.
 .El
 .Sh MEDIA SELECTION
 Media selection done using
@@ -420,7 +449,7 @@ mechanism.  Refer to those manual pages for more information.
 .%T "MXIC MX98725 Application Note"
 .%N Revision 1.1
 .%D July 10, 1998
-.%A Macronix Internation Co., Ltd.
+.%A Macronix International Co., Ltd.
 .%O Part Number: PM0525
 .Re
 .Rs
@@ -448,6 +477,22 @@ mechanism.  Refer to those manual pages for more information.
 .%D April 1997
 .%A Winbond Electronics Corporation
 .Re
+.Rs
+.%T "Xircom X3201-3 CardBus 10/100 Mbps Ethernet Controller Software Developer's Specification"
+.%N Revision B
+.%D April 7, 1999
+.%O Reference number: 103-0548-001
+.Re
+.Rs
+.%T "Davicom DM9102 10/100 Mbps Single Chip LAN Controller"
+.%N Version DM9102-DS-F01
+.%D July 22, 1999
+.Re
+.Rs
+.%T "Davicom DM9102A Single Chip Fast Ethernet NIC Controller"
+.%N Version DM9102A-DS-F01
+.%D January 20, 2000
+.Re
 .Sh HISTORY
 The
 .Nm
@@ -474,5 +519,7 @@ It is, however, supported for IEEE 802.3u-compliant PHY media.
 The
 .Nm
 driver was written by
-.An Jason R. Thorpe Aq thorpej@nas.nasa.gov
-of the Numerical Aerospace Simulation Facility, NASA Ames Research Center.
+.An Jason R. Thorpe
+while employed at the Numerical Aerospace Simulation Facility,
+NASA Ames Research Center.  The author may be contacted at
+.Aq thorpej@netbsd.org .
