@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.30 2003/11/25 22:45:33 cl Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.31 2003/11/25 23:55:27 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.30 2003/11/25 22:45:33 cl Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.31 2003/11/25 23:55:27 cl Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -825,7 +825,6 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 void
 pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 {
-	sigset_t oldmask;
 	ucontext_t *uc, *olduc;
 	struct sigaction act;
 	siginfo_t *siginfop;
@@ -834,20 +833,21 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	act = pt_sigacts[si->si_signo];
 	pthread_spinunlock(self, &pt_sigacts_lock);
 	
-	/*
-	 * Prevent anyone else from considering this thread for handling
-	 * more instances of this signal.
-	 */
-	oldmask = target->pt_sigmask;
-	__sigplusset(&target->pt_sigmask, &act.sa_mask);
-	if ((act.sa_flags & SA_NODEFER) == 0)
-		__sigaddset14(&target->pt_sigmask, si->si_signo);
-
 	if (target->pt_trapuc) {
 		olduc = target->pt_trapuc;
 		target->pt_trapuc = NULL;
 	} else
 		olduc = target->pt_uc;
+
+	/*
+	 * Prevent anyone else from considering this thread for handling
+	 * more instances of this signal.
+	 */
+	olduc->uc_sigmask = target->pt_sigmask;
+	__sigplusset(&target->pt_sigmask, &act.sa_mask);
+	if ((act.sa_flags & SA_NODEFER) == 0)
+		__sigaddset14(&target->pt_sigmask, si->si_signo);
+
 	/*
 	 * We'd like to just pass oldmask and si to the
 	 * pthread__signal_tramp(), but makecontext() can't reasonably
@@ -871,13 +871,12 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 #endif
 
 	_INITCONTEXT_U(uc);
-	uc->uc_sigmask = oldmask;
 	uc->uc_stack.ss_sp = uc;
 	uc->uc_stack.ss_size = 0;
 	uc->uc_link = NULL;
 
 	SDPRINTF(("(makecontext %p): target %p: sig: %d uc: %p oldmask: %08x\n",
-	    self, target, si->si_signo, olduc, oldmask.__bits[0]));
+	    self, target, si->si_signo, olduc, olduc->uc_sigmask.__bits[0]));
 	makecontext(uc, pthread__signal_tramp, 3, act.sa_handler, siginfop,
 	    olduc);
 	target->pt_uc = uc;
