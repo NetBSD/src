@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 2002/02/23 22:00:28 gmcgarry Exp $
+#	$NetBSD: dot.profile,v 1.3 2002/08/04 01:21:48 gmcgarry Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -35,8 +35,6 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=hp300h
-export TERM
 HOME=/
 export HOME
 BLOCKSIZE=1k
@@ -51,6 +49,22 @@ ROOTDEV=/dev/md0a
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 	export DONEPROFILE
+
+	# get the terminal type
+	_loop=""
+	while [ "X${_loop}" = X"" ]; do
+		echo "" >& 2
+		echo "Setting terminal type.  Options:" >& 2
+		echo "" >& 2
+		echo "  hp300h  for graphics console" >& 2
+		echo "  vt100   for dumb serial terminal" >& 2
+		echo "  xterm   for xterm." >& 2
+		echo "" >& 2
+		eval `tset -s -m ":?$TERM"`
+		if [ "X${TERM}" != X"unknown" ]; then
+			_loop="done"
+		fi
+	done
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
