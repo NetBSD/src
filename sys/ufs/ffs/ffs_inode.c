@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.35 2000/05/30 17:23:52 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.35.2.1 2000/12/14 23:36:36 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -235,7 +235,7 @@ ffs_truncate(v)
 			 * so that it will have no data structures left.
 			 */
 			if ((error = VOP_FSYNC(ovp, ap->a_cred, FSYNC_WAIT,
-			    ap->a_p)) != 0)
+			    0, 0, ap->a_p)) != 0)
 				return (error);
 		} else {
 #ifdef QUOTA
