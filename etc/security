@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.43 2000/05/05 18:28:53 itojun Exp $
+#	$NetBSD: security,v 1.44 2000/05/26 17:08:21 ad Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -696,4 +696,10 @@ fi
 #
 if checkyesno run_skeyaudit; then
 	skeyaudit
+fi
+
+if [ -f /etc/security.local ]; then
+	echo ""
+	echo "Running /etc/security.local:"
+	. /etc/security.local
 fi
