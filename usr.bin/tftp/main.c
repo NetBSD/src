@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1997/10/20 00:46:37 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1998/12/19 22:41:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1997/10/20 00:46:37 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1998/12/19 22:41:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,13 +51,13 @@ __RCSID("$NetBSD: main.c,v 1.9 1997/10/20 00:46:37 lukem Exp $");
  */
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/file.h>
 
 #include <netinet/in.h>
 
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <fcntl.h>
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
@@ -660,13 +660,13 @@ makeargv()
 
 	margc = 0;
 	for (cp = line; *cp;) {
-		while (isspace(*cp))
+		while (isspace((unsigned char)*cp))
 			cp++;
 		if (*cp == '\0')
 			break;
 		*argp++ = cp;
 		margc += 1;
-		while (*cp != '\0' && !isspace(*cp))
+		while (*cp != '\0' && !isspace((unsigned char)*cp))
 			cp++;
 		if (*cp == '\0')
 			break;

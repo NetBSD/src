@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.8 1998/07/26 15:26:18 mycroft Exp $	*/
+/*	$NetBSD: tftp.c,v 1.9 1998/12/19 22:41:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.8 1998/07/26 15:26:18 mycroft Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.9 1998/12/19 22:41:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,7 +316,11 @@ makerequest(request, name, tp, mode)
 	char *cp;
 
 	tp->th_opcode = htons((u_short)request);
+#ifndef __SVR4
 	cp = tp->th_stuff;
+#else
+	cp = (void *)&tp->th_stuff;
+#endif
 	strcpy(cp, name);
 	cp += strlen(name);
 	*cp++ = '\0';
@@ -395,7 +399,12 @@ tpacket(s, tp, n)
 	case RRQ:
 	case WRQ:
 		n -= 2;
-		file = cp = tp->th_stuff;
+#ifndef __SVR4
+		cp = tp->th_stuff;
+#else
+		cp = (void *) &tp->th_stuff;
+#endif
+		file = cp;
 		cp = strchr(cp, '\0');
 		printf("<file=%s, mode=%s>\n", file, cp + 1);
 		break;
