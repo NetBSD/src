@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.32 1994/04/18 12:40:39 deraadt Exp $
+ *	$Id: if_ep.c,v 1.33 1994/04/23 04:31:12 hpeyerl Exp $
  */
 
 #include "bpfilter.h"
@@ -377,7 +377,7 @@ epinit(sc)
 		return;
 
 	s = splimp();
-	while (inb(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
+	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
 
 	GO_WINDOW(0);
@@ -396,16 +396,15 @@ epinit(sc)
 	for (i = 0; i < 31; i++)
 		inb(BASE + EP_W1_TX_STATUS);
 
+	outw(BASE + EP_COMMAND, SET_RD_0_MASK | S_CARD_FAILURE | S_RX_COMPLETE |
+	    S_TX_COMPLETE | S_TX_AVAIL);
+	outw(BASE + EP_COMMAND, SET_INTR_MASK | S_CARD_FAILURE | S_RX_COMPLETE |
+	    S_TX_COMPLETE | S_TX_AVAIL);
 	/*
 	 * attemp to get rid of stray interrupts. on the i386 this isn't
 	 * totally possible since they may queue.
 	 */
 	outw(BASE + EP_COMMAND, ACK_INTR | 0xff);
-
-	outw(BASE + EP_COMMAND, SET_RD_0_MASK | S_CARD_FAILURE | S_RX_COMPLETE |
-	    S_TX_COMPLETE | S_TX_AVAIL);
-	outw(BASE + EP_COMMAND, SET_INTR_MASK | S_CARD_FAILURE | S_RX_COMPLETE |
-	    S_TX_COMPLETE | S_TX_AVAIL);
 
 	epsetfilter(sc);
 	epsetlink(sc);
@@ -811,8 +810,10 @@ epread(sc)
 		sc->mb[sc->next_mb] = 0;
 		if (top == 0) {
 			MGETHDR(top, M_DONTWAIT, MT_DATA);
-			if (top == 0)
+			if (top == 0) {
+				top = m0;   /* Fix up the chain so we can free it */
 				goto out;
+			}
 		} else {	/* Convert one of our saved mbuf's */
 			sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 			top->m_data = top->m_pktdat;
@@ -831,7 +832,7 @@ epread(sc)
 
 	top->m_pkthdr.rcvif = &sc->ep_ac.ac_if;
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
-	while (inb(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
+	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
 	++sc->ep_ac.ac_if.if_ipackets;
 #if NBPFILTER > 0
@@ -859,7 +860,7 @@ epread(sc)
 	return;
 
 out:	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
-	while (inb(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
+	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
 	if (top)
 		m_freem(top);
@@ -975,7 +976,7 @@ epstop(sc)
 
 	outw(BASE + EP_COMMAND, RX_DISABLE);
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
-	while (inb(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
+	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
 	outw(BASE + EP_COMMAND, TX_DISABLE);
 	outw(BASE + EP_COMMAND, STOP_TRANSCEIVER);
