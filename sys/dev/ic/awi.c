@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.51 2003/01/18 10:14:20 thorpej Exp $	*/
+/*	$NetBSD: awi.c,v 1.52 2003/02/25 01:57:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.51 2003/01/18 10:14:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.52 2003/02/25 01:57:35 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -504,6 +504,8 @@ awi_init(struct ifnet *ifp)
 		sc->sc_mib_local.Network_Mode = 1;
 		sc->sc_mib_local.Acting_as_AP = 1;
 		break;
+	case IEEE80211_M_MONITOR:
+		return ENODEV;
 	}
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	memset(&sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
@@ -951,6 +953,8 @@ awi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	}
 	imr->ifm_active |= ieee80211_rate2media(rate, ic->ic_phytype);
 	switch (ic->ic_opmode) {
+	case IEEE80211_M_MONITOR: /* we should never reach here */
+		break;
 	case IEEE80211_M_STA:
 		break;
 	case IEEE80211_M_IBSS:

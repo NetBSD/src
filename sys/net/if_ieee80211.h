@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.25 2002/11/16 06:08:31 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.26 2003/02/25 01:57:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -377,7 +377,9 @@ enum ieee80211_opmode {
 	IEEE80211_M_STA = 1,		/* infrastructure station */
 	IEEE80211_M_IBSS = 0,		/* IBSS (adhoc) station */
 	IEEE80211_M_AHDEMO = 3,		/* Old lucent compatible adhoc demo */
-	IEEE80211_M_HOSTAP = 6		/* Software Access Point */
+	IEEE80211_M_HOSTAP = 6,		/* Software Access Point */
+	IEEE80211_M_MONITOR = 8		/* Monitor mode (doesn't correspond
+					   to a PRISM port like the others) */
 };
 
 enum ieee80211_state {
@@ -502,6 +504,7 @@ struct ieee80211com {
 #define	IEEE80211_F_HASPMGT	0x00040000	/* CAPABILITY: Power mgmt */
 #define	IEEE80211_F_HASHOSTAP	0x00080000	/* CAPABILITY: HOSTAP avail */
 #define	IEEE80211_F_HASAHDEMO	0x00100000	/* CAPABILITY: Old Adhoc Demo */
+#define	IEEE80211_F_HASMONITOR	0x00200000	/* CAPABILITY: Monitor mode */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */

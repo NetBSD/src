@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.32 2002/11/07 08:00:47 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.33 2003/02/25 01:57:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -215,6 +215,7 @@ int	ifmedia_baudrate __P((int));
 
 #define	IFM_IEEE80211_ADHOC	 0x00000100	/* Operate in Adhoc mode */
 #define	IFM_IEEE80211_HOSTAP	 0x00000200	/* Operate in Host AP mode */
+#define	IFM_IEEE80211_MONITOR	 0x00000400	/* Operate in Monitor mode */
 
 /*
  * Shared media sub-types
@@ -417,6 +418,7 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"adhoc" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"ibss" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_HOSTAP,	"hostap" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_MONITOR,	"monitor" },		\
 									\
 	{ 0, NULL },							\
 }

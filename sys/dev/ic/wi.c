@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.111 2003/02/25 00:51:14 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.112 2003/02/25 01:57:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.111 2003/02/25 00:51:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.112 2003/02/25 01:57:35 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -304,6 +304,7 @@ wi_attach(struct wi_softc *sc)
 		if (sc->sc_sta_firmware_ver >= 800) {
 			ic->ic_flags |= IEEE80211_F_HASHOSTAP;
 			ic->ic_flags |= IEEE80211_F_HASIBSS;
+			ic->ic_flags |= IEEE80211_F_HASMONITOR;
 		}
 		sc->sc_ibss_port = 0;
 		break;
@@ -350,6 +351,8 @@ wi_attach(struct wi_softc *sc)
 		ADD(IFM_AUTO, IFM_IEEE80211_HOSTAP);
 	if (ic->ic_flags & IEEE80211_F_HASIBSS)
 		ADD(IFM_AUTO, IFM_IEEE80211_ADHOC);
+	if (ic->ic_flags & IEEE80211_F_HASMONITOR)
+		ADD(IFM_AUTO, IFM_IEEE80211_MONITOR);
 	ADD(IFM_AUTO, IFM_IEEE80211_ADHOC | IFM_FLAG0);
 	for (i = 0; i < nrate; i++) {
 		r = ic->ic_sup_rates[i];
@@ -363,6 +366,8 @@ wi_attach(struct wi_softc *sc)
 			ADD(mword, IFM_IEEE80211_HOSTAP);
 		if (ic->ic_flags & IEEE80211_F_HASIBSS)
 			ADD(mword, IFM_IEEE80211_ADHOC);
+		if (ic->ic_flags & IEEE80211_F_HASMONITOR)
+			ADD(mword, IFM_IEEE80211_MONITOR);
 		ADD(mword, IFM_IEEE80211_ADHOC | IFM_FLAG0);
 	}
 	printf("\n");
@@ -559,6 +564,9 @@ wi_init(struct ifnet *ifp)
 	case IEEE80211_M_HOSTAP:
 		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_HOSTAP);
 		break;
+	case IEEE80211_M_MONITOR:
+		wi_cmd(sc, WI_CMD_TEST | (WI_TEST_MONITOR << 8), 0, 0, 0);
+		break;
 	}
 
 	/* Intersil interprets this RID as joining ESS even in IBSS mode */
@@ -647,6 +655,7 @@ wi_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	if (ic->ic_opmode == IEEE80211_M_AHDEMO ||
+	    ic->ic_opmode == IEEE80211_M_MONITOR ||
 	    ic->ic_opmode == IEEE80211_M_HOSTAP)
 		wi_newstate(sc, IEEE80211_S_RUN);
 
@@ -1021,6 +1030,8 @@ wi_media_change(struct ifnet *ifp)
 		newmode = IEEE80211_M_IBSS;
 	else if (ime->ifm_media & IFM_IEEE80211_HOSTAP)
 		newmode = IEEE80211_M_HOSTAP;
+	else if (ime->ifm_media & IFM_IEEE80211_MONITOR)
+		newmode = IEEE80211_M_MONITOR;
 	else
 		newmode = IEEE80211_M_STA;
 	if (ic->ic_opmode != newmode) {
@@ -1085,6 +1096,9 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		break;
 	case IEEE80211_M_HOSTAP:
 		imr->ifm_active |= IFM_IEEE80211_HOSTAP;
+		break;
+	case IEEE80211_M_MONITOR:
+		imr->ifm_active |= IFM_IEEE80211_MONITOR;
 		break;
 	}
 }
@@ -1154,11 +1168,17 @@ wi_rx_intr(struct wi_softc *sc)
 	len = le16toh(frmhdr.wi_dat_len);
 	off = ALIGN(sizeof(struct ieee80211_frame));
 
+	/* Sometimes the PRISM2.x returns bogusly large frames. Except
+	 * in monitor mode, just throw them away.
+	 */
 	if (off + len > MCLBYTES) {
-		CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
-		ifp->if_ierrors++;
-		DPRINTF(("wi_rx_intr: oversized packet\n"));
-		return;
+		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+			CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
+			ifp->if_ierrors++;
+			DPRINTF(("wi_rx_intr: oversized packet\n"));
+			return;
+		} else
+			len = 0;
 	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
