@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.51.2.1 2002/06/21 16:03:48 lukem Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.51.2.2 2002/07/29 14:50:22 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -324,7 +324,7 @@ menu fdok, title "Hit enter to continue";
 	option "OK", exit, action { yesno = 1; };
 	option "Abort install", exit, action { yesno = 0; };
 
-menu crypttype, title "Password cipher";
+menu crypttype, title "Password cipher", y=16;
 	option "DES", exit, action { yesno = 1; };
 	option "MD5", exit, action { yesno = 2; };
 	option "do not change", exit, action { yesno = 0; };
