@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930reg.h,v 1.1 1995/04/24 19:17:17 pk Exp $ */
+/*	$NetBSD: am7930reg.h,v 1.2 1998/06/24 10:52:53 jonathan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  * chip registers) have the form AMDR_*.  Register fields look like AMD_*.
  */
 
-struct amd7930 {
+struct am7930 {
 	u_char	cr;		/* command register (wo) */
 #define ir cr			/* interrupt register (ro) */
 	u_char	dr;		/* data register (rw) */
