@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.6 1997/05/25 05:48:14 jonathan Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.7 1997/06/15 18:24:05 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -56,6 +56,10 @@ asic_dma_start __P((asc_softc_t asc, State *state, caddr_t cp, int flag));
 static void
 asic_dma_end __P((asc_softc_t asc, State *state, int flag));
 
+#ifdef MIPS3
+extern void MachHitFlushDCache __P((caddr_t, int));
+#endif
+
 int
 asc_ioasic_match(parent, match, aux)
 	struct device *parent;
@@ -104,7 +108,7 @@ asc_ioasic_attach(parent, self, aux)
 	 * (2) timing based on turbochannel frequency
 	 */
 
-	asc->buff = (u_char *)MACH_PHYS_TO_UNCACHED(asc_iomem);
+	asc->buff = (u_char *)MACH_PHYS_TO_CACHED(asc_iomem);
 	bufsiz = 8192;
 	*((volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base)) = -1;
 	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
@@ -141,6 +145,12 @@ asic_dma_start(asc, state, cp, flag)
 	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
 
+#ifdef MIPS3
+#ifdef MIPS1XX
+	if (cpu_arch == 3)
+#endif
+		MachHitFlushDCache(cp, state->dmalen);
+#endif /* MIPS3 */
 	phys = MACH_CACHED_TO_PHYS(cp);
 	cp = (caddr_t)mips_trunc_page(cp + NBPG);
 	nphys = MACH_CACHED_TO_PHYS(cp);
@@ -180,8 +190,22 @@ asic_dma_end(asc, state, flag)
 	wbflush();
 
 	if (flag == ASCDMA_READ) {
+#ifdef MIPS3
+#ifdef MIPS1XX
+		if (cpu_arch == 3)
+#endif
+			MachFlushDCache(MACH_UNCACHED_TO_PHYS(state->dmaBufAddr),
+			   state->dmalen);
+#ifdef MIPS1XX	/* ??? what am I doing? mhitch */
+		else
+			MachFlushDCache(MACH_PHYS_TO_CACHED(
+			    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)),
+			    state->dmalen);
+#endif
+#else
 		MachFlushDCache(MACH_PHYS_TO_CACHED(
 		    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)), state->dmalen);
+#endif /* MIPS3 */
 		if ( (nb = *((int *)IOASIC_REG_SCSI_SCR(ioasic_base))) != 0) {
 			/* pick up last upto6 bytes, sigh. */
 	
