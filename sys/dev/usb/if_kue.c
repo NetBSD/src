@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.8 2000/02/17 18:42:21 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.9 2000/02/29 19:08:09 hubertf Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -165,6 +165,7 @@ static struct kue_type kue_devs[] = {
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET2 },
 	{ USB_VENDOR_ENTREGA, USB_PRODUCT_ENTREGA_E45 },
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C19250 },
+	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C460 },
 	{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_ETHER_USB_T },
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650C },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
