@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.703 2005/03/19 10:28:12 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.704 2005/03/19 11:54:53 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.702 2005/03/19 10:27:52 tron Exp
+ *	NetBSD: pcidevs,v 1.703 2005/03/19 11:54:31 tron Exp
  */
 
 /*
@@ -1681,6 +1681,7 @@
 #define	PCI_PRODUCT_INTEL_82546GB_COPPER	0x1079		/* i82546GB 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82546GB_FIBER	0x107a		/* i82546GB 1000baseX Ethernet */
 #define	PCI_PRODUCT_INTEL_82546GB_SERDES	0x107b		/* i82546GB Gigabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82541PI	0x107c		/* i82541PI Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_DC100_GRAPH	0x1102		/* 82815 Graphics */
