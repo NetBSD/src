@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.8 1994/02/11 06:59:30 chopps Exp $
+ *	$Id: conf.c,v 1.9 1994/02/17 09:09:23 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -40,6 +40,8 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <dev/cons.h>
+
 #ifdef BANKEDDEVPAGER
 #include <sys/bankeddev.h>
 #endif
@@ -413,4 +415,13 @@ int	mem_no = 2; 	/* major device number of memory special file */
  */
 dev_t	swapdev = makedev(3, 0);
 
+int sercnprobe(), sercninit(), sercngetc(), sercnputc();
+int ite_cnprobe(), ite_cninit(), ite_cngetc(), ite_cnputc();
 
+struct	consdev constab[] = {
+	{ sercnprobe,	sercninit,	sercngetc,	sercnputc },
+#if NITE > 0
+	{ ite_cnprobe,	ite_cninit,	ite_cngetc,	ite_cnputc },
+#endif
+	{ 0 },
+};

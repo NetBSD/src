@@ -1,6 +1,6 @@
 /* some colors, handy for debugging 
  *
- *	$Id: color.h,v 1.4 1994/02/11 06:59:28 chopps Exp $
+ *	$Id: color.h,v 1.5 1994/02/17 09:09:21 chopps Exp $
  */
 
 #define COL_BLACK	0x000
@@ -20,3 +20,8 @@
 #define COL_LITE_GREEN	0x0fa
 #define COL_ORANGE	0xfa0
 #define COL_PURPLE	0xf0a
+
+#define COL24_BLACK	0x0
+#define COL24_DGREY	0x0009
+#define COL24_LGREY	0x0880
+#define COL24_WHITE	0xffff
