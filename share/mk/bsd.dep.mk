@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.36 2002/11/10 18:15:29 thorpej Exp $
+#	$NetBSD: bsd.dep.mk,v 1.37 2002/11/10 21:26:45 thorpej Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -26,10 +26,10 @@ __acpp_flags=	-traditional-cpp
 	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
 	if [ "$$files" != " " ]; then \
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${AFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${__acpp_flags} \
+	    ${AFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${__acpp_flags} ${AINC:Q} \
 	    $$files; \
 	  ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${AFLAGS:M-[ID]*} ${CPPFLAGS} ${__acpp_flags} $$files; \
+	    ${AFLAGS:M-[ID]*} ${CPPFLAGS} ${__acpp_flags} ${AINC} $$files; \
 	fi
 	@files="${.ALLSRC:M*.c}"; \
 	if [ "$$files" != "" ]; then \
