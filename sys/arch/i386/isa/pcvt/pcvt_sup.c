@@ -115,7 +115,7 @@ static unsigned char * compute_charset_base ( unsigned fontset );
 #endif /* XSERVER */
 
 #if PCVT_SCREENSAVER
-static void scrnsv_timedout ( void );
+static void scrnsv_timedout ( void *arg );
 static u_short *savedscreen = (u_short *)0;	/* ptr to screen contents */
 static size_t scrnsv_size = (size_t)-1;		/* size of saved image */
 
@@ -899,8 +899,9 @@ vgapaletteio(unsigned idx, struct rgb *val, int writeit)
  *	update asynchronous: cursor, cursor pos displ, sys load, keyb scan
  *---------------------------------------------------------------------------*/
 void
-async_update(int a)
+async_update(void *arg)
 {
+	int a = (int)arg;
 	static int lastpos = 0;
 	static int counter = PCVT_UPDATESLOW;
 
@@ -908,7 +909,7 @@ async_update(int a)
 	/* need a method to suspend the updates */
 	if(a)
 	{
-		untimeout(async_update, NULL);
+		untimeout(async_update, (void *)0);
 		return;
 	}
 #endif /* XSERVER */
@@ -1089,7 +1090,7 @@ async_update(int a)
 async_update_exit:
 
 	if(a == 0)
-		timeout(async_update, NULL, PCVT_UPDATEFAST);
+		timeout(async_update, (void *)0, PCVT_UPDATEFAST);
 }
     
 /*---------------------------------------------------------------------------*
@@ -1961,7 +1962,7 @@ pcvt_set_scrnsv_tmo(int timeout)
  *	we were timed out
  *---------------------------------------------------------------------------*/
 static void
-scrnsv_timedout(void)
+scrnsv_timedout(void *arg)
 {
 	/* this function is called by timeout() */
 	/* raise priority to avoid conflicts with kbd intr */

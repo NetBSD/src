@@ -1523,7 +1523,7 @@ void 	pcvt_set_scrnsv_tmo ( int );
 void	vga_move_charset ( unsigned n, unsigned char *b, int save_it);
 #endif /* XSERVER */
 
-void	async_update ( int a );
+void	async_update ( void *arg );
 void	clr_parms ( struct video_state *svsp );
 void	cons_highlight ( void );
 void	cons_normal ( void );

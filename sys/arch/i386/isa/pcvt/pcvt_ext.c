@@ -2155,7 +2155,7 @@ pcvt_x_hook(int tografx)
 #endif /* PCVT_SCREENSAVER */
 
 		/* step 2: handle status display */
-		async_update(1);	/* turn off */
+		async_update((void *)1);	/* turn off */
 
 		/* step 3: disable text output and save screen contents */
 
