@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 2003/10/16 22:56:29 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.9 2003/10/21 23:25:48 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2003/10/16 22:56:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2003/10/21 23:25:48 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -82,6 +82,8 @@ struct pic softintr_pic = {
 	NULL,
 	NULL,
 };
+
+static int intr_scan_bus(struct mp_intr_map *, int, int *);
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
@@ -183,35 +185,41 @@ intr_calculatemasks(struct cpu_info *ci)
 int
 intr_find_mpmapping(int bus, int pin, int *handle, void *aux)
 {
-	struct mp_intr_map *mip;
 	struct mp_bus *mpb;
+#if NPCI > 0
 	int dev, func;
+#endif
 
 	if (bus == -1)
 		return ENOENT;
-#if NPCI > 0
-	/*
-	 * For PCI, search upwards if there were no mappings
-	 * for a bus. It's assumed that they'll be found
-	 * by tracking the interrupt line upwards through the
-	 * bus hierarchy.
-	 */
-	if (!strcmp(mp_busses[bus].mb_name, "pci")) {
-		dev = (int)(intptr_t)aux;
-		while (mp_busses[bus].mb_intrs == NULL) {
-			mpb = &mp_busses[bus];
-			if (mpb->mb_pci_bridge_tag == NULL)
-				return ENOENT;
-			pin = PPB_INTERRUPT_SWIZZLE(pin, dev);
-			pci_decompose_tag(mpb->mb_pci_chipset_tag,
-			    *mpb->mb_pci_bridge_tag, &bus, &dev, &func);
-		}
-	} else
-#endif
-		if (mp_busses[bus].mb_intrs == NULL)
+
+	if (mp_busses[bus].mb_intrs == NULL &&
+	    mp_busses[bus].mb_pci_bridge_tag == NULL)
+		return ENOENT;
+
+	dev = (int)(intptr_t)aux;
+	while (intr_scan_bus(mp_busses[bus].mb_intrs, pin, handle) != 0) {
+		mpb = &mp_busses[bus];
+		if (mpb->mb_pci_bridge_tag == NULL)
 			return ENOENT;
-		
-	for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
+		pin = PPB_INTERRUPT_SWIZZLE(pin & 3, dev);
+		pci_decompose_tag(mpb->mb_pci_chipset_tag,
+		    *mpb->mb_pci_bridge_tag, &bus, &dev, &func);
+		pin |= (dev << 2);
+	}
+
+	return 0;
+}
+
+static int
+intr_scan_bus(struct mp_intr_map *intrs, int pin, int *handle)
+{
+	struct mp_intr_map *mip;
+
+	if (intrs == NULL)
+		return ENOENT;
+
+	for (mip = intrs; mip != NULL; mip=mip->next) {
 		if (mip->bus_pin == pin) {
 			*handle = mip->ioapic_ih;
 			return 0;
