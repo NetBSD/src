@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.19 1997/04/11 20:28:08 cgd Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.20 1997/04/13 19:48:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -402,14 +402,14 @@ pdq_pci_attach(
     struct device * const self,
     void * const aux)
 {
-    pdq_softc_t * const sc = (pdq_softc_t *) self;
+    pdq_softc_t * const sc = (pdq_softc_t *)self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     pdq_uint32_t data;
     pci_intr_handle_t intrhandle;
     const char *intrstr;
-    bus_addr_t csrbase;
-    bus_size_t csrsize;
-    int cacheable = 0;
+    bus_space_tag_t iot, memt;
+    bus_space_handle_t ioh, memh;
+    int ioh_valid, memh_valid;
 
     printf("\n");
 
@@ -424,14 +424,23 @@ pdq_pci_attach(
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
-    if (!pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &csrbase, &csrsize, &cacheable))
-	sc->sc_csrtag = pa->pa_memt;
-    else if (!pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &csrbase, &csrsize))
-	sc->sc_csrtag = pa->pa_iot;
-    else
+    ioh_valid = (pci_map_register(pa, PCI_CBIO,
+            PCI_MAPREG_TYPE_IO, 0,
+            &iot, &ioh, NULL, NULL) == 0);
+    memh_valid = (pci_map_register(pa, PCI_CBMA,
+            PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+            &memt, &memh, NULL, NULL) == 0);  
+
+    if (memh_valid) {
+	sc->sc_csrtag = memt;
+	sc->sc_membase = memh;
+    } else if (ioh_valid) {
+	sc->sc_csrtag = iot;
+	sc->sc_membase = ioh;
+    } else {
+	printf(": unable to map device registers\n");
 	return;
-    if (bus_space_map(sc->sc_csrtag, csrbase, csrsize, cacheable, &sc->sc_membase))
-	return;
+    }
 
     sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
