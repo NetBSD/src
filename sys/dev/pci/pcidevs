@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.284 2001/01/08 09:52:22 rh Exp $
+$NetBSD: pcidevs,v 1.285 2001/01/08 20:07:21 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -983,6 +983,7 @@ product DEC 21152	0x0024	DECchip 21152 PCI-PCI Bridge
 product DEC 21153	0x0025	DECchip 21153 PCI-PCI Bridge
 product DEC 21154	0x0026	DECchip 21154 PCI-PCI Bridge
 product DEC CPQ42XX	0x0046	Compaq SMART RAID 42xx
+product DEC SWXCR	0x1065	SWXCR RAID
 
 /* Delta products */
 product DELTA 8139	0x1360	8139 Ethernet
