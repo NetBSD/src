@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.13 2002/02/07 07:00:11 ross Exp $
+.\"	$NetBSD: directory.3,v 1.14 2002/02/07 09:24:04 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -160,7 +160,7 @@ Sample code which searchs a directory for entry ``name'' is:
 len = strlen(name);
 dirp = opendir(".");
 while ((dp = readdir(dirp)) != NULL)
-	if (dp-\*[Gt]d_namlen == len &amp;&amp; !strcmp(dp-\*[Gt]d_name, name)) {
+	if (dp-\*[Gt]d_namlen == len \*[Am]\*[Am] !strcmp(dp-\*[Gt]d_name, name)) {
 		(void)closedir(dirp);
 		return FOUND;
 	}
