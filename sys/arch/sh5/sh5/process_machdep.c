@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.2 2002/09/01 11:40:54 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.3 2002/09/04 14:13:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,6 +72,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 
 	tf->tf_state.sf_spc = pack->ep_entry;
 	tf->tf_state.sf_ssr = SH5_CONREG_SR_MMU;
+	tf->tf_state.sf_flags = SF_FLAGS_CALLEE_SAVED;
 
 	tf->tf_caller.r2 = (register_t) argc;			 /* argc */
 	tf->tf_caller.r3 = (register_t) (sstack + sizeof(long)); /* argv */
@@ -82,7 +83,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	 * passed by the dynamic loader. The kernel always sets them to 0.
 	 */
 
-	tf->tf_caller.r7 = (register_t) (uintptr_t) p->p_psstr;
+	tf->tf_caller.r7 = (register_t)(long)p->p_psstr;
 
 	/* Align the stack as required by the SH-5 ABI */
 	tf->tf_caller.r15 = (register_t) (sstack & ~0xf);
