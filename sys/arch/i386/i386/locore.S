@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.27 2004/04/20 11:59:20 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.28 2004/05/13 12:15:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1983,9 +1983,12 @@ switch_return:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
 	call    _C_LABEL(sched_unlock_idle)
 #endif
+	cmpl	$0,CPUVAR(IPENDING)
+	jz	3f
 	pushl	$IPL_NONE		# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 	addl	$4,%esp
+3:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)	# splhigh()
 
 	movl	%ebx,%eax
