@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.3 2004/05/31 13:28:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.4 2004/06/20 18:55:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,19 +106,12 @@ static int ffs_copyonwrite(void *, struct buf *);
 static int readfsblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static int readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static int writevnblk(struct vnode *, caddr_t, ufs2_daddr_t);
+static inline int cow_enter(void);
+static inline void cow_leave(int);
 static inline ufs2_daddr_t db_get(struct inode *, int);
 static inline void db_assign(struct inode *, int, ufs2_daddr_t);
 static inline ufs2_daddr_t idb_get(struct inode *, caddr_t, int);
 static inline void idb_assign(struct inode *, caddr_t, int, ufs2_daddr_t);
-
-/*
- * To ensure the consistency of snapshots across crashes, we must
- * synchronously write out copied blocks before allowing the
- * originals to be modified. Because of the rather severe speed
- * penalty that this imposes, the following flag allows this
- * crash persistence to be disabled.
- */
-static int dopersistence = 1;
 
 #ifdef DEBUG
 static int snapdebug = 0;
@@ -126,7 +119,7 @@ static int snapdebug = 0;
 
 /*
  * Create a snapshot file and initialize it for the filesystem.
- * Vnode is locked on entry and unlocked on return.
+ * Vnode is locked on entry and return.
  */
 int
 ffs_snapshot(mp, vp, ctime)
@@ -168,26 +161,19 @@ ffs_snapshot(mp, vp, ctime)
 			ctime->tv_sec = DIP(VTOI(vp), mtime);
 			ctime->tv_nsec = DIP(VTOI(vp), mtimensec);
 		}
-		VOP_UNLOCK(vp, 0);
 		return 0;
 	}
 	/*
 	 * Check mount and check for exclusive reference.
 	 */
-	if (vp->v_mount != mp) {
-		VOP_UNLOCK(vp, 0);
+	if (vp->v_mount != mp)
 		return EXDEV;
-	}
-	if (vp->v_usecount != 1 || vp->v_writecount != 0) {
-		VOP_UNLOCK(vp, 0);
+	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
-	}
 	if (vp->v_size != 0) {
 		error = VOP_TRUNCATE(vp, 0, 0, NOCRED, p);
-		if (error) {
-			VOP_UNLOCK(vp, 0);
+		if (error)
 			return error;
-		}
 	}
 	/*
 	 * Assign a snapshot slot in the superblock.
@@ -563,16 +549,6 @@ out1:
 		error = expunge_ufs1(vp, ip, copy_fs, mapacct_ufs1, BLK_SNAP);
 	else
 		error = expunge_ufs2(vp, ip, copy_fs, mapacct_ufs2, BLK_SNAP);
-	/*
-	 * All block address modifications are done. Invalidate and free
-	 * all pages on the snapshot vnode. Those coming from read ahead
-	 * are no longer valid.
-	 */
-	if (!error) {
-		simple_lock(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, 0, 0,
-		    PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
-	}
 	if (error) {
 		fs->fs_snapinum[snaploc] = 0;
 		FREE(snapblklist, M_UFSMNT);
@@ -630,6 +606,16 @@ done:
 	if (error == 0 && (error = writevnblk(vp, cgbuf, blkno)) != 0)
 		fs->fs_snapinum[snaploc] = 0;
 out:
+	/*
+	 * All block address modifications are done. Invalidate and free
+	 * all pages on the snapshot vnode. Those coming from read ahead
+	 * are no longer valid.
+	 */
+	if (!error) {
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, 0, 0,
+		    PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
+	}
 	if (cgbuf)
 		free(cgbuf, M_UFSMNT);
 	if (fs->fs_active != 0) {
@@ -641,7 +627,6 @@ out:
 		(void) VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 	else
 		vref(vp);
-	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -749,7 +734,7 @@ expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
 	    struct fs *, ufs_lbn_t, int);
 	int expungetype;
 {
-	int i, error, ns, indiroff;
+	int i, s, error, ns, indiroff;
 	ufs_lbn_t lbn, rlbn;
 	ufs2_daddr_t len, blkno, numblks, blksperindir;
 	struct ufs1_dinode *dip;
@@ -766,8 +751,10 @@ expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
 	if (lbn < NDADDR) {
 		blkno = db_get(VTOI(snapvp), lbn);
 	} else {
+		s = cow_enter();
 		error = VOP_BALLOC(snapvp, lblktosize(fs, (off_t)lbn),
 		   fs->fs_bsize, KERNCRED, B_METAONLY, &bp);
+		cow_leave(s);
 		if (error)
 			return (error);
 		indiroff = (lbn - NDADDR) % NINDIR(fs);
@@ -1036,7 +1023,7 @@ expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
 	    struct fs *, ufs_lbn_t, int);
 	int expungetype;
 {
-	int i, error, ns, indiroff;
+	int i, s, error, ns, indiroff;
 	ufs_lbn_t lbn, rlbn;
 	ufs2_daddr_t len, blkno, numblks, blksperindir;
 	struct ufs2_dinode *dip;
@@ -1053,8 +1040,10 @@ expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
 	if (lbn < NDADDR) {
 		blkno = db_get(VTOI(snapvp), lbn);
 	} else {
+		s = cow_enter();
 		error = VOP_BALLOC(snapvp, lblktosize(fs, (off_t)lbn),
 		   fs->fs_bsize, KERNCRED, B_METAONLY, &bp);
+		cow_leave(s);
 		if (error)
 			return (error);
 		indiroff = (lbn - NDADDR) % NINDIR(fs);
@@ -1475,7 +1464,7 @@ ffs_snapblkfree(fs, devvp, bno, size, inum)
 	caddr_t saved_data = NULL;
 	ufs_lbn_t lbn;
 	ufs2_daddr_t blkno;
-	int indiroff = 0, snapshot_locked = 0, error = 0, claimedblk = 0;
+	int s, indiroff = 0, snapshot_locked = 0, error = 0, claimedblk = 0;
 
 	lbn = fragstoblks(fs, bno);
 retry:
@@ -1494,8 +1483,10 @@ retry:
 			      VI_MTX(devvp)) != 0)
 				goto retry;
 			snapshot_locked = 1;
+			s = cow_enter();
 			error = VOP_BALLOC(vp, lblktosize(fs, (off_t)lbn),
 			    fs->fs_bsize, KERNCRED, B_METAONLY, &ibp);
+			cow_leave(s);
 			if (error)
 				break;
 			indiroff = (lbn - NDADDR) % NINDIR(fs);
@@ -1567,9 +1558,9 @@ retry:
 		if (size == fs->fs_bsize) {
 #ifdef DEBUG
 			if (snapdebug)
-				printf("%s %d lbn %jd from inum %d\n",
+				printf("%s %d lbn %" PRId64 " from inum %d\n",
 				    "Grabonremove: snapino", ip->i_number,
-				    (intmax_t)lbn, inum);
+				    lbn, inum);
 #endif
 			if (lbn < NDADDR) {
 				db_assign(ip, lbn, bno);
@@ -1586,9 +1577,9 @@ retry:
 			brelse(ibp);
 #ifdef DEBUG
 		if (snapdebug)
-			printf("%s%d lbn %jd %s %d size %ld\n",
+			printf("%s%d lbn %" PRId64 " %s %d size %ld\n",
 			    "Copyonremove: snapino ", ip->i_number,
-			    (intmax_t)lbn, "for inum", inum, size);
+			    lbn, "for inum", inum, size);
 #endif
 		/*
 		 * If we have already read the old block contents, then
@@ -1820,7 +1811,7 @@ ffs_copyonwrite(v, bp)
 	struct ufsmount *ump = VFSTOUFS(devvp->v_specmountpoint);
 	caddr_t saved_data = NULL;
 	ufs2_daddr_t lbn, blkno, *snapblklist;
-	int lower, upper, mid, ns, indiroff, snapshot_locked = 0, error = 0;
+	int lower, upper, mid, s, ns, indiroff, snapshot_locked = 0, error = 0;
 
 	/*
 	 * Check for valid snapshots.
@@ -1885,8 +1876,10 @@ retry:
 				goto retry;
 			}
 			snapshot_locked = 1;
+			s = cow_enter();
 			error = VOP_BALLOC(vp, lblktosize(fs, (off_t)lbn),
 			   fs->fs_bsize, KERNCRED, B_METAONLY, &ibp);
+			cow_leave(s);
 			if (error)
 				break;
 			indiroff = (lbn - NDADDR) % NINDIR(fs);
@@ -1899,6 +1892,10 @@ retry:
 #endif
 		if (blkno != 0)
 			continue;
+#ifdef DIAGNOSTIC
+		if (curlwp->l_flag & L_COWINPROGRESS)
+			printf("ffs_copyonwrite: recursive call\n");
+#endif
 		/*
 		 * Allocate the block into which to do the copy. Since
 		 * multiple processes may all try to copy the same block,
@@ -1919,13 +1916,13 @@ retry:
 		snapshot_locked = 1;
 #ifdef DEBUG
 		if (snapdebug) {
-			printf("Copyonwrite: snapino %d lbn %jd for ",
-			    ip->i_number, (intmax_t)lbn);
+			printf("Copyonwrite: snapino %d lbn %" PRId64 " for ",
+			    ip->i_number, lbn);
 			if (bp->b_vp == devvp)
 				printf("fs metadata");
 			else
 				printf("inum %d", VTOI(bp->b_vp)->i_number);
-			printf(" lblkno %jd\n", (intmax_t)bp->b_lblkno);
+			printf(" lblkno %" PRId64 "\n", bp->b_lblkno);
 		}
 #endif
 		/*
@@ -2008,7 +2005,7 @@ readfsblk(vp, data, lbn)
 }
 
 /*
- * Read the specified block. This is the needed part of ffs_read.
+ * Read the specified block. Bypass UBC to prevent deadlocks.
  */
 static int
 readvnblk(vp, data, lbn)
@@ -2016,34 +2013,35 @@ readvnblk(vp, data, lbn)
 	caddr_t data;
 	ufs2_daddr_t lbn;
 {
-	int error = 0;
-	vsize_t len, todo;
-	off_t off;
-	void *win;
+	int error;
+	daddr_t bn;
+	off_t offset;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 
-	off = lblktosize(fs, (off_t)lbn);
-	todo = fs->fs_bsize;
+	error = VOP_BMAP(vp, lbn, NULL, &bn, NULL);
+	if (error)
+		return error;
 
-	while (todo > 0) {
-		len = todo;
-		win = ubc_alloc(&vp->v_uobj, off, &len, UBC_READ);
-		error = kcopy(win, data, len);
-		ubc_release(win, 0);
+	if (bn != (daddr_t)-1) {
+		offset = dbtob(bn);
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, trunc_page(offset),
+		    round_page(offset+fs->fs_bsize),
+		    PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 		if (error)
-			break;
-		data += len;
-		off += len;
-		todo -= len;
+			return error;
+
+		return readfsblk(vp, data, fragstoblks(fs, dbtofsb(fs, bn)));
 	}
 
-	return error;
+	bzero(data, fs->fs_bsize);
+
+	return 0;
 }
 
 /*
- * Write the specified block. This is the needed part of ffs_write.
- * We must never call VOP_UPDATE() since it will deadlock.
+ * Write the specified block. Bypass UBC to prevent deadlocks.
  */
 static int
 writevnblk(vp, data, lbn)
@@ -2051,41 +2049,53 @@ writevnblk(vp, data, lbn)
 	caddr_t data;
 	ufs2_daddr_t lbn;
 {
-	int error, sync;
-	vsize_t len, todo;
-	off_t off;
-	voff_t offlo, offhi;
-	void *win;
+	int s, error;
+	off_t offset;
+	struct buf *bp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 
-	sync = (dopersistence && ip->i_ffs_effnlink > 0);
-	off = lblktosize(fs, (off_t)lbn);
-	offlo = trunc_page(off);
-	offhi = round_page(off+fs->fs_bsize);
-	todo = fs->fs_bsize;
-
-	error = ufs_balloc_range(vp, off, todo, KERNCRED, sync ? B_SYNC : 0);
+	offset = lblktosize(fs, (off_t)lbn);
+	s = cow_enter();
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, trunc_page(offset),
+	    round_page(offset+fs->fs_bsize), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
+	if (error == 0)
+		error = VOP_BALLOC(vp, lblktosize(fs, (off_t)lbn),
+		    fs->fs_bsize, KERNCRED, B_SYNC, &bp);
+	cow_leave(s);
 	if (error)
 		return error;
 
-	while (todo > 0) {
-		len = todo;
-		win = ubc_alloc(&vp->v_uobj, off, &len, UBC_WRITE);
-		error = kcopy(data, win, len);
-		ubc_release(win, 0);
-		if (error)
-			break;
-		data += len;
-		off += len;
-		todo -= len;
-	}
+	bcopy(data, bp->b_data, fs->fs_bsize);
+	bp->b_flags |= B_NOCACHE;
 
-	if (error == 0 && sync) {
-		simple_lock(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, offlo, offhi, PGO_CLEANIT|PGO_SYNCIO);
+	return bwrite(bp);
+}
+
+/*
+ * Set/reset lwp's L_COWINPROGRESS flag.
+ * May be called recursive.
+ */
+static inline int
+cow_enter(void)
+{
+	struct lwp *l = curlwp;
+
+	if (l->l_flag & L_COWINPROGRESS) {
+		return 0;
+	} else {
+		l->l_flag |= L_COWINPROGRESS;
+		return L_COWINPROGRESS;
 	}
-	return error;
+}
+
+static inline void
+cow_leave(int flag)
+{
+	struct lwp *l = curlwp;
+
+	l->l_flag &= ~flag;
 }
 
 /*
