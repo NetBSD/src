@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.3 2000/09/18 18:01:39 bjh21 Exp $ */
+/* $NetBSD: start.c,v 1.4 2000/09/21 23:22:51 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.3 2000/09/18 18:01:39 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4 2000/09/21 23:22:51 bjh21 Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -159,6 +159,14 @@ start(initbootconfig)
 	
 	if (boot_sanity != BOOT_SANITY)
 		panic("Bootloader mislaid the data segment");
+#endif
+
+#ifndef DDB
+	/* Throw away the symbol table to gain space. */
+	if (bootconfig.freebase == bootconfig.esym) {
+		bootconfig.freebase = bootconfig.ssym;
+		bootconfig.ssym = bootconfig.esym = 0;
+	}
 #endif
 
 	/*
