@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.38 2000/01/25 16:24:32 sommerfeld Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.39 2000/01/31 14:26:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.38 2000/01/25 16:24:32 sommerfeld Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.39 2000/01/31 14:26:40 itojun Exp $");
 #endif
 #endif
 
@@ -368,6 +368,11 @@ __dead	void usage(void);
 int	wait_for_reply(int, struct sockaddr_in *, struct timeval *);
 void	frag_err(void);
 int	find_local_ip(struct sockaddr_in *, struct sockaddr_in *);
+#ifdef IPSEC
+#ifdef IPSEC_POLICY_IPSEC
+int	setpolicy(int so, char *policy);
+#endif
+#endif
 
 int
 main(int argc, char **argv)
@@ -629,20 +634,14 @@ main(int argc, char **argv)
 		    sizeof(on));
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
-    {
-	int len;
-	char buf[16];
-
 	/*
 	 * do not raise error even if setsockopt fails, kernel may have ipsec
 	 * turned off.
 	 */
-	if ((len = ipsec_set_policy(buf, sizeof(buf), "bypass")) < 0) {
-		Fprintf(stderr, "%s: %s\n", prog, ipsec_strerror());
+	if (setpolicy(s, "in bypass") < 0)
 		exit(1);
-	}
-	(void)setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY, buf, len);
-    }
+	if (setpolicy(s, "out bypass") < 0)
+		exit(1);
 #else
     {
 	int level = IPSEC_LEVEL_AVAIL;
@@ -679,20 +678,14 @@ main(int argc, char **argv)
 
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
-    {
-	int len;
-	char buf[16];
-
 	/*
 	 * do not raise error even if setsockopt fails, kernel may have ipsec
 	 * turned off.
 	 */
-	if ((len = ipsec_set_policy(buf, sizeof(buf), "bypass")) < 0) {
-		Fprintf(stderr, "%s: %s\n", prog, ipsec_strerror());
+	if (setpolicy(sndsock, "in bypass") < 0)
 		exit(1);
-	}
-	(void)setsockopt(sndsock, IPPROTO_IP, IP_IPSEC_POLICY, buf, len);
-    }
+	if (setpolicy(sndsock, "out bypass") < 0)
+		exit(1);
 #else
     {
 	int level = IPSEC_LEVEL_BYPASS;
@@ -1638,3 +1631,28 @@ find_local_ip(struct sockaddr_in *from, struct sockaddr_in *to)
 	setsin(from, help.sin_addr.s_addr);
 	return (1);
 }
+
+#ifdef IPSEC
+#ifdef IPSEC_POLICY_IPSEC
+int
+setpolicy(so, policy)
+	int so;
+	char *policy;
+{
+	char *buf;
+
+	buf = ipsec_set_policy(policy, strlen(policy));
+	if (buf == NULL) {
+		Fprintf(stderr, "%s: %s\n", prog, ipsec_strerror());
+		return -1;
+	}
+	(void)setsockopt(so, IPPROTO_IP, IP_IPSEC_POLICY,
+		buf, ipsec_get_policylen(buf));
+
+	free(buf);
+
+	return 0;
+}
+#endif
+#endif
+
