@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.22 2001/09/11 22:52:53 wiz Exp $
+.\" $NetBSD: pcmcia.4,v 1.23 2001/09/22 15:58:14 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,19 +64,16 @@ a.k.a.
 .Tn "PC Card" ,
 .Tn CardBus
 devices.
-.Sh SUPPORTED DEVICES
+.Sh HARDWARE
 .Nx
 includes the following machine-independent
 .Tn PCMCIA
 drivers, sorted by function and driver name:
-.Pp
 .Ss Serial interfaces and modems
 .Bl -tag -width speaker -offset indent
 .It com
 8250/16450/16550-compatible PCMCIA serial cards and modems.
 .El
-.\"
-.Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent
 .It an
@@ -102,8 +99,6 @@ Lucent WaveLan/IEEE and PRISM-II based 802.11 controller.
 .It xi
 Xircom CreditCard Ethernet
 .El
-.\"
-.Pp
 .Ss SCSI controllers
 .Bl -tag -width speaker -offset indent
 .It aic
@@ -120,10 +115,7 @@ controllers.
 .It wdc
 Digital Hinote Ultra Mobile Media Adapter
 .El
-.\"
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr options 4 ,
 .Xr aic 4 ,
 .Xr an 4 ,
 .Xr awi 4 ,
@@ -132,10 +124,12 @@ Digital Hinote Ultra Mobile Media Adapter
 .Xr com 4 ,
 .Xr ep 4 ,
 .Xr esp 4 ,
+.Xr intro 4 ,
 .Xr isa 4 ,
 .Xr mbe 4 ,
 .Xr mhzc 4 ,
 .Xr ne 4 ,
+.Xr options 4 ,
 .Xr pcic 4 ,
 .Xr pcmcom 4 ,
 .Xr ray 4 ,
