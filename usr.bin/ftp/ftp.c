@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.88 1999/11/26 21:41:56 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.89 1999/12/11 02:02:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.88 1999/11/26 21:41:56 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.89 1999/12/11 02:02:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -866,20 +866,50 @@ sendrequest(cmd, local, remote, printnames)
 
 	case TYPE_I:
 	case TYPE_L:
-		while (1) {
-			struct timeval then, now, td;
-			off_t bufrem;
+		if (rate_put) {		/* rate limited */
+			while (1) {
+				struct timeval then, now, td;
+				off_t bufrem;
 
-			if (rate_put)
 				(void)gettimeofday(&then, NULL);
-			errno = c = d = 0;
-			bufrem = rate_put ? rate_put : bufsize;
-			while (bufrem > 0) {
-				if ((c = read(fileno(fin), buf,
-				    MIN(bufsize, bufrem))) <= 0)
+				errno = c = d = 0;
+				bufrem = rate_put;
+				while (bufrem > 0) {
+					if ((c = read(fileno(fin), buf,
+					    MIN(bufsize, bufrem))) <= 0)
+						goto senddone;
+					bytes += c;
+					bufrem -= c;
+					for (bufp = buf; c > 0;
+					    c -= d, bufp += d)
+						if ((d = write(fileno(dout),
+						    bufp, c)) <= 0)
+							break;
+					if (d < 0)
+						goto senddone;
+					if (hash &&
+					    (!progress || filesize < 0) ) {
+						while (bytes >= hashbytes) {
+							(void)putc('#', ttyout);
+							hashbytes += mark;
+						}
+						(void)fflush(ttyout);
+					}
+				}
+				while (1) {
+					(void)gettimeofday(&now, NULL);
+					timersub(&now, &then, &td);
+					if (td.tv_sec > 0)
+						break;
+					usleep(1000000 - td.tv_usec);
+				}
+			}
+		} else {		/* simpler/faster no rate limit */
+			while (1) {
+				errno = c = d = 0;
+				if ((c = read(fileno(fin), buf, bufsize)) <= 0)
 					goto senddone;
 				bytes += c;
-				bufrem -= c;
 				for (bufp = buf; c > 0; c -= d, bufp += d)
 					if ((d = write(fileno(dout), bufp, c))
 					    <= 0)
@@ -892,15 +922,6 @@ sendrequest(cmd, local, remote, printnames)
 						hashbytes += mark;
 					}
 					(void)fflush(ttyout);
-				}
-			}
-			if (rate_put) {
-				while (1) {
-					(void)gettimeofday(&now, NULL);
-					timersub(&now, &then, &td);
-					if (td.tv_sec > 0)
-						break;
-					usleep(1000000 - td.tv_usec);
 				}
 			}
 		}
@@ -1182,20 +1203,46 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 			warn("local: %s", local);
 			goto cleanuprecv;
 		}
-		while (1) {
-			struct timeval then, now, td;
-			off_t bufrem;
+		if (rate_get) {		/* rate limiting */
+			while (1) {
+				struct timeval then, now, td;
+				off_t bufrem;
 
-			if (rate_get)
 				(void)gettimeofday(&then, NULL);
-			errno = c = d = 0;
-			bufrem = rate_get ? rate_get : bufsize;
-			while (bufrem > 0) {
-				if ((c = read(fileno(din), buf,
-				    MIN(bufsize, bufrem))) <= 0)
+				errno = c = d = 0;
+				for (bufrem = rate_get; bufrem > 0; ) {
+					if ((c = read(fileno(din), buf,
+					    MIN(bufsize, bufrem))) <= 0)
+						goto recvdone;
+					bytes += c;
+					bufrem -=c;
+					if ((d = write(fileno(fout), buf, c))
+					    != c)
+						goto recvdone;
+					if (hash &&
+					    (!progress || filesize < 0)) {
+						while (bytes >= hashbytes) {
+							(void)putc('#', ttyout);
+							hashbytes += mark;
+						}
+						(void)fflush(ttyout);
+					}
+				}
+					/* sleep until time is up */
+				while (1) {
+					(void)gettimeofday(&now, NULL);
+					timersub(&now, &then, &td);
+					if (td.tv_sec > 0)
+						break;
+					usleep(1000000 - td.tv_usec);
+				}
+			}
+		} else {		/* faster code (no limiting) */
+			while (1) {
+				errno = c = d = 0;
+				if ((c = read(fileno(din), buf, bufsize)) <= 0)
 					goto recvdone;
 				bytes += c;
-				bufrem -=c;
 				if ((d = write(fileno(fout), buf, c)) != c)
 					goto recvdone;
 				if (hash && (!progress || filesize < 0)) {
@@ -1204,15 +1251,6 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 						hashbytes += mark;
 					}
 					(void)fflush(ttyout);
-				}
-			}
-			if (rate_get) {
-				while (1) {
-					(void)gettimeofday(&now, NULL);
-					timersub(&now, &then, &td);
-					if (td.tv_sec > 0)
-						break;
-					usleep(1000000 - td.tv_usec);
 				}
 			}
 		}
