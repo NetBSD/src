@@ -1,5 +1,5 @@
 #
-#	$Id: Makefile,v 1.2 1993/07/09 04:24:28 mycroft Exp $
+#	$Id: Makefile,v 1.3 1993/07/09 04:27:33 mycroft Exp $
 #
 
 FILES=	README syscall vfs misc
@@ -16,6 +16,9 @@ install:
         else \
                 true ; \
         fi
+# XXX:
+# Must do these separately if we want to preserve mod times on directories
+# because -prune doesn't work correctly with -depth.
 	find ${FILES} -name CVS -prune -o -type f -print | cpio -pdum ${DESTDIR}${BINDIR}/lkm
 	find ${FILES} -name CVS -prune -o -type d -print | cpio -pdum ${DESTDIR}${BINDIR}/lkm
 
