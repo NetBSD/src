@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)restore.8	8.2 (Berkeley) 12/11/93
-.\"	$Id: restore.8,v 1.6 1994/06/08 19:33:39 mycroft Exp $
+.\"     from: @(#)restore.8	8.3 (Berkeley) 6/1/94
+.\"	$Id: restore.8,v 1.7 1994/12/28 02:21:47 mycroft Exp $
 .\"
-.Dd December 11, 1993
+.Dd June 1, 1994
 .Dt RESTORE 8
 .Os BSD 4
 .Sh NAME
@@ -159,6 +159,7 @@ Note that the
 key replaces the function of the old
 .Xr dumpdir 8
 program.
+.ne 1i
 .It Cm i
 This mode allows interactive restoration of files from a dump.
 After reading in the directory information from the dump,
@@ -273,6 +274,7 @@ extracts the actual directory,
 rather than the files that it references.
 This prevents hierarchical restoration of complete subtrees
 from the dump.
+.ne 1i
 .It Cm m
 .Nm Restore
 will extract by inode numbers rather than by file name.
