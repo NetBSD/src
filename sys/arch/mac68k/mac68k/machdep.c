@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.298 2004/08/02 03:06:17 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.299 2004/08/02 03:44:39 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.298 2004/08/02 03:06:17 scottr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299 2004/08/02 03:44:39 scottr Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -409,8 +409,8 @@ consinit(void)
 #define CURRENTBOOTERVER	111
 
 /*
- * cpu_startup: allocate memory for variable-sized tables,
- * initialize CPU, and do autoconfiguration.
+ * cpu_startup: allocate memory for variable-sized tables, make
+ * (most of) kernel text read-only, and other miscellaneous bits
  */
 void
 cpu_startup(void)
@@ -421,9 +421,6 @@ cpu_startup(void)
 	vaddr_t minaddr, maxaddr;
 	int delay;
 	char pbuf[9];
-
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize the kernel crash dump header.
