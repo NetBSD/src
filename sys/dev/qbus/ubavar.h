@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.27 2000/04/30 11:46:03 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.28 2000/06/04 02:14:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -139,12 +139,12 @@ struct uba_attach_args {
 #define ubdevreg(addr) ((addr) & 017777)
 
 #ifdef _KERNEL
-void	uba_intr_establish(void *, int, void (*)(void *), void *);
-void	uba_reset_establish(void (*)(struct device *), struct device *);
-void	uba_attach(struct uba_softc *, unsigned long);
-void	uba_enqueue(struct uba_unit *);
-void	uba_done(struct uba_softc *);
-void	ubareset(struct uba_softc *);
+void uba_intr_establish(void *, int, void (*)(void *), void *, struct evcnt *);
+void uba_reset_establish(void (*)(struct device *), struct device *);
+void uba_attach(struct uba_softc *, unsigned long);
+void uba_enqueue(struct uba_unit *);
+void uba_done(struct uba_softc *);
+void ubareset(struct uba_softc *);
 #endif /* _KERNEL */
 
 #endif /* _QBUS_UBAVAR_H */
