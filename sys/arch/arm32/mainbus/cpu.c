@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 1997/10/14 20:01:54 mark Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 1997/10/17 06:59:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -49,6 +49,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <machine/bootconfig.h>
 #include <machine/io.h>
