@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.2 2001/07/06 18:11:29 abs Exp $
+.\"     $NetBSD: cardbus.9,v 1.3 2001/09/04 02:51:15 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -110,7 +110,7 @@
 "cardbus_function_tag_t cf" "void *ih"
 .Ft int
 .Fn CARDBUS_VENDOR "cardbusreg_t id"
-.Ft int 
+.Ft int
 .Fn CARDBUS_PRODUCT "cardbusreg_t id"
 .Ft int
 .Fn Cardbus_function_enable "cardbus_devfunc_t ct"
@@ -337,7 +337,7 @@ New vendor and product identifiers should be added to this
 file.  The database can be regenerated using the Makefile
 .Pa sys/dev/cardbus/Makefile.cardbusdevs .
 .Sh SEE ALSO
-.Xr cardbus 4 , 
+.Xr cardbus 4 ,
 .Xr pcmcia 4 ,
 .Xr autoconf 9 ,
 .Xr bus_dma 9 ,

@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.1 2001/07/01 04:11:14 gmcgarry Exp $
+.\"     $NetBSD: pci.9,v 1.2 2001/09/04 02:51:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -57,7 +57,7 @@
 .Nm pci_devinfo ,
 .Nm PCI_VENDOR ,
 .Nm PCI_PRODUCT ,
-.Nm PCI_REVISION 
+.Nm PCI_REVISION
 .Nd Peripheral Component Interconnect
 .Sh SYNOPSIS
 .Fd #include <machine/bus.h>
@@ -156,7 +156,7 @@ Configuration tag describing the location and function of the PCI
 device.  It contains the tuple
 .Ao
 bus, device, function
-.Ac . 
+.Ac .
 .It Fa pci_intr_handle_t
 The opaque handle describing an established interrupt handler.
 .It Fa struct pci_attach_args

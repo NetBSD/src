@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.7 2000/11/07 06:43:34 lukem Exp $
+.\"	$NetBSD: rnd.9,v 1.8 2001/09/04 02:51:16 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,10 +62,10 @@ functions make a device available for entropy collection for
 .Pp
 Ideally the first argument
 .Fa rnd_source
-of these functions gets included in the devices' entity struct, 
-but any means to permanently (static) attach one such argument 
+of these functions gets included in the devices' entity struct,
+but any means to permanently (static) attach one such argument
 to one incarnation of the device is ok.  Do not share
-.Fa rnd_source 
+.Fa rnd_source
 structures between two devices.
 .Pp
 .Bl -tag -width 8n
@@ -75,23 +75,23 @@ It must be called before the source struct pointed to by
 .Fa rnd_source
 is used in any of the following functions.
 .Pp
-.Fa devname 
+.Fa devname
 is the name of the device.  It is used to print a message (if the kernel is
 compiled with ``options RND_VERBOSE'') and also for status information printed
 with
 .Xr rndctl 8 .
 .Pp
 .Fa source_type
-is 
-.Dv RND_TYPE_NET 
-for network devices, 
-.Dv RND_TYPE_DISK 
+is
+.Dv RND_TYPE_NET
+for network devices,
+.Dv RND_TYPE_DISK
 for physical disks,
-.Dv RND_TYPE_TAPE 
-for a tape drive, and 
-.Dv RND_TYPE_TTY 
+.Dv RND_TYPE_TAPE
+for a tape drive, and
+.Dv RND_TYPE_TTY
 for a tty.
-.Dv RND_TYPE_UNKNOWN 
+.Dv RND_TYPE_UNKNOWN
 is not to be used as a type.  It is used internally to the rnd system.
 .Pp
 .Fa flags
@@ -132,14 +132,14 @@ source, don't.
 If it is desired to mix in the
 .Va datum
 and to add in a timestamp, but not to actually estimate entropy from a source
-of randomness, passing 
-.Dv NULL 
+of randomness, passing
+.Dv NULL
 for
 .Va rnd_source
 is permitted, and the device does not need to be attached.
 .It Fn rnd_add_data "rndsource_element_t *rnd_source" "void *data" "u_int32_t len" "u_int32_t entropy"
-adds (hopefully) random 
-.Fa data 
+adds (hopefully) random
+.Fa data
 to the entropy pool.
 .Fa len
 is the number of bytes in
@@ -147,7 +147,7 @@ is the number of bytes in
 and
 .Fa entropy
 is an "entropy quality" measurement.
-If every bit of 
+If every bit of
 .Fa data
 is known to be random,
 .Fa entropy
@@ -160,8 +160,8 @@ inter-event timings.
 If it is desired to mix in the
 .Va data
 and to add in a timestamp, but not to actually estimate entropy from a source
-of randomness, passing 
-.Dv NULL 
+of randomness, passing
+.Dv NULL
 for
 .Va rnd_source
 is permitted, and the device does not need to be attached.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.4 2001/07/18 20:35:36 bouyer Exp $
+.\"	$NetBSD: scsipi.9,v 1.5 2001/09/04 02:51:16 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -532,7 +532,7 @@ callback.
 .It Fn scsipi_periph_timed_thaw "void *arg"
 Same as the channel counterparts, but only for one specific peripheral.
 .It Fn scsipi_target_detach "struct scsipi_channel *chan" "int target" "int lun" "int flags"
-detach the periph associated with this I_T_L nexus. Both 
+detach the periph associated with this I_T_L nexus. Both
 .Fa target
 and
 .Fa lun
