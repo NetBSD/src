@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.30 2000/11/01 22:18:22 simonb Exp $ */
+/* $NetBSD: user.c,v 1.31 2000/11/01 22:29:10 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.30 2000/11/01 22:18:22 simonb Exp $");
+__RCSID("$NetBSD: user.c,v 1.31 2000/11/01 22:29:10 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -166,6 +166,7 @@ enum {
 };
 
 /* Full paths of programs used here */
+#define CHMOD		"/bin/chmod"
 #define CHOWN		"/usr/sbin/chown"
 #define MKDIR		"/bin/mkdir"
 #define MV		"/bin/mv"
@@ -392,6 +393,7 @@ copydotfiles(char *skeldir, int uid, int gid, char *dir)
 				skeldir, PAX, (verbose) ? "-v" : "", dir);
 	}
 	(void) asystem("%s -R -h %d:%d %s", CHOWN, uid, gid, dir);
+	(void) asystem("%s -R u+w %s", CHMOD, dir);
 	return n;
 }
 
