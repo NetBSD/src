@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.19 2000/01/19 23:28:28 hubertf Exp $
+.\" $NetBSD: pkg_add.1,v 1.19.4.1 2001/03/20 17:57:05 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,15 +17,15 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd January 12, 1999
+.Dd March 12, 2001
 .Dt pkg_add 1
 .Os
 .Sh NAME
 .Nm pkg_add
-.Nd a utility for installing software package distributions
+.Nd a utility for installing and upgrading software package distributions
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl vInfRMS
+.Op Fl fIMnRSuVv
 .Bk -words
 .Op Fl t Ar template
 .Ek
@@ -36,11 +36,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-command is used to extract packages that have been previously created
-with the
+command is used to extract and upgrade packages that have been
+previously created with the
 .Xr pkg_create 1
 command.
-
+Packages are prepared collections of pre-built binaries, documentation,
+configurations, installation instructions and/or other files.
+.Nm
+can recursively install other packages that the current package
+depends on or requires from both local disk and via FTP.
 .Sh WARNING
 .Bf -emphasis
 Since the
@@ -53,7 +57,7 @@ You are advised to verify the competence and identity of those who
 provide installable package files.  For extra protection, use the
 .Fl M
 flag to extract the package file, and inspect its contents and scripts
-to insure it poses no danger to your system's integrity.  Pay particular
+to ensure it poses no danger to your system's integrity.  Pay particular
 attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
 and inspect the +CONTENTS file for
 .Cm @cwd ,
@@ -86,23 +90,37 @@ will search them in each directory named by the
 environment variable.
 Any dependencies required by the installed package will be searched
 in the same location that the original package was installed from.
-.It Fl v
-Turn on verbose output.
-.It Fl I
-If an installation script exists for a given package, do not execute it.
-.It Fl n
-Don't actually install a package, just report the steps that
-would be taken if it was.
-.It Fl R
-Do not record the installation of a package.  This means
-that you cannot deinstall it later, so only use this option if
-you know what you are doing!
 .It Fl f
 Force installation to proceed even if prerequisite packages are not
 installed or the requirements script fails.  Although
 .Nm
 will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
+.It Fl I
+If an installation script exists for a given package, do not execute it.
+.It Fl M
+Run in
+.Cm MASTER
+mode.  This is a very specialized mode for running
+.Nm
+and is meant to be run in conjunction with
+.Cm SLAVE
+mode.  When run in this mode,
+.Nm
+does no work beyond extracting the package into a temporary staging
+area (see the
+.Fl t
+option), reading in the packing list, and then dumping it (prefaced by
+the current staging area) to stdout where it may be filtered by a
+program such as
+.Xr sed 1 .
+When used in conjunction with
+.Cm SLAVE
+mode, it allows you to make radical changes to the package structure
+before acting on its contents.
+.It Fl n
+Don't actually install a package, just report the steps that
+would be taken if it was.
 .It Fl p Ar prefix
 Set
 .Ar prefix
@@ -125,6 +143,23 @@ modes (see the
 and
 .Fl S
 options).
+.It Fl R
+Do not record the installation of a package.  This means
+that you cannot deinstall it later, so only use this option if
+you know what you are doing!
+.It Fl S
+Run in
+.Cm SLAVE
+mode.  This is a very specialized mode for running
+.Nm
+and is meant to be run in conjunction with
+.Cm MASTER
+mode.  When run in this mode,
+.Nm
+expects the release contents to be already extracted and waiting
+in the staging area, the location of which is read as a string
+from stdin.  The complete packing list is also read from stdin,
+and the contents then acted on as normal.
 .It Fl t Ar template
 Use
 .Ar template
@@ -146,39 +181,10 @@ You can get a performance boost by setting the staging area
 to reside on the same disk partition as target directories for package
 file installation; often this is
 .Pa /usr .
-.It Fl M
-Run in
-.Cm MASTER
-mode.  This is a very specialized mode for running
-.Nm
-and is meant to be run in conjunction with
-.Cm SLAVE
-mode.  When run in this mode,
-.Nm
-does no work beyond extracting the package into a temporary staging
-area (see the
-.Fl t
-option), reading in the packing list, and then dumping it (prefaced by
-the current staging area) to stdout where it may be filtered by a
-program such as
-.Xr sed 1 .
-When used in conjunction with
-.Cm SLAVE
-mode, it allows you to make radical changes to the package structure
-before acting on its contents.
-.It Fl S
-Run in
-.Cm SLAVE
-mode.  This is a very specialized mode for running
-.Nm
-and is meant to be run in conjunction with
-.Cm MASTER
-mode.  When run in this mode,
-.Nm
-expects the release contents to be already extracted and waiting
-in the staging area, the location of which is read as a string
-from stdin.  The complete packing list is also read from stdin,
-and the contents then acted on as normal.
+.It Fl V
+Print version number and exit.
+.It Fl v
+Turn on verbose output.
 .El
 .Pp
 One or more
@@ -218,7 +224,19 @@ of the package:
 A check is made to determine if the package or another version of it
 is already recorded as installed.
 If it is,
-installation is terminated.
+installation is terminated if the
+.Fl u
+option is not given.
+.Pp
+If the
+.Fl u
+option is given, it's assumed the package should be upgraded instead.
+This is prepared by moving an existing
+.Pa +REQUIRED_BY
+file aside (if it exists), and by running
+.Xr pkg_delete 1
+on the installed package. Installation then procedes as if the package
+was not installed.
 .It
 A check is made to determine if the package conflicts (from
 .Cm @pkgcfl
@@ -339,7 +357,12 @@ file
 .Pa /var/db/pkg/
 path shown above).
 .It
-Finally, the staging area is deleted and the program terminates.
+The staging area is deleted and the program terminates.
+.It
+Finally, if we were upgrading a package, any
+.Pa +REQUIRED_BY
+file that was moved aside before upgrading was started is now moved
+back into place.
 .El
 .Pp
 The
@@ -391,7 +414,7 @@ Initial work and ongoing development.
 refinements.
 .It "Hubert Feyrer"
 .Nx
-wildcard dependency processing, pkgdb, etc.
+wildcard dependency processing, pkgdb, upgrading, etc.
 .El
 .Sh BUGS
 Hard links between files in a distribution are only preserved if either
@@ -406,5 +429,7 @@ command (not split between
 invocations due to exec argument-space limitations--this depends on the
 value returned by
 .Fn sysconf _SC_ARG_MAX ) .
+.Pp
+Pkg upgrading needs a lot more work to be really universal. 
 .Pp
 Sure to be others.
