@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.56 1998/03/01 02:24:02 fvdl Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.57 1998/07/23 20:52:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -153,9 +153,6 @@ struct swappri {
 
 
 struct vndxfer {
-#if 0
-	struct pool_item	vx_pool;	/* MUST be first */
-#endif
 	struct buf	*vx_bp;			/* Pointer to parent buffer */
 	struct swapdev	*vx_sdp;
 	int		vx_error;
@@ -167,9 +164,6 @@ struct vndxfer {
 
 
 struct vndbuf {
-#if 0
-	struct pool_item	vb_pool;	/* MUST be first */
-#endif
 	struct buf	vb_buf;
 	struct vndxfer	*vb_xfer;
 };
@@ -187,7 +181,7 @@ struct pool *vndbuf_pool;
 #define	getvndxfer(vnx)	do {						\
 	int s = splbio();						\
 	(vnx) = (struct vndxfer *)					\
-		pool_get(vndxfer_pool, PR_MALLOCOK|PR_WAITOK);		\
+		pool_get(vndxfer_pool, PR_WAITOK);			\
 	splx(s);							\
 } while (0)
 
@@ -197,7 +191,7 @@ struct pool *vndbuf_pool;
 #define	getvndbuf(vbp)	do {						\
 	int s = splbio();						\
 	(vbp) = (struct vndbuf *)					\
-		pool_get(vndbuf_pool, PR_MALLOCOK|PR_WAITOK);		\
+		pool_get(vndbuf_pool, PR_WAITOK);			\
 	splx(s);							\
 } while (0)
 
@@ -1193,12 +1187,14 @@ swapinit()
 	sp->b_actf = NULL;
 
 	vndxfer_pool =
-		pool_create(sizeof(struct vndxfer), 0, "swp vnx", M_DEVBUF, 0);
+		pool_create(sizeof(struct vndxfer), 0, 0, 0, "swp vnx", 0,
+			    NULL, NULL, 0);
 	if (vndxfer_pool == NULL)
 		panic("swapinit: pool_create failed");
 
 	vndbuf_pool =
-		pool_create(sizeof(struct vndbuf), 0, "swp vnd", M_DEVBUF, 0);
+		pool_create(sizeof(struct vndbuf), 0, 0, 0, "swp vnd", 0,
+			    NULL, NULL, 0);
 	if (vndbuf_pool == NULL)
 		panic("swapinit: pool_create failed");
 
