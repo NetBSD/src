@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.17 1996/12/08 00:22:14 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.18 1997/04/06 23:32:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,7 +44,7 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
-#if defined(DEC_2100_A50)
+#ifdef DEC_2100_A50
 #include <alpha/pci/pci_2100_a50.h>
 #endif
 
@@ -164,7 +164,7 @@ apecsattach(parent, self, aux)
 		printf("WARNING: 21071-DA NOT PASS2... NO BETS...\n");
 
 	switch (hwrpb->rpb_type) {
-#if defined(DEC_2100_A50)
+#ifdef DEC_2100_A50
 	case ST_DEC_2100_A50:
 		pci_2100_a50_pickintr(acp);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.15 1996/12/08 00:22:16 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.16 1997/04/06 23:32:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,7 +44,7 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
-#if defined(DEC_AXPPCI_33)
+#ifdef DEC_AXPPCI_33
 #include <alpha/pci/pci_axppci_33.h>
 #endif
 
@@ -206,7 +206,7 @@ lcaattach(parent, self, aux)
 	printf("\n");
 
 	switch (hwrpb->rpb_type) {
-#if defined(DEC_AXPPCI_33)
+#ifdef DEC_AXPPCI_33
 	case ST_DEC_AXPPCI_33:
 		pci_axppci_33_pickintr(lcp);
 		break;

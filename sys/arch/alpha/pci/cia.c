@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.16 1996/12/08 00:22:15 cgd Exp $	*/
+/*	$NetBSD: cia.c,v 1.17 1997/04/06 23:32:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,10 +44,10 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
-#if defined(DEC_KN20AA)
+#ifdef DEC_KN20AA
 #include <alpha/pci/pci_kn20aa.h>
 #endif
-#if defined(DEC_EB164)
+#ifdef DEC_EB164
 #include <alpha/pci/pci_eb164.h>
 #endif
 
@@ -145,7 +145,7 @@ ciaattach(parent, self, aux)
 	printf("\n");
 
 	switch (hwrpb->rpb_type) {
-#if defined(DEC_KN20AA)
+#ifdef DEC_KN20AA
 	case ST_DEC_KN20AA:
 		pci_kn20aa_pickintr(ccp);
 #ifdef EVCNT_COUNTERS
@@ -154,7 +154,7 @@ ciaattach(parent, self, aux)
 		break;
 #endif
 
-#if defined(DEC_EB164)
+#ifdef DEC_EB164
 	case ST_EB164:
 		pci_eb164_pickintr(ccp);
 #ifdef EVCNT_COUNTERS
