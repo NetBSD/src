@@ -1,3 +1,5 @@
+/*	$NetBSD: c_test.h,v 1.2 1997/01/12 19:11:41 tls Exp $	*/
+
 /* Various types of operations.  Keeping things grouped nicely
  * (unary,binary) makes switch() statements more efficeint.
  */

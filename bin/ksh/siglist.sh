@@ -1,5 +1,5 @@
 #!/bin/sh
-
+#	$NetBSD: siglist.sh,v 1.2 1997/01/12 19:12:18 tls Exp $
 #
 # Script to generate a sorted, complete list of signals, suitable
 # for inclusion in trap.c as array initializer.

@@ -1,3 +1,5 @@
+/*	$NetBSD: c_ulimit.c,v 1.2 1997/01/12 19:11:42 tls Exp $	*/
+
 /*
 	ulimit -- handle "ulimit" builtin
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: expr.c,v 1.2 1997/01/12 19:11:51 tls Exp $	*/
+
 /*
  * Korn expression evaluation
  */

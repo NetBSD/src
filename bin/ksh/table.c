@@ -1,3 +1,5 @@
+/*	$NetBSD: table.c,v 1.2 1997/01/12 19:12:20 tls Exp $	*/
+
 /*
  * dynamic hashed associative table for commands and variables
  */
