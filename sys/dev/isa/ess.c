@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.38 1999/03/16 14:17:00 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.39 1999/03/17 01:06:17 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -128,10 +128,8 @@ int	ess_audio2_trigger_output __P((void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *));
 int	ess_audio1_trigger_input __P((void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *));
-int	ess_audio1_halt_output __P((void *));
-int	ess_audio2_halt_output __P((void *));
-int	ess_audio1_halt_input __P((void *));
-
+int	ess_audio1_halt __P((void *));
+int	ess_audio2_halt __P((void *));
 int	ess_audio1_intr __P((void *));
 int	ess_audio2_intr __P((void *));
 
@@ -211,8 +209,8 @@ struct audio_hw_if ess_1788_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	ess_audio1_halt_output,
-	ess_audio1_halt_input,
+	ess_audio1_halt,
+	ess_audio1_halt,
 	ess_speaker_ctl,
 	ess_getdev,
 	NULL,
@@ -240,8 +238,8 @@ struct audio_hw_if ess_1888_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	ess_audio2_halt_output,
-	ess_audio1_halt_input,
+	ess_audio2_halt,
+	ess_audio1_halt,
 	ess_speaker_ctl,
 	ess_getdev,
 	NULL,
@@ -984,12 +982,9 @@ ess_1788_close(addr)
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
 
-	ess_audio1_halt_output(sc);
-	ess_audio1_halt_input(sc);
+	ess_audio1_halt(sc);
 
-	sc->sc_audio1.intr = 0;
 	sc->sc_open = 0;
-
 	DPRINTF(("ess_1788_close: closed\n"));
 }
 
@@ -1004,13 +999,10 @@ ess_1888_close(addr)
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
 
-	ess_audio2_halt_output(sc);
-	ess_audio1_halt_input(sc);
+	ess_audio1_halt(sc);
+	ess_audio2_halt(sc);
 
-	sc->sc_audio1.intr = 0;
-	sc->sc_audio2.intr = 0;
 	sc->sc_open = 0;
-
 	DPRINTF(("ess_1888_close: closed\n"));
 }
 
@@ -1219,55 +1211,44 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct ess_softc *sc = addr;
+	u_int8_t reg;
 
 	DPRINTFN(1, ("ess_audio1_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
 	    addr, start, end, blksize, intr, arg));
 
-#ifdef DIAGNOSTIC
-	if (param->channels == 2 && (blksize & 1)) {
-		DPRINTF(("stereo playback odd bytes (%d)\n", blksize));
-		return EIO;
-	}
 	if (sc->sc_audio1.active)
 		panic("ess_audio1_trigger_output: already running");
-#endif
-	sc->sc_audio1.active = 1;
 
+	sc->sc_audio1.active = 1;
 	sc->sc_audio1.intr = intr;
 	sc->sc_audio1.arg = arg;
 
-	if (param->precision * param->factor == 16)
-		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_SIZE);
-	else
-		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_SIZE);
-
+	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
 	if (param->channels == 2) {
-		ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL,
-		    (ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL) |
-		     ESS_AUDIO_CTRL_STEREO) &~ ESS_AUDIO_CTRL_MONO);
-		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_STEREO);
+		reg &= ~ESS_AUDIO_CTRL_MONO;
+		reg |= ESS_AUDIO_CTRL_STEREO;
 	} else {
-		ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL,
-		    (ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL) |
-		     ESS_AUDIO_CTRL_MONO) &~ ESS_AUDIO_CTRL_STEREO);
-		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_STEREO);
+		reg |= ESS_AUDIO_CTRL_MONO;
+		reg &= ~ESS_AUDIO_CTRL_STEREO;
 	}
+	ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL, reg);
 
+	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1);
+	if (param->precision * param->factor == 16)
+		reg |= ESS_AUDIO1_CTRL1_FIFO_SIZE;
+	else
+		reg &= ~ESS_AUDIO1_CTRL1_FIFO_SIZE;
+	if (param->channels == 2)
+		reg |= ESS_AUDIO1_CTRL1_FIFO_STEREO;
+	else
+		reg &= ~ESS_AUDIO1_CTRL1_FIFO_STEREO;
 	if (param->encoding == AUDIO_ENCODING_SLINEAR_BE ||
 	    param->encoding == AUDIO_ENCODING_SLINEAR_LE)
-		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1, 
-		    ESS_AUDIO1_CTRL1_FIFO_SIGNED);
+		reg |= ESS_AUDIO1_CTRL1_FIFO_SIGNED;
 	else
-		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_SIGNED);
-
-	/* REVISIT: Hack to enable Audio1 FIFO connection to CODEC. */
-	ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-	    ESS_AUDIO1_CTRL1_FIFO_CONNECT);
+		reg &= ~ESS_AUDIO1_CTRL1_FIFO_SIGNED;
+	reg |= ESS_AUDIO1_CTRL1_FIFO_CONNECT;
+	ess_write_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1, reg);
 
 	isa_dmastart(sc->sc_ic, sc->sc_audio1.drq, start, 
 		     (char *)end - (char *)start, NULL,
@@ -1279,20 +1260,16 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTHI, blksize >> 8);
 
 	/* Use 4 bytes per output DMA. */
-	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL,
-	    ESS_DEMAND_CTRL_DEMAND_4);
+	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL, ESS_DEMAND_CTRL_DEMAND_4);
 
 	/* Start auto-init DMA */
   	ess_wdsp(sc, ESS_ACMD_ENABLE_SPKR);
-	ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
-			  ESS_AUDIO1_CTRL2_DMA_READ |
-			  ESS_AUDIO1_CTRL2_ADC_ENABLE);
-	ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
-			  ESS_AUDIO1_CTRL2_FIFO_ENABLE |
-			  ESS_AUDIO1_CTRL2_AUTO_INIT);
+	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL2);
+	reg &= ~(ESS_AUDIO1_CTRL2_DMA_READ | ESS_AUDIO1_CTRL2_ADC_ENABLE);
+	reg |= ESS_AUDIO1_CTRL2_FIFO_ENABLE | ESS_AUDIO1_CTRL2_AUTO_INIT;
+	ess_write_x_reg(sc, ESS_XCMD_AUDIO1_CTRL2, reg);
 
 	return (0);
-
 }
 
 int
@@ -1305,44 +1282,33 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct ess_softc *sc = addr;
+	u_int8_t reg;
 
 	DPRINTFN(1, ("ess_audio2_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
 	    addr, start, end, blksize, intr, arg));
 
-#ifdef DIAGNOSTIC
-	if (param->channels == 2 && (blksize & 1)) {
-		DPRINTF(("stereo playback odd bytes (%d)\n", blksize));
-		return EIO;
-	}
 	if (sc->sc_audio2.active)
 		panic("ess_audio2_trigger_output: already running");
-#endif
-	sc->sc_audio2.active = 1;
 
+	sc->sc_audio2.active = 1;
 	sc->sc_audio2.intr = intr;
 	sc->sc_audio2.arg = arg;
 
+	reg = ess_read_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2);
 	if (param->precision * param->factor == 16)
-		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_FIFO_SIZE);
+		reg |= ESS_AUDIO2_CTRL2_FIFO_SIZE;
 	else
-		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_FIFO_SIZE);
-
+		reg &= ~ESS_AUDIO2_CTRL2_FIFO_SIZE;
 	if (param->channels == 2)
-		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_CHANNELS);
+		reg |= ESS_AUDIO2_CTRL2_CHANNELS;
 	else
-		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_CHANNELS);
-
+		reg &= ~ESS_AUDIO2_CTRL2_CHANNELS;
 	if (param->encoding == AUDIO_ENCODING_SLINEAR_BE ||
 	    param->encoding == AUDIO_ENCODING_SLINEAR_LE)
-		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_FIFO_SIGNED);
+		reg |= ESS_AUDIO2_CTRL2_FIFO_SIGNED;
 	else
-		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
-		    ESS_AUDIO2_CTRL2_FIFO_SIGNED);
+		reg &= ~ESS_AUDIO2_CTRL2_FIFO_SIGNED;
+	ess_write_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2, reg);
 
 	isa_dmastart(sc->sc_ic, sc->sc_audio2.drq, start, 
 		     (char *)end - (char *)start, NULL,
@@ -1355,25 +1321,17 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTLO, blksize);
 	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTHI, blksize >> 8);
 
+	reg = ess_read_mix_reg(sc, ESS_MREG_AUDIO2_CTRL1);
 	if (IS16BITDRQ(sc->sc_audio2.drq))
-		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-		    ESS_AUDIO2_CTRL1_XFER_SIZE);
+		reg |= ESS_AUDIO2_CTRL1_XFER_SIZE;
 	else
-		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-		    ESS_AUDIO2_CTRL1_XFER_SIZE);
-
-	/* Use 8 bytes per output DMA. */
-	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-	    ESS_AUDIO2_CTRL1_DEMAND_8);
-
-	/* Start auto-init DMA */
-	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-			  ESS_AUDIO2_CTRL1_DAC_ENABLE |
-			  ESS_AUDIO2_CTRL1_FIFO_ENABLE |
-			  ESS_AUDIO2_CTRL1_AUTO_INIT);
+		reg &= ~ESS_AUDIO2_CTRL1_XFER_SIZE;
+	reg |= ESS_AUDIO2_CTRL1_DEMAND_8;
+	reg |= ESS_AUDIO2_CTRL1_DAC_ENABLE | ESS_AUDIO2_CTRL1_FIFO_ENABLE |
+	       ESS_AUDIO2_CTRL1_AUTO_INIT;
+	ess_write_mix_reg(sc, ESS_MREG_AUDIO2_CTRL1, reg);
 
 	return (0);
-
 }
 
 int
@@ -1386,55 +1344,44 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct ess_softc *sc = addr;
+	u_int8_t reg;
 
 	DPRINTFN(1, ("ess_audio1_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
 	    addr, start, end, blksize, intr, arg));
 
-#ifdef DIAGNOSTIC
-	if (param->channels == 2 && (blksize & 1)) {
-		DPRINTF(("stereo record odd bytes (%d)\n", blksize));
-		return EIO;
-	}
 	if (sc->sc_audio1.active)
 		panic("ess_audio1_trigger_input: already running");
-#endif
-	sc->sc_audio1.active = 1;
 
+	sc->sc_audio1.active = 1;
 	sc->sc_audio1.intr = intr;
 	sc->sc_audio1.arg = arg;
 
-	if (param->precision * param->factor == 16)
-		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_SIZE);
-	else
-		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_SIZE);
-
+	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
 	if (param->channels == 2) {
-		ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL,
-		    (ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL) |
-		     ESS_AUDIO_CTRL_STEREO) &~ ESS_AUDIO_CTRL_MONO);
-		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_STEREO);
+		reg &= ~ESS_AUDIO_CTRL_MONO;
+		reg |= ESS_AUDIO_CTRL_STEREO;
 	} else {
-		ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL,
-		    (ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL) |
-		     ESS_AUDIO_CTRL_MONO) &~ ESS_AUDIO_CTRL_STEREO);
-		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_STEREO);
+		reg |= ESS_AUDIO_CTRL_MONO;
+		reg &= ~ESS_AUDIO_CTRL_STEREO;
 	}
+	ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL, reg);
 
+	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1);
+	if (param->precision * param->factor == 16)
+		reg |= ESS_AUDIO1_CTRL1_FIFO_SIZE;
+	else
+		reg &= ~ESS_AUDIO1_CTRL1_FIFO_SIZE;
+	if (param->channels == 2)
+		reg |= ESS_AUDIO1_CTRL1_FIFO_STEREO;
+	else
+		reg &= ~ESS_AUDIO1_CTRL1_FIFO_STEREO;
 	if (param->encoding == AUDIO_ENCODING_SLINEAR_BE ||
 	    param->encoding == AUDIO_ENCODING_SLINEAR_LE)
-		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1, 
-		    ESS_AUDIO1_CTRL1_FIFO_SIGNED);
+		reg |= ESS_AUDIO1_CTRL1_FIFO_SIGNED;
 	else
-		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-		    ESS_AUDIO1_CTRL1_FIFO_SIGNED);
-
-	/* REVISIT: Hack to enable Audio1 FIFO connection to CODEC. */
-	ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
-	    ESS_AUDIO1_CTRL1_FIFO_CONNECT);
+		reg &= ~ESS_AUDIO1_CTRL1_FIFO_SIGNED;
+	reg |= ESS_AUDIO1_CTRL1_FIFO_CONNECT;
+	ess_write_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1, reg);
 
 	isa_dmastart(sc->sc_ic, sc->sc_audio1.drq, start, 
 		     (char *)end - (char *)start, NULL,
@@ -1446,32 +1393,29 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTHI, blksize >> 8);
 
 	/* Use 4 bytes per input DMA. */
-	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL,
-	    ESS_DEMAND_CTRL_DEMAND_4);
+	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL, ESS_DEMAND_CTRL_DEMAND_4);
 
 	/* Start auto-init DMA */
-	ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
-			  ESS_AUDIO1_CTRL2_DMA_READ |
-			  ESS_AUDIO1_CTRL2_ADC_ENABLE |
-			  ESS_AUDIO1_CTRL2_FIFO_ENABLE |
-			  ESS_AUDIO1_CTRL2_AUTO_INIT);
+  	ess_wdsp(sc, ESS_ACMD_DISABLE_SPKR);
+	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL2);
+	reg |= ESS_AUDIO1_CTRL2_DMA_READ | ESS_AUDIO1_CTRL2_ADC_ENABLE;
+	reg |= ESS_AUDIO1_CTRL2_FIFO_ENABLE | ESS_AUDIO1_CTRL2_AUTO_INIT;
+	ess_write_x_reg(sc, ESS_XCMD_AUDIO1_CTRL2, reg);
 
 	return (0);
-
 }
 
 int
-ess_audio1_halt_output(addr)
+ess_audio1_halt(addr)
 	void *addr;
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTF(("ess_audio1_halt_output: sc=%p\n", sc));
+	DPRINTF(("ess_audio1_halt: sc=%p\n", sc));
 
 	if (sc->sc_audio1.active) {
 		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
 		    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
-  		ess_wdsp(sc, ESS_ACMD_DISABLE_SPKR);
 		isa_dmaabort(sc->sc_ic, sc->sc_audio1.drq);
 		sc->sc_audio1.active = 0;
 	}
@@ -1480,12 +1424,12 @@ ess_audio1_halt_output(addr)
 }
 
 int
-ess_audio2_halt_output(addr)
+ess_audio2_halt(addr)
 	void *addr;
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTF(("ess_audio2_halt_output: sc=%p\n", sc));
+	DPRINTF(("ess_audio2_halt: sc=%p\n", sc));
 
 	if (sc->sc_audio2.active) {
 		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
@@ -1493,24 +1437,6 @@ ess_audio2_halt_output(addr)
 		    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
 		isa_dmaabort(sc->sc_ic, sc->sc_audio2.drq);
 		sc->sc_audio2.active = 0;
-	}
-
-	return (0);
-}
-
-int
-ess_audio1_halt_input(addr)
-	void *addr;
-{
-	struct ess_softc *sc = addr;
-
-	DPRINTF(("ess_audio1_halt_input: sc=%p\n", sc));
-
-	if (sc->sc_audio1.active) {
-		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
-		    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
-		isa_dmaabort(sc->sc_ic, sc->sc_audio1.drq);
-		sc->sc_audio1.active = 0;
 	}
 
 	return (0);
@@ -1530,12 +1456,11 @@ ess_audio1_intr(arg)
 
 	sc->sc_audio1.nintr++;
 
-	if (sc->sc_audio1.intr != 0)
+	if (sc->sc_audio1.active) {
 		(*sc->sc_audio1.intr)(sc->sc_audio1.arg);
-	else
+		return (1);
+	} else
 		return (0);
-
-	return (1);
 }
 
 int
@@ -1552,12 +1477,11 @@ ess_audio2_intr(arg)
 
 	sc->sc_audio2.nintr++;
 
-	if (sc->sc_audio2.intr != 0)
+	if (sc->sc_audio2.active) {
 		(*sc->sc_audio2.intr)(sc->sc_audio2.arg);
-	else
+		return (1);
+	} else
 		return (0);
-
-	return (1);
 }
 
 int
