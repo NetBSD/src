@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.13 2000/09/08 15:32:57 simonb Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.14 2000/09/10 09:39:57 takemura Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -328,9 +328,13 @@ wsdisplay_usl_ioctl1(sc, cmd, data, flag, p)
 		return (0);
 	    case VT_ACTIVATE:
 		idx = *(int *)data - 1;
+		if (idx < 0)
+			return (EINVAL);
 		return (wsdisplay_switch((struct device *)sc, idx, 1));
 	    case VT_WAITACTIVE:
 		idx = *(int *)data - 1;
+		if (idx < 0)
+			return (EINVAL);
 		return (wsscreen_switchwait(sc, idx));
 	    case VT_GETSTATE:
 #define ss ((struct vt_stat *)data)
