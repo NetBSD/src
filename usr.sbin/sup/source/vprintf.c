@@ -1,4 +1,4 @@
-/*	$NetBSD: vprintf.c,v 1.6 1997/06/17 21:38:28 christos Exp $	*/
+/*	$NetBSD: vprintf.c,v 1.7 1997/06/18 15:25:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -103,7 +103,8 @@ vsprintf(s, fmt, args)
 	FILE fakebuf;
 
 	fakebuf._flag = STRFLAG;
-	fakebuf._ptr = s;
+	fakebuf._base = (void *) s;
+	fakebuf._ptr = (void *) s;
 	fakebuf._cnt = 32767;
 	_doprnt(fmt, args, &fakebuf);
 	putc('\0', &fakebuf);
@@ -120,6 +121,7 @@ vsnprintf(s, n, fmt, args)
 	FILE fakebuf;
 
 	fakebuf._flag = STRFLAG;
+	fakebuf._base = (void *) s;
 	fakebuf._ptr = (void *) s;
 	fakebuf._cnt = n-1;
 	fakebuf._file = -1;
