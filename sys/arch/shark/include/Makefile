@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2002/02/28 04:11:41 nathanw Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2002/04/11 06:17:00 thorpej Exp $
 
 KDIR=	/sys/arch/shark/include
 INCSDIR= /usr/include/shark
@@ -13,7 +13,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h ipkdb.h \
 	limits.h lock.h \
-	math.h \
+	math.h mcontext.h \
 	param.h pcb.h pmap.h proc.h profile.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h sysarch.h \
