@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2000/04/03 11:44:21 soda Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2000/04/11 17:57:43 uch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -55,7 +55,6 @@
 #ifndef _LOCORE
 
 #include <mips/cpuregs.h>
-#include <mips/intr.h>
 
 int	_splraise __P((int));
 int	_spllower __P((int));
@@ -64,11 +63,6 @@ int	_splget __P((void));
 void	_splnone __P((void));
 void	_setsoftintr __P((int));
 void	_clrsoftintr __P((int));
-
-#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
-#define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)
-#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
-#define clearsoftnet()	 _clrsoftintr(MIPS_SOFT_INT_MASK_1)
 
 #define splhigh()	_splraise(MIPS_INT_MASK)
 #define spl0()		(void)_spllower(0)
@@ -130,6 +124,21 @@ extern u_long intrcnt[];
 #define	ISDN_INTR	14
 #define	FLOPPY_INTR	15
 #define	STRAY_INTR	16
+
+/*
+ * software simulated interrupt
+ */
+extern unsigned ssir;
+
+#define SIR_NET		0x1
+
+#define setsoftnet()	setsoft(SIR_NET)
+#define setsoft(x) \
+	do { ssir |= (x); _setsoftintr(MIPS_SOFT_INT_MASK_1); } while (0)
+
+#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
+#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
+#define clearsoftnet()	 _clrsoftintr(MIPS_SOFT_INT_MASK_1)
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
