@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.8 2000/04/19 09:42:24 itojun Exp $
+.\"	$NetBSD: gif.4,v 1.9 2000/04/24 13:23:59 itojun Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -198,19 +198,6 @@ enable ECN CE bit on the inner.
 Note that the ECN friendly behavior violates RFC1933.
 This should be used in mutual agreement with the peer.
 .Pp
-.Ss Backward compatibility
-.Nm
-interface will capture packets toward IPv4-in-IPv4 tunnel,
-which has been used by
-.Xr vif 4
-multicast tunnel device
-.Pq used in MBone community .
-For compatibility, IPv4-in-IPv4 traffic will be matched to
-.Nm
-interfaces first, and then sent to
-.Xr vif 4
-if no match is found.
-.Pp
 .Ss Security
 Malicious party may try to circumvent security filters by using
 tunnelled packets.
@@ -228,7 +215,6 @@ is far less secure than bidirectional mode.
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr inet6 4 ,
-.Xr vif 4 ,
 .Xr gifconfig 8
 .Rs
 .%A	R. Gilligan
