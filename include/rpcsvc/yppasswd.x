@@ -45,7 +45,7 @@ program YPPASSWDPROG {
 } = 100009;
 
 
-struct passwd {
+struct x_passwd {
 	string pw_name<>;	/* username */
 	string pw_passwd<>;	/* encrypted password */
 	int pw_uid;		/* user id */
@@ -57,7 +57,7 @@ struct passwd {
 
 struct yppasswd {
 	string oldpass<>;	/* unencrypted old password */
-	passwd newpw;		/* new passwd entry */
+	x_passwd newpw;		/* new passwd entry */
 };
 
 
