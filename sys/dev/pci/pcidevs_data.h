@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.19 1996/10/15 23:41:57 christos Exp 
+ *	NetBSD: pcidevs,v 1.20 1996/10/19 13:01:49 jonathan Exp 
  */
 
 /*
@@ -642,6 +642,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Quantum Designs",
 	    "8580",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
+	    0,
+	    "Realtek Semiconductor",
+	    "Ethernet",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO64,
