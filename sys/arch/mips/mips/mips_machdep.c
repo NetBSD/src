@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.163 2003/06/12 14:35:56 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.164 2003/06/29 09:24:53 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.163 2003/06/12 14:35:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.164 2003/06/29 09:24:53 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -1116,14 +1116,14 @@ setregs(l, pack, stack)
  * Machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 #ifdef __HAVE_BOOTINFO_H
 	struct btinfo_bootpath *bibp;
