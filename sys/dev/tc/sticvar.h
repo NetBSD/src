@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.4 2000/12/17 13:52:04 ad Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.5 2000/12/17 14:46:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ struct stic_xinfo {
 struct stic_xmap {
 	u_int32_t	sxm_stic[PAGE_SIZE];
 	u_int32_t	sxm_poll[0x0c0000 / sizeof(u_int32_t)];
-	u_int32_t	sxm_buf[128 * 1024 / sizeof(u_int32_t)];
+	u_int32_t	sxm_buf[256 * 1024 / sizeof(u_int32_t)];
 };
 
 #endif	/* !_TC_STICVAR_H_ */
