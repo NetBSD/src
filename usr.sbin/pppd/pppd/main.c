@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 2002/08/02 02:52:07 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2003/01/07 09:02:21 tron Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: main.c,v 1.105 2001/03/12 22:58:59 paulus Exp "
 #else
-__RCSID("$NetBSD: main.c,v 1.41 2002/08/02 02:52:07 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 2003/01/07 09:02:21 tron Exp $");
 #endif
 #endif
 
@@ -1102,9 +1102,9 @@ update_link_stats(u)
 
     slprintf(numbuf, sizeof(numbuf), "%d", link_connect_time);
     script_setenv("CONNECT_TIME", numbuf, 0);
-    slprintf(numbuf, sizeof(numbuf), "%d", link_stats.bytes_out);
+    slprintf(numbuf, sizeof(numbuf), "%u", link_stats.bytes_out);
     script_setenv("BYTES_SENT", numbuf, 0);
-    slprintf(numbuf, sizeof(numbuf), "%d", link_stats.bytes_in);
+    slprintf(numbuf, sizeof(numbuf), "%u", link_stats.bytes_in);
     script_setenv("BYTES_RCVD", numbuf, 0);
 }
 
