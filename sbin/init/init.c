@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.39 2000/12/30 15:01:42 wiz Exp $	*/
+/*	$NetBSD: init.c,v 1.40 2000/12/30 15:03:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.39 2000/12/30 15:01:42 wiz Exp $");
+__RCSID("$NetBSD: init.c,v 1.40 2000/12/30 15:03:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ state_t requested_transition = runcom;
 state_t requested_transition = single_user;
 #endif /* LETS_GET_SMALL */
 
-void setctty(char *);
+void setctty(const char *);
 
 typedef struct init_session {
 	int	se_index;		/* index of entry in ttys file */
@@ -547,7 +547,7 @@ clear_session_logs(session_t *sp)
  * Only called by children of init after forking.
  */
 void
-setctty(char *name)
+setctty(const char *name)
 {
 	int fd;
 
@@ -574,7 +574,7 @@ single_user(void)
 	int from_securitylevel;
 	sigset_t mask;
 #ifdef ALTSHELL
-	char *shell = _PATH_BSHELL;
+	const char *shell = _PATH_BSHELL;
 #endif
 	char *argv[2];
 #ifdef SECURE
