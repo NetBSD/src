@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.2 1999/05/11 21:15:46 augustss Exp $	*/
+/*	$NetBSD: usage.c,v 1.3 1999/05/12 00:37:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -66,7 +66,7 @@ dump_hid_table(void)
 #endif
 
 void
-init_hid(char *hidname)
+hid_init(char *hidname)
 {
 	FILE *f;
 	char line[100], name[100], *p, *n;
@@ -151,7 +151,7 @@ init_hid(char *hidname)
 }
 
 char *
-usage_page(int i)
+hid_usage_page(int i)
 {
 	static char b[10];
 	int k;
@@ -167,7 +167,7 @@ usage_page(int i)
 }
 
 char *
-usage_in_page(unsigned int u)
+hid_usage_in_page(unsigned int u)
 {
 	int page = HID_PAGE(u);
 	int i = HID_USAGE(u);
