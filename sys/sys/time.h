@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.24 1997/10/04 15:00:44 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.25 1997/10/06 01:42:33 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -178,6 +178,7 @@ int	clock_settime __P((clockid_t, const struct timespec *));
 int	futimes __P((int, const struct timeval *));
 int	getitimer __P((int, struct itimerval *));
 int	gettimeofday __P((struct timeval *, struct timezone *));
+int	lutimes __P((const char *, const struct timeval *));
 int	setitimer __P((int, const struct itimerval *, struct itimerval *));
 int	settimeofday __P((const struct timeval *, const struct timezone *));
 int	utimes __P((const char *, const struct timeval *));
