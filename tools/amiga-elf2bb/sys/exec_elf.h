@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.1 2004/11/28 07:00:53 jmc Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.1.4.1 2005/04/06 09:47:50 he Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
