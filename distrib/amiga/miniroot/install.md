@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3.2.1 1997/10/31 21:27:07 mellon Exp $
+#	$NetBSD: install.md,v 1.3.2.2 1997/11/14 10:11:00 veego Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ md_native_fstype() {
 }
 
 md_native_fsopts() {
-	echo "-ro"
+	echo "ro"
 }
 
 #md_prep_disklabel()
