@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.5.6.2 2002/02/11 20:08:06 jdolecek Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.5.6.3 2002/06/18 20:06:12 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -653,6 +653,14 @@ ucbsndpoll(dev_t dev, int events, struct proc *p)
 	/* not coded yet */
 
 	return (error);
+}
+
+int
+ucbsndkqfilter(dev_t dev, struct knote *kn)
+{
+
+	/* XXXLUKEM (jdolecek): not supported -- why is poll? */
+	return (1);
 }
 
 paddr_t
