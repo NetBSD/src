@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.28 2000/04/26 21:17:03 tron Exp $
+.\"	$NetBSD: packages.7,v 1.29 2000/07/06 15:22:02 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -72,14 +72,22 @@ if not in $PATH (default: xmkmf -a).
 .It WRKOBJDIR
 A top level directory where, if defined, the separate working
 directories will get created, and symbolically linked to from
-.Pa 
-${WRKDIR}
+.Pa ${WRKDIR}
 (see below).  This is useful for building packages on several
 architectures, then
 .Pa ${PKGSRCDIR}
 can be NFS-mounted while
 .Pa ${WRKOBJDIR}
 is local to every arch.
+.It PKG_DEVELOPER
+Run some sanity checks that package developers want:
+.Bl -bullet
+.It
+make sure patches apply with zero fuzz
+.It
+run check-shlibs to see that all binaries will find their 
+shared libs.
+.El
 .El
 .Sh PACKAGE SPECIFIC VARIABLES
 This section documents variables that typically apply to an individual
