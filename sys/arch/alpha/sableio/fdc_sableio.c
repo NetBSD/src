@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $ */
+/* $NetBSD: fdc_sableio.c,v 1.5 2003/09/25 01:12:43 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.5 2003/09/25 01:12:43 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,5 +133,5 @@ fdc_sableio_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("%s: interrupting at %s\n", fdc->sc_dev.dv_xname, intrstr);
 
-	fdcattach(fdc);
+	config_interrupts(self, fdcattach);
 }
