@@ -1,0 +1,316 @@
+.\" $Id: cdk_misc.3,v 1.1.1.1 2001/01/04 19:59:10 garbled Exp $
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_misc 3X "28 June 1996"
+.SH NAME
+   Cdk - \f2Curses Development Kit\f1 Miscellaneous Routines
+.LP
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+.BI "void Beep()" "";
+.LP
+.BI "char * baseName (char *" "pathname");
+.LP
+.B unsigned CDKcountStrings (char **\fIlist\fP);
+.LP
+.B void CDKfreeStrings (char **\fIlist\fP);
+.LP
+.B char ** CDKsplitString (char *\fIstring\fP, char \fIsplitChar\fP);
+.LP
+.BI "chtype * char2Chtype (char *" "string",
+.BI "int *" "length",
+.BI "int *" "align");
+.LP
+.BI "int chlen (chtype *" "string");
+.LP
+.BI "char *chtype2Char (chtype *" "string");
+.LP
+.BI "void cleanChar (char *" "string",
+.BI "int " "length",
+.BI "char " "character");
+.LP
+.BI "void cleanChtype (chtype *" "string",
+.BI "int " "length",
+.BI "chtype " "character");
+.LP
+.BI "char *copyChar (char *" "string");
+.LP
+.BI "chtype *copyChtype (chtype *" "string");
+.LP
+.BI "void freeChar (char *" "string");
+.LP
+.BI "void freeChtype (chtype *" "string");
+.LP
+.BI "int getDirectoryContents (char *" "directory",
+.BI "char **" "list",
+.BI "int " "maxListSize");
+.LP
+.BI "int intlen (int " "value");
+.LP
+.BI "int mode2Char (char *" "string",
+.BI "mode_t " "fileMode");
+.LP
+.BI "int popupDialog (CDKSCREEN *" "screen",
+.BI "char **" "mesg",
+.BI "int " "mesgCount",
+.BI "char **" "buttons",
+.BI "int " "buttonCount");
+.LP
+.BI "void popupLabel (CDKSCREEN *" "win",
+.BI "char **" "mesg",
+.BI "int " "count");
+.LP
+.BI "int getListIndex (CDKSCREEN *" "win",
+.BI "char *" "title",
+.BI "char **" "list",
+.BI "int " "listSize",
+.BI "boolean " "numbers");
+.LP
+.BI "char *getString (CDKSCREEN *" "win",
+.BI "char *" "title",
+.BI "char *" "label",
+.BI "char *" "inititalValue");
+.LP
+.BI "int viewFile (CDKSCREEN *" "win",
+.BI "char *" "title",
+.BI "char *" "filename",
+.BI "char **" "buttons",
+.BI "int " "buttonCount");
+.LP
+.BI "void quickSort (char **", "list",
+.BI "int " "left",
+.BI "int " "right");
+.LP
+.BI "int readFile (char *" "filename",
+.BI "char **" "info",
+.BI "int " "maxlines");
+.LP
+.BI "int searchList (char **" "list",
+.BI "int " "listSize",
+.BI "char *" "pattern");
+.LP
+.BI "void stripWhiteSpace (EStripType " "stripType",
+.BI "char *" "string");
+.SH DESCRIPTION
+The functions provided in this manual page are miscellaneous functions 
+which may be required when using the Cdk widget set.
+
+.SH AVAILABLE FUNCTIONS
+void Beep();
+.RS 3
+This function makes an audible beep. The difference between this one and
+the \f4beep\f1 function in the curses library is this one flushes the STDOUT
+stream.
+.RE
+
+char *baseName (char *\f2pathname\f1);
+.RS 3
+This function returns a pointer to the first character of the filename in
+the given pathname.
+.RE
+
+unsigned CDKcountStrings (char **\fIlist\fP);
+.RS 3
+Return the number of strings in the given \fIlist\fP.
+.RE
+
+void CDKfreeStrings (char **\fIlist\fP);
+.RS 3
+Free the strings in the list, and the given \fIlist\fP itself.
+.RE
+
+char ** CDKsplitString (char *\f2string\f1, char \f2splitChar\f1);
+.RS 3
+Split the given \f2string\f1 into strings based on the split 
+character in \f2splitChar\f1.
+The return value is a null-terminated list of the strings.
+.RE
+
+chtype *char2Chtype (char *\f2string\f1, int *\f2length\f1, int *\f2align\f1);
+.RS 3
+This function takes a string in the form of "</X/Y>Blah Blah" and returns
+a chtype * of the correct type. The \f2length\f1 parameter is the length of
+the chtype * and the \f2align\f1 parameter contains justification information.
+.RE
+
+int chlen (chtype *\f2string\f1);
+.RS 3
+This function returns the length of the chtype * given.
+.RE
+
+char *chtype2Char (chtype *\f2string\f1);
+.RS 3
+This function takes a chtype * and returns the equivalent char *.
+.RE
+
+void cleanChar (char *\f2string\f1, int \f2length\f1, char \f2character\f1);
+.RS 3
+This function is analogous to \f4bzero\f1 or \f4memcopy\f1. The \f2length\f1
+parameter states how many characters to write, and \f2character\f1 is the
+character which will be written.
+.RE
+
+void cleanChtype (chtype *\f2string\f1, int \f2length\f1, chtype \f2character\f1);
+.RS 3
+This function is analogous to \f4bzero\f1 or \f4memcopy\f1. The \f2length\f1
+parameter states how many characters to write, and \f2character\f1 is the
+character which will be written.
+.RE
+
+char *copyChar (char *\f2string\f1);
+.RS 3
+This function copies the string passed in. It is safer than \f4strdup\f1 because
+it checks to see if the string is NULL before copying, and it forces a NULL
+character on the end of the string after the copy is complete.
+.RE
+
+chtype *copyChtype (chtype *\f2string\f1);
+.RS 3
+This function copies the string passed in. It is safer than \f4strdup\f1 because
+it checks to see if the string is NULL before copying, and it forces a NULL
+character on the end of the string after the copy is complete.
+.RE
+
+void freeChar (char *\f2string\f1);
+.RS 3
+This function is safer to use than \f4free\f1. It checks to see if the string
+is NULL before trying to free the string.
+.RE
+
+void freeChtype (chtype *\f2string\f1);
+.RS 3
+This function is safer to use than \f4free\f1. It checks to see if the string
+is NULL before trying to free the string.
+.RE
+
+int getDirectoryContents (char *\f2directory\f1, char **\f2list\f1, int \f2maxListSize\f1);
+.RS 3
+This function opens and reads the contents of the given directory. It fills
+the array \f2list\f1 with the sorted contents of the directory, and the parameter
+\f2maxListSize\f1 states how many entries the array can hold. This function returns
+the number of files read. If the directory could not be opened then it returns
+a value of -1.
+.RE
+
+int intlen (int \f2value\f1);
+.RS 3
+This function returns the length of an integer value.
+.RE
+
+int mode2Char (char *\f2string\f1, mode_t \f2fileMode\f1);
+.RS 3
+This function takes the file-mode in the \f2fileMode\f1 parameter and returns
+the octal equivalent. The \f2string\f1 parameter is a character string
+of the permissions. (The string looks like the permissions of a file when the
+command ls -l has been run on the file.)
+.RE
+
+int popupDialog (CDKSCREEN *\f2screen\f1, char **\f2mesg\f1, int \f2mesgCount\f1, char **\f2buttons\f1, int \f2buttonCount\f1);
+.RS 3
+This function creates a quick pop-up dialog box. Pass in the message in the
+\f2mesg\f1 parameter, the size of the message in the \f2mesgCount\f1 parameter,
+the button labels in the \f2buttons\f1 parameter and the number of buttons in
+the \f2buttonCount\f1 parameter. The dialog box will be centered on the screen.
+.RE
+
+void popupLabel (CDKSCREEN *\f2win\f1, char **\f2mesg\f1, int \f2count\f1);
+.RS 3
+This function creates a quick pop-up label widget. The message and the size of
+the message are passed in via the \f2mesg\f1 and \f2count\f1 parameters respectively.
+The label widget will wait until the user hits a character and will be centered
+on the screen.
+.RE
+
+int getListIndex (CDKSCREEN *\f2win\f1, char *\f2title\f1, char **\f2list\f1, int \f2listSize\f1, boolean \f2numbers\f1);
+.RS 3
+This function provides a popup scrolling list filled with the items passed in
+via the \f2list\f1 parameter. It returns the index in the list selected, or -1
+if no item was selected.
+.RE
+
+char *getString (CDKSCREEN *\f2screen\f1, char *\f2title\f1, char *\f2label\f1, char *\f2initialValue\f1);
+.RS 3
+This function pops up an entry widget with a title supplied by the value
+of the \f2title\f1 parameter, a label supplied by the \f2label\f1 parameter,
+and an initial value supplied by the \f2initialValue\f1 parameter. This returns
+a pointer to the value typed in or NULL if the widget was exited early.
+.RE
+ 
+int viewFile (CDKSCREEN *\f2screen\f1, char *\f2title\f1, char *\f2filename\f1, char **\f2buttons\f1, int \f2buttonCount\f1);
+.RS 3
+This function pops up a viewer widget, with the contents of the viewer being
+the contents of the file supplied by the \f2filename\f1 value. The buttons on
+the file viewer are supplied by the \f2buttons\f1 parameter. This function returns
+the integer value of the button selected. This function returns -1 if the file
+does not exist, or the widget was exited early.
+.RE
+
+void quickSort (char **\f2list\f1, int \f2left\f1, int \f2right\f1);
+.RS 3
+This function performs a quick sort of the given list. The list will be sorted
+alphabetically in increasing order.
+.RE
+
+int readFile (char *\f2filename\f1, char **\f2info\f1, int \f2maxlines\f1);
+.RS 3
+This function reads the contents of the given file and stores the contents
+in the \f2info\f1 parameter. The \f2maxlines\f1 parameter states how many lines
+can be stored in the \f2info\f1 array. This function returns the number of lines
+read if the file could be opened, -1 otherwise.
+.RE
+
+int searchList (char **\f2list\f1, int \f2listSize\f1, char *\f2pattern\f1);
+.RS 3
+This function searches the array \f2list\f1 checking to see if each element 
+in the array starts with the given \f2pattern\f1. This function returns the
+index of the first match or -1 if it can't find one.
+.RE
+
+void stripWhiteSpace (EStripType \f2stripType\f1, char *\f2string\f1);
+.RS 3
+This function strips the leading/trailing white space off of the given
+string. The parameter \f2stripType\f1 takes the following values.
+.LP
+.RS 3
+.nf 
+\f2Strip_Type      Result\f1
+vFRONT          This tells the function to remove
+                all of the white space from the 
+                front of the given string.
+vBACK           This tells the function to remove 
+                all of the white space from the 
+                back of the given string.
+vBOTH           This tells the function to remove 
+                all of the white space from both 
+                the front and the back of the given
+                string.
+.fi
+.RE
+.RE
+
+.SH SEE ALSO
+.BR cdk (3X),
+.BR cdk_screen (3X),
+.BR cdk_display (3X),
+.BR cdk_binding (3X)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.

@@ -1,0 +1,265 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_menu 3 "24 April 1997"
+.SH NAME
+newCDKMenu, activateCDKMenu, injectCDKMenu, 
+setCDKMenu, 
+setCDKMenuCurrentItem, getCDKMenuCurrentItem
+setCDKMenuTitleHighlight, getCDKMenuTitleHighlight
+setCDKMenuSubTitleHighlight, getCDKMenuSubTitleHighlight,
+drawCDKMenu, eraseCDKMenu, 
+destroyCDKMenu, setCDKMenuPreProcess, setCDKMenuPostProcess
+ \- Creates a managed curses menu widget.
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+.BI "CDKMENU *newCDKMenu (CDKSCREEN *" "cdkscreen",
+.BI "char ***" "menuList",
+.BI "int " "menuListLength",
+.BI "int *" "submenuListLength",
+.BI "int *" "menuLocation",
+.BI "int " "menuPos",
+.BI "chtype " "titleAttribute",
+.BI "chtype " "subtitleAttribute");
+.LP
+.BI "int activateCDKMenu (CDKMENU *" "menu",
+.BI "chtype * " "actions");
+.LP
+.BI "int injectCDKMenu (CDKMENU *" "menu",
+.BI "chtype " "input");
+.LP
+.BI "void setCDKMenu (CDKMENU *" "menu",
+.BI "int " "menuItem",
+.BI "int " "submenuItem",
+.BI "chtype " "titleAttribute",
+.BI "chtype " "subtitleAttribute");
+.LP
+.BI "void setCDKMenuCurrentItem (CDKMENU *" "menu",
+.BI "int " "menuItem",
+.BI "int " "submenuItem");
+.LP
+.BI "void getCDKMenuCurrentItem (CDKMENU *" "menu",
+.BI "int *" "menuItem",
+.BI "int *" "submenuItem");
+.LP
+.BI "void setCDKMenuTitleHighlight (CDKMENU *" "menu",
+.BI "chtype " "highlight");
+.LP
+.BI "chtype getCDKMenuTitleHighlight (CDKMENU *" "menu");
+.BI "void setCDKMenuSubTitleHighlight (CDKMENU *" "menu",
+.BI "chtype " "highlight");
+.LP
+.BI "chtype getCDKMenuSubTitleHighlight (CDKMENU *" "menu");
+.BI "void drawCDKMenu (CDKMENU *" "menu",
+.BI "boolean " "box");
+.LP
+.BI "void eraseCDKMenu (CDKMENU *" "menu");
+.LP
+.BI "void destroyCDKMenu (CDKMENU *" "menu");
+.LP
+.BI "void setCDKMenuPreProcess (CDKMENU *" "menu",
+.BI "PROCESSFN " "callback",
+.BI "void * " "data");
+.LP
+.BI "void setCDKMenuPostProcess (CDKMENU *" "menu",
+.BI "PROCESSFN " "callback",
+.BI "void * " "data");
+.LP
+.BI "void bindCDKObject (EObjectType " "widgetType",
+.BI "void *" "object",
+.BI "chtype " "key",
+.BI "BINDFN " "function",
+.BI "void *" "data");
+.SH DESCRIPTION
+The Cdk menu widget creates a pull-down menu list. The following are functions 
+which create or manipulate the Cdk menu widget.
+
+.SH AVAILABLE FUNCTIONS
+CDKMENU *newCDKMenu (CDKSCREEN *\f2screen\f1, char ***\f2menuList\f1, int \f2f2menuListLength\f1, int **\f2submenuListLength\f1, int *\f2menuLocation\f1, int \f2menuPos\f1, chtype \f2titleAttribute\f1, chtype \f2subtitleAttribute\f1);
+.RS 3
+This function creates a pointer to a menu widget. The \f2screen\f1 parameter
+is the screen you wish this widget to be placed in. The parameter \f2menuList\f1
+is a list of the menu list titles while \f2menuListLength\f1 states how 
+many pull down menus there are. The parameter \f2submenuListLength\f1 states 
+how many menu items are under each menu list. The \f2menuLocation\f1 parameter
+state where each menu is to be located. Valid values are \f4LEFT\f1 and 
+\f4RIGHT\f1. The parameter \f2menuPos\f1 sets whether the menu is to be on
+the top of the screen or the bottom. Valid values are \f4TOP\f1 and \f4BOTTOM\f1.
+The parameters \f2titleAttribute\f1 and \f2subtitleAttribute\f1 are the character
+attributes of the title and sub-titles respectively. If the widget could not
+be created then a \f4NULL\f1 pointer is returned.
+.RE
+
+int activateCDKMenu (CDKMENU *\f2menu\f1, chtype *\f2actions\f1);
+This function activates the menu widget and lets the user interact with the
+widget. The parameter \f2menu\f1 is a pointer to a non-NULL menu widget.
+If the \f2actions\f1 parameter is passed with a non-NULL value, the characters
+in the array will be injected into the widget. To activate the widget
+interactively pass in a \f4NULL\f1 pointer for \f2actions\f1. If the character entered
+into this widget is \f4RETURN\f1 then this then this function returns an 
+integer value which is a value of the current menu list * 100 + the sub-menu
+number. It will also set the structure member \f4exitType\f1 to \f4vNORMAL\f1.
+If the character entered into this widget was \f4ESCAPE\f1 then the widget
+will return a value of -1 and the structure member \f4exitType\f1 will be
+set to \f4vESCAPE_HIT\f1.
+.RS 3
+.RE
+
+int injectCDKMenu (CDKMENU *\f2menu\f1, chtype \f2character\f1);
+.RS 3
+This function injects a single character into the widget. The parameter 
+\f2menu\f1 is a pointer to a non-NULL menu widget. The parameter 
+\f2character\f1 is the character to inject into the widget. If the character 
+injected into this widget was \f4RETURN\f1 then the character injected into
+this widget is \f4RETURN\f1 or \f4TAB\f1 then this function will returns an
+integer value which is a value of the current menu list * 100 + the sub-menu
+number. It will also set the structure member \f4exitType\f1 to \f4vNORMAL\f1.
+If the character entered into this widget was \f4ESCAPE\f1 then the widget
+will return a value of -1 and the structure member \f4exitType\f1 will be set
+to \f4vESCAPE_HIT\f1. Any other character injected into the widget will set the 
+structure member \f4exitType\f1 to \f4vEARLY_EXIT\f1 and the function will 
+return -1.
+.RE
+
+void setCDKMenu (CDKMENU *\f2menu\f1, int \f2menuItem\f1, int \f2submenuItem\f1, chtype \f2titleAttribute\f1, chtype \f2subtitleAttribute\f1);
+.RS 3
+This function lets the programmer modify certain elements of an already defined
+menu widget. The parameters \f2menuItem\f1 and \f2submenuItem\f1 set which
+menu list and sub-menu item are going to be highlighted when the widget is
+activated. The other parameter names correspond to the same parameter names
+listed in the \f4newCDKMenu\f1 function.
+.RE
+
+void setCDKMenuCurrentItem (CDKMENU *menu, int menuItem, int subMenuItem);
+.RS 3
+This sets the current item in the menu widget.
+.RE
+
+void getCDKMenuCurrentItem (CDKMENU *menu, int *menuItem, int *subMenuItem);
+.RS 3
+This sets the values of \f2menuItem\f1 and \f2submenuItem\f1 to the current
+menu selection.
+.RE
+
+void setCDKMenuTitleHighlight (CDKMENU *menu, chtype highlight);
+.RS 3
+This sets the highlight attributes of the menu title.
+.RE
+
+chtype getCDKMenuTitleHighlight (CDKMENU *menu);
+.RS 3
+This returns the highlight attributes of the menu title.
+.RE
+
+void setCDKMenuSubTitleHighlight (CDKMENU *menu, chtype highlight);
+.RS 3
+THis sets the highlight attribute of the sub-menu selection bar.
+.RE
+
+chtype getCDKMenuSubTitleHighlight (CDKMENU *menu);
+.RS 3
+THis returns the highlight attribute of the sub-menu selection bar.
+.RE
+
+void drawCDKMenu (CDKMENU *\f2menu\f1, boolean \f2box\f1);
+.RS 3
+This function draws the menu widget on the screen. The \f2box\f1 option 
+draws the widget with or without a box.
+.RE
+
+void eraseCDKMenu (CDKMENU *\f2menu\f1);
+.RS 3
+This function removes the widget from the screen. This does \f4NOT\f1 destroy
+the widget.
+.RE
+
+void destroyCDKMenu (CDKMENU *\f2menu\f1);
+.RS 3
+This function removes the widget from the screen and frees up any memory the
+object may be using.
+.RE
+
+void setCDKMenuPreProcess (CDKMENU *\f2menu\f1, PROCESSFN \f2function\f1, void *\f2data\f2);
+.RS 3
+This function allows the user to have the widget call a function after a key
+is hit and before the key is applied to the widget. The parameter \f2function\f1
+if of type \f4PROCESSFN\f1. The parameter \f2data\f1 is a pointer to 
+\f4void\f1. To learn more about pre-processing read the \f4cdk_process\f1
+manual page.
+.RE
+ 
+void setCDKMenuPostProcess (CDKMENU *\f2menu\f1, PROCESSFN \f2function\f1, void *\f2data\f2);
+.RS 3
+This function allows the user to have the widget call a function after the
+key has been applied to the widget.  The parameter \f2function\f1 if of type
+\f4PROCESSFN\f1. The parameter \f2data\f1 is a pointer to \f4void\f1. To
+learn more about post-processing read the \f4cdk_process\f1 manual page.
+.RE
+
+void bindCDKObject (EObjectType \f2widgetType\f1, void *\f2object\f1, char \f2key\f1, BINDFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to create special key bindings. The 
+\f2widgetType\f1 parameter is a defined type which states what Cdk object 
+type is being used.  To learn more about the type \f4EObjectType\f1 read 
+the \f2cdk_binding\f1 manual page. The \f2object\f1 parameter is the 
+pointer to the widget object. The \f2key\f1 is the character to bind. The 
+\f2function\f1 is the function type. To learn more about the key binding 
+callback function types read the \f4cdk_binding\f1 manual page. The last 
+parameter \f2data\f1 is a pointer to any data that needs to get passed to 
+the callback function.
+.RE
+
+.SH KEY BINDINGS
+When the widget is activated there are several default key bindings which will
+help the user enter or manipulate the information quickly. The following table
+outlines the keys and their actions for this widget.
+.LP
+.nf
+.RS 3
+\f2Key         Action\f1
+Left Arrow  Highlights the menu list to the left
+            of the current menu.
+Right Arrow Highlights the menu list to the right
+            of the current menu.
+Up Arrow    Moves the current menu selection up one.
+Down Arrow  Moves the current menu selection down one.
+Space       Moves the current menu selection down one.
+Tab         Highlights the menu list to the right
+            of the current menu.
+Return      Exits the widget and returns an integer value
+            representing which menu item was selected. This
+            also sets the structure member \f4exitType\f1
+            in the widget pointer to the value of
+            \f4vNORMAL\f1.
+Escape      Exits the widget and returns -1. This also
+            sets the structure member \f4exitType\f1 in
+            the widget pointer to the value of 
+            \f4vESCAPE_HIT\f1.
+Ctrl-L      Refreshes the screen.
+.RE
+.fi
+.SH SEE ALSO
+.BR cdk (3),
+.BR cdk_binding (3),
+.BR cdk_display (3),
+.BR cdk_screen (3)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.

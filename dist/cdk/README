@@ -1,0 +1,118 @@
+Cdk Readme Guide
+Copyright Mike Glover, 1995, 1996, 1997, 1998, 1999
+-------------------------------------------------------------------------------
+
+Overview:
+---------
+Cdk stands for 'Curses Development Kit' and it currently contains 21 ready
+to use widgets which facilitate the speedy development of full screen
+curses programs. This little project of mine started as a test to see how
+compatible my Linux machine was to other UNIX breeds. While doing this I 
+discovered Ncurses, and played with it. These widgets are the result of
+over a years worth of playing. The current complement of widgets are:
+
+Widget Type           Quick Description
+===========================================================================
+Alphalist             Allows a user to select from a list of words, with
+                      the ability to narrow the search list by typing in a
+                      few characters of the desired word.
+Buttonbox             This creates a multiple button widget. 
+Calendar              Creates a little simple calendar widget.
+Dialog                Prompts the user with a message, and the user
+                      can pick an answer from the buttons provided.
+Entry                 Allows the user to enter various types of information.
+File Selector         A file selector built from Cdk base widgets. This
+                      example shows how to create more complicated widgets
+                      using the Cdk widget library.
+Graph                 Draws a graph.
+Histogram             Draws a histogram.
+Item List             Creates a pop up field which allows the user to select
+                      one of several choices in a small field. Very useful
+                      for things like days of the week or month names.
+Label                 Displays messages in a pop up box, or the label can be
+                      considered part of the screen.
+Marquee               Displays a message in a scrolling marquee.
+Matrix                Creates a complex matrix with lots of options.
+Menu                  Creates a pull-down menu interface.
+Multiple Line Entry   A multiple line entry field. Very useful
+                      for long fields. (like a description
+                      field)
+Radio List            Creates a radio button list.
+Scale                 Creates a numeric scale. Used for allowing a user to
+                      pick a numeric value and restrict them to a range of 
+                      values.
+Scrolling List        Creates a scrolling list/menu list.
+Scrolling Window      Creates a scrolling log file viewer. Can add 
+                      information into the window while its running. 
+                      A good widget for displaying the progress of
+                      something. (akin to a console window)
+Selection List        Creates a multiple option selection list.
+Slider                Akin to the scale widget, this widget provides a
+                      visual slide bar to represent the numeric value.
+Template              Creates a entry field with character sensitive 
+                      positions. Used for pre-formatted fields like
+                      dates and phone numbers.
+Viewer                This is a file/information viewer. Very useful
+                      when you need to display loads of information.
+===========================================================================
+
+Each widget has the ability to display color, or other character attributes.
+Cdk comes with a attribute/color format command set which allows a programmer
+to add colors and characters attributes simply.
+
+The code has been cleaned using both Purify(TM) and Sun's Testcenter(TM),
+so it is as clean as a babies butt. :) Any leaks I have seen are in the curses
+libraries; there is nothing I can do about that, sorry. There should be no
+memory leaks within the code, it shouldn't core dump, and it shouldn't do 
+anything unexpected. Unfortunately this probably is not the case. If you do 
+see something like this tell me after you read the BUGS file.
+
+Distribution:
+-------------
+This distribution has a full complement of manual pages, so any specifics to
+the widgets will not be addressed in this read me. If you want to get right in
+there, nroff the cdk.3 file in the man directory. It is the starting point
+for all the manual pages.
+
+There are some other files to look at if you want to get anywhere. They are:
+
+INSTALL - This will show you how to build Cdk and install it on your system.
+          If there are any personal modifications that you think may be
+          needed, read this file. In fact read it regardless. :)
+
+COPYING - The legal stuff to protect my butt and all of the hard work that I
+          have put into this library.
+
+EXPANDING - You feel creative enough to add a widget, here are my requirements
+            that you have to follow to make the integration of a new widget
+            seamless.
+
+BUGS - What to do when you find a bug. It also lists all of the bugs found,
+       who found them, who fixed them, and when they were fixed. If you think
+       you have found a bug look at this file. If you do not think you have
+       the most up to date version of Cdk, go get it and try to replicate the
+       problem. Then look at the BUGS file again. If it is NOT there, then you
+       can mail me notifying me of a possible bug. I will try my hardest to get
+       back to you, but I have a pretty busy schedule so don't expect an instant
+       reply. This file will also explain how I would like any bug fixes sent to
+       me.
+
+NOTES - Misc babblings of myself somewhat related to this distribution.
+
+TODO - A list of things I plan to do in the future. (sleep)
+
+CHANGES - A list of changes from one release to another.
+
+If you want to get a hold of me mail me at one of the following:
+        glover@credit.erin.utoronto.ca
+	mike@vexus.ca
+
+The CDK Web page has several homes. They are:
+        http://www.vexus.ca/CDK.html (official)
+        http://www.datasoft.on.ca/~cdk (Sponsored by the nice folks at Datasoft)
+
+ttfn,
+	Mike
+
+PS: There is also a Perl5 extension of this library for you Perl5 fans.
+    Look under any CPAN site under the directory CPAN/authors/id/GLOVER.

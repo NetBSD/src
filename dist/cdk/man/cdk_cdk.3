@@ -1,0 +1,143 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH Cdk 3 "05 Dec 1995"
+.SH NAME
+   Cdk - \f2Curses Development Kit\f1
+.LP
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+Cdk provides functions to use a large number of pre-defined
+curses widgets. To use the Cdk widgets the header file \f4cdk.h\f1 must be 
+included in the source.
+.LP
+The widgets available from Cdk are listed below.
+
+.RS 3
+.nf
+\f2Widget_Type                 Manual_Page_Name\f1
+Alphalist                   cdk_alphalist (3)
+Calendar                    cdk_calendar (3)
+Dialog                      cdk_dialog (3)
+Entry Field                 cdk_entry (3)
+File Viewer                 cdk_viewer (3)
+Graph                       cdk_graph (3)
+Histogram                   cdk_histogram (3)
+Item List                   cdk_itemlist (3)
+Label                       cdk_label (3)
+Marquee                     cdk_marquee (3)
+Matrix                      cdk_matrix (3)
+Multiple Line Entry Field   cdk_mentry (3)
+Numeric Scale               cdk_scale (3)
+Numeric Slider              cdk_slider (3)
+Pulldown Menu               cdk_menu (3)
+Radio List                  cdk_radio (3)
+Scrolling List              cdk_scroll (3)
+Scrolling Selection List    cdk_selection (3)
+Scrolling Window            cdk_swindow (3)
+Numeric Slider              cdk_slider (3)
+Template                    cdk_template (3)
+.RE
+
+The rest of the manual pages are
+.RS 3
+\f2Manual_Page_Name            Description\f1
+cdk_binding (3)             Outlines how to create user
+                            definable key bindings.
+cdk_display (3)             Shows how to add special display
+                            attributes, colors, and justification
+                            into a widget.
+cdk_draw (3)                Outlines the basic drawing 
+                            capabilities of Cdk.
+cdk_screen (3)              Demonstrates the use of screens  
+                            within Cdk.
+cdk_misc (3)                Outlines miscellaneous functions
+                            provided with the Cdk library.
+cdk_process (3)             Demonstrates the use of the pre 
+                            and post process function class.
+.RE
+.fi
+
+.SH DESCRIPTION
+Cdk is a library of functions which allow a programmer to quickly create a 
+full screen interactive program with ease. The Cdk widgets support the 
+following features:
+.It "\(bu Ncurses library." 5
+Instead of using the standard curses library, Cdk can take advantage of the
+colors that Ncurses provides. To learn how to take advantage of Cdk's color
+capabilities, read the \f4cdk_display\f1 manual page.
+.PP
+.It "\(bu Key Bindings." 5
+Individual keys can be overridden with a call-back. The call-back is set up using
+the \f4bindCDKObject\f1 function. To learn more about this read the
+\f4cdk_binding\f1 manual page.
+.PP
+.It "\(bu Pre and Post Processing." 5
+Certain widgets allow the user to trap a character before and after the 
+character has been applied to the widget. This allows programmers to 'filter'
+character input. To learn more about this read the \f4cdk_process\f1 manual
+page.
+.PP
+.It "\(bu Self Test Widgets." 5
+With the use of the inject function class and the activate function, 
+programmers can have the widgets test themselves. This allows the programmer
+to perform automated tests on a final program.
+.PP
+.It "\(bu Special Display Formats" 5
+There are special character format commands that can be inserted into any 
+string in Cdk and the contents will get mapped to a \f4chtype\f1 (see the
+curses manual page) with character attributes. This allows the programmer to 
+insert format types on each character if they wish.
+.PP
+.It "\(bu The Ability To Build Predefined Screens" 5
+Widgets can be associated to any given screen. If there is more than one 
+screen defined, then Cdk has the ability to "flip" from one screen to another
+with ease. See the \f4cdk_screen\f1 manual page for more details.
+.PP
+
+.SH STANDARD WIDGET BEHAVIOR
+All of the widgets have a member of the structure called \f4exitType\f1. This
+member states how the widget exited. There are three values in which to check
+for, they are as follows:
+.nf
+.RS 3
+
+\f2Value            Meaning\f1
+vNORMAL          This means the widget exited normally. This 
+                 value is set when the widget is given the 
+                 characters TAB or RETURN.
+vEARLY_EXIT      This means the widget exited early. This value
+                 is set when characters are injected into the 
+                 widget via the injectCDKXXX function and the 
+                 character injected does not exit the widget.
+                 (ie: TAB or RETURN)
+vESCAPE_HIT      This value states the user hit ESCAPE to 
+                 leave the widget.
+vNEVER_ACTIVATED This is the initial state of the value. This 
+                 means that the widget has not been activated.
+
+.SH SEE ALSO
+.BR cdk (3),
+.BR cdk_binding (3),
+.BR cdk_display (3),
+.BR cdk_screen (3)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.
