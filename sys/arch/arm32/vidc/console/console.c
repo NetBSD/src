@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.10 1997/10/14 11:49:11 mark Exp $	*/
+/*	$NetBSD: console.c,v 1.11 1997/10/17 05:45:40 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -55,7 +55,6 @@
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
-#include <sys/sysctl.h>
 #include <sys/syslog.h>
 
 #include <dev/cons.h>
