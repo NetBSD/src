@@ -1,4 +1,4 @@
-/*	$NetBSD: lsystem.c,v 1.5 2002/03/05 12:28:34 mrg Exp $	*/
+/*	$NetBSD: lsystem.c,v 1.6 2002/06/15 18:27:20 wiz Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -294,9 +294,6 @@ pipe_data(cmd, spos, epos)
 {
 	register FILE *f;
 	register int c;
-#ifndef __STDC__
-	extern FILE *popen();
-#endif
 
 	/*
 	 * This is structured much like lsystem().
