@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis.1,v 1.6 1999/03/22 18:16:47 garbled Exp $
+.\"	$NetBSD: whatis.1,v 1.7 2002/03/08 20:27:42 jdolecek Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd describe what a command is
 .Sh SYNOPSIS
 .Nm
+.Op Fl C Ar path
 .Op Fl M Ar path
 .Op Fl m Ar path
 .Ar command Ar ...
@@ -53,6 +54,11 @@ command to get more information.
 .Pp
 The options are as follows:
 .Bl -tag -width Fl
+.It Fl C Ar path
+Use different
+.Xr man 1
+configuration file than the default,
+.Pa /etc/man.conf .
 .It Fl M Ar path
 Override the list of standard directories
 .Nm
@@ -92,14 +98,20 @@ may be overridden by specifying a path in the
 environment variable.
 .El
 .Sh FILES
-.Bl -tag -width whatis.db
+.Bl -tag -compact -width /etc/man.conf1
 .It Pa whatis.db
-name of the whatis database
+name of the whatis databases
+.It Pa /etc/man.conf
+.Xr man 1
+configuration file, used to get location of whatis databases if
+.Ev MANPATH
+is not set.
 .El
 .Sh SEE ALSO
 .Xr apropos 1 ,
 .Xr man 1 ,
 .Xr whereis 1 ,
+.Xr man.conf 5 ,
 .Xr makewhatis 8
 .Sh HISTORY
 The
