@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.84 2003/05/08 13:02:10 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.85 2003/05/08 20:39:01 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -68,7 +68,7 @@ HOST_LDFLAGS?=
 HOST_AR?=	ar
 HOST_RANLIB?=	ranlib
 
-.if !empty(_HOST_CYGWIN)
+.if !empty(HOST_CYGWIN)
 HOST_SH?=	/usr/bin/bash
 .else
 HOST_SH?=	sh
