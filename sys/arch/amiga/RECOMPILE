@@ -1,0 +1,63 @@
+How to recompile (under AmigaDOS)
+---------------------------------
+
+You need a fairly complete unix programming environment. You also need 
+gcc, I don't think any of the commercial compilers could recompile the
+kernel. The central configuration directory is sys/arch/amiga/conf. CD
+there, and take a look at the file AMIGA. Things you might change in
+this file are:
+
+timezone:	change to your timezone.
+
+options:	comment out modules you don't need, to make the kernel
+		smaller. Good candidates for exclusion are probably
+		the ISOFS (CD filesystem), ISO and TPIP (implement OSI
+		sockets). PCFS is entirely untested, so you might 
+		get rid of it as well.
+
+config:		this is a vital line, it tells BSD where to find the
+		root filesystem and the swap partition. The device
+		name is composed of `sd', which is the disk driver,
+		the unit number (6 in the distributed file), and the
+		partition (A==root).
+
+disk:		make sure there's an entry for your SCSI unit, the
+		kernel as distributed supports drives at units 0, 1 and
+		6.
+
+tape:		if you don't have a tape drive, you can remove those
+		entries, and save some space in the kernel.
+
+pseudo-device:	you can safely remove `sl' and `bpfilter', please don't
+		remove `ite', or you'll end up without a console...
+
+
+When you're happy with the config file, you have to run it thru the
+config program. config is included in the bin directory of this
+distribution, together with the loader. In sys/arch/amiga/conf, do
+
+  config AMIGA
+
+After a moment, config reminds you to do a make depend, well, you can't,
+there's no mkdep at the moment;-) Just make sure all object files of
+previous runs are removed, then `make', and cross fingers. The make
+process will need some binaries found in the bin directory of this
+distribution, so add bin to your PATH before starting the compilation.
+
+The distributed console bitmap font is *UGLY*. I'd strongly suggest
+you CD to sys/arch/amiga/stand/dumpfont, and generate a new font source
+file containing the topaz.font of AmigaOS. This looks *much* nicer
+than the free Mach font, but since it is part of AmigaOS, it is 
+owned by Commodore, and may not be redistributed, you'll have to regenerate
+it, sorry.  Dumpfont will output a new source file to stdout.  Redirect
+this output to a file, and then copy it to sys/arch/amiga/dev/kernel_font.c.
+If you can't get dumpfont working on your system (or if you're 
+crosscompiling from a non-amiga system), copy the ugly 
+sys/arch/amiga/dev/kernel_font.c.distrib to sys/arch/amiga/dev/kernel_font.c 
+instead.
+
+If you run into problems recompiling, configuring, etc. first try to
+find a solution yourself. I would prefer to work on BSD than to answer
+tons of email, but if you're really stuck, you can reach me at mw@eunet.ch.
+
+-Markus Wild

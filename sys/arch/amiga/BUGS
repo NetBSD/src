@@ -1,0 +1,26 @@
+Current list as of 93-7-5:
+
+Those I'm aware of:
+-  nfsd and mountd crash regularly when going to multiuser mode...
+-  the console seems to have some problems displaying text when parity is
+   enabled. This shows in a distorted login-prompt (multiuser mode).
+-  the vt200 emulator is really far from perfect, and needs a lot more work
+   to be honestly called a vt200 (or vt320 even) emulator.
+-  the console chops the rightmost character, I guess this is a problem of
+   the display-window, not of the bitmap drawing itself.
+-  8bit characters are all displayed as ^@. Problems could lie in wrong tty
+   settings or the ite driver.
+-  although autoconfig information is passed into the kernel and the hardware
+   table is generated, no I/O-space is currently allocated in kernel VM for 
+   boards. This will probably be one of the first things to fix or nobody is 
+   able to access their boards under BSD ...
+-  sun-style disklabels are not yet supported.
+-  disklabels can't be written back to disk. You'll have to configure your
+   drives under amigados (with hdtoolbox), and just format the partitions
+   under BSD. I think this is a tolerable limitation.
+-  there's currently no provision for reading the realtime-clock, so time
+   is always set using the last modification date of the mounted root 
+   filesystem.
+-  severe crash after dumping to disk...
+
+to be continued...
