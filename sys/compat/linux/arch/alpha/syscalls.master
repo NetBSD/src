@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 1998/12/08 21:02:19 erh Exp $
+	$NetBSD: syscalls.master,v 1.6 1998/12/10 17:07:04 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -53,6 +53,7 @@
 ;
 
 #include "opt_sysv.h"
+#include "opt_compat_43.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
