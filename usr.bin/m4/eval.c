@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.8 1997/01/09 20:20:35 tls Exp $	*/
+/*	$NetBSD: eval.c,v 1.9 1997/02/08 23:50:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.8 1997/01/09 20:20:35 tls Exp $";
+static char rcsid[] = "$NetBSD: eval.c,v 1.9 1997/02/08 23:50:40 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,22 +238,14 @@ register int td;
 		if (argc > 3) {
 			int k;
 			for (n = argc - 1; n > 3; n--) {
-				k = strlen(rquote);
-				while (k--)
-					putback(rquote[k]);
+				pbstr(rquote);
 				pbstr(argv[n]);
-				k = strlen(lquote);
-				while (k--)
-					putback(lquote[k]);
+				pbstr(lquote);
 				putback(COMMA);
 			}
-			k = strlen(rquote);
-			while (k--)
-				putback(rquote[k]);
+			pbstr(rquote);
 			pbstr(argv[3]);
-			k = strlen(lquote);
-			while (k--)
-				putback(lquote[k]);
+			pbstr(lquote);
 		}
 		break;
 
@@ -493,13 +485,9 @@ char *name;
 	register ndptr p;
 
 	if ((p = lookup(name)) != nil && p->defn != null) {
-		int n = strlen(rquote);
-		while (n--)
-			putback(rquote[n]);
+		pbstr(rquote);
 		pbstr(p->defn);
-		n = strlen(lquote);
-		while (n--)
-			putback(lquote[n]);
+		pbstr(lquote);
 	}
 }
 
@@ -674,15 +662,21 @@ void
 dodiv(n)
 register int n;
 {
-	if (n < 0 || n >= MAXOUT)
-		n = 0;		       /* bitbucket */
-	if (outfile[n] == NULL) {
-		m4temp[UNIQUE] = n + '0';
-		if ((outfile[n] = fopen(m4temp, "w")) == NULL)
+	int tempfilenum;
+
+	/*
+	 * direct output to the appropriate temporary file (the bit
+	 * bucket, if out of range).
+	 */
+	tempfilenum = (n < 0 || n >= MAXOUT) ? 0 : n;
+
+	if (outfile[tempfilenum] == NULL) {
+		m4temp[UNIQUE] = tempfilenum + '0';
+		if ((outfile[tempfilenum] = fopen(m4temp, "w")) == NULL)
 			oops("%s: cannot divert.", m4temp);
 	}
 	oindex = n;
-	active = outfile[n];
+	active = outfile[tempfilenum];
 }
 
 /*
