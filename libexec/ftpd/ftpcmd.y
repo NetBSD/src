@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.62 2001/04/12 02:28:59 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.63 2001/04/17 00:59:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.62 2001/04/12 02:28:59 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.63 2001/04/17 00:59:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1083,7 +1083,8 @@ pathname
 			 */
 			if (logged_in && $1 && *$1 == '~') {
 				glob_t gl;
-				int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
+				int flags = GLOB_BRACE | GLOB_NOCHECK | \
+					    GLOB_TILDE | GLOB_LIMIT;
 
 				if ($1[1] == '\0')
 					$$ = xstrdup(homedir);
@@ -1091,7 +1092,12 @@ pathname
 					memset(&gl, 0, sizeof(gl));
 					if (glob($1, flags, NULL, &gl) ||
 					    gl.gl_pathc == 0) {
-						reply(550, "not found");
+						reply(550, "%s: Not found",
+						    $1);
+						$$ = NULL;
+					} else if (gl.gl_matchc > 1) {
+						reply(550,
+						    "%s: Too many matches", $1);
 						$$ = NULL;
 					} else
 						$$ = xstrdup(gl.gl_pathv[0]);
