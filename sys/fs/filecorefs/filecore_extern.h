@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.4.2.1 2003/07/02 15:26:29 darrenr Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.4.2.2 2003/07/03 01:21:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -78,14 +78,15 @@ extern struct pool filecore_node_pool;
 
 int filecore_mount __P((struct mount *,
 	    const char *, void *, struct nameidata *, struct lwp *));
-int filecore_start __P((struct mount *, int, struct proc *));
-int filecore_unmount __P((struct mount *, int, struct proc *));
-int filecore_root __P((struct mount *, struct vnode **));
+int filecore_start __P((struct mount *, int, struct lwp *));
+int filecore_unmount __P((struct mount *, int, struct lwp *));
+int filecore_root __P((struct mount *, struct vnode **, struct lwp *));
 int filecore_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
-int filecore_statfs __P((struct mount *, struct statfs *, struct proc *));
-int filecore_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int filecore_vget __P((struct mount *, ino_t, struct vnode **));
-int filecore_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int filecore_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int filecore_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+int filecore_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
+int filecore_fhtovp __P((struct mount *, struct fid *, struct vnode **,
+			 struct lwp *));
 int filecore_checkexp __P((struct mount *, struct mbuf *, int *,
 	    struct ucred **));
 int filecore_vptofh __P((struct vnode *, struct fid *));
@@ -93,7 +94,7 @@ void filecore_init __P((void));
 void filecore_reinit __P((void));
 void filecore_done __P((void));
 int filecore_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			struct proc *));
+			struct lwp *));
 
 extern int (**filecore_vnodeop_p) __P((void *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.5.2.1 2003/07/02 15:26:29 darrenr Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.5.2.2 2003/07/03 01:21:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.1 2003/07/02 15:26:29 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.2 2003/07/03 01:21:41 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,7 +104,7 @@ struct genfs_ops filecore_genfsops = {
  */
 
 static int filecore_mountfs __P((struct vnode *devvp, struct mount *mp,
-		struct proc *p, struct filecore_args *argp));
+		struct lwp *l, struct filecore_args *argp));
 
 #if 0
 int
@@ -214,7 +214,7 @@ filecore_mount(mp, path, data, ndp, l)
 	 */
 	if (p->p_ucred->cr_uid != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
+		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -222,7 +222,7 @@ filecore_mount(mp, path, data, ndp, l)
 		}
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = filecore_mountfs(devvp, mp, p, &args);
+		error = filecore_mountfs(devvp, mp, l, &args);
 	else {
 		if (devvp != fcmp->fc_devvp)
 			error = EINVAL;	/* needs translation */
@@ -235,17 +235,17 @@ filecore_mount(mp, path, data, ndp, l)
 	}
 	fcmp = VFSTOFILECORE(mp);
 	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
-	    mp, p);
+	    mp, l);
 }
 
 /*
  * Common code for mount and mountroot
  */
 static int
-filecore_mountfs(devvp, mp, p, argp)
+filecore_mountfs(devvp, mp, l, argp)
 	struct vnode *devvp;
 	struct mount *mp;
-	struct proc *p;
+	struct lwp *l;
 	struct filecore_args *argp;
 {
 	struct filecore_mnt *fcmp = (struct filecore_mnt *)0;
@@ -271,10 +271,11 @@ filecore_mountfs(devvp, mp, p, argp)
 		return error;
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return EBUSY;
-	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0))
+	    != 0)
 		return (error);
 
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
+	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, l);
 	if (error)
 		return error;
 	
@@ -351,8 +352,8 @@ filecore_mountfs(devvp, mp, p, argp)
 	fcmp->fc_devvp = devvp;
 	fcmp->fc_mntflags = argp->flags;
 	if (argp->flags & FILECOREMNT_USEUID) {
-		fcmp->fc_uid = p->p_cred->p_ruid;
-		fcmp->fc_gid = p->p_cred->p_rgid;
+		fcmp->fc_uid = l->l_proc->p_cred->p_ruid;
+		fcmp->fc_gid = l->l_proc->p_cred->p_rgid;
 	} else {
 		fcmp->fc_uid = argp->uid;
 		fcmp->fc_gid = argp->gid;
@@ -367,7 +368,7 @@ out:
 		brelse(bp);
 	}
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
 	VOP_UNLOCK(devvp, 0);
 	if (fcmp) {
 		free((caddr_t)fcmp, M_FILECOREMNT);
@@ -382,10 +383,10 @@ out:
  */
 /* ARGSUSED */
 int
-filecore_start(mp, flags, p)
+filecore_start(mp, flags, l)
 	struct mount *mp;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	return 0;
 }
@@ -394,10 +395,10 @@ filecore_start(mp, flags, p)
  * unmount system call
  */
 int
-filecore_unmount(mp, mntflags, p)
+filecore_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct filecore_mnt *fcmp;
 	int error, flags = 0;
@@ -417,7 +418,7 @@ filecore_unmount(mp, mntflags, p)
 	if (fcmp->fc_devvp->v_type != VBAD)
 		fcmp->fc_devvp->v_specmountpoint = NULL;
 	vn_lock(fcmp->fc_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED, p);
+	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED, l);
 	vput(fcmp->fc_devvp);
 	free((caddr_t)fcmp, M_FILECOREMNT);
 	mp->mnt_data = NULL;
@@ -429,14 +430,15 @@ filecore_unmount(mp, mntflags, p)
  * Return root of a filesystem
  */
 int
-filecore_root(mp, vpp)
+filecore_root(mp, vpp, l)
 	struct mount *mp;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 	struct vnode *nvp;
         int error;
 
-        if ((error = VFS_VGET(mp, FILECORE_ROOTINO, &nvp)) != 0)
+        if ((error = VFS_VGET(mp, FILECORE_ROOTINO, &nvp, l)) != 0)
                 return (error);
         *vpp = nvp;
         return (0);
@@ -447,12 +449,12 @@ filecore_root(mp, vpp)
  */
 /* ARGSUSED */
 int
-filecore_quotactl(mp, cmd, uid, arg, .)
+filecore_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	caddr_t arg;
-	struct lwp *.;
+	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
@@ -462,10 +464,10 @@ filecore_quotactl(mp, cmd, uid, arg, .)
  * Get file system statistics.
  */
 int
-filecore_statfs(mp, sbp, p)
+filecore_statfs(mp, sbp, l)
 	struct mount *mp;
 	struct statfs *sbp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
 
@@ -487,11 +489,11 @@ filecore_statfs(mp, sbp, p)
 
 /* ARGSUSED */
 int
-filecore_sync(mp, waitfor, cred, p)
+filecore_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (0);
 }
@@ -514,17 +516,18 @@ struct ifid {
 
 /* ARGSUSED */
 int
-filecore_fhtovp(mp, fhp, vpp)
+filecore_fhtovp(mp, fhp, vpp, l)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
 	struct vnode *nvp;
 	struct filecore_node *ip;
 	int error;
 	
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp, l)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -570,10 +573,11 @@ filecore_checkexp(mp, nam, exflagsp, credanonp)
  */
 
 int
-filecore_vget(mp, ino, vpp)
+filecore_vget(mp, ino, vpp, l)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 	struct filecore_mnt *fcmp;
 	struct filecore_node *ip;
@@ -584,7 +588,7 @@ filecore_vget(mp, ino, vpp)
 
 	fcmp = VFSTOFILECORE(mp);
 	dev = fcmp->fc_dev;
-	if ((*vpp = filecore_ihashget(dev, ino)) != NULLVP)
+	if ((*vpp = filecore_ihashget(dev, ino, l)) != NULLVP)
 		return (0);
 
 	/* Allocate a new vnode/filecore_node. */
@@ -706,14 +710,14 @@ filecore_vptofh(vp, fhp)
 }
 
 int
-filecore_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+filecore_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (EOPNOTSUPP);
 }

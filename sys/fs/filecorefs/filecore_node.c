@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.1.4.1 2003/07/03 01:21:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.1.4.1 2003/07/03 01:21:41 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,9 +128,10 @@ filecore_done()
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-filecore_ihashget(dev, inum)
+filecore_ihashget(dev, inum, l)
 	dev_t dev;
 	ino_t inum;
+	struct lwp *l;
 {
 	struct filecore_node *ip;
 	struct vnode *vp;
@@ -142,7 +143,7 @@ loop:
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&filecore_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
 				goto loop;
 			return (vp);
 		}
@@ -195,7 +196,7 @@ filecore_inactive(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct filecore_node *ip = VTOI(vp);
 	int error = 0;
 	
@@ -209,7 +210,7 @@ filecore_inactive(v)
 	 * so that it can be reused immediately.
 	 */
 	if (filecore_staleinode(ip))
-		vrecycle(vp, (struct simplelock *)0, p);
+		vrecycle(vp, (struct simplelock *)0, l);
 	return error;
 }
 
