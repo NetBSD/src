@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/12/05 15:53:10 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 1999/12/05 16:26:39 minoura Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -27,7 +27,7 @@ MTREE=		mtree.conf
 
 DISKTYPE=	floppy5
 
-all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
+all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} xxboot
 	dd if=/dev/zero of=${IMAGE} count=2400
 	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/15/2/80
 	newfs -B be -m 0 -o space -i 5120 -c 80 ${VND_RDEV}
@@ -60,6 +60,10 @@ HACKSRC=${TOP}/../../utils/libhack
 
 # turn off small gethostby* temporarily
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
+
+# Adjust the size of xxboot.
+xxboot:
+	dd if=${DESTDIR}/usr/mdec/sdboot of=${.TARGET} conv=sync
 
 # Used in building bootfloppy
 echoimage:
