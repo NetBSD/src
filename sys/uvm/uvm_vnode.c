@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.59 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.60 2003/04/22 14:28:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.59 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.60 2003/04/22 14:28:16 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -394,11 +394,6 @@ uvn_findpage(uobj, offset, pgp, flags)
 				uvm_wait("uvn_fp1");
 				simple_lock(&uobj->vmobjlock);
 				continue;
-			}
-			if (UVM_OBJ_IS_VTEXT(uobj)) {
-				uvmexp.execpages++;
-			} else {
-				uvmexp.filepages++;
 			}
 			UVMHIST_LOG(ubchist, "alloced %p", pg,0,0,0);
 			break;
