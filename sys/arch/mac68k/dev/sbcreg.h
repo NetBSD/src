@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcreg.h,v 1.1 1996/04/25 22:26:56 scottr Exp $	*/
+/*	$NetBSD: sbcreg.h,v 1.2 1997/03/01 20:18:59 scottr Exp $	*/
 
 /*
  * Register map for the Mac II SCSI Interface (sbc)
