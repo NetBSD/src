@@ -1,4 +1,4 @@
-.\" $NetBSD: uhid.4,v 1.12 2001/12/28 17:38:00 augustss Exp $
+.\" $NetBSD: uhid.4,v 1.13 2001/12/29 14:41:59 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,6 +53,8 @@ The device handles the following
 calls:
 .Pp
 .Bl -tag -width indent -compact
+.It Dv USB_GET_REPORT_ID (int)
+Get the report identifier used by this HID report.
 .It Dv USB_GET_REPORT_DESC (struct usb_ctl_report_desc)
 Get the HID report descriptor.  Using
 this descriptor the exact layout and meaning of data to/from
