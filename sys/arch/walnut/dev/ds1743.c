@@ -1,6 +1,7 @@
-/*	$NetBSD: ds1743.c,v 1.1 2001/06/13 06:01:52 simonb Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.1.2.1 2002/03/16 16:00:19 jdolecek Exp $	*/
 
 /*
+ * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
  * Copyright (c) 1998 Mark Brinicombe.
  * Copyright (c) 1998 Causality Limited.
  * All rights reserved.
@@ -79,16 +80,45 @@ struct cfattach dsrtc_ca = {
  */
 int ds1743found = 0;
 
+#define DS_SCRATCH_ADDR 0x1FF7
+
 static int
 dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	union mainbus_attach_args *maa = aux;
+	struct mainbus_attach_args *maa = aux;
+	int retval = !ds1743found;
+	bus_space_handle_t h;
+	u_int8_t x;
 
 	/* match only RTC devices */
-	if (strcmp(maa->mba_rmb.rmb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 
-	return (!ds1743found);
+	if (bus_space_map(0, maa->mb_addr, DS_SIZE, 0, &h)) {
+		printf("%s: can't map i/o space\n", maa->mb_name);
+		return 0;
+	}
+
+	/* Read one byte of what's supposed to be NVRAM */
+	x = bus_space_read_1(0, h, DS_SCRATCH_ADDR);
+	bus_space_write_1(0, h, DS_SCRATCH_ADDR, 0xAA);
+	if (bus_space_read_1(0, h, DS_SCRATCH_ADDR) != 0xAA) {
+		retval = 0;
+		goto done;
+	}
+	
+	bus_space_write_1(0, h, DS_SCRATCH_ADDR, 0x55);
+	if (bus_space_read_1(0, h, DS_SCRATCH_ADDR) != 0x55) {
+		retval = 0;
+		goto done;
+	}
+
+	/* Restore scratch byte value */
+	bus_space_write_1(0, h, DS_SCRATCH_ADDR, x);
+  done:	
+	bus_space_unmap(0, h, DS_SIZE);
+	  
+	return retval;
 }
 
 /*
@@ -101,14 +131,14 @@ static void
 dsrtcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dsrtc_softc *sc = (struct dsrtc_softc *)self;
-	union mainbus_attach_args *maa = aux;
+	struct mainbus_attach_args *maa = aux;
 	struct todclock_attach_args ta;
 
 	ds1743found = 1;
 	
 	sc->sc_iot = 0;
-	sc->sc_ioh = maa->mba_rmb.rmb_addr;
-	if (bus_space_map(sc->sc_iot, maa->mba_rmb.rmb_addr, DS_SIZE, 0, &sc->sc_ioh)) {
+	sc->sc_ioh = maa->mb_addr;
+	if (bus_space_map(sc->sc_iot, maa->mb_addr, DS_SIZE, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}

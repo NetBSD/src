@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44.4.1 2002/01/10 19:59:52 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.4.2 2002/03/16 16:01:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.4.1 2002/01/10 19:59:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.4.2 2002/03/16 16:01:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,15 +190,15 @@ procinit()
 	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
 
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
+	    &pool_allocator_nointr);
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PGRP);
+	    &pool_allocator_nointr);
 	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	    &pool_allocator_nointr);
 	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	    &pool_allocator_nointr);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
+	    &pool_allocator_nointr);
 }
 
 /*

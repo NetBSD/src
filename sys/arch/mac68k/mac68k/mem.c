@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.28.2.1 2001/09/13 01:13:55 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.28.2.2 2002/03/16 15:58:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,10 +59,6 @@
 extern u_long maxaddr;
 static caddr_t devzeropage;
 
-#define mmread	mmrw
-#define mmwrite	mmrw
-cdev_decl(mm);
-
 /*ARGSUSED*/
 int
 mmopen(dev, flag, mode, p)
@@ -99,7 +95,7 @@ mmrw(dev, uio, flags)
 	static int physlock;
 	vm_prot_t prot;
 
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
@@ -121,8 +117,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
-		case 0:
+		case DEV_MEM:
 			v = uio->uio_offset;
 
 			/*
@@ -146,8 +141,7 @@ mmrw(dev, uio, flags)
 			pmap_update(pmap_kernel());
 			continue;
 
-/* minor device 1 is kernel memory */
-		case 1:
+		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			if (!uvm_kernacc((caddr_t)v, c,
@@ -156,14 +150,12 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
-		case 2:
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
-		case 12:
+		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
 				break;
@@ -191,7 +183,7 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 unlock:
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
@@ -214,7 +206,7 @@ mmmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != 0)
+	if (minor(dev) != DEV_MEM)
 		return (-1);
 
 	/*

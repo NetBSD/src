@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.2.6.2 2002/02/11 20:08:16 jdolecek Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.2.6.3 2002/03/16 15:58:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ STATIC int pfckbd_input_establish(void *, struct hpckbd_if *);
 STATIC void pfckbd_input(struct hpckbd_if *, u_int16_t *, u_int16_t, int);
 
 /*
- * matrix scan keyboard connected to SH3 PFC module.
+ * Matrix scan keyboard connected to SH7709, SH7709A PFC module.
  * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
  */
 void
@@ -103,6 +103,10 @@ pfckbd_cnattach()
 {
 	struct pfckbd_core *pc = &pfckbd_core;
 	
+	if ((cpu_product != CPU_PRODUCT_7709) &&
+	    (cpu_product != CPU_PRODUCT_7709A))
+		return;
+
 	/* initialize interface */
 	pfckbd_ifsetup(pc);
 
@@ -113,6 +117,10 @@ pfckbd_cnattach()
 int
 pfckbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
+	if ((cpu_product != CPU_PRODUCT_7709) &&
+	    (cpu_product != CPU_PRODUCT_7709A))
+		return (0);
 
 	return (!pfckbd_core.pc_attached);
 }
@@ -249,17 +257,18 @@ pfckbd_callout_hp(void *arg)
 		goto reinstall;
 
 	for (column = 0; column < 8; column++) {
-		SHREG_PDDR = scan[column].d;
-		SHREG_PEDR = scan[column].e;
+		_reg_write_1(SH7709_PDDR, scan[column].d);
+		_reg_write_1(SH7709_PEDR, scan[column].e);
 		delay(50);
-		data = SHREG_PFDR | (SHREG_PCDR << 8);
+		data = _reg_read_1(SH7709_PFDR) |
+		    (_reg_read_1(SH7709_PCDR) << 8);
 
 		pfckbd_input(pc->pc_hpckbd, pc->pc_column, data, column);
 	}
 
-	SHREG_PDDR = 0xff;
-	SHREG_PEDR = 0xff;
-	data = SHREG_PGDR | (SHREG_PHDR << 8);
+	_reg_write_1(SH7709_PDDR, 0xff);
+	_reg_write_1(SH7709_PEDR, 0xff);
+	data = _reg_read_1(SH7709_PGDR) | (_reg_read_1(SH7709_PHDR) << 8);
 
  reinstall:
 	callout_reset(&pc->pc_soft_ch, 1, pfckbd_callout_hp, pc);
@@ -289,23 +298,25 @@ pfckbd_callout_hitachi(void *arg)
 		goto reinstall;
 
 	for (column = 0; column < 8; column++) {
-		SHREG_PCDR = ~(1 << column);
+		_reg_write_1(SH7709_PCDR, ~(1 << column));
 		delay(50);
-		data = ((SHREG_PFDR & 0xfe) | (SHREG_PCDR & 0x01)) << 8;
-		SHREG_PCDR = 0xff;
-		SHREG_PDDR = scan[column].d;
-		SHREG_PEDR = scan[column].e;
+		data = ((_reg_read_1(SH7709_PFDR) & 0xfe) |
+		    (_reg_read_1(SH7709_PCDR) & 0x01)) << 8;
+		_reg_write_1(SH7709_PCDR, 0xff);
+		_reg_write_1(SH7709_PDDR, scan[column].d);
+		_reg_write_1(SH7709_PEDR, scan[column].e);
 		delay(50);
-		data |= (SHREG_PFDR & 0xfe) | (SHREG_PCDR & 0x01);
-		SHREG_PDDR = 0xf7;
-		SHREG_PEDR = 0xff;
+		data |= (_reg_read_1(SH7709_PFDR) & 0xfe) |
+		    (_reg_read_1(SH7709_PCDR) & 0x01);
+		_reg_write_1(SH7709_PDDR, 0xf7);
+		_reg_write_1(SH7709_PEDR, 0xff);
 
 		pfckbd_input(pc->pc_hpckbd, pc->pc_column, data, column);
 	}
 
-	SHREG_PDDR = 0xf7;
-	SHREG_PEDR = 0xff;
-	data = SHREG_PGDR | (SHREG_PHDR << 8);
+	_reg_write_1(SH7709_PDDR, 0xf7);
+	_reg_write_1(SH7709_PEDR, 0xff);
+	data = _reg_read_1(SH7709_PGDR) | (_reg_read_1(SH7709_PHDR) << 8);
 
  reinstall:
 	callout_reset(&pc->pc_soft_ch, 1, pfckbd_callout_hitachi, pc);

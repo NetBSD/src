@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99.2.2 2002/01/10 19:50:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99.2.3 2002/03/16 16:00:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -691,7 +691,7 @@ cpu_dump(dump, blknop)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 

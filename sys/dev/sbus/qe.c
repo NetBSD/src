@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.16.2.1 2002/01/10 19:58:13 thorpej Exp $	*/
+/*	$NetBSD: qe.c,v 1.16.2.2 2002/03/16 16:01:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.16.2.1 2002/01/10 19:58:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.16.2.2 2002/03/16 16:01:30 jdolecek Exp $");
 
 #define QEDEBUG
 
@@ -224,20 +224,22 @@ qeattach(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_map2(sa->sa_bustag,
-			  (bus_type_t)sa->sa_reg[0].sbr_slot,
-			  (bus_addr_t)sa->sa_reg[0].sbr_offset,
+	if (bus_space_map(sa->sa_bustag,
+			  (bus_addr_t)BUS_ADDR(
+				sa->sa_reg[0].sbr_slot,
+				sa->sa_reg[0].sbr_offset),
 			  (bus_size_t)sa->sa_reg[0].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, 0, &sc->sc_cr) != 0) {
+			  BUS_SPACE_MAP_LINEAR, &sc->sc_cr) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
 
-	if (bus_space_map2(sa->sa_bustag,
-			  (bus_type_t)sa->sa_reg[1].sbr_slot,
-			  (bus_addr_t)sa->sa_reg[1].sbr_offset,
+	if (bus_space_map(sa->sa_bustag,
+			  (bus_addr_t)BUS_ADDR(
+				sa->sa_reg[1].sbr_slot,
+				sa->sa_reg[1].sbr_offset),
 			  (bus_size_t)sa->sa_reg[1].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, 0, &sc->sc_mr) != 0) {
+			  BUS_SPACE_MAP_LINEAR, &sc->sc_mr) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
@@ -286,7 +288,6 @@ qeattach(parent, self, aux)
 			self->dv_xname, error);
 		return;
 	}
-	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Map DMA buffer in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
@@ -308,6 +309,7 @@ qeattach(parent, self, aux)
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
+	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Initialize media properties */
 	ifmedia_init(&sc->sc_ifmedia, 0, qe_ifmedia_upd, qe_ifmedia_sts);

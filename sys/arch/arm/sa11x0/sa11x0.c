@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.1.2.1 2001/08/03 04:11:02 lukem Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.1.2.2 2002/03/16 15:56:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -157,6 +157,11 @@ sa11x0_attach(parent, self, aux)
 	if (bus_space_map(sc->sc_iot, SADMAC_BASE, SADMAC_NPORTS,
 			  0, &sc->sc_dmach))
 		panic("%s: unable to map DMAC registers\n", self->dv_xname);
+
+	/* Map the reset controller registers */
+	if (bus_space_map(sc->sc_iot, SARCR_BASE, NBPG,
+			  0, &sc->sc_reseth))
+		panic("%s: unable to map reset registers\n", self->dv_xname);
 
 	printf("\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.4.2.2 2002/02/11 20:09:31 jdolecek Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.4.2.3 2002/03/16 16:00:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$Id: linux_sys_machdep.c,v 1.4.2.2 2002/02/11 20:09:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.4.2.3 2002/03/16 16:00:31 jdolecek Exp $");
 
 #include <sys/systm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.h,v 1.2.2.2 2002/01/10 19:56:56 thorpej Exp $	*/
+/*	$NetBSD: pciconf.h,v 1.2.2.3 2002/03/16 16:01:16 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -55,9 +55,3 @@ void	pci_conf_interrupt __P((pci_chipset_tag_t, int, int, int, int, int *));
 #define PCI_CONF_ENABLE_BM	0x20
 
 #define PCI_CONF_ALL		0x3f
-
-#ifdef __HAVE_PCI_CONF_HOOK
-/* Defined in machdep code. returns 0 if it's*/
-/* args: chipset_tag, bus,dev, function, id */
-int	pci_conf_hook(pci_chipset_tag_t, int, int, int, int);
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vripreg.h,v 1.3.2.2 2002/01/10 19:44:15 thorpej Exp $	*/
+/*	$NetBSD: vripreg.h,v 1.3.2.3 2002/03/16 15:58:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -143,12 +143,7 @@
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>
 
-#if !defined SINGLE_VRIP_BASE
-
-#error currently missconfiguration.
-#error NEED switch VRIP_BASE_ADDR by vr cpu type.
-
-#else
+#if defined SINGLE_VRIP_BASE
 
 #if defined VRGROUP_4181
 #define VRIP_BASE_ADDR		0x0a000000

@@ -1,4 +1,4 @@
-/*	$NetBSD: timekeeper.c,v 1.1.2.2 2001/08/25 06:15:36 thorpej Exp $	*/
+/*	$NetBSD: timekeeper.c,v 1.1.2.3 2002/03/16 15:58:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
-#include <mvme68k/mvme68k/clockvar.h>
+#include <dev/mvme/clockvar.h>
 
 #include <mvme68k/dev/mainbus.h>
 
@@ -108,7 +108,8 @@ timekeeper_attach(parent, self, aux)
 
 	bus_space_map(ma->ma_bust, ma->ma_offset, sc->sc_size, 0, &sc->sc_bush);
 
-	todr = mk48txx_attach(sc->sc_bust, sc->sc_bush, model, YEAR0);
+	todr = mk48txx_attach(sc->sc_bust, sc->sc_bush, model, YEAR0,
+	    NULL, NULL);
 	if (todr == NULL)
 		panic("\ntimekeeper_attach");
 

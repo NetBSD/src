@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.26.2.2 2002/02/11 20:09:02 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.26.2.3 2002/03/16 15:59:44 jdolecek Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -17,7 +17,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 ## The miniroot size must be kept in sync manually with the size of
 ## the `ramdisk' image (which is built in distrib/sparc/ramdisk).
-options 	MINIROOTSIZE=1360	# size of memory disk, in blocks
+options 	MEMORY_DISK_SIZE=1360	# size of memory disk, in blocks
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 
@@ -76,7 +76,7 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 ## NFS boot options; default on sparc is the bootparam protocol
 options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 #### Debugging options
 
@@ -453,7 +453,7 @@ en0	at sbus? slot ? offset ?
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs

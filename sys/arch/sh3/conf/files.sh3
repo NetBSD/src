@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.12.2.2 2002/01/10 19:48:37 thorpej Exp $
+#	$NetBSD: files.sh3,v 1.12.2.3 2002/03/16 15:59:34 jdolecek Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -6,15 +6,16 @@
 defparam PCLOCK
 
 file	arch/sh3/sh3/db_disasm.c	ddb
-file	arch/sh3/sh3/db_interface.c	ddb
+file	arch/sh3/sh3/db_interface.c	ddb | kgdb
 file	arch/sh3/sh3/db_memrw.c		ddb | kgdb
 file	arch/sh3/sh3/db_trace.c		ddb
 file	arch/sh3/sh3/sh3disasm.c	ddb
 file	arch/sh3/sh3/in_cksum.S		inet
 file	netinet/in4_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
+file	arch/sh3/sh3/exception_vector.S
 file	arch/sh3/sh3/Locore.c
-file	arch/sh3/sh3/math_emulate.c	math_emulate
+file	arch/sh3/sh3/locore_subr.S
 file	arch/sh3/sh3/mem.c
 file	netns/ns_cksum.c		ns
 file	arch/sh3/sh3/pmap.c
@@ -23,6 +24,14 @@ file	arch/sh3/sh3/sh3_machdep.c
 file	arch/sh3/sh3/sys_machdep.c
 file	arch/sh3/sh3/trap.c
 file	arch/sh3/sh3/vm_machdep.c
+file	arch/sh3/sh3/cache.c
+file	arch/sh3/sh3/cache_sh3.c	sh3
+file	arch/sh3/sh3/cache_sh4.c	sh4
+file	arch/sh3/sh3/mmu.c
+file	arch/sh3/sh3/mmu_sh3.c		sh3
+file	arch/sh3/sh3/mmu_sh4.c		sh4
+file	arch/sh3/sh3/clock.c
+file	arch/sh3/sh3/devreg.c		sh3 & sh4
 file	dev/clock_subr.c
 file	dev/cninit.c
 file	dev/cons.c

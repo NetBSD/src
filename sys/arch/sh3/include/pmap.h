@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13.2.1 2001/09/13 01:14:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13.2.2 2002/03/16 15:59:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -38,8 +38,9 @@
 #ifndef _SH3_PMAP_H_
 #define _SH3_PMAP_H_
 
-#include <machine/cpufunc.h>
-#include <machine/pte.h>
+#include <sh3/cache.h>
+#include <sh3/psl.h>
+#include <sh3/pte.h>
 #include <uvm/uvm_object.h>
 
 /*
@@ -222,12 +223,6 @@
 #define ptp_i2v(I)	((I) * NBPD)	/* index => VA */
 #define ptp_v2i(V)	((V) / NBPD)	/* VA => index (same as pdei) */
 
-/*
- * PG_AVAIL usage: we make use of the ignored bits of the PTE
- */
-
-#define PG_PVLIST	PG_AVAIL1	/* mapping has entry on pvlist */
-
 #ifdef _KERNEL
 /*
  * pmap data structures: see pmap.c for details of locking.
@@ -359,13 +354,6 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  * macros
  */
 
-/* XXX XXX XXX */
-#ifdef SH4
-#define	TLBFLUSH()			(cacheflush(), tlbflush())
-#else
-#define	TLBFLUSH()			tlbflush()
-#endif
-
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
@@ -384,23 +372,23 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  * prototypes
  */
 
-void		pmap_activate __P((struct proc *));
-void		pmap_bootstrap __P((vaddr_t));
-boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
-void		pmap_deactivate __P((struct proc *));
-void		pmap_page_remove  __P((struct vm_page *));
-static void	pmap_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
-void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
-boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-void		pmap_transfer __P((struct pmap *, struct pmap *, vaddr_t,
-				   vsize_t, vaddr_t, boolean_t));
-static void	pmap_update_pg __P((vaddr_t));
-static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
-void		pmap_write_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
+void		pmap_activate(struct proc *);
+void		pmap_bootstrap(vaddr_t);
+boolean_t	pmap_change_attrs(struct vm_page *, int, int);
+void		pmap_deactivate(struct proc *);
+void		pmap_page_remove (struct vm_page *);
+void		pmap_protect(struct pmap *, vaddr_t,
+				vaddr_t, vm_prot_t);
+void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
+boolean_t	pmap_test_attrs(struct vm_page *, int);
+void		pmap_transfer(struct pmap *, struct pmap *, vaddr_t,
+				   vsize_t, vaddr_t, boolean_t);
+void		pmap_update_pg(vaddr_t);
+void		pmap_update_2pg(vaddr_t,vaddr_t);
+void		pmap_write_protect(struct pmap *, vaddr_t,
+				vaddr_t, vm_prot_t);
 
-vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
+vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
@@ -415,94 +403,13 @@ vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
  *	vm_page.h:PHYS_TO_VM_PAGE, vm_physseg_find
  *	machdep.c:pmap_bootstrap (uvm_page_physload, etc)
  */
-#if 0
-/* broken */
-#define PMAP_MAP_POOLPAGE(pa)	SH3_PHYS_TO_P1SEG((pa))
-#define PMAP_UNMAP_POOLPAGE(va)	SH3_P1SEG_TO_PHYS((va))
-#else
+/* XXX broken */
 #define PMAP_MAP_POOLPAGE(pa)	(pa)
 #define PMAP_UNMAP_POOLPAGE(va)	(va)
-#endif
 
-/*
- * inline functions
- */
-
-/*
- * pmap_update_pg: flush one page from the TLB
- */
-
-__inline static void
-pmap_update_pg(va)
-	vaddr_t va;
-{
-#ifdef SH4
-#if 1
-	tlbflush();
-	cacheflush();
-#else
-	u_int32_t *addr, data;
-
-	addr = (void *)(0xf6000080 | (va & 0x00003f00)); /* 13-8 */
-	data =         (0x00000000 | (va & 0xfffff000)); /* 31-17, 11-10 */
-	*addr = data;
-#endif
-#else
-	u_int32_t *addr, data;
-
-	addr = (void *)(0xf2000080 | (va & 0x0001f000)); /* 16-12 */
-	data =         (0x00000000 | (va & 0xfffe0c00)); /* 31-17, 11-10 */
-
-	*addr = data;
-#endif
-}
-
-/*
- * pmap_update_2pg: flush two pages from the TLB
- */
-
-__inline static void
-pmap_update_2pg(va, vb)
-	vaddr_t va, vb;
-{
-#ifdef SH4
-	tlbflush();
-	cacheflush();
-#else
-	pmap_update_pg(va);
-	pmap_update_pg(vb);
-#endif
-}
-
-/*
- * pmap_protect: change the protection of pages in a pmap
- *
- * => this function is a frontend for pmap_remove/pmap_write_protect
- * => we only have to worry about making the page more protected.
- *	unprotecting a page is done on-demand at fault time.
- */
-
-__inline static void
-pmap_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
-{
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			pmap_write_protect(pmap, sva, eva, prot);
-		} else {
-			pmap_remove(pmap, sva, eva);
-		}
-	}
-}
-
-vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
-paddr_t vtophys __P((vaddr_t));
-void pmap_emulate_reference __P((struct proc *, vaddr_t, int, int));
-
-/* XXX */
-#define PG_U 0		/* referenced bit */
+vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
+paddr_t vtophys(vaddr_t);
+void pmap_emulate_reference(struct proc *, vaddr_t, int, int);
 
 #endif /* _KERNEL */
 #endif /* _SH3_PMAP_H_ */

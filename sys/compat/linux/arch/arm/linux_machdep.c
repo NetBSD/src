@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.3.2.2 2002/02/11 20:09:30 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.3.2.3 2002/03/16 16:00:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.3.2.2 2002/02/11 20:09:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.3.2.3 2002/03/16 16:00:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,8 @@ linux_sendsig(catcher, sig, mask, code)
 	/* Linux doesn't save the onstack flag in sigframe */
 
 	/* Save signal mask. */
-	native_to_linux_old_extra_sigset(mask, &frame.sf_sc.sc_mask,
-	    frame.sf_extramask);
+	native_to_linux_old_extra_sigset(&frame.sf_sc.sc_mask,
+	    frame.sf_extramask, mask);
 
 	/* Other state (mostly faked) */
 	/*
@@ -188,6 +188,8 @@ linux_sendsig(catcher, sig, mask, code)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 }
+
+#if 0
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -207,6 +209,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 	/* XXX XAX write me */
 	return(ENOSYS);
 }
+#endif
 
 int
 linux_sys_sigreturn(p, v, retval)
@@ -267,8 +270,8 @@ linux_sys_sigreturn(p, v, retval)
 	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_old_extra_to_native_sigset(&frame.sf_sc.sc_mask,
-	    frame.sf_extramask, &mask);
+	linux_old_extra_to_native_sigset(&mask, &frame.sf_sc.sc_mask,
+	    frame.sf_extramask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
@@ -278,8 +281,9 @@ linux_sys_sigreturn(p, v, retval)
  * major device numbers remapping
  */
 dev_t
-linux_fakedev(dev)
+linux_fakedev(dev, raw)
 	dev_t dev;
+	int raw;
 {
   /* XXX write me */
   return dev;

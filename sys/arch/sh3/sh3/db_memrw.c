@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.3 2000/09/04 23:11:42 tsubai Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3.4.1 2002/03/16 15:59:41 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -47,12 +47,9 @@
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char	*src;
+	char *src;
 
 	src = (char *)addr;
 	while (size-- > 0)
@@ -63,12 +60,9 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t		addr;
-	register size_t	size;
-	register char	*data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char	*dst;
+	char *dst;
 
 	dst = (char *)addr;
 

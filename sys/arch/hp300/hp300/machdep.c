@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147.2.3 2002/02/11 20:07:48 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.2.4 2002/03/16 15:57:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -595,10 +595,10 @@ identifycpu()
 	printf("%s\n", cpu_model);
 #ifdef DIAGNOSTIC
 	printf("cpu: delay divisor %d", delay_divisor);
-#endif
 	if (mmuid)
 		printf(", mmuid %d", mmuid);
 	printf("\n");
+#endif
 
 	/*
 	 * Now that we have told the user what they have,
@@ -855,7 +855,7 @@ cpu_dump(dump, blknop)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.22.2.1 2001/09/13 01:14:33 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.22.2.2 2002/03/16 15:59:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -263,7 +263,7 @@ ie_obio_match(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				1,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
@@ -305,11 +305,10 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	sc->ie_bus_write24 = ie_obio_write24;
 	sc->sc_msize = msize = 65536; /* XXX */
 
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 0,
-			 sizeof(struct ieob),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
+			  sizeof(struct ieob),
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}

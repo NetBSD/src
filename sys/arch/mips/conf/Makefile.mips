@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.14.2.2 2002/01/10 19:45:57 thorpej Exp $
+#	$NetBSD: Makefile.mips,v 1.14.2.3 2002/03/16 15:58:33 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -77,39 +77,6 @@ locore.o: ${MIPS}/mips/locore.S assym.h
 
 locore_machdep.o: ${THISMIPS}/${MACHINE}/locore_machdep.S assym.h
 	${NORMAL_S}
-
-.if !empty(IDENT:M-DMIPS1)
-MD_OBJS+=	locore_mips1.o
-MD_SFILES+=	${MIPS}/mips/locore_mips1.S
-locore_mips1.o: ${MIPS}/mips/locore_mips1.S assym.h
-	${NORMAL_S}
-.endif
-
-.if !empty(IDENT:M-DMIPS3)
-MD_OBJS+=	locore_mips3.o
-MD_SFILES+=	${MIPS}/mips/locore_mips3.S
-locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
-	${NORMAL_S}
-.endif
-
-.if !empty(IDENT:M-DMIPS3_5900)
-MD_OBJS+=	locore_r5900.o
-MD_SFILES+=	${MIPS}/mips/r5900/locore_r5900.S
-locore_r5900.o: ${MIPS}/mips/r5900/locore_r5900.S assym.h
-	${NORMAL_S}
-
-MD_OBJS+=	r5900_machdep.o
-MD_CFILES+=	${MIPS}/mips/r5900/r5900_machdep.c
-r5900_machdep.o: ${MIPS}/mips/r5900/r5900_machdep.c
-	${NORMAL_C}
-.endif
-
-.if empty(IDENT:M-DNOFPU)
-MD_OBJS+=	fp.o
-MD_SFILES+=	${MIPS}/mips/fp.S
-fp.o: ${MIPS}/mips/fp.S assym.h
-	${NORMAL_S}
-.endif
 
 ##
 ## (5) link settings

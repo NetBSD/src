@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.2.2.2 2002/02/11 20:07:49 jdolecek Exp $	*/
+/*	$NetBSD: debug.h,v 1.2.2.3 2002/03/16 15:57:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@ int	DPRINTF_DEBUG = DPRINTF_LEVEL;
  * debug print utility
  */
 #define dbg_bit_print(a) __dbg_bit_print((a), sizeof(typeof(a)), 0, 0, 0, 1)
+#define dbg_bit_print_msg(a, m)						\
+	__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, (m), 1)
 void __dbg_bit_print(u_int32_t, int, int, int, char *, int);
 void dbg_bitmask_print(u_int32_t, u_int32_t, const char *);
 void dbg_draw_line(int);
@@ -114,3 +116,15 @@ void dbg_banner_line(void);
 	const char funcname[] = __FUNCTION__;				\
 	dbg_banner_title(funcname, sizeof funcname);			\
 }
+
+/* HPC_DEBUG_LCD */
+#define RGB565_BLACK		0x0000
+#define RGB565_RED		0xf800
+#define RGB565_GREEN		0x07e0
+#define RGB565_YELLOW		0xffe0
+#define RGB565_BLUE		0x001f
+#define RGB565_MAGENTA		0xf81f
+#define RGB565_CYAN		0x07ff
+#define RGB565_WHITE		0xffff
+
+void dbg_lcd_test(void);

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.30.4.1 2002/01/10 19:47:55 thorpej Exp $
+# $NetBSD: Makefile.booters,v 1.30.4.2 2002/03/16 15:59:14 jdolecek Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -92,8 +92,7 @@ SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
 .endif
 .if defined(SECONDARY_PROG)
 SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes
-# for now:
-SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
+SAMISCMAKEFLAGS+=SA_INCLUDE_NET=yes
 .endif
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
@@ -111,6 +110,16 @@ ${PROG}: machine mips pmax ${OBJS} ${LIBS}
 .if defined(CHECKSIZE_CMD)
 	@${CHECKSIZE_CMD} ${PROG} ${PRIMARY_MAX_LOAD} ${PRIMARY_MAX_TOTAL} || \
 	    (rm -f ${PROG} ; false)
+.endif
+.if defined(DO_ECOFF_BINARY)
+	@echo -n "Creating ECOFF binary... "
+	@mv ${PROG} ${PROG}.elf
+.if defined(USETOOLS)
+	@${TOOLDIR}/bin/nbmips-elf2ecoff ${PROG}.elf ${PROG}
+.else
+	@elf2ecoff ${PROG}.elf ${PROG}
+.endif
+	@echo done.
 .endif
 
 .include <bsd.prog.mk>

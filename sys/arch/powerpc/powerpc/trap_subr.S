@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.10.2.2 2002/01/10 19:48:08 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.10.2.3 2002/03/16 15:59:19 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -193,7 +193,7 @@ _C_LABEL(extint):
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
 	lis	1,intstk+INTSTK@ha	/* get interrupt stack */
-	addi	1,1,intstk+INTSTK@l
+	addi	1,1,intstk+INTSTK@l	/* this is really intr_depth! */
 	lwz	31,0(1)			/* were we already running on intstk? */
 	addic.	31,31,1
 	stw	31,0(1)
@@ -604,6 +604,7 @@ s_trap:
 /* Obliterate SRs so BAT spills work correctly */
 	lis	31,EMPTY_SEGMENT@h
 	ori	31,31,EMPTY_SEGMENT@l
+	mtsr	0,31
 	mtsr	1,31
 	mtsr	2,31
 	mtsr	3,31
@@ -759,7 +760,8 @@ s_isitrap:
 	bc	4,17,99f;	/* branch if PSL_PR is false */		\
 	lis	3,EMPTY_SEGMENT@h;					\
 	ori	3,3,EMPTY_SEGMENT@l;					\
-	mtsr	1,3;		/* reset SRs so BAT spills work */	\
+	mtsr	0,3;		/* reset SRs so BAT spills work */	\
+	mtsr	1,3;							\
 	mtsr	2,3;							\
 	mtsr	3,3;							\
 	mtsr	4,3;							\

@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.8.4.3 2002/02/11 20:10:14 jdolecek Exp $	*/
+/*	$NetBSD: stic.c,v 1.8.4.4 2002/03/16 16:01:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.4.3 2002/02/11 20:10:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.4.4 2002/03/16 16:01:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,10 +338,16 @@ stic_init(struct stic_info *si)
 
 	/* Get a font and set up screen metrics. */
 	wsfont_init();
-	cookie = wsfont_find(NULL, 0, 0, 0);
 
-	if (wsfont_lock(cookie, &si->si_font,
-	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0)
+	cookie = wsfont_find(NULL, 12, 0, 2, WSDISPLAY_FONTORDER_R2L,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 2, WSDISPLAY_FONTORDER_R2L,
+		    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		panic("stic_init: font table is empty\n");
+
+	if (wsfont_lock(cookie, &si->si_font))
 		panic("stic_init: couldn't lock font\n");
 
 	si->si_fontw = si->si_font->fontwidth;
@@ -389,6 +395,7 @@ stic_reset(struct stic_info *si)
 	config = (yconfig << 1) | xconfig;
 	si->si_stampw = (xconfig ? 5 : 4);
 	si->si_stamph = (1 << yconfig);
+	si->si_stamphm = si->si_stamph - 1;
 #ifdef notyet
 	si->si_option = (char)((modtype >> 12) & 3);
 #endif
@@ -1035,7 +1042,7 @@ stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 	i = ((font->fontheight > 16 ? 16 : font->fontheight) << 2) - 1;
 	v1 = (c << 19) | ((r << 3) + i);
 	v2 = ((c + font->fontwidth) << 19) | (v1 & 0xffff);
-	xya = XYMASKADDR(si->si_stampw, si->si_stamph, c, r, 0, 0);
+	xya = XYMASKADDR(si->si_stampw, si->si_stamphm, c, r, 0, 0);
 
 	pb[4] = PACK(fr, 0);
 	pb[5] = PACK(fr, 2);
@@ -1426,7 +1433,7 @@ stic_set_hwcurpos(struct stic_info *si)
 }
 
 /*
- * STIC control inteface.  We have a seperate device for mapping the board,
+ * STIC control inteface.  We have a separate device for mapping the board,
  * because access to the DMA engine means that it's possible to circumvent
  * the securelevel mechanism.  Given the way devices work in the BSD kernel,
  * and given the unfortunate design of the mmap() call it's near impossible

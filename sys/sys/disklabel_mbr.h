@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_mbr.h,v 1.6 2000/12/24 13:30:51 lukem Exp $	*/
+/*	$NetBSD: disklabel_mbr.h,v 1.6.4.1 2002/03/16 16:02:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Christopher G. Demetriou
@@ -62,6 +62,9 @@ struct mbr_partition {
 };
 #endif
 
+/* Known MBR flags: */
+#define	MBR_FLAGS_ACTIVE	0x80	/* This is the boot partition */
+
 /* Known MBR partition types: */
 #define	MBR_PTYPE_NETBSD	0xa9	/* NetBSD partition type */
 #define	MBR_PTYPE_386BSD	0xa5	/* 386BSD partition type */
@@ -78,6 +81,7 @@ struct mbr_partition {
 #define	MBR_PTYPE_LNXEXT2	0x83	/* Linux native */
 #define	MBR_PTYPE_EXT_LNX	0x85	/* Linux extended partition */
 #define MBR_PTYPE_NTFSVOL	0x87	/* NTFS volume set or HPFS mirrored */
+#define	MBR_PTYPE_PREP		0x41	/* PReP */
 
 /* Isolate the relevant bits to get sector and cylinder. */
 #define	MBR_PSECT(s)	((s) & 0x3f)

@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.13 2001/01/15 20:19:53 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.13.4.1 2002/03/16 15:57:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -31,23 +31,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
+#include <sys/kernel.h>	/* cold */
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
-#include <machine/intr.h>
-#include <sh3/cpufunc.h>
 #include <sh3/intcreg.h>
 #include <sh3/trapreg.h>
-#include <machine/shbvar.h>
 
-#if 0
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmareg.h>
-#endif
+#include <machine/shbvar.h>
 
 #include <net/netisr.h>
 
@@ -271,20 +262,6 @@ intr_calculatemasks()
 		intrmask[irq] = irqs;
 	}
 
-#ifdef	TODO
-	/* Lastly, determine which IRQs are actually in use. */
-	{
-		int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
-			if (intrhand[irq])
-				irqs |= 1 << irq;
-		if (irqs >= 0x100) /* any IRQs >= 8 in use */
-			irqs |= 1 << IRQ_SLAVE;
-		imen = ~irqs;
-		SET_ICUS();
-	}
-#endif
-
 }
 
 /*
@@ -306,27 +283,6 @@ shb_intr_establish(irq, type, level, ih_fun, ih_arg)
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
 		panic("shb_intr_establish: can't malloc handler info");
-
-#ifdef TODO
-	if (type == IST_NONE)
-		panic("intr_establish: bogus irq or type");
-
-	switch (intrtype[irq]) {
-	case IST_NONE:
-		intrtype[irq] = type;
-		break;
-	case IST_EDGE:
-	case IST_LEVEL:
-		if (type == intrtype[irq])
-			break;
-	case IST_PULSE:
-		if (type != IST_NONE)
-			panic("intr_establish: can't share %s with %s",
-			    shb_intr_typename(intrtype[irq]),
-			    shb_intr_typename(type));
-		break;
-	}
-#endif
 
 	/*
 	 * Figure out where to put the handler.
@@ -386,18 +342,12 @@ intrhandler(p1, p2, p3, p4, frame)
 	unsigned int irq_num;
 	int ocpl;
 
-#if 0
-	printf("intr_handler:int_no %x spc %x ssr %x r15 %x curproc %x\n",
-	       frame.tf_trapno, frame.tf_spc, frame.tf_ssr, frame.tf_r15,
-	       (int)curproc);
-#endif
-
 	irl = (unsigned int)frame.tf_trapno;
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
-	} else if (irl == INTEVT_TMU1) {
-		irq_num = TMU1_IRQ;
+	} else if (irl == INTEVT_TMU0) {
+		irq_num = TMU0_IRQ;
 	} else if (IS_INTEVT_SCI0(irl)) {	/* XXX TOO DIRTY */
 		irq_num = SCI_IRQ;
 #ifdef SH4
@@ -418,17 +368,12 @@ intrhandler(p1, p2, p3, p4, frame)
 	cpl |= intrmask[irq_num];
 	ih = intrhand[irq_num];
 	if (ih == NULL) {
-
 		/* this is stray interrupt */
 		cpl = ocpl;
-
-#if 0	/* This is commented by T.Horiuchi */
-		unmask_irq(irq_num);
-#endif
 		return 1;
 	}
 
-	enable_ext_intr();
+	_cpu_intr_resume(0);
 	while (ih) {
 		if (ih->ih_arg)
 			(*ih->ih_fun)(ih->ih_arg);
@@ -436,15 +381,12 @@ intrhandler(p1, p2, p3, p4, frame)
 			(*ih->ih_fun)(&frame);
 		ih = ih->ih_next;
 	}
-	disable_ext_intr();
+	_cpu_intr_suspend();
 
 	cpl = ocpl;
 
 	unmask_irq(irq_num);
 
-#if 0
-	printf("intr_handler:end\n");
-#endif
 	return 1;
 }
 
@@ -463,13 +405,6 @@ check_ipending(p1, p2, p3, p4, frame)
 	if (ir == 0)
 		return 0;
 
-#if 0
-	mask = 1;
-	for (i = 0; i < MASK_LEN; i++, mask <<= 1) {
-		if (ir & mask)
-			break;
-	}
-#else
 	mask = 1 << IRQ_LOW;
 	for (i = IRQ_LOW; i <= IRQ_HIGH; i++, mask <<= 1) {
 		if (ir & mask)
@@ -482,7 +417,6 @@ check_ipending(p1, p2, p3, p4, frame)
 				break;
 		}
 	}
-#endif
 
 	if ((mask & ipending) == 0)
 		goto restart;
@@ -491,10 +425,10 @@ check_ipending(p1, p2, p3, p4, frame)
 
 	if (i < SHB_MAX_HARDINTR) {
 		/* set interrupt event register, this value is referenced in ihandler */
-		SHREG_INTEVT = (i << 5) + 0x200;
+		_reg_write_4(SH_(INTEVT), (i << 5) + 0x200);
 	} else {
 		/* This is software interrupt */
-		SHREG_INTEVT = INTEVT_SOFT+i;
+		_reg_write_4(SH_(INTEVT), INTEVT_SOFT + i);
 	}
 
 	return 1;
@@ -519,46 +453,32 @@ mask_irq(irq)
 	int irq;
 {
 	switch (irq) {
-	case TMU1_IRQ:
+	case TMU0_IRQ:
 #ifdef SH7709A_BROKEN_IPR
-		ipr[IPRA] &= ~((15)<<8);
-		SHREG_IPRA = ipr[IPRA];
+		ipr[IPRA] &= ~((15)<<12);
+		_reg_write_2(SH3_IPRA, ipr[IPRA]);
 #else
-		SHREG_IPRA &= ~((15)<<8);
+		_reg_write_2(SH3_IPRA, _reg_read_2(SH3_IPRA) & ~((15)<<12));
 #endif
 		break;
 	case SCI_IRQ:
 #ifdef SH7709A_BROKEN_IPR
 		ipr[IPRB] &= ~((15)<<4);
-		SHREG_IPRB = ipr[IPRB];
+		_reg_write_2(SH3_IPRB, ipr[IPRB]);
 #else
-		SHREG_IPRB &= ~((15)<<4);
+		_reg_write_2(SH3_IPRB, _reg_read_2(SH3_IPRB) & ~((15)<<4));
 #endif
 		break;
 #if defined(SH7709) || defined(SH7709A) || defined(SH7729)
 	case SCIF_IRQ:
 #ifdef SH7709A_BROKEN_IPR
 		ipr[IPRE] &= ~((15)<<4);
-		SHREG_IPRE = ipr[IPRE];
+		_reg_write_2(SH3_IPRE, ipr[IPRE]);
 #else
-		SHREG_IPRE &= ~((15)<<4);
+		_reg_write_2(SH3_IPRE, _reg_read_2(SH3_IPRE) & ~((15)<<4));
 #endif
 		break;
-#endif
-#if 0
-	case IRQ0_IRQ:
-		SHREG_IPRC &= ~(15);
-		break;
-	case IRQ1_IRQ:
-		SHREG_IPRC &= ~((15)<<4);
-		break;
-	case IRQ2_IRQ:
-		SHREG_IPRC &= ~((15)<<8);
-		break;
-	case DMAC_IRQ:
-		SHREG_IPRE &= ~((15)<<12);
-		break;
-#endif
+#endif /* SH7709 || SH7709A || SH7729 */
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("masked unknown irq(%d)!\n", irq);
@@ -571,80 +491,55 @@ unmask_irq(irq)
 {
 
 	switch (irq) {
-	case TMU1_IRQ:
+	case TMU0_IRQ:
 #ifdef SH7709A_BROKEN_IPR
-		ipr[ IPRA ] |= ((15 - irq)<<8);
-		SHREG_IPRA = ipr[ IPRA ];
+		ipr[ IPRA ] |= ((15 - irq)<<12);
+		_reg_write_2(SH3_IPRA, ipr[IPRA]);
 #else
-		SHREG_IPRA |= ((15 - irq)<<8);
+		_reg_write_2(SH3_IPRA,
+			     _reg_read_2(SH3_IPRA) | ((15 - irq)<<12));
 #endif
 		break;
 	case SCI_IRQ:
 #ifdef SH7709A_BROKEN_IPR
 		ipr[IPRB] |= ((15 - irq)<<4);
-		SHREG_IPRB = ipr[IPRB];
+		_reg_write_2(SH3_IPRB, ipr[IPRB]);
 #else
-		SHREG_IPRB |= ((15 - irq)<<4);
+		_reg_write_2(SH3_IPRB,
+			     _reg_read_2(SH3_IPRB) | ((15 - irq)<<4));
 #endif
 		break;
 #if defined(SH7709) || defined(SH7709A) || defined(SH7729)
 	case SCIF_IRQ:
 #ifdef SH7709A_BROKEN_IPR
 		ipr[ IPRE ] |= ((15 - irq)<<4);
-		SHREG_IPRE = ipr[ IPRE ];
+		_reg_write_2(SH7709_IPRE, ipr[IPRE]);
 #else
-		SHREG_IPRE |= ((15 - irq)<<4);
+		_reg_write_2(SH3_IPRE,
+			     _reg_read_2(SH3_IPRE) | ((15 - irq)<<4));
 #endif
 		break;
-#endif
-#if 0
-	case IRQ0_IRQ:
-		SHREG_IPRC |= (15 - irq);
-		break;
-	case IRQ1_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<4);
-		break;
-	case IRQ2_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<8);
-		break;
-	case DMAC_IRQ:
-		SHREG_IPRE |= ((15 - irq)<<12);
-		break;
-#endif
+#endif /* SH7709 || SH7709A || SH7729 */
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("unmasked unknown irq(%d)!\n", irq);
 	}
 }
-#else
+#else /* !SH4 */
 void
 mask_irq(irq)
 	int irq;
 {
 	switch (irq) {
-	case TMU1_IRQ:
-		SHREG_IPRA &= ~((15)<<8);
+	case TMU0_IRQ:
+		_reg_write_2(SH4_IPRA, _reg_read_2(SH4_IPRA) & ~((15) << 12));
 		break;
 	case SCI_IRQ:
-		SHREG_IPRB &= ~((15)<<4);
+		_reg_write_2(SH4_IPRB, _reg_read_2(SH4_IPRB) & ~((15) << 4));
 		break;
 	case SCIF_IRQ:
-		SHREG_IPRC &= ~((15)<<4);
+		_reg_write_2(SH4_IPRC, _reg_read_2(SH4_IPRC) & ~((15) << 4));
 		break;
-#if 0
-	case IRQ0_IRQ:
-		SHREG_IPRC &= ~(15);
-		break;
-	case IRQ1_IRQ:
-		SHREG_IPRC &= ~((15)<<4);
-		break;
-	case IRQ2_IRQ:
-		SHREG_IPRC &= ~((15)<<8);
-		break;
-	case DMAC_IRQ:
-		SHREG_IPRE &= ~((15)<<12);
-		break;
-#endif
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("masked unknown irq(%d)!\n", irq);
@@ -657,35 +552,24 @@ unmask_irq(irq)
 {
 
 	switch (irq) {
-	case TMU1_IRQ:
-		SHREG_IPRA |= ((15 - irq)<<8);
+	case TMU0_IRQ:
+		_reg_write_2(SH4_IPRA,
+		    _reg_read_2(SH4_IPRA) | ((15 - irq) << 12));
 		break;
 	case SCI_IRQ:
-		SHREG_IPRB |= ((15 - irq)<<4);
+		_reg_write_2(SH4_IPRB,
+		    _reg_read_2(SH4_IPRB) | ((15 - irq) << 4));
 		break;
 	case SCIF_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<4);
+		_reg_write_2(SH4_IPRC,
+		    _reg_read_2(SH4_IPRC) | ((15 - irq) << 4));
 		break;
-#if 0
-	case IRQ0_IRQ:
-		SHREG_IPRC |= (15 - irq);
-		break;
-	case IRQ1_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<4);
-		break;
-	case IRQ2_IRQ:
-		SHREG_IPRC |= ((15 - irq)<<8);
-		break;
-	case DMAC_IRQ:
-		SHREG_IPRE |= ((15 - irq)<<12);
-		break;
-#endif
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("unmasked unknown irq(%d)!\n", irq);
 	}
 }
-#endif
+#endif /* !SH4 */
 
 void
 init_soft_intr_handler(void)

@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.16.10.1 2002/01/10 19:45:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16.10.2 2002/03/16 15:58:21 jdolecek Exp $
 
 NOMAN=	# defined
 
 # XXX: bsd.own.mk included so LDSTATIC can be overwridden
 .include <bsd.own.mk>
 
-BINDIR=	/usr/mdec
 PROG=	installboot
 LIBSA=${.CURDIR}/../../../../lib/libsa
 

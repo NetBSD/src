@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.2.6.3 2002/02/11 20:08:16 jdolecek Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.2.6.4 2002/03/16 15:58:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -33,11 +33,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_kgdb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kgdb.h>
 
 #include <sys/termios.h>
 #include <dev/cons.h>
@@ -45,6 +48,7 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/console.h>
 
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
@@ -54,6 +58,8 @@
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461reg.h>
 #include <hpcsh/dev/hd64461/hd64461intcvar.h>
+#include <hpcsh/dev/hd64461/hd64461uartvar.h>
+#include <hpcsh/dev/hd64461/hd64461uartreg.h>
 
 STATIC struct hd64461uart_chip {
 	struct hpcsh_bus_space __tag_body;
@@ -70,8 +76,8 @@ struct hd64461uart_softc {
 
 /* boot console */
 cdev_decl(com);
-void comcnprobe(struct consdev *);
-void comcninit(struct consdev *);
+void hd64461uartcnprobe(struct consdev *);
+void hd64461uartcninit(struct consdev *);
 
 STATIC int hd64461uart_match(struct device *, struct cfdata *, void *);
 STATIC void hd64461uart_attach(struct device *, struct device *, void *);
@@ -92,7 +98,7 @@ STATIC void hd64461uart_write_1(void *, bus_space_handle_t, bus_size_t,
 #endif
 
 void
-comcnprobe(struct consdev *cp)
+hd64461uartcnprobe(struct consdev *cp)
 {
 	int maj;
 
@@ -107,16 +113,39 @@ comcnprobe(struct consdev *cp)
 }
 
 void
-comcninit(struct consdev *cp)
+hd64461uartcninit(struct consdev *cp)
 {
 
 	hd64461uart_init();
 
-	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ, 
+	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ,
 	    CONMODE);	
 
 	hd64461uart_chip.console = 1;
 }
+
+#ifdef KGDB
+int
+hd64461uart_kgdb_init()
+{
+
+	if (strcmp(kgdb_devname, "hd64461uart") != 0)
+		return (1);
+
+	if (hd64461uart_chip.console)
+		return (1);	/* can't share with console */
+
+	hd64461uart_init();
+
+	if (com_kgdb_attach(hd64461uart_chip.io_tag, 0x0, kgdb_rate,
+	    COM_FREQ, CONMODE) != 0) {
+		printf("%s: KGDB console open failed.\n", __FUNCTION__);
+		return (1);
+	}
+
+	return (0);
+}
+#endif /* KGDB */
 
 int
 hd64461uart_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -138,7 +167,8 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_module_id = ha->ha_module_id;
 
-	hd64461uart_init();
+	if (!sc->sc_chip->console)
+		hd64461uart_init();
 
 	csc->sc_iot = sc->sc_chip->io_tag;
 	bus_space_map(csc->sc_iot, 0, 8, 0, &csc->sc_ioh);
@@ -188,7 +218,7 @@ u_int8_t
 hd64461uart_read_1(void *t, bus_space_handle_t h, bus_size_t ofs)
 {
 
-	return *(volatile u_int8_t *)(h + (ofs << 1));
+	return *(__volatile__ u_int8_t *)(h + (ofs << 1));
 }
 
 void
@@ -196,5 +226,5 @@ hd64461uart_write_1(void *t, bus_space_handle_t h, bus_size_t ofs,
     u_int8_t val)
 {
 
-	*(volatile u_int8_t *)(h + (ofs << 1)) = val;	
+	*(__volatile__ u_int8_t *)(h + (ofs << 1)) = val;	
 }

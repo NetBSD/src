@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.2.2.2 2002/01/10 19:52:52 thorpej Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.2.2.3 2002/03/16 16:00:49 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.2.2.2 2002/01/10 19:52:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.2.2.3 2002/03/16 16:00:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.2.2.2 2002/01/10 19:52:52 thorpej 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-
-#define	ACPI_BUT_DEBUG
 
 struct acpibut_softc {
 	struct device sc_dev;		/* base device glue */

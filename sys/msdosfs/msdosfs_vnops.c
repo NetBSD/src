@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.109.2.3 2002/01/10 20:01:55 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.109.2.4 2002/03/16 16:02:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.109.2.3 2002/01/10 20:01:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.109.2.4 2002/03/16 16:02:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1120,6 +1120,10 @@ abortit:
 		}
 		dotdotp = (struct direntry *)bp->b_data + 1;
 		putushort(dotdotp->deStartCluster, dp->de_StartCluster);
+		if (FAT32(pmp)) {
+			putushort(dotdotp->deHighClust,
+				dp->de_StartCluster >> 16);
+		}
 		if ((error = bwrite(bp)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
 			VOP_UNLOCK(fvp, 0);

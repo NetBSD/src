@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.56.2.2 2002/02/11 20:10:25 jdolecek Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.56.2.3 2002/03/16 16:01:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.2 2002/02/11 20:10:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.3 2002/03/16 16:01:52 jdolecek Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -635,7 +635,7 @@ again:
 		}
 		while (cc > 0) {
 			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG - 2 &&
-			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_iflag, ICANON))) {
+			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_lflag, ICANON))) {
 				wakeup((caddr_t)&tp->t_rawq);
 				goto block;
 			}
@@ -693,7 +693,7 @@ ptcpoll(dev, events, p)
 		    ((pti->pt_flags & PF_REMOTE) ?
 		     (tp->t_canq.c_cc == 0) :
 		     ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2) ||
-		      (tp->t_canq.c_cc == 0 && ISSET(tp->t_iflag, ICANON)))))
+		      (tp->t_canq.c_cc == 0 && ISSET(tp->t_lflag, ICANON)))))
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (events & POLLHUP)
@@ -767,19 +767,6 @@ ptyioctl(dev, cmd, data, flag, p)
 		switch (cmd) {
 
 		case TIOCGPGRP:
-#ifdef COMPAT_SUNOS
-			{
-			/*
-			 * I'm not sure about SunOS TIOCGPGRP semantics
-			 * on PTYs, but it's something like this:
-			 */
-			extern struct emul emul_sunos;
-			if (p->p_emul == &emul_sunos && tp->t_pgrp == 0)
-				return (EIO);
-			*(int *)data = tp->t_pgrp->pg_id;
-			return (0);
-			}
-#endif
 			/*
 			 * We avoid calling ttioctl on the controller since,
 			 * in that case, tp must be the controlling terminal.

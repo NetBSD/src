@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.18 2000/06/29 08:28:25 mrg Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.18.4.1 2002/03/16 15:56:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -166,7 +166,7 @@ struct grfabs_et_priv {
 
 /*
  * XXX: called from ite console init routine.
- * Initialize list of posible video modes.
+ * Initialize list of possible video modes.
  */
 void
 et_probe_video(modelp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthreevar.h,v 1.1 2000/08/20 19:58:19 pk Exp $ */
+/*	$NetBSD: cgthreevar.h,v 1.1.6.1 2002/03/16 16:01:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,8 +45,7 @@ struct cgthree_softc {
 	struct device	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
-	bus_type_t	sc_btype;	/* phys address description */
-	bus_addr_t	sc_paddr;	/* for device mmap() */
+	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
 
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */

@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.30.2.2 2002/02/11 20:08:03 jdolecek Exp $
+#	$NetBSD: TX3912,v 1.30.2.3 2002/03/16 15:57:56 jdolecek Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -27,13 +27,13 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 #options 	SYSCALL_DEBUG		# for debug
-#options 	 MINIROOTSIZE=10000
+#options 	 MEMORY_DISK_SIZE=10000
 options 	MSGBUFSIZE=65534	# for dmesg
 
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=12288	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=12288	# size of memory disk, in blocks
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

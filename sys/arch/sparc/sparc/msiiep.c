@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.2.4.2 2002/01/10 19:49:02 thorpej Exp $ */
+/*	$NetBSD: msiiep.c,v 1.2.4.3 2002/03/16 15:59:53 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -194,7 +194,7 @@ msiiep_attach(parent, self, aux)
 	 * PCIC registers are mapped at a fixed VA because counters,
 	 * interrupt registers etc are there.  Just save that mapping.
 	 */
-	sc->sc_bh = (bus_addr_t)MSIIEP_PCIC_VA;
+	sc->sc_bh = (bus_space_handle_t)MSIIEP_PCIC_VA;
 
 	/*
 	 * Ok, we know that we are on ms-IIep and the easy way to get

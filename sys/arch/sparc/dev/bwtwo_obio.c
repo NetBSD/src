@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.4 2000/08/22 21:28:27 pk Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.4.4.1 2002/03/16 15:59:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ bwtwomatch_obio(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				4,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
@@ -163,7 +163,6 @@ bwtwoattach_obio(parent, self, uax)
 
 	/* Remember cookies for bwtwo_mmap() */
 	sc->sc_bustag = oba->oba_bustag;
-	sc->sc_btype = (bus_type_t)0;
 	sc->sc_paddr = (bus_addr_t)oba->oba_paddr;
 
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
@@ -183,12 +182,11 @@ bwtwoattach_obio(parent, self, uax)
 		 */
 		name = "bwtwo/p4";
 
-		if (obio_bus_map(oba->oba_bustag,
-				 oba->oba_paddr,
-				 0,
-				 sizeof(u_int32_t),
-				 BUS_SPACE_MAP_LINEAR,
-				 0, &bh) != 0) {
+		if (bus_space_map(oba->oba_bustag,
+				  oba->oba_paddr,
+				  sizeof(u_int32_t),
+				  BUS_SPACE_MAP_LINEAR,
+				  &bh) != 0) {
 			printf("%s: cannot map pfour register\n",
 				self->dv_xname);
 			return;
@@ -221,12 +219,11 @@ bwtwoattach_obio(parent, self, uax)
 
 	} else {
 		/* A plain bwtwo */
-		if (obio_bus_map(oba->oba_bustag,
-				 oba->oba_paddr,
-				 BWREG_REG,
-				 sizeof(struct fbcontrol),
-				 BUS_SPACE_MAP_LINEAR,
-				 0, &bh) != 0) {
+		if (bus_space_map(oba->oba_bustag,
+				  oba->oba_paddr + BWREG_REG,
+				  sizeof(struct fbcontrol),
+				  BUS_SPACE_MAP_LINEAR,
+				  &bh) != 0) {
 			printf("%s: cannot map control registers\n",
 				self->dv_xname);
 			return;
@@ -242,11 +239,11 @@ bwtwoattach_obio(parent, self, uax)
 
 	if (isconsole) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
-		if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-				 sc->sc_pixeloffset,
-				 ramsize,
-				 BUS_SPACE_MAP_LINEAR,
-				 0, &bh) != 0) {
+		if (bus_space_map(oba->oba_bustag,
+				  oba->oba_paddr + sc->sc_pixeloffset,
+				  ramsize,
+				  BUS_SPACE_MAP_LINEAR,
+				  &bh) != 0) {
 			printf("%s: cannot map pixels\n", self->dv_xname);
 			return;
 		}

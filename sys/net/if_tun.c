@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.43.2.6 2002/01/10 20:02:16 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.43.2.7 2002/03/16 16:02:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.43.2.6 2002/01/10 20:02:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.43.2.7 2002/03/16 16:02:08 jdolecek Exp $");
 
 #include "tun.h"
 
@@ -86,6 +86,9 @@ struct if_clone tun_cloner =
 
 static void tunattach0 __P((struct tun_softc *));
 static void tuninit __P((struct tun_softc *));
+#ifdef ALTQ
+static void tunstart __P((struct ifnet *));
+#endif
 static struct tun_softc *tun_find_unit __P((dev_t));
 
 void
@@ -135,6 +138,9 @@ tunattach0(sc)
 	ifp->if_mtu = TUNMTU;
 	ifp->if_ioctl = tun_ioctl;
 	ifp->if_output = tun_output;
+#ifdef ALTQ
+	ifp->if_start = tunstart;
+#endif
 	ifp->if_flags = IFF_POINTOPOINT;
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_collisions = 0;
@@ -143,6 +149,7 @@ tunattach0(sc)
 	ifp->if_ipackets = 0;
 	ifp->if_opackets = 0;
 	ifp->if_dlt = DLT_NULL;
+	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
@@ -252,7 +259,6 @@ tunclose(dev, flag, mode, p)
 	int	s;
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
-	struct mbuf	*m;
 
 	tp = tun_find_unit(dev);
 
@@ -267,13 +273,9 @@ tunclose(dev, flag, mode, p)
 	/*
 	 * junk all pending output
 	 */
-	do {
-		s = splnet();
-		IF_DEQUEUE(&ifp->if_snd, m);
-		splx(s);
-		if (m)
-			m_freem(m);
-	} while (m);
+	s = splnet();
+	IFQ_PURGE(&ifp->if_snd);
+	splx(s);
 
 	if (ifp->if_flags & IFF_UP) {
 		s = splnet();
@@ -416,7 +418,9 @@ tun_output(ifp, m0, dst, rt)
 	struct proc	*p;
 #ifdef INET
 	int		s;
+	int		error;
 #endif
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	simple_lock(&tp->tun_lock);
 	TUNDEBUG ("%s: tun_output\n", ifp->if_xname);
@@ -429,6 +433,12 @@ tun_output(ifp, m0, dst, rt)
 		return (EHOSTDOWN);
 	}
 
+	/*
+	 * if the queueing discipline needs packet classification,
+	 * do it before prepending link headers.
+	 */
+	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
+ 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
 		/*
@@ -465,15 +475,12 @@ tun_output(ifp, m0, dst, rt)
 		/* FALLTHROUGH */
 	case AF_UNSPEC:
 		s = splnet();
-		if (IF_QFULL(&ifp->if_snd)) {
-			IF_DROP(&ifp->if_snd);
-			m_freem(m0);
+		IFQ_ENQUEUE(&ifp->if_snd, m0, &pktattr, error);
+		if (error) {
 			splx(s);
 			ifp->if_collisions++;
-			simple_unlock(&tp->tun_lock);
-			return (ENOBUFS);
+			return (error);
 		}
-		IF_ENQUEUE(&ifp->if_snd, m0);
 		splx(s);
 		ifp->if_opackets++;
 		break;
@@ -631,7 +638,7 @@ tunread(dev, uio, ioflag)
 
 	s = splnet();
 	do {
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0) {
 			if (tp->tun_flags & TUN_NBIO) {
 				splx(s);
@@ -822,6 +829,40 @@ tunwrite(dev, uio, ioflag)
 	return (error);
 }
 
+#ifdef ALTQ
+/*
+ * Start packet transmission on the interface.
+ * when the interface queue is rate-limited by ALTQ or TBR,
+ * if_start is needed to drain packets from the queue in order
+ * to notify readers when outgoing packets become ready.
+ */
+static void
+tunstart(ifp)
+	struct ifnet *ifp;
+{
+	struct tun_softc *tp = ifp->if_softc;
+	struct mbuf *m;
+	struct proc	*p;
+
+	if (!ALTQ_IS_ENABLED(&ifp->if_snd) && !TBR_IS_ENABLED(&ifp->if_snd))
+		return;
+
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m != NULL) {
+		if (tp->tun_flags & TUN_RWAIT) {
+			tp->tun_flags &= ~TUN_RWAIT;
+			wakeup((caddr_t)tp);
+		}
+		if (tp->tun_flags & TUN_ASYNC && tp->tun_pgrp) {
+			if (tp->tun_pgrp > 0)
+				gsignal(tp->tun_pgrp, SIGIO);
+			else if ((p = pfind(-tp->tun_pgrp)) != NULL)
+				psignal(p, SIGIO);
+		}
+		selwakeup(&tp->tun_rsel);
+	}
+}
+#endif /* ALTQ */
 /*
  * tunpoll - the poll interface, this is only useful on reads
  * really. The write detect always returns true, write never blocks
@@ -849,7 +890,7 @@ tunpoll(dev, events, p)
 	TUNDEBUG("%s: tunpoll\n", ifp->if_xname);
 
 	if (events & (POLLIN | POLLRDNORM)) {
-		if (ifp->if_snd.ifq_len > 0) {
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0) {
 			TUNDEBUG("%s: tunpoll q=%d\n", ifp->if_xname,
 			    ifp->if_snd.ifq_len);
 			revents |= events & (POLLIN | POLLRDNORM);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.9.2.1 2001/08/25 06:15:35 thorpej Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.9.2.2 2002/03/16 15:58:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,8 @@
 #include <machine/psl.h>
 #include <machine/bus.h>
 
-#include <mvme68k/mvme68k/clockvar.h>
+#include <dev/mvme/clockvar.h>
+
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 

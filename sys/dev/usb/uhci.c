@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.135.2.4 2002/02/11 20:10:16 jdolecek Exp $	*/
+/*	$NetBSD: uhci.c,v 1.135.2.5 2002/03/16 16:01:37 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.135.2.4 2002/02/11 20:10:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.135.2.5 2002/03/16 16:01:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,7 @@ Static void		uhci_idone(uhci_intr_info_t *);
 Static void		uhci_abort_xfer(usbd_xfer_handle, usbd_status status);
 
 Static void		uhci_timeout(void *);
+Static void		uhci_timeout_task(void *);
 Static void		uhci_add_ls_ctrl(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_add_hs_ctrl(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_add_bulk(uhci_softc_t *, uhci_soft_qh_t *);
@@ -1192,7 +1193,7 @@ uhci_intr1(uhci_softc_t *sc)
 	}
 #endif
 
-	status = UREAD2(sc, UHCI_STS);
+	status = UREAD2(sc, UHCI_STS) & UHCI_STS_ALLINTRS;
 	if (status == 0)	/* The interrupt was not for us. */
 		return (0);
 
@@ -1272,6 +1273,11 @@ uhci_softintr(void *v)
 	for (ii = LIST_FIRST(&sc->sc_intrhead); ii; ii = LIST_NEXT(ii, list))
 		uhci_check_intr(sc, ii);
 
+	if (sc->sc_softwake) {
+		sc->sc_softwake = 0;
+		wakeup(&sc->sc_softwake);
+	}
+
 	sc->sc_bus.intr_context--;
 }
 
@@ -1289,6 +1295,12 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 		return;
 	}
 #endif
+	if (ii->xfer->status == USBD_CANCELLED ||
+	    ii->xfer->status == USBD_TIMEOUT) {
+		DPRINTF(("uhci_check_intr: aborted xfer=%p\n", ii->xfer));
+		return;
+	}
+
 	if (ii->stdstart == NULL)
 		return;
 	lstd = ii->stdend;
@@ -1357,12 +1369,6 @@ uhci_idone(uhci_intr_info_t *ii)
 		splx(s);
 	}
 #endif
-
-	if (xfer->status == USBD_CANCELLED ||
-	    xfer->status == USBD_TIMEOUT) {
-		DPRINTF(("uhci_idone: aborted xfer=%p\n", xfer));
-		return;
-	}
 
 	if (xfer->nframes != 0) {
 		/* Isoc transfer, do things differently. */
@@ -1459,17 +1465,33 @@ void
 uhci_timeout(void *addr)
 {
 	uhci_intr_info_t *ii = addr;
+	struct uhci_xfer *uxfer = UXFER(ii->xfer);
+	struct uhci_pipe *upipe = (struct uhci_pipe *)uxfer->xfer.pipe;
+	uhci_softc_t *sc = (uhci_softc_t *)upipe->pipe.device->bus;
 
-	DPRINTF(("uhci_timeout: ii=%p\n", ii));
+	DPRINTF(("uhci_timeout: uxfer=%p\n", uxfer));
 
-#ifdef UHCI_DEBUG
-	if (uhcidebug > 10)
-		uhci_dump_tds(ii->stdstart);
-#endif
+	if (sc->sc_dying) {
+		uhci_abort_xfer(&uxfer->xfer, USBD_TIMEOUT);
+		return;
+	}
 
-	ii->xfer->device->bus->intr_context++;
-	uhci_abort_xfer(ii->xfer, USBD_TIMEOUT);
-	ii->xfer->device->bus->intr_context--;
+	/* Execute the abort in a process context. */
+	usb_init_task(&uxfer->abort_task, uhci_timeout_task, ii->xfer);
+	usb_add_task(uxfer->xfer.pipe->device, &uxfer->abort_task);
+}
+
+void
+uhci_timeout_task(void *addr)
+{
+	usbd_xfer_handle xfer = addr;
+	int s;
+
+	DPRINTF(("uhci_timeout_task: xfer=%p\n", xfer));
+
+	s = splusb();
+	uhci_abort_xfer(xfer, USBD_TIMEOUT);
+	splx(s);
 }
 
 /*
@@ -1859,44 +1881,68 @@ uhci_device_bulk_abort(usbd_xfer_handle xfer)
 }
 
 /*
- * XXX This way of aborting is neither safe, nor good.
- * But it will have to do until I figure out what to do.
- * I apologize for the delay().
+ * Abort a device request.
+ * If this routine is called at splusb() it guarantees that the request
+ * will be removed from the hardware scheduling and that the callback
+ * for it will be called with USBD_CANCELLED status.
+ * It's impossible to guarantee that the requested transfer will not
+ * have happened since the hardware runs concurrently.
+ * If the transaction has already happened we rely on the ordinary
+ * interrupt processing to process it.
  */
 void
 uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 {
 	uhci_intr_info_t *ii = &UXFER(xfer)->iinfo;
+	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
+	uhci_softc_t *sc = (uhci_softc_t *)upipe->pipe.device->bus;
 	uhci_soft_td_t *std;
 	int s;
 
 	DPRINTFN(1,("uhci_abort_xfer: xfer=%p, status=%d\n", xfer, status));
 
-	s = splusb();
-
-	/* Transfer is already done. */
-	if (xfer->status != USBD_NOT_STARTED &&
-	    xfer->status != USBD_IN_PROGRESS) {
+	if (sc->sc_dying) {
+		/* If we're dying, just do the software part. */
+		s = splusb();
+		xfer->status = status;	/* make software ignore it */
+		usb_uncallout(xfer->timeout_handle, ehci_timeout, xfer);
+		usb_transfer_complete(xfer);
 		splx(s);
-		return;
 	}
 
-	/* Make interrupt routine ignore it, */
-	xfer->status = status;
+	if (xfer->device->bus->intr_context || !curproc)
+		panic("ohci_abort_xfer: not in process context\n");
 
-	/* don't timeout, */
+	/*
+	 * Step 1: Make interrupt routine and hardware ignore xfer.
+	 */
+	s = splusb();
+	xfer->status = status;	/* make software ignore it */
 	usb_uncallout(xfer->timeout_handle, uhci_timeout, ii);
-
-	/* make hardware ignore it, */
+	DPRINTFN(1,("uhci_abort_xfer: stop ii=%p\n", ii));
 	for (std = ii->stdstart; std != NULL; std = std->link.std)
 		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));
-
-	xfer->hcpriv = ii;
-
 	splx(s);
 
-	delay(1000);
+	/* 
+	 * Step 2: Wait until we know hardware has finished any possible
+	 * use of the xfer.  Also make sure the soft interrupt routine
+	 * has run.
+	 */
+	usb_delay_ms(upipe->pipe.device->bus, 2); /* Hardware finishes in 1ms */
+	s = splusb();
+	sc->sc_softwake = 1;
+	usb_schedsoftintr(&sc->sc_bus);
+	DPRINTFN(1,("uhci_abort_xfer: tsleep\n"));
+	tsleep(&sc->sc_softwake, PZERO, "uhciab", 0);
+	splx(s);
+		
+	/*
+	 * Step 3: Execute callback.
+	 */
+	xfer->hcpriv = ii;
 
+	DPRINTFN(1,("uhci_abort_xfer: callback\n"));
 	s = splusb();
 #ifdef DIAGNOSTIC
 	ii->isdone = 1;
@@ -2065,7 +2111,7 @@ uhci_device_intr_abort(usbd_xfer_handle xfer)
 	DPRINTFN(1,("uhci_device_intr_abort: xfer=%p\n", xfer));
 	if (xfer->pipe->intrxfer == xfer) {
 		DPRINTFN(1,("uhci_device_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = 0;
+		xfer->pipe->intrxfer = NULL;
 	}
 	uhci_abort_xfer(xfer, USBD_CANCELLED);
 }

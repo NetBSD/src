@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.h,v 1.2 2001/03/15 17:24:47 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arch.h,v 1.2.2.1 2002/03/16 15:57:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,11 +55,6 @@ protected:
 	paddr_t _loader_addr;
 	struct BootArgs *_boot_arg;
 	BOOL _debug;
-
-	/* debug utility */
-	void _bitdisp(u_int32_t, int, int, int, int);
-	void _dbg_bit_print(u_int32_t, u_int32_t, const char *);
-#define bitdisp(a) _bitdisp((a), 0, 0, 0, 1)
 
 public:
 	Architecture(Console *&, MemoryManager *&);

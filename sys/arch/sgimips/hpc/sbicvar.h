@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.1.2.3 2002/01/10 19:48:27 thorpej Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.1.2.4 2002/03/16 15:59:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -105,7 +105,7 @@ struct wd33c93_tinfo {
 	int	cmds;			/* # of commands processed */
 	int	dconns;			/* # of disconnects */
 
-	u_char  flags;
+	u_char	flags;
 #define T_NEED_RESET	0x01		/* Should send a BUS_DEV_RESET */
 #define T_NEGOTIATE	0x02		/* (Re)Negotiate synchronous options */
 #define T_BUSY		0x04		/* Target is busy */
@@ -113,8 +113,8 @@ struct wd33c93_tinfo {
 #define T_NOSYNC	0x10		/* Force ASYNC mode */
 #define T_NODISC	0x20		/* Don't allow disconnect */
 #define T_TAG		0x40		/* Turn on TAG QUEUEs */
-	u_char  period;			/* Period suggestion */
-	u_char  offset;			/* Offset suggestion */
+	u_char	period;			/* Period suggestion */
+	u_char	offset;			/* Offset suggestion */
 	u_char	nextag;			/* Next available tag */
 	struct wd33c93_linfo *lun[SBIC_NLUN]; /* LUN list for this target */
 } tinfo_t;
@@ -122,7 +122,7 @@ struct wd33c93_tinfo {
 /* Look up a lun in a tinfo */
 #define TINFO_LUN(t, l) 	((t)->lun[(l)])
 
-struct  wd33c93_softc {
+struct wd33c93_softc {
 	struct device	sc_dev;
 
 	struct scsipi_channel sc_channel; /* proto for sub devices */
@@ -191,9 +191,9 @@ struct  wd33c93_softc {
 #define SBICF_ABORTING		0x10	/* Aborting */
 
 /* values for sc_state */
-#define SBIC_UNINITIALIZED     	0	/* Driver not initialized */
+#define SBIC_UNINITIALIZED	0	/* Driver not initialized */
 #define SBIC_IDLE		1	/* waiting for something to do */
-#define SBIC_SELECTING		2	/* SCSI command is arbiting  */
+#define SBIC_SELECTING		2	/* SCSI command is arbiting */
 #define SBIC_RESELECTED		3	/* Has been reselected */
 #define SBIC_IDENTIFIED		4	/* Has gotten IFY but not TAG */
 #define SBIC_CONNECTED		5	/* Actively using the SCSI bus */
@@ -209,7 +209,7 @@ struct  wd33c93_softc {
 #define SEND_PARITY_ERROR	0x0002
 #define SEND_INIT_DET_ERR	0x0004
 #define SEND_REJECT		0x0008
-#define SEND_IDENTIFY  		0x0010
+#define SEND_IDENTIFY		0x0010
 #define SEND_ABORT		0x0020
 #define SEND_WDTR		0x0040
 #define SEND_SDTR		0x0080

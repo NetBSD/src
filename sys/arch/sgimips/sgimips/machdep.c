@@ -1,9 +1,9 @@
-/*	$NetBSD: machdep.c,v 1.23.2.2 2002/01/10 19:48:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.3 2002/03/16 15:59:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -94,7 +94,7 @@ char cpu_model[64 + 1];		/* sizeof(arcbios_system_identifier) */
 
 struct sgimips_intrhand intrtab[NINTR];
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 unsigned long cpuspeed;	/* Approximate number of instructions per usec */
@@ -332,33 +332,33 @@ mach_init(argc, argv, magic, btinfo)
 		panic("invalid architecture");
 
 	switch (mach_type) {
-	  case MACH_SGI_IP20:
+	case MACH_SGI_IP20:
 #ifdef IP20
-	    ip20_init();
+		ip20_init();
 #else
-	    unconfigured_system_type(mach_type);
+		unconfigured_system_type(mach_type);
 #endif
-	    break;
-	    
-	  case MACH_SGI_IP22:
+		break;
+
+	case MACH_SGI_IP22:
 #ifdef IP22
-	    ip22_init();
+		ip22_init();
 #else
-	    unconfigured_system_type(mach_type);
+		unconfigured_system_type(mach_type);
 #endif
-	    break;
+		break;
 
-	  case MACH_SGI_IP32:
+	case MACH_SGI_IP32:
 #ifdef IP32
-	    ip32_init();
+		ip32_init();
 #else
-	    unconfigured_system_type(mach_type);
+		unconfigured_system_type(mach_type);
 #endif
-	    break;
+		break;
 
-	  default:
-	    panic("IP%d architecture not yet supported\n", mach_type);
-	    break;
+	default:
+		panic("IP%d architecture not yet supported\n", mach_type);
+		break;
 	}
 
 	physmem = arcsmem = 0;
@@ -370,11 +370,11 @@ mach_init(argc, argv, magic, btinfo)
 	mem = NULL;
 
 	do {
-	    if ((mem = ARCBIOS->GetMemoryDescriptor(mem)) != NULL) {
-		i++;
-		printf("Mem block %d: type %d, base 0x%x, size 0x%x\n", 
+		if ((mem = ARCBIOS->GetMemoryDescriptor(mem)) != NULL) {
+			i++;
+			printf("Mem block %d: type %d, base 0x%x, size 0x%x\n",
 				i, mem->Type, mem->BasePage, mem->PageCount);
-	    }
+		}
 	} while (mem != NULL);
 #endif
 
@@ -383,7 +383,7 @@ mach_init(argc, argv, magic, btinfo)
 	 * XXX sorted in ascending order.
 	 */
 	mem = NULL;
-	for (i = 0; mem_cluster_cnt < VM_PHYSSEG_MAX; i++) { 
+	for (i = 0; mem_cluster_cnt < VM_PHYSSEG_MAX; i++) {
 		mem = ARCBIOS->GetMemoryDescriptor(mem);
 
 		if (mem == NULL)
@@ -464,7 +464,7 @@ mach_init(argc, argv, magic, btinfo)
 
 		default:
 			panic("unknown memory descriptor %d type %d",
-				i, mem->Type); 
+				i, mem->Type);
 		}
 
 		physmem += btoc(size);
@@ -506,7 +506,7 @@ mach_init(argc, argv, magic, btinfo)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
+	v = (caddr_t)uvm_pageboot_alloc(USPACE);
 	proc0.p_addr = proc0paddr = (struct user *)v;
 	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
@@ -518,7 +518,7 @@ mach_init(argc, argv, magic, btinfo)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(size); 
+	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 }
@@ -659,15 +659,15 @@ cpu_reboot(howto, bootstr)
 	if (curproc)
 		savectx((struct user *)curpcb);
 
-#if 1	
+#if 1
 	/* Clear and disable watchdog timer. */
 	switch (mach_type) {
-	  case MACH_SGI_IP22:
+	case MACH_SGI_IP22:
 		*(volatile u_int32_t *)0xbfa00014 = 0;
 		*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
 		break;
 
-	  case MACH_SGI_IP32:
+	case MACH_SGI_IP32:
 		*(volatile u_int32_t *)0xb4000034 = 0;
 		*(volatile u_int32_t *)0xb400000c &= ~0x200;
 		break;
@@ -706,14 +706,14 @@ haltsys:
 
 	/*
 	 * Calling ARCBIOS->PowerDown() results in a "CP1 unusable trap"
-	 * which lands me back in DDB, at least on my Indy.  So, enable 
-	 * the FPU before asking the PROM to power down to avoid this.. 
+	 * which lands me back in DDB, at least on my Indy.  So, enable
+	 * the FPU before asking the PROM to power down to avoid this..
 	 * It seems to want the FPU to play the `poweroff tune' 8-/
 	 */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		/* Set CP1 usable bit in SR */
-	 	mips_cp0_status_write(mips_cp0_status_read() | 
-					MIPS_SR_COP_1_BIT);	
+	 	mips_cp0_status_write(mips_cp0_status_read() |
+					MIPS_SR_COP_1_BIT);
 
 		printf("powering off...\n\n");
 		delay(500000);
@@ -839,8 +839,8 @@ cpu_intr(status, cause, pc, ipending)
 	/* software simulated interrupt */
 	if ((ipending & MIPS_SOFT_INT_MASK_1)
 		    || (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
-	    _clrsoftintr(MIPS_SOFT_INT_MASK_1);
-	    softintr_dispatch();
+		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
+		softintr_dispatch();
 	}
 }
 
@@ -848,7 +848,7 @@ void unconfigured_system_type(int ipnum)
 {
 	printf("Kernel not configured for IP%d support.  Add options `IP%d'\n",
 								ipnum, ipnum);
-	printf("to kernel configuration file to enable IP%d support!\n", 
+	printf("to kernel configuration file to enable IP%d support!\n",
 								ipnum);
 	printf("\n");
 
@@ -874,34 +874,34 @@ lookup_bootinfo(int type)
 void ddb_trap_hook(int where)
 {
 	switch (where) {
-	  case 1:	/* Entry to DDB, turn watchdog off */
-	    switch (mach_type) {
-	      case MACH_SGI_IP32:
-		    *(volatile u_int32_t *)0xb4000034 = 0;
-		    *(volatile u_int32_t *)0xb400000c &= ~0x200;
-		    break;
+	case 1:		/* Entry to DDB, turn watchdog off */
+		switch (mach_type) {
+		case MACH_SGI_IP32:
+			*(volatile u_int32_t *)0xb4000034 = 0;
+			*(volatile u_int32_t *)0xb400000c &= ~0x200;
+			break;
 
-	      case MACH_SGI_IP22:
-		    *(volatile u_int32_t *)0xbfa00014 = 0;
-		    *(volatile u_int32_t *)0xbfa00004 &= ~0x100;
-		    break;
-	    }
-	    break;
+		case MACH_SGI_IP22:
+			*(volatile u_int32_t *)0xbfa00014 = 0;
+			*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
+			break;
+		}
+		break;
 
-	  case 0:	/* Exit from DDB, turn watchdog back on */
-	    switch (mach_type) {
-	      case MACH_SGI_IP32:
-		    *(volatile u_int32_t *)0xb400000c |= 0x200;
-		    *(volatile u_int32_t *)0xb4000034 = 0;
-		    break;
+	case 0:		/* Exit from DDB, turn watchdog back on */
+		switch (mach_type) {
+		case MACH_SGI_IP32:
+			*(volatile u_int32_t *)0xb400000c |= 0x200;
+			*(volatile u_int32_t *)0xb4000034 = 0;
+			break;
 
-	      case MACH_SGI_IP22:
-		    *(volatile u_int32_t *)0xbfa00004 |= 0x100;
-		    *(volatile u_int32_t *)0xbfa00014 = 0;
+		case MACH_SGI_IP22:
+			*(volatile u_int32_t *)0xbfa00004 |= 0x100;
+			*(volatile u_int32_t *)0xbfa00014 = 0;
 
-		    break;
-	    }
-	    break;
+			break;
+		}
+		break;
 	}
 }
 

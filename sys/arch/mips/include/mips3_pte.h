@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.13 2000/06/09 05:51:43 soda Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.13.6.1 2002/03/16 15:58:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,9 +72,9 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 
 struct tlb {
 	int	tlb_mask;
-	int	tlb_hi;
-	int	tlb_lo0;
-	int	tlb_lo1;
+	int	tlb_hi;		/* XXX should be 64 bits */
+	int	tlb_lo0;	/* XXX maybe 64 bits (only 32 really used) */
+	int	tlb_lo1;	/* XXX maybe 64 bits (only 32 really used) */
 };
 #endif /* _LOCORE */
 
@@ -90,13 +90,18 @@ struct tlb {
 #define	MIPS3_PG_NV	0x00000000
 #define	MIPS3_PG_D	0x00000004	/* Dirty */
 #define	MIPS3_PG_ATTR	0x0000003f
-#define	MIPS3_PG_UNCACHED 0x00000010
+
+#define	MIPS3_CCA_TO_PG(cca)	((cca) << 3)
+
+#define	MIPS3_PG_UNCACHED	MIPS3_CCA_TO_PG(2)
 #ifdef HPCMIPS_L1CACHE_DISABLE		/* MIPS3_L1CACHE_DISABLE */
-#define MIPS3_PG_CACHED MIPS3_PG_UNCACHED /* XXX: brain damaged!!! */
+#define	MIPS3_PG_CACHED		MIPS3_PG_UNCACHED	/* XXX: brain damaged!!! */
 #else /* HPCMIPS_L1CACHE_DISABLE */
-#define MIPS3_PG_CACHED 0x00000018 /* Cacheable noncoherent */
+#define	MIPS3_PG_CACHED		mips3_pg_cached
+#define	MIPS3_DEFAULT_PG_CACHED	MIPS3_CCA_TO_PG(3)
 #endif /* ! HPCMIPS_L1CACHE_DISABLE */
-#define	MIPS3_PG_CACHEMODE 0x00000038
+#define	MIPS3_PG_CACHEMODE	MIPS3_CCA_TO_PG(7)
+
 /* Write protected */
 #define	MIPS3_PG_ROPAGE	(MIPS3_PG_V | MIPS3_PG_RO | MIPS3_PG_CACHED)
 
@@ -105,8 +110,8 @@ struct tlb {
 
 /* Not wr-prot but clean */
 #define	MIPS3_PG_CWPAGE	(MIPS3_PG_V | MIPS3_PG_CACHED)
-#define	MIPS3_PG_IOPAGE \
-	(MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D | MIPS3_PG_UNCACHED)
+#define	MIPS3_PG_IOPAGE(cca) \
+	(MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D | MIPS3_CCA_TO_PG(cca))
 #define	MIPS3_PG_FRAME	0x3fffffc0
 #ifdef MIPS3_4100			/* VR4100 core */
 #define MIPS3_PG_SHIFT	4

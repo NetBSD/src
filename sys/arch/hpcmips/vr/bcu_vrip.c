@@ -1,8 +1,8 @@
-/*	$NetBSD: bcu_vrip.c,v 1.10.2.3 2002/02/11 20:08:12 jdolecek Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.10.2.4 2002/03/16 15:58:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
- * Copyright (c) 1999 PocketBSD Project. All rights reserved.
+ * Copyright (c) 1999, 2002 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +41,8 @@
 
 #include <machine/bus.h>
 #include <machine/debug.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <mips/cpuregs.h>
 
@@ -71,6 +73,35 @@ struct cfattach vrbcu_ca = {
 };
 
 struct vrbcu_softc *the_bcu_sc = NULL;
+
+#ifdef SINGLE_VRIP_BASE
+#define vrbcu_addr()	VRIP_BCU_ADDR
+#else
+static bus_addr_t vrbcu_addr(void);
+static bus_addr_t
+vrbcu_addr()
+{
+	static bus_addr_t addr = NULL;
+	static struct platid_data addrs[] = {
+		{ &platid_mask_CPU_MIPS_VR_4102, (void *)VR4102_BCU_ADDR },
+		{ &platid_mask_CPU_MIPS_VR_4111, (void *)VR4102_BCU_ADDR },
+		{ &platid_mask_CPU_MIPS_VR_4121, (void *)VR4102_BCU_ADDR },
+		{ &platid_mask_CPU_MIPS_VR_4122, (void *)VR4122_BCU_ADDR },
+		{ &platid_mask_CPU_MIPS_VR_4131, (void *)VR4122_BCU_ADDR },
+		{ &platid_mask_CPU_MIPS_VR_4181, (void *)VR4181_BCU_ADDR },
+		{ NULL, NULL }	/* terminator, don't delete */
+	};
+	struct platid_data *p;
+
+	if (addr == NULL) {
+		if ((p = platid_search_data(&platid, addrs)) == NULL)
+			panic("%s: can't find VR BCU address\n", __FUNCTION__);
+		addr = (bus_addr_t)p->data;
+	}
+
+	return (addr);
+}
+#endif /* SINGLE_VRIP_BASE */
 
 static inline void
 vrbcu_write(struct vrbcu_softc *sc, int port, unsigned short val)
@@ -305,16 +336,16 @@ vrbcu_vrip_getcpuid(void)
 		return (vr_cpuid); 
 
 	if (vr_cpuid == -1) {
-		if (VRIP_BCU_ADDR == VR4181_BCU_ADDR)
+		if (vrbcu_addr() == VR4181_BCU_ADDR)
 			revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1
-			    ((VRIP_BCU_ADDR+BCU81REVID_REG_W));
+			    ((vrbcu_addr() + BCU81REVID_REG_W));
 		else
 			revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1
-			    ((VRIP_BCU_ADDR+BCUREVID_REG_W));
+			    ((vrbcu_addr() + BCUREVID_REG_W));
 
 		vr_cpuid = *revreg;
 		vr_cpuid = (vr_cpuid&BCUREVID_RIDMASK)>>BCUREVID_RIDSHFT;
-		if (VRIP_BCU_ADDR == VR4181_BCU_ADDR 
+		if (vrbcu_addr() == VR4181_BCU_ADDR 
 		    && vr_cpuid == BCUREVID_RID_4181) /* conflict vr4101 */
 			vr_cpuid = BCUREVID_FIXRID_4181;
 	}
@@ -345,7 +376,7 @@ vrbcu_vrip_getcpumajor(void)
 		return (vr_major);
 
 	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1
-	    ((VRIP_BCU_ADDR+BCUREVID_REG_W));
+	    ((vrbcu_addr() + BCUREVID_REG_W));
 
 	vr_major = *revreg;
 	vr_major = (vr_major&BCUREVID_MJREVMASK)>>BCUREVID_MJREVSHFT;
@@ -362,7 +393,7 @@ vrbcu_vrip_getcpuminor(void)
 		return (vr_minor);
 
 	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1
-	    ((VRIP_BCU_ADDR+BCUREVID_REG_W));
+	    ((vrbcu_addr() + BCUREVID_REG_W));
 
 	vr_minor = *revreg;
 	vr_minor = (vr_minor&BCUREVID_MNREVMASK)>>BCUREVID_MNREVSHFT;
@@ -382,11 +413,11 @@ vrbcu_vrip_getcpuclock(void)
 	cpuid = vrbcu_vrip_getcpuid();
 	if (cpuid != BCUREVID_FIXRID_4181 && cpuid >= BCUREVID_RID_4111) {
 		clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1
-		    ((VRIP_BCU_ADDR+BCUCLKSPEED_REG_W)) &
+		    ((vrbcu_addr() + BCUCLKSPEED_REG_W)) &
 		    BCUCLKSPEED_CLKSPMASK;
 	} else if (cpuid == BCUREVID_FIXRID_4181) {
 		clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1
-		    ((VRIP_BCU_ADDR+BCU81CLKSPEED_REG_W)) &
+		    ((vrbcu_addr() + BCU81CLKSPEED_REG_W)) &
 		    BCUCLKSPEED_CLKSPMASK;
 	}
 

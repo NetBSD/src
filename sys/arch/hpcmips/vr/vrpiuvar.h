@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiuvar.h,v 1.6.4.2 2002/02/11 20:08:15 jdolecek Exp $	*/
+/*	$NetBSD: vrpiuvar.h,v 1.6.4.3 2002/03/16 15:58:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 TAKEMURA Shin All rights reserved.
@@ -43,6 +43,7 @@ struct vrpiu_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_buf_ioh;
 	int sc_unit;
 	void *sc_handler;
 	vrip_chipset_tag_t sc_vrip;

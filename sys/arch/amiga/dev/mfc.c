@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.24.2.1 2002/02/11 20:07:03 jdolecek Exp $ */
+/*	$NetBSD: mfc.c,v 1.24.2.2 2002/03/16 15:55:51 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.24.2.1 2002/02/11 20:07:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.24.2.2 2002/03/16 15:55:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ extern struct cfdriver mfcs_cd;
 
 #if NMFCP > 0
 struct cfattach mfcp_ca = {
-	sizeof(struct mfcp_softc, mfcpmatch, mfcpattach
+	sizeof(struct mfcp_softc), mfcpmatch, mfcpattach
 };
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3 2001/05/16 12:42:38 msaitoh Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3.2.1 2002/03/16 15:59:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,14 +47,11 @@
 #include <sys/syscallargs.h>
 
 int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigreturn_args /* {
-		syscallarg(struct sigcontext13 *) sigcntxp;
-	} */ *uap = v;
+					       syscallarg(struct sigcontext13 *) sigcntxp;
+					       } */ *uap = v;
 	struct sigcontext13 *scp, context;
 	struct trapframe *tf;
 	sigset_t mask;

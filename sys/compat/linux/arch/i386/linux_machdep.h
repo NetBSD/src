@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.20 2001/01/09 13:01:03 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.20.4.1 2002/03/16 16:00:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _I386_LINUX_MACHDEP_H
 #define _I386_LINUX_MACHDEP_H
+
+#include <compat/linux/common/linux_signal.h>
 
 /*
  * The Linux sigcontext, pretty much a standard 386 trapframe.
@@ -85,7 +87,6 @@ struct linux_sigframe {
 #ifdef _KERNEL
 __BEGIN_DECLS
 void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
-dev_t linux_fakedev __P((dev_t));
 __END_DECLS
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.1.4.2 2002/02/11 20:08:14 jdolecek Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.1.4.3 2002/03/16 15:58:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -145,10 +145,12 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	struct vrpciu_softc *sc = (struct vrpciu_softc *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct vrip_attach_args *va = aux;
-	struct bus_space_tag_hpcmips *iot;
+#if defined(DEBUG) || NPCI > 0
 	u_int32_t reg;
-	char tmpbuf[16];
+#endif
 #if NPCI > 0
+	struct bus_space_tag_hpcmips *iot;
+	char tmpbuf[16];
 	struct pcibus_attach_args pba;
 #endif
 
@@ -513,7 +515,7 @@ vrpciu_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 
 	if (ih == -1)
 		return (NULL);
-	DPRINTF(("vrpciu_intr_establish: %p\n", sc));
+	DPRINTF(("vrpciu_intr_establish: %lx\n", ih));
 
 	return (config_hook(CONFIG_HOOK_PCIINTR, ih, CONFIG_HOOK_EXCLUSIVE,
 	    (int (*)(void *, int, long, void *))func, arg));
@@ -523,6 +525,6 @@ void
 vrpciu_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
-	DPRINTF(("vrpciu_intr_disestablish: %p\n", sc));
+	DPRINTF(("vrpciu_intr_disestablish: %p\n", cookie));
 	config_unhook(cookie);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123.2.2 2001/09/13 01:14:14 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123.2.3 2002/03/16 15:59:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -559,7 +559,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2001/06/10 11:01:27 tsubai Exp $	*/
+/*	$NetBSD: param.h,v 1.12.2.1 2002/03/16 15:59:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -125,7 +125,7 @@
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
-#ifndef NEWPMAP
+#ifdef OLDPMAP
 /*
  * Segment handling stuff
  */
@@ -148,6 +148,6 @@
 #define	NPMAPS		32768	/* Number of pmaps in system */
 #endif
 
-#endif /* NEWPMAP */
+#endif /* OLDPMAP */
 
 #endif /* _POWERPC_PARAM_H_ */

@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.36.4.1 2002/01/10 19:58:03 thorpej Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.36.4.2 2002/03/16 16:01:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.36.4.1 2002/01/10 19:58:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.36.4.2 2002/03/16 16:01:27 jdolecek Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -129,16 +129,18 @@ rasops_init(ri, wantrows, wantcols)
 		wsfont_init();
 
 		/* Want 8 pixel wide, don't care about aestethics */
-		if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
-			cookie = wsfont_find(NULL, 0, 0, 0);
+		cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_L2R,
+		    WSDISPLAY_FONTORDER_L2R);
+		if (cookie <= 0)
+			cookie = wsfont_find(NULL, 0, 0, 0,
+			    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R);
 
 		if (cookie <= 0) {
 			printf("rasops_init: font table is empty\n");
 			return (-1);
 		}
 
-		if (wsfont_lock(cookie, &ri->ri_font,
-		    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+		if (wsfont_lock(cookie, &ri->ri_font)) {
 			printf("rasops_init: couldn't lock font\n");
 			return (-1);
 		}
@@ -331,16 +333,14 @@ rasops_mapchar(cookie, c, cp)
 	if (ri->ri_font == NULL)
 		panic("rasops_mapchar: no font selected\n");
 #endif
+
 	if (ri->ri_font->encoding != WSDISPLAY_FONTENC_ISO) {
-
 		if ( (c = wsfont_map_unichar(ri->ri_font, c)) < 0) {
-
 			*cp = ' ';
 			return (0);
 
 		}
 	}
-
 
 	if (c < ri->ri_font->firstchar) {
 		*cp = ' ';

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: load.h,v 1.2 2001/03/21 14:06:25 toshii Exp $	*/
+/* -*-C++-*-	$NetBSD: load.h,v 1.2.2.1 2002/03/16 15:57:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ private:
 	int _nload_link, _n0clr_link;
 	size_t _tpsz;
 	struct PageTag *_load_page(vaddr_t, off_t, size_t, struct PageTag *);
+	BOOL _error;
 
 protected:
 	BOOL		_debug;
@@ -70,6 +71,7 @@ protected:
 	void _load_segment(vaddr_t, vsize_t, off_t, size_t);
 	void _load_memory(vaddr_t, vsize_t, void *);
 	void _load_segment_end(void);
+	BOOL _load_success(void) const { return !_error; };
 
 public:
 	virtual ~Loader(void) { /* NO-OP */ }
@@ -82,7 +84,7 @@ public:
 	virtual kaddr_t jumpAddr(void) = 0;
 
 	paddr_t tagStart(void);
-	void loadExtData(void);
+	BOOL loadExtData(void);
 	void loadEnd(void);
 
 	void tagDump(int);	// for debug

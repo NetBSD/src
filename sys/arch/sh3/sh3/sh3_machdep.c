@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.15.2.4 2002/02/11 20:09:02 jdolecek Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.15.2.5 2002/03/16 15:59:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  */
 
 #include "opt_kgdb.h"
+#include "opt_memsize.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -93,16 +94,26 @@
 
 #ifdef KGDB
 #include <sys/kgdb.h>
+#ifndef KGDB_DEVNAME
+#define KGDB_DEVNAME "nodev"
 #endif
+const char kgdb_devname[] = KGDB_DEVNAME;
+#endif /* KGDB */
 
 #include <uvm/uvm_extern.h>
+
+#include <sh3/trapreg.h>
+#include <sh3/cache.h>
+#include <sh3/mmu.h>
+#include <sh3/clock.h>
 
 char cpu_model[120];
 
 /* 
  * if PCLOCK isn't defined in config file, use this.
  */
-int sh3_pclock;
+int cpu_arch;
+int cpu_product;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -111,7 +122,131 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-extern int physmem;
+int physmem;
+struct user *proc0paddr;
+
+#ifndef IOM_RAM_BEGIN
+#error "define IOM_RAM_BEGIN"
+#endif
+#define VBR	(u_int8_t *)IOM_RAM_BEGIN
+vaddr_t ram_start = IOM_RAM_BEGIN;
+/* exception handler holder (sh3/sh3/exception_vector.S) */
+extern char sh_vector_generic[], sh_vector_generic_end[];
+extern char sh_vector_interrupt[], sh_vector_interrupt_end[];
+extern char sh_vector_tlbmiss[], sh_vector_tlbmiss_end[];
+
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+int 	dumpsize = 0;		/* pages */
+long	dumplo = 0; 		/* blocks */
+
+void
+sh_cpu_init(int arch, int product)
+{
+	/* CPU type */
+	cpu_arch = arch;
+	cpu_product = product;
+
+#if defined(SH3) && defined(SH4)
+	/* Set register addresses */
+	sh_devreg_init();
+#endif
+	/* Cache access ops. */
+	sh_cache_init();
+
+	/* MMU access ops. */
+	sh_mmu_init();
+
+	/* Hardclock, RTC initialize. */
+	machine_clock_init();
+
+	/* Exception vector. */
+	memcpy(VBR + 0x100, sh_vector_generic,
+	    sh_vector_generic_end - sh_vector_generic);
+	memcpy(VBR + 0x400, sh_vector_tlbmiss,
+	    sh_vector_tlbmiss_end - sh_vector_tlbmiss);
+	memcpy(VBR + 0x600, sh_vector_interrupt,
+	    sh_vector_interrupt_end - sh_vector_interrupt);
+	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(VBR));
+}
+
+/*
+ * vsize_t sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
+ *
+ *	kernend ... P1 address.
+ *	pstart  ... physical address of RAM start address.
+ *	pend    ... physical address of the last RAM address
+ *
+ *      Returns size of stealed memory.
+ *
+ *	Memory map
+ *	....|  proc0 stack  | Page Dir |    Page Table    |
+ *	    *    USPACE        NBPG     (1+nkpde)*NBPG
+ *       kernend
+ */
+vsize_t
+sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
+{
+	pd_entry_t *pagedir, *pagetab, pte;
+	vsize_t sz;
+	vaddr_t p0;
+	int i;
+
+	/* Set default page size (4KB) */
+	uvm_setpagesize();
+
+	/* # of pdes maps whole physical memory area. */
+	nkpde = sh3_btod(((pend - pstart + 1) + PDOFSET) & ~PDOFSET);
+
+	/* Steal page dir area, process0 stack, page table area */
+	sz = USPACE + NBPG + (1 + nkpde) * NBPG;
+	p0 = round_page(kernend);
+	memset((void *)p0, 0, sz);
+
+	/* Build initial page tables */
+	pagedir = (pt_entry_t *)(p0 + USPACE);
+	pagetab = (pt_entry_t *)(p0 + USPACE + NBPG);
+
+	/* Construct a page table directory */
+	pte = (pt_entry_t)pagetab;
+	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
+	pagedir[(SH3_PHYS_TO_P1SEG(pstart)) >> PDSHIFT] = pte;
+
+	/* Map whole physical memory space from VM_MIN_KERNEL_ADDRESS */
+	pte += NBPG;
+	for (i = 0; i < nkpde; i++, pte += NBPG)
+		pagedir[(VM_MIN_KERNEL_ADDRESS >> PDSHIFT) + i] = pte;
+
+	/* Install a PDE recursively mapping page directory as a page table. */
+	pte = (pt_entry_t)pagedir;
+	pte |= PG_V | PG_4K | PG_KW | PG_M | PG_N;
+	pagedir[PDSLOT_PTE] = pte;	/* 0xcfc00000 */
+
+	/* Set page directory base */
+	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
+
+	/* Setup proc0 */
+	proc0paddr = (struct user *)p0;
+	proc0.p_addr = proc0paddr;
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pageDirReg = (pt_entry_t)pagedir;
+	/* kernel stack */
+	curpcb->kr15 = p0 + USPACE - sizeof(struct trapframe);
+	curpcb->r15 = curpcb->kr15;
+	/* trap frame */
+	proc0.p_md.md_regs = (struct trapframe *)curpcb->kr15 - 1;
+
+	/* Enable MMU */
+	sh_mmu_start();
+
+	/* Enable exception */
+	splraise(-1);
+	_cpu_exception_resume(0); /* SR.BL = 0 */
+
+	return (p0 + sz - kernend);
+}
 
 void
 sh3_startup()
@@ -122,12 +257,19 @@ sh3_startup()
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	struct pcb *pcb;
 	char pbuf[9];
 
 	printf(version);
 
-	sprintf(cpu_model, "Hitachi SH3");
+	/* Check exception vector size here. */
+	KDASSERT(sh_vector_generic_end - sh_vector_generic < 0x300);
+	KDASSERT(sh_vector_tlbmiss_end - sh_vector_tlbmiss < 0x200);
+
+#define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
+	sprintf(cpu_model, "HITACHI SH%d %d.%02dMHz PCLOCK %d.%02d MHz",
+	    CPU_IS_SH3 ? 3 : 4, MHZ(sh_clock_get_cpuclock()),
+	    MHZ(sh_clock_get_pclock()));
+#undef MHZ
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -206,15 +348,53 @@ sh3_startup()
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
+	/* 
+	 * Print cache configuration.
+	 */
+	sh_cache_information();
+	/*
+	 * Print MMU configuration.
+	 */
+	sh_mmu_information();
+	
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+}
 
-	curpcb = pcb = &proc0.p_addr->u_pcb;
-	pcb->r15 = (int)proc0.p_addr + USPACE - 16;
+/*
+ * This is called by main to set dumplo and dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
+void
+cpu_dumpconf()
+{
+}
 
-	proc0.p_md.md_regs = (struct trapframe *)pcb->r15 - 1;
+/*
+ * Doadump comes here after turning off memory management and
+ * getting on the dump stack, either when called above, or by
+ * the auto-restart code.
+ */
+#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
+static vaddr_t dumpspace;
+
+vaddr_t
+reserve_dumppages(p)
+	vaddr_t p;
+{
+
+	dumpspace = p;
+	return (p + BYTES_PER_DUMP);
+}
+
+void
+dumpsys()
+{
 }
 
 /*
@@ -228,11 +408,7 @@ sh3_startup()
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig;
-	sigset_t *mask;
-	u_long code;
+sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
@@ -335,10 +511,7 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
@@ -398,10 +571,7 @@ sys___sigreturn14(p, v, retval)
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct proc *p, struct exec_package *pack, u_long stack)
 {
 	register struct pcb *pcb = &p->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -429,4 +599,20 @@ setregs(p, pack, stack)
 	tf->tf_spc = pack->ep_entry;
 	tf->tf_ssr = PSL_USERSET;
 	tf->tf_r15 = stack;
+}
+
+/*
+ * Jump to reset vector.
+ */
+void
+cpu_reset()
+{
+
+	_cpu_exception_suspend();
+	_reg_write_4(SH_(EXPEVT), 0x020);	/* manual reset */
+
+	goto *(u_int32_t *)0xa0000000;
+	/* NOTREACHED */
+	while (1)
+		;
 }

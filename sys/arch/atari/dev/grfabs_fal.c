@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.13 2000/03/13 23:52:28 soren Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.13.8.1 2002/03/16 15:56:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -177,7 +177,7 @@ static struct videl videlinit[] = {
 static u_short mon_type;
 /*
  * XXX: called from ite console init routine.
- * Initialize list of posible video modes.
+ * Initialize list of possible video modes.
  */
 void
 falcon_probe_video(modelp)
@@ -191,7 +191,7 @@ MODES	*modelp;
 	mon_type = (mon_type & 0xc0) << 2;
 
 	/*
-	 * get all posible modes
+	 * get all possible modes
 	 */
 
 	for (i = 0; (dm = &vid_modes[i])->name != NULL; i++) {

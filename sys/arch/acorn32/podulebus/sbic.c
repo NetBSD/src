@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.1.6.2 2002/01/10 19:36:37 thorpej Exp $ */
+/* $NetBSD: sbic.c,v 1.1.6.3 2002/03/16 15:55:28 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -83,8 +83,10 @@
 
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.1.6.3 2002/03/16 15:55:28 jdolecek Exp $");
+
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/kernel.h> /* For hz */
@@ -169,6 +171,7 @@ int	reselect_debug = 0;
 int	data_pointer_debug = 0;
 u_char	debug_asr, debug_csr, routine;
 
+void sbicdumpstate	(void);
 void sbictimeout	(struct sbic_softc *);
 void sbic_dump		(struct sbic_softc *);
 void sbic_dump_acb	(struct sbic_acb *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: qmsvar.h,v 1.1.6.2 2002/01/10 19:38:16 thorpej Exp $	*/
+/*	$NetBSD: qmsvar.h,v 1.1.6.3 2002/03/16 15:56:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -70,5 +70,9 @@ struct qms_softc {
 
 int  qmsintr	__P((void *arg));
 void qmsattach	__P((struct qms_softc *sc));
+
+#ifdef DIAGNOSTIC
+void qms_console_freeze __P((void));
+#endif
 
 /* End of qmsvar.h */

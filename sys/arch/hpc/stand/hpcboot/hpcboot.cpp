@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.4.2.1 2002/02/11 20:07:59 jdolecek Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.4.2.2 2002/03/16 15:57:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 
 #include <boot.h>
 
+OSVERSIONINFOW WinCEVersion;
+
 int WINAPI
 WinMain(HINSTANCE instance, HINSTANCE prev_instance,
     LPTSTR cmd_line, int window_show)
@@ -100,6 +102,9 @@ hpcboot(void *arg)
 	HpcMenuInterface &menu = HPC_MENU;
 	Boot &f = Boot::Instance();
 
+	// Open serial port for kernel KGDB.
+	SerialConsole::OpenCOM1();
+
 	menu.progress();
 	if (!f.setup()) {
 		error_message = TEXT("architecture not supported.\n");
@@ -136,54 +141,62 @@ hpcboot(void *arg)
 			goto failed_exit;
 		}
 		sz = f._file->size();
+		sz = f._mem->roundPage(sz);
 		f._file->close();
 	}
 
 	menu.progress();
 	if (!f._file->open(f.args.fileName)) {
 		error_message = TEXT("couldn't open kernel image.\n");
-		goto failed;
-	}
-  
-	menu.progress();
-	// put kernel to loader.
-	if (!f.attachLoader())
-		goto failed;
-		
-	if (!f._loader->setFile(f._file)) {
-		error_message = TEXT("couldn't initialize loader.\n");
-		goto failed;
+		goto failed_exit;
 	}
 
 	menu.progress();
-	sz += f._loader->memorySize();
+	// put kernel to loader.
+	if (!f.attachLoader())
+		goto file_close_exit;
+
+	if (!f._loader->setFile(f._file)) {
+		error_message = TEXT("couldn't initialize loader.\n");
+		goto file_close_exit;
+	}
+
+	menu.progress();
+	sz += f._mem->roundPage(f._loader->memorySize());
 
 	// allocate required memory.
 	if (!f._arch->allocateMemory(sz)) {
 		error_message = TEXT("couldn't allocate memory.\n");
-		goto failed;
+		goto file_close_exit;
 	}
 
 	menu.progress();
 	// load kernel to memory.
 	if (!f._arch->setupLoader()) {
 		error_message = TEXT("couldn't set up loader.\n");
-		goto failed;
+		goto file_close_exit;
 	}
 
 	menu.progress();
 	if (!f._loader->load()) {
-		error_message =
-		    TEXT("couldn't load kernel image to memory.\n");
-		goto failed;
+		error_message = TEXT("couldn't load kernel image to memory.\n");
+		goto file_close_exit;
 	}
 	menu.progress();
 	f._file->close();
 
 	// load file system image to memory
 	if (f.args.loadmfs) {
-		f._file->open(f.args.mfsName);
-		f._loader->loadExtData();
+		if (!f._file->open(f.args.mfsName)) {
+			error_message =
+			    TEXT("couldn't open file system image.\n");
+			goto failed_exit;
+		}
+		if (!f._loader->loadExtData()) {
+			error_message =
+			    TEXT("couldn't load filesystem image to memory.\n");
+			goto file_close_exit;
+		}
 		f._file->close();
 	}
 	f._loader->loadEnd();
@@ -199,13 +212,13 @@ hpcboot(void *arg)
 	if (HPC_PREFERENCE.pause_before_boot) {
 		if (MessageBox(menu._root->_window, TEXT("Push OK to boot."),
 		    TEXT("Last chance..."), MB_YESNO) != IDYES)
-			goto failed;
+			goto failed_exit;
 	}
 
 	f._arch->jump(p, f._loader->tagStart());
 	// NOTREACHED
 
- failed:
+ file_close_exit:
 	if (error_message == 0)
 		error_message = TEXT("can't jump to kernel.\n");
 	f._file->close();
@@ -221,7 +234,7 @@ int
 HpcBootApp::run(void)
 {
 	MSG msg;
-
+		
 	while (GetMessage(&msg, 0, 0, 0)) {
 		// cancel auto-boot.
 		if (HPC_PREFERENCE.auto_boot > 0 && _root &&
@@ -254,4 +267,53 @@ HpcBootApp::registerClass(WNDPROC proc)
 	wc.lpszClassName= wc_name;
 
 	return RegisterClass(&wc);
+}
+
+
+//
+// Debug support.
+//
+void
+_bitdisp(u_int32_t a, int s, int e, int m, int c)
+{
+	u_int32_t j, j1;
+	int i, n;
+
+	DPRINTF_SETUP();
+
+	n = 31;	// 32bit only.
+	j1 = 1 << n;
+	e = e ? e : n;
+	for (j = j1, i = n; j > 0; j >>=1, i--) {
+		if (i > e || i < s) {
+			DPRINTF((TEXT("%c"), a & j ? '+' : '-'));
+		} else {
+			DPRINTF((TEXT("%c"), a & j ? '|' : '.'));
+		}
+	}
+	if (m) {
+		DPRINTF((TEXT("[%s]"),(char*)m));
+	}
+
+	DPRINTF((TEXT(" [0x%08x]"), a));
+
+	if (c) {
+		for (j = j1, i = n; j > 0; j >>=1, i--) {
+			if (!(i > e || i < s) &&(a & j)) {
+				DPRINTF((TEXT(" %d"), i));
+			}
+		}
+	}
+
+	DPRINTF((TEXT(" %d\n"), a));
+}
+
+void
+_dbg_bit_print(u_int32_t reg, u_int32_t mask, const char *name)
+{
+	static const char onoff[3] = "_x";
+
+	DPRINTF_SETUP();
+
+	DPRINTF((TEXT("%S[%c] "), name, onoff[reg & mask ? 1 : 0]));
 }

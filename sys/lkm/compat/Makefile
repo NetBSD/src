@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.11.2.2 2002/01/10 20:00:44 thorpej Exp $
+# $NetBSD: Makefile,v 1.11.2.3 2002/03/16 16:02:00 jdolecek Exp $
 
-.if (${MACHINE} == "sparc64")
+.if (${MACHINE_ARCH} == "sparc64")
 SUBDIR+=	netbsd32 sunos32 svr4 svr4_32
 .endif
 
@@ -26,15 +26,15 @@ SUBDIR+=	aout ibcs2
 .endif
 
 .if (${MACHINE_ARCH} == "m68k")
-SUBDIR+=	aoutm68k linux sunos svr4
+SUBDIR+=	aoutm68k sunos svr4
 .endif
 
 .if (${MACHINE_ARCH} == "mipsel")
 SUBDIR+=	ultrix
 .endif
 
-.if (${MACHINE} == "sparc")
-SUBDIR+=	aout sunos svr4
+.if (${MACHINE_ARCH} == "sparc")
+SUBDIR+=	sunos svr4
 .endif
 
 .if (${MACHINE_ARCH} == "vax")

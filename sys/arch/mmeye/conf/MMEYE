@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.7.4.2 2002/02/11 20:08:40 jdolecek Exp $
+#	$NetBSD: MMEYE,v 1.7.4.3 2002/03/16 15:58:46 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -8,6 +8,7 @@ include "arch/mmeye/conf/std.mmeye"
 maxusers	16		# estimated number of users
 
 # CPU support
+options		SH3
 options 	SH7708R		# 100MHz
 options 	MMEYE
 options 	MMEYE_NEW_INT
@@ -100,6 +101,6 @@ pseudo-device	pty			# pseudo-terminals
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
 
 #pseudo-device	md		1	# memory disk device (ramdisk)

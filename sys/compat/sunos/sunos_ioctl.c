@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.37.2.1 2002/01/10 19:52:10 thorpej Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.37.2.2 2002/03/16 16:00:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,10 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.37.2.1 2002/01/10 19:52:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.37.2.2 2002/03/16 16:00:40 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_compat_netbsd32.h"
 #include "opt_execfmt.h"
 #endif
 
@@ -57,12 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.37.2.1 2002/01/10 19:52:10 thorpej
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
-#ifdef COMPAT_NETBSD32
-#include <compat/netbsd32/netbsd32.h>
-#include <compat/netbsd32/netbsd32_syscallargs.h>
-#include <compat/sunos32/sunos32.h>
-#include <compat/sunos32/sunos32_syscallargs.h>
-#endif
 #include <compat/common/compat_util.h>
 
 /*
@@ -499,22 +492,37 @@ sunos_sys_ioctl(p, v, retval)
 
 		return copyout ((caddr_t)&ss, SCARG(uap, data), sizeof (ss));
 	    }
+	case _IOR('t', 119, int):	/* TIOCGPGRP */
+	    {
+		int pgrp;
+
+		error = (*ctl)(fp, TIOCGPGRP, (caddr_t)&pgrp, p);
+		if (error == 0 && pgrp == 0)
+			return (EIO);
+		if (error)
+			return (error);
+		return copyout((caddr_t)&pgrp, SCARG(uap, data), sizeof(pgrp));
+	    }
 	case _IOW('t', 130, int):	/* TIOCSETPGRP: posix variant */
 		SCARG(uap, com) = TIOCSPGRP;
 		break;
 	case _IOR('t', 131, int):	/* TIOCGETPGRP: posix variant */
 	    {
 		/*
-		 * sigh, must do error translation on pty devices
-		 * (see also kern/tty_pty.c)
+		 * sigh, must do error translation on pty devices.  if the pgrp
+		 * returned is 0 (and no error), we convert this to EIO, if it
+		 * is on a pty.
 		 */
 		int pgrp;
 		struct vnode *vp;
+
 		error = (*ctl)(fp, TIOCGPGRP, (caddr_t)&pgrp, p);
 		if (error) {
 			vp = (struct vnode *)fp->f_data;
-			if (error == EIO && vp != NULL &&
-			    vp->v_type == VCHR && major(vp->v_rdev) == 21)
+			if ((error == EIO || (error == 0 && pgrp == 0)) &&
+			    vp != NULL &&
+			    vp->v_type == VCHR &&
+			    major(vp->v_rdev) == 21)
 				error = ENOTTY;
 			return (error);
 		}

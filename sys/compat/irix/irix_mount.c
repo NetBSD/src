@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.2.4.2 2002/01/10 19:51:18 thorpej Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.2.4.3 2002/03/16 16:00:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.2.4.2 2002/01/10 19:51:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.2.4.3 2002/03/16 16:00:27 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -71,6 +71,8 @@ irix_sys_getmountid(p, v, retval)
 	struct vnode *vp;
 	int error = 0;
 	struct nameidata nd;
+	irix_mountid_t mountid;
+	void *addr;
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -95,7 +97,10 @@ irix_sys_getmountid(p, v, retval)
 	 * Return the address of the mount structure
 	 * as the unique ID for the filesystem
 	 */
-	error = copyout(&vp->v_mount, SCARG(uap, buf), sizeof(irix_mountid_t));
+	addr = (void *)&vp->v_mount;
+	bzero((void *)&mountid, sizeof(mountid));
+	(void)memcpy((void *)&mountid, &addr, sizeof(addr));
+	error = copyout(&mountid, SCARG(uap, buf), sizeof(mountid));
 
 bad:
 	vput(vp);

@@ -1,7 +1,7 @@
-/*	$NetBSD: iq80310_pci.c,v 1.2.6.3 2002/02/11 20:07:45 jdolecek Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.2.6.4 2002/03/16 15:57:28 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -74,6 +74,51 @@ iq80310_pci_init(pci_chipset_tag_t pc, void *cookie)
 	pc->pc_intr_disestablish = iq80310_pci_intr_disestablish;
 }
 
+#if defined(IOP310_TEAMASA_NPWR)
+int
+iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	struct i80312_softc *sc = pa->pa_pc->pc_intr_v;
+	pcireg_t reg;
+	int sbus;
+
+	/*
+	 * The Npwr routes #INTA of the on-board PCI devices directly
+	 * through the CPLD.  There is no PCI-PCI bridge and no PCI
+	 * slots on the Npwr.
+	 *
+	 * We also expect the devices to be on the Secondary side of
+	 * the i80312.
+	 */
+
+	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
+	sbus = PPB_BUSINFO_SECONDARY(reg);
+
+	if (pa->pa_bus != sbus) {
+		printf("iq80310_pci_intr_map: %d/%d/%d not on Secondary bus\n",
+		    pa->pa_bus, pa->pa_device, pa->pa_function);
+		return (1);
+	}
+
+	switch (pa->pa_device) {
+	case 5:		/* LSI 53c1010 SCSI */
+		*ihp = XINT3_IRQ(2);
+		break;
+	case 6:		/* Intel i82544GC Gig-E #1 */
+		*ihp = XINT3_IRQ(1);
+		break;
+	case 7:		/* Intel i82544GC Gig-E #2 */
+		*ihp = XINT3_IRQ(4);
+		break;
+	default:
+		printf("iq80310_pci_intr_map: no mapping for %d/%d/%d\n",
+		    pa->pa_bus, pa->pa_device, pa->pa_function);
+		return (1);
+	}
+
+	return (0);
+}
+#else /* Default to stock IQ80310 */
 int
 iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
@@ -178,6 +223,7 @@ iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	return (0);
 }
+#endif /* list of IQ80310-based designs */
 
 const char *
 iq80310_pci_intr_string(void *v, pci_intr_handle_t ih)

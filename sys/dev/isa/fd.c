@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18.2.2 2002/02/11 20:09:52 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.18.2.3 2002/03/16 16:01:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.18.2.2 2002/02/11 20:09:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.18.2.3 2002/03/16 16:01:07 jdolecek Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -653,7 +653,7 @@ fdstart(fd)
 	struct fd_softc *fd;
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
-	int active = fdc->sc_drives.tqh_first != 0;
+	int active = !TAILQ_EMPTY(&fdc->sc_drives);
 
 	/* Link into controller queue. */
 	fd->sc_active = 1;
@@ -677,7 +677,7 @@ fdfinish(fd, bp)
 	 * another drive is waiting to be serviced, since there is a long motor
 	 * startup delay whenever we switch.
 	 */
-	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
+	if (TAILQ_NEXT(fd, sc_drivechain) && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
 		if (BUFQ_NEXT(bp) != NULL)
@@ -728,7 +728,7 @@ fd_set_motor(fdc, reset)
 	u_char status;
 	int n;
 
-	if ((fd = fdc->sc_drives.tqh_first) != NULL)
+	if ((fd = TAILQ_FIRST(&fdc->sc_drives)) != NULL)
 		status = fd->sc_drive;
 	else
 		status = 0;
@@ -763,7 +763,7 @@ fd_motor_on(arg)
 
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
-	if ((fdc->sc_drives.tqh_first == fd) && (fdc->sc_state == MOTORWAIT))
+	if ((TAILQ_FIRST(&fdc->sc_drives) == fd) &&(fdc->sc_state == MOTORWAIT))
 		(void) fdcintr(fdc);
 	splx(s);
 }
@@ -924,7 +924,7 @@ fdctimeout(arg)
 	void *arg;
 {
 	struct fdc_softc *fdc = arg;
-	struct fd_softc *fd = fdc->sc_drives.tqh_first;
+	struct fd_softc *fd = TAILQ_FIRST(&fdc->sc_drives);
 	int s;
 
 	s = splbio();
@@ -971,7 +971,7 @@ fdcintr(arg)
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
-	fd = fdc->sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_drives);
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
  		return 1;
@@ -1245,7 +1245,7 @@ fdcretry(fdc)
 	struct fd_softc *fd;
 	struct buf *bp;
 
-	fd = fdc->sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_drives);
 	bp = BUFQ_FIRST(&fd->sc_q);
 
 	if (fd->sc_opts & FDOPT_NORETRY)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57.2.3 2002/02/11 20:08:07 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.2.4 2002/03/16 15:57:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.2.3 2002/02/11 20:08:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.2.4 2002/03/16 15:57:58 jdolecek Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.2.3 2002/02/11 20:08:07 jdolecek Ex
 #include "opt_rtc_offset.h"
 #include "fs_nfs.h"
 #include "opt_kloader_kernel_path.h"
+#include "debug_hpc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.2.3 2002/02/11 20:08:07 jdolecek Ex
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 #include <machine/kloader.h>
+#include <machine/debug.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -136,12 +138,14 @@ static int __bicons_enable;
 #endif /* NBICONSDEV > 0 */
 
 #ifdef NFS
-extern int nfs_mountroot(void);
-extern int (*mountroot)(void);
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
 #endif
 
 #ifdef MEMORY_DISK_DYNAMIC
-void md_root_setconf(caddr_t, size_t);
+#include <dev/md.h>
 #endif
 
 /* the following is used externally (sysctl_hw) */
@@ -297,6 +301,9 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif
 
 	/* Initialize frame buffer (to steal DMA buffer, stay here.) */
+#ifdef HPC_DEBUG_LCD
+	dbg_lcd_test();
+#endif
 	(*platform.fb_init)(&kernend);
 	kernend = (caddr_t)mips_round_page(kernend);
 
@@ -635,7 +642,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	extern int cold;
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)

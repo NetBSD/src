@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1.2.1 2002/01/10 19:50:52 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.1.2.2 2002/03/16 16:00:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -361,7 +361,7 @@ copyfault:
 		else
 			map = &vm->vm_map;
 		if (frame.tf_err & PGEX_W)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 

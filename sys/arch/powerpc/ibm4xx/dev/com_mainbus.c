@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.1.2.1 2002/01/10 19:48:00 thorpej Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.1.2.2 2002/03/16 15:59:16 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/tty.h>
+#include <sys/systm.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -62,10 +65,10 @@ int comfound = 0;
 int
 com_mainbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
-	union mainbus_attach_args *maa = aux;
+	struct mainbus_attach_args *maa = aux;
 
 	/* match only com devices */
-	if (strcmp(maa->mba_rmb.rmb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 
 	return (comfound < 2);
@@ -78,9 +81,9 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_mainbus_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
-	union mainbus_attach_args *maa = aux;
-	int addr = maa->mba_rmb.rmb_addr;
-	int irq = maa->mba_rmb.rmb_irq;
+	struct mainbus_attach_args *maa = aux;
+	int addr = maa->mb_addr;
+	int irq = maa->mb_irq;
 	
 	sc->sc_iot = galaxy_make_bus_space_tag(0, 0);
 	sc->sc_iobase = sc->sc_ioh = addr;

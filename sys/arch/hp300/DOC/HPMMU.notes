@@ -1,4 +1,4 @@
-$NetBSD: HPMMU.notes,v 1.2.46.2 2002/01/10 19:42:44 thorpej Exp $
+$NetBSD: HPMMU.notes,v 1.2.46.3 2002/03/16 15:57:31 jdolecek Exp $
 
 Overview:
 --------
@@ -27,7 +27,7 @@ Overview:
 	external cache.  A direct-mapped, virtual cache implementation
 	is used with 16 Kbytes of cache on 320 systems and 32 Kbytes on
 	350 systems.  Each cache entry can contain instructions or data,
-	from either user or supervisor space.  Seperate valid bits are
+	from either user or supervisor space.  Separate valid bits are
 	kept for user and supervisor entries, allowing for descriminatory
 	flushing of the cache.
 

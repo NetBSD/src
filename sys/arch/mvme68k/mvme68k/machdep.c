@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84.2.2 2001/09/13 01:14:04 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84.2.3 2002/03/16 15:58:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -205,7 +205,7 @@ void	mvme147_init __P((void));
 #endif
 
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
-#include <mvme68k/dev/pcctworeg.h>
+#include <dev/mvme/pcctworeg.h>
 void	mvme1xx_init __P((void));
 #endif
 
@@ -963,7 +963,7 @@ cpu_dump(dump, blknop)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 

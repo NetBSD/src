@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_mmu.h,v 1.1.6.1 2002/02/11 20:08:00 jdolecek Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_mmu.h,v 1.1.6.2 2002/03/16 15:57:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -39,22 +39,22 @@
 #ifndef _HPCBOOT_SH_MMU_H_
 #define _HPCBOOT_SH_MMU_H_
 
-#include <sh3/sh_arch.h>
+#include <memory.h>
 
 class MemoryManager_SHMMU : public MemoryManager {
 private:
-	BOOL _kmode;
-	paddr_t _table_base;
-	u_int32_t _asid;
+	typedef MemoryManager super;
 
 public:
 	MemoryManager_SHMMU(Console *&cons, size_t pagesize)
 		: MemoryManager(cons, pagesize) {
 		DPRINTF((TEXT("MemoryManager: SH3 MMU\n")));
 	}
-	virtual ~MemoryManager_SHMMU();
-	BOOL init(void);
-	paddr_t searchPage(vaddr_t vaddr);
+	virtual ~MemoryManager_SHMMU(void) { /* NO-OP */ }
+	virtual paddr_t searchPage(vaddr_t vaddr);
+
+	static void MMUDump(void);
+	static void CacheDump(void);
 };
 
 #endif // _HPCBOOT_SH_MMU_H_

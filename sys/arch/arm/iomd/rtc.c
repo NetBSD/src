@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.6.3 2002/02/11 20:07:21 jdolecek Exp $	*/
+/*	$NetBSD: rtc.c,v 1.1.6.4 2002/03/16 15:56:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -50,6 +50,7 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <machine/conf.h>
 #include <machine/rtc.h>
 #include <arm/iomd/iic.h>
 #include <arm/iomd/todclockvar.h>
@@ -65,6 +66,10 @@ void rtcattach __P((struct device *parent, struct device *self, void *aux));
 int rtcmatch __P((struct device *parent, struct cfdata *cf, void *aux));
 int rtc_read __P((void *, rtc_t *));
 int rtc_write __P((void *, rtc_t *));
+
+static __inline int hexdectodec __P((u_char));
+static __inline int dectohexdec __P((u_char));
+static int twodigits __P((char *, int));
 
 /* Read a byte from CMOS RAM */
 
@@ -475,7 +480,7 @@ rtcwrite(dev, uio, flag)
 int
 rtcioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

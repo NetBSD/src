@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.2.4.2 2002/01/10 19:54:21 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.2.4.3 2002/03/16 16:00:53 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.2.4.2 2002/01/10 19:54:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.2.4.3 2002/03/16 16:00:53 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -228,7 +228,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.2.4.2 2002/01/10 19:54:21 thorpej Exp $
 #include <dev/ic/cs89x0var.h>
 
 #ifdef SHARK
-#include <arm32/shark/sequoia.h>
+#include <shark/shark/sequoia.h>
 #endif
 
 /*

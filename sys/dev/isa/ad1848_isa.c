@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.18.4.1 2002/01/10 19:55:16 thorpej Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.18.4.2 2002/03/16 16:01:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.18.4.1 2002/01/10 19:55:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.18.4.2 2002/03/16 16:01:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,7 +583,13 @@ ad1848_isa_trigger_input(addr, start, end, blksize, intr, arg, param)
 		isc->sc_parg = arg;
 	}
 
-	blksize = (blksize * 8) / (param->precision * param->factor * param->channels) - 1;
+	
+	/* 
+	 * Calculate number of transfers.
+	 * Note that ADPCM is always transferred 4 bytes at at a time.
+	 */
+	blksize = (param->encoding == AUDIO_ENCODING_ADPCM) ? blksize / 4 - 1 :
+	    (blksize * 8) / (param->precision * param->factor * param->channels) - 1;
 
 	if (sc->mode >= 2) {
 		ad_write(sc, CS_LOWER_REC_CNT, blksize & 0xff);
@@ -620,7 +626,12 @@ ad1848_isa_trigger_output(addr, start, end, blksize, intr, arg, param)
 	isc->sc_pintr = intr;
 	isc->sc_parg = arg;
 
-	blksize = (blksize * 8) / (param->precision * param->factor * param->channels) - 1;
+	/* 
+	 * Calculate number of transfers.
+	 * Note that ADPCM is always transferred 4 bytes at at a time.
+	 */
+	blksize = (param->encoding == AUDIO_ENCODING_ADPCM) ? blksize / 4 - 1 :
+	    (blksize * 8) / (param->precision * param->factor * param->channels) - 1;
 
 	ad_write(sc, SP_LOWER_BASE_COUNT, blksize & 0xff);
 	ad_write(sc, SP_UPPER_BASE_COUNT, blksize >> 8);

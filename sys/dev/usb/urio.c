@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.5.6.2 2002/01/10 19:59:04 thorpej Exp $	*/
+/*	$NetBSD: urio.c,v 1.5.6.3 2002/03/16 16:01:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.5.6.2 2002/01/10 19:59:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.5.6.3 2002/03/16 16:01:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +546,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 	sc->sc_refcnt++;
 
 	err = usbd_do_request_flags(sc->sc_udev, &req, ptr, req_flags,
-				    &req_actlen);
+		  &req_actlen, USBD_DEFAULT_TIMEOUT);
 
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));

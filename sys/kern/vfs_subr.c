@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.155.2.6 2002/03/15 19:21:26 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.155.2.7 2002/03/16 16:01:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.155.2.6 2002/03/15 19:21:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.155.2.7 2002/03/16 16:01:54 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -190,7 +190,7 @@ vntblinit()
 {
 
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VNODE);
+	    &pool_allocator_nointr);
 
 	/*
 	 * Initialize the filesystem syncer.
@@ -2547,7 +2547,6 @@ fail:
 int
 vfs_mountroot()
 {
-	extern int (*mountroot) __P((void));
 	struct vfsops *v;
 
 	if (root_device == NULL)
@@ -2797,6 +2796,7 @@ vfs_vnode_print(vp, full, pr)
 {
 	char buf[256];
 	const char *vtype, *vtag;
+	int tmp;
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
 	bitmask_snprintf(vp->v_flag, vnode_flagbits, buf, sizeof(buf));
@@ -2808,10 +2808,10 @@ vfs_vnode_print(vp, full, pr)
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
 	      vp->v_holdcnt, vp->v_numoutput);
 
-	vtype = (vp->v_type >= 0 &&
+	vtype = ((tmp = vp->v_type) >= 0 &&
 		 vp->v_type < sizeof(vnode_types) / sizeof(vnode_types[0])) ?
 		vnode_types[vp->v_type] : "UNKNOWN";
-	vtag = (vp->v_tag >= 0 &&
+	vtag = ((tmp = vp->v_tag) >= 0 &&
 		vp->v_tag < sizeof(vnode_tags) / sizeof(vnode_tags[0])) ?
 		vnode_tags[vp->v_tag] : "UNKNOWN";
 	

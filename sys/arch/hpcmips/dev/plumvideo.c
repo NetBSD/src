@@ -1,7 +1,7 @@
-/*	$NetBSD: plumvideo.c,v 1.18.2.4 2002/02/11 20:08:05 jdolecek Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.18.2.5 2002/03/16 15:57:57 jdolecek Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,6 +38,7 @@
 
 #undef PLUMVIDEODEBUG
 #include "plumohci.h" /* Plum2 OHCI shared memory allocated on V-RAM */
+#include "bivideo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +71,9 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/hpc/hpcfbvar.h>
 #include <dev/hpc/hpcfbio.h>
+#if NBIVIDEO > 0
+#include <dev/hpc/bivideovar.h>
+#endif
 
 #ifdef PLUMVIDEODEBUG
 int	plumvideo_debug = 1;
@@ -218,6 +222,10 @@ plumvideo_attach(struct device *parent, struct device *self, void *aux)
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
 	config_found(self, &ha, hpcfbprint);
+#if NBIVIDEO > 0
+	/* bivideo is no longer need */
+	bivideo_dont_attach = 1;
+#endif /* NBIVIDEO > 0 */
 }
 
 void
@@ -260,7 +268,7 @@ plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 	case 16:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
-		fb->hf_order_flags = HPCFB_REVORDER_BYTE;
+		fb->hf_order_flags = HPCFB_REVORDER_WORD;
 		fb->hf_pack_width = 16;
 		fb->hf_pixels_per_pack = 1;
 		fb->hf_pixel_width = 16;
@@ -280,6 +288,7 @@ plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 		break;
 
 	case 8:
+		fb->hf_order_flags = HPCFB_REVORDER_BYTE | HPCFB_REVORDER_WORD;
 		fb->hf_class = HPCFB_CLASS_INDEXCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
 		fb->hf_pack_width = 8;

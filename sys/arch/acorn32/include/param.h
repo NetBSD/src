@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4.2.2 2002/01/10 19:36:21 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.4.2.3 2002/03/16 15:55:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,8 +41,10 @@
 
 #define	_MACHINE	acorn32
 #define	MACHINE		"acorn32"
+#ifndef __ELF__
 #define	_MACHINE_ARCH	arm32
 #define	MACHINE_ARCH	"arm32"
+#endif /* ! __ELF__ */
 
 #include <arm/arm32/param.h>
 

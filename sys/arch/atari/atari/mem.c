@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21.2.1 2001/09/13 01:13:18 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.21.2.2 2002/03/16 15:56:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,10 +60,6 @@
 
 #include "nvr.h"
 
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
-
 extern u_int lowram;
 static caddr_t devzeropage;
 
@@ -104,7 +100,7 @@ mmrw(dev, uio, flags)
 	static int	physlock;
 	vm_prot_t	prot;
 
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
@@ -126,7 +122,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-		case 0: /* minor device 0 is physical memory */
+		case DEV_MEM:
 			v = uio->uio_offset;
 
 			/*
@@ -153,7 +149,7 @@ mmrw(dev, uio, flags)
 			pmap_update(pmap_kernel());
 			break;
 
-		case 1: /* minor device 1 is kernel memory */
+		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			if (!uvm_kernacc((caddr_t)v, c,
@@ -162,12 +158,12 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-		case 2: /* minor device 2 is EOF/RATHOLE */
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-		case 11: /* minor device 11 (/dev/nvram) */
+		case DEV_NVRAM:
 #if NNVR > 0
 			error = nvram_uio(uio);
 			return (error);
@@ -175,7 +171,7 @@ mmrw(dev, uio, flags)
 			return (ENXIO);
 #endif
 
-		case 12: /* minor device 12 (/dev/zero) */
+		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
 				break;

@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: file_http.h,v 1.1 2001/02/09 18:34:38 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file_http.h,v 1.1.6.1 2002/03/16 15:57:50 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -58,6 +58,11 @@ public:
 		FILE_CACHE	= 0x00000001,
 		USE_PROXY	= 0x00000002		// XXX not yet.
 	};
+
+private:
+	// Wrapper for absorb Windows CE API difference.
+	int (*_wsa_startup)(WORD, LPWSADATA);
+	int (*_wsa_cleanup)(void);
 
 private:
 	// IP Socket

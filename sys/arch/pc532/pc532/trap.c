@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 2001/06/02 18:09:18 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.46.2.1 2002/03/16 15:59:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -377,7 +377,7 @@ trap(frame)
 			map = &vm->vm_map;
 		if ((frame.tf_msr & MSR_DDT) == DDT_WRITE ||
 		    (frame.tf_msr & MSR_STT) == STT_RMW)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 

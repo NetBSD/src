@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.3.2.2 2002/02/11 20:09:24 jdolecek Exp $
+#	$NetBSD: SIMICS,v 1.3.2.3 2002/03/16 16:00:25 jdolecek Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -18,8 +18,8 @@ makeoptions	COPTS="-Os"
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=8192	# size of memory disk, in blocks
-#options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
+#options 	MEMORY_DISK_SIZE=8192	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=2880	# 1.44M, same as a floppy
 
 maxusers	2		# estimated number of users
 

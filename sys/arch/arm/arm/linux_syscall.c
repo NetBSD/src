@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.2.2.2 2002/02/11 20:07:17 jdolecek Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.2.2.3 2002/03/16 15:56:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: linux_syscall.c,v 1.2.2.2 2002/02/11 20:07:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2.2.3 2002/03/16 15:56:01 jdolecek Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -105,6 +105,9 @@ __RCSID("$NetBSD: linux_syscall.c,v 1.2.2.2 2002/02/11 20:07:17 jdolecek Exp $")
 /* ARMLinux has some system calls of its very own. */
 #define LINUX_ARM_NR_BASE	0x9f0000
 #define LINUX_SYS_ARMBASE	0x000100 /* Must agree with syscalls.master */
+
+/* XXX */
+void linux_syscall(struct trapframe *frame, struct proc *p, u_int32_t insn);
 
 void
 linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)

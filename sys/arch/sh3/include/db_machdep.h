@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 2000/09/08 10:15:23 tsubai Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3.4.1 2002/03/16 15:59:37 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -82,9 +82,9 @@ db_regs_t		ddb_regs;	/* register state */
 /*
  * Constants for KGDB.
  */
-typedef	long		kgdb_reg_t;
-#define	KGDB_NUMREGS	14
-#define	KGDB_BUFLEN	512
+typedef	long	kgdb_reg_t;
+#define	KGDB_NUMREGS	59
+#define	KGDB_BUFLEN	1024
 
 /* macro for checking if a thread has used floating-point */
 #define db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
@@ -100,5 +100,12 @@ boolean_t inst_trap_return(int);
  */
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
+
+/*
+ * We have machine-dependent commands.
+ */
+#define DB_MACHINE_COMMANDS
+
+extern const char kgdb_devname[];
 
 #endif	/* _SH3_DB_MACHDEP_H_ */

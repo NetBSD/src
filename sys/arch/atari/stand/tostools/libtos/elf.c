@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.4.6.2 2002/01/10 19:40:25 thorpej Exp $	*/
+/*	$NetBSD: elf.c,v 1.4.6.3 2002/03/16 15:56:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,9 +57,9 @@
 #define	MALLOC(x)	alloc(x)
 #endif
 
+#include "libtos.h"
 #include "tosdefs.h"
 #include "kparamb.h"
-#include "libtos.h"
 #include "cread.h"
 
 /*

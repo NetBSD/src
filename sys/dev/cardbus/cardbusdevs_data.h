@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.16.2.1 2002/01/10 19:53:44 thorpej Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.16.2.2 2002/03/16 16:00:50 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.19 2001/06/20 05:39:17 ichiro Exp 
+ *	NetBSD: cardbusdevs,v 1.21 2002/02/17 21:20:46 augustss Exp 
  */
 
 /*
@@ -182,6 +182,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "FE2500 10/100 Ethernet",
 	},
 	{
+	    CARDBUS_VENDOR_HAWKING, CARDBUS_PRODUCT_HAWKING_PN672TX,
+	    0,
+	    "Hawking Technology",
+	    "PN672TX 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_82557,
 	    0,
 	    "Intel",
@@ -275,6 +281,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_ABOCOM, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "AboCom Systems",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_HAWKING, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Hawking Technology",
 	    NULL,
 	},
 	{

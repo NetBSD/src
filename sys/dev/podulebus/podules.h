@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.4 2001/06/08 20:09:07 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.4.2.1 2002/03/16 16:01:25 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.6 2001/06/08 20:08:35 bjh21 Exp 
+ *	NetBSD: podules,v 1.7 2002/03/09 13:44:09 bjh21 Exp 
  */
 
 /*
@@ -125,6 +125,7 @@
 #define	PODULE_SJ_NEXUSNS	0x008F		/* Nexus interface (A3020 netslot) */
 
 #define	PODULE_MORLEY_SCSI	0x0067		/* SCSI interface */
+#define	PODULE_MORLEY_USERANALOGUE	0x006d		/* User and Analogue ports */
 
 #define	PODULE_HCCS2_USERANALOGUE	0x006e		/* User and Analogue ports */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.10.2.3 2002/02/11 20:06:37 jdolecek Exp $
+#	$NetBSD: Makefile.acorn32,v 1.10.2.4 2002/03/16 15:55:23 jdolecek Exp $
 
 # Makefile for NetBSD
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.8 2001/01/15 20:19:55 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.8.4.1 2002/03/16 15:58:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -31,24 +31,17 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
+#include <sys/kernel.h>	/* cold */
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-
-#include <machine/intr.h>
-#include <sh3/intcreg.h>
-#include <sh3/trapreg.h>
-#include <machine/shbvar.h>
-
-#if 0
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmareg.h>
-#endif
 
 #include <net/netisr.h>
+
+#include <sh3/intcreg.h>
+#include <sh3/trapreg.h>
+
+#include <machine/shbvar.h>
+#include <machine/mmeye.h>
 
 int shbmatch __P((struct device *, struct cfdata *, void *));
 void shbattach __P((struct device *, struct device *, void *));
@@ -402,8 +395,8 @@ intrhandler(p1, p2, p3, p4, frame)
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
-	} else if (irl == INTEVT_TMU1)
-		irq_num = TMU1_IRQ;
+	} else if (irl == INTEVT_TMU0)
+		irq_num = TMU0_IRQ;
 	else
 		irq_num = (irl - 0x200) >> 5;
 
@@ -427,7 +420,7 @@ intrhandler(p1, p2, p3, p4, frame)
 #endif
 		return 1;
 	}
-	enable_ext_intr();
+	_cpu_intr_resume(0);
 	while (ih) {
 		if (ih->ih_arg)
 			(*ih->ih_fun)(ih->ih_arg);
@@ -435,7 +428,7 @@ intrhandler(p1, p2, p3, p4, frame)
 			(*ih->ih_fun)(&frame);
 		ih = ih->ih_next;
 	}
-	disable_ext_intr();
+	_cpu_intr_suspend();
 
 	cpl = ocpl;
 
@@ -490,20 +483,14 @@ check_ipending(p1, p2, p3, p4, frame)
 
 	if (i < SHB_MAX_HARDINTR) {
 		/* set interrupt event register, this value is referenced in ihandler */
-		SHREG_INTEVT = (i << 5) + 0x200;
+		_reg_write_4(SH_(INTEVT), (i << 5) + 0x200);
 	} else {
 		/* This is software interrupt */
-		SHREG_INTEVT = INTEVT_SOFT+i;
+		_reg_write_4(SH_(INTEVT), INTEVT_SOFT + i);
 	}
 
 	return 1;
 }
-
-#include <machine/mmeye.h>
-#if 0
-/* This is Brains MMTA H/W specific register */
-#define	MMTA_IMASK	(*(volatile unsigned short  *)0xb0000010)
-#endif
 
 void
 mask_irq(irq)
@@ -511,8 +498,8 @@ mask_irq(irq)
 {
 	unsigned short mask;
 
-	if (irq == TMU1_IRQ) {
-		SHREG_IPRA &= 0xf0ff;
+	if (irq == TMU0_IRQ) {
+		_reg_write_2(SH3_IPRA, _reg_read_2(SH3_IPRA) & 0x0fff);
 	} else{
 		mask = IRQ_BIT(15 - irq);
 		MMTA_IMASK &= ~mask;
@@ -525,8 +512,9 @@ unmask_irq(irq)
 {
 	unsigned short mask;
 
-	if (irq == TMU1_IRQ) {
-		SHREG_IPRA |= ((15 - irq)<<8);
+	if (irq == TMU0_IRQ) {
+		_reg_write_2(SH3_IPRA,
+			     _reg_read_2(SH3_IPRA) | ((15 - irq)<<12));
 	} else{
 		mask = IRQ_BIT(15 - irq);
 		MMTA_IMASK |= mask;

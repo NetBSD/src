@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.29.2.1 2002/01/10 20:00:17 thorpej Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.29.2.2 2002/03/16 16:01:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.29.2.1 2002/01/10 20:00:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.29.2.2 2002/03/16 16:01:53 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -411,8 +411,7 @@ nchinit(void)
 	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &ncvhash);
 #endif
 	pool_init(&namecache_pool, sizeof(struct namecache), 0, 0, 0,
-	    "ncachepl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_CACHE);
+	    "ncachepl", &pool_allocator_nointr);
 }
 
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66.2.3 2002/02/11 20:07:47 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.66.2.4 2002/03/16 15:57:32 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.66.2.3 $"
+#ident 		"GENERIC-$Revision: 1.66.2.4 $"
 
 # Support for various CPU types
 options 	HP320
@@ -103,15 +103,11 @@ options 	SE_KEYBOARD	# include Swedish HIL keymap
 # mapping for large copies.
 #options 	MAPPEDCOPY	# different copyin/copyout for large copies
 
-#
-# HP-UX binary compatibility.
-# NOTE: THIS IS STILL VERY EXPERIMENTAL. YOUR MILEAGE MAY VARY.
-#
+# Binary compatibility.
 options 	COMPAT_HPUX	# HP-UX binary compatibility
-
-options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
-options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
-
+options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
+options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
+#options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 #options 	COMPAT_SVR4	# SVR4 binary compatibility
 

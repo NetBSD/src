@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.50.2.1 2002/01/10 19:47:49 thorpej Exp $	*/
+/*	$NetBSD: rcons.c,v 1.50.2.2 2002/03/16 15:59:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -129,13 +129,17 @@ rcons_connect (info)
 	wsfont_init();
 
 	if (epwf)
-		cookie = wsfont_find(NULL, 8, 0, 0);
-	else
-		cookie = wsfont_find("Gallant", 0, 0, 0);
-
-	if (cookie > 0)
-		wsfont_lock(cookie, &ri.ri_font, bior,
+		cookie = wsfont_find(NULL, 8, 0, 0, bior,
 		    WSDISPLAY_FONTORDER_L2R);
+	else
+		cookie = wsfont_find("Gallant", 0, 0, 0, bior,
+		    WSDISPLAY_FONTORDER_L2R);
+
+	if (cookie > 0) {
+		if (wsfont_lock(cookie, &ri.ri_font))
+			panic("wsfont_lock failed");
+	} else
+		panic("rcons_connect: no font available");
 
 	/* Get operations set and set framebugger colormap */
 	if (rasops_init(&ri, 5000, 80))

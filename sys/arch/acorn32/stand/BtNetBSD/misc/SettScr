@@ -1,10 +1,10 @@
-| $NetBSD: SettScr,v 1.2.2.2 2002/01/10 19:36:42 thorpej Exp $
+| $NetBSD: SettScr,v 1.2.2.3 2002/03/16 15:55:29 jdolecek Exp $
 
 *BASIC
 
 *DIR <rel$dir>
-*Settype FBInstall text
-*Settype README text
+*Settype FBInstall Text
+*Settype README Text
 
 *DIR <rel$dir>.!BtNetBSD
 TEXTLOAD "BtNetBSD"
@@ -23,11 +23,12 @@ SAVE "TestBoot"
 *Settype PreBoot obey
 *Settype fastboot Text
 *Settype Files Text
-*Settype Legal text
+*Settype Legal Text
 
 *DIR <rel$dir>.!BtNetBSD.native
 TEXTLOAD "MountUFS"
 SAVE "MountUFS"
+*Settype Howto Text
 *Settype KillUnixFS Obey
 *Settype OpenRoot Obey
 *Settype unixfs_res Module
@@ -49,11 +50,12 @@ SAVE "resutil"
 *DIR <rel$dir>.misc
 TEXTLOAD "bb_netbsd"
 SAVE "bb_netbsd"
-*Settype SettScr text
+*Settype SettScr Text
 
 *DIR <rel$dir>.unixfs
 TEXTLOAD "mountufs"
 SAVE "mountufs"
+*Settype Howto Text
 *Settype KillUnixFS Obey
 *Settype OpenRoot Obey
 *Settype unixfs_res module

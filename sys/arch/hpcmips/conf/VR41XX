@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.1.2.3 2002/02/11 20:08:04 jdolecek Exp $
+# $NetBSD: VR41XX,v 1.1.2.4 2002/03/16 15:57:56 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.1.2.3 $"
+#ident 		"GENERIC-$Revision: 1.1.2.4 $"
 
 maxusers	16
 
@@ -28,6 +28,8 @@ maxusers	16
 options 	VR4102			# NEC VR4102
 options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121
+options 	VR4122			# NEC VR4122
+options 	VR4131			# NEC VR4131
 
 # Standard system options
 options 	DDB			# in-kernel debugger
@@ -61,7 +63,6 @@ options 	NTP			# network time protocol
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas
@@ -105,7 +106,7 @@ options 	NFS_BOOT_DHCP
 config		netbsd		root on ? type ?
 
 # compile options
-makeoptions	DEFGP="-G 18"
+makeoptions	DEFGP="-G 8"
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
@@ -129,20 +130,20 @@ apmdev0	at hpcapm0			# APM
 
 options 	MQ200_DEBUG
 #options 	MQ200_USECRT
-mqvideo0 at vrip? addr 0x0a000000 size 0x800000	# MQ200 video controller
+mqvideo0 at vr4102ip? addr 0x0a000000 size 0x800000	# MQ200 video controller
 hpcfb*		at	mqvideo?
 
-ite8181video0 at vrip? addr 0x0a000000 size 0x800000 # ITE8181 video controller
+ite8181video0 at vr4102ip? addr 0x0a000000 size 0x800000 # ITE8181 video controller
 hpcfb*		at	ite8181video?
 
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_430
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_510
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
-vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_700
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_430
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_510
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_520
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_700
 
 # Workstation Console attachments
 bivideo0	at	mainbus0
@@ -326,6 +327,42 @@ vrisab5	at vrc4172gpio0 isaportoffset 0x1000000
 isa5	at vrisab5
 pcic0	at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
 
+#
+# SigmarionII
+#
+com*	at vrgiu? platform NEC_MCR_SIGMARION2 addr 0x0b600000 port 8
+vrisab6	at vrgiu? platform NEC_MCR_SIGMARION2 isaportoffset 0xf780f800
+isa6	at vrisab6
+ne*	at isa6 port 0x300 irq  0x00090003 # port 9, active high and thorough
+#wdc*	at isa6 port 0x170 irq 0x00090003 flags 0x0002  # single drive
+hpcioman6 at vrgiu? platform NEC_MCR_SIGMARION2
+hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_02 port 0 level 1 connect 1
+
+#
+# MP-C303/304
+#
+hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC303
+hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC304
+hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_02 port 1 level 0 hold 1 connect 1
+
+
+# PCI bus support
+options 	PCIVERBOSE
+pci*	at vrpciu?
+
+# VRC4173
+vrc4173bcu* at pci? dev ? function ?	# VRC4173 BCU
+#vrc4173cmu* at vrc4173bcu?		# VRC4173 CMU
+#vrc4173piu* at vrc4173bcu?		# VRC4173 PIU
+#vrc4173kiu* at vrc4173bcu?		# VRC4173 KIU
+
+#vrc4173cardu* at pci? dev ? function ?	# VRC4173 CARDU
+#pcmcia*	at vrc4173cardu?
+
+# PCI USB controllers
+ohci*	at pci?	dev ? function ?	# Open Host Controller
+#options 	OHCI_DEBUG, USB_DEBUG, UHUB_DEBUG
+
 # PCMCIA bus support
 pcmcia*	at pcic? controller 0 socket ?
 
@@ -360,6 +397,88 @@ scsibus* at aic?
 scsibus* at esp?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+
+# USB Hubs
+usb*	at ohci?
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse*	at ums? mux 0
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+uhid*	at uhidev? reportid ?
+
+# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem*	at uhub? port ? configuration ?
+ucom*	at umodem?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
+scsibus* at umass? channel ?
+
+# USB audio
+uaudio*	at uhub? port ? configuration ?
+
+# USB MIDI
+umidi* at uhub? port ? configuration ?
+
+# USB IrDA bridges
+#uirda* at uhub? port ? configuration ? interface ?
+#irframe* at uirda?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# Prolofic PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
+
+# Serial adapters
+# FTDI FT8U100AX serial adapter
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
+
+uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
+
+# Diamond Multimedia Rio 500
+urio*	at uhub? port ?
+
+# USB Handspring Visor
+uvisor*	at uhub? port ?
+ucom*	at uvisor?
+
+# USB scanners
+uscanner* at uhub? port ?
+
+# USB scanners that use SCSI emulation, e.g., HP5300
+usscanner* at uhub? port ?
+scsibus* at usscanner? channel ?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
+
+# USB Generic driver
+ugen*	at uhub? port ?
+
+audio*	at uaudio?
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# serial-line IP ports

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13.6.3 2002/02/11 20:10:47 jdolecek Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13.6.4 2002/03/16 16:02:23 jdolecek Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.6.3 2002/02/11 20:10:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.6.4 2002/03/16 16:02:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -105,13 +105,14 @@ const char *softdep_typenames[] = {
 	"allocindir",
 	"freefrag",
 	"freeblks",
+	"freefile",
 	"diradd",
 	"mkdir",
 	"dirrem",
 	"newdirblk",
 };
 #define TYPENAME(type) \
-	((unsigned)(type) < D_LAST ? softdep_typenames[type] : "???")
+	((unsigned)(type) <= D_LAST ? softdep_typenames[type] : "???")
 /*
  * Finding the current process.
  */
@@ -186,6 +187,9 @@ static	void softdep_collect_pagecache __P((struct inode *));
 static	void softdep_free_pagecache __P((struct inode *));
 static	struct vnode *softdep_lookupvp(struct fs *, ino_t);
 static	struct buf *softdep_lookup_pcbp __P((struct vnode *, ufs_lbn_t));
+#ifdef UVMHIST
+void softdep_pageiodone1 __P((struct buf *));
+#endif
 void softdep_pageiodone __P((struct buf *));
 void softdep_flush_vnode __P((struct vnode *, ufs_lbn_t));
 static void softdep_flush_indir __P((struct vnode *));
@@ -848,7 +852,8 @@ u_long	pagedep_hash;		/* size of hash table - 1 */
 static struct sema pagedep_in_progress;
 
 /*
- * Look up a pagedep. Return 1 if found, 0 if not found.
+ * Look up a pagedep. Return 1 if found, 0 if not found or found
+ * when asked to allocate but not associated with any buffer.
  * If not found, allocate if DEPALLOC flag is passed.
  * Found or allocated entry is returned in pagedeppp.
  * This routine must be called with splbio interrupts blocked.
@@ -880,6 +885,9 @@ top:
 	}
 	if (pagedep) {
 		*pagedeppp = pagedep;
+		if ((flags & DEPALLOC) != 0 &&
+		    (pagedep->pd_state & ONWORKLIST) == 0)
+			return (0);
 		return (1);
 	}
 	if ((flags & DEPALLOC) == 0) {
@@ -1059,53 +1067,39 @@ softdep_initialize()
 	    &newblk_hash);
 	sema_init(&newblk_in_progress, "newblk", PRIBIO, 0);
 	pool_init(&sdpcpool, sizeof(struct buf), 0, 0, 0, "sdpcpool",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_TEMP);
+	    &pool_allocator_nointr);
 	for (i = 0; i < PCBPHASHSIZE; i++) {
 		LIST_INIT(&pcbphashhead[i]);
 	}
 
 	pool_init(&pagedep_pool, sizeof(struct pagedep), 0, 0, 0,
-	    "pagedeppl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_PAGEDEP);
+	    "pagedeppl", &pool_allocator_nointr);
 	pool_init(&inodedep_pool, sizeof(struct inodedep), 0, 0, 0,
-	    "inodedeppl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_INODEDEP);
+	    "inodedeppl", &pool_allocator_nointr);
 	pool_init(&newblk_pool, sizeof(struct newblk), 0, 0, 0,
-	    "newblkpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_NEWBLK);
+	    "newblkpl", &pool_allocator_nointr);
 	pool_init(&bmsafemap_pool, sizeof(struct bmsafemap), 0, 0, 0,
-	    "bmsafemappl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_BMSAFEMAP);
+	    "bmsafemappl", &pool_allocator_nointr);
 	pool_init(&allocdirect_pool, sizeof(struct allocdirect), 0, 0, 0,
-	    "allocdirectpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_ALLOCDIRECT);
+	    "allocdirectpl", &pool_allocator_nointr);
 	pool_init(&indirdep_pool, sizeof(struct indirdep), 0, 0, 0,
-	    "indirdeppl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_INDIRDEP);
+	    "indirdeppl", &pool_allocator_nointr);
 	pool_init(&allocindir_pool, sizeof(struct allocindir), 0, 0, 0,
-	    "allocindirpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_ALLOCINDIR);
+	    "allocindirpl", &pool_allocator_nointr);
 	pool_init(&freefrag_pool, sizeof(struct freefrag), 0, 0, 0,
-	    "freefragpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_FREEFRAG);
+	    "freefragpl", &pool_allocator_nointr);
 	pool_init(&freeblks_pool, sizeof(struct freeblks), 0, 0, 0,
-	    "freeblkspl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_FREEBLKS);
+	    "freeblkspl", &pool_allocator_nointr);
 	pool_init(&freefile_pool, sizeof(struct freefile), 0, 0, 0,
-	    "freefilepl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_FREEFILE);
+	    "freefilepl", &pool_allocator_nointr);
 	pool_init(&diradd_pool, sizeof(struct diradd), 0, 0, 0,
-	    "diraddpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_DIRADD);
+	    "diraddpl", &pool_allocator_nointr);
 	pool_init(&mkdir_pool, sizeof(struct mkdir), 0, 0, 0,
-	    "mkdirpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_MKDIR);
+	    "mkdirpl", &pool_allocator_nointr);
 	pool_init(&dirrem_pool, sizeof(struct dirrem), 0, 0, 0,
-	    "dirrempl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_DIRREM);
+	    "dirrempl", &pool_allocator_nointr);
 	pool_init(&newdirblk_pool, sizeof (struct newdirblk), 0, 0, 0,
-	    "newdirblkpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_NEWDIRBLK);
+	    "newdirblkpl", &pool_allocator_nointr);
 }
 
 /*
@@ -1378,6 +1372,7 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	struct inodedep *inodedep;
 	struct pagedep *pagedep;
 	struct newblk *newblk;
+	UVMHIST_FUNC("softdep_setup_allocdirect"); UVMHIST_CALLED(ubchist);
 
 	adp = pool_get(&allocdirect_pool, PR_WAITOK);
 	bzero(adp, sizeof(struct allocdirect));
@@ -1423,6 +1418,8 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 
 	if (bp == NULL) {
 		bp = softdep_setup_pagecache(ip, lbn, newsize);
+		UVMHIST_LOG(ubchist, "bp = %p, size = %d -> %d",
+		    bp, (int)oldsize, (int)newsize, 0);
 	}
 	WORKLIST_INSERT(&bp->b_dep, &adp->ad_list);
 	if (lbn >= NDADDR) {
@@ -4042,13 +4039,12 @@ handle_written_filepage(pagedep, bp)
 		return (1);
 	}
 	/*
-	 * If no dependencies remain and we are not waiting for a
-	 * new directory block to be claimed by its inode, then the
-	 * pagedep will be freed. Otherwise it will remain to track
-	 * any new entries on the page in case they are fsync'ed.
+	 * If we are not waiting for a new directory block to be
+	 * claimed by its inode, then the pagedep will be freed.
+	 * Otherwise it will remain to track any new entries on
+	 * the page in case they are fsync'ed.
 	 */
-	if (LIST_FIRST(&pagedep->pd_pendinghd) == 0 &&
-	    (pagedep->pd_state & NEWBLOCK) == 0) {
+	if ((pagedep->pd_state & NEWBLOCK) == 0) {
 		LIST_REMOVE(pagedep, pd_hash);
 		WORKITEM_FREE(pagedep, D_PAGEDEP);
 	}
@@ -5282,6 +5278,7 @@ softdep_setup_pagecache(ip, lbn, size)
 	struct vnode *vp = ITOV(ip);
 	struct buf *bp;
 	int s;
+	UVMHIST_FUNC("softdep_setup_pagecache"); UVMHIST_CALLED(ubchist);
 
 	/*
 	 * Enter pagecache dependency buf in hash.
@@ -5302,6 +5299,8 @@ softdep_setup_pagecache(ip, lbn, size)
 		LIST_INSERT_HEAD(&ip->i_pcbufhd, bp, b_vnbufs);
 	}
 	bp->b_bcount = bp->b_resid = size;
+	UVMHIST_LOG(ubchist, "vp = %p, lbn = %d, bp = %p, bcount = resid = %ld",
+	    vp, (int)lbn, bp, size);
 	return bp;
 }
 
@@ -5406,6 +5405,18 @@ softdep_lookup_pcbp(vp, lbn)
 void
 softdep_pageiodone(bp)
 	struct buf *bp;
+#ifdef UVMHIST
+{
+	struct vnode *vp = bp->b_vp;
+
+	if (DOINGSOFTDEP(vp))
+		softdep_pageiodone1(bp);
+}
+
+void
+softdep_pageiodone1(bp)
+	struct buf *bp;
+#endif
 {
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vnode *vp = bp->b_vp;
@@ -5419,6 +5430,7 @@ softdep_pageiodone(bp)
 	long iosize = bp->b_bcount;
 	int size, asize, bshift, bsize;
 	int i;
+	UVMHIST_FUNC("softdep_pageiodone"); UVMHIST_CALLED(ubchist);
 
 	KASSERT(!(bp->b_flags & B_READ));
 	bshift = vp->v_mount->mnt_fs_bshift;
@@ -5443,11 +5455,19 @@ softdep_pageiodone(bp)
 			if (pcbp == NULL) {
 				continue;
 			}
+			UVMHIST_LOG(ubchist,
+			    "bcount %d resid %d vp %p lbn %ld",
+			    pcbp ? (int)pcbp->b_bcount : -1,
+			    pcbp ? (int)pcbp->b_resid : -1, vp, lbn);
+			UVMHIST_LOG(ubchist,
+			    "pcbp %p iosize %ld, size %d, asize %d",
+			    pcbp, iosize, size, asize);
 			pcbp->b_resid -= size;
 			if (pcbp->b_resid < 0) {
 				panic("softdep_pageiodone: "
-				      "resid < 0, vp %p lbn 0x%lx pcbp %p",
-				      vp, lbn, pcbp);
+				    "resid < 0, vp %p lbn 0x%lx pcbp %p"
+				    " iosize %ld, size %d, asize %d, bsize %d",
+				    vp, lbn, pcbp, iosize, size, asize, bsize);
 			}
 			if (pcbp->b_resid > 0) {
 				continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.21.16.1 2002/01/10 19:57:15 thorpej Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.21.16.2 2002/03/16 16:01:22 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.16.1 2002/01/10 19:57:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.16.2 2002/03/16 16:01:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,9 +267,6 @@ retry:
 		return;
 	}
 found:
-	sc->sc_iot = psc->sc_pcioh.iot;
-	sc->sc_ioh = psc->sc_pcioh.ioh;
-
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (com_pcmcia_enable1(sc))
@@ -285,6 +282,9 @@ found:
 		printf(": can't map i/o space\n");
 		return;
 	}
+	sc->sc_iot = psc->sc_pcioh.iot;
+	sc->sc_ioh = psc->sc_pcioh.ioh;
+
 	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 

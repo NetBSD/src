@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.1.6.2 2002/01/10 19:38:12 thorpej Exp $	*/
+/*	$NetBSD: pms.c,v 1.1.6.3 2002/03/16 15:56:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -40,6 +40,9 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: pms.c,v 1.1.6.3 2002/03/16 15:56:12 jdolecek Exp $");
+
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -82,6 +85,7 @@ void pmswatchdog	__P((void *));
 static void pmsputbuffer __P((struct pms_softc *sc, struct mousebufrec *buf));
 #endif
 static __inline void pms_flush __P((struct pms_softc *sc));
+static int cmd_mouse __P((struct pms_softc *, u_char));
 
 extern struct cfdriver opms_cd;
 

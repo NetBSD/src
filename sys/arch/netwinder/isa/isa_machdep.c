@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2 2001/06/09 10:29:16 chris Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2.2.1 2002/03/16 15:58:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -95,7 +96,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmareg.h>
 #include <dev/isa/isadmavar.h>
-#include <arm32/isa/icu.h>
+#include <arm/footbridge/isa/icu.h>
 #include <arm/footbridge/dc21285reg.h>
 #include <arm/footbridge/dc21285mem.h>
 
@@ -383,7 +384,6 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 {
 	struct irqhandler **p, *q, *ih;
 	static struct irqhandler fakehand = {fakeintr};
-	extern int cold;
 
 /*	printf("isa_intr_establish(%d, %d, %d)\n", irq, type, level);*/
 

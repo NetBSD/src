@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.1.2.3 2002/01/10 19:48:27 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.1.2.4 2002/03/16 15:59:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -62,32 +62,32 @@
 
 struct wdsc_softc {
 	struct wd33c93_softc	sc_wd33c93; /* Must be first */
-        struct evcnt		sc_intrcnt; /* Interrupt counter */
+	struct evcnt		sc_intrcnt; /* Interrupt counter */
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_dmamap;
 	int			sc_flags;
 #define	WDSC_DMA_ACTIVE			0x1
-#define	WDSC_DMA_MAPLOADED		0x2    
+#define	WDSC_DMA_MAPLOADED		0x2
 	struct hpc_dma_softc	sc_hpcdma;
 };
 
 
-void    wdsc_attach __P((struct device *, struct device *, void *));
-int     wdsc_match  __P((struct device *, struct cfdata *, void *));
+void	wdsc_attach	__P((struct device *, struct device *, void *));
+int	wdsc_match	__P((struct device *, struct cfdata *, void *));
 
 struct cfattach wdsc_ca = {
 	sizeof(struct wdsc_softc), wdsc_match, wdsc_attach
 };
 
-int     wdsc_dmasetup   __P((struct wd33c93_softc *, caddr_t *,size_t *,
+int	wdsc_dmasetup	__P((struct wd33c93_softc *, caddr_t *,size_t *,
 				int, size_t *));
-int     wdsc_dmago      __P((struct wd33c93_softc *));
-void    wdsc_dmastop    __P((struct wd33c93_softc *));
+int	wdsc_dmago	__P((struct wd33c93_softc *));
+void	wdsc_dmastop	__P((struct wd33c93_softc *));
 void	wdsc_reset	__P((struct wd33c93_softc *));
-int     wdsc_dmaintr    __P((void *));
-int     wdsc_scsiintr   __P((void *));
+int	wdsc_dmaintr	__P((void *));
+int	wdsc_scsiintr	__P((void *));
 
-#define MAX_SCSI_XFER   (512*1024)
+#define MAX_SCSI_XFER	(512*1024)
 #define MAX_SEG_SZ	8192
 #define	MAX_DMA_SZ	MAX_SCSI_XFER
 #define	DMA_SEGS	(MAX_DMA_SZ/MAX_SEG_SZ)
@@ -127,8 +127,8 @@ wdsc_attach(pdp, dp, auxp)
 
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
 					haa->ha_devoff,
-	     				HPC_SCSI0_DEVREGS_SIZE,
-	     				&sc->sc_regh)) != 0) {
+					HPC_SCSI0_DEVREGS_SIZE,
+					&sc->sc_regh)) != 0) {
 		printf(": unable to map regs, err=%d\n", err);
 		return;
 	}
@@ -181,8 +181,8 @@ wdsc_dmasetup(dev, addr, len, datain, dmasize)
 {
 	struct wdsc_softc *wsc = (void *)dev;
 	struct hpc_dma_softc *dsc = &wsc->sc_hpcdma;
-	int     count, err;
-	void   *vaddr;
+	int count, err;
+	void *vaddr;
 
 	KASSERT((wsc->sc_flags & WDSC_DMA_ACTIVE) == 0);
 
@@ -194,7 +194,7 @@ wdsc_dmasetup(dev, addr, len, datain, dmasize)
 		/* Build list of physical addresses for this transfer */
 		if ((err=bus_dmamap_load(wsc->sc_dmat, wsc->sc_dmamap,
 				vaddr, count,
-				NULL /* kernel address */,   
+				NULL /* kernel address */,
 				BUS_DMA_NOWAIT)) != 0)
 			panic("%s: bus_dmamap_load err=%d",
 			      dev->sc_dev.dv_xname, err);

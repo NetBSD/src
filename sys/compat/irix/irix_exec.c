@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.10.4.2 2002/01/10 19:51:17 thorpej Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.10.4.3 2002/03/16 16:00:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.4.2 2002/01/10 19:51:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.4.3 2002/03/16 16:00:27 jdolecek Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.4.2 2002/01/10 19:51:17 thorpej E
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_errno.h>
 
-static int ELFNAME2(irix,mipsopt_signature) __P((struct proc *, 
-    struct exec_package *epp, Elf_Ehdr *eh));
 static void setregs_n32 __P((struct proc *, struct exec_package *, u_long));
 
 extern struct sysent irix_sysent[];
@@ -134,73 +132,8 @@ const struct emul emul_irix_n32 = {
 #endif
 };
 
-static int
-ELFNAME2(irix,mipsopt_signature)(p, epp, eh)
-	struct proc *p;
-	struct exec_package *epp;
-	Elf_Ehdr *eh;
-{
-	size_t shsize;
-	int     strndx;
-	size_t i;
-	static const char signature[] = ".MIPS.options";
-	char* strtable;
-	Elf_Shdr *sh;
-
-	int error;
-
-	/*
-	 * load the section header table
-	 */
-	shsize = eh->e_shnum * sizeof(Elf_Shdr);
-	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-	error = exec_read_from(p, epp->ep_vp, eh->e_shoff, sh, shsize);
-	if (error)
-		goto out;
-
-	/*
-	 * Now let's find the string table. If it does not exists, give up.
-	 */
-	strndx = (int)(eh->e_shstrndx);
-	if (strndx == SHN_UNDEF) {
-		error = ENOEXEC;
-		goto out;
-	}
-
-	/*
-	 * strndx is the index in section header table of the string table
-	 * section get the whole string table in strtable, and then we 
-	 * get access to the names
-	 * s->sh_name is the offset of the section name in strtable.
-	 */
-	strtable = malloc(sh[strndx].sh_size, M_TEMP, M_WAITOK);
-	error = exec_read_from(p, epp->ep_vp, sh[strndx].sh_offset, strtable,
-	    sh[strndx].sh_size);
-	if (error)
-		goto out;
-
-	for (i = 0; i < eh->e_shnum; i++) {
-		Elf_Shdr *s = &sh[i];
-		if (!memcmp((void*)(&(strtable[s->sh_name])), signature,
-				sizeof(signature))) {
-#ifdef DEBUG_IRIX
-			printf("irix_mipsopt_sig=%s\n",&(strtable[s->sh_name]));
-#endif
-			error = 0;
-			goto out;
-		}
-	}
-	error = ENOEXEC;
-
-out:
-	free(sh, M_TEMP);
-	free(strtable, M_TEMP);
-	return (error);
-}
-
 /*
  * IRIX o32 ABI probe function
- * Should be run after the IRIX n32 ABI probe function, see comment below
  */
 int
 ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
@@ -217,6 +150,10 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 #ifdef DEBUG_IRIX
 	printf("irix_probe_o32()\n");
 #endif
+	if ((((Elf_Ehdr *)epp->ep_hdr)->e_flags & IRIX_EF_IRIX_ABI_MASK) !=
+	    IRIX_EF_IRIX_ABIO32)
+		return error;
+
 	if (itp[0]) {
 		/* o32 binaries use /lib/libc.so.1 */
 		if (strncmp(itp, "/lib/libc.so", 12) && 
@@ -240,8 +177,6 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 
 /*
  * IRIX n32 ABI probe function
- * This should be run before the IRIX o32 ABI probe function, else 
- * n32 static binaries will be matched as o32
  */
 int
 ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
@@ -258,8 +193,8 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 #ifdef DEBUG_IRIX
 	printf("irix_probe_n32()\n");
 #endif
-	/* This eliminates o32 static binaries */
-	if ((error = ELFNAME2(irix,mipsopt_signature)(p, epp, eh)) != 0)
+	if ((((Elf_Ehdr *)epp->ep_hdr)->e_flags & IRIX_EF_IRIX_ABI_MASK) !=
+	    IRIX_EF_IRIX_ABIN32)
 		return error;
 
 	if (itp[0]) {
@@ -276,7 +211,7 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 	}
 	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_IRIX
-	printf("irix_prob_n32e: returning 0\n");
+	printf("irix_probe_n32: returning 0\n");
 	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
 #endif
 	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121.2.3 2002/02/11 20:09:02 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.121.2.4 2002/03/16 15:59:44 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.121.2.3 $"
+#ident 		"GENERIC-$Revision: 1.121.2.4 $"
 
 maxusers	32
 
@@ -493,7 +493,7 @@ en0	at sbus? slot ? offset ?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs

@@ -1,9 +1,9 @@
-/*	$NetBSD: macepci.c,v 1.3 2000/06/14 22:32:20 soren Exp $	*/
+/*	$NetBSD: macepci.c,v 1.3.10.1 2002/03/16 15:59:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -59,7 +59,7 @@ struct macepci_softc {
 static int	macepci_match(struct device *, struct cfdata *, void *);
 static void	macepci_attach(struct device *, struct device *, void *);
 static int	macepci_print(void *, const char *);
-pcireg_t	macepci_conf_read(pci_chipset_tag_t, pcitag_t, int); 
+pcireg_t	macepci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		macepci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 int		macepci_intr(void *);
 
@@ -120,7 +120,7 @@ macepci_attach(parent, self, aux)
 		macepci_conf_write(0, devtag, PCI_MAPREG_START + (2 << 2),
 		    0x00000000);
 	}
-		
+
 	/*
 	 * Enable all MACE PCI interrupts. They will be masked by
 	 * the CRIME code.
@@ -160,13 +160,13 @@ macepci_print(aux, pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
-        if (pnp != 0)
-                printf("%s at %s", pba->pba_busname, pnp);
+	if (pnp != 0)
+		printf("%s at %s", pba->pba_busname, pnp);
 	else
 		printf(" bus %d", pba->pba_bus);
 
 	/* Mega XXX */
-	*(volatile u_int32_t *)0xb4000034 = 0;  /* prime timer */
+	*(volatile u_int32_t *)0xb4000034 = 0;	/* prime timer */
 
 	return UNCONF;
 }

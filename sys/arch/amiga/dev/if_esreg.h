@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esreg.h,v 1.4 1996/05/01 15:51:08 mhitch Exp $	*/
+/*	$NetBSD: if_esreg.h,v 1.4.44.1 2002/03/16 15:55:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -116,6 +116,7 @@ union smcregs {
 #define	CR_SET_SQLCH	0x0002		/* Squelch level 240mv */
 
 /* Control Register */
+#define	CTR_TE_ENA	0x2000		/* Transmit Error enable */
 #define	CTR_AUTO_RLSE	0x0008		/* Auto Release */
 
 /* MMU Command Register */

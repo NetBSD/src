@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.14.6.2 2002/01/10 20:03:08 thorpej Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.14.6.3 2002/03/16 16:02:15 jdolecek Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.14.6.2 2002/01/10 20:03:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.14.6.3 2002/03/16 16:02:15 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -464,13 +464,13 @@ esp_blowfish_blockdecrypt(algo, sav, s, d)
 	u_int8_t *s;
 	u_int8_t *d;
 {
-	/* HOLY COW!  BF_encrypt() takes values in host byteorder */
+	/* HOLY COW!  BF_decrypt() takes values in host byteorder */
 	BF_LONG t[2];
 
 	bcopy(s, t, sizeof(t));
 	t[0] = ntohl(t[0]);
 	t[1] = ntohl(t[1]);
-	BF_encrypt(t, (BF_KEY *)sav->sched, BF_DECRYPT);
+	BF_decrypt(t, (BF_KEY *)sav->sched);
 	t[0] = htonl(t[0]);
 	t[1] = htonl(t[1]);
 	bcopy(t, d, sizeof(t));
@@ -490,7 +490,7 @@ esp_blowfish_blockencrypt(algo, sav, s, d)
 	bcopy(s, t, sizeof(t));
 	t[0] = ntohl(t[0]);
 	t[1] = ntohl(t[1]);
-	BF_encrypt(t, (BF_KEY *)sav->sched, BF_ENCRYPT);
+	BF_encrypt(t, (BF_KEY *)sav->sched);
 	t[0] = htonl(t[0]);
 	t[1] = htonl(t[1]);
 	bcopy(t, d, sizeof(t));

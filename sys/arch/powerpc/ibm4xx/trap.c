@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1.2.1 2001/08/03 04:12:14 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.1.2.2 2002/03/16 15:59:15 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -178,7 +178,7 @@ printf("debug reg is %x srr2 %x srr3 %x\n", rv, srr2, srr3);
 			}
 
 			if (frame->esr & (ESR_DST|ESR_DIZ))
-				ftype = VM_PROT_READ | VM_PROT_WRITE;
+				ftype = VM_PROT_WRITE;
 
 DBPRINTF(TDB_ALL, ("trap(EXC_DSI) at %x %s fault on %p esr %x\n", 
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
@@ -207,7 +207,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 		KERNEL_PROC_LOCK(p);
 			
 		if (frame->esr & (ESR_DST|ESR_DIZ))
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 
 DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %x %s fault on %x %x\n", 
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->dear, frame->esr));
@@ -634,7 +634,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	 * Stolen from physio(): 
 	 */
 	PHOLD(p);
-	error = uvm_vslock(p, udaddr, len, VM_PROT_READ|VM_PROT_WRITE);
+	error = uvm_vslock(p, udaddr, len, VM_PROT_WRITE);
 	if (error) {
 		PRELE(p);
 		return EFAULT;

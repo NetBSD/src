@@ -1,4 +1,4 @@
-/*	$NetBSD: xalloc.c,v 1.1.1.1 1996/01/07 21:50:49 leo Exp $	*/
+/*	$NetBSD: xalloc.c,v 1.1.1.1.44.1 2002/03/16 15:56:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -42,6 +42,7 @@ xmalloc(size)
 	if (p || !size)
 		return(p);
 	fatal(-1, "Virtual memory exhausted");
+	return NULL; /* Never gets here...*/
 }
 
 void *
@@ -54,4 +55,5 @@ xrealloc(ptr, size)
 	if (p || !size)
 		return(p);
 	fatal(-1, "Virtual memory exhausted");
+	return NULL; /* Never gets here...*/
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11.2.2 2002/01/10 19:48:05 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.11.2.3 2002/03/16 15:59:18 jdolecek Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -66,7 +66,7 @@ ddb_trap_glue(frame)
 	struct trapframe *frame;
 {
 	if (!(frame->srr1 & PSL_PR)
-	    && (frame->exc == EXC_TRC
+	    && (frame->exc == EXC_TRC || frame->exc == EXC_RUNMODETRC
 		|| (frame->exc == EXC_PGM
 		    && (frame->srr1 & 0x20000))
 		|| frame->exc == EXC_BPT)) {

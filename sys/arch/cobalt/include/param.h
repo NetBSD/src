@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2001/05/30 12:28:41 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.6.2.1 2002/03/16 15:57:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,23 +51,27 @@
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* Maximum raw I/O transfer size */
 
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
-
-#define	MSIZE		256		/* Size of an mbuf */
+/*
+ * Constants related to network buffer management.
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * on machines that exchange pages of input or output buffers with mbuf
+ * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
+ * of the hardware page size.
+ */
+#define	MSIZE		256		/* size of an mbuf */
 
 #ifndef MCLSHIFT
-#define	MCLSHIFT	11		/* Convert bytes to m_buf clusters. */
-#endif
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
+#endif	/* MCLSHIFT */
 
-#define	MCLBYTES	(1 << MCLSHIFT)	/* Size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
+#ifndef NMBCLUSTERS
 #if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
 #endif
 
-#ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	2048		/* Map size, max cluster allocation */
 #else

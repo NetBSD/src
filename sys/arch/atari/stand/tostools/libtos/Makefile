@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.1.44.1 2002/01/10 19:40:21 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.44.2 2002/03/16 15:56:56 jdolecek Exp $
 #
 LIB	= libtos.a
 
-OBJS	= aout.o bsdstart.o cread.o elf.o eprintf.o error.o sysinfo.o \
-	  xalloc.o xexit.o keywait.o
+OBJS	= biosrw.o ahdi.o aout.o bsdstart.o cread.o diskio.o elf.o eprintf.o \
+	  error.o sysinfo.o xalloc.o xexit.o keywait.o
 
-HEADERS	= kparamb.h libtos.h
+HEADERS	= ahdilbl.h diskio.h kparamb.h libtos.h
 
 include ../Makefile.inc
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2.2.2 2002/01/10 19:41:19 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2.2.3 2002/03/16 15:57:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -69,8 +69,12 @@
  * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
  * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
-#define KERNEL_VM_SIZE		0x07000000
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
+
+/*
+ * Size of available KVM space, note that growkernel will grow into this.
+ */
+#define KERNEL_VM_SIZE	0x0C000000
 
 /*
  * Override the default pager_map size, there's not enough KVA.
@@ -86,7 +90,7 @@
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
 #define VM_MAX_KERNEL_BUF \
-	((VM_MAXKERN_ADDRESS - KERNEL_VM_BASE) * 4 / 10)
+	(((KERNEL_VM_SIZE) * 4) / 10)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */

@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.140.2.3 2002/02/11 20:06:41 jdolecek Exp $
+# $NetBSD: files.alpha,v 1.140.2.4 2002/03/16 15:55:41 jdolecek Exp $
 #
 # alpha-specific configuration info
 
@@ -224,7 +224,7 @@ device	vsms: wsmousedev
 attach	vsms at zsc with zsms
 file	dev/tc/zsms.c			zsms
 
-device	lkkbd: wskbddev
+device	lkkbd: wskbddev, lkkbdmap
 attach	lkkbd at zsc with zskbd
 file	dev/tc/zskbd.c			zskbd		needs-flag
 

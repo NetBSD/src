@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.3.2.2 2002/02/11 20:08:18 jdolecek Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.3.2.3 2002/03/16 15:58:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,31 +36,81 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <sh3/cpufunc.h>
+#include <sh3/mmu.h>
+#include <sh3/cache.h>
+#include <sh3/cache_sh3.h>
+#include <sh3/cache_sh4.h>
+
 #include <machine/kloader.h>
 
-void kloader_sh3_jump(kloader_bootfunc_t *, vaddr_t,
+/* 
+ * 2nd-bootloader. Make sure that PIC and its size is lower than page size.
+ */
+#define KLOADER_SH_BOOT(cpu, product)					\
+void									\
+kloader_sh ## cpu ## _boot(struct kloader_bootinfo *kbi,		\
+    struct kloader_page_tag *p)						\
+{									\
+	int tmp;							\
+									\
+	/* Disable interrupt. block exception. */			\
+	__asm__ __volatile__(						\
+		"stc	sr, %1;"					\
+		"or	%0, %1;"					\
+		"ldc	%1, sr" : : "r"(0x500000f0), "r"(tmp));		\
+									\
+	/* Now I run on P1, TLB flush. and disable. */			\
+	SH ## cpu ## _TLB_DISABLE;					\
+									\
+	do {								\
+		u_int32_t *dst =(u_int32_t *)p->dst;			\
+		u_int32_t *src =(u_int32_t *)p->src;			\
+		u_int32_t sz = p->sz / sizeof (int);			\
+		while (sz--)						\
+			*dst++ = *src++;				\
+	} while ((p = (struct kloader_page_tag *)p->next) != 0);	\
+									\
+	SH ## product ## _CACHE_FLUSH();				\
+									\
+	/* jump to kernel entry. */					\
+	__asm__ __volatile__(						\
+		"mov	%0, r4;"					\
+		"mov	%1, r5;"					\
+		"jmp	@%3;"						\
+		"mov	%2, r6;"					\
+		: :							\
+		"r"(kbi->argc),						\
+		"r"(kbi->argv),						\
+		"r"(&kbi->bootinfo),					\
+		"r"(kbi->entry));					\
+	/* NOTREACHED */						\
+}
+
+void kloader_sh_jump(kloader_bootfunc_t *, vaddr_t,
     struct kloader_bootinfo *, struct kloader_page_tag *);
 kloader_bootfunc_t kloader_sh3_boot;
+kloader_bootfunc_t kloader_sh4_boot;
 
-struct kloader_ops kloader_sh3_ops = {
-	.jump = kloader_sh3_jump,
-	.boot = kloader_sh3_boot    
+struct kloader_ops kloader_sh_ops = {
+	.jump = kloader_sh_jump,
+	.boot = 0
 };
 
 void
 kloader_reboot_setup(const char *filename)
 {
 
-	__kloader_reboot_setup(&kloader_sh3_ops, filename);
+	kloader_sh_ops.boot = CPU_IS_SH3 ? kloader_sh3_boot : kloader_sh4_boot;
+
+	__kloader_reboot_setup(&kloader_sh_ops, filename);
 }
 
 void
-kloader_sh3_jump(kloader_bootfunc_t func, vaddr_t sp,
+kloader_sh_jump(kloader_bootfunc_t func, vaddr_t sp,
     struct kloader_bootinfo *info, struct kloader_page_tag *tag)
 {
 
-	SH7709A_CACHE_FLUSH();
+	sh_icache_sync_all();	/* also flush d-cache */
 
 	__asm__ __volatile__(
 	    	"mov	%0, r4;"
@@ -71,43 +121,9 @@ kloader_sh3_jump(kloader_bootfunc_t func, vaddr_t sp,
 	/* NOTREACHED */
 }
 
-/* 
- * 2nd-bootloader. Make sure that PIC and its size is lower than page size.
- */
-void
-kloader_sh3_boot(struct kloader_bootinfo *kbi, struct kloader_page_tag *p)
-{
-	int tmp;
-
-	/* Disable interrupt. block exception.(TLB exception don't occur) */
-	__asm__ __volatile__(
-		"stc	sr, %1;"
-		"or	%0, %1;"
-		"ldc	%1, sr" : : "r"(0x500000f0), "r"(tmp));
-	
-	/* Now I run on P1, TLB flush. and disable. */
-	SHREG_MMUCR = MMUCR_TF;
-
-	do {
-		u_int32_t *dst =(u_int32_t *)p->dst;
-		u_int32_t *src =(u_int32_t *)p->src;
-		u_int32_t sz = p->sz / sizeof (int);
-		while (sz--)
-			*dst++ = *src++;
-	} while ((p = (struct kloader_page_tag *)p->next) != 0);
-
-	SH7709A_CACHE_FLUSH();
-
-	/* jump to kernel entry. */
-	__asm__ __volatile__(
-		"mov	%0, r4;"
-		"mov	%1, r5;"
-		"jmp	@%3;"
-		"mov	%2, r6;"
-		: :
-		"r"(kbi->argc),
-		"r"(kbi->argv),
-		"r"(&kbi->bootinfo),
-		"r"(kbi->entry));
-	/* NOTREACHED */
-}
+#ifdef SH3
+KLOADER_SH_BOOT(3, 7709A)
+#endif 
+#ifdef SH4
+KLOADER_SH_BOOT(4, 7750)
+#endif

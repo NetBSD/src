@@ -1,7 +1,7 @@
-/*	$NetBSD: obio.c,v 1.3.2.2 2002/01/10 19:42:37 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.3.2.3 2002/03/16 15:57:28 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -73,7 +73,18 @@ struct {
 	const char *od_name;
 	bus_addr_t od_addr;
 	int od_irq;
-} obio_devices[] = {
+} obio_devices[] =
+#if defined(IOP310_TEAMASA_NPWR)
+{
+	/*
+	 * There is only one UART on the Npwr.
+	 */
+	{ "com",	IQ80310_UART2,		XINT3_IRQ(XINT3_UART2) },
+
+	{ NULL,		0,			0 },
+};
+#else /* Default to stock IQ80310 */
+{
 	/*
 	 * Order these so the first UART matched is the one at J9
 	 * and the second is the one at J10.  (This is the same
@@ -84,6 +95,7 @@ struct {
 
 	{ NULL,		0,			0 },
 };
+#endif /* list of IQ80310-based designs */
 
 int
 obio_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -111,21 +123,30 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args oba;
 	int i;
-	uint8_t board_rev, cpld_rev, backplane;
 
 	obio_found = 1;
 
+#if defined(IOP310_TEAMASA_NPWR)
+	/*
+	 * These boards don't have revision/backplane detect registers.
+	 * Just ignore it.
+	 */
+	printf("\n");
+#else /* Default to stock IQ80310 */
+    {
 	/*
 	 * Yes, we're using knowledge of the obio bus space internals,
 	 * here.
 	 */
-	board_rev = CPLD_READ(IQ80310_BOARD_REV);
-	cpld_rev = CPLD_READ(IQ80310_CPLD_REV);
-	backplane = CPLD_READ(IQ80310_BACKPLANE_DET);
+	uint8_t board_rev = CPLD_READ(IQ80310_BOARD_REV);
+	uint8_t cpld_rev = CPLD_READ(IQ80310_CPLD_REV);
+	uint8_t backplane = CPLD_READ(IQ80310_BACKPLANE_DET);
 
 	printf(": board rev. %c, CPLD rev. %c, backplane %spresent\n",
 	    BOARD_REV(board_rev), CPLD_REV(cpld_rev),
 	    (backplane & 1) ? "" : "not ");
+    }
+#endif /* list of IQ80310-based designs */
 
 	for (i = 0; obio_devices[i].od_name != NULL; i++) {
 		oba.oba_name = obio_devices[i].od_name;

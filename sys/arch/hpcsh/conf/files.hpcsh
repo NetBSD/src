@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.14.2.1 2002/02/11 20:08:15 jdolecek Exp $
+#	$NetBSD: files.hpcsh,v 1.14.2.2 2002/03/16 15:58:04 jdolecek Exp $
 #
 maxpartitions 8
 
@@ -9,12 +9,14 @@ defflag debug_hpcsh.h	BUS_SPACE_DEBUG
 			HD64461VIDEO_DEBUG
 			HD64461PCMCIA_DEBUG			
 
+defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
+
 file	arch/hpcsh/hpcsh/conf.c
 file	arch/hpcsh/hpcsh/machdep.c
-file	arch/hpcsh/hpcsh/clock.c
 file	arch/hpcsh/hpcsh/console.c
 file	arch/hpcsh/hpcsh/autoconf.c
 file	arch/hpcsh/hpcsh/bus_space.c
+file	arch/hpcsh/hpcsh/clock_machdep.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
 
 file	arch/hpc/hpc/kloader.c
@@ -33,10 +35,7 @@ include "dev/hpc/files.bicons"
 include "dev/hpc/files.hpckbd"
 include "dev/hpc/files.hpcfb"
 
-#
-# Debug utility
-#
-file	arch/hpc/hpc/debug_subr.c
+include "arch/hpc/conf/files.debug"
 file	arch/hpcsh/hpcsh/debug.c
 defflag	opt_interrupt_monitor.h		INTERRUPT_MONITOR
 
@@ -79,25 +78,45 @@ file	arch/hpcsh/dev/pfckbd.c			pfckbd	needs-flag
 define	hd64461if {}
 device	hd64461if: hd64461if
 attach	hd64461if at shb
-file	arch/hpcsh/dev/hd64461/hd64461.c	hd64461if
+file	arch/hpcsh/dev/hd64461/hd64461.c		hd64461if
+file	arch/hpcsh/dev/hd64461/hd64461_machdep.c	hd64461if
 
 device	hd64461pcmcia: pcmciabus
 attach	hd64461pcmcia at hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461pcmcia.c	hd64461pcmcia
 
 attach	com at hd64461if with hd64461uart
-file	arch/hpcsh/dev/hd64461/hd64461uart.c	hd64461uart
+file	arch/hpcsh/dev/hd64461/hd64461uart.c	hd64461uart	needs-flag
 
 device	hd64461video: hpcfbif
 attach	hd64461video at hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461video.c	hd64461video	needs-flag
 file	dev/hpc/video_subr.c			hd64461video
 
-# network devices MII bus
-include	"dev/mii/files.mii"
+#
+# HD64465
+#
+define	hd64465if {}
+device	hd64465if: hd64465if
+attach	hd64465if at shb
+file	arch/hpcsh/dev/hd64465/hd64465.c	hd64465if	needs-flag
 
-#
-# Workstation Console
-#
+attach	com at hd64465if with hd64465uart
+file	arch/hpcsh/dev/hd64465/hd64465uart.c	hd64465uart	needs-flag
+
+device	hd64465pcmcia: pcmciabus
+attach	hd64465pcmcia at hd64465if
+file	arch/hpcsh/dev/hd64465/hd64465pcmcia.c	hd64465pcmcia
+
+#attach	ohci at hd64465if with hd64465ohci
+#file	arch/hpcsh/dev/hd64465/hd64465ohci.c	hd64465ohci
+
+include	"dev/mii/files.mii"
+include "dev/usb/files.usb"
 include	"dev/wscons/files.wscons"
 
+#
+# Machine-independent PCMCIA drivers
+#
+device	fdc {drive = -1}	# files.pcmcia requires.
+include "dev/pcmcia/files.pcmcia"

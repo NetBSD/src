@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13.2.2 2002/02/11 20:08:18 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.2.3 2002/03/16 15:58:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,14 +36,17 @@
 
 #include "opt_md.h"
 #include "opt_ddb.h"
-#include "opt_syscall_debug.h"
+#include "opt_kgdb.h"
 #include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"
 #include "opt_kloader_kernel_path.h"
+#include "debug_hpc.h"
+#include "hd64465if.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/user.h>
 
 #include <sys/reboot.h>
@@ -55,7 +58,14 @@
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#ifdef DDB
+#include <sh3/cpu.h>
+#include <sh3/clock.h>
+#include <sh3/intcreg.h>
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+#if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -64,7 +74,7 @@
 #endif
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
-#endif
+#endif /* DDB || KGDB */
 
 #include <dev/cons.h> /* consdev */
 #include <dev/md.h>
@@ -74,17 +84,13 @@
 #include <machine/platid_mask.h>
 #include <machine/autoconf.h>		/* makebootdev() */
 #include <machine/kloader.h>
-
-#include <hpcsh/hpcsh/clockvar.h>
-
-#include <sh3/pclock.h>
-#include <sh3/intcreg.h>
+#include <hpcsh/dev/hd64465/hd64465var.h>
 
 #ifdef DEBUG
-#define DPRINTF(arg) printf arg
-#else
-#define DPRINTF(arg)
-#endif
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	machdep_debug
+#endif /* DEBUG */
+#include <machine/debug.h>
 
 /* 
  * D-RAM location (Windows CE machine specific)
@@ -108,39 +114,20 @@
 #define DRAM_BANK1_END		(DRAM_BANK1_START + DRAM_BANK_SIZE)
 
 #ifdef NFS
-extern int nfs_mountroot(void);
-extern int (*mountroot)(void);
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
 #endif
 
-/* curpcb is defined in locore.s */
-struct user *proc0paddr;
+/* Machine */
 char machine[]		= MACHINE;
 char machine_arch[]	= MACHINE_ARCH;
-
-paddr_t msgbuf_paddr;
-vaddr_t ram_start = SH3_PHYS_TO_P1SEG(DRAM_BANK0_START);
-extern int nkpde;
 extern char cpu_model[];
-extern paddr_t avail_start, avail_end;	// XXX
+struct bootinfo *bootinfo;
 
-#if defined(sh3_debug) || defined(SYSCALL_DEBUG)
-int cpu_debug_mode = 1;
-#else
-int cpu_debug_mode = 0;
-#endif
-#ifdef	SYSCALL_DEBUG
-#define	SCDEBUG_ALL 0x0004
-extern int	scdebug;
-#endif
-
-/*
- * These variables are needed by /sbin/savecore
- */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
-int 	dumpsize;		/* pages */
-long	dumplo; 		/* blocks */
-
-/* VM */
+/* Physical memory */
+extern paddr_t avail_start, avail_end;
 static int	mem_cluster_init(paddr_t);
 static void	mem_cluster_load(void);
 static void	__find_dram_shadow(paddr_t, paddr_t);
@@ -149,28 +136,21 @@ static int	__check_dram(paddr_t, paddr_t);
 #endif
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
-int		physmem;
+paddr_t msgbuf_paddr;
 
-void main(void);
-void machine_startup(int, char *[], struct bootinfo *);
-struct bootinfo *bootinfo;
+void main(void) __attribute__((__noreturn__));
+void machine_startup(int, char *[], struct bootinfo *)
+	__attribute__((__noreturn__));
 
 void
 machine_startup(int argc, char *argv[], struct bootinfo *bi)
 {
-	extern char trap_base[], edata[], end[];
-	/* exception handler */
-	extern char MonTrap100[], MonTrap100_end[];
-	extern char MonTrap600[], MonTrap600_end[];
-	extern char tlbmisshandler_stub[], tlbmisshandler_stub_end[];
-	vaddr_t proc0_sp;
+	extern char edata[], end[];
 	vaddr_t kernend;
-	psize_t sz;
-	pd_entry_t *pagedir;
-	pt_entry_t *pagetab, pte;
+	vsize_t sz;
+	size_t symbolsize;
 	int i;
 	char *p;
-	size_t symbolsize;
 	/* 
 	 * this routines stack is never polluted since stack pointer
 	 * is lower than kernel text segment, and at exiting, stack pointer
@@ -178,7 +158,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	struct kloader_bootinfo kbi;
 
-	/* symbol table size */
+	/* Symbol table size */
 	symbolsize = 0;
 	if (memcmp(&end, ELFMAG, SELFMAG) == 0) {
 		Elf_Ehdr *eh = (void *)end;
@@ -189,24 +169,48 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 				symbolsize = sh->sh_offset + sh->sh_size;
 	}
 
-	/* clear BSS */
+	/* Clear BSS */
 	memset(edata, 0, end - edata);
 
-	/* initialize INTC */
-	SHREG_IPRA = 0;
-	SHREG_IPRB = 0;
-	SHREG_IPRC = 0;
-	SHREG_IPRD = 0;
-	SHREG_IPRE = 0;
-
-	/* start to determine heap area */
-	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
-
-	/* setup bootinfo */
+	/* Setup bootinfo */
 	bootinfo = &kbi.bootinfo;
 	memcpy(bootinfo, bi, sizeof(struct bootinfo));
+	if (bootinfo->magic == BOOTINFO_MAGIC) {
+		platid.dw.dw0 = bootinfo->platid_cpu;
+		platid.dw.dw1 = bootinfo->platid_machine;
+	}
 
-	/* setup bootstrap options */
+	/* CPU initialize */
+	if (platid_match(&platid, &platid_mask_CPU_SH_3))
+		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
+	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
+		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
+
+	/* ICU initiailze. (now we can use cpu_arch and cpu_product) */
+	switch (cpu_product) {
+	case CPU_PRODUCT_7709A:
+		_reg_write_2(SH7709_IPRC, 0);
+		_reg_write_2(SH7709_IPRD, 0);
+		_reg_write_2(SH7709_IPRE, 0);
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_7709:
+		_reg_write_2(SH3_IPRA, 0);
+		_reg_write_2(SH3_IPRB, 0);
+		break;
+	case CPU_PRODUCT_7750:
+		_reg_write_2(SH4_IPRA, 0);
+		_reg_write_2(SH4_IPRB, 0);
+		_reg_write_2(SH4_IPRC, 0);
+		break;
+	}
+#if NHD64465IF > 0
+	hd64465_intr_disable();
+#endif
+
+	/* Start to determine heap area */
+	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
+
+	/* Setup bootstrap options */
 	makebootdev("wd0"); /* default boot device */
 	boothowto = 0;
 	for (i = 1; i < argc; i++) { /* skip 1st arg (kernel name). */
@@ -220,9 +224,9 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 				mountroot = nfs_mountroot;
 			else
 				makebootdev(p);
-#else
+#else /* NFS */
 			makebootdev(p);
-#endif
+#endif /* NFS */
 			break;
 		default:
 			BOOT_FLAG(*cp, boothowto);
@@ -237,163 +241,98 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	if (boothowto & RB_MINIROOT) {
 		size_t fssz;
-		fssz = round_page(mfs_initminiroot((void *)kernend));
+		fssz = sh3_round_page(mfs_initminiroot((void *)kernend));
 #ifdef MEMORY_DISK_DYNAMIC
 		md_root_setconf((caddr_t)kernend, fssz);
 #endif
 		kernend += fssz;
 	}
-#endif
+#endif /* MFS */
 
 	/* 
-	 * start console 
+	 * Console
 	 */
-	/* serial console requires PCLOCK. estimate here */
-	clock_init();
-	sh3_pclock = clock_get_pclock();
-
-	if (bootinfo->magic == BOOTINFO_MAGIC) {
-		platid.dw.dw0 = bootinfo->platid_cpu;
-		platid.dw.dw1 = bootinfo->platid_machine;
-	}
 	consinit();
-
+#ifdef HPC_DEBUG_LCD
+	dbg_lcd_test();
+#endif
 	/* copy boot parameter for kloader */
 	kloader_bootinfo_set(&kbi, argc, argv, bi, TRUE);
 
-	uvm_setpagesize(); /* default page size (4KB) */
-
-	/* find memory cluster */
+	/* 
+	 * Find memory cluster.
+	 */
 	physmem = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
-	nkpde = physmem >> (PDSHIFT - 1);
-	DPRINTF(("nkpde = %d\n", nkpde));
+	_DPRINTF("total memory = %dMbyte\n", (int)(sh3_ptob(physmem) >> 20));
 
-	/* steal page dir area, process0 stack, page table area */
-	sz = NBPG + USPACE + NBPG * (1 + nkpde);
-	p = (void *)SH3_PHYS_TO_P1SEG(sh3_round_page(mem_clusters[1].start));
+	/*
+	 * Initialize proc0 and enable MMU.
+	 */
+	sz = sh_proc0_init(kernend, mem_clusters[0].start,
+	    mem_clusters[1].start + mem_clusters[1].size - 1);
+	/* adjust heap size */
+	kernend += sz;
 	mem_clusters[1].start += sz;
 	mem_clusters[1].size -= sz;
-	memset(p, 0, sz);
+	_DPRINTF("proc0: steal %ld KB, stack: 0x%08x\n", sz >> 10,
+	    proc0.p_addr->u_pcb.kr15);
 
 	/* 
-	 *                     edata  end
-	 * +-------------+------+-----+----------+-------------+------------+
-	 * | kernel text | data | bss | Page Dir | Proc0 Stack | Page Table |
-	 * +-------------+------+-----+----------+-------------+------------+
-	 *                                NBPG       USPACE    (1+nkpde)*NBPG
-	 *                                           (= 4*NBPG)
-	 * Build initial page tables
+	 * Debugger.
 	 */
-	pagedir = (void *)p;
-	pagetab = (void *)(p + SYSMAP);
-	/*
-	 * Construct a page table directory
-	 * In SH3 H/W does not support PTD,
-	 * these structures are used by S/W.
-	 */
-	pte = (pt_entry_t)pagetab;
-	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
-
-	pagedir[(SH3_PHYS_TO_P1SEG(mem_clusters[0].start)) >> PDSHIFT] = pte;
-	/* make pde for
-	   0xd0000000, 0xd0400000, 0xd0800000,0xd0c00000,
-	   0xd1000000, 0xd1400000, 0xd1800000, 0xd1c00000 */
-	pte += NBPG;
-	for (i = 0; i < nkpde; i++) {
-		pagedir[(VM_MIN_KERNEL_ADDRESS >> PDSHIFT) + i] = pte;
-		pte += NBPG;
-	}
-
-	/* Install a PDE recursively mapping page directory as a page table! */
-	pte = (u_int)pagedir;
-	pte |= PG_V | PG_4K | PG_KW | PG_M | PG_N;
-	pagedir[PDSLOT_PTE] = pte;
-
-	/* set PageDirReg */
-	SHREG_TTB = (u_int)pagedir;
-
-	/* install trap handler */
-	memcpy(trap_base + 0x100, MonTrap100, MonTrap100_end - MonTrap100);
-	memcpy(trap_base + 0x600, MonTrap600, MonTrap600_end - MonTrap600);
-	memcpy(trap_base + 0x400, tlbmisshandler_stub,
-	    tlbmisshandler_stub_end - tlbmisshandler_stub);
-	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(trap_base));
-
-	/* enable MMU */
-#ifdef SH4
-	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV | MMUCR_SQMD;
-#else
-	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV;
-#endif
-	/* enable exception */
-	splraise(-1);
-	enable_intr();
-
 #ifdef DDB
-	/* initialize debugger */
 	if (symbolsize) {
 		ddb_init(symbolsize, &end, end + symbolsize);
-		DPRINTF(("symbol size = %d byte\n", symbolsize));
-		if (boothowto & RB_KDB)
-			Debugger();
+		_DPRINTF("symbol size = %d byte\n", symbolsize);
 	}
-#endif	
-
-	/* setup proc0 stack */
-	proc0_sp = (vaddr_t)p + NBPG + USPACE - 16 - sizeof(struct trapframe);
-	DPRINTF(("proc0 stack: 0x%08lx\n", proc0_sp));
-
-	/* Set proc0paddr */
-	proc0paddr = (void *)(p + NBPG);
-	/* Set pcb->PageDirReg of proc0 */
-	proc0paddr->u_pcb.pageDirReg = (int)pagedir;
-	/* Set page dir address */
-	proc0.p_addr = proc0paddr;
-	/* XXX: PMAP_NEW requires valid curpcb. also init'd in cpu_startup */
-	curpcb = &proc0.p_addr->u_pcb;
-	/* Load physical memory to VM */
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif /* DDB */
+#ifdef KGDB
+	if (boothowto & RB_KDB) {
+		if (kgdb_dev == NODEV) {
+			printf("no kgdb console.\n");
+		} else {
+			kgdb_debug_init = 1;
+			kgdb_connect(1);
+		}
+	}
+#endif /* KGDB */
+	/*
+	 * Load physical memory to VM 
+	 */
 	mem_cluster_load();
-	/* Call pmap initialization to make new kernel address space */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
-	/* jump to main */
+	/* Jump to main */
 	__asm__ __volatile__(
 		"jmp	@%0;"
-		"mov	%1, sp" :: "r"(main), "r"(proc0_sp));
-
+		"mov	%1, sp" :: "r"(main), "r"(proc0.p_addr->u_pcb.kr15));
 	/* NOTREACHED */
+	while (1)
+		;
 }
 
 void
 cpu_startup()
 {
-	int cpuclock;
+	platid_t cpu;
+	int cpuclock, pclock;
 
-	cpuclock = clock_get_cpuclock();
+	cpuclock = sh_clock_get_cpuclock();
+	pclock = sh_clock_get_pclock();
 
 	sh3_startup();
-#define CPUIDMATCH(p)							\
-	platid_match(&platid, &platid_mask_CPU_##p)
 
-	if (CPUIDMATCH(SH_3_7709))
-		sprintf(cpu_model, "%s Hitachi SH7709",
-		    platid_name(&platid));
-	else if (CPUIDMATCH(SH_3_7709A))
-		sprintf(cpu_model, "%s Hitachi SH7709A",
-		    platid_name(&platid));
-	else
-		sprintf(cpu_model, "%s Hitachi SH product unknown",
-		    platid_name(&platid));
+	memcpy(&cpu, &platid, sizeof(platid_t));
+	cpu.dw.dw1 = 0;	/* clear platform */
+	sprintf(cpu_model, "[%s] %s", platid_name(&platid), platid_name(&cpu));
 
 #define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 	printf("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
-	    MHZ(cpuclock), MHZ(PCLOCK));
-
-#ifdef SYSCALL_DEBUG
-	scdebug |= SCDEBUG_ALL;
-#endif
+	    MHZ(cpuclock), MHZ(pclock));
 }
 
 int
@@ -409,15 +348,14 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
 		    sizeof cn_tab->cn_dev));
 	default:
-		return (EOPNOTSUPP);
 	}
-	/* NOTREACHED */
+
+	return (EOPNOTSUPP);
 }
 
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	extern int cold;
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
@@ -476,30 +414,14 @@ cpu_reboot(int howto, char *bootstr)
 #endif
 	}
 
-	goto *(u_int32_t *)0xa0000000;
-	while (1)
-		;
+#if NHD64465IF > 0
+	hd64465_intr_reboot();
+#endif
+
+	cpu_reset();
 	/*NOTREACHED*/
-}
-
-void
-cpu_dumpconf()
-{
-	// notyet;
-}
-
-/*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
- */
-vaddr_t
-reserve_dumppages(vaddr_t p)
-{
-#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
-	static vaddr_t dumpspace;
-	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
+	while(1)
+		;
 }
 
 /* return # of physical pages. */
@@ -519,27 +441,25 @@ mem_cluster_init(paddr_t addr)
 #ifdef LOAD_ALL_MEMORY /* notyet */
 	__find_dram_shadow(DRAM_BANK1_START, DRAM_BANK1_END);
 #endif
-	DPRINTF(("mem_cluster_cnt = %d\n", mem_cluster_cnt));
+	_DPRINTF("mem_cluster_cnt = %d\n", mem_cluster_cnt);
 	npages = 0;
 	for (i = 0, seg = mem_clusters; i < mem_cluster_cnt; i++, seg++) {
-		DPRINTF(("mem_clusters[%d] = {0x%lx+0x%lx <0x%lx}", i,
+		_DPRINTF("mem_clusters[%d] = {0x%lx+0x%lx <0x%lx}", i,
 		    (paddr_t)seg->start, (paddr_t)seg->size,
-		    (paddr_t)seg->start + (paddr_t)seg->size));
-		npages += atop(seg->size);
+		    (paddr_t)seg->start + (paddr_t)seg->size);
+		npages += sh3_btop(seg->size);
 #ifdef NARLY_MEMORY_PROBE
 		if (i == 0) {
-			DPRINTF((" don't check.\n"));
+			_DPRINTF(" don't check.\n");
 			continue;
 		}
 		if (__check_dram((paddr_t)seg->start, (paddr_t)seg->start +
 		    (paddr_t)seg->size) != 0)
 			panic("D-RAM check failed.");
 #else
-		DPRINTF(("\n"));
+		_DPRINTF("\n");
 #endif /* NARLY_MEMORY_PROBE */
 	}
-
-	DPRINTF(("total memory = %dMbyte\n", (int)(ptoa(npages) >> 20)));
 
 	return (npages);
 }
@@ -557,10 +477,10 @@ mem_cluster_load()
 		start = (paddr_t)mem_clusters[i].start;
 		size = (psize_t)mem_clusters[i].size;
 
-		DPRINTF(("loading 0x%lx,0x%lx\n", start, size));
+		_DPRINTF("loading 0x%lx,0x%lx\n", start, size);
 		start = SH3_PHYS_TO_P1SEG(start);
 		memset((void *)start, 0, size);
-		cacheflush();
+		sh_dcache_wbinv_all();
 		end = atop(start + size);
 		start = atop(start);
 		uvm_page_physload(start, end, start, end, VM_FREELIST_DEFAULT);
@@ -569,48 +489,16 @@ mem_cluster_load()
 	/* load cluster 1 only. */
 	start = (paddr_t)mem_clusters[1].start;
 	size = (psize_t)mem_clusters[1].size;
-	DPRINTF(("loading 0x%lx,0x%lx\n", start, size));
+	_DPRINTF("loading 0x%lx,0x%lx\n", start, size);
 
 	start = SH3_PHYS_TO_P1SEG(start);
 	end = start + size;
 	memset((void *)start, 0, size);
-	cacheflush();
 
 	avail_start = start;
 	avail_end = end;
 #endif
 }
-
-#ifdef NARLY_MEMORY_PROBE
-int
-__check_dram(paddr_t start, paddr_t end)
-{
-	u_int8_t *page;
-	int i, x;
-
-	DPRINTF((" checking..."));
-	for (; start < end; start += NBPG) {
-		page = (u_int8_t *)SH3_PHYS_TO_P2SEG (start);
-		x = random();
-		for (i = 0; i < NBPG; i += 4)
-			*(volatile int *)(page + i) = (x ^ i);
-		for (i = 0; i < NBPG; i += 4)
-			if (*(volatile int *)(page + i) != (x ^ i))
-				goto bad;
-		x = random();
-		for (i = 0; i < NBPG; i += 4)
-			*(volatile int *)(page + i) = (x ^ i);
-		for (i = 0; i < NBPG; i += 4)
-			if (*(volatile int *)(page + i) != (x ^ i))
-				goto bad;
-	}
-	DPRINTF(("success.\n"));
-	return (0);
- bad:
-	DPRINTF(("failed.\n"));
-	return (1);
-}
-#endif /* NARLY_MEMORY_PROBE */
 
 void
 __find_dram_shadow(paddr_t start, paddr_t end)
@@ -618,7 +506,7 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 	vaddr_t page, startaddr, endaddr;
 	int x;
 
-	DPRINTF(("search D-RAM from 0x%08lx for 0x%08lx\n", start, end));
+	_DPRINTF("search D-RAM from 0x%08lx for 0x%08lx\n", start, end);
 	startaddr = SH3_PHYS_TO_P2SEG(start);
 	endaddr = SH3_PHYS_TO_P2SEG(end);
 
@@ -659,3 +547,34 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 	
 	mem_cluster_cnt++;
 }
+
+#ifdef NARLY_MEMORY_PROBE
+int
+__check_dram(paddr_t start, paddr_t end)
+{
+	u_int8_t *page;
+	int i, x;
+
+	_DPRINTF(" checking...");
+	for (; start < end; start += NBPG) {
+		page = (u_int8_t *)SH3_PHYS_TO_P2SEG (start);
+		x = random();
+		for (i = 0; i < NBPG; i += 4)
+			*(volatile int *)(page + i) = (x ^ i);
+		for (i = 0; i < NBPG; i += 4)
+			if (*(volatile int *)(page + i) != (x ^ i))
+				goto bad;
+		x = random();
+		for (i = 0; i < NBPG; i += 4)
+			*(volatile int *)(page + i) = (x ^ i);
+		for (i = 0; i < NBPG; i += 4)
+			if (*(volatile int *)(page + i) != (x ^ i))
+				goto bad;
+	}
+	_DPRINTF("success.\n");
+	return (0);
+ bad:
+	_DPRINTF("failed.\n");
+	return (1);
+}
+#endif /* NARLY_MEMORY_PROBE */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.45.2.3 2002/01/10 19:46:32 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.45.2.4 2002/03/16 15:58:50 jdolecek Exp $
 
 # config file for mvme68k
 
@@ -11,51 +11,38 @@ device mainbus { }
 attach mainbus at root
 file arch/mvme68k/dev/mainbus.c		mainbus
 
-# MVME-147 Peripheral Channel Controller
-device pcc { [ ipl = -1 ] }
-attach pcc at mainbus
-file arch/mvme68k/dev/pcc.c			pcc needs-flag
-
-# MVME-166,167 and 177 Peripheral Channel Controller Chip2
-device pcctwo { [ ipl = -1 ] }
-attach pcctwo at mainbus
-file arch/mvme68k/dev/pcctwo.c			pcctwo needs-flag
-
-# This is not as odd as it looks. If the user doesn't define
-# a vmetwo0 device in the config file, we still need the
-# following gloop to deal with some local interrupts.
-file arch/mvme68k/dev/vme_two_isr.c		pcctwo
+device clock
 
 # Grab the MD VMEbus goop
 include "dev/vme/files.vme"
 
-# Our own common VMEbus glue
-define mvmebus
-file arch/mvme68k/dev/mvmebus.c			mvmebus
+# Grab the common MVME glue
+include "dev/mvme/files.mvme"
+
+# MVME-147 Peripheral Channel Controller
+device pcc { [ ipl = -1 ] }
+attach pcc at mainbus
+file arch/mvme68k/dev/pcc.c			pcc needs-flag
 
 # MVME-147 VME controller chip
 device	vmepcc: mvmebus, vmebus
 attach	vmepcc at pcc
 file	arch/mvme68k/dev/vme_pcc.c		vmepcc
 
-# MVME-1[67]7 VME controller chip
-device	vmetwo: mvmebus, vmebus
-attach	vmetwo at mainbus
-file	arch/mvme68k/dev/vme_two.c		vmetwo needs-flag
-
-device clock
+# MVME-147 Clock
 attach clock at pcc with clock_pcc
-attach clock at pcctwo with clock_pcctwo
 file arch/mvme68k/dev/clock_pcc.c		clock_pcc
-file arch/mvme68k/dev/clock_pcctwo.c		clock_pcctwo
 
+# ZS Serial ports
 device zsc { channel = -1 }
 file arch/mvme68k/dev/zs.c			zsc
 file dev/ic/z8530sc.c				zsc
 
+# MVME-147 Serial ports
 attach zsc at pcc with zsc_pcc
 file arch/mvme68k/dev/zs_pcc.c			zsc_pcc needs-flag
 
+# MVME-1[67]2 Serial ports
 attach zsc at pcctwo with zsc_pcctwo
 file arch/mvme68k/dev/zs_pcctwo.c		zsc_pcctwo needs-flag
 
@@ -63,30 +50,13 @@ device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
 
-# Parallel printer
-device lpt
+# MVME-147 Parallel printer
 attach lpt at pcc with lpt_pcc
-attach lpt at pcctwo with lpt_pcctwo
-file arch/mvme68k/dev/lpt.c			lpt needs-flag
 file arch/mvme68k/dev/lpt_pcc.c			lpt_pcc
-file arch/mvme68k/dev/lpt_pcctwo.c		lpt_pcctwo
 
 # device defined in sys/conf/files
 attach le at pcc with le_pcc: le24
 file arch/mvme68k/dev/if_le.c			le_pcc
-
-# i82596 Ethernet Interface on MVME1[67]7
-attach ie at pcctwo with ie_pcctwo
-file arch/mvme68k/dev/if_ie.c			ie_pcctwo
-
-# CD2401 Quad Serial Controller
-attach clmpcc at pcctwo with clmpcc_pcctwo
-file arch/mvme68k/dev/clmpcc_pcctwo.c		clmpcc_pcctwo needs-flag
-
-# MVME16x and MVME17x Memory Controller ASICs
-device memc
-attach memc at mainbus
-file arch/mvme68k/dev/memc.c			memc
 
 # TimeKeeper NVRAM device
 device timekeeper: mk48txx
@@ -114,9 +84,9 @@ device wdsc: sbic, scsi
 attach wdsc at pcc with wdsc_pcc
 file arch/mvme68k/dev/wdsc.c			wdsc_pcc
 
-# NCR53C710 SCSI on everything else
-attach osiop at pcctwo with ncrsc_pcctwo
-file arch/mvme68k/dev/ncrsc_pcctwo.c		ncrsc_pcctwo
+file arch/mvme68k/dev/pcctwo_68k.c		pcctwo
+file arch/mvme68k/dev/vme_two_68k.c		vmetwo
+file arch/mvme68k/dev/memc_68k.c		memc
 
 file arch/mvme68k/mvme68k/autoconf.c
 file arch/mvme68k/mvme68k/bus_dma.c

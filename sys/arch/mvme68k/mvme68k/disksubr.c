@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2001/07/07 07:51:38 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21.2.1 2002/03/16 15:58:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -61,7 +61,7 @@ static void printclp __P((struct cpu_disklabel *clp, char *str));
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.
@@ -147,7 +147,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)

@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.2.2.2 2002/01/10 19:37:59 thorpej Exp $	*/
+/*	$NetBSD: iic.c,v 1.2.2.3 2002/03/16 15:56:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -53,6 +53,7 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <arm/cpufunc.h>
@@ -361,7 +362,7 @@ iicwrite(dev, uio, flag)
 int
 iicioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

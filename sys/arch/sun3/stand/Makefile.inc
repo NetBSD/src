@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17.2.2 2002/02/11 20:09:17 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.17.2.3 2002/03/16 16:00:06 jdolecek Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -36,8 +36,8 @@ ${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
 .if !target(proginstall)
 realall: ${SA_PROG} ${SA_PROG}.bin
 proginstall: ${SA_PROG}.bin
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	  ${SA_PROG}.bin ${DESTDIR}${MDEC_DIR}/${SA_PROG}
+	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+		${SA_PROG}.bin ${DESTDIR}${MDEC_DIR}/${SA_PROG}
 .endif
 
 .endif	# defined(SA_PROG)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.24.2.3 2002/02/11 20:08:39 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.24.2.4 2002/03/16 15:58:46 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,11 +20,12 @@
 
 include 	"arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.24.2.3 $"
+#ident 		"GENERIC-$Revision: 1.24.2.4 $"
 
 maxusers	16		# estimated number of users
 
 # CPU support
+options		SH3
 options 	SH7708R		# 100MHz
 options 	MMEYE
 options 	MMEYE_NEW_INT
@@ -184,7 +185,6 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
@@ -199,4 +199,4 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks

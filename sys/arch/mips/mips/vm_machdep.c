@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.80.2.3 2002/01/10 19:46:14 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.80.2.4 2002/03/16 15:58:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.2.3 2002/01/10 19:46:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.2.4 2002/03/16 15:58:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.2.3 2002/01/10 19:46:14 thorpej 
 #include <mips/psl.h>
 #include <machine/cpu.h>
 
-paddr_t kvtophys __P((vaddr_t));	/* XXX */
+paddr_t kvtophys(vaddr_t);	/* XXX */
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -91,7 +91,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct pcb *pcb;
@@ -99,7 +99,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pt_entry_t *pte;
 	int i, x;
 
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 	/*
 	 * To eliminate virtual aliases created by pmap_zero_page(),
 	 * this cache flush operation is necessary.
@@ -139,7 +139,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 	p2->p_md.md_regs = (void *)f;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
-	x = (CPUISMIPS3) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
+	x = (MIPS_HAS_R4K_MMU) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
 	pte = kvtopte(p2->p_addr);
 	for (i = 0; i < UPAGES; i++)
 		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
@@ -172,7 +172,7 @@ cpu_swapin(p)
 	 * part of the proc struct so cpu_switch() can quickly map in
 	 * the user struct and kernel stack.
 	 */
-	x = (CPUISMIPS3) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
+	x = (MIPS_HAS_R4K_MMU) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
 	pte = kvtopte(p->p_addr);
 	for (i = 0; i < UPAGES; i++)
 		p->p_md.md_upte[i] = pte[i].pt_entry &~ x;
@@ -190,7 +190,7 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	void switch_exit __P((struct proc *));
+	void switch_exit(struct proc *);
 
 	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
 		fpcurproc = (struct proc *)0;
@@ -266,12 +266,12 @@ pagemove(from, to, size)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 	if (CPUISMIPS3 &&
 	    (mips_cache_indexof(from) != mips_cache_indexof(to)))
 		mips_dcache_wbinv_range((vaddr_t) from, size);
 #endif
-	invalid = (CPUISMIPS3) ? MIPS3_PG_NV | MIPS3_PG_G : MIPS1_PG_NV;
+	invalid = (MIPS_HAS_R4K_MMU) ? MIPS3_PG_NV | MIPS3_PG_G : MIPS1_PG_NV;
 	while (size > 0) {
 		tpte->pt_entry = fpte->pt_entry;
 		fpte->pt_entry = invalid;
@@ -283,8 +283,6 @@ pagemove(from, to, size)
 		to += NBPG;
 	}
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

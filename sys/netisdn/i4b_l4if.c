@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.2.2.1 2002/01/10 20:03:38 thorpej Exp $ 
+ *	$Id: i4b_l4if.c,v 1.2.2.2 2002/03/16 16:02:17 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.2.2.1 2002/01/10 20:03:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.2.2.2 2002/03/16 16:02:17 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -308,6 +308,7 @@ n_connect_response(u_int cdid, int response, int cause)
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
 		ctrl_desc[cd->bri].bch_state[cd->channelid] = chstate;
+		i4b_l2_channel_set_state(cd->bri, cd->channelid, chstate);
 	}
 	else
 	{

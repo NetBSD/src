@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_dma.h,v 1.1.6.2 2002/01/10 19:38:02 thorpej Exp $	*/
+/*	$NetBSD: iomd_dma.h,v 1.1.6.3 2002/03/16 15:56:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Scott Stevens
@@ -72,4 +72,9 @@ struct dma_ctrl {
 
 /* Prototypes */
 struct dma_ctrl *dma_init __P((int, int, int, int));
-void dma_go __P((struct dma_ctrl *));
+void dma_go	__P((struct dma_ctrl *));
+int dma_reset	__P((struct dma_ctrl *));
+int dma_setup	__P((struct dma_ctrl *, u_char *, int, int));
+int dma_isactive __P((struct dma_ctrl *));
+int dma_isintr	__P((struct dma_ctrl *));
+int dma_intr	__P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.9.4.3 2002/02/11 20:09:27 jdolecek Exp $ */
+/*	$NetBSD: irix_types.h,v 1.9.4.4 2002/03/16 16:00:28 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ typedef __int32_t irix_pid_t;
 typedef int irix_time_t;
 typedef unsigned long irix_size_t;
 #endif
-typedef __int64_t irix_blkcnt_t;
+typedef __int32_t irix_blkcnt_t;
 typedef __uint64_t irix_ino64_t;
 typedef __int64_t irix_off64_t;
 typedef __int64_t irix_blkcnt64_t;

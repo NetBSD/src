@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11.2.1 2002/01/10 19:48:39 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.2.2 2002/03/16 15:59:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -38,6 +38,8 @@
 #ifndef _SH3_INTR_H_
 #define _SH3_INTR_H_
 
+#include <sh3/psl.h>
+
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
 #define	IST_PULSE	1	/* pulsed */
@@ -49,18 +51,17 @@
 volatile int cpl, ipending, astpending;
 int imask[NIPL];
 
-extern void Xspllower __P((void));
+extern void Xspllower(void);
 
-static __inline int splraise __P((int));
-static __inline void spllower __P((int));
-static __inline void softintr __P((int));
+static __inline int splraise(int);
+static __inline void spllower(int);
+static __inline void softintr(int);
 
 /*
  * Add a mask to cpl, and return the old value of cpl.
  */
 static __inline int
-splraise(ncpl)
-	register int ncpl;
+splraise(int ncpl)
 {
 	int ocpl ;
 
@@ -75,8 +76,7 @@ splraise(ncpl)
  * interrupts are pending, call Xspllower() to process them.
  */
 static __inline void
-spllower(ncpl)
-	register int ncpl;
+spllower(int ncpl)
 {
 
 	cpl = ncpl;
@@ -122,15 +122,13 @@ spllower(ncpl)
  * We hand-code this to ensure that it's atomic.
  */
 static __inline void
-softintr(mask)
-	register int mask;
+softintr(int mask)
 {
-	extern void enable_interrupt(void);	/* XXX */
-	extern void disable_interrupt(void);
+	int s;
 
-	disable_interrupt();
+	s = _cpu_intr_suspend();
 	ipending |= (1 << mask);
-	enable_interrupt();
+	_cpu_intr_resume(s);
 }
 
 #define	setsoftast()	(astpending = 1)

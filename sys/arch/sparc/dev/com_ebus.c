@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.1.4.2 2002/01/10 19:48:45 thorpej Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.1.4.3 2002/03/16 15:59:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@
 
 #include <dev/pci/pcireg.h>	/* XXX: for PCI_INTERRUPT_PIN */
 
-#include <sparc/dev/ebusreg.h>
-#include <sparc/dev/ebusvar.h>
+#include <dev/ebus/ebusreg.h>
+#include <dev/ebus/ebusvar.h>
 
 #include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
@@ -81,11 +81,8 @@ com_ebus_match(parent, cf, aux)
 		return (0);
 
 	match = 0;
-	if (ebus_bus_map(ea->ea_bustag,
-			 EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
-			 ea->ea_reg[0].size,
-			 BUS_SPACE_MAP_LINEAR, 0,
-			 &ioh) == 0)
+	if (bus_space_map(ea->ea_bustag, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
+			  ea->ea_reg[0].size, 0, &ioh) == 0)
 	{
 		match = comprobe1(ea->ea_bustag, ioh);
 		bus_space_unmap(ea->ea_bustag, ioh, ea->ea_reg[0].size);
@@ -117,8 +114,8 @@ com_ebus_attach(parent, self, aux)
 			    B9600, sc->sc_frequency, (CLOCAL | CREAD | CS8));
 
 	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh)
-	    && ebus_bus_map(sc->sc_iot, sc->sc_iobase, ea->ea_reg[0].size,
-			    0, 0, &sc->sc_ioh) != 0)
+	    && bus_space_map(sc->sc_iot, sc->sc_iobase, ea->ea_reg[0].size,
+			     0, &sc->sc_ioh) != 0)
 	{
 		printf(": unable to map device registers\n");
 		return;

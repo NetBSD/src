@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $
+#	$NetBSD: RAMDISK,v 1.1.1.1.28.1 2002/03/16 15:59:04 jdolecek Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -9,4 +9,4 @@ include 	"arch/next68k/conf/GENERIC"
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT
-options 	MINIROOTSIZE=768
+options 	MEMORY_DISK_SIZE=768

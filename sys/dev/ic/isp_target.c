@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.14.2.2 2002/01/10 19:54:43 thorpej Exp $ */
+/* $NetBSD: isp_target.c,v 1.14.2.3 2002/03/16 16:00:59 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,11 +57,15 @@
  */
 
 /*
+ * Bug fixes gratefully acknowledged from:
+ *     Oded Kedem <oded@kashya.com>
+ */
+/*
  * Include header file appropriate for platform we're building on.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.14.2.2 2002/01/10 19:54:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.14.2.3 2002/03/16 16:00:59 jdolecek Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -709,6 +713,7 @@ isp_notify_ack(struct ispsoftc *isp, void *arg)
 			na->na_task_flags = inp->in_task_flags;
 			na->na_seqid = inp->in_seqid;
 			na->na_flags = NAFC_RCOUNT;
+			na->na_status = inp->in_status;
 			if (inp->in_status == IN_RESET) {
 				na->na_flags |= NAFC_RST_CLRD;
 			}

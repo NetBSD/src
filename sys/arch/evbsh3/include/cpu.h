@@ -1,7 +1,3 @@
-/*	$NetBSD: cpu.h,v 1.3 1999/12/24 08:29:25 msaitoh Exp $	*/
-#ifndef _EVBSH3_CPU_H_
-#define _EVBSH3_CPU_H_
+/*	$NetBSD: cpu.h,v 1.3.8.1 2002/03/16 15:57:31 jdolecek Exp $	*/
 
 #include <sh3/cpu.h>
-
-#endif /* _EVBSH3_CPU_H_ */

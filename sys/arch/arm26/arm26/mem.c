@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 2001/02/12 23:29:08 bjh21 Exp $	*/
+/*	$NetBSD: mem.c,v 1.4.4.1 2002/03/16 15:56:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,10 +59,6 @@
 caddr_t zeropage;
 int physlock;
 
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
-
 /*ARGSUSED*/
 int
 mmopen(dev, flag, mode, p)
@@ -111,8 +107,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-		/* minor device 0 is physical memory */
-		case 0:
+		case DEV_MEM:
 			/*
 			 * On arm26, there's no need to map in the
 			 * relevant page, as we've got physical memory
@@ -129,8 +124,7 @@ mmrw(dev, uio, flags)
 					uio->uio_resid, uio);
 			continue;
 
-		/* minor device 1 is kernel memory */
-		case 1:
+		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			/* Allow reading from physically mapped space. */
@@ -145,14 +139,12 @@ mmrw(dev, uio, flags)
 				return (EFAULT);
 			continue;
 
-		/* minor device 2 is EOF/RATHOLE */
-		case 2:
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-		/* minor device 3 (/dev/zero) is source of nulls on read, rathole on write */
-		case 3:
+		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
 				break;
@@ -176,7 +168,7 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 /*unlock:*/
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
@@ -201,14 +193,14 @@ mmmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != 0)
+	if (minor(dev) != DEV_MEM)
 		return (-1);
 
 	/* minor device 0 is physical memory */
 
 	/* XXX This may botch our cacheing assumptions.  Do we care? */
 	ppn = atop(off);
-	if (ppn >= 0 && ppn < physmem )
+	if (ppn >= 0 && ppn < physmem)
 		return ppn;
 	return -1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.1 2001/07/07 15:27:22 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.1.2.1 2002/03/16 15:59:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -97,7 +97,8 @@ mkclock_hb_attach(parent, self, aux)
 	    0, &bsh) != 0)
 		printf("can't map device space\n");
 
-	if ((handle = mk48txx_attach(bst, bsh, "mk48t02", 1900)) == NULL)
+	handle = mk48txx_attach(bst, bsh, "mk48t02", 1900, NULL, NULL);
+	if (handle == NULL)
 		panic("can't attach tod clock");
 
 	printf("\n");

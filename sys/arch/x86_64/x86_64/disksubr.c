@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2001/06/19 00:21:16 fvdl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.1.2.1 2002/03/16 16:00:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -115,7 +115,7 @@ mbr_findslice(dp, bp)
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines

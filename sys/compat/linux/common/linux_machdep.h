@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.3.4.2 2002/02/11 20:09:34 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.3.4.3 2002/03/16 16:00:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,5 +54,12 @@
 #else
 #error Undefined linux_machdep.h machine type.
 #endif
+
+#ifdef _KERNEL
+__BEGIN_DECLS
+void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
+dev_t linux_fakedev __P((dev_t, int));
+__END_DECLS
+#endif /* !_KERNEL */
 
 #endif /* !_LINUX_MACHDEP_H */

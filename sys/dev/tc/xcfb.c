@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.22.2.2 2002/01/10 19:58:45 thorpej Exp $ */
+/* $NetBSD: xcfb.c,v 1.22.2.3 2002/03/16 16:01:35 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.22.2.2 2002/01/10 19:58:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.22.2.3 2002/03/16 16:01:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,15 +291,17 @@ xcfb_common_init(ri)
 
 	wsfont_init();
 	/* prefer 12 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 12, 0, 0)) <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0);
+	cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_L2R,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_L2R,
+		    WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0) {
 		printf("xcfb: font table is empty\n");
 		return;
 	}
 
-	if (wsfont_lock(cookie, &ri->ri_font,
-	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	if (wsfont_lock(cookie, &ri->ri_font)) {
 		printf("xcfb: couldn't lock font\n");
 		return;
 	}

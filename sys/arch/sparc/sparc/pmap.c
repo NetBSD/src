@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196.2.4 2002/02/11 20:09:07 jdolecek Exp $ */
+/*	$NetBSD: pmap.c,v 1.196.2.5 2002/03/16 15:59:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -359,8 +359,12 @@ u_int	*kernel_pagtable_store;		/* 128k of storage to map the kernel */
 static struct pool L1_pool;
 static struct pool L23_pool;
 
-static void *pgt_page_alloc __P((unsigned long, int, int));
-static void  pgt_page_free __P((void *, unsigned long, int));
+static void *pgt_page_alloc __P((struct pool *, int));
+static void  pgt_page_free __P((struct pool *, void *));
+
+static struct pool_allocator pgt_page_allocator = {
+	pgt_page_alloc, pgt_page_free, 0,
+};
 
 #endif
 
@@ -886,10 +890,7 @@ setpte4m(va, pte)
  * Page table pool back-end.
  */
 void *
-pgt_page_alloc(sz, flags, mtype)
-	unsigned long sz;
-	int flags;
-	int mtype;
+pgt_page_alloc(struct pool *pp, int flags)
 {
 	int cacheit = (cpuinfo.flags & CPUFLG_CACHEPAGETABLES) != 0;
 	struct vm_page *pg;
@@ -926,10 +927,7 @@ pgt_page_alloc(sz, flags, mtype)
 }
 
 void
-pgt_page_free(v, sz, mtype)
-	void *v;
-	unsigned long sz;
-	int mtype;
+pgt_page_free(struct pool *pp, void *v)
 {
 	vaddr_t va;
 	paddr_t pa;
@@ -939,8 +937,8 @@ pgt_page_free(v, sz, mtype)
 	rv = pmap_extract(pmap_kernel(), va, &pa);
 	KASSERT(rv);
 	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
-	pmap_kremove(va, sz);
-	uvm_km_free(kernel_map, va, sz);
+	pmap_kremove(va, PAGE_SIZE);
+	uvm_km_free(kernel_map, va, PAGE_SIZE);
 }
 #endif /* 4m only */
 
@@ -3758,7 +3756,7 @@ pmap_init()
 	vaddr_t va;
 
 	if (PAGE_SIZE != NBPG)
-		panic("pmap_init: CLSIZE!=1");
+		panic("pmap_init: PAGE_SIZE!=NBPG");
 
 	npages = 0;
 	for (n = 0; n < vm_nphysseg; n++)
@@ -3778,8 +3776,7 @@ pmap_init()
 	vm_num_phys = vm_last_phys - vm_first_phys;
 
 	/* Setup a pool for additional pvlist structures */
-	pool_init(&pv_pool, sizeof(struct pvlist), 0, 0, 0, "pvtable", 0,
-		  NULL, NULL, 0);
+	pool_init(&pv_pool, sizeof(struct pvlist), 0, 0, 0, "pvtable", NULL);
 
 	/*
 	 * Setup a pool for pmap structures.
@@ -3791,7 +3788,7 @@ pmap_init()
 		      ncpu * sizeof(int *) +		/* pm_reg_ptps */
 		      ncpu * sizeof(int);		/* pm_reg_ptps_pa */
 	pool_init(&pmap_pmap_pool, sizeof_pmap, 0, 0, 0, "pmappl",
-		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+		  &pool_allocator_nointr);
 	pool_cache_init(&pmap_pmap_pool_cache, &pmap_pmap_pool,
 			pmap_pmap_pool_ctor, pmap_pmap_pool_dtor, NULL);
 
@@ -3805,12 +3802,12 @@ pmap_init()
 		int n;
 
 		n = SRMMU_L1SIZE * sizeof(int);
-		pool_init(&L1_pool, n, n, 0, 0, "L1 pagetable", 0,
-			  pgt_page_alloc, pgt_page_free, 0);
+		pool_init(&L1_pool, n, n, 0, 0, "L1 pagetable",
+			  &pgt_page_allocator);
 
 		n = SRMMU_L2SIZE * sizeof(int);
-		pool_init(&L23_pool, n, n, 0, 0, "L2/L3 pagetable", 0,
-			  pgt_page_alloc, pgt_page_free, 0);
+		pool_init(&L23_pool, n, n, 0, 0, "L2/L3 pagetable",
+			  &pgt_page_allocator);
 	}
 #endif
 

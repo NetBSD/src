@@ -1,13 +1,12 @@
-#	$NetBSD: files.ieee1394,v 1.5 2001/05/13 05:01:43 jmc Exp $
+#	$NetBSD: files.ieee1394,v 1.5.2.1 2002/03/16 16:01:05 jdolecek Exp $
 
 file	dev/ieee1394/fwlynx.c	fwlynx
 file	dev/ieee1394/fwohci.c	fwohci
 
 device	fwnode { }
-attach	fwnode at fwbus
+attach	fwnode at fwbus: ieee1212
 
 file	dev/ieee1394/fwnode.c		fwnode
-#file	dev/ieee1394/fw_kthread.c	fwbus
 
 device  fwscsi: scsi
 attach  fwscsi at fwnode

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.48.2.5 2002/02/11 20:10:12 jdolecek Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.48.2.6 2002/03/16 16:01:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.5 2002/02/11 20:10:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.6 2002/03/16 16:01:31 jdolecek Exp $");
 
 #include "opt_scsi.h"
 
@@ -101,7 +101,7 @@ scsipi_init()
 
 	/* Initialize the scsipi_xfer pool. */
 	pool_init(&scsipi_xfer_pool, sizeof(struct scsipi_xfer), 0,
-	    0, 0, "scxspl", 0, NULL, NULL, M_DEVBUF);
+	    0, 0, "scxspl", NULL);
 }
 
 /*
@@ -1609,7 +1609,7 @@ scsipi_complete(xs)
 		} else {
 			bp->b_error = 0;
 			bp->b_resid = xs->resid;
-																		}
+		}
 		biodone(bp);
 	}
 

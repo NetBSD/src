@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.4.2.2 2002/01/10 19:37:58 thorpej Exp $	*/
+/*	$NetBSD: beep.c,v 1.4.2.3 2002/03/16 15:56:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -41,6 +41,9 @@
  */
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.4.2.3 2002/03/16 15:56:10 jdolecek Exp $");
+
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
@@ -51,11 +54,13 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/conf.h>
 #include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 #include <machine/pmap.h>
 #include <machine/beep.h>
 #include <arm/mainbus/mainbus.h>
+#include <arm/iomd/beepvar.h>
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/waveform.h>
 #include <arm/iomd/iomdreg.h>
@@ -270,7 +275,7 @@ beep_generate(void)
 int
 beepioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

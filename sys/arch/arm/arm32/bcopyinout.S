@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.1.6.1 2002/01/10 19:37:47 thorpej Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.1.6.2 2002/03/16 15:56:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -54,7 +54,7 @@ Lvm_min_address:
 Lvm_maxuser_address:
 	.word	VM_MAXUSER_ADDRESS
 Lvm_maxkern_address:
-	.word	VM_MAXKERN_ADDRESS
+	.word	_C_LABEL(pmap_curmaxkvaddr)
 
 ENTRY(kcopy)
 	b	do_copyinout
@@ -78,7 +78,8 @@ ENTRY(copyin)
 	cmp	r1, r3
 	bcc	Lbadaddress
 	ldr	r3, Lvm_maxkern_address
-	cmp	r1, r3
+	ldr	ip, [r3]
+	cmp	r1, ip
 	bcs	Lbadaddress
 
 	/* Quick exit if length is zero */	
@@ -111,7 +112,8 @@ ENTRY(copyout)
 	cmp	r0, r3
 	bcc	Lbadaddress
 	ldr	r3, Lvm_maxkern_address
-	cmp	r0, r3
+	ldr	ip, [r3]
+	cmp	r0, ip
 	bcs	Lbadaddress
 
 	/* Quick exit if length is zero */	

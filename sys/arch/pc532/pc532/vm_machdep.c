@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48.2.2 2001/09/13 01:14:16 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48.2.3 2002/03/16 15:59:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -265,7 +265,7 @@ setredzone(pte, vaddr)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * and size must be a multiple of NBPG.
  */
 void
 pagemove(from, to, size)
@@ -318,8 +318,6 @@ kvtop(addr)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

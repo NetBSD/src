@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.6 2001/01/18 10:54:28 jdolecek Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6.4.1 2002/03/16 15:59:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -43,41 +43,39 @@
 # define DPRINTF while (0) printf
 #endif
 
-extern char _start[], etext[];
+extern char start[], etext[];
 void db_nextframe(db_addr_t, db_addr_t *, db_addr_t *);
 
 const struct db_variable db_regs[] = {
- { "r0",   (long *)&ddb_regs.tf_r0,   FCN_NULL },
- { "r1",   (long *)&ddb_regs.tf_r1,   FCN_NULL },
- { "r2",   (long *)&ddb_regs.tf_r2,   FCN_NULL },
- { "r3",   (long *)&ddb_regs.tf_r3,   FCN_NULL },
- { "r4",   (long *)&ddb_regs.tf_r4,   FCN_NULL },
- { "r5",   (long *)&ddb_regs.tf_r5,   FCN_NULL },
- { "r6",   (long *)&ddb_regs.tf_r6,   FCN_NULL },
- { "r7",   (long *)&ddb_regs.tf_r7,   FCN_NULL },
- { "r8",   (long *)&ddb_regs.tf_r8,   FCN_NULL },
- { "r9",   (long *)&ddb_regs.tf_r9,   FCN_NULL },
- { "r10",  (long *)&ddb_regs.tf_r10,  FCN_NULL },
- { "r11",  (long *)&ddb_regs.tf_r11,  FCN_NULL },
- { "r12",  (long *)&ddb_regs.tf_r12,  FCN_NULL },
- { "r13",  (long *)&ddb_regs.tf_r13,  FCN_NULL },
- { "r14",  (long *)&ddb_regs.tf_r14,  FCN_NULL },
- { "r15",  (long *)&ddb_regs.tf_r15,  FCN_NULL },
- { "pr",   (long *)&ddb_regs.tf_pr,   FCN_NULL },
- { "spc",  (long *)&ddb_regs.tf_spc,  FCN_NULL },
- { "ssr",  (long *)&ddb_regs.tf_ssr,  FCN_NULL },
- { "mach", (long *)&ddb_regs.tf_mach, FCN_NULL },
- { "macl", (long *)&ddb_regs.tf_macl, FCN_NULL },
+	{ "r0",   (long *)&ddb_regs.tf_r0,   FCN_NULL },
+	{ "r1",   (long *)&ddb_regs.tf_r1,   FCN_NULL },
+	{ "r2",   (long *)&ddb_regs.tf_r2,   FCN_NULL },
+	{ "r3",   (long *)&ddb_regs.tf_r3,   FCN_NULL },
+	{ "r4",   (long *)&ddb_regs.tf_r4,   FCN_NULL },
+	{ "r5",   (long *)&ddb_regs.tf_r5,   FCN_NULL },
+	{ "r6",   (long *)&ddb_regs.tf_r6,   FCN_NULL },
+	{ "r7",   (long *)&ddb_regs.tf_r7,   FCN_NULL },
+	{ "r8",   (long *)&ddb_regs.tf_r8,   FCN_NULL },
+	{ "r9",   (long *)&ddb_regs.tf_r9,   FCN_NULL },
+	{ "r10",  (long *)&ddb_regs.tf_r10,  FCN_NULL },
+	{ "r11",  (long *)&ddb_regs.tf_r11,  FCN_NULL },
+	{ "r12",  (long *)&ddb_regs.tf_r12,  FCN_NULL },
+	{ "r13",  (long *)&ddb_regs.tf_r13,  FCN_NULL },
+	{ "r14",  (long *)&ddb_regs.tf_r14,  FCN_NULL },
+	{ "r15",  (long *)&ddb_regs.tf_r15,  FCN_NULL },
+	{ "pr",   (long *)&ddb_regs.tf_pr,   FCN_NULL },
+	{ "spc",  (long *)&ddb_regs.tf_spc,  FCN_NULL },
+	{ "ssr",  (long *)&ddb_regs.tf_ssr,  FCN_NULL },
+	{ "mach", (long *)&ddb_regs.tf_mach, FCN_NULL },
+	{ "macl", (long *)&ddb_regs.tf_macl, FCN_NULL },
 };
 
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = 
+	db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, print)
-	db_expr_t addr, count;
-	boolean_t have_addr;
-	char *modif;
-	void (*print)(const char *, ...);
+db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+    char *modif, void (*print)(const char *, ...))
 {
 	db_addr_t callpc, frame, lastframe;
 
@@ -116,10 +114,10 @@ db_stack_trace_print(addr, have_addr, count, modif, print)
 }
 
 void
-db_nextframe(pc, fp, pr)
-	db_addr_t pc;		/* in: entry address of current function */
-	db_addr_t *fp;		/* in: current fp, out: parent fp */
-	db_addr_t *pr;		/* out: parent fp */
+db_nextframe(
+	db_addr_t pc,		/* in: entry address of current function */
+	db_addr_t *fp,		/* in: current fp, out: parent fp */
+	db_addr_t *pr)		/* out: parent fp */
 {
 	int *frame = (void *)*fp;
 	int i, inst;
@@ -128,7 +126,7 @@ db_nextframe(pc, fp, pr)
 	depth = 0;
 	prdepth = fpdepth = -1;
 
-	if (pc < (db_addr_t)_start || pc > (db_addr_t)etext)
+	if (pc < (db_addr_t)start || pc > (db_addr_t)etext)
 		goto out;
 
 	for (i = 0; i < 30; i++) {
@@ -186,7 +184,7 @@ db_nextframe(pc, fp, pr)
 		db_disasm(pc - 2, 0);
 	}
 
-out:
+ out:
 	if (fpdepth != -1)
 		*fp = frame[depth - fpdepth - 1];
 	else

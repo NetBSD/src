@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.2.2.1 2002/01/10 19:52:48 thorpej Exp $	*/
+/*	$NetBSD: md_root.c,v 1.2.2.2 2002/03/16 16:00:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.2.2.1 2002/01/10 19:52:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.2.2.2 2002/03/16 16:00:48 jdolecek Exp $");
 
 #include "opt_md.h"
-#include "opt_mdsize.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,10 +54,10 @@ size_t md_root_size;
 char *md_root_image;
 #else /* MEMORY_DISK_DYNAMIC */
 
-#ifndef MINIROOTSIZE
-#define MINIROOTSIZE 512
+#ifndef MEMORY_DISK_SIZE
+#define MEMORY_DISK_SIZE 512
 #endif
-#define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
+#define ROOTBYTES (MEMORY_DISK_SIZE << DEV_BSHIFT)
 
 /*
  * This array will be patched to contain a file-system image.

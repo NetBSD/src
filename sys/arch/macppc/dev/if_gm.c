@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.13.2.2 2002/02/11 20:08:34 jdolecek Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.13.2.3 2002/03/16 15:58:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -237,6 +237,7 @@ gmac_attach(parent, self, aux)
 	ifp->if_watchdog = gmac_watchdog;
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = gmac_mii_readreg;
@@ -493,7 +494,7 @@ gmac_start(ifp)
 		if (ifp->if_flags & IFF_OACTIVE)
 			break;
 
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 

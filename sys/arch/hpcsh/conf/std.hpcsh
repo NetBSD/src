@@ -1,10 +1,11 @@
-# $NetBSD: std.hpcsh,v 1.1.2.1 2002/01/10 19:44:19 thorpej Exp $
+# $NetBSD: std.hpcsh,v 1.1.2.2 2002/03/16 15:58:04 jdolecek Exp $
 #
 # standard, required NetBSD/hpcsh 'options'
 
 machine hpcsh sh3
 
 options 	EXEC_SCRIPT	# exec #! scripts
+options		IOM_RAM_BEGIN=0x8c000000
 
 makeoptions	ENDIAN="-EL"
 #makeoptions	LDSCRIPTBASE="shl-coff.x"	# for COFF kernel

@@ -1,4 +1,4 @@
-/*	$NetBSD: vripvar.h,v 1.4.2.2 2002/02/11 20:08:14 jdolecek Exp $	*/
+/*	$NetBSD: vripvar.h,v 1.4.2.3 2002/03/16 15:58:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -33,6 +33,8 @@
 #ifndef _VRIPVAR_H_
 #define _VRIPVAR_H_
 
+#include <hpcmips/vr/vripif.h>
+
 struct vrip_unit {
 	char	*vu_name;
 	int	vu_intr[2];
@@ -43,8 +45,30 @@ struct vrip_unit {
 	bus_addr_t	vu_mhreg;
 };
 
+struct vrip_softc {
+	struct	device sc_dv;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	hpcio_chip_t sc_gpio_chips[VRIP_NIOCHIPS];
+	vrcmu_chipset_tag_t sc_cc;
+	int sc_pri; /* attaching device priority */
+	u_int32_t sc_intrmask;
+	struct vrip_chipset_tag sc_chipset;
+	const struct vrip_unit *sc_units;
+	int sc_nunits;
+	bus_addr_t sc_icu_addr;
+	int sc_sysint2;
+	int sc_msysint2;
+	struct intrhand {
+		int	(*ih_fun)(void *);
+		void	*ih_arg;
+		const struct vrip_unit *ih_unit;
+	} sc_intrhands[32];
+};
+
 void vrip_intr_suspend(void);
 void vrip_intr_resume(void);
+int vripmatch(struct device *, struct cfdata *, void *);
 void vripattach_common(struct device *, struct device *, void *);
 
 #endif /* !_VRIPVAR_H_ */

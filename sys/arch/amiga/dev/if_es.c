@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.26.4.1 2002/02/11 20:06:59 jdolecek Exp $ */
+/*	$NetBSD: if_es.c,v 1.26.4.2 2002/03/16 15:55:51 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.26.4.1 2002/02/11 20:06:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.26.4.2 2002/03/16 15:55:51 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.26.4.1 2002/02/11 20:06:59 jdolecek Exp 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -92,6 +93,7 @@ struct	es_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
 	struct	ethercom sc_ethercom;	/* common Ethernet structures */
+	struct	ifmedia sc_media;	/* our supported media */
 	void	*sc_base;		/* base address of board */
 	short	sc_iflags;
 	unsigned short sc_intctl;
@@ -127,6 +129,8 @@ void estint(struct es_softc *);
 void esinit(struct es_softc *);
 void esreset(struct es_softc *);
 void esstop(struct es_softc *);
+int esmediachange(struct ifnet *);
+void esmediastatus(struct ifnet *, struct ifmediareq *);
 
 int esmatch(struct device *, struct cfdata *, void *);
 void esattach(struct device *, struct device *, void *);
@@ -189,6 +193,10 @@ esattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
 	    IFF_MULTICAST;
 
+	ifmedia_init(&sc->sc_media, 0, esmediachange, esmediastatus);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
@@ -234,6 +242,25 @@ es_dump_smcregs(char *where, union smcregs *smc)
 void
 esstop(struct es_softc *sc)
 {
+	union smcregs *smc = sc->sc_base;
+
+	/*
+	 * Clear interrupt mask; disable all interrupts.
+	 */
+	smc->b2.bsr = BSR_BANK2;
+	smc->b2.msk = 0;
+
+	/*
+	 * Disable transmitter and receiver.
+	 */
+	smc->b0.bsr = BSR_BANK0;
+	smc->b0.rcr = 0;
+	smc->b0.tcr = 0;
+
+	/*
+	 * Cancel watchdog timer.
+	 */
+	sc->sc_ethercom.ec_if.if_timer = 0;
 }
 
 void
@@ -260,7 +287,7 @@ esinit(struct es_softc *sc)
 	/* XXX set Multicast table from Multicast list */
 	smc->b1.bsr = BSR_BANK1;	/* Select bank 1 */
 	smc->b1.cr = CR_RAM32K | CR_NO_WAIT_ST | CR_SET_SQLCH;
-	smc->b1.ctr = CTR_AUTO_RLSE;
+	smc->b1.ctr = CTR_AUTO_RLSE | CTR_TE_ENA;
 	smc->b1.iar[0] = *((unsigned short *) &LLADDR(ifp->if_sadl)[0]);
 	smc->b1.iar[1] = *((unsigned short *) &LLADDR(ifp->if_sadl)[2]);
 	smc->b1.iar[2] = *((unsigned short *) &LLADDR(ifp->if_sadl)[4]);
@@ -272,7 +299,7 @@ esinit(struct es_softc *sc)
 	smc->b0.rcr = RCR_FILT_CAR | RCR_STRIP_CRC | RCR_RXEN | RCR_ALLMUL;
 	/* XXX add promiscuous flags */
 	smc->b2.bsr = BSR_BANK2;	/* Select bank 2 */
-	smc->b2.msk = sc->sc_intctl = MSK_RX_OVRN | MSK_RX;
+	smc->b2.msk = sc->sc_intctl = MSK_RX_OVRN | MSK_RX | MSK_EPHINT;
 
 	/* Interface is now 'running', with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
@@ -347,6 +374,7 @@ esintr(void *arg)
 				;
 			smc->b2.pnr = save_pnr;
 			ifp->if_flags &= ~IFF_OACTIVE;
+			ifp->if_timer = 0;
 		}
 #ifdef ESDEBUG
 		else if (esdebug || 1)
@@ -387,6 +415,7 @@ esintr(void *arg)
 #endif
 		smc->b2.ist = ACK_TX_EMPTY;
 		sc->sc_intctl &= ~(MSK_TX_EMPTY | MSK_TX);
+		ifp->if_timer = 0;
 #ifdef ESDEBUG
 		if (esdebug)
 			printf ("->%02x intcl %x pnr %02x arr %02x\n",
@@ -470,6 +499,7 @@ zzzz:
 			if (smc->b2.ist & IST_TX_EMPTY) {
 				smc->b2.mmucr = MMUCR_RESET_TX;
 				sc->sc_intctl &= ~(MSK_TX_EMPTY | MSK_TX);
+				ifp->if_timer = 0;
 			}
 #endif
 #ifdef ESDEBUG
@@ -490,6 +520,10 @@ zzzz:
 			if (tx_pnr != (smc->b2.fifo >> 8))
 				goto zzzz;
 		}
+	}
+	if (intact & IST_EPHINT) {
+		ifp->if_oerrors++;
+		esreset(sc);
 	}
 	/* output packets */
 	estint(sc);
@@ -787,6 +821,7 @@ esstart(struct ifnet *ifp)
 		if (smc->b2.arr & ARR_FAILED) {
 			sc->sc_ethercom.ec_if.if_flags |= IFF_OACTIVE;
 			sc->sc_intctl |= MSK_ALLOC;
+			sc->sc_ethercom.ec_if.if_timer = 5;
 			break;
 		}
 		active_pnr = smc->b2.pnr = smc->b2.arr;
@@ -795,7 +830,7 @@ esstart(struct ifnet *ifp)
 		while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 			printf("%s: esstart+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 			    smc->b2.bsr);
-		smc->b2.bsr = BSR_BANK2;
+			smc->b2.bsr = BSR_BANK2;
 		}
 #endif
 		IF_DEQUEUE(&sc->sc_ethercom.ec_if.if_snd, m);
@@ -910,6 +945,7 @@ esstart(struct ifnet *ifp)
 		m_freem(m0);
 		sc->sc_ethercom.ec_if.if_opackets++;	/* move to interrupt? */
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
+		sc->sc_ethercom.ec_if.if_timer = 5;
 	}
 	smc->b2.msk = sc->sc_intctl;
 #ifdef ESDEBUG
@@ -1020,6 +1056,11 @@ esioctl(register struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
+		break;
+
 	default:
 		error = EINVAL;
 	}
@@ -1028,6 +1069,9 @@ esioctl(register struct ifnet *ifp, u_long command, caddr_t data)
 	return (error);
 }
 
+/*
+ * Reset the interface.
+ */
 void
 esreset(struct es_softc *sc)
 {
@@ -1048,4 +1092,15 @@ eswatchdog(struct ifnet *ifp)
 	++ifp->if_oerrors;
 
 	esreset(sc);
+}
+
+int
+esmediachange(struct ifnet *ifp)
+{
+	return 0;
+}
+
+void
+esmediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
 }

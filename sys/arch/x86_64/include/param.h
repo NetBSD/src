@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2001/06/19 00:20:11 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.1.2.1 2002/03/16 16:00:25 jdolecek Exp $	*/
 
 #ifdef _KERNEL
 #ifdef _LOCORE
@@ -77,17 +77,16 @@
 #define	MSIZE		256		/* size of an mbuf */
 
 #ifndef MCLSHIFT
-# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #ifndef NMBCLUSTERS
-
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
-#endif /* _KERNEL && ! _LKM */
+#endif
 
 #ifdef GATEWAY
 #define	NMBCLUSTERS	4096		/* map size, max cluster allocation */

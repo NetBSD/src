@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/06/10 14:12:49 scw Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2002/03/16 15:58:58 jdolecek Exp $
 
 DEFS= -DSUN_BOOTPARAMS
 
@@ -17,8 +17,7 @@ netboot.bin: ${PROG}
 all realall: netboot.bin
 
 install: netboot.bin
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
-	   -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.OBJDIR}/netboot.bin \
-	   ${DESTDIR}${MDEC_DIR}/netboot
+	${INSTALL_FILE} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		${.OBJDIR}/netboot.bin ${DESTDIR}${MDEC_DIR}/netboot
 
 .include <bsd.prog.mk>

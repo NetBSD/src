@@ -1,7 +1,7 @@
-/*	$NetBSD: usb_pci.h,v 1.1.6.3 2002/02/11 20:10:06 jdolecek Exp $	*/
+/*	$NetBSD: usb_pci.h,v 1.1.6.4 2002/03/16 16:01:21 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

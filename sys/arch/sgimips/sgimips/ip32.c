@@ -1,10 +1,10 @@
-/*	$NetBSD: ip32.c,v 1.5.4.1 2002/01/10 19:48:31 thorpej Exp $	*/
+/*	$NetBSD: ip32.c,v 1.5.4.2 2002/03/16 15:59:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * Copyright (c) 2001 Rafal K. Boni
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -20,7 +20,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -37,7 +37,7 @@
 
 #ifdef IP32
 #include <sys/param.h>
-#include <sys/proc.h> 
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -102,7 +102,7 @@ printf("crm: %llx %llx %llx %llx\n", *(volatile u_int64_t *)0xb4000010,
 #endif
 
 #if 1
-	/* XXX soren Reset O2 watchdog timer */ 
+	/* XXX soren Reset O2 watchdog timer */
 	*(volatile u_int32_t *)0xb4000034 = 0;
 #endif
 
@@ -134,14 +134,14 @@ panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 	} else if (ipending & 0x7c00)
 		crime_intr(NULL);
 
-        for (i = 0; i < 5; i++) {
-                if (ipending & (MIPS_INT_MASK_0 << i))
+	for (i = 0; i < 5; i++) {
+		if (ipending & (MIPS_INT_MASK_0 << i))
 #if 0
-                        if (intrtab[i].func != NULL)
-                                if ((*intrtab[i].func)(intrtab[i].arg))
+			if (intrtab[i].func != NULL)
+				if ((*intrtab[i].func)(intrtab[i].arg))
 #endif
-                                        cause &= ~(MIPS_INT_MASK_0 << i);
-        }
+					cause &= ~(MIPS_INT_MASK_0 << i);
+	}
 
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }

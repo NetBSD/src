@@ -1,4 +1,4 @@
-/*	$NetBSD: regdef.h,v 1.7 1999/03/30 14:22:58 soda Exp $	*/
+/*	$NetBSD: regdef.h,v 1.7.22.1 2002/03/16 15:58:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,8 @@
 
 #ifndef _MIPS_REGDEF_H
 #define _MIPS_REGDEF_H
+
+#include <machine/cdefs.h>	/* for API selection */
 
 #define zero	$0	/* always zero */
 #define AT	$at	/* assembler temporary */

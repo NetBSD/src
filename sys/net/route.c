@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.43.4.2 2002/01/10 20:02:21 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.43.4.3 2002/03/16 16:02:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.4.2 2002/01/10 20:02:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.4.3 2002/03/16 16:02:09 jdolecek Exp $");
 
 #include "opt_ns.h"
 
@@ -160,7 +160,7 @@ route_init()
 {
 
 	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
-	    0, NULL, NULL, M_RTABLE);
+	    NULL);
 
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
@@ -874,7 +874,7 @@ rt_timer_init()
 	assert(rt_init_done == 0);
 
 	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
-	    0, NULL, NULL, M_RTABLE);
+	    NULL);
 
 	LIST_INIT(&rttimer_queue_head);
 	callout_init(&rt_timer_ch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1 2001/06/19 00:20:13 fvdl Exp $	*/
+/*	$NetBSD: types.h,v 1.1.2.1 2002/03/16 16:00:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,9 +61,9 @@ typedef int			register32_t;
 /* The x86-64 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT
 
-#define __HAVE_DEVICE_REGISTER
-#define __HAVE_NWSCONS
-#define __HAVE_CPU_COUNTER
+#define	__HAVE_DEVICE_REGISTER
+#define	__HAVE_NWSCONS
+#define	__HAVE_CPU_COUNTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 

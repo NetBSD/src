@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.83.2.4 2002/02/11 20:09:45 jdolecek Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.83.2.5 2002/03/16 16:01:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.83.2.4 2002/02/11 20:09:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.83.2.5 2002/03/16 16:01:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ ncr53c9x_init(sc, doreset)
 	if (!ecb_pool_initialized) {
 		/* All instances share this pool */
 		pool_init(&ecb_pool, sizeof(struct ncr53c9x_ecb), 0, 0, 0,
-		    "ncr53c9x_ecb", 0, NULL, NULL, 0);
+		    "ncr53c9x_ecb", NULL);
 		ecb_pool_initialized = 1;
 	}
 

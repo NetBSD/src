@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9.2.2 2002/01/10 19:49:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.2.3 2002/03/16 16:00:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -620,7 +620,7 @@ cpu_reboot(howto, user_boot_string)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 

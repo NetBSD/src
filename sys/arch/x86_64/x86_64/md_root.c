@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.1 2001/06/19 00:21:17 fvdl Exp $	*/
+/*	$NetBSD: md_root.c,v 1.1.2.1 2002/03/16 16:00:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -33,15 +33,15 @@
 
 #include <dev/md.h>
 
-#include "opt_mdsize.h"
+#include "opt_md.h"
 
 extern int boothowto;
 
-#ifndef MINIROOTSIZE
-#define MINIROOTSIZE 512
+#ifndef MEMORY_DISK_SIZE
+#define MEMORY_DISK_SIZE 512
 #endif
 
-#define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
+#define ROOTBYTES (MEMORY_DISK_SIZE << DEV_BSHIFT)
 
 /*
  * This array will be patched to contain a file-system image.

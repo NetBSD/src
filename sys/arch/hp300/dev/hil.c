@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.2.3 2002/01/10 19:42:55 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.2.4 2002/03/16 15:57:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1455,7 +1455,8 @@ hilinfo(hilp)
 	 * Keyboard info.
 	 */
 	if (hilp->hl_kbddev) {
-		printf("%s:%d: ", hilp->hl_dev.dv_xname, hilp->hl_kbddev);
+		printf("%s device %d: ", hilp->hl_dev.dv_xname,
+		    hilp->hl_kbddev);
 		for (km = kbd_map; km->kbd_code; km++)
 			if (km->kbd_code == hilp->hl_kbdlang) {
 				printf("%s ", km->kbd_desc);

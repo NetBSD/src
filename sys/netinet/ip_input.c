@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.135.2.2 2002/01/10 20:02:50 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.135.2.3 2002/03/16 16:02:12 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.135.2.2 2002/01/10 20:02:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.135.2.3 2002/03/16 16:02:12 jdolecek Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -139,6 +139,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.135.2.2 2002/01/10 20:02:50 thorpej E
 /* just for gif_ttl */
 #include <netinet/in_gif.h>
 #include "gif.h"
+#include <net/if_gre.h>
+#include "gre.h"
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
@@ -316,7 +318,7 @@ ip_init()
 	int i;
 
 	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
-	    0, NULL, NULL, M_IPQ);
+	    NULL);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -685,6 +687,13 @@ ip_input(struct mbuf *m)
 			ipstat.ips_cantforward++;
 			return;
 		}
+#ifdef IPSEC
+		if (ipsec4_in_reject(m, NULL)) {
+			ipsecstat.in_polvio++;
+			goto bad;
+		}
+#endif
+
 		ip_forward(m, 0);
 	}
 	return;
@@ -1665,9 +1674,21 @@ ip_forward(m, srcrt)
 		break;
 
 	case ENOBUFS:
+#if 1
+		/*
+		 * a router should not generate ICMP_SOURCEQUENCH as
+		 * required in RFC1812 Requirements for IP Version 4 Routers.
+		 * source quench could be a big problem under DoS attacks,
+		 * or the underlying interface is rate-limited.
+		 */
+		if (mcopy)
+			m_freem(mcopy);
+		return;
+#else
 		type = ICMP_SOURCEQUENCH;
 		code = 0;
 		break;
+#endif
 	}
 	icmp_error(mcopy, type, code, dest, destifp);
 }
@@ -1842,6 +1863,12 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_GIF_TTL:
 		return(sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip_gif_ttl));
+#endif
+
+#if NGRE > 0
+	case IPCTL_GRE_TTL:
+		return(sysctl_int(oldp, oldlenp, newp, newlen,
+				  &ip_gre_ttl));
 #endif
 
 #ifndef IPNOPRIVPORTS

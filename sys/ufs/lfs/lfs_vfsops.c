@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.65.4.2 2002/01/10 20:05:16 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.65.4.3 2002/03/16 16:02:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.65.4.2 2002/01/10 20:05:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.65.4.3 2002/03/16 16:02:25 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -164,8 +164,7 @@ lfs_init()
 	 * XXX Same structure as FFS inodes?  Should we share a common pool?
 	 */
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
-		  "lfsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-		  M_LFSNODE);
+		  "lfsinopl", &pool_allocator_nointr);
 }
 
 void

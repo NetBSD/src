@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1.4.1 2002/01/10 19:48:31 thorpej Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1.4.2 2002/03/16 15:59:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ softintr_init()
  *
  *	Process pending software interrupts.
  *
- *      Called at splsoft()
+ *	Called at splsoft()
  */
 void
 softintr_dispatch()
@@ -98,18 +98,18 @@ softintr_dispatch()
 	n = ssir; ssir = 0;
 	splx(s);
 	sip = softintr_tab;
-  	for (i = 0; i < IPL_NSOFT; sip++, i++) {
-	    if ((n & (1 << i)) == 0)
-		continue;
-	    sip->ih_evcnt.ev_count++;
+	for (i = 0; i < IPL_NSOFT; sip++, i++) {
+		if ((n & (1 << i)) == 0)
+			continue;
+		sip->ih_evcnt.ev_count++;
 
-	    LIST_FOREACH(sih, &sip->intr_q, ih_q) {
-		if (sih->ih_pending) {
-		    uvmexp.softs++;
-		    sih->ih_pending = 0;
-		    (*sih->ih_fun)(sih->ih_arg);
+		LIST_FOREACH(sih, &sip->intr_q, ih_q) {
+			if (sih->ih_pending) {
+				uvmexp.softs++;
+				sih->ih_pending = 0;
+				(*sih->ih_fun)(sih->ih_arg);
+			}
 		}
-	    }
 	}
 }
 

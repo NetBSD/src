@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.17 2001/01/25 13:13:59 tsutsui Exp $
+#	$NetBSD: files.newsmips,v 1.17.4.1 2002/03/16 15:59:03 jdolecek Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -96,7 +96,6 @@ file arch/newsmips/newsmips/news5000.c		ap
 file arch/newsmips/newsmips/disksubr.c
 file arch/newsmips/newsmips/mainbus.c
 file arch/newsmips/newsmips/cpu_cons.c
-file arch/newsmips/newsmips/procfs_machdep.c	procfs
 file dev/clock_subr.c
 file dev/cons.c
 

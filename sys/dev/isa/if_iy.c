@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.53.2.2 2002/01/10 19:55:30 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.53.2.3 2002/03/16 16:01:07 jdolecek Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.53.2.2 2002/01/10 19:55:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.53.2.3 2002/03/16 16:01:07 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -700,7 +700,7 @@ struct ifnet *ifp;
         	if (len + pad > ETHER_MAX_LEN) {
         	        /* packet is obviously too large: toss it */
         	        ++ifp->if_oerrors;
-        	        IF_DEQUEUE(&ifp->if_snd, m0);
+        	        IFQ_DEQUEUE(&ifp->if_snd, m0);
         	        m_freem(m0);
 			continue;
         	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5900.c,v 1.2.4.2 2002/01/10 19:46:05 thorpej Exp $	*/
+/*	$NetBSD: cache_r5900.c,v 1.2.4.3 2002/03/16 15:58:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,11 +38,10 @@
 
 #include <sys/param.h>
 
+#include <mips/cpuregs.h>
 #include <mips/cache.h>
 #include <mips/cache_r5900.h>
 #include <mips/locore.h>
-
-#include <mips/r5900/cpuregs.h>
 
 /*
  * Cache operations for R5900-style caches:

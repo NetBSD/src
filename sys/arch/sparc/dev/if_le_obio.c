@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.12 2001/05/30 12:28:50 mrg Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.12.2.1 2002/03/16 15:59:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ lematch_obio(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				2,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
@@ -168,10 +168,9 @@ leattach_obio(parent, self, aux)
 	lesc->sc_bustag = oba->oba_bustag;
 	lesc->sc_dmatag = dmatag = oba->oba_dmatag;
 
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 0, 2 * sizeof(u_int16_t),
-			 0, 0,
-			 &lesc->sc_reg) != 0) {
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
+			  2 * sizeof(u_int16_t),
+			  0, &lesc->sc_reg) != 0) {
 		printf("%s @ obio: cannot map registers\n", self->dv_xname);
 		return;
 	}

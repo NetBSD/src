@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.35.2.3 2002/02/11 20:10:27 jdolecek Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.35.2.4 2002/03/16 16:02:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.3 2002/02/11 20:10:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.4 2002/03/16 16:02:02 jdolecek Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1013,7 +1013,7 @@ genfs_putpages(v)
 	int i, s, error, npages, nback;
 	int freeflag;
 	struct vm_page *pgs[n], *pg, *nextpg, *tpg, curmp, endmp;
-	boolean_t wasclean, by_list, needs_clean;
+	boolean_t wasclean, by_list, needs_clean, yield;
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
@@ -1071,12 +1071,6 @@ genfs_putpages(v)
 	}
 	nextpg = NULL;
 	while (by_list || off < endoff) {
-		if (curproc->p_cpu->ci_schedstate.spc_flags &
-		    SPCF_SHOULDYIELD) {
-			simple_unlock(slock);
-			preempt(NULL);
-			simple_lock(slock);
-		}
 
 		/*
 		 * if the current page is not interesting, move on to the next.
@@ -1109,17 +1103,9 @@ genfs_putpages(v)
 		 * wait for it to become unbusy.
 		 */
 
-		if (flags & PGO_FREE) {
-			pmap_page_protect(pg, VM_PROT_NONE);
-		}
-		if (flags & PGO_CLEANIT) {
-			needs_clean = pmap_clear_modify(pg) ||
-				(pg->flags & PG_CLEAN) == 0;
-			pg->flags |= PG_CLEAN;
-		} else {
-			needs_clean = FALSE;
-		}
-		if (needs_clean && pg->flags & PG_BUSY) {
+		yield = (curproc->p_cpu->ci_schedstate.spc_flags &
+		    SPCF_SHOULDYIELD) && curproc != uvm.pagedaemon_proc;
+		if (pg->flags & PG_BUSY || yield) {
 			KASSERT(curproc != uvm.pagedaemon_proc);
 			UVMHIST_LOG(ubchist, "busy %p", pg,0,0,0);
 			if (by_list) {
@@ -1127,10 +1113,15 @@ genfs_putpages(v)
 				UVMHIST_LOG(ubchist, "curmp next %p",
 					    TAILQ_NEXT(&curmp, listq), 0,0,0);
 			}
-			pg->flags |= PG_WANTED;
-			pg->flags &= ~PG_CLEAN;
-			UVM_UNLOCK_AND_WAIT(pg, slock, 0, "genput", 0);
-			simple_lock(slock);
+			if (yield) {
+				simple_unlock(slock);
+				preempt(NULL);
+				simple_lock(slock);
+			} else {
+				pg->flags |= PG_WANTED;
+				UVM_UNLOCK_AND_WAIT(pg, slock, 0, "genput", 0);
+				simple_lock(slock);
+			}
 			if (by_list) {
 				UVMHIST_LOG(ubchist, "after next %p",
 					    TAILQ_NEXT(&curmp, listq), 0,0,0);
@@ -1140,6 +1131,22 @@ genfs_putpages(v)
 				pg = uvm_pagelookup(uobj, off);
 			}
 			continue;
+		}
+
+		/*
+		 * if we're freeing, remove all mappings of the page now.
+		 * if we're cleaning, check if the page is needs to be cleaned.
+		 */
+
+		if (flags & PGO_FREE) {
+			pmap_page_protect(pg, VM_PROT_NONE);
+		}
+		if (flags & PGO_CLEANIT) {
+			needs_clean = pmap_clear_modify(pg) ||
+				(pg->flags & PG_CLEAN) == 0;
+			pg->flags |= PG_CLEAN;
+		} else {
+			needs_clean = FALSE;
 		}
 
 		/*
@@ -1166,8 +1173,14 @@ genfs_putpages(v)
 			if (nback) {
 				memmove(&pgs[0], &pgs[npages - nback],
 				    nback * sizeof(pgs[0]));
+				if (npages - nback < nback)
+					memset(&pgs[nback], 0,
+					    (npages - nback) * sizeof(pgs[0]));
+				else
+					memset(&pgs[npages - nback], 0,
+					    nback * sizeof(pgs[0]));
+				n -= nback;
 			}
-			n -= nback;
 
 			/*
 			 * then plug in our page of interest.

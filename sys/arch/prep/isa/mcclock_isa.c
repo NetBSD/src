@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.1.10.2 2002/02/11 20:08:54 jdolecek Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.1.10.3 2002/03/16 15:59:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,7 @@
 
 #include <machine/bus.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>
 
 #include <prep/prep/clockvar.h>
@@ -74,7 +75,12 @@ mcclock_isa_match(parent, match, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
+	struct mcclock_isa_softc sc;
 	bus_space_handle_t ioh;
+	unsigned int cra, t1, t2;
+	int found;
+
+	found = 0;
 
 	if (ia->ia_nio < 1 ||
 	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
@@ -93,21 +99,50 @@ mcclock_isa_match(parent, match, aux)
 	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
 		return (0);
 
-	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
-	    MCCLOCK_NPORTS, 0, &ioh))
+	if (bus_space_map(ia->ia_iot, 0x70, MCCLOCK_NPORTS, 0, &ioh))
 		return (0);
 
+	sc.sc_iot = ia->ia_iot;
+	sc.sc_ioh = ioh;
+
+	/* Supposedly no update in progress after POST; check for this. */
+	cra = mcclock_isa_read((struct mcclock_softc *)&sc, MC_REGA);
+	if (cra & MC_REGA_UIP)
+		goto unmap;
+
+	/* Read from the seconds counter. */
+	t1 = FROMBCD(mcclock_isa_read((struct mcclock_softc *)&sc, MC_SEC));
+	if (t1 > 59)
+		goto unmap;
+
+	/* Wait, then look again. */
+	DELAY(1100000);
+	t2 = FROMBCD(mcclock_isa_read((struct mcclock_softc *)&sc, MC_SEC));
+	if (t2 > 59)
+		goto unmap;
+
+#ifdef DEBUG
+	printf("mcclock_isa_attach: t1 %02d, t2 %02d\n", t1, t2);
+#endif
+
+        /* If [1,2) seconds have passed since, call it a clock. */
+	if ((t1 + 1) % 60 == t2 || (t1 + 2) % 60 == t2)
+		found = 1;
+
+ unmap:
 	bus_space_unmap(ia->ia_iot, ioh, MCCLOCK_NPORTS);
 
-	ia->ia_nio = 1;
-	ia->ia_io[0].ir_addr = 0x70;
-	ia->ia_io[0].ir_size = MCCLOCK_NPORTS;
+	if (found) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_addr = 0x70;
+		ia->ia_io[0].ir_size = MCCLOCK_NPORTS;
 
-	ia->ia_niomem = 0;
-	ia->ia_nirq = 0;
-	ia->ia_ndrq = 0;
+		ia->ia_niomem = 0;
+		ia->ia_nirq = 0;
+		ia->ia_ndrq = 0;
+	}
 
-	return (1);
+	return (found);
 }
 
 void

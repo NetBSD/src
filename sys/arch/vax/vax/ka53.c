@@ -1,4 +1,4 @@
-/*	$NetBSD: ka53.c,v 1.5.2.1 2002/01/10 19:50:06 thorpej Exp $	*/
+/*	$NetBSD: ka53.c,v 1.5.2.2 2002/03/16 16:00:16 jdolecek Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -189,7 +189,7 @@ ka53_cache_enable()
 		mtpr(0, start);
 
 	/* Flush the pipes (via REI) */
-	asm("movpsl -(sp); movab 1f,-(sp); rei; 1:;");
+	asm("movpsl -(%sp); movab 1f,-(%sp); rei; 1:;");
 
 	/* Enable primary cache */
 	mtpr(PCCTL_P_EN|PCCTL_I_EN|PCCTL_D_EN, PR_PCCTL);

@@ -1,28 +1,36 @@
-##	$NetBSD: Makefile.inc,v 1.4.24.1 2002/01/10 19:45:14 thorpej Exp $
+##	$NetBSD: Makefile.inc,v 1.4.24.2 2002/03/16 15:58:21 jdolecek Exp $
 
-SRCS += netif_small.c
+SRCS+= netif_small.c
+
 .if (${USE_NETIF} == "3c509")
-SRCS += 3c509.c elink3.c
+SRCS+= 3c509.c elink3.c
 .endif
+
 .if (${USE_NETIF} == "3c590")
-SRCS += 3c590.c elink3.c
+SRCS+= 3c590.c elink3.c
 .endif
+
 .if (${USE_NETIF} == "wd80x3")
-SRCS += wd80x3.c dp8390.c
+SRCS+= wd80x3.c dp8390.c
 .endif
+
 .if (${USE_NETIF} == "pcnet_pci")
-SRCS += pcnet_pci.c am7990.c
+SRCS+= pcnet_pci.c am7990.c
 .endif
+
 .if (${USE_NETIF} == "pcnet_isapnp")
-SRCS += pcnet_isapnp.c am7990.c
+SRCS+= pcnet_isapnp.c am7990.c
 .endif
+
 .if (${USE_NETIF} == "i82557")
-SRCS += i82557.c
+SRCS+= i82557.c
 .endif
+
 .if (${USE_NETIF} == "3c90xb")
-SRCS += 3c90xb.c
+SRCS+= 3c90xb.c
 .endif
-.if (${USE_NETIF} == "ne2000")
-SRCS += ne.c dp8390.c
-CPPFLAGS += -DSUPPORT_NE2000
+
+.if (${USE_NETIF} == "ne2000_isa")
+SRCS+= ne.c dp8390.c
+CPPFLAGS+= -DSUPPORT_NE2000
 .endif

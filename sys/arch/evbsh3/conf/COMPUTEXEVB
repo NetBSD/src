@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.10.2.2 2002/02/11 20:07:45 jdolecek Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.10.2.3 2002/03/16 15:57:29 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -12,11 +12,12 @@ include "arch/evbsh3/conf/std.evbsh3.eb"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
+options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
 
 maxusers	32		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
+options		SH3
 options 	SH7709A,SH7709A_BROKEN_IPR	# 100MHz
 options 	PCLOCK=25000000		# 25.000MHz
 options 	IOM_ROM_BEGIN=0x00000000

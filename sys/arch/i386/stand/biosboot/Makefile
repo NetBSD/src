@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37.4.1 2002/01/10 19:45:10 thorpej Exp $
+#	$NetBSD: Makefile,v 1.37.4.2 2002/03/16 15:58:20 jdolecek Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -6,14 +6,14 @@ BASE?= biosboot
 PROG= ${BASE}.sym
 NOMAN=	# defined
 NEWVERSWHAT=	"BIOS Boot"
+STARTFILE=	${BSSTART}
+RELOC=		0x0
 
 .if (${BASE} != "biosboot")
 .PATH.c: ${.CURDIR}/../biosboot/
 .endif
 
 SRCS= main.c devopen.c conf.c exec.c
-
-CLEANFILES+= ${BSSTART}
 
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART -DSUPPORT_PS2
 

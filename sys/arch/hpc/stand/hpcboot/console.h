@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: console.h,v 1.6 2001/06/19 16:48:49 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: console.h,v 1.6.2.1 2002/03/16 15:57:50 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,6 @@
 
 class Console {
 private:
-	static Console *_instance;
 	int16_t _boot_console;
 
 protected:
@@ -57,6 +56,7 @@ protected:
 	~Console(void) { /* NO-OP */ }
 
 public:
+	static Console *_instance;
 	static Console *Instance(void);
 	static void Destroy(void);
 	virtual void print(const TCHAR *fmt, ...);
@@ -78,13 +78,14 @@ protected:
 protected:
 	SerialConsole(void);
 	~SerialConsole(void) { /* NO-OP */ };
-	BOOL openCOM1(void);
 	BOOL setupMultibyteBuffer(void);
 
 public:
 	void genericPrint(const char *);
 	virtual BOOL init(void);
 	virtual void print(const TCHAR *fmt, ...);
+
+	static HANDLE OpenCOM1(void);
 };
 
 #define SETUP_WIDECHAR_BUFFER()						\

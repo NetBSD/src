@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.18.2.2 2002/01/10 19:54:30 thorpej Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.18.2.3 2002/03/16 16:00:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.18.2.2 2002/01/10 19:54:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.18.2.3 2002/03/16 16:00:53 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -458,6 +458,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 #ifdef SCA_USE_FASTQ
 	scp->fastq.ifq_maxlen = IFQ_MAXLEN;
 #endif
+	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
@@ -1068,7 +1069,7 @@ sca_start(ifp)
 		IF_DEQUEUE(&scp->fastq, mb_head);
 	if (mb_head == NULL)
 #endif
-		IF_DEQUEUE(&ifp->if_snd, mb_head);
+		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
 	if (mb_head == NULL)
 		goto start_xmit;
 

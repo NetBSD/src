@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.132.2.4 2002/02/11 20:10:08 jdolecek Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.132.2.5 2002/03/16 16:01:23 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.162 2002/01/31 14:27:29 is Exp 
+ *	NetBSD: pcmciadevs,v 1.163 2002/03/04 16:41:50 martin Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -572,6 +572,9 @@
 #define	PCMCIA_CIS_TDK_LAK_CF010	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_LAK_CF010	0x0900
 #define	PCMCIA_STR_TDK_LAK_CF010	"TDK LAC-CF010"
+#define	PCMCIA_CIS_TDK_C6500012	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_C6500012	0x410a
+#define	PCMCIA_STR_TDK_C6500012	"TDK ELSA MicroLink MC all"
 #define	PCMCIA_CIS_TDK_DFL9610	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_DFL9610	0x0d0a
 #define	PCMCIA_STR_TDK_DFL9610	"TDK DFL9610 Ethernet & Digital Cellular"

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.4.4.2 2002/01/10 19:51:18 thorpej Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.4.4.3 2002/03/16 16:00:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,12 @@
 #include <sys/types.h> 
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+
+/* e_flags used by IRIX for ABI selection */
+#define IRIX_EF_IRIX_ABI64	0x00000010
+#define IRIX_EF_IRIX_ABIN32	0x00000020
+#define IRIX_EF_IRIX_ABIO32	0x00000000
+#define IRIX_EF_IRIX_ABI_MASK	0x00000030
 
 #define IRIX_ELF_AUX_ENTRIES 7
 

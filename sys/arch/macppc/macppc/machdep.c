@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101.2.3 2002/01/10 19:45:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101.2.4 2002/03/16 15:58:32 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -190,22 +190,22 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Map PCI memory space.
 	 */
-	battable[0x8].batl = BATL(0x80000000, BAT_I, BAT_PP_RW);
+	battable[0x8].batl = BATL(0x80000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0x8].batu = BATU(0x80000000, BAT_BL_256M, BAT_Vs);
 
-	battable[0x9].batl = BATL(0x90000000, BAT_I, BAT_PP_RW);
+	battable[0x9].batl = BATL(0x90000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0x9].batu = BATU(0x90000000, BAT_BL_256M, BAT_Vs);
 
-	battable[0xa].batl = BATL(0xa0000000, BAT_I, BAT_PP_RW);
+	battable[0xa].batl = BATL(0xa0000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0xa].batu = BATU(0xa0000000, BAT_BL_256M, BAT_Vs);
 
-	battable[0xb].batl = BATL(0xb0000000, BAT_I, BAT_PP_RW);
+	battable[0xb].batl = BATL(0xb0000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0xb].batu = BATU(0xb0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map obio devices.
 	 */
-	battable[0xf].batl = BATL(0xf0000000, BAT_I, BAT_PP_RW);
+	battable[0xf].batl = BATL(0xf0000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0xf].batu = BATU(0xf0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
@@ -903,6 +903,7 @@ cninit_kd()
 #endif
 #if NUKBD > 0
 	struct usb_kbd_ihandles *ukbds;
+	int ukbd;
 #endif
 
 	/*
@@ -982,11 +983,11 @@ cninit_kd()
 		goto kbd_found;
 	}
 	/* Try old method name. */
-	if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &akbd) != -1 &&
-	    akbd != 0 &&
-	    OF_instance_to_package(akbd) != -1) {
+	if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &ukbd) != -1 &&
+	    ukbd != 0 &&
+	    OF_instance_to_package(ukbd) != -1) {
 		printf("console keyboard type: USB\n");
-		stdin = akbd;
+		stdin = ukbd;
 		ukbd_cnattach();
 		goto kbd_found;
 	}

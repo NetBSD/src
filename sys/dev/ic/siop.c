@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.45.2.3 2002/02/11 20:09:46 jdolecek Exp $	*/
+/*	$NetBSD: siop.c,v 1.45.2.4 2002/03/16 16:01:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.45.2.3 2002/02/11 20:09:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.45.2.4 2002/03/16 16:01:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1525,7 +1525,7 @@ void
 siop_morecbd(sc)
 	struct siop_softc *sc;
 {
-	int error, i, j;
+	int error, i, j, s;
 	bus_dma_segment_t seg;
 	int rseg;
 	struct siop_cbd *newcbd;
@@ -1647,7 +1647,9 @@ siop_morecbd(sc)
 		    Ent_ldsa_data);
 		/* JUMP foo, IF FALSE - used by MOVE MEMORY to clear the slot */
 		scr[Ent_ldsa_data / 4] = htole32(0x80000000);
+		s = splbio();
 		TAILQ_INSERT_TAIL(&sc->free_list, &newcbd->cmds[i], next);
+		splx(s);
 #ifdef SIOP_DEBUG
 		printf("tables[%d]: in=0x%x out=0x%x status=0x%x\n", i,
 		    le32toh(newcbd->cmds[i].siop_tables.t_msgin.addr),
@@ -1655,8 +1657,10 @@ siop_morecbd(sc)
 		    le32toh(newcbd->cmds[i].siop_tables.t_status.addr));
 #endif
 	}
+	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->cmds, newcbd, next);
 	sc->sc_adapt.adapt_openings += SIOP_NCMDPB;
+	splx(s);
 	return;
 bad0:
 	bus_dmamap_unload(sc->sc_dmat, newcbd->xferdma);

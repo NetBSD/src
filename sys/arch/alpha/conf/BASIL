@@ -1,10 +1,10 @@
-# $NetBSD: BASIL,v 1.3.2.3 2002/02/11 20:06:41 jdolecek Exp $
+# $NetBSD: BASIL,v 1.3.2.4 2002/03/16 15:55:39 jdolecek Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"BASIL-$Revision: 1.3.2.3 $"
+#ident 		"BASIL-$Revision: 1.3.2.4 $"
 
 maxusers 64
 
@@ -256,7 +256,7 @@ audio*	at	eap?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs

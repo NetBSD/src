@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.14.4.1 2002/03/16 16:00:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -28,7 +28,9 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcctwo.c,v 1.4 2001/05/31 18:46:09 scw Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.4.2.1 2002/03/16 15:58:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -66,9 +66,10 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
+#include <dev/mvme/pcctworeg.h>
+#include <dev/mvme/pcctwovar.h>
+
 #include <mvme68k/dev/mainbus.h>
-#include <mvme68k/dev/pcctworeg.h>
-#include <mvme68k/dev/pcctwovar.h>
 #include <mvme68k/dev/zsvar.h>
 
 

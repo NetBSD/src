@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uartreg.h,v 1.2 2001/04/19 18:22:34 uch Exp $	*/
+/*	$NetBSD: hd64461uartreg.h,v 1.2.2.1 2002/03/16 15:58:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,3 +64,4 @@
 /* Scratch Pad Register */
 #define HD64461_USCR_REG8			0xb000800e
 
+#define	LSR_TXRDY	0x20	/* Transmitter buffer empty */

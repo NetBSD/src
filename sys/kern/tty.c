@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.2.7 2002/02/11 20:10:24 jdolecek Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.2.8 2002/03/16 16:01:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.128.2.7 2002/02/11 20:10:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.128.2.8 2002/03/16 16:01:51 jdolecek Exp $");
 
 #include "opt_uconsole.h"
 
@@ -733,7 +733,6 @@ int
 ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
-	extern int	nlinesw;
 	struct linesw	*lp;
 	int		s, error;
 
@@ -833,8 +832,8 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(int *)data = tp->t_linesw->l_no;
 		break;
 	case TIOCGLINED:
-		strncpy((char *)data, tp->t_linesw->l_name, 
-			TTLINEDNAMELEN);
+		(void)strncpy((char *)data, tp->t_linesw->l_name, 
+		    TTLINEDNAMELEN - 1);
 		break;
 	case TIOCGWINSZ:		/* get window size */
 		*(struct winsize *)data = tp->t_winsize;
@@ -940,7 +939,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		dev_t device;
 
 		/* Null terminate to prevent buffer overflow */
-		name[TTLINEDNAMELEN] = 0; 
+		name[TTLINEDNAMELEN - 1] = '\0'; 
 		lp = ttyldisc_lookup(name);
 
  setldisc:
@@ -2189,7 +2188,7 @@ tty_init(void)
 	tty_count = 0;
 
 	pool_init(&tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_TTYS);
+	    &pool_allocator_nointr);
 }
 
 /*

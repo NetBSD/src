@@ -1,4 +1,4 @@
-/*	$NetBSD: tosdefs.h,v 1.2.6.2 2002/01/10 19:40:30 thorpej Exp $	*/
+/*	$NetBSD: tosdefs.h,v 1.2.6.3 2002/03/16 15:56:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,14 +41,6 @@
 
 #include <sys/types.h>
 
-#ifndef int8_t
-/*
- * My TOS/MiNT installation does not define these (Leo 09/10/2001).
- */
-typedef	unsigned char	u_int8_t;
-typedef	unsigned short	u_int16_t;
-typedef	unsigned long	u_int32_t;
-#endif /* int8_t */
 
 #include "kparamb.h"
 

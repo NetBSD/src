@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.192.2.4 2002/01/10 19:59:42 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.192.2.5 2002/03/16 16:01:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,14 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.4 2002/01/10 19:59:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.5 2002/03/16 16:01:46 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
-#include "opt_new_pipe.h"
+#include "opt_pipe.h"
 #include "opt_syscall_debug.h"
 
 #include "rnd.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.4 2002/01/10 19:59:42 thorpej 
 #include <sys/disklabel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/exec.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
@@ -96,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.192.2.4 2002/01/10 19:59:42 thorpej 
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
 #endif
 
@@ -168,7 +169,6 @@ main(void)
 	rlim_t lim;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
-	extern void disk_init(void);
 #if defined(NFSSERVER) || defined(NFS)
 	extern void nfs_init(void);
 #endif
@@ -510,7 +510,7 @@ main(void)
 	/* Initialize exec structures */
 	exec_init(1);
 
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 	/* Initialize pipe structures */
 	pipe_init();
 #endif

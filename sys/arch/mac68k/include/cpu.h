@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67.2.1 2002/01/10 19:45:37 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.67.2.2 2002/03/16 15:58:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -199,6 +199,7 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define MACH_MACP550		80
 #define MACH_MACCCLASSICII	83
 #define MACH_MACPB165		84
+#define MACH_MACPB190CS		85
 #define MACH_MACTV		88
 #define MACH_MACLC475		89
 #define MACH_MACLC475_33	90

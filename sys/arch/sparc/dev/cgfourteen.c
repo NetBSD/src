@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.20.4.1 2002/01/10 19:48:44 thorpej Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.20.4.2 2002/03/16 15:59:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -218,11 +218,9 @@ cgfourteenattach(parent, self, aux)
 #endif
 		sa->sa_size = 0x10000;
 	}
-	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-			 sa->sa_offset,
-			 sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset, sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: cannot map control registers\n", self->dv_xname);
 		return;
 	}

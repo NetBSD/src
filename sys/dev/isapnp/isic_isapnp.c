@@ -33,7 +33,7 @@
  *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp.c,v 1.3.2.2 2002/02/11 20:09:53 jdolecek Exp $ 
+ *	$Id: isic_isapnp.c,v 1.3.2.3 2002/03/16 16:01:08 jdolecek Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.3.2.2 2002/02/11 20:09:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.3.2.3 2002/03/16 16:01:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -240,6 +240,12 @@ isic_isapnp_attach(parent, self, aux)
 	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
 	int i;
 
+	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
+		printf("%s: error in region allocation\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	for (i = 0; i < NUM_DESCRIPTIONS; i++, desc++)
 		if (strcmp(ipa->ipa_devlogic, desc->devlogic) == 0)
 			break;
@@ -256,7 +262,7 @@ isic_isapnp_attach(parent, self, aux)
 	printf(": %s\n", desc->name);
 
 	/* establish interrupt handler */
-	if (isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num, IST_EDGE,
+	if (isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num, ipa->ipa_irq[0].type,
 		IPL_NET, isicintr, sc) == NULL)
 		printf("%s: couldn't establish interrupt handler\n",
 			sc->sc_dev.dv_xname);

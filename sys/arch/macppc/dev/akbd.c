@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.14.2.2 2002/01/10 19:45:47 thorpej Exp $	*/
+/*	$NetBSD: akbd.c,v 1.14.2.3 2002/03/16 15:58:30 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -64,6 +64,7 @@ static int	akbdmatch __P((struct device *, struct cfdata *, void *));
 static void	akbdattach __P((struct device *, struct device *, void *));
 void		kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 static void	kbd_processevent __P((adb_event_t *event, struct akbd_softc *));
+static void kbd_passup __P((struct akbd_softc *sc, int));
 #ifdef notyet
 static u_char	getleds __P((int));
 static int	setleds __P((struct akbd_softc *, u_char));
@@ -105,6 +106,7 @@ struct wskbd_mapdata akbd_keymapdata = {
 };
 
 static int akbd_is_console;
+static int akbd_console_attached;
 static int pcmcia_soft_eject;
 
 static int
@@ -242,8 +244,9 @@ akbdattach(parent, self, aux)
 		printf("akbd: returned %d from SetADBInfo\n", error);
 #endif
 
-	if (akbd_is_console) {
-		wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
+	if (akbd_is_console && !akbd_console_attached) {
+		wskbd_cnattach(&akbd_consops, sc, &akbd_keymapdata);
+		akbd_console_attached = 1;
 	}
 
 	a.console = akbd_is_console;
@@ -465,31 +468,53 @@ akbd_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-static int polledkey;
 extern int adb_polling;
+
+void
+kbd_passup(sc,key)
+	struct akbd_softc *sc;
+	int key;
+{
+	if (sc->sc_polling) {
+		if (sc->sc_npolledkeys <
+			(sizeof(sc->sc_polledkeys)/sizeof(unsigned char))) {
+			sc->sc_polledkeys[sc->sc_npolledkeys++] = key;
+		}
+#ifdef ADB_DEBUG
+		else {
+			printf("akbd: dumping polled key 0x%02x\n",key);
+		}
+#endif
+	} else {
+		int press, val;
+		int type;
+    
+		press = ADBK_PRESS(key);
+		val = ADBK_KEYVAL(key);
+    
+		type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
+
+		wskbd_input(sc->sc_wskbddev, type, val);
+	}
+}
 
 int
 kbd_intr(arg)
 	void *arg;
 {
 	adb_event_t *event = arg;
-	int key, press, val;
-	int type;
+	int key;
 
 	struct akbd_softc *sc = akbd_cd.cd_devs[0];
 
 	key = event->u.k.key;
-	press = ADBK_PRESS(key);
-	val = ADBK_KEYVAL(key);
-
-	type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
 
 	switch (key) {
 	case 57:	/* Caps Lock pressed */
 	case 185:	/* Caps Lock released */
-		type = WSCONS_EVENT_KEY_DOWN;
-		wskbd_input(sc->sc_wskbddev, type, val);
-		type = WSCONS_EVENT_KEY_UP;
+		key = ADBK_KEYDOWN(ADBK_KEYVAL(key));
+		kbd_passup(sc,key);
+		key = ADBK_KEYUP(ADBK_KEYVAL(key));
 		break;
 	case 245:
 		if (pcmcia_soft_eject)
@@ -501,10 +526,7 @@ kbd_intr(arg)
 		break;
 	}
 
-	if (adb_polling)
-		polledkey = key;
-	else
-		wskbd_input(sc->sc_wskbddev, type, val);
+	kbd_passup(sc,key);
 
 	return 0;
 }
@@ -525,21 +547,25 @@ akbd_cngetc(v, type, data)
 {
 	int key, press, val;
 	int s;
+	struct akbd_softc *sc = v;
 
 	s = splhigh();
 
-	polledkey = -1;
-	adb_polling = 1;
+	KASSERT(sc->sc_polling);
+	KASSERT(adb_polling);
 
-	while (polledkey == -1) {
+	while (sc->sc_npolledkeys == 0) {
 		adb_intr();
 		DELAY(10000);				/* XXX */
 	}
 
-	adb_polling = 0;
 	splx(s);
 
-	key = polledkey;
+	key = sc->sc_polledkeys[0];
+	sc->sc_npolledkeys--;
+	memmove(sc->sc_polledkeys,sc->sc_polledkeys+1,
+		sc->sc_npolledkeys * sizeof(unsigned char));
+
 	press = ADBK_PRESS(key);
 	val = ADBK_KEYVAL(key);
 
@@ -552,4 +578,14 @@ akbd_cnpollc(v, on)
 	void *v;
 	int on;
 {
+	struct akbd_softc *sc = v;
+	sc->sc_polling = on;
+	if (!on) {
+		int i;
+		for(i=0;i<sc->sc_npolledkeys;i++) {
+			kbd_passup(sc,sc->sc_polledkeys[i]);
+		}
+		sc->sc_npolledkeys = 0;
+	}
+	adb_polling = on;
 }

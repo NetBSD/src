@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.29.2.1 2002/02/11 20:09:43 jdolecek Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.29.2.2 2002/03/16 16:00:52 jdolecek Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -353,7 +353,7 @@ struct tmode_tstate {
 	u_int16_t		 ultraenb;	/* Using ultra sync rate  */
 	u_int16_t	 	 discenable;	/* Disconnection allowed  */
 	u_int16_t		 tagenable;	/* Tagged Queuing allowed */
-	u_int16_t		 tagdisable;	/* TQ explicity disallowed */
+	u_int16_t		 tagdisable;	/* TQ explicitly disallowed */
 };
 
 #define AHC_TARGET_WILDCARD -1

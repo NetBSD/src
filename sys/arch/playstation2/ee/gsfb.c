@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.1.6.2 2002/01/10 19:47:33 thorpej Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.1.6.3 2002/03/16 15:59:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -356,12 +356,12 @@ gsfb_swinit()
 	int font;
 
 	wsfont_init();	
-	font = wsfont_find(NULL, 8, 16, 0);
+	font = wsfont_find(NULL, 8, 16, 0,  WSDISPLAY_FONTORDER_L2R,
+	    WSDISPLAY_FONTORDER_L2R);
 	if (font < 0)
 		return (1);
 
-	if (wsfont_lock(font, &gsfb.font, WSDISPLAY_FONTORDER_L2R,
-	    WSDISPLAY_FONTORDER_L2R) < 0)
+	if (wsfont_lock(font, &gsfb.font))
 		return (1);
 
 	gsfb.screen = &_gsfb_std_screen;

@@ -1,4 +1,4 @@
-/* $NetBSD: ubcreg.h,v 1.1 1999/09/13 10:31:24 itojun Exp $ */
+/*	$NetBSD: ubcreg.h,v 1.1.16.1 2002/03/16 15:59:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -28,49 +28,58 @@
 
 #ifndef _SH3_UBCREG_H_
 #define _SH3_UBCREG_H_
+#include <sh3/devreg.h>
 
 /*
  * User Break Controller
  */
 
-#if !defined(SH4)
+/* ch-A */
+#define SH3_BARA		0xffffffb0
+#define SH3_BAMRA		0xffffffb4
+#define SH3_BASRA		0xffffffe4
+#define SH3_BBRA		0xffffffb8
+/* ch-B */			  
+#define SH3_BARB		0xffffffa0
+#define SH3_BAMRB		0xffffffa4
+#define SH3_BASRB		0xffffffe8
+#define SH3_BBRB		0xffffffa8
+#define SH3_BDRB		0xffffff90
+#define SH3_BDMRB		0xffffff94
+/* common */			  
+#define SH3_BRCR		0xffffff98
 
-/* SH3 definition */
 
 /* ch-A */
-#define SHREG_BARA	(*(volatile unsigned int *)	0xFFFFFFB0)
-#define SHREG_BASRA	(*(volatile unsigned char *)	0xFFFFFFE4)
-#define SHREG_BAMRA	(*(volatile unsigned char *)	0xFFFFFFB4)
-#define SHREG_BBRA	(*(volatile unsigned short *)	0xFFFFFFB8)
-/* ch-B */
-#define SHREG_BARB	(*(volatile unsigned int *)	0xFFFFFFA0)
-#define SHREG_BAMRB	(*(volatile unsigned char *)	0xFFFFFFa4)
-#define SHREG_BASRB	(*(volatile unsigned char *)	0xFFFFFFe8)
-#define SHREG_BBRB	(*(volatile unsigned short *)	0xFFFFFFa8)
-#define SHREG_BDRB	(*(volatile unsigned int *)	0xFFFFFF90)
-#define SHREG_BDMRB	(*(volatile unsigned int *)	0xFFFFFF94)
-/* common */
-#define SHREG_BRCR	(*(volatile unsigned short *)	0xFFFFFF98)
+#define SH4_BARA		0xff200000
+#define SH4_BAMRA		0xff200004
+#define SH4_BASRA		0xff000014
+#define SH4_BBRA		0xff200008
 
-#else
+/* ch-B */			  
+#define SH4_BARB		0xff20000c
+#define SH4_BAMRB		0xff200010
+#define SH4_BASRB		0xff000018
+#define SH4_BBRB		0xff200014
+#define SH4_BDRB		0xff200018
+#define SH4_BDMRB		0xff20001c
+/* common */			  
+#define SH4_BRCR		0xff200020
 
-/* SH4 definitions */
-
-/* ch-A */
-#define SHREG_BARA	(*(volatile unsigned int *)	0xff200000)
-#define SHREG_BAMRA	(*(volatile unsigned char *)	0xff200004)
-#define SHREG_BBRA	(*(volatile unsigned short *)	0xff200008)
-#define SHREG_BASRA	(*(volatile unsigned char *)	0xff000014)
-/* ch-B */
-#define SHREG_BARB	(*(volatile unsigned int *)	0xff20000c)
-#define SHREG_BAMRB	(*(volatile unsigned char *)	0xff200010)
-#define SHREG_BBRB	(*(volatile unsigned short *)	0xff200014)
-#define SHREG_BASRB	(*(volatile unsigned char *)	0xff000018)
-#define SHREG_BDRB	(*(volatile unsigned int *)	0xff200018)
-#define SHREG_BDMRB	(*(volatile unsigned int *)	0xff20001c)
-/* common */
-#define SHREG_BRCR	(*(volatile unsigned short *)	0xff200020)
-
-#endif
+#ifndef _LOCORE
+#if defined(SH3) && defined(SH4)
+extern u_int32_t __sh_BARA;
+extern u_int32_t __sh_BAMRA;
+extern u_int32_t __sh_BASRA;
+extern u_int32_t __sh_BBRA;
+extern u_int32_t __sh_BARB;
+extern u_int32_t __sh_BAMRB;
+extern u_int32_t __sh_BASRB;
+extern u_int32_t __sh_BBRB;
+extern u_int32_t __sh_BDRB;
+extern u_int32_t __sh_BDMRB;
+extern u_int32_t __sh_BRCR;
+#endif /* SH3 && SH4 */
+#endif /* !_LOCORE */
 
 #endif	/* !_SH3_UBCREG_H_ */

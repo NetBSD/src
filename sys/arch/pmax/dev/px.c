@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.35.2.2 2002/01/10 19:47:49 thorpej Exp $	*/
+/* 	$NetBSD: px.c,v 1.35.2.3 2002/03/16 15:59:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35.2.2 2002/01/10 19:47:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35.2.3 2002/03/16 15:59:11 jdolecek Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -405,11 +405,12 @@ px_init(fi, slotbase, unit, console)
 	if (console) {
 		wsfont_init();
 
-		if ((i = wsfont_find(NULL, 0, 0, 2)) <= 0)
+		i = wsfont_find(NULL, 0, 0, 2, WSDISPLAY_FONTORDER_R2L,
+		    WSDISPLAY_FONTORDER_L2R);
+		if (i <= 0)
 			panic("px_init: unable to get font");
 		
-		if (wsfont_lock(i, &pxi->pxi_font, WSDISPLAY_FONTORDER_R2L, 
-		    WSDISPLAY_FONTORDER_L2R) <= 0)
+		if (wsfont_lock(i, &pxi->pxi_font))
 			panic("px_init: unable to lock font");
 			
 		pxi->pxi_wsfcookie = i;

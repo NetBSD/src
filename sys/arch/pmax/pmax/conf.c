@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41.2.2 2002/02/11 20:08:51 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.41.2.3 2002/03/16 15:59:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -278,7 +278,9 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NMD,md),	/* 97: memory disk  driver */
 	cdev_fbm_init(NPX,px),	/* 98: PixelStamp board driver */
 	cdev_audio_init(NAUDIO,audio),  /* 99: generic audio I/O */
-	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 100 clockctl pseudo device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 100: clockctl pseudo device */
+	cdev_notdef(),		/* 101: reserved for wsmux */
+	cdev_notdef(),		/* 102: reserved for wsfont */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -418,6 +420,8 @@ static int chrtoblktbl[] =  {
 	/* 98 */	NODEV,
 	/* 99 */	NODEV,
 	/* 100 */	NODEV,
+	/* 101 */	NODEV,
+	/* 102 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2001/06/24 05:34:07 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.2.1 2002/03/16 15:59:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,6 @@
  */
 #include <machine/psl.h>
 #include <machine/frame.h>
-#include <machine/segments.h>
 
 #include <sys/sched.h>
 struct cpu_info {
@@ -78,6 +77,7 @@ extern struct cpu_info cpu_info_store;
  * referenced in generic code
  */
 #define	cpu_swapin(p)			/* nothing */
+#define	cpu_swapout(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
 
@@ -88,17 +88,14 @@ extern struct cpu_info cpu_info_store;
  *
  * XXX intrframe has a lot of gunk we don't need.
  */
-#define clockframe intrframe
+#define clockframe trapframe
 
-#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->if_r15, (frame)->if_ssr))
-#if 0
-#define	CLKF_BASEPRI(frame)	((frame)->if_pri == 0)
-#else
+#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->tf_ssr))
 /* XXX we should fix this */
 #define	CLKF_BASEPRI(frame)	(0)
-#endif
-#define	CLKF_PC(frame)		((frame)->if_spc)
-#define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
+#define	CLKF_PC(frame)		((frame)->tf_spc)
+/* XXX we should have an interrupt stack */
+#define	CLKF_INTR(frame)	(0)
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -124,7 +121,6 @@ int	want_resched;		/* resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(x)		delay(x)
-void	delay __P((int));
 
 /*
  * Logical address space of SH3 CPU.
@@ -149,83 +145,52 @@ void	delay __P((int));
 #define SH3_PHYS_TO_P2SEG(x)	((unsigned)(x) | SH3_P2SEG_BASE)
 #define SH3_P1SEG_TO_P2SEG(x)	((unsigned)(x) | SH3_P1234SEG_SIZE)
 
+/* run on P2 */
+#define RUN_P2								\
+do {									\
+	u_int32_t p;							\
+	p = (u_int32_t)&&P2;						\
+	goto *(u_int32_t *)(p | 0x20000000);				\
+ P2:									\
+} while (/*CONSTCOND*/0)
+
+/* run on P1 */
+#define RUN_P1								\
+do {									\
+	u_int32_t p;							\
+	p = (u_int32_t)&&P1;						\
+	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop;nop");	\
+	goto *(u_int32_t *)(p & ~0x20000000);				\
+ P1:									\
+} while (/*CONSTCOND*/0)
+
 /*
  * pull in #defines for kinds of processors
  */
 #include <machine/cputypes.h>
 
-
 #ifdef _KERNEL
-extern int cpu;
-extern int cpu_class;
-extern struct cpu_nocpuid_nameclass sh3_nocpuid_cpus[];
-extern struct cpu_cpuid_nameclass sh3_cpuid_cpus[];
-
-/* autoconf.c */
-void	configure __P((void));
-
-/* sh3_machdep.c */
-void sh3_startup __P((void));
-
-/* machdep.c */
-void	delay __P((int));
-void	dumpconf __P((void));
-void	cpu_reset __P((void));
-
-/* locore.s */
-struct region_descriptor;
-void	lgdt __P((struct region_descriptor *));
-void	fillw __P((short, void *, size_t));
-void
-bcopyb  __P((caddr_t from, caddr_t to, size_t len));
-void
-bcopyw __P((caddr_t from, caddr_t to, size_t len));
-void
-setPageDirReg __P((int pgdir));
-
-
+void sh_cpu_init(int, int);
+void delay(int);
+void _cpu_spin(u_int32_t);	/* for delay loop. */
+void cpu_reset(void);		/* Soft reset */
+void sh3_startup(void);
 struct pcb;
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
-void	proc_trampoline __P((void));
-
-/* clock.c */
-void	startrtclock __P((void));
-
-/* npx.c */
-void	npxdrop __P((void));
-void	npxsave __P((void));
-
-/* vm_machdep.c */
-int kvtop __P((caddr_t));
-
-#ifdef MATH_EMULATE
-/* math_emulate.c */
-int	math_emulate __P((struct trapframe *));
-#endif
-
+void savectx(struct pcb *);
+void dumpsys(void);
 #endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_NKPDE		2	/* int: number of kernel PDEs */
-#define	CPU_BOOTED_KERNEL	3	/* string: booted kernel name */
-#define	CPU_SETPRIVPROC		4	/* set current proc to piviledged proc
-					   */
-#define	CPU_DEBUGMODE		5	/* set debug mode */
-#define	CPU_LOADANDRESET	6	/* load kernel image and reset */
-#define	CPU_MAXID		7	/* number of valid machdep ids */
+#define	CPU_LOADANDRESET	2	/* load kernel image and reset */
+#define	CPU_MAXID		3	/* number of valid machdep ids */
 
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "nkpde", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "set_priv_proc", CTLTYPE_INT }, \
-	{ "debug_mode", CTLTYPE_INT }, \
-	{ "load_and_reset", CTLTYPE_INT }, \
+#define	CTL_MACHDEP_NAMES {						\
+	{ 0, 0 },							\
+	{ "console_device",	CTLTYPE_STRUCT },			\
+	{ "load_and_reset",	CTLTYPE_INT },				\
 }
 
 #endif /* !_SH3_CPU_H_ */

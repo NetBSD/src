@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5.2.1 2002/01/10 19:48:25 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.5.2.2 2002/03/16 15:59:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ zs_hpc_attach(parent, self, aux)
 
 	zsc->zsc_bustag = haa->ha_st;
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
-				       haa->ha_devoff, 0x10, 
+				       haa->ha_devoff, 0x10,
 				       &zsc->zsc_base)) != 0) {
 		printf(": unable to map 85c30 registers, error = %d\n", err);
 		return;
@@ -233,8 +233,8 @@ zs_hpc_attach(parent, self, aux)
 	printf("\n");
 
 	/*
-	 * Initialize software state for each channel.  
-	 * 
+	 * Initialize software state for each channel.
+	 *
 	 * Done in reverse order of channels since the first serial port
 	 * is actually attached to the *second* channel, and vice versa.
 	 * Doing it this way should force a 'zstty*' to attach zstty0 to
@@ -269,7 +269,7 @@ zs_hpc_attach(parent, self, aux)
 		zsc_args.consdev = NULL;
 
 		if (zs_consunit == -1 && zs_conschan == -1) {
-		    /* 
+		    /*
 		     * If this channel is being used by the PROM console,
 		     * pass the generic zs driver a 'no reset' flag so the
 		     * channel gets left in the appropriate state after
@@ -323,7 +323,7 @@ zs_hpc_attach(parent, self, aux)
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
 
 			s = splhigh();
- 			zs_write_reg(cs,  9, reset);
+ 			zs_write_reg(cs, 9, reset);
 			splx(s);
 		}
 	}
@@ -381,8 +381,8 @@ zshard(arg)
 		softreq = zsc->zsc_cs[0]->cs_softreq;
 		softreq |= zsc->zsc_cs[1]->cs_softreq;
 		if (softreq && (zssoftpending == 0)) {
-		    zssoftpending = 1;
-		    softintr_schedule(zsc->sc_si);
+			zssoftpending = 1;
+			softintr_schedule(zsc->sc_si);
 		}
 	}
 	return rval;
@@ -450,7 +450,7 @@ zs_set_speed(cs, bps)
 
 #if 0
 	while (!(zs_read_csr(cs) & ZSRR0_TX_READY))
-	        {/*nop*/}
+		{/*nop*/}
 #endif
 	/* Wait for transmit buffer to empty */
 	if (bps == 0) {
@@ -556,7 +556,8 @@ zs_write_reg(cs, reg, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_csr(cs)
+u_char
+zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
 	struct zs_channel *zsc = (struct zs_channel *)cs;
@@ -567,7 +568,8 @@ u_char zs_read_csr(cs)
 	return val;
 }
 
-void  zs_write_csr(cs, val)
+void
+zs_write_csr(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -577,7 +579,8 @@ void  zs_write_csr(cs, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_data(cs)
+u_char
+zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
 	struct zs_channel *zsc = (struct zs_channel *)cs;
@@ -588,7 +591,8 @@ u_char zs_read_data(cs)
 	return val;
 }
 
-void  zs_write_data(cs, val)
+void
+zs_write_data(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -616,27 +620,27 @@ zs_abort(cs)
 
 struct zschan *
 zs_get_chan_addr(zs_unit, channel)
-        int zs_unit, channel;
+	int zs_unit, channel;
 {
 	static int dumped_addr = 0;
-        struct zsdevice *addr;
-        struct zschan *zc;
+	struct zsdevice *addr;
+	struct zschan *zc;
 
-        addr = (struct zsdevice *) MIPS_PHYS_TO_KSEG1(0x1fbd9830);
-        
-        if (channel == 0) {
-                zc = &addr->zs_chan_b;
-        } else {
-                zc = &addr->zs_chan_a;
-        }
+	addr = (struct zsdevice *) MIPS_PHYS_TO_KSEG1(0x1fbd9830);
+
+	if (channel == 0) {
+		zc = &addr->zs_chan_b;
+	} else {
+		zc = &addr->zs_chan_a;
+	}
 
 	if (dumped_addr == 0) {
 		dumped_addr++;
 		printf("zs channel %d had address %p\n", channel, zc);
 	}
 
-        return (zc);
-}      
+	return (zc);
+}
 
 int
 zs_getc(arg)
@@ -697,11 +701,11 @@ zscninit(cn)
 	char* consdev;
 
 	if ((consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut")) == NULL)
-	    panic("zscninit without valid ARCS ConsoleOut setting!\n");
+		panic("zscninit without valid ARCS ConsoleOut setting!\n");
 
 	if (strlen(consdev) != 9 ||
 	    strncmp(consdev, "serial", 6) != 0)
-	    panic("zscninit with ARCS console not set to serial!\n");
+		panic("zscninit with ARCS console not set to serial!\n");
 
 	cons_port = consdev[7] - '0';
 
@@ -713,9 +717,9 @@ zscninit(cn)
 
 	/* SGI hardware wires serial port 1 to channel B, port 2 to A */
 	if (cons_port == 0)
-	    zs_conschan = 1;
+		zs_conschan = 1;
 	else
-	    zs_conschan = 0;
+		zs_conschan = 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.2.3 2002/01/10 19:39:51 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.2.4 2002/03/16 15:56:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -145,7 +145,7 @@ cpu_exit(p)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * and size must be a multiple of PAGE_SIZE.
  */
 void
 pagemove(from, to, size)
@@ -320,8 +320,6 @@ kvtop(addr)
 		panic("kvtop: zero page frame");
 	return(pa);
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

@@ -1,4 +1,4 @@
-#	$NetBSD: INDY,v 1.7.2.2 2002/02/11 20:08:56 jdolecek Exp $
+#	$NetBSD: INDY,v 1.7.2.3 2002/03/16 15:59:26 jdolecek Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -29,7 +29,7 @@ options 	MIPS3_5200		# XXX
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT
 #options 	MEMORY_DISK_SERVER=0
-#options 	MINIROOTSIZE=8192
+#options 	MEMORY_DISK_SIZE=8192
 
 options 	KTRACE
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

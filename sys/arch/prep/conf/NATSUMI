@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.6.2.2 2002/02/11 20:08:53 jdolecek Exp $
+#	$NetBSD: NATSUMI,v 1.6.2.3 2002/03/16 15:59:20 jdolecek Exp $
 #
 #	for development
 #
@@ -8,8 +8,6 @@ include "arch/prep/conf/std.prep"
 maxusers	32
 
 makeoptions	COPTS="-O2 -pipe"
-
-#options 	NEWPMAP
 
 # Standard system options
 
@@ -381,7 +379,6 @@ pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation

@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.151.2.3 2002/02/11 20:06:40 jdolecek Exp $
+# $NetBSD: ALPHA,v 1.151.2.4 2002/03/16 15:55:39 jdolecek Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.151.2.3 $"
+ident		"ALPHA-$Revision: 1.151.2.4 $"
 
 maxusers 32
 
@@ -290,6 +290,7 @@ audio*	at	eap?
 audio*	at	eso?
 audio*	at	sv?
 audio*	at	yds?
+audio*	at	ess?
 
 opl*	at	cmpci? flags 1
 opl*	at	eso?
@@ -306,7 +307,7 @@ midi*	at	mpu?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
@@ -361,6 +362,7 @@ we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isapnp?
 #audio*	at	wss?
 #midi*	at	wss?
+ess0	at	isa? port 0x220 irq 5 drq 1 drq2 5   # ESS 18XX
 sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #sb*	at	isapnp?
 audio*	at	sb?

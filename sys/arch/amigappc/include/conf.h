@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3.2.1 2002/01/10 19:37:36 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.3.2.2 2002/03/16 15:55:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -29,9 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define mmread mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
+#include <sys/conf.h>
 
 cdev_decl(ctty);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.10.2.2 2002/02/11 20:10:11 jdolecek Exp $	*/
+/*	$NetBSD: magma.c,v 1.10.2.3 2002/03/16 16:01:30 jdolecek Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.2 2002/02/11 20:10:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.10.2.3 2002/03/16 16:01:30 jdolecek Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -389,11 +389,8 @@ magma_attach(parent, self, aux)
 	sc->ms_ncd1190 = card->mb_ncd1190;
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot,
-			 sa->sa_offset,
-			 sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+			 sa->sa_slot, sa->sa_offset, sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
 		return;
 	}

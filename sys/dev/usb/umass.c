@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.62.2.1 2002/01/10 19:59:00 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.62.2.2 2002/03/16 16:01:38 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.62.2.1 2002/01/10 19:59:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.62.2.2 2002/03/16 16:01:38 jdolecek Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -440,7 +440,8 @@ USB_ATTACH(umass)
 	/*
 	 * Get the maximum LUN supported by the device.
 	 */
-	if (sc->sc_wire == UMASS_WPROTO_BBB) {
+	if (sc->sc_wire == UMASS_WPROTO_BBB && 
+	    !(sc->sc_quirks & UMASS_QUIRK_NO_MAX_LUN)) {
 		err = umass_bbb_get_max_lun(sc, &sc->maxlun);
 		if (err) {
 			printf("%s: unable to get Max Lun: %s\n",

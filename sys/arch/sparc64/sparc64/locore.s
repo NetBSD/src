@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.124.2.5 2002/02/11 20:09:12 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.124.2.6 2002/03/16 15:59:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -9275,7 +9275,7 @@ ENTRY(pseg_find)
 	.data
 	.align	8
 	.globl	block_disable
-block_disable:	.xword	0
+block_disable:	.xword	1
 	.text
 
 #if 0
@@ -12106,26 +12106,25 @@ microtick:
 	bne	2b						! if time.tv_usec changed
 
 	 sethi	%hi(_C_LABEL(cpu_clockrate)), %o1
-	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o4	! Get scale factor
+	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)], %g1	! Get scale factor
 	sethi	%hi(MICROPERSEC), %o5
-	brnz,pt	%o4, 1f						! Already scaled?
-	 or	%o2, %lo(MICROPERSEC), %o5
+	brnz,pt	%g1, 1f						! Already scaled?
+	 or	%o5, %lo(MICROPERSEC), %o5
 
 	!! Calculate ticks/usec
-	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate))], %o4	! No, we need to calculate it
-	udivx	%o4, %o5, %o4					! Hz / 10^6 = MHz
-	stx	%o4, [%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
+	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate))], %g1	! No, we need to calculate it
+	udivx	%g1, %o5, %g1					! Hz / 10^6 = MHz
+	stx	%g1, [%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
 1:
 
 	STPTR	%o2, [%o0]					! Store seconds.
-	udivx	%o4, %o1, %o4					! Scale it: ticks / MHz = usec
+	udivx	%o4, %g1, %o4					! Scale it: ticks / MHz = usec
 
 	udivx	%o4, %o5, %o2					! Now %o2 has seconds
 
 	mulx	%o2, %o5, %o5					! Now calculate usecs -- damn no remainder insn
 	sub	%o4, %o5, %o1					! %o1 has the remainder
 
-	add	%o1, %o3, %o1	! I think this is wrong
 	retl
 	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.4.2.2 2002/01/10 19:54:35 thorpej Exp $ */
+/*	$NetBSD: iha.c,v 1.4.2.3 2002/03/16 16:00:55 jdolecek Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.4.2.2 2002/01/10 19:54:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.4.2.3 2002/03/16 16:00:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,53 +141,41 @@ static u_int16_t eeprom_default[EEPROM_SIZE] = {
 };
 #endif
 
-static u_int8_t iha_data_over_run(struct iha_scsi_req_q *);
+static void iha_append_free_scb(struct iha_softc *, struct iha_scb *);
+static void iha_append_done_scb(struct iha_softc *, struct iha_scb *, u_int8_t);
+static __inline struct iha_scb *iha_pop_done_scb(struct iha_softc *);
 
-static int iha_push_sense_request(struct iha_softc *, struct iha_scsi_req_q *);
-static void iha_timeout(void *);
+static struct iha_scb *iha_find_pend_scb(struct iha_softc *);
+static __inline void iha_append_pend_scb(struct iha_softc *, struct iha_scb *);
+static __inline void iha_push_pend_scb(struct iha_softc *, struct iha_scb *);
+static __inline void iha_del_pend_scb(struct iha_softc *, struct iha_scb *);
+static __inline void iha_mark_busy_scb(struct iha_scb *);
+
+static __inline void iha_set_ssig(struct iha_softc *, u_int8_t, u_int8_t);
+
 static int iha_alloc_sglist(struct iha_softc *);
 
-static void iha_read_eeprom(struct iha_softc *, struct iha_eeprom *);
-static int iha_se2_rd_all(struct iha_softc *, u_int16_t *);
-static void iha_se2_instr(struct iha_softc *, int);
-static u_int16_t iha_se2_rd(struct iha_softc *, int);
-#ifdef notused
-static void iha_se2_update_all(struct iha_softc *);
-static void iha_se2_wr(struct iha_softc *, int, u_int16_t);
-#endif
+static void iha_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
+    void *arg);
+static void iha_update_xfer_mode(struct iha_softc *, int);
 
 static void iha_reset_scsi_bus(struct iha_softc *);
 static void iha_reset_chip(struct iha_softc *);
 static void iha_reset_dma(struct iha_softc *);
-
 static void iha_reset_tcs(struct tcs *, u_int8_t);
-
-static void iha_done_scb(struct iha_softc *, struct iha_scsi_req_q *);
-static void iha_exec_scb(struct iha_softc *, struct iha_scsi_req_q *);
 
 static void iha_main(struct iha_softc *);
 static void iha_scsi(struct iha_softc *);
+static void iha_select(struct iha_softc *, struct iha_scb *, u_int8_t);
+static int iha_wait(struct iha_softc *, u_int8_t);
 
-static int  iha_wait(struct iha_softc *, u_int8_t);
+static void iha_exec_scb(struct iha_softc *, struct iha_scb *);
+static void iha_done_scb(struct iha_softc *, struct iha_scb *);
+static int iha_push_sense_request(struct iha_softc *, struct iha_scb *);
 
-static __inline void iha_mark_busy_scb(struct iha_scsi_req_q *);
-
-static void iha_append_free_scb(struct iha_softc *, struct iha_scsi_req_q *);
-static void iha_append_done_scb(struct iha_softc *, struct iha_scsi_req_q *,
-    u_int8_t);
-static __inline struct iha_scsi_req_q *iha_pop_done_scb(struct iha_softc *);
-
-static __inline void iha_append_pend_scb(struct iha_softc *,
-    struct iha_scsi_req_q *);
-static __inline void iha_push_pend_scb(struct iha_softc *,
-    struct iha_scsi_req_q *);
-static __inline void iha_del_pend_scb(struct iha_softc *,
-    struct iha_scsi_req_q *);
-static struct iha_scsi_req_q *iha_find_pend_scb(struct iha_softc *);
-
-static void iha_sync_done(struct iha_softc *);
-static void iha_wide_done(struct iha_softc *);
-static void iha_bad_seq(struct iha_softc *);
+static void iha_timeout(void *);
+static void iha_abort_xs(struct iha_softc *, struct scsipi_xfer *, u_int8_t);
+static u_int8_t iha_data_over_run(struct iha_scb *);
 
 static int iha_next_state(struct iha_softc *);
 static int iha_state_1(struct iha_softc *);
@@ -198,38 +186,278 @@ static int iha_state_5(struct iha_softc *);
 static int iha_state_6(struct iha_softc *);
 static int iha_state_8(struct iha_softc *);
 
-static void iha_set_ssig(struct iha_softc *, u_int8_t, u_int8_t);
-
+static int iha_xfer_data(struct iha_softc *, struct iha_scb *, int);
 static int iha_xpad_in(struct iha_softc *);
 static int iha_xpad_out(struct iha_softc *);
 
-static int iha_xfer_data(struct iha_softc *, struct iha_scsi_req_q *,
-    int direction);
-
 static int iha_status_msg(struct iha_softc *);
+static void iha_busfree(struct iha_softc *);
+static int iha_resel(struct iha_softc *);
 
 static int iha_msgin(struct iha_softc *);
-static int iha_msgin_sdtr(struct iha_softc *);
 static int iha_msgin_extended(struct iha_softc *);
+static int iha_msgin_sdtr(struct iha_softc *);
 static int iha_msgin_ignore_wid_resid(struct iha_softc *);
 
 static int  iha_msgout(struct iha_softc *, u_int8_t);
-static int  iha_msgout_extended(struct iha_softc *);
 static void iha_msgout_abort(struct iha_softc *, u_int8_t);
 static int  iha_msgout_reject(struct iha_softc *);
-static int  iha_msgout_sdtr(struct iha_softc *);
+static int  iha_msgout_extended(struct iha_softc *);
 static int  iha_msgout_wdtr(struct iha_softc *);
+static int  iha_msgout_sdtr(struct iha_softc *);
 
-static void iha_select(struct iha_softc *, struct iha_scsi_req_q *, u_int8_t);
+static void iha_wide_done(struct iha_softc *);
+static void iha_sync_done(struct iha_softc *);
 
-static void iha_busfree(struct iha_softc *);
-static int  iha_resel(struct iha_softc *);
+static void iha_bad_seq(struct iha_softc *);
 
-static void iha_abort_xs(struct iha_softc *, struct scsipi_xfer *, u_int8_t);
+static void iha_read_eeprom(struct iha_softc *, struct iha_eeprom *);
+static int iha_se2_rd_all(struct iha_softc *, u_int16_t *);
+static void iha_se2_instr(struct iha_softc *, int);
+static u_int16_t iha_se2_rd(struct iha_softc *, int);
+#ifdef notused
+static void iha_se2_update_all(struct iha_softc *);
+static void iha_se2_wr(struct iha_softc *, int, u_int16_t);
+#endif
 
-void iha_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
-    void *arg);
-void iha_update_xfer_mode(struct iha_softc *, int);
+/*
+ * iha_append_free_scb - append the supplied SCB to the tail of the
+ *			 sc_freescb queue after clearing and resetting
+ *			 everything possible.
+ */
+static void
+iha_append_free_scb(sc, scb)
+	struct iha_softc *sc;
+	struct iha_scb *scb;
+{
+	int s;
+
+	s = splbio();
+
+	if (scb == sc->sc_actscb)
+		sc->sc_actscb = NULL;
+
+	scb->status = STATUS_QUEUED;
+	scb->ha_stat = HOST_OK;
+	scb->ta_stat = SCSI_OK;
+
+	scb->nextstat = 0;
+	scb->scb_tagmsg = 0;
+
+	scb->xs = NULL;
+	scb->tcs = NULL;
+
+	/*
+	 * scb_tagid, sg_addr, sglist
+	 * SCB_SensePtr are set at initialization
+	 * and never change
+	 */
+
+	TAILQ_INSERT_TAIL(&sc->sc_freescb, scb, chain);
+
+	splx(s);
+}
+
+static void
+iha_append_done_scb(sc, scb, hastat)
+	struct iha_softc *sc;
+	struct iha_scb *scb;
+	u_int8_t hastat;
+{
+	struct tcs *tcs;
+	int s;
+
+	s = splbio();
+
+	if (scb->xs != NULL)
+		callout_stop(&scb->xs->xs_callout);
+
+	if (scb == sc->sc_actscb)
+		sc->sc_actscb = NULL;
+
+	tcs = scb->tcs;
+
+	if (scb->scb_tagmsg != 0) {
+		if (tcs->tagcnt)
+			tcs->tagcnt--;
+	} else if (tcs->ntagscb == scb)
+		tcs->ntagscb = NULL;
+
+	scb->status = STATUS_QUEUED;
+	scb->ha_stat = hastat;
+
+	TAILQ_INSERT_TAIL(&sc->sc_donescb, scb, chain);
+
+	splx(s);
+}
+
+static __inline struct iha_scb *
+iha_pop_done_scb(sc)
+	struct iha_softc *sc;
+{
+	struct iha_scb *scb;
+	int s;
+
+	s = splbio();
+
+	scb = TAILQ_FIRST(&sc->sc_donescb);
+
+	if (scb != NULL) {
+		scb->status = STATUS_RENT;
+		TAILQ_REMOVE(&sc->sc_donescb, scb, chain);
+	}
+
+	splx(s);
+
+	return (scb);
+}
+
+/*
+ * iha_find_pend_scb - scan the pending queue for a SCB that can be
+ *		       processed immediately. Return NULL if none found
+ *		       and a pointer to the SCB if one is found. If there
+ *		       is an active SCB, return NULL!
+ */
+static struct iha_scb *
+iha_find_pend_scb(sc)
+	struct iha_softc *sc;
+{
+	struct iha_scb *scb;
+	struct tcs *tcs;
+	int s;
+
+	s = splbio();
+
+	if (sc->sc_actscb != NULL)
+		scb = NULL;
+
+	else
+		TAILQ_FOREACH(scb, &sc->sc_pendscb, chain) {
+			if ((scb->xs->xs_control & XS_CTL_RESET) != 0)
+				/* ALWAYS willing to reset a device */
+				break;
+
+			tcs = scb->tcs;
+
+			if ((scb->scb_tagmsg) != 0) {
+				/*
+				 * A Tagged I/O. OK to start If no
+				 * non-tagged I/O is active on the same
+				 * target
+				 */
+				if (tcs->ntagscb == NULL)
+					break;
+
+			} else	if (scb->cmd[0] == REQUEST_SENSE) {
+				/*
+				 * OK to do a non-tagged request sense
+				 * even if a non-tagged I/O has been
+				 * started, 'cuz we don't allow any
+				 * disconnect during a request sense op
+				 */
+				break;
+
+			} else	if (tcs->tagcnt == 0) {
+				/*
+				 * No tagged I/O active on this target,
+				 * ok to start a non-tagged one if one
+				 * is not already active
+				 */
+				if (tcs->ntagscb == NULL)
+					break;
+			}
+		}
+
+	splx(s);
+
+	return (scb);
+}
+
+static __inline void
+iha_append_pend_scb(sc, scb)
+	struct iha_softc *sc;
+	struct iha_scb *scb;
+{
+	/* ASSUMPTION: only called within a splbio()/splx() pair */
+
+	if (scb == sc->sc_actscb)
+		sc->sc_actscb = NULL;
+
+	scb->status = STATUS_QUEUED;
+
+	TAILQ_INSERT_TAIL(&sc->sc_pendscb, scb, chain);
+}
+
+static __inline void
+iha_push_pend_scb(sc, scb)
+	struct iha_softc *sc;
+	struct iha_scb *scb;
+{
+	int s;
+
+	s = splbio();
+
+	if (scb == sc->sc_actscb)
+		sc->sc_actscb = NULL;
+
+	scb->status = STATUS_QUEUED;
+
+	TAILQ_INSERT_HEAD(&sc->sc_pendscb, scb, chain);
+
+	splx(s);
+}
+
+/*
+ * iha_del_pend_scb - remove scb from sc_pendscb
+ */
+static __inline void
+iha_del_pend_scb(sc, scb)
+	struct iha_softc *sc;
+	struct iha_scb *scb;
+{
+	int s;
+
+	s = splbio();
+
+	TAILQ_REMOVE(&sc->sc_pendscb, scb, chain);
+
+	splx(s);
+}
+
+static __inline void
+iha_mark_busy_scb(scb)
+	struct iha_scb *scb;
+{
+	int  s;
+
+	s = splbio();
+
+	scb->status = STATUS_BUSY;
+
+	if (scb->scb_tagmsg == 0)
+		scb->tcs->ntagscb = scb;
+	else
+		scb->tcs->tagcnt++;
+
+	splx(s);
+}
+
+/*
+ * iha_set_ssig - read the current scsi signal mask, then write a new
+ *		  one which turns off/on the specified signals.
+ */
+static __inline void
+iha_set_ssig(sc, offsigs, onsigs)
+	struct iha_softc *sc;
+	u_int8_t offsigs, onsigs;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int8_t currsigs;
+
+	currsigs = bus_space_read_1(iot, ioh, TUL_SSIGI);
+	bus_space_write_1(iot, ioh, TUL_SSIGO, (currsigs & ~offsigs) | onsigs);
+}
 
 /*
  * iha_intr - the interrupt service routine for the iha driver
@@ -269,6 +497,185 @@ iha_intr(arg)
 }
 
 void
+iha_attach(sc)
+	struct iha_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	struct iha_scb *scb;
+	struct iha_eeprom eeprom;
+	struct eeprom_adapter *conf;
+	int i, error, reg;
+
+	iha_read_eeprom(sc, &eeprom);
+
+	conf = &eeprom.adapter[0];
+
+	/*
+	 * fill in the rest of the iha_softc fields
+	 */
+	sc->sc_id = CFG_ID(conf->config1);
+	sc->sc_semaph = ~SEMAPH_IN_MAIN;
+	sc->sc_status0 = 0;
+	sc->sc_actscb = NULL;
+
+	TAILQ_INIT(&sc->sc_freescb);
+	TAILQ_INIT(&sc->sc_pendscb);
+	TAILQ_INIT(&sc->sc_donescb);
+	error = iha_alloc_sglist(sc);
+	if (error != 0) {
+		printf(": cannot allocate sglist\n");
+		return;
+	}
+
+	sc->sc_scb = malloc(sizeof(struct iha_scb) * IHA_MAX_SCB,
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (sc->sc_scb == NULL) {
+		printf(": cannot allocate SCB\n");
+		return;
+	}
+
+	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++) {
+		scb->scb_tagid = i;
+		scb->sgoffset = IHA_SG_SIZE * i;
+		scb->sglist = sc->sc_sglist + IHA_MAX_SG_ENTRIES * i;
+		scb->sg_addr =
+		    sc->sc_dmamap->dm_segs[0].ds_addr + scb->sgoffset;
+
+		error = bus_dmamap_create(sc->sc_dmat,
+		    MAXPHYS, IHA_MAX_SG_ENTRIES, MAXPHYS, 0,
+		    BUS_DMA_NOWAIT, &scb->dmap);
+
+		if (error != 0) {
+			printf(": couldn't create SCB DMA map, error = %d\n",
+			    error);
+			return;
+		}
+		TAILQ_INSERT_TAIL(&sc->sc_freescb, scb, chain);
+	}
+
+	/* Mask all the interrupts */
+	bus_space_write_1(iot, ioh, TUL_IMSK, MASK_ALL);
+
+	/* Stop any I/O and reset the scsi module */
+	iha_reset_dma(sc);
+	bus_space_write_1(iot, ioh, TUL_SCTRL0, RSMOD);
+
+	/* Program HBA's SCSI ID */
+	bus_space_write_1(iot, ioh, TUL_SID, sc->sc_id << 4);
+
+	/*
+	 * Configure the channel as requested by the NVRAM settings read
+	 * by iha_read_eeprom() above.
+	 */
+
+	sc->sc_sconf1 = SCONFIG0DEFAULT;
+	if ((conf->config1 & CFG_EN_PAR) != 0)
+		sc->sc_sconf1 |= SPCHK;
+	bus_space_write_1(iot, ioh, TUL_SCONFIG0, sc->sc_sconf1);
+
+	/* set selection time out 250 ms */
+	bus_space_write_1(iot, ioh, TUL_STIMO, STIMO_250MS);
+
+	/* Enable desired SCSI termination configuration read from eeprom */
+	reg = 0;
+	if (conf->config1 & CFG_ACT_TERM1)
+		reg |= ENTMW;
+	if (conf->config1 & CFG_ACT_TERM2)
+		reg |= ENTM;
+	bus_space_write_1(iot, ioh, TUL_DCTRL0, reg);
+
+	reg = bus_space_read_1(iot, ioh, TUL_GCTRL1) & ~ATDEN;
+	if (conf->config1 & CFG_AUTO_TERM)
+		reg |= ATDEN;
+	bus_space_write_1(iot, ioh, TUL_GCTRL1, reg);
+
+	for (i = 0; i < IHA_MAX_TARGETS / 2; i++) {
+		sc->sc_tcs[i * 2    ].flags = EEP_LBYTE(conf->tflags[i]);
+		sc->sc_tcs[i * 2 + 1].flags = EEP_HBYTE(conf->tflags[i]);
+		iha_reset_tcs(&sc->sc_tcs[i * 2    ], sc->sc_sconf1);
+		iha_reset_tcs(&sc->sc_tcs[i * 2 + 1], sc->sc_sconf1);
+	}
+
+	iha_reset_chip(sc);
+	bus_space_write_1(iot, ioh, TUL_SIEN, ALL_INTERRUPTS);
+
+	/*
+	 * fill in the adapter.
+	 */
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = IHA_MAX_SCB;
+	sc->sc_adapter.adapt_max_periph = IHA_MAX_SCB;
+	sc->sc_adapter.adapt_ioctl = NULL;
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = iha_scsipi_request;
+
+	/*
+	 * fill in the channel.
+	 */
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = CFG_TARGET(conf->config2);
+	sc->sc_channel.chan_nluns = 8;
+	sc->sc_channel.chan_id = sc->sc_id;
+
+	/*
+	 * Now try to attach all the sub devices.
+	 */
+	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+}
+
+/*
+ * iha_alloc_sglist - allocate and map sglist for SCB's
+ */
+static int
+iha_alloc_sglist(sc)
+	struct iha_softc *sc;
+{
+	bus_dma_segment_t seg;
+	int error, rseg;
+
+	/*
+	 * Allocate dma-safe memory for the SCB's sglist
+	 */
+	if ((error = bus_dmamem_alloc(sc->sc_dmat,
+	    IHA_SG_SIZE * IHA_MAX_SCB,
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf(": unable to allocate sglist, error = %d\n", error);
+		return (error);
+	}
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	    IHA_SG_SIZE * IHA_MAX_SCB, (caddr_t *)&sc->sc_sglist,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+		printf(": unable to map sglist, error = %d\n", error);
+		return (error);
+	}
+
+	/*
+	 * Create and load the DMA map used for the SCBs
+	 */
+	if ((error = bus_dmamap_create(sc->sc_dmat,
+	    IHA_SG_SIZE * IHA_MAX_SCB, 1, IHA_SG_SIZE * IHA_MAX_SCB,
+	    0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
+		printf(": unable to create control DMA map, error = %d\n",
+		    error);
+		return (error);
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
+	    sc->sc_sglist, IHA_SG_SIZE * IHA_MAX_SCB,
+	    NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf(": unable to load control DMA map, error = %d\n", error);
+		return (error);
+	}
+
+	memset(sc->sc_sglist, 0, IHA_SG_SIZE * IHA_MAX_SCB);
+
+	return (0);
+}
+
+void
 iha_scsipi_request(chan, req, arg)
 	struct scsipi_channel *chan;
 	scsipi_adapter_req_t req;
@@ -276,7 +683,7 @@ iha_scsipi_request(chan, req, arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	struct iha_scsi_req_q *scb;
+	struct iha_scb *scb;
 	struct iha_softc *sc;
 	int error, s;
 
@@ -382,134 +789,80 @@ iha_scsipi_request(chan, req, arg)
 }
 
 void
-iha_attach(sc)
+iha_update_xfer_mode(sc, target)
+	struct iha_softc *sc;
+	int target;
+{
+	struct tcs *tcs = &sc->sc_tcs[target];
+	struct scsipi_xfer_mode xm;
+
+	xm.xm_target = target;
+	xm.xm_mode = 0;
+	xm.xm_period = 0;
+	xm.xm_offset = 0;
+
+	if (tcs->syncm & PERIOD_WIDE_SCSI)
+		xm.xm_mode |= PERIPH_CAP_WIDE16;
+
+	if (tcs->period) {
+		xm.xm_mode |= PERIPH_CAP_SYNC;
+		xm.xm_period = tcs->period;
+		xm.xm_offset = tcs->offset;
+	}
+
+	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
+}
+
+static void
+iha_reset_scsi_bus(sc)
+	struct iha_softc *sc;
+{
+	struct iha_scb *scb;
+	struct tcs *tcs;
+	int i, s;
+
+	s = splbio();
+
+	iha_reset_dma(sc);
+
+	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++)
+		switch (scb->status) {
+		case STATUS_BUSY:
+			iha_append_done_scb(sc, scb, HOST_SCSI_RST);
+			break;
+
+		case STATUS_SELECT:
+			iha_push_pend_scb(sc, scb);
+			break;
+
+		default:
+			break;
+		}
+
+	for (i = 0, tcs = sc->sc_tcs; i < IHA_MAX_TARGETS; i++, tcs++)
+		iha_reset_tcs(tcs, sc->sc_sconf1);
+
+	splx(s);
+}
+
+void
+iha_reset_chip(sc)
 	struct iha_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb;
-	struct iha_eeprom eeprom;
-	struct eeprom_adapter *conf;
-	int i, error, reg;
 
-	iha_read_eeprom(sc, &eeprom);
+	/* reset tulip chip */
 
-	conf = &eeprom.adapter[0];
+	bus_space_write_1(iot, ioh, TUL_SCTRL0, RSCSI);
 
-	/*
-	 * fill in the rest of the iha_softc fields
-	 */
-	sc->sc_id = CFG_ID(conf->config1);
-	sc->sc_semaph = ~SEMAPH_IN_MAIN;
-	sc->sc_status0 = 0;
-	sc->sc_actscb = NULL;
+	do {
+		sc->sc_sistat = bus_space_read_1(iot, ioh, TUL_SISTAT);
+	} while ((sc->sc_sistat & SRSTD) == 0);
 
-	TAILQ_INIT(&sc->sc_freescb);
-	TAILQ_INIT(&sc->sc_pendscb);
-	TAILQ_INIT(&sc->sc_donescb);
-	error = iha_alloc_sglist(sc);
-	if (error != 0) {
-		printf(": cannot allocate sglist\n");
-		return;
-	}
+	iha_set_ssig(sc, 0, 0);
 
-	sc->sc_scb = malloc(sizeof(struct iha_scsi_req_q) * IHA_MAX_SCB,
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (sc->sc_scb == NULL) {
-		printf(": cannot allocate SCB\n");
-		return;
-	}
-
-	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++) {
-		scb->scb_tagid = i;
-		scb->sgoffset = IHA_SG_SIZE * i;
-		scb->sglist = sc->sc_sglist + IHA_MAX_SG_ENTRIES * i;
-		scb->sg_addr =
-		    sc->sc_dmamap->dm_segs[0].ds_addr + scb->sgoffset;
-
-		error = bus_dmamap_create(sc->sc_dmat,
-		    MAXPHYS, IHA_MAX_SG_ENTRIES, MAXPHYS, 0,
-		    BUS_DMA_NOWAIT, &scb->dmap);
-
-		if (error != 0) {
-			printf(": couldn't create SCB DMA map, error = %d\n",
-			    error);
-			return;
-		}
-		TAILQ_INSERT_TAIL(&sc->sc_freescb, scb, chain);
-	}
-
-	/* Mask all the interrupts */
-	bus_space_write_1(iot, ioh, TUL_IMSK, MASK_ALL);
-
-	/* Stop any I/O and reset the scsi module */
-	iha_reset_dma(sc);
-	bus_space_write_1(iot, ioh, TUL_SCTRL0, RSMOD);
-
-	/* Program HBA's SCSI ID */
-	bus_space_write_1(iot, ioh, TUL_SID, sc->sc_id << 4);
-
-	/*
-	 * Configure the channel as requested by the NVRAM settings read
-	 * by iha_read_eeprom() above.
-	 */
-
-	sc->sc_sconf1 = SCONFIG0DEFAULT;
-	if ((conf->config1 & CFG_EN_PAR) != 0)
-		sc->sc_sconf1 |= SPCHK;
-	bus_space_write_1(iot, ioh, TUL_SCONFIG0, sc->sc_sconf1);
-
-	/* set selection time out 250 ms */
-	bus_space_write_1(iot, ioh, TUL_STIMO, STIMO_250MS);
-
-	/* Enable desired SCSI termination configuration read from eeprom */
-	reg = 0;
-	if (conf->config1 & CFG_ACT_TERM1)
-		reg |= ENTMW;
-	if (conf->config1 & CFG_ACT_TERM2)
-		reg |= ENTM;
-	bus_space_write_1(iot, ioh, TUL_DCTRL0, reg);
-
-	reg = bus_space_read_1(iot, ioh, TUL_GCTRL1) & ~ATDEN;
-	if (conf->config1 & CFG_AUTO_TERM)
-		reg |= ATDEN;
-	bus_space_write_1(iot, ioh, TUL_GCTRL1, reg);
-
-	for (i = 0; i < IHA_MAX_TARGETS / 2; i++) {
-		sc->sc_tcs[i * 2    ].flags = EEP_LBYTE(conf->tflags[i]);
-		sc->sc_tcs[i * 2 + 1].flags = EEP_HBYTE(conf->tflags[i]);
-		iha_reset_tcs(&sc->sc_tcs[i * 2    ], sc->sc_sconf1);
-		iha_reset_tcs(&sc->sc_tcs[i * 2 + 1], sc->sc_sconf1);
-	}
-
-	iha_reset_chip(sc);
-	bus_space_write_1(iot, ioh, TUL_SIEN, ALL_INTERRUPTS);
-
-	/*
-	 * fill in the adapter.
-	 */
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
-	sc->sc_adapter.adapt_nchannels = 1;
-	sc->sc_adapter.adapt_openings = IHA_MAX_SCB;
-	sc->sc_adapter.adapt_max_periph = IHA_MAX_SCB;
-	sc->sc_adapter.adapt_ioctl = NULL;
-	sc->sc_adapter.adapt_minphys = minphys;
-	sc->sc_adapter.adapt_request = iha_scsipi_request;
-
-	/*
-	 * fill in the channel.
-	 */
-	sc->sc_channel.chan_adapter = &sc->sc_adapter;
-	sc->sc_channel.chan_bustype = &scsi_bustype;
-	sc->sc_channel.chan_channel = 0;
-	sc->sc_channel.chan_ntargets = CFG_TARGET(conf->config2);
-	sc->sc_channel.chan_nluns = 8;
-	sc->sc_channel.chan_id = sc->sc_id;
-
-	/*
-	 * Now try to attach all the sub devices.
-	 */
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	bus_space_read_1(iot, ioh, TUL_SISTAT); /* Clear any active interrupt*/
 }
 
 /*
@@ -534,339 +887,24 @@ iha_reset_dma(sc)
 }
 
 /*
- * iha_append_free_scb - append the supplied SCB to the tail of the
- *			 sc_freescb queue after clearing and resetting
- *			 everything possible.
+ * iha_reset_tcs - reset the target control structure pointed
+ *		   to by tcs to default values. tcs flags
+ *		   only has the negotiation done bits reset as
+ *		   the other bits are fixed at initialization.
  */
 static void
-iha_append_free_scb(sc, scb)
-	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
-{
-	int s;
-
-	s = splbio();
-
-	if (scb == sc->sc_actscb)
-		sc->sc_actscb = NULL;
-
-	scb->status = STATUS_QUEUED;
-	scb->ha_stat = HOST_OK;
-	scb->ta_stat  = SCSI_OK;
-
-	scb->nextstat = 0;
-	scb->scb_tagmsg = 0;
-
-	scb->xs = NULL;
-	scb->tcs = NULL;
-
-	/*
-	 * scb_tagid, sg_addr, sglist
-	 * SCB_SensePtr are set at initialization
-	 * and never change
-	 */
-
-	TAILQ_INSERT_TAIL(&sc->sc_freescb, scb, chain);
-
-	splx(s);
-}
-
-static __inline void
-iha_append_pend_scb(sc, scb)
-	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
-{
-	/* ASSUMPTION: only called within a splbio()/splx() pair */
-
-	if (scb == sc->sc_actscb)
-		sc->sc_actscb = NULL;
-
-	scb->status = STATUS_QUEUED;
-
-	TAILQ_INSERT_TAIL(&sc->sc_pendscb, scb, chain);
-}
-
-static __inline void
-iha_push_pend_scb(sc, scb)
-	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
-{
-	int s;
-
-	s = splbio();
-
-	if (scb == sc->sc_actscb)
-		sc->sc_actscb = NULL;
-
-	scb->status = STATUS_QUEUED;
-
-	TAILQ_INSERT_HEAD(&sc->sc_pendscb, scb, chain);
-
-	splx(s);
-}
-
-/*
- * iha_find_pend_scb - scan the pending queue for a SCB that can be
- *		       processed immediately. Return NULL if none found
- *		       and a pointer to the SCB if one is found. If there
- *		       is an active SCB, return NULL!
- */
-static struct iha_scsi_req_q *
-iha_find_pend_scb(sc)
-	struct iha_softc *sc;
-{
-	struct iha_scsi_req_q *scb;
+iha_reset_tcs(tcs, config0)
 	struct tcs *tcs;
-	int s;
-
-	s = splbio();
-
-	if (sc->sc_actscb != NULL)
-		scb = NULL;
-
-	else
-		TAILQ_FOREACH(scb, &sc->sc_pendscb, chain) {
-			if ((scb->xs->xs_control & XS_CTL_RESET) != 0)
-				/* ALWAYS willing to reset a device */
-				break;
-
-			tcs = scb->tcs;
-
-			if ((scb->scb_tagmsg) != 0) {
-				/*
-				 * A Tagged I/O. OK to start If no
-				 * non-tagged I/O is active on the same
-				 * target
-				 */
-				if (tcs->ntagscb == NULL)
-					break;
-
-			} else	if (scb->cmd[0] == REQUEST_SENSE) {
-				/*
-				 * OK to do a non-tagged request sense
-				 * even if a non-tagged I/O has been
-				 * started, 'cuz we don't allow any
-				 * disconnect during a request sense op
-				 */
-				break;
-
-			} else	if (tcs->tagcnt == 0) {
-				/*
-				 * No tagged I/O active on this target,
-				 * ok to start a non-tagged one if one
-				 * is not already active
-				 */
-				if (tcs->ntagscb == NULL)
-					break;
-			}
-		}
-
-	splx(s);
-
-	return (scb);
-}
-
-/*
- * iha_del_pend_scb - remove scb from sc_pendscb
- */
-static __inline void
-iha_del_pend_scb(sc, scb)
-	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
+	u_int8_t config0;
 {
-	int s;
 
-	s = splbio();
-
-	TAILQ_REMOVE(&sc->sc_pendscb, scb, chain);
-
-	splx(s);
-}
-
-static __inline void
-iha_mark_busy_scb(scb)
-	struct iha_scsi_req_q *scb;
-{
-	int  s;
-
-	s = splbio();
-
-	scb->status = STATUS_BUSY;
-
-	if (scb->scb_tagmsg == 0)
-		scb->tcs->ntagscb = scb;
-	else
-		scb->tcs->tagcnt++;
-
-	splx(s);
-}
-
-static void
-iha_append_done_scb(sc, scb, hastat)
-	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
-	u_int8_t hastat;
-{
-	struct tcs *tcs;
-	int s;
-
-	s = splbio();
-
-	if (scb->xs != NULL)
-		callout_stop(&scb->xs->xs_callout);
-
-	if (scb == sc->sc_actscb)
-		sc->sc_actscb = NULL;
-
-	tcs = scb->tcs;
-
-	if (scb->scb_tagmsg != 0) {
-		if (tcs->tagcnt)
-			tcs->tagcnt--;
-	} else if (tcs->ntagscb == scb)
-		tcs->ntagscb = NULL;
-
-	scb->status = STATUS_QUEUED;
-	scb->ha_stat = hastat;
-
-	TAILQ_INSERT_TAIL(&sc->sc_donescb, scb, chain);
-
-	splx(s);
-}
-
-static __inline struct iha_scsi_req_q *
-iha_pop_done_scb(sc)
-	struct iha_softc *sc;
-{
-	struct iha_scsi_req_q *scb;
-	int s;
-
-	s = splbio();
-
-	scb = TAILQ_FIRST(&sc->sc_donescb);
-
-	if (scb != NULL) {
-		scb->status = STATUS_RENT;
-		TAILQ_REMOVE(&sc->sc_donescb, scb, chain);
-	}
-
-	splx(s);
-
-	return (scb);
-}
-
-/*
- * iha_abort_xs - find the SCB associated with the supplied xs and
- *                stop all processing on it, moving it to the done
- *                queue with the supplied host status value.
- */
-static void
-iha_abort_xs(sc, xs, hastat)
-	struct iha_softc *sc;
-	struct scsipi_xfer *xs;
-	u_int8_t hastat;
-{
-	struct iha_scsi_req_q *scb;
-	int i, s;
-
-	s = splbio();
-
-	/* Check the pending queue for the SCB pointing to xs */
-
-	TAILQ_FOREACH(scb, &sc->sc_pendscb, chain)
-		if (scb->xs == xs) {
-			iha_del_pend_scb(sc, scb);
-			iha_append_done_scb(sc, scb, hastat);
-			splx(s);
-			return;
-		}
-
-	/*
-	 * If that didn't work, check all BUSY/SELECTING SCB's for one
-	 * pointing to xs
-	 */
-
-	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++)
-		switch (scb->status) {
-		case STATUS_BUSY:
-		case STATUS_SELECT:
-			if (scb->xs == xs) {
-				iha_append_done_scb(sc, scb, hastat);
-				splx(s);
-				return;
-			}
-			break;
-		default:
-			break;
-		}
-
-	splx(s);
-}
-
-/*
- * iha_bad_seq - a SCSI bus phase was encountered out of the
- *               correct/expected sequence. Reset the SCSI bus.
- */
-static void
-iha_bad_seq(sc)
-	struct iha_softc *sc;
-{
-	struct iha_scsi_req_q *scb = sc->sc_actscb;
-
-	if (scb != NULL)
-		iha_append_done_scb(sc, scb, HOST_BAD_PHAS);
-
-	iha_reset_scsi_bus(sc);
-	iha_reset_chip(sc);
-}
-
-/*
- * iha_push_sense_request - obtain auto sense data by pushing the
- *			    SCB needing it back onto the pending
- *			    queue with a REQUEST_SENSE CDB.
- */
-static int
-iha_push_sense_request(sc, scb)
-	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
-{
-	struct scsipi_xfer *xs = scb->xs;
-	struct scsipi_periph *periph = xs->xs_periph;
-	struct scsipi_sense *ss = (struct scsipi_sense *)scb->cmd;
-	int lun = periph->periph_lun;
-	int err;
-
-	ss->opcode = REQUEST_SENSE;
-	ss->byte2 = lun << SCSI_CMD_LUN_SHIFT;
-	ss->unused[0] = ss->unused[1] = 0;
-	ss->length = sizeof(struct scsipi_sense_data);
-	ss->control = 0;
-
-	scb->flags = FLAG_RSENS | FLAG_DATAIN;
-
-	scb->scb_id &= ~MSG_IDENTIFY_DISCFLAG;
-
-	scb->scb_tagmsg = 0;
-	scb->ta_stat = SCSI_OK;
-
-	scb->cmdlen = sizeof(struct scsipi_sense);
-	scb->buflen = ss->length;
-
-	err = bus_dmamap_load(sc->sc_dmat, scb->dmap,
-	    &xs->sense.scsi_sense, scb->buflen, NULL,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT);
-	if (err != 0) {
-		printf("iha_push_sense_request: cannot bus_dmamap_load()\n");
-		xs->error = XS_DRIVER_STUFFUP;
-		return 1;
-	}
-	bus_dmamap_sync(sc->sc_dmat, scb->dmap,
-	    0, scb->buflen, BUS_DMASYNC_PREREAD);
-
-	/* XXX What about queued command? */
-	iha_exec_scb(sc, scb);
-
-	return 0;
+	tcs->flags &= ~(FLAG_SYNC_DONE | FLAG_WIDE_DONE);
+	tcs->period = 0;
+	tcs->offset = 0;
+	tcs->tagcnt = 0;
+	tcs->ntagscb  = NULL;
+	tcs->syncm = 0;
+	tcs->sconfig0 = config0;
 }
 
 /*
@@ -881,7 +919,7 @@ iha_main(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh =sc->sc_ioh;
-	struct iha_scsi_req_q *scb;
+	struct iha_scb *scb;
 
 	for (;;) {
 		iha_scsi(sc);
@@ -911,7 +949,7 @@ iha_scsi(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb;
+	struct iha_scb *scb;
 	struct tcs *tcs;
 	u_int8_t stat;
 
@@ -1001,6 +1039,417 @@ iha_scsi(sc)
 	}
 }
 
+static void
+iha_select(sc, scb, select_type)
+	struct iha_softc *sc;
+	struct iha_scb *scb;
+	u_int8_t select_type;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	switch (select_type) {
+	case SEL_ATN:
+		bus_space_write_1(iot, ioh, TUL_SFIFO, scb->scb_id);
+		bus_space_write_multi_1(iot, ioh, TUL_SFIFO,
+		    scb->cmd, scb->cmdlen);
+
+		scb->nextstat = 2;
+		break;
+
+	case SELATNSTOP:
+		scb->nextstat = 1;
+		break;
+
+	case SEL_ATN3:
+		bus_space_write_1(iot, ioh, TUL_SFIFO, scb->scb_id);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, scb->scb_tagmsg);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, scb->scb_tagid);
+
+		bus_space_write_multi_1(iot, ioh, TUL_SFIFO, scb->cmd,
+		    scb->cmdlen);
+
+		scb->nextstat = 2;
+		break;
+
+	default:
+		printf("[debug] iha_select() - unknown select type = 0x%02x\n",
+		    select_type);
+		return;
+	}
+
+	iha_del_pend_scb(sc, scb);
+	scb->status = STATUS_SELECT;
+
+	sc->sc_actscb = scb;
+
+	bus_space_write_1(iot, ioh, TUL_SCMD, select_type);
+}
+
+/*
+ * iha_wait - wait for an interrupt to service or a SCSI bus phase change
+ *            after writing the supplied command to the tulip chip. If
+ *            the command is NO_OP, skip the command writing.
+ */
+static int
+iha_wait(sc, cmd)
+	struct iha_softc *sc;
+	u_int8_t cmd;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	if (cmd != NO_OP)
+		bus_space_write_1(iot, ioh, TUL_SCMD, cmd);
+
+	/*
+	 * Have to do this here, in addition to in iha_isr, because
+	 * interrupts might be turned off when we get here.
+	 */
+	do {
+		sc->sc_status0 = bus_space_read_1(iot, ioh, TUL_STAT0);
+	} while ((sc->sc_status0 & INTPD) == 0);
+
+	sc->sc_status1 = bus_space_read_1(iot, ioh, TUL_STAT1);
+	sc->sc_sistat = bus_space_read_1(iot, ioh, TUL_SISTAT);
+
+	sc->sc_phase = sc->sc_status0 & PH_MASK;
+
+	if ((sc->sc_sistat & SRSTD) != 0) {
+		/* SCSI bus reset interrupt */
+		iha_reset_scsi_bus(sc);
+		return (-1);
+	}
+
+	if ((sc->sc_sistat & RSELED) != 0)
+		/* Reselection interrupt */
+		return (iha_resel(sc));
+
+	if ((sc->sc_sistat & STIMEO) != 0) {
+		/* selected/reselected timeout interrupt */
+		iha_busfree(sc);
+		return (-1);
+	}
+
+	if ((sc->sc_sistat & DISCD) != 0) {
+		/* BUS disconnection interrupt */
+		if ((sc->sc_flags & FLAG_EXPECT_DONE_DISC) != 0) {
+			bus_space_write_1(iot, ioh, TUL_SCTRL0, RSFIFO);
+			bus_space_write_1(iot, ioh, TUL_SCONFIG0,
+			    SCONFIG0DEFAULT);
+			bus_space_write_1(iot, ioh, TUL_SCTRL1, EHRSL);
+			iha_append_done_scb(sc, sc->sc_actscb, HOST_OK);
+			sc->sc_flags &= ~FLAG_EXPECT_DONE_DISC;
+
+		} else if ((sc->sc_flags & FLAG_EXPECT_DISC) != 0) {
+			bus_space_write_1(iot, ioh, TUL_SCTRL0, RSFIFO);
+			bus_space_write_1(iot, ioh, TUL_SCONFIG0,
+			    SCONFIG0DEFAULT);
+			bus_space_write_1(iot, ioh, TUL_SCTRL1, EHRSL);
+			sc->sc_actscb = NULL;
+			sc->sc_flags &= ~FLAG_EXPECT_DISC;
+
+		} else
+			iha_busfree(sc);
+
+		return (-1);
+	}
+
+	return (sc->sc_phase);
+}
+
+static void
+iha_exec_scb(sc, scb)
+	struct iha_softc *sc;
+	struct iha_scb *scb;
+{
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_dmamap_t dm;
+	struct scsipi_xfer *xs = scb->xs;
+	int nseg, s;
+
+	dm = scb->dmap;
+	nseg = dm->dm_nsegs;
+
+	if (nseg > 1) {
+		struct iha_sg_element *sg = scb->sglist;
+		int i;
+
+		for (i = 0; i < nseg; i++) {
+			sg[i].sg_len = htole32(dm->dm_segs[i].ds_len);
+			sg[i].sg_addr = htole32(dm->dm_segs[i].ds_addr);
+		}
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    scb->sgoffset, IHA_SG_SIZE,
+		    BUS_DMASYNC_PREWRITE);
+
+		scb->flags |= FLAG_SG;
+		scb->sg_size = scb->sg_max = nseg;
+		scb->sg_index = 0;
+
+		scb->bufaddr = scb->sg_addr;
+	} else
+		scb->bufaddr = dm->dm_segs[0].ds_addr;
+
+	if ((xs->xs_control & XS_CTL_POLL) == 0) {
+		int timeout = xs->timeout;
+		timeout = (timeout > 100000) ?
+		    timeout / 1000 * hz : timeout * hz / 1000;
+		if (timeout == 0)
+			timeout = 1;
+		callout_reset(&xs->xs_callout, timeout, iha_timeout, scb);
+	}
+
+	s = splbio();
+
+	if (((scb->xs->xs_control & XS_RESET) != 0) ||
+	    (scb->cmd[0] == REQUEST_SENSE))
+		iha_push_pend_scb(sc, scb);   /* Insert SCB at head of Pend */
+	else
+		iha_append_pend_scb(sc, scb); /* Append SCB to tail of Pend */
+
+	/*
+	 * Run through iha_main() to ensure something is active, if
+	 * only this new SCB.
+	 */
+	if (sc->sc_semaph != SEMAPH_IN_MAIN) {
+		iot = sc->sc_iot;
+		ioh = sc->sc_ioh;
+
+		bus_space_write_1(iot, ioh, TUL_IMSK, MASK_ALL);
+		sc->sc_semaph = SEMAPH_IN_MAIN;;
+
+		splx(s);
+		iha_main(sc);
+		s = splbio();
+
+		sc->sc_semaph = ~SEMAPH_IN_MAIN;;
+		bus_space_write_1(iot, ioh, TUL_IMSK, (MASK_ALL & ~MSCMP));
+	}
+
+	splx(s);
+}
+
+/*
+ * iha_done_scb - We have a scb which has been processed by the
+ *                adaptor, now we look to see how the operation went.
+ */
+static void
+iha_done_scb(sc, scb)
+	struct iha_softc *sc;
+	struct iha_scb *scb;
+{
+	struct scsipi_xfer *xs = scb->xs;
+
+	if (xs != NULL) {
+		/* Cancel the timeout. */
+		callout_stop(&xs->xs_callout);
+
+		if (scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) {
+			bus_dmamap_sync(sc->sc_dmat, scb->dmap,
+			    0, scb->dmap->dm_mapsize,
+			    (scb->flags & FLAG_DATAIN) ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, scb->dmap);
+		}
+
+		xs->status = scb->ta_stat;
+
+		switch (scb->ha_stat) {
+		case HOST_OK:
+			switch (scb->ta_stat) {
+			case SCSI_OK:
+			case SCSI_CONDITION_MET:
+			case SCSI_INTERM:
+			case SCSI_INTERM_COND_MET:
+				xs->resid = scb->buflen;
+				xs->error = XS_NOERROR;
+				if ((scb->flags & FLAG_RSENS) != 0)
+					xs->error = XS_SENSE;
+				break;
+
+			case SCSI_RESV_CONFLICT:
+			case SCSI_BUSY:
+			case SCSI_QUEUE_FULL:
+				xs->error = XS_BUSY;
+				break;
+
+			case SCSI_TERMINATED:
+			case SCSI_ACA_ACTIVE:
+			case SCSI_CHECK:
+				scb->tcs->flags &=
+				    ~(FLAG_SYNC_DONE | FLAG_WIDE_DONE);
+
+				if ((scb->flags & FLAG_RSENS) != 0 ||
+				    iha_push_sense_request(sc, scb) != 0) {
+					scb->flags &= ~FLAG_RSENS;
+					printf("%s: request sense failed\n",
+					    sc->sc_dev.dv_xname);
+					xs->error = XS_DRIVER_STUFFUP;
+					break;
+				}
+
+				xs->error = XS_SENSE;
+				return;
+
+			default:
+				xs->error = XS_DRIVER_STUFFUP;
+				break;
+			}
+			break;
+
+		case HOST_SEL_TOUT:
+			xs->error = XS_SELTIMEOUT;
+			break;
+
+		case HOST_SCSI_RST:
+		case HOST_DEV_RST:
+			xs->error = XS_RESET;
+			break;
+
+		case HOST_SPERR:
+			printf("%s: SCSI Parity error detected\n",
+			    sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case HOST_TIMED_OUT:
+			xs->error = XS_TIMEOUT;
+			break;
+
+		case HOST_DO_DU:
+		case HOST_BAD_PHAS:
+		default:
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+		}
+
+		scsipi_done(xs);
+	}
+
+	iha_append_free_scb(sc, scb);
+}
+
+/*
+ * iha_push_sense_request - obtain auto sense data by pushing the
+ *			    SCB needing it back onto the pending
+ *			    queue with a REQUEST_SENSE CDB.
+ */
+static int
+iha_push_sense_request(sc, scb)
+	struct iha_softc *sc;
+	struct iha_scb *scb;
+{
+	struct scsipi_xfer *xs = scb->xs;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct scsipi_sense *ss = (struct scsipi_sense *)scb->cmd;
+	int lun = periph->periph_lun;
+	int err;
+
+	ss->opcode = REQUEST_SENSE;
+	ss->byte2 = lun << SCSI_CMD_LUN_SHIFT;
+	ss->unused[0] = ss->unused[1] = 0;
+	ss->length = sizeof(struct scsipi_sense_data);
+	ss->control = 0;
+
+	scb->flags = FLAG_RSENS | FLAG_DATAIN;
+
+	scb->scb_id &= ~MSG_IDENTIFY_DISCFLAG;
+
+	scb->scb_tagmsg = 0;
+	scb->ta_stat = SCSI_OK;
+
+	scb->cmdlen = sizeof(struct scsipi_sense);
+	scb->buflen = ss->length;
+
+	err = bus_dmamap_load(sc->sc_dmat, scb->dmap,
+	    &xs->sense.scsi_sense, scb->buflen, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	if (err != 0) {
+		printf("iha_push_sense_request: cannot bus_dmamap_load()\n");
+		xs->error = XS_DRIVER_STUFFUP;
+		return 1;
+	}
+	bus_dmamap_sync(sc->sc_dmat, scb->dmap,
+	    0, scb->buflen, BUS_DMASYNC_PREREAD);
+
+	/* XXX What about queued command? */
+	iha_exec_scb(sc, scb);
+
+	return 0;
+}
+
+static void
+iha_timeout(arg)
+	void *arg;
+{
+	struct iha_scb *scb = (struct iha_scb *)arg;
+	struct scsipi_xfer *xs = scb->xs;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct iha_softc *sc;
+
+	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
+
+	if (xs == NULL)
+		printf("[debug] iha_timeout called with xs == NULL\n");
+
+	else {
+		scsipi_printaddr(periph);
+		printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
+
+		iha_abort_xs(sc, xs, HOST_TIMED_OUT);
+	}
+}
+
+/*
+ * iha_abort_xs - find the SCB associated with the supplied xs and
+ *                stop all processing on it, moving it to the done
+ *                queue with the supplied host status value.
+ */
+static void
+iha_abort_xs(sc, xs, hastat)
+	struct iha_softc *sc;
+	struct scsipi_xfer *xs;
+	u_int8_t hastat;
+{
+	struct iha_scb *scb;
+	int i, s;
+
+	s = splbio();
+
+	/* Check the pending queue for the SCB pointing to xs */
+
+	TAILQ_FOREACH(scb, &sc->sc_pendscb, chain)
+		if (scb->xs == xs) {
+			iha_del_pend_scb(sc, scb);
+			iha_append_done_scb(sc, scb, hastat);
+			splx(s);
+			return;
+		}
+
+	/*
+	 * If that didn't work, check all BUSY/SELECTING SCB's for one
+	 * pointing to xs
+	 */
+
+	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++)
+		switch (scb->status) {
+		case STATUS_BUSY:
+		case STATUS_SELECT:
+			if (scb->xs == xs) {
+				iha_append_done_scb(sc, scb, hastat);
+				splx(s);
+				return;
+			}
+			break;
+		default:
+			break;
+		}
+
+	splx(s);
+}
+
 /*
  * iha_data_over_run - return HOST_OK for all SCSI opcodes where BufLen
  *		       is an 'Allocation Length'. All other SCSI opcodes
@@ -1013,7 +1462,7 @@ iha_scsi(sc)
  */
 static u_int8_t
 iha_data_over_run(scb)
-	struct iha_scsi_req_q *scb;
+	struct iha_scb *scb;
 {
 	switch (scb->cmd[0]) {
 	case 0x03: /* Request Sense                   SPC-2 */
@@ -1153,7 +1602,7 @@ iha_state_1(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb = sc->sc_actscb;
+	struct iha_scb *scb = sc->sc_actscb;
 	struct tcs *tcs;
 	int flags;
 
@@ -1214,7 +1663,7 @@ iha_state_2(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb = sc->sc_actscb;
+	struct iha_scb *scb = sc->sc_actscb;
 
 	iha_mark_busy_scb(scb);
 
@@ -1241,7 +1690,7 @@ iha_state_3(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb = sc->sc_actscb;
+	struct iha_scb *scb = sc->sc_actscb;
 	int flags;
 
 	for (;;) {
@@ -1296,7 +1745,7 @@ static int
 iha_state_4(sc)
 	struct iha_softc *sc;
 {
-	struct iha_scsi_req_q *scb = sc->sc_actscb;
+	struct iha_scb *scb = sc->sc_actscb;
 
 	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) ==
 	    (FLAG_DATAIN | FLAG_DATAOUT))
@@ -1359,7 +1808,7 @@ iha_state_5(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb = sc->sc_actscb;
+	struct iha_scb *scb = sc->sc_actscb;
 	struct iha_sg_element *sg;
 	u_int32_t cnt;
 	u_int8_t period, stat;
@@ -1507,7 +1956,7 @@ iha_state_8(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb;
+	struct iha_scb *scb;
 	int i;
 	u_int8_t tar;
 
@@ -1554,7 +2003,7 @@ iha_state_8(sc)
 static int
 iha_xfer_data(sc, scb, direction)
 	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
+	struct iha_scb *scb;
 	int direction;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1595,7 +2044,7 @@ iha_xpad_in(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb = sc->sc_actscb;
+	struct iha_scb *scb = sc->sc_actscb;
 
 	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != 0)
 		scb->ha_stat = HOST_DO_DU;
@@ -1627,7 +2076,7 @@ iha_xpad_out(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb = sc->sc_actscb;
+	struct iha_scb *scb = sc->sc_actscb;
 
 	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != 0)
 		scb->ha_stat = HOST_DO_DU;
@@ -1662,7 +2111,7 @@ iha_status_msg(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb;
+	struct iha_scb *scb;
 	u_int8_t msg;
 	int phase;
 
@@ -1734,7 +2183,7 @@ iha_busfree(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb;
+	struct iha_scb *scb;
 
 	bus_space_write_1(iot, ioh, TUL_SCTRL0, RSFIFO);
 	bus_space_write_1(iot, ioh, TUL_SCONFIG0, SCONFIG0DEFAULT);
@@ -1752,38 +2201,6 @@ iha_busfree(sc)
 	}
 }
 
-static void
-iha_reset_scsi_bus(sc)
-	struct iha_softc *sc;
-{
-	struct iha_scsi_req_q *scb;
-	struct tcs *tcs;
-	int i, s;
-
-	s = splbio();
-
-	iha_reset_dma(sc);
-
-	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++)
-		switch (scb->status) {
-		case STATUS_BUSY:
-			iha_append_done_scb(sc, scb, HOST_SCSI_RST);
-			break;
-
-		case STATUS_SELECT:
-			iha_push_pend_scb(sc, scb);
-			break;
-
-		default:
-			break;
-		}
-
-	for (i = 0, tcs = sc->sc_tcs; i < IHA_MAX_TARGETS; i++, tcs++)
-		iha_reset_tcs(tcs, sc->sc_sconf1);
-
-	splx(s);
-}
-
 /*
  * iha_resel - handle a detected SCSI bus reselection request.
  */
@@ -1793,7 +2210,7 @@ iha_resel(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct iha_scsi_req_q *scb;
+	struct iha_scb *scb;
 	struct tcs *tcs;
 	u_int8_t tag, target, lun, msg, abortmsg;
 
@@ -1943,31 +2360,6 @@ iha_msgin(sc)
 }
 
 static int
-iha_msgin_ignore_wid_resid(sc)
-	struct iha_softc *sc;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	int phase;
-
-	phase = iha_wait(sc, MSG_ACCEPT);
-
-	if (phase == PHASE_MSG_IN) {
-		phase = iha_wait(sc, XF_FIFO_IN);
-
-		if (phase != -1) {
-			bus_space_write_1(iot, ioh, TUL_SFIFO, 0);
-			bus_space_read_1(iot, ioh, TUL_SFIFO);
-			bus_space_read_1(iot, ioh, TUL_SFIFO);
-
-			phase = iha_wait(sc, MSG_ACCEPT);
-		}
-	}
-
-	return (phase);
-}
-
-static int
 iha_msgin_extended(sc)
 	struct iha_softc *sc;
 {
@@ -2096,6 +2488,31 @@ iha_msgin_sdtr(sc)
 	}
 
 	return (newoffer);
+}
+
+static int
+iha_msgin_ignore_wid_resid(sc)
+	struct iha_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int phase;
+
+	phase = iha_wait(sc, MSG_ACCEPT);
+
+	if (phase == PHASE_MSG_IN) {
+		phase = iha_wait(sc, XF_FIFO_IN);
+
+		if (phase != -1) {
+			bus_space_write_1(iot, ioh, TUL_SFIFO, 0);
+			bus_space_read_1(iot, ioh, TUL_SFIFO);
+			bus_space_read_1(iot, ioh, TUL_SFIFO);
+
+			phase = iha_wait(sc, MSG_ACCEPT);
+		}
+	}
+
+	return (phase);
 }
 
 static int
@@ -2253,411 +2670,28 @@ iha_sync_done(sc)
 	bus_space_write_1(iot, ioh, TUL_SYNCM, tcs->syncm);
 }
 
-void
-iha_reset_chip(sc)
-	struct iha_softc *sc;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-
-	/* reset tulip chip */
-
-	bus_space_write_1(iot, ioh, TUL_SCTRL0, RSCSI);
-
-	do {
-		sc->sc_sistat = bus_space_read_1(iot, ioh, TUL_SISTAT);
-	} while ((sc->sc_sistat & SRSTD) == 0);
-
-	iha_set_ssig(sc, 0, 0);
-
-	bus_space_read_1(iot, ioh, TUL_SISTAT); /* Clear any active interrupt*/
-}
-
-static void
-iha_select(sc, scb, select_type)
-	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
-	u_int8_t select_type;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-
-	switch (select_type) {
-	case SEL_ATN:
-		bus_space_write_1(iot, ioh, TUL_SFIFO, scb->scb_id);
-		bus_space_write_multi_1(iot, ioh, TUL_SFIFO,
-		    scb->cmd, scb->cmdlen);
-
-		scb->nextstat = 2;
-		break;
-
-	case SELATNSTOP:
-		scb->nextstat = 1;
-		break;
-
-	case SEL_ATN3:
-		bus_space_write_1(iot, ioh, TUL_SFIFO, scb->scb_id);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, scb->scb_tagmsg);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, scb->scb_tagid);
-
-		bus_space_write_multi_1(iot, ioh, TUL_SFIFO, scb->cmd,
-		    scb->cmdlen);
-
-		scb->nextstat = 2;
-		break;
-
-	default:
-		printf("[debug] iha_select() - unknown select type = 0x%02x\n",
-		    select_type);
-		return;
-	}
-
-	iha_del_pend_scb(sc, scb);
-	scb->status = STATUS_SELECT;
-
-	sc->sc_actscb = scb;
-
-	bus_space_write_1(iot, ioh, TUL_SCMD, select_type);
-}
-
 /*
- * iha_wait - wait for an interrupt to service or a SCSI bus phase change
- *            after writing the supplied command to the tulip chip. If
- *            the command is NO_OP, skip the command writing.
- */
-static int
-iha_wait(sc, cmd)
-	struct iha_softc *sc;
-	u_int8_t cmd;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-
-	if (cmd != NO_OP)
-		bus_space_write_1(iot, ioh, TUL_SCMD, cmd);
-
-	/*
-	 * Have to do this here, in addition to in iha_isr, because
-	 * interrupts might be turned off when we get here.
-	 */
-	do {
-		sc->sc_status0 = bus_space_read_1(iot, ioh, TUL_STAT0);
-	} while ((sc->sc_status0 & INTPD) == 0);
-
-	sc->sc_status1 = bus_space_read_1(iot, ioh, TUL_STAT1);
-	sc->sc_sistat = bus_space_read_1(iot, ioh, TUL_SISTAT);
-
-	sc->sc_phase = sc->sc_status0 & PH_MASK;
-
-	if ((sc->sc_sistat & SRSTD) != 0) {
-		/* SCSI bus reset interrupt */
-		iha_reset_scsi_bus(sc);
-		return (-1);
-	}
-
-	if ((sc->sc_sistat & RSELED) != 0)
-		/* Reselection interrupt */
-		return (iha_resel(sc));
-
-	if ((sc->sc_sistat & STIMEO) != 0) {
-		/* selected/reselected timeout interrupt */
-		iha_busfree(sc);
-		return (-1);
-	}
-
-	if ((sc->sc_sistat & DISCD) != 0) {
-		/* BUS disconnection interrupt */
-		if ((sc->sc_flags & FLAG_EXPECT_DONE_DISC) != 0) {
-			bus_space_write_1(iot, ioh, TUL_SCTRL0, RSFIFO);
-			bus_space_write_1(iot, ioh, TUL_SCONFIG0,
-			    SCONFIG0DEFAULT);
-			bus_space_write_1(iot, ioh, TUL_SCTRL1, EHRSL);
-			iha_append_done_scb(sc, sc->sc_actscb, HOST_OK);
-			sc->sc_flags &= ~FLAG_EXPECT_DONE_DISC;
-
-		} else if ((sc->sc_flags & FLAG_EXPECT_DISC) != 0) {
-			bus_space_write_1(iot, ioh, TUL_SCTRL0, RSFIFO);
-			bus_space_write_1(iot, ioh, TUL_SCONFIG0,
-			    SCONFIG0DEFAULT);
-			bus_space_write_1(iot, ioh, TUL_SCTRL1, EHRSL);
-			sc->sc_actscb = NULL;
-			sc->sc_flags &= ~FLAG_EXPECT_DISC;
-
-		} else
-			iha_busfree(sc);
-
-		return (-1);
-	}
-
-	return (sc->sc_phase);
-}
-
-/*
- * iha_done_scb - We have a scb which has been processed by the
- *                adaptor, now we look to see how the operation went.
+ * iha_bad_seq - a SCSI bus phase was encountered out of the
+ *               correct/expected sequence. Reset the SCSI bus.
  */
 static void
-iha_done_scb(sc, scb)
-	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
-{
-	struct scsipi_xfer *xs = scb->xs;
-
-	if (xs != NULL) {
-		/* Cancel the timeout. */
-		callout_stop(&xs->xs_callout);
-
-		if (scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) {
-			bus_dmamap_sync(sc->sc_dmat, scb->dmap,
-			    0, scb->dmap->dm_mapsize,
-			    (scb->flags & FLAG_DATAIN) ?
-			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, scb->dmap);
-		}
-
-		xs->status = scb->ta_stat;
-
-		switch (scb->ha_stat) {
-		case HOST_OK:
-			switch (scb->ta_stat) {
-			case SCSI_OK:
-			case SCSI_CONDITION_MET:
-			case SCSI_INTERM:
-			case SCSI_INTERM_COND_MET:
-				xs->resid = scb->buflen;
-				xs->error = XS_NOERROR;
-				if ((scb->flags & FLAG_RSENS) != 0)
-					xs->error = XS_SENSE;
-				break;
-
-			case SCSI_RESV_CONFLICT:
-			case SCSI_BUSY:
-			case SCSI_QUEUE_FULL:
-				xs->error = XS_BUSY;
-				break;
-
-			case SCSI_TERMINATED:
-			case SCSI_ACA_ACTIVE:
-			case SCSI_CHECK:
-				scb->tcs->flags &=
-				    ~(FLAG_SYNC_DONE | FLAG_WIDE_DONE);
-
-				if ((scb->flags & FLAG_RSENS) != 0 ||
-				    iha_push_sense_request(sc, scb) != 0) {
-					scb->flags &= ~FLAG_RSENS;
-					printf("%s: request sense failed\n",
-					    sc->sc_dev.dv_xname);
-					xs->error = XS_DRIVER_STUFFUP;
-					break;
-				}
-
-				xs->error = XS_SENSE;
-				return;
-
-			default:
-				xs->error = XS_DRIVER_STUFFUP;
-				break;
-			}
-			break;
-
-		case HOST_SEL_TOUT:
-			xs->error = XS_SELTIMEOUT;
-			break;
-
-		case HOST_SCSI_RST:
-		case HOST_DEV_RST:
-			xs->error = XS_RESET;
-			break;
-
-		case HOST_SPERR:
-			printf("%s: SCSI Parity error detected\n",
-			    sc->sc_dev.dv_xname);
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-
-		case HOST_TIMED_OUT:
-			xs->error = XS_TIMEOUT;
-			break;
-
-		case HOST_DO_DU:
-		case HOST_BAD_PHAS:
-		default:
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-		}
-
-		scsipi_done(xs);
-	}
-
-	iha_append_free_scb(sc, scb);
-}
-
-static void
-iha_timeout(arg)
-	void *arg;
-{
-	struct iha_scsi_req_q *scb = (struct iha_scsi_req_q *)arg;
-	struct scsipi_xfer *xs = scb->xs;
-	struct scsipi_periph *periph = xs->xs_periph;
-	struct iha_softc *sc;
-
-	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
-
-	if (xs == NULL)
-		printf("[debug] iha_timeout called with xs == NULL\n");
-
-	else {
-		scsipi_printaddr(periph);
-		printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
-
-		iha_abort_xs(sc, xs, HOST_TIMED_OUT);
-	}
-}
-
-static void
-iha_exec_scb(sc, scb)
-	struct iha_softc *sc;
-	struct iha_scsi_req_q *scb;
-{
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_dmamap_t dm;
-	struct scsipi_xfer *xs = scb->xs;
-	int nseg, s;
-
-	dm = scb->dmap;
-	nseg = dm->dm_nsegs;
-
-	if (nseg > 1) {
-		struct iha_sg_element *sg = scb->sglist;
-		int i;
-
-		for (i = 0; i < nseg; i++) {
-			sg[i].sg_len = htole32(dm->dm_segs[i].ds_len);
-			sg[i].sg_addr = htole32(dm->dm_segs[i].ds_addr);
-		}
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
-		    scb->sgoffset, IHA_SG_SIZE,
-		    BUS_DMASYNC_PREWRITE);
-
-		scb->flags |= FLAG_SG;
-		scb->sg_size = scb->sg_max = nseg;
-		scb->sg_index = 0;
-
-		scb->bufaddr = scb->sg_addr;
-	} else
-		scb->bufaddr = dm->dm_segs[0].ds_addr;
-
-	if ((xs->xs_control & XS_CTL_POLL) == 0) {
-		int timeout = xs->timeout;
-		timeout = (timeout > 100000) ?
-		    timeout / 1000 * hz : timeout * hz / 1000;
-		if (timeout == 0)
-			timeout = 1;
-		callout_reset(&xs->xs_callout, timeout, iha_timeout, scb);
-	}
-
-	s = splbio();
-
-	if (((scb->xs->xs_control & XS_RESET) != 0) ||
-	    (scb->cmd[0] == REQUEST_SENSE))
-		iha_push_pend_scb(sc, scb);   /* Insert SCB at head of Pend */
-	else
-		iha_append_pend_scb(sc, scb); /* Append SCB to tail of Pend */
-
-	/*
-	 * Run through iha_main() to ensure something is active, if
-	 * only this new SCB.
-	 */
-	if (sc->sc_semaph != SEMAPH_IN_MAIN) {
-		iot = sc->sc_iot;
-		ioh = sc->sc_ioh;
-
-		bus_space_write_1(iot, ioh, TUL_IMSK, MASK_ALL);
-		sc->sc_semaph = SEMAPH_IN_MAIN;;
-
-		splx(s);
-		iha_main(sc);
-		s = splbio();
-
-		sc->sc_semaph = ~SEMAPH_IN_MAIN;;
-		bus_space_write_1(iot, ioh, TUL_IMSK, (MASK_ALL & ~MSCMP));
-	}
-
-	splx(s);
-}
-
-
-/*
- * iha_set_ssig - read the current scsi signal mask, then write a new
- *		  one which turns off/on the specified signals.
- */
-static void
-iha_set_ssig(sc, offsigs, onsigs)
-	struct iha_softc *sc;
-	u_int8_t offsigs, onsigs;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t currsigs;
-
-	currsigs = bus_space_read_1(iot, ioh, TUL_SSIGI);
-	bus_space_write_1(iot, ioh, TUL_SSIGO, (currsigs & ~offsigs) | onsigs);
-}
-
-/*
- * iha_alloc_sglist - allocate and map sglist for SCB's
- */
-static int
-iha_alloc_sglist(sc)
+iha_bad_seq(sc)
 	struct iha_softc *sc;
 {
-	bus_dma_segment_t seg;
-	int error, rseg;
+	struct iha_scb *scb = sc->sc_actscb;
 
-	/*
-	 * Allocate dma-safe memory for the SCB's sglist
-	 */
-	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    IHA_SG_SIZE * IHA_MAX_SCB,
-	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to allocate sglist, error = %d\n", error);
-		return (error);
-	}
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    IHA_SG_SIZE * IHA_MAX_SCB, (caddr_t *)&sc->sc_sglist,
-	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf(": unable to map sglist, error = %d\n", error);
-		return (error);
-	}
+	if (scb != NULL)
+		iha_append_done_scb(sc, scb, HOST_BAD_PHAS);
 
-	/*
-	 * Create and load the DMA map used for the SCBs
-	 */
-	if ((error = bus_dmamap_create(sc->sc_dmat,
-	    IHA_SG_SIZE * IHA_MAX_SCB, 1, IHA_SG_SIZE * IHA_MAX_SCB,
-	    0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		printf(": unable to create control DMA map, error = %d\n",
-		    error);
-		return (error);
-	}
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
-	    sc->sc_sglist, IHA_SG_SIZE * IHA_MAX_SCB,
-	    NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to load control DMA map, error = %d\n", error);
-		return (error);
-	}
-
-	memset(sc->sc_sglist, 0, IHA_SG_SIZE * IHA_MAX_SCB);
-
-	return (0);
+	iha_reset_scsi_bus(sc);
+	iha_reset_chip(sc);
 }
 
 /*
  * iha_read_eeprom - read Serial EEPROM value & set to defaults
  *		     if required. XXX - Writing does NOT work!
  */
-void
+static void
 iha_read_eeprom(sc, eeprom)
 	struct iha_softc *sc;
 	struct iha_eeprom *eeprom;
@@ -2687,7 +2721,7 @@ iha_read_eeprom(sc, eeprom)
  *			change those values different from the values
  *			in iha_eeprom.
  */
-void
+static void
 iha_se2_update_all(sc)
 	struct iha_softc *sc;
 {
@@ -2722,7 +2756,7 @@ iha_se2_update_all(sc)
  * iha_se2_wr - write the given 16 bit value into the Serial EEPROM
  *		at the specified offset
  */
-void
+static void
 iha_se2_wr(sc, addr, writeword)
 	struct iha_softc *sc;
 	int addr;
@@ -2772,7 +2806,7 @@ iha_se2_wr(sc, addr, writeword)
  *		offset in the Serial E2PROM
  *
  */
-u_int16_t
+static u_int16_t
 iha_se2_rd(sc, addr)
 	struct iha_softc *sc;
 	int addr;
@@ -2806,7 +2840,7 @@ iha_se2_rd(sc, addr)
 /*
  * iha_se2_rd_all - Read SCSI H/A config parameters from serial EEPROM
  */
-int
+static int
 iha_se2_rd_all(sc, buf)
 	struct iha_softc *sc;
 	u_int16_t *buf;
@@ -2830,7 +2864,7 @@ iha_se2_rd_all(sc, buf)
 /*
  * iha_se2_instr - write an octet to serial E2PROM one bit at a time
  */
-void
+static void
 iha_se2_instr(sc, instr)
 	struct iha_softc *sc;
 	int instr;
@@ -2860,50 +2894,3 @@ iha_se2_instr(sc, instr)
 
 	bus_space_write_1(iot, ioh, TUL_NVRAM, NVRCS);
 }
-
-/*
- * iha_reset_tcs - reset the target control structure pointed
- *		   to by tcs to default values. tcs flags
- *		   only has the negotiation done bits reset as
- *		   the other bits are fixed at initialization.
- */
-void
-iha_reset_tcs(tcs, config0)
-	struct tcs *tcs;
-	u_int8_t config0;
-{
-
-	tcs->flags &= ~(FLAG_SYNC_DONE | FLAG_WIDE_DONE);
-	tcs->period = 0;
-	tcs->offset = 0;
-	tcs->tagcnt = 0;
-	tcs->ntagscb  = NULL;
-	tcs->syncm = 0;
-	tcs->sconfig0 = config0;
-}
-
-void
-iha_update_xfer_mode(sc, target)
-	struct iha_softc *sc;
-	int target;
-{
-	struct tcs *tcs = &sc->sc_tcs[target];
-	struct scsipi_xfer_mode xm;
-
-	xm.xm_target = target;
-	xm.xm_mode = 0;
-	xm.xm_period = 0;
-	xm.xm_offset = 0;
-
-	if (tcs->syncm & PERIOD_WIDE_SCSI)
-		xm.xm_mode |= PERIPH_CAP_WIDE16;
-
-	if (tcs->period) {
-		xm.xm_mode |= PERIPH_CAP_SYNC;
-		xm.xm_period = tcs->period;
-		xm.xm_offset = tcs->offset;
-	}
-
-	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
-}
-

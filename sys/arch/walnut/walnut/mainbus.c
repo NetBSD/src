@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4.2.1 2002/01/10 19:50:14 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.2.2 2002/03/16 16:00:21 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,9 +65,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "locators.h"
 #include "pckbc.h"
-#include "pci.h"
-#include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +81,6 @@
 
 #include <powerpc/ibm4xx/ibm405gp.h>
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pciconf.h>
-
 /*
  * The devices built in to the 405GP cpu.
  */
@@ -99,9 +94,10 @@ const struct ppc405gp_dev {
 	{ "dsrtc",	NVRAM_BASE,	-1 },
 	{ "emac",	EMAC0_BASE,	15 }, /* XXX: really irq 9..15 */
 	{ "gpio",	GPIO0_BASE,	-1 },
-	{ "i2c",	IIC0_BASE,	-1 },
+	{ "iic",	IIC0_BASE,	 2 },
 	{ "wdog",	-1,        	-1 },
 	{ "pckbc",	KEY_MOUSE_BASE,	10 }, /* XXX: really irq x..x+1 */
+	{ "pchb",	PCIC0_BASE,	-1 },
 	{ NULL }
 };
 
@@ -128,14 +124,10 @@ mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 static int
 mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	union mainbus_attach_args *maa = aux;
-
-	/* Skip locator song-and-dance if we're attaching the PCI layer */
-	if (strcmp(maa->mba_pba.pba_busname, "pci") == 0)
-		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	struct mainbus_attach_args *maa = aux;
 
 	if (cf->cf_loc[MAINBUSCF_ADDR] != MAINBUSCF_ADDR_DEFAULT &&
-	    cf->cf_loc[MAINBUSCF_ADDR] != maa->mba_rmb.rmb_addr)
+	    cf->cf_loc[MAINBUSCF_ADDR] != maa->mb_addr)
 		return (0);
 
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
@@ -147,35 +139,29 @@ mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	union mainbus_attach_args mba;
+	struct mainbus_attach_args mba;
 	int i;
 #if NPCKBC > 0
 	bus_space_handle_t ioh_fpga;
 	bus_space_tag_t iot_fpga = galaxy_make_bus_space_tag(0, 0);
 	uint8_t fpga_reg;
 #endif
-#ifdef PCI_NETBSD_CONFIGURE
-	struct extent *ioext, *memext;
-#ifdef PCI_CONFIGURE_VERBOSE
-	extern int pci_conf_debug;
-
-	pci_conf_debug = 1;
-#endif
-#endif
 
 	printf("\n");
 
 	/* Attach the CPU first */
-	mba.mba_rmb.rmb_name = "cpu";
-	mba.mba_rmb.rmb_addr = MAINBUSCF_ADDR_DEFAULT;
-	mba.mba_rmb.rmb_irq = MAINBUSCF_IRQ_DEFAULT;
+	mba.mb_name = "cpu";
+	mba.mb_addr = MAINBUSCF_ADDR_DEFAULT;
+	mba.mb_irq = MAINBUSCF_IRQ_DEFAULT;
+	mba.mb_bt = galaxy_make_bus_space_tag(0, 0);
 	config_found(self, &mba, mainbus_print);
 	
 	for (i = 0; ppc405gp_devs[i].name != NULL; i++) {
-		mba.mba_rmb.rmb_name = ppc405gp_devs[i].name;
-		mba.mba_rmb.rmb_addr = ppc405gp_devs[i].addr;
-		mba.mba_rmb.rmb_irq = ppc405gp_devs[i].irq;
-		mba.mba_rmb.rmb_dmat = &galaxy_default_bus_dma_tag;
+		mba.mb_name = ppc405gp_devs[i].name;
+		mba.mb_addr = ppc405gp_devs[i].addr;
+		mba.mb_irq = ppc405gp_devs[i].irq;
+		mba.mb_bt = galaxy_make_bus_space_tag(0, 0);
+		mba.mb_dmat = &galaxy_default_bus_dma_tag;
 
 		(void) config_found_sm(self, &mba, mainbus_print,
 		    mainbus_submatch);
@@ -211,81 +197,21 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if NPCI > 0
-	pci_machdep_init();
-	galaxy_setup_pci();
-#ifdef PCI_CONFIGURE_VERBOSE
-	galaxy_show_pci_map();
-#endif
-	// scan_pci_bus();
-
-#ifdef PCI_NETBSD_CONFIGURE
-	// galaxy_show_pci_map();
-	// scan_pci_bus();
-	memext = extent_create("pcimem", MIN_PCI_MEMADDR_NOPREFETCH,
-	    MIN_PCI_MEMADDR_NOPREFETCH + 0x1fffffff, M_DEVBUF, NULL, 0,
-	    EX_NOWAIT);
-	ioext = extent_create("pciio", MIN_PCI_PCI_IOADDR,
-	    MIN_PCI_PCI_IOADDR + 0xffff, M_DEVBUF, NULL, 0, EX_NOWAIT);
-	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
-	extent_destroy(memext);
-#endif /* PCI_NETBSD_CONFIGURE */
-
-#ifdef PCI_CONFIGURE_VERBOSE
-	printf("running config_found PCI\n");
-#endif
-	mba.mba_pba.pba_busname = "pci";
-	/* IO window located @ e8000000 and maps to 0-0xffff */
-	mba.mba_pba.pba_iot = galaxy_make_bus_space_tag(MIN_PLB_PCI_IOADDR, 0);
-	/* PCI memory window is directly mapped */
-	mba.mba_pba.pba_memt = galaxy_make_bus_space_tag(0, 0);
-	mba.mba_pba.pba_dmat = &galaxy_default_bus_dma_tag;
-	mba.mba_pba.pba_bus = 0;
-	mba.mba_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
-	config_found(self, &mba.mba_pba, mainbus_print);
-#endif /* NPCI > 0 */
 }
 
 static int
 mainbus_print(void *aux, const char *pnp)
 {
-	union mainbus_attach_args *mba = aux;
+	struct mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		printf("%s at %s", mba->mba_busname, pnp);
+		printf("%s at %s", mba->mb_name, pnp);
 
-	if (strcmp(mba->mba_busname, "pci") == 0)
-		printf(" bus %d", mba->mba_pba.pba_bus);
-	else {
-		if (mba->mba_rmb.rmb_addr != MAINBUSCF_ADDR_DEFAULT)
-			printf(" addr 0x%08lx", mba->mba_rmb.rmb_addr);
-		if (mba->mba_rmb.rmb_irq != MAINBUSCF_IRQ_DEFAULT)
-			printf(" irq %d", mba->mba_rmb.rmb_irq);
-	}
+	if (mba->mb_addr != MAINBUSCF_ADDR_DEFAULT)
+		printf(" addr 0x%08lx", mba->mb_addr);
+	if (mba->mb_irq != MAINBUSCF_IRQ_DEFAULT)
+		printf(" irq %d", mba->mb_irq);
+
 	return (UNCONF);
 }
 
-#if 0
-static void
-scan_pci_bus(void)
-{
-	pcitag_t tag;
-	int i, x;
-
-	for (i=0;i<32;i++){
-		tag = pci_make_tag(0, 0, i, 0);
-		x = pci_conf_read(0, tag, 0);
-		printf("%d tag=%08x : %08x\n", i, tag, x);
-#if 0
-		if (PCI_VENDOR(x) == PCI_VENDOR_INTEL
-		    && PCI_PRODUCT(x) == PCI_PRODUCT_INTEL_80960_RP) {
-			/* Do not configure PCI bus analyzer */
-			continue;
-		}
-		x = pci_conf_read(0, tag, PCI_COMMAND_STATUS_REG);
-		x |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-		pci_conf_write(0, tag, PCI_COMMAND_STATUS_REG, x);
-#endif
-	}
-}
-#endif

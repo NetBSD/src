@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.5.16.1 2001/08/25 06:15:33 thorpej Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.5.16.2 2002/03/16 15:58:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Regents of the University of California.
@@ -56,7 +56,7 @@ union memptr {
 	unsigned char *c;
 };
 
-static __inline u_int32_t fastsum __P((union memptr, int n, u_int sum, int odd));
+static __inline u_int32_t fastsum(union memptr, int, u_int, int);
 
 
 /*
@@ -69,10 +69,7 @@ static __inline u_int32_t fastsum __P((union memptr, int n, u_int sum, int odd))
  * over the data before adding it to `oldsum'.
  */
 u_int32_t
-fastsum(buf, n, oldsum, odd_aligned)
-	union memptr buf;
-	int n;
-	unsigned int oldsum;
+fastsum(union memptr buf, int n, unsigned int oldsum, int odd_aligned)
 {
 	unsigned long hilo = 0, high = 0;
 	unsigned long w0, w1;
@@ -245,9 +242,7 @@ fastsum(buf, n, oldsum, odd_aligned)
  *
  */
 int
-in_cksum(m, len)
-	struct mbuf *m;
-	int len;
+in_cksum(struct mbuf *m, int len)
 {
 	/*u_short **/ union memptr w;
 	u_int32_t sum = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16.2.3 2002/01/10 19:48:41 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16.2.4 2002/03/16 15:59:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -61,7 +61,16 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-void	setredzone __P((u_short *, caddr_t));
+void	setredzone(u_short *, caddr_t);
+
+/* XXX XXX XXX */
+#include <sh3/mmu.h>
+#ifdef SH4
+#define	TLBFLUSH()		(cacheflush(), sh_tlb_invalidate_all())
+#else
+#define	TLBFLUSH()		sh_tlb_invalidate_all()
+#endif
+/* XXX XXX XXX */
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -82,24 +91,16 @@ void	setredzone __P((u_short *, caddr_t));
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	register struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack,
+    size_t stacksize, void (*func)(void *), void *arg)
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	extern void proc_trampoline(void);
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 
-#ifdef sh3_debug
-	printf("cpu_fork:p1(%p),p2(%p)\n", p1, p2);
-#endif
-
-#ifdef SH4
-	cacheflush();
-#endif
+	if (CPU_IS_SH4)
+		cacheflush();
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
@@ -142,13 +143,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->r15 = (int)sf;
 }
 
-void
-cpu_swapout(p)
-	struct proc *p;
-{
-
-}
-
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -157,9 +151,10 @@ cpu_swapout(p)
  * jumps into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(p)
-	register struct proc *p;
+cpu_exit(struct proc *p)
 {
+	extern void switch_exit(struct proc *);
+
 	uvmexp.swtch++;
 	switch_exit(p);
 }
@@ -172,11 +167,8 @@ struct md_core {
 };
 
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	struct md_core md_core;
 	struct coreseg cseg;
@@ -213,36 +205,14 @@ cpu_coredump(p, vp, cred, chdr)
 	return 0;
 }
 
-#if 0
-/*
- * Set a red zone in the kernel stack after the u. area.
- */
-void
-setredzone(pte, vaddr)
-	u_short *pte;
-	caddr_t vaddr;
-{
-/* eventually do this by setting up an expand-down stack segment
-   for ss0: selector, allowing stack access down to top of u.
-   this means though that protection violations need to be handled
-   thru a double fault exception that must do an integral task
-   switch to a known good context, within which a dump can be
-   taken. a sensible scheme might be to save the initial context
-   used by sched (that has physical memory mapped 1:1 at bottom)
-   and take the dump while still in mapped mode */
-}
-#endif
-
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap.
  */
 void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
-	register pt_entry_t *fpte, *tpte;
+	pt_entry_t *fpte, *tpte;
 
 	if (size % NBPG)
 		panic("pagemove");
@@ -257,8 +227,6 @@ pagemove(from, to, size)
 	}
 	TLBFLUSH();
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map an IO request into kernel virtual address space.  Requests fall into
@@ -280,9 +248,7 @@ extern struct vm_map *phys_map;
  */
 
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
@@ -323,9 +289,7 @@ vmapbuf(bp, len)
  * We also invalidate the TLB entries and restore the original b_addr.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 
