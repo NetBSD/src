@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/22 13:18:47 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/26 05:14:13 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 
 .include <bsd.own.mk>
+.include <bsd.sys.mk> # for HOST_SH
 
 LIB=	xf86
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common
@@ -61,8 +62,10 @@ CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 BUILDSYMLINKS=	xf86DefModes.c xf86DefModeSet.c \
 		../../../mi/miinitext.c xf86IniExt.c 
 
+OS_RELEASE!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+
 CPPFLAGS.xf86Bus.c=	-DBUILDERADDR='"xfree86@xfree86.org"'
-CPPFLAGS.xf86Init.c=	-DOSNAME='"NetBSD/${MACHINE_ARCH}"' \
+CPPFLAGS.xf86Init.c=	-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
 			-DXORG_RELEASE='"Release 6.6"' \
 			-DBUILDERADDR='"xfree86@xfree86.org"' \
 			-DOSVENDOR='" The NetBSD Foundation, Inc."'
