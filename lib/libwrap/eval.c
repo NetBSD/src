@@ -1,3 +1,5 @@
+/*	$NetBSD: eval.c,v 1.3 1997/10/09 21:20:24 christos Exp $	*/
+
  /*
   * Routines for controlled evaluation of host names, user names, and so on.
   * They are, in fact, wrappers around the functions that are specific for
@@ -18,8 +20,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) eval.c 1.3 95/01/30 19:51:45";
+#else
+__RCSID("$NetBSD: eval.c,v 1.3 1997/10/09 21:20:24 christos Exp $");
+#endif
 #endif
 
 /* System libraries. */

@@ -1,3 +1,5 @@
+/*	$NetBSD: hosts_access.c,v 1.2 1997/10/09 21:20:30 christos Exp $	*/
+
  /*
   * This module implements a simple access control language that is based on
   * host (or domain) names, NIS (host) netgroup names, IP addresses (or
@@ -17,8 +19,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) hosts_access.c 1.20 96/02/11 17:01:27";
+#else
+__RCSID("$NetBSD: hosts_access.c,v 1.2 1997/10/09 21:20:30 christos Exp $");
+#endif
 #endif
 
 /* System libraries. */
@@ -34,7 +41,6 @@ static char sccsid[] = "@(#) hosts_access.c 1.20 96/02/11 17:01:27";
 #include <setjmp.h>
 #include <string.h>
 
-extern char *fgets();
 extern int errno;
 
 #ifndef	INADDR_NONE
@@ -75,13 +81,14 @@ int     resident = (-1);		/* -1, 0: unknown; +1: yes */
 
 /* Forward declarations. */
 
-static int table_match();
-static int list_match();
-static int server_match();
-static int client_match();
-static int host_match();
-static int string_match();
-static int masked_match();
+static int table_match __P((char *, struct request_info *));
+static int list_match __P((char *, struct request_info *,
+    int (*)(char *, struct request_info *)));
+static int server_match __P((char *, struct request_info *));
+static int client_match __P((char *, struct request_info *));
+static int host_match __P((char *, struct host_info *));
+static int string_match __P((char *, char *));
+static int masked_match __P((char *, char *, char *));
 
 /* Size of logical line buffer. */
 
@@ -129,7 +136,7 @@ struct request_info *request;
     FILE   *fp;
     char    sv_list[BUFLEN];		/* becomes list of daemons */
     char   *cl_list;			/* becomes list of clients */
-    char   *sh_cmd;			/* becomes optional shell command */
+    char   *sh_cmd = NULL;		/* becomes optional shell command */
     int     match = NO;
     struct tcpd_context saved_context;
 
@@ -184,7 +191,7 @@ struct request_info *request;
 static int list_match(list, request, match_fn)
 char   *list;
 struct request_info *request;
-int   (*match_fn) ();
+int   (*match_fn) __P((char *, struct request_info *));
 {
     char   *tok;
 

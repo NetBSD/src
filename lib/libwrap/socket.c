@@ -1,3 +1,5 @@
+/*	$NetBSD: socket.c,v 1.3 1997/10/09 21:20:50 christos Exp $	*/
+
  /*
   * This module determines the type of socket (datagram, stream), the client
   * socket address and port, the server socket address and port. In addition,
@@ -15,8 +17,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) socket.c 1.14 95/01/30 19:51:50";
+#else
+__RCSID("$NetBSD: socket.c,v 1.3 1997/10/09 21:20:50 christos Exp $");
+#endif
 #endif
 
 /* System libraries. */
@@ -29,8 +36,7 @@ static char sccsid[] = "@(#) socket.c 1.14 95/01/30 19:51:50";
 #include <stdio.h>
 #include <syslog.h>
 #include <string.h>
-
-extern char *inet_ntoa();
+#include <arpa/inet.h>
 
 /* Local stuff. */
 
@@ -38,9 +44,10 @@ extern char *inet_ntoa();
 
 /* Forward declarations. */
 
-static void sock_sink();
+static void sock_sink __P((int));
 
 #ifdef APPEND_DOT
+static struct hostent *gethostbyname_dot __P((char *));
 
  /*
   * Speed up DNS lookups by terminating the host name with a dot. Should be

@@ -1,3 +1,5 @@
+/*	$NetBSD: shell_cmd.c,v 1.2 1997/10/09 21:20:48 christos Exp $	*/
+
  /*
   * shell_cmd() takes a shell command after %<character> substitutions. The
   * command is executed by a /bin/sh child process, with standard input,
@@ -8,20 +10,27 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) shell_cmd.c 1.5 94/12/28 17:42:44";
+#else
+__RCSID("$NetBSD: shell_cmd.c,v 1.2 1997/10/09 21:20:48 christos Exp $");
+#endif
 #endif
 
 /* System libraries. */
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <syslog.h>
 #include <string.h>
-
-extern void exit();
 
 /* Local stuff. */
 
@@ -29,7 +38,7 @@ extern void exit();
 
 /* Forward declarations. */
 
-static void do_child();
+static void do_child __P((char *));
 
 /* shell_cmd - execute shell command */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: update.c,v 1.3 1997/10/09 21:20:55 christos Exp $	*/
+
  /*
   * Routines for controlled update/initialization of request structures.
   * 
@@ -13,8 +15,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) update.c 1.1 94/12/28 17:42:56";
+#else
+__RCSID("$NetBSD: update.c,v 1.3 1997/10/09 21:20:55 christos Exp $");
+#endif
 #endif
 
 /* System libraries */
@@ -22,11 +29,14 @@ static char sccsid[] = "@(#) update.c 1.1 94/12/28 17:42:56";
 #include <stdio.h>
 #include <syslog.h>
 #include <string.h>
+#include <unistd.h>
 
 /* Local stuff. */
 
 #include "mystdarg.h"
 #include "tcpd.h"
+
+static struct request_info *request_fill __P((struct request_info *, va_list));
 
 /* request_fill - request update engine */
 

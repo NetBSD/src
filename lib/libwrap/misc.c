@@ -1,11 +1,18 @@
+/*	$NetBSD: misc.c,v 1.2 1997/10/09 21:20:35 christos Exp $	*/
+
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
+#else
+__RCSID("$NetBSD: misc.c,v 1.2 1997/10/09 21:20:35 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>
@@ -16,8 +23,6 @@ static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #include <string.h>
 
 #include "tcpd.h"
-
-extern char *fgets();
 
 #ifndef	INADDR_NONE
 #define	INADDR_NONE	(-1)		/* XXX should be 0xffffffff */

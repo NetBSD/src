@@ -1,3 +1,5 @@
+/*	$NetBSD: clean_exit.c,v 1.2 1997/10/09 21:20:19 christos Exp $	*/
+
  /*
   * clean_exit() cleans up and terminates the program. It should be called
   * instead of exit() when for some reason the real network daemon will not or
@@ -8,13 +10,18 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) clean_exit.c 1.4 94/12/28 17:42:19";
+#else
+__RCSID("$NetBSD: clean_exit.c,v 1.2 1997/10/09 21:20:19 christos Exp $");
+#endif
 #endif
 
 #include <stdio.h>
-
-extern void exit();
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "tcpd.h"
 

@@ -1,3 +1,4 @@
+/*	$NetBSD: mystdarg.h,v 1.2 1997/10/09 21:20:37 christos Exp $	*/
 
  /*
   * What follows is an attempt to unify varargs.h and stdarg.h. I'd rather
@@ -15,5 +16,3 @@
 #define VASTART(ap,type,name)  {type name; va_start(ap); name = va_arg(ap, type)
 #define VAEND(ap)              va_end(ap);}
 #endif
-
-extern char *percent_m();
