@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2002/02/18 09:37:11 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.4 2002/07/16 04:17:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/util.c,v 1.72 2001/10/08 16:12:13 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: util.c,v 1.3 2002/02/18 09:37:11 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.4 2002/07/16 04:17:46 itojun Exp $");
 #endif
 #endif
 
@@ -361,8 +361,8 @@ safeputchar(int c)
 	unsigned char ch;
 
 	ch = (unsigned char)(c & 0xff);
-	if (c < 0x80 && isprint(c))
-		printf("%c", c & 0xff);
+	if (ch < 0x80 && isprint(ch))
+		printf("%c", ch);
 	else
-		printf("\\%03o", c & 0xff);
+		printf("\\%03o", ch);
 }
