@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.143 1999/03/24 05:51:22 mrg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.144 1999/03/26 01:10:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -172,7 +172,7 @@ struct emul emul_netbsd = {
 void
 main()
 {
-	struct proc *p, *p2;
+	struct proc *p;
 	struct pdevinit *pdev;
 	int i, s, error;
 	extern struct pdevinit pdevinit[];
@@ -398,9 +398,9 @@ main()
 	siginit(p);
 
 	/* Create process 1 (init(8)). */
-	if (fork1(p, 0, NULL, &p2))
+	if (fork1(p, 0, NULL, &initproc))
 		panic("fork init");
-	cpu_set_kpc(p2, start_init, p2);
+	cpu_set_kpc(initproc, start_init, initproc);
 
 	/* Create process 2, the pageout daemon kernel thread. */
 	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
@@ -468,7 +468,6 @@ start_init(arg)
 	/*
 	 * Now in process 1.
 	 */
-	initproc = p;
 
 	/*
 	 * This is not the right way to do this.  We really should
