@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.9 2001/05/27 14:17:56 lukem Exp $	*/
+/*	$NetBSD: itime.c,v 1.10 2001/05/28 00:41:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.9 2001/05/27 14:17:56 lukem Exp $");
+__RCSID("$NetBSD: itime.c,v 1.10 2001/05/28 00:41:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,12 +59,10 @@ __RCSID("$NetBSD: itime.c,v 1.9 2001/05/27 14:17:56 lukem Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#endif
 
 #include "dump.h"
 
