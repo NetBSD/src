@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1996/03/04 03:26:18 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1996/03/29 01:15:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,6 +58,10 @@
 
 #include <machine/pte.h>
 
+void	setroot __P((void));
+void	swapconf __P((void));
+void	dumpconf __P((void));
+
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
@@ -68,6 +72,7 @@ extern int	cold;		/* cold start flag initialized in locore.s */
 /*
  * Determine i/o configuration for a machine.
  */
+void
 configure()
 {
 
@@ -101,6 +106,7 @@ configure()
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
 	register struct swdevt *swp;
@@ -137,6 +143,7 @@ static	char devname[][2] = {
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
+void
 setroot()
 {
 	int  majdev, mindev, unit, part, adaptor;
