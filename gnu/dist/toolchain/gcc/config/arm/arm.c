@@ -5564,6 +5564,9 @@ output_func_epilogue (f, frame_size)
   int volatile_func = (optimize > 0
 		       && TREE_THIS_VOLATILE (current_function_decl));
 
+  /* We need to take into account any stack-frame rounding.  */
+  frame_size = arm_get_frame_size ();
+
   if (use_return_insn (FALSE) && return_used_this_function)
     {
       if ((frame_size + current_function_outgoing_args_size) != 0
