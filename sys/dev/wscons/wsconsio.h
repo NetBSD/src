@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.11 1998/12/30 19:15:11 augustss Exp $ */
+/* $NetBSD: wsconsio.h,v 1.12 1999/01/09 15:44:45 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -238,12 +238,31 @@ struct wsdisplay_cursor {
 #define		WSDISPLAYIO_MODE_EMUL	0	/* emulation (text) mode */
 #define		WSDISPLAYIO_MODE_MAPPED	1	/* mapped (graphics) mode */
 
+/*
+ * XXX WARNING
+ * XXX The following 3 definitions are very preliminary and are likely
+ * XXX to be changed without care about backwards compatibility!
+ */
 struct wsdisplay_font {
 	int firstchar, numchars;
 	int fontwidth, fontheight, stride;
 	void *data;
 };
 #define WSDISPLAYIO_SFONT	_IOW('W', 77, struct wsdisplay_font)
+
+struct wsdisplay_addscreendata {
+	int idx; /* screen index */
+	char *screentype;
+	char *emul;
+};
+#define WSDISPLAYIO_ADDSCREEN _IOW('W', 78, struct wsdisplay_addscreendata)
+
+struct wsdisplay_delscreendata {
+	int idx; /* screen index */
+	int flags;
+#define WSDISPLAY_DELSCR_FORCE 1
+};
+#define WSDISPLAYIO_DELSCREEN _IOW('W', 79, struct wsdisplay_delscreendata)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
