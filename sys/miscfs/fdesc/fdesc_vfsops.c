@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.40 2003/06/28 14:22:01 darrenr Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.41 2003/06/29 02:16:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.40 2003/06/28 14:22:01 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.41 2003/06/29 02:16:59 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -117,7 +117,7 @@ fdesc_mount(mp, path, data, ndp, l)
 	vfs_getnewfsid(mp);
 
 	error = set_statfs_info(path, UIO_USERSPACE, "fdesc", UIO_SYSSPACE,
-	    mp, p);
+	    mp, l);
 	VOP_UNLOCK(rvp, 0);
 	return error;
 }
