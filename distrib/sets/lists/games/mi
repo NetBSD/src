@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.27 2003/12/26 18:00:09 christos Exp $
+# $NetBSD: mi,v 1.28 2003/12/26 18:01:33 christos Exp $
 ./usr/games/adventure		games-games-bin
 ./usr/games/arithmetic		games-games-bin
 ./usr/games/atc			games-games-bin
@@ -145,6 +145,7 @@
 ./usr/share/man/cat6/canfield.0		games-games-catman
 ./usr/share/man/cat6/countmail.0	games-utils-catman
 ./usr/share/man/cat6/cribbage.0		games-games-catman
+./usr/share/man/cat6/dab.0		games-games-catman
 ./usr/share/man/cat6/factor.0		games-utils-catman
 ./usr/share/man/cat6/fish.0		games-games-catman
 ./usr/share/man/cat6/fortune.0		games-utils-catman
@@ -191,6 +192,7 @@
 ./usr/share/man/man6/canfield.6		games-games-man
 ./usr/share/man/man6/countmail.6	games-utils-man
 ./usr/share/man/man6/cribbage.6		games-games-man
+./usr/share/man/man6/dab.6		games-games-man
 ./usr/share/man/man6/factor.6		games-utils-man
 ./usr/share/man/man6/fish.6		games-games-man
 ./usr/share/man/man6/fortune.6		games-utils-man
