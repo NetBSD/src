@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.10 1999/05/19 14:50:49 kleink Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.11 2000/02/08 16:22:59 scottb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ extern void	*dlopen __P((const char *, int));
 extern int	dlclose __P((void *));
 extern void	*dlsym __P((void *, const char *));
 #if !defined(_XOPEN_SOURCE)
-extern int	dladdr __P((void *, Dl_info *));
+extern int	dladdr __P((const void *, Dl_info *));
 extern int	dlctl __P((void *, int, void *));
 #endif
 extern __aconst char *dlerror __P((void));
