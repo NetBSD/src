@@ -1,4 +1,4 @@
-/*      $NetBSD: ibm_machdep.c,v 1.2 2001/08/26 02:47:35 matt Exp $        */
+/*      $NetBSD: ibm_machdep.c,v 1.3 2002/04/25 20:40:16 nonaka Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,21 +63,6 @@ cpu_setup_ibm_generic(struct device *dev)
 
 	/* Enable L2 cache */
 	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c) = l2ctrl | 0xc0;
-
-	printf("%s: ", dev->dv_xname);
-	if (((cpuinf>>1) & 1) == 0) {
-		printf("Upgrade CPU, ");
-	}
-
-	printf("L2 cache ");
-	if ((cpuinf & 1) == 0) {
-		printf("%s ", ((cpuinf>>2) & 1) ? "256KB" : "unknown size");
-		printf("%s", ((cpuinf>>3) & 1) ? "copy-back" : "write-through");
-	} else {
-		printf("not present");
-	}
-
-	printf("\n");
 }
 
 void
