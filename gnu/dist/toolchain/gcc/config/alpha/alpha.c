@@ -275,7 +275,7 @@ override_options ()
 	static int const cache_latency[][4] = 
 	{
 	  { 3, 30, -1 },	/* ev4 -- Bcache is a guess */
-	  { 2, 12, 38 },	/* ev5 -- Bcache from PC164 LMbench numbers */
+	  { 3, 12, 38 },	/* ev5 -- Bcache from PC164 LMbench numbers */
 	  { 3, 13, -1 },	/* ev6 -- Ho hum, doesn't exist yet */
 	};
 
@@ -3375,7 +3375,8 @@ alpha_does_function_need_gp ()
 /* Write a version stamp.  Don't write anything if we are running as a
    cross-compiler.  Otherwise, use the versions in /usr/include/stamp.h.  */
 
-#ifdef HAVE_STAMP_H
+#if !defined(CROSS_COMPILE) && !defined(_WIN32) && !defined(__linux__) && \
+    !defined(VMS) && !defined(__NetBSD__)
 #include <stamp.h>
 #endif
 
