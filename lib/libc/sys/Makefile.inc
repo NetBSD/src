@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.80 1998/02/14 01:38:36 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.81 1998/02/14 20:18:12 kleink Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -38,7 +38,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	fpathconf.o __fstat13.o fstatfs.o fsync.o futimes.o \
 	getdents.o getfh.o getfsstat.o getgroups.o getitimer.o \
 	__getlogin.o getpeername.o getpgid.o getpgrp.o \
-	getpriority.o getrlimit.o getrusage.o getsockname.o \
+	getpriority.o getrlimit.o getrusage.o getsid.o getsockname.o \
 	getsockopt.o gettimeofday.o ioctl.o kill.o ktrace.o \
 	lchmod.o lchown.o __lstat13.o lfs_bmapv.o lfs_markv.o \
 	lfs_segclean.o lfs_segwait.o link.o listen.o lutimes.o \
@@ -56,12 +56,14 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	__sigaltstack14.o socket.o socketpair.o __stat13.o statfs.o \
 	swapctl.o symlink.o sysarch.o umask.o undelete.o unlink.o \
 	unmount.o utimes.o vadvise.o wait4.o write.o writev.o \
-	__semctl.o __syscall.o __sysctl.o
+	__semctl.o __syscall.o __sysctl.o \
+	__posix_chown.o __posix_fchown.o __posix_lchown.o __posix_rename.o
 
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 
-NOERR=	getegid.o geteuid.o getgid.o getpid.o getppid.o getuid.o sync.o
+NOERR=	getegid.o geteuid.o getgid.o getpid.o getppid.o getsid.o getuid.o \
+	sync.o
 PNOERR= ${NOERR:.o=.po}
 SNOERR= ${NOERR:.o=.so}
 
