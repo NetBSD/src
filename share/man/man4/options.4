@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.63 1998/10/13 13:32:44 bouyer Exp $
+.\"	$NetBSD: options.4,v 1.64 1998/10/29 21:22:34 jonathan Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -236,6 +236,17 @@ See
 for details.
 .Em NOTE:
 not available on all architectures.
+.It Cd options DDB_FROMCONSOLE=integer
+If set to non-zero, DDB may be entered by sending a break on a serial
+console or by a special key sequence on a graphics console.
+A value of "0" ignores console breaks or key sequences,
+It not explicitly specified, the default value is "1".
+Note that this sets the value of the
+.Em ddb.fromconsole
+.Xr sysctl 3
+variable which may be changed at run time -- see
+.Xr sysctl 8
+for details. 
 .It Cd options DDB_HISTORY_SIZE=integer
 If this is non-zero, enable history editing in the kernel debugger
 and set the size of the history to this value.
