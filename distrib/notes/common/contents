@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.1 1999/01/13 08:18:45 ross Exp $
+.\"	$NetBSD: contents,v 1.2 1999/01/25 23:34:22 garbled Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -609,15 +609,7 @@ the current directory. That
 is, if you want to extract the binaries into your system, i.e.
 replace the system binaries with them, you have to run the
 .Ic tar xfp
-command from /. Also note that if you upgrade or install this way, those
-programs that you are using at the time will
-.Em not
-be replaced unless you run
-.Xr tar 1
-with the
-.Cm --unlink
-option. If you follow the normal
-installation or upgrade procedures, this will be taken care of for you.
+command from /.
 .
 .
 .

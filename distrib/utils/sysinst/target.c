@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.18 1999/01/21 08:02:18 garbled Exp $	*/
+/*	$NetBSD: target.c,v 1.19 1999/01/25 23:34:24 garbled Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.18 1999/01/21 08:02:18 garbled Exp $");
+__RCSID("$NetBSD: target.c,v 1.19 1999/01/25 23:34:24 garbled Exp $");
 #endif
 
 /*
@@ -399,6 +399,8 @@ make_ramdisk_dir(path)
 	make_prefixed_dir(path, "");
 }
 
+#if 0
+/* unused, will not work with new run.c */
 /*
  *
  * Append |string| to the  filename |path|, where |path| is
@@ -451,6 +453,7 @@ trunc_target_file(path)
 
 	run_prog(1, 0, "cat < /dev/null > %s",  target_expand(path));
 }
+#endif /* if 0 */
 
 static int
 do_target_chdir(dir, must_succeed)

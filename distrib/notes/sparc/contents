@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.13 1998/01/28 10:38:15 is Exp $	
+	$NetBSD: contents,v 1.14 1999/01/25 23:34:23 garbled Exp $	
 
 The sparc-specific portion of the NetBSD _VER release is found in the
 "sparc" subdirectory of the distribution.  That subdirectory is laid
@@ -116,10 +116,7 @@ form a gzipped tar file.  Each sparc binary distribution set also has
 its own "CKSUMS" file, just as the source distribution sets do.  The
 binary sets are "rooted" at /, that is, if you want to extract the
 binaries "into" your system, i.e.  replace the system binaries with
-them, you have to run the "tar xfp" from /.  Also note that if you
-upgrade or install this way, those programs that you are using at the
-time will NOT be replaced.  If you follow the normal installation or
-upgrade procedures, this will be taken care of for you.
+them, you have to run the "tar xfp" from /.
 
 Note the distribution cannot be extracted using the SunOS "tar" program so
 SunOS statically-linked versions of gzip (GNU gzip) and gtar (GNU tar)

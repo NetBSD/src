@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.tmpl,v 1.1 1997/10/18 04:05:48 mark Exp $
+#	$NetBSD: upgrade.tmpl,v 1.2 1999/01/25 23:34:21 garbled Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -145,7 +145,7 @@ echo -n	"Copying new fsck binary to your hard disk..."
 if [ ! -d /mnt/sbin ]; then
 	mkdir /mnt/sbin
 fi
-(cd / ; tar -cf - ./sbin/* ) | (cd /mnt ; tar -xpf - )
+(cd / ; pax -rwpe ./sbin/* /mnt)
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: COPY FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
@@ -193,7 +193,7 @@ echo	""
 echo	"Copying bootstrapping binaries and config files to the hard drive..."
 cd /
 $DONTDOIT cp /mnt/.profile /mnt/.profile.bak
-$DONTDOIT tar --exclude etc --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
+$DONTDOIT pax -s '#^/etc/.*##' -Xrwpe . /mnt
 $DONTDOIT mv /mnt/etc/rc /mnt/etc/rc.bak
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 echo	"Upgrading kernel (old kernel is /netbsd.bak)"

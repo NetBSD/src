@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.13 1999/01/13 07:30:06 ross Exp $
+.\"	$NetBSD: upgrade,v 1.14 1999/01/25 23:34:22 garbled Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,13 +140,10 @@ partitions by hand using the MiniShell before installing). If you are
 installing from within NetBSD, do the following:
 .Bd -literal -offset indent
 cd /
-tar --unlink -zxvpf /path/to/base.tgz
+pax -zrvpe -f /path/to/base.tgz
 .Ed
 .Pp
-It is crucial that you use the 
-.Cm --unlink
-flag when invoking tar or you
-will fail to correctly overwrite some files. Keep in mind that there is
+Keep in mind that there is
 no going back once you have installed the base set short of a complete
 re-install of an earlier distribution. Continue with the appropriate
 command line for each of the other sets you wish to install except for
@@ -165,7 +162,7 @@ install the
 If you are in NetBSD, do the following instead:
 .Bd -literal -offset indent
 cd /tmp
-tar --unlink -zxvpf /path/to/etc.tgz
+tar -zrvpe -f /path/to/etc.tgz
 .Ed
 .It
 If you are in the Installer, quit it and boot into

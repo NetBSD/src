@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$NetBSD: install.sh,v 1.5 1998/01/06 04:45:19 perry Exp $
+#	$NetBSD: install.sh,v 1.6 1999/01/25 23:34:24 garbled Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -433,7 +433,7 @@ fi
 
 echo	""
 echo    "Populating filesystems with bootstrapping binaries and config files"
-$DONTDOIT tar --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
+$DONTDOIT pax -Xrwpe . /mnt
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 $DONTDOIT gzip -d /mnt/netbsd.gz
 
