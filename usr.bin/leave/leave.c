@@ -1,4 +1,4 @@
-/*	$NetBSD: leave.c,v 1.5 1997/07/15 02:14:35 mikel Exp $	*/
+/*	$NetBSD: leave.c,v 1.6 1997/07/15 02:31:13 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: leave.c,v 1.5 1997/07/15 02:14:35 mikel Exp $");
+__RCSID("$NetBSD: leave.c,v 1.6 1997/07/15 02:31:13 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,9 +113,13 @@ main(argc, argv)
 	if (plusnow)
 		secs = hours * 60 * 60 + minutes * 60;
 	else {
-		if (hours > 23 || t->tm_hour > hours ||
-		    (t->tm_hour == hours && minutes <= t->tm_min))
+		if (hours > 23)
 			usage();
+		if (t->tm_hour >= 12)
+			t->tm_hour -= 12;
+		if (t->tm_hour > hours ||
+		    (t->tm_hour == hours && minutes <= t->tm_min))
+			hours += 12;
 		secs = (hours - t->tm_hour) * 60 * 60;
 		secs += (minutes - t->tm_min) * 60;
 	}
