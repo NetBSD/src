@@ -1,13 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/08 13:57:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/12/20 12:56:00 rtr Exp $
 
 NOPIC=	1
 
 .include <bsd.own.mk>
 
 LIB=	lbxutil
-
-SUBDIR=	mkg3states
-
 
 .PATH:	${X11SRCDIR.xc}/lib/${LIB}/lbx_zlib
 SRCS=	lbx_zlib.c lbx_zlib_io.c reqstats.c
@@ -23,13 +20,10 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I.
 
-MKG3STATESDIR!=	cd ${.CURDIR}/mkg3states && ${PRINTOBJDIR}
+MKG3STATESDIR!=	cd ${NETBSDSRCDIR}/x11/tools/mkg3states && ${PRINTOBJDIR}
 MKG3STATES=	${MKG3STATESDIR}/mkg3states
 
-${MKG3STATES}:
-	(cd ${.CURDIR}/mkg3states && ${MAKE})
-
-g3states.h: ${MKG3STATES}
+g3states.h:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${MKG3STATES} > ${.TARGET}
@@ -39,4 +33,3 @@ dfaxg42d.c: g3states.h
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
-.include <bsd.subdir.mk>
