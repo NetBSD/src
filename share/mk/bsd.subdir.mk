@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.14 1997/03/29 08:02:56 mikel Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.15 1997/04/15 21:32:40 christos Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
@@ -23,9 +23,13 @@ __SUBDIRINTERNALUSE: .USE
 	else \
 		_nextdir_="$${_THISDIR_}/$${_newdir_}"; \
 	fi; \
-	echo "===> $${_nextdir_}"; \
-	cd ${.CURDIR}/$${_newdir_}; \
-	${MAKE} _THISDIR_="$${_nextdir_}" $${target});
+	if test -d ${.CURDIR}/$${_newdir_}; then \
+		echo "===> $${_nextdir_}"; \
+		cd ${.CURDIR}/$${_newdir_}; \
+		${MAKE} _THISDIR_="$${_nextdir_}" $${target}; \
+	else \
+		echo "===> $${_nextdir_} [skipped]"; \
+	fi)
 
 .for dir in ${SUBDIR}
 all-${dir}: __SUBDIRINTERNALUSE
