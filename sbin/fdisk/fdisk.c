@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.40 2000/05/27 19:02:54 fvdl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.41 2000/06/14 19:35:50 wiz Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.40 2000/05/27 19:02:54 fvdl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.41 2000/06/14 19:35:50 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -186,6 +186,9 @@ struct part_type {
 	{0x41, "Linux/MINIX (sharing disk with DRDOS) or Personal RISC boot"},
 	{0x42, "SFS or Linux swap (sharing disk with DRDOS)"},
 	{0x43, "Linux native (sharing disk with DRDOS)"},
+	{0x4D, "QNX4.x"},
+	{0x4E, "QNX4.x 2nd part"},
+	{0x4F, "QNX4.x 3rd part"},
 	{0x50, "DM (disk manager)"},
 	{0x51, "DM6 Aux1 (or Novell)"},
 	{0x52, "CP/M or Microport SysV/AT"},
@@ -208,9 +211,6 @@ struct part_type {
 	{0x74, reserved},
 	{0x75, "PC/IX"},
 	{0x76, reserved},
-	{0x77, "QNX4.x"},
-	{0x78, "QNX4.x 2nd part"},
-	{0x79, "QNX4.x 3rd part"},
 	{0x80, "MINIX until 1.4a"},
 	{0x81, "MINIX since 1.4b, early Linux, Mitac dmgr"},
 	{0x82, "Linux swap or Prime or Solaris"},
