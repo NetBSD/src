@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.10 1997/03/23 01:22:36 is Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.11 1997/03/25 02:30:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -52,6 +52,7 @@ struct	arphdr {
 #define ARPHRD_ETHER 	1	/* ethernet hardware format */
 #define ARPHRD_ARCNET 	7	/* ethernet hardware format */
 #define ARPHRD_FRELAY 	15	/* frame relay hardware format */
+#define ARPHRD_STRIP 	23	/* Ricochet Starmode Radio hardware format */
 	u_int16_t ar_pro;	/* format of protocol address */
 	u_int8_t  ar_hln;	/* length of hardware address */
 	u_int8_t  ar_pln;	/* length of protocol address */
