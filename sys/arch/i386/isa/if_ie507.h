@@ -1,5 +1,5 @@
 /*
- * $Id: if_ie507.h,v 1.2 1994/02/16 19:04:42 mycroft Exp $
+ * $Id: if_ie507.h,v 1.3 1994/03/31 06:16:37 mycroft Exp $
  * Definitions for 3C507
  */
 
@@ -11,6 +11,7 @@
 
 #define	EL_CTRL_BNK1	0x01	/* register bank 1 */
 #define	EL_CTRL_IEN	0x04	/* interrupt enable */
+#define	EL_CTRL_INTL	0x08	/* interrupt active latch */
 #define	EL_CTRL_16BIT	0x10	/* bus width; clear = 8-bit, set = 16-bit */
 #define	EL_CTRL_LOOP	0x20	/* loopback mode */
 #define	EL_CTRL_NRST	0x80	/* turn off to reset */
