@@ -1,16 +1,15 @@
-#	$NetBSD: bsd.links.mk,v 1.18 2002/03/21 12:59:56 pk Exp $
+#	$NetBSD: bsd.links.mk,v 1.19 2002/04/30 14:29:01 sommerfeld Exp $
 
 ##### Basic targets
 .PHONY:		linksinstall
 install:	linksinstall
-linksinstall::	realinstall
 
 ##### Default values
 LINKS?=
 SYMLINKS?=
 
 ##### Install rules
-linksinstall::
+linksinstall::	realinstall
 .if !empty(SYMLINKS)
 	@(set ${SYMLINKS}; \
 	 while test $$# -ge 2; do \
