@@ -18,15 +18,14 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /*
- * $Id: tc-i386.h,v 1.1 1993/10/02 20:59:21 pk Exp $
+ * $Id: tc-i386.h,v 1.2 1994/06/22 15:14:32 pk Exp $
  */
 
 #ifndef TC_I386
 #define TC_I386 1
 
-#if 0
-#define AOUT_MACHTYPE 100
-#endif
+#define AOUT_MACHTYPE 134
+
 #define REVERSE_SORT_RELOCS
 
 #define LOCAL_LABELS_FB
