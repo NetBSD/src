@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.20 1997/03/22 22:33:53 perry Exp $
+#	$NetBSD: bsd.README,v 1.21 1997/03/24 21:54:13 christos Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -56,7 +56,19 @@ the tree where the file gets installed.
 
 The profiled libraries are no longer built in a different directory than
 the regular libraries.  A new suffix, ".po", is used to denote a profiled
-object.
+object, and ".so" denotes a shared (position-independent) object.
+
+There are two variables that control how things are made/installed that
+are not set by default:
+
+BUILD 		If set 'make install' checks that the targets in the source
+                directories are up-to-date and remakes them if they
+                are out of date, instead of blindly trying to install
+                out of date or non-existant targets.
+
+UPDATE 		'make install' only installs targets that are more recently
+                modified in the source directories that their installed
+                counterparts.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -68,10 +80,12 @@ environment or otherwise.  You probably don't want to touch this file.
 The include file <bsd.man.mk> handles installing manual pages and their
 links.
 
-It has a single target:
+It has a two targets:
 
 	maninstall:
-		Install the manual pages and their links.
+		Install the manual page sources and their links.
+	catinstall:
+		Install the preformatted manual pages and their links.
 
 It sets/uses the following variables:
 
@@ -111,6 +125,8 @@ is included.  These files may define any of the variables described below.
 bsd.own.mk sets the following variables, if they are not already defined
 (defaults are in brackets):
 
+
+
 BSDSRCDIR	The real path to the system sources, so that 'make obj'
 		will work correctly. [/usr/src]
 
@@ -132,6 +148,8 @@ MANGRP		Manual group. [bin]
 MANOWN		Manual owner. [bin]
 
 MANMODE		Manual mode. [${NONBINMODE}]
+
+MANINSTALL	Manual installation type: maninstall, catinstall, or both
 
 LIBDIR		Base path for library installation. [/usr/lib]
 
@@ -277,6 +295,9 @@ MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 PROG		The name of the program to build.  If not supplied, nothing
 		is built.
 
+PROGNAME	The name that the above program will be installed as, if
+		different from ${PROG}.
+
 SRCS		List of source files to build the program.  If PROG is not
 		defined, it's assumed to be ${PROG}.c.
 
@@ -288,23 +309,36 @@ DPADD		Additional dependencies for the program.  Usually used for
 
 		The following libraries are predefined for DPADD:
 
-			LIBC		/lib/libc.a
-			LIBCOMPAT	/usr/lib/libcompat.a
-			LIBCRYPT	/usr/lib/libcrypt.a
-			LIBCURSES	/usr/lib/libcurses.a
-			LIBDBM		/usr/lib/libdbm.a
-			LIBDES		/usr/lib/libdes.a
-			LIBL		/usr/lib/libl.a
-			LIBKDB		/usr/lib/libkdb.a
-			LIBKRB		/usr/lib/libkrb.a
-			LIBKVM		/usr/lib/libkvm.a
-			LIBM		/usr/lib/libm.a
-			LIBMP		/usr/lib/libmp.a
-			LIBPC		/usr/lib/libpc.a
-			LIBPLOT		/usr/lib/libplot.a
-			LIBRPC		/usr/lib/sunrpc.a
-			LIBTERM		/usr/lib/libterm.a
-			LIBUTIL		/usr/lib/libutil.a
+		LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+		LIBC?=		${DESTDIR}/usr/lib/libc.a
+		LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
+		LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
+		LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
+		LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
+		LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
+		LIBDES?=	${DESTDIR}/usr/lib/libdes.a
+		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
+		LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
+		LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
+		LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
+		LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
+		LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
+		LIBL?=		${DESTDIR}/usr/lib/libl.a
+		LIBM?=		${DESTDIR}/usr/lib/libm.a
+		LIBMP?=		${DESTDIR}/usr/lib/libmp.a
+		LIBPC?=		${DESTDIR}/usr/lib/libpc.a
+		LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
+		LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
+		LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
+		LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
+		LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
+		LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
+		LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
+		LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
+		LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
+		LIBY?=		${DESTDIR}/usr/lib/liby.a
+		LIBZ?=		${DESTDIR}/usr/lib/libz.a
+
 
 SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
 		strings, using xstr(1). Note that this will not work with
@@ -316,6 +350,17 @@ STRIP		The flag passed to the install program to cause the binary
 SUBDIR		A list of subdirectories that should be built as well.
 		Each of the targets will execute the same target in the
 		subdirectories.
+
+SCRIPTS		A list of interpreter scripts [file.{sh,csh,pl,awk,...}].
+		These are installed exactly like programs.
+
+SCRIPTSNAME	The name that the above program will be installed as, if
+		different from ${SCRIPTS}. These can be further specialized
+		by setting SCRIPTSNAME_<script>.
+
+FILES		A list of files to install. The installation is controlled
+		by the FILESNAME, FILESOWN, FILESGRP, FILESMODE, FILESDIR
+		variables that can be further specialized by FILES<VAR>_<file>
 
 The include file <bsd.prog.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.
@@ -349,6 +394,19 @@ the directories listed in the variable SUBDIRS, the specified directory
 will be visited and the target made.  There is also a default target which
 allows the command "make subdir" where subdir is any directory listed in
 the variable SUBDIRS.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.links.mk> handles the LINKS and SYMLINKS targets.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.inc.mk> defines the includes target and uses two
+variables:
+
+INCS	The list of include files
+
+INCSDIR	The location to install the include files.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
