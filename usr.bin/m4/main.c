@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1999/06/23 19:09:35 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1999/08/16 02:49:20 enami Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 1999/06/23 19:09:35 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 1999/08/16 02:49:20 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,16 +243,17 @@ main(argc,argv)
 	for (n = 1; n < MAXOUT; n++)	/* default wrap-up: undivert */
 		if (outfile[n] != NULL)
 			getdiv(n);
-					/* remove bitbucket if used  */
-	if (outfile[0] != NULL) {
+					/* close bitbucket if used  */
+	if (outfile[0] != NULL)
 		(void) fclose(outfile[0]);
-		m4temp[UNIQUE] = '0';
+
+	/* always remove bitbucket since mkstemp(3) creates it */
+	m4temp[UNIQUE] = '0';
 #ifdef vms
-		(void) remove(m4temp);
+	(void) remove(m4temp);
 #else
-		(void) unlink(m4temp);
+	(void) unlink(m4temp);
 #endif
-	}
 
 	return 0;
 }
