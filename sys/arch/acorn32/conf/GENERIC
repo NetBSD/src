@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.23 2002/10/19 05:55:10 junyoung Exp $
+# 	$NetBSD: GENERIC,v 1.24 2002/11/22 12:20:58 wiz Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.23 $"
+#ident		"GENERIC-$Revision: 1.24 $"
 
 # estimated number of users
 maxusers	32
@@ -131,7 +131,7 @@ options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-# Enable experimental buffer queue strategy for better responsiness under 
+# Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
 

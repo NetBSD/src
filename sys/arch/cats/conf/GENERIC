@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 2002/10/27 17:57:13 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.43 2002/11/22 12:21:00 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -34,7 +34,7 @@ options 	INSECURE	# disable kernel securelevel
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
-# Enable experimental buffer queue strategy for better responsiness under 
+# Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
 
