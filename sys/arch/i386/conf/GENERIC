@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.225 1999/03/25 03:35:26 explorer Exp $
+#	$NetBSD: GENERIC,v 1.226 1999/03/25 17:06:38 perry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -290,7 +290,7 @@ lpt*	at puc? port ?			# || ports on "universal" comm boards
 
 # ISA parallel printer interfaces
 # BROKEN_LPT_DELAY can fix hangs and reboots in interrupt driven lpt
-#option	BROKEN_LPT_DELAY=5
+#options 	BROKEN_LPT_DELAY=5
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
