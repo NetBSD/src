@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.86 2002/01/16 02:11:20 ichiro Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.87 2002/01/16 03:27:37 ichiro Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.86 2002/01/16 02:11:20 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.87 2002/01/16 03:27:37 ichiro Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -1426,7 +1426,9 @@ ahc_detach(struct ahc_softc *ahc, int flags)
 
 	if (ahc->child != NULL)
 		rv = config_detach(ahc->child, flags);
-        
+
+	ahc_free(ahc);
+
         return (rv);
 }
 
