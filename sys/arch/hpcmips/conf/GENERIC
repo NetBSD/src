@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.28 2000/02/11 03:20:17 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.29 2000/02/12 03:21:06 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	8
 
@@ -25,7 +25,6 @@ options 	DDB			# in-kernel debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
-options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 
 options 	SCSIVERBOSE		# human readable SCSI error messages
 #options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
