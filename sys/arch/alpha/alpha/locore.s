@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.66 1999/11/01 19:59:58 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.67 1999/11/01 22:41:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.66 1999/11/01 19:59:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.67 1999/11/01 22:41:55 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -401,41 +401,28 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
-	bne	t0, 5f				/* != 0: can't do AST or SIR */
+	bne	t0, 4f				/* != 0: can't do AST or SIR */
 
 	/* see if we can do an SIR */
-	ldq	t1, ssir			/* SIR pending? */
-	beq	t1, 2f				/* no, try an AST*/
+2:	ldq	t1, ssir			/* SIR pending? */
+	bne	t1, 5f				/* yes */
+	/* no */
 
-	/* We've got a SIR. */
-	CALL(do_sir)				/* do the SIR; lowers IPL */
+	/* check for AST */
+3:	and	s1, ALPHA_PSL_USERMODE, t0	/* are we returning to user? */
+	beq	t0, 4f				/* no: just return */
+	/* yes */
 
-	/* Check for AST */
-2:	and	s1, ALPHA_PSL_USERMODE, t0	/* are we returning to user? */
-	beq	t0, 5f				/* no: just return */
-
-3:	ldq	t2, astpending			/* AST pending? */
-	beq	t2, 4f				/* no: return & deal with FP */
-
-	/* We've got an AST.  Handle it. */
-	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
-	call_pal PAL_OSF1_swpipl
-	mov	v0, s2				/* remember old IPL */
-
-	mov	sp, a0				/* only arg is frame */
-	CALL(ast)
-
-	/* AST handled; raise IPL and check again */
-	mov	s2, a0
-	call_pal PAL_OSF1_swpipl
-	beq	zero, 3b
+	ldq	t2, astpending			/* AST pending? */
+	bne	t2, 6f				/* yes */
+	/* no: return & deal with FP */
 
 	/*
 	 * We are going back to usermode.  Enable the FPU based on whether
 	 * the current proc is fpcurproc.  Note: GET_*() clobbers v0, t0,
 	 * t8...t11.
 	 */
-4:	GET_CURPROC(t1)
+	GET_CURPROC(t1)
 	ldq	t1, 0(t1)
 	GET_FPCURPROC(t2)
 	ldq	t2, 0(t2)
@@ -444,8 +431,8 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	cmovne	t1, 1, a0
 	call_pal PAL_OSF1_wrfen
 
-5:	/* restore the registers, and return */
-	bsr	ra, exception_restore_regs	/* jmp/CALL trashes pv/t12 */
+	/* restore the registers, and return */
+4:	bsr	ra, exception_restore_regs	/* jmp/CALL trashes pv/t12 */
 	ldq	ra,(FRAME_RA*8)(sp)
 	.set noat
 	ldq	at_reg,(FRAME_AT*8)(sp)
@@ -453,6 +440,32 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	lda	sp,(FRAME_SW_SIZE*8)(sp)
 	call_pal PAL_OSF1_rti
 	.set at
+	/* NOTREACHED */
+
+	/* We've got a SIR */
+5:	ldiq	a0, ALPHA_PSL_IPL_SOFT
+	call_pal PAL_OSF1_swpipl
+	mov	v0, s2				/* remember old IPL */
+	CALL(do_sir)
+
+	/* SIR handled; restore IPL and check again */
+	mov	s2, a0
+	call_pal PAL_OSF1_swpipl
+	br	2b
+
+	/* We've got an AST */
+6:	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
+	call_pal PAL_OSF1_swpipl
+	mov	v0, s2				/* remember old IPL */
+
+	mov	sp, a0				/* only arg is frame */
+	CALL(ast)
+
+	/* AST handled; restore IPL and check again */
+	mov	s2, a0
+	call_pal PAL_OSF1_swpipl
+	br	3b
+
 	END(exception_return)
 
 LEAF(exception_save_regs, 0)
