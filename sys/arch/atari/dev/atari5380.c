@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.31 2000/03/29 14:19:22 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.32 2001/07/09 14:49:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_atariscsi.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
