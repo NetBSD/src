@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.47 2002/05/07 02:59:38 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.48 2002/06/30 22:40:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -182,6 +182,12 @@ struct ipflow {
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
+
+#ifdef __NO_STRICT_ALIGNMENT
+#define	IP_HDR_ALIGNED_P(ip)	1
+#else
+#define	IP_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
+#endif
 
 extern struct ipstat ipstat;		/* ip statistics */
 extern LIST_HEAD(ipqhead, ipq) ipq;	/* ip reass. queue */

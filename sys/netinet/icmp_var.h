@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.20 2002/06/09 16:33:37 itojun Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.21 2002/06/30 22:40:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -83,6 +83,12 @@ struct	icmpstat {
 
 #ifdef _KERNEL
 struct	icmpstat icmpstat;
+
+#ifdef __NO_STRICT_ALIGNMENT
+#define	ICMP_HDR_ALIGNED_P(ic)	1
+#else
+#define	ICMP_HDR_ALIGNED_P(ic)	((((vaddr_t) (ic)) & 3) == 0)
 #endif
+#endif /* _KERNEL_ */
 
 #endif /* _NETINET_ICMP_VAR_H_ */
