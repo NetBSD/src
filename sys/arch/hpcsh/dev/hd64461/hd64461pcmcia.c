@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.24 2004/03/27 02:24:01 uwe Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.25 2004/03/27 02:53:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.24 2004/03/27 02:24:01 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.25 2004/03/27 02:53:12 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -365,10 +365,25 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	struct hd64461pcmcia_channel *ch = &sc->sc_ch[channel];
 	struct pcmciabus_attach_args paa;	
 	bus_addr_t membase;
+	bus_addr_t gcr;
+	uint8_t r;
 	int i;
 
 	ch->ch_parent = sc;
 	ch->ch_channel = channel;
+
+	/*
+	 * DRV (external buffer) high level
+	 * 
+	 * XXX: This hack makes pcmcia cards "being used" at the boot
+	 * time (by WinCE or NetBSD) correctly detected.
+	 */
+	gcr = HD64461_PCCGCR(channel);
+	r = hd64461_reg_read_1(gcr);
+	if (r & HD64461_PCCGCR_DRVE) {
+		r &= ~HD64461_PCCGCR_DRVE;
+		hd64461_reg_write_1(gcr, r);
+	}
 
 	/* 
 	 * Continuous 16-MB Area Mode 
