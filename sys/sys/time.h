@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.9 1994/09/18 21:55:43 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.10 1994/12/11 17:02:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -83,6 +83,24 @@ struct timezone {
 	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
 	    ((tvp)->tv_usec cmp (uvp)->tv_usec) :			\
 	    ((tvp)->tv_sec cmp (uvp)->tv_sec))
+#define	__timeradd(tvp, uvp)						\
+	do {								\
+		(tvp)->tv_sec += (uvp)->tv_sec;				\
+		(tvp)->tv_usec += (uvp)->tv_usec;			\
+		if ((tvp)->tv_usec >= 1000000) {			\
+			(tvp)->tv_sec++;				\
+			(tvp)->tv_usec -= 1000000;			\
+		}							\
+	} while (0)
+#define	__timersub(tvp, uvp)						\
+	do {								\
+		(tvp)->tv_sec -= (uvp)->tv_sec;				\
+		(tvp)->tv_usec -= (uvp)->tv_usec;			\
+		if ((tvp)->tv_usec < 0) {				\
+			(tvp)->tv_sec--;				\
+			(tvp)->tv_usec += 1000000;			\
+		}							\
+	} while (0)
 
 /*
  * Names of the interval timers, and structure
