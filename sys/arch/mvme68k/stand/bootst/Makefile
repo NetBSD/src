@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.6 2000/06/25 16:39:06 scw Exp $
+#	$NetBSD: Makefile,v 1.7 2000/07/09 13:47:33 jdolecek Exp $
 
 RELOC=0x3F0000 
 
@@ -15,18 +15,16 @@ CLEANFILES+=stboot bootst bootst.bug
 .include "${S}/arch/mvme68k/stand/bugcrt/Makefile.inc"
 .include "${S}/arch/mvme68k/stand/wrtvid/Makefile.inc"
 
+PROG=dummy
+MKMAN=no
 SRCS=   boot.c conf.c dev_tape.c rawfs.c version.c
 LIBS=	${LIBSA} ${LIBBUG}
-OBJS=   ${SRCS:S/.c/.o/g}
 
-realall:	bootst stboot
-
-bootst.bug:	${OBJS} ${BUGCRT} ${LIBS}
-	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o $@
+${PROG}: ${OBJS} ${BUGCRT} ${LIBS}
+	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o bootst.bug
 	@size bootst.bug
-
-bootst stboot: bootst.bug ${WRTVID}
-	${WRTVID} bootst.bug
+	@${WRTVID} bootst.bug # creates bootst  and stboot
+	touch ${PROG}
 
 install:
 	${INSTALL} -c -m 555 -g bin -o bin bootst ${DESTDIR}${MDEC_DIR}
