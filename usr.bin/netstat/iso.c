@@ -1,6 +1,6 @@
-/*-
- * Copyright (c) 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)iso.c	5.6 (Berkeley) 4/27/91";*/
-static char rcsid[] = "$Id: iso.c,v 1.8 1994/04/01 09:18:11 cgd Exp $";
+/*static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: iso.c,v 1.9 1994/05/13 08:08:13 mycroft Exp $";
 #endif /* not lint */
 
 /*******************************************************************************
@@ -41,13 +41,13 @@ static char rcsid[] = "$Id: iso.c,v 1.8 1994/04/01 09:18:11 cgd Exp $";
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
@@ -63,7 +63,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
-#include <stdio.h>
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/time.h>
@@ -74,6 +73,11 @@ SOFTWARE.
 #include <errno.h>
 #include <net/if.h>
 #include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
 #include <netiso/iso.h>
 #include <netiso/iso_errno.h>
 #include <netiso/clnp.h>
@@ -92,63 +96,31 @@ SOFTWARE.
 #undef IncStat
 #endif
 #include <netiso/cons_pcb.h>
+#include <arpa/inet.h>
 #include <netdb.h>
-#include <nlist.h>
-#include <kvm.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "netstat.h"
 
-char *tp_sstring[] = {
-    "ST_ERROR(0x0)",
-    "TP_CLOSED(0x1)",
-    "TP_CRSENT(0x2)",
-    "TP_AKWAIT(0x3)",
-    "TP_OPEN(0x4)",
-    "TP_CLOSING(0x5)",
-    "TP_REFWAIT(0x6)",
-    "TP_LISTENING(0x7)",
-    "TP_CONFIRMING(0x8)",
-};
-
-char *tp_estring[] = {
-    "TM_inact(0x0)",
-    "TM_retrans(0x1)",
-    "TM_sendack(0x2)",
-    "TM_notused(0x3)",
-    "TM_reference(0x4)",
-    "TM_data_retrans(0x5)",
-    "ER_TPDU(0x6)",
-    "CR_TPDU(0x7)",
-    "DR_TPDU(0x8)",
-    "DC_TPDU(0x9)",
-    "CC_TPDU(0xa)",
-    "AK_TPDU(0xb)",
-    "DT_TPDU(0xc)",
-    "XPD_TPDU(0xd)",
-    "XAK_TPDU(0xe)",
-    "T_CONN_req(0xf)",
-    "T_DISC_req(0x10)",
-    "T_LISTEN_req(0x11)",
-    "T_DATA_req(0x12)",
-    "T_XPD_req(0x13)",
-    "T_USR_rcvd(0x14)",
-    "T_USR_Xrcvd(0x15)",
-    "T_DETACH(0x16)",
-    "T_NETRESET(0x17)",
-    "T_ACPT_req(0x18)",
-};
+static void tprintstat __P((struct tp_stat *, int));
+static void isonetprint __P((struct sockaddr_iso *, int));
+static void hexprint __P((int, char *, char *));
+extern void inetprint __P((struct in_addr *, int, char *));
 
 /*
  *	Dump esis stats
  */
+void
 esis_stats(off, name)
-	u_long off;
+	u_long	off;
 	char	*name;
 {
 	struct esis_stat esis_stat;
 
-	if (off == 0)
+	if (off == 0 ||
+	    kread(off, (char *)&esis_stat, sizeof (struct esis_stat)))
 		return;
-	kvm_read((void *)(long)off, (char *)&esis_stat,
-	    sizeof (struct esis_stat));
 	printf("%s:\n", name);
 	printf("\t%d esh sent, %d esh received\n", esis_stat.es_eshsent,
 		esis_stat.es_eshrcvd);
@@ -156,10 +128,10 @@ esis_stats(off, name)
 		esis_stat.es_ishrcvd);
 	printf("\t%d rd sent, %d rd received\n", esis_stat.es_rdsent,
 		esis_stat.es_rdrcvd);
-	printf("\t%d pdus not sent due to insufficient memory\n", 
+	printf("\t%d pdus not sent due to insufficient memory\n",
 		esis_stat.es_nomem);
 	printf("\t%d pdus received with bad checksum\n", esis_stat.es_badcsum);
-	printf("\t%d pdus received with bad version number\n", 
+	printf("\t%d pdus received with bad version number\n",
 		esis_stat.es_badvers);
 	printf("\t%d pdus received with bad type field\n", esis_stat.es_badtype);
 	printf("\t%d short pdus received\n", esis_stat.es_toosmall);
@@ -168,49 +140,51 @@ esis_stats(off, name)
 /*
  * Dump clnp statistics structure.
  */
+void
 clnp_stats(off, name)
 	u_long off;
 	char *name;
 {
 	struct clnp_stat clnp_stat;
 
-	if (off == 0)
+	if (off == 0 ||
+	    kread(off, (char *)&clnp_stat, sizeof (clnp_stat)))
 		return;
-	kvm_read((void *)(long)off, (char *)&clnp_stat, sizeof (clnp_stat));
 
 	printf("%s:\n\t%d total packets sent\n", name, clnp_stat.cns_sent);
 	printf("\t%d total fragments sent\n", clnp_stat.cns_fragments);
 	printf("\t%d total packets received\n", clnp_stat.cns_total);
-	printf("\t%d with fixed part of header too small\n", 
+	printf("\t%d with fixed part of header too small\n",
 		clnp_stat.cns_toosmall);
 	printf("\t%d with header length not reasonable\n", clnp_stat.cns_badhlen);
-	printf("\t%d incorrect checksum%s\n", 
+	printf("\t%d incorrect checksum%s\n",
 		clnp_stat.cns_badcsum, plural(clnp_stat.cns_badcsum));
 	printf("\t%d with unreasonable address lengths\n", clnp_stat.cns_badaddr);
-	printf("\t%d with forgotten segmentation information\n", 
+	printf("\t%d with forgotten segmentation information\n",
 		clnp_stat.cns_noseg);
 	printf("\t%d with an incorrect protocol identifier\n", clnp_stat.cns_noproto);
 	printf("\t%d with an incorrect version\n", clnp_stat.cns_badvers);
-	printf("\t%d dropped because the ttl has expired\n", 
+	printf("\t%d dropped because the ttl has expired\n",
 		clnp_stat.cns_ttlexpired);
 	printf("\t%d clnp cache misses\n", clnp_stat.cns_cachemiss);
-	printf("\t%d clnp congestion experience bits set\n", 
+	printf("\t%d clnp congestion experience bits set\n",
 		clnp_stat.cns_congest_set);
-	printf("\t%d clnp congestion experience bits received\n", 
+	printf("\t%d clnp congestion experience bits received\n",
 		clnp_stat.cns_congest_rcvd);
 }
 /*
  * Dump CLTP statistics structure.
  */
+void
 cltp_stats(off, name)
 	u_long off;
 	char *name;
 {
 	struct cltpstat cltpstat;
 
-	if (off == 0)
+	if (off == 0 ||
+	    kread(off, (char *)&cltpstat, sizeof (cltpstat)))
 		return;
-	kvm_read((void *)(long)off, (char *)&cltpstat, sizeof (cltpstat));
 	printf("%s:\n\t%u incomplete header%s\n", name,
 		cltpstat.cltps_hdrops, plural(cltpstat.cltps_hdrops));
 	printf("\t%u bad data length field%s\n",
@@ -223,14 +197,11 @@ struct	tp_pcb tpcb;
 struct	isopcb isopcb;
 struct	socket sockb;
 union	{
-struct sockaddr_iso	siso;
-char	data[128];
+	struct sockaddr_iso	siso;
+	char	data[128];
 } laddr, faddr;
 #define kget(o, p) \
-	(kvm_read((void *)(long)(o), (char *)&p, sizeof (p)))
-extern	int Aflag;
-extern	int aflag;
-extern	int nflag;
+	(kread((u_long)(o), (char *)&p, sizeof (p)))
 
 static	int first = 1;
 
@@ -240,26 +211,29 @@ static	int first = 1;
  * Listening processes (aflag) are suppressed unless the
  * -a (all) flag is specified.
  */
+void
 iso_protopr(off, name)
 	u_long off;
 	char *name;
 {
 	struct isopcb cb;
 	register struct isopcb *prev, *next;
-	int istp = (strcmp(name, "tp") == 0);
 
 	if (off == 0) {
-#ifdef DEBUG
 		printf("%s control block: symbol not in namelist\n", name);
-#endif
 		return;
 	}
-	kget(off, cb);
-	isopcb = cb;
-	prev = (struct isopcb *)(long)off;
-	if (isopcb.isop_next == (struct isopcb *)(long)off)
+	if (strcmp(name, "tp") == 0) {
+		tp_protopr(off, name);
 		return;
-	while (isopcb.isop_next != (struct isopcb *)(long)off) {
+	}
+	if (kread(off, (char *)&cb, sizeof(cb)))
+		return;
+	isopcb = cb;
+	prev = (struct isopcb *)off;
+	if (isopcb.isop_next == (struct isopcb *)off)
+		return;
+	while (isopcb.isop_next != (struct isopcb *)off) {
 		next = isopcb.isop_next;
 		kget(next, isopcb);
 		if (isopcb.isop_prev != prev) {
@@ -268,66 +242,125 @@ iso_protopr(off, name)
 			break;
 		}
 		kget(isopcb.isop_socket, sockb);
-		if (istp) {
-			kget(sockb.so_tpcb, tpcb);
-			if (tpcb.tp_state == ST_ERROR)
-				fprintf(stderr,"addr: 0x%x, prev 0x%x\n", next, prev);
-			if (!aflag &&
-				tpcb.tp_state == TP_LISTENING ||
-				tpcb.tp_state == TP_CLOSED ||
-				tpcb.tp_state == TP_REFWAIT) {
-				prev = next;
-				continue;
-			}
-		}
-		if (first) {
-			printf("Active ISO net connections");
-			if (aflag)
-				printf(" (including servers)");
-			putchar('\n');
-			if (Aflag)
-				printf("%-8.8s ", "PCB");
-			printf(Aflag ?
-				"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-				"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
-				"Proto", "Recv-Q", "Send-Q",
-				"Local Address", "Foreign Address", "(state)");
-			first = 0;
-		}
-		if (Aflag)
-			printf("%8x ",
-			    (istp ? (long)sockb.so_tpcb : (long)next));
-		printf("%-5.5s %6d %6d ", name, sockb.so_rcv.sb_cc,
-			sockb.so_snd.sb_cc);
-		if (isopcb.isop_laddr == 0)
-			printf("*.*\t");
-		else {
-			if ((char *)isopcb.isop_laddr == ((char *)next) +
-				_offsetof(struct isopcb, isop_sladdr))
-				laddr.siso = isopcb.isop_sladdr;
-			else
-				kget(isopcb.isop_laddr, laddr);
-			isonetprint(&laddr, 1);
-		}
-		if (isopcb.isop_faddr == 0)
-			printf("*.*\t");
-		else {
-			if ((char *)isopcb.isop_faddr == ((char *)next) +
-				_offsetof(struct isopcb, isop_sfaddr))
-				faddr.siso = isopcb.isop_sfaddr;
-			else
-				kget(isopcb.isop_faddr, faddr);
-			isonetprint(&faddr, 0);
-		}
-		if (istp) {
-			if (tpcb.tp_state >= tp_NSTATES)
-				printf(" %d", tpcb.tp_state);
-			else
-				printf(" %-12.12s", tp_sstring[tpcb.tp_state]);
-		}
+		iso_protopr1((u_long)next, 0);
 		putchar('\n');
 		prev = next;
 	}
+}
+
+void
+iso_protopr1(kern_addr, istp)
+	u_long kern_addr;
+	int istp;
+{
+	if (first) {
+		printf("Active ISO net connections");
+		if (aflag)
+			printf(" (including servers)");
+		putchar('\n');
+		if (Aflag)
+			printf("%-8.8s ", "PCB");
+		printf(Aflag ?
+			"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
+			"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+			"Proto", "Recv-Q", "Send-Q",
+			"Local Address", "Foreign Address", "(state)");
+		first = 0;
+	}
+	if (Aflag)
+			printf("%8x ",
+					(sockb.so_pcb ? (void *)sockb.so_pcb : (void *)kern_addr));
+	printf("%-5.5s %6d %6d ", "tp", sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc);
+	if (istp && tpcb.tp_lsuffixlen) {
+			hexprint(tpcb.tp_lsuffixlen, tpcb.tp_lsuffix, "()");
+			printf("\t");
+	} else if (isopcb.isop_laddr == 0)
+			printf("*.*\t");
+	else {
+			if ((char *)isopcb.isop_laddr == ((char *)kern_addr) +
+					_offsetof(struct isopcb, isop_sladdr))
+					laddr.siso = isopcb.isop_sladdr;
+			else
+					kget(isopcb.isop_laddr, laddr);
+			isonetprint((struct sockaddr_iso *)&laddr, 1);
+	}
+	if (istp && tpcb.tp_fsuffixlen) {
+			hexprint(tpcb.tp_fsuffixlen, tpcb.tp_fsuffix, "()");
+			printf("\t");
+	} else if (isopcb.isop_faddr == 0)
+		printf("*.*\t");
+	else {
+		if ((char *)isopcb.isop_faddr == ((char *)kern_addr) +
+			_offsetof(struct isopcb, isop_sfaddr))
+			faddr.siso = isopcb.isop_sfaddr;
+		else
+			kget(isopcb.isop_faddr, faddr);
+		isonetprint((struct sockaddr_iso *)&faddr, 0);
+	}
+}
+
+void
+tp_protopr(off, name)
+	u_long off;
+	char *name;
+{
+#ifdef notyet /* XXXX */
+	extern char *tp_sstring[];
+	struct tp_ref *tpr, *tpr_base;
+	struct tp_refinfo tpkerninfo;
+	int size;
+
+	kget(off, tpkerninfo);
+	size = tpkerninfo.tpr_size * sizeof (*tpr);
+	tpr_base = (struct tp_ref *)malloc(size);
+	if (tpr_base == 0)
+		return;
+	kread((u_long)(tpkerninfo.tpr_base), (char *)tpr_base, size);
+	for (tpr = tpr_base; tpr < tpr_base + tpkerninfo.tpr_size; tpr++) {
+		if (tpr->tpr_pcb == 0)
+			continue;
+		kget(tpr->tpr_pcb, tpcb);
+		if (tpcb.tp_state == ST_ERROR)
+			printf("undefined tpcb state: 0x%x\n", tpr->tpr_pcb);
+		if (!aflag &&
+			(tpcb.tp_state == TP_LISTENING ||
+			 tpcb.tp_state == TP_CLOSED ||
+			 tpcb.tp_state == TP_REFWAIT)) {
+			continue;
+		}
+		kget(tpcb.tp_sock, sockb);
+		if (tpcb.tp_npcb) switch(tpcb.tp_netservice) {
+			case IN_CLNS:
+				tp_inproto((u_long)tpkerninfo.tpr_base);
+				break;
+			default:
+				kget(tpcb.tp_npcb, isopcb);
+				iso_protopr1((u_long)tpcb.tp_npcb, 1);
+				break;
+		}
+		if (tpcb.tp_state >= tp_NSTATES)
+			printf(" %d", tpcb.tp_state);
+		else
+			printf(" %-12.12s", tp_sstring[tpcb.tp_state]);
+		putchar('\n');
+	}
+#endif
+}
+
+void
+tp_inproto(pcb)
+	u_long pcb;
+{
+	struct inpcb inpcb;
+	kget(tpcb.tp_npcb, inpcb);
+	if (!aflag && inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
+		return;
+	if (Aflag)
+		printf("%8x ", pcb);
+	printf("%-5.5s %6d %6d ", "tpip",
+	    sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc);
+	inetprint(&inpcb.inp_laddr, inpcb.inp_lport, "tp");
+	inetprint(&inpcb.inp_faddr, inpcb.inp_fport, "tp");
 }
 
 /*
@@ -346,7 +379,6 @@ isonetname(iso)
 	struct iso_hostent *iso_getserventrybytsel();
 	struct iso_hostent Ihe;
 	static char line[80];
-	char *index();
 
 	bzero(line, sizeof(line));
 	if( iso->isoa_afi ) {
@@ -369,6 +401,7 @@ isonetname(iso)
 	return line;
 }
 
+static void
 isonetprint(iso, sufx, sufxlen, islocal)
 	register struct iso_addr *iso;
 	char *sufx;
@@ -377,7 +410,7 @@ isonetprint(iso, sufx, sufxlen, islocal)
 {
 	struct iso_hostent *iso_getserventrybytsel(), *ihe;
 	struct iso_hostent Ihe;
-	char *line, *cp, *index();
+	char *line, *cp;
 	int Alen = Aflag?18:22;
 
 	line =  isonetname(iso);
@@ -386,7 +419,7 @@ isonetprint(iso, sufx, sufxlen, islocal)
 
 	if( islocal )
 		islocal = 20;
-	else 
+	else
 		islocal = 22 + Alen;
 
 	if(Aflag)
@@ -426,6 +459,7 @@ isonetprint(iso, sufx, sufxlen, islocal)
 #endif
 
 #ifdef notdef
+static void
 x25_protopr(off, name)
 	u_long off;
 	char *name;
@@ -442,23 +476,21 @@ x25_protopr(off, name)
 	struct x25_pcb xpcb;
 
 	if (off == 0) {
-#ifdef DEBUG
 		printf("%s control block: symbol not in namelist\n", name);
-#endif
 		return;
 	}
-	kvm_read(off, &xpcb, sizeof (struct x25_pcb));
+	kread(off, &xpcb, sizeof (struct x25_pcb));
 	prev = (struct isopcb *)off;
 	if (xpcb.x_next == (struct isopcb *)off)
 		return;
 	while (xpcb.x_next != (struct isopcb *)off) {
 		next = isopcb.isop_next;
-		kvm_read(next, &xpcb, sizeof (struct x25_pcb));
+		kread((u_long)next, &xpcb, sizeof (struct x25_pcb));
 		if (xpcb.x_prev != prev) {
 			printf("???\n");
 			break;
 		}
-		kvm_read(xpcb.x_socket, &sockb, sizeof (sockb));
+		kread((u_long)xpcb.x_socket, &sockb, sizeof (sockb));
 
 		if (!aflag &&
 			xpcb.x_state == LISTENING ||
@@ -482,9 +514,9 @@ x25_protopr(off, name)
 		}
 		printf("%-5.5s %6d %6d ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
-		isonetprint(&xpcb.x_laddr.siso_addr, &xpcb.x_lport, 
+		isonetprint(&xpcb.x_laddr.siso_addr, &xpcb.x_lport,
 			sizeof(xpcb.x_lport), 1);
-		isonetprint(&xpcb.x_faddr.siso_addr, &xpcb.x_fport, 
+		isonetprint(&xpcb.x_faddr.siso_addr, &xpcb.x_fport,
 			sizeof(xpcb.x_lport), 0);
 		if (xpcb.x_state < 0 || xpcb.x_state >= x25_NSTATES)
 			printf(" 0x0x0x0x0x0x0x0x0x%x", xpcb.x_state);
@@ -498,8 +530,9 @@ x25_protopr(off, name)
 
 struct	tp_stat tp_stat;
 
+void
 tp_stats(off, name)
-caddr_t off, name;
+	caddr_t off, name;
 {
 	if (off == 0) {
 		printf("TP not configured\n\n");
@@ -512,11 +545,10 @@ caddr_t off, name;
 
 #define OUT stdout
 
-#define plural(x) (x>1?"s":"")
-
+static void
 tprintstat(s, indent)
-register struct tp_stat *s;
-int indent;
+	register struct tp_stat *s;
+	int indent;
 {
 	fprintf(OUT,
 		"%*sReceiving:\n",indent," ");
@@ -587,7 +619,7 @@ int indent;
 		"\t%*s%d cluster%s\n", indent, " ",
 		s->ts_mb_cluster, plural(s->ts_mb_cluster));
 	fprintf(OUT,
-		"\t%*s%d source quench \n",indent, " ", 
+		"\t%*s%d source quench \n",indent, " ",
 		s->ts_quench);
 	fprintf(OUT,
 		"\t%*s%d dec bit%s\n", indent, " ",
@@ -635,46 +667,35 @@ int indent;
 	fprintf(OUT,
 		"\t%*s%d tp 0 connection%s\n",  indent, " ",
 		s->ts_tp0_conn ,plural(s->ts_tp0_conn));
-	{
-		register int j, div;
-		register float f;
+    {
+		register int j;
 		static char *name[]= {
-			"~LOCAL, PDN", 
+			"~LOCAL, PDN",
 			"~LOCAL,~PDN",
 			" LOCAL,~PDN",
 			" LOCAL, PDN"
 		};
-#define factor(i) \
-	div = (s->ts_rtt[(i)].tv_sec * 1000000) + \
-		s->ts_rtt[(i)].tv_usec ;\
-	if(div) {\
-		f = ((s->ts_rtv[(i)].tv_sec * 1000000) + \
-				s->ts_rtv[(i)].tv_usec)/div;  \
-		div = (int) (f + 0.5);\
-	}
 
-		fprintf(OUT, 
-			"\n%*sRound trip times, listed in (sec: usec):\n", indent, " ");
-		fprintf(OUT, 
+		fprintf(OUT,
+			"\n%*sRound trip times, listed in ticks:\n", indent, " ");
+		fprintf(OUT,
 			"\t%*s%11.11s  %12.12s | %12.12s | %s\n", indent, " ",
 				"Category",
 				"Smoothed avg", "Deviation", "Deviation/Avg");
-		for( j=0; j<=3; j++) {
-			factor(j);
+		for (j = 0; j <= 3; j++) {
 			fprintf(OUT,
-				"\t%*s%11.11s: %5d:%-6d | %5d:%-6d | %-6d\n", indent, " ",
+				"\t%*s%11.11s: %-11d | %-11d | %-11d | %-11d\n", indent, " ",
 				name[j],
-				s->ts_rtt[j].tv_sec,
-				s->ts_rtt[j].tv_usec,
-				s->ts_rtv[j].tv_sec,
-				s->ts_rtv[j].tv_usec,
-				div);
+				s->ts_rtt[j],
+				s->ts_rtt[j],
+				s->ts_rtv[j],
+				s->ts_rtv[j]);
 		}
 	}
 	fprintf(OUT,
 "\n%*sTpdus RECVD [%d valid, %3.6f %% of total (%d); %d dropped]\n",indent," ",
 		s->ts_tpdu_rcvd ,
-		((s->ts_pkt_rcvd > 0) ? 
+		((s->ts_pkt_rcvd > 0) ?
 			((100 * (float)s->ts_tpdu_rcvd)/(float)s->ts_pkt_rcvd)
 			: 0),
 		s->ts_pkt_rcvd,
@@ -714,7 +735,7 @@ int indent;
 	"\t%*sXPD %6d (%5.2f%%)\n",  indent, " ",
 		s->ts_retrans_xpd,
 		PERCENT(s->ts_retrans_xpd, s->ts_XPD_sent));
-	
+
 
 	fprintf(OUT,
 		"\n%*sE Timers: [%6d ticks]\n", indent, " ", s->ts_Eticks);
@@ -755,30 +776,31 @@ int indent;
 	fprintf(OUT,
 		"\n%*sACK reasons:\n", indent, " ");
 	fprintf(OUT, "\t%*s%6d not acked immediately\n", indent, " ",
-										s->ts_ackreason[_ACK_DONT_] );
+		s->ts_ackreason[_ACK_DONT_] );
 	fprintf(OUT, "\t%*s%6d strategy==each\n", indent, " ",
-										s->ts_ackreason[_ACK_STRAT_EACH_] );
+		s->ts_ackreason[_ACK_STRAT_EACH_] );
 	fprintf(OUT, "\t%*s%6d strategy==fullwindow\n", indent, " ",
-										s->ts_ackreason[_ACK_STRAT_FULLWIN_] );
+		s->ts_ackreason[_ACK_STRAT_FULLWIN_] );
 	fprintf(OUT, "\t%*s%6d duplicate DT\n", indent, " ",
-										s->ts_ackreason[_ACK_DUP_] );
+		s->ts_ackreason[_ACK_DUP_] );
 	fprintf(OUT, "\t%*s%6d EOTSDU\n", indent, " ",
-										s->ts_ackreason[_ACK_EOT_] );
+		s->ts_ackreason[_ACK_EOT_] );
 	fprintf(OUT, "\t%*s%6d reordered DT\n", indent, " ",
-										s->ts_ackreason[_ACK_REORDER_] );
+		s->ts_ackreason[_ACK_REORDER_] );
 	fprintf(OUT, "\t%*s%6d user rcvd\n", indent, " ",
-										s->ts_ackreason[_ACK_USRRCV_] );
-	fprintf(OUT, "\t%*s%6d fcc reqd\n", 	indent, " ",
-										s->ts_ackreason[_ACK_FCC_] );
+		s->ts_ackreason[_ACK_USRRCV_] );
+	fprintf(OUT, "\t%*s%6d fcc reqd\n", indent, " ",
+		s->ts_ackreason[_ACK_FCC_] );
 }
 #ifndef SSEL
 #define SSEL(s) ((s)->siso_tlen + TSEL(s))
 #define PSEL(s) ((s)->siso_slen + SSEL(s))
 #endif
 
+static void
 isonetprint(siso, islocal)
-register struct sockaddr_iso *siso;
-int islocal;
+	register struct sockaddr_iso *siso;
+	int islocal;
 {
 	hexprint(siso->siso_nlen, siso->siso_addr.isoa_genaddr, "{}");
 	if (siso->siso_tlen || siso->siso_slen || siso->siso_plen)
@@ -789,10 +811,13 @@ int islocal;
 		hexprint(siso->siso_plen, PSEL(siso), "<>");
 	putchar(' ');
 }
+
 static char hexlist[] = "0123456789abcdef", obuf[128];
 
+static void
 hexprint(n, buf, delim)
-char *buf, *delim;
+	int n;
+	char *buf, *delim;
 {
 	register u_char *in = (u_char *)buf, *top = in + n;
 	register char *out = obuf;

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)netstat.h	8.2 (Berkeley) 1/4/94
- *	$Id: netstat.h,v 1.1 1994/05/13 08:06:36 mycroft Exp $
+ *	$Id: netstat.h,v 1.2 1994/05/13 08:08:20 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
