@@ -1,4 +1,4 @@
-/*	$NetBSD: move_robs.c,v 1.5 1999/05/15 23:56:36 christos Exp $	*/
+/*	$NetBSD: move_robs.c,v 1.6 2001/01/16 02:50:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move_robs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move_robs.c,v 1.5 1999/05/15 23:56:36 christos Exp $");
+__RCSID("$NetBSD: move_robs.c,v 1.6 2001/01/16 02:50:28 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ move_robots(was_sig)
 	addch(inch());
 	move(Max.y, Max.x);
 	addch(inch());
-# endif DEBUG
+# endif /* DEBUG */
 	for (rp = Robots; rp < &Robots[MAXROBOTS]; rp++) {
 		if (rp->y < 0)
 			continue;

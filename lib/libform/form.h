@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.3 2001/01/16 01:02:47 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.4 2001/01/16 02:50:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -328,4 +328,4 @@ int unpost_form(FORM *);
 
 __END_DECLS
 
-#endif FORM_H
+#endif /* FORM_H */
