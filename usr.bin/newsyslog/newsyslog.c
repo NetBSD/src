@@ -25,11 +25,11 @@ provided "as is" without express or implied warranty.
  *              keeping the a specified number of backup files around.
  *
  *      $Source: /cvsroot/src/usr.bin/newsyslog/newsyslog.c,v $
- *      $Author: cgd $
+ *      $Author: pk $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: newsyslog.c,v 1.6 1994/02/07 07:00:26 cgd Exp $";
+static char rcsid[] = "$Id: newsyslog.c,v 1.7 1994/02/20 09:54:45 pk Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -93,6 +93,8 @@ int     noaction = 0;           /* Don't do anything, just show it */
 char    *conf = CONF;           /* Configuration file to use */
 time_t  timenow;
 int     syslog_pid;             /* read in from /etc/syslog.pid */
+#define MIN_PID		3
+#define MAX_PID		65534
 char    hostname[64];           /* hostname */
 char    *daytime;               /* timenow in human readable form */
 
@@ -183,6 +185,8 @@ PRS(argc,argv)
         f = fopen(PIDFILE,"r");
         if (f && fgets(line,BUFSIZ,f))
                 syslog_pid = atoi(line);
+	if (f)
+		(void)fclose(f);
 
         /* Let's get our hostname */
         if (gethostname(hostname, 64)) {
@@ -449,7 +453,10 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         if (noaction)
                 printf("kill -HUP %d (syslogd)\n",syslog_pid);
         else
-        if (kill(syslog_pid,SIGHUP)) {
+	if (syslog_pid < MIN_PID || syslog_pid > MAX_PID) {
+		fprintf(stderr,"%s: preposterous process number: %d\n",
+				progname, syslog_pid);
+        } else if (kill(syslog_pid,SIGHUP)) {
                         fprintf(stderr,"%s: ",progname);
                         perror("warning - could not restart syslogd");
                 }
@@ -514,7 +521,7 @@ int age_old_log(file)
         char    *file;
 {
         struct stat sb;
-        char tmp[80];
+        char tmp[MAXPATHLEN+3];
 
         (void) strcpy(tmp,file);
         if (stat(strcat(tmp,".0"),&sb) < 0)
