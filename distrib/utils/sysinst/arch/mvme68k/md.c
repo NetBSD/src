@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2002/03/24 22:04:05 scw Exp $	*/
+/*	$NetBSD: md.c,v 1.1.2.1 2002/06/05 09:41:28 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -198,7 +198,7 @@ md_check_partitions(void)
 			if (last < A)
 				last = part;
 		} else {
-			if (start >= bsdlabel[part].pi_offset) {
+			if (start > bsdlabel[part].pi_offset) {
 				msg_display(MSG_ordering, part+'a');
 				process_menu(MENU_yesno);
 				if (yesno)
