@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2000/05/26 03:04:28 simonb Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 2000/06/02 03:39:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -54,7 +54,6 @@ void	 command __P((struct kinfo_proc2 *, VARENT *));
 void	 cputime __P((struct kinfo_proc2 *, VARENT *));
 int	 donlist __P((void));
 int	 donlist_sysctl __P((void));
-void	 evar __P((struct kinfo_proc2 *, VARENT *));
 void	 fmt_puts __P((char *, int *));
 void	 fmt_putc __P((int, int *));
 double	 getpcpu __P((struct kinfo_proc2 *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.51 2000/05/26 03:04:28 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.52 2000/06/02 03:39:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.51 2000/05/26 03:04:28 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.52 2000/06/02 03:39:02 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -756,17 +756,6 @@ printval(bp, v)
 
 void
 pvar(k, ve)
-	struct kinfo_proc2 *k;
-	VARENT *ve;
-{
-	VAR *v;
-
-	v = ve->var;
-	printval((char *)k + v->off, v);
-}
-
-void
-evar(k, ve)
 	struct kinfo_proc2 *k;
 	VARENT *ve;
 {

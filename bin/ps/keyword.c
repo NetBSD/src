@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.23 2000/05/26 03:04:28 simonb Exp $	*/
+/*	$NetBSD: keyword.c,v 1.24 2000/06/02 03:39:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.23 2000/05/26 03:04:28 simonb Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.24 2000/06/02 03:39:02 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ VAR var[] = {
 	{"ignored", "", "sigignore"},
 	{"inblk", "INBLK", NULL, USER, pvar, 4, POFF(p_uru_inblock), LONG, "d"},
 	{"inblock", "", "inblk"},
-	{"jobc", "JOBC", NULL, 0, evar, 4, POFF(p_jobc), SHORT, "d"},
+	{"jobc", "JOBC", NULL, 0, pvar, 4, POFF(p_jobc), SHORT, "d"},
 	{"ktrace", "KTRACE", NULL, 0, pvar, 8, POFF(p_traceflag), INT, "x"},
 	/* XXX */
 	{"ktracep", "KTRACEP", NULL, 0, pvar, 8, POFF(p_tracep), KPTR, "x"},
@@ -133,26 +133,26 @@ VAR var[] = {
 	/* XXX */
 	{"p_ru", "P_RU", NULL, 0, pvar, 6, POFF(p_ru), KPTR, "x"},
 	/* XXX */
-	{"paddr", "PADDR", NULL, 0, evar, 6, POFF(p_paddr), KPTR, "x"},
+	{"paddr", "PADDR", NULL, 0, pvar, 6, POFF(p_paddr), KPTR, "x"},
 	{"pagein", "PAGEIN", NULL, USER, pagein, 6},
 	{"pcpu", "", "%cpu"},
 	{"pending", "", "sig"},
-	PID("pgid", "PGID", evar, POFF(p__pgid)),
+	PID("pgid", "PGID", pvar, POFF(p__pgid)),
 	PID("pid", "PID", pvar, POFF(p_pid)),
 	{"pmem", "", "%mem"},
-	PID("ppid", "PPID", evar, POFF(p_ppid)),
+	PID("ppid", "PPID", pvar, POFF(p_ppid)),
 	{"pri", "PRI", NULL, 0, pri, 3},
 	{"re", "RE", NULL, INF127, pvar, 3, POFF(p_swtime), UINT, "d"},
-	GID("rgid", "RGID", evar, POFF(p_rgid)),
+	GID("rgid", "RGID", pvar, POFF(p_rgid)),
 	/* XXX */
 	{"rlink", "RLINK", NULL, 0, pvar, 8, POFF(p_back), KPTR, "x"},
 	{"rss", "RSS", NULL, 0, p_rssize, 4},
 	{"rssize", "", "rsz"},
 	{"rsz", "RSZ", NULL, 0, rssize, 4},
-	UID("ruid", "RUID", evar, POFF(p_ruid)),
+	UID("ruid", "RUID", pvar, POFF(p_ruid)),
 	{"ruser", "RUSER", NULL, LJUST, runame, USERLEN},
-	{"sess", "SESS", NULL, 0, evar, 6, POFF(p_sess), KPTR24, "x"},
-	PID("sid", "SID", evar, POFF(p_sid)),
+	{"sess", "SESS", NULL, 0, pvar, 6, POFF(p_sess), KPTR24, "x"},
+	PID("sid", "SID", pvar, POFF(p_sid)),
 	{"sig", "PENDING",
 	    NULL, 0, pvar, SIGWIDTH, POFF(p_siglist), SIGLIST, "s"},
 	{"sigcatch", "CAUGHT",
@@ -165,17 +165,17 @@ VAR var[] = {
 	{"start", "STARTED", NULL, LJUST|USER, started, 8},
 	{"stat", "", "state"},
 	{"state", "STAT", NULL, 0, state, 4},
-	GID("svgid", "SVGID", evar, POFF(p_gid)),
-	UID("svuid", "SVUID", evar, POFF(p_uid)),
+	GID("svgid", "SVGID", pvar, POFF(p_gid)),
+	UID("svuid", "SVUID", pvar, POFF(p_uid)),
 	{"tdev", "TDEV", NULL, 0, tdev, 4},
 	{"time", "TIME", NULL, USER, cputime, 9},
-	PID("tpgid", "TGPID", evar, POFF(p_tpgid)),
-	{"tsess", "TSESS", NULL, 0, evar, 6, POFF(p_tsess), KPTR, "x"},
+	PID("tpgid", "TGPID", pvar, POFF(p_tpgid)),
+	{"tsess", "TSESS", NULL, 0, pvar, 6, POFF(p_tsess), KPTR, "x"},
 	{"tsiz", "TSIZ", NULL, 0, tsize, 4},
 	{"tt", "TT", NULL, LJUST, tname, 3},
 	{"tty", "TTY", NULL, LJUST, longtname, 8},
 	{"ucomm", "UCOMM", NULL, LJUST, ucomm, MAXCOMLEN},
-	UID("uid", "UID", evar, POFF(p_uid)),
+	UID("uid", "UID", pvar, POFF(p_uid)),
 	{"upr", "UPR", NULL, 0, pvar, 3, POFF(p_usrpri), UCHAR, "d"},
 	{"user", "USER", NULL, LJUST, uname, USERLEN},
 	{"usrpri", "", "upr"},
