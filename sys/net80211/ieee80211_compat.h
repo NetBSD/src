@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_compat.h,v 1.4 2003/10/15 08:13:28 itojun Exp $	*/
+/*	$NetBSD: ieee80211_compat.h,v 1.5 2004/01/13 23:37:30 dyoung Exp $	*/
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
@@ -29,8 +29,9 @@
 #define _NET80211_IEEE80211_COMPAT_H_
 
 #ifdef __NetBSD__
-#undef KASSERT
-#define KASSERT(cond, complaint) if (!(cond)) panic complaint
+#define IASSERT(cond, complaint) if (!(cond)) panic complaint
+#else
+#define IASSERT(cond, complaint) KASSERT(cond, complaint)
 #endif
 
 #ifdef __NetBSD__

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.16 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.17 2004/01/13 23:37:30 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.12 2003/10/17 23:59:11 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.16 2003/12/14 09:56:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.17 2004/01/13 23:37:30 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -117,14 +117,14 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	u_int16_t rxseq;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
-	KASSERT(ni != NULL, ("null node"));
+	IASSERT(ni != NULL, ("null node"));
 
 	/* trim CRC here so WEP can find its own CRC at the end of packet. */
 	if (m->m_flags & M_HASFCS) {
 		m_adj(m, -IEEE80211_CRC_LEN);
 		m->m_flags &= ~M_HASFCS;
 	}
-	KASSERT(m->m_pkthdr.len >= sizeof(struct ieee80211_frame_min),
+	IASSERT(m->m_pkthdr.len >= sizeof(struct ieee80211_frame_min),
 		("frame length too short: %u", m->m_pkthdr.len));
 
 	/*

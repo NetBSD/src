@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.9 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.10 2004/01/13 23:37:30 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.13 2003/11/09 23:36:46 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.9 2003/12/14 09:56:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.10 2004/01/13 23:37:30 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -121,7 +121,7 @@ ieee80211_node_lateattach(struct ifnet *ifp)
 	struct ieee80211com *ic = (void *)ifp;
 
 	ic->ic_bss = (*ic->ic_node_alloc)(ic);
-	KASSERT(ic->ic_bss != NULL, ("unable to setup inital BSS node"));
+	IASSERT(ic->ic_bss != NULL, ("unable to setup inital BSS node"));
 	ic->ic_bss->ni_chan = IEEE80211_CHAN_ANYC;
 }
 
@@ -673,7 +673,7 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 		ni = ieee80211_ref_node((ni == NULL) ? ic->ic_bss : ni);
 	}
 	ieee80211_node_critsec_end(ic, s);
-	KASSERT(ni != NULL, ("%s: null node", __func__));
+	IASSERT(ni != NULL, ("%s: null node", __func__));
 	return ni;
 }
 
@@ -703,7 +703,7 @@ ieee80211_lookup_node(struct ieee80211com *ic,
 static void
 _ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	KASSERT(ni != ic->ic_bss, ("freeing bss node"));
+	IASSERT(ni != ic->ic_bss, ("freeing bss node"));
 
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 	TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
@@ -723,7 +723,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	ieee80211_node_critsec_decl(s);
 
-	KASSERT(ni != ic->ic_bss, ("freeing ic_bss"));
+	IASSERT(ni != ic->ic_bss, ("freeing ic_bss"));
 
 	if (ieee80211_node_decref(ni) == 0) {
 		ieee80211_node_critsec_begin(ic, s);
