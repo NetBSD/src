@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.6.4.1 2000/07/26 23:45:22 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.6.4.2 2001/05/01 12:06:01 he Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -88,7 +88,7 @@ _rtld_digest_dynamic(obj)
 				obj->pltrel = (const Elf_Rel *)
 				    (obj->relocbase + dynp->d_un.d_ptr);
 			} else {
-				obj->pltrela = (const Elf_RelA *)
+				obj->pltrela = (const Elf_Rela *)
 				    (obj->relocbase + dynp->d_un.d_ptr);
 			}
 			break;
@@ -98,7 +98,7 @@ _rtld_digest_dynamic(obj)
 			break;
 
 		case DT_RELA:
-			obj->rela = (const Elf_RelA *)
+			obj->rela = (const Elf_Rela *)
 			    (obj->relocbase + dynp->d_un.d_ptr);
 			break;
 
@@ -107,7 +107,7 @@ _rtld_digest_dynamic(obj)
 			break;
 
 		case DT_RELAENT:
-			assert(dynp->d_un.d_val == sizeof(Elf_RelA));
+			assert(dynp->d_un.d_val == sizeof(Elf_Rela));
 			break;
 
 		case DT_PLTREL:
@@ -121,7 +121,7 @@ _rtld_digest_dynamic(obj)
 			 * We want the DT_JMPREL which points to our jump table.
 			 */
 			if (plttype == DT_RELA) {
-				obj->pltrela = (const Elf_RelA *) obj->pltrel;
+				obj->pltrela = (const Elf_Rela *) obj->pltrel;
 				obj->pltrel = NULL;
 			}
 #endif
@@ -237,13 +237,13 @@ _rtld_digest_dynamic(obj)
 	}
 
 	obj->rellim = (const Elf_Rel *)((caddr_t)obj->rel + relsz);
-	obj->relalim = (const Elf_RelA *)((caddr_t)obj->rela + relasz);
+	obj->relalim = (const Elf_Rela *)((caddr_t)obj->rela + relasz);
 	if (plttype == DT_REL) {
 		obj->pltrellim = (const Elf_Rel *)((caddr_t)obj->pltrel + pltrelsz);
 		obj->pltrelalim = 0;
 	} else {
 		obj->pltrellim = 0;
-		obj->pltrelalim = (const Elf_RelA *)((caddr_t)obj->pltrela + pltrelsz);
+		obj->pltrelalim = (const Elf_Rela *)((caddr_t)obj->pltrela + pltrelsz);
 	}
 
 	if (dyn_rpath != NULL) {
