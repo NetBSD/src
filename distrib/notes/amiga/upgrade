@@ -1,4 +1,4 @@
-	$NetBSD: upgrade,v 1.12 1998/01/09 18:45:48 perry Exp $	
+	$NetBSD: upgrade,v 1.13 1998/02/01 16:28:54 is Exp $	
 
 The upgrade to NetBSD _VER is a binary upgrade; it would be prohibitive
 to make users upgrade by compiling and installing the _VER sources, and
@@ -75,8 +75,10 @@ To upgrade your system, follow the following instructions:
 	hard disk device is configured that contains your root and
 	swap partition.  When prompted for the root device, type
 	'sd0b' (replacing 0 with the disk number that NetBSD used for
-	your root/swap device). When you reach the prompt asking you
-	for a shell name, just hit return.
+	your root/swap device).  When prompted for a dump device,
+	answer 'none' for the upgrade. (For a normal boot, you would
+	tell it one of the swap devices). When prompted for the root
+	filesystem type, confirm 'generic', which will auto-detect it.
 
 	You will be presented with some information about the upgrade
 	process and a warning message, and will be asked if you wish
