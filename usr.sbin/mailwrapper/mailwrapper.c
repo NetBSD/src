@@ -1,4 +1,4 @@
-/*	$NetBSD: mailwrapper.c,v 1.6 2002/11/30 03:10:57 lukem Exp $	*/
+/*	$NetBSD: mailwrapper.c,v 1.7 2003/02/17 21:18:46 is Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -87,11 +87,11 @@ main(argc, argv, envp)
 	FILE *config;
 	char *line, *cp, *from, *to, *ap;
 	size_t len, lineno = 0;
+	int i;
 	struct arglist al;
 
 	initarg(&al);
-	for (len = 0; len < argc; len++)
-		addarg(&al, argv[len], 0);
+	addarg(&al, argv[0], 0);
 
 	if ((config = fopen(_PATH_MAILERCONF, "r")) == NULL)
 		err(1, "mailwrapper: can't open %s", _PATH_MAILERCONF);
@@ -134,6 +134,9 @@ main(argc, argv, envp)
 	}
 
 	(void)fclose(config);
+
+	for (i = 1; i < argc; i++)
+		addarg(&al, argv[i], 0);
 
 	addarg(&al, NULL, 0);
 	execve(to, al.argv, envp);
