@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.34 2003/05/16 18:15:34 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.35 2004/05/09 15:54:59 elric Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -78,7 +78,7 @@
 #if 0
 #define RCSID	"Id: auth.c,v 1.69 2001/03/12 22:50:01 paulus Exp "
 #else
-__RCSID("$NetBSD: auth.c,v 1.34 2003/05/16 18:15:34 itojun Exp $");
+__RCSID("$NetBSD: auth.c,v 1.35 2004/05/09 15:54:59 elric Exp $");
 #endif
 #endif
 
@@ -1610,7 +1610,7 @@ set_allowed_addrs(unit, addrs, opts)
 	} else {
 	    np = getnetbyname (ptr_word);
 	    if (np != NULL && np->n_addrtype == AF_INET) {
-		a = htonl (*(u_int32_t *)np->n_net);
+		a = htonl(np->n_net);
 		if (ptr_mask == NULL) {
 		    /* calculate appropriate mask for net */
 		    ah = ntohl(a);
