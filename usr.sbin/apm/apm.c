@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.13 2002/07/20 08:40:17 grant Exp $ */
+/*	$NetBSD: apm.c,v 1.14 2002/08/08 13:24:14 soren Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ send_command(int fd,
 
 	if (send(fd, cmd, sizeof(*cmd), 0) == sizeof(*cmd)) {
 		if (recv(fd, reply, sizeof(*reply), 0) != sizeof(*reply)) {
-			warn("invalid reply from APM daemon\n");
+			warn("invalid reply from APM daemon");
 			return (1);
 		}
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsm.c,v 1.14 2002/07/01 22:19:32 itojun Exp $	*/
+/*	$NetBSD: fsm.c,v 1.15 2002/08/08 13:24:15 soren Exp $	*/
 
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: fsm.c,v 1.17 1999/08/13 06:46:12 paulus Exp "
 #else
-__RCSID("$NetBSD: fsm.c,v 1.14 2002/07/01 22:19:32 itojun Exp $");
+__RCSID("$NetBSD: fsm.c,v 1.15 2002/08/08 13:24:15 soren Exp $");
 #endif
 #endif
 
@@ -291,7 +291,7 @@ fsm_timeout(arg)
     case ACKRCVD:
     case ACKSENT:
 	if (f->retransmits <= 0) {
-	    warn("%s: timeout sending Config-Requests\n", PROTO_NAME(f));
+	    warn("%s: timeout sending Config-Requests", PROTO_NAME(f));
 	    f->state = STOPPED;
 	    if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished )
 		(*f->callbacks->finished)(f);
