@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2000/05/13 19:50:51 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2001/04/22 17:46:04 he Exp $
 
 # for OBJECT_FMT, UNPRIVILEGED
 .include <bsd.own.mk>
@@ -14,8 +14,7 @@ ELF_PLEASE=
     (${MACHINE_ARCH} == "mipsel") || \
     (${MACHINE_ARCH} == "powerpc") || \
     (${MACHINE_ARCH} == "sh3") || \
-    (${MACHINE_ARCH} == "sparc" && defined(ELF_PLEASE)) || \
-    (${MACHINE_ARCH} == "sparc64")
+    (${MACHINE_ARCH} == "sparc" && defined(ELF_PLEASE))
 PROG=		ld
 MAN=		ld.1
 SRCS=		ldctor.c ldemul.c ldexp.c ldfile.c ldlang.c ldmain.c ldmisc.c \
