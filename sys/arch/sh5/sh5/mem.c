@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 2002/10/07 15:05:58 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.3 2002/10/07 15:05:58 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -111,8 +111,8 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
-			pmap_enter(pmap_kernel(), vmmap,
-			    trunc_page(v), prot, prot|PMAP_WIRED);
+			pmap_enter(pmap_kernel(), vmmap, trunc_page(v), prot,
+			    prot | PMAP_WIRED | PMAP_UNMANAGED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
