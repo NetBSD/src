@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1999/04/02 12:09:44 tsubai Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1999/04/03 16:39:31 simonb Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -41,11 +41,10 @@ crtend.o: crtend.c
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-install:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
-	    ${DESTDIR}/usr/lib
-	rm -f ${DESTDIR}/usr/lib/crtbeginS.o ${DESTDIR}/usr/lib/crtendS.o
-	ln ${DESTDIR}/usr/lib/crtbegin.o ${DESTDIR}/usr/lib/crtbeginS.o
-	ln ${DESTDIR}/usr/lib/crtend.o ${DESTDIR}/usr/lib/crtendS.o
+FILES=${OBJS}
+FILESDIR=/usr/lib
+
+LINKS=	${LIBDIR}/crtbegin.o ${LIBDIR}/crtbeginS.o \
+	${LIBDIR}/crtend.o ${LIBDIR}/crtendS.o
 
 .include <bsd.prog.mk>
