@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.5 1998/09/05 14:18:24 christos Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.6 1998/09/12 21:49:51 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.5 1998/09/05 14:15:26 christos Exp 
+ *	NetBSD: isapnpdevs,v 1.6 1998/09/12 21:48:57 wrstuden Exp 
  */
 
 /*-
@@ -199,6 +199,7 @@ const struct isapnp_devinfo isapnp_sb_devinfo = {
 
 /* Western Digital Disk Controller */
 static const char *isapnp_wdc_devlogic[] = {
+	"OPT0007",	/* OPTi Audio 16 IDE controller */
 	NULL
 };
 static const char *isapnp_wdc_devcompat[] = {
