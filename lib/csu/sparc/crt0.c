@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.4 1994/02/25 15:02:58 pk Exp $
+ *	$Id: crt0.c,v 1.5 1994/03/10 21:02:01 pk Exp $
  */
 
 
@@ -174,7 +174,7 @@ __do_mcrt ()
 	extern unsigned char eprol, etext;
 	extern void _mcleanup();
 
-	on_exit(_mcleanup, 0);
+	atexit(_mcleanup);
 	monstartup(&eprol, &etext);
 	return;
 }
