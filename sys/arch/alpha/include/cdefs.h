@@ -1,4 +1,4 @@
-/* $NetBSD: cdefs.h,v 1.8 1997/04/07 23:40:16 cgd Exp $ */
+/* $NetBSD: cdefs.h,v 1.9 1997/10/22 05:20:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,6 +31,10 @@
 #define	_MACHINE_CDEFS_H_
 
 #define	_C_LABEL(x)	_STRING(x)
+
+#ifdef __GNUC__
+#define	__RENAME(x)	__asm__(x)
+#endif
 
 #ifdef __ELF__
 
