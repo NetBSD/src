@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.2 1996/04/07 17:23:07 jonathan Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.2.4.1 1996/12/10 08:52:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,16 +85,16 @@ ultrix_sys_creat(p, v, retval)
 	register_t *retval;
 {
 	struct ultrix_sys_creat_args *uap = v;
-	struct sys_open_args ouap;
+	struct sys_open_args ap;
 
 	caddr_t sg = stackgap_init(p->p_emul);
 	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	SCARG(&ouap, path) = SCARG(uap, path);
-	SCARG(&ouap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
-	SCARG(&ouap, mode) = SCARG(uap, mode);
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
+	SCARG(&ap, mode) = SCARG(uap, mode);
 
-	return (sys_open(p, &ouap, retval));
+	return (sys_open(p, &ap, retval));
 }
 
 
@@ -143,17 +143,45 @@ ultrix_sys_execv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct ultrix_sys_execv_args *uap = v;
-	struct sys_execve_args ouap;
+	struct ultrix_sys_execv_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+	} */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
 
-	caddr_t sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p->p_emul);
 	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	SCARG(&ouap, path) = SCARG(uap, path);
-	SCARG(&ouap, argp) = SCARG(uap, argp);
-	SCARG(&ouap, envp) = NULL;
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = NULL;
 
-	return (sys_execve(p, &ouap, retval));
+	return (sys_execve(p, &ap, retval));
+}
+
+int
+ultrix_sys_execve(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ultrix_sys_execve_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+		syscallarg(char **) envp;
+	} */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return (sys_execve(p, &ap, retval));
 }
 
 int
