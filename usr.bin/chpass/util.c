@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 1997/02/11 08:26:28 mrg Exp $	*/
+/*	$NetBSD: util.c,v 1.6 1997/07/25 06:38:02 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: util.c,v 1.5 1997/02/11 08:26:28 mrg Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.6 1997/07/25 06:38:02 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,7 @@ ok_shell(name)
 	char *p, *sh;
 
 	setusershell();
-	while (sh = getusershell()) {
+	while ((sh = getusershell()) != NULL) {
 		if (!strcmp(name, sh))
 			return (name);
 		/* allow just shell name, but use "real" path */
