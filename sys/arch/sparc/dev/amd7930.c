@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.28 1997/08/24 22:31:27 augustss Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.29 1997/08/27 22:33:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -206,7 +206,7 @@ static const u_short ger_coeff[] = {
 int	amd7930_open __P((void *, int));
 void	amd7930_close __P((void *));
 int	amd7930_query_encoding __P((void *, struct audio_encoding *));
-int	amd7930_set_params __P((void *, int, struct audio_params *, struct audio_params *));
+int	amd7930_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	amd7930_round_blocksize __P((void *, int));
 int	amd7930_set_out_port __P((void *, int));
 int	amd7930_get_out_port __P((void *));
