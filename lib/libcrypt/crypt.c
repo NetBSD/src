@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.16 2000/07/06 11:13:49 ad Exp $	*/
+/*	$NetBSD: crypt.c,v 1.17 2001/01/05 23:11:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.16 2000/07/06 11:13:49 ad Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.17 2001/01/05 23:11:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,6 +471,8 @@ static C_block	CF6464[64/CHUNKBITS][1<<CHUNKBITS];
 static C_block	constdatablock;			/* encryption constant */
 static char	cryptresult[1+4+4+11+1];	/* encrypted result */
 
+extern char *__md5crypt(const char *, const char *);	/* XXX */
+
 /*
  * Return a pointer to static data consisting of the "setting"
  * followed by an encryption produced by the "key" and "setting".
@@ -480,7 +482,6 @@ crypt(key, setting)
 	const char *key;
 	const char *setting;
 {
-	extern char *__md5crypt(const char *, const char *);	/* XXX */
 	char *encp;
 	int32_t i;
 	int t;
