@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_defs.h,v 1.3 1994/11/21 21:31:20 gwr Exp $	*/
+/*	$NetBSD: scsi_defs.h,v 1.4 1995/06/01 20:22:17 gwr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -53,5 +53,6 @@
 #define SCSI_RET_RETRY		1
 #define SCSI_RET_DEVICE_DOWN	2
 #define SCSI_RET_COMMAND_FAIL	3
+#define SCSI_RET_NEED_RESET 	4
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.16 1995/05/24 20:52:27 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.17 1995/06/01 20:22:36 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -69,7 +69,7 @@ static int si_flags = 0 /* | SDEV_DB2 */ ;
 #define SCI_PHASE_DISC		0	/* sort of ... */
 #define SCI_CLR_INTR(regs)	((volatile)(regs->sci_iack))
 #define SCI_ACK(ptr,phase)	(ptr)->sci_tcmd = (phase)
-#define SCSI_TIMEOUT_VAL	10000000
+#define SCSI_TIMEOUT_VAL	1000000
 #define WAIT_FOR_NOT_REQ(ptr) {	\
 	int scsi_timeout = SCSI_TIMEOUT_VAL; \
 	while ( ((ptr)->sci_bus_csr & SCI_BUS_REQ) && \
@@ -120,6 +120,7 @@ struct ncr5380_softc {
     struct device sc_dev;
     volatile void *sc_regs;
     int sc_adapter_type;
+    int sc_adapter_iv_am;	/* int. vec + address modifier */
     struct scsi_link sc_link;
 };
 
@@ -255,6 +256,8 @@ si_attach(parent, self, args)
 	}
 
 	ncr5380->sc_adapter_type = ca->ca_bustype;
+	ncr5380->sc_adapter_iv_am =
+		VME_SUPV_DATA_24 | (ca->ca_intvec & 0xFF);
 	ncr5380->sc_regs = regs;
 
 	/*
@@ -410,9 +413,9 @@ ncr_intr(void *arg)
 }
 
 static int
-ncr5380_reset_adapter(struct ncr5380_softc *ncr5380)
+ncr5380_reset_adapter(struct ncr5380_softc *sc)
 {
-	volatile struct si_regs *si = ncr5380->sc_regs;
+	volatile struct si_regs *si = sc->sc_regs;
 
 #ifdef	DEBUG
 	if (si_debug) {
@@ -420,10 +423,18 @@ ncr5380_reset_adapter(struct ncr5380_softc *ncr5380)
 	}
 #endif
 
-	/* The reset bits are active low. */
+	/* The reset bits in the CSR are active low. */
 	si->si_csr = 0;
-	delay(100);
+	delay(20);
 	si->si_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES;
+	si->fifo_count = 0;
+	if (sc->sc_adapter_type == BUS_VME16) {
+		si->dma_addrh = 0;
+		si->dma_addrl = 0;
+		si->dma_counth = 0;
+		si->dma_countl = 0;
+		si->iv_am = sc->sc_adapter_iv_am;
+	}
 }
 
 static int
@@ -437,9 +448,8 @@ ncr5380_reset_scsibus(struct ncr5380_softc *ncr5380)
 	}
 #endif
 
-	regs->sci_icmd = SCI_ICMD_TEST;
-	regs->sci_icmd = SCI_ICMD_TEST | SCI_ICMD_RST;
-	delay(2500);
+	regs->sci_icmd = SCI_ICMD_RST;
+	delay(100);
 	regs->sci_icmd = 0;
 
 	regs->sci_mode = 0;
@@ -447,7 +457,7 @@ ncr5380_reset_scsibus(struct ncr5380_softc *ncr5380)
 	regs->sci_sel_enb = 0;
 
 	SCI_CLR_INTR(regs);
-	SCI_CLR_INTR(regs);
+	/* XXX - Need long delay here! */
 }
 
 static int
@@ -496,10 +506,10 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 				  sizeof(struct scsi_sense_data));
 		xs->error = XS_SENSE;
 		break;
-	case 0x08:	/* Busy */
+	case 0x08:	/* Busy - common code will delay, retry. */
 		xs->error = XS_BUSY;
 		break;
-	default:
+	default:	/* Dead - tell common code to give up. */
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 
@@ -529,22 +539,28 @@ retry_arbitration:
 	if (--arb_retries <= 0) {
 #ifdef	DEBUG
 		if (si_debug) {
-			printf("si_select: arb_retries expended\n");
+			printf("si_select: arb_retries expended; resetting...\n");
 		}
 #endif
-		goto lost;
+		ret = SCSI_RET_NEED_RESET;
+		goto nosel;
 	}
+
+	icmd = regs->sci_icmd & ~(SCI_ICMD_DIFF|SCI_ICMD_TEST);
 
 	if ((regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)) &&
 	    (regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)) &&
 	    (regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)))
 	{
+		/* Something is sitting on the SCSI bus... */
 #ifdef	DEBUG
 		if (si_debug) {
-			printf("si_select_target: still BSY|SEL\n");
+			printf("si_select_target: still BSY+SEL; resetting...\n");
 		}
 #endif
-		return ret;
+		/* Send bus device reset. */
+		ret = SCSI_RET_NEED_RESET;
+		goto nosel;
 	}
 
 	regs->sci_odata = myid;
@@ -556,15 +572,19 @@ retry_arbitration:
 	arb_wait = 50;	/* X2 */
 	do {
 		if (regs->sci_icmd & SCI_ICMD_AIP)
-			break;
+			goto got_aip;
 		delay2us();
 	} while (--arb_wait > 0);
-	if (arb_wait <= 0) {
-		/* XXX - Could have missed it? */
-		goto retry_arbitration;
-	}
+	/* XXX - Could have missed it? */
 #ifdef	DEBUG
-	if (si_debug) {
+	if (si_debug)
+		printf("si_select_target: API did not appear\n");
+#endif
+	goto retry_arbitration;
+
+	got_aip:
+#ifdef	DEBUG
+	if (si_debug & 4) {
 		printf("si_select_target: API after %d tries (last wait %d)\n",
 			   ARBITRATION_RETRIES - arb_retries,
 			   (50 - arb_wait));
@@ -646,7 +666,7 @@ retry_arbitration:
 				/* This is the "normal" no-such-device select error. */
 #ifdef	DEBUG
 				if (si_debug)
-					printf("si_select: did not see BSY\n");
+					printf("si_select: not BSY (nothing there)\n");
 #endif
 				goto nodev;
 			}
@@ -663,8 +683,7 @@ nodev:
 	ret = SCSI_RET_DEVICE_DOWN;
 	regs->sci_sel_enb = myid;
 nosel:
-	icmd &= ~(SCI_ICMD_DATA|SCI_ICMD_SEL|SCI_ICMD_ATN);
-	regs->sci_icmd = icmd;
+	regs->sci_icmd = 0;
 	regs->sci_mode = 0;
 	return ret;
 
@@ -741,14 +760,14 @@ scsi_timeout_error:
 	return cnt;
 }
 
+/* Return -1 (error) or number of bytes sent (>=0). */
 static int
 si_command_transfer(register volatile sci_regmap_t *regs,
 		 int maxlen, u_char *data, u_char *status, u_char *msg)
 {
-	int	xfer=0, phase;
+	int	xfer, phase;
 
-/*	printf("command_transfer called for 0x%x.\n", *data); */
-
+	xfer = 0;
 	regs->sci_icmd = 0;
 
 	while (1) {
@@ -762,38 +781,47 @@ si_command_transfer(register volatile sci_regmap_t *regs,
 				SCI_ACK(regs,SCSI_PHASE_CMD);
 				xfer += sci_data_out(regs, SCSI_PHASE_CMD,
 						   	maxlen, data);
-				return xfer;
+				goto out;
+
 			case SCSI_PHASE_DATA_IN:
-				printf("Data in phase in command_transfer?\n");
-				return 0;
+				printf("command_transfer: Data in phase?\n");
+				goto err;
+
 			case SCSI_PHASE_DATA_OUT:
-				printf("Data out phase in command_transfer?\n");
-				return 0;
+				printf("command_transfer: Data out phase?\n");
+				goto err;
+
 			case SCSI_PHASE_STATUS:
 				SCI_ACK(regs,SCSI_PHASE_STATUS);
-				printf("status in command_transfer.\n");
+				printf("command_transfer: status in...\n");
 				sci_data_in(regs, SCSI_PHASE_STATUS,
 					  	1, status);
-				break;
+				printf("command_transfer: status=0x%x\n", *status);
+				goto err;
+
 			case SCSI_PHASE_MESSAGE_IN:
 				SCI_ACK(regs,SCSI_PHASE_MESSAGE_IN);
-				printf("msgin in command_transfer.\n");
+				printf("command_transfer: msg in?\n");
 				sci_data_in(regs, SCSI_PHASE_MESSAGE_IN,
 					  	1, msg);
 				break;
+
 			case SCSI_PHASE_MESSAGE_OUT:
 				SCI_ACK(regs,SCSI_PHASE_MESSAGE_OUT);
 				sci_data_out(regs, SCSI_PHASE_MESSAGE_OUT,
 					  	1, msg);
 				break;
+
 			default:
-				printf("Unexpected phase 0x%x in "
-					"command_transfer().\n", phase);
-scsi_timeout_error:
-				return xfer;
-				break;
+				printf("command_transfer: Unexpected phase 0x%x\n", phase);
+				goto err;
 		}
 	}
+scsi_timeout_error:
+ err:
+	xfer = -1;
+ out:
+	return xfer;
 }
 
 static int
@@ -872,13 +900,20 @@ scsi_timeout_error:
 }
 
 static int
-si_dorequest(register volatile sci_regmap_t *regs,
-		int target, int lun, u_char *cmd, int cmdlen,
-		char *databuf, int datalen, int *sent, int *ret)
+si_dorequest(struct ncr5380_softc *sc,
+	int target, int lun, u_char *cmd, int cmdlen,
+	char *databuf, int datalen, int *sent)
+	/* Returns 0 on success, -1 on internal error, or the status byte */
 {
-/* Returns 0 on success, -1 on internal error, or the status byte */
+	register volatile sci_regmap_t *regs = sc->sc_regs;
 	int	cmd_bytes_sent, r;
 	u_char	stat, msg, c;
+
+#ifdef	DEBUG
+	if (si_debug) {
+		printf("si_dorequest: target=%d, lun=%d\n", target, lun);
+	}
+#endif
 
 	*sent = 0;
 
@@ -888,16 +923,25 @@ si_dorequest(register volatile sci_regmap_t *regs,
 			printf("si_dorequest: select returned %d\n", r);
 		}
 #endif
-		*ret = r;
+
 		SCI_CLR_INTR(regs);
 		switch (r) {
+
+		case SCSI_RET_NEED_RESET:
+			printf("si_dorequest: target=%d, lun=%d, resetting...\n",
+				   target, lun, r);
+			ncr5380_reset_adapter(sc);
+			ncr5380_reset_scsibus(sc);
+			/* fall through */
 		case SCSI_RET_RETRY:
-			return 0x08;
+			return 0x08;	/* Busy - tell common code to retry. */
+
 		default:
-			printf("si_select_target(target %d, lun %d) failed(%d).\n",
+			printf("si_dorequest: target=%d, lun=%d, error=%d.\n",
 				target, lun, r);
+			/* fall through */
 		case SCSI_RET_DEVICE_DOWN:
-			return -1;
+			return -1;	/* Dead - tell common code to give up. */
 		}
 	}
 
@@ -907,13 +951,14 @@ si_dorequest(register volatile sci_regmap_t *regs,
 				(u_char *) cmd, &stat, &c)) != cmdlen)
 	{
 		SCI_CLR_INTR(regs);
-		*ret = SCSI_RET_COMMAND_FAIL;
-		printf("Data underrun sending CCB (%d bytes of %d, sent).\n",
-			cmd_bytes_sent, cmdlen);
+		if (cmd_bytes_sent >= 0) {
+			printf("Data underrun sending CCB (%d bytes of %d, sent).\n",
+				   cmd_bytes_sent, cmdlen);
+		}
 		return -1;
 	}
 
-	*sent=si_data_transfer(regs, datalen, (u_char *)databuf,
+	*sent = si_data_transfer(regs, datalen, (u_char *)databuf,
 				  &stat, &msg);
 #ifdef	DEBUG
 	if (si_debug) {
@@ -921,7 +966,6 @@ si_dorequest(register volatile sci_regmap_t *regs,
 	}
 #endif
 
-	*ret = 0;
 	return stat;
 }
 
@@ -929,15 +973,14 @@ static int
 si_generic(int adapter, int id, int lun, struct scsi_generic *cmd,
   	 int cmdlen, void *databuf, int datalen)
 {
-	register struct ncr5380_softc *ncr5380 = sicd.cd_devs[adapter];
-	register volatile sci_regmap_t *regs = ncr5380->sc_regs;
-	int i,j,sent,ret;
+	register struct ncr5380_softc *sc = sicd.cd_devs[adapter];
+	int i, j, sent;
 
 	if (cmd->opcode == TEST_UNIT_READY)	/* XXX */
 		cmd->bytes[0] = ((u_char) lun << 5);
 
-	i = si_dorequest(regs, id, lun, (u_char *) cmd, cmdlen,
-					 databuf, datalen, &sent, &ret);
+	i = si_dorequest(sc, id, lun, (u_char *) cmd, cmdlen,
+					 databuf, datalen, &sent);
 
 	return i;
 }
@@ -946,10 +989,9 @@ static int
 si_group0(int adapter, int id, int lun, int opcode, int addr, int len,
 		int flags, caddr_t databuf, int datalen)
 {
-	register struct ncr5380_softc *ncr5380 = sicd.cd_devs[adapter];
-	register volatile sci_regmap_t *regs = ncr5380->sc_regs;
+	register struct ncr5380_softc *sc = sicd.cd_devs[adapter];
 	unsigned char cmd[6];
-	int i,j,sent,ret;
+	int i, j, sent;
 
 	cmd[0] = opcode;		/* Operation code           		*/
 	cmd[1] = (lun << 5) | ((addr >> 16) & 0x1F);	/* Lun & MSB of addr	*/
@@ -958,7 +1000,7 @@ si_group0(int adapter, int id, int lun, int opcode, int addr, int len,
 	cmd[4] = len;			/* Allocation length			*/
 	cmd[5] = flags;		/* Link/Flag				*/
 
-	i = si_dorequest(regs, id, lun, cmd, 6, databuf, datalen, &sent, &ret);
+	i = si_dorequest(sc, id, lun, cmd, 6, databuf, datalen, &sent);
 
 	return i;
 }
