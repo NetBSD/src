@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.15 1996/10/13 03:30:12 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.16 1996/11/24 13:32:48 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -174,19 +174,19 @@ cdev_decl(lpt);
 
 static int lptmatch __P((struct device *, void *, void *aux));
 static void lptattach __P((struct device *, struct device *, void *));
-static void lptintr __P((struct lpt_softc *));
+static void lptintr __P((void *));
 static int notready __P((u_char, struct lpt_softc *));
-static void lptout __P((void *arg));
+static void lptout __P((void *));
 static int pushbytes __P((struct lpt_softc *));
 
 #if defined(INET) && defined(PLIP)
 /* Functions for the plip# interface */
 static void plipattach __P((struct lpt_softc *,int));
 static int plipioctl __P((struct ifnet *, u_long, caddr_t));
-static void plipsoftint __P((struct lpt_softc *));
+static void plipsoftint __P((void *));
 static void plipinput __P((struct lpt_softc *));
 static void plipstart __P((struct ifnet *));
-static void plipoutput __P((struct lpt_softc *));
+static void plipoutput __P((void *));
 #endif
 
 struct cfattach lpt_ca = {
@@ -353,7 +353,7 @@ static void
 lptout(arg)
 	void *arg;
 {
-	struct lpt_softc *sc = (struct lpt_softc *) arg;
+	struct lpt_softc *sc = arg;
 	if (sc->sc_count > 0)
 		sc->sc_i8255->port_control = LPT_IRQENABLE;
 }
@@ -433,9 +433,10 @@ lptwrite(dev, uio, flags)
  * another char.
  */
 static void
-lptintr(sc)
-	struct lpt_softc *sc;
+lptintr(arg)
+	void *arg;
 {
+	struct lpt_softc *sc = arg;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 
 #if defined(INET) && defined(PLIP)
@@ -619,12 +620,10 @@ plipioctl(ifp, cmd, data)
 		if (ifp->if_mtu != ifr->ifr_mtu) {
 		        ifp->if_mtu = ifr->ifr_mtu;
 			if (sc->sc_ifbuf) {
-				s = splimp();
 				free(sc->sc_ifbuf, M_DEVBUF);
 				sc->sc_ifbuf =
 					malloc(ifp->if_mtu + ifp->if_hdrlen,
 					       M_DEVBUF, M_WAITOK);
-				splx(s);
 			}
 		}
 		break;
@@ -636,9 +635,10 @@ plipioctl(ifp, cmd, data)
 }
 
 static void
-plipsoftint(sc)
-	struct lpt_softc *sc;
+plipsoftint(arg)
+	void *arg;
 {
+	struct lpt_softc *sc = arg;
 	int pending = sc->sc_pending;
 
 	while (sc->sc_pending & PLIP_IPENDING) {
@@ -936,9 +936,10 @@ plipstart(ifp)
 }
 
 static void
-plipoutput(sc)
-	struct lpt_softc *sc;
+plipoutput(arg)
+	void *arg;
 {
+	struct lpt_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct mbuf *m0, *m;
@@ -950,10 +951,10 @@ plipoutput(sc)
 	ifp->if_flags |= IFF_OACTIVE;
 
 	if (sc->sc_ifoerrs)
-		untimeout((void (*)(void *))plipoutput, sc);
+		untimeout(plipoutput, sc);
 
 	for (;;) {
-		s = splnet();
+		s = splimp();
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		splx(s);
 		if (!m0)
@@ -1010,9 +1011,7 @@ plipoutput(sc)
 		ifp->if_opackets++;
 		ifp->if_obytes += len + 4;
 		sc->sc_ifoerrs = 0;
-		s = splimp();
 		m_freem(m0);
-		splx(s);
 		i8255->port_a |= LPA_ACKENABLE;
 	}
 	i8255->port_a |= LPA_ACTIVE;
@@ -1030,18 +1029,16 @@ retry:
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == (IFF_RUNNING | IFF_UP)
 	    && sc->sc_ifoerrs < PLIPMXRETRY) {
-		s = splnet();
+		s = splimp();
 		IF_PREPEND(&ifp->if_snd, m0);
 		splx(s);
 		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
-		timeout((void (*)(void *))plipoutput, sc, PLIPRETRY);
+		timeout(plipoutput, sc, PLIPRETRY);
 	} else {
 		if (sc->sc_ifoerrs == PLIPMXRETRY) {
 			log(LOG_NOTICE, "%s: tx hard error\n", ifp->if_xname);
 		}
-		s = splimp();
 		m_freem(m0);
-		splx(s);
 		i8255->port_a |= LPA_ACTIVE;
 	}
 	sc->sc_ifoerrs++;
