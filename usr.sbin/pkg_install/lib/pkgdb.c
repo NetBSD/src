@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.19 2004/12/29 11:35:03 agc Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.20 2005/02/04 09:03:03 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.19 2004/12/29 11:35:03 agc Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.20 2005/02/04 09:03:03 jlam Exp $");
 #endif
 
 /*
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: pkgdb.c,v 1.19 2004/12/29 11:35:03 agc Exp $");
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "lib.h"
 
@@ -237,6 +238,22 @@ pkgdb_remove_pkg(const char *pkg)
 		}
 	}
 	return ret;
+}
+
+/*
+ *  Return the location of the package reference counts database directory.
+ */
+char *
+pkgdb_refcount_dir(void)
+{
+	static char buf[MaxPathSize];
+	char *tmp;
+
+	if (tmp = getenv(PKG_REFCOUNT_DBDIR_VNAME))
+		strlcpy(buf, tmp, sizeof(buf));
+	else
+		snprintf(buf, sizeof(buf), "%s.refcount", _pkgdb_getPKGDB_DIR());
+	return buf;
 }
 
 /*
