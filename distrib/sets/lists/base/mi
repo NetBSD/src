@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.9 2000/08/09 07:58:04 drochner Exp $
+# $NetBSD: mi,v 1.169.2.10 2000/08/17 14:17:16 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -1716,7 +1716,7 @@
 ./var/games/hackdir/save
 ./var/games/larn
 ./var/games/phantasia
-./var/krb5kdc
+./var/heimdal
 ./var/log
 ./var/log/rdist
 ./var/mail
