@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.154 2003/10/28 17:37:25 hannken Exp $ */
+/*	$NetBSD: machdep.c,v 1.155 2003/10/30 21:02:55 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 2003/10/28 17:37:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2003/10/30 21:02:55 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -514,7 +514,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 	if (*onstack)
 		return ((caddr_t)ctx->ps_sigstk.ss_sp + ctx->ps_sigstk.ss_size);
 	else
-		return (void *)(tf->tf_out[6] + STACK_OFFSET);
+		return (void *)((uintptr_t)tf->tf_out[6] + STACK_OFFSET);
 }
 
 struct sigframe_siginfo {
@@ -534,7 +534,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	long ucsz;
 	struct sigframe_siginfo *fp = getframe(l, sig, &onstack);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct trapframe *tf = l->l_md.md_tf;
+	struct trapframe64 *tf = l->l_md.md_tf;
 	struct rwindow *newsp;
 	/* Allocate an aligned sigframe */
 	fp = (void *)((u_long)(fp - 1) & ~0x0f);

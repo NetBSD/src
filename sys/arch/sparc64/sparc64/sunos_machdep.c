@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.19 2003/09/26 12:02:56 simonb Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.20 2003/10/30 21:02:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.19 2003/09/26 12:02:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.20 2003/10/30 21:02:55 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -81,10 +81,9 @@ struct sunos_sigframe {
 };
 
 void
-sunos_sendsig(sig, mask, code)
-	int sig;
+sunos_sendsig(ksi, mask)
+	const ksiginfo_t *ksi;
 	const sigset_t *mask;
-	u_long code;
 {
 	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -92,6 +91,7 @@ sunos_sendsig(sig, mask, code)
 	register struct trapframe64 *tf;
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
+	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sunos_sigframe sf;
 
@@ -129,7 +129,7 @@ sunos_sendsig(sig, mask, code)
 	 * directly in user space....
 	 */
 	sf.sf_signo = sig;
-	sf.sf_code = code;
+	sf.sf_code = ksi->ksi_trap;
 	sf.sf_scp = (u_long)&fp->sf_sc;
 	sf.sf_addr = 0;			/* XXX */
 
