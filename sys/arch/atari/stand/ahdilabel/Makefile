@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2001/02/25 14:31:53 jdc Exp $
+#	$NetBSD: Makefile,v 1.4 2001/03/04 20:51:51 jdc Exp $
 
 PROG=	ahdilabel
 SRCS=	ahdilabel.c build.c check.c cksum.c magic.c openraw.c read.c write.c \
 	writedtab.c
 
-MAN=	ahdilabel.8
-MANSUBDIR=	/atari
+MKMAN=	no
 BINDIR=	/sbin
 
 WARNS=	1
