@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_tworeg.h,v 1.1.16.4 2000/03/18 13:52:13 scw Exp $ */
+/*	$NetBSD: vme_tworeg.h,v 1.1.16.5 2000/03/18 16:56:48 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -518,7 +518,7 @@
 #define	VME2_IO1_VME_START		(0x00000000u)
 #define	VME2_IO1_VME_END		(0x00ffffffu)
 
-#define	VME2_IO2_LOCAL_START		(0xf1000000u)
+#define	VME2_IO2_LOCAL_START		(0x00000000u)
 #define	VME2_IO2_MASK			(0xffffffffu)
 #define	VME2_IO2_VME_START		(0xf1000000u)	/* Maybe starts@ 0x0? */
 #define	VME2_IO2_VME_END		(0xff7fffffu)

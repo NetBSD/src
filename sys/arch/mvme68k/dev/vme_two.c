@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.1.16.4 2000/03/18 13:52:12 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.1.16.5 2000/03/18 16:56:48 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ vmetwo_attach(parent, self, aux)
 	if ( reg & VME2_IO_CONTROL_I1EN ) {
 
 		/* This range is fixed to A16, DATA */
-		sc->sc_ranges[0].vr_am = VME_AM_A16 | VME_AM_DATA;
+		sc->sc_ranges[0].vr_am = VME_AM_MBO | VME_AM_A16 | VME_AM_DATA;
 
 		/* However, SUPER/USER is selectable... */
 		if ( reg & VME2_IO_CONTROL_I1SU )
@@ -227,9 +227,9 @@ vmetwo_attach(parent, self, aux)
 
 	if ( reg & VME2_IO_CONTROL_I2EN ) {
 		/* These two ranges are fixed to A24D16 and A32D16 */
-		sc->sc_ranges[1].vr_am = VME_AM_A24;
+		sc->sc_ranges[1].vr_am = VME_AM_MBO | VME_AM_A24;
 		sc->sc_ranges[1].vr_datasize = VME_D16;
-		sc->sc_ranges[2].vr_am = VME_AM_A32;
+		sc->sc_ranges[2].vr_am = VME_AM_MBO | VME_AM_A32;
 		sc->sc_ranges[2].vr_datasize = VME_D16;
 
 		/* However, SUPER/USER is selectable */
@@ -335,7 +335,22 @@ vmetwo_master_range(sc, range, vr)
 	 */
 	attr = vme2_lcsr_read(sc, VME2LCSR_MASTER_ATTR);
 	attr >>= VME2_MASTER_ATTR_AM_SHIFT(range);
-	vr->vr_am = attr & VME2_MASTER_ATTR_AM_MASK;
+	vr->vr_am = VME_AM_MBO | (attr & VME2_MASTER_ATTR_AM_MASK);
+
+	switch ( vr->vr_am & VME_AM_ADRSIZEMASK ) {
+	case VME_AM_A32:
+	default:
+		vr->vr_mask = 0xffffffffu;
+		break;
+
+	case VME_AM_A24:
+		vr->vr_mask = 0x00ffffffu;
+		break;
+
+	case VME_AM_A16:
+		vr->vr_mask = 0x0000ffffu;
+		break;
+	}
 
 	/*
 	 * Fix up the datasizes available through this range
@@ -361,8 +376,6 @@ vmetwo_master_range(sc, range, vr)
 	end = (reg & VME2_MAST_ADDRESS_END_MASK);
 	end <<= VME2_MAST_ADDRESS_END_SHIFT;
 
-	vr->vr_locstart = start;
-
 	/*
 	 * Local->VMEbus map '4' has optional translation bits, so
 	 * the VMEbus start and end addresses may need to be adjusted.
@@ -371,10 +384,12 @@ vmetwo_master_range(sc, range, vr)
 	 * is not enabled. This code works either way.
 	 */
 	if ( range == 3 ) {
+		vr->vr_locstart = start;
+
 		reg = vme2_lcsr_read(sc, VME2LCSR_MAST4_TRANS);
 		reg &= VME2_MAST4_TRANS_SELECT_MASK;
 		reg <<= VME2_MAST4_TRANS_SELECT_SHIFT;
-		vr->vr_mask = ~reg;
+		vr->vr_mask &= ~reg;
 		start &= ~reg;
 		end &= ~reg;
 
@@ -384,10 +399,10 @@ vmetwo_master_range(sc, range, vr)
 		start |= reg;
 		end |= reg;
 	} else
-		vr->vr_mask = 0xffffffffu;
+		vr->vr_locstart = 0;
 
 	/*
-	 * Fixup the VMEbus addresses this range corresponds to
+	 * Fixup the addresses this range corresponds to
 	 */
 	vr->vr_vmestart = start;
 	vr->vr_vmeend = end - 1;
@@ -430,8 +445,7 @@ _vmetwo_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 		/*
 		 * Check the range against the address modifier and datasize
 		 */
-		if ( (am & VME_AM_ADRSIZEMASK) != vr->vr_am ||
-		     datasize > vr->vr_datasize )
+		if ( am != vr->vr_am || datasize > vr->vr_datasize )
 			continue;
 
 		/*
@@ -442,7 +456,7 @@ _vmetwo_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 			 * We have a match. Compute the required local-bus
 			 * address which maps to the VMEbus start address.
 			 */
-			paddr = vr->vr_locstart | (vmeaddr & vr->vr_mask);
+			paddr = vr->vr_locstart + (vmeaddr & vr->vr_mask);
 			break;
 		}
 	}

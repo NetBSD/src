@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.6.24.4 2000/03/18 13:52:11 scw Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.6.24.5 2000/03/18 16:56:48 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -93,16 +93,16 @@ struct vme_pcc_range {
 };
 
 static struct vme_pcc_range vme_pcc_ranges[] = {
-    {VME_AM_A24 | VME_AM_DATA | VME_AM_SUPER, VME_D32 | VME_D16 | VME_D8,
-		VME1_A24D32_START, VME1_A24D32_END},
-    {VME_AM_A32 | VME_AM_DATA | VME_AM_SUPER, VME_D32 | VME_D16 | VME_D8,
-		VME1_A32D32_START, VME1_A32D32_END},
-    {VME_AM_A24 | VME_AM_DATA | VME_AM_SUPER, VME_D16 | VME_D8,
-		VME1_A24D16_START, VME1_A24D16_END},
-    {VME_AM_A32 | VME_AM_DATA | VME_AM_SUPER, VME_D16 | VME_D8,
-		VME1_A32D16_START, VME1_A32D16_END},
-    {VME_AM_A16 | VME_AM_DATA | VME_AM_SUPER, VME_D16 | VME_D8,
-		VME1_A16D16_START, VME1_A16D16_END}
+    {VME_AM_MBO | VME_AM_A24 | VME_AM_DATA | VME_AM_SUPER,
+     VME_D32 | VME_D16 | VME_D8, VME1_A24D32_START, VME1_A24D32_END},
+    {VME_AM_MBO | VME_AM_A32 | VME_AM_DATA | VME_AM_SUPER,
+     VME_D32 | VME_D16 | VME_D8, VME1_A32D32_START, VME1_A32D32_END},
+    {VME_AM_MBO | VME_AM_A24 | VME_AM_DATA | VME_AM_SUPER,
+     VME_D16 | VME_D8, VME1_A24D16_START, VME1_A24D16_END},
+    {VME_AM_MBO | VME_AM_A32 | VME_AM_DATA | VME_AM_SUPER,
+     VME_D16 | VME_D8, VME1_A32D16_START, VME1_A32D16_END},
+    {VME_AM_MBO | VME_AM_A16 | VME_AM_DATA | VME_AM_SUPER,
+     VME_D16 | VME_D8, VME1_A16D16_START, VME1_A16D16_END}
 };
 #define VME1_NRANGES	(sizeof(vme_pcc_ranges)/sizeof(struct vme_pcc_range))
 
@@ -273,7 +273,7 @@ _vme_pcc_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 		/*
 		 * Accept the range if it matches the constraints
 		 */
-		if ( (am & VME_AM_ADRSIZEMASK) == pr->pr_am &&
+		if ( am == pr->pr_am &&
 		     datasize <= pr->pr_datasize            &&
 		     vmeaddr >= (pr->pr_start & mask)       &&
 		     end <= (pr->pr_end & mask) ) {
