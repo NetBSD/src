@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.6 2003/11/18 00:56:57 thorpej Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.7 2003/11/21 23:03:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.6 2003/11/18 00:56:57 thorpej Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.7 2003/11/21 23:03:13 nathanw Exp $");
 
 /*
  * This is necessary because the fsync_range() name is always weak (it is
@@ -90,6 +90,11 @@ int	_sys_wait4(pid_t, int *, int, struct rusage *);
 ssize_t	_sys_write(int, const void *, size_t);
 ssize_t	_sys_writev(int, const struct iovec *, int);
 
+#define TESTCANCEL(id) 	do {						\
+	if (__predict_false((id)->pt_cancel))				\
+		pthread_exit(PTHREAD_CANCELED);				\
+	} while (0)
+
 
 int
 accept(int s, struct sockaddr *addr, socklen_t *addrlen)
@@ -98,9 +103,9 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_accept(s, addr, addrlen);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	
 	return retval;
 }
@@ -112,9 +117,9 @@ close(int d)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_close(d);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	
 	return retval;
 }
@@ -126,9 +131,9 @@ connect(int s, const struct sockaddr *addr, socklen_t namelen)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_connect(s, addr, namelen);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	
 	return retval;
 }
@@ -141,11 +146,11 @@ fcntl(int fd, int cmd, ...)
 	va_list ap;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	va_start(ap, cmd);
 	retval = _sys_fcntl(fd, cmd, va_arg(ap, void *));
 	va_end(ap);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -157,9 +162,9 @@ fsync(int d)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_fsync(d);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	
 	return retval;
 }
@@ -171,9 +176,9 @@ fsync_range(int d, int f, off_t s, off_t e)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_fsync_range(d, f, s, e);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -185,9 +190,9 @@ msgrcv(int msgid, void *msgp, size_t msgsz, long msgtyp, int msgflg)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_msgrcv(msgid, msgp, msgsz, msgtyp, msgflg);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -199,9 +204,9 @@ msgsnd(int msgid, const void *msgp, size_t msgsz, int msgflg)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_msgsnd(msgid, msgp, msgsz, msgflg);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -213,9 +218,9 @@ __msync13(void *addr, size_t len, int flags)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys___msync13(addr, len, flags);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -228,11 +233,11 @@ open(const char *path, int flags, ...)
 	va_list ap;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	va_start(ap, flags);
 	retval = _sys_open(path, flags, va_arg(ap, mode_t));
 	va_end(ap);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -244,9 +249,9 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_poll(fds, nfds, timeout);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -258,9 +263,9 @@ pread(int d, void *buf, size_t nbytes, off_t offset)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_pread(d, buf, nbytes, offset);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -272,9 +277,9 @@ pwrite(int d, const void *buf, size_t nbytes, off_t offset)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_pwrite(d, buf, nbytes, offset);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -286,9 +291,9 @@ read(int d, void *buf, size_t nbytes)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_read(d, buf, nbytes);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -300,9 +305,9 @@ readv(int d, const struct iovec *iov, int iovcnt)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_readv(d, iov, iovcnt);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -315,9 +320,9 @@ select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_select(nfds, readfds, writefds, exceptfds, timeout);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -329,9 +334,9 @@ wait4(pid_t wpid, int *status, int options, struct rusage *rusage)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_wait4(wpid, status, options, rusage);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -343,9 +348,9 @@ write(int d, const void *buf, size_t nbytes)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_write(d, buf, nbytes);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
@@ -357,9 +362,9 @@ writev(int d, const struct iovec *iov, int iovcnt)
 	pthread_t self;
 
 	self = pthread__self();
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 	retval = _sys_writev(d, iov, iovcnt);
-	pthread__testcancel(self);
+	TESTCANCEL(self);
 
 	return retval;
 }
