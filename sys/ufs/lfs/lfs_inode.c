@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.51.2.1 2001/06/27 03:49:39 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.51.2.2 2001/06/29 03:56:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -106,10 +106,7 @@ static int lfs_vtruncbuf(struct vnode *, daddr_t, int, int);
 
 /* Search a block for a specific dinode. */
 struct dinode *
-lfs_ifind(fs, ino, bp)
-	struct lfs *fs;
-	ino_t ino;
-	struct buf *bp;
+lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 {
 	struct dinode *dip = (struct dinode *)bp->b_data;
 	struct dinode *ldip, *fin;
@@ -140,8 +137,7 @@ lfs_ifind(fs, ino, bp)
 }
 
 int
-lfs_update(v)
-	void *v;
+lfs_update(void *v)
 {
 	struct vop_update_args /* {
 				  struct vnode *a_vp;
@@ -217,8 +213,7 @@ lfs_update(v)
  */
 /* VOP_BWRITE 1 + NIADDR + VOP_BALLOC == 2 + 2*NIADDR times */
 int
-lfs_truncate(v)
-	void *v;
+lfs_truncate(void *v)
 {
 	struct vop_truncate_args /* {
 		struct vnode *a_vp;
@@ -682,10 +677,7 @@ lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
  * Inlined from vtruncbuf, so that lfs_avail could be updated.
  */
 static int
-lfs_vtruncbuf(vp, lbn, slpflag, slptimeo)
-	struct vnode *vp;
-	daddr_t lbn;
-	int slpflag, slptimeo;
+lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
 {
 	struct buf *bp, *nbp;
 	int s, error;

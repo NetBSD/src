@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56.4.1 2001/06/27 03:49:40 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.4.2 2001/06/29 03:56:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@
 #define FVG_UNLOCK 0x01	  /* Needs to be unlocked */
 #define FVG_PUT	   0x02	  /* Needs to be vput() */
 
-struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
-int lfs_fasthashget __P((dev_t, ino_t, int *, struct vnode **));
+struct buf *lfs_fakebuf(struct vnode *, int, size_t, caddr_t);
+int lfs_fasthashget(dev_t, ino_t, int *, struct vnode **);
 
 int debug_cleaner = 0; 
 int clean_vnlocked = 0;

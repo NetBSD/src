@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.10.2.1 2001/06/27 03:49:42 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.10.2.2 2001/06/29 03:56:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -119,18 +119,6 @@ typedef struct fs_info {
 				((i) / (fs)->lfs_sepb)) +		\
 				(i) % (fs)->lfs_sepb))
 
-__BEGIN_DECLS
-int	 dump_summary __P((struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t));
-int	 fs_getmntinfo __P((struct statfs **, char *, const char *));
-void	 get __P((int, off_t, void *, size_t));
-FS_INFO	*get_fs_info __P((struct statfs *, int));
-int 	 lfs_segmapv __P((FS_INFO *, int, caddr_t, BLOCK_INFO **, int *));
-int	 mmap_segment __P((FS_INFO *, int, caddr_t *, int));
-void	 munmap_segment __P((FS_INFO *, caddr_t, int));
-void	 reread_fs_info __P((FS_INFO *, int));
-void	 toss __P((void *, int *, size_t,
-	      int (*)(const void *, const void *, const void *), void *));
-
 /*
  * USEFUL DEBUGGING FUNCTIONS:
  */
@@ -163,8 +151,20 @@ void	 toss __P((void *, int *, size_t,
 			ctime((time_t *)&(sup)->su_lastmod)); \
 }
 
-void	 dump_super __P((struct lfs *));
-void	 dump_cleaner_info __P((void *));
-void	 print_SEGSUM __P(( struct lfs *, SEGSUM *, daddr_t));
-void	 print_CLEANERINFO __P((CLEANERINFO *));
+__BEGIN_DECLS
+int	 dump_summary(struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t);
+int	 fs_getmntinfo(struct statfs **, char *, const char *);
+void	 get(int, off_t, void *, size_t);
+FS_INFO	*get_fs_info(struct statfs *, int);
+int 	 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO **, int *);
+int	 mmap_segment(FS_INFO *, int, caddr_t *, int);
+void	 munmap_segment(FS_INFO *, caddr_t, int);
+void	 reread_fs_info(FS_INFO *, int);
+void	 toss __P((void *, int *, size_t,
+	      int (*)(const void *, const void *, const void *), void *));
+
+void	 dump_super(struct lfs *);
+void	 dump_cleaner_info(void *);
+void	 print_SEGSUM(struct lfs *, SEGSUM *, daddr_t);
+void	 print_CLEANERINFO(CLEANERINFO *);
 __END_DECLS

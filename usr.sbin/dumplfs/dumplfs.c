@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.18.2.1 2001/06/27 03:49:42 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.18.2.2 2001/06/29 03:56:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.18.2.1 2001/06/27 03:49:42 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.18.2.2 2001/06/29 03:56:46 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,20 +67,18 @@ __RCSID("$NetBSD: dumplfs.c,v 1.18.2.1 2001/06/27 03:49:42 perseant Exp $");
 #include <unistd.h>
 #include "extern.h"
 
-static void	addseg __P((char *));
-static void	dump_cleaner_info __P((struct lfs *, void *));
-static void	dump_dinode __P((struct dinode *));
-static void	dump_ifile __P((int, struct lfs *, int, int, int));
-static int	dump_ipage_ifile __P((int, IFILE *, int));
-static int	dump_ipage_segusage __P((struct lfs *, int, IFILE *, int));
-static void	dump_segment __P((int, int, daddr_t, struct lfs *, int));
-static int	dump_sum __P((int, struct lfs *, SEGSUM *, int, daddr_t));
-static void	dump_super __P((struct lfs *));
-static void	usage __P((void));
+static void	addseg(char *);
+static void	dump_cleaner_info(struct lfs *, void *);
+static void	dump_dinode(struct dinode *);
+static void	dump_ifile(int, struct lfs *, int, int, int);
+static int	dump_ipage_ifile(int, IFILE *, int);
+static int	dump_ipage_segusage(struct lfs *, int, IFILE *, int);
+static void	dump_segment(int, int, daddr_t, struct lfs *, int);
+static int	dump_sum(int, struct lfs *, SEGSUM *, int, daddr_t);
+static void	dump_super(struct lfs *);
+static void	usage(void);
 
-int		main __P((int, char *[]));
-
-extern u_long	cksum __P((void *, size_t));
+extern u_long	cksum(void *, size_t);
 
 typedef struct seglist SEGLIST;
 struct seglist {
@@ -119,9 +117,7 @@ char *special;
 	(((off_t)(da)) << ((fs)->lfs_bshift - (fs)->lfs_fsbtodb))
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	struct lfs lfs_sb1, lfs_sb2, *lfs_master;
 	daddr_t seg_addr, idaddr, sbdaddr;
@@ -225,12 +221,7 @@ main(argc, argv)
  * printed out rather than making this code incredibly efficient.
  */
 static void
-dump_ifile(fd, lfsp, do_ientries, do_segentries, addr)
-	int fd;
-	struct lfs *lfsp;
-	int do_ientries;
-	int do_segentries;
-	daddr_t addr;
+dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t addr)
 {
 	IFILE *ipage;
 	struct dinode *dip, *dpage;
@@ -368,10 +359,7 @@ e0:	free(dpage);
 }
 
 static int
-dump_ipage_ifile(i, pp, tot)
-	int i;
-	IFILE *pp;
-	int tot;
+dump_ipage_ifile(int i, IFILE *pp, int tot)
 {
 	IFILE *ip;
 	int cnt, max;
@@ -384,11 +372,7 @@ dump_ipage_ifile(i, pp, tot)
 }
 
 static int
-dump_ipage_segusage(lfsp, i, pp, tot)
-	struct lfs *lfsp;
-	int i;
-	IFILE *pp;
-	int tot;
+dump_ipage_segusage(struct lfs *lfsp, int i, IFILE *pp, int tot)
 {
 	SEGUSE *sp;
 	int cnt, max;
@@ -418,8 +402,7 @@ dump_ipage_segusage(lfsp, i, pp, tot)
 }
 
 static void
-dump_dinode(dip)
-	struct dinode *dip;
+dump_dinode(struct dinode *dip)
 {
 	int i;
 	time_t at, mt, ct;
@@ -451,11 +434,7 @@ dump_dinode(dip)
 }
 
 static int
-dump_sum(fd, lfsp, sp, segnum, addr)
-	struct lfs *lfsp;
-	SEGSUM *sp;
-	int fd, segnum;
-	daddr_t addr;
+dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 {
 	FINFO *fp;
 	daddr_t *dp;
@@ -541,11 +520,7 @@ dump_sum(fd, lfsp, sp, segnum, addr)
 }
 
 static void
-dump_segment(fd, segnum, addr, lfsp, dump_sb)
-	int fd, segnum;
-	daddr_t addr;
-	struct lfs *lfsp;
-	int dump_sb;
+dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 {
 	struct lfs lfs_sb, *sbp;
 	SEGSUM *sump;
@@ -609,8 +584,7 @@ dump_segment(fd, segnum, addr, lfsp, dump_sb)
 }
 
 static void
-dump_super(lfsp)
-	struct lfs *lfsp;
+dump_super(struct lfs *lfsp)
 {
 	int i;
 
@@ -690,8 +664,7 @@ dump_super(lfsp)
 }
 
 static void
-addseg(arg)
-	char *arg;
+addseg(char *arg)
 {
 	SEGLIST *p;
 
@@ -703,9 +676,7 @@ addseg(arg)
 }
 
 static void
-dump_cleaner_info(lfsp, ipage)
-	struct lfs *lfsp;
-	void *ipage;
+dump_cleaner_info(struct lfs *lfsp, void *ipage)
 {
 	CLEANERINFO *cip;
 
@@ -717,7 +688,7 @@ dump_cleaner_info(lfsp, ipage)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: dumplfs [-ai] [-s segnum] file\n");
 	exit(1);
