@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.89 2002/04/30 13:14:38 uch Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.90 2002/05/08 18:18:55 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.89 2002/04/30 13:14:38 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.90 2002/05/08 18:18:55 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,6 +447,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
       PCMCIA_CIS_MACNICA_ME1_JEIDA,
       0, 0x00b8, { 0x08, 0x00, 0x42 } },
+
+    { PCMCIA_STR_NETGEAR_FA411,
+      PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA411,
+      PCMCIA_CIS_NETGEAR_FA411,
+      0, -1, { 0x00, 0x40, 0xf4 } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
