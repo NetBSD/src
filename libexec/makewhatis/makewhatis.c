@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.23 2002/03/08 21:59:07 jdolecek Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.24 2002/03/10 20:36:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: makewhatis.c,v 1.23 2002/03/08 21:59:07 jdolecek Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.24 2002/03/10 20:36:10 jdolecek Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -152,7 +152,7 @@ main(int argc, char *const *argv)
 	argc -= optind;
 	argv += optind;
 			
-	if (argc >= 2) {
+	if (argc >= 1) {
 		manpath = &argv[0];
 	
 	    mkwhatis:
