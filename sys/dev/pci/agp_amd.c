@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.1 2001/09/10 10:01:01 fvdl Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -149,13 +149,8 @@ agp_amd_free_gatt(struct agp_softc *sc, struct agp_amd_gatt *gatt)
 #endif
 
 int
-agp_amd_match(struct device *parent, struct cfdata *match, void *aux)
+agp_amd_match(const struct pci_attach_args *pa)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, NULL, NULL)
-	    == 0)
-		return 0;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_SC751_SC:

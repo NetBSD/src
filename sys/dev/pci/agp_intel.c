@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.2 2001/09/11 06:30:38 fvdl Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -70,19 +70,6 @@ struct agp_methods agp_intel_methods = {
 	agp_generic_bind_memory,
 	agp_generic_unbind_memory,
 };
-
-
-int
-agp_intel_match(struct device *parent, struct cfdata *match, void *aux)
-{
-	struct pci_attach_args *pa = aux;
-
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, NULL, NULL) 
-	    == 0)
-		return 0;
-
-	return 1;
-}
 
 int
 agp_intel_attach(struct device *parent, struct device *self, void *aux)
