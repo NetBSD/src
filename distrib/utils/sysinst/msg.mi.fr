@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.80 2004/08/14 16:06:37 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.81 2004/08/20 21:23:08 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1008,12 +1008,12 @@ message Megabytes {Megaoctets}
 message Cylinders {Cylindres}
 message Sectors {Secteurs}
 message Select_medium {Sélection du media d'installation}
-message ftp {ftp}
-message nfs {nfs}
-message cdrom {cdrom}
-message floppy {disquette}
-message local_fs {systeme de fichier non-monté}
-message local_dir {répertoire local}
+message ftp {FTP}
+message nfs {NFS}
+message cdrom {CD-ROM / DVD}
+message floppy {Disquette}
+message local_fs {Systeme de fichier non-monté}
+message local_dir {Répertoire local}
 message Select_your_distribution {Sélection de la distribution}
 message Full_installation {Installation complète}
 message Custom_installation {Installation personnalisée}
