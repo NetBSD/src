@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.92 1997/11/06 00:41:51 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.93 1997/12/16 21:59:41 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 1997/11/06 00:41:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 1997/12/16 21:59:41 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,13 +415,8 @@ alpha_init(pfn, ptb, bim, bip)
 	 */
 	if (physmem >= btoc(128 << 20)) {
 		vm_mbuf_size <<= 1;
-		if (physmem >= btoc(1024 << 20)) {
-			vm_kmem_size <<= 4;
-			vm_phys_size <<= 5;
-		} else {
-			vm_kmem_size <<= 3;
-			vm_phys_size <<= 2;
-		}
+		vm_kmem_size <<= 3;
+		vm_phys_size <<= 2;
 	}
 
 	/*
