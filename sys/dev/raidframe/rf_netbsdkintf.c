@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.30 1999/11/17 01:16:37 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.31 1999/11/18 13:28:06 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1775,7 +1775,7 @@ InitBP(
 #if 0
 	db1_printf(("bp->b_data=0x%x\n", bp->b_data));
 #endif
-
+	LIST_INIT(&bp->b_dep);
 	bp->b_blkno = startSect;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
 	db1_printf(("b_bcount is: %d\n", (int) bp->b_bcount));
