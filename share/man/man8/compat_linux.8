@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.17 2001/08/23 19:58:03 manu Exp $
+.\"	$NetBSD: compat_linux.8,v 1.18 2001/08/30 20:47:14 manu Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -392,10 +392,6 @@ work, but may confuse others, so you may have to remove it again at
 some point.
 .Sh BUGS
 The information about Linux distributions may become outdated.
-.Pp
-On the PowerPC, Linux's ldd command is not emulated correctly. The NetBSD
-.Xr ldd 1
-command is able to retreive the information, hence this is not a real problem.
 .Pp
 Pathnames pointed to by symbolic links are not looked up in the
 shadow root when running a Linux executable. This is not consistent.
