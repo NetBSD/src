@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.16 1997/10/14 15:06:42 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.17 1997/11/12 03:40:55 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.16 1997/10/14 15:06:42 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.17 1997/11/12 03:40:55 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,9 @@ __RCSID("$NetBSD: histedit.c,v 1.16 1997/10/14 15:06:42 christos Exp $");
 #include "main.h"
 #include "output.h"
 #include "mystring.h"
-#ifndef SMALL
 #include "myhistedit.h"
 #include "error.h"
+#ifndef SMALL
 #include "eval.h"
 #include "memalloc.h"
 
@@ -499,5 +499,6 @@ histcmd(argc, argv)
 	char **argv;
 {
 	error("not compiled with history support");
+	return 0;
 }
 #endif
