@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.23 2001/02/03 12:53:23 tsutsui Exp $	*/
+/*	$NetBSD: machdep.h,v 1.24 2001/02/04 01:31:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -71,8 +71,6 @@ extern vm_offset_t vmmap;	/* XXX - See mem.c */
 void	DCIA __P((void));
 void	DCIU __P((void));
 void	ICIA __P((void));
-
-int 	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 
 void	child_return __P((void *));
 
