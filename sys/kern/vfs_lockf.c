@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.23 2003/03/05 18:28:22 mycroft Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.24 2003/05/01 12:49:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.23 2003/03/05 18:28:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.24 2003/05/01 12:49:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,20 @@ int	lockf_debug = 0;
 #define NOLOCKF (struct lockf *)0
 #define SELF	0x1
 #define OTHERS	0x2
+
+static int lf_clearlock __P((struct lockf *));
+static int lf_findoverlap __P((struct lockf *,
+	    struct lockf *, int, struct lockf ***, struct lockf **));
+static struct lockf * lf_getblock __P((struct lockf *));
+static int lf_getlock __P((struct lockf *, struct flock *));
+static int lf_setlock __P((struct lockf *));
+static void lf_split __P((struct lockf *, struct lockf *));
+static void lf_wakelock __P((struct lockf *));
+
+#ifdef LOCKF_DEBUG
+static void lf_print __P((char *, struct lockf *));
+static void lf_printlist __P((char *, struct lockf *));
+#endif
 
 /*
  * XXX TODO
@@ -189,7 +203,7 @@ lf_advlock(ap, head, size)
 /*
  * Set a byte-range lock.
  */
-int
+static int
 lf_setlock(lock)
 	struct lockf *lock;
 {
@@ -444,7 +458,7 @@ lf_setlock(lock)
  * Generally, find the lock (or an overlap to that lock)
  * and remove it (or shrink it), then wakeup anyone we can.
  */
-int
+static int
 lf_clearlock(unlock)
 	struct lockf *unlock;
 {
@@ -514,7 +528,7 @@ lf_clearlock(unlock)
  * Check whether there is a blocking lock,
  * and if so return its process identifier.
  */
-int
+static int
 lf_getlock(lock, fl)
 	struct lockf *lock;
 	struct flock *fl;
@@ -548,7 +562,7 @@ lf_getlock(lock, fl)
  * Walk the list of locks for an inode and
  * return the first blocking lock.
  */
-struct lockf *
+static struct lockf *
 lf_getblock(lock)
 	struct lockf *lock;
 {
@@ -577,7 +591,7 @@ lf_getblock(lock)
  * NOTE: this returns only the FIRST overlapping lock.  There
  *	 may be more than one.
  */
-int
+static int
 lf_findoverlap(lf, lock, type, prev, overlap)
 	struct lockf *lf;
 	struct lockf *lock;
@@ -687,7 +701,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
  * Split a lock and a contained region into
  * two or three locks as necessary.
  */
-void
+static void
 lf_split(lock1, lock2)
 	struct lockf *lock1;
 	struct lockf *lock2;
@@ -734,7 +748,7 @@ lf_split(lock1, lock2)
 /*
  * Wakeup a blocklist
  */
-void
+static void
 lf_wakelock(listhead)
 	struct lockf *listhead;
 {
@@ -756,7 +770,7 @@ lf_wakelock(listhead)
 /*
  * Print out a lock.
  */
-void
+static void
 lf_print(tag, lock)
 	char *tag;
 	struct lockf *lock;
@@ -778,7 +792,7 @@ lf_print(tag, lock)
 		printf("\n");
 }
 
-void
+static void
 lf_printlist(tag, lock)
 	char *tag;
 	struct lockf *lock;
