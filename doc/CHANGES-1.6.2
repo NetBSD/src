@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.114 2003/08/17 11:21:02 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.115 2003/08/17 12:00:03 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1302,4 +1302,20 @@ sys/sys/param.h					1.163
 	grow #! line length -- patch from cgd, fixes PR kern/20112 from Todd
 	Vierling
 	[tv, ticket #1423]
+
+share/man/man5/dir.5				1.10-1.16
+
+	Bring up to date with getdents(2) reality.
+	s/file format/format/
+	Nit.
+	Don't back-reference getdirentries(3).
+	And make that getdents(_2_).
+	Remove duplicate defines.
+	Use
+	.In header.h
+	instead of
+	.Fd #include \*[Lt]header.h\*[Gt]
+	Much easier to read and write, and supported by groff for ages.
+	Okayed by ross.
+	[wiz, ticket #1372]
 
