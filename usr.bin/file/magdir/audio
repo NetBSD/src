@@ -2,7 +2,8 @@
 #------------------------------------------------------------------------------
 # audio:  file(1) magic for sound formats
 #
-# from Jan Nicolai Langfeldt <janl@ifi.uio.no>,
+# Jan Nicolai Langfeldt (janl@ifi.uio.no), Dan Quinlan (quinlan@yggdrasil.com),
+# and others
 #
 
 # Sun/NeXT audio data
@@ -66,3 +67,12 @@
 >22	short		=2		Stereo
 >22	short		>2		%d Channels
 >24	long		>0		%d Hz
+
+# Extended MOD format (*.emd) (Greg Roelofs, newt@uchicago.edu); NOT TESTED
+# [based on posting 940824 by "Dirk/Elastik", husberg@lehtori.cc.tut.fi]
+0	string		EMOD		Extended MOD sound data,
+>4	byte&0xf0	x		version %d
+>4	byte&0x0f	x		\b.%d,
+>45	byte		x		%d instruments
+>83	byte		0		(module)
+>83	byte		1		(song)
