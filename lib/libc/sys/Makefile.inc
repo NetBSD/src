@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.117 2001/11/13 15:12:01 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.118 2001/11/13 15:20:34 tv Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -97,7 +97,7 @@ ${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 
 .for F in ${PSEUDONOERR:.o=.S}
 ${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
-	@printf '#include "SYS.h"\n\PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
+	@printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
 .endfor
 
 # Lint stubs for all automatically-generated assembly stubs (GENERATED)
