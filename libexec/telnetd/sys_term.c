@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.36 2003/07/14 15:55:54 itojun Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.37 2003/07/14 16:16:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.36 2003/07/14 15:55:54 itojun Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.37 2003/07/14 16:16:42 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -820,7 +820,6 @@ void
 cleanup(sig)
 	int sig;
 {
-# if BSD > 43
 	char *p, c;
 
 	p = line + sizeof("/dev/") - 1;
@@ -842,104 +841,4 @@ cleanup(sig)
 		syslog(LOG_ERR, "%s: ttyaction failed", line);
 	(void) shutdown(net, 2);
 	exit(1);
-# else
-	void rmut();
-
-	rmut();
-	vhangup();	/* XXX */
-	(void) shutdown(net, 2);
-	exit(1);
-# endif
 }
-
-/*
- * rmut()
- *
- * This is the function called by cleanup() to
- * remove the utmp entry for this person.
- */
-
-#ifdef	UTMPX
-void
-rmut()
-{
-	register f;
-	int found = 0;
-	struct utmp *u, *utmp;
-	int nutmp;
-	struct stat statbf;
-
-	struct utmpx *utxp, utmpx;
-
-	/*
-	 * This updates the utmpx and utmp entries and make a wtmp/x entry
-	 */
-
-	SCPYN(utmpx.ut_line, line + sizeof("/dev/") - 1);
-	utxp = getutxline(&utmpx);
-	if (utxp) {
-		utxp->ut_type = DEAD_PROCESS;
-		utxp->ut_exit.e_termination = 0;
-		utxp->ut_exit.e_exit = 0;
-		(void) time(&utmpx.ut_tv.tv_sec);
-		utmpx.ut_tv.tv_usec = 0;
-		modutx(utxp);
-	}
-	endutxent();
-}  /* end of rmut */
-#endif
-
-#if	!defined(UTMPX) && BSD <= 43
-void
-rmut()
-{
-	register f;
-	int found = 0;
-	struct utmp *u, *utmp;
-	int nutmp;
-	struct stat statbf;
-
-	f = open(utmpf, O_RDWR);
-	if (f >= 0) {
-		(void) fstat(f, &statbf);
-		utmp = (struct utmp *)malloc((unsigned)statbf.st_size);
-		if (!utmp)
-			syslog(LOG_WARNING, "utmp malloc failed");
-		if (statbf.st_size && utmp) {
-			nutmp = read(f, (char *)utmp, (int)statbf.st_size);
-			nutmp /= sizeof(struct utmp);
-
-			for (u = utmp ; u < &utmp[nutmp] ; u++) {
-				if (SCMPN(u->ut_line, line+5) ||
-				    u->ut_name[0]==0)
-					continue;
-				(void)lseek(f, (off_t)((long)u)-((long)utmp),
-				    SEEK_SET);
-				SCPYN(u->ut_name, "");
-				SCPYN(u->ut_host, "");
-				(void) time(&u->ut_time);
-				(void) write(f, (char *)u, sizeof(wtmp));
-				found++;
-			}
-		}
-		(void) close(f);
-	}
-	if (found) {
-		f = open(wtmpf, O_WRONLY|O_APPEND);
-		if (f >= 0) {
-			SCPYN(wtmp.ut_line, line+5);
-			SCPYN(wtmp.ut_name, "");
-			SCPYN(wtmp.ut_host, "");
-			(void) time(&wtmp.ut_time);
-			(void) write(f, (char *)&wtmp, sizeof(wtmp));
-			(void) close(f);
-		}
-	}
-	(void) chmod(line, 0666);
-	(void) chown(line, 0, 0);
-	line[strlen("/dev/")] = 'p';
-	(void) chmod(line, 0666);
-	(void) chown(line, 0, 0);
-}  /* end of rmut */
-#endif
-
