@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.7 1999/01/08 19:26:15 augustss Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.8 1999/03/15 01:15:06 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -155,7 +155,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 clean: cleankernel
 cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+	    [Ee]rrs lderr linterrs makelinks assym.h.tmp assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
