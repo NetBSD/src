@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.28 2003/08/08 01:52:24 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.29 2003/09/29 07:55:17 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1239,13 +1239,13 @@ or called with an absolute path.
 .Bl -enum
 .
 .It
-.Li "./build.sh tools kernel=GENERIC"
+.Li "% ./build.sh tools kernel=GENERIC"
 .Pp
 Build a new toolchain, and use the new toolchain to
 configure and build a new GENERIC kernel.
 .
 .It
-.Li "./build.sh -U distribution"
+.Li "% ./build.sh -U distribution"
 .Pp
 Using unprivileged mode,
 build a complete distribution to a
@@ -1269,7 +1269,7 @@ are correctly applied to the files as they're copied to
 .Pa / .
 .
 .It
-.Li "./build.sh -U -u release"
+.Li "% ./build.sh -U -u release"
 .Pp
 Using unprivileged mode,
 build a complete release to
