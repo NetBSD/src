@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.26 1998/07/05 06:49:12 jonathan Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.27 1998/11/17 20:25:01 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -112,9 +112,6 @@ void	mb86960_droppacket __P((struct mb86960_softc *));
 void	mb86960_getmcaf __P((struct ethercom *, u_char *));
 void	mb86960_setmode __P((struct mb86960_softc *));
 void	mb86960_loadmar __P((struct mb86960_softc *));
-
-int	mb86960_enable __P((struct mb86960_softc *));
-void	mb86960_disable __P((struct mb86960_softc *));
 
 int	mb86960_mediachange __P((struct ifnet *));
 void	mb86960_mediastatus __P((struct ifnet *, struct ifmediareq *));
