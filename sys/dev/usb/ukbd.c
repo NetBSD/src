@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.7 1998/08/01 20:11:38 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.8 1998/08/02 14:22:25 drochner Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -184,11 +184,33 @@ void	ukbd_attach __P((struct device *, struct device *, void *));
 void	ukbd_cngetc __P((void *, u_int *, int *));
 void	ukbd_cnpollc __P((void *, int));
 
+const struct wskbd_consops ukbd_consops = {
+	ukbd_cngetc,
+	ukbd_cnpollc,
+};
+
 void	ukbd_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 void	ukbd_disco __P((void *));
 
+int	ukbd_enable __P((void *, int));
 void	ukbd_set_leds __P((void *, int));
 int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+
+const struct wskbd_accessops ukbd_accessops = {
+	ukbd_enable,
+	ukbd_set_leds,
+	ukbd_ioctl,
+};
+
+const struct wskbd_mapdata ukbd_keymapdata = {
+	pckbd_keydesctab,
+	sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]),
+#ifdef PCKBD_LAYOUT
+	PCKBD_LAYOUT,
+#else
+	KB_US,
+#endif
+};
 
 extern struct cfdriver ukbd_cd;
 
@@ -274,18 +296,12 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 	sc->sc_disconnected = 0;
 
 	a.console = 0;	/* XXX */
-#ifdef PCKBD_LAYOUT
-	a.layout = PCKBD_LAYOUT;
-#else
-	a.layout = KB_US;
-#endif
-	a.keydesc = pckbd_keydesctab;
-	a.num_keydescs = sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]);
-	a.getc = ukbd_cngetc;
-	a.pollc = ukbd_cnpollc;
-	a.set_leds = ukbd_set_leds;
-	a.ioctl = ukbd_ioctl;
+
+	a.keymap = &ukbd_keymapdata;
+
+	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
+
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
 	/* Set up interrupt pipe. */
@@ -310,6 +326,14 @@ ukbd_disco(p)
 	DPRINTF(("ukbd_disco: sc=%p\n", sc));
 	usbd_abort_pipe(sc->sc_intrpipe);
 	sc->sc_disconnected = 1;
+}
+
+int
+ukbd_enable(v, on)
+	void *v;
+	int on;
+{
+	return (0);
 }
 
 void
