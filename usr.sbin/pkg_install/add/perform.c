@@ -1,10 +1,11 @@
-/* $NetBSD: perform.c,v 1.6 1997/10/16 00:55:01 hubertf Exp $ */
+/*	$NetBSD: perform.c,v 1.7 1997/10/17 14:53:40 lukem Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-static const char *rcsid = "$NetBSD: perform.c,v 1.6 1997/10/16 00:55:01 hubertf Exp $";
+__RCSID("$NetBSD: perform.c,v 1.7 1997/10/17 14:53:40 lukem Exp $");
 #endif
 #endif
 
@@ -129,7 +130,8 @@ pkg_do(char *pkg)
 	    }
 	    Home = make_playpen(playpen, sb.st_size * 4);
 	    if (!Home)
-		warnx("unable to make playpen for %d bytes", sb.st_size * 4);
+		warnx("unable to make playpen for %ld bytes",
+		    (long)(sb.st_size * 4));
 	    where_to = Home;
 	    if (unpack(pkg_fullname, extract)) {
 		warnx(
@@ -180,9 +182,9 @@ pkg_do(char *pkg)
 	     */
 
 	    if (!inPlace && min_free(playpen) < sb.st_size * 4) {
-		warnx("projected size of %d exceeds available free space.\n"
+		warnx("projected size of %ld exceeds available free space.\n"
 "Please set your PKG_TMPDIR variable to point to a location with more\n"
-		       "free space and try again", sb.st_size * 4);
+		       "free space and try again", (long)(sb.st_size * 4));
 		warnx("not extracting %s\ninto %s, sorry!",
 			pkg_fullname, where_to);
 		goto bomb;

@@ -1,10 +1,11 @@
-/* $NetBSD: extract.c,v 1.5 1997/10/16 00:50:20 hubertf Exp $ */
+/*	$NetBSD: extract.c,v 1.6 1997/10/17 14:53:31 lukem Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: extract.c,v 1.5 1997/10/16 00:50:20 hubertf Exp $";
+__RCSID("$NetBSD: extract.c,v 1.6 1997/10/17 14:53:31 lukem Exp $");
 #endif
 #endif
 
@@ -225,6 +226,9 @@ extract_plist(char *home, Package *pkg)
 
 	case PLIST_IGNORE:
 	    p = p->next;
+	    break;
+
+	default:
 	    break;
 	}
 	p = p->next;
