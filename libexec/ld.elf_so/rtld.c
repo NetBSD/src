@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.105 2004/05/17 13:16:02 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.106 2004/07/18 17:26:19 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -580,6 +580,7 @@ _rtld_unref_dag(Obj_Entry *root)
 	}
 }
 
+__strong_alias(__dlclose,dlclose)
 int
 dlclose(void *handle)
 {
@@ -600,6 +601,7 @@ dlclose(void *handle)
 	return 0;
 }
 
+__strong_alias(__dlerror,dlerror)
 char *
 dlerror(void)
 {
@@ -609,6 +611,7 @@ dlerror(void)
 	return msg;
 }
 
+__strong_alias(__dlopen,dlopen)
 void *
 dlopen(const char *name, int mode)
 {
@@ -666,6 +669,7 @@ _rtld_objmain_sym(const char *name)
 	return(NULL);
 }
 
+__strong_alias(__dlsym,dlsym)
 void *
 dlsym(void *handle, const char *name)
 {
@@ -752,6 +756,7 @@ dlsym(void *handle, const char *name)
 	return NULL;
 }
 
+__strong_alias(__dladdr,dladdr)
 int
 dladdr(const void *addr, Dl_info *info)
 {
