@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.36 2003/05/22 14:14:03 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.37 2003/05/22 14:16:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,15 +42,16 @@
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
+#include <sys/pool.h>
 
 MALLOC_DECLARE(M_NFSREQ);
 MALLOC_DECLARE(M_NFSMNT);
 MALLOC_DECLARE(M_NFSUID);
 MALLOC_DECLARE(M_NFSD);
-MALLOC_DECLARE(M_NFSRVDESC);
 MALLOC_DECLARE(M_NFSDIROFF);
 MALLOC_DECLARE(M_NFSBIGFH);
 MALLOC_DECLARE(M_NQLEASE);
+extern struct pool nfs_srvdesc_pool;
 
 struct vnode;
 struct uio;

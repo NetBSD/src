@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.63 2003/05/22 14:14:41 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.64 2003/05/22 14:16:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.63 2003/05/22 14:14:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.64 2003/05/22 14:16:23 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -344,7 +344,7 @@ sys_nfssvc(l, v, retval)
 #ifdef NFSSERVER
 MALLOC_DEFINE(M_NFSD, "NFS daemon", "Nfs server daemon structure");
 MALLOC_DEFINE(M_NFSSVC, "NFS srvsock", "Nfs server structure");
-MALLOC_DEFINE(M_NFSRVDESC, "NFS srvdesc", "NFS server descriptor");
+struct pool nfs_srvdesc_pool;
 
 /*
  * Adds a socket to the list for servicing by nfsds.
@@ -545,7 +545,7 @@ nfssvc_nfsd(nsd, argp, l)
 		}
 		if (error || (slp->ns_flag & SLP_VALID) == 0) {
 			if (nd) {
-				FREE(nd, M_NFSRVDESC);
+				pool_put(&nfs_srvdesc_pool, nd);
 				nd = NULL;
 			}
 			nfsd->nfsd_slp = (struct nfssvc_sock *)0;
@@ -724,7 +724,7 @@ nfssvc_nfsd(nsd, argp, l)
 				if (solockp)
 					nfs_sndunlock(solockp);
 				if (error == EINTR || error == ERESTART) {
-					FREE(nd, M_NFSRVDESC);
+					pool_put(&nfs_srvdesc_pool, nd);
 					nfsrv_slpderef(slp);
 					s = splsoftnet();
 					goto done;
@@ -738,7 +738,7 @@ nfssvc_nfsd(nsd, argp, l)
 				break;
 			}
 			if (nd) {
-				FREE(nd, M_NFSRVDESC);
+				pool_put(&nfs_srvdesc_pool, nd);
 				nd = NULL;
 			}
 
@@ -821,7 +821,7 @@ nfsrv_zapsock(slp)
 		for (nwp = LIST_FIRST(&slp->ns_tq); nwp; nwp = nnwp) {
 			nnwp = LIST_NEXT(nwp, nd_tq);
 			LIST_REMOVE(nwp, nd_tq);
-			FREE(nwp, M_NFSRVDESC);
+			pool_put(&nfs_srvdesc_pool, nwp);
 		}
 		LIST_INIT(&slp->ns_tq);
 		splx(s);

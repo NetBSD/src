@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.120 2003/05/22 14:14:02 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.121 2003/05/22 14:16:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.120 2003/05/22 14:14:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.121 2003/05/22 14:16:23 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1486,6 +1486,8 @@ nfs_init()
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
+	pool_init(&nfs_srvdesc_pool, sizeof(struct nfsrv_descript),
+	    0, 0, 0, "nfsrvdescpl", &pool_allocator_nointr);
 #endif /* NFSSERVER */
 
 #if defined(NFSSERVER) || !defined(NFS_V2_ONLY)
