@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: fd.c,v 1.10 1994/07/04 19:39:07 chopps Exp $
+ *	$Id: fd.c,v 1.11 1994/07/18 01:37:48 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ struct fd_softc {
 #define FDF_WRITEWAIT	(0x10)	/* need to head select delay on next setpos */
 #define FDF_HAVELABEL	(0x20)	/* label is valid */
 #define FDF_JUSTFLUSH	(0x40)	/* don't bother caching track. */
+#define FDF_NOTRACK0	(0x80)	/* was not able to recalibrate drive */
 
 int fdc_wantwakeup;
 int fdc_side;
@@ -369,6 +370,8 @@ Fdopen(dev, flags, devtype, p)
 		return(ENXIO);
 
 	if ((sc = getsoftc(fdcd, FDUNIT(dev))) == NULL)
+		return(ENXIO);
+	if (sc->flags & FDF_NOTRACK0)
 		return(ENXIO);
 	if (sc->cachep == NULL)
 		sc->cachep = malloc(MAXTRKSZ, M_DEVBUF, M_WAITOK);
@@ -1018,10 +1021,13 @@ fdsetpos(sc, trk, towrite)
 			 * either just want cylinder 0 or doing 
 			 * a calibrate.
 			 */
-			while (FDTESTC(FDB_CYLZERO) == 0) {
+			nstep = 256;
+			while (FDTESTC(FDB_CYLZERO) == 0 && nstep--) {
 				FDSTEP;
 				delay(sc->stepdelay);
 			}
+			if (nstep < 0)
+				sc->flags |= FDF_NOTRACK0;
 		} else {
 			/*
 			 * step the needed amount amount.
