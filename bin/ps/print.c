@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.50 2000/05/26 00:42:34 thorpej Exp $	*/
+/*	$NetBSD: print.c,v 1.51 2000/05/26 03:04:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.50 2000/05/26 00:42:34 thorpej Exp $");
+__RCSID("$NetBSD: print.c,v 1.51 2000/05/26 03:04:28 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ titlecmp(name, argv)
 
 void
 command(ki, ve)
-	KINFO *ki;
+	struct kinfo_proc2 *ki;
 	VARENT *ve;
 {
 	VAR *v;
@@ -153,9 +153,8 @@ command(ki, ve)
 			left = v->width;
 	} else
 		left = -1;
-	if (needenv && (myuid == 0 || KI_EPROC(ki)->e_ucred.cr_uid == myuid) &&
-	    kd) {
-		argv = kvm_getenvv(kd, ki->ki_p, termwidth);
+	if (needenv && kd) {
+		argv = kvm_getenvv2(kd, ki, termwidth);
 		if ((p = argv) != NULL) {
 			while (*p) {
 				fmt_puts(*p, &left);
@@ -165,13 +164,13 @@ command(ki, ve)
 		}
 	}
 	if (needcomm) {
-		name = KI_PROC(ki)->p_comm;
+		name = ki->p_comm;
 		if (!commandonly) {
 			argv = NULL;
 			if (!use_procfs)
-				argv = kvm_getargv(kd, ki->ki_p, termwidth);
+				argv = kvm_getargv2(kd, ki, termwidth);
 			else
-				argv = procfs_getargv(ki->ki_p, termwidth);
+				argv = procfs_getargv(ki, termwidth);
 			if ((p = argv) != NULL) {
 				while (*p) {
 					fmt_puts(*p, &left);
@@ -198,18 +197,18 @@ command(ki, ve)
 
 void
 ucomm(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%-*s", v->width, KI_PROC(k)->p_comm);
+	(void)printf("%-*s", v->width, k->p_comm);
 }
 
 void
 logname(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -217,28 +216,27 @@ logname(k, ve)
 
 	v = ve->var;
 	n = min(v->width, MAXLOGNAME);
-	(void)printf("%-*.*s", n, n, KI_EPROC(k)->e_login);
+	(void)printf("%-*.*s", n, n, k->p_login);
 	if (v->width > n)
 		(void)printf("%*s", v->width - n, "");
 }
 
 void
 state(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
-	struct proc *p;
-	int flag;
+	int flag, is_zombie;
 	char *cp;
 	VAR *v;
 	char buf[16];
 
+	is_zombie = 0;
 	v = ve->var;
-	p = KI_PROC(k);
-	flag = p->p_flag;
+	flag = k->p_flag;
 	cp = buf;
 
-	switch (p->p_stat) {
+	switch (k->p_stat) {
 
 	case SSTOP:
 		*cp = 'T';
@@ -246,7 +244,7 @@ state(k, ve)
 
 	case SSLEEP:
 		if (flag & P_SINTR)	/* interuptable (long) */
-			*cp = p->p_slptime >= MAXSLP ? 'I' : 'S';
+			*cp = k->p_slptime >= MAXSLP ? 'I' : 'S';
 		else
 			*cp = 'D';
 		break;
@@ -260,6 +258,7 @@ state(k, ve)
 	case SZOMB:
 	case SDEAD:
 		*cp = 'Z';
+		is_zombie = 1;
 		break;
 
 	default:
@@ -269,21 +268,21 @@ state(k, ve)
 	if (flag & P_INMEM) {
 	} else
 		*cp++ = 'W';
-	if (p->p_nice < NZERO)
+	if (k->p_nice < NZERO)
 		*cp++ = '<';
-	else if (p->p_nice > NZERO)
+	else if (k->p_nice > NZERO)
 		*cp++ = 'N';
 	if (flag & P_TRACED)
 		*cp++ = 'X';
-	if (flag & P_WEXIT && P_ZOMBIE(p) == 0)
+	if (flag & P_WEXIT && !is_zombie)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
 		*cp++ = 'V';
-	if ((flag & P_SYSTEM) || p->p_holdcnt)
+	if ((flag & P_SYSTEM) || k->p_holdcnt)
 		*cp++ = 'L';
-	if (KI_EPROC(k)->e_flag & EPROC_SLEADER)
+	if (k->p_eflag & EPROC_SLEADER)
 		*cp++ = 's';
-	if ((flag & P_CONTROLT) && KI_EPROC(k)->e_pgid == KI_EPROC(k)->e_tpgid)
+	if ((flag & P_CONTROLT) && k->p__pgid == k->p_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
 	(void)printf("%-*s", v->width, buf);
@@ -291,53 +290,53 @@ state(k, ve)
 
 void
 pnice(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, KI_PROC(k)->p_nice - NZERO);
+	(void)printf("%*d", v->width, k->p_nice - NZERO);
 }
 
 void
 pri(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, KI_PROC(k)->p_priority - PZERO);
+	(void)printf("%*d", v->width, k->p_priority - PZERO);
 }
 
 void
 uname(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
 	(void)printf("%-*s",
-	    (int)v->width, user_from_uid(KI_EPROC(k)->e_ucred.cr_uid, 0));
+	    (int)v->width, user_from_uid(k->p_uid, 0));
 }
 
 void
 runame(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
 	(void)printf("%-*s",
-	    (int)v->width, user_from_uid(KI_EPROC(k)->e_pcred.p_ruid, 0));
+	    (int)v->width, user_from_uid(k->p_ruid, 0));
 }
 
 void
 tdev(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -345,7 +344,7 @@ tdev(k, ve)
 	char buff[16];
 
 	v = ve->var;
-	dev = KI_EPROC(k)->e_tdev;
+	dev = k->p_tdev;
 	if (dev == NODEV)
 		(void)printf("%*s", v->width, "??");
 	else {
@@ -357,7 +356,7 @@ tdev(k, ve)
 
 void
 tname(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -365,7 +364,7 @@ tname(k, ve)
 	const char *ttname;
 
 	v = ve->var;
-	dev = KI_EPROC(k)->e_tdev;
+	dev = k->p_tdev;
 	if (dev == NODEV || (ttname = devname(dev, S_IFCHR)) == NULL)
 		(void)printf("%-*s", v->width, "??");
 	else {
@@ -373,13 +372,13 @@ tname(k, ve)
 		    strncmp(ttname, "dty", 3) == 0)
 			ttname += 3;
 		(void)printf("%*.*s%c", v->width-1, v->width-1, ttname,
-			KI_EPROC(k)->e_flag & EPROC_CTTY ? ' ' : '-');
+			k->p_eflag & EPROC_CTTY ? ' ' : '-');
 	}
 }
 
 void
 longtname(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -387,7 +386,7 @@ longtname(k, ve)
 	const char *ttname;
 
 	v = ve->var;
-	dev = KI_EPROC(k)->e_tdev;
+	dev = k->p_tdev;
 	if (dev == NODEV || (ttname = devname(dev, S_IFCHR)) == NULL)
 		(void)printf("%-*s", v->width, "??");
 	else
@@ -396,7 +395,7 @@ longtname(k, ve)
 
 void
 started(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -406,20 +405,20 @@ started(k, ve)
 	char buf[100];
 
 	v = ve->var;
-	if (!k->ki_u.u_valid) {
+	if (!k->p_uvalid) {
 		(void)printf("%-*s", v->width, "-");
 		return;
 	}
 
-	startt = k->ki_u.u_start.tv_sec;
+	startt = k->p_ustart_sec;
 	tp = localtime(&startt);
 	if (!now)
 		(void)time(&now);
-	if (now - k->ki_u.u_start.tv_sec < 24 * SECSPERHOUR) {
+	if (now - k->p_ustart_sec < 24 * SECSPERHOUR) {
 		/* I *hate* SCCS... */
 		static char fmt[] = __CONCAT("%l:%", "M%p");
 		(void)strftime(buf, sizeof(buf) - 1, fmt, tp);
-	} else if (now - k->ki_u.u_start.tv_sec < 7 * SECSPERDAY) {
+	} else if (now - k->p_ustart_sec < 7 * SECSPERDAY) {
 		/* I *hate* SCCS... */
 		static char fmt[] = __CONCAT("%a%", "I%p");
 		(void)strftime(buf, sizeof(buf) - 1, fmt, tp);
@@ -430,7 +429,7 @@ started(k, ve)
 
 void
 lstarted(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -438,11 +437,11 @@ lstarted(k, ve)
 	char buf[100];
 
 	v = ve->var;
-	if (!k->ki_u.u_valid) {
+	if (!k->p_uvalid) {
 		(void)printf("%-*s", v->width, "-");
 		return;
 	}
-	startt = k->ki_u.u_start.tv_sec;
+	startt = k->p_ustart_sec;
 	(void)strftime(buf, sizeof(buf) -1, "%c",
 	    localtime(&startt));
 	(void)printf("%-*s", v->width, buf);
@@ -450,22 +449,22 @@ lstarted(k, ve)
 
 void
 wchan(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 	int n;
 
 	v = ve->var;
-	if (KI_PROC(k)->p_wchan) {
-		if (KI_PROC(k)->p_wmesg) {
+	if (k->p_wchan) {
+		if (k->p_wmesg) {
 			n = min(v->width, WMESGLEN);
-			(void)printf("%-*.*s", n, n, KI_EPROC(k)->e_wmesg);
+			(void)printf("%-*.*s", n, n, k->p_wmesg);
 			if (v->width > n)
 				(void)printf("%*s", v->width - n, "");
 		} else
 			(void)printf("%-*lx", v->width,
-			    (long)KI_PROC(k)->p_wchan);
+			    (long)k->p_wchan);
 	} else
 		(void)printf("%-*s", v->width, "-");
 }
@@ -474,43 +473,42 @@ wchan(k, ve)
 
 void
 vsize(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
 	(void)printf("%*d", v->width,
-	    pgtok(KI_EPROC(k)->e_vm.vm_dsize + KI_EPROC(k)->e_vm.vm_ssize +
-		KI_EPROC(k)->e_vm.vm_tsize));
+	    pgtok(k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize));
 }
 
 void
 rssize(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
 	/* XXX don't have info about shared */
-	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_rssize));
+	(void)printf("%*d", v->width, pgtok(k->p_vm_rssize));
 }
 
 void
 p_rssize(k, ve)		/* doesn't account for text */
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_rssize));
+	(void)printf("%*d", v->width, pgtok(k->p_vm_rssize));
 }
 
 void
 cputime(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -519,7 +517,7 @@ cputime(k, ve)
 	char obuff[128];
 
 	v = ve->var;
-	if (P_ZOMBIE(KI_PROC(k)) || k->ki_u.u_valid == 0) {
+	if (P_ZOMBIE(k) || k->p_uvalid == 0) {
 		secs = 0;
 		psecs = 0;
 	} else {
@@ -528,13 +526,11 @@ cputime(k, ve)
 		 * fix this, but it is not 100% trivial (and interrupt
 		 * time fractions only work on the sparc anyway).	XXX
 		 */
-		secs = KI_PROC(k)->p_rtime.tv_sec;
-		psecs = KI_PROC(k)->p_rtime.tv_usec;
+		secs = k->p_rtime_sec;
+		psecs = k->p_rtime_usec;
 		if (sumrusage) {
-			secs += k->ki_u.u_cru.ru_utime.tv_sec +
-				k->ki_u.u_cru.ru_stime.tv_sec;
-			psecs += k->ki_u.u_cru.ru_utime.tv_usec +
-				k->ki_u.u_cru.ru_stime.tv_usec;
+			secs += k->p_uctime_sec;
+			psecs += k->p_uctime_usec;
 		}
 		/*
 		 * round and scale to 100's
@@ -550,9 +546,8 @@ cputime(k, ve)
 
 double
 getpcpu(k)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 {
-	struct proc *p;
 	static int failure;
 
 	if (!nlistread)
@@ -560,22 +555,21 @@ getpcpu(k)
 	if (failure)
 		return (0.0);
 
-	p = KI_PROC(k);
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (p->p_swtime == 0 || (p->p_flag & P_INMEM) == 0 ||
-	    P_ZOMBIE(p))
+	if (k->p_swtime == 0 || (k->p_flag & P_INMEM) == 0 ||
+	    k->p_stat == SZOMB || k->p_stat == SDEAD)
 		return (0.0);
 	if (rawcpu)
-		return (100.0 * fxtofl(p->p_pctcpu));
-	return (100.0 * fxtofl(p->p_pctcpu) /
-		(1.0 - exp(p->p_swtime * log(fxtofl(ccpu)))));
+		return (100.0 * fxtofl(k->p_pctcpu));
+	return (100.0 * fxtofl(k->p_pctcpu) /
+		(1.0 - exp(k->p_swtime * log(ccpu))));
 }
 
 void
 pcpu(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -586,11 +580,9 @@ pcpu(k, ve)
 
 double
 getpmem(k)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 {
 	static int failure;
-	struct proc *p;
-	struct eproc *e;
 	double fracmem;
 	int szptudot;
 
@@ -599,20 +591,18 @@ getpmem(k)
 	if (failure)
 		return (0.0);
 
-	p = KI_PROC(k);
-	e = KI_EPROC(k);
-	if ((p->p_flag & P_INMEM) == 0)
+	if ((k->p_flag & P_INMEM) == 0)
 		return (0.0);
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
 	/* XXX don't have info about shared */
-	fracmem = ((float)e->e_vm.vm_rssize + szptudot)/mempages;
+	fracmem = ((float)k->p_vm_rssize + szptudot)/mempages;
 	return (100.0 * fracmem);
 }
 
 void
 pmem(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -623,19 +613,19 @@ pmem(k, ve)
 
 void
 pagein(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*ld", v->width, 
-	    k->ki_u.u_valid ? k->ki_u.u_ru.ru_majflt : 0);
+	(void)printf("%*lld", v->width, 
+	    k->p_uvalid ? (long long)k->p_uru_majflt : 0);
 }
 
 void
 maxrss(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
@@ -646,13 +636,13 @@ maxrss(k, ve)
 
 void
 tsize(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_tsize));
+	(void)printf("%*d", v->width, pgtok(k->p_vm_tsize));
 }
 
 /*
@@ -766,50 +756,22 @@ printval(bp, v)
 
 void
 pvar(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
-	printval((char *)KI_PROC(k) + v->off, v);
+	printval((char *)k + v->off, v);
 }
 
 void
 evar(k, ve)
-	KINFO *k;
+	struct kinfo_proc2 *k;
 	VARENT *ve;
 {
 	VAR *v;
 
 	v = ve->var;
-	printval((char *)KI_EPROC(k) + v->off, v);
-}
-
-void
-uvar(k, ve)
-	KINFO *k;
-	VARENT *ve;
-{
-	VAR *v;
-
-	v = ve->var;
-	if (k->ki_u.u_valid)
-		printval((char *)&k->ki_u + v->off, v);
-	else
-		(void)printf("%*s", v->width, "-");
-}
-
-void
-rvar(k, ve)
-	KINFO *k;
-	VARENT *ve;
-{
-	VAR *v;
-
-	v = ve->var;
-	if (k->ki_u.u_valid)
-		printval((char *)&k->ki_u.u_ru + v->off, v);
-	else
-		(void)printf("%*s", v->width, "-");
+	printval((char *)k + v->off, v);
 }

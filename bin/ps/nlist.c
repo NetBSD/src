@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.15 1999/12/03 02:26:36 simonb Exp $	*/
+/*	$NetBSD: nlist.c,v 1.16 2000/05/26 03:04:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.15 1999/12/03 02:26:36 simonb Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.16 2000/05/26 03:04:28 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,10 +46,12 @@ __RCSID("$NetBSD: nlist.c,v 1.15 1999/12/03 02:26:36 simonb Exp $");
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
 #include <kvm.h>
+#include <math.h>
 #include <nlist.h>
 #include <stdio.h>
 #include <string.h>
@@ -67,7 +69,7 @@ struct	nlist psnl[] = {
 	{ NULL }
 };
 
-fixpt_t	ccpu;				/* kernel _ccpu variable */
+double	ccpu;				/* kernel _ccpu variable */
 int	nlistread;			/* if nlist already read. */
 int	mempages;			/* number of pages of phys. memory */
 int	fscale;				/* kernel _fscale variable */
@@ -79,6 +81,7 @@ int
 donlist()
 {
 	int rval;
+	fixpt_t xccpu;
 
 	rval = 0;
 	nlistread = 1;
@@ -95,11 +98,45 @@ donlist()
 		warnx("avail_start: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
-	if (kread(X_CCPU, ccpu)) {
+	if (kread(X_CCPU, xccpu)) {
 		warnx("ccpu: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
+	ccpu = (double)xccpu / fscale;
 	return (rval);
+}
+
+int
+donlist_sysctl()
+{
+	int mib[2];
+	size_t size;
+	fixpt_t xccpu;
+
+	nlistread = 1;
+	mib[0] = CTL_HW;
+	mib[1] = HW_PHYSMEM;
+	size = sizeof(mempages);
+	if (sysctl(mib, 2, &mempages, &size, NULL, 0) == 0)
+		mempages /= getpagesize();
+	else
+		mempages = 0;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_FSCALE;
+	size = sizeof(fscale);
+	if (sysctl(mib, 2, &fscale, &size, NULL, 0) == -1)
+		fscale = (1 << 8);	/* XXX Hopefully reasonable default */
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CCPU;
+	size = sizeof(xccpu);
+	if (sysctl(mib, 2, &xccpu, &size, NULL, 0) == -1)
+		ccpu = exp(-1.0 / 20.0); /* XXX Hopefully reasonable default */
+	else
+		ccpu = (double)xccpu / fscale;
+
+	return 0;
 }
 
 void
