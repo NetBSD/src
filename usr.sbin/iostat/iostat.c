@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.19 1999/09/13 16:56:35 tron Exp $	*/
+/*	$NetBSD: iostat.c,v 1.20 1999/09/13 16:59:54 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.19 1999/09/13 16:56:35 tron Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.20 1999/09/13 16:59:54 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,12 +465,13 @@ selectdrives(argc, argv)
 		if (isdigit(**argv))
 			break;
 #endif
-		for (i = 0; i < dk_ndrive; i++) {
-			if (strcmp(cur.dk_name[i], *argv))
-				continue;
-			cur.dk_select[i] = 1;
-			++ndrives;
-		}
+		if (!ISSET(todo, SHOW_STATS_X))
+			for (i = 0; i < dk_ndrive; i++) {
+				if (strcmp(cur.dk_name[i], *argv))
+					continue;
+				cur.dk_select[i] = 1;
+				++ndrives;
+			}
 	}
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
