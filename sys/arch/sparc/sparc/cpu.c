@@ -42,7 +42,7 @@
  *	@(#)cpu.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.c,v 1.12 93/05/03 09:47:57 torek Exp  (LBL)
- * $Id: cpu.c,v 1.7 1994/05/19 07:12:49 deraadt Exp $
+ * $Id: cpu.c,v 1.8 1994/08/20 01:32:45 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -52,8 +52,13 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#include <machine/idprom.h>
 
 #include <sparc/sparc/cache.h>
+
+#ifdef SUN4
+extern struct idprom idprom;
+#endif
 
 /* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo;
@@ -110,7 +115,7 @@ cpu_attach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	register int node, clk, i, l;
+	register int node, clk, bug = 0, i, l;
 	register int impl, vers, fver;
 	register char *fpuname;
 	struct fpstate fpstate;
@@ -139,40 +144,83 @@ cpu_attach(parent, dev, aux)
 
 	/* tell them what we have */
 	node = ((struct romaux *)aux)->ra_node;
-	clk = getpropint(node, "clock-frequency", 0);
-	sprintf(cpu_model, "%s (%s @ %s MHz, %s FPU)",
-	    getpropstring(node, "name"),
-	    psrtoname(impl, vers, fver, iubuf), clockfreq(clk), fpuname);
-	printf(": %s\n", cpu_model);
+#ifdef SUN4
+	if (cputyp == CPU_SUN4) {
+		clk = 0;
+		vactype = VAC_WRITEBACK;
+		switch (idprom.id_machine) {
+		case SUN4_100:
+			sprintf(cpu_model,"SUN-4/100 series (%s FPU)", fpuname);
+			cacheinfo.c_totalsize = 0;
+			cacheinfo.c_hwflush = 0;
+			cacheinfo.c_linesize = 0;
+			cacheinfo.c_l2linesize = 0;
+			break;
+		case SUN4_200:
+			sprintf(cpu_model,"SUN-4/200 series (%s FPU)", fpuname);
+	        	cacheinfo.c_totalsize = 128*1024;
+			cacheinfo.c_hwflush = 0;
+			cacheinfo.c_linesize = 16;
+			cacheinfo.c_l2linesize = 4;
+			break;
+		case SUN4_300:
+			sprintf(cpu_model,"SUN-4/300 series (%s FPU)", fpuname);
+			bug = 1;
+	        	cacheinfo.c_totalsize = 128*1024;
+			cacheinfo.c_hwflush = 0;
+			cacheinfo.c_linesize = 16;
+			cacheinfo.c_l2linesize = 4;
+			break;
+		case SUN4_400:
+			sprintf(cpu_model,"SUN-4/400 series (%s FPU)", fpuname);
+			cacheinfo.c_totalsize = 128 * 1024;
+			cacheinfo.c_hwflush = 0;
+			cacheinfo.c_linesize = 32;
+			cacheinfo.c_l2linesize = 5;
+			break;
+		}
+		printf(": %s\n", cpu_model);
+	}
+#endif
+#if defined(SUN4C) || defined(SUN4M)
+	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
+		clk = getpropint(node, "clock-frequency", 0);
+		sprintf(cpu_model, "%s (%s @ %s MHz, %s FPU)",
+		    getpropstring(node, "name"),
+		    psrtoname(impl, vers, fver, iubuf), clockfreq(clk), fpuname);
+		printf(": %s\n", cpu_model);
 
-	/*
-	 * Fill in the cache info.  Note, vac-hwflush is spelled
-	 * with an underscore on 4/75s.
-	 */
-	cacheinfo.c_totalsize = getpropint(node, "vac-size", 65536);
-	cacheinfo.c_hwflush = getpropint(node, "vac_hwflush", 0) |
-	    getpropint(node, "vac-hwflush", 0);
-	cacheinfo.c_linesize = l = getpropint(node, "vac-linesize", 16);
-	for (i = 0; (1 << i) < l; i++)
-		/* void */;
-	if ((1 << i) != l)
-		panic("bad cache line size %d", l);
-	cacheinfo.c_l2linesize = i;
-	vactype = VAC_WRITETHROUGH;
+		/*
+		 * Fill in the cache info.  Note, vac-hwflush is spelled
+		 * with an underscore on 4/75s.
+		 */
+		cacheinfo.c_totalsize = getpropint(node, "vac-size", 65536);
+		cacheinfo.c_hwflush = getpropint(node, "vac_hwflush", 0) |
+		    getpropint(node, "vac-hwflush", 0);
+		cacheinfo.c_linesize = l = getpropint(node, "vac-linesize", 16);
+		for (i = 0; (1 << i) < l; i++)
+			/* void */;
+		if ((1 << i) != l)
+			panic("bad cache line size %d", l);
+		cacheinfo.c_l2linesize = i;
+		vactype = VAC_WRITETHROUGH;
 
-	/*
-	 * Machines with "buserr-type" 1 have a bug in the cache
-	 * chip that affects traps.  (I wish I knew more about this
-	 * mysterious buserr-type variable....)
-	 */
-	if (getpropint(node, "buserr-type", 0) == 1) {
+		/*
+		 * Machines with "buserr-type" 1 have a bug in the cache
+		 * chip that affects traps.  (I wish I knew more about this
+		 * mysterious buserr-type variable....)
+		 */
+		bug = (getpropint(node, "buserr-type", 0) == 1);
+	}
+#endif /* SUN4C || SUN4M */
+	if (bug) {
 		kvm_uncache((caddr_t)trapbase, 1);
 		printf("%s: cache chip bug; trap page uncached\n",
 		    dev->dv_xname);
 	}
 
 	printf("%s: %d byte write-through, %d bytes/line, %cw flush ",
-	    dev->dv_xname, cacheinfo.c_totalsize, l,
+	    dev->dv_xname, cacheinfo.c_totalsize, cacheinfo.c_linesize,
 	    cacheinfo.c_hwflush ? 'h' : 's');
 	cache_enable();
 }
