@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2 1998/08/16 11:24:37 tsubai Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.3 1998/08/26 11:44:06 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -126,3 +126,12 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
 /* XXX - Could define splzs() here instead of in psl.h */
 #define splzs spltty
+
+/* Hook for MD ioctl support */
+int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, caddr_t data));
+/* XXX - This is a bit gross... */
+#define ZS_MD_IOCTL zsmdioctl(cs, cmd, data)
+
+/* Callback for "external" clock sources */
+void zsmd_setclock  __P((struct zs_chanstate *cs));
+#define ZS_MD_SETCLK(cs) zsmd_setclock(cs)
