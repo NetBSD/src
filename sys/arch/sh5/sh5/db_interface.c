@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 2002/09/06 15:37:14 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.6 2002/09/10 12:44:38 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,6 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/systm.h>
 
 #include <dev/cons.h>
@@ -152,12 +153,15 @@ const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_
  * SH5-specific commands
  */
 static void db_sh5_tlb(db_expr_t, int, db_expr_t, char *);
-static void print_tlb_entry(int, pteh_t, ptel_t);
+static void db_sh5_fpr(db_expr_t, int, db_expr_t, char *);
 
 const struct db_command db_machine_command_table[] = {
 	{"tlb",		db_sh5_tlb,	0,	0},
+	{"fpr",		db_sh5_fpr,	0,	0},
 	{NULL,}
 };
+
+static void print_tlb_entry(int, pteh_t, ptel_t);
 
 
 static int
@@ -192,6 +196,8 @@ db_var_reg(const struct db_variable *varp, db_expr_t *valp, int op)
 	return (0);
 }
 
+int already_in_db;
+
 void
 cpu_Debugger(void)
 {
@@ -218,6 +224,7 @@ kdb_trap(int type, void *v)
 	}
 
 	s = splhigh();
+	already_in_db = 1;
 	ddb_regs = *frame;
 	db_active++;
 	cnpollc(1);
@@ -233,6 +240,7 @@ kdb_trap(int type, void *v)
 	}
 
 	*frame = ddb_regs;
+	already_in_db = 0;
 	splx(s);
 
 	return (1);
@@ -387,6 +395,78 @@ db_sh5_tlb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 				continue;
 
 			print_tlb_entry(i, pteh, ptel);
+		}
+	}
+}
+
+static void
+db_sh5_fpr(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	struct switchframe sw, *swp;
+	struct proc *p;
+	u_int usr;
+	int i, flagc, flagf;
+
+	flagc = (strchr(modif, 'c') != NULL);
+	flagf = (strchr(modif, 'f') != NULL);
+
+	if (have_addr) {
+		p = pfind(addr);
+		if (p == NULL) {
+			db_printf("Invalid PID\n");
+			return;
+		}
+	} else
+		p = curproc;
+
+	if (flagc || p == NULL || (p->p_md.md_flags & MDP_FPSAVED) == 0) {
+		/*
+		 * Fetch "Current" FP reg contents (at time
+		 * of entry to ddb), or if the current process'
+		 * FP registers have not yet been saved.
+		 */
+		swp = &sw;
+		usr = (u_int)ddb_regs.tf_state.sf_usr;
+		i = sh5_fpsave(usr, (struct pcb *)swp);
+	} else {
+		/*
+		 * Fetch FP registers for current process, as
+		 * stashed in the PCB.
+		 */
+		swp = &p->p_addr->u_pcb.pcb_ctx;
+		usr = (u_int)p->p_md.md_regs->tf_state.sf_usr;
+		i = p->p_md.md_flags & (MDP_FPUSED | MDP_FPSAVED);
+	}
+
+	if (i == 0) {
+		db_printf("The FPU appears to be disabled\n");
+		return;
+	}
+
+	db_printf("fpscr: 0x%08x\n", (u_int)swp->sf_fpregs.fpscr);
+	db_printf("  usr: 0x%04x\n", usr);
+
+	if ((i & MDP_FPUSED) == 0) {
+		db_printf("The current process hasn't used the FPU.");
+		if (flagf == 0) {
+			db_printf("\n");
+			return;
+		}
+		db_printf(" Register dump forced.\n");
+	}
+
+	usr >>= 8;
+
+	for (i = 0; i < 32; i++) {
+		if (flagf || (usr & (1 << (i / 4))) != 0) {
+			if (i < 5)
+				db_printf("  dr%d: ", i * 2);
+			else
+				db_printf(" dr%d: ", i * 2);
+
+			db_printf("0x%08x%08x\n",
+			    (u_int)(swp->sf_fpregs.fp[i] >> 32),
+			    (u_int)(swp->sf_fpregs.fp[i]));
 		}
 	}
 }
