@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.115 1998/01/12 18:59:11 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.116 1998/01/15 06:11:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -127,7 +127,16 @@ struct fdc_softc {
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
-	bus_space_handle_t   sc_ioh;	/* ISA io handle */
+	bus_space_handle_t sc_ioh;	/* ISA io handle */
+
+	/*
+	 * XXX We have port overlap with the first IDE controller.
+	 * Until we have a reasonable solution for handling overlap
+	 * like this, we kludge access to our control register at
+	 * offset 7.
+	 */
+	bus_space_handle_t sc_fdctlioh;
+#define	sc_fdinioh	sc_fdctlioh
 
 	int sc_drq;
 
@@ -270,8 +279,21 @@ fdcprobe(parent, match, aux)
 		return 0;
 
 	/* Map the i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, 6 /* XXX FDC_NPORT */, 0, &ioh))
 		return 0;
+
+	/* XXX XXX XXX BEGIN XXX XXX XXX */
+	{
+		bus_space_handle_t fdctlioh;
+		if (bus_space_map(iot, ia->ia_iobase + fdctl, 1, 0,
+		    &fdctlioh)) {
+			bus_space_unmap(iot, ioh, 6);
+			return 0;
+		}
+		/* not needed for the rest of the probe */
+		bus_space_unmap(iot, fdctlioh, 1);
+	}
+	/* XXX XXX XXX END XXX XXX XXX */
 
 	/* reset */
 	bus_space_write_1(iot, ioh, fdout, 0);
@@ -305,7 +327,7 @@ fdcprobe(parent, match, aux)
 	ia->ia_msize = 0;
 
  out:
-	bus_space_unmap(iot, ioh, FDC_NPORT);
+	bus_space_unmap(iot, ioh, 6 /* XXX FDC_NPORT */);
 	return rv;
 }
 
@@ -373,10 +395,18 @@ fdcattach(parent, self, aux)
 	printf("\n");
 
 	/* Re-map the I/O space. */
-	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_iobase, 6 /* XXX FDC_NPORT */, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", fdc->sc_dev.dv_xname);
 		return;
 	}
+
+	/* XXX XXX XXX BEGIN XXX XXX XXX */
+	if (bus_space_map(iot, ia->ia_iobase + fdctl, 1, 0,
+	    &fdc->sc_fdctlioh)) {
+		printf("%s: can't kludge i/o space\n", fdc->sc_dev.dv_xname);
+		return;
+	}
+	/* XXX XXX XXX END XXX XXX XXX */
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
@@ -1053,7 +1083,11 @@ loop:
 		isa_dmastart(fdc->sc_dev.dv_parent, fdc->sc_drq,
 		    bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    NULL, read, BUS_DMA_NOWAIT);
+#if 0 /* XXX i/o port kludge */
 		bus_space_write_1(iot, ioh, fdctl, type->rate);
+#else
+		bus_space_write_1(iot, fdc->sc_fdctlioh, 0, type->rate);
+#endif
 #ifdef FD_DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 			read ? "read" : "write", fd->sc_drive, fd->sc_cylin,
