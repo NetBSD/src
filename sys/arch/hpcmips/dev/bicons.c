@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.5 2000/03/06 21:36:07 thorpej Exp $	*/
+/*	$NetBSD: bicons.c,v 1.6 2001/01/21 09:11:29 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -75,6 +75,10 @@ static void put_oxel_D2_M2L_3(u_char*, u_char, u_char);
 static void put_oxel_D2_M2L_3x2(u_char*, u_char, u_char);
 static void put_oxel_D2_M2L_0(u_char*, u_char, u_char);
 static void put_oxel_D2_M2L_0x2(u_char*, u_char, u_char);
+static void put_oxel_D4_M2L_F(u_char*, u_char, u_char);
+static void put_oxel_D4_M2L_Fx2(u_char*, u_char, u_char);
+static void put_oxel_D4_M2L_0(u_char*, u_char, u_char);
+static void put_oxel_D4_M2L_0x2(u_char*, u_char, u_char);
 static void put_oxel_D8_00(u_char*, u_char, u_char);
 static void put_oxel_D8_FF(u_char*, u_char, u_char);
 static void put_oxel_D16_0000(u_char*, u_char, u_char);
@@ -87,14 +91,30 @@ struct {
 	u_char clear_byte;
 	short oxel_bytes;
 } fb_table[] = {
-	{ BIFB_D2_M2L_3,	BIFBN_D2_M2L_3,		put_oxel_D2_M2L_3,	0,2 },
-	{ BIFB_D2_M2L_3x2,	BIFBN_D2_M2L_3x2,	put_oxel_D2_M2L_3x2,	0,1 },
-	{ BIFB_D2_M2L_0,	BIFBN_D2_M2L_0,		put_oxel_D2_M2L_0,0xff,	2 },
-	{ BIFB_D2_M2L_0x2,	BIFBN_D2_M2L_0x2,	put_oxel_D2_M2L_0x2,0xff,1 },
-	{ BIFB_D8_00,		BIFBN_D8_00,		put_oxel_D8_00,	0xff,	8 },
-	{ BIFB_D8_FF,		BIFBN_D8_FF,		put_oxel_D8_FF,	0x00,	8 },
-	{ BIFB_D16_0000,	BIFBN_D16_0000,		put_oxel_D16_0000,0xff,	16 },
-	{ BIFB_D16_FFFF,	BIFBN_D16_FFFF,		put_oxel_D16_FFFF,0x00,	16 },
+	{ BIFB_D2_M2L_3,	BIFBN_D2_M2L_3,
+	  put_oxel_D2_M2L_3,	0,	2	},
+	{ BIFB_D2_M2L_3x2,	BIFBN_D2_M2L_3x2,
+	  put_oxel_D2_M2L_3x2,	0,	1	},
+	{ BIFB_D2_M2L_0,	BIFBN_D2_M2L_0,
+	  put_oxel_D2_M2L_0,	0xff,	2	},
+	{ BIFB_D2_M2L_0x2,	BIFBN_D2_M2L_0x2,
+	  put_oxel_D2_M2L_0x2,	0xff,	1	},
+	{ BIFB_D4_M2L_F,	BIFBN_D4_M2L_F,
+	  put_oxel_D4_M2L_F,	0x00,	4	},
+	{ BIFB_D4_M2L_Fx2,	BIFBN_D4_M2L_Fx2,
+	  put_oxel_D4_M2L_Fx2,	0x00,	2	},
+	{ BIFB_D4_M2L_0,	BIFBN_D4_M2L_0,
+	  put_oxel_D4_M2L_0,	0xff,	4	},
+	{ BIFB_D4_M2L_0x2,	BIFBN_D4_M2L_0x2,
+	  put_oxel_D4_M2L_0x2,	0xff,	2	},
+	{ BIFB_D8_00,		BIFBN_D8_00,
+	  put_oxel_D8_00,	0xff,	8	},
+	{ BIFB_D8_FF,		BIFBN_D8_FF,
+	  put_oxel_D8_FF,	0x00,	8	},
+	{ BIFB_D16_0000,	BIFBN_D16_0000,
+	  put_oxel_D16_0000,	0xff,	16	},
+	{ BIFB_D16_FFFF,	BIFBN_D16_FFFF,
+	  put_oxel_D16_FFFF,	0x00,	16	},
 };
 #define FB_TABLE_SIZE (sizeof(fb_table)/sizeof(*fb_table))
 
@@ -487,6 +507,72 @@ put_oxel_D2_M2L_0x2(u_char* xaddr, u_char data, u_char mask)
 	register u_char even = (data & 0x55);
 
 	*xaddr = ~((odd | (even << 1)) | ((odd >> 1) & even));
+}
+
+/*=============================================================================
+ *
+ *	D4_M2L_F
+ *
+ */
+static void
+put_oxel_D4_M2L_F(u_char* xaddr, u_char data, u_char mask)
+{
+	u_int32_t* addr = (u_int32_t*)xaddr;
+	static u_int32_t map[] = {
+		0x0000, 0x0f00, 0xf000, 0xff00, 0x000f, 0x0f0f, 0xf00f, 0xff0f,
+		0x00f0, 0x0ff0, 0xf0f0, 0xfff0, 0x00ff, 0x0fff, 0xf0ff, 0xffff,
+	};
+	*addr = (map[data >> 4] | (map[data & 0x0f] << 16));
+}
+
+/*=============================================================================
+ *
+ *	D4_M2L_Fx2
+ *
+ */
+static void
+put_oxel_D4_M2L_Fx2(u_char* xaddr, u_char data, u_char mask)
+{
+	u_int16_t* addr = (u_int16_t*)xaddr;
+	static u_int16_t map[] = {
+		0x00, 0x08, 0x08, 0x0f, 0x80, 0x88, 0x88, 0x8f,
+		0x80, 0x88, 0x88, 0x8f, 0xf0, 0xf8, 0xf8, 0xff,
+	};
+
+	*addr = (map[data >> 4] | (map[data & 0x0f] << 8));
+}
+
+/*=============================================================================
+ *
+ *	D4_M2L_0
+ *
+ */
+static void
+put_oxel_D4_M2L_0(u_char* xaddr, u_char data, u_char mask)
+{
+	u_int32_t* addr = (u_int32_t*)xaddr;
+	static u_int32_t map[] = {
+		0xffff, 0xf0ff, 0x0fff, 0x00ff, 0xfff0, 0xf0f0, 0x0ff0, 0x00f0,
+		0xff0f, 0xf00f, 0x0f0f, 0x000f, 0xff00, 0xf000, 0x0f00, 0x0000,
+	};
+	*addr = (map[data >> 4] | (map[data & 0x0f] << 16));
+}
+
+/*=============================================================================
+ *
+ *	D4_M2L_0x2
+ *
+ */
+static void
+put_oxel_D4_M2L_0x2(u_char* xaddr, u_char data, u_char mask)
+{
+	u_int16_t* addr = (u_int16_t*)xaddr;
+	static u_int16_t map[] = {
+		0xff, 0xf8, 0xf8, 0xf0, 0x8f, 0x88, 0x88, 0x80,
+		0x8f, 0x88, 0x88, 0x80, 0x0f, 0x08, 0x08, 0x00,
+	};
+
+	*addr = (map[data >> 4] | (map[data & 0x0f] << 8));
 }
 
 /*=============================================================================

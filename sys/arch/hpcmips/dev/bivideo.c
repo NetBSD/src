@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.14 2001/01/05 09:09:48 sato Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.15 2001/01/21 09:11:29 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.14 2001/01/05 09:09:48 sato Exp $";
+    "$Id: bivideo.c,v 1.15 2001/01/21 09:11:29 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,9 +143,13 @@ bivideoattach(parent, self, aux)
 	}
 	attach_flag = 1;
 
-	bivideo_init(&sc->sc_fbconf);
+	printf(": ");
+	if (bivideo_init(&sc->sc_fbconf) != 0) {
+		/* just return so that hpcfb will not be attached */
+		return;
+	}
 
-	printf(": pseudo video controller");
+	printf("pseudo video controller");
 	if (console_flag) {
 		printf(", console");
 	}
@@ -285,7 +289,7 @@ bivideo_init(fb)
 		break;
 
 	default:
-		printf("unknown type (=%d).\n", bootinfo->fb_type);
+		printf("unsupported type %d.\n", bootinfo->fb_type);
 		return (-1);
 		break;
 	}
