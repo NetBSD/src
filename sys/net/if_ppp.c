@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.3 1993/09/02 12:10:59 paulus Exp $ */
+/* $Id: if_ppp.c,v 1.4 1993/11/04 03:45:23 paulus Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -669,8 +669,13 @@ pppoutput(ifp, m0, dst)
 	goto bad;
     }
     IF_ENQUEUE(ifq, m0);
-    if (CCOUNT(&sc->sc_ttyp->t_outq) == 0)
-	pppstart(sc->sc_ttyp);
+    /*
+     * The next statement used to be subject to:
+     *     if (CCOUNT(&sc->sc_ttyp->t_outq) == 0)
+     * which was removed so that we don't hang up completely
+     * if the serial transmitter loses an interrupt.
+     */
+    pppstart(sc->sc_ttyp);
     splx(s);
     return (0);
 
@@ -825,16 +830,16 @@ pppstart(tp)
 		    ndone = n - b_to_q(start, n, &tp->t_outq);
 #else
 #ifdef	NetBSD
-		    /* NetBSD, 0.8 or earlier */
+		    /* NetBSD with 2-byte ring buffer entries */
 		    ndone = rb_cwrite(&tp->t_out, start, n);
 #else
-		    /* 386BSD */
+		    /* 386BSD, FreeBSD */
 		    int cc, nleft;
 		    for (nleft = n; nleft > 0; nleft -= cc) {
 			if ((cc = RB_CONTIGPUT(&tp->t_out)) == 0)
 			    break;
 			cc = min (cc, nleft);
-			bcopy((char *)start, tp->t_out.rb_tl, cc);
+			bcopy((char *)start + n - nleft, tp->t_out.rb_tl, cc);
 			tp->t_out.rb_tl = RB_ROLLOVER(&tp->t_out,
 						      tp->t_out.rb_tl + cc);
 		    }
