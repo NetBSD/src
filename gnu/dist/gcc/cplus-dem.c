@@ -49,7 +49,7 @@ char * realloc ();
 #undef CURRENT_DEMANGLING_STYLE
 #define CURRENT_DEMANGLING_STYLE work->options
 
-#include "libiberty.h"
+#include "scan.h"
 
 static const char *mystrstr PARAMS ((const char *, const char *));
 
