@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.46 1994/06/16 18:59:14 deraadt Exp $
+#	$Id: Makefile,v 1.47 1994/06/19 04:40:28 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -23,7 +23,6 @@ BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 # -rw-rw-r--
 BIN2=	motd
 
-MTREE=	BSD.root.dist BSD.usr.dist BSD.var.dist
 NAMEDB=	localhost.rev named.boot root.cache
 PCS=	pcs750.bin
 WCS1=	wcs fppwcs poc poc1 poc2 fppoc
@@ -57,8 +56,11 @@ distribution: distrib-dirs
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
 		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
-	cd mtree; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${MTREE} \
-	    ${DESTDIR}/etc/mtree
+	(cd mtree; \
+		install -c -o root -g wheel -m 600 special \
+		    ${DESTDIR}/etc/mtree; \
+		install -c -o root -g wheel -m 444 4.4BSD.dist \
+		    ${DESTDIR}/etc/mtree)
 	cd namedb; install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
 	    ${DESTDIR}/etc/namedb
 	/bin/rm -f ${DESTDIR}/etc/localtime
@@ -103,9 +105,7 @@ hcx9-distribution:
 
 distrib-dirs:
 	install -d -o root -g wheel -m 755 ${DESTDIR}
-	mtree -u -d -p ${DESTDIR}/ -f ${.CURDIR}/mtree/BSD.root.dist
-	mtree -u -d -p ${DESTDIR}/usr -f ${.CURDIR}/mtree/BSD.usr.dist
-	mtree -u -d -p ${DESTDIR}/var -f ${.CURDIR}/mtree/BSD.var.dist
+	-mtree -def mtree/4.4BSD.dist -p ${DESTDIR}/ -u
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
 snapshot: distribution snap_pre snap_tar snap_md
