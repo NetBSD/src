@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)print.c	5.9 (Berkeley) 7/1/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/ps/print.c,v 1.3 1993/03/23 00:26:36 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/print.c,v 1.4 1993/06/01 01:38:28 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,18 +89,28 @@ command(k, v, next)
 
 	if (next == NULL) {
 		/* last field */
-		if (termwidth == UNLIMITED)
+		if (termwidth == UNLIMITED) {
+			if (k->ki_env)
+				(void)printf("%s ", k->ki_env);
 			(void) printf("%s", k->ki_args);
-		else {
+		} else {
 			register int left = termwidth - (totwidth - v->width);
 			register char *cp = k->ki_args;
 
 			if (left < 1) /* already wrapped, just use std width */
 				left = v->width;
+                        cp = k->ki_env;
+			if (cp != 0) {
+				while (--left >= 0 && *cp)
+					(void)putchar(*cp++);
+				if (--left >= 0)
+					putchar(' ');
+			}
 			while (--left >= 0 && *cp)
 				(void) putchar(*cp++);
 		}
 	} else
+		/* XXX environment strings? */
 		(void) printf("%-*.*s", v->width, v->width, k->ki_args);
 
 }
