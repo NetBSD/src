@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1995/04/10 12:59:48 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1995/04/10 13:01:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,16 +66,8 @@
  *
  */
 /*-
+ * Derived a long time ago from
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- */
-/*
-   ALICE
-      BG 06/02/92,23:25:54
-         I have modified this file to correspond loosely to our requirements.
-         We need to go back through and check on a few things:
-            1) can we get rid of the _notdef()'s?
-            2) should we keep all the devices I left here?  (e.g. cd...)
-            3) did I put the new devices in the right places?
  */
 
 #include <sys/param.h>
