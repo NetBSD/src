@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.83 1999/03/06 05:34:41 fair Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.83.4.1 1999/07/04 01:46:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -661,6 +661,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
+	mp->mnt_fs_bshift = DEV_BSHIFT;
+	mp->mnt_dev_bshift = -1;
 	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name,
 	    MFSNAMELEN);
 	memcpy(mp->mnt_stat.f_mntfromname, hst, MNAMELEN);
