@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.68 2003/11/19 15:46:16 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.69 2004/03/09 03:18:03 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.68 2003/11/19 15:46:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.69 2004/03/09 03:18:03 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -876,7 +876,6 @@ ibcs2_sys_sysconf(l, v, retval)
 	struct proc *p = l->l_proc;
 	int mib[2], value, error;
 	size_t len;
-	struct sys___sysctl_args sa;
 	struct sys_getrlimit_args ga;
 
 	switch(SCARG(uap, name)) {
@@ -942,14 +941,13 @@ ibcs2_sys_sysconf(l, v, retval)
 
 	mib[0] = CTL_KERN;
 	len = sizeof(value);
-	SCARG(&sa, name) = mib;
-	SCARG(&sa, namelen) = 2;
-	SCARG(&sa, old) = &value;
-	SCARG(&sa, oldlenp) = &len;
-	SCARG(&sa, new) = NULL;
-	SCARG(&sa, newlen) = 0;
-	if ((error = sys___sysctl(l, &sa, retval)) != 0)
-		return error;
+	/*
+	 * calling into sysctl with superuser privs, but we don't mind,
+	 * 'cause we're only querying a value.
+	 */
+	error = old_sysctl(&mib[0], 2, &value, &len, NULL, 0, NULL);
+	if (error)
+		return (error);
 	*retval = value;
 	return 0;
 }
