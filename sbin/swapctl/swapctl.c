@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.13 2000/03/13 22:59:22 soren Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.14 2000/04/13 08:29:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -54,8 +54,7 @@
 
 #include <sys/param.h>
 #include <sys/stat.h>
-
-#include <vm/vm_swap.h>
+#include <sys/swap.h>
 
 #include <unistd.h>
 #include <err.h>
