@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 1999/08/25 02:07:44 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2000/07/16 22:10:13 tron Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: main.c,v 1.85 1999/08/24 05:59:15 paulus Exp "
+#define RCSID	"Id: main.c,v 1.88 1999/12/23 01:28:27 paulus Exp "
 #else
-__RCSID("$NetBSD: main.c,v 1.35 1999/08/25 02:07:44 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2000/07/16 22:10:13 tron Exp $");
 #endif
 #endif
 
@@ -103,6 +103,12 @@ int prepass = 0;		/* doing prepass to find device name */
 int devnam_fixed;		/* set while in options.ttyxx file */
 volatile int status;		/* exit status for pppd */
 int unsuccess;			/* # unsuccessful connection attempts */
+int do_callback;		/* != 0 if we should do callback next */
+int doing_callback;		/* != 0 if we are doing callback */
+char *callback_script;		/* script for doing callback */
+
+int (*holdoff_hook) __P((void)) = NULL;
+int (*new_phase_hook) __P((int)) = NULL;
 
 static int fd_ppp = -1;		/* fd for talking PPP */
 static int fd_loop;		/* fd for getting demand-dial packets */
@@ -163,6 +169,7 @@ static void create_linkpidfile __P((void));
 static void cleanup __P((void));
 static void close_tty __P((void));
 static void get_input __P((void));
+static const char *protocol_name __P((int));
 static void calltimeout __P((void));
 static struct timeval *timeleft __P((struct timeval *));
 static void kill_my_pg __P((int));
@@ -226,9 +233,9 @@ main(argc, argv)
     int argc;
     char *argv[];
 {
-    int i, fdflags;
+    int i, fdflags, t;
     struct sigaction sa;
-    char *p;
+    char *p, *connector;
     struct passwd *pw;
     struct timeval timo;
     sigset_t mask;
@@ -236,7 +243,7 @@ main(argc, argv)
     struct stat statbuf;
     char numbuf[16];
 
-    phase = PHASE_INITIALIZE;
+    new_phase(PHASE_INITIALIZE);
 
     /*
      * Ensure that fds 0, 1, 2 are open, to /dev/null if nowhere else.
@@ -260,6 +267,9 @@ main(argc, argv)
 	exit(1);
     }
     hostname[MAXNAMELEN-1] = 0;
+
+    /* make sure we don't create world or group writable files. */
+    umask(umask(0777) | 022);
 
     uid = getuid();
     privileged = uid == 0;
@@ -347,10 +357,13 @@ main(argc, argv)
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->check_options != NULL)
 	    (*protp->check_options)();
-    if (demand && connector == 0) {
+    if (demand && connect_script == 0) {
 	option_error("connect script is required for demand-dialling\n");
 	exit(EXIT_OPTION_ERROR);
     }
+    /* default holdoff to 0 if no connect script has been given */
+    if (connect_script == 0 && !holdoff_specified)
+	holdoff = 0;
 
     if (using_pty) {
 	if (!default_device) {
@@ -519,6 +532,7 @@ main(argc, argv)
 	demand_conf();
     }
 
+    do_callback = 0;
     for (;;) {
 
 	need_holdoff = 1;
@@ -526,13 +540,15 @@ main(argc, argv)
 	real_ttyfd = -1;
 	status = EXIT_OK;
 	++unsuccess;
+	doing_callback = do_callback;
+	do_callback = 0;
 
-	if (demand) {
+	if (demand && !doing_callback) {
 	    /*
 	     * Don't do anything until we see some activity.
 	     */
 	    kill_link = 0;
-	    phase = PHASE_DORMANT;
+	    new_phase(PHASE_DORMANT);
 	    demand_unblock();
 	    add_fd(fd_loop);
 	    for (;;) {
@@ -569,7 +585,7 @@ main(argc, argv)
 	    info("Starting link");
 	}
 
-	phase = PHASE_SERIALCONN;
+	new_phase(PHASE_SERIALCONN);
 
 	/*
 	 * Get a pty master/slave pair if the pty, notty, or record
@@ -606,6 +622,7 @@ main(argc, argv)
 	 */
 	hungup = 0;
 	kill_link = 0;
+	connector = doing_callback? callback_script: connect_script;
 	if (devnam[0] != 0) {
 	    for (;;) {
 		/* If the user specified the device name, become the
@@ -692,6 +709,7 @@ main(argc, argv)
 	/* run connection script */
 	if ((connector && connector[0]) || initializer) {
 	    if (real_ttyfd != -1) {
+		/* XXX do this if doing_callback == CALLBACK_DIALIN? */
 		if (!default_device && modem) {
 		    setdtr(real_ttyfd, 0);	/* in case modem is off hook */
 		    sleep(1);
@@ -727,6 +745,9 @@ main(argc, argv)
 	       clear CLOCAL if modem option */
 	    if (real_ttyfd != -1)
 		set_up_tty(real_ttyfd, 0);
+
+	    if (doing_callback == CALLBACK_DIALIN)
+		connector = NULL;
 	}
 
 	/* reopen tty if necessary to wait for carrier */
@@ -786,18 +807,19 @@ main(argc, argv)
 	 * time for something from the peer.  This can avoid bouncing
 	 * our packets off his tty before he has it set up.
 	 */
-	if (connector != NULL || ptycommand != NULL) {
+	add_fd(fd_ppp);
+	if (connect_delay != 0 && (connector != NULL || ptycommand != NULL)) {
 	    struct timeval t;
-	    t.tv_sec = 1;
-	    t.tv_usec = 0;
+	    t.tv_sec = connect_delay / 1000;
+	    t.tv_usec = connect_delay % 1000;
 	    wait_input(&t);
 	}
 
 	lcp_open(0);		/* Start protocol */
 	open_ccp_flag = 0;
-	add_fd(fd_ppp);
 	status = EXIT_NEGOTIATION_FAILED;
-	for (phase = PHASE_ESTABLISH; phase != PHASE_DEAD; ) {
+	new_phase(PHASE_ESTABLISH);
+	while (phase != PHASE_DEAD) {
 	    if (sigsetjmp(sigjmp, 1) == 0) {
 		sigprocmask(SIG_BLOCK, &mask, NULL);
 		if (kill_link || open_ccp_flag || got_sigchld) {
@@ -816,7 +838,7 @@ main(argc, argv)
 		kill_link = 0;
 	    }
 	    if (open_ccp_flag) {
-		if (phase == PHASE_NETWORK) {
+		if (phase == PHASE_NETWORK || phase == PHASE_RUNNING) {
 		    ccp_fsm[0].flags = OPT_RESTART; /* clears OPT_SILENT */
 		    (*ccp_protent.open)(0);
 		}
@@ -867,10 +889,11 @@ main(argc, argv)
 	 * XXX we may not be able to do this if the line has hung up!
 	 */
     disconnect:
-	if (disconnector && !hungup) {
+	if (disconnect_script && !hungup) {
+	    new_phase(PHASE_DISCONNECT);
 	    if (real_ttyfd >= 0)
 		set_up_tty(real_ttyfd, 1);
-	    if (device_script(disconnector, ttyfd, ttyfd, 0) < 0) {
+	    if (device_script(disconnect_script, ttyfd, ttyfd, 0) < 0) {
 		warn("disconnect script failed");
 	    } else {
 		info("Serial link disconnected.");
@@ -902,9 +925,12 @@ main(argc, argv)
 	kill_link = 0;
 	if (demand)
 	    demand_discard();
-	if (holdoff > 0 && need_holdoff) {
-	    phase = PHASE_HOLDOFF;
-	    TIMEOUT(holdoff_end, NULL, holdoff);
+	t = need_holdoff? holdoff: 0;
+	if (holdoff_hook)
+	    t = (*holdoff_hook)();
+	if (t > 0) {
+	    new_phase(PHASE_HOLDOFF);
+	    TIMEOUT(holdoff_end, NULL, t);
 	    do {
 		if (sigsetjmp(sigjmp, 1) == 0) {
 		    sigprocmask(SIG_BLOCK, &mask, NULL);
@@ -920,7 +946,7 @@ main(argc, argv)
 		calltimeout();
 		if (kill_link) {
 		    kill_link = 0;
-		    phase = PHASE_DORMANT; /* allow signal to end holdoff */
+		    new_phase(PHASE_DORMANT); /* allow signal to end holdoff */
 		}
 		if (got_sigchld)
 		    reap_kids(0);
@@ -1047,7 +1073,91 @@ static void
 holdoff_end(arg)
     void *arg;
 {
-    phase = PHASE_DORMANT;
+    new_phase(PHASE_DORMANT);
+}
+
+/* List of protocol names, to make our messages a little more informative. */
+struct protocol_list {
+    u_short	proto;
+    const char	*name;
+} protocol_list[] = {
+    { 0x21,	"IP" },
+    { 0x23,	"OSI Network Layer" },
+    { 0x25,	"Xerox NS IDP" },
+    { 0x27,	"DECnet Phase IV" },
+    { 0x29,	"Appletalk" },
+    { 0x2b,	"Novell IPX" },
+    { 0x2d,	"VJ compressed TCP/IP" },
+    { 0x2f,	"VJ uncompressed TCP/IP" },
+    { 0x31,	"Bridging PDU" },
+    { 0x33,	"Stream Protocol ST-II" },
+    { 0x35,	"Banyan Vines" },
+    { 0x39,	"AppleTalk EDDP" },
+    { 0x3b,	"AppleTalk SmartBuffered" },
+    { 0x3d,	"Multi-Link" },
+    { 0x3f,	"NETBIOS Framing" },
+    { 0x41,	"Cisco Systems" },
+    { 0x43,	"Ascom Timeplex" },
+    { 0x45,	"Fujitsu Link Backup and Load Balancing (LBLB)" },
+    { 0x47,	"DCA Remote Lan" },
+    { 0x49,	"Serial Data Transport Protocol (PPP-SDTP)" },
+    { 0x4b,	"SNA over 802.2" },
+    { 0x4d,	"SNA" },
+    { 0x4f,	"IP6 Header Compression" },
+    { 0x6f,	"Stampede Bridging" },
+    { 0xfb,	"single-link compression" },
+    { 0xfd,	"1st choice compression" },
+    { 0x0201,	"802.1d Hello Packets" },
+    { 0x0203,	"IBM Source Routing BPDU" },
+    { 0x0205,	"DEC LANBridge100 Spanning Tree" },
+    { 0x0231,	"Luxcom" },
+    { 0x0233,	"Sigma Network Systems" },
+    { 0x8021,	"Internet Protocol Control Protocol" },
+    { 0x8023,	"OSI Network Layer Control Protocol" },
+    { 0x8025,	"Xerox NS IDP Control Protocol" },
+    { 0x8027,	"DECnet Phase IV Control Protocol" },
+    { 0x8029,	"Appletalk Control Protocol" },
+    { 0x802b,	"Novell IPX Control Protocol" },
+    { 0x8031,	"Bridging NCP" },
+    { 0x8033,	"Stream Protocol Control Protocol" },
+    { 0x8035,	"Banyan Vines Control Protocol" },
+    { 0x803d,	"Multi-Link Control Protocol" },
+    { 0x803f,	"NETBIOS Framing Control Protocol" },
+    { 0x8041,	"Cisco Systems Control Protocol" },
+    { 0x8043,	"Ascom Timeplex" },
+    { 0x8045,	"Fujitsu LBLB Control Protocol" },
+    { 0x8047,	"DCA Remote Lan Network Control Protocol (RLNCP)" },
+    { 0x8049,	"Serial Data Control Protocol (PPP-SDCP)" },
+    { 0x804b,	"SNA over 802.2 Control Protocol" },
+    { 0x804d,	"SNA Control Protocol" },
+    { 0x804f,	"IP6 Header Compression Control Protocol" },
+    { 0x006f,	"Stampede Bridging Control Protocol" },
+    { 0x80fb,	"Single Link Compression Control Protocol" },
+    { 0x80fd,	"Compression Control Protocol" },
+    { 0xc021,	"Link Control Protocol" },
+    { 0xc023,	"Password Authentication Protocol" },
+    { 0xc025,	"Link Quality Report" },
+    { 0xc027,	"Shiva Password Authentication Protocol" },
+    { 0xc029,	"CallBack Control Protocol (CBCP)" },
+    { 0xc081,	"Container Control Protocol" },
+    { 0xc223,	"Challenge Handshake Authentication Protocol" },
+    { 0xc281,	"Proprietary Authentication Protocol" },
+    { 0,	NULL },
+};
+
+/*
+ * protocol_name - find a name for a PPP protocol.
+ */
+static const char *
+protocol_name(proto)
+    int proto;
+{
+    struct protocol_list *lp;
+
+    for (lp = protocol_list; lp->proto != 0; ++lp)
+	if (proto == lp->proto)
+	    return lp->name;
+    return NULL;
 }
 
 /*
@@ -1123,11 +1233,27 @@ get_input()
 	}
     }
 
-    if (debug)
-    	warn("Unsupported protocol (0x%x) received", protocol);
+    if (debug) {
+	const char *pname = protocol_name(protocol);
+	if (pname != NULL)
+	    warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
+	else
+	    warn("Unsupported protocol 0x%x received", protocol);
+    }
     lcp_sprotrej(0, p - PPP_HDRLEN, len + PPP_HDRLEN);
 }
 
+/*
+ * new_phase - signal the start of a new phase of pppd's operation.
+ */
+void
+new_phase(p)
+    int p;
+{
+    phase = p;
+    if (new_phase_hook)
+	(*new_phase_hook)(p);
+}
 
 /*
  * die - clean up state and exit with the specified status.
@@ -1288,7 +1414,7 @@ untimeout(func, arg)
     for (copp = &callout; (freep = *copp); copp = &freep->c_next)
 	if (freep->c_func == func && freep->c_arg == arg) {
 	    *copp = freep->c_next;
-	    (void) free((char *) freep);
+	    free((char *) freep);
 	    break;
 	}
 }
@@ -1777,6 +1903,7 @@ script_setenv(var, value)
 	    }
 	}
     } else {
+	/* no space allocated for script env. ptrs. yet */
 	i = 0;
 	script_env = (char **) malloc(16 * sizeof(char *));
 	if (script_env == 0)
