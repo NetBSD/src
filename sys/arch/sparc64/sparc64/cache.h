@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.4 2002/04/16 23:13:13 eeh Exp $ */
+/*	$NetBSD: cache.h,v 1.5 2002/09/22 07:19:46 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -141,7 +141,8 @@ int	cache_flush __P((vaddr_t, vsize_t));	/* flush region */
 /* The following two are for I$ and D$ flushes and are in locore.s */
 void 	dcache_flush_page __P((paddr_t));	/* flush page from D$ */
 void 	icache_flush_page __P((paddr_t));	/* flush page from I$ */
-void 	blast_vcache __P((void));		/* Clear entire contents of I$ and D$ */
+void 	blast_dcache __P((void));		/* Clear entire contents of D$ */
+void 	blast_icache __P((void));		/* Clear entire contents of I$ */
 
 /* The following flush a range from the D$ and I$ but not E$. */
 void	cache_flush_virt __P((vaddr_t, vsize_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 2002/08/13 05:08:19 petrov Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.45 2002/09/22 07:19:53 chs Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -113,10 +113,6 @@ vmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
-	/*
-	 * XXX:  It might be better to round/trunc to a
-	 * segment boundary to avoid VAC problems!
-	 */
 	bp->b_saveaddr = bp->b_data;
 	uva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
@@ -124,23 +120,13 @@ vmapbuf(bp, len)
 	kva = uvm_km_valloc_wait(kernel_map, len);
 	bp->b_data = (caddr_t)(kva + off);
 
-	/*
-	 * We have to flush any write-back cache on the
-	 * user-space mappings so our new mappings will
-	 * have the correct contents.
-	 */
-	cache_flush(uva, len);
-
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		/* Now map the page into kernel space. */
-		pmap_enter(pmap_kernel(), kva,
-			pa /* | PMAP_NC */,
-			VM_PROT_READ|VM_PROT_WRITE,
-			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
 
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
@@ -166,15 +152,10 @@ vunmapbuf(bp, len)
 	kva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
-	pmap_remove(pmap_kernel(), kva, kva + len);
+	pmap_kremove(kva, len);
 	uvm_km_free_wakeup(kernel_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-
-#if 0	/* XXX: The flush above is sufficient, right? */
-	if (CACHEINFO.c_vactype != VAC_NONE)
-		cpuinfo.cache_flush(bp->b_data, len);
-#endif
 }
 
 

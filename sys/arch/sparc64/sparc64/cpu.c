@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 2002/06/02 14:44:41 drochner Exp $ */
+/*	$NetBSD: cpu.c,v 1.20 2002/09/22 07:19:47 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -166,19 +166,19 @@ cpu_init(pa, cpu_num)
 		0 /* IE */);
 
 	/* Map the pages */
-	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (; m != NULL; m = TAILQ_NEXT(m, pageq)) {
 		pa = VM_PAGE_TO_PHYS(m);
 		pmap_zero_page(pa);
-		pmap_enter(pmap_kernel(), va, pa | PMAP_NVC,
-			VM_PROT_READ|VM_PROT_WRITE,
-			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(va, pa | PMAP_NVC, VM_PROT_READ | VM_PROT_WRITE);
 		va += NBPG;
 	}
 	pmap_update(pmap_kernel());
 
-	if (!cpus) cpus = (struct cpu_info *)va;
+	if (!cpus)
+		cpus = (struct cpu_info *)va;
 	else {
-		for (ci = cpus; ci->ci_next; ci=ci->ci_next);
+		for (ci = cpus; ci->ci_next; ci = ci->ci_next)
+			;
 		ci->ci_next = (struct cpu_info *)va;
 	}
 
@@ -200,7 +200,7 @@ cpu_init(pa, cpu_num)
 		panic("cpu_start: stack size %x not a machine page size\n",
 			(unsigned)size);
 	}
-	return (pte|TLB_L);
+	return (pte | TLB_L);
 }
 
 
