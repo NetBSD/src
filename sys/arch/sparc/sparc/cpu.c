@@ -42,7 +42,7 @@
  *	@(#)cpu.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.c,v 1.12 93/05/03 09:47:57 torek Exp  (LBL)
- * $Id: cpu.c,v 1.10 1994/10/02 22:00:45 deraadt Exp $
+ * $Id: cpu.c,v 1.11 1994/11/13 22:12:44 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -232,10 +232,14 @@ cpu_attach(parent, dev, aux)
 		    dev->dv_xname);
 	}
 
-	printf("%s: %d byte write-through, %d bytes/line, %cw flush ",
-	    dev->dv_xname, cacheinfo.c_totalsize, cacheinfo.c_linesize,
-	    cacheinfo.c_hwflush ? 'h' : 's');
-	cache_enable();
+	if (cacheinfo.c_totalsize) {
+		printf("%s: %d byte write-%s, %d bytes/line, %cw flush ",
+		    dev->dv_xname, cacheinfo.c_totalsize,
+		    (vactype == VAC_WRITETHROUGH) ? "through" : "back",
+		    cacheinfo.c_linesize,
+		    cacheinfo.c_hwflush ? 'h' : 's');
+		cache_enable();
+	}
 }
 
 /*
