@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2005/03/19 03:53:55 thorpej Exp $
+#	$NetBSD: Makefile,v 1.20 2005/03/19 17:32:26 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -21,6 +21,7 @@ LDADD+=-lutil
 
 SRCS= ifconfig.c 
 SRCS+= agr.c
+SRCS+= tunnel.c
 SRCS+= vlan.c
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.156 2005/03/19 03:56:06 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.157 2005/03/19 17:32:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.156 2005/03/19 03:56:06 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.157 2005/03/19 17:32:26 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.156 2005/03/19 03:56:06 thorpej Exp $");
 
 #include "extern.h"
 #include "agr.h"
+#include "tunnel.h"
 #include "vlan.h"
 
 struct	ifreq		ifr, ridreq;
@@ -177,8 +178,6 @@ void 	setnsellength(const char *, int);
 void 	setsnpaoffset(const char *, int);
 void	setatrange(const char *, int);
 void	setatphase(const char *, int);
-void	settunnel(const char *, const char *);
-void	deletetunnel(const char *, int);
 #ifdef INET6
 void 	setia6flags(const char *, int);
 void	setia6pltime(const char *, int);
@@ -363,21 +362,9 @@ void 	iso_getaddr(const char *, int);
 
 void	ieee80211_statistics(void);
 void	ieee80211_status(void);
-void	tunnel_status(void);
 
 /* Known address families */
-struct afswtch {
-	const char *af_name;
-	short af_af;
-	void (*af_status)(int);
-	void (*af_getaddr)(const char *, int);
-	void (*af_getprefix)(const char *, int);
-	u_long af_difaddr;
-	u_long af_aifaddr;
-	u_long af_gifaddr;
-	void *af_ridreq;
-	void *af_addreq;
-} afs[] = {
+struct afswtch afs[] = {
 	{ "inet", AF_INET, in_status, in_getaddr, in_getprefix,
 	     SIOCDIFADDR, SIOCAIFADDR, SIOCGIFADDR, &ridreq, &in_addreq },
 #ifdef INET6
@@ -894,82 +881,6 @@ setifaddr(const char *addr, int param)
 	}
 
 	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
-}
-
-void
-settunnel(const char *src, const char *dst)
-{
-	struct addrinfo hints, *srcres, *dstres;
-	int ecode;
-	struct if_laddrreq req;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = afp->af_af;
-	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-
-	if ((ecode = getaddrinfo(src, NULL, &hints, &srcres)) != 0)
-		errx(EXIT_FAILURE, "error in parsing address string: %s",
-		    gai_strerror(ecode));
-
-	if ((ecode = getaddrinfo(dst, NULL, &hints, &dstres)) != 0)
-		errx(EXIT_FAILURE, "error in parsing address string: %s",
-		    gai_strerror(ecode));
-
-	if (srcres->ai_addr->sa_family != dstres->ai_addr->sa_family)
-		errx(EXIT_FAILURE,
-		    "source and destination address families do not match");
-
-	if (srcres->ai_addrlen > sizeof(req.addr) ||
-	    dstres->ai_addrlen > sizeof(req.dstaddr))
-		errx(EXIT_FAILURE, "invalid sockaddr");
-
-	memset(&req, 0, sizeof(req));
-	strncpy(req.iflr_name, name, sizeof(req.iflr_name));
-	memcpy(&req.addr, srcres->ai_addr, srcres->ai_addrlen);
-	memcpy(&req.dstaddr, dstres->ai_addr, dstres->ai_addrlen);
-
-#ifdef INET6
-	if (req.addr.ss_family == AF_INET6) {
-		struct sockaddr_in6 *s6, *d;
-
-		s6 = (struct sockaddr_in6 *)&req.addr;
-		d = (struct sockaddr_in6 *)&req.dstaddr;
-		if (s6->sin6_scope_id != d->sin6_scope_id) {
-			errx(EXIT_FAILURE, "scope mismatch");
-			/* NOTREACHED */
-		}
-#ifdef __KAME__
-		/* embed scopeid */
-		if (s6->sin6_scope_id && 
-		    (IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&s6->sin6_addr))) {
-			*(u_int16_t *)&s6->sin6_addr.s6_addr[2] =
-			    htons(s6->sin6_scope_id);
-		}
-		if (d->sin6_scope_id && 
-		    (IN6_IS_ADDR_LINKLOCAL(&d->sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&d->sin6_addr))) {
-			*(u_int16_t *)&d->sin6_addr.s6_addr[2] =
-			    htons(d->sin6_scope_id);
-		}
-#endif
-	}
-#endif
-
-	if (ioctl(s, SIOCSLIFPHYADDR, &req) == -1)
-		warn("SIOCSLIFPHYADDR");
-
-	freeaddrinfo(srcres);
-	freeaddrinfo(dstres);
-}
-
-/* ARGSUSED */
-void
-deletetunnel(const char *vname, int param)
-{
-
-	if (ioctl(s, SIOCDIFPHYADDR, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCDIFPHYADDR");
 }
 
 void
@@ -2022,42 +1933,6 @@ status(const struct sockaddr_dl *sdl)
 		ifr.ifr_addr.sa_family = p->af_af;
 		(*p->af_status)(0);
 	}
-}
-
-void
-tunnel_status(void)
-{
-	char psrcaddr[NI_MAXHOST];
-	char pdstaddr[NI_MAXHOST];
-	const char *ver = "";
-	const int niflag = NI_NUMERICHOST;
-	struct if_laddrreq req;
-
-	psrcaddr[0] = pdstaddr[0] = '\0';
-
-	memset(&req, 0, sizeof(req));
-	strncpy(req.iflr_name, name, IFNAMSIZ);
-	if (ioctl(s, SIOCGLIFPHYADDR, &req) == -1)
-		return;
-#ifdef INET6
-	if (req.addr.ss_family == AF_INET6)
-		in6_fillscopeid((struct sockaddr_in6 *)&req.addr);
-#endif
-	getnameinfo((struct sockaddr *)&req.addr, req.addr.ss_len,
-	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag);
-#ifdef INET6
-	if (req.addr.ss_family == AF_INET6)
-		ver = "6";
-#endif
-
-#ifdef INET6
-	if (req.dstaddr.ss_family == AF_INET6)
-		in6_fillscopeid((struct sockaddr_in6 *)&req.dstaddr);
-#endif
-	getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
-	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag);
-
-	printf("\ttunnel inet%s %s --> %s\n", ver, psrcaddr, pdstaddr);
 }
 
 void
