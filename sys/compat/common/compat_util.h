@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.4 1998/09/05 14:50:26 christos Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.5 1999/02/09 20:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@ struct proc;
 caddr_t	stackgap_init __P((struct emul *));
 void	*stackgap_alloc __P((caddr_t *, size_t));
 
-int emul_find __P((struct proc *, caddr_t *, const char *, char *,
-		   char **, int));
+int emul_find __P((struct proc *, caddr_t *, const char *, const char *,
+		   const char **, int));
 
 void compat_offseterr __P((struct vnode *, char *msg));
 
