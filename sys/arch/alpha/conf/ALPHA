@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.155 2001/11/04 07:39:41 itohy Exp $
+# $NetBSD: ALPHA,v 1.156 2001/11/04 10:27:15 itohy Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.155 $"
+ident		"ALPHA-$Revision: 1.156 $"
 
 maxusers 32
 
@@ -295,9 +295,13 @@ opl*	at	eso?
 #opl*	at	sv?
 opl*	at	yds?
 
+midi*	at	opl?
+
 mpu*	at	cmpci?
 mpu*	at	eso?
 mpu*	at	yds?
+
+midi*	at	mpu?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
