@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.28 1997/06/24 20:04:45 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.28.4.1 1997/08/28 00:12:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -350,8 +350,10 @@ sosend(so, addr, uio, top, control, flags)
 	 * of space and resid.  On the other hand, a negative resid
 	 * causes us to loop sending 0-length segments to the protocol.
 	 */
-	if (resid < 0)
-		return (EINVAL);
+	if (resid < 0) {
+		error = EINVAL;
+		goto out;
+	}
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);

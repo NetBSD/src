@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.24 1997/02/25 08:35:41 cjs Exp $	*/
+/*	$NetBSD: in.h,v 1.24.4.1 1997/08/28 00:22:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -57,6 +57,8 @@
 #define	IPPROTO_UDP		17		/* user datagram protocol */
 #define	IPPROTO_IDP		22		/* xns idp */
 #define	IPPROTO_TP		29 		/* tp-4 w/ class negotiation */
+#define	IPPROTO_ESP		50 		/* encap. security payload */
+#define	IPPROTO_AH		51 		/* authentication header */
 #define	IPPROTO_EON		80		/* ISO cnlp */
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
 
