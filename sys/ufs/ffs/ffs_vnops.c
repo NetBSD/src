@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.60 2003/08/07 16:34:32 agc Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.61 2003/10/25 19:52:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.60 2003/08/07 16:34:32 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.61 2003/10/25 19:52:21 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ ffs_fsync(v)
 	 */
 
 	s = splbio();
-	if (!(ap->a_flags & FSYNC_DATAONLY) && blk_high >= NDADDR) {
+	if (blk_high >= NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
 		if (error) {
 			splx(s);
@@ -359,7 +359,7 @@ ffs_full_fsync(v)
 
 	passes = NIADDR + 1;
 	skipmeta = 0;
-	if (ap->a_flags & (FSYNC_DATAONLY|FSYNC_WAIT))
+	if (ap->a_flags & FSYNC_WAIT)
 		skipmeta = 1;
 	s = splbio();
 
@@ -392,7 +392,7 @@ loop:
 		 */
 		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
 	}
-	if (skipmeta && !(ap->a_flags & FSYNC_DATAONLY)) {
+	if (skipmeta) {
 		skipmeta = 0;
 		goto loop;
 	}
@@ -405,9 +405,6 @@ loop:
 		}
 		simple_unlock(&global_v_numoutput_slock);
 		splx(s);
-
-		if (ap->a_flags & FSYNC_DATAONLY)
-			return (0);
 
 		/* 
 		 * Ensure that any filesystem metadata associated
