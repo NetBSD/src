@@ -1,4 +1,5 @@
-.\" $NetBSD: kue.4,v 1.5 2000/03/20 01:34:22 augustss Exp $
+.\"	$NetBSD: kue.4,v 1.6 2000/07/31 11:45:48 ad Exp $
+.\"
 .\" Copyright (c) 1997, 1998, 1999, 2000
 .\"     Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
 .\"
@@ -62,11 +63,12 @@ driver supports the following adapters:
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for USB ethernet adapters based on the Kawasaki
-LSI KL5KLUSB101B chipset.
+driver provides support for USB
+.Tn Ethernet
+adapters based on the Kawasaki LSI KL5KLUSB101B chipset.
 .Pp
 The KL5KLUSB101B supports a 128-entry multicast filter, single perfect
-filter entry for the station address and promiscuous mode. Packets are
+filter entry for the station address and promiscuous mode.  Packets are
 received and transmitted over separate USB bulk transfer endpoints.
 .Pp
 The Kawasaki adapter supports only 10Mbps half-duplex mode, hence there
@@ -97,13 +99,15 @@ device driver first appeared in
 .Fx 4.0 ,
 and in
 .Nx 1.5 .
-.Sh AUTHORS
+.Sh AUTHOR
 The
 .Nm
-driver was written by
-.An Bill Paul Aq wpaul@ee.columbia.edu .
+driver was written by Bill Paul
+.Aq wpaul@ee.columbia.edu .
 .Sh BUGS
 The
 .Nm
-driver does not accumulate ethernet collisions statistics because the
-Kawasaki firmware does not appear to maintain any internal statistics.
+driver does not accumulate
+.Tn Ethernet
+collisions statistics because the Kawasaki firmware does not appear to
+maintain any internal statistics.
