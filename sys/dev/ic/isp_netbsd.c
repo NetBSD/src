@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.30 2000/08/14 07:08:12 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.31 2000/10/16 05:15:55 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -315,6 +315,15 @@ ispcmd(xs)
 	}
 
 	result = isp_start(xs);
+#if	0
+{
+	static int na[16] = { 0 };
+	if (na[isp->isp_unit] < isp->isp_nactive) {
+		isp_prt(isp, ISP_LOGALL, "active hiwater %d", isp->isp_nactive);
+		na[isp->isp_unit] = isp->isp_nactive;
+	}
+}
+#endif
 	switch (result) {
 	case CMD_QUEUED:
 		result = SUCCESSFULLY_QUEUED;
@@ -751,12 +760,12 @@ isp_async(isp, cmd, arg)
 		    (((u_int64_t)resp->snscb_portname[5]) << 16) |
 		    (((u_int64_t)resp->snscb_portname[6]) <<  8) |
 		    (((u_int64_t)resp->snscb_portname[7]));
+
 		isp_prt(isp, ISP_LOGINFO,
 		    "Fabric Device (Type 0x%x)@PortID 0x%x WWN 0x%08x%08x",
 		    resp->snscb_port_type, portid, ((u_int32_t)(wwn >> 32)),
 		    ((u_int32_t)(wwn & 0xffffffff)));
-		if (resp->snscb_port_type != 2)
-			break;
+
 		for (target = FC_SNS_ID+1; target < MAX_FC_TARG; target++) {
 			lp = &fcp->portdb[target];
 			if (lp->port_wwn == wwn)
