@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.4 1995/07/05 08:19:10 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.5 1995/11/10 19:25:58 ragge Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -234,9 +234,9 @@ struct	uba_device *qeinfo[NQE];
 
 extern struct timeval time;
 
-int	qeprobe(), qeattach(), qeintr(), qetimeout();
+int	qeprobe(), qeattach(), qeintr();
 int	qeinit(), qeioctl(), qereset();
-void	qestart();
+void	qestart(), qetimeout();
 
 u_short qestd[] = { 0 };
 struct	uba_driver qedriver =
@@ -250,6 +250,7 @@ struct	uba_driver qedriver =
  * size buffers.
  */
 #define MAXPACKETSIZE 2048		/* Should really be ETHERMTU	*/
+extern	struct cfdriver ubacd;
 /*
  * Probe the QNA to see if it's there
  */
@@ -257,12 +258,12 @@ qeprobe(reg, ui)
 	caddr_t reg;
 	struct uba_device *ui;
 {
-	/* register int br, cvec;		r11, r10 value-result */
-	register volatile struct qedevice *addr = (struct qedevice *)reg;
-	register volatile struct qe_ring *rp;
-	register struct qe_ring *prp; 	/* physical rp 		*/
-	register int i;
-	register volatile struct qe_softc *sc = &qe_softc[ui->ui_unit];
+	volatile struct qedevice *addr = (struct qedevice *)reg;
+	volatile struct qe_softc *sc = &qe_softc[ui->ui_unit];
+	volatile struct qe_ring *rp;
+	struct	qe_ring *prp; 	/* physical rp 		*/
+	struct	uba_softc *ubasc;
+	int i;
 
 #ifdef lint
 	br = 0; cvec = br; br = cvec;
@@ -273,9 +274,11 @@ qeprobe(reg, ui)
 	 * The QNA interrupts on i/o operations. To do an I/O operation
 	 * we have to setup the interface by transmitting a setup  packet.
 	 */
+	
 	addr->qe_csr = QE_RESET;
 	addr->qe_csr &= ~QE_RESET;
-	addr->qe_vector = (uba_hd[numuba].uh_lastiv -= 4);
+	ubasc = ubacd.cd_devs[0]; /* XXX */
+	addr->qe_vector = (ubasc->uh_lastiv -= 4);
 
 	/*
 	 * Map the communications area and the setup packet.
@@ -343,7 +346,7 @@ qeprobe(reg, ui)
 qeattach(ui)
 	struct uba_device *ui;
 {
-	volatile struct qe_softc *sc = &qe_softc[ui->ui_unit];
+	struct qe_softc *sc = &qe_softc[ui->ui_unit];
 	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	volatile struct qedevice *addr=(struct qedevice *)ui->ui_addr;
 	int i;
@@ -580,7 +583,7 @@ qestart(ifp)
 /*
  * Ethernet interface interrupt processor
  */
-qeintr(uba, vector, level, unit)
+qeintr(unit)
 {
 	register volatile struct qe_softc *sc = &qe_softc[unit];
 	volatile struct qedevice *addr =
@@ -747,7 +750,7 @@ qeioctl(ifp, cmd, data)
 	int cmd;
 	caddr_t data;
 {
-	volatile struct qe_softc *sc = &qe_softc[ifp->if_unit];
+	struct qe_softc *sc = &qe_softc[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splimp(), error = 0;
 
@@ -917,6 +920,7 @@ if (m) {
  * causes the board to lock up under heavy load. This routine detects
  * the hang up and restarts the device.
  */
+void
 qetimeout(unit)
 	int unit;
 {
