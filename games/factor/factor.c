@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.14 2003/08/07 09:37:12 agc Exp $	*/
+/*	$NetBSD: factor.c,v 1.15 2004/02/08 11:47:36 jsm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.14 2003/08/07 09:37:12 agc Exp $");
+__RCSID("$NetBSD: factor.c,v 1.15 2004/02/08 11:47:36 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,9 @@ pr_fact(BIGNUM *val)
 			bnfact = BN_new();
 			BN_set_word(bnfact, *(fact - 1));
 			BN_sqr(bnfact, bnfact, ctx);
-			if (BN_cmp(bnfact, val) > 0) {
+			if (BN_cmp(bnfact, val) > 0
+			    || BN_is_prime(val, PRIME_CHECKS, NULL, NULL,
+					   NULL) == 1) {
 				putchar(' ');
 				BN_print_dec_fp(stdout, val);
 			} else
@@ -277,23 +279,29 @@ usage(void)
 
 
 #ifdef HAVE_OPENSSL
-/* pollard rho, algorithm from Jim Gillogly, May 2000 */
+/* pollard p-1, algorithm from Jim Gillogly, May 2000 */
 
 void
 pollard_pminus1(BIGNUM *val)
 {
-	BIGNUM *base, *num, *i, *x;
+	BIGNUM *base, *rbase, *num, *i, *x;
 
 	base = BN_new();
+	rbase = BN_new();
 	num = BN_new();
 	i = BN_new();
 	x = BN_new();
 
+	BN_set_word(rbase, 1);
+ newbase:
+	BN_add_word(rbase, 1);
 	BN_set_word(i, 2);
-	BN_set_word(base, 2);
+	BN_copy(base, rbase);
 
 	for (;;) {
 		BN_mod_exp(base, base, i, val, ctx);
+		if (BN_is_one(base))
+			goto newbase;
 
 		BN_copy(x, base);
 		BN_sub_word(x, 1);
