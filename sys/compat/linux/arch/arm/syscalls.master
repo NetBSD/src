@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15 2003/08/10 20:16:20 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.16 2004/08/01 10:32:40 jdolecek Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -373,8 +373,8 @@
 217	STD		{ int linux_sys_getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
 218	UNIMPL		pivot_root
-219	UNIMPL		mincore
-220	UNIMPL		madvise
+219	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
+220	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 221	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
 ; Fill until 256
 222	UNIMPL
