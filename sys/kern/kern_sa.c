@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.41 2003/11/07 18:37:41 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.42 2003/11/12 21:27:46 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.41 2003/11/07 18:37:41 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.42 2003/11/12 21:27:46 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,31 +750,34 @@ sa_switch(struct lwp *l, int type)
 			return;
 		}
 
+		if (sa->sa_nstacks == 0) {
+#ifdef DIAGNOSTIC
+			printf("sa_switch(%d.%d flag %x): Not enough stacks.\n",
+			    p->p_pid, l->l_lid, l->l_flag);
+#endif
+			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
+			mi_switch(l, NULL);
+			return;
+		}
+
 		/*
 		 * XXX We need to allocate the sadata_upcall structure here,
 		 * XXX since we can't sleep while waiting for memory inside
 		 * XXX sa_upcall().  It would be nice if we could safely
 		 * XXX allocate the sadata_upcall structure on the stack, here.
 		 */
-
-		if (sa->sa_nstacks == 0) {
-#ifdef DIAGNOSTIC
-			printf("sa_switch(%d.%d flag %x): Not enough stacks.\n",
-			    p->p_pid, l->l_lid, l->l_flag);
-#endif
-			goto sa_upcall_failed;
-		}
-
 		sau = sadata_upcall_alloc(0);
 		if (sau == NULL) {
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d): "
 			    "couldn't allocate upcall data.\n",
 			    p->p_pid, l->l_lid);
-
 #endif
-			goto sa_upcall_failed;
+			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
+			mi_switch(l, NULL);
+			return;
 		}
+
 		st = sa->sa_stacks[--sa->sa_nstacks];
 		DPRINTFN(9,("sa_switch(%d.%d) nstacks--   = %2d\n", 
 		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
@@ -787,7 +790,10 @@ sa_switch(struct lwp *l, int type)
 			printf("sa_switch(%d.%d): Error %d from sa_upcall()\n",
 			    p->p_pid, l->l_lid, error);
 #endif
-			goto sa_upcall_failed;
+			sa->sa_stacks[sa->sa_nstacks++] = st;
+			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
+			mi_switch(l, NULL);
+			return;
 		}
 
 		/* 
@@ -842,13 +848,6 @@ sa_switch(struct lwp *l, int type)
 	} else {
 		/* NOTREACHED */
 		panic("sa_vp empty");
-
-	sa_upcall_failed:
-		cpu_setfunc(l2, sa_yieldcall, l2);
-
-		l2->l_priority = l2->l_usrpri;
-		setrunnable(l2);
-		PRELE(l2); /* Remove the artificial hold-count */
 	}
 
 	DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d.\n",
@@ -888,31 +887,6 @@ sa_switchcall(void *arg)
 	upcallret(l);
 }
 
-void
-sa_yieldcall(void *arg)
-{
-	struct lwp *l;
-	struct proc *p;
-	struct sadata *sa;
-
-	l = arg;
-	p = l->l_proc;
-	sa = p->p_sa;
-	sa->sa_vp = l;
-
-	DPRINTFN(6,("sa_yieldcall(%d.%d)\n", p->p_pid, l->l_lid));
-
-	if (LIST_EMPTY(&sa->sa_lwpcache)) {
-		/* Allocate the next cache LWP */
-		DPRINTFN(6,("sa_yieldcall(%d.%d) allocating LWP\n",
-		    p->p_pid, l->l_lid));
-		sa_newcachelwp(l);
-	}
-
-	sa_yield(l);
-	upcallret(l);
-}
-
 static int
 sa_newcachelwp(struct lwp *l)
 {
@@ -923,6 +897,8 @@ sa_newcachelwp(struct lwp *l)
 	int s;
 
 	p = l->l_proc;
+	if (p->p_flag & P_WEXIT)
+		return (0);
 
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (__predict_false(uaddr == 0)) {
