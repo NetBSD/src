@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.19 1996/02/25 21:46:05 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.20 1996/02/27 00:11:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,8 +77,8 @@ struct cgthree_softc {
 	struct	device sc_dev;		/* base device */
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
-	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
 	struct rom_reg	sc_phys;	/* phys address description */
+	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	int	sc_bustype;		/* type of bus we live on */
 	int	sc_blanked;		/* true if blanked */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
@@ -198,22 +198,21 @@ cgthreeattach(parent, self, args)
 		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,
 						ramsize, ca->ca_bustype);
 	}
-	sc->sc_bt = bt = (volatile struct bt_regs *)
+	sc->sc_fbc = (volatile struct fbcontrol *)
 	    mapiodev(ca->ca_ra.ra_reg, CG3REG_REG,
-		     sizeof(struct bt_regs), ca->ca_bustype);
+		     sizeof(struct fbcontrol), ca->ca_bustype);
 
+printf(" fb ctrl: %x, status %x ", sc->sc_fbc->fbc_ctrl, sc->sc_fbc->fbc_status);
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
 
 	/* grab initial (current) color map */
+	bt = &sc->sc_fbc->fbc_dac;
 	bt->bt_addr = 0;
 	for (i = 0; i < 256 * 3 / 4; i++)
 		sc->sc_cmap.cm_chip[i] = bt->bt_cmap;
-	/* make sure we are not blanked (see cgthreeunblank) */
-	bt->bt_addr = 0x06;		/* command reg */
-	bt->bt_ctrl = 0x73;		/* overlay plane */
-	bt->bt_addr = 0x04;		/* read mask */
-	bt->bt_ctrl = 0xff;		/* color planes */
+	/* make sure we are not blanked */
+	BT_INIT(bt);
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -303,23 +302,9 @@ cgthreeioctl(dev, cmd, data, flags, p)
 	case FBIOSVIDEO:
 		if (*(int *)data)
 			cgthreeunblank(&sc->sc_dev);
-		else if (!sc->sc_blanked) {
-			register volatile struct bt_regs *bt;
-
-			bt = sc->sc_bt;
-			bt->bt_addr = 0x06;	/* command reg */
-			bt->bt_ctrl = 0x70;	/* overlay plane */
-			bt->bt_addr = 0x04;	/* read mask */
-			bt->bt_ctrl = 0x00;	/* color planes */
-			/*
-			 * Set color 0 to black -- note that this overwrites
-			 * R of color 1.
-			 */
-			bt->bt_addr = 0;
-			bt->bt_cmap = 0;
-
-			sc->sc_blanked = 1;
-		}
+		else
+			sc->sc_fbc->fbc_ctrl &= ~FBC_VENAB;
+			/* if (!sbus) BT_BLANK(&sc->sc_fbc.fbc_dac); (?) */
 		break;
 
 	default:
@@ -336,21 +321,9 @@ cgthreeunblank(dev)
 	struct device *dev;
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)dev;
-	register volatile struct bt_regs *bt;
 
-	if (sc->sc_blanked) {
-		sc->sc_blanked = 0;
-		bt = sc->sc_bt;
-		/* restore color 0 (and R of color 1) */
-		bt->bt_addr = 0;
-		bt->bt_cmap = sc->sc_cmap.cm_chip[0];
-
-		/* restore read mask */
-		bt->bt_addr = 0x06;	/* command reg */
-		bt->bt_ctrl = 0x73;	/* overlay plane */
-		bt->bt_addr = 0x04;	/* read mask */
-		bt->bt_ctrl = 0xff;	/* color planes */
-	}
+	sc->sc_fbc->fbc_ctrl |= FBC_VENAB;
+	/* if (!sbus) BT_UNBLANK(&sc->sc_fbc.fbc_dac); (?) */
 }
 
 /*
@@ -367,7 +340,7 @@ cgthreeloadcmap(sc, start, ncolors)
 
 	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
 	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
-	bt = sc->sc_bt;
+	bt = &sc->sc_fbc->fbc_dac;
 	bt->bt_addr = BT_D4M4(start);
 	while (--count >= 0)
 		bt->bt_cmap = *ip++;
