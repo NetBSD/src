@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile.cfb,v 1.3 2003/09/20 06:20:44 lukem Exp $
+#	$NetBSD: Makefile.cfb,v 1.4 2003/09/23 23:21:09 lukem Exp $
+
+XMODULEDIR=	${X11ROOTDIR}/lib/modules
+
+.include "../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
@@ -106,4 +110,5 @@ CPPFLAGS.cfbzerarcG.c=	-DRROP=GXset
 CPPFLAGS.cfbzerarcX.c=	-DRROP=GXxor
 
 .include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
 .include <bsd.lib.mk>

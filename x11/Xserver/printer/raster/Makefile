@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:15 lukem Exp $
+
+.include "../../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
@@ -18,5 +20,5 @@ CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11 \
 
 CPPFLAGS+=	-D_XP_PRINT_SERVER_ -UXFree86LOADER
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>

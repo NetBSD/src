@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.1 2003/09/23 23:21:03 lukem Exp $
+
+XMODULEDIR=	${X11ROOTDIR}/lib/modules/extensions
+
+.include "../../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
-LIB=		mesa
+LIB=		GLcore
 
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src
 SRCS+=		accum.c api_arrayelt.c api_eval.c api_loopback.c \
@@ -70,5 +74,6 @@ CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11 \
 
 CPPFLAGS+=	-DIN_MODULE -DXFree86Module -DGLXEXT -DGLX_USE_MESA
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>

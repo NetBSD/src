@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:08 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,8 @@ LDADD+=	${LDADD.dix} ${LDADD.os} -lXau -lXdmcp \
 	${LDADD.mi} ${LDADD.Xext/exts} ${LDADD.xkb} ${LDADD.xinput} \
 	${LDADD.lbx} -llbxutil ${LDADD.randr} ${LDADD.render} \
 	${LDADD.mi} ${LDADD.Xext/ext} ${LDADD.dbe} ${LDADD.record} \
-	${LDADD.GL/glx} ${LDADD.GL/mesa} ${LDADD.xtrap} \
+	${LDADD.GL/glx} ${LDADD.GL/GLcore} ${LDADD.xtrap} \
+	${LIBCWRAPPER} \
 	-lXfont -lfreetype ${LDADD.dix/xpstubs} \
 	-lz -lm -li386
 
@@ -21,9 +22,10 @@ DPADD+=	${DPADD.dix} ${DPADD.os} ${LIBXAU} ${LIBXDMCP} \
 	${DPADD.mi} ${DPADD.Xext/exts} ${DPADD.xkb} ${DPADD.xinput} \
 	${DPADD.lbx} ${LIBLBXUTIL} ${DPADD.randr} ${DPADD.render} \
 	${DPADD.mi} ${DPADD.Xext/ext} ${DPADD.dbe} ${DPADD.record} \
-	${DPADD.GL/glx} ${DPADD.GL/mesa} ${DPADD.xtrap} \
+	${DPADD.GL/glx} ${DPADD.GL/GLcore} ${DPADD.xtrap} \
+	${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${DPADD.dix/xpstubs} \
 	${LIBZ} ${LIBM} ${LIBI386}
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>

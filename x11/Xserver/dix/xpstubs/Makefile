@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:11 lukem Exp $
+
+.include "../../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
@@ -14,5 +16,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext \
 		-I${X11SRCDIR.xc}/programs/Xserver/lbx
 
-.include <bsd.lib.mk>
+.include "../../Makefile.inc"
+
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>
