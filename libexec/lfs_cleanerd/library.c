@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.30 2002/11/29 17:15:46 christos Exp $	*/
+/*	$NetBSD: library.c,v 1.31 2002/12/05 02:03:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.30 2002/11/29 17:15:46 christos Exp $");
+__RCSID("$NetBSD: library.c,v 1.31 2002/12/05 02:03:56 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ getdevfd(FS_INFO *fsp)
 	if (dev_fd != -1)
 		return dev_fd;
 
-	(void)snprintf(rdev, sizeof(rdev), "/dev/r/%s",
+	(void)snprintf(rdev, sizeof(rdev), "/dev/r%s",
 	    fsp->fi_statfsp->f_mntfromname + 5);
 	if ((dev_fd = open(rdev, O_RDONLY)) == -1) {
 		syslog(LOG_ERR, "Cannot open `%s' (%m)", rdev);
