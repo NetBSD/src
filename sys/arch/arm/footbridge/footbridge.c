@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.5 2001/02/25 21:31:14 bjh21 Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -48,9 +48,9 @@
 #include <machine/bus.h>
 #include <machine/irqhandler.h>
 #include <machine/cpufunc.h>
-#include <arm32/footbridge/footbridgevar.h>
-#include <arm32/footbridge/dc21285reg.h>
-#include <arm32/footbridge/dc21285mem.h>
+#include <arm/footbridge/footbridgevar.h>
+#include <arm/footbridge/dc21285reg.h>
+#include <arm/footbridge/dc21285mem.h>
 
 /*
  * DC21285 'Footbridge' device
