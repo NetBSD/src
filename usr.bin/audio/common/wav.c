@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.5 2003/04/06 18:20:14 wiz Exp $	*/
+/*	$NetBSD: wav.c,v 1.6 2003/06/23 12:15:01 agc Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -32,6 +32,12 @@
  * WAV support for the audio tools; thanks go to the sox utility for
  * clearing up issues with WAV files.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: wav.c,v 1.6 2003/06/23 12:15:01 agc Exp $");
+#endif
+
 
 #include <sys/types.h>
 #include <sys/audioio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.32 2002/12/27 23:43:16 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.33 2003/06/23 12:15:04 agc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -31,6 +31,12 @@
 /*
  * SunOS compatible audiorecord(1)
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: record.c,v 1.33 2003/06/23 12:15:04 agc Exp $");
+#endif
+
 
 #include <sys/types.h>
 #include <sys/audioio.h>

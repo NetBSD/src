@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.41 2002/12/08 10:49:22 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.42 2003/06/23 12:15:03 agc Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -27,6 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: play.c,v 1.42 2003/06/23 12:15:03 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/audioio.h>
