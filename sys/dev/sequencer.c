@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.1 1998/08/07 00:00:58 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.2 1998/08/07 00:28:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -466,6 +466,7 @@ sequencerioctl(dev, cmd, addr, flag, p)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
 	struct synth_info *si;
+	struct midi_dev *md;
 	int devno;
 	int error;
 	int t;
@@ -509,16 +510,17 @@ sequencerioctl(dev, cmd, addr, flag, p)
 		devno = si->device;
 		if (devno < 0 || devno >= sc->nmidi)
 			return EINVAL;
-		strncpy(si->name, "XXXX", sizeof si->name); /*sc->devs[devno]->name);*/
+		md = sc->devs[devno];
+		strncpy(si->name, md->name, sizeof si->name);
 		si->synth_type = SYNTH_TYPE_MIDI;
-		si->synth_subtype = SYNTH_SUB_MIDI_TYPE_MPU401;	/* XXX */
-		si->nr_voices = 128; /* XXX */
-		si->instr_bank_size = 128;	/* XXX */
-		si->capabilities = SYNTH_CAP_INPUT; /* XXX */
+		si->synth_subtype = md->subtype;
+		si->nr_voices = md->nr_voices;
+		si->instr_bank_size = md->instr_bank_size;
+		si->capabilities = md->capabilities;
 		break;
 
 	case SEQUENCER_NRSYNTHS:
-		*(int *)addr = sc->nmidi;
+		*(int *)addr = 0;
 		break;
 
 	case SEQUENCER_NRMIDIS:
@@ -1056,8 +1058,9 @@ midisyn_open(unit, flags)
 	midi_getinfo(makedev(0, unit), &mi);
 	md->unit = unit;
 	md->name = mi.name;
-	md->type = SYNTH_TYPE_MIDI;
 	md->subtype = 0;
+	md->nr_voices = 128;	/* XXX */
+	md->instr_bank_size = 128; /* XXX */
 	if (mi.props & MIDI_PROP_CAN_INPUT)
 		md->capabilities |= SYNTH_CAP_INPUT;
 	return (md);
