@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.elf_so.1,v 1.4 2002/02/08 01:30:08 ross Exp $
+.\"	$NetBSD: ld.elf_so.1,v 1.5 2002/09/08 23:44:09 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -165,6 +165,10 @@ performed instead of the default lazy method.
 .It Ev LD_DEBUG
 If defined a variety of debug information will be written to the standard
 error of an dynamically linked executed when it is run.
+This variable is only recognized if
+.Nm
+was compiled with debugging support
+.Sy ( -DDEBUG ) .
 .El
 .Sh FILES
 .Bl -tag -width /etc/ld.so.conf -compact
