@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.97 2002/08/16 21:43:14 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.98 2002/08/17 17:31:53 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.97 2002/08/16 21:43:14 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.98 2002/08/17 17:31:53 mjacob Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -759,11 +759,17 @@ again:
 	if (IS_FC(isp)) {
 		/*
 		 * We do not believe firmware attributes for 2100 code less
-		 * than 1.17.0. Note that all 22XX and 23XX f/w is greater
-		 * than 1.X.0.
+		 * than 1.17.0, unless it's the firmware we specifically
+		 * are loading.
+		 *
+		 * Note that all 22XX and 23XX f/w is greater than 1.X.0.
 		 */
 		if (!(ISP_FW_NEWER_THAN(isp, 1, 17, 0))) {
+#ifdef	USE_SMALLER_2100_FIRMWARE
+			FCPARAM(isp)->isp_fwattr = ISP_FW_ATTR_SCCLUN;
+#else
 			FCPARAM(isp)->isp_fwattr = 0;
+#endif
 		} else {
 			FCPARAM(isp)->isp_fwattr = mbs.param[6];
 			isp_prt(isp, ISP_LOGDEBUG0,
@@ -1628,11 +1634,20 @@ isp_fclink_test(struct ispsoftc *isp, int usdelay)
 	 */
 	fcp->isp_onfabric = 0;
 
-	if (IS_2100(isp))
+	if (IS_2100(isp)) {
+		/*
+		 * Don't bother with fabric if we are using really old
+		 * 2100 firmware. It's just not worth it.
+		 */
+		if (ISP_FW_NEWER_THAN(isp, 1, 15, 37)) {
+			check_for_fabric = 1;
+		} else {
+			check_for_fabric = 0;
+		}
+	} else if (fcp->isp_topo == TOPO_FL_PORT ||
+	    fcp->isp_topo == TOPO_F_PORT) {
 		check_for_fabric = 1;
-	else if (fcp->isp_topo == TOPO_FL_PORT || fcp->isp_topo == TOPO_F_PORT)
-		check_for_fabric = 1;
-	else
+	} else
 		check_for_fabric = 0;
 
 	if (check_for_fabric && isp_getpdb(isp, FL_PORT_ID, &pdb) == 0) {
