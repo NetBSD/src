@@ -45,7 +45,7 @@
 #define STDC_HEADERS 1
 
 /* Define if lex declares yytext as a char * by default, not a char[].  */
-/* #undef YYTEXT_POINTER */
+#define YYTEXT_POINTER 1
 
 /* Define if you have the __argz_count function.  */
 /* #undef HAVE___ARGZ_COUNT */
