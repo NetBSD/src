@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.62 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.62.2.1 2004/06/01 04:37:34 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.62 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.62.2.1 2004/06/01 04:37:34 jmc Exp $");
 
 #include "hil.h"
 
@@ -627,14 +627,15 @@ itefilter(stat, c)
 	switch ((stat>>KBD_SSHIFT) & KBD_SMASK) {
 	default:
 	case KBD_KEY:
-	        if (!capsmode) {
-			code = ite_km->kbd_keymap[(int)c];
-			break;
-		}
-		/* FALLTHROUGH */
+		code = ite_km->kbd_keymap[(int)c];
+	        if (capsmode)
+			code = toupper(code);
+		break;
 
 	case KBD_SHIFT:
 		code = ite_km->kbd_shiftmap[(int)c];
+	        if (capsmode)
+			code = tolower(code);
 		break;
 
 	case KBD_CTRL:
