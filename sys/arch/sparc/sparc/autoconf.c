@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.80 1997/10/18 00:01:42 gwr Exp $ */
+/*	$NetBSD: autoconf.c,v 1.80.2.1 1998/11/23 03:43:23 cgd Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1303,7 +1303,7 @@ findzs(zs)
 
 #if defined(SUN4C) || defined(SUN4M)
 	if (CPU_ISSUN4COR4M) {
-		register int node, addr;
+		register int node;
 
 		node = firstchild(findroot());
 		if (CPU_ISSUN4M) { /* zs is in "obio" tree on Sun4M */
@@ -1313,12 +1313,21 @@ findzs(zs)
 			node = firstchild(node);
 		}
 		while ((node = findnode(node, "zs")) != 0) {
-			if (getpropint(node, "slave", -1) == zs) {
-				if ((addr = getpropint(node, "address", 0)) == 0)
-					panic("findzs: zs%d not mapped by PROM", zs);
-				return ((void *)addr);
+			int vstore[10];
+
+			if (getpropint(node, "slave", -1) != zs) {
+				node = nextsibling(node);
+				continue;
 			}
-			node = nextsibling(node);
+
+			/*
+			 * On some machines (e.g. the Voyager), the zs
+			 * device has multi-valued register properties.  
+			*/
+			if (getprop(node, "address", (void *)vstore, sizeof(vstore)) < 4) {
+				panic("findzs: zs%d not mapped by PROM", zs);
+			}
+			return ((void *)vstore[0]);
 		}
 	}
 #endif
