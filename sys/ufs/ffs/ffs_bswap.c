@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.8 2000/05/15 08:51:55 bouyer Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.9 2000/12/23 14:09:52 enami Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
@@ -52,14 +53,15 @@ ffs_sb_swap(o, n, ns)
 	u_int32_t *o32, *n32;
 	u_int16_t *o16, *n16;
 	
-	/* in order to avoid a lot of lines, as the first 52 fields of
+	/*
+	 * In order to avoid a lot of lines, as the first 52 fields of
 	 * the superblock are u_int32_t, we loop here to convert it.
 	 */
 	o32 = (u_int32_t *)o;
 	n32 = (u_int32_t *)n;
-	for (i=0; i< 52; i++)
+	for (i = 0; i < 52; i++)
 		n32[i] = bswap32(o32[i]);
-   
+
 	n->fs_cpc = bswap32(o->fs_cpc);
 	n->fs_fscktime = bswap32(o->fs_fscktime);
 	n->fs_contigsumsize = bswap32(o->fs_contigsumsize);
@@ -93,6 +95,7 @@ void
 ffs_dinode_swap(o, n)
 	struct dinode *o, *n;
 {
+
 	n->di_mode = bswap16(o->di_mode);
 	n->di_nlink = bswap16(o->di_nlink);
 	n->di_u.oldids[0] = bswap16(o->di_u.oldids[0]);
