@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.52 2000/12/18 15:57:15 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.53 2000/12/29 17:08:54 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -657,12 +657,9 @@ db_dump_pcb(addr, have_addr, count, modif)
 	if (have_addr) 
 		pcb = (struct pcb*) addr;
 
-	db_printf("pcb@%p sp:%llx pc:%llx cwp:%d pil:%d nsaved:%x onfault:%p\n"
-		  "lastcall:%s\nfull windows:\n",
-		  pcb, (unsigned long long)pcb->pcb_sp,
-		  (unsigned long long)pcb->pcb_pc,
-		  pcb->pcb_cwp, pcb->pcb_pil, pcb->pcb_nsaved,
-		  (void *)pcb->pcb_onfault,
+	db_printf("pcb@%p sp:%p pc:%p cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
+		  pcb, (void *)(long)pcb->pcb_sp, (void *)(long)pcb->pcb_pc, pcb->pcb_cwp,
+		  pcb->pcb_pil, pcb->pcb_nsaved, (void *)pcb->pcb_onfault,
 		  (pcb->lastcall)?pcb->lastcall:"Null");
 	
 	for (i=0; i<pcb->pcb_nsaved; i++) {
