@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.1 2003/04/18 12:01:32 scw Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.2 2003/07/15 00:24:58 lukem Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -67,6 +67,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.2 2003/07/15 00:24:58 lukem Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -110,6 +110,10 @@
  * S19: no-dot: set RB_KDB.  enter kgdb session.
  * S20: no-dot: set RB_SINGLE. don't go multi user mode.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $");
+
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"

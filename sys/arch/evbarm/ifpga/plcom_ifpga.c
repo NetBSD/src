@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.6 2002/10/02 05:10:33 thorpej Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.7 2003/07/15 00:24:59 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -30,6 +30,9 @@
  */
 
 /* Interface to plcom (PL010) serial driver. */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.7 2003/07/15 00:24:59 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

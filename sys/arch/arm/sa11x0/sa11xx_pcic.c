@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.3 2003/01/19 07:29:19 thorpej Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.4 2003/07/15 00:24:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -33,6 +33,9 @@
 /*
  * Common code for SA11x0 based PCMCIA modules
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.4 2003/07/15 00:24:51 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

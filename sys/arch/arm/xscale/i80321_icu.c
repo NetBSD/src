@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.7 2003/06/16 20:00:58 thorpej Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.8 2003/07/15 00:24:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.8 2003/07/15 00:24:53 lukem Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE

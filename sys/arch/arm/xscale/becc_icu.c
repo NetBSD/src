@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.2 2003/06/16 20:00:58 thorpej Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.3 2003/07/15 00:24:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Interrupt support for the ADI Engineering Big Endian Companion Chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.3 2003/07/15 00:24:52 lukem Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
