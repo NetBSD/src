@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/07/18 13:59:17 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/07/24 21:16:08 tv Exp $
 
 LIB=		backend
 MKLINT=		no
@@ -44,7 +44,7 @@ lofiles: ${LOFILES}
 	flags.h opinit.c peep.c output.c recog.c
 CLEANFILES+=	gen${f:R} insn-${f}
 
-insn-${f}: genrtl.h gen${f:R}.c
+insn-${f}: genrtl.h gen${f:R}.c ${G_md_file}
 	@cd ${.CURDIR} && ${MAKE} lofiles
 	${HOST_LINK.c} -o gen${f:R} ${>:M*.c} ${LOFILES}
 	./gen${f:R} ${G_md_file} >$@
