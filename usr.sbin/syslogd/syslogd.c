@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.14 1997/09/15 03:25:42 enami Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.15 1997/09/19 19:24:24 leo Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.14 1997/09/15 03:25:42 enami Exp $");
 #include <sys/un.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 #include <netdb.h>
@@ -199,6 +200,7 @@ int	decode __P((const char *, CODE *));
 void	die __P((int));
 void	domark __P((int));
 void	fprintlog __P((struct filed *, int, char *));
+int	getmsgbufsize __P((void));
 void	init __P((int));
 void	logerror __P((char *));
 void	logmsg __P((int, char *, char *, int));
@@ -214,11 +216,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, funix, i, inetm, fklog, klogm, len;
+	int ch, funix, i, inetm, fklog, klogm, len, linesize;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
 	FILE *fp;
-	char *p, line[MSG_BSIZE + 1];
+	char *p, *line;
 
 	while ((ch = getopt(argc, argv, "dsf:m:p:")) != EOF)
 		switch(ch) {
@@ -257,6 +259,15 @@ main(argc, argv)
 		LocalDomain = p;
 	} else
 		LocalDomain = "";
+	linesize = getmsgbufsize();
+	if (linesize < MAXLINE)
+		linesize = MAXLINE;
+	linesize++;
+	line = malloc(linesize);
+	if (line == NULL) {
+		logerror("couldn't allocate line buffer");
+		die(0);
+	}
 	(void)signal(SIGTERM, die);
 	(void)signal(SIGINT, Debug ? die : SIG_IGN);
 	(void)signal(SIGQUIT, Debug ? die : SIG_IGN);
@@ -344,7 +355,7 @@ main(argc, argv)
 		}
 		dprintf("got a message (%d, %#x)\n", nfds, readfds);
 		if (readfds & klogm) {
-			i = read(fklog, line, sizeof(line) - 1);
+			i = read(fklog, line, linesize - 1);
 			if (i > 0) {
 				line[i] = '\0';
 				printsys(line);
@@ -1146,4 +1157,23 @@ decode(name, codetab)
 			return (c->c_val);
 
 	return (-1);
+}
+
+/*
+ * Retrieve the size of the kernel message buffer, via sysctl.
+ */
+int
+getmsgbufsize()
+{
+	int msgbufsize, mib[2];
+	size_t size;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MSGBUFSIZE;
+	size = sizeof msgbufsize;
+	if (sysctl(mib, 2, &msgbufsize, &size, NULL, 0) == -1) {
+		dprintf("couldn't get kern.msgbufsize\n");
+		return (0);
+	}
+	return (msgbufsize);
 }
