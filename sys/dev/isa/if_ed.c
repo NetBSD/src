@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.79 1995/07/23 20:36:51 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.80 1995/07/23 22:12:16 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -96,9 +96,8 @@ struct ed_softc {
 	caddr_t	mem_ring;	/* start of RX ring-buffer (in NIC mem) */
 
 	u_char	mem_shared;	/* NIC memory is shared with host */
-	u_char	xmit_busy;	/* transmitter is busy */
+	u_char	xmit_busy;	/* number of transmit buffers active */
 	u_char	txb_cnt;	/* number of transmit buffers */
-	u_char	txb_inuse;	/* number of TX buffers currently in-use*/
 
 	u_char 	txb_new;	/* pointer to where new buffer will be added */
 	u_char	txb_next_tx;	/* pointer to next buffer ready to xmit */
@@ -1166,10 +1165,9 @@ ed_init(sc)
 	 */
 
 	/* Reset transmitter flags. */
-	sc->xmit_busy = 0;
 	sc->sc_arpcom.ac_if.if_timer = 0;
 
-	sc->txb_inuse = 0;
+	sc->xmit_busy = 0;
 	sc->txb_new = 0;
 	sc->txb_next_tx = 0;
 
@@ -1317,7 +1315,6 @@ ed_xmit(sc)
 
 	/* Set page 0, remote DMA complete, transmit packet, and *start*. */
 	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_TXP | ED_CR_STA);
-	sc->xmit_busy = 1;
 
 	/* Point to next transmit buffer slot and wrap if necessary. */
 	sc->txb_next_tx++;
@@ -1346,43 +1343,30 @@ ed_start(ifp)
 	caddr_t buffer;
 	int len;
 
-outloop:
-	/*
-	 * First, see if there are buffered packets and an idle transmitter -
-	 * should never happen at this point.
-	 */
-	if (sc->txb_inuse && (sc->xmit_busy == 0)) {
-		printf("%s: packets buffered, but transmitter idle\n",
-		    sc->sc_dev.dv_xname);
-		ed_xmit(sc);
-	}
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
 
+outloop:
 	/* See if there is room to put another packet in the buffer. */
-	if (sc->txb_inuse == sc->txb_cnt) {
+	if (sc->xmit_busy == sc->txb_cnt) {
 		/* No room.  Indicate this to the outside world and exit. */
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
-	if (m == 0) {
-		/*
-		 * We are using the !OACTIVE flag to indicate to the outside
-		 * world that we can accept an additional packet rather than
-		 * that the transmitter is _actually_ active.  Indeed, the
-		 * transmitter may be active, but if we haven't filled all the
-		 * buffers with data then we still want to accept more.
-		 */
-		ifp->if_flags &= ~IFF_OACTIVE;
+	IF_DEQUEUE(&ifp->if_snd, m0);
+	if (m0 == 0)
 		return;
-	}
 
 	/* We need to use m->m_pkthdr.len, so require the header */
-	if ((m->m_flags & M_PKTHDR) == 0)
+	if ((m0->m_flags & M_PKTHDR) == 0)
 		panic("ed_start: no header mbuf");
 
-	/* Copy the mbuf chain into the transmit buffer. */
-	m0 = m;
+#if NBPFILTER > 0
+	/* Tap off here if there is a BPF listener. */
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0);
+#endif
 
 	/* txb_new points to next open buffer slot. */
 	buffer = sc->mem_start + ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
@@ -1415,7 +1399,7 @@ outloop:
 			break;
 		}
 
-		for (; m; m = m->m_next) {
+		for (m = m0; m != 0; m = m->m_next) {
 			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 		}
@@ -1441,23 +1425,17 @@ outloop:
 	} else
 		len = ed_pio_write_mbufs(sc, m, (long)buffer);
 
+	m_freem(m0);
 	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
-	sc->txb_inuse++;
+
+	/* Start the first packet transmitting. */
+	if (sc->xmit_busy == 0)
+		ed_xmit(sc);
 
 	/* Point to next buffer slot and wrap if necessary. */
 	if (++sc->txb_new == sc->txb_cnt)
 		sc->txb_new = 0;
-
-	if (sc->xmit_busy == 0)
-		ed_xmit(sc);
-
-#if NBPFILTER > 0
-	/* Tap off here if there is a BPF listener. */
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
-#endif
-
-	m_freem(m0);
+	sc->xmit_busy++;
 
 	/* Loop back to the top to possibly buffer more packets. */
 	goto outloop;
@@ -1586,6 +1564,7 @@ edintr(arg)
 	void *arg;
 {
 	struct ed_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_char isr;
 
 	/* Set NIC to page 0 registers. */
@@ -1636,27 +1615,27 @@ edintr(arg)
 				}
 
 				/* Update output errors counter. */
-				++sc->sc_arpcom.ac_if.if_oerrors;
+				++ifp->if_oerrors;
 			} else {
 				/*
 				 * Update total number of successfully
 				 * transmitted packets.
 				 */
-				++sc->sc_arpcom.ac_if.if_opackets;
+				++ifp->if_opackets;
 			}
 
-			/* Reset TX busy and output active flags. */
-			sc->xmit_busy = 0;
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			/* Done with the buffer. */
+			sc->xmit_busy--;
 
 			/* Clear watchdog timer. */
-			sc->sc_arpcom.ac_if.if_timer = 0;
+			ifp->if_timer = 0;
+			ifp->if_flags &= ~IFF_OACTIVE;
 
 			/*
 			 * Add in total number of collisions on last
 			 * transmission.
 			 */
-			sc->sc_arpcom.ac_if.if_collisions += collisions;
+			ifp->if_collisions += collisions;
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
@@ -1665,7 +1644,7 @@ edintr(arg)
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.
 			 */
-			if (sc->txb_inuse && --sc->txb_inuse)
+			if (sc->xmit_busy > 0)
 				ed_xmit(sc);
 		}
 
@@ -1681,7 +1660,7 @@ edintr(arg)
 			 * fixed in later revs.  -DG
 			 */
 			if (isr & ED_ISR_OVW) {
-				++sc->sc_arpcom.ac_if.if_ierrors;
+				++ifp->if_ierrors;
 #ifdef DIAGNOSTIC
 				log(LOG_WARNING,
 				    "%s: warning - receiver ring buffer overrun\n",
@@ -1696,7 +1675,7 @@ edintr(arg)
 				 * missed packet.
 				 */
 				if (isr & ED_ISR_RXE) {
-					++sc->sc_arpcom.ac_if.if_ierrors;
+					++ifp->if_ierrors;
 #ifdef ED_DEBUG
 					printf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
@@ -1746,8 +1725,7 @@ edintr(arg)
 		 * to start output on the interface.  This is done after
 		 * handling the receiver to give the receiver priority.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) == 0)
-			ed_start(&sc->sc_arpcom.ac_if);
+		ed_start(ifp);
 
 		/*
 		 * Return NIC CR to standard state: page 0, remote DMA
