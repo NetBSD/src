@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.10 1997/10/20 22:05:14 thorpej Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.11 1998/02/14 21:13:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -776,7 +776,7 @@ hpux_sys_chown(p, v, retval)
 
 	/* XXX What about older HP-UX executables? */
 
-	return (sys_chown(p, uap, retval));
+	return (sys___posix_chown(p, uap, retval));
 }
 
 /*
@@ -797,7 +797,7 @@ hpux_sys_rename(p, v, retval)
 	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, to));
 
-	return (sys_rename(p, uap, retval));
+	return (sys___posix_rename(p, uap, retval));
 }
 
 /*
