@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.22 2002/05/29 23:40:25 itojun Exp $
+.\"	$NetBSD: gif.4,v 1.23 2002/09/04 00:04:20 wiz Exp $
 .\"	$KAME: gif.4,v 1.24 2001/02/20 12:54:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,7 +39,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is a generic tunnelling pseudo device for IPv4 and IPv6.
+interface is a generic tunneling pseudo device for IPv4 and IPv6.
 It can tunnel IPv[46] traffic over IPv[46].
 Therefore, there can be four possible configurations.
 The behavior of
@@ -147,7 +147,7 @@ is 80
 .Dv ( IPPROTO_EON ) .
 .Ss Security
 Malicious party may try to circumvent security filters by using
-tunnelled packets.
+tunneled packets.
 For better protection,
 .Nm
 performs martian filter and ingress filter against outer source address,
@@ -242,7 +242,7 @@ The
 device first appeared in WIDE hydrangea IPv6 kit.
 .\"
 .Sh BUGS
-There are many tunnelling protocol specifications,
+There are many tunneling protocol specifications,
 defined differently from each other.
 .Nm
 may not interoperate with peers which are based on different specifications,
