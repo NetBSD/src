@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.25 1998/03/12 05:45:07 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26 1998/07/28 18:34:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 1998/03/12 05:45:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 1998/07/28 18:34:55 thorpej Exp $");
 
 #include "opt_uvm.h"
 
@@ -218,7 +218,7 @@ cpu_coredump(p, vp, cred, chdr)
 	cseg.c_size = chdr->c_cpusize;
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	if (error)
 		return error;
 
@@ -227,7 +227,7 @@ cpu_coredump(p, vp, cred, chdr)
 			(off_t)chdr -> c_cpusize,
 	    		(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
 			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
-			cred, (int *)NULL, p);
+			cred, NULL, p);
 
 	if (!error)
 		chdr->c_nseg++;
