@@ -1,4 +1,4 @@
-/* $NetBSD: pal.s,v 1.9 1997/09/16 06:54:01 thorpej Exp $ */
+/* $NetBSD: pal.s,v 1.10 1997/09/17 23:32:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
  * and Richard T. Witek.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.9 1997/09/16 06:54:01 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.10 1997/09/17 23:32:14 thorpej Exp $");
 
 /*
  * alpha_rpcc: read process cycle counter (XXX INSTRUCTION, NOT PALcode OP)
@@ -83,6 +83,22 @@ LEAF(alpha_amask,1)
 	amask	a0, v0
 	RET
 	END(alpha_amask)
+
+/*
+ * alpha_implver: read implementation version (XXX INSTRUCTION, NOT PALcode OP)
+ *
+ * Returns:
+ *	v0	implementation version - see <machine/alpha_cpu.h>
+ */
+	.text
+LEAF(alpha_implver,0)
+#if 0
+	implver	0x1, v0
+#else
+	.long	0x47e03d80	/* XXX gas(1) does the Wrong Thing */
+#endif
+	RET
+	END(alpha_implver)
 
 /*
  * alpha_pal_imb: I-Stream memory barrier. [UNPRIVILEGED]
