@@ -1,4 +1,4 @@
-.\"	$NetBSD: vr.4,v 1.6 2003/10/05 16:32:13 bouyer Exp $
+.\"	$NetBSD: vr.4,v 1.7 2003/12/23 09:51:27 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 Manuel Bouyer
 .\" All rights reserved.
@@ -28,13 +28,12 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 6, 2000
+.Dd December 23, 2003
 .Dt VR 4
 .Os
 .Sh NAME
 .Nm vr
-.Nd Ethernet driver for VIA VT3043(Rhine) and VT86C100A(Rhine-II) based
-Ethernet boards
+.Nd Ethernet driver for VIA Rhine Ethernet boards
 .Sh SYNOPSIS
 .Cd "vr* at pci? dev ? function ?"
 .Pp
@@ -44,7 +43,8 @@ Configuration of PHYs are necessary.  See
 The
 .Nm vr
 device driver supports network adapters based on
-the VIA VT3043(Rhine) and VT86C100A(Rhine-II) chips.
+the VIA VT3043(Rhine), VIA VT86C100A(Rhine-II), and
+VIA VT6105(Rhine-III) chips.
 .Sh HARDWARE
 Supported cards include:
 .Pp
