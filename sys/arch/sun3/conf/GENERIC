@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45 1997/12/01 16:07:08 kleink Exp $
+# $NetBSD: GENERIC,v 1.46 1997/12/13 00:23:45 gwr Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # Supports root on: ie0, le0, sd*, ...
@@ -129,6 +129,14 @@ xd* at xdc? drive ?
 # Xylogics 472 tape controllers?
 
 #
+# Sun3/E stuff
+#
+sebuf0 at vmes0 addr 0xff300000 level 2 vect 0x74
+sebuf1 at vmes0 addr 0xff340000 level 2 vect 0x76
+si* at sebuf?
+ie* at sebuf?
+
+#
 # Frame buffer devices
 #
 
@@ -157,14 +165,6 @@ cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
 
 # Support for the CG9 24-bit VME frame buffer.
 # cgnine0 at vmel0 addr 0x08000000
-
-#
-# Sun3/E stuff
-#
-sebuf0 at vmes0 addr 0xff300000 level 2 vect 0x74
-sebuf1 at vmes0 addr 0xff340000 level 2 vect 0x76
-si* at sebuf?
-ie* at sebuf?
 
 #
 # SCSI infrastructure
