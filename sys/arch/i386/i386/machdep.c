@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234 1997/06/12 23:57:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.235 1997/07/05 20:48:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -107,6 +107,10 @@
 #endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
+#endif
+
+#ifdef KGDB
+#include <sys/kgdb.h>
 #endif
 
 #include <dev/cons.h>
@@ -1478,8 +1482,10 @@ init386(first_avail)
 		Debugger();
 #endif
 #ifdef KGDB
-	if (boothowto & RB_KDB)
+	if (boothowto & RB_KDB) {
+		kgdb_debug_init = 1;
 		kgdb_connect(0);
+	}
 #endif
 }
 
