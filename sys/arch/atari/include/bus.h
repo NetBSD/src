@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.21 2000/01/25 22:13:19 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.22 2000/04/11 07:12:47 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -507,6 +507,22 @@ struct atari_bus_space {
 	__abs_copy(8, (t), (h1), (o1), (h2), (o2), (c))
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
+
+/*
+ * Bus read/write barrier methods.
+ *
+ *	void bus_space_barrier __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    bus_size_t len, int flags));
+ *
+ * Note: the Atari does not currently require barriers, but we must
+ * provide the flags to MI code.
+ */
+#define	bus_space_barrier(t, h, o, l, f)	\
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
+#define	BUS_SPACE_BARRIER_READ	0x01	/* force read barrier */
+#define	BUS_SPACE_BARRIER_WRITE	0x02	/* force write barrier */
+
 
 /*
  * Flags used in various bus DMA methods.
