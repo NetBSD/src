@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.6 1996/10/13 03:06:26 christos Exp $ */
+/* $NetBSD: mainbus.c,v 1.7 1997/01/13 00:35:48 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -49,8 +49,11 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <arm32/mainbus/mainbus.h>
 #include <machine/io.h>
+#include <machine/bus.h>
+#include <arm32/mainbus/mainbus.h>
+
+extern struct bus_space mainbus_bs_tag;
 
 int mainbusmatch __P((struct device *, void *, void *));
 void mainbusattach __P((struct device *, struct device *, void *));
@@ -116,6 +119,7 @@ mainbusscan(parent, match)
 		mb.mb_drq = cf->cf_loc[1];
 		mb.mb_irq = cf->cf_loc[2];
 	}
+	mb.mb_iot = &mainbus_bs_tag;
 	if ((*cf->cf_attach->ca_match)(parent, dev, &mb) > 0)
 		config_attach(parent, dev, &mb, mainbusprint);
 	else

@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.h,v 1.2 1996/03/18 20:50:05 mark Exp $ */
+/* $NetBSD: mainbus.h,v 1.3 1997/01/13 00:35:47 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,6 +41,8 @@
  * Created      : 15/12/94
  */
 
+#include <machine/bus.h>
+
 /*
  * mainbus driver attach arguments
  */
@@ -51,6 +53,7 @@ struct mainbus_attach_args {
 	int	mb_irq;			/* interrupt request */
 	int	mb_drq;			/* DMA request */
 	void	*mb_aux;		/* driver specific */
+	bus_space_tag_t	mb_iot;		/* bus space tag */
 };
 
 #define DRQUNK -1
