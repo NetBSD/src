@@ -1,4 +1,4 @@
-/*	$NetBSD: supcparse.c,v 1.11 2002/07/10 20:19:45 wiz Exp $	*/
+/*	$NetBSD: supcparse.c,v 1.12 2002/07/10 23:55:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -63,11 +63,7 @@
 #include "supextern.h"
 
 
-#ifdef	lint
-static char _argbreak;
-#else
 extern char _argbreak;		/* break character from nxtarg */
-#endif
 
 typedef enum {			/* supfile options */
 	OHOST, OBASE, OHOSTBASE, OPREFIX, ORELEASE,
