@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.4 1997/03/27 20:36:21 thorpej Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.5 1997/11/17 23:35:32 thorpej Exp $	*/
 
 /*
  * Definitions for SLIP interface data structures
@@ -6,7 +6,7 @@
  * (This exists so programs like slstats can get at the definition
  *  of sl_softc.)
  */
-struct st_softc {
+struct strip_softc {
 	struct	ifnet sc_if;		/* network-visible interface */
 	int	sc_unit;		/* XXX unit number */
 	struct	ifqueue sc_fastq;	/* interactive output queue */
@@ -20,7 +20,7 @@ struct st_softc {
 	u_int	sc_flags;		/* see below */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
-#ifdef NetBSD
+#ifdef __NetBSD__
 	int	sc_oldbufsize;		/* previous output buffer size */
 	int	sc_oldbufquot;		/* previous output buffer quoting */
 #endif
