@@ -1,4 +1,4 @@
-/*	$NetBSD: adrsmap.h,v 1.4 1999/12/23 06:52:30 tsubai Exp $	*/
+/*	$NetBSD: adrsmap.h,v 1.5 2000/10/12 03:07:02 onoe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -221,6 +221,7 @@
 #define	NEWS5000_IDROM		0xbf3c0000
 
 #define	NEWS5000_TIMER0		0xbf800000
+#define	NEWS5000_FREERUN	0xbf840000
 #define	NEWS5000_NVRAM		0xbf880000
 #define	NEWS5000_NVRAM_SIZE	0x07f8
 #define	NEWS5000_RTC_PORT	0xbf881fe0
@@ -269,6 +270,11 @@
 #define	NEWS5000_INT2_TIMER0	0x01
 #define	NEWS5000_INT2_TIMER1	0x02
 
+/*
+ * level4 intr (INTMASK4/INTSTAT4)
+ */
+#define	NEWS5000_INT4_APBUS	0x01
+
 #define	NEWS5000_WBFLUSH	0xbf520004
 
 #define	NEWS5000_LED_POWER	0xbf3f0000
@@ -278,10 +284,16 @@
 #define	NEWS5000_LED_NET	0xbf3f0010
 #define	NEWS5000_LED_CD		0xbf3f0014
 
-#define	NEWS5000_APBUS_INTMSK	0xb4c0000c
-#define	NEWS5000_APBUS_INTST	0xb4c00014
-#define	NEWS5000_APBUS_CTRL	0xb4c00034
-#define	NEWS5000_APBUS_DMA	0xb4c00084
+#define	NEWS5000_APBUS_INTMSK	0xb4c0000c	/* interrupt mask */
+#define		NEWS5000_APBUS_INT_DMAADDR	0x0100
+#define		NEWS5000_APBUS_INT_RDTIMEO	0x0004
+#define		NEWS5000_APBUS_INT_WRTIMEO	0x0001
+#define	NEWS5000_APBUS_INTST	0xb4c00014	/* interrupt status */
+#define	NEWS5000_APBUS_BER_A	0xb4c0001c	/* Bus error address */
+#define	NEWS5000_APBUS_CTRL	0xb4c00034	/* configuration control */
+#define	NEWS5000_APBUS_DER_A	0xb400005c	/* DMA error address */
+#define	NEWS5000_APBUS_DER_S	0xb4c0006c	/* DMA error slot */
+#define	NEWS5000_APBUS_DMA	0xb4c00084	/* unmapped DMA coherency */
 
 #define	NEWS5000_SCCPORT0A	0xbe950000
 
