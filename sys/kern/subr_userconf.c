@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.2 2001/07/02 23:02:11 itojun Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.3 2001/07/03 08:06:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -427,15 +427,6 @@ userconf_change(devno)
 				ln++;
 				l++;
 			}
-
-#ifdef __OpenBSD__
-			if (share) {
-				if (bcmp(cd->cf_loc, lk, sizeof(int) * i))
-					cd->cf_loc = lk;
-				else
-					free(lk, M_TEMP);
-			}
-#endif
 
 			printf("[%3d] ", devno);
 			userconf_pdevnam(devno);
