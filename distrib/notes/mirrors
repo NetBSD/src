@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of June 03, 1998.
+The following sites mirror NetBSD as of June 24, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -14,6 +14,10 @@ Australia
 *   ftp://ftp.au.netbsd.org/pub/NetBSD
 
 *   ftp://ftp2.au.netbsd.org/pub/NetBSD
+
+Austria
+
+*   ftp://ftp.at.netbsd.org/pub/NetBSD
 
 Brazil
 
@@ -113,6 +117,11 @@ Australia
 * sup.au.netbsd.org
   Instructions: ftp://sup.au.netbsd.org/pub/NetBSD/sup/README.sup
 
+France
+
+* sup.fr.netbsd.org
+  Instructions: Similar to sup.netbsd.org
+
 Germany
 
 * sup.de.netbsd.org
@@ -149,6 +158,10 @@ USA
 Australia
 
 *   http://www.au.netbsd.org/
+
+Austria
+
+*   http://www.at.netbsd.org/
 
 France
 
