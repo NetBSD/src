@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.potion.c,v 1.4 1997/10/19 16:58:48 christos Exp $	*/
+/*	$NetBSD: hack.potion.c,v 1.5 2001/03/25 20:44:02 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.potion.c,v 1.4 1997/10/19 16:58:48 christos Exp $");
+__RCSID("$NetBSD: hack.potion.c,v 1.5 2001/03/25 20:44:02 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -224,7 +224,7 @@ pluslvl()
 void
 strange_feeling(obj, txt)
 	struct obj     *obj;
-	char           *txt;
+	const char           *txt;
 {
 	if (flags.beginner)
 		pline("You have a strange feeling for a moment, then it passes.");
@@ -235,7 +235,7 @@ strange_feeling(obj, txt)
 	useup(obj);
 }
 
-char           *bottlenames[] = {
+const char           *const bottlenames[] = {
 	"bottle", "phial", "flagon", "carafe", "flask", "jar", "vial"
 };
 
@@ -244,7 +244,7 @@ potionhit(mon, obj)
 	struct monst   *mon;
 	struct obj     *obj;
 {
-	char           *botlnam = bottlenames[rn2(SIZE(bottlenames))];
+	const char           *botlnam = bottlenames[rn2(SIZE(bottlenames))];
 	boolean         uclose, isyou = (mon == &youmonst);
 
 	if (isyou) {

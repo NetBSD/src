@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.vault.c,v 1.4 1997/10/19 16:59:23 christos Exp $	*/
+/*	$NetBSD: hack.vault.c,v 1.5 2001/03/25 20:44:03 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.vault.c,v 1.4 1997/10/19 16:59:23 christos Exp $");
+__RCSID("$NetBSD: hack.vault.c,v 1.5 2001/03/25 20:44:03 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -50,7 +50,7 @@ struct egd {
 	struct fakecorridor fakecorr[FCSIZ];
 };
 
-static struct permonst pm_guard =
+static const struct permonst pm_guard =
 {"guard", '@', 12, 12, -1, 4, 10, sizeof(struct egd)};
 
 static struct monst *guard;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.makemon.c,v 1.4 1997/10/19 16:58:17 christos Exp $	*/
+/*	$NetBSD: hack.makemon.c,v 1.5 2001/03/25 20:44:01 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.makemon.c,v 1.4 1997/10/19 16:58:17 christos Exp $");
+__RCSID("$NetBSD: hack.makemon.c,v 1.5 2001/03/25 20:44:01 jsm Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -23,8 +23,7 @@ struct monst zeromonst;
  *	note that in this case we return only one of them (the one at [x,y]).
  */
 struct monst   *
-makemon(ptr, x, y)
-	struct permonst *ptr;
+makemon(const struct permonst *ptr, int x, int y)
 {
 	struct monst   *mtmp;
 	int		tmp, ct;
@@ -169,7 +168,7 @@ foofull:
 }
 
 int
-goodpos(x, y)
+goodpos(int x, int y)
 {				/* used only in mnexto and rloc */
 	return (
 		!(x < 1 || x > COLNO - 2 || y < 1 || y > ROWNO - 2 ||
@@ -213,7 +212,7 @@ mkmon_at(let, x, y)
 	int             x, y;
 {
 	int             ct;
-	struct permonst *ptr;
+	const struct permonst *ptr;
 
 	for (ct = 0; ct < CMNUM; ct++) {
 		ptr = &mons[ct];

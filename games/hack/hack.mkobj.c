@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkobj.c,v 1.4 1997/10/19 16:58:29 christos Exp $	*/
+/*	$NetBSD: hack.mkobj.c,v 1.5 2001/03/25 20:44:01 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkobj.c,v 1.4 1997/10/19 16:58:29 christos Exp $");
+__RCSID("$NetBSD: hack.mkobj.c,v 1.5 2001/03/25 20:44:01 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -151,8 +151,7 @@ weight(obj)
 }
 
 void
-mkgold(num, x, y)
-	long            num;
+mkgold(long num, int x, int y)
 {
 	struct gold    *gold;
 	long            amount = (num ? num : 1 + (rnd(dlevel + 2) * rnd(30)));
