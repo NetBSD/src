@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.43 2003/05/03 19:01:05 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.44 2003/05/14 11:59:15 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -691,7 +691,7 @@ frees the list of pages pointed to by
 .Fn uvm_page_physload
 loads physical memory segments into VM space on the specified
 .Fa free_list .
-It must be called at system boot time to setup physical memory
+It must be called at system boot time to set up physical memory
 management pages.
 The arguments describe the
 .Fa start
