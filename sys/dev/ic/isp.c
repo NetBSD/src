@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.82 2001/10/20 18:37:54 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.83 2001/10/23 16:24:33 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -2742,13 +2742,13 @@ isp_start(XS_T *xs)
 		else
 			reqp->req_header.rqs_entry_type = RQSTYPE_REQUEST;
 	}
-	reqp->req_header.rqs_flags = 0;
-	reqp->req_header.rqs_seqno = 0;
+	/* reqp->req_header.rqs_flags = 0; */
+	/* reqp->req_header.rqs_seqno = 0; */
 	if (IS_FC(isp)) {
 		/*
 		 * See comment in isp_intr
 		 */
-		XS_RESID(xs) = 0;
+		/* XS_RESID(xs) = 0; */
 
 		/*
 		 * Fibre Channel always requires some kind of tag.
@@ -4159,7 +4159,7 @@ static u_int16_t mbpscsi[] = {
 	ISPOPMAP(0xdf, 0xdf),	/* 0x51: DUMP RAM A64 */
 	ISPOPMAP(0xdf, 0xdf),	/* 0x52: INITIALIZE REQUEST QUEUE A64 */
 	ISPOPMAP(0xff, 0xff),	/* 0x53: INITIALIZE RESPONSE QUEUE A64 */
-	ISPOPMAP(0xcf, 0xff),	/* 0x54: EXECUTE IOCB A64 */
+	ISPOPMAP(0xcf, 0x01),	/* 0x54: EXECUTE IOCB A64 */
 	ISPOPMAP(0x07, 0x01),	/* 0x55: ENABLE TARGET MODE */
 	ISPOPMAP(0x03, 0x0f),	/* 0x56: GET TARGET STATUS */
 	ISPOPMAP(0x00, 0x00),	/* 0x57: */
