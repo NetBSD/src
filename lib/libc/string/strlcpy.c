@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.11 2002/04/24 12:25:09 kleink Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.12 2002/04/24 17:45:15 bjh21 Exp $	*/
 /*	$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $ 	*/
 
 /*
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcpy.c,v 1.11 2002/04/24 12:25:09 kleink Exp $");
+__RCSID("$NetBSD: strlcpy.c,v 1.12 2002/04/24 17:45:15 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
@@ -44,6 +44,10 @@ __RCSID("$NetBSD: strlcpy.c,v 1.11 2002/04/24 12:25:09 kleink Exp $");
 # ifdef __weak_alias
 __weak_alias(strlcpy, _strlcpy)
 # endif
+#endif
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #if !HAVE_STRLCPY

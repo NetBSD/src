@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.13 2002/04/24 12:25:09 kleink Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.14 2002/04/24 17:45:14 bjh21 Exp $	*/
 /*	$OpenBSD: strlcat.c,v 1.4 2001/01/12 22:55:23 millert Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcat.c,v 1.13 2002/04/24 12:25:09 kleink Exp $");
+__RCSID("$NetBSD: strlcat.c,v 1.14 2002/04/24 17:45:14 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
@@ -44,6 +44,10 @@ __RCSID("$NetBSD: strlcat.c,v 1.13 2002/04/24 12:25:09 kleink Exp $");
 # ifdef __weak_alias
 __weak_alias(strlcat, _strlcat)
 # endif
+#endif
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #if !HAVE_STRLCAT
