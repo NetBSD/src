@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.2 2002/10/02 07:35:30 wiz Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.3 2002/10/02 13:39:10 jdolecek Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -47,24 +47,17 @@
 #define DO_MD5     2
 #define DO_BLF     3
 
-extern char *__progname;
-char buffer[_PASSWORD_LEN];
-void print_passwd(char *, int , void *);
-
-void usage(void);
-char *trim(char *);
-
-void
+static void
 usage(void)
 {
 
 	(void)fprintf(stderr,
 	    "usage: %s [-b rounds] [-k] [-m] [-s salt] [-p | string]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 
-char *
+static char *
 trim(char *line)
 {
 	char *ptr;
@@ -81,14 +74,17 @@ trim(char *line)
 	return(ptr);
 }
 
-void
+/* these are pulled from usr.bin/passwd/pwd_gensalt.c */
+int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
+void to64(char *, int32_t, int n);
+
+static void
 print_passwd(char *string, int operation, void *extra)
 {
 	char msalt[3], *salt;
 	struct passwd pwd;
 	login_cap_t *lc;
-	int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
-	void to64(char *, int32_t, int n);
+	char buffer[_PASSWORD_LEN];
 
 	switch(operation) {
 	case DO_MAKEKEY:
@@ -142,7 +138,9 @@ main(int argc, char **argv)
 	int rounds;
 	void *extra;                       /* Store salt or number of rounds */
 
-	if (strcmp(__progname, "makekey") == 0)
+	setprogname(argv[0]);
+
+	if (strcmp(getprogname(), "makekey") == 0)
 		operation = DO_MAKEKEY;
 
 	while ((opt = getopt(argc, argv, "kmps:b:")) != -1) {
