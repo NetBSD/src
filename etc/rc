@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.74 1997/04/23 01:24:22 perry Exp $
+#	$NetBSD: rc,v 1.75 1997/04/27 23:17:56 perry Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -309,6 +309,17 @@ if [ "$timed_flags" != NO ]; then
 		timed_flags=""
 	fi
 	echo -n ' timed'; 		timed $timed_flags
+fi
+
+if [ "$ntpdate_hosts" != NO ]; then
+	if [ "$ntpdate_hosts" = DEFAULT ]; then
+		ntpdate_hosts=`awk '/^server/ {print $2}' </etc/ntp.conf`
+	fi
+
+	if [ -n "$ntpdate_hosts"  ]; then
+		echo -n 'ntpdate:'
+		ntpdate -b $ntpdate_hosts
+	fi
 fi
 
 if [ "$xntpd_flags" != NO ]; then
