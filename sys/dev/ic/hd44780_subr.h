@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.h,v 1.2 2005/01/08 20:17:22 joff Exp $ */
+/* $NetBSD: hd44780_subr.h,v 1.3 2005/01/09 15:43:56 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -81,6 +81,7 @@ struct hd44780_chip {
 #define HD_BIGFONT		0x04	/* 5x10 if set, 5x8 otherwise */
 #define HD_KEYPAD		0x08	/* if set, keypad is connected */
 #define HD_UP			0x10	/* if set, lcd has been initialized */
+#define HD_TIMEDOUT		0x20	/* lcd has recently stopped talking */
 	u_char sc_flags;
 
 	u_char sc_rows;			/* visible rows */
@@ -99,9 +100,6 @@ struct hd44780_chip {
 	u_int8_t (* sc_readreg)(struct hd44780_chip *, u_int32_t);
 };
 
-#define hd44780_busy_wait(sc) \
-	while((hd44780_ir_read(sc) & BUSY_FLAG) == BUSY_FLAG)
-
 #define hd44780_ir_write(sc, dat) \
 	do {								\
 		hd44780_busy_wait(sc);					\
@@ -118,6 +116,8 @@ struct hd44780_chip {
 	(sc)->sc_readreg((sc), 1)
 
 void hd44780_attach_subr(struct hd44780_chip *);
+void hd44780_busy_wait(struct hd44780_chip *);
+int  hd44780_init(struct hd44780_chip *);
 int  hd44780_ioctl_subr(struct hd44780_chip *, u_long, caddr_t);
 void hd44780_ddram_redraw(struct hd44780_chip *, struct hd44780_io *);
 
