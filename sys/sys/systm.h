@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.55 1996/09/08 02:09:50 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.56 1996/09/20 22:11:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -67,6 +67,11 @@
  * comes into existence when the kernel is loaded and hence cannot be
  * patched by a stalking hacker.
  */
+
+struct proc;
+struct uio;
+struct tty;
+
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
 extern char version[];		/* system version */
@@ -237,7 +242,9 @@ void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 void	kmstartup __P((void));
 #endif
 
+#ifdef _KERNEL
 #include <lib/libkern/libkern.h>
+#endif
 
 #ifdef DDB
 /* debugger entry points */
