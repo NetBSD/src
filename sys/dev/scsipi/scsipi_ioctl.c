@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.28 1997/10/18 19:51:04 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.29 1998/06/15 08:16:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -298,6 +298,7 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 
 	/* Check for the safe-ness of this request. */
 	switch (cmd) {
+	case OSCIOCIDENTIFY:
 	case SCIOCIDENTIFY:
 		break;
 	case SCIOCCOMMAND:
