@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.41 2000/12/30 15:32:19 wiz Exp $	*/
+/*	$NetBSD: init.c,v 1.42 2001/01/10 03:01:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.41 2000/12/30 15:32:19 wiz Exp $");
+__RCSID("$NetBSD: init.c,v 1.42 2001/01/10 03:01:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ main(argc, argv)
 	 * Note that this does NOT open a file...
 	 * Does 'init' deserve its own facility number?
 	 */
-	openlog("init", LOG_CONS|LOG_ODELAY, LOG_AUTH);
+	openlog("init", LOG_CONS, LOG_AUTH);
 #endif /* LETS_GET_SMALL */
 
 
