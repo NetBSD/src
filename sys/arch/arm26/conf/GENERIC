@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.10 2000/08/17 13:38:51 bjh21 Exp $
+# $NetBSD: GENERIC,v 1.11 2000/09/24 15:59:29 jdolecek Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -165,7 +165,7 @@ pseudo-device	md		1
 #options 	MEMORY_DISK_HOOKS
 #options 	MINIROOTSIZE=
 pseudo-device	ppp		4
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		4
 pseudo-device	vnd		4
 pseudo-device	gre		2	# generic L3 over IP tunnel

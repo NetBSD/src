@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.83 2000/06/11 02:41:10 mycroft Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.84 2000/09/24 15:59:32 jdolecek Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -70,4 +70,4 @@ pseudo-device	bpfilter 2		# packet filter
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 
-pseudo-device	pty	32		# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
