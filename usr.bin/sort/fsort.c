@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.12 2001/02/05 14:25:34 itojun Exp $	*/
+/*	$NetBSD: fsort.c,v 1.13 2001/02/19 19:31:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,14 +47,14 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.12 2001/02/05 14:25:34 itojun Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.13 2001/02/19 19:31:29 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
 
-const u_char **keylist = 0;
+static const u_char **keylist = 0;
 u_char *buffer = 0, *linebuf = 0;
 size_t bufsize = DEFLLEN;
 size_t linebuf_size;
@@ -64,6 +64,7 @@ extern char *toutpath;
 int PANIC = FSORTMAX;
 
 #define MSTART		(MAXFCT - MERGE_FNUM)
+#define SALIGN(n) ((n+sizeof(length_t)-1) & ~(sizeof(length_t)-1))
 
 void
 fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
@@ -142,6 +143,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				crec =(RECHEADER *)	((char *) crec +
 				SALIGN(crec->length) + sizeof(TRECHEADER));
 			}
+
 			if (c == BUFFEND && nelem < min(9, MAXNUM)) {
 				const u_char **keyp;
 				u_char *oldb = buffer;
