@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.2 2000/06/04 02:19:27 matt Exp $	*/
+/*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,75 +30,34 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Done by Michael Kukat (michael@unixiron.org) */
+
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/device.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
-#include <machine/clock.h>
+#include <machine/pte.h>
 #include <machine/cpu.h>
-#include <machine/scb.h>
-#include <machine/sid.h>
 #include <machine/mtpr.h>
+#include <machine/sid.h>
+#include <machine/nexus.h>
+#include <machine/uvax.h>
+#include <machine/ka680.h>
+#include <machine/clock.h>
+#include <machine/scb.h>
 
-static void    ka680_conf(void);
-static void    ka680_memerr(void);
-static int     ka680_mchk(caddr_t);
-static void    ka680_halt(void);
-static void    ka680_reboot(int);
-#ifdef notyet
-static void    ka680_softmem(int);
-static void    ka680_hardmem(int);
-#endif
-static void    ka680_steal_pages(void);
-static void    ka680_cache_enable(void);
-static void    ka680_halt(void);
-
-/* 
- * Declaration of 680-specific calls.
- */
-struct cpu_dep ka680_calls = {
-	ka680_steal_pages,
-	ka680_mchk,
-	ka680_memerr, 
-	ka680_conf,
-	generic_clkread,
-	generic_clkwrite,
-	24,	 /* ~VUPS */
-	2,	/* SCB pages */
-	ka680_halt,
-	ka680_reboot,
-};
-
-
-void
-ka680_conf()
-{
-	printf("cpu0: KA680, ucode rev %d\n", vax_cpudata & 0xff);
-}
-
-/*
- * Why may we get memory errors during startup???
- */
-
-#ifdef notyet
-void
-ka680_hardmem(int arg)
-{
-	if (cold == 0)
-		printf("Hard memory error\n");
-	splhigh();
-}
-
-void
-ka680_softmem(int arg)
-{
-	if (cold == 0)
-		printf("Soft memory error\n");
-	splhigh();
-}
-#endif
-
+static void	ka680_conf __P((void));
+static void	ka680_cache_enable __P((void));
+static void	ka680_softmem __P((void *));
+static void	ka680_hardmem __P((void *));
+static void	ka680_steal_pages __P((void));
+static void	ka680_memerr __P((void));
+static int	ka680_mchk __P((caddr_t));
+static void	ka680_halt __P((void));
+static void	ka680_reboot __P((int));
+ 
 /*
  * KA680-specific IPRs. KA680 has the funny habit to control all caches
  * via IPRs.
@@ -122,12 +81,50 @@ ka680_softmem(int arg)
 #define PCCTL_I_EN	0x02
 #define PCCTL_D_EN	0x01
 
+ 
+/* 
+ * Declaration of KA680-specific calls.
+ */
+struct cpu_dep ka680_calls = {
+	ka680_steal_pages,
+	ka680_mchk,
+	ka680_memerr, 
+	ka680_conf,
+	generic_clkread,
+	generic_clkwrite,
+	24,	 /* ~VUPS */
+	2,	/* SCB pages */
+	ka680_halt,
+	ka680_reboot,
+	NULL,
+	NULL,
+	CPU_RAISEIPL,
+};
+
+
+void
+ka680_conf()
+{
+	char *cpuname;
+
+	/* Don't ask why, but we seem to need this... */
+
+	volatile int *hej = (void *)mfpr(PR_ISP);
+	*hej = *hej;
+	hej[-1] = hej[-1];
+
+	switch((vax_siedata & 0xff00) >> 8) {
+		case VAX_STYP_675: cpuname = "KA675"; break;
+		case VAX_STYP_680: cpuname = "KA680"; break;
+		default: cpuname = "unknown NVAX";
+	}
+	printf("cpu0: %s, ucode rev %d\n", cpuname, vax_cpudata & 0xff);
+}
+
 void
 ka680_cache_enable()
 {
 	int start, slut;
-
-	return;
 
 	/*
 	 * Turn caches off.
@@ -178,13 +175,48 @@ ka680_cache_enable()
 	mtpr(PCCTL_P_EN|PCCTL_I_EN|PCCTL_D_EN, PR_PCCTL);
 
 	/* Enable the VIC */
-	start = 0;
-	slut  = 0x800;
-	for (; start < slut; start += 0x20) {
-		mtpr(start, PR_VMAR);
-		mtpr(0, PR_VTAG);
+	if(((vax_siedata & 0xff00) >> 8) == VAX_STYP_680) {
+		start = 0;
+		slut  = 0x800;
+		for (; start < slut; start += 0x20) {
+			mtpr(start, PR_VMAR);
+			mtpr(0, PR_VTAG);
+		}
+		mtpr(ICSR_ENABLE, PR_ICSR);
 	}
-	mtpr(ICSR_ENABLE, PR_ICSR);
+}
+
+/*
+ * Why may we get memory errors during startup???
+ */
+
+void
+ka680_hardmem(void *arg)
+{
+	if (cold == 0)
+		printf("Hard memory error\n");
+	splhigh();
+}
+
+void
+ka680_softmem(void *arg)
+{
+	if (cold == 0)
+		printf("Soft memory error\n");
+	splhigh();
+}
+
+void
+ka680_steal_pages()
+{
+	/*
+	 * Get the soft and hard memory error vectors now.
+	 */
+	scb_vecalloc(0x54, ka680_softmem, NULL, 0, NULL);
+	scb_vecalloc(0x60, ka680_hardmem, NULL, 0, NULL);
+
+	/* Turn on caches (to speed up execution a bit) */
+	ka680_cache_enable();
 }
 
 void
@@ -196,25 +228,8 @@ ka680_memerr()
 int
 ka680_mchk(caddr_t addr)
 {
-	mtpr(0x00, PR_MCESR);
-	printf("Machine Check\n");
+	panic("Machine check");
 	return 0;
-}
-
-void
-ka680_steal_pages()
-{
-
-	/*
-	 * Get the soft and hard memory error vectors now.
-	 */
-#ifdef notyet
-	scb_vecalloc(0x54, ka680_softmem, NULL, 0, NULL);
-	scb_vecalloc(0x60, ka680_hardmem, NULL, 0, NULL);
-#endif
-
-	/* Turn on caches (to speed up execution a bit) */
-	ka680_cache_enable();
 }
 
 static void
