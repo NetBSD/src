@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.19 2003/08/07 16:33:15 agc Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.20 2005/01/13 19:09:40 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,12 +61,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.19 2003/08/07 16:33:15 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.20 2005/01/13 19:09:40 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
 
-#ifdef TCP_DEBUG
 /* load symbolic names */
 #define	PRUREQUESTS
 #define	TCPSTATES
@@ -219,4 +218,3 @@ tcp_trace(act, ostate, tp, m, req)
 	printf("\tsnd_(wl1,wl2,wnd) (%x,%x,%lx)\n",
 	    tp->snd_wl1, tp->snd_wl2, tp->snd_wnd);
 }
-#endif /* TCP_DEBUG */
