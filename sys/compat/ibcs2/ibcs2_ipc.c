@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.8 1998/03/05 04:36:07 scottb Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.9 1998/10/19 22:34:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -23,6 +23,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_sysv.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
