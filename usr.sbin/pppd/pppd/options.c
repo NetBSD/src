@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: options.c,v 1.7 1994/05/30 01:18:53 paulus Exp $";
+static char rcsid[] = "$Id: options.c,v 1.8 1994/07/04 19:30:24 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -129,7 +129,7 @@ extern int nodetach;
 extern char *connector;
 extern char *disconnector;
 extern int inspeed;
-extern char devname[];
+extern char devnam[];
 extern int default_device;
 extern u_long netmask;
 extern int detach;
@@ -409,9 +409,9 @@ options_for_tty()
     char *dev, *path;
     int ret;
 
-    dev = strrchr(devname, '/');
+    dev = strrchr(devnam, '/');
     if (dev == NULL)
-	dev = devname;
+	dev = devnam;
     else
 	++dev;
     if (strcmp(dev, "tty") == 0)
@@ -1048,8 +1048,8 @@ setdevname(cp)
 	return -1;
     }
   
-    (void) strncpy(devname, cp, MAXPATHLEN);
-    devname[MAXPATHLEN-1] = 0;
+    (void) strncpy(devnam, cp, MAXPATHLEN);
+    devnam[MAXPATHLEN-1] = 0;
     default_device = FALSE;
   
     return 1;

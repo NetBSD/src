@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.6 1994/05/30 01:18:44 paulus Exp $";
+static char rcsid[] = "$Id: auth.c,v 1.7 1994/07/04 19:30:17 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -78,7 +78,7 @@ struct wordlist {
 
 extern char user[];
 extern char passwd[];
-extern char devname[];
+extern char devnam[];
 extern char our_name[];
 extern char remote_name[];
 extern char hostname[];
@@ -411,7 +411,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
 	 */
 	if (attempts++ >= 10) {
 	    syslog(LOG_WARNING, "%d LOGIN FAILURES ON %s, %s",
-		   attempts, devname, user);
+		   attempts, devnam, user);
 	    quit();
 	}
 	if (attempts > 3)
@@ -473,9 +473,9 @@ login(user, passwd, msg, msglen)
     /*
      * Write a wtmp entry for this user.
      */
-    tty = strrchr(devname, '/');
+    tty = strrchr(devnam, '/');
     if (tty == NULL)
-	tty = devname;
+	tty = devnam;
     else
 	tty++;
     logwtmp(tty, user, "");		/* Add wtmp login entry */
@@ -492,9 +492,9 @@ logout()
 {
     char *tty;
 
-    tty = strrchr(devname, '/');
+    tty = strrchr(devnam, '/');
     if (tty == NULL)
-	tty = devname;
+	tty = devnam;
     else
 	tty++;
     logwtmp(tty, "", "");		/* Wipe out wtmp logout entry */

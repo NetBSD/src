@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipcp.c,v 1.6 1994/05/30 01:18:47 paulus Exp $";
+static char rcsid[] = "$Id: ipcp.c,v 1.7 1994/07/04 19:30:20 deraadt Exp $";
 #endif
 
 /*
@@ -44,7 +44,7 @@ ipcp_options ipcp_allowoptions[NPPP];	/* Options we allow peer to request */
 ipcp_options ipcp_hisoptions[NPPP];	/* Options that we ack'd */
 
 extern char ifname[];
-extern char devname[];
+extern char devnam[];
 extern int baud_rate;
 
 /* local vars */
@@ -1083,7 +1083,7 @@ ipcp_script(f, script)
 
     argv[0] = script;
     argv[1] = ifname;
-    argv[2] = devname;
+    argv[2] = devnam;
     argv[3] = strspeed;
     argv[4] = strlocal;
     argv[5] = strremote;

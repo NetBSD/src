@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.10 1994/05/30 01:18:51 paulus Exp $";
+static char rcsid[] = "$Id: main.c,v 1.11 1994/07/04 19:30:22 deraadt Exp $";
 #endif
 
 #define SETSID
@@ -94,7 +94,7 @@ static pid_t	pid;		/* Our pid */
 static pid_t	pgrpid;		/* Process Group ID */
 uid_t uid;			/* Our real user-id */
 
-char devname[MAXPATHLEN] = "/dev/tty";	/* Device name */
+char devnam[MAXPATHLEN] = "/dev/tty";	/* Device name */
 int default_device = TRUE;	/* use default device (stdin/out) */
 
 int fd = -1;			/* Device file descriptor */
@@ -194,7 +194,7 @@ main(argc, argv)
 
     p = ttyname(0);
     if (p)
-	strcpy(devname, p);
+	strcpy(devnam, p);
   
     if (gethostname(hostname, MAXNAMELEN) < 0 ) {
 	perror("couldn't get hostname");
@@ -297,7 +297,7 @@ main(argc, argv)
 #endif
 
     if (lockflag && !default_device)
-	if (lock(devname) < 0)
+	if (lock(devnam) < 0)
 	    die(1);
 
     /* Get an internet socket for doing socket ioctl's on. */
@@ -348,8 +348,8 @@ main(argc, argv)
     /*
      * Open the serial device and set it up to be the ppp interface.
      */
-    if ((fd = open(devname, O_RDWR /*| O_NDELAY*/)) < 0) {
-	syslog(LOG_ERR, "open(%s): %m", devname);
+    if ((fd = open(devnam, O_RDWR /*| O_NDELAY*/)) < 0) {
+	syslog(LOG_ERR, "open(%s): %m", devnam);
 	die(1);
     }
     hungup = 0;
@@ -447,7 +447,7 @@ main(argc, argv)
      * Block all signals, start opening the connection, and  wait for
      * incoming signals (reply, timeout, etc.).
      */
-    syslog(LOG_NOTICE, "Connect: %s <--> %s", ifname, devname);
+    syslog(LOG_NOTICE, "Connect: %s <--> %s", ifname, devnam);
     sigprocmask(SIG_BLOCK, &mask, NULL); /* Block signals now */
     lcp_lowerup(0);		/* XXX Well, sort of... */
     lcp_open(0);		/* Start protocol */
