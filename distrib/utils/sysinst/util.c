@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.112 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.113 2003/10/19 20:45:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1491,7 +1491,7 @@ enable_rc_conf(void)
 {
 	const char *tp = target_prefix();
 
-	run_prog(0, NULL, "sed -an -e 's/^rc_configured=YES/rc_configured=NO/;"
+	run_prog(0, NULL, "sed -an -e 's/^rc_configured=NO/rc_configured=YES/;"
 				    "H;$!d;g;w %s/etc/rc.conf' %s/etc/rc.conf",
 		tp, tp);
 }
