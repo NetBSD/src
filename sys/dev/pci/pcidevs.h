@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.408 2002/02/20 23:53:32 simonb Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.409 2002/02/21 00:00:28 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.403 2002/02/20 23:53:01 simonb Exp 
+ *	NetBSD: pcidevs,v 1.404 2002/02/20 23:59:58 simonb Exp 
  */
 
 /*
@@ -1755,8 +1755,8 @@
 #define	PCI_PRODUCT_SGSTHOMSON_1764	0x1746		/* STG 1764X */
 
 /* Broadcom Corp. (SiByte) products */
-#define	PCI_PRODUCT_SIBYTE_SB1250_PCIHB	0x0001		/* SB-1250 PCI Host Bridge */
-#define	PCI_PRODUCT_SIBYTE_SB1250_LDTHB	0x0002		/* SB-1250 LDT Host Bridge */
+#define	PCI_PRODUCT_SIBYTE_BCM1250_PCIHB	0x0001		/* BCM1250 PCI Host Bridge */
+#define	PCI_PRODUCT_SIBYTE_BCM1250_LDTHB	0x0002		/* BCM1250 LDT Host Bridge */
 
 /* Sigma Designs products */
 #define	PCI_PRODUCT_SIGMA_HOLLYWOODPLUS	0x8300		/* REALmagic Hollywood-Plus MPEG-2 Decoder */
