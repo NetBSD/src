@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.28 2003/06/15 17:45:25 thorpej Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.29 2003/06/15 18:43:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -819,6 +819,13 @@ consinit(void)
 		return;
 
 	consinit_called = 1;
+
+	/*
+	 * Console devices are mapped VA==PA.  Our devmap reflects
+	 * this, so register it now so drivers can map the console
+	 * device.
+	 */
+	pmap_devmap_register(iq80321_devmap);
 
 #if NCOM > 0
 	if (comcnattach(&obio_bs_tag, comcnaddrs[comcnunit], comcnspeed,
