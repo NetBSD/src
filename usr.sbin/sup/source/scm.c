@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.5 1997/06/17 18:56:35 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.6 1997/06/17 21:38:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -176,7 +176,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>

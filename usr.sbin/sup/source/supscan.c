@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.4 1997/06/17 18:57:03 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.5 1997/06/17 21:38:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -115,7 +115,7 @@
 #include <c.h>
 #include <netdb.h>
 #include <setjmp.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
