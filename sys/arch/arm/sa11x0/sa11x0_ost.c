@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.9 2002/10/02 05:02:32 thorpej Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.10 2003/03/23 08:59:02 bsh Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -285,7 +285,7 @@ microtime(tvp)
 
 	deltatm = saost_sc->sc_clock_count - tm;
 
-#ifdef DEBUG
+#ifdef OST_DEBUG
 	printf("deltatm = %d\n",deltatm);
 #endif
 
