@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.9 2002/06/01 17:24:38 bouyer Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.10 2002/06/05 15:24:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.9 2002/06/01 17:24:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.10 2002/06/05 15:24:31 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -212,7 +212,9 @@ void	ste_stop(struct ifnet *, int);
 
 void	ste_shutdown(void *);
 
-void	ste_reset(struct ste_softc *);
+void	ste_reset(struct ste_softc *, u_int32_t);
+void	ste_setthresh(struct ste_softc *);
+void	ste_txrestart(struct ste_softc *, u_int8_t);
 void	ste_rxdrain(struct ste_softc *);
 int	ste_add_rxbuf(struct ste_softc *, int);
 void	ste_read_eeprom(struct ste_softc *, int, uint16_t *);
@@ -461,7 +463,8 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Reset the chip to a known state.
 	 */
-	ste_reset(sc);
+	ste_reset(sc, AC_GlobalReset | AC_RxReset | AC_TxReset | AC_DMA |
+	    AC_FIFO | AC_Network | AC_Host | AC_AutoInit | AC_RstOut);
 
 	/*
 	 * Read the Ethernet address from the EEPROM.
@@ -504,9 +507,9 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
-	 * Default the transmit threshold to 1504 bytes.
+	 * Default the transmit threshold to 128 bytes.
 	 */
-	sc->sc_txthresh = 1504;
+	sc->sc_txthresh = 128;
 
 	/*
 	 * Disable MWI if the PCI layer tells us to.
@@ -891,17 +894,33 @@ ste_intr(void *arg)
 					    "threshold: %d bytes\n",
 					    sc->sc_dev.dv_xname,
 					    sc->sc_txthresh);
+					ste_reset(sc, AC_TxReset | AC_DMA |
+					    AC_FIFO | AC_Network);
+					ste_setthresh(sc);
+					bus_space_write_1(sc->sc_st, sc->sc_sh,
+					    STE_TxDMAPollPeriod, 127);
+					ste_txrestart(sc,
+					    bus_space_read_1(sc->sc_st,
+						sc->sc_sh, STE_TxFrameId));
 				}
-				if (txstat & TS_TxReleaseError)
+				if (txstat & TS_TxReleaseError) {
 					printf("%s: Tx FIFO release error\n",
 					    sc->sc_dev.dv_xname);
-				if (txstat & TS_MaxCollisions)
+					wantinit = 1;
+				}
+				if (txstat & TS_MaxCollisions) {
 					printf("%s: excessive collisions\n",
 					    sc->sc_dev.dv_xname);
+					wantinit = 1;
+				}
+				if (txstat & TS_TxStatusOverflow) {
+					printf("%s: status overflow\n",
+					    sc->sc_dev.dv_xname);
+					wantinit = 1;
+				}
 				bus_space_write_2(sc->sc_st, sc->sc_sh,
 				    STE_TxStatus, 0);
 			}
-			wantinit = 1;
 		}
 
 		/* Host interface errors. */
@@ -1142,17 +1161,14 @@ ste_stats_update(struct ste_softc *sc)
  *	Perform a soft reset on the ST-201.
  */
 void
-ste_reset(struct ste_softc *sc)
+ste_reset(struct ste_softc *sc, u_int32_t rstbits)
 {
 	uint32_t ac;
 	int i;
 
 	ac = bus_space_read_4(sc->sc_st, sc->sc_sh, STE_AsicCtrl);
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, STE_AsicCtrl,
-	    ac | AC_GlobalReset | AC_RxReset | AC_TxReset |
-	    AC_DMA | AC_FIFO | AC_Network | AC_Host | AC_AutoInit |
-	    AC_RstOut);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, STE_AsicCtrl, ac | rstbits);
 
 	delay(50000);
 
@@ -1167,6 +1183,47 @@ ste_reset(struct ste_softc *sc)
 		printf("%s: reset failed to complete\n", sc->sc_dev.dv_xname);
 
 	delay(1000);
+}
+
+/*
+ * ste_setthresh:
+ *
+ * 	set the various transmit threshold registers
+ */
+void
+ste_setthresh(struct ste_softc *sc)
+{
+	/* set the TX threhold */
+	bus_space_write_2(sc->sc_st, sc->sc_sh,
+	    STE_TxStartThresh, sc->sc_txthresh);
+	/* Urgent threshold: set to sc_txthresh / 2 */
+	bus_space_write_2(sc->sc_st, sc->sc_sh, STE_TxDMAUrgentThresh,
+	    sc->sc_txthresh >> 6);
+	/* Burst threshold: use default value (256 bytes) */
+}
+
+/*
+ * restart TX at the given frame ID in the transmitter ring
+ */
+
+void
+ste_txrestart(struct ste_softc *sc, u_int8_t id)
+{
+	u_int32_t control;
+
+	STE_CDTXSYNC(sc, id, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	control = le32toh(sc->sc_txdescs[id].tfd_control);
+	control &= ~TFD_TxDMAComplete;
+	sc->sc_txdescs[id].tfd_control = htole32(control);
+	STE_CDTXSYNC(sc, id, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+	bus_space_write_4(sc->sc_st, sc->sc_sh, STE_TxDMAListPtr, 0);
+	bus_space_write_2(sc->sc_st, sc->sc_sh, STE_MacCtrl1, MC1_TxEnable);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, STE_DMACtrl, DC_TxDMAHalt);
+	ste_dmahalt_wait(sc);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, STE_TxDMAListPtr,
+	    STE_CDTXADDR(sc, id));
+	bus_space_write_4(sc->sc_st, sc->sc_sh, STE_DMACtrl, DC_TxDMAResume);
 }
 
 /*
@@ -1191,7 +1248,8 @@ ste_init(struct ifnet *ifp)
 	/*
 	 * Reset the chip to a known state.
 	 */
-	ste_reset(sc);
+	ste_reset(sc, AC_GlobalReset | AC_RxReset | AC_TxReset | AC_DMA |
+	    AC_FIFO | AC_Network | AC_Host | AC_AutoInit | AC_RstOut);
 
 	/*
 	 * Initialize the transmit descriptor ring.
@@ -1255,7 +1313,7 @@ ste_init(struct ifnet *ifp)
 	bus_space_write_1(st, sh, STE_RxDMAPollPeriod, 64);
 
 	/* Initialize the Tx start threshold. */
-	bus_space_write_2(st, sh, STE_TxStartThresh, sc->sc_txthresh);
+	ste_setthresh(sc);
 
 	/* Set the FIFO release threshold to 512 bytes. */
 	bus_space_write_1(st, sh, STE_TxReleaseThresh, 512 >> 4);
