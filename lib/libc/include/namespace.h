@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.80 2003/09/13 21:27:45 itojun Exp $	*/
+/*	$NetBSD: namespace.h,v 1.81 2003/09/13 22:28:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -371,8 +371,9 @@
 #define psignal			_psignal
 #define pthread_atfork		_pthread_atfork
 #define putenv			_putenv
-#define pwcache_userdb		_pwcache_userdb
+#define pw_dup			_pw_dup
 #define pwcache_groupdb		_pwcache_groupdb
+#define pwcache_userdb		_pwcache_userdb
 #define pwrite			_pwrite
 #define qabs			_qabs
 #define qdiv			_qdiv
