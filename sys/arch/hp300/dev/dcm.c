@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.32 1996/10/14 07:14:14 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.33 1996/12/09 03:14:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -332,7 +332,7 @@ dcmattach(hd)
 	sc->sc_flags |= DCM_ACTIVE;
 
 	/* Establish the interrupt handler. */
-	isrlink(dcmintr, sc, hd->hp_ipl, ISRPRI_TTY);
+	(void) isrlink(dcmintr, sc, hd->hp_ipl, ISRPRI_TTY);
 
 	if (dcmistype == DIS_TIMER)
 		dcmsetischeme(brd, DIS_RESET|DIS_TIMER);
