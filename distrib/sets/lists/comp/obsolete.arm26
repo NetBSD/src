@@ -1,5 +1,7 @@
-# $NetBSD: obsolete.arm26,v 1.4 2001/07/28 19:22:57 bjh21 Exp $
+# $NetBSD: obsolete.arm26,v 1.5 2001/11/24 02:09:11 thorpej Exp $
 /usr/include/arm/arm32/bus.h
 /usr/include/arm/arm32/sysarch.h
 /usr/include/arm26/armreg.h
+/usr/include/arm26/pte.h
 /usr/include/arm26/spl.h
+/usr/include/arm26/undefined.h
