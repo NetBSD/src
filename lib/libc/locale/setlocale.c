@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.21 2000/09/09 20:50:33 veego Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.22 2000/12/20 11:44:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.21 2000/09/09 20:50:33 veego Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.22 2000/12/20 11:44:36 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,6 +93,11 @@ size_t __mb_cur_max = 1;
  */
 static char new_categories[_LC_LAST][32];
 
+/*
+ * Backup area to back out changes on failure
+ */
+static char saved_categories[_LC_LAST][32];
+
 static char current_locale_string[_LC_LAST * 33];
 static char *PathLocale;
 
@@ -104,7 +109,7 @@ __setlocale_mb_len_max_32(category, locale)
 	int category;
 	const char *locale;
 {
-	int i;
+	int i, j;
 	size_t len;
 	char *env, *r;
 
@@ -183,9 +188,20 @@ __setlocale_mb_len_max_32(category, locale)
 	if (category)
 		return (loadlocale(category));
 
-	for (i = 1; i < _LC_LAST; ++i)
-		(void) loadlocale(i);
-
+	for (i = 1; i < _LC_LAST; ++i) {
+		(void)strlcpy(saved_categories[i], current_categories[i],
+		    sizeof(saved_categories[i]));
+		if (loadlocale(i) == NULL) {
+			for (j = 1; j < i; j++) {
+				(void)strlcpy(new_categories[j],
+				     saved_categories[j],
+				     sizeof(new_categories[j]));
+				/* XXX can fail too */
+				(void)loadlocale(j);
+			}
+			return (NULL);
+		}
+	}
 	return (currentlocale());
 }
 
