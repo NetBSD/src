@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.53 2000/05/28 00:19:59 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.54 2000/05/29 20:13:53 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -4022,9 +4022,12 @@ get_scb:
 
 	channel = SIM_CHANNEL(ahc, xs->sc_link);
 	if (ahc->inited_channels[channel - 'A'] == 0) {
-		s = splbio();
-		ahc_reset_channel(ahc, channel, TRUE);
-		splx(s);
+		if ((channel == 'A' && (ahc->flags & AHC_RESET_BUS_A)) ||
+		    (channel == 'B' && (ahc->flags & AHC_RESET_BUS_B))) {
+			s = splbio();
+			ahc_reset_channel(ahc, channel, TRUE);
+			splx(s);
+		}
 		ahc->inited_channels[channel - 'A'] = 1;
 	}
 
