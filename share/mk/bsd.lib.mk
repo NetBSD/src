@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.180 2001/06/01 17:49:33 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.181 2001/06/07 15:28:55 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -148,8 +148,8 @@ MKPICLIB?= yes
 .if ${OBJECT_FMT} == "ELF"
 SHLIB_SOVERSION=${SHLIB_MAJOR}
 SHLIB_SHFLAGS=-soname lib${LIB}.so.${SHLIB_SOVERSION}
-SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
-SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
+SHLIB_LDSTARTFILE= ${DESTDIR}${LIBDIR}/crtbeginS.o
+SHLIB_LDENDFILE= ${DESTDIR}${LIBDIR}/crtendS.o
 .endif
 
 CFLAGS+=	${COPTS}
