@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.5 2002/09/18 02:35:08 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.6 2002/09/26 18:54:30 thorpej Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -39,7 +39,6 @@
 
 include <sys/param.h>
 include <sys/buf.h>
-include <sys/map.h>
 include <sys/proc.h>
 include <sys/sched.h>
 include <sys/mbuf.h>
