@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.18 2002/02/02 12:34:39 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.19 2002/04/12 04:44:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.18 2002/02/02 12:34:39 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.19 2002/04/12 04:44:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,6 +430,10 @@ next_file(ARCHD *arcn)
 	 * from specfile info, and jump below to complete setup of arcn.
 	 */
 	if (Mflag) {
+		int	optionalfake;
+
+ next_ftnode:
+		optionalfake = 0;
 		if (ftnode == NULL)		/* tree is empty */
 			return (-1);
 
@@ -450,6 +454,9 @@ next_file(ARCHD *arcn)
 		ftent = &Mftent;
 						/* look for existing file */
 		if (lstat(Mftent.fts_path, &statbuf) == -1) {
+			if (ftnode->flags & F_OPT)
+				optionalfake = 1;
+
 						/* missing: fake up stat info */
 			memset(&statbuf, 0, sizeof(statbuf));
 			statbuf.st_dev = MFTENT_DUMMY_DEV;
@@ -543,6 +550,8 @@ next_file(ARCHD *arcn)
 				}
 			}
 		} while (ftnode != NULL && ftnode->flags & F_VISIT);
+		if (optionalfake)	/* skip optional faked up entries */
+			goto next_ftnode;
 		goto got_ftent;
 	}
 #endif	/* SMALL */
