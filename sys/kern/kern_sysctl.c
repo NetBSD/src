@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.70 2000/06/03 20:42:42 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.71 2000/06/13 01:27:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1220,6 +1220,11 @@ again:
 				continue;
 			break;
 
+		case KERN_PROC_SESSION:
+			if (p->p_session->s_sid != (pid_t)arg)
+				continue;
+			break;
+
 		case KERN_PROC_TTY:
 			if (arg == KERN_PROC_TTY_REVOKE) {
 				if ((p->p_flag & P_CONTROLT) == 0 ||
@@ -1243,6 +1248,24 @@ again:
 			if (p->p_cred->p_ruid != (uid_t)arg)
 				continue;
 			break;
+
+		case KERN_PROC_GID:
+			if (p->p_ucred->cr_gid != (uid_t)arg)
+				continue;
+			break;
+
+		case KERN_PROC_RGID:
+			if (p->p_cred->p_rgid != (uid_t)arg)
+				continue;
+			break;
+
+		case KERN_PROC_ALL:
+			/* allow everything */
+			break;
+
+		default:
+			error = EINVAL;
+			goto cleanup;
 		}
 		if (type == KERN_PROC) {
 			if (buflen >= sizeof(struct kinfo_proc)) {
