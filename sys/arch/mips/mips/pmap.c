@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134.2.2 2001/11/04 03:41:24 shin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.134.2.3 2001/11/11 03:47:38 shin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.2.2 2001/11/04 03:41:24 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.2.3 2001/11/11 03:47:38 shin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1628,8 +1628,10 @@ pmap_copy_page(src, dst)
 	 *
 	 * XXXJRT -- This is totally disgusting.
 	 */
-	if (CPUISMIPS3)
+	if (CPUISMIPS3) {
+		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), NBPG);
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), NBPG);
+	}
 #endif
 }
 
