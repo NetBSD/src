@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.15 2002/07/22 11:06:01 wiz Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.16 2002/08/06 12:09:42 grant Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -49,7 +49,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 # Standard system options
 
 options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
-options 	INSECURE	# disable kernel security levels
+options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=-600 # hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
