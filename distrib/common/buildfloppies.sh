@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.4 2002/12/21 15:54:49 lukem Exp $
+# $NetBSD: buildfloppies.sh,v 1.5 2003/03/03 14:20:13 dsl Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -126,9 +126,9 @@ if [ ${numdisks} -gt ${maxdisks} ]; then
 	exit 1
 fi
 
+padsize=$(( ${floppysize} * ${maxdisks} ))
+padcount=$(( ${padsize} - ${blocks} ))
 if [ -n "${pad}" ]; then
-	padsize=$(( ${floppysize} * ${maxdisks} ))
-	padcount=$(( ${padsize} - ${blocks} ))
 	echo \
 	    "Writing $(( ${padsize} * 512 )) bytes ($(( ${padsize} / 2 )) KB)" \
 	    "on ${numdisks} disk"$(plural ${numdisks})"," \
@@ -136,7 +136,9 @@ if [ -n "${pad}" ]; then
 	    "($(( ${padcount} / 2 )) KB)"
 else
 	echo "Writing ${bytes} bytes ($(( ${blocks} / 2 )) KB)"\
-	    "on ${numdisks} disk"$(plural ${numdisks})
+	    "on ${numdisks} disk"$(plural ${numdisks})"," \
+	    "free space $(( ${padcount} * 512 )) bytes" \
+	    "($(( ${padcount} / 2 )) KB)"
 fi
 
 #	write disks
