@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.144 2002/05/21 01:38:26 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.144.2.1 2002/11/09 10:21:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -223,6 +223,9 @@ int	copyinstr __P((const void *, void *, size_t, size_t *));
 int	copyoutstr __P((const void *, void *, size_t, size_t *));
 int	copyin __P((const void *, void *, size_t));
 int	copyout __P((const void *, void *, size_t));
+
+int	copyin_proc __P((struct proc *, const void *, void *, size_t));
+int	copyout_proc __P((struct proc *, const void *, void *, size_t));
 
 int	subyte __P((void *, int));
 int	suibyte __P((void *, int));
