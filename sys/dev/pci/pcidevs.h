@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.207 2000/03/21 18:51:43 joda Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.208 2000/03/23 11:18:09 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.200 2000/03/21 18:51:08 joda Exp 
+ *	NetBSD: pcidevs,v 1.201 2000/03/23 11:17:32 ad Exp 
  */
 
 /*
@@ -833,16 +833,8 @@
 #define	PCI_PRODUCT_COMPAQ_QVISION_1280P	0x3033		/* QVision 1280/p */
 #define	PCI_PRODUCT_COMPAQ_QVISION_V2	0x3034		/* QVision */
 #define	PCI_PRODUCT_COMPAQ_TRIFLEX4	0x4000		/* Triflex Host-PCI Bridge */
-#define	PCI_PRODUCT_COMPAQ_SMART2P2	0x4030		/* Smart-2/P RAID */
-#define	PCI_PRODUCT_COMPAQ_SMART2SL	0x4031		/* Smart-2SL RAID */
-#define	PCI_PRODUCT_COMPAQ_SMARTARY_3200	0x4032		/* Smart Array 3200 */
-#define	PCI_PRODUCT_COMPAQ_SMARTARY_3100ES	0x4033		/* Smart Array 3100ES */
-#define	PCI_PRODUCT_COMPAQ_SMARTARY_211	0x4034		/* Smart Array 211 */
-#define	PCI_PRODUCT_COMPAQ_INTEGRATED_ARRAY	0x4040		/* Integrated Array */
-#define	PCI_PRODUCT_COMPAQ_SMARTARY_4200	0x4050		/* Smart Array 4200 */
-#define	PCI_PRODUCT_COMPAQ_SMARTARY_4250ES	0x4051		/* Smart Array 4250ES */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB Controller */
-#define	PCI_PRODUCT_COMPAQ_SMART2P	0xae10		/* Smart-2/P RAID */
+#define	PCI_PRODUCT_COMPAQ_SMART2P	0xae10		/* SMART2P RAID */
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_N10T	0xae34		/* Netelligent 10 T */
 #define	PCI_PRODUCT_COMPAQ_IntNF3P	0xae35		/* Integrated NetFlex 3/P */
