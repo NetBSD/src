@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.5 1995/06/18 01:23:11 cgd Exp $
+#	$NetBSD: files.pci,v 1.6 1995/07/27 04:43:19 mycroft Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -8,7 +8,7 @@
 # but with the correct bus attachment).
 
 #device	pci at mainbus {[bus = -1], [dev = -1]}
-file	dev/pci/pci_subr.c		pci
+file	dev/pci/pci_subr.c		pci needs-flag
 
 # NCR 53C8{10,15,25} SCSI chips
 device	ncr at pci: scsi
