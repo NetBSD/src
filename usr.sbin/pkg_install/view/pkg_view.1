@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.8 2003/08/17 04:55:23 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.9 2003/08/21 01:57:24 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,11 +142,11 @@ Delete the listed packages from
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width indent
-.It Ev PKG_DBDIR
-The standard package database directory,
+.It Ev PKG_DBDIR_DFLT
+The package database directory for the default view,
 .Pa /var/db/pkg ,
 can be overridden by specifying an alternative directory in the
-.Ev PKG_DBDIR
+.Ev PKG_DBDIR_DFLT
 environment variable.
 .It Ev PLIST_IGNORE_FILES
 This can be used to specify files in
