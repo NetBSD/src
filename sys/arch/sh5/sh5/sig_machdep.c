@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.11 2003/01/20 20:07:54 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.12 2003/01/22 13:40:57 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -230,11 +230,20 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
     void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct trapframe *tf;
+	register_t upc;
 
 	tf = l->l_md.md_regs;
+	upc = (register_t)(intptr_t)upcall;
 
-	tf->tf_state.sf_spc = (register_t)(intptr_t)upcall | 1;
+	if (!SH5_EFF_IS_VALID(upc) || (upc & 0x3) == 0x3) {
+		printf("cpu_upcall: warning: bad upcall PC 0x%lx\n",
+		    (long)upc);
+		upcall = (sa_upcall_t)(void *)1;	/* Force fault */
+	}
+
+	tf->tf_state.sf_spc = (register_t)(intptr_t)upcall;
 	tf->tf_state.sf_usr = 0x0007;	/* r0-r23 are dirty */
+	tf->tf_caller.r0 = 0;
 	tf->tf_caller.r2 = (register_t)type;
 	tf->tf_caller.r3 = (register_t)(intptr_t)sas;
 	tf->tf_caller.r4 = (register_t)nevents;
