@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.42 2000/04/21 16:05:50 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.43 2000/04/21 19:51:43 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -61,6 +61,8 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
+
+#define UHUB_INTR_INTERVAL 255	/* ms */
 
 #ifdef UHUB_DEBUG
 #define DPRINTF(x)	if (uhubdebug) logprintf x
@@ -236,7 +238,7 @@ USB_ATTACH(uhub)
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status, 
-		  sizeof(sc->sc_status), uhub_intr, USBD_DEFAULT_INTERVAL);
+		  sizeof(sc->sc_status), uhub_intr, UHUB_INTR_INTERVAL);
 	if (err) {
 		printf("%s: cannot open interrupt pipe\n", 
 		       USBDEVNAME(sc->sc_dev));
