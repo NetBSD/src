@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.4 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: border.c,v 1.5 2000/04/18 22:45:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,28 +114,44 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 	/* Sides */
 	for (i = 1; i < endy; i++) {
 		win->lines[i]->line[0].ch = (wchar_t) left & __CHARTEXT;
+		win->lines[i]->line[0].bch = win->bch;
 		win->lines[i]->line[0].attr = (attr_t) left & __ATTRIBUTES;
+		win->lines[i]->line[0].battr = win->battr;
 		win->lines[i]->line[endx].ch = (wchar_t) right & __CHARTEXT;
+		win->lines[i]->line[endx].bch = win->bch;
 		win->lines[i]->line[endx].attr = (attr_t) right & __ATTRIBUTES;
+		win->lines[i]->line[endx].battr = win->battr;
 	}
 	for (i = 1; i < endx; i++) {
 		fp[i].ch = (wchar_t) top & __CHARTEXT;
+		fp[i].bch = win->bch;
 		fp[i].attr = (attr_t) top & __ATTRIBUTES;
+		fp[i].battr = win->battr;
 		lp[i].ch = (wchar_t) bottom & __CHARTEXT;
+		lp[i].bch = win->bch;
 		lp[i].attr = (attr_t) bottom & __ATTRIBUTES;
+		lp[i].battr = win->battr;
 	}
 
 	/* Corners */
 	if (!(win->maxx == LINES && win->maxy == COLS &&
 	    (win->flags & __SCROLLOK) && (win->flags & __SCROLLWIN))) {
 		fp[0].ch = (wchar_t) topleft & __CHARTEXT;
+		fp[0].bch = win->bch;
 		fp[0].attr = (attr_t) topleft & __ATTRIBUTES;
+		fp[0].battr = win->battr;
 		fp[endx].ch = (wchar_t) topright & __CHARTEXT;
+		fp[endx].bch = win->bch;
 		fp[endx].attr = (attr_t) topright & __ATTRIBUTES;
+		fp[endx].battr = win->battr;
 		lp[0].ch = (wchar_t) botleft & __CHARTEXT;
+		lp[0].bch = win->bch;
 		lp[0].attr = (attr_t) botleft & __ATTRIBUTES;
+		lp[0].battr = win->battr;
 		lp[endx].ch = (wchar_t) botright & __CHARTEXT;
+		lp[endx].bch = win->bch;
 		lp[endx].attr = (attr_t) botright & __ATTRIBUTES;
+		lp[endx].battr = win->battr;
 	}
 	__touchwin(win);
 	return (OK);

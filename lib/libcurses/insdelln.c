@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.4 2000/04/16 05:48:25 mycroft Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.5 2000/04/18 22:45:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,9 @@ winsdelln(WINDOW *win, int lines)
 		for (y = win->cury - 1 + lines; y >= win->cury; --y)
 			for (i = 0; i < win->maxx; i++) {
 				win->lines[y]->line[i].ch = ' ';
+				win->lines[y]->line[i].bch = win->bch;
 				win->lines[y]->line[i].attr = 0;
+				win->lines[y]->line[i].battr = win->battr;
 			}
 		for (y = win->maxy - 1; y >= win->cury; --y)
 			__touchline(win, y, 0, (int) win->maxx - 1, 0);
@@ -126,7 +128,9 @@ winsdelln(WINDOW *win, int lines)
 		for (y = win->maxy - lines; y < win->maxy; y++)
 			for (i = 0; i < win->maxx; i++) {
 				win->lines[y]->line[i].ch = ' ';
+				win->lines[y]->line[i].bch = win->bch;
 				win->lines[y]->line[i].attr = 0;
+				win->lines[y]->line[i].battr = win->battr;
 			}
 		for (y = win->cury; y < win->maxy; y++)
 			__touchline(win, y, 0, (int) win->maxx - 1, 0);
