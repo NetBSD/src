@@ -24,6 +24,7 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the 'standard' number of each type.
+#	floppy	devices to be put on install floppies
 #	std	standard devices
 #	local	configuration specific devices
 #
@@ -32,23 +33,24 @@
 #
 # Disks:
 #	sd*	SCSI disks
-#	cd*	SCSI CD-ROM		(XXX - not yet)
-#	mcd*	Mitsumi CD-ROM
-#	vnd*	"file" pseudo-disks	(XXX - not yet)
+#	cd*	SCSI CD-ROM
+#	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
 #
 # Terminal ports:
-#	tty*	serial ports
+#	tty*	rs232 devices
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 #
-# Call units:
+# Printers:
+#	lpt*	Matthias's lp interface
 #
 # Special purpose devices:
+#	fd	file descriptors
 #	bpf*	packet filter
-#	tuy*	network tunnel driver
-#	lkm	loadable kernel modules interface	(XXX - not yet)
+#	lkm	loadable kernel modules interface
+#	tun*	network tunnel driver
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -58,15 +60,16 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std sd0 sd1 sd2 st0 st1
-	sh MAKEDEV tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7 pty0 pty1
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 vnd0 vnd1
+	sh MAKEDEV std fd sd0 sd1 sd2 st0 st1 cd0 cd1
+	sh MAKEDEV tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7
+	sh MAKEDEV pty0 pty1 vnd0 vnd1 bpf0 bpf1 bpf2 bpf3
+	sh MAKEDEV tun0 tun1 tun2 lkm
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV local
-# Unknown which of the following will eventually be done ....
-#	sh MAKEDEV ch0 cd0 cd1
-#	sh MAKEDEV mcd0 
-#	sh MAKEDEV mms0 lms0 lkm
+	;;
+
+floppy)
+	sh MAKEDEV std sd0 sd1 sd2 tty0 tty1 tty2 tty3
+	sh MAKEDEV st0 st1 cd0 cd1 rd0
 	;;
 
 std)
@@ -77,12 +80,14 @@ std)
 	mknod mem		c 2 0	; chmod 640 mem	; chgrp kmem mem
 	mknod null		c 2 2	; chmod 666 null
 	mknod zero		c 2 12	; chmod 666 zero
-	mknod io		c 2 14	; chmod 640 io ; chgrp kmem io
 	mknod tty		c 1 0	; chmod 666 tty
 	mknod klog		c 7 0	; chmod 600 klog
 	mknod stdin		c 11 0	; chmod 666 stdin
 	mknod stdout		c 11 1	; chmod 666 stdout
 	mknod stderr		c 11 2	; chmod 666 stderr
+	;;
+
+fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
 	(cd fd && eval `echo "" | awk ' BEGIN { \
@@ -93,7 +98,15 @@ std)
 	chmod 666 fd/*
 	;;
 
-
+rd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	mknod rd${unit} b 3 $unit
+	mknod rrd${unit} c 9 $unit
+	chgrp operator rd${unit} rrd${unit}
+	chmod 640 rd${unit} rrd${unit}
+	umask 77
+	;;
+	
 sd*|vnd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
@@ -102,38 +115,29 @@ sd*|vnd*|ccd*)
 	ccd*) name=ccd; blk=6; chr=18;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	echo unit=$unit
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
-		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
-		mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
-		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
-		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
-		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
-		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
-		;;
-	*)
-		echo bad unit for disk in: $i
-		;;
-	esac
+	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
+	mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
+	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
+	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
+	mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
+	mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
+	mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
+	mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
+	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
+	mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
+	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
+	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
+	mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
+	mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
+	mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
+	mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
+	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 	umask 77
 	;;
 
 tty*)
 	unit=`expr $i : '...\(.*\)'`
-	rm -f tty0$unit
 	mknod tty0$unit c 8 $unit
 	chown uucp.wheel tty0$unit
 	;;
@@ -158,9 +162,6 @@ pty*)
 				    rm -f pty%s%x; mknod pty%s%x c 6 %d; ", \
 				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
 		umask 77
-		if [ $class = 1 ]; then
-			mv ttyqf ttyv0; mv ptyqf ptyv0
-		fi
 		;;
 	esac
 	;;
@@ -172,73 +173,48 @@ st*)
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
-		mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
-		mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
-		mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
-		mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-		mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
-		mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
-		mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-		chgrp operator ${name}${unit} n${name}${unit} \
-			e$name$unit en$name$unit \
-			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
-		chmod 640 ${name}${unit} n${name}${unit} \
-			e$name$unit en$name$unit \
-			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
-		;;
-	*)
-		echo bad unit for tape in: $i
-		;;
-	esac
+	mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
+	mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
+	mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
+	mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
+	mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
+	mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
+	mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
+	mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
+	chgrp operator ${name}${unit} n${name}${unit} \
+		e$name$unit en$name$unit \
+		r${name}${unit} nr${name}${unit} \
+		er${name}${unit} enr${name}${unit} 
+	chmod 640 ${name}${unit} n${name}${unit} \
+		e$name$unit en$name$unit \
+		r${name}${unit} nr${name}${unit} \
+		er${name}${unit} enr${name}${unit} 
 	umask 77
 	;;
 
-#ch*)
-#	umask 2 ; unit=`expr $i : '..\(.*\)'`
-#	case $i in
-#	ch*) name=ch;  chr=17;;
-#	esac
-#	rm -f $name$unit
-#	case $unit in
-#	0|1|2|3|4|5|6)
-#		mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-#		chgrp operator ${name}${unit}
-#		chmod 640 ${name}${unit}
-#		;;
-#	*)
-#		echo bad unit for media changer in: $i
-#		;;
-#	esac
-#	umask 77
-#	;;
+cd*)
+	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
+	case $i in
+        cd*) name=cd; blk=4; chr=12;;
+	esac
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
+	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
+	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
+	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
+	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+	umask 77
+	;;
 
-#cd*|mcd*)
-#	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
-#	case $i in
-#	cd*) name=cd; blk=4; chr=12;;
-#	mcd*) name=mcd; blk=7; chr=39;;
-#	esac
-#	rm -f $name$unit? r$name$unit?
-#	case $unit in
-#	0|1|2|3|4|5|6)
-#		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-#		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-#		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-#		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-#		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-#		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
-#		;;
-#	*)
-#		echo bad unit for disk in: $i
-#		;;
-#	esac
-#	umask 77
-#	;;
+lpt*)
+	unit=`expr $i : 'lpt\(.*\)'`
+	rm -f lpt${unit} lpt${unit}p
+	mknod lpt${unit}  c 17 `expr $unit + 64`
+	mknod lpt${unit}p c 17 $unit
+	chmod 0220 lpt${unit} lpt${unit}p
+	chown root.wheel lpt$unit
+	;;
 
 bpf*)
 	unit=`expr $i : 'bpf\(.*\)'`
@@ -255,12 +231,12 @@ tun*)
 	chown root.wheel tun$unit
 	;;
 
-#lkm)
-#	rm -f lkm
-#	mknod lkm c 28 0
-#	chown root.kmem lkm
-#	chmod 640 lkm
-#	;;
+lkm)
+	rm -f lkm
+	mknod lkm c 18 0
+	chown root.kmem lkm
+	chmod 640 lkm
+	;;
 
 local)
 	umask 0
