@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.38.2.1 2002/01/10 20:04:22 thorpej Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.38.2.2 2002/06/23 17:51:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.38.2.1 2002/01/10 20:04:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.38.2.2 2002/06/23 17:51:47 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -94,6 +94,10 @@ int nqsrv_clockskew = NQ_CLOCKSKEW;
 int nqsrv_writeslack = NQ_WRITESLACK;
 int nqsrv_maxlease = NQ_MAXLEASE;
 int nqsrv_maxnumlease = NQ_MAXNUMLEASE;
+
+struct nqleasehead nqtimerhead;
+struct nqfhhashhead *nqfhhashtbl;
+u_long nqfhhash;
 
 /*
  * Signifies which rpcs can have piggybacked lease requests

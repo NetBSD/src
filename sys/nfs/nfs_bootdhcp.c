@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.17.2.1 2002/01/10 20:04:21 thorpej Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.17.2.2 2002/06/23 17:51:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.17.2.1 2002/01/10 20:04:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.17.2.2 2002/06/23 17:51:47 jdolecek Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -341,13 +341,11 @@ bootpcheck(m, context)
 	/*
 	 * don't make first checks more expensive than necessary
 	 */
-#define ofs(what, elem) ((int)&(((what *)0)->elem))
-	if (m->m_len < ofs(struct bootp, bp_secs)) {
-		m = m_pullup(m, ofs(struct bootp, bp_secs));
+	if (m->m_len < offsetof(struct bootp, bp_sname)) {
+		m = m_pullup(m, offsetof(struct bootp, bp_sname));
 		if (m == NULL)
 			return (-1);
 	}
-#undef ofs
 	bootp = mtod(m, struct bootp*);
 
 	if (bootp->bp_op != BOOTREPLY) {
@@ -411,17 +409,17 @@ bootpcheck(m, context)
 		}
 		switch (tag) {
 #ifdef NFS_BOOT_DHCP
-		    case TAG_DHCP_MSGTYPE:
+		case TAG_DHCP_MSGTYPE:
 			if (*p != bpc->expected_dhcpmsgtype)
 				return (-1);
 			bpc->dhcp_ok = 1;
 			break;
-		    case TAG_SERVERID:
+		case TAG_SERVERID:
 			memcpy(&bpc->dhcp_serverip.s_addr, p,
 			      sizeof(bpc->dhcp_serverip.s_addr));
 			break;
 #endif
-		    default:
+		default:
 			break;
 		}
 		p += len;
@@ -448,6 +446,10 @@ bootpc_call(nd, procp)
 	u_char *haddr;
 	u_char hafmt, halen;
 	struct bootpcontext bpc;
+#ifdef NFS_BOOT_DHCP
+	char vci[64];
+	int vcilen;
+#endif
 
 	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
 	if (error) {
@@ -507,6 +509,26 @@ bootpc_call(nd, procp)
 		goto out;
 	}
 
+	/*
+	 * Set some TTL so we can boot through routers.
+	 * Real BOOTP forwarding agents don't need this; they obey "bp_hops"
+	 * and set "bp_giaddr", thus rewrite the packet anyway.
+	 * The "helper-address" feature of some popular router vendor seems
+	 * to do simple IP forwarding and drops packets with (ip_ttl == 1).
+	 */
+	{	u_char *opt;
+		m = m_get(M_WAIT, MT_SOOPTS);
+		opt = mtod(m, u_char *);
+		m->m_len = sizeof(*opt);
+		*opt = 7;
+		error = sosetopt(so, IPPROTO_IP, IP_MULTICAST_TTL, m);
+		m = NULL;	/* was consumed */
+	}
+	if (error) {
+		DPRINT("IP_MULTICAST_TTL");
+		goto out;
+	}
+
 	/* Set the receive timeout for the socket. */
 	if ((error = nfs_boot_setrecvtimo(so))) {
 		DPRINT("SO_RCVTIMEO");
@@ -559,7 +581,15 @@ bootpc_call(nd, procp)
 	bootp->bp_vend[4] = TAG_DHCP_MSGTYPE;
 	bootp->bp_vend[5] = 1;
 	bootp->bp_vend[6] = DHCPDISCOVER;
-	bootp->bp_vend[7] = TAG_END;
+	/*
+	 * Insert a NetBSD Vendor Class Identifier option.
+	 */
+	sprintf(vci, "%s:%s:kernel:%s", ostype, MACHINE, osrelease);
+	vcilen = strlen(vci);
+	bootp->bp_vend[7] = TAG_CLASSID;
+	bootp->bp_vend[8] = vcilen;
+	memcpy(&bootp->bp_vend[9], vci, vcilen);
+	bootp->bp_vend[9 + vcilen] = TAG_END;
 #else
 	bootp->bp_vend[4] = TAG_END;
 #endif
@@ -594,7 +624,15 @@ bootpc_call(nd, procp)
 		bootp->bp_vend[20] = 4;
 		leasetime = htonl(300);
 		memcpy(&bootp->bp_vend[21], &leasetime, 4);
-		bootp->bp_vend[25] = TAG_END;
+		/*
+		 * Insert a NetBSD Vendor Class Identifier option.
+		 */
+		sprintf(vci, "%s:%s:kernel:%s", ostype, MACHINE, osrelease);
+		vcilen = strlen(vci);
+		bootp->bp_vend[25] = TAG_CLASSID;
+		bootp->bp_vend[26] = vcilen;
+		memcpy(&bootp->bp_vend[27], vci, vcilen);
+		bootp->bp_vend[27 + vcilen] = TAG_END;
 
 		bpc.expected_dhcpmsgtype = DHCPACK;
 

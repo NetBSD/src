@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.14.8.1 2002/01/10 20:02:40 thorpej Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.14.8.2 2002/06/23 17:50:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.14.8.1 2002/01/10 20:02:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.14.8.2 2002/06/23 17:50:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -82,7 +82,7 @@ in_cksum(m, len)
 			 * of a word spanning between this mbuf and the
 			 * last mbuf.
 			 *
-			 * s_util.c[0] is already saved when scanning previous 
+			 * s_util.c[0] is already saved when scanning previous
 			 * mbuf.
 			 */
 			s_util.c[1] = *(u_int8_t *)w;

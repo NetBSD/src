@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.23.2.1 2002/01/10 19:54:22 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.23.2.2 2002/06/23 17:46:18 jdolecek Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.23.2.1 2002/01/10 19:54:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.23.2.2 2002/06/23 17:46:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -500,11 +500,11 @@ cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	tp = cy->cy_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	/* XXX should not allow dropping DTR when dialin? */
@@ -560,7 +560,7 @@ cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 
 	return 0;

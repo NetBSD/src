@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.91.2.4 2002/03/16 16:01:49 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.91.2.5 2002/06/23 17:49:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.4 2002/03/16 16:01:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.5 2002/06/23 17:49:32 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -203,6 +203,10 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 #endif
 	case CTL_PROC:
 		fn = proc_sysctl;
+		break;
+
+	case CTL_EMUL:
+		fn = emul_sysctl;
 		break;
 	default:
 		return (EOPNOTSUPP);
@@ -635,7 +639,7 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 /*
  * Debugging related system variables.
  */
-struct ctldebug debug0, debug1, debug2, debug3, debug4;
+struct ctldebug /* debug0, */ /* debug1, */ debug2, debug3, debug4;
 struct ctldebug debug5, debug6, debug7, debug8, debug9;
 struct ctldebug debug10, debug11, debug12, debug13, debug14;
 struct ctldebug debug15, debug16, debug17, debug18, debug19;
@@ -655,8 +659,10 @@ debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* all sysctl names at this level are name and field */
 	if (namelen != 2)
 		return (ENOTDIR);		/* overloaded */
+	if (name[0] >= CTL_DEBUG_MAXID)
+		return (EOPNOTSUPP);
 	cdp = debugvars[name[0]];
-	if (name[0] >= CTL_DEBUG_MAXID || cdp->debugname == 0)
+	if (cdp->debugname == 0)
 		return (EOPNOTSUPP);
 	switch (name[1]) {
 	case CTL_DEBUG_NAME:
@@ -814,6 +820,58 @@ cleanup:
 	return (EINVAL);
 }
 
+int
+emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
+{
+	static struct {
+		const char *name;
+		int  type;
+	} emulations[] = CTL_EMUL_NAMES;
+	const struct emul *e;
+	const char *ename;
+#ifdef LKM
+	extern struct lock exec_lock;	/* XXX */
+	int error;
+#else
+	extern int nexecs_builtin;
+	extern const struct execsw execsw_builtin[];
+	int i;
+#endif
+
+	/* all sysctl names at this level are name and field */
+	if (namelen < 2)
+		return (ENOTDIR);		/* overloaded */
+
+	if ((u_int) name[0] >= EMUL_MAXID || name[0] == 0)
+		return (EOPNOTSUPP);
+
+	ename = emulations[name[0]].name;
+
+#ifdef LKM
+	lockmgr(&exec_lock, LK_SHARED, NULL);
+	if ((e = emul_search(ename))) {
+		error = (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
+				newp, newlen, p);
+	} else
+		error = EOPNOTSUPP;
+	lockmgr(&exec_lock, LK_RELEASE, NULL);
+
+	return (error);
+#else
+	for (i = 0; i < nexecs_builtin; i++) {
+	    e = execsw_builtin[i].es_emul;
+	    if (e == NULL || strcmp(ename, e->e_name) != 0 ||
+		e->e_sysctl != NULL)
+		continue;
+
+	    return (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
+					newp, newlen, p);
+	}
+
+	return (EOPNOTSUPP);
+#endif
+}
 /*
  * Convenience macros.
  */
@@ -1123,7 +1181,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 	struct shm_sysctl_info *shmsi;
 #endif
 	size_t infosize, dssize, tsize, buflen;
-	void *buf = NULL, *buf2;
+	void *buf = NULL;
 	char *start;
 	int32_t nds;
 	int i, error, ret;
@@ -1191,21 +1249,18 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 #ifdef SYSVMSG
 	case KERN_SYSVIPC_MSG_INFO:
 		msgsi = (struct msg_sysctl_info *)buf;
-		buf2 = &msgsi->msgids[0];
 		msgsi->msginfo = msginfo;
 		break;
 #endif
 #ifdef SYSVSEM
 	case KERN_SYSVIPC_SEM_INFO:
 		semsi = (struct sem_sysctl_info *)buf;
-		buf2 = &semsi->semids[0];
 		semsi->seminfo = seminfo;
 		break;
 #endif
 #ifdef SYSVSHM
 	case KERN_SYSVIPC_SHM_INFO:
 		shmsi = (struct shm_sysctl_info *)buf;
-		buf2 = &shmsi->shmids[0];
 		shmsi->shminfo = shminfo;
 		break;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.2.2.2 2002/02/11 20:09:40 jdolecek Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.2.2.3 2002/06/23 17:46:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.2.2.2 2002/02/11 20:09:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.2.2.3 2002/06/23 17:46:02 jdolecek Exp $");
 
 #define BTNMGRDEBUG
 
@@ -289,7 +289,7 @@ btnmgr_wskbd_ioctl(void *scx, u_long cmd, caddr_t data, int flag,
 		return (0);
 #endif
 	}
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 #ifdef notyet

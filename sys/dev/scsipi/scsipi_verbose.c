@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.12.2.2 2002/01/10 19:58:24 thorpej Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.12.2.3 2002/06/23 17:48:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.12.2.2 2002/01/10 19:58:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.12.2.3 2002/06/23 17:48:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -274,6 +274,8 @@ static const struct {
 { 0x62, 0x00, "Scan Head Positioning Error" },
 { 0x63, 0x00, "End Of User Area Encountered On This Track" },
 { 0x64, 0x00, "Illegal Mode For This Track" },
+{ 0x6f, 0x03, "Read of scrambled Sector without Authentication" },
+{ 0x6f, 0x04, "Media Region Code is mismatched to Logical Unit Region" },
 { 0x00, 0x00, NULL }
 };
 

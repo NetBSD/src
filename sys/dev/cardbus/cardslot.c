@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.14.2.1 2002/01/10 19:53:45 thorpej Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.14.2.2 2002/06/23 17:45:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.14.2.1 2002/01/10 19:53:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.14.2.2 2002/06/23 17:45:56 jdolecek Exp $");
 
 #include "opt_cardslot.h"
 
@@ -301,7 +301,7 @@ cardslot_event_thread(arg)
 			(void) tsleep(&sc->sc_events, PWAIT, "cardslotev", 0);
 			continue;
 		}
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_events, ce, ce_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_events, ce_q);
 		splx(s);
 
 		if (IS_CARDSLOT_INSERT_REMOVE_EV(ce->ce_type)) {
@@ -320,9 +320,11 @@ cardslot_event_thread(arg)
 					break;
 				}
 				if (ce2->ce_type == ce->ce_type) {
-					SIMPLEQ_REMOVE_HEAD(&sc->sc_events, ce1, ce_q);
+					SIMPLEQ_REMOVE_HEAD(&sc->sc_events,
+					    ce_q);
 					free(ce1, M_TEMP);
-					SIMPLEQ_REMOVE_HEAD(&sc->sc_events, ce2, ce_q);
+					SIMPLEQ_REMOVE_HEAD(&sc->sc_events,
+					    ce_q);
 					free(ce2, M_TEMP);
 				}
 			}

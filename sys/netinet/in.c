@@ -1,9 +1,9 @@
-/*	$NetBSD: in.c,v 1.66.2.3 2002/03/16 16:02:11 jdolecek Exp $	*/
+/*	$NetBSD: in.c,v 1.66.2.4 2002/06/23 17:50:42 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.66.2.3 2002/03/16 16:02:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.66.2.4 2002/06/23 17:50:42 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -136,7 +136,6 @@ static int in_mask2len __P((struct in_addr *));
 static void in_len2mask __P((struct in_addr *, int));
 static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 	struct ifnet *, struct proc *));
-static int in_rt_walktree __P((struct radix_node *, void *));
 
 static int in_addprefix __P((struct in_ifaddr *, int));
 static int in_scrubprefix __P((struct in_ifaddr *));
@@ -541,32 +540,12 @@ in_control(so, cmd, data, ifp, p)
 	return (0);
 }
 
-static int
-in_rt_walktree(rn, v)
-	struct radix_node *rn;
-	void *v;
-{
-	struct in_ifaddr *ia = (struct in_ifaddr *)v;
-	struct rtentry *rt = (struct rtentry *)rn;
-	int error;
-
-	if (rt->rt_ifa == &ia->ia_ifa) {
-		if ((error = rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
-		    rt_mask(rt), rt->rt_flags, NULL)) != 0) {
-			log(LOG_WARNING, "ifa_rt_walktree: unable to delete "
-			    "rtentry. error= %d", error);
-		}
-	}
-	return 0;
-}
-
 void
 in_purgeaddr(ifa, ifp)
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
 {
 	struct in_ifaddr *ia = (void *) ifa;
-	struct radix_node_head *rnh;
 
 	in_ifscrub(ifp, ia);
 	LIST_REMOVE(ia, ia_hash);
@@ -583,10 +562,6 @@ in_purgeaddr(ifa, ifp)
 	    ifp->if_output != if_nulloutput)
 		in_savemkludge(ia);
 	IFAFREE(&ia->ia_ifa);
-
-	if ((rnh = rt_tables[AF_INET]) != NULL)
-		(*rnh->rnh_walktree)(rnh, in_rt_walktree, ifa);
-
 	in_setmaxmtu();
 }
 
@@ -1046,9 +1021,10 @@ in_broadcast(in, ifp)
 #define ia (ifatoia(ifa))
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
+		    !in_hosteq(in, ia->ia_addr.sin_addr) &&
 		    (in_hosteq(in, ia->ia_broadaddr.sin_addr) ||
 		     in_hosteq(in, ia->ia_netbroadcast) ||
-		     (hostzeroisbroadcast && 
+		     (hostzeroisbroadcast &&
 		      /*
 		       * Check for old-style (host 0) broadcast.
 		       */

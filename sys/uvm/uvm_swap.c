@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.52.2.3 2002/03/16 16:02:30 jdolecek Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.52.2.4 2002/06/23 17:52:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.52.2.3 2002/03/16 16:02:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.52.2.4 2002/06/23 17:52:19 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -104,7 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.52.2.3 2002/03/16 16:02:30 jdolecek E
  *  [1] SWAP_NSWAP: returns the number of swap devices currently configured
  *  [2] SWAP_STATS: given a pointer to an array of swapent structures
  *	(passed in via "arg") of a size passed in via "misc" ... we load
- *	the current swap config into the array.
+ *	the current swap config into the array. The actual work is done 
+ *	in the uvm_swap_stats(9) function.
  *  [3] SWAP_ON: given a pathname in arg (could be device or file) and a
  *	priority in "misc", start swapping on it.
  *  [4] SWAP_OFF: as SWAP_ON, but stops swapping to a device
@@ -456,7 +457,7 @@ sys_swapctl(p, v, retval)
 	struct swapent *sep;
 	char	userpath[PATH_MAX + 1];
 	size_t	len;
-	int	count, error, misc;
+	int	error, misc;
 	int	priority;
 	UVMHIST_FUNC("sys_swapctl"); UVMHIST_CALLED(pdhist);
 
@@ -494,53 +495,20 @@ sys_swapctl(p, v, retval)
 	    || SCARG(uap, cmd) == SWAP_OSTATS
 #endif
 	    ) {
-		sep = (struct swapent *)SCARG(uap, arg);
-		count = 0;
-
-		LIST_FOREACH(spp, &swap_priority, spi_swappri) {
-			for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
-			     sdp != (void *)&spp->spi_swapdev && misc-- > 0;
-			     sdp = CIRCLEQ_NEXT(sdp, swd_next)) {
-			  	/*
-				 * backwards compatibility for system call.
-				 * note that we use 'struct oswapent' as an
-				 * overlay into both 'struct swapdev' and
-				 * the userland 'struct swapent', as we
-				 * want to retain backwards compatibility
-				 * with NetBSD 1.3.
-				 */
-				sdp->swd_ose.ose_inuse =
-				    btodb((u_int64_t)sdp->swd_npginuse <<
-				    PAGE_SHIFT);
-				error = copyout(&sdp->swd_ose, sep,
-						sizeof(struct oswapent));
-
-				/* now copy out the path if necessary */
+		misc = MIN(uvmexp.nswapdev, misc);
 #if defined(COMPAT_13)
-				if (error == 0 && SCARG(uap, cmd) == SWAP_STATS)
-#else
-				if (error == 0)
+		if (SCARG(uap, cmd) == SWAP_OSTATS)
+			len = sizeof(struct oswapent) * misc;
+		else
 #endif
-					error = copyout(sdp->swd_path,
-					    &sep->se_path, sdp->swd_pathlen);
+			len = sizeof(struct swapent) * misc;
+		sep = (struct swapent *)malloc(len, M_TEMP, M_WAITOK);
 
-				if (error)
-					goto out;
-				count++;
-#if defined(COMPAT_13)
-				if (SCARG(uap, cmd) == SWAP_OSTATS)
-					sep = (struct swapent *)
-					    ((struct oswapent *)sep + 1);
-				else
-#endif
-					sep++;
-			}
-		}
+		uvm_swap_stats(SCARG(uap, cmd), sep, misc, retval);
+		error = copyout(sep, (void *)SCARG(uap, arg), len);
 
+		free(sep, M_TEMP);
 		UVMHIST_LOG(pdhist, "<- done SWAP_STATS", 0, 0, 0, 0);
-
-		*retval = count;
-		error = 0;
 		goto out;
 	}
 	if (SCARG(uap, cmd) == SWAP_GETDUMPDEV) {
@@ -717,6 +685,66 @@ out:
 	return (error);
 }
 
+/* 
+ * swap_stats: implements swapctl(SWAP_STATS). The function is kept
+ * away from sys_swapctl() in order to allow COMPAT_* swapctl() 
+ * emulation to use it directly without going through sys_swapctl().
+ * The problem with using sys_swapctl() there is that it involves
+ * copying the swapent array to the stackgap, and this array's size
+ * is not known at build time. Hence it would not be possible to 
+ * ensure it would fit in the stackgap in any case.
+ */
+void
+uvm_swap_stats(cmd, sep, sec, retval)
+	int cmd;
+	struct swapent *sep;
+	int sec;
+	register_t *retval;
+{
+	struct swappri *spp;
+	struct swapdev *sdp;
+	int count = 0;
+
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
+		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
+		     sdp != (void *)&spp->spi_swapdev && sec-- > 0;
+		     sdp = CIRCLEQ_NEXT(sdp, swd_next)) {
+		  	/*
+			 * backwards compatibility for system call.
+			 * note that we use 'struct oswapent' as an
+			 * overlay into both 'struct swapdev' and
+			 * the userland 'struct swapent', as we
+			 * want to retain backwards compatibility
+			 * with NetBSD 1.3.
+			 */
+			sdp->swd_ose.ose_inuse =
+			    btodb((u_int64_t)sdp->swd_npginuse <<
+			    PAGE_SHIFT);
+			(void)memcpy(sep, &sdp->swd_ose, 
+			    sizeof(struct oswapent));
+			
+			/* now copy out the path if necessary */
+#if defined(COMPAT_13)
+			if (cmd == SWAP_STATS)
+#endif
+				(void)memcpy(&sep->se_path, sdp->swd_path,
+				    sdp->swd_pathlen);
+
+			count++;
+#if defined(COMPAT_13)
+			if (cmd == SWAP_OSTATS)
+				sep = (struct swapent *)
+				    ((struct oswapent *)sep + 1);
+			else
+#endif
+				sep++;
+		}
+	}
+
+	*retval = count;
+	return;
+}
+
 /*
  * swap_on: attempt to enable a swapdev for swapping.   note that the
  *	swapdev is already on the global list, but disabled (marked
@@ -878,6 +906,20 @@ swap_on(p, sdp)
 		mp = rootvnode->v_mount;
 		sp = &mp->mnt_stat;
 		rootblocks = sp->f_blocks * btodb(sp->f_bsize);
+		/*
+		 * XXX: sp->f_blocks isn't the total number of
+		 * blocks in the filesystem, it's the number of
+		 * data blocks.  so, our rootblocks almost
+		 * definitely underestimates the total size 
+		 * of the filesystem - how badly depends on the
+		 * details of the filesystem type.  there isn't 
+		 * an obvious way to deal with this cleanly
+		 * and perfectly, so for now we just pad our 
+		 * rootblocks estimate with an extra 5 percent.
+		 */
+		rootblocks += (rootblocks >> 5) +
+			(rootblocks >> 6) +
+			(rootblocks >> 7);
 		rootpages = round_page(dbtob(rootblocks)) >> PAGE_SHIFT;
 		if (rootpages > size)
 			panic("swap_on: miniroot larger than swap?");

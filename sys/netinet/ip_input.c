@@ -1,9 +1,9 @@
-/*	$NetBSD: ip_input.c,v 1.135.2.3 2002/03/16 16:02:12 jdolecek Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.135.2.4 2002/06/23 17:50:51 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.135.2.3 2002/03/16 16:02:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.135.2.4 2002/06/23 17:50:51 jdolecek Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -168,7 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.135.2.3 2002/03/16 16:02:12 jdolecek 
 #define	IPALLOWSRCRT	1	/* allow source-routed packets */
 #endif
 #ifndef IPMTUDISC
-#define IPMTUDISC	0
+#define IPMTUDISC	1
 #endif
 #ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
@@ -201,6 +201,8 @@ struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
 extern	struct domain inetdomain;
 int	ipqmaxlen = IFQ_MAXLEN;
+u_long	in_ifaddrhash;				/* size of hash table - 1 */
+int	in_ifaddrentries;			/* total number of addrs */
 struct	in_ifaddrhead in_ifaddr;
 struct	in_ifaddrhashhead *in_ifaddrhashtbl;
 struct	ifqueue ipintrq;
@@ -225,7 +227,7 @@ ipq_lock_try()
 	int s;
 
 	/*
-	 * Use splvm() -- we're bloking things that would cause
+	 * Use splvm() -- we're blocking things that would cause
 	 * mbuf allocation.
 	 */
 	s = splvm();
@@ -337,7 +339,7 @@ ip_init()
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
 	    M_WAITOK, &in_ifaddrhash);
 	if (ip_mtudisc != 0)
-		ip_mtudisc_timeout_q = 
+		ip_mtudisc_timeout_q =
 		    rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
 	ipflow_init();
@@ -509,7 +511,7 @@ ip_input(struct mbuf *m)
 	}
 
 #ifdef IPSEC
-	/* ipflow (IP fast fowarding) is not compatible with IPsec. */
+	/* ipflow (IP fast forwarding) is not compatible with IPsec. */
 	m->m_flags &= ~M_CANFASTFWD;
 #else
 	/*
@@ -616,7 +618,7 @@ ip_input(struct mbuf *m)
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
 
-		if (m->m_flags & M_EXT) {
+		if (M_READONLY(m)) {
 			if ((m = m_pullup(m, hlen)) == 0) {
 				ipstat.ips_toosmall++;
 				return;
@@ -858,7 +860,7 @@ ip_reass(ipqe, fp)
 		fp->ipq_ttl = IPFRAGTTL;
 		fp->ipq_p = ipqe->ipqe_ip->ip_p;
 		fp->ipq_id = ipqe->ipqe_ip->ip_id;
-		LIST_INIT(&fp->ipq_fragq);
+		TAILQ_INIT(&fp->ipq_fragq);
 		fp->ipq_src = ipqe->ipqe_ip->ip_src;
 		fp->ipq_dst = ipqe->ipqe_ip->ip_dst;
 		p = NULL;
@@ -868,8 +870,8 @@ ip_reass(ipqe, fp)
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq); q != NULL;
-	    p = q, q = LIST_NEXT(q, ipqe_q))
+	for (p = NULL, q = TAILQ_FIRST(&fp->ipq_fragq); q != NULL;
+	    p = q, q = TAILQ_NEXT(q, ipqe_q))
 		if (q->ipqe_ip->ip_off > ipqe->ipqe_ip->ip_off)
 			break;
 
@@ -904,9 +906,9 @@ ip_reass(ipqe, fp)
 			m_adj(q->ipqe_m, i);
 			break;
 		}
-		nq = LIST_NEXT(q, ipqe_q);
+		nq = TAILQ_NEXT(q, ipqe_q);
 		m_freem(q->ipqe_m);
-		LIST_REMOVE(q, ipqe_q);
+		TAILQ_REMOVE(&fp->ipq_fragq, q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 	}
 
@@ -916,13 +918,13 @@ insert:
 	 * check for complete reassembly.
 	 */
 	if (p == NULL) {
-		LIST_INSERT_HEAD(&fp->ipq_fragq, ipqe, ipqe_q);
+		TAILQ_INSERT_HEAD(&fp->ipq_fragq, ipqe, ipqe_q);
 	} else {
-		LIST_INSERT_AFTER(p, ipqe, ipqe_q);
+		TAILQ_INSERT_AFTER(&fp->ipq_fragq, p, ipqe, ipqe_q);
 	}
 	next = 0;
-	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq); q != NULL;
-	    p = q, q = LIST_NEXT(q, ipqe_q)) {
+	for (p = NULL, q = TAILQ_FIRST(&fp->ipq_fragq); q != NULL;
+	    p = q, q = TAILQ_NEXT(q, ipqe_q)) {
 		if (q->ipqe_ip->ip_off != next)
 			return (0);
 		next += q->ipqe_ip->ip_len;
@@ -934,7 +936,7 @@ insert:
 	 * Reassembly is complete.  Check for a bogus message size and
 	 * concatenate fragments.
 	 */
-	q = LIST_FIRST(&fp->ipq_fragq);
+	q = TAILQ_FIRST(&fp->ipq_fragq);
 	ip = q->ipqe_ip;
 	if ((next + (ip->ip_hl << 2)) > IP_MAXPACKET) {
 		ipstat.ips_toolong++;
@@ -945,11 +947,11 @@ insert:
 	t = m->m_next;
 	m->m_next = 0;
 	m_cat(m, t);
-	nq = LIST_NEXT(q, ipqe_q);
+	nq = TAILQ_NEXT(q, ipqe_q);
 	pool_put(&ipqent_pool, q);
 	for (q = nq; q != NULL; q = nq) {
 		t = q->ipqe_m;
-		nq = LIST_NEXT(q, ipqe_q);
+		nq = TAILQ_NEXT(q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 		m_cat(m, t);
 	}
@@ -996,10 +998,10 @@ ip_freef(fp)
 
 	IPQ_LOCK_CHECK();
 
-	for (q = LIST_FIRST(&fp->ipq_fragq); q != NULL; q = p) {
-		p = LIST_NEXT(q, ipqe_q);
+	for (q = TAILQ_FIRST(&fp->ipq_fragq); q != NULL; q = p) {
+		p = TAILQ_NEXT(q, ipqe_q);
 		m_freem(q->ipqe_m);
-		LIST_REMOVE(q, ipqe_q);
+		TAILQ_REMOVE(&fp->ipq_fragq, q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 	}
 	LIST_REMOVE(fp, ipq_q);
@@ -1660,6 +1662,8 @@ ip_forward(m, srcrt)
 					ro = &sp->req->sav->sah->sa_route;
 					if (ro->ro_rt && ro->ro_rt->rt_ifp) {
 						dummyifp.if_mtu =
+						    ro->ro_rt->rt_rmx.rmx_mtu ?
+						    ro->ro_rt->rt_rmx.rmx_mtu :
 						    ro->ro_rt->rt_ifp->if_mtu;
 						dummyifp.if_mtu -= ipsechdr;
 						destifp = &dummyifp;
@@ -1679,7 +1683,7 @@ ip_forward(m, srcrt)
 		 * a router should not generate ICMP_SOURCEQUENCH as
 		 * required in RFC1812 Requirements for IP Version 4 Routers.
 		 * source quench could be a big problem under DoS attacks,
-		 * or the underlying interface is rate-limited.
+		 * or if the underlying interface is rate-limited.
 		 */
 		if (mcopy)
 			m_freem(mcopy);
@@ -1803,7 +1807,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_mtudisc);
 		if (ip_mtudisc != 0 && ip_mtudisc_timeout_q == NULL) {
-			ip_mtudisc_timeout_q = 
+			ip_mtudisc_timeout_q =
 			    rt_timer_queue_create(ip_mtudisc_timeout);
 		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
 			rt_timer_queue_destroy(ip_mtudisc_timeout_q, TRUE);
@@ -1840,7 +1844,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_mtudisc_timeout);
 		if (ip_mtudisc_timeout_q != NULL)
-			rt_timer_queue_change(ip_mtudisc_timeout_q, 
+			rt_timer_queue_change(ip_mtudisc_timeout_q,
 					      ip_mtudisc_timeout);
 		return (error);
 #ifdef GATEWAY

@@ -27,7 +27,7 @@
  *	i4b_tei.c - tei handling procedures
  *	-----------------------------------
  *
- *	$Id: i4b_tei.c,v 1.2.2.1 2002/01/10 20:03:41 thorpej Exp $ 
+ *	$Id: i4b_tei.c,v 1.2.2.2 2002/06/23 17:51:32 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.2.2.1 2002/01/10 20:03:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.2.2.2 2002/06/23 17:51:32 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -74,18 +74,20 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.2.2.1 2002/01/10 20:03:41 thorpej Exp 
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
 #include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
+#include <netisdn/i4b_l3l4.h>
 
 /*---------------------------------------------------------------------------*
  *	handle a received TEI management frame
  *---------------------------------------------------------------------------*/
 void
-i4b_tei_rxframe(l2_softc_t *l2sc, struct mbuf *m)
+i4b_tei_rxframe(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 	u_char *ptr = m->m_data;
 	
@@ -101,13 +103,13 @@ i4b_tei_rxframe(l2_softc_t *l2sc, struct mbuf *m)
 				if(l2sc->T202 == TIMER_ACTIVE)
 					i4b_T202_stop(l2sc);
 
-				i4b_mdl_status_ind(l2sc->bri, STI_TEIASG, l2sc->tei);
+				i4b_mdl_status_ind(drv, STI_TEIASG, l2sc->tei);
 
-				log(LOG_INFO, "i4b: bri %d, assigned TEI = %d = 0x%02x\n", l2sc->bri, l2sc->tei, l2sc->tei);
+				log(LOG_INFO, "i4b: bri %d, assigned TEI = %d = 0x%02x\n", l2sc->drv->bri, l2sc->tei, l2sc->tei);
 
 				NDBGL2(L2_TEI_MSG, "TEI ID Assign - TEI = %d", l2sc->tei);
 
-				i4b_next_l2state(l2sc, EV_MDASGRQ);
+				i4b_next_l2state(l2sc, drv, EV_MDASGRQ);
 			}
 			break;
 			
@@ -120,16 +122,16 @@ i4b_tei_rxframe(l2_softc_t *l2sc, struct mbuf *m)
 
 				if(l2sc->tei == GROUP_TEI)
 				{
-					log(LOG_WARNING, "i4b: bri %d, denied TEI, no TEI values available from exchange!\n", l2sc->bri);
+					log(LOG_WARNING, "i4b: bri %d, denied TEI, no TEI values available from exchange!\n", l2sc->drv->bri);
 					NDBGL2(L2_TEI_ERR, "TEI ID Denied, No TEI values available from exchange!");
 				}
 				else
 				{
-					log(LOG_WARNING, "i4b: bri %d, denied TEI = %d = 0x%02x\n", l2sc->bri, l2sc->tei, l2sc->tei);
+					log(LOG_WARNING, "i4b: bri %d, denied TEI = %d = 0x%02x\n", l2sc->drv->bri, l2sc->tei, l2sc->tei);
 					NDBGL2(L2_TEI_ERR, "TEI ID Denied - TEI = %d", l2sc->tei);
 				}					
-				i4b_mdl_status_ind(l2sc->bri, STI_TEIASG, -1);
-				i4b_next_l2state(l2sc, EV_MDERRRS);
+				i4b_mdl_status_ind(drv, STI_TEIASG, -1);
+				i4b_next_l2state(l2sc, drv, EV_MDERRRS);
 			}
 			break;
 			
@@ -160,10 +162,10 @@ i4b_tei_rxframe(l2_softc_t *l2sc, struct mbuf *m)
 				l2sc->tei_valid = TEI_INVALID;
 				l2sc->tei = GET_TEIFROMAI(*(ptr+OFF_AI));
 
-				log(LOG_INFO, "i4b: bri %d, removed TEI = %d = 0x%02x\n", l2sc->bri, l2sc->tei, l2sc->tei);
+				log(LOG_INFO, "i4b: bri %d, removed TEI = %d = 0x%02x\n", drv->bri, l2sc->tei, l2sc->tei);
 				NDBGL2(L2_TEI_MSG, "TEI ID Remove - TEI = %d", l2sc->tei);
-				i4b_mdl_status_ind(l2sc->bri, STI_TEIASG, -1);
-				i4b_next_l2state(l2sc, EV_MDREMRQ);
+				i4b_mdl_status_ind(drv, STI_TEIASG, -1);
+				i4b_next_l2state(l2sc, drv, EV_MDREMRQ);
 			}
 			break;
 			
@@ -317,7 +319,7 @@ i4b_make_rand_ri(l2_softc_t *l2sc)
 	
 	for(i=0; i < 50 ; i++, val++)
 	{
-		val |= l2sc->bri+i;
+		val |= l2sc->drv->bri+i;
 		val <<= i;
 		val ^= (time.tv_sec >> 16) ^ time.tv_usec;
 		val <<= i;

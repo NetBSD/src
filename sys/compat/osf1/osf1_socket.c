@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.6.4.1 2002/01/10 19:52:05 thorpej Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.6.4.2 2002/06/23 17:44:39 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.6.4.1 2002/01/10 19:52:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.6.4.2 2002/06/23 17:44:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ osf1_sys_sendmsg_xopen(p, v, retval)
 	unsigned int i;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
 	SCARG(&a, s) = SCARG(uap, s);
 
@@ -125,8 +125,8 @@ printf("sendmsg space\n");
                 return (EINVAL);
 }
 
-	SCARG(&a, msg) = stackgap_alloc(&sg, sizeof bsd_msghdr);
-	bsd_msghdr.msg_iov = stackgap_alloc(&sg,
+	SCARG(&a, msg) = stackgap_alloc(p, &sg, sizeof bsd_msghdr);
+	bsd_msghdr.msg_iov = stackgap_alloc(p, &sg,
 	    bsd_msghdr.msg_iovlen * sizeof (struct iovec));
 
 	if ((error = copyout(&bsd_msghdr, (caddr_t)SCARG(&a, msg),

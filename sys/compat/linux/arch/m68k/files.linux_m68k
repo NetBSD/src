@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_m68k,v 1.2 2000/12/12 19:02:00 jdolecek Exp $
+#	$NetBSD: files.linux_m68k,v 1.2.4.1 2002/06/23 17:44:11 jdolecek Exp $
 #
 # Config file description for m68k-dependent Linux compat code.
 
@@ -6,7 +6,6 @@ file	compat/linux/arch/m68k/linux_sig_machdep.S	compat_linux
 file	compat/linux/arch/m68k/linux_machdep.c		compat_linux
 file	compat/linux/arch/m68k/linux_syscalls.c		compat_linux
 file	compat/linux/arch/m68k/linux_sysent.c		compat_linux
-file	compat/linux/arch/m68k/linux_sigarray.c		compat_linux
 
 file	compat/linux/common/linux_pipe.c		compat_linux
 file	compat/linux/common/linux_file64.c		compat_linux

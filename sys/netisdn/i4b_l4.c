@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.4.2.2 2002/03/16 16:02:17 jdolecek Exp $ 
+ *	$Id: i4b_l4.c,v 1.4.2.3 2002/06/23 17:51:29 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,12 +36,12 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.4.2.2 2002/03/16 16:02:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.4.2.3 2002/06/23 17:51:29 jdolecek Exp $");
 
-#include "i4b.h"
-#include "i4bipr.h"
+#include "isdn.h"
+#include "irip.h"
 
-#if NI4B > 0
+#if NISDN > 0
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,20 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.4.2.2 2002/03/16 16:02:17 jdolecek Exp 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 #include <sys/callout.h>
 #endif
-
-#if defined(__FreeBSD__)
-#include "i4bing.h"
-#endif
-
-#ifdef __bsdi__
-#define NI4BISPPP 0
-#include "ibc.h"
-#else
-#include "i4bisppp.h"
-#endif
-
-#include "i4brbch.h"
-#include "i4btel.h"
 
 #ifdef __FreeBSD__
 #include <machine/i4b_debug.h>
@@ -90,8 +76,157 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.4.2.2 2002/03/16 16:02:17 jdolecek Exp 
 
 unsigned int i4b_l4_debug = L4_DEBUG_DEFAULT;
 
-struct ctrl_type_desc ctrl_types[CTRL_NUMTYPES] = { { NULL, NULL} };
+/*
+ * BRIs (in userland sometimes called "controllers", but one controller
+ * may have multiple BRIs, for example daic QUAD cards attach four BRIs).
+ */
+static SLIST_HEAD(, isdn_l3_driver) bri_list = SLIST_HEAD_INITIALIZER(bri_list);
+static int next_bri = 0;
 
+/*
+ * Attach a new L3 driver instance and return it's BRI identifier
+ */
+struct isdn_l3_driver *
+isdn_attach_bri(const char *devname, const char *cardname, 
+    void *l1_token, const struct isdn_l3_driver_functions *l3driver)
+{
+	int s = splnet();
+	int l, bri = next_bri++;
+	struct isdn_l3_driver *new_ctrl;
+
+	new_ctrl = malloc(sizeof(*new_ctrl), M_DEVBUF, 0);
+	memset(new_ctrl, 0, sizeof *new_ctrl);
+	SLIST_INSERT_HEAD(&bri_list, new_ctrl, l3drvq);
+	l = strlen(devname);
+	new_ctrl->devname = malloc(l+1, M_DEVBUF, 0);
+	strcpy(new_ctrl->devname, devname);
+	l = strlen(cardname);
+	new_ctrl->card_name = malloc(l+1, M_DEVBUF, 0);
+	strcpy(new_ctrl->card_name, cardname);
+
+	new_ctrl->l3driver = l3driver;
+	new_ctrl->l1_token = l1_token;
+	new_ctrl->bri = bri;
+	new_ctrl->tei = -1;
+	new_ctrl->dl_est = DL_DOWN;
+	new_ctrl->bch_state[0] = BCH_ST_FREE;
+	new_ctrl->bch_state[1] = BCH_ST_FREE;
+
+	splx(s);
+
+	return new_ctrl;
+}
+
+/*
+ * Detach a L3 driver instance
+ */
+int
+isdn_detach_bri(struct isdn_l3_driver *l3drv)
+{
+	struct isdn_l3_driver *sc;
+	int s = splnet();
+	int bri = l3drv->bri;
+	int max;
+
+	i4b_l4_contr_ev_ind(bri, 0);
+	SLIST_REMOVE(&bri_list, l3drv, isdn_l3_driver, l3drvq);
+
+	max = -1;
+	SLIST_FOREACH(sc, &bri_list, l3drvq)
+		if (sc->bri > max)
+			max = sc->bri;
+	next_bri = max+1;
+
+	free_all_cd_of_bri(bri);
+
+	splx(s);
+
+	free(l3drv, M_DEVBUF);
+	printf("BRI %d detached\n", bri);
+	return 1;
+}
+
+struct isdn_l3_driver *
+isdn_find_l3_by_bri(int bri)
+{
+	struct isdn_l3_driver *sc;
+
+	SLIST_FOREACH(sc, &bri_list, l3drvq)
+		if (sc->bri == bri)
+			return sc;
+	return NULL;
+}
+
+int isdn_count_bri(int *mbri)
+{
+	struct isdn_l3_driver *sc;
+	int count = 0;
+	int maxbri = -1;
+
+	SLIST_FOREACH(sc, &bri_list, l3drvq) {
+		count++;
+		if (sc->bri > maxbri)
+			maxbri = sc->bri;
+	}
+
+	if (mbri)
+		*mbri = maxbri;
+
+	return count;
+}
+
+void *
+isdn_find_softc_by_bri(int bri)
+{
+	struct isdn_l3_driver *sc = isdn_find_l3_by_bri(bri);
+	if (sc == NULL)
+		return NULL;
+	/*
+	 * XXX - hack: do not return a softc for active cards.
+	 *       all callers of this expecting l2_softc* results
+	 *       should be fixed!
+	 */
+	if (sc->l3driver->N_DOWNLOAD)
+		return NULL;
+	return sc->l1_token;
+}
+
+/*---------------------------------------------------------------------------*
+ *      daemon is attached
+ *---------------------------------------------------------------------------*/
+void 
+i4b_l4_daemon_attached(void)
+{
+	struct isdn_l3_driver *d;
+
+	int x = splnet();
+	SLIST_FOREACH(d, &bri_list, l3drvq)
+	{
+		d->l3driver->N_MGMT_COMMAND(d, CMR_DOPEN, 0);
+	}
+	splx(x);
+}
+
+/*---------------------------------------------------------------------------*
+ *      daemon is detached
+ *---------------------------------------------------------------------------*/
+void 
+i4b_l4_daemon_detached(void)
+{
+	struct isdn_l3_driver *d;
+
+	int x = splnet();
+	SLIST_FOREACH(d, &bri_list, l3drvq)
+	{
+		d->l3driver->N_MGMT_COMMAND(d, CMR_DCLOSE, 0);
+	}
+	splx(x);
+}
+
+/*
+ * B-channel layer 4 drivers and their registry.
+ * (Application drivers connecting to a B-channel)
+ */
 static int i4b_link_bchandrvr(call_desc_t *cd);
 static void i4b_unlink_bchandrvr(call_desc_t *cd);
 static void i4b_l4_setup_timeout(call_desc_t *cd);
@@ -100,23 +235,83 @@ static void i4b_idle_check_var_unit(call_desc_t *cd);
 static void i4b_l4_setup_timeout_fix_unit(call_desc_t *cd);
 static void i4b_l4_setup_timeout_var_unit(call_desc_t *cd);
 static time_t i4b_get_idletime(call_desc_t *cd);
-#if NI4BISPPP > 0
-extern time_t i4bisppp_idletime(int);
-#endif
+
+static int next_l4_driver_id = 0;
+
+struct l4_driver_desc {
+	SLIST_ENTRY(l4_driver_desc) l4drvq;
+	char name[L4DRIVER_NAME_SIZ];
+	int driver_id;
+	const struct isdn_l4_driver_functions *driver;
+	int units;
+};
+static SLIST_HEAD(, l4_driver_desc) l4_driver_registry
+    = SLIST_HEAD_INITIALIZER(l4_driver_registry);
+
+int isdn_l4_driver_attach(const char *name, int units, const struct isdn_l4_driver_functions *driver)
+{
+	struct l4_driver_desc * new_driver;
+
+	new_driver = malloc(sizeof(struct l4_driver_desc), M_DEVBUF, 0);
+	memset(new_driver, 0, sizeof(struct l4_driver_desc));
+	strncpy(new_driver->name, name, L4DRIVER_NAME_SIZ);
+	new_driver->name[L4DRIVER_NAME_SIZ-1] = 0;
+	new_driver->driver_id =	next_l4_driver_id++;
+	new_driver->driver = driver;
+	new_driver->units = units;
+	SLIST_INSERT_HEAD(&l4_driver_registry, new_driver, l4drvq);
+	return new_driver->driver_id;
+}
+
+int isdn_l4_driver_detatch(const char *name)
+{
+	/* XXX - not yet implemented */
+	return 0;
+}
+
+const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int unit)
+{
+	struct l4_driver_desc * d;
+	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
+		if (strcmp(d->name, name) == 0) {
+			return d->driver;
+		}
+	return NULL;
+}
+
+int isdn_l4_find_driverid(const char *name)
+{
+	struct l4_driver_desc * d;
+	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
+		if (strcmp(d->name, name) == 0) {
+			return d->driver_id;
+		}
+	return -1;
+}
+
+const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int unit)
+{
+	struct l4_driver_desc * d;
+	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
+		if (d->driver_id == driver_id) {
+			return d->driver;
+		}
+	return NULL;
+}
 
 /*---------------------------------------------------------------------------*
  *	send MSG_PDEACT_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_pdeact(int controller, int numactive)
+i4b_l4_pdeact(struct isdn_l3_driver *d, int numactive)
 {
 	struct mbuf *m;
 	int i;
 	call_desc_t *cd;
 	
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
-		if(call_desc[i].cdid != CDID_UNUSED && call_desc[i].bri == controller)
+		if(call_desc[i].cdid != CDID_UNUSED && call_desc[i].l3drv == d)
 		{
 			cd = &call_desc[i];
 			
@@ -125,15 +320,15 @@ i4b_l4_pdeact(int controller, int numactive)
 				STOP_TIMER(cd->idle_timeout_handle, i4b_idle_check, cd);
 			}
 			
-			if(cd->dlt != NULL)
+			if (cd->l4_driver != NULL && cd->l4_driver_softc != NULL)
 			{
-				(*cd->dlt->line_disconnected)(cd->driver_unit, (void *)cd);
+				(*cd->l4_driver->line_disconnected)(cd->l4_driver_softc, (void *)cd);
 				i4b_unlink_bchandrvr(cd);
 			}
 		
 			if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 			{
-				ctrl_desc[cd->bri].bch_state[cd->channelid] = BCH_ST_FREE;
+				d->bch_state[cd->channelid] = BCH_ST_FREE;
 			}
 
 			cd->cdid = CDID_UNUSED;
@@ -147,7 +342,7 @@ i4b_l4_pdeact(int controller, int numactive)
 		md->header.type = MSG_PDEACT_IND;
 		md->header.cdid = -1;
 
-		md->controller = controller;
+		md->controller = d->bri;
 		md->numactive = numactive;
 
 		i4bputqueue_hipri(m);		/* URGENT !!! */
@@ -158,7 +353,7 @@ i4b_l4_pdeact(int controller, int numactive)
  *	send MSG_L12STAT_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_l12stat(int controller, int layer, int state)
+i4b_l4_l12stat(struct isdn_l3_driver *d, int layer, int state)
 {
 	struct mbuf *m;
 
@@ -169,7 +364,7 @@ i4b_l4_l12stat(int controller, int layer, int state)
 		md->header.type = MSG_L12STAT_IND;
 		md->header.cdid = -1;
 
-		md->controller = controller;
+		md->controller = d->bri;
 		md->layer = layer;
 		md->state = state;
 
@@ -181,7 +376,7 @@ i4b_l4_l12stat(int controller, int layer, int state)
  *	send MSG_TEIASG_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_teiasg(int controller, int tei)
+i4b_l4_teiasg(struct isdn_l3_driver *d, int tei)
 {
 	struct mbuf *m;
 
@@ -192,8 +387,8 @@ i4b_l4_teiasg(int controller, int tei)
 		md->header.type = MSG_TEIASG_IND;
 		md->header.cdid = -1;
 
-		md->controller = controller;
-		md->tei = ctrl_desc[controller].tei;
+		md->controller = d->bri;
+		md->tei = d->tei;
 
 		i4bputqueue(m);
 	}
@@ -291,7 +486,7 @@ i4b_l4_ifstate_changed(call_desc_t *cd, int new_state)
  *	send MSG_DRVRDISC_REQ message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_drvrdisc(int driver, int driver_unit)
+i4b_l4_drvrdisc(int cdid)
 {
 	struct mbuf *m;
 
@@ -300,10 +495,7 @@ i4b_l4_drvrdisc(int driver, int driver_unit)
 		msg_drvrdisc_req_t *md = (msg_drvrdisc_req_t *)m->m_data;
 
 		md->header.type = MSG_DRVRDISC_REQ;
-		md->header.cdid = -1;
-
-		md->driver = driver;
-		md->driver_unit = driver_unit;	
+		md->header.cdid = cdid;
 
 		i4bputqueue(m);
 	}
@@ -313,7 +505,7 @@ i4b_l4_drvrdisc(int driver, int driver_unit)
  *	send MSG_ACCT_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_accounting(int driver, int driver_unit, int accttype, int ioutbytes,
+i4b_l4_accounting(int cdid, int accttype, int ioutbytes,
 		int iinbytes, int ro, int ri, int outbytes, int inbytes)
 {
 	struct mbuf *m;
@@ -323,10 +515,7 @@ i4b_l4_accounting(int driver, int driver_unit, int accttype, int ioutbytes,
 		msg_accounting_ind_t *md = (msg_accounting_ind_t *)m->m_data;
 
 		md->header.type = MSG_ACCT_IND;
-		md->header.cdid = -1;
-
-		md->driver = driver;
-		md->driver_unit = driver_unit;	
+		md->header.cdid = cdid;
 
 		md->accttype = accttype;
 		md->ioutbytes = ioutbytes;
@@ -370,6 +559,9 @@ i4b_l4_connect_ind(call_desc_t *cd)
 			strcpy(mp->src_telno, cd->src_telno);
 		else
 			strcpy(mp->src_telno, TELNO_EMPTY);
+		mp->type_plan = cd->type_plan;
+		memcpy(mp->src_subaddr, cd->src_subaddr, sizeof(mp->src_subaddr));
+		memcpy(mp->dest_subaddr, cd->dest_subaddr, sizeof(mp->dest_subaddr));
 			
 		strcpy(mp->display, cd->display);
 
@@ -399,7 +591,9 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 	
 	i4b_link_bchandrvr(cd);
 
-	(*cd->dlt->line_connected)(cd->driver_unit, (void *)cd);
+	update_controller_leds(cd->l3drv);
+
+	(*cd->l4_driver->line_connected)(cd->l4_driver_softc, cd);
 
 	i4b_l4_setup_timeout(cd);
 	
@@ -427,27 +621,31 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 void
 i4b_l4_disconnect_ind(call_desc_t *cd)
 {
+	struct isdn_l3_driver *d;
 	struct mbuf *m;
 
 	if(cd->timeout_active)
 		STOP_TIMER(cd->idle_timeout_handle, i4b_idle_check, cd);
 
-	if(cd->dlt != NULL)
+	if (cd->l4_driver != NULL && cd->l4_driver_softc != NULL)
 	{
-		(*cd->dlt->line_disconnected)(cd->driver_unit, (void *)cd);
+		(*cd->l4_driver->line_disconnected)(cd->l4_driver_softc, (void *)cd);
 		i4b_unlink_bchandrvr(cd);
 	}
 
+	d = cd->l3drv;
+
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
-		ctrl_desc[cd->bri].bch_state[cd->channelid] = BCH_ST_FREE;
-		i4b_l2_channel_set_state(cd->bri, cd->channelid, BCH_ST_FREE);
+		d->bch_state[cd->channelid] = BCH_ST_FREE;
+		i4b_l2_channel_set_state(d, cd->channelid, BCH_ST_FREE);
 	}
 	else
 	{
 		/* no error, might be hunting call for callback */
 		NDBGL4(L4_MSG, "channel free not B1/B2 but %d!", cd->channelid);
 	}
+	update_controller_leds(d);
 	
 	if((m = i4b_Dgetmbuf(sizeof(msg_disconnect_ind_t))) != NULL)
 	{
@@ -586,124 +784,62 @@ i4b_l4_packet_ind(int driver, int driver_unit, int dir, struct mbuf *pkt)
 }
 
 /*---------------------------------------------------------------------------*
+ *    send MSG_CONTR_EV_IND message to userland
+ *---------------------------------------------------------------------------*/
+void
+i4b_l4_contr_ev_ind(int controller, int attach)
+{
+	struct mbuf *m;
+
+	if((m = i4b_Dgetmbuf(sizeof(msg_ctrl_ev_ind_t))) != NULL)
+	{
+		msg_ctrl_ev_ind_t *ev = (msg_ctrl_ev_ind_t *)m->m_data;
+
+		ev->header.type = MSG_CONTR_EV_IND;
+		ev->header.cdid = -1;
+		ev->controller = controller;
+		ev->event = attach;
+		i4bputqueue(m);
+	}
+}
+
+/*---------------------------------------------------------------------------*
  *	link a driver(unit) to a B-channel(controller,unit,channel)
  *---------------------------------------------------------------------------*/
 static int
 i4b_link_bchandrvr(call_desc_t *cd)
 {
-	int t = ctrl_desc[cd->bri].ctrl_type;
+	struct isdn_l3_driver *d = cd->l3drv;
 	
-	if(t < 0 || t >= CTRL_NUMTYPES || ctrl_types[t].get_linktab == NULL)
+	if (d == NULL || d->l3driver == NULL || d->l3driver->get_linktab == NULL)
 	{
 			cd->ilt = NULL;
+			return 1;
 	}
+
+	cd->ilt = d->l3driver->get_linktab(d->l1_token,
+	    cd->channelid);
+
+	cd->l4_driver = isdn_l4_get_driver(cd->bchan_driver_index, cd->bchan_driver_unit);
+	if (cd->l4_driver != NULL)
+		cd->l4_driver_softc = cd->l4_driver->get_softc(cd->bchan_driver_unit);
 	else
-	{
-		cd->ilt = ctrl_types[t].get_linktab(
-			ctrl_desc[cd->bri].l1_token,
-			cd->channelid);
-	}
+		cd->l4_driver_softc = NULL;
 
-	switch(cd->driver)
-	{
-#if NI4BRBCH > 0
-		case BDRV_RBCH:
-			cd->dlt = rbch_ret_linktab(cd->driver_unit);
-			break;
-#endif
-		
-#if NI4BTEL > 0
-		case BDRV_TEL:
-			cd->dlt = tel_ret_linktab(cd->driver_unit);
-			break;
-#endif
-
-#if NI4BIPR > 0
-		case BDRV_IPR:
-			cd->dlt = ipr_ret_linktab(cd->driver_unit);
-			break;
-#endif
-
-#if NI4BISPPP > 0
-		case BDRV_ISPPP:
-			cd->dlt = i4bisppp_ret_linktab(cd->driver_unit);
-			break;
-#endif
-
-#if defined(__bsdi__) && NIBC > 0
-		case BDRV_IBC:
-			cd->dlt = ibc_ret_linktab(cd->driver_unit);
-			break;
-#endif
-
-#if NI4BING > 0
-		case BDRV_ING:
-			cd->dlt = ing_ret_linktab(cd->driver_unit);
-			break;
-#endif
-
-		default:
-			cd->dlt = NULL;
-			break;
-	}
-
-	if(cd->dlt == NULL || cd->ilt == NULL)
+	if(cd->l4_driver == NULL || cd->l4_driver_softc == NULL || cd->ilt == NULL)
 		return(-1);
 
-	if(t >= 0 && t < CTRL_NUMTYPES && ctrl_types[t].set_linktab != NULL)
+	if (d->l3driver->set_l4_driver != NULL)
 	{
-		ctrl_types[t].set_linktab(
-				ctrl_desc[cd->bri].l1_token,
-				cd->channelid,
-				cd->dlt);
+		d->l3driver->set_l4_driver(d->l1_token,
+		    cd->channelid, cd->l4_driver, cd->l4_driver_softc);
 	}
 
-	switch(cd->driver)
-	{
-#if NI4BRBCH > 0
-		case BDRV_RBCH:
-			rbch_set_linktab(cd->driver_unit, cd->ilt);
-			break;
-#endif
-
-#if NI4BTEL > 0
-		case BDRV_TEL:
-			tel_set_linktab(cd->driver_unit, cd->ilt);
-			break;
-#endif
-
-#if NI4BIPR > 0
-		case BDRV_IPR:
-			ipr_set_linktab(cd->driver_unit, cd->ilt);
-			break;
-#endif
-
-#if NI4BISPPP > 0
-		case BDRV_ISPPP:
-			i4bisppp_set_linktab(cd->driver_unit, cd->ilt);
-			break;
-#endif
-
-#if defined(__bsdi__) && NIBC > 0
-		case BDRV_IBC:
-			ibc_set_linktab(cd->driver_unit, cd->ilt);
-			break;
-#endif
-
-#if NI4BING > 0
-		case BDRV_ING:
-			ing_set_linktab(cd->driver_unit, cd->ilt);
-			break;
-#endif
-
-		default:
-			return(0);
-			break;
-	}
+	cd->l4_driver->set_linktab(cd->l4_driver_softc, cd->ilt);
 
 	/* activate B channel */
 		
-	(*cd->ilt->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 1);
+	(*cd->ilt->bchannel_driver->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 1);
 
 	return(0);
 }
@@ -714,23 +850,27 @@ i4b_link_bchandrvr(call_desc_t *cd)
 static void
 i4b_unlink_bchandrvr(call_desc_t *cd)
 {
-	int t = ctrl_desc[cd->bri].ctrl_type;
+	struct isdn_l3_driver *d = cd->l3drv;
 
-	if(t < 0 || t >= CTRL_NUMTYPES || ctrl_types[t].get_linktab == NULL)
+	/*
+	 * XXX - what's this *cd manipulation for? Shouldn't we
+	 * close the bchannel driver first and then just set ilt to NULL
+	 * in *cd?
+	 */
+	if (d == NULL || d->l3driver == NULL || d->l3driver->get_linktab == NULL)
 	{
 		cd->ilt = NULL;
 		return;
 	}
 	else
 	{
-		cd->ilt = ctrl_types[t].get_linktab(
-				ctrl_desc[cd->bri].l1_token,
-				cd->channelid);
+		cd->ilt = d->l3driver->get_linktab(
+		    d->l1_token, cd->channelid);
 	}
 	
 	/* deactivate B channel */
 		
-	(*cd->ilt->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 0);
+	(*cd->ilt->bchannel_driver->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 0);
 } 
 
 /*---------------------------------------------------------------------------
@@ -778,17 +918,11 @@ idletime_state:      IST_NONCHK             IST_CHECK       IST_SAFE
 static time_t
 i4b_get_idletime(call_desc_t *cd)
 {
-	switch (cd->driver) {
-#if NI4BISPPP > 0
-		case BDRV_ISPPP:
-			return i4bisppp_idletime(cd->driver_unit);
-		break;
-#endif
-		default:
-			return cd->last_active_time;
-		break;
-	}
+	if (cd->l4_driver->get_idletime)
+		return cd->l4_driver->get_idletime(cd->l4_driver_softc);
+	return cd->last_active_time;
 }
+
 /*---------------------------------------------------------------------------*
  *	B channel idle check timeout setup
  *---------------------------------------------------------------------------*/ 
@@ -924,8 +1058,9 @@ i4b_idle_check(call_desc_t *cd)
 	{
 		if((i4b_get_idletime(cd) + cd->max_idle_time) <= SECOND)
 		{
+			struct isdn_l3_driver *d = cd->l3drv;
 			NDBGL4(L4_TIMO, "%ld: incoming-call, line idle timeout, disconnecting!", (long)SECOND);
-			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid,
+			d->l3driver->N_DISCONNECT_REQUEST(cd,
 					(CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 		}
@@ -966,6 +1101,7 @@ i4b_idle_check(call_desc_t *cd)
 static void
 i4b_idle_check_fix_unit(call_desc_t *cd)
 {
+	struct isdn_l3_driver *d = cd->l3drv;
 
 	/* simple idletime calculation */
 
@@ -974,7 +1110,7 @@ i4b_idle_check_fix_unit(call_desc_t *cd)
 		if((i4b_get_idletime(cd) + cd->shorthold_data.idle_time) <= SECOND)
 		{
 			NDBGL4(L4_TIMO, "%ld: outgoing-call-st, idle timeout, disconnecting!", (long)SECOND);
-			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+			d->l3driver->N_DISCONNECT_REQUEST(cd, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 		}
 		else
@@ -1015,7 +1151,7 @@ i4b_idle_check_fix_unit(call_desc_t *cd)
 			else
 			{	/* no activity, hangup */
 				NDBGL4(L4_TIMO, "%ld: outgoing-call, idle timeout, last activity at %ld", (long)SECOND, (long)i4b_get_idletime(cd));
-				(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+				d->l3driver->N_DISCONNECT_REQUEST(cd, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 				i4b_l4_idle_timeout_ind(cd);
 				cd->idletime_state = IST_IDLE;
 			}
@@ -1069,8 +1205,9 @@ i4b_idle_check_var_unit(call_desc_t *cd)
 		}
 		else
 		{	/* no activity, hangup */
+			struct isdn_l3_driver *d = cd->l3drv;
 			NDBGL4(L4_TIMO, "%ld: outgoing-call, var idle timeout - last activity at %ld", (long)SECOND, (long)i4b_get_idletime(cd));
-			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+			d->l3driver->N_DISCONNECT_REQUEST(cd, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 			cd->idletime_state = IST_IDLE;
 		}
@@ -1083,4 +1220,4 @@ i4b_idle_check_var_unit(call_desc_t *cd)
 	}
 }
 
-#endif /* NI4B > 0 */
+#endif /* NISDN > 0 */

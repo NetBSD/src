@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.11.4.1 2002/01/10 19:59:48 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.11.4.2 2002/06/23 17:49:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.11.4.1 2002/01/10 19:59:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.11.4.2 2002/06/23 17:49:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ kthread_run_deferred_queue(void)
 	kthread_create_now = 1;
 
 	while ((kq = SIMPLEQ_FIRST(&kthread_q)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&kthread_q, kq, kq_q);
+		SIMPLEQ_REMOVE_HEAD(&kthread_q, kq_q);
 		(*kq->kq_func)(kq->kq_arg);
 		free(kq, M_TEMP);
 	}

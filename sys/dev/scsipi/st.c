@@ -1,5 +1,4 @@
-/*	$NetBSD: st.c,v 1.142.2.3 2002/02/11 20:10:13 jdolecek Exp $ */
-
+/*	$NetBSD: st.c,v 1.142.2.4 2002/06/23 17:48:50 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.142.2.3 2002/02/11 20:10:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.142.2.4 2002/06/23 17:48:50 jdolecek Exp $");
 
 #include "opt_scsi.h"
 
@@ -689,6 +688,10 @@ stopen(dev, flags, mode, p)
 			goto bad;
 		st->last_dsty = dsty;
 	}
+	if (!(st->quirks & ST_Q_NOPREVENT)) {
+		scsipi_prevent(periph, PR_PREVENT,
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
+	}
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("open complete\n"));
 	return (0);
@@ -739,6 +742,12 @@ stclose(dev, flags, mode, p)
 		int nm;
 		error = st_check_eod(st, FALSE, &nm, 0);
 	}
+
+	/*
+	 * Allow robots to eject tape if needed.
+	 */
+	scsipi_prevent(periph, PR_ALLOW,
+	    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
 
 	switch (STMODE(dev)) {
 	case NORMAL_MODE:
@@ -886,14 +895,10 @@ st_mount_tape(dev, flags)
 			return (error);
 		}
 	}
-	if (!(st->quirks & ST_Q_NOPREVENT)) {
-		scsipi_prevent(periph, PR_PREVENT,
-		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
-	}
 	st->flags &= ~ST_NEW_MOUNT;
 	st->flags |= ST_MOUNTED;
 	periph->periph_flags |= PERIPH_MEDIA_LOADED;	/* move earlier? */
-
+	st->blkno = st->fileno = (daddr_t) 0;
 	return (0);
 }
 
@@ -933,10 +938,17 @@ st_unmount(st, eject)
 			st->sc_dev.dv_xname);
 	}
 
-	scsipi_prevent(periph, PR_ALLOW,
-	    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
-	if (eject)
+	if (eject) {
+		if (!(st->quirks & ST_Q_NOPREVENT)) {
+			scsipi_prevent(periph, PR_ALLOW,
+			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
+			    XS_CTL_IGNORE_NOT_READY);
+		}
 		st_load(st, LD_UNLOAD, XS_CTL_IGNORE_NOT_READY);
+		st->blkno = st->fileno = (daddr_t) -1;
+	} else {
+		st->blkno = st->fileno = (daddr_t) 0;
+	}
 	st->flags &= ~(ST_MOUNTED | ST_NEW_MOUNT);
 	periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 }
@@ -1253,6 +1265,11 @@ ststart(periph)
 			_lto3b(bp->b_bcount, cmd.len);
 
 		/*
+		 * Clear 'position updated' indicator
+		 */
+		st->flags &= ~ST_POSUPDATED;
+
+		/*
 		 * go ask the adapter to do all this for us
 		 */
 		error = scsipi_command(periph,
@@ -1281,6 +1298,19 @@ stdone(xs)
 #if NRND > 0
 		rnd_add_uint32(&st->rnd_source, xs->bp->b_blkno);
 #endif
+
+		if ((st->flags & ST_POSUPDATED) == 0) {
+			if (xs->bp->b_flags & B_ERROR) {
+				st->fileno = st->blkno = -1;
+			} else if (st->blkno != -1) {
+				if (st->flags & ST_FIXEDBLOCKS) {
+					st->blkno +=
+					    (xs->bp->b_bcount / st->blksize);
+				} else {
+					st->blkno++;
+				}
+			}
+		}
 	}
 }
 
@@ -1369,6 +1399,8 @@ stioctl(dev, cmd, arg, flag, p)
 		g->mt_mdensity[1] = st->modes[1].density;
 		g->mt_mdensity[2] = st->modes[2].density;
 		g->mt_mdensity[3] = st->modes[3].density;
+		g->mt_fileno = st->fileno;
+		g->mt_blkno = st->blkno;
 		if (st->flags & ST_READONLY)
 			g->mt_dsreg |= MT_DS_RDONLY;
 		if (st->flags & ST_MOUNTED)
@@ -1713,9 +1745,35 @@ st_space(st, number, what, flags)
 	cmd.byte2 = what;
 	_lto3b(number, cmd.number);
 
-	return (scsipi_command(st->sc_periph,
+	st->flags &= ~ST_POSUPDATED;
+	st->last_ctl_resid = 0;
+	error = scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    0, 0, 0, ST_SPC_TIME, NULL, flags));
+	    0, 0, 0, ST_SPC_TIME, NULL, flags);
+
+	if (error == 0 && (st->flags & ST_POSUPDATED) == 0) {
+		number = number - st->last_ctl_resid;
+		if (what == SP_BLKS) {
+			if (st->blkno != -1) {
+				st->blkno += number;
+			}
+		} else if (what == SP_FILEMARKS) {
+			if (st->fileno != -1) {
+				st->fileno += number;
+				if (number > 0) {
+					st->blkno = 0;
+				} else if (number < 0) {
+					st->blkno = -1;
+				}
+			}
+		} else if (what == SP_EOM) {
+			/*
+			 * This loses us relative position.
+			 */
+			st->fileno = st->blkno = -1;
+		}
+	}
+	return (error);
 }
 
 /*
@@ -1727,6 +1785,7 @@ st_write_filemarks(st, number, flags)
 	int flags;
 	int number;
 {
+	int error;
 	struct scsi_write_filemarks cmd;
 
 	/*
@@ -1760,9 +1819,14 @@ st_write_filemarks(st, number, flags)
 	if ((st->quirks & ST_Q_NOFILEMARKS) == 0)
 		_lto3b(number, cmd.number);
 
-	return (scsipi_command(st->sc_periph,
+	/* XXX WE NEED TO BE ABLE TO GET A RESIDIUAL XXX */
+	error = scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    0, 0, 0, ST_IO_TIME * 4, NULL, flags));
+	    0, 0, 0, ST_IO_TIME * 4, NULL, flags);
+	if (error == 0 && st->fileno != -1) {
+		st->fileno += number;
+	}
+	return (error);
 }
 
 /*
@@ -1884,6 +1948,10 @@ st_rewind(st, immediate, flags)
 	if (error) {
 		printf("%s: error %d trying to rewind\n",
 		    st->sc_dev.dv_xname, error);
+		/* lost position */
+		st->fileno = st->blkno = -1;
+	} else {
+		st->fileno = st->blkno = 0;
 	}
 	return (error);
 }
@@ -1899,17 +1967,28 @@ st_rdpos(st, hard, blkptr)
 	struct scsi_tape_read_position cmd;
 
 	/*
-	 * First flush any pending writes...
+	 * We try and flush any buffered writes here if we were writing
+	 * and we're trying to get hardware block position. It eats
+	 * up performance substantially, but I'm wary of drive firmware.
+	 *
+	 * I think that *logical* block position is probably okay-
+	 * but hardware block position might have to wait for data
+	 * to hit media to be valid. Caveat Emptor.
 	 */
-	error = st_write_filemarks(st, 0, XS_CTL_SILENT);
 
-	/*
-	 * The latter case is for 'write protected' tapes
-	 * which are too stupid to recognize a zero count
-	 * for writing filemarks as a no-op.
-	 */
-	if (error != 0 && error != EACCES && error != EROFS)
-		return (error);
+	if (hard && (st->flags & ST_WRITTEN)) {
+		/*
+		 * First flush any pending writes...
+		 */
+		error = st_write_filemarks(st, 0, XS_CTL_SILENT);
+		/*
+		 * The latter case is for 'write protected' tapes
+		 * which are too stupid to recognize a zero count
+		 * for writing filemarks as a no-op.
+		 */
+		if (error != 0 && error != EACCES && error != EROFS)
+			return (error);
+	}
 
 	memset(&cmd, 0, sizeof(cmd));
 	memset(&posdata, 0, sizeof(posdata));
@@ -1947,19 +2026,14 @@ st_setpos(st, hard, blkptr)
 	struct scsi_tape_locate cmd;
 
 	/*
-	 * First flush any pending writes. Strictly speaking,
-	 * we're not supposed to have to worry about this,
-	 * but let's be untrusting.
+	 * We used to try and flush any buffered writes here.
+	 * Now we push this onto user applications to either
+	 * flush the pending writes themselves (via a zero count
+	 * WRITE FILEMARKS command) or they can trust their tape
+	 * drive to do this correctly for them.
+	 *
+	 * There are very ugly performance limitations otherwise.
 	 */
-	error = st_write_filemarks(st, 0, XS_CTL_SILENT);
-
-	/*
-	 * The latter case is for 'write protected' tapes
-	 * which are too stupid to recognize a zero count
-	 * for writing filemarks as a no-op.
-	 */
-	if (error != 0 && error != EACCES && error != EROFS)
-		return (error);
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = LOCATE;
@@ -1970,9 +2044,10 @@ st_setpos(st, hard, blkptr)
 		(struct scsipi_generic *)&cmd, sizeof(cmd),
 		NULL, 0, ST_RETRIES, ST_SPC_TIME, NULL, 0);
 	/*
-	 * XXX: Note file && block number position now unknown (if
-	 * XXX: these things ever start being maintained in this driver)
+	 * Note file && block number position now unknown (if
+	 * these things ever start being maintained in this driver)
 	 */
+	st->fileno = st->blkno = -1;
 	return (error);
 }
 
@@ -2017,7 +2092,8 @@ st_interpret_sense(xs)
 
 	if (key == SKEY_NOT_READY && st->asc == 0x4 && st->ascq == 0x1) {
 		/* Not Ready, Logical Unit Is in Process Of Becoming Ready */
-		scsipi_periph_freeze(periph, 1);
+		if (!callout_active(&periph->periph_callout))
+			scsipi_periph_freeze(periph, 1);
 		callout_reset(&periph->periph_callout,
 		    hz, scsipi_periph_timed_thaw, periph);
 		return (ERESTART);
@@ -2030,20 +2106,45 @@ st_interpret_sense(xs)
 		return (retval);
 	}
 
-
+	xs->resid = info;
 	if (st->flags & ST_FIXEDBLOCKS) {
-		xs->resid = info * st->blksize;
-		if (sense->flags & SSD_EOM) {
+		if (bp) {
+			xs->resid *= st->blksize;
+			st->last_io_resid = xs->resid;
+		} else {
+			st->last_ctl_resid = xs->resid;
+		}
+		if (key == SKEY_VOLUME_OVERFLOW) {
+			st->flags |= ST_EIO_PENDING;
+			if (bp)
+				bp->b_resid = xs->resid;
+		} else if (sense->flags & SSD_EOM) {
 			if ((st->flags & ST_EARLYWARN) == 0)
 				st->flags |= ST_EIO_PENDING;
 			st->flags |= ST_EOM_PENDING;
-			if (bp)
+			if (bp) {
+#if 0
 				bp->b_resid = xs->resid;
+#else
+				/*
+				 * Grotesque as it seems, the few times
+				 * I've actually seen a non-zero resid,
+				 * the tape drive actually lied and had
+				 * written all the data!
+				 */
+				bp->b_resid = 0;
+#endif
+			}
 		}
 		if (sense->flags & SSD_FILEMARK) {
 			st->flags |= ST_AT_FILEMARK;
 			if (bp)
 				bp->b_resid = xs->resid;
+			if (st->fileno != (daddr_t) -1) {
+				st->fileno++;
+				st->blkno = 0;
+				st->flags |= ST_POSUPDATED;
+			}
 		}
 		if (sense->flags & SSD_ILI) {
 			st->flags |= ST_EIO_PENDING;
@@ -2064,6 +2165,13 @@ st_interpret_sense(xs)
 			if ((st->quirks & ST_Q_SENSE_HELP) &&
 			    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)
 				st->blksize -= 512;
+			else if ((st->flags & ST_POSUPDATED) == 0) {
+				if (st->blkno != (daddr_t) -1) {
+					st->blkno +=
+					    (xs->datalen / st->blksize);
+					st->flags |= ST_POSUPDATED;
+				}
+			}
 		}
 		/*
 		 * If data wanted and no data was transferred, do it immediately
@@ -2078,6 +2186,11 @@ st_interpret_sense(xs)
 			}
 		}
 	} else {		/* must be variable mode */
+		if (bp) {
+			st->last_io_resid = xs->resid;
+		} else {
+			st->last_ctl_resid = xs->resid;
+		}
 		if (sense->flags & SSD_EOM) {
 			/*
 			 * The current semantics of this
@@ -2103,6 +2216,11 @@ st_interpret_sense(xs)
 			}
 		} else if (sense->flags & SSD_FILEMARK) {
 			retval = 0;
+			if (st->fileno != (daddr_t) -1) {
+				st->fileno++;
+				st->blkno = 0;
+				st->flags |= ST_POSUPDATED;
+			}
 		} else if (sense->flags & SSD_ILI) {
 			if (info < 0) {
 				/*
@@ -2118,9 +2236,12 @@ st_interpret_sense(xs)
 				retval = EIO;
 			} else {
 				retval = 0;
+				if (st->blkno != (daddr_t) -1) {
+					st->blkno++;
+					st->flags |= ST_POSUPDATED;
+				}
 			}
 		}
-		xs->resid = info;
 		if (bp)
 			bp->b_resid = info;
 	}
@@ -2148,6 +2269,8 @@ st_interpret_sense(xs)
 				/* return an EOF */
 			}
 			retval = 0;
+			/* lost position */
+			st->fileno = st->blkno = -1;
 		}
 	}
 
@@ -2171,6 +2294,7 @@ st_interpret_sense(xs)
 			case SKEY_UNIT_ATTENTION:
 			case SKEY_WRITE_PROTECT:
 				break;
+			case SKEY_VOLUME_OVERFLOW:
 			case SKEY_BLANK_CHECK:
 				printf(", requested size: %d (decimal)", info);
 				break;

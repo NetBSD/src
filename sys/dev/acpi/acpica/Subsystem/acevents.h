@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acevents.h - Event subcomponent prototypes and defines
- *       xRevision: 65 $
+ *       $Revision: 1.1.1.1.8.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -122,9 +122,13 @@ ACPI_STATUS
 AcpiEvInitialize (
     void);
 
+ACPI_STATUS
+AcpiEvHandlerInitialize (
+    void);
+
 
 /*
- * AcpiEvfixed - Fixed event handling
+ * Evfixed - Fixed event handling
  */
 
 ACPI_STATUS
@@ -137,18 +141,22 @@ AcpiEvFixedEventDetect (
 
 UINT32
 AcpiEvFixedEventDispatch (
-    UINT32                  AcpiEvent);
+    UINT32                  Event);
 
 
 /*
- * AcpiEvglock - Global Lock support
+ * Evmisc
  */
+
+BOOLEAN
+AcpiEvIsNotifyObject (
+    ACPI_NAMESPACE_NODE     *Node);
 
 ACPI_STATUS
 AcpiEvAcquireGlobalLock(
-    void);
+    UINT32                  Timeout);
 
-void
+ACPI_STATUS
 AcpiEvReleaseGlobalLock(
     void);
 
@@ -156,9 +164,26 @@ ACPI_STATUS
 AcpiEvInitGlobalLockHandler (
     void);
 
+UINT32
+AcpiEvGetGpeRegisterIndex (
+    UINT32                  GpeNumber);
+
+UINT32
+AcpiEvGetGpeNumberIndex (
+    UINT32                  GpeNumber);
+
+ACPI_STATUS
+AcpiEvQueueNotifyRequest (
+    ACPI_NAMESPACE_NODE     *Node,
+    UINT32                  NotifyValue);
+
+void ACPI_SYSTEM_XFACE
+AcpiEvNotifyDispatch (
+    void                    *Context);
+
 
 /*
- * AcpiEvgpe - GPE handling and dispatch
+ * Evgpe - GPE handling and dispatch
  */
 
 ACPI_STATUS
@@ -177,26 +202,12 @@ UINT32
 AcpiEvGpeDetect (
     void);
 
-
 /*
- * AcpiEvnotify - Device Notify handling and dispatch
+ * Evregion - Address Space handling
  */
 
 ACPI_STATUS
-AcpiEvQueueNotifyRequest (
-    ACPI_NAMESPACE_NODE     *Node,
-    UINT32                  NotifyValue);
-
-void
-AcpiEvNotifyDispatch (
-    void                    *Context);
-
-/*
- * AcpiEvregion - Address Space handling
- */
-
-ACPI_STATUS
-AcpiEvInstallDefaultAddressSpaceHandlers (
+AcpiEvInitAddressSpaces (
     void);
 
 ACPI_STATUS
@@ -205,8 +216,7 @@ AcpiEvAddressSpaceDispatch (
     UINT32                  Function,
     ACPI_PHYSICAL_ADDRESS   Address,
     UINT32                  BitWidth,
-    UINT32                  *Value);
-
+    void                    *Value);
 
 ACPI_STATUS
 AcpiEvAddrHandlerHelper (
@@ -215,21 +225,20 @@ AcpiEvAddrHandlerHelper (
     void                    *Context,
     void                    **ReturnValue);
 
-void
-AcpiEvDisassociateRegionFromHandler(
-    ACPI_OPERAND_OBJECT    *RegionObj,
-    BOOLEAN                 AcpiNsIsLocked);
-
-
 ACPI_STATUS
-AcpiEvAssociateRegionAndHandler (
+AcpiEvAttachRegion (
     ACPI_OPERAND_OBJECT     *HandlerObj,
     ACPI_OPERAND_OBJECT     *RegionObj,
     BOOLEAN                 AcpiNsIsLocked);
 
+void
+AcpiEvDetachRegion (
+    ACPI_OPERAND_OBJECT    *RegionObj,
+    BOOLEAN                 AcpiNsIsLocked);
+
 
 /*
- * AcpiEvregini - Region initialization and setup
+ * Evregini - Region initialization and setup
  */
 
 ACPI_STATUS
@@ -248,6 +257,20 @@ AcpiEvIoSpaceRegionSetup (
 
 ACPI_STATUS
 AcpiEvPciConfigRegionSetup (
+    ACPI_HANDLE             Handle,
+    UINT32                  Function,
+    void                    *HandlerContext,
+    void                    **RegionContext);
+
+ACPI_STATUS
+AcpiEvCmosRegionSetup (
+    ACPI_HANDLE             Handle,
+    UINT32                  Function,
+    void                    *HandlerContext,
+    void                    **RegionContext);
+
+ACPI_STATUS
+AcpiEvPciBarRegionSetup (
     ACPI_HANDLE             Handle,
     UINT32                  Function,
     void                    *HandlerContext,
@@ -281,10 +304,6 @@ AcpiEvRemoveSciHandler (
 UINT32
 AcpiEvInitializeSCI (
     UINT32                  ProgramSCI);
-
-void
-AcpiEvRestoreAcpiState (
-    void);
 
 void
 AcpiEvTerminate (

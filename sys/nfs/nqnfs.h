@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.7 2000/06/09 00:00:18 fvdl Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.7.6.1 2002/06/23 17:51:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -184,15 +184,16 @@ struct nqm {
 /*
  * List head for timer queue.
  */
-CIRCLEQ_HEAD(, nqlease) nqtimerhead;
+extern CIRCLEQ_HEAD(nqleasehead, nqlease) nqtimerhead;
 
 /*
  * List head for the file handle hash table.
  */
 #define	NQFHHASH(f) \
 	(&nqfhhashtbl[(*((u_int32_t *)(f))) & nqfhhash])
-LIST_HEAD(nqfhhashhead, nqlease) *nqfhhashtbl;
-u_long nqfhhash;
+extern LIST_HEAD(nqfhhashhead, nqlease) *nqfhhashtbl;
+extern u_long nqfhhash;
+extern int nqsrv_writeslack;
 
 /*
  * Nqnfs return status numbers.

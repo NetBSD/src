@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.60.2.1 2002/01/10 19:51:56 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.60.2.2 2002/06/23 17:44:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.60.2.1 2002/01/10 19:51:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.60.2.2 2002/06/23 17:44:32 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -226,7 +226,7 @@ netbsd32_open(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TO64_UAP(mode);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_open(p, &ua, retval));
@@ -518,7 +518,7 @@ netbsd32_access(p, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_access(p, &ua, retval));
@@ -735,7 +735,7 @@ netbsd32_revoke(p, v, retval)
 	caddr_t sg;
 
 	NETBSD32TOP_UAP(path, const char);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_revoke(p, &ua, retval));
@@ -776,7 +776,7 @@ netbsd32_readlink(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(buf, char);
 	NETBSD32TOX_UAP(count, size_t);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(&ua, path));
 
 	return (sys_readlink(p, &ua, retval));

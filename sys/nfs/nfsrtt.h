@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrtt.h,v 1.5 1997/05/12 23:36:08 fvdl Exp $	*/
+/*	$NetBSD: nfsrtt.h,v 1.5.36.1 2002/06/23 17:51:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,5 +101,9 @@ struct nfsdrt {
 		struct timeval tstamp;	/* Timestamp of log entry */
 	} drt[NFSRTTLOGSIZ];
 };
+
+#ifdef _KERNEL
+extern int nfsrtton;
+#endif
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.136.2.2 2002/03/16 16:02:22 jdolecek Exp $	*/
+/*	$NetBSD: systm.h,v 1.136.2.3 2002/06/23 17:52:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -305,6 +305,13 @@ void	*exechook_establish __P((void (*)(struct proc *, void *), void *));
 void	exechook_disestablish __P((void *));
 void	doexechooks __P((struct proc *));
 
+/*
+ * Exit hooks. Subsystems may want to do cleanup when a process exits.
+ */
+void	*exithook_establish __P((void (*)(struct proc *, void *), void *));
+void	exithook_disestablish __P((void *));
+void	doexithooks __P((struct proc *));
+
 int	uiomove __P((void *, int, struct uio *));
 
 #ifdef _KERNEL
@@ -389,6 +396,8 @@ void	cpu_Debugger __P((void));
  */
 extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #define console_debugger() if (db_fromconsole) Debugger()
+#elif defined(Debugger)
+#define console_debugger() Debugger()
 #else
 #define console_debugger() do {} while (/* CONSTCOND */ 0) /* NOP */
 #endif
@@ -400,39 +409,17 @@ void scdebug_ret __P((struct proc *, register_t, int, register_t[]));
 #endif /* SYSCALL_DEBUG */
 
 #if defined(MULTIPROCESSOR)
-#include <sys/lock.h>
+void	_kernel_lock_init(void);
+void	_kernel_lock(int);
+void	_kernel_unlock(void);
+void	_kernel_proc_lock(struct proc *);
+void	_kernel_proc_unlock(struct proc *);
 
-extern struct lock kernel_lock;
-
-#define	KERNEL_LOCK_INIT()	spinlockinit(&kernel_lock, "klock", 0)
-
-/*
- * Acquire/release kernel lock.
- * Intended for use in the scheduler and the lower half of the kernel.
- */
-#define	KERNEL_LOCK(flag)						\
-do {									\
-	SCHED_ASSERT_UNLOCKED();					\
-	spinlockmgr(&kernel_lock, (flag), 0);				\
-} while (/* CONSTCOND */ 0)
-
-#define	KERNEL_UNLOCK()		spinlockmgr(&kernel_lock, LK_RELEASE, 0)
-
-/*
- * Acquire/release kernel lock on behalf of a process.
- * Intended for use in the top half of the kernel.
- */
-#define	KERNEL_PROC_LOCK(p)						\
-do {									\
-	KERNEL_LOCK(LK_EXCLUSIVE);					\
-	(p)->p_flag |= P_BIGLOCK;					\
-} while (/* CONSTCOND */ 0)
-
-#define	KERNEL_PROC_UNLOCK(p)						\
-do {									\
-	p->p_flag &= ~P_BIGLOCK;					\
-	KERNEL_UNLOCK();						\
-} while (/* CONSTCOND */ 0)
+#define	KERNEL_LOCK_INIT()		_kernel_lock_init()
+#define	KERNEL_LOCK(flag)		_kernel_lock((flag))
+#define	KERNEL_UNLOCK()			_kernel_unlock()
+#define	KERNEL_PROC_LOCK(p)		_kernel_proc_lock((p))
+#define	KERNEL_PROC_UNLOCK(p)		_kernel_proc_unlock((p))
 
 #else /* ! MULTIPROCESSOR */
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.5.2.2 2002/02/11 20:10:14 jdolecek Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.5.2.3 2002/06/23 17:48:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.5.2.2 2002/02/11 20:10:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.5.2.3 2002/06/23 17:48:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,7 +406,7 @@ pxg_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
 		break;
 
 	default:
-		rv = ENOTTY;
+		rv = EPASSTHROUGH;
 		break;
 	}
 

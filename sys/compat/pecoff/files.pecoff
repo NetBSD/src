@@ -1,4 +1,8 @@
-#	$NetBSD: files.pecoff,v 1.2 2000/06/09 22:38:56 oki Exp $
+#	$NetBSD: files.pecoff,v 1.2.10.1 2002/06/23 17:44:39 jdolecek Exp $
 #
 
 file	compat/pecoff/pecoff_exec.c	compat_pecoff
+file	compat/pecoff/pecoff_emul.c	compat_pecoff
+file	compat/pecoff/pecoff_misc.c	compat_pecoff
+file	compat/pecoff/pecoff_syscalls.c	compat_pecoff
+file	compat/pecoff/pecoff_sysent.c	compat_pecoff

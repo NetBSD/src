@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.23.2.2 2002/02/11 20:10:34 jdolecek Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.23.2.3 2002/06/23 17:50:49 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -9,6 +9,9 @@
 # define      _KERNEL
 #endif
 
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -25,7 +28,6 @@
 #else
 # include <sys/ioctl.h>
 #endif
-#include <sys/uio.h>
 #ifndef linux
 # include <sys/protosw.h>
 #endif
@@ -91,10 +93,10 @@ extern struct timeout ipfr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.23.2.2 2002/02/11 20:10:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.23.2.3 2002/06/23 17:50:49 jdolecek Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.18 2002/01/01 15:09:11 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.21 2002/04/10 04:56:10 darrenr Exp";
 #endif
 #endif
 
@@ -285,7 +287,7 @@ ipfr_t *table[];
 {
 	ipfr_t	*f, frag;
 	u_int idx;
- 
+
 	/*
 	 * For fragments, we record protocol, packet id, TOS and both IP#'s
 	 * (these should all be the same for all fragments of a packet).
@@ -587,11 +589,11 @@ void ipfr_slowtimer()
 #if defined(_KERNEL) && SOLARIS
 	extern	int	fr_running;
 
-	if (fr_running <= 0) 
+	if (fr_running <= 0)
 		return;
+	READ_ENTER(&ipf_solaris);
 #endif
 
-	READ_ENTER(&ipf_solaris);
 #if defined(__sgi) && defined(_KERNEL)
 	ipfilter_sgi_intfsync();
 #endif

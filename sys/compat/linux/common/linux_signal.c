@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.31.4.2 2002/03/16 16:00:38 jdolecek Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.31.4.3 2002/06/23 17:44:26 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.4.2 2002/03/16 16:00:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.4.3 2002/06/23 17:44:26 jdolecek Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -86,42 +86,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.4.2 2002/03/16 16:00:38 jdolec
 #define	linux_sigaddset(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
 					|= (1 << ((n) - 1) % LINUX__NSIG_BPW))
 
-/* Note: linux_to_native_sig[] is in <arch>/linux_sigarray.c */
-const int native_to_linux_sig[NSIG] = {
-	0,
-	LINUX_SIGHUP,
-	LINUX_SIGINT,
-	LINUX_SIGQUIT,
-	LINUX_SIGILL,
-	LINUX_SIGTRAP,
-	LINUX_SIGABRT,
-	0,			/* SIGEMT */
-	LINUX_SIGFPE,
-	LINUX_SIGKILL,
-	LINUX_SIGBUS,
-	LINUX_SIGSEGV,
-	0,			/* SIGSYS */
-	LINUX_SIGPIPE,
-	LINUX_SIGALRM,
-	LINUX_SIGTERM,
-	LINUX_SIGURG,
-	LINUX_SIGSTOP,
-	LINUX_SIGTSTP,
-	LINUX_SIGCONT,
-	LINUX_SIGCHLD,
-	LINUX_SIGTTIN,
-	LINUX_SIGTTOU,
-	LINUX_SIGIO,
-	LINUX_SIGXCPU,
-	LINUX_SIGXFSZ,
-	LINUX_SIGVTALRM,
-	LINUX_SIGPROF,
-	LINUX_SIGWINCH,
-	0,			/* SIGINFO */
-	LINUX_SIGUSR1,
-	LINUX_SIGUSR2,
-	LINUX_SIGPWR,
-};
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
+
+extern const int native_to_linux_signo[];
+extern const int linux_to_native_signo[];
 
 /*
  * Convert between Linux and BSD signal sets.
@@ -173,7 +145,7 @@ linux_to_native_sigset(bss, lss)
 	sigemptyset(bss);
 	for (i = 1; i < LINUX__NSIG; i++) {
 		if (linux_sigismember(lss, i)) {
-			newsig = linux_to_native_sig[i];
+			newsig = linux_to_native_signo[i];
 			if (newsig)
 				sigaddset(bss, newsig);
 		}
@@ -190,7 +162,7 @@ native_to_linux_sigset(lss, bss)
 	linux_sigemptyset(lss);
 	for (i = 1; i < NSIG; i++) {
 		if (sigismember(bss, i)) {
-			newsig = native_to_linux_sig[i];
+			newsig = native_to_linux_signo[i];
 			if (newsig)
 				linux_sigaddset(lss, newsig);
 		}
@@ -238,12 +210,9 @@ linux_to_native_sigflags(lsf)
 		bsf |= SA_NODEFER;
 	if ((lsf & LINUX_SA_SIGINFO) != 0)
 		bsf |= SA_SIGINFO;
-#ifdef DEBUG_LINUX
 	if ((lsf & ~LINUX_SA_ALLBITS) != 0)
-		uprintf(
-		    "linux_old_to_native_sigflags: %lx extra bits ignored\n",
-		    lsf);
-#endif
+		DPRINTF(("linux_old_to_native_sigflags: "
+		    "%lx extra bits ignored\n", lsf));
 	return bsf;
 }
 
@@ -263,10 +232,9 @@ linux_old_to_native_sigaction(bsa, lsa)
 /*
  * XXX: On the alpha sa_restorer is elsewhere.
  */
-#ifdef DEBUG_LINUX
 	if (lsa->sa_restorer != NULL)
-		uprintf("linux_old_to_native_sigaction: sa_restorer ignored\n");
-#endif
+		DPRINTF(("linux_old_to_native_sigaction: "
+		    "sa_restorer ignored\n"));
 #endif
 }
 
@@ -293,10 +261,8 @@ linux_to_native_sigaction(bsa, lsa)
 	linux_to_native_sigset(&bsa->sa_mask, &lsa->sa_mask);
 	bsa->sa_flags = linux_to_native_sigflags(lsa->sa_flags);
 #ifndef __alpha__
-#ifdef DEBUG_LINUX
 	if (lsa->sa_restorer != 0)
-		uprintf("linux_to_native_sigaction: sa_restorer ignored\n");
-#endif
+		DPRINTF(("linux_to_native_sigaction: sa_restorer ignored\n"));
 #endif
 }
 
@@ -348,13 +314,13 @@ linux_sys_rt_sigaction(p, v, retval)
 	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
-	if (sig > 0 && !linux_to_native_sig[sig]) {
+	if (sig > 0 && !linux_to_native_signo[sig]) {
 		/* Pretend that we did something useful for unknown signals. */
 		obsa.sa_handler = SIG_IGN;
 		sigemptyset(&obsa.sa_mask);
 		obsa.sa_flags = 0;
 	} else {
-		error = sigaction1(p, linux_to_native_sig[sig],
+		error = sigaction1(p, linux_to_native_signo[sig],
 		    SCARG(uap, nsa) ? &nbsa : NULL, SCARG(uap, osa) ? &obsa : NULL);
 		if (error)
 			return (error);
@@ -588,7 +554,7 @@ linux_sys_kill(p, v, retval)
 	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
-	SCARG(&ka, signum) = linux_to_native_sig[sig];
+	SCARG(&ka, signum) = linux_to_native_signo[sig];
 	return sys_kill(p, &ka, retval);
 }
 

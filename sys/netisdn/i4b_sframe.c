@@ -27,7 +27,7 @@
  *	i4b_sframe.c - s frame handling routines
  *	----------------------------------------
  *
- *	$Id: i4b_sframe.c,v 1.2.2.1 2002/01/10 20:03:41 thorpej Exp $ 
+ *	$Id: i4b_sframe.c,v 1.2.2.2 2002/06/23 17:51:31 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_sframe.c,v 1.2.2.1 2002/01/10 20:03:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_sframe.c,v 1.2.2.2 2002/06/23 17:51:31 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -64,18 +64,18 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_sframe.c,v 1.2.2.1 2002/01/10 20:03:41 thorpej E
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
-
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
+#include <netisdn/i4b_l3l4.h>
 
 /*---------------------------------------------------------------------------*
  *	process s frame
  *---------------------------------------------------------------------------*/
 void
-i4b_rxd_s_frame(l2_softc_t *l2sc, struct mbuf *m)
+i4b_rxd_s_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 	u_char *ptr = m->m_data;
 	
@@ -90,26 +90,26 @@ i4b_rxd_s_frame(l2_softc_t *l2sc, struct mbuf *m)
 	l2sc->rxd_PF = GETSPF(*(ptr + OFF_SNR));
 	l2sc->rxd_NR = GETSNR(*(ptr + OFF_SNR));
 
-	i4b_rxd_ack(l2sc, l2sc->rxd_NR);
+	i4b_rxd_ack(l2sc, drv, l2sc->rxd_NR);
 	
 	switch(*(ptr + OFF_SRCR))
 	{
 		case RR:
 			l2sc->stat.rx_rr++; /* update statistics */
 			NDBGL2(L2_S_MSG, "rx'd RR, N(R) = %d", l2sc->rxd_NR);
-			i4b_next_l2state(l2sc, EV_RXRR);
+			i4b_next_l2state(l2sc, drv, EV_RXRR);
 			break;
 
 		case RNR:
 			l2sc->stat.rx_rnr++; /* update statistics */
 			NDBGL2(L2_S_MSG, "rx'd RNR, N(R) = %d", l2sc->rxd_NR);
-			i4b_next_l2state(l2sc, EV_RXRNR);
+			i4b_next_l2state(l2sc, drv, EV_RXRNR);
 			break;
 
 		case REJ:
 			l2sc->stat.rx_rej++; /* update statistics */
 			NDBGL2(L2_S_MSG, "rx'd REJ, N(R) = %d", l2sc->rxd_NR);
-			i4b_next_l2state(l2sc, EV_RXREJ);
+			i4b_next_l2state(l2sc, drv, EV_RXREJ);
 			break;
 
 		default:
@@ -129,7 +129,7 @@ i4b_tx_rr_command(l2_softc_t *l2sc, pbit_t pbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx RR, bri = %d", l2sc->bri);
+	NDBGL2(L2_S_MSG, "tx RR, bri = %d", l2sc->drv->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_CMD_TO_NT, pbit, RR);
 
@@ -146,7 +146,7 @@ i4b_tx_rr_response(l2_softc_t *l2sc, fbit_t fbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx RR, bri = %d", l2sc->bri);
+	NDBGL2(L2_S_MSG, "tx RR, bri = %d", l2sc->drv->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_RSP_TO_NT, fbit, RR);	
 
@@ -163,7 +163,7 @@ i4b_tx_rnr_command(l2_softc_t *l2sc, pbit_t pbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx RNR, bri = %d", l2sc->bri);
+	NDBGL2(L2_S_MSG, "tx RNR, bri = %d", l2sc->drv->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_CMD_TO_NT, pbit, RNR);	
 
@@ -180,7 +180,7 @@ i4b_tx_rnr_response(l2_softc_t *l2sc, fbit_t fbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx RNR, bri = %d", l2sc->bri);
+	NDBGL2(L2_S_MSG, "tx RNR, bri = %d", l2sc->drv->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_RSP_TO_NT, fbit, RNR);
 
@@ -197,7 +197,7 @@ i4b_tx_rej_response(l2_softc_t *l2sc, fbit_t fbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx REJ, bri = %d", l2sc->bri);
+	NDBGL2(L2_S_MSG, "tx REJ, bri = %d", l2sc->drv->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_RSP_TO_NT, fbit, REJ);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.3.2.3 2002/01/10 19:59:13 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.3.2.4 2002/06/23 17:49:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.3.2.3 2002/01/10 19:59:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.3.2.4 2002/06/23 17:49:18 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.3.2.3 2002/01/10 19:59:13 thorpej Exp $");
 #include <dev/scsipi/scsipi_debug.h>
 #include <dev/scsipi/scsiconf.h>
 
-#ifndef DDB
+#ifndef Debugger
 #define	Debugger()
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcvar.h,v 1.7.2.1 2001/09/13 01:15:54 thorpej Exp $	*/
+/*	$NetBSD: if_lmcvar.h,v 1.7.2.2 2002/06/23 17:47:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -496,7 +496,7 @@ struct lmc___softc {
 #define	LMC_HAVE_STOREFWD	0x00008000	/* have CMD_STOREFWD */
 #define	LMC_HAVE_SIA100		0x00010000	/* has LS100 in SIA status */
 
-static const char * const lmc_system_errors[] = {
+static const char * const lmc_system_errors[] __attribute__((__unused__)) = {
     "parity error",
     "master abort",
     "target abort",
@@ -507,6 +507,7 @@ static const char * const lmc_system_errors[] = {
     "reserved #7",
 };
 
+#if 0
 static const char * const lmc_status_bits[] = {
     NULL,
     "transmit process stopped",
@@ -527,6 +528,7 @@ static const char * const lmc_status_bits[] = {
     NULL,
     NULL,
 };
+#endif
 
 /*
  * This driver supports a maximum of 32 tulip boards.

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.44.2.3 2002/03/16 16:01:29 jdolecek Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.44.2.4 2002/06/23 17:48:40 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.44.2.3 2002/03/16 16:01:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.44.2.4 2002/06/23 17:48:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,12 +164,12 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 		sbc->sbus_pri = sa->sa_pri;
 	sbc->sbus_mdvec = mdvec;
 
-	if (sa->sa_npromvaddrs != 0) {
-		sbc->sbus_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
+	if (sa->sa_npromvaddrs) {
+		sbus_promaddr_to_handle(sa->sa_bustag,
+			sa->sa_promvaddrs[0], &sbc->sbus_reg);
 	} else {
-		if (sbus_bus_map(sa->sa_bustag,
-				 sa->sa_slot, sa->sa_offset, sa->sa_size,
-				 BUS_SPACE_MAP_LINEAR, &sbc->sbus_reg) != 0) {
+		if (sbus_bus_map(sa->sa_bustag,	sa->sa_slot, sa->sa_offset,
+			sa->sa_size, 0, &sbc->sbus_reg) != 0) {
 			printf("%s: cannot map registers\n", self->dv_xname);
 			return;
 		}
@@ -522,7 +522,7 @@ isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmap;
 	ispreq_t *qep;
-	int cansleep = (xs->xs_control & XS_CTL_NOSLEEP) == 0;
+	int error, cansleep = (xs->xs_control & XS_CTL_NOSLEEP) == 0;
 	int in = (xs->xs_control & XS_CTL_DATA_IN) != 0;
 
 	qep = (ispreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, isp->isp_reqidx);
@@ -536,11 +536,15 @@ isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
 		panic("%s: dma map already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	if (bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
+	error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
 	    NULL, (cansleep ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) |
-	    BUS_DMA_STREAMING) != 0) {
+	    BUS_DMA_STREAMING);
+	if (error != 0) {
 		XS_SETERR(xs, HBA_BOTCH);
-		return (CMD_COMPLETE);
+		if (error == EAGAIN || error == ENOMEM)
+			return (CMD_EAGAIN);
+		else
+			return (CMD_COMPLETE);
 	}
 
 	bus_dmamap_sync(isp->isp_dmatag, dmap, 0, xs->datalen,

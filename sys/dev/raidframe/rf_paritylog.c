@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.5.8.1 2002/01/10 19:57:52 thorpej Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.5.8.2 2002/06/23 17:48:36 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.5.8.1 2002/01/10 19:57:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.5.8.2 2002/06/23 17:48:36 jdolecek Exp $");
 
 #include "rf_archs.h"
 
@@ -810,7 +810,7 @@ rf_ParityLogAppend(
 				RF_ASSERT(log->records[logItem].parityAddr.startSector < raidPtr->regionInfo[regionID].parityStartAddr + raidPtr->regionInfo[regionID].numSectorsParity);
 				log->records[logItem].parityAddr.numSector = 1;
 				log->records[logItem].operation = item->common->operation;
-				bcopy((item->common->bufPtr + (item->bufOffset++ * (1 << item->common->raidPtr->logBytesPerSector))), log->bufPtr + (logItem * (1 << item->common->raidPtr->logBytesPerSector)), (1 << item->common->raidPtr->logBytesPerSector));
+				memcpy(log->bufPtr + (logItem * (1 << item->common->raidPtr->logBytesPerSector)), (item->common->bufPtr + (item->bufOffset++ * (1 << item->common->raidPtr->logBytesPerSector))), (1 << item->common->raidPtr->logBytesPerSector));
 				item->diskAddress.numSector--;
 				item->diskAddress.startSector++;
 				if (item->diskAddress.numSector == 0)

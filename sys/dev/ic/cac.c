@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.17.2.3 2002/02/11 20:09:44 jdolecek Exp $	*/
+/*	$NetBSD: cac.c,v 1.17.2.4 2002/06/23 17:46:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.17.2.3 2002/02/11 20:09:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.17.2.4 2002/06/23 17:46:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,7 +394,7 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 	while ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL) {
 		if ((*sc->sc_cl.cl_fifo_full)(sc))
 			return (EBUSY);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb, ccb_chain);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb_chain);
 #ifdef DIAGNOSTIC
 		ccb->ccb_flags |= CAC_CCB_ACTIVE;
 #endif
@@ -461,7 +461,7 @@ cac_ccb_alloc(struct cac_softc *sc, int nosleep)
 
 	for (;;) {
 		if ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_free)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ccb, ccb_chain);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ccb_chain);
 			break;
 		}
 		if (nosleep) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.9.4.4 2002/03/16 16:00:28 jdolecek Exp $ */
+/*	$NetBSD: irix_types.h,v 1.9.4.5 2002/06/23 17:43:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
 
+/* From IRIX's <limits.h> */
+#define IRIX_PATH_MAX 1024
+
 /* From IRIX's <sys/signal.h> */
 typedef struct {
 	__uint32_t bits[4];
@@ -58,6 +61,7 @@ typedef __int64_t irix_app32_long_long_t;
 typedef __uint32_t irix_ino_t;
 typedef __int32_t irix_off_t;
 typedef __uint32_t irix_app32_ptr_t;
+typedef __uint64_t irix_k_sigset_t;
 
 #if 1 /* _MIPS_SZLONG == 32 */
 typedef unsigned long irix_mode_t;

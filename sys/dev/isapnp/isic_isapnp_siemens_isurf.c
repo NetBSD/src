@@ -37,14 +37,14 @@
  *	Siemens I-Surf 2.0 PnP specific routines for isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_siemens_isurf.c,v 1.2.6.1 2002/01/10 19:55:55 thorpej Exp $
+ *	$Id: isic_isapnp_siemens_isurf.c,v 1.2.6.2 2002/06/23 17:47:10 jdolecek Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.2.6.1 2002/01/10 19:55:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.2.6.2 2002/06/23 17:47:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.2.6.1 2002/01/10 19:
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_debug.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -91,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.2.6.1 2002/01/10 19:
 #include <dev/ic/hscx.h>
 
 #if !defined(__FreeBSD__)
-void isic_attach_siemens_isurf __P((struct l1_softc *sc));
+void isic_attach_siemens_isurf __P((struct isic_softc *sc));
 #endif
 
 /* masks for register encoded in base addr */
@@ -139,7 +141,7 @@ siemens_isurf_read_fifo(void *buf, const void *base, size_t len)
 #else
 
 static void
-siemens_isurf_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+siemens_isurf_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -189,7 +191,7 @@ siemens_isurf_write_fifo(void *base, const void *buf, size_t len)
 #else
 
 static void
-siemens_isurf_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+siemens_isurf_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -244,7 +246,7 @@ siemens_isurf_write_reg(u_char *base, u_int offset, u_int v)
 #else
 
 static void
-siemens_isurf_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+siemens_isurf_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -303,7 +305,7 @@ siemens_isurf_read_reg(u_char *base, u_int offset)
 #else
 
 static u_int8_t
-siemens_isurf_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+siemens_isurf_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -334,7 +336,7 @@ siemens_isurf_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 int
 isic_probe_siemens_isurf(struct isa_device *dev, unsigned int iobase2)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	
 	/* check max unit range */
 	
@@ -421,7 +423,7 @@ isic_probe_siemens_isurf(struct isa_device *dev, unsigned int iobase2)
 int
 isic_attach_siemens_isurf(struct isa_device *dev, unsigned int iobase2)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 
 	/* setup ISAC and HSCX base addr */
 
@@ -444,7 +446,7 @@ isic_attach_siemens_isurf(struct isa_device *dev, unsigned int iobase2)
 #else
 
 void
-isic_attach_siemens_isurf(struct l1_softc *sc)
+isic_attach_siemens_isurf(struct isic_softc *sc)
 {
 	/* setup access routines */
 

@@ -27,7 +27,7 @@
  *	i4b_global.h - i4b global include file
  *	--------------------------------------
  *
- *	$Id: i4b_global.h,v 1.3 2001/03/24 12:40:31 martin Exp $
+ *	$Id: i4b_global.h,v 1.3.2.1 2002/06/23 17:51:25 jdolecek Exp $
  *
  * $FreeBSD$
  *
@@ -137,5 +137,13 @@
 #define CMR_SETTRACE	2	/* set D-channel and B-channel trace	*/
 #define CMR_GCST	3	/* get chipset statistics		*/
 #define CMR_CCST	4	/* clear chipset statistics		*/
+#define	CMR_SETLEDS	5	/* set LEDs (if available)		*/
+
+/* param for CMR_SETLEDS: */
+#define	CMRLEDS_TEI	1	/* this controller has a TEI */
+#define	CMRLEDS_B0	2	/* first B channel is in use */
+#define	CMRLEDS_B0_IN	4	/* first B channel handles an incoming call */
+#define	CMRLEDS_B1	8	/* second B channel is in use */
+#define	CMRLEDS_B1_IN	16	/* second B channel handles an incoming call */
 
 #endif /* _I4B_GLOBAL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.13.8.1 2002/01/10 20:02:34 thorpej Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.13.8.2 2002/06/23 17:50:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_output.c,v 1.13.8.1 2002/01/10 20:02:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_output.c,v 1.13.8.2 2002/06/23 17:50:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pk_output.c,v 1.13.8.1 2002/01/10 20:02:34 thorpej E
 #include <netccitt/pk_var.h>
 #include <netccitt/pk_extern.h>
 
-struct mbuf_cache pk_output_cache = {0}, pk_input_cache;
+struct mbuf_cache pk_output_cache = {0};
 
 void
 pk_output(lcp)

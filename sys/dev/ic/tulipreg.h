@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.25 2001/06/12 15:17:24 wiz Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.25.2.1 2002/06/23 17:46:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -639,7 +639,7 @@ struct tulip_desc {
 #define	OPMODE_WINB_REIO	0x80000000	/* receive early intr on */
 
 /* Shorthand for media-related OPMODE bits */
-#define	OPMODE_MEDIA_BITS	(OPMODE_FD|OPMODE_PS|OPMODE_PCS|OPMODE_SCR)
+#define	OPMODE_MEDIA_BITS	(OPMODE_FD|OPMODE_PS|OPMODE_TTM|OPMODE_PCS|OPMODE_SCR)
 
 /* CSR7 - Interrupt Enable */
 #define	CSR_INTEN		TULIP_CSR7
@@ -888,6 +888,20 @@ struct tulip_desc {
 #define	GPP_PNIC_PIN_100M_LPKB	1
 #define	GPP_PNIC_PIN_BNC_XMER	2
 #define	GPP_PNIC_PIN_LNK100X	3
+
+/*
+ * Definitions used for the SMC 9332DST (21140) board.
+ */
+#define GPP_SMC9332DST_PINS	0x3f	/* General Purpose Pin directions */
+#define GPP_SMC9332DST_OK10	0x80	/* 10 Mb/sec Signal Detect gep<7> */
+#define GPP_SMC9332DST_OK100	0x40	/* 100 Mb/sec Signal Detect gep<6> */
+#define GPP_SMC9332DST_INIT	0x09	/* No loopback --- point-to-point */
+
+/*
+ * Definitions used for the Cogent EM1x0 (21140) board.
+ */
+#define GPP_COGENT_EM1x0_PINS	0x3f	/* General Purpose Pin directions */
+#define GPP_COGENT_EM1x0_INIT	0x09	/* No loopback --- point-to-point */
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.3.6.2 2002/01/10 19:57:09 thorpej Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.3.6.3 2002/06/23 17:48:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -35,7 +35,7 @@
 /* driver for the hardware monitoring part of the VIA VT82C686A */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.3.6.2 2002/01/10 19:57:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.3.6.3 2002/06/23 17:48:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,8 @@ struct viaenv_softc {
 	struct envsys_tre_data sc_data[VIANUMSENSORS];
 	struct envsys_basic_info sc_info[VIANUMSENSORS];
 
-	struct proc *sc_thread;
-
-	struct lock sc_lock;
+	struct simplelock sc_slock;
+	struct timeval sc_lastread;
 
 	struct sysmon_envsys sc_sysmon;
 };
@@ -207,74 +206,68 @@ val_to_uV(unsigned int val, int index)
 
 
 static void
-viaenv_thread(void *arg)
+viaenv_refresh_sensor_data(struct viaenv_softc *sc)
 {
-	struct viaenv_softc *sc = arg;
+	static const struct timeval onepointfive =  { 1, 500000 };
+	struct timeval t;
 	u_int8_t v, v2;
-	int     i;
+	int i, s;
 
-	while (1) {
-		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	/* Read new values at most once every 1.5 seconds. */
+	timeradd(&sc->sc_lastread, &onepointfive, &t);
+	s = splclock();
+	i = timercmp(&mono_time, &t, >);
+	if (i)
+		sc->sc_lastread = mono_time;
+	splx(s);
 
-		/* temperature */
-		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TIRQ);
-		v2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TSENS1);
-		DPRINTF(("TSENS1 = %d\n", (v2 << 2) | (v >> 6)));
-		sc->sc_data[0].cur.data_us = val_to_uK((v2 << 2) | (v >> 6));
-		sc->sc_data[0].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
+	if (i == 0)
+		return;
 
-		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TLOW);
-		v2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TSENS2);
-		DPRINTF(("TSENS2 = %d\n", (v2 << 2) | ((v >> 4) & 0x3)));
-		sc->sc_data[1].cur.data_us =
-		    val_to_uK((v2 << 2) | ((v >> 4) & 0x3));
-		sc->sc_data[1].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
+	/* temperature */
+	v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TIRQ);
+	v2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TSENS1);
+	DPRINTF(("TSENS1 = %d\n", (v2 << 2) | (v >> 6)));
+	sc->sc_data[0].cur.data_us = val_to_uK((v2 << 2) | (v >> 6));
+	sc->sc_data[0].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
 
-		v2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TSENS3);
-		DPRINTF(("TSENS3 = %d\n", (v2 << 2) | (v >> 6)));
-		sc->sc_data[2].cur.data_us = val_to_uK((v2 << 2) | (v >> 6));
-		sc->sc_data[2].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
+	v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TLOW);
+	v2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TSENS2);
+	DPRINTF(("TSENS2 = %d\n", (v2 << 2) | ((v >> 4) & 0x3)));
+	sc->sc_data[1].cur.data_us =
+	    val_to_uK((v2 << 2) | ((v >> 4) & 0x3));
+	sc->sc_data[1].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
 
-		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_FANCONF);
+	v2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TSENS3);
+	DPRINTF(("TSENS3 = %d\n", (v2 << 2) | (v >> 6)));
+	sc->sc_data[2].cur.data_us = val_to_uK((v2 << 2) | (v >> 6));
+	sc->sc_data[2].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
 
-		sc->sc_fan_div[0] = 1 << ((v >> 4) & 0x3);
-		sc->sc_fan_div[1] = 1 << ((v >> 6) & 0x3);
+	v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_FANCONF);
 
-		/* fan */
-		for (i = 3; i <= 4; i++) {
-			v = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-			    VIAENV_FAN1 + i - 3);
-			DPRINTF(("FAN%d = %d / %d\n", i - 3, v,
-			    sc->sc_fan_div[i - 3]));
-			sc->sc_data[i].cur.data_us = val_to_rpm(v,
-			    sc->sc_fan_div[i - 3]);
-			sc->sc_data[i].validflags =
-			    ENVSYS_FVALID | ENVSYS_FCURVALID;
-		}
+	sc->sc_fan_div[0] = 1 << ((v >> 4) & 0x3);
+	sc->sc_fan_div[1] = 1 << ((v >> 6) & 0x3);
 
-		/* voltage */
-		for (i = 5; i <= 9; i++) {
-			v = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-			    VIAENV_VSENS1 + i - 5);
-			DPRINTF(("V%d = %d\n", i - 5, v));
-			sc->sc_data[i].cur.data_us = val_to_uV(v, i - 5);
-			sc->sc_data[i].validflags =
-			    ENVSYS_FVALID | ENVSYS_FCURVALID;
-		}
-
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
-		tsleep(sc, PWAIT, "viaenv", 3 * hz / 2);
+	/* fan */
+	for (i = 3; i <= 4; i++) {
+		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    VIAENV_FAN1 + i - 3);
+		DPRINTF(("FAN%d = %d / %d\n", i - 3, v,
+		    sc->sc_fan_div[i - 3]));
+		sc->sc_data[i].cur.data_us = val_to_rpm(v,
+		    sc->sc_fan_div[i - 3]);
+		sc->sc_data[i].validflags =
+		    ENVSYS_FVALID | ENVSYS_FCURVALID;
 	}
-}
 
-static void
-viaenv_thread_create(void *arg)
-{
-	struct viaenv_softc *sc = arg;
-
-	if (kthread_create1(viaenv_thread, sc, &sc->sc_thread, "%s",
-	    sc->sc_dev.dv_xname)) {
-		printf("%s: failed to create thread\n", sc->sc_dev.dv_xname);
+	/* voltage */
+	for (i = 5; i <= 9; i++) {
+		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    VIAENV_VSENS1 + i - 5);
+		DPRINTF(("V%d = %d\n", i - 5, v));
+		sc->sc_data[i].cur.data_us = val_to_uV(v, i - 5);
+		sc->sc_data[i].validflags =
+		    ENVSYS_FVALID | ENVSYS_FCURVALID;
 	}
 }
 
@@ -299,7 +292,7 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	}
 	printf("\n");
 
-	lockinit(&sc->sc_lock, PWAIT, "viaenv", 0, 0);
+	simple_lock_init(&sc->sc_slock);
 
 	/* Initialize sensors */
 	for (i = 0; i < VIANUMSENSORS; ++i) {
@@ -333,7 +326,8 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	strcpy(sc->sc_info[8].desc, "VSENS3");	/* VSENS3 (5V) */
 	strcpy(sc->sc_info[9].desc, "VSENS4");	/* VSENS4 (12V) */
 
-	kthread_create(viaenv_thread_create, sc);
+	/* Get initial set of sensor values. */
+	viaenv_refresh_sensor_data(sc);
 
 	/*
 	 * Hook into the System Monitor.
@@ -359,9 +353,12 @@ viaenv_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct viaenv_softc *sc = sme->sme_cookie;
 
-	(void) lockmgr(&sc->sc_lock, LK_SHARED, NULL);
+	simple_lock(&sc->sc_slock);
+
+	viaenv_refresh_sensor_data(sc);
 	*tred = sc->sc_data[tred->sensor];
-	(void) lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+
+	simple_unlock(&sc->sc_slock);
 
 	return (0);
 }

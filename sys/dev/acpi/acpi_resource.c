@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.2.2.2 2002/01/10 19:52:53 thorpej Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.2.2.3 2002/06/23 17:45:02 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.2.2.2 2002/01/10 19:52:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.2.2.3 2002/06/23 17:45:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.2.2.2 2002/01/10 19:52:53 thorpe
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
-#define	_COMPONENT	ACPI_BUS
-MODULE_NAME("RESOURCE")
+#define	_COMPONENT	ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME("RESOURCE")
 
 /*
  * acpi_resource_parse:
@@ -101,7 +101,7 @@ acpi_resource_parse(struct device *dev, struct acpi_devnode *ad,
 	void *context;
 	int i;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	/*
 	 * XXX Note, this means we only get devices that are currently
@@ -314,8 +314,7 @@ acpi_resource_print(struct device *dev, struct acpi_resources *res)
 
 		sep = "";
 		printf(" io ");
-		for (ar = SIMPLEQ_FIRST(&res->ar_io); ar != NULL;
-		     ar = SIMPLEQ_NEXT(ar, ar_list)) {
+		SIMPLEQ_FOREACH(ar, &res->ar_io, ar_list) {
 			printf("%s0x%x", sep, ar->ar_base);
 			if (ar->ar_length > 1)
 				printf("-0x%x", ar->ar_base +
@@ -331,8 +330,7 @@ acpi_resource_print(struct device *dev, struct acpi_resources *res)
 
 		sep = "";
 		printf(" mem ");
-		for (ar = SIMPLEQ_FIRST(&res->ar_mem); ar != NULL;
-		     ar = SIMPLEQ_NEXT(ar, ar_list)) {
+		SIMPLEQ_FOREACH(ar, &res->ar_mem, ar_list) {
 			printf("%s0x%x", sep, ar->ar_base);
 			if (ar->ar_length > 1)
 				printf("-0x%x", ar->ar_base +
@@ -348,8 +346,7 @@ acpi_resource_print(struct device *dev, struct acpi_resources *res)
 
 		sep = "";
 		printf(" irq ");
-		for (ar = SIMPLEQ_FIRST(&res->ar_irq); ar != NULL;
-		     ar = SIMPLEQ_NEXT(ar, ar_list)) {
+		SIMPLEQ_FOREACH(ar, &res->ar_irq, ar_list) {
 			printf("%s%d", sep, ar->ar_irq);
 			sep = ",";
 		}
@@ -360,8 +357,7 @@ acpi_resource_print(struct device *dev, struct acpi_resources *res)
 
 		sep = "";
 		printf(" drq ");
-		for (ar = SIMPLEQ_FIRST(&res->ar_drq); ar != NULL;
-		     ar = SIMPLEQ_NEXT(ar, ar_list)) {
+		SIMPLEQ_FOREACH(ar, &res->ar_drq, ar_list) {
 			printf("%s%d", sep, ar->ar_drq);
 			sep = ",";
 		}

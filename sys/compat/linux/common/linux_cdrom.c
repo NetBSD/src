@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.9.2.2 2002/03/16 16:00:37 jdolecek Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.9.2.3 2002/06/23 17:44:18 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.9.2.2 2002/03/16 16:00:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.9.2.3 2002/06/23 17:44:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.9.2.2 2002/03/16 16:00:37 jdolecek
 static int bsd_to_linux_msf_lba(unsigned address_format, union msf_lba *bml,
 				union linux_cdrom_addr *llml);
 
-#if 0
+#if DEBUG_LINUX
 #define DPRINTF(x) uprintf x
 #else
 #define DPRINTF(x)
@@ -184,8 +184,8 @@ linux_ioctl_cdrom(p, uap, retval)
 		if (error)
 			break;
 	    
-		sg = stackgap_init(p->p_emul);
-		entry = stackgap_alloc(&sg, sizeof *entry);
+		sg = stackgap_init(p, 0);
+		entry = stackgap_alloc(p, &sg, sizeof *entry);
 		t_toc_entry.address_format = l_tocentry.cdte_format;
 		t_toc_entry.starting_track = l_tocentry.cdte_track;
 		t_toc_entry.data_len = sizeof *entry;
@@ -204,7 +204,7 @@ linux_ioctl_cdrom(p, uap, retval)
 		l_tocentry.cdte_ctrl = t_entry.control;
 		if (bsd_to_linux_msf_lba(t_entry.addr_type, &t_entry.addr,
 		    &l_tocentry.cdte_addr) < 0) {
-			uprintf("linux_ioctl: unknown format msf/lba\n");
+			DPRINTF(("linux_ioctl: unknown format msf/lba\n"));
 			error = EINVAL;
 			break;
 		}
@@ -244,8 +244,8 @@ linux_ioctl_cdrom(p, uap, retval)
 		if (error)
 			break;
 
-		sg = stackgap_init(p->p_emul);
-		info = stackgap_alloc(&sg, sizeof *info);
+		sg = stackgap_init(p, 0);
+		info = stackgap_alloc(p, &sg, sizeof *info);
 		t_subchannel.address_format = CD_MSF_FORMAT;
 		t_subchannel.track = 0;
 		t_subchannel.data_format = l_subchnl.cdsc_format;
@@ -349,8 +349,8 @@ linux_ioctl_cdrom(p, uap, retval)
 		if (error)
 			break;
 
-		sg = stackgap_init(p->p_emul);
-		entry = stackgap_alloc(&sg, sizeof *entry);
+		sg = stackgap_init(p, 0);
+		entry = stackgap_alloc(p, &sg, sizeof *entry);
 		t_toc_entry.address_format = l_session.addr_format;
 		t_toc_entry.starting_track = 0;
 		t_toc_entry.data_len = sizeof *entry;

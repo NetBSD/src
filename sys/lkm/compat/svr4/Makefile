@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.2.2 2002/03/16 16:02:01 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.7.2.3 2002/06/23 17:49:56 jdolecek Exp $
 
 COMPAT_UTIL_OVERRIDE=	svr4
 .include "../Makefile.inc"

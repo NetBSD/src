@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.46.2.3 2002/03/16 16:00:58 jdolecek Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.46.2.4 2002/06/23 17:46:37 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.46.2.3 2002/03/16 16:00:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.46.2.4 2002/06/23 17:46:37 jdolecek Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -273,40 +273,6 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 		retval = 0;
 		break;
 #endif
-	case ISP_GET_STATS:
-	{
-		isp_stats_t *sp = (isp_stats_t *) addr;
-
-		MEMZERO(sp, sizeof (*sp));
-		sp->isp_stat_version = ISP_STATS_VERSION;
-		sp->isp_type = isp->isp_type;
-		sp->isp_revision = isp->isp_revision;
-		ISP_LOCK(isp);
-		sp->isp_stats[ISP_INTCNT] = isp->isp_intcnt;
-		sp->isp_stats[ISP_INTBOGUS] = isp->isp_intbogus;
-		sp->isp_stats[ISP_INTMBOXC] = isp->isp_intmboxc;
-		sp->isp_stats[ISP_INGOASYNC] = isp->isp_intoasync;
-		sp->isp_stats[ISP_RSLTCCMPLT] = isp->isp_rsltccmplt;
-		sp->isp_stats[ISP_FPHCCMCPLT] = isp->isp_fphccmplt;
-		sp->isp_stats[ISP_RSCCHIWAT] = isp->isp_rscchiwater;
-		sp->isp_stats[ISP_FPCCHIWAT] = isp->isp_fpcchiwater;
-		ISP_UNLOCK(isp);
-		retval = 0;
-		break;
-	}
-	case ISP_CLR_STATS:
-		ISP_LOCK(isp);
-		isp->isp_intcnt = 0;
-		isp->isp_intbogus = 0;
-		isp->isp_intmboxc = 0;
-		isp->isp_intoasync = 0;
-		isp->isp_rsltccmplt = 0;
-		isp->isp_fphccmplt = 0;
-		isp->isp_rscchiwater = 0;
-		isp->isp_fpcchiwater = 0;
-		ISP_UNLOCK(isp);
-		retval = 0;
-		break;
 	case ISP_SDBLEV:
 	{
 		int olddblev = isp->isp_dblev;
@@ -363,6 +329,54 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 		} else {
 			retval = ENODEV;
 		}
+		ISP_UNLOCK(isp);
+		break;
+	}
+	case ISP_GET_STATS:
+	{
+		isp_stats_t *sp = (isp_stats_t *) addr;
+
+		MEMZERO(sp, sizeof (*sp));
+		sp->isp_stat_version = ISP_STATS_VERSION;
+		sp->isp_type = isp->isp_type;
+		sp->isp_revision = isp->isp_revision;
+		ISP_LOCK(isp);
+		sp->isp_stats[ISP_INTCNT] = isp->isp_intcnt;
+		sp->isp_stats[ISP_INTBOGUS] = isp->isp_intbogus;
+		sp->isp_stats[ISP_INTMBOXC] = isp->isp_intmboxc;
+		sp->isp_stats[ISP_INGOASYNC] = isp->isp_intoasync;
+		sp->isp_stats[ISP_RSLTCCMPLT] = isp->isp_rsltccmplt;
+		sp->isp_stats[ISP_FPHCCMCPLT] = isp->isp_fphccmplt;
+		sp->isp_stats[ISP_RSCCHIWAT] = isp->isp_rscchiwater;
+		sp->isp_stats[ISP_FPCCHIWAT] = isp->isp_fpcchiwater;
+		ISP_UNLOCK(isp);
+		retval = 0;
+		break;
+	}
+	case ISP_CLR_STATS:
+		ISP_LOCK(isp);
+		isp->isp_intcnt = 0;
+		isp->isp_intbogus = 0;
+		isp->isp_intmboxc = 0;
+		isp->isp_intoasync = 0;
+		isp->isp_rsltccmplt = 0;
+		isp->isp_fphccmplt = 0;
+		isp->isp_rscchiwater = 0;
+		isp->isp_fpcchiwater = 0;
+		ISP_UNLOCK(isp);
+		retval = 0;
+		break;
+	case ISP_FC_GETHINFO:
+	{
+		struct isp_hba_device *hba = (struct isp_hba_device *) addr;
+		MEMZERO(hba, sizeof (*hba));
+		ISP_LOCK(isp);
+		hba->fc_speed = FCPARAM(isp)->isp_gbspeed;
+		hba->fc_scsi_supported = 1;
+		hba->fc_topology = FCPARAM(isp)->isp_topo + 1;
+		hba->fc_loopid = FCPARAM(isp)->isp_loopid;
+		hba->active_node_wwn = FCPARAM(isp)->isp_nodewwn;
+		hba->active_port_wwn = FCPARAM(isp)->isp_portwwn;
 		ISP_UNLOCK(isp);
 		break;
 	}
@@ -912,9 +926,9 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		break;
 	case ISPASYNC_PROMENADE:
 	if (IS_FC(isp) && isp->isp_dblev) {
-		const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
+		static const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "(role %s) %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
-		const static char *roles[4] = {
+		const static char *const roles[4] = {
 		    "None", "Target", "Initiator", "Target/Initiator"
 		};
 		fcparam *fcp = isp->isp_param;
@@ -964,43 +978,13 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		break;
 	case ISPASYNC_FABRIC_DEV:
 	{
-		int target, lrange;
-		struct lportdb *lp = NULL;
-		char *pt;
-		sns_ganrsp_t *resp = (sns_ganrsp_t *) arg;
-		u_int32_t portid;
-		u_int64_t wwpn, wwnn;
+		int target, base, lim;
 		fcparam *fcp = isp->isp_param;
+		struct lportdb *lp = NULL;
+		struct lportdb *clp = (struct lportdb *) arg;
+		char *pt;
 
-		portid =
-		    (((u_int32_t) resp->snscb_port_id[0]) << 16) |
-		    (((u_int32_t) resp->snscb_port_id[1]) << 8) |
-		    (((u_int32_t) resp->snscb_port_id[2]));
-
-		wwpn =
-		    (((u_int64_t)resp->snscb_portname[0]) << 56) |
-		    (((u_int64_t)resp->snscb_portname[1]) << 48) |
-		    (((u_int64_t)resp->snscb_portname[2]) << 40) |
-		    (((u_int64_t)resp->snscb_portname[3]) << 32) |
-		    (((u_int64_t)resp->snscb_portname[4]) << 24) |
-		    (((u_int64_t)resp->snscb_portname[5]) << 16) |
-		    (((u_int64_t)resp->snscb_portname[6]) <<  8) |
-		    (((u_int64_t)resp->snscb_portname[7]));
-
-		wwnn =
-		    (((u_int64_t)resp->snscb_nodename[0]) << 56) |
-		    (((u_int64_t)resp->snscb_nodename[1]) << 48) |
-		    (((u_int64_t)resp->snscb_nodename[2]) << 40) |
-		    (((u_int64_t)resp->snscb_nodename[3]) << 32) |
-		    (((u_int64_t)resp->snscb_nodename[4]) << 24) |
-		    (((u_int64_t)resp->snscb_nodename[5]) << 16) |
-		    (((u_int64_t)resp->snscb_nodename[6]) <<  8) |
-		    (((u_int64_t)resp->snscb_nodename[7]));
-		if (portid == 0 || wwpn == 0) {
-			break;
-		}
-
-		switch (resp->snscb_port_type) {
+		switch (clp->port_type) {
 		case 1:
 			pt = "   N_Port";
 			break;
@@ -1023,40 +1007,66 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 			pt = "   E_port";
 			break;
 		default:
-			pt = "?";
+			pt = " ";
 			break;
 		}
+
 		isp_prt(isp, ISP_LOGINFO,
-		    "%s @ 0x%x, Node 0x%08x%08x Port %08x%08x",
-		    pt, portid, ((u_int32_t) (wwnn >> 32)), ((u_int32_t) wwnn),
-		    ((u_int32_t) (wwpn >> 32)), ((u_int32_t) wwpn));
+		    "%s Fabric Device @ PortID 0x%x", pt, clp->portid);
+
 		/*
-		 * We're only interested in SCSI_FCP types (for now)
+		 * If we don't have an initiator role we bail.
+		 *
+		 * We just use ISPASYNC_FABRIC_DEV for announcement purposes.
 		 */
-		if ((resp->snscb_fc4_types[2] & 1) == 0) {
+
+		if ((isp->isp_role & ISP_ROLE_INITIATOR) == 0) {
 			break;
 		}
-		if (fcp->isp_topo != TOPO_F_PORT)
-			lrange = FC_SNS_ID+1;
+
+		/*
+		 * Is this entry for us? If so, we bail.
+		 */
+
+		if (fcp->isp_portid == clp->portid) {
+			break;
+		}
+
+		/*
+		 * Else, the default policy is to find room for it in
+		 * our local port database. Later, when we execute
+		 * the call to isp_pdb_sync either this newly arrived
+		 * or already logged in device will be (re)announced.
+		 */
+
+		if (fcp->isp_topo == TOPO_FL_PORT)
+			base = FC_SNS_ID+1;
 		else
-			lrange = 0;
+			base = 0;
+
+		if (fcp->isp_topo == TOPO_N_PORT)
+			lim = 1;
+		else
+			lim = MAX_FC_TARG;
+
 		/*
 		 * Is it already in our list?
 		 */
-		for (target = lrange; target < MAX_FC_TARG; target++) {
+		for (target = base; target < lim; target++) {
 			if (target >= FL_PORT_ID && target <= FC_SNS_ID) {
 				continue;
 			}
 			lp = &fcp->portdb[target];
-			if (lp->port_wwn == wwpn && lp->node_wwn == wwnn) {
+			if (lp->port_wwn == clp->port_wwn &&
+			    lp->node_wwn == clp->node_wwn) {
 				lp->fabric_dev = 1;
 				break;
 			}
 		}
-		if (target < MAX_FC_TARG) {
+		if (target < lim) {
 			break;
 		}
-		for (target = lrange; target < MAX_FC_TARG; target++) {
+		for (target = base; target < lim; target++) {
 			if (target >= FL_PORT_ID && target <= FC_SNS_ID) {
 				continue;
 			}
@@ -1065,14 +1075,16 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 				break;
 			}
 		}
-		if (target == MAX_FC_TARG) {
+		if (target == lim) {
 			isp_prt(isp, ISP_LOGWARN,
-			    "no more space for fabric devices");
+			    "out of space for fabric devices");
 			break;
 		}
-		lp->node_wwn = wwnn;
-		lp->port_wwn = wwpn;
-		lp->portid = portid;
+		lp->port_type = clp->port_type;
+		lp->fc4_type = clp->fc4_type;
+		lp->node_wwn = clp->node_wwn;
+		lp->port_wwn = clp->port_wwn;
+		lp->portid = clp->portid;
 		lp->fabric_dev = 1;
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258var.h,v 1.1 2001/05/02 12:53:31 minoura Exp $	*/
+/*	$NetBSD: msm6258var.h,v 1.1.4.1 2002/06/23 17:46:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -34,10 +34,19 @@
  * OKI MSM6258 ADPCM voice synthesizer codec.
  */
 
-#include <dev/auconv.h>
-
 void *msm6258_codec_init (void);
-void msm6258_ulinear8_to_adpcm (void *, u_char *, int);
-void msm6258_mulaw_to_adpcm (void *, u_char *, int);
-void msm6258_adpcm_to_ulinear8 (void *, u_char *, int);
-void msm6258_adpcm_to_mulaw (void *, u_char *, int);
+int  msm6258_codec_open (void *);
+
+void msm6258_slinear16_host_to_adpcm(void *, u_char *, int);
+void msm6258_slinear16_le_to_adpcm(void *, u_char *, int);
+void msm6258_slinear16_be_to_adpcm(void *, u_char *, int);
+void msm6258_slinear8_to_adpcm(void *, u_char *, int);
+void msm6258_ulinear8_to_adpcm(void *, u_char *, int);
+void msm6258_mulaw_to_adpcm(void *, u_char *, int);
+
+void msm6258_adpcm_to_slinear16_host(void *, u_char *, int);
+void msm6258_adpcm_to_slinear16_le(void *, u_char *, int);
+void msm6258_adpcm_to_slinear16_be(void *, u_char *, int);
+void msm6258_adpcm_to_slinear8(void *, u_char *, int);
+void msm6258_adpcm_to_ulinear8(void *, u_char *, int);
+void msm6258_adpcm_to_mulaw(void *, u_char *, int);

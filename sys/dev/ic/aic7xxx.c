@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.78.2.3 2002/02/11 20:09:42 jdolecek Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.78.2.4 2002/06/23 17:46:12 jdolecek Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.78.2.3 2002/02/11 20:09:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.78.2.4 2002/06/23 17:46:12 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -1548,10 +1548,9 @@ ahc_intr(void *arg)
 		 * We upset the sequencer :-(
 		 * Lookup the error message
 		 */
-		int i, error, num_errors;
+		int i, error;
 
 		error = ahc_inb(ahc, ERROR);
-		num_errors =  sizeof(hard_error)/sizeof(hard_error[0]);
 		for (i = 0; error != 1 && i < num_errors; i++)
 			error >>= 1;
 		panic("%s: brkadrint, %s at seqaddr = 0x%x\n",
@@ -3384,9 +3383,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 
 			if (!(txs->xs_control & XS_CTL_POLL)) {
 				callout_reset(&scbp->xs->xs_callout,
-				    (scbp->xs->timeout > 1000000) ?
-				    (scbp->xs->timeout / 1000) * hz : 
-				    (scbp->xs->timeout * hz) / 1000,
+				    mstohz(scbp->xs->timeout),
 				    ahc_timeout, scbp);
 			}
 			scbp = LIST_NEXT(scbp, plinks);
@@ -4102,8 +4099,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	scb->flags |= SCB_ACTIVE;
 
 	if (!(xs->xs_control & XS_CTL_POLL))
-		callout_reset(&scb->xs->xs_callout, xs->timeout > 1000000 ?
-		    (xs->timeout / 1000) * hz : (xs->timeout * hz) / 1000,
+		callout_reset(&scb->xs->xs_callout, mstohz(xs->timeout),
 		    ahc_timeout, scb);
 
 	if ((scb->flags & SCB_TARGET_IMMEDIATE) != 0) {
@@ -4722,10 +4718,7 @@ bus_reset:
 				newtimeout = MAX(active_scb->xs->timeout,
 						 scb->xs->timeout);
 				callout_reset(&scb->xs->xs_callout,
-				    newtimeout > 1000000 ?
-				    (newtimeout / 1000) * hz :
-				    (newtimeout * hz) / 1000,
-				    ahc_timeout, scb);
+				    mstohz(newtimeout), ahc_timeout, scb);
 				splx(s);
 				return;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.4.2.3 2002/03/16 16:00:55 jdolecek Exp $ */
+/*	$NetBSD: iha.c,v 1.4.2.4 2002/06/23 17:46:30 jdolecek Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.4.2.3 2002/03/16 16:00:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.4.2.4 2002/06/23 17:46:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ static __inline void iha_set_ssig(struct iha_softc *, u_int8_t, u_int8_t);
 static int iha_alloc_sglist(struct iha_softc *);
 
 static void iha_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
-    void *arg);
+    void *);
 static void iha_update_xfer_mode(struct iha_softc *, int);
 
 static void iha_reset_scsi_bus(struct iha_softc *);
@@ -1193,9 +1193,7 @@ iha_exec_scb(sc, scb)
 		scb->bufaddr = dm->dm_segs[0].ds_addr;
 
 	if ((xs->xs_control & XS_CTL_POLL) == 0) {
-		int timeout = xs->timeout;
-		timeout = (timeout > 100000) ?
-		    timeout / 1000 * hz : timeout * hz / 1000;
+		int timeout = mstohz(xs->timeout);
 		if (timeout == 0)
 			timeout = 1;
 		callout_reset(&xs->xs_callout, timeout, iha_timeout, scb);

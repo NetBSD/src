@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.5.2.1 2002/01/10 20:03:42 thorpej Exp $
+ *	$Id: i4b_trace.c,v 1.5.2.2 2002/06/23 17:51:33 jdolecek Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,11 +35,11 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.5.2.1 2002/01/10 20:03:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.5.2.2 2002/06/23 17:51:33 jdolecek Exp $");
 
-#include "i4btrc.h"
+#include "isdntrc.h"
 
-#if NI4BTRC > 0
+#if NISDNTRC > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,11 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.5.2.1 2002/01/10 20:03:42 thorpej Ex
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_l3l4.h>
-#include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 
-static struct ifqueue trace_queue[NI4BTRC];
-static int device_state[NI4BTRC];
+static struct ifqueue trace_queue[NISDNTRC];
+static int device_state[NISDNTRC];
 #define ST_IDLE		0x00
 #define ST_ISOPEN	0x01
 #define ST_WAITDATA	0x02
@@ -81,29 +81,25 @@ static int txunit = -1;				/* l2 bri of transmitting driver */
 static int outunit = -1;			/* output device for trace data */
 
 #define	PDEVSTATIC	/* - not static - */
-void i4btrcattach __P((void));
-int i4btrcopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btrcclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btrcread __P((dev_t dev, struct uio * uio, int ioflag));
-int i4btrcioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+void isdntrcattach __P((void));
+int isdntrcopen __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdntrcclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdntrcread __P((dev_t dev, struct uio * uio, int ioflag));
+int isdntrcioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 
 /*---------------------------------------------------------------------------*
  *	interface attach routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC void
 #ifdef __FreeBSD__
-i4btrcattach(void *dummy)
+isdntrcattach(void *dummy)
 #else
-i4btrcattach()
+isdntrcattach()
 #endif
 {
 	int i;
 	
-#ifndef HACK_NO_PSEUDO_ATTACH_MSG
-	printf("i4btrc: %d ISDN trace device(s) attached\n", NI4BTRC);
-#endif
-	
-	for(i=0; i < NI4BTRC; i++)
+	for(i=0; i < NISDNTRC; i++)
 	{
 
 #if defined(__FreeBSD__)
@@ -113,12 +109,12 @@ i4btrcattach()
 	  	devfs_token[i]
 		  = devfs_add_devswf(&i4btrc_cdevsw, i, DV_CHR,
 				     UID_ROOT, GID_WHEEL, 0600,
-				     "i4btrc%d", i);
+				     "isdntrc%d", i);
 #endif
 
 #else
 		make_dev(&i4btrc_cdevsw, i,
-				     UID_ROOT, GID_WHEEL, 0600, "i4btrc%d", i);
+				     UID_ROOT, GID_WHEEL, 0600, "isdntrc%d", i);
 #endif
 #endif
 		trace_queue[i].ifq_maxlen = IFQ_MAXLEN;
@@ -135,16 +131,15 @@ i4btrcattach()
  *	device's queue the data is put into.
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_trace_ind(isdn_layer2token t, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
+isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
 {
-	struct l2_softc *sc = (struct l2_softc*)t;
 	struct mbuf *m;
 	int bri, x;
 	int trunc = 0;
 	int totlen = len + sizeof(i4b_trace_hdr);
 
 	MICROTIME(hdr->time);
-	hdr->bri = sc->bri;
+	hdr->bri = sc->drv->bri;
 
 	/*
 	 * for telephony (or better non-HDLC HSCX mode) we get 
@@ -172,9 +167,9 @@ isdn_layer2_trace_ind(isdn_layer2token t, i4b_trace_hdr *hdr, size_t len, unsign
 	
 	/* check valid interface */
 	
-	if((bri = hdr->bri) > NI4BTRC)
+	if((bri = hdr->bri) > NISDNTRC)
 	{
-		printf("i4b_trace: get_trace_data_from_l1 - bri > NI4BTRC!\n"); 
+		printf("i4b_trace: get_trace_data_from_l1 - bri > NISDNTRC!\n"); 
 		return(0);
 	}
 
@@ -236,12 +231,12 @@ isdn_layer2_trace_ind(isdn_layer2token t, i4b_trace_hdr *hdr, size_t len, unsign
  *	open trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdntrcopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int x;
 	int unit = minor(dev);
 
-	if(unit >= NI4BTRC)
+	if(unit >= NISDNTRC)
 		return(ENXIO);
 
 	if(device_state[unit] & ST_ISOPEN)
@@ -264,7 +259,7 @@ i4btrcopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	close trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdntrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int bri = minor(dev);
 	int x;
@@ -274,13 +269,13 @@ i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 		analyzemode = 0;		
 		outunit = -1;
 		
-		rx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(rxunit);
-		tx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(txunit);
+		rx_l2sc = (l2_softc_t*)isdn_find_softc_by_bri(rxunit);
+		tx_l2sc = (l2_softc_t*)isdn_find_softc_by_bri(txunit);
 
 		if (rx_l2sc != NULL)
-			rx_l2sc->driver->n_mgmt_command(rx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
+			rx_l2sc->driver->mph_command_req(rx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
 		if (tx_l2sc != NULL)
-			tx_l2sc->driver->n_mgmt_command(tx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
+			tx_l2sc->driver->mph_command_req(tx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
 
 		x = splnet();
 		device_state[rxunit] = ST_IDLE;
@@ -289,9 +284,9 @@ i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 		rxunit = -1;
 		txunit = -1;
 	} else {
-		l2_softc_t * l2sc = (l2_softc_t*)isdn_find_l2_by_bri(bri);
+		l2_softc_t * l2sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
 		if (l2sc != NULL) {
-			l2sc->driver->n_mgmt_command(l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
+			l2sc->driver->mph_command_req(l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
 			x = splnet();
 			device_state[bri] = ST_IDLE;
 			splx(x);
@@ -304,7 +299,7 @@ i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	read from trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcread(dev_t dev, struct uio * uio, int ioflag)
+isdntrcread(dev_t dev, struct uio * uio, int ioflag)
 {
 	struct mbuf *m;
 	int x;
@@ -360,30 +355,30 @@ i4btrcpoll(dev_t dev, int events, struct proc *p)
  *	device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
 	int bri = minor(dev);
 	i4b_trace_setupa_t *tsa;
-	l2_softc_t * l2sc = isdn_find_l2_by_bri(bri);
+	l2_softc_t * l2sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
 
 	switch(cmd)
 	{
 		case I4B_TRC_SET:
 			if (l2sc == NULL)
 				return ENOTTY;
-			l2sc->driver->n_mgmt_command(l2sc->l1_token, CMR_SETTRACE, (void *)*(unsigned long *)data);
+			l2sc->driver->mph_command_req(l2sc->l1_token, CMR_SETTRACE, (void *)*(unsigned long *)data);
 			break;
 
 		case I4B_TRC_SETA:
 			tsa = (i4b_trace_setupa_t *)data;
 
-			if(tsa->rxunit >= 0 && tsa->rxunit < NI4BTRC)
+			if(tsa->rxunit >= 0 && tsa->rxunit < NISDNTRC)
 				rxunit = tsa->rxunit;
 			else
 				error = EINVAL;
 
-			if(tsa->txunit >= 0 && tsa->txunit < NI4BTRC)
+			if(tsa->txunit >= 0 && tsa->txunit < NISDNTRC)
 				txunit = tsa->txunit;
 			else
 				error = EINVAL;
@@ -397,16 +392,16 @@ i4btrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			else
 			{
 				l2_softc_t * rx_l2sc, * tx_l2sc;
-				rx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(rxunit);
-				tx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(txunit);
+				rx_l2sc = (l2_softc_t*)(l2_softc_t*)isdn_find_softc_by_bri(rxunit);
+				tx_l2sc = (l2_softc_t*)(l2_softc_t*)isdn_find_softc_by_bri(txunit);
 
 				if (l2sc == NULL || rx_l2sc == NULL || tx_l2sc == NULL)
 					return ENOTTY;
 					
 				outunit = bri;
 				analyzemode = 1;
-				rx_l2sc->driver->n_mgmt_command(rx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->rxflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
-				tx_l2sc->driver->n_mgmt_command(tx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->txflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
+				rx_l2sc->driver->mph_command_req(rx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->rxflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
+				tx_l2sc->driver->mph_command_req(tx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->txflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
 			}
 			break;
 
@@ -424,4 +419,4 @@ i4btrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return(error);
 }
 
-#endif /* NI4BTRC > 0 */
+#endif /* NISDNTRC > 0 */

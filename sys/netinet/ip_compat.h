@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.24.2.1 2002/02/11 20:10:33 jdolecek Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.24.2.2 2002/06/23 17:50:46 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.26.2.34 2002/01/08 14:18:13 darrenr Exp
+ * Id: ip_compat.h,v 2.26.2.44 2002/04/25 16:32:15 darrenr Exp
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -71,6 +71,18 @@ struct  ether_addr {
 };
 #endif
 
+#ifndef	LIFNAMSIZ
+# ifdef	IF_NAMESIZE
+#  define	LIFNAMSIZ	IF_NAMESIZE
+# else
+#  ifdef	IFNAMSIZ
+#   define	LIFNAMSIZ	IFNAMSIZ
+#  else
+#   define	LIFNAMSIZ	16
+#  endif
+# endif
+#endif
+
 #if defined(__sgi) && !defined(IPFILTER_LKM)
 # ifdef __STDC__
 #  define IPL_EXTERN(ep) ipfilter##ep
@@ -92,6 +104,24 @@ struct  ether_addr {
 #ifdef	linux
 # include <sys/sysmacros.h>
 #endif
+
+/*
+ * This is a workaround for <sys/uio.h> troubles on FreeBSD and OpenBSD.
+ */
+#ifndef _KERNEL
+# define ADD_KERNEL
+# define _KERNEL
+# define KERNEL
+#endif
+#ifdef __OpenBSD__
+struct file;
+#endif
+#include <sys/uio.h>
+#ifdef ADD_KERNEL
+# undef _KERNEL
+# undef KERNEL
+#endif
+
 #if	SOLARIS
 # define	MTYPE(m)	((m)->b_datap->db_type)
 # if SOLARIS2 >= 4
@@ -152,7 +182,7 @@ typedef	struct	qif	{
 	queue_t	*qf_q;	/* fr_qin and fr_qout to the packet processing. */
 	size_t	qf_off;
 	size_t	qf_len;	/* this field is used for in ipfr_fastroute */
-	char	qf_name[8];
+	char	qf_name[LIFNAMSIZ];
 	/*
 	 * in case the ILL has disappeared...
 	 */
@@ -168,10 +198,6 @@ typedef	 int	minor_t;
 #endif /* SOLARIS */
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
 
-#if defined(__FreeBSD__) && (__FreeBSD__ >= 5) && defined(_KERNEL)
-# include <machine/in_cksum.h>
-#endif
-
 #ifndef	IP_OFFMASK
 #define	IP_OFFMASK	0x1fff
 #endif
@@ -185,6 +211,30 @@ typedef	 int	minor_t;
 # define	QUAD_T		long
 #endif /* BSD > 199306 */
 
+
+#if defined(__FreeBSD__) && (defined(KERNEL) || defined(_KERNEL))
+# include <sys/param.h>
+# ifndef __FreeBSD_version
+#  include <sys/osreldate.h>
+# endif
+# ifdef IPFILTER_LKM
+#  define       ACTUALLY_LKM_NOT_KERNEL
+# endif
+# if defined(__FreeBSD_version) && (__FreeBSD_version < 300000)
+#  include <machine/spl.h>
+# else
+#  if (__FreeBSD_version >= 300000) && (__FreeBSD_version < 400000)
+#   if defined(IPFILTER_LKM) && !defined(ACTUALLY_LKM_NOT_KERNEL)
+#    define	ACTUALLY_LKM_NOT_KERNEL
+#   endif
+#  endif
+# endif
+#endif /* __FreeBSD__ && KERNEL */
+
+#if defined(__FreeBSD_version) && (__FreeBSD_version >= 500000) && \
+    defined(_KERNEL)
+# include <machine/in_cksum.h>
+#endif
 
 /*
  * These operating systems already take care of the problem for us.
@@ -201,6 +251,13 @@ typedef u_int32_t       u_32_t;
 #   include "opt_inet6.h"
 #  endif
 #  ifdef INET6
+#   define USE_INET6
+#  endif
+# endif
+# if !defined(_KERNEL) && !defined(IPFILTER_LKM) && !defined(USE_INET6)
+#  if (defined(__FreeBSD_version) && (__FreeBSD_version >= 400000)) || \
+      (defined(OpenBSD) && (OpenBSD >= 200111)) || \
+      (defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105000000))
 #   define USE_INET6
 #  endif
 # endif
@@ -312,45 +369,29 @@ union	i6addr	{
 #define	IPOPT_EIP	145	/* EIP */
 #define	IPOPT_FINN	205	/* FINN */
 
-
-#if defined(__FreeBSD__) && (defined(KERNEL) || defined(_KERNEL))
-# ifdef IPFILTER_LKM
-#  ifndef __FreeBSD_cc_version
-#   include <osreldate.h>
-#  else
-#   if __FreeBSD_cc_version < 430000
-#    include <osreldate.h>
-#   else
-#    include <sys/param.h>
-#   endif
-#  endif
-#  define       ACTUALLY_LKM_NOT_KERNEL
-# else
-#  ifndef __FreeBSD_cc_version
-#   include <sys/osreldate.h>
-#  else
-#   if __FreeBSD_cc_version < 430000
-#    include <sys/osreldate.h>
-#   else
-#    include <sys/param.h>
-#   endif
-#  endif
-# endif
-# if __FreeBSD__ < 3
-#  include <machine/spl.h>
-# else
-#  if __FreeBSD__ == 3
-#   if defined(IPFILTER_LKM) && !defined(ACTUALLY_LKM_NOT_KERNEL)
-#    define	ACTUALLY_LKM_NOT_KERNEL
-#   endif
-#  endif
-# endif
-#endif /* __FreeBSD__ && KERNEL */
+#ifndef	TCPOPT_WSCALE
+# define	TCPOPT_WSCALE	3
+#endif
 
 /*
  * Build some macros and #defines to enable the same code to compile anywhere
  * Well, that's the idea, anyway :-)
  */
+#if SOLARIS
+typedef mblk_t mb_t;
+# if SOLARIS2 >= 7
+#  ifdef lint
+#   define ALIGN32(ptr)    (ptr ? 0L : 0L)
+#   define ALIGN16(ptr)    (ptr ? 0L : 0L)
+#  else
+#   define ALIGN32(ptr)    (ptr)
+#   define ALIGN16(ptr)    (ptr)
+#  endif
+# endif
+#else
+typedef struct mbuf mb_t;
+#endif /* SOLARIS */
+
 #if !SOLARIS || (SOLARIS2 < 6) || !defined(KERNEL)
 # define	ATOMIC_INCL		ATOMIC_INC
 # define	ATOMIC_INC64		ATOMIC_INC
@@ -533,10 +574,12 @@ extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 # endif
 # if (BSD >= 199306) || defined(__FreeBSD__)
 #  if (defined(__NetBSD_Version__) && (__NetBSD_Version__ < 105180000)) || \
-       defined(__FreeBSD__) || defined(__OpenBSD__) || defined(_BSDI_VERSION)
+       defined(__FreeBSD__) || (defined(OpenBSD) && (OpenBSD < 200206)) || \
+       defined(_BSDI_VERSION)
 #   include <vm/vm.h>
 #  endif
-#  if !defined(__FreeBSD__) || (defined (__FreeBSD__) && __FreeBSD__>=3)
+#  if !defined(__FreeBSD__) || (defined (__FreeBSD_version) && \
+      (__FreeBSD_version >= 300000))
 #   if (defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105180000)) || \
        (defined(OpenBSD) && (OpenBSD >= 200111))
 #    include <uvm/uvm_extern.h>
@@ -545,9 +588,9 @@ extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 extern	vm_map_t	kmem_map;
 #   endif
 #   include <sys/proc.h>
-#  else /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
+#  else /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD_version >= 300000) */
 #   include <vm/vm_kern.h>
-#  endif /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
+#  endif /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD_version >= 300000) */
 #  ifdef	M_PFIL
 #   define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), M_PFIL, M_NOWAIT)
 #   define	KMALLOCS(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)
@@ -576,7 +619,7 @@ extern	vm_map_t	kmem_map;
 # endif /* NetBSD && (NetBSD <= 1991011) && (NetBSD >= 199407) */
 # define	PANIC(x,y)	if (x) panic y
 #else /* KERNEL */
-# define	SLEEP(x,y)	;
+# define	SLEEP(x,y)	1
 # define	WAKEUP(x)	;
 # define	PANIC(x,y)	;
 # define	ATOMIC_INC(x)	(x)++
@@ -605,34 +648,10 @@ extern	vm_map_t	kmem_map;
 # define	IRCOPYPTR	ircopyptr
 # define	IWCOPYPTR	iwcopyptr
 # define	IFNAME(x)	get_ifname((struct ifnet *)x)
+# define	UIOMOVE(a,b,c,d)	ipfuiomove(a,b,c,d)
+extern	void	m_copydata __P((mb_t *, int, int, caddr_t));
+extern	int	ipfuiomove __P((caddr_t, int, int, struct uio *));
 #endif /* KERNEL */
-
-#if SOLARIS
-typedef mblk_t mb_t;
-# if SOLARIS2 >= 7
-#  ifdef lint
-#   define ALIGN32(ptr)    (ptr ? 0L : 0L)
-#   define ALIGN16(ptr)    (ptr ? 0L : 0L)
-#  else
-#   define ALIGN32(ptr)    (ptr)
-#   define ALIGN16(ptr)    (ptr)
-#  endif
-# endif
-#else
-# ifdef	linux
-#  ifndef kernel
-typedef struct mb {
-	struct mb *next;
-	u_int len;
-	u_char *data;
-} mb_t;
-#  else
-typedef struct sk_buff mb_t;
-#  endif
-# else
-typedef struct mbuf mb_t;
-# endif
-#endif /* SOLARIS */
 
 /*
  * These #ifdef's are here mainly for linux, but who knows, they may
@@ -1061,7 +1080,7 @@ typedef	struct	uio	{
 #  define	SPL_X(x)
 #  define	SPL_NET(x)
 #  define	SPL_IMP(x)
- 
+
 #  define	bcmp(a,b,c)	memcmp(a,b,c)
 #  define	bcopy(a,b,c)	memcpy(b,a,c)
 #  define	bzero(a,c)	memset(a,0,c)

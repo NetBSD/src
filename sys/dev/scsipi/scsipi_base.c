@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipi_base.c,v 1.48.2.6 2002/03/16 16:01:31 jdolecek Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.48.2.7 2002/06/23 17:48:47 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.6 2002/03/16 16:01:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.7 2002/06/23 17:48:47 jdolecek Exp $");
 
 #include "opt_scsi.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.6 2002/03/16 16:01:31 jdolece
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
+#include <sys/hash.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>
@@ -113,7 +114,6 @@ int
 scsipi_channel_init(chan)
 	struct scsipi_channel *chan;
 {
-	size_t nbytes;
 	int i;
 
 	/* Initialize shared data. */
@@ -123,23 +123,8 @@ scsipi_channel_init(chan)
 	TAILQ_INIT(&chan->chan_queue);
 	TAILQ_INIT(&chan->chan_complete);
 
-	nbytes = chan->chan_ntargets * sizeof(struct scsipi_periph **);
-	chan->chan_periphs = malloc(nbytes, M_DEVBUF, M_NOWAIT);
-	if (chan->chan_periphs == NULL)
-		return (ENOMEM);
-	
-
-	nbytes = chan->chan_nluns * sizeof(struct scsipi_periph *);
-	for (i = 0; i < chan->chan_ntargets; i++) { 
-		chan->chan_periphs[i] = malloc(nbytes, M_DEVBUF,
-		    M_NOWAIT|M_ZERO);
-		if (chan->chan_periphs[i] == NULL) {
-			while (--i >= 0) {
-				free(chan->chan_periphs[i], M_DEVBUF);
-			}
-			return (ENOMEM);
-		}
-	}
+	for (i = 0; i < SCSIPI_CHAN_PERIPH_BUCKETS; i++)
+		LIST_INIT(&chan->chan_periphtab[i]);
 
 	/*
 	 * Create the asynchronous completion thread.
@@ -171,6 +156,17 @@ scsipi_channel_shutdown(chan)
 		(void) tsleep(&chan->chan_thread, PRIBIO, "scshut", 0);
 }
 
+static uint32_t
+scsipi_chan_periph_hash(uint64_t t, uint64_t l)
+{
+	uint32_t hash;
+
+	hash = hash32_buf(&t, sizeof(t), HASH32_BUF_INIT);
+	hash = hash32_buf(&l, sizeof(l), hash);
+
+	return (hash & SCSIPI_CHAN_PERIPH_HASHMASK);
+}
+
 /*
  * scsipi_insert_periph:
  *
@@ -181,10 +177,14 @@ scsipi_insert_periph(chan, periph)
 	struct scsipi_channel *chan;
 	struct scsipi_periph *periph;
 {
+	uint32_t hash;
 	int s;
 
+	hash = scsipi_chan_periph_hash(periph->periph_target,
+	    periph->periph_lun);
+
 	s = splbio();
-	chan->chan_periphs[periph->periph_target][periph->periph_lun] = periph;
+	LIST_INSERT_HEAD(&chan->chan_periphtab[hash], periph, periph_hash);
 	splx(s);
 }
 
@@ -201,7 +201,7 @@ scsipi_remove_periph(chan, periph)
 	int s;
 
 	s = splbio();
-	chan->chan_periphs[periph->periph_target][periph->periph_lun] = NULL;
+	LIST_REMOVE(periph, periph_hash);
 	splx(s);
 }
 
@@ -216,14 +216,21 @@ scsipi_lookup_periph(chan, target, lun)
 	int target, lun;
 {
 	struct scsipi_periph *periph;
+	uint32_t hash;
 	int s;
 
 	if (target >= chan->chan_ntargets ||
 	    lun >= chan->chan_nluns)
 		return (NULL);
 
+	hash = scsipi_chan_periph_hash(target, lun);
+
 	s = splbio();
-	periph = chan->chan_periphs[target][lun];
+	LIST_FOREACH(periph, &chan->chan_periphtab[hash], periph_hash) {
+		if (periph->periph_target == target &&
+		    periph->periph_lun == lun)
+			break;
+	}
 	splx(s);
 
 	return (periph);
@@ -1519,7 +1526,7 @@ scsipi_complete(xs)
 			if ((xs->xs_control & XS_CTL_POLL) ||
 			    (chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
 				delay(1000000);
-			} else {
+			} else if (!callout_active(&periph->periph_callout)) {
 				scsipi_periph_freeze(periph, 1);
 				callout_reset(&periph->periph_callout,
 				    hz, scsipi_periph_timed_thaw, periph);
@@ -1533,17 +1540,21 @@ scsipi_complete(xs)
 		error = ERESTART;
 		break;
 
+	case XS_SELTIMEOUT:
 	case XS_TIMEOUT:
-		if (xs->xs_retries != 0) {
+		/*
+		 * If the device hasn't gone away, honor retry counts.
+		 *
+		 * Note that if we're in the middle of probing it,
+		 * it won't be found because it isn't here yet so
+		 * we won't honor the retry count in that case.
+		 */
+		if (scsipi_lookup_periph(chan, periph->periph_target,
+		    periph->periph_lun) && xs->xs_retries != 0) {
 			xs->xs_retries--;
 			error = ERESTART;
 		} else
 			error = EIO;
-		break;
-
-	case XS_SELTIMEOUT:
-		/* XXX Disable device? */
-		error = EIO;
 		break;
 
 	case XS_RESET:
@@ -1562,6 +1573,11 @@ scsipi_complete(xs)
 		}
 		break;
 
+	case XS_DRIVER_STUFFUP:
+		scsipi_printaddr(periph);
+		printf("generic HBA error\n");
+		error = EIO;
+		break;
 	default:
 		scsipi_printaddr(periph);
 		printf("invalid return code from adapter: %d\n", xs->error);
@@ -1598,9 +1614,10 @@ scsipi_complete(xs)
 	if (xs->error != XS_NOERROR)
 		scsipi_periph_thaw(periph, 1);
 
-
-	if (periph->periph_switch->psw_done)
-		periph->periph_switch->psw_done(xs);
+	/*
+	 * Set buffer fields in case the periph
+	 * switch done func uses them
+	 */
 	if ((bp = xs->bp) != NULL) {
 		if (error) {
 			bp->b_error = error;
@@ -1610,8 +1627,13 @@ scsipi_complete(xs)
 			bp->b_error = 0;
 			bp->b_resid = xs->resid;
 		}
-		biodone(bp);
 	}
+
+	if (periph->periph_switch->psw_done)
+		periph->periph_switch->psw_done(xs);
+
+	if (bp)
+		biodone(bp);
 
 	if (xs->xs_control & XS_CTL_ASYNC)
 		scsipi_put_xs(xs);
@@ -1871,7 +1893,7 @@ scsipi_execute_xs(xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
-	int async, poll, retries, error, s;
+	int oasync, async, poll, retries, error, s;
 
 	xs->xs_status &= ~XS_STS_DONE;
 	xs->error = XS_NOERROR;
@@ -1943,6 +1965,7 @@ scsipi_execute_xs(xs)
 	 * If we don't yet have a completion thread, or we are to poll for
 	 * completion, clear the ASYNC flag.
 	 */
+	oasync =  (xs->xs_control & XS_CTL_ASYNC);
 	if (chan->chan_thread == NULL || (xs->xs_control & XS_CTL_POLL) != 0)
 		xs->xs_control &= ~XS_CTL_ASYNC;
 
@@ -1951,7 +1974,7 @@ scsipi_execute_xs(xs)
 	retries = xs->xs_retries;		/* for polling commands */
 
 #ifdef DIAGNOSTIC
-	if (async != 0 && xs->bp == NULL)
+	if (oasync != 0 && xs->bp == NULL)
 		panic("scsipi_execute_xs: XS_CTL_ASYNC but no buf");
 #endif
 
@@ -2013,6 +2036,12 @@ scsipi_execute_xs(xs)
 	if (error == ERESTART)
 		goto restarted;
 
+	/*
+	 * If it was meant to run async and we cleared aync ourselve, 
+	 * don't return an error here. It has already been handled
+	 */
+	if (oasync)
+		error = EJUSTRETURN;
 	/*
 	 * Command completed successfully or fatal error occurred.  Fall
 	 * into....
@@ -2126,8 +2155,7 @@ scsipi_create_completion_thread(arg)
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 
 	if (kthread_create1(scsipi_completion_thread, chan,
-	    &chan->chan_thread, "%s:%d", adapt->adapt_dev->dv_xname,
-	    chan->chan_channel)) {
+	    &chan->chan_thread, "%s", chan->chan_name)) {
 		printf("%s: unable to create completion thread for "
 		    "channel %d\n", adapt->adapt_dev->dv_xname,
 		    chan->chan_channel);
@@ -2213,7 +2241,7 @@ scsipi_print_xfer_mode(periph)
 		return;
 
 	printf("%s: ", periph->periph_dev->dv_xname);
-	if (periph->periph_mode & PERIPH_CAP_SYNC) {
+	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		period = scsipi_sync_factor_to_period(periph->periph_period);
 		printf("sync (%d.%dns offset %d)",
 		    period / 10, period % 10, periph->periph_offset);
@@ -2222,17 +2250,18 @@ scsipi_print_xfer_mode(periph)
 
 	if (periph->periph_mode & PERIPH_CAP_WIDE32)
 		printf(", 32-bit");
-	else if (periph->periph_mode & PERIPH_CAP_WIDE16)
+	else if (periph->periph_mode & (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
 		printf(", 16-bit");
 	else
 		printf(", 8-bit");
 
-	if (periph->periph_mode & PERIPH_CAP_SYNC) {
+	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		freq = scsipi_sync_factor_to_freq(periph->periph_period);
 		speed = freq;
 		if (periph->periph_mode & PERIPH_CAP_WIDE32)
 			speed *= 4;
-		else if (periph->periph_mode & PERIPH_CAP_WIDE16)
+		else if (periph->periph_mode &
+		    (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT)) 
 			speed *= 2;
 		mbs = speed / 1000;
 		if (mbs > 0)
@@ -2272,6 +2301,7 @@ scsipi_async_event_max_openings(chan, mo)
 	} else
 		minlun = maxlun = mo->mo_lun;
 
+	/* XXX This could really suck with a large LUN space. */
 	for (; minlun <= maxlun; minlun++) {
 		periph = scsipi_lookup_periph(chan, mo->mo_target, minlun);
 		if (periph == NULL)
@@ -2426,7 +2456,7 @@ scsipi_async_event_channel_reset(chan)
 		if (target == chan->chan_id)
 			continue;
 		for (lun = 0; lun <  chan->chan_nluns; lun++) {
-			periph = chan->chan_periphs[target][lun];
+			periph = scsipi_lookup_periph(chan, target, lun);
 			if (periph) {
 				xs = periph->periph_xscheck;
 				if (xs)

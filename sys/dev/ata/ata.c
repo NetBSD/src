@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.13.8.1 2002/01/10 19:53:39 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.13.8.2 2002/06/23 17:45:52 jdolecek Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.13.8.1 2002/01/10 19:53:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.13.8.2 2002/06/23 17:45:52 jdolecek Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -112,6 +112,9 @@ ata_get_params(drvp, flags, prms)
 		    wdc_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
+		/* if we didn't read any data something is wrong */
+		if ((wdc_c.flags & AT_XFDONE) == 0)
+			return CMD_ERR;
 		/* Read in parameter block. */
 		memcpy(prms, tb, sizeof(struct ataparams));
 #if BYTE_ORDER == LITTLE_ENDIAN

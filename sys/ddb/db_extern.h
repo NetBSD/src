@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.7.4.1 2002/03/16 16:00:44 jdolecek Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.7.4.2 2002/06/23 17:44:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@ void ddb_init(int, void *, void *);
 
 /* db_command.c */
 extern int db_cmd_loop_done;
+extern label_t *db_recover;
 
 /* db_examine.c */
 void	db_examine_cmd(db_expr_t, int, db_expr_t, char *);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.27.4.2 2002/02/11 20:09:53 jdolecek Exp $
+#	$NetBSD: files.isapnp,v 1.27.4.3 2002/06/23 17:47:07 jdolecek Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -55,7 +55,7 @@ attach	sb at isapnp with sb_isapnp
 file	dev/isapnp/sb_isapnp.c			sb_isapnp
 
 # GUS Pnp (Interwave)
-device	guspnp: audio, isadma, interwave, mulaw
+device	guspnp: audiobus, isadma, interwave, mulaw
 attach	guspnp at isapnp
 file	dev/isapnp/gus_isapnp.c			guspnp		needs-flag
 

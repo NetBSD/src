@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.22.2.5 2002/03/16 16:00:48 jdolecek Exp $	*/
+/*	$NetBSD: rnd.c,v 1.22.2.6 2002/06/23 17:45:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.22.2.5 2002/03/16 16:00:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.22.2.6 2002/06/23 17:45:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -977,7 +977,7 @@ rnd_timeout(void *arg)
 
 	sample = SIMPLEQ_FIRST(&rnd_samples);
 	while (sample != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&rnd_samples, sample, next);
+		SIMPLEQ_REMOVE_HEAD(&rnd_samples, next);
 		splx(s);
 
 		source = sample->source;

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21.4.3 2002/01/10 19:52:48 thorpej Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.4.4 2002/06/23 17:45:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.4.3 2002/01/10 19:52:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.4.4 2002/06/23 17:45:00 jdolecek Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -733,12 +733,14 @@ midipoll(dev_t dev, int events, struct proc *p)
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
 	int revents = 0;
-	int s = splaudio();
+	int s;
 
 	DPRINTF(("midipoll: %p events=0x%x\n", sc, events));
 
 	if (sc->dying)
 		return EIO;
+
+	s = splaudio();
 
 	if (events & (POLLIN | POLLRDNORM))
 		if (sc->inbuf.used > 0)

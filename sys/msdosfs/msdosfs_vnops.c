@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.109.2.4 2002/03/16 16:02:03 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.109.2.5 2002/06/23 17:50:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.109.2.4 2002/03/16 16:02:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.109.2.5 2002/06/23 17:50:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -562,6 +562,7 @@ msdosfs_write(v)
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct ucred *cred = ap->a_cred;
+	boolean_t async;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_write(vp %p, uio %p, ioflag %x, cred %p\n",
@@ -611,6 +612,7 @@ msdosfs_write(v)
 	/*
 	 * Remember some values in case the write fails.
 	 */
+	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	resid = uio->uio_resid;
 	osize = dep->de_FileSize;
 
@@ -647,7 +649,7 @@ msdosfs_write(v)
 		 * XXXUBC simplistic async flushing.
 		 */
 
-		if (oldoff >> 16 != uio->uio_offset >> 16) {
+		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.72.2.3 2002/03/16 16:00:48 jdolecek Exp $	*/
+/*	$NetBSD: vnd.c,v 1.72.2.4 2002/06/23 17:45:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.72.2.3 2002/03/16 16:00:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.72.2.4 2002/06/23 17:45:01 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -455,7 +455,8 @@ vndstrategy(bp)
 		splx(s);
 		nbp->vb_buf.b_flags = flags;
 		nbp->vb_buf.b_bcount = sz;
-		nbp->vb_buf.b_bufsize = bp->b_bufsize;
+		nbp->vb_buf.b_bufsize = round_page((ulong)addr + sz)
+		    - trunc_page((ulong) addr);
 		nbp->vb_buf.b_error = 0;
 		nbp->vb_buf.b_data = addr;
 		nbp->vb_buf.b_blkno = nbp->vb_buf.b_rawblkno = nbn + btodb(off);

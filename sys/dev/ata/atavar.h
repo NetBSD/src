@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.19.2.1 2002/01/10 19:53:39 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.19.2.2 2002/06/23 17:45:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -13,8 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -133,10 +132,11 @@ struct wdc_command {
 #define AT_WAIT     0x0008 /* wait in controller code for command completion */
 #define AT_POLL     0x0010 /* poll for command completion (no interrupts) */
 #define AT_DONE     0x0020 /* command is done */
-#define AT_ERROR    0x0040 /* command is done with error */
-#define AT_TIMEOU   0x0080 /* command timed out */
-#define AT_DF       0x0100 /* Drive fault */
-#define AT_READREG  0x0200 /* Read registers on completion */
+#define AT_XFDONE   0x0040 /* data xfer is done */
+#define AT_ERROR    0x0080 /* command is done with error */
+#define AT_TIMEOU   0x0100 /* command timed out */
+#define AT_DF       0x0200 /* Drive fault */
+#define AT_READREG  0x0400 /* Read registers on completion */
     int timeout;	 /* timeout (in ms) */
     void *data;          /* Data buffer address */
     int bcount;           /* number of bytes to transfer */

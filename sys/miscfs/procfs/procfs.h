@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.34.2.1 2002/01/10 20:01:41 thorpej Exp $	*/
+/*	$NetBSD: procfs.h,v 1.34.2.2 2002/06/23 17:50:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -154,7 +154,6 @@ int procfs_domeminfo __P((struct proc *, struct proc *, struct pfsnode *,
 int procfs_docpuinfo __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 
-int procfs_checkioperm __P((struct proc *, struct proc *));
 void procfs_revoke_vnodes __P((struct proc *, void *));
 void procfs_hashinit __P((void));
 void procfs_hashreinit __P((void));

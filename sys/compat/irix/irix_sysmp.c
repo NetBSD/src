@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_sysmp.c,v 1.3.4.3 2002/03/16 16:00:28 jdolecek Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.3.4.4 2002/06/23 17:43:58 jdolecek Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.3.4.3 2002/03/16 16:00:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.3.4.4 2002/06/23 17:43:58 jdolecek Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -45,8 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.3.4.3 2002/03/16 16:00:28 jdolecek 
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/resource.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/vmparam.h>
+
+#include <compat/common/compat_util.h>
 
 #include <compat/svr4/svr4_types.h>
 
@@ -57,7 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.3.4.3 2002/03/16 16:00:28 jdolecek 
 
 /* IRIX /dev/kmem diggers emulation */
 static int irix_sysmp_kernaddr __P((int, register_t *));
+static int irix_sysmp_sasz __P((int, register_t *));
+static int irix_sysmp_saget __P((int, char *, size_t));
 extern struct loadavg averunnable;
+extern long irix_kernel_var[32];
 
 int
 irix_sys_sysmp(p, v, retval)
@@ -74,6 +83,7 @@ irix_sys_sysmp(p, v, retval)
 	} */ *uap = v;
 	int cmd = SCARG(uap, cmd);
 	int error = 0;
+	caddr_t sg = stackgap_init(p, 0);
 
 #ifdef DEBUG_IRIX
 	printf("irix_sys_sysmp(): cmd = %d\n", cmd);
@@ -82,13 +92,14 @@ irix_sys_sysmp(p, v, retval)
 	switch(cmd) {
 	case IRIX_MP_NPROCS:	/* Number of processors in complex */
 	case IRIX_MP_NAPROCS: {	/* Number of active processors in complex */
-		int ncpu;
+		int *ncpu = stackgap_alloc(p, &sg, sizeof(int));
 		int name = HW_NCPU;
 		int namelen = sizeof(name);
 
-		error = hw_sysctl(&name, 1, &ncpu, &namelen, NULL, 0, p);
+		error = hw_sysctl(&name, 1, ncpu, &namelen, NULL, 0, p);
 		if (!error)
-			*retval = (register_t)ncpu;
+			error = copyin(ncpu, retval, sizeof(int));
+
 		return error;
 		break;
 	}
@@ -98,6 +109,16 @@ irix_sys_sysmp(p, v, retval)
 
 	case IRIX_MP_KERNADDR: 	/* Kernel structure addresses */
 		return irix_sysmp_kernaddr((int)SCARG(uap, arg1), retval);
+		break;
+
+	case IRIX_MP_SASZ: 	/* System accounting structure size */
+		return irix_sysmp_sasz((int)SCARG(uap, arg1), retval);
+		break;
+
+	case IRIX_MP_SAGET1: /* Get system accounting structure for one CPU */
+	case IRIX_MP_SAGET:  /* Get system accounting structure for all CPU */
+		return irix_sysmp_saget((int)SCARG(uap, arg1), 
+		    (char *)SCARG(uap, arg2), (size_t)SCARG(uap, arg3));
 		break;
 
 	default:
@@ -119,6 +140,10 @@ irix_sysmp_kernaddr(kernaddr, retval)
 		*retval = (register_t)&averunnable;
 		break;
 
+	case IRIX_MPKA_VAR:
+		*retval = (register_t)&irix_kernel_var;
+		break;
+
 	default:
 		printf("Warning: sysmp(KERNADDR) unimplemented address %d\n", 
 		    kernaddr);
@@ -127,4 +152,71 @@ irix_sysmp_kernaddr(kernaddr, retval)
 	}
 
 	return 0;
+}
+
+static int
+irix_sysmp_sasz(cmd, retval)
+	int cmd;
+	register_t *retval;
+{
+	switch (cmd) {
+	case IRIX_MPSA_RMINFO:
+		*retval = sizeof(struct irix_sysmp_rminfo);
+		break;
+	default:
+		printf("Warning: sysmp(SASZ) unimplemented struct %d\n", 
+		    cmd);
+		return EINVAL;
+		break;
+	}
+	return 0;
+}
+
+static int
+irix_sysmp_saget(cmd, buf, len)
+	int cmd;
+	char *buf;
+	size_t len;
+{
+	void *kbuf;
+	int error = 0;
+
+	if (!uvm_useracc(buf, len, B_WRITE))
+		return EINVAL;
+
+	kbuf = malloc(len, M_TEMP, M_WAITOK);
+
+	switch (cmd) {
+	case IRIX_MPSA_RMINFO: {
+		struct irix_sysmp_rminfo *irm = 
+		    (struct irix_sysmp_rminfo *)kbuf;
+
+		irm->freemem = uvmexp.free + uvmexp.filepages;
+		irm->availsmem = uvmexp.free + uvmexp.active + uvmexp.inactive
+		    + uvmexp.wired + (uvmexp.swpages - uvmexp.swpgonly);
+		irm->availrmem = uvmexp.free + uvmexp.active + uvmexp.inactive
+		    + uvmexp.wired;
+		irm->bufmem = bufpages;
+		irm->physmem = uvmexp.npages;
+		irm->dchunkpages = 0; /* unsupported */
+		irm->pmapmem = 0;     /* unsupported */
+		irm->strmem = 0;      /* unsupported */
+		irm->chunkpages = 0;  /* unsupported */
+		irm->dpages = 0;      /* unsupported */
+		irm->emptymem = uvmexp.free;
+		irm->ravailrmem = uvmexp.active + uvmexp.inactive + uvmexp.free;
+		break;
+	}
+	default:
+		printf("Warning: sysmp(SAGET) unimplemented struct %d\n", 
+		    cmd);
+		error = EINVAL;
+		break;
+	}
+
+	if (error == 0)
+		(void)copyout((void *)kbuf, (void *)buf, len);
+
+	free(kbuf, M_TEMP);
+	return error;
 }

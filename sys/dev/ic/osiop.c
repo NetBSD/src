@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.4.4.2 2002/01/10 19:54:57 thorpej Exp $	*/
+/*	$NetBSD: osiop.c,v 1.4.4.3 2002/06/23 17:46:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.4.4.2 2002/01/10 19:54:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.4.4.3 2002/06/23 17:46:45 jdolecek Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -1046,10 +1046,8 @@ osiop_start(sc)
 
 	/* handle timeout */
 	if ((xs->xs_control & XS_CTL_POLL) == 0) {
-		int timeout = acb->xs->timeout;
+		int timeout = mstohz(acb->xs->timeout);
 		/* start expire timer */
-		timeout = (timeout > 100000) ?
-		    timeout / 1000 * hz : timeout * hz / 1000;
 		if (timeout == 0)
 			timeout = 1;
 		callout_reset(&xs->xs_callout, timeout,

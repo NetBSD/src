@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_prctl.h,v 1.1.4.2 2002/01/10 19:51:19 thorpej Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.1.4.3 2002/06/23 17:43:55 jdolecek Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,6 +39,11 @@
 #ifndef _IRIX_PRCTL_H_
 #define _IRIX_PRCTL_H_
 
+int irix_prda_init __P((struct proc *));
+int irix_sync_saddr_syscall __P((struct proc *, void *, register_t *,
+	int (*syscall) __P((struct proc *, void *, register_t *))));
+int irix_sync_saddr_vmcmd __P((struct proc *, struct exec_vmcmd *));
+
 /* From IRIX's <sys/prctl.h> */
 
 #define IRIX_PR_MAXPROCS	1
@@ -61,5 +66,75 @@
 #define IRIX_PR_INIT_THREADS	20
 #define IRIX_PR_THREAD_CTL	21
 #define IRIX_PR_LASTSHEXIT	22
+
+/* sproc flags */
+#define IRIX_PR_SPROC		0x00000001
+#define IRIX_PR_SFDS		0x00000002
+#define IRIX_PR_SDIR		0x00000004
+#define IRIX_PR_SUMASK		0x00000008
+#define IRIX_PR_SULIMIT		0x00000010
+#define IRIX_PR_SID		0x00000020
+#define IRIX_PR_SADDR		0x00000040
+#define IRIX_PR_THREADS		0x00000080
+#define IRIX_PR_BLOCK		0x01000000
+#define IRIX_PR_NOLIBC		0x02000000
+#define IRIX_PR_EVENT		0x04000000
+
+/* blockproc constants */
+#define IRIX_PR_MAXBLOCKCNT	10000
+#define IRIX_PR_MINBLOCKCNT	-10000
+
+/* This is undocumented */
+#define IRIX_PROCBLK_BLOCK	0
+#define IRIX_PROCBLK_UNBLOCK	1
+#define IRIX_PROCBLK_COUNT	2
+#define IRIX_PROCBLK_BLOCKALL	3
+#define IRIX_PROCBLK_UNBLOCKALL	4
+#define IRIX_PROCBLK_COUNTALL	5
+#define IRIX_PROCBLK_ONLYONE	-3
+
+/* From <sys/prctl.h> */
+#define IRIX_PRDA 		((struct prda *)0x00200000L)
+struct irix_prda_sys {
+	irix_pid_t	t_pid;
+	uint32_t	t_hint;
+	uint32_t	t_dlactseq;
+	uint32_t	t_fpflags;
+	uint32_t	t_prid;
+	uint32_t	t_dlendseq;
+	uint64_t	t_unused1[5];
+	irix_pid_t	t_rpid;
+	int32_t		t_resched;
+	int32_t		t_syserror;
+	int32_t		t_nid;
+	int32_t		t_affinity_nid;
+	uint32_t	t_unused2[5];
+	uint32_t	t_cpu;
+	uint32_t	t_flags;
+	irix_k_sigset_t	t_hold;
+};
+struct irix_prda {
+	char	unused[2048];
+	union {
+		char	fill[512];
+		uint32_t rsvd[8];
+	} sys2_prda;
+	union {
+		char fill[512];
+	} lib2_prda;
+	union {
+		char fill[512];
+	} usr2rda;
+	union {
+		struct irix_prda_sys prda_sys;
+		char fill[128];
+	} sys_prda;
+	union {
+		char fill[256];
+	} lib_prda;
+	union {
+		char fill[128];
+	} usr_prda;
+};
 
 #endif /* _IRIX_IRIX_PRCTL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.8.2.2 2002/01/10 19:56:40 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.8.2.3 2002/06/23 17:47:40 jdolecek Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.8.2.2 2002/01/10 19:56:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.8.2.3 2002/06/23 17:47:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -101,13 +101,13 @@ gem_match_pci(parent, cf, aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN && 
-	       (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_ERINETWORK ||
-		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_GEMNETWORK))
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_ERINETWORK ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_GEMNETWORK))
 		return (1);
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE && 
-	       (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
-		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2))
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2))
 		return (1);
 
 
@@ -133,6 +133,15 @@ gem_attach_pci(parent, self, aux)
 	sc->sc_dmatag = pa->pa_dmat;
 
 	sc->sc_pci = 1;		/* XXX */
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN && 
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_ERINETWORK ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_GEMNETWORK))
+		sc->sc_variant = GEM_SUN_GEM;
+	else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE && 
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2))
+		sc->sc_variant = GEM_APPLE_GMAC;
 
 #define PCI_GEM_BASEADDR	(PCI_MAPREG_START + 0x00)
 

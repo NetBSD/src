@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.14.2.2 2002/02/11 20:10:07 jdolecek Exp $ */
+/*	$NetBSD: if_xi.c,v 1.14.2.3 2002/06/23 17:48:18 jdolecek Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.14.2.2 2002/02/11 20:10:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.14.2.3 2002/06/23 17:48:18 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -397,7 +397,7 @@ xi_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card */
 	psc->sc_pf = pa->pf;
-	pcmcia_function_init(psc->sc_pf, psc->sc_pf->cfe_head.sqh_first);
+	pcmcia_function_init(psc->sc_pf, SIMPLEQ_FIRST(&psc->sc_pf->cfe_head));
 	if (pcmcia_function_enable(psc->sc_pf)) {
 		printf(": function enable failed\n");
 		goto fail;
@@ -994,7 +994,7 @@ xi_get(sc)
 		if (len > 1) {
 		        len &= ~1;
 			bus_space_read_multi_2(sc->sc_bst, sc->sc_bsh,
-			    sc->sc_offset + EDP, data, len>>1);
+			    sc->sc_offset + EDP, (u_int16_t *)data, len>>1);
 		} else
 			*data = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
 			    sc->sc_offset + EDP);
@@ -1339,7 +1339,7 @@ xi_start(ifp)
 	for (m = m0; m; ) {
 		if (m->m_len > 1)
 			bus_space_write_multi_2(bst, bsh, offset + EDP,
-			    mtod(m, u_int8_t *), m->m_len>>1);
+			    mtod(m, u_int16_t *), m->m_len>>1);
 		if (m->m_len & 1)
 			bus_space_write_1(bst, bsh, offset + EDP,
 			    *(mtod(m, u_int8_t *) + m->m_len - 1));

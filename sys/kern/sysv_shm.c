@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.61.2.1 2002/01/10 20:00:10 thorpej Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.61.2.2 2002/06/23 17:49:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.61.2.1 2002/01/10 20:00:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.61.2.2 2002/06/23 17:49:38 jdolecek Exp $");
 
 #define SYSVSHM
 
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.61.2.1 2002/01/10 20:00:10 thorpej Ex
 
 #include <uvm/uvm_extern.h>
 
-struct shmid_ds *shm_find_segment_by_shmid __P((int));
+struct shmid_ds *shm_find_segment_by_shmid __P((int, int));
 
 /*
  * Provides the following externally accessible functions:
@@ -137,8 +137,9 @@ shm_find_segment_by_key(key)
 }
 
 struct shmid_ds *
-shm_find_segment_by_shmid(shmid)
+shm_find_segment_by_shmid(shmid, findremoved)
 	int shmid;
+	int findremoved;
 {
 	int segnum;
 	struct shmid_ds *shmseg;
@@ -147,9 +148,11 @@ shm_find_segment_by_shmid(shmid)
 	if (segnum < 0 || segnum >= shminfo.shmmni)
 		return NULL;
 	shmseg = &shmsegs[segnum];
-	if ((shmseg->shm_perm.mode & (SHMSEG_ALLOCATED | SHMSEG_REMOVED))
-	    != SHMSEG_ALLOCATED ||
-	    shmseg->shm_perm._seq != IPCID_TO_SEQ(shmid))
+	if ((shmseg->shm_perm.mode & SHMSEG_ALLOCATED) == 0)
+		return NULL;
+	if (!findremoved && ((shmseg->shm_perm.mode & SHMSEG_REMOVED) != 0))
+		return NULL;
+	if (shmseg->shm_perm._seq != IPCID_TO_SEQ(shmid))
 		return NULL;
 	return shmseg;
 }
@@ -230,6 +233,26 @@ sys_shmat(p, v, retval)
 		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
+	vaddr_t attach_va;
+	int error;
+
+	error = shmat1(p, SCARG(uap, shmid), SCARG(uap, shmaddr),
+	    SCARG(uap, shmflg), &attach_va, 0);
+	if (error != 0)
+		return error;
+	retval[0] = attach_va;
+	return 0;
+}
+
+int
+shmat1(p, shmid, shmaddr, shmflg, attachp, findremoved)
+	struct proc *p;
+	int shmid;
+	const void *shmaddr;
+	int shmflg;
+	vaddr_t *attachp;
+	int findremoved;
+{
 	int error, i, flags;
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds *shmseg;
@@ -247,11 +270,11 @@ sys_shmat(p, v, retval)
 			shmmap_s[i].shmid = -1;
 		p->p_vmspace->vm_shm = (caddr_t)shmmap_s;
 	}
-	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid));
+	shmseg = shm_find_segment_by_shmid(shmid, findremoved);
 	if (shmseg == NULL)
 		return EINVAL;
 	error = ipcperm(cred, &shmseg->shm_perm,
-		    (SCARG(uap, shmflg) & SHM_RDONLY) ? IPC_R : IPC_R|IPC_W);
+		    (shmflg & SHM_RDONLY) ? IPC_R : IPC_R|IPC_W);
 	if (error)
 		return error;
 	for (i = 0; i < shminfo.shmseg; i++) {
@@ -263,16 +286,16 @@ sys_shmat(p, v, retval)
 		return EMFILE;
 	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 	prot = VM_PROT_READ;
-	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
+	if ((shmflg & SHM_RDONLY) == 0)
 		prot |= VM_PROT_WRITE;
 	flags = MAP_ANON | MAP_SHARED;
-	if (SCARG(uap, shmaddr)) {
+	if (shmaddr) {
 		flags |= MAP_FIXED;
-		if (SCARG(uap, shmflg) & SHM_RND) 
+		if (shmflg & SHM_RND) 
 			attach_va =
-			    (vaddr_t)SCARG(uap, shmaddr) & ~(SHMLBA-1);
-		else if (((vaddr_t)SCARG(uap, shmaddr) & (SHMLBA-1)) == 0)
-			attach_va = (vaddr_t)SCARG(uap, shmaddr);
+			    (vaddr_t)shmaddr & ~(SHMLBA-1);
+		else if (((vaddr_t)shmaddr & (SHMLBA-1)) == 0)
+			attach_va = (vaddr_t)shmaddr;
 		else
 			return EINVAL;
 	} else {
@@ -290,11 +313,11 @@ sys_shmat(p, v, retval)
 		return error;
 	}
 	shmmap_s->va = attach_va;
-	shmmap_s->shmid = SCARG(uap, shmid);
+	shmmap_s->shmid = shmid;
 	shmseg->shm_lpid = p->p_pid;
 	shmseg->shm_atime = time.tv_sec;
 	shmseg->shm_nattch++;
-	*retval = attach_va;
+	*attachp = attach_va;
 	return 0;
 }
 
@@ -340,7 +363,7 @@ shmctl1(p, shmid, cmd, shmbuf)
 	struct shmid_ds *shmseg;
 	int error = 0;
 
-	shmseg = shm_find_segment_by_shmid(shmid);
+	shmseg = shm_find_segment_by_shmid(shmid, 0);
 	if (shmseg == NULL)
 		return EINVAL;
 	switch (cmd) {

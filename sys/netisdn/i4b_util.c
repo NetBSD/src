@@ -27,7 +27,7 @@
  *	i4b_util.c - layer 2 utility routines
  *	-------------------------------------
  *
- *	$Id: i4b_util.c,v 1.3.2.1 2002/01/10 20:03:43 thorpej Exp $ 
+ *	$Id: i4b_util.c,v 1.3.2.2 2002/06/23 17:51:33 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.3.2.1 2002/01/10 20:03:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.3.2.2 2002/06/23 17:51:33 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -65,12 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.3.2.1 2002/01/10 20:03:43 thorpej Exp
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
-
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
+#include <netisdn/i4b_l3l4.h>
 
 /*---------------------------------------------------------------------------*
  *	routine ESTABLISH DATA LINK (Q.921 03/93 page 83)
@@ -250,7 +250,7 @@ void
 i4b_print_l2var(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_ERROR, "bri %d V(R)=%d, V(S)=%d, V(A)=%d,ACKP=%d,PBSY=%d,OBSY=%d",
-		l2sc->bri,
+		l2sc->drv->bri,
 		l2sc->vr,
 		l2sc->vs,
 		l2sc->va,
@@ -263,7 +263,7 @@ i4b_print_l2var(l2_softc_t *l2sc)
  *	got s or i frame, check if valid ack for last sent frame
  *---------------------------------------------------------------------------*/
 void
-i4b_rxd_ack(l2_softc_t *l2sc, int nr)
+i4b_rxd_ack(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int nr)
 {
 
 #ifdef NOTDEF

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.1.8.2 $
+ *       $Revision: 1.1.8.3 $
  *
  *****************************************************************************/
 
@@ -131,6 +131,15 @@
 
 #include "acgcc.h"
 
+#ifdef _LP64
+#define	ACPI_MACHINE_WIDTH	64
+#else
+#define	ACPI_MACHINE_WIDTH	32
+#endif
+
+#define	COMPILER_DEPENDENT_INT64  int64_t
+#define	COMPILER_DEPENDENT_UINT64 uint64_t
+
 #ifdef _KERNEL
 #include "opt_acpi.h"		/* collect build-time options here */
 
@@ -140,11 +149,59 @@
 
 #define asm         __asm
 
+#define	ACPI_USE_NATIVE_DIVIDE
+
+#define ACPI_ASM_MACROS		/* tell acenv.h */
+
+#define	ACPI_SYSTEM_XFACE       
+#define	ACPI_EXTERNAL_XFACE     
+#define	ACPI_INTERNAL_XFACE
+#define	ACPI_INTERNAL_VAR_XFACE
+
 /* XXX This is not a perfect world. */
 #ifdef __i386__
 #include <machine/cpufunc.h>
-#define __cli()     disable_intr()
-#define __sti()     enable_intr()
+
+#if 0
+#define	ACPI_DISABLE_IRQS()		disable_intr()
+#define	ACPI_ENABLE_IRQS()		enable_intr()
+#endif
+
+#define	ACPI_ACQUIRE_GLOBAL_LOCK(GLptr, Acq) \
+do { \
+	int dummy; \
+	__asm __volatile( \
+	"1:	movl (%1),%%eax		;" \
+	"	movl %%eax,%%edx	;" \
+	"	andl %2,%%edx		;" \
+	"	btsl $0x1,%%edx		;" \
+	"	adcl $0x0,%%edx		;" \
+	"	lock			;" \
+	"	cmpxchgl %%edx,(%1)	;" \
+	"	jnz 1b			;" \
+	"	cmpb $0x3,%%dl		;" \
+	"	sbbl %%eax,%%eax	" \
+	: "=a" (Acq), "=c" (dummy) \
+	: "c" (GLptr), "i" (~1L) \
+	: "dx"); \
+} while (0)
+
+#define ACPI_RELEASE_GLOBAL_LOCK(GLptr, Acq) \
+do { \
+	int dummy; \
+	__asm __volatile( \
+	"1:	movl (%1),%%eax		;" \
+	"	andl %2,%%edx		;" \
+	"	lock			;" \
+	"	cmpxchgl %%edx,(%1)	;" \
+	"	jnz 1b			;" \
+	"	andl $0x1,%%eax		;" \
+	: "=a" (Acq), "=c" (dummy) \
+	: "c" (GLptr), "i" (~3L) \
+	: "dx"); \
+} while (0)
+
+#define	ACPI_FLUSH_CPU_CACHE()		wbinvd()
 #endif /* __i386__ */
 
 #ifdef ACPI_DEBUG

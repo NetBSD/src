@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.11 1999/11/19 10:41:42 bouyer Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.11.8.1 2002/06/23 17:50:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -66,14 +66,14 @@ struct igmpstat {
 };
 
 #ifdef _KERNEL
-struct igmpstat igmpstat;
+extern	struct igmpstat igmpstat;
 
 /*
  * Macro to compute a random timer value between 1 and (IGMP_MAX_REPORTING_
  * DELAY * countdown frequency).  We assume that the routine random()
  * is defined somewhere (and that it returns a positive number).
  */
-#define	IGMP_RANDOM_DELAY(X)	(random() % (X) + 1)
+#define	IGMP_RANDOM_DELAY(X)	(arc4random() % (X) + 1)
 
 void	igmp_init __P((void));
 void	igmp_input __P((struct mbuf *, ...));

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.2.2.2 2002/01/10 19:52:56 thorpej Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.2.2.3 2002/06/23 17:45:05 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.2.2.2 2002/01/10 19:52:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.2.2.3 2002/06/23 17:45:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.2.2.2 2002/01/10 19:52:56 thorpej
 #include <machine/acpi_machdep.h>
 
 #define	_COMPONENT	ACPI_OS_SERVICES
-MODULE_NAME("INTERRUPT")
+ACPI_MODULE_NAME("INTERRUPT")
 
 /*
  * We're lucky -- ACPI uses the same convention for interrupt service
@@ -99,7 +99,7 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
 	ACPI_STATUS rv;
 	int s;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	if (InterruptNumber < 0 || InterruptNumber > 255)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -136,7 +136,7 @@ AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber, OSD_HANDLER ServiceRoutine)
 	struct acpi_interrupt_handler *aih;
 	int s;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	if (InterruptNumber < 0 || InterruptNumber > 255)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.55.2.1 2002/03/16 16:02:11 jdolecek Exp $	*/
+/*	$NetBSD: in.h,v 1.55.2.2 2002/06/23 17:50:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -43,7 +43,29 @@
 #ifndef _NETINET_IN_H_
 #define	_NETINET_IN_H_
 
+#include <machine/int_types.h>
+
+#ifndef uint8_t
+typedef __uint8_t	uint8_t;
+#define	uint8_t		__uint8_t
+#endif
+
+#ifndef uint32_t
+typedef __uint32_t	uint32_t;
+#define	uint32_t	__uint32_t
+#endif
+
 #include <sys/ansi.h>
+
+#ifndef in_addr_t
+typedef __in_addr_t	in_addr_t;
+#define	in_addr_t	__in_addr_t
+#endif
+
+#ifndef in_port_t
+typedef __in_port_t	in_port_t;
+#define	in_port_t	__in_port_t
+#endif
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
@@ -129,7 +151,7 @@ typedef __sa_family_t	sa_family_t;
  * Internet address (a structure for historical reasons)
  */
 struct in_addr {
-	u_int32_t s_addr;
+	in_addr_t s_addr;
 } __attribute__((__packed__));
 
 /*
@@ -142,32 +164,32 @@ struct in_addr {
  * on these macros not doing byte-swapping.
  */
 #ifdef _KERNEL
-#define	__IPADDR(x)	((u_int32_t) htonl((u_int32_t)(x)))
+#define	__IPADDR(x)	((uint32_t) htonl((uint32_t)(x)))
 #else
-#define	__IPADDR(x)	((u_int32_t)(x))
+#define	__IPADDR(x)	((uint32_t)(x))
 #endif
 
-#define	IN_CLASSA(i)		(((u_int32_t)(i) & __IPADDR(0x80000000)) == \
+#define	IN_CLASSA(i)		(((uint32_t)(i) & __IPADDR(0x80000000)) == \
 				 __IPADDR(0x00000000))
 #define	IN_CLASSA_NET		__IPADDR(0xff000000)
 #define	IN_CLASSA_NSHIFT	24
 #define	IN_CLASSA_HOST		__IPADDR(0x00ffffff)
 #define	IN_CLASSA_MAX		128
 
-#define	IN_CLASSB(i)		(((u_int32_t)(i) & __IPADDR(0xc0000000)) == \
+#define	IN_CLASSB(i)		(((uint32_t)(i) & __IPADDR(0xc0000000)) == \
 				 __IPADDR(0x80000000))
 #define	IN_CLASSB_NET		__IPADDR(0xffff0000)
 #define	IN_CLASSB_NSHIFT	16
 #define	IN_CLASSB_HOST		__IPADDR(0x0000ffff)
 #define	IN_CLASSB_MAX		65536
 
-#define	IN_CLASSC(i)		(((u_int32_t)(i) & __IPADDR(0xe0000000)) == \
+#define	IN_CLASSC(i)		(((uint32_t)(i) & __IPADDR(0xe0000000)) == \
 				 __IPADDR(0xc0000000))
 #define	IN_CLASSC_NET		__IPADDR(0xffffff00)
 #define	IN_CLASSC_NSHIFT	8
 #define	IN_CLASSC_HOST		__IPADDR(0x000000ff)
 
-#define	IN_CLASSD(i)		(((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
+#define	IN_CLASSD(i)		(((uint32_t)(i) & __IPADDR(0xf0000000)) == \
 				 __IPADDR(0xe0000000))
 /* These ones aren't really net and host fields, but routing needn't know. */
 #define	IN_CLASSD_NET		__IPADDR(0xf0000000)
@@ -175,12 +197,12 @@ struct in_addr {
 #define	IN_CLASSD_HOST		__IPADDR(0x0fffffff)
 #define	IN_MULTICAST(i)		IN_CLASSD(i)
 
-#define	IN_EXPERIMENTAL(i)	(((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
+#define	IN_EXPERIMENTAL(i)	(((uint32_t)(i) & __IPADDR(0xf0000000)) == \
 				 __IPADDR(0xf0000000))
-#define	IN_BADCLASS(i)		(((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
+#define	IN_BADCLASS(i)		(((uint32_t)(i) & __IPADDR(0xf0000000)) == \
 				 __IPADDR(0xf0000000))
 
-#define	IN_LOCAL_GROUP(i)	(((u_int32_t)(i) & __IPADDR(0xffffff00)) == \
+#define	IN_LOCAL_GROUP(i)	(((uint32_t)(i) & __IPADDR(0xffffff00)) == \
 				 __IPADDR(0xe0000000))
 
 #define	INADDR_ANY		__IPADDR(0x00000000)
@@ -201,11 +223,11 @@ struct in_addr {
  * Socket address, internet style.
  */
 struct sockaddr_in {
-	u_int8_t	sin_len;
+	uint8_t		sin_len;
 	sa_family_t	sin_family;
-	u_int16_t	sin_port;
+	in_port_t	sin_port;
 	struct in_addr	sin_addr;
-	int8_t		sin_zero[8];
+	__int8_t	sin_zero[8];
 };
 
 #define	INET_ADDRSTRLEN                 16
@@ -219,7 +241,7 @@ struct sockaddr_in {
  */
 struct ip_opts {
 	struct in_addr	ip_dst;		/* first hop, 0 w/o src rt */
-	int8_t		ip_opts[40];	/* actually variable in size */
+	__int8_t	ip_opts[40];	/* actually variable in size */
 };
 
 /*
@@ -269,7 +291,7 @@ struct ip_mreq {
 #define	IP_PORTRANGE_HIGH	1	/* same as DEFAULT (FreeBSD compat) */
 #define	IP_PORTRANGE_LOW	2	/* use privileged range */
 
-#if !defined(_XOPEN_SOURCE)
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * Definitions for inet sysctl operations.
  *
@@ -381,7 +403,7 @@ struct ip_mreq {
 	{ "maxfragpackets", CTLTYPE_INT }, \
 	{ "grettl", CTLTYPE_INT }, \
 }
-#endif /* !_XOPEN_SOURCE */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
 /* INET6 stuff */
 #define	__KAME_NETINET_IN_H_INCLUDED_

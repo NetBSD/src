@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.17.2.1 2002/01/10 20:03:09 thorpej Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.17.2.2 2002/06/23 17:51:07 jdolecek Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.17.2.1 2002/01/10 20:03:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.17.2.2 2002/06/23 17:51:07 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -794,7 +794,7 @@ noreplaycheck:
 		}
 
 		key_sa_recordxfer(sav, m);
-		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 || 
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 ||
 		    ipsec_addhist(m, IPPROTO_IPV6, 0) != 0) {
 			ipsec6stat.in_nomem++;
 			goto bad;
@@ -943,7 +943,7 @@ esp6_ctlinput(cmd, sa, d)
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
-	struct sockaddr_in6 sa6_src, sa6_dst;
+	struct sockaddr_in6 *sa6_src, *sa6_dst;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -1007,10 +1007,12 @@ esp6_ctlinput(cmd, sa, d)
 			 * Check to see if we have a valid SA corresponding to
 			 * the address in the ICMP message payload.
 			 */
+			sa6_src = ip6cp->ip6c_src;
+			sa6_dst = (struct sockaddr_in6 *)sa;
 			sav = key_allocsa(AF_INET6,
-					  (caddr_t)&sa6_src.sin6_addr,
-					  (caddr_t)&sa6_dst, IPPROTO_ESP,
-					  espp->esp_spi);
+					  (caddr_t)&sa6_src->sin6_addr,
+					  (caddr_t)&sa6_dst->sin6_addr,
+					  IPPROTO_ESP, espp->esp_spi);
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||
 				    sav->state == SADB_SASTATE_DYING)

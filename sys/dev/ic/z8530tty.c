@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.77.2.1 2002/01/10 19:55:12 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.77.2.2 2002/06/23 17:47:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.77.2.1 2002/01/10 19:55:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.77.2.2 2002/06/23 17:47:00 jdolecek Exp $");
 
 #include "opt_kgdb.h"
 
@@ -717,16 +717,16 @@ zsioctl(dev, cmd, data, flag, p)
 	int s;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 #ifdef	ZS_MD_IOCTL
-	error = ZS_MD_IOCTL;
-	if (error >= 0)
+	error = ZS_MD_IOCTL(cs, cmd, data);
+	if (error != EPASSTHROUGH)
 		return (error);
 #endif	/* ZS_MD_IOCTL */
 
@@ -913,7 +913,7 @@ zsioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

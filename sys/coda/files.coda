@@ -1,0 +1,12 @@
+#	$NetBSD: files.coda,v 1.1.8.2 2002/06/23 17:43:38 jdolecek Exp $
+
+deffs	fs_coda.h			CODA
+
+defpseudo				vcoda
+
+file	coda/coda_namecache.c		coda
+file	coda/coda_psdev.c		vcoda			needs-count
+file	coda/coda_subr.c		coda
+file	coda/coda_venus.c		coda
+file	coda/coda_vfsops.c		coda
+file	coda/coda_vnops.c		coda

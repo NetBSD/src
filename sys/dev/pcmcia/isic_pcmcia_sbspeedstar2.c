@@ -1,35 +1,46 @@
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Martin Husemann <martin@netbsd.org>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.2.6.2 2002/06/23 17:48:20 jdolecek Exp $");
+
+#include "opt_isicpcmcia.h"  
+#ifdef ISICPCMCIA_SBSPEEDSTAR2
+
 /*
- *   Copyright (c) 2001 Martin Husemann. All rights reserved.
- *
- *   Redistribution and use in source and binary forms, with or without
- *   modification, are permitted provided that the following conditions
- *   are met:
- *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *   3. Neither the name of the author nor the names of any co-contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
- *   4. Altered versions must be plainly marked as such, and must not be
- *      misrepresented as being the original software and/or documentation.
- *   
- *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- *   ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- *   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- *   OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- *   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- *   OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- *   SUCH DAMAGE.
- *
- *---------------------------------------------------------------------------
- *
  * Card format:
  * 
  * iobase + 0 : reset on (0x03), off (0x0)
@@ -38,13 +49,7 @@
  *                                offset 0x40-0x7f hscx1 )
  * iobase + 4 : address register
  *
- *---------------------------------------------------------------------------*/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.2.6.1 2002/01/10 19:57:23 thorpej Exp $");
-
-#include "opt_isicpcmcia.h"  
-#ifdef ISICPCMCIA_SBSPEEDSTAR2
+ */
 
 #define SBSS_RESET  0 /* reset on / off           */
 #define SBSS_ISAC   1 /* ISAC                     */
@@ -64,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.2.6.1 2002/01/10 19:5
 #include <net/if.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
@@ -82,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.2.6.1 2002/01/10 19:5
  *---------------------------------------------------------------------------*/
 
 static void
-sws_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+sws_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -107,7 +114,7 @@ sws_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
  *---------------------------------------------------------------------------*/
 
 static void
-sws_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+sws_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -132,7 +139,7 @@ sws_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
  *---------------------------------------------------------------------------*/
 
 static void
-sws_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+sws_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -157,7 +164,7 @@ sws_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
  *---------------------------------------------------------------------------*/
 
 static u_int8_t
-sws_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+sws_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -181,9 +188,9 @@ sws_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
  * could be removed an inserted again.
  */
 int
-isic_attach_sbspeedstar2(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
+isic_attach_sbspeedstar2(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
 {
-	struct l1_softc * sc = &psc->sc_isic;
+	struct isic_softc * sc = &psc->sc_isic;
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	
@@ -228,10 +235,6 @@ isic_attach_sbspeedstar2(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry
 
 	sc->readfifo  = sws_read_fifo;
 	sc->writefifo = sws_write_fifo;
-
-	/* setup card type */
-	
-	sc->sc_cardtyp = CARD_TYPEP_SWS;
 
 	/* setup IOM bus type */
 	

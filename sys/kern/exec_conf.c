@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.57.2.3 2002/03/16 16:01:46 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.57.2.4 2002/06/23 17:49:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.57.2.3 2002/03/16 16:01:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.57.2.4 2002/06/23 17:49:23 jdolecek Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.57.2.3 2002/03/16 16:01:46 jdolecek 
 #include "opt_compat_pecoff.h"
 #include "opt_compat_osf1.h"
 #include "opt_compat_ultrix.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -86,6 +87,19 @@ int ELF32NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
     void *, char *, vaddr_t *);
 #endif
+
+/*
+ * Compatibility with old ELF binaries without NetBSD note.
+ * Generic ELF executable kernel support was added in NetBSD 1.1.
+ * The NetBSD note was introduced in NetBSD 1.3 together with initial
+ * ELF shared library support.
+ */
+#ifndef EXEC_ELF_NOTELESS
+#  if defined(COMPAT_11) || defined(COMPAT_12)
+#    define EXEC_ELF_NOTELESS		1
+#  endif
+#endif /* !EXEC_ELF_NOTELESS */
+
 #endif /* ELF32 || ELF64 */
 
 #ifdef EXEC_MACHO
@@ -189,7 +203,7 @@ const struct execsw execsw_builtin[] = {
 	  netbsd32_copyargs,
 	  NULL,
 	  coredump_netbsd32 },
-#endif
+#else /* !COMPAT_NETBSD32 */
 
 	/* Native a.out */
 	{ sizeof(struct exec),
@@ -208,6 +222,7 @@ const struct execsw execsw_builtin[] = {
 	  NULL,
 	  coredump_netbsd },
 #endif /* EXEC_AOUT */
+#endif /* !COMPAT_NETBSD32 */
 
 #ifdef EXEC_COFF
 	/* Native COFF */
@@ -273,9 +288,38 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  netbsd32_elf32_copyargs,
 	  NULL,
-	  coredump_netbsd32 },		/* XXX XXX XXX */
+	  coredump_elf32 },		/* XXX XXX XXX */
+	  /* This one should go first so it matches instead of native */
+
+#ifdef COMPAT_SVR4_32
+	/* SVR4 Elf32 on 64-bit */
+	{ sizeof (Elf32_Ehdr),
+	  exec_elf32_makecmds,
+	  { ELF32NAME2(svr4_32,probe) },
+	  &emul_svr4_32,
+	  EXECSW_PRIO_ANY,
+	  SVR4_32_AUX_ARGSIZ,
+	  svr4_32_copyargs,
+	  NULL,
+	  coredump_elf32 },	/* XXX XXX XXX */
 	  /* This one should go first so it matches instead of native */
 #endif
+
+#if 0
+#if EXEC_ELF_NOTELESS
+	/* Generic compat Elf32 -- run as compat NetBSD Elf32 */
+	{ sizeof (Elf32_Ehdr),
+	  exec_elf32_makecmds,
+	  { ELF32NAME2(netbsd32,probe_noteless) },
+	  &emul_netbsd32,
+	  EXECSW_PRIO_FIRST,
+	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  netbsd32_elf32_copyargs,
+	  NULL,
+	  coredump_elf32 },		/* XXX XXX XXX */
+#endif
+#endif
+#else /* !COMPAT_NETBSD32 */
 
 	/* Native Elf32 */
 	{ sizeof (Elf32_Ehdr),
@@ -338,20 +382,6 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf32 },
 #endif
 
-#ifdef COMPAT_SVR4_32
-	/* SVR4 Elf32 on 64-bit */
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { ELF32NAME2(svr4_32,probe) },
-	  &emul_svr4_32,
-	  EXECSW_PRIO_ANY,
-	  SVR4_32_AUX_ARGSIZ,
-	  svr4_32_copyargs,
-	  NULL,
-	  coredump_netbsd32 },	/* XXX XXX XXX */
-	  /* This one should go first so it matches instead of native */
-#endif
-
 #ifdef COMPAT_SVR4
 	/* SVR4 Elf32 */
 	{ sizeof (Elf32_Ehdr),
@@ -378,7 +408,7 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf32 },
 #endif
 
-#ifdef EXEC_ELF_CATCHALL
+#if EXEC_ELF_NOTELESS
 	/* Generic Elf32 -- run at NetBSD Elf32 */
 	{ sizeof (Elf32_Ehdr),
 	  exec_elf32_makecmds,
@@ -391,6 +421,7 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf32 },
 #endif
 #endif /* EXEC_ELF32 */
+#endif /* !COMPAT_NETBSD32 */
 
 #ifdef EXEC_ELF64
 	/* Native Elf64 */
@@ -430,7 +461,7 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf64 },
 #endif
 
-#ifdef EXEC_ELF_CATCHALL
+#if EXEC_ELF_NOTELESS
 	/* Generic Elf64 -- run at NetBSD Elf64 */
 	{ sizeof (Elf64_Ehdr),
 	  exec_elf64_makecmds,
@@ -576,10 +607,10 @@ const struct execsw execsw_builtin[] = {
 
 #ifdef COMPAT_PECOFF
 	/* Win32/WinCE PE/COFF (native word size) */
-	{ sizeof(struct exec),
+	{ PECOFF_HDR_SIZE,
 	  exec_pecoff_makecmds,
 	  { NULL },
-	  &emul_netbsd,		/* XXX emul_pecoff once it's different */
+	  &emul_pecoff,
 	  EXECSW_PRIO_ANY,
 	  howmany(sizeof(struct pecoff_args), sizeof(char *)),
 	  pecoff_copyargs,

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.43 2001/04/30 01:13:21 lukem Exp $	*/
+/*	$NetBSD: signal.h,v 1.43.2.1 2002/06/23 17:52:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -45,7 +45,7 @@
 
 #include <sys/featuretest.h>
 
-#define _NSIG		33
+#define _NSIG		64
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
@@ -104,6 +104,10 @@
 #define SIGUSR2		31	/* user defined signal 2 */
 #ifndef _POSIX_SOURCE
 #define	SIGPWR		32	/* power fail/restart (not reset when caught) */
+#endif
+#ifdef _KERNEL
+#define SIGRTMIN	33	/* Kernel only; not exposed to userland yet */
+#define SIGRTMAX	63	/* Kernel only; not exposed to userland yet */
 #endif
 
 #ifndef _KERNEL
@@ -199,9 +203,9 @@ struct	sigaction {
 #define SA_RESTART	0x0002	/* restart system on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
 #define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
-#if defined(_KERNEL) && defined(COMPAT_LINUX)
+#if defined(_KERNEL)
 #define SA_SIGINFO	0x0040
-#endif /* (_KERNEL && linux) */
+#endif /* _KERNEL */
 #endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 /* Only valid for SIGCHLD. */
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.16.2.2 2002/02/11 20:09:56 jdolecek Exp $	*/
+/*	$NetBSD: cz.c,v 1.16.2.3 2002/06/23 17:47:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.16.2.2 2002/02/11 20:09:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.16.2.3 2002/06/23 17:47:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1166,11 +1166,11 @@ czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int s, error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
@@ -1216,7 +1216,7 @@ czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

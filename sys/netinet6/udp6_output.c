@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.1.6.1 2002/01/10 20:03:32 thorpej Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.1.6.2 2002/06/23 17:51:23 jdolecek Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.1.6.1 2002/01/10 20:03:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.1.6.2 2002/06/23 17:51:23 jdolecek Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_inet.h"
@@ -205,9 +205,9 @@ udp6_output(in6p, m, addr6, control, p)
 			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)
 			    && !IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)) {
 				/*
-				 * when remote addr is an IPv4-mapped address, 
+				 * when remote addr is an IPv4-mapped address,
 				 * local addr should not be an IPv6 address,
-				 * since you cannot determine how to map IPv6 
+				 * since you cannot determine how to map IPv6
 				 * source address to IPv4.
 				 */
 				error = EINVAL;

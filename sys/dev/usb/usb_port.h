@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.44.2.2 2002/03/16 16:01:40 jdolecek Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.44.2.3 2002/06/23 17:49:12 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #define AUE_DEBUG 1
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
+#define URL_DEBUG 1
 #define UMASS_DEBUG 1
 #define UVISOR_DEBUG 1
 #define UPL_DEBUG 1
@@ -496,13 +497,7 @@ __CONCAT(dname,_detach)(device_t self)
 	(device_probe_and_attach((bdev)) == 0 ? (bdev) : 0)
 
 /* conversion from one type of queue to the other */
-/* XXX In FreeBSD SIMPLEQ_REMOVE_HEAD only removes the head element.
- */
-#define SIMPLEQ_REMOVE_HEAD(h, e, f)	do {				\
-		if ( (e) != SIMPLEQ_FIRST((h)) )			\
-			panic("Removing other than first element");	\
-		STAILQ_REMOVE_HEAD(h, f);				\
-} while (0)
+#define SIMPLEQ_REMOVE_HEAD	STAILQ_REMOVE_HEAD
 #define SIMPLEQ_INSERT_HEAD	STAILQ_INSERT_HEAD
 #define SIMPLEQ_INSERT_TAIL	STAILQ_INSERT_TAIL
 #define SIMPLEQ_NEXT		STAILQ_NEXT

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.12.2.1 2002/01/10 20:05:42 thorpej Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.12.2.2 2002/06/23 17:52:18 jdolecek Exp $	*/
 
 /*
  *
@@ -73,6 +73,9 @@ struct uvm_object {
 #ifdef _KERNEL
 
 extern struct uvm_pagerops uvm_vnodeops;
+extern struct uvm_pagerops uvm_deviceops;
+extern struct uvm_pagerops ubc_pager;
+extern struct uvm_pagerops aobj_pager;
 
 #define	UVM_OBJ_IS_VNODE(uobj)						\
 	((uobj)->pgops == &uvm_vnodeops)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.72.2.4 2002/03/16 16:00:47 jdolecek Exp $	*/
+/*	$NetBSD: ccd.c,v 1.72.2.5 2002/06/23 17:44:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.72.2.4 2002/03/16 16:00:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.72.2.5 2002/06/23 17:44:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,7 +687,7 @@ ccdstart(cs, bp)
 		if (cbp == NULL) {
 			/* Free the already allocated component buffers. */
 			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
-				SIMPLEQ_REMOVE_HEAD(&cbufq, cbp, cb_q);
+				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 				CCD_PUTBUF(cbp);
 			}
 
@@ -706,7 +706,7 @@ ccdstart(cs, bp)
 
 	/* Now fire off the requests. */
 	while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&cbufq, cbp, cb_q);
+		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 		if ((cbp->cb_buf.b_flags & B_READ) == 0)
 			cbp->cb_buf.b_vp->v_numoutput++;
 		VOP_STRATEGY(&cbp->cb_buf);

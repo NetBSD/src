@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.57.2.1 2002/01/10 20:00:05 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.57.2.2 2002/06/23 17:49:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.57.2.1 2002/01/10 20:00:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.57.2.2 2002/06/23 17:49:35 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -412,8 +412,10 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX)
-			return (EINVAL);
+		if ((u_int)iovcnt > IOV_MAX) {
+			error = EINVAL;
+			goto out;
+		}
 		iov = malloc(iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
@@ -624,7 +626,20 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		free(memp, M_IOCTLOPS);
  out:
 	FILE_UNUSE(fp, p);
-	return (error);
+	switch (error) {
+	case -1:
+		printf("sys_ioctl: _IO%s%s('%c', %lu, %lu) returned -1: "
+		    "pid=%d comm=%s\n",
+		    (com & IOC_IN) ? "W" : "", (com & IOC_OUT) ? "R" : "",
+		    (char)IOCGROUP(com), (com & 0xff), IOCPARM_LEN(com),
+		    p->p_pid, p->p_comm);
+		/* FALLTHROUGH */
+	case EPASSTHROUGH:
+		error = ENOTTY;
+		/* FALLTHROUGH */
+	default:
+		return (error);
+	}
 }
 
 int	selwait, nselcoll;

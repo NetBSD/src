@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.43.2.2 2002/02/11 20:10:12 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.43.2.3 2002/06/23 17:48:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -13,8 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.43.2.2 2002/02/11 20:10:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.43.2.3 2002/06/23 17:48:42 jdolecek Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -120,7 +119,6 @@ wdc_atapibus_attach(chp)
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
-	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = &wdc->sc_dev;
 	adapt->adapt_nchannels = wdc->nchannels;
 	adapt->adapt_request = wdc_atapi_scsipi_request;
@@ -365,6 +363,15 @@ wdc_atapi_scsipi_request(chan, req, arg)
 			 */
 			xfer->c_flags |= C_FORCEPIO;
 		}
+		/*
+		 * DMA can't deal with transfers which are not a multiple of
+		 * 2 bytes. It's a bug to request such transfers for ATAPI
+		 * but as the request can come from userland, we have to
+		 * protect against it.
+		 */
+		if (sc_xfer->datalen & 0x01)
+			xfer->c_flags |= C_FORCEPIO;
+
 		xfer->cmd = sc_xfer;
 		xfer->databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
@@ -411,7 +418,7 @@ wdc_atapi_start(chp, xfer)
 	}
 	/* start timeout machinery */
 	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&chp->ch_callout, sc_xfer->timeout * hz / 1000,
+		callout_reset(&chp->ch_callout, mstohz(sc_xfer->timeout),
 		    wdctimeout, chp);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
@@ -936,7 +943,7 @@ wdc_atapi_phase_complete(xfer)
 			if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10)) {
 				/* 10ms not enouth, try again in 1 tick */
 				if (xfer->c_dscpoll++ > 
-				    sc_xfer->timeout * hz / 1000) {
+				    mstohz(sc_xfer->timeout)) {
 					printf("%s:%d:%d: wait_for_dsc "
 					    "failed\n",
 					    chp->wdc->sc_dev.dv_xname,

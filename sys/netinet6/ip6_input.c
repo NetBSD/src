@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.41.2.2 2002/01/10 20:03:20 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.41.2.3 2002/06/23 17:51:15 jdolecek Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.41.2.2 2002/01/10 20:03:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.41.2.3 2002/06/23 17:51:15 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.41.2.2 2002/01/10 20:03:20 thorpej E
 #include <netinet/icmp6.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
-#include <netinet6/in6_prefix.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -160,7 +159,6 @@ ip6_init()
 {
 	struct ip6protosw *pr;
 	int i;
-	struct timeval tv;
 
 	pr = (struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -175,12 +173,7 @@ ip6_init()
 	ip6intrq.ifq_maxlen = ip6qmaxlen;
 	nd6_init();
 	frag6_init();
-	/*
-	 * in many cases, random() here does NOT return random number
-	 * as initialization during bootstrap time occur in fixed order.
-	 */
-	microtime(&tv);
-	ip6_flow_seq = random() ^ tv.tv_usec;
+	ip6_flow_seq = arc4random();
 
 	ip6_init2((void *)0);
 
@@ -199,18 +192,10 @@ static void
 ip6_init2(dummy)
 	void *dummy;
 {
-	/*
-	 * to route local address of p2p link to loopback,
-	 * assign loopback address first.
-	 */
-	in6_ifattach(&loif[0], NULL);
 
 	/* nd6_timer_init */
 	callout_init(&nd6_timer_ch);
 	callout_reset(&nd6_timer_ch, hz, nd6_timer, NULL);
-	/* router renumbering prefix list maintenance */
-	callout_init(&in6_rr_timer_ch);
-	callout_reset(&in6_rr_timer_ch, hz, in6_rr_timer, NULL);
 }
 
 /*
@@ -287,7 +272,7 @@ ip6_input(m)
 	if (m->m_len < sizeof(struct ip6_hdr)) {
 		struct ifnet *inifp;
 		inifp = m->m_pkthdr.rcvif;
-		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0) {
+		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 			ip6stat.ip6s_toosmall++;
 			in6_ifstat_inc(inifp, ifs6_in_hdrerr);
 			return;
@@ -343,6 +328,9 @@ ip6_input(m)
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst)) {
+		/*
+		 * XXX: "badscope" is not very suitable for a multicast source.
+		 */
 		ip6stat.ip6s_badscope++;
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
 		goto bad;
@@ -357,7 +345,7 @@ ip6_input(m)
 	 * support IPv4-less kernel compilation, we cannot support SIIT
 	 * environment at all.  So, it makes more sense for us to reject any
 	 * malicious packets for non-SIIT environment, than try to do a
-	 * partical support for SIIT environment.
+	 * partial support for SIIT environment.
 	 */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
@@ -466,7 +454,7 @@ ip6_input(m)
 	 *  Unicast check
 	 */
 	if (ip6_forward_rt.ro_rt != NULL &&
-	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 && 
+	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 &&
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
 			       &((struct sockaddr_in6 *)(&ip6_forward_rt.ro_dst))->sin6_addr))
 		ip6stat.ip6s_forward_cachehit++;
@@ -503,6 +491,7 @@ ip6_input(m)
 	if (ip6_forward_rt.ro_rt &&
 	    (ip6_forward_rt.ro_rt->rt_flags &
 	     (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
+	    !(ip6_forward_rt.ro_rt->rt_flags & RTF_CLONED) &&
 #if 0
 	    /*
 	     * The check below is redundant since the comparison of
@@ -510,7 +499,7 @@ ip6_input(m)
 	     * already done through looking up the routing table.
 	     */
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-			       &rt6_key(ip6_forward_rt.ro_rt)->sin6_addr) &&
+	    &rt6_key(ip6_forward_rt.ro_rt)->sin6_addr) &&
 #endif
 	    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_LOOP) {
 		struct in6_ifaddr *ia6 =
@@ -538,7 +527,7 @@ ip6_input(m)
 	}
 
 	/*
-	 * FAITH(Firewall Aided Internet Translator)
+	 * FAITH (Firewall Aided Internet Translator)
 	 */
 #if defined(NFAITH) && 0 < NFAITH
 	if (ip6_keepfaith) {
@@ -615,7 +604,7 @@ ip6_input(m)
 			/*
 			 * Note that if a valid jumbo payload option is
 			 * contained, ip6_hoptops_input() must set a valid
-			 * (non-zero) payload length to the variable plen. 
+			 * (non-zero) payload length to the variable plen.
 			 */
 			ip6stat.ip6s_badoptions++;
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_discard);
@@ -690,7 +679,7 @@ ip6_input(m)
 	} else if (!ours) {
 		ip6_forward(m, 0);
 		return;
-	}	
+	}
 
 	ip6 = mtod(m, struct ip6_hdr *);
 
@@ -753,7 +742,7 @@ ip6_input(m)
 			goto bad;
 		}
 #endif
-		
+
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
 	return;
@@ -818,6 +807,10 @@ ip6_hopopts_input(plenp, rtalertp, mp, offp)
  * This function is separate from ip6_hopopts_input() in order to
  * handle a case where the sending node itself process its hop-by-hop
  * options header. In such a case, the function is called from ip6_output().
+ *
+ * The function assumes that hbh header is located right after the IPv6 header
+ * (RFC2460 p7), opthead is pointer into data content in m, and opthead to
+ * opthead + hbhlen is located in continuous memory region.
  */
 int
 ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
@@ -832,6 +825,7 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 	u_int8_t *opt = opthead;
 	u_int16_t rtalert_val;
 	u_int32_t jumboplen;
+	const int erroff = sizeof(struct ip6_hdr) + sizeof(struct ip6_hbh);
 
 	for (; hbhlen > 0; hbhlen -= optlen, opt += optlen) {
 		switch (*opt) {
@@ -852,9 +846,11 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 				goto bad;
 			}
 			if (*(opt + 1) != IP6OPT_RTALERT_LEN - 2) {
-				 /* XXX: should we discard the packet? */
-				log(LOG_ERR, "length of router alert opt is inconsitent(%d)",
-				    *(opt + 1));
+				/* XXX stat */
+				icmp6_error(m, ICMP6_PARAM_PROB,
+				    ICMP6_PARAMPROB_HEADER,
+				    erroff + opt + 1 - opthead);
+				return (-1);
 			}
 			optlen = IP6OPT_RTALERT_LEN;
 			bcopy((caddr_t)(opt + 2), (caddr_t)&rtalert_val, 2);
@@ -867,10 +863,11 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 				goto bad;
 			}
 			if (*(opt + 1) != IP6OPT_JUMBO_LEN - 2) {
-				/* XXX: should we discard the packet? */
-				log(LOG_ERR, "length of jumbopayload opt "
-				    "is inconsistent(%d)\n",
-				    *(opt + 1));
+				/* XXX stat */
+				icmp6_error(m, ICMP6_PARAM_PROB,
+				    ICMP6_PARAMPROB_HEADER,
+				    erroff + opt + 1 - opthead);
+				return (-1);
 			}
 			optlen = IP6OPT_JUMBO_LEN;
 
@@ -882,11 +879,9 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 			if (ip6->ip6_plen) {
 				ip6stat.ip6s_badoptions++;
 				icmp6_error(m, ICMP6_PARAM_PROB,
-					    ICMP6_PARAMPROB_HEADER,
-					    sizeof(struct ip6_hdr) +
-					    sizeof(struct ip6_hbh) +
-					    opt - opthead);
-				return(-1);
+				    ICMP6_PARAMPROB_HEADER,
+				    erroff + opt - opthead);
+				return (-1);
 			}
 
 			/*
@@ -908,11 +903,9 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 			if (*plenp != 0) {
 				ip6stat.ip6s_badoptions++;
 				icmp6_error(m, ICMP6_PARAM_PROB,
-					    ICMP6_PARAMPROB_HEADER,
-					    sizeof(struct ip6_hdr) +
-					    sizeof(struct ip6_hbh) +
-					    opt + 2 - opthead);
-				return(-1);
+				    ICMP6_PARAMPROB_HEADER,
+				    erroff + opt + 2 - opthead);
+				return (-1);
 			}
 #endif
 
@@ -922,11 +915,9 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 			if (jumboplen <= IPV6_MAXPACKET) {
 				ip6stat.ip6s_badoptions++;
 				icmp6_error(m, ICMP6_PARAM_PROB,
-					    ICMP6_PARAMPROB_HEADER,
-					    sizeof(struct ip6_hdr) +
-					    sizeof(struct ip6_hbh) +
-					    opt + 2 - opthead);
-				return(-1);
+				    ICMP6_PARAMPROB_HEADER,
+				    erroff + opt + 2 - opthead);
+				return (-1);
 			}
 			*plenp = jumboplen;
 
@@ -936,21 +927,20 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 				ip6stat.ip6s_toosmall++;
 				goto bad;
 			}
-			if ((optlen = ip6_unknown_opt(opt, m,
-						      sizeof(struct ip6_hdr) +
-						      sizeof(struct ip6_hbh) +
-						      opt - opthead)) == -1)
-				return(-1);
+			optlen = ip6_unknown_opt(opt, m,
+			    erroff + opt - opthead);
+			if (optlen == -1)
+				return (-1);
 			optlen += 2;
 			break;
 		}
 	}
 
-	return(0);
+	return (0);
 
   bad:
 	m_freem(m);
-	return(-1);
+	return (-1);
 }
 
 /*
@@ -1517,6 +1507,8 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		}
 		return (error);
 #endif
+	case IPV6CTL_MAXFRAGS:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_maxfrags);
 	default:
 		return EOPNOTSUPP;
 	}

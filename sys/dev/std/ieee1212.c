@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212.c,v 1.1.8.2 2002/03/16 16:01:32 jdolecek Exp $	*/
+/*	$NetBSD: ieee1212.c,v 1.1.8.3 2002/06/23 17:48:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -168,8 +168,8 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 		len = newlen;
 		newlen = 0;
 		for (i = 0; i < len; i++) {
-			type = P1212_DIRENT_GET_KEYTYPE((ntohl(t[offset + i])));
-			val = P1212_DIRENT_GET_VALUE((ntohl(t[offset + i])));
+			type = P1212_DIRENT_GET_KEYTYPE((ntohl(t[offset+i])));
+			val = P1212_DIRENT_GET_VALUE((ntohl(t[offset+i])));
 			switch (type) {
 			case P1212_KEYTYPE_Immediate:
 			case P1212_KEYTYPE_Offset:
@@ -198,7 +198,8 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 				 */
 
 				test--;
-				infolen = P1212_DIRENT_GET_LEN((ntohl(t[test])));
+				infolen = 
+				    P1212_DIRENT_GET_LEN((ntohl(t[test])));
 				test++;
 				test += infolen;
 				if ((test > *size) && (test > newlen)) {
@@ -217,12 +218,12 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 				}
 				
 				/*
-				 * Can't just walk the ROM looking at type codes
-				 * since these are only valid on directory
-				 * entries. So save any directories
+				 * Can't just walk the ROM looking at type 
+				 * codes since these are only valid on 
+				 * directory entries. So save any directories
 				 * we find into a queue and the bottom of the
-				 * while loop will pop the last one off and walk
-				 * that directory.
+				 * while loop will pop the last one off and 
+				 * walk that directory.
 				 */
                 
 				test--;
@@ -318,7 +319,7 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 	if (rom->len) {
 		rom->data = malloc(sizeof(u_int32_t) * rom->len, M_DEVBUF,
 		    M_WAITOK);
-		/* Add 2 to account for info/crc and bus name we're skipping. */
+		/* Add 2 to account for info/crc and bus name skipped. */
 		for (i = 0; i < rom->len; i++)
 			rom->data[i] = t[i + 2];
 	}
@@ -332,7 +333,7 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 	 * parse/print/match routines have a standard layout to work against.
 	 */
 	
-	rom->root = malloc(sizeof(struct p1212_dir), M_DEVBUF, M_WAITOK|M_ZERO);
+	rom->root = malloc(sizeof(*rom->root), M_DEVBUF, M_WAITOK|M_ZERO);
 	rom->root->com.key.key_type = P1212_KEYTYPE_Directory;
 	rom->root->com.key.key_value = 0;
 	rom->root->com.key.key = (u_int8_t)P1212_KEYTYPE_Directory;
@@ -410,7 +411,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			 * Sanity check for valid types/locations/etc.
 			 *
 			 * See pages 79-100 of
-			 * ISO/IEC 13213:1194 (ANSI/IEEE Std 1212, 1994 edition)
+			 * ISO/IEC 13213:1194(ANSI/IEEE Std 1212, 1994 edition)
 			 * for specifics.
 			 *
 			 * XXX: These all really should be broken out into 
@@ -446,8 +447,8 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			case P1212_KEYTYPE_Immediate:
 				if (p1212_validate_immed(val, mask)) {
 					DPRINTF(("Invalid ROM: Can't have an "
-					    "immediate type with %s value. Key "
-					    "used at location 0x%0x in ROM\n",
+					    "immediate type with %s value. Key"
+					    " used at location 0x%0x in ROM\n",
 					    p1212_keyvalue_strings[val],
 					    (unsigned int)(&t[i]-&addr[0])));
 					return 1;
@@ -476,8 +477,8 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			case P1212_KEYTYPE_Directory:
 				if (p1212_validate_dir(val, mask)) {
 					DPRINTF(("Invalid ROM: Can't have a "
-					    "directory type with %s value. Key "
-					    "used at location 0x%0x in ROM\n",
+					    "directory type with %s value. Key"
+					    " used at location 0x%0x in ROM\n",
 					    p1212_keyvalue_strings[val],
 					    (unsigned int)(&t[i]-&addr[0])));
 					return 1;
@@ -514,8 +515,8 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 
 			if (val == P1212_KEYVALUE_Module_Sw_Version) {
 				if (node_sw_flag) {
-					DPRINTF(("Can't have a module software "
-				            "version along with a node "
+					DPRINTF(("Can't have a module software"
+				            " version along with a node "
 					    "software version entry\n"));
 					return 1;
 				}
@@ -561,8 +562,9 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			 * preventing one from putting text descriptors after
 			 * directory descriptors. Also they can be a single
 			 * value or a list of them in a directory format so
-			 * account for either. Finally if they're in a directory
-			 * those can be the only types in a directory.
+			 * account for either. Finally if they're in a 
+			 * directory those can be the only types in a 
+			 * directory.
 			 */
 
 			if (val == P1212_KEYVALUE_Textual_Descriptor) {
@@ -572,8 +574,8 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				leafoff += i;
 
 				if (com == NULL) {
-					DPRINTF(("Can't have a text descriptor "
-					    "as the first entry in a "
+					DPRINTF(("Can't have a text descriptor"
+					    " as the first entry in a "
 					    "directory\n"));
 					return 1;
 				}
@@ -591,9 +593,9 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 					com->text[0] =
 					    p1212_parse_text_desc(&t[leafoff]);
 					if (com->text[0] == NULL) {
-						DPRINTF(("Got an error parsing "
-						    "text descriptor at offset "
-						    "0x%0x\n",
+						DPRINTF(("Got an error parsing"
+						    " text descriptor at "
+						    "offset 0x%0x\n",
 						    &t[leafoff]-&addr[0]));
 						free(com->text, M_DEVBUF);
 						return 1;
@@ -658,7 +660,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				sdir->match = sdir->com.key.val + i;
 				TAILQ_INIT(&sdir->data_root);
 				TAILQ_INIT(&sdir->subdir_root);
-				TAILQ_INSERT_TAIL(&dir->subdir_root, sdir, dir);
+				TAILQ_INSERT_TAIL(&dir->subdir_root, sdir,dir);
 			}
 		}
 
@@ -741,7 +743,7 @@ p1212_parse_leaf(u_int32_t *t)
 	    M_WAITOK);
 	leafdata->len = crclen;
 	for (i = 0; i < crclen; i++)
-		leafdata->data[i] = t[i];
+		leafdata->data[i] = ntohl(t[i]);
 	return leafdata;
 }
 
@@ -840,9 +842,9 @@ p1212_parse_text_desc(u_int32_t *addr)
 	t++;
 	t++;
 	crclen -= 2;
-	size = (crclen * sizeof(u_int32_t)) + 1;
+	size = (crclen * sizeof(u_int32_t));
 
-	text->text = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
+	text->text = malloc(size + 1, M_DEVBUF, M_WAITOK|M_ZERO);
 
 	memcpy(text->text, &t[0], size);
 
@@ -1231,7 +1233,7 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 	    P1212_FIND_SEARCHALL|P1212_FIND_RETURNALL);
 	
 	if (udirs) {
-		while (*udirs++) {
+		do {
 			dev = config_found_sm(sc, udirs, print, NULL);
 			if (dev && numdev) {
 				devret = realloc(devret,
@@ -1243,7 +1245,8 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 				devret[0] = dev;
 				numdev++;
 			}
-		}
+			udirs++;
+		} while (*udirs);
 	}
 	if (numdev == 0) {
 		free(devret, M_DEVBUF);
@@ -1333,6 +1336,9 @@ p1212_validate_dir(u_int16_t val, u_int32_t mask)
 	case P1212_KEYVALUE_Unit_Dependent_Info:
 		break;
 	default:
+		if ((mask & P1212_ALLOW_VENDOR_DIRECTORY_TYPE) &&
+		    (val == P1212_KEYVALUE_Module_Vendor_Id))
+			break;
 		return 1;
 		break;
 	}

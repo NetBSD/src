@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.49.2.2 2002/03/16 16:02:23 jdolecek Exp $	*/
+/*	$NetBSD: types.h,v 1.49.2.3 2002/06/23 17:52:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -113,7 +113,7 @@ typedef unsigned long	ulong;		/* Sys V compatibility */
 typedef	u_long		cpuid_t;
 #endif
 
-typedef	u_int64_t	u_quad_t;	/* quads */
+typedef	uint64_t	u_quad_t;	/* quads */
 typedef	int64_t		quad_t;
 typedef	quad_t *	qaddr_t;
 
@@ -127,11 +127,11 @@ typedef	quad_t *	qaddr_t;
  * the C99 types int64_t and uint64_t instead.
  */
 
-typedef	quad_t		longlong_t;	/* for XDR */
-typedef	u_quad_t	u_longlong_t;	/* for XDR */
+typedef	int64_t		longlong_t;	/* for XDR */
+typedef	uint64_t	u_longlong_t;	/* for XDR */
 
 typedef	int64_t		blkcnt_t;	/* fs block count */
-typedef	u_int32_t	blksize_t;	/* fs optimal block size */
+typedef	uint32_t	blksize_t;	/* fs optimal block size */
 
 #ifndef	caddr_t
 typedef	__caddr_t	caddr_t;	/* core address */
@@ -139,16 +139,16 @@ typedef	__caddr_t	caddr_t;	/* core address */
 #endif
 
 typedef	int32_t		daddr_t;	/* disk address */
-typedef	u_int32_t	dev_t;		/* device number */
-typedef	u_int32_t	fixpt_t;	/* fixed point number */
+typedef	uint32_t	dev_t;		/* device number */
+typedef	uint32_t	fixpt_t;	/* fixed point number */
 
 #ifndef	gid_t
 typedef	__gid_t		gid_t;		/* group id */
 #define	gid_t		__gid_t
 #endif
 
-typedef	u_int32_t	id_t;		/* group id, process id or user id */
-typedef	u_int32_t	ino_t;		/* inode number */
+typedef	uint32_t	id_t;		/* group id, process id or user id */
+typedef	uint32_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 
 #ifndef	mode_t
@@ -156,7 +156,7 @@ typedef	__mode_t	mode_t;		/* permissions */
 #define	mode_t		__mode_t
 #endif
 
-typedef	u_int32_t	nlink_t;	/* link count */
+typedef	uint32_t	nlink_t;	/* link count */
 
 #ifndef	off_t
 typedef	__off_t		off_t;		/* file offset */

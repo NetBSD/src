@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdStream.c,v 1.2.2.2 2002/01/10 19:52:58 thorpej Exp $	*/
+/*	$NetBSD: OsdStream.c,v 1.2.2.3 2002/06/23 17:45:06 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,36 +42,45 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdStream.c,v 1.2.2.2 2002/01/10 19:52:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdStream.c,v 1.2.2.3 2002/06/23 17:45:06 jdolecek Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpica.h>
 
+#ifdef DDB
+#include <ddb/db_output.h>
+#endif
+
+extern int acpi_indebugger;
+
 /*
  * AcpiOsPrintf:
  *
  *	Formatted stream output.
  */
-INT32
-AcpiOsPrintf(const char *Format, ...)
+void ACPI_INTERNAL_VAR_XFACE
+AcpiOsPrintf(const NATIVE_CHAR *Format, ...)
 {
 
 	va_list ap;
 
 	va_start(ap, Format);
-	vprintf(Format, ap);
+	AcpiOsVprintf(Format, ap);
 	va_end(ap);
-
-	return (0);	/* XXX XXX XXX */
 }
 
-INT32
-AcpiOsVprintf(const char *Format, va_list Args)
+void
+AcpiOsVprintf(const NATIVE_CHAR *Format, va_list Args)
 {
 
-	vprintf(Format, Args);
-
-	return (0);	/* XXX XXX XXX */
+#ifdef DDB
+	if (acpi_indebugger)
+		db_vprintf(Format, Args);
+	else
+#endif
+		vprintf(Format, Args);
 }

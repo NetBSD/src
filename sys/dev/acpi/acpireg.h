@@ -1,4 +1,4 @@
-/*	$NetBSD: acpireg.h,v 1.2.8.2 2002/01/10 19:52:54 thorpej Exp $	*/
+/*	$NetBSD: acpireg.h,v 1.2.8.3 2002/06/23 17:45:03 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -307,3 +307,15 @@
  */
 #define	ACPI_STA_POW_OFF	0		/* power resource off */
 #define	ACPI_STA_POW_ON		1		/* power resource on */
+
+/*
+ * ACPI driver components
+ */
+
+#define	ACPI_BUS_COMPONENT	0x00010000
+#define	ACPI_ACAD_COMPONENT	0x00020000
+#define	ACPI_BAT_COMPONENT	0x00040000
+#define	ACPI_BUTTON_COMPONENT	0x00080000
+#define	ACPI_EC_COMPONENT	0x00100000
+#define	ACPI_LID_COMPONENT	0x00200000
+#define	ACPI_RESOURCE_COMPONENT	0x00400000

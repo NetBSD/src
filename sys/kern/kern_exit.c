@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.90.2.3 2002/01/10 19:59:47 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.90.2.4 2002/06/23 17:49:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.90.2.3 2002/01/10 19:59:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.90.2.4 2002/06/23 17:49:27 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sysv.h"
@@ -107,13 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.90.2.3 2002/01/10 19:59:47 thorpej E
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
@@ -179,9 +172,8 @@ exit1(struct proc *p, int rv)
 	fdfree(p);
 	cwdfree(p);
 
-#ifdef SYSVSEM
-	semexit(p);
-#endif
+	doexithooks(p);
+
 	if (SESS_LEADER(p)) {
 		struct session *sp = p->p_session;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.64.2.3 2002/01/10 20:01:32 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.64.2.4 2002/06/23 17:50:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.64.2.3 2002/01/10 20:01:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.64.2.4 2002/06/23 17:50:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,38 +494,42 @@ fdesc_attr(fd, vap, cred, p)
 		}
 		break;
 
-	case DTYPE_SOCKET:
-	case DTYPE_PIPE:
-	case DTYPE_KQUEUE:
+	default:
 		FILE_USE(fp);
+		memset(&stb, 0, sizeof(stb));
 		error = (*fp->f_ops->fo_stat)(fp, &stb, p);
 		FILE_UNUSE(fp, p);
-		if (error == 0) {
-			vattr_null(vap);
-			if (fp->f_type == DTYPE_SOCKET)
-				vap->va_type = VSOCK;
-			else
-				vap->va_type = VFIFO;
-			vap->va_mode = stb.st_mode;
-			vap->va_nlink = stb.st_nlink;
-			vap->va_uid = stb.st_uid;
-			vap->va_gid = stb.st_gid;
-			vap->va_fsid = stb.st_dev;
-			vap->va_fileid = stb.st_ino;
-			vap->va_size = stb.st_size;
-			vap->va_blocksize = stb.st_blksize;
-			vap->va_atime = stb.st_atimespec;
-			vap->va_mtime = stb.st_mtimespec;
-			vap->va_ctime = stb.st_ctimespec;
-			vap->va_gen = stb.st_gen;
-			vap->va_flags = stb.st_flags;
-			vap->va_rdev = stb.st_rdev;
-			vap->va_bytes = stb.st_blocks * stb.st_blksize;
-		}
-		break;
+		if (error)
+			break;
 
-	default:
-		panic("fdesc attr");
+		vattr_null(vap);
+		switch(fp->f_type) {
+		case DTYPE_SOCKET:
+			vap->va_type = VSOCK;
+			break;
+		case DTYPE_PIPE:
+			vap->va_type = VFIFO;
+			break;
+		default:
+			/* use VNON perhaps? */
+			vap->va_type = VBAD;
+			break;
+		}
+		vap->va_mode = stb.st_mode;
+		vap->va_nlink = stb.st_nlink;
+		vap->va_uid = stb.st_uid;
+		vap->va_gid = stb.st_gid;
+		vap->va_fsid = stb.st_dev;
+		vap->va_fileid = stb.st_ino;
+		vap->va_size = stb.st_size;
+		vap->va_blocksize = stb.st_blksize;
+		vap->va_atime = stb.st_atimespec;
+		vap->va_mtime = stb.st_mtimespec;
+		vap->va_ctime = stb.st_ctimespec;
+		vap->va_gen = stb.st_gen;
+		vap->va_flags = stb.st_flags;
+		vap->va_rdev = stb.st_rdev;
+		vap->va_bytes = stb.st_blocks * stb.st_blksize;
 		break;
 	}
 
@@ -626,7 +630,6 @@ fdesc_setattr(v)
 	struct filedesc *fdp = ap->a_p->p_fd;
 	struct file *fp;
 	unsigned fd;
-	int error;
 
 	/*
 	 * Can't mess with the root vnode
@@ -647,21 +650,11 @@ fdesc_setattr(v)
 		return (EBADF);
 
 	/*
-	 * Can setattr the underlying vnode, but not sockets!
+	 * XXX: Can't reasonably set the attr's on any types currently.
+	 *      On vnode's this will cause truncation and socket/pipes make
+	 *      no sense.
 	 */
-	switch (fp->f_type) {
-	case DTYPE_VNODE:
-	case DTYPE_SOCKET:
-	case DTYPE_KQUEUE:
-		error = 0;
-		break;
-
-	default:
-		panic("fdesc setattr");
-		break;
-	}
-
-	return (error);
+	return (0);
 }
 
 #define UIO_MX 32

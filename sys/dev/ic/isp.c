@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.78.2.3 2002/03/16 16:00:56 jdolecek Exp $ */
+/* $NetBSD: isp.c,v 1.78.2.4 2002/06/23 17:46:33 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.78.2.3 2002/03/16 16:00:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.78.2.4 2002/06/23 17:46:33 jdolecek Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -127,6 +127,8 @@ static const char pskip[] =
     "SCSI phase skipped for target %d.%d.%d";
 static const char topology[] =
     "Loop ID %d, AL_PA 0x%x, Port ID 0x%x, Loop State 0x%x, Topology '%s'";
+static const char swrej[] =
+    "Fabric Nameserver rejected %s (Reason=0x%x Expl=0x%x) for Port ID 0x%x";
 static const char finmsg[] =
     "(%d.%d.%d): FIN dl%d resid %d STS 0x%x SKEY %c XS_ERR=0x%x";
 static const char sc0[] =
@@ -136,6 +138,8 @@ static const char sc1[] =
 static const char sc2[] = "%s CHAN %d TGT %d FLAGS 0x%x 0x%x/0x%x";
 static const char sc3[] = "Generated";
 static const char sc4[] = "NVRAM";
+static const char bun[] =
+    "bad underrun for %d.%d (count %d, resid %d, status %s)";
 
 /*
  * Local function prototypes.
@@ -158,7 +162,8 @@ static int isp_fclink_test(struct ispsoftc *, int);
 static char *isp2100_fw_statename(int);
 static int isp_pdb_sync(struct ispsoftc *);
 static int isp_scan_loop(struct ispsoftc *);
-static int isp_scan_fabric(struct ispsoftc *);
+static int isp_fabric_mbox_cmd(struct ispsoftc *, mbreg_t *);
+static int isp_scan_fabric(struct ispsoftc *, int);
 static void isp_register_fc4_type(struct ispsoftc *);
 static void isp_fw_state(struct ispsoftc *);
 static void isp_mboxcmd_qnw(struct ispsoftc *, mbreg_t *, int);
@@ -187,7 +192,7 @@ isp_reset(struct ispsoftc *isp)
 {
 	mbreg_t mbs;
 	u_int16_t code_org;
-	int loops, i, touched, dodnld = 1;
+	int loops, i, dodnld = 1;
 	char *btype = "????";
 
 	isp->isp_state = ISP_NILSTATE;
@@ -210,7 +215,7 @@ isp_reset(struct ispsoftc *isp)
 	 * case, we don't really use this yet, but we may in
 	 * the future.
 	 */
-	if ((touched = isp->isp_touched) == 0) {
+	if (isp->isp_touched == 0) {
 		/*
 		 * First see whether or not we're sitting in the ISP PROM.
 		 * If we've just been reset, we'll have the string "ISP   "
@@ -702,8 +707,10 @@ again:
 	mbs.param[0] = MBOX_EXEC_FIRMWARE;
 	mbs.param[1] = code_org;
 	isp_mboxcmd(isp, &mbs, MBLOGNONE);
-	/* give it a chance to start */
-	USEC_SLEEP(isp, 500);
+	/*
+	 * Give it a chance to start.
+	 */
+	USEC_DELAY(500);
 
 	if (IS_SCSI(isp)) {
 		/*
@@ -801,7 +808,7 @@ again:
 	 * of knowing how many luns we support.
 	 *
 	 * Expanded lun firmware gives you 32 luns for SCSI cards and
-	 * 65536 luns for Fibre Channel cards.
+	 * 16384 luns for Fibre Channel cards.
 	 *
 	 * It turns out that even for QLogic 2100s with ROM 1.10 and above
 	 * we do get a firmware attributes word returned in mailbox register 6.
@@ -815,19 +822,21 @@ again:
 	 * because we may be called again after firmware has been loaded once
 	 * and released.
 	 */
-	if (touched == 0) {
-		if (IS_SCSI(isp)) {
-			if (dodnld) {
+	if (IS_SCSI(isp)) {
+		if (dodnld) {
+			if (IS_ULTRA2(isp) || IS_ULTRA3(isp)) {
 				isp->isp_maxluns = 32;
 			} else {
 				isp->isp_maxluns = 8;
 			}
 		} else {
-			if (FCPARAM(isp)->isp_fwattr & ISP_FW_ATTR_SCCLUN) {
-				isp->isp_maxluns = 65536;
-			} else {
-				isp->isp_maxluns = 16;
-			}
+			isp->isp_maxluns = 8;
+		}
+	} else {
+		if (FCPARAM(isp)->isp_fwattr & ISP_FW_ATTR_SCCLUN) {
+			isp->isp_maxluns = 16384;
+		} else {
+			isp->isp_maxluns = 16;
 		}
 	}
 }
@@ -1202,7 +1211,6 @@ isp_fibre_init(struct ispsoftc *isp)
 	 * Insist on Port Database Update Async notifications
 	 */
 	fcp->isp_fwoptions |= ICBOPT_PDBCHANGE_AE;
-
 
 	/*
 	 * Make sure that target role reflects into fwoptions.
@@ -1847,7 +1855,7 @@ isp_pdb_sync(struct ispsoftc *isp)
 		 * that has, in fact, gone away. And it hangs trying to
 		 * log it out.
 		 */
-		if (lp->loggedin &&
+		if (lp->loggedin && lp->force_logout == 0 &&
 		    isp_getpdb(isp, lp->loopid, &pdb) == 0) {
 			int nrole;
 			u_int64_t nwwnn, nwwpn;
@@ -1883,8 +1891,6 @@ isp_pdb_sync(struct ispsoftc *isp)
 			}
 		}
 
-		lp->force_logout = 0;
-
 		if (fcp->isp_fwstate != FW_READY ||
 		    fcp->isp_loopstate != LOOP_SYNCING_PDB) {
 			return (-1);
@@ -1894,18 +1900,18 @@ isp_pdb_sync(struct ispsoftc *isp)
 		 * Force a logout if we were logged in.
 		 */
 		if (lp->loggedin) {
-			if (isp_getpdb(isp, lp->loopid, &pdb) == 0) {
+			if (lp->force_logout ||
+			    isp_getpdb(isp, lp->loopid, &pdb) == 0) {
 				mbs.param[0] = MBOX_FABRIC_LOGOUT;
 				mbs.param[1] = lp->loopid << 8;
 				mbs.param[2] = 0;
 				mbs.param[3] = 0;
 				isp_mboxcmd(isp, &mbs, MBLOGNONE);
-				lp->loggedin = 0;
 				isp_prt(isp, ISP_LOGINFO, plogout,
 				    (int) (lp - fcp->portdb), lp->loopid,
 				    lp->portid);
 			}
-			lp->loggedin = 0;
+			lp->force_logout = lp->loggedin = 0;
 			if (fcp->isp_fwstate != FW_READY ||
 			    fcp->isp_loopstate != LOOP_SYNCING_PDB) {
 				return (-1);
@@ -1922,10 +1928,6 @@ isp_pdb_sync(struct ispsoftc *isp)
 			mbs.param[1] = loopid << 8;
 			mbs.param[2] = portid >> 16;
 			mbs.param[3] = portid & 0xffff;
-			if (IS_2200(isp) || IS_23XX(isp)) {
-				/* only issue a PLOGI if not logged in */
-				mbs.param[1] |= 0x1;
-			}
 			isp_mboxcmd(isp, &mbs, MBLOGALL & ~(MBOX_LOOP_ID_USED |
 			    MBOX_PORT_ID_USED | MBOX_COMMAND_ERROR));
 			if (fcp->isp_fwstate != FW_READY ||
@@ -2329,18 +2331,69 @@ isp_scan_loop(struct ispsoftc *isp)
 	return (0);
 }
 
+
 static int
-isp_scan_fabric(struct ispsoftc *isp)
+isp_fabric_mbox_cmd(struct ispsoftc *isp, mbreg_t *mbp)
+{
+	isp_mboxcmd(isp, mbp, MBLOGNONE);
+	if (mbp->param[0] != MBOX_COMMAND_COMPLETE) {
+		if (FCPARAM(isp)->isp_loopstate == LOOP_SCANNING_FABRIC) {
+			FCPARAM(isp)->isp_loopstate = LOOP_PDB_RCVD;
+		}
+		if (mbp->param[0] == MBOX_COMMAND_ERROR) {
+			char tbuf[16];
+			char *m;
+			switch (mbp->param[1]) {
+			case 1:
+				m = "No Loop";
+				break;
+			case 2:
+				m = "Failed to allocate IOCB buffer";
+				break;
+			case 3:
+				m = "Failed to allocate XCB buffer";
+				break;
+			case 4:
+				m = "timeout or transmit failed";
+				break;
+			case 5:
+				m = "no fabric loop";
+				break;
+			case 6:
+				m = "remote device not a target";
+				break;
+			default:
+				SNPRINTF(tbuf, sizeof tbuf, "%x",
+				    mbp->param[1]);
+				m = tbuf;
+				break;
+			}
+			isp_prt(isp, ISP_LOGERR, "SNS Failed- %s", m);
+		}
+		return (-1);
+	}
+
+	if (FCPARAM(isp)->isp_fwstate != FW_READY ||
+	    FCPARAM(isp)->isp_loopstate < LOOP_SCANNING_FABRIC) {
+		return (-1);
+	}
+	return(0);
+}
+
+#ifdef	ISP_USE_GA_NXT
+static int
+isp_scan_fabric(struct ispsoftc *isp, int ftype)
 {
 	fcparam *fcp = isp->isp_param;
 	u_int32_t portid, first_portid, last_portid;
-	int hicap, first_portid_seen, last_port_same;
+	int hicap, last_port_same;
 
 	if (fcp->isp_onfabric == 0) {
 		fcp->isp_loopstate = LOOP_FSCAN_DONE;
 		return (0);
 	}
 
+	FC_SCRATCH_ACQUIRE(isp);
 
 	/*
 	 * Since Port IDs are 24 bits, we can check against having seen
@@ -2351,28 +2404,28 @@ isp_scan_fabric(struct ispsoftc *isp)
 	first_portid = portid = fcp->isp_portid;
 	fcp->isp_loopstate = LOOP_SCANNING_FABRIC;
 
-	for (first_portid_seen = hicap = 0; hicap < 65535; hicap++) {
+	for (hicap = 0; hicap < GA_NXT_MAX; hicap++) {
 		mbreg_t mbs;
 		sns_screq_t *rq;
-		sns_ganrsp_t *rs0, *rs1;
-		u_int8_t sc[SNS_GAN_REQ_SIZE];
+		sns_ga_nxt_rsp_t *rs0, *rs1;
+		struct lportdb lcl;
+		u_int8_t sc[SNS_GA_NXT_RESP_SIZE];
 
 		rq = (sns_screq_t *)sc;
-		MEMZERO((void *) rq, SNS_GAN_REQ_SIZE);
-		rq->snscb_rblen = SNS_GAN_RESP_SIZE >> 1;
+		MEMZERO((void *) rq, SNS_GA_NXT_REQ_SIZE);
+		rq->snscb_rblen = SNS_GA_NXT_RESP_SIZE >> 1;
 		rq->snscb_addr[RQRSP_ADDR0015] = DMA_WD0(fcp->isp_scdma+0x100);
 		rq->snscb_addr[RQRSP_ADDR1631] = DMA_WD1(fcp->isp_scdma+0x100);
 		rq->snscb_addr[RQRSP_ADDR3247] = DMA_WD2(fcp->isp_scdma+0x100);
 		rq->snscb_addr[RQRSP_ADDR4863] = DMA_WD3(fcp->isp_scdma+0x100);
 		rq->snscb_sblen = 6;
-		rq->snscb_data[0] = SNS_GAN;
+		rq->snscb_data[0] = SNS_GA_NXT;
 		rq->snscb_data[4] = portid & 0xffff;
 		rq->snscb_data[5] = (portid >> 16) & 0xff;
-		FC_SCRATCH_ACQUIRE(isp);
 		isp_put_sns_request(isp, rq, (sns_screq_t *) fcp->isp_scratch);
-		MEMORYBARRIER(isp, SYNC_SFORDEV, 0, SNS_GAN_REQ_SIZE);
+		MEMORYBARRIER(isp, SYNC_SFORDEV, 0, SNS_GA_NXT_REQ_SIZE);
 		mbs.param[0] = MBOX_SEND_SNS;
-		mbs.param[1] = SNS_GAN_REQ_SIZE >> 1;
+		mbs.param[1] = SNS_GA_NXT_REQ_SIZE >> 1;
 		mbs.param[2] = DMA_WD1(fcp->isp_scdma);
 		mbs.param[3] = DMA_WD0(fcp->isp_scdma);
 		/*
@@ -2380,59 +2433,90 @@ isp_scan_fabric(struct ispsoftc *isp)
 		 */
 		mbs.param[6] = DMA_WD3(fcp->isp_scdma);
 		mbs.param[7] = DMA_WD2(fcp->isp_scdma);
-		isp_mboxcmd(isp, &mbs, MBLOGNONE);
-		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-			if (fcp->isp_loopstate == LOOP_SCANNING_FABRIC) {
+		if (isp_fabric_mbox_cmd(isp, &mbs)) {
+			if (fcp->isp_loopstate >= LOOP_SCANNING_FABRIC) {
 				fcp->isp_loopstate = LOOP_PDB_RCVD;
 			}
-			if (mbs.param[0] == MBOX_COMMAND_ERROR) {
-				char tbuf[16];
-				char *m;
-				switch (mbs.param[1]) {
-				case 1:
-					m = "No Loop";
-					break;
-				case 2:
-					m = "Failed to allocate IOCB buffer";
-					break;
-				case 3:
-					m = "Failed to allocate XCB buffer";
-					break;
-				case 4:
-					m = "timeout or transmit failed";
-					break;
-				case 5:
-					m = "no fabric loop";
-					break;
-				case 6:
-					m = "remote device not a target";
-					break;
-				default:
-					SNPRINTF(tbuf, sizeof tbuf, "%x",
-					    mbs.param[1]);
-					m = tbuf;
-					break;
-				}
-				isp_prt(isp, ISP_LOGERR, "SNS Failed- %s", m);
-			}
-			return (-1);
-		}
-		if (fcp->isp_fwstate != FW_READY ||
-		    fcp->isp_loopstate < LOOP_SCANNING_FABRIC) {
 			FC_SCRATCH_RELEASE(isp);
 			return (-1);
 		}
-		MEMORYBARRIER(isp, SYNC_SFORCPU, 0x100, SNS_GAN_RESP_SIZE);
-		rs1 = (sns_ganrsp_t *) fcp->isp_scratch;
-		rs0 = (sns_ganrsp_t *) ((u_int8_t *)fcp->isp_scratch + 0x100);
-		isp_get_gan_response(isp, rs0, rs1);
-		FC_SCRATCH_RELEASE(isp);
-		portid = (((u_int32_t) rs1->snscb_port_id[0]) << 16) |
+		MEMORYBARRIER(isp, SYNC_SFORCPU, 0x100, SNS_GA_NXT_RESP_SIZE);
+		rs1 = (sns_ga_nxt_rsp_t *) sc;
+		rs0 = (sns_ga_nxt_rsp_t *) ((u_int8_t *)fcp->isp_scratch+0x100);
+		isp_get_ga_nxt_response(isp, rs0, rs1);
+		if (rs1->snscb_cthdr.ct_response != FS_ACC) {
+			int level;
+			if (rs1->snscb_cthdr.ct_reason == 9 &&
+			    rs1->snscb_cthdr.ct_explanation == 7)
+				level = ISP_LOGDEBUG0;
+			else
+				level = ISP_LOGWARN;
+			isp_prt(isp, level, swrej, "GA_NXT",
+			    rs1->snscb_cthdr.ct_reason,
+			    rs1->snscb_cthdr.ct_explanation, portid);
+			FC_SCRATCH_RELEASE(isp);
+			fcp->isp_loopstate = LOOP_FSCAN_DONE;
+			return (0);
+		}
+		portid =
+		    (((u_int32_t) rs1->snscb_port_id[0]) << 16) |
 		    (((u_int32_t) rs1->snscb_port_id[1]) << 8) |
 		    (((u_int32_t) rs1->snscb_port_id[2]));
-		(void) isp_async(isp, ISPASYNC_FABRIC_DEV, rs1);
+
+		/*
+		 * XXX: We should check to make sure that this entry
+		 * XXX: supports the type(s) we are interested in.
+		 */
+		/*
+		 * Okay, we now have information about a fabric object.
+		 * If it is the type we're interested in, tell the outer layers
+		 * about it. The outer layer needs to  know: Port ID, WWNN,
+		 * WWPN, FC4 type, and port type.
+		 *
+		 * The lportdb structure is adequate for this.
+		 */
+		MEMZERO(&lcl, sizeof (lcl));
+		lcl.port_type = rs1->snscb_port_type;
+		lcl.fc4_type = ftype;
+		lcl.portid = portid;
+		lcl.node_wwn =
+		    (((u_int64_t)rs1->snscb_nodename[0]) << 56) |
+		    (((u_int64_t)rs1->snscb_nodename[1]) << 48) |
+		    (((u_int64_t)rs1->snscb_nodename[2]) << 40) |
+		    (((u_int64_t)rs1->snscb_nodename[3]) << 32) |
+		    (((u_int64_t)rs1->snscb_nodename[4]) << 24) |
+		    (((u_int64_t)rs1->snscb_nodename[5]) << 16) |
+		    (((u_int64_t)rs1->snscb_nodename[6]) <<  8) |
+		    (((u_int64_t)rs1->snscb_nodename[7]));
+		lcl.port_wwn =
+		    (((u_int64_t)rs1->snscb_portname[0]) << 56) |
+		    (((u_int64_t)rs1->snscb_portname[1]) << 48) |
+		    (((u_int64_t)rs1->snscb_portname[2]) << 40) |
+		    (((u_int64_t)rs1->snscb_portname[3]) << 32) |
+		    (((u_int64_t)rs1->snscb_portname[4]) << 24) |
+		    (((u_int64_t)rs1->snscb_portname[5]) << 16) |
+		    (((u_int64_t)rs1->snscb_portname[6]) <<  8) |
+		    (((u_int64_t)rs1->snscb_portname[7]));
+
+		/*
+		 * Does this fabric object support the type we want?
+		 * If not, skip it.
+		 */
+		if (rs1->snscb_fc4_types[ftype >> 5] & (1 << (ftype & 0x1f))) {
+			if (first_portid == portid) {
+				lcl.last_fabric_dev = 1;
+			} else {
+				lcl.last_fabric_dev = 0;
+			}
+			(void) isp_async(isp, ISPASYNC_FABRIC_DEV, &lcl);
+		} else {
+			isp_prt(isp, ISP_LOGDEBUG0,
+			    "PortID 0x%x doesn't support FC4 type 0x%x",
+			    portid, ftype);
+		}
 		if (first_portid == portid) {
 			fcp->isp_loopstate = LOOP_FSCAN_DONE;
+			FC_SCRATCH_RELEASE(isp);
 			return (0);
 		}
 		if (portid == last_portid) {
@@ -2442,47 +2526,358 @@ isp_scan_fabric(struct ispsoftc *isp)
 				break;
 			}
 		} else {
+			last_port_same = 0 ;
 			last_portid = portid;
 		}
 	}
-
-	if (hicap >= 65535) {
-		isp_prt(isp, ISP_LOGWARN, "fabric too big (> 65535)");
+	FC_SCRATCH_RELEASE(isp);
+	if (hicap >= GA_NXT_MAX) {
+		isp_prt(isp, ISP_LOGWARN, "fabric too big (> %d)", GA_NXT_MAX);
 	}
-
-	/*
-	 * We either have a broken name server or a huge fabric if we get here.
-	 */
 	fcp->isp_loopstate = LOOP_FSCAN_DONE;
 	return (0);
 }
+#else
+#define	GIDLEN	((ISP2100_SCRLEN >> 1) + 16)
+#define	NGENT	((GIDLEN - 16) >> 2)
+
+#define	IGPOFF	(ISP2100_SCRLEN - GIDLEN)
+#define	GXOFF	(256)
+
+static int
+isp_scan_fabric(struct ispsoftc *isp, int ftype)
+{
+	fcparam *fcp = FCPARAM(isp);
+	mbreg_t mbs;
+	int i;
+	sns_gid_ft_req_t *rq;
+	sns_gid_ft_rsp_t *rs0, *rs1;
+
+	if (fcp->isp_onfabric == 0) {
+		fcp->isp_loopstate = LOOP_FSCAN_DONE;
+		return (0);
+	}
+
+	FC_SCRATCH_ACQUIRE(isp);
+	fcp->isp_loopstate = LOOP_SCANNING_FABRIC;
+
+	rq = (sns_gid_ft_req_t *)fcp->tport;
+	MEMZERO((void *) rq, SNS_GID_FT_REQ_SIZE);
+	rq->snscb_rblen = GIDLEN >> 1;
+	rq->snscb_addr[RQRSP_ADDR0015] = DMA_WD0(fcp->isp_scdma+IGPOFF);
+	rq->snscb_addr[RQRSP_ADDR1631] = DMA_WD1(fcp->isp_scdma+IGPOFF);
+	rq->snscb_addr[RQRSP_ADDR3247] = DMA_WD2(fcp->isp_scdma+IGPOFF);
+	rq->snscb_addr[RQRSP_ADDR4863] = DMA_WD3(fcp->isp_scdma+IGPOFF);
+	rq->snscb_sblen = 6;
+	rq->snscb_cmd = SNS_GID_FT;
+	rq->snscb_mword_div_2 = NGENT;
+	rq->snscb_fc4_type = ftype;
+	isp_put_gid_ft_request(isp, rq, (sns_gid_ft_req_t *) fcp->isp_scratch);
+	MEMORYBARRIER(isp, SYNC_SFORDEV, 0, SNS_GID_FT_REQ_SIZE);
+	mbs.param[0] = MBOX_SEND_SNS;
+	mbs.param[1] = SNS_GID_FT_REQ_SIZE >> 1;
+	mbs.param[2] = DMA_WD1(fcp->isp_scdma);
+	mbs.param[3] = DMA_WD0(fcp->isp_scdma);
+
+	/*
+	 * Leave 4 and 5 alone
+	 */
+	mbs.param[6] = DMA_WD3(fcp->isp_scdma);
+	mbs.param[7] = DMA_WD2(fcp->isp_scdma);
+	if (isp_fabric_mbox_cmd(isp, &mbs)) {
+		if (fcp->isp_loopstate >= LOOP_SCANNING_FABRIC) {
+			fcp->isp_loopstate = LOOP_PDB_RCVD;
+		}
+		FC_SCRATCH_RELEASE(isp);
+		return (-1);
+	}
+	if (fcp->isp_loopstate != LOOP_SCANNING_FABRIC) {
+		FC_SCRATCH_RELEASE(isp);
+		return (-1);
+	}
+	MEMORYBARRIER(isp, SYNC_SFORCPU, IGPOFF, GIDLEN);
+	rs1 = (sns_gid_ft_rsp_t *) fcp->tport;
+	rs0 = (sns_gid_ft_rsp_t *) ((u_int8_t *)fcp->isp_scratch+IGPOFF);
+	isp_get_gid_ft_response(isp, rs0, rs1, NGENT);
+	if (rs1->snscb_cthdr.ct_response != FS_ACC) {
+		int level;
+		if (rs1->snscb_cthdr.ct_reason == 9 &&
+		    rs1->snscb_cthdr.ct_explanation == 7)
+			level = ISP_LOGDEBUG0;
+		else
+			level = ISP_LOGWARN;
+		isp_prt(isp, level, swrej, "GID_FT",
+		    rs1->snscb_cthdr.ct_reason,
+		    rs1->snscb_cthdr.ct_explanation, 0);
+		FC_SCRATCH_RELEASE(isp);
+		fcp->isp_loopstate = LOOP_FSCAN_DONE;
+		return (0);
+	}
+
+	/*
+	 * Okay, we now have a list of Port IDs for this class of device.
+	 * Go through the list and for each one get the WWPN/WWNN for it
+	 * and tell the outer layers about it. The outer layer needs to
+	 * know: Port ID, WWNN, WWPN, FC4 type, and (possibly) port type.
+	 *
+	 * The lportdb structure is adequate for this.
+	 */
+	i = -1;
+	do {
+		sns_gxn_id_req_t grqbuf, *gq = &grqbuf;
+		sns_gxn_id_rsp_t *gs0, grsbuf, *gs1 = &grsbuf;
+		struct lportdb lcl;
+#if	0
+		sns_gff_id_rsp_t *fs0, ffsbuf, *fs1 = &ffsbuf;
+#endif
+
+		i++;
+		MEMZERO(&lcl, sizeof (lcl));
+		lcl.fc4_type = ftype;
+		lcl.portid =
+		    (((u_int32_t) rs1->snscb_ports[i].portid[0]) << 16) |
+		    (((u_int32_t) rs1->snscb_ports[i].portid[1]) << 8) |
+		    (((u_int32_t) rs1->snscb_ports[i].portid[2]));
+
+		MEMZERO((void *) gq, sizeof (sns_gxn_id_req_t));
+		gq->snscb_rblen = SNS_GXN_ID_RESP_SIZE >> 1;
+		gq->snscb_addr[RQRSP_ADDR0015] = DMA_WD0(fcp->isp_scdma+GXOFF);
+		gq->snscb_addr[RQRSP_ADDR1631] = DMA_WD1(fcp->isp_scdma+GXOFF);
+		gq->snscb_addr[RQRSP_ADDR3247] = DMA_WD2(fcp->isp_scdma+GXOFF);
+		gq->snscb_addr[RQRSP_ADDR4863] = DMA_WD3(fcp->isp_scdma+GXOFF);
+		gq->snscb_sblen = 6;
+		gq->snscb_cmd = SNS_GPN_ID;
+		gq->snscb_portid = lcl.portid;
+		isp_put_gxn_id_request(isp, gq,
+		    (sns_gxn_id_req_t *) fcp->isp_scratch);
+		MEMORYBARRIER(isp, SYNC_SFORDEV, 0, SNS_GXN_ID_REQ_SIZE);
+		mbs.param[0] = MBOX_SEND_SNS;
+		mbs.param[1] = SNS_GXN_ID_REQ_SIZE >> 1;
+		mbs.param[2] = DMA_WD1(fcp->isp_scdma);
+		mbs.param[3] = DMA_WD0(fcp->isp_scdma);
+		/*
+		 * Leave 4 and 5 alone
+		 */
+		mbs.param[6] = DMA_WD3(fcp->isp_scdma);
+		mbs.param[7] = DMA_WD2(fcp->isp_scdma);
+		if (isp_fabric_mbox_cmd(isp, &mbs)) {
+			if (fcp->isp_loopstate >= LOOP_SCANNING_FABRIC) {
+				fcp->isp_loopstate = LOOP_PDB_RCVD;
+			}
+			FC_SCRATCH_RELEASE(isp);
+			return (-1);
+		}
+		if (fcp->isp_loopstate != LOOP_SCANNING_FABRIC) {
+			FC_SCRATCH_RELEASE(isp);
+			return (-1);
+		}
+		MEMORYBARRIER(isp, SYNC_SFORCPU, GXOFF, SNS_GXN_ID_RESP_SIZE);
+		gs0 = (sns_gxn_id_rsp_t *) ((u_int8_t *)fcp->isp_scratch+GXOFF);
+		isp_get_gxn_id_response(isp, gs0, gs1);
+		if (gs1->snscb_cthdr.ct_response != FS_ACC) {
+			isp_prt(isp, ISP_LOGWARN, swrej, "GPN_ID",
+			    gs1->snscb_cthdr.ct_reason,
+			    gs1->snscb_cthdr.ct_explanation, lcl.portid);
+			if (fcp->isp_loopstate != LOOP_SCANNING_FABRIC) {
+				FC_SCRATCH_RELEASE(isp);
+				return (-1);
+			}
+			continue;
+		}
+		lcl.port_wwn = 
+		    (((u_int64_t)gs1->snscb_wwn[0]) << 56) |
+		    (((u_int64_t)gs1->snscb_wwn[1]) << 48) |
+		    (((u_int64_t)gs1->snscb_wwn[2]) << 40) |
+		    (((u_int64_t)gs1->snscb_wwn[3]) << 32) |
+		    (((u_int64_t)gs1->snscb_wwn[4]) << 24) |
+		    (((u_int64_t)gs1->snscb_wwn[5]) << 16) |
+		    (((u_int64_t)gs1->snscb_wwn[6]) <<  8) |
+		    (((u_int64_t)gs1->snscb_wwn[7]));
+
+		MEMZERO((void *) gq, sizeof (sns_gxn_id_req_t));
+		gq->snscb_rblen = SNS_GXN_ID_RESP_SIZE >> 1;
+		gq->snscb_addr[RQRSP_ADDR0015] = DMA_WD0(fcp->isp_scdma+GXOFF);
+		gq->snscb_addr[RQRSP_ADDR1631] = DMA_WD1(fcp->isp_scdma+GXOFF);
+		gq->snscb_addr[RQRSP_ADDR3247] = DMA_WD2(fcp->isp_scdma+GXOFF);
+		gq->snscb_addr[RQRSP_ADDR4863] = DMA_WD3(fcp->isp_scdma+GXOFF);
+		gq->snscb_sblen = 6;
+		gq->snscb_cmd = SNS_GNN_ID;
+		gq->snscb_portid = lcl.portid;
+		isp_put_gxn_id_request(isp, gq,
+		    (sns_gxn_id_req_t *) fcp->isp_scratch);
+		MEMORYBARRIER(isp, SYNC_SFORDEV, 0, SNS_GXN_ID_REQ_SIZE);
+		mbs.param[0] = MBOX_SEND_SNS;
+		mbs.param[1] = SNS_GXN_ID_REQ_SIZE >> 1;
+		mbs.param[2] = DMA_WD1(fcp->isp_scdma);
+		mbs.param[3] = DMA_WD0(fcp->isp_scdma);
+		/*
+		 * Leave 4 and 5 alone
+		 */
+		mbs.param[6] = DMA_WD3(fcp->isp_scdma);
+		mbs.param[7] = DMA_WD2(fcp->isp_scdma);
+		if (isp_fabric_mbox_cmd(isp, &mbs)) {
+			if (fcp->isp_loopstate >= LOOP_SCANNING_FABRIC) {
+				fcp->isp_loopstate = LOOP_PDB_RCVD;
+			}
+			FC_SCRATCH_RELEASE(isp);
+			return (-1);
+		}
+		if (fcp->isp_loopstate != LOOP_SCANNING_FABRIC) {
+			FC_SCRATCH_RELEASE(isp);
+			return (-1);
+		}
+		MEMORYBARRIER(isp, SYNC_SFORCPU, GXOFF, SNS_GXN_ID_RESP_SIZE);
+		gs0 = (sns_gxn_id_rsp_t *) ((u_int8_t *)fcp->isp_scratch+GXOFF);
+		isp_get_gxn_id_response(isp, gs0, gs1);
+		if (gs1->snscb_cthdr.ct_response != FS_ACC) {
+			isp_prt(isp, ISP_LOGWARN, swrej, "GNN_ID",
+			    gs1->snscb_cthdr.ct_reason,
+			    gs1->snscb_cthdr.ct_explanation, lcl.portid);
+			if (fcp->isp_loopstate != LOOP_SCANNING_FABRIC) {
+				FC_SCRATCH_RELEASE(isp);
+				return (-1);
+			}
+			continue;
+		}
+		lcl.node_wwn = 
+		    (((u_int64_t)gs1->snscb_wwn[0]) << 56) |
+		    (((u_int64_t)gs1->snscb_wwn[1]) << 48) |
+		    (((u_int64_t)gs1->snscb_wwn[2]) << 40) |
+		    (((u_int64_t)gs1->snscb_wwn[3]) << 32) |
+		    (((u_int64_t)gs1->snscb_wwn[4]) << 24) |
+		    (((u_int64_t)gs1->snscb_wwn[5]) << 16) |
+		    (((u_int64_t)gs1->snscb_wwn[6]) <<  8) |
+		    (((u_int64_t)gs1->snscb_wwn[7]));
+
+		/*
+		 * The QLogic f/w is bouncing this with a parameter error.
+		 */
+#if	0
+		/*
+		 * Try and get FC4 Features (FC-GS-3 only).
+		 * We can use the sns_gxn_id_req_t for this request.
+		 */
+		MEMZERO((void *) gq, sizeof (sns_gxn_id_req_t));
+		gq->snscb_rblen = SNS_GFF_ID_RESP_SIZE >> 1;
+		gq->snscb_addr[RQRSP_ADDR0015] = DMA_WD0(fcp->isp_scdma+GXOFF);
+		gq->snscb_addr[RQRSP_ADDR1631] = DMA_WD1(fcp->isp_scdma+GXOFF);
+		gq->snscb_addr[RQRSP_ADDR3247] = DMA_WD2(fcp->isp_scdma+GXOFF);
+		gq->snscb_addr[RQRSP_ADDR4863] = DMA_WD3(fcp->isp_scdma+GXOFF);
+		gq->snscb_sblen = 6;
+		gq->snscb_cmd = SNS_GFF_ID;
+		gq->snscb_portid = lcl.portid;
+		isp_put_gxn_id_request(isp, gq,
+		    (sns_gxn_id_req_t *) fcp->isp_scratch);
+		MEMORYBARRIER(isp, SYNC_SFORDEV, 0, SNS_GXN_ID_REQ_SIZE);
+		mbs.param[0] = MBOX_SEND_SNS;
+		mbs.param[1] = SNS_GXN_ID_REQ_SIZE >> 1;
+		mbs.param[2] = DMA_WD1(fcp->isp_scdma);
+		mbs.param[3] = DMA_WD0(fcp->isp_scdma);
+		/*
+		 * Leave 4 and 5 alone
+		 */
+		mbs.param[6] = DMA_WD3(fcp->isp_scdma);
+		mbs.param[7] = DMA_WD2(fcp->isp_scdma);
+		if (isp_fabric_mbox_cmd(isp, &mbs)) {
+			if (fcp->isp_loopstate >= LOOP_SCANNING_FABRIC) {
+				fcp->isp_loopstate = LOOP_PDB_RCVD;
+			}
+			FC_SCRATCH_RELEASE(isp);
+			return (-1);
+		}
+		if (fcp->isp_loopstate != LOOP_SCANNING_FABRIC) {
+			FC_SCRATCH_RELEASE(isp);
+			return (-1);
+		}
+		MEMORYBARRIER(isp, SYNC_SFORCPU, GXOFF, SNS_GFF_ID_RESP_SIZE);
+		fs0 = (sns_gff_id_rsp_t *) ((u_int8_t *)fcp->isp_scratch+GXOFF);
+		isp_get_gff_id_response(isp, fs0, fs1);
+		if (fs1->snscb_cthdr.ct_response != FS_ACC) {
+			isp_prt(isp, /* ISP_LOGDEBUG0 */ ISP_LOGWARN,
+			    swrej, "GFF_ID",
+			    fs1->snscb_cthdr.ct_reason,
+			    fs1->snscb_cthdr.ct_explanation, lcl.portid);
+			if (fcp->isp_loopstate != LOOP_SCANNING_FABRIC) {
+				FC_SCRATCH_RELEASE(isp);
+				return (-1);
+			}
+		} else {
+			int index = (ftype >> 3);
+			int bshft = (ftype & 0x7) * 4;
+			int fc4_fval =
+			    (fs1->snscb_fc4_features[index] >> bshft) & 0xf;
+			if (fc4_fval & 0x1) {
+				lcl.roles |=
+				    (SVC3_INI_ROLE >> SVC3_ROLE_SHIFT);
+			}
+			if (fc4_fval & 0x2) {
+				lcl.roles |=
+				    (SVC3_TGT_ROLE >> SVC3_ROLE_SHIFT);
+			}
+		}
+#endif
+
+		/*
+		 * If we really want to know what kind of port type this is,
+		 * we have to run another CT command. Otherwise, we'll leave
+		 * it as undefined.
+		 *
+		lcl.port_type = 0;
+		 */
+		if (rs1->snscb_ports[i].control & 0x80) {
+			lcl.last_fabric_dev = 1;
+		} else {
+			lcl.last_fabric_dev = 0;
+		}
+		(void) isp_async(isp, ISPASYNC_FABRIC_DEV, &lcl);
+
+	} while ((rs1->snscb_ports[i].control & 0x80) == 0 && i < NGENT-1);
+
+	/*
+	 * If we're not at the last entry, our list isn't big enough.
+	 */
+	if ((rs1->snscb_ports[i].control & 0x80) == 0) {
+		isp_prt(isp, ISP_LOGWARN, "fabric too big for scratch area");
+	}
+
+	FC_SCRATCH_RELEASE(isp);
+	/*
+	 * XXX: Workaround for some bogus fabric registrants
+	 */
+	if (ftype) {
+		(void) isp_scan_fabric(isp, 0);
+	}
+	fcp->isp_loopstate = LOOP_FSCAN_DONE;
+	return (0);
+}
+#endif
 
 static void
 isp_register_fc4_type(struct ispsoftc *isp)
 {
 	fcparam *fcp = isp->isp_param;
-	u_int8_t local[SNS_RFT_REQ_SIZE];
+	u_int8_t local[SNS_RFT_ID_REQ_SIZE];
 	sns_screq_t *reqp = (sns_screq_t *) local;
 	mbreg_t mbs;
 
-	MEMZERO((void *) reqp, SNS_RFT_REQ_SIZE);
-	reqp->snscb_rblen = SNS_RFT_RESP_SIZE >> 1;
+	MEMZERO((void *) reqp, SNS_RFT_ID_REQ_SIZE);
+	reqp->snscb_rblen = SNS_RFT_ID_RESP_SIZE >> 1;
 	reqp->snscb_addr[RQRSP_ADDR0015] = DMA_WD0(fcp->isp_scdma + 0x100);
 	reqp->snscb_addr[RQRSP_ADDR1631] = DMA_WD1(fcp->isp_scdma + 0x100);
 	reqp->snscb_addr[RQRSP_ADDR3247] = DMA_WD2(fcp->isp_scdma + 0x100);
 	reqp->snscb_addr[RQRSP_ADDR4863] = DMA_WD3(fcp->isp_scdma + 0x100);
 	reqp->snscb_sblen = 22;
-	reqp->snscb_data[0] = SNS_RFT;
+	reqp->snscb_data[0] = SNS_RFT_ID;
 	reqp->snscb_data[4] = fcp->isp_portid & 0xffff;
 	reqp->snscb_data[5] = (fcp->isp_portid >> 16) & 0xff;
-	reqp->snscb_data[6] = 0x100;	/* SCS - FCP */
+	reqp->snscb_data[6] = (1 << FC4_SCSI);
 #if	0
-	reqp->snscb_data[6] |= 20;	/* ISO/IEC 8802-2 LLC/SNAP */
+	reqp->snscb_data[6] |= (1 << FC4_IP);	/* ISO/IEC 8802-2 LLC/SNAP */
 #endif
 	FC_SCRATCH_ACQUIRE(isp);
 	isp_put_sns_request(isp, reqp, (sns_screq_t *) fcp->isp_scratch);
 	mbs.param[0] = MBOX_SEND_SNS;
-	mbs.param[1] = SNS_RFT_REQ_SIZE >> 1;
+	mbs.param[1] = SNS_RFT_ID_REQ_SIZE >> 1;
 	mbs.param[2] = DMA_WD1(fcp->isp_scdma);
 	mbs.param[3] = DMA_WD0(fcp->isp_scdma);
 	/*
@@ -2680,11 +3075,11 @@ isp_start(XS_T *xs)
 		 * out and try again later if this doesn't work.
 		 */
 		if (fcp->isp_loopstate == LOOP_PDB_RCVD && fcp->isp_onfabric) {
-			if (isp_scan_fabric(isp)) {
+			if (isp_scan_fabric(isp, FC4_SCSI)) {
 				return (CMD_RQLATER);
 			}
 			if (fcp->isp_fwstate != FW_READY ||
-			    fcp->isp_loopstate < LOOP_PDB_RCVD) {
+			    fcp->isp_loopstate < LOOP_FSCAN_DONE) {
 				return (CMD_RQLATER);
 			}
 		}
@@ -2860,7 +3255,7 @@ isp_start(XS_T *xs)
 	XS_SETERR(xs, HBA_NOERROR);
 	isp_prt(isp, ISP_LOGDEBUG2,
 	    "START cmd for %d.%d.%d cmd 0x%x datalen %ld",
-	    XS_CHANNEL(xs), target, XS_LUN(xs), XS_CDBP(xs)[0],
+	    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs), XS_CDBP(xs)[0],
 	    (long) XS_XFRLEN(xs));
 	ISP_ADD_REQUEST(isp, nxti);
 	isp->isp_nactive++;
@@ -2979,7 +3374,8 @@ isp_control(struct ispsoftc *isp, ispctl_t ctl, void *arg)
 	case ISPCTL_SCAN_FABRIC:
 
 		if (IS_FC(isp)) {
-			return (isp_scan_fabric(isp));
+			int ftype = (arg)? *((int *) arg) : FC4_SCSI;
+			return (isp_scan_fabric(isp, ftype));
 		}
 		break;
 
@@ -3164,6 +3560,7 @@ again:
 	} else {
 		iptr = READ_RESPONSE_QUEUE_IN_POINTER(isp);
 	}
+	isp->isp_resodx = iptr;
 
 
 	if (optr == iptr && sema == 0) {
@@ -3198,8 +3595,14 @@ again:
 			    isr, junk, iptr, optr);
 		}
 	}
+	isp->isp_resodx = iptr;
 	ISP_WRITE(isp, HCCR, HCCR_CMD_CLEAR_RISC_INT);
 	ISP_WRITE(isp, BIU_SEMA, 0);
+
+	if (isp->isp_rspbsy) {
+		return;
+	}
+	isp->isp_rspbsy = 1;
 
 	while (optr != iptr) {
 		ispstatusreq_t local, *sp = &local;
@@ -3229,19 +3632,17 @@ again:
 			}
 			if (isp->isp_fpcchiwater < rio.req_header.rqs_seqno)
 				isp->isp_fpcchiwater = rio.req_header.rqs_seqno;
+			MEMZERO(hp, QENTRY_LEN);	/* PERF */
 			continue;
 		} else {
 			/*
 			 * Somebody reachable via isp_handle_other_response
 			 * may have updated the response queue pointers for
-			 * us.
+			 * us, so we reload our goal index.
 			 */
-			oop = optr;
-			if (!isp_handle_other_response(isp, type, hp, &optr)) {
+			if (isp_handle_other_response(isp, type, hp, &optr)) {
+				iptr = isp->isp_resodx;
 				MEMZERO(hp, QENTRY_LEN);	/* PERF */
-				if (oop != optr) {
-					goto out;
-				}
 				continue;
 			}
 
@@ -3314,10 +3715,22 @@ again:
 		}
 		xs = isp_find_xs(isp, sp->req_handle);
 		if (xs == NULL) {
+			u_int8_t ts = sp->req_completion_status & 0xff;
 			MEMZERO(hp, QENTRY_LEN);	/* PERF */
-			isp_prt(isp, ISP_LOGERR,
-			    "cannot find handle 0x%x in xflist",
-			    sp->req_handle);
+			/*
+			 * Only whine if this isn't the expected fallout of
+			 * aborting the command.
+			 */
+			if (sp->req_header.rqs_entry_type != RQSTYPE_RESPONSE) {
+				isp_prt(isp, ISP_LOGERR,
+				    "cannot find handle 0x%x (type 0x%x)",
+				    sp->req_handle,
+				    sp->req_header.rqs_entry_type);
+			} else if (ts != RQCS_ABORTED) {
+				isp_prt(isp, ISP_LOGERR,
+				    "cannot find handle 0x%x (status 0x%x)",
+				    sp->req_handle, ts);
+			}
 			WRITE_RESPONSE_QUEUE_OUT_POINTER(isp, optr);
 			continue;
 		}
@@ -3469,7 +3882,7 @@ again:
 	}
 
 	isp->isp_residx = optr;
-out:
+	isp->isp_rspbsy = 0;
 	for (i = 0; i < ndone; i++) {
 		xs = complist[i];
 		if (xs) {
@@ -3486,6 +3899,7 @@ out:
 static int
 isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 {
+	int rval = 0;
 	int bus;
 
 	if (IS_DUALBUS(isp)) {
@@ -3499,14 +3913,17 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 	case ASYNC_BUS_RESET:
 		isp->isp_sendmarker |= (1 << bus);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		isp_async(isp, ISPASYNC_BUS_RESET, &bus);
 		break;
 	case ASYNC_SYSTEM_ERROR:
 		isp_async(isp, ISPASYNC_FW_CRASH, NULL);
-		/* no point continuing after this */
-		return (-1);
+		isp_reinit(isp);
+		isp_async(isp, ISPASYNC_FW_RESTARTED, NULL);
+		rval = -1;
+		break;
 
 	case ASYNC_RQS_XFER_ERR:
 		isp_prt(isp, ISP_LOGERR, "Request Queue Transfer Error");
@@ -3530,7 +3947,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		    "timeout initiated SCSI bus reset of bus %d", bus);
 		isp->isp_sendmarker |= (1 << bus);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -3538,7 +3956,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_prt(isp, ISP_LOGINFO, "device reset on bus %d", bus);
 		isp->isp_sendmarker |= (1 << bus);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -3624,19 +4043,19 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		break;
 
 	case ASYNC_CTIO_DONE:
+	{
 #ifdef	ISP_TARGET_MODE
-		/*
-		 * Bus gets overloaded with the handle. Dual bus
-		 * cards don't put bus# into the handle.
-		 */
-		isp_target_async(isp, ((ISP_READ(isp, OUTMAILBOX2) << 16) |
-		    ISP_READ(isp, OUTMAILBOX1)), mbox);
+		int handle =
+		    (ISP_READ(isp, OUTMAILBOX2) << 16) | 
+		    (ISP_READ(isp, OUTMAILBOX1));
+		if (isp_target_async(isp, handle, mbox))
+			rval = -1;
 #else
 		isp_prt(isp, ISP_LOGINFO, "Fast Posting CTIO done");
 #endif
 		isp->isp_fphccmplt++;	/* count it as a fast posting intr */
-		return (0);
-
+		break;
+	}
 	case ASYNC_LIP_F8:
 	case ASYNC_LIP_OCCURRED:
 		FCPARAM(isp)->isp_lipseq =
@@ -3647,7 +4066,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LIP, NULL);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		/*
 		 * We've had problems with data corruption occuring on
@@ -3681,7 +4101,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LOOP_UP, NULL);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -3692,7 +4113,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LOOP_DOWN, NULL);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -3703,7 +4125,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LOOP_RESET, NULL);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -3734,7 +4157,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		FCPARAM(isp)->isp_loopstate = LOOP_LIP_RCVD;
 		isp_async(isp, ISPASYNC_CHANGE_NOTIFY, ISPASYNC_CHANGE_OTHER);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		isp_prt(isp, ISP_LOGINFO, "Point-to-Point mode");
 		break;
@@ -3757,11 +4181,9 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 			break;
 		case ISP_CONN_FATAL:
 			isp_prt(isp, ISP_LOGERR, "FATAL CONNECTION ERROR");
+			isp_async(isp, ISPASYNC_FW_CRASH, NULL);
 			isp_reinit(isp);
-#ifdef	ISP_TARGET_MODE
-			isp_target_async(isp, bus, ASYNC_SYSTEM_ERROR);
-#endif
-			/* no point continuing after this */
+			isp_async(isp, ISPASYNC_FW_RESTARTED, NULL);
 			return (-1);
 		case ISP_CONN_LOOPBACK:
 			isp_prt(isp, ISP_LOGWARN,
@@ -3803,7 +4225,7 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 	} else {
 		isp->isp_intoasync++;
 	}
-	return (0);
+	return (rval);
 }
 
 /*
@@ -3819,7 +4241,7 @@ isp_handle_other_response(struct ispsoftc *isp, int type,
 	switch (type) {
 	case RQSTYPE_STATUS_CONT:
 		isp_prt(isp, ISP_LOGINFO, "Ignored Continuation Response");
-		return (0);
+		return (1);
 	case RQSTYPE_ATIO:
 	case RQSTYPE_CTIO:
 	case RQSTYPE_ENABLE_LUN:
@@ -3832,7 +4254,9 @@ isp_handle_other_response(struct ispsoftc *isp, int type,
 	case RQSTYPE_CTIO3:
 		isp->isp_rsltccmplt++;	/* count as a response completion */
 #ifdef	ISP_TARGET_MODE
-		return (isp_target_notify(isp, (ispstatusreq_t *) hp, optrp));
+		if (isp_target_notify(isp, (ispstatusreq_t *) hp, optrp)) {
+			return (1);
+		}
 #else
 		optrp = optrp;
 		/* FALLTHROUGH */
@@ -3840,11 +4264,11 @@ isp_handle_other_response(struct ispsoftc *isp, int type,
 	case RQSTYPE_REQUEST:
 	default:
 		if (isp_async(isp, ISPASYNC_UNHANDLED_RESPONSE, hp)) {
-			return (0);
+			return (1);
 		}
 		isp_prt(isp, ISP_LOGWARN, "Unhandled Response Type 0x%x",
 		    isp_get_response_type(isp, hp));
-		return (-1);
+		return (0);
 	}
 }
 
@@ -3957,6 +4381,16 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 	case RQCS_TIMEOUT:
 		isp_prt(isp, ISP_LOGWARN, "command timed out for %d.%d.%d",
 		    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
+		/*
+	 	 * Check to see if we logged out the device.
+		 */
+		if (IS_FC(isp)) {
+			if ((sp->req_completion_status & RQSTF_LOGOUT) &&
+			    FCPARAM(isp)->portdb[XS_TGT(xs)].valid &&
+			    FCPARAM(isp)->portdb[XS_TGT(xs)].fabric_dev) {
+				FCPARAM(isp)->portdb[XS_TGT(xs)].relogin = 1;
+			}
+		}
 		if (XS_NOERR(xs)) {
 			XS_SETERR(xs, HBA_CMDTIMEOUT);
 		}
@@ -4044,11 +4478,25 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 		break;
 
 	case RQCS_DATA_UNDERRUN:
+	{
+		if (IS_FC(isp)) {
+			int ru_marked = (sp->req_scsi_status & RQCS_RU) != 0;
+			if (!ru_marked || sp->req_resid > XS_XFRLEN(xs)) {
+				isp_prt(isp, ISP_LOGWARN, bun, XS_TGT(xs),
+				    XS_LUN(xs), XS_XFRLEN(xs), sp->req_resid,
+				    (ru_marked)? "marked" : "not marked");
+				if (XS_NOERR(xs)) {
+					XS_SETERR(xs, HBA_BOTCH);
+				}
+				return;
+			}
+		}
 		XS_RESID(xs) = sp->req_resid;
 		if (XS_NOERR(xs)) {
 			XS_SETERR(xs, HBA_NOERROR);
 		}
 		return;
+	}
 
 	case RQCS_XACT_ERR1:
 		isp_prt(isp, ISP_LOGERR, xact1, XS_CHANNEL(xs),
@@ -4071,8 +4519,8 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 
 	case RQCS_QUEUE_FULL:
 		isp_prt(isp, ISP_LOGDEBUG0,
-		    "internal queues full for %d.%d.%d status 0x%x", XS_TGT(xs),
-		    XS_LUN(xs), XS_CHANNEL(xs), *XS_STSP(xs));
+		    "internal queues full for %d.%d.%d status 0x%x",
+		    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs), *XS_STSP(xs));
 
 		/*
 		 * If QFULL or some other status byte is set, then this
@@ -4148,21 +4596,20 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 		/*
 		 * No such port on the loop. Moral equivalent of SELTIMEO
 		 */
-		isp_prt(isp, ISP_LOGINFO,
-		    "Port Unavailable for target %d", XS_TGT(xs));
-		if (XS_NOERR(xs)) {
-			XS_SETERR(xs, HBA_SELTIMEOUT);
-		}
-		return;
 	case RQCS_PORT_LOGGED_OUT:
 		/*
 		 * It was there (maybe)- treat as a selection timeout.
 		 */
-		isp_prt(isp, ISP_LOGINFO,
-		    "port logout for target %d", XS_TGT(xs));
+		if ((sp->req_completion_status & 0xff) == RQCS_PORT_UNAVAILABLE)
+			isp_prt(isp, ISP_LOGINFO,
+			    "port unavailable for target %d", XS_TGT(xs));
+		else
+			isp_prt(isp, ISP_LOGINFO,
+			    "port logout for target %d", XS_TGT(xs));
 		/*
 		 * If we're on a local loop, force a LIP (which is overkill)
-		 * to force a re-login of this unit.
+		 * to force a re-login of this unit. If we're on fabric,
+		 * then we'll have to relogin as a matter of course.
 		 */
 		if (FCPARAM(isp)->isp_topo == TOPO_NL_PORT ||
 		    FCPARAM(isp)->isp_topo == TOPO_FL_PORT) {
@@ -4582,8 +5029,8 @@ static u_int16_t mbpfc[] = {
 	ISPOPMAP(0x00, 0x00),	/* 0x58: */
 	ISPOPMAP(0x00, 0x00),	/* 0x59: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5a: */
-	ISPOPMAP(0x00, 0x00),	/* 0x5b: */
-	ISPOPMAP(0x00, 0x00),	/* 0x5c: */
+	ISPOPMAP(0x03, 0x01),	/* 0x5b: MBOX_DRIVER_HEARTBEAT */
+	ISPOPMAP(0xcf, 0x01),	/* 0x5c: MBOX_FW_HEARTBEAT */
 	ISPOPMAP(0x07, 0x03),	/* 0x5d: MBOX_GET_SET_DATA_RATE */
 	ISPOPMAP(0x00, 0x00),	/* 0x5e: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5f: */
@@ -5089,6 +5536,13 @@ isp_update_bus(struct ispsoftc *isp, int bus)
 	}
 }
 
+#ifndef	DEFAULT_FRAMESIZE
+#define	DEFAULT_FRAMESIZE(isp)		ICB_DFLT_FRMLEN
+#endif
+#ifndef	DEFAULT_EXEC_THROTTLE
+#define	DEFAULT_EXEC_THROTTLE(isp)	ISP_EXEC_THROTTLE
+#endif
+
 static void
 isp_setdfltparm(struct ispsoftc *isp, int channel)
 {
@@ -5105,9 +5559,9 @@ isp_setdfltparm(struct ispsoftc *isp, int channel)
 			return;
 		}
 		fcp->isp_gotdparms = 1;
-		fcp->isp_maxfrmlen = ICB_DFLT_FRMLEN;
+		fcp->isp_maxfrmlen = DEFAULT_FRAMESIZE(isp);
 		fcp->isp_maxalloc = ICB_DFLT_ALLOC;
-		fcp->isp_execthrottle = ISP_EXEC_THROTTLE;
+		fcp->isp_execthrottle = DEFAULT_EXEC_THROTTLE(isp);
 		fcp->isp_retry_delay = ICB_DFLT_RDELAY;
 		fcp->isp_retry_count = ICB_DFLT_RCOUNT;
 		/* Platform specific.... */
@@ -5324,19 +5778,16 @@ isp_reinit(struct ispsoftc *isp)
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
 		isp_prt(isp, ISP_LOGERR, "isp_reinit cannot reset card");
-		goto skip;
+	} else if (isp->isp_role != ISP_ROLE_NONE) {
+		isp_init(isp);
+		if (isp->isp_state == ISP_INITSTATE) {
+			isp->isp_state = ISP_RUNSTATE;
+		}
+		if (isp->isp_state != ISP_RUNSTATE) {
+			isp_prt(isp, ISP_LOGERR,
+			    "isp_reinit cannot restart card");
+		}
 	}
-	isp_init(isp);
-	if (isp->isp_role == ISP_ROLE_NONE) {
-		goto skip;
-	}
-	if (isp->isp_state == ISP_INITSTATE) {
-		isp->isp_state = ISP_RUNSTATE;
-	}
-	if (isp->isp_state != ISP_RUNSTATE) {
-		isp_prt(isp, ISP_LOGERR, "isp_reinit cannot restart card");
-	}
-skip:
 	isp->isp_nactive = 0;
 
 	for (handle = 1; (int) handle <= isp->isp_maxcmds; handle++) {
@@ -5871,22 +6322,29 @@ isp_parse_nvram_2100(struct ispsoftc *isp, u_int8_t *nvram_data)
 		}
 	}
 
+	isp_prt(isp, ISP_LOGDEBUG0,
+	    "NVRAM: maxfrmlen %d execthrottle %d fwoptions 0x%x loopid %x",
+	    ISP2100_NVRAM_MAXFRAMELENGTH(nvram_data),
+	    ISP2100_NVRAM_EXECUTION_THROTTLE(nvram_data),
+	    ISP2100_NVRAM_OPTIONS(nvram_data),
+	    ISP2100_NVRAM_HARDLOOPID(nvram_data));
+
 	fcp->isp_maxalloc =
 		ISP2100_NVRAM_MAXIOCBALLOCATION(nvram_data);
-	fcp->isp_maxfrmlen =
-		ISP2100_NVRAM_MAXFRAMELENGTH(nvram_data);
+	if ((isp->isp_confopts & ISP_CFG_OWNFSZ) == 0)
+		fcp->isp_maxfrmlen =
+			ISP2100_NVRAM_MAXFRAMELENGTH(nvram_data);
 	fcp->isp_retry_delay =
 		ISP2100_NVRAM_RETRY_DELAY(nvram_data);
 	fcp->isp_retry_count =
 		ISP2100_NVRAM_RETRY_COUNT(nvram_data);
-	fcp->isp_loopid =
-		ISP2100_NVRAM_HARDLOOPID(nvram_data);
-	fcp->isp_execthrottle =
-		ISP2100_NVRAM_EXECUTION_THROTTLE(nvram_data);
+	if ((isp->isp_confopts & ISP_CFG_OWNLOOPID) == 0)
+		fcp->isp_loopid =
+			ISP2100_NVRAM_HARDLOOPID(nvram_data);
+	if ((isp->isp_confopts & ISP_CFG_OWNEXCTHROTTLE) == 0)
+		fcp->isp_execthrottle =
+			ISP2100_NVRAM_EXECUTION_THROTTLE(nvram_data);
 	fcp->isp_fwoptions = ISP2100_NVRAM_OPTIONS(nvram_data);
-	isp_prt(isp, ISP_LOGDEBUG0,
-	    "NVRAM: maxfrmlen %d execthrottle %d fwoptions 0x%x",
-	    fcp->isp_maxfrmlen, fcp->isp_execthrottle, fcp->isp_fwoptions);
 }
 
 #ifdef	ISP_FW_CRASH_DUMP

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.15.6.2 2002/01/10 20:05:11 thorpej Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.15.6.3 2002/06/23 17:52:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.15.6.2 2002/01/10 20:05:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.15.6.3 2002/06/23 17:52:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.15.6.2 2002/01/10 20:05:11 thorpej E
 #include <sys/mount.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_extern.h>
 
 /*
  * Simple, general purpose, fast checksum.  Data must be short-aligned.

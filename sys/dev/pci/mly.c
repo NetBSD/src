@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.6.2.5 2002/02/11 20:10:01 jdolecek Exp $	*/
+/*	$NetBSD: mly.c,v 1.6.2.6 2002/06/23 17:47:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.6.2.5 2002/02/11 20:10:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.6.2.6 2002/06/23 17:47:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1362,7 +1362,7 @@ mly_ccb_enqueue(struct mly_softc *mly, struct mly_ccb *mc)
 	while ((mc = SIMPLEQ_FIRST(&mly->mly_ccb_queue)) != NULL) {
 		if (mly_ccb_submit(mly, mc))
 			break;
-		SIMPLEQ_REMOVE_HEAD(&mly->mly_ccb_queue, mc, mc_link.simpleq);
+		SIMPLEQ_REMOVE_HEAD(&mly->mly_ccb_queue, mc_link.simpleq);
 	}
 
 	splx(s);
@@ -1532,7 +1532,7 @@ mly_intr(void *cookie)
 	/*
 	 * Run the queue.
 	 */
-	if (forus && SIMPLEQ_FIRST(&mly->mly_ccb_queue) != NULL)
+	if (forus && ! SIMPLEQ_EMPTY(&mly->mly_ccb_queue))
 		mly_ccb_enqueue(mly, NULL);
 
 	return (forus);

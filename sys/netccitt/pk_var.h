@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.14 2001/06/19 07:37:16 jdolecek Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.14.2.1 2002/06/23 17:50:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1985 Computing Centre, University of British Columbia.
@@ -235,8 +235,11 @@ struct mbuf_cache {
 #include <sys/queue.h>
 
 extern struct pkcb_q pkcb_q;
-TAILQ_HEAD(, pklcd) pk_listenhead;
+TAILQ_HEAD(pklcdhead, pklcd);
+extern struct pklcdhead pk_listenhead;
+extern struct mbuf_cache pk_input_cache;
+extern struct mbuf_cache pk_output_cache;
 
 extern char	*pk_name[], *pk_state[];
-int	pk_t20, pk_t21, pk_t22, pk_t23;
+extern int	pk_t20, pk_t21, pk_t22, pk_t23;
 #endif

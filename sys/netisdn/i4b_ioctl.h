@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.1.1.1.6.1 2001/08/25 06:17:07 thorpej Exp $ 
+ *	$Id: i4b_ioctl.h,v 1.1.1.1.6.2 2002/06/23 17:51:26 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -65,98 +65,16 @@
 #define I4B_TIME_FORMAT	"%d.%m.%Y %H:%M:%S"
 
 /*---------------------------------------------------------------------------*
- *	max number of controllers in system
- *---------------------------------------------------------------------------*/
-#define	MAX_CONTROLLERS	8		/* max number of controllers	*/
-
-/*---------------------------------------------------------------------------*
  *	ISDN D-channel protocols 
  *---------------------------------------------------------------------------*/
 #define PROTOCOL_DSS1	0		/* default, Euro-ISDN/DSS1 */
 #define PROTOCOL_D64S	1		/* 64k leased line, no protocol */
 
 /*---------------------------------------------------------------------------*
- *	controller types
- *---------------------------------------------------------------------------*/
-#define CTRL_INVALID	(-1)		/* invalid, error		*/
-#define CTRL_UNKNOWN	0		/* unknown controller type	*/
-#define CTRL_PASSIVE	1		/* passive ISDN controller cards*/
-#define CTRL_DAIC	2		/* Diehl active controller cards*/
-#define CTRL_TINADD	3		/* Stollmann Tina-dd active card*/
-#define CTRL_AVMB1	4		/* AVM B1 active card		*/
-#define	CTRL_NUMTYPES	5		/* number of controller types	*/
-
-/*---------------------------------------------------------------------------*
- *	CTRL_PASSIVE: driver types
- *---------------------------------------------------------------------------*/
-#define MAXL1UNITS      8		/* max number of units	*/
-
-#define L1DRVR_ISIC     0		/* isic - driver	*/
-#define L1DRVR_IWIC     1		/* iwic - driver	*/
-#define L1DRVR_IFPI     2		/* ifpi - driver	*/
-#define L1DRVR_IHFC     3		/* ihfc - driver	*/
-#define L1DRVR_IFPNP    4		/* ifpnp - driver	*/
-
-/* MAXL1DRVR MUST be updated when more passive drivers are added !!! */
-#define MAXL1DRVR       (L1DRVR_IFPNP + 1)
-
-/*---------------------------------------------------------------------------*
- *	card types for CTRL_PASSIVE 
- *---------------------------------------------------------------------------*/
-#define CARD_TYPEP_INVAL	(-1)	/* invalid, error		*/
-#define CARD_TYPEP_UNK		0	/* unknown			*/
-#define CARD_TYPEP_8		1	/* Teles, S0/8 			*/
-#define CARD_TYPEP_16		2	/* Teles, S0/16			*/
-#define CARD_TYPEP_16_3		3	/* Teles, S0/16.3		*/
-#define CARD_TYPEP_AVMA1	4	/* AVM A1 or AVM Fritz!Card	*/
-#define CARD_TYPEP_163P		5	/* Teles, S0/16.3 PnP		*/
-#define CARD_TYPEP_CS0P		6	/* Creatix, S0 PnP		*/
-#define CARD_TYPEP_USRTA	7	/* US Robotics ISDN TA internal	*/
-#define CARD_TYPEP_DRNNGO	8	/* Dr. Neuhaus Niccy GO@	*/
-#define CARD_TYPEP_SWS		9	/* Sedlbauer Win Speed		*/
-#define CARD_TYPEP_DYNALINK	10	/* Dynalink IS64PH		*/
-#define CARD_TYPEP_BLMASTER	11	/* ISDN Blaster / ISDN Master	*/
-#define	CARD_TYPEP_PCFRITZ	12	/* AVM PCMCIA Fritz!Card	*/
-#define CARD_TYPEP_ELSAQS1ISA	13	/* ELSA QuickStep 1000pro ISA	*/
-#define CARD_TYPEP_ELSAQS1PCI	14	/* ELSA QuickStep 1000pro PCI	*/
-#define CARD_TYPEP_SIEMENSITALK	15	/* Siemens I-Talk		*/
-#define	CARD_TYPEP_ELSAMLIMC	16	/* ELSA MicroLink ISDN/MC	*/
-#define	CARD_TYPEP_ELSAMLMCALL	17	/* ELSA MicroLink MCall		*/
-#define	CARD_TYPEP_ITKIX1	18	/* ITK ix1 micro 		*/
-#define CARD_TYPEP_AVMA1PCI	19	/* AVM FRITZ!CARD PCI		*/
-#define CARD_TYPEP_PCC16	20	/* ELSA PCC-16			*/
-#define CARD_TYPEP_AVM_PNP	21	/* AVM FRITZ!CARD PnP		*/
-#define CARD_TYPEP_SIE_ISURF2 	22	/* Siemens I-Surf 2 PnP		*/
-#define CARD_TYPEP_ASUSCOMIPAC	23	/* Asuscom ISDNlink 128 K PnP	*/
-#define CARD_TYPEP_WINB6692	24	/* Winbond W6692 based		*/
-#define CARD_TYPEP_16_3C	25	/* Teles S0/16.3c PnP (HFC-S/SP	*/
-#define CARD_TYPEP_ACERP10	26	/* Acer ISDN P10 (HFC-S)	*/
-#define CARD_TYPEP_TELEINT_NO_1	27	/* TELEINT ISDN SPEED No. 1 (HFC-1) */
-
-/*
- * in case you add support for more cards, please update:
- *
- *	isdnd:		controller.c, name_of_controller()
- *	diehl/diehlctl:	main.c, listall()
- *
- * and adjust CARD_TYPEP_MAX below.
- */
-
-#define CARD_TYPEP_MAX		27	/* max type */
-
-/*---------------------------------------------------------------------------*
- *	card types for CTRL_DAIC
- *---------------------------------------------------------------------------*/
-#define CARD_TYPEA_DAIC_UNK	0
-#define	CARD_TYPEA_DAIC_S	1
-#define	CARD_TYPEA_DAIC_SX	2
-#define	CARD_TYPEA_DAIC_SCOM	3
-#define	CARD_TYPEA_DAIC_QUAD	4
-
-/*---------------------------------------------------------------------------*
  *	max length of some strings
  *---------------------------------------------------------------------------*/
 #define TELNO_MAX	41  /* max length of a telephone number (+ '\0')  */
+#define	SUBADDR_MAX	22  /* max length of subaddres IE		  */
 #define DISPLAY_MAX	91  /* max length of display information (+ '\0') */
 #define DATETIME_MAX	21  /* max length of datetime information (+ '\0')*/
 
@@ -169,19 +87,6 @@
  *	B channel parameters
  *---------------------------------------------------------------------------*/
 #define BCH_MAX_DATALEN	2048	/* max length of a B channel frame */
-
-/*---------------------------------------------------------------------------*
- * userland driver types
- * ---------------------
- * a "driver" is defined here as a piece of software interfacing an 
- * ISDN B channel with a userland service, such as IP, Telephony etc.
- *---------------------------------------------------------------------------*/
-#define BDRV_RBCH	0       /* raw b-channel interface driver       */
-#define BDRV_TEL	1       /* telephone (speech) interface driver  */
-#define BDRV_IPR	2       /* IP over raw HDLC interface driver    */
-#define BDRV_ISPPP	3       /* sync Kernel PPP interface driver     */
-#define BDRV_IBC	4       /* BSD/OS point to point driver		*/
-#define BDRV_ING	5       /* NetGraph ing driver			*/
 
 /*---------------------------------------------------------------------------*
  * B channel protocol
@@ -307,6 +212,7 @@ typedef struct {
 #define	MSG_IFSTATE_CHANGED_IND	'o'
 #define MSG_DIALOUTNUMBER_IND	'p'
 #define MSG_PACKET_IND		'q'
+#define	MSG_CONTR_EV_IND	'r'
 	int		cdid;		/* call descriptor id		*/
 } msg_hdr_t;
 
@@ -338,6 +244,9 @@ typedef struct {
 #define  PRS_NNINTERW 3		/* number not available due to interworking */
 #define  PRS_RESERVED 4		/* reserved				*/
 	char		display[DISPLAY_MAX];	/* content of display IE*/
+	u_int8_t	src_subaddr[SUBADDR_MAX];
+	u_int8_t	dest_subaddr[SUBADDR_MAX];
+	u_int8_t	type_plan;
 } msg_connect_ind_t;
 
 /*---------------------------------------------------------------------------*
@@ -414,8 +323,6 @@ typedef struct {
 	int		accttype;	/* accounting type		*/
 #define  ACCT_DURING 0
 #define  ACCT_FINAL  1
-	int		driver;		/* driver type			*/
-	int		driver_unit;	/* driver unit number		*/
 	int		ioutbytes;	/* ISDN # of bytes sent		*/
 	int		iinbytes;	/* ISDN # of bytes received	*/
 	int		outbps;		/* bytes per sec out		*/
@@ -460,8 +367,6 @@ typedef struct {
  *---------------------------------------------------------------------------*/
 typedef struct {
 	msg_hdr_t	header;		/* common header	*/
-	int		driver;		/* driver type		*/
-	int		driver_unit;	/* driver unit number	*/
 } msg_drvrdisc_req_t;
 
 /*---------------------------------------------------------------------------*
@@ -511,6 +416,17 @@ typedef struct {
 	int		numactive;	/* number of active connections */
 } msg_pdeact_ind_t;
 
+/*---------------------------------------------------------------------------*
+ *	connect indication
+ *		indicates incoming connection
+ *---------------------------------------------------------------------------*/
+typedef struct {
+	msg_hdr_t	header;		/* common header		*/
+	int		controller;	/* controller number		*/
+	int		event;
+#define CTRL_EV_IND_DETACH	0
+#define CTRL_EV_IND_ATTACH	1
+} msg_ctrl_ev_ind_t;
 
 /*===========================================================================*
  *===========================================================================*
@@ -587,9 +503,10 @@ typedef struct {
 typedef struct {
 	int	controller;	/* controller number			*/
 	int	ncontroller;	/* number of controllers in system	*/
-	int	ctrl_type;	/* controller type passive/active	*/
-	int	card_type;	/* brand / version			*/
+	int	maxbri;		/* highest available BRI number		*/
 	int	tei;		/* tei controller probably has		*/
+	char	devname[64];	/* autoconfig device name, i.e. "isic0"	*/
+	char	cardname[80];	/* human readable brand / version	*/
 } msg_ctrl_info_req_t;
 	
 #define	I4B_CTRL_INFO_REQ	_IOWR('4', 4, msg_ctrl_info_req_t)
@@ -664,6 +581,17 @@ typedef struct {
 } msg_prot_ind_t;
 
 #define I4B_PROT_IND		_IOW('4', 10, msg_prot_ind_t)
+
+/*---------------------------------------------------------------------------*
+ *	Query the identifier for a B channel driver
+ *---------------------------------------------------------------------------*/
+#define	L4DRIVER_NAME_SIZ	16
+typedef struct {
+	char name[L4DRIVER_NAME_SIZ];	/* lookup this driver */
+	int  driver_id;			/* returned driver id */
+} msg_l4driver_lookup_t;
+
+#define I4B_L4DRIVER_LOOKUP	_IOWR('4', 11, msg_l4driver_lookup_t)
 
 /*---------------------------------------------------------------------------*
  *	Protocol download to active cards

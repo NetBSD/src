@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.1.2.1 2002/03/16 16:00:26 jdolecek Exp $	*/
+/*	$NetBSD: md_root.c,v 1.1.2.2 2002/06/23 17:43:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,11 +37,11 @@
 
 extern int boothowto;
 
-#ifndef MEMORY_DISK_SIZE
-#define MEMORY_DISK_SIZE 512
+#ifndef MEMORY_DISK_ROOT_SIZE
+#define MEMORY_DISK_ROOT_SIZE 512
 #endif
 
-#define ROOTBYTES (MEMORY_DISK_SIZE << DEV_BSHIFT)
+#define ROOTBYTES (MEMORY_DISK_ROOT_SIZE << DEV_BSHIFT)
 
 /*
  * This array will be patched to contain a file-system image.

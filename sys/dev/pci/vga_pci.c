@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pci.c,v 1.4.4.1 2002/01/10 19:57:08 thorpej Exp $ */
+/* $NetBSD: vga_pci.c,v 1.4.4.2 2002/06/23 17:48:06 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.4.4.1 2002/01/10 19:57:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.4.4.2 2002/06/23 17:48:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,11 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (bar = 0; bar < NBARS; bar++) {
 		reg = PCI_MAPREG_START + (bar * 4);
-		psc->sc_bars[bar].vb_type = pci_mapreg_type(psc->sc_pc,
-		    psc->sc_pcitag, reg);
+		if (!pci_mapreg_probe(psc->sc_pc, psc->sc_pcitag, reg,
+				      &psc->sc_bars[bar].vb_type)) {
+			/* there is no valid mapping register */
+			continue;
+		}
 		if (PCI_MAPREG_TYPE(psc->sc_bars[bar].vb_type) ==
 		    PCI_MAPREG_TYPE_IO) {
 			/* Don't bother fetching I/O BARs. */
@@ -163,14 +166,16 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 			/* XXX */
 			printf("%s: WARNING: ignoring 64-bit BAR @ 0x%02x\n",
 			    sc->sc_dev.dv_xname, reg);
+			bar++;
 			continue;
 		}
-		/* Ignore errors (unimplemented BARs). */
-		(void) pci_mapreg_info(psc->sc_pc, psc->sc_pcitag, reg,
+		if (pci_mapreg_info(psc->sc_pc, psc->sc_pcitag, reg,
 		     psc->sc_bars[bar].vb_type,
 		     &psc->sc_bars[bar].vb_base,
 		     &psc->sc_bars[bar].vb_size,
-		     &psc->sc_bars[bar].vb_flags);
+		     &psc->sc_bars[bar].vb_flags))
+			printf("%s: WARNING: strange BAR @ 0x%02x\n",
+			       sc->sc_dev.dv_xname, reg);
 	}
 
 	/* XXX Expansion ROM? */
@@ -200,7 +205,7 @@ vga_pci_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    cmd, data, flag, p));
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 }
 

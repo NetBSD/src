@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.11.4.2 2002/01/10 19:56:27 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.11.4.3 2002/06/23 17:47:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.11.4.2 2002/01/10 19:56:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.11.4.3 2002/06/23 17:47:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,8 +201,12 @@ auvia_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_VIATECH)
 		return 0;
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT82C686A_AC97)
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_VIATECH_VT82C686A_AC97:
+		break;
+	default:
 		return 0;
+	}
 
 	return 1;
 }
@@ -946,6 +950,9 @@ auvia_intr(void *arg)
 {
 	struct auvia_softc *sc = arg;
 	u_int8_t r;
+	int rval;
+
+	rval = 0;
 
 	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AUVIA_RECORD_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
@@ -955,6 +962,7 @@ auvia_intr(void *arg)
 		/* clear interrupts */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUVIA_RECORD_STAT,
 			AUVIA_RPSTAT_INTR);
+		rval = 1;
 	}
 	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AUVIA_PLAY_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
@@ -964,7 +972,8 @@ auvia_intr(void *arg)
 		/* clear interrupts */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUVIA_PLAY_STAT,
 			AUVIA_RPSTAT_INTR);
+		rval = 1;
 	}
 
-	return 1;
+	return rval;
 }

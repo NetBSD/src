@@ -1,4 +1,4 @@
-/*	$NetBSD: coda.h,v 1.6 1998/11/11 19:22:08 rvb Exp $	*/
+/*	$NetBSD: coda.h,v 1.6.24.1 2002/06/23 17:43:37 jdolecek Exp $	*/
 
 /*
  * 
@@ -90,13 +90,6 @@ typedef unsigned long long u_quad_t;
 #define cdev_t dev_t
 #endif
 
-#ifdef __CYGWIN32__
-typedef unsigned char u_int8_t;
-struct timespec {
-        time_t  tv_sec;         /* seconds */
-        long    tv_nsec;        /* nanoseconds */
-};
-#endif
 
 
 /*
@@ -244,6 +237,15 @@ struct coda_vattr {
 
 #endif 
 
+/* structure used by CODA_STATFS for getting cache information from venus */
+struct coda_statfs {
+    int32_t f_blocks;
+    int32_t f_bfree;
+    int32_t f_bavail;
+    int32_t f_files;
+    int32_t f_ffree;
+};
+
 /*
  * Kernel <--> Venus communications.
  */
@@ -279,7 +281,8 @@ struct coda_vattr {
 #define CODA_OPEN_BY_PATH 31
 #define CODA_RESOLVE     32
 #define CODA_REINTEGRATE 33
-#define CODA_NCALLS 34
+#define CODA_STATFS	 34
+#define CODA_NCALLS 35
 
 #define DOWNCALL(opcode) (opcode >= CODA_REPLACE && opcode <= CODA_PURGEFID)
 
@@ -653,6 +656,16 @@ struct coda_open_by_path_out {
 	int path;
 };
 
+/* coda_statfs: NO_IN */
+struct coda_statfs_in {
+    struct coda_in_hdr ih;
+};
+
+struct coda_statfs_out {
+    struct coda_out_hdr oh;
+    struct coda_statfs stat;
+};
+
 /* 
  * Occasionally, we don't cache the fid returned by CODA_LOOKUP. 
  * For instance, if the fid is inconsistent. 
@@ -682,7 +695,8 @@ union inputArgs {
     struct coda_inactive_in coda_inactive;
     struct coda_vget_in coda_vget;
     struct coda_rdwr_in coda_rdwr;
-	struct coda_open_by_path_in coda_open_by_path;
+    struct coda_open_by_path_in coda_open_by_path;
+    struct coda_statfs_in coda_statfs;
 };
 
 union outputArgs {
@@ -704,7 +718,8 @@ union outputArgs {
     struct coda_purgefid_out coda_purgefid;
     struct coda_rdwr_out coda_rdwr;
     struct coda_replace_out coda_replace;
-	struct coda_open_by_path_out coda_open_by_path;
+    struct coda_open_by_path_out coda_open_by_path;
+    struct coda_statfs_out coda_statfs;
 };    
 
 union coda_downcalls {

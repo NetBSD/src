@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.2.10.1 2002/01/10 19:57:09 thorpej Exp $	*/
+/*	$NetBSD: viapm.c,v 1.2.10.2 2002/06/23 17:48:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.2.10.1 2002/01/10 19:57:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.2.10.2 2002/06/23 17:48:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ viapm_device_name(enum vapm_devtype type)
 {
 
 	switch (type) {
-		case VIAPM_POWER:
+	case VIAPM_POWER:
 		return "power management";
 	case VIAPM_HWMON:
 		return "hardware monitor";
@@ -106,10 +106,17 @@ viapm_submatch(struct device * parent, struct cfdata * cf, void *aux)
 }
 
 static void
-viapm_config_defer(struct device * self)
+viapm_attach(struct device * parent, struct device * self, void *aux)
 {
 	struct viapm_softc *sc = (struct viapm_softc *) self;
+	struct pci_attach_args *pa = aux;
 	struct viapm_attach_args vaa;
+
+	printf("\n");
+
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
+	sc->sc_iot = pa->pa_iot;
 
 	vaa.va_pc = sc->sc_pc;
 	vaa.va_tag = sc->sc_tag;
@@ -134,21 +141,6 @@ viapm_config_defer(struct device * self)
 	vaa.va_offset = 0x93;
 	config_found_sm(self, &vaa, viapm_print, viapm_submatch);
 #endif
-}
-
-static void
-viapm_attach(struct device * parent, struct device * self, void *aux)
-{
-	struct viapm_softc *sc = (struct viapm_softc *) self;
-	struct pci_attach_args *pa = aux;
-
-	printf("\n");
-
-	sc->sc_pc = pa->pa_pc;
-	sc->sc_tag = pa->pa_tag;
-	sc->sc_iot = pa->pa_iot;
-
-	config_defer(self, viapm_config_defer);
 }
 
 struct cfattach viapm_ca = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.4.4.1 2002/01/10 19:56:21 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.4.4.2 2002/06/23 17:47:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.4.4.1 2002/01/10 19:56:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.4.4.2 2002/06/23 17:47:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ cs_ofisa_match(parent, cf, aux)
 	void *aux;
 {
 	struct ofisa_attach_args *aa = aux;
-	const char *compatible_strings[] = {
+	static const char *const compatible_strings[] = {
 		"CRUS,CS8900",
 		/* XXX CS8920, CS8920M? */
 		/* XXX PNP names? */

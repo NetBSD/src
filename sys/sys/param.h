@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.128.2.3 2002/03/16 16:02:22 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.128.2.4 2002/06/23 17:51:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  * Don't forget to change conf/osrelease.sh too.
  */
 
-#define	__NetBSD_Version__	105280000	/* NetBSD 1.5ZB */
+#define	__NetBSD_Version__	106020000	/* NetBSD 1.6B */
 
 /*
  * Historical NetBSD #define
@@ -274,5 +274,20 @@
 #ifndef UBC_NWINS
 #define	UBC_NWINS	1024
 #endif
+
+#ifdef _KERNEL
+/*
+ * macro to convert from milliseconds to hz without integer overflow
+ * Default version using only 32bits arithmetics.
+ * 64bit port can define 64bit version in their <machine/param.h>
+ * 0x20000 is safe for hz < 20000
+ */
+#ifndef mstohz
+#define mstohz(ms) \
+	(__predict_false((ms) >= 0x20000) ? \
+	    ((ms +0u) / 1000u) * hz : \
+	    ((ms +0u) * hz) / 1000u)
+#endif
+#endif /* _KERNEL */
 
 #endif /* !_SYS_PARAM_H_ */

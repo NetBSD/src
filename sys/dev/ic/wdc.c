@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.98.2.3 2002/03/16 16:01:03 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.98.2.4 2002/06/23 17:46:56 jdolecek Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.98.2.3 2002/03/16 16:01:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.98.2.4 2002/06/23 17:46:56 jdolecek Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -357,7 +357,7 @@ wdcattach(chp)
 		 * Wait a bit, some devices are weird just after a reset.
 		 * Then issue a IDENTIFY command, to try to detect slave ghost
 		 */
-		delay(100);
+		delay(5000);
 		error = ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
 		if (error != CMD_OK) {
 			delay(1000000);
@@ -714,6 +714,8 @@ wdcintr(arg)
 	}
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
+		/* try to clear the pending interrupt anyway */
+		(void)bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 		return (0);
 	}
 
@@ -1372,8 +1374,26 @@ __wdccommand_intr(chp, xfer, irq)
 	int bcount = wdc_c->bcount;
 	char *data = wdc_c->data;
 
+again:
 	WDCDEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_INTR);
+	if ((wdc_c->flags & AT_XFDONE) != 0) {
+		/*
+		 * We have completed a data xfer. The drive should now be
+		 * in its initial state
+		 */
+		if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ,
+		    wdc_c->r_st_bmask, (irq == 0)  ? wdc_c->timeout : 0) != 0) {
+			if (irq && (xfer->c_flags & C_TIMEOU) == 0) 
+				return 0; /* IRQ was not for us */
+			wdc_c->flags |= AT_TIMEOU;
+			__wdccommand_done(chp, xfer);
+			return 1;
+		}
+		wdc_c->flags |= AT_DONE;
+		__wdccommand_done(chp, xfer);
+		return 1;
+	}
 	if (wdcwait(chp, wdc_c->r_st_pmask, wdc_c->r_st_pmask,
 	     (irq == 0)  ? wdc_c->timeout : 0)) {
 		if (irq && (xfer->c_flags & C_TIMEOU) == 0) 
@@ -1394,6 +1414,11 @@ __wdccommand_intr(chp, xfer, irq)
 		if (bcount > 0)
 			bus_space_read_multi_2(chp->cmd_iot, chp->cmd_ioh,
 			    wd_data, (u_int16_t *)data, bcount >> 1);
+		/* at this point the drive should be in its initial state */
+		wdc_c->flags |= AT_XFDONE;
+		if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ,
+		    wdc_c->r_st_bmask, 100) != 0)
+			wdc_c->flags |= AT_TIMEOU;
 	} else if (wdc_c->flags & AT_WRITE) {
 		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
 			bus_space_write_multi_4(chp->data32iot, chp->data32ioh,
@@ -1404,6 +1429,15 @@ __wdccommand_intr(chp, xfer, irq)
 		if (bcount > 0)
 			bus_space_write_multi_2(chp->cmd_iot, chp->cmd_ioh,
 			    wd_data, (u_int16_t *)data, bcount >> 1);
+		wdc_c->flags |= AT_XFDONE;
+		if ((wdc_c->flags & AT_POLL) == 0) {
+			chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
+			callout_reset(&chp->ch_callout,
+			    wdc_c->timeout / 1000 * hz, wdctimeout, chp);
+			return 1;
+		} else {
+			goto again;
+		}
 	}
 	__wdccommand_done(chp, xfer);
 	return 1;

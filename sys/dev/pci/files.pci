@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.132.2.6 2002/03/16 16:01:13 jdolecek Exp $
+#	$NetBSD: files.pci,v 1.132.2.7 2002/06/23 17:47:38 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -22,7 +22,7 @@ file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
 file	dev/pci/pci_usrreq.c		pci
-file	dev/pci/pciconf.c		pci_netbsd_configure
+file	dev/pci/pciconf.c		pci & pci_netbsd_configure
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:
@@ -73,6 +73,14 @@ device	mly: scsi
 attach	mly at pci
 file	dev/pci/mly.c			mly			needs-flag
 
+# ICP-Vortex/Intel RAID controllers
+attach	icp at pci with icp_pci
+file	dev/pci/icp_pci.c		icp_pci
+
+# Adaptec FSA RAID controllers
+attach	aac at pci with aac_pci
+file	dev/pci/aac_pci.c		aac_pci
+
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
 file	dev/pci/dpt_pci.c		dpt_pci
@@ -103,6 +111,11 @@ file	dev/pci/bha_pci.c		bha_pci
 # device declaration in sys/conf/files
 attach	isp at pci with isp_pci
 file	dev/pci/isp_pci.c		isp_pci
+
+# LSILogic Fusion-MPT I/O Processor family
+# device declaration in sys/conf/files
+attach	lfmiop at pci with lfmiop_pci
+file	dev/pci/lfmiop_pci.c		lfmiop_pci
 
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet, arp
@@ -148,6 +161,8 @@ file	dev/pci/siop_pci_common.c	siop_pci_common
 # device declaration in sys/conf/files
 attach	siop at pci with siop_pci: siop_pci_common
 file	dev/pci/siop_pci.c		siop_pci
+attach	esiop at pci with esiop_pci: siop_pci_common
+file	dev/pci/esiop_pci.c		esiop_pci
 
 # Initio INIC-940/950 SCSI controllers
 attach	iha at pci with iha_pci
@@ -241,6 +256,11 @@ file	dev/ic/bt485.c			tga
 file	dev/ic/bt463.c			tga
 file	dev/ic/ibm561.c			tga
 
+# Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
+# device declaration in sys/conf/files
+attach	igsfb at pci with igsfb_pci
+file	dev/pci/igsfb_pci.c		igsfb_pci
+
 # Brooktree Bt848 video capture
 device	bktr: pcibus, radiodev
 attach	bktr at pci
@@ -251,12 +271,12 @@ file	dev/pci/bktr/bktr_os.c		bktr			needs-flag
 file	dev/pci/bktr/bktr_tuner.c	bktr
 
 # Cirrus Logic CrystalClear PCI Audio CS4280
-device	clcs: audio, auconv, mulaw, ac97, midibus
+device	clcs: audiobus, auconv, mulaw, ac97, midibus
 attach	clcs at pci
 file	dev/pci/cs4280.c		clcs
 
 # Cirrus Logic CrystalClear PCI Audio CS4281
-device	clct: audio, auconv, mulaw, ac97
+device	clct: audiobus, auconv, mulaw, ac97
 attach	clct at pci
 file	dev/pci/cs4281.c		clct
 
@@ -264,7 +284,7 @@ file	dev/pci/cs4281.c		clct
 file	dev/pci/cs428x.c		clcs | clct
 
 # Forte Media FM801
-device	fms { }: audio, auconv, mulaw, ac97, midibus
+device	fms { }: audiobus, auconv, mulaw, ac97, midibus
 attach	fms at pci
 file	dev/pci/fms.c			fms
 
@@ -275,32 +295,32 @@ attach	mpu at fms with mpu_fms
 file	dev/pci/mpu_fms.c		mpu_fms
 
 # Ensoniq AudioPCI S5016
-device	eap: audio, auconv, mulaw, ac97, midibus
+device	eap: audiobus, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
 
 # Intel ICH AC'97 audio
-device	auich: audio, auconv, mulaw, ac97, aurateconv
+device	auich: audiobus, auconv, mulaw, ac97, aurateconv
 attach	auich at pci
 file	dev/pci/auich.c			auich
 
 # VIA VT82C686A AC'97 Audio
-device	auvia: audio, auconv, mulaw, ac97
+device	auvia: audiobus, auconv, mulaw, ac97
 attach	auvia at pci
 file	dev/pci/auvia.c			auvia
 
 # NeoMagic 256 AC'97 Audio
-device	neo: audio, auconv, mulaw, ac97
+device	neo: audiobus, auconv, mulaw, ac97
 attach	neo at pci
 file	dev/pci/neo.c			neo
 
 # ESS Allegro-1 / Maestro3
-device	esa: audio, auconv, mulaw, ac97
+device	esa: audiobus, auconv, mulaw, ac97
 attach	esa at pci
 file	dev/pci/esa.c			esa
 
 # ESS Solo-1 PCI AudioDrive
-device	eso { }: audio, auconv, mulaw, midibus
+device	eso { }: audiobus, auconv, mulaw, midibus
 attach	eso at pci
 file	dev/pci/eso.c			eso
 
@@ -310,13 +330,16 @@ file	dev/pci/opl_eso.c		opl_eso
 attach	mpu at eso with mpu_eso
 file	dev/pci/mpu_eso.c		mpu_eso
 
+attach	joy at eso with joy_eso
+file	dev/pci/joy_eso.c		joy_eso
+
 # ESS Maestro-1/2/2e PCI AC97 Audio Accelerator
-device	esm: audio, auconv, mulaw, ac97
+device	esm: audiobus, auconv, mulaw, ac97
 attach	esm at pci
 file	dev/pci/esm.c			esm
 
 # S3 SonicVibes (S3 617)
-device	sv { }: audio, auconv, mulaw, midibus
+device	sv { }: audiobus, auconv, mulaw, midibus
 attach	sv at pci
 file	dev/pci/sv.c			sv
 
@@ -324,7 +347,7 @@ attach	opl at sv with opl_sv
 file	dev/pci/opl_sv.c		opl_sv
 
 # C-Media CMI8x38 Audio Chip
-device	cmpci { }: audio, auconv, mulaw
+device	cmpci { }: audiobus, auconv, mulaw
 attach	cmpci at pci
 file	dev/pci/cmpci.c			cmpci
 
@@ -335,7 +358,7 @@ attach	mpu at cmpci with mpu_cmpci
 file	dev/pci/mpu_cmpci.c		mpu_cmpci
 
 # Yamaha YMF724/740/744/754 PCI audio controller
-device	yds { }: audio, auconv, mulaw, ac97
+device	yds { }: audiobus, auconv, mulaw, ac97
 attach	yds at pci
 file	dev/pci/yds.c			yds
 
@@ -346,12 +369,12 @@ attach	mpu at yds with mpu_yds
 file	dev/pci/mpu_yds.c		mpu_yds
 
 # Creative Labs EMU10k1 (SBLive! series and PCI512)
-device	emuxki: audio, auconv, mulaw, ac97
+device	emuxki: audiobus, auconv, mulaw, ac97
 attach	emuxki at pci
 file	dev/pci/emuxki.c		emuxki
 
 # Trident 4DWAVE AC'97 audio (including SiS 7018,ALi M5451)
-device	autri: audio, auconv, mulaw, ac97, midibus
+device	autri: audiobus, auconv, mulaw, ac97, midibus
 attach	autri at pci
 file	dev/pci/autri.c			autri
 
@@ -447,9 +470,6 @@ file	dev/pci/if_rtk_pci.c		rtk_pci
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 attach	tlp at pci with tlp_pci
-defflag	opt_tlp.h	TLP_MATCH_21040 TLP_MATCH_21041
-			TLP_MATCH_21140 TLP_MATCH_21142
-
 file	dev/pci/if_tlp_pci.c		tlp_pci
 
 # Bit3 PCI-VME mod. 617
@@ -498,6 +518,12 @@ device	viaenv: sysmon_envsys
 attach	viaenv at viapm
 file	dev/pci/viaenv.c		viaenv			needs-flag
 
+# AMD 768MPX power management controller
+defflag	opt_amdpm.h			AMDPM_RND_COUNTERS
+device	amdpm {}
+attach	amdpm at pci
+file	dev/pci/amdpm.c			amdpm
+
 # Hi/fn 7751 
 device	hifn {}
 attach	hifn at pci
@@ -515,10 +541,11 @@ file	dev/pci/if_wi_pci.c		wi_pci
 attach	isic at pci with isic_pci
 file	dev/pci/isic_pci.c		isic_pci
 
-defflag	opt_isicpci.h	ISICPCI_ELSA_QS1PCI ISICPCI_AVM_A1
-
 file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
-file	dev/pci/isic_pci_avm_fritz_pci.c isic_pci
+
+device	ifpci: isdndev, passive_isdn
+attach	ifpci at pci
+file	dev/pci/ifpci.c			ifpci
 
 # IrDA devices
 #  Toshiba Fast Infrared Type O IrDA driver

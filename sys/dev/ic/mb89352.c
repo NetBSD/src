@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.8.2.1 2002/01/10 19:54:49 thorpej Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.8.2.2 2002/06/23 17:46:42 jdolecek Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.8.2.1 2002/01/10 19:54:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.8.2.2 2002/06/23 17:46:42 jdolecek Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1380,6 +1380,7 @@ nextbyte:
 
 out:
 	/* Disable REQ/ACK protocol. */
+	return;
 }
 
 /*
@@ -1749,8 +1750,7 @@ loop:
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->xs_control & XS_CTL_POLL) == 0)
 				callout_reset(&acb->xs->xs_callout,
-				    (acb->timeout * hz) / 1000,
-				    spc_timeout, acb);
+				    mstohz(acb->timeout), spc_timeout, acb);
 
 			sc->sc_state = SPC_CONNECTED;
 		} else if ((ints & INTS_TIMEOUT) != 0) {

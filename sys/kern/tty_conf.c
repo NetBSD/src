@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.33.2.3 2002/03/16 16:01:52 jdolecek Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.33.2.4 2002/06/23 17:49:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.33.2.3 2002/03/16 16:01:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.33.2.4 2002/06/23 17:49:39 jdolecek Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -178,7 +178,7 @@ nullioctl(tp, cmd, data, flags, p)
 #ifdef lint
 	tp = tp; data = data; flags = flags; p = p;
 #endif
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 /*

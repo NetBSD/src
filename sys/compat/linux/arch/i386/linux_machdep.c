@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.65.2.3 2002/03/16 16:00:32 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.65.2.4 2002/06/23 17:44:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.65.2.3 2002/03/16 16:00:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.65.2.4 2002/06/23 17:44:07 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -112,6 +112,12 @@ int linux_write_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
     register_t *));
 #endif
 
+#ifdef DEBUG_LINUX
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a)
+#endif
+
 static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
 extern struct disklist *i386_alldisks;
 extern const char *findblkname __P((int));
@@ -127,12 +133,44 @@ linux_setregs(p, epp, stack)
 	u_long stack;
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct trapframe *tf;
 
-	setregs(p, epp, stack);
-	if (i386_use_fxsave)
+#if NNPX > 0
+	/* If we were using the FPU, forget about it. */
+	if (npxproc == p)
+		npxdrop();
+#endif
+
+#ifdef USER_LDT
+	pmap_ldt_cleanup(p);
+#endif
+
+	p->p_md.md_flags &= ~MDP_USEDFPU;
+	pcb->pcb_flags = 0;
+
+	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __Linux_NPXCW__;
-	else
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
+	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __Linux_NPXCW__;
+
+	tf = p->p_md.md_regs;
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_edi = 0;
+	tf->tf_esi = 0;
+	tf->tf_ebp = 0;
+	tf->tf_ebx = (int)p->p_psstr;
+	tf->tf_edx = 0;
+	tf->tf_ecx = 0;
+	tf->tf_eax = 0;
+	tf->tf_eip = epp->ep_entry;
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_eflags = PSL_USERSET;
+	tf->tf_esp = stack;
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
 /*
@@ -175,7 +213,7 @@ linux_sendsig(catcher, sig, mask, code)
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
-	frame.sf_sig = native_to_linux_sig[sig];
+	frame.sf_sig = native_to_linux_signo[sig];
 
 	/* Save register context. */
 #ifdef VM86
@@ -227,6 +265,8 @@ linux_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
@@ -305,7 +345,8 @@ linux_sys_sigreturn(p, v, retval)
 		    !USERMODE(context.sc_cs, context.sc_eflags))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_gs = context.sc_gs;
+		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
 		tf->tf_eflags = context.sc_eflags;
@@ -358,13 +399,14 @@ linux_read_ldt(p, uap, retval)
 	caddr_t sg;
 	char *parms;
 
-	sg = stackgap_init(p->p_emul);
+	DPRINTF(("linux_read_ldt!"));
+	sg = stackgap_init(p, 0);
 
 	gl.start = 0;
 	gl.desc = SCARG(uap, ptr);
 	gl.num = SCARG(uap, bytecount) / sizeof(union descriptor);
 
-	parms = stackgap_alloc(&sg, sizeof(gl));
+	parms = stackgap_alloc(p, &sg, sizeof(gl));
 
 	if ((error = copyout(&gl, parms, sizeof(gl))) != 0)
 		return (error);
@@ -385,6 +427,7 @@ struct linux_ldt_info {
 	u_int read_exec_only:1;
 	u_int limit_in_pages:1;
 	u_int seg_not_present:1;
+	u_int useable:1;
 };
 
 int
@@ -403,15 +446,27 @@ linux_write_ldt(p, uap, retval)
 	int error;
 	caddr_t sg;
 	char *parms;
+	int oldmode = (int)retval[0];
 
+	DPRINTF(("linux_write_ldt %d\n", oldmode));
 	if (SCARG(uap, bytecount) != sizeof(ldt_info))
 		return (EINVAL);
 	if ((error = copyin(SCARG(uap, ptr), &ldt_info, sizeof(ldt_info))) != 0)
 		return error;
-	if (ldt_info.contents == 3)
+	if (ldt_info.entry_number >= 8192)
 		return (EINVAL);
+	if (ldt_info.contents == 3) {
+		if (oldmode)
+			return (EINVAL);
+		if (ldt_info.seg_not_present)
+			return (EINVAL);
+	}
 
-	if (ldt_info.base_addr == 0 && ldt_info.limit == 0) {
+	if (ldt_info.base_addr == 0 && ldt_info.limit == 0 &&
+	    (oldmode || (ldt_info.contents == 0 &&
+	    ldt_info.read_exec_only == 1 && ldt_info.seg_32bit == 0 &&
+	    ldt_info.limit_in_pages == 0 && ldt_info.seg_not_present == 1 &&
+	    ldt_info.useable == 0))) {
 		/* this means you should zero the ldt */
 		(void)memset(&sd, 0, sizeof(sd));
 	} else {
@@ -425,18 +480,20 @@ linux_write_ldt(p, uap, retval)
 		sd.sd_p = !ldt_info.seg_not_present;
 		sd.sd_def32 = ldt_info.seg_32bit;
 		sd.sd_gran = ldt_info.limit_in_pages;
+		if (!oldmode)
+			sd.sd_xx = ldt_info.useable;
+		else
+			sd.sd_xx = 0;
 	}
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	sl.start = ldt_info.entry_number;
-	sl.desc = stackgap_alloc(&sg, sizeof(sd));
+	sl.desc = stackgap_alloc(p, &sg, sizeof(sd));
 	sl.num = 1;
 
-#if 0
-	printf("linux_write_ldt: idx=%d, base=%x, limit=%x\n",
-	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit);
-#endif
+	DPRINTF(("linux_write_ldt: idx=%d, base=0x%lx, limit=0x%x\n",
+	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit));
 
-	parms = stackgap_alloc(&sg, sizeof(sl));
+	parms = stackgap_alloc(p, &sg, sizeof(sl));
 
 	if ((error = copyout(&sd, sl.desc, sizeof(sd))) != 0)
 		return (error);
@@ -467,10 +524,19 @@ linux_sys_modify_ldt(p, v, retval)
 	switch (SCARG(uap, func)) {
 #ifdef USER_LDT
 	case 0:
-		return (linux_read_ldt(p, uap, retval));
-
+		return linux_read_ldt(p, uap, retval);
 	case 1:
-		return (linux_write_ldt(p, uap, retval));
+		retval[0] = 1;
+		return linux_write_ldt(p, uap, retval);
+	case 2:
+#ifdef notyet
+		return (linux_read_default_ldt(p, uap, retval);
+#else
+		return (ENOSYS);
+#endif
+	case 0x11:
+		retval[0] = 0;
+		return linux_write_ldt(p, uap, retval);
 #endif /* USER_LDT */
 
 	default:
@@ -494,10 +560,9 @@ linux_fakedev(dev, raw)
 		if (major(dev) == NETBSD_WSCONS_MAJOR)
 			return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
 #endif
-		return 0;
-	} else {
-		return dev;
 	}
+
+	return dev;
 }
 
 #if (NWSDISPLAY > 0)
@@ -707,9 +772,9 @@ linux_machdepioctl(p, v, retval)
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
 			return error;
-		lvt.relsig = native_to_linux_sig[lvt.relsig];
-		lvt.acqsig = native_to_linux_sig[lvt.acqsig];
-		lvt.frsig = native_to_linux_sig[lvt.frsig];
+		lvt.relsig = native_to_linux_signo[lvt.relsig];
+		lvt.acqsig = native_to_linux_signo[lvt.acqsig];
+		lvt.frsig = native_to_linux_signo[lvt.frsig];
 		return copyout((caddr_t)&lvt, SCARG(uap, data),
 		    sizeof (struct vt_mode));
 	case LINUX_VT_SETMODE:
@@ -717,11 +782,11 @@ linux_machdepioctl(p, v, retval)
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
 			return error;
-		lvt.relsig = linux_to_native_sig[lvt.relsig];
-		lvt.acqsig = linux_to_native_sig[lvt.acqsig];
-		lvt.frsig = linux_to_native_sig[lvt.frsig];
-		sg = stackgap_init(p->p_emul);
-		bvtp = stackgap_alloc(&sg, sizeof (struct vt_mode));
+		lvt.relsig = linux_to_native_signo[lvt.relsig];
+		lvt.acqsig = linux_to_native_signo[lvt.acqsig];
+		lvt.frsig = linux_to_native_signo[lvt.frsig];
+		sg = stackgap_init(p, 0);
+		bvtp = stackgap_alloc(p, &sg, sizeof (struct vt_mode));
 		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))
 			return error;
 		SCARG(&bia, data) = bvtp;
@@ -809,7 +874,6 @@ linux_machdepioctl(p, v, retval)
 			return copyout(&hdg_big, SCARG(uap, data),
 			    sizeof hdg_big);
 		}
-		return 0;
 
 	default:
 		/*
@@ -831,8 +895,8 @@ linux_machdepioctl(p, v, retval)
 		}
 
 		if (error == ENOTTY)
-			printf("linux_machdepioctl: invalid ioctl %08lx\n",
-			    com);
+			DPRINTF(("linux_machdepioctl: invalid ioctl %08lx\n",
+			    com));
 		return error;
 	}
 	SCARG(&bia, com) = com;

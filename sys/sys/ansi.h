@@ -1,7 +1,7 @@
-/*	$NetBSD: ansi.h,v 1.6.6.1 2002/01/10 20:04:37 thorpej Exp $	*/
+/*	$NetBSD: ansi.h,v 1.6.6.2 2002/06/23 17:51:53 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,6 +43,8 @@
 
 typedef char *		__caddr_t;	/* core address */
 typedef __uint32_t	__gid_t;	/* group id */
+typedef __uint32_t	__in_addr_t;	/* IP(v4) address */
+typedef __uint16_t	__in_port_t;	/* "Internet" port number */
 typedef __uint32_t	__mode_t;	/* file permissions */
 typedef __int64_t	__off_t;	/* file offset */
 typedef __int32_t	__pid_t;	/* process id */

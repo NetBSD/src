@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.336.2.6 2002/03/16 16:01:16 jdolecek Exp $
+$NetBSD: pcidevs,v 1.336.2.7 2002/06/23 17:47:53 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -492,6 +492,7 @@ vendor ESSENTIAL	0x120f	Essential Communications
 vendor O2MICRO		0x1217  O2 Micro Inc
 vendor 3DFX		0x121a	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
+vendor HEURICON		0x1223	Heurikon/Computer Products
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
 vendor CCUBE		0x123f	C-Cube Microsystems
@@ -553,8 +554,10 @@ vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor COREGA		0x15e8	Corega
+vendor ACTIONTEC	0x1668	Action Tec Electronics, Inc.
 vendor GLOBALSUN	0x16ab	Global Sun Tech
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
+vendor SANDBURST	0x17ba	Sandburst, Inc.
 vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
@@ -567,6 +570,7 @@ vendor GUILLEMOT	0x5046	Guillemot
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
 vendor C4T		0x6374	c't Magazin
+vendor KURUSUGAWA	0x6809	Kurusugawa Electronics, Inc.
 vendor QUANCM		0x8008	Quancm Electronic GmbH
 vendor INTEL		0x8086	Intel
 vendor TRIGEM2		0x8800	Trigem Computer (2nd PCI Vendor ID)
@@ -703,12 +707,29 @@ product ADP 389XU	0x8378	AHA-389X Ultra
 product ADP 2944U	0x8478	AHA-2944 Ultra
 product ADP 2940UP	0x8778	AHA-2940 Ultra Pro
 
-product ADP2 2940U2	0x0010	AHA-2940 Ultra2
-product ADP2 2930U2	0x0011	AHA-2930 Ultra2
-product ADP2 AIC7890	0x001f	AIC-7890/1
-product ADP2 3950U2B	0x0050	AHA-3950 Ultra2
-product ADP2 3950U2D	0x0051	AHA-3950 Ultra2
-product ADP2 AIC7896	0x005f	AIC-7896/7
+product ADP2 2940U2		0x0010	AHA-2940U2 U2
+product ADP2 2930U2		0x0011	AHA-2930U2 U2
+product ADP2 AIC7890		0x001f	AIC-7890/1 U2
+product ADP2 3950U2B		0x0050	AHA-3950U2B U2
+product ADP2 3950U2D		0x0051	AHA-3950U2D U2
+product ADP2 AIC7896		0x005f	AIC-7896/7 U2
+product ADP2 AIC7892A		0x0080	AIC-7892A U160
+product ADP2 AIC7892B		0x0081	AIC-7892B U160
+product ADP2 AIC7892D		0x0083	AIC-7892D U160
+product ADP2 AIC7892P		0x008f	AIC-7892P U160
+product ADP2 AIC7899A		0x00c0	AIC-7899A U160
+product ADP2 AIC7899B		0x00c1	AIC-7899B U160
+product ADP2 AIC7899D		0x00c3	AIC-7899D U160
+product ADP2 AIC7899F		0x00c5	AIC-7899F RAID
+product ADP2 AIC7899P		0x00cf	AIC-7899P U160
+product ADP2 AAC2622		0x0282	AAC-2622
+product ADP2 ASR2200S		0x0285	ASR-2200S
+product ADP2 ASR2120S		0x0286	ASR-2120S
+product ADP2 AAC364		0x0364	AAC-364
+product ADP2 ASR5400S		0x0365	ASR-5400S
+product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
+/* XXX guess */
+product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
 
 /* Addtron Products */
 product ADDTRON 8139	0x1360	8139 Ethernet
@@ -759,6 +780,14 @@ product AMD PBC766_ISA	0x7410	AMD766 SouthBridge
 product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
 product AMD PBC766_USB	0x7414	AMD766 USB Host Controller
+product AMD PBC768_ISA	0x7440	AMD768 PCI to ISA/LPC Bridge
+product AMD PBC768_IDE  0x7441	AMD768 EIDE Controller
+product AMD PBC768_PMC  0x7443	AMD768 Power Management Controller
+product AMD PBC768_AC	0x7445	AMD768 AC97 Audio
+product AMD PBC768_MD	0x7446	AMD768 AC97 Modem
+product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
+product AMD PBC768_USB	0x7449	AMD768 USB Controller
+product AMD PBC8111_IDE	0x7469	AMD8111 IDE Controller
 
 /* American Megatrends products */
 product AMI MEGARAID	0x9010	MegaRAID
@@ -936,6 +965,7 @@ product CHIPS 65545		0x00d8	65545
 product CHIPS 65548		0x00dc	65548
 product CHIPS 65550		0x00e0	65550
 product CHIPS 65554		0x00e4	65554
+product CHIPS 69030		0x0c30	69030
 
 /* Chrysalis products */
 product CHRYSALIS LUNAVPN	0x0001	LunaVPN
@@ -1025,6 +1055,7 @@ product COMPEX RL100TX		0x9881	RL100-TX 10/100 Ethernet
 
 /* Conexant Systems products  */
 product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
+product CONEXANT 56KFAXMODEM	0x1085	HW 56K Fax Modem
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
@@ -1084,8 +1115,20 @@ product DEC 21150	0x0022	DECchip 21150 PCI-PCI Bridge
 product DEC 21152	0x0024	DECchip 21152 PCI-PCI Bridge
 product DEC 21153	0x0025	DECchip 21153 PCI-PCI Bridge
 product DEC 21154	0x0026	DECchip 21154 PCI-PCI Bridge
-product DEC CPQ42XX	0x0046	Compaq SMART RAID 42xx
+product DEC 21554	0x0046	DECchip 21554 PCI-PCI Bridge
 product DEC SWXCR	0x1065	SWXCR RAID
+
+/* Dell Computer products */
+product DELL PERC_2SI		0x0001	PERC 2/Si
+product DELL PERC_3DI		0x0002	PERC 3/Di
+product DELL PERC_3SI		0x0003	PERC 3/Si
+product DELL PERC_3SI_2		0x0004	PERC 3/Si
+product DELL PERC_3DI_2		0x0008	PERC 3/Di
+product DELL PERC_3SI		0x0003	PERC 3/Si
+product DELL PERC_3DI_2_SUB	0x00cf	PERC 3/Di
+product DELL PERC_3SI_2_SUB	0x00d0	PERC 3/Si
+product DELL PERC_3DI_SUB2	0x00d1	PERC 3/Di
+product DELL PERC_3DI_SUB3	0x00d9	PERC 3/Di
 
 /* Delta products */
 product DELTA 8139	0x1360	8139 Ethernet
@@ -1164,6 +1207,7 @@ product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 /* FZ Juelich / ZEL products */
 product FZJZEL	GIGALINK	0x0001	Gigabit link / STR1100
 product FZJZEL	PLXHOTLINK	0x0002	HOTlink interface
+product FZJZEL	COUNTTIME	0x0003	Counter / Timer
 product FZJZEL	PLXCAMAC	0x0004	CAMAC controller
 product FZJZEL	PROFIBUS	0x0005	PROFIBUS interface
 product FZJZEL	AMCCHOTLINK	0x0006	old HOTlink interface
@@ -1189,8 +1233,15 @@ product GLOBALSUN GL24110P02	0x1102	GL24110P PCI IEEE 802.11b
 /* Guillemot products */
 product GUILLEMOT MAXIRADIO	0x1001	MAXIRADIO
 
+/* Heuricon products */
+product HEURICON PMPPC		0x000e	PM/PPC
+
 /* Hewlett-Packard products */
-product HP J2585A	0x1030	J2585A
+product HP A4977A		0x1005	A4977A Visualize EG
+product HP J2585A		0x1030	J2585A
+product HP J2585B		0x1031	J2585B
+product HP 82557B		0x1200	82557B 10/100 NIC
+product HP NETRAID_4M		0x10c2	NetRaid-4M
 
 /* Hi/Fn products */
 product HIFN 7751	0x0005	7751
@@ -1215,7 +1266,9 @@ product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM 82660	0x0037	82660 PowerPC to PCI Bridge and Memory Controller
+product IBM MPIC	0x0046	MPIC
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
+product IBM GXT800P	0x005e	GXT-800P
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
 
@@ -1299,6 +1352,9 @@ product INTEL 82441FX		0x1237	82441FX PCI and Memory Controller (PMC)
 product INTEL 82380AB		0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
 product INTEL 82380FB		0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
 product INTEL 82439HX		0x1250	82439HX System Controller (TXC)
+product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-to-PCI Bridge
+product INTEL 82870P2_IOxAPIC	0x1461	82870P2 P64H2 IOxAPIC
+product INTEL 82870P2_HPLUG	0x1462	82870P2 P64H2 Hot Plug Controller
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
@@ -1343,6 +1399,22 @@ product INTEL 82801CA_IDE_2	0x248B	82801CA IDE Controller
 product INTEL 82801CAM_LPC	0x248C	82801CAM LPC Interface
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
+product INTEL 82850_HB		0x2530	82850 Host
+product INTEL 82850_AGP		0x2532	82850/82860 AGP
+product INTEL 82860_HB		0x2531	82860 Host
+product INTEL 82850_AGP		0x2532	82850/82860 AGP
+product INTEL 82860_PCI1	0x2533	82860 PCI-PCI
+product INTEL 82860_PCI2	0x2534	82860 PCI-PCI
+product INTEL 82860_PCI3	0x2535	82860 PCI-PCI
+product INTEL 82860_PCI4	0x2536	82860 PCI-PCI
+product INTEL E7500_HB		0x2540  E7500 MCH Host
+product INTEL E7500_DRAM	0x2541	E7500 MCH DRAM Controller
+product INTEL E7500_HI_B1	0x2543	E7500 MCH HI_B vppb 1
+product INTEL E7500_HI_B2	0x2544	E7500 MCH HI_B vppb 2
+product INTEL E7500_HI_C1	0x2545	E7500 MCH HI_C vppb 1
+product INTEL E7500_HI_C2	0x2546	E7500 MCH HI_C vppb 2
+product INTEL E7500_HI_D1	0x2547	E7500 MCH HI_C vppb 1
+product INTEL E7500_HI_D2	0x2548	E7500 MCH HI_C vppb 2
 product INTEL 82830MP_IO_1	0x3575	82830MP CPU to I/O Bridge 1
 product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
 product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
@@ -1382,6 +1454,7 @@ product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
 product INTEL 82451NX_MIOC	0x84ca	82451NX Memory & I/O Controller (MIOC)
 product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
+product INTEL 21555		0xb555	21555 Non-Transparent PCI-PCI Bridge
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
@@ -1484,6 +1557,7 @@ product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
 product MOT MPC107	0x0004	MPC107 \"Chaparral\" Host Bridge
+product MOT MPC8245	0x0006	MPC8245 \"Kahlua II\" Host Bridge
 product MOT RAVEN	0x4801	Raven Host Bridge & Multi-Processor Interrupt Controller
 product MOT FALCON	0x4802	Falcon ECC Memory Controller Chip Set
 product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
@@ -1535,10 +1609,16 @@ product SYMBIOS 885	0x000d	53c885
 product SYMBIOS 875	0x000f	53c875/876
 product SYMBIOS 1510	0x0010	53c1510
 product SYMBIOS 895A	0x0012	53c895A
+product SYMBIOS 875A	0x0013	53c875A
 product SYMBIOS 1010	0x0020	53c1010
 product SYMBIOS 1010_2	0x0021	53c1010 (66MHz)
+product SYMBIOS 1030R	0x1030	53c1030R
 product SYMBIOS 875J	0x008f	53c875J
 product SYMBIOS FC909	0x0621	FC909
+product SYMBIOS FC929	0x0622	FC929
+product SYMBIOS FC929_1	0x0623	FC929
+product SYMBIOS FC919	0x0624	FC919
+product SYMBIOS FC919_1	0x0625	FC919
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
@@ -1574,6 +1654,7 @@ product NETGEAR MA301		0x4100	MA301 PCI IEEE 802.11b
 
 /* Netmos products */
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
+product NETMOS NM9845	0x9845	Quad UART and 1284 Printer port
 
 /* Network Security Technologies, Inc. */
 product NETSEC 7751		0x7751	7751
@@ -1732,7 +1813,8 @@ product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
 product	SEGA	BROADBAND	0x1234	Broadband Adapter
 
 /* ServerWorks products */
-product	SERVERWORKS ROSB4	0x0200	ROSB4 SouthBridge
+product	SERVERWORKS OSB4	0x0200	OSB4 SouthBridge
+product SERVERWORKS CSB5	0x0201	CSB5 SouthBridge
 product SERVERWORKS XX5		0x0005	PCIHB5
 product SERVERWORKS CIOB20	0x0006	I/O Bridge
 product SERVERWORKS XX7		0x0007	PCIHB7
@@ -1740,8 +1822,9 @@ product SERVERWORKS CNB20HE	0x0008	CNB20HE Host
 product SERVERWORKS CNB20LE	0x0009	CNB20LE Host
 product SERVERWORKS CIOB30	0x0010	CIOB30
 product SERVERWORKS CMIC_HE	0x0011	CMIC_HE Host
-product SERVERWORKS IDE		0x0211	IDE
-product SERVERWORKS USB		0x0220	USB
+product SERVERWORKS OSB4_IDE	0x0211	OSB4 IDE
+product SERVERWORKS CSB5_IDE	0x0212	CSB5 IDE
+product SERVERWORKS USB		0x0220	OSB4/CSB5 USB
 
 /* SGI products */
 product SGI IOC3	0x0003	IOC3
@@ -1884,6 +1967,7 @@ product TI	PCI1451		0xac52	PCI1451 PCI-CardBus Bridge
 product TI	PCI2040		0xac60	PCI2040 PCI-to-DSP Bridge
 
 /* Titan Electronics products */
+product TITAN PCI800L		0x8080	PCI-800L
 product TITAN PCI800H		0xa003	PCI-800H
 product TITAN PCI100H		0xa001	PCI-100H
 
@@ -1927,7 +2011,9 @@ product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
-product TRIONES HPT366          0x0004  HPT366/370 IDE Controller
+product TRIONES HPT366		0x0004  HPT366/370 IDE Controller
+product TRIONES HPT372		0x0005  HPT372 IDE Controller
+product TRIONES HPT374		0x0008  HPT374 IDE Controller
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
@@ -1983,7 +2069,8 @@ product VIATECH VT82C586_ISA	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
 product VIATECH VT82C595	0x0595	VT82C595 (Apollo VP2) Host-PCI Bridge
 product VIATECH VT82C596A	0x0596	VT82C596A (Apollo Pro) PCI-ISA Bridge
 product VIATECH VT82C597	0x0597	VT82C597 (Apollo VP3) Host-PCI Bridge
-product VIATECH VT82C598PCI	0x0598	VT82C598 (Apollo MVP3) Host-PCI
+product VIATECH VT82C598PCI	0x0598	VT82C598 (Apollo MVP3) Host-PCI Bridge
+product VIATECH VT8605PCI	0x0605	VT8605 (Apollo ProMedia 133) Host-PCI Bridge
 product VIATECH VT82C686A_ISA	0x0686	VT82C686A (Apollo KX133) PCI-ISA Bridge
 product VIATECH VT82C691	0x0691	VT82C691 (Apollo Pro) Host-PCI
 product VIATECH VT82C693	0x0693	VT82C693 (Apollo Pro Plus) Host-PCI
@@ -2003,13 +2090,16 @@ product	VIATECH	VT6102		0x3065	VT6102 (Rhine II) 10/100 Ethernet
 product VIATECH VT8233		0x3074	VT8233 PCI-ISA Bridge
 product VIATECH VT8366		0x3099	VT8366 (Apollo KT266) CPU-PCI Bridge
 product VIATECH VT82C686A_MC97	0x3068	VT82C686A MC-97 Modem Controller
+product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
+product VIATECH VT8231		0x8231	VT8231 IDE Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 KT133 PCI to AGP Bridge
 product	VIATECH	VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
-product VIATECH VT8501AGP	0x8501	VT8501 PCI-AGP
-product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) PCI-AGP
-product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) PCI-AGP
-product VIATECH VT8366AGP	0xb099	VT8366 CPU-AGP
+product VIATECH VT8501AGP	0x8501	VT8501 CPU-AGP Bridge
+product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) CPU-AGP Bridge
+product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) CPU-AGP Bridge
+product VIATECH VT8605AGP	0x8605	VT8605 (Apollo ProMedia 133) Host-AGP Bridge
+product VIATECH VT8366AGP	0xb099	VT8366 CPU-AGP Bridge
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_60x0		0x0000	GDT6000/6020/6050

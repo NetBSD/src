@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.41.2.4 2002/02/11 20:10:21 jdolecek Exp $ */
+/* $NetBSD: wskbd.c,v 1.41.2.5 2002/06/23 17:49:19 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.41.2.4 2002/02/11 20:10:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.41.2.5 2002/06/23 17:49:19 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -850,7 +850,6 @@ int
 wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 		  struct proc *p)
 {
-	int error;
 
 	/*      
 	 * Try the generic ioctls that the wskbd interface supports.
@@ -874,11 +873,10 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 	}
 
 	/*
-	 * Try the keyboard driver for WSKBDIO ioctls.  It returns -1
+	 * Try the keyboard driver for WSKBDIO ioctls.  It returns EPASSTHROUGH
 	 * if it didn't recognize the request.
 	 */
-	error = wskbd_displayioctl(&sc->sc_base.me_dv, cmd, data, flag, p);
-	return (error != -1 ? error : ENOTTY);
+	return (wskbd_displayioctl(&sc->sc_base.me_dv, cmd, data, flag, p));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.4.4.3 2002/03/16 16:00:27 jdolecek Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.4.4.4 2002/06/23 17:43:52 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,25 @@
 
 #include <sys/types.h> 
 #include <sys/exec.h>
+#include <sys/signal.h>
 #include <sys/exec_elf.h>
+
+#include <machine/vmparam.h>
+
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
+
+/* IRIX specific per-process data, zero'ed on allocation */
+struct irix_emuldata {
+#define ied_startcopy ied_sigtramp
+	void *ied_sigtramp[SVR4_NSIG];	/* Address of signal trampoline */
+#define ied_endcopy ied_pptr	
+	struct proc *ied_pptr;	/* parent process or NULL, for SIGHUP on exit */
+	int ied_procblk_count;	/* semaphore for blockproc */
+	struct proc *ied_shareparent; /* parent of the share group */
+	int ied_shareaddr;	/* VM space is shared with parent */
+	/* Only the share group parent keeps track of this: */
+};
 
 /* e_flags used by IRIX for ABI selection */
 #define IRIX_EF_IRIX_ABI64	0x00000010
@@ -50,6 +68,8 @@
 #define IRIX_EF_IRIX_ABI_MASK	0x00000030
 
 #define IRIX_ELF_AUX_ENTRIES 7
+
+int irix_check_exec __P((struct proc *p));
 
 #ifdef EXEC_ELF32
 #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
@@ -76,7 +96,7 @@ int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 #endif
 
-extern const struct emul emul_irix_n32;
 extern const struct emul emul_irix_o32;
+extern const struct emul emul_irix_n32;
 
 #endif /* !_IRIX_EXEC_H_ */

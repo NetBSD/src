@@ -27,14 +27,14 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: isic_bchan.c,v 1.3.2.1 2002/01/10 19:54:37 thorpej Exp $
+ *	$Id: isic_bchan.c,v 1.3.2.2 2002/06/23 17:46:32 jdolecek Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.3.2.1 2002/01/10 19:54:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.3.2.2 2002/06/23 17:46:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -68,18 +68,20 @@ __KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.3.2.1 2002/01/10 19:54:37 thorpej E
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 
-#include <dev/ic/isic_l1.h>
-#include <dev/ic/isac.h>
-#include <dev/ic/hscx.h>
-
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
+
 static void isic_bchannel_start(isdn_layer1token, int h_chan);
 static void isic_bchannel_stat(isdn_layer1token, int h_chan, bchan_statistics_t *bsp);
-static void isic_set_linktab(isdn_layer1token, int channel, drvr_link_t *dlt);
-static isdn_link_t *isic_ret_linktab(isdn_layer1token, int channel);
+
+void isic_set_link(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
+isdn_link_t *isic_ret_linktab(void*, int channel);
 
 /*---------------------------------------------------------------------------*
  *	initialize one B channels rx/tx data structures and init/deinit HSCX
@@ -87,7 +89,7 @@ static isdn_link_t *isic_ret_linktab(isdn_layer1token, int channel);
 void
 isic_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct isic_softc *sc = (struct isic_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
 	int s = splnet();
@@ -98,12 +100,11 @@ isic_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 		isic_hscx_init(sc, h_chan, activate);
 	}
 		
-	NDBGL1(L1_BCHAN, "unit=%d, channel=%d, %s",
-		sc->sc_unit, h_chan, activate ? "activate" : "deactivate");
+	NDBGL1(L1_BCHAN, "%s, channel=%d, %s",
+		sc->sc_dev.dv_xname, h_chan, activate ? "activate" : "deactivate");
 
 	/* general part */
 
-	chan->unit = sc->sc_unit;	/* unit number */
 	chan->channel = h_chan;		/* B channel */
 	chan->bprot = bprot;		/* B channel protocol */
 	chan->state = HSCX_IDLE;	/* B channel state */
@@ -152,7 +153,7 @@ isic_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 static void
 isic_bchannel_start(isdn_layer1token t, int h_chan)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct isic_softc *sc = (struct isic_softc*)t;
 
 	register l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	register int next_len;
@@ -189,7 +190,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 
 	if(chan->bprot == BPROT_NONE)
 	{
-		if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data,
+		if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data,
 		    chan->out_mbuf_cur->m_len)))
 			activity = ACT_TX;
 	}
@@ -206,7 +207,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 		hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_bcount;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr,
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr,
 			chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 	}			
 
@@ -276,7 +277,8 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 					TRC_CH_B1 : TRC_CH_B2);
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_bcount;
-				isdn_layer2_trace_ind(sc->sc_l2, &hdr,
+				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, 
+					&hdr,
 					chan->out_mbuf_cur->m_len,
 					chan->out_mbuf_cur->m_data);
 			}			
@@ -322,8 +324,8 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 	/* call timeout handling routine */
 	
 	if(activity == ACT_RX || activity == ACT_TX)
-		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit,
-			activity);
+		(*chan->l4_driver->bch_activity)(
+		    chan->l4_driver_softc, activity);
 
 	if(cmd)
 		isic_hscx_cmd(sc, h_chan, cmd);
@@ -337,7 +339,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 static void
 isic_bchannel_stat(isdn_layer1token t, int h_chan, bchan_statistics_t *bsp)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct isic_softc *sc = (struct isic_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int s;
 
@@ -355,10 +357,11 @@ isic_bchannel_stat(isdn_layer1token t, int h_chan, bchan_statistics_t *bsp)
 /*---------------------------------------------------------------------------*
  *	return the address of isic drivers linktab	
  *---------------------------------------------------------------------------*/
-static isdn_link_t *
-isic_ret_linktab(isdn_layer1token t, int channel)
+isdn_link_t *
+isic_ret_linktab(void *token, int channel)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct l2_softc *l2sc = token;
+	struct isic_softc *sc = l2sc->l1_token;
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
 	return(&chan->isdn_linktab);
@@ -367,34 +370,37 @@ isic_ret_linktab(isdn_layer1token t, int channel)
 /*---------------------------------------------------------------------------*
  *	set the driver linktab in the b channel softc
  *---------------------------------------------------------------------------*/
-static void
-isic_set_linktab(isdn_layer1token t, int channel, drvr_link_t *dlt)
+void
+isic_set_link(void *token, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc)
 {
-	struct l1_softc *sc = (struct l1_softc*)t;
+	struct l2_softc *l2sc = token;
+	struct isic_softc *sc = l2sc->l1_token;
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
-	chan->drvr_linktab = dlt;
+	chan->l4_driver = l4_driver;
+	chan->l4_driver_softc = l4_driver_softc;
 }
+
+static const struct isdn_l4_bchannel_functions
+isic_l4_bchannel_functions = {
+	isic_bchannel_setup,
+	isic_bchannel_start,
+	isic_bchannel_stat
+};
 
 /*---------------------------------------------------------------------------*
  *	initialize our local linktab
  *---------------------------------------------------------------------------*/
 void
-isic_init_linktab(struct l1_softc *sc)
+isic_init_linktab(struct isic_softc *sc)
 {
 	l1_bchan_state_t *chan = &sc->sc_chan[HSCX_CH_A];
 	isdn_link_t *lt = &chan->isdn_linktab;
 
-	/* make sure the hardware driver is known to layer 4 */
-	ctrl_types[CTRL_PASSIVE].set_linktab = isic_set_linktab;
-	ctrl_types[CTRL_PASSIVE].get_linktab = isic_ret_linktab;
-
 	/* local setup */
 	lt->l1token = sc;
 	lt->channel = HSCX_CH_A;
-	lt->bch_config = isic_bchannel_setup;
-	lt->bch_tx_start = isic_bchannel_start;
-	lt->bch_stat = isic_bchannel_stat;
+	lt->bchannel_driver = &isic_l4_bchannel_functions;
 	lt->tx_queue = &chan->tx_queue;
 
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
@@ -408,9 +414,7 @@ isic_init_linktab(struct l1_softc *sc)
 
 	lt->l1token = sc;
 	lt->channel = HSCX_CH_B;
-	lt->bch_config = isic_bchannel_setup;
-	lt->bch_tx_start = isic_bchannel_start;
-	lt->bch_stat = isic_bchannel_stat;
+	lt->bchannel_driver = &isic_l4_bchannel_functions;
 	lt->tx_queue = &chan->tx_queue;
 
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
@@ -419,36 +423,3 @@ isic_init_linktab(struct l1_softc *sc)
 	/* used by HDLC data transfers, i.e. ipr and isp drivers */	
 	lt->rx_mbuf = &chan->in_mbuf;	
 }
-
-/*---------------------------------------------------------------------------*
- *	telephony silence detection
- *---------------------------------------------------------------------------*/
-
-#define TEL_IDLE_MIN (BCH_MAX_DATALEN/2)
-
-int
-isic_hscx_silence(unsigned char *data, int len)
-{
-	register int i = 0;
-	register int j = 0;
-
-	/* count idle bytes */
-	
-	for(;i < len; i++)
-	{
-		if((*data >= 0xaa) && (*data <= 0xac))
-			j++;
-		data++;
-	}
-
-#ifdef NOTDEF
-	printf("isic_hscx_silence: got %d silence bytes in frame\n", j);
-#endif
-	
-	if(j < (TEL_IDLE_MIN))
-		return(0);
-	else
-		return(1);
-
-}
-

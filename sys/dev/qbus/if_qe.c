@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.48.2.1 2002/01/10 19:57:32 thorpej Exp $ */
+/*      $NetBSD: if_qe.c,v 1.48.2.2 2002/06/23 17:48:30 jdolecek Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.48.2.1 2002/01/10 19:57:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.48.2.2 2002/06/23 17:48:30 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -139,11 +139,12 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
 	struct ubinfo ui;
 
-#define	PROBESIZE	(sizeof(struct qe_ring) * 4 + 128)
-	struct	qe_ring ring[15]; /* For diag purposes only */
+#define	PROBESIZE	4096
+	struct qe_ring *ring;
 	struct	qe_ring *rp;
 	int error;
 
+	ring = malloc(PROBESIZE, M_TEMP, M_WAITOK);
 	bzero(sc, sizeof(struct qe_softc));
 	bzero(ring, PROBESIZE);
 	sc->sc_iot = ua->ua_iot;
@@ -172,12 +173,12 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	ring[0].qe_flag = ring[0].qe_status1 = QE_NOTYET;
 	ring[0].qe_addr_lo = LOWORD(&rp[4]);
 	ring[0].qe_addr_hi = HIWORD(&rp[4]) | QE_VALID | QE_EOMSG | QE_SETUP;
-	ring[0].qe_buf_len = 128;
+	ring[0].qe_buf_len = -64;
 
 	ring[2].qe_flag = ring[2].qe_status1 = QE_NOTYET;
 	ring[2].qe_addr_lo = LOWORD(&rp[4]);
 	ring[2].qe_addr_hi = HIWORD(&rp[4]) | QE_VALID;
-	ring[2].qe_buf_len = 128;
+	ring[2].qe_buf_len = -(1500/2);
 
 	QE_WCSR(QE_CSR_CSR, QE_RCSR(QE_CSR_CSR) & ~QE_RESET);
 	DELAY(1000);
@@ -196,6 +197,7 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	 * All done with the bus resources.
 	 */
 	ubfree((void *)parent, &ui);
+	free(ring, M_TEMP);
 	return 1;
 }
 
@@ -765,7 +767,7 @@ qe_setup(struct qe_softc *sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
 			ifp->if_flags |= IFF_ALLMULTI;
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.2.4.3 2002/01/10 19:51:34 thorpej Exp $ */
+/*	$NetBSD: linux_sigarray.c,v 1.2.4.4 2002/06/23 17:44:14 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,20 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigarray.c,v 1.2.4.3 2002/01/10 19:51:34 thorpej Exp $");
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/signal.h>
-
-#include <compat/linux/common/linux_signal.h>
+__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.2.4.4 2002/06/23 17:44:14 jdolecek Exp $");
 
 /* 
  * From Linux's include/asm-mips/signal.h 
  */
-const int linux_to_native_sig[LINUX__NSIG] = {
+const int linux_to_native_signo[LINUX__NSIG] = {
 	0,				/* 0 */
 	SIGHUP,
 	SIGINT,

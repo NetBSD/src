@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.21.2.1 2002/01/10 19:54:54 thorpej Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.21.2.2 2002/06/23 17:46:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -38,14 +38,14 @@
  */
 
 /*
- * Only arm26, i386, vax, mips, sparc, and sun2 use real bus space:
+ * Only acorn26, i386, vax, mips, sparc, and sun2 use real bus space:
  *	arm32: csa driver; easy to convert
  *	mac68k: sbc driver; easy to convert
  *	pc532: ncr driver; need bus.h first
  *	sparc: si and sw drivers; easy to convert
  *	sun3: si driver; need bus.h first
  */
-#if defined(__arm26__) || defined(__i386__) || defined(__vax__) || \
+#if defined(acorn26) || defined(__i386__) || defined(__vax__) || \
 	defined(__mips__) || defined(__sparc__) || defined(sun2)
 # define NCR5380_USE_BUS_SPACE
 #endif

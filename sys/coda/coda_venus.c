@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.7.24.3 2002/01/10 19:50:53 thorpej Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.7.24.4 2002/06/23 17:43:37 jdolecek Exp $	*/
 
 /*
  * 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.7.24.3 2002/01/10 19:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.7.24.4 2002/06/23 17:43:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,6 +637,25 @@ venus_readdir(void *mdp, ViceFid *fid,
     }
 
     CODA_FREE(inp, coda_readdir_size);
+    return error;
+}
+
+int
+venus_statfs(void *mdp, struct ucred *cred, struct proc *p,
+   /*out*/   struct coda_statfs *fsp)
+{
+    DECL(coda_statfs);			/* sets Isize & Osize */
+    ALLOC(coda_statfs);			/* sets inp & outp */
+
+    /* send the open to venus. */
+    INIT_IN(&inp->ih, CODA_STATFS, cred, p);
+
+    error = coda_call(mdp, Isize, &Osize, (char *)inp);
+    if (!error) {
+        *fsp = outp->stat;
+    }
+
+    CODA_FREE(inp, coda_statfs_size);
     return error;
 }
 

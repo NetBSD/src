@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.158.2.4 2002/02/11 20:10:12 jdolecek Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.158.2.5 2002/06/23 17:48:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.158.2.4 2002/02/11 20:10:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.158.2.5 2002/06/23 17:48:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,7 @@ scsibusattach(parent, self, aux)
 	struct scsipi_channel *chan = aux;
 
 	sc->sc_channel = chan;
+	chan->chan_name = sc->sc_dev.dv_xname;
 
 	/* Initialize the channel structure first */
 	if (scsipi_channel_init(chan)) {
@@ -506,6 +507,10 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "IBM",	     "0664",		 ""},     PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
+	/* improperly report DT-only sync mode */
+	 "IBM     ", "DXHS36D",		 ""},
+				PQUIRK_CAP_SYNC|PQUIRK_CAP_WIDE16},
+	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "H3171-S2",	 ""},
 				PQUIRK_NOLUNS|PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
@@ -533,6 +538,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MAXTOR  ", "LXT-200S        ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MEGADRV ", "EV1000",           ""},     PQUIRK_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,
+	 "MICROP", "1991-27MZ",          ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
 	 "MST     ", "SnapLink        ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -574,6 +581,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
 	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
 	 "Maxtor 4", "D080H4",           "DAH0"}, PQUIRK_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
+	 "Maxtor 4", "D040H2",           "DAH0"}, PQUIRK_NOMODESENSE},
 
 	{{T_DIRECT, T_REMOV,
 	 "iomega", "jaz 1GB", 		 ""},	  PQUIRK_NOMODESENSE},
@@ -838,10 +847,36 @@ scsi_probe_device(sc, target, lun)
 			periph->periph_cap |= PERIPH_CAP_SFTRESET;
 		if ((inqbuf.flags3 & SID_RelAdr) != 0)
 			periph->periph_cap |= PERIPH_CAP_RELADR;
-	} else {
-		if (quirks & PQUIRK_CAP_SYNC)
-			periph->periph_cap |= PERIPH_CAP_SYNC;
+		if (periph->periph_version >= 3) { /* SPC-2 */
+			/*
+			 * Report ST clocking though CAP_WIDExx/CAP_SYNC.
+			 * If the device only supports DT, clear these
+			 * flags (DT implies SYNC and WIDE)
+			 */
+			switch (inqbuf.flags4 & SID_Clocking) {
+			case SID_CLOCKING_DT_ONLY:
+				periph->periph_cap &=
+				    ~(PERIPH_CAP_SYNC |
+				      PERIPH_CAP_WIDE16 |
+				      PERIPH_CAP_WIDE32);
+				/* FALLTHOUGH */
+			case SID_CLOCKING_SD_DT:
+				periph->periph_cap |= PERIPH_CAP_DT;
+				break;
+			default: /* ST only or invalid */
+				/* nothing to do */
+				break;
+			}
+			if (inqbuf.flags4 & SID_IUS)
+				periph->periph_cap |= PERIPH_CAP_IUS;
+			if (inqbuf.flags4 & SID_QAS)
+				periph->periph_cap |= PERIPH_CAP_QAS;
+		}
 	}
+	if (quirks & PQUIRK_CAP_SYNC)
+		periph->periph_cap |= PERIPH_CAP_SYNC;
+	if (quirks & PQUIRK_CAP_WIDE16)
+		periph->periph_cap |= PERIPH_CAP_WIDE16;
 
 	/*
 	 * Now apply any quirks from the table.

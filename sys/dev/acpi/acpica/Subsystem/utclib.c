@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: cmclib - Local implementation of C library functions
- * xRevision: 39 $
+ * $Revision: 1.2.2.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,16 +115,11 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utclib.c,v 1.2.2.2 2002/01/10 19:53:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utclib.c,v 1.2.2.3 2002/06/23 17:45:48 jdolecek Exp $");
 
 #define __CMCLIB_C__
 
 #include "acpi.h"
-#include "acevents.h"
-#include "achware.h"
-#include "acnamesp.h"
-#include "acinterp.h"
-#include "amlcode.h"
 
 /*
  * These implementations of standard C Library routines can optionally be
@@ -132,8 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: utclib.c,v 1.2.2.2 2002/01/10 19:53:35 thorpej Exp $
  * than an inline or assembly implementation
  */
 
-#define _COMPONENT          MISCELLANEOUS
-        MODULE_NAME         ("cmclib")
+#define _COMPONENT          ACPI_UTILITIES
+        ACPI_MODULE_NAME    ("cmclib")
 
 
 #ifndef ACPI_USE_SYSTEM_CLIBRARY
@@ -204,7 +199,6 @@ AcpiUtStrcpy (
     /* Null terminate */
 
     *String = 0;
-
     return (DstString);
 }
 
@@ -280,7 +274,6 @@ AcpiUtStrcmp (
         }
     }
 
-
     return ((unsigned char) *String1 - (unsigned char) *String2);
 }
 
@@ -299,7 +292,7 @@ AcpiUtStrcmp (
  *
  ******************************************************************************/
 
-UINT32
+int
 AcpiUtStrncmp (
     const NATIVE_CHAR       *String1,
     const NATIVE_CHAR       *String2,
@@ -315,7 +308,7 @@ AcpiUtStrncmp (
         }
     }
 
-    return ((Count == -1) ? 0 : ((unsigned char) *String1 -
+    return ((Count == ACPI_INTEGER_MAX) ? 0 : ((unsigned char) *String1 -
         (unsigned char) *String2));
 }
 
@@ -476,19 +469,7 @@ AcpiUtMemset (
 #define NEGATIVE    1
 #define POSITIVE    0
 
-
-#define _ACPI_XA     0x00    /* extra alphabetic - not supported */
-#define _ACPI_XS     0x40    /* extra space */
-#define _ACPI_BB     0x00    /* BEL, BS, etc. - not supported */
-#define _ACPI_CN     0x20    /* CR, FF, HT, NL, VT */
-#define _ACPI_DI     0x04    /* '0'-'9' */
-#define _ACPI_LO     0x02    /* 'a'-'z' */
-#define _ACPI_PU     0x10    /* punctuation */
-#define _ACPI_SP     0x08    /* space */
-#define _ACPI_UP     0x01    /* 'A'-'Z' */
-#define _ACPI_XD     0x80    /* '0'-'9', 'A'-'F', 'a'-'f' */
-
-static const UINT8 _acpi_ctype[257] = {
+const UINT8 _acpi_ctype[257] = {
     _ACPI_CN,            /* 0x0      0.     */
     _ACPI_CN,            /* 0x1      1.     */
     _ACPI_CN,            /* 0x2      2.     */
@@ -647,9 +628,9 @@ static const UINT8 _acpi_ctype[257] = {
  *
  ******************************************************************************/
 
-UINT32
+int
 AcpiUtToUpper (
-    UINT32                  c)
+    int                     c)
 {
 
     return (IS_LOWER(c) ? ((c)-0x20) : (c));
@@ -668,9 +649,9 @@ AcpiUtToUpper (
  *
  ******************************************************************************/
 
-UINT32
+int
 AcpiUtToLower (
-    UINT32                  c)
+    int                     c)
 {
 
     return (IS_UPPER(c) ? ((c)+0x20) : (c));
@@ -717,7 +698,6 @@ AcpiUtStrstr (
         String2++;
         String++;
     }
-
 
     return (String1);
 }
@@ -771,13 +751,11 @@ AcpiUtStrtoul (
         sign = NEGATIVE;
         ++String;
     }
-
     else if (*String == '+')
     {
         ++String;
         sign = POSITIVE;
     }
-
     else
     {
         sign = POSITIVE;
@@ -796,19 +774,16 @@ AcpiUtStrtoul (
                 Base = 16;
                 ++String;
             }
-
             else
             {
                 Base = 8;
             }
         }
-
         else
         {
             Base = 10;
         }
     }
-
     else if (Base < 2 || Base > 36)
     {
         /*
@@ -842,17 +817,15 @@ AcpiUtStrtoul (
     {
         if (IS_DIGIT (*String))
         {
-            index = *String - '0';
+            index = (UINT32) ((UINT8) *String - '0');
         }
-
         else
         {
-            index = AcpiUtToUpper (*String);
+            index = (UINT32) AcpiUtToUpper (*String);
             if (IS_UPPER (index))
             {
                 index = index - 'A' + 10;
             }
-
             else
             {
                 goto done;
@@ -874,7 +847,6 @@ AcpiUtStrtoul (
             Status = AE_ERROR;
             ReturnValue = 0L;           /* reset */
         }
-
         else
         {
             ReturnValue *= Base;
@@ -896,7 +868,6 @@ done:
         {
             *Terminator = (NATIVE_CHAR *) StringStart;
         }
-
         else
         {
             *Terminator = (NATIVE_CHAR *) String;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.22.6.1 2002/01/10 19:59:10 thorpej Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.22.6.2 2002/06/23 17:49:17 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ usbd_status	usbd_set_hub_feature(usbd_device_handle dev, int);
 usbd_status	usbd_clear_hub_feature(usbd_device_handle, int);
 usbd_status	usbd_set_port_feature(usbd_device_handle dev, int, int);
 usbd_status	usbd_clear_port_feature(usbd_device_handle, int, int);
-usbd_status	usbd_get_device_status(usbd_device_handle,usb_status_t*);
+usbd_status	usbd_get_device_status(usbd_device_handle, usb_status_t *);
 usbd_status	usbd_get_hub_status(usbd_device_handle, usb_hub_status_t *);
 usbd_status	usbd_get_protocol(usbd_interface_handle dev, u_int8_t *report);
 usbd_status	usbd_set_protocol(usbd_interface_handle dev, int report);

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6.2.2 2002/03/16 16:00:36 jdolecek Exp $  
+	$NetBSD: syscalls.master,v 1.6.2.3 2002/06/23 17:44:18 jdolecek Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -248,7 +248,8 @@
 122	STD		{ int linux_sys_new_uname(struct linux_utsname *up); }
 123	UNIMPL		modify_ldt	
 124	UNIMPL		adjtimex
-125	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
+125	STD		{ int linux_sys_mprotect(const void *start, \
+			    unsigned long len, int prot); }
 126	STD		{ int linux_sys_sigprocmask(int how, \
 			    const linux_old_sigset_t *set, \
 			    linux_old_sigset_t *oset); }
@@ -351,19 +352,24 @@
 190	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct rlimit *rlp); }
 191	UNIMPL		/* unused */
-192	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
-			    int prot, int flags, int fd, off_t offset); }
-193	UNIMPL		truncate64
-194	UNIMPL		ftruncate64
-195	UNIMPL		stat64
-196	UNIMPL		lstat64
-197	UNIMPL		fstat64
+192	UNIMPL		mmap2
+193	STD		{ int linux_sys_truncate64(const char *path, \
+			    off_t length); }
+194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, \
+			    off_t length); }
+195	STD		{ int linux_sys_stat64(const char *path, \
+			    struct linux_stat64 *sp); }
+196	STD		{ int linux_sys_lstat64(const char *path, \
+			    struct linux_stat64 *sp); }
+197	STD		{ int linux_sys_fstat64(int fd, \
+			    struct linux_stat64 *sp); }
 198	UNIMPL		sys_pciconfig_read  
 199	UNIMPL		sys_pciconfig_write
 200	UNIMPL		sys_pciconfig_iobase
 201	UNIMPL		/* Unused (MacOnLinux project) */
-202	UNIMPL		sys_getdents64
+202	STD		{ int linux_sys_getdents64(int fd, \
+			    struct linux_dirent64 *dent, unsigned int count); }
 203	UNIMPL		pivot_root
-204	UNIMPL		fcntl64
+204	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
 205	UNIMPL		madvise
 206	UNIMPL		mincore

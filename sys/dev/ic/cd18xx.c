@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.2.2.2 2002/01/10 19:54:18 thorpej Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.2.2.3 2002/06/23 17:46:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.2.2.2 2002/01/10 19:54:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.2.2.3 2002/06/23 17:46:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -614,11 +614,11 @@ cdttyioctl(dev, cmd, data, flag, p)
 	int error, s;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	s = splserial();
@@ -656,7 +656,7 @@ cdttyioctl(dev, cmd, data, flag, p)
 	case TIOCMBIC:
 	case TIOCMGET:
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: llscan.c,v 1.6.2.1 2002/01/10 20:03:59 thorpej Exp $	*/
+/*	$NetBSD: llscan.c,v 1.6.2.2 2002/06/23 17:51:38 jdolecek Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.6.2.1 2002/01/10 20:03:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.6.2.2 2002/06/23 17:51:38 jdolecek Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -394,7 +394,7 @@ again:
 			getstr('"', '"');
 			TVAL.FSTRING.address = stash(buffer[currentbuf]);
 			break;
-#endif T_FSTRING
+#endif /* T_FSTRING */
 
 		case '(':
 			t->llterm = T_PREDICATE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.11.8.1 2002/01/10 20:02:20 thorpej Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.11.8.2 2002/06/23 17:50:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.11.8.1 2002/01/10 20:02:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.11.8.2 2002/06/23 17:50:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.11.8.1 2002/01/10 20:02:20 thorpej Exp 
  *	take care of unique address problems per AF?
  *	redo address binding to allow wildcards
  */
+
+struct	rawcbhead rawcb = LIST_HEAD_INITIALIZER(rawcb);
 
 u_long	raw_sendspace = RAWSNDQ;
 u_long	raw_recvspace = RAWRCVQ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.54.2.2 2002/01/10 20:05:41 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.54.2.3 2002/06/23 17:52:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.54.2.2 2002/01/10 20:05:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.54.2.3 2002/06/23 17:52:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ sys_mincore(p, v, retval)
 /*
  * sys_mmap: mmap system call.
  *
- * => file offest and address may not be page aligned
+ * => file offset and address may not be page aligned
  *    - if MAP_FIXED, offset and address must have remainder mod PAGE_SIZE
  *    - if address isn't page aligned the mapping starts at trunc_page(addr)
  *      and the return value is adjusted up by the page offset.
@@ -340,11 +340,11 @@ sys_mmap(p, v, retval)
 
 		if (VM_MAXUSER_ADDRESS > 0 &&
 		    (addr + size) > VM_MAXUSER_ADDRESS)
-			return (EINVAL);
+			return (EFBIG);
 		if (vm_min_address > 0 && addr < vm_min_address)
 			return (EINVAL);
 		if (addr > addr + size)
-			return (EINVAL);		/* no wrapping! */
+			return (EOVERFLOW);		/* no wrapping! */
 
 	} else {
 

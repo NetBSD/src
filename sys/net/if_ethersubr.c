@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.86.2.3 2002/03/16 16:02:04 jdolecek Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.86.2.4 2002/06/23 17:50:23 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.86.2.3 2002/03/16 16:02:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.86.2.4 2002/06/23 17:50:23 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.86.2.3 2002/03/16 16:02:04 jdolec
 #include "pppoe.h"
 #include "bridge.h"
 #include "bpfilter.h"
+#include "arp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +101,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.86.2.3 2002/03/16 16:02:04 jdolec
 #include <net/if_llc.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
+#if NARP == 0
+/*
+ * XXX there should realy be a way to issue this warning from within config(8)
+ */
+#error You have included a pseudo-device in your configuration that depends on the presence of ethernet interfaces, but have no such interfaces configured. Check if you realy need pseudo-device bridge, ppppoe or vlan.
+#endif
 
 #if NBPFILTER > 0 
 #include <net/bpf.h>
@@ -587,12 +595,15 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 		break;
 	}
 
+	while (m->m_len <= hlen) {
+		hlen -= m->m_len;
+		m = m->m_next;
+	}
 	if (m->m_len < (hlen + hdrsize)) {
 		/*
-		 * Ethernet and protocol header not in a single
-		 * mbuf.  We can't cope with this situation right
+		 * protocol header not in a single mbuf.
+		 * We can't cope with this situation right
 		 * now (but it shouldn't ever happen, really, anyhow).
-		 * XXX Should use m_pulldown().
 		 */
 #ifdef DEBUG
 		printf("altq_etherclassify: headers span multiple mbufs: "
@@ -1031,7 +1042,7 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 
 	ifp->if_type = IFT_ETHER;
 	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = 14;
+	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;

@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.1.2.4 2002/01/10 19:56:13 thorpej Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.1.2.5 2002/06/23 17:47:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.1.2.4 2002/01/10 19:56:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.1.2.5 2002/06/23 17:47:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ glxtphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &glxtphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);

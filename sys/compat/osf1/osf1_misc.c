@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.64.2.2 2002/01/10 19:52:03 thorpej Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.64.2.3 2002/06/23 17:44:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.64.2.2 2002/01/10 19:52:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.64.2.3 2002/06/23 17:44:37 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -190,7 +190,7 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 		break;
 	case OSF_GET_IEEE_FP_CONTROL:
 		if (((fpflags = alpha_read_fp_c(p)) & IEEE_INHERIT) != 0) {
-			fpflags |= 1UL << 63;
+			fpflags |= 1ULL << 63;
 			fpflags &= ~IEEE_INHERIT;
 		}
 		error = copyout(&fpflags, SCARG(uap, buffer), sizeof fpflags);
@@ -202,7 +202,11 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 			error = EINVAL;
 		else {
 			memset(&cpuinfo, 0, sizeof(cpuinfo));
+#ifdef __alpha__
 			unit = alpha_pal_whami();
+#else
+			unit = 0; /* XXX */
+#endif
 			cpuinfo.current_cpu = unit;
 			cpuinfo.cpus_in_box = ncpus;
 			cpuinfo.cpu_type = 
@@ -222,8 +226,12 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 		if(SCARG(uap, nbytes) < sizeof(proctype))
 			error = EINVAL;
 		else {
+#ifdef __alpha__
 			unit = alpha_pal_whami();
 			proctype = LOCATE_PCS(hwrpb, unit)->pcs_proc_type;
+#else
+			proctype = 0;	/* XXX */
+#endif
 			error = copyout (&proctype, SCARG(uap, buffer),
 			    sizeof(percpu));
 			retval[0] = 1;
@@ -455,8 +463,8 @@ osf1_sys_wait4(p, v, retval)
 	if (SCARG(uap, rusage) == NULL)
 		SCARG(&a, rusage) = NULL;
 	else {
-		sg = stackgap_init(p->p_emul);
-		SCARG(&a, rusage) = stackgap_alloc(&sg, sizeof netbsd_rusage);
+		sg = stackgap_init(p, 0);
+		SCARG(&a, rusage) = stackgap_alloc(p, &sg, sizeof netbsd_rusage);
 	}
 
 	error = sys_wait4(p, &a, retval);

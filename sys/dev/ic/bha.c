@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.44.2.3 2002/01/10 19:54:16 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.44.2.4 2002/06/23 17:46:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.44.2.3 2002/01/10 19:54:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.44.2.4 2002/06/23 17:46:14 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -1524,7 +1524,7 @@ bha_start_ccbs(sc)
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
 			callout_reset(&ccb->xs->xs_callout,
-			    (ccb->timeout * hz) / 1000, bha_timeout, ccb);
+			    mstohz(ccb->timeout), bha_timeout, ccb);
 
 		++sc->sc_mbofull;
 		mbo = bha_nextmbo(sc, mbo);

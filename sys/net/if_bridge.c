@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.2.4.4 2002/03/16 16:02:04 jdolecek Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.2.4.5 2002/06/23 17:50:22 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.4.4 2002/03/16 16:02:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.4.5 2002/06/23 17:50:22 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -349,7 +349,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = bridge_start;
 	ifp->if_stop = bridge_stop;
 	ifp->if_init = bridge_init;
-	ifp->if_type = IFT_PROPVIRTUAL;	/* XXX IFT_BRIDGE */
+	ifp->if_type = IFT_BRIDGE;
 	ifp->if_addrlen = 0;
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
@@ -556,6 +556,9 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	if (ifs == NULL)
 		return (ENOENT);
 
+	if (sc->sc_if.if_mtu != ifs->if_mtu)
+		return (EINVAL);
+
 	if (ifs->if_bridge == sc)
 		return (EEXIST);
 
@@ -577,7 +580,8 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		break;
 
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 
 	bif->bif_ifp = ifs;

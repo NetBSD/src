@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.4.4.2 2002/02/11 20:09:49 jdolecek Exp $	*/
+/*	$NetBSD: wivar.h,v 1.4.4.3 2002/06/23 17:46:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -48,8 +48,13 @@ struct wi_softc	{
 
 	int sc_attached;
 	int sc_enabled;
-	int sc_prism2;
-	int sc_prism2_ver;
+	int sc_firmware_type;
+#define	WI_NOTYPE	0
+#define	WI_LUCENT	1
+#define	WI_INTERSIL	2
+#define	WI_SYMBOL	3
+	int sc_pri_firmware_ver;	/* Primary firmware version */
+	int sc_sta_firmware_ver;	/* Station firmware version */
 	int sc_pci;			/* attach to PCI-Bus */
 
 	bus_space_tag_t		sc_iot;	/* bus cookie */
@@ -94,10 +99,15 @@ struct wi_softc	{
 	int			wi_scanning;	/* scan mode */
 };
 
+struct wi_card_ident {
+	u_int16_t	card_id;
+	char		*card_name;
+	u_int8_t	firm_type;
+};
+
 int	wi_attach __P((struct wi_softc *));
 int	wi_detach __P((struct wi_softc *));
 int	wi_activate __P((struct device *, enum devact));
 int	wi_intr __P((void *arg));
 void	wi_power __P((struct wi_softc *, int));
 void	wi_shutdown __P((struct wi_softc *));
-void	wi_pci_reset __P((struct wi_softc *));

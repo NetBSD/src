@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.2.2.1 2002/01/10 19:54:37 thorpej Exp $ 
+ *	$Id: isic.c,v 1.2.2.2 2002/06/23 17:46:32 jdolecek Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.2.2.1 2002/01/10 19:54:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.2.2.2 2002/06/23 17:46:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -51,14 +51,36 @@ __KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.2.2.1 2002/01/10 19:54:37 thorpej Exp $")
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_mbuf.h>
+#include <netisdn/i4b_global.h>
+
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/ipac.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
 
-#include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_mbuf.h>
-#include <netisdn/i4b_global.h>
+isdn_link_t *isic_ret_linktab(void*, int channel);
+void isic_set_link(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
+void n_connect_request(struct call_desc *cd);
+void n_connect_response(struct call_desc *cd, int response, int cause);
+void n_disconnect_request(struct call_desc *cd, int cause);
+void n_alert_request(struct call_desc *cd);
+void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
+
+const struct isdn_l3_driver_functions
+isic_l3_driver = {
+	isic_ret_linktab,
+	isic_set_link,
+	n_connect_request,
+	n_connect_response,
+	n_disconnect_request,
+	n_alert_request,
+	NULL,
+	NULL,
+	n_mgmt_command
+};
 
 /*---------------------------------------------------------------------------*
  *	isic - device driver interrupt routine
@@ -66,8 +88,12 @@ __KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.2.2.1 2002/01/10 19:54:37 thorpej Exp $")
 int
 isicintr(void *arg)
 {
-	struct l1_softc *sc = arg;
-	
+	struct isic_softc *sc = arg;
+
+	/* could this be an interrupt for us? */
+	if (sc->sc_intr_valid == ISIC_INTR_DYING)
+		return 0;	/* do not touch removed hardware */
+
 	if(sc->sc_ipac == 0)	/* HSCX/ISAC interupt routine */
 	{
 		u_char was_hscx_irq = 0;
@@ -110,7 +136,8 @@ isicintr(void *arg)
 	
 			if(isac_irq_stat)
 			{
-				isic_isac_irq(sc, isac_irq_stat); /* isac handler */
+				/* isac handler */
+				isic_isac_irq(sc, isac_irq_stat);
 				was_isac_irq = 1;
 			}
 		}
@@ -163,13 +190,18 @@ isicintr(void *arg)
 			}
 			if(ipac_irq_stat & IPAC_ISTA_ICD)
 			{
-				/* ISAC interrupt */
-				isic_isac_irq(sc, ISAC_READ(I_ISTA));
+				/* ISAC interrupt, Obey ISAC-IPAC differences */
+				u_int8_t isac_ista = ISAC_READ(I_ISTA);
+				if (isac_ista & 0xfe)
+					isic_isac_irq(sc, isac_ista & 0xfe);
+				if (isac_ista & 0x01) /* unexpected */
+					printf("%s: unexpected ipac timer2 irq\n", 
+					    sc->sc_dev.dv_xname);
 				was_ipac_irq = 1;
 			}
 			if(ipac_irq_stat & IPAC_ISTA_EXD)
 			{
-				/* force ISAC interrupt handling */
+				/* ISAC EXI interrupt */
 				isic_isac_irq(sc, ISAC_ISTA_EXI);
 				was_ipac_irq = 1;
 			}
@@ -179,69 +211,41 @@ isicintr(void *arg)
 				break;
 		}
 
+#if 0
+		/*
+		 * This seems not to be necessary on IPACs - no idea why
+		 * it is here - but due to limit range of test cards, leave
+		 * it in for now, in case we have to resurrect it.
+		 */
 		IPAC_WRITE(IPAC_MASK, 0xff);
 		DELAY(50);
 		IPAC_WRITE(IPAC_MASK, 0xc0);
+#endif
 
 		return(was_ipac_irq);
 	}		
 }
 
-/*---------------------------------------------------------------------------*
- *	isic_recovery - try to recover from irq lockup
- *---------------------------------------------------------------------------*/
-void
-isic_recover(struct l1_softc *sc)
+int
+isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_bri_driver *dchan_driver)
 {
-	u_char byte;
-	
-	/* get hscx irq status from hscx b ista */
+	struct isdn_l3_driver * drv;
 
-	byte = HSCX_READ(HSCX_CH_B, H_ISTA);
+	drv = isdn_attach_bri(sc->sc_dev.dv_xname, cardname, &sc->sc_l2, &isic_l3_driver);
+	sc->sc_l3token = drv;
+	sc->sc_l2.driver = dchan_driver;
+	sc->sc_l2.l1_token = sc;
+	sc->sc_l2.drv = drv;
+	isdn_layer2_status_ind(&sc->sc_l2, drv, STI_ATTACH, 1);
+	isdn_bri_ready(drv->bri);
+	return 1;
+}
 
-	NDBGL1(L1_ERROR, "HSCX B: ISTA = 0x%x", byte);
-
-	if(byte & HSCX_ISTA_ICA)
-		NDBGL1(L1_ERROR, "HSCX A: ISTA = 0x%x", (u_char)HSCX_READ(HSCX_CH_A, H_ISTA));
-
-	if(byte & HSCX_ISTA_EXB)
-		NDBGL1(L1_ERROR, "HSCX B: EXIR = 0x%x", (u_char)HSCX_READ(HSCX_CH_B, H_EXIR));
-
-	if(byte & HSCX_ISTA_EXA)
-		NDBGL1(L1_ERROR, "HSCX A: EXIR = 0x%x", (u_char)HSCX_READ(HSCX_CH_A, H_EXIR));
-
-	/* get isac irq status */
-
-	byte = ISAC_READ(I_ISTA);
-
-	NDBGL1(L1_ERROR, "  ISAC: ISTA = 0x%x", byte);
-	
-	if(byte & ISAC_ISTA_EXI)
-		NDBGL1(L1_ERROR, "  ISAC: EXIR = 0x%x", (u_char)ISAC_READ(I_EXIR));
-
-	if(byte & ISAC_ISTA_CISQ)
-	{
-		byte = ISAC_READ(I_CIRR);
-	
-		NDBGL1(L1_ERROR, "  ISAC: CISQ = 0x%x", byte);
-		
-		if(byte & ISAC_CIRR_SQC)
-			NDBGL1(L1_ERROR, "  ISAC: SQRR = 0x%x", (u_char)ISAC_READ(I_SQRR));
-	}
-
-	NDBGL1(L1_ERROR, "HSCX B: IMASK = 0x%x", HSCX_B_IMASK);
-	NDBGL1(L1_ERROR, "HSCX A: IMASK = 0x%x", HSCX_A_IMASK);
-
-	HSCX_WRITE(0, H_MASK, 0xff);
-	HSCX_WRITE(1, H_MASK, 0xff);
-	DELAY(100);	
-	HSCX_WRITE(0, H_MASK, HSCX_A_IMASK);
-	HSCX_WRITE(1, H_MASK, HSCX_B_IMASK);
-	DELAY(100);
-
-	NDBGL1(L1_ERROR, "  ISAC: IMASK = 0x%x", ISAC_IMASK);
-
-	ISAC_WRITE(I_MASK, 0xff);	
-	DELAY(100);
-	ISAC_WRITE(I_MASK, ISAC_IMASK);
+int
+isic_detach_bri(struct isic_softc *sc)
+{
+	isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_ATTACH, 0);
+	isdn_detach_bri(sc->sc_l3token);
+	sc->sc_l3token = NULL;
+	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.20.2.1 2002/01/10 19:52:27 thorpej Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.20.2.2 2002/06/23 17:44:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.20.2.1 2002/01/10 19:52:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.20.2.2 2002/06/23 17:44:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,7 @@ ultrix_sys_mount(p, v, retval)
 	struct sys_mount_args nuap;
 	char *native_fstype;
 
-	caddr_t usp = stackgap_init(p->p_emul);
+	caddr_t usp = stackgap_init(p, 0);
 
 	memset(&nuap, 0, sizeof(nuap));
 	SCARG(&nuap, flags) = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.3.4.3 2002/03/16 16:00:27 jdolecek Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.3.4.4 2002/06/23 17:43:56 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.3.4.3 2002/03/16 16:00:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.3.4.4 2002/06/23 17:43:56 jdolecek Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -139,10 +139,10 @@ irix_sys_xstat(p, v, retval)
 	} */ *uap = v;
 	struct sys___stat13_args cup;
 	struct stat st;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int error;
 
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
+	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -196,10 +196,10 @@ irix_sys_lxstat(p, v, retval)
 	} */ *uap = v;
 	struct sys___lstat13_args cup;
 	struct stat st;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int error;
 
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
+	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -254,9 +254,9 @@ irix_sys_fxstat(p, v, retval)
 	struct sys___fstat13_args cup;
 	struct stat st;
 	int error;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
-	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(struct stat));
+	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 	SCARG(&cup, fd) = SCARG(uap, fd);
 
 	if ((error = sys___fstat13(p, &cup, retval)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.28 2001/03/08 03:22:28 enami Exp $	*/
+/*	$NetBSD: route.h,v 1.28.2.1 2002/06/23 17:50:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -276,9 +276,9 @@ do { \
 		(rt)->rt_refcnt--; \
 } while (0)
 
-struct	route_cb route_cb;
-struct	rtstat	rtstat;
-struct	radix_node_head *rt_tables[AF_MAX+1];
+extern	struct	route_cb route_cb;
+extern	struct	rtstat	rtstat;
+extern	struct	radix_node_head *rt_tables[AF_MAX+1];
 
 struct socket;
 

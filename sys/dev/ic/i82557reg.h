@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.10 2001/06/02 01:04:01 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.10.2.1 2002/06/23 17:46:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -293,6 +293,14 @@ struct fxp_cb_mcs {
 	volatile u_int8_t mc_addr[MAXMCADDR][6];
 };
 
+#define	MAXUCODESIZE		192
+struct fxp_cb_ucode {
+	volatile u_int16_t cb_status;
+	volatile u_int16_t cb_command;
+	volatile u_int32_t link_addr;
+	volatile u_int32_t ucode[MAXUCODESIZE];
+};
+
 /*
  * Transmit command.
  */
@@ -333,7 +341,7 @@ struct fxp_tbd {
 #define FXP_CB_COMMAND_CONFIG	0x2
 #define FXP_CB_COMMAND_MCAS	0x3
 #define FXP_CB_COMMAND_XMIT	0x4
-#define FXP_CB_COMMAND_RESRV	0x5
+#define FXP_CB_COMMAND_UCODE	0x5
 #define FXP_CB_COMMAND_DUMP	0x6
 #define FXP_CB_COMMAND_DIAG	0x7
 

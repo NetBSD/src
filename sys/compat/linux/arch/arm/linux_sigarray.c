@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.1.2.2 2002/02/11 20:09:31 jdolecek Exp $	*/
+/*	$NetBSD: linux_sigarray.c,v 1.1.2.3 2002/06/23 17:44:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -36,17 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigarray.c,v 1.1.2.2 2002/02/11 20:09:31 jdolecek Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_sigarray.c,v 1.1.2.3 2002/06/23 17:44:04 jdolecek Exp $");
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/signal.h>
-
-#include <compat/linux/common/linux_signal.h>
-
-int const linux_to_native_sig[LINUX__NSIG] = {
+const int linux_to_native_signo[LINUX__NSIG] = {
 	0,
 	SIGHUP,
 	SIGINT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.2.2.5 2002/02/11 20:09:53 jdolecek Exp $	*/
+/*	$NetBSD: makphy.c,v 1.2.2.6 2002/06/23 17:47:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.2.2.5 2002/02/11 20:09:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.2.2.6 2002/06/23 17:47:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ makphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &makphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);

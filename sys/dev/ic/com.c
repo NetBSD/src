@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.186.2.3 2002/01/10 19:54:19 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.186.2.4 2002/06/23 17:46:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.186.2.3 2002/01/10 19:54:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.186.2.4 2002/06/23 17:46:16 jdolecek Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -660,6 +660,15 @@ com_detach(self, flags)
 	mn |= COMDIALOUT_MASK;
 	vdevgone(maj, mn, mn, VCHR);
 
+	if (sc->sc_rbuf == NULL) {
+		/*
+		 * Ring buffer allocation failed in the com_attach_subr,
+		 * only the tty is allocated, and nothing else.
+		 */
+		ttyfree(sc->sc_tty);
+		return 0;
+	}
+	
 	/* Free the receive buffer. */
 	free(sc->sc_rbuf, M_DEVBUF);
 
@@ -1024,11 +1033,11 @@ comioctl(dev, cmd, data, flag, p)
 		return (EIO);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
@@ -1172,7 +1181,7 @@ comioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 
@@ -1725,7 +1734,7 @@ comstart(tp)
 	}
 
 	/* Output the first chunk of the contiguous buffer. */
-	{
+	if (!ISSET(sc->sc_hwflags, COM_HW_NO_TXPRELOAD)) {
 		int n;
 
 		n = sc->sc_tbc;

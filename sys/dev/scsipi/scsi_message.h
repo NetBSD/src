@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_message.h,v 1.5.2.1 2002/01/10 19:58:20 thorpej Exp $	*/
+/*	$NetBSD: scsi_message.h,v 1.5.2.2 2002/06/23 17:48:46 jdolecek Exp $	*/
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
@@ -43,6 +43,24 @@
 #define MSG_EXT_WDTR_BUS_8_BIT	0x00
 #define MSG_EXT_WDTR_BUS_16_BIT	0x01
 #define MSG_EXT_WDTR_BUS_32_BIT	0x02 
+
+#define MSG_EXT_PPR		0x04
+#define MSG_EXT_PPR_LEN		0x06
+/*
+ * Offsets:	0x3: transfer period factor
+ * 		0x4: reserved
+ * 		0x5: REQ/ACK offset
+ *		0x6: transfer width exponent
+ *		0x7: flags
+ */
+#define MSG_EXT_PPR_IU		0x01
+#define MSG_EXT_PPR_DT		0x02
+#define MSG_EXT_PPR_QAS		0x04
+#define MSG_EXT_PPR_HOLDMCS	0x08
+#define MSG_EXT_PPR_WRFLOW	0x10
+#define MSG_EXT_PPR_RDSTRM	0x20
+#define MSG_EXT_PPR_RTI		0x40
+#define MSG_EXT_PPR_PCOM	0x80
 
 #define MSG_ISEXTENDED(m)	((m) == MSG_EXTENDED)
 

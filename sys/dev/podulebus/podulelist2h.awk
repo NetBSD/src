@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: podulelist2h.awk,v 1.1 2001/03/17 19:05:19 bjh21 Exp $
+#	$NetBSD: podulelist2h.awk,v 1.1.4.1 2002/06/23 17:48:29 jdolecek Exp $
 #	from: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp
 #
 # Copyright (c) 1996 Mark Brinicombe
@@ -107,13 +107,12 @@ $1 == "manufacturer" {
 $1 == "podule" {
 	npodules++
 
-	podules[npodules, 1] = $2;		# vendor name
-	podules[npodules, 2] = $3;		# podule id
-	podules[npodules, 3] = $4;		# id
-	printf("#define\tPODULE_%s_%s\t%s\t", podules[npodules, 1],
-	    podules[npodules, 2], podules[npodules, 3]) > hfile
+	podules[npodules, 1] = $2;		# podule id
+	podules[npodules, 2] = $3;		# id
+	printf("#define\tPODULE_%s\t%s\t",
+	    podules[npodules, 1], podules[npodules, 2]) > hfile
 
-	i=4; f = 5;
+	i=3; f = 4;
 
 	# comments
 	ocomment = oparen = 0
@@ -161,34 +160,27 @@ END {
 
 	printf("\n") > dfile
 
-	for (i = 1; i <= nvendors; i++) {
-		printf("static struct podule_description podules_%s[] = {\n", \
-		    tolower(vendors[i, 1])) > dfile
-		for (j = 1; j <= npodules; j++) {
-			if (podules[j, 1] != vendors[i, 1]) continue
-			printf("\t{ PODULE_%s_%s,",
-			    podules[j, 1], podules[j, 2]) \
-			    > dfile
-	
-			printf("\t\"") > dfile
-			k = 4;
-			needspace = 0;
-			while (podules[j, k] != "") {
-				if (needspace)
-					printf(" ") > dfile
-				printf("%s", podules[j, k]) > dfile
-				needspace = 1
-				k++
-			}
-			printf("\" },\n") > dfile
+	printf("static struct podule_description known_podules[] = {\n") > dfile
+	for (j = 1; j <= npodules; j++) {
+		printf("\t{ PODULE_%s,", podules[j, 1]) > dfile
+		printf("\t\"") > dfile
+		k = 3;
+		needspace = 0;
+		while (podules[j, k] != "") {
+			if (needspace)
+				printf(" ") > dfile
+			printf("%s", podules[j, k]) > dfile
+			needspace = 1
+			k++
 		}
-		printf("\t{ 0x0000, NULL }\n") > dfile
-		printf("};\n\n") > dfile
+		printf("\" },\n") > dfile
 	}
+	printf("\t{ 0x0000, NULL }\n") > dfile
+	printf("};\n\n") > dfile
 
 	printf("\n") > dfile
 
-	printf("struct podule_list known_podules[] = {\n") > dfile
+	printf("struct manufacturer_description known_manufacturers[] = {\n") > dfile
 	for (i = 1; i <= nvendors; i++) {
 		printf("\t{ MANUFACTURER_%s, \t", vendors[i, 1]) > dfile
 		if (length(vendors[i, 1]) < 7)
@@ -203,8 +195,8 @@ END {
 			needspace = 1
 			j++
 		}
-		printf("\", \tpodules_%s },\n", tolower(vendors[i, 1])) > dfile
+		printf("\" },\n") > dfile
 	}
-	printf("\t{ 0, NULL, NULL }\n") > dfile
+	printf("\t{ 0, NULL }\n") > dfile
 	printf("};\n") > dfile
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_ofisa.c,v 1.1.26.2 2002/02/11 20:09:54 jdolecek Exp $	*/
+/*	$NetBSD: joy_ofisa.c,v 1.1.26.3 2002/06/23 17:47:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.1.26.2 2002/02/11 20:09:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.1.26.3 2002/06/23 17:47:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ joy_ofisa_match(parent, match, aux)
 	void *aux;
 {
 	struct ofisa_attach_args *aa = aux;
-	const char *compatible_strings[] = {
+	static const char *const compatible_strings[] = {
 		"pnpPNP,b02f",			/* generic joystick */
 		NULL,
 	};

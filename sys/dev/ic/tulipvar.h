@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.45 2001/05/01 16:42:12 lukem Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.45.2.1 2002/06/23 17:46:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -477,11 +477,9 @@ struct tulip_softc {
 #define	TULIP_IS_ENABLED(sc)	((sc)->sc_flags & TULIPF_ENABLED)
 
 /*
- * This macro returns the current media entry for *non-MII* media.
+ * This macro returns the current media entry.
  */
-#define	TULIP_CURRENT_MEDIA(sc)						\
-	(IFM_SUBTYPE((sc)->sc_mii.mii_media.ifm_cur->ifm_media) != IFM_AUTO ? \
-	 (sc)->sc_mii.mii_media.ifm_cur : (sc)->sc_nway_active)
+#define	TULIP_CURRENT_MEDIA(sc) ((sc)->sc_mii.mii_media.ifm_cur)
 
 /*
  * This macro determines if a change to media-related OPMODE bits requires
@@ -603,9 +601,15 @@ int	tlp_srom_crcok __P((const u_int8_t *));
 int	tlp_isv_srom __P((const u_int8_t *));
 int	tlp_isv_srom_enaddr __P((struct tulip_softc *, u_int8_t *));
 int	tlp_parse_old_srom __P((struct tulip_softc *, u_int8_t *));
+void	tlp_reset __P((struct tulip_softc *));
 
 int	tlp_mediachange __P((struct ifnet *));
 void	tlp_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
+void	tlp_21140_gpio_get __P((struct tulip_softc *sc,
+	    struct ifmediareq *ifmr));
+int	tlp_21140_gpio_set __P((struct tulip_softc *sc));
+
 #endif /* _KERNEL */
 
 #endif /* _DEV_IC_TULIPVAR_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.2.2 2002/03/16 16:02:00 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.16.2.3 2002/06/23 17:49:55 jdolecek Exp $
 
 COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"
@@ -18,7 +18,7 @@ KMOD=	compat_linux
 SRCS+=	lkminit_emul.c
 SRCS+=	linux_cdrom.c linux_errno.c linux_exec.c linux_file.c \
 	linux_ioctl.c linux_ipc.c linux_misc.c linux_pipe.c \
-	linux_sched.c linux_sigaction.c linux_sigarray.c linux_signal.c \
+	linux_sched.c linux_sigaction.c linux_signal.c linux_signo.c \
 	linux_socket.c linux_termios.c linux_time.c linux_uselib.c
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c
 SRCS+=	linux_fdio.c linux_hdio.c linux_blkio.c linux_sysctl.c
@@ -47,6 +47,14 @@ SRCS+=	linux_sig_machdep.S
 CPPFLAGS+=	-Dalpha
 SRCS+=	linux_olduname.c linux_syscall.c
 SRCS+=	linux_sigcode.s
+.endif
+
+.if ${MACHINE_ARCH} == "powerpc"
+CPPFLAGS+=	-Dpowerpc
+SRCS+=	linux_ipccall.c linux_misc_notalpha.c linux_sig_notalpha.c	\
+	linux_socketcall.c linux_llseek.c linux_olduname.c linux_file64.c
+SRCS+=	linux_ptrace.c linux_exec_powerpc.c linux_sp_wrap_powerpc.S
+SRCS+=	linux_sigcode.S linux_trap.c
 .endif
 
 .include <bsd.kmod.mk>

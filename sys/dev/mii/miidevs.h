@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.23.2.6 2002/03/16 16:01:11 jdolecek Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.23.2.7 2002/06/23 17:47:25 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.34 2002/02/10 17:08:24 wiz Exp 
+ *	NetBSD: miidevs,v 1.37 2002/05/15 22:48:17 matt Exp 
  */
 
 /*-
@@ -100,6 +100,7 @@
 /* Don't know what's going on here. */
 #define	MII_OUI_xxDAVICOM	0x000602	/* Davicom Semiconductor */
 #define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
+#define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
 
 #define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
 
@@ -169,6 +170,8 @@
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 media interface"
+#define	MII_MODEL_LEVEL1_LXT971	0x000e
+#define	MII_STR_LEVEL1_LXT971	"LXT971 10/100 media interface"
 #define	MII_MODEL_LEVEL1_LXT1000_OLD	0x0003
 #define	MII_STR_LEVEL1_LXT1000_OLD	"LXT1000 1000BASE-T media interface"
 #define	MII_MODEL_LEVEL1_LXT1000	0x000c
@@ -199,6 +202,12 @@
 /* PMC Sierra PHYs */
 #define	MII_MODEL_xxPMCSIERRA_PM8351	0x0000
 #define	MII_STR_xxPMCSIERRA_PM8351	"PM8351 OctalPHY Gigabit interface"
+#define	MII_MODEL_xxPMCSIERRA2_PM8352	0x0002
+#define	MII_STR_xxPMCSIERRA2_PM8352	"PM8352 OctalPHY Gigabit interface"
+#define	MII_MODEL_xxPMCSIERRA2_PM8353	0x0003
+#define	MII_STR_xxPMCSIERRA2_PM8353	"PM8353 QuadPHY Gigabit interface"
+#define	MII_MODEL_PMCSIERRA_PM8354	0x0004
+#define	MII_STR_PMCSIERRA_PM8354	"PM8354 QuadPHY Gigabit interface"
 
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_xxQUALSEMI_QS6612	0x0000

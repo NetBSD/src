@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.7.2.2 2002/03/16 16:01:29 jdolecek Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.7.2.3 2002/06/23 17:48:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.7.2.2 2002/03/16 16:01:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.7.2.3 2002/06/23 17:48:39 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -185,7 +185,7 @@ leattach_lebuffer(parent, self, aux)
 			 sa->sa_slot,
 			 sa->sa_offset,
 			 sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR, &lesc->sc_reg)) {
+			 0, &lesc->sc_reg)) {
 		printf("%s @ lebuffer: cannot map registers\n", self->dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.35.2.4 2002/03/16 16:02:02 jdolecek Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.35.2.5 2002/06/23 17:50:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.4 2002/03/16 16:02:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.5 2002/06/23 17:50:09 jdolecek Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -66,11 +66,15 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.35.2.4 2002/03/16 16:02:02 jdolece
 #include <nfs/nfs_var.h>
 #endif
 
+static __inline void genfs_rel_pages(struct vm_page **, int);
+
 #define MAX_READ_AHEAD	16 	/* XXXUBC 16 */
+int genfs_rapages = MAX_READ_AHEAD; /* # of pages in each chunk of readahead */
+int genfs_racount = 2;		/* # of page chunks to readahead */
+int genfs_raskip = 2;		/* # of busy page chunks allowed to skip */
 
 int
-genfs_poll(v)
-	void *v;
+genfs_poll(void *v)
 {
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
@@ -82,8 +86,7 @@ genfs_poll(v)
 }
 
 int
-genfs_fsync(v)
-	void *v;
+genfs_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -105,8 +108,7 @@ genfs_fsync(v)
 }
 
 int
-genfs_seek(v)
-	void *v;
+genfs_seek(void *v)
 {
 	struct vop_seek_args /* {
 		struct vnode *a_vp;
@@ -122,22 +124,20 @@ genfs_seek(v)
 }
 
 int
-genfs_abortop(v)
-	void *v;
+genfs_abortop(void *v)
 {
 	struct vop_abortop_args /* {
 		struct vnode *a_dvp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
- 
+
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
 		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 	return (0);
 }
 
 int
-genfs_fcntl(v)
-	void *v;
+genfs_fcntl(void *v)
 {
 	struct vop_fcntl_args /* {
 		struct vnode *a_vp;
@@ -156,8 +156,7 @@ genfs_fcntl(v)
 
 /*ARGSUSED*/
 int
-genfs_badop(v)
-	void *v;
+genfs_badop(void *v)
 {
 
 	panic("genfs: bad op");
@@ -165,8 +164,7 @@ genfs_badop(v)
 
 /*ARGSUSED*/
 int
-genfs_nullop(v)
-	void *v;
+genfs_nullop(void *v)
 {
 
 	return (0);
@@ -174,8 +172,7 @@ genfs_nullop(v)
 
 /*ARGSUSED*/
 int
-genfs_einval(v)
-	void *v;
+genfs_einval(void *v)
 {
 
 	return (EINVAL);
@@ -183,8 +180,7 @@ genfs_einval(v)
 
 /*ARGSUSED*/
 int
-genfs_eopnotsupp(v)
-	void *v;
+genfs_eopnotsupp(void *v)
 {
 
 	return (EOPNOTSUPP);
@@ -195,12 +191,11 @@ genfs_eopnotsupp(v)
  * vrele, vput, or vunlock passed in vnodes.
  */
 int
-genfs_eopnotsupp_rele(v)
-	void *v;
+genfs_eopnotsupp_rele(void *v)
 {
 	struct vop_generic_args /*
 		struct vnodeop_desc *a_desc;
-		/ * other random data follows, presumably * / 
+		/ * other random data follows, presumably * /
 	} */ *ap = v;
 	struct vnodeop_desc *desc = ap->a_desc;
 	struct vnode *vp;
@@ -211,7 +206,7 @@ genfs_eopnotsupp_rele(v)
 		if ((offset = desc->vdesc_vp_offsets[i]) == VDESC_NO_OFFSET)
 			break;	/* stop at end of list */
 		if ((j = flags & VDESC_VP0_WILLPUT)) {
-			vp = *VOPARG_OFFSETTO(struct vnode**,offset,ap);
+			vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
 			switch (j) {
 			case VDESC_VP0_WILLPUT:
 				vput(vp);
@@ -231,8 +226,7 @@ genfs_eopnotsupp_rele(v)
 
 /*ARGSUSED*/
 int
-genfs_ebadf(v)
-	void *v;
+genfs_ebadf(void *v)
 {
 
 	return (EBADF);
@@ -240,11 +234,10 @@ genfs_ebadf(v)
 
 /* ARGSUSED */
 int
-genfs_enoioctl(v)
-	void *v;
+genfs_enoioctl(void *v)
 {
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 
@@ -253,8 +246,7 @@ genfs_enoioctl(v)
  * and with all vnodes aliased to the requested vnode.
  */
 int
-genfs_revoke(v)
-	void *v;
+genfs_revoke(void *v)
 {
 	struct vop_revoke_args /* {
 		struct vnode *a_vp;
@@ -317,8 +309,7 @@ genfs_revoke(v)
  * Lock the node.
  */
 int
-genfs_lock(v)
-	void *v;
+genfs_lock(void *v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
@@ -333,8 +324,7 @@ genfs_lock(v)
  * Unlock the node.
  */
 int
-genfs_unlock(v)
-	void *v;
+genfs_unlock(void *v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
@@ -343,15 +333,14 @@ genfs_unlock(v)
 	struct vnode *vp = ap->a_vp;
 
 	return (lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE,
-		&vp->v_interlock));
+	    &vp->v_interlock));
 }
 
 /*
  * Return whether or not the node is locked.
  */
 int
-genfs_islocked(v)
-	void *v;
+genfs_islocked(void *v)
 {
 	struct vop_islocked_args /* {
 		struct vnode *a_vp;
@@ -365,8 +354,7 @@ genfs_islocked(v)
  * Stubs to use when there is no locking to be done on the underlying object.
  */
 int
-genfs_nolock(v)
-	void *v;
+genfs_nolock(void *v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
@@ -384,16 +372,16 @@ genfs_nolock(v)
 }
 
 int
-genfs_nounlock(v)
-	void *v;
+genfs_nounlock(void *v)
 {
+
 	return (0);
 }
 
 int
-genfs_noislocked(v)
-	void *v;
+genfs_noislocked(void *v)
 {
+
 	return (0);
 }
 
@@ -403,8 +391,7 @@ genfs_noislocked(v)
  * this is a null operation.
  */
 int
-genfs_lease_check(v)
-	void *v;
+genfs_lease_check(void *v)
 {
 #ifdef NFSSERVER
 	struct vop_lease_args /* {
@@ -426,10 +413,29 @@ genfs_lease_check(v)
 }
 
 int
-genfs_mmap(v)
-	void *v;
+genfs_mmap(void *v)
 {
-	return 0;
+
+	return (0);
+}
+
+static __inline void
+genfs_rel_pages(struct vm_page **pgs, int npages)
+{
+	int i;
+
+	for (i = 0; i < npages; i++) {
+		struct vm_page *pg = pgs[i];
+
+		if (pg == NULL)
+			continue;
+		if (pg->flags & PG_FAKE) {
+			pg->flags |= PG_RELEASED;
+		}
+	}
+	uvm_lock_pageq();
+	uvm_page_unbusy(pgs, npages);
+	uvm_unlock_pageq();
 }
 
 /*
@@ -439,8 +445,7 @@ genfs_mmap(v)
  */
 
 int
-genfs_getpages(v)
-	void *v;
+genfs_getpages(void *v)
 {
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
@@ -475,7 +480,7 @@ genfs_getpages(v)
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
-		    vp, ap->a_offset >> 32, ap->a_offset, *ap->a_count);
+	    vp, ap->a_offset >> 32, ap->a_offset, *ap->a_count);
 
 	/* XXXUBC temp limit */
 	if (*ap->a_count > MAX_READ_AHEAD) {
@@ -488,7 +493,7 @@ genfs_getpages(v)
 	GOP_SIZE(vp, vp->v_size, &diskeof);
 	if (flags & PGO_PASTEOF) {
 		newsize = MAX(vp->v_size,
-			      origoffset + (orignpages << PAGE_SHIFT));
+		    origoffset + (orignpages << PAGE_SHIFT));
 		GOP_SIZE(vp, newsize, &memeof);
 	} else {
 		memeof = diskeof;
@@ -506,8 +511,8 @@ genfs_getpages(v)
 			simple_unlock(&uobj->vmobjlock);
 		}
 		UVMHIST_LOG(ubchist, "off 0x%x count %d goes past EOF 0x%x",
-			    origoffset, *ap->a_count, memeof,0);
-		return EINVAL;
+		    origoffset, *ap->a_count, memeof,0);
+		return (EINVAL);
 	}
 
 	/*
@@ -516,9 +521,9 @@ genfs_getpages(v)
 
 	if (flags & PGO_LOCKED) {
 		uvn_findpages(uobj, origoffset, ap->a_count, ap->a_m,
-			      UFP_NOWAIT|UFP_NOALLOC|UFP_NORDONLY);
+		    UFP_NOWAIT|UFP_NOALLOC| (write ? UFP_NORDONLY : 0));
 
-		return ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0;
+		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 	}
 
 	/* vnode is VOP_LOCKed, uobj is locked */
@@ -545,13 +550,22 @@ genfs_getpages(v)
 	    round_page(memeof - origoffset) >> PAGE_SHIFT);
 	npages = orignpages;
 	startoffset = origoffset & ~(fs_bsize - 1);
-	endoffset = round_page((origoffset + (npages << PAGE_SHIFT)
-				+ fs_bsize - 1) & ~(fs_bsize - 1));
+	endoffset = round_page((origoffset + (npages << PAGE_SHIFT) +
+	    fs_bsize - 1) & ~(fs_bsize - 1));
 	endoffset = MIN(endoffset, round_page(memeof));
 	ridx = (origoffset - startoffset) >> PAGE_SHIFT;
 
 	memset(pgs, 0, sizeof(pgs));
-	uvn_findpages(uobj, origoffset, &npages, &pgs[ridx], UFP_ALL);
+	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
+	    ridx, npages, startoffset, endoffset);
+	KASSERT(&pgs[ridx + npages] <= &pgs[MAX_READ_AHEAD]);
+	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
+	    async ? UFP_NOWAIT : UFP_ALL) != orignpages) {
+		KASSERT(async != 0);
+		genfs_rel_pages(&pgs[ridx], orignpages);
+		simple_unlock(&uobj->vmobjlock);
+		return (EBUSY);
+	}
 
 	/*
 	 * if the pages are already resident, just return them.
@@ -603,20 +617,19 @@ genfs_getpages(v)
 		 * already have locked.  unlock them all and start over.
 		 */
 
-		for (i = 0; i < orignpages; i++) {
-			struct vm_page *pg = pgs[ridx + i];
-
-			if (pg->flags & PG_FAKE) {
-				pg->flags |= PG_RELEASED;
-			}
-		}
-		uvm_page_unbusy(&pgs[ridx], orignpages);
+		genfs_rel_pages(&pgs[ridx], orignpages);
 		memset(pgs, 0, sizeof(pgs));
 
 		UVMHIST_LOG(ubchist, "reset npages start 0x%x end 0x%x",
-			    startoffset, endoffset, 0,0);
+		    startoffset, endoffset, 0,0);
 		npgs = npages;
-		uvn_findpages(uobj, startoffset, &npgs, pgs, UFP_ALL);
+		if (uvn_findpages(uobj, startoffset, &npgs, pgs,
+		    async ? UFP_NOWAIT : UFP_ALL) != npages) {
+			KASSERT(async != 0);
+			genfs_rel_pages(pgs, npages);
+			simple_unlock(&uobj->vmobjlock);
+			return (EBUSY);
+		}
 	}
 	simple_unlock(&uobj->vmobjlock);
 
@@ -629,8 +642,8 @@ genfs_getpages(v)
 	tailbytes = totalbytes - bytes;
 	skipbytes = 0;
 
-	kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WAITOK |
-			     UVMPAGER_MAPIN_READ);
+	kva = uvm_pagermapin(pgs, npages,
+	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 
 	s = splbio();
 	mbp = pool_get(&bufpool, PR_WAITOK);
@@ -657,7 +670,7 @@ genfs_getpages(v)
 			tailbytes -= tailstart - bytes;
 		}
 		UVMHIST_LOG(ubchist, "tailbytes %p 0x%x 0x%x",
-			    kva, tailstart, tailbytes,0);
+		    kva, tailstart, tailbytes,0);
 		memset((void *)(kva + tailstart), 0, tailbytes);
 	}
 
@@ -673,8 +686,8 @@ genfs_getpages(v)
 
 	bp = NULL;
 	for (offset = startoffset;
-	     bytes > 0;
-	     offset += iobytes, bytes -= iobytes) {
+	    bytes > 0;
+	    offset += iobytes, bytes -= iobytes) {
 
 		/*
 		 * skip pages which don't need to be read.
@@ -691,7 +704,7 @@ genfs_getpages(v)
 			skipbytes += b;
 			pidx++;
 			UVMHIST_LOG(ubchist, "skipping, new offset 0x%x",
-				    offset, 0,0,0);
+			    offset, 0,0,0);
 			if (bytes == 0) {
 				goto loopdone;
 			}
@@ -707,7 +720,7 @@ genfs_getpages(v)
 		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		if (error) {
 			UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%x -> %d\n",
-				    lbn, error,0,0);
+			    lbn, error,0,0);
 			skipbytes += bytes;
 			goto loopdone;
 		}
@@ -723,26 +736,27 @@ genfs_getpages(v)
 		if (offset + iobytes > round_page(offset)) {
 			pcount = 1;
 			while (pidx + pcount < npages &&
-			       pgs[pidx + pcount]->flags & PG_FAKE) {
+			    pgs[pidx + pcount]->flags & PG_FAKE) {
 				pcount++;
 			}
 			iobytes = MIN(iobytes, (pcount << PAGE_SHIFT) -
-				      (offset - trunc_page(offset)));
+			    (offset - trunc_page(offset)));
 		}
 
 		/*
-		 * if this block isn't allocated, zero it instead of reading it.
-		 * if this is a read access, mark the pages we zeroed PG_RDONLY.
+		 * if this block isn't allocated, zero it instead of
+		 * reading it.  if this is a read access, mark the
+		 * pages we zeroed PG_RDONLY.
 		 */
 
 		if (blkno < 0) {
-			int holepages = (round_page(offset + iobytes) - 
-					 trunc_page(offset)) >> PAGE_SHIFT;
+			int holepages = (round_page(offset + iobytes) -
+			    trunc_page(offset)) >> PAGE_SHIFT;
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
 
 			sawhole = TRUE;
 			memset((char *)kva + (offset - startoffset), 0,
-			       iobytes);
+			    iobytes);
 			skipbytes += iobytes;
 
 			for (i = 0; i < holepages; i++) {
@@ -783,10 +797,11 @@ genfs_getpages(v)
 
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
-				       dev_bshift);
+		    dev_bshift);
 
-		UVMHIST_LOG(ubchist, "bp %p offset 0x%x bcount 0x%x blkno 0x%x",
-			    bp, offset, iobytes, bp->b_blkno);
+		UVMHIST_LOG(ubchist,
+		    "bp %p offset 0x%x bcount 0x%x blkno 0x%x",
+		    bp, offset, iobytes, bp->b_blkno);
 
 		VOP_STRATEGY(bp);
 	}
@@ -808,7 +823,7 @@ loopdone:
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
 		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
-		return 0;
+		return (0);
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -836,7 +851,7 @@ loopdone:
 			UVMHIST_LOG(ubchist, "mark dirty pg %p", pgs[i],0,0,0);
 		}
 		error = GOP_ALLOC(vp, startoffset, npages << PAGE_SHIFT, 0,
-				  cred);
+		    cred);
 		UVMHIST_LOG(ubchist, "gop_alloc off 0x%x/0x%x -> %d",
 		    startoffset, npages << PAGE_SHIFT, error,0);
 	}
@@ -854,20 +869,24 @@ raout:
 	if (!error && !async && !write && ((int)raoffset & 0xffff) == 0 &&
 	    PAGE_SHIFT <= 16) {
 		off_t rasize;
-		int racount;
+		int rapages, err, i, skipped;
 
 		/* XXXUBC temp limit, from above */
-		racount = MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD);
-		rasize = racount << PAGE_SHIFT;
-		(void) VOP_GETPAGES(vp, raoffset, NULL, &racount, 0,
-				    VM_PROT_READ, 0, 0);
-		simple_lock(&uobj->vmobjlock);
-
-		/* XXXUBC temp limit, from above */
-		racount = MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD);
-		(void) VOP_GETPAGES(vp, raoffset + rasize, NULL, &racount, 0,
-				    VM_PROT_READ, 0, 0);
-		simple_lock(&uobj->vmobjlock);
+		rapages = MIN(MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD),
+		    genfs_rapages);
+		rasize = rapages << PAGE_SHIFT;
+		for (i = skipped = 0; i < genfs_racount; i++) {
+			err = VOP_GETPAGES(vp, raoffset, NULL, &rapages, 0,
+			    VM_PROT_READ, 0, 0);
+			simple_lock(&uobj->vmobjlock);
+			if (err) {
+				if (err != EBUSY ||
+				    skipped++ == genfs_raskip)
+					break;
+			}
+			raoffset += rasize;
+			rapages = rasize >> PAGE_SHIFT;
+		}
 	}
 
 	/*
@@ -883,7 +902,7 @@ raout:
 				continue;
 			}
 			UVMHIST_LOG(ubchist, "examining pg %p flags 0x%x",
-				    pgs[i], pgs[i]->flags, 0,0);
+			    pgs[i], pgs[i]->flags, 0,0);
 			if (pgs[i]->flags & PG_FAKE) {
 				pgs[i]->flags |= PG_RELEASED;
 			}
@@ -893,7 +912,7 @@ raout:
 		uvm_unlock_pageq();
 		simple_unlock(&uobj->vmobjlock);
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
-		return error;
+		return (error);
 	}
 
 out:
@@ -905,7 +924,7 @@ out:
 			continue;
 		}
 		UVMHIST_LOG(ubchist, "examining pg %p flags 0x%x",
-			    pg, pg->flags, 0,0);
+		    pg, pg->flags, 0,0);
 		if (pg->flags & PG_FAKE && !overwrite) {
 			pg->flags &= ~(PG_FAKE);
 			pmap_clear_modify(pgs[i]);
@@ -915,7 +934,7 @@ out:
 		}
 		if (i < ridx || i >= ridx + orignpages || async) {
 			UVMHIST_LOG(ubchist, "unbusy pg %p offset 0x%x",
-				    pg, pg->offset,0,0);
+			    pg, pg->offset,0,0);
 			if (pg->flags & PG_WANTED) {
 				wakeup(pg);
 			}
@@ -936,9 +955,9 @@ out:
 	simple_unlock(&uobj->vmobjlock);
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
-		       orignpages * sizeof(struct vm_page *));
+		    orignpages * sizeof(struct vm_page *));
 	}
-	return 0;
+	return (0);
 }
 
 /*
@@ -972,9 +991,9 @@ out:
  *	in, then it can not be dirty (!PG_CLEAN) because no one has
  *	had a chance to modify it yet.    if the PG_BUSY page is being
  *	paged out then it means that someone else has already started
- *	cleaning the page for us (how nice!).    in this case, if we 
+ *	cleaning the page for us (how nice!).    in this case, if we
  *	have syncio specified, then after we make our pass through the
- *	object we need to wait for the other PG_BUSY pages to clear 
+ *	object we need to wait for the other PG_BUSY pages to clear
  *	off (i.e. we need to do an iosync).   also note that once a
  *	page is PG_BUSY it must stay in its object until it is un-busyed.
  *
@@ -982,19 +1001,18 @@ out:
  *	we can traverse the pages in an object either by going down the
  *	linked list in "uobj->memq", or we can go over the address range
  *	by page doing hash table lookups for each address.    depending
- *	on how many pages are in the object it may be cheaper to do one 
+ *	on how many pages are in the object it may be cheaper to do one
  *	or the other.   we set "by_list" to true if we are using memq.
  *	if the cost of a hash lookup was equal to the cost of the list
  *	traversal we could compare the number of pages in the start->stop
  *	range to the total number of pages in the object.   however, it
  *	seems that a hash table lookup is more expensive than the linked
- *	list traversal, so we multiply the number of pages in the 
+ *	list traversal, so we multiply the number of pages in the
  *	range by an estimate of the relatively higher cost of the hash lookup.
  */
 
 int
-genfs_putpages(v)
-	void *v;
+genfs_putpages(void *v)
 {
 	struct vop_putpages_args /* {
 		struct vnode *a_vp;
@@ -1009,12 +1027,13 @@ genfs_putpages(v)
 	off_t endoff = ap->a_offhi;
 	off_t off;
 	int flags = ap->a_flags;
-	int n = MAXBSIZE >> PAGE_SHIFT;
+	const int maxpages = MAXBSIZE >> PAGE_SHIFT;
 	int i, s, error, npages, nback;
 	int freeflag;
-	struct vm_page *pgs[n], *pg, *nextpg, *tpg, curmp, endmp;
+	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
 	boolean_t wasclean, by_list, needs_clean, yield;
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
+	boolean_t pagedaemon = curproc == uvm.pagedaemon_proc;
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
 	KASSERT(flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE));
@@ -1024,13 +1043,15 @@ genfs_putpages(v)
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 	if (uobj->uo_npages == 0) {
+		s = splbio();
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
 		    (vp->v_flag & VONWORKLST)) {
 			vp->v_flag &= ~VONWORKLST;
 			LIST_REMOVE(vp, v_synclist);
 		}
+		splx(s);
 		simple_unlock(slock);
-		return 0;
+		return (0);
 	}
 
 	/*
@@ -1055,7 +1076,7 @@ genfs_putpages(v)
 	 * current last page.
 	 */
 
-	freeflag = (curproc == uvm.pagedaemon_proc) ? PG_PAGEOUT : PG_RELEASED;
+	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
 	curmp.uobject = uobj;
 	curmp.offset = (voff_t)-1;
 	curmp.flags = PG_BUSY;
@@ -1078,8 +1099,8 @@ genfs_putpages(v)
 
 		KASSERT(pg == NULL || pg->uobject == uobj);
 		KASSERT(pg == NULL ||
-			(pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
-			(pg->flags & PG_BUSY) != 0);
+		    (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
+		    (pg->flags & PG_BUSY) != 0);
 		if (by_list) {
 			if (pg == &endmp) {
 				break;
@@ -1090,7 +1111,8 @@ genfs_putpages(v)
 				continue;
 			}
 			off = pg->offset;
-		} else if (pg == NULL || pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
+		} else if (pg == NULL ||
+		    pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
 			off += PAGE_SIZE;
 			if (off < endoff) {
 				pg = uvm_pagelookup(uobj, off);
@@ -1104,14 +1126,14 @@ genfs_putpages(v)
 		 */
 
 		yield = (curproc->p_cpu->ci_schedstate.spc_flags &
-		    SPCF_SHOULDYIELD) && curproc != uvm.pagedaemon_proc;
+		    SPCF_SHOULDYIELD) && !pagedaemon;
 		if (pg->flags & PG_BUSY || yield) {
-			KASSERT(curproc != uvm.pagedaemon_proc);
+			KASSERT(!pagedaemon);
 			UVMHIST_LOG(ubchist, "busy %p", pg,0,0,0);
 			if (by_list) {
 				TAILQ_INSERT_BEFORE(pg, &curmp, listq);
 				UVMHIST_LOG(ubchist, "curmp next %p",
-					    TAILQ_NEXT(&curmp, listq), 0,0,0);
+				    TAILQ_NEXT(&curmp, listq), 0,0,0);
 			}
 			if (yield) {
 				simple_unlock(slock);
@@ -1124,7 +1146,7 @@ genfs_putpages(v)
 			}
 			if (by_list) {
 				UVMHIST_LOG(ubchist, "after next %p",
-					    TAILQ_NEXT(&curmp, listq), 0,0,0);
+				    TAILQ_NEXT(&curmp, listq), 0,0,0);
 				pg = TAILQ_NEXT(&curmp, listq);
 				TAILQ_REMOVE(&uobj->memq, &curmp, listq);
 			} else {
@@ -1143,7 +1165,7 @@ genfs_putpages(v)
 		}
 		if (flags & PGO_CLEANIT) {
 			needs_clean = pmap_clear_modify(pg) ||
-				(pg->flags & PG_CLEAN) == 0;
+			    (pg->flags & PG_CLEAN) == 0;
 			pg->flags |= PG_CLEAN;
 		} else {
 			needs_clean = FALSE;
@@ -1166,7 +1188,7 @@ genfs_putpages(v)
 			 * first look backward.
 			 */
 
-			npages = MIN(n >> 1, off >> PAGE_SHIFT);
+			npages = MIN(maxpages >> 1, off >> PAGE_SHIFT);
 			nback = npages;
 			uvn_findpages(uobj, off - PAGE_SIZE, &nback, &pgs[0],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY|UFP_BACKWARD);
@@ -1179,7 +1201,6 @@ genfs_putpages(v)
 				else
 					memset(&pgs[npages - nback], 0,
 					    nback * sizeof(pgs[0]));
-				n -= nback;
 			}
 
 			/*
@@ -1193,7 +1214,7 @@ genfs_putpages(v)
 			 * the array of pages.
 			 */
 
-			npages = MIN(n, (endoff - off) >> PAGE_SHIFT) - 1;
+			npages = maxpages - nback - 1;
 			uvn_findpages(uobj, off + PAGE_SIZE, &npages,
 			    &pgs[nback + 1],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY);
@@ -1201,6 +1222,7 @@ genfs_putpages(v)
 		} else {
 			pgs[0] = pg;
 			npages = 1;
+			nback = 0;
 		}
 
 		/*
@@ -1213,6 +1235,10 @@ genfs_putpages(v)
 		for (i = 0; i < npages; i++) {
 			tpg = pgs[i];
 			KASSERT(tpg->uobject == uobj);
+			if (by_list && tpg == TAILQ_NEXT(pg, listq))
+				pg = tpg;
+			if (tpg->offset < startoff || tpg->offset >= endoff)
+				continue;
 			if (flags & PGO_DEACTIVATE &&
 			    (tpg->pqflags & PQ_INACTIVE) == 0 &&
 			    tpg->wire_count == 0) {
@@ -1222,11 +1248,18 @@ genfs_putpages(v)
 				pmap_page_protect(tpg, VM_PROT_NONE);
 				if (tpg->flags & PG_BUSY) {
 					tpg->flags |= freeflag;
-					if (freeflag == PG_PAGEOUT) {
+					if (pagedaemon) {
 						uvmexp.paging++;
 						uvm_pagedequeue(tpg);
 					}
 				} else {
+
+					/*
+					 * ``page is not busy''
+					 * implies that npages is 1
+					 * and needs_clean is false.
+					 */
+
 					nextpg = TAILQ_NEXT(tpg, listq);
 					uvm_pagefree(tpg);
 				}
@@ -1253,18 +1286,6 @@ genfs_putpages(v)
 				pg = TAILQ_NEXT(&curmp, listq);
 				TAILQ_REMOVE(&uobj->memq, &curmp, listq);
 			}
-			if (error == ENOMEM) {
-				for (i = 0; i < npages; i++) {
-					tpg = pgs[i];
-					if (tpg->flags & PG_PAGEOUT) {
-						tpg->flags &= ~PG_PAGEOUT;
-						uvmexp.paging--;
-					}
-					tpg->flags &= ~PG_CLEAN;
-					uvm_pageactivate(tpg);
-				}
-				uvm_page_unbusy(pgs, npages);
-			}
 			if (error) {
 				break;
 			}
@@ -1285,7 +1306,7 @@ genfs_putpages(v)
 				pg = TAILQ_NEXT(pg, listq);
 			}
 		} else {
-			off += npages << PAGE_SHIFT;
+			off += (npages - nback) << PAGE_SHIFT;
 			if (off < endoff) {
 				pg = uvm_pagelookup(uobj, off);
 			}
@@ -1302,6 +1323,7 @@ genfs_putpages(v)
 	 * and we're doing sync i/o, wait for all writes to finish.
 	 */
 
+	s = splbio();
 	if ((flags & PGO_CLEANIT) && wasclean &&
 	    startoff == 0 && endoff == trunc_page(LLONG_MAX) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
@@ -1309,6 +1331,7 @@ genfs_putpages(v)
 		vp->v_flag &= ~VONWORKLST;
 		LIST_REMOVE(vp, v_synclist);
 	}
+	splx(s);
 	if (!wasclean && !async) {
 		s = splbio();
 		while (vp->v_numoutput != 0) {
@@ -1320,7 +1343,7 @@ genfs_putpages(v)
 		splx(s);
 	}
 	simple_unlock(&uobj->vmobjlock);
-	return error;
+	return (error);
 }
 
 int
@@ -1356,14 +1379,14 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	skipbytes = 0;
 	KASSERT(bytes != 0);
 
-	kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
-			     UVMPAGER_MAPIN_WAITOK);
+	kva = uvm_pagermapin(pgs, npages,
+	    UVMPAGER_MAPIN_WRITE | UVMPAGER_MAPIN_WAITOK);
 
 	s = splbio();
 	vp->v_numoutput += 2;
 	mbp = pool_get(&bufpool, PR_WAITOK);
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
-		    vp, mbp, vp->v_numoutput, bytes);
+	    vp, mbp, vp->v_numoutput, bytes);
 	splx(s);
 	mbp->b_bufsize = npages << PAGE_SHIFT;
 	mbp->b_data = (void *)kva;
@@ -1375,8 +1398,8 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 
 	bp = NULL;
 	for (offset = startoffset;
-	     bytes > 0;
-	     offset += iobytes, bytes -= iobytes) {
+	    bytes > 0;
+	    offset += iobytes, bytes -= iobytes) {
 		lbn = offset >> fs_bshift;
 		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		if (error) {
@@ -1401,10 +1424,10 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			vp->v_numoutput++;
 			bp = pool_get(&bufpool, PR_WAITOK);
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
-				    vp, bp, vp->v_numoutput, 0);
+			    vp, bp, vp->v_numoutput, 0);
 			splx(s);
 			bp->b_data = (char *)kva +
-				(vaddr_t)(offset - pg->offset);
+			    (vaddr_t)(offset - pg->offset);
 			bp->b_resid = bp->b_bcount = iobytes;
 			bp->b_flags = B_BUSY|B_WRITE|B_CALL|B_ASYNC;
 			bp->b_iodone = uvm_aio_biodone1;
@@ -1419,9 +1442,10 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
-				       dev_bshift);
-		UVMHIST_LOG(ubchist, "vp %p offset 0x%x bcount 0x%x blkno 0x%x",
-			    vp, offset, bp->b_bcount, bp->b_blkno);
+		    dev_bshift);
+		UVMHIST_LOG(ubchist,
+		    "vp %p offset 0x%x bcount 0x%x blkno 0x%x",
+		    vp, offset, bp->b_bcount, bp->b_blkno);
 		VOP_STRATEGY(bp);
 	}
 	if (skipbytes) {
@@ -1439,13 +1463,13 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	}
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)", 0,0,0,0);
-		return 0;
+		return (0);
 	}
 	UVMHIST_LOG(ubchist, "waiting for mbp %p", mbp,0,0,0);
 	error = biowait(mbp);
 	uvm_aio_aiodone(mbp);
 	UVMHIST_LOG(ubchist, "returning, error %d", error,0,0,0);
-	return error;
+	return (error);
 }
 
 /*
@@ -1521,19 +1545,19 @@ genfs_compat_getpages(void *v)
 	}
 	if (ap->a_flags & PGO_LOCKED) {
 		uvn_findpages(uobj, origoffset, ap->a_count, ap->a_m,
-			      UFP_NOWAIT|UFP_NOALLOC|UFP_NORDONLY);
+		    UFP_NOWAIT|UFP_NOALLOC| (write ? UFP_NORDONLY : 0));
 
-		return ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0;
+		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 	}
 	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= vp->v_size) {
 		simple_unlock(&uobj->vmobjlock);
-		return EINVAL;
+		return (EINVAL);
 	}
 	npages = orignpages;
 	uvn_findpages(uobj, origoffset, &npages, pgs, UFP_ALL);
 	simple_unlock(&uobj->vmobjlock);
-	kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WAITOK |
-			     UVMPAGER_MAPIN_READ);
+	kva = uvm_pagermapin(pgs, npages,
+	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
 		if ((pg->flags & PG_FAKE) == 0) {
@@ -1551,6 +1575,9 @@ genfs_compat_getpages(void *v)
 		error = VOP_READ(vp, &uio, 0, cred);
 		if (error) {
 			break;
+		}
+		if (uio.uio_resid) {
+			memset(iov.iov_base, 0, uio.uio_resid);
 		}
 	}
 	uvm_pagermapout(kva, npages);
@@ -1570,7 +1597,7 @@ genfs_compat_getpages(void *v)
 	}
 	uvm_unlock_pageq();
 	simple_unlock(&uobj->vmobjlock);
-	return error;
+	return (error);
 }
 
 int
@@ -1586,8 +1613,8 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	int s, error;
 
 	offset = pgs[0]->offset;
-	kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
-			     UVMPAGER_MAPIN_WAITOK);
+	kva = uvm_pagermapin(pgs, npages,
+	    UVMPAGER_MAPIN_WRITE | UVMPAGER_MAPIN_WAITOK);
 
 	iov.iov_base = (void *)kva;
 	iov.iov_len = npages << PAGE_SHIFT;
@@ -1618,5 +1645,5 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		bp->b_error = error;
 	}
 	uvm_aio_aiodone(bp);
-	return error;
+	return (error);
 }

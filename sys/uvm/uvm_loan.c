@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.29.2.3 2002/01/10 20:05:37 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.29.2.4 2002/06/23 17:52:17 jdolecek Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.29.2.3 2002/01/10 20:05:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.29.2.4 2002/06/23 17:52:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,8 @@ uvm_loanuobj(ufi, output, flags, va)
 	if (uobj->pgops->pgo_get) {	/* try locked pgo_get */
 		npages = 1;
 		pg = NULL;
-		error = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
+		error = (*uobj->pgops->pgo_get)(uobj,
+		    va - ufi->entry->start + ufi->entry->offset,
 		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, PGO_LOCKED);
 	} else {
 		error = EIO;		/* must have pgo_get op */
@@ -477,7 +478,8 @@ uvm_loanuobj(ufi, output, flags, va)
 
 		/* locked: uobj */
 		npages = 1;
-		error = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
+		error = (*uobj->pgops->pgo_get)(uobj,
+		    va - ufi->entry->start + ufi->entry->offset,
 		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, PGO_SYNCIO);
 		/* locked: <nothing> */
 
@@ -521,7 +523,9 @@ uvm_loanuobj(ufi, output, flags, va)
 				wakeup(pg);
 			}
 			if (pg->flags & PG_RELEASED) {
+				uvm_lock_pageq();
 				uvm_pagefree(pg);
+				uvm_unlock_pageq();
 				return (0);
 			}
 			uvm_lock_pageq();

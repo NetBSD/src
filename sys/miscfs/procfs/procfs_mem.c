@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.27.4.2 2002/02/11 20:10:28 jdolecek Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.27.4.3 2002/06/23 17:50:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -46,27 +46,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.27.4.2 2002/02/11 20:10:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.27.4.3 2002/06/23 17:50:13 jdolecek Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/ptrace.h>
 
 #include <miscfs/procfs/procfs.h>
 
-#include <uvm/uvm_extern.h>
-
-#define	ISSET(t, f)	((t) & (f))
-
-/*
- * Copy data in and out of the target process.
- * We do this by mapping the process's page into
- * the kernel and then doing a uiomove direct
- * from the kernel address space.
- */
 int
 procfs_domem(curp, p, pfs, uio)
 	struct proc *curp;		/* tracer */
@@ -74,82 +62,6 @@ procfs_domem(curp, p, pfs, uio)
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
-	int error;
 
-	size_t len;
-#ifdef PMAP_NEED_PROCWR
-	vaddr_t	addr;
-#endif
-
-	len = uio->uio_resid;
-
-	if (len == 0)
-		return (0);
-
-#ifdef PMAP_NEED_PROCWR
-	addr = uio->uio_offset;
-#endif
-
-	if ((error = procfs_checkioperm(curp, p)) != 0)
-		return (error);
-
-	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
-		return(EFAULT);
-	p->p_vmspace->vm_refcnt++;  /* XXX */
-	error = uvm_io(&p->p_vmspace->vm_map, uio);
-	uvmspace_free(p->p_vmspace);
-
-#ifdef PMAP_NEED_PROCWR
-	if (uio->uio_rw == UIO_WRITE)
-		pmap_procwr(p, addr, len);
-#endif
-	return (error);
-}
-
-/*
- * Ensure that a process has permission to perform I/O on another.
- * Arguments:
- *	p	The process wishing to do the I/O (the tracer).
- *	t	The process who's memory/registers will be read/written.
- */
-int
-procfs_checkioperm(p, t)
-	struct proc *p, *t;
-{
-	int error;
-
-	/*
-	 * You cannot attach to a processes mem/regs if:
-	 *
-	 *	(1) It is currently exec'ing
-	 */
-	if (ISSET(t->p_flag, P_INEXEC))
-		return (EAGAIN);
-
-	/*
-	 *	(2) it's not owned by you, or is set-id on exec
-	 *	    (unless you're root), or...
-	 */
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-		ISSET(t->p_flag, P_SUGID)) &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-
-	/*
-	 *	(3) ...it's init, which controls the security level
-	 *	    of the entire system, and the system was not
-	 *	    compiled with permanetly insecure mode turned on.
-	 */
-	if (t == initproc && securelevel > -1)
-		return (EPERM);
-
-	/*
-	 *	(4) the tracer is chrooted, and its root directory is
-	 * 	    not at or above the root directory of the tracee
-	 */
-	if (!proc_isunder(t, p))
-		return (EPERM);
-	
-	return (0);
+	return (process_domem(curp, p, uio));
 }

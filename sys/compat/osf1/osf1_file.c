@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.11.2.1 2002/01/10 19:52:02 thorpej Exp $ */
+/* $NetBSD: osf1_file.c,v 1.11.2.2 2002/06/23 17:44:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.11.2.1 2002/01/10 19:52:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.11.2.2 2002/06/23 17:44:37 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -102,7 +102,7 @@ osf1_sys_access(p, v, retval)
 	unsigned long leftovers;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -126,7 +126,7 @@ osf1_sys_execve(p, v, retval)
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -153,7 +153,7 @@ osf1_sys_lstat(p, v, retval)
 	struct nameidata nd;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -186,7 +186,7 @@ osf1_sys_lstat2(p, v, retval)
 	struct nameidata nd;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -212,7 +212,7 @@ osf1_sys_mknod(p, v, retval)
 	struct sys_mknod_args a;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -241,7 +241,7 @@ osf1_sys_open(p, v, retval)
 		printf("osf1_open: open: %s\n", pnbuf);
 #endif
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
 	/* translate flags */
 	SCARG(&a, flags) = emul_flags_translate(osf1_open_flags_xtab,
@@ -274,7 +274,7 @@ osf1_sys_pathconf(p, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&a, path) = SCARG(uap, path);
@@ -305,7 +305,7 @@ osf1_sys_stat(p, v, retval)
 	struct nameidata nd;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -338,7 +338,7 @@ osf1_sys_stat2(p, v, retval)
 	struct nameidata nd;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -364,7 +364,7 @@ osf1_sys_truncate(p, v, retval)
 	struct sys_truncate_args a;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -387,7 +387,7 @@ osf1_sys_utimes(p, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&a, path) = SCARG(uap, path);
@@ -396,7 +396,7 @@ osf1_sys_utimes(p, v, retval)
 	if (SCARG(uap, tptr) == NULL)
 		SCARG(&a, tptr) = NULL;
 	else {
-		SCARG(&a, tptr) = stackgap_alloc(&sg, sizeof tv);
+		SCARG(&a, tptr) = stackgap_alloc(p, &sg, sizeof tv);
 
 		/* get the OSF/1 timeval argument */
 		error = copyin((caddr_t)SCARG(uap, tptr),

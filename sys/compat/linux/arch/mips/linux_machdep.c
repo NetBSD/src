@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.9.2.3 2002/03/16 16:00:34 jdolecek Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.9.2.4 2002/06/23 17:44:14 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9.2.3 2002/03/16 16:00:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9.2.4 2002/06/23 17:44:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,9 +181,9 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	sf.lsf_sc.lsc_mdhi = f->f_regs[MULHI];
 	sf.lsf_sc.lsc_mdlo = f->f_regs[MULLO];
 	sf.lsf_sc.lsc_pc = f->f_regs[PC];
-	sf.lsf_sc.lsc_status = f->f_regs[SR];	/* XXX */
+	sf.lsf_sc.lsc_status = f->f_regs[SR];
 	sf.lsf_sc.lsc_cause = f->f_regs[CAUSE];
-	sf.lsf_sc.lsc_badvaddr = f->f_regs[BADVADDR];	/* XXX */
+	sf.lsf_sc.lsc_badvaddr = f->f_regs[BADVADDR];
 
 	/* 
 	 * Save signal stack.  XXX broken
@@ -207,7 +207,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	}
 
 	/* Set up the registers to return to sigcode. */
-	f->f_regs[A0] = native_to_linux_sig[sig];
+	f->f_regs[A0] = native_to_linux_signo[sig];
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = (unsigned long)&fp->lsf_sc;
 
@@ -270,7 +270,6 @@ linux_sys_sigreturn(p, v, retval)
 	f->f_regs[PC] = ksf.lsf_sc.lsc_pc;
 	f->f_regs[BADVADDR] = ksf.lsf_sc.lsc_badvaddr;
 	f->f_regs[CAUSE] = ksf.lsf_sc.lsc_cause;
-	f->f_regs[SR] = ksf.lsf_sc.lsc_status;
 
 	/* Restore signal stack. */
 	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
@@ -319,8 +318,8 @@ linux_fakedev(dev, raw)
 	dev_t dev;
 	int raw;
 {
-  /* XXX write me */
-  return dev;
+	/* XXX write me */
+	return dev;
 }
 
 /*

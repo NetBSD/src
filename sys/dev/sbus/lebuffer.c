@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.7.8.3 2002/03/16 16:01:30 jdolecek Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.7.8.4 2002/06/23 17:48:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.8.3 2002/03/16 16:01:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.8.4 2002/06/23 17:48:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ lebufattach(parent, self, aux)
 	 * Lance ring-buffers can be stored. Note the buffer's location
 	 * and size, so the `le' driver can pick them up.
 	 */
-	sc->sc_buffer = (caddr_t)(u_long)bh;
+	sc->sc_buffer = bus_space_vaddr(sa->sa_bustag, bh);
 	sc->sc_bufsiz = sa->sa_size;
 
 	node = sc->sc_node = sa->sa_node;

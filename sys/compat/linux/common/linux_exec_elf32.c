@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.51.4.4 2002/03/16 16:00:37 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.51.4.5 2002/06/23 17:44:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.51.4.4 2002/03/16 16:00:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.51.4.5 2002/06/23 17:44:20 jdolecek Exp $");
 
 #ifndef ELFSIZE
 #define	ELFSIZE		32				/* XXX should die */
@@ -83,6 +83,12 @@ static int ELFNAME2(linux,gcc_signature) __P((struct proc *p,
 #ifdef LINUX_ATEXIT_SIGNATURE
 static int ELFNAME2(linux,atexit_signature) __P((struct proc *p,
 	struct exec_package *, Elf_Ehdr *));
+#endif
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
 #endif
 
 #ifdef LINUX_ATEXIT_SIGNATURE
@@ -140,10 +146,8 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 		Elf_Shdr *s = &sh[i];
 		if (!memcmp((void*)(&(strtable[s->sh_name])), signature, 
 				sizeof(signature))) {
-#ifdef DEBUG_LINUX
-			uprintf("linux_atexit_sig=%s\n",
-			    &(strtable[s->sh_name]));
-#endif
+			DPRINTF(("linux_atexit_sig=%s\n",
+			    &(strtable[s->sh_name])));
 			error = 0;
 			goto out;
 		}
@@ -210,9 +214,7 @@ ELFNAME2(linux,gcc_signature)(p, epp, eh)
 		/*
 		 * error is 0, if the signatures match we are done.
 		 */
-#ifdef DEBUG_LINUX
-		uprintf("linux_gcc_sig: sig=%s\n", buf);
-#endif
+		DPRINTF(("linux_gcc_sig: sig=%s\n", buf));
 		if (!memcmp(buf, signature, sizeof(signature) - 1)) {
 			error = 0;
 			goto out;
@@ -329,9 +331,7 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 		free((void *)bp, M_TEMP);
 	}
 	*pos = ELF_NO_ADDR;
-#ifdef DEBUG_LINUX
-	uprintf("linux_probe: returning 0\n");
-#endif
+	DPRINTF(("linux_probe: returning 0\n"));
 	return 0;
 }
 

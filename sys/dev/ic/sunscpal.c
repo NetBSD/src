@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.5.2.3 2002/01/10 19:55:05 thorpej Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.5.2.4 2002/06/23 17:46:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.5.2.3 2002/01/10 19:55:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.5.2.4 2002/06/23 17:46:52 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -1159,7 +1159,7 @@ next_job:
 	 * Schedule a timeout for the job we are starting.
 	 */
 	if ((sr->sr_flags & SR_IMMED) == 0) {
-		i = (xs->timeout * hz) / 1000;
+		i = mstohz(xs->timeout);
 		SUNSCPAL_TRACE("sched: set timeout=%d\n", i);
 		callout_reset(&sr->sr_xs->xs_callout, i,
 		    sunscpal_cmd_timeout, sr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.7.2.1 2002/01/10 19:56:22 thorpej Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.7.2.2 2002/06/23 17:47:30 jdolecek Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.7.2.1 2002/01/10 19:56:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.7.2.2 2002/06/23 17:47:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ ofisamatch(parent, cf, aux)
 	void *aux;
 {
 	struct ofbus_attach_args *oba = aux;
-	const char *compatible_strings[] = { "pnpPNP,a00", NULL };
+	static const char *const compatible_strings[] = { "pnpPNP,a00", NULL };
 	int rv = 0;
 
 	if (of_compatible(oba->oba_phandle, compatible_strings) != -1)

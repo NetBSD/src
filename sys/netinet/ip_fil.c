@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.68.2.2 2002/02/11 20:10:34 jdolecek Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.68.2.3 2002/06/23 17:50:47 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -26,6 +26,10 @@
 #  include <osreldate.h>
 # endif
 #endif
+#ifdef __sgi
+# define _KMEMUSER
+# include <sys/ptimers.h>
+#endif
 #ifndef	_KERNEL
 # include <stdio.h>
 # include <string.h>
@@ -46,7 +50,6 @@
 #ifdef	_KERNEL
 # include <sys/systm.h>
 #endif
-#include <sys/uio.h>
 #if !SOLARIS
 # if (NetBSD > 199609) || (OpenBSD > 199603) || (__FreeBSD_version >= 300000)
 #  include <sys/dirent.h>
@@ -120,10 +123,10 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.68.2.2 2002/02/11 20:10:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.68.2.3 2002/06/23 17:50:47 jdolecek Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.48 2002/01/01 13:34:05 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.55 2002/03/26 15:54:39 darrenr Exp";
 #endif
 #endif
 
@@ -165,9 +168,8 @@ extern  kmutex_t        ipf_rw;
 extern	KRWLOCK_T	ipf_mutex;
 # endif
 #else
-int	ipllog __P((void));
 void	init_ifp __P((void));
-# ifdef __sgi
+# if defined(__sgi) && (IRIX < 605)
 static int 	no_output __P((struct ifnet *, struct mbuf *,
 			       struct sockaddr *));
 static int	write_output __P((struct ifnet *, struct mbuf *,
@@ -288,7 +290,7 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	
+
 	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
 	    ifp, (dir == PFIL_OUT), mp));
 }
@@ -365,7 +367,7 @@ int iplattach()
 	}
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 104200000
+#  if (__NetBSD_Version__ >= 104200000) || (__FreeBSD_version >= 500011)
 #   if __NetBSD_Version__ >= 105110000
 	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
 #    ifdef USE_INET6
@@ -535,7 +537,7 @@ int ipldetach()
 	fr_running = 0;
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 104200000
+#  if ((__NetBSD_Version__ >= 104200000) || (__FreeBSD_version >= 500011))
 #   if __NetBSD_Version__ >= 105110000
 	if (ph_inet != NULL)
 		error = pfil_remove_hook((void *)fr_check_wrapper, NULL,
@@ -1181,7 +1183,7 @@ fr_info_t *fin;
 	if (m == NULL)
 		return -1;
 
-	tlen = oip->ip_len - fin->fin_hlen - (tcp->th_off << 2) +
+	tlen = fin->fin_dlen - (tcp->th_off << 2) +
 			((tcp->th_flags & TH_SYN) ? 1 : 0) +
 			((tcp->th_flags & TH_FIN) ? 1 : 0);
 
@@ -1468,7 +1470,8 @@ int dst;
 }
 
 
-# if !defined(IPFILTER_LKM) && (__FreeBSD_version < 300000) && !defined(__sgi)
+# if !defined(IPFILTER_LKM) && !defined(__sgi) && \
+     (!defined(__FreeBSD_version) || (__FreeBSD_version < 300000))
 #  if	(BSD < 199306)
 int iplinit __P((void));
 
@@ -1696,7 +1699,7 @@ frdest_t *fdp;
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
 # endif /* __NetBSD__ && M_CSUM_IPv4 */
-# if	BSD >= 199306
+# if	(BSD >= 199306) || (defined(IRIX) && (IRIX >= 605))
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
 # else
@@ -1788,7 +1791,7 @@ sendorfree:
 		m0 = m->m_act;
 		m->m_act = 0;
 		if (error == 0)
-# if BSD >= 199306
+# if (BSD >= 199306) || (defined(IRIX) && (IRIX >= 605))
 			error = (*ifp->if_output)(ifp, m,
 			    (struct sockaddr *)dst, ro->ro_rt);
 # else
@@ -1798,7 +1801,7 @@ sendorfree:
 		else
 			m_freem(m);
 	}
-    }	
+    }
 done:
 	if (!error)
 		ipl_frouteok[0]++;
@@ -1925,7 +1928,7 @@ frdest_t *fdp;
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		ro->ro_rt->rt_use++;
 
-		if (m0->m_pkthdr.len <= nd_ifinfo[ifp->if_index].linkmtu)
+		if (m0->m_pkthdr.len <= IN6_LINKMTU(ifp))
 			error = nd6_output(ifp, fin->fin_ifp, m0, dst6,
 					   ro->ro_rt);
 		else
@@ -1941,7 +1944,7 @@ frdest_t *fdp;
 #else /* #ifdef _KERNEL */
 
 
-# ifdef __sgi
+# if defined(__sgi) && (IRIX < 605)
 static int no_output __P((struct ifnet *ifp, struct mbuf *m,
 			   struct sockaddr *s))
 # else
@@ -1954,7 +1957,7 @@ static int no_output __P((struct ifnet *ifp, struct mbuf *m,
 
 
 # ifdef __STDC__
-#  ifdef __sgi
+#  if defined(__sgi) && (IRIX < 605)
 static int write_output __P((struct ifnet *ifp, struct mbuf *m,
 			     struct sockaddr *s))
 #  else
@@ -1996,7 +1999,10 @@ struct ifnet *ifp;
      (defined(OpenBSD) && (OpenBSD >= 199603))
 	return ifp->if_xname;
 # else
-	return ifp->if_name;
+	static char fullifname[LIFNAMSIZ];
+
+	sprintf(fullifname, "%s%d", ifp->if_name, ifp->if_unit);
+	return fullifname;
 # endif
 }
 
@@ -2012,7 +2018,10 @@ int v;
      (defined(OpenBSD) && (OpenBSD >= 199603))
 		if (!strncmp(ifname, ifp->if_xname, sizeof(ifp->if_xname)))
 # else
-		if (!strcmp(ifname, ifp->if_name))
+		char fullname[LIFNAMSIZ];
+
+		sprintf(fullname, "%s%d", ifp->if_name, ifp->if_unit);
+		if (!strcmp(ifname, fullname))
 # endif
 			return ifp;
 	}
@@ -2053,11 +2062,13 @@ int v;
 # else
 	ifp->if_name = strdup(ifname);
 
+	ifname = ifp->if_name;
 	while (*ifname && !isdigit(*ifname))
 		ifname++;
-	if (*ifname && isdigit(*ifname))
+	if (*ifname && isdigit(*ifname)) {
 		ifp->if_unit = atoi(ifname);
-	else
+		*ifname = '\0';
+	} else
 		ifp->if_unit = -1;
 # endif
 	ifp->if_output = no_output;
@@ -2098,13 +2109,6 @@ void init_ifp()
 }
 
 
-int ipllog __P((void))
-{
-	verbose("l");
-	return 0;
-}
-
-
 int send_reset(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
@@ -2128,5 +2132,53 @@ int dst;
 void frsync()
 {
 	return;
+}
+
+void m_copydata(m, off, len, cp)
+mb_t *m;
+int off, len;
+caddr_t cp;
+{
+	bcopy((char *)m + off, cp, len);
+}
+
+
+int ipfuiomove(buf, len, rwflag, uio)
+caddr_t buf;
+int len, rwflag;
+struct uio *uio;
+{
+	int left, ioc, num, offset;
+	struct iovec *io;
+	char *start;
+
+	if (rwflag == UIO_READ) {
+		left = len;
+		ioc = 0;
+
+		offset = uio->uio_offset;
+
+		while ((left > 0) && (ioc < uio->uio_iovcnt)) {
+			io = uio->uio_iov + ioc;
+			num = io->iov_len;
+			if (num > left)
+				num = left;
+			start = (char *)io->iov_base + offset;
+			if (start > (char *)io->iov_base + io->iov_len) {
+				offset -= io->iov_len;
+				ioc++;
+				continue;
+			}
+			bcopy(buf, start, num);
+			uio->uio_resid -= num;
+			uio->uio_offset += num;
+			left -= num;
+			if (left > 0)
+				ioc++;
+		}
+		if (left > 0)
+			return EFAULT;
+	}
+	return 0;
 }
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.35.4.2 2002/03/16 16:00:47 jdolecek Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.35.4.3 2002/06/23 17:44:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -51,6 +51,7 @@ struct audio_params {
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_code)(void *, u_char *, int);
 	int	factor;				/* coding space change */
+	int	factor_denom;			/* denominator of factor */
 	/*
 	 * The following four members represent what format is used in a
 	 * hardware.  If hw_sample_rate != sample_rate || hw_channels !=
@@ -146,6 +147,7 @@ struct audio_attach_args {
 #define	AUDIODEV_TYPE_MIDI	1
 #define AUDIODEV_TYPE_OPL	2
 #define AUDIODEV_TYPE_MPU	3
+#define AUDIODEV_TYPE_AUX	4
 
 /* Attach the MI driver(s) to the MD driver. */
 struct device *audio_attach_mi(struct audio_hw_if *, void *, struct device *);
@@ -169,6 +171,12 @@ int	audioprint(void *, const char *);
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
 #endif
+
+/*
+ * USB Audio specification defines 12 channels:
+ *	L R C LFE Ls Rs Lc Rc S Sl Sr T
+ */
+#define AUDIO_MAX_CHANNELS	12
 
 #endif /* _SYS_DEV_AUDIO_IF_H_ */
 

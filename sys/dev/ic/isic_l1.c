@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.2.2.1 2002/01/10 19:54:38 thorpej Exp $ */
+/* $NetBSD: isic_l1.c,v 1.2.2.2 2002/06/23 17:46:32 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.2.2.1 2002/01/10 19:54:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.2.2.2 2002/06/23 17:46:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -47,23 +47,24 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.2.2.1 2002/01/10 19:54:38 thorpej Exp 
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 
-#include <dev/ic/isic_l1.h>
-#include <dev/ic/isac.h>
-#include <dev/ic/hscx.h>
-
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/ipac.h>
+#include <dev/ic/hscx.h>
+
 unsigned int i4b_l1_debug = L1_DEBUG_DEFAULT;
 
-static int isic_std_enable(isdn_layer1token, int);
 static int isic_std_ph_data_req(isdn_layer1token, struct mbuf *, int);
 static int isic_std_ph_activate_req(isdn_layer1token);
 static int isic_std_mph_command_req(isdn_layer1token, int, void*);
+static void isic_enable_intr(struct isic_softc *sc, int enable);
 
 const struct isdn_layer1_bri_driver isic_std_driver = {
-	isic_std_enable,
 	isic_std_ph_data_req,
 	isic_std_ph_activate_req,
 	isic_std_mph_command_req
@@ -91,7 +92,7 @@ extern int get_trace_data_from_l1(int unit, int what, int len, char *buf);
 static int
 isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 {
-	struct l1_softc *sc = (struct l1_softc*)token;
+	struct isic_softc *sc = (struct isic_softc*)token;
 	u_char cmd;
 	int s;
 
@@ -125,7 +126,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 				hdr.type = TRC_CH_D;
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_dcount;
-				isdn_layer2_trace_ind(sc->sc_l2, &hdr, m->m_len, m->m_data);
+				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, m->m_len, m->m_data);
 			}
 			splx(s);
 			return(1);
@@ -146,7 +147,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 		hdr.type = TRC_CH_D;
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_dcount;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, m->m_len, m->m_data);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, m->m_len, m->m_data);
 	}
 	
 	sc->sc_state |= ISAC_TX_ACTIVE;	/* set transmitter busy flag */
@@ -204,7 +205,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 static int
 isic_std_ph_activate_req(isdn_layer1token token)
 {
-	struct l1_softc *sc = (struct l1_softc*)token;
+	struct isic_softc *sc = (struct isic_softc*)token;
 
 	NDBGL1(L1_PRIM, " %s ", sc->sc_dev.dv_xname);
 	isic_next_state(sc, EV_PHAR);
@@ -217,18 +218,27 @@ isic_std_ph_activate_req(isdn_layer1token token)
 static int
 isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 {
-	struct l1_softc *sc = (struct l1_softc*)token;
-	
+	struct isic_softc *sc = (struct isic_softc*)token;
+	int s, pass_down = 0;
+
+	s = splnet();
 	switch(command)
 	{
 		case CMR_DOPEN:		/* daemon running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DOPEN", sc->sc_dev.dv_xname);
-			sc->sc_enabled = 1;			
+			sc->sc_intr_valid = ISIC_INTR_VALID;
+			pass_down = 1;
 			break;
 			
 		case CMR_DCLOSE:	/* daemon not running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DCLOSE", sc->sc_dev.dv_xname);
-			sc->sc_enabled = 0;
+			sc->sc_intr_valid = ISIC_INTR_DISABLED;
+			isic_enable_intr(sc, 0);
+			pass_down = 1;
+			break;
+
+		case CMR_SETLEDS:
+			pass_down = 1;
 			break;
 
 		case CMR_SETTRACE:
@@ -241,14 +251,30 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 			break;
 	}
 
+	if (pass_down && sc->drv_command != NULL)
+		sc->drv_command(sc, command, parm);
+
+	if (command == CMR_DOPEN)
+		isic_enable_intr(sc, 1);
+
+	splx(s);
+
 	return(0);
 }
 
-static int
-isic_std_enable(isdn_layer1token token, int enable)
+static void
+isic_enable_intr(struct isic_softc *sc, int enable)
 {
-	struct l1_softc * sc = (struct l1_softc*)token;
-	printf("%s: enable = %d\n", sc->sc_dev.dv_xname, enable);
-	return 0;
+	if (enable) {
+		isic_isac_init(sc);
+	} else {
+		/* disable receiver */
+		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_DIM0);
+		/* mask interrupts */
+		if (sc->sc_ipac) {
+			IPAC_WRITE(IPAC_MASK, 0xff);
+		} else {
+			ISAC_WRITE(I_MASK, 0xff);
+		}
+	}
 }
-

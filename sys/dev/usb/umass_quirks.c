@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.8.4.3 2002/03/16 16:01:39 jdolecek Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.8.4.4 2002/06/23 17:49:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -203,6 +203,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_MINOLTA, USB_PRODUCT_MINOLTA_X },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  UMASS_QUIRK_NO_MAX_LUN | UMASS_QUIRK_NO_START_STOP,
+	  0,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_PEN, USB_PRODUCT_PEN_USBDISK },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_NO_MAX_LUN | UMASS_QUIRK_NO_START_STOP,
 	  0,

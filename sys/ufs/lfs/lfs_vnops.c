@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.6.4 2002/03/16 16:02:26 jdolecek Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.6.5 2002/06/23 17:52:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.6.4 2002/03/16 16:02:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.6.5 2002/06/23 17:52:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_create_desc, spec_create },		/* create */
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */
 	{ &vop_open_desc, spec_open },			/* open */
-	{ &vop_close_desc, ufsspec_close },		/* close */
+	{ &vop_close_desc, lfsspec_close },		/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
@@ -217,7 +217,7 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_create_desc, fifo_create },		/* create */
 	{ &vop_mknod_desc, fifo_mknod },		/* mknod */
 	{ &vop_open_desc, fifo_open },			/* open */
-	{ &vop_close_desc, ufsfifo_close },		/* close */
+	{ &vop_close_desc, lfsfifo_close },		/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
@@ -298,13 +298,31 @@ lfs_fsync(void *v)
 		return 0;
 
 	simple_lock(&vp->v_interlock);
-	error = VOP_PUTPAGES(vp, ap->a_offlo, ap->a_offhi,
-	    PGO_CLEANIT | PGO_SYNCIO);
-	if (error) {
+	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+                    round_page(ap->a_offhi), PGO_CLEANIT | PGO_SYNCIO);
+	if (error)
 		return error;
+	error = VOP_UPDATE(vp, NULL, NULL,
+			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0);
+#ifdef DEBUG
+	/*
+	 * If we were called from vinvalbuf and lfs_update
+	 * didn't flush all our buffers, we're in trouble.
+	 */
+	if ((ap->a_flags & FSYNC_WAIT) && LIST_FIRST(&vp->v_dirtyblkhd) != NULL) {
+		struct buf *bp;
+
+		bp = LIST_FIRST(&vp->v_dirtyblkhd);
+		printf("lfs_fsync: ino %d failed to sync", VTOI(vp)->i_number);
+		printf("lfs_fsync: iocount = %d\n", VTOI(vp)->i_lfs->lfs_iocount);
+		printf("lfs_fsync: flags are 0x%x, numoutput=%d\n",
+			VTOI(vp)->i_flag, vp->v_numoutput);
+		printf("lfs_fsync: writecount=%ld\n", vp->v_writecount);
+		printf("lfs_fsync: first bp: %p, flags=0x%lx, lbn=%d\n",
+			bp, bp->b_flags, bp->b_lblkno);
 	}
-	return (VOP_UPDATE(vp, NULL, NULL,
-			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0));
+#endif
+	return error;
 }
 
 /*
@@ -358,7 +376,7 @@ lfs_set_dirop(struct vnode *vp)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
 	while (fs->lfs_writer || lfs_dirvcount > LFS_MAXDIROP) {
 		if (fs->lfs_writer)
-			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);
+			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_sdirop", 0);
 		if (lfs_dirvcount > LFS_MAXDIROP && fs->lfs_dirops == 0) {
                 	++fs->lfs_writer;
                 	lfs_flush(fs, 0);
@@ -846,13 +864,65 @@ lfs_close(void *v)
 	struct inode *ip = VTOI(vp);
 	struct timespec ts;
 
-	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1) {
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		LFS_ITIMES(ip, &ts, &ts, &ts);
 	}
-	simple_unlock(&vp->v_interlock);
 	return (0);
+}
+
+/*
+ * Close wrapper for special devices.
+ *
+ * Update the times on the inode then do device close.
+ */
+int
+lfsspec_close(void *v)
+{
+	struct vop_close_args /* {
+		struct vnode	*a_vp;
+		int		a_fflag;
+		struct ucred	*a_cred;
+		struct proc	*a_p;
+	} */ *ap = v;
+	struct vnode	*vp;
+	struct inode	*ip;
+	struct timespec	ts;
+
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+	if (vp->v_usecount > 1) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		LFS_ITIMES(ip, &ts, &ts, &ts);
+	}
+	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
+}
+
+/*
+ * Close wrapper for fifo's.
+ *
+ * Update the times on the inode then do device close.
+ */
+int
+lfsfifo_close(void *v)
+{
+	struct vop_close_args /* {
+		struct vnode	*a_vp;
+		int		a_fflag;
+		struct ucred	*a_cred;
+		struct proc	*a_p;
+	} */ *ap = v;
+	struct vnode	*vp;
+	struct inode	*ip;
+	struct timespec	ts;
+
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+	if (ap->a_vp->v_usecount > 1) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		LFS_ITIMES(ip, &ts, &ts, &ts);
+	}
+	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
 /*

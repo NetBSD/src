@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.14.2.1 2002/01/10 19:51:02 thorpej Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.14.2.2 2002/06/23 17:43:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.14.2.1 2002/01/10 19:51:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.14.2.2 2002/06/23 17:43:44 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -108,12 +108,12 @@ freebsd_sys_mount(p, v, retval)
 	int error;
 	const char *type;
 	char *s;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	struct sys_mount_args bma;
 
 	if ((type = convert_from_freebsd_mount_type(SCARG(uap, type))) == NULL)
 		return ENODEV;
-	s = stackgap_alloc(&sg, MFSNAMELEN + 1);
+	s = stackgap_alloc(p, &sg, MFSNAMELEN + 1);
 	if ((error = copyout(type, s, strlen(type) + 1)) != 0)
 		return error;
 	SCARG(&bma, type) = s;
@@ -143,7 +143,7 @@ freebsd_sys_open(p, v, retval)
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	if (SCARG(uap, flags) & O_CREAT)
 		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
@@ -162,7 +162,7 @@ compat_43_freebsd_sys_creat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	caddr_t sg  = stackgap_init(p->p_emul);
+	caddr_t sg  = stackgap_init(p, 0);
 
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	return compat_43_sys_creat(p, uap, retval);
@@ -178,7 +178,7 @@ freebsd_sys_link(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(char *) link;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
@@ -194,7 +194,7 @@ freebsd_sys_unlink(p, v, retval)
 	struct freebsd_sys_unlink_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_unlink(p, uap, retval);
@@ -209,7 +209,7 @@ freebsd_sys_chdir(p, v, retval)
 	struct freebsd_sys_chdir_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chdir(p, uap, retval);
@@ -226,7 +226,7 @@ freebsd_sys_mknod(p, v, retval)
 		syscallarg(int) mode;
 		syscallarg(int) dev;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	return sys_mknod(p, uap, retval);
@@ -242,7 +242,7 @@ freebsd_sys_chmod(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chmod(p, uap, retval);
@@ -259,7 +259,7 @@ freebsd_sys_chown(p, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chown(p, uap, retval);
@@ -276,7 +276,7 @@ freebsd_sys_lchown(p, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 	return sys_lchown(p, uap, retval);
@@ -292,7 +292,7 @@ freebsd_sys_unmount(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_unmount(p, uap, retval);
@@ -308,7 +308,7 @@ freebsd_sys_access(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_access(p, uap, retval);
@@ -324,7 +324,7 @@ freebsd_sys_chflags(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chflags(p, uap, retval);
@@ -340,7 +340,7 @@ compat_43_freebsd_sys_stat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return compat_43_sys_stat(p, uap, retval);
@@ -356,7 +356,7 @@ compat_43_freebsd_sys_lstat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return compat_43_sys_lstat(p, uap, retval);
@@ -371,7 +371,7 @@ freebsd_sys_revoke(p, v, retval)
 	struct freebsd_sys_revoke_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_revoke(p, uap, retval);
@@ -387,7 +387,7 @@ freebsd_sys_symlink(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(char *) link;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
@@ -405,7 +405,7 @@ freebsd_sys_readlink(p, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 	return sys_readlink(p, uap, retval);
@@ -425,7 +425,7 @@ freebsd_sys_execve(p, v, retval)
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -444,7 +444,7 @@ freebsd_sys_chroot(p, v, retval)
 	struct freebsd_sys_chroot_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chroot(p, uap, retval);
@@ -460,7 +460,7 @@ freebsd_sys_rename(p, v, retval)
 		syscallarg(char *) from;
 		syscallarg(char *) to;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
@@ -477,7 +477,7 @@ compat_43_freebsd_sys_truncate(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(long) length;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return compat_43_sys_truncate(p, uap, retval);
@@ -493,7 +493,7 @@ freebsd_sys_mkfifo(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	return sys_mkfifo(p, uap, retval);
@@ -509,7 +509,7 @@ freebsd_sys_mkdir(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	return sys_mkdir(p, uap, retval);
@@ -524,7 +524,7 @@ freebsd_sys_rmdir(p, v, retval)
 	struct freebsd_sys_rmdir_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_rmdir(p, uap, retval);
@@ -540,7 +540,7 @@ freebsd_sys_statfs(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct statfs *) buf;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_statfs(p, uap, retval);
@@ -557,7 +557,7 @@ freebsd_sys_getfh(p, v, retval)
 		syscallarg(char *) fname;
 		syscallarg(fhandle_t *) fhp;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, fname));
 	return sys_getfh(p, uap, retval);
@@ -574,7 +574,7 @@ freebsd_sys_stat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct stat12 *) ub;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return compat_12_sys_stat(p, uap, retval);
@@ -590,7 +590,7 @@ freebsd_sys_lstat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct stat12 *) ub;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return compat_12_sys_lstat(p, uap, retval);
@@ -606,7 +606,7 @@ freebsd_sys_pathconf(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) name;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_pathconf(p, uap, retval);
@@ -623,7 +623,7 @@ freebsd_sys_truncate(p, v, retval)
 		syscallarg(int) pad;
 		syscallarg(off_t) length;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_truncate(p, uap, retval);

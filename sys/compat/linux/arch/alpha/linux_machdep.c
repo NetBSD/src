@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.17.2.2 2002/03/16 16:00:29 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.17.2.3 2002/06/23 17:44:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17.2.2 2002/03/16 16:00:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17.2.3 2002/06/23 17:44:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 
 	/* Address of trampoline code.  End up at this PC after mi_switch */
 	tf->tf_regs[FRAME_PC] =
-	    (u_int64_t)(PS_STRINGS - (linux_rt_esigcode - linux_rt_sigcode));
+	    (u_int64_t)(p->p_psstr - (linux_rt_esigcode - linux_rt_sigcode));
 
 	/* Adjust the stack */
 	alpha_pal_wrusp((unsigned long)sfp);
@@ -295,7 +295,7 @@ void setup_linux_sigframe(tf, sig, mask)
 
 	/* Address of trampoline code.  End up at this PC after mi_switch */
 	tf->tf_regs[FRAME_PC] =
-	    (u_int64_t)(PS_STRINGS - (linux_esigcode - linux_sigcode));
+	    (u_int64_t)(p->p_psstr - (linux_esigcode - linux_sigcode));
 
 	/* Adjust the stack */
 	alpha_pal_wrusp((unsigned long)sfp);
@@ -344,7 +344,7 @@ linux_sendsig(catcher, sig, mask, code)
 
 	/* Signal handler for trampoline code */
 	tf->tf_regs[FRAME_T12] = (u_int64_t)catcher;
-	tf->tf_regs[FRAME_A0] = native_to_linux_sig[sig];
+	tf->tf_regs[FRAME_A0] = native_to_linux_signo[sig];
 
 	/*
 	 * Linux has a custom restorer option.  To support it we would

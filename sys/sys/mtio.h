@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.18 1999/09/07 13:55:27 simonb Exp $	*/
+/*	$NetBSD: mtio.h,v 1.18.16.1 2002/06/23 17:51:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef _SYS_MTIO_H_
-#define _SYS_MTIO_H_
+#define	_SYS_MTIO_H_
 
 /*
  * Structures and definitions for mag tape io control commands
@@ -49,24 +49,24 @@ struct mtop {
 };
 
 /* operations */
-#define MTWEOF		0	/* write an end-of-file record */
-#define MTFSF		1	/* forward space file */
-#define MTBSF		2	/* backward space file */
-#define MTFSR		3	/* forward space record */
-#define MTBSR		4	/* backward space record */
-#define MTREW		5	/* rewind */
-#define MTOFFL		6	/* rewind and put the drive offline */
-#define MTNOP		7	/* no operation, sets status only */
-#define MTRETEN		8	/* retension */
-#define MTERASE		9	/* erase entire tape */
-#define MTEOM		10	/* forward to end of media */
-#define MTNBSF		11	/* backward space to beginning of file */
-#define MTCACHE		12	/* enable controller cache */
-#define MTNOCACHE	13	/* disable controller cache */
-#define MTSETBSIZ	14	/* set block size; 0 for variable */
-#define MTSETDNSTY	15	/* set density code for current mode */
-#define MTCMPRESS	16	/* set/clear device compression */
-#define MTEWARN		17	/* set/clear early warning behaviour */
+#define	MTWEOF		0	/* write an end-of-file record */
+#define	MTFSF		1	/* forward space file */
+#define	MTBSF		2	/* backward space file */
+#define	MTFSR		3	/* forward space record */
+#define	MTBSR		4	/* backward space record */
+#define	MTREW		5	/* rewind */
+#define	MTOFFL		6	/* rewind and put the drive offline */
+#define	MTNOP		7	/* no operation, sets status only */
+#define	MTRETEN		8	/* retension */
+#define	MTERASE		9	/* erase entire tape */
+#define	MTEOM		10	/* forward to end of media */
+#define	MTNBSF		11	/* backward space to beginning of file */
+#define	MTCACHE		12	/* enable controller cache */
+#define	MTNOCACHE	13	/* disable controller cache */
+#define	MTSETBSIZ	14	/* set block size; 0 for variable */
+#define	MTSETDNSTY	15	/* set density code for current mode */
+#define	MTCMPRESS	16	/* set/clear device compression */
+#define	MTEWARN		17	/* set/clear early warning behaviour */
 
 /* structure for MTIOCGET - mag tape get status command */
 
@@ -99,22 +99,22 @@ struct mtget {
 #define	MT_ISCPC	0x06		/* SUN */
 #define	MT_ISAR		0x07		/* SUN - Also "GENERIC SCSI" */
 #define	MT_ISTMSCP	0x08		/* DEC TMSCP protocol (TU81, TK50) */
-#define MT_ISCY		0x09		/* CCI Cipher */
-#define MT_ISCT		0x0a		/* HP 1/4 tape */
-#define MT_ISFHP	0x0b		/* HP 7980 1/2 tape */
-#define MT_ISEXABYTE	0x0c		/* Exabyte */
-#define MT_ISEXA8200	0x0c		/* Exabyte EXB-8200 */
-#define MT_ISEXA8500	0x0d		/* Exabyte EXB-8500 */
-#define MT_ISVIPER1	0x0e		/* Archive Viper-150 */
-#define MT_ISPYTHON	0x0f		/* Archive Python (DAT) */
-#define MT_ISHPDAT	0x10		/* HP 35450A DAT drive */
-#define MT_ISWANGTEK	0x11		/* WANGTEK 5150ES */
-#define MT_ISCALIPER	0x12		/* Caliper CP150 */
-#define MT_ISWTEK5099	0x13		/* WANGTEK 5099ES */
-#define MT_ISVIPER2525	0x14		/* Archive Viper 2525 */
-#define MT_ISMFOUR	0x11		/* M4 Data 1/2 9track drive */
-#define MT_ISTK50	0x12		/* DEC SCSI TK50 */
-#define MT_ISMT02	0x13		/* Emulex MT02 SCSI tape controller */
+#define	MT_ISCY		0x09		/* CCI Cipher */
+#define	MT_ISCT		0x0a		/* HP 1/4 tape */
+#define	MT_ISFHP	0x0b		/* HP 7980 1/2 tape */
+#define	MT_ISEXABYTE	0x0c		/* Exabyte */
+#define	MT_ISEXA8200	0x0c		/* Exabyte EXB-8200 */
+#define	MT_ISEXA8500	0x0d		/* Exabyte EXB-8500 */
+#define	MT_ISVIPER1	0x0e		/* Archive Viper-150 */
+#define	MT_ISPYTHON	0x0f		/* Archive Python (DAT) */
+#define	MT_ISHPDAT	0x10		/* HP 35450A DAT drive */
+#define	MT_ISWANGTEK	0x11		/* WANGTEK 5150ES */
+#define	MT_ISCALIPER	0x12		/* Caliper CP150 */
+#define	MT_ISWTEK5099	0x13		/* WANGTEK 5099ES */
+#define	MT_ISVIPER2525	0x14		/* Archive Viper 2525 */
+#define	MT_ISMFOUR	0x11		/* M4 Data 1/2 9track drive */
+#define	MT_ISTK50	0x12		/* DEC SCSI TK50 */
+#define	MT_ISMT02	0x13		/* Emulex MT02 SCSI tape controller */
 
 /* bits defined for the mt_dsreg field */
 #define	MT_DS_RDONLY	0x10		/* tape mounted readonly */
@@ -138,8 +138,8 @@ struct mtget {
 /* mag tape io control commands */
 #define	MTIOCTOP	_IOW('m', 1, struct mtop)	/* do a mag tape op */
 #define	MTIOCGET	_IOR('m', 2, struct mtget)	/* get tape status */
-#define MTIOCIEOT	_IO('m', 3)			/* ignore EOT error */
-#define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
+#define	MTIOCIEOT	_IO('m', 3)			/* ignore EOT error */
+#define	MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
 /*
  * When more SCSI-3 SSC (streaming device) devices are out there
  * that support the full 32 byte type 2 structure, we'll have to

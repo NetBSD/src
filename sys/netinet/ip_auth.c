@@ -1,10 +1,13 @@
-/*	$NetBSD: ip_auth.c,v 1.19.2.2 2002/02/11 20:10:33 jdolecek Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.19.2.3 2002/06/23 17:50:45 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1998-2001 by Darren Reed & Guido van Rooij.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -21,7 +24,6 @@
 #else
 # include <sys/ioctl.h>
 #endif
-#include <sys/uio.h>
 #ifndef linux
 # include <sys/protosw.h>
 #endif
@@ -106,9 +108,9 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.19.2.2 2002/02/11 20:10:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.19.2.3 2002/06/23 17:50:45 jdolecek Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.15 2002/01/01 15:08:01 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.19 2002/04/23 14:57:27 darrenr Exp";
 #endif
 #endif
 
@@ -410,6 +412,7 @@ fr_authioctlloop:
 			RWLOCK_EXIT(&ipf_auth);
 			return 0;
 		}
+		RWLOCK_EXIT(&ipf_auth);
 #ifdef	_KERNEL
 # if	SOLARIS
 		mutex_enter(&ipf_authmx);
@@ -422,7 +425,6 @@ fr_authioctlloop:
 		error = SLEEP(&fr_authnext, "fr_authnext");
 # endif
 #endif
-		RWLOCK_EXIT(&ipf_auth);
 		if (!error)
 			goto fr_authioctlloop;
 		break;
@@ -452,13 +454,13 @@ fr_authioctlloop:
 #ifdef	_KERNEL
 		if (m && au->fra_info.fin_out) {
 # if SOLARIS
-			error = fr_qout(fra->fra_q, m);
+			error = (fr_qout(fra->fra_q, m) == 0) ? EINVAL : 0;
 # else /* SOLARIS */
 			struct route ro;
 
 			bzero((char *)&ro, sizeof(ro));
 #  if ((_BSDI_VERSION >= 199802) && (_BSDI_VERSION < 200005)) || \
-       defined(__OpenBSD__)
+       defined(__OpenBSD__) || (defined(IRIX) && (IRIX >= 605))
 			error = ip_output(m, NULL, &ro, IP_FORWARDING, NULL,
 					  NULL);
 #  else
@@ -474,7 +476,7 @@ fr_authioctlloop:
 				fr_authstats.fas_sendok++;
 		} else if (m) {
 # if SOLARIS
-			error = fr_qin(fra->fra_q, m);
+			error = (fr_qin(fra->fra_q, m) == 0) ? EINVAL : 0;
 # else /* SOLARIS */
 			ifq = &ipintrq;
 			if (IF_QFULL(ifq)) {
@@ -483,7 +485,9 @@ fr_authioctlloop:
 				error = ENOBUFS;
 			} else {
 				IF_ENQUEUE(ifq, m);
+#  if IRIX < 605
 				schednetisr(NETISR_IP);
+#  endif
 			}
 # endif /* SOLARIS */
 			if (error)
@@ -499,7 +503,7 @@ fr_authioctlloop:
 		/*
 		 * If we experience an error which will result in the packet
 		 * not being processed, make sure we advance to the next one.
-		 */ 
+		 */
 		if (error == ENOBUFS) {
 			fr_authused--;
 			fra->fra_index = -1;

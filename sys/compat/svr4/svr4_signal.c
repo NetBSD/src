@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.41.4.1 2002/01/10 19:52:18 thorpej Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.41.4.2 2002/06/23 17:44:47 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.41.4.1 2002/01/10 19:52:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.41.4.2 2002/06/23 17:44:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,76 +74,8 @@ void svr4_to_native_sigaction __P((const struct svr4_sigaction *,
 void native_to_svr4_sigaction __P((const struct sigaction *,
 				struct svr4_sigaction *));
 
-const int native_to_svr4_sig[NSIG] = {
-	0,
-	SVR4_SIGHUP,
-	SVR4_SIGINT,
-	SVR4_SIGQUIT,
-	SVR4_SIGILL,
-	SVR4_SIGTRAP,
-	SVR4_SIGABRT,
-	SVR4_SIGEMT,
-	SVR4_SIGFPE,
-	SVR4_SIGKILL,
-	SVR4_SIGBUS,
-	SVR4_SIGSEGV,
-	SVR4_SIGSYS,
-	SVR4_SIGPIPE,
-	SVR4_SIGALRM,
-	SVR4_SIGTERM,
-	SVR4_SIGURG,
-	SVR4_SIGSTOP,
-	SVR4_SIGTSTP,
-	SVR4_SIGCONT,
-	SVR4_SIGCHLD,
-	SVR4_SIGTTIN,
-	SVR4_SIGTTOU,
-	SVR4_SIGIO,
-	SVR4_SIGXCPU,
-	SVR4_SIGXFSZ,
-	SVR4_SIGVTALRM,
-	SVR4_SIGPROF,
-	SVR4_SIGWINCH,
-	0,			/* SIGINFO */
-	SVR4_SIGUSR1,
-	SVR4_SIGUSR2,
-	SVR4_SIGPWR,
-};
-
-int svr4_to_native_sig[SVR4_NSIG] = {
-	0,
-	SIGHUP,
-	SIGINT,
-	SIGQUIT,
-	SIGILL,
-	SIGTRAP,
-	SIGABRT,
-	SIGEMT,
-	SIGFPE,
-	SIGKILL,
-	SIGBUS,
-	SIGSEGV,
-	SIGSYS,
-	SIGPIPE,
-	SIGALRM,
-	SIGTERM,
-	SIGUSR1,
-	SIGUSR2,
-	SIGCHLD,
-	SIGPWR,
-	SIGWINCH,
-	SIGURG,
-	SIGIO,
-	SIGSTOP,
-	SIGTSTP,
-	SIGCONT,
-	SIGTTIN,
-	SIGTTOU,
-	SIGVTALRM,
-	SIGPROF,
-	SIGXCPU,
-	SIGXFSZ,
-};
+extern const int native_to_svr4_signo[];
+extern const int svr4_to_native_signo[];
 
 static __inline void
 svr4_sigfillset(s)
@@ -153,7 +85,7 @@ svr4_sigfillset(s)
 
 	svr4_sigemptyset(s);
 	for (i = 1; i < SVR4_NSIG; i++)
-		if (svr4_to_native_sig[i] != 0)
+		if (svr4_to_native_signo[i] != 0)
 			svr4_sigaddset(s, i);
 }
 
@@ -167,7 +99,7 @@ svr4_to_native_sigset(sss, bss)
 	sigemptyset(bss);
 	for (i = 1; i < SVR4_NSIG; i++) {
 		if (svr4_sigismember(sss, i)) {
-			newsig = svr4_to_native_sig[i];
+			newsig = svr4_to_native_signo[i];
 			if (newsig)
 				sigaddset(bss, newsig);
 		}
@@ -185,7 +117,7 @@ native_to_svr4_sigset(bss, sss)
 	svr4_sigemptyset(sss);
 	for (i = 1; i < NSIG; i++) {
 		if (sigismember(bss, i)) {
-			newsig = native_to_svr4_sig[i];
+			newsig = native_to_svr4_signo[i];
 			if (newsig)
 				svr4_sigaddset(sss, newsig);
 		}
@@ -211,7 +143,7 @@ svr4_to_native_sigaction(ssa, bsa)
 	if ((ssa->sa_flags & SVR4_SA_RESTART) != 0)
 		bsa->sa_flags |= SA_RESTART;
 	if ((ssa->sa_flags & SVR4_SA_SIGINFO) != 0)
-		DPRINTF(("svr4_to_native_sigaction: SA_SIGINFO ignored\n"));
+		bsa->sa_flags |= SA_SIGINFO;
 	if ((ssa->sa_flags & SVR4_SA_NODEFER) != 0)
 		bsa->sa_flags |= SA_NODEFER;
 	if ((ssa->sa_flags & SVR4_SA_NOCLDWAIT) != 0)
@@ -298,7 +230,7 @@ svr4_sys_sigaction(p, v, retval)
 			return (error);
 		svr4_to_native_sigaction(&nssa, &nbsa);
 	}
-	error = sigaction1(p, svr4_to_native_sig[SCARG(uap, signum)],
+	error = sigaction1(p, svr4_to_native_signo[SCARG(uap, signum)],
 	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
 	if (error)
 		return (error);
@@ -357,7 +289,7 @@ svr4_sys_signal(p, v, retval)
 		syscallarg(int) signum;
 		syscallarg(svr4_sig_t) handler;
 	} */ *uap = v;
-	int signum = svr4_to_native_sig[SVR4_SIGNO(SCARG(uap, signum))];
+	int signum = svr4_to_native_signo[SVR4_SIGNO(SCARG(uap, signum))];
 	struct sigaction nbsa, obsa;
 	sigset_t ss;
 	int error;
@@ -540,7 +472,7 @@ svr4_sys_kill(p, v, retval)
 	struct sys_kill_args ka;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
-	SCARG(&ka, signum) = svr4_to_native_sig[SCARG(uap, signum)];
+	SCARG(&ka, signum) = svr4_to_native_signo[SCARG(uap, signum)];
 	return sys_kill(p, &ka, retval);
 }
 

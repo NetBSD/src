@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.18.2.1 2002/01/10 19:57:31 thorpej Exp $	*/
+/*	$NetBSD: dl.c,v 1.18.2.2 2002/06/23 17:48:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.18.2.1 2002/01/10 19:57:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.18.2.2 2002/06/23 17:48:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,10 +372,11 @@ dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 
 
         error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-        if (error >= 0)
+        if (error != EPASSTHROUGH)
                 return (error);
+
         error = ttioctl(tp, cmd, data, flag, p);
-        if (error >= 0)
+        if (error != EPASSTHROUGH)
                 return (error);
 
 	switch (cmd) {
@@ -394,7 +395,7 @@ dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct proc *p)
                 break;
 
         default:
-                return (ENOTTY);
+                return (EPASSTHROUGH);
         }
         return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.7.4.1 2002/01/10 19:51:47 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.7.4.2 2002/06/23 17:44:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.7.4.1 2002/01/10 19:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.7.4.2 2002/06/23 17:44:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -93,7 +93,7 @@ linux_sys_clone(p, v, retval)
 	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
-	sig = linux_to_native_sig[sig];
+	sig = linux_to_native_signo[sig];
 
 	/*
 	 * Note that Linux does not provide a portable way of specifying

@@ -1,48 +1,41 @@
-/*
- *   Copyright (c) 1998 Martin Husemann. All rights reserved.
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- *   Redistribution and use in source and binary forms, with or without
- *   modification, are permitted provided that the following conditions
- *   are met:
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Martin Husemann <martin@netbsd.org>.
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *   3. Neither the name of the author nor the names of any co-contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
- *   4. Altered versions must be plainly marked as such, and must not be
- *      misrepresented as being the original software and/or documentation.
- *   
- *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- *   ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- *   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- *   OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- *   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- *   OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- *   SUCH DAMAGE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- *---------------------------------------------------------------------------
- *
- *	ELSA MicroLink ISDN/MC card specific routines
- *	---------------------------------------------
- *
- *	$Id: isic_pcmcia_elsa_isdnmc.c,v 1.2.6.1 2002/01/10 19:57:22 thorpej Exp $
- *
- *      last edit-date: [Fri Jan  5 11:39:32 2001]
- *
- *	-mh	added support for elsa ISDN/mc
- *
- *---------------------------------------------------------------------------*/
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.2.6.1 2002/01/10 19:57:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.2.6.2 2002/06/23 17:48:19 jdolecek Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_ISDNMC
@@ -83,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.2.6.1 2002/01/10 19:57
 #include <dev/pcmcia/pcmciavar.h>
 #endif
 
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
@@ -91,11 +86,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.2.6.1 2002/01/10 19:57
 
 #ifndef __FreeBSD__
 /* PCMCIA support routines */
-static u_int8_t elsa_isdnmc_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void elsa_isdnmc_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void elsa_isdnmc_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void elsa_isdnmc_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
-static void elsa_isdnmc_clrirq __P((struct l1_softc *sc));
+static u_int8_t elsa_isdnmc_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void elsa_isdnmc_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void elsa_isdnmc_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void elsa_isdnmc_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
+static void elsa_isdnmc_clrirq __P((struct isic_softc *sc));
 #endif
 
 /*
@@ -116,7 +111,7 @@ elsa_isdnmc_clrirq(void *base)
 }
 #else
 static void
-elsa_isdnmc_clrirq(struct l1_softc *sc)
+elsa_isdnmc_clrirq(struct isic_softc *sc)
 {
 	ISAC_WRITE(I_MASK, 0xff);
 	HSCX_WRITE(0, H_MASK, 0xff);
@@ -137,7 +132,7 @@ elsa_isdnmc_read_fifo(void *buf, const void *base, size_t len)
 }
 #else
 static void
-elsa_isdnmc_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+elsa_isdnmc_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -168,7 +163,7 @@ elsa_isdnmc_write_fifo(void *base, const void *buf, size_t len)
 }
 #else
 static void
-elsa_isdnmc_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+elsa_isdnmc_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -199,7 +194,7 @@ elsa_isdnmc_write_reg(u_char *base, u_int offset, u_int v)
 }
 #else
 static void
-elsa_isdnmc_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+elsa_isdnmc_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -231,7 +226,7 @@ elsa_isdnmc_read_reg(u_char *base, u_int offset)
 }
 #else
 static u_int8_t
-elsa_isdnmc_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+elsa_isdnmc_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -259,9 +254,9 @@ elsa_isdnmc_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
  * could be removed an inserted again.
  */
 int
-isic_attach_elsaisdnmc(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
+isic_attach_elsaisdnmc(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
 {
-	struct l1_softc *sc = &psc->sc_isic;
+	struct isic_softc *sc = &psc->sc_isic;
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 
@@ -285,9 +280,6 @@ isic_attach_elsaisdnmc(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *
 		printf(": can't map i/o space\n");
 		return 0;
 	}
-
-	/* OK, this will work! */
-	sc->sc_cardtyp = CARD_TYPEP_ELSAMLIMC;
 
 	/* Setup bus space maps */
 	sc->sc_num_mappings = 1;
