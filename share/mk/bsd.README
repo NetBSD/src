@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.145 2004/02/06 22:13:58 jwise Exp $
+#	$NetBSD: bsd.README,v 1.146 2004/02/13 05:13:37 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -421,7 +421,7 @@ X11USRLIBDIR	X11 library directory.  [${X11ROOTDIR}/lib]
 STRIPFLAG	The flag passed to the install program to cause the binary
 		to be stripped.  This is to be used when building your
 		own install script so that the entire system can be made
-		stripped/not-stripped using a single knob.  [-s]
+		stripped/not-stripped using a single knob.  []
 
 COPY		The flag passed to the install program to cause the binary
 		to be copied rather than moved.  This is to be used when
