@@ -1,4 +1,4 @@
-/*	$NetBSD: bugdev.c,v 1.5 1998/09/05 15:20:48 pk Exp $	*/
+/*	$NetBSD: bugdev.c,v 1.6 2001/07/07 09:06:44 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -211,8 +211,8 @@ cputobsdlabel(lp, clp)
 	lp->d_type    = (u_int16_t)clp->type;
 	lp->d_subtype = (u_int16_t)clp->subtype;
 
-	bcopy(clp->vid_vd, lp->d_typename, 16);
-	bcopy(clp->packname, lp->d_packname, 16);
+	memcpy(lp->d_typename, clp->vid_vd, 16);
+	memcpy(lp->d_packname, clp->packname, 16);
 
 	lp->d_secsize        = (u_int32_t)clp->cfg_psm;
 	lp->d_nsectors       = (u_int32_t)clp->cfg_spt;
@@ -264,9 +264,10 @@ cputobsdlabel(lp, clp)
 	lp->d_bbsize      = (u_int32_t)clp->bbsize;
 	lp->d_sbsize      = (u_int32_t)clp->sbsize;
 
-	bcopy(clp->vid_4, &(lp->d_partitions[0]),sizeof (struct partition) * 4);
+	memcpy(&(lp->d_partitions[0]), clp->vid_4,
+	    sizeof (struct partition) * 4);
 
 	/* CONSTCOND */
-	bcopy(clp->cfg_4, &(lp->d_partitions[4]), sizeof (struct partition) 
+	memcpy(&(lp->d_partitions[4]), clp->cfg_4, sizeof (struct partition) 
 		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 }
