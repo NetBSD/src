@@ -31,21 +31,21 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.15 1994/05/07 00:20:42 jtc Exp $
+ *	$Id: stdlib.h,v 1.16 1994/05/21 09:42:29 cgd Exp $
  */
 
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
 #include <machine/ansi.h>
 
-#ifdef	_SIZE_T_
-typedef	_SIZE_T_	size_t;
-#undef	_SIZE_T_
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
-#ifdef	_WCHAR_T_
-typedef	_WCHAR_T_	wchar_t;
-#undef	_WCHAR_T_
+#ifdef	_BSD_WCHAR_T_
+typedef	_BSD_WCHAR_T_	wchar_t;
+#undef	_BSD_WCHAR_T_
 #endif
 
 typedef struct {

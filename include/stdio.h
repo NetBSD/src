@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.11 1994/04/03 01:26:42 cgd Exp $
+ *	$Id: stdio.h,v 1.12 1994/05/21 09:42:20 cgd Exp $
  */
 
 #ifndef	_STDIO_H_
@@ -47,9 +47,9 @@
 #include <sys/cdefs.h>
 
 #include <machine/ansi.h>
-#ifdef	_SIZE_T_
-typedef	_SIZE_T_	size_t;
-#undef	_SIZE_T_
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
 #ifndef NULL
