@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dump.h	5.16 (Berkeley) 5/29/91
- *	$Id: dump.h,v 1.4 1993/08/01 18:27:52 mycroft Exp $
+ *	$Id: dump.h,v 1.5 1993/12/02 02:33:39 mycroft Exp $
  */
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
@@ -159,7 +159,7 @@ void	initdumptimes();
 void	getdumptime();
 void	putdumptime();
 #define	ITITERATE(i, ddp) \
-	for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
+	if (nddates) for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
 
 /*
  *	We catch these interrupts
