@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_acct.c	8.1 (Berkeley) 6/14/93
- *	$Id: kern_acct.c,v 1.24 1994/05/20 10:05:02 cgd Exp $
+ *	$Id: kern_acct.c,v 1.25 1994/05/21 01:10:26 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -131,9 +131,9 @@ acct(p, uap, retval)
 		error = vn_close((acctp != NULLVP ? acctp : savacctp), FWRITE,
 		    p->p_ucred, p);
 		acctp = savacctp = NULLVP;
-		if (uap->fname == NULL)
-			return (error);
 	}
+	if (uap->fname == NULL)
+		return (error);
 
 	/*
 	 * Save the new accounting file vnode, and schedule the new
