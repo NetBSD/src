@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_meter.c	7.11 (Berkeley) 4/20/91
- *	$Id: vm_meter.c,v 1.4 1993/08/27 23:47:12 brezak Exp $
+ *	$Id: vm_meter.c,v 1.5 1993/09/15 22:31:07 cgd Exp $
  */
 
 #include "param.h"
@@ -75,7 +75,7 @@ vmtotal()
 	total.t_pw = 0;
 	total.t_sl = 0;
 	total.t_sw = 0;
-	for (p = allproc; p != NULL; p = p->p_nxt) {
+	for (p = (struct proc *)allproc; p != NULL; p = p->p_nxt) {
 		if (p->p_flag & SSYS)
 			continue;
 		if (p->p_stat) {
