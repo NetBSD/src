@@ -1,4 +1,4 @@
-/* $NetBSD: avalon_a12.c,v 1.1 1998/01/29 21:46:33 ross Exp $ */
+/* $NetBSD: avalon_a12.c,v 1.2 1998/01/31 10:55:42 ross Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.1 1998/01/29 21:46:33 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.2 1998/01/31 10:55:42 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,8 @@ static void avalon_a12_device_register __P((struct device *, void *));
 void
 avalon_a12_init()
 {
-	platform.family = platform.model = "A12";
+	platform.family = platform.model =
+		"Avalon A12 Scalable Parallel Processor";
 	platform.iobus = "a12c";
 	platform.cons_init = avalon_a12_cons_init;
 	platform.device_register = avalon_a12_device_register;
