@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.24 1997/02/04 05:08:30 perry Exp $
+#	$NetBSD: Makefile.arm32,v 1.25 1997/02/04 06:19:08 mark Exp $
 
 # Makefile for NetBSD
 #
@@ -170,7 +170,7 @@ uipc_proto.o vfs_conf.o: Makefile
 genassym.o machdep.o: Makefile
 
 # depend on CPU configuration 
-cpuswitch.o fault.o machdep.o: Makefile
+cpufunc.o cpufunc_asm.o cpuswitch.o fault.o machdep.o: Makefile
 
 
 locore.o: ${ARM32}/arm32/locore.S assym.h
