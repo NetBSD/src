@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.26 2002/03/17 19:41:01 atatat Exp $	*/
+/*	$NetBSD: dhu.c,v 1.26.4.1 2002/05/16 11:54:08 gehenna Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.26 2002/03/17 19:41:01 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.26.4.1 2002/05/16 11:54:08 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,10 +148,22 @@ static	int	dhuparam __P((struct tty *, struct termios *));
 static	int	dhuiflow __P((struct tty *, int));
 static unsigned	dhumctl __P((struct dhu_softc *,int, int, int));
 
-cdev_decl(dhu);
-
 struct	cfattach dhu_ca = {
 	sizeof(struct dhu_softc), dhu_match, dhu_attach
+};
+
+dev_type_open(dhuopen);
+dev_type_close(dhuclose);
+dev_type_read(dhuread);
+dev_type_write(dhuwrite);
+dev_type_ioctl(dhuioctl);
+dev_type_stop(dhustop);
+dev_type_tty(dhutty);
+dev_type_poll(dhupoll);
+
+const struct cdevsw dhu_cdevsw = {
+	dhuopen, dhuclose, dhuread, dhuwrite, dhuioctl,
+	dhustop, dhutty, dhupoll, nommap, D_TTY
 };
 
 /* Autoconfig handles: setup the controller to interrupt, */
@@ -460,6 +472,7 @@ int
 dhuread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
@@ -474,6 +487,7 @@ int
 dhuwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
@@ -579,6 +593,7 @@ dhutty(dev)
 void
 dhustop(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	struct dhu_softc *sc;
 	int line;
