@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.8 2001/08/13 18:48:48 soda Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.9 2002/07/06 23:59:19 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -126,6 +126,7 @@ typedef union {
 #define OP_BNE		005
 #define OP_BLEZ		006
 #define OP_BGTZ		007
+#define OP_SYNC		017
 
 #define OP_ADDI		010
 #define OP_ADDIU	011
@@ -178,6 +179,7 @@ typedef union {
 #define OP_LWC2		062
 #define OP_LWC3		063
 #define OP_LLD		064		/* MIPS-II, for r4000 port */
+#define OP_LDC1		065
 #define OP_LD		067		/* MIPS-II, for r4000 port */
 
 #define OP_SC		070
@@ -186,6 +188,7 @@ typedef union {
 #define OP_SWC2		072
 #define OP_SWC3		073
 #define OP_SCD		074		/* MIPS-II, for r4000 port */
+#define OP_SDC1		075
 #define OP_SD		077		/* MIPS-II, for r4000 port */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.c,v 1.10 2002/03/05 15:46:51 simonb Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.1 2002/07/06 23:59:21 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -40,14 +40,23 @@
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
+extern	void MachEmulateFP(u_int32_t, struct frame *, u_int32_t);
+
 static __inline void	send_sigsegv(u_int32_t, u_int32_t, struct frame *,
 			    u_int32_t);
 static __inline void	update_pc(struct frame *, u_int32_t);
 
+vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
+void	MachEmulateInst(u_int32_t, u_int32_t, u_int32_t, struct frame *);
+
+void	MachEmulateLWC0(u_int32_t inst, struct frame *, u_int32_t);
+void	MachEmulateSWC0(u_int32_t inst, struct frame *, u_int32_t);
+void	MachEmulateSpecial(u_int32_t inst, struct frame *, u_int32_t);
 void	MachEmulateLWC1(u_int32_t inst, struct frame *, u_int32_t);
 void	MachEmulateLDC1(u_int32_t inst, struct frame *, u_int32_t);
 void	MachEmulateSWC1(u_int32_t inst, struct frame *, u_int32_t);
 void	MachEmulateSDC1(u_int32_t inst, struct frame *, u_int32_t);
+
 void	bcemul_lb(u_int32_t inst, struct frame *, u_int32_t);
 void	bcemul_lbu(u_int32_t inst, struct frame *, u_int32_t);
 void	bcemul_lh(u_int32_t inst, struct frame *, u_int32_t);
@@ -61,7 +70,180 @@ void	bcemul_sw(u_int32_t inst, struct frame *, u_int32_t);
 void	bcemul_swl(u_int32_t inst, struct frame *, u_int32_t);
 void	bcemul_swr(u_int32_t inst, struct frame *f, u_int32_t);
 
-vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
+/*
+ * Analyse 'next' PC address taking account of branch/jump instructions
+ */
+vaddr_t
+MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
+	struct frame *f;
+	vaddr_t instpc;
+	unsigned fpuCSR;
+	int allowNonBranch;
+{
+#define	BRANCHTARGET(p) (4 + (p) + ((short)((InstFmt *)(p))->IType.imm << 2))
+	InstFmt inst;
+	vaddr_t nextpc;
+
+	if (instpc < MIPS_KSEG0_START)
+		inst.word = fuiword((void *)instpc);
+	else
+		inst.word = *(unsigned *)instpc;
+
+	switch ((int)inst.JType.op) {
+	case OP_SPECIAL:
+		if (inst.RType.func == OP_JR || inst.RType.func == OP_JALR)
+			nextpc = f->f_regs[inst.RType.rs];
+		else if (allowNonBranch)
+			nextpc = instpc + 4;
+		else
+			panic("MachEmulateBranch: Non-branch");
+		break;
+
+	case OP_BCOND:
+		switch ((int)inst.IType.rt) {
+		case OP_BLTZ:
+		case OP_BLTZAL:
+		case OP_BLTZL:		/* squashed */
+		case OP_BLTZALL:	/* squashed */
+			if ((int)(f->f_regs[inst.RType.rs]) < 0)
+				nextpc = BRANCHTARGET(instpc);
+			else
+				nextpc = instpc + 8;
+			break;
+
+		case OP_BGEZ:
+		case OP_BGEZAL:
+		case OP_BGEZL:		/* squashed */
+		case OP_BGEZALL:	/* squashed */
+			if ((int)(f->f_regs[inst.RType.rs]) >= 0)
+				nextpc = BRANCHTARGET(instpc);
+			else
+				nextpc = instpc + 8;
+			break;
+
+		default:
+			panic("MachEmulateBranch: Bad branch cond");
+		}
+		break;
+
+	case OP_J:
+	case OP_JAL:
+		nextpc = (inst.JType.target << 2) |
+			((unsigned)instpc & 0xF0000000);
+		break;
+
+	case OP_BEQ:
+	case OP_BEQL:	/* squashed */
+		if (f->f_regs[inst.RType.rs] == f->f_regs[inst.RType.rt])
+			nextpc = BRANCHTARGET(instpc);
+		else
+			nextpc = instpc + 8;
+		break;
+
+	case OP_BNE:
+	case OP_BNEL:	/* squashed */
+		if (f->f_regs[inst.RType.rs] != f->f_regs[inst.RType.rt])
+			nextpc = BRANCHTARGET(instpc);
+		else
+			nextpc = instpc + 8;
+		break;
+
+	case OP_BLEZ:
+	case OP_BLEZL:	/* squashed */
+		if ((int)(f->f_regs[inst.RType.rs]) <= 0)
+			nextpc = BRANCHTARGET(instpc);
+		else
+			nextpc = instpc + 8;
+		break;
+
+	case OP_BGTZ:
+	case OP_BGTZL:	/* squashed */
+		if ((int)(f->f_regs[inst.RType.rs]) > 0)
+			nextpc = BRANCHTARGET(instpc);
+		else
+			nextpc = instpc + 8;
+		break;
+
+	case OP_COP1:
+		if (inst.RType.rs == OP_BCx || inst.RType.rs == OP_BCy) {
+			int condition = (fpuCSR & MIPS_FPU_COND_BIT) != 0;
+			if ((inst.RType.rt & COPz_BC_TF_MASK) != COPz_BC_TRUE)
+				condition = !condition;
+			if (condition)
+				nextpc = BRANCHTARGET(instpc);
+			else
+				nextpc = instpc + 8;
+		}
+		else if (allowNonBranch)
+			nextpc = instpc + 4;
+		else
+			panic("MachEmulateBranch: Bad COP1 branch instruction");
+		break;
+
+	default:
+		if (!allowNonBranch)
+			panic("MachEmulateBranch: Non-branch instruction");
+		nextpc = instpc + 4;
+	}
+	return nextpc;
+#undef	BRANCHTARGET
+}
+
+/*
+ * Emulate instructions (including floating-point instructions)
+ */
+void
+MachEmulateInst(status, cause, opc, frame)
+	u_int32_t status;
+	u_int32_t cause;
+	u_int32_t opc;
+	struct frame *frame;
+{
+	u_int32_t inst;
+
+	/*
+	 *  Fetch the instruction.
+	 */
+	if (cause & MIPS_CR_BR_DELAY)
+		inst = fuword((u_int32_t *)opc+1);
+	else
+		inst = fuword((u_int32_t *)opc);
+
+	switch (((InstFmt)inst).FRType.op) {
+#if defined(MIPS1)
+	case OP_LWC0:
+		MachEmulateLWC0(inst, frame, cause);
+		break;
+	case OP_SWC0:
+		MachEmulateSWC0(inst, frame, cause);
+		break;
+	case OP_SPECIAL:
+		MachEmulateSpecial(inst, frame, cause);
+		break;
+#endif
+	case OP_COP1:
+		MachEmulateFP(inst, frame, cause);
+		break;
+#if defined(SOFTFLOAT)
+	case OP_LWC1:
+		MachEmulateLWC1(inst, frame, cause);
+		break;
+	case OP_LDC1:
+		MachEmulateLDC1(inst, frame, cause);
+		break;
+	case OP_SWC1:
+		MachEmulateSWC1(inst, frame, cause);
+		break;
+	case OP_SDC1:
+		MachEmulateSDC1(inst, frame, cause);
+		break;
+#endif
+	default:
+		frame->f_regs[CAUSE] = cause;
+		frame->f_regs[BADVADDR] = opc;
+		trapsignal(curproc, SIGSEGV, opc);
+	}
+}
 
 static __inline void
 send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
@@ -85,6 +267,162 @@ update_pc(struct frame *frame, u_int32_t cause)
 	else
 		frame->f_regs[PC] += 4;
 }
+
+#if defined(MIPS1)
+
+#define LWLWC0_MAXLOOP	12
+
+/*
+ * XXX only on uniprocessor machines
+ */
+void
+MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
+{
+	u_int32_t	vaddr;
+	int16_t		offset;
+	void		*t;
+	mips_reg_t	pc;
+	int		i;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment and alignment check */
+	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		return;
+	}
+
+	t = &(frame->f_regs[(inst>>16)&0x1F]);
+
+	if (copyin((void *)vaddr, t, 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+		return;
+	}
+
+	pc = frame->f_regs[PC];
+	update_pc(frame, cause);
+
+	if (cause & MIPS_CR_BR_DELAY)
+		return;
+
+	for (i = 1; i < LWLWC0_MAXLOOP; i++) {
+		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
+			return;
+
+		vaddr = frame->f_regs[PC];	/* XXX truncates to 32 bits */
+		inst = fuiword((u_int32_t *)vaddr);
+		if (((InstFmt)inst).FRType.op != OP_LWC0)
+			return;
+
+		offset = inst & 0xFFFF;
+		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+		/* segment and alignment check */
+		if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+			send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+			return;
+		}
+
+		t = &(frame->f_regs[(inst>>16)&0x1F]);
+
+		if (copyin((void *)vaddr, t, 4) != 0) {
+			send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+			return;
+		}
+
+		pc = frame->f_regs[PC];
+		update_pc(frame, cause);
+	}
+}
+
+#define LWSWC0_MAXLOOP	12
+
+/*
+ * XXX only on uniprocessor machines
+ */
+void
+MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
+{
+
+	u_int32_t	vaddr;
+	int16_t		offset;
+	void		*t;
+	mips_reg_t	pc;
+	int		i;
+
+	offset = inst & 0xFFFF;
+	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment and alignment check */
+	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		return;
+	}
+
+	t = &(frame->f_regs[(inst>>16)&0x1F]);
+
+	if (copyout(t, (void *)vaddr, 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+		return;
+	}
+
+	pc = frame->f_regs[PC];
+	update_pc(frame, cause);
+
+	if (cause & MIPS_CR_BR_DELAY)
+		return;
+
+	for (i = 1; i < LWSWC0_MAXLOOP; i++) {
+		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
+			return;
+
+		vaddr = frame->f_regs[PC];	/* XXX truncates to 32 bits */
+		inst = fuiword((u_int32_t *)vaddr);
+		if (((InstFmt)inst).FRType.op != OP_SWC0)
+			return;
+
+		offset = inst & 0xFFFF;
+		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
+
+		/* segment and alignment check */
+		if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+			send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+			return;
+		}
+
+		t = &(frame->f_regs[(inst>>16)&0x1F]);
+
+		if (copyout(t, (void *)vaddr, 4) != 0) {
+			send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
+			return;
+		}
+
+		pc = frame->f_regs[PC];
+		update_pc(frame, cause);
+	}
+}
+
+void
+MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
+{
+	switch (((InstFmt)inst).RType.func) {
+	case OP_SYNC:
+		/* nothing */
+		break;
+	default:
+		frame->f_regs[CAUSE] = cause;
+		frame->f_regs[BADVADDR] = frame->f_regs[PC];
+		trapsignal(curproc, SIGSEGV, frame->f_regs[PC]);
+	}
+
+	update_pc(frame, cause);
+}
+
+#endif /* defined(MIPS1) */
+
+
+#if defined(SOFTFLOAT)
 
 #define LWSWC1_MAXLOOP	12
 
@@ -591,3 +929,4 @@ bcemul_swr(u_int32_t inst, struct frame *frame, u_int32_t cause)
 
 	update_pc(frame, cause);
 }
+#endif /* defined(SOFTFLOAT) */

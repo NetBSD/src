@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.53 2002/06/27 03:43:45 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.54 2002/07/06 23:59:19 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -557,10 +557,6 @@
  */
 #define	MIPS_OPCODE_SHIFT	26
 #define	MIPS_OPCODE_C1		0x11
-#define	MIPS_OPCODE_LWC1	0x31
-#define	MIPS_OPCODE_LDC1	0x35
-#define	MIPS_OPCODE_SWC1	0x39
-#define	MIPS_OPCODE_SDC1	0x3d
 
 
 /*

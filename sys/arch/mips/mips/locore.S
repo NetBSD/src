@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.141 2002/07/04 19:20:01 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.142 2002/07/06 23:59:20 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1194,7 +1194,7 @@ LEAF(mips_cp0_status_write)
 END(mips_cp0_status_write)
 
 
-#if !defined(NOFPU) || defined(SOFTFLOAT)
+#if !defined(NOFPU) && !defined(SOFTFLOAT)
 /*----------------------------------------------------------------------------
  *
  * MachFPInterrupt --
@@ -1227,11 +1227,8 @@ NESTED(MachFPInterrupt, CALLFRAME_SIZ, ra)
 XNESTED(MachFPTrap)
 	.mask	0x80000000, -4
 	subu	sp, sp, CALLFRAME_SIZ
-#ifndef SOFTFLOAT
 	mfc0	t0, MIPS_COP_0_STATUS
-#endif
 	sw	ra, CALLFRAME_RA(sp)
-#ifndef SOFTFLOAT
 	or	t0, t0, MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
 	COP0_SYNC
@@ -1246,9 +1243,13 @@ XNESTED(MachFPTrap)
 	sll	t2, t0, (31 - 17)	# unimplemented operation?
 	bgez	t2, 3f			# no, normal trap
 	nop
-#endif
 /*
  * We got an unimplemented operation trap so
+ * We received an unimplemented operation trap.
+ *
+ * We check whether it's an unimplemented FP instruction here rather
+ * than invoking MachEmulateInst(), since it is faster.
+ *
  * fetch the instruction and emulate the instruction.
  */
 	bgez	a1, 1f			# Check the branch delay bit.
@@ -1274,21 +1275,6 @@ XNESTED(MachFPTrap)
 	srl	t0, a0, MIPS_OPCODE_SHIFT
 	beq	t0, MIPS_OPCODE_C1, 4f
 	nop
-
-#ifdef SOFTFLOAT
-	REG_PROLOGUE
-	REG_S	zero, FRAME_ZERO(a3)		# ensure zero has value 0
-	REG_EPILOGUE
-
-	beq	t0, MIPS_OPCODE_LWC1, 5f
-	nop
-	beq	t0, MIPS_OPCODE_LDC1, 6f
-	nop
-	beq	t0, MIPS_OPCODE_SWC1, 7f
-	nop
-	beq	t0, MIPS_OPCODE_SDC1, 8f
-	nop
-#endif
 
 /*
  * Send a floating point exception signal to the current process.
@@ -1336,48 +1322,15 @@ XNESTED(MachFPTrap)
  * Turn off the floating point coprocessor and return.
  */
 FPReturn:
-#ifndef SOFTFLOAT
 	mfc0	t0, MIPS_COP_0_STATUS
-#endif
 	lw	ra, CALLFRAME_RA(sp)
-#ifndef SOFTFLOAT
 	and	t0, t0, ~MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
 	COP0_SYNC
-#else
-	nop
-#endif
 	j	ra
 	addu	sp, sp, CALLFRAME_SIZ
-
-#ifdef SOFTFLOAT
-5:	# lwc1
-	jal	_C_LABEL(MachEmulateLWC1)
-	move	a1, a3
-	b	FPReturn
-	nop
-
-6:	# ldc1
-	jal	_C_LABEL(MachEmulateLDC1)
-	move	a1, a3
-	b	FPReturn
-	nop
-
-7:	# swc1
-	jal	_C_LABEL(MachEmulateSWC1)
-	move	a1, a3
-	b	FPReturn
-	nop
-
-8:	# sdc1
-	jal	_C_LABEL(MachEmulateSDC1)
-	move	a1, a3
-	b	FPReturn
-	nop
-
-#endif
 END(MachFPInterrupt)
-#endif /* !defined(NOFPU) || defined(SOFTFLOAT) */
+#endif /* !defined(NOFPU) && !defined(SOFTFLOAT) */
 
 LEAF(mips_pagecopy)
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
