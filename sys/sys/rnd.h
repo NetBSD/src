@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.14 2001/09/09 00:48:55 enami Exp $	*/
+/*	$NetBSD: rnd.h,v 1.15 2002/08/20 22:30:53 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -139,6 +139,9 @@ struct __rndsource_element {
 #define	RND_EXTRACT_ANY		0  /* extract anything, even if no entropy */
 #define	RND_EXTRACT_GOOD	1  /* return as many good bytes
 				      (short read ok) */
+
+#define RND_ENABLED(rp) \
+        (((rp)->data.flags & RND_FLAG_NO_COLLECT) == 0)
 
 void		rndpool_init __P((rndpool_t *));
 void		rndpool_init_global __P((void));
