@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.10 2001/09/27 16:30:35 yamt Exp $	*/
+/*	$NetBSD: wchar.h,v 1.11 2001/12/07 11:47:40 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -69,6 +69,8 @@
 #include <machine/ansi.h>
 #include <sys/null.h>
 
+#include <stdio.h> /* for FILE* */
+
 #ifdef	_BSD_WCHAR_T_
 typedef	_BSD_WCHAR_T_	wchar_t;
 #undef	_BSD_WCHAR_T_
@@ -92,6 +94,11 @@ typedef	_BSD_SIZE_T_	size_t;
 #ifndef WEOF
 #define	WEOF 	((wint_t)-1)
 #endif
+
+#define getwc(f) fgetwc(f)
+#define getwchar() getwc(stdin)
+#define putwc(wc, f) fputwc((wc), (f))
+#define putwchar(wc) putwc((wc), stdout)
 
 __BEGIN_DECLS
 size_t	mbrlen __P((const char * __restrict, size_t, mbstate_t * __restrict));
@@ -134,6 +141,16 @@ unsigned long int wcstoul __P((const wchar_t * __restrict, wchar_t ** __restrict
 		int base));
 long int wcstol __P((const wchar_t * __restrict, wchar_t ** __restrict, int base));
 double wcstod __P((const wchar_t * __restrict, wchar_t ** __restrict));
+
+wint_t ungetwc __P((wint_t, FILE *));
+wint_t fgetwc __P((FILE *));
+wint_t getwc __P((FILE *));
+wint_t getwchar __P((void));
+wint_t fputwc __P((wint_t, FILE *));
+wint_t putwc __P((wint_t, FILE *));
+wint_t putwchar __P((wint_t));
+
+int fwide __P((FILE *, int));
 __END_DECLS
 
 #endif /* !_WCHAR_H_ */
