@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.24 2002/07/01 22:19:35 itojun Exp $	*/
+/*	$NetBSD: lcp.c,v 1.25 2003/04/01 15:12:12 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: lcp.c,v 1.57 2001/03/08 05:11:14 paulus Exp "
 #else
-__RCSID("$NetBSD: lcp.c,v 1.24 2002/07/01 22:19:35 itojun Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.25 2003/04/01 15:12:12 christos Exp $");
 #endif
 #endif
 
@@ -2199,6 +2199,9 @@ LcpSendEchoRequest (f)
     u_int32_t lcp_magic;
     u_char pkt[4], *pktp;
 
+    if (f->state != OPENED)
+	return;
+
     /*
      * Detect the failure of the peer at this point.
      */
@@ -2212,13 +2215,11 @@ LcpSendEchoRequest (f)
     /*
      * Make and send the echo request frame.
      */
-    if (f->state == OPENED) {
-        lcp_magic = lcp_gotoptions[f->unit].magicnumber;
-	pktp = pkt;
-	PUTLONG(lcp_magic, pktp);
-        fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
-	++lcp_echos_pending;
-    }
+    lcp_magic = lcp_gotoptions[f->unit].magicnumber;
+    pktp = pkt;
+    PUTLONG(lcp_magic, pktp);
+    fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
+    ++lcp_echos_pending;
 }
 
 /*
