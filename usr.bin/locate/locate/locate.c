@@ -135,7 +135,7 @@ fastfind(pathpart)
 				if (*p == NULL) {	/* fast match success */
 					found = 1;
 					if (!globflag ||
-					    fnmatch(pathpart, path, FNM_QUOTE))
+					    !fnmatch(pathpart, path, FNM_QUOTE))
 						(void)printf("%s\n", path);
 					break;
 				}
