@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.32 2003/01/21 09:15:54 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.33 2003/08/07 11:25:48 agc Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -45,11 +45,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -79,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.32 2003/01/21 09:15:54 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.33 2003/08/07 11:25:48 agc Exp $");
 #endif
 #endif
 
