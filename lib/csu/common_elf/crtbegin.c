@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.22 2003/09/07 22:27:54 fvdl Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.23 2003/12/02 03:01:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ __dtors(void)
 		(**p++)();
 }
 
-static void __attribute__((__unused__))
+static void __attribute__((__used__,__noinline__))
 __do_global_ctors_aux(void)
 {
 	static int initialized;
@@ -166,7 +166,7 @@ __do_global_ctors_aux(void)
 }
 MD_CALL_STATIC_FUNCTION(.init, __do_global_ctors_aux)
 
-static void __attribute__((__unused__))
+static void __attribute__((__used__,__noinline__))
 __do_global_dtors_aux(void)
 {
 	static int finished;
