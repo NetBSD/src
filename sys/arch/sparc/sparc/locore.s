@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.76 1997/11/19 22:59:05 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.77 1997/11/22 03:13:59 tv Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2301,7 +2301,6 @@ return_from_syscall:
  * An interrupt frame is built in the space for a full trapframe;
  * this contains the psr, pc, npc, and interrupt level.
  */
-	.comm	_intrhand, 15 * 8	! intrhand[0..14]; 0 => error
 softintr_sun44c:
 	sethi	%hi(INTRREG_VA), %l6
 	ldub	[%l6 + %lo(INTRREG_VA)], %l5
@@ -4241,6 +4240,7 @@ ENTRY(write_user_windows)
 
 
 	.comm	_want_resched,4
+	.comm	_want_ast,4
 /*
  * Masterpaddr is the p->p_addr of the last process on the processor.
  * XXX masterpaddr is almost the same as cpcb
