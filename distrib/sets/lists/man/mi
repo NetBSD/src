@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.529 2002/11/23 11:24:03 blymn Exp $
+# $NetBSD: mi,v 1.530 2002/11/29 18:00:54 martin Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -920,6 +920,7 @@
 ./usr/share/man/cat4/sound.0			man-sys-catman
 ./usr/share/man/cat4/sp.0			man-sys-catman
 ./usr/share/man/cat4/sparc/audioamd.0		man-sys-catman
+./usr/share/man/cat4/sparc/bpp.0		man-sys-catman
 ./usr/share/man/cat4/sparc/bwtwo.0		man-sys-catman
 ./usr/share/man/cat4/sparc/cgeight.0		man-sys-catman
 ./usr/share/man/cat4/sparc/cgfour.0		man-sys-catman
@@ -2686,6 +2687,7 @@
 ./usr/share/man/man4/sound.4			man-sys-man
 ./usr/share/man/man4/sp.4			man-sys-man
 ./usr/share/man/man4/sparc/audioamd.4		man-sys-man
+./usr/share/man/man4/sparc/bpp.4		man-sys-man
 ./usr/share/man/man4/sparc/bwtwo.4		man-sys-man
 ./usr/share/man/man4/sparc/cgeight.4		man-sys-man
 ./usr/share/man/man4/sparc/cgfour.4		man-sys-man
