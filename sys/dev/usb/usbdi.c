@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.86 2001/11/20 13:48:04 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.87 2001/11/21 15:37:41 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.86 2001/11/20 13:48:04 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.87 2001/11/21 15:37:41 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,10 @@ extern int usbdebug;
 
 Static usbd_status usbd_ar_pipe(usbd_pipe_handle pipe);
 Static void usbd_do_request_async_cb 
-(usbd_xfer_handle, usbd_private_handle, usbd_status);
+	(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void usbd_start_next(usbd_pipe_handle pipe);
 Static usbd_status usbd_open_pipe_ival
-(usbd_interface_handle, u_int8_t, u_int8_t, usbd_pipe_handle *, int);
+	(usbd_interface_handle, u_int8_t, u_int8_t, usbd_pipe_handle *, int);
 
 Static int usbd_nbuses = 0;
 
@@ -558,7 +558,7 @@ usbd_clear_endpoint_stall(usbd_pipe_handle pipe)
 	DPRINTFN(8, ("usbd_clear_endpoint_stall\n"));
 
 	/* 
-	 * Clearing en endpoint stall resets the enpoint toggle, so
+	 * Clearing en endpoint stall resets the endpoint toggle, so
 	 * do the same to the HC toggle.
 	 */
 	pipe->methods->cleartoggle(pipe);
