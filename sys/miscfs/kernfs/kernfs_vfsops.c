@@ -37,7 +37,7 @@
  * From:
  *	Id: kernfs_vfsops.c,v 4.1 1994/01/02 14:42:00 jsp Exp
  *
- *	$Id: kernfs_vfsops.c,v 1.13 1994/04/21 07:48:43 cgd Exp $
+ *	$Id: kernfs_vfsops.c,v 1.14 1994/04/23 07:54:55 cgd Exp $
  */
 
 /*
@@ -135,7 +135,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) fmp;
-	getnewfsid(mp, (int)MOUNT_KERNFS);
+	getnewfsid(mp, makefstype(MOUNT_KERNFS));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);

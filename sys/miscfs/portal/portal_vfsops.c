@@ -37,7 +37,7 @@
  * From:
  *	Id: portal_vfsops.c,v 1.6 1993/09/22 17:57:30 jsp Exp
  *
- *	$Id: portal_vfsops.c,v 1.3 1994/04/21 07:48:48 cgd Exp $
+ *	$Id: portal_vfsops.c,v 1.4 1994/04/23 07:55:00 cgd Exp $
  */
 
 /*
@@ -131,7 +131,7 @@ portal_mount(mp, path, data, ndp, p)
 
 	/* mp->mnt_flag |= MNT_LOCAL; */
 	mp->mnt_data = (qaddr_t) fmp;
-	getnewfsid(mp, (int)MOUNT_PORTAL);
+	getnewfsid(mp, makefstype(MOUNT_PORTAL));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
