@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: fd.c,v 1.7 1994/06/07 05:41:51 chopps Exp $
+ *	$Id: fd.c,v 1.8 1994/06/16 15:06:49 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,7 +674,7 @@ fdgetdisklabel(sc, dev)
 	lp->d_npartitions = part + 1;
 	lp->d_partitions[part].p_size = lp->d_secperunit;
 	lp->d_partitions[part].p_fstype = FS_UNUSED;
-	lp->d_partitions[part].p_fsize = 512;
+	lp->d_partitions[part].p_fsize = 1024;
 	lp->d_partitions[part].p_frag = 8;
 	
 	sc->flags |= FDF_HAVELABEL;
@@ -715,7 +715,7 @@ nolabel:
 	lp->d_sbsize = 0;
 	lp->d_partitions[part].p_size = lp->d_secperunit;
 	lp->d_partitions[part].p_fstype = FS_UNUSED;
-	lp->d_partitions[part].p_fsize = 512;
+	lp->d_partitions[part].p_fsize = 1024;
 	lp->d_partitions[part].p_frag = 8;
 	lp->d_npartitions = part + 1;
 	lp->d_magic = lp->d_magic2 = DISKMAGIC;
@@ -775,8 +775,12 @@ fdsetdisklabel(sc, lp)
 		return(EINVAL);
 	/* 
 	 * make sure selected partition is within bounds
+	 * XXX on the second check, its to handle a bug in 
+	 * XXX the cluster routines as they require mutliples
+	 * XXX of CLBYTES currently
 	 */
-	if (pp->p_offset + pp->p_size >= lp->d_secperunit)
+	if ((pp->p_offset + pp->p_size >= lp->d_secperunit) ||
+	    (pp->p_frag * pp->p_fsize % CLBYTES))
 		return(EINVAL);
 done:
 	bcopy(lp, clp, sizeof(struct disklabel));
