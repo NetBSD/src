@@ -1,4 +1,4 @@
-/*	$NetBSD: dos_file.S,v 1.2 1997/06/13 13:32:12 drochner Exp $	*/
+/*	$NetBSD: dos_file.S,v 1.3 1997/08/18 22:44:02 hannken Exp $	*/
 	
 /* extracted from Tor Egge's patches for NetBSD boot */
 
@@ -46,7 +46,7 @@ ENTRY(dosopen)
 ok1:
 	data32
 	movl	$0,%edx
-	mov	%eax, %edx		# !!! at run time, it's mov %ax,%dx
+	mov	%eax, %edx		# !!! at run time, it is mov %ax,%dx
 err1:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
@@ -90,7 +90,7 @@ ENTRY(dosread)
 ok2:
 	data32
 	movl	$0,%edx
-	mov	%eax, %edx		# !!! at run time, it's mov %ax,%bx
+	mov	%eax, %edx		# !!! at run time, it is mov %ax,%bx
 err2:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
@@ -177,7 +177,7 @@ ENTRY(dosseek)
 ok4:
 	data32
 	shl	$0x10, %edx	#new ofs hi
-	mov	%eax, %edx	#new ofs lo - at run time, it's mov %ax,%dx
+	mov	%eax, %edx	#new ofs lo - at run time, it is mov %ax,%dx
 err4:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
