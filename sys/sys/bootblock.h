@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.11 2002/11/02 07:35:07 perry Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.12 2003/01/11 19:14:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -245,6 +245,27 @@ struct apple_part_map_entry {
 #define	APPLE_PART_TYPE_SCRATCH		"APPLE_SCRATCH"
 #define	APPLE_PART_TYPE_UNIX		"APPLE_UNIX_SVR2"
 
+/*
+ * "pmBootArgs" for APPLE_UNIX_SVR2 partition.
+ * NetBSD/mac68k only uses Magic, Cluster, Type, and Flags.
+ */
+struct apple_blockzeroblock {
+	u_int32_t       bzbMagic;
+	u_int8_t        bzbCluster;
+	u_int8_t        bzbType;
+	u_int16_t       bzbBadBlockInode;
+	u_int16_t       bzbFlags;
+	u_int16_t       bzbReserved;
+	u_int32_t       bzbCreationTime;
+	u_int32_t       bzbMountTime;
+	u_int32_t       bzbUMountTime;
+};
+
+#define APPLE_BZB_MAGIC	0xABADBABE
+#define APPLE_BZB_TYPEFS	1
+#define APPLE_BZB_TYPESWAP	3
+#define APPLE_BZB_ROOTFS	0x8000
+#define APPLE_BZB_USRFS	0x4000
 
 /* ------------------------------------------
  * macppc
