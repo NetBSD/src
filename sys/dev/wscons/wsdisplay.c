@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.21 1999/03/13 14:46:20 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.22 1999/03/23 15:56:56 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.21 1999/03/13 14:46:20 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.22 1999/03/23 15:56:56 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -319,6 +319,7 @@ wsdisplay_addscreen(sc, idx, screentype, emul)
 	int ccol, crow;
 	long defattr;
 	struct wsscreen *scr;
+	int s;
 
 	if (idx < 0 || idx >= WSDISPLAY_MAXSCREEN)
 		return (EINVAL);
@@ -348,6 +349,16 @@ wsdisplay_addscreen(sc, idx, screentype, emul)
 	if (WSSCREEN_HAS_EMULATOR(scr))
 		printf(", %s emulation", scr->scr_dconf->wsemul->name);
 	printf(")\n");
+
+	/* if no screen has focus yet, activate the first we get */
+	s = spltty();
+	if (!sc->sc_focus) {
+		(*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
+						 scr->scr_dconf->emulcookie);
+		sc->sc_focusidx = idx;
+		sc->sc_focus = scr;
+	}
+	splx(s);
 	return (0);
 }
 
