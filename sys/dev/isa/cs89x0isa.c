@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.7 2003/05/09 23:51:28 fvdl Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.8 2004/08/05 16:45:12 drochner Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.7 2003/05/09 23:51:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.8 2004/08/05 16:45:12 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,11 +206,13 @@ void cs_process_rx_dma(struct cs_softc *sc)
 			 * status is guaranteed to be at dma_mem_ptr, ie need
 			 * to check for wraparound before reading the length
 			 */
-			status = *((unsigned short *) dma_mem_ptr)++;
+			status = *((u_int16_t *) dma_mem_ptr);
+			dma_mem_ptr += 2;
 			if (dma_mem_ptr > (isc->sc_dmabase + isc->sc_dmasize)) {
 				dma_mem_ptr = isc->sc_dmabase;
 			}
-			pkt_length = *((unsigned short *) dma_mem_ptr)++;
+			pkt_length = *((u_int16_t *) dma_mem_ptr);
+			dma_mem_ptr += 2;
 
 			/* Do some sanity checks on the length and status. */
 			if ((pkt_length > ETHER_MAX_LEN) ||
