@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.9 2000/02/01 22:52:12 thorpej Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.10 2000/02/03 12:49:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -378,15 +378,6 @@ defrouter_addreq(new)
 {
 	struct sockaddr_in6 def, mask, gate;
 	int s;
-#if 0
-	register struct radix_node *rn;
-	register struct radix_node_head *rnh;
-	struct sockaddr *ndst;
-	struct ifnet *ifp = new->ifp;
-	struct ifaddr *ifa;
-	struct rtentry *rt;
-	extern struct pool rtentry_pool;
-#endif
 
 	Bzero(&def, sizeof(def));
 	Bzero(&mask, sizeof(mask));
@@ -397,50 +388,12 @@ defrouter_addreq(new)
 	def.sin6_family = mask.sin6_family = gate.sin6_family = AF_INET6;
 	gate.sin6_addr = new->rtaddr;
 
-#if 1
 	s = splsoftnet();
 	(void)rtrequest(RTM_ADD, (struct sockaddr *)&def,
 		(struct sockaddr *)&gate, (struct sockaddr *)&mask,
 		RTF_GATEWAY, NULL);
 	splx(s);
 	return;
-#else
-	ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp);
-	if (!ifa)
-		return;
-	if ((rnh = rt_tables[AF_INET6]) == 0)
-		return;
-
-	s = splsoftnet();
-	rt = pool_get(&rtentry_pool, PR_NOWAIT);
-	if (!rt)
-		goto bad;
-	Bzero(rt, sizeof(*rt));
-	rt->rt_flags = RTF_UP | RTF_GATEWAY;
-	if (rt_setgate(rt, (struct sockaddr *)&def, (struct sockaddr *)&gate)){
-		Free(rt);
-		goto bad;
-	}
-	ndst = rt_key(rt);
-	Bcopy(&def, ndst, sizeof(def));
-	rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)&mask,
-			      rnh, rt->rt_nodes);
-	if (rn == 0) {
-		Free(rt_key(rt));
-		Free(rt);
-		goto bad;
-	}
-	IFAREF(ifa);
-	rt->rt_ifa = ifa;
-	rt->rt_ifp = ifp;
-	rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
-	/* xxx
-	 * many codes should be stolen from route.c
-	 */
-bad:
-	splx(s);
-	return;
-#endif
 }
 
 /* Add a route to a given interface as default */
