@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tb.c	7.7 (Berkeley) 5/9/91
- *	$Id: tty_tb.c,v 1.3 1993/05/20 02:55:15 cgd Exp $
+ *	$Id: tty_tb.c,v 1.4 1993/10/31 19:36:33 glass Exp $
  */
 
 #include "tb.h"
-#if NTB > 0
 
 /*
  * Line discipline for RS232 tablets;
@@ -366,4 +365,3 @@ tbioctl(tp, cmd, data, flag)
 	}
 	return (0);
 }
-#endif
