@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2001/06/19 00:20:10 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2001/07/22 13:34:09 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 /*
  * XXXfvdl plain copy of i386 version, but may change enough in the
- * future to be seperate.
+ * future to be separate.
  */
 
 #ifndef _X86_64_CPU_H_

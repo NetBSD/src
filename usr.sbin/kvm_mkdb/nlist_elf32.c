@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.13 2001/03/16 14:12:43 agc Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.14 2001/07/22 13:34:17 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_elf32.c,v 1.13 2001/03/16 14:12:43 agc Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.14 2001/07/22 13:34:17 wiz Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -281,7 +281,7 @@ ELFNAMEEND(create_knlist)(name, db)
 
 		/*
 		 * If it's the kernel version string, we've gotta keep
-		 * some extra data around.  Under a seperate key,
+		 * some extra data around.  Under a separate key,
 		 * we enter the first line (i.e. up to the first newline,
 		 * with the newline replaced by a NUL to terminate the
 		 * entered string) of the version string.

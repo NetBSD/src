@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.17 2001/06/19 12:59:15 wiz Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.18 2001/07/22 13:34:05 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -222,7 +222,7 @@
 
 /*
  * the following four 3-byte registers control the non-cacheable regions.
- * These registers must be written as three seperate bytes.
+ * These registers must be written as three separate bytes.
  *
  * NCRx+0: A31-A24 of starting address
  * NCRx+1: A23-A16 of starting address

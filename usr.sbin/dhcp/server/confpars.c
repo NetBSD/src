@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.9 2001/06/18 19:01:58 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.10 2001/07/22 13:34:17 wiz Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2461,7 +2461,7 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 			}
 			break;
 
-			/* Colon-seperated hexadecimal octets... */
+			/* Colon-separated hexadecimal octets... */
 		      case UID:
 			seenbit = 8;
 			token = peek_token (&val, (unsigned *)0, cfile);

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.6 2001/06/18 19:01:54 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.7 2001/07/22 13:34:15 wiz Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -328,7 +328,7 @@ int parse_ip_addr (cfile, addr)
 }	
 
 /*
- * hardware-parameter :== HARDWARE hardware-type colon-seperated-hex-list SEMI
+ * hardware-parameter :== HARDWARE hardware-type colon-separated-hex-list SEMI
  * hardware-type :== ETHERNET | TOKEN_RING
  */
 
@@ -426,7 +426,7 @@ void parse_lease_time (cfile, timep)
 }
 
 /* No BNF for numeric aggregates - that's defined by the caller.  What
-   this function does is to parse a sequence of numbers seperated by
+   this function does is to parse a sequence of numbers separated by
    the token specified in seperator.  If max is zero, any number of
    numbers will be parsed; otherwise, exactly max numbers are
    expected.  Base and size tell us how to internalize the numbers
@@ -1411,8 +1411,8 @@ int parse_base64 (data, cfile)
 
 
 /*
- * colon-seperated-hex-list :== NUMBER |
- *				NUMBER COLON colon-seperated-hex-list
+ * colon-separated-hex-list :== NUMBER |
+ *				NUMBER COLON colon-separated-hex-list
  */
 
 int parse_cshl (data, cfile)
@@ -2682,7 +2682,7 @@ int parse_boolean_expression (expr, cfile, lose)
  *		       PACKET LPAREN numeric-expression COMMA
  *				     numeric-expression RPAREN |
  *		       STRING |
- *		       colon_seperated_hex_list
+ *		       colon_separated_hex_list
  */
 
 int parse_data_expression (expr, cfile, lose)

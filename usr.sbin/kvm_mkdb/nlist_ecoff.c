@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.7 2000/06/14 17:26:07 cgd Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.8 2001/07/22 13:34:17 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.7 2000/06/14 17:26:07 cgd Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.8 2001/07/22 13:34:17 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -217,7 +217,7 @@ create_knlist_ecoff(name, db)
 
 		/*
 		 * If it's the kernel version string, we've gotta keep
-		 * some extra data around.  Under a seperate key,
+		 * some extra data around.  Under a separate key,
 		 * we enter the first line (i.e. up to the first newline,
 		 * with the newline replaced by a NUL to terminate the
 		 * entered string) of the version string.

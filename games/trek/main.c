@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2000/05/08 07:56:06 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2001/07/22 13:34:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 2000/05/08 07:56:06 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2001/07/22 13:34:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ uid_t	Mother	= 51 + (51 << 8);
 **
 **	Many things in trek are not as clear as they might be, but are
 **	done to reduce space.  I compile with the -f and -O flags.  I
-**	am constrained to running with non-seperated I/D space, since
+**	am constrained to running with non-separated I/D space, since
 **	we don't have doubleing point hardware here; even if we did, I
 **	would like trek to be available to the large number of people
 **	who either have an 11/40 or do not have FP hardware.  I also

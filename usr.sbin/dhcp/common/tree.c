@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.1.1.10 2001/06/18 18:13:18 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.2 2001/07/22 13:34:15 wiz Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -801,7 +801,7 @@ int evaluate_dns_expression (result, packet, lease, client_state, in_options,
 		   ASCII string both look like data expressions, but
 		   for A records, we want an ASCII string, not a
 		   binary IP address.  Do I need to turn binary IP
-		   addresses into a seperate type?  */
+		   addresses into a separate type?  */
 		return (r0 && r1 &&
 			(r2 || expr -> op != expr_ns_add) && *result);
 

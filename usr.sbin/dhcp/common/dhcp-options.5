@@ -106,7 +106,7 @@ The
 .B string
 data type specifies either an NVT ASCII string
 enclosed in double quotes, or a series of octets specified in
-hexadecimal, seperated by colons.   For example:
+hexadecimal, separated by colons.   For example:
 .nf
 .sp 1
   option dhcp-client-identifier "CLIENT-FOO";
@@ -674,7 +674,7 @@ agent should only use the list of scopes provided in this option;
 otherwise, it may use its own static configuration in preference to
 the list provided in this option.
 .PP
-The text string should be a comma-seperated list of scopes that the
+The text string should be a comma-separated list of scopes that the
 SLP agent should use.   It may be omitted, in which case the SLP Agent
 will use the aggregated list of scopes of all directory agents known
 to the SLP agent.
@@ -816,7 +816,7 @@ includes a URL that does not contain a port component, the normal
 default port is assumed (i.e., port 80 for http and port 443 for
 https).  If the list includes a URL that does not contain a path
 component, the path /uap is assumed.   If more than one URL is
-specified in this list, the URLs are seperated by spaces.
+specified in this list, the URLs are separated by spaces.
 .RE
 .PP
 .B option \fBuser-class\fR \fIstring\fR\fB;\fR
@@ -1197,7 +1197,7 @@ option sql-default-connection-name "PRODZA";
 .PP
 An option whose type is a data string is essentially just a collection
 of bytes, and can be specified either as quoted text, like the text
-type, or as a list of hexadecimal contents seperated by colons whose
+type, or as a list of hexadecimal contents separated by colons whose
 values must be between 0 and FF.   For example:
 .nf
 
@@ -1277,7 +1277,7 @@ length does not include itself or the option code).
 .PP
 The value of this option can be set in one of two ways.   The first
 way is to simply specify the data directly, using a text string or a
-colon-seperated list of hexadecimal values.   For example:
+colon-separated list of hexadecimal values.   For example:
 .PP
 .nf
 option vendor-encapsulated-options

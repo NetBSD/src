@@ -450,7 +450,7 @@ September 14, 1990:
 	one of them is undefined, and the other one is not already
 	defined to the telnet escape character.
 
-	Handle TERMIOS systems that have seperate input and output
+	Handle TERMIOS systems that have separate input and output
 	line speed settings imbedded in the flags.
 
 	Many other minor bug fixes.
@@ -516,7 +516,7 @@ June 20, 1990:
 	option turned back off!
 
 	Fix the TERMIOS setting of the terminal speed to handle both
-	BSD's seperate fields, and the SYSV method of CBAUD bits.
+	BSD's separate fields, and the SYSV method of CBAUD bits.
 
 	Change how we deal with the other side refusing to enable
 	an option.  The sequence used to be: send DO option; receive

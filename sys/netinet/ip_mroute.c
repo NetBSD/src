@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.55 2001/06/02 16:17:10 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.56 2001/07/22 13:34:11 wiz Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1273,7 +1273,7 @@ ip_mdq(m, ifp, rt)
 /*
  * Macro to send packet on vif.  Since RSVP packets don't get counted on
  * input, they shouldn't get counted on output, so statistics keeping is
- * seperate.
+ * separate.
  */
 #define MC_SEND(ip,vifp,m) {                             \
                 if ((vifp)->v_flags & VIFF_TUNNEL)	 \

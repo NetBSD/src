@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.15 1998/06/25 23:57:33 thorpej Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.16 2001/07/22 13:34:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -275,7 +275,7 @@ dv_init(gp, scode, addr)
 			gp->g_fbkva = addr + gi->gd_regsize;
 		} else {
 			/*
-			 * For DIO space we need to map the seperate
+			 * For DIO space we need to map the separate
 			 * framebuffer.
 			 */
 			gp->g_regkva = addr;

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.14 2001/02/20 23:56:12 cgd Exp $ */
+/* $NetBSD: main.c,v 1.15 2001/07/22 13:34:18 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.14 2001/02/20 23:56:12 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2001/07/22 13:34:18 wiz Exp $");
 #endif
 
 /*
@@ -139,7 +139,7 @@ main(argc, argv)
 			Kflag = 1;
 			break;
 		case 'l':
-			/* seperate system and user time */
+			/* separate system and user time */
 			lflag = 1;
 			break;
 		case 'm':

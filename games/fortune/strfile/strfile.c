@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.20 2000/07/31 11:32:33 simonb Exp $	*/
+/*	$NetBSD: strfile.c,v 1.21 2001/07/22 13:34:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.20 2000/07/31 11:32:33 simonb Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.21 2001/07/22 13:34:00 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -86,7 +86,7 @@ h2nl(u_int32_t h)
 }
 
 /*
- *	This program takes a file composed of strings seperated by
+ *	This program takes a file composed of strings separated by
  * lines starting with two consecutive delimiting character (default
  * character is '%') and creates another file which consists of a table
  * describing the file (structure from "strfile.h"), a table of seek

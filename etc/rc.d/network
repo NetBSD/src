@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.32 2001/07/08 07:16:00 lukem Exp $
+# $NetBSD: network,v 1.33 2001/07/22 13:33:59 wiz Exp $
 #
 
 # PROVIDE: network
@@ -164,7 +164,7 @@ network_start()
 	# we do "ifconfig xxN $ifconfig_xxN".
 	# If there is no such variable, we take the contents of the file
 	# /etc/ifconfig.xxN, and run "ifconfig xxN" repeatedly, using each
-	# line of the file as the arguments for a seperate "ifconfig"
+	# line of the file as the arguments for a separate "ifconfig"
 	# invocation.
 	#
 	# In order to configure an interface reasonably, you at the very least
