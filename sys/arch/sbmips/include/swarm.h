@@ -1,4 +1,4 @@
-/* $NetBSD: swarm.h,v 1.1 2002/03/17 06:24:30 simonb Exp $ */
+/* $NetBSD: swarm.h,v 1.2 2002/11/12 01:22:26 simonb Exp $ */
 
 /*
  * I/O Address assignments for the CSWARM board
@@ -59,18 +59,21 @@
 #define	DRAM_SMBUS_CHAN		0
 #define	DRAM_SMBUS_DEV		0x54
 
-#define	BIGEEPROM_SMBUS_CHAN_1	1
-#define	BIGEEPROM_SMBUS_DEV_1	0x51
-
 #define	BIGEEPROM_SMBUS_CHAN	0
 #define	BIGEEPROM_SMBUS_DEV	0x50
+
+#define	BIGEEPROM_SMBUS_CHAN_1	1	/* rev 2.0 swarm only */
+#define	BIGEEPROM_SMBUS_DEV_1	0x51
 
 #define	CFG_DRAM_SMBUS_CHAN	0
 #define	CFG_DRAM_SMBUS_BASE	0x54	/* starting SMBus device base */
 
-#define	X1240_SMBUS_CHAN	1
-#define	X1240_ARRAY_SMBUS_DEV	0x57	/* SMBus address of EEPROM */
-#define	X1240_RTC_SMBUS_DEV	0x6f	/* SMBus address of RTC */
+#define	X1241_SMBUS_CHAN	1	/* rev 1.0 swarm only, fixed slave address */
 
-#define	M41T81_SMBUS_CHAN	1	/* Only on rev 2.0 Swarm */
-#define	M41T81_SMBUS_DEV	0x68	/* that does not have an X1240 */
+#define	M41T81_SMBUS_CHAN	1	/* rev 2.0 swarm only (or PCF8563), fixed slave address */
+
+#define	PCF8563_SMBUS_CHAN	1	/* rev 2.0 swarm only (or M41T81) */
+#define	PCF8563_SMBUS_DEV	0x50
+
+#define	MAX1617A_SMBUS_CHAN	0	/* or MAX6654 on newer board, reg compatible */
+#define	MAX1617A_SMBUS_DEV	0x2a
