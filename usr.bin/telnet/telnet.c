@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.26 2003/08/07 11:16:11 agc Exp $	*/
+/*	$NetBSD: telnet.c,v 1.27 2003/11/17 11:16:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.26 2003/08/07 11:16:11 agc Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.27 2003/11/17 11:16:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1958,7 +1958,7 @@ process_iac:
 		    /*
 		     * This is an error.  We only expect to get
 		     * "IAC IAC" or "IAC SE".  Several things may
-		     * have happend.  An IAC was not doubled, the
+		     * have happened.  An IAC was not doubled, the
 		     * IAC SE was left off, or another option got
 		     * inserted into the suboption are all possibilities.
 		     * If we assume that the IAC was not doubled,

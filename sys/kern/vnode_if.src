@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.35 2003/06/29 22:31:36 fvdl Exp $
+#	$NetBSD: vnode_if.src,v 1.36 2003/11/17 11:16:10 wiz Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 # protocol used by each vop call.  The first column is the name of
 # the variable, the remaining three columns are in, out and error
 # respectively.  The "in" column defines the lock state on input,
-# the "out" column defines the state on succesful return, and the
+# the "out" column defines the state on successful return, and the
 # "error" column defines the locking state on error exit.
 #     
 # The locking value can take the following values:
