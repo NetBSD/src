@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.52 1998/12/18 14:10:06 drochner Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.53 1999/03/28 17:34:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -644,7 +644,7 @@ sys___getlogin(p, v, retval)
 {
 	struct sys___getlogin_args /* {
 		syscallarg(char *) namebuf;
-		syscallarg(u_int) namelen;
+		syscallarg(size_t) namelen;
 	} */ *uap = v;
 
 	if (SCARG(uap, namelen) > sizeof(p->p_pgrp->pg_session->s_login))
