@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.22 2000/02/14 22:00:23 fvdl Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.23 2000/03/16 18:26:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -105,13 +105,13 @@ int ufs_getlbns __P((struct vnode *, ufs_daddr_t, struct indir *, int *));
 
 /* ufs_ihash.c */
 void ufs_ihashinit __P((void));
+void ufs_ihashdone __P((void));
 struct vnode *ufs_ihashlookup __P((dev_t, ino_t));
 struct vnode *ufs_ihashget __P((dev_t, ino_t, int));
 void ufs_ihashins __P((struct inode *));
 void ufs_ihashrem __P((struct inode *));
 
 /* ufs_inode.c */
-void ufs_init __P((void));
 int ufs_reclaim __P((struct vnode *, struct proc *));
 
 /* ufs_lookup.c */
@@ -147,6 +147,8 @@ int dqsync __P((struct vnode *, struct dquot *));
 void dqflush __P((struct vnode *));
 
 /* ufs_vfsops.c */
+void ufs_init __P((void));
+void ufs_done __P((void));
 int ufs_start __P((struct mount *, int, struct proc *));
 int ufs_root __P((struct mount *, struct vnode **));
 int ufs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));

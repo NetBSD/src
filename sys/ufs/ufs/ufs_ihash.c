@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.9 1999/11/15 18:49:15 fvdl Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.10 2000/03/16 18:26:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -65,6 +65,15 @@ ufs_ihashinit()
 	lockinit(&ufs_hashlock, PINOD, "ufs_hashlock", 0, 0);
 	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, M_WAITOK, &ihash);
 	simple_lock_init(&ufs_ihash_slock);
+}
+
+/*
+ * Free inode hash table.
+ */
+void
+ufs_ihashdone()
+{
+	hashdone(ihashtbl, M_UFSMNT);
 }
 
 /*

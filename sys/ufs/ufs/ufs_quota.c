@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.13 1999/11/15 18:49:15 fvdl Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.14 2000/03/16 18:26:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -684,9 +684,17 @@ long numdquot, desireddquot = DQUOTINC;
 void
 dqinit()
 {
-
 	dqhashtbl = hashinit(desiredvnodes, M_DQUOT, M_WAITOK, &dqhash);
 	TAILQ_INIT(&dqfreelist);
+}
+
+/*
+ * Free resources held by quota system.
+ */
+void
+dqdone()
+{
+	hashdone(dqhashtbl, M_DQUOT);
 }
 
 /*
