@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.30 1998/08/20 08:33:41 kleink Exp $	*/
+/*	$NetBSD: grf.c,v 1.31 1998/10/11 23:20:59 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -676,7 +676,7 @@ grfunmap(dev, addr, p)
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
 #if defined(UVM)
 	rv = uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
-	    (vaddr_t)addr + size, FALSE);
+	    (vaddr_t)addr + size);
 #else
 	rv = vm_deallocate(&p->p_vmspace->vm_map, (vaddr_t)addr, size);
 #endif
