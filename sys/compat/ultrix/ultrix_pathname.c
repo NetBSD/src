@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.14 2002/03/16 20:43:58 christos Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.15 2003/01/18 08:49:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.14 2002/03/16 20:43:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.15 2003/01/18 08:49:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.14 2002/03/16 20:43:58 christo
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 
@@ -83,13 +84,14 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.14 2002/03/16 20:43:58 christo
 static int ultrixstatfs __P((struct statfs *sp, caddr_t buf));
 
 int
-ultrix_sys_creat(p, v, retval)
-	struct proc *p;
+ultrix_sys_creat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_creat_args *uap = v;
 	struct sys_open_args ap;
+	struct proc *p = l->l_proc;
 
 	caddr_t sg = stackgap_init(p, 0);
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
@@ -98,52 +100,55 @@ ultrix_sys_creat(p, v, retval)
 	SCARG(&ap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	SCARG(&ap, mode) = SCARG(uap, mode);
 
-	return (sys_open(p, &ap, retval));
+	return (sys_open(l, &ap, retval));
 }
 
 
 int
-ultrix_sys_access(p, v, retval)
-	struct proc *p;
+ultrix_sys_access(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_access_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (sys_access(p, uap, retval));
+	return (sys_access(l, uap, retval));
 }
 
 int
-ultrix_sys_stat(p, v, retval)
-	struct proc *p;
+ultrix_sys_stat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_stat_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (compat_43_sys_stat(p, uap, retval));
+	return (compat_43_sys_stat(l, uap, retval));
 }
 
 int
-ultrix_sys_lstat(p, v, retval)
-	struct proc *p;
+ultrix_sys_lstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_lstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (compat_43_sys_lstat(p, uap, retval));
+	return (compat_43_sys_lstat(l, uap, retval));
 }
 
 int
-ultrix_sys_execv(p, v, retval)
-	struct proc *p;
+ultrix_sys_execv(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -151,6 +156,7 @@ ultrix_sys_execv(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 	caddr_t sg;
 
@@ -161,12 +167,12 @@ ultrix_sys_execv(p, v, retval)
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = NULL;
 
-	return (sys_execve(p, &ap, retval));
+	return (sys_execve(l, &ap, retval));
 }
 
 int
-ultrix_sys_execve(p, v, retval)
-	struct proc *p;
+ultrix_sys_execve(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -175,6 +181,7 @@ ultrix_sys_execve(p, v, retval)
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 	caddr_t sg;
 
@@ -185,37 +192,38 @@ ultrix_sys_execve(p, v, retval)
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = SCARG(uap, envp);
 
-	return (sys_execve(p, &ap, retval));
+	return (sys_execve(l, &ap, retval));
 }
 
 int
-ultrix_sys_open(p, v, retval)
-	struct proc *p;
+ultrix_sys_open(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_open_args *uap = v;
-	int l, r;
+	struct proc *p = l->l_proc;
+	int q, r;
 	int noctty;
 	int ret;
 	
 	caddr_t sg = stackgap_init(p, 0);
 
 	/* convert open flags into NetBSD flags */
-	l = SCARG(uap, flags);
-	noctty = l & 0x8000;
-	r =	(l & (0x0001 | 0x0002 | 0x0008 | 0x0040 | 0x0200 | 0x0400 | 0x0800));
-	r |=	((l & (0x0004 | 0x1000 | 0x4000)) ? O_NONBLOCK : 0);
-	r |=	((l & 0x0080) ? O_SHLOCK : 0);
-	r |=	((l & 0x0100) ? O_EXLOCK : 0);
-	r |=	((l & 0x2000) ? O_FSYNC : 0);
+	q = SCARG(uap, flags);
+	noctty = q & 0x8000;
+	r =	(q & (0x0001 | 0x0002 | 0x0008 | 0x0040 | 0x0200 | 0x0400 | 0x0800));
+	r |=	((q & (0x0004 | 0x1000 | 0x4000)) ? O_NONBLOCK : 0);
+	r |=	((q & 0x0080) ? O_SHLOCK : 0);
+	r |=	((q & 0x0100) ? O_EXLOCK : 0);
+	r |=	((q & 0x2000) ? O_FSYNC : 0);
 
 	if (r & O_CREAT)
 		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	else
 		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(uap, flags) = r;
-	ret = sys_open(p, (struct sys_open_args *)uap, retval);
+	ret = sys_open(l, (struct sys_open_args *)uap, retval);
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
@@ -270,12 +278,13 @@ ultrixstatfs(sp, buf)
 
 
 int
-ultrix_sys_statfs(p, v, retval)
-	struct proc *p;
+ultrix_sys_statfs(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_statfs_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statfs *sp;
 	int error;
@@ -303,12 +312,13 @@ ultrix_sys_statfs(p, v, retval)
  * it goes here anyway.
  */
 int
-ultrix_sys_fstatfs(p, v, retval)
-	struct proc *p;
+ultrix_sys_fstatfs(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_fstatfs_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
 	struct statfs *sp;
@@ -329,18 +339,19 @@ ultrix_sys_fstatfs(p, v, retval)
 }
 
 int
-ultrix_sys_mknod(p, v, retval)
-	struct proc *p;
+ultrix_sys_mknod(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct ultrix_sys_mknod_args *uap = v;
+	struct proc *p = l->l_proc;
 
 	caddr_t sg = stackgap_init(p, 0);
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	if (S_ISFIFO(SCARG(uap, mode)))
-		return sys_mkfifo(p, uap, retval);
+		return sys_mkfifo(l, uap, retval);
 
-	return sys_mknod(p, (struct sys_mknod_args *)uap, retval);
+	return sys_mknod(l, (struct sys_mknod_args *)uap, retval);
 }
