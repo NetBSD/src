@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.91.4.3 2000/10/17 00:48:30 tv Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.91.4.4 2001/04/06 00:26:34 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -618,7 +618,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	}
 
 #ifdef IPSEC
-	ipsec_setsocket(m, NULL);
+	(void)ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 
 	/*
@@ -632,7 +632,10 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	if (tp != NULL && tp->t_inpcb != NULL) {
 		ro = &tp->t_inpcb->inp_route;
 #ifdef IPSEC
-		ipsec_setsocket(m, tp->t_inpcb->inp_socket);
+		if (ipsec_setsocket(m, tp->t_inpcb->inp_socket) != 0) {
+			m_freem(m);
+			return ENOBUFS;
+		}
 #endif
 #ifdef DIAGNOSTIC
 		if (family != AF_INET)
@@ -648,7 +651,10 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	else if (tp != NULL && tp->t_in6pcb != NULL) {
 		ro = (struct route *)&tp->t_in6pcb->in6p_route;
 #ifdef IPSEC
-		ipsec_setsocket(m, tp->t_in6pcb->in6p_socket);
+		if (ipsec_setsocket(m, tp->t_in6pcb->in6p_socket) != 0) {
+			m_freem(m);
+			return ENOBUFS;
+		}
 #endif
 #ifdef DIAGNOSTIC
 		if (family == AF_INET) {
