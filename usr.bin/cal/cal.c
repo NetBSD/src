@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cal.c	5.2 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: cal.c,v 1.4 1994/12/24 15:50:40 cgd Exp $";
+static char rcsid[] = "$Id: cal.c,v 1.5 1995/01/16 19:06:47 ws Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ static char rcsid[] = "$Id: cal.c,v 1.4 1994/12/24 15:50:40 cgd Exp $";
 #define	THURSDAY		4		/* for reformation */
 #define	SATURDAY 		6		/* 1 Jan 1 was a Saturday */
 
-#define	FIRST_MISSING_DAY 	639787		/* 3 Sep 1752 */
+#define	FIRST_MISSING_DAY 	639799		/* 3 Sep 1752 */
 #define	NUMBER_MISSING_DAYS 	11		/* 11 day correction */
 
 #define	MAXDAYS			42		/* max slots in a month array */
