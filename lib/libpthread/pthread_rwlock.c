@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.7.2.1 2004/08/12 04:22:36 jmc Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.7.2.2 2004/08/12 18:26:38 jmc Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.7.2.1 2004/08/12 04:22:36 jmc Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.7.2.2 2004/08/12 18:26:38 jmc Exp $");
 
 #include <errno.h>
 
@@ -259,7 +259,7 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	pthread_spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
-		pthread_spinlock(self, &rwlock->ptr_interlock);
+		pthread_spinunlock(self, &rwlock->ptr_interlock);
 		return EDEADLK;
 	}
 #endif
@@ -317,7 +317,7 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	pthread_spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
-		pthread_spinlock(self, &rwlock->ptr_interlock);
+		pthread_spinunlock(self, &rwlock->ptr_interlock);
 		return EDEADLK;
 	}
 #endif
