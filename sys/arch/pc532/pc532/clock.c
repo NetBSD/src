@@ -35,7 +35,7 @@
  *
  *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  *
- *	$Id: clock.c,v 1.3 1994/02/22 22:55:24 phil Exp $
+ *	$Id: clock.c,v 1.4 1994/05/03 07:30:30 phil Exp $
  */
 
 /*
@@ -126,16 +126,22 @@ inittodr(base)
   unsigned int sec;
   int leap;
 
-  if (!have_rtc) return;
+  if (!have_rtc)
+    {
+      time.tv_sec = 0;
+      return;
+    }
 
   /* Read rtc and convert to seconds since Jan 1, 1970. */
 
   rw_rtc ( buffer, 0);  /* Read the rtc. */
 
-  /* Check to see if it was really the rtc! */
-  if (buffer[0] == 0x6d)  /* The first byte of the rom. */
+  /* Check to see if it was really the rtc by checking for bad date info. */
+  if (buffer[1] > 59 || buffer[2] > 59 || buffer[3] > 23 || buffer[5] > 31
+      || buffer[6] > 12)
     {
       have_rtc = 0;
+      time.tv_sec = 0;
       return;
     }
 
