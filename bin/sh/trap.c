@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 1999/01/18 16:18:04 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.20 1999/02/05 21:21:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.19 1999/01/18 16:18:04 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.20 1999/02/05 21:21:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ setsignal(signo)
 	if (rootshell && action == S_DFL) {
 		switch (signo) {
 		case SIGINT:
-			if (iflag)
+			if (iflag || minusc)
 				action = S_CATCH;
 			break;
 		case SIGQUIT:
