@@ -1,4 +1,4 @@
-/* $NetBSD: scifreg.h,v 1.1 1999/09/13 10:31:22 itojun Exp $ */
+/* $NetBSD: scifreg.h,v 1.2 1999/09/16 21:15:36 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -29,10 +29,6 @@
 #ifndef _SH3_SCIFREG_H_
 #define _SH3_SCIFREG_H_
 
-#ifndef BYTE_ORDER
-#error Define BYTE_ORDER!
-#endif
-
 /*
  * Serial Communication Interface (SCIF)
  */
@@ -40,87 +36,6 @@
 #if !defined(SH4)
 
 /* SH3 definitions */
-
-/* Serial Mode Register */
-typedef union {
-	unsigned char	BYTE;	/* Byte Access */
-	struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-		/* Bit 7..0 */
-		unsigned char CA  :1;
-		unsigned char CHR :1;
-		unsigned char PE  :1;
-		unsigned char OE  :1;
-		unsigned char STOP:1;
-		unsigned char MP  :1;
-		unsigned char CKS :2;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Bit 0..7 */
-		unsigned char CKS :2;
-		unsigned char MP  :1;
-		unsigned char STOP:1;
-		unsigned char OE  :1;
-		unsigned char PE  :1;
-		unsigned char CHR :1;
-		unsigned char CA  :1;
-#endif
-	} BIT;
-} SH3SCSMR;
-
-/* Serial Control Register */
-typedef union {
-	unsigned char	BYTE;	/* Byte Access */
-	struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-		/* Bit 7..0 */
-		unsigned char TIE :1;
-		unsigned char RIE :1;
-		unsigned char TE  :1;
-		unsigned char RE  :1;
-		unsigned char MPIE:1;
-		unsigned char TEIE:1;
-		unsigned char CKE :2;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Bit 0..7 */
-		unsigned char CKE :2;
-		unsigned char TEIE:1;
-		unsigned char MPIE:1;
-		unsigned char RE  :1;
-		unsigned char TE  :1;
-		unsigned char RIE :1;
-		unsigned char TIE :1;
-#endif
-	} BIT;
-} SH3SCSCR;
-
-/* Serial Status Register */
-typedef union {
-	unsigned char	BYTE;	/* Byte Access */
-	struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-		/* Bit 7..0 */
-		unsigned char TDRE:1;
-		unsigned char RDRF:1;
-		unsigned char ORER:1;
-		unsigned char FER :1;
-		unsigned char PER :1;
-		unsigned char TEND:1;
-		unsigned char MPB :1;
-		unsigned char MPBT:1;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Bit 0..7 */
-		unsigned char MPBT:1;
-		unsigned char MPB :1;
-		unsigned char TEND:1;
-		unsigned char PER :1;
-		unsigned char FER :1;
-		unsigned char ORER:1;
-		unsigned char RDRF:1;
-		unsigned char TDRE:1;
-#endif
-	} BIT;
-} SH3SCSSR;
-
 
 #define SHREG_SCSMR2  (*(volatile unsigned char *)	0xa4000150)
 #define SHREG_SCBRR2  (*(volatile unsigned char *)	0xa4000152)
@@ -167,108 +82,6 @@ typedef union {
 #else
 
 /* SH4 definitions */
-
-/* Serial Mode Register */
-typedef union {
-	unsigned short	BYTE;	/* Byte Access */
-	struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-		/* Bit 15..0 */
-		unsigned short		:8;
-		unsigned short CA	:1;
-		unsigned short CHR	:1;
-		unsigned short PE	:1;
-		unsigned short OE	:1;
-		unsigned short STOP	:1;
-		unsigned short MP	:1;
-		unsigned short CKS	:2;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Bit 0..15 */
-		unsigned short CKS	:2;
-		unsigned short MP	:1;
-		unsigned short STOP	:1;
-		unsigned short OE	:1;
-		unsigned short PE	:1;
-		unsigned short CHR	:1;
-		unsigned short CA	:1;
-		unsigned short		:8;
-#endif
-	} BIT;
-} SH3SCSMR;
-
-/* Serial Control Register */
-typedef union {
-	unsigned short	BYTE;	/* Byte Access */
-	struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-		/* Bit 15..0 */
-		unsigned short		:8;
-		unsigned short TIE	:1;
-		unsigned short RIE	:1;
-		unsigned short TE	:1;
-		unsigned short RE	:1;
-		unsigned short REIE	:1;
-		unsigned short 		:1;
-		unsigned short CKE1	:1;
-		unsigned short 		:1;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Bit 0..15 */
-		unsigned short 		:1;
-		unsigned short CKE1	:1;
-		unsigned short 		:1;
-		unsigned short REIE	:1;
-		unsigned short RE	:1;
-		unsigned short TE	:1;
-		unsigned short RIE	:1;
-		unsigned short TIE	:1;
-		unsigned short		:8;
-#endif
-	} BIT;
-} SH3SCSCR;
-
-/* Serial Status Register */
-typedef union {
-	unsigned short	BYTE;	/* Byte Access */
-	struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-		/* Bit 15..0 */
-		unsigned short PER3	:1;
-		unsigned short PER2	:1;
-		unsigned short PER1	:1;
-		unsigned short PER0	:1;
-		unsigned short FER3	:1;
-		unsigned short FER2	:1;
-		unsigned short FER1	:1;
-		unsigned short FER0	:1;
-		unsigned short ER	:1;
-		unsigned short TEND	:1;
-		unsigned short TDFE	:1;
-		unsigned short BRK	:1;
-		unsigned short FER	:1;
-		unsigned short PER	:1;
-		unsigned short RDF	:1;
-		unsigned short DR	:1;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Bit 0..15 */
-		unsigned short DR	:1;
-		unsigned short RDF	:1;
-		unsigned short PER	:1;
-		unsigned short FER	:1;
-		unsigned short BRK	:1;
-		unsigned short TDFE	:1;
-		unsigned short TEND	:1;
-		unsigned short ER	:1;
-		unsigned short FER0	:1;
-		unsigned short FER1	:1;
-		unsigned short FER2	:1;
-		unsigned short FER3	:1;
-		unsigned short PER0	:1;
-		unsigned short PER1	:1;
-		unsigned short PER2	:1;
-		unsigned short PER3	:1;
-#endif
-	} BIT;
-} SH3SCSSR;
 
 #define SHREG_SCSMR2  (*(volatile unsigned short *)	0xffe80000)
 #define SHREG_SCBRR2  (*(volatile unsigned char *)	0xffe80004)
