@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.33 2003/07/06 07:54:43 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.34 2003/07/06 08:06:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -624,6 +624,9 @@ int	ieee80211_cfgset(struct ifnet *, u_long, caddr_t);
 
 void	ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *, 
 			  struct mbuf *);
+
+int	ieee80211_media_change(struct ifnet *);
+void	ieee80211_media_status(struct ifnet *, struct ifmediareq *);
 
 #endif /* _KERNEL */
 

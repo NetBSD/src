@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.36 2003/07/06 07:33:57 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.37 2003/07/06 08:06:20 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.36 2003/07/06 07:33:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.37 2003/07/06 08:06:20 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2849,6 +2849,99 @@ ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len)
 	for (endbuf = buf + len; buf < endbuf; buf++)
 		crc = ieee80211_crc_table[(crc ^ *buf) & 0xff] ^ (crc >> 8);
 	return crc;
+}
+
+int
+ieee80211_media_change(struct ifnet *ifp)
+{
+	struct ieee80211com *ic = (void *)ifp;
+	struct ifmedia_entry *ime;
+	enum ieee80211_opmode newmode;
+	int i, rate, error = 0;
+
+	ime = ic->ic_media.ifm_cur;
+	if (IFM_SUBTYPE(ime->ifm_media) == IFM_AUTO) {
+		i = -1;
+	} else {
+		rate = ieee80211_media2rate(ime->ifm_media, ic->ic_phytype);
+		if (rate == 0)
+			return EINVAL;
+		for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
+			if ((ic->ic_sup_rates[i] & IEEE80211_RATE_VAL) == rate)
+				break;
+		}
+		if (i == IEEE80211_RATE_SIZE)
+			return EINVAL;
+	}
+	if (ic->ic_fixed_rate != i) {
+		ic->ic_fixed_rate = i;
+		error = ENETRESET;
+	}
+
+	if ((ime->ifm_media & IFM_IEEE80211_ADHOC) &&
+	    (ime->ifm_media & IFM_FLAG0))
+		newmode = IEEE80211_M_AHDEMO;
+	else if (ime->ifm_media & IFM_IEEE80211_ADHOC)
+		newmode = IEEE80211_M_IBSS;
+	else if (ime->ifm_media & IFM_IEEE80211_HOSTAP)
+		newmode = IEEE80211_M_HOSTAP;
+	else if (ime->ifm_media & IFM_IEEE80211_MONITOR)
+		newmode = IEEE80211_M_MONITOR;
+	else
+		newmode = IEEE80211_M_STA;
+	if (ic->ic_opmode != newmode) {
+		ic->ic_opmode = newmode;
+		error = ENETRESET;
+	}
+	if (error == ENETRESET) {
+		if ((ifp->if_flags & IFF_UP) != 0)
+			error = (*ifp->if_init)(ifp);
+		else
+			error = 0;
+	}
+	if (error == 0)
+		ifp->if_baudrate = ifmedia_baudrate(ime->ifm_media);
+
+	return error;
+}
+
+void
+ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
+{
+	struct ieee80211com *ic = (void *)ifp;
+	int rate;
+
+	imr->ifm_status = IFM_AVALID;
+	if (ic->ic_state == IEEE80211_S_RUN)
+		imr->ifm_status |= IFM_ACTIVE;
+	imr->ifm_active = IFM_IEEE80211;
+	if (ic->ic_state == IEEE80211_S_RUN)
+		rate = ic->ic_bss.ni_rates[ic->ic_bss.ni_txrate] &
+		    IEEE80211_RATE_VAL;
+	else {
+		if (ic->ic_fixed_rate == -1)
+			rate = 0;
+		else
+			rate = ic->ic_sup_rates[ic->ic_fixed_rate] &
+			    IEEE80211_RATE_VAL;
+	}
+	imr->ifm_active |= ieee80211_rate2media(rate, ic->ic_phytype);
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_AHDEMO:
+		imr->ifm_active |= IFM_IEEE80211_ADHOC | IFM_FLAG0;
+		break;
+	case IEEE80211_M_HOSTAP:
+		imr->ifm_active |= IFM_IEEE80211_HOSTAP;
+		break;
+	case IEEE80211_M_IBSS:
+		imr->ifm_active |= IFM_IEEE80211_ADHOC;
+		break;
+	case IEEE80211_M_MONITOR:
+		imr->ifm_active |= IFM_IEEE80211_MONITOR;
+		break;
+	case IEEE80211_M_STA:
+		break;
+	}
 }
 
 /*
