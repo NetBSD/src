@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.20 1996/02/12 15:11:41 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.21 1996/09/02 21:25:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: expand.c,v 1.20 1996/02/12 15:11:41 christos Exp $";
+static char rcsid[] = "$NetBSD: expand.c,v 1.21 1996/09/02 21:25:52 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -649,8 +649,10 @@ record:
 	case VSASSIGN:
 	case VSQUESTION:
 		if (!set) {
-			if (subevalvar(p, var, 0, subtype, startloc, varflags))
+			if (subevalvar(p, var, 0, subtype, startloc, varflags)) {
+				varflags &= ~VSNUL;
 				goto again;
+			}
 			break;
 		}
 		if (easy)
