@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.40 2002/04/28 20:23:22 manu Exp $
+	$NetBSD: syscalls.master,v 1.41 2002/04/29 14:40:23 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -375,7 +375,7 @@
 220	UNIMPL		sched_setscheduler
 221	UNIMPL		sched_getparam
 222	UNIMPL		sched_setparam
-223	UNIMPL		usync_cntl
+223	STD		{ int irix_sys_usync_cntl(int cmd, void *arg); }
 224	UNIMPL		psema_cntl
 225	UNIMPL		restartreturn
 226	UNIMPL		sysget
