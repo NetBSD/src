@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.26 1997/11/30 15:24:00 drochner Exp $	*/
+/*	$NetBSD: wds.c,v 1.27 1998/01/12 09:43:52 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -228,10 +228,6 @@ void	wdsattach __P((struct device *, struct device *, void *));
 
 struct cfattach wds_ca = {
 	sizeof(struct wds_softc), wdsprobe, wdsattach
-};
-
-struct cfdriver wds_cd = {
-	NULL, "wds", DV_DULL
 };
 
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */

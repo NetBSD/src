@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.38 1997/10/19 18:57:04 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.39 1998/01/12 09:43:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -128,10 +128,6 @@ void egattach __P((struct device *, struct device *, void *));
 
 struct cfattach eg_ca = {
 	sizeof(struct eg_softc), egprobe, egattach
-};
-
-struct cfdriver eg_cd = {
-	NULL, "eg", DV_IFNET
 };
 
 int egintr __P((void *));

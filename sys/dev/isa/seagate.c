@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.24 1998/01/05 07:31:10 perry Exp $	*/
+/*	$NetBSD: seagate.c,v 1.25 1998/01/12 09:43:47 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -312,9 +312,7 @@ struct cfattach sea_ca = {
 	sizeof(struct sea_softc), seaprobe, seaattach
 };
 
-struct cfdriver sea_cd = {
-	NULL, "sea", DV_DULL
-};
+extern struct cfdriver sea_cd;
 
 #ifdef SEA_DEBUGQUEUE
 void

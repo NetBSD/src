@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.36 1997/10/19 07:42:30 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -240,10 +240,6 @@ void	pasattach __P((struct device *, struct device *, void *));
 
 struct cfattach pas_ca = {
 	sizeof(struct pas_softc), pasprobe, pasattach
-};
-
-struct cfdriver pas_cd = {
-	NULL, "pas", DV_DULL
 };
 
 /*
