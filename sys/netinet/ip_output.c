@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.94 2002/02/06 18:00:01 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.95 2002/02/07 21:47:45 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.94 2002/02/06 18:00:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.95 2002/02/07 21:47:45 thorpej Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -303,12 +303,13 @@ ip_output(m0, va_alist)
 		} else
 			ip->ip_ttl = IP_DEFAULT_MULTICAST_TTL;
 		/*
-		 * Confirm that the outgoing interface supports multicast.
+		 * If the packet is multicast or broadcast, confirm that
+		 * the outgoing interface can transmit it.
 		 */
 		if (((m->m_flags & M_MCAST) &&
 		     (ifp->if_flags & IFF_MULTICAST) == 0) ||
 		    ((m->m_flags & M_BCAST) && 
-		     (ifp->if_flags & IFF_BROADCAST) == 0))  {
+		     (ifp->if_flags & (IFF_BROADCAST|IFF_POINTOPOINT)) == 0))  {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;
