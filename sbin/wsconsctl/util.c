@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
+/*	$NetBSD: util.c,v 1.9 2001/09/19 12:45:24 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,20 +56,26 @@ struct nameint {
 };
 
 static struct nameint kbtype_tab[] = {
-	{ WSKBD_TYPE_LK201,	"lk201" },
-	{ WSKBD_TYPE_LK401,	"lk401" },
-	{ WSKBD_TYPE_PC_XT,	"pc-xt" },
-	{ WSKBD_TYPE_PC_AT,	"pc-at" },
-	{ WSKBD_TYPE_USB,	"usb" },
-	{ WSKBD_TYPE_HPC_KBD,	"hpc-kbd" },
-	{ WSKBD_TYPE_HPC_BTN,	"hpc-btn" },
+	{ WSKBD_TYPE_LK201,		"lk201" },
+	{ WSKBD_TYPE_LK401,		"lk401" },
+	{ WSKBD_TYPE_PC_XT,		"pc-xt" },
+	{ WSKBD_TYPE_PC_AT,		"pc-at" },
+	{ WSKBD_TYPE_USB,		"usb" },
+	{ WSKBD_TYPE_HPC_KBD,		"hpc-kbd" },
+	{ WSKBD_TYPE_HPC_BTN,		"hpc-btn" },
+	{ WSKBD_TYPE_ARCHIMEDES,	"archimedes" },
+	{ WSKBD_TYPE_RISCPC,		"riscpc" },
 };
 
 static struct nameint mstype_tab[] = {
-	{ WSMOUSE_TYPE_VSXXX,	"dec-tc" },
-	{ WSMOUSE_TYPE_PS2,	"ps2" },
-	{ WSMOUSE_TYPE_USB,	"usb" },
-	{ WSMOUSE_TYPE_TPANEL,	"touch-pannel" },
+	{ WSMOUSE_TYPE_VSXXX,		"dec-tc" },
+	{ WSMOUSE_TYPE_PS2,		"ps2" },
+	{ WSMOUSE_TYPE_USB,		"usb" },
+	{ WSMOUSE_TYPE_LMS,		"logitech-bus" },
+	{ WSMOUSE_TYPE_MMS,		"ms-inport" },
+	{ WSMOUSE_TYPE_TPANEL,		"touch-panel" },
+	{ WSMOUSE_TYPE_NEXT,		"next" },
+	{ WSMOUSE_TYPE_ARCHIMEDES,	"archimedes" },
 };
 
 static struct nameint dpytype_tab[] = {
@@ -90,6 +96,14 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_PXG,		"dex-pxg" },
 	{ WSDISPLAY_TYPE_TX,		"dex-tx" },
 	{ WSDISPLAY_TYPE_HPCFB,		"generic-hpc" },
+	{ WSDISPLAY_TYPE_VIDC,		"arm-vidc" },
+	{ WSDISPLAY_TYPE_SPX,		"dec-spx" },
+	{ WSDISPLAY_TYPE_GPX,		"dec-gpx" },
+	{ WSDISPLAY_TYPE_LCG,		"dec-lcg" },
+	{ WSDISPLAY_TYPE_VAX_MONO,	"dec-vax-mono" },
+	{ WSDISPLAY_TYPE_SB_P9100,	"sparcbook-p9100" },
+	{ WSDISPLAY_TYPE_EGA,		"ega" },
+	{ WSDISPLAY_TYPE_DCPVR,		"dreamcast-pvr" },
 };
 
 static struct nameint kbdenc_tab[] = {
