@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.94 2002/03/11 04:57:56 itojun Exp $
+# $NetBSD: mi,v 1.95 2002/04/22 10:08:41 minoura Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -54,6 +54,7 @@
 ./etc/nsswitch.conf			etc-net-etc
 ./etc/ntp.conf				etc-ntp-etc
 ./etc/passwd				etc-sys-etc
+./etc/passwd.conf			etc-sys-etc
 ./etc/phones				etc-uucp-etc
 ./etc/postfix/README			etc-postfix-etc
 ./etc/postfix/main.cf			etc-postfix-etc
