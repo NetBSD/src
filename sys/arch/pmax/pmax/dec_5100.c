@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.21 2000/02/29 04:41:53 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.22 2000/03/04 10:14:39 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.22 2000/03/04 10:14:39 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,10 +97,12 @@ dec_5100_init()
 static void
 dec_5100_bus_reset()
 {
-	volatile u_int *icsr_addr =
-	   (volatile u_int *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	u_int32_t icsr;
 
-	*icsr_addr |= KN230_CSR_INTR_WMERR ;
+	/* clear any memory error condition */
+	icsr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	icsr |= KN230_CSR_INTR_WMERR;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
 
 	/* nothing else to do */
 	kn230_wbflush();
@@ -193,7 +198,7 @@ dec_5100_intr(cpumask, pc, status, cause)
 
 	if (cpumask & MIPS_INT_MASK_1) {
 		CALLINTR(SYS_DEV_LANCE, KN230_CSR_INTR_LANCE);
-		CALLINTR(SYS_DEV_LANCE, KN230_CSR_INTR_SII);
+		CALLINTR(SYS_DEV_SCSI, KN230_CSR_INTR_SII);
 	}
 
 	if (cpumask & MIPS_INT_MASK_3) {
@@ -206,7 +211,7 @@ dec_5100_intr(cpumask, pc, status, cause)
 
 
 /*
- * Handle  write-to-nonexistent-address memory errors  on MIPS_INT_MASK_3.
+ * Handle write-to-nonexistent-address memory errors on MIPS_INT_MASK_3.
  * These are reported asynchronously, due to hardware write buffering.
  * we can't easily figure out process context, so just panic.
  *
