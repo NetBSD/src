@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.41 2003/06/29 22:31:30 fvdl Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.41.2.1 2003/07/02 15:26:44 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.41 2003/06/29 22:31:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.41.2.1 2003/07/02 15:26:44 darrenr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -210,14 +210,14 @@ pffindproto(family, protocol, type)
 }
 
 int
-net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct domain *dp;
 	struct protosw *pr;

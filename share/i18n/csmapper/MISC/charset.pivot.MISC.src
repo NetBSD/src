@@ -1,6 +1,0 @@
-# $NetBSD: charset.pivot.MISC.src,v 1.2 2003/07/01 12:16:26 tshiozak Exp $
-
-Big5			UCS			1
-UCS			Big5			1
-KOI8-R			UCS			1
-UCS			KOI8-R			1

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.24 2003/06/29 22:32:10 fvdl Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.24.2.1 2003/07/02 15:27:06 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.24 2003/06/29 22:32:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.24.2.1 2003/07/02 15:27:06 darrenr Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,11 +266,11 @@ smb_rq_bend(struct smb_rq *rqp)
 int
 smb_rq_intr(struct smb_rq *rqp)
 {
-	struct proc *p = rqp->sr_cred->scr_p;
+	struct lwp *l = rqp->sr_cred->scr_l;
 
 	if (rqp->sr_flags & SMBR_INTR)
 		return EINTR;
-	return smb_proc_intr(p);
+	return smb_proc_intr(l);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 2003/06/29 22:29:06 fvdl Exp $     */
+/*	$NetBSD: trap.c,v 1.80.2.1 2003/07/02 15:25:35 darrenr Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -466,7 +466,7 @@ child_return(void *arg)
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif

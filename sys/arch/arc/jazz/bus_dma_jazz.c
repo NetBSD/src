@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.7 2003/06/29 22:28:08 fvdl Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.7.2.1 2003/07/02 15:25:15 darrenr Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -290,8 +290,8 @@ jazz_bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		error = jazz_bus_dmamap_alloc_sgmap(t, map->dm_segs,
 		    map->dm_nsegs, map->_dm_boundary,
-		    uio->uio_segflg == UIO_USERSPACE ? uio->uio_procp : NULL,
-		    flags);
+		    uio->uio_segflg == UIO_USERSPACE ? uio->uio_lwp->l_proc :
+		    NULL, flags);
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.185 2003/06/29 22:30:37 fvdl Exp $	*/
+/*	$NetBSD: cd.c,v 1.185.2.1 2003/07/02 15:26:17 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185 2003/06/29 22:30:37 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185.2.1 2003/07/02 15:26:17 darrenr Exp $");
 
 #include "rnd.h"
 
@@ -330,10 +330,10 @@ cdunlock(cd)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 int 
-cdopen(dev, flag, fmt, p)
+cdopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct cd_softc *cd;
 	struct scsipi_periph *periph;
@@ -491,10 +491,10 @@ bad4:
  * occurence of an open device
  */
 int 
-cdclose(dev, flag, fmt, p)
+cdclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
@@ -1093,12 +1093,12 @@ cdreadmsaddr(cd, addr)
  * Knows about the internals of this device
  */
 int
-cdioctl(dev, cmd, addr, flag, p)
+cdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
@@ -1442,7 +1442,7 @@ bad:
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
-		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, p));
+		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, l));
 	}
 
 #ifdef DIAGNOSTIC

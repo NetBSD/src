@@ -1,4 +1,0 @@
-# $NetBSD: obsolete.pmax,v 1.5 2002/11/17 02:54:51 lukem Exp $
-./etc/ld.so.conf
-./sbin/ldconfig
-./usr/mdec/installboot

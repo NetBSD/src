@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.290 2003/06/29 22:28:31 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.290.2.1 2003/07/02 15:25:24 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1062,8 +1062,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
@@ -1071,7 +1071,7 @@ cpu_exec_aout_makecmds(p, epp)
 #ifdef COMPAT_NOMID
 	/* Check to see if MID == 0. */
 	if (((struct exec *)epp->ep_hdr)->a_midmag == ZMAGIC)
-		return exec_aout_prep_oldzmagic(p, epp);
+		return exec_aout_prep_oldzmagic(l->l_proc, epp);
 #endif
 
 	return error;
