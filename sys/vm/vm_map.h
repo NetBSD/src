@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.12 1997/07/06 12:38:29 fvdl Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.13 1997/07/07 10:57:34 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -161,6 +161,7 @@ typedef struct {
  *		Perform locking on the data portion of a map.
  */
 
+#include <sys/time.h>
 #include <sys/proc.h>	/* XXX for curproc and p_pid */
 
 #define	vm_map_lock_drain_interlock(map) { \
