@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.8 1998/07/13 18:49:34 ross Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.9 1998/11/01 00:03:08 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.8 1998/07/13 18:49:34 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.9 1998/11/01 00:03:08 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ kn300_softerr(mces, type, logout, framep)
 		"I/O Bridge Module" : sys));
 
 	printf("    Machine Check Code 0x%lx\n", hdr->mcheck_code);
-	printf("    Physical Addess of error %0xl016x", ptr->ei_addr);
+	printf("    Physical Address of Error %p\n", ptr->ei_addr);
 	if (ptr->ei_stat & 0x80000000L)
 		printf("Corrected ECC Error ");
 	if (ptr->ei_stat & 0x40000000L)
