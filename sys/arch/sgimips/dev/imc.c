@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.15 2004/01/18 12:18:57 sekiya Exp $	*/
+/*	$NetBSD: imc.c,v 1.16 2004/01/18 13:11:18 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.15 2004/01/18 12:18:57 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.16 2004/01/18 13:11:18 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,7 +124,7 @@ imc_attach(parent, self, aux)
 	else
 		isc.eisa_present = 0;
 
-	printf("\nimc0: Revision %d", (sysid & IMC_SYSID_REVMASK));
+	printf(": revision %d", (sysid & IMC_SYSID_REVMASK));
 
 	if (isc.eisa_present)
 		printf(", EISA bus present");
