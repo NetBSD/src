@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.26 1999/04/26 04:34:00 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.27 1999/05/15 13:04:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -134,11 +134,12 @@ rcons_connect (info)
 	wsfont_init();
 
 	/* Choose 'Gallant' font if this is an 8-bit display */
-	if (ri.ri_depth == 8 && (cookie = wsfont_find("Gallant", 0, 0, 0)) >= 0)
+	if (ri.ri_depth == 8 && (cookie = wsfont_find("Gallant", 0, 0, 0)) > 0)
 		wsfont_lock(cookie, &ri.ri_font, WSFONT_L2R, WSFONT_L2R);
 
 	/* Get operations set and set framebugger colormap */
-	rasops_init(&ri, 0, 80, 1, 0);
+	if (rasops_init(&ri, 0, 80, 1, 0))
+		panic("rcons_connect: rasops_init failed");
 
 	if (ri.ri_depth == 8 && info->fi_type.fb_boardtype != PMAX_FBTYPE_MFB)
 		info->fi_driver->fbd_putcmap(info, rasops_cmap, 0, 256);
