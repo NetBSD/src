@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.2 2002/04/09 19:48:08 hubertf Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.3 2002/10/20 22:06:17 rnestor Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.13 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -46,9 +46,10 @@ menu fullpart, title  "Wybierz";
 
 menu nodiskmap, title "Wybierz opcje", y=16;
        display action { msg_display (MSG_nodiskmap, diskdev); };
-       option "Przerwij instalacje",
-               action (endwin)  { exit(1); };
-       option "Zainicjuj Mape partycji Dysku", action {
+       option "Przerwij instalacje", exit, action {
+		endwin();  { exit(1);
+	};
+       option "Zainicjuj Mape partycji Dysku", exit, action {
                int i;
 
                msg_clear();
@@ -161,6 +162,7 @@ menu chooseid, title  "Rodzaj partycji?";
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
                bzb->magic = BZB_MAGIC;
+               strcpy (map.blk[j].pmPartName, "NetBSD Root");
                strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
                bzb->type = BZB_TYPEFS;
                bzb->flags.root = 1;
@@ -191,6 +193,7 @@ menu chooseid, title  "Rodzaj partycji?";
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
                bzb->magic = BZB_MAGIC;
+               strcpy (map,blk[j].pmPartName, "NetBSD SWAP");
                strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
                bzb->type = BZB_TYPESWAP; };
        option "NetBSD Usr", exit, action {
@@ -201,6 +204,7 @@ menu chooseid, title  "Rodzaj partycji?";
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
                bzb->magic = BZB_MAGIC;
+               strcpy (map.blk[j].pmPartName, "NetBSD Usr");
                strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
                bzb->type = BZB_TYPEFS;
                bzb->flags.usr = 1;
@@ -215,6 +219,7 @@ menu chooseid, title  "Rodzaj partycji?";
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
                bzb->magic = BZB_MAGIC;
+               strcpy (map.blk[j].pmPartName, "NetBSD Root & Usr");
                strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
                bzb->type = BZB_TYPEFS;
                bzb->flags.root = 1;
@@ -233,6 +238,7 @@ menu chooseid, title  "Rodzaj partycji?";
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
                bzb->mount_point[0] = '\0';
+               strcpy (map.blk[j].pmPartName, "untitled (HFS)");
                strcpy (map.blk[j].pmPartType, "Apple_HFS"); };
        option "Scratch", exit, action {
                int j;
@@ -242,6 +248,7 @@ menu chooseid, title  "Rodzaj partycji?";
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
                bzb->mount_point[0] = '\0';
+               strcpy (map.blk[j].pmPartName, "untitled (Scratch)");
                strcpy (map.blk[j].pmPartType, "Apple_Scratch"); };
        option "Free", exit, action {
                int j;
@@ -251,6 +258,7 @@ menu chooseid, title  "Rodzaj partycji?";
                reset_part_flags(j);
                bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
                bzb->mount_point[0] = '\0';
+               strcpy (map.blk[j].pmPartName, "untitled (Free)");
                strcpy (map.blk[j].pmPartType, "Apple_Free"); };
 
 menu mount_point, title  "Punkt montazu?";

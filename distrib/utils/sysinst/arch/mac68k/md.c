@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 2002/09/03 00:35:53 rnestor Exp $ */
+/*	$NetBSD: md.c,v 1.25 2002/10/20 22:06:17 rnestor Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,14 +49,6 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-MAP map = {0, 0, 0, 0, 0, 0, 0, 0, {0}};
-
-/*
- * Define a default Disk Partition Map that can be used for an uninitialized
- *  disk.
- */
-Block0 new_block0 = {0x4552, 512, 0};
- 
 /*
  * Compare lexigraphically two strings
  */
@@ -114,9 +106,10 @@ int
 whichType(part)
 	struct part_map_entry *part;
 {
+	MAP_TYPE *map_entry = (MAP_TYPE *)&map_types;
 	EBZB *bzb;
 	char partyp[32];
-	int type, maxsiz;
+	int type, maxsiz, entry_type = MAP_OTHER;
 
 	bzb = (EBZB *)&part->pmBootArgs[0];
 	if (part->pmSig != PART_ENTRY_MAGIC)
@@ -127,13 +120,23 @@ whichType(part)
 	strncpy(partyp, part->pmPartType, maxsiz);
 	partyp[maxsiz-1] = '\0';
 
-	if (stricmp(PART_TYPE_DRIVER, partyp) == 0 ||
-	    stricmp(PART_TYPE_DRIVER43, partyp) == 0 ||
-	    stricmp(PART_TYPE_DRIVERATA, partyp) == 0 ||
-	    stricmp(PART_TYPE_FWB_COMPONENT, partyp) == 0 ||
-	    stricmp(PART_TYPE_PARTMAP, partyp) == 0)
+	/*
+	 * Find out how to treat the partition type under NetBSD
+	 */
+	while (map_entry->type != MAP_EOL) {
+	    if (stricmp(map_entry->name, partyp) == 0) {
+		entry_type = map_entry->type;
+		break;
+	    }
+	    map_entry++;
+	}
+
+	/*
+	 * Now classify the use for NetBSD
+	 */
+	if (entry_type == MAP_RESERVED)
 		type = 0;
-	else if (stricmp(PART_TYPE_UNIX, partyp) == 0) {
+	else if (entry_type == MAP_NETBSD) {
 	    if (bzb->magic != BZB_MAGIC)
 		type = 0;
 	    else if (bzb->type == BZB_TYPEFS) {
@@ -147,7 +150,7 @@ whichType(part)
 		type = SWAP_PART;
 	    else
 		type = SCRATCH_PART;
-	} else if (stricmp(PART_TYPE_MAC, partyp) == 0)
+	} else if (entry_type == MAP_MACOS)
 	    type = HFS_PART;
 	else
 	    type = SCRATCH_PART;
@@ -334,7 +337,7 @@ reset_part_flags (part)
 	 *  in case we've clobbered the boot code.
 	 */
 	part->pmLgDataStart = 0;
-	part->pmPartStatus = 0x7f;  /* make sure the partition shows up */
+	part->pmPartStatus = 0x77;  /* make sure the partition shows up */
 	part->pmLgBootStart = 0;
 	part->pmBootSize = 0;
 	part->pmBootLoad = 0;
@@ -684,13 +687,12 @@ md_get_info()
 	 *  need to completely initialize the disk.
 	 */
 	dlsize = disklabel.d_secperunit;
-	new_block0.sbBlkCount = dlsize;
 	for (i=0;i<NEW_MAP_SIZE;i++) {
 	   if (i > 0)
 		new_map[i].pmPyPartStart = new_map[i-1].pmPyPartStart +
 			new_map[i-1].pmPartBlkCnt;
 	   new_map[i].pmDataCnt = new_map[i].pmPartBlkCnt;
-	   if (new_map[i].pmPartBlkCnt) {
+	   if (new_map[i].pmPartBlkCnt == 0) {
 		new_map[i].pmPartBlkCnt = dlsize;
 		new_map[i].pmDataCnt = dlsize;
 		break;
@@ -751,6 +753,7 @@ md_pre_disklabel()
     int fd;
     char devname[100];
     struct disklabel lp;
+    Block0 new_block0 = {DRIVER_MAP_MAGIC, 512, 0};
 
     /*
      * Danger Will Robinson!  We're about to turn that nice MacOS disk
@@ -779,6 +782,7 @@ md_pre_disklabel()
 	    close (fd);
 	    exit (1);
 	}
+	new_block0.sbBlkCount = dlsize;		/* Set disk size */
 	if (write (fd, &new_block0, bsize) != bsize) {
 	    endwin();
 	    fprintf (stderr, "I/O error writing Block0\n");
@@ -982,7 +986,7 @@ md_make_bsd_partitions(void)
 		bsdlabel[i].pi_fsize = 0;
 		fsmount[i][0] = '\0';
 	}
-	bsdlabel[RAW_PART].pi_size = new_block0.sbBlkCount;
+	bsdlabel[RAW_PART].pi_size = dlsize;
 	/*
 	 * Now, scan through the Disk Partition Map and transfer the
 	 *  information into the incore disklabel.
