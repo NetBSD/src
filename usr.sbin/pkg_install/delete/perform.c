@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.19 1999/03/09 10:01:12 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.20 1999/03/20 00:29:19 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.19 1999/03/09 10:01:12 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.20 1999/03/20 00:29:19 hubertf Exp $");
 #endif
 #endif
 
@@ -638,8 +638,17 @@ int
 pkg_perform(char **pkgs)
 {
     int i, err_cnt = 0;
+    int oldcwd;
 
-    for (i = 0; pkgs[i]; i++)
+    /* save cwd */
+    oldcwd=open(".", O_RDONLY, 0);
+    if (oldcwd == -1)
+	err(1, "cannot open \".\"");
+
+    for (i = 0; pkgs[i]; i++) {
 	err_cnt += pkg_do(pkgs[i]);
+	if (fchdir(oldcwd) == FAIL)
+	    err(1,"unable to change to previous directory");
+    }
     return err_cnt;
 }
