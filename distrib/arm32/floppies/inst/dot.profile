@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $NetBSD: dot.profile,v 1.3 1998/01/09 21:51:34 perry Exp $
+#       $NetBSD: dot.profile,v 1.4 1999/06/26 06:12:52 cgd Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
@@ -40,6 +40,7 @@ umask 022
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
+	export DONEPROFILE
 
 	# set up some sane defaults
 	echo 'erase ^H, werase ^W, kill ^U, intr ^C'

@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 1999/03/29 07:19:47 simonb Exp $
+#	$NetBSD: dot.profile,v 1.3 1999/06/26 06:12:59 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -43,6 +43,7 @@ ROOTDEV=/dev/md0a
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
+	export DONEPROFILE
 
 	# get the terminal type
 	eval `tset -s -m ":?$TERM"`
