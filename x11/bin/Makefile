@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 2004/04/28 14:17:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/05/13 21:10:36 mhitch Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap \
 	ccmakedep cleanlinks cxpm dpsexec dpsinfo editres \
 	fc-cache fc-list fonttosfnt fslsfonts fstobdf gccmakedep \
-	iceauth ico imake lbxproxy listres lndir luit \
-	makedepend makeg makepsres makestrs mergelib \
+	glxgears glxinfo iceauth ico imake lbxproxy listres lndir \
+	luit makedepend makeg makepsres makestrs mergelib \
 	mkcfm mkdirhier mkfontdir mkfontscale mkhtmlindex \
 	oclock proxymngr pswrap revpath rgb rman rstart \
 	scripts setxkbmap showfont smproxy ssh-askpass sxpm \
@@ -17,9 +17,5 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap \
 	xmessage xmh xmkmf xmodmap xprop xrandr xrdb xrefresh xset \
 	xsetmode xsetpointer xsetroot xsm xstdcmap xsystrace xterm \
 	xtrap xvidtune xvinfo xwd xwininfo xwud
-
-.if ${MACHINE_ARCH} != "vax"	# XXX: vax is missing ceilf (etc) in libm
-SUBDIR+=glxgears glxinfo 
-.endif
 
 .include <bsd.subdir.mk>
