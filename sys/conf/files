@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.234 1998/08/17 21:16:11 augustss Exp $
+#	$NetBSD: files,v 1.235 1998/08/22 22:53:06 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -272,7 +272,7 @@ device  esh: hippi, ifnet
 file    dev/ic/rrunner.c        esh
 
 # OPL2/OPL3 FM synth driver
-device	opl: midibus
+device	opl: midibus, midisyn
 file	dev/ic/opl.c			opl
 file	dev/ic/oplinstrs.c		opl
 
