@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.24 2000/05/09 23:16:19 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.25 2000/05/10 14:16:11 pk Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -296,7 +296,7 @@ isp_sbus_mbxdma(isp)
 	 */
 	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
 	/* Allocate DMA map */
-	if (bus_dmamap_create(dmatag, len, 1, len, NBPG, BUS_DMA_NOWAIT,
+	if (bus_dmamap_create(dmatag, len, 1, len, 0, BUS_DMA_NOWAIT,
 				&sbc->sbus_request_dmamap) != 0) {
 		goto dmafail;
 	}
@@ -329,7 +329,7 @@ isp_sbus_mbxdma(isp)
 	 */
 	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
 	/* Allocate DMA map */
-	if (bus_dmamap_create(dmatag, len, 1, len, NBPG, BUS_DMA_NOWAIT,
+	if (bus_dmamap_create(dmatag, len, 1, len, 0, BUS_DMA_NOWAIT,
 				&sbc->sbus_result_dmamap) != 0) {
 		goto dmafail;
 	}
