@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.181 2002/04/23 09:09:55 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.182 2002/04/23 17:28:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.181 2002/04/23 09:09:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.182 2002/04/23 17:28:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -843,7 +843,7 @@ scsi_probe_device(sc, target, lun)
 			periph->periph_cap |= PERIPH_CAP_SFTRESET;
 		if ((inqbuf.flags3 & SID_RelAdr) != 0)
 			periph->periph_cap |= PERIPH_CAP_RELADR;
-		if (periph->periph_version >= 4) { /* SPC-2 */
+		if (periph->periph_version >= 3) { /* SPC-2 */
 			/*
 			 * Report ST clocking though CAP_WIDExx/CAP_SYNC.
 			 * If the device only supports DT, clear these
