@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/07 12:27:33 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 12:46:48 rtr Exp $
 
 .include <bsd.own.mk>
 
 PROG=	Xdreamcast
+BINMODE=4711
 
 .include "../Makefile.Xserver"
 
@@ -23,6 +24,8 @@ DPADD=	${DPADD.dix} ${DPADD.hw/netbsd/dreamcast} ${LIBXFONT} \
 	${LIBLBXUTIL} ${DPADD.dbe} ${DPADD.record} ${DPADD.xtrap} \
 	${DPADD.GL/glx} ${DPADD.GL/GLcore} ${DPADD.randr} ${DPADD.render} \
 	${LIBXAU} ${LIBXDMCP} ${LIBZ} ${LIBM}
+
+SYMLINKS=	${X11BINDIR}/Xdreamcast ${X11BINDIR}/X
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
