@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.51 2004/08/07 17:12:44 mycroft Exp $	*/
+/*	$NetBSD: wivar.h,v 1.52 2004/09/28 00:42:11 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -144,6 +144,7 @@ struct wi_softc	{
 	struct wi_apinfo	sc_aps[MAXAPINFO];
 	int 			sc_naps;
 
+	struct timeval		sc_last_syn;
 	int			sc_false_syns;
 	int			sc_alt_retry;
 
@@ -171,7 +172,7 @@ struct wi_node {
 	struct ieee80211_rssadapt	wn_rssadapt;
 };
 
-/* maximum consecutive false change-of-BSSID indications */
+/* maximum false change-of-BSSID indications per second */
 #define	WI_MAX_FALSE_SYNS		10	
 
 #define	WI_PRISM_DBM_OFFSET	100	/* XXX */
