@@ -1,5 +1,6 @@
-# $NetBSD: md.macppc,v 1.17 2002/07/09 05:30:49 mycroft Exp $
+# $NetBSD: md.macppc,v 1.18 2002/07/09 05:57:34 dbj Exp $
 ./sbin/fdisk			base-sysutil-root
+./sbin/pdisk			base-sysutil-root
 ./usr/mdec/bootxx		base-sysutil-bin
 ./usr/mdec/ofwboot		base-sysutil-bin
 ./usr/mdec/ofwboot.elf		base-sysutil-bin
