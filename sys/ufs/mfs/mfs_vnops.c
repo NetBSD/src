@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.24 2000/06/11 03:09:55 sommerfeld Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.25 2000/10/09 18:07:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -158,6 +158,7 @@ mfs_strategy(v)
 			memcpy(bp->b_data, base, bp->b_bcount);
 		else
 			memcpy(base, bp->b_data, bp->b_bcount);
+		bp->b_resid = 0;
 		biodone(bp);
 	} else if (mfsp->mfs_proc == p) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
@@ -168,6 +169,7 @@ mfs_strategy(v)
 		 */
 		if (bp->b_flags & B_READ)
 			printf("warning: mfs read during shutdown\n");
+		bp->b_resid = 0;
 		biodone(bp);
 	} else {
 		BUFQ_INSERT_TAIL(&mfsp->mfs_buflist, bp);
