@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.15 2001/01/14 23:50:30 thorpej Exp $ */
+/*	$NetBSD: types.h,v 1.16 2001/04/28 15:41:33 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,33 +60,27 @@ typedef struct label_t {
 } label_t;
 #endif
 
-/*
- * Basic integral types.  Omit the typedef if
- * not possible for a machine/compiler combination.
- */
-#define	__BIT_TYPES_DEFINED__
-typedef	__int8_t	   int8_t;
-typedef	__uint8_t	 u_int8_t;
-typedef	__int16_t	  int16_t;
-typedef	__uint16_t	u_int16_t;
-typedef	__int32_t	  int32_t;
-typedef	__uint32_t	u_int32_t;
-typedef	__int64_t	  int64_t;
-typedef	__uint64_t	u_int64_t;
-
 /* The following are unsigned to prevent annoying sign extended pointers. */
-typedef unsigned long		register_t;
-typedef u_int32_t		register32_t;
-typedef u_int64_t		register64_t;
+typedef unsigned long int	register_t;
+typedef unsigned int		register32_t;
+#ifdef __arch64__
+typedef unsigned long int	register64_t;
+#else
+typedef unsigned long long int	register64_t;
+#endif
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-typedef unsigned long		vaddr_t;
+typedef unsigned long int	vaddr_t;
 typedef vaddr_t			vsize_t;
 #ifdef SUN4U
-typedef u_int64_t		paddr_t;
+#ifdef __arch64__
+typedef unsigned long int	paddr_t;
 #else
-typedef unsigned long		paddr_t;
-#endif
+typedef unsigned long long int	paddr_t;
+#endif /* __arch64__ */
+#else
+typedef unsigned long int	paddr_t;
+#endif /* SUN4U */
 typedef paddr_t			psize_t;
 #endif
 
