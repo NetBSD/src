@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 1998/11/22 23:38:53 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.24 1998/11/24 12:53:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -610,7 +610,10 @@ sendsig(catcher, sig, mask, code)
 	struct sigframe *fp;
 	struct trapframe *tf;
 	vaddr_t addr; 
-	struct rwindow *oldsp, *newsp, /* DEBUG */tmpwin;
+	struct rwindow *oldsp, *newsp;
+#ifdef NOT_DEBUG
+	struct rwindow tmpwin;
+#endif
 	struct sigframe sf;
 	int onstack;
 
