@@ -36,7 +36,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.7 2002/07/04 15:48:40 kent Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.8 2002/07/10 06:01:51 kent Exp $")
 #endif
 
 	/*
@@ -58,71 +58,79 @@ ENTRY(bcopy)
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
+	movl	%edi,%eax	/* return value */
 #else
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 #endif
 	movl	20(%esp),%ecx
-	movl	%edi,%eax
-	subl	%esi,%eax
-	cmpl	%ecx,%eax	/* overlapping? */
+	movl	%edi,%edx
+	subl	%esi,%edx
+	cmpl	%ecx,%edx	/* overlapping? */
+	movl	%ecx,%edx
 	jb	1f
 	cld			/* nope, copy forwards. */
 	shrl	$2,%ecx		/* copy by words */
 	rep
 	movsl
-	movl	20(%esp),%ecx
+	movl	%edx,%ecx
 	andl	$3,%ecx		/* any bytes left? */
 	rep
 	movsb
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	12(%esp),%eax
-#endif
 	popl	%edi
 	popl	%esi
 	ret
 1:
 	addl	%ecx,%edi	/* copy backwards. */
 	addl	%ecx,%esi
+
 #ifdef _DIAGNOSTIC
-#define _DIAGASSERT	call	_C_LABEL(__diagassert13)
-	cmpl	12(%esp),%edi	/* check pointer wraparound */
+				/* check pointer wraparound */
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	cmpl	12(%esp),%edi
+#else
+	cmpl	16(%esp),%edi
+#endif
 	jae	2f
 	pushl	$diagmes1
 	pushl	$func
 	pushl	$__LINE__-4
-	pushl	$file
-	_DIAGASSERT
-	addl	$16,%esp
 	jmp	4f
 2:	
+#if defined(MEMCOPY) || defined(MEMMOVE)
 	cmpl	16(%esp),%esi
+#else
+	cmpl	12(%esp),%esi
+#endif
 	jae	3f
 	pushl	$diagmes2
 	pushl	$func
 	pushl	$__LINE__-4
+4:	
 	pushl	$file
-	_DIAGASSERT
+	call	_C_LABEL(__diagassert13)
 	addl	$16,%esp
-	jmp	4f
-3:
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	12(%esp),%eax
 #endif
+	popl	%edi
+	popl	%esi
+	ret
+3:
+#endif	/* _DIAGNOSTIC */
+
 	std
 	andl	$3,%ecx		/* any fractional bytes? */
 	decl	%edi
 	decl	%esi
 	rep
 	movsb
-	movl	20(%esp),%ecx	/* copy remainder by words */
+	movl	%edx,%ecx	/* copy remainder by words */
 	shrl	$2,%ecx
 	subl	$3,%esi
 	subl	$3,%edi
 	rep
 	movsl
-4:
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	12(%esp),%eax
-#endif
 	popl	%edi
 	popl	%esi
 	cld
