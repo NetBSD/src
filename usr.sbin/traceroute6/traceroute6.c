@@ -1,5 +1,5 @@
-/*	$NetBSD: traceroute6.c,v 1.19 2002/05/26 05:32:13 itojun Exp $	*/
-/*	$KAME: traceroute6.c,v 1.49 2002/05/26 01:06:22 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.20 2002/05/26 13:14:03 itojun Exp $	*/
+/*	$KAME: traceroute6.c,v 1.50 2002/05/26 13:12:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.19 2002/05/26 05:32:13 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.20 2002/05/26 13:14:03 itojun Exp $");
 #endif
 #endif
 
@@ -794,7 +794,7 @@ main(argc, argv)
 		int len;
 
 		len = sizeof(Src);
-		if (getsockname(sndsock, (struct sockaddr *)&Src, &i) < 0) {
+		if (getsockname(sndsock, (struct sockaddr *)&Src, &len) < 0) {
 			perror("getsockname");
 			exit(1);
 		}
