@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 2001/01/04 06:01:43 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.50 2001/01/21 14:31:37 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.16.4 2001.01.04\r\n")
+	TEXT("Version 1.17.0 2001.01.07\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -136,6 +136,11 @@ struct fb_type fb_types[] = {
 	{ BIFB_D2_M2L_3,	TEXT(BIFBN_D2_M2L_3)	},
 	{ BIFB_D2_M2L_3x2,	TEXT(BIFBN_D2_M2L_3x2)	},
 	{ BIFB_D2_M2L_0,	TEXT(BIFBN_D2_M2L_0)	},
+	{ BIFB_D2_M2L_0x2,	TEXT(BIFBN_D2_M2L_0x2)	},
+	{ BIFB_D4_M2L_F,	TEXT(BIFBN_D4_M2L_F)	},
+	{ BIFB_D4_M2L_Fx2,	TEXT(BIFBN_D4_M2L_Fx2)	},
+	{ BIFB_D4_M2L_0,	TEXT(BIFBN_D4_M2L_0)	},
+	{ BIFB_D4_M2L_0x2,	TEXT(BIFBN_D4_M2L_0x2)	},
 	{ BIFB_D8_00,		TEXT(BIFBN_D8_00)	},
 	{ BIFB_D8_FF,		TEXT(BIFBN_D8_FF)	},
 	{ BIFB_D16_0000,	TEXT(BIFBN_D16_0000)	},
@@ -287,8 +292,11 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("Compaq PRESARIO 213"), BIFB_D8_00,
 		320, 240, 0, 0,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_COMPAQ_PRESARIO_213 },
-	{ TEXT("Compaq Aero 1530"), BIFB_D2_M2L_0,
-		320, 240, 0, 0,
+	{ TEXT("Compaq Aero 1530"), BIFB_D4_M2L_F,
+		320, 240, 160, 0x0a000000,
+		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_COMPAQ_AERO_1530 },
+	{ TEXT("Aero1530(Small Font)"), BIFB_D4_M2L_Fx2,
+		640, 240, 160, 0x0a000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_COMPAQ_AERO_1530 },
 	{ TEXT("Victor InterLink MP-C101"), BIFB_D16_0000,
 		640, 480, 0, 0,
@@ -385,6 +393,8 @@ int reverse_fb_type(int type)
 	} types[] = {
 		{ BIFB_D2_M2L_3,	BIFB_D2_M2L_0	},
 		{ BIFB_D2_M2L_3x2,	BIFB_D2_M2L_0x2	},
+		{ BIFB_D4_M2L_F,	BIFB_D4_M2L_0	},
+		{ BIFB_D4_M2L_Fx2,	BIFB_D4_M2L_0x2	},
 		{ BIFB_D8_FF,		BIFB_D8_00		},
 		{ BIFB_D16_FFFF,	BIFB_D16_0000,	},
 	};
