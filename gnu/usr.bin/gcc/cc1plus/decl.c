@@ -2503,7 +2503,7 @@ duplicate_decls (newdecl, olddecl)
       /* If you declare a built-in or predefined function name as static,
 	 the old definition is overridden, but optionally warn this was a
 	 bad choice of name.  Ditto for overloads.  */
-      if (! DECL_PUBLIC (newdecl)
+      if (! TREE_PUBLIC (newdecl)
 	  || (TREE_CODE (newdecl) == FUNCTION_DECL
 	      && DECL_LANGUAGE (newdecl) != DECL_LANGUAGE (olddecl)))
 	{
@@ -2888,7 +2888,6 @@ duplicate_decls (newdecl, olddecl)
 
   if (TREE_CODE (newdecl) == FUNCTION_DECL)
     {
-      DECL_C_STATIC (newdecl) = DECL_C_STATIC (olddecl);
       DECL_INTERFACE_KNOWN (newdecl) |= DECL_INTERFACE_KNOWN (olddecl);
       DECL_NOT_REALLY_EXTERN (newdecl) |= DECL_NOT_REALLY_EXTERN (olddecl);
     }
@@ -3273,7 +3272,7 @@ pushdecl (x)
 
 	  /* If the first global decl has external linkage,
 	     warn if we later see static one.  */
-	  if (IDENTIFIER_GLOBAL_VALUE (name) == NULL_TREE && DECL_PUBLIC (x))
+	  if (IDENTIFIER_GLOBAL_VALUE (name) == NULL_TREE && TREE_PUBLIC (x))
 	    TREE_PUBLIC (name) = 1;
 
 	  /* Don't install an artificial TYPE_DECL if we already have
@@ -7196,7 +7195,10 @@ grokfndecl (ctype, type, declarator, virtualp, flags, quals,
 	  
   TREE_PUBLIC (decl) = publicp;
   if (! publicp)
-    DECL_C_STATIC (decl) = 1;
+    {
+      DECL_INTERFACE_KNOWN (decl) = 1;
+      DECL_NOT_REALLY_EXTERN (decl) = 1;
+    }
 
   if (inlinep)
     DECL_THIS_INLINE (decl) = DECL_INLINE (decl) = 1;
@@ -9671,8 +9673,7 @@ grokdeclarator (declarator, declspecs, decl_context, initialized, raises, attrli
 	/* Record presence of `static'.  In C++, `inline' implies `static'.  */
 	publicp = (ctype != NULL_TREE
 		   || RIDBIT_SETP (RID_EXTERN, specbits)
-		   || (!RIDBIT_SETP (RID_STATIC, specbits)
-		       && !RIDBIT_SETP (RID_INLINE, specbits)));
+		   || !RIDBIT_SETP (RID_STATIC, specbits));
 
 	decl = grokfndecl (ctype, type, original_name,
 			   virtualp, flags, quals, raises, attrlist,
@@ -11337,11 +11338,7 @@ start_function (declspecs, declarator, raises, attrs, pre_parsed_p)
       if (DECL_THIS_INLINE (decl1) && ! DECL_INTERFACE_KNOWN (decl1))
 	DECL_DEFER_OUTPUT (decl1) = 1;
       else
-	{
-	  DECL_INTERFACE_KNOWN (decl1) = 1;
-	  if (DECL_C_STATIC (decl1))
-	    TREE_PUBLIC (decl1) = 0;
-	}
+	DECL_INTERFACE_KNOWN (decl1) = 1;
     }
 
   if (ctype != NULL_TREE && DECL_STATIC_FUNCTION_P (decl1))
