@@ -1,3 +1,5 @@
+/*	$NetBSD: strmode.c,v 1.5 1997/07/13 20:24:28 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strmode.c	5.3 (Berkeley) 5/18/90";*/
-static char *rcsid = "$Id: strmode.c,v 1.4 1997/01/30 09:23:47 matthias Exp $";
+#if 0
+static char *sccsid = "@(#)strmode.c	5.3 (Berkeley) 5/18/90";
+#else
+__RCSID("$NetBSD: strmode.c,v 1.5 1997/07/13 20:24:28 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

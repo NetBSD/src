@@ -1,3 +1,5 @@
+/*	$NetBSD: strncmp.c,v 1.7 1997/07/13 20:24:29 christos Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strncmp.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$Id: strncmp.c,v 1.6 1996/10/24 23:47:28 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)strncmp.c	5.6 (Berkeley) 1/26/91";
+#else
+__RCSID("$NetBSD: strncmp.c,v 1.7 1997/07/13 20:24:29 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL
