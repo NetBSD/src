@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.9 2004/03/13 17:31:33 bjh21 Exp $
+#	$NetBSD: files.hp700,v 1.10 2004/07/25 21:52:56 jkunz Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -97,8 +97,9 @@ attach	asp at mainbus
 file	arch/hp700/dev/asp.c		asp
 
 # 1FT4-0001, ASIC used on gecko cards
-device	wax: gscbus, isabus, eisabus
-attach	wax at mainbus
+device	wax: gscbus
+attach	wax at mainbus with wax_mainbus
+attach	wax at phantomas with wax_phantomas
 file	arch/hp700/dev/wax.c		wax
 
 device	mongoose: isabus, eisabus
