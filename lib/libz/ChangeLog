@@ -1,4 +1,4 @@
-$NetBSD: ChangeLog,v 1.4 1999/07/02 15:51:37 simonb Exp $
+$NetBSD: ChangeLog,v 1.5 1999/07/03 12:30:52 simonb Exp $
 
 		ChangeLog file for zlib
 
@@ -208,7 +208,7 @@ Changes in 1.0.6 (19 Jan 1998)
 - add NEED_DUMMY_RETURN for Borland
 - use variable z_verbose for tracing in debug mode (L. Peter Deutsch).
 - allow compilation with CC
-- defined STDC for OS/2 (David Charlap)
+- defined STDC for OS/2 (David Charlap)	
 - limit external names to 8 chars for MVS (Thomas Lund)
 - in minigzip.c, use static buffers only for 16-bit systems
 - fix suffix check for "minigzip -d foo.gz"
@@ -216,7 +216,7 @@ Changes in 1.0.6 (19 Jan 1998)
 - use _fdopen instead of fdopen for MSC >= 6.0 (Thomas Fanslau)
 - added makelcc.bat for lcc-win32 (Tom St Denis)
 - in Makefile.dj2, use copy and del instead of install and rm (Frank Donahoe)
-- Avoid expanded $Id: ChangeLog,v 1.4 1999/07/02 15:51:37 simonb Exp $. Use "rcs -kb" or "cvs admin -kb" to avoid Id expansion.
+- Avoid expanded $Id: ChangeLog,v 1.5 1999/07/03 12:30:52 simonb Exp $. Use "rcs -kb" or "cvs admin -kb" to avoid Id expansion.
 - check for unistd.h in configure (for off_t)
 - remove useless check parameter in inflate_blocks_free
 - avoid useless assignment of s->check to itself in inflate_blocks_new
@@ -233,7 +233,7 @@ Changes in 1.0.5 (3 Jan 98)
 - Eliminate memory leaks on error conditions in inflate
 - Removed some vestigial code in inflate
 - Update web address in README
-
+  
 Changes in 1.0.4 (24 Jul 96)
 - In very rare conditions, deflate(s, Z_FINISH) could fail to produce an EOF
   bit, so the decompressor could decompress all the correct data but went

@@ -1,8 +1,8 @@
-/*	$NetBSD: misc.c,v 1.5 1999/07/02 16:15:33 simonb Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 1999/07/03 12:30:41 simonb Exp $	*/
 
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
-  *
+  * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -11,7 +11,7 @@
 #if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #else
-__RCSID("$NetBSD: misc.c,v 1.5 1999/07/02 16:15:33 simonb Exp $");
+__RCSID("$NetBSD: misc.c,v 1.6 1999/07/03 12:30:41 simonb Exp $");
 #endif
 #endif
 

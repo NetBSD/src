@@ -1,8 +1,8 @@
-/* $NetBSD: trees.c,v 1.5 1999/07/02 15:51:40 simonb Exp $ */
+/* $NetBSD: trees.c,v 1.6 1999/07/03 12:30:57 simonb Exp $ */
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-1998 Jean-loup Gailly
- * For conditions of distribution and use, see copyright notice in zlib.h
+ * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
 /*
@@ -1201,7 +1201,7 @@ local void copy_block(s, buf, len, header)
     s->last_eob_len = 8; /* enough lookahead for inflate */
 
     if (header) {
-        put_short(s, (ush)len);
+        put_short(s, (ush)len);   
         put_short(s, (ush)~len);
 #ifdef DEBUG
         s->bits_sent += 2*16;
