@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.6 2001/03/04 14:32:12 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.7 2001/03/10 20:15:46 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -44,18 +44,24 @@
 #ifndef _ARM_CPUS_H_
 #define _ARM_CPUS_H_
 
-#define MAX_CPUS		2
-#define MAX_SLAVE_CPUS		0
-#define MAX_FOREIGN_CPUS	1
+#define MAX_CPUS	1
 
 #define CPU_MASTER	0
-#define CPU_486		1
-#define CPU_SLAVE	2
 
-#define CPU_CLASS_NONE	0	/* No CPU */
-#define CPU_CLASS_ARM	1	/* ARM 6/7/8 */
-#define CPU_CLASS_SARM	2	/* Guess */
-#define CPU_CLASS_I486	3	/* 486/586 */
+enum cpu_class {
+	CPU_CLASS_NONE,
+	CPU_CLASS_ARM2,
+	CPU_CLASS_ARM2AS,
+	CPU_CLASS_ARM3,
+	CPU_CLASS_ARM6,
+	CPU_CLASS_ARM7,
+	CPU_CLASS_ARM7TDMI,
+	CPU_CLASS_ARM8,
+	CPU_CLASS_ARM9TDMI,
+	CPU_CLASS_ARM9ES,
+	CPU_CLASS_SA1,
+	CPU_CLASS_XSCALE,
+};
 
 #define FPU_CLASS_NONE		0	/* no Floating point support */
 #define FPU_CLASS_FPE		1	/* Floating point emulator installed */
