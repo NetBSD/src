@@ -1,4 +1,4 @@
-# $NetBSD: md.arm26,v 1.23 2001/11/24 02:09:11 thorpej Exp $
+# $NetBSD: md.arm26,v 1.24 2001/11/25 16:28:52 thorpej Exp $
 ./usr/include/arm26			comp-c-include
 ./usr/include/arm26/ansi.h		comp-c-include
 ./usr/include/arm26/aout_machdep.h	comp-c-include
@@ -10,7 +10,6 @@
 ./usr/include/arm26/cpu.h		comp-c-include
 ./usr/include/arm26/db_machdep.h	comp-c-include
 ./usr/include/arm26/disklabel.h		comp-c-include
-./usr/include/arm26/disklabel_acorn.h	comp-c-include
 ./usr/include/arm26/elf_machdep.h	comp-c-include
 ./usr/include/arm26/endian.h		comp-c-include
 ./usr/include/arm26/endian_machdep.h	comp-c-include
