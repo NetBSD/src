@@ -1,5 +1,5 @@
 REM>BBBB
-REM $NetBSD: BBBB,v 1.4 2000/12/11 22:19:18 bjh21 Exp $
+REM $NetBSD: BBBB,v 1.5 2001/02/23 00:27:40 bjh21 Exp $
 REM
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
 REM All rights reserved.
@@ -29,15 +29,22 @@ REM
 REM This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines.
 REM
 REM Ben's BASIC BSD Booter (allegedly)
+
+ON ERROR ON ERROR OFF:ERROR ERR, REPORT$ + " at line " + STR$(ERL)
+
 debug% = 1
-PRINT ">> BBBB, Revision 0.42"
+PRINT ">> BBBB, Revision 0.43"
 SYS "OS_ReadMemMapInfo" TO nbpp%, npages%
 IF debug% THEN
   PRINT "Machine has ";npages%;" pages of ";nbpp% DIV 1024;"K each.  ";
   PRINT "Total RAM: ";npages% * nbpp% DIV 1024 DIV 1024;"Mb"
   PRINT "Lowering HIMEM: &";~HIMEM;
 ENDIF
-HIMEM = &10000
+IF npages% > 256
+  HIMEM = &18000
+ELSE
+  HIMEM = &10000
+ENDIF
 IF debug% THEN PRINT " -> &";~HIMEM
 
 twirl% = 0
@@ -104,7 +111,7 @@ FOR i% = 0 TO nfiles% - 1
 NEXT
 PRINT " (howto = 0x"; ~howto%; ")"
 PROCload_kernel
-DIM P% 1023
+DIM P% 128
 REM
 [ OPT 2
  .config%
@@ -375,15 +382,11 @@ DEF PROCstart_kernel(A%, B%, C%, D%, E%)
   REM R3: unused
   REM R4: kernel entry point
   LOCAL asm%, P%
-  DIM asm% 256
+  DIM asm% 128
   FOR pass% = 0 TO 2 STEP 2
     P%=asm%
     [ OPT pass%
       STMFD   R13!,{R14}
-      STMFD   R13!,{R0-R4}
-    ]
-    [ OPT pass%
-      LDMFD   R13!, {R0-R4}
       SWI     "OS_EnterOS"
       ; We now attempt to be APCS compliant on entry to the kernel.
       ; Kernel APCS is 26bit/explicit/nofpregs/non-reentrant
