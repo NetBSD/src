@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.19 2001/10/27 00:34:57 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.20 2001/10/27 00:39:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -268,14 +268,14 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 			continue;
 		}
 		{
-		int error = me->me_ops->dopen(me, evar);
+		int error = wsevsrc_open(me, evar);
 		if (error) {
 			DPRINTF(("wsmuxopen: open failed %d\n", error));
 		}
 		}
 #else
 		/* ignore errors, failing children will not be marked open */
-		(void)me->me_ops->dopen(me, evar);
+		(void)wsevsrc_open(me, evar);
 #endif
 	}
 }
@@ -332,7 +332,7 @@ wsmux_do_close(struct wsmux_softc *sc)
 			continue;
 		}
 #endif
-		(void)me->me_ops->dclose(me);
+		(void)wsevsrc_close(me);
 		me->me_evp = NULL;
 	}
 }
@@ -650,7 +650,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 		/* Mux is open, so open the new subdevice */
 		DPRINTF(("wsmux_attach_sc: %s: calling open of %s\n",
 			 sc->sc_base.me_dv.dv_xname, me->me_dv.dv_xname));
-		error = me->me_ops->dopen(me, sc->sc_base.me_evp);
+		error = wsevsrc_open(me, sc->sc_base.me_evp);
 	} else {
 		DPRINTF(("wsmux_attach_sc: %s not open\n",
 			 sc->sc_base.me_dv.dv_xname));
@@ -690,7 +690,7 @@ wsmux_detach_sc(struct wsevsrc *me)
 		if (me->me_evp != NULL) {
 		DPRINTF(("wsmux_detach_sc: close\n"));
 		/* mux device is open, so close multiplexee */
-		(void)me->me_ops->dclose(me);
+		(void)wsevsrc_close(me);
 	}
 
 	CIRCLEQ_REMOVE(&sc->sc_cld, me, me_next);
@@ -796,7 +796,7 @@ wsmux_set_display(struct device *dv, struct wsevsrc *ame)
 			if (!error) {
 				ok = 1;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-				DPRINTF(("wsmux_set_display: on %s set rawkbd=%d\n",
+				DPRINTF(("wsmux_set_display: %s set rawkbd=%d\n",
 					 me->me_dv.dv_xname, sc->sc_rawkbd));
 				(void)wsevsrc_ioctl(me, WSKBDIO_SETMODE, 
 						    &sc->sc_rawkbd, 0, 0);
