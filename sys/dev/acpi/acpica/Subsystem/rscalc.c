@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rscalc - Calculate stream and list lengths
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  ******************************************************************************/
 
@@ -433,7 +433,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
             ++Buffer;
 
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
             BytesConsumed = Temp16 + 3;
 
             /*
@@ -474,7 +474,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
 
             ++Buffer;
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             BytesConsumed = Temp16 + 3;
 
@@ -514,7 +514,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
 
             ++Buffer;
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             BytesConsumed = Temp16 + 3;
 
@@ -554,7 +554,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
 
             ++Buffer;
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             BytesConsumed = Temp16 + 3;
 
@@ -594,7 +594,7 @@ AcpiRsGetListLength (
             Buffer = ByteStreamBuffer;
 
             ++Buffer;
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             BytesConsumed = Temp16 + 3;
 
@@ -667,7 +667,7 @@ AcpiRsGetListLength (
             /*
              * Look at the number of bits set
              */
-            ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+            ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
             for (Index = 0; Index < 16; Index++)
             {
@@ -796,7 +796,7 @@ AcpiRsGetListLength (
         default:
             /*
              * If we get here, everything is out of sync,
-             *  so exit with an error
+             * exit with an error
              */
             return_ACPI_STATUS (AE_AML_INVALID_RESOURCE_TYPE);
         }
@@ -804,7 +804,7 @@ AcpiRsGetListLength (
         /*
          * Update the return value and counter
          */
-        BufferSize += ACPI_ALIGN_RESOURCE_SIZE(StructureSize);
+        BufferSize += (UINT32) ACPI_ALIGN_RESOURCE_SIZE (StructureSize);
         BytesParsed += BytesConsumed;
 
         /*

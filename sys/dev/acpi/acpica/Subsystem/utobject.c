@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utobject - ACPI object create/delete/size/cache routines
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  *****************************************************************************/
 
@@ -226,7 +226,7 @@ AcpiUtCreateBufferObject (
     ACPI_SIZE               BufferSize)
 {
     ACPI_OPERAND_OBJECT     *BufferDesc;
-    UINT8                   *Buffer;
+    UINT8                   *Buffer = NULL;
 
 
     ACPI_FUNCTION_TRACE_U32 ("UtCreateBufferObject", BufferSize);
@@ -241,15 +241,20 @@ AcpiUtCreateBufferObject (
         return_PTR (NULL);
     }
 
-    /* Allocate the actual buffer */
+    /* Create an actual buffer only if size > 0 */
 
-    Buffer = ACPI_MEM_CALLOCATE (BufferSize);
-    if (!Buffer)
+    if (BufferSize > 0)
     {
-        ACPI_REPORT_ERROR (("CreateBuffer: could not allocate size %X\n",
-            (UINT32) BufferSize));
-        AcpiUtRemoveReference (BufferDesc);
-        return_PTR (NULL);
+        /* Allocate the actual buffer */
+
+        Buffer = ACPI_MEM_CALLOCATE (BufferSize);
+        if (!Buffer)
+        {
+            ACPI_REPORT_ERROR (("CreateBuffer: could not allocate size %X\n",
+                (UINT32) BufferSize));
+            AcpiUtRemoveReference (BufferDesc);
+            return_PTR (NULL);
+        }
     }
 
     /* Complete buffer object initialization */
@@ -300,29 +305,10 @@ AcpiUtValidInternalObject (
 
         return (TRUE);
 
-    case ACPI_DESC_TYPE_NAMED:
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "**** Obj %p is a named obj, not ACPI obj\n", Object));
-        break;
-
-    case ACPI_DESC_TYPE_PARSER:
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "**** Obj %p is a parser obj, not ACPI obj\n", Object));
-        break;
-
-    case ACPI_DESC_TYPE_CACHED:
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-            "**** Obj %p has already been released to internal cache\n", Object));
-        break;
-
     default:
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-            "**** Obj %p has unknown descriptor type %X\n", Object,
-            ACPI_GET_DESCRIPTOR_TYPE (Object)));
+        ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
+                "%p is not not an ACPI operand obj [%s]\n", 
+                Object, AcpiUtGetDescriptorName (Object)));
         break;
     }
 
@@ -401,7 +387,8 @@ AcpiUtDeleteObjectDesc (
     if (ACPI_GET_DESCRIPTOR_TYPE (Object) != ACPI_DESC_TYPE_OPERAND)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-            "Obj %p is not an ACPI object\n", Object));
+                "%p is not an ACPI Operand object [%s]\n", Object,
+                AcpiUtGetDescriptorName (Object)));
         return_VOID;
     }
 

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exregion - ACPI default OpRegion (address space) handlers
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  *****************************************************************************/
 
@@ -158,7 +158,7 @@ AcpiExSystemMemorySpaceHandler (
     ACPI_MEM_SPACE_CONTEXT  *MemInfo = RegionContext;
     UINT32                  Length;
     ACPI_SIZE               WindowSize;
-#ifndef _HW_ALIGNMENT_SUPPORT
+#ifndef ACPI_MISALIGNED_TRANSFERS
     UINT32                  Remainder;
 #endif
 
@@ -192,7 +192,7 @@ AcpiExSystemMemorySpaceHandler (
     }
 
 
-#ifndef _HW_ALIGNMENT_SUPPORT
+#ifndef ACPI_MISALIGNED_TRANSFERS
     /*
      * Hardware does not support non-aligned data transfers, we must verify
      * the request.
@@ -242,7 +242,7 @@ AcpiExSystemMemorySpaceHandler (
         if (ACPI_FAILURE (Status))
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not map memory at %8.8X%8.8X, size %X\n",
-                ACPI_HIDWORD (Address), ACPI_LODWORD (Address), (UINT32) WindowSize));
+                    ACPI_FORMAT_UINT64 (Address), (UINT32) WindowSize));
             MemInfo->MappedLength = 0;
             return_ACPI_STATUS (Status);
         }
@@ -261,8 +261,8 @@ AcpiExSystemMemorySpaceHandler (
                     ((ACPI_INTEGER) Address - (ACPI_INTEGER) MemInfo->MappedPhysicalAddress);
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-        "SystemMemory %d (%d width) Address=%8.8X%8.8X\n", Function, BitWidth,
-        ACPI_HIDWORD (Address), ACPI_LODWORD (Address)));
+            "SystemMemory %d (%d width) Address=%8.8X%8.8X\n", Function, BitWidth,
+            ACPI_FORMAT_UINT64 (Address)));
 
    /*
     * Perform the memory read or write
@@ -367,14 +367,15 @@ AcpiExSystemIoSpaceHandler (
     void                    *RegionContext)
 {
     ACPI_STATUS             Status = AE_OK;
+    UINT32                  Value32;
 
 
     ACPI_FUNCTION_TRACE ("ExSystemIoSpaceHandler");
 
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-        "SystemIO %d (%d width) Address=%8.8X%8.8X\n", Function, BitWidth,
-        ACPI_HIDWORD (Address), ACPI_LODWORD (Address)));
+            "SystemIO %d (%d width) Address=%8.8X%8.8X\n", Function, BitWidth,
+            ACPI_FORMAT_UINT64 (Address)));
 
     /* Decode the function parameter */
 
@@ -382,13 +383,13 @@ AcpiExSystemIoSpaceHandler (
     {
     case ACPI_READ:
 
-        *Value = 0;
-        Status = AcpiOsReadPort ((ACPI_IO_ADDRESS) Address, Value, BitWidth);
+        Status = AcpiOsReadPort ((ACPI_IO_ADDRESS) Address, &Value32, BitWidth);
+        *Value = Value32;
         break;
 
     case ACPI_WRITE:
 
-        Status = AcpiOsWritePort ((ACPI_IO_ADDRESS) Address, *Value, BitWidth);
+        Status = AcpiOsWritePort ((ACPI_IO_ADDRESS) Address, (UINT32) *Value, BitWidth);
         break;
 
     default:

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbgetall - Get all required ACPI tables
- *              $Revision: 1.1.1.4 $
+ *              $Revision: 1.1.1.5 $
  *
  *****************************************************************************/
 
@@ -311,7 +311,7 @@ AcpiTbGetRequiredTables (
      */
     for (i = 0; i < AcpiGbl_RsdtTableCount; i++)
     {
-        /* Get the table addresss from the common internal XSDT */
+        /* Get the table address from the common internal XSDT */
 
         Address.Pointer.Value = ACPI_GET_ADDRESS (AcpiGbl_XSDT->TableOffsetEntry[i]);
 
@@ -324,8 +324,7 @@ AcpiTbGetRequiredTables (
         {
             ACPI_REPORT_WARNING (("%s, while getting table at %8.8X%8.8X\n",
                 AcpiFormatException (Status),
-                ACPI_HIDWORD (Address.Pointer.Value),
-                ACPI_LODWORD (Address.Pointer.Value)));
+                ACPI_FORMAT_UINT64 (Address.Pointer.Value)));
         }
     }
 
@@ -396,7 +395,7 @@ AcpiTbGetRequiredTables (
 
     /* Always delete the RSDP mapping, we are done with it */
 
-    AcpiTbDeleteAcpiTable (ACPI_TABLE_RSDP);
+    AcpiTbDeleteTablesByType (ACPI_TABLE_RSDP);
     return_ACPI_STATUS (Status);
 }
 

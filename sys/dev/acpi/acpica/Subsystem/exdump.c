@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exdump - Interpreter debug output routines
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  *****************************************************************************/
 
@@ -165,29 +165,29 @@ AcpiExDumpOperand (
     if (!ObjDesc)
     {
         /*
-         * This usually indicates that something serious is wrong --
-         * since most (if not all)
-         * code that dumps the stack expects something to be there!
+         * This usually indicates that something serious is wrong
          */
-        AcpiOsPrintf ("Null stack entry ptr\n");
+        AcpiOsPrintf ("Null Object Descriptor\n");
         return;
     }
 
     if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_NAMED)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%p NS Node: ", ObjDesc));
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%p is a NS Node: ", ObjDesc));
         ACPI_DUMP_ENTRY (ObjDesc, ACPI_LV_EXEC);
         return;
     }
 
     if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%p is not a local object\n", ObjDesc));
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+                "%p is not a node or operand object: [%s]\n",
+                ObjDesc, AcpiUtGetDescriptorName (ObjDesc)));
         ACPI_DUMP_BUFFER (ObjDesc, sizeof (ACPI_OPERAND_OBJECT));
         return;
     }
 
-    /*  ObjDesc is a valid object  */
+    /* ObjDesc is a valid object */
 
     ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%p ", ObjDesc));
 
@@ -232,11 +232,10 @@ AcpiExDumpOperand (
 
             if (ACPI_GET_OBJECT_TYPE (ObjDesc) == ACPI_TYPE_INTEGER)
             {
-                /* Value is a Number */
+                /* Value is an Integer */
 
                 AcpiOsPrintf (" value is [%8.8X%8.8x]",
-                            ACPI_HIDWORD(ObjDesc->Integer.Value),
-                            ACPI_LODWORD(ObjDesc->Integer.Value));
+                            ACPI_FORMAT_UINT64 (ObjDesc->Integer.Value));
             }
 
             AcpiOsPrintf ("\n");
@@ -251,11 +250,10 @@ AcpiExDumpOperand (
             if (ACPI_GET_OBJECT_TYPE (ObjDesc) == ACPI_TYPE_INTEGER)
             {
 
-                /* Value is a Number */
+                /* Value is an Integer */
 
                 AcpiOsPrintf (" value is [%8.8X%8.8x]",
-                            ACPI_HIDWORD(ObjDesc->Integer.Value),
-                            ACPI_LODWORD(ObjDesc->Integer.Value));
+                            ACPI_FORMAT_UINT64 (ObjDesc->Integer.Value));
             }
 
             AcpiOsPrintf ("\n");
@@ -271,7 +269,7 @@ AcpiExDumpOperand (
 
         default:
 
-            /*  unknown opcode  */
+            /* Unknown opcode */
 
             AcpiOsPrintf ("Unknown Reference opcode=%X\n",
                 ObjDesc->Reference.Opcode);
@@ -314,8 +312,7 @@ AcpiExDumpOperand (
     case ACPI_TYPE_INTEGER:
 
         AcpiOsPrintf ("Integer %8.8X%8.8X\n",
-                    ACPI_HIDWORD (ObjDesc->Integer.Value),
-                    ACPI_LODWORD (ObjDesc->Integer.Value));
+                    ACPI_FORMAT_UINT64 (ObjDesc->Integer.Value));
         break;
 
 
@@ -360,8 +357,7 @@ AcpiExDumpOperand (
         else
         {
             AcpiOsPrintf (" base %8.8X%8.8X Length %X\n",
-                ACPI_HIDWORD (ObjDesc->Region.Address),
-                ACPI_LODWORD (ObjDesc->Region.Address),
+                ACPI_FORMAT_UINT64 (ObjDesc->Region.Address),
                 ObjDesc->Region.Length);
         }
         break;
@@ -590,7 +586,7 @@ AcpiExOutAddress (
     AcpiOsPrintf ("%20s : %p\n", Title, Value);
 #else
     AcpiOsPrintf ("%20s : %8.8X%8.8X\n", Title,
-                ACPI_HIDWORD (Value), ACPI_LODWORD (Value));
+                ACPI_FORMAT_UINT64 (Value));
 #endif
 }
 
@@ -623,7 +619,7 @@ AcpiExDumpNode (
         }
     }
 
-    AcpiOsPrintf ("%20s : %4.4s\n",       "Name", Node->Name.Ascii);
+    AcpiOsPrintf ("%20s : %4.4s\n",       "Name", AcpiUtGetNodeName (Node));
     AcpiExOutString  ("Type",             AcpiUtGetTypeName (Node->Type));
     AcpiExOutInteger ("Flags",            Node->Flags);
     AcpiExOutInteger ("Owner Id",         Node->OwnerId);
@@ -675,7 +671,8 @@ AcpiExDumpObjectDescriptor (
 
     if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND)
     {
-        AcpiOsPrintf ("ExDumpObjectDescriptor: %p is not a valid ACPI object\n", ObjDesc);
+        AcpiOsPrintf ("ExDumpObjectDescriptor: %p is not an ACPI operand object: [%s]\n",
+                ObjDesc, AcpiUtGetDescriptorName (ObjDesc));
         return_VOID;
     }
 
@@ -692,8 +689,7 @@ AcpiExDumpObjectDescriptor (
     case ACPI_TYPE_INTEGER:
 
         AcpiOsPrintf ("%20s : %8.8X%8.8X\n", "Value",
-                        ACPI_HIDWORD (ObjDesc->Integer.Value),
-                        ACPI_LODWORD (ObjDesc->Integer.Value));
+                ACPI_FORMAT_UINT64 (ObjDesc->Integer.Value));
         break;
 
 
@@ -741,9 +737,9 @@ AcpiExDumpObjectDescriptor (
 
     case ACPI_TYPE_DEVICE:
 
-        AcpiExOutPointer ("AddrHandler",     ObjDesc->Device.AddrHandler);
-        AcpiExOutPointer ("SysHandler",      ObjDesc->Device.SysHandler);
-        AcpiExOutPointer ("DrvHandler",      ObjDesc->Device.DrvHandler);
+        AcpiExOutPointer ("AddressSpace",   ObjDesc->Device.AddressSpace);
+        AcpiExOutPointer ("SystemNotify",   ObjDesc->Device.SystemNotify);
+        AcpiExOutPointer ("DeviceNotify",   ObjDesc->Device.DeviceNotify);
         break;
 
 
@@ -779,7 +775,7 @@ AcpiExDumpObjectDescriptor (
         AcpiExOutInteger ("Flags",           ObjDesc->Region.Flags);
         AcpiExOutAddress ("Address",         ObjDesc->Region.Address);
         AcpiExOutInteger ("Length",          ObjDesc->Region.Length);
-        AcpiExOutPointer ("AddrHandler",     ObjDesc->Region.AddrHandler);
+        AcpiExOutPointer ("AddressSpace",    ObjDesc->Region.AddressSpace);
         AcpiExOutPointer ("Next",            ObjDesc->Region.Next);
         break;
 
@@ -788,8 +784,8 @@ AcpiExDumpObjectDescriptor (
 
         AcpiExOutInteger ("SystemLevel",     ObjDesc->PowerResource.SystemLevel);
         AcpiExOutInteger ("ResourceOrder",   ObjDesc->PowerResource.ResourceOrder);
-        AcpiExOutPointer ("SysHandler",      ObjDesc->PowerResource.SysHandler);
-        AcpiExOutPointer ("DrvHandler",      ObjDesc->PowerResource.DrvHandler);
+        AcpiExOutPointer ("SystemNotify",    ObjDesc->PowerResource.SystemNotify);
+        AcpiExOutPointer ("DeviceNotify",    ObjDesc->PowerResource.DeviceNotify);
         break;
 
 
@@ -798,17 +794,17 @@ AcpiExDumpObjectDescriptor (
         AcpiExOutInteger ("Processor ID",    ObjDesc->Processor.ProcId);
         AcpiExOutInteger ("Length",          ObjDesc->Processor.Length);
         AcpiExOutAddress ("Address",         (ACPI_PHYSICAL_ADDRESS) ObjDesc->Processor.Address);
-        AcpiExOutPointer ("SysHandler",      ObjDesc->Processor.SysHandler);
-        AcpiExOutPointer ("DrvHandler",      ObjDesc->Processor.DrvHandler);
-        AcpiExOutPointer ("AddrHandler",     ObjDesc->Processor.AddrHandler);
+        AcpiExOutPointer ("SystemNotify",    ObjDesc->Processor.SystemNotify);
+        AcpiExOutPointer ("DeviceNotify",    ObjDesc->Processor.DeviceNotify);
+        AcpiExOutPointer ("AddressSpace",    ObjDesc->Processor.AddressSpace);
         break;
 
 
     case ACPI_TYPE_THERMAL:
 
-        AcpiExOutPointer ("SysHandler",      ObjDesc->ThermalZone.SysHandler);
-        AcpiExOutPointer ("DrvHandler",      ObjDesc->ThermalZone.DrvHandler);
-        AcpiExOutPointer ("AddrHandler",     ObjDesc->ThermalZone.AddrHandler);
+        AcpiExOutPointer ("SystemNotify",    ObjDesc->ThermalZone.SystemNotify);
+        AcpiExOutPointer ("DeviceNotify",    ObjDesc->ThermalZone.DeviceNotify);
+        AcpiExOutPointer ("AddressSpace",    ObjDesc->ThermalZone.AddressSpace);
         break;
 
 
@@ -869,18 +865,18 @@ AcpiExDumpObjectDescriptor (
 
     case ACPI_TYPE_LOCAL_ADDRESS_HANDLER:
 
-        AcpiExOutInteger ("SpaceId",         ObjDesc->AddrHandler.SpaceId);
-        AcpiExOutPointer ("Next",            ObjDesc->AddrHandler.Next);
-        AcpiExOutPointer ("RegionList",      ObjDesc->AddrHandler.RegionList);
-        AcpiExOutPointer ("Node",            ObjDesc->AddrHandler.Node);
-        AcpiExOutPointer ("Context",         ObjDesc->AddrHandler.Context);
+        AcpiExOutInteger ("SpaceId",         ObjDesc->AddressSpace.SpaceId);
+        AcpiExOutPointer ("Next",            ObjDesc->AddressSpace.Next);
+        AcpiExOutPointer ("RegionList",      ObjDesc->AddressSpace.RegionList);
+        AcpiExOutPointer ("Node",            ObjDesc->AddressSpace.Node);
+        AcpiExOutPointer ("Context",         ObjDesc->AddressSpace.Context);
         break;
 
 
     case ACPI_TYPE_LOCAL_NOTIFY:
 
-        AcpiExOutPointer ("Node",            ObjDesc->NotifyHandler.Node);
-        AcpiExOutPointer ("Context",         ObjDesc->NotifyHandler.Context);
+        AcpiExOutPointer ("Node",            ObjDesc->Notify.Node);
+        AcpiExOutPointer ("Context",         ObjDesc->Notify.Context);
         break;
 
 

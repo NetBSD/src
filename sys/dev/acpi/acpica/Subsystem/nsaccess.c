@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsaccess - Top-level functions for accessing ACPI namespace
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  ******************************************************************************/
 
@@ -147,6 +147,7 @@ AcpiNsRootInitialize (void)
     const ACPI_PREDEFINED_NAMES *InitVal = NULL;
     ACPI_NAMESPACE_NODE         *NewNode;
     ACPI_OPERAND_OBJECT         *ObjDesc;
+    ACPI_STRING                 Val = NULL;
 
 
     ACPI_FUNCTION_TRACE ("NsRootInitialize");
@@ -198,9 +199,7 @@ AcpiNsRootInitialize (void)
          */
         if (InitVal->Val)
         {
-            ACPI_STRING Val;
-
-            Status = AcpiOsPredefinedOverride(InitVal, &Val);
+            Status = AcpiOsPredefinedOverride (InitVal, &Val);
             if (ACPI_FAILURE (Status))
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not override predefined %s\n",
@@ -407,8 +406,8 @@ AcpiNsLookup (
         PrefixNode = ScopeInfo->Scope.Node;
         if (ACPI_GET_DESCRIPTOR_TYPE (PrefixNode) != ACPI_DESC_TYPE_NAMED)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "[%p] Not a namespace node\n",
-                PrefixNode));
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "%p Not a namespace node [%s]\n",
+                    PrefixNode, AcpiUtGetDescriptorName (PrefixNode)));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
 
@@ -477,7 +476,7 @@ AcpiNsLookup (
 
             ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
                 "Searching relative to prefix scope [%4.4s] (%p)\n",
-                PrefixNode->Name.Ascii, PrefixNode));
+                AcpiUtGetNodeName (PrefixNode), PrefixNode));
 
             /*
              * Handle multiple Parent Prefixes (carat) by just getting
@@ -514,7 +513,7 @@ AcpiNsLookup (
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
                     "Search scope is [%4.4s], path has %d carat(s)\n",
-                    ThisNode->Name.Ascii, NumCarats));
+                    AcpiUtGetNodeName (ThisNode), NumCarats));
             }
         }
 
@@ -633,7 +632,7 @@ AcpiNsLookup (
 
         /* Extract one ACPI name from the front of the pathname */
 
-        ACPI_MOVE_UNALIGNED32_TO_32 (&SimpleName, Path);
+        ACPI_MOVE_32_TO_32 (&SimpleName, Path);
 
         /* Try to find the single (4 character) ACPI name */
 

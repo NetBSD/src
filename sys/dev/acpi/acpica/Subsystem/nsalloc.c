@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsalloc - Namespace allocation and deletion utilities
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  ******************************************************************************/
 
@@ -192,6 +192,8 @@ AcpiNsDeleteNode (
     PrevNode = NULL;
     NextNode = ParentNode->Child;
 
+    /* Find the node that is the previous peer in the parent's child list */
+
     while (NextNode != Node)
     {
         PrevNode = NextNode;
@@ -200,6 +202,8 @@ AcpiNsDeleteNode (
 
     if (PrevNode)
     {
+        /* Node is not first child, unlink it */
+
         PrevNode->Peer = NextNode->Peer;
         if (NextNode->Flags & ANOBJ_END_OF_PEER_LIST)
         {
@@ -208,7 +212,19 @@ AcpiNsDeleteNode (
     }
     else
     {
-        ParentNode->Child = NextNode->Peer;
+        /* Node is first child (has no previous peer) */
+
+        if (NextNode->Flags & ANOBJ_END_OF_PEER_LIST)
+        {
+            /* No peers at all */
+
+            ParentNode->Child = NULL;
+        }
+        else
+        {   /* Link peer list to parent */
+
+            ParentNode->Child = NextNode->Peer;
+        }
     }
 
 
@@ -305,7 +321,7 @@ AcpiNsInstallNode (
     ACPI_NAMESPACE_NODE     *Node,          /* New Child*/
     ACPI_OBJECT_TYPE        Type)
 {
-    UINT16                  OwnerId = TABLE_ID_DSDT;
+    UINT16                  OwnerId = 0;
     ACPI_NAMESPACE_NODE     *ChildNode;
 #ifdef ACPI_ALPHABETIC_NAMESPACE
 
@@ -343,7 +359,7 @@ AcpiNsInstallNode (
          * alphabetic placement.
          */
         PreviousChildNode = NULL;
-        while (AcpiNsCompareNames (ChildNode->Name.Ascii, Node->Name.Ascii) < 0)
+        while (AcpiNsCompareNames (AcpiUtGetNodeName (ChildNode), AcpiUtGetNodeName (Node)) < 0)
         {
             if (ChildNode->Flags & ANOBJ_END_OF_PEER_LIST)
             {
@@ -413,8 +429,9 @@ AcpiNsInstallNode (
     Node->Type = (UINT8) Type;
 
     ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "%4.4s (%s) added to %4.4s (%s) %p at %p\n",
-        Node->Name.Ascii, AcpiUtGetTypeName (Node->Type),
-        ParentNode->Name.Ascii, AcpiUtGetTypeName (ParentNode->Type), ParentNode, Node));
+        AcpiUtGetNodeName (Node), AcpiUtGetTypeName (Node->Type),
+        AcpiUtGetNodeName (ParentNode), AcpiUtGetTypeName (ParentNode->Type),
+        ParentNode, Node));
 
     /*
      * Increment the reference count(s) of all parents up to
@@ -448,6 +465,7 @@ AcpiNsDeleteChildren (
 {
     ACPI_NAMESPACE_NODE     *ChildNode;
     ACPI_NAMESPACE_NODE     *NextNode;
+    ACPI_NAMESPACE_NODE     *Node;
     UINT8                   Flags;
 
 
@@ -496,6 +514,27 @@ AcpiNsDeleteChildren (
          * Detach an object if there is one, then free the child node
          */
         AcpiNsDetachObject (ChildNode);
+
+        /*
+         * Decrement the reference count(s) of all parents up to
+         * the root! (counts were incremented when the node was created)
+         */
+        Node = ChildNode;
+        while ((Node = AcpiNsGetParentNode (Node)) != NULL)
+        {
+            Node->ReferenceCount--;
+        }
+
+        /* There should be only one reference remaining on this node */
+
+        if (ChildNode->ReferenceCount != 1)
+        {
+            ACPI_REPORT_WARNING (("Existing references (%d) on node being deleted (%p)\n",
+                ChildNode->ReferenceCount, ChildNode));
+        }
+
+        /* Now we can delete the node */
+
         ACPI_MEM_FREE (ChildNode);
 
         /* And move on to the next child in the list */
@@ -614,7 +653,7 @@ AcpiNsDeleteNamespaceSubtree (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiNsRemoveReference (
     ACPI_NAMESPACE_NODE     *Node)
 {

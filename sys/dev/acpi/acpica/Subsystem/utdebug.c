@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utdebug - Debug print routines
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  *****************************************************************************/
 
@@ -530,7 +530,7 @@ AcpiUtValueExit (
 
     AcpiUtDebugPrint (ACPI_LV_FUNCTIONS, LineNumber, DbgInfo,
             "%s %8.8X%8.8X\n", AcpiGbl_FnExitStr,
-            ACPI_HIDWORD (Value), ACPI_LODWORD (Value));
+            ACPI_FORMAT_UINT64 (Value));
 
     AcpiGbl_NestingLevel--;
 }
@@ -648,8 +648,7 @@ AcpiUtDumpBuffer (
 
             case DB_WORD_DISPLAY:
 
-                ACPI_MOVE_UNALIGNED16_TO_32 (&Temp32,
-                                             &Buffer[i + j]);
+                ACPI_MOVE_16_TO_32 (&Temp32, &Buffer[i + j]);
                 AcpiOsPrintf ("%04X ", Temp32);
                 j += 2;
                 break;
@@ -657,8 +656,7 @@ AcpiUtDumpBuffer (
 
             case DB_DWORD_DISPLAY:
 
-                ACPI_MOVE_UNALIGNED32_TO_32 (&Temp32,
-                                             &Buffer[i + j]);
+                ACPI_MOVE_32_TO_32 (&Temp32, &Buffer[i + j]);
                 AcpiOsPrintf ("%08X ", Temp32);
                 j += 4;
                 break;
@@ -666,12 +664,10 @@ AcpiUtDumpBuffer (
 
             case DB_QWORD_DISPLAY:
 
-                ACPI_MOVE_UNALIGNED32_TO_32 (&Temp32,
-                                             &Buffer[i + j]);
+                ACPI_MOVE_32_TO_32 (&Temp32, &Buffer[i + j]);
                 AcpiOsPrintf ("%08X", Temp32);
 
-                ACPI_MOVE_UNALIGNED32_TO_32 (&Temp32,
-                                             &Buffer[i + j + 4]);
+                ACPI_MOVE_32_TO_32 (&Temp32, &Buffer[i + j + 4]);
                 AcpiOsPrintf ("%08X ", Temp32);
                 j += 8;
                 break;

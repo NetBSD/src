@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmresrc.c - Resource Descriptor disassembly
- *              $Revision: 1.1.1.4 $
+ *              $Revision: 1.1.1.5 $
  *
  ******************************************************************************/
 
@@ -134,7 +134,7 @@
  *
  * RETURN:      None
  *
- * DESCRIPTION: Dump a bit mask as a list of individual interrupt/dma levels.
+ * DESCRIPTION: Dump a bit mask as a list of individual interrupt/DMA levels.
  *
  ******************************************************************************/
 
@@ -430,7 +430,7 @@ AcpiDmIsResourceDescriptor (
 
     /* Extract the data pointer and data length */
 
-    ByteCount = NextOp->Common.Value.Integer32;
+    ByteCount = (UINT32) NextOp->Common.Value.Integer;
     ByteData = NextOp->Named.Data;
 
     /* The list must have a valid END_TAG */

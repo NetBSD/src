@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsmethod - Parser/Interpreter interface - control method parsing
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  *****************************************************************************/
 
@@ -169,7 +169,7 @@ AcpiDsParseMethod (
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "**** Parsing [%4.4s] **** NamedObj=%p\n",
-        ((ACPI_NAMESPACE_NODE *) ObjHandle)->Name.Ascii, ObjHandle));
+        AcpiUtGetNodeName (ObjHandle), ObjHandle));
 
     /* Extract the method object from the method Node */
 
@@ -251,7 +251,7 @@ AcpiDsParseMethod (
 
     ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
         "**** [%4.4s] Parsed **** NamedObj=%p Op=%p\n",
-        ((ACPI_NAMESPACE_NODE *) ObjHandle)->Name.Ascii, ObjHandle, Op));
+        AcpiUtGetNodeName (ObjHandle), ObjHandle, Op));
 
     AcpiPsDeleteParseTree (Op);
     return_ACPI_STATUS (Status);
@@ -377,6 +377,8 @@ AcpiDsCallControlMethod (
     {
         return_ACPI_STATUS (AE_NULL_OBJECT);
     }
+
+    ObjDesc->Method.OwningId = AcpiUtAllocateOwnerId (ACPI_OWNER_TYPE_METHOD);
 
     /* Init for new method, wait on concurrency semaphore */
 

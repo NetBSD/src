@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswload - Dispatcher namespace load callbacks
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  *****************************************************************************/
 
@@ -330,6 +330,15 @@ AcpiDsLoad1BeginOp (
          *       BufferField, or Package), the name of the object is already
          *       in the namespace.
          */
+        if (WalkState->DeferredNode)
+        {
+            /* This name is already in the namespace, get the node */
+
+            Node = WalkState->DeferredNode;
+            Status = AE_OK;
+            break;
+        }
+
         Flags = ACPI_NS_NO_UPSEARCH;
         if ((WalkState->Opcode != AML_SCOPE_OP) &&
             (!(WalkState->ParseFlags & ACPI_PARSE_DEFERRED_OP)))
@@ -700,7 +709,18 @@ AcpiDsLoad2BeginOp (
          * Enter the named type into the internal namespace.  We enter the name
          * as we go downward in the parse tree.  Any necessary subobjects that involve
          * arguments to the opcode must be created as we go back up the parse tree later.
+         *
+         * Note: Name may already exist if we are executing a deferred opcode.
          */
+        if (WalkState->DeferredNode)
+        {
+            /* This name is already in the namespace, get the node */
+
+            Node = WalkState->DeferredNode;
+            Status = AE_OK;
+            break;
+        }
+
         Status = AcpiNsLookup (WalkState->ScopeInfo, BufferPtr, ObjectType,
                         ACPI_IMODE_EXECUTE, ACPI_NS_NO_UPSEARCH, WalkState, &(Node));
         break;

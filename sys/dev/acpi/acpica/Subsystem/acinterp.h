@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acinterp.h - Interpreter subcomponent prototypes and defines
- *       $Revision: 1.1.1.6 $
+ *       $Revision: 1.1.1.7 $
  *
  *****************************************************************************/
 
@@ -237,15 +237,17 @@ void
 AcpiExGetBufferDatum(
     ACPI_INTEGER            *Datum,
     void                    *Buffer,
+    UINT32                  BufferLength,
     UINT32                  ByteGranularity,
-    UINT32                  Offset);
+    UINT32                  BufferOffset);
 
 void
 AcpiExSetBufferDatum (
     ACPI_INTEGER            MergedDatum,
     void                    *Buffer,
+    UINT32                  BufferLength,
     UINT32                  ByteGranularity,
-    UINT32                  Offset);
+    UINT32                  BufferOffset);
 
 ACPI_STATUS
 AcpiExReadDataFromField (

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nssearch - Namespace search
- *              $Revision: 1.1.1.6 $
+ *              $Revision: 1.1.1.7 $
  *
  ******************************************************************************/
 
@@ -172,7 +172,7 @@ AcpiNsSearchNode (
         ScopeName = AcpiNsGetExternalPathname (Node);
         if (ScopeName)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Searching %s [%p] For %4.4s (%s)\n",
+            ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Searching %s (%p) For [%4.4s] (%s)\n",
                 ScopeName, Node, (char *) &TargetName, AcpiUtGetTypeName (Type)));
 
             ACPI_MEM_FREE (ScopeName);
@@ -195,8 +195,9 @@ AcpiNsSearchNode (
              * Found matching entry.
              */
             ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
-                "Name %4.4s Type [%s] found at %p\n",
-                (char *) &TargetName, AcpiUtGetTypeName (NextNode->Type), NextNode));
+                "Name [%4.4s] (%s) %p found in scope [%4.4s] %p\n",
+                (char *) &TargetName, AcpiUtGetTypeName (NextNode->Type),
+                NextNode, AcpiUtGetNodeName (Node), Node));
 
             *ReturnNode = NextNode;
             return_ACPI_STATUS (AE_OK);
@@ -220,8 +221,10 @@ AcpiNsSearchNode (
 
     /* Searched entire namespace level, not found */
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Name %4.4s Type [%s] not found at %p\n",
-        (char *) &TargetName, AcpiUtGetTypeName (Type), NextNode));
+    ACPI_DEBUG_PRINT ((ACPI_DB_NAMES,
+        "Name [%4.4s] (%s) not found in search in scope [%4.4s] %p first child %p\n",
+        (char *) &TargetName, AcpiUtGetTypeName (Type),
+        AcpiUtGetNodeName (Node), Node, Node->Child));
 
     return_ACPI_STATUS (AE_NOT_FOUND);
 }

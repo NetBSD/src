@@ -1,7 +1,7 @@
 /******************************************************************************
  *
- * Name: acfreebsd.h - OS specific defines, etc.
- *       xRevision: 11 $
+ * Name: acnetbsd.h - OS specific defines, etc.
+ *       $Revision: 1.1.1.2 $
  *
  *****************************************************************************/
 
@@ -117,51 +117,86 @@
 #ifndef __ACNETBSD_H__
 #define __ACNETBSD_H__
 
+#if 0
 /*
  * XXX this is technically correct, but will cause problems with some ASL
  *     which only works if the string names a Microsoft operating system.
  */
 #define ACPI_OS_NAME                "NetBSD"
+#else
+#define	ACPI_OS_NAME                "Microsoft Windows NT"
+#endif
 
 /* NetBSD uses GCC */
 
 #include "acgcc.h"
-#include <machine/acpica_machdep.h>
+
+#ifdef _LP64
+#define	ACPI_MACHINE_WIDTH	64
+#else
+#define	ACPI_MACHINE_WIDTH	32
+#endif
+
+#define	COMPILER_DEPENDENT_INT64  int64_t
+#define	COMPILER_DEPENDENT_UINT64 uint64_t
 
 #ifdef _KERNEL
-#include <sys/ctype.h>
+#include "opt_acpi.h"		/* collect build-time options here */
+
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/libkern.h>
 #include <machine/stdarg.h>
+#include <machine/acpi_func.h>
 
 #define asm         __asm
-#define __cli()     disable_intr()
-#define __sti()     enable_intr()
 
-#ifdef ACPI_DEBUG_OUTPUT
+#define	ACPI_USE_NATIVE_DIVIDE
+
+#define ACPI_ASM_MACROS		/* tell acenv.h */
+
+#define	ACPI_SYSTEM_XFACE       
+#define	ACPI_EXTERNAL_XFACE     
+#define	ACPI_INTERNAL_XFACE
+#define	ACPI_INTERNAL_VAR_XFACE
+#define	ACPI_DISASSEMBLER
+
+#ifdef ACPI_DEBUG
+#define ACPI_DEBUG_OUTPUT
+#define ACPI_DBG_TRACK_ALLOCATIONS
 #ifdef DEBUGGER_THREADING
 #undef DEBUGGER_THREADING
 #endif /* DEBUGGER_THREADING */
-#define DEBUGGER_THREADING 0    /* integrated with DDB */
+#define DEBUGGER_THREADING 0	/* integrated with DDB */
 #include "opt_ddb.h"
 #ifdef DDB
 #define ACPI_DEBUGGER
 #endif /* DDB */
-#endif /* ACPI_DEBUG_OUTPUT */
+#endif /* ACPI_DEBUG */
+
+static __inline int
+isprint(int ch)
+{
+	return(isspace(ch) || isascii(ch));
+}
 
 #else /* _KERNEL */
+
+#include <ctype.h>
 
 /* Not building kernel code, so use libc */
 #define ACPI_USE_STANDARD_HEADERS
 
-#define __cli()
-#define __sti()
+#define	__cli()
+#define	__sti()
+
+/* XXX */
+#define __inline inline
 
 #endif /* _KERNEL */
 
 /* Always use NetBSD code over our local versions */
 #define ACPI_USE_SYSTEM_CLIBRARY
+#define ACPI_USE_NATIVE_DIVIDE
 
 /* NetBSD doesn't have strupr, should be fixed. (move to libkern) */
 static __inline char *
@@ -169,32 +204,9 @@ strupr(char *str)
 {
     char *c = str;
     while(*c) {
-    *c = toupper(*c);
-    c++;
+	*c = toupper(*c);
+	c++;
     }
     return(str);
 }
-
-#ifdef _KERNEL
-/* Or strstr (used in debugging mode, also move to libkern) */
-static __inline char *
-strstr(char *s, char *find)
-{
-    char c, sc;
-    size_t len;
-
-    if ((c = *find++) != 0) {
-    len = strlen(find);
-    do {
-        do {
-        if ((sc = *s++) == 0)
-            return (NULL);
-        } while (sc != c);
-    } while (strncmp(s, find, len) != 0);
-    s--;
-    }
-    return ((char *)s);
-}
-#endif /* _KERNEL */
-
 #endif /* __ACNETBSD_H__ */
