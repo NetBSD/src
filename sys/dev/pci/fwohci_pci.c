@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.9 2001/04/12 21:39:31 thorpej Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.10 2001/05/01 05:10:30 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -126,12 +126,7 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	/*
-	 * XXX SHOULD BE IPL_BIO, BUT WE HAVE TO USE IPL_NET RIGHT NOW
-	 * XXX TO AVOID EVIL INTERRUPT LEVEL MIXING IN THE FWOCHI NETWORK
-	 * XXX CODE.
-	 */
-	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, fwohci_intr,
+	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_intr,
 	    &psc->psc_sc);
 	if (psc->psc_ih == NULL) {
 		printf("%s: couldn't establish interrupt", self->dv_xname);
