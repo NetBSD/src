@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.14 2002/12/10 17:14:32 thorpej Exp $	*/
+/*	$NetBSD: bim.c,v 1.15 2002/12/12 11:06:12 scw Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.14 2002/12/10 17:14:32 thorpej Exp $");
+__RCSID("$NetBSD: bim.c,v 1.15 2002/12/12 11:06:12 scw Exp $");
 #endif /* not lint */
 
 /*
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: bim.c,v 1.14 2002/12/10 17:14:32 thorpej Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #define FSTYPENAMES
 #include <sys/disklabel.h>
@@ -84,9 +85,8 @@ char    disk_info[BLOCK_SIZE];
 int     disk_fd;		/* The file descriptor for the disk. */
 int	yesmode;
 
-struct disklabel *dk_label = (struct disklabel *) & disk_info[LABELOFFSET];
-struct imageinfo *im_table =
-    (struct imageinfo *) (&disk_info[LABELOFFSET] + sizeof(struct disklabel));
+struct disklabel *dk_label;
+struct imageinfo *im_table;
 
 int     label_changed = FALSE;
 int     images_changed = FALSE;
@@ -584,6 +584,7 @@ main(argc, argv)
 	char   *argcmds[MAXARGCMDS];
 	char    optchar;
 	int     idx;
+	off_t	loff;
 
 	/* Check the parameters.  */
 	yesmode = 0;
@@ -608,6 +609,11 @@ main(argc, argv)
 		usage();
 	if (optind < argc)
 		fname = argv[optind];
+
+	loff = getlabeloffset();
+	dk_label = (struct disklabel *) &disk_info[loff];
+	im_table = (struct imageinfo *) (&disk_info[loff] +
+	    sizeof(struct disklabel));
 
 	disk_fd = open(fname, O_RDWR);
 	if (disk_fd < 0)
