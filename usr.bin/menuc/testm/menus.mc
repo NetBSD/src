@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.5 1998/06/29 08:46:37 phil Exp $	*/
+/*	$NetBSD: menus.mc,v 1.6 1998/06/29 22:21:03 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -193,7 +193,7 @@ menu bigscroll, no scrollable, title "  Non-scrollable Menu";
 	option "option 19", action {};
 	option "option 20", action {};
 
-menu scrollit2, scrollable, title "  Non-scrollable Menu";
+menu scrollit2, scrollable, title "  Big scrollable Menu";
 	option "option 1", action {};
 	option "option 2", action {};
 	option "option 3", action {};
