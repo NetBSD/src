@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.158 2001/03/19 17:01:12 tsutsui Exp $
+#	$NetBSD: bsd.own.mk,v 1.159 2001/05/12 22:38:04 chs Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -106,6 +106,7 @@ NOLINT=1
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE} == "next68k" || \
     ${MACHINE} == "sun3" || \
     ${MACHINE} == "mvme68k" || \
     ${MACHINE} == "hp300" || \
