@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2000/06/29 08:11:27 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2000/07/20 18:33:43 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2000/06/29 08:11:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2000/07/20 18:33:43 jeffs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2153,13 +2153,14 @@ pmap_prefer(foff, vap)
 	vaddr_t foff;
 	vaddr_t *vap;
 {
-	vaddr_t	va = *vap;
+	vaddr_t	va;
 	vsize_t d;
 
 	if (CPUISMIPS3) {
+		va = *vap;
+
 		d = foff - va;
-		/* Use 64K to prevent virtual coherency exceptions */
-		d &= (0x10000 - 1);
+		d &= mips_CachePreferMask;
 		*vap = va + d;
 	}
 }
