@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.28 1996/09/25 02:22:10 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.29 1996/10/10 22:25:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -150,7 +150,7 @@ vndattach(num)
 	size = num * sizeof(struct vnd_softc);
 	mem = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (mem == NULL) {
-		printf("WARNING: no memory for vnode disks\n");
+		kprintf("WARNING: no memory for vnode disks\n");
 		return;
 	}
 	bzero(mem, size);
@@ -174,7 +174,7 @@ vndopen(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(%x, %x, %x, %p)\n", dev, flags, mode, p);
+		kprintf("vndopen(%x, %x, %x, %p)\n", dev, flags, mode, p);
 #endif
 	if (unit >= numvnd)
 		return (ENXIO);
@@ -215,7 +215,7 @@ vndclose(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(%x, %x, %x, %p)\n", dev, flags, mode, p);
+		kprintf("vndclose(%x, %x, %x, %p)\n", dev, flags, mode, p);
 #endif
 
 	if (unit >= numvnd)
@@ -262,7 +262,7 @@ vndstrategy(bp)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndstrategy(%p): unit %d\n", bp, unit);
+		kprintf("vndstrategy(%p): unit %d\n", bp, unit);
 #endif
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
@@ -309,8 +309,8 @@ vndstrategy(bp)
 			sz = resid;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndstrategy: vp %p/%p bn %x/%x sz %x\n",
-			       vnd->sc_vp, vp, bn, nbn, sz);
+			kprintf("vndstrategy: vp %p/%p bn %x/%x sz %x\n",
+			    vnd->sc_vp, vp, bn, nbn, sz);
 #endif
 
 		nbp = getvndbuf();
@@ -389,7 +389,7 @@ vndstart(vnd)
 	vnd->sc_tab.b_actf = bp->b_actf;
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndstart(%ld): bp %p vp %p blkno %x addr %p cnt %lx\n",
+		kprintf("vndstart(%ld): bp %p vp %p blkno %x addr %p cnt %lx\n",
 		    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
 		    bp->b_data, bp->b_bcount);
 #endif
@@ -414,7 +414,7 @@ vndiodone(bp)
 	s = splbio();
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndiodone(%ld): vbp %p vp %p blkno %x addr %p cnt %lx\n",
+		kprintf("vndiodone(%ld): vbp %p vp %p blkno %x addr %p cnt %lx\n",
 		    (long) (vnd-vnd_softc), vbp, vbp->vb_buf.b_vp,
 		    vbp->vb_buf.b_blkno, vbp->vb_buf.b_data,
 		    vbp->vb_buf.b_bcount);
@@ -423,7 +423,7 @@ vndiodone(bp)
 	if (vbp->vb_buf.b_error) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndiodone: vbp %p error %d\n", vbp,
+			kprintf("vndiodone: vbp %p error %d\n", vbp,
 			    vbp->vb_buf.b_error);
 #endif
 		pbp->b_flags |= B_ERROR;
@@ -435,7 +435,7 @@ vndiodone(bp)
 	if (pbp->b_resid == 0) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndiodone: pbp %p iodone\n", pbp);
+			kprintf("vndiodone: pbp %p iodone\n", pbp);
 #endif
 		biodone(pbp);
 	}
@@ -458,7 +458,7 @@ vndread(dev, uio, flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndread(%x, %p)\n", dev, uio);
+		kprintf("vndread(%x, %p)\n", dev, uio);
 #endif
 
 	if (unit >= numvnd)
@@ -483,7 +483,7 @@ vndwrite(dev, uio, flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndwrite(%x, %p)\n", dev, uio);
+		kprintf("vndwrite(%x, %p)\n", dev, uio);
 #endif
 
 	if (unit >= numvnd)
@@ -514,7 +514,7 @@ vndioctl(dev, cmd, data, flag, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
+		kprintf("vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
 		    dev, cmd, data, flag, p, unit);
 #endif
 	error = suser(p->p_ucred, &p->p_acflag);
@@ -565,13 +565,13 @@ vndioctl(dev, cmd, data, flag, p)
 		vnd->sc_flags |= VNF_INITED;
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
-			printf("vndioctl: SET vp %p size %lx\n",
+			kprintf("vndioctl: SET vp %p size %lx\n",
 			    vnd->sc_vp, (unsigned long) vnd->sc_size);
 #endif
 
 		/* Attach the disk. */
 		bzero(vnd->sc_xname, sizeof(vnd->sc_xname));	/* XXX */
-		sprintf(vnd->sc_xname, "vnd%d", unit);		/* XXX */
+		ksprintf(vnd->sc_xname, "vnd%d", unit);		/* XXX */
 		vnd->sc_dkdev.dk_name = vnd->sc_xname;
 		disk_attach(&vnd->sc_dkdev);
 
@@ -603,7 +603,7 @@ vndioctl(dev, cmd, data, flag, p)
 		vndclear(vnd);
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
-			printf("vndioctl: CLRed\n");
+			kprintf("vndioctl: CLRed\n");
 #endif
 
 		/* Detatch the disk. */
@@ -704,7 +704,7 @@ vndclear(vnd)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclear(%p): vp %p\n", vnd, vp);
+		kprintf("vndclear(%p): vp %p\n", vnd, vp);
 #endif
 	vnd->sc_flags &= ~VNF_INITED;
 	if (vp == (struct vnode *)0)

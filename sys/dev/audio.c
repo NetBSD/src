@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.29 1996/09/07 12:40:53 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.30 1996/10/10 22:25:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -163,15 +163,15 @@ void
 audio_printsc(sc)
 	struct audio_softc *sc;
 {
-	printf("hwhandle %p hw_if %p ", sc->hw_hdl, sc->hw_if);
-	printf("open %x mode %x\n", sc->sc_open, sc->sc_mode);
-	printf("rchan %x wchan %x ", sc->sc_rchan, sc->sc_wchan);
-	printf("rring blk %x pring nblk %x\n", sc->rr.nblk, sc->pr.nblk);
-	printf("rbus %x pbus %x ", sc->sc_rbus, sc->sc_pbus);
-	printf("blksz %d sib %d ", sc->sc_blksize, sc->sc_smpl_in_blk);
-	printf("sp50ms %d backlog %d\n", sc->sc_50ms, sc->sc_backlog);
-	printf("hiwat %d lowat %d rblks %d\n", sc->sc_hiwat, sc->sc_lowat,
-		sc->sc_rblks);
+	kprintf("hwhandle %p hw_if %p ", sc->hw_hdl, sc->hw_if);
+	kprintf("open %x mode %x\n", sc->sc_open, sc->sc_mode);
+	kprintf("rchan %x wchan %x ", sc->sc_rchan, sc->sc_wchan);
+	kprintf("rring blk %x pring nblk %x\n", sc->rr.nblk, sc->pr.nblk);
+	kprintf("rbus %x pbus %x ", sc->sc_rbus, sc->sc_pbus);
+	kprintf("blksz %d sib %d ", sc->sc_blksize, sc->sc_smpl_in_blk);
+	kprintf("sp50ms %d backlog %d\n", sc->sc_50ms, sc->sc_backlog);
+	kprintf("hiwat %d lowat %d rblks %d\n", sc->sc_hiwat, sc->sc_lowat,
+	    sc->sc_rblks);
 }
 #endif
 
@@ -264,7 +264,7 @@ audio_hardware_attach(hwp, hdlp)
 	hwp->audio_unit = naudio++;
 
 #ifdef AUDIO_DEBUG
-	printf("audio: unit %d attached\n", hwp->audio_unit);
+	kprintf("audio: unit %d attached\n", hwp->audio_unit);
 #endif
 	
 	return(0);
@@ -1009,7 +1009,7 @@ audio_write(dev, uio, ioflag)
 		if ((tp + towrite) > cb->ep) {
 			DPRINTF(("audio_write: overwrite tp=%p towrite=%d ep=0x%x bs=%d\n",
 			         tp, towrite, cb->ep, blocksize));
-			printf("audio_write: overwrite tp=%p towrite=%d ep=%p\n",
+			kprintf("audio_write: overwrite tp=%p towrite=%d ep=%p\n",
 			         tp, towrite, cb->ep);
 			tp = cb->bp;
 		}
@@ -1034,7 +1034,7 @@ audio_write(dev, uio, ioflag)
 		}
 		if (error) {
 #ifdef AUDIO_DEBUG
-		        printf("audio_write:(1) uiomove failed %d; cc=%d tp=%p bs=%d\n", error, cc, tp, blocksize);
+		        kprintf("audio_write:(1) uiomove failed %d; cc=%d tp=%p bs=%d\n", error, cc, tp, blocksize);
 #endif
 			break;
 		}		    
