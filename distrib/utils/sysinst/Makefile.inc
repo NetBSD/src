@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 2003/11/20 13:13:38 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.32 2003/12/01 01:11:57 lukem Exp $
 #
 # Makefile for sysinst
 
@@ -14,7 +14,7 @@ MENUS_MD?=	menus.md.${SYSINSTLANG}
 .include <bsd.sys.mk>		# for HOST_SH
 .include <bsd.own.mk>		# for mk.conf
 
-_MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.OBJDIR:T}/${.TARGET}
+_MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}
 
 DPADD=		${LIBCURSES} ${LIBTERMCAP} ${LIBUTIL}
 LDADD=		-lcurses -ltermcap -lutil
