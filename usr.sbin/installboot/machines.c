@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.23 2004/03/13 22:51:50 dsl Exp $	*/
+/*	$NetBSD: machines.c,v 1.23.2.1 2004/06/22 07:26:45 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.23 2004/03/13 22:51:50 dsl Exp $");
+__RCSID("$NetBSD: machines.c,v 1.23.2.1 2004/06/22 07:26:45 tron Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
