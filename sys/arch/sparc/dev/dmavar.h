@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.11 1996/11/27 21:49:53 pk Exp $ */
+/*	$NetBSD: dmavar.h,v 1.12 1998/03/21 20:28:44 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -29,26 +29,30 @@
  */
 
 struct dma_softc {
-	struct device sc_dev;			/* us as a device */
-	struct sbusdev sc_sd;			/* sbus device */
+	struct device	sc_dev;			/* us as a device */
+	struct sbusdev	sc_sd;			/* sbus device */
+	bus_space_tag_t	sc_bustag;		/* bus tags */
+	bus_dma_tag_t	sc_dmatag;
 	struct esp_softc *sc_esp;		/* my scsi */
-	struct le_softc *sc_le;			/* my ethernet */
-	struct dma_regs *sc_regs;		/* the registers */
-	int	sc_active;			/* DMA active ? */
-	u_int	sc_rev;				/* revision */
-	int	sc_node;			/* PROM node ID */
-	int	sc_burst;			/* DVMA burst size in effect */
-	caddr_t	sc_dvmakaddr;			/* DVMA cookies */
-	caddr_t	sc_dvmaaddr;			/*		*/
-	size_t	sc_dmasize;
-	caddr_t	*sc_dmaaddr;
-	size_t  *sc_dmalen;
+	struct le_softc	*sc_le;			/* my ethernet */
+	struct dma_regs	*sc_regs;		/* the registers */
+	int		sc_active;		/* DMA active ? */
+	u_int		sc_rev;			/* revision */
+	int		sc_node;		/* PROM node ID */
+	int		sc_burst;		/* DVMA burst size in effect */
+	caddr_t		sc_dvmakaddr;		/* DVMA cookies */
+	caddr_t		sc_dvmaaddr;		/*		*/
+	size_t		sc_dmasize;
+	caddr_t		*sc_dmaaddr;
+	size_t		*sc_dmalen;
 	void (*reset)(struct dma_softc *);	/* reset routine */
 	void (*enintr)(struct dma_softc *);	/* enable interrupts */
 	int (*isintr)(struct dma_softc *);	/* interrupt ? */
-	int (*intr)(struct dma_softc *);	/* interrupt ! */
+	int (*intr)(void *);			/* interrupt ! */
 	int (*setup)(struct dma_softc *, caddr_t *, size_t *, int, size_t *);
 	void (*go)(struct dma_softc *);
+	int (*sc_intrchain)(void *);		/* next handler in intr chain */
+	void *sc_intrchainarg;			/* arg for next intr handler */
 };
 
 #define DMACSR(sc)	(sc->sc_regs->csr)
