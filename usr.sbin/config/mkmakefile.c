@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.43 2000/01/20 00:08:08 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.44 2000/02/01 05:13:17 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -447,7 +447,7 @@ emitload(fp)
 	struct config *cf;
 	const char *nm, *swname;
 
-	if (fputs("all:", fp) < 0)
+	if (fputs(".MAIN: all\nall:", fp) < 0)
 		return (1);
 	for (cf = allcf; cf != NULL; cf = cf->cf_next) {
 		if (fprintf(fp, " %s", cf->cf_name) < 0)
