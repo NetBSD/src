@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.22 1996/02/04 02:12:07 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.23 1996/02/09 18:24:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -165,18 +165,18 @@ void	bdwrite __P((struct buf *));
 void	biodone __P((struct buf *));
 int	biowait __P((struct buf *));
 int	bread __P((struct vnode *, daddr_t, int,
-	    struct ucred *, struct buf **));
+		   struct ucred *, struct buf **));
 int	breada __P((struct vnode *, daddr_t, int, daddr_t, int,
-	    struct ucred *, struct buf **));
+		    struct ucred *, struct buf **));
 int	breadn __P((struct vnode *, daddr_t, int, daddr_t *, int *, int,
-	    struct ucred *, struct buf **));
+		    struct ucred *, struct buf **));
 void	brelse __P((struct buf *));
 void	bremfree __P((struct buf *));
 void	bufinit __P((void));
 int	bwrite __P((struct buf *));
 void	cluster_callback __P((struct buf *));
 int	cluster_read __P((struct vnode *, u_quad_t, daddr_t, long,
-	    struct ucred *, struct buf **));
+			  struct ucred *, struct buf **));
 void	cluster_write __P((struct buf *, u_quad_t));
 struct buf *getblk __P((struct vnode *, daddr_t, int, int, int));
 struct buf *geteblk __P((int));
@@ -185,7 +185,10 @@ struct buf *incore __P((struct vnode *, daddr_t));
 
 void	minphys __P((struct buf *bp));
 int	physio __P((void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
-	    int flags, void (*minphys)(struct buf *), struct uio *uio));
+		    int flags, void (*minphys)(struct buf *), struct uio *uio));
+void  brelvp __P((struct buf *));
+void  reassignbuf __P((struct buf *, struct vnode *));
+void  bgetvp __P((struct vnode *, struct buf *));
 __END_DECLS
 #endif
 #endif /* !_SYS_BUF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.15 1996/02/04 02:12:38 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.16 1996/02/09 18:25:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -66,8 +66,8 @@ struct	sigacts {
 #define	SAS_ALTSTACK	0x02		/* have alternate signal stack */
 
 /* additional signal action values, used only temporarily/internally */
-#define	SIG_CATCH	(void (*)())2
-#define	SIG_HOLD	(void (*)())3
+#define	SIG_CATCH	(void (*) __P((int)))2
+#define	SIG_HOLD	(void (*) __P((int)))3
 
 /*
  * get signal action for process and signal; currently only for current process
@@ -81,8 +81,8 @@ struct	sigacts {
  */
 #define	CURSIG(p)							\
 	(((p)->p_siglist == 0 ||					\
-	    ((p)->p_flag & P_TRACED) == 0 &&				\
-	    ((p)->p_siglist & ~(p)->p_sigmask) == 0) ?			\
+	    (((p)->p_flag & P_TRACED) == 0 &&				\
+	    ((p)->p_siglist & ~(p)->p_sigmask) == 0)) ?			\
 	    0 : issignal(p))
 
 /*
