@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.9 2000/09/23 22:39:36 christos Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.10 2002/05/29 19:06:32 christos Exp $	*/
 
 /*
     ipv6cp.c - PPP IPV6 Control Protocol.
@@ -92,15 +92,15 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: ipv6cp.c,v 1.11 2000/08/05 06:46:47 paulus Exp  
+ * Id: ipv6cp.c,v 1.15 2001/03/22 00:42:33 paulus Exp 
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: ipv6cp.c,v 1.11 2000/08/05 06:46:47 paulus Exp "
+#define RCSID	"Id: ipv6cp.c,v 1.15 2001/03/22 00:42:33 paulus Exp "
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.9 2000/09/23 22:39:36 christos Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.10 2002/05/29 19:06:32 christos Exp $");
 #endif
 #endif
 
@@ -188,33 +188,40 @@ static fsm_callbacks ipv6cp_callbacks = { /* IPV6CP callback routines */
  * Command-line options.
  */
 static int setifaceid __P((char **arg));
+static void printifaceid __P((option_t *,
+			      void (*)(void *, char *, ...), void *));
 
 static option_t ipv6cp_option_list[] = {
     { "ipv6", o_special, (void *)setifaceid,
-      "Set interface identifiers for IPV6" },
-    { "noipv6", o_bool, &ipv6cp_protent.enabled_flag,
-      "Disable IPv6 and IPv6CP" },
-    { "-ipv6", o_bool, &ipv6cp_protent.enabled_flag,
-      "Disable IPv6 and IPv6CP" },
+      "Set interface identifiers for IPV6",
+      OPT_A2PRINTER, (void *)printifaceid },
+
     { "+ipv6", o_bool, &ipv6cp_protent.enabled_flag,
-      "Enable IPv6 and IPv6CP", 1 },
+      "Enable IPv6 and IPv6CP", OPT_PRIO | 1 },
+    { "noipv6", o_bool, &ipv6cp_protent.enabled_flag,
+      "Disable IPv6 and IPv6CP", OPT_PRIOSUB },
+    { "-ipv6", o_bool, &ipv6cp_protent.enabled_flag,
+      "Disable IPv6 and IPv6CP", OPT_PRIOSUB | OPT_ALIAS },
 
     { "ipv6cp-accept-local", o_bool, &ipv6cp_allowoptions[0].accept_local,
       "Accept peer's interface identifier for us", 1 },
+
     { "ipv6cp-use-ipaddr", o_bool, &ipv6cp_allowoptions[0].use_ip,
-      "Use (default) IPv4 address as interface identifier", 0 },
+      "Use (default) IPv4 address as interface identifier", 1 },
+
 #if defined(SOL2)
     { "ipv6cp-use-persistent", o_bool, &ipv6cp_wantoptions[0].use_persistent,
       "Use uniquely-available persistent value for link local address", 1 },
 #endif /* defined(SOL2) */
+
     { "ipv6cp-restart", o_int, &ipv6cp_fsm[0].timeouttime,
-      "Set timeout for IPv6CP" },
+      "Set timeout for IPv6CP", OPT_PRIO },
     { "ipv6cp-max-terminate", o_int, &ipv6cp_fsm[0].maxtermtransmits,
-      "Set max #xmits for term-reqs" },
+      "Set max #xmits for term-reqs", OPT_PRIO },
     { "ipv6cp-max-configure", o_int, &ipv6cp_fsm[0].maxconfreqtransmits,
-      "Set max #xmits for conf-reqs" },
+      "Set max #xmits for conf-reqs", OPT_PRIO },
     { "ipv6cp-max-failure", o_int, &ipv6cp_fsm[0].maxnakloops,
-      "Set max #conf-naks for IPv6CP" },
+      "Set max #conf-naks for IPv6CP", OPT_PRIO },
 
    { NULL }
 };
@@ -287,13 +294,15 @@ static int
 setifaceid(argv)
     char **argv;
 {
-    char *comma, *arg;
+    char *comma, *arg, c;
     ipv6cp_options *wo = &ipv6cp_wantoptions[0];
     struct in6_addr addr;
+    static int prio_local, prio_remote;
 
 #define s6_addr32 __u6_addr.__u6_addr32 /* non-standard */
 #define VALIDID(a) ( (((a).s6_addr32[0] == 0) && ((a).s6_addr32[1] == 0)) && \
 			(((a).s6_addr32[2] != 0) || ((a).s6_addr32[3] != 0)) )
+
     arg = *argv;
     if ((comma = strchr(arg, ',')) == NULL)
 	comma = arg + strlen(arg);
@@ -302,16 +311,20 @@ setifaceid(argv)
      * If comma first character, then no local identifier
      */
     if (comma != arg) {
+	c = *comma;
 	*comma = '\0';
 
 	if (inet_pton(AF_INET6, arg, &addr) == 0 || !VALIDID(addr)) {
 	    option_error("Illegal interface identifier (local): %s", arg);
 	    return 0;
 	}
-	
-	eui64_copy(addr.s6_addr32[2], wo->ourid);
-	wo->opt_local = 1;
-	*comma = ',';
+
+	if (option_priority >= prio_local) {
+	    eui64_copy(addr.s6_addr32[2], wo->ourid);
+	    wo->opt_local = 1;
+	    prio_local = option_priority;
+	}
+	*comma = c;
     }
     
     /*
@@ -322,12 +335,31 @@ setifaceid(argv)
 	    option_error("Illegal interface identifier (remote): %s", comma);
 	    return 0;
 	}
-	eui64_copy(addr.s6_addr32[2], wo->hisid);
-	wo->opt_remote = 1;
+	if (option_priority >= prio_remote) {
+	    eui64_copy(addr.s6_addr32[2], wo->hisid);
+	    wo->opt_remote = 1;
+	    prio_remote = option_priority;
+	}
     }
 
-    ipv6cp_protent.enabled_flag = 1;
+    if (override_value("+ipv6", option_priority, option_source))
+	ipv6cp_protent.enabled_flag = 1;
     return 1;
+}
+
+static void
+printifaceid(opt, printer, arg)
+    option_t *opt;
+    void (*printer) __P((void *, char *, ...));
+    void *arg;
+{
+	ipv6cp_options *wo = &ipv6cp_wantoptions[0];
+
+	if (wo->opt_local)
+		printer(arg, "%s", llv6_ntoa(wo->ourid));
+	printer(arg, ",");
+	if (wo->opt_remote)
+		printer(arg, "%s", llv6_ntoa(wo->hisid));
 }
 
 /*

@@ -1,7 +1,7 @@
-.\" $NetBSD: pppd.8,v 1.34 2002/02/08 01:38:54 ross Exp $
+.\" $NetBSD: pppd.8,v 1.35 2002/05/29 19:06:33 christos Exp $
 .\"
 .\" manual page [] for pppd 2.4
-.\" Id: pppd.8,v 1.53 2000/08/01 01:47:04 paulus Exp
+.\" Id: pppd.8,v 1.57 2001/03/12 22:49:25 paulus Exp
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -291,7 +291,7 @@ Request that the peer compress packets that it sends, using the
 Deflate scheme, with a maximum window size of \fI2**nr\fR bytes, and
 agree to compress packets sent to the peer with a maximum window size
 of \fI2**nt\fR bytes.  If \fInt\fR is not specified, it defaults to
-the value given for \fInr\fR.  Values in the range 8 to 15 may be used
+the value given for \fInr\fR.  Values in the range 9 to 15 may be used
 for \fInr\fR and \fInt\fR; larger values give better compression but
 consume more kernel memory for compression dictionaries.
 Alternatively, a value of 0 for \fInr\fR or \fInt\fR disables
@@ -323,6 +323,19 @@ specify \fIdomain Quotron.COM\fR.  Pppd would then use the name
 \fIporsche.Quotron.COM\fR for looking up secrets in the secrets file,
 and as the default name to send to the peer when authenticating itself
 to the peer.  This option is privileged.
+.TP
+.B dryrun
+With the \fBdryrun\fR option, pppd will print out all the option
+values which have been set and then exit, after parsing the command
+line and options files and checking the option values, but before
+initiating the link.  The option values are logged at level info, and
+also printed to standard output unless the device on standard output
+is the device that pppd would be using to communicate with the peer.
+.TP
+.B dump
+With the \fBdump\fR option, pppd will print out all the option values
+which have been set.  This option is like the \fBdryrun\fR option
+except that pppd proceeds as normal rather than exiting.
 .TP
 .B endpoint \fI\*[Lt]epdisc\*[Gt]
 Sets the endpoint discriminator sent by the local machine to the peer
@@ -366,6 +379,13 @@ address, even if the local IP address was specified in an option.
 .B ipcp-accept-remote
 With this option, pppd will accept the peer's idea of its (remote) IP
 address, even if the remote IP address was specified in an option.
+.TP
+.B +ipv6
+Enable IPv6CP negotiation and IPv6 communication.
+It needs to be explicitly specified if you want IPv6CP.
+.TP
+.B -ipv6
+Disable IPv6CP negotiation and IPv6 communication.
 .TP
 .B ipcp-max-configure \fIn
 Set the maximum number of IPCP configure-request transmissions to
@@ -477,7 +497,11 @@ default value is 3.
 .TP
 .B kdebug \fIn
 Enable debugging code in the kernel-level PPP driver.  The argument
-\fIn\fR is a number which is the sum of the following values: 1 to
+values depend on the specific kernel driver, but in general a value of
+1 will enable general kernel debug messages.  (Note that these
+messages are usually only useful for debugging the kernel driver
+itself.)  For the Linux 2.2.x kernel driver, the value is a sum of
+bits: 1 to
 enable general debug messages, 2 to request that the contents of
 received packets be printed, and 4 to request that the contents of
 transmitted packets be printed.  On most systems, messages printed by
@@ -654,10 +678,10 @@ requests from pppd for CCP negotiation.
 .B nocrtscts
 Disable hardware flow control (i.e. RTS/CTS) on the serial port.
 If neither the \fIcrtscts\fR nor the \fInocrtscts\fR nor the
-\fIcdtrcts\fR nor the \fInodtrcts\fR option is given, the hardware
+\fIcdtrcts\fR nor the \fInocdtrcts\fR option is given, the hardware
 flow control setting for the serial port is left unchanged.
 .TP
-.B nodtrcts
+.B nocdtrcts
 This option is a synonym for \fInocrtscts\fR. Either of these options will
 disable both forms of hardware flow control.
 .TP
@@ -853,7 +877,8 @@ using the user's user-ID and permissions.  This option is implemented
 using a pseudo-tty and a process to transfer characters between the
 pseudo-tty and the real serial device, so it will increase the latency
 and CPU overhead of transferring data over the ppp interface.  The
-characters are stored in a tagged format with timestamps.
+characters are stored in a tagged format with timestamps, which can be
+displayed in readable form using the pppdump(8) program.
 .TP
 .B remotename \fIname
 Set the assumed name of the remote system for authentication purposes

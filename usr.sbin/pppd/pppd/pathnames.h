@@ -1,9 +1,9 @@
-/*	$NetBSD: pathnames.h,v 1.13 2000/09/23 22:39:38 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.14 2002/05/29 19:06:32 christos Exp $	*/
 
 /*
  * define path names
  *
- * Id: pathnames.h,v 1.13 2000/04/04 07:06:52 paulus Exp 
+ * Id: pathnames.h,v 1.14 2001/03/08 05:15:37 paulus Exp 
  */
 
 #ifdef HAVE_PATHS_H
@@ -53,3 +53,7 @@
 #define _PATH_PPPDB	"/etc/ppp/pppd.tdb"
 #endif
 #endif /* __STDC__ */
+
+#ifdef PLUGIN
+#define _PATH_PLUGIN	"/usr/lib/pppd/" VERSION
+#endif /* PLUGIN */
