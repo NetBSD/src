@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.4 2003/10/15 23:23:39 itojun Exp $	*/
+/*	$NetBSD: athvar.h,v 1.5 2003/10/16 07:55:18 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -202,14 +202,15 @@ int	ath_attach(u_int16_t, struct ath_softc *);
 int	ath_detach(struct ath_softc *);
 void	ath_resume(struct ath_softc *, int);
 void	ath_suspend(struct ath_softc *, int);
-void	ath_shutdown(struct ath_softc *);
-#ifndef __FreeBSD__
+#ifdef __NetBSD__
 int	ath_activate(struct device *, enum devact);
 void	ath_power(int, void *);
 #endif
 #ifdef __FreeBSD__
+void	ath_shutdown(struct ath_softc *);
 void	ath_intr(void *);
 #else
+void	ath_shutdown(void *);
 int	ath_intr(void *);
 #endif
 

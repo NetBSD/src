@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.9 2003/10/15 23:23:39 itojun Exp $	*/
+/*	$NetBSD: ath.c,v 1.10 2003/10/16 07:55:18 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.9 2003/10/15 23:23:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.10 2003/10/16 07:55:18 ichiro Exp $");
 #endif
 
 /*
@@ -430,12 +430,10 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-#if 0
 	sc->sc_sdhook = shutdownhook_establish(ath_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 			sc->sc_dev.dv_xname);
-#endif
 	sc->sc_powerhook = powerhook_establish(ath_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -471,9 +469,14 @@ ath_detach(struct ath_softc *sc)
 	if_detach(ifp);
 #endif
 	ath_softc_critsect_end(sc, s);
+#ifdef __NetBSD__
+	powerhook_disestablish(sc->sc_sdhook);
+	shutdownhook_disestablish(sc->sc_powerhook);
+#endif
 	return 0;
 }
 
+#ifdef __NetBSD__
 void
 ath_power(int why, void *arg)
 {
@@ -498,6 +501,7 @@ ath_power(int why, void *arg)
 	}
 	splx(s);
 }
+#endif
 
 void
 ath_suspend(struct ath_softc *sc, int why)
@@ -530,6 +534,15 @@ ath_resume(struct ath_softc *sc, int why)
 	}
 }
 
+#ifdef __NetBSD__
+void
+ath_shutdown(void *arg)
+{
+	struct ath_softc *sc = arg;
+
+	ath_stop(&sc->sc_ic.ic_if);
+}
+#else
 void
 ath_shutdown(struct ath_softc *sc)
 {
@@ -543,6 +556,7 @@ ath_shutdown(struct ath_softc *sc)
 	ath_stop(ifp);
 #endif
 }
+#endif
 
 #ifdef __NetBSD__
 int
