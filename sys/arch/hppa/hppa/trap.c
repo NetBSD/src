@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 2004/06/15 16:29:32 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.20 2004/07/18 20:57:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19 2004/06/15 16:29:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.20 2004/07/18 20:57:34 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19 2004/06/15 16:29:32 chs Exp $");
 #include <sys/signal.h>
 #include <sys/device.h>
 #include <sys/pool.h>
+#include <sys/userret.h>
 
 #include <net/netisr.h>
 
@@ -190,24 +191,16 @@ u_int rctr_next_iioq;
 #endif
 
 static __inline void
-userret (struct lwp *l, register_t pc, u_quad_t oticks)
+userret(struct lwp *l, register_t pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
 
 	l->l_priority = l->l_usrpri;
 	if (want_resched) {
-		/*
-		 * We're being preempted.
-		 */
 		preempt(0);
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
 	}
+
+	mi_userret(l);
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
