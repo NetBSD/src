@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.25 2003/09/26 12:02:57 simonb Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.26 2003/10/08 00:39:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.25 2003/09/26 12:02:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.26 2003/10/08 00:39:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ linux_sendsig(sig, mask, code)  /* XXX Check me */
 #endif
 {
 #ifdef __HAVE_SIGINFO
-	const int sig = ksi->_signo;
+	const int sig = ksi->ksi_signo;
 #endif
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
