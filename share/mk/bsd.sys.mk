@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.39 2000/05/09 00:15:55 thorpej Exp $
+#	$NetBSD: bsd.sys.mk,v 1.40 2000/07/25 06:29:44 cgd Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -43,6 +43,7 @@ HOST_LDFLAGS?=
 OBJCOPY?=	objcopy
 STRIP?=		strip
 CONFIG?=	config
+RPCGEN?=	rpcgen
 
 .SUFFIXES:	.m .o .ln .lo
 

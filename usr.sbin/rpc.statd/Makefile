@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/06/12 01:57:26 mycroft Exp $
+#	$NetBSD: Makefile,v 1.9 2000/07/25 06:29:47 cgd Exp $
 
 PROG=	rpc.statd
 SRCS=	sm_inter_svc.c statd.c stat_proc.c
@@ -21,7 +21,7 @@ sm_inter.h: ${DESTDIR}/usr/include/rpcsvc/sm_inter.h
 	ln -s ${.ALLSRC} ${.TARGET}
 
 sm_inter_svc.c: sm_inter.x sm_inter.h
-	rpcgen -C -L -m -o ${.TARGET} sm_inter.x
+	${RPCGEN} -C -L -m -o ${.TARGET} sm_inter.x
 
 test: ${.CURDIR}/test.c
 	cc -o test ${.CURDIR}/test.c -lrpcsvc
