@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.48 2002/01/27 22:00:40 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.49 2002/03/31 14:36:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.48 2002/01/27 22:00:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.49 2002/03/31 14:36:59 martin Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -120,7 +120,6 @@ wdc_atapibus_attach(chp)
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
-	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = &wdc->sc_dev;
 	adapt->adapt_nchannels = wdc->nchannels;
 	adapt->adapt_request = wdc_atapi_scsipi_request;
