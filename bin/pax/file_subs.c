@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.7 1997/10/08 22:57:52 enami Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.8 1997/10/19 13:02:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.7 1997/10/08 22:57:52 enami Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.8 1997/10/19 13:02:43 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -709,11 +709,13 @@ set_ftime(fnm, mtime, atime, frc)
 	int frc;
 #endif
 {
-	static struct timeval tv[2] = {{0L, 0L}, {0L, 0L}};
+	struct timeval tv[2];
 	struct stat sb;
 
 	tv[0].tv_sec = (long)atime;
+	tv[0].tv_usec = 0;
 	tv[1].tv_sec = (long)mtime;
+	tv[1].tv_usec = 0;
 	if (!frc && (!patime || !pmtime)) {
 		/*
 		 * if we are not forcing, only set those times the user wants
@@ -721,9 +723,9 @@ set_ftime(fnm, mtime, atime, frc)
 		 */
 		if (lstat(fnm, &sb) == 0) {
 			if (!patime)
-				tv[0].tv_sec = (long)sb.st_atime;
+				TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
 			if (!pmtime)
-				tv[1].tv_sec = (long)sb.st_mtime;
+				TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
 		} else
 			syswarn(0,errno,"Unable to obtain file stats %s", fnm);
 	}
