@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.8.2.2 2000/06/27 08:35:46 soren Exp $
+#	$NetBSD: GENERIC,v 1.8.2.3 2000/11/14 03:28:00 tv Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.8.2.2 $"
+#ident 		"GENERIC-$Revision: 1.8.2.3 $"
 
 maxusers	32
 
@@ -121,7 +121,7 @@ ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 #bha*		at pci? dev ? function ?	# BusLogic 9xx SCSI
 #dpt*		at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*		at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FC
-siop*		at pci? dev ? function ?	# NCR 53c8xx SCSI
+#siop*		at pci? dev ? function ?	# NCR 53c8xx SCSI
 #pcscp*		at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # SCSI bus support
@@ -131,7 +131,7 @@ scsibus* 	at ahc?
 #scsibus* 	at bha?
 #scsibus* 	at dpt?
 #scsibus* 	at isp?
-scsibus* 	at siop?
+#scsibus* 	at siop?
 #scsibus* 	at pcscp?
 
 # SCSI devices
