@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2001/10/13 18:28:10 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 2001/12/01 23:34:52 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1019,7 +1019,8 @@ pmap_enter(pm, va, pa, prot, flags)
 			/*
 			 * Flush the real memory from the cache.
 			 */
-			__syncicache((void *)pa, NBPG);
+			if (prot & VM_PROT_EXECUTE)
+				__syncicache((void *)pa, NBPG);
 		}
 
 	s = splvm();
@@ -1051,17 +1052,61 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
-}
+	struct pmap *pm = pmap_kernel();
+	sr_t sr;
+	int idx, s;
+	pte_t pte;
+	struct pte_ovfl *po;
+	struct mem_region *mp;
 
-void
-pmap_kremove(va, len)
-	vaddr_t va;
-	vsize_t len;
-{
-	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	/*
+	 * Have to remove any existing mapping first.
+	 */
+	pmap_kremove(va, NBPG);
+
+	/*
+	 * Compute the HTAB index.
+	 */
+	idx = pteidx(sr = ptesr(pm->pm_sr, va), va);
+	/*
+	 * Construct the PTE.
+	 *
+	 * Note: Don't set the valid bit for correct operation of tlb update.
+	 */
+	pte.pte_hi = ((sr & SR_VSID) << PTE_VSID_SHFT)
+		| ((va & ADDR_PIDX) >> ADDR_API_SHFT);
+	pte.pte_lo = (pa & PTE_RPGN) | PTE_M | PTE_I | PTE_G;
+
+	for (mp = mem; mp->size; mp++) {
+		if (pa >= mp->start && pa < mp->start + mp->size) {
+			pte.pte_lo &= ~(PTE_I | PTE_G);
+			break;
+		}
 	}
+	if (prot & VM_PROT_WRITE)
+		pte.pte_lo |= PTE_RW;
+	else
+		pte.pte_lo |= PTE_RO;
+
+	s = splvm();
+	pm->pm_stats.resident_count++;
+	/*
+	 * Try to insert directly into HTAB.
+	 */
+	if (pte_insert(idx, &pte)) {
+		splx(s);
+		return;
+	}
+
+	/*
+	 * Have to allocate overflow entry.
+	 *
+	 * Note, that we must use real addresses for these.
+	 */
+	po = poalloc();
+	po->po_pte = pte;
+	LIST_INSERT_HEAD(potable + idx, po, po_list);
+	splx(s);
 }
 
 /*
@@ -1088,6 +1133,7 @@ pmap_remove(pm, va, endva)
 				tlbie(va);
 				tlbsync();
 				pm->pm_stats.resident_count--;
+				goto next;
 			}
 		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID | PTE_HID)) {
@@ -1097,6 +1143,7 @@ pmap_remove(pm, va, endva)
 				tlbie(va);
 				tlbsync();
 				pm->pm_stats.resident_count--;
+				goto next;
 			}
 		for (po = potable[idx].lh_first; po; po = npo) {
 			npo = po->po_list.le_next;
@@ -1106,8 +1153,58 @@ pmap_remove(pm, va, endva)
 				LIST_REMOVE(po, po_list);
 				pofree(po, 1);
 				pm->pm_stats.resident_count--;
+				goto next;
 			}
 		}
+ next:
+		va += NBPG;
+	}
+	splx(s);
+}
+
+void
+pmap_kremove(va, len)
+	vaddr_t va;
+	vsize_t len;
+{
+	struct pmap *pm = pmap_kernel();
+	vaddr_t endva = va + len;
+	int idx, i, s;
+	sr_t sr;
+	pte_t *ptp;
+	struct pte_ovfl *po, *npo;
+
+	s = splvm();
+	while (va < endva) {
+		idx = pteidx(sr = ptesr(pm->pm_sr, va), va);
+		for (ptp = ptable + idx * 8, i = 8; --i >= 0; ptp++)
+			if (ptematch(ptp, sr, va, PTE_VALID)) {
+				ptp->pte_hi &= ~PTE_VALID;
+				asm volatile ("sync");
+				tlbie(va);
+				tlbsync();
+				pm->pm_stats.resident_count--;
+				goto next;
+			}
+		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
+			if (ptematch(ptp, sr, va, PTE_VALID | PTE_HID)) {
+				ptp->pte_hi &= ~PTE_VALID;
+				asm volatile ("sync");
+				tlbie(va);
+				tlbsync();
+				pm->pm_stats.resident_count--;
+				goto next;
+			}
+		for (po = potable[idx].lh_first; po; po = npo) {
+			npo = po->po_list.le_next;
+			if (ptematch(&po->po_pte, sr, va, 0)) {
+				LIST_REMOVE(po, po_list);
+				pofree(po, 1);
+				pm->pm_stats.resident_count--;
+				goto next;
+			}
+		}
+ next:
 		va += NBPG;
 	}
 	splx(s);
