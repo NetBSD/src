@@ -1,4 +1,4 @@
-/* $NetBSD: setjmp.h,v 1.2 1997/04/06 08:47:41 cgd Exp $ */
+/* $NetBSD: setjmp.h,v 1.3 1998/09/14 06:07:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,4 +31,4 @@
  * machine/setjmp.h: machine dependent setjmp-related information.
  */
 
-#define _JBLEN  81              /* size, in longs, of a jmp_buf */
+#define _JBLEN  83              /* size, in longs, of a jmp_buf */
