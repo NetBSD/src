@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.4 1999/04/02 20:39:23 hwr Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.5 1999/04/04 00:21:53 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -301,18 +301,23 @@ ipip_ioctl(ifp, cmd, data)
 			break;
 		}
 
-			sc->sc_src = (satosin(ifa->ifa_addr))->sin_addr;
-			sc->sc_dst = ia->ia_dstaddr.sin_addr;
+		sc->sc_src = (satosin(ifa->ifa_addr))->sin_addr;
+		sc->sc_dst = ia->ia_dstaddr.sin_addr;
 
 		if (!in_nullhost(sc->sc_src) && !in_nullhost(sc->sc_dst)) {
+			struct rtentry *rt;
+
 			ipip_compute_route(sc);
 			/*
 			 * Now that we know the route to use, fill in the
 			 * MTU.
 			 */
-			ifp->if_mtu = sc->sc_route.ro_rt->rt_ifp->if_mtu -
-			    ifp->if_hdrlen;
-			ifp->if_flags |= IFF_UP;
+			rt = sc->sc_route.ro_rt;
+			if (rt != NULL) {
+				ifp->if_mtu = rt->rt_ifp->if_mtu -
+					      ifp->if_hdrlen;
+				ifp->if_flags |= IFF_UP;
+			}
 		}
 		break;
 
