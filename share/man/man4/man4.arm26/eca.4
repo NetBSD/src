@@ -1,4 +1,4 @@
-.\" $NetBSD: eca.4,v 1.4 2002/01/15 01:27:42 wiz Exp $
+.\" $NetBSD: eca.4,v 1.5 2002/01/21 18:02:53 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Ben Harris
 .\" All rights reserved.
@@ -55,13 +55,13 @@ This should never happen.
 .It %s: Rx overrun
 Reception of a frame failed because the driver couldn't get data off
 the ADLC fast enough.  Likely causes are the same as for
-.Qd Tx underrun
+.Ql \&Tx underrun
 above.
 .It %s: Rx abort
 A frame being received was aborted before it was complete.  This was
 probably caused by a problem at the transmitting station.
 .It %s: CRC error
-A recieved frame failed its cyclic redundancy check and was discarded.
+A received frame failed its cyclic redundancy check and was discarded.
 This is usually due to electrical noise on the network.
 .It %s: No clock
 The clock signal on the Econet has disappeared.  This probably
