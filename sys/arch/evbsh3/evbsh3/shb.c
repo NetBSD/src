@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.9.4.1 2000/08/21 18:20:56 msaitoh Exp $	*/
+/*	$NetBSD: shb.c,v 1.9.4.2 2000/11/05 01:06:37 tv Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -382,7 +382,6 @@ fakeintr(arg)
 
 #define	IRQ_BIT(irq_num)	(1 << (irq_num))
 
-
 /*ARGSUSED*/
 int	/* 1 = check ipending on return, 0 = fast intr return */
 intrhandler(p1, p2, p3, p4, frame)
@@ -509,20 +508,48 @@ check_ipending(p1, p2, p3, p4, frame)
 }
 
 #if !defined(SH4)
+
+#ifdef SH7709A_BROKEN_IPR	/* broken IPR patch */
+
+#define IPRA	0
+#define IPRB	1
+#define IPRC	2
+#define IPRD	3
+#define IPRE	4
+
+static unsigned short ipr[ 5 ];
+
+#endif /* SH7709A_BROKEN_IPR */
+
 void
 mask_irq(irq)
 	int irq;
 {
 	switch (irq) {
 	case TMU1_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRA] &= ~((15)<<8);
+		SHREG_IPRA = ipr[IPRA];
+#else
 		SHREG_IPRA &= ~((15)<<8);
+#endif
 		break;
 	case SCI_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRB] &= ~((15)<<4);
+		SHREG_IPRB = ipr[IPRB];
+#else
 		SHREG_IPRB &= ~((15)<<4);
+#endif
 		break;
 #if defined(SH7709) || defined(SH7709A) || defined(SH7729)
 	case SCIF_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRE] &= ~((15)<<4);
+		SHREG_IPRE = ipr[IPRE];
+#else
 		SHREG_IPRE &= ~((15)<<4);
+#endif
 		break;
 #endif
 #if 0
@@ -552,14 +579,29 @@ unmask_irq(irq)
 
 	switch (irq) {
 	case TMU1_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[ IPRA ] |= ((15 - irq)<<8);
+		SHREG_IPRA = ipr[ IPRA ];
+#else
 		SHREG_IPRA |= ((15 - irq)<<8);
+#endif
 		break;
 	case SCI_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[IPRB] |= ((15 - irq)<<4);
+		SHREG_IPRB = ipr[IPRB];
+#else
 		SHREG_IPRB |= ((15 - irq)<<4);
+#endif
 		break;
 #if defined(SH7709) || defined(SH7709A) || defined(SH7729)
 	case SCIF_IRQ:
+#ifdef SH7709A_BROKEN_IPR
+		ipr[ IPRE ] |= ((15 - irq)<<4);
+		SHREG_IPRE = ipr[ IPRE ];
+#else
 		SHREG_IPRE |= ((15 - irq)<<4);
+#endif
 		break;
 #endif
 #if 0
