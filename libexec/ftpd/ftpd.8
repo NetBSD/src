@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.30 1998/09/05 17:33:00 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.31 1998/09/07 08:11:20 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd June 6, 1998
+.Dd September 7, 1998
 .Dt FTPD 8
 .Os NetBSD
 .Sh NAME
@@ -120,6 +120,7 @@ The case of the requests is ignored.
 .It CDUP Ta "change to parent of current working directory"
 .It CWD Ta "change working directory"
 .It DELE Ta "delete a file"
+.It FEAT Ta "list extra features that are not defined in" Cm "RFC 959"
 .It HELP Ta "give help information"
 .It LIST Ta "give list files in a directory" Pq Dq Li "ls -lgA"
 .It MKD Ta "make a directory"
@@ -127,6 +128,7 @@ The case of the requests is ignored.
 .It MODE Ta "specify data transfer" Em mode
 .It NLST Ta "give name list of files in directory"
 .It NOOP Ta "do nothing"
+.It OPTS Ta "define persistent options for a given command"
 .It PASS Ta "specify password"
 .It PASV Ta "prepare for server-to-server transfer"
 .It PORT Ta "specify data connection port"
@@ -165,11 +167,12 @@ specific commands are supported by the SITE request.
 .It UMASK Ta "change umask, e.g. ``SITE UMASK 002''"
 .El
 .Pp
-The remaining ftp requests specified in
-.Cm RFC 959
-are recognized, but not implemented.
+The following ftp requests (as specified in
+.Cm RFC 959 )
+are recognized, but are not implemented:
+ACCT, SMNT, and REIN.
 MDTM and SIZE are not specified in
-.CM RFC 959 ,
+.Cm RFC 959 ,
 but will appear in the
 next updated FTP RFC.
 .Pp
@@ -223,8 +226,9 @@ If the user's shell field in the password database is empty, the
 shell is assumed to be
 .Pa /bin/sh .
 .It
-If the user name appears in the file
+f directed by the file
 .Pa /etc/ftpchroot
+(see below)
 the session's root will be changed to the user's login directory by
 .Xr chroot 2
 as for an
@@ -268,16 +272,24 @@ If it does exist, each line is a a comment starting with
 .Dq #
 or a glob pattern that uses the same syntax as /bin/sh,
 optionally followed by whitespace and
-.Dq allow
+.Dq allow ,
+.Dq yes ,
+.Dq deny ,
 or
-.Dq deny .
+.Dq no .
 Each glob pattern is compared in turn against the username
 until a match is found.
 If the word following the matched glob pattern is
 .Dq allow
+or
+.Dq yes
 the user is granted access; if the word is
-anything else, or nothing at all, the user is denied access.
-(No further comparisons are attempted after the first successful match.)
+.Dq deny
+or
+.Dq no ,
+or if the word is missing,
+the user is denied access.
+No further comparisons are attempted after the first successful match.
 If no match is found, the user is granted access.
 This syntax is backward-compatable with the old syntax.
 .Pp
@@ -293,6 +305,29 @@ and
 to
 .Pa /etc/ftpusers
 in order to allow guest logins.
+.Ss /etc/ftpchroot
+The file
+.Pa /etc/ftpchroot
+is used to determine which users will have their session's root changed
+to the user's home directory.
+If the file does not exist, the root change is not performed.
+If it does exist, each line is a a comment starting with
+.Dq #
+or a glob pattern that uses the same syntax as /bin/sh,
+optionally followed by whitespace and
+.Dq yes
+or
+.Dq no .
+Each glob pattern is compared in turn against the username
+until a match is found.  If the word following the matched glob
+pattern is
+.Dq yes
+or there is no following word, the root is changed.
+If the word is 
+.Dq no ,
+or if no match is found, the root is not changed.
+No further comparisons are attempted after the first successful match.
+This syntax is backward-compatable with the old syntax.
 .Ss /etc/ftpd.conf
 The file
 .Pa /etc/ftpd.conf
@@ -592,10 +627,11 @@ If it exists, displayed and access is refused.
 .Sh STANDARDS
 .Nm
 recognizes all commands in 
-.Cm RFC 959 ,
-and follows the guidelines in 
-.Cm RFC 1123
-section 4.1.
+.Cm RFC 959 , 
+follows the guidelines in 
+.Cm RFC 1123 ,
+and supports the extensions from
+.Cm RFC 2389.
 .Sh HISTORY
 The
 .Nm

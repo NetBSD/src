@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.57 1998/09/06 10:39:40 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.58 1998/09/07 08:11:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.57 1998/09/06 10:39:40 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.58 1998/09/07 08:11:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,11 @@ __RCSID("$NetBSD: ftpd.c,v 1.57 1998/09/06 10:39:40 lukem Exp $");
 #include <stdarg.h>
 #else
 #include <varargs.h>
+#endif
+ 
+#ifndef TRUE
+#define TRUE	1
+#define FALSE	0
 #endif
 
 const char version[] = "Version: 7.03";
@@ -177,7 +182,7 @@ char	proctitle[BUFSIZ];	/* initial part of title */
 
 static void	 ack __P((char *));
 static void	 myoob __P((int));
-static int	 checkuser __P((const char *, const char *));
+static int	 checkuser __P((const char *, const char *, int, int));
 static int	 checkaccess __P((const char *));
 static FILE	*dataconn __P((char *, off_t, char *));
 static void	 dolog __P((struct sockaddr_in *));
@@ -191,7 +196,6 @@ static void	 replydirname __P((const char *, const char *));
 static int	 send_data __P((FILE *, FILE *, off_t));
 static struct passwd *
 		 sgetpwnam __P((const char *));
-static char	*sgetsave __P((const char *));
 
 int	main __P((int, char *[]));
 
@@ -378,23 +382,6 @@ lostconn(signo)
 }
 
 /*
- * Helper function for sgetpwnam().
- */
-static char *
-sgetsave(s)
-	const char *s;
-{
-	char *new = strdup(s);
-
-	if (new == NULL) {
-		perror_reply(421, "Local resource failure: malloc");
-		dologout(1);
-		/* NOTREACHED */
-	}
-	return (new);
-}
-
-/*
  * Save the result of a getpwnam.  Used for USER command, since
  * the data returned must not be clobbered by any other command
  * (e.g., globbing).
@@ -416,11 +403,11 @@ sgetpwnam(name)
 		free((char *)save.pw_shell);
 	}
 	save = *p;
-	save.pw_name = sgetsave(p->pw_name);
-	save.pw_passwd = sgetsave(p->pw_passwd);
-	save.pw_gecos = sgetsave(p->pw_gecos);
-	save.pw_dir = sgetsave(p->pw_dir);
-	save.pw_shell = sgetsave(p->pw_shell);
+	save.pw_name = xstrdup(p->pw_name);
+	save.pw_passwd = xstrdup(p->pw_passwd);
+	save.pw_gecos = xstrdup(p->pw_gecos);
+	save.pw_dir = xstrdup(p->pw_dir);
+	save.pw_shell = xstrdup(p->pw_shell);
 	return (&save);
 }
 
@@ -500,65 +487,37 @@ user(name)
 }
 
 /*
- * Check if a user is in the file "fname"
- */
-static int
-checkuser(fname, name)
-	const char *fname;
-	const char *name;
-{
-	FILE *fd;
-	int found = 0;
-	char *p, line[BUFSIZ];
-
-	if ((fd = fopen(fname, "r")) != NULL) {
-		while (fgets(line, sizeof(line), fd) != NULL)
-			if ((p = strchr(line, '\n')) != NULL) {
-				*p = '\0';
-				if (line[0] == '#')
-					continue;
-				if (strcmp(line, name) == 0) {
-					found = 1;
-					break;
-				}
-			}
-		(void) fclose(fd);
-	}
-	return (found);
-}
-
-/*
- * Determine whether a user has access, based on information in 
- * _PATH_FTPUSERS. Each line is a shell-style glob followed by
- * `allow' or `deny' (with deny being the default if anything but
- * `allow', or nothing at all, is specified).
+ * Determine whether something is to happen (allow access, chroot)
+ * for a user. Each line is a shell-style glob followed by
+ * `yes' or `no'.
+ *
+ * For backward compatability, `allow' and `deny' are synonymns
+ * for `yes' and `no', respectively.
  *
  * Each glob is matched against the username in turn, and the first
- * match found is used. If no match is found, access is allowed.
+ * match found is used. If no match is found, the result is the
+ * argument `def'. If a match is found but without and explicit
+ * `yes'/`no', the result is the opposite of def.
+ *
+ * If the file doesn't exist at all, the result is the argument
+ * `nofile'
  *
  * Any line starting with `#' is considered a comment and ignored.
  *
- * This is probably not the best way to do this, but it preserves
- * the old semantics where if a user was listed in the file he was
- * denied, otherwise he was allowed.
- *
- * There is one change in the semantics, however; ftpd will now `fail
- * safe' and deny all access if there's no /etc/ftpusers file.
- *
- * Return 1 if the user is denied, or 0 if he is allowed.
+ * Returns FALSE if the user is denied, or TRUE if they are allowed.
  */
-static int
-checkaccess(name)
-	const char *name;
+int
+checkuser(fname, name, def, nofile)
+	const char *fname, *name;
+	int def, nofile;
 {
-#define ALLOWED		0
-#define	NOT_ALLOWED	1
-	FILE *fd;
-	int retval = ALLOWED;
-	char *glob, *perm, line[BUFSIZ];
+	FILE	*fd;
+	int	 retval;
+	char	*glob, *perm, line[BUFSIZ];
 
-	if ((fd = fopen(conffilename(_PATH_FTPUSERS), "r")) == NULL)
-		return NOT_ALLOWED;
+	retval = def;
+	if ((fd = fopen(conffilename(fname), "r")) == NULL)
+		return nofile;
 
 	while (fgets(line, sizeof(line), fd) != NULL)  {
 		glob = strtok(line, " \t\n");
@@ -566,18 +525,34 @@ checkaccess(name)
 			continue;
 		perm = strtok(NULL, " \t\n");
 		if (fnmatch(glob, name, 0) == 0)  {
-			if (perm != NULL && strcmp(perm, "allow") == 0)
-				retval = ALLOWED;
+			if (perm != NULL &&
+			    ((strcasecmp(perm, "allow") == 0) ||
+			    (strcasecmp(perm, "yes") == 0)))
+				retval = TRUE;
+			else if (perm != NULL &&
+			    ((strcasecmp(perm, "deny") == 0) ||
+			    (strcasecmp(perm, "no") == 0)))
+				retval = FALSE;
 			else
-				retval = NOT_ALLOWED;
+				retval = !def;
 			break;
 		}
 	}
 	(void) fclose(fd);
 	return (retval);
 }
-#undef	ALLOWED
-#undef	NOT_ALLOWED
+
+/*
+ * Check if user is allowed by /etc/ftpusers
+ * returns 0 for yes, 1 for no
+ */
+int
+checkaccess(name)
+	const char *name;
+{
+
+	return (! checkuser(_PATH_FTPUSERS, name, TRUE, FALSE));
+}
 
 /*
  * Terminate login as previous user, if any, resetting state;
@@ -706,7 +681,7 @@ skip:
 	logwtmp(ttyline, pw->pw_name, remotehost);
 	logged_in = 1;
 
-	dochroot = checkuser(conffilename(_PATH_FTPCHROOT), pw->pw_name);
+	dochroot = checkuser(_PATH_FTPCHROOT, pw->pw_name, FALSE, FALSE);
 
 	/* parse ftpd.conf, setting up various parameters */
 	if (guest)
@@ -1622,14 +1597,13 @@ myoob(signo)
 		reply(221, "You could at least say goodbye.");
 		dologout(0);
 	}
-	upper(cp);
-	if (strcmp(cp, "ABOR\r\n") == 0) {
+	if (strcasecmp(cp, "ABOR\r\n") == 0) {
 		tmpline[0] = '\0';
 		reply(426, "Transfer aborted. Data connection closed.");
 		reply(226, "Abort successful");
 		longjmp(urgcatch, 1);
 	}
-	if (strcmp(cp, "STAT\r\n") == 0) {
+	if (strcasecmp(cp, "STAT\r\n") == 0) {
 		if (file_size != (off_t) -1)
 			reply(213, "Status: %qd of %qd bytes transferred",
 			    byte_count, file_size);
@@ -1890,4 +1864,16 @@ conffilename(s)
 
 	(void)snprintf(filename, sizeof(filename), "%s/%s", confdir ,s);
 	return filename;
+}
+
+char *
+xstrdup(s)
+	const char *s;
+{
+	char *new = strdup(s);
+
+	if (new == NULL)
+		fatal("Local resource failure: malloc");
+		/* NOTREACHED */
+	return (new);
 }

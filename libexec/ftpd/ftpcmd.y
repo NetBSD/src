@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.22 1998/09/06 10:39:40 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.23 1998/09/07 08:11:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.22 1998/09/06 10:39:40 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.23 1998/09/07 08:11:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,15 +97,19 @@ int	hasyyerrored;
 
 	SP	CRLF	COMMA
 
-	USER	PASS	ACCT	REIN	QUIT	PORT
-	PASV	TYPE	STRU	MODE	RETR	STOR
-	APPE	MLFL	MAIL	MSND	MSOM	MSAM
-	MRSQ	MRCP	ALLO	REST	RNFR	RNTO
-	ABOR	DELE	CWD	LIST	NLST	SITE
-	STAT	HELP	NOOP	MKD	RMD	PWD
-	CDUP	STOU	SMNT	SYST
+	USER	PASS	ACCT	CWD	CDUP	SMNT
+	QUIT	REIN	PORT	PASV	TYPE	STRU
+	MODE	RETR	STOR	STOU	APPE	ALLO
+	REST	RNFR	RNTO	ABOR	DELE	RMD
+	MKD	PWD	LIST	NLST	SITE	SYST
+	STAT	HELP	NOOP
+
+	FEAT	OPTS
 
 	SIZE	MDTM
+
+	MAIL	MLFL	MRCP	MRSQ	MSAM	MSND
+	MSOM
 
 	UMASK	IDLE	CHMOD
 
@@ -124,25 +128,57 @@ int	hasyyerrored;
 
 cmd_list
 	: /* empty */
+
 	| cmd_list cmd
 		{
 			fromname = NULL;
 			restart_point = (off_t) 0;
 		}
+
 	| cmd_list rcmd
+
 	;
 
 cmd
+						/* RFC 959 */
 	: USER SP username CRLF
 		{
 			user($3);
 			free($3);
 		}
+
 	| PASS SP password CRLF
 		{
 			pass($3);
 			free($3);
 		}
+
+	| CWD check_login CRLF
+		{
+			if ($2)
+				cwd(pw->pw_dir);
+		}
+
+	| CWD check_login SP pathname CRLF
+		{
+			if ($2 && $4 != NULL)
+				cwd($4);
+			if ($4 != NULL)
+				free($4);
+		}
+
+	| CDUP check_login CRLF
+		{
+			if ($2)
+				cwd("..");
+		}
+
+	| QUIT CRLF
+		{
+			reply(221, "Goodbye.");
+			dologout(0);
+		}
+
 	| PORT check_login SP host_port CRLF
 		{
 			if ($2) {
@@ -163,6 +199,7 @@ cmd
 			}
 			}
 		}
+
 	| PASV check_login CRLF
 		{
 			if (curclass.passive) {
@@ -171,6 +208,7 @@ cmd
 				reply(500, "PASV mode not available.");
 			}
 		}
+
 	| TYPE SP type_code CRLF
 		{
 			switch (cmd_type) {
@@ -206,6 +244,7 @@ cmd
 #endif /* NBBY == 8 */
 			}
 		}
+
 	| STRU SP struct_code CRLF
 		{
 			switch ($3) {
@@ -218,6 +257,7 @@ cmd
 				reply(504, "Unimplemented STRU type.");
 			}
 		}
+
 	| MODE SP mode_code CRLF
 		{
 			switch ($3) {
@@ -230,14 +270,7 @@ cmd
 				reply(502, "Unimplemented MODE type.");
 			}
 		}
-	| ALLO SP NUMBER CRLF
-		{
-			reply(202, "ALLO command ignored.");
-		}
-	| ALLO SP NUMBER SP R SP NUMBER CRLF
-		{
-			reply(202, "ALLO command ignored.");
-		}
+
 	| RETR check_login SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
@@ -245,6 +278,7 @@ cmd
 			if ($4 != NULL)
 				free($4);
 		}
+
 	| STOR check_login SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
@@ -252,6 +286,15 @@ cmd
 			if ($4 != NULL)
 				free($4);
 		}
+
+	| STOU check_login SP pathname CRLF
+		{
+			if ($2 && $4 != NULL)
+				store($4, "w", 1);
+			if ($4 != NULL)
+				free($4);
+		}
+		
 	| APPE check_login SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
@@ -259,48 +302,17 @@ cmd
 			if ($4 != NULL)
 				free($4);
 		}
-	| NLST check_login CRLF
+
+	| ALLO SP NUMBER CRLF
 		{
-			if ($2)
-				send_file_list(".");
+			reply(202, "ALLO command ignored.");
 		}
-	| NLST check_login SP STRING CRLF
+
+	| ALLO SP NUMBER SP R SP NUMBER CRLF
 		{
-			if ($2 && $4 != NULL)
-				send_file_list($4);
-			if ($4 != NULL)
-				free($4);
+			reply(202, "ALLO command ignored.");
 		}
-	| LIST check_login CRLF
-		{
-			if ($2)
-				retrieve("/bin/ls -lgA", "");
-		}
-	| LIST check_login SP pathname CRLF
-		{
-			if ($2 && $4 != NULL)
-				retrieve("/bin/ls -lgA %s", $4);
-			if ($4 != NULL)
-				free($4);
-		}
-	| STAT check_login SP pathname CRLF
-		{
-			if ($2 && $4 != NULL)
-				statfilecmd($4);
-			if ($4 != NULL)
-				free($4);
-		}
-	| STAT CRLF
-		{
-			statcmd();
-		}
-	| DELE check_modify SP pathname CRLF
-		{
-			if ($2 && $4 != NULL)
-				delete($4);
-			if ($4 != NULL)
-				free($4);
-		}
+
 	| RNTO SP pathname CRLF
 		{
 			if (fromname) {
@@ -312,52 +324,20 @@ cmd
 			}
 			free($3);
 		}
+
 	| ABOR CRLF
 		{
 			reply(225, "ABOR command successful.");
 		}
-	| CWD check_login CRLF
-		{
-			if ($2)
-				cwd(pw->pw_dir);
-		}
-	| CWD check_login SP pathname CRLF
-		{
-			if ($2 && $4 != NULL)
-				cwd($4);
-			if ($4 != NULL)
-				free($4);
-		}
-	| HELP CRLF
-		{
-			help(cmdtab, NULL);
-		}
-	| HELP SP STRING CRLF
-		{
-			char *cp = $3;
 
-			if (strncasecmp(cp, "SITE", 4) == 0) {
-				cp = $3 + 4;
-				if (*cp == ' ')
-					cp++;
-				if (*cp)
-					help(sitetab, cp);
-				else
-					help(sitetab, NULL);
-			} else
-				help(cmdtab, $3);
-		}
-	| NOOP CRLF
-		{
-			reply(200, "NOOP command successful.");
-		}
-	| MKD check_modify SP pathname CRLF
+	| DELE check_modify SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
-				makedir($4);
+				delete($4);
 			if ($4 != NULL)
 				free($4);
 		}
+
 	| RMD check_modify SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
@@ -365,24 +345,59 @@ cmd
 			if ($4 != NULL)
 				free($4);
 		}
+
+	| MKD check_modify SP pathname CRLF
+		{
+			if ($2 && $4 != NULL)
+				makedir($4);
+			if ($4 != NULL)
+				free($4);
+		}
+
 	| PWD check_login CRLF
 		{
 			if ($2)
 				pwd();
 		}
-	| CDUP check_login CRLF
+
+	| LIST check_login CRLF
 		{
 			if ($2)
-				cwd("..");
+				retrieve("/bin/ls -lgA", "");
 		}
+
+	| LIST check_login SP pathname CRLF
+		{
+			if ($2 && $4 != NULL)
+				retrieve("/bin/ls -lgA %s", $4);
+			if ($4 != NULL)
+				free($4);
+		}
+
+	| NLST check_login CRLF
+		{
+			if ($2)
+				send_file_list(".");
+		}
+
+	| NLST check_login SP STRING CRLF
+		{
+			if ($2 && $4 != NULL)
+				send_file_list($4);
+			if ($4 != NULL)
+				free($4);
+		}
+
 	| SITE SP HELP CRLF
 		{
 			help(sitetab, NULL);
 		}
+
 	| SITE SP HELP SP STRING CRLF
 		{
 			help(sitetab, $5);
 		}
+
 	| SITE SP UMASK check_login CRLF
 		{
 			int oldmask;
@@ -393,6 +408,7 @@ cmd
 				reply(200, "Current UMASK is %03o", oldmask);
 			}
 		}
+
 	| SITE SP UMASK check_modify SP octal_number CRLF
 		{
 			int oldmask;
@@ -408,6 +424,7 @@ cmd
 				}
 			}
 		}
+
 	| SITE SP CHMOD check_modify SP octal_number SP pathname CRLF
 		{
 			if ($4 && ($8 != NULL)) {
@@ -422,12 +439,14 @@ cmd
 			if ($8 != NULL)
 				free($8);
 		}
+
 	| SITE SP IDLE CRLF
 		{
 			reply(200,
 			    "Current IDLE time limit is %d seconds; max %d",
 				curclass.timeout, curclass.maxtimeout);
 		}
+
 	| SITE SP IDLE SP NUMBER CRLF
 		{
 			if ($5 < 30 || $5 > curclass.maxtimeout) {
@@ -442,17 +461,68 @@ cmd
 				    curclass.timeout);
 			}
 		}
-	| STOU check_login SP pathname CRLF
-		{
-			if ($2 && $4 != NULL)
-				store($4, "w", 1);
-			if ($4 != NULL)
-				free($4);
-		}
+
 	| SYST CRLF
 		{
 			reply(215, "UNIX Type: L%d %s", NBBY, version);
 		}
+
+	| STAT check_login SP pathname CRLF
+		{
+			if ($2 && $4 != NULL)
+				statfilecmd($4);
+			if ($4 != NULL)
+				free($4);
+		}
+		
+	| STAT CRLF
+		{
+			statcmd();
+		}
+
+	| HELP CRLF
+		{
+			help(cmdtab, NULL);
+		}
+
+	| HELP SP STRING CRLF
+		{
+			char *cp = $3;
+
+			if (strncasecmp(cp, "SITE", 4) == 0) {
+				cp = $3 + 4;
+				if (*cp == ' ')
+					cp++;
+				if (*cp)
+					help(sitetab, cp);
+				else
+					help(sitetab, NULL);
+			} else
+				help(cmdtab, $3);
+		}
+
+	| NOOP CRLF
+		{
+			reply(200, "NOOP command successful.");
+		}
+
+						/* RFC 2389 */
+	| FEAT CRLF
+		{
+			lreply(211, "Features supported");
+			printf(" SIZE\r\n");
+			printf(" MDTM\r\n");
+			reply(211, "End");
+		}
+
+	| OPTS SP STRING CRLF
+		{
+			
+			opts($3);
+		}
+
+
+						/* BSD extensions */
 
 		/*
 		 * SIZE is not in RFC 959, but Postel has blessed it and
@@ -499,11 +569,7 @@ cmd
 			if ($4 != NULL)
 				free($4);
 		}
-	| QUIT CRLF
-		{
-			reply(221, "Goodbye.");
-			dologout(0);
-		}
+
 	| error CRLF
 		{
 			yyerrok;
@@ -511,7 +577,14 @@ cmd
 	;
 
 rcmd
-	: RNFR check_modify SP pathname CRLF
+	: REST SP byte_size CRLF
+		{
+			fromname = NULL;
+			restart_point = $3;	/* XXX $3 is only "int" */
+			reply(350, "Restarting at %qd. %s", restart_point,
+			    "Send STORE or RETRIEVE to initiate transfer.");
+		}
+	| RNFR check_modify SP pathname CRLF
 		{
 			restart_point = (off_t) 0;
 			if ($2 && $4) {
@@ -520,13 +593,6 @@ rcmd
 					free($4);
 				}
 			}
-		}
-	| REST SP byte_size CRLF
-		{
-			fromname = NULL;
-			restart_point = $3;	/* XXX $3 is only "int" */
-			reply(350, "Restarting at %qd. %s", restart_point,
-			    "Send STORE or RETRIEVE to initiate transfer.");
 		}
 	;
 
@@ -539,6 +605,7 @@ password
 		{
 			$$ = (char *)calloc(1, sizeof(char));
 		}
+
 	| STRING
 	;
 
@@ -566,10 +633,12 @@ form_code
 		{
 			$$ = FORM_N;
 		}
+
 	| T
 		{
 			$$ = FORM_T;
 		}
+
 	| C
 		{
 			$$ = FORM_C;
@@ -582,35 +651,42 @@ type_code
 			cmd_type = TYPE_A;
 			cmd_form = FORM_N;
 		}
+
 	| A SP form_code
 		{
 			cmd_type = TYPE_A;
 			cmd_form = $3;
 		}
+
 	| E
 		{
 			cmd_type = TYPE_E;
 			cmd_form = FORM_N;
 		}
+
 	| E SP form_code
 		{
 			cmd_type = TYPE_E;
 			cmd_form = $3;
 		}
+
 	| I
 		{
 			cmd_type = TYPE_I;
 		}
+
 	| L
 		{
 			cmd_type = TYPE_L;
 			cmd_bytesz = NBBY;
 		}
+
 	| L SP byte_size
 		{
 			cmd_type = TYPE_L;
 			cmd_bytesz = $3;
 		}
+
 		/* this is for a bug in the BBN ftp */
 	| L byte_size
 		{
@@ -624,10 +700,12 @@ struct_code
 		{
 			$$ = STRU_F;
 		}
+
 	| R
 		{
 			$$ = STRU_R;
 		}
+
 	| P
 		{
 			$$ = STRU_P;
@@ -639,10 +717,12 @@ mode_code
 		{
 			$$ = MODE_S;
 		}
+
 	| B
 		{
 			$$ = MODE_B;
 		}
+
 	| C
 		{
 			$$ = MODE_C;
@@ -664,7 +744,7 @@ pathname
 				 GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 
 				if ($1[1] == '\0')
-					$$ = strdup(pw->pw_dir);
+					$$ = xstrdup(pw->pw_dir);
 				else {
 					memset(&gl, 0, sizeof(gl));
 					if (glob($1, flags, NULL, &gl) ||
@@ -672,7 +752,7 @@ pathname
 						reply(550, "not found");
 						$$ = NULL;
 					} else
-						$$ = strdup(gl.gl_pathv[0]);
+						$$ = xstrdup(gl.gl_pathv[0]);
 					globfree(&gl);
 				}
 				free($1);
@@ -758,92 +838,98 @@ check_modify
 
 struct tab {
 	char	*name;
-	short	token;
-	short	state;
-	short	implemented;	/* 1 if command is implemented */
+	short	 token;
+	short	 state;
+	short	 implemented;	/* 1 if command is implemented */
+	short	 hasopts;	/* 1 if command takes options */
 	char	*help;
+	char	*options;
 };
 
 struct tab cmdtab[] = {
 				/* From RFC 959, in order defined (5.3.1) */
-	{ "USER", USER, STR1, 1,	"<sp> username" },
-	{ "PASS", PASS, ZSTR1, 1,	"<sp> password" },
-	{ "ACCT", ACCT, STR1, 0,	"(specify account)" },
-	{ "CWD",  CWD,  OSTR, 1,	"[ <sp> directory-name ]" },
-	{ "CDUP", CDUP, NOARGS, 1,	"(change to parent directory)" },
-	{ "SMNT", SMNT, ARGS, 0,	"(structure mount)" },
-	{ "QUIT", QUIT, NOARGS, 1,	"(terminate service)", },
-	{ "REIN", REIN, NOARGS, 0,	"(reinitialize server state)" },
-	{ "PORT", PORT, ARGS, 1,	"<sp> b0, b1, b2, b3, b4" },
-	{ "PASV", PASV, NOARGS, 1,	"(set server in passive mode)" },
-	{ "TYPE", TYPE, ARGS, 1,	"<sp> [ A | E | I | L ]" },
-	{ "STRU", STRU, ARGS, 1,	"(specify file structure)" },
-	{ "MODE", MODE, ARGS, 1,	"(specify transfer mode)" },
-	{ "RETR", RETR, STR1, 1,	"<sp> file-name" },
-	{ "STOR", STOR, STR1, 1,	"<sp> file-name" },
-	{ "STOU", STOU, STR1, 1,	"<sp> file-name" },
-	{ "APPE", APPE, STR1, 1,	"<sp> file-name" },
-	{ "ALLO", ALLO, ARGS, 1,	"allocate storage (vacuously)" },
-	{ "REST", REST, ARGS, 1,	"<sp> offset (restart command)" },
-	{ "RNFR", RNFR, STR1, 1,	"<sp> file-name" },
-	{ "RNTO", RNTO, STR1, 1,	"<sp> file-name" },
-	{ "ABOR", ABOR, NOARGS, 1,	"(abort operation)" },
-	{ "DELE", DELE, STR1, 1,	"<sp> file-name" },
-	{ "RMD",  RMD,  STR1, 1,	"<sp> path-name" },
-	{ "MKD",  MKD,  STR1, 1,	"<sp> path-name" },
-	{ "PWD",  PWD,  NOARGS, 1,	"(return current directory)" },
-	{ "LIST", LIST, OSTR, 1,	"[ <sp> path-name ]" },
-	{ "NLST", NLST, OSTR, 1,	"[ <sp> path-name ]" },
-	{ "SITE", SITE, SITECMD, 1,	"site-cmd [ <sp> arguments ]" },
-	{ "SYST", SYST, NOARGS, 1,	"(get type of operating system)" },
-	{ "STAT", STAT, OSTR, 1,	"[ <sp> path-name ]" },
-	{ "HELP", HELP, OSTR, 1,	"[ <sp> <string> ]" },
-	{ "NOOP", NOOP, NOARGS, 1,	"" },
+	{ "USER", USER, STR1,	1, 0,	"<sp> username" },
+	{ "PASS", PASS, ZSTR1,	1, 0,	"<sp> password" },
+	{ "ACCT", ACCT, STR1,	0, 0,	"(specify account)" },
+	{ "CWD",  CWD,  OSTR,	1, 0,	"[ <sp> directory-name ]" },
+	{ "CDUP", CDUP, NOARGS,	1, 0,	"(change to parent directory)" },
+	{ "SMNT", SMNT, ARGS,	0, 0,	"(structure mount)" },
+	{ "QUIT", QUIT, NOARGS,	1, 0,	"(terminate service)", },
+	{ "REIN", REIN, NOARGS,	0, 0,	"(reinitialize server state)" },
+	{ "PORT", PORT, ARGS,	1, 0,	"<sp> b0, b1, b2, b3, b4" },
+	{ "PASV", PASV, NOARGS,	1, 0,	"(set server in passive mode)" },
+	{ "TYPE", TYPE, ARGS,	1, 0,	"<sp> [ A | E | I | L ]" },
+	{ "STRU", STRU, ARGS,	1, 0,	"(specify file structure)" },
+	{ "MODE", MODE, ARGS,	1, 0,	"(specify transfer mode)" },
+	{ "RETR", RETR, STR1,	1, 0,	"<sp> file-name" },
+	{ "STOR", STOR, STR1,	1, 0,	"<sp> file-name" },
+	{ "STOU", STOU, STR1,	1, 0,	"<sp> file-name" },
+	{ "APPE", APPE, STR1,	1, 0,	"<sp> file-name" },
+	{ "ALLO", ALLO, ARGS,	1, 0,	"allocate storage (vacuously)" },
+	{ "REST", REST, ARGS,	1, 0,	"<sp> offset (restart command)" },
+	{ "RNFR", RNFR, STR1,	1, 0,	"<sp> file-name" },
+	{ "RNTO", RNTO, STR1,	1, 0,	"<sp> file-name" },
+	{ "ABOR", ABOR, NOARGS,	1, 0,	"(abort operation)" },
+	{ "DELE", DELE, STR1,	1, 0,	"<sp> file-name" },
+	{ "RMD",  RMD,  STR1,	1, 0,	"<sp> path-name" },
+	{ "MKD",  MKD,  STR1,	1, 0,	"<sp> path-name" },
+	{ "PWD",  PWD,  NOARGS,	1, 0,	"(return current directory)" },
+	{ "LIST", LIST, OSTR,	1, 0,	"[ <sp> path-name ]" },
+	{ "NLST", NLST, OSTR,	1, 0,	"[ <sp> path-name ]" },
+	{ "SITE", SITE, SITECMD, 1, 0,	"site-cmd [ <sp> arguments ]" },
+	{ "SYST", SYST, NOARGS,	1, 0,	"(get type of operating system)" },
+	{ "STAT", STAT, OSTR,	1, 0,	"[ <sp> path-name ]" },
+	{ "HELP", HELP, OSTR,	1, 0,	"[ <sp> <string> ]" },
+	{ "NOOP", NOOP, NOARGS,	1, 1,	"" },
 
-	{ "SIZE", SIZE, OSTR, 1,	"<sp> path-name" },
-	{ "MDTM", MDTM, OSTR, 1,	"<sp> path-name" },
+				/* From RFC-2389, in order defined */
+	{ "FEAT", FEAT, NOARGS,	1, 0,	"(display extended features)" },
+	{ "OPTS", OPTS, STR1,	1, 0,	"<sp> command [ <sp> options ]" },
+
+				/* Non standardized extensions */
+	{ "SIZE", SIZE, OSTR,	1, 0,	"<sp> path-name" },
+	{ "MDTM", MDTM, OSTR,	1, 0,	"<sp> path-name" },
 
 				/* obsolete commands */
-	{ "MLFL", MLFL, OSTR, 0,	"(mail file)" },
-	{ "MAIL", MAIL, OSTR, 0,	"(mail to user)" },
-	{ "MSND", MSND, OSTR, 0,	"(mail send to terminal)" },
-	{ "MSOM", MSOM, OSTR, 0,	"(mail send to terminal or mailbox)" },
-	{ "MSAM", MSAM, OSTR, 0,	"(mail send to terminal and mailbox)" },
-	{ "MRSQ", MRSQ, OSTR, 0,	"(mail recipient scheme question)" },
-	{ "MRCP", MRCP, STR1, 0,	"(mail recipient)" },
-	{ "XCWD", CWD,	OSTR, 1,	"[ <sp> directory-name ]" },
-	{ "XCUP", CDUP, NOARGS, 1,	"(change to parent directory)" },
-	{ "XRMD", RMD,  STR1, 1,	"<sp> path-name" },
-	{ "XMKD", MKD,  STR1, 1,	"<sp> path-name" },
-	{ "XPWD", PWD,  NOARGS, 1,	"(return current directory)" },
+	{ "MAIL", MAIL, OSTR,	0, 0,	"(mail to user)" },
+	{ "MLFL", MLFL, OSTR,	0, 0,	"(mail file)" },
+	{ "MRCP", MRCP, STR1,	0, 0,	"(mail recipient)" },
+	{ "MRSQ", MRSQ, OSTR,	0, 0,	"(mail recipient scheme question)" },
+	{ "MSAM", MSAM, OSTR,	0, 0,	"(mail send to terminal and mailbox)" },
+	{ "MSND", MSND, OSTR,	0, 0,	"(mail send to terminal)" },
+	{ "MSOM", MSOM, OSTR,	0, 0,	"(mail send to terminal or mailbox)" },
+	{ "XCUP", CDUP, NOARGS,	1, 0,	"(change to parent directory)" },
+	{ "XCWD", CWD,	OSTR,	1, 0,	"[ <sp> directory-name ]" },
+	{ "XMKD", MKD,  STR1,	1, 0,	"<sp> path-name" },
+	{ "XPWD", PWD,  NOARGS,	1, 0,	"(return current directory)" },
+	{ "XRMD", RMD,  STR1,	1, 0,	"<sp> path-name" },
 
-	{ NULL,   0,    0,    0,	0 }
+	{ NULL,   0,    0,	0, 0,	0 }
 };
 
 struct tab sitetab[] = {
-	{ "UMASK", UMASK, ARGS, 1,	"[ <sp> umask ]" },
-	{ "IDLE", IDLE, ARGS, 1,	"[ <sp> maximum-idle-time ]" },
-	{ "CHMOD", CHMOD, NSTR, 1,	"<sp> mode <sp> file-name" },
-	{ "HELP", HELP, OSTR, 1,	"[ <sp> <string> ]" },
-	{ NULL,   0,    0,    0,	0 }
+	{ "UMASK", UMASK, ARGS,	1, 0,	"[ <sp> umask ]" },
+	{ "IDLE",  IDLE,  ARGS,	1, 0,	"[ <sp> maximum-idle-time ]" },
+	{ "CHMOD", CHMOD, NSTR,	1, 0,	"<sp> mode <sp> file-name" },
+	{ "HELP",  HELP,  OSTR,	1, 0,	"[ <sp> <string> ]" },
+	{ NULL,    0,     0,	0, 0,	0 }
 };
 
-static char	*copy __P((char *));
-static void	 help __P((struct tab *, char *));
-static struct tab *
-		 lookup __P((struct tab *, char *));
-static void	 sizecmd __P((char *));
-static void	 toolong __P((int));
-static int	 yylex __P((void));
+static	void	 	help __P((struct tab *, char *));
+static	struct tab     *lookup __P((struct tab *, const char *));
+static	void		opts __P((const char *));
+static	void		sizecmd __P((char *));
+static	void		toolong __P((int));
+static	int		yylex __P((void));
 
 static struct tab *
 lookup(p, cmd)
 	struct tab *p;
-	char *cmd;
+	const char *cmd;
 {
 
 	for (; p->name != NULL; p++)
-		if (strcmp(cmd, p->name) == 0)
+		if (strcasecmp(cmd, p->name) == 0)
 			return (p);
 	return (0);
 }
@@ -952,224 +1038,223 @@ yylex()
 	int n;
 	char c;
 
-	for (;;) {
-		switch (state) {
+	switch (state) {
 
-		case CMD:
-			hasyyerrored = 0;
-			(void) signal(SIGALRM, toolong);
-			(void) alarm(curclass.timeout);
-			if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
-				reply(221, "You could at least say goodbye.");
-				dologout(0);
-			}
-			(void) alarm(0);
-#ifdef HASSETPROCTITLE
-			if (strncasecmp(cbuf, "PASS", 4) != 0)
-				setproctitle("%s: %s", proctitle, cbuf);
-#endif /* HASSETPROCTITLE */
-			if ((cp = strchr(cbuf, '\r'))) {
-				*cp++ = '\n';
-				*cp = '\0';
-			}
-			if ((cp = strpbrk(cbuf, " \n")))
-				cpos = cp - cbuf;
-			if (cpos == 0)
-				cpos = 4;
-			c = cbuf[cpos];
-			cbuf[cpos] = '\0';
-			upper(cbuf);
-			p = lookup(cmdtab, cbuf);
-			cbuf[cpos] = c;
-			if (p != 0) {
-				if (p->implemented == 0) {
-					nack(p->name);
-					break;
-				}
-				state = p->state;
-				yylval.s = p->name;
-				return (p->token);
-			}
-			break;
-
-		case SITECMD:
-			if (cbuf[cpos] == ' ') {
-				cpos++;
-				return (SP);
-			}
-			cp = &cbuf[cpos];
-			if ((cp2 = strpbrk(cp, " \n")))
-				cpos = cp2 - cbuf;
-			c = cbuf[cpos];
-			cbuf[cpos] = '\0';
-			upper(cp);
-			p = lookup(sitetab, cp);
-			cbuf[cpos] = c;
-			if (p != 0) {
-				if (p->implemented == 0) {
-					nack(p->name);
-					break;
-				}
-				state = p->state;
-				yylval.s = p->name;
-				return (p->token);
-			}
-			state = CMD;
-			break;
-
-		case OSTR:
-			if (cbuf[cpos] == '\n') {
-				state = CMD;
-				return (CRLF);
-			}
-			/* FALLTHROUGH */
-
-		case STR1:
-		case ZSTR1:
-		dostr1:
-			if (cbuf[cpos] == ' ') {
-				cpos++;
-				state = state == OSTR ? STR2 : ++state;
-				return (SP);
-			}
-			break;
-
-		case ZSTR2:
-			if (cbuf[cpos] == '\n') {
-				state = CMD;
-				return (CRLF);
-			}
-			/* FALLTHROUGH */
-
-		case STR2:
-			cp = &cbuf[cpos];
-			n = strlen(cp);
-			cpos += n - 1;
-			/*
-			 * Make sure the string is nonempty and \n terminated.
-			 */
-			if (n > 1 && cbuf[cpos] == '\n') {
-				cbuf[cpos] = '\0';
-				yylval.s = copy(cp);
-				cbuf[cpos] = '\n';
-				state = ARGS;
-				return (STRING);
-			}
-			break;
-
-		case NSTR:
-			if (cbuf[cpos] == ' ') {
-				cpos++;
-				return (SP);
-			}
-			if (isdigit(cbuf[cpos])) {
-				cp = &cbuf[cpos];
-				while (isdigit(cbuf[++cpos]))
-					;
-				c = cbuf[cpos];
-				cbuf[cpos] = '\0';
-				yylval.i = atoi(cp);
-				cbuf[cpos] = c;
-				state = STR1;
-				return (NUMBER);
-			}
-			state = STR1;
-			goto dostr1;
-
-		case ARGS:
-			if (isdigit(cbuf[cpos])) {
-				cp = &cbuf[cpos];
-				while (isdigit(cbuf[++cpos]))
-					;
-				c = cbuf[cpos];
-				cbuf[cpos] = '\0';
-				yylval.i = atoi(cp);
-				cbuf[cpos] = c;
-				return (NUMBER);
-			}
-			switch (cbuf[cpos++]) {
-
-			case '\n':
-				state = CMD;
-				return (CRLF);
-
-			case ' ':
-				return (SP);
-
-			case ',':
-				return (COMMA);
-
-			case 'A':
-			case 'a':
-				return (A);
-
-			case 'B':
-			case 'b':
-				return (B);
-
-			case 'C':
-			case 'c':
-				return (C);
-
-			case 'E':
-			case 'e':
-				return (E);
-
-			case 'F':
-			case 'f':
-				return (F);
-
-			case 'I':
-			case 'i':
-				return (I);
-
-			case 'L':
-			case 'l':
-				return (L);
-
-			case 'N':
-			case 'n':
-				return (N);
-
-			case 'P':
-			case 'p':
-				return (P);
-
-			case 'R':
-			case 'r':
-				return (R);
-
-			case 'S':
-			case 's':
-				return (S);
-
-			case 'T':
-			case 't':
-				return (T);
-
-			}
-			break;
-
-		case NOARGS:
-			if (cbuf[cpos] == '\n') {
-				state = CMD;
-				return (CRLF);
-			}
-			c = cbuf[cpos];
-			cbuf[cpos] = '\0';
-			reply(501, "'%s' command does not take any arguments.",
-			    cbuf);
-			cbuf[cpos] = c;
-			break;
-
-		default:
-			fatal("Unknown state in scanner.");
+	case CMD:
+		hasyyerrored = 0;
+		(void) signal(SIGALRM, toolong);
+		(void) alarm(curclass.timeout);
+		if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
+			reply(221, "You could at least say goodbye.");
+			dologout(0);
 		}
-		yyerror(NULL);
-		state = CMD;
-		longjmp(errcatch, 0);
-		/* NOTREACHED */
+		(void) alarm(0);
+#ifdef HASSETPROCTITLE
+		if (strncasecmp(cbuf, "PASS", 4) != 0)
+			setproctitle("%s: %s", proctitle, cbuf);
+#endif /* HASSETPROCTITLE */
+		if ((cp = strchr(cbuf, '\r'))) {
+			*cp++ = '\n';
+			*cp = '\0';
+		}
+		if ((cp = strpbrk(cbuf, " \n")))
+			cpos = cp - cbuf;
+		if (cpos == 0)
+			cpos = 4;
+		c = cbuf[cpos];
+		cbuf[cpos] = '\0';
+		p = lookup(cmdtab, cbuf);
+		cbuf[cpos] = c;
+		if (p != NULL) {
+			if (p->implemented == 0) {
+				reply(502, "%s command not implemented.",
+				    p->name);
+				hasyyerrored = 1;
+				break;
+			}
+			state = p->state;
+			yylval.s = p->name;
+			return (p->token);
+		}
+		break;
+
+	case SITECMD:
+		if (cbuf[cpos] == ' ') {
+			cpos++;
+			return (SP);
+		}
+		cp = &cbuf[cpos];
+		if ((cp2 = strpbrk(cp, " \n")))
+			cpos = cp2 - cbuf;
+		c = cbuf[cpos];
+		cbuf[cpos] = '\0';
+		p = lookup(sitetab, cp);
+		cbuf[cpos] = c;
+		if (p != NULL) {
+			if (p->implemented == 0) {
+				reply(502, "SITE %s command not implemented.",
+				    p->name);
+				hasyyerrored = 1;
+				break;
+			}
+			state = p->state;
+			yylval.s = p->name;
+			return (p->token);
+		}
+		break;
+
+	case OSTR:
+		if (cbuf[cpos] == '\n') {
+			state = CMD;
+			return (CRLF);
+		}
+		/* FALLTHROUGH */
+
+	case STR1:
+	case ZSTR1:
+	dostr1:
+		if (cbuf[cpos] == ' ') {
+			cpos++;
+			state = state == OSTR ? STR2 : ++state;
+			return (SP);
+		}
+		break;
+
+	case ZSTR2:
+		if (cbuf[cpos] == '\n') {
+			state = CMD;
+			return (CRLF);
+		}
+		/* FALLTHROUGH */
+
+	case STR2:
+		cp = &cbuf[cpos];
+		n = strlen(cp);
+		cpos += n - 1;
+		/*
+		 * Make sure the string is nonempty and \n terminated.
+		 */
+		if (n > 1 && cbuf[cpos] == '\n') {
+			cbuf[cpos] = '\0';
+			yylval.s = xstrdup(cp);
+			cbuf[cpos] = '\n';
+			state = ARGS;
+			return (STRING);
+		}
+		break;
+
+	case NSTR:
+		if (cbuf[cpos] == ' ') {
+			cpos++;
+			return (SP);
+		}
+		if (isdigit(cbuf[cpos])) {
+			cp = &cbuf[cpos];
+			while (isdigit(cbuf[++cpos]))
+				;
+			c = cbuf[cpos];
+			cbuf[cpos] = '\0';
+			yylval.i = atoi(cp);
+			cbuf[cpos] = c;
+			state = STR1;
+			return (NUMBER);
+		}
+		state = STR1;
+		goto dostr1;
+
+	case ARGS:
+		if (isdigit(cbuf[cpos])) {
+			cp = &cbuf[cpos];
+			while (isdigit(cbuf[++cpos]))
+				;
+			c = cbuf[cpos];
+			cbuf[cpos] = '\0';
+			yylval.i = atoi(cp);
+			cbuf[cpos] = c;
+			return (NUMBER);
+		}
+		switch (cbuf[cpos++]) {
+
+		case '\n':
+			state = CMD;
+			return (CRLF);
+
+		case ' ':
+			return (SP);
+
+		case ',':
+			return (COMMA);
+
+		case 'A':
+		case 'a':
+			return (A);
+
+		case 'B':
+		case 'b':
+			return (B);
+
+		case 'C':
+		case 'c':
+			return (C);
+
+		case 'E':
+		case 'e':
+			return (E);
+
+		case 'F':
+		case 'f':
+			return (F);
+
+		case 'I':
+		case 'i':
+			return (I);
+
+		case 'L':
+		case 'l':
+			return (L);
+
+		case 'N':
+		case 'n':
+			return (N);
+
+		case 'P':
+		case 'p':
+			return (P);
+
+		case 'R':
+		case 'r':
+			return (R);
+
+		case 'S':
+		case 's':
+			return (S);
+
+		case 'T':
+		case 't':
+			return (T);
+
+		}
+		break;
+
+	case NOARGS:
+		if (cbuf[cpos] == '\n') {
+			state = CMD;
+			return (CRLF);
+		}
+		c = cbuf[cpos];
+		cbuf[cpos] = '\0';
+		reply(501, "'%s' command does not take any arguments.", cbuf);
+		hasyyerrored = 1;
+		cbuf[cpos] = c;
+		break;
+
+	default:
+		fatal("Unknown state in scanner.");
 	}
+	yyerror(NULL);
+	state = CMD;
+	longjmp(errcatch, 0);
+	/* NOTREACHED */
 }
 
 /* ARGSUSED */
@@ -1185,28 +1270,6 @@ yyerror(s)
 		*cp = '\0';
 	reply(500, "'%s': command not understood.", cbuf);
 	hasyyerrored = 1;
-}
-
-void
-upper(s)
-	char *s;
-{
-	while (*s != '\0') {
-		*s = toupper(*s);
-		s++;
-	}
-}
-
-static char *
-copy(s)
-	char *s;
-{
-	char *p;
-
-	p = strdup(s);
-	if (p == NULL)
-		fatal("Ran out of memory.");
-	return (p);
 }
 
 static void
@@ -1235,8 +1298,8 @@ help(ctab, s)
 		int i, j, w;
 		int columns, lines;
 
-		lreply(214, "The following %scommands are recognized %s.",
-		    type, "(* =>'s unimplemented)");
+		lreply(214, "The following %scommands are recognized.", type);
+		lreply(214, "(`*' = not implemented, `+' = supports options)");
 		columns = 76 / width;
 		if (columns == 0)
 			columns = 1;
@@ -1245,11 +1308,18 @@ help(ctab, s)
 			printf("   ");
 			for (j = 0; j < columns; j++) {
 				c = ctab + j * lines + i;
-				printf("%s%c", c->name,
-					c->implemented ? ' ' : '*');
+				fputs(c->name, stdout);
+				w = strlen(c->name);
+				if (! c->implemented) {
+					putchar('*');
+					w++;
+				}
+				if (c->hasopts) {
+					putchar('+');
+					w++;
+				}
 				if (c + lines >= &ctab[NCMDS])
 					break;
-				w = strlen(c->name) + 1;
 				while (w < width) {
 					putchar(' ');
 					w++;
@@ -1261,7 +1331,6 @@ help(ctab, s)
 		reply(214, "Direct comments to ftp-bugs@%s.", hostname);
 		return;
 	}
-	upper(s);
 	c = lookup(ctab, s);
 	if (c == (struct tab *)0) {
 		reply(502, "Unknown command %s.", s);
@@ -1270,7 +1339,7 @@ help(ctab, s)
 	if (c->implemented)
 		reply(214, "Syntax: %s%s %s", type, c->name, c->help);
 	else
-		reply(214, "%s%-*s\t%s; unimplemented.", type, width,
+		reply(214, "%s%-*s\t%s; not implemented.", type, width,
 		    c->name, c->help);
 }
 
@@ -1318,3 +1387,37 @@ sizecmd(filename)
 	}
 }
 
+static void
+opts(command)
+	const char *command;
+{
+	struct tab *c;
+	char *ep;
+
+	if ((ep = strchr(command, ' ')) != NULL)
+		*ep++ = '\0';
+	c = lookup(cmdtab, command);
+	if (c == NULL) {
+		reply(502, "Unknown command %s.", command);
+		return;
+	}
+	if (c->implemented == 0) {
+		reply(502, "%s command not implemented.", c->name);
+		return;
+	}
+	if (c->hasopts == 0) {
+		reply(501, "%s command does not support persistent options.",
+		    c->name);
+		return;
+	}
+
+	if (ep != NULL && *ep != '\0') {
+		if (c->options != NULL)
+			free(c->options);
+		c->options = xstrdup(ep);
+	}
+	if (c->options != NULL)
+		reply(200, "Options for %s are '%s'.", c->name, c->options);
+	else
+		reply(200, "No options defined for %s.", c->name);
+}

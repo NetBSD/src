@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 1998/09/06 10:39:40 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 1998/09/07 08:11:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,8 +65,8 @@ void	show_chdir_messages __P((int));
 void	statcmd __P((void));
 void	statfilecmd __P((char *));
 void	store __P((char *, char *, int));
-void	upper __P((char *));
 void	user __P((char *));
+char   *xstrdup __P((const char *));
 void	yyerror __P((char *));
 
 #define CLASS_CHROOT	"chroot"
