@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.636 2003/12/15 06:28:32 lonewolf Exp $
+# $NetBSD: mi,v 1.637 2003/12/21 11:35:36 agc Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -48,6 +48,7 @@
 ./usr/share/man/cat1/bdes.0			man-crypto-catman
 ./usr/share/man/cat1/bg.0			man-util-catman
 ./usr/share/man/cat1/biff.0			man-mail-catman
+./usr/share/man/cat1/bpm.0			man-pkgutil-catman
 ./usr/share/man/cat1/bunzip2.0			man-util-catman
 ./usr/share/man/cat1/bzcat.0			man-util-catman
 ./usr/share/man/cat1/bzip2.0			man-util-catman
@@ -1786,6 +1787,7 @@
 ./usr/share/man/man1/bdes.1			man-crypto-man
 ./usr/share/man/man1/bg.1			man-util-man
 ./usr/share/man/man1/biff.1			man-mail-man
+./usr/share/man/man1/bpm.1			man-pkgutil-man
 ./usr/share/man/man1/bunzip2.1			man-util-man
 ./usr/share/man/man1/bzcat.1			man-util-man
 ./usr/share/man/man1/bzip2.1			man-util-man
