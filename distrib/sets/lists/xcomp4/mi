@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.6 2003/12/29 03:13:29 lukem Exp $
+# $NetBSD: mi,v 1.7 2004/03/05 20:07:27 tron Exp $
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
 ./usr/X11R6/bin/cleanlinks
@@ -222,9 +222,9 @@
 ./usr/X11R6/include/X11/extensions/XEVI.h
 ./usr/X11R6/include/X11/extensions/XEVIstr.h
 ./usr/X11R6/include/X11/extensions/XI.h
-./usr/X11R6/include/X11/extensions/XIE.h
-./usr/X11R6/include/X11/extensions/XIEproto.h
-./usr/X11R6/include/X11/extensions/XIEprotost.h
+./usr/X11R6/include/X11/extensions/XIE.h	xcomp-obsolete obsolete
+./usr/X11R6/include/X11/extensions/XIEproto.h	xcomp-obsolete obsolete
+./usr/X11R6/include/X11/extensions/XIEprotost.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/X11/extensions/XInput.h
 ./usr/X11R6/include/X11/extensions/XIproto.h
 ./usr/X11R6/include/X11/extensions/XKB.h
@@ -350,22 +350,27 @@
 ./usr/X11R6/include/freetype2/freetype/fterrdef.h
 ./usr/X11R6/include/freetype2/freetype/fterrors.h
 ./usr/X11R6/include/freetype2/freetype/ftglyph.h
+./usr/X11R6/include/freetype2/freetype/ftgzip.h
 ./usr/X11R6/include/freetype2/freetype/ftimage.h
+./usr/X11R6/include/freetype2/freetype/ftincrem.h
 ./usr/X11R6/include/freetype2/freetype/ftlist.h
 ./usr/X11R6/include/freetype2/freetype/ftmac.h
 ./usr/X11R6/include/freetype2/freetype/ftmm.h
 ./usr/X11R6/include/freetype2/freetype/ftmoderr.h
 ./usr/X11R6/include/freetype2/freetype/ftmodule.h
 ./usr/X11R6/include/freetype2/freetype/ftoutln.h
+./usr/X11R6/include/freetype2/freetype/ftpfr.h
 ./usr/X11R6/include/freetype2/freetype/ftrender.h
 ./usr/X11R6/include/freetype2/freetype/ftsizes.h
 ./usr/X11R6/include/freetype2/freetype/ftsnames.h
+./usr/X11R6/include/freetype2/freetype/ftstroker.h
 ./usr/X11R6/include/freetype2/freetype/ftsynth.h
 ./usr/X11R6/include/freetype2/freetype/ftsysio.h
 ./usr/X11R6/include/freetype2/freetype/ftsysmem.h
 ./usr/X11R6/include/freetype2/freetype/ftsystem.h
 ./usr/X11R6/include/freetype2/freetype/fttrigon.h
 ./usr/X11R6/include/freetype2/freetype/fttypes.h
+./usr/X11R6/include/freetype2/freetype/ftwinfnt.h
 ./usr/X11R6/include/freetype2/freetype/ftxf86.h
 ./usr/X11R6/include/freetype2/freetype/internal
 ./usr/X11R6/include/freetype2/freetype/internal/autohint.h
@@ -387,6 +392,7 @@
 ./usr/X11R6/include/freetype2/freetype/internal/fttrace.h
 ./usr/X11R6/include/freetype2/freetype/internal/internal.h
 ./usr/X11R6/include/freetype2/freetype/internal/pcftypes.h
+./usr/X11R6/include/freetype2/freetype/internal/pfr.h
 ./usr/X11R6/include/freetype2/freetype/internal/psaux.h
 ./usr/X11R6/include/freetype2/freetype/internal/psglobal.h	xcomp-obsolete	obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/pshints.h
@@ -399,7 +405,8 @@
 ./usr/X11R6/include/freetype2/freetype/ttnameid.h
 ./usr/X11R6/include/freetype2/freetype/tttables.h
 ./usr/X11R6/include/freetype2/freetype/tttags.h
-./usr/X11R6/include/freetype2/ft2build.h
+./usr/X11R6/include/freetype2/ft2build.h		xcomp-obsolete obsolete
+./usr/X11R6/include/ft2build.h
 ./usr/X11R6/lib/X11/config/Amoeba.cf
 ./usr/X11R6/lib/X11/config/DGUX.cf
 ./usr/X11R6/lib/X11/config/FreeBSD.cf
@@ -596,6 +603,11 @@
 ./usr/X11R6/man/cat3/DoesBackingStore.0
 ./usr/X11R6/man/cat3/DoesSaveUnders.0
 ./usr/X11R6/man/cat3/EventMaskOfScreen.0
+./usr/X11R6/man/cat3/FontCacheChangeCacheSettings.0
+./usr/X11R6/man/cat3/FontCacheGetCacheSettings.0
+./usr/X11R6/man/cat3/FontCacheGetCacheStatistics.0
+./usr/X11R6/man/cat3/FontCacheQueryExtension.0
+./usr/X11R6/man/cat3/FontCacheQueryVersion.0
 ./usr/X11R6/man/cat3/GLwCreateMDrawingArea.0
 ./usr/X11R6/man/cat3/GLwDrawingArea.0
 ./usr/X11R6/man/cat3/GLwDrawingAreaMakeCurrent.0
@@ -725,6 +737,25 @@
 ./usr/X11R6/man/cat3/XCreateWindow.0
 ./usr/X11R6/man/cat3/XCreateWindowEvent.0
 ./usr/X11R6/man/cat3/XCrossingEvent.0
+./usr/X11R6/man/cat3/XDGA.0
+./usr/X11R6/man/cat3/XDGAChangePixmapMode.0
+./usr/X11R6/man/cat3/XDGACloseFramebuffer.0
+./usr/X11R6/man/cat3/XDGACopyArea.0
+./usr/X11R6/man/cat3/XDGACopyTransparentArea.0
+./usr/X11R6/man/cat3/XDGACreateColormap.0
+./usr/X11R6/man/cat3/XDGAFillRectangle.0
+./usr/X11R6/man/cat3/XDGAGetViewportStatus.0
+./usr/X11R6/man/cat3/XDGAInstallColormap.0
+./usr/X11R6/man/cat3/XDGAKeyEventToXKeyEvent.0
+./usr/X11R6/man/cat3/XDGAOpenFramebuffer.0
+./usr/X11R6/man/cat3/XDGAQueryExtension.0
+./usr/X11R6/man/cat3/XDGAQueryModes.0
+./usr/X11R6/man/cat3/XDGAQueryVersion.0
+./usr/X11R6/man/cat3/XDGASelectInput.0
+./usr/X11R6/man/cat3/XDGASetClientVersion.0
+./usr/X11R6/man/cat3/XDGASetMode.0
+./usr/X11R6/man/cat3/XDGASetViewport.0
+./usr/X11R6/man/cat3/XDGASync.0
 ./usr/X11R6/man/cat3/XDefaultString.0
 ./usr/X11R6/man/cat3/XDefineCursor.0
 ./usr/X11R6/man/cat3/XDeleteContext.0
@@ -770,6 +801,7 @@
 ./usr/X11R6/man/cat3/XExposeEvent.0
 ./usr/X11R6/man/cat3/XExtendedMaxRequestSize.0
 ./usr/X11R6/man/cat3/XExtentsOfFontSet.0
+./usr/X11R6/man/cat3/XF86DGA.0
 ./usr/X11R6/man/cat3/XFetchBuffer.0
 ./usr/X11R6/man/cat3/XFetchBytes.0
 ./usr/X11R6/man/cat3/XFetchName.0
@@ -788,6 +820,7 @@
 ./usr/X11R6/man/cat3/XFontsOfFontSet.0
 ./usr/X11R6/man/cat3/XForceScreenSaver.0
 ./usr/X11R6/man/cat3/XFree.0
+./usr/X11R6/man/cat3/XFree86-DGA.0
 ./usr/X11R6/man/cat3/XFreeColormap.0
 ./usr/X11R6/man/cat3/XFreeColors.0
 ./usr/X11R6/man/cat3/XFreeCursor.0
@@ -970,6 +1003,12 @@
 ./usr/X11R6/man/cat3/XRemoveHosts.0
 ./usr/X11R6/man/cat3/XReparentEvent.0
 ./usr/X11R6/man/cat3/XReparentWindow.0
+./usr/X11R6/man/cat3/XRes.0
+./usr/X11R6/man/cat3/XResQueryClientPixmapBytes.0
+./usr/X11R6/man/cat3/XResQueryClientResources.0
+./usr/X11R6/man/cat3/XResQueryClients.0
+./usr/X11R6/man/cat3/XResQueryExtension.0
+./usr/X11R6/man/cat3/XResQueryVersion.0
 ./usr/X11R6/man/cat3/XResetScreenSaver.0
 ./usr/X11R6/man/cat3/XResizeRequestEvent.0
 ./usr/X11R6/man/cat3/XResizeWindow.0
@@ -980,6 +1019,16 @@
 ./usr/X11R6/man/cat3/XSaveContext.0
 ./usr/X11R6/man/cat3/XScreenNumberOfScreen.0
 ./usr/X11R6/man/cat3/XScreenResourceString.0
+./usr/X11R6/man/cat3/XScreenSaverAllocInfo.0
+./usr/X11R6/man/cat3/XScreenSaverGetRegistered.0
+./usr/X11R6/man/cat3/XScreenSaverQueryExtension.0
+./usr/X11R6/man/cat3/XScreenSaverQueryInfo.0
+./usr/X11R6/man/cat3/XScreenSaverQueryVersion.0
+./usr/X11R6/man/cat3/XScreenSaverRegister.0
+./usr/X11R6/man/cat3/XScreenSaverSelectInput.0
+./usr/X11R6/man/cat3/XScreenSaverSetAttributes.0
+./usr/X11R6/man/cat3/XScreenSaverUnregister.0
+./usr/X11R6/man/cat3/XScreenSaverUnsetAttributes.0
 ./usr/X11R6/man/cat3/XSegment.0
 ./usr/X11R6/man/cat3/XSelectExtensionEvent.0
 ./usr/X11R6/man/cat3/XSelectInput.0
@@ -1190,6 +1239,7 @@
 ./usr/X11R6/man/cat3/XeviGetVisualInfo.0
 ./usr/X11R6/man/cat3/XeviQueryExtension.0
 ./usr/X11R6/man/cat3/XeviQueryVersion.0
+./usr/X11R6/man/cat3/Xfontcache.0
 ./usr/X11R6/man/cat3/Xft.0
 ./usr/X11R6/man/cat3/XmbDrawImageString.0
 ./usr/X11R6/man/cat3/XmbDrawString.0
@@ -1246,6 +1296,7 @@
 ./usr/X11R6/man/cat3/XrmUniqueQuark.0
 ./usr/X11R6/man/cat3/XrmValue.0
 ./usr/X11R6/man/cat3/Xsecurity.0	xcomp-obsolete	obsolete
+./usr/X11R6/man/cat3/Xss.0
 ./usr/X11R6/man/cat3/XtAddActions.0
 ./usr/X11R6/man/cat3/XtAddCallback.0
 ./usr/X11R6/man/cat3/XtAddCallbacks.0
@@ -2074,3 +2125,4 @@
 ./usr/X11R6/man/cat3/gluTessProperty.0
 ./usr/X11R6/man/cat3/gluTessVertex.0
 ./usr/X11R6/man/cat3/gluUnProject.0
+./usr/X11R6/man/cat4/via.0
