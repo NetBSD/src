@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.29 2003/10/20 22:42:40 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.30 2004/03/23 13:22:32 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.29 2003/10/20 22:42:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.30 2004/03/23 13:22:32 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -73,20 +73,17 @@ static int exec_macho_load_vnode(struct proc *, struct exec_package *,
     struct vnode *, struct exec_macho_fat_header *, u_long *, int, int, int);
 
 #ifdef DEBUG_MACHO
-static void exec_macho_print_segment_command 
-    __P((struct exec_macho_segment_command *));
-static void exec_macho_print_fat_header __P((struct exec_macho_fat_header *));
-static void exec_macho_print_fat_arch __P((struct exec_macho_fat_arch *));
-static void exec_macho_print_object_header 
-    __P((struct exec_macho_object_header *));
-static void exec_macho_print_load_command 
-    __P((struct exec_macho_load_command *));
-static void exec_macho_print_dylinker_command 
-    __P((struct exec_macho_dylinker_command *));
-static void exec_macho_print_dylib_command 
-    __P((struct exec_macho_dylib_command *));
-static void exec_macho_print_thread_command 
-    __P((struct exec_macho_thread_command *));
+static void exec_macho_print_segment_command
+    (struct exec_macho_segment_command *);
+static void exec_macho_print_fat_header(struct exec_macho_fat_header *);
+static void exec_macho_print_fat_arch(struct exec_macho_fat_arch *);
+static void exec_macho_print_object_header(struct exec_macho_object_header *);
+static void exec_macho_print_load_command(struct exec_macho_load_command *);
+static void exec_macho_print_dylinker_command
+    (struct exec_macho_dylinker_command *);
+static void exec_macho_print_dylib_command(struct exec_macho_dylib_command *);
+static void exec_macho_print_thread_command
+    (struct exec_macho_thread_command *);
 
 static void
 exec_macho_print_segment_command(ls)
@@ -114,7 +111,7 @@ exec_macho_print_fat_header(fat)
 }
 
 static void
-exec_macho_print_fat_arch(arch) 
+exec_macho_print_fat_arch(arch)
 	struct exec_macho_fat_arch *arch;
 {
 	printf("arch.cputype %x\n", be32toh(arch->cputype));
@@ -216,7 +213,7 @@ exec_macho_load_segment(epp, vp, foff, ls, type)
 		if (strcmp(ls->segname, "__TEXT") == 0) {
 			epp->ep_taddr = addr;
 			epp->ep_tsize = round_page(ls->vmsize);
-			emea->macho_hdr = 
+			emea->macho_hdr =
 			    (struct exec_macho_object_header *)addr;
 		}
 		if ((strcmp(ls->segname, "__DATA") == 0) ||
@@ -228,7 +225,7 @@ exec_macho_load_segment(epp, vp, foff, ls, type)
 		}
 	}
 
-	/* 
+	/*
 	 * Some libraries do not have a load base address. The Darwin
 	 * kernel seems to skip them, and dyld will do the job.
 	 */
@@ -236,7 +233,7 @@ exec_macho_load_segment(epp, vp, foff, ls, type)
 		return ENOMEM;
 
 	if (ls->filesize > 0) {
-		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_pagedvn, size, 
+		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_pagedvn, size,
 		    addr, vp, (off_t)(ls->fileoff + foff),
 		    ls->initprot, flags);
 		DPRINTF(("map(0x%lx, 0x%lx, %o, fd@ 0x%lx)\n",
@@ -247,7 +244,7 @@ exec_macho_load_segment(epp, vp, foff, ls, type)
 	if (ls->vmsize > size) {
 		addr += size;
 		size = round_page(ls->vmsize - size);
-		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, size, 
+		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, size,
 		    addr, vp, (off_t)(ls->fileoff + foff),
 		    ls->initprot, flags);
 		DPRINTF(("mmap(0x%lx, 0x%lx, %o, zero)\n",
@@ -342,7 +339,7 @@ exec_macho_load_file(p, epp, path, entry, type, recursive, depth)
 	 */
 	if (depth++ > 6)
 		return E2BIG;
-	
+
 	/*
 	 * 1. open file
 	 * 2. read filehdr
@@ -381,7 +378,7 @@ exec_macho_load_file(p, epp, path, entry, type, recursive, depth)
 	if ((error = exec_read_from(p, vp, 0, &fat, sizeof(fat))) != 0)
 		goto bad;
 
-	if ((error = exec_macho_load_vnode(p, epp, vp, &fat, 
+	if ((error = exec_macho_load_vnode(p, epp, vp, &fat,
 	    entry, type, recursive, depth)) != 0)
 		goto bad;
 
@@ -431,7 +428,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 #endif
 
 	switch(be32toh(fat->magic)){
-	case MACHO_FAT_MAGIC:		
+	case MACHO_FAT_MAGIC:
 		for (i = 0; i < be32toh(fat->nfat_arch); i++, arch) {
 			if ((error = exec_read_from(p, vp, sizeof(*fat) +
 			    sizeof(arch) * i, &arch, sizeof(arch))) != 0)
@@ -443,7 +440,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 				if (*sc == be32toh(arch.cputype))
 					break;
 
-			if (sc != NULL) 
+			if (sc != NULL)
 				break;
 		}
 		if (sc == NULL || *sc == 0) {
@@ -454,7 +451,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 		break;
 
 	case MACHO_MOH_MAGIC:
-		/* 
+		/*
 		 * This is not a FAT Mach-O binary, the file starts
 		 * with the object header.
 		 */
@@ -491,7 +488,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 		goto bad;
 	}
 
-		
+
 	aoffs = be32toh(arch.offset);
 	offs = aoffs + sizeof(hdr);
 	size = sizeof(lc);
@@ -517,7 +514,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 
 		switch (lc.cmd) {
 		case MACHO_LC_SEGMENT:
-			error = exec_macho_load_segment(epp, vp, aoffs, 
+			error = exec_macho_load_segment(epp, vp, aoffs,
 			    (struct exec_macho_segment_command *)buf, type);
 
 			switch(error) {
@@ -544,15 +541,15 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 			emea->dynamic = 1;
 			break;
 		case MACHO_LC_LOAD_DYLIB:
-			/* 
-			 * We should only load libraries required by the 
-			 * binary we want to load, not libraries required 
+			/*
+			 * We should only load libraries required by the
+			 * binary we want to load, not libraries required
 			 * by theses libraries.
 			 */
 			if (recursive == 0)
 				break;
 			if ((error = exec_macho_load_dylib(p, epp,
-			    (struct exec_macho_dylib_command *)buf, 
+			    (struct exec_macho_dylib_command *)buf,
 			    depth)) != 0) {
 				DPRINTF(("load dylib failed\n"));
 				goto bad;
@@ -643,7 +640,7 @@ exec_macho_makecmds(p, epp)
 	 * has been found yet.
 	 */
 	epp->ep_entry = 0;
-		
+
 	if ((error = exec_macho_load_vnode(p, epp, epp->ep_vp, fat,
 	    &epp->ep_entry, MACHO_MOH_EXECUTE, 1, 0)) != 0)
 		goto bad;

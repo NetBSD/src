@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.4 2004/03/20 18:34:57 he Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.5 2004/03/23 13:22:32 junyoung Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.4 2004/03/20 18:34:57 he Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.5 2004/03/23 13:22:32 junyoung Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,7 +59,7 @@ MALLOC_DEFINE(M_KCONT, "kcont", "Kernel non-process continuations");
 
 /* Accessors for struct kc_queue */
 static __inline struct kc * kc_set(struct kc *,
-	void (*func) __P((void *, void *, int)),
+	void (*func)(void *, void *, int),
 	void *env_arg, int ipl);
 
 static __inline void kcont_enqueue_atomic(kcq_t *kcq, struct kc *kc);
@@ -115,18 +115,18 @@ kcont_dequeue_atomic(kcq_t *kcq)
 	if (kc != NULL) {
 		SIMPLEQ_REMOVE_HEAD(kcq, kc_next);
 		SIMPLEQ_NEXT(kc, kc_next) = NULL;
-	}		
+	}
 	splx(s);
 	return kc;
 }
 
 /*
  * Construct a continuation object from pre-allocated memory.
- * Used by functions that are about call an asynchronous operation, 
+ * Used by functions that are about call an asynchronous operation,
  * to build a continuation to be called once the operation completes.
  */
 static __inline struct kc *
-kc_set(struct kc *kc, void (*func) __P((void *, void *, int)),
+kc_set(struct kc *kc, void (*func)(void *, void *, int),
 	void *env_arg, int ipl)
 {
 	kc->kc_fn = func;
@@ -142,10 +142,10 @@ kc_set(struct kc *kc, void (*func) __P((void *, void *, int)),
 }
 
 /*
- * Request a continuation. Caller provides space for the struct kc *. 
+ * Request a continuation. Caller provides space for the struct kc *.
  */
 struct kc *
-kcont(struct kc *kc, void (*func) __P((void *, void *, int)),
+kcont(struct kc *kc, void (*func)(void *, void *, int),
 	void *env_arg, int continue_ipl)
 {
 	/* Just save the arguments in the kcont *. */
@@ -161,7 +161,7 @@ kcont(struct kc *kc, void (*func) __P((void *, void *, int)),
  */
 struct kc *
 kcont_malloc(int malloc_flags,
-	       void (*func) __P((void *, void *, int)),
+	       void (*func)(void *, void *, int),
 	       void *env_arg, int continue_ipl)
 {
 	struct kc *kc;
@@ -180,7 +180,7 @@ kcont_malloc(int malloc_flags,
 void
 kcont_defer(struct kc *kc, void *obj, int status)
 {
-	/* 
+	/*
 	 * IPL at which to synchronize access to object is
 	 * above the continuer's requested callback IPL,
 	 * (e.g., continuer wants IPL_SOFTNET but the object
@@ -236,7 +236,7 @@ kcont_defer(struct kc *kc, void *obj, int status)
 
 void
 kcont_defer_malloc(int mallocflags,
-	void (*func) __P((void *, void *, int)),
+	void (*func)(void *, void *, int),
 	void * obj, void *env_arg, int status, int ipl)
 {
 	struct kc *kc;
@@ -261,8 +261,8 @@ kcont_enqueue(kcq_t * kcq, struct kc* kc)
  * Run through a list of continuations, calling (or handing off)
  * continuation functions.
  * If the caller-provided IPL is the same as the requested  IPL,
- * deliver the callback. 
- * If the caller-provided IPL is higher than the requested 
+ * deliver the callback.
+ * If the caller-provided IPL is higher than the requested
  * callback IPL, re-enqueue the continuation to a lower-priority queue.
  */
 void
@@ -349,7 +349,7 @@ kcont_worker(void *arg)
 /*
  * Initialize kcont subsystem.
  */
-void 
+void
 kcont_init()
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.204 2004/02/25 04:10:28 dbj Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.205 2004/03/23 13:22:33 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.204 2004/02/25 04:10:28 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.205 2004/03/23 13:22:33 junyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -73,18 +73,16 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.204 2004/02/25 04:10:28 dbj Exp $
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 
-static int change_dir __P((struct nameidata *, struct proc *));
-static int change_flags __P((struct vnode *, u_long, struct proc *));
-static int change_mode __P((struct vnode *, int, struct proc *p));
-static int change_owner __P((struct vnode *, uid_t, gid_t, struct proc *,
-    int));
-static int change_utimes __P((struct vnode *vp, const struct timeval *,
-	       struct proc *p));
-static int rename_files __P((const char *, const char *, struct proc *, int));
-static int dostatfs __P((struct mount *, struct statfs *, struct proc *, int,
-    int));
+static int change_dir(struct nameidata *, struct proc *);
+static int change_flags(struct vnode *, u_long, struct proc *);
+static int change_mode(struct vnode *, int, struct proc *p);
+static int change_owner(struct vnode *, uid_t, gid_t, struct proc *, int);
+static int change_utimes(struct vnode *vp, const struct timeval *,
+	       struct proc *p);
+static int rename_files(const char *, const char *, struct proc *, int);
+static int dostatfs(struct mount *, struct statfs *, struct proc *, int, int);
 
-void checkdirs __P((struct vnode *));
+void checkdirs(struct vnode *);
 
 int dovfsusermount = 0;
 
@@ -217,7 +215,7 @@ sys_mount(l, v, retval)
 		if (vfs_busy(mp, LK_NOWAIT, 0)) {
 			vput(vp);
 			return (EPERM);
-		}                     
+		}
 		goto update;
 	} else {
 		if (securelevel >= 2) {
@@ -265,7 +263,7 @@ sys_mount(l, v, retval)
 		 * If we get an integer for the filesystem type instead of a
 		 * string, we check to see if it matches one of the historic
 		 * filesystem types.
-		 */     
+		 */
 		u_long fsindex = (u_long)SCARG(uap, type);
 		if (fsindex >= nmountcompatnames ||
 		    mountcompatnames[fsindex] == NULL) {
@@ -623,7 +621,7 @@ sys_sync(l, v, retval)
 		simple_lock(&mountlist_slock);
 		nmp = mp->mnt_list.cqe_prev;
 		vfs_unbusy(mp);
-		
+
 	}
 	simple_unlock(&mountlist_slock);
 #ifdef DEBUG
@@ -684,7 +682,7 @@ dostatfs(struct mount *mp, struct statfs *sp, struct proc *p, int flags,
 		memcpy(sp, &mp->mnt_stat, sizeof(*sp));
 		goto done;
 	}
-		
+
 	if ((error = VFS_STATFS(mp, sp, p)) != 0) {
 		return error;
 	}
@@ -925,7 +923,7 @@ sys_fchdir(l, v, retval)
 		error = EPERM;	/* operation not permitted */
 		goto out;
 	}
-	
+
 	vrele(cwdi->cwdi_cdir);
 	cwdi->cwdi_cdir = vp;
  out:
@@ -981,7 +979,7 @@ sys_fchroot(l, v, retval)
 		VREF(vp);
 		cwdi->cwdi_cdir = vp;
 	}
-	
+
 	if (cwdi->cwdi_rdir != NULL)
 		vrele(cwdi->cwdi_rdir);
 	cwdi->cwdi_rdir = vp;
@@ -1063,7 +1061,7 @@ sys_chroot(l, v, retval)
 		VREF(vp);
 		cwdi->cwdi_cdir = vp;
 	}
-	
+
 	return (0);
 }
 
@@ -1085,7 +1083,7 @@ change_dir(ndp, p)
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
-	
+
 	if (error)
 		vput(vp);
 	else
@@ -2697,7 +2695,7 @@ sys___posix_lchown(l, v, retval)
 }
 
 /*
- * Common routine to set ownership given a vnode.  
+ * Common routine to set ownership given a vnode.
  */
 static int
 change_owner(vp, uid, gid, p, posix_semantics)
@@ -2744,14 +2742,14 @@ change_owner(vp, uid, gid, p, posix_semantics)
 	/* Update va_mode iff altered. */
 	if (vattr.va_mode == newmode)
 		newmode = VNOVAL;
-	
+
 	VATTR_NULL(&vattr);
 	vattr.va_uid = CHANGED(uid) ? uid : (uid_t)VNOVAL;
 	vattr.va_gid = CHANGED(gid) ? gid : (gid_t)VNOVAL;
 	vattr.va_mode = newmode;
 	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 #undef CHANGED
-	
+
 out:
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
