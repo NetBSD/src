@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.4 1996/02/27 22:09:31 thorpej Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.5 1998/03/21 19:45:45 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,15 @@
  */
 
 /* offsets */
+#define CGSIX_ROM_OFFSET	0x000000
+#define CGSIX_BT_OFFSET		0x200000
+#define CGSIX_DHC_OFFSET	0x240000
+#define CGSIX_ALT_OFFSET	0x280000
 #define CGSIX_FHC_OFFSET	0x300000
+#define CGSIX_THC_OFFSET	0x301000
+#define CGSIX_FBC_OFFSET	0x700000
+#define CGSIX_TEC_OFFSET	0x701000
+#define CGSIX_RAM_OFFSET	0x800000
 
 /* bits in FHC register */
 #define	FHC_FBID_MASK	0xff000000	/* bits 24..31 are frame buffer ID */
