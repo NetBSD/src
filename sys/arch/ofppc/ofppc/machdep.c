@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1999/11/13 00:30:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1999/11/17 14:48:43 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -441,7 +441,7 @@ cpu_startup()
 					"buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
