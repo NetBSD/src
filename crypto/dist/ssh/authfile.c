@@ -1,5 +1,3 @@
-/*	$NetBSD: authfile.c,v 1.1.1.2 2001/01/14 04:50:04 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,32 +35,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: authfile.c,v 1.24 2000/12/20 19:26:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: authfile.c,v 1.1.1.2 2001/01/14 04:50:04 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: authfile.c,v 1.26 2001/01/28 22:27:05 stevesk Exp $");
 
-#include <openssl/bn.h>
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
 #include <openssl/err.h>
-#include <openssl/pem.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
+#include <openssl/pem.h>
 
+#include "cipher.h"
 #include "xmalloc.h"
 #include "buffer.h"
 #include "bufaux.h"
-#include "ssh.h"
 #include "key.h"
-#include "authfile.h"
+#include "ssh.h"
+#include "log.h"
 
 /* Version identification string for identity files. */
-#define AUTHFILE_ID_STRING "SSH PRIVATE KEY FILE FORMAT 1.1\n"
+static const char authfile_id_string[] =
+    "SSH PRIVATE KEY FILE FORMAT 1.1\n";
 
 /*
  * Saves the authentication (private) key in a file, encrypting it with
@@ -71,7 +61,7 @@ __RCSID("$NetBSD: authfile.c,v 1.1.1.2 2001/01/14 04:50:04 itojun Exp $");
  * passphrase.
  */
 
-static int
+int
 save_private_key_rsa1(const char *filename, const char *passphrase,
     RSA *key, const char *comment)
 {
@@ -97,8 +87,7 @@ save_private_key_rsa1(const char *filename, const char *passphrase,
 	buffer_init(&buffer);
 
 	/* Put checkbytes for checking passphrase validity. */
-	/* XXXthorpej */
-	RAND_pseudo_bytes((u_char *)&rand, sizeof(rand));
+	rand = arc4random();
 	buf[0] = rand & 0xff;
 	buf[1] = (rand >> 8) & 0xff;
 	buf[2] = buf[0];
@@ -123,9 +112,8 @@ save_private_key_rsa1(const char *filename, const char *passphrase,
 	buffer_init(&encrypted);
 
 	/* First store keyfile id string. */
-	cp = AUTHFILE_ID_STRING;
-	for (i = 0; cp[i]; i++)
-		buffer_put_char(&encrypted, cp[i]);
+	for (i = 0; authfile_id_string[i]; i++)
+		buffer_put_char(&encrypted, authfile_id_string[i]);
 	buffer_put_char(&encrypted, 0);
 
 	/* Store cipher type. */
@@ -168,7 +156,7 @@ save_private_key_rsa1(const char *filename, const char *passphrase,
 }
 
 /* save SSH2 key in OpenSSL PEM format */
-static int
+int
 save_private_key_ssh2(const char *filename, const char *_passphrase,
     Key *key, const char *comment)
 {
@@ -233,7 +221,7 @@ save_private_key(const char *filename, const char *passphrase, Key *key,
  * otherwise.
  */
 
-static int
+int
 load_public_key_rsa(const char *filename, RSA * pub, char **comment_return)
 {
 	int fd, i;
@@ -259,8 +247,8 @@ load_public_key_rsa(const char *filename, RSA * pub, char **comment_return)
 	}
 	close(fd);
 
-	/* Check that it is at least big enought to contain the ID string. */
-	if (len < strlen(AUTHFILE_ID_STRING) + 1) {
+	/* Check that it is at least big enough to contain the ID string. */
+	if (len < sizeof(authfile_id_string)) {
 		debug3("Bad RSA1 key file %.200s.", filename);
 		buffer_free(&buffer);
 		return 0;
@@ -269,8 +257,8 @@ load_public_key_rsa(const char *filename, RSA * pub, char **comment_return)
 	 * Make sure it begins with the id string.  Consume the id string
 	 * from the buffer.
 	 */
-	for (i = 0; i < (u_int) strlen(AUTHFILE_ID_STRING) + 1; i++)
-		if (buffer_get_char(&buffer) != (u_char) AUTHFILE_ID_STRING[i]) {
+	for (i = 0; i < sizeof(authfile_id_string); i++)
+		if (buffer_get_char(&buffer) != authfile_id_string[i]) {
 			debug3("Bad RSA1 key file %.200s.", filename);
 			buffer_free(&buffer);
 			return 0;
@@ -321,7 +309,7 @@ load_public_key(const char *filename, Key * key, char **comment_return)
  * Assumes we are called under uid of the owner of the file.
  */
 
-static int
+int
 load_private_key_rsa1(int fd, const char *filename,
     const char *passphrase, RSA * prv, char **comment_return)
 {
@@ -349,8 +337,8 @@ load_private_key_rsa1(int fd, const char *filename,
 	}
 	close(fd);
 
-	/* Check that it is at least big enought to contain the ID string. */
-	if (len < strlen(AUTHFILE_ID_STRING) + 1) {
+	/* Check that it is at least big enough to contain the ID string. */
+	if (len < sizeof(authfile_id_string)) {
 		debug3("Bad RSA1 key file %.200s.", filename);
 		buffer_free(&buffer);
 		return 0;
@@ -359,8 +347,8 @@ load_private_key_rsa1(int fd, const char *filename,
 	 * Make sure it begins with the id string.  Consume the id string
 	 * from the buffer.
 	 */
-	for (i = 0; i < (u_int) strlen(AUTHFILE_ID_STRING) + 1; i++)
-		if (buffer_get_char(&buffer) != (u_char) AUTHFILE_ID_STRING[i]) {
+	for (i = 0; i < sizeof(authfile_id_string); i++)
+		if (buffer_get_char(&buffer) != authfile_id_string[i]) {
 			debug3("Bad RSA1 key file %.200s.", filename);
 			buffer_free(&buffer);
 			return 0;
@@ -446,7 +434,7 @@ fail:
 	return 1;
 }
 
-static int
+int
 load_private_key_ssh2(int fd, const char *passphrase, Key *k, char **comment_return)
 {
 	FILE *fp;
@@ -551,7 +539,7 @@ load_private_key(const char *filename, const char *passphrase, Key *key,
 	return ret;
 }
 
-static int
+int
 do_load_public_key(const char *filename, Key *k, char **commentp)
 {
 	FILE *f;

@@ -1,5 +1,4 @@
-.\"
-.\"	$NetBSD: ssh-agent.1,v 1.1.1.2 2001/01/14 04:50:42 itojun Exp $
+.\" $OpenBSD: ssh-agent.1,v 1.20 2001/01/28 10:24:04 markus Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,14 +34,12 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" from OpenBSD: ssh-agent.1,v 1.16 2000/09/07 20:27:54 deraadt Exp
-.\"
-.Dd August 6, 2000
+.Dd September 25, 1999
 .Dt SSH-AGENT 1
 .Os
 .Sh NAME
 .Nm ssh-agent
-.Nd authentication agent for the Secure Shell
+.Nd authentication agent
 .Sh SYNOPSIS
 .Nm ssh-agent
 .Ar command
@@ -53,23 +50,17 @@
 .Fl k
 .Sh DESCRIPTION
 .Nm
-is a program to hold private keys used for public key (RSA or DSA)
-authentication.  It is intended to be started at the beginning of
-an X Window System or login session.
+is a program to hold private keys used for public key authentication
+(RSA, DSA).
+The idea is that
 .Nm
-works by setting certain variables in the user's environment.  Through
-the use of these environment variables, the agent can be located
-and automatically used for RSA authentication when logging in to
-other hosts using
+is started in the beginning of an X-session or a login session, and
+all other windows or programs are started as clients to the ssh-agent
+program.
+Through use of environment variables the agent can be located
+and automatically used for authentication when logging in to other
+machines using
 .Xr ssh 1 .
-.Pp
-A user generally one identity per
-.Dq workstation ,
-e.g. laptop or desktop computer, handheld device, etc.  Use of
-.Nm
-on these workstations prevents having to store authentication
-information on remote hosts, and prevents having to transmit
-Passphrases over the network.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -91,106 +82,63 @@ Kill the current agent (given by the
 environment variable).
 .El
 .Pp
-If a command line is given, it is executed as a sub-process of the agent.
-When the command dies, so does the agent.  If a command line is not given,
-the agent will not automatically exit, and must be explicitly killed with
-the
-.Fl k
-option when the session ends.
+If a commandline is given, this is executed as a subprocess of the agent.
+When the command dies, so does the agent.
 .Pp
 The agent initially does not have any private keys.
-Keys must added using
+Keys are added using
 .Xr ssh-add 1 .
+When executed without arguments,
+.Xr ssh-add 1
+adds the
+.Pa $HOME/.ssh/identity
+file.
+If the identity has a passphrase,
+.Xr ssh-add 1
+asks for the passphrase (using a small X11 application if running
+under X11, or from the terminal if running without X).
+It then sends the identity to the agent.
+Several identities can be stored in the
+agent; the agent can automatically use any of these identities.
+.Ic ssh-add -l
+displays the identities currently held by the agent.
 .Pp
-There are two main ways to set up the agent:
-.Bl -bullet
-.It
-Invoke
-.Nm
-with a command line.  The command will be started with the
-appropriate environment variables set to use the agent.
-.It
-Invoke
-.Nm
-without a command line, which causes
-.Nm
-to print shell commands which will set up the enviroment if
-evaluated by the shell.
-.Nm
-will attempt to detect if you are running a
-.Xr csh 1
-or
+The idea is that the agent is run in the user's local PC, laptop, or
+terminal.
+Authentication data need not be stored on any other
+machine, and authentication passphrases never go over the network.
+However, the connection to the agent is forwarded over SSH
+remote logins, and the user can thus use the privileges given by the
+identities anywhere in the network in a secure way.
+.Pp
+There are two main ways to get an agent setup:
+Either you let the agent
+start a new subcommand into which some environment variables are exported, or
+you let the agent print the needed shell commands (either
 .Xr sh 1
-style shell, and generate the appropriate syntax.  The
-syntax can be forced with the
-.Fl c
-and
-.Fl s
-flags.
-.El
+or
+.Xr csh 1
+syntax can be generated) which can be evalled in the calling shell.
+Later
+.Xr ssh 1
+look at these variables and use them to establish a connection to the agent.
 .Pp
-When the agent is started, a Unix-domain socket is created
-and the name of this socket stored in the
+A unix-domain socket is created
+.Pq Pa /tmp/ssh-XXXXXXXX/agent.<pid> ,
+and the name of this socket is stored in the
 .Ev SSH_AUTH_SOCK
-environment variable.
+environment
+variable.
 The socket is made accessible only to the current user.
 This method is easily abused by root or another instance of the same
 user.
-.Sh EXAMPLES
-The following shows using the command line facility of
-.Nm
-to associate an agent with an X session started by
-.Xr xinit 1 :
-.Bd -literal -offset indent
-#!/bin/sh -
-#
-# $HOME/.xinitrc
-#
-
-if [ -r $HOME/.ssh/identity ]; then
-	EXEC="exec ssh-agent"
-else
-	EXEC="exec"
-fi
-
-# .xsession will perform the ssh-add to add the keys.
-$EXEC $HOME/.xsession
-.Ed
 .Pp
-The following shows using
-.Nm
-and
-.Xr ssh-add 1
-in an X session startup script:
-.Bd -literal -offset indent
-#!/bin/sh -
-#
-# $HOME/.xsession
-#
-
-if [ -f $HOME/.Xdefaults ]; then
-	xrdb -merge $HOME/.Xdefaults
-fi
-
-xsetroot -solid black
-
-if [ -r $HOME/.ssh/identity ]; then
-	eval `ssh-agent`
-	ssh-add < /dev/null	# ensure stdin is not a tty
-	if [ $? != 0 ]; then
-		# Failed to provide a Passphrase, bail out!
-		exit 1
-	fi
-fi
-
-# Start the window manager.
-twm
-
-# Kill the agent we started above.
-if [ -n "$SSH_AGENT_PID" ]; then
-	ssh-agent -k
-fi
-.Ed
+The
+.Ev SSH_AGENT_PID
+environment variable holds the agent's PID.
+.Pp
+The agent exits automatically when the command given on the command
+line terminates.
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa $HOME/.ssh/identity
@@ -212,10 +160,18 @@ authentication agent.
 These sockets should only be readable by the owner.
 The sockets should get automatically removed when the agent exits.
 .El
-.Sh AUTHOR
-Tatu Ylonen <ylo@cs.hut.fi>, Markus Friedl
+.Sh AUTHORS
+OpenSSH is a derivative of the original and free
+ssh 1.2.12 release by Tatu Ylonen.
+Aaron Campbell, Bob Beck, Markus Friedl, Niels Provos,
+Theo de Raadt and Dug Song
+removed many bugs, re-added newer features and
+created OpenSSH.
+Markus Friedl contributed the support for SSH
+protocol versions 1.5 and 2.0.
 .Sh SEE ALSO
 .Xr ssh 1 ,
 .Xr ssh-add 1 ,
 .Xr ssh-keygen 1 ,
-.Xr sshd 8
+.Xr sshd 8 ,
+.Xr ssl 8

@@ -1,5 +1,3 @@
-/*	$NetBSD: rsa.c,v 1.1.1.2 2001/01/14 04:50:32 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -10,7 +8,7 @@
  * software must be clearly marked as such, and if the derived work is
  * incompatible with the protocol description in the RFC file, it must be
  * called by a name other than "ssh" or "Secure Shell".
- * 
+ *
  *
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
  *
@@ -61,17 +59,11 @@
  *     [gone - had to be deleted - what a pity]
  */
 
-/* from OpenBSD: rsa.c,v 1.18 2000/12/19 23:17:57 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: rsa.c,v 1.1.1.2 2001/01/14 04:50:32 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: rsa.c,v 1.21 2001/02/04 15:32:24 stevesk Exp $");
 
 #include "rsa.h"
-#include "ssh.h"
+#include "log.h"
 #include "xmalloc.h"
 
 void
@@ -102,7 +94,7 @@ rsa_public_encrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 	xfree(inbuf);
 }
 
-void
+int
 rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 {
 	u_char *inbuf, *outbuf;
@@ -116,13 +108,14 @@ rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 	BN_bn2bin(in, inbuf);
 
 	if ((len = RSA_private_decrypt(ilen, inbuf, outbuf, key,
-	    RSA_PKCS1_PADDING)) <= 0)
-		fatal("rsa_private_decrypt() failed");
-
-	BN_bin2bn(outbuf, len, out);
-
+	    RSA_PKCS1_PADDING)) <= 0) {
+		error("rsa_private_decrypt() failed");
+	} else {
+		BN_bin2bn(outbuf, len, out);
+	}
 	memset(outbuf, 0, olen);
 	memset(inbuf, 0, ilen);
 	xfree(outbuf);
 	xfree(inbuf);
+	return len;
 }

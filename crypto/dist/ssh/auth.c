@@ -1,52 +1,4 @@
-/*	$NetBSD: auth.c,v 1.1.1.2 2001/01/14 04:50:00 itojun Exp $	*/
-
-/*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 /*
- * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
- *                    All rights reserved
- *
- * As far as I am concerned, the code I have written for this software
- * can be used freely for any purpose.  Any derived versions of this
- * software must be clearly marked as such, and if the derived work is
- * incompatible with the protocol description in the RFC file, it must be
- * called by a name other than "ssh" or "Secure Shell".
- *
- *
  * Copyright (c) 2000 Markus Friedl. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,129 +22,40 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: auth.c,v 1.11 2000/10/11 20:27:23 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: auth.c,v 1.1.1.2 2001/01/14 04:50:00 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: auth.c,v 1.16 2001/02/04 15:32:22 stevesk Exp $");
 
 #include "xmalloc.h"
-#include "rsa.h"
-#include "ssh.h"
-#include "pty.h"
-#include "packet.h"
-#include "buffer.h"
-#include "mpaux.h"
-#include "servconf.h"
-#include "compat.h"
-#include "channels.h"
 #include "match.h"
-
-#include "bufaux.h"
-#include "ssh2.h"
+#include "groupaccess.h"
+#include "log.h"
+#include "servconf.h"
 #include "auth.h"
-#include "session.h"
-
-#include <login_cap.h>
+#include "auth-options.h"
+#include "canohost.h"
 
 /* import */
 extern ServerOptions options;
 
 /*
- * Check if the user is allowed to log in via ssh. If user is listed in
- * DenyUsers or user's primary group is listed in DenyGroups, false will
- * be returned. If AllowUsers isn't empty and user isn't listed there, or
- * if AllowGroups isn't empty and user isn't listed there, false will be
- * returned.
+ * Check if the user is allowed to log in via ssh. If user is listed
+ * in DenyUsers or one of user's groups is listed in DenyGroups, false
+ * will be returned. If AllowUsers isn't empty and user isn't listed
+ * there, or if AllowGroups isn't empty and one of user's groups isn't
+ * listed there, false will be returned.
  * If the user's shell is not executable, false will be returned.
  * Otherwise true is returned.
  */
 int
-allowed_user(struct passwd *pw)
+allowed_user(struct passwd * pw)
 {
 	struct stat st;
-	struct group *grp;
-	const char *shell;
-	int i, match_name, match_ip;
-	login_cap_t *lc;
-	const char *hostname, *ipaddr;
-	char *cap_hlist, *hp;
-
-	hostname = get_canonical_hostname();
-	ipaddr = get_remote_ipaddr();
+	char *shell;
+	int i;
 
 	/* Shouldn't be called if pw is NULL, but better safe than sorry... */
-	if (pw == NULL)
-		goto denied;
-
-	lc = login_getclass(pw->pw_class);
-
-	/*
-	 * Check the deny list.
-	 */
-	cap_hlist = login_getcapstr(lc, "host.deny", NULL, NULL);
-	if (cap_hlist != NULL) {
-		hp = strtok(cap_hlist, ",");
-		while (hp != NULL) {
-			match_name = match_hostname(hostname,
-			    hp, strlen(hp));
-			match_ip = match_hostname(ipaddr,
-			    hp, strlen(hp));
-			/*
-			 * Only a positive match here causes a "deny".
-			 */
-			if (match_name > 0 || match_ip > 0) {
-				free(cap_hlist);
-				login_close(lc);
-				goto denied;
-			}
-			hp = strtok(NULL, ",");
-		}
-		free(cap_hlist);
-	}
-
-	/*
-	 * Check the allow list.  If the allow list exists, and the
-	 * remote host is not in it, the user is implicitly denied.
-	 */
-	cap_hlist = login_getcapstr(lc, "host.allow", NULL, NULL);
-	if (cap_hlist != NULL) {
-		hp = strtok(cap_hlist, ",");
-		if (hp == NULL) {
-			/* Just in case there's an empty string... */
-			free(cap_hlist);
-			login_close(lc);
-			goto denied;
-		}
-		while (hp != NULL) {
-			match_name = match_hostname(hostname,
-			    hp, strlen(hp));
-			match_ip = match_hostname(ipaddr,
-			    hp, strlen(hp));
-			/*
-			 * Negative match causes an immediate "deny".
-			 * Positive match causes us to break out
-			 * of the loop (allowing a fallthrough).
-			 */
-			if (match_name < 0 || match_ip < 0) {
-				free(cap_hlist);
-				login_close(lc);
-				goto denied;
-			}
-			if (match_name > 0 || match_ip > 0)
-				break;
-		}
-		free(cap_hlist);
-		if (hp == NULL) {
-			login_close(lc);
-			goto denied;
-		}
-	}
-
-	login_close(lc);
+	if (!pw || !pw->pw_name)
+		return 0;
 
 	/*
 	 * Get the shell from the password data.  An empty shell field is
@@ -200,82 +63,120 @@ allowed_user(struct passwd *pw)
 	 */
 	shell = (pw->pw_shell[0] == '\0') ? _PATH_BSHELL : pw->pw_shell;
 
-	/*
-	 * Deny if shell does not exists or is not executable.
-	 * XXX Should check to see if it is executable by the
-	 * XXX requesting user.  --thorpej
-	 */
+	/* deny if shell does not exists or is not executable */
 	if (stat(shell, &st) != 0)
-		goto denied;
-	if (S_ISREG(st.st_mode) == 0 ||
-	    (st.st_mode & (S_IXOTH|S_IXUSR|S_IXGRP)) == 0)
-		goto denied;
-
-	/*
-	 * XXX Consider nuking {Allow,Deny}{Users,Groups}.  We have the
-	 * XXX login_cap(3) mechanism which covers all other types of
-	 * XXX logins, too.
-	 */
+		return 0;
+	if (!((st.st_mode & S_IFREG) && (st.st_mode & (S_IXOTH|S_IXUSR|S_IXGRP))))
+		return 0;
 
 	/* Return false if user is listed in DenyUsers */
 	if (options.num_deny_users > 0) {
-		if (pw->pw_name == NULL)
-			goto denied;
 		for (i = 0; i < options.num_deny_users; i++)
 			if (match_pattern(pw->pw_name, options.deny_users[i]))
-				goto denied;
+				return 0;
 	}
 	/* Return false if AllowUsers isn't empty and user isn't listed there */
 	if (options.num_allow_users > 0) {
-		if (pw->pw_name == NULL)
-			goto denied;
 		for (i = 0; i < options.num_allow_users; i++)
 			if (match_pattern(pw->pw_name, options.allow_users[i]))
 				break;
 		/* i < options.num_allow_users iff we break for loop */
 		if (i >= options.num_allow_users)
-			goto denied;
+			return 0;
 	}
-	/* Get the primary group name if we need it. Return false if it fails */
 	if (options.num_deny_groups > 0 || options.num_allow_groups > 0) {
-		grp = getgrgid(pw->pw_gid);
-		if (grp == NULL)
-			goto denied;
+		/* Get the user's group access list (primary and supplementary) */
+		if (ga_init(pw->pw_name, pw->pw_gid) == 0)
+			return 0;
 
-		/* Return false if user's group is listed in DenyGroups */
-		if (options.num_deny_groups > 0) {
-			if (grp->gr_name == NULL)
-				goto denied;
-			for (i = 0; i < options.num_deny_groups; i++)
-				if (match_pattern(grp->gr_name,
-				    options.deny_groups[i]))
-					goto denied;
-		}
+		/* Return false if one of user's groups is listed in DenyGroups */
+		if (options.num_deny_groups > 0)
+			if (ga_match(options.deny_groups,
+			    options.num_deny_groups)) {
+				ga_free();
+				return 0;
+			}
 		/*
-		 * Return false if AllowGroups isn't empty and user's group
+		 * Return false if AllowGroups isn't empty and one of user's groups
 		 * isn't listed there
 		 */
-		if (options.num_allow_groups > 0) {
-			if (grp->gr_name == NULL)
-				goto denied;
-			for (i = 0; i < options.num_allow_groups; i++)
-				if (match_pattern(grp->gr_name,
-				    options.allow_groups[i]))
-					break;
-			/* i < options.num_allow_groups iff we break for
-			   loop */
-			if (i >= options.num_allow_groups)
-				goto denied;
-		}
+		if (options.num_allow_groups > 0)
+			if (!ga_match(options.allow_groups,
+			    options.num_allow_groups)) {
+				ga_free();
+				return 0;
+			}
+		ga_free();
 	}
-
 	/* We found no reason not to let this user try to log on... */
 	return 1;
+}
 
- denied:
-	/* XXX Need to add notice()  --thorpej */
-	log("Denied connection for %.200s from %.200s [%.200s] port %d.\n",
-	    pw == NULL ? "<unknown>" : pw->pw_name, hostname, ipaddr,
-	    get_remote_port());
-	return (0);
+Authctxt *
+authctxt_new(void)
+{
+	Authctxt *authctxt = xmalloc(sizeof(*authctxt));
+	memset(authctxt, 0, sizeof(*authctxt));
+	return authctxt;
+}
+
+struct passwd *
+pwcopy(struct passwd *pw)
+{
+	struct passwd *copy = xmalloc(sizeof(*copy));
+	memset(copy, 0, sizeof(*copy));
+	copy->pw_name = xstrdup(pw->pw_name);
+	copy->pw_passwd = xstrdup(pw->pw_passwd);
+	copy->pw_uid = pw->pw_uid;
+	copy->pw_gid = pw->pw_gid;
+	copy->pw_class = xstrdup(pw->pw_class);
+	copy->pw_dir = xstrdup(pw->pw_dir);
+	copy->pw_shell = xstrdup(pw->pw_shell);
+	return copy;
+}
+
+void
+auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
+{
+	void (*authlog) (const char *fmt,...) = verbose;
+	char *authmsg;
+
+	/* Raise logging level */
+	if (authenticated == 1 ||
+	    !authctxt->valid ||
+	    authctxt->failures >= AUTH_FAIL_LOG ||
+	    strcmp(method, "password") == 0)
+		authlog = log;
+
+	if (authctxt->postponed)
+		authmsg = "Postponed";
+	else
+		authmsg = authenticated ? "Accepted" : "Failed";
+
+	authlog("%s %s for %s%.100s from %.200s port %d%s",
+	    authmsg,
+	    method,
+	    authctxt->valid ? "" : "illegal user ",
+	    authctxt->valid && authctxt->pw->pw_uid == 0 ? "ROOT" : authctxt->user,
+	    get_remote_ipaddr(),
+	    get_remote_port(),
+	    info);
+}
+
+/*
+ * Check if the user is logging in as root and root logins are disallowed.
+ * Note that root login is _allways_ allowed for forced commands.
+ */
+int
+auth_root_allowed(void)
+{
+	if (options.permit_root_login)
+		return 1;
+	if (forced_command) {
+		log("Root login accepted for forced command.");
+		return 1;
+	} else {
+		log("ROOT LOGIN REFUSED FROM %.200s", get_remote_ipaddr());
+		return 0;
+	}
 }
