@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.21 2000/01/23 01:37:19 mycroft Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.22 2000/01/23 04:03:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -42,7 +42,7 @@
  *   to let it do PF_UNSPEC (actually we never pass PF_UNSPEC to
  *   getipnodebyname().
  * - The code filters out AFs that are not supported by the kernel,
- *   when resolving FQDNs and globbing NULL hostname.  Is it the right
+ *   when globbing NULL hostname (to loopback, or wildcard).  Is it the right
  *   thing to do?  What is the relationship with post-RFC2553 AI_ADDRCONFIG
  *   in ai_flags?
  */
@@ -346,6 +346,7 @@ getaddrinfo(hostname, servname, hints, res)
 	 */
 	if (MATCH_FAMILY(pai->ai_family, PF_INET, 1)
 	 || MATCH_FAMILY(pai->ai_family, PF_INET6, 1)) {
+		/* call to get_portmatch() can conterminate *pai */
 		ai0 = *pai;
 
 		if (pai->ai_family == PF_UNSPEC)
@@ -477,9 +478,6 @@ explore_fqdn(pai, hostname, servname, res)
 	const char *servname;
 	struct addrinfo **res;
 {
-#if 0
-	int s;
-#endif
 	struct hostent *hp;
 	int h_error;
 	int af;
@@ -497,18 +495,11 @@ explore_fqdn(pai, hostname, servname, res)
 	sentinel.ai_next = NULL;
 	cur = &sentinel;
 
-#if 0
 	/*
-	 * filter out AFs that are not supported by the kernel
-	 * XXX errno?
+	 * Do not filter unsupported AFs here.  We need to honor content of
+	 * databases (/etc/hosts, DNS and others).  Otherwise we cannot
+	 * replace gethostbyname() by getaddrinfo().
 	 */
-	s = socket(pai->ai_family, SOCK_DGRAM, 0);
-	if (s < 0) {
-		if (errno != EMFILE)
-			return 0;
-	} else
-		close(s);
-#endif
 
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
