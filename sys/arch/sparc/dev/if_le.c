@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.42.6.1 1997/03/06 14:36:23 is Exp $	*/
+/*	$NetBSD: if_le.c,v 1.42.6.2 1997/03/10 15:47:55 is Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -58,7 +58,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <machine/autoconf.h>

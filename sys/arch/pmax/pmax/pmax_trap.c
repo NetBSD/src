@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.39.6.1 1997/03/04 16:12:12 is Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.39.6.2 1997/03/10 15:50:43 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,7 +83,7 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <net/if_ether.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 
 struct ifnet; struct ethercom;
 #include <dev/ic/am7990var.h>		/* Lance interrupt for kn01 */
