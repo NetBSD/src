@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.67 2000/04/12 11:33:43 fvdl Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.67.4.1 2001/04/01 17:06:00 he Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -324,6 +324,16 @@ bwrite(bp)
 	struct vnode *vp;
 	struct mount *mp;
 
+	vp = bp->b_vp;
+	if (vp != NULL) {
+		if (vp->v_type == VBLK)
+			mp = vp->v_specmountpoint;
+		else
+			mp = vp->v_mount;
+	} else {
+		mp = NULL;
+	}
+
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
 	 * synchronous, but the file system was mounted with MNT_ASYNC,
@@ -332,8 +342,7 @@ bwrite(bp)
 	 * to async, not sync writes (which is safe, but ugly).
 	 */
 	sync = !ISSET(bp->b_flags, B_ASYNC);
-	if (sync && bp->b_vp && bp->b_vp->v_mount &&
-	    ISSET(bp->b_vp->v_mount->mnt_flag, MNT_ASYNC)) {
+	if (sync && mp != NULL && ISSET(mp->mnt_flag, MNT_ASYNC)) {
 		bdwrite(bp);
 		return (0);
 	}
@@ -343,17 +352,11 @@ bwrite(bp)
 	 * Writes to block devices are charged to their associated
 	 * filesystem (if any).
 	 */
-	if ((vp = bp->b_vp) != NULL) {
-		if (vp->v_type == VBLK)
-			mp = vp->v_specmountpoint;
+	if (mp != NULL) {
+		if (sync)
+			mp->mnt_stat.f_syncwrites++;
 		else
-			mp = vp->v_mount;
-		if (mp != NULL) {
-			if (sync)
-				mp->mnt_stat.f_syncwrites++;
-			else
-				mp->mnt_stat.f_asyncwrites++;
-		}
+			mp->mnt_stat.f_asyncwrites++;
 	}
 
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
