@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.141 2004/05/31 15:33:38 pk Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.142 2004/08/07 03:34:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.141 2004/05/31 15:33:38 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.142 2004/08/07 03:34:37 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -664,7 +664,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 
 	retval[0] = child->p_pid;
 
-	if (child->p_stat == SZOMB) {
+	if (P_ZOMBIE(child)) {
 		if (SCARG(uap, status)) {
 			status = child->p_xstat;	/* convert to int */
 			error = copyout(&status, SCARG(uap, status),
