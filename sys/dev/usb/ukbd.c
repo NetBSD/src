@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.79 2001/12/30 19:37:43 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.80 2001/12/31 12:15:21 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.79 2001/12/30 19:37:43 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.80 2001/12/31 12:15:21 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ Static int	ukbd_enable(void *, int);
 Static void	ukbd_set_leds(void *, int);
 
 #if defined(__NetBSD__)
-Static int	ukbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+Static int	ukbd_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr );
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 Static void	ukbd_rawrepeat(void *v);
 #endif
@@ -467,7 +467,7 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 	ud->modifiers = 0;
 	for (i = 0; i < sc->sc_nmod; i++)
 		if (hid_get_data(ibuf, &sc->sc_modloc[i]))
-			ud->modifiers |= 1 << i;
+			ud->modifiers |= sc->sc_mods[i].mask;
 	memcpy(ud->keycode, (char *)ibuf + sc->sc_keycodeloc.pos / 8,
 	       sc->sc_nkeycode);
 
@@ -684,7 +684,7 @@ ukbd_rawrepeat(void *v)
 #endif
 
 int
-ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
 	struct ukbd_softc *sc = v;
 
@@ -804,6 +804,8 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 			 "cnt=%d\n", imod,
 			 h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {
+			if (h.loc.size != 1)
+				return ("bad modifier size");
 			/* Single item */
 			if (imod < MAXMOD) {
 				sc->sc_modloc[imod] = h.loc;

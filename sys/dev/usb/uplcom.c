@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.23 2001/12/03 01:47:12 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.24 2001/12/31 12:15:22 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.23 2001/12/03 01:47:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.24 2001/12/31 12:15:22 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ Static	void uplcom_break(struct uplcom_softc *, int);
 Static	void uplcom_set_line_state(struct uplcom_softc *);
 Static	void uplcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
 #if TODO
-Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, struct proc *);
+Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr );
 #endif
 Static	int  uplcom_param(void *, int, struct termios *);
 Static	int  uplcom_open(void *, int);
@@ -710,7 +710,7 @@ uplcom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 #if TODO
 int
 uplcom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
-	     struct proc *p)
+	     usb_proc_ptr p)
 {
 	struct uplcom_softc *sc = addr;
 	int error = 0;

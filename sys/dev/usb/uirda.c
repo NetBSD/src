@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.8 2001/12/18 14:50:01 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.9 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.8 2001/12/18 14:50:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.9 2001/12/31 12:15:21 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,14 +226,14 @@ struct uirda_softc {
 
 #define UIRDA_WR_TIMEOUT 200
 
-int uirda_open(void *h, int flag, int mode, struct proc *p);
-int uirda_close(void *h, int flag, int mode, struct proc *p);
+int uirda_open(void *h, int flag, int mode, usb_proc_ptr p);
+int uirda_close(void *h, int flag, int mode, usb_proc_ptr p);
 int uirda_read(void *h, struct uio *uio, int flag);
 int uirda_write(void *h, struct uio *uio, int flag);
 int uirda_set_params(void *h, struct irda_params *params);
 int uirda_get_speeds(void *h, int *speeds);
 int uirda_get_turnarounds(void *h, int *times);
-int uirda_poll(void *h, int events, struct proc *p);
+int uirda_poll(void *h, int events, usb_proc_ptr p);
 
 struct irframe_methods uirda_methods = {
 	uirda_open, uirda_close, uirda_read, uirda_write, uirda_poll, 
@@ -438,7 +438,7 @@ uirda_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uirda_open(void *h, int flag, int mode, struct proc *p)
+uirda_open(void *h, int flag, int mode, usb_proc_ptr p)
 {
 	struct uirda_softc *sc = h;
 	int error;
@@ -507,7 +507,7 @@ bad1:
 }
 
 int
-uirda_close(void *h, int flag, int mode, struct proc *p)
+uirda_close(void *h, int flag, int mode, usb_proc_ptr p)
 {
 	struct uirda_softc *sc = h;
 
@@ -654,7 +654,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 }
 
 int
-uirda_poll(void *h, int events, struct proc *p)
+uirda_poll(void *h, int events, usb_proc_ptr p)
 {
 	struct uirda_softc *sc = h;
 	int revents = 0;
