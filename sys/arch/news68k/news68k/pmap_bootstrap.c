@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.7 2003/01/18 12:29:03 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.8 2003/04/02 04:05:32 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -144,15 +144,15 @@ pmap_bootstrap(nextpa, firstpa)
 	kstsize = 1;
 #endif
 	kstpa = nextpa;
-	nextpa += kstsize * NBPG;
+	nextpa += kstsize * PAGE_SIZE;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
 		(iiomapsize + eiomapsize + NPTEPG - 1) / NPTEPG;
-	nextpa += nptpages * NBPG;
+	nextpa += nptpages * PAGE_SIZE;
 	eiopa = nextpa - eiomapsize * sizeof(pt_entry_t);
 	iiopa = eiopa - iiomapsize * sizeof(pt_entry_t);
 	kptmpa = nextpa;
-	nextpa += NBPG;
+	nextpa += PAGE_SIZE;
 	p0upa = nextpa;
 	nextpa += USPACE;
 
@@ -247,7 +247,7 @@ pmap_bootstrap(nextpa, firstpa)
 		protopte = kptpa | PG_RW | PG_CI | PG_V;
 		while (pte < epte) {
 			*pte++ = protopte;
-			protopte += NBPG;
+			protopte += PAGE_SIZE;
 		}
 		/*
 		 * Invalidate all but the last remaining entry.
@@ -272,8 +272,8 @@ pmap_bootstrap(nextpa, firstpa)
 		while (pte < epte) {
 			*ste++ = protoste;
 			*pte++ = protopte;
-			protoste += NBPG;
-			protopte += NBPG;
+			protoste += PAGE_SIZE;
+			protopte += PAGE_SIZE;
 		}
 		/*
 		 * Invalidate all but the last remaining entries in both.
@@ -301,7 +301,7 @@ pmap_bootstrap(nextpa, firstpa)
 	protopte = firstpa | PG_RO | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
-		protopte += NBPG;
+		protopte += PAGE_SIZE;
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
@@ -319,7 +319,7 @@ pmap_bootstrap(nextpa, firstpa)
 #endif
 	while (pte < epte) {
 		*pte++ = protopte;
-		protopte += NBPG;
+		protopte += PAGE_SIZE;
 	}
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
@@ -329,7 +329,7 @@ pmap_bootstrap(nextpa, firstpa)
 	protopte = RELOC(intiobase_phys, u_int) | PG_RW | PG_CI | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
-		protopte += NBPG;
+		protopte += PAGE_SIZE;
 	}
 
 	/*
@@ -480,11 +480,11 @@ pmap_bootstrap(nextpa, firstpa)
 		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
 		RELOC(CADDR1, caddr_t) = (caddr_t)va;
-		va += NBPG;
+		va += PAGE_SIZE;
 		RELOC(CADDR2, caddr_t) = (caddr_t)va;
-		va += NBPG;
+		va += PAGE_SIZE;
 		RELOC(vmmap, caddr_t) = (caddr_t)va;
-		va += NBPG;
+		va += PAGE_SIZE;
 		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vaddr_t) = va;
