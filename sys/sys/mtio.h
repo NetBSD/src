@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtio.h	7.6 (Berkeley) 2/5/91
- *	$Id: mtio.h,v 1.3 1993/05/20 16:22:46 cgd Exp $
+ *	$Id: mtio.h,v 1.4 1994/01/26 21:48:20 mw Exp $
  */
 
 #ifndef _SYS_MTIO_H_
@@ -95,6 +95,11 @@ struct mtget {
 #define MT_ISVIPER1	0x0e		/* Archive Viper-150 */
 #define MT_ISPYTHON	0x0f		/* Archive Python (DAT) */
 #define MT_ISHPDAT	0x10		/* HP 35450A DAT drive */
+#define MT_ISWANGTEK	0x11            /* WANGTEK 5150ES */
+#define MT_ISCALIPER	0x12            /* Caliper CP150 */
+#define MT_ISWTEK5099	0x13            /* WANGTEK 5099ES */
+#define MT_ISVIPER2525	0x14            /* Archive Viper 2525 */
+
 
 /* mag tape io control commands */
 #define	MTIOCTOP	_IOW('m', 1, struct mtop)	/* do a mag tape op */
