@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.8 1997/09/02 13:18:38 thorpej Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.9 1998/02/25 21:41:55 perry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 1997/09/02 13:18:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9 1998/02/25 21:41:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ sys_sysarch(p, v, retval)
 #if 0
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
-		syscallarg(char *) parms;
+		syscallarg(void *) parms;
 	} */ *uap = v;
 #endif
 
