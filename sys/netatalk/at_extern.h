@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.1 1997/04/02 21:31:06 christos Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.2 1997/04/02 21:47:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -28,8 +28,16 @@
 
 #ifndef _NETATALK_AT_EXTERN_H_
 #define _NETATALK_AT_EXTERN_H_
-struct aarptab;
 
+struct ifnet;
+struct mbuf;
+struct sockaddr_at;
+struct proc;
+struct at_ifaddr;
+struct route;
+struct socket;
+
+void	atintr		__P((void));
 void	aarpprobe	__P((void *));
 int	aarpresolve	__P((struct ifnet *, struct mbuf *,
     struct sockaddr_at *, u_char *));
