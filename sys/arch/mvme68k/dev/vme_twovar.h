@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.1.16.2 2000/03/13 19:09:03 scw Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.1.16.3 2000/03/14 12:43:38 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,13 +40,12 @@
 #define _MVME68K_VME_TWOVAR_H
 
 struct vmetwo_range {
-	vme_am_t		vr_am;
-	vme_datasize_t		vr_datasize;
-	u_int32_t		vr_locstart;
-	u_int32_t		vr_locmask;
-	vme_addr_t		vr_vmestart;
-	vme_addr_t		vr_vmeend;
-	vme_addr_t		vr_vmemask;
+	vme_am_t	vr_am;
+	vme_datasize_t	vr_datasize;
+	paddr_t		vr_locstart;
+	paddr_t		vr_locmask;
+	vme_addr_t	vr_vmestart;
+	vme_addr_t	vr_vmeend;
 };
 
 #define VME2_AM_DISABLED	((vme_am_t)-1)
