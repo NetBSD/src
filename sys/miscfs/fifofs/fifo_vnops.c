@@ -31,23 +31,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fifo_vnops.c	7.7 (Berkeley) 4/15/91
- *	$Id: fifo_vnops.c,v 1.5.4.1 1993/11/10 20:04:49 mycroft Exp $
+ *	$Id: fifo_vnops.c,v 1.5.4.2 1993/11/14 22:34:45 mycroft Exp $
  */
 
-#include "param.h"
-#include "time.h"
-#include "namei.h"
-#include "vnode.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "un.h"
-#include "stat.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "file.h"
-#include "fifo.h"
-#include "errno.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/un.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
+
+#include <miscfs/fifofs/fifo.h>
 
 /*
  * This structure is associated with the FIFO vnode and stores

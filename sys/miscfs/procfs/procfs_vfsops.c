@@ -27,23 +27,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vfsops.c,v 1.7 1993/08/26 19:01:01 pk Exp $
+ *	$Id: procfs_vfsops.c,v 1.7.2.1 1993/11/14 22:35:05 mycroft Exp $
  */
 
 /*
  * PROCFS VFS interface routines
  */
 
-#include "param.h"
-#include "time.h"
-#include "kernel.h"
-#include "proc.h"
-#include "buf.h"
-#include "mount.h"
-#include "signalvar.h"
-#include "vnode.h"
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/mount.h>
+#include <sys/signalvar.h>
+#include <sys/vnode.h>
 
-#include "pfsnode.h"
+#include <miscfs/procfs/pfsnode.h>
 
 extern struct vnodeops pfs_vnodeops;
 

@@ -27,32 +27,34 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vnops.c,v 1.6.2.1 1993/09/24 08:53:04 mycroft Exp $
+ *	$Id: procfs_vnops.c,v 1.6.2.2 1993/11/14 22:35:07 mycroft Exp $
  */
 
 /*
  * PROCFS vnode interface routines
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "kernel.h"
-#include "ioctl.h"
-#include "file.h"
-#include "proc.h"
-#include "buf.h"
-#include "vnode.h"
-#include "namei.h"
-#include "resourcevar.h"
-#include "vm/vm.h"
-#include "kinfo.h"
-#include "kinfo_proc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/vnode.h>
+#include <sys/namei.h>
+#include <sys/resourcevar.h>
 
-#include "procfs.h"
-#include "pfsnode.h"
+#include <vm/vm.h>
 
-#include "machine/vmparam.h"
+#include <sys/kinfo.h>
+#include <sys/kinfo_proc.h>
+
+#include <miscfs/procfs/procfs.h>
+#include <miscfs/procfs/pfsnode.h>
+
+#include <machine/vmparam.h>
 
 /*
  * procfs vnode operations.

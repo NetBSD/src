@@ -33,25 +33,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vfsops.c,v 1.5 1993/08/23 16:02:46 mycroft Exp $
+ *	$Id: fdesc_vfsops.c,v 1.5.2.1 1993/11/14 22:34:39 mycroft Exp $
  */
 
 /*
  * /dev/fd Filesystem
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "types.h"
-#include "proc.h"
-#include "resourcevar.h"
-#include "filedesc.h"
-#include "vnode.h"
-#include "mount.h"
-#include "namei.h"
-#include "malloc.h"
-#include "miscfs/fdesc/fdesc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/filedesc.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/malloc.h>
+#include <miscfs/fdesc/fdesc.h>
 
 static u_short fdesc_mntid;
 
