@@ -1,4 +1,4 @@
-/*     $NetBSD: bus.h,v 1.9 2001/03/07 22:42:18 thorpej Exp $   */
+/*     $NetBSD: bus.h,v 1.10 2001/05/31 02:30:04 enami Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,10 +45,11 @@
 #ifdef BUS_SPACE_DEBUG
 #include <sys/systm.h> /* for printf() prototype */
 /*
- * Macros for sanity-checking the aligned-ness of pointers passed to
- * bus space ops.  These are not strictly necessary on the x86, but
- * could lead to performance improvements, and help catch problems
- * with drivers that would creep up on other architectures.
+ * Macros for checking the aligned-ness of pointers passed to bus
+ * space ops.  Strict alignment is required by the MIPS architecture,
+ * and a trap will occur if unaligned access is performed.  These
+ * may aid in the debugging of a broken device driver by displaying
+ * useful information about the problem.
  */
 #define	__BUS_SPACE_ALIGNED_ADDRESS(p, t)				\
 	((((u_long)(p)) & (sizeof(t)-1)) == 0)
