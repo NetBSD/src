@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.5 2002/03/17 19:40:33 atatat Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.6 2002/03/23 02:00:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.5 2002/03/17 19:40:33 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.6 2002/03/23 02:00:26 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,9 @@ struct fb_devconfig {
 
 	struct vidc_mode   mode_info;
 	struct rasops_info rinfo;
+
+	/* origional rasops functions for deligation */
+	struct wsdisplay_emulops orig_ri_ops;
 };
 
 
@@ -181,6 +184,7 @@ static const struct wsdisplay_accessops vidcvideo_accessops = {
 	0 /* load_font */
 };
 
+
 /* Function prototypes */
 int         vidcvideo_cnattach __P((vaddr_t));
 static void vidcvideo_colourmap_and_cursor_init __P((struct fb_devconfig *));
@@ -195,9 +199,11 @@ static void vidcvideo_getdevconfig __P((vaddr_t, struct fb_devconfig *));
 static int  vidcvideointr __P((void *));
 static void vidcvideo_config_wscons __P((struct fb_devconfig *));
 
+
 /* Acceleration function prototypes */
 static void vv_copyrows __P((void *, int, int, int));
 static void vv_eraserows __P((void *, int, int, long));
+static void vv_putchar __P((void *c, int row, int col, u_int uc, long attr));
 
 
 static int
@@ -303,9 +309,19 @@ vidcvideo_config_wscons(dc)
 		dc->rinfo.ri_width / dc->rinfo.ri_font->fontwidth
 	);
 
-	/* XXX add our accelerated functions */
+	/*
+	 * Provide a hook for the acceleration functions and make a copy of the
+	 * original rasops functions for passing on calls
+	 */
+	dc->rinfo.ri_hw = dc;
+	memcpy(&(dc->orig_ri_ops), &(dc->rinfo.ri_ops), sizeof(struct wsdisplay_emulops));
+
+	/* add our accelerated functions */
 	dc->rinfo.ri_ops.eraserows = vv_eraserows;
 	dc->rinfo.ri_ops.copyrows  = vv_copyrows;
+
+	/* add the extra activity measuring functions; they just delegate on */
+	dc->rinfo.ri_ops.putchar   = vv_putchar;
 
 	/* XXX shouldn't be global */
 	vidcvideo_stdscreen.nrows = dc->rinfo.ri_rows;
@@ -328,20 +344,17 @@ vidcvideo_attach(parent, self, aux)
 	struct wsemuldisplaydev_attach_args waa;
 	struct hwcmap256 *cm;
 	const u_int8_t *p;
+	long defattr;
 	int index;
 
 	vidcvideo_init();
 	if (sc->nscreens == 0) {
-		if (vidcvideo_is_console) {
-			sc->sc_dc = &vidcvideo_console_dc;
-		} else {
-			printf(" : non console vidcvideo fb ... can't cope with this\n");
-			return;
-			/*
-			 * sc->sc_dc = (struct fb_devconfig *)
-			 *	   malloc(sizeof(struct fb_devconfig), M_DEVBUF, M_WAITOK);
-			 * vidcvideo_getdevconfig(videomemory.vidm_vbase, sc->sc_dc);
-			 */
+		sc->sc_dc = &vidcvideo_console_dc;
+		if (!vidcvideo_is_console) {
+			printf(" : non console (no kbd yet) ");
+			vidcvideo_getdevconfig(videomemory.vidm_vbase, sc->sc_dc);
+			vidcvideo_config_wscons(sc->sc_dc);
+			(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0, &defattr);
 		};
 		sc->nscreens = 1;
 	} else {
@@ -369,8 +382,11 @@ vidcvideo_attach(parent, self, aux)
 	/* set up interrupt flags */
 	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
 
-	/* set up a link in the rasops structure to our softc for acceleration stuff */
-	sc->sc_dc->rinfo.ri_hw = sc;
+	/*
+	 * Set up a link in the rasops structure to our device config
+	 * for acceleration stuff
+	 */
+	sc->sc_dc->rinfo.ri_hw = sc->sc_dc;
 
 	/* Establish an interrupt handler, and clear any pending interrupts */
 	intr_claim(IRQ_FLYBACK, IPL_TTY, "vblank", vidcvideointr, sc);
@@ -488,15 +504,23 @@ vidcvideo_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	struct vidcvideo_softc *sc = v;
 	long defattr;
 
-	if (sc->nscreens > 0)
+	/*
+	 * One and just only one for now :( ... if the vidcconsole is not the
+	 * console then this makes one wsconsole screen free for use !
+	 */
+	if ((sc->nscreens > 1) || vidcvideo_is_console)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_dc->rinfo; /* one and only for now */
+	/* Add the screen to wscons to control */
+	*cookiep = &sc->sc_dc->rinfo;
 	*curxp = 0;
 	*curyp = 0;
+	vidcvideo_getdevconfig(videomemory.vidm_vbase, sc->sc_dc);
+	vidcvideo_config_wscons(sc->sc_dc);
 	(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
+	
 	return (0);
 }
 
@@ -896,5 +920,19 @@ static void vv_eraserows(id, startrow, nrows, attr)
 	src = ri->ri_bits + startrow * ri->ri_font->fontheight * ri->ri_stride;
 
 	bzero(src, height);
+}
+
+
+static void vv_putchar(id, row, col, uc, attr)
+    	void *id;
+	int row, col;
+	u_int uc;
+	long attr;
+{
+    	struct rasops_info *ri = id;
+	struct fb_devconfig *dc = (struct fb_devconfig *) (ri->ri_hw);
+
+	/* just delegate */
+	dc->orig_ri_ops.putchar(id, row, col, uc, attr);
 }
 
