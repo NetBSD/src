@@ -40,7 +40,7 @@
 #	ct*	HP300 HP-IB cartridge tape
 #	st*	Exabyte tape
 # Disks:
-#	cd*	"concatenated" pseudo-disks
+#	ccd*	"concatenated" pseudo-disks
 #	rd*	HP300 HP-IB disks
 #	sd*	HP300 SCSI disks
 #	vnd*	"file" pseudo-disks
@@ -67,7 +67,7 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std ct0 ct1 st0 st1 cd0 cd1 cd2 rd0 rd1 rd2
+	sh MAKEDEV std ct0 ct1 st0 st1 ccd0 ccd1 ccd2 rd0 rd1 rd2
 	sh MAKEDEV sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3 lkm
@@ -154,12 +154,12 @@ vnd*)
 	chmod 640 ${name}${unit}c r${name}${unit}c
 	;;
 
-cd*|fd*|rd*|sd*)
+ccd*|fd*|rd*|sd*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
 	rd*) name=rd; blk=2; chr=9;;
 	sd*) name=sd; blk=4; chr=8;;
-	cd*) name=cd; blk=5; chr=17;;
+	ccd*) name=ccd; blk=5; chr=17;;
 	esac
 	case $unit in
 	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|\
