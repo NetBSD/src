@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.6 2002/09/27 20:38:06 thorpej Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.7 2002/09/30 21:17:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.6 2002/09/27 20:38:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.7 2002/09/30 21:17:58 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -79,9 +79,8 @@ int	ld_cac_start(struct ld_softc *, struct buf *);
 
 static const struct	timeval ld_cac_serrintvl = { 60, 0 };
 
-const struct cfattach ld_cac_ca = {
-	sizeof(struct ld_cac_softc), ld_cac_match, ld_cac_attach
-};
+CFATTACH_DECL(ld_cac, sizeof(struct ld_cac_softc),
+    ld_cac_match, ld_cac_attach, NULL, NULL)
 
 int
 ld_cac_match(struct device *parent, struct cfdata *match, void *aux)
