@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.11 2000/07/18 06:12:33 thorpej Exp $ */
+/* $NetBSD: bba.c,v 1.12 2000/07/18 06:14:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,8 +44,6 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-
-#include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -709,7 +707,7 @@ bba_round_blocksize(addr, blk)
 	void *addr;
 	int blk;
 {
-	return (PAGE_SIZE);
+	return (IOASIC_DMA_BLOCKSIZE);
 }
 
 
