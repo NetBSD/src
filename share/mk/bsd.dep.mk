@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.10 1994/12/13 08:40:04 mycroft Exp $
+#	$NetBSD: bsd.dep.mk,v 1.11 1994/12/13 11:14:56 mycroft Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)
@@ -16,7 +16,7 @@ depend: beforedepend .depend _SUBDIRUSE afterdepend
 	fi
 	files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx}"; \
 	if [ "$$files" != "  " ]; then \
-	  mkdep -a ${MKDEP} -+ ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
+	  mkdep -a ${MKDEP} ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
 .else
 .depend:
