@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1999/07/02 15:21:23 simonb Exp $
+#	$NetBSD: Makefile,v 1.18 1999/07/06 14:10:21 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -22,45 +22,48 @@ SRCS=	editline.c tokenizer.c history.c readline.c
 
 SRCS+=	common.h emacs.h fcns.h help.h vi.h
 
+LIBEDITDIR?=${.CURDIR}
+
 INCS= histedit.h readline.h
 INCSDIR=/usr/include
 LINKS=${INCSDIR}/readline.h ${INCSDIR}/history.h
 
 CLEANFILES+=common.h editline.c emacs.h fcns.c fcns.h help.c help.h vi.h
+CPPFLAGS+=-I. -I${LIBEDITDIR} 
 CPPFLAGS+=-I. -I${.CURDIR}
 CPPFLAGS+=#-DDEBUG_TTY -DDEBUG_KEY -DDEBUG_READ -DDEBUG -DDEBUG_REFRESH
 CPPFLAGS+=#-DDEBUG_PASTE
 
-AHDR=vi.h emacs.h common.h
-ASRC=${.CURDIR}/vi.c ${.CURDIR}/emacs.c ${.CURDIR}/common.c
+AHDR=vi.h emacs.h common.h 
+ASRC=${LIBEDITDIR}/vi.c ${LIBEDITDIR}/emacs.c ${LIBEDITDIR}/common.c
 
 vi.h: vi.c makelist
-	sh ${.CURDIR}/makelist -h ${.CURDIR}/vi.c > ${.TARGET}
+	sh ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/vi.c > ${.TARGET}
 
 emacs.h: emacs.c makelist
-	sh ${.CURDIR}/makelist -h ${.CURDIR}/emacs.c > ${.TARGET}
+	sh ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/emacs.c > ${.TARGET}
 
 common.h: common.c makelist
-	sh ${.CURDIR}/makelist -h ${.CURDIR}/common.c > ${.TARGET}
+	sh ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/common.c > ${.TARGET}
 
 fcns.h: ${AHDR} makelist
-	sh ${.CURDIR}/makelist -fh ${AHDR} > ${.TARGET}
+	sh ${LIBEDITDIR}/makelist -fh ${AHDR} > ${.TARGET}
 
 fcns.c: ${AHDR} fcns.h makelist
-	sh ${.CURDIR}/makelist -fc ${AHDR} > ${.TARGET}
+	sh ${LIBEDITDIR}/makelist -fc ${AHDR} > ${.TARGET}
 
-help.c: ${ASRC} makelist
-	sh ${.CURDIR}/makelist -bc ${ASRC} > ${.TARGET}
+help.c: ${ASRC} makelist 
+	sh ${LIBEDITDIR}/makelist -bc ${ASRC} > ${.TARGET}
 
 help.h: ${ASRC} makelist
-	sh ${.CURDIR}/makelist -bh ${ASRC} > ${.TARGET}
+	sh ${LIBEDITDIR}/makelist -bh ${ASRC} > ${.TARGET}
 
 editline.c: ${OSRCS}
-	sh ${.CURDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}
+	sh ${LIBEDITDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}
 
-test.o:	${.CURDIR}/TEST/test.c
-
-test:	libedit.a test.o
+test.o:	${LIBEDITDIR}/TEST/test.c
+	
+test:	libedit.a test.o 
 	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
 
 # minimal dependency to make "make depend" optional
