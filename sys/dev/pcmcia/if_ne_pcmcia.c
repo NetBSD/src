@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.4.2.2 1997/11/20 04:03:47 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.4.2.3 1997/12/18 22:31:04 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -100,6 +100,9 @@ struct ne2000dev {
        CIRRUS_PD672X on TI TravelMate 5000 needs it: */
     { "Linksys EthernetCard",
       0x0149, 0x0265, "LINKSYS", "E-CARD",
+      0, -1, { 0x00, 0x80, 0xc8 } },
+    { "Linksys Combo EthernetCard",
+      0x0149, 0xc1ab, NULL, NULL,
       0, -1, { 0x00, 0x80, 0xc8 } },
     { "Planet SmartCOM 2000",
       /* This card doesn't have manufacturer and product id in CIS.  */
