@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.34 2000/12/20 20:56:01 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.35 2001/01/05 22:29:28 jdolecek Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -47,9 +47,12 @@
 #   if defined(__alpha__)
 #       define malloc_minsize		16U
 #   endif
-#   if !defined(__NETBSD_SYSCALLS)
-#       define HAS_UTRACE
-#   endif
+#   define HAS_UTRACE
+#   define UTRACE_LABEL
+
+#include <sys/cdefs.h>
+void utrace __P((struct ut *, int));
+
     /*
      * Make malloc/free/realloc thread-safe in libc for use with
      * kernel threads.
@@ -63,6 +66,11 @@
 
 #if defined(__NetBSD__)
 #   define malloc_minsize               16U
+#   define HAS_UTRACE
+#   define UTRACE_LABEL "malloc",
+#include <sys/cdefs.h>
+#include <sys/types.h>
+int utrace __P((const char *, void *, size_t));
 #endif /* __NetBSD__ */
 
 #if defined(__sparc__) && defined(sun)
@@ -229,11 +237,12 @@ static int malloc_utrace;
 
 struct ut { void *p; size_t s; void *r; };
 
-void utrace __P((struct ut *, int));
-
 #define UTRACE(a, b, c) \
-	if (malloc_utrace) \
-		{struct ut u; u.p=a; u.s = b; u.r=c; utrace(&u, sizeof u);}
+	if (malloc_utrace) {			\
+		struct ut u;			\
+		u.p=a; u.s = b; u.r=c;		\
+		utrace(UTRACE_LABEL (void *) &u, sizeof u);	\
+	}
 #else /* !HAS_UTRACE */
 #define UTRACE(a,b,c)
 #endif /* HAS_UTRACE */
