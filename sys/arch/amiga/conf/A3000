@@ -1,12 +1,17 @@
 #
 # Minimal AMIGA 3000
 #
-# $Id: A3000,v 1.2 1994/05/26 01:55:43 chopps Exp $
+# $Id: A3000,v 1.3 1994/06/05 07:43:34 chopps Exp $
 #
 # Author: Stephen Roznowski (sjr@zombie.ncsc.mil)
 #
 # This configuration file is for a multiple disk/multiple tape A3000.
 #
+
+#
+# processors this kernel should support
+#
+options		"M68030"		# support for 030
 
 include "std.amiga"
 
