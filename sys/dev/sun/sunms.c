@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.5 2001/11/13 06:54:32 lukem Exp $	*/
+/*	$NetBSD: sunms.c,v 1.6 2001/11/27 16:19:43 fredette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.5 2001/11/13 06:54:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.6 2001/11/27 16:19:43 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ sunmsiopen(dev, flags)
 	tp->t_ospeed = 0;
 	t.c_ispeed = sunms_bps;
 	t.c_ospeed = sunms_bps;
-	t.c_cflag =  CLOCAL;
+	t.c_cflag =  CLOCAL|CS8;
 	(*tp->t_param)(tp, &t);
 
 	return (0);
