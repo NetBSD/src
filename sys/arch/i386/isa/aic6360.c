@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.17 1994/11/29 20:57:28 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.18 1994/11/29 21:29:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -622,9 +622,11 @@ struct aic_softc { /* One of these per adapter */
 int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; /**/ 
 #define	AIC_PRINT(b, s)	do {if ((aic_debug & (b)) != 0) printf s;} while (0)
 #define	AIC_BREAK()	do {if ((aic_debug & AIC_DOBREAK) != 0) Debugger();} while (0)
+#define	AIC_ASSERT(x)	do {if (x) {} else {printf("aic at line %d: assertion failed\n", __LINE__); Debugger();}} while (0)
 #else
 #define	AIC_PRINT(b, s)
 #define	AIC_BREAK()
+#define	AIC_ASSERT(x)
 #endif
 
 #define AIC_ACBS(s)	AIC_PRINT(AIC_SHOWACBS, s)
@@ -888,7 +890,7 @@ aic_init(aic)
 		TAILQ_INIT(&aic->ready_list);
 		TAILQ_INIT(&aic->nexus_list);
 		TAILQ_INIT(&aic->free_list);
-		aic->nexus = 0;
+		aic->nexus = NULL;
 		acb = aic->acb;
 		bzero(acb, sizeof(aic->acb));
 		for (r = 0; r < sizeof(aic->acb) / sizeof(*acb); r++) {
@@ -1180,7 +1182,8 @@ aic_sched(aic)
 	 * Find first acb in ready queue that is for a target/lunit pair that
 	 * is not busy.
 	 */
-	for (acb = aic->ready_list.tqh_first; acb; acb = acb->chain.tqe_next) {
+	for (acb = aic->ready_list.tqh_first; acb != NULL;
+	    acb = acb->chain.tqe_next) {
 		sc = acb->xs->sc_link;
 		ti = &aic->tinfo[sc->target];
 		if ((ti->lubusy & (1<<sc->lun)) == 0) {
@@ -1286,7 +1289,7 @@ aic_done(acb)
 		TAILQ_REMOVE(&aic->ready_list, acb, chain);
 	} else {
 		register struct acb *acb2;
-		for (acb2 = aic->nexus_list.tqh_first; acb2;
+		for (acb2 = aic->nexus_list.tqh_first; acb2 != NULL;
 		    acb2 = acb2->chain.tqe_next)
 			if (acb2 == acb) {
 				TAILQ_REMOVE(&aic->nexus_list, acb, chain);
@@ -1294,7 +1297,7 @@ aic_done(acb)
 				/* XXXX Should we call aic_sched() here? */
 				break;
 			}
-		if (acb2)
+		if (acb2 != NULL)
 			;
 		else if (acb->chain.tqe_next) {
 			TAILQ_REMOVE(&aic->ready_list, acb, chain);
@@ -1447,15 +1450,17 @@ nextbyte:
 		u_char selid, target, lun;
 
 	case AIC_CONNECTED:
+		AIC_ASSERT(aic->nexus != NULL);
 		acb = aic->nexus;
-		sc = acb->xs->sc_link;
-		ti = &aic->tinfo[sc->target];
+		ti = &aic->tinfo[acb->xs->sc_link->target];
 
 		switch (aic->imess[0]) {
 		case MSG_CMDCOMPLETE:
 			if (aic->dleft < 0) {
-				printf("aic: %d extra bytes from %d:%d\n",
-				       -aic->dleft, sc->target, sc->lun);
+				sc = acb->xs->sc_link;
+				printf("%s: %d extra bytes from %d:%d\n",
+				    aic->sc_dev.dv_xname,
+				    -aic->dleft, sc->target, sc->lun);
 				acb->dleft = 0;
 			}
 			acb->xs->resid = acb->dleft = aic->dleft;
@@ -1595,13 +1600,13 @@ nextbyte:
 		 */
 		target = ffs(selid) - 1;
 		lun = aic->imess[0] & 0x07;
-		for (acb = aic->nexus_list.tqh_first; acb != 0;
+		for (acb = aic->nexus_list.tqh_first; acb != NULL;
 		     acb = acb->chain.tqe_next) {
 			sc = acb->xs->sc_link;
 			if (sc->target == target && sc->lun == lun)
 				break;
 		}
-		if (acb == 0) {
+		if (acb == NULL) {
 			printf("aic at line %d: reselect from target %d lun %d with no nexus; sending DEVICE RESET\n", __LINE__, target, lun);
 			AIC_BREAK();
 			goto reset;
@@ -1720,6 +1725,7 @@ nextmsg:
 			AIC_BREAK();
 			goto noop;
 		}
+		AIC_ASSERT(aic->nexus != NULL);
 		acb = aic->nexus;
 		aic->omess[0] = MSG_IDENTIFY(acb->xs->sc_link->lun);
 		n = 1;
@@ -1731,6 +1737,7 @@ nextmsg:
 			AIC_BREAK();
 			goto noop;
 		}
+		AIC_ASSERT(aic->nexus != NULL);
 		ti = &aic->tinfo[aic->nexus->xs->sc_link->target];
 		aic->omess[4] = MSG_EXTENDED;
 		aic->omess[3] = 3;
@@ -1746,6 +1753,7 @@ nextmsg:
 			AIC_BREAK();
 			goto noop;
 		}
+		AIC_ASSERT(aic->nexus != NULL);
 		ti = &aic->tinfo[aic->nexus->xs->sc_link->target];
 		aic->omess[3] = MSG_EXTENDED;
 		aic->omess[2] = 2;
@@ -2181,6 +2189,7 @@ aicintr(aic)
 				AIC_BREAK();
 				goto reset;
 			}
+			AIC_ASSERT(aic->nexus != NULL);
 			acb = aic->nexus;
 
 			sc = acb->xs->sc_link;
@@ -2222,6 +2231,7 @@ aicintr(aic)
 				AIC_BREAK();
 				goto reset;
 			}
+			AIC_ASSERT(aic->nexus != NULL);
 			acb = aic->nexus;
 
 			outb(SXFRCTL1, 0);
@@ -2267,11 +2277,13 @@ aicintr(aic)
 				printf("aic at line %d: unexpected BUS FREE; aborting\n", __LINE__);
 				AIC_BREAK();
 			}
+			AIC_ASSERT(aic->nexus != NULL);
 			acb = aic->nexus;
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			goto finish;
 
 		case AIC_DISCONNECT:
+			AIC_ASSERT(aic->nexus != NULL);
 			acb = aic->nexus;
 			aic->state = AIC_IDLE;
 			aic->nexus = NULL;
@@ -2280,6 +2292,7 @@ aicintr(aic)
 			goto out;
 
 		case AIC_CMDCOMPLETE:
+			AIC_ASSERT(aic->nexus != NULL);
 			acb = aic->nexus;
 		finish:
 			untimeout(aic_timeout, acb);
@@ -2321,6 +2334,7 @@ aicintr(aic)
 		case PH_CMD:		/* CMD phase & REQ asserted */
 #if AIC_DEBUG
 			if ((aic_debug & AIC_SHOWMISC) != 0) {
+				AIC_ASSERT(aic->nexus != NULL);
 				acb = aic->nexus;
 				printf("cmd=0x%02x+%d  ",
 				    acb->cmd.opcode, acb->clen-1);
@@ -2345,6 +2359,7 @@ aicintr(aic)
 			goto nextphase;
 
 		case PH_STAT:
+			AIC_ASSERT(aic->nexus != NULL);
 			acb = aic->nexus;
 			outb(SXFRCTL0, CHEN|SPIOEN);
 			outb(DMACNTRL0, RSTFIFO);
@@ -2434,13 +2449,15 @@ aic_print_active_acb()
 	struct aic_softc *aic = aiccd.cd_devs[0];
 
 	printf("ready list:\n");
-	for (acb = aic->ready_list.tqh_first; acb; acb = acb->chain.tqe_next)
+	for (acb = aic->ready_list.tqh_first; acb != NULL;
+	    acb = acb->chain.tqe_next)
 		aic_print_acb(acb);
 	printf("nexus:\n");
-	if (aic->nexus)
+	if (aic->nexus != NULL)
 		aic_print_acb(aic->nexus);
 	printf("nexus list:\n");
-	for (acb = aic->nexus_list.tqh_first; acb; acb = acb->chain.tqe_next)
+	for (acb = aic->nexus_list.tqh_first; acb != NULL;
+	    acb = acb->chain.tqe_next)
 		aic_print_acb(acb);
 }
 
