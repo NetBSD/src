@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2003/06/12 08:43:07 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2003/06/12 08:47:21 scw Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -661,9 +661,6 @@ typedef struct powerpc_bus_dmamap		*bus_dmamap_t;
 struct powerpc_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-
-	/* Private fields. For use by the powerpc bus_dma implementation only */
-	vaddr_t		_ds_vaddr;	/* Virtual address of segment */
 };
 typedef struct powerpc_bus_dma_segment	bus_dma_segment_t;
 
