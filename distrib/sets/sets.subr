@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.28 2004/01/23 14:38:09 lukem Exp $
+#	$NetBSD: sets.subr,v 1.29 2004/02/22 01:43:02 uwe Exp $
 #
 
 #
@@ -97,7 +97,7 @@ else
 	shlib=aout
 fi
 stlib=$shlib
-if [ "${MACHINE_CPU}" = "sh3" -o "${MACHINE_ARCH}" = "m68000" ]; then
+if [ "${MACHINE_ARCH}" = "m68000" ]; then
 	shlib=no			# Turn off shlibs for some ports.
 fi
 
@@ -109,7 +109,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.28 2004/01/23 14:38:09 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.29 2004/02/22 01:43:02 uwe Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
