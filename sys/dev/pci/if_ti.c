@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.1.2.4 2000/04/30 13:07:07 he Exp $ */
+/* $NetBSD: if_ti.c,v 1.1.2.5 2000/06/01 18:04:43 he Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1642,6 +1642,7 @@ static void ti_attach(parent, self, aux)
 	const char *intrstr = NULL;
 	bus_dma_segment_t dmaseg;
 	int error, dmanseg, nolinear;
+	struct ti_type          *t;
 
 	t = ti_type_match(pa);
 	if (t == NULL) {
