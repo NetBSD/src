@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.51 2003/12/30 00:15:46 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.52 2004/01/01 22:48:54 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.51 2003/12/30 00:15:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.52 2004/01/01 22:48:54 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -336,12 +336,11 @@ mach_e_proc_init(p, vmspace)
 		med->med_kernel->mp_datatype = MACH_MP_PROC;
 		med->med_host->mp_datatype = MACH_MP_PROC;
 
-		/* Make sure they will not be deallocated */
-		med->med_kernel->mp_refcount++;
-		med->med_host->mp_refcount++;
+		MACH_PORT_REF(med->med_kernel);
+		MACH_PORT_REF(med->med_host);
 
 		med->med_bootstrap = mach_bootstrap_port;
-		med->med_bootstrap->mp_refcount++;
+		MACH_PORT_REF(med->med_bootstrap);
 	}
 
 	/* 
@@ -367,6 +366,7 @@ mach_e_proc_exit(p)
 	struct mach_right *mr;
 	int i;
 
+	/* There is only one lwp remaining... */
 	mach_e_lwp_exit(proc_representative_lwp(p));
 
 	med = (struct mach_emuldata *)p->p_emuldata;
@@ -376,8 +376,7 @@ mach_e_proc_exit(p)
 		mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
 	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
-	if (--med->med_bootstrap->mp_refcount <= 0)
-		mach_port_put(med->med_bootstrap);
+	MACH_PORT_UNREF(med->med_bootstrap);
 
 	/*
 	 * If the lock on this task exception handler is held,
@@ -392,24 +391,17 @@ mach_e_proc_exit(p)
 	 * the pointer to this process' struct proc, as it will 
 	 * become invalid once the process will exit.
 	 */
-	if (--med->med_kernel->mp_refcount <= 0) {
-		mach_port_put(med->med_kernel);
-	} else {
-		med->med_kernel->mp_datatype = MACH_MP_NONE;
-		med->med_kernel->mp_data = NULL;
-	}
+	med->med_kernel->mp_datatype = MACH_MP_NONE;
+	med->med_kernel->mp_data = NULL;
+	MACH_PORT_UNREF(med->med_kernel);
 
-	if (--med->med_host->mp_refcount <= 0) { 
-		mach_port_put(med->med_host);  
-	} else {
-		med->med_host->mp_datatype = MACH_MP_NONE;
-		med->med_host->mp_data = NULL;
-	}
+	med->med_host->mp_datatype = MACH_MP_NONE;
+	med->med_host->mp_data = NULL;
+	MACH_PORT_UNREF(med->med_host);
 
 	for (i = 0; i <= MACH_EXC_MAX; i++)
-		if ((med->med_exc[i] != NULL) &&
-		    (--med->med_exc[i]->mp_refcount <= 0))
-			mach_port_put(med->med_exc[i]);
+		if (med->med_exc[i] != NULL)
+			MACH_PORT_UNREF(med->med_exc[i]);
 
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;
@@ -428,7 +420,7 @@ mach_e_lwp_fork(l1, l2)
 	l2->l_emuldata = mle;
 
 	mle->mle_kernel = mach_port_get();
-	mle->mle_kernel->mp_refcount++;
+	MACH_PORT_REF(mle->mle_kernel);
 
 	mle->mle_kernel->mp_flags |= MACH_MP_INKERNEL;
 	mle->mle_kernel->mp_datatype = MACH_MP_LWP;
@@ -460,9 +452,7 @@ mach_e_lwp_exit(l)
 
 	mle->mle_kernel->mp_data = NULL;
 	mle->mle_kernel->mp_datatype = MACH_MP_NONE;
-
-	if (--mle->mle_kernel->mp_refcount <= 0) 
-		mach_port_put(mle->mle_kernel);
+	MACH_PORT_UNREF(mle->mle_kernel);
 
 	free(mle, M_EMULDATA);
 	l->l_emuldata = NULL;

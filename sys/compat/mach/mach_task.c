@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.52 2003/12/24 23:22:22 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.53 2004/01/01 22:48:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.52 2003/12/24 23:22:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.53 2004/01/01 22:48:54 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -212,25 +212,25 @@ mach_task_set_special_port(args)
 	case MACH_TASK_KERNEL_PORT:
 		mp = med->med_kernel;
 		med->med_kernel = mr->mr_port;
-		mp->mp_refcount--;
-		if (mp->mp_refcount == 0)
-			mach_port_put(mp);
+		if (mr->mr_port != NULL)
+			MACH_PORT_REF(mr->mr_port);
+		MACH_PORT_UNREF(mp);
 		break;
 
 	case MACH_TASK_HOST_PORT:
 		mp = med->med_host;
 		med->med_host = mr->mr_port;
-		mp->mp_refcount--;
-		if (mp->mp_refcount == 0)
-			mach_port_put(mp);
+		if (mr->mr_port != NULL)
+			MACH_PORT_REF(mr->mr_port);
+		MACH_PORT_UNREF(mp);
 		break;
 
 	case MACH_TASK_BOOTSTRAP_PORT:
 		mp = med->med_bootstrap;
 		med->med_bootstrap = mr->mr_port;
-		mp->mp_refcount--;
-		if (mp->mp_refcount == 0)
-			mach_port_put(mp);
+		if (mr->mr_port != NULL)
+			MACH_PORT_REF(mr->mr_port);
+		MACH_PORT_UNREF(mp);
 #ifdef COMPAT_DARWIN
 		/*
 		 * mach_init sets the bootstrap port for any new process.
@@ -374,13 +374,10 @@ update_exception_port(med, exc, mp)
 	int exc;
 	struct mach_port *mp;
 {
-	if (med->med_exc[exc] != NULL) {
-		med->med_exc[exc]->mp_refcount--;
-		if (med->med_exc[exc]->mp_refcount <= 0)
-			mach_port_put(med->med_exc[exc]);
-	}
+	if (med->med_exc[exc] != NULL) 
+		MACH_PORT_UNREF(med->med_exc[exc]);
 	med->med_exc[exc] = mp;
-	mp->mp_refcount++;
+	MACH_PORT_REF(mp);
 
 	return;
 }

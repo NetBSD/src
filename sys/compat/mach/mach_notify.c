@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.14 2003/12/09 12:13:44 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.15 2004/01/01 22:48:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.14 2003/12/09 12:13:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.15 2004/01/01 22:48:54 manu Exp $");
 
 #include "opt_ktrace.h"
 
@@ -64,6 +64,7 @@ mach_notify_port_destroyed(l, mr)
 
 	if (mr->mr_notify_destroyed == NULL)
 		return;
+
 	mp = mr->mr_notify_destroyed->mr_port;
 
 #ifdef DIAGNOSTIC
@@ -72,6 +73,8 @@ mach_notify_port_destroyed(l, mr)
 		return;
 	}
 #endif
+
+	MACH_PORT_REF(mp);
 
 	req = malloc(sizeof(*req), M_EMULDATA, M_WAITOK | M_ZERO);
 
@@ -92,6 +95,8 @@ mach_notify_port_destroyed(l, mr)
 	    mp->mp_recv->mr_sethead);
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
+
+	MACH_PORT_UNREF(mp);
 
 	return;
 }
@@ -117,8 +122,9 @@ mach_notify_port_no_senders(l, mr)
 		return;
 	}
 #endif
+	MACH_PORT_REF(mp);
 	if ((int)mp->mp_data >= mr->mr_refcount)
-		return;
+		goto out;
 
 	req = malloc(sizeof(*req), M_EMULDATA, M_WAITOK | M_ZERO);
 
@@ -139,6 +145,8 @@ mach_notify_port_no_senders(l, mr)
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
 
+out:
+	MACH_PORT_UNREF(mp);
 	return;
 }
 
@@ -153,7 +161,7 @@ mach_notify_port_dead_name(l, mr)
 	if ((mr->mr_notify_dead_name == NULL) || 
 	    (mr->mr_notify_dead_name->mr_port == NULL))
 		return;
-	mp = mr->mr_notify_no_senders->mr_port;
+	mp = mr->mr_notify_dead_name->mr_port;
 
 #ifdef DIAGNOSTIC
 	if ((mp == NULL) || (mp->mp_recv)) {
@@ -161,6 +169,7 @@ mach_notify_port_dead_name(l, mr)
 		return;
 	}
 #endif
+	MACH_PORT_REF(mp);
 
 	req = malloc(sizeof(*req), M_EMULDATA, M_WAITOK | M_ZERO);
 
@@ -175,7 +184,6 @@ mach_notify_port_dead_name(l, mr)
 
 	mr->mr_refcount++;
 
-	mp = mr->mr_notify_dead_name->mr_port;
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
 	printf("pid %d: message queued on port %p (%d) [%p]\n",
@@ -183,6 +191,7 @@ mach_notify_port_dead_name(l, mr)
 	    mp->mp_recv->mr_sethead);
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
+	MACH_PORT_UNREF(mp);
 
 	return;
 }
