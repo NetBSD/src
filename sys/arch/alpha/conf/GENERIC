@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.208.2.1 2002/07/09 05:27:17 gehenna Exp $
+# $NetBSD: GENERIC,v 1.208.2.2 2002/07/16 00:27:29 gehenna Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.208.2.1 $"
+#ident 		"GENERIC-$Revision: 1.208.2.2 $"
 
 maxusers 32
 
@@ -72,8 +72,8 @@ file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	NTFS		# Windows/NT file system (experimental)
 file-system	NFS		# Sun NFS-compatible file system client
-#file-system	KERNFS		# Kernel variable file system (/kern)
-#file-system	PROCFS		# Process file system (/proc)
+file-system	KERNFS		# Kernel variable file system (/kern)
+file-system	PROCFS		# Process file system (/proc)
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
