@@ -38,7 +38,7 @@
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
  *	from: @(#)swap_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: swap_pager.c,v 1.15 1994/01/13 02:43:09 cgd Exp $
+ *	$Id: swap_pager.c,v 1.16 1994/01/13 18:20:36 cgd Exp $
  */
 
 /*
@@ -845,7 +845,6 @@ swap_pager_finish(spc)
 		printf("swap_pager_finish: clean of page %x failed\n",
 		       VM_PAGE_TO_PHYS(spc->spc_m));
 		spc->spc_m->flags |= PG_LAUNDRY;
-		panic("not taking chances right now...");
 	} else {
 		spc->spc_m->flags |= PG_CLEAN;
 		pmap_clear_modify(VM_PAGE_TO_PHYS(spc->spc_m));
