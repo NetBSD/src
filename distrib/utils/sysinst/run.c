@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.53 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.54 2003/11/11 17:27:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -336,13 +336,13 @@ show_cmd(const char *scmd, struct winsize *win)
 		wattrset(actionwin, getattrs(stdscr));
 	}
 
-	mvaddstr(0, 3, msg_string(MSG_Status));
+	mvaddstr(0, 4, msg_string(MSG_Status));
 	standout();
 	addstr(msg_string(MSG_Running));
 	standend();
 	mvaddstr(1, 4, msg_string(MSG_Command));
 	standout();
-	addstr(scmd);
+	printw("%.*s", win->ws_col - getcurx(stdscr) - 1, scmd);
 	standend();
 
 	move(3, 0);
