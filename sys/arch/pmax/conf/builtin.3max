@@ -7,4 +7,4 @@ dc0	at mainbus0
 le0	at tc? #slot ?  offset ?	# TC ether "option" on baseboard
 asc0	at tc?				# TC scsi  "option" on baseboard
 # For now, pretend this machine has an IOASIC.
-dc0	at ioasic?			# dc7083 four-port DZ device
+dc0	at ioasic?	offset ?	# dc7083 four-port DZ device
