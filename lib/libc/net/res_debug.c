@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.29 2000/08/09 14:41:02 itojun Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.30 2000/12/20 20:44:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.29 2000/08/09 14:41:02 itojun Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.30 2000/12/20 20:44:14 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -111,28 +111,6 @@ static const u_char *do_rrset __P((const u_char *, int, const u_char *,
 static const char *precsize_ntoa __P((u_int32_t));
 static u_int8_t precsize_aton __P((const u_char **));
 static u_int32_t latlon2ul __P((const u_char **, int *));
-
-void __p_query __P((const u_char *));
-void __fp_resstat __P((struct __res_state *, FILE *));
-void __fp_nquery __P((const u_char *, int, FILE *));
-void __fp_query __P((const u_char *, FILE *));
-const u_char *__p_cdnname __P((const u_char *, const u_char *, int, FILE *));
-const u_char *__p_cdname __P((const u_char *, const u_char *, FILE *));
-const u_char *__p_fqnname __P((const u_char *, const u_char *, int, char *,
-    int));
-const u_char *__p_fqname __P((const u_char *, const u_char *, FILE *));
-const u_char *__p_rr __P((const u_char *, const u_char *, FILE *));
-int __sym_ston __P((const struct res_sym *, char *, int *));
-const char *__sym_ntos __P((const struct res_sym *, int, int *));
-const char *__sym_ntop __P((const struct res_sym *, int, int *));
-const char *__p_type __P((int));
-const char *__p_class __P((int));
-const char *__p_option __P((u_long));
-const char *__p_time __P((u_int32_t));
-int loc_aton __P((const char *, u_char *));
-const char *loc_ntoa __P((const u_char *, char *));
-int __dn_count_labels __P((char *));
-char *__p_secstodate __P((unsigned long));
 
 static char *
 dewks(wks)
@@ -1378,7 +1356,7 @@ loc_aton(ascii, binary)
 	_DIAGASSERT(ascii != NULL);
 	_DIAGASSERT(binary != NULL);
 
-	cp = ascii;
+	cp = (const u_char *)ascii;
 	maxcp = cp + strlen(ascii);
 
 	lltemp1 = latlon2ul(&cp, &which1);
