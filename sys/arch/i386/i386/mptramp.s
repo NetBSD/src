@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.s,v 1.1.2.7 2001/06/24 19:42:57 sommerfeld Exp $	*/
+/*	$NetBSD: mptramp.s,v 1.1.2.8 2001/09/24 00:37:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -128,28 +128,26 @@
 
 	.text
 	.align 4,0x0
+	.code16
 _C_LABEL(cpu_spinup_trampoline):
 	cli
-	xorl    %eax,%eax
-	movl    %ax, %ds
-	movl    %ax, %es
-	movl    %ax, %ss
-	aword
-	word
-	lgdt    (gdt_desc)      # load flat descriptor table
-	movl    %cr0,%eax       # get cr0
-	word
+	xorw    %ax,%ax
+	movw    %ax, %ds
+	movw    %ax, %es
+	movw    %ax, %ss
+	data32 addr32 lgdt    (gdt_desc)      # load flat descriptor table
+	movl    %cr0, %eax       # get cr0
 	orl     $0x1, %eax      # enable protected mode
 	movl    %eax, %cr0      # doit
 	movl    $0x10, %eax     # data segment
-	movl    %ax, %ds
-	movl    %ax, %ss
-	movl    %ax, %es
-	movl    %ax, %fs
-	movl    %ax, %gs
-	word
-	ljmp    $0x8, $mp_startup
-
+	movw    %ax, %ds
+	movw    %ax, %ss
+	movw    %ax, %es
+	movw    %ax, %fs
+	movw    %ax, %gs
+	ljmpl    $0x8, $mp_startup
+	.code32
+	
 _TRMP_LABEL(mp_startup)
 	movl    $ (MP_TRAMPOLINE+NBPG-4),%esp       # bootstrap stack end location
 	
@@ -185,9 +183,9 @@ _TRMP_LABEL(mp_startup)
 1:	
 	HALT(0x12)
 	movl    $GSEL(GDATA_SEL, SEL_KPL),%eax 	#switch to new segment
-	movl    %ax,%ds
-	movl    %ax,%es
-	movl    %ax,%ss
+	movl    %eax,%ds
+	movl    %eax,%es
+	movl    %eax,%ss
 	HALT(0x13)
 	pushl   $GSEL(GCODE_SEL, SEL_KPL)
 	pushl	$mp_cont
@@ -248,9 +246,9 @@ mp_cont:
 	/* Restore segment registers. */
 	xorl	%eax,%eax
 	HALTT(0x26,%eax)
-	movl	%ax,%fs
+	movl	%eax,%fs
 	HALTT(0x27,%eax)	
-	movl	%ax,%gs
+	movl	%eax,%gs
 	movl    PCB_CR0(%esi),%eax
 	HALTT(0x28,%eax)		
 	movl    %eax,%cr0
