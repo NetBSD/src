@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.394 2002/01/21 18:55:26 eeh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.395 2002/01/21 21:45:46 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.389 2002/01/21 18:51:44 eeh Exp 
+ *	NetBSD: pcidevs,v 1.390 2002/01/21 21:43:55 ichiro Exp 
  */
 
 /*
@@ -1138,7 +1138,7 @@
 #define	PCI_PRODUCT_ESSTECH2_MAESTRO1	0x0100		/* Maestro 1 PCI Audio Accelerator */
 
 /* Eumitcom products */
-#define	PCI_PRODUCT_EUMITCOM_WL11000P	0x1100		/* WL11000P */
+#define	PCI_PRODUCT_EUMITCOM_WL11000P	0x1100		/* WL11000P PCI WaveLAN/IEEE 802.11 */
 
 /* O2 Micro Inc */
 #define	PCI_PRODUCT_O2MICRO_OZ6729	0x6729		/* OZ6729 PCI-PCMCIA Bridge */
@@ -1182,8 +1182,8 @@
 #define	PCI_PRODUCT_GALILEO_GT64260	0x6430		/* GT-64260 System Controller */
 
 /* Global Sun Tech products */
-#define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P */
-#define	PCI_PRODUCT_GLOBALSUN_GL24110P02	0x1102		/* GL24110P */
+#define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P PCI IEEE 802.11b */
+#define	PCI_PRODUCT_GLOBALSUN_GL24110P02	0x1102		/* GL24110P PCI IEEE 802.11b */
 
 /* Guillemot products */
 #define	PCI_PRODUCT_GUILLEMOT_MAXIRADIO	0x1001		/* MAXIRADIO */
@@ -1553,7 +1553,7 @@
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 1000baseSX Gigabit Ethernet */
 #define	PCI_PRODUCT_NETGEAR_GA620T	0x630a		/* GA620 1000baseT Gigabit Ethernet */
-#define	PCI_PRODUCT_NETGEAR_MA301	0x4100		/* MA301 */
+#define	PCI_PRODUCT_NETGEAR_MA301	0x4100		/* MA301 PCI IEEE 802.11b */
 
 /* Netmos products */
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Dual UART and 1284 Printer port */
