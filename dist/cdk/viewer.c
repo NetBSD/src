@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:36 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:31 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -701,7 +701,7 @@ int activateCDKViewer (CDKVIEWER *viewer, chtype *actions GCC_UNUSED)
 		 viewer->exitType = vESCAPE_HIT;
 		 return -1;
 
-	    case KEY_RETURN : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_ENTER : case KEY_CR :
 		 freeCharList (fileInfo, 6);
 		 viewer->exitType = vNORMAL;
 		 return viewer->currentButton;
@@ -964,7 +964,6 @@ static void _drawCDKViewer (CDKOBJS *object, boolean Box)
 static void drawCDKViewerButtons (CDKVIEWER *viewer)
 {
    /* Declare local variables. */
-   char character;
    int x;
 
    if (viewer->buttonCount > 0)

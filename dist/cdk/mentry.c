@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:02 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -559,7 +559,7 @@ char *injectCDKMentry (CDKMENTRY *mentry, chtype input)
 		 }
 		 break;
 
-	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER : case KEY_CR :
 		 infoLength = (int)strlen(mentry->info);
 		 if (infoLength < mentry->min + 1)
 		 {

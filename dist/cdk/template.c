@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:38 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:31 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -367,7 +367,7 @@ char *injectCDKTemplate (CDKTEMPLATE *cdktemplate, chtype input)
 		 }
 		 break;
 
-	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER : case KEY_CR :
 		 if ((int)strlen(cdktemplate->info) < (int)cdktemplate->min)
 		 {
 		    Beep();

@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:27 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -314,7 +314,7 @@ time_t injectCDKCalendar (CDKCALENDAR *calendar, chtype input)
 		 calendar->exitType = vESCAPE_HIT;
 		 return (time_t)-1;
 
-	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER : case KEY_CR :
 		 calendar->exitType = vNORMAL;
 		 return getCurrentTime (calendar);
 
