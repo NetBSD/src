@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.94 2002/01/09 00:18:02 deberg Exp $	*/
+/*	$NetBSD: vnode.h,v 1.95 2002/08/14 18:31:36 soren Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,10 +70,6 @@ enum vtagtype	{
 	VT_OVERLAY, VT_SMBFS
 };
 
-/*
- * Each underlying filesystem allocates its own private area and hangs
- * it from v_data.  If non-null, this area is freed in getnewvnode().
- */
 LIST_HEAD(buflists, buf);
 
 /*
@@ -82,6 +78,9 @@ LIST_HEAD(buflists, buf);
  * v_mntvnodes is locked by the global mntvnodes simple lock.
  * v_flag, v_usecount, v_holdcount and v_writecount are
  *     locked by the v_interlock simple lock
+ *
+ * Each underlying filesystem allocates its own private area and hangs
+ * it from v_data.
  */
 struct vnode {
 	struct uvm_object v_uobj;		/* the VM object */
