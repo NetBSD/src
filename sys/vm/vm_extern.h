@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.34 1998/03/27 01:46:20 thorpej Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.35 1998/03/30 06:24:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@ void		 munmapfd __P((struct proc *, int));
 int		 pager_cache __P((vm_object_t, boolean_t));
 void		 sched __P((void));
 #if !defined(UVM)
-void		 scheduler __P((void));
+__dead void	 scheduler __P((void)) __attribute__((noreturn));
 #endif
 int		 svm_allocate __P((struct proc *, void *, int *));
 int		 svm_deallocate __P((struct proc *, void *, int *));
