@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)crt0.c	5.6 (Berkeley) 7/3/91";*/
-static char rcsid[] = "$Id: crt0.c,v 1.3 1993/08/09 05:47:02 mycroft Exp $";
+static char rcsid[] = "$Id: crt0.c,v 1.4 1993/10/13 23:45:22 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -63,6 +63,8 @@ static char rcsid[] = "$Id: crt0.c,v 1.3 1993/08/09 05:47:02 mycroft Exp $";
 char **environ = (char **)0;
 static char empty[1];
 char *__progname = empty;
+int errno;
+
 #ifdef paranoid
 static int fd;
 #endif /* paranoid */
