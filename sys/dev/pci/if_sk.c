@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.1 2003/08/26 21:11:00 jdolecek Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.2 2003/09/08 19:17:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1124,8 +1124,9 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
 	    sizeof(struct sk_ring_data), &kva, BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
-		       sc_if->sk_dev.dv_xname, sizeof(struct sk_ring_data));
+		printf("%s: can't map dma buffers (%lu bytes)\n",
+		       sc_if->sk_dev.dv_xname,
+		       (u_long) sizeof(struct sk_ring_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 		goto fail;
 	}
