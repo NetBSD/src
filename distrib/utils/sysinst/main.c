@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46 2004/06/12 19:18:24 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.47 2004/07/17 10:55:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,8 +79,6 @@ init(void)
 	(void)strlcpy(rel, REL, SSTRSIZE);
 	(void)strlcpy(machine, MACH, SSTRSIZE);
 	sizemult = 1;
-	ramsize = 0;
-	rammb = 0;
 	(void)strlcpy(diskdev, "", SSTRSIZE);
 	disktype = "unknown";
 	tmp_mfs_size = 0;
