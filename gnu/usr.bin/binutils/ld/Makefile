@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/08/06 20:00:02 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/08/10 10:39:10 mrg Exp $
 
 TOP=		${.CURDIR}/../../..
 DIST=		${TOP}/dist/toolchain
@@ -42,7 +42,19 @@ stringify.sed: ${G_STRINGIFY}
 
 .depend: .depend.${f}
 .depend.${f}: ${f}.sh
-	(. ${>:M*.sh} && echo "e${f}.c: $$TEMPLATE_NAME.em $$SCRIPT_NAME.sc") >$@
+	(. ${>:M*.sh} && \
+		if [ x"$$TEMPLATE_NAME" != x ]; then \
+			temp_emul=$$TEMPLATE_NAME.em; \
+		else \
+			temp_emul=; \
+		fi; \
+		if [ x"$$SCRIPT_NAME" != x ]; then \
+			script=$$SCRIPT_NAME.sc; \
+		else \
+			script=; \
+		fi; \
+		echo "e${f}.c: $$temp_name $$script" \
+	) >$@
 
 CLEANFILES+=	.depend.${f} e${f}.c
 
