@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:19 pk Exp $
+#	$NetBSD: MAKEDEV,v 1.6 1997/01/06 02:56:36 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -73,6 +73,7 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	beep	riscpc speaker
+#	ipl	ip filter control
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	ch*	SCSI Auto changer
@@ -92,7 +93,7 @@ all)
 	sh $0 std fd fd0 fd1 wd0 wd1 md0 md1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1 ss0 acd0 acd1
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
-	sh $0 lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2
+	sh $0 lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 ipl
 	sh $0 beep lkm quadmouse0 pms0 local cpu0 cpu1
 	sh $0 mouse-quadmouse0
 	;;
@@ -290,6 +291,13 @@ bpf*|tun*|pms*|quadmouse*)
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
 	chown root.wheel $name$unit
+	;;
+
+ipl)
+	rm -f ipl
+	mknod ipl c 46 0
+	chown root.wheel ipl
+	chmod 600 ipl
 	;;
 
 beep)
