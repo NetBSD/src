@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2002/11/28 15:29:53 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.52 2002/12/06 16:04:12 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,8 +75,8 @@
 #include "opt_sparc_arch.h"
 #endif
 
-#include <machine/psl.h>
 #include <machine/intr.h>
+#include <machine/psl.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/intreg.h>
 
@@ -187,9 +187,10 @@ extern struct intrhand {
 	int	(*ih_fun) __P((void *));
 	void	*ih_arg;
 	struct	intrhand *ih_next;
+	int	ih_classipl;
 } *intrhand[15];
 
-void	intr_establish __P((int level, struct intrhand *));
+void	intr_establish __P((int level, int classipl, struct intrhand *));
 void	intr_disestablish __P((int level, struct intrhand *));
 
 /*

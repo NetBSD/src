@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.12 2002/11/28 14:18:31 pk Exp $ */
+/*	$NetBSD: timer.c,v 1.13 2002/12/06 16:04:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,8 +125,8 @@ timerattach(cntreg, limreg)
 	}
 #endif
 	/* link interrupt handlers */
-	intr_establish(10, &level10);
-	intr_establish(14, &level14);
+	intr_establish(10, 0, &level10);
+	intr_establish(14, 0, &level14);
 }
 
 /*
