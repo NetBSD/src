@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.29 2002/01/23 19:07:33 atatat Exp $	*/
+/*	$NetBSD: ed.h,v 1.30 2002/05/25 23:29:17 wiz Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -189,11 +189,7 @@ if ((i) > (n)) { \
 #endif
 
 #ifndef __P
-# ifndef __STDC__
-#  define __P(proto) ()
-# else
-#  define __P(proto) proto
-# endif
+# define __P(proto) proto
 #endif
 
 /* Local Function Declarations */
