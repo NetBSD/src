@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.103 2000/02/20 19:32:28 sommerfeld Exp $	*/
+/*	$NetBSD: systm.h,v 1.104 2000/03/16 17:19:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -160,6 +160,7 @@ int	lkmenodev __P((void));
 
 int	seltrue __P((dev_t dev, int events, struct proc *p));
 void	*hashinit __P((int count, int type, int flags, u_long *hashmask));
+void	hashdone __P((void *hashtbl, int type));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 

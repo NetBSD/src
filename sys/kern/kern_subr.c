@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.60 2000/03/01 03:51:29 enami Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.61 2000/03/16 17:19:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -234,6 +234,17 @@ hashinit(elements, type, flags, hashmask)
 		LIST_INIT(&hashtbl[i]);
 	*hashmask = hashsize - 1;
 	return (hashtbl);
+}
+
+/*
+ * Free memory from hash table previosly allocated via hashinit().
+ */
+void
+hashdone(hashtbl, type)
+	void *hashtbl;
+	int type;
+{
+	free(hashtbl, type);
 }
 
 /*
