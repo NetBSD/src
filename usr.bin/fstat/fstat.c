@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.36 1999/07/08 12:07:56 tron Exp $	*/
+/*	$NetBSD: fstat.c,v 1.37 1999/08/02 17:39:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.36 1999/07/08 12:07:56 tron Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.37 1999/08/02 17:39:13 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,6 +407,10 @@ vtrans(vp, i, flag)
 			break;
 		case VT_ISOFS:
 			if (!isofs_filestat(&vn, &fst))
+				badtype = "error";
+			break;
+		case VT_NTFS:
+			if (!ntfs_filestat(&vn, &fst))
 				badtype = "error";
 			break;
 		default: {
