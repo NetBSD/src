@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/04/03 05:58:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/04/03 06:34:31 lukem Exp $
 #
 
 PROG=	installboot
@@ -9,7 +9,7 @@ WARNS?=	3
 
 # list of MACHINEs to build this version of installboot for.
 #
-IB_MACHINES?=	vax
+IB_MACHINES?=	pmax vax
 
 SRCS+=		${IB_MACHINES:S/$/.c/}
 
