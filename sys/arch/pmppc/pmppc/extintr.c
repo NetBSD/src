@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.5 2003/01/13 20:26:22 augustss Exp $	*/
+/*	$NetBSD: extintr.c,v 1.6 2003/01/18 17:40:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ ext_intr()
 			cpc700_disable_irq(irq);
 		} else {
 #if RECINTR
-			/* XXX disbale irq? */
+			/* XXX disable irq? */
 			splraise(intrmask[irq]);
 			__asm volatile ("mtmsr %0" :: "r"(msr | PSL_EE));
 #endif
