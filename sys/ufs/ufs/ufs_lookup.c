@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.52 2003/09/15 15:08:09 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.53 2003/09/20 21:05:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.52 2003/09/15 15:08:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.53 2003/09/20 21:05:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,7 +761,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 		if (dp->i_offset & (dirblksiz - 1))
 			panic("ufs_direnter: newblk");
 		flags = B_CLRBUF;
-		if (!DOINGSOFTDEP(dvp))
+		if (!DOINGSOFTDEP(dvp) && !(dvp->v_mount->mnt_flag &MNT_ASYNC))
 			flags |= B_SYNC;
 		if ((error = VOP_BALLOC(dvp, (off_t)dp->i_offset, dirblksiz,
 		    cr, flags, &bp)) != 0) {
@@ -829,7 +829,11 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		} else {
-			error = VOP_BWRITE(bp);
+			if (dvp->v_mount->mnt_flag & MNT_ASYNC) {
+				bdwrite(bp);
+				error = 0;
+			} else
+				error = VOP_BWRITE(bp);
 		}
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		ret = VOP_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
@@ -932,7 +936,11 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 			ufs_rw32(dirp->d_ino, needswap), newdirbp, 0);
 		bdwrite(bp);
 	} else {
-		error = VOP_BWRITE(bp);
+		if (dvp->v_mount->mnt_flag & MNT_ASYNC) {
+			bdwrite(bp);
+			error = 0;
+		} else
+			error = VOP_BWRITE(bp);
 	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*
@@ -1026,7 +1034,11 @@ out:
 			DIP_ASSIGN(ip, nlink, ip->i_nlink);
 			ip->i_flag |= IN_CHANGE;
 		}
-		error = VOP_BWRITE(bp);
+		if (dvp->v_mount->mnt_flag & MNT_ASYNC) {
+			bdwrite(bp);
+			error = 0;
+		} else
+			error = VOP_BWRITE(bp);
 	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);
@@ -1065,7 +1077,11 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir, iflags)
 		oip->i_nlink--;
 		DIP_ASSIGN(oip, nlink, oip->i_nlink);
 		oip->i_flag |= IN_CHANGE;
-		error = VOP_BWRITE(bp);
+		if (vdp->v_mount->mnt_flag & MNT_ASYNC) {
+			bdwrite(bp);
+			error = 0;
+		} else
+			error = VOP_BWRITE(bp);
 	}
 	dp->i_flag |= iflags;
 	return (error);
