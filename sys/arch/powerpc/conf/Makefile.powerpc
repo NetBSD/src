@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.9 1997/09/30 22:56:18 christos Exp $
+#	$NetBSD: Makefile.powerpc,v 1.9.2.1 1997/11/12 23:45:50 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -23,12 +23,20 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
+AR?=	ar
+AS?=	as
 CC?=	cc
+CPP?=	cpp
 LD?=	ld
+LORDER?=lorder
 MKDEP?=	mkdep
-STRIP?=	strip
+NM?=	nm
+RANLIB?=ranlib
 SIZE?=	size
-COPTS?= 	-O2
+STRIP?=	strip
+TSORT?=	tsort -q
+
+COPTS?= -O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef	S
