@@ -1,0 +1,33 @@
+#! /bin/sh
+
+# PROVIDE: rtclocaltime
+# REQUIRE: mountcritremote
+# BEFORE:  ntpdate ntpd
+
+. /etc/rc.subr
+
+name="rtclocaltime"
+rcvar=$name
+start_cmd="rtclocaltime_start"
+stop_cmd=":"
+
+rtclocaltime_start()
+{
+	rtcoff=$(date '+%z' | awk '{
+		offset = int($1);
+		if (offset < 0) {
+			sign = -1;
+			offset = -offset;
+		} else {
+			sign = 1;
+		}
+		minutes = offset % 100;
+		hours = offset / 100;
+		offset = sign * (hours * 60 + minutes);
+		print offset;
+	}')
+	sysctl -w kern.rtc_offset=$((-1 * $rtcoff))
+}
+
+load_rc_config $name
+run_rc_command "$1"
