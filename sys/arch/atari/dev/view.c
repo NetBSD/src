@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.2 1995/03/28 06:35:49 leo Exp $	*/
+/*	$NetBSD: view.c,v 1.3 1995/04/10 09:13:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -59,7 +59,7 @@ static int  view_set_colormap __P((struct view_softc *, colormap_t *));
 void viewclose __P((dev_t, int));
 int viewioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int viewopen __P((dev_t, int));
-int viewmap __P((dev_t, int, int));
+int viewmmap __P((dev_t, int, int));
 
 int view_get_colormap __P((struct view_softc *, colormap_t *));
 int view_set_colormap __P((struct view_softc *, colormap_t *));
@@ -379,7 +379,7 @@ struct proc	*p;
 
 /*ARGSUSED*/
 int
-viewmap(dev, off, prot)
+viewmmap(dev, off, prot)
 dev_t	dev;
 int	off, prot;
 {
