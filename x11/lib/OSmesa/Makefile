@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/02/07 05:47:19 rtr Exp $
+#	$NetBSD: Makefile,v 1.10 2004/02/09 04:30:05 lukem Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -70,17 +70,12 @@ COMPILE.S=	${COMPILE.s}		# XXX don't want -traditional-cpp
 AFLAGS+=	-DUSE_GAS -I. -I${X11SRCDIR.xc}/extras/Mesa/src/SPARC
 .endif
 
+.include "${NETBSDSRCDIR}/x11/tools/gen_matypes/Makefile.gen_matypes"
 
-GENMATYPESDIR!=	cd ${NETBSDSRCDIR}/x11/tools/gen_matypes && ${PRINTOBJDIR}
-GENMATYPES=	${GENMATYPESDIR}/gen_matypes
-
-${GENMATYPES}:
-	(cd ${NETBSDSRCDIR}/x11/tools/gen_matypes && ${MAKE})
-
-matypes.h: ${GENMATYPES}
+matypes.h: ${GEN_MATYPES}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${GENMATYPES} > ${.TARGET}
+	${GEN_MATYPES} > ${.TARGET}
 CLEANFILES+=	matypes.h
 
 DPSRCS+=	matypes.h
