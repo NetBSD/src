@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.137 2002/03/17 19:43:07 atatat Exp $	*/
+/*	$NetBSD: param.h,v 1.138 2002/04/05 18:27:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -274,5 +274,20 @@
 #ifndef UBC_NWINS
 #define	UBC_NWINS	1024
 #endif
+
+#ifdef _KERNEL
+/*
+ * macro to convert from milliseconds to hz without integer overflow
+ * Default version using only 32bits arithmetics.
+ * 64bit port can define 64bit version in their <machine/param.h>
+ * 0x20000 is safe for hz < 20000
+ */
+#ifndef mstohz
+#define mstohz(ms) \
+	(__predict_false((ms) >= 0x20000) ? \
+	    ((ms +0u) / 1000u) * hz : \
+	    ((ms +0u) * hz) / 1000u)
+#endif
+#endif /* _KERNEL */
 
 #endif /* !_SYS_PARAM_H_ */

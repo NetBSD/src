@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.11 2001/11/15 09:48:06 lukem Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.12 2002/04/05 18:27:52 bouyer Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.11 2001/11/15 09:48:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.12 2002/04/05 18:27:52 bouyer Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1749,8 +1749,7 @@ loop:
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->xs_control & XS_CTL_POLL) == 0)
 				callout_reset(&acb->xs->xs_callout,
-				    (acb->timeout * hz) / 1000,
-				    spc_timeout, acb);
+				    mstohz(acb->timeout), spc_timeout, acb);
 
 			sc->sc_state = SPC_CONNECTED;
 		} else if ((ints & INTS_TIMEOUT) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.27 2001/12/27 02:23:25 wiz Exp $	*/
+/*	$NetBSD: mha.c,v 1.28 2002/04/05 18:27:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -748,8 +748,7 @@ mha_scsi_request(chan, req, arg)
 		TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 #if 1
 		callout_reset(&acb->xs->xs_callout,
-		    ((u_int64_t)xs->timeout * (u_int64_t)hz) / 1000,
-		    mha_timeout, acb);
+		    mstohz(xs->timeout), mha_timeout, acb);
 #endif
 
 		/*
