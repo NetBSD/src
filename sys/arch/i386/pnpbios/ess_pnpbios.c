@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.1 2000/02/15 17:12:54 nathanw Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.2 2000/02/28 00:22:33 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ ess_pnpbios_match(parent, match, aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
-	if (strcmp(aa->idstr, "ESS0104"))
+	if (strcmp(aa->idstr, "ESS0104") && strcmp(aa->idstr, "ESS1869"))
 		return (0);
 
 	return (1);
