@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.9 2002/07/27 19:38:29 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.10 2002/07/28 00:45:11 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.9 2002/07/27 19:38:29 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.10 2002/07/28 00:45:11 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -404,7 +404,7 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 {
 	DBT key, data;
 	int error = 0;
-	DB *db = dbopen(llfile, O_RDWR|O_CREAT|O_EXLOCK, 0, DB_HASH, NULL);
+	DB *db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0, DB_HASH, NULL);
 
 	if (db == NULL)
 		return -1;
