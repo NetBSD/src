@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.113 2001/11/15 09:48:14 lukem Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.114 2001/11/28 05:39:13 lukem Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.113 2001/11/15 09:48:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.114 2001/11/28 05:39:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -379,7 +379,7 @@ raidattach(num)
 		}
 	}
 
-#if RAID_AUTOCONFIG
+#ifdef RAID_AUTOCONFIG
 	raidautoconfig = 1;
 #endif
 
