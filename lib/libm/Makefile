@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.39 1998/02/19 06:58:07 cgd Exp $
+#  $NetBSD: Makefile,v 1.40 1998/08/09 23:51:33 perry Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -42,20 +42,24 @@
 #					    default standard
 # 
 
+# require this for the value of I387_LIBM from mk.conf, if set.
+.include <bsd.own.mk>
+
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S
 .elif (${MACHINE_ARCH} == "i386")
-# Uncomment the following lines if you have a i387 (or i486 or Pentium)
-#.PATH:	${.CURDIR}/arch/i387
-#ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
-#	    e_logf.S e_log10.S e_log10f.S e_remainder.S e_remainderf.S \
-#	    e_scalb.S e_scalbf.S e_sqrt.S e_sqrtf.S s_atan.S s_atanf.S \
-#	    s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S s_cos.S s_cosf.S \
-#	    s_finite.S s_finitef.S s_floor.S s_floorf.S s_ilogb.S s_ilogbf.S \
-#	    s_log1p.S s_log1pf.S s_logb.S s_logbf.S s_rint.S s_rintf.S \
-#	    s_scalbn.S s_scalbnf.S s_significand.S s_significandf.S s_sin.S \
-#	    s_sinf.S s_tan.S s_tanf.S
+.if defined(I387_LIBM)
+.PATH:	${.CURDIR}/arch/i387
+ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
+	    e_logf.S e_log10.S e_log10f.S e_remainder.S e_remainderf.S \
+	    e_scalb.S e_scalbf.S e_sqrt.S e_sqrtf.S s_atan.S s_atanf.S \
+	    s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S s_cos.S s_cosf.S \
+	    s_finite.S s_finitef.S s_floor.S s_floorf.S s_ilogb.S s_ilogbf.S \
+	    s_log1p.S s_log1pf.S s_logb.S s_logbf.S s_rint.S s_rintf.S \
+	    s_scalbn.S s_scalbnf.S s_significand.S s_significandf.S s_sin.S \
+	    s_sinf.S s_tan.S s_tanf.S
+.endif
 .elif (${MACHINE_ARCH} == "m68k")
 .PATH:	${.CURDIR}/arch/mc68881
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
