@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.27 1998/08/28 21:20:05 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.28 1998/08/31 23:20:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -40,6 +40,7 @@
 #include <sys/map.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/acct.h>
 #include <sys/wait.h>
@@ -75,6 +76,8 @@ u_long pgrphash;
 struct proclist allproc;
 struct proclist zombproc;
 struct pool proc_pool;
+struct pool pcred_pool;
+struct pool plimit_pool;
 
 static void orphanpg __P((struct pgrp *));
 #ifdef DEBUG
@@ -95,6 +98,10 @@ procinit()
 	uihashtbl = hashinit(maxproc / 16, M_PROC, M_WAITOK, &uihash);
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
+	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.46 1998/08/13 02:10:57 eeh Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.47 1998/08/31 23:20:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -251,8 +251,7 @@ again:
 	p2->p_emul = p1->p_emul;
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
-	MALLOC(p2->p_cred, struct pcred *, sizeof(struct pcred),
-	    M_SUBPROC, M_WAITOK);
+	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);
 	memcpy(p2->p_cred, p1->p_cred, sizeof(*p2->p_cred));
 	p2->p_cred->p_refcnt = 1;
 	crhold(p1->p_ucred);

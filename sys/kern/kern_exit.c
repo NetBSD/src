@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.53 1998/08/02 04:41:32 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.54 1998/08/31 23:20:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -268,7 +268,7 @@ exit1(p, rv)
 	 */
 	curproc = NULL;
 	if (--p->p_limit->p_refcnt == 0)
-		FREE(p->p_limit, M_SUBPROC);
+		pool_put(&plimit_pool, p->p_limit);
 
 	/*
 	 * Finally, call machine-dependent code to release the remaining
@@ -367,7 +367,7 @@ loop:
 			 */
 			if (--p->p_cred->p_refcnt == 0) {
 				crfree(p->p_cred->pc_ucred);
-				FREE(p->p_cred, M_SUBPROC);
+				pool_put(&pcred_pool, p->p_cred);
 			}
 
 			/*
