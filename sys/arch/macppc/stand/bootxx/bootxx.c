@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.3 1998/07/02 19:26:02 tsubai Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.4 1998/07/13 17:35:55 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,12 +37,12 @@
 int (*openfirmware)(void *);
 int stack[1024];
 
-#define MAXBLOCKNUM 32
+#define MAXBLOCKNUM 30
 
+void (*entry_point)(int, int, void *) = (void *)0;
 int block_size = 0;
 int block_count = MAXBLOCKNUM;
 int block_table[MAXBLOCKNUM] = { 0 };
-void (*entry_point)(int, int, void *) = (void *)0;
 
 asm("
 	.text
@@ -59,7 +59,6 @@ _start:
 	addi	8,8,0x20
 	bdnz	1b
 	sync
-	isync
 
 	li	0,0
 	mtdbatu	3,0
@@ -73,30 +72,11 @@ _start:
 	mtibatu	3,8
 	isync
 
-	lis	1,stack@ha	/* setup 4KB of stack */
-	addi	1,1,stack@l
-	addi	1,1,4096
+	li	1,(stack+4096)@l	/* setup 4KB of stack */
 
 	b	startup
 ");
 
-
-static __inline void
-OF_exit()
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-	} args = {
-		"exit",
-		0,
-		0
-	};
-
-	openfirmware(&args);
-	for (;;);			/* just in case */
-}
 
 static __inline int
 OF_finddevice(name)
@@ -173,25 +153,6 @@ OF_open(dname)
 	return args.handle;
 }
 
-static __inline void
-OF_close(handle)
-	int handle;
-{
-	static struct {
-		char *name;
-		int nargs;
-		int nreturns;
-		int handle;
-	} args = {
-		"close",
-		1,
-		0,
-	};
-	
-	args.handle = handle;
-	openfirmware(&args);
-}
-
 static __inline int
 OF_read(handle, addr, len)
 	int handle;
@@ -247,22 +208,26 @@ OF_seek(handle, pos)
 	return args.status;
 }
 
-
-char bootpath[128];
-
 void
 startup(arg1, arg2, openfirm)
 	int arg1, arg2;
 	void *openfirm;
 {
-	int fd, blk, chosen;
-	int i;
+	int fd, blk, chosen, options;
+	int i, bs;
 	char *addr;
-	
+	char bootpath[128];
+
 	openfirmware = openfirm;
 
 	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "bootpath", bootpath, sizeof(bootpath));
+	if (OF_getprop(chosen, "bootpath", bootpath, sizeof(bootpath)) == 1) {
+		/*
+		 * buggy firmware doesn't set bootpath...
+		 */
+		options = OF_finddevice("/options");
+		OF_getprop(options, "boot-device", bootpath, sizeof(bootpath));
+	}
 
 	/*
 	 * "scsi/sd@0:0" --> "scsi/sd@0"
@@ -274,12 +239,13 @@ startup(arg1, arg2, openfirm)
 	fd = OF_open(bootpath);
 
 	addr = (char *)entry_point;
+	bs = block_size;
 	for (i = 0; i < block_count; i++) {
 		blk = block_table[i];
 
 		OF_seek(fd, (u_quad_t)blk * 512);
-		OF_read(fd, addr, block_size);
-		addr += block_size;
+		OF_read(fd, addr, bs);
+		addr += bs;
 	}
 
 	/*
@@ -294,7 +260,5 @@ startup(arg1, arg2, openfirm)
 	" :: "r"(BATU(0)), "r"(BATL(0, 0)));
 
 	entry_point(0, 0, openfirm);
-
-	OF_exit();
-	for (;;);
+	for (;;);			/* just in case */
 }
