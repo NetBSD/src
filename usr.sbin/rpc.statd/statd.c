@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.6 1997/10/17 16:12:53 lukem Exp $	*/
+/*	$NetBSD: statd.c,v 1.7 1997/10/18 14:11:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.6 1997/10/17 16:12:53 lukem Exp $");
+__RCSID("$NetBSD: statd.c,v 1.7 1997/10/18 14:11:43 drochner Exp $");
 #endif
 
 
@@ -177,7 +177,7 @@ handle_sigchld(sig)
 void 
 sync_file()
 {
-	if (msync((caddr_t)status_info, 0) < 0)
+	if (msync((caddr_t)status_info, 0, 0) < 0)
 		syslog(LOG_ERR, "msync() failed: %s", strerror(errno));
 }
 
