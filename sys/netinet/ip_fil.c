@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.22 1997/07/06 05:29:15 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.23 1997/07/06 22:32:34 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -164,13 +164,8 @@ struct devsw iplsw = {
 /*
  * We provide the fr_checkp name just to minimize changes later.
  */
-#  ifndef	_KERNEL
 int (*fr_checkp) __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
-    char **mp));
-#  else
-int (*fr_checkp) __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
-    struct mbuf **mp));
-#  endif /* _KERNEL */
+    mb_t **mp));
 # endif /* NETBSD_PF */
 #endif /* __NetBSD__ */
 
