@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.7 2003/03/24 07:49:48 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.8 2003/03/24 09:17:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -111,7 +111,7 @@ struct smb_sopt {
 	int		sv_proto;
 	int16_t		sv_tz;		/* offset in min relative to UTC */
 	u_int32_t	sv_maxtx;	/* maximum transmit buf size */
-	u_char		sv_sm;		/* security mode */
+	u_int16_t	sv_sm;		/* security mode */
 	u_int16_t	sv_maxmux;	/* max number of outstanding rq's */
 	u_int16_t 	sv_maxvcs;	/* max number of VCs */
 	u_int16_t	sv_rawmode;
