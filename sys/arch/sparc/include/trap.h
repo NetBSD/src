@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.9 1996/05/16 15:57:04 abrown Exp $ */
+/*	$NetBSD: trap.h,v 1.10 1996/12/01 23:19:00 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,7 +92,7 @@
 /*	through		0x27	   unused */
 #define	T_CPEXCEPTION	0x28	/* (9) coprocessor exception */
 /*			0x29	   unused */
-/*	through		0x2a	   unused */
+#define T_IDIV0		0x2a	/* divide by zero (from hw [su]div instr) */
 #define T_STOREBUFFAULT	0x2b	/* SuperSPARC: Store buffer copy-back fault */
 /*			0x2c	   unused */
 /*	through		0x7f	   unused */
