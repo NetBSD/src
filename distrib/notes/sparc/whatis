@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.16 2003/07/22 11:59:49 mrg Exp $
+.\"	$NetBSD: whatis,v 1.17 2003/10/21 02:19:38 mbw Exp $
 .
 .Nx \*V
 is the seventh major release for the \*M.
@@ -15,6 +15,10 @@ run substantially faster.
 .It
 The release of X11 distributed with the \*M port has been upgraded from
 XFree86 3.3.6 to Xfree86 4.3.0.
+.It
+Improvements in PCMCIA support.
+.It
+Support for ZX and TZX framebuffers (a.k.a leo).
 .bullet)
 .Pp
 .Nx \*V
