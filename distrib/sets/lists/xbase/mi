@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.46 2005/03/22 12:45:07 tron Exp $
+# $NetBSD: mi,v 1.47 2005/03/23 00:38:10 tron Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./var/db/obsolete/xbase				xbase-sys-root
 ./var/db/obsolete/xcomp				xbase-sys-root
@@ -1035,8 +1035,8 @@
 ./usr/X11R6/man/man7/X.Org.7			xbase-obsolete		obsolete
 ./usr/X11R6/man/man7/XConsortium.7		xbase-obsolete		obsolete
 ./usr/X11R6/man/man7/XProjectTeam.7		xbase-obsolete		obsolete
-./usr/X11R6/man/man7/XStandards.7		-unknown-		man
-./usr/X11R6/man/man7/Xsecurity.7		-unknown-		man
+./usr/X11R6/man/man7/XStandards.7		-unknown-		.man
+./usr/X11R6/man/man7/Xsecurity.7		-unknown-		.man
 ./usr/X11R6/man/whatis.db			-unknown-		man
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-1337.ad
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-NeXTish.ad
