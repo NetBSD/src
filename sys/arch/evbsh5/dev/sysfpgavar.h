@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpgavar.h,v 1.3 2002/09/22 20:51:09 scw Exp $	*/
+/*	$NetBSD: sysfpgavar.h,v 1.4 2002/09/28 11:16:38 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -68,6 +68,28 @@ struct sysfpga_attach_args {
 #define	SYSFPGA_SUPERIO_INUM_MOUSE	6
 #define	SYSFPGA_SUPERIO_INUM_IDE	7
 #define	SYSFPGA_SUPERIO_NINTR		8
+
+/*
+ * PCI1 generates the following interrupts
+ */
+#define	SYSFPGA_PCI1_INTA		0
+#define	SYSFPGA_PCI1_INTB		1
+#define	SYSFPGA_PCI1_INTC		2
+#define	SYSFPGA_PCI1_INTD		3
+#define	SYSFPGA_PCI1_NINTR		4
+
+/*
+ * PCI2 generates the following interrupts
+ */
+#define	SYSFPGA_PCI2_INTA		0
+#define	SYSFPGA_PCI2_INTB		1
+#define	SYSFPGA_PCI2_INTC		2
+#define	SYSFPGA_PCI2_INTD		3
+#define	SYSFPGA_PCI2_FAL		4	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_PCI2_DEG		5	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_PCI2_INTP		6	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_PCI2_INTS		7	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_PCI2_NINTR		8
 
 struct evcnt;
 extern struct evcnt *sysfpga_intr_evcnt(int);
