@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.355 2001/08/28 23:54:14 tsubai Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.356 2001/08/30 16:22:48 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.350 2001/08/28 23:53:14 tsubai Exp 
+ *	NetBSD: pcidevs,v 1.351 2001/08/30 16:21:42 soren Exp 
  */
 
 /*
@@ -1141,6 +1141,8 @@
 /* Hi/Fn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
 #define	PCI_PRODUCT_HIFN_6500	0x0006		/* 6500 */
+#define	PCI_PRODUCT_HIFN_7811	0x0007		/* 7811 */
+#define	PCI_PRODUCT_HIFN_7951	0x0012		/* 7951 */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_MCABRIDGE	0x0002		/* MCA Bridge */
