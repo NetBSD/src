@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.34 2000/11/21 00:37:55 jdolecek Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.35 2000/12/01 12:28:35 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -60,13 +60,13 @@
 #include <compat/svr4/svr4_errno.h>
 #include <compat/svr4/svr4_signal.h>
 
-const char svr4_emul_path[] = "/emul/svr4";
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
 extern const char * const svr4_syscallnames[];
 
 const struct emul emul_svr4 = {
 	"svr4",
+	"/emul/svr4",
 	native_to_svr4_errno,
 	svr4_sendsig,
 	SVR4_SYS_syscall,
@@ -123,7 +123,8 @@ svr4_elf32_probe(p, epp, eh, itp, pos)
 	size_t len;
 
 	if (itp[0]) {
-		if ((error = emul_find(p, NULL, svr4_emul_path, itp, &bp, 0)))
+		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
+		    itp, &bp, 0)))
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
 			return error;
