@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.39 2002/11/11 18:09:29 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.40 2002/12/09 14:14:59 chris Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1114,6 +1114,7 @@ malloc(size_t size)
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
         malloc_active--;
+	THREAD_UNLOCK();
 	return (0);
     }
     if (!malloc_started)
@@ -1162,6 +1163,7 @@ realloc(void *ptr, size_t size)
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
         malloc_active--;
+	THREAD_UNLOCK();
 	return (0);
     }
     if (ptr && !malloc_started) {
