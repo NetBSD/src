@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.5 2000/05/23 01:48:52 perseant Exp $	 */
+/* $NetBSD: fsck.h,v 1.6 2002/05/23 04:05:11 perseant Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -90,9 +90,12 @@ struct bufarea {
 	(bp)->b_bno = (daddr_t)-1; \
 	(bp)->b_flags = 0;
 
-#define	sbdirty()	sblk.b_dirty = 1
 #define	sblock		(*sblk.b_un.b_fs)
 #define ifblock         (*iblk.b_un.b_dinode)
+#define	sbdirty() do {							\
+	sblk.b_dirty = 1;						\
+	sblock.lfs_dlfs.dlfs_cksum = lfs_sb_cksum(&(sblock.lfs_dlfs));	\
+} while(0)
 
 enum fixstate {
 	DONTKNOW, NOFIX, FIX, IGNORE
