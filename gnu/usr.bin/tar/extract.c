@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: extract.c,v 1.8 1997/10/08 22:55:31 enami Exp $";
+static char rcsid[] = "$NetBSD: extract.c,v 1.8.10.1 2003/03/27 08:35:14 msaitoh Exp $";
 #endif /* not lint */
 
 /*
@@ -98,6 +98,7 @@ int make_dirs ();		/* Makes required directories */
 static time_t now = 0;		/* Current time */
 static we_are_root = 0;		/* True if our effective uid == 0 */
 static int notumask = ~0;	/* Masks out bits user doesn't want */
+static int dirmode = 0755;	/* Default directory create mask */
 
 /*
  * "Scratch" space to store the information about a sparse file before
@@ -136,11 +137,13 @@ extr_init ()
 	 * leave our kernel umask at 0, and our "notumask" at ~0.
 	 */
   ourmask = umask (0);		/* Read it */
+  dirmode = ~ourmask;
   if (!f_use_protection)
     {
       (void) umask (ourmask);	/* Set it back how it was */
-      notumask = ~ourmask;	/* Make umask override permissions */
+      notumask = dirmode;	/* Make umask override permissions */
     }
+  dirmode &= 0777;
 }
 
 
@@ -837,7 +840,7 @@ make_dirs (pathname)
       if (p[-1] == '.' && (p == pathname + 1 || p[-2] == '/'))
 	continue;
       *p = 0;			/* Truncate the path there */
-      check = mkdir (pathname, 0777);	/* Try to create it as a dir */
+      check = mkdir (pathname, dirmode); /* Try to create it as a dir */
       if (check == 0)
 	{
 	  /* Fix ownership */
