@@ -71,8 +71,13 @@ struct sysent hpux_sysent[] = {
 	    sys_getuid },			/* 24 = getuid */
 	{ 1, s(struct hpux_sys_stime_6x_args),
 	    hpux_sys_stime_6x },		/* 25 = stime_6x */
+#if 0
 	{ 4, s(struct hpux_sys_ptrace_args),
 	    hpux_sys_ptrace },			/* 26 = ptrace */
+#else
+	{ 0, 0,
+	    sys_nosys },			/* 26 = unimplemented ptrace */
+#endif
 	{ 1, s(struct hpux_sys_alarm_6x_args),
 	    hpux_sys_alarm_6x },		/* 27 = alarm_6x */
 	{ 2, s(struct hpux_sys_fstat_6x_args),

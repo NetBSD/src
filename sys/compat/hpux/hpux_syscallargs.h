@@ -406,7 +406,10 @@ int	sys_getpid	__P((struct proc *, void *, register_t *));
 int	sys_setuid	__P((struct proc *, void *, register_t *));
 int	sys_getuid	__P((struct proc *, void *, register_t *));
 int	hpux_sys_stime_6x	__P((struct proc *, void *, register_t *));
+#if 0
 int	hpux_sys_ptrace	__P((struct proc *, void *, register_t *));
+#else
+#endif
 int	hpux_sys_alarm_6x	__P((struct proc *, void *, register_t *));
 int	hpux_sys_fstat_6x	__P((struct proc *, void *, register_t *));
 int	hpux_sys_pause_6x	__P((struct proc *, void *, register_t *));
