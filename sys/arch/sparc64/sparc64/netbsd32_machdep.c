@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.16 2001/06/07 17:54:35 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.17 2001/06/30 00:00:41 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -572,8 +572,10 @@ cpu_coredump32(p, vp, cred, chdr)
 	}
 
 	if (p->p_md.md_fpstate) {
-		if (p == fpproc)
+		if (p == fpproc) {
 			savefpstate(p->p_md.md_fpstate);
+			fpproc = NULL;
+		}
 		/* Copy individual fields */
 		for (i=0; i<32; i++)
 			md_core.md_fpstate.fs_regs[i] = 
