@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_tcp.c,v 1.17 1999/01/31 20:45:31 christos Exp $	*/
+/*	$NetBSD: clnt_tcp.c,v 1.18 1999/03/25 01:16:10 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_tcp.c,v 1.17 1999/01/31 20:45:31 christos Exp $");
+__RCSID("$NetBSD: clnt_tcp.c,v 1.18 1999/03/25 01:16:10 lukem Exp $");
 #endif
 #endif
  
@@ -126,7 +126,11 @@ struct ct_data {
  * If raddr->sin_port is 0, then a binder on the remote machine is
  * consulted for the right port number.
  * NB: *sockp is copied into a private area.
- * NB: It is the clients responsibility to close *sockp.
+ * NB: It is the client's responsibility to close *sockp, unless
+ *     CLNT_DESTROY() is used
+ * NB: It is the client's responsibility to close *sockp, unless
+ *     clnttcp_create() was called with *sockp = -1 (so it created
+ *     the socket), and CLNT_DESTROY() is used.
  * NB: The rpch->cl_auth is set null authentication.  Caller may wish to set
  * this something more useful.
  */
@@ -414,7 +418,7 @@ clnttcp_destroy(h)
 {
 	struct ct_data *ct = (struct ct_data *) h->cl_private;
 
-	if (ct->ct_closeit) {
+	if (ct->ct_closeit && ct->ct_sock != -1) {
 		(void)close(ct->ct_sock);
 	}
 	XDR_DESTROY(&(ct->ct_xdrs));
