@@ -16,7 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$Id: Makefile.gnu,v 1.2 1993/08/02 17:48:37 mycroft Exp $
+#	$Id: Makefile.gnu,v 1.3 1998/06/07 02:30:12 enami Exp $
 
 #### Start of system configuration section. ####
 
@@ -39,6 +39,8 @@ INSTALL_DATA = $(INSTALL) -m 644
 # -DHAVE_LIMITS_H	If you have limits.h.
 # -DBSD42		If you have sys/dir.h (unless you use -DPOSIX),
 #			sys/file.h, and st_blocks in `struct stat'.
+#			Also, efficient sparse file handling is enabled
+#			as if -DENABLE_SPARSE is specified.
 # -DDIRENT		If you have dirent.h.
 # -DSYSNDIR		Old Xenix systems (sys/ndir.h).
 # -DSYSDIR		Old BSD systems (sys/dir.h).
@@ -67,6 +69,8 @@ INSTALL_DATA = $(INSTALL) -m 644
 # -DNO_OPEN3		If you lack the 3-argument open and want to
 #			disable the tar -k option instead of emulating open.
 # -DXENIX		If you have sys/inode.h and need it to be included.
+# -DENABLE_SPARSE	If you want to enable an efficient sparse file
+#			handling (-S option).
 
 DEF_AR_FILE = /dev/rst0
 DEFBLOCKING = 20
