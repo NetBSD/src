@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma3.h,v 1.7 1997/10/17 03:20:13 gwr Exp $	*/
+/*	$NetBSD: dvma3.h,v 1.8 1998/01/22 23:45:05 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,35 +45,26 @@
  * is presented as slave-accessible memory for VME and OBIO
  * devices, though not at the same address seen by the CPU.
  *
- * Relevant parts of virtual memory map are:
- *
- * 0FE0.0000  monitor map (devices)
- * 0FF0.0000  DVMA space
- * 0FFE.0000  monitor RAM seg.
- * 0FFF.E000  monitor RAM page
- *
  * Note that while the DVMA harware makes the last 1MB visible
  * for secondary masters, the PROM "owns" the last page of it.
  * Also note that OBIO devices can actually see the last 16MB
  * of kernel virtual space.  That can be mostly ignored, except
  * when calculating the alias address for slave access.
  */
+#define DVMA_MAP_BASE	0x0FF00000
+#define DVMA_MAP_SIZE	0x00100000
+#define DVMA_MAP_AVAIL	(DVMA_MAP_SIZE-NBPG)
 
 /*
  * To convert an address in DVMA space to a slave address,
  * just use a logical AND with one of the following masks.
  * To convert back, just logical OR with the base address.
  */
-#define DVMA_OBIO_SLAVE_BASE 0x0F000000
-#define DVMA_OBIO_SLAVE_MASK 0x00FFffff	/* 16MB */
+#define DVMA_OBIO_SLAVE_BASE	0x0F000000
+#define DVMA_OBIO_SLAVE_MASK	0x00FFffff	/* 16MB */
 
-#define DVMA_VME_SLAVE_BASE  0x0FF00000	/*  1MB */
-#define DVMA_VME_SLAVE_MASK  0x000Fffff	/*  1MB */
-
-
-/* DVMA is the last 1MB, but the PROM gets the last page. */
-#define	DVMA_SPACE_START	0x0FF00000
-#define DVMA_SPACE_END  	0x0FFFE000
+#define DVMA_VME_SLAVE_BASE 	0x0FF00000
+#define DVMA_VME_SLAVE_MASK 	0x000Fffff	/*  1MB */
 
 void dvma_init __P((void));
 
