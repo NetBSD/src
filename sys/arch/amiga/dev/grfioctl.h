@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grfioctl.h 1.1 90/07/09
  *	from: @(#)grfioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: grfioctl.h,v 1.2 1993/08/01 19:23:07 mycroft Exp $
+ *	$Id: grfioctl.h,v 1.3 1993/09/02 18:08:00 mw Exp $
  */
 
 
@@ -73,6 +73,30 @@ struct	grfinfo {
 #define gd_dy		gd_dyn.gdi_dy
 };
 
+
+/* video mode, should be display-independant, but it might need 
+   modifications in the future to really become hardware-independant. */
+
+struct grfvideo_mode {
+  u_char  mode_num;		/* index in mode table */
+  char	  mode_descr[80];	/* description of mode */
+  u_long  pixel_clock;		/* in Hz. */
+  u_short disp_width;		/* width of displayed video (incl overscan) */
+  u_short disp_height;		/* height "" */
+  u_short depth;		/* number of bitplanes resp. bits per pixel */
+  u_short hblank_start;		
+  u_short hblank_stop;		
+  u_short hsync_start;		/* video-parameters, take care not to   */
+  u_short hsync_stop;		/* use parameters that violete specs of */
+  u_short htotal;		/* your monitor !                       */
+  u_short vblank_start;
+  u_short vblank_stop;
+  u_short vsync_start;
+  u_short vsync_stop;
+  u_short vtotal;
+};
+
+
 /*
  * BSD ioctls
  */
@@ -81,4 +105,16 @@ struct	grfinfo {
 #define	GRFIOCOFF	_IO('G', 2)		/* turn graphics off */
 #define GRFIOCMAP	_IOWR('G', 5, int)	/* map in regs+framebuffer */
 #define GRFIOCUNMAP	_IOW('G', 6, int)	/* unmap regs+framebuffer */
-#define	GRFIOCSINFO	_IOW('G', 7, struct grfdyninfo) /* set info on device */
+
+/* amiga addons */
+	/* set info on device */
+#define	GRFIOCSINFO	_IOW('G', 40, struct grfdyninfo)
+	/* get video_mode. mode_num==0 gets current mode. */
+#define GRFGETVMODE	_IOWR('G', 41, struct grfvideo_mode)
+	/* set video_mode. */
+#define GRFSETVMODE	_IOW('G', 42, int)
+	/* get number of configured video modes */
+#define GRFGETNUMVM	_IOR('G', 43, int)
+
+
+

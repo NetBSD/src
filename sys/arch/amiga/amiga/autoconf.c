@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: autoconf.c 1.31 91/01/21
  *	from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.2 1993/08/01 19:22:26 mycroft Exp $
+ *	$Id: autoconf.c,v 1.3 1993/09/02 18:05:26 mw Exp $
  */
 
 /*
@@ -61,8 +61,8 @@
 #include "pte.h"
 #include "../dev/device.h"
 
-#include <libraries/configregs.h>
-#include <libraries/configvars.h>
+#include "configdev.h"
+#include "custom.h"
 
 /*
  * The following several variables are related to
@@ -73,6 +73,15 @@ int	cold;		    /* if 1, still working on cold-start */
 int	dkn;		    /* number of iostat dk numbers assigned so far */
 int	cpuspeed = MHZ_8;   /* relative cpu speed */
 struct	amiga_hw sc_table[MAXCTLRS];
+
+/* set up in amiga_init.c */
+extern caddr_t ZORRO2ADDR;
+
+/* maps a zorro2 and/or A3000 builtin address into the mapped kva address */
+#define zorro2map(pa) ((caddr_t) ((u_int)ZORRO2ADDR - ZORRO2BASE + (u_int)pa))
+/* tests whether the address lies in our zorro2 space */
+#define iszorro2kva(kva) ((u_int)kva >= (u_int)ZORRO2ADDR && (u_int)kva < ((u_int)ZORRO2ADDR+(u_int)ZORRO2TOP-(u_int)ZORRO2BASE))
+#define iszorro2pa(pa) ((u_int)pa >= ZORRO2BASE && (u_int)pa <= ZORRO2TOP)
 
 #ifdef DEBUG
 int	acdebug = 0;
@@ -85,11 +94,9 @@ configure()
 {
 	register struct amiga_hw *hw;
 	int found;
-
-	/*
-	 * XXX: these should be consolidated into some kind of table
-	 */
-	dmainit();
+	
+	/* XXXX I HATE IT XXXX */
+	custom.intena = INTF_INTEN;
 
 	/*
 	 * Look over each hardware device actually found and attempt
@@ -127,6 +134,8 @@ configure()
 #endif
 	swapconf();
 	cold = 0;
+
+	custom.intena = INTF_SETCLR | INTF_INTEN;
 }
 
 #define dr_type(d, s)	\
@@ -134,7 +143,7 @@ configure()
 
 #define same_hw_ctlr(hw, ac) \
 	(HW_ISFLOPPY(hw) && dr_type((ac)->amiga_driver, "floppy") || \
-	 HW_ISSCSI(hw) && dr_type((ac)->amiga_driver, "scsi"))
+	 HW_ISSCSI(hw) && (dr_type((ac)->amiga_driver, "a3000scsi")||dr_type((ac)->amiga_driver, "a2091scsi")||dr_type((ac)->amiga_driver, "GVPIIscsi")))
 
 find_controller(hw)
 	register struct amiga_hw *hw;
@@ -233,6 +242,21 @@ find_device(hw)
 		if (ad->amiga_cdriver)
 			continue;
 
+		/*
+		 * XXX: A graphics device that was found as part of the
+		 * console init will have the amiga_addr field already set
+		 * (i.e. no longer the select code).  Gotta perform a
+		 * slightly different check for an exact match.
+		 */
+		if (HW_ISDEV(hw, D_BITMAP) && iszorro2kva(ad->amiga_addr))
+		  {
+		    if (ad->amiga_addr == hw->hw_kva)
+		      {
+		        match_d = ad;
+		        break;
+		      }
+		    continue;
+		  }
 		sc = (int) ad->amiga_addr;
 		/*
 		 * Exact match; all done.
@@ -271,6 +295,8 @@ find_device(hw)
 	ad = match_d;
 	oaddr = ad->amiga_addr;
 	ad->amiga_addr = hw->hw_kva;
+	ad->amiga_serno = hw->hw_serno;
+	ad->amiga_size = hw->hw_size;
 	if ((*ad->amiga_driver->d_init)(ad)) {
 		ad->amiga_alive = 1;
 		printf("%s%d", ad->amiga_driver->d_name, ad->amiga_unit);
@@ -288,7 +314,7 @@ find_slaves(ac)
 {
 	if (dr_type(ac->amiga_driver, "floppy"))
 		find_busslaves(ac, 4);
-	else if (dr_type(ac->amiga_driver, "scsi"))
+	else if (dr_type(ac->amiga_driver, "a3000scsi")||dr_type(ac->amiga_driver, "a2091scsi")||dr_type(ac->amiga_driver, "GVPIIscsi"))
 		find_busslaves(ac, 7);
 }
 
@@ -478,7 +504,9 @@ same_hw_device(hw, ad)
 		found = dr_type(ad->amiga_driver, "floppy");
 		break;
 	case C_SCSI:
-		found = dr_type(ad->amiga_driver, "scsi");
+		found = (dr_type(ad->amiga_driver, "a3000scsi")
+			 || dr_type(ad->amiga_driver, "a2091scsi")
+			 || dr_type(ad->amiga_driver, "GVPIIscsi"));
 		break;
 	case D_BITMAP:
 		found = dr_type(ad->amiga_driver, "grf");
@@ -488,6 +516,9 @@ same_hw_device(hw, ad)
 		break;
 	case D_COMMSER:
 		found = dr_type(ad->amiga_driver, "ser");
+		break;
+	case D_CLOCK:
+		found = dr_type(ad->amiga_driver, "rtclock");
 		break;
 	default:
 		break;
@@ -521,72 +552,102 @@ find_devs()
   
   /* first enter builtin devices */
   
-  /* this is only for the A3000, but... */
-  hw->hw_pa	      = 0xdd0000;
-  hw->hw_size	      = NBPG;
-  hw->hw_kva	      = 0;			/* filled out in scsiinit */
+  if (is_a3000 ())
+    {
+      /* hm, this doesn't belong here... */
+      volatile u_char *magic_reset_reg = zorro2map (0xde0002);
+      /* this bit makes the next reset look like a powerup reset, Amiga
+	 Unix sets this bit, and perhaps it will enable 16M machines to
+	 boot again... */
+      *magic_reset_reg   |= 0x80;
+
+      hw->hw_pa		  = 0xdd0000;
+      hw->hw_size	  = NBPG;
+      hw->hw_kva	  = zorro2map (0xdd0000);
+      hw->hw_manufacturer = MANUF_BUILTIN;
+      hw->hw_product      = PROD_BUILTIN_SCSI;
+      hw->hw_type	  = B_BUILTIN | C_SCSI;
+      hw->hw_serno	  = 0;
+      hw++;
+  
+      hw->hw_pa	      	  = 0xdc0000;
+      hw->hw_size	  = NBPG;
+      hw->hw_kva	  = zorro2map (0xdc0000);
+      hw->hw_manufacturer = MANUF_BUILTIN;
+      hw->hw_product      = PROD_BUILTIN_CLOCK;
+      hw->hw_type	  = B_BUILTIN | D_CLOCK;
+      hw->hw_serno	  = 0;
+      hw++;
+    }
+  else
+    {
+      /* what about other Amigas? Oh well.. */
+      hw->hw_pa	      	  = 0xdc0000;
+      hw->hw_size	  = NBPG;
+      hw->hw_kva	  = zorro2map (0xdc0000);
+      hw->hw_manufacturer = MANUF_BUILTIN;
+      hw->hw_product      = PROD_BUILTIN_CLOCK2;
+      hw->hw_type	  = B_BUILTIN | D_CLOCK;
+      hw->hw_serno	  = 0;
+      hw++;
+    }
+
+  hw->hw_pa	      = 0;
+  hw->hw_size	      = 0;
+  hw->hw_kva	      = CUSTOMbase;
   hw->hw_manufacturer = MANUF_BUILTIN;
-  hw->hw_product      = PROD_BUILTIN_SCSI;
-  hw->hw_type	      = B_BUILTIN | C_SCSI;
+  hw->hw_product      = PROD_BUILTIN_FLOPPY;
+  hw->hw_type	      = B_BUILTIN | C_FLOPPY;
+  hw->hw_serno	      = 0;
   hw++;
   
-  hw->hw_pa	      = 0xdc0000;
-  hw->hw_size	      = NBPG;
-  hw->hw_kva	      = 0;			/* should be mapped here! */
+  hw->hw_pa	      = 0;
+  hw->hw_size	      = 0;
+  hw->hw_kva	      = CUSTOMbase;
   hw->hw_manufacturer = MANUF_BUILTIN;
-  hw->hw_product      = PROD_BUILTIN_CLOCK;
-  hw->hw_type	      = B_BUILTIN | D_CLOCK;
+  hw->hw_product      = PROD_BUILTIN_KEYBOARD;
+  hw->hw_type	      = B_BUILTIN | D_KEYBOARD;
+  hw->hw_serno	      = 0;
+  hw++;
+  
+  hw->hw_pa	      = 0;
+  hw->hw_size	      = 0;
+  hw->hw_kva	      = CUSTOMbase;
+  hw->hw_manufacturer = MANUF_BUILTIN;
+  hw->hw_product      = PROD_BUILTIN_PPORT;
+  hw->hw_type	      = B_BUILTIN | D_PPORT;
+  hw->hw_serno	      = 0;
+  hw++;
+  
+  hw->hw_pa	      = 0;
+  hw->hw_size	      = 0;
+  hw->hw_kva	      = CUSTOMbase;
+  hw->hw_manufacturer = MANUF_BUILTIN;
+  hw->hw_product      = PROD_BUILTIN_DISPLAY;
+  hw->hw_type	      = B_BUILTIN | D_BITMAP;
+  hw->hw_serno	      = 0;
   hw++;
 
   hw->hw_pa	      = 0;
   hw->hw_size	      = 0;
-  hw->hw_kva	      = 0;			/* already mapped, uses CUSTOMbase */
-  hw->hw_manufacturer = MANUF_BUILTIN;
-  hw->hw_product      = PROD_BUILTIN_FLOPPY;
-  hw->hw_type	      = B_BUILTIN | C_FLOPPY;
-  hw++;
-  
-  hw->hw_pa	      = 0;
-  hw->hw_size	      = 0;
-  hw->hw_kva	      = 0;			/* already mapped, uses CUSTOMbase */
+  hw->hw_kva	      = CUSTOMbase;
   hw->hw_manufacturer = MANUF_BUILTIN;
   hw->hw_product      = PROD_BUILTIN_RS232;
   hw->hw_type	      = B_BUILTIN | D_COMMSER;
+  hw->hw_serno	      = 0;
   hw++;
-  
-  hw->hw_pa	      = 0;
-  hw->hw_size	      = 0;
-  hw->hw_kva	      = 0;			/* already mapped, uses CUSTOMbase */
-  hw->hw_manufacturer = MANUF_BUILTIN;
-  hw->hw_product      = PROD_BUILTIN_KEYBOARD;
-  hw->hw_type	      = B_BUILTIN | D_KEYBOARD;
-  hw++;
-  
-  hw->hw_pa	      = 0;
-  hw->hw_size	      = 0;
-  hw->hw_kva	      = 0;			/* already mapped, uses CUSTOMbase */
-  hw->hw_manufacturer = MANUF_BUILTIN;
-  hw->hw_product      = PROD_BUILTIN_PPORT;
-  hw->hw_type	      = B_BUILTIN | D_PPORT;
-  hw++;
-  
-  hw->hw_pa	      = 0;
-  hw->hw_size	      = 0;
-  hw->hw_kva	      = 0;			/* already mapped, uses CUSTOMbase */
-  hw->hw_manufacturer = MANUF_BUILTIN;
-  hw->hw_product      = PROD_BUILTIN_DISPLAY;
-  hw->hw_type	      = B_BUILTIN | D_BITMAP;
-  hw++;
-  
+
   /* and afterwards add Zorro II/III devices passed by the loader */
   
   for (sc = 0, cd = ConfigDev; sc < num_ConfigDev; sc++, cd++)
     {
       hw->hw_pa		  = cd->cd_BoardAddr;
       hw->hw_size	  = cd->cd_BoardSize;
-      hw->hw_kva	  = 0;			/* XXX */
+      /* ADD ZORRO3 SUPPORT HERE !! */
+      hw->hw_kva	  = iszorro2pa(cd->cd_BoardAddr) ? zorro2map (cd->cd_BoardAddr) : 0;
       hw->hw_manufacturer = cd->cd_Rom.er_Manufacturer;
       hw->hw_product	  = cd->cd_Rom.er_Product;
+      hw->hw_serno	  = cd->cd_Rom.er_SerialNumber;
       
       switch (hw->hw_manufacturer)
         {
@@ -600,7 +661,42 @@ find_devs()
             default:
               continue;
             }
-            
+          break;
+
+	case MANUF_CBM_2:
+	  switch (hw->hw_product)            
+	    {
+	    case PROD_CBM_2_A2091:
+	      hw->hw_type = B_ZORROII | C_SCSI;
+	      break;
+
+	    case PROD_CBM_2_A2065:
+	      hw->hw_type = B_ZORROII | D_LAN;
+              /* the ethernet board uses bytes 1 to 3 for ID, set byte 0 to indicate
+                 whether Commodore or Ameristar board. */
+              hw->hw_serno = (hw->hw_serno & 0x00ffffff) | 0x01000000;
+	      break;
+
+	    default:
+	      continue;
+	    }
+	  break;
+	  
+	case MANUF_AMERISTAR:
+	  switch (hw->hw_product)
+	    {
+	    case PROD_AMERISTAR_ETHER:
+	      hw->hw_type = B_ZORROII | D_LAN;
+              /* the ethernet board uses bytes 1 to 3 for ID, set byte 0 to indicate
+                 whether Commodore or Ameristar board. */
+              hw->hw_serno = (hw->hw_serno & 0x00ffffff) | 0x02000000;
+	      break;
+	      
+	    default:
+	      continue;
+	    }
+	  break;
+
         case MANUF_UNILOWELL:
           switch (hw->hw_product)
             {
@@ -611,6 +707,36 @@ find_devs()
             default:
               continue;
             }
+          break;
+
+	case MANUF_MACROSYSTEM:
+	  switch (hw->hw_product)
+	    {
+	    case PROD_MACROSYSTEM_RETINA:
+	      hw->hw_type = B_ZORROII | D_BITMAP;
+	      break;
+	      
+	    default:
+	      continue;
+	    }
+	  break;
+
+	case MANUF_GVP:
+	  switch (hw->hw_product)
+	    {
+	    case PROD_GVP_SERIES_II:
+	      hw->hw_type = B_ZORROII | C_SCSI;
+	      break;
+
+	    case PROD_GVP_IV24:
+	      hw->hw_type = B_ZORROII | D_BITMAP;
+	      break;
+
+	    default:
+	      continue;
+	    }
+	  break;
+
             
         default:
           continue;
@@ -769,36 +895,67 @@ setroot()
 	dev_t temp, orootdev;
 	struct swdevt *swp;
 
-/*	printf ("setroot: boothowto = 0x%x, bootdev = 0x%x\n", boothowto, bootdev);*/
+#ifdef DEBUG
+	if (acdebug > 1)
+	  printf ("setroot: boothowto = 0x%x, bootdev = 0x%x\n", boothowto, bootdev);
+#endif
 
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-		return;
+	  {
+#ifdef DEBUG
+	    if (acdebug > 1)
+	      printf ("returning due to: bad boothowto\n");
+#endif
+	    return;
+	  }
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
 	if (majdev > sizeof(devname) / sizeof(devname[0]))
-		return;
+	  {
+#ifdef DEBUG
+	    if (acdebug > 1)
+	      printf ("returning due to: majdev (%d) > maxdevs (%d)\n",
+		      majdev, sizeof(devname) / sizeof(devname[0]));
+#endif
+	    return;
+	  }
 	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	/*
-	 * First, find the controller type which support this device.
-	 */
+
+	/* First, find the controller type which support this device.
+
+	   Can have more than one controller for the same device, with 
+	   just one of them configured, so test for ad->amiga_cdriver != 0
+	   too.  */
+
 	for (ad = amiga_dinit; ad->amiga_driver; ad++)
-		if (ad->amiga_driver->d_name[0] == devname[majdev][0] &&
-		    ad->amiga_driver->d_name[1] == devname[majdev][1])
-			break;
+	  {
+	    if (ad->amiga_driver->d_name[0] != devname[majdev][0] 
+		|| ad->amiga_driver->d_name[1] != devname[majdev][1])
+	      continue;
+
+	    /*
+	     * Next, find the controller of that type corresponding to
+	     * the adaptor number.
+	     */
+	    for (ac = amiga_cinit; ac->amiga_driver; ac++)
+	      if (ac->amiga_alive && ac->amiga_unit == adaptor &&
+		  ac->amiga_driver == ad->amiga_cdriver)
+		goto found_it;
+	  }
+
+/* could also place after test, but I'd like to be on the safe side */
+found_it:
 	if (ad->amiga_driver == 0)
-		return;
-	/*
-	 * Next, find the controller of that type corresponding to
-	 * the adaptor number.
-	 */
-	for (ac = amiga_cinit; ac->amiga_driver; ac++)
-		if (ac->amiga_alive && ac->amiga_unit == adaptor &&
-		    ac->amiga_driver == ad->amiga_cdriver)
-			break;
-	if (ac->amiga_driver == 0)
-		return;
+	  {
+#ifdef DEBUG
+	    if (acdebug > 1)
+	      printf ("returning due to: amiga_driver == 0\n");
+#endif
+	    return;
+	  }
+
 	/*
 	 * Finally, find the device in question attached to that controller.
 	 */
@@ -808,7 +965,13 @@ setroot()
 		    ad->amiga_ctlr == ac->amiga_unit)
 			break;
 	if (ad->amiga_driver == 0)
-		return;
+	  {
+#ifdef DEBUG
+	    if (acdebug > 1)
+	      printf ("returning due to: no device\n");
+#endif
+	    return;
+	  }
 	mindev = ad->amiga_unit;
 	/*
 	 * Form a new rootdev
@@ -821,7 +984,15 @@ setroot()
 	 * just calculated, don't need to adjust the swap configuration.
 	 */
 	if (rootdev == orootdev)
-		return;
+	  {
+#ifdef DEBUG
+	    if (acdebug > 1)
+	      printf ("returning due to: new root == old root\n");
+#endif
+	    return;
+	  }
+
+
 
 	printf("Changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
@@ -848,4 +1019,17 @@ setroot()
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
 #endif
+}
+
+/* try to determine, of this machine is an A3000, which has a builtin
+   realtime clock and scsi controller, so that this hardware is only
+   included as "configured" if this IS an A3000  */
+int
+is_a3000 ()
+{
+  /* this is a dirty kludge.. but how do you do this RIGHT ? :-) */
+  extern long orig_fastram_start;
+
+  /* where is fastram on the A4000 ?? */
+  return orig_fastram_start >= 0x07000000;
 }

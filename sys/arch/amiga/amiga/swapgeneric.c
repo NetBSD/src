@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.2 1993/08/01 19:22:50 mycroft Exp $
+ *	$Id: swapgeneric.c,v 1.3 1993/09/02 18:05:38 mw Exp $
  */
 
 #include "sys/param.h"
@@ -77,6 +77,14 @@ setconf()
 	register struct genericconf *gc;
 	register char *cp;
 	int unit, swaponroot = 0;
+
+#ifdef DEBUG
+	extern int acdebug;
+
+	if (acdebug > 1)
+	  printf ("setconf: rootdev = 0x%x, swaponroot = %d\n", rootdev, swaponroot);
+#endif
+
 
 	if (rootdev != NODEV)
 		goto doswap;

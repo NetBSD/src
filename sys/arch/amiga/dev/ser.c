@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.2 1993/08/01 19:23:20 mycroft Exp $
+ *	$Id: ser.c,v 1.3 1993/09/02 18:08:14 mw Exp $
  */
 
 #include "ser.h"
@@ -62,6 +62,7 @@ struct	driver serdriver = {
 };
 
 int	serstart(), serparam(), serintr();
+extern int ttrstrt();
 int	sersoftCAR;
 int	ser_active;
 int	ser_hasfifo;
@@ -76,7 +77,11 @@ int	serdefaultrate = TTYDEF_SPEED;
 int	sermajor;
 struct	serdevice *ser_addr[NSER];
 struct	tty ser_cons;
+#if 0
 struct	tty *ser_tty[NSER] = { &ser_cons };
+#else
+struct	tty *ser_tty[NSER];
+#endif
 
 struct speedtab serspeedtab[] = {
 	0,	0,
@@ -203,6 +208,7 @@ seropen(dev, flag, mode, p)
 	register struct tty *tp;
 	register int unit;
 	int error = 0;
+	int s;
 
 	unit = minor (dev);
 	
@@ -222,9 +228,22 @@ seropen(dev, flag, mode, p)
 	if (unit >= NSER || (ser_active & (1 << unit)) == 0)
 		return (ENXIO);
 	if(!ser_tty[unit]) {
+#if 0
 		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
 		bzero(tp, sizeof(struct tty));
 		ser_tty[unit] = tp;
+#else
+		tp = ser_tty[unit] = ttymalloc();
+		/* default values are not optimal for this device, increase
+		   buffers */
+		clfree(&tp->t_rawq);
+		clfree(&tp->t_canq);
+		clfree(&tp->t_outq);
+		clalloc(&tp->t_rawq, 8192, 1);
+		clalloc(&tp->t_canq, 8192, 1);
+		clalloc(&tp->t_outq, 8192, 0);
+
+#endif
 	} else
 		tp = ser_tty[unit];
 	tp->t_oproc = serstart;
@@ -251,15 +270,15 @@ seropen(dev, flag, mode, p)
 	(void) sermctl (dev, TIOCM_DTR | TIOCM_RTS, DMSET);
 	if ((sersoftCAR & (1 << unit)) || (sermctl(dev, 0, DMGET) & TIOCM_CD))
 		tp->t_state |= TS_CARR_ON;
-	(void) spltty();
+        s = spltty();
 	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
 	       (tp->t_state & TS_CARR_ON) == 0) {
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_raw, TTIPRI | PCATCH,
+		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
 		    ttopen, 0))
 			break;
 	}
-	(void) spl0();
+	splx (s);
 	if (error == 0)
 		error = (*linesw[tp->t_line].l_open)(dev, tp);
 	return (error);
@@ -285,8 +304,8 @@ serclose(dev, flag, mode, p)
 	/* do not disable interrupts if debugging */
 	if (dev != kgdb_dev)
 #endif
-	custom.intena = INTF_RBF | INTF_VERTB; /* clear interrupt enable */
-	custom.intreq = INTF_RBF | INTF_VERTB; /* and   interrupt request */
+	custom.intena = INTF_RBF|INTF_TBE; /* clear interrupt enable */
+	custom.intreq = INTF_RBF|INTF_TBE; /* and   interrupt request */
 #if 0
 /* if the device is closed, it's close, no matter whether we deal with modem
    control signals nor not. */
@@ -298,7 +317,11 @@ serclose(dev, flag, mode, p)
 #if 0
 	if (tp != &ser_cons)
 	  {
+#if 0
 	    FREE(tp, M_TTYS);
+#else
+	    ttyfree (tp);
+#endif
 	    ser_tty[unit] = (struct tty *)NULL;
 	  }
 #endif
@@ -310,7 +333,12 @@ serread(dev, uio, flag)
 	struct uio *uio;
 {
 	register struct tty *tp = ser_tty[UNIT(dev)];
-	int error = (*linesw[tp->t_line].l_read)(tp, uio, flag);
+	int error;
+
+	if (! tp)
+	  return ENXIO;
+
+	error = (*linesw[tp->t_line].l_read)(tp, uio, flag);
 
 	return error;
 }
@@ -322,6 +350,9 @@ serwrite(dev, uio, flag)
 	int unit = UNIT(dev);
 	register struct tty *tp = ser_tty[unit];
  
+	if (! tp)
+	  return ENXIO;
+
 	/*
 	 * (XXX) We disallow virtual consoles if the physical console is
 	 * a serial port.  This is in case there is a display attached that
@@ -332,32 +363,88 @@ serwrite(dev, uio, flag)
 		constty = NULL;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
- 
+
+
+/* don't do any processing of data here, so we store the raw code
+   obtained from the uart register. In theory, 110kBaud gibes you
+   11kcps, so 16k buffer should be more than enough, interrupt
+   latency of 1s should never happen, or something is seriously
+   wrong.. */
+#define SERIBUF_SIZE 16738
+static u_short serbuf[SERIBUF_SIZE];
+static u_short *sbrpt = serbuf;
+static u_short *sbwpt = serbuf;
+
+
+/* this is a replacement for the lack of a hardware fifo. 32k should be
+   enough (there's only one unit anyway, so this is not going to 
+   accumulate). */
+void
+ser_fastint ()
+{
+  /* we're at RBE-level, which is higher than VBL-level which is used
+     to periodically transmit contents of this buffer up one layer,
+     so no spl-raising is necessary. */
+
+  register u_short ints, code;
+
+  ints = custom.intreqr & INTF_RBF;
+  if (! ints)
+    return;
+
+  /* clear interrupt */
+  custom.intreq = ints;
+  /* this register contains both data and status bits! */
+  code = custom.serdatr;
+
+  /* should really not happen, but you never know.. buffer
+     overflow. */
+  if (sbwpt + 1 == sbrpt 
+      || (sbwpt == serbuf + SERIBUF_SIZE - 1 && sbrpt == serbuf))
+    {
+      log (LOG_WARNING, "ser_fastint: buffer overflow!");
+      return;
+    }
+
+  *sbwpt++ = code;
+  if (sbwpt == serbuf + SERIBUF_SIZE)
+    sbwpt = serbuf;
+}
+
+
+int
 serintr(unit)
 	register int unit;
 {
 	register struct serdevice *ser;
-	register u_short code;
-	register u_char ch;
-	register u_short ints;
-	register struct tty *tp;
+	int s1, s2;
 
 	ser = ser_addr[unit];
 
-again:
-	ints = custom.intreqr & INTF_RBF;
-	if (! ints)
-	  return 0;
+	/* make sure we're not interrupted by another
+	   vbl, but allow level5 ints */
+	s1 = spltty();
 
-	/* clear interrupt(s) */
-	custom.intreq = ints;
-
-	/* this register contains both data and status bits! */
-	code = custom.serdatr;
-
-	if (ints & INTF_RBF)
+	/* ok, pass along any acumulated information .. */
+	while (sbrpt != sbwpt)
 	  {
-	    tp = ser_tty[unit];
+	    /* no collision with ser_fastint() */
+	    sereint (unit, *sbrpt, ser);
+	    /* lock against ser_fastint() */
+	    s2 = spl5();
+	    {
+	      sbrpt++;
+	      if (sbrpt == serbuf + SERIBUF_SIZE)
+		sbrpt = serbuf;
+	    }
+	    splx (s2);
+	  }
+
+	splx (s1);
+
+#if 0
+/* add the code below if you really need it */
+	  {
 /*
  * Process a received byte.  Inline for speed...
  */
@@ -376,11 +463,7 @@ again:
 	    /* sereint does the receive-processing */
 	    sereint (unit, code, ser);
 	  }
-
-	/* fake modem-control interrupt */
-	sermint (unit, ser);
-	/* try to save interrupt load.. */
-	goto again;
+#endif
 }
 
 sereint(unit, stat, ser)
@@ -417,6 +500,11 @@ sereint(unit, stat, ser)
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
 
+/* this interrupt is periodically invoked in the vertical blank 
+   interrupt. It's used to keep track of the modem control lines
+   and (new with the fast_int code) to move accumulated data
+   up into the tty layer. */
+void
 sermint(unit)
 	register int unit;
 {
@@ -425,6 +513,19 @@ sermint(unit)
 	register struct serdevice *ser;
 
 	tp = ser_tty[unit];
+	if (!tp)
+	  return;
+
+	if ((tp->t_state & (TS_ISOPEN|TS_WOPEN)) == 0) 
+	  {
+	    sbrpt = sbwpt = serbuf;
+	    return;
+	  }
+
+
+	/* first empty buffer */
+	serintr (0);
+
 	stat = ciab.pra;
 	last = last_ciab_pra;
 	last_ciab_pra = stat;
@@ -452,10 +553,12 @@ sermint(unit)
 	      {
 		tp->t_state &=~ TS_TTSTOP;
 		ttstart(tp);
+		/* cause tbe-int if we were stuck there */
+		custom.intreq = INTF_SETCLR | INTF_TBE;
 	      }
 	    else
 	      tp->t_state |= TS_TTSTOP;
-	}
+	  }
 }
 
 serioctl(dev, cmd, data, flag)
@@ -468,6 +571,9 @@ serioctl(dev, cmd, data, flag)
 	register int error;
  
 	tp = ser_tty[unit];
+	if (! tp)
+	  return ENXIO;
+
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
 		return (error);
@@ -533,74 +639,141 @@ serparam(tp, t)
         tp->t_ospeed = t->c_ospeed;
         tp->t_cflag = cflag;
 
-	custom.intena = INTF_SETCLR | INTF_RBF;
-	custom.intreq = INTF_RBF;
+	custom.intena = INTF_SETCLR | INTF_RBF | INTF_TBE;
 	last_ciab_pra = ciab.pra;
 
-	if (ospeed == 0) {
-		(void) sermctl(unit, 0, DMSET);	/* hang up line */
-		return (0);
-	}
+	if (ospeed == 0) 
+	  {
+	    (void) sermctl(unit, 0, DMSET);	/* hang up line */
+	    return (0);
+	  }
+	else
+	  {
+	    /* make sure any previous hangup is undone, ie.
+	       reenable DTR. */
+	    (void) sermctl (tp->t_dev, TIOCM_DTR | TIOCM_RTS, DMSET);
+	  }
 	/* set the baud rate */
 	custom.serper = (0<<15) | ospeed;  /* select 8 bit mode (instead of 9 bit) */
 
 	return (0);
 }
+
+
+static void
+ser_putchar (tp, c)
+     struct tty *tp;
+     unsigned short c;
+{
+  /* handle truncation of character if necessary */
+  if ((tp->t_cflag & CSIZE) == CS7)
+    c &= 0x7f;
+  
+  /* handle parity if necessary (forces CS7) */
+  if (tp->t_cflag & PARENB)
+    {
+      if (even_parity[c & 0x7f])
+	c |= 0x80;
+      if (tp->t_cflag & PARODD)
+	c ^= 0x80;
+    }
+  
+  /* add stop bit(s) */
+  if (tp->t_cflag & CSTOPB)
+    c |= 0x300;
+  else
+    c |= 0x100;
+  
+  custom.serdat = c;
+}
+
+
+#define SEROBUF_SIZE	1024
+static u_char ser_outbuf[SEROBUF_SIZE];
+static u_char *sob_ptr=ser_outbuf, *sob_end=ser_outbuf;
+void
+ser_outintr ()
+{
+  struct tty *tp = ser_tty[0]; /* hmmmmm */
+  unsigned short c;
+  int s;
+
+  if (! tp)
+    return;
+
+  if (! (custom.intreqr & INTF_TBE))
+    return;
+
+  /* clear interrupt */
+  custom.intreq = INTF_TBE;
+
+  if (sob_ptr == sob_end)
+    {
+      s = spltty();
+      /* hm, probably not necessary in every case, but WHEN is 
+	 it necessary? */
+      tp->t_state |= TS_TIMEOUT;
+      timeout (ttrstrt, tp, 1);
+      tp->t_state &= ~TS_BUSY;
+      splx (s);
+      return;
+    }
+
+  if (tp->t_state & TS_TTSTOP)
+    return;
+
+  ser_putchar (tp, *sob_ptr++);
+}
  
 serstart(tp)
 	register struct tty *tp;
 {
+	register int cc, s;
+	int unit;
 	register struct serdevice *ser;
-	int s, unit;
-	u_short c;
- 
+	int hiwat = 0;
+
+ 	if (! (tp->t_state & TS_ISOPEN))
+	  return;
+
 	unit = UNIT(tp->t_dev);
 	ser = ser_addr[unit];
+
 	s = spltty();
-again:
-	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP))
-		goto out;
-	if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_out);
-		}
-		selwakeup (&tp->t_wsel);
+	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP)) {
+		splx(s);
+		return;
 	}
-	if (RB_LEN(&tp->t_out) == 0)
-		goto out;
-
-	while (! (custom.serdatr & SERDATRF_TBE)) ;
-
-	c = rbgetc(&tp->t_out);
-	/* tp->t_state |= TS_BUSY; */
-	
-	/* handle truncation of character if necessary */
-	if ((tp->t_cflag & CSIZE) == CS7)
-	  c &= 0x7f;
-
-	/* handle parity if necessary (forces CS7) */
-	if (tp->t_cflag & PARENB)
+	tp->t_state |= TS_BUSY;
+	cc = tp->t_outq.c_cc;
+	if (cc <= tp->t_lowat) {
+		if (tp->t_state & TS_ASLEEP) {
+			tp->t_state &= ~TS_ASLEEP;
+			wakeup(&tp->t_outq);
+		}
+		selwakeup(&tp->t_wsel);
+	}
+	/*
+	 * Limit the amount of output we do in one burst
+	 * to prevent hogging the CPU. 
+	 */
+	if (cc > SEROBUF_SIZE) {
+		hiwat++;
+		cc = SEROBUF_SIZE;
+	}
+	cc = q_to_b (&tp->t_outq, ser_outbuf, cc);
+	if (cc > 0)
 	  {
-	    if (even_parity[c & 0x7f])
-	      c |= 0x80;
-	    if (tp->t_cflag & PARODD)
-	      c ^= 0x80;
+	    sob_ptr = ser_outbuf;
+	    sob_end = ser_outbuf + cc;
+	    /* get first character out, then have tbe-interrupts blow out
+	       further characters, until buffer is empty, and TS_BUSY
+	       gets cleared. */
+	    ser_putchar (tp, *sob_ptr++);
 	  }
-
-	/* add stop bit(s) */
-	if (tp->t_cflag & CSTOPB)
-	  c |= 0x300;
 	else
-	  c |= 0x100;
-	
-	custom.serdat = c;
-	
-	/* if there's input on the line, stop spitting out characters */
-	if (! (custom.intreqr & INTF_RBF))
-	  goto again;
+	  tp->t_state &= ~TS_BUSY;
 
-out:
 	splx(s);
 }
  
@@ -690,7 +863,6 @@ sercnprobe(cp)
 	struct consdev *cp;
 {
 	int unit = CONUNIT;
-
 	/* locate the major number */
 	for (sermajor = 0; sermajor < nchrdev; sermajor++)
 		if (cdevsw[sermajor].d_open == seropen)
@@ -701,7 +873,13 @@ sercnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(sermajor, unit);
+#if 0
+	/* on ser it really doesn't matter whether we're later
+	   using the tty interface or single-character io thru
+	   cnputc, so don't reach out to later on remember that
+	   our console is here (see ite.c) */
 	cp->cn_tp = ser_tty[unit];
+#endif
 	cp->cn_pri = CN_NORMAL;
 
 	/*
@@ -824,6 +1002,13 @@ serspit(c)
 	splx (s);
 }
 
+serspits(cp)
+     char *cp;
+{
+  while (*cp)
+    serspit(*cp++);
+}
+
 int
 serselect(dev, rw, p)
 	dev_t dev;
@@ -846,7 +1031,7 @@ serselect(dev, rw, p)
 		break;
 
 	case FWRITE:
-		if (RB_LEN(&tp->t_out) <= tp->t_lowat)
+		if (tp->t_outq.c_cc <= tp->t_lowat)
 			goto win;
 		selrecord(p, &tp->t_wsel);
 		break;
