@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)date.c	5.5 (Berkeley) 3/18/91";*/
-static char rcsid[] = "$Id: date.c,v 1.6 1993/08/16 23:08:52 jtc Exp $";
+static char rcsid[] = "$Id: date.c,v 1.7 1993/12/31 19:25:23 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$Id: date.c,v 1.6 1993/08/16 23:08:52 jtc Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <ctype.h>
 
 time_t tval;
@@ -65,9 +66,11 @@ main(argc, argv)
 	int ch, rflag;
 	char *format, buf[1024];
 
+	setlocale(LC_ALL, "");
+
 	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
-	while ((ch = getopt(argc, argv, "d:nr:ut:")) != EOF)
+	while ((ch = getopt(argc, argv, "d:nr:ut:")) != -1)
 		switch((char)ch) {
 		case 'd':		/* daylight savings time */
 			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
