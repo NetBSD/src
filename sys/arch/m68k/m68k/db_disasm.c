@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.15 1996/06/12 20:22:42 is Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.16 1996/10/24 18:30:17 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -2240,6 +2240,10 @@ opcode_movec(dbuf, opc)
 		break;
 	case 0x807:
 		tmp = "srp";
+		break;
+		/* 060: */
+	case 0x808:
+		tmp = "pcr";
 		break;
 	default:
 		tmp = "INVALID";
