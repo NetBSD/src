@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_misc.c,v 1.4 2002/11/09 09:03:58 manu Exp $ */
+/*	$NetBSD: irix_misc.c,v 1.5 2003/01/22 12:58:22 rafal Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.4 2002/11/09 09:03:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.5 2003/01/22 12:58:22 rafal Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.4 2002/11/09 09:03:58 manu Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.4 2002/11/09 09:03:58 manu Exp $");
  * Maybe consider moving this to sys/compat/common/compat_util.c?
  */
 int
-irix_sys_setpgrp(p, v, retval)
-	struct proc *p; 
+irix_sys_setpgrp(l, v, retval)
+	struct lwp *l; 
 	void *v;
 	register_t *retval;
 {
@@ -76,6 +76,7 @@ irix_sys_setpgrp(p, v, retval)
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
  
 	/*
 	 * difference to our setpgid call is to include backwards  
@@ -85,16 +86,16 @@ irix_sys_setpgrp(p, v, retval)
 	 */
 	if (!SCARG(uap, pgid) &&
 	    (!SCARG(uap, pid) || SCARG(uap, pid) == p->p_pid))
-		return sys_setsid(p, uap, retval);
+		return sys_setsid(l, uap, retval);
 	else
-		return sys_setpgid(p, uap, retval);
+		return sys_setpgid(l, uap, retval);
 }
 
 #define BUF_SIZE 16
 
 int
-irix_sys_uname(p, v, retval)
-	struct proc *p;
+irix_sys_uname(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -128,8 +129,8 @@ irix_sys_uname(p, v, retval)
 }
 
 int
-irix_sys_utssys(p, v, retval)
-	struct proc *p;
+irix_sys_utssys(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -144,12 +145,12 @@ irix_sys_utssys(p, v, retval)
 	case 0: {	/* uname(2)  */
 		struct irix_sys_uname_args ua;
 		SCARG(&ua, name) = SCARG(uap, a1);
-		return irix_sys_uname(p, &ua, retval);
+		return irix_sys_uname(l, &ua, retval);
 	}
 	break;
 
 	default:
-		return(svr4_sys_utssys(p, v, retval));
+		return(svr4_sys_utssys(l, v, retval));
 	break;	
 	}
 

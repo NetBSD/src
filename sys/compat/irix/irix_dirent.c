@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.7 2002/03/09 13:32:12 manu Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.8 2003/01/22 12:58:22 rafal Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.7 2002/03/09 13:32:12 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.8 2003/01/22 12:58:22 rafal Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.7 2002/03/09 13:32:12 manu Exp $")
 #define SVR4_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)dp)
 
 int
-irix_sys_ngetdents(p, v, retval)
-	struct proc *p;
+irix_sys_ngetdents(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -82,6 +82,7 @@ irix_sys_ngetdents(p, v, retval)
 		syscallarg(unsigned short) nbyte;
 		syscallarg(int *) eof;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t inp, buf;	/* BSD-format */
@@ -200,8 +201,8 @@ out1:
 }
 
 int
-irix_sys_getdents(p, v, retval)
-	struct proc *p;
+irix_sys_getdents(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -218,7 +219,7 @@ irix_sys_getdents(p, v, retval)
 	SCARG(&cup, nbyte) = SCARG(uap, nbyte);
 	SCARG(&cup, eof) = NULL;
 
-	return irix_sys_ngetdents(p, (void *)&cup, retval);
+	return irix_sys_ngetdents(l, (void *)&cup, retval);
 }
 
 
@@ -227,8 +228,8 @@ irix_sys_getdents(p, v, retval)
  * 32 bit versions (only 3 lines of diff)
  */
 int
-irix_sys_ngetdents64(p, v, retval)
-	struct proc *p;
+irix_sys_ngetdents64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -239,6 +240,7 @@ irix_sys_ngetdents64(p, v, retval)
 		syscallarg(int *) eof;
 	} */ *uap = v;
 	struct dirent *bdp;
+	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	caddr_t inp, buf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
@@ -352,8 +354,8 @@ out1:
 }
 
 int
-irix_sys_getdents64(p, v, retval)
-	struct proc *p;
+irix_sys_getdents64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -370,5 +372,5 @@ irix_sys_getdents64(p, v, retval)
 	SCARG(&cup, nbyte) = SCARG(uap, nbyte);
 	SCARG(&cup, eof) = NULL;
 
-	return irix_sys_ngetdents64(p, (void *)&cup, retval);
+	return irix_sys_ngetdents64(l, (void *)&cup, retval);
 }

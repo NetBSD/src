@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.8 2003/01/18 07:44:51 thorpej Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.9 2003/01/22 12:58:23 rafal Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.8 2003/01/18 07:44:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.9 2003/01/22 12:58:23 rafal Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h> 
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.8 2003/01/18 07:44:51 thorpej Exp $"
 extern struct lock swap_syscall_lock;
 
 int
-irix_sys_swapctl(p, v, retval)
-	struct proc *p;
+irix_sys_swapctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -111,7 +111,7 @@ irix_sys_swapctl(p, v, retval)
 		SCARG(&cup, arg) = isr.sr_name;
 		SCARG(&cup, misc) = 
 		    (SCARG(uap, cmd) == IRIX_SC_SGIADD) ? isr.sr_pri : 0;
-		return sys_swapctl(p, &cup, retval);
+		return sys_swapctl(l, &cup, retval);
 		break;
 	}
 
@@ -120,7 +120,7 @@ irix_sys_swapctl(p, v, retval)
 		SCARG(&cup, cmd) = SWAP_NSWAP;
 		SCARG(&cup, arg) = NULL;
 		SCARG(&cup, misc) = 0;
-		return sys_swapctl(p, &cup, retval);
+		return sys_swapctl(l, &cup, retval);
 		break;
 
 	case IRIX_SC_LIST: { /* Get swap list */
@@ -197,7 +197,7 @@ bad:
 		SCARG(&cup, cmd) = SWAP_NSWAP;
 		SCARG(&cup, arg) = NULL;
 		SCARG(&cup, misc) = 0;
-		if ((error = sys_swapctl(p, &cup, (register_t *)&entries)) != 0)
+		if ((error = sys_swapctl(l, &cup, (register_t *)&entries)) != 0)
 			return error;
 
 		sep = (struct swapent *)malloc(

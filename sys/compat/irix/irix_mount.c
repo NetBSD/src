@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.4 2002/03/16 20:43:52 christos Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.5 2003/01/22 12:58:23 rafal Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.4 2002/03/16 20:43:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.5 2003/01/22 12:58:23 rafal Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.4 2002/03/16 20:43:52 christos Exp 
 #include <compat/irix/irix_syscallargs.h>
 
 int
-irix_sys_getmountid(p, v, retval)
-	struct proc *p;
+irix_sys_getmountid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -66,6 +66,7 @@ irix_sys_getmountid(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(irix_mountid_t *) buf;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct ucred *cred = crget();
 	struct vnode *vp;
