@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.84 1999/07/02 12:45:32 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.85 1999/07/09 22:57:20 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -125,6 +125,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
