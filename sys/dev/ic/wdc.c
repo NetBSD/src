@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.20 1998/04/23 13:30:40 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.21 1998/04/26 05:28:24 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -538,7 +538,7 @@ wdc_ata_start(wdc, xfer)
 			/* Transfer is okay now. */
 		}
 
-		if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
+		if ((d_link->sc_flags & WDF_LBA) != 0) {
 			sector = (blkno >> 0) & 0xff;
 			cylin = (blkno >> 8) & 0xffff;
 			head = (blkno >> 24) & 0xf;
@@ -854,9 +854,10 @@ wdc_get_parms(wdc, d_link)
 		d_link->sc_params.wdp_cylinders = 1024;
 		d_link->sc_params.wdp_heads = 8;
 		d_link->sc_params.wdp_sectors = 17;
-		d_link->sc_params.wdp_maxmulti = 0;
-		d_link->sc_params.wdp_usedmovsd = 0;
-		d_link->sc_params.wdp_capabilities = 0;
+		d_link->sc_params.wdp_multi = 0x0000;
+		d_link->sc_params.wdp_capabilities1 = 0x0000;
+		d_link->sc_params.wdp_capabilities2 = 0x0000;
+		d_link->sc_params.wdp_ataversion = 0x0000;
 	} else {
 		strncpy(d_link->sc_lp->d_typename, "ESDI/IDE",
 		    sizeof d_link->sc_lp->d_typename);
@@ -919,7 +920,7 @@ wdccontrol(wdc, d_link)
 		/* fall through */
 
 	case GEOMETRY:
-		if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
+		if ((d_link->sc_flags & WDF_LBA) != 0)
 			goto multimode;
 		if (wdsetctlr(d_link) != 0) {
 			/* Already printed a message. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.16 1998/04/23 10:37:01 bouyer Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.17 1998/04/26 05:28:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -154,37 +154,49 @@
  */
 struct wdparams {
 	/* drive info */
-	short	wdp_config;		/* general configuration */
+	u_short	wdp_config;		/* general configuration */
 #define	WD_CFG_REMOVABLE	0x0080
 #define	WD_CFG_FIXED		0x0040
-	short	wdp_cylinders;		/* number of non-removable cylinders */
-	char	__reserved1[2];
-	short	wdp_heads;		/* number of heads */
-	short	wdp_unfbytespertrk;	/* number of unformatted bytes/track */
-	short	wdp_unfbytespersec;	/* number of unformatted bytes/sector */
-	short	wdp_sectors;		/* number of sectors */
-	char	wdp_vendor1[6];
-	/* controller info */
+	u_short	wdp_cylinders;		/* number of non-removable cylinders */
+	u_short	__reserved1;
+	u_short	wdp_heads;		/* number of heads */
+	u_short	__retired1[2];		/* number of unformatted bytes/track */
+	u_short	wdp_sectors;		/* number of sectors */
+	u_short	__retired2[3];
 	char	wdp_serial[20];		/* serial number */
-	short	wdp_buftype;		/* buffer type */
-#define	WD_BUF_SINGLEPORTSECTOR	1	 /* single port, single sector buffer */
-#define	WD_BUF_DUALPORTMULTI	2	 /* dual port, multiple sector buffer */
-#define	WD_BUF_DUALPORTMULTICACHE 3	 /* above plus track cache */
-	short	wdp_bufsize;		/* buffer size, in 512-byte units */
-	short	wdp_eccbytes;		/* ecc bytes appended */
+	u_short	__retired3[2];
+	u_short	__obsolete1;
 	char	wdp_revision[8];	/* firmware revision */
 	char	wdp_model[40];		/* model name */
-	u_char	wdp_maxmulti;		/* maximum sectors per interrupt */
-	char	wdp_vendor2[1];
-	short	wdp_usedmovsd;		/* can use double word read/write? */
-	char	wdp_vendor3[1];
-	char	wdp_capabilities;	/* capability flags */
-#define	WD_CAP_LBA	0x02
-#define	WD_CAP_DMA	0x01
-	char	__reserved2[2];
-	char	wdp_vendor4[1];		
-	char	wdp_piotiming;		/* PIO timing mode */
-	char	wdp_vendor5[1];
-	char	wdp_dmatiming;		/* DMA timing mode */
+	u_short	wdp_multi;		/* maximum sectors per interrupt */
+	u_short	__reserved2;
+	u_short	wdp_capabilities1;	/* capability flags */
+#define	WD_CAP_LBA	0x0200
+#define	WD_CAP_DMA	0x0100
+	u_short wdp_capabilities2;
+	char	__junk2;
+	char	wdp_oldpiotiming;	/* PIO timing mode */
+	char	__junk3;
+	char	wdp_olddmatiming;	/* DMA timing mode */
+	u_short	wdp_extensions;
+	u_short	wdp_curcylinders;
+	u_short	wdp_curheads;
+	u_short	wdp_cursectors;
+	u_short	wdp_curcapacity[2];
+	u_short	wdp_curmulti;
+	u_short	wdp_capacity[2];
+	u_short	__retired4;
+	u_short	wdp_dmamode;
+	u_short	wdp_piomode;
+	u_short	wdp_dmatiming[2];
+	u_short	wdp_piotiming[2];
+	u_short	__reserved3[6];
+	u_short	wdp_queuedepth;
+	u_short	__reserved4[4];
+	u_short	wdp_ataversion;
+#define	WD_VER_ATA1	0x0002
+#define	WD_VER_ATA2	0x0004
+#define	WD_VER_ATA3	0x0008
+#define	WD_VER_ATA4	0x0010
 };
 #endif /* _KERNEL */
