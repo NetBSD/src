@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael.c,v 1.4 2003/08/27 02:44:19 itojun Exp $	*/
+/*	$NetBSD: rijndael.c,v 1.5 2003/08/27 03:35:35 itojun Exp $	*/
 
 /**             
  * rijndael-alg-fst.c 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.4 2003/08/27 02:44:19 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.5 2003/08/27 03:35:35 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ rijndael_decrypt(const rijndael_ctx *ctx, const u_char *src, u_char *dst)
 {
 
 	if (!ctx->decrypt)
-		panic("rijndael_decrypt: decryption context is passed");
+		panic("rijndael_decrypt: encryption context is passed");
 	rijndaelDecrypt(ctx->dk, ctx->Nr, src, dst);
 }
 
