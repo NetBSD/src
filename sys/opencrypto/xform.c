@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.7 2003/08/26 16:37:38 thorpej Exp $ */
+/*	$NetBSD: xform.c,v 1.8 2003/08/27 00:05:28 thorpej Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.7 2003/08/26 16:37:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.8 2003/08/27 00:05:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.7 2003/08/26 16:37:38 thorpej Exp $");
 #include <crypto/rijndael/rijndael.h>
 #include <crypto/ripemd160/rmd160.h>
 
-#include <opencrypto/blf.h>
 #include <opencrypto/deflate.h>
 #include <opencrypto/skipjack.h>
 
@@ -392,13 +391,23 @@ des3_zerokey(u_int8_t **sched)
 static void
 blf_encrypt(caddr_t key, u_int8_t *blk)
 {
+
+#if defined(__NetBSD__)
+	BF_ecb_encrypt(blk, blk, (BF_KEY *)key, 1);
+#else
 	blf_ecb_encrypt((blf_ctx *) key, blk, 8);
+#endif
 }
 
 static void
 blf_decrypt(caddr_t key, u_int8_t *blk)
 {
+
+#if defined(__NetBSD__)
+	BF_ecb_encrypt(blk, blk, (BF_KEY *)key, 0);
+#else
 	blf_ecb_decrypt((blf_ctx *) key, blk, 8);
+#endif
 }
 
 static int
@@ -406,17 +415,17 @@ blf_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
 	int err;
 
-#ifdef __FreeBSD__
-#define BLF_SIZ	       sizeof(BF_KEY)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#define	BLF_SIZ	sizeof(BF_KEY)
 #else
-#define BLF_SIZ       sizeof(blf_ctx)
+#define	BLF_SIZ	sizeof(blf_ctx)
 #endif
 
 	MALLOC(*sched, u_int8_t *, BLF_SIZ,
 		M_CRYPTO_DATA, M_NOWAIT);
 	if (*sched != NULL) {
 		bzero(*sched, BLF_SIZ);
-#ifdef _FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 		BF_set_key((BF_KEY *) *sched, len, key);
 #else
 		blf_key((blf_ctx *)*sched, key, len);
