@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.18 2000/02/25 00:22:36 ad Exp $
+.\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -86,6 +86,8 @@ BusLogic BT-445
 interfaces.
 .It dpt
 DPT SmartCache/SmartRAID III and IV SCSI interfaces.
+.It nca
+NCR-5380/NCR-53C400
 .It sea
 Seagate/Future Domain
 .Tn SCSI
@@ -230,6 +232,7 @@ These are listed in
 .Xr le 4 ,
 .Xr lpt 4 ,
 .Xr mcd 4 ,
+.Xr nca 4 ,
 .Xr ne 4 ,
 .Xr pas 4 ,
 .Xr pss 4 ,
