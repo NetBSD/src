@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.22 2001/08/19 17:18:02 mrg Exp $
+# $NetBSD: shl.elf,v 1.23 2001/08/25 15:49:12 thorpej Exp $
 ./usr/lib/crtbegin.o		comp-c-lib
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtend.o		comp-c-lib
@@ -15,7 +15,6 @@
 ./usr/lib/libdes.so		comp-c-lib
 ./usr/lib/libedit.so		comp-c-lib
 ./usr/lib/libform.so		comp-c-lib
-./usr/lib/libg2c.so		comp-fortran-lib
 ./usr/lib/libgnumalloc.so	comp-c-lib
 ./usr/lib/libgssapi.so		comp-c-lib
 ./usr/lib/libhdb.so		comp-c-lib
@@ -32,7 +31,6 @@
 ./usr/lib/libkvm.so		comp-c-lib
 ./usr/lib/libm.so		comp-c-lib
 ./usr/lib/libmenu.so		comp-c-lib
-./usr/lib/libobjc.so		comp-objc-lib
 ./usr/lib/libossaudio.so	comp-c-lib
 ./usr/lib/libpcap.so		comp-c-lib
 ./usr/lib/libposix.so		comp-c-lib
@@ -42,7 +40,6 @@
 ./usr/lib/libsl.so		comp-c-lib
 ./usr/lib/libss.so		comp-c-lib
 ./usr/lib/libssl.so		comp-c-lib
-./usr/lib/libstdc++.so		comp-cxx-lib
 ./usr/lib/libtelnet.so		comp-c-lib
 ./usr/lib/libtermcap.so		comp-c-lib
 ./usr/lib/libtermlib.so		comp-c-lib
