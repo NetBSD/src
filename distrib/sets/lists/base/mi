@@ -128,6 +128,10 @@
 ./usr/bin/bc
 ./usr/bin/bdes
 ./usr/bin/biff
+./usr/bin/bunzip2
+./usr/bin/bzcat
+./usr/bin/bzip2
+./usr/bin/bzip2recover
 ./usr/bin/c++filt
 ./usr/bin/cal
 ./usr/bin/calendar
