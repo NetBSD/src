@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.74 92/12/20$
  *
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
- *	$Id: machdep.c,v 1.2 1994/06/18 12:09:56 paulus Exp $
+ *	$Id: machdep.c,v 1.3 1994/07/08 12:02:20 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -80,6 +80,7 @@
 #include <dev/cons.h>
 #include <da30/da30/isr.h>
 #include <net/netisr.h>
+#include "ether.h"
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
@@ -1009,10 +1010,12 @@ badbaddr(addr)
 netintr()
 {
 #ifdef INET
+#if NETHER > 0
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();
 	}
+#endif
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
