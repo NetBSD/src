@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2004/11/11 01:43:25 christos Exp $
+#	$NetBSD: Makefile,v 1.1 2004/11/11 19:25:30 jdolecek Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	$S/miscfs/ptyfs ${.CURDIR}/../.. $S/arch/${MACHINE}/${MACHINE} \
+.PATH:	$S/fs/ptyfs ${.CURDIR}/../.. $S/arch/${MACHINE}/${MACHINE} \
 	$S/arch/${MACHINE_CPU}/${MACHINE_CPU}
 
 KMOD=	ptyfs
