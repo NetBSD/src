@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 1998/07/05 06:49:07 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 1998/07/05 22:48:06 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -48,6 +48,7 @@
 #include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
+#include "opt_natm.h"
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
 
