@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.94 2005/03/12 00:52:51 tron Exp $
+# $NetBSD: postinstall,v 1.95 2005/03/22 04:43:53 lukem Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1088,20 +1088,22 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
 
 	Options:
 	-s srcdir	Source directory to compare from.
-			This can either be src/etc or
-			an extracted copy of "etc.tgz".	[${SRC_DIR:-/}]
+			This may be src/etc, an extracted copy of "etc.tgz",
+			or the file etc.tgz.  In the latter case, etc.tgz
+			is extracted into a temporary directory to be used
+			as the source directory.	[${SRC_DIR:-/}]
 	-d destdir	Destination directory to check.	[${DEST_DIR:-/}]
 	-m mach		MACHINE.			[${MACHINE}]
 	-a arch		MACHINE_ARCH.			[${MACHINE_ARCH}]
 
 	Operation may be one of:
-		help	display this help
-		list	list available items
-		check	perform post-installation checks on items
+		help	Display this help.
+		list	List available items.
+		check	Perform post-installation checks on items.
 		diff [diff(1) options ...]
-			similar to 'check' but also output difference of files
-		fix	apply fixes that 'check' determines need to be applied
-		usage	display this usage
+			Similar to 'check' but also output difference of files.
+		fix	Apply fixes that 'check' determines need to be applied.
+		usage	Display this usage.
 _USAGE_
 	exit 1
 }
