@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.11 2003/10/13 18:08:45 cl Exp $	*/
+/*	$NetBSD: exception.c,v 1.12 2003/10/22 21:10:15 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.11 2003/10/13 18:08:45 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.12 2003/10/22 21:10:15 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -179,7 +179,7 @@ general_exception(struct lwp *l, struct trapframe *tf)
 	case EXPEVT_ADDR_ERR_ST:
 		KDASSERT(l->l_md.md_pcb->pcb_onfault != NULL);
 		tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
-		if (tf->tf_spc == NULL)
+		if (tf->tf_spc == 0)
 			goto do_panic;
 		break;
 
