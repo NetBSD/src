@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2004/06/25 16:34:45 itojun Exp $
+#	$NetBSD: Makefile,v 1.49 2004/11/11 11:54:51 yamt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -12,8 +12,5 @@ SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd ld.aout_so \
 # Heimdal/KTH Kerberos
 SUBDIR+= hpropd kadmind kpasswdd
 .endif
-
-# PF
-SUBDIR+=spamd spamd-setup ftp-proxy spamlogd
 
 .include <bsd.subdir.mk>
