@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.177 2002/01/18 10:52:24 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.178 2002/01/25 05:07:57 perry Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -261,6 +261,7 @@
 ./usr/share/games
 ./usr/share/games/atc
 ./usr/share/games/boggle
+./usr/share/games/ching
 ./usr/share/games/fortune
 ./usr/share/games/larn
 ./usr/share/games/quiz.db
