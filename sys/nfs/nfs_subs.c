@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.113 2003/04/02 15:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.114 2003/04/16 14:51:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.113 2003/04/02 15:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.114 2003/04/16 14:51:55 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2442,9 +2442,9 @@ netaddr_match(family, haddr, nam)
 
 /*
  * The write verifier has changed (probably due to a server reboot), so all
- * B_NEEDCOMMIT blocks will have to be written again. Since they are on the
- * dirty block list as B_DELWRI, all this takes is clearing the B_NEEDCOMMIT
- * flag. Once done the new write verifier can be set for the mount point.
+ * PG_NEEDCOMMIT pages will have to be written again. Since they are marked
+ * as dirty, all this takes is clearing the PG_NEEDCOMMIT flag. Once done
+ * the new write verifier can be set for the mount point.
  */
 void
 nfs_clearcommit(mp)
