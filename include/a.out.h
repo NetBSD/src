@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)a.out.h	5.6 (Berkeley) 4/30/91
- *	$Id: a.out.h,v 1.10 1993/10/18 09:50:27 pk Exp $
+ *	$Id: a.out.h,v 1.11 1993/12/11 03:51:46 mycroft Exp $
  */
 
 #ifndef	_AOUT_H_
@@ -41,20 +41,24 @@
 #include <machine/exec.h>
 
 
-#define N_GETMAGIC(ex) \
+#ifndef N_PAGSIZ
+#define	N_PAGSIZ(ex)	(__LDPGSZ)
+#endif
+
+#define	N_GETMAGIC(ex) \
     ( (((ex).a_midmag)&0xffff0000) ? (ntohl(((ex).a_midmag))&0xffff) : ((ex).a_midmag))
-#define N_GETMAGIC2(ex) \
+#define	N_GETMAGIC2(ex) \
     ( (((ex).a_midmag)&0xffff0000) ? (ntohl(((ex).a_midmag))&0xffff) : \
     (((ex).a_midmag) | 0x10000) )
-#define N_GETMID(ex) \
+#define	N_GETMID(ex) \
     ( (((ex).a_midmag)&0xffff0000) ? ((ntohl(((ex).a_midmag))>>16)&0x03ff) : MID_ZERO )
-#define N_GETFLAG(ex) \
+#define	N_GETFLAG(ex) \
     ( (((ex).a_midmag)&0xffff0000) ? ((ntohl(((ex).a_midmag))>>26)&0x3f) : 0 )
-#define N_SETMAGIC(ex,mag,mid,flag) \
+#define	N_SETMAGIC(ex,mag,mid,flag) \
     ( (ex).a_midmag = htonl( (((flag)&0x3f)<<26) | (((mid)&0x03ff)<<16) | \
     (((mag)&0xffff)) ) )
 
-#define N_ALIGN(ex,x) \
+#define	N_ALIGN(ex,x) \
 	(N_GETMAGIC(ex) == ZMAGIC || N_GETMAGIC(ex) == QMAGIC ? \
 	 ((x) + __LDPGSZ - 1) & ~(__LDPGSZ - 1) : (x))
 
@@ -64,11 +68,15 @@
 	    N_GETMAGIC(ex) != ZMAGIC && N_GETMAGIC(ex) != QMAGIC)
 
 /* Address of the bottom of the text segment. */
-#define N_TXTADDR(ex)	(N_GETMAGIC2(ex) == (ZMAGIC|0x10000) ? 0 : __LDPGSZ)
+#define	N_TXTADDR(ex)	(N_GETMAGIC2(ex) == (ZMAGIC|0x10000) ? 0 : __LDPGSZ)
 
 /* Address of the bottom of the data segment. */
-#define N_DATADDR(ex) \
+#define	N_DATADDR(ex) \
 	N_ALIGN(ex, N_TXTADDR(ex) + (ex).a_text)
+
+/* Address of the bottom of the bss segment. */
+#define	N_BSSADDR(ex) \
+	N_ALIGN(ex, N_DATADDR(ex) + (ex).a_data)
 
 /* Text segment offset. */
 #define	N_TXTOFF(ex) \
@@ -79,19 +87,24 @@
 #define	N_DATOFF(ex) \
 	N_ALIGN(ex, N_TXTOFF(ex) + (ex).a_text)
 
-/* Relocation table offset. */
-#define N_RELOFF(ex) \
+/* Text relocation table offset. */
+#define	N_TRELOFF(ex) \
 	N_ALIGN(ex, N_DATOFF(ex) + (ex).a_data)
 
+/* Data relocation table offset. */
+#define	N_DRELOFF(ex) \
+	(N_TRELOFF(ex) + (ex).a_trsize)
+
 /* Symbol table offset. */
-#define N_SYMOFF(ex) \
-	(N_RELOFF(ex) + (ex).a_trsize + (ex).a_drsize)
+#define	N_SYMOFF(ex) \
+	(N_DRELOFF(ex) + (ex).a_drsize)
 
 /* String table offset. */
-#define	N_STROFF(ex) 	(N_SYMOFF(ex) + (ex).a_syms)
+#define	N_STROFF(ex) \
+	(N_SYMOFF(ex) + (ex).a_syms)
 
 
-#define _AOUT_INCLUDE_
+#define	_AOUT_INCLUDE_
 #include <nlist.h>
 
 #endif /* !_AOUT_H_ */
