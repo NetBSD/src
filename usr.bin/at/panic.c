@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.6 1999/01/31 09:30:31 mrg Exp $	*/
+/*	$NetBSD: panic.c,v 1.7 2000/10/04 19:14:53 mjl Exp $	*/
 
 /*
  * panic.c - terminate fast in case of error
@@ -27,6 +27,7 @@
 
 /* System Headers */
 
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +45,7 @@
 #if 0
 static char rcsid[] = "$OpenBSD: panic.c,v 1.4 1997/03/01 23:40:09 millert Exp $";
 #else
-__RCSID("$NetBSD: panic.c,v 1.6 1999/01/31 09:30:31 mrg Exp $");
+__RCSID("$NetBSD: panic.c,v 1.7 2000/10/04 19:14:53 mjl Exp $");
 #endif
 #endif
 
@@ -60,14 +61,13 @@ panic(a)
 	/*
 	 * Something fatal has happened, print error message and exit.
 	 */
-	(void)fprintf(stderr, "%s: %s\n", namep, a);
 	if (fcreated) {
 		PRIV_START
 		(void)unlink(atfile);
 		PRIV_END
 	}
 
-	exit(EXIT_FAILURE);
+	errx(EXIT_FAILURE, "%s: %s", namep, a);
 }
 
 void
