@@ -1,4 +1,4 @@
-/*	$NetBSD: map_parse.y,v 1.2 1999/02/08 11:08:23 hannken Exp $ */
+/*	$NetBSD: map_parse.y,v 1.3 2004/06/27 02:09:47 itohy Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,11 +43,11 @@
  *				from the old to the new map. Therefore it
  *				is possible to exchange keys.
  *
- * kecode pos = sym ...		assign the symbols to key `pos'.
+ * keycode pos = sym ...	assign the symbols to key `pos'.
  *				The first symbol may be a command.
  *				The following symbols are assigned
  *				to the normal and altgr groups.
- *				Missing symbols are generated automacically
+ *				Missing symbols are generated automatically
  *				as either the upper case variant or the
  *				normal group.
  */
