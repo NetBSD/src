@@ -1,7 +1,7 @@
-/*	$NetBSD: trap.c,v 1.146 2000/12/09 02:18:16 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.147 2000/12/09 02:46:17 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -576,7 +576,7 @@ syscall(frame)
 	register caddr_t params;
 	register const struct sysent *callp;
 	register struct proc *p;
-	int error, nsys;
+	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
@@ -597,7 +597,6 @@ syscall(frame)
 	p->p_md.md_regs = &frame;
 	code = frame.tf_eax;
 
-	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
 	params = (caddr_t)frame.tf_esp + sizeof(int);
@@ -634,7 +633,7 @@ syscall(frame)
 	default:
 		break;
 	}
-	if (code < 0 || code >= nsys)
+	if ((u_int)code >= (u_int)p->p_emul->e_nsysent)
 		callp += p->p_emul->e_nosys;		/* illegal */
 	else
 		callp += code;
@@ -652,7 +651,7 @@ syscall(frame)
 		ktrsyscall(p, code, argsize, args);
 #endif /* KTRACE */
 	rval[0] = 0;
-	rval[1] = frame.tf_edx;
+	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
