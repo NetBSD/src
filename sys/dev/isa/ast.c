@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.19 1995/12/24 02:31:10 mycroft Exp $	*/
+/*	$NetBSD: ast.c,v 1.20 1996/03/09 00:09:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -38,14 +38,17 @@
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/comreg.h>
+
+#define	NSLAVES	4
 
 struct ast_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
 	int sc_iobase;
-	int sc_alive;		/* mask of slave units attached */
-	void *sc_slaves[4];	/* com device unit numbers */
+	int sc_alive;			/* mask of slave units attached */
+	void *sc_slaves[NSLAVES];	/* com device unit numbers */
 };
 
 int astprobe();
@@ -68,7 +71,7 @@ astprobe(parent, self, aux)
 	 * its presence means there is a multiport board there.
 	 * XXX Needs more robustness.
 	 */
-	ia->ia_iosize = 4 * 8;
+	ia->ia_iosize = NSLAVES * COM_NPORTS;
 	return (comprobe1(ia->ia_iobase));
 }
 
@@ -123,9 +126,9 @@ astattach(parent, self, aux)
 	printf("\n");
 
 	isa.ia_aux = &aa;
-	for (aa.aa_slave = 0; aa.aa_slave < 4; aa.aa_slave++) {
+	for (aa.aa_slave = 0; aa.aa_slave < NSLAVES; aa.aa_slave++) {
 		struct cfdata *cf;
-		isa.ia_iobase = sc->sc_iobase + 8 * aa.aa_slave;
+		isa.ia_iobase = sc->sc_iobase + COM_NPORTS * aa.aa_slave;
 		isa.ia_iosize = 0x666;
 		isa.ia_irq = IRQUNK;
 		isa.ia_drq = DRQUNK;
