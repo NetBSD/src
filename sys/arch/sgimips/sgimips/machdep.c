@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2001/07/09 00:30:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2001/07/09 02:00:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -110,6 +110,8 @@ int mach_boardrev;	/* machine board revision, in case it matters */
 int physmem;		/* Total physical memory */
 int arcsmem;		/* Memory used by the ARCS firmware */
 
+int ncpus;
+
 /* CPU interrupt masks */
 u_int32_t biomask;
 u_int32_t netmask;
@@ -136,6 +138,9 @@ void * cpu_intr_establish(int, int, int (*)(void *), void *);
 void	mach_init(int, char **, char **);
 void	unconfigured_system_type(int);
 
+void	sgimips_count_cpus(struct arcbios_component *,
+	    struct arcbios_treewalk_context *);
+
 #ifdef KGDB
 void zs_kgdb_init(void);
 void kgdb_connect(int);
@@ -158,7 +163,6 @@ struct platform platform = {
 	unimpl_intr_establish,
 	(void *)nullwork,
 };
-
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
@@ -232,13 +236,6 @@ mach_init(argc, argv, envp)
 #endif
 
 	uvm_setpagesize();
-
-	/*
-	 * Copy exception-dispatch code down to exception vector.
-	 * Initialize locore-function vector.
-	 * Clear out the I and D caches.
-	 */
-	mips_vector_init();
 
 	boothowto = RB_SINGLE;
 
@@ -376,6 +373,19 @@ mach_init(argc, argv, envp)
 		panic("no free memory descriptors found");
 
 	/*
+	 * Walk the component tree and count the number of CPUs
+	 * present in the system.
+	 */
+	arcbios_tree_walk(sgimips_count_cpus, NULL);
+
+	/*
+	 * Copy exception-dispatch code down to exception vector.
+	 * Initialize locore-function vector.
+	 * Clear out the I and D caches.
+	 */
+	mips_vector_init();
+
+	/*
 	 * Initialize error message buffer (at end of core).
 	 */
 	mips_init_msgbuf();
@@ -406,6 +416,22 @@ mach_init(argc, argv, envp)
 	v = (caddr_t)uvm_pageboot_alloc(size); 
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
+}
+
+void
+sgimips_count_cpus(struct arcbios_component *node,
+    struct arcbios_treewalk_context *atc)
+{
+
+	switch (node->Class) {
+	case COMPONENT_CLASS_ProcessorClass:
+		if (node->Type == COMPONENT_TYPE_CPU)
+			ncpus++;
+		break;
+
+	default:
+		break;
+	}
 }
 
 /*
