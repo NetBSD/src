@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.27 1996/10/17 15:49:39 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.28 1996/12/09 18:17:40 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -125,8 +125,8 @@ static struct aconfdata aconftab[] = {
 	/* phase 5 digital products */
 	{ "flmem",	8512,	10},	/* FastlaneZ3 memory */
 	{ "flsc",	8512,	11},	/* FastlaneZ3 */
-	{ "bznsc",	8512,	17},	/* Blizzard IV SCSI */
-	{ "bznsc", 	8512,	24},	/* Blizzard 2060 SCSI */
+	{ "bzivsc",	8512,	17},	/* Blizzard IV SCSI */
+	{ "bztzsc", 	8512,	24},	/* Blizzard 2060 SCSI */
 	{ "grfcv",	8512,	34},	/* CyberVison 64 */
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
