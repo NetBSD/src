@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.14 1999/08/21 19:19:23 jdc Exp $	*/
+/*	$NetBSD: label.c,v 1.15 2000/10/11 22:58:17 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.14 1999/08/21 19:19:23 jdc Exp $");
+__RCSID("$NetBSD: label.c,v 1.15 2000/10/11 22:58:17 fvdl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -209,9 +209,7 @@ savenewlabel(lp, nparts)
 #ifdef DEBUG
 	f = fopen("/tmp/disktab", "a");
 #else
-	/* Create the disktab.preinstall */
-	run_prog(0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
-	f = fopen("/etc/disktab", "a");
+	f = fopen("/etc/disktab", "w");
 #endif
 	if (logging)
 		(void)fprintf(log, "Creating disklabel %s\n", bsddiskname);
