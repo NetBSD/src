@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.12 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.13 2000/04/14 08:22:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ cs4231_attach_sbus(parent, self, aux)
 	}
 
 	sc->sc_ad1848.sc_ioh = bh;
-	sc->sc_dmareg = (struct apc_dma *)(bh + CS4231_REG_SIZE);
+	sc->sc_dmareg = (struct apc_dma *)(u_long)(bh + CS4231_REG_SIZE);
 
 	cs4231_init(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.8 1999/06/05 08:35:45 pk Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.9 2000/04/14 08:27:17 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
-				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(bus_addr_t)(u_long)sc->sc_dvmaaddr, sc->sc_dmasize,
 				datain
 					? BUS_DMASYNC_PREREAD
 					: BUS_DMASYNC_PREWRITE);
@@ -422,7 +422,7 @@ lsi64854_scsi_intr(arg)
 
 	if (sc->sc_dmamap->dm_nsegs > 0) {
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
-				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(bus_addr_t)(u_long)sc->sc_dvmaaddr, sc->sc_dmasize,
 				(csr & D_WRITE) != 0
 					? BUS_DMASYNC_POSTREAD
 					: BUS_DMASYNC_POSTWRITE);
@@ -522,7 +522,7 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
-				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(bus_addr_t)(u_long)sc->sc_dvmaaddr, sc->sc_dmasize,
 				datain
 					? BUS_DMASYNC_PREREAD
 					: BUS_DMASYNC_PREWRITE);
@@ -597,7 +597,7 @@ lsi64854_pp_intr(arg)
 
 	if (sc->sc_dmamap->dm_nsegs > 0) {
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
-				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(bus_addr_t)(u_long)sc->sc_dvmaaddr, sc->sc_dmasize,
 				(csr & D_WRITE) != 0
 					? BUS_DMASYNC_POSTREAD
 					: BUS_DMASYNC_POSTWRITE);
