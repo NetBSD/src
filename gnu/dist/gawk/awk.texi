@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $NetBSD: awk.texi,v 1.1 2004/03/26 16:55:15 jdolecek Exp $
+@c $NetBSD: awk.texi,v 1.1 2004/03/27 11:34:11 jdolecek Exp $
 @c %**start of header (This is for running Texinfo on a region.)
 @setfilename awk.info
 @settitle The GNU Awk User's Guide
