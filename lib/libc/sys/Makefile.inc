@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.152 2004/04/21 01:05:32 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.153 2004/05/21 17:15:42 kleink Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -45,7 +45,7 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	chmod.S chown.S chroot.S clock_getres.S clock_gettime.S \
 	dup.S dup2.S  \
 	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
-	fdatasync.S fhopen.S fhstat.S fhstatvfs1.S \
+	fhopen.S fhstat.S fhstatvfs1.S \
 	fktrace.S flock.S fpathconf.S __fstat13.S fstatvfs1.S \
 	futimes.S __getcwd.S \
 	getdents.S getfh.S getvfsstat.S getgroups.S getitimer.S \
@@ -83,7 +83,8 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
 	timer_settime.S
 
-WEAKASM= accept.S close.S connect.S execve.S fcntl.S fsync.S fsync_range.S \
+WEAKASM= accept.S close.S connect.S execve.S \
+	fcntl.S fdatasync.S fsync.S fsync_range.S \
 	kill.S msgrcv.S msgsnd.S __msync13.S \
 	nanosleep.S open.S poll.S read.S readv.S \
 	select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
