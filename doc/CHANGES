@@ -1,10 +1,10 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.181 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.182 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
 For an exhaustive list, please subscribe to the `source-changes' mailing list,
 or see the mailing list archives.  For more information, send a message
-containing just the word `help' to `majordomo@netbsd.org'.]
+containing just the word `help' to `majordomo@NetBSD.org'.]
 
 
 Changes from NetBSD 1.6 to NetBSD 2.0:
