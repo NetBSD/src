@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-syms,v 1.46 1999/05/22 23:08:24 kleink Exp $
+.\"	$NetBSD: doc-syms,v 1.47 1999/07/03 14:14:32 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -287,7 +287,7 @@
 .	ds aa \&\f\\n(cF\s\\n(cZ
 .	nr aP \\n(aP+1
 .       if "\\*(A\\n(aP"-p1003.1-96" \{\
-.		ds b1 \&\\*(tNIEEE S\\*(aatd 1003.1-1996\\*(sV
+.		ds b1 \&\\*(tNISO/IEC \\*(aa9945-1: 1996\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.1c-95" \{\
@@ -317,6 +317,22 @@
 .       if "\\*(A\\n(aP"-p1003.2" \{\
 .		ds b1 \&\\*(tNIEEE S\\*(aatd 1003.2\\*(sV
 .		as b1 (``\\*(tN\\*(Px.2\\*(aa'')
+.       \}
+.       if "\\*(A\\n(aP"-isoC" \{\
+.		ds b1 \&\\*(tNISO/IEC \\*(aa9899: 1990\\*(sV
+.		as b1 (``\\*(tNISO C\\*(aa'')
+.       \}
+.       if "\\*(A\\n(aP"-isoC-amd1" \{\
+.		ds b1 \&\\*(tNISO/IEC \\*(aa9899/AMD1: 1995\\*(sV
+.		as b1 (``\\*(tNISO C\\*(aa'')
+.       \}
+.       if "\\*(A\\n(aP"-isoC-tcor1" \{\
+.		ds b1 \&\\*(tNISO/IEC \\*(aa9899/TCOR1: 1994\\*(sV
+.		as b1 (``\\*(tNISO C\\*(aa'')
+.       \}
+.       if "\\*(A\\n(aP"-isoC-tcor2" \{\
+.		ds b1 \&\\*(tNISO/IEC \\*(aa9899/TCOR2: 1995\\*(sV
+.		as b1 (``\\*(tNISO C\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-ansiC" \{\
 .		ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
@@ -360,6 +376,10 @@
 .       if "\\*(A\\n(aP"-xns5" \{\
 .		ds b1 X/Open Networking Services Issue 5\\*(sV
 .		as b1 (``\\*(tNXNS5\\*(aa'')
+.       \}
+.       if "\\*(A\\n(aP"-xns5.2d2.0" \{\
+.		ds b1 X/Open Networking Services Issue 5.2 Draft 2.0\\*(sV
+.		as b1 (``\\*(tNXNS5.2D2.0\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-xcurses4.2" \{\
 .		ds b1 X/Open Curses Issue 4 Version 2\\*(sV
