@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k.oldconf,v 1.10 1994/10/26 07:48:18 cgd Exp $
+#	$NetBSD: files.m68k.oldconf,v 1.11 1996/09/10 22:07:10 thorpej Exp $
 #
 arch/m68k/m68k/db_disasm.c		optional ddb
 arch/m68k/m68k/db_interface.c		optional ddb
@@ -8,3 +8,5 @@ arch/m68k/m68k/ns_cksum.c		optional ns
 arch/m68k/m68k/oc_cksum.s		optional inet
 arch/m68k/m68k/process_machdep.c	standard
 arch/m68k/m68k/random.s			standard
+
+compat/m68k4k/m68k4k_exec.c		optional compat_m68k4k
