@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.5 2001/05/06 15:30:13 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.6 2001/05/06 16:11:17 simonb Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -300,7 +300,6 @@ const struct opcode opcodes_1f[] = {
 	{ "stfsx",	0xfc0007fe, 0x7c00052e, Op_S | Op_A | Op_B },
 	{ "stfsux",	0xfc0007fe, 0x7c00056e, Op_S | Op_A | Op_B },
 	{ "stswi",	0xfc0007fe, 0x7c0005aa, Op_S | Op_A | Op_NB },
-	{ "stfdx",	0xfc0007fe, 0x7c0005ae, Op_S | Op_A | Op_B },
 	{ "stfdx",	0xfc0007fe, 0x7c0005ae, Op_S | Op_A | Op_B },
 	{ "stfdux",	0xfc0007fe, 0x7c0005ee, Op_S | Op_A | Op_B },
 	{ "lhbrx",	0xfc0007fe, 0x7c00062c, Op_D | Op_A | Op_B },
