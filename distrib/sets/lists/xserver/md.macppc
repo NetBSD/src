@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.21 2005/01/21 08:33:11 rtr Exp $
+# $NetBSD: md.macppc,v 1.22 2005/03/21 14:43:44 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xmacppc
@@ -67,40 +67,37 @@
 ./usr/X11R6/lib/X11/doc/Versions
 ./usr/X11R6/lib/X11/doc/VideoBoard98
 ./usr/X11R6/lib/X11/etc/xmodmap.std
-./usr/X11R6/lib/libXxf86dga.so
-./usr/X11R6/lib/libXxf86dga.so.1
-./usr/X11R6/lib/libXxf86dga.so.1.0
 ./usr/X11R6/lib/libxf86config.a
-./usr/X11R6/lib/modules/codeconv/libARABIC.a
-./usr/X11R6/lib/modules/codeconv/libARMSCII8.a
-./usr/X11R6/lib/modules/codeconv/libBIG5.a
-./usr/X11R6/lib/modules/codeconv/libBIG5HKSCS.a
-./usr/X11R6/lib/modules/codeconv/libDOSENCODING.a
-./usr/X11R6/lib/modules/codeconv/libGB2312.a
-./usr/X11R6/lib/modules/codeconv/libGBK.a
-./usr/X11R6/lib/modules/codeconv/libGEORGIAN.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_1.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_10.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_11.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_14.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_15.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_2.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_3.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_4.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_5.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_6.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_7.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_8.a
-./usr/X11R6/lib/modules/codeconv/libISO8859_9.a
-./usr/X11R6/lib/modules/codeconv/libJISX0201.a
-./usr/X11R6/lib/modules/codeconv/libJISX0208.a
-./usr/X11R6/lib/modules/codeconv/libJISX0212.a
-./usr/X11R6/lib/modules/codeconv/libKOI8.a
-./usr/X11R6/lib/modules/codeconv/libKSC5601.a
-./usr/X11R6/lib/modules/codeconv/libKSCJOHAB.a
-./usr/X11R6/lib/modules/codeconv/libMULEENCODING.a
-./usr/X11R6/lib/modules/codeconv/libTCVN.a
-./usr/X11R6/lib/modules/codeconv/libVISCII.a
+./usr/X11R6/lib/modules/codeconv/libARABIC.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libARMSCII8.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libBIG5.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libBIG5HKSCS.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libDOSENCODING.a	xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libGB2312.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libGBK.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libGEORGIAN.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_1.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_10.a	xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_11.a	xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_14.a	xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_15.a	xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_2.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_3.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_4.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_5.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_6.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_7.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_8.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libISO8859_9.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libJISX0201.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libJISX0208.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libJISX0212.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libKOI8.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libKSC5601.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libKSCJOHAB.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libMULEENCODING.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libTCVN.a		xserver-obsolete	obsolete
+./usr/X11R6/lib/modules/codeconv/libVISCII.a		xserver-obsolete	obsolete
 ./usr/X11R6/lib/modules/drivers/ati_drv.o
 ./usr/X11R6/lib/modules/drivers/atimisc_drv.o
 ./usr/X11R6/lib/modules/drivers/chips_drv.o

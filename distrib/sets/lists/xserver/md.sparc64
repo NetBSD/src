@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.6 2004/03/28 06:48:43 jmc Exp $
+# $NetBSD: md.sparc64,v 1.7 2005/03/21 14:43:44 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/Xsun
 ./usr/X11R6/bin/Xsun24
@@ -6,9 +6,6 @@
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/constype
 ./usr/X11R6/bin/kbd_mode
-./usr/X11R6/lib/libXxf86dga.so
-./usr/X11R6/lib/libXxf86dga.so.1
-./usr/X11R6/lib/libXxf86dga.so.1.0
 ./usr/X11R6/man/cat1/Xsun.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/Xsun24.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/XsunMono.0			-unknown-		.cat
