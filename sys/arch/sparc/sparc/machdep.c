@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 1998/10/06 18:58:09 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.133 1998/10/11 23:21:03 chuck Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@
 /* A few straightforward translations to reduce clutter */
 #define uvm_km_alloc(m,s)	kmem_alloc(m,s)
 #define uvm_km_valloc(m,s)	kmem_alloc_pageable(m,s)
-#define uvm_unmap(m,a,s,x)	kmem_free(m,a,s)
+#define uvm_unmap(m,a,s)	kmem_free(m,a,s)
 #define uvm_km_suballoc(m,l,h,s,p,x,y) \
 				kmem_suballoc(m,l,h,s,p)
 #define uvm_useracc(a,s,f)	useracc(a,s,f)
@@ -1404,7 +1404,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size, 0);
+	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
 }
 
 /*
@@ -1673,7 +1673,7 @@ sun4_dmamem_free(t, segs, nsegs)
 	if (segs[0]._ds_mlist == NULL) {
 		vaddr_t kva = (vaddr_t)segs[0].ds_addr;
 		vsize_t size = round_page(segs[0].ds_len);
-		uvm_unmap(kernel_map, kva, kva + size, 0);
+		uvm_unmap(kernel_map, kva, kva + size);
 		return;
 	}
 

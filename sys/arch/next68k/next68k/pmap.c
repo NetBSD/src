@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 1998/08/28 23:05:54 dbj Exp $        */
+/*	$NetBSD: pmap.c,v 1.4 1998/10/11 23:21:01 chuck Exp $        */
 
 /*
  * This file was taken from from mvme68k/mvme68k/pmap.c
@@ -501,7 +501,7 @@ bogons:
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
 	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
-	rv = uvm_unmap(kernel_map, addr, addr + s, FALSE);
+	rv = uvm_unmap(kernel_map, addr, addr + s);
 	if (rv != KERN_SUCCESS)
 		panic("pmap_init: uvm_unmap failed");
 #else

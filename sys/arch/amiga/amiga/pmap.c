@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 1998/09/26 19:26:58 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 1998/10/11 23:20:59 chuck Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -612,7 +612,7 @@ pmap_init()
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
 	if (rv != KERN_SUCCESS || (addr + s) >= (vm_offset_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
-	rv = uvm_unmap(kernel_map, addr, addr + s, FALSE);
+	rv = uvm_unmap(kernel_map, addr, addr + s);
 	if (rv != KERN_SUCCESS)
 		panic("pmap_init: uvm_unmap failed");
 #else

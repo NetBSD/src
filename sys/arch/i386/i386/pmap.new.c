@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.19 1998/09/24 23:04:11 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.20 1998/10/11 23:21:00 chuck Exp $	*/
 
 /*
  *
@@ -1461,7 +1461,7 @@ static void pmap_free_pvpage()
     /* unmap the page */
     dead_entries = NULL;
     (void)uvm_unmap_remove(map, (vaddr_t) pvp,
-			   ((vaddr_t) pvp) + NBPG, TRUE, &dead_entries);
+			   ((vaddr_t) pvp) + NBPG, &dead_entries);
     vm_map_unlock(map);
 
     if (dead_entries != NULL)
