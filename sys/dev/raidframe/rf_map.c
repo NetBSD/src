@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.30 2004/03/05 02:53:56 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.31 2004/03/07 02:59:25 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.30 2004/03/05 02:53:56 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.31 2004/03/07 02:59:25 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -87,8 +87,10 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 	RF_RaidAddr_t startAddress = raidAddress;
 	RF_RaidAddr_t endAddress = raidAddress + numBlocks;
 	RF_RaidDisk_t *disks = raidPtr->Disks;
-
-	RF_PhysDiskAddr_t *pda_p, *pda_q;
+	RF_PhysDiskAddr_t *pda_p;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
+	RF_PhysDiskAddr_t *pda_q;
+#endif
 	RF_StripeCount_t numStripes = 0;
 	RF_RaidAddr_t stripeRealEndAddress, stripeEndAddress, 
 		nextStripeUnitAddress;
@@ -210,6 +212,7 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 			rf_ASMParityAdjust(asm_p->parityInfo, startAddrWithinStripe, endAddress, layoutPtr, asm_p);
 
 			break;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 		case 2:	/* two fault tolerant */
 			RF_ASSERT(pdaList && pdaList->next);
 			t_pda = pdaList;
@@ -236,6 +239,7 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 			rf_ASMParityAdjust(asm_p->parityInfo, startAddrWithinStripe, endAddress, layoutPtr, asm_p);
 			rf_ASMParityAdjust(asm_p->qInfo, startAddrWithinStripe, endAddress, layoutPtr, asm_p);
 			break;
+#endif
 		}
 	}
 	RF_ASSERT(asmList == NULL && pdaList == NULL);
