@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.9 1999/08/22 13:43:09 kleink Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.10 1999/11/16 23:56:41 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = INTARG;
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		/* fall into ... */
+		/* FALLTHRU */
 	case SOUND_PCM_READ_RATE:
 		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
@@ -186,7 +186,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return EINVAL;
 		}
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		/* fall into ... */
+		/* FALLTHRU */
 	case SOUND_PCM_READ_BITS:
 		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
@@ -233,7 +233,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		tmpinfo.play.channels =
 		tmpinfo.record.channels = INTARG;
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		/* fall into ... */
+		/* FALLTHRU */
 	case SOUND_PCM_READ_CHANNELS:
 		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
@@ -331,7 +331,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SNDCTL_DSP_GETOSPACE:
 	case SNDCTL_DSP_GETISPACE:
-		retval = ioctl(fd, AUDIO_GETINFO, (caddr_t)&tmpinfo);
+		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		setblocksize(fd, &tmpinfo);
@@ -348,7 +348,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		break;
 	case SNDCTL_DSP_GETCAPS:
-		retval = ioctl(fd, AUDIO_GETPROPS, (caddr_t)&idata);
+		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
 		if (retval < 0)
 			return retval;
 		idat = DSP_CAP_TRIGGER; /* pretend we have trigger */
@@ -360,7 +360,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		break;
 #if 0
 	case SNDCTL_DSP_GETTRIGGER:
-		retval = ioctl(fd, AUDIO_GETINFO, (caddr_t)&tmpinfo);
+		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		idat = (tmpinfo.play.pause ? 0 : PCM_ENABLE_OUTPUT) |
@@ -376,7 +376,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		tmpinfo.play.pause = (idat & PCM_ENABLE_OUTPUT) == 0;
 		tmpinfo.record.pause = (idat & PCM_ENABLE_INPUT) == 0;
-		(void) ioctl(fd, AUDIO_SETINFO, (caddr_t)&tmpinfo);
+		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		retval = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (retval < 0)
 			return retval;
@@ -542,17 +542,30 @@ int
 mixer_ioctl(int fd, unsigned long com, void *argp)
 {
 	struct audiodevinfo *di;
+	struct mixer_info *omi;
+	struct audio_device adev;
 	mixer_ctrl_t mc;
 	int idat;
 	int i;
 	int retval;
-	int l, r, n;
+	int l, r, n, error;
 
 	di = getdevinfo(fd);
 	if (di == 0)
 		return -1;
 
 	switch (com) {
+	case SOUND_MIXER_INFO:
+	case SOUND_OLD_MIXER_INFO:
+		error = ioctl(fd, AUDIO_GETDEV, &adev);
+		if (error)
+			return (error);
+		omi = argp;
+		if (com == SOUND_MIXER_INFO)
+			omi->modify_counter = 1;
+		strncpy(omi->id, adev.name, sizeof omi->id);
+		strncpy(omi->name, adev.name, sizeof omi->name);
+		return 0;
 	case SOUND_MIXER_READ_RECSRC:
 		if (di->source == -1)
 			return EINVAL;
