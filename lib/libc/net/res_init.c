@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.25 1999/07/04 00:43:44 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.26 1999/07/04 03:52:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.25 1999/07/04 00:43:44 itojun Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.26 1999/07/04 03:52:55 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -299,7 +299,10 @@ res_init()
 			sin6->sin6_port = htons(NAMESERVER_PORT);
 			/* just for safety */
 			memset(&_res.nsaddr_list[nserv], 0,
-			    sizeof(_res.nsaddr_list[nserv]));
+				sizeof(_res.nsaddr_list[nserv]));
+			_res.nsaddr_list[nserv].sin_family = AF_INET;
+			_res.nsaddr_list[nserv].sin_len =
+				sizeof(struct sockaddr_in);
 			nserv++;
 		    } else if (inet_pton(AF_INET, cp, &a) == 1) {
 			struct sockaddr_in *sin;
