@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/11/21 21:19:12 gwr Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 1996/08/29 03:24:24 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -19,10 +19,10 @@ LISTS=	${TOP}/common/mini_sbin.list \
 KERNEL=${SRCSYSDIR}/arch/sun3/compile/GENERIC/netbsd
 
 MOUNT_POINT=	/mnt
-#BDEV=		/dev/sd2b
-#CDEV=		/dev/rsd2b
-BDEV=		/dev/sd0d
-CDEV=		/dev/rsd0d
+BDEV=		/dev/sd2b
+CDEV=		/dev/rsd2b
+#BDEV=		/dev/sd0d
+#CDEV=		/dev/rsd0d
 
 # These are all the parameters for the miniroot: (8MB)
 DISKTYPE=	miniroot
@@ -30,9 +30,9 @@ NBLKS=		16384
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -O -m 0 -o space -i 8192 -t 8 -u 32 -c 16
 
-CLEANFILES= ${IMAGE}.gz
+CLEANFILES= ${IMAGE}.gz install.sub
 
-${IMAGE}.gz: ${TREE} ${LISTS} ${CBIN} mini_xx
+${IMAGE}.gz: ${TREE} ${LISTS} ${CBIN} mini_xx install.sub
 	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
@@ -57,6 +57,9 @@ ${IMAGE}.gz: ${TREE} ${LISTS} ${CBIN} mini_xx
 
 # Rules for making ${CBIN} ...
 .include "${TOP}/common/Make.crunch"
+
+install.sub : ${TOP}/../miniroot/install.sub
+	sed -e "/^VERSION=/s/=.*/=${REV}/" < $? > $@
 
 clean cleandir: clean_xx
 	-rm -f a.out core *.core *.o
