@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.6 1999/02/17 14:56:56 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.7 1999/05/06 19:20:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -104,7 +104,7 @@ struct wskbd_mapdata akbd_keymapdata = {
 	KB_US,
 };
 
-static int akbd_is_console __P((void));
+static int akbd_is_console;
 
 static int
 akbdmatch(parent, cf, aux)
@@ -237,7 +237,7 @@ akbdattach(parent, self, aux)
 		printf("kbd: returned %d from SetADBInfo\n", error);
 #endif
 
-	a.console = akbd_is_console();
+	a.console = akbd_is_console;
 	a.keymap = &akbd_keymapdata;
 	a.accessops = &akbd_accessops;
 	a.accesscookie = sc;
@@ -436,24 +436,6 @@ blinkleds(ksc)
 #endif
 
 int
-akbd_is_console()
-{
-	int chosen, stdin, pkg;
-	char name[16];
-	int kbd;
-
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "stdin", &stdin, 4);
-	pkg = OF_instance_to_package(stdin);
-	OF_getprop(pkg, "name", name, sizeof(name));
-
-	if (strcmp(name, "keyboard") == 0)
-		return 1;
-	else
-		return 0;
-}
-
-int
 akbd_enable(v, on)
 	void *v;
 	int on;
@@ -527,25 +509,9 @@ kbd_intr(event)
 int
 akbd_cnattach()
 {
-	int chosen, stdin, node;
-	char name[16];
 
-	chosen = OF_finddevice("/chosen");
-	if (chosen == -1)
-		return -1;
-
-	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) == -1)
-		return -1;
-
-	node = OF_parent(OF_instance_to_package(stdin));
-	bzero(name, sizeof(name));
-	OF_getprop(node, "name", name, sizeof(name));
-
-	if (strcmp(name, "adb") != 0)
-		return -1;
-
+	akbd_is_console = 1;
 	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
-
 	return 0;
 }
 
