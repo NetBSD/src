@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.34 1998/04/29 05:16:47 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.35 1998/05/01 01:15:55 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -260,6 +260,7 @@ tcp_timers(tp, timer)
 		TCPT_RANGESET(tp->t_rxtcur, rto * tcp_backoff[tp->t_rxtshift],
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+#if 0
 		/* 
 		 * If we are losing and we are trying path MTU discovery,
 		 * try turning it off.  This will avoid black holes in
@@ -272,8 +273,9 @@ tcp_timers(tp, timer)
 			struct inpcb *inp = tp->t_inpcb;
 			struct rtentry *rt = in_pcbrtentry(inp);
 
-			rt->rt_rmx.rmx_locks |= RTV_MTU;
+			/* XXX:  Black hole recovery code goes here */
 		}
+#endif
 		/*
 		 * If losing, let the lower level know and try for
 		 * a better route.  Also, if we backed off this far,
