@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.2 1997/01/05 21:32:24 veego Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.3 1997/01/29 02:16:26 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -102,7 +102,7 @@ typedef	struct	natstat	{
 #define	IPN_UDP		2
 #define	IPN_TCPUDP	3
 
-extern	int	nat_ioctl __P((caddr_t data, int cmd, int mode));
+extern	int	nat_ioctl __P((caddr_t data, u_long cmd, int mode));
 extern	nat_t	*nat_lookupoutip __P((register ipnat_t *np, ip_t *ip, tcphdr_t *tcp));
 extern	nat_t	*nat_lookupinip __P((struct in_addr ipaddr, u_short sport));
 extern	nat_t	*nat_lookupredir __P((natlookup_t *np));
