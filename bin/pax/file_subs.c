@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.41.2.5 2004/06/22 07:15:49 tron Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.41.2.6 2004/08/12 19:35:44 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.41.2.5 2004/06/22 07:15:49 tron Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.41.2.6 2004/08/12 19:35:44 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		/*
 		 * try to get rid of the file, based on the type
 		 */
-		if (S_ISDIR(sb.st_mode)) {
+		if (S_ISDIR(sb.st_mode) && strcmp(from, ".") != 0) {
 			if (rmdir(from) < 0) {
 				syswarn(1, errno, "Cannot remove %s", from);
 				return(-1);
@@ -407,7 +407,7 @@ node_creat(ARCHD *arcn)
 	file_mode = arcn->sb.st_mode & FILEBITS(arcn->type == PAX_DIR);
 
 	for (;;) {
-		switch(arcn->type) {
+		switch (arcn->type) {
 		case PAX_DIR:
 			/*
 			 * If -h (or -L) was given in tar-mode, follow the
@@ -421,7 +421,8 @@ node_creat(ARCHD *arcn)
 					    sizeof target - 1);
 					if (len == -1) {
 						syswarn(0, errno,
-						   "cannot follow symlink %s in chain for %s",
+						   "cannot follow symlink %s "
+						   "in chain for %s",
 						    nm, arcn->name);
 						res = -1;
 						goto badlink;
@@ -454,7 +455,7 @@ badlink:
 			tty_warn(0,
 			    "%s skipped. Sockets cannot be copied or extracted",
 			    nm);
-			return(-1);
+			return (-1);
 		case PAX_SLK:
 			res = symlink(arcn->ln_name, nm);
 			break;
@@ -468,7 +469,7 @@ badlink:
 			 */
 			tty_warn(0, "%s has an unknown file type, skipping",
 			    nm);
-			return(-1);
+			return (-1);
 		}
 
 		/*
@@ -483,16 +484,27 @@ badlink:
 		 * we failed to make the node
 		 */
 		oerrno = errno;
-		if ((ign = unlnk_exist(nm, arcn->type)) < 0)
-			return(-1);
-
-		if (++pass <= 1)
+		switch (pass++) {
+		case 0:
+			if ((ign = unlnk_exist(nm, arcn->type)) < 0)
+				return (-1);
 			continue;
 
-		if (nodirs || chk_path(nm,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
-			syswarn(1, oerrno, "Cannot create %s", nm);
-			return(-1);
+		case 1:
+			if (nodirs ||
+			    chk_path(nm, arcn->sb.st_uid,
+			    arcn->sb.st_gid) < 0) {
+				syswarn(1, oerrno, "Cannot create %s", nm);
+				return (-1);
+			}
+			continue;
 		}
+
+		/*
+		 * it must be a file that exists but we can't create or
+		 * remove, but we must avoid the infinite loop.
+		 */
+		break;
 	}
 
 	/*
@@ -593,8 +605,13 @@ unlnk_exist(char *name, int type)
 	if (S_ISDIR(sb.st_mode)) {
 		/*
 		 * try to remove a directory, if it fails and we were going to
-		 * create a directory anyway, tell the caller (return a 1)
+		 * create a directory anyway, tell the caller (return a 1).
+		 *
+		 * don't try to remove the directory if the name is "."
+		 * otherwise later file/directory creation fails.
 		 */
+		if (strcmp(name, ".") == 0)
+			return(1);
 		if (rmdir(name) < 0) {
 			if (type == PAX_DIR)
 				return(1);
