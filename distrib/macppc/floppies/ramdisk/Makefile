@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.3 2000/03/01 00:12:22 he Exp $
+#	$NetBSD: Makefile,v 1.4.2.4 2000/06/03 15:06:42 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,15 +20,22 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-SIZE=		1600k
-GEOM=		512/16/2/100
+CYLS=		100
+SECS=		16
+TRKS=		2
+TOTALSECT !=	expr ${CYLS} '*' ${SECS} '*' ${TRKS}
 DISKTYPE=	floppyinstfs
+DISKTAB=	./${DISKTYPE}.disktab
+GEOM=		512/${SECS}/${TRKS}/${CYLS}
+INO_BYTES=	6144
 
 all: ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i 4096 -c 100 ${VND_RDEV}
+	dd if=/dev/zero of=${IMAGE} bs=512 count=${TOTALSECT}
+	vnconfig -v -c ${VND_CDEV} ${IMAGE} ${GEOM}
+	echo "${DISKTYPE}:ty=floppy:se#512:nt#${TRKS}:rm#300:ns#${SECS}:nc#${CYLS}:pa#${TOTALSECT}:oa#0:ba#4096:fa#512:ta=4.2BSD:pc#${TOTALSECT}:oc#0:" > ${DISKTAB}
+	disklabel -rw -f ${DISKTAB} ${VND_CDEV} ${DISKTYPE}
+	disklabel -W ${VND_CDEV}
+	newfs -B be -m 0 -o space -i ${INO_BYTES} -c ${CYLS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
