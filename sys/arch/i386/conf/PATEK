@@ -1,7 +1,7 @@
 #
 # PATEK -- Mycroft's 486 test box
 #
-#	$Id: PATEK,v 1.4 1994/01/06 12:07:52 cgd Exp $
+#	$Id: PATEK,v 1.5 1994/01/29 02:40:09 mycroft Exp $
 #
 
 machine		"i386"
@@ -33,6 +33,7 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
 #options	QUOTA
+options		FIFO
 options		FFS
 options		MFS
 options		NFSSERVER
@@ -41,8 +42,10 @@ options		ISOFS
 options		MSDOSFS
 options		FDESC
 options		KERNFS
+options		PROCFS
 
 options		GATEWAY
+options		MULTICAST,MROUTING
 options		INET
 #options	NS
 #options	CCITT
@@ -51,6 +54,7 @@ options		INET
 #options	EON
 
 options		SCSI
+options		SBPRO
 
 config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3
 
@@ -71,6 +75,7 @@ disk		fd1	at fdc0 drive 1
 
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+device		sb0	at isa? port 0x220 bio irq 5 drq 1 vector sbintr
 
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
@@ -85,3 +90,4 @@ pseudo-device	ether
 pseudo-device	bpfilter 4
 pseudo-device	log
 pseudo-device	pty	32
+pseudo-device	audio
