@@ -856,6 +856,7 @@ ahc_patch1_func(struct ahc_softc *ahc)
 
 static int ahc_patch0_func(struct ahc_softc *ahc);
 
+/* ARGSUSED */
 static int
 ahc_patch0_func(struct ahc_softc *ahc)
 {
