@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.75 2001/07/04 20:34:03 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.76 2001/07/07 15:53:15 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -1563,7 +1563,7 @@ ahc_alloc_tstate(struct ahc_softc *ahc, u_int scsi_id, char channel)
 	 * until an initiator talks to us.
 	 */
 	if (master_tstate != NULL) {
-		bcopy(master_tstate, tstate, sizeof(*tstate));
+		memcpy(tstate, master_tstate, sizeof(*tstate));
 		tstate->ultraenb = 0;
 		for (i = 0; i < 16; i++) {
 			bzero(&tstate->transinfo[i].current,
@@ -3382,8 +3382,9 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 * csio.
 		 */
 		bzero(&xs->sense.scsi_sense, sizeof(xs->sense.scsi_sense));
-		bcopy(&ahc->scb_data->sense[scb->hscb->tag],
-		      &xs->sense.scsi_sense, le32toh(scb->sg_list->len));
+		memcpy(&xs->sense.scsi_sense,
+		    &ahc->scb_data->sense[scb->hscb->tag],
+		    le32toh(scb->sg_list->len));
 		xs->error = XS_SENSE;
 	}
 	if (scb->flags & SCB_FREEZE_QUEUE) {

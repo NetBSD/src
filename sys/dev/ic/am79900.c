@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.9 2001/05/30 11:46:33 mrg Exp $	*/
+/*	$NetBSD: am79900.c,v 1.10 2001/07/07 15:53:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998
@@ -155,7 +155,7 @@ am79900_meminit(sc)
 	 * Update our private copy of the Ethernet address.
 	 * We NEED the copy so we can ensure its alignment!
 	 */
-	bcopy(LLADDR(ifp->if_sadl), sc->sc_enaddr, ETHER_ADDR_LEN);
+	memcpy(sc->sc_enaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 	myaddr = sc->sc_enaddr;
 
 	init.init_padr[0] = myaddr[0] | (myaddr[1] << 8)

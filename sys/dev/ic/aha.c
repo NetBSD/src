@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.32 2001/05/02 10:31:41 bouyer Exp $	*/
+/*	$NetBSD: aha.c,v 1.33 2001/07/07 15:53:14 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -1191,7 +1191,7 @@ aha_scsipi_request(chan, req, arg)
 			/* can't use S/G if zero length */
 			ccb->opcode = (xs->datalen ? AHA_INIT_SCAT_GATH_CCB
 						   : AHA_INITIATOR_CCB);
-			bcopy(xs->cmd, &ccb->scsi_cmd,
+			memcpy(&ccb->scsi_cmd, xs->cmd,
 			    ccb->scsi_cmd_length = xs->cmdlen);
 		}
 

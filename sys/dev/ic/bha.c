@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.43 2001/05/03 20:34:54 ross Exp $	*/
+/*	$NetBSD: bha.c,v 1.44 2001/07/07 15:53:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -332,7 +332,7 @@ bha_scsipi_request(chan, req, arg)
 			/* can't use S/G if zero length */
 			ccb->opcode = (xs->datalen ? BHA_INIT_SCAT_GATH_CCB
 						   : BHA_INITIATOR_CCB);
-			bcopy(xs->cmd, &ccb->scsi_cmd,
+			memcpy(&ccb->scsi_cmd, xs->cmd,
 			    ccb->scsi_cmd_length = xs->cmdlen);
 		}
 
