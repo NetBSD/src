@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.22 2000/05/31 03:37:34 fredb Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.23 2000/06/06 20:19:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -138,10 +138,12 @@ lfs_bwrite(v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
+	struct inode *ip;
+
+	ip = VTOI(bp->b_vp);
 
 #ifdef DIAGNOSTIC
-        if(VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0
-	   && (bp->b_flags & B_ASYNC)) {
+        if (VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0 && (bp->b_flags & B_ASYNC)) {
 		panic("bawrite LFS buffer");
 	}
 #endif /* DIAGNOSTIC */
@@ -154,7 +156,8 @@ lfs_bwrite(v)
  * inode blocks, a summary block, plus potentially the ifile inode and
  * the segment usage table, plus an ifile page.
  */
-inline static int lfs_fits(struct lfs *fs, int db)
+inline static int
+lfs_fits(struct lfs *fs, int db)
 {
 	if(((db + (fs->lfs_uinodes + INOPB((fs))) /
 	     INOPB(fs) + fsbtodb(fs, 1) + LFS_SUMMARY_SIZE / DEV_BSIZE +
