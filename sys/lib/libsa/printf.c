@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.9 1996/10/13 02:29:05 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -122,7 +122,7 @@ printf(fmt, va_alist)
 }
 
 void
-kvprintf(const char *fmt, va_list ap)
+vprintf(const char *fmt, va_list ap)
 {
 	kdoprnt(putchar, fmt, ap);
 }
