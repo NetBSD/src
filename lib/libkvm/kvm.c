@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.24 1994/02/01 02:17:21 mycroft Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.25 1994/02/14 04:34:44 chopps Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -107,6 +107,9 @@ static	long	vm_page_buckets;
 static	long	page_shift;
 static	char	*tmp;
 #if defined(m68k)
+#if defined(amiga)
+static  int	cpu040;
+#endif
 static	int	lowram;
 static	struct ste *Sysseg;
 #endif
@@ -158,6 +161,10 @@ static struct nlist nl[] = {
 #define	X_SYSSEG	(X_LAST+1)
 	{ "_lowram" },
 #define	X_LOWRAM	(X_LAST+2)
+#if defined(amiga)
+	{ "_cpu040" },
+#define X_CPU040	(X_LAST+3)
+#endif
 #endif
 #if defined(i386)
 	{ "_IdlePTD" },
@@ -871,6 +878,15 @@ getkvars()
 		long	addr;
 
 #if defined(m68k)
+#if defined(amiga)
+		addr = (long) nl[X_CPU040].n_value;
+		(void) lseek(kmem, addr, 0);
+		if (read(kmem, (char *) &cpu040, sizeof (cpu040))
+		    != sizeof (cpu040)) {
+			seterr("can't read cpu040");
+			return (-1);
+		}	
+#endif
 		addr = (long) nl[X_LOWRAM].n_value;
 		(void) lseek(kmem, addr, 0);
 		if (read(kmem, (char *) &lowram, sizeof (lowram))
