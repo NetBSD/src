@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.70.2.3 2003/07/25 11:53:59 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.70.2.4 2003/08/17 04:55:21 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70.2.3 2003/07/25 11:53:59 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70.2.4 2003/08/17 04:55:21 jlam Exp $");
 #endif
 #endif
 
@@ -67,15 +67,23 @@ sanity_check(const char *pkg)
 static int
 installprereq(const char *name, int *errc)
 {
+	char	*tmp;
 	int	ret;
 	ret = 0;
 
 	if (Verbose)
 		printf("Loading it from %s.\n", name);
 	path_setenv("PKG_PATH");
-	if (vsystem("%s/pkg_add -s %s %s%s%s %s%s",
+	if (vsystem("env %s=%s %s/pkg_add -s %s %s%s%s %s%s %s%s%s %s%s",
+			PKG_VIEW,
+			(tmp = getenv(PKG_VIEW) ? tmp : ""),
 			BINDIR,
 			get_verification(),
+			NoView ? "-L " : "",
+			View ? "-w " : "",
+			View ? View : "",
+			Viewbase ? "-W " : "",
+			Viewbase ? Viewbase : "",
 			Force ? "-f " : "",
 			Prefix ? "-p " : "",
 			Prefix ? Prefix : "",
@@ -114,6 +122,7 @@ pkg_do(const char *pkg)
 	struct stat sb;
 	int     inPlace;
 	int	rc;
+	Boolean	is_depoted_pkg = FALSE;
 
 	errc = 0;
 	zapLogDir = 0;
@@ -124,7 +133,7 @@ pkg_do(const char *pkg)
 
 	/* make sure dbdir actually exists! */
 	if (!(isdir(dbdir) || islinktodir(dbdir))) {
-		if (vsystem("/bin/mkdir -p -m 755 %s", dbdir)) {
+		if (vsystem("mkdir -p -m 755 %s", dbdir)) {
 			errx(EXIT_FAILURE, "Database-dir %s cannot be generated, aborting.",
 			    dbdir);
 		}
@@ -427,7 +436,7 @@ ignore_replace_depends_check:
 
 					if (Verbose)
 						printf("pkg_delete '%s'\n", installed);
-					vsystem("pkg_delete '%s'\n", installed);
+					vsystem("%s/pkg_delete '%s'\n", BINDIR, installed);
 					
 				} else {
 					warnx("other version '%s' already installed", installed);
@@ -449,7 +458,7 @@ ignore_replace_depends_check:
 			printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
 
 		/* was: */
-		/* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
+		/* if (!vsystem("%s/pkg_info -qe '%s'", BINDIR, p->name)) { */
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
 			warnx("Conflicting package `%s'installed, please use\n"
 			      "\t\"pkg_delete %s\" first to remove it!", installed, installed);
@@ -467,7 +476,7 @@ ignore_replace_depends_check:
 			continue;
 		if (Verbose)
 			printf("Depends pre-scan: `%s' required.\n", p->name);
-		/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
+		/* if (vsystem("%s/pkg_info -qe '%s'", BINDIR, p->name)) { */
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) <= 0) {
 			/* 
 			 * required pkg not found. look if it's available with a more liberal
@@ -682,8 +691,10 @@ ignore_replace_depends_check:
 			move_file(".", DISPLAY_FNAME, LogDir);
 		if (fexists(PRESERVE_FNAME))
 			move_file(".", PRESERVE_FNAME, LogDir);
-		if (fexists(VIEWS_FNAME))
+		if (fexists(VIEWS_FNAME)) {
+			is_depoted_pkg = TRUE;
 			move_file(".", VIEWS_FNAME, LogDir);
+		}
 
 		/* register dependencies */
 		/* we could save some cycles here if we remembered what we
@@ -755,6 +766,36 @@ fail:
 		delete_package(FALSE, FALSE, &Plist);
 
 success:
+	/* Add the package to a default view. */
+	if (!NoView && is_depoted_pkg) {
+		if (Verbose) {
+			printf("env %s=%s %s=%s %s/pkg_view %s%s %s%s %sadd %s\n",
+				PKG_DBDIR,
+				DEF_LOG_DIR,
+				PKG_VIEW,
+				(tmp = getenv(PKG_VIEW) ? tmp : ""),
+				BINDIR,
+				View ? "-w " : "",
+				View ? View : "",
+				Viewbase ? "-W " : "",
+				Viewbase ? Viewbase : "",
+				Verbose ? "-v " : "",
+				PkgName);
+		}
+		vsystem("env %s=%s %s=%s %s/pkg_view %s%s %s%s %sadd %s",
+				PKG_DBDIR,
+				DEF_LOG_DIR,
+				PKG_VIEW,
+				(tmp = getenv(PKG_VIEW) ? tmp : ""),
+				BINDIR,
+				View ? "-w " : "",
+				View ? View : "",
+				Viewbase ? "-W " : "",
+				Viewbase ? Viewbase : "",
+				Verbose ? "-v " : "",
+				PkgName);
+	}
+
 	/* delete the packing list contents */
 	free_plist(&Plist);
 	leave_playpen(Home);

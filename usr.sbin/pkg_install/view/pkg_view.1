@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.7 2003/07/28 21:55:36 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.8 2003/08/17 04:55:23 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@ command is used to add and delete packages in
 into a
 .Ar view
 in the
-.Ar prefix
+.Ar viewbase
 directory.
 .Sh WARNING
 .Bf -emphasis
@@ -91,7 +91,7 @@ The default
 is the
 .Pa packages
 directory under
-.Ar prefix .
+.Ar viewbase .
 .It Fl i Ar ignore
 Add
 .Ar ignore
@@ -99,24 +99,26 @@ to the list of files in
 .Ar package
 that should ignored when adding or removing the package from
 .Ar view .
-.It Fl p Ar prefix
+.It Fl V
+Print the version number and exit.
+.It Fl v
+Turn on verbose output.
+.It Fl W Ar viewbase
 Set
-.Ar prefix
+.Ar viewbase
 as the directory in which all the views are managed.
 The default
-.Ar prefix
+.Ar viewbase
 directory is
 .Pa /usr/pkg
 but may be overridden by the
-.Ev PREFIX
+.Ev PKG_VIEWBASE
 environment variable.
-.It Fl V
-Print the version number and exit.
-.It Fl v Ar view
+.It Fl w Ar view
 Set
 .Ar view
 as the directory in
-.Ar prefix
+.Ar viewbase
 in which the packages should be added or removed.
 The default
 .Ar view
@@ -160,11 +162,11 @@ directory, and it defaults to "info/dir *[~#] *.OLD *.orig *,v".
 The default view can be specified in the
 .Ev PKG_VIEW
 environment variable.
-.It Ev PREFIX
-The standard prefix directory,
+.It Ev PKG_VIEWBASE
+The standard viewbase directory,
 .Pa /usr/pkg ,
 can be overridden by specifying an alternative directory in the
-.Ev PREFIX
+.Ev PKG_VIEWBASE
 environment variable.
 .El
 .Sh FILES
