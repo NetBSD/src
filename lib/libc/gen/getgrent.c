@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.19 1997/05/22 10:38:07 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.20 1997/07/13 19:01:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.19 1997/05/22 10:38:07 lukem Exp $";
+__RCSID("$NetBSD: getgrent.c,v 1.20 1997/07/13 19:01:22 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +58,8 @@ static char rcsid[] = "$NetBSD: getgrent.c,v 1.19 1997/05/22 10:38:07 lukem Exp 
 static FILE *_gr_fp;
 static struct group _gr_group;
 static int _gr_stayopen;
-static int grscan(), start_gr();
+static int grscan __P((int, gid_t, const char *));
+static int start_gr __P((void));
 
 #define	MAXGRP		200
 static char *members[MAXGRP];
@@ -74,7 +76,7 @@ static int	__ypcurrentlen;
 struct group *
 getgrent()
 {
-	if (!_gr_fp && !start_gr() || !grscan(0, 0, NULL))
+	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL))
 		return(NULL);
 	return(&_gr_group);
 }
@@ -241,6 +243,9 @@ grscan(search, gid, name)
 					__ypmode = YPMODE_NONE;
 					continue;
 				}
+				break;
+			case YPMODE_NONE:
+				abort();	/* Cannot happen */
 				break;
 			}
 			line[datalen] = '\0';
