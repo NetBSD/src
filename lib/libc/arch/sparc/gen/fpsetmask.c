@@ -1,11 +1,19 @@
-/*	$NetBSD: fpsetmask.c,v 1.2 1998/01/09 03:15:17 perry Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.3 2002/01/13 21:45:49 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
  * Public domain.
  */
 
+#include <sys/cdefs.h>
+
+#include "namespace.h"
+
 #include <ieeefp.h>
+
+#ifdef __weak_alias
+__weak_alias(fpsetmask,_fpsetmask)
+#endif
 
 fp_except
 fpsetmask(mask)

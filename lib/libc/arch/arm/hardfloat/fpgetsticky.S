@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.S,v 1.1 2000/12/29 20:13:52 bjh21 Exp $	*/
+/*	$NetBSD: fpgetsticky.S,v 1.2 2002/01/13 21:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -39,7 +39,12 @@
  * Return the current FP cumulative flags
  */
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fpgetsticky, _fpgetsticky)
+ENTRY(_fpgetsticky)
+#else
 ENTRY(fpgetsticky)
+#endif
 	rfs	r0
 	and	r0, r0, #0x1f
 #ifdef __APCS_26__
