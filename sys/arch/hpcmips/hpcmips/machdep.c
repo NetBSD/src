@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2000/05/26 21:19:43 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.4.1 2000/07/19 00:25:26 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2000/05/26 21:19:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.4.1 2000/07/19 00:25:26 jeffs Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -156,7 +156,6 @@ unsigned ssir;				/* schedules software interrupt */
 struct splvec	splvec;			/* XXX will go XXX */
 
 void mach_init __P((int, char *[], struct bootinfo*));
-void cpu_intr  __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 
 static struct bootinfo bi_copy;
 struct bootinfo *bootinfo = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 2000/05/30 02:05:36 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41.2.1 2000/07/19 00:25:25 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,6 +51,12 @@
 #define CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
 #define CPU_ROOT_DEVICE		3	/* string: root device name */
+
+/*
+ * Platform can override, but note this breaks userland compatability
+ * with other mips platforms.
+ */
+#ifndef CPU_MAXID
 #define CPU_MAXID		4	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
@@ -59,7 +65,7 @@
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "root_device", CTLTYPE_STRING }, \
 }
-
+#endif
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -80,7 +86,7 @@
 
 #else /* run-time test */
 extern int cpu_arch;
-#define CPUISMIPS3	(cpu_arch == 3)
+#define CPUISMIPS3	(cpu_arch >= 3)
 #endif /* run-time test */
 
 /*
@@ -89,6 +95,8 @@ extern int cpu_arch;
  */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+
+void cpu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
