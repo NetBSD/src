@@ -1,4 +1,4 @@
-/*	$NetBSD: dklist.c,v 1.2 2001/04/17 13:32:39 ad Exp $	*/
+/*	$NetBSD: dklist.c,v 1.3 2001/09/29 17:04:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dklist.c,v 1.2 2001/04/17 13:32:39 ad Exp $");
+__RCSID("$NetBSD: dklist.c,v 1.3 2001/09/29 17:04:10 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -209,7 +209,7 @@ mlx_disk_add_all(void)
 		deref_kptr(kd, dk, &cur_disk, sizeof(cur_disk));
 		deref_kptr(kd, cur_disk.dk_name, buf, sizeof(buf));
 		mlx_disk_add0(buf);
-		dk = TAILQ_NEXT(dk, dk_link);
+		dk = TAILQ_NEXT(&cur_disk, dk_link);
 	}
 
 	kvm_close(kd);
