@@ -1,3 +1,5 @@
+/*	$NetBSD: smb_rq.h,v 1.2 2002/01/04 02:39:44 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
@@ -29,13 +31,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/netsmb/smb_rq.h,v 1.1 2001/04/10 07:59:06 bp Exp $
+ * FreeBSD: src/sys/netsmb/smb_rq.h,v 1.1 2001/04/10 07:59:06 bp Exp
  */
 #ifndef _NETSMB_SMB_RQ_H_
 #define	_NETSMB_SMB_RQ_H_
 
 #ifndef MB_MSYSTEM
-#include <sys/mchain.h>
+#include <netsmb/mchain.h>
 #endif
 
 #define	SMBR_ALLOCED		0x0001	/* structure was malloced */
@@ -89,7 +91,7 @@ struct smb_rq {
 	int			sr_timo;
 	int			sr_rexmit;
 	int			sr_sendcnt;
-	struct timespec 	sr_timesent;
+	struct timeval	 	sr_timesent;
 	int			sr_lerror;
 	u_int16_t *		sr_rqtid;
 	u_int16_t *		sr_rquid;
