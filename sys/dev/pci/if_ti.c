@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.6 2000/03/17 09:20:16 bouyer Exp $ */
+/* $NetBSD: if_ti.c,v 1.7 2000/03/17 09:25:22 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1801,7 +1801,6 @@ static void ti_attach(parent, self, aux)
 	ifp->if_ioctl = ti_ioctl;
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
-	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = TI_TX_RING_CNT - 1;
 
 	/* Set up ifmedia support. */
