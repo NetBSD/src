@@ -1,4 +1,4 @@
-/*	$NetBSD: print-cnfp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
+/*	$NetBSD: print-cnfp.c,v 1.3 2002/02/18 09:37:06 itojun Exp $	*/
 
 /*	$OpenBSD: print-cnfp.c,v 1.2 1998/06/25 20:26:59 mickey Exp $	*/
 
@@ -38,9 +38,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-cnfp.c,v 1.7 2001/02/21 09:05:39 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-cnfp.c,v 1.8 2001/09/17 21:57:58 fenner Exp";
 #else
-__RCSID("$NetBSD: print-cnfp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+__RCSID("$NetBSD: print-cnfp.c,v 1.3 2002/02/18 09:37:06 itojun Exp $");
 #endif
 #endif
 
@@ -99,10 +99,10 @@ cnfp_print(const u_char *cp, u_int len, const u_char *bp)
 	int nrecs, ver;
 	time_t t;
 
-	ip = (struct ip *)bp;
-	nh = (struct nfhdr *)cp;
+	ip = (const struct ip *)bp;
+	nh = (const struct nfhdr *)cp;
 
-	if ((u_char *)(nh + 1) > snapend)
+	if ((const u_char *)(nh + 1) > snapend)
 		return;
 
 	nrecs = ntohl(nh->ver_cnt) & 0xffff;
@@ -117,16 +117,16 @@ cnfp_print(const u_char *cp, u_int len, const u_char *bp)
 
 	if (ver == 5 || ver == 6) {
 		printf("#%u, ", (unsigned)htonl(nh->sequence));
-		nr = (struct nfrec *)&nh[1];
+		nr = (const struct nfrec *)&nh[1];
 		snaplen -= 24;
 	} else {
-		nr = (struct nfrec *)&nh->sequence;
+		nr = (const struct nfrec *)&nh->sequence;
 		snaplen -= 16;
 	}
 
 	printf("%2u recs", nrecs);
 
-	for (; nrecs-- && (u_char *)(nr + 1) <= snapend; nr++) {
+	for (; nrecs-- && (const u_char *)(nr + 1) <= snapend; nr++) {
 		char buf[20];
 		char asbuf[20];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sctp.c,v 1.3 2001/06/27 02:46:25 simonb Exp $	*/
+/*	$NetBSD: print-sctp.c,v 1.4 2002/02/18 09:37:09 itojun Exp $	*/
 
 /* Copyright (c) 2001 NETLAB, Temple University
  * Copyright (c) 2001 Protocol Engineering Lab, University of Delaware
@@ -39,9 +39,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-"@(#) Header: /tcpdump/master/tcpdump/print-sctp.c,v 1.3 2001/05/09 02:42:50 itojun Exp (NETLAB/PEL)";
+"@(#) Header: /tcpdump/master/tcpdump/print-sctp.c,v 1.7 2001/12/12 07:16:40 guy Exp (NETLAB/PEL)";
 #else
-__RCSID("$NetBSD: print-sctp.c,v 1.3 2001/06/27 02:46:25 simonb Exp $");
+__RCSID("$NetBSD: print-sctp.c,v 1.4 2002/02/18 09:37:09 itojun Exp $");
 #endif
 #endif
 
@@ -57,12 +57,6 @@ __RCSID("$NetBSD: print-sctp.c,v 1.3 2001/06/27 02:46:25 simonb Exp $");
 #include "sctpHeader.h"
 #include "sctpConstants.h"
 #include <assert.h>
-
-#if __STDC__
-struct mbuf;
-struct rtentry;
-#endif
-#include <net/if.h>
 
 #include <netinet/in.h>
 
@@ -220,15 +214,16 @@ void sctp_print(const u_char *bp,        /* beginning of sctp packet */
 	      {		           /* at the command line */
 		char *payloadPtr;
 		
-		printf("[Payload: {");
-		fflush(stdout);
+		printf("[Payload");
 
-		payloadPtr = (char *) (++dataHdrPtr);
-		write(STDOUT_FILENO, payloadPtr, 
-		      htons(chunkDescPtr->chunkLength)-1 -
-		      sizeof(struct sctpDataPart)-sizeof(struct sctpChunkDesc));
-		printf("}] ");
-		fflush(stdout);
+		if (!xflag && !qflag) {
+			payloadPtr = (char *) (++dataHdrPtr);
+			printf(":");
+			default_print(payloadPtr,
+			      htons(chunkDescPtr->chunkLength)-1 -
+			      sizeof(struct sctpDataPart)-sizeof(struct sctpChunkDesc));
+		} else
+			printf("]");
 	      }
 	    break;
 	  }

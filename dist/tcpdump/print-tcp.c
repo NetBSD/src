@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.3 2001/06/25 20:00:01 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-tcp.c,v 1.86 2001/05/09 01:16:57 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-tcp.c,v 1.95 2001/12/10 08:21:24 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.3 2001/06/25 20:00:01 itojun Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $");
 #endif
 #endif
 
@@ -102,16 +102,16 @@ static struct tcp_seq_hash tcp_seq_hash[TSEQ_HASHSIZE];
 #ifndef PPTP_PORT
 #define PPTP_PORT	1723
 #endif
-#define BXXP_PORT        10288
+#define BEEP_PORT        10288
 #ifndef NFS_PORT
 #define NFS_PORT	2049
 #endif
+#define MSDP_PORT	639
 
 static int tcp_cksum(register const struct ip *ip,
 		     register const struct tcphdr *tp,
 		     register int len)
 {
-	int i, tlen;
 	union phu {
 		struct phdr {
 			u_int32_t src;
@@ -122,34 +122,18 @@ static int tcp_cksum(register const struct ip *ip,
 		} ph;
 		u_int16_t pa[6];
 	} phu;
-	register const u_int16_t *sp;
-	u_int32_t sum;
-	tlen = ntohs(ip->ip_len) - ((const char *)tp-(const char*)ip);
+	const u_int16_t *sp;
 
 	/* pseudo-header.. */
-	phu.ph.len = htons(tlen);
+	phu.ph.len = htons(len);	/* XXX */
 	phu.ph.mbz = 0;
 	phu.ph.proto = IPPROTO_TCP;
 	memcpy(&phu.ph.src, &ip->ip_src.s_addr, sizeof(u_int32_t));
 	memcpy(&phu.ph.dst, &ip->ip_dst.s_addr, sizeof(u_int32_t));
 
 	sp = &phu.pa[0];
-	sum = sp[0]+sp[1]+sp[2]+sp[3]+sp[4]+sp[5];
-
-	sp = (const u_int16_t *)tp;
-
-	for (i=0; i<(tlen&~1); i+= 2)
-		sum += *sp++;
-
-	if (tlen & 1) {
-		sum += htons( (*(const u_int8_t *)sp) << 8);
-	}
-
-	while (sum > 0xffff)
-		sum = (sum & 0xffff) + (sum >> 16);
-	sum = ~sum & 0xffff;
-
-	return (sum);
+	return in_cksum((u_short *)tp, len,
+			sp[0]+sp[1]+sp[2]+sp[3]+sp[4]+sp[5]);
 }
 
 #ifdef INET6
@@ -235,7 +219,6 @@ tcp_print(register const u_char *bp, register u_int length,
 	sport = ntohs(tp->th_sport);
 	dport = ntohs(tp->th_dport);
 
-
 	hlen = TH_OFF(tp) * 4;
 
 	/*
@@ -252,7 +235,7 @@ tcp_print(register const u_char *bp, register u_int length,
 		} else if ((u_char *)tp + 4 + sizeof(struct rpc_msg)
 			   <= snapend &&
 			   sport == NFS_PORT) {
-			nfsreply_print((u_char *)tp + hlen + 4,length-hlen,
+			nfsreply_print((u_char *)tp + hlen + 4, length - hlen,
 				       (u_char *)ip);
 			return;
 		}
@@ -441,7 +424,7 @@ tcp_print(register const u_char *bp, register u_int length,
 
 	length -= hlen;
 	if (vflag > 1 || length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
-		(void)printf(" %u:%u(%d)", seq, seq + length, length);
+		(void)printf(" %u:%u(%u)", seq, seq + length, length);
 	if (flags & TH_ACK)
 		(void)printf(" ack %u", ack);
 
@@ -623,16 +606,21 @@ tcp_print(register const u_char *bp, register u_int length,
 			bgp_print(bp, length);
 		else if (sport == PPTP_PORT || dport == PPTP_PORT)
 			pptp_print(bp, length);
-#if 0
+#ifdef TCPDUMP_DO_SMB
 		else if (sport == NETBIOS_SSN_PORT || dport == NETBIOS_SSN_PORT)
 			nbt_tcp_print(bp, length);
 #endif
-		else if (sport == BXXP_PORT || dport == BXXP_PORT)
-			bxxp_print(bp, length);
+		else if (sport == BEEP_PORT || dport == BEEP_PORT)
+			beep_print(bp, length);
 		else if (length > 2 &&
 		    (sport == NAMESERVER_PORT || dport == NAMESERVER_PORT)) {
-			/* TCP DNS query has 2byte length at the head */
+			/*
+			 * TCP DNS query has 2byte length at the head.
+			 * XXX packet could be unaligned, it can go strange
+			 */
 			ns_print(bp + 2, length - 2);
+		} else if (sport == MSDP_PORT || dport == MSDP_PORT) {
+			msdp_print(bp, length);
 		}
 	}
 	return;

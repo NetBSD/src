@@ -1,4 +1,4 @@
-/*	$NetBSD: print-raw.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
+/*	$NetBSD: print-raw.c,v 1.3 2002/02/18 09:37:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-raw.c,v 1.33 2000/10/06 04:23:13 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-raw.c,v 1.34 2001/07/05 18:54:17 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-raw.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+__RCSID("$NetBSD: print-raw.c,v 1.3 2002/02/18 09:37:09 itojun Exp $");
 #endif
 #endif
 
@@ -60,6 +60,7 @@ raw_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	u_int length = h->len;
 	u_int caplen = h->caplen;
 
+	++infodelay;
 	ts_print(&h->ts);
 
 	/*
@@ -78,4 +79,7 @@ raw_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	if (xflag)
 		default_print(p, caplen);
 	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }

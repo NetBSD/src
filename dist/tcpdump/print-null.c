@@ -1,4 +1,4 @@
-/*	$NetBSD: print-null.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
+/*	$NetBSD: print-null.c,v 1.3 2002/02/18 09:37:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-null.c,v 1.40 2000/12/16 22:00:50 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-null.c,v 1.41 2001/07/05 18:54:15 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-null.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+__RCSID("$NetBSD: print-null.c,v 1.3 2002/02/18 09:37:08 itojun Exp $");
 #endif
 #endif
 
@@ -120,6 +120,7 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	const struct ip *ip;
 	u_int family;
 
+	++infodelay;
 	ts_print(&h->ts);
 
 	memcpy((char *)&family, (char *)p, sizeof(family));
@@ -167,5 +168,8 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	if (xflag)
 		default_print((const u_char *)ip, caplen - NULL_HDRLEN);
 	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ah.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
+/*	$NetBSD: print-ah.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ah.c,v 1.14 2000/12/12 09:58:40 itojun Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ah.c,v 1.15 2001/09/17 21:57:54 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ah.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+__RCSID("$NetBSD: print-ah.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
 #endif
 #endif
 
@@ -57,11 +57,10 @@ ah_print(register const u_char *bp, register const u_char *bp2)
 	int sumlen;
 	u_int32_t spi;
 
-	ah = (struct ah *)bp;
+	ah = (const struct ah *)bp;
 	ep = snapend;		/* 'ep' points to the end of available data. */
 
-	if ((u_char *)(ah + 1) >= ep - sizeof(struct ah))
-		goto trunc;
+	TCHECK(*ah);
 
 	sumlen = ah->ah_len << 2;
 	spi = (u_int32_t)ntohl(ah->ah_spi);
@@ -69,7 +68,7 @@ ah_print(register const u_char *bp, register const u_char *bp2)
 	printf("AH(spi=0x%08x", spi);
 	if (vflag)
 		printf(",sumlen=%d", sumlen);
-	printf(",seq=0x%x", (u_int32_t)ntohl(*(u_int32_t *)(ah + 1)));
+	printf(",seq=0x%x", (u_int32_t)ntohl(*(const u_int32_t *)(ah + 1)));
 	if (bp + sizeof(struct ah) + sumlen > ep)
 		fputs("[truncated]", stdout);
 	fputs("): ", stdout);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atalk.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
+/*	$NetBSD: print-atalk.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,9 +27,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.66 2001/06/18 08:52:53 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.70 2001/11/15 08:23:12 itojun Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-atalk.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+__RCSID("$NetBSD: print-atalk.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
 #endif
 #endif
 
@@ -97,11 +97,15 @@ void
 ltalk_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
 	snapend = p + h->caplen;
+	++infodelay;
 	ts_print(&h->ts);
 	llap_print(p, h->caplen);
 	if(xflag)
 		default_print(p, h->caplen);
 	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }
 
 /*
@@ -115,7 +119,7 @@ llap_print(register const u_char *bp, u_int length)
 	register const struct atShortDDP *sdp;
 	u_short snet;
 
-	lp = (struct LAP *)bp;
+	lp = (const struct LAP *)bp;
 	bp += sizeof(*lp);
 	length -= sizeof(*lp);
 	switch (lp->type) {
@@ -177,8 +181,8 @@ atalk_print(register const u_char *bp, u_int length)
 	u_short snet;
 
 	if (length < ddpSize) {
-	  (void)printf(" [|ddp %d]", length);
-	  return;
+		(void)printf(" [|ddp %d]", length);
+		return;
 	}
 	dp = (const struct atDDP *)bp;
 	snet = EXTRACT_16BITS(&dp->srcNet);
@@ -189,6 +193,21 @@ atalk_print(register const u_char *bp, u_int length)
 	       ddpskt_string(dp->dstSkt));
 	bp += ddpSize;
 	length -= ddpSize;
+#ifdef LBL_ALIGN
+	if ((long)bp & 3) {
+		static u_char *abuf = NULL;
+
+		if (abuf == NULL) {
+			abuf = (u_char *)malloc(snaplen);
+			if (abuf == NULL)
+				error("atalk_print: malloc");
+		}
+		memcpy((char *)abuf, (char *)bp, min(length, snaplen));
+		snapend += abuf - (u_char *)bp;
+		packetp = abuf;
+		bp = abuf;
+	}
+#endif
 	ddp_print(bp, length, dp->type, snet, dp->srcNode, dp->srcSkt);
 }
 
@@ -378,7 +397,7 @@ nbp_print(register const struct atNBP *np, u_int length, register u_short snet,
 	  register u_char snode, register u_char skt)
 {
 	register const struct atNBPtuple *tp =
-			(struct atNBPtuple *)((u_char *)np + nbpHeaderSize);
+		(const struct atNBPtuple *)((u_char *)np + nbpHeaderSize);
 	int i;
 	const u_char *ep;
 
@@ -454,7 +473,7 @@ print_cstring(register const char *cp, register const u_char *ep)
 		return (0);
 	}
 	while ((int)--length >= 0) {
-		if (cp >= (char *)ep) {
+		if (cp >= (const char *)ep) {
 			fputs(tstr, stdout);
 			return (0);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-frag6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-frag6.c,v 1.3 2002/02/18 09:37:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-frag6.c,v 1.12 2000/10/07 05:53:10 itojun Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-frag6.c,v 1.13 2001/09/17 21:58:02 fenner Exp";
 #else
-__RCSID("$NetBSD: print-frag6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-frag6.c,v 1.3 2002/02/18 09:37:06 itojun Exp $");
 #endif
 #endif
 
@@ -63,8 +63,8 @@ frag6_print(register const u_char *bp, register const u_char *bp2)
 #define TCHECK(var) if ((u_char *)&(var) >= ep - sizeof(var)) goto trunc
 #endif
 
-	dp = (struct ip6_frag *)bp;
-	ip6 = (struct ip6_hdr *)bp2;
+	dp = (const struct ip6_frag *)bp;
+	ip6 = (const struct ip6_hdr *)bp2;
 
 	/* 'ep' points to the end of available data. */
 	ep = snapend;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbutil.c,v 1.3 2001/09/19 03:37:58 itojun Exp $	*/
+/*	$NetBSD: smbutil.c,v 1.4 2002/02/18 09:37:10 itojun Exp $	*/
 
 /*
  * Copyright (C) Andrew Tridgell 1995-1999
@@ -16,9 +16,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-     "@(#) Header: /tcpdump/master/tcpdump/smbutil.c,v 1.15 2001/06/25 18:58:09 itojun Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/smbutil.c,v 1.18 2002/01/17 04:38:29 guy Exp";
 #else
-__RCSID("$NetBSD: smbutil.c,v 1.3 2001/09/19 03:37:58 itojun Exp $");
+__RCSID("$NetBSD: smbutil.c,v 1.4 2002/02/18 09:37:10 itojun Exp $");
 #endif
 #endif
 
@@ -26,7 +26,6 @@ __RCSID("$NetBSD: smbutil.c,v 1.3 2001/09/19 03:37:58 itojun Exp $");
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-
 
 #include <netinet/in.h>
 
@@ -37,315 +36,353 @@ __RCSID("$NetBSD: smbutil.c,v 1.3 2001/09/19 03:37:58 itojun Exp $");
 #include <time.h>
 
 #include "interface.h"
+#include "extract.h"
 #include "smb.h"
 
-extern const uchar *startbuf;
+extern const u_char *startbuf;
 
-/*******************************************************************
-  interpret a 32 bit dos packed date/time to some parameters
-********************************************************************/
-static void interpret_dos_date(uint32 date,int *year,int *month,int *day,int *hour,int *minute,int *second)
+/*
+ * interpret a 32 bit dos packed date/time to some parameters
+ */
+static void
+interpret_dos_date(u_int32_t date, struct tm *tp)
 {
-  uint32 p0,p1,p2,p3;
+    u_int32_t p0, p1, p2, p3;
 
-  p0=date&0xFF; p1=((date&0xFF00)>>8)&0xFF;
-  p2=((date&0xFF0000)>>16)&0xFF; p3=((date&0xFF000000)>>24)&0xFF;
+    p0 = date & 0xFF;
+    p1 = ((date & 0xFF00) >> 8) & 0xFF;
+    p2 = ((date & 0xFF0000) >> 16) & 0xFF;
+    p3 = ((date & 0xFF000000) >> 24) & 0xFF;
 
-  *second = 2*(p0 & 0x1F);
-  *minute = ((p0>>5)&0xFF) + ((p1&0x7)<<3);
-  *hour = (p1>>3)&0xFF;
-  *day = (p2&0x1F);
-  *month = ((p2>>5)&0xFF) + ((p3&0x1)<<3) - 1;
-  *year = ((p3>>1)&0xFF) + 80;
+    tp->tm_sec = 2 * (p0 & 0x1F);
+    tp->tm_min = ((p0 >> 5) & 0xFF) + ((p1 & 0x7) << 3);
+    tp->tm_hour = (p1 >> 3) & 0xFF;
+    tp->tm_mday = (p2 & 0x1F);
+    tp->tm_mon = ((p2 >> 5) & 0xFF) + ((p3 & 0x1) << 3) - 1;
+    tp->tm_year = ((p3 >> 1) & 0xFF) + 80;
 }
 
-/*******************************************************************
-  create a unix date from a dos date
-********************************************************************/
-static time_t make_unix_date(const void *date_ptr)
+/*
+ * common portion:
+ * create a unix date from a dos date
+ */
+static time_t
+int_unix_date(u_int32_t dos_date)
 {
-  uint32 dos_date=0;
-  struct tm t;
+    struct tm t;
 
-  dos_date = IVAL(date_ptr,0);
-
-  if (dos_date == 0) return(0);
-
-  interpret_dos_date(dos_date,&t.tm_year,&t.tm_mon,
-		     &t.tm_mday,&t.tm_hour,&t.tm_min,&t.tm_sec);
-  t.tm_wday = 1;
-  t.tm_yday = 1;
-  t.tm_isdst = 0;
-
-  return (mktime(&t));
-}
-
-/*******************************************************************
-  create a unix date from a dos date
-********************************************************************/
-static time_t make_unix_date2(const void *date_ptr)
-{
-  uint32 x,x2;
-
-  x = IVAL(date_ptr,0);
-  x2 = ((x&0xFFFF)<<16) | ((x&0xFFFF0000)>>16);
-  SIVAL(&x,0,x2);
-
-  return(make_unix_date((void *)&x));
-}
-
-/****************************************************************************
-interpret an 8 byte "filetime" structure to a time_t
-It's originally in "100ns units since jan 1st 1601"
-****************************************************************************/
-static time_t interpret_long_date(const char *p)
-{
-  double d;
-  time_t ret;
-
-  /* this gives us seconds since jan 1st 1601 (approx) */
-  d = (IVAL(p,4)*256.0 + CVAL(p,3)) * (1.0e-7 * (1<<24));
-
-  /* now adjust by 369 years to make the secs since 1970 */
-  d -= 369.0*365.25*24*60*60;
-
-  /* and a fudge factor as we got it wrong by a few days */
-  d += (3*24*60*60 + 6*60*60 + 2);
-
-  if (d<0)
-    return(0);
-
-  ret = (time_t)d;
-
-  return(ret);
-}
-
-
-/****************************************************************************
-interpret the weird netbios "name". Return the name type, or -1 if
-we run past the end of the buffer
-****************************************************************************/
-static int name_interpret(const uchar *in,const uchar *maxbuf,char *out)
-{
-  int ret;
-  int len;
-
-  if (in >= maxbuf)
-    return(-1);	/* name goes past the end of the buffer */
-  TCHECK2(*in, 1);
-  len = (*in++) / 2;
-
-  *out=0;
-
-  if (len > 30 || len<1) return(0);
-
-  while (len--)
-    {
-      if (in + 1 >= maxbuf)
-	return(-1);	/* name goes past the end of the buffer */
-      TCHECK2(*in, 2);
-      if (in[0] < 'A' || in[0] > 'P' || in[1] < 'A' || in[1] > 'P') {
-	*out = 0;
+    if (dos_date == 0)
 	return(0);
-      }
-      *out = ((in[0]-'A')<<4) + (in[1]-'A');
-      in += 2;
-      out++;
-    }
-  *out = 0;
-  ret = out[-1];
 
-  return(ret);
+    interpret_dos_date(dos_date, &t);
+    t.tm_wday = 1;
+    t.tm_yday = 1;
+    t.tm_isdst = 0;
 
+    return (mktime(&t));
+}
+
+/*
+ * create a unix date from a dos date
+ * in network byte order
+ */
+static time_t
+make_unix_date(const u_char *date_ptr)
+{
+    u_int32_t dos_date = 0;
+
+    dos_date = EXTRACT_LE_32BITS(date_ptr);
+
+    return int_unix_date(dos_date);
+}
+
+/*
+ * create a unix date from a dos date
+ * in halfword-swapped network byte order!
+ */
+static time_t
+make_unix_date2(const u_char *date_ptr)
+{
+    u_int32_t x, x2;
+
+    x = EXTRACT_LE_32BITS(date_ptr);
+    x2 = ((x & 0xFFFF) << 16) | ((x & 0xFFFF0000) >> 16);
+    return int_unix_date(x2);
+}
+
+/*
+ * interpret an 8 byte "filetime" structure to a time_t
+ * It's originally in "100ns units since jan 1st 1601"
+ */
+static time_t
+interpret_long_date(const u_char *p)
+{
+    double d;
+    time_t ret;
+
+    TCHECK2(p[4], 4);
+
+    /* this gives us seconds since jan 1st 1601 (approx) */
+    d = (EXTRACT_LE_32BITS(p + 4) * 256.0 + p[3]) * (1.0e-7 * (1 << 24));
+
+    /* now adjust by 369 years to make the secs since 1970 */
+    d -= 369.0 * 365.25 * 24 * 60 * 60;
+
+    /* and a fudge factor as we got it wrong by a few days */
+    d += (3 * 24 * 60 * 60 + 6 * 60 * 60 + 2);
+
+    if (d < 0)
+	return(0);
+
+    ret = (time_t)d;
+
+    return(ret);
 trunc:
-  return(-1);
+    return(0);
 }
 
-/****************************************************************************
-find a pointer to a netbios name
-****************************************************************************/
-static const uchar *name_ptr(const uchar *buf,int ofs,const uchar *maxbuf)
+/*
+ * interpret the weird netbios "name". Return the name type, or -1 if
+ * we run past the end of the buffer
+ */
+static int
+name_interpret(const u_char *in, const u_char *maxbuf, char *out)
 {
-  const uchar *p;
-  uchar c;
+    int ret;
+    int len;
 
-  p = buf+ofs;
-  if (p >= maxbuf)
-    return(NULL);	/* name goes past the end of the buffer */
-  TCHECK2(*p, 1);
-
-  c = *p;
-
-  /* XXX - this should use the same code that the DNS dissector does */
-  if ((c & 0xC0) == 0xC0)
-    {
-      uint16 l = RSVAL(buf, ofs) & 0x3FFF;
-      if (l == 0)
-	{
-	  /* We have a pointer that points to itself. */
-	  return(NULL);
-	}
-      p = buf + l;
-      if (p >= maxbuf)
-	return(NULL);	/* name goes past the end of the buffer */
-      TCHECK2(*p, 1);
-      return(buf + l);
-    }
-  else
-    return(buf+ofs);
-
-trunc:
-  return(NULL);	/* name goes past the end of the buffer */
-}
-
-/****************************************************************************
-extract a netbios name from a buf
-****************************************************************************/
-static int name_extract(const uchar *buf,int ofs,const uchar *maxbuf,char *name)
-{
-  const uchar *p = name_ptr(buf,ofs,maxbuf);
-  if (p == NULL)
-    return(-1);	/* error (probably name going past end of buffer) */
-  name[0] = '\0';
-  return(name_interpret(p,maxbuf,name));
-}
-
-
-/****************************************************************************
-return the total storage length of a mangled name
-****************************************************************************/
-static int name_len(const unsigned char *s, const unsigned char *maxbuf)
-{
-  const unsigned char *s0 = s;
-  unsigned char c;
-
-  if (s >= maxbuf)
-    return(-1);	/* name goes past the end of the buffer */
-  TCHECK2(*s, 1);
-  c = *s;
-  if ((c & 0xC0) == 0xC0)
-    return(2);
-  while (*s)
-    {
-      if (s >= maxbuf)
+    if (in >= maxbuf)
 	return(-1);	/* name goes past the end of the buffer */
-      TCHECK2(*s, 1);
-      s += (*s)+1;
+    TCHECK2(*in, 1);
+    len = (*in++) / 2;
+
+    *out=0;
+
+    if (len > 30 || len < 1)
+	return(0);
+
+    while (len--) {
+	TCHECK2(*in, 2);
+	if (in + 1 >= maxbuf)
+	    return(-1);	/* name goes past the end of the buffer */
+	if (in[0] < 'A' || in[0] > 'P' || in[1] < 'A' || in[1] > 'P') {
+	    *out = 0;
+	    return(0);
+	}
+	*out = ((in[0] - 'A') << 4) + (in[1] - 'A');
+	in += 2;
+	out++;
     }
-  return(PTR_DIFF(s,s0)+1);
+    *out = 0;
+    ret = out[-1];
+
+    return(ret);
 
 trunc:
-  return(-1);	/* name goes past the end of the buffer */
+    return(-1);
 }
 
-static void print_asc(const unsigned char *buf,int len)
+/*
+ * find a pointer to a netbios name
+ */
+static const u_char *
+name_ptr(const u_char *buf, int ofs, const u_char *maxbuf)
 {
-  int i;
-  for (i=0;i<len;i++)
-    safeputchar(buf[i]);
+    const u_char *p;
+    u_char c;
+
+    p = buf + ofs;
+    if (p >= maxbuf)
+	return(NULL);	/* name goes past the end of the buffer */
+    TCHECK2(*p, 1);
+
+    c = *p;
+
+    /* XXX - this should use the same code that the DNS dissector does */
+    if ((c & 0xC0) == 0xC0) {
+	u_int16_t l = EXTRACT_16BITS(buf + ofs) & 0x3FFF;
+	if (l == 0) {
+	    /* We have a pointer that points to itself. */
+	    return(NULL);
+	}
+	p = buf + l;
+	if (p >= maxbuf)
+	    return(NULL);	/* name goes past the end of the buffer */
+	TCHECK2(*p, 1);
+	return(buf + l);
+    } else
+	return(buf + ofs);
+
+trunc:
+    return(NULL);	/* name goes past the end of the buffer */
 }
 
-static char *name_type_str(int name_type)
+/*
+ * extract a netbios name from a buf
+ */
+static int
+name_extract(const u_char *buf, int ofs, const u_char *maxbuf, char *name)
 {
-  static char *f = NULL;
-  switch (name_type) {
-  case 0:    f = "Workstation"; break;
-  case 0x03: f = "Client?"; break;
-  case 0x20: f = "Server"; break;
-  case 0x1d: f = "Master Browser"; break;
-  case 0x1b: f = "Domain Controller"; break;
-  case 0x1e: f = "Browser Server"; break;
-  default:   f = "Unknown"; break;
-  }
-  return(f);
+    const u_char *p = name_ptr(buf, ofs, maxbuf);
+    if (p == NULL)
+	return(-1);	/* error (probably name going past end of buffer) */
+    name[0] = '\0';
+    return(name_interpret(p, maxbuf, name));
 }
 
-void print_data(const unsigned char *buf, int len)
+
+/*
+ * return the total storage length of a mangled name
+ */
+static int
+name_len(const unsigned char *s, const unsigned char *maxbuf)
 {
-  int i=0;
-  if (len<=0) return;
-  printf("[%03X] ",i);
-  for (i=0;i<len;) {
-    printf("%02X ",(int)buf[i]);
-    i++;
-    if (i%8 == 0) printf(" ");
-    if (i%16 == 0) {
-      print_asc(&buf[i-16],8); printf(" ");
-      print_asc(&buf[i-8],8); printf("\n");
-      if (i<len) printf("[%03X] ",i);
+    const unsigned char *s0 = s;
+    unsigned char c;
+
+    if (s >= maxbuf)
+	return(-1);	/* name goes past the end of the buffer */
+    TCHECK2(*s, 1);
+    c = *s;
+    if ((c & 0xC0) == 0xC0)
+	return(2);
+    while (*s) {
+	if (s >= maxbuf)
+	    return(-1);	/* name goes past the end of the buffer */
+	TCHECK2(*s, 1);
+	s += (*s) + 1;
     }
-  }
-  if (i%16) {
-    int n;
+    return(PTR_DIFF(s, s0) + 1);
 
-    n = 16 - (i%16);
-    printf(" ");
-    if (n>8) printf(" ");
-    while (n--) printf("   ");
+trunc:
+    return(-1);	/* name goes past the end of the buffer */
+}
 
-    n = MIN(8,i%16);
-    print_asc(&buf[i-(i%16)],n); printf(" ");
-    n = (i%16) - n;
-    if (n>0) print_asc(&buf[i-n],n);
-    printf("\n");
-  }
+static void
+print_asc(const unsigned char *buf, int len)
+{
+    int i;
+    for (i = 0; i < len; i++)
+	safeputchar(buf[i]);
+}
+
+static char *
+name_type_str(int name_type)
+{
+    char *f = NULL;
+
+    switch (name_type) {
+    case 0:    f = "Workstation"; break;
+    case 0x03: f = "Client?"; break;
+    case 0x20: f = "Server"; break;
+    case 0x1d: f = "Master Browser"; break;
+    case 0x1b: f = "Domain Controller"; break;
+    case 0x1e: f = "Browser Server"; break;
+    default:   f = "Unknown"; break;
+    }
+    return(f);
+}
+
+void
+print_data(const unsigned char *buf, int len)
+{
+    int i = 0;
+
+    if (len <= 0)
+	return;
+    printf("[%03X] ", i);
+    for (i = 0; i < len; /*nothing*/) {
+	printf("%02X ", buf[i] & 0xff);
+	i++;
+	if (i%8 == 0)
+	    printf(" ");
+	if (i % 16 == 0) {
+	    print_asc(&buf[i - 16], 8);
+	    printf(" ");
+	    print_asc(&buf[i - 8], 8);
+	    printf("\n");
+	    if (i < len)
+		printf("[%03X] ", i);
+	}
+    }
+    if (i % 16) {
+	int n;
+
+	n = 16 - (i % 16);
+	printf(" ");
+	if (n>8)
+	    printf(" ");
+	while (n--)
+	    printf("   ");
+
+	n = SMBMIN(8, i % 16);
+	print_asc(&buf[i - (i % 16)], n);
+	printf(" ");
+	n = (i % 16) - n;
+	if (n > 0)
+	    print_asc(&buf[i - n], n);
+	printf("\n");
+    }
 }
 
 
-static void write_bits(unsigned int val,char *fmt)
+static void
+write_bits(unsigned int val, char *fmt)
 {
-  char *p = fmt;
-  int i=0;
+    char *p = fmt;
+    int i = 0;
 
-  while ((p=strchr(fmt,'|'))) {
-    int l = PTR_DIFF(p,fmt);
-    if (l && (val & (1<<i)))
-      printf("%.*s ",l,fmt);
-    fmt = p+1;
-    i++;
-  }
+    while ((p = strchr(fmt, '|'))) {
+	size_t l = PTR_DIFF(p, fmt);
+	if (l && (val & (1 << i)))
+	    printf("%.*s ", (int)l, fmt);
+	fmt = p + 1;
+	i++;
+    }
 }
 
-/* convert a unicode string */
-static const char *unistr(const char *s, int *len)
+/* convert a UCS2 string into iso-8859-1 string */
+static const char *
+unistr(const char *s, int *len)
 {
-	static char buf[1000];
-	int l=0;
-	static int use_unicode = -1;
+    static char buf[1000];
+    int l=0;
+    static int use_unicode = -1;
 
-	if (use_unicode == -1) {
-		char *p = getenv("USE_UNICODE");
-		if (p && (atoi(p) == 1))
-			use_unicode = 1;
-		else
-			use_unicode = 0;
-	}
+    if (use_unicode == -1) {
+	char *p = getenv("USE_UNICODE");
+	if (p && (atoi(p) == 1))
+	    use_unicode = 1;
+	else
+	    use_unicode = 0;
+    }
 
-	/* maybe it isn't unicode - a cheap trick */
-	if (!use_unicode || (s[0] && s[1])) {
-		*len = strlen(s)+1;
-		return s;
-	}
+    /* maybe it isn't unicode - a cheap trick */
+    if (!use_unicode || (s[0] && s[1])) {
+	*len = strlen(s) + 1;
+	return s;
+    }
 
-	*len = 0;
+    *len = 0;
 
-	if (s[0] == 0 && s[1] != 0) {
-		s++;
-		*len = 1;
-	}
+    if (s[0] == 0 && s[1] != 0) {
+	s++;
+	*len = 1;
+    }
 
-	while (l < (sizeof(buf)-1) && s[0] && s[1] == 0) {
-		buf[l] = s[0];
-		s += 2; l++;
-		*len += 2;
-	}
-	buf[l] = 0;
+    while (l < (sizeof(buf) - 1) && s[0] && s[1] == 0) {
+	buf[l] = s[0];
+	s += 2;
+	l++;
 	*len += 2;
-	return buf;
+    }
+    buf[l] = 0;
+    *len += 2;
+    return buf;
 }
 
-static const uchar *
-fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
+static const u_char *
+smb_fdata1(const u_char *buf, const char *fmt, const u_char *maxbuf)
 {
     int reverse = 0;
     char *attrib_fmt = "READONLY|HIDDEN|SYSTEM|VOLUME|DIR|ARCHIVE|";
@@ -354,13 +391,13 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
     while (*fmt && buf<maxbuf) {
 	switch (*fmt) {
 	case 'a':
-	    write_bits(CVAL(buf,0), attrib_fmt);
+	    write_bits(buf[0], attrib_fmt);
 	    buf++;
 	    fmt++;
 	    break;
 
 	case 'A':
-	    write_bits(SVAL(buf, 0), attrib_fmt);
+	    write_bits(EXTRACT_LE_16BITS(buf), attrib_fmt);
 	    buf += 2;
 	    fmt++;
 	    break;
@@ -373,7 +410,7 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	    strncpy(bitfmt, fmt, l);
 	    bitfmt[l] = 0;
 	    fmt = p + 1;
-	    write_bits(CVAL(buf, 0), bitfmt);
+	    write_bits(buf[0], bitfmt);
 	    buf++;
 	    break;
 	  }
@@ -393,7 +430,10 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	    break;
 	case 'D':
 	  {
-	    unsigned int x = reverse ? RIVAL(buf, 0) : IVAL(buf, 0);
+	    unsigned int x;
+
+	    TCHECK2(buf[0], 4);
+	    x = reverse ? EXTRACT_32BITS(buf) : EXTRACT_LE_32BITS(buf);
 	    printf("%d (0x%x)", x, x);
 	    buf += 4;
 	    fmt++;
@@ -401,8 +441,13 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	  }
 	case 'L':
 	  {
-	    unsigned int x1 = reverse ? RIVAL(buf, 0) : IVAL(buf, 0);
-	    unsigned int x2 = reverse ? RIVAL(buf, 4) : IVAL(buf, 4);
+	    unsigned int x1, x2;
+
+	    TCHECK2(buf[4], 4);
+	    x1 = reverse ? EXTRACT_32BITS(buf) :
+			   EXTRACT_LE_32BITS(buf);
+	    x2 = reverse ? EXTRACT_32BITS(buf + 4) :
+			   EXTRACT_LE_32BITS(buf + 4);
 	    if (x2)
 		printf("0x%08x:%08x", x2, x1);
 	    else
@@ -413,7 +458,10 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	  }
 	case 'd':
 	  {
-	    unsigned int x = reverse ? RSVAL(buf, 0) : SVAL(buf, 0);
+	    unsigned int x;
+	    TCHECK2(buf[0], 2);
+	    x = reverse ? EXTRACT_16BITS(buf) :
+			  EXTRACT_LE_16BITS(buf);
 	    printf("%d (0x%x)", x, x);
 	    buf += 2;
 	    fmt++;
@@ -421,7 +469,10 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	  }
 	case 'W':
 	  {
-	    unsigned int x = reverse ? RIVAL(buf, 0) : IVAL(buf, 0);
+	    unsigned int x;
+	    TCHECK2(buf[0], 4);
+	    x = reverse ? EXTRACT_32BITS(buf) :
+			  EXTRACT_LE_32BITS(buf);
 	    printf("0x%X", x);
 	    buf += 4;
 	    fmt++;
@@ -429,7 +480,10 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	  }
 	case 'w':
 	  {
-	    unsigned int x = reverse ? RSVAL(buf, 0) : SVAL(buf, 0);
+	    unsigned int x;
+	    TCHECK2(buf[0], 2);
+	    x = reverse ? EXTRACT_16BITS(buf) :
+			  EXTRACT_LE_16BITS(buf);
 	    printf("0x%X", x);
 	    buf += 2;
 	    fmt++;
@@ -437,7 +491,9 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	  }
 	case 'B':
 	  {
-	    unsigned int x = CVAL(buf,0);
+	    unsigned int x;
+	    TCHECK(buf[0]);
+	    x = buf[0];
 	    printf("0x%X", x);
 	    buf += 1;
 	    fmt++;
@@ -445,7 +501,9 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	  }
 	case 'b':
 	  {
-	    unsigned int x = CVAL(buf, 0);
+	    unsigned int x;
+	    TCHECK(buf[0]);
+	    x = buf[0];
 	    printf("%u (0x%x)", x, x);
 	    buf += 1;
 	    fmt++;
@@ -453,6 +511,7 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	  }
 	case 'S':
 	  {
+	    /*XXX unistr() */
 	    printf("%.*s", (int)PTR_DIFF(maxbuf, buf), unistr(buf, &len));
 	    buf += len;
 	    fmt++;
@@ -524,7 +583,8 @@ fdata1(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	case 'T':
 	  {
 	    time_t t;
-	    int x = IVAL(buf,0);
+	    int x;
+	    x = EXTRACT_LE_32BITS(buf);
 
 	    switch (atoi(fmt + 1)) {
 	    case 1:
@@ -570,8 +630,8 @@ trunc:
     return(NULL);
 }
 
-const uchar *
-fdata(const uchar *buf, const char *fmt, const uchar *maxbuf)
+const u_char *
+smb_fdata(const u_char *buf, const char *fmt, const u_char *maxbuf)
 {
     static int depth = 0;
     char s[128];
@@ -582,15 +642,17 @@ fdata(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	case '*':
 	    fmt++;
 	    while (buf < maxbuf) {
-		const uchar *buf2;
+		const u_char *buf2;
 		depth++;
-		buf2 = fdata(buf, fmt, maxbuf);
+		buf2 = smb_fdata(buf, fmt, maxbuf);
 		depth--;
+		if (buf2 == NULL)
+		    return(NULL);
 		if (buf2 == buf)
 		    return(buf);
 		buf = buf2;
 	    }
-	    break;
+	    return(buf);
 
 	case '|':
 	    fmt++;
@@ -621,7 +683,7 @@ fdata(const uchar *buf, const char *fmt, const uchar *maxbuf)
 	    strncpy(s, fmt, p - fmt);
 	    s[p - fmt] = '\0';
 	    fmt = p + 1;
-	    buf = fdata1(buf, s, maxbuf);
+	    buf = smb_fdata1(buf, s, maxbuf);
 	    if (buf == NULL)
 		return(NULL);
 	    break;
@@ -643,9 +705,9 @@ fdata(const uchar *buf, const char *fmt, const uchar *maxbuf)
 }
 
 typedef struct {
-    char *name;
+    const char *name;
     int code;
-    char *message;
+    const char *message;
 } err_code_struct;
 
 /* Dos Error Messages */

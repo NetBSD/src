@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.h,v 1.2 2001/10/22 04:29:06 itojun Exp $	*/
+/*	$NetBSD: route6d.h,v 1.3 2002/02/18 09:37:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 /*
- * Header: /tcpdump/master/tcpdump/route6d.h,v 1.2 2000/04/28 11:14:49 itojun Exp
+ * Header: /tcpdump/master/tcpdump/route6d.h,v 1.3 2001/10/22 04:27:47 itojun Exp
  */
 
 #define	RIP6_VERSION	1

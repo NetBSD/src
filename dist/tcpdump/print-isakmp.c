@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isakmp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-isakmp.c,v 1.3 2002/02/18 09:37:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -34,9 +34,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.28 2001/02/20 18:55:14 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.29 2001/10/26 03:41:29 itojun Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-isakmp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.3 2002/02/18 09:37:07 itojun Exp $");
 #endif
 #endif
 
@@ -762,7 +762,6 @@ isakmp_id_print(struct isakmp_gen *ext, u_char *ep, u_int32_t phase,
 	    }
 	}
 	if (data && len) {
-		len -= sizeof(*p);
 		printf(" len=%d", len);
 		if (2 < vflag) {
 			printf(" ");

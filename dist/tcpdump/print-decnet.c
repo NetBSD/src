@@ -1,4 +1,4 @@
-/*	$NetBSD: print-decnet.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
+/*	$NetBSD: print-decnet.c,v 1.3 2002/02/18 09:37:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-decnet.c,v 1.32 2001/01/28 08:06:06 itojun Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-decnet.c,v 1.33 2001/09/17 21:57:59 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-decnet.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+__RCSID("$NetBSD: print-decnet.c,v 1.3 2002/02/18 09:37:06 itojun Exp $");
 #endif
 #endif
 
@@ -737,7 +737,7 @@ print_reason(register int reason)
 	printf("%s ", tok2str(reason2str, "reason-%d", reason));
 }
 
-char *
+const char *
 dnnum_string(u_short dnaddr)
 {
 	char *str;
@@ -752,7 +752,7 @@ dnnum_string(u_short dnaddr)
 	return(str);
 }
 
-char *
+const char *
 dnname_string(u_short dnaddr)
 {
 #ifdef	HAVE_LIBDNET

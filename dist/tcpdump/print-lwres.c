@@ -1,4 +1,4 @@
-/*	$NetBSD: print-lwres.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
+/*	$NetBSD: print-lwres.c,v 1.3 2002/02/18 09:37:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 2001 WIDE Project.
@@ -33,9 +33,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-lwres.c,v 1.4 2001/02/09 05:16:48 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-lwres.c,v 1.5 2001/06/26 06:19:05 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-lwres.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+__RCSID("$NetBSD: print-lwres.c,v 1.3 2002/02/18 09:37:08 itojun Exp $");
 #endif
 #endif
 
@@ -48,12 +48,6 @@ __RCSID("$NetBSD: print-lwres.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
 
 #include <netinet/in.h>
 
-#ifdef NOERROR
-#undef NOERROR					/* Solaris sucks */
-#endif
-#ifdef NOERROR
-#undef T_UNSPEC					/* SINIX does too */
-#endif
 #include "nameser.h"
 
 #include <stdio.h>
