@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.9 2004/02/13 10:05:49 wiz Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.10 2005/01/18 07:12:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.9 2004/02/13 10:05:49 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.10 2005/01/18 07:12:15 chs Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -90,9 +90,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.9 2004/02/13 10:05:49 wiz Exp $"
 
 #include <arch/x68k/dev/neptunevar.h>
 
-static int ne_neptune_match __P((struct device *, struct cfdata *, void *));
-static void ne_neptune_attach __P((struct device *, struct device *, void *));
-static int ne_neptune_intr __P((void *));
+static int ne_neptune_match(struct device *, struct cfdata *, void *);
+static void ne_neptune_attach(struct device *, struct device *, void *);
+static int ne_neptune_intr(void *);
 
 #define ne_neptune_softc ne2000_softc
 
@@ -100,10 +100,7 @@ CFATTACH_DECL(ne_neptune, sizeof(struct ne_neptune_softc),
     ne_neptune_match, ne_neptune_attach, NULL, NULL);
 
 int
-ne_neptune_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ne_neptune_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct neptune_attach_args *na = aux;
 	bus_space_tag_t nict = na->na_bst;
@@ -137,9 +134,7 @@ ne_neptune_match(parent, match, aux)
 }
 
 void
-ne_neptune_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ne_neptune_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ne_neptune_softc *nsc = (struct ne_neptune_softc *)self;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
@@ -223,8 +218,7 @@ ne_neptune_attach(parent, self, aux)
 }
 
 static int
-ne_neptune_intr(arg)
-	void *arg;
+ne_neptune_intr(void *arg)
 {
 	spl4();			/* XXX */
 	return dp8390_intr(arg);

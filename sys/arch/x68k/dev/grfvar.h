@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.5 2004/01/25 13:17:00 minoura Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.6 2005/01/18 07:12:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -92,8 +92,8 @@ struct	grfsw {
 	int	gd_hwid;	/* id returned by hardware */
 	int	gd_swid;	/* id to be returned by software */
 	char	*gd_desc;	/* description printed at config time */
-	int	(*gd_init) __P((struct grf_softc *, caddr_t));
-	int	(*gd_mode) __P((struct grf_softc *, u_long, caddr_t));
+	int	(*gd_init)(struct grf_softc *, caddr_t);
+	int	(*gd_mode)(struct grf_softc *, u_long, caddr_t);
 };
 
 /* per display info */
