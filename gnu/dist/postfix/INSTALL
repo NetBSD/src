@@ -140,6 +140,13 @@ configuration directory other than /etc/postfix, use:
 
 That's seven backslashes :-) But at least this works with sh and csh.
 
+In order to build Postfix for very large applications, where you
+expect to run more than 1000 delivery processes, you may need to
+override the definition of the FD_SETSIZE macro to make select()
+work correctly:
+
+    % make makefiles CCARGS=-DFD_SETSIZE=2048
+
 In any case, if the command
 
     % make

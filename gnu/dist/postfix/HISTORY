@@ -5096,3 +5096,70 @@ Apologies for any names omitted.
 	of hostnames in $inet_interfaces, so that Postfix does not
 	suddenly refuse to start up after someone changes the DNS.
 	Files:  util/inet_addr_list.c global/own_inet_addr.c.
+
+20010917
+
+	Bugfix: an address extension could be appended multiple
+	times to the result of a canonical or virtual map lookup.
+	File: global/mail_addr_map.c.  Fix by Victor Duchovni,
+	Morgan Stanley.
+
+	Bugfix: because split_addr() would split an address even
+	when there was no data before the recipient delimiter, the
+	above bug could cause an address to grow exponentially in
+	size.  Problem reported by Victor Duchovni, Morgan Stanley.
+	File:  global/split_addr.c.
+
+20010918
+
+	Bugfix: the mail_addr_map() fix was almost but not quite
+	right. It took two clever people and several iterations of
+	email to really fix the mail_addr_map() problem.  Thanks
+	to Victor Duchovni and Liviu Daia.
+
+20011016
+
+	Bugfix: As of 20000625, Errors-To: was broken, because the
+	code to extract the address was not moved from recipient
+	address rewriting to sender address rewriting. Problem
+	reported by Roelof Osinga @ nisser.com. File:
+	cleanup/cleanup_message.c.
+
+20011023
+
+	Bugfix: the FILTER_README content filtering example had
+	not been updated to include the sendmail "-i" command line
+	option.
+
+20011029
+
+	Bugfix: virtual map expansion terminated early because the
+	detection of self-referential entries was flawed.  File:
+	cleanup/cleanup_map1n.c.
+
+20011031
+
+	Bugfix: mail_date() mis-formatted negative time zone offsets
+	with fractional hours (-03-30 instead of -0330). Fix by
+	Chad House, greyfirst.ca. File: global/mail_date.c.
+
+20011103
+
+	Bugfix: Postfix would log the wrong error text when locally
+	submitted mail was deferred due to "soft_bounce = yes".
+
+	Bugfix: The LDAP client dropped any entries that don't have
+	the result_attribute, but errored out when a DN didn't
+	exist.  The behavior is now consistent: treat non-existant
+	DN's in a special result attribute expansion the same as
+	DN's with no attribute.  LaMont Jones, HP.
+
+20011114
+
+	Bugfix: reset the smtpd command transaction log between
+	deliveries. File: smtpd/smtpd.c.
+
+20011115
+
+	Bugfix: reset the smtpd command transaction log between
+	non-deliveries. File: smtpd/smtpd.c.
