@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 1999/12/30 16:57:27 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.35 2000/01/10 03:53:22 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -124,6 +124,7 @@ int uintrcnt = 0;
 int kiveccnt = 0;
 int kintrcnt = 0;
 int intristk = 0; /* interrupts when already on intrstack */
+int intrpoll = 0; /* interrupts not using vector lists */
 int wfill = 0;
 int kwfill = 0;
 int wspill = 0;
@@ -502,6 +503,7 @@ trap(type, tstate, pc, tf)
 		printf("trap: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
 		Debugger();
 	}
+#if 0
 	{
 		/* Check to make sure we're on the normal stack */
 		int* sp;
@@ -514,6 +516,7 @@ trap(type, tstate, pc, tf)
 				((type == T_RWRET) ? "rwret" : T)));
 		}
 	}
+#endif
 #endif
 
 
@@ -558,7 +561,7 @@ trap(type, tstate, pc, tf)
 		if (type == T_BREAKPOINT) {
 			write_all_windows();
 			if (kdb_trap(type, tf)) {
-				ADVANCE;
+				/* ADVANCE; */
 				return;
 			}
 		}
@@ -1981,7 +1984,7 @@ syscall(code, tf, pc)
 			for (j=0; j<i; j++) 
 				temp[j] = args.i[j];
 			ktrsyscall(p->p_tracep, code,
-				   callp->sy_argsize, (register_t *)temp);
+				   i * sizeof(register_t), (register_t *)temp);
 #else
 			ktrsyscall(p->p_tracep, code,
 				   callp->sy_argsize, (register_t *)args.i);

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.8 1999/12/30 16:42:10 eeh Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.9 2000/01/10 03:53:22 eeh Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -192,10 +192,6 @@ struct fpreg	*regs;
 		statep = p->p_md.md_fpstate;
 	for (i=0; i<32; i++)
 		regp->fr_regs[i] = statep->fs_regs[i];
-	regp->fr_fsr = statep->fs_fsr;
-	regp->fr_qsize = statep->fs_qsize;
-	for (i=0; i<statep->fs_qsize; i++)
-		regp->fr_queue[i] = statep->fs_queue[i];
 
 	return 0;
 }
@@ -226,9 +222,6 @@ struct fpreg	*regs;
 	for (i=0; i<32; i++)
 		statep->fs_regs[i] = regp->fr_regs[i];
 	statep->fs_fsr = regp->fr_fsr;
-	statep->fs_qsize = regp->fr_qsize;
-	for (i=0; i<regp->fr_qsize; i++)
-		statep->fs_queue[i] = regp->fr_queue[i];
 
 	return 0;
 }

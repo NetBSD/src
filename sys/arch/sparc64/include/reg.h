@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.5 1999/12/30 16:20:43 eeh Exp $ */
+/*	$NetBSD: reg.h,v 1.6 2000/01/10 03:53:20 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,6 +142,8 @@ struct reg64 {
  * ``I'd suggest allowing 16 ... allowing an indeterminate variable
  * size would be even better''.  Of course, we cannot do that; we
  * need to malloc these.
+ *
+ * XXXX UltraSPARC processors don't implement a floating point queue.
  */
 #define	FP_QSIZE	16
 #define ALIGNFPSTATE(f)		((struct fpstate64 *)(((long)(f))&(~BLOCK_ALIGN)))
@@ -170,14 +172,14 @@ struct fpstate32 {
 };
 
 /*
- * Clone fpstate into an fpreg structure to satisfy <kern/sys_process.c>
+ * The actual FP registers are made accessable (c.f. ptrace(2)) through
+ * a `struct fpreg'; <arch/sparc64/sparc64/process_machdep.c> relies on the
+ * fact that `fpreg' is a prefix of `fpstate'.
  */
 struct fpreg64 {
 	u_int	fr_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fr_fsr;			/* %fsr */
 	int	fr_gsr;			/* graphics state reg */
-	int	fr_qsize;		/* actual queue depth */
-	struct	fp_qentry fr_queue[FP_QSIZE];	/* queue contents */
 };
 
 /*
@@ -186,8 +188,6 @@ struct fpreg64 {
 struct fpreg32 {
 	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
 	int	fr_fsr;			/* %fsr */
-	int	fr_qsize;		/* actual queue depth */
-	struct	fp_qentry fr_queue[FP_QSIZE];	/* queue contents */
 };
 
 #if defined(__arch64__)

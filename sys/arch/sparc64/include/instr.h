@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.2 1998/09/22 02:48:43 eeh Exp $ */
+/*	$NetBSD: instr.h,v 1.3 2000/01/10 03:53:20 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,8 +46,8 @@
 
 /* see also Appendix F of the SPARC version 8 document */
 enum IOP { IOP_OP2, IOP_CALL, IOP_reg, IOP_mem };
-enum IOP2 { IOP2_UNIMP, IOP2_err1, IOP2_Bicc, IOP2_err3,
-	IOP2_SETHI, IOP2_err5, IOP2_FBfcc, IOP2_CBccc };
+enum IOP2 { IOP2_UNIMP, IOP2_BPcc, IOP2_Bicc, IOP2_BPr,
+	IOP2_SETHI, IOP2_FBPfcc, IOP2_FBfcc, IOP2_CBccc };
 enum IOP3_reg {
 	IOP3_ADD, IOP3_AND, IOP3_OR, IOP3_XOR,
 	IOP3_SUB, IOP3_ANDN, IOP3_ORN, IOP3_XNOR,
@@ -192,6 +192,31 @@ union instr {
 		u_int	i_op2:3;	/* opcode: {Bi,FBf,CBc}cc */
 		int	i_disp:22;	/* branch displacement */
 	} i_branch;
+
+	/* more branches: BPcc, FBPfcc */
+	struct {
+		u_int	:2;		/* 00 */
+		u_int	i_annul:1;	/* annul bit */
+		u_int	i_cond:4;	/* condition codes */
+		u_int	i_op2:3;	/* opcode: {BP,FBPf}cc */
+		u_int	i_cc:2;		/* condition code selector */
+		u_int	i_pred:1;	/* branch prediction bit */
+		int	i_disp:19;	/* branch displacement */
+	} i_branch_p;
+
+	/* one last branch: BPr */
+	struct {
+		u_int	:2;		/* 00 */
+		u_int	i_annul:1;	/* annul bit */
+		u_int	:1;		/* 0 */
+		u_int	i_rcond:4;	/* register condition */
+		u_int	:3;		/* 011 */
+		int	i_disphi:2;	/* branch displacement, hi bits */
+		u_int   i_pred:1;	/* branch prediction bit */
+		u_int   i_rs1:1;	/* source register 1 */
+		u_int	i_displo:16;	/* branch displacement, lo bits */
+	} i_branch_pr;
+
 
 	/*
 	 * Format 3 instructions (memory reference; arithmetic, logical,
