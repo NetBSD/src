@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.32 1997/04/03 02:07:59 christos Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.33 1997/04/10 19:10:17 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.32 1997/04/03 02:07:59 christos Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.33 1997/04/10 19:10:17 is Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ struct	sockaddr_in	netmask;
 struct	netrange	at_nr;		/* AppleTalk net range */
 
 char	name[30];
-int	flags, metric, setaddr, setipdst, doalias;
+int	flags, metric, mtu, setaddr, setipdst, doalias;
 int	clearaddr, s;
 int	newaddr = 1;
 int	nsellength = 1;
@@ -131,6 +131,7 @@ void 	setifflags __P((char *, int));
 void 	setifbroadaddr __P((char *, int));
 void 	setifipdst __P((char *, int));
 void 	setifmetric __P((char *, int));
+void 	setifmtu __P((char *, int));
 void 	setifnetmask __P((char *, int));
 void 	setnsellength __P((char *, int));
 void 	setsnpaoffset __P((char *, int));
@@ -168,6 +169,7 @@ struct	cmd {
 #endif
 	{ "netmask",	NEXTARG,	setifnetmask },
 	{ "metric",	NEXTARG,	setifmetric },
+	{ "mtu",	NEXTARG,	setifmtu },
 	{ "broadcast",	NEXTARG,	setifbroadaddr },
 	{ "ipdst",	NEXTARG,	setifipdst },
 #ifndef INET_ONLY
@@ -440,6 +442,10 @@ getinfo(ifr)
 		metric = 0;
 	} else
 		metric = ifr->ifr_metric;
+	if (ioctl(s, SIOCGIFMTU, (caddr_t)ifr) < 0)
+		mtu = 0;
+	else
+		mtu = ifr->ifr_metric;
 	return (0);
 }
 
@@ -612,6 +618,17 @@ setifmetric(val, d)
 	ifr.ifr_metric = atoi(val);
 	if (ioctl(s, SIOCSIFMETRIC, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFMETRIC");
+}
+
+void
+setifmtu(val, d)
+	char *val;
+	int d;
+{
+	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_metric = atoi(val);
+	if (ioctl(s, SIOCSIFMTU, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFMTU");
 }
 
 void
@@ -987,6 +1004,8 @@ status(ap, alen)
 	printb("flags", flags, IFFBITS);
 	if (metric)
 		printf(" metric %d", metric);
+	if (mtu)
+		printf(" mtu %d", mtu);
 	putchar('\n');
 	if (ap && alen > 0) {
 		printf("\taddress:");
@@ -1493,10 +1512,11 @@ void
 usage()
 {
 	fprintf(stderr,
-	    "usage: ifconfig [ -m ] interface\n%s%s%s%s%s%s%s%s%s%s",
+	    "usage: ifconfig [ -m ] interface\n%s%s%s%s%s%s%s%s%s%s%s",
 		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
 		"[ netmask mask ] ]\n",
 		"\t[ metric n ]\n",
+		"\t[ mtu n ]\n",
 		"\t[ arp | -arp ]\n",
 		"\t[ media mtype ]\n",
 		"\t[ mediaopt mopts ]\n",

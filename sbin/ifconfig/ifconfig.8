@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.15 1997/04/10 06:30:26 jeremy Exp $
+.\"	$NetBSD: ifconfig.8,v 1.16 1997/04/10 19:10:16 is Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -207,6 +207,10 @@ The routing metric is used by the routing protocol
 Higher metrics have the effect of making a route
 less favorable; metrics are counted as addition hops
 to the destination network or host.
+.It Cm mtu Ar n
+Set the maximum transmission unit of the interface to
+.Ar n .
+Most interfaces don't support this option.
 .It Cm netmask Ar mask
 (Inet and ISO)
 Specify how much of the address to reserve for subdividing
