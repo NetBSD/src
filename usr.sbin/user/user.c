@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.13 2000/03/12 19:57:24 jlam Exp $ */
+/* $NetBSD: user.c,v 1.14 2000/03/31 02:54:17 soren Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.13 2000/03/12 19:57:24 jlam Exp $");
+__RCSID("$NetBSD: user.c,v 1.14 2000/03/31 02:54:17 soren Exp $");
 #endif
 
 #include <sys/types.h>
@@ -179,7 +179,7 @@ memsave(char **cpp, char *s, size_t n)
 	}
 	NEWARRAY(char, *cpp, n + 1, exit(1));
 	(void) memcpy(*cpp, s, n);
-	(*cpp)[n] = 0;
+	(*cpp)[n] = '\0';
 }
 
 /* a replacement for system(3) */
@@ -215,7 +215,7 @@ strlcpy(char *to, char *from, size_t tosize)
 	fromsize = strlen(from);
 	n = MIN(tosize - 1, fromsize);
 	(void) memcpy(to, from, n);
-	to[n] = 0;
+	to[n] = '\0';
 	return fromsize;
 }
 #endif
@@ -725,7 +725,7 @@ adduser(char *login, user_t *up)
 			expire = mktime(&tm);
 		}
 	}
-	password[PasswordLength] = 0;
+	password[PasswordLength] = '\0';
 	if (up->u_password != (char *) NULL &&
 	    strlen(up->u_password) == PasswordLength) {
 		(void) memcpy(password, up->u_password, PasswordLength);
@@ -861,7 +861,7 @@ moduser(char *login, char *newlogin, user_t *up)
 				expire = mktime(&tm);
 			}
 		}
-		password[PasswordLength] = 0;
+		password[PasswordLength] = '\0';
 		if (up->u_password != (char *) NULL &&
 		    strlen(up->u_password) == PasswordLength) {
 			(void) memcpy(password, up->u_password, PasswordLength);
@@ -1260,7 +1260,7 @@ userdel(int argc, char **argv)
 	if (u.u_preserve) {
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
 		(void) memset(password, '*', PasswordLength);
-		password[PasswordLength] = 0;
+		password[PasswordLength] = '\0';
 		memsave(&u.u_password, password, PasswordLength);
 		return moduser(argv[optind], argv[optind], &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
