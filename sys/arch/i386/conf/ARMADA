@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADA,v 1.5 2001/08/28 09:25:52 ad Exp $
+#	$NetBSD: ARMADA,v 1.6 2001/11/04 07:39:40 itohy Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.5 $"
+#ident		"CARDBUS-$Revision: 1.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -777,6 +777,7 @@ wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at cmpci? flags 1
 opl*	at eso?
 #opl*	at ess?
 opl*	at fms?
@@ -810,6 +811,7 @@ audio*	at wss?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
+mpu*	at cmpci?
 mpu*	at eso?
 mpu*	at fms?
 mpu*	at sb?

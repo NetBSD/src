@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.111 2001/11/03 17:16:17 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.112 2001/11/04 07:39:42 itohy Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.111 $"
+#ident 		"GENERIC-$Revision: 1.112 $"
 
 maxusers	32
 
@@ -300,6 +300,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # OPL[23] FM synthesizers
+#opl*	at cmpci? flags 1
 #opl*	at eso?
 #opl*	at fms?
 
@@ -314,6 +315,7 @@ audio*	at eap?
 audio*	at uaudio?
 
 # MPU 401 UARTs
+#mpu*	at cmpci?
 #mpu*	at eso?
 #mpu*	at fms?
 
