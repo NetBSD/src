@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.14 2002/10/02 05:18:52 thorpej Exp $ */
+/* $NetBSD: j720ssp.c,v 1.15 2002/10/05 17:12:09 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ int  j720kbd_enable __P((void *, int));
 void j720kbd_set_leds __P((void *, int));
 int  j720kbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
+int  j720lcdpower(void *, int, long, void *);
 int  hpcarm_apm_getpower __P((struct apm_power_info *, void *));
 
 CFATTACH_DECL(j720ssp, sizeof(struct j720ssp_softc),
@@ -202,7 +203,7 @@ static int j720kbdcons_initstate = 0;
 #ifdef DEBUG
 int j720sspwaitcnt;
 int j720sspwaittime;
-extern int gettick();
+extern int gettick(void);
 #endif
 
 #define BIT_INVERT(x)	do {					\
