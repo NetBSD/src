@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.78 2002/06/09 16:33:38 itojun Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.79 2002/06/11 19:39:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.78 2002/06/09 16:33:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.79 2002/06/11 19:39:59 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -197,7 +197,7 @@ in_pcballoc(so, v)
 	inp->inp_socket = so;
 	inp->inp_errormtu = -1;
 #ifdef IPSEC
-	error = ipsec_init_policy(so, &inp->inp_sp);
+	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 	if (error != 0) {
 		pool_put(&inpcb_pool, inp);
 		return error;
