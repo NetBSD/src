@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.60.2.8 2002/07/12 01:40:01 nathanw Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.60.2.9 2002/10/05 04:53:31 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.60.2.8 2002/07/12 01:40:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.60.2.9 2002/10/05 04:53:31 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,9 +91,10 @@ linux_sys_alarm(l, v, retval)
 	struct proc *p = l->l_proc;
 	int s;
 	struct itimerval *itp, it;
+	struct ptimer *ptp;
 
-	if (p->p_timers && p->p_timers[0])
-		itp = &p->p_timers[0]->pt_time;
+	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL])
+		itp = &p->p_timers->pts_timers[ITIMER_REAL]->pt_time;
 	else
 		itp = NULL;
 	s = splclock();
@@ -101,7 +102,7 @@ linux_sys_alarm(l, v, retval)
 	 * Clear any pending timer alarms.
 	 */
 	if (itp) {
-		callout_stop(&p->p_timers[0]->pt_ch);
+		callout_stop(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch);
 		timerclear(&itp->it_interval);
 		if (timerisset(&itp->it_value) &&
 		    timercmp(&itp->it_value, &time, >))
@@ -139,12 +140,13 @@ linux_sys_alarm(l, v, retval)
 
 	if (p->p_timers == NULL)
 		timers_alloc(p);
-	if (p->p_timers[0] == NULL) {
-		p->p_timers[0] = pool_get(&ptimer_pool, PR_WAITOK);
-		p->p_timers[0]->pt_ev.sigev_notify = SIGEV_SIGNAL;
-		p->p_timers[0]->pt_ev.sigev_signo = SIGALRM;
-		p->p_timers[0]->pt_type = CLOCK_REALTIME;
-		callout_init(&p->p_timers[0]->pt_ch);
+	ptp = p->p_timers->pts_timers[ITIMER_REAL];
+	if (ptp == NULL) {
+		ptp = pool_get(&ptimer_pool, PR_WAITOK);
+		ptp->pt_ev.sigev_notify = SIGEV_SIGNAL;
+		ptp->pt_ev.sigev_signo = SIGALRM;
+		ptp->pt_type = CLOCK_REALTIME;
+		callout_init(&ptp->pt_ch);
 	}
 
 	if (timerisset(&it.it_value)) {
@@ -153,10 +155,10 @@ linux_sys_alarm(l, v, retval)
 		 * callout_reset() does it for us.
 		 */
 		timeradd(&it.it_value, &time, &it.it_value);
-		callout_reset(&p->p_timers[0]->pt_ch, hzto(&it.it_value),
-		    realtimerexpire, p->p_timers[0]);
+		callout_reset(&ptp->pt_ch, hzto(&it.it_value),
+		    realtimerexpire, ptp);
 	}
-	p->p_timers[0]->pt_time = it;
+	ptp->pt_time = it;
 	splx(s);
 
 	return 0;
