@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.3 1997/10/01 01:19:05 enami Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.4 1997/10/02 16:03:47 mjacob Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -91,6 +91,15 @@ struct scsipi_sense_data {
 /*18*/	u_int8_t sense_key_spec_3;
 /*32*/	u_int8_t extra_bytes[14];
 };
+/*
+ * Sense bytes described by the extra_len tag start at cmd_spec_info,
+ * and can only continue up to the end of the structure we've defined
+ * (which is too short for some cases).
+ */
+#define	ADD_BYTES_LIM(sp)	\
+	(((int)(sp)->extra_len) < (int) sizeof(struct scsipi_sense_data) - 8)? \
+	((sp)->extra_len) : (sizeof (struct scsipi_sense_data) - 8)
+
 
 struct scsipi_sense_data_unextended {
 /* 1*/	u_int8_t error_code;
