@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.9 1994/03/29 04:36:16 mycroft Exp $
+ *	$Id: mms.c,v 1.10 1994/03/30 00:54:45 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -101,6 +101,8 @@ mmsattach(parent, self, aux)
 	struct mms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
+
+	printf("\n");
 
 	/* Other initialization was done by mmsprobe. */
 	sc->sc_iobase = iobase;
