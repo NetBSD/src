@@ -1,0 +1,178 @@
+#	$NetBSD: Makefile.x68k,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/x68k/conf/``machineid''
+# after which you should do
+#	config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/x68k/conf/Makefile.x68k
+# after which config should be rerun for all machines of that type.
+#
+# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
+#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
+#
+# -DTRACE	compile in kernel tracing hooks
+# -DQUOTA	compile in file system quotas
+
+# DEBUG is set to -g if debugging.
+# PROF is set to -pg if profiling.
+
+AS?=	as
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
+
+# source tree is located via $S relative to the compilation directory
+S=	../../../..
+X68K=	../..
+
+INCLUDES=	-I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dx68k -DFPCOPROC
+CFLAGS=		${DEBUG} -O2 -Werror -msoft-float
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+LINKFLAGS=	-n -Ttext 0 -e start
+
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
+.ifndef PROF
+LIBKERN=	${KERNLIB}
+.else
+LIBKERN=	${KERNLIB_PROF}
+.endif
+
+### find out what to use for libcompat
+.include "$S/compat/common/Makefile.inc"
+.ifndef PROF
+LIBCOMPAT=	${COMPATLIB}
+.else
+LIBCOMPAT=	${COMPATLIB_PROF}
+.endif
+
+### for the Motorola 68040 Floating Point Software Product
+.include "$S/arch/m68k/fpsp/Makefile.inc"
+
+# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
+# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
+# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
+# is marked as config-dependent.
+
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+
+%OBJS
+
+%CFILES
+
+#%SFILES
+
+# load lines for config "xxx" will be emitted as:
+# xxx: ${SYSTEM_DEP} swapxxx.o
+#	${SYSTEM_LD_HEAD}
+#	${SYSTEM_LD} swapxxx.o
+#	${SYSTEM_LD_TAIL}
+SYSTEM_OBJ=	locore.o ${FPSP} \
+		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	@rm -f $@
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+
+DEBUG?=
+.if ${DEBUG} == "-g"
+LINKFLAGS+=	-X
+SYSTEM_LD_TAIL+=; \
+		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo ${STRIP} $@; ${STRIP} $@
+.else
+LINKFLAGS+=	-x
+.endif
+
+%LOAD
+
+assym.h: genassym
+	./genassym >assym.h
+
+genassym: genassym.o
+	${CC} -o $@ genassym.o
+
+genassym.o: ${X68K}/x68k/genassym.c
+	${NORMAL_C_C}
+
+param.c: $S/conf/param.c
+	rm -f param.c
+	cp $S/conf/param.c .
+
+param.o: param.c Makefile
+	${NORMAL_C_C}
+
+ioconf.o: ioconf.c
+	${NORMAL_C}
+
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
+
+clean::
+	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+
+lint:
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	    ${X68K}/x68k/Locore.c ${CFILES} ${X68K}/x68k/swapgeneric.c \
+	    ioconf.c param.c | \
+	    grep -v 'static function .* unused'
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
+
+links:
+	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink
+
+SRCS=	${X68K}/x68k/locore.s \
+	param.c ioconf.c ${CFILES} ${SFILES}
+depend: .depend
+.depend: ${SRCS} assym.h param.c
+	mkdep ${AFLAGS} ${CPPFLAGS} ${X68K}/x68k/locore.s
+	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	-if test -n "${SFILES}"; then \
+		mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
+	fi
+	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${X68K}/x68k/genassym.c
+
+
+# depend on root or device configuration
+autoconf.o conf.o: Makefile
+ 
+# depend on network or filesystem configuration 
+uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on maxusers
+genassym.o machdep.o: Makefile
+
+# depend on CPU configuration 
+dma.o genassym.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
+
+
+locore.o: ${X68K}/x68k/locore.s assym.h
+	${NORMAL_S}
+
+%RULES

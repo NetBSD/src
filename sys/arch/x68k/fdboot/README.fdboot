@@ -1,0 +1,33 @@
+この fdboot は:
+
+NetBSD/X68k をフロッピーから立ち上げるためのものです。
+
+この fdboot は、chapuni氏作の sdboot の SCSI アクセス部分を
+フロッピー用に書き換えて、disklabel とぶつからない
+(ように見える)領域を使うようにしただけのものです。
+
+1024bytes/sector を仮定しています。美しくないですね。
+
+ま、とりあえず動いているみたいですが、どなたかちゃんと
+書き直してくれませんか?
+
+なお、私の行った変更については、パブリックドメインとします。
+
+
+install:
+
+1. make します
+	% make
+
+2. フロッピーに書き込みます
+	# ./writefdboot fdboot /dev/rfd0a
+	                               ~
+   0 の部分をインストール先のドライブによって変更してください。
+
+
+使いかたなど:
+
+sdboot と全く同じです。README.sdboot などを参照してください。
+
+
+			---written by Yasha (ITOH Yasufumi)
