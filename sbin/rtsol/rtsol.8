@@ -1,0 +1,95 @@
+.\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+.\" All rights reserved.
+.\" 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the project nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     $Id: rtsol.8,v 1.1 1999/07/02 08:28:04 itojun Exp $
+.\"
+.Dd May 17, 1998
+.Dt RTSOL 8
+.Os
+.\"
+.Sh NAME
+.Nm rtsol
+.Nd send router solicitation
+.\"
+.Sh SYNOPSIS
+.Nm
+.Op Fl nv
+.Ar interface
+.\"
+.Sh DESCRIPTION
+.Nm Rtsol
+sends router solicitation packet to the specified
+.Ar interface .
+If there is any router on the network, the router may respond by
+router advertisement packet.
+Router advertisement packet contains information about the network,
+the link-local address of the router, and so forth.
+The kernel will install the new routing information and address prefix
+for the
+.Ar interface ,
+according to the information.
+.Pp
+.Nm
+implements some quickhack code for notebook computers.
+.Fl n
+disables the behavior
+.Pq the flag stands for no tricks .
+.Pp
+If
+.Fl v 
+is specified,
+.Nm
+will generate more messages.
+This is mostly for debugging.
+.Pp
+Router advertisement packet will be processed only if the
+node is configured as a host, not a router.
+To accept router advertisement packet,
+.Xr sysctl 8
+variables must be set as follows:
+.Bd -literal -offset
+# sysctl -w net.inet6.ip6.forwarding=0
+# sysctl -w net.inet6.ip6.accept_rtadv=1
+.Ed
+.Pp
+Typically this is done in system startup scripts, such as
+.Xr rc 8 .
+.\"
+.Sh RETURN VALUES
+The program exits with 0 on success, non-zero on failures.
+.\"
+.Sh SEE ALSO
+.Xr rtadvd 8 ,
+.Xr rtsold 8 ,
+.Xr sysctl 8
+.\"
+.Sh HISTORY
+The
+.Nm
+command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
+.\" .Sh BUGS
+.\" (to be written)
