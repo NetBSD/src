@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.13 2004/01/02 01:34:01 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.14 2004/01/02 01:40:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.13 2004/01/02 01:34:01 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.14 2004/01/02 01:40:59 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: gzip.c,v 1.13 2004/01/02 01:34:01 mrg Exp $");
  * TODO:
  *	- handle .taz/.tgz files?
  *	- use mmap where possible
+ *	- $GZIP
  */
 
 #include <sys/param.h>
