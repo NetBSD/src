@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2003/10/20 09:07:44 mbw Exp $
+#	$NetBSD: Makefile,v 1.5 2003/10/24 20:26:58 jdolecek Exp $
 
-MAN=	MAKEDEV.8 boot.8 ofwboot.8
-MLINKS=	MAKEDEV.8 makedev.8
+MAN=	boot.8 ofwboot.8
 MLINKS+=	ofwboot.8 ofwboot.elf.8 ofwboot.8 ofwboot.xcf.8
 MANSUBDIR=/macppc
 
