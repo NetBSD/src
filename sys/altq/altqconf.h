@@ -1,6 +1,6 @@
-/*	$NetBSD: altqconf.h,v 1.1 2000/12/14 23:50:43 thorpej Exp $	*/
+/*	$NetBSD: altqconf.h,v 1.2 2001/05/30 11:57:16 mrg Exp $	*/
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_altq_enabled.h"
 
 #include <sys/conf.h>
@@ -14,4 +14,4 @@
 cdev_decl(altq);
 
 #define	cdev_altq_init(x,y)	cdev__oci_init(x,y)
-#endif /* _KERNEL && ! _LKM */
+#endif /* _KERNEL_OPT */

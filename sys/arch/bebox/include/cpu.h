@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2000/12/14 10:33:42 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2001/05/30 12:28:41 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 

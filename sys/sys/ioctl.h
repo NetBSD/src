@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.27 2000/12/18 18:57:11 fvdl Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.28 2001/05/30 12:07:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -105,7 +105,7 @@ __END_DECLS
  * Kernel level -> options COMPAT_43 or COMPAT_SUNOS or ...
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_freebsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_svr4.h"

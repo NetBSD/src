@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.30 1999/11/12 18:37:29 drochner Exp $	*/
+/*	$NetBSD: segments.h,v 1.31 2001/05/30 12:28:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -63,7 +63,7 @@
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
 #define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2001/02/02 18:25:04 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2001/05/30 12:28:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,7 +47,7 @@
 #ifndef _SH3_CPU_H_
 #define _SH3_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 

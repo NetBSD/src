@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2001/05/28 16:22:17 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2001/05/30 12:28:37 mrg Exp $	*/
 
 #ifndef _ALGOR_CPU_H_
 #define _ALGOR_CPU_H_
@@ -7,7 +7,7 @@
 #include <mips/cpuregs.h>
 
 #ifndef _LOCORE
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 

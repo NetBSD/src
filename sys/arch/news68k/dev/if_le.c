@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 2000/02/08 16:17:31 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 2001/05/30 12:28:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ struct cfattach le_ca = {
 
 extern volatile u_char *lance_mem, *idrom_addr;
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 
