@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.523 2002/10/14 06:31:39 takemura Exp $
+# $NetBSD: mi,v 1.524 2002/10/17 12:27:58 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -26,7 +26,6 @@
 ./usr/share/info/ld.info			man-computil-info
 ./usr/share/info/send-pr.info			man-gnats-info
 ./usr/share/info/stabs.info			man-debug-info
-./usr/share/info/tar.info			man-tar-info
 ./usr/share/info/texinfo.info			man-texinfo-info
 ./usr/share/info/uucp.info			man-uucp-info
 ./usr/share/man/cat1/Mail.0			man-mail-catman
