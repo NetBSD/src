@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.8 2002/10/21 17:07:36 uch Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.9 2003/01/01 01:41:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -135,7 +135,8 @@ hd64465_print(void *aux, const char *pnp)
 	struct hd64465_attach_args *ha = aux;
 
 	if (pnp)
-		printf("%s at %s", hd64465_modules[ha->ha_module_id].name, pnp);
+		aprint_normal("%s at %s",
+		    hd64465_modules[ha->ha_module_id].name, pnp);
 
 	return (UNCONF);
 }
