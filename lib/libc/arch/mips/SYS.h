@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.9 1997/05/02 18:15:23 kleink Exp $ */
+/*	$NetBSD: SYS.h,v 1.10 1997/06/17 16:35:26 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan STone
@@ -70,7 +70,7 @@
  */
 
 #include <sys/syscall.h>
-#include <machine/machAsmDefs.h>
+#include <mips/asm.h>
 
 
 /*
