@@ -1,4 +1,4 @@
-/*	$NetBSD: header.h,v 1.9 1997/03/29 20:42:20 thorpej Exp $	*/
+/*	$NetBSD: header.h,v 1.10 1997/07/13 20:21:35 christos Exp $	*/
 
 /*	header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -349,7 +349,7 @@ extern short iarg[MAXX][MAXY],ivenarg[],lasthx,lasthy,lastnum,lastpx,lastpy;
 extern short nobeep,oldx,oldy,playerx,playery,level;
 extern int dayplay,enable_scroll,srcount,yrepcount,userid,wisid,lfd,fd;
 extern uid_t uid, euid;
-extern long initialtime,outstanding_taxes,skill[],gtime,c[],cbak[];
+extern long initialtime,outstanding_taxes,skill[],gltime,c[],cbak[];
 extern unsigned long randx;
 extern struct cel *cell;
 extern struct monst monster[];
