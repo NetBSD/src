@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 2000/01/18 19:35:13 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33 2000/03/30 11:37:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -449,12 +449,12 @@ done:
  */
 int
 setdisklabel(olp, nlp, openmask, clp)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	register int i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
@@ -494,7 +494,7 @@ int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
 	struct rdbmap *bmap;
