@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.57 1998/03/04 15:34:41 fvdl Exp $	*/
+/*	$NetBSD: vnd.c,v 1.58 1998/03/12 16:51:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -390,22 +390,12 @@ vndstrategy(bp)
 		struct vndbuf *nbp;
 		struct vnode *vp;
 		daddr_t nbn;
-		int off, nra, dolock = 0;
+		int off, nra;
 
 		nra = 0;
-		/*
-		 * XXX check if vnode is already locked, to avoid
-		 * recursive locking. The real solution is to
-		 * allow recursive locks here, but the interface
-		 * doesn't allow it.
-		 */
-		if (!VOP_ISLOCKED(vnd->sc_vp)) {
-			dolock = 1;
-			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
-		}
+		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
-		if (dolock)
-			VOP_UNLOCK(vnd->sc_vp, 0);
+		VOP_UNLOCK(vnd->sc_vp, 0);
 
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
