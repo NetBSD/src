@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 2003/03/11 10:57:55 hannken Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2 2003/06/14 17:01:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,8 @@ consinit(void)
 
 #ifdef COM_IS_CONSOLE
 	tag = MAKE_BUS_TAG(BASE_COM);
-	comcnattach(tag, BASE_COM, COM_CONSOLE_SPEED, COM_FREQ,
+	comcnattach(tag, BASE_COM, COM_CONSOLE_SPEED,
+	    COM_FREQ, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
 #else
 	/* Clear VRam */

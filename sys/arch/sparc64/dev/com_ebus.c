@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.18 2002/12/10 13:44:51 pk Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.19 2003/06/14 17:01:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -158,7 +158,7 @@ com_ebus_attach(parent, self, aux)
 		/* Attach com as the console. */
 		cn_orig = cn_tab;
 		if (comcnattach(sc->sc_iot, sc->sc_iobase, kma.kmta_baud,
-			sc->sc_frequency, kma.kmta_cflag)) {
+			sc->sc_frequency, COM_TYPE_NORMAL, kma.kmta_cflag)) {
 			printf("Error: comcnattach failed\n");
 		}
 		cn_tab = cn_orig;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2003/04/26 11:05:19 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2003/06/14 17:01:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -298,6 +298,7 @@ consinit(void)
 	tag = &pmppc_mem_tag;
 
 	if(comcnattach(tag, CPC_COM0, 9600, CPC_COM_SPEED(a_config.a_bus_freq),
+	    COM_TYPE_NORMAL,
 	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8))) 
 		panic("can't init serial console");
 	else
@@ -317,7 +318,7 @@ kgdb_port_init(void)
 		bus_space_tag_t tag = &pmppc_mem_tag;
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate,
 				CPC_COM_SPEED(a_config.a_bus_freq),
-				comkgdbmode);
+				COM_TYPE_NORMAL, comkgdbmode);
 	}
 #endif
 }

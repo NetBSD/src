@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.8 2002/09/27 15:35:34 provos Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.9 2003/06/14 17:01:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.8 2002/09/27 15:35:34 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.9 2003/06/14 17:01:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ dec_2000_300_cons_init(void)
 			DELAY(160000000 / ctb->ctb_baud);
 
 			if (comcnattach(&jcp->jc_internal_iot, 0x3f8,
-			    ctb->ctb_baud, COM_FREQ,
+			    ctb->ctb_baud, COM_FREQ, COM_TYPE_NORMAL,
 			    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 				panic("can't init serial console");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2003/04/26 11:05:19 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2003/06/14 17:01:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -287,7 +287,7 @@ consinit(void)
 #if (NCOM > 0)
 	tag = &sandpoint_isa_io_bs_tag;
 
-	if(comcnattach(tag, 0x3F8, 38400, COM_FREQ,
+	if(comcnattach(tag, 0x3F8, 38400, COM_FREQ, COM_TYPE_NORMAL,
 	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
 		panic("can't init serial console");
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.9 2002/12/10 13:44:49 pk Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.10 2003/06/14 17:01:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,7 +108,8 @@ com_ebus_attach(parent, self, aux)
 	 */
 	if (prom_instance_to_package(prom_stdin()) == ea->ea_node)
 		comcnattach(sc->sc_iot, sc->sc_iobase,
-			    B9600, sc->sc_frequency, (CLOCAL | CREAD | CS8));
+			    B9600, sc->sc_frequency, COM_TYPE_NORMAL,
+			    (CLOCAL | CREAD | CS8));
 
 	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh)
 	    && bus_space_map(sc->sc_iot, sc->sc_iobase, ea->ea_reg[0].size,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.47 2003/05/22 05:47:06 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.48 2003/06/14 17:01:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -925,7 +925,7 @@ consinit(void)
 #if (NCOM > 0)
 	else if (strncmp(console, "com", 3) == 0) {
 		if (comcnattach(&isa_io_bs_tag, CONCOMADDR, comcnspeed,
-		    COM_FREQ, comcnmode))
+		    COM_FREQ, COM_TYPE_NORMAL, comcnmode))
 			panic("can't init serial console @%x", CONCOMADDR);
 	}
 #endif

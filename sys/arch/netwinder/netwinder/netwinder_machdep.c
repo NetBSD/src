@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.53 2003/06/13 12:30:04 uwe Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.54 2003/06/14 17:01:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -915,7 +915,7 @@ consinit(void)
 	} else {
 #if (NCOM > 0)
 		if (comcnattach(&isa_io_bs_tag, CONCOMADDR, comcnspeed,
-		    COM_FREQ, comcnmode))
+		    COM_FREQ, COM_TYPE_NORMAL, comcnmode))
 			panic("can't init serial console @%x", CONCOMADDR);
 #else
 			panic("serial console @%x not configured", CONCOMADDR);

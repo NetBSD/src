@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2003/03/02 18:27:14 fvdl Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3 2003/06/14 17:01:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2003/03/02 18:27:14 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2003/06/14 17:01:15 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -189,7 +189,7 @@ dokbd:
 		bus_space_tag_t tag = X86_BUS_SPACE_IO;
 
 		if (comcnattach(tag, consinfo->addr, consinfo->speed,
-				COM_FREQ, comcnmode))
+				COM_FREQ, COM_TYPE_NORMAL, comcnmode))
 			panic("can't init serial console @%x", consinfo->addr);
 
 		return;
@@ -225,7 +225,7 @@ kgdb_port_init()
 		bus_space_tag_t tag = X86_BUS_SPACE_IO;
 
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ, 
-		    comkgdbmode);
+		    COM_TYPE_NORMAL, comkgdbmode);
 	}
 #endif
 }

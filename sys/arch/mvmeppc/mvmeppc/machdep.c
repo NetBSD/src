@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2003/04/26 11:05:16 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2003/06/14 17:01:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -313,7 +313,7 @@ dokbd:
 		static const bus_addr_t caddr[2] = {0x3f8, 0x2f8};
 		int rv;
 		rv = comcnattach(tag, caddr[bootinfo.bi_consolechan],
-		    bootinfo.bi_consolespeed, COM_FREQ,
+		    bootinfo.bi_consolespeed, COM_FREQ, COM_TYPE_NORMAL,
 		    bootinfo.bi_consolecflag);
 		if (rv)
 			panic("can't init serial console");

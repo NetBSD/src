@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2003/04/26 11:05:06 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2003/06/14 17:01:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ mach_init(int argc, char *argv[], char *envp[])
 		led_display('c', 'o', 'n', 's');
 		DELAY(160000000 / comcnrate);
 		if (comcnattach(&acp->ac_lociot, P4032_COM1, comcnrate,
-		    COM_FREQ,
+		    COM_FREQ, COM_TYPE_NORMAL,
 		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
 			panic("p4032: unable to initialize serial console");
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: console.c,v 1.3 2003/06/14 17:01:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -51,7 +51,8 @@ consinit()
 {
 	/* XXX Check NVRAM to see if we should enable the console at all. */
 
-	comcnattach(0, 0x1c800000, 115200, COM_FREQ * 10, CONMODE);
+	comcnattach(0, 0x1c800000, 115200, COM_FREQ * 10, COM_TYPE_NORMAL,
+	    CONMODE);
 
 	return;
 }

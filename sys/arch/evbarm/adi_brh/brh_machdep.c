@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.14 2003/05/22 05:47:07 thorpej Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.15 2003/06/14 17:01:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -872,7 +872,7 @@ consinit(void)
 
 #if NCOM > 0
 	if (comcnattach(&obio_bs_tag, comcnaddrs[comcnunit], comcnspeed,
-	    BECC_PERIPH_CLOCK, comcnmode))
+	    BECC_PERIPH_CLOCK, COM_TYPE_NORMAL, comcnmode))
 		panic("can't init serial console @%lx", comcnaddrs[comcnunit]);
 #else
 	panic("serial console @%lx not configured", comcnaddrs[comcnunit]);

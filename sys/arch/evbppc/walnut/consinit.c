@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 2002/12/09 12:16:21 scw Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2 2003/06/14 17:01:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -110,7 +110,7 @@ consinit(void)
 	tag = ibm4xx_make_bus_space_tag(0, 0);
 
 	if (comcnattach(tag, CONADDR, CONSPEED, COM_FREQ*6,
-	    comcnmode))
+	    COM_TYPE_NORMAL, comcnmode))
 		panic("can't init serial console @%x", CONADDR);
 	else
 		return;
@@ -127,7 +127,7 @@ kgdb_port_init(void)
 	if(!strcmp(kgdb_devname, "com")) {
 		bus_space_tag_t tag = ibm4xx_make_bus_space_tag(0, 2);
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ * 6,
-		    comkgdbmode);
+		    COM_TYPE_NORMAL, comkgdbmode);
 	}
 #endif
 }

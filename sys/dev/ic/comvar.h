@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.45 2003/06/14 16:25:53 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.46 2003/06/14 17:01:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -46,10 +46,10 @@
 #include <sys/lock.h>
 #endif
 
-int comcnattach __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t));
+int comcnattach __P((bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t));
 
 #ifdef KGDB
-int com_kgdb_attach __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t));
+int com_kgdb_attach __P((bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t));
 #endif
 
 int com_is_console __P((bus_space_tag_t, bus_addr_t, bus_space_handle_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2003/04/26 11:05:11 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2003/06/14 17:01:11 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -222,7 +222,8 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * character time = (1000000 / (defaultrate / 10))
 	 */
 	delay(160000000 / comcnrate);
-	if (comcnattach(&mcp->mc_iot, MALTA_UART0ADR, comcnrate, COM_FREQ,
+	if (comcnattach(&mcp->mc_iot, MALTA_UART0ADR, comcnrate,
+	    COM_FREQ, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
 		panic("malta: unable to initialize serial console");
 #else
