@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.44 2003/07/07 21:26:32 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.45 2003/07/08 11:58:57 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -148,15 +148,19 @@ disp_cur_geom(void)
  * Then,  the partition stuff...
  */
 
+/*
+ * If we change the mbr partitioning, the we must remove any references
+ * in the netbsd disklabel to the part we changed.
+ */
 static void
 remove_old_partitions(uint start, int size)
 {
 	partinfo *p;
 	uint end;
 
-	if (start > 0)
-		end = start + size;
-	else {
+	/* Allow for size being -ve, get it right for very large partitions */
+	end = start + size;
+	if (end < start) {
 		end = start;
 		start = end + size;
 	}
@@ -249,7 +253,6 @@ set_mbr_type(menudesc *m, menu_ent *ent, void *arg)
 		/* type not changed... */
 		return 1;
 
-	remove_old_partitions(mbri->sector + mbrp->mbrp_start, mbrp->mbrp_size);
 	mbri->last_mounted[opt < NMBRPART ? opt : 0] = NULL;
 
 	if (MBR_IS_EXTENDED(mbrp->mbrp_typ)) {
@@ -262,8 +265,10 @@ set_mbr_type(menudesc *m, menu_ent *ent, void *arg)
 	}
 
 	if (type == 0) {
-		mbrp->mbrp_typ = type;
 		/* Deleting partition */
+		mbrp->mbrp_typ = 0;
+		remove_old_partitions(mbri->sector + mbrp->mbrp_start,
+		    mbrp->mbrp_size);
 #ifdef BOOTSEL
 		if (ombri->bootsec == mbri->sector + mbrp->mbrp_start)
 			ombri->bootsec = 0;
@@ -494,8 +499,8 @@ edit_mbr_start(menudesc *m, menu_ent *ent, void *arg)
 		/* Keep end of partition in the same place */
 		limit = mbrp->mbrp_start + mbrp->mbrp_size;
 
+	delta = new - mbrp->mbrp_start;
 	if (MBR_IS_EXTENDED(mbrp->mbrp_typ)) {
-		delta = new - mbrp->mbrp_start;
 		ext = mbri->extended;
 		if (ext->mbr.mbr_parts[0].mbrp_typ != 0) {
 			/* allocate an extended ptn for the free item */
@@ -522,9 +527,8 @@ edit_mbr_start(menudesc *m, menu_ent *ent, void *arg)
 			if (ext->extended)
 				ext->mbr.mbr_parts[1].mbrp_start -= delta;
 		while ((ext = ext->extended));
-		remove_old_partitions(mbri->sector + mbrp->mbrp_start, delta);
-	} else
-		remove_old_partitions(mbri->sector + mbrp->mbrp_start, mbrp->mbrp_size);
+	}
+	remove_old_partitions(mbri->sector + mbrp->mbrp_start, delta);
 
 	/* finally set partition base and size */
 	mbrp->mbrp_start = new;
@@ -664,8 +668,8 @@ edit_mbr_size(menudesc *m, menu_ent *ent, void *arg)
 
 	if (new != mbrp->mbrp_size) {
 		mbri->last_mounted[opt < NMBRPART ? opt : 0] = NULL;
-		remove_old_partitions(mbri->sector + mbrp->mbrp_start + mbrp->mbrp_size,
-				      new - mbrp->mbrp_size);
+		remove_old_partitions(mbri->sector + mbrp->mbrp_start +
+					mbrp->mbrp_size, new - mbrp->mbrp_size);
 	}
 
 	mbrp->mbrp_size = new;

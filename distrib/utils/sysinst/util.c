@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.101 2003/07/07 12:30:22 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.102 2003/07/08 11:58:58 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1267,7 +1267,7 @@ tzm_set_names(menudesc *m, void *arg)
 	fp = strchr(zoneinfo_dir, 0);
 	if (fp != zoneinfo_dir + zonerootlen) {
 		tz_names[0] = 0;
-		tz_menu[0].opt_name = MSG_tz_back;
+		tz_menu[0].opt_name = msg_string(MSG_tz_back);
 		tz_menu[0].opt_menu = OPT_NOMENU;
 		tz_menu[0].opt_flags = 0;
 		tz_menu[0].opt_action = set_tz_back;
