@@ -1,4 +1,4 @@
-/*	$NetBSD: mopcopy.c,v 1.1 2002/06/06 23:01:01 thorpej Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.2 2002/11/05 04:54:26 thorpej Exp $	*/
 
 /* mopcopy - Convert a Unix format kernel into something that
  * can be transfered via MOP.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopcopy.c,v 1.1 2002/06/06 23:01:01 thorpej Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.2 2002/11/05 04:54:26 thorpej Exp $");
 #endif
 
 #include "os.h"
@@ -170,7 +170,7 @@ main (int argc, char **argv)
 			fprintf(stderr, "%s%u+%u", j == 0 ? "" : "+",
 			    dl.e_sections[j].s_fsize,
 			    dl.e_sections[j].s_pad);
-		fprintf(stderr, "->%u\n", dl.xferaddr);
+		fprintf(stderr, "->0x%x\n", dl.xferaddr);
 #endif
 		break;
 
@@ -178,7 +178,7 @@ main (int argc, char **argv)
 #ifdef NOAOUT
 		abort();
 #else
-		fprintf(stderr, "copying %u+%u+%u->%u\n", dl.a_text,
+		fprintf(stderr, "copying %u+%u+%u->0x%x\n", dl.a_text,
 		    dl.a_data, dl.a_bss, dl.xferaddr);
 #endif
 		break;
