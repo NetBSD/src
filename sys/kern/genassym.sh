@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.11 2001/09/24 00:20:11 sommerfeld Exp $
+#	$NetBSD: genassym.sh,v 1.11.6.1 2002/03/22 19:36:12 thorpej Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -97,6 +97,11 @@ $0 ~ /^else/ ||
 $0 ~ /^elif[ \t]/ ||
 $0 ~ /^endif/ {
 	printf("#%s\n", $0);
+	next;
+}
+
+/^def[ \t]/ {
+	printf("#define %s\n", $2);
 	next;
 }
 
