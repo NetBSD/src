@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 1998/10/07 06:24:58 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 1998/10/14 12:28:54 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -428,7 +428,6 @@ cpu_startup()
 	int base, residual;
 
 	initmsgbuf((caddr_t)MSGBUFADDR, round_page(MSGBUFSIZE));
-	msgbufmapped = 1;
 
 	proc0.p_addr = proc0paddr;
 	v = (caddr_t)proc0paddr + USPACE;
@@ -1062,6 +1061,7 @@ mapiodev(pa, len)
 	return (void *)(va + off);
 }
 
+#include "ofb.h"
 #include "ite.h"
 #include "zstty.h"
 
@@ -1090,6 +1090,14 @@ cninit()
 		goto nocons;
 
 	console_node = node;
+
+#if NOFB > 0
+	if (strcmp(type, "display") == 0) {
+		akbd_cnattach();
+		ofb_cnattach();		/* XXX error check? */
+		return;
+	}
+#endif
 
 #if NITE > 0
 	if (strcmp(type, "display") == 0) {
