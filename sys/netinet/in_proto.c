@@ -1,9 +1,9 @@
-/*	$NetBSD: in_proto.c,v 1.55 2002/03/04 13:24:12 sommerfeld Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.56 2002/06/09 16:33:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.55 2002/03/04 13:24:12 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.56 2002/06/09 16:33:38 itojun Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -171,19 +171,19 @@ struct protosw inetsw[] = {
 #ifdef IPSEC
 { SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
   ah4_input,	0,	 	ah4_ctlinput,	0,
-  0,	  
+  0,
   0,		0,		0,		0,		ipsec_sysctl
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
   esp4_input,	0,	 	esp4_ctlinput,	0,
-  0,	  
+  0,
   0,		0,		0,		0,		ipsec_sysctl
 },
 #endif
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
   ipcomp4_input, 0,	 	0,		0,
-  0,	  
+  0,
   0,		0,		0,		0,		ipsec_sysctl
 },
 #endif /* IPSEC */
@@ -255,7 +255,7 @@ struct protosw inetsw[] = {
 };
 
 struct domain inetdomain =
-    { PF_INET, "internet", 0, 0, 0, 
+    { PF_INET, "internet", 0, 0, 0,
       inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])], 0,
       rn_inithead, 32, sizeof(struct sockaddr_in) };
 
