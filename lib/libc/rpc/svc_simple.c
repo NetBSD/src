@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.21 2001/01/04 14:42:22 lukem Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.22 2002/11/08 00:13:08 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -57,7 +57,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "rpc_com.h"
+#include "rpc_internal.h"
 
 #ifdef __weak_alias
 __weak_alias(rpc_reg,_rpc_reg)
