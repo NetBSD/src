@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.26 1999/04/07 08:21:25 christos Exp $
+$NetBSD: isapnpdevs,v 1.27 1999/04/18 00:35:30 ad Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ devlogic	com	ZTIF761		0	Zoom ComStar 33.6
 devlogic	com	CIR3000		0	Cirrus Logic V43 
 devlogic	com	MOT0000		0	Motorola ModemSurfr
 devlogic	com	SMM00C1		0	Leopard 56k PnP
+devlogic	com	SUP1650		0	Supra 336i Sp Intl
 devcompat	com	PNP0500		0	Generic 8250/16450
 devcompat	com	PNP0501		0	Generic 16550A
 
