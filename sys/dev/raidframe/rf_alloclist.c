@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.16 2003/12/31 16:32:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.16 2003/12/31 16:32:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -56,8 +56,6 @@ static int al_free_list_count;
 
 #define RF_AL_FREELIST_MAX 256
 
-#define DO_FREE(_p,_sz) RF_Free((_p),(_sz))
-
 static void rf_ShutdownAllocList(void *);
 
 static void rf_ShutdownAllocList(void *ignored)
@@ -67,7 +65,7 @@ static void rf_ShutdownAllocList(void *ignored)
 	for (p = al_free_list; p;) {
 		pt = p;
 		p = p->next;
-		DO_FREE(pt, sizeof(*pt));
+		RF_Free(pt, sizeof(*pt));
 	}
 	/*
         printf("Alloclist: Free list hit count %lu (%lu %%) miss count %lu (%lu %%)\n",
@@ -134,7 +132,7 @@ rf_FreeAllocList(RF_AllocListElem_t *l)
 		temp = l;
 		l = l->next;
 		if (al_free_list_count > RF_AL_FREELIST_MAX) {
-			DO_FREE(temp, sizeof(*temp));
+			RF_Free(temp, sizeof(*temp));
 		} else {
 			temp->next = al_free_list;
 			al_free_list = temp;
