@@ -10,5 +10,9 @@ Implement isochronous transfer mode.
 
 Implement audio driver.
 
+Do bandwidth accounting.
+
+Use lock manager locks.
+
 Implement a modem driver for the Abstract Control Model.
 
