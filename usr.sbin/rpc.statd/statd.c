@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.3 1997/10/16 23:32:27 christos Exp $	*/
+/*	$NetBSD: statd.c,v 1.4 1997/10/17 13:21:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -54,7 +54,7 @@
 #include "statd.h"
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: statd.c,v 1.3 1997/10/16 23:32:27 christos Exp $";
+static char rcsid[] = "$NetBSD: statd.c,v 1.4 1997/10/17 13:21:06 lukem Exp $";
 #endif				/* not lint */
 
 int     	debug = 0;		/* Controls syslog() for debug msgs */
@@ -170,7 +170,7 @@ handle_sigchld(sig)
 void 
 sync_file()
 {
-	if (msync(status_info, 0, 0) < 0)
+	if (msync((caddr_t)status_info, 0) < 0)
 		syslog(LOG_ERR, "msync() failed: %s", strerror(errno));
 }
 
