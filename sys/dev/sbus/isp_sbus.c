@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.14 1999/10/14 02:16:04 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.14.2.1 1999/10/20 21:02:23 thorpej Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -332,8 +332,8 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmamap;
-	int dosleep = (xs->xs_control & XS_CTL_NOSLEEP) != 0;
 	int in = (xs->xs_control & XS_CTL_DATA_IN) != 0;
+	int error;
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
@@ -345,8 +345,17 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		panic("%s: dma map already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	if (bus_dmamap_load(sbc->sbus_dmatag, dmamap, xs->data, xs->datalen,
-	    NULL, dosleep ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
+	error = bus_dmamap_load(sbc->sbus_dmatag, dmamap, xs->data, xs->datalen,
+	    NULL, BUS_DMA_NOWAIT);
+	switch (error) {
+	case 0:
+		break;
+
+	case ENOMEM:
+	case EAGAIN:
+		return (CMD_EAGAIN);
+
+	default:
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
 	}
