@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.26 2005/03/16 12:13:16 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.27 2005/03/16 12:36:57 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -706,4 +706,18 @@ sys/uvm/uvm_pdaemon.c				1.61
 	Hack around a UVM problem that causes hangs when large processes fork.
 	see PR 26908 for details.
 	[chs, ticket #1137]
+
+sys/arch/sparc/sparc/trap.c			1.156
+
+	sun4c hardware reports faults by the atomic load/store instructions as
+	read faults even if the problem was that the memory was read-only.
+	Detect this case and relabel the fault as both read and write.
+	Part of PR 25633, PR 25896.
+	[chs, ticket #1158]
+
+sys/sys/param.h                                 patch
+share/tmac/doc-common                           patch
+gnu/usr.bin/groff/tmac/mdoc.local               patch
+
+	Welcome to 2.0.2
 
