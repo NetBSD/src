@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 1995/02/13 23:06:56 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 1995/03/24 15:15:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -224,14 +224,11 @@ writedisklabel(dev, strat, lp, clp)
 		int i;
 		u_long *dp, sum;
 
-printf("dp = %lx (dlp = %lx)\n", dp, dlp);
 		dp = (u_long *)bp->b_un.b_addr;
 		sum = 0;
 		for (i = 0; i < 63; i++)
 			sum += dp[i];
 		dp[63] = sum;
-printf("sum = %lx\n", sum);
-printf("&dp[63] = %lx\n", &dp[63]);
 	}
 
 	bp->b_flags = B_WRITE;
