@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecavar.h,v 1.3 2001/09/20 21:54:11 bjh21 Exp $	*/
+/*	$NetBSD: if_ecavar.h,v 1.4 2001/12/20 01:20:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -37,13 +37,15 @@
 #include <net/if.h>
 #include <net/if_eco.h>
 
+#include <arm/fiq.h>
+
 #include <machine/bus.h>
 #include <machine/fiq.h>
 
 struct eca_fiqstate {
 	void		*efs_fiqhandler;
 	struct mbuf	*efs_rx_curmbuf;
-	struct fiq_regs	efs_rx_fiqregs;
+	struct fiqregs	efs_rx_fiqregs;
 	u_int32_t	efs_rx_flags;
 	u_int8_t	efs_rx_myaddr;
 	struct mbuf	*efs_tx_curmbuf;
@@ -59,6 +61,7 @@ struct eca_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void		*sc_rx_soft;
+	struct fiqhandler sc_fiqhandler;
 	struct eca_fiqstate sc_fiqstate;
 	struct mbuf	*sc_rcvmbuf;
 	struct mbuf	*sc_txmbuf;

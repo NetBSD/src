@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.24 2001/11/29 22:17:17 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.25 2001/12/20 01:20:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.24 2001/11/29 22:17:17 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.25 2001/12/20 01:20:24 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -78,6 +78,7 @@ extern char *irqnames[];
 int current_intr_depth = 0;
 
 #if NFIQ > 0
+void (*fiq_downgrade_handler)(void);
 int fiq_want_downgrade;
 #endif
 
