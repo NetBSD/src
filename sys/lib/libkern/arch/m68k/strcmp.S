@@ -1,5 +1,3 @@
-/*	$NetBSD: strcmp.S,v 1.2 1994/10/26 06:39:34 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,10 +37,8 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-#ifdef notdef
-	.asciz "@(#)strcmp.s	5.1 (Berkeley) 5/12/90"
-#endif
-	.asciz "$NetBSD: strcmp.S,v 1.2 1994/10/26 06:39:34 cgd Exp $"
+	/*.asciz "from: @(#)strcmp.s	5.1 (Berkeley) 5/12/90"*/
+	.asciz "$Id: strcmp.S,v 1.3 1995/02/08 18:35:53 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -54,17 +50,17 @@
  * right??
  */
 ENTRY(strcmp)
-	movl	sp@(4),a0	/* a0 = string1 */
-	movl	sp@(8),a1	/* a1 = string2 */
+	movl	sp@(4),a0		| a0 = string1
+	movl	sp@(8),a1		| a1 = string2
 scloop:
-	movb	a0@+,d0		/* get *string1 */
-	cmpb	a1@+,d0		/* compare a byte */
-	jne	scexit		/* not equal, break out */
-	tstb	d0		/* at end of string1? */
-	jne	scloop		/* no, keep going */
-	moveq	#0,d0		/* strings are equal */
+	movb	a0@+,d0			| get *string1
+	cmpb	a1@+,d0			| compare a byte
+	bne	scexit			| not equal, break out
+	tstb	d0			| at end of string1?
+	bne	scloop			| no, keep going
+	moveq	#0,d0			| strings are equal
 	rts
 scexit:
-	subb	a1@-,d0		/* *string1 - *string2 */
+	subb	a1@-,d0			| *string1 - *string2
 	extbl	d0
 	rts
