@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.93 2004/05/11 12:28:08 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.94 2004/05/11 14:42:32 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -679,4 +679,38 @@ bin/csh/dir.c					1.21,1.23
 	Use readlink with bufsize - 1.
 	Avoid overflow in strcpy.
 	[kleink, ticket #1688]
+
+sys/compat/linux/arch/arm/linux_syscall.h	regen
+sys/compat/linux/arch/arm/linux_syscallargs.h	regen
+sys/compat/linux/arch/arm/linux_syscalls.c	regen
+sys/compat/linux/arch/arm/linux_sysent.c	regen
+sys/compat/linux/arch/arm/syscalls.master	1.15 via patch
+sys/compat/linux/arch/i386/linux_syscall.h	regen
+sys/compat/linux/arch/i386/linux_syscallargs.h	regen
+sys/compat/linux/arch/i386/linux_syscalls.c	regen
+sys/compat/linux/arch/i386/linux_sysent.c	regen
+sys/compat/linux/arch/i386/syscalls.master	1.67 via patch
+sys/compat/linux/arch/m68k/linux_syscall.h	regen
+sys/compat/linux/arch/m68k/linux_syscallargs.h	regen
+sys/compat/linux/arch/m68k/linux_syscalls.c	regen
+sys/compat/linux/arch/m68k/linux_sysent.c	regen
+sys/compat/linux/arch/m68k/syscalls.master	1.43 via patch
+sys/compat/linux/arch/mips/linux_syscall.h	regen
+sys/compat/linux/arch/mips/linux_syscallargs.h	regen
+sys/compat/linux/arch/mips/linux_syscalls.c	regen
+sys/compat/linux/arch/mips/linux_sysent.c	regen
+sys/compat/linux/arch/mips/syscalls.master	1.12 via patch
+sys/compat/linux/arch/powerpc/linux_syscall.h	regen
+sys/compat/linux/arch/powerpc/linux_syscallargs.h	regen
+sys/compat/linux/arch/powerpc/linux_syscalls.c	regen
+sys/compat/linux/arch/powerpc/linux_sysent.c	regen
+sys/compat/linux/arch/powerpc/syscalls.master	1.16 via patch
+sys/compat/linux/common/linux_file64.c		1.22 via patch
+
+	Add Linux compat arg wrapper for ftruncate64(), and change linux compat
+	truncate64() wrapper to translate args structure NetBSD truncate() and
+	ftrucate() have hidden 'pad' argument, so we have to do the argument
+	translation. Problem found and patch supplied in PR kern/22360 by
+	Ales Krenek.
+	[wennmach, ticket #1686]
 
