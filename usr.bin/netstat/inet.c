@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.15 1996/01/31 04:01:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $";
+static char *rcsid = "$NetBSD: inet.c,v 1.15 1996/01/31 04:01:48 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,9 @@ tcp_stats(off, name)
 	p(tcps_keepdrops, "\t\t%d connection%s dropped by keepalive\n");
 	p(tcps_predack, "\t%d correct ACK header prediction%s\n");
 	p(tcps_preddat, "\t%d correct data packet header prediction%s\n");
-	p3(tcps_pcbcachemiss, "\t%d PCB cache miss%s\n");
+	p3(tcps_pcbhashmiss, "\t%d PCB hash miss%s\n");
+	p(tcps_noport, "\t%d dropped due to no socket\n");
+
 #undef p
 #undef p2
 #undef p3
@@ -246,10 +248,14 @@ udp_stats(off, name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&udpstat, sizeof (udpstat));
 	printf("%s:\n", name);
+	kread(off, (char *)&udpstat, sizeof (udpstat));
+
 #define	p(f, m) if (udpstat.f || sflag <= 1) \
     printf(m, udpstat.f, plural(udpstat.f))
+#define	p3(f, m) if (udpstat.f || sflag <= 1) \
+    printf(m, udpstat.f, plurales(udpstat.f))
+
 	p(udps_ipackets, "\t%u datagram%s received\n");
 	p(udps_hdrops, "\t%u with incomplete header\n");
 	p(udps_badlen, "\t%u with bad data length field\n");
@@ -266,8 +272,11 @@ udp_stats(off, name)
 		    udpstat.udps_fullsock;
 	if (delivered || sflag <= 1)
 		printf("\t%u delivered\n", delivered);
+	p3(udps_pcbhashmiss, "\t%u PCB hash miss%s\n");
 	p(udps_opackets, "\t%u datagram%s output\n");
+
 #undef p
+#undef p3
 }
 
 /*
