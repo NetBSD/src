@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.4 1999/09/29 17:33:02 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.5 1999/09/30 17:15:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@
  *
  * TODO:
  *
- * o Occasionally, dpt_readcfg() will fail while waiting for the HBA - fix. 
- * o Need a front-end for EISA boards.
  * o Need a front-end for (newer) ISA boards.
  * o Handle older firmware better.
  * o Find a bunch of different firmware EEPROMs and try them out.
@@ -69,11 +67,10 @@
  * o An interface to userland applications.
  * o A port of DPT Storage Manager included in the base system would be nice.
  * o Some sysctls or a utility (eg dptctl(8)) to control parameters.
- * o Code needs KNF in places and sanity in others.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.4 1999/09/29 17:33:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.5 1999/09/30 17:15:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,6 +459,11 @@ dpt_poll(sc, ccb)
         struct dpt_ccb *ccb;
 {
 	int i;
+
+#ifdef DEBUG
+	if ((ccb->ccb_flg & CCB_PRIVATE) == 0)
+		panic("dpt_poll: called for non-CCB_PRIVATE request\n");
+#endif
 
         for (i = ccb->ccb_timeout * 20; i; i--) {
                 if ((ccb->ccb_flg & CCB_INTR) != 0)
