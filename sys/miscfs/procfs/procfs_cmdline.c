@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.4 1999/03/24 05:51:27 mrg Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.5 1999/04/27 06:02:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -62,7 +62,8 @@ procfs_docmdline(curp, p, pfs, uio)
 	struct uio *uio;
 {
 	struct ps_strings pss;
-	int xlen, len, count, error;
+	int xlen, count, error, i;
+	size_t len, upper_bound;
 	struct uio auio;
 	struct iovec aiov;
 	vaddr_t argv;
@@ -74,11 +75,8 @@ procfs_docmdline(curp, p, pfs, uio)
 
 	/*
 	 * Allocate a temporary buffer to hold the arguments.
-	 *
-	 * XXX THIS COULD BE HANDLED MUCH MORE INTELLIGENTLY,
-	 * XXX WITHOUT REQUIRING A 256k TEMPORARY BUFFER!
 	 */
-	arg = malloc(ARG_MAX, M_TEMP, M_WAITOK);
+	arg = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
@@ -86,8 +84,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	 * ps(1) would display.
 	 */
 	if (p->p_stat == SZOMB || (p->p_flag & P_SYSTEM) != 0) {
-		snprintf(arg, sizeof(arg), "(%s)", p->p_comm);
-		len = strlen(arg);	/* exclude last NUL */
+		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm);
 		goto doio;
 	}
 
@@ -139,19 +136,20 @@ procfs_docmdline(curp, p, pfs, uio)
 		goto bad;
 
 	/*
-	 * Now copy in the actual argument vector, one byte at a time,
+	 * Now copy in the actual argument vector, one page at a time,
 	 * since we don't know how long the vector is (though, we do
 	 * know how many NUL-terminated strings are in the vector).
 	 */
 	len = 0;
 	count = pss.ps_nargvstr;
-	while (count && len < ARG_MAX) {
-		aiov.iov_base = &arg[len];
-		aiov.iov_len = 1;
+	upper_bound = round_page(uio->uio_offset + 1);
+	for (; count && len < upper_bound; len += PAGE_SIZE) {
+		aiov.iov_base = arg;
+		aiov.iov_len = PAGE_SIZE;
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = argv + len;
-		auio.uio_resid = 1;
+		auio.uio_resid = PAGE_SIZE;
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
 		auio.uio_procp = NULL;
@@ -159,9 +157,16 @@ procfs_docmdline(curp, p, pfs, uio)
 		if (error)
 			goto bad;
 
-		if (len > 0 && arg[len] == '\0')
-			count--;	/* one full string */
-		len++;
+		for (i = len; i < (len + PAGE_SIZE) && count != 0; i++) {
+			if (arg[i] == '\0')
+				count--;	/* one full string */
+		}
+
+		if (count == 0) {
+			/* No more argv strings, set up len and break. */
+			len = i;
+			break;
+		}
 	}
 	if (len > 0)
 		len--;			/* exclude last NUL */
@@ -174,11 +179,10 @@ procfs_docmdline(curp, p, pfs, uio)
 
  doio:
 	xlen = len - uio->uio_offset;
-	xlen = imin(xlen, uio->uio_resid);
 	if (xlen <= 0) 
 		error = 0;
 	else
-		error = uiomove(arg + uio->uio_offset, xlen, uio);
+		error = uiomove(arg + trunc_page(len), xlen, uio);
 
 	free(arg, M_TEMP);
 	return (error);
