@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: parse.c,v 1.2 1993/08/01 18:14:45 mycroft Exp $";
+static char rcsid[] = "$Id: parse.c,v 1.3 1994/05/20 15:57:26 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -348,7 +348,8 @@ sw1:				switch(fu->bcnt) {
 					++p2;
 					switch(p1[2]) {
 					case 'd': case 'o': case'x':
-						*p1 = p1[2];
+						*p1 = 'q';
+						p1[1] = p1[2];
 						break;
 					default:
 						p1[3] = '\0';
@@ -390,7 +391,7 @@ sw2:					switch(fu->bcnt) {
 			 * pointer, update original.
 			 */
 			savech = *p2;
-			p1[1] = '\0';
+			p1[(pr->flags&F_ADDRESS)?2:1] = '\0';
 			if (!(pr->fmt = strdup(fmtp)))
 				nomem();
 			*p2 = savech;
