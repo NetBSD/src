@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/07/10 04:29:07 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2003/09/22 14:42:02 cl Exp $
 
 KMINCLUDES=	arch/m68k/DEFS.h arch/m68k/SYS.h
 KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S index.S rindex.S \
@@ -8,4 +8,4 @@ KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S index.S rindex.S \
 	ashldi3.S ashrdi3.S lshrdi3.S \
 	bswap16.S bswap32.S bswap64.S
 
-SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S
+SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S __sigtramp2.S

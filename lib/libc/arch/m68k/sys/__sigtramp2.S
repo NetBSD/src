@@ -1,11 +1,8 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.3 2003/09/22 14:42:03 cl Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.1 2003/09/22 14:42:04 cl Exp $
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,52 +33,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <signal.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/syscall.h>
+#include "SYS.h"
 
-#include "extern.h"
-
-__weak_alias(__sigaction14, __libc_sigaction14)
-
-static int have_sigreturn = -1;
-
-static void get_have_sigreturn(void);
-
-extern int __sigtramp_siginfo_2[];
-extern int __sigtramp_sigcontext_1[];
-extern int __sigreturn14(struct sigcontext *);
-
-static void
-get_have_sigreturn(void)
-{
-	struct sigaction nsa, osa;
-
-	sigemptyset(&nsa.sa_mask);
-	nsa.sa_flags = 0;
-	nsa.sa_handler = SIG_IGN;
-
-	__sigaction_sigtramp(SIGILL, &nsa, &osa, __sigtramp_siginfo_2, 2);
-
-	/* (void)syscall(SYS_compat_16___sigreturn14, NULL); */
-	(void)__sigreturn14(NULL);
-	have_sigreturn = errno == EFAULT;
-
-	__sigaction_sigtramp(SIGILL, &osa, NULL, __sigtramp_siginfo_2, 2);
-}
-
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	if (have_sigreturn == -1)
-		get_have_sigreturn();
-
-	if (have_sigreturn && act && (act->sa_flags & SA_SIGINFO) == 0)
-		return __sigaction_sigtramp(sig, act, oact,
-		    __sigtramp_sigcontext_1, 1);
-
-	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2);
-}
+/*
+ * The m68k signal trampoline is invoked only to return from
+ * the signal; the kernel calls the signal handler directly.
+ *
+ * On entry, stack looks like:
+ *
+ *		ucontext structure			[12+sizeof(siginfo_t)]
+ *		siginfo structure			[12]
+ *		pointer to ucontext structure		[8]
+ *		pointer to siginfo structure		[4]
+ *	sp->	signal number				[0]
+ */
+ENTRY_NOPROFILE(__sigtramp_siginfo_2)
+	movl	%sp@(8),%a0	/* get pointer to ucontext */
+	movl	%a0,%sp@(4)	/* put it in the argument slot */
+				/* fake return address already there */
+        movl    #SYS_setcontext,%d0
+        trap    #0
+	movl	%d0,%sp@(4)	/* error code */
+	SYSTRAP(exit)		/* exit */
