@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.10 2002/10/14 13:43:36 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.11 2002/10/23 06:15:59 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,6 +53,7 @@
 .Nm ungetnewvnode ,
 .Nm vrecycle ,
 .Nm vgone ,
+.Nm vgonel ,
 .Nm vflush ,
 .Nm vaccess ,
 .Nm checkalias ,
@@ -97,6 +98,8 @@
 .Fn vrecycle "struct vnode *vp" "struct simplelock *inter_lkp" "struct proc *p"
 .Ft void
 .Fn vgone "struct vnode *vp"
+.Ft void
+.Fn vgonel "struct vnode *vp"
 .Ft int
 .Fn vflush "struct mount *mp" "struct vnode *skipvp" "int flags"
 .Ft int
@@ -642,7 +645,11 @@ to the front of the freelist.
 .Fn vrecycle
 is a null operation if the reference count is greater than zero.
 .It Fn vgone "vp"
-Eliminate all activity associated with the vnode
+Eliminate all activity associated with the unlocked vnode
+.Fa vp
+in preparation for recycling.
+.It Fn vgonel "vp"
+Eliminate all activity associated with the locked vnode
 .Fa vp
 in preparation for recycling.
 .It Fn vflush "mp" "skipvp" "flags"
