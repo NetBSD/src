@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $	*/
+/*	$NetBSD: kvm_sparc64.c,v 1.8 2003/04/03 22:07:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $");
+__RCSID("$NetBSD: kvm_sparc64.c,v 1.8 2003/04/03 22:07:16 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,6 +66,7 @@ __RCSID("$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $");
 
 #include <machine/pmap.h>
 #include <machine/kcore.h>
+#include <machine/vmparam.h>
 
 #include <limits.h>
 #include <db.h>
