@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.5 1997/08/24 23:20:04 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.6 1997/10/07 14:02:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,6 +44,12 @@
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 
+char *catstr __P((char *p, char *q));
+struct field *findfield __P((char *name));
+void prfield __P((struct field *p, char *sep, int prvalset));
+int rdfield __P((struct field *p, char *q));
+int main(int argc, char **argv);
+
 FILE *out = stdout;
 
 char *prog;
@@ -59,7 +65,9 @@ mixer_ctrl_t *values;
 mixer_devinfo_t *infos;
 
 char *
-catstr(char *p, char *q)
+catstr(p, q)
+	char *p;
+        char *q;
 {
 	char *r = malloc(strlen(p) + strlen(q) + 2);
 	strcpy(r, p);
@@ -69,7 +77,8 @@ catstr(char *p, char *q)
 }
 
 struct field *
-findfield(char *name)
+findfield(name)
+	char *name;
 {
 	int i;
 	for(i = 0; fields[i].name; i++)
@@ -79,7 +88,10 @@ findfield(char *name)
 }
 
 void
-prfield(struct field *p, char *sep, int prvalset)
+prfield(p, sep, prvalset)
+	struct field *p;
+        char *sep;
+        int prvalset;
 {
 	mixer_ctrl_t *m;
 	int i, n;
@@ -126,7 +138,9 @@ prfield(struct field *p, char *sep, int prvalset)
 }
 
 int
-rdfield(struct field *p, char *q)
+rdfield(p, q)
+	struct field *p;
+        char *q;
 {
 	mixer_ctrl_t *m;
 	int v, v0, v1, mask;
@@ -191,10 +205,12 @@ rdfield(struct field *p, char *q)
 	return 1;
 }
 
-void
-main(int argc, char **argv)
+int
+main(argc, argv)
+	int argc;
+        char **argv;
 {
-	int fd, r, i, j, ch, pos;
+	int fd, i, j, ch, pos;
 	int aflag = 0, wflag = 0, vflag = 0;
 	char *file = "/dev/mixer";
 	char *sep = "=";
@@ -266,7 +282,7 @@ main(int argc, char **argv)
 			if (ioctl(fd, AUDIO_MIXER_READ, &values[i]) < 0) {
 				values[i].un.value.num_channels = 1;
 				if (ioctl(fd, AUDIO_MIXER_READ, &values[i]) < 0)
-					err(1, NULL);
+					err(1, "AUDIO_MIXER_READ");
 			}
 		}
 	}
@@ -313,7 +329,7 @@ main(int argc, char **argv)
 						val = *p->valp;
 						if (rdfield(p, q)) {
 							if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0)
-								warn(NULL);
+								warn("AUDIO_MIXER_WRITE");
 							else if (sep) {
 								*p->valp = val;
 								prfield(p, ": ", 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: audioctl.c,v 1.8 1997/08/25 19:03:12 augustss Exp $	*/
+/*	$NetBSD: audioctl.c,v 1.9 1997/10/07 13:55:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,6 +44,13 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
+
+struct field *findfield __P((char *name));
+void prfield __P((struct field *p, char *sep));
+void rdfield __P((struct field *p, char *q));
+void getinfo __P((int fd));
+void usage __P((void));
+int main __P((int argc, char **argv));
 
 FILE *out = stdout;
 
@@ -142,7 +149,8 @@ struct {
 };
 
 struct field *
-findfield(char *name)
+findfield(name)
+    char *name;
 {
     int i;
     for(i = 0; fields[i].name; i++)
@@ -152,7 +160,9 @@ findfield(char *name)
 }
 
 void
-prfield(struct field *p, char *sep)
+prfield(p, sep)
+    struct field *p;
+    char *sep;
 {
     u_int v;
     char *cm;
@@ -217,7 +227,9 @@ prfield(struct field *p, char *sep)
 }
 
 void
-rdfield(struct field *p, char *q)
+rdfield(p, q)
+    struct field *p;
+    char *q;
 {
     int i;
 
@@ -242,12 +254,13 @@ rdfield(struct field *p, char *q)
 }
 
 void
-getinfo(int fd)
+getinfo(fd)
+    int fd;
 {
     int pos, i;
 
     if (ioctl(fd, AUDIO_GETDEV, &adev) < 0)
-	err(1, NULL);
+	err(1, "AUDIO_GETDEV");
     for(pos = 0, i = 0; ; i++) {
 	audio_encoding_t enc;
 	enc.index = i;
@@ -261,17 +274,17 @@ getinfo(int fd)
 	pos += strlen(encbuf+pos);
     }
     if (ioctl(fd, AUDIO_GETFD, &fullduplex) < 0)
-	err(1, NULL);
+	err(1, "AUDIO_GETFD");
     if (ioctl(fd, AUDIO_GETPROPS, &properties) < 0)
-	err(1, NULL);
+	err(1, "AUDIO_GETPROPS");
     if (ioctl(fd, AUDIO_RERROR, &rerror) < 0)
-	err(1, NULL);
+	err(1, "AUDIO_RERROR");
     if (ioctl(fd, AUDIO_GETINFO, &info) < 0)
-	err(1, NULL);
+	err(1, "AUDIO_GETINFO");
 }
 
 void
-usage(void)
+usage()
 {
     fprintf(out, "%s [-f file] [-n] name ...\n", prog);
     fprintf(out, "%s [-f file] [-n] -w name=value ...\n", prog);
@@ -279,8 +292,10 @@ usage(void)
     exit(1);
 }
 
-void
-main(int argc, char **argv)
+int
+main(argc, argv)
+    int argc;
+    char **argv;
 {
     int fd, i, ch;
     int aflag = 0, wflag = 0;
@@ -320,9 +335,9 @@ main(int argc, char **argv)
     
     /* Check if stdout is the same device as the audio device. */
     if (fstat(fd, &dstat) < 0)
-	err(1, NULL);
+	err(1, "fstat au");
     if (fstat(STDOUT_FILENO, &ostat) < 0)
-		err(1, NULL);
+		err(1, "fstat stdout");
     if (S_ISCHR(dstat.st_mode) && S_ISCHR(ostat.st_mode) &&
 	major(dstat.st_dev) == major(ostat.st_dev) &&
 	minor(dstat.st_dev) == minor(ostat.st_dev))
