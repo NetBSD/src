@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.154 2001/01/08 13:28:08 itojun Exp $
+#	$NetBSD: bsd.own.mk,v 1.155 2001/02/01 19:29:59 itojun Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -57,6 +57,11 @@ KMODDIR?=	/usr/lkm
 KMODGRP?=	wheel
 KMODOWN?=	root
 KMODMODE?=	${NONBINMODE}
+
+LOCALEDIR?=	/usr/share/locale
+LOCALEGRP?=	wheel
+LOCALEOWN?=	root
+LOCALEMODE?=	${NONBINMODE}
 
 COPY?=		-c
 .if defined(UPDATE)
