@@ -1,8 +1,12 @@
 ./boot
 ./pcs750.bin
 ./sbin/ldconfig
+./usr/mdec/boot
+./usr/mdec/boot.mop
 ./usr/mdec/hpboot
 ./usr/mdec/raboot
+./usr/mdec/rdboot
+./usr/mdec/sdboot
 ./usr/mdec/xxboot
 ./usr/lib/libg2c.so.0.0
 ./usr/lib/libobjc.so.0.0
