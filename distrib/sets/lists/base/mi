@@ -515,6 +515,7 @@
 ./usr/sbin/nfsiod
 ./usr/sbin/nslookup
 ./usr/sbin/ntpdate
+./usr/sbin/ntptime
 ./usr/sbin/ntpq
 ./usr/sbin/ntptrace
 ./usr/sbin/pac
@@ -699,8 +700,12 @@
 ./usr/share/man
 ./usr/share/man/COPYRIGHT
 ./usr/share/man/cat1
+./usr/share/man/cat1/atari
+./usr/share/man/cat1/i386
+./usr/share/man/cat1/x68k
 ./usr/share/man/cat2
 ./usr/share/man/cat3
+./usr/share/man/cat3/i386
 ./usr/share/man/cat3f
 ./usr/share/man/cat4
 ./usr/share/man/cat4/alpha
@@ -717,6 +722,7 @@
 ./usr/share/man/cat4/vax
 ./usr/share/man/cat4/x68k
 ./usr/share/man/cat5
+./usr/share/man/cat5/i386
 ./usr/share/man/cat6
 ./usr/share/man/cat7
 ./usr/share/man/cat8
@@ -727,10 +733,12 @@
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/i386
 ./usr/share/man/cat8/mac68k
+./usr/share/man/cat8/mvme68k
 ./usr/share/man/cat8/pc532
 ./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/sparc
 ./usr/share/man/cat8/sun3
+./usr/share/man/cat8/sun3x
 ./usr/share/man/cat8/vax
 ./usr/share/man/cat8/x68k
 ./usr/share/man/cat9
@@ -749,8 +757,12 @@
 ./usr/share/man/cat9/x68k
 ./usr/share/man/makewhatis.sed
 ./usr/share/man/man1
+./usr/share/man/man1/atari
+./usr/share/man/man1/i386
+./usr/share/man/man1/x68k
 ./usr/share/man/man2
 ./usr/share/man/man3
+./usr/share/man/man3/i386
 ./usr/share/man/man3f
 ./usr/share/man/man4
 ./usr/share/man/man4/alpha
@@ -767,6 +779,7 @@
 ./usr/share/man/man4/vax
 ./usr/share/man/man4/x68k
 ./usr/share/man/man5
+./usr/share/man/man5/i386
 ./usr/share/man/man6
 ./usr/share/man/man7
 ./usr/share/man/man8
@@ -777,10 +790,12 @@
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/mac68k
+./usr/share/man/man8/mvme68k
 ./usr/share/man/man8/pc532
 ./usr/share/man/man8/pmax
 ./usr/share/man/man8/sparc
 ./usr/share/man/man8/sun3
+./usr/share/man/man8/sun3x
 ./usr/share/man/man8/vax
 ./usr/share/man/man8/x68k
 ./usr/share/man/man9
