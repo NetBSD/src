@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: mgnsc.c,v 1.4 1994/06/16 14:28:53 chopps Exp $
+ *	$Id: mgnsc.c,v 1.5 1994/09/27 05:07:59 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ mgnscattach(pdp, dp, auxp)
 	zap = auxp;
 	
 	sc = (struct siop_softc *)dp;
-	sc->sc_siopp = rp = zap->va + 0x40000;
+	sc->sc_siopp = rp = zap->va + 0x8000;
 
 	/*
 	 * DCNTL = 25.01->37.5MHZ / SCLK/1.5
