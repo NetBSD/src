@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1999/02/20 00:12:02 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1999/06/07 20:16:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -176,14 +176,6 @@ mainbus_print(aux, cp)
 	return (UNCONF);
 }
 
-struct devnametobdevmaj mvme68k_nam2blk[] = {
-	{ "sd",		4 },
-	{ "st",		7 },
-	{ "cd",		8 },
-	{ "md",		9 },
-	{ NULL,		0 },
-};
-
 /*
  * Determine mass storage and memory configuration for a machine.
  */
@@ -208,7 +200,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 		(booted_device) ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, 0, mvme68k_nam2blk);
+	setroot(booted_device, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 1999/04/01 00:17:46 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64 1999/06/07 20:16:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -50,13 +50,6 @@ int mbmatch __P((struct device *, struct cfdata *, void *));
 int cold;	/* 1 if still booting */
 #include <sys/kernel.h>
 
-struct devnametobdevmaj amiga_nam2blk[] = {
-	{ "fd",		2 },
-	{ "sd",		4 },
-	{ "cd",		7 },
-	{ "md",		15 },
-	{ NULL,		0 },
-};
 u_long boot_partition;
 
 /*
@@ -126,7 +119,7 @@ cpu_rootconf()
 #ifdef DEBUG_KERNEL_START
 	printf("survived findroot()\n");
 #endif
-	setroot(booted_device, booted_partition, amiga_nam2blk);
+	setroot(booted_device, booted_partition);
 #ifdef DEBUG_KERNEL_START
 	printf("survived setroot()\n");
 #endif
