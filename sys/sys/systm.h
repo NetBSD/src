@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.143.2.2 2002/05/16 12:45:34 gehenna Exp $	*/
+/*	$NetBSD: systm.h,v 1.143.2.3 2002/05/16 12:47:25 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -121,7 +121,7 @@ extern const char *rootspec;	/* how root device was specified */
  * is used by the swap pager to indirect through the routines
  * in sys/vm/vm_swap.c.
  */
-extern dev_t swapdev;		/* swapping device */
+extern const dev_t swapdev;	/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
 typedef int	sy_call_t(struct proc *, void *, register_t *);
