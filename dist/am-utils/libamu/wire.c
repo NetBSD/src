@@ -1,7 +1,7 @@
-/*	$NetBSD: wire.c,v 1.3 2000/11/20 00:03:16 wiz Exp $	*/
+/*	$NetBSD: wire.c,v 1.4 2001/05/13 18:07:00 veego Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: wire.c,v 1.8.2.2 2000/06/09 20:16:26 ezk Exp
+ * Id: wire.c,v 1.8.2.5 2001/01/10 03:23:41 ezk Exp
  *
  */
 
@@ -244,6 +244,12 @@ getwire_lookup(u_long address, u_long netmask, int ishost)
 
   /* fill in network name (string) */
   al->ip_net_name = strdup(s);
+  /* Let's be cautious here about buffer overflows -Ion */
+  if (strlen(s) > MAXHOSTNAMELEN) {
+    al->ip_net_name[MAXHOSTNAMELEN] = '\0';
+    plog(XLOG_WARNING, "Long hostname %s truncated to %d characters",
+	 s, MAXHOSTNAMELEN);
+  }
 
   return (al);
 }
