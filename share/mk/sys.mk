@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.75 2003/07/18 04:04:04 lukem Exp $
+#	$NetBSD: sys.mk,v 1.76 2003/07/27 09:35:47 lukem Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -107,8 +107,8 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${COMPILE.c} ${.IMPSRC}
 .c.a:
 	${COMPILE.c} ${.IMPSRC}
-	${AR} ${ARFLAGS} $@ $*.o
-	rm -f $*.o
+	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
+	rm -f ${.PREFIX}.o
 .c.ln:
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
@@ -119,8 +119,8 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${COMPILE.cc} ${.IMPSRC}
 .cc.a .cpp.a .cxx.a .C.a:
 	${COMPILE.cc} ${.IMPSRC}
-	${AR} ${ARFLAGS} $@ $*.o
-	rm -f $*.o
+	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
+	rm -f ${.PREFIX}.o
 
 # Fortran/Ratfor
 .f:
@@ -129,8 +129,8 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${COMPILE.f} ${.IMPSRC}
 .f.a:
 	${COMPILE.f} ${.IMPSRC}
-	${AR} ${ARFLAGS} $@ $*.o
-	rm -f $*.o
+	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
+	rm -f ${.PREFIX}.o
 
 .F:
 	${LINK.F} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
@@ -138,8 +138,8 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${COMPILE.F} ${.IMPSRC}
 .F.a:
 	${COMPILE.F} ${.IMPSRC}
-	${AR} ${ARFLAGS} $@ $*.o
-	rm -f $*.o
+	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
+	rm -f ${.PREFIX}.o
 
 .r:
 	${LINK.r} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
@@ -147,8 +147,8 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${COMPILE.r} ${.IMPSRC}
 .r.a:
 	${COMPILE.r} ${.IMPSRC}
-	${AR} ${ARFLAGS} $@ $*.o
-	rm -f $*.o
+	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
+	rm -f ${.PREFIX}.o
 
 # Pascal
 .p:
@@ -157,8 +157,8 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${COMPILE.p} ${.IMPSRC}
 .p.a:
 	${COMPILE.p} ${.IMPSRC}
-	${AR} ${ARFLAGS} $@ $*.o
-	rm -f $*.o
+	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
+	rm -f ${.PREFIX}.o
 
 # Assembly
 .s:
@@ -167,16 +167,16 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${COMPILE.s} ${.IMPSRC}
 .s.a:
 	${COMPILE.s} ${.IMPSRC}
-	${AR} ${ARFLAGS} $@ $*.o
-	rm -f $*.o
+	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
+	rm -f ${.PREFIX}.o
 .S:
 	${LINK.S} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .S.o:
 	${COMPILE.S} ${.IMPSRC}
 .S.a:
 	${COMPILE.S} ${.IMPSRC}
-	${AR} ${ARFLAGS} $@ $*.o
-	rm -f $*.o
+	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
+	rm -f ${.PREFIX}.o
 
 # Lex
 .l:
