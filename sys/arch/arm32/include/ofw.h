@@ -61,10 +61,8 @@ vm_offset_t ofw_getcleaninfo __P((void));
 #ifdef	OFWGENCFG
 /* Implemented in <ofw/ofwgencfg_machdep.c> */
 extern int ofw_handleticks;
-extern void boot		__P((int, char *));
+extern void cpu_reboot		__P((int, char *));
 extern vm_offset_t initarm	__P((ofw_handle_t));
-extern void consinit		__P((void));
-extern void process_kernel_args	__P((void));
 extern void ofrootfound		__P((void));
 #endif
 
