@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.24 2004/02/13 11:36:17 wiz Exp $ */
+/* $NetBSD: machdep.c,v 1.25 2004/04/03 06:44:00 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2004/02/13 11:36:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2004/04/03 06:44:00 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -361,7 +361,7 @@ cpu_startup(void)
 	 */
 	printf(version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("%s memory", pbuf);
+	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
 	/*
@@ -384,7 +384,7 @@ cpu_startup(void)
 	 */
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf(", %s free", pbuf);
+	printf("avail memory = %s\n", pbuf);
 }
 
 int	waittime = -1;
