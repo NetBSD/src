@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.5 1994/03/08 19:48:19 phil Exp $
+ *	$Id: scn.c,v 1.6 1994/03/10 21:35:50 phil Exp $
  */
 
 #include "scn.h"
@@ -505,14 +505,13 @@ scnclose(dev, flag, mode, p)
 		DELAY (10);
 		WR_ADR (u_char, rs->opset_port, DTR_BIT << rs->a_or_b);
 	}
-
 	ttyclose(tp);
-
-#if 0 /* this is broken. */
-	ttyfree(tp);
-	scn_tty[unit] = (struct tty *)NULL;
+#if 0
+	if ((tp->t_state&TS_ISOPEN) == 0) {
+		ttyfree(tp);
+		scn_tty[unit] = (struct tty *)NULL;
+	}
 #endif
-
 	return(0);
 }
  
