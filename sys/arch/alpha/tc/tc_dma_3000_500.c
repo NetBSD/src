@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.5 1998/02/04 07:37:31 thorpej Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.6 1998/05/07 20:09:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.5 1998/02/04 07:37:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.6 1998/05/07 20:09:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.5 1998/02/04 07:37:31 thorpej 
 
 struct alpha_bus_dma_tag tc_dmat_sgmap = {
 	NULL,				/* _cookie */
+	0,				/* _wbase */
 	NULL,				/* _get_tag */
 	tc_bus_dmamap_create_sgmap,
 	tc_bus_dmamap_destroy_sgmap,

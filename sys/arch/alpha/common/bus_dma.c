@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.17 1998/03/17 04:59:36 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.18 1998/05/07 20:09:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 1998/03/17 04:59:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 1998/05/07 20:09:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,14 +221,13 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
  * chipset.
  */
 int
-_bus_dmamap_load_direct_common(t, map, buf, buflen, p, flags, wbase)
+_bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	bus_addr_t wbase;
 {
 	vm_offset_t lastaddr;
 	int seg, error;
@@ -244,7 +243,7 @@ _bus_dmamap_load_direct_common(t, map, buf, buflen, p, flags, wbase)
 
 	seg = 0;
 	error = _bus_dmamap_load_buffer_direct_common(map, buf, buflen,
-	    p, flags, wbase, &lastaddr, &seg, 1);
+	    p, flags, t->_wbase, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -256,12 +255,11 @@ _bus_dmamap_load_direct_common(t, map, buf, buflen, p, flags, wbase)
  * Like _bus_dmamap_load_direct_common(), but for mbufs.
  */
 int
-_bus_dmamap_load_mbuf_direct_common(t, map, m0, flags, wbase)
+_bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	struct mbuf *m0;
 	int flags;
-	bus_addr_t wbase;
 {
 	vm_offset_t lastaddr;
 	int seg, error, first;
@@ -286,7 +284,7 @@ _bus_dmamap_load_mbuf_direct_common(t, map, m0, flags, wbase)
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		error = _bus_dmamap_load_buffer_direct_common(map,
-		    m->m_data, m->m_len, NULL, flags, wbase, &lastaddr,
+		    m->m_data, m->m_len, NULL, flags, t->_wbase, &lastaddr,
 		    &seg, first);
 		first = 0;
 	}
@@ -301,32 +299,30 @@ _bus_dmamap_load_mbuf_direct_common(t, map, m0, flags, wbase)
  * Like _bus_dmamap_load_direct_common(), but for uios.
  */
 int
-_bus_dmamap_load_uio_direct_common(t, map, uio, flags, wbase)
+_bus_dmamap_load_uio_direct(t, map, uio, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	struct uio *uio;
 	int flags;
-	bus_addr_t wbase;
 {
 
-	panic("_bus_dmamap_load_uio_direct_common: not implemented");
+	panic("_bus_dmamap_load_uio_direct: not implemented");
 }
 
 /*
  * Like _bus_dmamap_load_direct_common(), but for raw memory.
  */
 int
-_bus_dmamap_load_raw_direct_common(t, map, segs, nsegs, size, flags, wbase)
+_bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	bus_size_t size;
 	int flags;
-	bus_addr_t wbase;
 {
 
-	panic("_bus_dmamap_load_raw_direct_common: not implemented");
+	panic("_bus_dmamap_load_raw_direct: not implemented");
 }
 
 /*
