@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.21 1997/03/20 06:48:56 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.22 1997/03/25 07:57:14 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -108,7 +108,9 @@
 
 struct pss_softc {
 	struct	device sc_dev;		/* base device */
+#ifdef NEWCONFIG
 	struct	isadev sc_id;		/* ISA device */
+#endif
 	void	*sc_ih;			/* interrupt vectoring */
 
 	int	sc_iobase;		/* I/O port base address */
@@ -127,23 +129,29 @@ struct pss_softc {
 	int	mic_mute, cd_mute, dac_mute;
 };
 
+#ifdef notyet
 struct mpu_softc {
 	struct	device sc_dev;		/* base device */
+#ifdef NEWCONFIG
 	struct	isadev sc_id;		/* ISA device */
+#endif
 	void	*sc_ih;			/* interrupt vectoring */
     
 	int	sc_iobase;		/* MIDI I/O port base address */
 	int	sc_irq;			/* MIDI interrupt */
 };
 
-struct cd_softc {
+struct pcd_softc {
 	struct	device sc_dev;		/* base device */
+#ifdef NEWCONFIG
 	struct	isadev sc_id;		/* ISA device */
+#endif
 	void	*sc_ih;			/* interrupt vectoring */
 
 	int	sc_iobase;		/* CD I/O port base address */
 	int	sc_irq;			/* CD interrupt */
 };
+#endif
 
 #ifdef AUDIO_DEBUG
 extern void Dprintf __P((const char *, ...));
@@ -187,14 +195,21 @@ int	pss_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	pss_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	pss_query_devinfo __P((void *, mixer_devinfo_t *));
 
+#ifdef PSS_DSP
 void	pss_dspwrite __P((struct pss_softc *, int));
+#endif
 void	pss_setaddr __P((int, int));
 int	pss_setint __P((int, int));
 int	pss_setdma __P((int, int));
+int	pss_testirq __P((struct pss_softc *, int));
 int	pss_testdma __P((struct pss_softc *, int));
+#ifdef notyet
 int	pss_reset_dsp __P((struct pss_softc *));
 int	pss_download_dsp __P((struct pss_softc *, u_char *, int));
+#endif
+#ifdef AUDIO_DEBUG
 void	pss_dump_regs __P((struct pss_softc *));
+#endif
 int	pss_set_master_gain __P((struct pss_softc *, struct ad1848_volume *));
 int	pss_set_master_mode __P((struct pss_softc *, int));
 int	pss_set_treble __P((struct pss_softc *, u_int));
@@ -207,7 +222,9 @@ int	pss_get_bass __P((struct pss_softc *, u_char *));
 static int pss_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
 static int pss_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
 
+#ifdef AUDIO_DEBUG
 void	wss_dump_regs __P((struct ad1848_softc *));
+#endif
 
 /*
  * Define our interface to the higher level audio driver.
@@ -288,7 +305,7 @@ struct cfdriver mpu_cd = {
 };
 
 struct cfattach pcd_ca = {
-	sizeof(struct cd_softc), pcdprobe, pcdattach
+	sizeof(struct pcd_softc), pcdprobe, pcdattach
 };
 
 struct cfdriver pcd_cd = {
@@ -302,6 +319,7 @@ struct audio_device pss_device = {
 	"PSS"
 };
 
+#ifdef PSS_DSP
 void
 pss_dspwrite(sc, data)
 	struct pss_softc *sc;
@@ -325,6 +343,7 @@ pss_dspwrite(sc, data)
     }
     printf ("pss: DSP Command (%04x) Timeout.\n", data);
 }
+#endif /* PSS_DSP */
 
 void
 pss_setaddr(addr, configAddr)
@@ -350,58 +369,48 @@ pss_setint(intNum, configAddress)
 	int configAddress;
 {
     int val;
+
     switch(intNum) {
-    case 0:
-	val = inw(configAddress);
-	val &= INT_MASK;
-	outw(configAddress,val);
-	break;
     case 3:
 	val = inw(configAddress);
 	val &= INT_MASK;
 	val |= INT_3_BITS;
-	outw(configAddress,val);
 	break;
     case 5:
 	val = inw(configAddress);
 	val &= INT_MASK;
 	val |= INT_5_BITS;
-	outw(configAddress,val);
 	break;
     case 7:
 	val = inw(configAddress);
 	val &= INT_MASK;
 	val |= INT_7_BITS;
-	outw(configAddress,val);
 	break;
     case 9:
 	val = inw(configAddress);
 	val &= INT_MASK;
 	val |= INT_9_BITS;
-	outw(configAddress,val);
 	break;
     case 10:
 	val = inw(configAddress);
 	val &= INT_MASK;
 	val |= INT_10_BITS;
-	outw(configAddress,val);
 	break;
     case 11:
 	val = inw(configAddress);
 	val &= INT_MASK;
 	val |= INT_11_BITS;
-	outw(configAddress,val);
 	break;
     case 12:
 	val = inw(configAddress);
 	val &= INT_MASK;
 	val |= INT_12_BITS;
-	outw(configAddress,val);
 	break;
     default:
-	printf("pss_setint unkown int\n");
+	DPRINTF(("pss_setint: invalid irq (%d)\n", intNum));
 	return 1;
     }
+    outw(configAddress,val);
     return 0;
 }
 
@@ -417,42 +426,37 @@ pss_setdma(dmaNum, configAddress)
 	val = inw(configAddress);
 	val &= DMA_MASK;
 	val |= DMA_0_BITS;
-	outw(configAddress,val);
 	break;
     case 1:
 	val = inw(configAddress);
 	val &= DMA_MASK;
 	val |= DMA_1_BITS;
-	outw(configAddress,val);
 	break;
     case 3:
 	val = inw(configAddress);
 	val &= DMA_MASK;
 	val |= DMA_3_BITS;
-	outw(configAddress,val);
 	break;
     case 5:
 	val = inw(configAddress);
 	val &= DMA_MASK;
 	val |= DMA_5_BITS;
-	outw(configAddress,val);
 	break;
     case 6:
 	val = inw(configAddress);
 	val &= DMA_MASK;
 	val |= DMA_6_BITS;
-	outw(configAddress,val);
 	break;
     case 7:
 	val = inw(configAddress);
 	val &= DMA_MASK;
 	val |= DMA_7_BITS;
-	outw(configAddress,val);
 	break;
     default:
-	printf("PSS ERROR! pss_setdma: unknown_dma\n");
+	DPRINTF(("pss_setdma: invalid drq (%d)\n", dmaNum));
 	return 1;
     }
+    outw(configAddress, val);
     return 0;
 }
 
@@ -462,10 +466,10 @@ pss_setdma(dmaNum, configAddress)
  * as its argument and returns TRUE if the interrupt
  * is ok.
 */
-static int
+int
 pss_testirq(struct pss_softc *sc, int intNum)
 {
-    int iobase = sc->sc_iobase;
+    int config = sc->sc_iobase + PSS_CONFIG;
     int val;
     int ret;
     int i;
@@ -473,61 +477,50 @@ pss_testirq(struct pss_softc *sc, int intNum)
     /* Set the interrupt bits */
     switch(intNum) {
     case 3:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= INT_MASK;	/* Special: 0 */
-	outw(iobase+PSS_CONFIG, val);
 	break;
     case 5:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= INT_MASK;
-	val |= INT_5_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= INT_TEST_BIT | INT_5_BITS;
 	break;
     case 7:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= INT_MASK;
-	val |= INT_7_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= INT_TEST_BIT | INT_7_BITS;
 	break;
     case 9:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= INT_MASK;
-	val |= INT_9_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= INT_TEST_BIT | INT_9_BITS;
 	break;
     case 10:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= INT_MASK;
-	val |= INT_10_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= INT_TEST_BIT | INT_10_BITS;
 	break;
     case 11:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= INT_MASK;
-	val |= INT_11_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= INT_TEST_BIT | INT_11_BITS;
 	break;
     case 12:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= INT_MASK;
-	val |= INT_12_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= INT_TEST_BIT | INT_12_BITS;
 	break;
     default:
-	DPRINTF(("pss: unknown IRQ (%d)\n", intNum));
+	DPRINTF(("pss_testirq: invalid irq (%d)\n", intNum));
 	return 0;
     }
-
-    /* Set the interrupt test bit */
-    val = inw(iobase+PSS_CONFIG);
-    val |= INT_TEST_BIT;
-    outw(iobase+PSS_CONFIG,val);
+    outw(config, val);
 
     /* Check if the interrupt is in use */
     /* Do it a few times in case there is a delay */
     ret = 0;
     for (i = 0; i < 5; i++) {
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	if (val & INT_TEST_PASS) {
 	    ret = 1;
 	    break;
@@ -535,17 +528,16 @@ pss_testirq(struct pss_softc *sc, int intNum)
     }
 
     /* Clear the Test bit and the interrupt bits */
-    val = inw(iobase+PSS_CONFIG);
-    val &= INT_TEST_BIT_MASK;
-    val &= INT_MASK;
-    outw(iobase+PSS_CONFIG,val);
+    val = inw(config);
+    val &= INT_TEST_BIT_MASK & INT_MASK;
+    outw(config, val);
     return(ret);
 }
 
 /*
  * This function tests a dma channel to see if
- * it is availible. It takes the DMA channel button
- * as it's argument and returns TRUE if the channel
+ * it is available. It takes the DMA channel button
+ * as its argument and returns TRUE if the channel
  * is ok.
  */
 int
@@ -553,62 +545,52 @@ pss_testdma(sc, dmaNum)
 	struct pss_softc *sc;
 	int dmaNum;
 {
-    int iobase = sc->sc_iobase;
+    int config = sc->sc_iobase + PSS_CONFIG;
     int val;
-    int i,ret;
+    int i, ret;
 
     switch (dmaNum) {
     case 0:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= DMA_MASK;
-	val |= DMA_0_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= DMA_TEST_BIT | DMA_0_BITS;
 	break;
     case 1:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= DMA_MASK;
-	val |= DMA_1_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= DMA_TEST_BIT | DMA_1_BITS;
 	break;
     case 3:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= DMA_MASK;
-	val |= DMA_3_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= DMA_TEST_BIT | DMA_3_BITS;
 	break;
     case 5:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= DMA_MASK;
-	val |= DMA_5_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= DMA_TEST_BIT | DMA_5_BITS;
 	break;
     case 6:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= DMA_MASK;
-	val |= DMA_6_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= DMA_TEST_BIT | DMA_6_BITS;
 	break;
     case 7:
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	val &= DMA_MASK;
-	val |= DMA_7_BITS;
-	outw(iobase+PSS_CONFIG,val);
+	val |= DMA_TEST_BIT | DMA_7_BITS;
 	break;
     default:
-	DPRINTF(("pss: unknown DMA channel (%d)\n", dmaNum));
+	DPRINTF(("pss_testdma: invalid drq (%d)\n", dmaNum));
 	return 0;
     }
-
-    /* Set the DMA test bit */
-    val = inw(iobase+PSS_CONFIG);
-    val |= DMA_TEST_BIT;
-    outw(iobase+PSS_CONFIG,val);
+    outw(config, val);
 
     /* Check if the DMA channel is in use */
     /* Do it a few times in case there is a delay */
     ret = 0;
     for (i = 0; i < 3; i++) {
-	val = inw(iobase+PSS_CONFIG);
+	val = inw(config);
 	if (val & DMA_TEST_PASS) {
 	    ret = 1;
 	    break;
@@ -616,13 +598,13 @@ pss_testdma(sc, dmaNum)
     }
 
     /* Clear the Test bit and the DMA bits */
-    val = inw(iobase+PSS_CONFIG);
-    val &= DMA_TEST_BIT_MASK;
-    val &= DMA_MASK;
-    outw(iobase+PSS_CONFIG,val);
+    val = inw(config);
+    val &= DMA_TEST_BIT_MASK & DMA_MASK;
+    outw(config, val);
     return(ret);
 }
 
+#ifdef notyet
 int
 pss_reset_dsp(sc)
 	struct pss_softc *sc;
@@ -642,8 +624,8 @@ pss_reset_dsp(sc)
 
 /*
  * This function loads an image into the PSS 
- * card.  The function loads the file by putting
- * reseting the dsp and feeding it the boot bytes.
+ * card.  The function loads the file by
+ * resetting the dsp and feeding it the boot bytes.
  * First you feed the ASIC the first byte of 
  * the boot sequence. The ASIC waits until it
  * detects a BMS and RD and asserts BR
@@ -723,28 +705,32 @@ pss_download_dsp(sc, block, size)
 
     return 1;
 }
+#endif /* notyet */
 
+#ifdef AUDIO_DEBUG
 void
 wss_dump_regs(sc)
 	struct ad1848_softc *sc;
 {
-    printf("WSS regs: config=%x version=%x\n",
-	   (u_char)inb(sc->sc_iobase+WSS_CONFIG),
-	   (u_char)inb(sc->sc_iobase+WSS_STATUS));
+
+    printf("WSS reg: status=%02x\n",
+	   (u_char)inb(sc->sc_iobase-WSS_CODEC+WSS_STATUS));
 }
 
 void
 pss_dump_regs(sc)
 	struct pss_softc *sc;
 {
-    printf("PSS regs: status=%x vers=%x ",
+
+    printf("PSS regs: status=%04x vers=%04x ",
 	   (u_short)inw(sc->sc_iobase+PSS_STATUS),
 	   (u_short)inw(sc->sc_iobase+PSS_ID_VERS));
 	
-    printf("config=%x wss_config=%x\n",
+    printf("config=%04x wss_config=%04x\n",
 	   (u_short)inw(sc->sc_iobase+PSS_CONFIG),
 	   (u_short)inw(sc->sc_iobase+PSS_WSS_CONFIG));
 }
+#endif
 
 /*
  * Probe for the PSS hardware.
@@ -831,7 +817,7 @@ pss_found:
     pss_setint(ia->ia_irq, sc->sc_iobase+PSS_CONFIG);
     pss_setdma(sc->sc_drq, sc->sc_iobase+PSS_CONFIG);
 
-	
+#ifdef notyet
     /* Setup the Game port */
 #ifdef PSS_GAMEPORT
     DPRINTF(("Turning Game Port On.\n"));
@@ -842,6 +828,7 @@ pss_found:
 
     /* Reset DSP */
     pss_reset_dsp(sc);
+#endif /* notyet */
 
     return 1;
 }
@@ -863,7 +850,7 @@ spprobe(parent, match, aux)
     sc->sc_iobase = cf->cf_iobase + WSS_CODEC;
     
     /* Set WSS io address */
-    pss_setaddr(sc->sc_iobase, pc->sc_iobase+PSS_WSS_CONFIG);
+    pss_setaddr(cf->cf_iobase, pc->sc_iobase+PSS_WSS_CONFIG);
 
     /* Is there an ad1848 chip at the WSS iobase ? */
     if (ad1848_probe(sc) == 0) {
@@ -994,7 +981,7 @@ pcdprobe(parent, match, aux)
     struct device *parent;
     void *match, *aux;
 {
-    struct cd_softc *sc = match;
+    struct pcd_softc *sc = match;
     struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
     u_short val;
@@ -1145,7 +1132,7 @@ pcdattach(parent, self, aux)
     struct device *parent, *self;
     void *aux;
 {
-    struct cd_softc *sc = (struct cd_softc *)self;
+    struct pcd_softc *sc = (struct pcd_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
     int iobase = cf->cf_iobase;
     
