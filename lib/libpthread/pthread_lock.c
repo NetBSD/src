@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.7 2002/02/08 22:26:55 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.8 2002/03/01 01:23:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <assert.h>
+#include <errno.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -163,5 +164,93 @@ pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 		PTHREADD_ADD(PTHREADD_SPINPREEMPT);
 		pthread__switch(thread, thread->pt_next);
 	}
+}
+
+
+/* 
+ * Public (POSIX-specified) spinlocks.
+ * These don't interact with the spin-preemption code, nor do they
+ * perform any adaptive sleeping.
+ */
+
+int
+pthread_spin_init(pthread_spinlock_t *lock, int pshared)
+{
+
+#ifdef ERRORCHECK
+	if ((lock == NULL) ||
+	    ((pshared != PTHREAD_PROCESS_PRIVATE) &&
+		(pshared != PTHREAD_PROCESS_SHARED)))
+		return EINVAL;
+#endif
+	lock->pts_magic = _PT_SPINLOCK_MAGIC;
+	/* We don't actually use the pshared flag for anything;
+	 * cpu simple locks have all the process-shared properties 
+	 * that we want anyway.
+	 */
+	lock->pts_flags = pshared;
+	pthread_lockinit(&lock->pts_spin);
+
+	return 0;
+}
+
+int
+pthread_spin_destroy(pthread_spinlock_t *lock)
+{
+
+#ifdef ERRORCHECK
+	if ((lock == NULL) || (lock->pts_magic != _PT_SPINLOCK_MAGIC))
+		return EINVAL;
+	
+	if (lock->pts_spin != __SIMPLELOCK_UNLOCKED)
+		return EBUSY;
+#endif
+
+	lock->pts_magic = _PT_SPINLOCK_DEAD;
+
+	return 0;
+}
+
+int
+pthread_spin_lock(pthread_spinlock_t *lock)
+{
+
+#ifdef ERRORCHECK
+	if ((lock == NULL) || (lock->pts_magic != _PT_SPINLOCK_MAGIC))
+		return EINVAL;
+#endif
+
+	__cpu_simple_lock(&lock->pts_spin);
+
+	return 0;
+}
+
+int
+pthread_spin_trylock(pthread_spinlock_t *lock)
+{
+
+#ifdef ERRORCHECK
+	if ((lock == NULL) || (lock->pts_magic != _PT_SPINLOCK_MAGIC))
+		return EINVAL;
+#endif
+
+	if (__cpu_simple_lock_try(&lock->pts_spin) == 0)
+		return EBUSY;
+
+	return 0;
+}
+
+int
+pthread_spin_unlock(pthread_spinlock_t *lock)
+{
+
+#ifdef ERRORCHECK
+	if ((lock == NULL) || (lock->pts_magic != _PT_SPINLOCK_MAGIC))
+		return EINVAL;
+#endif
+
+	__cpu_simple_unlock(&lock->pts_spin);
+
+	return 0;
 }
 
