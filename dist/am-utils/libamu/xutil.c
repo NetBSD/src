@@ -1,7 +1,7 @@
-/*	$NetBSD: xutil.c,v 1.5 2001/05/13 18:07:00 veego Exp $	*/
+/*	$NetBSD: xutil.c,v 1.6 2002/11/29 23:06:26 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: xutil.c,v 1.11.2.6 2001/01/10 03:23:41 ezk Exp
+ * Id: xutil.c,v 1.23 2002/06/23 01:05:41 ib42 Exp
  *
  */
 
@@ -62,9 +61,7 @@ static char am_hostname[MAXHOSTNAMELEN + 1] = "unknown"; /* Hostname */
 pid_t am_mypid = -1;		/* process ID */
 serv_state amd_state;		/* amd's state */
 int foreground = 1;		/* 1 == this is the top-level server */
-#ifdef DEBUG
 int debug_flags = 0;
-#endif /* DEBUG */
 
 #ifdef HAVE_SYSLOG
 int syslogging;
@@ -82,11 +79,10 @@ static int orig_mem_bytes;
 #endif /* DEBUG_MEM */
 
 /* forward definitions */
+/* for GCC format string auditing */
 static void real_plog(int lvl, const char *fmt, va_list vargs)
      __attribute__((__format__(__printf__, 2, 0)));
-/* for GCC format string auditing */
-static const char *expand_error(const char *f, char *e, int maxlen)
-     __attribute__((__format_arg__(1)));
+
 
 #ifdef DEBUG
 /*
@@ -227,7 +223,8 @@ voidp
 xrealloc(voidp ptr, int len)
 {
 #if defined(DEBUG) && defined(DEBUG_MEM)
-  amuDebug(D_MEM) plog(XLOG_DEBUG, "Reallocated size %d; block %#x", len, ptr);
+  amuDebug(D_MEM)
+    plog(XLOG_DEBUG, "Reallocated size %d; block %#x", len, ptr);
 #endif /* defined(DEBUG) && defined(DEBUG_MEM) */
 
   if (len == 0)
@@ -346,26 +343,24 @@ show_time_host_and_name(int lvl)
   static time_t last_t = 0;
   static char *last_ctime = 0;
   time_t t;
-#ifdef HAVE_CLOCK_GETTIME
+#if defined(HAVE_CLOCK_GETTIME) && defined(DEBUG)
   struct timespec ts;
-#endif /* HAVE_CLOCK_GETTIME */
+#endif /* defined(HAVE_CLOCK_GETTIME) && defined(DEBUG) */
   char nsecs[11] = "";	/* '.' + 9 digits + '\0' */
   char *sev;
 
-#ifdef HAVE_CLOCK_GETTIME
+#if defined(HAVE_CLOCK_GETTIME) && defined(DEBUG)
   /*
    * Some systems (AIX 4.3) seem to implement clock_gettime() as stub
    * returning ENOSYS.
    */
   if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
     t = ts.tv_sec;
-#ifdef DEBUG
     amuDebug(D_HRTIME)
       sprintf(nsecs, ".%09ld", ts.tv_nsec);
-#endif /* DEBUG */
   }
   else
-#endif /* HAVE_CLOCK_GETTIME */
+#endif /* defined(HAVE_CLOCK_GETTIME) && defined(DEBUG) */
     t = clocktime();
 
   if (t != last_t) {
@@ -879,9 +874,7 @@ going_down(int rc)
   if (foreground) {
     plog(XLOG_INFO, "Finishing with status %d", rc);
   } else {
-#ifdef DEBUG
     dlog("background process exiting with status %d", rc);
-#endif /* DEBUG */
   }
 
   exit(rc);

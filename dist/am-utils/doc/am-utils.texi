@@ -1,7 +1,7 @@
 \input texinfo          @c -*-texinfo-*-
-@c $NetBSD: am-utils.texi,v 1.3 2001/05/13 18:06:59 veego Exp $
+@c $NetBSD: am-utils.texi,v 1.4 2002/11/29 23:06:24 christos Exp $
 @c
-@c Copyright (c) 1997-2001 Erez Zadok
+@c Copyright (c) 1997-2002 Erez Zadok
 @c Copyright (c) 1989 Jan-Simon Pendry
 @c Copyright (c) 1989 Imperial College of Science, Technology & Medicine
 @c Copyright (c) 1989 The Regents of the University of California.
@@ -39,13 +39,14 @@
 @c
 @c      %W% (Berkeley) %G%
 @c
-@c Id: am-utils.texi,v 1.21.2.16 2001/04/07 00:47:43 ib42 Exp
+@c Id: am-utils.texi,v 1.49 2002/06/23 00:57:38 ezk Exp
 @c
 @setfilename am-utils.info
 
 @include version.texi
 
 @c info directory entry
+@dircategory Administration
 @direntry
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 @end direntry
@@ -61,7 +62,7 @@
 (Originally by Jan-Simon Pendry and Nick Williams)
 
 @page
-Copyright @copyright{} 1997-2001 Erez Zadok
+Copyright @copyright{} 1997-2002 Erez Zadok
 @*
 Copyright @copyright{} 1989 Jan-Simon Pendry
 @*
@@ -86,6 +87,7 @@ copyright notice and statement of permission are included.
 @c ################################################################
 @node Top, License, , (DIR)
 Am-utils - The 4.4BSD Automounter Tool Suite
+
 *********************************************
 
 Am-utils is the 4.4BSD Automounter Tool Suite, which includes the Amd
@@ -223,7 +225,7 @@ part of his @uref{http://www.cs.columbia.edu/~ezk/research/tp/thesis_proposal.ht
 
 Before reporting a bug, see if it is a known one in the
 @uref{http://www.am-utils.org/BUGS.txt,bugs} file.
-Send all bug reports to @email{amd-dev@@majordomo.cs.columbia.edu}
+Send all bug reports to @email{amd-dev@@am-utils.org}
 quoting the details of the release and your configuration.  These can be
 obtained by running the command @samp{amd -v}.  It would greatly help if
 you could provide a reproducible procedure for detecting the bug you are
@@ -340,14 +342,21 @@ on am-utils.
 Am-utils version 6.0 was numbered with a major new release number to
 distinguish it from the last official release of @i{Amd} (5.x).  Many
 new features have been added such as a GNU @code{configure} system, NFS
-Version 3, Autofs support, a run-time configuration file (`amd.conf'),
-many new ports, more scripts and programs, as well as numerous bug
-fixes.  Another reason for the new major release number was to alert
-users of am-utils that user-visible interfaces may have changed.  In
-order to make @i{Amd} work well for the next 10 years, and be easier to
-maintain, it was necessary to remove old or unused features, change
-various syntax files, etc.  However, great care was taken to ensure the
-maximum possible backwards compatibility.
+Version 3, a run-time configuration file (`amd.conf'), many new ports,
+more scripts and programs, as well as numerous bug fixes.  Another
+reason for the new major release number was to alert users of am-utils
+that user-visible interfaces may have changed.  In order to make @i{Amd}
+work well for the next 10 years, and be easier to maintain, it was
+necessary to remove old or unused features, change various syntax files,
+etc.  However, great care was taken to ensure the maximum possible
+backwards compatibility.
+
+Am-utils version 6.1 has autofs support for Linux and Solaris 2.5+ as
+_the_ major new feature, in addition to several other minor new
+features. The autofs support is completely transparent to the end-user,
+aside from the fact that /bin/pwd now always returns the correct
+amd-ified path. The administrator can easily switch between NFS and
+autofs mounts by changing one parameter in amd.conf.
 
 @c ################################################################
 @node Overview, Supported Platforms, History, Top
@@ -710,11 +719,7 @@ features.
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
-@item @b{alphaev5-unknown-linux-gnu}
-@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
-
-@item @b{alphaev5-unknown-linux-gnu-rh5.2}
+@item @b{alphaev5-unknown-linux-rh5.2}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
@@ -778,6 +783,10 @@ features.
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
+@item @b{i386-pc-linux-rh7.2}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab yes
+
 @item @b{i386-pc-solaris2.5.1}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab yes
@@ -814,7 +823,11 @@ features.
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
-@item @b{i386-unknown-freebsd4.2}
+@item @b{i386-unknown-freebsd4.4}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
+
+@item @b{i386-unknown-freebsd5.0}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
@@ -894,73 +907,53 @@ features.
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab ?    @tab yes   @tab yes  @tab ?
 
-@item @b{i486-pc-linux-gnu-rh6.0}
+@item @b{i386-pc-linux}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
-@item @b{i486-pc-linux-gnulibc1}
+@item @b{i386-pc-linux-rh5.2}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
-@item @b{i486-pc-linux-gnulibc1-rh4.2}
+@item @b{i386-pc-linux-rh6.0}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
-@item @b{i486-pc-linux-gnuoldld}
+@item @b{i386-pc-linux-rh6.1}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
-@item @b{i586-pc-linux-gnu}
+@item @b{i386-pc-linux-rh6.2}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab yes
+
+@item @b{i386-pc-linux-rh7.0}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab yes
+
+@item @b{i386-pc-linux-rh7.1}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab yes
+
+@item @b{i386-pc-linux-gnulibc1}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
-@item @b{i586-pc-linux-gnu-rh5.2}
+@item @b{i386-pc-linux-gnulibc1-rh4.2}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
-@item @b{i586-pc-linux-gnu-rh6.0}
+@item @b{i386-pc-linux-gnuoldld}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
-@item @b{i586-pc-linux-gnu-rh6.1}
+@item @b{ia64-hp-hpux11.20}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
-@item @b{i586-pc-linux-gnu-rh6.2}
+@item @b{ia64-unknown-linux-rh7.1}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
-
-@item @b{i586-pc-linux-gnulibc1}
-@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
-
-@item @b{i586-pc-linux-gnulibc1-rh4.2}
-@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
-
-@item @b{i686-pc-linux-gnu}
-@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
-
-@item @b{i686-pc-linux-gnu-rh5.2}
-@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
-
-@item @b{i686-pc-linux-gnu-rh6.0}
-@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
-
-@item @b{i686-pc-linux-gnu-rh6.2}
-@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab yes
-
-@item @b{i686-pc-linux-gnulibc}
-@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
-
-@item @b{i686-pc-linux-gnulibc1}
-@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab yes
 
 @item @b{m68k-hp-hpux9.00}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
@@ -996,7 +989,7 @@ features.
 
 @item @b{mips-sgi-irix6.5}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes    @tab yes   @tab yes  @tab ?
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
 @item @b{powerpc-ibm-aix4.1.5.0}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
@@ -1010,7 +1003,7 @@ features.
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab ?    @tab yes   @tab ?    @tab ?
 
-@item @b{powerpc-unknown-linux-gnu}
+@item @b{powerpc-unknown-linux}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
@@ -1081,6 +1074,10 @@ features.
 @item @b{sparc-unknown-linux-gnulibc1}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
+
+@item @b{sparc64-unknown-linux-rh6.2}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
 @item @b{sparc-unknown-netbsd1.2E}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
@@ -1718,7 +1715,8 @@ The following selectors are currently implemented.
 
 The machine architecture which was automatically determined at compile
 time.  The architecture type can be displayed by running the command
-@samp{amd -v}.  @xref{Supported Platforms}.@refill
+@samp{amd -v}.  You can override this value also using the @code{-A}
+command line option.  @xref{Supported Platforms}.@refill
 
 @c ----------------------------------------------------------------
 @node autodir Selector Variable, byte Selector Variable, arch Selector Variable, Selectors
@@ -2114,9 +2112,18 @@ function (@pxref{netgrp Selector Function}) uses short host names
 @cindex Mount selector; in_network
 @cindex Selector; in_network
 
-If the current host has any network interface that is locally attached
-to the network specified in @i{ARG} (either via name or number), this
-selector evaluates to true.  Otherwise it evaluates to false.
+This selector matches against any network name or number with an
+optional netmask.  First, if the current host has any network interface that is
+locally attached to the network specified in @i{ARG} (either via name or
+number), this selector evaluates to true. 
+
+Second, @samp{in_network} supports a network/netmask syntax such as
+@samp{128.59.16.0/255.255.255.0}, @samp{128.59.16.0/24},
+@samp{128.59.16.0/0xffffff00}, or @samp{128.59.16.0/}.  Using the last
+form, @i{Amd} will match the specified network number against the
+default netmasks of each of the locally attached interfaces.
+
+If the selector does not match, it evaluates to false.
 
 For example, suppose you have two servers that have an exportable
 @file{/opt} that smaller clients can NFS mount.  The two servers are
@@ -2374,6 +2381,16 @@ Allow keyboard interrupts on hard mounts.
 @cindex Mount flags; lock
 Use the NFS locking protocol (default)
 
+@item loop
+@cindex Mount flags; loop
+Support loop device mounts for CDFS (currently only on Linux).  With
+this option, you can mount ISO-9660 files as if they were normal
+CD-ROMs:
+
+@example
+sw71   type:=cdfs;addopts:=loop;dev:=/misc/rh71cd.iso;rfs:=/mnt/RPMS
+@end example
+
 @item multi
 @cindex Mount flags; multi
 Perform multi-component lookup on files.
@@ -2598,6 +2615,10 @@ has failed.  In fact the interval is extended before the unmount is
 attempted to avoid thrashing.  The default value is 120 seconds (two
 minutes) or as set by the @code{-w} command line option.
 
+@item xlatecookie
+@cindex Mount flags; xlatecookie
+Translate directory cookies between 32-long and 64-long lengths.
+
 @end table
 
 @node remopts Option, sublink Option, opts Option, Map Options
@@ -2709,6 +2730,7 @@ exists.
 * -w Option::   Wait interval after failed unmount.
 * -x Option::   Log options.
 * -y Option::   NIS domain.
+* -A-Option::   Operating system Architecture.
 * -C-Option::   Cluster name.
 * -D-Option::   Debug flags.
 * -F Option::   Amd configuration file.
@@ -3067,7 +3089,7 @@ If @i{Amd} was built with debugging enabled the @code{debug} option is
 automatically enabled regardless of the command line options.
 
 @c ----------------------------------------------------------------
-@node -y Option, -C-Option, -x Option, Amd Command Line Options
+@node -y Option, -A-Option, -x Option, Amd Command Line Options
 @comment  node-name,  next,  previous,  up
 @section @code{-y} @var{NIS-domain}
 @cindex NIS (YP) domain name
@@ -3082,7 +3104,22 @@ immediately attempts to bind to a server for this domain.
 @c is specified, and whenever required in a mount map.
 
 @c ----------------------------------------------------------------
-@node -C-Option, -D-Option, -y Option, Amd Command Line Options
+@node -A-Option, -C-Option, -y Option, Amd Command Line Options
+@comment  node-name,  next,  previous,  up
+@section @code{-A} @var{architecture}
+@cindex Setting the operating system architecture
+
+Specifies the OS architecture of the system.  
+The only effect of this option is to set the variable @code{$@{arch@}}.
+
+This option would be used as follows:
+
+@example
+amd -A i386 ...
+@end example
+
+@c ----------------------------------------------------------------
+@node -C-Option, -D-Option, -A-Option, Amd Command Line Options
 @comment  node-name,  next,  previous,  up
 @section @code{-C} @var{cluster-name}
 @cindex Cluster names
@@ -3135,7 +3172,7 @@ program trace
 print high resolution time stamps (only if @b{syslog}(3) is not used)
 @item info
 @cindex debugging hesiod resolver service
-@cindex Hesiod: turning on RES_DEBUG
+@cindex Hesiod; turning on RES_DEBUG
 info service specific debugging (hesiod, nis, etc.)  In the case of
 hesiod maps, turns on the hesiod RES_DEBUG internal debugging option.
 @item mem
@@ -3202,10 +3239,12 @@ older maps which were written with the latter in mind.
 @comment  node-name,  next,  previous,  up
 @section @code{-S}
 @cindex plock; using
+@cindex mlockall; using
 @cindex locking executable pages in memory
 
 Do @emph{not} lock the running executable pages of @i{Amd} into memory.
 To improve @i{Amd}'s performance, systems that support the @b{plock}(3)
+or @b{mlockall}(2)
 call lock the @i{Amd} process into memory.  This way there is less
 chance the operating system will schedule, page out, and swap the
 @i{Amd} process as needed.  This tends to improve @i{Amd}'s performance,
@@ -3274,7 +3313,6 @@ effect visible to the user.@refill
 * Union Filesystem::
 * Error Filesystem::
 * Top-level Filesystem::
-* Autofs Filesystem::           Sun's kernel-based automounter filesystem.
 * Root Filesystem::
 * Inheritance Filesystem::
 @end menu
@@ -4101,7 +4139,7 @@ directory''.  All other operations trivially succeed.
 The error filesystem is not directly accessible.
 
 @c ----------------------------------------------------------------
-@node Top-level Filesystem, Autofs Filesystem, Error Filesystem, Filesystem Types
+@node Top-level Filesystem, Root Filesystem, Error Filesystem, Filesystem Types
 @comment  node-name,  next,  previous,  up
 @section Top-level Filesystem (@samp{toplvl})
 @cindex Top level filesystem
@@ -4113,7 +4151,7 @@ and is used to mount the top-level automount nodes.  Requests of this
 type are automatically generated from the command line arguments.
 
 @c ----------------------------------------------------------------
-@node Root Filesystem, Inheritance Filesystem, Autofs Filesystem, Filesystem Types
+@node Root Filesystem, Inheritance Filesystem, Top-level Filesystem, Filesystem Types
 @comment  node-name,  next,  previous,  up
 @section Root Filesystem (@samp{root})
 @cindex Root filesystem
@@ -4127,24 +4165,6 @@ during startup.  The effect of having more than one root node is
 undefined.
 
 The root filesystem is not directly accessible.
-
-@c ----------------------------------------------------------------
-@node Autofs Filesystem, Root Filesystem, Top-level Filesystem, Filesystem Types
-@comment  node-name,  next,  previous,  up
-@section Autofs Filesystem (@samp{autofs})
-@cindex Autofs filesystem
-@cindex autofs, filesystem type
-@cindex Filesystem type; autofs
-
-The @dfn{autofs} (@samp{type:=autofs}) filesystem uses Sun's kernel-based automounter
-supporting filesystem for @i{Amd}'s mount points.  Hence it is another
-type of top level filesystem.
-
-The autofs filesystem is not directly accessible from @i{Amd} maps, but
-only from the @file{amd.conf} file (@pxref{mount_type Parameter}).
-
-Note that Autofs support is still very early.  See the distribution file
-@file{README.autofs} for detail of what works and what does not.
 
 @c ----------------------------------------------------------------
 @node Inheritance Filesystem, , Root Filesystem, Filesystem Types
@@ -4376,6 +4396,8 @@ The following parameters are applicable to the @samp{[global]} section only.
 * local_domain Parameter::
 * log_file Parameter::
 * log_options Parameter::
+* map_reload_interval Parameter::
+* nfs_proto Parameter::
 * nfs_proto Parameter::
 * nfs_retransmit_counter Parameter::
 * nfs_retry_interval Parameter::
@@ -4402,8 +4424,9 @@ The following parameters are applicable to the @samp{[global]} section only.
 @subsection @t{arch} Parameter
 @cindex arch Parameter
 
-(type=string, default to compiled in value).  Allows you to override the
-value of the @i{arch} @i{Amd} variable.
+(type=string, default to compiled in value).  Same as the @code{-A}
+option to @i{Amd}.  Allows you to override the value of the @i{arch}
+@i{Amd} variable.
 
 @c ----------------------------------------------------------------
 @node auto_dir Parameter, cache_duration Parameter, arch Parameter, Global Parameters
@@ -4604,7 +4627,7 @@ is generally a bad idea to use those reserved for other services such as
 @samp{kern}, @samp{lpr}, @samp{cron}, etc.
 
 @c ----------------------------------------------------------------
-@node log_options Parameter, nfs_proto Parameter, log_file Parameter, Global Parameters
+@node log_options Parameter, map_reload_interval Parameter, log_file Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{log_options} Parameter
 @cindex log_options Parameter
@@ -4641,7 +4664,18 @@ warnings
 @end table
 
 @c ----------------------------------------------------------------
-@node nfs_proto Parameter, nfs_retransmit_counter Parameter, log_options Parameter, Global Parameters
+@node map_reload_interval Parameter, nfs_proto Parameter, log_options Parameter, Global Parameters
+@comment  node-name,  next,  previous,  up
+@subsection @t{map_reload_interval} Parameter
+@cindex map_reload_interval Parameter
+
+(type=numeric, default=3600).  The number of seconds that @i{Amd} will
+wait before it checks to see if any maps have changed at their source
+(NIS servers, LDAP servers, files, etc.).  @i{Amd} will reload only
+those maps that have changed.
+
+@c ----------------------------------------------------------------
+@node nfs_proto Parameter, nfs_retransmit_counter Parameter, map_reload_interval Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{nfs_proto} Parameter
 @cindex nfs_proto Parameter
@@ -4770,6 +4804,7 @@ This file is used only if the @samp{print_pid} option is on
 (type=boolean, default=@samp{yes}).  Same as the @code{-S} option to @i{Amd}.
 If @samp{yes}, lock the running executable pages of @i{Amd} into memory.
 To improve @i{Amd}'s performance, systems that support the @b{plock}(3)
+or @b{mlockall}(2)
 call can lock the @i{Amd} process into memory.  This way there is less
 chance the operating system will schedule, page out, and swap the
 @i{Amd} process as needed.  This improves @i{Amd}'s performance, at the
@@ -5473,7 +5508,7 @@ The purpose of @i{FSinfo} is to generate all the important standard
 filesystem data files from a single set of input data.  Starting with a
 single data source guarantees that all the generated files are
 self-consistent.  One of the possible output data formats is a set of
-@i{Amd} maps which can be used amongst the set of hosts described in the
+@i{Amd} maps which can be used among the set of hosts described in the
 input data.
 
 @i{FSinfo} implements a declarative language.  This language is
@@ -5654,14 +5689,14 @@ host @{
 The options that can be given as host attributes are shown below.
 
 @menu
-* netif Option:         FSinfo host netif:
-* config Option:        FSinfo host config:
-* arch Option:          FSinfo host arch:
-* os Option:            FSinfo host os:
-* cluster Option:       FSinfo host cluster:
+* FSinfo netif Option::         FSinfo host netif.
+* FSinfo config Option::        FSinfo host config.
+* FSinfo arch Option::          FSinfo host arch.
+* FSinfo os Option::            FSinfo host os.
+* FSinfo cluster Option::       FSinfo host cluster.
 @end menu
 
-@node FSinfo host netif, FSinfo host config, , FSinfo host attributes
+@node FSinfo netif Option, FSinfo config Option, , FSinfo host attributes
 @comment  node-name,  next,  previous,  up
 @subsection netif Option
 
@@ -5692,7 +5727,7 @@ netif ie0 @{
 netif ec0 @{ @}
 @end example
 
-@node FSinfo host config, FSinfo host arch, FSinfo host netif, FSinfo host attributes
+@node FSinfo config Option, FSinfo arch Option, FSinfo netif Option, FSinfo host attributes
 @comment  node-name,  next,  previous,  up
 @subsection config Option
 @cindex FSinfo config host attribute
@@ -5711,7 +5746,7 @@ config "ZEPHYR=true"
 
 This option is currently unsupported.
 
-@node FSinfo host arch, FSinfo host os, FSinfo host config, FSinfo host attributes
+@node FSinfo arch Option, FSinfo os Option, FSinfo config Option, FSinfo host attributes
 @comment  node-name,  next,  previous,  up
 @subsection arch Option
 @cindex FSinfo arch host attribute
@@ -5726,7 +5761,7 @@ arch = hp300
 This is intended to be of use when building architecture specific
 mountmaps, however, the option is currently unsupported.
 
-@node FSinfo host os, FSinfo host cluster, FSinfo host arch, FSinfo host attributes
+@node FSinfo os Option, FSinfo cluster Option, FSinfo arch Option, FSinfo host attributes
 @comment  node-name,  next,  previous,  up
 @subsection os Option
 @cindex FSinfo os host attribute
@@ -5742,7 +5777,7 @@ This information is used when creating the @file{fstab} files, for
 example in choosing which format to use for the @file{fstab} entries
 within the file.
 
-@node FSinfo host cluster, , FSinfo host os, FSinfo host attributes
+@node FSinfo cluster Option, , FSinfo os Option, FSinfo host attributes
 @comment  node-name,  next,  previous,  up
 @subsection cluster Option
 @cindex FSinfo cluster host attribute
@@ -5853,16 +5888,16 @@ fs /dev/dsk/5s0 @{
 @end example
 
 @menu
-* fstype Option:        FSinfo filesystems fstype:
-* opts Option:          FSinfo filesystems opts:
-* passno Option:        FSinfo filesystems passno:
-* freq Option:          FSinfo filesystems freq:
-* mount Option:         FSinfo filesystems mount:
-* dumpset Option:       FSinfo filesystems dumpset:
-* log Option:           FSinfo filesystems log:
+* FSinfo fstype Option::        FSinfo filesystems fstype.
+* FSinfo opts Option::          FSinfo filesystems opts.
+* FSinfo passno Option::        FSinfo filesystems passno.
+* FSinfo freq Option::          FSinfo filesystems freq.
+* FSinfo mount Option::         FSinfo filesystems mount.
+* FSinfo dumpset Option::       FSinfo filesystems dumpset.
+* FSinfo log Option::           FSinfo filesystems log.
 @end menu
 
-@node FSinfo filesystems fstype, FSinfo filesystems opts, , FSinfo filesystems
+@node FSinfo fstype Option, FSinfo opts Option, , FSinfo filesystems
 @comment  node-name,  next,  previous,  up
 @subsection fstype Option
 @cindex FSinfo fstype filesystems option
@@ -5887,7 +5922,7 @@ Example:
 fstype = swap
 @end example
 
-@node FSinfo filesystems opts, FSinfo filesystems passno, FSinfo filesystems fstype, FSinfo filesystems
+@node FSinfo opts Option, FSinfo passno Option, FSinfo fstype Option, FSinfo filesystems
 @comment  node-name,  next,  previous,  up
 @subsection opts Option
 @cindex FSinfo opts filesystems option
@@ -5900,7 +5935,7 @@ This defines any options that should be given to @b{mount}(8) in the
 opts = rw,nosuid,grpid
 @end example
 
-@node FSinfo filesystems passno, FSinfo filesystems freq, FSinfo filesystems opts, FSinfo filesystems
+@node FSinfo passno Option, FSinfo freq Option, FSinfo opts Option, FSinfo filesystems
 @comment  node-name,  next,  previous,  up
 @subsection passno Option
 @cindex FSinfo passno filesystems option
@@ -5915,7 +5950,7 @@ Example:
 passno = 1
 @end example
 
-@node FSinfo filesystems freq, FSinfo filesystems mount, FSinfo filesystems passno, FSinfo filesystems
+@node FSinfo freq Option, FSinfo mount Option, FSinfo passno Option, FSinfo filesystems
 @comment  node-name,  next,  previous,  up
 @subsection freq Option
 @cindex FSinfo freq filesystems option
@@ -5930,7 +5965,7 @@ Example:
 freq = 3
 @end example
 
-@node FSinfo filesystems mount, FSinfo filesystems dumpset, FSinfo filesystems freq, FSinfo filesystems
+@node FSinfo mount Option, FSinfo dumpset Option, FSinfo freq Option, FSinfo filesystems
 @comment  node-name,  next,  previous,  up
 @subsection mount Option
 @cindex FSinfo mount filesystems option
@@ -6000,7 +6035,7 @@ filesystem.@refill
 
 @end table
 
-@node FSinfo filesystems dumpset, FSinfo filesystems log, FSinfo filesystems mount, FSinfo filesystems
+@node FSinfo dumpset Option, FSinfo log Option, FSinfo mount Option, FSinfo filesystems
 @comment  node-name,  next,  previous,  up
 @subsection dumpset Option
 @cindex FSinfo dumpset filesystems option
@@ -6009,7 +6044,7 @@ filesystem.@refill
 This provides support for Imperial College's local file backup tools and
 is not documented further here.
 
-@node FSinfo filesystems log, , FSinfo filesystems dumpset, FSinfo filesystems    
+@node FSinfo log Option, , FSinfo dumpset Option, FSinfo filesystems    
 @comment  node-name,  next,  previous,  up
 @subsection log Option
 @cindex FSinfo log filesystems option
@@ -6505,8 +6540,8 @@ each level.
 
 @item pass number for @var{host}:@var{device} is non-zero
 Occurs if @var{device} has its @samp{fstype} declared to be @samp{swap}
-or @samp{export} and the @b{fsck}(8) pass number is set. Swap devices should not be
-fsck'd.  @xref{FSinfo filesystems fstype}.
+or @samp{export} and the @b{fsck}(8) pass number is set. Swap devices
+should not be fsck'd.  @xref{FSinfo fstype Option}.
 
 @item sub-directory @var{directory} of @var{directory-tree} starts with '/'
 Within the filesystem specification for a host, if an element
@@ -7180,6 +7215,7 @@ am-utils, and get installed.
 * lostaltmail.conf-sample::
 * mk-amd-map::        
 * pawd::              
+* redhat-ctl-amd::              
 * wait4amd::          
 * wait4amd2die::      
 * wire-test::         
@@ -7274,8 +7310,8 @@ If you wish to generate Amd maps using the @i{hostd} (@pxref{hostd
 Selector Variable}) @i{Amd} map syntax, then define the environment
 variable @b{$DOMAIN} or modify the script.
 
-Note that automount2amd does not understand newer Sun Automount map
-syntax, those used by autofs.
+Note that automount2amd does not understand the syntax in newer Sun
+Automount maps, those used with autofs.
 
 @c ----------------------------------------------------------------
 @node ctl-amd, ctl-hlfsd, automount2amd, Assorted Tools
@@ -7437,7 +7473,7 @@ mk-amd-map @i{mapname}
 @end example
 
 @c ----------------------------------------------------------------
-@node pawd, wait4amd, mk-amd-map, Assorted Tools
+@node pawd, redhat-ctl-amd, mk-amd-map, Assorted Tools
 @comment  node-name,  next,  previous,  up
 @section pawd
 @pindex pawd
@@ -7455,7 +7491,20 @@ current working directory.  With any number of arguments, it will print
 the adjusted path of each one of the arguments.
 
 @c ----------------------------------------------------------------
-@node wait4amd, wait4amd2die, pawd, Assorted Tools
+@node redhat-ctl-amd, wait4amd, pawd, Assorted Tools
+@comment  node-name,  next,  previous,  up
+@section redhat-ctl-amd
+@pindex redhat-ctl-amd
+
+This script is similar to @i{ctl-amd} (@pxref{ctl-amd}) but is intended
+for Red Hat Linux systems.  You can safely copy @i{redhat-ctl-amd} onto
+@file{/etc/rc.d/init.d/amd}.  The script supplied by @i{Am-utils} is
+usually better than the one provided by Red Hat, because the Red Hat
+script does not correctly kill @i{Amd} processes: it is too quick to
+kill the wrong processes, leaving stale or hung mount points behind.
+
+@c ----------------------------------------------------------------
+@node wait4amd, wait4amd2die, redhat-ctl-amd, Assorted Tools
 @comment  node-name,  next,  previous,  up
 @section wait4amd
 @pindex wait4amd
@@ -7905,7 +7954,7 @@ file service performance.
 @comment  node-name,  next,  previous,  up
 @section @samp{/tftpboot} in a chroot-ed environment
 @cindex /tftpboot in a chroot-ed environment
-@cindex chroot: /tftpboot example
+@cindex chroot; /tftpboot example
 
 In this complex example, we attempt to run an @i{Amd} process
 @emph{inside} a chroot-ed environment.  @samp{tftpd} (Trivial FTP) is
@@ -8308,4 +8357,5 @@ All other registered trademarks are owned by their respective owners.
 @c LocalWords:  nointr extatt setchapternewpage columnfractions alphaev gnulibc
 @c LocalWords:  freebsdelf gnuoldld ifhtml defperm nodefperm norrip RRIP rrip
 @c LocalWords:  noversion attr XXXXXX netgrpd rh mkstemp uid gid noexec mntfs
-@c LocalWords:  nomnttab optionstr hrtime xdrtrace getpwd proplist
+@c LocalWords:  nomnttab optionstr hrtime xdrtrace getpwd proplist redhat ctl
+@c LocalWords:  texinfo texi ib sp cartouche ified xlatecookie

@@ -1,7 +1,7 @@
-/*	$NetBSD: am_defs.h,v 1.2 2002/05/30 14:48:45 itojun Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.3 2002/11/29 23:06:25 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: am_defs.h,v 1.15.2.9 2001/04/07 00:47:44 ib42 Exp
+ * Id: am_defs.h,v 1.30 2002/06/23 01:05:40 ib42 Exp
  *
  */
 
@@ -196,6 +195,12 @@ char *strchr(), *strrchr(), *strdup();
  * Actions to take if HAVE_FCNTL_H is defined.
  */
 #if HAVE_FCNTL_H
+# ifdef HAVE_LINUX_LOOP_H
+/* so I can mount large files as loop devices */
+/* XXX: need to move these two LARGEFILE defines to a better place */
+#  define _LARGEFILE64_SOURCE
+#  define __USE_LARGEFILE64
+# endif /* HAVE_LINUX_LOOP_H */
 # include <fcntl.h>
 #endif /* HAVE_FCNTL_H */
 
@@ -393,6 +398,13 @@ extern int errno;
 #endif /* HAVE_NET_IF_H */
 
 /*
+ * Actions to take if <sys/mman.h> exists.
+ */
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif /* HAVE_SYS_MMAN_H */
+
+/*
  * Actions to take if <netdb.h> exists.
  */
 #ifdef HAVE_NETDB_H
@@ -588,15 +600,19 @@ struct ypall_callback;
 #endif /* HAVE_CDFS_CDFSMOUNT_H */
 
 /*
- * Actions to take if <linux/auto_fs.h> exists.
+ * Actions to take if <linux/auto_fs[4].h> exists.
  * We really don't want <linux/fs.h> pulled in here
  */
 #ifndef _LINUX_FS_H
 #define _LINUX_FS_H
 #endif /* _LINUX_FS_H */
-#ifdef HAVE_LINUX_AUTO_FS_H
-# include <linux/auto_fs.h>
-#endif /* HAVE_LINUX_AUTO_FS_H */
+#ifdef HAVE_LINUX_AUTO_FS4_H
+# include <linux/auto_fs4.h>
+#else  /* not HAVE_LINUX_AUTO_FS4_H */
+# ifdef HAVE_LINUX_AUTO_FS_H
+#  include <linux/auto_fs.h>
+# endif /* HAVE_LINUX_AUTO_FS_H */
+#endif /* not HAVE_LINUX_AUTO_FS4_H */
 
 /*
  * Actions to take if <sys/fs/autofs.h> exists.
@@ -606,15 +622,28 @@ struct ypall_callback;
 #endif /* HAVE_SYS_FS_AUTOFS_H */
 
 /*
- * Actions to take if <sys/fs/autofs_prot.h> exists.
- * We really don't want <linux/fs.h> pulled in here
+ * Actions to take if <linux/loop.h> exists.
  */
-#ifndef _LINUX_FS_H
-#define _LINUX_FS_H
-#endif /* _LINUX_FS_H */
-#ifdef HAVE_SYS_FS_AUTOFS_PROT_H
-# include <sys/fs/autofs_prot.h>
-#endif /* HAVE_SYS_FS_AUTOFS_PROT_H */
+#ifdef HAVE_LINUX_LOOP_H
+# ifdef HAVE_LINUX_POSIX_TYPES_H
+#  include <linux/posix_types.h>
+# endif /* HAVE_LINUX_POSIX_TYPES_H */
+/* next dev_t lines needed due to changes in kernel code */
+# undef dev_t
+# define dev_t __kernel_dev_t
+# include <linux/loop.h>
+#endif /* HAVE_LINUX_LOOP_H */
+
+/*
+ * Actions to take if <rpcsvc/autofs_prot.h> or <sys/fs/autofs_prot.h> exist.
+ */
+#ifdef HAVE_RPCSVC_AUTOFS_PROT_H
+# include <rpcsvc/autofs_prot.h>
+#else  /* not HAVE_RPCSVC_AUTOFS_PROT_H */
+# ifdef HAVE_SYS_FS_AUTOFS_PROT_H
+#  include <sys/fs/autofs_prot.h>
+# endif /* HAVE_SYS_FS_AUTOFS_PROT_H */
+#endif /* not HAVE_RPCSVC_AUTOFS_PROT_H */
 
 /*
  * NFS PROTOCOL HEADER FILES:
@@ -1411,6 +1440,10 @@ extern int wait3(int *statusp, int options, struct rusage *rusage);
 extern int vsnprintf(char *, int, const char *, ...);
 #endif /* defined(HAVE_VSNPRINTF) && !defined(HAVE_EXTERN_VSNPRINTF) */
 
+#ifndef HAVE_EXTERN_XDR_CALLMSG
+extern bool_t xdr_callmsg(XDR *xdrs, struct rpc_msg *msg);
+#endif /* not HAVE_EXTERN_XDR_CALLMSG */
+
 #ifndef HAVE_EXTERN_XDR_OPAQUE_AUTH
 extern bool_t xdr_opaque_auth(XDR *xdrs, struct opaque_auth *auth);
 #endif /* not HAVE_EXTERN_XDR_OPAQUE_AUTH */
@@ -1422,11 +1455,10 @@ extern bool_t xdr_opaque_auth(XDR *xdrs, struct opaque_auth *auth);
 #ifdef THIS_HEADER_FILE_IS_INCLUDED_ABOVE
 # include <amu_nfs_prot.h>
 #endif /* THIS_HEADER_FILE_IS_INCLUDED_ABOVE */
+#include <am_compat.h>
 #include <am_utils.h>
 #include <amq_defs.h>
 #include <aux_conf.h>
-/* compatibility with old amd, while autoconfiscating it */
-#include <am_compat.h>
 
 
 /****************************************************************************/
