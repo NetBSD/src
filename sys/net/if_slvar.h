@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_slvar.h	7.7 (Berkeley) 5/7/91
- *	$Id: if_slvar.h,v 1.8 1994/01/08 02:54:06 cgd Exp $
+ *	$Id: if_slvar.h,v 1.9 1994/02/10 05:39:08 cgd Exp $
  */
 
 #ifndef _IF_SLVAR_H_
@@ -68,24 +68,6 @@ struct sl_softc {
 #define	SC_COMPRESS	IFF_LINK0	/* compress TCP traffic */
 #define	SC_NOICMP	IFF_LINK1	/* supress ICMP traffic */
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
-
-/* this stuff doesn't belong here... */
-#define	SLIOCGUNIT	_IOR('t', 88, int)	/* get slip unit number */
-
-/*
- * definitions of the pseudo- link-level header attached to slip
- * packets grabbed by the packet filter (bpf) traffic monitor.
- * These definitions pulled from BPF's "slip.h" by cgd.
- */
-#define	SLIP_HDRLEN	16		/* BPF SLIP header length */
-
-/* offsets into BPF SLIP header */
-#define	SLX_DIR		0		/* direction; see below */
-#define	SLX_CHDR	1		/* compressed header data */
-#define	CHDR_LEN	15		/* length of compressed header data */
-
-#define	SLIPDIR_IN	0		/* incoming */
-#define	SLIPDIR_OUT	1		/* outgoing */
 
 #ifdef KERNEL
 void	slattach __P((void));
