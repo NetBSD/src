@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.51 1994/03/02 21:42:31 mycroft Exp $
+ *	$Id: wd.c,v 1.52 1994/03/02 22:07:00 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -1026,14 +1026,15 @@ wdcommand(struct disk *du, int cmd)
 	switch (cmd) {
 	default:
 #if 0
-	case WDCC_READ:
 	case WDCC_FORMAT:
 	case WDCC_RESTORE | WD_STEP:
 	case WDCC_IDC:
 	case WDCC_DIAGNOSE:
-	case WDCC_WRITE:
 #endif
 		return wait_for_unbusy(du);
+	case WDCC_READ:
+	case WDCC_WRITE:
+		return 0;
 	case WDCC_READP:
 		return wait_for_drq(du);
 	}
