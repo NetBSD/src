@@ -1,4 +1,4 @@
-.\"  $NetBSD: od.1,v 1.13 2001/10/03 20:29:39 atatat Exp $
+.\"  $NetBSD: od.1,v 1.14 2001/12/05 17:46:15 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,9 @@
 .Sh SYNOPSIS
 .Nm ""
 .Op Fl aBbcDdeFfHhIiLlOovXx
+.Bk -words
+.Op Fl j Ar skip
+.Ek
 .Bk -words
 .Op Fl t Ar type_string
 .Ek
@@ -137,6 +140,36 @@ decimal, per line.
 Display the input offset in octal, followed by eight space-separated,
 six column, space filled, two-byte units of input data, in decimal,
 per line.
+.It Fl j Ar offset
+Skip
+.Ar offset
+bytes from the beginning of the input.
+By default,
+.Ar offset
+is interpreted as a decimal number.
+With a leading
+.Cm 0x
+or
+.Cm 0X ,
+.Ar offset
+is interpreted as a hexadecimal number,
+otherwise, with a leading
+.Cm 0 ,
+.Ar offset
+is interpreted as an octal number.
+Appending the character
+.Cm b ,
+.Cm k ,
+or
+.Cm m
+to
+.Ar offset
+causes it to be interpreted as a multiple of
+.Li 512 ,
+.Li 1024 ,
+or
+.Li 1048576 ,
+respectively.
 .It Fl L
 Same as
 .Fl I .
