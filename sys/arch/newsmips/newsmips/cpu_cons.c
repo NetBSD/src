@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.5 2000/11/13 16:48:46 tsubai Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.6 2000/11/15 14:29:41 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,17 +64,20 @@
 struct consdev *cn_tab = NULL;
 extern struct consdev consdev_zs, consdev_zs_ap;
 
-int tty00_is_console = 0;
-
 void fb_cnattach(void);
 void kb_hb_cnattach(void);
 
+void xafb_cnattach(void);
+void kb_ap_cnattach(void);
+
 #include "fb.h"
+#include "xafb.h"
 #include "zsc.h"
 
 void
 consinit()
 {
+	volatile int *dipsw;
 	static int initted = 0;
 
 	if (initted)
@@ -82,19 +85,11 @@ consinit()
 
 	initted = 1;
 
-#ifdef news5000
-	/* currently only serial console is available on news5000 */
-	if (systype == NEWS5000) {
-		tty00_is_console = 1;
-		cn_tab = &consdev_zs_ap;
-		(*cn_tab->cn_init)(cn_tab);
-		return;
-	}
-#endif
+	switch (systype) {
 
 #ifdef news3400
-	if (systype == NEWS3400) {
-		volatile int *dipsw = (void *)DIP_SWITCH;
+	case NEWS3400:
+		dipsw = (void *)DIP_SWITCH;
 
 #if NFB > 0
 		if (*dipsw & SW_CONSOLE) {
@@ -105,10 +100,30 @@ consinit()
 #endif
 
 #if NZSC > 0
-		tty00_is_console = 1;
 		cn_tab = &consdev_zs;
 		(*cn_tab->cn_init)(cn_tab);
 #endif
-	}
+
+#endif /* news3400 */
+
+#ifdef news5000
+	case NEWS5000:
+		dipsw = (void *)NEWS5000_DIP_SWITCH;
+
+#if NXAFB > 0
+		if (*dipsw & SW_CONSOLE) {
+			xafb_cnattach();
+			kb_ap_cnattach();
+			return;
+		}
 #endif
+
+#if NZSC > 0
+		cn_tab = &consdev_zs_ap;
+		(*cn_tab->cn_init)(cn_tab);
+		return;
+#endif
+
+#endif /* news5000 */
+	}
 }
