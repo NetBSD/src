@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230.4.1 1997/05/13 02:50:14 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230.4.2 1997/05/17 00:27:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2150,17 +2150,17 @@ _bus_dmamap_sync(t, map, op)
  * by bus-specific DMA memory allocation functions.
  */
 int
-_bus_dmamem_alloc(t, size, segs, nsegs, rsegs, flags)
+_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	bus_dma_tag_t t;
-	bus_size_t size;
+	bus_size_t size, alignment, boundary;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	int *rsegs;
 	int flags;
 {
 
-	return (_bus_dmamem_alloc_range(t, size, segs, nsegs, rsegs,
-	    flags, 0, trunc_page(avail_end)));
+	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, trunc_page(avail_end)));
 }
 
 /*
@@ -2281,9 +2281,10 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * Called by DMA-safe memory allocation methods.
  */
 int
-_bus_dmamem_alloc_range(t, size, segs, nsegs, rsegs, flags, low, high)
+_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
+    flags, low, high)
 	bus_dma_tag_t t;
-	bus_size_t size;
+	bus_size_t size, alignment, boundary;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	int *rsegs;
@@ -2304,7 +2305,7 @@ _bus_dmamem_alloc_range(t, size, segs, nsegs, rsegs, flags, low, high)
 	 */
 	TAILQ_INIT(&mlist);
 	error = vm_page_alloc_memory(size, low, high,
-	    NBPG, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
 
