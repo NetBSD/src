@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.7 1995/06/21 02:57:19 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.8 1995/07/01 23:40:40 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -218,6 +218,8 @@ typedef struct _NUBUS_EXEC_BLOCK {
 				 NUBUS_MIN_SLOT)
 #define NUBUS_SLOT_TO_BASE(x)	(NuBusBase + \
 				 ((((x)-NUBUS_MIN_SLOT) & 0xF) << 24))
+#define NUBUS_VIRT_TO_PHYS(x)	((x - NuBusBase) + \
+				 ((0xF0 | NUBUS_MIN_SLOT) << 24))
 
 struct nubus_softc {
 	struct	device	sc_dev;

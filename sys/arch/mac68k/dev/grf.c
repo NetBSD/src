@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.21 1995/04/29 20:23:39 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.22 1995/07/01 23:40:38 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -289,7 +289,11 @@ grfmmap(dev, off, prot)
 	int off;
 	int prot;
 {
-	return (grfaddr(grfcd.cd_devs[GRFUNIT(dev)], off));
+	int     unit = GRFUNIT(dev);
+	struct grf_softc *gp;
+
+	gp = grfcd.cd_devs[unit];
+	return (grfaddr(gp, off));
 }
 
 int
@@ -337,9 +341,11 @@ grfaddr(gp, off)
 	register int off;
 {
 	register struct grfmode *gm = &gp->curr_mode;
+	u_long	addr;
 
 	if (off < gm->fbsize) {
-		return (((u_int) gm->fbbase + off) >> PGSHIFT);
+		addr = NUBUS_VIRT_TO_PHYS((u_int) gm->fbbase) + off;
+		return mac68k_btop(addr);
 	}
 	/* bogus */
 	return (-1);
