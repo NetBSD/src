@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.42 2003/05/03 17:54:32 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.43 2003/10/26 16:04:00 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.42 2003/05/03 17:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.43 2003/10/26 16:04:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,7 +520,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		/* locked: <nothing> */
 
 		if (error) {
-			 if (error == EAGAIN) {
+			if (error == EAGAIN) {
 				tsleep(&lbolt, PVM, "fltagain2", 0);
 				return (0);
 			}
