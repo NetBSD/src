@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/01/29 18:41:50 christos Exp $
+#	$NetBSD: Makefile,v 1.9 1999/02/12 05:15:35 cjs Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ PROG=	installboot
 
 SRCS=	installboot.c bootblks.c getmount.c loadfile.c
 
-NOMAN=	yes
+MKMAN=	no
 
 CPPFLAGS+= -I${.CURDIR}/../lib/crt/bootsect
 CPPFLAGS+= -I${.CURDIR}/../lib
