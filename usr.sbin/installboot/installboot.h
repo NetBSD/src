@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.1 2002/04/03 05:21:17 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.2 2002/04/04 17:53:04 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #ifndef	_INSTALLBOOT_H
 #define	_INSTALLBOOT_H
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 typedef enum {
 				/* flags from global options */
