@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 2000/04/29 03:31:49 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.3 2000/04/29 19:39:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,5 +45,52 @@
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
+
+static __inline void __cpu_simple_lock_init __P((__volatile int *))
+	__attribute__((__unused__));
+static __inline void __cpu_simple_lock __P((__volatile int *))
+	__attribute__((__unused__));
+static __inline int __cpu_simple_lock_try __P((__volatile int *))
+	__attribute__((__unused__));
+static __inline void __cpu_simple_unlock __P((__volatile int *)) 
+	__attribute__((__unused__));
+
+static __inline void
+__cpu_simple_lock_init(__volatile int *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock(__volatile int *alp)
+{
+	int __val = __SIMPLELOCK_LOCKED;
+
+	do {
+		__asm __volatile("xchgl %0, %2"
+			: "=r" (__val)
+			: "0" (__val), "m" (*alp));
+	} while (__val != __SIMPLELOCK_UNLOCKED);
+}
+
+static __inline int
+__cpu_simple_lock_try(__volatile int *alp)
+{
+	int __val = __SIMPLELOCK_LOCKED;
+
+	__asm __volatile("xchgl %0, %2"
+		: "=r" (__val)
+		: "0" (__val), "m" (*alp));
+
+	return ((__val == __SIMPLELOCK_UNLOCKED) ? 1 : 0);
+}
+
+void
+__cpu_simple_unlock(__volatile int *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
 
 #endif /* _I386_LOCK_H_ */
