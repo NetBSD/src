@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2004/02/14 08:20:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,7 @@
 #ifndef _NS532_CPU_H_
 #define	_NS532_CPU_H_
 
+#ifdef _KERNEL
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
@@ -60,11 +61,8 @@ struct cpu_info {
 #endif
 };
 
-#ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
-
 #define	curcpu()			(&cpu_info_store)
-#endif
 
 /*
  * definitions of cpu-dependent requirements
@@ -105,15 +103,14 @@ int	want_resched;		/* resched() was called */
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	setsoftast()
+#define	signotify(p)		setsoftast()
 
 /*
  * We need a machine-independent name for this.
  */
-#define	DELAY(n)	delay(n)
+#define	DELAY(n)		delay(n)
 void	delay __P((int));
 
-#ifdef _KERNEL
 /* ieee_handler.c */
 int	ieee_handle_exception __P((struct lwp *));
 
@@ -151,5 +148,4 @@ int	kvtop __P((caddr_t));
 	{ "nkpde", CTLTYPE_INT }, \
 	{ "ieee_disable", CTLTYPE_INT }, \
 }
-
 #endif /* !_NS532_CPU_H_ */
