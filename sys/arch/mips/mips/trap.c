@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 2000/03/28 02:58:50 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.124 2000/03/28 03:11:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2000/03/28 02:58:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2000/03/28 03:11:28 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -407,7 +407,6 @@ trap(status, cause, vaddr, opc, frame)
 	u_quad_t sticks = 0;
 	struct proc *p = curproc;
 	vm_prot_t ftype;
-	extern struct proc *fpcurproc;
 	void fswintrberr __P((void));
 
 	uvmexp.traps++;
