@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.166 1999/11/04 01:13:31 perry Exp $
+# $NetBSD: mi,v 1.167 1999/11/10 22:41:00 jdolecek Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1676,6 +1676,7 @@
 ./usr/share/man/cat3/fputs.0
 ./usr/share/man/cat3/fread.0
 ./usr/share/man/cat3/free.0
+./usr/share/man/cat3/freeaddrinfo.0
 ./usr/share/man/cat3/freopen.0
 ./usr/share/man/cat3/frexp.0
 ./usr/share/man/cat3/fropen.0
@@ -1694,6 +1695,7 @@
 ./usr/share/man/cat3/funopen.0
 ./usr/share/man/cat3/fwopen.0
 ./usr/share/man/cat3/fwrite.0
+./usr/share/man/cat3/gai_strerror.0
 ./usr/share/man/cat3/gamma.0
 ./usr/share/man/cat3/gamma_r.0
 ./usr/share/man/cat3/gammaf.0
@@ -3110,6 +3112,7 @@
 ./usr/share/man/man3/fputs.3
 ./usr/share/man/man3/fread.3
 ./usr/share/man/man3/free.3
+./usr/share/man/man3/freeaddrinfo.3
 ./usr/share/man/man3/freopen.3
 ./usr/share/man/man3/frexp.3
 ./usr/share/man/man3/fropen.3
@@ -3128,6 +3131,7 @@
 ./usr/share/man/man3/funopen.3
 ./usr/share/man/man3/fwopen.3
 ./usr/share/man/man3/fwrite.3
+./usr/share/man/man3/gai_strerror.3
 ./usr/share/man/man3/gamma.3
 ./usr/share/man/man3/gamma_r.3
 ./usr/share/man/man3/gammaf.3
