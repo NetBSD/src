@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.139 2004/12/05 06:12:54 jrf Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.140 2004/12/23 20:11:28 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.139 2004/12/05 06:12:54 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.140 2004/12/23 20:11:28 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ static int checkfreelist(struct buf *, struct bqueue *);
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-#ifndef SOFTDEP
+#if !defined(SOFTDEP) || !defined(FFS)
 struct bio_ops bioops;	/* I/O operation notification */
 #endif
 
