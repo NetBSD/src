@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.22 2002/04/24 05:25:02 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.23 2002/04/26 17:45:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,6 +76,8 @@ struct	pthread_st {
 	PTQ_ENTRY(pthread_st)	pt_allq;
 	/* Entry on the sleep queue (xxx should be same as run queue?) */
 	PTQ_ENTRY(pthread_st)	pt_sleep;
+	/* Objecy we're sleeping on */
+	void	*pt_sleepobj;
 	/* Queue we're sleeping on */
 	struct pthread_queue_t		*pt_sleepq;
 	/* Lock protecting that queue */
