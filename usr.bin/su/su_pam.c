@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.2 2005/01/10 23:33:53 christos Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.3 2005/01/12 01:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.2 2005/01/10 23:33:53 christos Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.3 2005/01/12 01:45:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,8 @@ main(int argc, char **argv)
 		if (pamh != NULL)
 			PAM_END("pam_start");
 		/* Things went really bad... */
-		syslog(LOG_ERR, "pam_start failed");
+		syslog(LOG_ERR, "pam_start failed: %s",
+		    pam_strerror(pamh, pam_err));
 		errx(1, "pam_start failed");
 	}
 
@@ -207,10 +208,10 @@ main(int argc, char **argv)
 	 * Authentication 
 	 */
 	if ((pam_err = pam_authenticate(pamh, 0)) != PAM_SUCCESS) {
-		syslog(LOG_WARNING, "BAD SU %s to %s%s",
-		    username, user, ontty());
+		syslog(LOG_WARNING, "BAD SU %s to %s%s: %s",
+		    username, user, ontty(), pam_strerror(pamh, pam_err));
 		pam_end(pamh, pam_err);
-		errx(1, "Sorry");
+		errx(1, "Sorry: %s", pam_strerror(pamh, pam_err));
 	}
 
 	/*
