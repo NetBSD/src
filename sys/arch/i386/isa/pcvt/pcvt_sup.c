@@ -135,17 +135,6 @@ static u_short getrand ( void );
 #endif /* PCVT_SCREENSAVER */
 
 
-#if PCVT_NETBSD
-#if PCVT_NETBSD > 9
-#define DELAY(x) delay(x)
-#endif /* PCVT_NETBSD > 9 */
-#define TIMEOUT_T timeout_t
-#elif PCVT_FREEBSD && PCVT_FREEBSD > 102
-#define TIMEOUT_T timeout_func_t
-#else	/* old style */
-#define TIMEOUT_T caddr_t
-#endif /* PCVT_NETBSD, PCVT_FREEBSD > 102 */
-
 /*---------------------------------------------------------------------------*
  *	execute vga ioctls
  *---------------------------------------------------------------------------*/
@@ -919,7 +908,7 @@ async_update(int a)
 	/* need a method to suspend the updates */
 	if(a)
 	{
-		untimeout((TIMEOUT_T)async_update, 0);
+		untimeout(async_update, NULL);
 		return;
 	}
 #endif /* XSERVER */
@@ -1100,7 +1089,7 @@ async_update(int a)
 async_update_exit:
 
 	if(a == 0)
-		timeout((TIMEOUT_T)async_update, 0, PCVT_UPDATEFAST);
+		timeout(async_update, NULL, PCVT_UPDATEFAST);
 }
     
 /*---------------------------------------------------------------------------*
@@ -1937,7 +1926,7 @@ scrnsv_blink(void)
 	*scrnsv_current = (7 /* LIGHTGRAY */ << 8) + '*';
 	if(adaptor_type == VGA_ADAPTOR)
 		vgapaletteio(7 /* LIGHTGRAY */, &blink_rgb[(r >> 4) & 7], 1);
-	timeout((TIMEOUT_T)scrnsv_blink, 0, hz);
+	timeout(scrnsv_blink, NULL, hz);
 }
 
 #endif /* PCVT_PRETTYSCRNS */
@@ -1956,7 +1945,7 @@ pcvt_set_scrnsv_tmo(int timeout)
 	int x = splhigh();
 
 	if(scrnsv_timeout)
-		untimeout((TIMEOUT_T)scrnsv_timedout, 0);
+		untimeout(scrnsv_timedout, NULL);
 	scrnsv_timeout = timeout;
 	pcvt_scrnsv_reset();		/* sanity */
 	splx(x);
@@ -2032,7 +2021,7 @@ scrnsv_timedout(void)
 			vgapaletteio(0 /* BLACK */, &black, 1);
 		}
 		/* prepare for next time... */
-		timeout((TIMEOUT_T)scrnsv_timedout /* me! */, 0, hz / 10);
+		timeout(scrnsv_timedout /* me! */, NULL, hz / 10);
 	}
 	else
 	{
@@ -2042,7 +2031,7 @@ scrnsv_timedout(void)
 		
 #if PCVT_PRETTYSCRNS
 		scrnsv_current = vsp->Crtat;
-		timeout((TIMEOUT_T)scrnsv_blink, 0, hz);
+		timeout(scrnsv_blink, NULL, hz);
 #endif /* PCVT_PRETTYSCRNS */
 
 		sw_cursor(0);	/* cursor off on mda/cga */
@@ -2070,14 +2059,14 @@ pcvt_scrnsv_reset(void)
 	{
 		last_schedule = time.tv_sec;
 		reschedule = 1;
-		untimeout((TIMEOUT_T)scrnsv_timedout, 0);
+		untimeout(scrnsv_timedout, NULL);
 	}
 	if(scrnsv_active)
 	{
 
 #if PCVT_PRETTYSCRNS
 		if(scrnsv_active > 1)
-			untimeout((TIMEOUT_T)scrnsv_blink, 0);
+			untimeout(scrnsv_blink, NULL);
 #endif /* PCVT_PRETTYSCRNS */
 
 		bcopy(savedscreen, vsp->Crtat, scrnsv_size);
@@ -2099,7 +2088,7 @@ pcvt_scrnsv_reset(void)
 	if(reschedule)
 	{
 		/* mark next timeout */
-		timeout((TIMEOUT_T)scrnsv_timedout, 0, scrnsv_timeout * hz);
+		timeout(scrnsv_timedout, NULL, scrnsv_timeout * hz);
 	}
 	splx(x);
 }
