@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.85 2004/02/23 05:01:04 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.86 2004/03/28 08:28:06 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.85 2004/02/23 05:01:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.86 2004/03/28 08:28:06 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1908,6 +1908,7 @@ in6_delmulti(in6m)
 	struct in6_multi *in6m;
 {
 	struct	in6_ifreq ifr;
+	struct	in6_ifaddr *ia;
 	int	s = splsoftnet();
 
 	if (--in6m->in6m_refcount == 0) {
@@ -1923,6 +1924,18 @@ in6_delmulti(in6m)
 		LIST_REMOVE(in6m, in6m_entry);
 		if (in6m->in6m_ia) {
 			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+		}
+		/*
+		 * Delete all references of this multicasting group from
+		 * the membership arrays
+		 */
+		for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+			struct in6_multi_mship *imm;
+			LIST_FOREACH(imm, &ia->ia6_memberships,
+			    i6mm_chain) {
+				if (imm->i6mm_maddr == in6m)
+					imm->i6mm_maddr = NULL;
+			}
 		}
 
 		/*
