@@ -1,4 +1,5 @@
-.\"	$OpenBSD: mkalias.8,v 1.1 1997/07/26 12:12:28 maja Exp $
+.\"	$NetBSD: mkalias.8,v 1.2 1997/10/06 06:10:16 lukem Exp $
+.\"
 .\" Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -35,57 +36,61 @@
 .Nm mkalias
 .Nd a YP map convertion program
 .Sh SYNOPSIS
-.Nm mkalias
-.Op Fl v
+.Nm
+.Op Fl d
 .Op Fl e 
 .Op Fl E
-.Op Fl d
-.Op Fl u
 .Op Fl n
+.Op Fl s
+.Op Fl u
+.Op Fl v
 .Ar input
 .Op Ar output
 .Sh DESCRIPTION
-.Nm Mkalias
+.Nm
 is used to convert a mail.aliases map to a mail.byaddr map. This is a
 a inverse map of user@host (or user!host) back to alias. 
 .Pp
+.Nm
+uses
+.Ar input
+as the input map, and if
+.Ar output
+is given, use that as the output map.
+If the output map isn't given don't create database.
+This can be useful when
+.Fl e 
+or
+.Fl E
+is given.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl v
-Verbose mode.
+.It Fl d
+Assume domain names are OK.
+Only useful together with
+.Fl e 
+or
+.Fl E .
 .It Fl e
 Check host to verify that it exists.
 .It Fl E
 Same as
 .Fl e ,
 but also check for any MX-record.
-.It Fl d
-Assume Domain names are OK. Only useful together with
-.Fl e 
-or
-.Fl E .
-.It Fl u
-Assume UUCP names are OK. Only useful together with
-.Fl e 
-or
-.Fl E .
 .It Fl n
 Capitalize name. eg mats.o.jansson becomes Mats.O.Jansson.  
-.It Ar input
-Use this map as input
-.It Ar output
-Use this map as output. If the output map isn't given don't create database.
-Can be useful together with
+.It Fl u
+Assume UUCP names are OK.
+Only useful together with
 .Fl e 
 or
 .Fl E .
+.It Fl s
+Ignored (only provided for compatibility with SunOS 4.1.x).
+.It Fl v
+Verbose mode.
 .El
-.Sh BUGS
-.Nm mkalias
-on SunOS 4.1.x seems to have a
-.Fl s .
-Since I don't know what it is supposed to do I havn't implemented it. But it is accepted by the program.
 .Sh SEE ALSO
 .Xr yp 8 ,
 .Xr ypserv 8 
