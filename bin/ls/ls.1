@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.36 2002/11/09 12:27:53 enami Exp $
+.\"	$NetBSD: ls.1,v 1.37 2003/02/10 16:10:22 grant Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,12 +80,24 @@ Always set for the super-user.
 .It Fl C
 Force multi-column output; this is the default when output is to a terminal.
 .It Fl F
-Display a slash (/) immediately after each pathname that is a directory,
-an asterisk (*) after each that is executable,
-an at sign (@) after each symbolic link,
-a percent sign (%) after each whiteout,
-an equal sign (=) after each socket,
-and a vertical bar (|) after each that is a
+Display a slash
+.Pq Sq \&/
+immediately after each pathname that is a directory,
+an asterisk
+.Pq Sq \&*
+after each that is executable,
+an at sign
+.Pq Sq \&@
+after each symbolic link,
+a percent sign
+.Pq Sq \&%
+after each whiteout,
+an equal sign
+.Pq Sq \&=
+after each socket,
+and a vertical bar
+.Pq Sq \&|
+after each that is a
 .Tn FIFO .
 .It Fl L
 If argument is a symbolic link, list the file or directory the link references
@@ -97,14 +109,16 @@ Sort by size, largest file first.
 .It Fl T
 When used with the
 .Fl l
-(the lowercase letter ``ell'') option,
-display complete time information for the file, including
+(the lowercase letter
+.Dq ell )
+option, display complete time information for the file, including
 month, day, hour, minute, second, and year.
 .It Fl W
 Display whiteouts when scanning directories.
 .It Fl a
 Include directory entries whose names begin with a
-dot (.).
+dot
+.Pq Sq \&. .
 .It Fl c
 Use time when file status was last changed for sorting or printing.
 .It Fl d
@@ -122,7 +136,8 @@ Modifies the
 .Fl s
 option, causing the sizes to be reported in kilobytes.
 .It Fl l
-(The lowercase letter ``ell.'')
+(The lowercase letter
+.Dq ell ) .
 List in long format.
 (See below.)
 If the output is to a terminal, a total sum for all the file
@@ -145,10 +160,14 @@ is displayed.
 .Xr chflags 1
 for a list of possible flags and their meanings.)
 .It Fl p
-Display a slash (/) immediately after each pathname that is a directory.
+Display a slash
+.Pq Sq \&/
+immediately after each pathname that is a directory.
 .It Fl q
 Force printing of non-graphic characters in file names as
-the character `?'; this is the default when output is to a terminal.
+the character
+.Sq \&? ;
+this is the default when output is to a terminal.
 .It Fl r
 Reverse the order of the sort to get reverse
 lexicographical order or the smallest or oldest entries first.
@@ -171,7 +190,8 @@ or printing
 .It Fl x
 Multi-column output sorted across the page rather than down the page.
 .It Fl \&1
-(The numeric digit ``one.'')
+(The numeric digit
+.Dq one ) .
 Force output to be one entry per line.
 This is the default when output is not to a terminal.
 .El
