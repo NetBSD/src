@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.77 2003/01/08 15:40:56 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.78 2003/01/08 15:43:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.77 2003/01/08 15:40:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.78 2003/01/08 15:43:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,9 +409,9 @@ lfs_set_dirop(struct vnode *vp, struct vnode *vp2)
 	fs->lfs_doifile = 1;						
 
 	/* Hold a reference so SET_ENDOP will be happy */
-	lfs_vref(vp);
-	if (vp2 != NULL)
-		lfs_vref(vp2);
+	vref(vp);
+	if (vp2)
+		vref(vp2);
 
 	return 0;
 
@@ -432,9 +432,9 @@ unreserve:
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
 	lfs_reserve((fs), vp, vp2, -NRESERVE(fs)); /* XXX */		\
-	lfs_vunref(vp);							\
-	if (vp2 != NULL)						\
-		lfs_vunref(vp2);					\
+	vrele(vp);							\
+	if (vp2)							\
+		vrele(vp2);						\
 }
 
 #define	MARK_VNODE(dvp)  do {                                           \
