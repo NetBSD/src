@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.11 1997/10/08 19:16:24 christos Exp $	*/
+/*	$NetBSD: docmd.c,v 1.12 1997/10/18 14:34:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,15 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: docmd.c,v 1.11 1997/10/08 19:16:24 christos Exp $";
+static char *rcsid = "$NetBSD: docmd.c,v 1.12 1997/10/18 14:34:47 mrg Exp $";
 #endif
 #endif /* not lint */
 
-#include "defs.h"
-#include <setjmp.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+
+#include <errno.h>
 #include <netdb.h>
 #include <regex.h>
-#include <sys/ioctl.h>
+#include <setjmp.h>
+
+#include "defs.h"
 
 FILE	*lfp;			/* log file for recording files updated */
 struct	subcmd *subcmds;	/* list of sub-commands for current cmd */

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.6 1996/09/10 18:48:57 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.7 1997/10/18 14:34:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: gram.y,v 1.6 1996/09/10 18:48:57 thorpej Exp $";
+static char *rcsid = "$NetBSD: gram.y,v 1.7 1997/10/18 14:34:54 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -450,6 +450,7 @@ void
 yyerror(s)
 	char *s;
 {
+
 	++nerrs;
 	fflush(stdout);
 	fprintf(stderr, "rdist: line %d: %s\n", yylineno, s);
@@ -494,7 +495,7 @@ makenl(name)
  */
 struct subcmd *
 makesubcmd(type)
-	int type;
+	int	type;
 {
 	register struct subcmd *sc;
 

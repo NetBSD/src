@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.11 1996/07/12 00:46:31 thorpej Exp $	*/
+/*	$NetBSD: server.c,v 1.12 1997/10/18 14:35:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,11 +37,17 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: server.c,v 1.11 1996/07/12 00:46:31 thorpej Exp $";
+static char *rcsid = "$NetBSD: server.c,v 1.12 1997/10/18 14:35:04 mrg Exp $";
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
 #include <sys/wait.h>
+
+#include <errno.h>
+#include <pwd.h>
+#include <grp.h>
+
 #include "defs.h"
 
 #define	ack() 	(void) write(rem, "\0\n", 2)
@@ -477,7 +483,7 @@ sendf(rname, opts)
 		error("%s: %s\n", target, strerror(errno));
 		return;
 	}
-	(void) snprintf(buf, sizeof(buf), "R%o %o %qd %ld %s %s %s\n", opts,
+	(void)snprintf(buf, sizeof(buf), "R%o %o %qd %ld %s %s %s\n", opts,
 		stb.st_mode & 07777, stb.st_size, stb.st_mtime,
 		protoname(), protogroup(), rname);
 	if (debug)
@@ -680,9 +686,9 @@ query(name)
 
 	switch (stb.st_mode & S_IFMT) {
 	case S_IFREG:
-		(void) snprintf(buf, sizeof(buf), "Y%qd %ld\n", stb.st_size,
+		(void)snprintf(buf, sizeof(buf), "Y%qd %ld\n", stb.st_size,
 		    stb.st_mtime);
-		(void) write(rem, buf, strlen(buf));
+		(void)write(rem, buf, strlen(buf));
 		break;
 
 	case S_IFLNK:
@@ -908,7 +914,7 @@ badnew1:		error("%s:%s: %s\n", host, new, strerror(errno));
 		(void) fclose(f2);
 		if (opts & VERIFY) {
 differ:			buf[0] = '\0';
-			(void) snprintf(buf + 1, sizeof(buf) - 1,
+			(void)snprintf(buf + 1, sizeof(buf) - 1,
 			    "need to update: %s\n",target);
 			(void) write(rem, buf, strlen(buf + 1) + 1);
 			goto badnew2;
@@ -922,11 +928,11 @@ differ:			buf[0] = '\0';
 	tvp[0].tv_usec = 0;
 	tvp[1].tv_sec = mtime;
 	tvp[1].tv_usec = 0;
-	if (utimes(new, tvp) < 0)
+	if (futimes(f, tvp) < 0)
 		note("%s: utimes failed %s: %s\n", host, new, strerror(errno));
 
 	if (fchog(f, new, owner, group, mode) < 0) {
-badnew2:	
+badnew2:
 		if (f != -1)
 			(void) close(f);
 		(void) unlink(new);
