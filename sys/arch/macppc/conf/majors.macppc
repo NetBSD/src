@@ -1,4 +1,4 @@
-#	$NetBSD: majors.macppc,v 1.11 2003/07/27 14:18:22 itojun Exp $
+#	$NetBSD: majors.macppc,v 1.12 2003/08/17 19:15:50 hannken Exp $
 #
 # Device majors for macppc
 #
@@ -20,6 +20,8 @@ device-major	cd		char 15  block 6	cd
 device-major	ch		char 16			ch
 device-major	ss		char 17			ss
 device-major	uk		char 18			uk
+
+#device-major	lpt		char 20			lpt
 
 device-major	ipl		char 21			ipfilter
 device-major	ite		char 22			ite
