@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.14 1994/06/29 06:38:31 cgd Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.15 1995/01/12 06:23:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -182,8 +182,11 @@ rip_ctloutput(op, so, level, optname, m)
 	register struct inpcb *inp = sotoinpcb(so);
 	register int error;
 
-	if (level != IPPROTO_IP)
+	if (level != IPPROTO_IP) {
+		if (m != 0 && *m != 0)
+			(void)m_free(*m);
 		return (EINVAL);
+	}
 
 	switch (optname) {
 
