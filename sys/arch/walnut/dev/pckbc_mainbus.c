@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mainbus.c,v 1.2 2001/07/22 15:09:09 wiz Exp $	*/
+/*	$NetBSD: pckbc_mainbus.c,v 1.3 2001/10/29 01:42:11 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,6 +47,7 @@
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/walnut.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h> 
@@ -107,8 +108,8 @@ pckbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		pckbc_console_attached = 1;
 		/* t->t_cmdbyte was initialized by cnattach */
 	} else {
-		if (bus_space_map(iot, addr + KBDATAP, 1, 0, &ioh_d) ||
-		    bus_space_map(iot, addr + KBCMDP, 1, 0, &ioh_c))
+		if (bus_space_map(iot, addr + KEY_MOUSE_DATA, 1, 0, &ioh_d) ||
+		    bus_space_map(iot, addr + KEY_MOUSE_CMD, 1, 0, &ioh_c))
 			panic("pckbc_attach: couldn't map");
 
 		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
@@ -136,9 +137,17 @@ pckbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 static void
 pckbc_mainbus_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
-	// struct pckbc_mainbus_softc *jsc = (void *) sc;
+	struct pckbc_mainbus_softc *msc = (void *)sc;
+	int irq = msc->sc_irq[slot];
 
-	// XXX FPGA interrupts - uggg....
-	// intr_establish(jsc->sc_intr[slot], pckbcintr, sc);
-	// printf ..... interrupting.... at ....
+	if (slot > PCKBC_NSLOTS) {
+		printf("pckbc_mainbus_intr_establish: attempt to establish "
+		    "interrupt at slot %d\n", slot);
+		return;
+	}
+		
+	intr_establish(irq, IST_LEVEL, IPL_SERIAL, pckbcintr, sc);
+	printf("%s: %s slot interrupting at irq %d\n", sc->sc_dv.dv_xname,
+	    pckbc_slot_names[slot], irq);
+
 }
