@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15 2003/09/03 07:28:40 manu Exp $
+	$NetBSD: syscalls.master,v 1.16 2003/09/06 11:18:03 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -359,11 +359,11 @@
 185	UNIMPL
 186	UNIMPL
 187	UNIMPL
-188	NODEF		{ int bsd_compat_12_sys_stat(const char *path, \
+188	STD		{ int darwin_sys_stat(const char *path, \
 			    struct stat12 *ub); } stat12
-189	NOARGS		{ int compat_12_sys_fstat(int fd, \
+189	STD		{ int darwin_sys_fstat(int fd, \
 			    struct stat12 *sb); }
-190	NODEF		{ int bsd_compat_12_sys_lstat(const char *path, \
+190	STD		{ int darwin_sys_lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
 191	NODEF		{ long bsd_sys_pathconf(const char *path, \
 			    int name); }
