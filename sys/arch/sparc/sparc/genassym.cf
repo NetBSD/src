@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.42 2004/04/17 10:07:58 pk Exp $
+#	$NetBSD: genassym.cf,v 1.43 2004/04/17 22:36:54 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ define	V_SWTCH		offsetof(struct uvmexp, swtch)
 define	V_INTR		offsetof(struct uvmexp, intrs)
 define	V_SOFT		offsetof(struct uvmexp, softs)
 define	V_FAULTS	offsetof(struct uvmexp, faults)
+define	EV_COUNT	offsetof(struct evcnt, ev_count)
 
 # CPU info structure
 define	CPUINFO_STRUCTSIZE	sizeof(struct cpu_info)
