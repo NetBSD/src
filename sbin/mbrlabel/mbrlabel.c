@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.8 2000/07/03 03:37:59 matt Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.9 2000/12/24 01:50:29 wiz Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.8 2000/07/03 03:37:59 matt Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.9 2000/12/24 01:50:29 wiz Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,19 +52,18 @@ __RCSID("$NetBSD: mbrlabel.c,v 1.8 2000/07/03 03:37:59 matt Exp $");
 
 #define	FIRSTPART	0
 
-int main __P((int, char **));
-void usage __P((void));
-void getlabel __P((int));
-void setlabel __P((int));
-int getparts __P((int, int, u_int32_t, u_int32_t));
-int nbsdtype __P((int));
-u_int32_t getlong __P((void *p));
+int main(int, char **);
+void usage(void);
+void getlabel(int);
+void setlabel(int);
+int getparts(int, int, u_int32_t, u_int32_t);
+int nbsdtype(int);
+u_int32_t getlong(void *p);
 
 struct disklabel label;
 
 void
-getlabel(sd)
-	int sd;
+getlabel(int sd)
 {
 	struct partition save;
 
@@ -84,8 +83,7 @@ getlabel(sd)
 }
 
 void
-setlabel(sd)
-	int sd;
+setlabel(int sd)
 {
 	label.d_checksum = 0;
 	label.d_checksum = dkcksum(&label);
@@ -112,8 +110,7 @@ static struct typetab {
 };
 
 int
-nbsdtype(type)
-	int type;
+nbsdtype(int type)
 {
 	struct typetab *tt;
 
@@ -124,8 +121,7 @@ nbsdtype(type)
 }
 
 u_int32_t
-getlong(p)
-	void *p;
+getlong(void *p)
 {
 	unsigned char *cp = p;
 
@@ -133,11 +129,7 @@ getlong(p)
 }
 
 int
-getparts(sd, np, off, eoff)
-	int sd;
-	int np;
-	u_int32_t off;
-	u_int32_t eoff;
+getparts(int sd, int np, u_int32_t off, u_int32_t eoff)
 {
 	unsigned char buf[DEV_BSIZE];
 	struct mbr_partition parts[NMBRPART];
@@ -215,16 +207,14 @@ getparts(sd, np, off, eoff)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: mbrlabel rawdisk\n");
 	exit(1);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int sd;
 	int np;
