@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/24 17:17:29 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/26 22:53:14 tv Exp $
 
 LIB=		bfd
 
@@ -48,6 +48,7 @@ CLEANFILES+=	bfd.h elf32-target.h elf64-target.h targmatch.h
 
 TEXINFO=	bfd.texinfo
 INFOFLAGS=	-I${DIST}/bfd/doc
+SELECT_VECS=	netbsd_core_vec
 
 .PATH:		${DIST}/bfd ${DIST}/opcodes ${DIST}/libiberty ${DIST}/include \
 		${DIST}/bfd/doc
