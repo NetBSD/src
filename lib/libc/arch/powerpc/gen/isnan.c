@@ -1,4 +1,4 @@
-/*	$NetBSD: isnan.c,v 1.4 1999/08/29 18:08:31 mycroft Exp $	*/
+/*	$NetBSD: isnan.c,v 1.5 2000/01/22 22:45:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isnan.c,v 1.4 1999/08/29 18:08:31 mycroft Exp $");
+__RCSID("$NetBSD: isnan.c,v 1.5 2000/01/22 22:45:00 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: isnan.c,v 1.4 1999/08/29 18:08:31 mycroft Exp $");
 #include <math.h>
 
 #ifdef __weak_alias
-__weak_alias(isnan,_isnan);
+__weak_alias(isnan,_isnan)
 #endif
 
 int
