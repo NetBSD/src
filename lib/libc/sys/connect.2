@@ -1,4 +1,4 @@
-.\"	$NetBSD: connect.2,v 1.11 1998/08/29 08:32:36 lukem Exp $
+.\"	$NetBSD: connect.2,v 1.12 1999/02/10 18:20:02 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
-.Fn connect "int s" "const struct sockaddr *name" "int namelen"
+.Fn connect "int s" "const struct sockaddr *name" "socklen_t namelen"
 .Sh DESCRIPTION
 The parameter
 .Fa s
