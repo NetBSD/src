@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fdset,v 1.5 2002/04/11 12:17:15 lukem Exp $
+#	$NetBSD: Makefile.fdset,v 1.6 2002/04/11 12:22:58 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -93,8 +93,7 @@ boot: ${BOOTCODE}
 
 release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/installation/floppy
-	cp -p ${BASENAME}?.fs ${RELEASEDIR}/installation/floppy
-		# XXXDISTRIB: use ${RELINSTALL}
+	${RELINSTALL} ${BASENAME}?.fs ${RELEASEDIR}/installation/floppy
 
 clean cleandir distclean:
 	rm -f ${BASENAME}?.fs 
