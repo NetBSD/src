@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.22 2000/09/25 23:07:28 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.23 2000/09/25 23:37:55 itojun Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.22 2000/09/25 23:07:28 itojun Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.23 2000/09/25 23:37:55 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -264,9 +264,6 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 			}
 #endif
 			if (strlen(hp->h_name) + 1 > hostlen) {
-#ifdef USE_GETIPNODEBY
-				freehostent(hp);
-#endif
 				return ENI_MEMORY;
 			}
 			strcpy(host, hp->h_name);
