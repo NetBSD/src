@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.167 2001/12/09 03:07:43 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.168 2001/12/10 01:38:48 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.167 2001/12/09 03:07:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.168 2001/12/10 01:38:48 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2744,7 +2744,8 @@ vfs_buf_print(bp, full, pr)
 
 
 const char vnode_flagbits[] =
-	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\11XLOCK\12XWANT\13BWAIT\14ALIASED"
+	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP"
+	"\11XLOCK\12XWANT\13BWAIT\14ALIASED"
 	"\15DIROP\16LAYER\17ONWORKLIST\20DIRTY";
 
 const char *vnode_types[] = {
