@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.4 1996/09/14 06:08:01 scottr Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.5 1997/01/13 07:01:24 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -62,4 +62,4 @@ void	extdms_complete __P((void));
 
 /* adbsys.c */
 void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	extdms_init __P((void));
+void	extdms_init __P((int));
