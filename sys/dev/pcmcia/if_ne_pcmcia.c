@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.117 2004/07/07 04:01:30 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.118 2004/07/07 04:19:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.117 2004/07/07 04:01:30 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.118 2004/07/07 04:19:45 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,10 @@ static const struct ne2000dev {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_PREMAX_PE200,
       0, 0x07f0, { 0x00, 0x20, 0xe0 } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_PREMAX_PE200,
+      0, -1, { 0x00, 0x20, 0xe0 } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_DIGITAL_DEPCMXX,
@@ -500,6 +504,10 @@ static const struct ne2000dev {
     { PCMCIA_VENDOR_ALLIEDTELESIS, PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM,
       PCMCIA_CIS_ALLIEDTELESIS_LA_PCM,
       0, 0x0ff0, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_VENDOR_NEXTCOM, PCMCIA_PRODUCT_NEXTCOM_NEXTHAWK,
+      PCMCIA_CIS_NEXTCOM_NEXTHAWK,
+      0, -1, { 0x00, 0x40, 0xb4 } },
 };
 
 #define	NE2000_NDEVS	(sizeof(ne2000devs) / sizeof(ne2000devs[0]))
@@ -761,10 +769,12 @@ found:
 		}
 	}
 
-	aprint_normal("%s: <%s, %s> <%04x, %04x>%s\n",
+	aprint_normal("%s: <%s, %s, %s, %s> <%04x, %04x>%s\n",
 	    dsc->sc_dev.dv_xname,
 	    pa->card->cis1_info[0] ?: "",
 	    pa->card->cis1_info[1] ?: "",
+	    pa->card->cis1_info[2] ?: "",
+	    pa->card->cis1_info[3] ?: "",
 	    pa->manufacturer, pa->product, typestr);
 
 	if (ne2000_attach(nsc, enaddr))
