@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.21 2001/04/07 15:19:32 jhawk Exp $
+.\"	$NetBSD: postinstall,v 1.22 2001/04/07 17:21:30 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -248,7 +248,6 @@ may depend, and simplifies installation (and deinstallation), both
 from source and precompiled binaries.
 .Pp
 .(bullet
-.It
 More information on the package system is at
 .Lk http://www.netbsd.org/Documentation/software/packages.html
 .It
