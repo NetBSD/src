@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.3 2000/12/03 13:17:03 ad Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.4 2001/01/03 21:04:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,6 +71,13 @@ struct iop_stat {
 #define	IOP_MAX_HW_QUEUECNT	256
 #define	IOP_MAX_HW_REPLYCNT	256
 
+struct iop_tidmap {
+	u_short	it_tid;
+	u_short	it_flags;
+	char	it_dvname[sizeof(((struct device *)NULL)->dv_xname)];
+};
+#define	IT_CONFIGURED	0x02	/* target configured */
+
 #ifdef _KERNEL
 
 #include "locators.h"
@@ -129,12 +136,6 @@ struct iop_initiator {
 
 #define	IOP_ICTX	0
 
-struct iop_tidmap {
-	u_short	it_tid;
-	u_short	it_flags;
-};
-#define	IT_CONFIGURED	0x02	/* target configured */
-
 /*
  * Per-IOP context.
  */
@@ -162,6 +163,7 @@ struct iop_softc {
 	int		sc_maxqueuecnt;	/* maximum # of msgs on h/w queue */
 	struct iop_initiator sc_eventii;/* IOP event handler */
 	struct proc	*sc_reconf_proc;/* reconfiguration process */
+	caddr_t		sc_ptb;
 
 	/*
 	 * Reply queue.
@@ -228,8 +230,9 @@ struct ioppt {
 };
 
 #define	IOPIOCPT	_IOWR('u', 0, struct ioppt)
-#define	IOPIOCGLCT	_IOW('u', 1, struct iovec)
-#define	IOPIOCGSTATUS	_IOW('u', 2, struct iovec)
+#define	IOPIOCGLCT	_IOWR('u', 1, struct iovec)
+#define	IOPIOCGSTATUS	_IOWR('u', 2, struct iovec)
 #define	IOPIOCRECONFIG	_IO('u', 3)
+#define	IOPIOCGTIDMAP	_IOWR('u', 4, struct iovec)
 
 #endif	/* !_I2O_IOPVAR_H_ */
