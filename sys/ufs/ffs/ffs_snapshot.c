@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.8 2005/01/18 10:40:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.9 2005/02/09 16:05:29 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -167,12 +167,16 @@ ffs_snapshot(mp, vp, ctime)
 		return 0;
 	}
 	/*
-	 * Check mount and check for exclusive reference.
+	 * Check mount, exclusive reference and owner.
 	 */
 	if (vp->v_mount != mp)
 		return EXDEV;
 	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
+	if (suser(p->p_ucred, &p->p_acflag) != 0 &&
+	    VTOI(vp)->i_uid != p->p_ucred->cr_uid)
+		return EACCES;
+
 	if (vp->v_size != 0) {
 		error = VOP_TRUNCATE(vp, 0, 0, NOCRED, p);
 		if (error)
