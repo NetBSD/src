@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.37 1994/05/21 08:37:47 cgd Exp $
+#	$Id: TDR,v 1.38 1994/05/22 10:05:59 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -22,6 +22,8 @@ options		DUMMY_NOPS
 options		MACHINE_NONCONTIG
 #options	SYSVMSG,SYSVSEM
 #options	SYSVSHM
+
+options		"COMPAT_SVR4"
 
 config		netbsd	root on sd0 swap on sd0 and sd1
 
