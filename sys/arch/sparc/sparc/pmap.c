@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.132 1998/10/08 21:47:34 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.133 1998/10/16 22:39:18 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1921,15 +1921,27 @@ ctx_alloc(pm)
 		/* Do any cache flush needed on context switch */
 		(*cpuinfo.pure_vcache_flush)();
 #ifdef DEBUG
-#if 0
-		ctxbusyvector[cnum] = 1; /* mark context as busy */
-#endif
 		if (pm->pm_reg_ptps_pa == 0)
 			panic("ctx_alloc: no region table in current pmap");
 #endif
 		/*setcontext(0); * paranoia? can we modify curr. ctx? */
+#if defined(MULTIPROCESSOR)
+		for (i = 0; i < ncpu; i++) {
+			struct cpu_info *cpi = cpus[i];
+			if (cpi == NULL)
+				continue;
+
+			setpgt4m(&cpi->ctx_tbl[cnum],
+				 (pm->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) |
+					SRMMU_TEPTD);
+		}
+		/* Fixup CPUINFO_VA region table entry for current CPU */
+		setpgt4m(&pm->pm_reg_ptps[VA_VREG(CPUINFO_VA)],
+			 cpuinfo.cpu_seg_ptd);
+#else
 		setpgt4m(&cpuinfo.ctx_tbl[cnum],
 			(pm->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
+#endif
 
 		setcontext4m(cnum);
 		if (doflush)
@@ -3354,12 +3366,10 @@ pmap_bootstrap4m(void)
 	setpgt4m(&cpuinfo.ctx_tbl[0],
 	    (pmap_kernel()->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
-	/* XXX:rethink - Store pointer to region table address */
-	cpuinfo.L1_ptps = pmap_kernel()->pm_reg_ptps;
-
 	for (reg = 0; reg < NKREG; reg++) {
 		struct regmap *rp;
 		caddr_t kphyssegtbl;
+		u_int ptd;
 
 		/*
 		 * Entering new region; install & build segtbl
@@ -3370,10 +3380,21 @@ pmap_bootstrap4m(void)
 		kphyssegtbl = (caddr_t)
 		    &kernel_segtable_store[reg * SRMMU_L2SIZE];
 
+		ptd = (VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
 		setpgt4m(&pmap_kernel()->pm_reg_ptps[reg + VA_VREG(KERNBASE)],
-		    (VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
+			 ptd);
 
 		rp->rg_seg_ptps = (int *)kphyssegtbl;
+
+		if (reg + VA_VREG(KERNBASE) == VA_VREG(CPUINFO_VA)) {
+			/*
+			 * Store the segment page table descriptor
+			 * corresponding to CPUINFO_VA, so we can install
+			 * this CPU-dependent translation into user pmaps
+			 * at context switch time.
+			 */
+			cpuinfo.cpu_seg_ptd = ptd;
+		}
 
 		if (rp->rg_segmap == NULL) {
 			printf("rp->rg_segmap == NULL!\n");
@@ -3627,6 +3648,21 @@ pmap_alloc_cpu(sc)
 	segtable = regtable + SRMMU_L1SIZE;
 	pagtable = segtable + SRMMU_L2SIZE;
 
+	/*
+	 * Store the segment page table descriptor corresponding
+	 * to CPUINFO_VA, so we can install this CPU-dependent
+	 * translation into user pmaps at context switch time.
+	 * Note that the region table we allocate here (`regtable')
+	 * is only used in context 0 on this CPU. Non-zero context
+	 * numbers always have a user pmap associated with it.
+	 * That pmap's region table is fixed up at context switch
+	 * time so that the entry corresponding to CPUINFO_VA points
+	 * at the correct CPU's segment table (and hence the per-CPU
+	 * page table).
+	 */
+	sc->cpu_seg_ptd =
+		(VA2PA((caddr_t)segtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
+
 	vr = VA_VREG(CPUINFO_VA);
 	vs = VA_VSEG(CPUINFO_VA);
 	vpg = VA_VPG(CPUINFO_VA);
@@ -3655,7 +3691,6 @@ pmap_alloc_cpu(sc)
 		(SRMMU_TEPTE | PPROT_N_RWX | SRMMU_PG_C));
 
 	sc->ctx_tbl = ctxtable;
-	sc->L1_ptps = regtable;
 }
 #endif /* SUN4M */
 
@@ -3799,8 +3834,10 @@ pmap_pinit(pm)
 
 		/* Copy kernel regions */
 		for (i = 0; i < NKREG; i++) {
-			setpgt4m(&pm->pm_reg_ptps[VA_VREG(KERNBASE) + i],
-				 cpuinfo.L1_ptps[VA_VREG(KERNBASE) + i]);
+			int *kpt, *upt;
+			kpt = &pmap_kernel()->pm_reg_ptps[VA_VREG(KERNBASE)];
+			upt = &pm->pm_reg_ptps[VA_VREG(KERNBASE)];
+			setpgt4m(&upt[i], kpt[i]);
 		}
 	}
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 1998/10/12 21:50:22 pk Exp $
+#	$NetBSD: genassym.cf,v 1.17 1998/10/16 22:39:18 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,6 +132,9 @@ define	SRUN		SRUN
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
 define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
+define	PMAP_REGPTPS	offsetof(struct pmap, pm_reg_ptps)
+
+define	REGTAB_CPU_OFF	(int)(&((int *)0)[VA_VREG(CPUINFO_VA)])
 
 # interrupt/fault metering
 ifdef UVM
@@ -157,6 +160,8 @@ define	CPUINFO_REDZONE		offsetof(struct cpu_info, redzone)
 define	REDSIZE			REDSIZE
 define	CPUINFO_IDLE_U		offsetof(struct cpu_info, idle_u)
 define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
+define	CPUINFO_SEGPTD		offsetof(struct cpu_info, cpu_seg_ptd)
+define	CPUINFO_CPUNO		offsetof(struct cpu_info, cpu_no)
 
 # PTE bits and related information
 define	PG_W		PG_W
