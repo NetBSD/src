@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.10 1994/04/14 04:06:15 cgd Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.11 1994/04/20 17:10:59 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -416,7 +416,7 @@ mountmsdosfs(devvp, mp, p)
 		pmp->pm_fmod = 1;
 	mp->mnt_data = (qaddr_t) pmp;
         mp->mnt_stat.f_fsid.val[0] = (long)dev;
-        mp->mnt_stat.f_fsid.val[1] = (long)MOUNT_ISOFS;
+        mp->mnt_stat.f_fsid.val[1] = (long)MOUNT_MSDOS;
 	mp->mnt_flag |= MNT_LOCAL;
 #if defined(QUOTA)
 	/*
