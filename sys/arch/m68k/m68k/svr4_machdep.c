@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.6.8.1 2001/11/17 13:07:54 scw Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.6.8.2 2001/11/17 21:42:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ svr4_sendsig(catcher, sig, mask, code)
 		sfp = (struct svr4_sigframe *)frame->f_regs[SP];
 	sfp--;
 
-	svr4_getcontext(l, &sf.sf_uc, mask);
+	svr4_getcontext(l, &sf.sf_uc);
 	/* Passing the PC is *wrong*! */
 	svr4_getsiginfo(&sf.sf_si, sig, code, (caddr_t)frame->f_pc);
 
