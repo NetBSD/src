@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.7 1999/03/25 20:56:01 leo Exp $
+.\"	$NetBSD: contents,v 1.8 1999/03/30 07:46:10 ross Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,9 +80,9 @@ see below.
 .	Bl -tag -compact -width diskimage/
 .		It Pa floppy/
 \*m boot and installation floppies; see below.
-.		It Pa tapeimage/
 .		It Pa diskimage/
-.No An image file Pa cdhdtape
+.		It Pa tapeimage/
+.No \&an image file Pa cdhdtape
 is included for the case where the installer is written to
 a CD, hard drive, or tape.
 This image file is the same for the CD, HD, and tape cases,
@@ -92,6 +92,12 @@ directory exists to hold a copy of the
 .Nx
 .Xr release 7
 standard.
+.		It Pa misc/
+contains
+.Pa GENERIC.fs ,
+.No a Tn GENERIC
+kernel in a bootable filesystem image. This is used in some unusual
+installations as described in the next section.
 .	El
 .\}
 .
