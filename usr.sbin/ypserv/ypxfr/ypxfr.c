@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.2 1996/08/15 22:17:57 chuck Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.3 1997/03/22 03:32:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -400,7 +400,7 @@ create_db(domain, map, temp_map)
 	    YP_DB_PATH, domain, temp_map);
 	db_temp[sizeof(db_temp) - 1] = '\0';
 
-	db = ypdb_open(db_temp, O_RDWR|O_CREAT, 0444);
+	db = ypdb_open(db_temp, O_RDWR|O_CREAT|O_EXCL, 0444);
 
 	return db;
 }
