@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 1/11/93
-#	$Id: Makefile,v 1.1 1993/05/27 21:19:56 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/05/27 21:24:06 cgd Exp $
 
 PROG=	dbtest
 SRCS=	dbtest.c
@@ -17,6 +17,11 @@ SRCS=	dbtest.c
 
 CFLAGS=	-g -DDEBUG -DSTATISTICS
 NOMAN=	noman
+
+install:
+
+regress:
+	sh ${.CURDIR}/run.test
 
 NOINCLUDE=1
 .include <bsd.prog.mk>
