@@ -1,5 +1,5 @@
 /*
- * $Id: md.c,v 1.1 1993/10/16 21:54:34 pk Exp $
+ * $Id: md.c,v 1.2 1993/10/27 00:56:17 pk Exp $
  */
 
 #include <sys/param.h>
@@ -154,7 +154,7 @@ int		magic, flags;
 	hp->a_dynamic = ((flags) & EX_DYNAMIC);
 
 	/* SunOS 4.1 N_TXTADDR depends on the value of outheader.a_entry.  */
-	if (entry_symbol)
+	if (!(link_mode & SHAREABLE)) /*WAS: if (entry_symbol) */
 		hp->a_entry = N_PAGSIZ(*hp);
 }
 
