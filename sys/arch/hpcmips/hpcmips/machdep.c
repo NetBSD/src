@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2000/07/20 21:03:37 jeffs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2000/07/25 00:11:36 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2000/07/20 21:03:37 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2000/07/25 00:11:36 jeffs Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -241,7 +241,7 @@ mach_init(argc, argv, bi)
 	}
 
 	/*
-	 *  Arguments are set up by boot lader.
+	 *  Arguments are set up by boot loader.
 	 */
 	if (bi && bi->magic == BOOTINFO_MAGIC) {
 		memset(&bi_copy, 0, sizeof(struct bootinfo));
