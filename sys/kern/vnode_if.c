@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.38 2001/09/15 20:37:36 chs Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.38.2.1 2001/11/12 21:19:03 thorpej Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -7,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.30 2001/09/15 20:36:37 chs Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp 
+ *	NetBSD: vnode_if.sh,v 1.30 2001/11/12 14:34:24 lukem Exp 
  */
 
 /*
@@ -42,6 +42,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.38.2.1 2001/11/12 21:19:03 thorpej Exp $");
+
 
 /*
  * If we have LKM support, always include the non-inline versions for

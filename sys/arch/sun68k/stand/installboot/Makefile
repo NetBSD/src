@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/06/14 12:57:13 fredette Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2001/11/12 21:17:38 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,6 @@ LDSTATIC?=	-static
 
 .PATH.c: ${LIBSA}
 
-SRCS=	installboot.c loadfile.c
+SRCS=	installboot.c byteorder.c loadfile.c loadfile_aout.c loadfile_elf32.c
 
 .include <bsd.prog.mk>

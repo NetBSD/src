@@ -1,4 +1,4 @@
-/*	$NetBSD: le_poll.c,v 1.3 2001/07/07 09:06:45 scw Exp $	*/
+/*	$NetBSD: le_poll.c,v 1.3.6.1 2001/11/12 21:17:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -75,7 +75,7 @@ le_reset(myea)
     struct lereg1 *ler1 = le_softc.sc_r1;
     struct lereg2 *ler2 = le_softc.sc_r2;
     unsigned int a;
-    int timo = 100000, stat, i;
+    int timo = 100000, stat = 0, i;
 
     ler1->ler1_rap = LE_CSR0;
     ler1->ler1_rdp = LE_C0_STOP;	/* do nothing until we are finished */
@@ -205,7 +205,7 @@ int le_put(pkt, len)
     struct lereg1 *ler1 = le_softc.sc_r1;
     struct lereg2 *ler2 = le_softc.sc_r2;
     struct letmd *tmd;
-    int timo = 100000, stat;
+    int timo = 100000, stat = 0;
     unsigned int a;
 
     ler1->ler1_rap = LE_CSR0;

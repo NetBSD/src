@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.37 2001/09/23 19:59:19 jdolecek Exp $	*/
+/*	$NetBSD: bus.h,v 1.37.2.1 2001/11/12 21:17:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -262,10 +262,10 @@ paddr_t	i386_memio_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
  * described by tag/handle/offset and copy into buffer provided.
  */
 
-#define	bus_space_read_multi_1(t, h, o, a, c)				\
+#define	bus_space_read_multi_1(t, h, o, ptr, cnt)			\
 do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
-		insb((h) + (o), (a), (c));				\
+		insb((h) + (o), (ptr), (cnt));				\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
@@ -277,17 +277,17 @@ do {									\
 			stosb					;	\
 			loop 1b"				: 	\
 		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
-		    "0" ((a)), "1" ((c)), "2" ((h) + (o))       :       \
+		    "0" ((ptr)), "1" ((cnt)), "2" ((h) + (o))       :	\
 		    "memory");						\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	bus_space_read_multi_2(t, h, o, a, c)				\
+#define	bus_space_read_multi_2(t, h, o, ptr, cnt)			\
 do {									\
-	__BUS_SPACE_ADDRESS_SANITY((a), u_int16_t, "buffer");		\
+	__BUS_SPACE_ADDRESS_SANITY((ptr), u_int16_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
-		insw((h) + (o), (a), (c));				\
+		insw((h) + (o), (ptr), (cnt));				\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
@@ -299,17 +299,17 @@ do {									\
 			stosw					;	\
 			loop 1b"				:	\
 		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
-		    "0" ((a)), "1" ((c)), "2" ((h) + (o))       :       \
+		    "0" ((ptr)), "1" ((cnt)), "2" ((h) + (o))       :	\
 		    "memory");						\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	bus_space_read_multi_4(t, h, o, a, c)				\
+#define	bus_space_read_multi_4(t, h, o, ptr, cnt)			\
 do {									\
-	__BUS_SPACE_ADDRESS_SANITY((a), u_int32_t, "buffer");		\
+	__BUS_SPACE_ADDRESS_SANITY((ptr), u_int32_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
-		insl((h) + (o), (a), (c));				\
+		insl((h) + (o), (ptr), (cnt));				\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
@@ -321,7 +321,7 @@ do {									\
 			stosl					;	\
 			loop 1b"				:	\
 		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
-		    "0" ((a)), "1" ((c)), "2" ((h) + (o))       :       \
+		    "0" ((ptr)), "1" ((cnt)), "2" ((h) + (o))       :       \
 		    "memory");						\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -346,7 +346,7 @@ do {									\
  * buffer provided.
  */
 
-#define	bus_space_read_region_1(t, h, o, a, c)				\
+#define	bus_space_read_region_1(t, h, o, ptr, cnt)			\
 do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		int dummy1;						\
@@ -361,7 +361,7 @@ do {									\
 			loop 1b"				: 	\
 		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),		\
 		    "=c" (dummy3)				:	\
-		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "1" ((h) + (o)), "2" ((ptr)), "3" ((cnt))	:	\
 		    "memory");						\
 	} else {							\
 		int dummy1;						\
@@ -372,14 +372,14 @@ do {									\
 			repne					;	\
 			movsb"					:	\
 		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
-		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "0" ((h) + (o)), "1" ((ptr)), "2" ((cnt))	:	\
 		    "memory");						\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	bus_space_read_region_2(t, h, o, a, c)				\
+#define	bus_space_read_region_2(t, h, o, ptr, cnt)			\
 do {									\
-	__BUS_SPACE_ADDRESS_SANITY((a), u_int16_t, "buffer");		\
+	__BUS_SPACE_ADDRESS_SANITY((ptr), u_int16_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		int dummy1;						\
@@ -394,7 +394,7 @@ do {									\
 			loop 1b"				: 	\
 		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),		\
 		    "=c" (dummy3)				:	\
-		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "1" ((h) + (o)), "2" ((ptr)), "3" ((cnt))	:	\
 		    "memory");						\
 	} else {							\
 		int dummy1;						\
@@ -405,14 +405,14 @@ do {									\
 			repne					;	\
 			movsw"					:	\
 		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
-		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "0" ((h) + (o)), "1" ((ptr)), "2" ((cnt))	:	\
 		    "memory");						\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	bus_space_read_region_4(t, h, o, a, c)				\
+#define	bus_space_read_region_4(t, h, o, ptr, cnt)			\
 do {									\
-	__BUS_SPACE_ADDRESS_SANITY((a), u_int32_t, "buffer");		\
+	__BUS_SPACE_ADDRESS_SANITY((ptr), u_int32_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		int dummy1;						\
@@ -427,7 +427,7 @@ do {									\
 			loop 1b"				: 	\
 		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),		\
 		    "=c" (dummy3)				:	\
-		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "1" ((h) + (o)), "2" ((ptr)), "3" ((cnt))	:	\
 		    "memory");						\
 	} else {							\
 		int dummy1;						\
@@ -438,7 +438,7 @@ do {									\
 			repne					;	\
 			movsl"					:	\
 		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
-		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "0" ((h) + (o)), "1" ((ptr)), "2" ((cnt))	:	\
 		    "memory");						\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -507,10 +507,10 @@ do {									\
  * provided to bus space described by tag/handle/offset.
  */
 
-#define	bus_space_write_multi_1(t, h, o, a, c)				\
+#define	bus_space_write_multi_1(t, h, o, ptr, cnt)			\
 do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
-		outsb((h) + (o), (a), (c));				\
+		outsb((h) + (o), (ptr), (cnt));				\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
@@ -522,16 +522,16 @@ do {									\
 			movb %%al,(%2)				;	\
 			loop 1b"				: 	\
 		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
-		    "0" ((a)), "1" ((c)), "2" ((h) + (o)));		\
+		    "0" ((ptr)), "1" ((cnt)), "2" ((h) + (o)));		\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define bus_space_write_multi_2(t, h, o, a, c)				\
+#define bus_space_write_multi_2(t, h, o, ptr, cnt)			\
 do {									\
-	__BUS_SPACE_ADDRESS_SANITY((a), u_int16_t, "buffer");		\
+	__BUS_SPACE_ADDRESS_SANITY((ptr), u_int16_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
-		outsw((h) + (o), (a), (c));				\
+		outsw((h) + (o), (ptr), (cnt));				\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
@@ -543,16 +543,16 @@ do {									\
 			movw %%ax,(%2)				;	\
 			loop 1b"				: 	\
 		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
-		    "0" ((a)), "1" ((c)), "2" ((h) + (o)));		\
+		    "0" ((ptr)), "1" ((cnt)), "2" ((h) + (o)));		\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define bus_space_write_multi_4(t, h, o, a, c)				\
+#define bus_space_write_multi_4(t, h, o, ptr, cnt)			\
 do {									\
-	__BUS_SPACE_ADDRESS_SANITY((a), u_int32_t, "buffer");		\
+	__BUS_SPACE_ADDRESS_SANITY((ptr), u_int32_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
-		outsl((h) + (o), (a), (c));				\
+		outsl((h) + (o), (ptr), (cnt));				\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
@@ -564,7 +564,7 @@ do {									\
 			movl %%eax,(%2)				;	\
 			loop 1b"				: 	\
 		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
-		    "0" ((a)), "1" ((c)), "2" ((h) + (o)));		\
+		    "0" ((ptr)), "1" ((cnt)), "2" ((h) + (o)));		\
 	}								\
 } while (/* CONSTCOND */ 0)
 
@@ -573,9 +573,9 @@ do {									\
 #define bus_space_write_multi_stream_4 bus_space_write_multi_4
 
 #if 0	/* Cause a link error for bus_space_write_multi_8 */
-#define	bus_space_write_multi_8(t, h, o, a, c)				\
+#define	bus_space_write_multi_8(t, h, o, ptr, cnt)			\
 			!!! bus_space_write_multi_8 unimplemented !!!
-#define	bus_space_write_multi_stream_8(t, h, o, a, c)			\
+#define	bus_space_write_multi_stream_8(t, h, o, ptr, cnt)		\
 			!!! bus_space_write_multi_stream_8 unimplemented !!!
 #endif
 
@@ -588,7 +588,7 @@ do {									\
  * to bus space described by tag/handle starting at `offset'.
  */
 
-#define	bus_space_write_region_1(t, h, o, a, c)				\
+#define	bus_space_write_region_1(t, h, o, ptr, cnt)			\
 do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		int dummy1;						\
@@ -603,7 +603,7 @@ do {									\
 			loop 1b"				: 	\
 		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),		\
 		    "=c" (dummy3)				:	\
-		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "1" ((h) + (o)), "2" ((ptr)), "3" ((cnt))	:	\
 		    "memory");						\
 	} else {							\
 		int dummy1;						\
@@ -614,14 +614,14 @@ do {									\
 			repne					;	\
 			movsb"					:	\
 		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:	\
-		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "0" ((h) + (o)), "1" ((ptr)), "2" ((cnt))	:	\
 		    "memory");						\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	bus_space_write_region_2(t, h, o, a, c)				\
+#define	bus_space_write_region_2(t, h, o, ptr, cnt)			\
 do {									\
-	__BUS_SPACE_ADDRESS_SANITY((a), u_int16_t, "buffer");		\
+	__BUS_SPACE_ADDRESS_SANITY((ptr), u_int16_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		int dummy1;						\
@@ -636,7 +636,7 @@ do {									\
 			loop 1b"				: 	\
 		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),		\
 		    "=c" (dummy3)				:	\
-		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "1" ((h) + (o)), "2" ((ptr)), "3" ((cnt))	:	\
 		    "memory");						\
 	} else {							\
 		int dummy1;						\
@@ -647,14 +647,14 @@ do {									\
 			repne					;	\
 			movsw"					:	\
 		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:	\
-		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "0" ((h) + (o)), "1" ((ptr)), "2" ((cnt))	:	\
 		    "memory");						\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	bus_space_write_region_4(t, h, o, a, c)				\
+#define	bus_space_write_region_4(t, h, o, ptr, cnt)			\
 do {									\
-	__BUS_SPACE_ADDRESS_SANITY((a), u_int32_t, "buffer");		\
+	__BUS_SPACE_ADDRESS_SANITY((ptr), u_int32_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		int dummy1;						\
@@ -669,7 +669,7 @@ do {									\
 			loop 1b"				: 	\
 		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),		\
 		    "=c" (dummy3)				:	\
-		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "1" ((h) + (o)), "2" ((ptr)), "3" ((cnt))	:	\
 		    "memory");						\
 	} else {							\
 		int dummy1;						\
@@ -680,7 +680,7 @@ do {									\
 			repne					;	\
 			movsl"					:	\
 		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:	\
-		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "0" ((h) + (o)), "1" ((ptr)), "2" ((cnt))	:	\
 		    "memory");						\
 	}								\
 } while (/* CONSTCOND */ 0)

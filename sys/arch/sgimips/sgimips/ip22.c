@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.5 2001/06/14 01:15:35 rafal Exp $	*/
+/*	$NetBSD: ip22.c,v 1.5.8.1 2001/11/12 21:17:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -47,6 +47,11 @@ static struct evcnt mips_int5_evcnt =
 static u_int32_t iocwrite;	/* IOC write register: read-only */
 static u_int32_t iocreset;	/* IOC reset register: read-only */
 
+static unsigned long last_clk_intr;
+
+static unsigned long ticks_per_hz;
+static unsigned long ticks_per_usec;
+
 
 void		ip22_init(void);
 void 		ip22_bus_reset(void);
@@ -55,6 +60,8 @@ int		ip22_local1_intr(void);
 int 		ip22_mappable_intr(void *);
 void 		ip22_intr(u_int, u_int, u_int, u_int);
 void		ip22_intr_establish(int, int, int (*)(void *), void *);
+
+unsigned long 	ip22_clkread(void);
 unsigned long	ip22_cal_timer(u_int32_t, u_int32_t);
 
 void 
@@ -159,7 +166,10 @@ ip22_init(void)
 	printf("CPU clock speed = %lu.%02luMhz\n", cps / (1000000 / hz), 
 						(cps % (1000000 / hz) / 100));
 
-	platform.ticks_per_hz = cps;
+	platform.clkread = ip22_clkread;
+
+	ticks_per_hz = cps;
+	ticks_per_usec = cps * hz / 1000000;
 
 	evcnt_attach_static(&mips_int5_evcnt);
 }
@@ -178,15 +188,14 @@ ip22_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;
 {
-	unsigned long cycles;
 	struct clockframe cf;
 
 	/* Tickle Indy/I2 MC watchdog timer */ 
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
 
 	if (ipending & MIPS_INT_MASK_5) {
-		cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + platform.ticks_per_hz);
+		last_clk_intr = mips3_cp0_count_read();
+		mips3_cp0_compare_write(last_clk_intr + ticks_per_hz);
 
 		cf.pc = pc;
 		cf.sr = status;
@@ -372,6 +381,15 @@ ip22_intr_establish(level, ipl, handler, arg)
 	    mask |= (1 << (level - 24));
 	    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x18) = mask;
 	}
+}
+
+unsigned long
+ip22_clkread(void)
+{
+	unsigned long diff =  mips3_cp0_count_read();
+
+	diff -= last_clk_intr;
+	return (diff / ticks_per_usec);
 }
 
 unsigned long

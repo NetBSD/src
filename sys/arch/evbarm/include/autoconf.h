@@ -1,3 +1,5 @@
+/*	$NetBSD: autoconf.h,v 1.1.4.1 2001/11/12 21:16:51 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,40 +39,8 @@
 #ifndef _EVBARM_AUTOCONF_H_
 #define	_EVBARM_AUTOCONF_H_
 
-#include <machine/bus.h>
-
 struct mainbus_attach_args {
 	const char *ma_name;
 };
-
-
-/*
- * There's no DMA to/from OBIO space so there's dma tag
- */
-#define	OBIO_MAXREGIONS		8
-
-struct obio_attach_args {
-	const char *oa_name;
-	int oa_instance;
-
-	bus_space_tag_t oa_memt;
-	int oa_nregions;
-	bus_addr_t oa_addrs[OBIO_MAXREGIONS];
-	bus_size_t oa_lens[OBIO_MAXREGIONS];
-
-	int oa_irq;
-	int oa_itype;
-	struct intrsource *oa_isrc;
-};
-
-#ifdef _KERNEL
-
-#include "locators.h"
-#define	obiocf_instance		cf_loc[OBIOCF_INSTANCE]
-
-#define	obio_intr_establish(oa, func, arg) \
-	intr_establish((oa)->oa_isrc, (oa)->oa_irq, (oa)->oa_itype, func, arg)
-
-#endif	/* _KERNEL */
 
 #endif	/* _EVBARM_AUTOCONF_H_ */

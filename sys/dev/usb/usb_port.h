@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.44.6.1 2001/11/12 21:18:35 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
+#define UHIDEV_DEBUG 1
 #define UHID_DEBUG 1
 #define OHCI_DEBUG 1
 #define UGEN_DEBUG 1
@@ -79,6 +80,7 @@
 #define UFTDI_DEBUG 1
 #define USCANNER_DEBUG 1
 #define USSCANNER_DEBUG 1
+#define EHCI_DEBUG 1
 #define Static
 #else
 #define Static static
@@ -416,6 +418,8 @@ typedef struct callout_handle usb_callout_t;
 #define powerhook_establish(fn, sc) (fn)
 #define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
+
+#define config_detach(dev, flag) device_delete_child(device_get_parent(dev), dev)
 
 typedef struct malloc_type *usb_malloc_type;
 

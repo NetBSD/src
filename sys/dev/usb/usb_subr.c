@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.87 2001/08/15 00:04:59 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.87.4.1 2001/11/12 21:18:35 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -724,7 +724,6 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 	p->repeat = 0;
 	p->interval = ival;
 	SIMPLEQ_INIT(&p->queue);
-	usb_callout_init(p->abort_handle);
 	err = dev->bus->methods->open_pipe(p);
 	if (err) {
 		DPRINTFN(-1,("usbd_setup_pipe: endpoint=0x%x failed, error="
@@ -744,6 +743,7 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 void
 usbd_kill_pipe(usbd_pipe_handle pipe)
 {
+	usbd_abort_pipe(pipe);
 	pipe->methods->close(pipe);
 	pipe->endpoint->refcnt--;
 	free(pipe, M_USB);
@@ -1305,13 +1305,7 @@ usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
 			if (up->portno != 0)
 				printf(" port %d", up->portno);
 			printf(" (addr %d) disconnected\n", dev->address);
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 			config_detach(dev->subdevs[i], DETACH_FORCE);
-#elif defined(__FreeBSD__)
-                        device_delete_child(device_get_parent(dev->subdevs[i]),
-					    dev->subdevs[i]);
-#endif
-
 		}
 	}
 

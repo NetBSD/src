@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.42 2001/10/16 04:57:38 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.42.2.1 2001/11/12 21:19:31 thorpej Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ in6_pcballoc(so, head)
 		FREE(in6p, M_PCB);
 		return error;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 	in6p->in6p_next = head->in6p_next;
 	head->in6p_next = in6p;
 	in6p->in6p_prev = head;

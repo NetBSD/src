@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.98 2001/09/27 21:44:56 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.98.2.1 2001/11/12 21:19:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,6 +72,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.98.2.1 2001/11/12 21:19:37 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2001/10/18 02:36:33 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.2.1 2001/11/12 21:17:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -151,12 +151,11 @@ static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
 static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
 static void	unimpl_intr_establish(int, int, int (*)(void *), void *);
-static unsigned	nullwork(void);
+static unsigned	long nullwork(void);
 
 void ddb_trap_hook(int where);
 
 struct platform platform = {
-	1000000,
 	unimpl_bus_reset,
 	unimpl_cons_init,
 	unimpl_iointr,
@@ -656,6 +655,7 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
+	tvp->tv_usec += (*platform.clkread)();
 
 	/*
 	 * Make sure that the time returned is always greater
@@ -718,7 +718,7 @@ unimpl_intr_establish(level, ipl, handler, arg)
 	panic("target init didn't set intr_establish");
 }
 
-static unsigned
+static unsigned long
 nullwork()
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.110 2001/10/08 00:22:13 chs Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.110.2.1 2001/11/12 21:19:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -37,6 +37,9 @@
  *
  *	@(#)nfs_vfsops.c	8.12 (Berkeley) 5/20/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.110.2.1 2001/11/12 21:19:38 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

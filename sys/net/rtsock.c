@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.51 2001/09/16 16:34:39 wiz Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.51.2.1 2001/11/12 21:19:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,9 +74,6 @@
 #include <sys/socketvar.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -318,7 +315,7 @@ route_output(m, va_alist)
 			genmask = rt->rt_genmask;
 			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) {
 				if ((ifp = rt->rt_ifp) != NULL) {
-					ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
+					ifpaddr = TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
 					ifaaddr = rt->rt_ifa->ifa_addr;
 					if (ifp->if_flags & IFF_POINTOPOINT)
 						brdaddr = rt->rt_ifa->ifa_dstaddr;
@@ -790,7 +787,7 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 			int ncmd = cmd == RTM_ADD ? RTM_NEWADDR : RTM_DELADDR;
 
 			ifaaddr = sa = ifa->ifa_addr;
-			ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
+			ifpaddr = TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
 			netmask = ifa->ifa_netmask;
 			brdaddr = ifa->ifa_dstaddr;
 			memset(&ifam, 0, sizeof(ifam));
@@ -874,7 +871,7 @@ sysctl_dumpentry(rn, v)
 	netmask = rt_mask(rt);
 	genmask = rt->rt_genmask;
 	if (rt->rt_ifp) {
-		ifpaddr = rt->rt_ifp->if_addrlist.tqh_first->ifa_addr;
+		ifpaddr = TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
 		ifaaddr = rt->rt_ifa->ifa_addr;
 		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
 			brdaddr = rt->rt_ifa->ifa_dstaddr;
@@ -910,10 +907,10 @@ sysctl_iflist(af, w, type)
 	int	len, error = 0;
 
 	memset(&info, 0, sizeof(info));
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
-		ifa = ifp->if_addrlist.tqh_first;
+		ifa = TAILQ_FIRST(&ifp->if_addrlist);
 		ifpaddr = ifa->ifa_addr;
 		switch(type) {
 		case NET_RT_IFLIST:
@@ -1002,7 +999,7 @@ sysctl_iflist(af, w, type)
 				panic("sysctl_iflist(2)");
 			}
 		}
-		while ((ifa = ifa->ifa_list.tqe_next) != NULL) {
+		while ((ifa = TAILQ_NEXT(ifa, ifa_list)) != NULL) {
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
 			ifaaddr = ifa->ifa_addr;

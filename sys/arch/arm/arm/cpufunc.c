@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.12 2001/10/18 14:10:07 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.12.2.1 2001/11/12 21:16:25 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -281,18 +281,18 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* domain		*/
-	arm7tdmi_setttb,			/* setttb		*/
+	arm7tdmi_setttb,		/* setttb		*/
 	cpufunc_faultstatus,		/* faultstatus		*/
 	cpufunc_faultaddress,		/* faultaddress		*/
 
 	/* TLB functions */
 
 	arm7tdmi_tlb_flushID,		/* tlb_flushID		*/
-	arm7tdmi_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	arm7tdmi_tlb_flushID_SE,	/* tlb_flushID_SE	*/
 	arm7tdmi_tlb_flushID,		/* tlb_flushI		*/
-	arm7tdmi_tlb_flushID_SE,		/* tlb_flushI_SE	*/
+	arm7tdmi_tlb_flushID_SE,	/* tlb_flushI_SE	*/
 	arm7tdmi_tlb_flushID,		/* tlb_flushD		*/
-	arm7tdmi_tlb_flushID_SE,		/* tlb_flushD_SE	*/
+	arm7tdmi_tlb_flushID_SE,	/* tlb_flushD_SE	*/
 
 	/* Cache functions */
 
@@ -334,7 +334,7 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 	late_abort_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
-	arm7tdmi_context_switch,		/* context_switch	*/
+	arm7tdmi_context_switch,	/* context_switch	*/
 
 	arm7tdmi_setup			/* cpu setup		*/
 
@@ -497,7 +497,7 @@ struct cpu_functions sa110_cpufuncs = {
 	/* TLB functions */
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
-	sa110_tlb_flushID_SE,		/* tlb_flushID_SE		*/
+	sa110_tlb_flushID_SE,		/* tlb_flushID_SE	*/
 	armv4_tlb_flushI,		/* tlb_flushI		*/
 	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
@@ -549,6 +549,74 @@ struct cpu_functions sa110_cpufuncs = {
 };          
 #endif	/* CPU_SA110 */
 
+#ifdef CPU_XSCALE
+struct cpu_functions xscale_cpufuncs = {
+	/* CPU functions */
+	
+	cpufunc_id,			/* id			 */
+
+	/* MMU functions */
+
+	cpufunc_control,		/* control		*/
+	cpufunc_domains,		/* domain		*/
+	xscale_setttb,			/* setttb		*/
+	cpufunc_faultstatus,		/* faultstatus		*/
+	cpufunc_faultaddress,		/* faultaddress		*/
+
+	/* TLB functions */
+
+	armv4_tlb_flushID,		/* tlb_flushID		*/
+	xscale_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	armv4_tlb_flushI,		/* tlb_flushI		*/
+	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
+	armv4_tlb_flushD,		/* tlb_flushD		*/
+	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
+
+	/* Cache functions */
+
+	xscale_cache_flushID,		/* cache_flushID	*/
+	(void *)xscale_cache_flushID,	/* cache_flushID_SE	*/
+	xscale_cache_flushI,		/* cache_flushI		*/
+	(void *)xscale_cache_flushI,	/* cache_flushI_SE	*/
+	xscale_cache_flushD,		/* cache_flushD		*/
+	xscale_cache_flushD_SE,		/* cache_flushD_SE	*/
+
+	xscale_cache_cleanID,		/* cache_cleanID	s*/
+	xscale_cache_cleanD_E,		/* cache_cleanID_E	s*/
+	xscale_cache_cleanD,		/* cache_cleanD		s*/
+	xscale_cache_cleanD_E,		/* cache_cleanD_E	*/
+
+	xscale_cache_purgeID,		/* cache_purgeID	s*/
+	xscale_cache_purgeID_E,		/* cache_purgeID_E	s*/
+	xscale_cache_purgeD,		/* cache_purgeD		s*/
+	xscale_cache_purgeD_E,		/* cache_purgeD_E	s*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	armv4_drain_writebuf,		/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	xscale_cache_syncI,		/* cache_syncI		*/
+	xscale_cache_cleanID_rng,	/* cache_cleanID_rng	*/
+	xscale_cache_cleanD_rng,	/* cache_cleanD_rng	*/
+	xscale_cache_purgeID_rng,	/* cache_purgeID_rng	*/
+	xscale_cache_purgeD_rng,	/* cache_purgeD_rng	*/
+	xscale_cache_syncI_rng,		/* cache_syncI_rng	*/
+
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	xscale_context_switch,		/* context_switch	*/
+
+	xscale_setup			/* cpu setup		*/
+};
+#endif /* CPU_XSCALE */
 
 /*
  * Global constants also used by locore.s
@@ -615,7 +683,7 @@ set_cpufuncs()
 	if (cputype == CPU_ID_ARM920T) {
 		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = arm9_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1; /* V4 or higher */
+		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		return 0;
 	}
 #endif /* CPU_ARM9 */
@@ -623,10 +691,17 @@ set_cpufuncs()
 	if (cputype == CPU_ID_SA110 || cputype == CPU_ID_SA1100 ||
 	    cputype == CPU_ID_SA1110) {
 		cpufuncs = sa110_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
+		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		return 0;
 	}
 #endif	/* CPU_SA110 */
+#ifdef CPU_XSCALE
+	if (cputype == CPU_ID_I80200) {
+		cpufuncs = xscale_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
+		return 0;
+	}
+#endif /* CPU_XSCALE */
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
@@ -1030,7 +1105,8 @@ late_abort_fixup(arg)
  */
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
-	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110)
+	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110) || \
+	defined(CPU_XSCALE)
 int cpuctrl;
 
 #define IGN	0
@@ -1369,3 +1445,63 @@ sa110_setup(args)
 	__asm ("mcr 15, 0, r0, c15, c1, 2");
 }
 #endif	/* CPU_SA110 */
+
+#ifdef CPU_XSCALE
+struct cpu_option xscale_options[] = {
+#ifdef COMPAT_12
+	{ "nocache",		IGN, BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+#endif	/* COMPAT_12 */
+	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "xscale.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "xscale.icache",	BIC, OR,  CPU_CONTROL_IC_ENABLE },
+	{ "xscale.dcache",	BIC, OR,  CPU_CONTROL_DC_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+xscale_setup(args)
+	char *args;
+{
+	int cpuctrlmask;
+
+	/*
+	 * The XScale Write Buffer is always enabled.  Our option
+	 * is to enable/disable coalescing.  Note that bits 6:3
+	 * must always be enabled.
+	 */
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
+		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
+		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
+		 | CPU_CONTROL_CPCLK;
+
+	cpuctrl = parse_cpu_options(args, xscale_options, cpuctrl);
+
+	/* Clear out the cache */
+	cpu_cache_purgeID();
+
+	/*
+	 * Set the control register.  Note that bits 6:3 must always
+	 * be set to 1.
+	 */
+/*	cpu_control(cpuctrlmask, cpuctrl);*/
+	cpu_control(0xffffffff, cpuctrl);
+
+#if 0
+	/*
+	 * XXX FIXME
+	 * Disable write buffer coalescing, PT ECC, and set
+	 * the mini-cache to write-back/read-allocate.
+	 */
+	__asm ("mcr p15, 0, %0, c1, c0, 1" :: "r" (0));
+#endif
+}
+#endif	/* CPU_XSCALE */

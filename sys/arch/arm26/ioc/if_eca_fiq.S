@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca_fiq.S,v 1.3 2001/09/22 17:19:27 bjh21 Exp $	*/
+/*	$NetBSD: if_eca_fiq.S,v 1.3.4.1 2001/11/12 21:16:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: if_eca_fiq.S,v 1.3 2001/09/22 17:19:27 bjh21 Exp $")
+RCSID("$NetBSD: if_eca_fiq.S,v 1.3.4.1 2001/11/12 21:16:38 thorpej Exp $")
 
 #include <dev/ic/mc6854reg.h>
 #include <arch/arm26/ioc/if_ecavar.h>
@@ -54,6 +54,8 @@ _C_LABEL(eca_efiqhandler):
 ENTRY(eca_fiqhandler_rx)
 	/* If there's something in the Rx FIFO, read it now. */
 	ldrb	r12, [r8, #(MC6854_SR2 << 2)]
+	tst	r12, #MC6854_SR2_OVRN
+	bne	Leca_rx_nodata
 	tst	r12, #MC6854_SR2_RDA
 	beq	Leca_rx_nodata
 Leca_rx_loop:

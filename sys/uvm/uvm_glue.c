@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.53 2001/09/23 07:10:08 chs Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.53.2.1 2001/11/12 21:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -65,6 +65,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.53.2.1 2001/11/12 21:19:53 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -330,7 +333,6 @@ uvm_exit(p)
 
 	uvmspace_free(p->p_vmspace);
 	p->p_flag &= ~P_INMEM;
-	uvm_fault_unwire(kernel_map, va, va + USPACE);
 	uvm_km_free(kernel_map, va, USPACE);
 	p->p_addr = NULL;
 }

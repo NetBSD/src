@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.28 2001/09/15 16:13:00 chs Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.28.2.1 2001/11/12 21:19:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -42,6 +42,9 @@
 /*
  * Union Layer
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.28.2.1 2001/11/12 21:19:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

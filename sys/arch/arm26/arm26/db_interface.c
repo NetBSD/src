@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.9 2001/03/13 23:56:49 bjh21 Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.9.6.1 2001/11/12 21:16:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -307,7 +307,7 @@ db_machine_init()
 	 */
 
 	if (kernexec->a_syms == 0) {
-		printf("[No symbol table]\n");
+		printf("ddb: No symbol table\n");
 	} else {
 		/* cover the symbols themselves (what is the int for?? XXX) */
 		esym = (int)&end + kernexec->a_syms + sizeof(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen.c,v 1.1 2001/10/22 23:01:18 thorpej Exp $	*/
+/*	$NetBSD: ofwgen.c,v 1.1.2.1 2001/11/12 21:17:24 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,11 +63,7 @@ ofwgen_init(void)
 	platform.cons_init = ofwgen_cons_init;
 	platform.device_register = ofwgen_device_register;
 
-	/*
-	 * Generic OpenFirmware configurations use software
-	 * simulated interrupts.
-	 */
-	machine_interface = ofwgen_machvec;
+	ofwgen_intr_init();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.20 2001/09/17 17:27:00 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.20.2.1 2001/11/12 21:19:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/pool.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <sys/sysctl.h>
 
 #include <net/if.h>

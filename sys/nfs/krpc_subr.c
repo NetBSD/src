@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.24 2001/06/12 15:17:28 wiz Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.24.6.1 2001/11/12 21:19:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -41,6 +41,9 @@
  *      libnetboot/rpc.c
  *               @(#) Header: rpc.c,v 1.12 93/09/28 08:31:56 leres Exp  (LBL)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.24.6.1 2001/11/12 21:19:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

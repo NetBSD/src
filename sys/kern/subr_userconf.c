@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.4 2001/07/18 06:51:38 thorpej Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.4.6.1 2001/11/12 21:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,6 +33,9 @@
  *
  *	OpenBSD: subr_userconf.c,v 1.19 2000/01/08 23:23:37 d Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.4.6.1 2001/11/12 21:18:53 thorpej Exp $");
 
 #include "opt_userconf.h"
 

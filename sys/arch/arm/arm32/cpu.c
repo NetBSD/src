@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2001/10/18 15:19:58 rearnsha Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6.2.1 2001/11/12 21:16:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -251,7 +251,7 @@ identify_master_cpu(dv, cpu_number)
 struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
-	char *		cpu_name;
+	const char	*cpu_name;
 };
 
 const struct cpuidtab cpuids[] = {
@@ -280,13 +280,13 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110" },
 	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100" },
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110" },
-	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"80200" },
+	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200" },
 	{ 0, CPU_CLASS_NONE, NULL }
 };
 
 struct cpu_classtab {
-	char	*class_name;
-	char	*class_option;
+	const char	*class_name;
+	const char	*class_option;
 };
 
 const struct cpu_classtab cpu_classes[] = {
@@ -301,7 +301,7 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
-	{ "Xscale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
+	{ "XScale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
 };
 
 /*

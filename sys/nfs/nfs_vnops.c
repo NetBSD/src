@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.141 2001/10/13 23:25:58 simonb Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.141.2.1 2001/11/12 21:19:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,6 +41,9 @@
 /*
  * vnode op calls for Sun NFS version 2 and 3
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.141.2.1 2001/11/12 21:19:38 thorpej Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1209,7 +1212,7 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 		panic("writerpc readonly vp %p", vp);
 	}
 
-#ifndef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
 		panic("nfs: writerpc iovcnt > 1");
 #endif

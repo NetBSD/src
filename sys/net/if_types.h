@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.18 2001/08/23 14:52:21 bjh21 Exp $	*/
+/*	$NetBSD: if_types.h,v 1.18.4.1 2001/11/12 21:19:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -243,6 +243,15 @@
 #define IFT_OPTICALCHANNEL	   0xc3 /* Optical Channel */
 #define IFT_OPTICALTRANSPORT	   0xc4 /* Optical Transport */
 #define IFT_PROPATM		   0xc5 /* Proprietary ATM */
+#define IFT_VOICEOVERCABLE	   0xc6 /* Voice Over Cable Interface */
+#define IFT_INFINIBAND		   0xc7 /* Infiniband */
+#define IFT_TELINK		   0xc8 /* TE Link */
+#define IFT_Q2931		   0xc9 /* Q.2931 */
+#define IFT_VIRTUALTG		   0xca /* Virtual Trunk Group */
+#define IFT_SIPTG		   0xcb /* SIP Trunk Group */
+#define IFT_SIPSIG		   0xcc /* SIP Signaling */
+#define IFT_DOCSCABLEUPSTREAMCHANNEL 0xcd /* CATV Upstream Channel */
+#define IFT_ECONET		   0xce /* Acorn Econet */
 
 /* not based on IANA assignments - how should we treat these? */
 #define IFT_GIF		0xf0

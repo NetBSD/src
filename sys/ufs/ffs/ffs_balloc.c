@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.27 2001/09/30 02:54:42 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.27.2.1 2001/11/12 21:19:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,6 +35,9 @@
  *	@(#)ffs_balloc.c	8.8 (Berkeley) 6/16/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.27.2.1 2001/11/12 21:19:44 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
 #endif
@@ -42,7 +45,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
@@ -91,7 +93,6 @@ ffs_balloc(v)
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 	int unwindidx = -1;
 	struct buf **bpp = ap->a_bpp;
-	off_t off;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -244,20 +245,19 @@ ffs_balloc(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (0);
 	}
+
 	/*
 	 * Determine the number of levels of indirection.
 	 */
+
 	pref = 0;
 	if ((error = ufs_getlbns(vp, lbn, indirs, &num)) != 0)
-		return(error);
+		return (error);
 
-#ifdef DIAGNOSTIC
-	if (num < 1)
-		panic ("ffs_balloc: ufs_bmaparray returned indirect block\n");
-#endif
 	/*
 	 * Fetch the first indirect block allocating if necessary.
 	 */
+
 	--num;
 	nb = ufs_rw32(ip->i_ffs_ib[indirs[0].in_off], needswap);
 	allocib = NULL;
@@ -278,10 +278,12 @@ ffs_balloc(v)
 			    newb, 0, fs->fs_bsize, 0, bp);
 			bdwrite(bp);
 		} else {
+
 			/*
 			 * Write synchronously so that indirect blocks
 			 * never point at garbage.
 			 */
+
 			if ((error = bwrite(bp)) != 0)
 				goto fail;
 		}
@@ -290,9 +292,11 @@ ffs_balloc(v)
 		*allocib = ufs_rw32(nb, needswap);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+
 	/*
 	 * Fetch through the indirect blocks, allocating as necessary.
 	 */
+
 	for (i = 1;;) {
 		error = bread(vp,
 		    indirs[i].in_lbn, (int)fs->fs_bsize, NOCRED, &bp);
@@ -327,10 +331,12 @@ ffs_balloc(v)
 			    indirs[i - 1].in_off, nb);
 			bdwrite(nbp);
 		} else {
+
 			/*
 			 * Write synchronously so that indirect blocks
 			 * never point at garbage.
 			 */
+
 			if ((error = bwrite(nbp)) != 0) {
 				brelse(bp);
 				goto fail;
@@ -339,19 +345,23 @@ ffs_balloc(v)
 		if (unwindidx < 0)
 			unwindidx = i - 1;
 		bap[indirs[i - 1].in_off] = ufs_rw32(nb, needswap);
+
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
 		 */
+
 		if (flags & B_SYNC) {
 			bwrite(bp);
 		} else {
 			bdwrite(bp);
 		}
 	}
+
 	/*
 	 * Get the data block, allocating if necessary.
 	 */
+
 	if (nb == 0) {
 		pref = ffs_blkpref(ip, lbn, indirs[num].in_off, &bap[0]);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
@@ -376,10 +386,12 @@ ffs_balloc(v)
 		if (allocib == NULL && unwindidx < 0) {
 			unwindidx = i - 1;
 		}
+
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
 		 */
+
 		if (flags & B_SYNC) {
 			bwrite(bp);
 		} else {
@@ -405,56 +417,61 @@ ffs_balloc(v)
 	return (0);
 
 fail:
-
-	/*
-	 * Restore the UVM state to what the rest of the FFS code is
-	 * expecting.  Unbusy any pages that we allocated and left busy up in
-	 * ufs_balloc_range().  the following VOP_FSYNC() will try to busy
-	 * those pages again, which would deadlock if they are still busy
-	 * from before.  After this we're back to a state where we can undo
-	 * any partial allocation.
-	 */
-
-	simple_lock(&vp->v_uobj.vmobjlock);
-	for (off = ap->a_startoffset; off < ap->a_startoffset + fs->fs_bsize;
-	     off += PAGE_SIZE) {
-		struct vm_page *pg;
-
-		pg = uvm_pagelookup(&vp->v_uobj, off);
-		if (pg == NULL) {
-			break;
-		}
-		uvm_pageactivate(pg);
-		KASSERT((pg->flags & PG_FAKE) == 0);
-		pg->flags &= ~(PG_BUSY);
-		UVM_PAGE_OWN(pg, NULL);
-	}
-	simple_unlock(&vp->v_uobj.vmobjlock);
-
 	/*
 	 * If we have failed part way through block allocation, we
 	 * have to deallocate any indirect blocks that we have allocated.
-	 * We have to fsync the file before we start to get rid of all
-	 * of its dependencies so that we do not leave them dangling.
-	 * We have to sync it at the end so that the soft updates code
-	 * does not find any untracked changes. Although this is really
-	 * slow, running out of disk space is not expected to be a common
-	 * occurence. The error return from fsync is ignored as we already
-	 * have an error to return to the user.
 	 */
 
-	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0, curproc);
-	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
-		ffs_blkfree(ip, *blkp, fs->fs_bsize);
-		deallocated += fs->fs_bsize;
-	}
 	if (unwindidx >= 0) {
+
+		/*
+		 * First write out any buffers we've created to resolve their
+		 * softdeps.  This must be done in reverse order of creation
+		 * so that we resolve the dependencies in one pass.
+		 * Write the cylinder group buffers for these buffers too.
+		 */
+
+		for (i = num; i >= unwindidx; i--) {
+			if (i == 0) {
+				break;
+			}
+			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
+			    0);
+			if (bp->b_flags & B_DELWRI) {
+				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
+				    bp->b_blkno)));
+				bwrite(bp);
+				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
+				    0, 0);
+				if (bp->b_flags & B_DELWRI) {
+					bwrite(bp);
+				} else {
+					bp->b_flags |= B_INVAL;
+					brelse(bp);
+				}
+			} else {
+				bp->b_flags |= B_INVAL;
+				brelse(bp);
+			}
+		}
+		if (unwindidx == 0) {
+			ip->i_flag |= IN_MODIFIED | IN_CHANGE | IN_UPDATE;
+			VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+		}
+
+		/*
+		 * Now that any dependencies that we created have been
+		 * resolved, we can undo the partial allocation.
+		 */
+
 		if (unwindidx == 0) {
 			*allocib = 0;
+			ip->i_flag |= IN_MODIFIED | IN_CHANGE | IN_UPDATE;
+			VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 		} else {
 			int r;
-	
-			r = bread(vp, indirs[unwindidx].in_lbn, 
+
+			r = bread(vp, indirs[unwindidx].in_lbn,
 			    (int)fs->fs_bsize, NOCRED, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
@@ -462,10 +479,7 @@ fail:
 			} else {
 				bap = (ufs_daddr_t *)bp->b_data;
 				bap[indirs[unwindidx].in_off] = 0;
-				if (flags & B_SYNC)
-					bwrite(bp);
-				else
-					bdwrite(bp);
+				bwrite(bp);
 			}
 		}
 		for (i = unwindidx + 1; i <= num; i++) {
@@ -474,6 +488,10 @@ fail:
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
 		}
+	}
+	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
+		ffs_blkfree(ip, *blkp, fs->fs_bsize);
+		deallocated += fs->fs_bsize;
 	}
 	if (deallocated) {
 #ifdef QUOTA
@@ -485,7 +503,6 @@ fail:
 		ip->i_ffs_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0, curproc);
 	return (error);
 }
 

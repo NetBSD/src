@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.9 2001/09/22 17:19:27 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.9.4.1 2001/11/12 21:16:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.9 2001/09/22 17:19:27 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.9.4.1 2001/11/12 21:16:38 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -203,6 +203,7 @@ eca_claimwire(struct ifnet *ifp)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
+	KASSERT(sc->sc_ec.ec_state == ECO_IDLE);
 	if (bus_space_read_1(iot, ioh, MC6854_SR2) & MC6854_SR2_RX_IDLE) {
 		/* Start flag fill. */
 		sc->sc_cr2 |= MC6854_CR2_RTS | MC6854_CR2_F_M_IDLE;
@@ -483,7 +484,11 @@ eca_gotframe(void *arg)
 
 	/* 2: Are there any errors waiting? */
 	if (sr2 & MC6854_SR2_OVRN) {
-		log(LOG_ERR, "%s: Rx overrun\n", sc->sc_dev.dv_xname);
+		fiq_getregs(&fr);
+		mtail = sc->sc_fiqstate.efs_rx_curmbuf;
+		log(LOG_ERR, "%s: Rx overrun (state = %d, len = %ld)\n",
+		    sc->sc_dev.dv_xname, sc->sc_ec.ec_state,
+		    (caddr_t)(fr.r9_fiq) - mtail->m_data);
 		ifp->if_ierrors++;
 
 		/* Discard the rest of the frame. */
@@ -520,7 +525,7 @@ eca_gotframe(void *arg)
 		eca_init_rx_soft(sc);
 		eca_txframe(ifp, reply);
 	} else {
-		KASSERT(!sc->sc_transmitting);
+		/* KASSERT(!sc->sc_transmitting); */
 		if (sc->sc_fiqstate.efs_rx_flags & ERXF_FLAGFILL)
 			/* Stop flag-filling: we have nothing to send. */
 			bus_space_write_1(iot, ioh, MC6854_CR2,

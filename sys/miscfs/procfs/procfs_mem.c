@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.27 2000/11/24 18:58:37 chs Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.27.8.1 2001/11/12 21:19:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -45,6 +45,9 @@
  * of sef's pread/pwrite functions
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.27.8.1 2001/11/12 21:19:12 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -74,14 +77,18 @@ procfs_domem(curp, p, pfs, uio)
 	int error;
 
 	size_t len;
+#ifdef PMAP_NEED_PROCWR
 	vaddr_t	addr;
+#endif
 
 	len = uio->uio_resid;
 
 	if (len == 0)
 		return (0);
 
+#ifdef PMAP_NEED_PROCWR
 	addr = uio->uio_offset;
+#endif
 
 	if ((error = procfs_checkioperm(curp, p)) != 0)
 		return (error);

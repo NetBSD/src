@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.38 2001/09/22 22:35:19 sommerfeld Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.38.2.1 2001/11/12 21:19:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -42,6 +42,9 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.38.2.1 2001/11/12 21:19:44 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
@@ -63,7 +66,6 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufsmount.h>

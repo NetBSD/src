@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.51 2001/10/14 19:06:16 chs Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.51.2.1 2001/11/12 21:19:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs_alloc.c	8.4 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.51.2.1 2001/11/12 21:19:47 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"

@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.143 2001/10/21 23:16:48 mjl Exp $
+$NetBSD: pcmciadevs,v 1.143.2.1 2001/11/12 21:18:25 thorpej Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -155,6 +155,7 @@ product DLINK_2 DMF560TX	0xc0ab D-Link DMF-650TX
 /* ELSA Products */
 product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
 product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
+product ELSA XI800_IEEE		0x0004 XI800 CF Wireless LAN
 
 /* EMTAC */
 product EMTAC WLAN		0x0002	EMTAC A2424i 11Mbps WLAN Card
@@ -292,6 +293,7 @@ product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
 product XIRCOM CE		0x0108 Xircom CreditCard Ethernet
 product XIRCOM CE2		0x010b Xircom CreditCard Ethernet II
 product XIRCOM CE3		0x010a Xircom CreditCard 10/100 Ethernet
+product XIRCOM XE2000		0x0153 Xircom XE2000 10/100 Ethernet
 product XIRCOM CNW_801		0x0801 Xircom CreditCard Netwave (Canada)
 product XIRCOM CNW_802		0x0802 Xircom CreditCard Netwave (US)
 product XIRCOM CT2		0x1101 Xircom CreditCard Token Ring II

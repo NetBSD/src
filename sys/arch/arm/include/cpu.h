@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2001/07/10 20:43:57 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.4.1 2001/11/12 21:16:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -251,6 +251,9 @@ void userret		__P((register struct proc *p));
 
 /* machdep.h */
 void bootsync		__P((void));
+
+/* fault.c */
+int badaddr_read	__P((void *, size_t, void *));
 
 #endif	/* !_LOCORE */
 

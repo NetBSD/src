@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.11 2001/08/24 10:24:46 wiz Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.11.4.1 2001/11/12 21:19:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -37,6 +37,9 @@
  *  Modified for ext2fs by Manuel Bouyer.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.11.4.1 2001/11/12 21:19:43 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -46,7 +49,6 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 

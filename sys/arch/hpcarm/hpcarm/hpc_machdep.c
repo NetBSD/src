@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.18 2001/08/02 14:42:08 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.18.4.1 2001/11/12 21:16:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -194,8 +194,6 @@ vm_size_t map_chunk	__P((vaddr_t pd, vaddr_t pt, vaddr_t va,
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
-void zero_page_readonly		__P((void));
-void zero_page_readwrite	__P((void));
 
 u_int cpu_get_control		__P((void));
 
@@ -213,7 +211,6 @@ extern int db_trapper();
 
 extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vaddr_t va));
-extern void db_machine_init	__P((void));
 
 extern void dumpsys	__P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.15 2001/09/16 09:55:26 jmc Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.15.2.1 2001/11/12 21:18:48 thorpej Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -48,6 +48,10 @@
  * this routine are used by hardclock() to adjust the phase and
  * frequency of the phase-lock loop which controls the system clock.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.15.2.1 2001/11/12 21:18:48 thorpej Exp $");
+
 #include "opt_ntp.h"
 
 #include <sys/param.h>

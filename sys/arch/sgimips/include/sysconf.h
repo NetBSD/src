@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.2 2001/06/14 01:06:08 rafal Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.2.8.1 2001/11/12 21:17:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,11 +55,6 @@
 
 struct platform {
 	/*
-	 * Platform specific data
-	 *	ticks_per_hz	-	ticks per HZ
-	 */
-	unsigned long ticks_per_hz;
-	/*
 	 * Platform Specific Function Hooks
 	 *	bus_reset	-	clear memory error condition
 	 *	cons_init	-	console initialization
@@ -73,7 +68,7 @@ struct platform {
 	void	(*cons_init)(void);
 	void	(*iointr)(unsigned, unsigned, unsigned, unsigned);
 	void	(*intr_establish)(int , int, int (*)(void *), void *);
-	unsigned (*clkread) __P((void));
+	unsigned long (*clkread) __P((void));
 };
 
 extern struct platform platform;

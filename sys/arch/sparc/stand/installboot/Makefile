@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 2000/08/16 08:24:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.6.1 2001/11/12 21:17:33 thorpej Exp $
 
 .include <bsd.own.mk>
 
 WARNS?=1
 PROG=	installboot
-SRCS=	installboot.c loadfile.c
+SRCS=	installboot.c byteorder.c loadfile.c loadfile_aout.c \
+	loadfile_elf32.c
 MKMAN=	no
 CFLAGS+=-g
 
@@ -13,6 +14,7 @@ LIBSA=${.CURDIR}/../../../../lib/libsa
 .PATH.c: ${LIBSA}
 
 CPPFLAGS+=-I${LIBSA} -I.
+CPPFLAGS+=-I${.CURDIR}/..
 
 LDSTATIC?=	-static
 

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/30 14:11:00 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2001/11/12 21:17:20 thorpej Exp $
 
 PROG= installboot
-SRCS= installboot.c loadfile.c
+SRCS= installboot.c byteorder.c loadfile.c loadfile_aout.c loadfile_elf32.c
 MKMAN= no
 WARNS?= 1
 

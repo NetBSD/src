@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.117 2001/10/23 19:26:45 thorpej Exp $
+#	$NetBSD: Makefile.i386,v 1.117.2.1 2001/11/12 21:17:03 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -13,6 +13,7 @@
 # after which config should be rerun for all machines of that type.
 
 MACHINE_ARCH=i386
+USETOOLS?=	no
 
 .include <bsd.own.mk>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.11 2000/07/14 07:15:05 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.11.8.1 2001/11/12 21:18:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.11.8.1 2001/11/12 21:18:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

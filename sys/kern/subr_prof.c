@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.23 2001/04/28 12:56:00 bjh21 Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.23.6.1 2001/11/12 21:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)subr_prof.c	8.4 (Berkeley) 2/14/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.23.6.1 2001/11/12 21:18:53 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -42,7 +45,6 @@
 #include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>

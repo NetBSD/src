@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.1 2001/04/06 13:13:02 fredette Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.1.8.1 2001/11/12 21:17:36 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -44,7 +44,6 @@
 extern label_t	*db_recover;	/* db_command.c */
 
 extern char	*esym;	/* end of symbols */
-void db_machine_init __P((void));
 
 /* These are in db_memrw.c */
 extern void db_read_bytes  __P((vm_offset_t addr, size_t size, char *data));

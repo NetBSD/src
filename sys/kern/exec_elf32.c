@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.67 2001/07/29 21:24:23 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.67.4.1 2001/11/12 21:18:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.67.4.1 2001/11/12 21:18:43 thorpej Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -611,7 +614,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 #endif
 	FREE(interp, M_TEMP);
 	free((char *)ph, M_TEMP);
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 	return exec_elf_setup_stack(p, epp);
 
 bad:

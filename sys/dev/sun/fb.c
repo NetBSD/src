@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.4 2001/09/26 20:53:16 eeh Exp $ */
+/*	$NetBSD: fb.c,v 1.4.2.1 2001/11/12 21:18:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,6 +64,7 @@
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
 
+#include "kbd.h"
 #include "pfour.h"
 
 static struct fbdevice *devfb;
@@ -348,7 +349,9 @@ static void
 fb_bell(on)
 	int on;
 {
+#if NKBD > 0
 	(void)kbd_docmd(on?KBD_CMD_BELL:KBD_CMD_NOBELL, 0);
+#endif
 }
 
 void

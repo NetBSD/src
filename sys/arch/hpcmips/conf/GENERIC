@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.94 2001/09/01 23:08:42 atatat Exp $
+# 	$NetBSD: GENERIC,v 1.94.4.1 2001/11/12 21:16:59 thorpej Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.94 $"
+#ident 		"GENERIC-$Revision: 1.94.4.1 $"
 
 maxusers	10
 
@@ -228,12 +228,10 @@ pwctl0 at vrgiu? platform NEC_MCR_530A id PWCTL_COM0 port 46
 #pwctl0 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM0 port 46
 pwctl0 at vrgiu? platform NEC_MCR_7XX id PWCTL_COM0 port 46
 pwctl0 at vrgiu? platform NEC_MCCS id PWCTL_COM0 port 14
-pwctl1 at vrgiu? platform NEC_MCR_300 id PWCTL_LCDLIGHT port 45
-pwctl1 at vrgiu? platform NEC_MCR_FORDOCOMO id PWCTL_LCDLIGHT port 45
+pwctl1 at vrgiu? platform NEC_MCR_3XX id PWCTL_LCDLIGHT port 45
 pwctl1 at vrgiu? platform NEC_MCR_500 id PWCTL_LCDLIGHT port 45
 pwctl1 at vrgiu? platform NEC_MCCS id PWCTL_LCDLIGHT port 45
-pwctl2 at vrgiu? platform NEC_MCR_300 id PWCTL_LCD port 10
-pwctl2 at vrgiu? platform NEC_MCR_FORDOCOMO id PWCTL_LCD port 10
+pwctl2 at vrgiu? platform NEC_MCR_3XX id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCR_500 id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCCS id PWCTL_LCD port 10
 pwctl3 at vrgiu? platform NEC_MCR_3XX id PWCTL_SPEAKER port 12

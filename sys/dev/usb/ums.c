@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.47 2001/01/23 14:04:14 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.47.8.1 2001/11/12 21:18:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 /*
  * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
  */
-
-/* XXX complete SPUR_UP change */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +144,7 @@ USB_MATCH(ums)
 	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
 		return (UMATCH_NONE);
 
-	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
+	err = usbd_read_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (err)
 		return (UMATCH_NONE);
 
@@ -211,7 +209,7 @@ USB_ATTACH(ums)
 	if (quirks & UQ_SPUR_BUT_UP)
 		sc->flags |= UMS_SPUR_BUT_UP;
 
-	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
+	err = usbd_read_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (err)
 		USB_ATTACH_ERROR_RETURN;
 
@@ -291,7 +289,7 @@ USB_ATTACH(ums)
 	DPRINTF(("ums_attach: X\t%d/%d\n", 
 		 sc->sc_loc_x.pos, sc->sc_loc_x.size));
 	DPRINTF(("ums_attach: Y\t%d/%d\n", 
-		 sc->sc_loc_x.pos, sc->sc_loc_x.size));
+		 sc->sc_loc_y.pos, sc->sc_loc_y.size));
 	if (sc->flags & UMS_Z)
 		DPRINTF(("ums_attach: Z\t%d/%d\n", 
 			 sc->sc_loc_z.pos, sc->sc_loc_z.size));
@@ -343,6 +341,14 @@ USB_DETACH(ums)
 	/* No need to do reference counting of ums, wsmouse has all the goo. */
 	if (sc->sc_wsmousedev != NULL)
 		rv = config_detach(sc->sc_wsmousedev, flags);
+#ifdef DIAGNOSTIC
+	if (sc->sc_intrpipe != NULL) {
+		printf("ums_disable: intr pipe still open\n");
+		usbd_abort_pipe(sc->sc_intrpipe);
+		usbd_close_pipe(sc->sc_intrpipe);
+		sc->sc_intrpipe = NULL;
+	}
+#endif
 	if (rv == 0) {
 		free(sc->sc_loc_btn, M_USBDEV);
 		free(sc->sc_ibuf, M_USBDEV);
@@ -451,6 +457,7 @@ ums_disable(void *v)
 	/* Disable interrupts. */
 	usbd_abort_pipe(sc->sc_intrpipe);
 	usbd_close_pipe(sc->sc_intrpipe);
+	sc->sc_intrpipe = NULL;
 
 	sc->sc_enabled = 0;
 }

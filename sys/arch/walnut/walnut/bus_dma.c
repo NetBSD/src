@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 2001/07/22 15:09:10 wiz Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2.4.1 2001/11/12 21:17:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -565,7 +565,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED |
-				PME_NOCACHE);
+			    PME_NOCACHE);
 		}
 	}
 

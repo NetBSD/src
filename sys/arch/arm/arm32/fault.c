@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.2 2001/09/05 16:17:35 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.2.4.1 2001/11/12 21:16:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -113,6 +113,73 @@ report_abort(prefix, fault_status, fault_address, fault_pc)
 #endif
 }
 
+static __volatile int data_abort_expected;
+static __volatile int data_abort_received;
+
+int
+badaddr_read(void *addr, size_t size, void *rptr)
+{
+	u_long rcpt;
+	int rv;
+
+	/* Tell the Data Abort handler that we're expecting one. */
+	data_abort_received = 0;
+	data_abort_expected = 1;
+
+	cpu_drain_writebuf();
+
+	/* Read from the test address. */
+	switch (size) {
+	case sizeof(uint8_t):
+		__asm __volatile("ldrb %0, [%1]"
+			: "=r" (rcpt)
+			: "r" (addr));
+		break;
+
+	case sizeof(uint16_t):
+		__asm __volatile("ldrh %0, [%1]"
+			: "=r" (rcpt)
+			: "r" (addr));
+		break;
+
+	case sizeof(uint32_t):
+		__asm __volatile("ldr %0, [%1]"
+			: "=r" (rcpt)
+			: "r" (addr));
+		break;
+
+	default:
+		data_abort_expected = 0;
+		panic("badaddr: invalid size (%lu)\n", (u_long) size);
+	}
+
+	/* Disallow further Data Aborts. */
+	data_abort_expected = 0;
+
+	rv = data_abort_received;
+	data_abort_received = 0;
+
+	/* Copy the data back if no fault occurred. */
+	if (rptr != NULL && rv == 0) {
+		switch (size) {
+		case sizeof(uint8_t):
+			*(uint8_t *) rptr = rcpt;
+			break;
+
+		case sizeof(uint16_t):
+			*(uint16_t *) rptr = rcpt;
+			break;
+
+		case sizeof(uint32_t):
+			*(uint32_t *) rptr = rcpt;
+			break;
+		}
+	}
+
+	/* Return true if the address was invalid. */
+	return (rv);
+}
+
 /*
  * void data_abort_handler(trapframe_t *frame)
  *
@@ -137,6 +204,17 @@ data_abort_handler(frame)
 	int user;
 	int error;
 	void *onfault;
+
+	/*
+	 * If we were expecting a Data Abort, signal that we got
+	 * one, adjust the PC to skip the faulting insn, and
+	 * return.
+	 */
+	if (data_abort_expected) {
+		data_abort_received = 1;
+		frame->tf_pc += INSN_SIZE;
+		return;
+	}
 
 	/*
 	 * Must get fault address and status from the CPU before
@@ -528,8 +606,10 @@ prefetch_abort_handler(frame)
 	}
 #endif	/* DEBUG */
 
-	/* Was the prefectch abort from USR32 mode ? */
+	/* Get fault address */
+	fault_pc = frame->tf_pc;
 
+	/* Was the prefectch abort from USR32 mode ? */
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
 		p->p_addr->u_pcb.pcb_tf = frame;
 	} else {
@@ -537,11 +617,9 @@ prefetch_abort_handler(frame)
 		 * All the kernel code pages are loaded at boot time
 		 * and do not get paged
 		 */
-	        panic("Prefetch abort in non-USR mode (frame=%p)\n", frame);
+	        panic("Prefetch abort in non-USR mode (frame=%p PC=0x%08x)\n",
+	            frame, fault_pc);
 	}
-
-	/* Get fault address */
-	fault_pc = frame->tf_pc;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)

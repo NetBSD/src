@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.35 2001/09/19 03:41:46 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.35.2.1 2001/11/12 21:19:51 thorpej Exp $	*/
 
 /*
  *
@@ -40,6 +40,9 @@
  * this file contains functions that perform operations on amaps.  see
  * uvm_amap.h for a brief explanation of the role of amaps in uvm.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.35.2.1 2001/11/12 21:19:51 thorpej Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -292,7 +295,7 @@ amap_extend(entry, addsize)
 #ifdef UVM_AMAP_PPREF
 	int *newppref, *oldppref;
 #endif
-	u_int *newsl, *newbck, *oldsl, *oldbck;
+	int *newsl, *newbck, *oldsl, *oldbck;
 	struct vm_anon **newover, **oldover;
 	int slotadded;
 	UVMHIST_FUNC("amap_extend"); UVMHIST_CALLED(maphist);

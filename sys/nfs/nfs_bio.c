@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.70 2001/10/13 23:25:58 simonb Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.70.2.1 2001/11/12 21:19:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,9 @@
  *
  *	@(#)nfs_bio.c	8.9 (Berkeley) 3/30/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.70.2.1 2001/11/12 21:19:35 thorpej Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.1 2000/12/01 19:17:41 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.1.10.1 2001/11/12 21:17:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -451,7 +451,7 @@ n	 */
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 #endif
 	
 	/* DPRINTF(("VMCMD: addr %x size %d offset %d\n", epp->ep_taddr,

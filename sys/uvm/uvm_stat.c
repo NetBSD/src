@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.20 2001/09/15 20:36:47 chs Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.20.2.1 2001/11/12 21:19:58 thorpej Exp $	 */
 
 /*
  *
@@ -34,12 +34,15 @@
  * from: Id: uvm_stat.c,v 1.1.2.3 1997/12/19 15:01:00 mrg Exp
  */
 
-#include "opt_uvmhist.h"
-#include "opt_ddb.h"
-
 /*
  * uvm_stat.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.20.2.1 2001/11/12 21:19:58 thorpej Exp $");
+
+#include "opt_uvmhist.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

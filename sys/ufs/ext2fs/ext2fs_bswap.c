@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.6 2000/07/24 00:23:10 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.6.10.1 2001/11/12 21:19:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.6.10.1 2001/11/12 21:19:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

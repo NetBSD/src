@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.99 2001/09/16 16:34:37 wiz Exp $	*/
+/*	$NetBSD: tulip.c,v 1.99.2.1 2001/11/12 21:18:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -3874,7 +3874,7 @@ tlp_print_media(sc)
 	struct tulip_21x4x_media *tm;
 	const char *sep = "";
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 	for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
@@ -5085,7 +5085,7 @@ tlp_pnic_tmsw_init(sc)
 	const char *sep = "";
 
 #define	ADD(m, c)	ifmedia_add(&sc->sc_mii.mii_media, (m), (c), NULL)
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = tlp_pnic_mii_readreg;

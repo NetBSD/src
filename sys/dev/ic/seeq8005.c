@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.29 2001/07/07 15:57:52 thorpej Exp $ */
+/* $NetBSD: seeq8005.c,v 1.29.6.1 2001/11/12 21:18:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -63,7 +63,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.29 2001/07/07 15:57:52 thorpej Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.29.6.1 2001/11/12 21:18:06 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -84,6 +84,11 @@ __RCSID("$NetBSD: seeq8005.c,v 1.29 2001/07/07 15:57:52 thorpej Exp $");
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
+#endif
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 #include <machine/bus.h>
@@ -277,6 +282,12 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	ether_ifattach(ifp, myaddr);
 
 	printf("\n");
+
+#if NRND > 0
+	/* After \n because it can print a line of its own. */
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 }
 
 /*
@@ -1010,6 +1021,10 @@ seeq8005intr(void *arg)
 		ea_rxint(sc);
 	}
 
+#if NRND > 0
+	if (handled)
+		rnd_add_uint32(&sc->rnd_source, status);
+#endif
 	return handled;
 }
 

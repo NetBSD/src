@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 2001/05/01 02:19:20 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21.6.1 2001/11/12 21:17:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
  */
 
 /*
- * We use 4K pages on the X86K.  Override the PAGE_* definitions
+ * We use 4K pages on the X68K.  Override the PAGE_* definitions
  * to be compile-time constants.
  */
 #define	PAGE_SHIFT	12

@@ -1,11 +1,11 @@
-/*	$NetBSD: mtrr_i686.c,v 1.2 2001/09/17 20:44:08 fvdl Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.2.8.1 2001/11/12 21:17:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Bill Sommerfeld
+ * by Bill Sommerfeld.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

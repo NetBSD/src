@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.26 2001/10/17 18:41:20 jdolecek Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.26.2.1 2001/11/12 21:17:02 thorpej Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.26.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -55,10 +55,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -91,8 +91,8 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options	COMPAT_MACH	# binary compatibility with Mach binaries
-#options	EXEC_MACHO	# exec MACH-O binaries
+#options 	COMPAT_MACH	# binary compatibility with Mach binaries
+#options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
@@ -152,7 +152,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
+#options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -390,6 +390,7 @@ esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 
 # CardBus SCSI cards
 ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 scsibus* at ahc?
@@ -626,6 +627,7 @@ esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at cmpci? flags 1
 opl*	at esl?
 opl*	at eso?
 opl*	at ess?
@@ -664,6 +666,7 @@ audio*	at ym?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
+mpu*	at cmpci?
 mpu*	at eso?
 mpu*	at fms?
 mpu*	at sb?

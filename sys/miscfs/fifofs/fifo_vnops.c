@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.31 2001/09/22 22:35:18 sommerfeld Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.31.2.1 2001/11/12 21:19:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -34,6 +34,9 @@
  *
  *	@(#)fifo_vnops.c	8.10 (Berkeley) 5/27/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.31.2.1 2001/11/12 21:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

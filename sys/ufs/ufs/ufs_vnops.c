@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.82 2001/09/23 05:28:23 chs Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.82.2.1 2001/11/12 21:19:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -39,6 +39,9 @@
  *
  *	@(#)ufs_vnops.c	8.28 (Berkeley) 7/31/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.82.2.1 2001/11/12 21:19:51 thorpej Exp $");
 
 #include "opt_quota.h"
 #include "fs_lfs.h"

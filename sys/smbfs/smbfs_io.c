@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.2 2001/05/26 21:27:20 chs Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.2.6.1 2001/11/12 21:19:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -32,6 +32,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.2.6.1 2001/11/12 21:19:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
