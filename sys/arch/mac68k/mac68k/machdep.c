@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1995/07/04 14:42:16 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 1995/07/04 18:55:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -160,6 +160,14 @@ unsigned long	nbphys[NBMAXRANGES];    /* Start physical addr of this range */
 unsigned long	nblog[NBMAXRANGES];     /* Start logical addr of this range */
 /* If the length is negative, the all physical addresses are the same: */
 long		nblen[NBMAXRANGES];     /* Length of this range */
+
+/*
+ * Values for IIvx-like internal video
+ * -- should be zero if it is not used (usual case).
+ */
+u_int32_t	mac68k_vidlog;	/* logical addr */
+u_int32_t	mac68k_vidphys;	/* physical addr */
+u_int32_t	mac68k_vidlen;	/* mem length */
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -2325,7 +2333,6 @@ mac68k_set_io_offsets(base)
 {
 	extern volatile unsigned char	*sccA;
 	extern volatile unsigned char	*ASCBase;
-	extern vm_offset_t		SCSIBase;
 
 	switch(current_mac_model->class) {
 	case MACH_CLASSII:
@@ -2696,7 +2703,40 @@ get_mapping (void)
 		}
 	}
 	if (i == nbnumranges) {
-		printf ("  no internal video at address 0.\n");
+		/*
+		 * Kludge for IIvx internal video. ???
+		 */
+		if (0x60000000 < videoaddr && videoaddr < 0x70000000) {
+			if (!get_physical(addr, &phys))
+				printf("get_mapping(): IIvx kludge. "
+					" False start.\n");
+			else {
+				addr = videoaddr;
+				mac68k_vidlog = addr;
+				mac68k_vidphys = phys;
+				mac68k_vidlen = 32768;
+				while (get_physical(addr, &phys)) {
+					if (   (phys - mac68k_vidphys)
+					    !=  mac68k_vidlen+32768)
+						break;
+					if (mac68k_vidlen+32768 > 1*1024*1024){
+printf("get_mapping(): IIvx kludge.  Does it never end?\n");
+printf("               Forcing VRAM size to a conservative 512K.\n");
+						mac68k_vidlen = 512*1024;
+						break;
+					}
+					mac68k_vidlen += 32768;
+					addr += 32768;
+				}
+				printf("  IIvx-like internal video at "
+				       "addr 0x%x (phys 0x%x), len 0x%x.\n",
+				       mac68k_vidlog, mac68k_vidphys,
+				       mac68k_vidlen);
+			}
+		} else {
+			printf ("  no internal video at address 0"
+				"-- videoaddr is 0x%x.\n", videoaddr);
+		}
 	} else {
 		printf ("  Video address = 0x%x\n", videoaddr);
 		printf ("  Int video starts at 0x%x\n",
