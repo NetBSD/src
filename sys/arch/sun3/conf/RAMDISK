@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.10 1997/03/11 21:21:53 gwr Exp $
+#	$NetBSD: RAMDISK,v 1.11 1997/05/07 02:15:03 lukem Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -32,9 +32,9 @@ options 	MINIROOTSIZE=512	# 256K
 
 # Filesystem options
 # May need NFS to get miniroot image
-file-system 	NFS		# nfs client support
+file-system	NFS		# nfs client support
 # Need FFS for the ramdisk image
-file-system 	FFS		# ufs file system
+file-system	FFS		# ufs file system
 
 options 	FIFO		# named pipes used during install
 
@@ -54,11 +54,11 @@ config		netbsd root on md0 type ffs
 #
 # Serial ports
 #
-zstty0 at zsc1 channel 0	# ttya
-zstty1 at zsc1 channel 1	# ttyb
+zstty0	at zsc1 channel 0	# ttya
+zstty1	at zsc1 channel 1	# ttyb
 
-kbd0   at zsc0 channel 0	# keyboard
-ms0    at zsc0 channel 1	# mouse
+kbd0	at zsc0 channel 0	# keyboard
+ms0	at zsc0 channel 1	# mouse
 
 #
 # Network devices
@@ -117,10 +117,10 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
 # Memory-disk (root for install tape)
-pseudo-device	md	2
+pseudo-device	md		2
 
 # Misc.
-pseudo-device	loop	1		# network loopback
-pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp	2		# PPP
+pseudo-device	loop		1	# network loopback
+pseudo-device	sl		2	# CSLIP
+pseudo-device	ppp		2	# PPP
 
