@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.47 2001/06/22 13:36:12 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.48 2001/06/27 17:36:14 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -625,10 +625,12 @@ nd6_purge(ifp)
 	if (nd6_defifindex == ifp->if_index)
 		nd6_setdefaultiface(0);
 
-	/* refresh default router list */
-	bzero(&drany, sizeof(drany));
-	defrouter_delreq(&drany, 0);
-	defrouter_select();
+	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
+		/* refresh default router list */
+		bzero(&drany, sizeof(drany));
+		defrouter_delreq(&drany, 0);
+		defrouter_select();
+	}
 
 	/*
 	 * Nuke neighbor cache entries for the ifp.
