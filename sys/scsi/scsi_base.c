@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.44 1997/06/09 19:36:56 matthias Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.45 1997/08/04 06:55:22 fair Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -605,16 +605,16 @@ scsi_interpret_sense(xs)
 #ifdef	SCSIDEBUG
 	if ((sc_link->flags & SDEV_DB1) != 0) {
 		int count;
-		printf("code%x valid%x ",
+		printf("code 0x%x valid 0x%x ",
 		    sense->error_code & SSD_ERRCODE,
 		    sense->error_code & SSD_ERRCODE_VALID ? 1 : 0);
-		printf("seg%x key%x ili%x eom%x fmark%x\n",
+		printf("seg 0x%x key 0x%x ili 0x%x eom 0x%x fmark 0x%x\n",
 		    sense->segment,
 		    sense->flags & SSD_KEY,
 		    sense->flags & SSD_ILI ? 1 : 0,
 		    sense->flags & SSD_EOM ? 1 : 0,
 		    sense->flags & SSD_FILEMARK ? 1 : 0);
-		printf("info: %x %x %x %x followed by %d extra bytes\n",
+		printf("info: 0x%x 0x%x 0x%x 0x%x followed by %d extra bytes\n",
 		    sense->info[0],
 		    sense->info[1],
 		    sense->info[2],
@@ -622,7 +622,7 @@ scsi_interpret_sense(xs)
 		    sense->extra_len);
 		printf("extra: ");
 		for (count = 0; count < sense->extra_len; count++)
-			printf("%x ", sense->extra_bytes[count]);
+			printf("0x%x ", sense->extra_bytes[count]);
 		printf("\n");
 	}
 #endif	/*SCSIDEBUG */
@@ -814,7 +814,7 @@ show_scsi_cmd(xs)
 		while (i < xs->cmdlen) {
 			if (i)
 				printf(",");
-			printf("%x", b[i++]);
+			printf("0x%x", b[i++]);
 		}
 		printf("-[%d bytes]\n", xs->datalen);
 		if (xs->datalen)
