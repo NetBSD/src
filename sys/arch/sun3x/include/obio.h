@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.3 1997/04/09 04:42:25 jeremy Exp $	*/
+/*	$NetBSD: obio.h,v 1.4 1997/04/25 18:00:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@
 /*
  * Physical addresses of nonconfigurable devices.
  */
-#define	OBIO_P4_REG 		0x50300000
 #define	OBIO_FPA_ADDR		0x5C000000
 
 #define	OBIO_IOMMU  		0x60000000
@@ -95,18 +94,16 @@
 
 #ifdef	_KERNEL
 
-caddr_t	obio_alloc __P((int, int));
 void	obio_init __P((void));
 caddr_t	obio_find_mapping __P((int pa, int size));
+caddr_t	obio_mapin __P((int, int));
 caddr_t	obio_vm_alloc __P((int));
 
 /*
  * These are some OBIO devices that need early init calls.
  */
-void	idprom_init __P((void));
-void	eeprom_init __P((void));
-void	zs_init     __P((void));
 void	intreg_init __P((void));
-void	clock_init  __P((void));
+void	leds_init __P((void));
+void	zs_init __P((void));
 
 #endif	/* _KERNEL */
