@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88.2.4 2002/02/11 20:10:44 jdolecek Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.2.5 2002/03/16 16:02:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -342,7 +342,7 @@ but needs own kqfilter */
 /* open, close, read, write, mmap */
 #define cdev_mm_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap), \
 	dev_noimpl(kqfilter,enodev), 0 }
 
@@ -560,6 +560,19 @@ cdev_decl(ptc);
 #define	ptsioctl	ptyioctl
 #define	ptskqfilter	ttykqfilter
 cdev_decl(pts);
+
+#define mmread		mmrw
+#define mmwrite		mmrw
+cdev_decl(mm);
+#define	DEV_MEM		0	/* minor device 0 is physical memory */
+#define	DEV_KMEM	1	/* minor device 1 is kernel memory */
+#define DEV_NULL	2	/* minor device 2 is EOF/rathole */
+#ifdef __arm__			/* XXX: FIX ME ARM! */
+#define DEV_ZERO	3	/* minor device 3 is '\0'/rathole */
+#else
+#define DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
+#endif
+
 
 /*
  * [bc]dev_decl()s for 'fake' disk devices.

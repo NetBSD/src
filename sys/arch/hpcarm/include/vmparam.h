@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4.2.3 2002/01/10 19:43:42 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4.2.4 2002/03/16 15:57:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -74,7 +74,7 @@
  * buffers is being limited due to lack of VA space.
  */
 #ifdef HPCARM
-#define	KERNEL_VM_SIZE		0x03000000
+#define	KERNEL_VM_SIZE		0x05000000
 #endif
 
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
@@ -93,7 +93,7 @@
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
 #define VM_MAX_KERNEL_BUF \
-	((VM_MAXKERN_ADDRESS - KERNEL_VM_BASE) * 4 / 10)
+	((KERNEL_VM_SIZE) * 4 / 10)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */

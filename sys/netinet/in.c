@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.66.2.2 2002/01/10 20:02:39 thorpej Exp $	*/
+/*	$NetBSD: in.c,v 1.66.2.3 2002/03/16 16:02:11 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.66.2.2 2002/01/10 20:02:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.66.2.3 2002/03/16 16:02:11 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.66.2.2 2002/01/10 20:02:39 thorpej Exp $");
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -135,6 +136,7 @@ static int in_mask2len __P((struct in_addr *));
 static void in_len2mask __P((struct in_addr *, int));
 static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 	struct ifnet *, struct proc *));
+static int in_rt_walktree __P((struct radix_node *, void *));
 
 static int in_addprefix __P((struct in_ifaddr *, int));
 static int in_scrubprefix __P((struct in_ifaddr *));
@@ -539,12 +541,32 @@ in_control(so, cmd, data, ifp, p)
 	return (0);
 }
 
+static int
+in_rt_walktree(rn, v)
+	struct radix_node *rn;
+	void *v;
+{
+	struct in_ifaddr *ia = (struct in_ifaddr *)v;
+	struct rtentry *rt = (struct rtentry *)rn;
+	int error;
+
+	if (rt->rt_ifa == &ia->ia_ifa) {
+		if ((error = rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
+		    rt_mask(rt), rt->rt_flags, NULL)) != 0) {
+			log(LOG_WARNING, "ifa_rt_walktree: unable to delete "
+			    "rtentry. error= %d", error);
+		}
+	}
+	return 0;
+}
+
 void
 in_purgeaddr(ifa, ifp)
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
 {
 	struct in_ifaddr *ia = (void *) ifa;
+	struct radix_node_head *rnh;
 
 	in_ifscrub(ifp, ia);
 	LIST_REMOVE(ia, ia_hash);
@@ -561,6 +583,10 @@ in_purgeaddr(ifa, ifp)
 	    ifp->if_output != if_nulloutput)
 		in_savemkludge(ia);
 	IFAFREE(&ia->ia_ifa);
+
+	if ((rnh = rt_tables[AF_INET]) != NULL)
+		(*rnh->rnh_walktree)(rnh, in_rt_walktree, ifa);
+
 	in_setmaxmtu();
 }
 
@@ -1050,6 +1076,7 @@ in_savemkludge(oia)
 	if (ia) {	/* there is another address */
 		for (inm = LIST_FIRST(&oia->ia_multiaddrs); inm; inm = next){
 			next = LIST_NEXT(inm, inm_list);
+			LIST_REMOVE(inm, inm_list);
 			IFAFREE(&inm->inm_ia->ia_ifa);
 			IFAREF(&ia->ia_ifa);
 			inm->inm_ia = ia;
@@ -1081,6 +1108,7 @@ in_restoremkludge(ia, ifp)
 			for (inm = LIST_FIRST(&oia->ia_multiaddrs);
 			    inm != NULL; inm = next) {
 				next = LIST_NEXT(inm, inm_list);
+				LIST_REMOVE(inm, inm_list);
 				IFAFREE(&inm->inm_ia->ia_ifa);
 				IFAREF(&ia->ia_ifa);
 				inm->inm_ia = ia;

@@ -1,5 +1,5 @@
 |
-| $NetBSD: !Boot,v 1.1.6.2 2002/01/10 19:36:43 thorpej Exp $
+| $NetBSD: !Boot,v 1.1.6.3 2002/03/16 15:55:29 jdolecek Exp $
 | boot file for !BtNetBSD application
 |
 IconSprites <Obey$Dir>.!Sprites

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69.2.3 2002/01/10 19:49:32 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.69.2.4 2002/03/16 16:00:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1103,8 +1103,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 		/* Punt */
 		access_type = VM_PROT_READ;
 	} else {
-		access_type = (sfsr & SFSR_W) ? VM_PROT_READ|VM_PROT_WRITE
-			: VM_PROT_READ;
+		access_type = (sfsr & SFSR_W) ? VM_PROT_WRITE : VM_PROT_READ;
 	}
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern char Lfsbail[];

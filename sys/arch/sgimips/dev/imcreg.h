@@ -1,9 +1,9 @@
-/*	$NetBSD: imcreg.h,v 1.1.2.2 2001/09/13 01:14:30 thorpej Exp $	*/
+/*	$NetBSD: imcreg.h,v 1.1.2.3 2002/03/16 15:59:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -30,7 +30,7 @@
 #ifndef _ARCH_SGIMIPS_DEV_IMCREG_H_
 #define	_ARCH_SGIMIPS_DEV_IMCREG_H_
 
-#define IMC_CPUCTRL0		0x1fa00004	/* CPU control, register 0 */	
+#define IMC_CPUCTRL0		0x1fa00004	/* CPU control, register 0 */
 
 #define IMC_CPUCTRL0_REFMASK	0x0000000f	/* # lines to refresh */
 #define IMC_CPUCTRL0_RFE	0x00000010	/* refresh enable */
@@ -44,7 +44,7 @@
 #define IMC_CPUCTRL0_CMDPAR	0x00001000	/* SysCmd parity enable */
 #define IMC_CPUCTRL0_INTENA	0x00002000	/* enable CPU interrupts */
 #define IMC_CPUCTRL0_SNOOPENA	0x00004000	/* enable gfx DMA snoop */
-#define IMC_CPUCTRL0_PROM_WRENA	0x00008000	/* disable buserr on PROM 
+#define IMC_CPUCTRL0_PROM_WRENA	0x00008000	/* disable buserr on PROM
 						 * writes */
 #define IMC_CPUCTRL0_WRST	0x00010000	/* warm restart (reset cpu) */
 /* Bit 17 reserved		0x00020000	*/
@@ -53,7 +53,7 @@
 #define IMC_CPUCTRL0_MUXHWMSK	0x01f00000	/* MUX fifo high-water mask */
 #define IMC_CPUCTRL0_BADPAR	0x02000000	/* generate bad parity on
 						 * CPU->memory writes */
-#define IMC_CPUCTRL0_NCHKMEMPAR	0x04000000	/* disable CPU parity check 
+#define IMC_CPUCTRL0_NCHKMEMPAR	0x04000000	/* disable CPU parity check
 						 * on memory reads. */
 #define IMC_CPUCTRL0_BACK2	0x08000000	/* enable back2back GIO wrt */
 #define IMC_CPUCTRL0_BUSRTMSK	0xf0000000	/* stall cycle for berr data */

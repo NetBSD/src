@@ -1,9 +1,9 @@
-/*	$NetBSD: hpcreg.h,v 1.2.2.2 2002/01/10 19:48:26 thorpej Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.2.2.3 2002/03/16 15:59:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -48,14 +48,14 @@ struct hpc_dma_desc {
 
 #define HDD_CTL_BYTECNT(x)	((x) & 0x3fff)	/* Byte count: for ethernet
 						 * rcv channel also doubles as
-						 * length of packet received 
+						 * length of packet received
 						 */
 
-/* 
- * HPC memory map, as offsets from HPC base 
+/*
+ * HPC memory map, as offsets from HPC base
  *
  * XXXrkb: should each section be used as a base and have the specific
- * registers offset from there?? 
+ * registers offset from there??
  *
  * XXX: define register values as well as their offsets.
  *
@@ -164,8 +164,8 @@ struct hpc_dma_desc {
 #define	ENETR_DMACFG_D3		0x00f00		/* DMA D3 state cycles */
 #define	ENETR_DMACFG_WRCTL	0x01000		/* Enable IPG write */
 
-/* 
- * The following three bits work around bugs in the Seeq 8003; if you 
+/*
+ * The following three bits work around bugs in the Seeq 8003; if you
  * don't set them, the Seeq gets wonky pretty often.
  */
 #define	ENETR_DMACFG_FIX_RXDC	0x02000		/* Clear EOP bits on RXDC */
@@ -207,7 +207,7 @@ struct hpc_dma_desc {
 #define HPC_ENETX_FIFO		0x0002e000	/* Ether xmit DMA FIFO */
 #define HPC_ENETX_FIFO_SIZE	0x00001fff	/* Ether xmit DMA FIFO size */
 
-/* 
+/*
  * HPCBUG: The interrupt status is split amongst two registers, and they're
  * not even consecutive in the HPC address space.  This is documented as a
  * bug by SGI.
@@ -282,31 +282,31 @@ struct hpc_dma_desc {
 #define HPC_PBUS_CH9_DEVREGS_4_SIZE 0x03ff
 
 #define HPC_PBUS_CFGDMA_REGS	0x0005c000	/* PBus DMA config registers */
-#define HPC_PBUS_CFGDMA_REGS_SIZE   0x0fff	
+#define HPC_PBUS_CFGDMA_REGS_SIZE   0x0fff
 
 #define HPC_PBUS_CH0_CFGDMA	0x0005c000	/* PBus Ch. 0 DMA config */
-#define HPC_PBUS_CH0_CFGDMA_SIZE    0x01ff	
+#define HPC_PBUS_CH0_CFGDMA_SIZE    0x01ff
 
 #define HPC_PBUS_CH1_CFGDMA	0x0005c200	/* PBus Ch. 1 DMA config */
-#define HPC_PBUS_CH1_CFGDMA_SIZE    0x01ff	
+#define HPC_PBUS_CH1_CFGDMA_SIZE    0x01ff
 
 #define HPC_PBUS_CH2_CFGDMA	0x0005c400	/* PBus Ch. 2 DMA config */
-#define HPC_PBUS_CH2_CFGDMA_SIZE    0x01ff	
+#define HPC_PBUS_CH2_CFGDMA_SIZE    0x01ff
 
 #define HPC_PBUS_CH3_CFGDMA	0x0005c600	/* PBus Ch. 3 DMA config */
-#define HPC_PBUS_CH3_CFGDMA_SIZE    0x01ff	
+#define HPC_PBUS_CH3_CFGDMA_SIZE    0x01ff
 
 #define HPC_PBUS_CH4_CFGDMA	0x0005c800	/* PBus Ch. 4 DMA config */
-#define HPC_PBUS_CH4_CFGDMA_SIZE    0x01ff	
+#define HPC_PBUS_CH4_CFGDMA_SIZE    0x01ff
 
 #define HPC_PBUS_CH5_CFGDMA	0x0005ca00	/* PBus Ch. 5 DMA config */
-#define HPC_PBUS_CH5_CFGDMA_SIZE    0x01ff	
+#define HPC_PBUS_CH5_CFGDMA_SIZE    0x01ff
 
 #define HPC_PBUS_CH6_CFGDMA	0x0005cc00	/* PBus Ch. 6 DMA config */
-#define HPC_PBUS_CH6_CFGDMA_SIZE    0x01ff	
+#define HPC_PBUS_CH6_CFGDMA_SIZE    0x01ff
 
 #define HPC_PBUS_CH7_CFGDMA	0x0005ce00	/* PBus Ch. 7 DMA config */
-#define HPC_PBUS_CH7_CFGDMA_SIZE    0x01ff	
+#define HPC_PBUS_CH7_CFGDMA_SIZE    0x01ff
 
 #define HPC_PBUS_CFGPIO_REGS	0x0005d000	/* PBus PIO config registers */
 #define HPC_PBUS_CFGPIO_REGS_SIZE   0x0fff
@@ -329,18 +329,18 @@ struct hpc_dma_desc {
 #define HPC_PBUS_CH9_CFGPIO_4	0x0005df00	/* PBus Ch. 9 PIO config */
 
 #define HPC_PBUS_PROM_WE	0x0005e000	/* PBus boot-prom write
-						 * enable register 
+						 * enable register
 						 */
 
-#define HPC_PBUS_PROM_SWAP	0x0005e800	/* PBus boot-prom chip-select 
+#define HPC_PBUS_PROM_SWAP	0x0005e800	/* PBus boot-prom chip-select
 						 * swap register
 						 */
 
 #define HPC_PBUS_GEN_OUT	0x0005f000	/* PBus general-purpose output
-						 * register 
+						 * register
 						 */
 
 #define HPC_PBUS_BBRAM		0x00060000	/* PBus battery-backed RAM
-						 * external registers 
+						 * external registers
 						 */
 #endif	/* _ARCH_SGIMIPS_HPC_HPCREG_H_ */

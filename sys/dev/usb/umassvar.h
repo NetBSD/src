@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.3.6.1 2002/01/10 19:59:02 thorpej Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.3.6.2 2002/03/16 16:01:39 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -182,6 +182,7 @@ struct umass_softc {
 #define	UMASS_QUIRK_NO_START_STOP	0x00000004
 #define	UMASS_QUIRK_FORCE_SHORT_INQUIRY	0x00000008
 #define	UMASS_QUIRK_WRONG_CSWSIG	0x00000010
+#define UMASS_QUIRK_NO_MAX_LUN		0x00000020
 
 	u_int32_t		sc_busquirks;
 

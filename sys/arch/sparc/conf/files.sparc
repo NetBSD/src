@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.102.2.2 2002/02/11 20:09:03 jdolecek Exp $
+#	$NetBSD: files.sparc,v 1.102.2.3 2002/03/16 15:59:44 jdolecek Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -117,6 +117,9 @@ include "dev/sbus/files.sbus"
 attach sbus at mainbus with sbus_mainbus
 attach sbus at iommu with sbus_iommu
 file	arch/sparc/dev/sbus.c			sbus needs-flag
+
+attach	audiocs at ebus with audiocs_ebus
+file	dev/ebus/cs4231_ebus.c			audiocs_ebus
 
 device tpcic: pcmciabus
 attach tpcic at sbus

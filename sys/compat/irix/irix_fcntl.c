@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.2.4.2 2002/01/10 19:51:18 thorpej Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.2.4.3 2002/03/16 16:00:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.2.4.2 2002/01/10 19:51:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.2.4.3 2002/03/16 16:00:27 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -59,7 +59,7 @@ irix_sys_lseek64(p, v, retval)
 	register_t *retval;
 {
 	/* 
-	 * Note: we have aan alignement problem here. If pad2, pad3 and pad4 
+	 * Note: we have an alignement problem here. If pad2, pad3 and pad4 
 	 * are removed, lseek64 will break, because whence will be wrong.
 	 */
 	struct irix_sys_lseek64_args /* {

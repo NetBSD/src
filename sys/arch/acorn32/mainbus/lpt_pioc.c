@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pioc.c,v 1.2.2.2 2002/01/10 19:36:28 thorpej Exp $	*/
+/*	$NetBSD: lpt_pioc.c,v 1.2.2.3 2002/03/16 15:55:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -35,6 +35,9 @@
  */
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.2.2.3 2002/03/16 15:55:26 jdolecek Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -48,6 +51,9 @@
 
 /* Prototypes for functions */
 
+static int lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+    bus_size_t,	u_char, u_char));
+static int lptprobe __P((bus_space_tag_t, u_int));
 static int  lpt_pioc_probe  __P((struct device *, struct cfdata *, void *));
 static void lpt_pioc_attach __P((struct device *, struct device *, void *));
 

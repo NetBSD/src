@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.47.2.1 2002/01/10 19:42:50 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.47.2.2 2002/03/16 15:57:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1362,7 +1362,7 @@ dcmmctl(dev, bits, how)
 		dcm->dcm_cr |= CR_MODM;
 		SEM_UNLOCK(dcm);
 		DELAY(10); /* delay until done */
-		(void) splx(s);
+		splx(s);
 	}
 	return (bits);
 }

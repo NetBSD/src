@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_ecoff.c,v 1.3.6.2 2002/01/10 20:00:39 thorpej Exp $ */
+/* $NetBSD: loadfile_ecoff.c,v 1.3.6.3 2002/03/16 16:01:57 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@ loadfile_coff(fd, coff, marks, flags)
 {
 	paddr_t offset = marks[MARK_START];
 	paddr_t minp = ~0, maxp = 0, pos;
+
+	/* some ports dont use the offset */
+	offset = offset;
 
 	/* Read in text. */
 	if (lseek(fd, ECOFF_TXTOFF(coff), SEEK_SET) == -1)  {

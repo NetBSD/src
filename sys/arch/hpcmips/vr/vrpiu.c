@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.13.2.3 2002/02/11 20:08:15 jdolecek Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.13.2.4 2002/03/16 15:58:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
@@ -56,6 +56,7 @@
 #include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/vrpiuvar.h>
+#define	PIUB_REG_OFFSSET	0
 #include <hpcmips/vr/vrpiureg.h>
 
 /*
@@ -156,6 +157,13 @@ vrpiu_read(struct vrpiu_softc *sc, int port)
 	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, port));
 }
 
+static inline u_short
+vrpiu_buf_read(struct vrpiu_softc *sc, int port)
+{
+
+	return (bus_space_read_2(sc->sc_iot, sc->sc_buf_ioh, port));
+}
+
 static int
 vrpiumatch(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -169,18 +177,32 @@ vrpiuattach(struct device *parent, struct device *self, void *aux)
 	struct vrpiu_softc *sc = (struct vrpiu_softc *)self;
 	struct vrip_attach_args *va = aux;
 	struct wsmousedev_attach_args wsmaa;
-
+	int res;
 	bus_space_tag_t iot = va->va_iot;
-	bus_space_handle_t ioh;
 	struct platid_data *p;
 
-	if (bus_space_map(iot, va->va_addr, 1, 0, &ioh)) {
+	if (va->va_parent_ioh != NULL)
+		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr,
+		    va->va_size, &sc->sc_ioh);
+	else
+		res = bus_space_map(iot, va->va_addr, va->va_size, 0,
+		    &sc->sc_ioh);
+	if (res != 0) {
 		printf(": can't map bus space\n");
+		return;
+	}
+	if (va->va_parent_ioh != NULL)
+		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr2,
+		    va->va_size2, &sc->sc_buf_ioh);
+	else
+		res = bus_space_map(iot, va->va_addr2, va->va_size2, 0,
+		    &sc->sc_buf_ioh);
+	if (res != 0) {
+		printf(": can't map second bus space\n");
 		return;
 	}
 
 	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
 	sc->sc_unit = va->va_unit;
 	sc->sc_vrip = va->va_vc;
 
@@ -527,11 +549,11 @@ vrpiu_ad_intr(struct vrpiu_softc *sc)
 
 	if (intrstat & PIUINT_PADADPINTR) {
 		sc->sc_battery.value[0] = (unsigned int)
-		    vrpiu_read(sc, PIUAB(0));
+		    vrpiu_buf_read(sc, PIUAB(0));
 		sc->sc_battery.value[1] = (unsigned int)
-		    vrpiu_read(sc, PIUAB(1));
+		    vrpiu_buf_read(sc, PIUAB(1));
 		sc->sc_battery.value[2] = (unsigned int)
-		    vrpiu_read(sc, PIUAB(2));
+		    vrpiu_buf_read(sc, PIUAB(2));
 	}
 
 	if (intrstat & PIUINT_PADADPINTR) {
@@ -570,16 +592,16 @@ vrpiu_tp_intr(struct vrpiu_softc *sc)
 
 	page = (intrstat & PIUINT_OVP) ? 1 : 0;
 	if (intrstat & (PIUINT_PADPAGE0INTR | PIUINT_PADPAGE1INTR)) {
-		tpx0 = vrpiu_read(sc, PIUPB(page, 0));
-		tpx1 = vrpiu_read(sc, PIUPB(page, 1));
-		tpy0 = vrpiu_read(sc, PIUPB(page, 2));
-		tpy1 = vrpiu_read(sc, PIUPB(page, 3));
+		tpx0 = vrpiu_buf_read(sc, PIUPB(page, 0));
+		tpx1 = vrpiu_buf_read(sc, PIUPB(page, 1));
+		tpy0 = vrpiu_buf_read(sc, PIUPB(page, 2));
+		tpy1 = vrpiu_buf_read(sc, PIUPB(page, 3));
 	}
 
 	if (intrstat & PIUINT_PADDLOSTINTR) {
 		page = page ? 0 : 1;
 		for (i = 0; i < 4; i++)
-			vrpiu_read(sc, PIUPB(page, i));
+			vrpiu_buf_read(sc, PIUPB(page, i));
 	}
 
 	cnt = vrpiu_read(sc, PIUCNT_REG_W);

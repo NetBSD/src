@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13.2.1 2001/09/13 01:13:28 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.2.2 2002/03/16 15:57:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@ extern long intrcnt[];
 
 /*
  *  Reorder protection in the following inline functions is
- * achived with the "eieio" instruction which the assembler
- * seems to detect and then doen't move instructions past....
+ * achieved with the "eieio" instruction which the assembler
+ * seems to detect and then doesn't move instructions past....
  */
 static __inline int
 splraise(newcpl)

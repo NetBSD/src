@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.4.2.2 2002/02/11 20:07:59 jdolecek Exp $	*/
+/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.4.2.3 2002/03/16 15:57:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ FrameBufferInfo::_table[] =
 	// SH7709A (P2 address)
 	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA                  ,       16,      640,      240,     1280, 0xb2000000 },
 	// SH7750 (P2 address)
-	{ PLATID_CPU_SH_4_7750   , PLATID_MACH_HITACHI_PERSONA_HPW650PA    ,       16,      640,      480, 0, 0 },
+	{ PLATID_CPU_SH_4_7750   , PLATID_MACH_HITACHI_PERSONA_HPW650PA    ,       16,      640,      480,     1280, 0xb204b000 },
 #endif // SHx
 #ifdef ARM
 	// SA-1100 (can't determine frame buffer address)

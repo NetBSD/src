@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.24.2.3 2002/02/11 20:08:13 jdolecek Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.24.2.4 2002/03/16 15:58:02 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -98,11 +98,6 @@ int vrgiu_intr_led = 1;
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)
 #define	LEGAL_OUT_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_OUT)
 
-/* flags for variant chips */
-#if !defined(VR4122) && !defined(VR4131)
-#define VRGIU_HAVE_PULLUPDNREGS
-#endif
-
 /*
  * type declarations
  */
@@ -124,7 +119,15 @@ struct vrgiu_softc {
 	u_int32_t sc_intr_mode[MAX_GPIO_INOUT];
 	TAILQ_HEAD(, vrgiu_intr_entry) sc_intr_head[MAX_GPIO_INOUT]; 
 	struct hpcio_chip sc_iochip;
+#ifndef SINGLE_VRIP_BASE
+	int sc_useupdn_reg, sc_termupdn_reg;
+#endif /* SINGLE_VRIP_BASE */
 };
+
+#ifndef SINGLE_VRIP_BASE
+#define GIUUSEUPDN_REG_W	(sc->sc_useupdn_reg)
+#define GIUTERMUPDN_REG_W	(sc->sc_termupdn_reg)
+#endif /* SINGLE_VRIP_BASE */
 
 /*
  * prototypes
@@ -192,6 +195,20 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 	struct vrgiu_softc *sc = (void*)self;
 	struct hpcio_attach_args haa;
 	int i;
+
+#ifndef SINGLE_VRIP_BASE
+	if (va->va_addr == VR4102_GIU_ADDR) {
+		sc->sc_useupdn_reg = VR4102_GIUUSEUPDN_REG_W;
+		sc->sc_termupdn_reg = VR4102_GIUTERMUPDN_REG_W;
+	} else
+	if (va->va_addr == VR4122_GIU_ADDR) {
+		sc->sc_useupdn_reg = VR4122_GIUUSEUPDN_REG_W;
+		sc->sc_termupdn_reg = VR4122_GIUTERMUPDN_REG_W;
+	} else {
+		panic("%s: unknown base address 0x%lx\n",
+		    sc->sc_dev.dv_xname, va->va_addr);
+	}
+#endif /* SINGLE_VRIP_BASE */
 
 	this_giu = sc;
 	sc->sc_vc = va->va_vc;
@@ -292,12 +309,15 @@ vrgiu_dump_iosetting(struct vrgiu_softc *sc)
 	edge = vrgiu_regread_4(sc, GIUINTTYP_REG);
 	hold = vrgiu_regread_4(sc, GIUINTHTSEL_REG);
 	level = vrgiu_regread_4(sc, GIUINTALSEL_REG);
-#ifndef VRGIU_HAVE_PULLUPDNREGS
-	useupdn = termupdn = 0;
-#else
-	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
-	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
-#endif
+
+	if (GIUUSEUPDN_REG_W == GIU_NO_REG_W)
+		useupdn = 0;
+	else
+		useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
+	if (GIUTERMUPDN_REG_W == GIU_NO_REG_W)
+		termupdn = 0;
+	else
+		termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
 	for (m = 0x80000000; m; m >>=1)
 		printf ("%c", syms[
 			((useupdn&m) ? 32 : 0) +
@@ -318,12 +338,14 @@ vrgiu_diff_iosetting()
 
 	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
 	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
-#ifndef VRGIU_HAVE_PULLUPDNREGS
-	useupdn = termupdn = 0;
-#else
-	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
-	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
-#endif
+	if (GIUUSEUPDN_REG_W == GIU_NO_REG_W)
+		useupdn = 0;
+	else
+		useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
+	if (GIUTERMUPDN_REG_W == GIU_NO_REG_W)
+		termupdn = 0;
+	else
+		termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
 	if (oiosel != iosel || ointen != inten ||
 	    ouseupdn != useupdn || otermupdn != termupdn) {
 		for (m = 0x80000000; m; m >>=1)

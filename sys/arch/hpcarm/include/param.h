@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2001/03/04 08:28:52 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.4.6.1 2002/03/16 15:57:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,8 +41,6 @@
 
 #define	_MACHINE	hpcarm
 #define	MACHINE		"hpcarm"
-#define	_MACHINE_ARCH	arm
-#define	MACHINE_ARCH	"arm"
 
 #include <arm/arm32/param.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.4.2.3 2002/02/11 20:10:29 jdolecek Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.4.2.4 2002/03/16 16:02:06 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.4.2.3 2002/02/11 20:10:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.4.2.4 2002/03/16 16:02:06 jdolecek Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -443,7 +443,9 @@ static void pppoe_dispatch_disc_pkt(u_int8_t *p, size_t size, struct ifnet *rcvi
 		return;
 	case PPPOE_CODE_PADO:
 		if (sc == NULL) {
-			printf("pppoe: received PADO but could not find request for it\n");
+			/* be quiete if there is not a single pppoe instance */
+			if (!LIST_EMPTY(&pppoe_softc_list))
+				printf("pppoe: received PADO but could not find request for it\n");
 			return;
 		}
 		if (sc->sc_state != PPPOE_STATE_PADI_SENT) {
@@ -509,11 +511,14 @@ pppoe_disc_input(struct mbuf *m)
         u_int8_t *p;
         struct ether_header *eh;
 
-        eh = mtod(m, struct ether_header*);
-        m_adj(m, sizeof(struct ether_header));
-        p = mtod(m, u_int8_t*);
-        KASSERT(m->m_flags & M_PKTHDR);
-        pppoe_dispatch_disc_pkt(p, m->m_len, m->m_pkthdr.rcvif, eh);
+        /* avoid error messages if there is not a single pppoe instance */
+        if (!LIST_EMPTY(&pppoe_softc_list)) {
+	        eh = mtod(m, struct ether_header*);
+        	m_adj(m, sizeof(struct ether_header));
+	        p = mtod(m, u_int8_t*);
+        	KASSERT(m->m_flags & M_PKTHDR);
+	        pppoe_dispatch_disc_pkt(p, m->m_len, m->m_pkthdr.rcvif, eh);
+	}
         m_free(m);
 }
 
@@ -613,6 +618,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	    ether_sprintf((const unsigned char *)&sc->sc_dest), m->m_pkthdr.len);
 #endif
 
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 	sc->sc_sppp.pp_if.if_opackets++;
 	return sc->sc_eth_if->if_output(sc->sc_eth_if, m, &dst, NULL);
 }
@@ -1037,7 +1043,7 @@ pppoe_start(struct ifnet *ifp)
 	if (sppp_isempty(ifp))
 		return;
 
-	/* are we read to proccess data yet? */
+	/* are we ready to proccess data yet? */
 	if (sc->sc_state < PPPOE_STATE_SESSION) {
 		sppp_flush(&sc->sc_sppp.pp_if);
 		return;

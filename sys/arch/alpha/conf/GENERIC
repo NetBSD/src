@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.189.2.4 2002/02/11 20:06:41 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.189.2.5 2002/03/16 15:55:40 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@
 
 include		"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.189.2.4 $"
+#ident 		"GENERIC-$Revision: 1.189.2.5 $"
 
 maxusers 32
 
@@ -290,6 +290,7 @@ audio*	at	eap?
 audio*	at	eso?
 audio*	at	sv?
 audio*	at	yds?
+audio*	at	ess?
 
 opl*	at	cmpci? flags 1
 opl*	at	eso?
@@ -306,7 +307,7 @@ midi*	at	mpu?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
@@ -358,6 +359,8 @@ we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isapnp?
 #audio*	at	wss?
 #midi*	at	wss?
+
+ess0	at	isa? port 0x220 irq 5 drq 1 drq2 5   # ESS 18XX
 sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #sb*	at	isapnp?
 audio*	at	sb?

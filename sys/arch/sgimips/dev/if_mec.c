@@ -1,9 +1,9 @@
-/*	$NetBSD: if_mec.c,v 1.5 2000/11/18 19:32:34 soren Exp $	*/
+/*	$NetBSD: if_mec.c,v 1.5.6.1 2002/03/16 15:59:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -41,10 +41,10 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -58,12 +58,12 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 
@@ -138,7 +138,7 @@ mec_attach(parent, self, aux)
 {
 	struct mec_softc *sc = (void *)self;
 	struct mace_attach_args *maa = aux;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int64_t address, command;
 	int i;
 
@@ -179,20 +179,20 @@ mec_attach(parent, self, aux)
 	ifp->if_watchdog = mec_watchdog;
 #endif
 
-        sc->sc_mii.mii_ifp = ifp;
-        sc->sc_mii.mii_readreg = mec_mii_readreg;
-        sc->sc_mii.mii_writereg = mec_mii_writereg;
-        sc->sc_mii.mii_statchg = mec_statchg;
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = mec_mii_readreg;
+	sc->sc_mii.mii_writereg = mec_mii_writereg;
+	sc->sc_mii.mii_statchg = mec_statchg;
 
-        ifmedia_init(&sc->sc_mii.mii_media, 0, mec_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, 0, mec_mediachange,
 	    mec_mediastatus);
-        mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-            MII_OFFSET_ANY, 0);
-        if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-                ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-                ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
-        } else
-                ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 return; /* XXX */
 

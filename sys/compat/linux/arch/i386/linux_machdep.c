@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.65.2.2 2002/01/10 19:51:27 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.65.2.3 2002/03/16 16:00:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.65.2.2 2002/01/10 19:51:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.65.2.3 2002/03/16 16:00:32 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -207,12 +207,13 @@ linux_sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_ss = tf->tf_ss;
 	frame.sf_sc.sc_err = tf->tf_err;
 	frame.sf_sc.sc_trapno = tf->tf_trapno;
+	frame.sf_sc.sc_cr2 = p->p_addr->u_pcb.pcb_cr2;
 
 	/* Save signal stack. */
 	/* Linux doesn't save the onstack flag in sigframe */
 
 	/* Save signal mask. */
-	native_to_linux_old_sigset(mask, &frame.sf_sc.sc_mask);
+	native_to_linux_old_sigset(&frame.sf_sc.sc_mask, mask);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -334,7 +335,7 @@ linux_sys_sigreturn(p, v, retval)
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_old_to_native_sigset(&context.sc_mask, &mask);
+	linux_old_to_native_sigset(&mask, &context.sc_mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
@@ -410,19 +411,22 @@ linux_write_ldt(p, uap, retval)
 	if (ldt_info.contents == 3)
 		return (EINVAL);
 
+	if (ldt_info.base_addr == 0 && ldt_info.limit == 0) {
+		/* this means you should zero the ldt */
+		(void)memset(&sd, 0, sizeof(sd));
+	} else {
+		sd.sd_lobase = ldt_info.base_addr & 0xffffff;
+		sd.sd_hibase = (ldt_info.base_addr >> 24) & 0xff;
+		sd.sd_lolimit = ldt_info.limit & 0xffff;
+		sd.sd_hilimit = (ldt_info.limit >> 16) & 0xf;
+		sd.sd_type = 16 | (ldt_info.contents << 2) |
+		    (!ldt_info.read_exec_only << 1);
+		sd.sd_dpl = SEL_UPL;
+		sd.sd_p = !ldt_info.seg_not_present;
+		sd.sd_def32 = ldt_info.seg_32bit;
+		sd.sd_gran = ldt_info.limit_in_pages;
+	}
 	sg = stackgap_init(p->p_emul);
-
-	sd.sd_lobase = ldt_info.base_addr & 0xffffff;
-	sd.sd_hibase = (ldt_info.base_addr >> 24) & 0xff;
-	sd.sd_lolimit = ldt_info.limit & 0xffff;
-	sd.sd_hilimit = (ldt_info.limit >> 16) & 0xf;
-	sd.sd_type =
-	    16 | (ldt_info.contents << 2) | (!ldt_info.read_exec_only << 1);
-	sd.sd_dpl = SEL_UPL;
-	sd.sd_p = !ldt_info.seg_not_present;
-	sd.sd_def32 = ldt_info.seg_32bit;
-	sd.sd_gran = ldt_info.limit_in_pages;
-
 	sl.start = ldt_info.entry_number;
 	sl.desc = stackgap_alloc(&sg, sizeof(sd));
 	sl.num = 1;
@@ -481,14 +485,19 @@ linux_sys_modify_ldt(p, v, retval)
  * array for all major device numbers, and map linux_mknod too.
  */
 dev_t
-linux_fakedev(dev)
+linux_fakedev(dev, raw)
 	dev_t dev;
+	int raw;
 {
+	if (raw) {
 #if (NWSDISPLAY > 0)
-	if (major(dev) == NETBSD_WSCONS_MAJOR)
-		return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
+		if (major(dev) == NETBSD_WSCONS_MAJOR)
+			return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
 #endif
-	return dev;
+		return 0;
+	} else {
+		return dev;
+	}
 }
 
 #if (NWSDISPLAY > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.20.2.2 2002/02/11 20:07:45 jdolecek Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.20.2.3 2002/03/16 15:57:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -162,14 +162,20 @@ extern u_int undefined_handler_address;
 extern int pmap_debug_level;
 #endif
 
-#define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
-#define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
-#define	KERNEL_PT_IOPXS		2	/* Page table for mapping i80312 */
-#define KERNEL_PT_VMDATA	3	/* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
+
+#define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
+#define	KERNEL_PT_KERNEL_NUM	2
+
+					/* L2 table for mapping i80312 */
+#define	KERNEL_PT_IOPXS		(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
+
+					/* L2 tables for mapping kernel VM */ 
+#define KERNEL_PT_VMDATA	(KERNEL_PT_IOPXS + 1)
+#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
-pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
+pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
 
@@ -183,14 +189,24 @@ void	consinit(void);
 #include <dev/ic/comvar.h>
 #endif
 
+/*
+ * Define the default console speed for the board.  This is generally
+ * what the firmware provided with the board defaults to.
+ */
 #ifndef CONSPEED
-#define CONSPEED B115200	/* What RedBoot uses */
-#endif
-#ifndef CONMODE
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
+#if defined(IOP310_TEAMASA_NPWR)
+#define CONSPEED B19200
+#else /* Default to stock IQ80310 */
+#define CONSPEED B115200
+#endif /* list of IQ80310-based designs */
+#endif /* ! CONSPEED */
+
 #ifndef CONUNIT
 #define	CONUNIT	0
+#endif
+
+#ifndef CONMODE
+#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 
 int comcnspeed = CONSPEED;
@@ -271,7 +287,8 @@ struct l1_sec_map {
 	vaddr_t	va;
 	vaddr_t	pa;
 	vsize_t	size;
-	int flags;
+	vm_prot_t prot;
+	int cache;
 } l1_sec_table[] = {
     /*
      * Map the on-board devices VA == PA so that we can access them
@@ -281,10 +298,12 @@ struct l1_sec_map {
 	IQ80310_OBIO_BASE,
 	IQ80310_OBIO_BASE,
 	IQ80310_OBIO_SIZE,
-	0,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
     },
 
     {
+	0,
 	0,
 	0,
 	0,
@@ -313,7 +332,6 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	u_int l2pagetable;
 	extern char page0[], page0_end[];
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
@@ -371,57 +389,11 @@ initarm(void *arg)
 	}
 
 	/*
-	 * Okay, RedBoot has provided us with the following memory map:
-	 *
-	 * Physical Address Range     Description 
-	 * -----------------------    ---------------------------------- 
-	 * 0x00000000 - 0x00000fff    flash Memory 
-	 * 0x00001000 - 0x00001fff    80312 Internal Registers 
-	 * 0x00002000 - 0x007fffff    flash Memory 
-	 * 0x00800000 - 0x7fffffff    PCI ATU Outbound Direct Window 
-	 * 0x80000000 - 0x83ffffff    Primary PCI 32-bit Memory 
-	 * 0x84000000 - 0x87ffffff    Primary PCI 64-bit Memory 
-	 * 0x88000000 - 0x8bffffff    Secondary PCI 32-bit Memory 
-	 * 0x8c000000 - 0x8fffffff    Secondary PCI 64-bit Memory 
-	 * 0x90000000 - 0x9000ffff    Primary PCI IO Space 
-	 * 0x90010000 - 0x9001ffff    Secondary PCI IO Space 
-	 * 0x90020000 - 0x9fffffff    Unused 
-	 * 0xa0000000 - 0xbfffffff    SDRAM 
-	 * 0xc0000000 - 0xefffffff    Unused 
-	 * 0xf0000000 - 0xffffffff    80200 Internal Registers
-	 *
-	 *
-	 * Virtual Address Range    C B  Description 
-	 * -----------------------  - -  ---------------------------------- 
-	 * 0x00000000 - 0x00000fff  Y Y  SDRAM 
-	 * 0x00001000 - 0x00001fff  N N  80312 Internal Registers 
-	 * 0x00002000 - 0x007fffff  Y N  flash Memory 
-	 * 0x00800000 - 0x7fffffff  N N  PCI ATU Outbound Direct Window 
-	 * 0x80000000 - 0x83ffffff  N N  Primary PCI 32-bit Memory 
-	 * 0x84000000 - 0x87ffffff  N N  Primary PCI 64-bit Memory 
-	 * 0x88000000 - 0x8bffffff  N N  Secondary PCI 32-bit Memory 
-	 * 0x8c000000 - 0x8fffffff  N N  Secondary PCI 64-bit Memory 
-	 * 0x90000000 - 0x9000ffff  N N  Primary PCI IO Space 
-	 * 0x90010000 - 0x9001ffff  N N  Secondary PCI IO Space 
-	 * 0xa0000000 - 0xa0000fff  Y N  flash 
-	 * 0xa0001000 - 0xbfffffff  Y Y  SDRAM 
-	 * 0xc0000000 - 0xcfffffff  Y Y  Cache Flush Region 
-	 * 0xf0000000 - 0xffffffff  N N  80200 Internal Registers 
-	 *
-	 * The first level page table is at 0xa0004000.  There are also
-	 * 2 second-level tables at 0xa0008000 and 0xa0008400.
-	 *
-	 * This corresponds roughly to the physical memory map, i.e.
-	 * we are quite nearly running VA==PA.
+	 * We are currently running with the MMU enabled and the
+	 * entire address space mapped VA==PA, except for the
+	 * first 64M of RAM is also double-mapped at 0xc0000000.
+	 * There is an L1 page table at 0xa0004000.
 	 */
-
-	/*
-	 * Examine the boot args string for options we need to know about
-	 * now.
-	 */
-#if 0
-	process_kernel_args((char *)nwbootinfo.bt_args);
-#endif
 
 	/*
 	 * Fetch the SDRAM start/size from the i80312 SDRAM configration
@@ -443,9 +415,9 @@ initarm(void *arg)
 	 * physical memory.  For now, we're going to set
 	 * physical_freestart to 0xa0200000 (where the kernel
 	 * was loaded), and allocate the memory we need downwards.
-	 * If we get too close to the page tables that RedBoot
-	 * set up, we will panic.  We will update physical_freestart
-	 * and physical_freeend later to reflect what pmap_bootstrap()
+	 * If we get too close to the L1 table that we set up, we
+	 * will panic.  We will update physical_freestart and
+	 * physical_freeend later to reflect what pmap_bootstrap()
 	 * wants to see.
 	 *
 	 * XXX pmap_bootstrap() needs an enema.
@@ -512,7 +484,10 @@ initarm(void *arg)
 		    && kernel_l1pt.pv_pa == 0) {
 			valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
 		} else {
-			alloc_pages(kernel_pt_table[loop1], PT_SIZE / NBPG);
+			alloc_pages(kernel_pt_table[loop1].pv_pa,
+			    PT_SIZE / NBPG);
+			kernel_pt_table[loop1].pv_va =
+			    kernel_pt_table[loop1].pv_pa;
 			++loop1;
 		}
 	}
@@ -569,32 +544,34 @@ initarm(void *arg)
 #endif
 
 	/*
-	 * Now we start consturction of the L1 page table
+	 * Now we start construction of the L1 page table
 	 * We start by mapping the L2 page tables into the L1.
 	 * This means that we can replace L1 mappings later on if necessary
 	 */
 	l1pagetable = kernel_l1pt.pv_pa;
 
 	/* Map the L2 pages tables in the L1 page table */
-	map_pagetable(l1pagetable, 0x00000000,
-	    kernel_pt_table[KERNEL_PT_SYS]);
-	map_pagetable(l1pagetable, KERNEL_BASE,
-	    kernel_pt_table[KERNEL_PT_KERNEL]);
-	map_pagetable(l1pagetable, IQ80310_IOPXS_VBASE,
-	    kernel_pt_table[KERNEL_PT_IOPXS]);
-	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
-		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
-		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-	map_pagetable(l1pagetable, PROCESS_PAGE_TBLS_BASE,
-	    kernel_ptpt.pv_pa);
+	pmap_link_l2pt(l1pagetable, 0x00000000,
+	    &kernel_pt_table[KERNEL_PT_SYS]);
+	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
+		pmap_link_l2pt(l1pagetable, KERNEL_BASE + loop * 0x00400000,
+		    &kernel_pt_table[KERNEL_PT_KERNEL + loop]);
+	pmap_link_l2pt(l1pagetable, IQ80310_IOPXS_VBASE,
+	    &kernel_pt_table[KERNEL_PT_IOPXS]);
+	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
+		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
+		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE, &kernel_ptpt);
+
+	/* update the top of the kernel VM */
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
-	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
-
 	{
 		extern char etext[], _end[];
 		size_t textsize = (uintptr_t) etext - KERNEL_TEXT_BASE;
@@ -606,25 +583,12 @@ initarm(void *arg)
 		
 		logical = 0x00200000;	/* offset of kernel in RAM */
 
-		/*
-		 * This maps the kernel text/data/bss VA==PA.
-		 */
-		logical += map_chunk(l1pagetable, l2pagetable,
-		    KERNEL_BASE + logical,
+		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
-		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(l1pagetable, l2pagetable,
-		    KERNEL_BASE + logical,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
-		    AP_KRW, PT_CACHEABLE);
-
-#if 0 /* XXX No symbols yet. */
-		logical += map_chunk(l1pagetable, l2pagetable,
-		    KERNEL_BASE + logical,
-		    physical_start + logical, kernexec->a_syms + sizeof(int)
-		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int)),
-		    AP_KRW, PT_CACHEABLE);
-#endif
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
 
 #ifdef VERBOSE_INIT_ARM
@@ -632,47 +596,58 @@ initarm(void *arg)
 #endif
 
 	/* Map the stack pages */
-	map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, AP_KRW, 0);
+	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
+	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
+	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
+	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
+	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+
+	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the Mini-Data cache clean area. */
-	map_chunk(0, l2pagetable, minidataclean.pv_va, minidataclean.pv_pa,
-	    NBPG, AP_KRW, PT_CACHEABLE);
+	pmap_map_chunk(l1pagetable, minidataclean.pv_va, minidataclean.pv_pa,
+	    NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the page table that maps the kernel pages */
-	map_entry_nc(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa);
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
 	 * Map entries in the page table used to map PTE's
 	 * Basically every kernel page table gets mapped here
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
-	l2pagetable = kernel_ptpt.pv_pa;
-	map_entry_nc(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_KERNEL]);
-	map_entry_nc(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
-	    kernel_ptpt.pv_pa);
-	map_entry_nc(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_SYS]);
-	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
-		map_entry_nc(l2pagetable, ((KERNEL_VM_BASE +
+	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++) {
+		pmap_map_entry(l1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
-		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+		    kernel_pt_table[KERNEL_PT_KERNEL + loop].pv_pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	}
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
+	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
+		pmap_map_entry(l1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
+		    (loop * 0x00400000)) >> (PGSHIFT-2)),
+		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
 	 * Map the system page in the kernel page table for the bottom 1Meg
 	 * of the virtual memory map.
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_SYS];
-	map_entry(l2pagetable, 0x00000000, systempage.pv_pa);
+	pmap_map_entry(l1pagetable, 0x00000000, systempage.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/*
 	 * Map devices we can map w/ section mappings.
@@ -687,9 +662,11 @@ initarm(void *arg)
 		    l1_sec_table[loop].va);
 #endif
 		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_SEC_SIZE)
-			map_section(l1pagetable, l1_sec_table[loop].va + sz,
+			pmap_map_section(l1pagetable,
+			    l1_sec_table[loop].va + sz,
 			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].flags);
+			    l1_sec_table[loop].prot,
+			    l1_sec_table[loop].cache);
 		++loop;
 	}
 
@@ -697,15 +674,15 @@ initarm(void *arg)
 	 * Map the PCI I/O spaces and i80312 registers.  These are too
 	 * small to be mapped w/ section mappings.
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_IOPXS];
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping PIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
 	    I80312_PCI_XLATE_PIOW_BASE,
 	    I80312_PCI_XLATE_PIOW_BASE + I80312_PCI_XLATE_IOSIZE - 1,
 	    IQ80310_PIOW_VBASE);
 #endif
-	map_chunk(0, l2pagetable, IQ80310_PIOW_VBASE,
-	    I80312_PCI_XLATE_PIOW_BASE, I80312_PCI_XLATE_IOSIZE, AP_KRW, 0);
+	pmap_map_chunk(l1pagetable, IQ80310_PIOW_VBASE,
+	    I80312_PCI_XLATE_PIOW_BASE, I80312_PCI_XLATE_IOSIZE,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping SIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
@@ -713,8 +690,9 @@ initarm(void *arg)
 	    I80312_PCI_XLATE_SIOW_BASE + I80312_PCI_XLATE_IOSIZE - 1,
 	    IQ80310_SIOW_VBASE);
 #endif
-	map_chunk(0, l2pagetable, IQ80310_SIOW_VBASE,
-	    I80312_PCI_XLATE_SIOW_BASE, I80312_PCI_XLATE_IOSIZE, AP_KRW, 0);
+	pmap_map_chunk(l1pagetable, IQ80310_SIOW_VBASE,
+	    I80312_PCI_XLATE_SIOW_BASE, I80312_PCI_XLATE_IOSIZE,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping 80312 0x%08lx -> 0x%08lx @ 0x%08lx\n",
@@ -722,8 +700,9 @@ initarm(void *arg)
 	    I80312_PMMR_BASE + I80312_PMMR_SIZE - 1,
 	    IQ80310_80312_VBASE);
 #endif
-	map_chunk(0, l2pagetable, IQ80310_80312_VBASE,
-	    I80312_PMMR_BASE, I80312_PMMR_SIZE, AP_KRW, 0);
+	pmap_map_chunk(l1pagetable, IQ80310_80312_VBASE,
+	    I80312_PMMR_BASE, I80312_PMMR_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
 	 * Give the XScale global cache clean code an appropriately
@@ -745,7 +724,9 @@ initarm(void *arg)
 	{
 		extern char _end[];
 
-		physical_freestart = (((uintptr_t) _end) + PGOFSET) & ~PGOFSET;
+		physical_freestart = physical_start +
+		    (((((uintptr_t) _end) + PGOFSET) & ~PGOFSET) -
+		     KERNEL_BASE);
 		physical_freeend = physical_end;
 		free_pages = (physical_freeend - physical_freestart) / NBPG;
 	}
@@ -757,6 +738,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	setttb(kernel_l1pt.pv_pa);
+	cpu_tlb_flushID();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");
@@ -800,14 +782,6 @@ initarm(void *arg)
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
 
-	/* At last !
-	 * We now have the kernel in physical memory from the bottom upwards.
-	 * Kernel page tables are physically above this.
-	 * The kernel is mapped to KERNEL_TEXT_BASE
-	 * The kernel data PTs will handle the mapping of 0xf1000000-0xf3ffffff
-	 * The page tables are mapped to 0xefc00000
-	 */
-
 	/* Initialise the undefined instruction handlers */
 	printf("undefined ");
 	undefined_init();
@@ -842,39 +816,6 @@ initarm(void *arg)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
-#if 0
-void
-process_kernel_args(char *args)
-{
-	static char bootargs[MAX_BOOT_STRING + 1];
-
-	boothowto = 0;
-
-	/* Make a local copy of the bootargs */
-	strncpy(bootargs, args, MAX_BOOT_STRING);
-
-	args = bootargs;
-	boot_file = bootargs;
-
-	/* Skip the kernel image filename */
-	while (*args != ' ' && *args != 0)
-		++args;
-
-	if (*args != 0)
-		*args++ = 0;
-
-	while (*args == ' ')
-		++args;
-
-	boot_args = args;
-
-	printf("bootfile: %s\n", boot_file);
-	printf("bootargs: %s\n", boot_args);
-
-	parse_mi_bootargs(boot_args);
-}
-#endif
-
 void
 consinit(void)
 {
@@ -892,8 +833,8 @@ consinit(void)
 #if NCOM > 0
 	if (comcnattach(&obio_bs_tag, comcnaddrs[comcnunit], comcnspeed,
 	    COM_FREQ, comcnmode))
-			panic("can't init serial console @%lx", IQ80310_UART2);
+		panic("can't init serial console @%lx", comcnaddrs[comcnunit]);
 #else
-	panic("serial console @%lx not configured", IQ80310_UART2);
+	panic("serial console @%lx not configured", comcnaddrs[comcnunit]);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: shbvar.h,v 1.1 1999/09/13 10:31:22 itojun Exp $	*/
+/*	$NetBSD: shbvar.h,v 1.1.16.1 2002/03/16 15:59:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ struct shb_softc {
  */
 
 /* SHB interrupt sharing types */
-char	*shb_intr_typename __P((int type));
+char	*shb_intr_typename(int);
 
 #define ICU_LEN 32
 #define SHB_MAX_HARDINTR 16
@@ -183,7 +183,7 @@ char	*shb_intr_typename __P((int type));
  */
 
 struct intrhand {
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	u_long	ih_count;
 	struct	intrhand *ih_next;
@@ -191,9 +191,8 @@ struct intrhand {
 	int	ih_irq;
 };
 
-void	*shb_intr_establish __P((int irq, int type,
-	    int level, int (*ih_fun)(void *), void *ih_arg));
-void	shb_intr_disestablish __P((void *, void *));
-int	sh_intr_alloc __P((int mask, int type, int *irq));
+void	*shb_intr_establish(int, int, int, int (*_fun)(void *), void *);
+void	shb_intr_disestablish(void *, void *);
+int	sh_intr_alloc(int, int, int *);
 
 #endif /* !_DEV_SHB_SHBVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2001/02/21 16:28:04 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.4.1 2002/03/16 15:58:10 jdolecek Exp $	*/
 #ifndef _HPCSH_INTR_H_
 #define _HPCSH_INTR_H_
 
@@ -28,7 +28,7 @@
 #define SIR_HIGH	31
 
 /* IRQ */
-#define TMU1_IRQ	2
+#define TMU0_IRQ	2
 #define SCI_IRQ		6
 #define SCIF_IRQ	7
 #define IRQ4_IRQ	4

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.51.4.3 2002/01/10 19:51:41 thorpej Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.51.4.4 2002/03/16 16:00:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.51.4.3 2002/01/10 19:51:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.51.4.4 2002/03/16 16:00:37 jdolecek Exp $");
 
 #ifndef ELFSIZE
 #define	ELFSIZE		32				/* XXX should die */
@@ -141,7 +141,8 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 		if (!memcmp((void*)(&(strtable[s->sh_name])), signature, 
 				sizeof(signature))) {
 #ifdef DEBUG_LINUX
-			printf("linux_atexit_sig=%s\n",&(strtable[s->sh_name]));
+			uprintf("linux_atexit_sig=%s\n",
+			    &(strtable[s->sh_name]));
 #endif
 			error = 0;
 			goto out;
@@ -210,7 +211,7 @@ ELFNAME2(linux,gcc_signature)(p, epp, eh)
 		 * error is 0, if the signatures match we are done.
 		 */
 #ifdef DEBUG_LINUX
-		printf("linux_gcc_sig: sig=%s\n", buf);
+		uprintf("linux_gcc_sig: sig=%s\n", buf);
 #endif
 		if (!memcmp(buf, signature, sizeof(signature) - 1)) {
 			error = 0;
@@ -329,7 +330,7 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	}
 	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_LINUX
-	printf("linux_probe: returning 0\n");
+	uprintf("linux_probe: returning 0\n");
 #endif
 	return 0;
 }

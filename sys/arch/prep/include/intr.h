@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10.2.1 2001/09/13 01:14:26 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.10.2.2 2002/03/16 15:59:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ int  splsoftnet(void);
 void do_pending_int(void);
 
 void ext_intr(void);
+void ext_intr_ivr(void);
 
 void enable_intr(void);
 void disable_intr(void);
@@ -110,12 +111,12 @@ extern long intrcnt[];
 extern unsigned intrcnt2[];
 extern struct intrhand *intrhand[];
 extern int intrtype[];
-extern paddr_t prep_intr_reg;
+extern vaddr_t prep_intr_reg;
 
 /*
  *  Reorder protection in the following inline functions is
- * achived with the "eieio" instruction which the assembler
- * seems to detect and then doen't move instructions past....
+ * achieved with the "eieio" instruction which the assembler
+ * seems to detect and then doesn't move instructions past....
  */
 static __inline int
 splraise(int newcpl)

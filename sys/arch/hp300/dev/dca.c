@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.44.2.1 2002/01/10 19:42:49 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.44.2.2 2002/03/16 15:57:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
  *  machines.
  */
 
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
@@ -628,6 +629,12 @@ dcaeint(sc, stat)
 #endif
 		return;
 	}
+#ifdef DDB
+	if ((sc->sc_flags & DCA_ISCONSOLE) && (stat & LSR_BI)) {
+		Debugger();
+		return;
+	}
+#endif
 	if (stat & (LSR_BI | LSR_FE))
 		c |= TTY_FE;
 	else if (stat & LSR_PE)
@@ -940,7 +947,7 @@ dcamctl(sc, bits, how)
 		bits = dca->dca_msr;
 		break;
 	}
-	(void) splx(s);
+	splx(s);
 	return (bits);
 }
 

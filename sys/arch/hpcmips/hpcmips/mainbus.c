@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10.2.1 2002/01/10 19:44:01 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10.2.2 2002/03/16 15:57:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -73,7 +73,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	static const char *devnames[] = {	/* ATTACH ORDER */
 		"cpu",				/* 1. CPU */
-		"vrip", "txsim",		/* 2. System BUS */
+		"vrip", "vr4102ip", "vr4122ip",	/* 2. System BUS */
+		"txsim",			
 		"bivideo", "btnmgr", "hpcapm",	/* 3. misc */
 	};
 	struct mainbus_attach_args ma;
@@ -100,14 +101,14 @@ int
 mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = (void *)aux;
-	int locator = cf->cf_loc[MAINBUSCF_ID];
+	int locator = cf->cf_loc[MAINBUSCF_PLATFORM];
 
 	/* check device name */
 	if (strcmp(ma->ma_name, cf->cf_driver->cd_name) != 0)
 		return (0);
 
 	/* check platform ID in config file */
-	if (locator != MAINBUSCF_ID_DEFAULT &&
+	if (locator != MAINBUSCF_PLATFORM_DEFAULT &&
 	    !platid_match(&platid, PLATID_DEREFP(locator)))
 		return (0);
 

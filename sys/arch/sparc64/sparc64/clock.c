@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39.4.2 2002/01/10 19:49:24 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.39.4.3 2002/03/16 15:59:59 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -340,7 +340,7 @@ clockattach_ebus(parent, self, aux)
 
 	if (ebus_bus_map(bt,
 			 0,
-			 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+			 EBUS_ADDR_FROM_REG(&ea->ea_regs[0]),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
 			 0,
@@ -382,7 +382,7 @@ ebus_wenable(handle, onoff)
 		bus_space_handle_t newaddr;
 
 		err = sbus_bus_map(ebi->ei_bt, 0,
-			EBUS_PADDR_FROM_REG(&ebi->ei_reg), 8192, prot,
+			EBUS_ADDR_FROM_REG(&ebi->ei_reg), 8192, prot,
 			(vaddr_t)ebi->ei_bh, &newaddr);
 		/* We can panic now or take a datafault later... */
 		if (ebi->ei_bh != newaddr)
@@ -412,7 +412,8 @@ clockattach(node, bt, bh)
 #endif
 
 	/* Our TOD clock year 0 is 1968 */
-	if ((todr_handle = mk48txx_attach(bt, bh, model, 1968)) == NULL)
+	todr_handle = mk48txx_attach(bt, bh, model, 1968, NULL, NULL);
+	if (todr_handle == NULL)
 		panic("Can't attach %s tod clock", model);
 
 #define IDPROM_OFFSET (8*1024 - 40)	/* XXX - get nvram sz from driver */
@@ -476,7 +477,7 @@ clockattach_rtc(parent, self, aux)
 
 	if (ebus_bus_map(bt,
 			 0,
-			 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+			 EBUS_ADDR_FROM_REG(&ea->ea_regs[0]),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
 			 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.12 1997/01/25 00:37:50 cgd Exp $	*/
+/*	$NetBSD: strerror.c,v 1.12.40.1 2002/03/16 16:01:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -74,6 +74,8 @@ static	char ebuf[64];
 		return "Invalid argument";
 	case ENOTDIR:
 		return "Not a directory";
+	case EOFFSET:
+		return "invalid file offset";
 
 	default:
 		sprintf(ebuf, "Unknown error: code %d", err);

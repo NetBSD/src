@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66 2001/06/28 21:54:23 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.66.2.1 2002/03/16 16:00:17 jdolecek Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -194,11 +194,15 @@ fram:
 #ifdef nohwbug
 		panic("translation fault");
 #endif
+
+	case T_PTELEN|T_USER:	/* Page table length exceeded */
 	case T_ACCFLT|T_USER:
 		if (frame->code < 0) { /* Check for kernel space */
 			sig = SIGSEGV;
 			break;
 		}
+
+	case T_PTELEN:
 	case T_ACCFLT:
 #ifdef TRAPDEBUG
 if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
@@ -226,7 +230,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			map = &p->p_vmspace->vm_map;
 
 		if (frame->trap & T_WRITE)
-			ftype = VM_PROT_WRITE|VM_PROT_READ;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 
@@ -258,16 +262,6 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			KERNEL_PROC_UNLOCK(p);
 		else
 			KERNEL_UNLOCK();
-		break;
-
-	case T_PTELEN:
-		if (p && p->p_addr)
-			FAULTCHK;
-		panic("ptelen fault in system space: addr %lx pc %lx",
-		    frame->code, frame->pc);
-
-	case T_PTELEN|T_USER:	/* Page table length exceeded */
-		sig = SIGSEGV;
 		break;
 
 	case T_BPTFLT|T_USER:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.8 2001/03/05 02:45:24 marcus Exp $	*/
+/*	$NetBSD: pvr.c,v 1.8.4.1 2002/03/16 15:57:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.8 2001/03/05 02:45:24 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.8.4.1 2002/03/16 15:57:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,15 +213,17 @@ pvr_getdevconfig(struct fb_devconfig *dc)
 
 	wsfont_init();
 	/* prefer 8 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0);
+	cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_L2R,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_L2R,
+		    WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0) {
 		printf("pvr: font table is empty\n");
 		return;
 	}
 
-	if (wsfont_lock(cookie, &dc->rinfo.ri_font,
-	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	if (wsfont_lock(cookie, &dc->rinfo.ri_font)) {
 		printf("pvr: unable to lock font\n");
 		return;
 	}

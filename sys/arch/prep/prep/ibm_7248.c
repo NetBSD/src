@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_7248.c,v 1.1 2001/06/20 14:35:26 nonaka Exp $	*/
+/*	$NetBSD: ibm_7248.c,v 1.1.2.1 2002/03/16 15:59:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,12 +42,13 @@
 #include <machine/platform.h>
 
 struct platform platform_ibm_7248 = {
-	"IBM PPS Model 7248 (E)",	/* model */
-	platform_generic_match,		/* match */
-	pci_intr_fixup_ibm_7248,	/* pci_intr_fixup */
-	ext_intr,			/* ext_intr */
-	cpu_setup_ibm_generic,		/* cpu_setup */
-	reset_ibm_generic,		/* reset */
+	"IBM PPS Model 7248 (E)",		/* model */
+	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
+	pci_intr_fixup_ibm_7248,		/* pci_intr_fixup */
+	ext_intr,				/* ext_intr */
+	cpu_setup_ibm_generic,			/* cpu_setup */
+	reset_ibm_generic,			/* reset */
 };
 
 void

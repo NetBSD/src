@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.20 2000/03/30 12:19:48 augustss Exp $	*/
+/*	$NetBSD: open.c,v 1.20.8.1 2002/03/16 16:01:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,8 +65,6 @@
  */
 
 #include "stand.h"
-
-struct open_file files[SOPEN_MAX];
 
 /*
  *	File primitives proper

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1.2.2 2002/01/10 19:48:36 thorpej Exp $	*/
+/*	$NetBSD: start.S,v 1.1.2.3 2002/03/16 15:59:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -77,12 +77,12 @@
 /*
  * start.s -
  *
- *     Contains code that is the first executed at boot time.
+ *	Contains code that is the first executed at boot time.
  *
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -100,9 +100,9 @@
 start:
 	.set	noreorder
 #ifdef __GP_SUPPORT__
-	la      gp, _C_LABEL (_gp)
+	la	gp, _C_LABEL (_gp)
 #endif
-	addi	sp,  -CALLFRAME_SIZ
+	addi	sp, -CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)		# Save RA
 	sw	a0, 0(sp)			# save argc
 	sw	a1, 4(sp)			# save argv

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.1.2.2 2002/02/11 20:09:03 jdolecek Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.1.2.3 2002/03/16 15:59:47 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -41,8 +41,8 @@
 #include <dev/ic/pckbcvar.h> 
 #include <dev/pckbc/pckbdvar.h>
 
-#include <sparc/dev/ebusreg.h>
-#include <sparc/dev/ebusvar.h>
+#include <dev/ebus/ebusreg.h>
+#include <dev/ebus/ebusvar.h>
 
 
 struct pckbc_js_softc {
@@ -142,7 +142,7 @@ pckbc_ebus_attach(parent, self, aux)
 	int intr, isconsole;
 
 	iot = ea->ea_bustag;
-	ioaddr = BUS_ADDR(ea->ea_reg[0].bar, ea->ea_reg[0].offset);
+	ioaddr = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 	intr = ea->ea_nintr ? ea->ea_intr[0] : /* line */ 0;
 
 	/* TODO: see comment in pckbc_obio_attach above */

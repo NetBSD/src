@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.3.4.2 2002/01/10 19:51:21 thorpej Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.3.4.3 2002/03/16 16:00:28 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.3.4.2 2002/01/10 19:51:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.3.4.3 2002/03/16 16:00:28 jdolecek Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
+#include <sys/resource.h>
 
 #include <machine/vmparam.h>
 
@@ -53,6 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.3.4.2 2002/01/10 19:51:21 thorpej E
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_sysmp.h>
 #include <compat/irix/irix_syscallargs.h>
+
+/* IRIX /dev/kmem diggers emulation */
+static int irix_sysmp_kernaddr __P((int, register_t *));
+extern struct loadavg averunnable;
 
 int
 irix_sys_sysmp(p, v, retval)
@@ -68,7 +73,7 @@ irix_sys_sysmp(p, v, retval)
 		syscallarg(void *) arg4;
 	} */ *uap = v;
 	int cmd = SCARG(uap, cmd);
-	int error;
+	int error = 0;
 
 #ifdef DEBUG_IRIX
 	printf("irix_sys_sysmp(): cmd = %d\n", cmd);
@@ -91,11 +96,35 @@ irix_sys_sysmp(p, v, retval)
 		*retval = (register_t)PAGE_SIZE;
 		break;
 
+	case IRIX_MP_KERNADDR: 	/* Kernel structure addresses */
+		return irix_sysmp_kernaddr((int)SCARG(uap, arg1), retval);
+		break;
+
 	default:
 		printf("Warning: call to unimplemented sysmp() command %d\n",
 		    cmd);
 		return EINVAL;
 		break;
 	}
+	return 0;
+}
+ 
+static int
+irix_sysmp_kernaddr(kernaddr, retval)
+	int kernaddr;
+	register_t *retval;
+{
+	switch (kernaddr) {
+	case IRIX_MPKA_AVENRUN:
+		*retval = (register_t)&averunnable;
+		break;
+
+	default:
+		printf("Warning: sysmp(KERNADDR) unimplemented address %d\n", 
+		    kernaddr);
+		return EINVAL;
+		break;
+	}
+
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.39.2.4 2002/02/11 20:10:21 jdolecek Exp $ */
+/* $NetBSD: wsconsio.h,v 1.39.2.5 2002/03/16 16:01:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -173,6 +173,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
 #define		WSMOUSE_TYPE_HIL	9	/* HIL mouse */
 #define		WSMOUSE_TYPE_AMIGA	10	/* Amiga mouse */      
+#define		WSMOUSE_TYPE_MAXINE	11	/* DEC maxine mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.44.2.2 2002/01/10 19:58:11 thorpej Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.44.2.3 2002/03/16 16:01:29 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.44.2.2 2002/01/10 19:58:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.44.2.3 2002/03/16 16:01:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.44.2.2 2002/01/10 19:58:11 thorpej Ex
 #include <dev/sbus/sbusvar.h>
 #include <sys/reboot.h>
 
+static void isp_sbus_reset1(struct ispsoftc *);
 static int isp_sbus_intr(void *);
 static int
 isp_sbus_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
@@ -96,7 +97,7 @@ static struct ispmdvec mdvec = {
 	isp_sbus_dmasetup,
 	isp_sbus_dmateardown,
 	NULL,
-	NULL,
+	isp_sbus_reset1,
 	NULL,
 	ISP_1000_RISC_CODE
 };
@@ -166,9 +167,9 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	if (sa->sa_npromvaddrs != 0) {
 		sbc->sbus_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
 	} else {
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot, sa->sa_offset,
-				 sa->sa_size, BUS_SPACE_MAP_LINEAR, 0,
-				 &sbc->sbus_reg) != 0) {
+		if (sbus_bus_map(sa->sa_bustag,
+				 sa->sa_slot, sa->sa_offset, sa->sa_size,
+				 BUS_SPACE_MAP_LINEAR, &sbc->sbus_reg) != 0) {
 			printf("%s: cannot map registers\n", self->dv_xname);
 			return;
 		}
@@ -293,6 +294,16 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 		isp_uninit(isp);
 		ISP_UNLOCK(isp);
 	}
+}
+
+
+static void
+isp_sbus_reset1(struct ispsoftc *isp)
+{
+	if (isp->isp_osinfo.no_mbox_ints == 0) {
+		ENABLE_INTS(isp);
+	}
+
 }
 
 static int

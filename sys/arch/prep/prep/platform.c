@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.1.2.1 2001/09/13 01:14:27 thorpej Exp $	*/
+/*	$NetBSD: platform.c,v 1.1.2.2 2002/03/16 15:59:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,17 +39,20 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <dev/pci/pcivar.h>
+
 #include <machine/intr.h>
 #include <machine/platform.h>
 #include <machine/residual.h>
 
 static struct platform platform_unknown = {
-	NULL,			/* model */
-	platform_generic_match,	/* match */
-	pci_intr_nofixup,	/* pci_intr_fixup */
-	ext_intr,		/* ext_intr */
-	cpu_setup_unknown,	/* cpu_setup */
-	reset_unknown,		/* reset */
+	NULL,					/* model */
+	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_setup */
+	pci_intr_nofixup,			/* pci_intr_fixup */
+	ext_intr,				/* ext_intr */
+	cpu_setup_unknown,			/* cpu_setup */
+	reset_unknown,				/* reset */
 };
 
 static struct plattab plattab_unknown = {
@@ -68,8 +71,15 @@ ident_platform(void)
 	if (res == NULL)
 		return 0;
 
-	if (strncmp(res->VitalProductData.PrintableModel, "IBM", 3) == 0)
+	if (strncmp(res->VitalProductData.PrintableModel,
+	    "IBM", 3) == 0)
 		p = &plattab_ibm;
+	else if (strncmp(res->VitalProductData.PrintableModel,
+	    "MOT", 3) == 0)
+		p = &plattab_mot;
+	else if (strncmp(res->VitalProductData.PrintableModel,
+	    "BULL ESTRELLA (e0)         (e0)", 31) == 0) /* XXX */
+		p = &plattab_mot;
 	else
 		p = &plattab_unknown;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5.2.1 2002/01/10 19:44:05 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.5.2.2 2002/03/16 15:57:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,7 @@
 #define MID_MACHINE MID_HPCMIPS
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
-#define KERNTEXTOFF	0x80030000	/* start of kernel text for kvm_mkdb */
+#define KERNTEXTOFF	0x80001000	/* start of kernel text for kvm_mkdb */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
@@ -79,16 +79,13 @@
 #define	MSIZE		256		/* size of an mbuf */
 
 #ifndef MCLSHIFT
-
-# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
 					/* 2K cluster can hold Ether frame */
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)
 
 #ifndef NMBCLUSTERS
-
 #if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
 #endif

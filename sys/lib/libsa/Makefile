@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44.2.2 2002/01/10 20:00:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.44.2.3 2002/03/16 16:01:57 jdolecek Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -6,7 +6,7 @@ NOPROFILE=# defined
 
 SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
-SA_USE_LOADFILE?= no		#
+SA_USE_LOADFILE?= no		# Generic executable loading support
 
 #DEBUGCPPFLAGS= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.14 2001/05/31 18:46:08 scw Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.14.2.1 2002/03/16 15:58:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,8 @@
 
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
-#include <mvme68k/dev/mvmebus.h>
+
+#include <dev/mvme/mvmebus.h>
 #include <mvme68k/dev/vme_pccreg.h>
 #include <mvme68k/dev/vme_pccvar.h>
 

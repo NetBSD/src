@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.23.2.4 2002/02/11 20:10:30 jdolecek Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.23.2.5 2002/03/16 16:02:07 jdolecek Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.23.2.4 2002/02/11 20:10:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.23.2.5 2002/03/16 16:02:07 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1000,8 +1000,8 @@ sppp_isempty(struct ifnet *ifp)
 	int empty, s;
 
 	s = splnet();
-	empty = !sp->pp_fastq.ifq_head && !sp->pp_cpq.ifq_head &&
-		!sp->pp_if.if_snd.ifq_head;
+	empty = IF_IS_EMPTY(&sp->pp_fastq) && IF_IS_EMPTY(&sp->pp_cpq) &&
+		IFQ_IS_EMPTY(&sp->pp_if.if_snd);
 	splx(s);
 	return (empty);
 }
@@ -1137,6 +1137,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPSETLCPCFG:
 	case SPPPSETIDLETO:
 	case SPPPSETAUTHFAILURE:
+	case SPPPSETDNSOPTS:
 	{
 		struct proc *p = curproc;		/* XXX */
 
@@ -1149,6 +1150,8 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPGETSTATUS:
 	case SPPPGETIDLETO:
 	case SPPPGETAUTHFAILURES:
+	case SPPPGETDNSOPTS:
+	case SPPPGETDNSADDRS:
 		error = sppp_params(sp, cmd, data);
 		break;
 
@@ -2714,6 +2717,7 @@ sppp_ipcp_open(struct sppp *sp)
 	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|IPCP_MYADDR_DYN|IPCP_HISADDR_DYN);
 	sp->ipcp.req_myaddr = 0;
 	sp->ipcp.req_hisaddr = 0;
+	memset(&sp->dns_addrs, 0, sizeof sp->dns_addrs);
 
 	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
 	/*
@@ -2989,15 +2993,12 @@ sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 static void
 sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 {
-	u_char *buf, *p;
+	u_char *p;
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	u_int32_t wantaddr;
 
 	len -= 4;
-	buf = malloc (len, M_TEMP, M_NOWAIT);
-	if (!buf)
-		return;
 
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT "ipcp nak opts:",
@@ -3035,6 +3036,20 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				}
 			}
 			break;
+
+		case IPCP_OPT_PRIMDNS:
+			if (len >= 6 && p[1] == 6) {
+				sp->dns_addrs[0] = p[2] << 24 | p[3] << 16 |
+					p[4] << 8 | p[5]; 
+			}
+			break;
+
+		case IPCP_OPT_SECDNS:
+			if (len >= 6 && p[1] == 6) {
+				sp->dns_addrs[1] = p[2] << 24 | p[3] << 16 |
+					p[4] << 8 | p[5]; 
+			}
+			break;
 #ifdef notyet
 		case IPCP_OPT_COMPRESS:
 			/*
@@ -3046,7 +3061,6 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	}
 	if (debug)
 		addlog("\n");
-	free (buf, M_TEMP);
 	return;
 }
 
@@ -3087,7 +3101,7 @@ sppp_ipcp_tlf(struct sppp *sp)
 static void
 sppp_ipcp_scr(struct sppp *sp)
 {
-	char opt[6 /* compression */ + 6 /* address */];
+	char opt[6 /* compression */ + 6 /* address */ + 12 /* dns addresses */];
 	u_int32_t ouraddr;
 	int i = 0;
 
@@ -3113,6 +3127,23 @@ sppp_ipcp_scr(struct sppp *sp)
 		opt[i++] = ouraddr >> 16;
 		opt[i++] = ouraddr >> 8;
 		opt[i++] = ouraddr;
+	}
+
+	if (sp->query_dns & 1) {
+		opt[i++] = IPCP_OPT_PRIMDNS;
+		opt[i++] = 6;
+		opt[i++] = sp->dns_addrs[0] >> 24;
+		opt[i++] = sp->dns_addrs[0] >> 16;
+		opt[i++] = sp->dns_addrs[0] >> 8;
+		opt[i++] = sp->dns_addrs[0];
+	}
+	if (sp->query_dns & 2) {
+		opt[i++] = IPCP_OPT_SECDNS;
+		opt[i++] = 6;
+		opt[i++] = sp->dns_addrs[1] >> 24;
+		opt[i++] = sp->dns_addrs[1] >> 16;
+		opt[i++] = sp->dns_addrs[1] >> 8;
+		opt[i++] = sp->dns_addrs[1];
 	}
 
 	sp->confid[IDX_IPCP] = ++sp->pp_seq[IDX_IPCP];
@@ -5075,6 +5106,24 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 	    	struct spppauthfailurestats *stats = (struct spppauthfailurestats *)data;
 	    	stats->auth_failures = sp->pp_auth_failures;
 	    	stats->max_failures = sp->pp_max_auth_fail;
+	    }
+	    break;
+	case SPPPSETDNSOPTS:
+	    {
+		struct spppdnssettings *req = (struct spppdnssettings*)data;
+		sp->query_dns = req->query_dns & 3;
+	    }
+	    break;
+	case SPPPGETDNSOPTS:
+	    {
+		struct spppdnssettings *req = (struct spppdnssettings*)data;
+		req->query_dns = sp->query_dns;
+	    }
+	    break;
+	case SPPPGETDNSADDRS:
+	    {
+	    	struct spppdnsaddrs *addrs = (struct spppdnsaddrs*)data;
+	    	memcpy(&addrs->dns, &sp->dns_addrs, sizeof addrs->dns);
 	    }
 	    break;
 	default:

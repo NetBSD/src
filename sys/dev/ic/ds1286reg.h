@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1286reg.h,v 1.1 2001/05/11 02:07:09 thorpej Exp $ 	*/
+/*	$NetBSD: ds1286reg.h,v 1.1.4.1 2002/03/16 16:00:53 jdolecek Exp $ 	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -57,8 +57,8 @@
  * Definitions for the Dallas Semiconductor DS1286/DS1386 Real Time Clock.
  *
  * Plucked right from the Dallas Semicomductor specs available at
- * http://www.dalsemi.com/datasheets/pdfs/1286.pdf and 
- * http://www.dalsemi.com/datasheets/pdfs/1386p.pdf
+ * http://pdfserv.maxim-ic.com/arpdf/DS1286.pdf and
+ * http://pdfserv.maxim-ic.com/arpdf/DS1386-DS1386P.pdf
  *
  * The DS1286 and 1386 have 14 clock-related registers and some amount
  * of user registers (50 for the 1286, 8K or 32K for the 1386).  The

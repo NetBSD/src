@@ -1,3 +1,5 @@
+/*	$NetBSD: romboot.ldscript,v 1.1.2.3 2002/03/16 15:57:59 jdolecek Exp $	*/
+
 OUTPUT_ARCH(mips)
 ENTRY(_start)
 SECTIONS

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37.4.2 2002/01/10 19:45:39 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37.4.3 2002/03/16 15:58:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -420,7 +420,7 @@ read_bsd_label(dlbuf, lp, match)
 }
 
 /*
- * Attempt to read a disk label from a device using the indicated stategy
+ * Attempt to read a disk label from a device using the indicated strategy
  * routine.  The label must be partly set up before this: secpercyl and
  * anything required in the strategy routine (e.g., sector size) must be
  * filled in before calling us.  Returns null on success and an error
@@ -514,7 +514,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	 * e.g. Macintosh or (PC) BIOS, will be overwritten.
 	 */
 
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)

@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.8.4.2 2002/02/11 20:07:45 jdolecek Exp $
+#	$NetBSD: COMPUTEX7750,v 1.8.4.3 2002/03/16 15:57:29 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -12,7 +12,7 @@ include "arch/evbsh3/conf/std.evbsh3.eb"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=2880	# size of memory disk, in blocks
+options 	MEMORY_DISK_SIZE=2880	# size of memory disk, in blocks
 
 maxusers	16		# estimated number of users
 
@@ -24,7 +24,7 @@ options 	EVBSH4
 options 	MMEYE
 #options 	MMEYE_NEW_INT
 #options 	MMEYE_50M
-#options 	MMEYE_NO_CACHE
+#options 	CACHE_DISABLE
 options 	PCLOCK=33333300			# 33.3333MHz
 options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_ROM_SIZE=0x00100000		# 1MB
@@ -160,6 +160,6 @@ pseudo-device	pty			# pseudo-terminals
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
 
 pseudo-device	md		1	# memory disk device (ramdisk)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.1.4.3 2002/02/11 20:09:03 jdolecek Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.1.4.4 2002/03/16 15:59:46 jdolecek Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,10 +33,11 @@
  * EBus is documented in PCIO manual (Sun Part#: 802-7837-01).
  */
 
-#undef DEBUG
-#define DEBUG
+#if defined(DEBUG) && !defined(EBUS_DEBUG)
+#define EBUS_DEBUG
+#endif
 
-#ifdef DEBUG
+#ifdef EBUS_DEBUG
 #define	EDB_PROM	0x01
 #define EDB_CHILD	0x02
 #define	EDB_INTRMAP	0x04
@@ -69,10 +70,28 @@ int ebus_debug = 0;
 
 #include <dev/ofw/ofw_pci.h>
 
-/* XXX: convert to use shared <dev/ebus/ebusreg.h> */
-#include <sparc/dev/ebusreg.h>
-#include <sparc/dev/ebusvar.h>
+#include <dev/ebus/ebusreg.h>
+#include <dev/ebus/ebusvar.h>
 
+
+struct ebus_softc {
+	struct device			sc_dev;
+	struct device			*sc_parent;	/* PCI bus */
+
+	int				sc_node;	/* PROM node */
+
+	bus_space_tag_t			sc_bustag;	/* mem tag from pci */
+	bus_dma_tag_t			sc_dmatag;	/* XXX */
+
+	bus_space_tag_t			sc_childbustag;	/* EBus tag */
+
+	/* 
+	 * "reg" contains exactly the info we'd get by processing
+	 * "ranges", so don't bother with "ranges" and use "reg" directly.
+	 */
+	struct ofw_pci_register		*sc_reg;
+	int				sc_nreg;
+};
 
 int	ebus_match(struct device *, struct cfdata *, void *);
 void	ebus_attach(struct device *, struct device *, void *);
@@ -91,10 +110,14 @@ int	ebus_print(void *, const char *);
  * here are our bus space and bus dma routines.
  */
 static paddr_t	ebus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
-static int	_ebus_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
+static int	_ebus_bus_map(bus_space_tag_t, bus_addr_t,
 			      bus_size_t, int, vaddr_t, bus_space_handle_t *);
 static void	*ebus_intr_establish(bus_space_tag_t, int, int, int,
 				     int (*)(void *), void *);
+
+static bus_space_tag_t	ebus_alloc_bus_tag(struct ebus_softc *);
+static bus_dma_tag_t	ebus_alloc_dma_tag(struct ebus_softc *, bus_dma_tag_t);
+
 
 /*
  * Working around PROM bogosity.
@@ -289,10 +312,23 @@ ebus_setup_attach_args(sc, node, ea)
 	ea->ea_bustag = sc->sc_childbustag;
 	ea->ea_dmatag = sc->sc_dmatag;
 
-	err = PROM_getprop(node, "reg", sizeof(struct ebus_reg),
+	err = PROM_getprop(node, "reg", sizeof(struct ebus_regs),
 			   &ea->ea_nreg, (void **)&ea->ea_reg);
 	if (err != 0)
 		return (err);
+
+	/*
+	 * On Ultra the bar is the _offset_ of the BAR in PCI config
+	 * space but in (some?) ms-IIep systems (e.g. Krups) it's the
+	 * _number_ of the BAR - e.g. BAR1 is represented by 1 in
+	 * Krups PROM, while on Ultra it's 0x14.  Fix it here.
+	 */
+	for (n = 0; n < ea->ea_nreg; ++n)
+	    if (ea->ea_reg[n].hi < PCI_MAPREG_START) {
+		ea->ea_reg[n].hi = PCI_MAPREG_START
+		    + ea->ea_reg[n].hi * sizeof(pcireg_t);
+	    }
+
 
 	err = PROM_getprop(node, "address", sizeof(u_int32_t),
 			   &ea->ea_nvaddr, (void **)&ea->ea_vaddr);
@@ -347,8 +383,8 @@ ebus_print(aux, p)
 	if (p)
 		printf("%s at %s", ea->ea_name, p);
 	for (i = 0; i < ea->ea_nreg; ++i)
-		printf("%s bar %d offset 0x%x", i == 0 ? "" : ",",
-		       ea->ea_reg[i].bar, ea->ea_reg[i].offset);
+		printf("%s bar %x offset 0x%x", i == 0 ? "" : ",",
+		       ea->ea_reg[i].hi, ea->ea_reg[i].lo);
 	for (i = 0; i < ea->ea_nintr; ++i)
 		printf(" line %d", ea->ea_intr[i]);
 	return (UNCONF);
@@ -368,7 +404,7 @@ ebus_alloc_bus_tag(sc)
 	bt = (bus_space_tag_t)
 		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
 	if (bt == NULL)
-		panic("could not allocate ebus bus tag");
+		panic("unable to allocate ebus bus tag");
 
 	memset(bt, 0, sizeof *bt);
 	bt->cookie = sc;
@@ -390,7 +426,7 @@ ebus_alloc_dma_tag(sc, pdt)
 	dt = (bus_dma_tag_t)
 		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
 	if (dt == NULL)
-		panic("could not allocate ebus dma tag");
+		panic("unable to allocate ebus dma tag");
 
 	memset(dt, 0, sizeof *dt);
 	dt->_cookie = sc;
@@ -417,13 +453,12 @@ ebus_alloc_dma_tag(sc, pdt)
  * about PCI physical addresses, which also applies to ebus.
  */
 static int
-_ebus_bus_map(t, btype, addr, size, flags, vaddr, hp)
+_ebus_bus_map(t, ba, size, flags, va, hp)
 	bus_space_tag_t t;
-	bus_type_t btype;	/* unused now that bus_addr_t is 64 bit */
-	bus_addr_t addr;	/* encodes bar/offset */
+	bus_addr_t ba;	/* encodes bar/offset */
 	bus_size_t size;
 	int	flags;
-	vaddr_t vaddr;
+	vaddr_t va;
 	bus_space_handle_t *hp;
 {
 	struct ebus_softc *sc = t->cookie;
@@ -431,23 +466,20 @@ _ebus_bus_map(t, btype, addr, size, flags, vaddr, hp)
 	paddr_t offset;
 	int i;
 
-	bar = BUS_ADDR_IOSPACE(addr);
-	offset = BUS_ADDR_PADDR(addr);
+	bar = BUS_ADDR_IOSPACE(ba);
+	offset = BUS_ADDR_PADDR(ba);
 
 	DPRINTF(EDB_BUSMAP,
 		("\n_ebus_bus_map: bar %d offset %08x sz %x flags %x va %p\n",
 		 (int)bar, (u_int32_t)offset, (u_int32_t)size,
-		 flags, (void *)vaddr));
+		 flags, (void *)va));
 
-	/* EBus only has two BARs */
-	if (bar != 0 && bar != 1) {
+	/* EBus has only two BARs */
+	if (PCI_MAPREG_NUM(bar) > 1) {
 		DPRINTF(EDB_BUSMAP,
 			("\n_ebus_bus_map: impossible bar\n"));
 		return (EINVAL);
 	}
-
-	/* XXX: krups: change bar number to the offset in config space */
-	bar = PCI_MAPREG_START + bar * sizeof(pcireg_t);
 
 	/*
 	 * Almost all of the interesting ebus children are mapped by
@@ -477,8 +509,8 @@ _ebus_bus_map(t, btype, addr, size, flags, vaddr, hp)
 			 (u_int32_t)pciaddr));
 
 		/* pass it onto the pci controller */
-		return (bus_space_map2(sc->sc_bustag, 0, pciaddr, size,
-				       flags, vaddr, hp));
+		return (bus_space_map2(sc->sc_bustag, pciaddr, size,
+				       flags, va, hp));
 	}
 
 	DPRINTF(EDB_BUSMAP, (": FAILED\n"));
@@ -486,9 +518,9 @@ _ebus_bus_map(t, btype, addr, size, flags, vaddr, hp)
 }
 
 static paddr_t
-ebus_bus_mmap(t, paddr, off, prot, flags)
+ebus_bus_mmap(t, ba, off, prot, flags)
 	bus_space_tag_t t;
-	bus_addr_t paddr;
+	bus_addr_t ba;
 	off_t off;
 	int prot;
 	int flags;

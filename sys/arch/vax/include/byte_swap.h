@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.2.4.1 2002/01/10 19:50:03 thorpej Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.2.4.2 2002/03/16 16:00:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -48,8 +48,8 @@ __byte_swap_long_variable(uint32_t x)
 	__asm __volatile(
 		"rotl	$-8, %1, %0	\n"
 		"insv	%0, $16, $8, %0	\n"
-		"rotl	$8, %1, r1	\n"
-		"movb	r1, %0"
+		"rotl	$8, %1, %%r1	\n"
+		"movb	%%r1, %0"
 		: "=&r" (y)
 		: "r" (x)
 		: "r1", "cc");

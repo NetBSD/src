@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:22 lukem Exp $	*/
+/*	$NetBSD: conf.h,v 1.9.2.1 2002/03/16 15:55:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -29,9 +29,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define mmread mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
+#define	DEV_RELOAD	20	/* minor device 20  is magic memory
+				 * which you can write a kernel image to,
+				 * causing a reboot into that kernel
+				 */
+#include <sys/conf.h>
 
 cdev_decl(ctty);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.3 2001/05/27 05:35:14 gmcgarry Exp $
+/*	$NetBSD: mkboot.c,v 1.3.2.1 2002/03/16 15:57:38 jdolecek Exp $
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.3 2001/05/27 05:35:14 gmcgarry Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.3.2.1 2002/03/16 15:57:38 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -226,16 +226,16 @@ putfile(from, to)
 	void *bp;
 
 	if ((fd = open(from, 0)) < 0) {
-	  printf("error: unable to open file %s\n", from);
-	  exit(1);
+		printf("error: unable to open file %s\n", from);
+		exit(1);
 	}
 	fstat(fd, &statb);
 	ld.address = htobe32(loadpoint);
 	ld.count = htobe32(statb.st_size);
 	bp = malloc(statb.st_size);
 	if ((nr = read(fd, bp, statb.st_size)) < 0) {
-	  printf("error: reading from file %s\n", from);
-	  exit(1);
+		printf("error: reading from file %s\n", from);
+		exit(1);
 	}
 	(void)close(fd);
 	write(to, &ld, sizeof(ld));

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.8.2.1 2001/08/03 04:12:04 lukem Exp $	*/
+/* $NetBSD: bus_dma.h,v 1.8.2.2 2002/03/16 15:58:54 jdolecek Exp $	*/
 
 /*
  * This file was extracted from from next68k/include/bus.h
@@ -239,11 +239,6 @@ void	_bus_dmamap_sync_030 __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
 void	_bus_dmamap_sync_0460 __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
-
-int	_bus_dmamem_alloc_common __P((bus_dma_tag_t,
-	    bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t,
-	    bus_dma_segment_t *, int, int *, int));
-
 int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
@@ -256,5 +251,10 @@ void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags));
 #endif /* _MVME68K_BUS_DMA_PRIVATE */
+
+/* Needed by mvmebus.c */
+int	_bus_dmamem_alloc_common __P((bus_dma_tag_t,
+	    bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t,
+	    bus_dma_segment_t *, int, int *, int));
 
 #endif /* _MVME68K_BUS_DMA_H_ */

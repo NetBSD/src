@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2.6.1 2002/01/10 19:58:14 thorpej Exp $ */
+/*	$NetBSD: tcx.c,v 1.2.6.2 2002/03/16 16:01:31 jdolecek Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.1 2002/01/10 19:58:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.2 2002/03/16 16:01:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,22 +186,20 @@ tcxattach(parent, self, args)
 
 	/* Map the register banks we care about */
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sc->sc_physadr[TCX_REG_THC].sbr_slot,
-			 (bus_addr_t)sc->sc_physadr[TCX_REG_THC].sbr_offset,
+			 sc->sc_physadr[TCX_REG_THC].sbr_slot,
+			 sc->sc_physadr[TCX_REG_THC].sbr_offset,
 			 sizeof (struct tcx_thc),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("tcxattach: cannot map thc registers\n");
 		return;
 	}
 	sc->sc_thc = (volatile struct tcx_thc *)bh;
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sc->sc_physadr[TCX_REG_CMAP].sbr_slot,
-			 (bus_addr_t)sc->sc_physadr[TCX_REG_CMAP].sbr_offset,
+			 sc->sc_physadr[TCX_REG_CMAP].sbr_slot,
+			 sc->sc_physadr[TCX_REG_CMAP].sbr_offset,
 			 sizeof (struct bt_regs),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("tcxattach: cannot map bt registers\n");
 		return;
 	}
@@ -473,11 +471,9 @@ tcxmmap(dev, off, prot)
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
 		if (u < sz) {
-			bus_type_t t = (bus_type_t)rr[mo->mo_bank].sbr_slot;
-			bus_addr_t a = BUS_ADDR(t, rr[mo->mo_bank].sbr_offset);
-
 			return (bus_space_mmap(sc->sc_bustag,
-				a,
+				BUS_ADDR(rr[mo->mo_bank].sbr_slot,
+					 rr[mo->mo_bank].sbr_offset),
 				u,
 				prot,
 				BUS_SPACE_MAP_LINEAR));

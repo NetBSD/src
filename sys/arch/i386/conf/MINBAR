@@ -1,4 +1,4 @@
-#	$NetBSD: MINBAR,v 1.27.2.3 2002/02/11 20:08:23 jdolecek Exp $
+#	$NetBSD: MINBAR,v 1.27.2.4 2002/03/16 15:58:13 jdolecek Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	MINBAR -- offshore CVS server
@@ -461,7 +461,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs

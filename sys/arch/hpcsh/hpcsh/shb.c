@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.6.2.1 2002/02/11 20:08:18 jdolecek Exp $	*/
+/*	$NetBSD: shb.c,v 1.6.2.2 2002/03/16 15:58:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -29,48 +29,64 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "hd64465if.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
-#include <sh3/cpufunc.h>
-#include <sh3/intcreg.h>
-#include <sh3/trapreg.h>
-#include <machine/shbvar.h>
-
 #include <net/netisr.h>
+
+#include <sh3/trapreg.h>
+#include <sh3/intcreg.h>
+
+#include <machine/shbvar.h>
+#include <machine/autoconf.h>
 #include <machine/debug.h>
 
-int shbmatch __P((struct device *, struct cfdata *, void *));
-void shbattach __P((struct device *, struct device *, void *));
-int shbprint __P((void *, const char *));
-void intr_calculatemasks __P((void));
-int fakeintr __P((void *));
-void	*shb_intr_establish __P((int irq, int type,
-	    int level, int (*ih_fun)(void *), void *ih_arg));
-int intrhandler __P((int, int, int, int, struct trapframe));
-int check_ipending __P((int, int, int, int, struct trapframe));
-void mask_irq __P((int));
-void unmask_irq __P((int));
-void Xsoftserial __P((void));
-void Xsoftnet __P((void));
-void Xsoftclock __P((void));
-void init_soft_intr_handler __P((void));
+#include <hpcsh/dev/hd64465/hd64465var.h>
+
+int shbmatch(struct device *, struct cfdata *, void *);
+void shbattach(struct device *, struct device *, void *);
+int shbprint(void *, const char *);
+int shbsearch(struct device *, struct cfdata *, void *);
+
+void intr_calculatemasks(void);
+int fakeintr(void *);
+void *shb_intr_establish(int, int, int, int (*_fun)(void *), void *);
+int intrhandler(int, int, int, int, struct trapframe);
+int check_ipending(int, int, int, int, struct trapframe);
+void Xsoftserial(void);
+void Xsoftnet(void);
+void Xsoftclock(void);
+
+static int __nih;
+static struct intrhand __intr_handler[ICU_LEN];
+int intrmask[ICU_LEN], intrlevel[ICU_LEN];
+struct intrhand *intrhand[ICU_LEN];
+
+/* mask interrupt source */
+void mask_irq_sh3(int);
+void unmask_irq_sh3(int);
+void mask_irq_sh4(int);
+void unmask_irq_sh4(int);
+#if defined(SH3) && defined(SH4)
+static void (*mask_irq)(int);
+static void (*unmask_irq)(int);
+#elif defined (SH3)
+#define mask_irq	mask_irq_sh3
+#define unmask_irq	unmask_irq_sh3
+#elif defined (SH4)
+#define mask_irq	mask_irq_sh4
+#define unmask_irq	unmask_irq_sh4
+#endif
 
 struct cfattach shb_ca = {
-	sizeof(struct shb_softc), shbmatch, shbattach
+	sizeof(struct device), shbmatch, shbattach
 };
 
-int	shbsearch __P((struct device *, struct cfdata *, void *));
-
 int
-shbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+shbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -81,101 +97,53 @@ shbmatch(parent, cf, aux)
 }
 
 void
-shbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+shbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct shb_softc *sc = (struct shb_softc *)self;
 
 	printf("\n");
+#if defined(SH3) && defined(SH4)
+	mask_irq = CPU_IS_SH3 ? mask_irq_sh3 : mask_irq_sh4;
+	unmask_irq = CPU_IS_SH3 ? unmask_irq_sh3 : unmask_irq_sh4;
+#endif
 
-	sc->sc_iot = 0;
-	sc->sc_memt = 0;
-
-	TAILQ_INIT(&sc->sc_subdevs);
 	config_search(shbsearch, self, NULL);
 
-	init_soft_intr_handler();
+#include	"scif.h"
+#include	"com.h"
+#if (NSCIF > 0) || (NCOM > 0)
+	shb_intr_establish(SIR_SERIAL, IST_LEVEL, IPL_SOFTSERIAL,
+	    (int (*) (void *))Xsoftserial, NULL);
+#endif
+	shb_intr_establish(SIR_NET, IST_LEVEL, IPL_SOFTNET,
+	    (int (*) (void *))Xsoftnet, NULL);
+
+	shb_intr_establish(SIR_CLOCK, IST_LEVEL, IPL_SOFTCLOCK,
+	    (int (*) (void *))Xsoftclock, NULL);
 }
 
 int
-shbprint(aux, isa)
-	void *aux;
-	const char *isa;
+shbprint(void *aux, const char *isa)
 {
 	struct shb_attach_args *ia = aux;
 
-	if (ia->ia_iosize)
-		printf(" port 0x%x", ia->ia_iobase);
-	if (ia->ia_iosize > 1)
-		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
-	if (ia->ia_msize)
-		printf(" iomem 0x%x", ia->ia_maddr);
-	if (ia->ia_msize > 1)
-		printf("-0x%x", ia->ia_maddr + ia->ia_msize - 1);
 	if (ia->ia_irq != IRQUNK)
 		printf(" irq %d", ia->ia_irq);
-	if (ia->ia_drq != DRQUNK)
-		printf(" drq %d", ia->ia_drq);
-	if (ia->ia_drq2 != DRQUNK)
-		printf(" drq2 %d", ia->ia_drq2);
+
 	return (UNCONF);
 }
 
 int
-shbsearch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+shbsearch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct shb_softc *sc = (struct shb_softc *)parent;
 	struct shb_attach_args ia;
-	int tryagain;
 
-	do {
-		ia.ia_iot = sc->sc_iot;
-		ia.ia_memt = sc->sc_memt;
-		/* ia.ia_dmat = sc->sc_dmat; */
-		/* ia.ia_ic = sc->sc_ic; */
-		ia.ia_iobase = cf->cf_iobase;
-		ia.ia_iosize = 0x666; /* cf->cf_iosize; */
-		ia.ia_maddr = cf->cf_maddr;
-		ia.ia_msize = cf->cf_msize;
-		ia.ia_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
-		ia.ia_drq = cf->cf_drq;
-		ia.ia_drq2 = cf->cf_drq2;
-		/* ia.ia_delaybah = sc->sc_delaybah; */
+	ia.ia_irq = cf->cf_irq;
 
-		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0) {
-			config_attach(parent, cf, &ia, shbprint);
-			tryagain = (cf->cf_fstate == FSTATE_STAR);
-		}
-	} while (tryagain);
+	if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0)
+		config_attach(parent, cf, &ia, shbprint);
 
 	return (0);
 }
-
-char *
-shb_intr_typename(type)
-	int type;
-{
-
-	switch (type) {
-        case IST_NONE :
-		return ("none");
-        case IST_PULSE:
-		return ("pulsed");
-        case IST_EDGE:
-		return ("edge-triggered");
-        case IST_LEVEL:
-		return ("level-triggered");
-	default:
-		panic("shb_intr_typename: invalid type %d", type);
-	}
-}
-int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-struct intrhand *intrhand[ICU_LEN];
 
 /*
  * Recalculate the interrupt masks from scratch.
@@ -262,21 +230,6 @@ intr_calculatemasks()
 			irqs |= imask[q->ih_level];
 		intrmask[irq] = irqs;
 	}
-
-#ifdef	TODO
-	/* Lastly, determine which IRQs are actually in use. */
-	{
-		int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
-			if (intrhand[irq])
-				irqs |= 1 << irq;
-		if (irqs >= 0x100) /* any IRQs >= 8 in use */
-			irqs |= 1 << IRQ_SLAVE;
-		imen = ~irqs;
-		SET_ICUS();
-	}
-#endif
-
 }
 
 /*
@@ -284,42 +237,26 @@ intr_calculatemasks()
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
  */
 void *
-shb_intr_establish(irq, type, level, ih_fun, ih_arg)
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun) __P((void *));
-	void *ih_arg;
+shb_intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
+    void *ih_arg)
 {
 	struct intrhand **p, *q, *ih;
-	static struct intrhand fakehand = {fakeintr};
+	int s;
 
 	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("shb_intr_establish: can't malloc handler info");
+	if (__nih == ICU_LEN)
+		panic("%s:: can't allocate handler info", __FUNCTION__);
+	ih = &__intr_handler[__nih++];
 
 	/*
 	 * Figure out where to put the handler.
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * generally small.
 	 */
+	s = splhigh();
 	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
 		;
 
-	/*
-	 * Actually install a fake handler momentarily, since we might be doing
-	 * this with interrupts enabled and don't want the real routine called
-	 * until masking is set up.
-	 */
-	fakehand.ih_level = level;
-	*p = &fakehand;
-
-	intr_calculatemasks();
-
-	/*
-	 * Poke the real handler in now.
-	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
 	ih->ih_count = 0;
@@ -328,9 +265,12 @@ shb_intr_establish(irq, type, level, ih_fun, ih_arg)
 	ih->ih_irq = irq;
 	*p = ih;
 
+	intr_calculatemasks();
+
 	/* unmask H/W interrupt mask register */
 	if (irq < SHB_MAX_HARDINTR)
 		unmask_irq(irq);
+	splx(s);
 
 	return (ih);
 }
@@ -343,73 +283,49 @@ fakeintr(arg)
 	return 0;
 }
 
-
-#define	IRQ_BIT(irq_num)	(1 << (irq_num))
-
 /*ARGSUSED*/
 int	/* 1 = check ipending on return, 0 = fast intr return */
-intrhandler(p1, p2, p3, p4, frame)
-	int p1, p2, p3, p4; /* dummy param */
-	struct trapframe frame;
+intrhandler(int p1, int p2, int p3, int p4, /* dummy param */
+    struct trapframe frame)
 {
 	unsigned int irl;
 	struct intrhand *ih;
 	unsigned int irq_num;
 	int ocpl;
 
-#if 0
-	u_int32_t intevt = *(volatile u_int32_t *)0xffffffd8;
-	u_int32_t intevt2 = *(volatile u_int32_t *)0xa4000000;
-	if (intevt < 0xf00 && intevt != 0x420)
-		printf("INTEVT=%08x INTEVT2=%08x\n", intevt, intevt2);
-#endif
-	__dbg_heart_beat(HEART_BEAT_WHITE);
-
-#if 0
-	printf("intr_handler:int_no %x spc %x ssr %x r15 %x curproc %x\n",
-	       frame.tf_trapno, frame.tf_spc, frame.tf_ssr, frame.tf_r15,
-	       (int)curproc);
-#endif
-
 	irl = (unsigned int)frame.tf_trapno;
 
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
-	} else if (irl == INTEVT_TMU1) {
-		irq_num = TMU1_IRQ;
-	} else if (IS_INTEVT_SCI0(irl)) {	/* XXX TOO DIRTY */
-		irq_num = SCI_IRQ;
+	} else if (irl == INTEVT_TMU0) {
+		irq_num = TMU0_IRQ;
 #ifdef SH4
-	} else if ((irl & 0x0f00) == INTEVT_SCIF) {
+	} else if (CPU_IS_SH4 && (irl & 0x0f00) == INTEVT_SCIF) {
 		irq_num = SCIF_IRQ;
 #endif
 	} else {
-		irq_num = (irl - 0x200) >> 5;		
+		irq_num = (irl - 0x200) >> 5;
 	}
 
 	mask_irq(irq_num);
 
-	if (cpl & IRQ_BIT(irq_num)) {
-		ipending |= IRQ_BIT(irq_num);
-		return 0;
+	if (cpl & (1 << irq_num)) {
+		ipending |= (1 << irq_num);
+		return (0);
 	}
 
 	ocpl = cpl;
 	cpl |= intrmask[irq_num];
 	ih = intrhand[irq_num];
 	if (ih == NULL) {
-
 		/* this is stray interrupt */
 		cpl = ocpl;
-
-#if 0	/* This is commented by T.Horiuchi */
-		unmask_irq(irq_num);
-#endif
-		return 1;
+		printf("stray interrupt. INTEVT=0x%x\n", frame.tf_trapno);
+		return (1);
 	}
 
-	enable_ext_intr();
+	_cpu_intr_resume(0);
 	while (ih) {
 		if (ih->ih_arg)
 			(*ih->ih_fun)(ih->ih_arg);
@@ -417,40 +333,26 @@ intrhandler(p1, p2, p3, p4, frame)
 			(*ih->ih_fun)(&frame);
 		ih = ih->ih_next;
 	}
-	disable_ext_intr();
+	_cpu_intr_suspend();
 
 	cpl = ocpl;
 
 	unmask_irq(irq_num);
 
-#if 0
-	printf("intr_handler:end\n");
-#endif
-	return 1;
+	return (1);
 }
 
 int	/* 1 = resume ihandler on return, 0 = go to fast intr return */
-check_ipending(p1, p2, p3, p4, frame)
-	int p1, p2, p3, p4; /* dummy param */
-	struct trapframe frame;
+check_ipending(int p1, int p2, int p3, int p4, /* dummy param */
+    struct trapframe frame)
 {
-	int ir;
-	int i;
-	int mask;
-#define MASK_LEN 32
+	int ir, i, mask;
 
-  restart:
+ restart:
 	ir = (~cpl) & ipending;
 	if (ir == 0)
-		return 0;
+		return (0);
 
-#if 0
-	mask = 1;
-	for (i = 0; i < MASK_LEN; i++, mask <<= 1) {
-		if (ir & mask)
-			break;
-	}
-#else
 	mask = 1 << IRQ_LOW;
 	for (i = IRQ_LOW; i <= IRQ_HIGH; i++, mask <<= 1) {
 		if (ir & mask)
@@ -463,7 +365,6 @@ check_ipending(p1, p2, p3, p4, frame)
 				break;
 		}
 	}
-#endif
 
 	if ((mask & ipending) == 0)
 		goto restart;
@@ -471,66 +372,95 @@ check_ipending(p1, p2, p3, p4, frame)
 	ipending &= ~mask;
 
 	if (i < SHB_MAX_HARDINTR) {
-		/* set interrupt event register, this value is referenced in ihandler */
-		SHREG_INTEVT = (i << 5) + 0x200;
+		/* 
+		 * set interrupt event register,
+		 * this value is referenced in ihandler 
+		 */
+		_reg_write_4(SH_(INTEVT), (i << 5) + 0x200);
 	} else {
 		/* This is software interrupt */
-		SHREG_INTEVT = INTEVT_SOFT+i;
+		_reg_write_4(SH_(INTEVT), INTEVT_SOFT + i);
 	}
 
-	return 1;
+	return (1);
 }
 
-#ifdef SH7709A_BROKEN_IPR	/* broken IPR patch */
+#ifdef SH4
+void
+mask_irq_sh4(int irq)
+{
 
+	switch (irq) {
+	case TMU0_IRQ:
+		_reg_write_2(SH4_IPRA, _reg_read_2(SH4_IPRA) & ~((15) << 12));
+		break;
+	case SCIF_IRQ:
+		_reg_write_2(SH4_IPRC, _reg_read_2(SH4_IPRC) & ~((15) << 4));
+		break;
+#if NHD64465IF > 0
+	case 11:
+
+		hd64465_intr_mask();
+		break;
+#endif /* NHD64465IF > 0 */
+	default:
+		if (irq < SHB_MAX_HARDINTR)
+			printf("masked unknown irq(%d)!\n", irq);
+	}
+}
+
+void
+unmask_irq_sh4(int irq)
+{
+
+	switch (irq) {
+	case TMU0_IRQ:
+		_reg_write_2(SH4_IPRA,
+		    _reg_read_2(SH4_IPRA) | ((15 - irq) << 12));
+		break;
+	case SCIF_IRQ:
+		_reg_write_2(SH4_IPRC,
+		    _reg_read_2(SH4_IPRC) | ((15 - irq) << 4));
+		break;
+#if NHD64465IF > 0
+	case 11:
+		hd64465_intr_unmask();
+		break;
+#endif /* NHD64465IF > 0 */
+	default:
+		if (irq < SHB_MAX_HARDINTR)
+			printf("unmasked unknown irq(%d)!\n", irq);
+	}
+}
+#endif /* SH4 */
+
+#ifdef SH3
+/*
+ * work around for SH7709A broken IPR register is applied for SH7709.
+ */
 #define IPRA	0
 #define IPRB	1
 #define IPRC	2
 #define IPRD	3
 #define IPRE	4
-
-static unsigned short ipr[ 5 ];
-
-#endif /* SH7709A_BROKEN_IPR */
+static u_int16_t ipr[5];
 
 void
-mask_irq(irq)
-	int irq;
+mask_irq_sh3(int irq)
 {
+
 	switch (irq) {
-	case TMU1_IRQ:
-#ifdef SH7709A_BROKEN_IPR
-		ipr[IPRA] &= ~((15)<<8);
-		SHREG_IPRA = ipr[IPRA];
-#else
-		SHREG_IPRA &= ~((15)<<8);
-#endif
+	case TMU0_IRQ:
+		ipr[IPRA] &= ~((15) << 12);
+		_reg_write_2(SH3_IPRA, ipr[IPRA]);
 		break;
-	case SCI_IRQ:
-#ifdef SH7709A_BROKEN_IPR
-		ipr[IPRB] &= ~((15)<<4);
-		SHREG_IPRB = ipr[IPRB];
-#else
-		SHREG_IPRB &= ~((15)<<4);
-#endif
-		break;
-#if defined(SH7709) || defined(SH7709A) || defined(SH7729)
 	case SCIF_IRQ:
-#ifdef SH7709A_BROKEN_IPR
-		ipr[IPRE] &= ~((15)<<4);
-		SHREG_IPRE = ipr[IPRE];
-#else
-		SHREG_IPRE &= ~((15)<<4);
-#endif
+		ipr[IPRE] &= ~((15) << 4);
+		_reg_write_2(SH7709_IPRE, ipr[IPRE]);
 		break;
-#endif
 	case IRQ4_IRQ:
-#ifdef SH7709A_BROKEN_IPR
 		ipr[IPRD] &= ~15;
-		SHREG_IPRD = ipr[IPRD];
-#else
-		SHREG_IPRD &= ~0xf;
-#endif
+		_reg_write_2(SH7709_IPRD, ipr[IPRD]);
 		break;
 	default:
 		if (irq < SHB_MAX_HARDINTR)
@@ -539,82 +469,37 @@ mask_irq(irq)
 }
 
 void
-unmask_irq(irq)
-	int irq;
+unmask_irq_sh3(int irq)
 {
 
 	switch (irq) {
-	case TMU1_IRQ:
-#ifdef SH7709A_BROKEN_IPR
-		ipr[ IPRA ] |= ((15 - irq)<<8);
-		SHREG_IPRA = ipr[ IPRA ];
-#else
-		SHREG_IPRA |= ((15 - irq)<<8);
-#endif
+	case TMU0_IRQ:
+		ipr[IPRA] |= ((15 - irq) << 12);
+		_reg_write_2(SH3_IPRA, ipr[IPRA]);
 		break;
-	case SCI_IRQ:
-#ifdef SH7709A_BROKEN_IPR
-		ipr[IPRB] |= ((15 - irq)<<4);
-		SHREG_IPRB = ipr[IPRB];
-#else
-		SHREG_IPRB |= ((15 - irq)<<4);
-#endif
-		break;
-#if defined(SH7709) || defined(SH7709A) || defined(SH7729)
 	case SCIF_IRQ:
-#ifdef SH7709A_BROKEN_IPR
-		ipr[ IPRE ] |= ((15 - irq)<<4);
-		SHREG_IPRE = ipr[ IPRE ];
-#else
-		SHREG_IPRE |= ((15 - irq)<<4);
-#endif
+		ipr[IPRE] |= ((15 - irq) << 4);
+		_reg_write_2(SH7709_IPRE, ipr[IPRE]);
 		break;
-#endif
 	case IRQ4_IRQ:
-#ifdef SH7709A_BROKEN_IPR
 		ipr[IPRD] |= (15 - irq);
-		SHREG_IPRD = ipr[IPRD];
-#else
-		SHREG_IPRD |= (15 - irq);
-#endif
+		_reg_write_2(SH7709_IPRD, ipr[IPRD]);
 		break;
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("unmasked unknown irq(%d)!\n", irq);
 	}
 }
+#endif /* SH3 */
 
-void
-init_soft_intr_handler(void)
-{
-#include	"sci.h"
-#include	"scif.h"
-#include	"com.h"
-#if (NSCI > 0) || (NSCIF > 0) || (NCOM > 0)
-	shb_intr_establish(SIR_SERIAL, IST_LEVEL, IPL_SOFTSERIAL,
-		      	(int (*) (void *))Xsoftserial, NULL);
-#endif
-
-	shb_intr_establish(SIR_NET, IST_LEVEL, IPL_SOFTNET,
-		      (int (*) (void *))Xsoftnet, NULL);
-
-	shb_intr_establish(SIR_CLOCK, IST_LEVEL, IPL_SOFTCLOCK,
-		      (int (*) (void *))Xsoftclock, NULL);
-}
-
-#if (NSCI > 0) || (NSCIF > 0) || (NCOM > 0)
-void scisoft __P((void *));
-void scifsoft __P((void *));
-void comsoft __P((void *));
+#if (NSCIF > 0) || (NCOM > 0)
+void scifsoft(void *);
+void comsoft(void *);
 
 void
 Xsoftserial(void)
 {
-	__dbg_heart_beat(HEART_BEAT_BLUE);
 
-#if (NSCI > 0)
-	scisoft(NULL);
-#endif
 #if (NSCIF > 0)
 	scifsoft(NULL);
 #endif
@@ -622,14 +507,12 @@ Xsoftserial(void)
 	comsoft(NULL);
 #endif
 }	
-#endif /* NSCI > 0 || NSCIF > 0 || NCOM > 0 */
+#endif /* NSCIF > 0 || NCOM > 0 */
 
 void
 Xsoftnet(void)
 {
 	int s, ni;
-
-	__dbg_heart_beat(HEART_BEAT_RED);
 
 	s = splhigh();
 	ni = netisr;
@@ -649,107 +532,6 @@ Xsoftnet(void)
 void
 Xsoftclock(void)
 {
-	__dbg_heart_beat(HEART_BEAT_GREEN);
+
         softclock(NULL);
-}
-
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < SHB_MAX_HARDINTR && (x) != 2)
-
-int
-sh_intr_alloc(mask, type, irq)
-	int mask;
-	int type;
-	int *irq;
-{
-	int i, tmp, bestirq, count;
-	struct intrhand **p, *q;
-
-	if (type == IST_NONE)
-		panic("intr_alloc: bogus type");
-
-	bestirq = -1;
-	count = -1;
-
-	/* some interrupts should never be dynamically allocated */
-	mask &= 0xdef8;
-
-	/*
-	 * XXX some interrupts will be used later (6 for fdc, 12 for pms).
-	 * the right answer is to do "breadth-first" searching of devices.
-	 */
-	mask &= 0xefbf;
-
-	for (i = 0; i < SHB_MAX_HARDINTR; i++) {
-		if (LEGAL_IRQ(i) == 0 || (mask & (1 << i)) == 0)
-			continue;
-
-		switch(intrtype[i]) {
-		case IST_NONE:
-			/*
-			 * if nothing's using the irq, just return it
-			 */
-			*irq = i;
-			return (0);
-
-		case IST_EDGE:
-		case IST_LEVEL:
-			if (type != intrtype[i])
-				continue;
-			/*
-			 * if the irq is shareable, count the number of other
-			 * handlers, and if it's smaller than the last irq like
-			 * this, remember it
-			 *
-			 * XXX We should probably also consider the
-			 * interrupt level and stick IPL_TTY with other
-			 * IPL_TTY, etc.
-			 */
-			for (p = &intrhand[i], tmp = 0; (q = *p) != NULL;
-			     p = &q->ih_next, tmp++)
-				;
-			if ((bestirq == -1) || (count > tmp)) {
-				bestirq = i;
-				count = tmp;
-			}
-			break;
-
-		case IST_PULSE:
-			/* this just isn't shareable */
-			continue;
-		}
-	}
-
-	if (bestirq == -1)
-		return (1);
-
-	*irq = bestirq;
-
-	return (0);
-}
-
-/*
- * Deregister an interrupt handler.
- */
-void
-shb_intr_disestablish(ic, arg)
-	void *ic;
-	void *arg;
-{
-	struct intrhand *ih = arg;
-	int irq = ih->ih_irq;
-	struct intrhand **p, *q;
-
-	mask_irq(irq);
-
-	/*
-	 * Remove the handler from the chain.
-	 * This is O(n^2), too.
-	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
-		;
-	if (q)
-		*p = q->ih_next;
-	else
-		panic("shb_intr_disestablish: handler not registered");
-	free(ih, M_DEVBUF);
 }

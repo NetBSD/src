@@ -1,10 +1,10 @@
-# 	$NetBSD: SPLODE,v 1.1.2.4 2002/02/11 20:09:09 jdolecek Exp $
+# 	$NetBSD: SPLODE,v 1.1.2.5 2002/03/16 15:59:55 jdolecek Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.1.2.4 $"
+#ident 		"GENERIC-$Revision: 1.1.2.5 $"
 
 maxusers	256
 
@@ -323,7 +323,7 @@ pseudo-device	ccd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-pseudo-device	raid	4
+pseudo-device	raid	8
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 ## Memory disk device, used on boot floppies with compressed
@@ -356,7 +356,7 @@ hme*		at sbus? slot ? offset ?
 # MII/PHY support
 # XXX: only nsphy "tested"
 #exphy*		at mii? phy ?		# 3Com internal PHYs
-#icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+#icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 #inphy*		at mii? phy ?		# Intel 82555 PHYs
 #lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.336.2.5 2002/02/11 20:10:02 jdolecek Exp $
+$NetBSD: pcidevs,v 1.336.2.6 2002/03/16 16:01:16 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -548,7 +548,7 @@ vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
-vendor SIBYTE		0x166d	SiByte, Inc.
+vendor SIBYTE		0x166d	Broadcom Corp. (SiByte)
 vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
@@ -746,6 +746,7 @@ product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
 product AMD PCNETS_PCI	0x2040	PCnet-PCI Ethernet & SCSI
+product AMD SC520_SC	0x3000	Elan SC520 System Controller
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-to-PCI Bridge
 product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
@@ -805,34 +806,26 @@ product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
 product ATI MACH32		0x4158	Mach32
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
-product ATI MACH64_ET		0x4554	Mach64 ET
-product ATI MACH64_VT		0x4654	Mach64 VT
-product ATI MACH64_GB		0x4742	Mach64 GB
-product ATI MACH64_GD		0x4744	Mach64 GD
-product ATI MACH64_GI		0x4749	Mach64 GI
-product ATI MACH64_GL		0x474c	Mach64 GL
-product ATI RAGEXLAGP2X		0x474d	Rage XL AGP 2x
-product ATI MACH64_GN		0x474e	Mach64 GN
-product ATI MACH64_GO		0x474f	Mach64 GO
-product ATI MACH64_GP		0x4750	Mach64 GP
-product ATI MACH64_GQ		0x4751	Mach64 GQ
-product ATI MACH64_GR		0x4752	Mach64 GR
-product ATI MACH64_GS		0x4753	Mach64 GS
-product ATI MACH64_GT		0x4754	Mach64 GT
-product ATI MACH64_GU		0x4755	Mach64 GU
-product ATI MACH64_GV		0x4756	Mach64 GV
-product ATI MACH64_GW		0x4757	Mach64 GW
+product ATI RAGE_PRO_AGP	0x4742	3D Rage Pro (AGP) 
+product ATI RAGE_PRO_AGP1X	0x4744	3D Rage Pro (AGP 1x)
+product ATI RAGE_PRO_PCI_B	0x4749	3D Rage Pro	
+product ATI RAGE_XL_AGP		0x474d	Rage XL (AGP)
+product ATI RAGE_PRO_PCI_P	0x4750 	3D Rage Pro	
+product ATI RAGE_PRO_PCI_L	0x4751 	3D Rage Pro (limited 3D)
+product ATI RAGE_XL_PCI		0x4752	Rage XL
+product ATI RAGE_II		0x4754	3D Rage I/II 
+product ATI RAGE_IIP		0x4755	3D Rage II+
+product ATI RAGE_IIC_PCI	0x4756	3D Rage IIC 
+product ATI RAGE_IIC_AGP_B 	0x4757	3D Rage IIC (AGP) 
 product ATI MACH64_GX		0x4758	Mach64 GX
-product ATI MACH64_GZ		0x475a	Mach64 GZ
-product ATI MACH64_LB		0x4c42	Mach64 LB
-product ATI MACH64_LD		0x4c44	Mach64 LD
-product ATI MOBILITY_M3_PCI	0x4c45	Mobility M3 (PCI)
-product ATI MOBILITY_M3_AGP	0x4c46	Mobility M3 (AGP)
-product ATI MACH64_LG		0x4c47	Mach64 LG
-product ATI MACH64_LI		0x4c49	Mach64 LI
-product ATI MACH64_LM		0x4c4d	Mach64 LM
-product ATI MACH64_LP		0x4c50	Mach64 LP
-product ATI MACH64_LR		0x4c52	Mach64 LR
+product ATI RAGE_IIC_AGP_P	0x475a 	3D Rage IIC (AGP)
+product ATI RAGE_LT_PRO_AGP	0x4c42	3D Rage LT Pro (AGP)
+product ATI RAGE_MOB_M3_PCI	0x4c45	Rage Mobility M3
+product ATI RAGE_MOB_M3_AGP	0x4c46	Rage Mobility M3 (AGP)
+product ATI RAGE_LT		0x4c47	3D Rage LT	
+product ATI RAGE_LT_PRO_PCI	0x4c49	3D Rage LT Pro
+product ATI RAGE_MOBILITY	0x4c4d	Rage Mobility	
+product ATI RAGE_LT_PRO		0x4c50	3D Rage LT Pro	
 product ATI RAGE1PCI		0x5041	Rage 128 Pro PCI
 product ATI RAGE1AGP2X		0x5042	Rage 128 Pro AGP 2x
 product ATI RAGE1AGP4X		0x5043	Rage 128 Pro AGP 4x
@@ -857,6 +850,10 @@ product ATI RAGE4AGP4X 		0x5055	Rage 128 Pro AGP 4x
 product ATI RAGE4PCIT  		0x5056	Rage 128 Pro PCI (TMDS)
 product ATI RAGE4AGP2XT		0x5057	Rage 128 Pro AGP 2x (TMDS)
 product ATI RAGE4AGP4XT		0x5058	Rage 128 Pro AGP 4x (TMDS)
+product ATI RADEON_7200		0x5144	Radeon 7200
+product ATI RADEON_8500		0x514c	Radeon 8500
+product ATI RADEON_7500		0x5157	Radeon 7500
+product ATI RADEON_7000		0x5159	Radeon 7000/VE
 product ATI RAGEGLPCI		0x5245	Rage 128 GL PCI
 product ATI RAGEGLAGP		0x5246	Rage 128 GL AGP 2x
 product ATI RAGEVRPCI		0x524b	Rage 128 VR PCI
@@ -869,6 +866,9 @@ product ATI RAGE24XPCI		0x534b	Rage 128 4x PCI
 product ATI RAGE24XA2X		0x534c	Rage 128 4x AGP 2x
 product ATI RAGE24XA4X		0x534d	Rage 128 4x AGP 4x
 product ATI RAGE24X		0x534e	Rage 128 4x
+product ATI MACH64_VT		0x5654	Mach64 VT
+product ATI MACH64_VTB		0x5655	Mach64 VTB
+product ATI MACH64_VT4		0x5656	Mach64 VT4
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
@@ -1214,6 +1214,7 @@ product IBM 82351	0x0022	82351 PCI-PCI Bridge
 product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
+product IBM 82660	0x0037	82660 PowerPC to PCI Bridge and Memory Controller
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
@@ -1302,6 +1303,8 @@ product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
 product INTEL 82840_PCI		0x1a24	82840 PCI
+product INTEL 82845_HB		0x1a30	82845 Host
+product INTEL 82845_AGP		0x1a31	82845 AGP
 product INTEL 82801AA_LPC	0x2410	82801AA LPC Interface Bridge
 product INTEL 82801AA_IDE	0x2411	82801AA IDE Controller
 product INTEL 82801AA_USB	0x2412	82801AA USB Controller
@@ -1481,6 +1484,9 @@ product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
 product MOT MPC107	0x0004	MPC107 \"Chaparral\" Host Bridge
+product MOT RAVEN	0x4801	Raven Host Bridge & Multi-Processor Interrupt Controller
+product MOT FALCON	0x4802	Falcon ECC Memory Controller Chip Set
+product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
 
 /* Mylex products */
 product MYLEX RAID_V2		0x0001	DAC960 RAID (v2 interface)
@@ -1727,15 +1733,15 @@ product	SEGA	BROADBAND	0x1234	Broadband Adapter
 
 /* ServerWorks products */
 product	SERVERWORKS ROSB4	0x0200	ROSB4 SouthBridge
-product SERVERWORKS XX5	0x0005	PCIHB5
+product SERVERWORKS XX5		0x0005	PCIHB5
 product SERVERWORKS CIOB20	0x0006	I/O Bridge
-product SERVERWORKS XX7	0x0007	PCIHB7
+product SERVERWORKS XX7		0x0007	PCIHB7
 product SERVERWORKS CNB20HE	0x0008	CNB20HE Host
 product SERVERWORKS CNB20LE	0x0009	CNB20LE Host
 product SERVERWORKS CIOB30	0x0010	CIOB30
 product SERVERWORKS CMIC_HE	0x0011	CMIC_HE Host
-product SERVERWORKS IDE	0x0211	IDE
-product SERVERWORKS USB	0x0220	USB
+product SERVERWORKS IDE		0x0211	IDE
+product SERVERWORKS USB		0x0220	USB
 
 /* SGI products */
 product SGI IOC3	0x0003	IOC3
@@ -1745,6 +1751,10 @@ product SGI TIGON	0x0009	Tigon Gigabit Ethernet
 /* SGS Thomson products */
 product SGSTHOMSON 2000	0x0008	STG 2000X
 product SGSTHOMSON 1764	0x1746	STG 1764X
+
+/* Broadcom Corp. (SiByte) products */
+product SIBYTE BCM1250_PCIHB	0x0001	BCM1250 PCI Host Bridge
+product SIBYTE BCM1250_LDTHB	0x0002	BCM1250 LDT Host Bridge
 
 /* Sigma Designs products */
 product SIGMA HOLLYWOODPLUS	0x8300	REALmagic Hollywood-Plus MPEG-2 Decoder

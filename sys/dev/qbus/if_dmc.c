@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.1.4.1 2002/01/10 19:57:32 thorpej Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.1.4.2 2002/03/16 16:01:26 jdolecek Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.1.4.1 2002/01/10 19:57:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.1.4.2 2002/03/16 16:01:26 jdolecek Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -269,6 +269,7 @@ dmcattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_if.if_watchdog = dmctimeout;
 	sc->sc_if.if_flags = IFF_POINTOPOINT;
 	sc->sc_if.if_softc = sc;
+	IFQ_SET_READY(&sc->sc_if.if_snd);
 
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, dmcrint, sc,
 	    &sc->sc_rintrcnt);
@@ -438,7 +439,7 @@ dmcstart(struct ifnet *ifp)
 	for (rp = &sc->sc_xbufs[0]; rp < &sc->sc_xbufs[NXMT]; rp++ ) {
 		/* find an available buffer */
 		if ((rp->flags & DBUF_DMCS) == 0) {
-			IF_DEQUEUE(&sc->sc_if.if_snd, m);
+			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 			if (m == 0)
 				return;
 			/* mark it dmcs */
@@ -773,11 +774,14 @@ dmcoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	int type, error, s;
 	struct mbuf *m = m0;
 	struct dmc_header *dh;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		error = ENETDOWN;
 		goto bad;
 	}
+
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	switch (dst->sa_family) {
 #ifdef	INET
@@ -815,13 +819,12 @@ dmcoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	 * not yet active.
 	 */
 	s = splnet();
-	if (IF_QFULL(&ifp->if_snd)) {
-		IF_DROP(&ifp->if_snd);
-		m_freem(m);
+	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	if (error) {
+		/* mbuf is already freed */
 		splx(s);
-		return (ENOBUFS);
+		return (error);
 	}
-	IF_ENQUEUE(&ifp->if_snd, m);
 	dmcstart(ifp);
 	splx(s);
 	return (0);

@@ -1,5 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.15.2.2 2002/01/10 19:59:11 thorpej Exp $	*/
-/*	$FreeBSD$	*/
+/*	$NetBSD: uscanner.c,v 1.15.2.3 2002/03/16 16:01:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.15.2.2 2002/01/10 19:59:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.15.2.3 2002/03/16 16:01:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.15.2.2 2002/01/10 19:59:11 thorpej Ex
 #endif
 #include <sys/tty.h>
 #include <sys/file.h>
+#if defined(__FreeBSD__) && __FreeBSD_version >= 500014
+#include <sys/selinfo.h>
+#else
 #include <sys/select.h>
+#endif
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
@@ -118,6 +121,7 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_3400CSE }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_4100C }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_4200C }, 0 },
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_4300C }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_S20 }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_5200C }, 0 },
 #if 0
@@ -143,14 +147,16 @@ static const struct uscan_info uscanner_devs[] = {
   /* Mustek */
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CU }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_BEARPAW1200F }, 0 },
- {{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW1200 }, 0 },
- {{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW2400 }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_600USB }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_600CU }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200USB }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200UB }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200USBPLUS }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CUPLUS }, 0 },
+
+  /* National */
+ {{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW1200 }, 0 },
+ {{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW2400 }, 0 },
 
   /* Primax */
  {{ USB_VENDOR_PRIMAX, USB_PRODUCT_PRIMAX_G2X300 }, 0 },
@@ -196,7 +202,7 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_ULTIMA, USB_PRODUCT_ULTIMA_1200UBPLUS }, 0 },
 
 };
-#define uscanner_lookup(v, p) ((struct uscan_info *)usb_lookup(uscanner_devs, v, p))
+#define uscanner_lookup(v, p) ((const struct uscan_info *)usb_lookup(uscanner_devs, v, p))
 
 #define	USCANNER_BUFFERSIZE	1024
 
@@ -255,7 +261,9 @@ Static struct cdevsw uscanner_cdevsw = {
 	/* dump */	nodump,
 	/* psize */	nopsize,
 	/* flags */	0,
+#if !defined(__FreeBSD__) || (__FreeBSD__ < 5)
 	/* bmaj */	-1
+#endif
 };
 #endif
 

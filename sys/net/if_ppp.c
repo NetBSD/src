@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.69.2.4 2002/02/11 20:10:28 jdolecek Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.69.2.5 2002/03/16 16:02:06 jdolecek Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.69.2.4 2002/02/11 20:10:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.69.2.5 2002/03/16 16:02:06 jdolecek Exp $");
 
 #include "ppp.h"
 
@@ -156,6 +156,9 @@ static void	ppp_ccp __P((struct ppp_softc *, struct mbuf *m, int rcvd));
 static void	ppp_ccp_closed __P((struct ppp_softc *));
 static void	ppp_inproc __P((struct ppp_softc *, struct mbuf *));
 static void	pppdumpm __P((struct mbuf *m0));
+#ifdef ALTQ
+static void	ppp_ifstart __P((struct ifnet *ifp));
+#endif
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void		pppnetisr(void);
@@ -226,6 +229,9 @@ pppattach()
 	sc->sc_if.if_dlt = DLT_NULL;
 	sc->sc_if.if_ioctl = pppsioctl;
 	sc->sc_if.if_output = pppoutput;
+#ifdef ALTQ
+	sc->sc_if.if_start = ppp_ifstart;
+#endif
 	IFQ_SET_MAXLEN(&sc->sc_if.if_snd, IFQ_MAXLEN);
 	sc->sc_inq.ifq_maxlen = IFQ_MAXLEN;
 	sc->sc_fastq.ifq_maxlen = IFQ_MAXLEN;
@@ -1693,3 +1699,19 @@ done:
     *bp = 0;
     printf("%s\n", buf);
 }
+
+#ifdef ALTQ
+/*
+ * a wrapper to transmit a packet from if_start since ALTQ uses
+ * if_start to send a packet.
+ */
+static void
+ppp_ifstart(ifp)
+	struct ifnet *ifp;
+{
+	struct ppp_softc *sc;
+
+	sc = ifp->if_softc;
+	(*sc->sc_start)(sc);
+}
+#endif

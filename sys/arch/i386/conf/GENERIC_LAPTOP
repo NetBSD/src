@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.17.2.4 2002/02/11 20:08:21 jdolecek Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.17.2.5 2002/03/16 15:58:12 jdolecek Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.17.2.4 $"
+#ident 		"GENERIC-$Revision: 1.17.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -267,6 +267,7 @@ pcmcia*	at tcic? controller ? socket ?
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 
 # PCI PCMCIA controllers
@@ -496,7 +497,7 @@ tlp*	at cardbus? dev ? function ?	# DECchip 21143
 # MII/PHY support
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
@@ -764,7 +765,6 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation

@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064reg.h,v 1.1 2001/05/28 16:22:14 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064reg.h,v 1.1.2.1 2002/03/16 15:55:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * Memory map and register definitions for the Algorithmics P-5064.
  */
 
-#define	P5064_MEMORY		0x00000000UL	/* onbord DRAM memory */
+#define	P5064_MEMORY		0x00000000UL	/* onboard DRAM memory */
 			/* 	256 MB		*/
 #define	P5064_ISAMEM		0x10000000UL	/* ISA window of PCI memory */
 			/*	8MB		*/

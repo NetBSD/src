@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.4.4.1 2002/01/10 19:48:40 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.4.4.2 2002/03/16 15:59:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,101 +87,14 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/psl.h>
-
-#if 0
-/*
- * fillw(short pattern, caddr_t addr, size_t len);
- * Write len copies of pattern at addr.
- */
-void
-fillw(pattern, addr, len)
-	short pattern;
-	void *addr;
-	size_t len;
-{
-	unsigned long *p;
-	unsigned long pat;
-	int cnt;
-
-	p = addr;
-	pat = pattern;
-	pat = pat | (pat << 16);
-
-	cnt = len >> 1;
-	while (cnt--)
-		*p++ = pat;
-
-	if (len & 1)
-		*(short *)p = pattern;
-}
-
-/*
- * bcopyb(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes, one byte at a time.
- */
-void
-bcopyb(from, to, len)
-	caddr_t from;
-	caddr_t to;
-	size_t len;
-{
-	char *s = (char *)from;
-	char *d = (char *)to;
-
-	if (from >= to) {
-		while (len--)
-			*d++ = *s++;
-	} else {
-		s += len - 1;
-		d += len - 1;
-		while (len--)
-			*d-- = *s--;
-	}
-}
-
-/*
- * bcopyw(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes, two bytes at a time.
- */
-void
-bcopyw(from, to, len)
-	caddr_t from;
-	caddr_t to;
-	size_t len;
-{
-	short *s = (short *)from;
-	short *d = (short *)to;
-	int cnt;
-
-	cnt = len >> 1;
-
-	if (from >= to) {
-		while (cnt--)
-			*d++ = *s++;
-		if (len & 1)
-			*(char *)d = *(char *)s;
-	} else {
-		s += len - sizeof(short);
-		d += len - sizeof(short);
-		while (cnt--)
-			*d-- = *s--;
-		if (len & 1)
-			*(char *)d = *(char *)s;
-	}
-}
-#endif
 
 /*
  * copyout(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes into the user's address space.
  */
 int
-copyout(kaddr, uaddr, len)
-	const void *kaddr;
-	void *uaddr;
-	size_t len;
+copyout(const void *kaddr, void *uaddr, size_t len)
 {
 	const void *from = kaddr;
 	char *to = uaddr;
@@ -204,10 +117,7 @@ copyout(kaddr, uaddr, len)
  * Copy len bytes from the user's address space.
  */
 int
-copyin(uaddr, kaddr, len)
-	const void *uaddr;
-	void *kaddr;
-	size_t len;
+copyin(const void *uaddr, void *kaddr, size_t len)
 {
 	const char *from = uaddr;
 	void *to = kaddr;
@@ -233,11 +143,7 @@ copyin(uaddr, kaddr, len)
  * return 0 or EFAULT.
  */
 int
-copyoutstr(kaddr, uaddr, maxlen, lencopied)
-	const void *kaddr;
-	void *uaddr;
-	size_t maxlen;
-	size_t *lencopied;
+copyoutstr(const void *kaddr, void *uaddr, size_t maxlen, size_t *lencopied)
 {
 	const char *from = kaddr;
 	char *to = uaddr;
@@ -283,11 +189,7 @@ out:
  * return 0 or EFAULT.
  */
 int
-copyinstr(uaddr, kaddr, maxlen, lencopied)
-	const void *uaddr;
-	void *kaddr;
-	size_t maxlen;
-	size_t *lencopied;
+copyinstr(const void *uaddr, void *kaddr, size_t maxlen, size_t *lencopied)
 {
 	const char *from = uaddr;
 	char *to = kaddr;
@@ -332,11 +234,7 @@ out:
  * string is too long, return ENAMETOOLONG; else return 0.
  */
 int
-copystr(kfaddr, kdaddr, maxlen, lencopied)
-	const void *kfaddr;
-	void *kdaddr;
-	size_t maxlen;
-	size_t *lencopied;
+copystr(const void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
 {
 	const char *from = kfaddr;
 	char *to = kdaddr;
@@ -360,8 +258,7 @@ copystr(kfaddr, kdaddr, maxlen, lencopied)
  * Fetch an int from the user's address space.
  */
 long
-fuword(base)
-	const void *base;
+fuword(const void *base)
 {
 	const char *uaddr = base;
 	long rc;
@@ -386,8 +283,7 @@ fuword(base)
  * Fetch a short from the user's address space.
  */
 int
-fusword(base)
-	const void *base;
+fusword(const void *base)
 {
 	const char *uaddr = base;
 	int rc;
@@ -413,8 +309,7 @@ fusword(base)
  * interrupt.
  */
 int
-fuswintr(base)
-	const void *base;
+fuswintr(const void *base)
 {
 	const char *uaddr = base;
 	int rc;
@@ -442,8 +337,7 @@ fuswintr(base)
  * Fetch a byte from the user's address space.
  */
 int
-fubyte(base)
-	const void *base;
+fubyte(const void *base)
 {
 	const char *uaddr = base;
 	int rc;
@@ -468,9 +362,7 @@ fubyte(base)
  * Store an int in the user's address space.
  */
 int
-suword(base, x)
-	void *base;
-	long x;
+suword(void *base, long x)
 {
 	char *uaddr = base;
 
@@ -494,9 +386,7 @@ suword(base, x)
  * Store a short in the user's address space.
  */
 int
-susword(base, x)
-	void *base;
-	short x;
+susword(void *base, short x)
 {
 	char *uaddr = base;
 
@@ -521,9 +411,7 @@ susword(base, x)
  * interrupt.
  */
 int
-suswintr(base, x)
-	void *base;
-	short x;
+suswintr(void *base, short x)
 {
 	char *uaddr = base;
 
@@ -550,9 +438,7 @@ suswintr(base, x)
  * Store a byte in the user's address space.
  */
 int
-subyte(base, x)
-	void *base;
-	int x;
+subyte(void *base, int x)
 {
 	char *uaddr = base;
 
@@ -572,10 +458,7 @@ subyte(base, x)
 }
 
 int
-kcopy(src, dst, len)
-	const void *src;
-	void *dst;
-	size_t len;
+kcopy(const void *src, void *dst, size_t len)
 {
 	caddr_t oldfault;
 
@@ -598,19 +481,12 @@ kcopy(src, dst, len)
  * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
  */
 void
-setrunqueue(p)
-	struct proc *p;
+setrunqueue(struct proc *p)
 {
 	struct prochd *q;
 	struct proc *oldlast;
 	int which = p->p_priority >> 2;
 
-#ifdef sh3_debug
-	printf("setrunque[whichqs = 0x%x,which=%d]\n",
-	    sched_whichqs, which);
-#endif
-
-#define DIAGNOSTIC 1
 #ifdef DIAGNOSTIC
 	if (p->p_back || which >= 32 || which < 0)
 		panic("setrunqueue");
@@ -624,10 +500,6 @@ setrunqueue(p)
 	p->p_back = oldlast = q->ph_rlink;
 	q->ph_rlink = p;
 	oldlast->p_forw = p;
-#ifdef sh3_debug
-	printf("setrunque[whichqs = 0x%x,which=%d]\n",
-	    sched_whichqs, which);
-#endif
 }
 
 /*
@@ -636,16 +508,11 @@ setrunqueue(p)
  * Calls should be made at splstatclock().
  */
 void
-remrunqueue(p)
-	struct proc *p;
+remrunqueue(struct proc *p)
 {
 	int which = p->p_priority >> 2;
 	struct prochd *q;
 
-#ifdef sh3_debug
-	printf("remrunque[whichqs = 0x%x,which=%d]\n",
-	    sched_whichqs, which);
-#endif
 #ifdef DIAGNOSTIC
 	if (!(sched_whichqs & (0x00000001 << which)))
 		panic("remrunqueue");
@@ -656,30 +523,4 @@ remrunqueue(p)
 	q = &sched_qs[which];
 	if (q->ph_link == (struct proc *)q)
 		sched_whichqs &= ~(0x00000001 << which);
-#ifdef sh3_debug
-	printf("remrunque[whichqs = 0x%x,which=%d]\n",
-	    sched_whichqs, which);
-#endif
 }
-
-void
-setPageDirReg(int pgdir)
-{
-#if 0
-	PageDirReg = pgdir;
-#else
-	SHREG_TTB = pgdir;
-#endif
-	tlbflush();
-}
-
-#if 0
-u_long
-random()
-{
-	static u_long randseed;
-
-	randseed = randseed*1103515245 + 12345;
-	return randseed;
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.44.2.4 2002/02/11 20:10:41 jdolecek Exp $	*/
+/*	$NetBSD: key.c,v 1.44.2.5 2002/03/16 16:02:18 jdolecek Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.44.2.4 2002/02/11 20:10:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.44.2.5 2002/03/16 16:02:18 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -6155,6 +6155,7 @@ key_expire(sav)
 	mtod(result, struct sadb_msg *)->sadb_msg_len =
 	    PFKEY_UNIT64(result->m_pkthdr.len);
 
+	splx(s);
 	return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
 
  fail:

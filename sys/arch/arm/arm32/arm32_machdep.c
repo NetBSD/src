@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.2.2.6 2002/02/11 20:07:17 jdolecek Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.2.2.7 2002/03/16 15:56:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -65,7 +65,6 @@
 #include <machine/bootconfig.h>
 
 #include "opt_ipkdb.h"
-#include "opt_mdsize.h"
 #include "md.h"
 
 struct vm_map *exec_map = NULL;
@@ -77,9 +76,9 @@ extern int physmem;
 #ifndef PMAP_STATIC_L1S
 extern int max_processes;
 #endif	/* !PMAP_STATIC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
 extern u_int memory_disc_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
 
 pv_addr_t systempage;
 pv_addr_t kernelstack;
@@ -99,6 +98,7 @@ int kernel_debug = 0;
 
 struct user *proc0paddr;
 
+/* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
 
 
@@ -148,177 +148,6 @@ bootsync(void)
 
 	vfs_shutdown();
 }
-
-/*
- * A few functions that are used to help construct the page tables
- * during the bootstrap process.
- */
-
-void
-map_section(pagetable, va, pa, cacheable)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-	int cacheable;
-{
-#ifdef	DIAGNOSTIC
-	if (((va | pa) & (L1_SEC_SIZE - 1)) != 0)
-		panic("initarm: Cannot allocate 1MB section on non 1MB boundry\n");
-#endif	/* DIAGNOSTIC */
-
-	if (cacheable)
-		((u_int *)pagetable)[(va >> PDSHIFT)] =
-		    L1_SEC((pa & PD_MASK), pte_cache_mode);
-	else
-		((u_int *)pagetable)[(va >> PDSHIFT)] =
-		    L1_SEC((pa & PD_MASK), 0);
-}
-
-
-void
-map_pagetable(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-#ifdef	DIAGNOSTIC
-	if ((pa & 0xc00) != 0)
-		panic("pagetables should be group allocated on pageboundry");
-#endif	/* DIAGNOSTIC */
-
-	((u_int *)pagetable)[(va >> PDSHIFT) + 0] =
-	     L1_PTE((pa & PG_FRAME) + 0x000);
-	((u_int *)pagetable)[(va >> PDSHIFT) + 1] =
-	     L1_PTE((pa & PG_FRAME) + 0x400);
-	((u_int *)pagetable)[(va >> PDSHIFT) + 2] =
-	     L1_PTE((pa & PG_FRAME) + 0x800);
-	((u_int *)pagetable)[(va >> PDSHIFT) + 3] =
-	     L1_PTE((pa & PG_FRAME) + 0xc00);
-}
-
-/* cats kernels have a 2nd l2 pt, so the range is bigger hence the 0x7ff etc */
-vsize_t
-map_chunk(pd, pt, va, pa, size, acc, flg)
-	vaddr_t pd;
-	vaddr_t pt;
-	vaddr_t va;
-	paddr_t pa;
-	vsize_t size;
-	u_int acc;
-	u_int flg;
-{
-	pd_entry_t *l1pt = (pd_entry_t *)pd;
-	pt_entry_t *l2pt = (pt_entry_t *)pt;
-	vsize_t remain;
-	u_int loop;
-
-	remain = (size + (NBPG - 1)) & ~(NBPG - 1);
-#ifdef VERBOSE_INIT_ARM
-	printf("map_chunk: pa=%lx va=%lx sz=%lx rem=%lx acc=%x flg=%x\n",
-	    pa, va, size, remain, acc, flg);
-	printf("map_chunk: ");
-#endif
-	size = remain;
-
-	while (remain > 0) {
-		/* Can we do a section mapping ? */
-		if (l1pt && !((pa | va) & (L1_SEC_SIZE - 1))
-		    && remain >= L1_SEC_SIZE) {
-#ifdef VERBOSE_INIT_ARM
-			printf("S");
-#endif
-			l1pt[(va >> PDSHIFT)] = L1_SECPTE(pa, acc, flg);
-			va += L1_SEC_SIZE;
-			pa += L1_SEC_SIZE;
-			remain -= L1_SEC_SIZE;
-		} else
-		/* Can we do a large page mapping ? */
-		if (!((pa | va) & (L2_LPAGE_SIZE - 1))
-		    && (remain >= L2_LPAGE_SIZE)) {
-#ifdef VERBOSE_INIT_ARM
-			printf("L");
-#endif
-			for (loop = 0; loop < 16; ++loop)
-#ifndef cats
-				l2pt[((va >> PGSHIFT) & 0x3f0) + loop] =
-				    L2_LPTE(pa, acc, flg);
-#else
-				l2pt[((va >> PGSHIFT) & 0x7f0) + loop] =
-				    L2_LPTE(pa, acc, flg);
-#endif	
-			va += L2_LPAGE_SIZE;
-			pa += L2_LPAGE_SIZE;
-			remain -= L2_LPAGE_SIZE;
-		} else
-		/* All we can do is a small page mapping */
-		{
-#ifdef VERBOSE_INIT_ARM
-			printf("P");
-#endif
-#ifndef cats			
-			l2pt[((va >> PGSHIFT) & 0x3ff)] = L2_SPTE(pa, acc, flg);
-#else
-			l2pt[((va >> PGSHIFT) & 0x7ff)] = L2_SPTE(pa, acc, flg);
-#endif
-			va += NBPG;
-			pa += NBPG;
-			remain -= NBPG;
-		}
-	}
-#ifdef VERBOSE_INIT_ARM
-	printf("\n");
-#endif
-	return(size);
-}
-
-/* cats versions have larger 2 l2pt's next to each other */
-void
-map_entry(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-#ifndef cats
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KRW);
-#else
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000007ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KRW);
-#endif	
-}
-
-
-void
-map_entry_nc(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-#ifndef cats
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
-#else
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000007ff)] =
-	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
-#endif
-}
-
-
-void
-map_entry_ro(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-#ifndef cats
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KR);
-#else
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000007ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KR);
-#endif
-}
-
 
 /*
  * void cpu_startup(void)
@@ -597,7 +426,7 @@ parse_mi_bootargs(args)
 			max_processes = 255;
 	}
 #endif	/* !PMAP_STATUC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
 		memory_disc_size = integer;
@@ -607,7 +436,7 @@ parse_mi_bootargs(args)
 		if (memory_disc_size > 2048*1024)
 			memory_disc_size = 2048*1024;
 	}
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
 
 	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
 	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))

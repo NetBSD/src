@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.2.2.2 2002/01/10 19:38:21 thorpej Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.2.2.3 2002/03/16 15:56:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.2.2.2 2002/01/10 19:38:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.2.2.3 2002/03/16 15:56:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,6 +193,7 @@ static void set_curpos __P((struct vidcvideo_softc *, struct wsdisplay_curpos *)
 static void vidcvideo_getdevconfig __P((vaddr_t, struct fb_devconfig *));
 
 static int  vidcvideointr __P((void *));
+static void vidcvideo_config_wscons __P((struct fb_devconfig *));
 
 /* Acceleration function prototypes */
 static void vv_copyrows __P((void *, int, int, int));
@@ -272,7 +273,7 @@ static void
 vidcvideo_config_wscons(dc)
 	struct fb_devconfig *dc;
 {
-	int i, cookie, font_locked;
+	int i, cookie, font_not_locked;
 
 	/* clear the screen ; why not a memset ? - it was this way so keep it for now */
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
@@ -281,8 +282,11 @@ vidcvideo_config_wscons(dc)
 	wsfont_init();
 
 	/* prefer 8 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0);
+	cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_L2R,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_L2R,
+		    WSDISPLAY_FONTORDER_L2R);
 
 	if (cookie < 0) {
 		/* Can I even print here ? */
@@ -290,8 +294,7 @@ vidcvideo_config_wscons(dc)
 		return;
 	};
 
-	font_locked = wsfont_lock(cookie, &dc->rinfo.ri_font,
-		WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R);
+	font_not_locked = wsfont_lock(cookie, &dc->rinfo.ri_font);
 
 	dc->rinfo.ri_wsfcookie = cookie;
 
@@ -310,7 +313,7 @@ vidcvideo_config_wscons(dc)
 	vidcvideo_stdscreen.textops = &dc->rinfo.ri_ops;
 	vidcvideo_stdscreen.capabilities = dc->rinfo.ri_caps;
 
-	if (font_locked < 0) {
+	if (font_not_locked) {
 		printf(" warning ... couldn't lock font! ");
 	};
 }

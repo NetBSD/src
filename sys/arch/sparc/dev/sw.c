@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.4.2.1 2001/08/25 06:15:51 thorpej Exp $	*/
+/*	$NetBSD: sw.c,v 1.4.2.2 2002/03/16 15:59:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ sw_match(parent, cf, aux)
 
 	/* Make sure there is something there... */
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				1,	/* probe size */
 				1,	/* offset */
 				0,	/* flags */
@@ -264,11 +264,10 @@ sw_attach(parent, self, aux)
 	sc->sc_dmatag = oba->oba_dmatag;
 
 	/* Map the controller registers. */
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 0,
-			 SWREG_BANK_SZ,
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
+			  SWREG_BANK_SZ,
+			  BUS_SPACE_MAP_LINEAR,
+			  &bh) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.9.2.2 2002/01/10 19:48:30 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.9.2.3 2002/03/16 15:59:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -199,11 +199,10 @@ bus_space_map(t, bpa, size, flags, bshp)
 #define PCI_LOW_IO		0x18000000
 
 	/* XXX O2 */
-        if (bpa > 0x80000000 && bpa < 0x82000000)
-                *bshp = MIPS_PHYS_TO_KSEG1(PCI_LOW_MEMORY + (bpa & 0xfffffff));
-        if (bpa < 0x00010000)
-                *bshp = MIPS_PHYS_TO_KSEG1(PCI_LOW_IO + bpa);
-
+	if (bpa > 0x80000000 && bpa < 0x82000000)
+		*bshp = MIPS_PHYS_TO_KSEG1(PCI_LOW_MEMORY + (bpa & 0xfffffff));
+	if (bpa < 0x00010000)
+		*bshp = MIPS_PHYS_TO_KSEG1(PCI_LOW_IO + bpa);
 
 	return 0;
 }
@@ -321,8 +320,7 @@ extern	paddr_t kvtophys(vaddr_t);		/* XXX */
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(map, buf, buflen, p, flags,
-    lastaddrp, segp, first)
+_bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
@@ -338,7 +336,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 	int seg;
 
 	lastaddr = *lastaddrp;
-	bmask  = ~(map->_dm_boundary - 1);
+	bmask = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0 ; ) {
 		/*
@@ -678,7 +676,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		MachFlushDCache(addr + offset, minlen);
 #endif
 #if 1
-		mips_dcache_wbinv_range(map->dm_segs[i]._ds_vaddr + offset, len);
+		mips_dcache_wbinv_range(addr + offset, minlen);
 #endif
 #if 0
 		MachFlushCache();

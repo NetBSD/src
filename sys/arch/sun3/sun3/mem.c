@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.38.2.1 2001/09/13 01:14:58 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.38.2.2 2002/03/16 16:00:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -52,6 +52,7 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/ioctl.h>
 #include <sys/uio.h>
 
 #include <uvm/uvm_extern.h>
@@ -65,8 +66,15 @@
 
 #include <sun3/sun3/machdep.h>
 
-#define	mmread	mmrw
-cdev_decl(mm);
+#define DEV_VME16D16	5	/* minor device 5 is /dev/vme16d16 */
+#define DEV_VME24D16	6	/* minor device 6 is /dev/vme24d16 */
+#define DEV_VME32D16	7	/* minor device 7 is /dev/vme32d16 */
+#define DEV_VME16D32	8	/* minor device 8 is /dev/vme16d32 */
+#define DEV_VME24D32	9	/* minor device 9 is /dev/vme24d32 */
+#define DEV_VME32D32	10	/* minor device 10 is /dev/vme32d32 */
+#define DEV_EEPROM	11 	/* minor device 11 is eeprom */
+#define DEV_LEDS	13 	/* minor device 13 is leds */
+
 static int promacc __P((caddr_t, int, int));
 static caddr_t devzeropage;
 
@@ -107,7 +115,7 @@ mmrw(dev, uio, flags)
 	static int physlock;
 	vm_prot_t prot;
 
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 		if (vmmap == 0)
 			return (EIO);
 		/* lock against other uses of shared vmmap */
@@ -131,7 +139,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-		case 0:                        /*  /dev/mem  */
+		case DEV_MEM:
 			v = uio->uio_offset;
 			/* allow reads only in RAM */
 			if (v >= avail_end) {
@@ -168,7 +176,7 @@ mmrw(dev, uio, flags)
 			pmap_update(pmap_kernel());
 			break;
 
-		case 1:                        /*  /dev/kmem  */
+		case DEV_KMEM:
 			v = uio->uio_offset;
 		use_kmem:
 			/*
@@ -194,17 +202,17 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-		case 2:                        /*  /dev/null  */
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-		case 11:                        /*  /dev/eeprom  */
+		case DEV_EEPROM:
 			error = eeprom_uio(uio);
 			/* Yes, return (not break) so EOF works. */
 			return (error);
 
-		case 12:                        /*  /dev/zero  */
+		case DEV_ZERO:
 			/* Write to /dev/zero is ignored. */
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
@@ -223,7 +231,7 @@ mmrw(dev, uio, flags)
 			error = uiomove(devzeropage, c, uio);
 			break;
 
-		case 13:                        /*  /dev/leds  */
+		case DEV_LEDS:
 			error = leds_uio(uio);
 			/* Yes, return (not break) so EOF works. */
 			return (error);
@@ -239,7 +247,7 @@ mmrw(dev, uio, flags)
 	 * redirection above jumps here on error to do its unlock.
 	 */
 unlock:
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;
@@ -261,36 +269,36 @@ mmmmap(dev, off, prot)
 
 	switch (minor(dev)) {
 
-	case 0:		/* dev/mem */
+	case DEV_MEM:
 		/* Allow access only in "managed" RAM. */
 		if (off < avail_start || off >= avail_end)
 			break;
 		return (off);
 
-	case 5: 	/* dev/vme16d16 */
+	case DEV_VME16D16:
 		if (off & 0xffff0000)
 			break;
 		off |= 0xff0000;
 		/* fall through */
-	case 6: 	/* dev/vme24d16 */
+	case DEV_VME24D16:
 		if (off & 0xff000000)
 			break;
 		off |= 0xff000000;
 		/* fall through */
-	case 7: 	/* dev/vme32d16 */
+	case DEV_VME32D16:
 		return (off | PMAP_VME16);
 
-	case 8: 	/* dev/vme16d32 */
+	case DEV_VME16D32:
 		if (off & 0xffff0000)
 			break;
 		off |= 0xff0000;
 		/* fall through */
-	case 9: 	/* dev/vme24d32 */
+	case DEV_VME24D32:
 		if (off & 0xff000000)
 			break;
 		off |= 0xff000000;
 		/* fall through */
-	case 10:	/* dev/vme32d32 */
+	case DEV_VME32D32:
 		return (off | PMAP_VME32);
 	}
 

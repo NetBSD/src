@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.19.2.1 2002/01/10 19:53:44 thorpej Exp $
+$NetBSD: cardbusdevs,v 1.19.2.2 2002/03/16 16:00:49 jdolecek Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -53,6 +53,7 @@ vendor DLINK		0x1186	D-Link Systems
 vendor COREGA		0x1259	Corega
 vendor ALLIEDTELESYN	0x1259	Allied Telesyn International
 vendor ABOCOM		0x13d1	AboCom Systems
+vendor HAWKING		0x17b3	Hawking Technology
 vendor INTEL		0x8086	Intel
 vendor ADP		0x9004	Adaptec
 vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
@@ -110,6 +111,9 @@ product COREGA CB_TXD	0xa117	FEther CB-TXD 10/100 Ethernet
 /* AboCom products */
 product ABOCOM FE2500	0xab02	FE2500 10/100 Ethernet
 product ABOCOM PCM200	0xab03	FE2500 10/100 Ethernet
+
+/* Hawking Technology products */
+product HAWKING PN672TX	0xab08	PN672TX 10/100 Ethernet
 
 /* Intel products */
 product INTEL 82557	0x1229	82557 Fast Ethernet LAN Controller

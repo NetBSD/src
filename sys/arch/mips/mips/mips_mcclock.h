@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.h,v 1.2 1999/12/03 02:56:37 nisimura Exp $ */
+/* $NetBSD: mips_mcclock.h,v 1.2.8.1 2002/03/16 15:58:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -39,7 +39,7 @@
  * Estimate CPU speed and multiplier for DELAY() by polling mcclock,
  * counting iterations of an loop between successive ticks.
  */
-unsigned mc_cpuspeed __P((vaddr_t, int));
+unsigned mc_cpuspeed(vaddr_t, int);
 
 /*
  * CPU speed in MHz, as estimated by mc_cpuspeed(). Read-only.

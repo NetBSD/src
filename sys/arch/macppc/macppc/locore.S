@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.41.2.1 2002/01/10 19:45:52 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.41.2.2 2002/03/16 15:58:32 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,7 +45,7 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/asm.h>
-#ifdef NEWPMAP
+#ifndef OLDPMAP
 #include <machine/vmparam.h>
 #endif
 

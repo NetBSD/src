@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.27.2.2 2002/01/10 19:49:01 thorpej Exp $ */
+/*	$NetBSD: mem.c,v 1.27.2.3 2002/03/16 15:59:53 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,7 +101,7 @@ mmrw(dev, uio, flags)
 	vm_prot_t prot;
 	extern caddr_t vmmap;
 
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
@@ -128,8 +128,7 @@ mmrw(dev, uio, flags)
 
 		switch (minor(dev)) {
 
-		/* minor device 0 is physical memory */
-		case 0:
+		case DEV_MEM:
 			pa = (paddr_t)uio->uio_offset;
 			if (!pmap_pa_exists(pa)) {
 				error = EFAULT;
@@ -148,8 +147,7 @@ mmrw(dev, uio, flags)
 			pmap_update(pmap_kernel());
 			break;
 
-		/* minor device 1 is kernel memory */
-		case 1:
+		case DEV_KMEM:
 			va = (vaddr_t)uio->uio_offset;
 			if (va >= MSGBUF_VA && va < MSGBUF_VA+NBPG) {
 				c = min(iov->iov_len, 4096);
@@ -166,8 +164,7 @@ mmrw(dev, uio, flags)
 			error = uiomove((void *)va, c, uio);
 			break;
 
-		/* minor device 2 is EOF/RATHOLE */
-		case 2:
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
@@ -175,11 +172,7 @@ mmrw(dev, uio, flags)
 /* XXX should add sbus, etc */
 
 #if defined(SUN4)
-		/*
-		 * minor device 11 (/dev/eeprom) is the old-style
-		 * (a'la Sun 3) EEPROM.
-		 */
-		case 11:
+		case DEV_EEPROM:
 			if (cputyp == CPU_SUN4)
 				error = eeprom_uio(uio);
 			else
@@ -188,11 +181,7 @@ mmrw(dev, uio, flags)
 			break;
 #endif /* SUN4 */
 
-		/*
-		 * minor device 12 (/dev/zero) is source of nulls on read,
-		 * rathole on write.
-		 */
-		case 12:
+		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
 				return(0);

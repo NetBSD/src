@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.42.2.1 2002/01/10 19:58:59 thorpej Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.42.2.2 2002/03/16 16:01:38 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.42.2.1 2002/01/10 19:58:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.42.2.2 2002/03/16 16:01:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,9 @@ Static struct cdevsw ulpt_cdevsw = {
 	/* dump */	nodump,
 	/* psize */	nopsize,
 	/* flags */	0,
+#if !defined(__FreeBSD__) || (__FreeBSD__ < 5)
 	/* bmaj */	-1
+#endif
 };
 #endif
 
@@ -309,8 +311,8 @@ USB_ATTACH(ulpt)
 	USETW(req.wValue, cd->bConfigurationValue);
 	USETW2(req.wIndex, id->bInterfaceNumber, id->bAlternateSetting);
 	USETW(req.wLength, sizeof devinfo - 1);
-	err = usbd_do_request_flags(dev, &req, devinfo,USBD_SHORT_XFER_OK,
-		  &alen);
+	err = usbd_do_request_flags(dev, &req, devinfo, USBD_SHORT_XFER_OK,
+		  &alen, USBD_DEFAULT_TIMEOUT);
 	if (err) {
 		printf("%s: cannot get device id\n", USBDEVNAME(sc->sc_dev));
 	} else if (alen <= 2) {
@@ -368,11 +370,11 @@ USB_DETACH(ulpt)
 	int s;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	int maj, mn;
-
-	DPRINTF(("ulpt_detach: sc=%p flags=%d\n", sc, flags));
 #elif defined(__FreeBSD__)
-	DPRINTF(("ulpt_detach: sc=%p\n", sc));
+	struct vnode *vp;
 #endif
+
+	DPRINTF(("ulpt_detach: sc=%p\n", sc));
 
 	sc->sc_dying = 1;
 	if (sc->sc_out_pipe != NULL)
@@ -398,7 +400,12 @@ USB_DETACH(ulpt)
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
 #elif defined(__FreeBSD__)
-	/* XXX not implemented yet */
+	vp = SLIST_FIRST(&sc->dev->si_hlist);
+	if (vp)
+		VOP_REVOKE(vp, REVOKEALL);
+	vp = SLIST_FIRST(&sc->dev_noprime->si_hlist);
+	if (vp)
+		VOP_REVOKE(vp, REVOKEALL);
 
 	destroy_dev(sc->dev);
 	destroy_dev(sc->dev_noprime);
@@ -447,6 +454,7 @@ ulpt_reset(struct ulpt_softc *sc)
 	 * UT_WRITE_CLASS_INTERFACE.  Many printers use the old one,
 	 * so we try both.
 	 */
+	req.bmRequestType = UT_WRITE_CLASS_OTHER;
 	if (usbd_do_request(sc->sc_udev, &req, 0)) {	/* 1.0 */
 		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 		(void)usbd_do_request(sc->sc_udev, &req, 0); /* 1.1 */

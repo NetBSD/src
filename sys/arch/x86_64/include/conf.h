@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 2001/06/19 00:20:10 fvdl Exp $	*/
+/*	$NetBSD: conf.h,v 1.1.2.1 2002/03/16 16:00:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,10 +37,6 @@
  */
 
 #include <sys/conf.h>
-
-#define	mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
 
 bdev_decl(fd);
 cdev_decl(fd);

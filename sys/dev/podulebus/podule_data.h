@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.4 2001/06/08 20:09:07 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.4.2.1 2002/03/16 16:01:25 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.6 2001/06/08 20:08:35 bjh21 Exp 
+ *	NetBSD: podules,v 1.7 2002/03/09 13:44:09 bjh21 Exp 
  */
 
 /*
@@ -126,6 +126,7 @@ static struct podule_description podules_sj[] = {
 
 static struct podule_description podules_morley[] = {
 	{ PODULE_MORLEY_SCSI,	"SCSI interface" },
+	{ PODULE_MORLEY_USERANALOGUE,	"User and Analogue ports" },
 	{ 0x0000, NULL }
 };
 

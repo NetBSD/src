@@ -1,10 +1,10 @@
-/*	$NetBSD: cpu.c,v 1.5.2.1 2002/01/10 19:48:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5.2.2 2002/03/16 15:59:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * Copyright (c) 2001 Jason R. Thorpe.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -20,7 +20,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.

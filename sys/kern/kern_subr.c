@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_subr.c,v 1.76.2.1 2002/01/10 19:59:55 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.76.2.2 2002/03/16 16:01:48 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -90,8 +90,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.76.2.1 2002/01/10 19:59:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.76.2.2 2002/03/16 16:01:48 jdolecek Exp $");
 
+#include "opt_ddb.h"
 #include "opt_md.h"
 
 #include <sys/param.h>
@@ -624,7 +625,6 @@ setroot(bootdv, bootpartition)
 	struct ifnet *ifp;
 	const char *deffsname;
 	struct vfsops *vops;
-	extern int (*mountroot) __P((void));
 
 #ifdef MEMORY_DISK_HOOKS
 	for (i = 0; i < NMD; i++) {
@@ -775,6 +775,11 @@ setroot(bootdv, bootpartition)
 				cpu_reboot(RB_HALT, NULL);
 			else if (len == 6 && strcmp(buf, "reboot") == 0)
 				cpu_reboot(0, NULL);
+#if defined(DDB)
+			else if (len == 3 && strcmp(buf, "ddb") == 0) {
+				console_debugger();
+			}
+#endif
 			else if (len == 7 && strcmp(buf, "generic") == 0) {
 				mountroot = NULL;
 				break;
@@ -788,6 +793,9 @@ setroot(bootdv, bootpartition)
 					if (vops->vfs_mountroot != NULL)
 						printf(" %s", vops->vfs_name);
 				}
+#if defined(DDB)
+				printf(" ddb");
+#endif
 				printf(" halt reboot\n");
 			} else {
 				mountroot = vops->vfs_mountroot;
@@ -1013,6 +1021,9 @@ getdisk(str, len, defpart, devp, isdump)
 		}
 		if (isdump)
 			printf(" none");
+#if defined(DDB)
+		printf(" ddb");
+#endif
 		printf(" halt reboot\n");
 	}
 	return (dv);
@@ -1037,6 +1048,10 @@ parsedisk(str, len, defpart, devp)
 		cpu_reboot(RB_HALT, NULL);
 	else if (len == 6 && strcmp(str, "reboot") == 0)
 		cpu_reboot(0, NULL);
+#if defined(DDB)
+	else if (len == 3 && strcmp(str, "ddb") == 0)
+		console_debugger();
+#endif
 
 	cp = str + len - 1;
 	c = *cp;

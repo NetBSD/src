@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2001/04/13 23:29:58 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.2.1 2002/03/16 15:55:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -117,8 +117,8 @@ extern int imask[];
 
 /*
  *  Reorder protection in the following inline functions is
- * achived with the "eieio" instruction which the assembler
- * seems to detect and then doen't move instructions past....
+ * achieved with the "eieio" instruction which the assembler
+ * seems to detect and then doesn't move instructions past....
  */
 static __inline int
 splraise(ncpl)

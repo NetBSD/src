@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50.2.4 2002/02/11 20:08:52 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.50.2.5 2002/03/16 15:59:19 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -102,6 +102,8 @@ trap(frame)
 	uvmexp.traps++;
 
 	switch (type) {
+	case EXC_RUNMODETRC|EXC_USER:
+		/* FALLTHROUGH */
 	case EXC_TRC|EXC_USER:
 		KERNEL_PROC_LOCK(p);
 		frame->srr1 &= ~PSL_SE;
@@ -133,7 +135,7 @@ trap(frame)
 				map = &p->p_vmspace->vm_map;
 			}
 			if (frame->dsisr & DSISR_STORE)
-				ftype = VM_PROT_READ | VM_PROT_WRITE;
+				ftype = VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
@@ -172,7 +174,7 @@ trap(frame)
 		KERNEL_PROC_LOCK(p);
 		curcpu()->ci_ev_udsi.ev_count++;
 		if (frame->dsisr & DSISR_STORE)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
@@ -420,7 +422,9 @@ brain_damage2:
 #endif
 #ifdef TRAP_PANICWAIT
 		printf("Press a key to panic.\n");
+		cnpollc(1);
 		cngetc();
+		cnpollc(0);
 #endif
 		panic("trap");
 	}

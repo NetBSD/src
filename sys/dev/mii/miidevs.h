@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.23.2.5 2002/02/11 20:09:54 jdolecek Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.23.2.6 2002/03/16 16:01:11 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.33 2002/01/15 20:59:52 thorpej Exp 
+ *	NetBSD: miidevs,v 1.34 2002/02/10 17:08:24 wiz Exp 
  */
 
 /*-
@@ -149,6 +149,8 @@
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1890	0x0002
 #define	MII_STR_ICS_1890	"ICS1890 10/100 media interface"
+#define	MII_MODEL_ICS_1893	0x0004
+#define	MII_STR_ICS_1893	"ICS1893 10/100 media interface"
 
 /* Intel PHYs */
 #define	MII_MODEL_xxINTEL_I82553	0x0000

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.12.4.1 2002/01/10 19:46:02 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.12.4.2 2002/03/16 15:58:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,7 +71,7 @@ struct frame {
 
 #ifdef _KERNEL
 /* kernel single-step emulation */
-int mips_singlestep __P((struct proc *p));
+int mips_singlestep(struct proc *p);
 #endif /* _KERNEL */
 
 #endif /* _MIPS_PROC_H_ */

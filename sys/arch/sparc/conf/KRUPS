@@ -1,5 +1,5 @@
-# $NetBSD: KRUPS,v 1.2.2.2 2002/02/11 20:09:02 jdolecek Exp $
-# From: NetBSD: GENERIC,v 1.130 2002/01/27 13:23:26 jdolecek Exp
+# $NetBSD: KRUPS,v 1.2.2.3 2002/03/16 15:59:44 jdolecek Exp $
+# From: NetBSD: GENERIC,v 1.131 2002/02/10 17:37:02 wiz Exp
 #
 # Krups (JavaStation 10, aka JavaStation NC) machine description file
 #
@@ -8,7 +8,7 @@
 
 include 	"arch/sparc/conf/std.sparc"
 
-#ident 		"KRUPS-$Revision: 1.2.2.2 $"
+#ident 		"KRUPS-$Revision: 1.2.2.3 $"
 
 maxusers	32
 
@@ -278,10 +278,9 @@ pseudo-device	bpfilter	8
 
 #### Audio and video devices
 
-# XXX: uwe: not committed yet
 ## /dev/audio support
-#audiocs0	at ebus?		# SUNW,CS4231
-#audio*		at audiocs0
+audiocs0	at ebus?		# SUNW,CS4231
+audio*		at audiocs0
 
 
 #### Other device configuration

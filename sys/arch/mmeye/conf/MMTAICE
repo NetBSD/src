@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.6.2.2 2002/02/11 20:08:40 jdolecek Exp $
+#	$NetBSD: MMTAICE,v 1.6.2.3 2002/03/16 15:58:47 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -9,7 +9,7 @@ include "arch/mmeye/conf/std.mmeye"
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
 
 maxusers	32		# estimated number of users
 
@@ -17,6 +17,7 @@ maxusers	32		# estimated number of users
 #options 	I386_CPU
 #options 	I486_CPU
 #options 	I586_CPU
+options		SH3
 options 	SH7708		# 60MHz
 #options 	SH7708R		# 100MHz
 #options 	I686_CPU
@@ -214,7 +215,7 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs

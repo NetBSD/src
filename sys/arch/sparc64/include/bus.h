@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.27.2.3 2002/01/10 19:49:19 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.27.2.4 2002/03/16 15:59:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ typedef u_int64_t	bus_size_t;
 /* For buses which have an iospace. */
 #define	BUS_ADDR_IOSPACE(x)	((x)>>32)
 #define	BUS_ADDR_PADDR(x)	((x)&0xffffffff)
-#define	BUS_ADDR(io, pa)	(((io)<<32)|(pa))
+#define	BUS_ADDR(io, pa)	((((bus_addr_t)io)<<32)|(pa))
 
 /*
  * Access methods for bus resources and address space.
@@ -146,10 +146,6 @@ struct sparc_bus_space_tag {
 	int	(*sparc_bus_subregion) __P((bus_space_tag_t,
 		bus_space_handle_t, bus_size_t,
 		bus_size_t, bus_space_handle_t *));
-
-	void	(*sparc_bus_barrier) __P((bus_space_tag_t,
-		bus_space_handle_t, bus_size_t,
-		bus_size_t, int));
 
 	paddr_t	(*sparc_bus_mmap) __P((bus_space_tag_t,
 		bus_addr_t, off_t, int, int));
@@ -337,17 +333,6 @@ bus_intr_establish(t, p, l, f, h, a)
 	_BS_CALL(t, sparc_intr_establish)(t, p, l, f, h, a);
 }
 
-__inline__ void
-bus_space_barrier(t, h, o, s, f)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	bus_size_t s;
-	int f;
-{
-	_BS_CALL(t, sparc_bus_barrier)(t, h, o, s, f);
-}
-
 #if 1
 /* XXXX Things get complicated if we use unmapped register accesses. */
 #define	bus_space_vaddr(t, h)	(vaddr_t)(h)
@@ -373,6 +358,31 @@ void * bus_space_vaddr __P((bus_space_tag_t space, bus_space_handle_t handle));
 /* flags for bus_space_barrier() */
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+__inline__ void
+bus_space_barrier(t, h, o, s, f)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	bus_size_t s;
+	int f;
+{
+	/*
+	 * We have a bit of a problem with the bus_space_barrier()
+	 * interface.  It defines a read barrier and a write barrier
+	 * which really don't map to the 7 different types of memory
+	 * barriers in the SPARC v9 instruction set.
+	 */
+	if (f == BUS_SPACE_BARRIER_READ)
+		/* A load followed by a load to the same location? */
+		__asm __volatile("membar #Lookaside");
+	else if (f == BUS_SPACE_BARRIER_WRITE)
+		/* A store followed by a store? */
+		__asm __volatile("membar #StoreStore");
+	else 
+		/* A store followed by a load? */
+		__asm __volatile("membar #StoreLoad|#MemIssue|#Lookaside");
+}
 
 /*
  * Device space probe assistant.

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4.2.2 2002/01/10 19:51:35 thorpej Exp $  
+	$NetBSD: syscalls.master,v 1.4.2.3 2002/03/16 16:00:35 jdolecek Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -153,9 +153,9 @@
 73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *set); }
 74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
 			    u_int len);}
-75	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
+75	STD		{ int linux_sys_setrlimit(u_int which, \
 			    struct orlimit *rlp); }
-76	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
+76	STD		{ int linux_sys_getrlimit(u_int which, \
 			    struct orlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 78	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
@@ -364,16 +364,17 @@
 207	UNIMPL		sendfile
 208	UNIMPL
 209	UNIMPL
-210	UNIMPL		mmap2
+210	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
+			    int prot, int flags, int fd, off_t offset); }
 211	STD		{ int linux_sys_truncate64(const char *path, \
 			    off_t length); }
 212	UNIMPL		ftruncate64
 213	STD		{ int linux_sys_stat64(const char *path, \
-			     struct linux_stat64 *sp); }
+			    struct linux_stat64 *sp); }
 214	STD		{ int linux_sys_lstat64(const char *path, \
-			     struct linux_stat64 *sp); }
+			    struct linux_stat64 *sp); }
 215	STD		{ int linux_sys_fstat64(int fd, \
-			     struct linux_stat64 *sp); }
+			    struct linux_stat64 *sp); }
 216	UNIMPL		pivot_root
 217	UNIMPL		mincore
 218	UNIMPL		modvise

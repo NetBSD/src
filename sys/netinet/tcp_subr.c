@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.112.2.3 2002/01/10 20:03:02 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.112.2.4 2002/03/16 16:02:15 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.112.2.3 2002/01/10 20:03:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.112.2.4 2002/03/16 16:02:15 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -236,7 +236,7 @@ tcp_init()
 	int hlen;
 
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
-	    0, NULL, NULL, M_PCB);
+	    NULL);
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 #ifdef INET6
 	tcb6.in6p_next = tcb6.in6p_prev = &tcb6;

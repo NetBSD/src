@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.15.4.1 2001/08/03 04:11:53 lukem Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.15.4.2 2002/03/16 15:58:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -248,6 +248,7 @@ bmac_attach(parent, self, aux)
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = bmac_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = bmac_mii_readreg;
@@ -583,7 +584,7 @@ bmac_start(ifp)
 		if (ifp->if_flags & IFF_OACTIVE)
 			return;
 
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102.2.1 2001/09/13 01:15:00 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.102.2.2 2002/03/16 16:00:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -494,7 +494,7 @@ trap(type, code, v, tf)
 		}
 
 		if (WRFAULT(code))
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 		va = m68k_trunc_page((vaddr_t)v);

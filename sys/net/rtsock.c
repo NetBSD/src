@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.47.2.2 2002/01/10 20:02:21 thorpej Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.47.2.3 2002/03/16 16:02:09 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.47.2.2 2002/01/10 20:02:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.47.2.3 2002/03/16 16:02:09 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -217,6 +217,7 @@ route_output(m, va_alist)
 	struct ifaddr *ifa = 0;
 	struct socket *so;
 	va_list ap;
+	sa_family_t family;
 
 	va_start(ap, m);
 	so = va_arg(ap, struct socket *);
@@ -408,6 +409,7 @@ flush:
 		else 
 			rtm->rtm_flags |= RTF_DONE;
 	}
+	family = dst ? dst->sa_family : 0;
 	if (rt)
 		rtfree(rt);
     {
@@ -436,8 +438,8 @@ flush:
 	}
 	if (rp)
 		rp->rcb_proto.sp_family = 0; /* Avoid us */
-	if (dst)
-		route_proto.sp_protocol = dst->sa_family;
+	if (family)
+		route_proto.sp_protocol = family;
 	if (m)
 		raw_input(m, &route_proto, &route_src, &route_dst);
 	if (rp)

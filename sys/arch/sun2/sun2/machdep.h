@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.4.2.1 2002/01/10 19:49:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4.2.2 2002/03/16 16:00:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -64,7 +64,6 @@ struct reg;
 struct trapframe;
 struct uio;
 
-extern int cold;
 extern int fputype;
 
 extern label_t *nofault;

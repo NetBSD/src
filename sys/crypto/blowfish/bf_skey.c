@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_skey.c,v 1.2.6.1 2002/01/10 19:52:33 thorpej Exp $	*/
+/*	$NetBSD: bf_skey.c,v 1.2.6.2 2002/03/16 16:00:42 jdolecek Exp $	*/
 /*	$KAME: bf_skey.c,v 1.5 2000/11/06 13:58:08 itojun Exp $	*/
 
 /* crypto/bf/bf_skey.c */
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_skey.c,v 1.2.6.1 2002/01/10 19:52:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_skey.c,v 1.2.6.2 2002/03/16 16:00:42 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -113,14 +113,14 @@ BF_set_key(key, len, data)
 	in[0] = 0L;
 	in[1] = 0L;
 	for (i = 0; i < BF_ROUNDS + 2; i += 2) {
-		BF_encrypt(in, key, BF_ENCRYPT);
+		BF_encrypt(in, key);
 		p[i  ] = in[0];
 		p[i+1] = in[1];
 	}
 
 	p = key->S;
 	for (i = 0; i < 4 * 256; i += 2) {
-		BF_encrypt(in, key, BF_ENCRYPT);
+		BF_encrypt(in, key);
 		p[i  ] = in[0];
 		p[i+1] = in[1];
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.52.2.2 2002/01/10 20:05:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.52.2.3 2002/03/16 16:02:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.52.2.2 2002/01/10 20:05:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.52.2.3 2002/03/16 16:02:30 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -183,7 +183,7 @@ static struct pool vndbuf_pool;
 
 #define	getvndxfer(vnx)	do {						\
 	int s = splbio();						\
-	vnx = pool_get(&vndxfer_pool, PR_MALLOCOK|PR_WAITOK);		\
+	vnx = pool_get(&vndxfer_pool, PR_WAITOK);			\
 	splx(s);							\
 } while (0)
 
@@ -193,7 +193,7 @@ static struct pool vndbuf_pool;
 
 #define	getvndbuf(vbp)	do {						\
 	int s = splbio();						\
-	vbp = pool_get(&vndbuf_pool, PR_MALLOCOK|PR_WAITOK);		\
+	vbp = pool_get(&vndbuf_pool, PR_WAITOK);			\
 	splx(s);							\
 } while (0)
 
@@ -278,10 +278,10 @@ uvm_swap_init()
 	 */
 
 	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0,
-	    "swp vnx", 0, NULL, NULL, 0);
+	    "swp vnx", NULL);
 
 	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0,
-	    "swp vnd", 0, NULL, NULL, 0);
+	    "swp vnd", NULL);
 
 	/*
 	 * done!

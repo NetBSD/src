@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2000/11/20 08:24:23 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.4.1 2002/03/16 16:00:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -99,7 +99,7 @@ bad:
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.
@@ -158,7 +158,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp,
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)

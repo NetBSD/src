@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.4.1 2002/01/10 19:45:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.18.4.2 2002/03/16 15:58:20 jdolecek Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -6,10 +6,10 @@ BASE= dosboot
 PROG= ${BASE}.com
 NOMAN=	# defined
 NEWVERSWHAT=	"DOS Boot"
+STARTFILE=	${DOSSTART}
+RELOC=		0x100
 
 SRCS= main.c devopen.c exec.c
-
-CLEANFILES+= ${DOSSTART} ${BASE}.sym
 
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 CPPFLAGS+= -DXMS

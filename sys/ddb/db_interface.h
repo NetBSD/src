@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.6.4.2 2002/01/10 19:52:39 thorpej Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.6.4.3 2002/03/16 16:00:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _DDB_DB_INTERFACE_H_
 
 /* arch/<arch>/<arch>/db_disasm.c */
-db_addr_t db_disasm __P((db_addr_t, boolean_t));
+db_addr_t	db_disasm(db_addr_t, boolean_t);
 
 /* arch/<arch>/<arch>/db_interface.c */
 #ifdef DB_MACHINE_COMMANDS
@@ -49,20 +49,20 @@ extern const struct db_command db_machine_command_table[];
 
 /* arch/<arch>/<arch>/db_trace.c */
 /* arch/vax/vax/db_machdep.c */
-void db_stack_trace_print __P((db_expr_t, int, db_expr_t, char *,
-    void (*)(const char *, ...)));
+void		db_stack_trace_print(db_expr_t, int, db_expr_t, char *,
+		    void (*)(const char *, ...));
 
 /* kern/kern_proc.c */
-void db_kill_proc __P((db_expr_t, int, db_expr_t, char *));
-void db_show_all_procs __P((db_expr_t, int, db_expr_t, char *));
+void		db_kill_proc(db_expr_t, int, db_expr_t, char *);
+void		db_show_all_procs(db_expr_t, int, db_expr_t, char *);
 
 /* kern/kern_clock.c */
-void db_show_callout __P((db_expr_t, int, db_expr_t, char *));
+void		db_show_callout(db_expr_t, int, db_expr_t, char *);
 
 /* kern/subr_log.c */
-void db_dmesg __P((db_expr_t, int, db_expr_t, char *));
+void		db_dmesg(db_expr_t, int, db_expr_t, char *);
 
 /* netinet/if_arp.c */
-void db_show_arptab __P((db_expr_t, int, db_expr_t, char *));
+void		db_show_arptab(db_expr_t, int, db_expr_t, char *);
 
 #endif /* _DDB_DB_INTERFACE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.76.2.1 2002/01/10 20:00:17 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.76.2.2 2002/03/16 16:01:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.76.2.1 2002/01/10 20:00:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.76.2.2 2002/03/16 16:01:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,7 @@ bufinit()
 	 * which are strictly I/O control blocks, not buffer cache
 	 * buffers.
 	 */
-	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", 0,
-	    NULL, NULL, M_DEVBUF);
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
@@ -668,7 +667,8 @@ start:
 			goto start;
 		}
 #ifdef DIAGNOSTIC
-		if (ISSET(bp->b_flags, B_DONE|B_DELWRI) && bp->b_bcount < size)
+		if (ISSET(bp->b_flags, B_DONE|B_DELWRI) &&
+		    bp->b_bcount < size && vp->v_type != VBLK)
 			panic("getblk: block size invariant failed");
 #endif
 		SET(bp->b_flags, B_BUSY);

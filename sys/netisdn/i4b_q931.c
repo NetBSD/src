@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.4.2.1 2002/01/10 20:03:40 thorpej Exp $ 
+ *	$Id: i4b_q931.c,v 1.4.2.2 2002/03/16 16:02:17 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.4.2.1 2002/01/10 20:03:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.4.2.2 2002/03/16 16:02:17 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -138,7 +138,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 
 		if(*msg_ptr != protoflag)
 		{
-			NDBGL3(L3_P_ERR, "unknown protocol discriminator 0x%x!", *msg_ptr);
+			NDBGL3(L3_P_MSG, "unknown protocol discriminator 0x%x!", *msg_ptr);
 			protoflag = *msg_ptr;
 		}			
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2.2.1 2002/02/11 20:07:34 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.2.2.2 2002/03/16 15:57:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,7 +69,6 @@
 
 #define	KERNBASE	0x00002000	/* start of kernel virtual */
 
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>

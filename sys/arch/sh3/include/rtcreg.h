@@ -1,5 +1,4 @@
-/* $Id: rtcreg.h,v 1.4 2001/04/22 16:50:17 uch Exp $ */
-/* $NetBSD: rtcreg.h,v 1.4 2001/04/22 16:50:17 uch Exp $ */
+/*	$NetBSD: rtcreg.h,v 1.4.2.1 2002/03/16 15:59:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -29,69 +28,77 @@
 
 #ifndef _SH3_RTCREG_H__
 #define _SH3_RTCREG_H__
+#include <sh3/devreg.h>
 
 /*
- * Real Time Clock
+ * RTC
  */
+#define SH3_R64CNT			0xfffffec0
+#define SH3_RSECCNT			0xfffffec2
+#define SH3_RMINCNT			0xfffffec4
+#define SH3_RHRCNT			0xfffffec6
+#define SH3_RWKCNT			0xfffffec8
+#define SH3_RDAYCNT			0xfffffeca
+#define SH3_RMONCNT			0xfffffecc
+#define SH3_RYRCNT			0xfffffece
+#define SH3_RSECAR			0xfffffed0
+#define SH3_RMINAR			0xfffffed2
+#define SH3_RHRAR			0xfffffed4
+#define SH3_RWKAR			0xfffffed6
+#define SH3_RDAYAR			0xfffffed8
+#define SH3_RMONAR			0xfffffeda
+#define SH3_RCR1			0xfffffedc
+#define SH3_RCR2			0xfffffede
 
-#if !defined(SH4)
+#define SH4_R64CNT			0xffc80000
+#define SH4_RSECCNT			0xffc80004
+#define SH4_RMINCNT			0xffc80008
+#define SH4_RHRCNT			0xffc8000c
+#define SH4_RWKCNT			0xffc80010
+#define SH4_RDAYCNT			0xffc80014
+#define SH4_RMONCNT			0xffc80018
+#define SH4_RYRCNT			0xffc8001c	/* 16 bit */
+#define SH4_RSECAR			0xffc80020
+#define SH4_RMINAR			0xffc80024
+#define SH4_RHRAR			0xffc80028
+#define SH4_RWKAR			0xffc8002c
+#define SH4_RDAYAR			0xffc80030
+#define SH4_RMONAR			0xffc80034
+#define SH4_RCR1			0xffc80038
+#define SH4_RCR2			0xffc8003c
 
-/* SH3 definitions */
+#define   SH_RCR1_CF			  0x80
+#define   SH_RCR1_CIE			  0x10
+#define   SH_RCR1_AIE			  0x08
+#define   SH_RCR1_AF			  0x01
+#define   SH_RCR2_PEF			  0x80
+#define   SH_RCR2_PES2			  0x40
+#define   SH_RCR2_PES1			  0x20
+#define   SH_RCR2_PES0			  0x10
+#define   SH_RCR2_ENABLE		  0x08
+#define   SH_RCR2_ADJ			  0x04
+#define   SH_RCR2_RESET			  0x02
+#define   SH_RCR2_START			  0x01
 
-#define SHREG_R64CNT	(*(volatile unsigned char *)	0xFFFFFEC0)
-#define SHREG_RSECCNT	(*(volatile unsigned char *)	0xFFFFFEC2)
-#define SHREG_RMINCNT	(*(volatile unsigned char *)	0xFFFFFEC4)
-#define SHREG_RHRCNT	(*(volatile unsigned char *)	0xFFFFFEC6)
-#define SHREG_RWKCNT	(*(volatile unsigned char *)	0xFFFFFEC8)
-#define SHREG_RDAYCNT	(*(volatile unsigned char *)	0xFFFFFECA)
-#define SHREG_RMONCNT	(*(volatile unsigned char *)	0xFFFFFECC)
-#define SHREG_RYRCNT	(*(volatile unsigned char *)	0xFFFFFECE)
-#define SHREG_RSECAR	(*(volatile unsigned char *)	0xFFFFFED0)
-#define SHREG_RMINAR	(*(volatile unsigned char *)	0xFFFFFED2)
-#define SHREG_RHRAR	(*(volatile unsigned char *)	0xFFFFFED4)
-#define SHREG_RWKAR	(*(volatile unsigned char *)	0xFFFFFED6)
-#define SHREG_RDAYAR	(*(volatile unsigned char *)	0xFFFFFED8)
-#define SHREG_RMONAR	(*(volatile unsigned char *)	0xFFFFFEDA)
-#define SHREG_RCR1	(*(volatile unsigned char *)	0xFFFFFEDC)
-#define SHREG_RCR2	(*(volatile unsigned char *)	0xFFFFFEDE)
-
-#else
-
-/* SH4 definitions */
-
-#define SHREG_R64CNT	(*(volatile unsigned char *)	0xffc80000)
-#define SHREG_RSECCNT	(*(volatile unsigned char *)	0xffc80004)
-#define SHREG_RMINCNT	(*(volatile unsigned char *)	0xffc80008)
-#define SHREG_RHRCNT	(*(volatile unsigned char *)	0xffc8000c)
-#define SHREG_RWKCNT	(*(volatile unsigned char *)	0xffc80010)
-#define SHREG_RDAYCNT	(*(volatile unsigned char *)	0xffc80014)
-#define SHREG_RMONCNT	(*(volatile unsigned char *)	0xffc80018)
-#define SHREG_RYRCNT	(*(volatile unsigned short *)	0xffc8001c)
-#define SHREG_RSECAR	(*(volatile unsigned char *)	0xffc80020)
-#define SHREG_RMINAR	(*(volatile unsigned char *)	0xffc80024)
-#define SHREG_RHRAR	(*(volatile unsigned char *)	0xffc80028)
-#define SHREG_RWKAR	(*(volatile unsigned char *)	0xffc8002c)
-#define SHREG_RDAYAR	(*(volatile unsigned char *)	0xffc80030)
-#define SHREG_RMONAR	(*(volatile unsigned char *)	0xffc80034)
-#define SHREG_RCR1	(*(volatile unsigned char *)	0xffc80038)
-#define SHREG_RCR2	(*(volatile unsigned char *)	0xffc8003c)
-
-#endif
-
-#define SHREG_RCR1_CF		0x80
-#define SHREG_RCR1_CIE		0x10
-#define SHREG_RCR1_AIE		0x08
-#define SHREG_RCR1_AF		0x01
-
-#define SHREG_RCR2_PEF		0x80
-#define SHREG_RCR2_PES2		0x40
-#define SHREG_RCR2_PES1		0x20
-#define SHREG_RCR2_PES0		0x10
-#define SHREG_RCR2_ENABLE	0x08
-#define SHREG_RCR2_ADJ		0x04
-#define SHREG_RCR2_RESET	0x02
-#define SHREG_RCR2_START	0x01
-
-#define SHREG_RCR2_P64		(SHREG_RCR2_PES1)
+#ifndef _LOCORE
+#if defined(SH3) && defined(SH4)
+extern u_int32_t __sh_R64CNT;
+extern u_int32_t __sh_RSECCNT;
+extern u_int32_t __sh_RMINCNT;
+extern u_int32_t __sh_RHRCNT;
+extern u_int32_t __sh_RWKCNT;
+extern u_int32_t __sh_RDAYCNT;
+extern u_int32_t __sh_RMONCNT;
+extern u_int32_t __sh_RYRCNT;
+extern u_int32_t __sh_RSECAR;
+extern u_int32_t __sh_RMINAR;
+extern u_int32_t __sh_RHRAR;
+extern u_int32_t __sh_RWKAR;
+extern u_int32_t __sh_RDAYAR;
+extern u_int32_t __sh_RMONAR;
+extern u_int32_t __sh_RCR1;
+extern u_int32_t __sh_RCR2;
+#endif /* SH3 && SH4 */
+#endif /* !_LOCORE */
 
 #endif /* !_SH3_RTCREG_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.15.4.1 2002/01/10 19:45:35 thorpej Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.15.4.2 2002/03/16 15:58:25 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -252,7 +252,6 @@ pm_setup_adb()
 	switch (mac68k_machine.machineid) {
 		case MACH_MACPB140:
 		case MACH_MACPB145:
-		case MACH_MACPB150:
 		case MACH_MACPB160:
 		case MACH_MACPB165:
 		case MACH_MACPB165C:
@@ -261,6 +260,7 @@ pm_setup_adb()
 		case MACH_MACPB180C:
 			pmHardware = PM_HW_PB1XX;
 			break;
+		case MACH_MACPB150:
 		case MACH_MACPB210:
 		case MACH_MACPB230:
 		case MACH_MACPB250:
@@ -1054,6 +1054,7 @@ pm_adb_op(buffer, compRout, data, command)
 	delay = 0x80000;
 	while (adbWaiting == 1) {
 		switch (mac68k_machine.machineid) {
+		case MACH_MACPB150:
 		case MACH_MACPB210:
 		case MACH_MACPB230:	/* daishi tested with Duo230 */
 		case MACH_MACPB250:

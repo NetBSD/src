@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.3.8.1 2002/01/10 20:00:41 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.3.8.2 2002/03/16 16:01:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -100,7 +100,7 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 	return (sbuf - buf);
 }
 
-void
+static void
 kdoprnt(put, fmt, ap)
 	void (*put)__P((int));
 	const char *fmt;

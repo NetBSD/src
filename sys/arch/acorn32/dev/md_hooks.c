@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.1.6.2 2002/01/10 19:36:08 thorpej Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.1.6.3 2002/03/16 15:55:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -38,10 +38,8 @@
 
 #include <dev/md.h>
 
-#include "opt_mdsize.h"
-
-#ifdef	MINIROOTSIZE
-#define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
+#ifdef	MEMORY_DISK_SIZE
+#define ROOTBYTES (MEMORY_DISK_SIZE << DEV_BSHIFT)
 
 /*
  * This array will be patched to contain a file-system image.
@@ -50,7 +48,7 @@
 int md_root_size = ROOTBYTES;
 char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
-#else	/* MINIROOTSIZE */
+#else	/* MEMORY_DISK_SIZE */
 
 u_int memory_disc_size = 0;		/* set by machdep.c */
 static struct md_conf *bootmd = NULL;
@@ -58,7 +56,7 @@ static struct md_conf *bootmd = NULL;
 extern int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
 
 #include "fdc.h"
-#endif	/* MINIROOTSIZE */
+#endif	/* MEMORY_DISK_SIZE */
 
 void
 md_attach_hook(unit, md)
@@ -66,23 +64,23 @@ md_attach_hook(unit, md)
 	struct md_conf *md;
 {
 	if (unit == 0) {
-#ifdef MINIROOTSIZE
+#ifdef MEMORY_DISK_SIZE
 		/* Setup root ramdisk */
 		md->md_addr = (caddr_t) md_root_image;
 		md->md_size = (size_t)  md_root_size;
 		md->md_type = MD_KMEM_FIXED;
-#else	/* MINIROOTSIZE */
-#ifdef MEMORY_DISK_SIZE
-		if (memory_disc_size == 0 && MEMORY_DISK_SIZE)
-			memory_disc_size = (MEMORY_DISK_SIZE << DEV_BSHIFT);
-#endif	/* MEMORY_DISK_SIZE */
+#else	/* MEMORY_DISK_SIZE */
+#ifdef OLD_MEMORY_DISK_SIZE
+		if (memory_disc_size == 0 && OLD_MEMORY_DISK_SIZE)
+			memory_disc_size = (OLD_MEMORY_DISK_SIZE << DEV_BSHIFT);
+#endif	/* OLD_MEMORY_DISK_SIZE */
 		if (memory_disc_size != 0) {
 			md->md_size = round_page(memory_disc_size);
 			md->md_addr = (caddr_t)uvm_km_zalloc(kernel_map, memory_disc_size);
 			md->md_type = MD_KMEM_FIXED;
 			bootmd = md;
 		}
-#endif	/* MINIROOTSIZE */
+#endif	/* MEMORY_DISK_SIZE */
 		printf("md%d: allocated %ldK (%ld blocks)\n", unit, (long)md->md_size / 1024, (long)md->md_size / DEV_BSIZE);
 	}
 }
@@ -100,7 +98,7 @@ md_open_hook(unit, md)
 	if (unit == 0) {
 		/* The root memory disk only works single-user. */
 		boothowto |= RB_SINGLE;
-#if !defined(MINIROOTSIZE) && NFDC > 0
+#if !defined(MEMORY_DISK_SIZE) && NFDC > 0
 		load_memory_disc_from_floppy(bootmd, makedev(17, 1));	/* XXX 1.44MB FD */
 #endif
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.17.2.1 2002/01/10 19:38:39 thorpej Exp $ */
+/* $NetBSD: arcvideo.c,v 1.17.2.2 2002/03/16 15:56:19 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -34,12 +34,12 @@
  * The Arc video system is rather closely tied into the heart of the
  * machine, being partly controlled by the MEMC.  Similarly, this
  * driver will probably end up with its tentacles throughout the
- * kernel, though in theory it should be posible to leave it out.
+ * kernel, though in theory it should be possible to leave it out.
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.17.2.1 2002/01/10 19:38:39 thorpej Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.17.2.2 2002/03/16 15:56:19 jdolecek Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>

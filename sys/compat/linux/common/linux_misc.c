@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.92.2.3 2002/01/10 19:51:43 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.92.2.4 2002/03/16 16:00:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.92.2.3 2002/01/10 19:51:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.92.2.4 2002/03/16 16:00:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,38 @@ const int linux_ptrace_request_map[] = {
 	-1
 };
 
+const static struct mnttypes {
+	char *bsd;
+	int linux;
+} fstypes[] = {
+	{ MOUNT_FFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_NFS,		LINUX_NFS_SUPER_MAGIC 		},
+	{ MOUNT_MFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_MSDOS,		LINUX_MSDOS_SUPER_MAGIC		},
+	{ MOUNT_LFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_FDESC,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_PORTAL,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_NULL,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_OVERLAY,	LINUX_DEFAULT_SUPER_MAGIC	},	
+	{ MOUNT_UMAP,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_KERNFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_PROCFS,		LINUX_PROC_SUPER_MAGIC		},
+	{ MOUNT_AFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_CD9660,		LINUX_ISOFS_SUPER_MAGIC		},
+	{ MOUNT_UNION,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_ADOSFS,		LINUX_ADFS_SUPER_MAGIC		},
+	{ MOUNT_EXT2FS,		LINUX_EXT2_SUPER_MAGIC		},
+	{ MOUNT_CFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_CODA,		LINUX_CODA_SUPER_MAGIC		},
+	{ MOUNT_FILECORE,	LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_NTFS,		LINUX_DEFAULT_SUPER_MAGIC	},
+	{ MOUNT_SMBFS,		LINUX_SMB_SUPER_MAGIC		}
+};
+#define FSTYPESSIZE (sizeof(fstypes) / sizeof(fstypes[0]))
+
 /* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
+static int linux_to_bsd_limit __P((int));
 
 /*
  * The information on a terminated (or stopped) process needs
@@ -260,17 +290,33 @@ bsd_to_linux_statfs(bsp, lsp)
 	struct statfs *bsp;
 	struct linux_statfs *lsp;
 {
+	int i;
 
-	lsp->l_ftype = bsp->f_type;
+	for (i = 0; i < FSTYPESSIZE; i++)
+		if (strcmp(bsp->f_fstypename, fstypes[i].bsd) == 0)
+			break;
+
+	if (i == FSTYPESSIZE) {
+#ifdef DIAGNOSTIC
+		printf("unhandled fstype in linux emulation: %s\n",
+		    bsp->f_fstypename);
+#endif
+		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
+	} else {
+		lsp->l_ftype = fstypes[i].linux;
+	}
+
 	lsp->l_fbsize = bsp->f_bsize;
 	lsp->l_fblocks = bsp->f_blocks;
 	lsp->l_fbfree = bsp->f_bfree;
 	lsp->l_fbavail = bsp->f_bavail;
 	lsp->l_ffiles = bsp->f_files;
 	lsp->l_fffree = bsp->f_ffree;
+	/* Linux sets the fsid to 0..., we don't */
 	lsp->l_ffsid.val[0] = bsp->f_fsid.val[0];
 	lsp->l_ffsid.val[1] = bsp->f_fsid.val[1];
 	lsp->l_fnamelen = MAXNAMLEN;	/* XXX */
+	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
 }
 
 /*
@@ -344,10 +390,6 @@ linux_sys_fstatfs(p, v, retval)
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
 
-char linux_sysname[] = "Linux";
-char linux_release[] = "2.0.38";
-char linux_version[] = "#0 Sun Apr 1 11:11:11 MET 2000";
-
 /*
  * uname(). Just copy the info from the various strings stored in the
  * kernel, and put it in the Linux utsname structure. That structure
@@ -414,6 +456,45 @@ linux_sys_mmap(p, v, retval)
 	SCARG(&cma,flags) = flags;
 	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
 	SCARG(&cma,pad) = 0;
+	SCARG(&cma,pos) = (off_t)SCARG(uap, offset);
+
+	return sys_mmap(p, &cma, retval);
+}
+
+/*
+ * Newer type Linux mmap call.
+ */
+int
+linux_sys_mmap2(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_mmap2_args /* {
+		syscallarg(void *) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) prot;
+		syscallarg(int) flags;
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+	} */ *uap = v;
+	struct sys_mmap_args cma;
+	int flags;
+	
+	flags = 0;
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_SHARED, MAP_SHARED);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_PRIVATE, MAP_PRIVATE);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_FIXED, MAP_FIXED);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_ANON, MAP_ANON);
+	/* XXX XAX ERH: Any other flags here?  There are more defined... */
+
+	SCARG(&cma,addr) = (void *)SCARG(uap, addr);
+	SCARG(&cma,len) = SCARG(uap, len);
+	SCARG(&cma,prot) = SCARG(uap, prot);
+	if (SCARG(&cma,prot) & VM_PROT_WRITE) /* XXX */
+		SCARG(&cma,prot) |= VM_PROT_READ;
+	SCARG(&cma,flags) = flags;
+	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
 	SCARG(&cma,pos) = (off_t)SCARG(uap, offset);
 
 	return sys_mmap(p, &cma, retval);
@@ -1087,31 +1168,6 @@ linux_sys_getfsuid(p, v, retval)
 #endif
 
 int
-linux_sys___sysctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys___sysctl_args /* {
-		syscallarg(struct linux___sysctl *) lsp;
-	} */ *uap = v;
-	struct linux___sysctl ls;
-	struct sys___sysctl_args bsa;
-	int error;
-
-	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof ls)))
-		return error;
-	SCARG(&bsa, name) = ls.name;
-	SCARG(&bsa, namelen) = ls.namelen;
-	SCARG(&bsa, old) = ls.old;
-	SCARG(&bsa, oldlenp) = ls.oldlenp;
-	SCARG(&bsa, new) = ls.new;
-	SCARG(&bsa, newlen) = ls.newlen;
-
-	return sys___sysctl(p, &bsa, retval);
-}
-
-int
 linux_sys_setresuid(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -1422,6 +1478,120 @@ linux_sys_sysinfo(p, v, retval)
 
 	return (copyout(&si, SCARG(uap, arg), sizeof si));
 }
+
+#define bsd_to_linux_rlimit1(l, b, f) \
+    (l)->f = ((b)->f == RLIM_INFINITY || ((b)->f & 0xffffffff00000000) != 0) ? \
+    LINUX_RLIM_INFINITY : (int32_t)(b)->f
+#define bsd_to_linux_rlimit(l, b) \
+    bsd_to_linux_rlimit1(l, b, rlim_cur); \
+    bsd_to_linux_rlimit1(l, b, rlim_max)
+
+#define linux_to_bsd_rlimit1(b, l, f) \
+    (b)->f = (l)->f == LINUX_RLIM_INFINITY ? RLIM_INFINITY : (b)->f
+#define linux_to_bsd_rlimit(b, l) \
+    linux_to_bsd_rlimit1(b, l, rlim_cur); \
+    linux_to_bsd_rlimit1(b, l, rlim_max)
+
+static int
+linux_to_bsd_limit(lim)
+	int lim;
+{
+	switch (lim) {
+	case LINUX_RLIMIT_CPU:
+		return RLIMIT_CPU;
+	case LINUX_RLIMIT_FSIZE:
+		return RLIMIT_FSIZE;
+	case LINUX_RLIMIT_DATA:
+		return RLIMIT_DATA;
+	case LINUX_RLIMIT_STACK:
+		return RLIMIT_STACK;
+	case LINUX_RLIMIT_CORE:
+		return RLIMIT_CORE;
+	case LINUX_RLIMIT_RSS:
+		return RLIMIT_RSS;
+	case LINUX_RLIMIT_NPROC:
+		return RLIMIT_NPROC;
+	case LINUX_RLIMIT_NOFILE:
+		return RLIMIT_NOFILE;
+	case LINUX_RLIMIT_MEMLOCK:
+		return RLIMIT_MEMLOCK;
+	case LINUX_RLIMIT_AS:
+	case LINUX_RLIMIT_LOCKS:
+		return -EOPNOTSUPP;
+	default:
+		return -EINVAL;
+	}
+}
+
+
+int
+linux_sys_getrlimit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getrlimit_args /* {
+		syscallarg(int) which;
+		syscallarg(struct orlimit *) rlp;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+	struct sys_getrlimit_args ap;
+	struct rlimit rl;
+	struct orlimit orl;
+	int error;
+
+	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
+	if ((error = SCARG(&ap, which)) < 0)
+		return -error;
+	SCARG(&ap, rlp) = stackgap_alloc(&sg, sizeof rl);
+	if ((error = sys_getrlimit(p, &ap, retval)) != 0)
+		return error;
+	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
+		return error;
+	bsd_to_linux_rlimit(&orl, &rl);
+	return copyout(&orl, SCARG(uap, rlp), sizeof(orl));
+}
+
+int
+linux_sys_setrlimit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setrlimit_args /* {
+		syscallarg(int) which;
+		syscallarg(struct orlimit *) rlp;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+	struct sys_setrlimit_args ap;
+	struct rlimit rl;
+	struct orlimit orl;
+	int error;
+
+	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
+	SCARG(&ap, rlp) = stackgap_alloc(&sg, sizeof rl);
+	if ((error = SCARG(&ap, which)) < 0)
+		return -error;
+	if ((error = copyin(SCARG(uap, rlp), &orl, sizeof(orl))) != 0)
+		return error;
+	linux_to_bsd_rlimit(&rl, &orl);
+	/* XXX: alpha complains about this */
+	if ((error = copyout(&rl, (void *)SCARG(&ap, rlp), sizeof(rl))) != 0)
+		return error;
+	return sys_setrlimit(p, &ap, retval);
+}
+
+#ifndef __mips__
+/* XXX: this doesn't look 100% common, at least mips doesn't have it */
+int
+linux_sys_ugetrlimit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return linux_sys_getrlimit(p, v, retval);
+}
+#endif
 
 /*
  * This gets called for unsupported syscalls. The difference to sys_nosys()

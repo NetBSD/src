@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27.2.1 2001/08/25 06:15:51 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.27.2.2 2002/03/16 15:59:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -67,8 +67,9 @@
 #include <uvm/uvm_extern.h>
 
 #include <sh3/trapreg.h>
+#include <sh3/mmu.h>
+
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
@@ -80,26 +81,40 @@
 #include <sys/kgdb.h>
 #endif
 
-extern int cpu_debug_mode;
+const char *trap_type[] = {
+	"power-on",				/* 0x000 T_POWERON */
+	"manual reset",				/* 0x020 T_RESET */
+	"TLB miss/invalid (load)",		/* 0x040 T_TLBMISSR */
+	"TLB miss/invalid (store)",		/* 0x060 T_TLBMISSW */
+	"initial page write",			/* 0x080 T_INITPAGEWR */
+	"TLB protection violation (load)",	/* 0x0a0 T_TLBPRIVR */
+	"TLB protection violation (store)",	/* 0x0c0 T_TLBPRIVW */
+	"address error (load)",			/* 0x0e0 T_ADDRESSERRR */
+	"address error (store)",		/* 0x100 T_ADDRESSERRW */
+	"unknown trap (0x120)",			/* 0x120 */
+	"unknown trap (0x140)",			/* 0x140 */
+	"unconditional trap (TRAPA)",		/* 0x160 T_TRAP */
+	"reserved instruction code exception",	/* 0x180 T_INVALIDISN */
+	"illegal slot instruction exception",	/* 0x1a0 T_INVALIDSLOT */
+	"nonmaskable interrupt",		/* 0x1c0 T_NMI */
+	"user break point trap",		/* 0x1e0 T_USERBREAK */
+};
+const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
-static __inline void userret __P((struct proc *, int, u_quad_t));
-void trap __P((int, int, int, int, struct trapframe));
-int trapwrite __P((unsigned));
-void syscall __P((struct trapframe *));
-void
-tlb_handler __P((
-	    int p1, int p2, int p3, int p4, /* These four param is dummy */
-	    struct trapframe frame));
+int	trapdebug = 1;
+
+static __inline void userret(struct proc *, int, u_quad_t);
+void trap(struct trapframe *);
+int trapwrite(unsigned);
+void syscall(struct trapframe *);
+void tlb_handler(int, int, int, int /* dummy 4 param  */, struct trapframe);
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
 static __inline void
-userret(p, pc, oticks)
-	register struct proc *p;
-	int pc;
-	u_quad_t oticks;
+userret(struct proc *p, int pc, u_quad_t oticks)
 {
 	int sig;
 
@@ -128,31 +143,6 @@ userret(p, pc, oticks)
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
-char	*trap_type[] = {
-	"power-on",				/* 0x000 T_POWERON */
-	"manual reset",				/* 0x020 T_RESET */
-	"TLB miss/invalid (load)",		/* 0x040 T_TLBMISSR */
-	"TLB miss/invalid (store)",		/* 0x060 T_TLBMISSW */
-	"initial page write",			/* 0x080 T_INITPAGEWR */
-	"TLB protection violation (load)",	/* 0x0a0 T_TLBPRIVR */
-	"TLB protection violation (store)",	/* 0x0c0 T_TLBPRIVW */
-	"address error (load)",			/* 0x0e0 T_ADDRESSERRR */
-	"address error (store)",		/* 0x100 T_ADDRESSERRW */
-	"unknown trap (0x120)",			/* 0x120 */
-	"unknown trap (0x140)",			/* 0x140 */
-	"unconditional trap (TRAPA)",		/* 0x160 T_TRAP */
-	"reserved instruction code exception",	/* 0x180 T_INVALIDISN */
-	"illegal slot instruction exception",	/* 0x1a0 T_INVALIDSLOT */
-	"nonmaskable interrupt",		/* 0x1c0 T_NMI */
-	"user break point trap",		/* 0x1e0 T_USERBREAK */
-};
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
-
-#define	DEBUG 1
-#ifdef DEBUG
-int	trapdebug = 1;
-#endif
-
 /*
  * trap(frame):
  *	Exception, fault, and trap interface to BSD kernel. This
@@ -163,12 +153,10 @@ int	trapdebug = 1;
  */
 /*ARGSUSED*/
 void
-trap(p1, p2, p3, p4, frame)
-     int p1, p2, p3, p4; /* dummy param */
-     struct trapframe frame;
+trap(struct trapframe *tf)
 {
 	register struct proc *p = curproc;
-	int type = frame.tf_trapno;
+	int type = tf->tf_trapno;
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
 	int resume;
@@ -181,15 +169,15 @@ trap(p1, p2, p3, p4, frame)
 #ifdef TRAPDEBUG
 	if (trapdebug) {
 		printf("trap %x spc %x ssr %x \n",
-			   frame.tf_trapno, frame.tf_spc, frame.tf_ssr);
+			   tf->tf_trapno, tf->tf_spc, tf->tf_ssr);
 		printf("curproc %p\n", curproc);
 	}
 #endif
 
-	if (!KERNELMODE(frame.tf_r15, frame.tf_ssr)) {
+	if (!KERNELMODE(tf->tf_ssr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
-		p->p_md.md_regs = &frame;
+		p->p_md.md_regs = tf;
 	}
 	else
 		sticks = 0;
@@ -199,32 +187,37 @@ trap(p1, p2, p3, p4, frame)
 	default:
 	we_re_toast:
 #ifdef DDB
-		if (kdb_trap(type, 0, &frame))
+		if (kdb_trap(type, 0, tf))
 			return;
 #endif
-		if (frame.tf_trapno >> 5 < trap_types)
-			printf("fatal %s", trap_type[frame.tf_trapno >> 5]);
+#ifdef KGDB
+		if (kgdb_trap(T_USERBREAK, tf))
+			return;
+#endif
+
+		if (tf->tf_trapno >> 5 < trap_types)
+			printf("fatal %s", trap_type[tf->tf_trapno >> 5]);
 		else
-			printf("unknown trap %x", frame.tf_trapno);
+			printf("unknown trap %x", tf->tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %x spc %x ssr %x \n",
-			   type, frame.tf_spc, frame.tf_ssr);
+			   type, tf->tf_spc, tf->tf_ssr);
 
 		panic("trap");
 		/*NOTREACHED*/
 
 	case T_TRAP|T_USER:
-		if (SHREG_TRA == (0x000000c3 << 2)) {
+		if (_reg_read_4(SH_(TRA)) == (0x000000c3 << 2)) {
 			trapsignal(p, SIGTRAP, type &~ T_USER);
 			break;
 		} else {
-			syscall(&frame);
+			syscall(tf);
 			return;
 		}
 
 	case T_INITPAGEWR:
 	case T_INITPAGEWR|T_USER:
-		va = (vaddr_t)SHREG_TEA;
+		va = (vaddr_t)SH_TEA;
 		pmap_emulate_reference(p, va, type & T_USER, 1);
 		return;
 
@@ -237,11 +230,8 @@ trap(p1, p2, p3, p4, frame)
 		/* Check for copyin/copyout fault. */
 		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
-#ifdef	TODO
-		copyfault:
-#endif
 			printf("copyin/copyout fault\n");
-			frame.tf_spc = (int)pcb->pcb_onfault;
+			tf->tf_spc = (int)pcb->pcb_onfault;
 			return;
 		}
 
@@ -260,24 +250,18 @@ trap(p1, p2, p3, p4, frame)
 		 * at this point is the same as on exit from a `slow'
 		 * interrupt.
 		 */
-		switch (*(u_char *)frame.tf_spc) {
-#ifdef TODO
-		case 0xcf:	/* iret */
-			vframe = (void *)((int)&frame.tf_esp - 44);
-			resume = (int)resume_iret;
-			break;
-#endif
+		switch (*(u_char *)tf->tf_spc) {
 		default:
 			goto we_re_toast;
 		}
-		frame.tf_spc = resume;
+		tf->tf_spc = resume;
 		return;
 
 	case T_ADDRESSERRR|T_USER:		/* protection fault */
 	case T_ADDRESSERRW|T_USER:
 	case T_INVALIDSLOT|T_USER:
 		printf("trap type %x spc %x ssr %x (%s)\n",
-			   type, frame.tf_spc, frame.tf_ssr, p->p_comm);
+			   type, tf->tf_spc, tf->tf_ssr, p->p_comm);
 		trapsignal(p, SIGBUS, type &~ T_USER);
 		goto out;
 
@@ -297,99 +281,6 @@ trap(p1, p2, p3, p4, frame)
 			ADDUPROF(p);
 		}
 		goto out;
-#ifdef	TODO
-	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (p == 0)
-			goto we_re_toast;
-		pcb = &p->p_addr->u_pcb;
-		/*
-		 * fusubail is used by [fs]uswintr() to prevent page faulting
-		 * from inside the profiling interrupt.
-		 */
-		if (pcb->pcb_onfault == fusubail)
-			goto copyfault;
-#if 0
-		/* XXX - check only applies to 386's and 486's with WP off */
-		if (frame.tf_err & PGEX_P)
-			goto we_re_toast;
-#endif
-		/* FALLTHROUGH */
-
-	case T_PAGEFLT|T_USER: {	/* page fault */
-		register vaddrt_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register struct vm_map *map;
-		int rv;
-		vm_prot_t ftype;
-		extern struct vm_map *kernel_map;
-		unsigned nss, v;
-
-		va = trunc_page((vaddr_t)rcr2());
-		/*
-		 * It is only a kernel address space fault iff:
-		 *	1. (type & T_USER) == 0  and
-		 *	2. pcb_onfault not set or
-		 *	3. pcb_onfault set but supervisor space fault
-		 * The last can occur during an exec() copyin where the
-		 * argument space is lazy-allocated.
-		 */
-		if (type == T_PAGEFLT && va >= KERNBASE)
-			map = kernel_map;
-		else
-			map = &vm->vm_map;
-		if (frame.tf_err & PGEX_W)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
-		else
-			ftype = VM_PROT_READ;
-
-#ifdef DIAGNOSTIC
-		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %lx\n", va);
-			goto we_re_toast;
-		}
-#endif
-
-		nss = 0;
-		if ((caddr_t)va >= vm->vm_maxsaddr
-			&& (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
-			&& map != kernel_map) {
-			nss = btoc(USRSTACK-(unsigned)va);
-			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-				nss = 0;
-			}
-		}
-
-		/* Fault the original page in. */
-		rv = uvm_fault(map, va, 0, ftype);
-		if (rv == 0) {
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-
-			if (type == T_PAGEFLT)
-				return;
-			goto out;
-		}
-
-	nogo:
-		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0)
-				goto copyfault;
-			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
-				   map, va, ftype, rv);
-			goto we_re_toast;
-		}
-		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
-			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, T_PAGEFLT);
-		} else
-			trapsignal(p, SIGSEGV, T_PAGEFLT);
-		break;
-	}
-
-#endif /* TODO */
 
 	case T_USERBREAK|T_USER:		/* bpt instruction fault */
 		trapsignal(p, SIGTRAP, type &~ T_USER);
@@ -399,7 +290,7 @@ trap(p1, p2, p3, p4, frame)
 	if ((type & T_USER) == 0)
 		return;
  out:
-	userret(p, frame.tf_spc, sticks);
+	userret(p, tf->tf_spc, sticks);
 }
 
 /*
@@ -409,8 +300,7 @@ trap(p1, p2, p3, p4, frame)
  */
 /*ARGSUSED*/
 void
-syscall(frame)
-	struct trapframe *frame;
+syscall(struct trapframe *frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -421,7 +311,7 @@ syscall(frame)
 	u_quad_t sticks;
 
 	uvmexp.syscalls++;
-	if (KERNELMODE(frame->tf_r15, frame->tf_ssr))
+	if (KERNELMODE(frame->tf_ssr))
 		panic("syscall");
 	p = curproc;
 	sticks = p->p_sticks;
@@ -508,12 +398,10 @@ syscall(frame)
 			error = 0;
 	}
 
-//#ifdef TRAP_DEBUG
 #ifdef SYSCALL_DEBUG
-	if (cpu_debug_mode)
+	if (trapdebug > 1)
 		scdebug_call(p, code, args);
 #endif
-//#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, argsize, args);
@@ -553,12 +441,10 @@ syscall(frame)
 		break;
 	}
 
-//#ifdef TRAP_DEBUG
 #ifdef SYSCALL_DEBUG
-	if (cpu_debug_mode)
+	if (trapdebug > 1)
 		scdebug_ret(p, code, error, rval);
 #endif
-//#endif
 	userret(p, frame->tf_spc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
@@ -567,8 +453,7 @@ syscall(frame)
 }
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct proc *p = arg;
 	struct trapframe *tf = p->p_md.md_regs;
@@ -588,9 +473,7 @@ child_return(arg)
  * This is called from tlb_miss exception handler.
  */
 void
-tlb_handler(p1, p2, p3, p4, frame)
-	int p1, p2, p3, p4;	/* These four params are dummy */
-	struct trapframe frame;
+tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 {
 	vaddr_t va;
 	int pde_index, sig;
@@ -614,85 +497,20 @@ tlb_handler(p1, p2, p3, p4, frame)
 
 	uvmexp.traps++;
 
-	va = (vaddr_t)SHREG_TEA;
+	va = (vaddr_t)SH_TEA;
 	va = trunc_page(va);
 	pde_index = pdei(va);
-#ifdef SH4
-	pd_top = (u_long *)(SH3_P1SEG_TO_P2SEG(SHREG_TTB));
-	pde = (u_long *)((u_long)SH3_P1SEG_TO_P2SEG(pd_top[pde_index]));
-#else
-	pd_top = (u_long *)SHREG_TTB;
-	pde = (u_long *)pd_top[pde_index];
-#endif
-	exptype = SHREG_EXPEVT;
+	pd_top = SH_MMU_PD_TOP();
+	pde = SH_MMU_PDE(pd_top, pde_index);
+	exptype = _reg_read_4(SH_(EXPEVT));
 
-#if 0 /* def SH4 */
-	if (((u_long)pde & PG_V) != 0 && 
-	    (incpuswitch || exptype != T_TLBPRIVW)) {
-#else
 	if (((u_long)pde & PG_V) != 0 && exptype != T_TLBPRIVW) {
-#endif
 		(u_long)pde &= ~PGOFSET;
 		pte_index = ptei(va);
-#ifdef SH4
-		pte = SH3_P1SEG_TO_P2SEG(pde[pte_index]);
-#else
-		pte = pde[pte_index];
-#endif
-
+		pte = (u_int32_t)SH_MMU_PDE(pde, pte_index);
 		if ((pte & PG_V) != 0) {
-#ifdef	DEBUG_TLB
-			if (trapdebug)
-				printf("tlb_handler:va(0x%lx),pte(0x%lx)\n",
-				       va, pte);
-#endif
-
-#ifdef SH4_PCMCIA
-#define PTEL_VALIDBITS 0x1ffff17e
-#else
-#define PTEL_VALIDBITS 0x1ffffd7e
-#endif
-#ifdef SH4
-#ifdef SH4_PCMCIA
-			if (pte & PG_PCMCIA) {
-				int pcmtype;
-				unsigned long ptea = 0;
-
-				pcmtype = pte & PG_PCMCIA;
-
-				/* printf("pcmtype = %lx,pte=%lx\n",
-				       pcmtype,pte); */
-
-				if (pcmtype == PG_PCMCIA_IO) {
-					ptea = 0x03;
-				} else if (pcmtype == PG_PCMCIA_MEM) {
-					ptea = 0x05; 
-					/* ptea = 0x03; */
-				} else if (pcmtype == PG_PCMCIA_ATT) {
-					ptea = 0x07;
-				}
-
-				SHREG_PTEL = (pte & PTEL_VALIDBITS)
-					& ~PG_N;
-
-				SHREG_PTEA = ptea;
-			} else
-#endif
-			{
-				if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
-					SHREG_PTEL = (pte & PTEL_VALIDBITS)
-						| PG_WT;
-				} else {
-					SHREG_PTEL = pte & PTEL_VALIDBITS;
-				}
-
-				SHREG_PTEA = 0;
-			}
-#else
-			SHREG_PTEL = pte & PTEL_VALIDBITS;
-#endif
+			SH_MMU_PTE_SETUP(va, pte);
 			__asm __volatile ("ldtlb; nop");
-
 			return;
 		}
 	}
@@ -701,9 +519,9 @@ tlb_handler(p1, p2, p3, p4, frame)
 		printf("tlb_handler#:va(0x%lx),curproc(%p)\n", va, curproc);
 #endif
 
-	user = !KERNELMODE(frame.tf_r15, frame.tf_ssr);
+	user = !KERNELMODE(frame.tf_ssr);
 
-	pteh_save = SHREG_PTEH;
+	pteh_save = SH_PTEH;
 	va_save = va;
 	p = curproc;
 	if (p == NULL) {
@@ -744,12 +562,12 @@ tlb_handler(p1, p2, p3, p4, frame)
 	/* Fault the original page in. */
 #ifdef RECURSE_TLB_HANDLER
 	if (reentrant)
-		enable_ext_intr();
+		_cpu_intr_resume(0);
 #endif
 	rv = uvm_fault(map, va, 0, ftype);
 #ifdef RECURSE_TLB_HANDLER
 	if (reentrant)
-		disable_ext_intr();
+		_cpu_intr_suspend();
 #endif
 
 	/*
@@ -778,69 +596,18 @@ tlb_handler(p1, p2, p3, p4, frame)
 
 	if (rv == 0) {
 		va = va_save;
-		SHREG_PTEH = pteh_save;
+		SH_PTEH = pteh_save;
 		pde_index = pdei(va);
-		pd_top = (u_long *)SHREG_TTB;
-#ifdef SH4
-		pde = (u_long *)
-			((u_long)SH3_P1SEG_TO_P2SEG(pd_top[pde_index]));
-#else
-		pde = (u_long *)pd_top[pde_index];
-#endif
+		pd_top = SH_MMU_PD_TOP();
+		pde = SH_MMU_PDE(pd_top, pde_index);
 
 		if (((u_long)pde & PG_V) != 0) {
 			(u_long)pde &= ~PGOFSET;
 			pte_index = ptei(va);
 			pte = pde[pte_index];
 
-			if ((pte & PG_V) != 0) {
-#ifdef TRAP_DEBUG
-				if (trapdebug)
-					printf("tlb_handler#:va(0x%lx),pte(0x%lx)\n", va, pte);
-#endif
-
-#ifdef SH4
-#ifdef SH4_PCMCIA
-				if (pte & PG_PCMCIA) {
-					int pcmtype;
-					unsigned long ptea = 0;
-
-					pcmtype = pte & PG_PCMCIA;
-
-					/* printf("pcmtype = %lx,pte=%lx\n",
-					       pcmtype,pte); */
-
-					if (pcmtype == PG_PCMCIA_IO) {
-						ptea = 0x03;
-					} else if (pcmtype == PG_PCMCIA_MEM) {
-						ptea = 0x05; 
-						/*ptea = 0x03; */
-					} else if (pcmtype == PG_PCMCIA_ATT) {
-						ptea = 0x07;
-					}
-
-					SHREG_PTEL = (pte & PTEL_VALIDBITS)
-						& ~PG_N;
-
-					SHREG_PTEA = ptea;
-				} else
-#endif
-				{
-					if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
-						SHREG_PTEL = 
-							(pte & PTEL_VALIDBITS)
-								| PG_WT;
-					} else {
-						SHREG_PTEL = 
-							(pte & PTEL_VALIDBITS);
-					}
-					SHREG_PTEA = 0;
-				}
-#else
-
-				SHREG_PTEL = pte & PTEL_VALIDBITS;
-#endif
-			}
+			if ((pte & PG_V) != 0)
+				SH_MMU_PTE_SETUP(va, pte);
 		}
 		__asm __volatile("ldtlb; nop");
 		if (user)
@@ -850,8 +617,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 
 	if (user == 0) {
 		/* Check for copyin/copyout fault. */
-		if (p != NULL &&
-		    p->p_addr->u_pcb.pcb_onfault != 0) {
+		if (p != NULL && p->p_addr->u_pcb.pcb_onfault != 0) {
 			frame.tf_spc = (int) p->p_addr->u_pcb.pcb_onfault;
 			return;
 		}

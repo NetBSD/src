@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.36.2.2 2002/01/10 20:05:31 thorpej Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.36.2.3 2002/03/16 16:02:28 jdolecek Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.36.2.2 2002/01/10 20:05:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.36.2.3 2002/03/16 16:02:28 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -120,7 +120,8 @@ udv_attach(arg, accessprot, off, size)
 {
 	dev_t device = *((dev_t *)arg);
 	struct uvm_device *udv, *lcv;
-	paddr_t (*mapfn) __P((dev_t, off_t, int));
+	dev_type_mmap((*mapfn));
+
 	UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(device=0x%x)", device,0,0,0);
@@ -131,8 +132,8 @@ udv_attach(arg, accessprot, off, size)
 
 	mapfn = cdevsw[major(device)].d_mmap;
 	if (mapfn == NULL ||
-	    mapfn == (paddr_t (*) __P((dev_t, off_t, int))) enodev ||
-	    mapfn == (paddr_t (*) __P((dev_t, off_t, int))) nullop)
+	    mapfn == (dev_type_mmap((*))) enodev ||
+	    mapfn == (dev_type_mmap((*))) nullop)
 		return(NULL);
 
 	/*

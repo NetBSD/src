@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.15.2.2 2002/02/11 20:08:23 jdolecek Exp $
+#	$NetBSD: IOPENER,v 1.15.2.3 2002/03/16 15:58:13 jdolecek Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.15.2.2 $"
+#ident 		"IOPENER-$Revision: 1.15.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -274,7 +274,7 @@ wd*	at pciide? channel ? drive ? flags 0x0000
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
@@ -388,7 +388,6 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation

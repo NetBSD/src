@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1.4.2 2002/01/10 19:37:56 thorpej Exp $	*/
+/*	$NetBSD: pte.h,v 1.1.4.3 2002/03/16 15:56:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -40,8 +40,8 @@
 #define NPTEPD		(NBPD / NBPG)
 
 #ifndef _LOCORE
-typedef	int	pd_entry_t;		/* page directory entry */
-typedef	int	pt_entry_t;		/* page table entry */
+typedef	u_int32_t	pd_entry_t;		/* page directory entry */
+typedef	u_int32_t	pt_entry_t;		/* page table entry */
 #endif
 
 #define PD_MASK		0xfff00000	/* page directory address bits */

@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.2.2.3 2002/02/11 20:07:21 jdolecek Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.2.2.4 2002/03/16 15:56:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -139,9 +139,10 @@ dma_isintr(dp)
 }
 
 int
-dma_intr(dp)
-	struct dma_ctrl *dp;
+dma_intr(cookie)
+	void *cookie;
 {
+	struct dma_ctrl *dp = cookie;
 	u_char status = (*dp->dc_st) & DMA_ST_MASK;
 	vm_offset_t cur;
 	int len;

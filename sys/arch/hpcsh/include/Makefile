@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2001/04/15 17:13:10 kleink Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2002/03/16 15:58:09 jdolecek Exp $
 
 KDIR=	/sys/arch/hpcsh/include
 INCSDIR= /usr/include/hpcsh
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bootinfo.h bswap.h bus.h \
-	cdefs.h coff_machdep.h conf.h cpu.h cpufunc.h cputypes.h \
+	cdefs.h coff_machdep.h conf.h cpu.h cputypes.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
@@ -14,9 +14,9 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	intr.h \
 	limits.h lock.h \
 	math.h \
-	param.h pcb.h pio.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
-	segments.h setjmp.h shbvar.h signal.h stdarg.h \
+	setjmp.h shbvar.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.1.6.2 2002/02/11 20:08:31 jdolecek Exp $
+#	$NetBSD: INSTALLSBC,v 1.1.6.3 2002/03/16 15:58:24 jdolecek Exp $
 #
 # INSTALLSBC
 
@@ -11,7 +11,7 @@ maxusers	8		# estimated number of users
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT 	# Force root on ram-disk
-options 	MINIROOTSIZE=5120	# 2.5 MB
+options 	MEMORY_DISK_SIZE=5120	# 2.5 MB
 
 # CPU support.  At least one is REQUIRED.
 options 	M68040

@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.h,v 1.1.6.2 2002/01/10 19:40:24 thorpej Exp $	*/
+/*	$NetBSD: cread.h,v 1.1.6.3 2002/03/16 15:56:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,15 +42,17 @@
 #include <libtos.h>
 
 #ifdef COMPRESSED_READ
+#ifndef _CREAD_C
 #define	close	cclose
 #define	lseek	clseek
 #define	open	copen
 #define	read	cread
+#endif /* ! _CREAD_C */
 
-EXTERN int	cclose	 PROTO((int));
+EXTERN int		cclose	 PROTO((int));
 EXTERN off_t	clseek	 PROTO((int, off_t, int));
-EXTERN int	copen	 PROTO((const char *, int));
-EXTERN int	cread	 PROTO((int, void *, size_t));
+EXTERN int		copen	 PROTO((const char *, int));
+EXTERN size_t	cread	 PROTO((int, void *, size_t));
 
 #endif /* COMPRESSED_READ */
 

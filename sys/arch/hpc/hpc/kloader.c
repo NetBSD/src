@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.2.2.2 2002/02/11 20:07:49 jdolecek Exp $	*/
+/*	$NetBSD: kloader.c,v 1.2.2.3 2002/03/16 15:57:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ struct kloader {
 	vaddr_t loader_sp;
 	kloader_bootfunc_t *loader;
 	int setuped;
+	int called;
 
 	struct kloader_ops *ops;
 };
@@ -90,6 +91,7 @@ STATIC void kloader_bootinfo_dump(void);
 void
 __kloader_reboot_setup(struct kloader_ops *ops, const char *filename)
 {
+	static const char fatal_msg[] = "*** FATAL ERROR ***\n";
 
 	if (kloader.bootinfo == NULL) {
 		PRINTF("No bootinfo.\n");
@@ -102,6 +104,28 @@ __kloader_reboot_setup(struct kloader_ops *ops, const char *filename)
 	}
 	kloader.ops = ops;
 
+	switch (kloader.called++) {
+	case 0:
+		/* normal operation */
+		break;
+ 	case 1:
+		/* try to reboot anyway. */
+		printf("%s", fatal_msg);
+		kloader.setuped = TRUE;
+		kloader_load ();
+		kloader_reboot();
+		/* NOTREACHED */
+		break;
+	case 2:
+		/* if reboot method exits, reboot. */
+		printf("%s", fatal_msg);
+		/* try to reset */
+		if (kloader.ops->reset != NULL)
+			(*kloader.ops->reset) ();
+		/* NOTREACHED */
+		break;
+	}
+
 	PRINTF("kernel file name: %s\n", filename);
 	kloader.vp = kloader_open(filename);
 	if (kloader.vp == NULL)
@@ -110,7 +134,7 @@ __kloader_reboot_setup(struct kloader_ops *ops, const char *filename)
 	if (kloader_load() != 0)
 		goto end;
 
-	kloader.setuped = 1;
+	kloader.setuped = TRUE;
 #ifdef KLOADER_DEBUG
 	kloader_pagetag_dump();
 #endif
@@ -125,10 +149,7 @@ kloader_reboot()
 	if (!kloader.setuped)
 		return;
 
-#ifdef KLOADER_DEBUG
-	kloader_bootinfo_dump();
-#endif
-	PRINTF("Rebooting...\n");
+	printf("Rebooting...\n");
 
 	(*kloader.ops->jump) (kloader.loader, kloader.loader_sp,
 	    kloader.bootinfo, kloader.tagstart);
@@ -396,19 +417,19 @@ kloader_bootinfo_dump()
 
 	dbg_banner_function();
 	printf("[bootinfo] addr=%p\n", kbi);
-#define _(m, fmt)	printf(" - %-15s= " #fmt "\n", #m, bi->m)
-	_(length, %d);
-	_(magic, 0x%08x);
-	_(fb_addr, %p);
-	_(fb_line_bytes, %d);
-	_(fb_width, %d);
-	_(fb_height, %d);
-	_(fb_type, %d);
-	_(bi_cnuse, %d);
-	_(platid_cpu, 0x%08lx);
-	_(platid_machine, 0x%08lx);
-	_(timezone, 0x%08lx);
-#undef _
+#define PRINT(m, fmt)	printf(" - %-15s= " #fmt "\n", #m, bi->m)
+	PRINT(length, %d);
+	PRINT(magic, 0x%08x);
+	PRINT(fb_addr, %p);
+	PRINT(fb_line_bytes, %d);
+	PRINT(fb_width, %d);
+	PRINT(fb_height, %d);
+	PRINT(fb_type, %d);
+	PRINT(bi_cnuse, %d);
+	PRINT(platid_cpu, 0x%08lx);
+	PRINT(platid_machine, 0x%08lx);
+	PRINT(timezone, 0x%08lx);
+#undef PRINT
 
 	printf("[args]\n");
 	for (i = 0; i < kbi->argc; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.91.2.3 2002/02/11 20:10:23 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.91.2.4 2002/03/16 16:01:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,12 +43,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.3 2002/02/11 20:10:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.4 2002/03/16 16:01:49 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
 #include "opt_defcorename.h"
-#include "opt_new_pipe.h"
+#include "opt_pipe.h"
 #include "opt_sysv.h"
 #include "pty.h"
 
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.3 2002/02/11 20:10:23 jdolece
 #include <ddb/ddbvar.h>
 #endif
 
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
 #endif
 
@@ -222,8 +222,7 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
 		if (error)
 			return (error);
-		error = uvm_vslock(p, SCARG(uap, old), oldlen,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		error = uvm_vslock(p, SCARG(uap, old), oldlen, VM_PROT_WRITE);
 		if (error) {
 			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 			return error;
@@ -541,7 +540,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_MAXPTYS:
 		return sysctl_pty(oldp, oldlenp, newp, newlen);
 #endif
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 	case KERN_PIPE:
 		return (sysctl_dopipe(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));

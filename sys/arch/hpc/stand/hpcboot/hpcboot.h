@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.h,v 1.1.6.1 2002/02/11 20:07:59 jdolecek Exp $	*/
+/*	$NetBSD: hpcboot.h,v 1.1.6.2 2002/03/16 15:57:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -125,6 +125,12 @@ struct BootArgs {
 #define VOLATILE_REF(x)			(*(volatile u_int32_t *)(x))
 #define VOLATILE_REF16(x)		(*(volatile u_int16_t *)(x))
 #define VOLATILE_REF8(x)		(*(volatile u_int8_t *)(x))
+#define	_reg_read_1(a)		(*(volatile u_int8_t *)(a))
+#define	_reg_read_2(a)		(*(volatile u_int16_t *)(a))
+#define	_reg_read_4(a)		(*(volatile u_int32_t *)(a))
+#define	_reg_write_1(a, v)	(*(volatile u_int8_t *)(a) = (v))
+#define	_reg_write_2(a, v)	(*(volatile u_int16_t *)(a) = (v))
+#define	_reg_write_4(a, v)	(*(volatile u_int32_t *)(a) = (v))
 
 #ifdef ARM
 #define ptokv(x)	(x)			/* UNCACHED FLAT */
@@ -148,6 +154,14 @@ void CacheSync(int);
 /* ExtEscape */
 #define GETVFRAMEPHYSICAL	6144
 #define GETVFRAMELEN		6145
+
+/* debug utility */
+void _bitdisp(u_int32_t, int, int, int, int);
+void _dbg_bit_print(u_int32_t, u_int32_t, const char *);
+#define bitdisp(a) _bitdisp((a), 0, 0, 0, 1)
 __END_DECLS
+
+/* Runtime Windows CE version */
+extern OSVERSIONINFOW WinCEVersion;
 
 #endif /* _HPCBOOT_H_ */

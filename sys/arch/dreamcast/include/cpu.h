@@ -1,7 +1,3 @@
-/*	$NetBSD: cpu.h,v 1.1 2000/12/11 18:19:14 marcus Exp $	*/
-#ifndef _DREAMCAST_CPU_H_
-#define _DREAMCAST_CPU_H_
+/*	$NetBSD: cpu.h,v 1.1.6.1 2002/03/16 15:57:25 jdolecek Exp $	*/
 
 #include <sh3/cpu.h>
-
-#endif /* _DREAMCAST_CPU_H_ */

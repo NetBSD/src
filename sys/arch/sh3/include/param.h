@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2001/01/04 07:03:21 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.5.4.1 2002/03/16 15:59:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,23 +39,11 @@
  */
 
 /*
- * Machine dependent constants for mmEye.
+ * SuperH dependent constants.
  */
 
-#ifdef _KERNEL
-#ifdef _LOCORE
-#include <machine/psl.h>
-#else
+#if defined(_KERNEL) && !defined(_LOCORE)
 #include <machine/cpu.h>
-#endif
-#endif
-
-#if 0 /* machine/param.h should define it */
-#define	_MACHINE	sh3
-#define	MACHINE		"sh3"
-#define	_MACHINE_ARCH	sh3
-#define	MACHINE_ARCH	"sh3"
-#define	MID_MACHINE	MID_SH3
 #endif
 
 /*
@@ -70,35 +58,23 @@
  *
  */
 #define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-/* #define ALIGNED_POINTER(p, t)	1 */
+#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t) - 1)) == 0)
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
-#define	KERNBASE	0x8c000000	/* start of kernel virtual space */
-#define	KERNSIZE	0x01800000	/* size of kernel virtual space */
-#define	KERNTEXTOFF	0x8c000000	/* start of kernel text */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#define NPGDIR (1*NBPG)
-#define SYSMAP (5*NBPG) /* page table area offset from _end */
+#define	PGOFSET		(NBPG - 1)	/* byte offset into page */
+#define	NPTEPG		(NBPG / (sizeof(pt_entry_t)))
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
-#if 0
-#define	UPAGES		2		/* pages of u-area */
-#else
+/*
+ * u-space.
+ */
 #define	UPAGES		4		/* pages of u-area */
-#endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
@@ -115,13 +91,17 @@
 #define	MSIZE		256		/* size of an mbuf */
 
 #ifndef MCLSHIFT
-# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #ifndef NMBCLUSTERS
+#if defined(_KERNEL_OPT)
+#include "opt_gateway.h"
+#endif
+
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else

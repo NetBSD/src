@@ -1,5 +1,5 @@
 REM >checkro403
-REM $NetBSD: checkro403,v 1.1.6.2 2002/01/10 19:36:46 thorpej Exp $
+REM $NetBSD: checkro403,v 1.1.6.3 2002/03/16 15:55:31 jdolecek Exp $
 REM
 REM This program checks the build date of RISC OS to see if it is the one
 REM with the bug in OS_Module 7 (RO 4.03 for the Castle Kinetic Card). If

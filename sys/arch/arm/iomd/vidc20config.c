@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.6.2.2 2002/01/10 19:38:20 thorpej Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.6.2.3 2002/03/16 15:56:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -47,6 +47,9 @@
  */
 
 #include <sys/cdefs.h>
+
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.6.2.3 2002/03/16 15:56:13 jdolecek Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <arm/iomd/vidc.h>
@@ -530,6 +533,7 @@ vidcvideo_setmode(struct vidc_mode *mode)
 }
 
 
+#if 0
 /* not used for now */
 void
 vidcvideo_set_display_base(base)
@@ -540,6 +544,7 @@ vidcvideo_set_display_base(base)
 	dispend = base + dispsize;
 	ptov = dispbase - phys_base;
 }
+#endif
 
 
 /*
@@ -580,18 +585,6 @@ vidcvideo_reinit()
 {
 	vidcvideo_coldinit();
 	vidcvideo_setmode(vidc_currentmode);
-}
-
-
-paddr_t
-vidcvideo_mmap(vc, offset, nprot)
-	struct vconsole *vc;
-	off_t offset;
-	int nprot;
-{
-	if ((u_int)offset >= videomemory.vidm_size)
-		return (-1);
-	return(arm_byte_to_page(((videomemory.vidm_pbase) + (offset))));
 }
 
 

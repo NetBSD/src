@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.4.2.2 2002/01/10 19:38:01 thorpej Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.4.2.3 2002/03/16 15:56:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -45,8 +45,10 @@
 
 /* Include header files */
 
-#include <sys/types.h>
 #include <sys/param.h>
+
+__RCSID("$NetBSD");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
@@ -78,6 +80,9 @@ static void clockattach	__P((struct device *parent, struct device *self, void *a
 #ifdef DIAGNOSTIC
 static void checkdelay	__P((void));
 #endif
+
+int clockhandler	__P((void *));
+int statclockhandler	__P((void *));
 
 struct cfattach clock_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
@@ -139,9 +144,11 @@ clockattach(parent, self, aux)
  */
  
 int
-clockhandler(frame)
-	struct clockframe *frame;
+clockhandler(cookie)
+	void *cookie;
 {
+	struct clockframe *frame = cookie;
+
 	hardclock(frame);
 	return(0);	/* Pass the interrupt on down the chain */
 }
@@ -156,9 +163,11 @@ clockhandler(frame)
  */
  
 int
-statclockhandler(frame)
-	struct clockframe *frame;
+statclockhandler(cookie)
+	void *cookie;
 {
+	struct clockframe *frame = cookie;
+
 	statclock(frame);
 	return(0);	/* Pass the interrupt on down the chain */
 }

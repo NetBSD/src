@@ -1,6 +1,7 @@
 #ifndef _NETWINDER_CONF_H
 #define	_NETWINDER_CONF_H
 
+#include <sys/conf.h>
 /*
  * NETWINDER specific device includes go in here
  */

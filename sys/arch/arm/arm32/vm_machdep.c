@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.2.6 2002/02/11 20:07:19 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.7 2002/03/16 15:56:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -267,7 +267,7 @@ cpu_swapout(p)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * and size must be a multiple of NBPG.
  */
 
 void
@@ -305,8 +305,6 @@ pagemove(from, to, size)
 	}
 	//cpu_tlb_flushD();
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

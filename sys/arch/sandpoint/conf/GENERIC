@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9.2.3 2002/02/11 20:08:55 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.9.2.4 2002/03/16 15:59:25 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.9.2.3 $"
+#ident 		"GENERIC-$Revision: 1.9.2.4 $"
 
 maxusers	32
 
@@ -37,7 +37,6 @@ options 	TRAP_PANICWAIT
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	KTRACE
-options 	NEWPMAP
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
 options 	OPENPIC_SERIAL_MODE

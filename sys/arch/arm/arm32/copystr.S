@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.1.6.1 2002/01/10 19:37:48 thorpej Exp $	*/
+/*	$NetBSD: copystr.S,v 1.1.6.2 2002/03/16 15:56:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -52,7 +52,7 @@ Lvm_min_address:
 Lvm_maxuser_address:
 	.word	VM_MAXUSER_ADDRESS
 Lvm_maxkern_address:
-	.word	VM_MAXKERN_ADDRESS
+	.word	_C_LABEL(pmap_curmaxkvaddr)
 
 /*
  * r0 - from
@@ -112,7 +112,8 @@ ENTRY(copyinstr)
 	cmp	r1, r4
 	bcc	Lbadaddress
 	ldr	r4, Lvm_maxkern_address
-	cmp	r1, r4
+	ldr	r5, [r4]
+	cmp	r1, r5
 	bcs	Lbadaddress
 
 	/* Do the actual copy */
@@ -140,7 +141,8 @@ ENTRY(copyoutstr)
 	cmp	r0, r4
 	bcc	Lbadaddress
 	ldr	r4, Lvm_maxkern_address
-	cmp	r0, r4
+	ldr	r5, [r4]
+	cmp	r0, r5
 	bcs	Lbadaddress
 
 	/* Do the actual copy */

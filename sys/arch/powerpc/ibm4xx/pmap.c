@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.3 2002/01/10 19:47:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.4 2002/03/16 15:59:15 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -79,14 +79,12 @@
 
 #include <uvm/uvm.h>
 
+#include <machine/cpu.h>
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
 
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/tlb.h>
-
-
-#define	CACHE_LINE	32
+#include <machine/tlb.h>
 
 /*
  * kernmap is an array of PTEs large enough to map in
@@ -162,11 +160,6 @@ static int pmap_initialized;
 
 static int ctx_flush(int);
 
-static inline void dcache_flush_page(vaddr_t);
-static inline void icache_flush_page(vaddr_t);
-static inline void dcache_flush(vaddr_t, vsize_t);
-static inline void icache_flush(vaddr_t, vsize_t);
-
 inline struct pv_entry *pa_to_pv(paddr_t);
 static inline char *pa_to_attr(paddr_t);
 
@@ -178,60 +171,6 @@ static void pmap_release(pmap_t);
 static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t);
 static void pmap_remove_pv(struct pmap *, vaddr_t, paddr_t);
 
-/*
- * These small routines may have to be replaced,
- * if/when we support processors other that the 604.
- */
-
-static inline void
-dcache_flush_page(vaddr_t va)
-{
-	int i;
-
-	for (i = 0; i < NBPG; i += CACHE_LINE)
-		asm volatile("dcbf %0,%1" : : "r" (va), "r" (i));
-	asm volatile("sync;isync" : : );
-}
-
-static inline void
-icache_flush_page(vaddr_t va)
-{
-	int i;
-
-	for (i = 0; i < NBPG; i += CACHE_LINE)
-		asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
-	asm volatile("sync;isync" : : );
-}
-
-static inline void
-dcache_flush(vaddr_t va, vsize_t len)
-{
-	int i;
-
-	if (len == 0)
-		return;
-
-	/* Make sure we flush all cache lines */
-	len += va & (CACHE_LINE-1);
-	for (i = 0; i < len; i += CACHE_LINE)
-		asm volatile("dcbf %0,%1" : : "r" (va), "r" (i));
-	asm volatile("sync;isync" : : );
-}
-
-static inline void
-icache_flush(vaddr_t va, vsize_t len)
-{
-	int i;
-
-	if (len == 0)
-		return;
-
-	/* Make sure we flush all cache lines */
-	len += va & (CACHE_LINE-1);
-	for (i = 0; i < len; i += CACHE_LINE)
-		asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
-	asm volatile("sync;isync" : : );
-}
 
 inline struct pv_entry *
 pa_to_pv(paddr_t pa)
@@ -309,14 +248,12 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	 * kernel space so it's in the locked TTE.
 	 */
 	kernmap = (caddr_t)kernelend;
-//	kernelend += KERNMAP_SIZE*sizeof(struct pte);
 
 	/*
 	 * Initialize kernel page table.
 	 */
-//	memset(kernmap, 0, KERNMAP_SIZE*sizeof(struct pte));
 	for (i = 0; i < STSZ; i++) {
-		pmap_kernel()->pm_ptbl[i] = 0; // (u_int *)(kernmap + i*NBPG);
+		pmap_kernel()->pm_ptbl[i] = 0;
 	}
 	ctxbusy[0] = ctxbusy[1] = pmap_kernel();
 
@@ -521,8 +458,7 @@ pmap_init(void)
 	splx(s);
 
 	/* Setup a pool for additional pvlist structures */
-	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", 0,
-		  NULL, NULL, 0);
+	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
 }
 
 /*
@@ -622,12 +558,16 @@ void
 vm_page_free1(mem)
 	struct vm_page *mem;
 {
+#ifdef DIAGNOSTIC
 	if (mem->flags != (PG_CLEAN|PG_FAKE)) {
 		printf("Freeing invalid page %p\n", mem);
 		printf("pa = %llx\n", (unsigned long long)VM_PAGE_TO_PHYS(mem));
+#ifdef DDB
 		Debugger();
+#endif
 		return;
 	}
+#endif
 	mem->flags |= PG_BUSY;
 	mem->wire_count = 0;
 	uvm_pagefree(mem);
@@ -785,6 +725,13 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
 	s = splvm();
 
 	pv = pa_to_pv(pa);
+for (npv = pv; npv; npv = npv->pv_next)
+if (npv->pv_va == va && npv->pv_pm == pm) {
+printf("Duplicate pv: va %lx pm %p\n", va, pm);
+Debugger();
+return (1);
+}
+
 	if (!pv->pv_pm) {
 		/*
 		 * No entries yet, use header as the first entry.
@@ -1346,14 +1293,17 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	u_long th, tl, idx;
 	tlbpid_t pid;
 	u_short msr;
-	int s;
+	paddr_t pa;
+	int s, sz;
+
   
 	tlbenter_ev.ev_count++;
 
-	th = (va & TLB_EPN_MASK) |
-		(((pte & TTE_SZ_MASK) >> TTE_SZ_SHIFT) << TLB_SIZE_SHFT) |
-		TLB_VALID;
-	tl = pte & ~(TTE_SZ_MASK|TTE_ENDIAN);
+	sz = (pte & TTE_SZ_MASK) >> TTE_SZ_SHIFT;
+	pa = (pte & TTE_RPN_MASK(sz));
+	th = (va & TLB_EPN_MASK) | (sz << TLB_SIZE_SHFT) | TLB_VALID;
+	tl = (pte & ~TLB_RPN_MASK) | pa;
+	tl |= ppc4xx_tlbflags(va, pa);
 
 	s = splhigh();
 	idx = ppc4xx_tlb_find_victim();
@@ -1479,7 +1429,9 @@ ctx_flush(int cnum)
 				printf("ctx_flush: can't invalidate "
 					"locked mapping %d "
 					"for context %d\n", i, cnum);
+#ifdef DDB
 				Debugger();
+#endif
 #endif
 				return (1);
 			}
@@ -1566,7 +1518,9 @@ ctx_free(struct pmap *pm)
 		printf("ctx_free: freeing someone esle's context\n "
 		       "ctxbusy[%d] = %p, pm->pm_ctx = %p\n",
 		       oldctx, (void *)(u_long)ctxbusy[oldctx], pm);
+#ifdef DDB
 		Debugger();
+#endif
 	}
 #endif
 	/* We should verify it has not been stolen and reallocated... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.1.2.2 2001/08/03 04:10:58 lukem Exp $	*/
+/*	$NetBSD: fusu.S,v 1.1.2.3 2002/03/16 15:56:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -84,8 +84,6 @@ Lvm_min_address:
 	.word	VM_MIN_ADDRESS
 Lvm_maxuser_address:
 	.word	VM_MAXUSER_ADDRESS
-Lvm_maxkern_address:
-	.word	VM_MAXKERN_ADDRESS
 
 
 /*

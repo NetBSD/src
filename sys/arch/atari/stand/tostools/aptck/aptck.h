@@ -1,4 +1,4 @@
-/*	$NetBSD: aptck.h,v 1.1.1.1.44.1 2001/08/03 04:11:18 lukem Exp $	*/
+/*	$NetBSD: aptck.h,v 1.1.1.1.44.2 2002/03/16 15:56:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -40,13 +40,6 @@
 #define TARGET(major, minor)	((major) & 0x0007)
 #define BUS(major, minor)	(((major) >> 3) & 0x1FFF)
 #define BIOSDEV(major, minor)	(((minor) == 0) ? ((major) + 2) : 0)
-
-typedef signed char	int8_t;
-typedef unsigned char	u_int8_t;
-typedef signed short	int16_t;
-typedef unsigned short	u_int16_t;
-typedef signed long	int32_t;
-typedef unsigned long	u_int32_t;
 
 typedef enum {
 	ACSI = 0,

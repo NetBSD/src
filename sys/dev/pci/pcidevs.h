@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.342.2.5 2002/02/11 20:10:03 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.342.2.6 2002/03/16 16:01:17 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.400 2002/02/04 16:56:49 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.411 2002/03/11 23:17:37 joda Exp 
  */
 
 /*
@@ -555,7 +555,7 @@
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
-#define	PCI_VENDOR_SIBYTE	0x166d		/* SiByte, Inc. */
+#define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom Corp. (SiByte) */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
@@ -753,6 +753,7 @@
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* PCscsi-PCI SCSI */
 #define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* PCnet-PCI Ethernet & SCSI */
+#define	PCI_PRODUCT_AMD_SC520_SC	0x3000		/* Elan SC520 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* AMD751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* AMD751 PCI-to-PCI Bridge */
 #define	PCI_PRODUCT_AMD_PBC756_ISA	0x7408		/* AMD756 PCI-to-ISA Bridge */
@@ -812,34 +813,26 @@
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
-#define	PCI_PRODUCT_ATI_MACH64_ET	0x4554		/* Mach64 ET */
-#define	PCI_PRODUCT_ATI_MACH64_VT	0x4654		/* Mach64 VT */
-#define	PCI_PRODUCT_ATI_MACH64_GB	0x4742		/* Mach64 GB */
-#define	PCI_PRODUCT_ATI_MACH64_GD	0x4744		/* Mach64 GD */
-#define	PCI_PRODUCT_ATI_MACH64_GI	0x4749		/* Mach64 GI */
-#define	PCI_PRODUCT_ATI_MACH64_GL	0x474c		/* Mach64 GL */
-#define	PCI_PRODUCT_ATI_RAGEXLAGP2X	0x474d		/* Rage XL AGP 2x */
-#define	PCI_PRODUCT_ATI_MACH64_GN	0x474e		/* Mach64 GN */
-#define	PCI_PRODUCT_ATI_MACH64_GO	0x474f		/* Mach64 GO */
-#define	PCI_PRODUCT_ATI_MACH64_GP	0x4750		/* Mach64 GP */
-#define	PCI_PRODUCT_ATI_MACH64_GQ	0x4751		/* Mach64 GQ */
-#define	PCI_PRODUCT_ATI_MACH64_GR	0x4752		/* Mach64 GR */
-#define	PCI_PRODUCT_ATI_MACH64_GS	0x4753		/* Mach64 GS */
-#define	PCI_PRODUCT_ATI_MACH64_GT	0x4754		/* Mach64 GT */
-#define	PCI_PRODUCT_ATI_MACH64_GU	0x4755		/* Mach64 GU */
-#define	PCI_PRODUCT_ATI_MACH64_GV	0x4756		/* Mach64 GV */
-#define	PCI_PRODUCT_ATI_MACH64_GW	0x4757		/* Mach64 GW */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_AGP	0x4742		/* 3D Rage Pro (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_AGP1X	0x4744		/* 3D Rage Pro (AGP 1x) */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_B	0x4749		/* 3D Rage Pro */
+#define	PCI_PRODUCT_ATI_RAGE_XL_AGP	0x474d		/* Rage XL (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_P	0x4750		/* 3D Rage Pro */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_L	0x4751		/* 3D Rage Pro (limited 3D) */
+#define	PCI_PRODUCT_ATI_RAGE_XL_PCI	0x4752		/* Rage XL */
+#define	PCI_PRODUCT_ATI_RAGE_II	0x4754		/* 3D Rage I/II */
+#define	PCI_PRODUCT_ATI_RAGE_IIP	0x4755		/* 3D Rage II+ */
+#define	PCI_PRODUCT_ATI_RAGE_IIC_PCI	0x4756		/* 3D Rage IIC */
+#define	PCI_PRODUCT_ATI_RAGE_IIC_AGP_B	0x4757		/* 3D Rage IIC (AGP) */
 #define	PCI_PRODUCT_ATI_MACH64_GX	0x4758		/* Mach64 GX */
-#define	PCI_PRODUCT_ATI_MACH64_GZ	0x475a		/* Mach64 GZ */
-#define	PCI_PRODUCT_ATI_MACH64_LB	0x4c42		/* Mach64 LB */
-#define	PCI_PRODUCT_ATI_MACH64_LD	0x4c44		/* Mach64 LD */
-#define	PCI_PRODUCT_ATI_MOBILITY_M3_PCI	0x4c45		/* Mobility M3 (PCI) */
-#define	PCI_PRODUCT_ATI_MOBILITY_M3_AGP	0x4c46		/* Mobility M3 (AGP) */
-#define	PCI_PRODUCT_ATI_MACH64_LG	0x4c47		/* Mach64 LG */
-#define	PCI_PRODUCT_ATI_MACH64_LI	0x4c49		/* Mach64 LI */
-#define	PCI_PRODUCT_ATI_MACH64_LM	0x4c4d		/* Mach64 LM */
-#define	PCI_PRODUCT_ATI_MACH64_LP	0x4c50		/* Mach64 LP */
-#define	PCI_PRODUCT_ATI_MACH64_LR	0x4c52		/* Mach64 LR */
+#define	PCI_PRODUCT_ATI_RAGE_IIC_AGP_P	0x475a		/* 3D Rage IIC (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP	0x4c42		/* 3D Rage LT Pro (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI	0x4c45		/* Rage Mobility M3 */
+#define	PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP	0x4c46		/* Rage Mobility M3 (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_LT	0x4c47		/* 3D Rage LT */
+#define	PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI	0x4c49		/* 3D Rage LT Pro */
+#define	PCI_PRODUCT_ATI_RAGE_MOBILITY	0x4c4d		/* Rage Mobility */
+#define	PCI_PRODUCT_ATI_RAGE_LT_PRO	0x4c50		/* 3D Rage LT Pro */
 #define	PCI_PRODUCT_ATI_RAGE1PCI	0x5041		/* Rage 128 Pro PCI */
 #define	PCI_PRODUCT_ATI_RAGE1AGP2X	0x5042		/* Rage 128 Pro AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE1AGP4X	0x5043		/* Rage 128 Pro AGP 4x */
@@ -864,6 +857,10 @@
 #define	PCI_PRODUCT_ATI_RAGE4PCIT	0x5056		/* Rage 128 Pro PCI (TMDS) */
 #define	PCI_PRODUCT_ATI_RAGE4AGP2XT	0x5057		/* Rage 128 Pro AGP 2x (TMDS) */
 #define	PCI_PRODUCT_ATI_RAGE4AGP4XT	0x5058		/* Rage 128 Pro AGP 4x (TMDS) */
+#define	PCI_PRODUCT_ATI_RADEON_7200	0x5144		/* Radeon 7200 */
+#define	PCI_PRODUCT_ATI_RADEON_8500	0x514c		/* Radeon 8500 */
+#define	PCI_PRODUCT_ATI_RADEON_7500	0x5157		/* Radeon 7500 */
+#define	PCI_PRODUCT_ATI_RADEON_7000	0x5159		/* Radeon 7000/VE */
 #define	PCI_PRODUCT_ATI_RAGEGLPCI	0x5245		/* Rage 128 GL PCI */
 #define	PCI_PRODUCT_ATI_RAGEGLAGP	0x5246		/* Rage 128 GL AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGEVRPCI	0x524b		/* Rage 128 VR PCI */
@@ -876,6 +873,9 @@
 #define	PCI_PRODUCT_ATI_RAGE24XA2X	0x534c		/* Rage 128 4x AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE24XA4X	0x534d		/* Rage 128 4x AGP 4x */
 #define	PCI_PRODUCT_ATI_RAGE24X	0x534e		/* Rage 128 4x */
+#define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
+#define	PCI_PRODUCT_ATI_MACH64_VTB	0x5655		/* Mach64 VTB */
+#define	PCI_PRODUCT_ATI_MACH64_VT4	0x5656		/* Mach64 VT4 */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
@@ -1221,6 +1221,7 @@
 #define	PCI_PRODUCT_IBM_SERVERAID	0x002e		/* ServeRAID */
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
+#define	PCI_PRODUCT_IBM_82660	0x0037		/* 82660 PowerPC to PCI Bridge and Memory Controller */
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
@@ -1309,6 +1310,8 @@
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
 #define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
 #define	PCI_PRODUCT_INTEL_82840_PCI	0x1a24		/* 82840 PCI */
+#define	PCI_PRODUCT_INTEL_82845_HB	0x1a30		/* 82845 Host */
+#define	PCI_PRODUCT_INTEL_82845_AGP	0x1a31		/* 82845 AGP */
 #define	PCI_PRODUCT_INTEL_82801AA_LPC	0x2410		/* 82801AA LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801AA_IDE	0x2411		/* 82801AA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801AA_USB	0x2412		/* 82801AA USB Controller */
@@ -1488,6 +1491,9 @@
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 \"Grackle\" Host Bridge */
 #define	PCI_PRODUCT_MOT_MPC8240	0x0003		/* MPC8240 \"Kahlua\" Host Bridge */
 #define	PCI_PRODUCT_MOT_MPC107	0x0004		/* MPC107 \"Chaparral\" Host Bridge */
+#define	PCI_PRODUCT_MOT_RAVEN	0x4801		/* Raven Host Bridge & Multi-Processor Interrupt Controller */
+#define	PCI_PRODUCT_MOT_FALCON	0x4802		/* Falcon ECC Memory Controller Chip Set */
+#define	PCI_PRODUCT_MOT_HAWK	0x4803		/* Hawk System Memory Controller & PCI Host Bridge */
 
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_RAID_V2	0x0001		/* DAC960 RAID (v2 interface) */
@@ -1752,6 +1758,10 @@
 /* SGS Thomson products */
 #define	PCI_PRODUCT_SGSTHOMSON_2000	0x0008		/* STG 2000X */
 #define	PCI_PRODUCT_SGSTHOMSON_1764	0x1746		/* STG 1764X */
+
+/* Broadcom Corp. (SiByte) products */
+#define	PCI_PRODUCT_SIBYTE_BCM1250_PCIHB	0x0001		/* BCM1250 PCI Host Bridge */
+#define	PCI_PRODUCT_SIBYTE_BCM1250_LDTHB	0x0002		/* BCM1250 LDT Host Bridge */
 
 /* Sigma Designs products */
 #define	PCI_PRODUCT_SIGMA_HOLLYWOODPLUS	0x8300		/* REALmagic Hollywood-Plus MPEG-2 Decoder */

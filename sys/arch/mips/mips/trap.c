@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163.2.2 2002/02/11 20:08:37 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.163.2.3 2002/03/16 15:58:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,16 +44,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163.2.2 2002/02/11 20:08:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163.2.3 2002/03/16 15:58:44 jdolecek Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-
-#if !defined(MIPS1) && !defined(MIPS3)
-#error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,28 +109,28 @@ const char *trap_type[] = {
 	"r4k floating point/ r3k reserved 15",
 	"reserved 16",
 	"reserved 17",
-	"reserved 18",
+	"mipsNN cp2 exception",
 	"reserved 19",
 	"reserved 20",
 	"reserved 21",
-	"reserved 22",
-	"r4000 watch",
-	"reserved 24",
+	"mips64 MDMX",
+	"r4k watch",
+	"mipsNN machine check",
 	"reserved 25",
 	"reserved 26",
 	"reserved 27",
 	"reserved 28",
 	"reserved 29",
-	"reserved 30",
+	"mipsNN cache error",
 	"r4000 virtual coherency data",
 };
 
-void trap __P((unsigned, unsigned, unsigned, unsigned, struct trapframe *));
-void ast __P((unsigned));
+void trap(unsigned, unsigned, unsigned, unsigned, struct trapframe *);
+void ast(unsigned);
 
-vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
-extern void MachEmulateFP __P((unsigned));
-extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
+vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
+extern void MachEmulateFP(unsigned);
+extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
 
 #define DELAYBRANCH(x) ((int)(x)<0)
 
@@ -159,7 +155,7 @@ child_return(arg)
 #endif
 }
 
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 #define TRAPTYPE(x) (((x) & MIPS3_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT)
 #else
 #define TRAPTYPE(x) (((x) & MIPS1_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT)
@@ -183,7 +179,7 @@ trap(status, cause, vaddr, opc, frame)
 	int ucode = 0;
 	struct proc *p = curproc;
 	vm_prot_t ftype;
-	extern void fswintrberr __P((void));
+	extern void fswintrberr(void);
 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
@@ -344,18 +340,8 @@ trap(status, cause, vaddr, opc, frame)
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef VMFAULT_TRACE
 		printf(
-	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, ftype) -> %d at pc %p\n",
+	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, %d) -> %d at pc %p\n",
 		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, (void*)opc);
-#endif
-#ifdef HPCMIPS_FLUSHCACHE_XXX
-#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
-		/*
-		 * This code is debug use only.
-		 */
-		if (CPUISMIPS3 && !mips_L2CachePresent) {
-			MachFlushCache();
-		}
-#endif
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -779,7 +765,7 @@ mips_singlestep(p)
 #ifndef DDB_TRACE
 
 #if defined(DEBUG) || defined(DDB) || defined(KGDB) || defined(geo)
-mips_reg_t kdbrpeek __P((vaddr_t));
+mips_reg_t kdbrpeek(vaddr_t);
 
 int
 kdbpeek(addr)
@@ -830,9 +816,9 @@ extern char mips3_UserGenException[];
 extern char mips3_KernIntr[];
 extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
-extern int main __P((void*));
-extern void mips_idle __P((void));
-extern void cpu_switch __P((struct proc *));
+extern int main(void *);
+extern void mips_idle(void);
+extern void cpu_switch(struct proc *);
 
 /*
  *  stack trace code, also useful to DDB one day
@@ -840,9 +826,8 @@ extern void cpu_switch __P((struct proc *));
 
 /* forward */
 char *fn_name(unsigned addr);
-void stacktrace_subr __P((int a0, int a1, int a2, int a3,
-			  u_int pc, u_int sp, u_int fp, u_int ra,
-			  void (*)(const char*, ...)));
+void stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
+	    void (*)(const char*, ...));
 
 #define	MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 #define	MIPS_JR_K0	0x03400008	/* instruction code for jr k0 */
@@ -857,7 +842,7 @@ void
 stacktrace_subr(a0, a1, a2, a3, pc, sp, fp, ra, printfn)
 	int a0, a1, a2, a3;
 	u_int  pc, sp, fp, ra;
-	void (*printfn) __P((const char*, ...));
+	void (*printfn)(const char*, ...);
 {
 	unsigned va, subr;
 	unsigned instr, mask;
@@ -868,8 +853,6 @@ stacktrace_subr(a0, a1, a2, a3, pc, sp, fp, ra, printfn)
 
 /* Jump here when done with a frame, to start a new one */
 loop:
-/* Jump here after a nonstandard (interrupt handler) frame
-specialframe: */
 	stksize = 0;
 	subr = 0;
 	if (frames++ > 100) {
@@ -885,79 +868,6 @@ specialframe: */
 		subr = 0;
 		goto done;
 	}
-
-#if 0 /* special locore arrangements made unnecssary following */
-
-/*
- * check for PC between two entry points
- */
-# define Between(x, y, z) \
-		( ((x) <= (y)) && ((y) < (z)) )
-# define pcBetween(a,b) \
-		Between((unsigned)a, pc, (unsigned)b)
-
-	/* Backtraces should continue through interrupts from kernel mode */
-#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
-	if (pcBetween(mips1_KernIntr, mips1_KernIntrEnd)) {
-		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("mips1 KernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)mips1_KernIntr, a0, a1, a2);
-		a0 = kdbpeek(sp + 40);
-		a1 = kdbpeek(sp + 44);
-		a2 = kdbpeek(sp + 48);
-		a3 = kdbpeek(sp + 52);
-		pc = kdbpeek(sp + 112);	/* exc_pc - pc at time of exception */
-		ra = kdbpeek(sp + 96);	/* ra at time of exception */
-		sp = sp + 116;
-		goto specialframe;
-	}
-	else if (pcBetween(mips1_KernGenException, mips1_KernGenExceptionEnd)) {
-		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("------ kernel trap+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)mips1_KernGenException, a0, a1, a2);
-
-		a0 = kdbpeek(sp + 40);
-		a1 = kdbpeek(sp + 44);
-		a2 = kdbpeek(sp + 48);
-		a3 = kdbpeek(sp + 52);
-		pc = kdbpeek(sp + 112);	/* exc_pc - pc at time of exception */
-		ra = kdbpeek(sp + 96);	/* ra at time of exception */
-		sp = sp + 116;
-		goto specialframe;
-	}
-#endif	/* MIPS1 */
-
-#ifdef MIPS3		/* r4000 family (mips-III cpu) */
-	if (pcBetween(mips3_KernIntr, mips3_KernIntrEnd)) {
-		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("------ mips3 KernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)mips3_KernIntr, a0, a1, a2);
-		a0 = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 3);
-		a1 = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 4);
-		a2 = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 5);
-		a3 = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 6);
-		pc = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 21);
-		ra = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 17);
-		sp = sp + 4 * 5 + 4 + 4 + 22 * sizeof(mips_reg_t);
-		goto specialframe;
-	}
-	else if (pcBetween(mips3_KernGenException, mips3_KernGenExceptionEnd)) {
-		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("------ kernel trap+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)mips3_KernGenException, a0, a1, a2);
-
-		a0 = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 3);
-		a1 = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 4);
-		a2 = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 5);
-		a3 = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 6);
-		pc = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 21);
-		ra = kdbrpeek(sp + 28 + sizeof(mips_reg_t) * 17);
-		sp = sp + 4 * 5 + 4 + 4 + 22 * sizeof(mips_reg_t);
-		goto specialframe;
-	}
-#endif	/* MIPS3 */
-
-#endif
 
 	/* Check for bad PC */
 	if (pc & 3 || pc < 0x80000000 || pc >= (unsigned)edata) {
@@ -1125,13 +1035,14 @@ static struct { void *addr; char *name;} names[] = {
 	Name(mips1_UserIntr),
 #endif	/* MIPS1 */
 
-#ifdef MIPS3		/* r4000 family (mips-III cpu) */
+/* XXX simonb: need mips32 and mips64 checks here too */
+#if defined(MIPS3) && !defined(MIPS3_5900) /* r4000 family (mips-III cpu) */
 	Name(mips3_KernGenException),
 	Name(mips3_UserGenException),
 	Name(mips3_SystemCall),
 	Name(mips3_KernIntr),
 	Name(mips3_UserIntr),
-#endif	/* MIPS3 */
+#endif	/* MIPS3 && !MIPS3_5900 */
 
 	Name(mips_idle),
 	Name(cpu_switch),

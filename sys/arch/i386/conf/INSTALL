@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.169.2.4 2002/02/11 20:08:22 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.169.2.5 2002/03/16 15:58:12 jdolecek Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -17,8 +17,8 @@ makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=4096	# size of memory disk, in blocks
-#options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_SIZE=4096	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=2880	# 1.44M, same as a floppy
 
 maxusers	32		# estimated number of users
 
@@ -197,6 +197,7 @@ pcmcia*	at tcic? controller ? socket ?
 # ISA PCMCIA controllers
 pcic0 	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1 	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 tcic0 	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 
 # PCI PCMCIA controllers
@@ -543,7 +544,7 @@ dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
@@ -704,7 +705,6 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)

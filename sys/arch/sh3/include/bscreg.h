@@ -1,4 +1,4 @@
-/* $NetBSD: bscreg.h,v 1.2 1999/09/16 21:15:36 msaitoh Exp $ */
+/*	$NetBSD: bscreg.h,v 1.2.16.1 2002/03/16 15:59:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -28,43 +28,35 @@
 
 #ifndef _SH3_BSCREG_H_
 #define _SH3_BSCREG_H_
+#include <sh3/devreg.h>
 
 /*
  * Bus State Controller
  */
 
-#if !defined(SH4)
+#define SH3_BCR1		0xffffff60	/* 16bit */
+#define SH3_BCR2		0xffffff62	/* 16bit */
+#define SH3_WCR1		0xffffff64	/* 16bit */
+#define SH3_WCR2		0xffffff66	/* 16bit */
+#define SH3_MCR			0xffffff68	/* 16bit */
+#define SH3_DCR			0xffffff6a	/* 16bit */
+#define SH3_PCR			0xffffff6c	/* 16bit */
+#define SH3_RTCSR		0xffffff6e	/* 16bit */
+#define SH3_RTCNT		0xffffff70	/* 16bit */
+#define SH3_RTCOR		0xffffff72	/* 16bit */
+#define SH3_RFCR		0xffffff74	/* 16bit */
+#define SH3_BCR3		0xffffff7e	/* 16bit */
 
-/* SH3 definitions */
+#define SH4_BCR1		0xff800000	/* 32bit */
+#define SH4_BCR2		0xff800004	/* 16bit */
+#define SH4_WCR1		0xff800008	/* 32bit */
+#define SH4_WCR2		0xff80000c	/* 32bit */
+#define SH4_WCR3		0xff800010	/* 32bit */
+#define SH4_MCR			0xff800014	/* 32bit */
+#define SH4_PCR			0xff800018	/* 16bit */
+#define SH4_RTCSR		0xff80001c	/* 16bit */
+#define SH4_RTCNT		0xff800020	/* 16bit */
+#define SH4_RTCOR		0xff800024	/* 16bit */
+#define SH4_RFCR		0xff800028	/* 16bit */
 
-#define SHREG_BCR1	(*(volatile unsigned short *)	0xffffff60)
-#define SHREG_BCR2	(*(volatile unsigned short *)	0xffffff62)
-#define SHREG_WCR1	(*(volatile unsigned short *)	0xffffff64)
-#define SHREG_WCR2	(*(volatile unsigned short *)	0xffffff66)
-#define SHREG_MCR	(*(volatile unsigned short *)	0xffffff68)
-#define SHREG_DCR	(*(volatile unsigned short *)	0xffffff6a)
-#define SHREG_PCR	(*(volatile unsigned short *)	0xffffff6c)
-#define SHREG_RTCSR	(*(volatile unsigned short *)	0xffffff6e)
-#define SHREG_RTCNT	(*(volatile unsigned short *)	0xffffff70)
-#define SHREG_RTCOR	(*(volatile unsigned short *)	0xffffff72)
-#define SHREG_RFCR	(*(volatile unsigned short *)	0xffffff74)
-#define SHREG_BCR3	(*(volatile unsigned short *)	0xffffff7e)
-
-#else
-
-/* SH4 definitions */
-
-#define SHREG_BCR1	(*(volatile unsigned int *)	0xff800000)
-#define SHREG_BCR2	(*(volatile unsigned short *)	0xff800004)
-#define SHREG_WCR1	(*(volatile unsigned int *)	0xff800008)
-#define SHREG_WCR2	(*(volatile unsigned int *)	0xff80000c)
-#define SHREG_WCR3	(*(volatile unsigned int *)	0xff800010)
-#define SHREG_MCR	(*(volatile unsigned int *)	0xff800014)
-#define SHREG_PCR	(*(volatile unsigned short *)	0xff800018)
-#define SHREG_RTCSR	(*(volatile unsigned short *)	0xff80001c)
-#define SHREG_RTCNT	(*(volatile unsigned short *)	0xff800020)
-#define SHREG_RTCOR	(*(volatile unsigned short *)	0xff800024)
-#define SHREG_RFCR	(*(volatile unsigned short *)	0xff800028)
-
-#endif
 #endif	/* !_SH3_BSCREG_H_ */

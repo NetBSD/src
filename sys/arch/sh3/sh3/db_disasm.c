@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 2000/09/04 23:02:43 tsubai Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.4.4.1 2002/03/16 15:59:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -37,9 +37,7 @@
 void sh3_disasm(void *, char *, char *);
 
 db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t loc;
-	boolean_t altfmt;
+db_disasm(db_addr_t loc, boolean_t altfmt)
 {
 	char line[40], ascii[4];
 

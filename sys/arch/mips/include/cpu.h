@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52.2.2 2002/01/10 19:46:00 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52.2.3 2002/03/16 15:58:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,6 +56,10 @@
 
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
+	u_long ci_cpu_freq;		/* CPU frequency */
+	u_long ci_cycles_per_hz;	/* CPU freq / hz */
+	u_long ci_divisor_delay;	/* for delay/DELAY */
+	u_long ci_divisor_recip;	/* scaled reciprocal of previous */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
@@ -91,14 +95,14 @@ extern struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)
 #define	cpu_number()	(0)
+#endif /* !_LOCORE */
 
 /*
  * Macros to find the CPU architecture we're on at run-time,
  * or if possible, at compile-time.
  */
 
-extern int cpu_arch;
-
+#define	CPU_ARCH_MIPSx	0		/* XXX unknown */
 #define	CPU_ARCH_MIPS1	(1 << 0)
 #define	CPU_ARCH_MIPS2	(1 << 1)
 #define	CPU_ARCH_MIPS3	(1 << 2)
@@ -107,20 +111,104 @@ extern int cpu_arch;
 #define	CPU_ARCH_MIPS32	(1 << 5)
 #define	CPU_ARCH_MIPS64	(1 << 6)
 
-#if (MIPS1 + MIPS3) == 1
-#ifdef MIPS1
-# define CPUISMIPS3	0
-#endif /* mips1 */
+#ifndef _LOCORE
+/* XXX simonb
+ * Should the following be in a cpu_info type structure?
+ * And how many of these are per-cpu vs. per-system?  (Ie,
+ * we can assume that all cpus have the same mmu-type, but
+ * maybe not that all cpus run at the same clock speed.
+ * Some SGI's apparently support R12k and R14k in the same
+ * box.)
+ */
+extern int cpu_arch;
+extern int mips_cpu_flags;
+extern int mips_has_r4k_mmu;
+extern int mips_has_llsc;
+extern int mips3_pg_cached;
 
-#ifdef MIPS3
-#  define CPUISMIPS3	 1
-#endif /* mips1 */
+#define	CPU_MIPS_R4K_MMU		0x0001
+#define	CPU_MIPS_NO_LLSC		0x0002
+#define	CPU_MIPS_CAUSE_IV		0x0004
+#define	CPU_MIPS_HAVE_SPECIAL_CCA	0x0008	/* Defaults to '3' if not set. */
+#define	CPU_MIPS_CACHED_CCA_MASK	0x0070
+#define	CPU_MIPS_CACHED_CCA_SHIFT	 4
+#define	MIPS_NOT_SUPP			0x8000
+
+#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 0
+#error at least one of MIPS1, MIPS3, MIPS4, MIPS32 or MIPS64 must be specified
+#endif
+
+#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 1
+#ifdef MIPS1
+# define CPUISMIPS3		0
+# define CPUIS64BITS		0
+# define CPUISMIPS32		0
+# define CPUISMIPS64		0
+# define CPUISMIPSNN		0
+# define MIPS_HAS_R4K_MMU	0
+# define MIPS_HAS_CLOCK		0
+# define MIPS_HAS_LLSC		0
+#endif /* MIPS1 */
+
+#if defined(MIPS3) || defined(MIPS4)
+# define CPUISMIPS3		1
+# define CPUIS64BITS		1
+# define CPUISMIPS32		0
+# define CPUISMIPS64		0
+# define CPUISMIPSNN		0
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# define MIPS_HAS_LLSC		(mips_has_llsc)
+#endif /* MIPS3 || MIPS4 */
+
+#ifdef MIPS32
+# define CPUISMIPS3		1
+# define CPUIS64BITS		0
+# define CPUISMIPS32		1
+# define CPUISMIPS64		0
+# define CPUISMIPSNN		1
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# define MIPS_HAS_LLSC		1
+#endif /* MIPS32 */
+
+#ifdef MIPS64
+# define CPUISMIPS3		1
+# define CPUIS64BITS		1
+# define CPUISMIPS32		0
+# define CPUISMIPS64		1
+# define CPUISMIPSNN		1
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# define MIPS_HAS_LLSC		1
+#endif /* MIPS32 */
 
 #else /* run-time test */
 
+#define	MIPS_HAS_R4K_MMU	(mips_has_r4k_mmu)
+#define	MIPS_HAS_LLSC		(mips_has_llsc)
+
 /* This test is ... rather bogus */
-#define CPUISMIPS3	((cpu_arch & (CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4)) != 0)
+#define	CPUISMIPS3	((cpu_arch & \
+	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64)) != 0)
+
+/* And these aren't much better while the previous test exists as is... */
+#define	CPUISMIPS32	((cpu_arch & CPU_ARCH_MIPS32) != 0)
+#define	CPUISMIPS64	((cpu_arch & CPU_ARCH_MIPS64) != 0)
+#define	CPUISMIPSNN	((cpu_arch & (CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64)) != 0)
+#define	CPUIS64BITS	((cpu_arch & \
+	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS64)) != 0)
+
+#define	MIPS_HAS_CLOCK	(cpu_arch >= CPU_ARCH_MIPS3)
 #endif /* run-time test */
+
+/* Shortcut for MIPS3 or above defined */
+#if defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)
+#define	MIPS3_PLUS	1
+#else
+#undef MIPS3_PLUS
+#endif
+
 
 /*
  * definitions of cpu-dependent requirements
@@ -129,7 +217,7 @@ extern int cpu_arch;
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
-void cpu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
+void cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -165,12 +253,12 @@ struct clockframe {
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
 
-#if defined(MIPS3) && !defined(MIPS1)
+#if defined(MIPS3_PLUS) && !defined(MIPS1)		/* XXX bogus! */
 #define	CLKF_USERMODE(framep)	MIPS3_CLKF_USERMODE(framep)
 #define	CLKF_BASEPRI(framep)	MIPS3_CLKF_BASEPRI(framep)
 #endif
 
-#if !defined(MIPS3) && defined(MIPS1)
+#if !defined(MIPS3_PLUS) && defined(MIPS1)		/* XXX bogus! */
 #define	CLKF_USERMODE(framep)	MIPS1_CLKF_USERMODE(framep)
 #define	CLKF_BASEPRI(framep)	MIPS1_CLKF_BASEPRI(framep)
 #endif
@@ -180,7 +268,7 @@ struct clockframe {
 #define CLKF_BASEPRI(framep)	ICU_CLKF_BASEPRI(framep)
 #endif
 
-#if defined(MIPS3) && defined(MIPS1)
+#if defined(MIPS3_PLUS) && defined(MIPS1)		/* XXX bogus! */
 #define CLKF_USERMODE(framep) \
     ((CPUISMIPS3) ? MIPS3_CLKF_USERMODE(framep):  MIPS1_CLKF_USERMODE(framep))
 #define CLKF_BASEPRI(framep) \
@@ -235,24 +323,23 @@ struct user;
 extern struct proc *fpcurproc;
 
 /* trap.c */
-void	netintr __P((void));
-int	kdbpeek __P((vaddr_t));
+void	netintr(void);
+int	kdbpeek(vaddr_t);
 
 /* mips_machdep.c */
-void	dumpsys __P((void));
-int	savectx __P((struct user *));
-void	mips_init_msgbuf __P((void));
-void	savefpregs __P((struct proc *));
-void	loadfpregs __P((struct proc *));
+void	dumpsys(void);
+int	savectx(struct user *);
+void	mips_init_msgbuf(void);
+void	savefpregs(struct proc *);
+void	loadfpregs(struct proc *);
 
 /* locore.S */
-int	badaddr __P((void *, size_t));
+int	badaddr(void *, size_t);
 
 /* mips_machdep.c */
-void	cpu_identify __P((void));
-void	mips_vector_init __P((void));
+void	cpu_identify(void);
+void	mips_vector_init(void);
 
 #endif /* ! _LOCORE */
 #endif /* _KERNEL */
-
 #endif /* _CPU_H_ */

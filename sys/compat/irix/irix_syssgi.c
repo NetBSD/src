@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_syssgi.c,v 1.11.4.3 2002/02/11 20:09:27 jdolecek Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.11.4.4 2002/03/16 16:00:28 jdolecek Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.3 2002/02/11 20:09:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.4 2002/03/16 16:00:28 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -58,11 +58,16 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.3 2002/02/11 20:09:27 jdolece
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
+#include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <compat/common/compat_util.h>
 
 #include <compat/svr4/svr4_types.h>
 
@@ -105,21 +110,38 @@ irix_sys_syssgi(p, v, retval)
 		*retval = (register_t)hostid;
 		break;
 
-	case IRIX_SGI_GETPGID: {	/* Get parent process GID */
-		struct proc *tp;
+	case IRIX_SGI_SETGROUPS: {	/* setgroups(2) */
+		struct sys_setgroups_args cup;
 
-		arg1 = SCARG(uap, arg1); /* Process group GID */ 
-		if (arg1 == 0)
-			tp = p;
-		else
-			tp = pfind((pid_t)arg1);
+		SCARG(&cup, gidsetsize) = (int)SCARG(uap, arg1);
+		SCARG(&cup, gidset) = (gid_t *)SCARG(uap, arg2);
+		return (sys_setgroups(p, &cup, retval));
+		break;
+	}
 
-		if (tp == NULL || tp->p_pgrp == NULL)
-			return 0;
+	case IRIX_SGI_GETGROUPS: {	/* getgroups(2) */
+		struct sys_getgroups_args cup;
 
-		*retval = (register_t)tp->p_pgid;
+		SCARG(&cup, gidsetsize) = (int)SCARG(uap, arg1);
+		SCARG(&cup, gidset) = (gid_t *)SCARG(uap, arg2);
+		return (sys_getgroups(p, &cup, retval));
+		break;
+	}
 
-		return 0;
+	case IRIX_SGI_GETSID: {	/* Get session ID: getsid(2) */
+		struct sys_getsid_args cup;
+
+		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1); 
+		return (sys_getsid(p, &cup, retval)); 
+		break;
+	}
+
+	case IRIX_SGI_GETPGID: {/* Get parent process GID: getpgid(2) */
+		struct sys_getpgid_args cup;
+
+		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1); 
+		return (sys_getpgid(p, &cup, retval)); 
+		break;
 	}
 
 	case IRIX_SGI_RDNAME: {	/* Read Processes' name */
@@ -180,6 +202,11 @@ irix_sys_syssgi(p, v, retval)
 
 	case IRIX_SGI_RXEV_GET:		/* Trusted IRIX call */
 		/* Undocumented (?) and unimplemented */
+		return 0;
+		break;
+
+	case IRIX_SGI_FDHI:	/* getdtablehi(3): get higher open fd + 1 */
+		*retval = (register_t)(p->p_fd->fd_lastfile + 1);
 		return 0;
 		break;
 
@@ -277,8 +304,8 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		 * (And also that the sections are not overlapping)
 		 */
 		pht--;
-		size = (pht->p_vaddr & ~(pht->p_align - 1)) + pht->p_align 
-		    - kph->p_vaddr;
+		size = ELF_ROUND((pht->p_vaddr + pht->p_memsz), pht->p_align) -
+		    ELF_TRUNC(kph->p_vaddr, kph->p_align);
 
 		/* Find a free place for the sections */
 		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
@@ -370,6 +397,8 @@ irix_syssgi_sysconf(name, p, retval)
 	int error = 0;
 	int mib[2], value;
 	int len = sizeof(value);
+	struct sys___sysctl_args cup;
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	switch (name) {
 	case IRIX_SC_ARG_MAX:
@@ -377,8 +406,8 @@ irix_syssgi_sysconf(name, p, retval)
 		mib[1] = KERN_ARGMAX;
 		break;
 	case IRIX_SC_CHILD_MAX:
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_MAXPROC;
+		*retval = (register_t)p->p_rlimit[RLIMIT_NPROC].rlim_cur;
+		return 0;
 		break;
 	case IRIX_SC_CLK_TCK:
 		*retval = hz;
@@ -389,16 +418,16 @@ irix_syssgi_sysconf(name, p, retval)
 		mib[1] = KERN_NGROUPS;
 		break;
 	case IRIX_SC_OPEN_MAX:
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_MAXFILES;
+		*retval = (register_t)p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
+		return 0;
 		break;
 	case IRIX_SC_JOB_CONTROL:
-		*retval = 1;
-		return 0;
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_JOB_CONTROL;
 		break;
 	case IRIX_SC_SAVED_IDS:
-		*retval = 1;
-		return 0;
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_SAVED_IDS;
 		break;
 	/* Trusted IRIX capabilities are unsupported */
 	case IRIX_SC_ACL:	/* ACcess Lists */
@@ -423,8 +452,18 @@ irix_syssgi_sysconf(name, p, retval)
 		break;
 	}
 
-	error = kern_sysctl(mib, 2, &value, &len, NULL, 0, p);
-	if (error == 0)
-		*retval = (register_t)value;
-	return error;
+	SCARG(&cup, name) = stackgap_alloc(&sg, sizeof(mib));
+	if ((error = copyout(&mib, SCARG(&cup, name), sizeof(mib))) != 0)
+		return error;
+	SCARG(&cup, namelen) = sizeof(mib);
+	SCARG(&cup, old) = stackgap_alloc(&sg, sizeof(value));
+	if ((copyout(&value, SCARG(&cup, old), sizeof(value))) != 0)
+		return error;
+	SCARG(&cup, oldlenp) = stackgap_alloc(&sg, sizeof(len));
+	if ((copyout(&len, SCARG(&cup, oldlenp), sizeof(len))) != 0)
+		return error;
+	SCARG(&cup, new) = NULL;
+	SCARG(&cup, newlen) = 0;
+
+	return sys___sysctl(p, &cup, retval);
 }

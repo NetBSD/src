@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.6.2.2 2002/02/11 20:08:40 jdolecek Exp $
+#	$NetBSD: MMTAROMNEW,v 1.6.2.3 2002/03/16 15:58:47 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -9,12 +9,13 @@ include "arch/mmeye/conf/std.mmeye"
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
 
 options 	ROMIMAGE
 
 maxusers	32		# estimated number of users
 
+options		SH3
 options 	PCLOCK=33330000		# 33.33MHz
 options 	MMEYE_NEW_INT
 #options 	MMEYE_NO_CACHE
@@ -190,7 +191,7 @@ wd*	at wdc? drive ?			# the drives themselves
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.19.2.3 2002/02/11 20:08:30 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.19.2.4 2002/03/16 15:58:22 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.19.2.3 $"
+#ident 		"GENERIC-$Revision: 1.19.2.4 $"
 
 maxusers	8
 
@@ -89,7 +89,7 @@ options 	SOFTDEP		# ffs soft updates support
 options 	INET		# IP prototol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP securyty (encryption part; define w/IPSEC)
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing

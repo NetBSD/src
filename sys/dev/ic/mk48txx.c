@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.7.2.1 2002/01/10 19:54:51 thorpej Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.7.2.2 2002/03/16 16:01:01 jdolecek Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.7.2.1 2002/01/10 19:54:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.7.2.2 2002/03/16 16:01:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -59,12 +59,16 @@ struct mk48txx {
 	bus_size_t	mk_clkoffset;	/* Offset in NVRAM to clock bits */
 	u_int		mk_year0;	/* What year is represented on the system
 					   by the chip's year counter at 0 */
+	mk48txx_nvrd_t	mk_nvrd;	/* NVRAM/RTC read function */
+	mk48txx_nvwr_t	mk_nvwr;	/* NVRAM/RTC write function */
 };
 
 int mk48txx_gettime(todr_chip_handle_t, struct timeval *);
 int mk48txx_settime(todr_chip_handle_t, struct timeval *);
 int mk48txx_getcal(todr_chip_handle_t, int *);
 int mk48txx_setcal(todr_chip_handle_t, int);
+u_int8_t mk48txx_def_nvrd(bus_space_tag_t, bus_space_handle_t, int);
+void mk48txx_def_nvwr(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
 
 int mk48txx_auto_century_adjust = 1;
 
@@ -82,11 +86,13 @@ struct {
 };
 
 todr_chip_handle_t
-mk48txx_attach(bt, bh, model, year0)
+mk48txx_attach(bt, bh, model, year0, nvread, nvwrite)
 	bus_space_tag_t bt;
 	bus_space_handle_t bh;
 	const char *model;
 	int year0;
+	mk48txx_nvrd_t nvread;
+	mk48txx_nvwr_t nvwrite;
 {
 	todr_chip_handle_t handle;
 	struct mk48txx *mk;
@@ -125,6 +131,14 @@ mk48txx_attach(bt, bh, model, year0)
 	mk->mk_clkoffset = clkoff;
 	mk->mk_year0 = year0;
 
+	if (nvread == NULL)
+		nvread = mk48txx_def_nvrd;
+	if (nvwrite == NULL)
+		nvwrite = mk48txx_def_nvwr;
+
+	mk->mk_nvrd = nvread;
+	mk->mk_nvwr = nvwrite;
+
 	return (handle);
 }
 
@@ -148,17 +162,17 @@ mk48txx_gettime(handle, tv)
 	todr_wenable(handle, 1);
 
 	/* enable read (stop time) */
-	csr = bus_space_read_1(bt, bh, clkoff + MK48TXX_ICSR);
+	csr = (*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_ICSR);
 	csr |= MK48TXX_CSR_READ;
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_ICSR, csr);
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_ICSR, csr);
 
-	dt.dt_sec = FROMBCD(bus_space_read_1(bt, bh, clkoff + MK48TXX_ISEC));
-	dt.dt_min = FROMBCD(bus_space_read_1(bt, bh, clkoff + MK48TXX_IMIN));
-	dt.dt_hour = FROMBCD(bus_space_read_1(bt, bh, clkoff + MK48TXX_IHOUR));
-	dt.dt_day = FROMBCD(bus_space_read_1(bt, bh, clkoff + MK48TXX_IDAY));
-	dt.dt_wday = FROMBCD(bus_space_read_1(bt, bh, clkoff + MK48TXX_IWDAY));
-	dt.dt_mon = FROMBCD(bus_space_read_1(bt, bh, clkoff + MK48TXX_IMON));
-	year = FROMBCD(bus_space_read_1(bt, bh, clkoff + MK48TXX_IYEAR));
+	dt.dt_sec = FROMBCD((*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_ISEC));
+	dt.dt_min = FROMBCD((*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_IMIN));
+	dt.dt_hour = FROMBCD((*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_IHOUR));
+	dt.dt_day = FROMBCD((*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_IDAY));
+	dt.dt_wday = FROMBCD((*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_IWDAY));
+	dt.dt_mon = FROMBCD((*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_IMON));
+	year = FROMBCD((*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_IYEAR));
 
 	year += mk->mk_year0;
 	if (year < POSIX_BASE_YEAR && mk48txx_auto_century_adjust != 0)
@@ -167,9 +181,9 @@ mk48txx_gettime(handle, tv)
 	dt.dt_year = year;
 
 	/* time wears on */
-	csr = bus_space_read_1(bt, bh, clkoff + MK48TXX_ICSR);
+	csr = (*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_ICSR);
 	csr &= ~MK48TXX_CSR_READ;
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_ICSR, csr);
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_ICSR, csr);
 	todr_wenable(handle, 0);
 
 	/* simple sanity checks */
@@ -208,22 +222,22 @@ mk48txx_settime(handle, tv)
 
 	todr_wenable(handle, 1);
 	/* enable write */
-	csr = bus_space_read_1(bt, bh, clkoff + MK48TXX_ICSR);
+	csr = (*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_ICSR);
 	csr |= MK48TXX_CSR_WRITE;
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_ICSR, csr);
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_ICSR, csr);
 
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_ISEC, TOBCD(dt.dt_sec));
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_IMIN, TOBCD(dt.dt_min));
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_IHOUR, TOBCD(dt.dt_hour));
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_IWDAY, TOBCD(dt.dt_wday));
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_IDAY, TOBCD(dt.dt_day));
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_IMON, TOBCD(dt.dt_mon));
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_IYEAR, TOBCD(year));
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_ISEC, TOBCD(dt.dt_sec));
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_IMIN, TOBCD(dt.dt_min));
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_IHOUR, TOBCD(dt.dt_hour));
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_IWDAY, TOBCD(dt.dt_wday));
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_IDAY, TOBCD(dt.dt_day));
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_IMON, TOBCD(dt.dt_mon));
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_IYEAR, TOBCD(year));
 
 	/* load them up */
-	csr = bus_space_read_1(bt, bh, clkoff + MK48TXX_ICSR);
+	csr = (*mk->mk_nvrd)(bt, bh, clkoff + MK48TXX_ICSR);
 	csr &= ~MK48TXX_CSR_WRITE;
-	bus_space_write_1(bt, bh, clkoff + MK48TXX_ICSR, csr);
+	(*mk->mk_nvwr)(bt, bh, clkoff + MK48TXX_ICSR, csr);
 	todr_wenable(handle, 0);
 	return (0);
 }
@@ -252,4 +266,18 @@ mk48txx_get_nvram_size(handle, vp)
 	struct mk48txx *mk = handle->cookie;
 	*vp = mk->mk_nvramsz;
 	return (0);
+}
+
+u_int8_t
+mk48txx_def_nvrd(bus_space_tag_t bt, bus_space_handle_t bh, int off)
+{
+
+	return (bus_space_read_1(bt, bh, off));
+}
+
+void
+mk48txx_def_nvwr(bus_space_tag_t bt, bus_space_handle_t bh, int off, u_int8_t v)
+{
+
+	bus_space_write_1(bt, bh, off, v);
 }

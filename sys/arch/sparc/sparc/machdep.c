@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181.2.4 2002/02/11 20:09:07 jdolecek Exp $ */
+/*	$NetBSD: machdep.c,v 1.181.2.5 2002/03/16 15:59:53 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -781,7 +781,7 @@ cpu_reboot(howto, user_boot_string)
 	/*NOTREACHED*/
 }
 
-u_long	dumpmag = 0x8fca0101;	/* magic number for savecore */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
@@ -1744,7 +1744,7 @@ struct sparc_bus_dma_tag mainbus_dma_tag = {
 /*
  * Base bus space handlers.
  */
-static int	sparc_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
+static int	sparc_bus_map __P(( bus_space_tag_t, bus_addr_t,
 				    bus_size_t, int, vaddr_t,
 				    bus_space_handle_t *));
 static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
@@ -1762,12 +1762,11 @@ static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 
 
 int
-sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
+sparc_bus_map(t, ba, size, flags, va, hp)
 	bus_space_tag_t t;
-	bus_type_t	iospace;
-	bus_addr_t	addr;
+	bus_addr_t	ba;
 	bus_size_t	size;
-	vaddr_t		vaddr;
+	vaddr_t		va;
 	bus_space_handle_t *hp;
 {
 	vaddr_t v;
@@ -1785,8 +1784,8 @@ static	vaddr_t iobase;
 		return (EINVAL);
 	}
 
-	if (vaddr)
-		v = trunc_page(vaddr);
+	if (va)
+		v = trunc_page(va);
 	else {
 		v = iobase;
 		iobase += size;
@@ -1794,18 +1793,20 @@ static	vaddr_t iobase;
 			panic("sparc_bus_map: iobase=0x%lx", iobase);
 	}
 
+	pmtype = PMAP_IOENC(BUS_ADDR_IOSPACE(ba));
+	pa = BUS_ADDR_PADDR(ba);
+
 	/* note: preserve page offset */
-	*hp = (bus_space_handle_t)(v | ((u_long)addr & PGOFSET));
+	*hp = (bus_space_handle_t)(v | ((u_long)pa & PGOFSET));
 
-	pa = trunc_page(addr);
-	pmtype = PMAP_IOENC(iospace);
-
+	pa = trunc_page(pa);
 	do {
 		pmap_kenter_pa(v, pa | pmtype | PMAP_NC,
 		    VM_PROT_READ | VM_PROT_WRITE);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
+
 	pmap_update(pmap_kernel());
 	return (0);
 }
@@ -1836,25 +1837,24 @@ sparc_bus_subregion(tag, handle, offset, size, nhandlep)
 }
 
 paddr_t
-sparc_bus_mmap(t, baddr, off, prot, flags)
+sparc_bus_mmap(t, ba, off, prot, flags)
 	bus_space_tag_t t;
-	bus_addr_t	baddr;
+	bus_addr_t	ba;
 	off_t		off;
 	int		prot;
 	int		flags;
 {
-	bus_type_t iospace = BUS_ADDR_IOSPACE(baddr);
-	paddr_t paddr = trunc_page(BUS_ADDR_PADDR(baddr) + off);
-	return (paddr_t)(paddr | PMAP_IOENC(iospace) | PMAP_NC);
+	u_int pmtype = PMAP_IOENC(BUS_ADDR_IOSPACE(ba));
+	paddr_t pa = trunc_page(BUS_ADDR_PADDR(ba) + off);
+	return (paddr_t)(pa | pmtype | PMAP_NC);
 }
 
 /*
  * Establish a temporary bus mapping for device probing.
  */
 int
-bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
+bus_space_probe(tag, paddr, size, offset, flags, callback, arg)
 	bus_space_tag_t tag;
-	bus_type_t	btype;
 	bus_addr_t	paddr;
 	bus_size_t	size;
 	size_t		offset;
@@ -1866,7 +1866,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	caddr_t tmp;
 	int result;
 
-	if (bus_space_map2(tag, btype, paddr, size, flags, TMPMAP_VA, &bh) != 0)
+	if (bus_space_map2(tag, paddr, size, flags, TMPMAP_VA, &bh) != 0)
 		return (0);
 
 	tmp = (caddr_t)bh;

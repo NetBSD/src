@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.3.2.1 2002/02/11 20:07:58 jdolecek Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.3.2.2 2002/03/16 15:57:49 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -126,6 +126,26 @@ Architecture::systemInfo(void)
 	u_int32_t val = 0;
 	SYSTEM_INFO si;
 	HDC hdc;
+	BOOL (*getVersionEx)(LPOSVERSIONINFO);
+	
+	//
+	// WCE200 ... GetVersionEx
+	// WCE210 or later ... GetVersionExA or GetVersionExW
+	// see winbase.h
+	//
+	getVersionEx = reinterpret_cast <BOOL(*)(LPOSVERSIONINFO)>
+	    (_load_func(TEXT("GetVersionEx")));
+	
+	if (getVersionEx) {
+		getVersionEx(&WinCEVersion);
+		DPRINTF((TEXT("GetVersionEx\n")));
+	} else {
+		GetVersionEx(&WinCEVersion);
+		DPRINTF((TEXT("GetVersionExW\n")));
+	}
+
+	DPRINTF((TEXT("Windows CE %d.%d\n"), WinCEVersion.dwMajorVersion,
+	    WinCEVersion.dwMinorVersion));
 
 	GetSystemInfo(&si);
 	DPRINTF((TEXT("GetSystemInfo:\n")));
@@ -162,45 +182,4 @@ BOOL(*Architecture::_load_UnlockPages(void))(LPVOID, DWORD)
 
 	return reinterpret_cast <BOOL(*)(LPVOID, DWORD)>
 	    (_load_func(TEXT("UnlockPages")));
-}
-
-//
-// Debug support.
-//
-void
-Architecture::_bitdisp(u_int32_t a, int s, int e, int m, int c)
-{
-	u_int32_t j, j1;
-	int i, n;
-
-	n = 31;	// 32bit only.
-	j1 = 1 << n;
-	e = e ? e : n;
-	for (j = j1, i = n; j > 0; j >>=1, i--) {
-		if (i > e || i < s) {
-			DPRINTF((TEXT("%c"), a & j ? '+' : '-'));
-		} else {
-			DPRINTF((TEXT("%c"), a & j ? '|' : '.'));
-		}
-	}
-	if (m) {
-		DPRINTF((TEXT("[%s]"),(char*)m));
-	}
-	if (c) {
-		for (j = j1, i = n; j > 0; j >>=1, i--) {
-			if (!(i > e || i < s) &&(a & j)) {
-				DPRINTF((TEXT(" %d"), i));
-			}
-		}
-	}
-	DPRINTF((TEXT(" [0x%08x] %d"), a, a));
-	DPRINTF((TEXT("\n")));
-}
-
-void
-Architecture::_dbg_bit_print(u_int32_t reg, u_int32_t mask, const char *name)
-{
-	static const char onoff[3] = "_x";
-
-	DPRINTF((TEXT("%S[%c] "), name, onoff[reg & mask ? 1 : 0]));
 }

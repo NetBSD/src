@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.451.2.6 2002/02/11 20:09:35 jdolecek Exp $
+#	$NetBSD: files,v 1.451.2.7 2002/03/16 16:00:41 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -12,8 +12,7 @@ defparam			MAXUPRC
 defparam			RTC_OFFSET
 defparam			DEFCORENAME
 defflag				UCONSOLE
-defflag				NEW_PIPE
-defflag				PIPE_SOCKETPAIR
+defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag				MULTIPROCESSOR
 
@@ -182,9 +181,7 @@ defflag				SYSCALL_DEBUG
 #
 defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
-defparam opt_md.h		MEMORY_DISK_SERVER
-
-defparam opt_mdsize.h		MINIROOTSIZE
+defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_SIZE
 
 # device classes
 #
@@ -210,6 +207,8 @@ define	radiodev	{ }
 #
 define	mulaw
 define	auconv
+define	aurateconv
+file	dev/aurateconv.c	aurateconv	needs-flag
 
 # audio and midi devices, attaches to audio hardware driver
 #
@@ -375,6 +374,7 @@ defflag	opt_isp.h		ISP_DISABLE_1020_SUPPORT
 				ISP_DISABLE_2100_SUPPORT
 				ISP_DISABLE_2200_SUPPORT
 				ISP_DISABLE_FW ISP_TARGET_MODE
+				ISP_FW_CRASH_DUMP
 defparam opt_isp.h		ISP_LOGDEFAULT
 device	isp: scsi
 file	dev/ic/isp.c			isp
@@ -816,6 +816,11 @@ file	dev/usb/ehci.c			ehci			needs-flag
 device	radio
 attach	radio at radiodev
 
+#
+# IEEE 1212 routines
+define	ieee1212
+file	dev/std/ieee1212.c		ieee1212
+
 # IEEE 1394 controllers
 # (These need to be here since it will have both PCI and CardBus attachments)
 #
@@ -873,7 +878,6 @@ defpseudo bridge:	ifnet, ether
 defpseudo bpfilter:	ifnet, bpf_filter
 defpseudo strip:	ifnet
 defpseudo ipfilter:	ifnet
-defpseudo ipip:		ifnet
 defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
@@ -962,6 +966,7 @@ file	dev/ir/sir.c			irdasir
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
+file	dev/mm.c
 file	dev/mulaw.c			mulaw
 file	dev/radio.c			radio			needs-flag
 file	dev/raidframe/rf_acctrace.c		raid		needs-flag
@@ -1100,7 +1105,7 @@ file	kern/subr_rmap.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
-file	kern/sys_pipe.c			new_pipe
+file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_process.c
 file	kern/sys_socket.c
 file	kern/syscalls.c			syscall_debug
@@ -1259,7 +1264,6 @@ file	netinet/ip_frag.c		ipfilter
 file	netinet/ip_gre.c		inet & gre
 file	netinet/ip_icmp.c		inet
 file	netinet/ip_input.c		inet
-file	netinet/ip_ipip.c		ipip			needs-count
 file	netinet/ip_log.c		ipfilter & ipfilter_log
 file	netinet/ip_mroute.c		inet & mrouting
 file	netinet/ip_nat.c		ipfilter

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.18.2.1 2001/09/13 01:14:44 thorpej Exp $ */
+/*	$NetBSD: mem.c,v 1.18.2.2 2002/03/16 16:00:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,7 +101,7 @@ mmrw(dev, uio, flags)
 	extern caddr_t vmmap;
 	vsize_t msgbufsz;
 
-	if (minor(dev) == 0) {
+	if (minor(dev) == DEV_MEM) {
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
@@ -128,8 +128,7 @@ mmrw(dev, uio, flags)
 
 		switch (minor(dev)) {
 
-		/* minor device 0 is physical memory */
-		case 0:
+		case DEV_MEM:
 #if 1
 			v = uio->uio_offset;
 			if (!pmap_pa_exists(v)) {
@@ -213,8 +212,7 @@ mmrw(dev, uio, flags)
 			break;
 #endif
 
-		/* minor device 1 is kernel memory */
-		case 1:
+		case DEV_KMEM:
 			v = uio->uio_offset;
 			msgbufsz = msgbufp->msg_bufs +
 				offsetof(struct kern_msgbuf, msg_bufc);
@@ -236,19 +234,14 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-		/* minor device 2 is EOF/RATHOLE */
-		case 2:
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
 /* XXX should add sbus, etc */
 
-		/*
-		 * minor device 12 (/dev/zero) is source of nulls on read,
-		 * rathole on write.
-		 */
-		case 12:
+		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
 				return(0);

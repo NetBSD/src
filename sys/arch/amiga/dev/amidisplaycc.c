@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.1.6.1 2002/02/11 20:06:49 jdolecek Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.1.6.2 2002/03/16 15:55:49 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.6.1 2002/02/11 20:06:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.6.2 2002/03/16 15:55:49 jdolecek Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -1569,16 +1569,16 @@ amidisplaycc_setnamedfont(struct amidisplaycc_screen *scr, char *fontname)
 		wsfontcookie = wsfont_find(fontname,
 					   scr->fontwidth,
 					   scr->fontheight,
-					   1);
+					   1,
+					   WSDISPLAY_FONTORDER_L2R,
+					   WSDISPLAY_FONTORDER_L2R);
 
 		if (wsfontcookie == -1)
 			return (EINVAL);
 
 		/* So, found a suitable font. Now lock it. */
 		if (wsfont_lock(wsfontcookie,
-				&font,
-				WSDISPLAY_FONTORDER_L2R,
-				WSDISPLAY_FONTORDER_L2R) == -1)
+				&font))
 			return (EINVAL);
 
 		/* Ok here we have the font successfully. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.1.2.1 2002/01/10 19:48:03 thorpej Exp $	*/
+/*	$NetBSD: bat.h,v 1.1.2.2 2002/03/16 15:59:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ struct bat {
 #define	BAT_W		0x00000040	/* 1 = write-through, 0 = write-back */
 #define	BAT_I		0x00000020	/* cache inhibit */
 #define	BAT_M		0x00000010	/* memory coherency enable */
-#define	BAT_G		0x00000008	/* guarded region */
+#define	BAT_G		0x00000008	/* guarded region (not on 601) */
 
 #define	BAT_PP      0x00000003	/* PP mask */
 #define	BAT_PP_NONE	0x00000000	/* no access permission */

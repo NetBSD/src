@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.26.2.4 2002/02/11 20:09:45 jdolecek Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.26.2.5 2002/03/16 16:01:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.26.2.4 2002/02/11 20:09:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.26.2.5 2002/03/16 16:01:02 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1038,7 +1038,7 @@ esh_fpread(dev, uio, ioflag)
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
 		error = uvm_vslock(p, iovp->iov_base, iovp->iov_len,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_WRITE);
 		if (error) {
 			/* Unlock what we've locked so far. */
 			for (--i; i >= 0; i--) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2.16.1 2002/03/16 15:59:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -48,8 +48,7 @@
 #define _SH3_PCB_H_
 
 #include <sys/signal.h>
-
-#include <machine/segments.h>
+#include <machine/psl.h>
 
 struct pcb {
 	int	r0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.136.2.1 2002/01/10 20:04:51 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.136.2.2 2002/03/16 16:02:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -286,10 +286,11 @@ void	dopowerhooks __P((int));
 #define PWR_SOFTSTANDBY	5
 
 /*
- * Mountroot hooks.  Device drivers establish these to be executed
- * just before (*mountroot)() if the passed device is selected
- * as the root device.
+ * Mountroot hooks (and mountroot declaration).  Device drivers establish
+ * these to be executed just before (*mountroot)() if the passed device is
+ * selected as the root device.
  */
+extern int (*mountroot)(void);
 void	*mountroothook_establish __P((void (*)(struct device *),
 	    struct device *));
 void	mountroothook_disestablish __P((void *));

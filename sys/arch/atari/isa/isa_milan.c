@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.4 2001/05/29 05:58:18 leo Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.4.4.1 2002/03/16 15:56:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,47 +47,33 @@
 #include <machine/iomap.h>
 
 void	isa_bus_init(void);
-#if 0
-static void init_icu(void);
-#endif
-static void set_icus(void);
-static void calc_imask(void);
+
+static void new_imask(void);
 static void isa_callback(int);
 
 /*
- * Bitmask of currently enabled isa interrupts. Used by set_icus().
+ * Bitmask of currently enabled isa interrupts. Used by new_imask().
  */
 static u_int16_t imask_enable = 0xffff;
 
-#define	IRQ_SLAVE	2
+#define	IRQ_SLAVE		2	/* Slave at level 2		*/
+#define MILAN_MAX_ISA_INTS	16	/* Max. number of vectors	*/
+#define	ICU_OFFSET		0	/* Interrupt vector base	*/
 
-/*
- * Interrupt routing table
- */
-#define MILAN_MAX_ISA_INTS	16
+#define	WICU(icu, val)		*(volatile u_int8_t*)(icu) = val
 
 static isa_intr_info_t milan_isa_iinfo[MILAN_MAX_ISA_INTS];
 
 void
 isa_bus_init()
 {
-#if 0
-	init_icu();
-#endif
-	set_icus();
-}
+	volatile u_int8_t	*icu;
 
-#if 0
-/*
- * XXX: For some reason, this does not work at all... (Leo).
- */
-static void
-init_icu()
-{
-#define	ICU_OFFSET	0
-
-	u_int8_t	*icu;
-
+	/*
+	 * Initialize both the icu's:
+	 *   - enter Special Mask Mode
+	 *   - Block all interrupts
+	 */
 	icu = (u_int8_t*)(AD_8259_MASTER);
 
 	icu[0] = 0x11;			/* reset; program device, four bytes */
@@ -95,6 +81,8 @@ init_icu()
 	icu[1] = (1 << IRQ_SLAVE);	/* slave on line 2 */
 	icu[1] = 1;			/* 8086 mode */
 	icu[1] = 0xff;			/* leave interrupts masked */
+	icu[0] = 0x68;			/* special mask mode  */
+	icu[0] = 0x0a;			/* Read IRR by default. */
 
 	icu = (u_int8_t*)(AD_8259_SLAVE);
 
@@ -103,22 +91,16 @@ init_icu()
 	icu[1] = IRQ_SLAVE;		/* slave on line 2 */
 	icu[1] = 1;			/* 8086 mode */
 	icu[1] = 0xff;			/* leave interrupts masked */
-}
-#endif
-
-static void
-set_icus()
-{
-	u_int8_t	*icu;
-
-	icu = (u_int8_t*)AD_8259_MASTER;
-	icu[1] = imask_enable & 0xff;
-	icu = (u_int8_t*)AD_8259_SLAVE;
-	icu[1] = (imask_enable >> 8) & 0xff;
+	icu[0] = 0x68;			/* special mask mode  */
+	icu[0] = 0x0a;			/* Read IRR by default. */
 }
 
+/*
+ * Determine and activate new interrupt mask by scanning the milan_isa_iinfo
+ * array for enabled interrupts.
+ */
 static void
-calc_imask()
+new_imask()
 {
 	int		irq;
 	u_int16_t	nmask = 0;
@@ -130,7 +112,8 @@ calc_imask()
 			nmask |= 1 << IRQ_SLAVE;
 	}
 	imask_enable = ~nmask;
-	set_icus();
+	WICU(AD_8259_MASTER+1, imask_enable & 0xff);
+	WICU(AD_8259_SLAVE+1 , (imask_enable >> 8) & 0xff);
 }
 
 static void
@@ -144,6 +127,9 @@ isa_callback(vector)
 
 	s = splx(iinfo_p->ipl);
 	(void) (iinfo_p->ifunc)(iinfo_p->iarg);
+	if (vector > 7)
+		WICU(AD_8259_SLAVE, 0x60 | (vector & 7));
+	else WICU(AD_8259_MASTER, 0x60 | (vector & 7));
 	splx(s);
 }
 
@@ -160,10 +146,9 @@ milan_isa_intr(vector, sr)
 		return;
 	}
 
-	/* Acknowledge interrupt XXX 0x20 == EOI	*/
+	/* Ack cascade 0x60 == Specific EOI		*/
 	if (vector > 7)
-		*((u_char *)AD_8259_SLAVE) = 0x20;
-	*((u_char *)AD_8259_MASTER) = 0x20;
+		WICU(AD_8259_MASTER, 0x60|IRQ_SLAVE);
 
 	iinfo_p = &milan_isa_iinfo[vector];
 	if (iinfo_p->ifunc == NULL) {
@@ -180,10 +165,12 @@ milan_isa_intr(vector, sr)
 	else {
 		s = splx(iinfo_p->ipl);
 		(void) (iinfo_p->ifunc)(iinfo_p->iarg);
+		if (vector > 7)
+			WICU(AD_8259_SLAVE, 0x60 | (vector & 7));
+		else WICU(AD_8259_MASTER, 0x60 | (vector & 7));
 		splx(s);
 	}
 }
-
 
 /*
  * Try to allocate a free interrupt... On the Milan, we have available:
@@ -199,13 +186,6 @@ isa_intr_alloc(ic, mask, type, irq)
 	int *irq;
 {
 	int	i;
-
-	/*
-	 * The Hades only supports edge triggered interrupts!
-	 * XXX: Find out about the Milan....
-	 */
-	if (type != IST_EDGE)
-		return 1;
 
 	/*
 	 * Say no to impossible questions...
@@ -233,13 +213,6 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 {
 	isa_intr_info_t *iinfo_p;
 
-	/*
-	 * The Hades only supports edge triggered interrupts!
-	 * XXX: Find out oubout the Milan...
-	 */
-	if (type != IST_EDGE)
-		return NULL;
-
 	iinfo_p = &milan_isa_iinfo[irq];
 
 	if (iinfo_p->ifunc != NULL) {
@@ -254,7 +227,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	iinfo_p->ifunc = ih_fun;
 	iinfo_p->iarg  = ih_arg;
 
-	calc_imask();
+	new_imask();
 	return(iinfo_p);
 }
 
@@ -269,5 +242,5 @@ isa_intr_disestablish(ic, handler)
 	    panic("isa_intr_disestablish: interrupt was not established\n");
 
 	iinfo_p->ifunc = NULL;
-	calc_imask();
+	new_imask();
 }

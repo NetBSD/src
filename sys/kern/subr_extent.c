@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.42.2.2 2002/01/10 20:00:00 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.42.2.3 2002/03/16 16:01:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.42.2.2 2002/01/10 20:00:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.42.2.3 2002/03/16 16:01:49 jdolecek Exp $");
 
 #ifdef _KERNEL
 #include <sys/param.h>
@@ -137,7 +137,7 @@ expool_init(void)
 
 #if defined(_KERNEL)
 	pool_init(&expool, sizeof(struct extent_region), 0, 0, 0,
-	    "extent", 0, 0, 0, 0);
+	    "extent", NULL);
 #else
 	expool.pr_size = sizeof(struct extent_region);
 #endif
@@ -722,7 +722,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 					newend = newstart + (size - 1);
 					dontcross += boundary;
 					if (!LE_OV(newstart, size, rp->er_start))
-						continue;
+						goto skip;
 				}
 
 				/*
@@ -757,6 +757,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			}
 		}
 
+skip:
 		/*
 		 * Skip past the current region and check again.
 		 */

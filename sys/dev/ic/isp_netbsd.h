@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.45.2.2 2002/01/10 19:54:42 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.45.2.3 2002/03/16 16:00:58 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -235,6 +235,9 @@ default:							\
 	}								\
 	isp->isp_osinfo.mbox_locked = 0
 
+#define	FC_SCRATCH_ACQUIRE(isp)
+#define	FC_SCRATCH_RELEASE(isp)
+
 #ifndef	SCSI_GOOD
 #define	SCSI_GOOD	0x0
 #endif
@@ -457,13 +460,18 @@ isp_microtime_sub(struct timeval *b, struct timeval *a)
 static INLINE void
 isp_wait_complete(struct ispsoftc *isp)
 {
+	int lim;
+	if (isp->isp_mbxwrk0)
+		lim = 60;
+	else
+		lim = 5;
 	if (isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints) {
-		int usecs = 0;
+		int useclim = 1000000 * lim, usecs = 0;
 		/*
 		 * For sanity's sake, we don't delay longer
 		 * than 5 seconds for polled commands.
 		 */
-		while (usecs < 5 * 1000000) {
+		while (usecs < useclim) {
 			u_int16_t isr, sema, mbox;
 			if (isp->isp_mboxbsy == 0) {
 				break;
@@ -486,9 +494,12 @@ isp_wait_complete(struct ispsoftc *isp)
 		int rv = 0;
                 isp->isp_osinfo.mboxwaiting = 1;
                 while (isp->isp_osinfo.mboxwaiting && rv == 0) {
-			static const struct timeval dtime = { 5, 0 };
+			struct timeval dtime;
 			int timo;
 			struct timeval tv;
+
+			dtime.tv_sec = lim;
+			dtime.tv_usec = 0;
 			microtime(&tv);
 			timeradd(&tv, &dtime, &tv);
 			if ((timo = hzto(&tv)) == 0) {

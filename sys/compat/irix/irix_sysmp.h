@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.h,v 1.1.4.2 2002/01/10 19:51:21 thorpej Exp $ */
+/*	$NetBSD: irix_sysmp.h,v 1.1.4.3 2002/03/16 16:00:28 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,4 +84,35 @@
 #define IRIX_MP_KLSTAT			48
 #define IRIX_MP_NUM_CPU_PER_NODE	49
 
-#endif /* _IRIX_SYSMP_H_ */
+/* IRIX_MP_KERNADDR subcommands */
+#define IRIX_MPKA_VAR                2
+#define IRIX_MPKA_SWPLO              3
+#define IRIX_MPKA_INO                4
+#define IRIX_MPKA_SEMAMETER          7
+#define IRIX_MPKA_PROCSIZE           9
+#define IRIX_MPKA_TIME               10
+#define IRIX_MPKA_MSG                11
+#define IRIX_MPKA_MSGINFO            14
+#define IRIX_MPKA_SPLOCKMETER        17
+#define IRIX_MPKA_SPLOCKMETERTAB     18
+#define IRIX_MPKA_AVENRUN            19
+#define IRIX_MPKA_PHYSMEM            20
+#define IRIX_MPKA_KPBASE             21
+#define IRIX_MPKA_PFDAT              22
+#define IRIX_MPKA_FREEMEM            23
+#define IRIX_MPKA_USERMEM            24
+#define IRIX_MPKA_PDWRIMEM           25
+#define IRIX_MPKA_BUFMEM             26
+#define IRIX_MPKA_BUF                27
+#define IRIX_MPKA_CHUNKMEM           30
+#define IRIX_MPKA_MAXCLICK           31
+#define IRIX_MPKA_PSTART             32
+#define IRIX_MPKA_TEXT               33
+#define IRIX_MPKA_ETEXT              34
+#define IRIX_MPKA_EDATA              35
+#define IRIX_MPKA_END                36
+#define IRIX_MPKA_SYSSEGSZ           37
+#define IRIX_MPKA_SEM_MAC            38
+#define IRIX_MPKA_MSG_MAC            40
+#define IRIX_MPKA_BSD_KERNADDRS      41
+#endif /* _IRIX_SYSIRIX_MP_H_ */

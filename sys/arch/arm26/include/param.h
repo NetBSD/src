@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10.2.2 2002/01/10 19:38:36 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.10.2.3 2002/03/16 15:56:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,8 +42,6 @@
 
 #define	_MACHINE	arm26
 #define	MACHINE		"arm26"
-#define	_MACHINE_ARCH	arm
-#define	MACHINE_ARCH	"arm"
 
 #define POOL_SUBPAGE 4096
 
@@ -51,10 +49,6 @@
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 
-#define	CLSIZELOG2	0
-#define	CLSIZE		(1 << CLSIZELOG2)
-
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define SSIZE           1               /* initial stack size/NBPG */
 #define SINCR           1               /* increment of stack/NBPG */
 #define UPAGES          1               /* pages of u-area */
@@ -65,6 +59,10 @@
 #endif
 
 #ifndef NMBCLUSTERS
+#if defined(_KERNEL_OPT)
+#include "opt_gateway.h"
+#endif
+
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else

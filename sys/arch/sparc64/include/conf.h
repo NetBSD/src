@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:26 lukem Exp $	*/
+/*	$NetBSD: conf.h,v 1.9.2.1 2002/03/16 15:59:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,9 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define mmread mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
+#include <sys/conf.h>
 
 cdev_decl(openprom);
 

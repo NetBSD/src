@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2001/03/04 05:06:51 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.1.6.1 2002/03/16 15:56:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -77,7 +77,7 @@
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines

@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.30.2.1 2002/01/10 19:58:30 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.30.2.2 2002/03/16 16:01:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.30.2.1 2002/01/10 19:58:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.30.2.2 2002/03/16 16:01:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ ukattach(parent, self, aux)
 	periph->periph_dev = &uk->sc_dev;
 
 	printf("\n");
-	printf("%s: unknown device\n", uk->sc_dev.dv_xname);
 }
 
 int

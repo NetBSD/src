@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.44.2.2 2002/02/11 20:10:43 jdolecek Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.44.2.3 2002/03/16 16:02:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.44.2.2 2002/02/11 20:10:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.44.2.3 2002/03/16 16:02:19 jdolecek Exp $");
 
 #include "opt_nfs.h"
 
@@ -99,9 +99,9 @@ nfs_nhinit()
 	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
 
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
+	    &pool_allocator_nointr);
 	pool_init(&nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
+	    &pool_allocator_nointr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1.2.2 2001/08/25 06:15:10 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.1.2.3 2002/03/16 15:56:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,22 +41,32 @@
 
 /*
  * For KERNEL code:
- *	MACHINE must be defined by the individual port.
- *	MACHINE_ARCH may be defined by an individual port.
+ *	MACHINE must be defined by the individual port.  This is so that
+ *	uname returns the correct thing, etc.
+ *
+ *	MACHINE_ARCH may be defined by individual ports as a temporary
+ *	measure while we're finishing the conversion to ELF.
  *
  * For non-KERNEL code:
- *	MACHINE && MACHINE_ARCH default to "arm"
+ *	If ELF, MACHINE and MACHINE_ARCH are forced to "arm".
  */
 
-#ifndef _KERNEL
-#ifndef MACHINE
-#define	MACHINE		"arm"
-#endif
-#endif /* !_KERNEL */
-
-#ifndef MACHINE_ARCH
+#if defined(_KERNEL)
+#ifndef MACHINE_ARCH			/* XXX For now */
+#define	_MACHINE_ARCH	arm
 #define	MACHINE_ARCH	"arm"
 #endif
+#elif defined(__ELF__)
+#undef _MACHINE
+#define	_MACHINE	arm
+#undef MACHINE
+#define	MACHINE		"arm"
+
+#undef _MACHINE_ARCH
+#define	_MACHINE_ARCH	arm
+#undef MACHINE_ARCH
+#define	MACHINE_ARCH	"arm"
+#endif /* _KERNEL */
 
 #define	MID_MACHINE	MID_ARM6
 
@@ -117,8 +127,12 @@
  * of the hardware page size.
  */
 #define	MSIZE		256		/* size of an mbuf */
+
+#ifndef MCLSHIFT
 #define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
+#endif	/* MCLSHIFT */
+
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #endif /* _ARM_PARAM_H_ */

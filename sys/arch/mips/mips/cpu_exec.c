@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.27.2.1 2002/01/10 19:46:06 thorpej Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.27.2.2 2002/03/16 15:58:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,15 +52,17 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef EXEC_ECOFF
 #include <sys/exec_ecoff.h>
-#include <sys/exec_elf.h>
+#endif
+#include <sys/exec_elf.h>			/* mandatory */
 #ifdef COMPAT_09
 #include <machine/bsd-aout.h>
 #endif
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
-int	mips_elf_makecmds __P((struct proc *, struct exec_package *));
+int	mips_elf_makecmds(struct proc *, struct exec_package *);
 
 
 /*

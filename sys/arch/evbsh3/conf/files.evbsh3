@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbsh3,v 1.8.2.1 2002/01/10 19:42:40 thorpej Exp $
+#	$NetBSD: files.evbsh3,v 1.8.2.2 2002/03/16 15:57:29 jdolecek Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -12,7 +12,7 @@ file	arch/evbsh3/evbsh3/conf.c
 file	arch/evbsh3/evbsh3/machdep.c
 file	arch/evbsh3/evbsh3/procfs_machdep.c	procfs
 file	arch/evbsh3/evbsh3/autoconf.c
-file	arch/sh3/sh3/clock.c
+file	arch/evbsh3/evbsh3/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c			disk
 
 defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE

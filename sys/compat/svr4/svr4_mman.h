@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_mman.h,v 1.2 1999/04/06 02:55:24 tv Exp $	*/
+/*	$NetBSD: svr4_mman.h,v 1.2.16.1 2002/03/16 16:00:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,5 +48,14 @@
 #define SVR4_MC_ADVISE		4
 #define SVR4_MC_LOCKAS		5
 #define SVR4_MC_UNLOCKAS	6
+
+/*
+ * Flags passed to traditional mmap() syscall.  The type (SHARED/PRIVATE)
+ * is the same as in NetBSD.
+ */
+
+#define SVR4_MAP_TYPE		0x00f
+#define SVR4_MAP_COPYFLAGS	0x07f	/* flags same as NetBSD */
+#define SVR4_MAP_ANON		0x100
 
 #endif /* !_SVR4_MMAN_H */

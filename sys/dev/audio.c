@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.137.2.4 2002/02/11 20:09:36 jdolecek Exp $	*/
+/*	$NetBSD: audio.c,v 1.137.2.5 2002/03/16 16:00:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137.2.4 2002/02/11 20:09:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137.2.5 2002/03/16 16:00:46 jdolecek Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137.2.4 2002/02/11 20:09:36 jdolecek Exp
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (audiodebug) printf x
 #define DPRINTFN(n,x)	if (audiodebug>(n)) printf x
-int	audiodebug = 0;
+int	audiodebug = AUDIO_DEBUG;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -267,7 +267,11 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		printf("audio: could not allocate record buffer\n");
 		return;
 	}
-	
+
+	sc->sc_pconvbuffer = malloc(AU_RING_SIZE, M_DEVBUF, M_WAITOK);
+	sc->sc_pconvbuffer_size = AU_RING_SIZE;
+	sc->sc_rconvbuffer = malloc(AU_RING_SIZE, M_DEVBUF, M_WAITOK);
+	sc->sc_rconvbuffer_size = AU_RING_SIZE;
 	/*
 	 * Set default softc params
 	 */
@@ -281,6 +285,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	audio_init_ringbuffer(&sc->sc_rr);
 	audio_init_ringbuffer(&sc->sc_pr);
 	audio_calcwater(sc);
+	sc->sc_input_fragment_length = 0;
 
 	iclass = oclass = -1;
 	sc->sc_inports.index = -1;
@@ -364,6 +369,8 @@ audiodetach(struct device *self, int flags)
 	/* free resources */
 	audio_free_ring(sc, &sc->sc_pr);
 	audio_free_ring(sc, &sc->sc_rr);
+	free(sc->sc_pconvbuffer, M_DEVBUF);
+	free(sc->sc_rconvbuffer, M_DEVBUF);
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -798,6 +805,13 @@ audio_initbufs(struct audio_softc *sc)
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_mode));
 	audio_init_ringbuffer(&sc->sc_rr);
+#if NAURATECONV > 0
+	auconv_init_context(&sc->sc_rconv, sc->sc_rparams.hw_sample_rate,
+			    sc->sc_rparams.sample_rate,
+			    sc->sc_rr.start, sc->sc_rr.end);
+#endif
+	sc->sc_rconvbuffer_begin = 0;
+	sc->sc_rconvbuffer_end = 0;
 	if (hw->init_input && (sc->sc_mode & AUMODE_RECORD)) {
 		error = hw->init_input(sc->hw_hdl, sc->sc_rr.start,
 				       sc->sc_rr.end - sc->sc_rr.start);
@@ -806,6 +820,11 @@ audio_initbufs(struct audio_softc *sc)
 	}
 
 	audio_init_ringbuffer(&sc->sc_pr);
+#if NAURATECONV > 0
+	auconv_init_context(&sc->sc_pconv, sc->sc_pparams.sample_rate,
+			    sc->sc_pparams.hw_sample_rate,
+			    sc->sc_pr.start, sc->sc_pr.end);
+#endif
 	sc->sc_sil_count = 0;
 	if (hw->init_output && (sc->sc_mode & AUMODE_PLAY)) {
 		error = hw->init_output(sc->hw_hdl, sc->sc_pr.start,
@@ -1141,6 +1160,8 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	struct audio_ringbuffer *cb = &sc->sc_rr;
 	u_char *outp;
 	int error, s, used, cc, n;
+	const struct audio_params *params;
+	int hw_bytes_per_sample;
 
 	if (cb->mmapped)
 		return EINVAL;
@@ -1148,6 +1169,18 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	DPRINTFN(1,("audio_read: cc=%lu mode=%d\n", 
                     (unsigned long)uio->uio_resid, sc->sc_mode));
 
+	params = &sc->sc_rparams;
+	switch (params->hw_encoding) {
+	case AUDIO_ENCODING_SLINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR_BE:
+	case AUDIO_ENCODING_ULINEAR_LE:
+	case AUDIO_ENCODING_ULINEAR_BE:
+		hw_bytes_per_sample = params->hw_channels * params->precision/8
+			* params->factor;
+		break;
+	default:
+		hw_bytes_per_sample = 1 * params->factor;
+	}
 	error = 0;
 	/*
 	 * If hardware is half-duplex and currently playing, return
@@ -1187,67 +1220,121 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		return (error);
 	}
 	while (uio->uio_resid > 0 && !error) {
-		s = splaudio();
-		while (cb->used <= 0) {
-			if (!sc->sc_rbus) {
-				error = audiostartr(sc);
+		if (sc->sc_rconvbuffer_end - sc->sc_rconvbuffer_begin <= 0) {
+			s = splaudio();
+			while (cb->used < hw_bytes_per_sample) {
+				if (!sc->sc_rbus) {
+					error = audiostartr(sc);
+					if (error) {
+						splx(s);
+						return (error);
+					}
+				}
+				if (ioflag & IO_NDELAY) {
+					splx(s);
+					return (EWOULDBLOCK);
+				}
+				DPRINTFN(1, ("audio_read: sleep used=%d\n",
+					     cb->used));
+				error = audio_sleep(&sc->sc_rchan, "aud_rd");
+				if (sc->sc_dying)
+					error = EIO;
 				if (error) {
 					splx(s);
 					return (error);
 				}
 			}
-			if (ioflag & IO_NDELAY) {
-				splx(s);
-				return (EWOULDBLOCK);
+
+			/*
+			 * Move data in the ring buffer to sc_rconvbuffer as
+			 * possible with/without rate conversion.
+			 */
+			used = cb->used;
+			outp = cb->outp;
+			cb->copying = 1;
+			splx(s);
+			cc = used - cb->usedlow; /* maximum to read */
+			if (cc > sc->sc_rconvbuffer_size)
+				cc = sc->sc_rconvbuffer_size;
+			/* cc must be aligned by the sample size */
+			cc = (cc / hw_bytes_per_sample) * hw_bytes_per_sample;
+#ifdef DIAGNOSTIC
+			if (cc == 0)
+				printf("audio_read: cc=0 hw_sample_size=%d\n",
+				       hw_bytes_per_sample);
+#endif
+
+			/*
+			 * The format of data in the ring buffer is
+			 * [hw_sample_rate, hw_encoding, hw_precision, hw_channels]
+			 */
+#if NAURATECONV > 0
+			sc->sc_rconvbuffer_end =
+				auconv_record(&sc->sc_rconv, params,
+					      sc->sc_rconvbuffer, outp, cc);
+#else
+			n = cb->end - outp;
+			if (cc <= n) {
+				memcpy(sc->sc_rconvbuffer, outp, cc);
+			} else {
+				memcpy(sc->sc_rconvbuffer, outp, n);
+				memcpy(sc->sc_rconvbuffer + n, cb->start,
+				       cc - n);
 			}
-			DPRINTFN(2, ("audio_read: sleep used=%d\n", cb->used));
-			error = audio_sleep(&sc->sc_rchan, "aud_rd");
-			if (sc->sc_dying)
-				error = EIO;
-			if (error) {
-				splx(s);
-				return error;
+			sc->sc_rconvbuffer_end = cc;
+#endif /* !NAURATECONV */
+			/*
+			 * The format of data in sc_rconvbuffer is
+			 * [sample_rate, hw_encoding, hw_precision, channels]
+			 */
+			used -= cc;
+			outp += cc;
+			if (outp >= cb->end)
+				outp -= cb->end - cb->start;
+			s = splaudio();
+			cb->outp = outp;
+			cb->used = used;
+			cb->copying = 0;
+			splx(s);
+
+			if (params->sw_code) {
+				cc = sc->sc_rconvbuffer_end;
+#ifdef DIAGNOSTIC
+				if (cc % params->factor != 0)
+					printf("audio_read: cc is not aligned"
+					       ": cc=%d factor=%d\n", cc,
+					       params->factor);
+#endif
+				cc /= params->factor;
+#ifdef DIAGNOSTIC
+				if (cc == 0)
+					printf("audio_read: cc=0 factor=%d\n",
+					       params->factor);
+#endif
+				params->sw_code(sc->hw_hdl, sc->sc_rconvbuffer,
+						cc);
+				sc->sc_rconvbuffer_end = cc;
 			}
+			sc->sc_rconvbuffer_begin = 0;
+			/*
+			 * The format of data in sc_rconvbuffer is
+			 * [sample_rate, encoding, precision, channels]
+			 */
 		}
-		used = cb->used;
-		outp = cb->outp;
-		cb->copying = 1;
-		splx(s);
-		cc = used - cb->usedlow; /* maximum to read */
-		n = cb->end - outp;
-		if (n < cc)
-			cc = n;	/* don't read beyond end of buffer */
-		
-		if (sc->sc_rparams.factor != 1) {
-			/* Compensate for software coding expansion factor. */
-			n /= sc->sc_rparams.factor;
-			cc /= sc->sc_rparams.factor;
-		}
- 
+
+		cc = sc->sc_rconvbuffer_end - sc->sc_rconvbuffer_begin;
 		if (uio->uio_resid < cc)
 			cc = uio->uio_resid; /* and no more than we want */
 
-		if (sc->sc_rparams.sw_code)
-			sc->sc_rparams.sw_code(sc->hw_hdl, outp, cc);
-
-		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
+		DPRINTFN(0,("audio_read: buffer=%p[%d] (~ %d), cc=%d\n",
+			    sc->sc_rconvbuffer, sc->sc_rconvbuffer_begin,
+			    sc->sc_rconvbuffer_end, cc));
 		n = uio->uio_resid;
-		error = uiomove(outp, cc, uio);
+		error = uiomove(sc->sc_rconvbuffer + sc->sc_rconvbuffer_begin,
+				cc, uio);
 		cc = n - uio->uio_resid; /* number of bytes actually moved */
-		if (sc->sc_rparams.factor != 1) {
-			/* Adjust count with expansion. */
-			cc *= sc->sc_rparams.factor;
-		}
+		sc->sc_rconvbuffer_begin += cc;
 
-		used -= cc;
-		outp += cc;
-		if (outp >= cb->end)
-			outp = cb->start;
-		s = splaudio();
-		cb->outp = outp;
-		cb->used = used;
-		cb->copying = 0;
-		splx(s);
 	}
 	return (error);
 }
@@ -1289,8 +1376,8 @@ audio_calc_blksize(struct audio_softc *sc, int mode)
 		rb = &sc->sc_rr;
 	}
 	
-	bs = parm->sample_rate * audio_blk_ms / 1000 *
-	     parm->channels * parm->precision / NBBY *
+	bs = parm->hw_sample_rate * audio_blk_ms / 1000 *
+	     parm->hw_channels * parm->precision / NBBY *
 	     parm->factor;
 	ROUNDSIZE(bs);
 	if (hw->round_blocksize)
@@ -1313,7 +1400,7 @@ audio_fill_silence(struct audio_params *params, u_char *p, int n)
 	u_char auzero0, auzero1 = 0; /* initialize to please gcc */
 	int nfill = 1;
 
-	switch (params->encoding) {
+	switch (params->hw_encoding) {
 	case AUDIO_ENCODING_ULAW:
 	    	auzero0 = 0x7f; 
 		break;
@@ -1333,8 +1420,8 @@ audio_fill_silence(struct audio_params *params, u_char *p, int n)
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (params->precision > 8) {
-			nfill = (params->precision + NBBY - 1)/ NBBY;
+		if (params->hw_precision > 8) {
+			nfill = (params->hw_precision + NBBY - 1)/ NBBY;
 			auzero0 = 0x80;
 			auzero1 = 0;
 		} else
@@ -1349,7 +1436,7 @@ audio_fill_silence(struct audio_params *params, u_char *p, int n)
 		while (--n >= 0)
 			*p++ = auzero0; /* XXX memset */
 	} else /* nfill must no longer be 2 */ {
-		if (params->encoding == AUDIO_ENCODING_ULINEAR_LE) {
+		if (params->hw_encoding == AUDIO_ENCODING_ULINEAR_LE) {
 			int k = nfill;
 			while (--k > 0)
 				*p++ = auzero1;
@@ -1392,6 +1479,9 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp, *einp;
 	int saveerror, error, s, n, cc, used;
+	struct audio_params *params;
+	int samples, hw_bytes_per_sample, user_bytes_per_sample;
+	int input_remain, space;
 
 	DPRINTFN(2,("audio_write: sc=%p count=%lu used=%d(hi=%d)\n", 
 		    sc, (unsigned long)uio->uio_resid, sc->sc_pr.used, 
@@ -1426,16 +1516,53 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			return 0;
 	}
 
+	params = &sc->sc_pparams;
 	DPRINTFN(1, ("audio_write: sr=%ld, enc=%d, prec=%d, chan=%d, sw=%p, "
 		     "fact=%d\n",
                      sc->sc_pparams.sample_rate, sc->sc_pparams.encoding,
                      sc->sc_pparams.precision, sc->sc_pparams.channels,
                      sc->sc_pparams.sw_code, sc->sc_pparams.factor));
 
+	/*
+	 * For some encodings, handle data in sample unit.
+	 */
+	switch (params->hw_encoding) {
+	case AUDIO_ENCODING_SLINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR_BE:
+	case AUDIO_ENCODING_ULINEAR_LE:
+	case AUDIO_ENCODING_ULINEAR_BE:
+		hw_bytes_per_sample = params->hw_channels * params->precision/8
+			* params->factor;
+		user_bytes_per_sample = params->channels * params->precision/8;
+		break;
+	default:
+		hw_bytes_per_sample = 1 * params->factor;
+		user_bytes_per_sample = 1;
+	}
+#ifdef DIAGNOSTIC
+	if (hw_bytes_per_sample > MAX_SAMPLE_SIZE) {
+		printf("audio_write(): Invalid sample size: cur=%d max=%d\n",
+		       hw_bytes_per_sample, MAX_SAMPLE_SIZE);
+	}
+#endif
+	space = ((params->hw_sample_rate / params->sample_rate) + 1)
+		* hw_bytes_per_sample;
 	error = 0;
-	while (uio->uio_resid > 0 && !error) {
+	while ((input_remain = uio->uio_resid + sc->sc_input_fragment_length) > 0
+	       && !error) {
 		s = splaudio();
-		while (cb->used >= cb->usedhigh) {
+		if (input_remain < user_bytes_per_sample) {
+			n = uio->uio_resid;
+			DPRINTF(("audio_write: fragment uiomove length=%d\n", n));
+			error = uiomove(sc->sc_input_fragment
+					+ sc->sc_input_fragment_length,
+					n, uio);
+			if (!error)
+				sc->sc_input_fragment_length += n;
+			splx(s);
+			return (error);
+		}
+		while (cb->used + space >= cb->usedhigh) {
 			DPRINTFN(2, ("audio_write: sleep used=%d lowat=%d "
 				     "hiwat=%d\n", 
 				     cb->used, cb->usedlow, cb->usedhigh));
@@ -1456,16 +1583,41 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		cb->copying = 1;
 		splx(s);
 		cc = cb->usedhigh - used; 	/* maximum to write */
-		n = cb->end - inp;
-		if (sc->sc_pparams.factor != 1) {
-			/* Compensate for software coding expansion factor. */
-			n /= sc->sc_pparams.factor;
-			cc /= sc->sc_pparams.factor;
+		/* cc may be greater than the size of the ring buffer */
+		if (cc > cb->end - cb->start)
+			cc = cb->end - cb->start;
+
+		/* cc: # of bytes we can write to the ring buffer */
+		samples = cc / hw_bytes_per_sample;
+#ifdef DIAGNOSTIC
+		if (samples == 0)
+			printf("audio_write: samples (cc/hw_bps) == 0\n");
+#endif
+		/* samples: # of samples we can write to the ring buffer */
+		samples = samples * params->sample_rate / params->hw_sample_rate;
+#ifdef DIAGNOSTIC
+		if (samples == 0)
+			printf("audio_write: samples (rate/hw_rate) == 0 "
+			       "usedhigh-used=%d cc/hw_bps=%d/%d "
+			       "rate/hw_rate=%ld/%ld space=%d\n",
+			       cb->usedhigh - cb->used, cc,
+			       hw_bytes_per_sample, params->sample_rate,
+			       params->hw_sample_rate, space);
+#endif
+		/* samples: # of samples in source data */
+		cc = samples * user_bytes_per_sample;
+		/* cc: # of bytes in source data */
+		if (input_remain < cc)	/* and no more than we have */
+			cc = (input_remain / user_bytes_per_sample)
+				* user_bytes_per_sample;
+#ifdef DIAGNOSTIC
+		if (cc == 0)
+			printf("audio_write: cc == 0\n");
+#endif
+		if (cc * params->factor > sc->sc_pconvbuffer_size) {
+			cc = (sc->sc_pconvbuffer_size / params->factor
+			      / user_bytes_per_sample) * user_bytes_per_sample;
 		}
-		if (n < cc)
-			cc = n;		/* don't write beyond end of buffer */
-		if (uio->uio_resid < cc)
-			cc = uio->uio_resid; 	/* and no more than we have */
 
 #ifdef DIAGNOSTIC
 		/* 
@@ -1481,9 +1633,20 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 #endif
 		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%lu\n", 
                              cc, inp, (unsigned long)uio->uio_resid));
+		memcpy(sc->sc_pconvbuffer, sc->sc_input_fragment,
+		       sc->sc_input_fragment_length);
+		cc -= sc->sc_input_fragment_length;
 		n = uio->uio_resid;
-		error = uiomove(inp, cc, uio);
-		cc = n - uio->uio_resid; /* number of bytes actually moved */
+		error = uiomove(sc->sc_pconvbuffer + sc->sc_input_fragment_length,
+				cc, uio);
+		if (cc != n - uio->uio_resid) {
+			printf("audio_write: uiomove didn't move requested "
+			       "amount: requested=%d, actual=%ld\n",
+			       cc, (long)n - uio->uio_resid);
+		}
+			    /* number of bytes actually moved */
+		cc = sc->sc_input_fragment_length + n - uio->uio_resid;
+		sc->sc_input_fragment_length = 0;
 #ifdef AUDIO_DEBUG
 		if (error)
 		        printf("audio_write:(1) uiomove failed %d; cc=%d "
@@ -1493,16 +1656,43 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 * Continue even if uiomove() failed because we may have
 		 * gotten a partial block.
 		 */
+
+		/*
+		 * The format of data in sc_pconvbuffer is:
+		 * [sample_rate, encoding, precision, channels]
+		 */
 		if (sc->sc_pparams.sw_code) {
-			sc->sc_pparams.sw_code(sc->hw_hdl, inp, cc);
+			sc->sc_pparams.sw_code(sc->hw_hdl,
+					       sc->sc_pconvbuffer, cc);
 			/* Adjust count after the expansion. */
 			cc *= sc->sc_pparams.factor;
 			DPRINTFN(1, ("audio_write: expanded cc=%d\n", cc));
 		}
+		/*
+		 * The format of data in sc_pconvbuffer is:
+		 * [sample_rate, hw_encoding, hw_precision, channels]
+		 */
+#if NAURATECONV > 0
+		cc = auconv_play(&sc->sc_pconv, params, inp,
+				 sc->sc_pconvbuffer, cc);
+#else
+		n = cb->end - inp;
+		if (cc <= n) {
+			memcpy(inp, sc->sc_pconvbuffer, cc);
+		} else {
+			memcpy(inp, sc->sc_pconvbuffer, n);
+			memcpy(cb->start, sc->sc_pconvbuffer + n, cc - n);
+		}
+#endif /* !NAURATECONV */
+		/*
+		 * The format of data in inp is:
+		 * [hw_sample_rate, hw_encoding, hw_precision, hw_channels]
+		 * cc is the size of data actually written to inp.
+		 */
 
 		einp = cb->inp + cc;
 		if (einp >= cb->end)
-			einp = cb->start;
+			einp -= cb->end - cb->start; /* not cb->bufsize */
 
 		s = splaudio();
 		/*
@@ -2520,6 +2710,18 @@ au_get_port(struct audio_softc *sc, struct au_mixer_ports *ports)
 	return aumask;
 }
 
+#if NAURATECONV <= 0
+/* dummy function for the case that aurateconv is not linked */
+int
+auconv_check_params(const struct audio_params *params)
+{
+	if (params->hw_channels == params->channels
+	    && params->hw_sample_rate == params->sample_rate)
+		return 0;	/* No conversion */
+	return (EINVAL);
+}
+#endif /* !NAURATECONV */
+
 int
 audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 {
@@ -2597,6 +2799,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		modechange = cleared = 1;
 		rp.sw_code = 0;
 		rp.factor = 1;
+		rp.hw_sample_rate = rp.sample_rate;
+		rp.hw_encoding = rp.encoding;
+		rp.hw_precision = rp.precision;
+		rp.hw_channels = rp.channels;
 		setmode |= AUMODE_RECORD;
 	}
 	if (np) {
@@ -2605,6 +2811,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		modechange = cleared = 1;
 		pp.sw_code = 0;
 		pp.factor = 1;
+		pp.hw_sample_rate = pp.sample_rate;
+		pp.hw_encoding = pp.encoding;
+		pp.hw_precision = pp.precision;
+		pp.hw_channels = pp.channels;
 		setmode |= AUMODE_PLAY;
 	}
 
@@ -2621,17 +2831,47 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	}
 
 	if (modechange) {
-		int indep = hw->get_props(sc->hw_hdl) & AUDIO_PROP_INDEPENDENT;
+		int orig_p_channels, orig_p_rate;
+		int orig_r_channels, orig_r_rate;
+		int indep;
+
+		indep = hw->get_props(sc->hw_hdl) & AUDIO_PROP_INDEPENDENT;
 		if (!indep) {
 			if (setmode == AUMODE_RECORD)
 				pp = rp;
 			else if (setmode == AUMODE_PLAY)
 				rp = pp;
 		}
+		/* Some device drivers change channels/sample_rate and change
+		 * no channels/sample_rate. */
+		orig_p_channels = pp.channels;
+		orig_p_rate = pp.sample_rate;
+		orig_r_channels = rp.channels;
+		orig_r_rate = rp.sample_rate;
 		error = hw->set_params(sc->hw_hdl, setmode,
 		    sc->sc_mode & (AUMODE_PLAY | AUMODE_RECORD), &pp, &rp);
 		if (error)
 			return (error);
+
+		if (np) {
+			if (orig_p_channels != pp.channels)
+				pp.hw_channels = pp.channels;
+			if (orig_p_rate != pp.sample_rate)
+				pp.hw_sample_rate = pp.sample_rate;
+			error = auconv_check_params(&pp);
+			if (error)
+				return (error);
+		}
+		if (nr) {
+			if (orig_r_channels != rp.channels)
+				rp.hw_channels = rp.channels;
+			if (orig_r_rate != rp.sample_rate)
+				rp.hw_sample_rate = rp.sample_rate;
+			error = auconv_check_params(&rp);
+			if (error)
+				return (error);
+		}
+
 		if (!indep) {
 			if (setmode == AUMODE_RECORD) {
 				pp.sample_rate = rp.sample_rate;

@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.46.2.1 2001/08/03 04:12:36 lukem Exp $    */
+/*      $NetBSD: param.h,v 1.46.2.2 2002/03/16 16:00:14 jdolecek Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -99,19 +99,16 @@
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-
-#ifndef	MSIZE
 #define	MSIZE		256		/* size of an mbuf */
-#endif	/* MSIZE */
 
 #ifndef	MCLSHIFT
 #define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
 #endif	/* MCLSHIFT */
-#define	MCLBYTES	(1 << MCLSHIFT)	/* size of an m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)	/* offset within an m_buf cluster */
+
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #ifndef NMBCLUSTERS
-
 #if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
 #endif
@@ -120,8 +117,8 @@
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else
 #define	NMBCLUSTERS	256		/* map size, max cluster allocation */
-#endif	/* GATEWAY */
-#endif	/* NMBCLUSTERS */
+#endif
+#endif
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized

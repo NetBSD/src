@@ -15,15 +15,15 @@ fwohci.c)
 
 Move SBP2 routines into their own file.
 
-Rewrite ROM parsing/validation. Unroll all recursion, add ref counting, path
-elimination, etc. 
+done - Rewrite ROM parsing/validation. Unroll all recursion, add ref counting, 
+       path elimination, etc. 
 
-Move rom routines into their own files to allow easier cross usage.
+done - Move rom routines into their own files to allow easier cross usage.
 
-Write sub match setup for fwnode/fwscsi so matching devices listed in the ROM
-can be done via autoconf.
+done - Write sub match setup for fwnode/fwscsi so matching devices listed in 
+       the ROM can be done via autoconf.
 
-Remove all of the devcap stuff.
+done - Remove all of the devcap stuff.
 
 SBP2 needs a complete API written up: logins, ORB management/allocation, etc.
 

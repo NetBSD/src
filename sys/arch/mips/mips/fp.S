@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.21 2000/07/18 00:41:18 jeffs Exp $	*/
+/*	$NetBSD: fp.S,v 1.21.4.1 2002/03/16 15:58:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,8 @@
  *
  *	@(#)fp.s	8.1 (Berkeley) 6/10/93
  */
-#include <machine/cdefs.h>
+
+#include <sys/cdefs.h>
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
@@ -210,7 +211,7 @@ func_single_tbl:
 	.word	sub_s		# func 1
 	.word	mul_s		# func 2
 	.word	div_s		# func 3
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 	.word	sqrt_s		# func 4
 #else
 	.word	ill		# func 4
@@ -222,7 +223,7 @@ func_single_tbl:
 	.word	ill		# func 9
 	.word	ill		# func 10
 	.word	ill		# func 11
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 	.word	round_w_s	# func 12 /* MIPS2 FP instructions */
 	.word	trunc_w_s	# func 13
 	.word	ceil_w_s	# func 14
@@ -287,7 +288,7 @@ func_double_tbl:
 	.word	sub_d		# func 1
 	.word	mul_d		# func 2
 	.word	div_d		# func 3
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 	.word	sqrt_d		# func 4
 #else
 	.word	ill		# func 4
@@ -299,7 +300,7 @@ func_double_tbl:
 	.word	ill		# func 9
 	.word	ill		# func 10
 	.word	ill		# func 11
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 	.word	round_w_d	# func 12 /* MIPS2 FP instructions */
 	.word	trunc_w_d	# func 13
 	.word	ceil_w_d	# func 14
@@ -1269,7 +1270,7 @@ div_d:
 	or	t8, t8, v0			# from the lower remainder
 	b	norm_d
 
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 sqrt_s:
 	jal	_C_LABEL(get_fs_s)
 
@@ -1439,7 +1440,7 @@ sqrt_d:
 	nor	v1, v1, v1			# ~DIMPL_ONE
 	and	t2, t2, v1			# ix0 &= ~DIMPL_ONE
 	b	result_fs_d			# store result (already normal)
-#endif	/* MIPS3 */
+#endif	/* MIPS3_PLUS */
 
 /*
  * Single precision absolute value.

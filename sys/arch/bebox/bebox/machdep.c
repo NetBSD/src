@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63.2.3 2001/09/13 01:13:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63.2.4 2002/03/16 15:57:00 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -249,33 +249,33 @@ initppc(startkernel, endkernel, args, btinfo)
 	 * Set up initial BAT table
 	 */
 	/* map the lowest 256M area */
-	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
-	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
+	battable[0x0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
+	battable[0x0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA I/O 256M area */
-	battable[1].batl = BATL(BEBOX_BUS_SPACE_IO, BAT_I, BAT_PP_RW);
-	battable[1].batu = BATU(BEBOX_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
+	battable[0x8].batl = BATL(BEBOX_BUS_SPACE_IO, BAT_I, BAT_PP_RW);
+	battable[0x8].batu = BATU(BEBOX_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA MEMORY 256M area */
-	battable[2].batl = BATL(BEBOX_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
-	battable[2].batu = BATU(BEBOX_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
+	battable[0xc].batl = BATL(BEBOX_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
+	battable[0xc].batu = BATU(BEBOX_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers
 	 */
 	asm volatile ("mtibatl 0,%0; mtibatu 0,%1"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+		      :: "r"(battable[0x0].batl), "r"(battable[0x0].batu));
 	asm volatile ("mtibatl 1,%0; mtibatu 1,%1"
-		      :: "r"(battable[1].batl), "r"(battable[1].batu));
+		      :: "r"(battable[0x8].batl), "r"(battable[0x8].batu));
 	asm volatile ("mtibatl 2,%0; mtibatu 2,%1"
-		      :: "r"(battable[2].batl), "r"(battable[2].batu));
+		      :: "r"(battable[0xc].batl), "r"(battable[0xc].batu));
 
 	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+		      :: "r"(battable[0x0].batl), "r"(battable[0x0].batu));
 	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(battable[1].batl), "r"(battable[1].batu));
+		      :: "r"(battable[0x8].batl), "r"(battable[0x8].batu));
 	asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-		      :: "r"(battable[2].batl), "r"(battable[2].batu));
+		      :: "r"(battable[0xc].batl), "r"(battable[0xc].batu));
 
 	/*
 	 * Set up trap vectors

@@ -1,7 +1,7 @@
-/*	$NetBSD: usb_pci.c,v 1.1.2.3 2002/02/11 20:10:06 jdolecek Exp $	*/
+/*	$NetBSD: usb_pci.c,v 1.1.2.4 2002/03/16 16:01:21 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.1.2.3 2002/02/11 20:10:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.1.2.4 2002/03/16 16:01:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.91.2.1 2002/01/10 19:52:17 thorpej Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.91.2.2 2002/03/16 16:00:40 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.91.2.1 2002/01/10 19:52:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.91.2.2 2002/03/16 16:00:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.91.2.1 2002/01/10 19:52:17 thorpej E
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
+static int svr4_to_bsd_mmap_flags __P((int));
 
 static __inline clock_t timeval_to_clock_t __P((struct timeval *));
 static int svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
@@ -489,6 +491,24 @@ out:
 }
 
 
+static int
+svr4_to_bsd_mmap_flags(f)
+	int f;
+{
+	int type = f & SVR4_MAP_TYPE;
+	int nf;
+
+	if (type != MAP_PRIVATE && type != MAP_SHARED)
+		return -1;
+
+	nf = f & SVR4_MAP_COPYFLAGS;
+	if (f & SVR4_MAP_ANON)
+		nf |= MAP_ANON;
+
+	return nf;
+}
+
+
 int
 svr4_sys_mmap(p, v, retval)
 	struct proc *p;
@@ -498,7 +518,6 @@ svr4_sys_mmap(p, v, retval)
 	struct svr4_sys_mmap_args	*uap = v;
 	struct sys_mmap_args	 mm;
 	void		*rp;
-#define _MAP_NEW	0x80000000
 	/*
          * Verify the arguments.
          */
@@ -508,9 +527,11 @@ svr4_sys_mmap(p, v, retval)
 	if (SCARG(uap, len) == 0)
 		return EINVAL;
 
+	if ((SCARG(&mm, flags) = svr4_to_bsd_mmap_flags(SCARG(uap, flags))) == -1)
+		return EINVAL;
+
 	SCARG(&mm, prot) = SCARG(uap, prot);
 	SCARG(&mm, len) = SCARG(uap, len);
-	SCARG(&mm, flags) = SCARG(uap, flags) & ~_MAP_NEW;
 	SCARG(&mm, fd) = SCARG(uap, fd);
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
@@ -533,7 +554,6 @@ svr4_sys_mmap64(p, v, retval)
 	struct svr4_sys_mmap64_args	*uap = v;
 	struct sys_mmap_args	 mm;
 	void		*rp;
-#define _MAP_NEW	0x80000000
 	/*
          * Verify the arguments.
          */
@@ -543,9 +563,11 @@ svr4_sys_mmap64(p, v, retval)
 	if (SCARG(uap, len) == 0)
 		return EINVAL;
 
+	if ((SCARG(&mm, flags) = svr4_to_bsd_mmap_flags(SCARG(uap, flags))) == -1)
+		return EINVAL;
+
 	SCARG(&mm, prot) = SCARG(uap, prot);
 	SCARG(&mm, len) = SCARG(uap, len);
-	SCARG(&mm, flags) = SCARG(uap, flags) & ~_MAP_NEW;
 	SCARG(&mm, fd) = SCARG(uap, fd);
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);

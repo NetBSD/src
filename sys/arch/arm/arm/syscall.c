@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6.2.2 2002/02/11 20:07:17 jdolecek Exp $	*/
+/*	$NetBSD: syscall.c,v 1.6.2.3 2002/03/16 15:56:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: syscall.c,v 1.6.2.2 2002/02/11 20:07:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.2.3 2002/03/16 15:56:02 jdolecek Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -104,11 +104,6 @@ __RCSID("$NetBSD: syscall.c,v 1.6.2.2 2002/02/11 20:07:17 jdolecek Exp $");
 
 #ifdef arm26
 #include <machine/machdep.h>
-#endif
-
-#ifdef CPU_ARM7
-struct evcnt arm700bugcount =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "cpu", "arm700swibug");
 #endif
 
 void
@@ -163,13 +158,7 @@ swi_handler(trapframe_t *frame)
 	 */
 	if ((insn & 0x0f000000) != 0x0f000000) {
 		frame->tf_pc -= INSN_SIZE;
-		/*
-		 * Yuck.  arm700bugcount should be per-CPU and
-		 * attached at the same time as the CPU.
-		 */
-		if (!cold && arm700bugcount.ev_list.tqe_next == NULL)
-			evcnt_attach_static(&arm700bugcount);
-		++arm700bugcount.ev_count;
+		curcpu()->ci_arm700bugcount.ev_count++;
 		userret(p);
 		return;
 	}

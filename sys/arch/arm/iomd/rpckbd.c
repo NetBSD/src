@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.1.6.2 2002/01/10 19:38:16 thorpej Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.1.6.3 2002/03/16 15:56:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
+#include <sys/errno.h>
 
 #include <machine/bus.h>
 #include <machine/conf.h>
@@ -177,9 +178,9 @@ rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	    case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_RISCPC;
 		return 0;
-	    case WSKBDIO_SETLEDS: {
+	    case WSKBDIO_SETLEDS:
 		/* same as rpckbd_set_leds */
-
+	
 		/* check if we're allready in this state */
 		new_ledstate = rpckbd_led_encode(*(int *)data);
 		if (new_ledstate == sc->sc_ledstate)
@@ -190,8 +191,7 @@ rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		res = kbdcmd(sc, sc->sc_ledstate, 0);
 		if (res == KBR_ACK)
 			return (0);
-		return (res);
-		}
+		return (EIO);
  	   case WSKBDIO_GETLEDS:
 		*(int *)data = rpckbd_led_decode(sc->sc_ledstate);
 		return (0);

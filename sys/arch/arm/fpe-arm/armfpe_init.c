@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.1.2.2 2002/01/10 19:37:52 thorpej Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.1.2.3 2002/03/16 15:56:07 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -42,6 +42,9 @@
  */
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.1.2.3 2002/03/16 15:56:07 jdolecek Exp $");
+
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -50,7 +53,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <arm/cpus.h>
 #include <arm/arm32/katelib.h>
 #include <machine/frame.h>
 
@@ -87,20 +89,17 @@ static const char *exception_errors[] = {
  */
 
 int
-initialise_arm_fpe(cpu)
-	cpu_t *cpu;
+initialise_arm_fpe()
 {
 	int error;
 
-	cpu->fpu_class = FPU_CLASS_FPE;
-	cpu->fpu_type = FPU_TYPE_ARMLTD_FPE;
-	strcpy(cpu->fpu_model, fpe_arm_header.core_identity_addr);
-	error = arm_fpe_boot(cpu);
+	printf("%s: FPE: %s\n",
+	    curcpu()->ci_dev->dv_xname, fpe_arm_header.core_identity_addr);
+	error = arm_fpe_boot();
 	if (error != 0) {
-		strcat(cpu->fpu_model, " - boot failed");
+		printf("%s: FPE boot failed\n", curcpu()->ci_dev->dv_xname);
 		return(1);
 	}
-
 	return(0);
 }
 
@@ -113,8 +112,7 @@ initialise_arm_fpe(cpu)
  */
 
 int
-arm_fpe_boot(cpu)
-	cpu_t *cpu;
+arm_fpe_boot()
 {
 	u_int workspace;
 	int id;
@@ -140,10 +138,11 @@ arm_fpe_boot(cpu)
 	id = arm_fpe_core_initws(workspace, (u_int)&fpe_nexthandler,
 	    (u_int)&fpe_nexthandler);
 
-	if (id == FPU_TYPE_FPA11) {
-		cpu->fpu_class = FPU_CLASS_FPA;
-		cpu->fpu_type = FPU_TYPE_FPA11;
-	}
+	if (id == 0x81)
+		printf("%s: FPA11 found\n", curcpu()->ci_dev->dv_xname);
+	else
+		printf("%s: no FP hardware found\n",
+		    curcpu()->ci_dev->dv_xname);
 
 #ifdef DEBUG
 	printf("fpe id=%08x\n", id);

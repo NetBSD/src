@@ -1,7 +1,17 @@
-#	$NetBSD: files.iq80310,v 1.4.6.3 2002/02/11 20:07:41 jdolecek Exp $
+#	$NetBSD: files.iq80310,v 1.4.6.4 2002/03/16 15:57:26 jdolecek Exp $
 #
 # Intel IQ80310 evaluation board configuration info
 #
+
+# Define the (IQ80310-based) board types that we support:
+#
+#	IOP310_TEAMASA_NPWR
+#		Team ASA, Inc. Npwr http://www.teamasa.com/
+#
+# If no board type options are specified, the default is the
+# Intel/Cyclone IQ80310 (which is the IOP310 reference design
+# eval board).
+defflag opt_iop310.h	IOP310_TEAMASA_NPWR
 
 # Use the generic ARM soft interrupt code.
 file	arch/arm/arm/softintr.c

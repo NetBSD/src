@@ -1,4 +1,4 @@
-/*	$NetBSD: load_coff.cpp,v 1.2 2001/05/08 18:51:23 uch Exp $	*/
+/*	$NetBSD: load_coff.cpp,v 1.2.2.1 2002/03/16 15:57:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,9 @@ CoffLoader::memorySize()
 kaddr_t
 CoffLoader::jumpAddr()
 {
+
 	DPRINTF((TEXT("kernel entry address: 0x%08x\n"), _ah->a_entry));
+
 	return _ah->a_entry;
 }
 
@@ -115,8 +117,7 @@ CoffLoader::load()
 	_load_segment(kv, memsz, fileofs, filesz);
 
 	/* tag chain still opening */
-
-	return TRUE;
+	return _load_success();
 }
 
 BOOL

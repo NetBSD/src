@@ -1,5 +1,5 @@
-/*	$NetBSD: if_altq.h,v 1.6 2001/01/29 20:02:48 itojun Exp $	*/
-/*	$KAME: if_altq.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.6.4.1 2002/03/16 15:55:21 jdolecek Exp $	*/
+/*	$KAME: if_altq.h,v 1.7 2002/02/19 06:37:39 kjc Exp $	*/
 
 /*
  * Copyright (C) 1997-2000
@@ -158,7 +158,8 @@ extern int altq_enable __P((struct ifaltq *));
 extern int altq_disable __P((struct ifaltq *));
 extern struct mbuf *tbr_dequeue __P((struct ifaltq *, int));
 extern int (*altq_input) __P((struct mbuf *, int));
-
+void altq_etherclassify __P((struct ifaltq *, struct mbuf *,
+			     struct altq_pktattr *));
 #endif /* _KERNEL */
 
 #endif /* _ALTQ_IF_ALTQ_H_ */

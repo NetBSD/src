@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47.2.4 2002/02/11 20:07:14 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.47.2.5 2002/03/16 15:55:56 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.47.2.4 $"
+#ident		"GENERIC-$Revision: 1.47.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -321,7 +321,7 @@ atapibus*	at pciide? channel ?
 #### MII/PHY support
 
 exphy*		at mii? phy ?		# 3Com internal PHYs
-icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 inphy*		at mii? phy ?		# Intel 82555 PHYs
 iophy*		at mii? phy ?		# Intel 82553 PHYs
 lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
@@ -386,7 +386,6 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation

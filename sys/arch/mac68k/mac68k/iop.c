@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.3 2000/07/30 21:48:55 briggs Exp $	*/
+/*	$NetBSD: iop.c,v 1.3.4.1 2002/03/16 15:58:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -173,7 +173,7 @@ iop_init(fullinit)
 	ioph = iop->iop;
 	printf("SCC IOP base: 0x%x\n", (unsigned) ioph);
 	pool_init(&iop->pool, sizeof(struct iop_msg), 0, 0, 0, "mac68k_iop1",
-		  0, NULL, NULL, M_DEVBUF);
+		  NULL);
 	ioph->control_status = IOP_BYPASS;
 
 	iop = &mac68k_iops[ISM_IOP];
@@ -181,7 +181,7 @@ iop_init(fullinit)
 	printf("ISM IOP base: 0x%x, alive %x\n", (unsigned) ioph, 
 	(unsigned) iop_alive(ioph));
 	pool_init(&iop->pool, sizeof(struct iop_msg), 0, 0, 0, "mac68k_iop2",
-		  0, NULL, NULL, M_DEVBUF);
+		  NULL);
 	iop_write1(ioph, IOP_ADDR_ALIVE, 0);
 
 /*

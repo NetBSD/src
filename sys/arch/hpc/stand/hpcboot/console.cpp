@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: console.cpp,v 1.7 2001/06/19 16:48:49 uch Exp $ */
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.7.2.1 2002/03/16 15:57:50 jdolecek Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,9 +47,12 @@ Console *Console::_instance = 0;
 Console *
 Console::Instance()
 {
-	if (_instance == 0)
+
+	if (_instance == 0) {
 		_instance = new Console;
-	return _instance;
+	}
+
+	return (_instance);
 }
 
 Console::Console()
@@ -61,6 +64,7 @@ Console::Console()
 void
 Console::Destroy()
 {
+
 	if (_instance)
 		delete _instance;
 	_instance = 0;
@@ -70,6 +74,7 @@ void
 Console::print(const TCHAR *fmt, ...)
 {
 	va_list ap;
+
 	va_start(ap, fmt);
 	wvsprintf(_bufw, fmt, ap);
 	va_end(ap);
@@ -83,6 +88,7 @@ Console::print(const TCHAR *fmt, ...)
 //
 SerialConsole::SerialConsole()
 {
+
 	_handle = INVALID_HANDLE_VALUE;
 	// set default serial console.
 	setBootConsole(BI_CNUSE_SERIAL);
@@ -93,7 +99,22 @@ SerialConsole::init()
 {
 	// always open COM1 to supply clock and power for the
 	// sake of kernel serial driver 
-	return openCOM1();
+	if (_handle == INVALID_HANDLE_VALUE)
+		_handle = OpenCOM1(); 
+
+	if (_handle == INVALID_HANDLE_VALUE) {
+		Console::print(TEXT("couldn't open COM1\n"));
+		return (FALSE);
+	}
+
+	// Print serial console status on LCD.
+	DCB dcb;
+	GetCommState(_handle, &dcb);
+	Console::print(
+		TEXT("BaudRate %d, ByteSize %#x, Parity %#x, StopBits %#x\n"),
+		dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
+
+	return (TRUE);
 }
 
 BOOL
@@ -101,6 +122,7 @@ SerialConsole::setupMultibyteBuffer()
 {
 	size_t len = WideCharToMultiByte(CP_ACP, 0, _bufw, wcslen(_bufw),
 	    0, 0, 0, 0);
+
 	if (len + 1 > CONSOLE_BUFSIZE)
 		return FALSE;
 	if (!WideCharToMultiByte(CP_ACP, 0, _bufw, len, _bufm, len, 0, 0))
@@ -113,6 +135,7 @@ SerialConsole::setupMultibyteBuffer()
 void
 SerialConsole::print(const TCHAR *fmt, ...)
 {
+
 	SETUP_WIDECHAR_BUFFER();
 
 	if (!setupMultibyteBuffer())
@@ -121,45 +144,41 @@ SerialConsole::print(const TCHAR *fmt, ...)
 	genericPrint(_bufm);
 }
 
-BOOL
-SerialConsole::openCOM1()
+HANDLE
+SerialConsole::OpenCOM1()
 {
+	static HANDLE COM1handle = INVALID_HANDLE_VALUE;
+	const char msg[] = "\r\n--------HPCBOOT--------\r\n";
+	unsigned long wrote;
 	int speed = HPC_PREFERENCE.serial_speed;
+	HANDLE h;
 
-	if (_handle == INVALID_HANDLE_VALUE) {
-		_handle = CreateFile(TEXT("COM1:"), 
-		    GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0,
-		    NULL);
-		if (_handle == INVALID_HANDLE_VALUE) {
-			Console::print(TEXT("couldn't open COM1\n"));
-			return FALSE;
-		}
+	if (COM1handle != INVALID_HANDLE_VALUE)
+		return (COM1handle);
 
-		DCB dcb;
-		if (!GetCommState(_handle, &dcb)) {
-			Console::print(TEXT("couldn't get COM port status.\n"));
-			goto bad;
-		}
+	h = CreateFile(TEXT("COM1:"), 
+	    GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0,
+	    NULL);
+	if (h == INVALID_HANDLE_VALUE)
+		return (h);
+
+	DCB dcb;
+	if (!GetCommState(h, &dcb))
+		goto bad;
       
-		dcb.BaudRate = speed;
-		if (!SetCommState(_handle, &dcb)) {
-			Console::print(TEXT("couldn't set baud rate to %s.\n"),
-			    speed);
-			goto bad;
-		}
+	dcb.BaudRate = speed;
+	if (!SetCommState(h, &dcb))
+		goto bad;
 
-		Console::print(TEXT("BaudRate %d, ByteSize %#x, Parity %#x, StopBits %#x\n"),
-		    dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
-		const char msg[] = "--------HPCBOOT--------\r\n";
-		unsigned long wrote;
-		WriteFile(_handle, msg, sizeof msg, &wrote, 0);
-	}
+	// Print banner on serial console.
+	WriteFile(h, msg, sizeof msg, &wrote, 0);
 
-	return TRUE;
+	COM1handle = h;
+
+	return (h);
  bad:
-	CloseHandle(_handle);
-	_handle = INVALID_HANDLE_VALUE;
-	return FALSE;
+	CloseHandle(h);
+	return (INVALID_HANDLE_VALUE);
 }
 
 void

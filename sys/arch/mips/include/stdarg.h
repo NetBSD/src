@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.19.8.1 2001/08/25 06:15:33 thorpej Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.19.8.2 2002/03/16 15:58:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,9 @@
 #include <machine/ansi.h>
 #include <sys/featuretest.h>
 
-#if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
+#if defined(_MIPS_BSD_API) && \
+    !((_MIPS_BSD_API == _MIPS_BSD_API_LP32) || \
+      (_MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN))
 #error stdargs.h does not work with 64 bit ABIs
 #endif
 

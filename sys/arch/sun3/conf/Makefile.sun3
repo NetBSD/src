@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.87.2.1 2002/01/10 19:49:43 thorpej Exp $
+# $NetBSD: Makefile.sun3,v 1.87.2.2 2002/03/16 16:00:05 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ GENASSYM=	${SUN3}/${MACHTYPE}/genassym.cf
 XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000 -D__m68k__ -D__ELF__
 DEFINES=	-Dsun3
 CPPFLAGS+=	${XDEFS} ${DEFINES}
-CFLAGS+=	-msoft-float -fno-defer-pop
+CFLAGS+=	${CMACHFLAGS} -msoft-float -fno-defer-pop
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 
 ##

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.32.4.1 2002/01/10 20:00:08 thorpej Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.32.4.2 2002/03/16 16:01:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.32.4.1 2002/01/10 20:00:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.32.4.2 2002/03/16 16:01:51 jdolecek Exp $");
 
 #define SYSVMSG
 
@@ -410,8 +410,8 @@ sys_msgsnd(p, v, retval)
 	struct __msg *msghdr;
 	short next;
 
-	MSG_PRINTF(("call to msgsnd(%d, %p, %d, %d)\n", msqid, user_msgp, msgsz,
-	    msgflg));
+	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
+	    (long long)msgsz, msgflg));
 
 	msqid = IPCID_TO_IX(msqid);
 
@@ -437,8 +437,8 @@ sys_msgsnd(p, v, retval)
 	}
 
 	segs_needed = (msgsz + msginfo.msgssz - 1) / msginfo.msgssz;
-	MSG_PRINTF(("msgsz=%d, msgssz=%d, segs_needed=%d\n", msgsz,
-	    msginfo.msgssz, segs_needed));
+	MSG_PRINTF(("msgsz=%lld, msgssz=%d, segs_needed=%d\n",
+	    (long long)msgsz, msginfo.msgssz, segs_needed));
 	for (;;) {
 		int need_more_resources = 0;
 
@@ -590,7 +590,7 @@ sys_msgsnd(p, v, retval)
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
 		wakeup(msqptr);
-		MSG_PRINTF(("mtype (%d) < 1\n", msghdr->msg_type));
+		MSG_PRINTF(("mtype (%ld) < 1\n", msghdr->msg_type));
 		return (EINVAL);
 	}
 
@@ -688,8 +688,8 @@ sys_msgrcv(p, v, retval)
 	int error;
 	short next;
 
-	MSG_PRINTF(("call to msgrcv(%d, %p, %d, %ld, %d)\n", msqid, user_msgp,
-	    msgsz, msgtyp, msgflg));
+	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
+	    user_msgp, (long long)msgsz, msgtyp, msgflg));
 
 	msqid = IPCID_TO_IX(msqid);
 
@@ -731,8 +731,8 @@ sys_msgrcv(p, v, retval)
 				    (msgflg & MSG_NOERROR) == 0) {
 					MSG_PRINTF(("first message on the "
 					    "queue is too big "
-					    "(want %d, got %d)\n",
-					    msgsz, msghdr->msg_ts));
+					    "(want %lld, got %d)\n",
+					    (long long)msgsz, msghdr->msg_ts));
 					return (E2BIG);
 				}
 				if (msqptr->_msg_first == msqptr->_msg_last) {
@@ -763,15 +763,16 @@ sys_msgrcv(p, v, retval)
 
 				if (msgtyp == msghdr->msg_type ||
 				    msghdr->msg_type <= -msgtyp) {
-					MSG_PRINTF(("found message type %d, "
-					    "requested %d\n",
+					MSG_PRINTF(("found message type %ld, "
+					    "requested %ld\n",
 					    msghdr->msg_type, msgtyp));
 					if (msgsz < msghdr->msg_ts &&
 					    (msgflg & MSG_NOERROR) == 0) {
 						MSG_PRINTF(("requested message "
 						    "on the queue is too big "
-						    "(want %d, got %d)\n",
-						    msgsz, msghdr->msg_ts));
+						    "(want %lld, got %d)\n",
+						    (long long)msgsz,
+						    msghdr->msg_ts));
 						return (E2BIG);
 					}
 					*prev = msghdr->msg_next;
@@ -811,7 +812,7 @@ sys_msgrcv(p, v, retval)
 		 */
 
 		if ((msgflg & IPC_NOWAIT) != 0) {
-			MSG_PRINTF(("no appropriate message found (msgtyp=%d)\n",
+			MSG_PRINTF(("no appropriate message found (msgtyp=%ld)\n",
 			    msgtyp));
 			/* The SVID says to return ENOMSG. */
 #ifdef ENOMSG
@@ -864,8 +865,8 @@ sys_msgrcv(p, v, retval)
 	 * (since msgsz is never increased).
 	 */
 
-	MSG_PRINTF(("found a message, msgsz=%d, msg_ts=%d\n", msgsz,
-	    msghdr->msg_ts));
+	MSG_PRINTF(("found a message, msgsz=%lld, msg_ts=%d\n",
+	    (long long)msgsz, msghdr->msg_ts));
 	if (msgsz > msghdr->msg_ts)
 		msgsz = msghdr->msg_ts;
 

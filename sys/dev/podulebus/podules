@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.6 2001/06/08 20:08:35 bjh21 Exp $
+$NetBSD: podules,v 1.6.2.1 2002/03/16 16:01:25 jdolecek Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -118,6 +118,7 @@ podule	SJ		NEXUS		0x0064	Nexus interface (Podule)
 podule	SJ		NEXUSNS		0x008F	Nexus interface (A3020 netslot)
 
 podule	MORLEY		SCSI		0x0067	SCSI interface
+podule	MORLEY		USERANALOGUE	0x006d	User and Analogue ports
 
 podule	HCCS2		USERANALOGUE	0x006e	User and Analogue ports
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.83.2.1 2002/01/10 19:48:47 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.83.2.2 2002/03/16 15:59:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ zs_match_obio(parent, cf, aux)
 	}
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 			        1, 0, 0, NULL, NULL));
 }
 
@@ -290,11 +290,10 @@ zs_attach_obio(parent, self, aux)
 			bus_space_handle_t bh;
 
 			if (sbus_bus_map(sa->sa_bustag,
-					  sa->sa_slot,
-					  sa->sa_offset,
-					  sa->sa_size,
-					  BUS_SPACE_MAP_LINEAR,
-					  0, &bh) != 0) {
+					 sa->sa_slot,
+					 sa->sa_offset,
+					 sa->sa_size,
+					 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 				printf(" cannot map zs registers\n");
 				return; 
 			}

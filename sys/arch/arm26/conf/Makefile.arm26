@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.7.2.2 2002/01/10 19:38:35 thorpej Exp $
+#	$NetBSD: Makefile.arm26,v 1.7.2.3 2002/03/16 15:56:18 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,11 @@ GENASSYM=	${ARM26}/arm26/genassym.cf
 CPPFLAGS+=	-Darm26
 CWARNFLAGS+=	-Wcomment
 LOOSE_PROTOTYPES= yes
+# We'd like GCC to leave R14 alone as much as possible (so page faults in the
+# kernel are safer).
 CFLAGS+=	-ffixed-r14
+# arm26 systems can safely do unaligned loads.
+CFLAGS+=	-mshort-load-words
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 
 ##

@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.3.2.2 2002/01/10 19:48:36 thorpej Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.3.2.3 2002/03/16 15:59:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -242,16 +242,16 @@ init_volhdr(void)
 	volhdr->root = 0;
 	volhdr->swap = 1;
 	strcpy(volhdr->bootfile, "/netbsd");
-        volhdr->dp.dp_skew = lbl.d_trackskew;
-        volhdr->dp.dp_gap1 = 1; /* XXX */
-        volhdr->dp.dp_gap2 = 1; /* XXX */
-        volhdr->dp.dp_cyls = lbl.d_ncylinders;
-        volhdr->dp.dp_shd0 = 0;
-        volhdr->dp.dp_trks0 = lbl.d_ntracks;
-        volhdr->dp.dp_secs = lbl.d_nsectors;
-        volhdr->dp.dp_secbytes = lbl.d_secsize;
-        volhdr->dp.dp_interleave = lbl.d_interleave;
-        volhdr->dp.dp_nretries = 22;
+	volhdr->dp.dp_skew = lbl.d_trackskew;
+	volhdr->dp.dp_gap1 = 1; /* XXX */
+	volhdr->dp.dp_gap2 = 1; /* XXX */
+	volhdr->dp.dp_cyls = lbl.d_ncylinders;
+	volhdr->dp.dp_shd0 = 0;
+	volhdr->dp.dp_trks0 = lbl.d_ntracks;
+	volhdr->dp.dp_secs = lbl.d_nsectors;
+	volhdr->dp.dp_secbytes = lbl.d_secsize;
+	volhdr->dp.dp_interleave = lbl.d_interleave;
+	volhdr->dp.dp_nretries = 22;
 	volhdr->partitions[10].blocks = lbl.d_secperunit;
 	volhdr->partitions[10].first = 0;
 	volhdr->partitions[10].type = SGI_PTYPE_VOLUME;
@@ -356,7 +356,7 @@ write_file(void)
 		namelen = sizeof(volhdr->voldir[slot].name);
 		printf("truncating to '%-8s'\n", vfilename);
 	}
-	
+
 	/* Populate it w/ NULs */
 	memset(volhdr->voldir[slot].name, 0,
 	    sizeof(volhdr->voldir[slot].name));
@@ -494,10 +494,10 @@ checksum_vol(void)
 void
 usage(void)
 {
-	printf("Usage:  sgivol [-i] device\n"
-	       "        sgivol [-r vhfilename diskfilename] device\n"
-	       "        sgivol [-w vhfilename diskfilename] device\n"
-	       "        sgivol [-d vhfilename] device\n"
+	printf("Usage:	sgivol [-i] device\n"
+	       "	sgivol [-r vhfilename diskfilename] device\n"
+	       "	sgivol [-w vhfilename diskfilename] device\n"
+	       "	sgivol [-d vhfilename] device\n"
 	       );
 	exit(0);
 }

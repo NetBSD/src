@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.160.2.3 2002/02/11 20:06:48 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.160.2.4 2002/03/16 15:55:47 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.160.2.3 $"
+#ident 		"GENERIC-$Revision: 1.160.2.4 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -155,8 +155,10 @@ options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 #endif
+
+options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
+options 	COMPAT_AOUT_M68K # actually make some system calls work.
 
 #ifndef INSTALL_CONFIGURATION
 #
@@ -494,7 +496,6 @@ pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

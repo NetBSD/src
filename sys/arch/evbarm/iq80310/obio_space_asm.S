@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space_asm.S,v 1.1.6.2 2002/01/10 19:42:38 thorpej Exp $	*/
+/*	$NetBSD: obio_space_asm.S,v 1.1.6.3 2002/03/16 15:57:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -104,5 +104,28 @@ Lobio_bs_wm_1_loop:
 	strb	r3, [r0]
 	subs	r2, r2, #1
 	bne	Lobio_bs_wm_1_loop
+
+	mov	pc, lr
+
+/*
+ * read region 1
+ *	r0 - space
+ *	r1 - handle
+ *	r2 - offset
+ *	r3 - *dest
+ *	[stack #0] - count
+ */
+ENTRY(obio_bs_rr_1)
+	add	r0, r1, r2	/* r0 now *src, r1 & r2 now free */
+	mov	r1, r3		/* r1 now *dest, r3 now free */
+	ldr	r2, [sp, #0]	/* r2 now count */
+	teq	r2, #0		/* is count 0? */
+	moveq	pc, lr		/* if so, exit */
+
+Lobio_bs_rr_1_loop:
+	ldrb	r3, [r0], #1	/* r3 = *src++ */
+	strb	r3, [r1], #1	/* *dest++ = r3 */
+	subs	r2, r2, #1	/* if --count != 0, go again */
+	bne	Lobio_bs_rr_1_loop
 
 	mov	pc, lr

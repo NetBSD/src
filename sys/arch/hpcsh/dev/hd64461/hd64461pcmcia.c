@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.3 2002/02/11 20:08:16 jdolecek Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.4 2002/03/16 15:58:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461intcvar.h>
 #include <hpcsh/dev/hd64461/hd64461gpioreg.h>
+#include <hpcsh/dev/hd64461/hd64461pcmciavar.h>
 #include <hpcsh/dev/hd64461/hd64461pcmciareg.h>
 
 #include "locators.h"
@@ -229,10 +230,10 @@ STATIC void hd64461pcmcia_info(struct hd64461pcmcia_softc *);
 /* fix SH3 Area[56] bug */
 STATIC void fixup_sh3_pcmcia_area(bus_space_tag_t);
 #define _BUS_SPACE_ACCESS_HOOK()					\
-{									\
+do {									\
 	u_int8_t dummy __attribute__((__unused__)) =			\
 	 *(volatile u_int8_t *)0xba000000;				\
-}
+} while (/*CONSTCOND*/0)
 _BUS_SPACE_WRITE(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_WRITE_MULTI(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_WRITE_REGION(_sh3_pcmcia_bug, 1, 8)
@@ -907,41 +908,28 @@ hd64461pcmcia_power_on(enum controller_channel channel)
 
 	/* detect voltage and supply VCC */
 	r = hd64461_reg_read_1(isr);
+
 	switch (r & (HD64461_PCCISR_VS1 | HD64461_PCCISR_VS2)) {
 	case (HD64461_PCCISR_VS1 | HD64461_PCCISR_VS2): /* 5 V */
 		DPRINTF("5V card\n");
-		r = hd64461_reg_read_1(gcr);
-		r &= ~HD64461_PCCGCR_VCC0;
-		hd64461_reg_write_1(gcr, r);
-		r = hd64461_reg_read_1(scr);
-		r &= ~HD64461_PCCSCR_VCC1;
-		hd64461_reg_write_1(scr, r);
+		hd64461pcmcia_power(channel, V_5, 1);
 		break;
 	case HD64461_PCCISR_VS2:	/* 3.3 / 5 V */
 		/* FALLTHROUGH */
 	case 0:				/* x.x / 3.3 / 5 V */
 		DPRINTF("3.3V card\n");
-		if (channel == CHANNEL_1) { 
-			r = hd64461_reg_read_1(gcr);
-			r &= ~HD64461_PCCGCR_VCC0;
-			hd64461_reg_write_1(gcr, r);
-		} else { 
-			r = hd64461_reg_read_1(gcr);
-			r |= HD64461_PCCGCR_VCC0;
-			hd64461_reg_write_1(gcr, r);
-		} 
-		r = hd64461_reg_read_1(scr);
-		r &= ~HD64461_PCCSCR_VCC1;
-		hd64461_reg_write_1(scr, r);
+		hd64461pcmcia_power(channel, V_3_3, 1);
 		break;
 	case HD64461_PCCISR_VS1:	/* x.x V */
 		/* FALLTHROUGH */
-		printf("x.x V not supported.\n");
+		DPRINTF("x.x V card\n");
+		hd64461pcmcia_power(channel, V_X_X, 1);
 		return;
 	default:
 		printf("\nunknown Voltage. don't attach.\n");
 		return;
 	}
+
 	/*
 	 * wait 100ms until power raise (Tpr) and 20ms to become
 	 * stable (Tsu(Vcc)).
@@ -1055,7 +1043,7 @@ hd64461_set_bus_width(enum controller_channel channel, int width)
 {
 	u_int16_t r16;
 
-	r16 = SHREG_BCR2;
+	r16 = _reg_read_2(SH3_BCR2);
 	if (channel == CHANNEL_0) {
 		r16 &= ~((1 << 13)|(1 << 12));
 		r16 |= 1 << (width == PCMCIA_WIDTH_IO8 ? 12 : 13);
@@ -1063,7 +1051,7 @@ hd64461_set_bus_width(enum controller_channel channel, int width)
 		r16 &= ~((1 << 11)|(1 << 10));
 		r16 |= 1 << (width == PCMCIA_WIDTH_IO8 ? 10 : 11);
 	}
-	SHREG_BCR2 = r16;
+	_reg_write_2(SH3_BCR2, r16);
 }
 
 void
@@ -1207,4 +1195,4 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 
 	dbg_banner_line();
 }
-#endif /* DEBUG */
+#endif /* HD64461PCMCIA_DEBUG */

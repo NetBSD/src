@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.24 2001/07/07 07:51:38 scw Exp $	*/
+/*	$NetBSD: isr.c,v 1.24.2.1 2002/03/16 15:58:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -208,6 +208,24 @@ isrlink_vectored(func, arg, ipl, vec, evcnt)
 
 	/* Hook into the vector table. */
 	vectab[vec] = intrhand_vectored;
+}
+
+/*
+ * Return a pointer to the evcnt structure for
+ * the specified ipl.
+ */
+struct evcnt *
+isrlink_evcnt(ipl)
+	int ipl;
+{
+
+#ifdef DIAGNOSTIC
+	if (ipl < 0 ||
+	    ipl >= (sizeof(mvme68k_irq_evcnt) / sizeof(struct evcnt)))
+		panic("isrlink_evcnt: bad ipl %d", ipl);
+#endif
+
+	return (&mvme68k_irq_evcnt[ipl]);
 }
 
 /*

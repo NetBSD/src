@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4.2.1 2001/08/25 06:15:10 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.4.2.2 2002/03/16 15:56:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -61,15 +61,14 @@
 #endif
 
 #ifndef NMBCLUSTERS
-
 #if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
 #endif
 
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
 

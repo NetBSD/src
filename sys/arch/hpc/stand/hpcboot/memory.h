@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: memory.h,v 1.3 2001/05/08 18:51:23 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: memory.h,v 1.3.2.1 2002/03/16 15:57:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ public:
 		{ return _page_size - sizeof(struct PageTag); }
 	vsize_t estimateTaggedPageSize(vsize_t sz) {
 		vsize_t tsz = getTaggedPageSize();
-		return((sz + tsz - 1) / tsz) * _page_size;
+		return ((sz + tsz - 1) / tsz) * _page_size;
 	}
 	u_int32_t roundPage(u_int32_t v) { return ROUND(v, _page_size); }
 	u_int32_t truncPage(u_int32_t v) { return TRUNC(v, _page_size); }

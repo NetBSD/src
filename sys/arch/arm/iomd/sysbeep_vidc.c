@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_vidc.c,v 1.1.6.2 2002/01/10 19:38:18 thorpej Exp $	*/
+/*	$NetBSD: sysbeep_vidc.c,v 1.1.6.3 2002/03/16 15:56:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,8 +37,14 @@
  */
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.1.6.3 2002/03/16 15:56:13 jdolecek Exp $");
+
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <arch/arm/iomd/beepvar.h>
+#include <arch/arm/iomd/vidcaudiovar.h>
 
 #include "beep.h"
 #include "vidcaudio.h"
@@ -47,11 +53,9 @@
 /* Prototypes */
 int sysbeep_vidc_match __P((struct device *parent, struct cfdata *cf, void *aux));
 void sysbeep_vidc_attach __P((struct device *parent, struct device *self, void *aux));
-void sysbeep_vidc __P((int pitch, int period));
+void sysbeep __P((int pitch, int period));
 
-void vidcaudio_beep_generate __P((void));
 void lmcaudio_beep_generate __P((void));
-void beep_generate __P((void));
 
 /* device attach structure */
 struct cfattach sysbeep_vidc_ca = {

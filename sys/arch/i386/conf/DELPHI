@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.4.2.3 2002/02/11 20:08:20 jdolecek Exp $
+#	$NetBSD: DELPHI,v 1.4.2.4 2002/03/16 15:58:11 jdolecek Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.4.2.3 $"
+ident 		"DELPHI-$Revision: 1.4.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -561,7 +561,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 #iophy*	at mii? phy ?			# Intel 82553 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

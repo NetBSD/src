@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.3.8.1 2002/01/10 20:04:04 thorpej Exp $	*/
+/*	$NetBSD: keydb.c,v 1.3.8.2 2002/03/16 16:02:19 jdolecek Exp $	*/
 /*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.3.8.1 2002/01/10 20:04:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.3.8.2 2002/03/16 16:02:19 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -139,11 +139,7 @@ keydb_freesecasvar(p)
 {
 	int s;
 
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	p->refcnt--;
 	/* negative refcnt will cause panic intentionally */
 	if (p->refcnt <= 0)

@@ -1,8 +1,8 @@
-/*	$NetBSD: vrkiu.c,v 1.28.2.2 2002/02/11 20:08:14 jdolecek Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.28.2.3 2002/03/16 15:58:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
- * Copyright (c) 1999,2000 TAKEMRUA, Shin All rights reserved.
+ * Copyright (c) 1999, 2000, 2002 TAKEMRUA, Shin All rights reserved.
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -137,12 +137,17 @@ vrkiuattach(struct device *parent, struct device *self, void *aux)
 	struct vrkiu_softc *sc = (struct vrkiu_softc *)self;
 	struct vrip_attach_args *va = aux;
 	struct hpckbd_attach_args haa;
-	int isconsole;
+	int isconsole, res;
 
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
 
-	if (bus_space_map(iot, va->va_addr, 1, 0, &ioh)) {
+	if (va->va_parent_ioh != NULL)
+		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr,
+		    va->va_size, &ioh);
+	else
+		res = bus_space_map(iot, va->va_addr, 1, 0, &ioh);
+	if (res != 0) {
 		printf(": can't map bus space\n");
 		return;
 	}

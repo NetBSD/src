@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6.2.2 2002/02/11 20:09:32 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.6.2.3 2002/03/16 16:00:31 jdolecek Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -146,9 +146,9 @@
 73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *set); }
 74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
 			    u_int len);}
-75	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
+75	STD		{ int linux_sys_setrlimit(u_int which, \
 			    struct orlimit *rlp); }
-76	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
+76	STD		{ int linux_sys_getrlimit(u_int which, \
 			    struct orlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 78	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
@@ -322,8 +322,10 @@
 188	UNIMPL		getpmsg
 189	UNIMPL		putpmsg
 190	NOARGS		vfork { int sys___vfork14(void); }
-191	UNIMPL		getrlimit
-192	UNIMPL		mmap2
+191	STD		{ int linux_sys_ugetrlimit(int which, \
+			    struct rlimit *rlp); }
+192	STD		{ int linux_sys_mmap2(void *addr, size_t len, \
+			    int prot, int flags, int fd, off_t offset); }
 193	STD		{ int linux_sys_truncate64(const char *path, \
 				off_t length); }
 194	NOARGS		ftruncate64 { int sys_ftruncate(int fd, \

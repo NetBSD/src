@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.1.6.2 2002/02/11 20:08:16 jdolecek Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.1.6.3 2002/03/16 15:58:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -108,6 +108,16 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	static int match;
 	struct shb_attach_args *ia = aux;
+
+	switch (cpu_product) {
+	default:
+		/* HD64461 only supports SH7709 interface */
+		return (0);
+	case CPU_PRODUCT_7709:
+		break;
+	case CPU_PRODUCT_7709A:
+		break;
+	}
 
 	if (match++)	
 		return (0);	/* only one instance */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.9 2002/03/15 21:51:49 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.10 2002/03/16 16:01:47 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -145,9 +145,9 @@ kqueue_init(void)
 {
 
 	pool_init(&kqueue_pool, sizeof(struct kqueue), 0, 0, 0, "kqueuepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_KEVENT);
+	    NULL);
 	pool_init(&knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_KEVENT);
+	    NULL);
 }
 
 /*

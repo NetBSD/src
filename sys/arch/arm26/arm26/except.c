@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.36.2.3 2002/02/11 20:07:23 jdolecek Exp $ */
+/* $NetBSD: except.c,v 1.36.2.4 2002/03/16 15:56:16 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.36.2.3 2002/02/11 20:07:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.36.2.4 2002/03/16 15:56:16 jdolecek Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -206,18 +206,6 @@ do_fault(struct trapframe *tf, struct proc *p,
 	}
 
 	if (error != 0) {
-#ifdef DEBUG
-		printf("unhandled fault at %p (error = %d)\n",
-		    (void *)va, error);
-		printregs(tf);
-		if ((tf->tf_r15 & R15_PC) != va) {
-			printf("pc -> ");
-			disassemble(tf->tf_r15 & R15_PC);
-		}
-#ifdef DDB
-		Debugger();
-#endif
-#endif
 		curpcb = &p->p_addr->u_pcb;
 		if (curpcb->pcb_onfault != NULL) {
 			tf->tf_r0 = error;
@@ -395,10 +383,10 @@ data_abort_atype(struct trapframe *tf)
 	insn = *(register_t *)(tf->tf_r15 & R15_PC);
 	/* STR instruction ? */
 	if ((insn & 0x0c100000) == 0x04000000)
-		return VM_PROT_READ | VM_PROT_WRITE;
+		return VM_PROT_WRITE;
 	/* STM or CDT instruction ? */
 	else if ((insn & 0x0a100000) == 0x08000000)
-		return VM_PROT_READ | VM_PROT_WRITE;
+		return VM_PROT_WRITE;
 #if defined(CPU_ARM250) || defined(CPU_ARM3)
 	/* SWP instruction ? */
 	else if ((insn & 0x0fb00ff0) == 0x01000090)
@@ -452,15 +440,6 @@ address_exception_handler(struct trapframe *tf)
 		panic("address exception in kernel mode");
 	}
 
-#ifdef DEBUG
-	printf("Address exception:\n");
-	printregs(tf);
-	printf("pc -> ");
-	disassemble(pc);
-#ifdef DDB
-	Debugger();
-#endif
-#endif
 	trapsignal(p, SIGBUS, pc);
 	userret(p);
 }

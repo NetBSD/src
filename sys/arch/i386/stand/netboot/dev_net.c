@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.9.6.1 2002/02/11 20:08:29 jdolecek Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.9.6.2 2002/03/16 15:58:22 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -57,23 +57,6 @@
 #ifdef SUPPORT_BOOTP
 void bootp      __P((int));
 #endif
-
-struct in_addr  myip;		/* init'ed as INADDR_ANY */
-struct in_addr  rootip, gateip;
-n_long          netmask = 0xffffff00;
-
-char	rootpath[FNAME_SIZE] = "/";
-char	bootfile[FNAME_SIZE];
-
-char	hostname[FNAME_SIZE];	/* our hostname */
-int	hostnamelen;
-
-#ifdef SUPPORT_BOOTPARAM
-char	domainname[FNAME_SIZE];	/* our DNS domain, not used */
-int	domainnamelen;
-#endif
-
-u_char	bcea[6] = BA;
 
 static int      netdev_sock = -1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.3.4.2 2002/02/11 20:09:55 jdolecek Exp $	*/
+/*	$NetBSD: auich.c,v 1.3.4.3 2002/03/16 16:01:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.4.2 2002/02/11 20:09:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.4.3 2002/03/16 16:01:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,6 +401,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_fixed_rate = 0;
 	} else {
 		sc->sc_fixed_rate = 48000;
+		printf("%s: warning, fixed rate codec\n", sc->sc_dev.dv_xname);
 	}
 
 	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
@@ -586,15 +587,20 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 
 		p->factor = 1;
 		p->sw_code = NULL;
+		if (p->channels < 2)
+			p->hw_channels = 2;
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
+			if (p->precision == 16) {
 				p->sw_code = swap_bytes;
-			else {
+				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+			} else {
 				if (mode == AUMODE_PLAY)
 					p->sw_code = linear8_to_linear16_le;
 				else
 					p->sw_code = linear16_to_linear8_le;
+				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+				p->hw_precision = 16;
 			}
 			break;
 
@@ -604,6 +610,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 					p->sw_code = linear8_to_linear16_le;
 				else
 					p->sw_code = linear16_to_linear8_le;
+				p->hw_precision = 16;
 			}
 			break;
 
@@ -615,6 +622,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 				else
 					p->sw_code =
 					    change_sign16_swap_bytes_le;
+				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 			} else {
 				/*
 				 * XXX ulinear8_to_slinear16_le
@@ -624,9 +632,10 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			break;
 
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
+			if (p->precision == 16) {
 				p->sw_code = change_sign16_le;
-			else {
+				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+			} else {
 				/*
 				 * XXX ulinear8_to_slinear16_le
 				 */
@@ -636,20 +645,21 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
 				p->sw_code = mulaw_to_slinear16_le;
 			} else {
-				/*
-				 * XXX slinear16_le_to_mulaw
-				 */
-				return (EINVAL);
+				p->sw_code = slinear16_to_mulaw_le;
 			}
+			p->factor = 2;
+			p->hw_precision = 16;
+			p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 			break;
 
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
 				p->sw_code = alaw_to_slinear16_le;
+				p->hw_precision = 16;
+				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 			} else {
 				/*
 				 * XXX slinear16_le_to_alaw
@@ -665,10 +675,15 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		auich_read_codec(sc, AC97_REG_POWER, &val);
 		auich_write_codec(sc, AC97_REG_POWER, val | inout);
 
-		auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
-		    sc->sc_fixed_rate ? sc->sc_fixed_rate : p->sample_rate);
-		auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE, &rate);
-		p->sample_rate = rate;
+		if (sc->sc_fixed_rate) {
+			p->hw_sample_rate = sc->sc_fixed_rate;
+		} else {
+			auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
+			    p->sample_rate);
+			auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
+			    &rate);
+			p->hw_sample_rate = rate;
+		}
 
 		auich_write_codec(sc, AC97_REG_POWER, val);
 	}

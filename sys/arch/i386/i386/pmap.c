@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128.2.2 2002/01/10 19:44:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.128.2.3 2002/03/16 15:58:15 jdolecek Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128.2.2 2002/01/10 19:44:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128.2.3 2002/03/16 15:58:15 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -855,14 +855,14 @@ pmap_bootstrap(kva_start)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+		  &pool_allocator_nointr);
 
 	/*
 	 * initialize the PDE pool and cache.
 	 */
 
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+		  &pool_allocator_nointr);
 	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
 			pmap_pdp_ctor, NULL, NULL);
 

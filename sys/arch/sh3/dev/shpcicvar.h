@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcicvar.h,v 1.1.16.1 2002/01/10 19:48:38 thorpej Exp $	*/
+/*	$NetBSD: shpcicvar.h,v 1.1.16.2 2002/03/16 15:59:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -135,41 +135,39 @@ struct shpcic_softc {
 };
 
 
-int	shpcic_ident_ok __P((int));
-int	shpcic_vendor __P((struct shpcic_handle *));
-char	*shpcic_vendor_to_string __P((int));
+int	shpcic_ident_ok(int);
+int	shpcic_vendor(struct shpcic_handle *);
+char	*shpcic_vendor_to_string(int);
 
-void	shpcic_attach __P((struct shpcic_softc *));
-void	shpcic_attach_sockets __P((struct shpcic_softc *));
-int	shpcic_intr __P((void *arg));
+void	shpcic_attach(struct shpcic_softc *);
+void	shpcic_attach_sockets(struct shpcic_softc *);
+int	shpcic_intr(void *arg);
 
-static inline int shpcic_read __P((struct shpcic_handle *, int));
-static inline void shpcic_write __P((struct shpcic_handle *, int, int));
+static inline int shpcic_read(struct shpcic_handle *, int);
+static inline void shpcic_write(struct shpcic_handle *, int, int);
 
-int	shpcic_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t,
-	    struct pcmcia_mem_handle *));
-void	shpcic_chip_mem_free __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_mem_handle *));
-int	shpcic_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *));
-void	shpcic_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
+int	shpcic_chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
+	    struct pcmcia_mem_handle *);
+void	shpcic_chip_mem_free(pcmcia_chipset_handle_t,
+	    struct pcmcia_mem_handle *);
+int	shpcic_chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
+	    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
+void	shpcic_chip_mem_unmap(pcmcia_chipset_handle_t, int);
 
-int	shpcic_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t,
-	    bus_size_t, bus_size_t, struct pcmcia_io_handle *));
-void	shpcic_chip_io_free __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_io_handle *));
-int	shpcic_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_io_handle *, int *));
-void	shpcic_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
+int	shpcic_chip_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
+	    bus_size_t, bus_size_t, struct pcmcia_io_handle *);
+void	shpcic_chip_io_free(pcmcia_chipset_handle_t,
+	    struct pcmcia_io_handle *);
+int	shpcic_chip_io_map(pcmcia_chipset_handle_t, int, bus_addr_t,
+	    bus_size_t, struct pcmcia_io_handle *, int *);
+void	shpcic_chip_io_unmap(pcmcia_chipset_handle_t, int);
 
-void	shpcic_chip_socket_enable __P((pcmcia_chipset_handle_t));
-void	shpcic_chip_socket_disable __P((pcmcia_chipset_handle_t));
+void	shpcic_chip_socket_enable(pcmcia_chipset_handle_t);
+void	shpcic_chip_socket_disable(pcmcia_chipset_handle_t);
 
-static __inline int shpcic_read __P((struct shpcic_handle *, int));
+static __inline int shpcic_read(struct shpcic_handle *, int);
 static __inline int
-shpcic_read(h, idx)
-	struct shpcic_handle *h;
-	int idx;
+shpcic_read(struct shpcic_handle *h, int idx)
 {
 	static int prev_idx = 0;
 
@@ -180,12 +178,9 @@ shpcic_read(h, idx)
 	return (bus_space_read_stream_2(h->sc->iot, h->sc->ioh, idx));
 }
 
-static __inline void shpcic_write __P((struct shpcic_handle *, int, int));
+static __inline void shpcic_write(struct shpcic_handle *, int, int);
 static __inline void
-shpcic_write(h, idx, data)
-	struct shpcic_handle *h;
-	int idx;
-	int data;
+shpcic_write(struct shpcic_handle *h, int idx, int data)
 {
 	static int prev_idx;
 	if (idx == -1){
@@ -195,8 +190,8 @@ shpcic_write(h, idx, data)
 	bus_space_write_stream_2(h->sc->iot, h->sc->ioh, idx, (data));
 }
 
-void	*pcic_shb_chip_intr_establish __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *));
-void	pcic_shb_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
-void pcic_shb_bus_width_probe __P((struct shpcic_softc *, bus_space_tag_t,
-				   bus_space_handle_t, bus_addr_t, u_int32_t));
+void	*pcic_shb_chip_intr_establish(pcmcia_chipset_handle_t,
+	    struct pcmcia_function *, int, int (*) (void *), void *);
+void	pcic_shb_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
+void	pcic_shb_bus_width_probe(struct shpcic_softc *, bus_space_tag_t,
+	    bus_space_handle_t, bus_addr_t, u_int32_t);
