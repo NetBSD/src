@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.16 2001/07/23 14:47:43 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.17 2001/10/06 19:39:23 bjh21 Exp $	*/
 /*	$KAME: ndp.c,v 1.69 2001/07/23 14:46:31 itojun Exp $	*/
 
 /*
@@ -780,18 +780,17 @@ static char *
 ether_str(sdl)
 	struct sockaddr_dl *sdl;
 {
-	static char ebuf[32];
-	u_char *cp;
+	static char hbuf[NI_MAXHOST];
 
 	if (sdl->sdl_alen) {
-		cp = (u_char *)LLADDR(sdl);
-		sprintf(ebuf, "%x:%x:%x:%x:%x:%x",
-			cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
+		if (getnameinfo((struct sockaddr *)sdl, sdl->sdl_len,
+		    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+			strcpy(hbuf, "<invalid>");
 	} else {
-		sprintf(ebuf, "(incomplete)");
+		strcpy(hbuf, "(incomplete)");
 	}
 
-	return(ebuf);
+	return(hbuf);
 }
 
 int
