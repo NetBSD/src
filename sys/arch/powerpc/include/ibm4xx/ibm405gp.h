@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.h,v 1.7 2002/08/13 04:57:49 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.h,v 1.8 2002/08/13 05:43:25 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -88,7 +88,7 @@
 #define	IBM405GP_BOOT_ROM_END		0xffffffff
 
 #ifndef _LOCORE
-void galaxy_show_pci_map(void);
-void galaxy_setup_pci(void);
+void ibm4xx_show_pci_map(void);
+void ibm4xx_setup_pci(void);
 #endif /* _LOCORE */
 #endif	/* _IBM4XX_IBM405GP_H_ */

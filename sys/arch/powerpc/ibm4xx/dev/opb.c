@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.3 2002/08/13 04:57:49 simonb Exp $ */
+/* $NetBSD: opb.c,v 1.4 2002/08/13 05:43:25 simonb Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#define _GALAXY_BUS_DMA_PRIVATE
+#define _IBM4XX_BUS_DMA_PRIVATE
 #include <machine/walnut.h>
 
 #include <powerpc/spr.h>
@@ -153,8 +153,8 @@ opb_attach(struct device *parent, struct device *self, void *aux)
 		oaa.opb_name = opb_devs[i].name;
 		oaa.opb_addr = opb_devs[i].addr;
 		oaa.opb_irq = opb_devs[i].irq;
-		oaa.opb_bt = galaxy_make_bus_space_tag(0, 0);
-		oaa.opb_dmat = &galaxy_default_bus_dma_tag;
+		oaa.opb_bt = ibm4xx_make_bus_space_tag(0, 0);
+		oaa.opb_dmat = &ibm4xx_default_bus_dma_tag;
 
 		(void) config_found_sm(self, &oaa, opb_print, opb_submatch);
 	}
