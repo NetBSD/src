@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.148 2001/01/02 04:34:37 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.149 2001/01/04 08:38:51 itojun Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -76,7 +76,7 @@ STRIPFLAG?=	-s
 #SYS_INCLUDE= 	symlinks
 
 # The sh3 port is incomplete.
-.if ${MACHINE_ARCH} == "sh3"
+.if ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
 NOLINT=1
 NOPROFILE=1
 OBJECT_FMT?=COFF
