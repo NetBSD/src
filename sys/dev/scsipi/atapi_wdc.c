@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.19 1999/03/25 16:17:37 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.20 1999/04/01 21:46:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -86,8 +86,8 @@ int wdcdebug_atapi_mask = 0;
 
 void  wdc_atapi_minphys  __P((struct buf *bp));
 void  wdc_atapi_start	__P((struct channel_softc *,struct wdc_xfer *));
-int   wdc_atapi_intr	 __P((struct channel_softc *, struct wdc_xfer *));
-int   wdc_atapi_ctrl	 __P((struct channel_softc *, struct wdc_xfer *));
+int   wdc_atapi_intr	 __P((struct channel_softc *, struct wdc_xfer *, int));
+int   wdc_atapi_ctrl	 __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdc_atapi_done	 __P((struct channel_softc *, struct wdc_xfer *));
 void  wdc_atapi_reset	 __P((struct channel_softc *, struct wdc_xfer *));
 int   wdc_atapi_send_cmd __P((struct scsipi_xfer *sc_xfer));
@@ -246,7 +246,7 @@ wdc_atapi_start(chp, xfer)
 			    xfer->drive, drvp->state);
 			panic("wdc_atapi_start: bad state");
 		}
-		wdc_atapi_ctrl(chp, xfer);
+		wdc_atapi_ctrl(chp, xfer, 0);
 		return;
 	}
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
@@ -281,26 +281,23 @@ wdc_atapi_start(chp, xfer)
 	if ((sc_xfer->sc_link->scsipi_atapi.cap  & 0x0300) != ACAP_DRQ_INTR || 
 	    sc_xfer->flags & SCSI_POLL) {
 		/* Wait for at last 400ns for status bit to be valid */
-		delay(1);
-		if (wdc_atapi_intr(chp, xfer) == 0) {
-			sc_xfer->error = XS_TIMEOUT;
-			wdc_atapi_reset(chp, xfer);
-			return;
-		}
+		DELAY(1);
+		wdc_atapi_intr(chp, xfer, 0);
 	}
 	if (sc_xfer->flags & SCSI_POLL) {
 		while ((sc_xfer->flags & ITSDONE) == 0) {
 			/* Wait for at last 400ns for status bit to be valid */
-			delay(1);
-			wdc_atapi_intr(chp, xfer);
+			DELAY(1);
+			wdc_atapi_intr(chp, xfer, 0);
 		}
 	}
 }
 
 int
-wdc_atapi_intr(chp, xfer)
+wdc_atapi_intr(chp, xfer, irq)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
+	int irq;
 {
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -326,9 +323,8 @@ wdc_atapi_intr(chp, xfer)
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (xfer->drive << 4));
 	if (wait_for_unbusy(chp,
-	    (sc_xfer->flags & SCSI_POLL) ? sc_xfer->timeout : 0) != 0) {
-		if ((sc_xfer->flags & SCSI_POLL) == 0 &&
-		    (xfer->c_flags & C_TIMEOU) == 0)
+	    (irq == 0) ? sc_xfer->timeout : 0) != 0) {
+		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
 			return 0; /* IRQ was not for us */
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
@@ -592,7 +588,11 @@ again:
 		if (xfer->c_flags & C_DMA) {
 			dma_err = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive, dma_flags);
-			xfer->c_bcount -= sc_xfer->datalen;
+			if (xfer->c_flags & C_SENSE)
+				xfer->c_bcount -=
+				    sizeof(sc_xfer->sense.scsi_sense);
+			else
+				xfer->c_bcount -= sc_xfer->datalen;
 		}
 		if (xfer->c_flags & C_SENSE) {
 			if ((chp->ch_status & WDCS_ERR) || dma_err < 0) {
@@ -680,14 +680,15 @@ again:
 }
 
 int
-wdc_atapi_ctrl(chp, xfer)
+wdc_atapi_ctrl(chp, xfer, irq)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
+	int irq;
 {
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
-	int delay = (sc_xfer->flags & SCSI_POLL) ? ATAPI_DELAY : 0;
+	int delay = (irq == 0) ? ATAPI_DELAY : 0;
 
 	/* Ack interrupt done in wait_for_unbusy */
 again:
@@ -753,7 +754,7 @@ again:
 	return 1;
 
 timeout:
-	if ((xfer->c_flags & C_TIMEOU) == 0 && delay == 0) {
+	if (irq && (xfer->c_flags & C_TIMEOU) == 0) {
 		return 0; /* IRQ was not for us */
 	}
 	printf("%s:%d:%d: %s timed out\n",
