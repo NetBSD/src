@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: md_root.c,v 1.2 1999/03/17 18:59:23 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <sys/reboot.h>
 
 #include <dev/md.h>
+
+#include "opt_mdsize.h"
 
 extern int boothowto;
 
