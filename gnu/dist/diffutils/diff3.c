@@ -20,7 +20,7 @@
 #include "system.h"
 #include <stdio.h>
 #include <signal.h>
-#include "getopt.h"
+#include <getopt.h>
 
 extern char const version_string[];
 

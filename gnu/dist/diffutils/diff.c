@@ -23,7 +23,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define GDIFF_MAIN
 #include "diff.h"
 #include <signal.h>
-#include "getopt.h"
+#include <getopt.h>
 #include "fnmatch.h"
 
 #ifndef DEFAULT_WIDTH
