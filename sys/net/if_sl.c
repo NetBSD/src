@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.89 2004/12/05 15:00:47 peter Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.90 2004/12/06 02:59:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.89 2004/12/05 15:00:47 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.90 2004/12/06 02:59:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.89 2004/12/05 15:00:47 peter Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#else
-#error Slip without inet?
 #endif
 
 #include <net/slcompress.h>
@@ -261,7 +259,9 @@ slinit(sc)
 	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
 	    BUFOFFSET;
 
+#ifdef INET
 	sl_compress_init(&sc->sc_comp);
+#endif
 
 	return (1);
 }
@@ -461,10 +461,12 @@ sloutput(ifp, m, dst, rtp)
 		return (EHOSTUNREACH);
 	}
 	ip = mtod(m, struct ip *);
+#ifdef INET
 	if (sc->sc_if.if_flags & SC_NOICMP && ip->ip_p == IPPROTO_ICMP) {
 		m_freem(m);
 		return (ENETRESET);		/* XXX ? */
 	}
+#endif
 
 	s = spltty();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
@@ -480,6 +482,7 @@ sloutput(ifp, m, dst, rtp)
 	splx(s);
 
 	s = splnet();
+#ifdef INET
 	if ((ip->ip_tos & IPTOS_LOWDELAY) != 0
 #ifdef ALTQ
 	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
@@ -494,6 +497,7 @@ sloutput(ifp, m, dst, rtp)
 			error = 0;
 		}
 	} else
+#endif
 		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
 	if (error) {
 		splx(s);
@@ -715,7 +719,10 @@ slintr(void *arg)
 	struct tty *tp = sc->sc_ttyp;
 	struct mbuf *m;
 	int s, len;
-	u_char *pktstart, c;
+	u_char *pktstart;
+#ifdef INET
+	u_char c;
+#endif
 #if NBPFILTER > 0
 	u_char chdr[CHDR_LEN];
 #endif
@@ -726,7 +733,9 @@ slintr(void *arg)
 	 * Output processing loop.
 	 */
 	for (;;) {
+#ifdef INET
 		struct ip *ip;
+#endif
 		struct mbuf *m2;
 #if NBPFILTER > 0
 		struct mbuf *bpf_m;
@@ -781,12 +790,14 @@ slintr(void *arg)
 		} else
 			bpf_m = NULL;
 #endif
+#ifdef INET
 		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
 			if (sc->sc_if.if_flags & SC_COMPRESS)
 				*mtod(m, u_char *) |=
 				    sl_compress_tcp(m, ip,
 				    &sc->sc_comp, 1);
 		}
+#endif
 #if NBPFILTER > 0
 		if (sc->sc_if.if_bpf && bpf_m != NULL)
 			bpf_mtap_sl_out(sc->sc_if.if_bpf, mtod(m, u_char *),
@@ -912,6 +923,7 @@ slintr(void *arg)
 			memcpy(chdr, pktstart, CHDR_LEN);
 		}
 #endif /* NBPFILTER > 0 */
+#ifdef INET
 		if ((c = (*pktstart & 0xf0)) != (IPVERSION << 4)) {
 			if (c & 0x80)
 				c = TYPE_COMPRESSED_TCP;
@@ -947,6 +959,7 @@ slintr(void *arg)
 				continue;
 			}
 		}
+#endif
 		m->m_data = (caddr_t) pktstart;
 		m->m_pkthdr.len = m->m_len = len;
 #if NBPFILTER > 0
@@ -976,6 +989,7 @@ slintr(void *arg)
 		sc->sc_if.if_ipackets++;
 		sc->sc_lastpacket = time;
 
+#ifdef INET
 		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);
@@ -987,6 +1001,7 @@ slintr(void *arg)
 			schednetisr(NETISR_IP);
 		}
 		splx(s);
+#endif
 	}
 }
 

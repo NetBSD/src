@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.2 2004/10/31 04:52:50 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3 2004/12/06 02:59:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -70,7 +70,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.12 2004/07/06 11:1
 #include "netinet/ip_pool.h"
 #include <sys/md5.h>
 #include <sys/kernel.h>
+#ifdef INET
 extern	int	ip_optcopy __P((struct ip *, struct ip *));
+#endif
 
 #ifdef IPFILTER_M_IPFILTER
 MALLOC_DEFINE(M_IPFILTER, "IP Filter", "IP Filter packet filter data structures");
@@ -141,6 +143,7 @@ int dir;
 		return error;
 	}
 
+#ifdef INET
 #if defined(M_CSUM_TCPv4)
 	/*
 	 * If the packet is out-bound, we can't delay checksums
@@ -155,6 +158,7 @@ int dir;
 		}
 	}
 #endif /* M_CSUM_TCPv4 */
+#endif
 
 	ip = mtod(*mp, struct ip *);
 	hlen = ip->ip_hl << 2;
@@ -332,8 +336,10 @@ pfil_error:
 	fr_savep = fr_checkp;
 	fr_checkp = fr_check;
 
+#ifdef INET
 	if (fr_control_forwarding & 1)
 		ipforwarding = 1;
+#endif
 
 	SPL_X(s);
 
@@ -377,8 +383,10 @@ int ipldetach()
 	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
 	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE);
 
+#ifdef INET
 	if (fr_control_forwarding & 2)
 		ipforwarding = 0;
+#endif
 
 #ifdef NETBSD_PF
 # if (__NetBSD_Version__ >= 104200000)
@@ -800,6 +808,7 @@ fr_info_t *fin;
 		return fr_send_ip(fin, m, &m);
 	}
 #endif
+#ifdef INET
 	ip->ip_p = IPPROTO_TCP;
 	ip->ip_len = htons(sizeof(struct tcphdr));
 	ip->ip_src.s_addr = fin->fin_daddr;
@@ -807,6 +816,9 @@ fr_info_t *fin;
 	tcp2->th_sum = in_cksum(m, hlen + sizeof(*tcp2));
 	ip->ip_len = hlen + sizeof(*tcp2);
 	return fr_send_ip(fin, m, &m);
+#else
+	return 0;
+#endif
 }
 
 
@@ -815,7 +827,7 @@ fr_info_t *fin;
 mb_t *m, **mpp;
 {
 	fr_info_t fnew;
-	ip_t *ip, *oip;
+	ip_t *ip;
 	int hlen;
 
 	ip = mtod(m, ip_t *);
@@ -824,9 +836,11 @@ mb_t *m, **mpp;
 	IP_V_A(ip, fin->fin_v);
 	switch (fin->fin_v)
 	{
+#ifdef INET
 	case 4 :
+	{
+		ip_t *oip = fin->fin_ip;
 		fnew.fin_v = 4;
-		oip = fin->fin_ip;
 		IP_HL_A(ip, sizeof(*oip) >> 2);
 		ip->ip_tos = oip->ip_tos;
 		ip->ip_id = fr_nextipid(fin);
@@ -835,6 +849,8 @@ mb_t *m, **mpp;
 		ip->ip_sum = 0;
 		hlen = sizeof(*oip);
 		break;
+	}
+#endif
 #ifdef USE_INET6
 	case 6 :
 	{
@@ -1122,9 +1138,11 @@ frdest_t *fdp;
 		ifp = ro->ro_rt->rt_ifp;
 
 	if ((ro->ro_rt == NULL) || (ifp == NULL)) {
+#ifdef INET
 		if (in_localaddr(ip->ip_dst))
 			error = EHOSTUNREACH;
 		else
+#endif
 			error = ENETUNREACH;
 		goto bad;
 	}
@@ -1173,6 +1191,7 @@ frdest_t *fdp;
 	if (ip->ip_len <= ifp->if_mtu) {
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
+#ifdef INET
 #if defined(M_CSUM_IPv4)
 		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
 			m->m_pkthdr.csuminfo |= M_CSUM_IPv4;
@@ -1182,6 +1201,7 @@ frdest_t *fdp;
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
 #endif /* M_CSUM_IPv4 */
+#endif
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
 		goto done;
@@ -1225,10 +1245,12 @@ frdest_t *fdp;
 		m->m_data += max_linkhdr;
 		mhip = mtod(m, struct ip *);
 		bcopy((char *)ip, (char *)mhip, sizeof(*ip));
+#ifdef INET
 		if (hlen > sizeof (struct ip)) {
 			mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
 			IP_HL_A(mhip, mhlen >> 2);
 		}
+#endif
 		m->m_len = mhlen;
 		mhip->ip_off = ((off - hlen) >> 3) + ip_off;
 		if (off + len >= ip->ip_len)
@@ -1245,7 +1267,9 @@ frdest_t *fdp;
 		m->m_pkthdr.rcvif = NULL;
 		mhip->ip_off = htons((u_short)mhip->ip_off);
 		mhip->ip_sum = 0;
+#ifdef INET
 		mhip->ip_sum = in_cksum(m, mhlen);
+#endif
 		*mnext = m;
 		mnext = &m->m_act;
 	}
@@ -1257,7 +1281,9 @@ frdest_t *fdp;
 	ip->ip_len = htons((u_short)(hlen + firstlen));
 	ip->ip_off = htons((u_short)IP_MF);
 	ip->ip_sum = 0;
+#ifdef INET
 	ip->ip_sum = in_cksum(m0, hlen);
+#endif
 sendorfree:
 	for (m = m0; m; m = m0) {
 		m0 = m->m_act;

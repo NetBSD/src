@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.56 2004/12/05 15:00:47 peter Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.57 2004/12/06 02:59:23 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.56 2004/12/05 15:00:47 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.57 2004/12/06 02:59:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -123,8 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.56 2004/12/05 15:00:47 peter Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#else
-#error Starmode Radio IP configured without configuring inet?
 #endif
 
 #include <net/slcompress.h>
@@ -436,7 +434,9 @@ stripinit(sc)
 		}
 	}
 
+#ifdef INET
 	sl_compress_init(&sc->sc_comp);
+#endif
 
 	/* Initialize radio probe/reset state machine */
 	sc->sc_state = ST_DEAD;		/* assumet the worst. */
@@ -801,6 +801,7 @@ stripoutput(ifp, m, dst, rt)
 	}
 	
 	ip = mtod(m, struct ip *);
+#ifdef INET
 	if (sc->sc_if.if_flags & SC_NOICMP && ip->ip_p == IPPROTO_ICMP) {
 		m_freem(m);
 		return (ENETRESET);		/* XXX ? */
@@ -812,6 +813,7 @@ stripoutput(ifp, m, dst, rt)
 	    )
 		ifq = &sc->sc_fastq;
 	else
+#endif
 		ifq = NULL;
 
 	/*
@@ -1106,7 +1108,10 @@ stripintr(void *arg)
 	struct tty *tp = sc->sc_ttyp;
 	struct mbuf *m;
 	int s, len;
-	u_char *pktstart, c;
+	u_char *pktstart;
+#ifdef INET
+	u_char c;
+#endif
 #if NBPFILTER > 0
 	u_char chdr[CHDR_LEN];
 #endif
@@ -1117,7 +1122,9 @@ stripintr(void *arg)
 	 * Output processing loop.
 	 */
 	for (;;) {
+#ifdef INET
 		struct ip *ip;
+#endif
 #if NBPFILTER > 0
 		struct mbuf *bpf_m;
 #endif
@@ -1173,12 +1180,14 @@ stripintr(void *arg)
 		} else
 			bpf_m = NULL;
 #endif
+#ifdef INET
 		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
 			if (sc->sc_if.if_flags & SC_COMPRESS)
 				*mtod(m, u_char *) |=
 				    sl_compress_tcp(m, ip,
 				    &sc->sc_comp, 1);
 		}
+#endif
 #if NBPFILTER > 0
 		if (sc->sc_if.if_bpf && bpf_m != NULL)
 			bpf_mtap_sl_out(sc->sc_if.if_bpf, mtod(m, u_char *),
@@ -1222,6 +1231,7 @@ stripintr(void *arg)
 			memcpy(chdr, pktstart, CHDR_LEN);
 		}
 #endif /* NBPFILTER > 0 */
+#ifdef INET
 		if ((c = (*pktstart & 0xf0)) != (IPVERSION << 4)) {
 			if (c & 0x80)
 				c = TYPE_COMPRESSED_TCP;
@@ -1257,6 +1267,7 @@ stripintr(void *arg)
 				continue;
 			}
 		}
+#endif
 		m->m_data = (caddr_t) pktstart;
 		m->m_pkthdr.len = m->m_len = len;
 #if NPBFILTER > 0
@@ -1286,6 +1297,7 @@ stripintr(void *arg)
 		sc->sc_if.if_ipackets++;
 		sc->sc_lastpacket = time;
 
+#ifdef INET
 		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);
@@ -1297,6 +1309,7 @@ stripintr(void *arg)
 			schednetisr(NETISR_IP);
 		}
 		splx(s);
+#endif
 	}
 }
 
