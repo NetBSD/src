@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: find.1,v 1.7 1994/04/14 03:34:13 cgd Exp $
+.\"	$Id: find.1,v 1.8 1994/07/18 09:55:31 cgd Exp $
 .\"
 .Dd June 6, 1993
 .Dt FIND 1
@@ -259,12 +259,15 @@ Note, the first character of a symbolic mode may not be a dash (``\-'').
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
 by a newline character.
-The expression is appended to the user specified expression if neither
+If neither
 .Ic -exec ,
-.Ic -ls
+.Ic -ls ,
+.Ic -ok ,
 nor
-.Ic \&-ok
-is specified.
+.Ic -print0
+is specified, the given expression shall be effectively replaced by
+.Cm \&( Ns Ar given\& expression Ns Cm \&) 
+.Ic -print .
 .It Ic -print0
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed

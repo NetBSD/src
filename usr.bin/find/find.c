@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: find.c,v 1.5 1993/12/30 21:15:21 jtc Exp $";
+static char rcsid[] = "$Id: find.c,v 1.6 1994/07/18 09:55:36 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,15 +91,21 @@ find_formplan(argv)
     
 	/*
 	 * if the user didn't specify one of -print, -ok or -exec, then -print
-	 * is assumed so we add a -print node on the end.  It is possible that
-	 * the user might want the -print someplace else on the command line,
-	 * but there's no way to know that.
+	 * is assumed so we bracket the current expression with parens, if
+	 * necessary, and add a -print node on the end.
 	 */
 	if (!isoutput) {
-		new = c_print();
-		if (plan == NULL)
+		if (plan == NULL) {
+			new = c_print();
 			tail = plan = new;
-		else {
+		} else {
+			new = c_openparen();
+			new->next = plan;
+			plan = new;
+			new = c_closeparen();
+			tail->next = new;
+			tail = new;
+			new = c_print();
 			tail->next = new;
 			tail = new;
 		}
