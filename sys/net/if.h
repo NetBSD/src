@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.49 2000/05/15 16:45:50 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.50 2000/05/15 16:59:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -447,7 +447,7 @@ struct	ifreq {
 #define	ifr_value	ifr_ifru.ifru_value	/* generic value */
 #define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
-} __attribute__((__packed__));
+};
 
 struct ifaliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
