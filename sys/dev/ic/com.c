@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.133 1998/02/02 23:01:02 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.134 1998/02/06 03:25:34 enami Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -627,6 +627,7 @@ comopen(dev, flag, mode, p)
 
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
+				splx(s);
 				printf("%s: device enable failed\n",
 				       sc->sc_dev.dv_xname);
 				return (EIO);
