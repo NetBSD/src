@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.23 1998/01/17 12:00:42 mycroft Exp $	*/
+/*	$NetBSD: ls.c,v 1.24 1998/01/18 13:30:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.23 1998/01/17 12:00:42 mycroft Exp $");
+__RCSID("$NetBSD: ls.c,v 1.24 1998/01/18 13:30:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ int sortkey = BY_NAME;
 /* flags */
 int f_accesstime;		/* use time of last access */
 int f_column;			/* columnated format */
+int f_columnacross;		/* columnated format, sorted across */
 int f_flags;			/* show flags associated with a file */
 int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
@@ -96,6 +97,7 @@ int f_longform;			/* long listing format */
 int f_newline;			/* if precede with newline */
 int f_nonprint;			/* show unprintables as ? */
 int f_nosort;			/* don't sort output */
+int f_numericonly;		/* don't convert uid/gid to name */
 int f_recursive;		/* ls subdirectories also */
 int f_reversesort;		/* reverse whatever sort is used */
 int f_sectime;			/* print the real time for all files */
@@ -133,23 +135,27 @@ main(argc, argv)
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgikloqrstu")) != -1) {
+	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgiklnoqrstux")) != -1) {
 		switch (ch) {
 		/*
-		 * The -1, -C and -l options all override each other so shell
-		 * aliasing works right.
+		 * The -1, -C, -l and -x options all override each other so
+		 * shell aliasing works correctly.
 		 */
 		case '1':
 			f_singlecol = 1;
-			f_column = f_longform = 0;
+			f_column = f_columnacross = f_longform = 0;
 			break;
 		case 'C':
 			f_column = 1;
-			f_longform = f_singlecol = 0;
+			f_columnacross = f_longform = f_singlecol = 0;
 			break;
 		case 'l':
 			f_longform = 1;
-			f_column = f_singlecol = 0;
+			f_column = f_columnacross = f_singlecol = 0;
+			break;
+		case 'x':
+			f_columnacross = 1;
+			f_column = f_longform = f_singlecol = 0;
 			break;
 		/* The -c and -u options override each other. */
 		case 'c':
@@ -192,6 +198,9 @@ main(argc, argv)
 		case 'k':
 			blocksize = 1024;
 			kflag = 1;
+			break;
+		case 'n':
+			f_numericonly = 1;
 			break;
 		case 'o':
 			f_flags = 1;
@@ -295,6 +304,8 @@ main(argc, argv)
 	/* Select a print function. */
 	if (f_singlecol)
 		printfcn = printscol;
+	else if (f_columnacross)
+		printfcn = printacol;
 	else if (f_longform)
 		printfcn = printlong;
 	else
@@ -394,6 +405,7 @@ display(p, list)
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser;
 	int entries, needstats;
 	char *user, *group, buf[20];	/* 32 bits == 10 digits */
+	char nuser[12], ngroup[12];
 	char *flags = NULL;	/* pacify gcc */
 
 	/*
@@ -462,10 +474,17 @@ display(p, list)
 
 			btotal += sp->st_blocks;
 			if (f_longform) {
-				user = user_from_uid(sp->st_uid, 0);
+				if (f_numericonly) {
+					snprintf(nuser, 12, "%u", sp->st_uid);
+					snprintf(ngroup, 12, "%u", sp->st_gid);
+					user = nuser;
+					group = ngroup;
+				} else {
+					user = user_from_uid(sp->st_uid, 0);
+					group = group_from_gid(sp->st_gid, 0);
+				}
 				if ((ulen = strlen(user)) > maxuser)
 					maxuser = ulen;
-				group = group_from_gid(sp->st_gid, 0);
 				if ((glen = strlen(group)) > maxgroup)
 					maxgroup = glen;
 				if (f_flags) {
@@ -564,16 +583,12 @@ mastercmp(a, b)
 		else
 			return (namecmp(*a, *b));
 
-	if (a_info == b_info)
-		return (sortfcn(*a, *b));
-
-	if ((*a)->fts_level == FTS_ROOTLEVEL)
+	if (a_info != b_info && !f_listdir &&
+	    (*a)->fts_level == FTS_ROOTLEVEL) {
 		if (a_info == FTS_D)
 			return (1);
 		else if (b_info == FTS_D)
 			return (-1);
-		else
-			return (sortfcn(*a, *b));
-	else
-		return (sortfcn(*a, *b));
+	}
+	return (sortfcn(*a, *b));
 }
