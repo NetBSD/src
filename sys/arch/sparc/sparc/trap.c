@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 1998/02/10 14:11:46 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.65 1998/05/06 14:28:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -681,7 +681,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		rv = KERN_PROTECTION_FAILURE;
 		goto fault;
 	}
-	atype = ser & SER_WRITE ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
+	atype = ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ;
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
@@ -947,8 +947,7 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	}
 
 	/* Now munch on protections... */
-
-	atype = sfsr & SFSR_AT_STORE ? VM_PROT_READ|VM_PROT_WRITE:VM_PROT_READ;
+	atype = sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ;
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
