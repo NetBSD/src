@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.3 1999/04/01 20:40:07 ragge Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.4 1999/08/07 18:30:36 ragge Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -49,7 +49,7 @@
 
 
 int ze_probe(), ze_match(), ze_get(), ze_put();
-void ze_init();
+void ze_init(), ze_end();
 
 struct netif_stats ze_stats;
 
@@ -61,7 +61,7 @@ struct netif_dif ze_ifs[] = {
 struct netif_stats ze_stats;
 
 struct netif_driver ze_driver = {
-	"ze", ze_match, ze_probe, ze_init, ze_get, ze_put, 0, ze_ifs, 1,
+	"ze", ze_match, ze_probe, ze_init, ze_get, ze_put, ze_end, ze_ifs, 1,
 };
 
 #define NRCV 5				/* allocate 5 receive descriptors */
@@ -284,4 +284,10 @@ ze_put(desc, pkt, len)
 	/* Return good if we didn't timeout, or error if we did. */
 	if (timeout>0) return len;
 	return -1;
+}
+
+void
+ze_end()
+{
+	addr->ze_nicsr6 = ZE_NICSR6_RE;
 }
