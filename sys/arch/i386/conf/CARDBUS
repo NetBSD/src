@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.47 2001/12/28 17:37:03 augustss Exp $
+#	$NetBSD: CARDBUS,v 1.48 2002/01/02 22:32:16 mcr Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.47 $"
+#ident		"CARDBUS-$Revision: 1.48 $"
 
 maxusers	32		# estimated number of users
 
@@ -44,6 +44,11 @@ options 	MTRR		# memory-type range register syscall support
 # (as is the case on most recent systems).
 #options 	REALBASEMEM=639		# size of base memory (in KB)
 #options 	REALEXTMEM=15360	# size of extended memory (in KB)
+
+# following makes ARMADA M700's happy
+#options 	RBUS_MIN_START=0x20000000
+#options 	RBUS_IO_BASE=0x600
+#options 	RBUS_IO_SIZE=0x100
 
 # Standard system options
 
@@ -256,6 +261,7 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 #pcmb*	at pci? dev ? function ?	# PCI-MCA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+ppb*	at cardbus? dev ? function ?	# Cardbus-PCI bridges (www.magma.com)
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
