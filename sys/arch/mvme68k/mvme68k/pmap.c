@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 2001/04/24 04:31:04 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.57 2001/04/29 07:41:58 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -313,6 +313,7 @@ int	pmap_mapmulti __P((pmap_t, vaddr_t));
  * Internal routines
  */
 void	pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
+void	pmap_do_remove __P((pmap_t, vaddr_t, vaddr_t, int));
 boolean_t pmap_testbit __P((paddr_t, int));
 boolean_t pmap_changebit __P((paddr_t, int, int));
 void	pmap_enter_ptpage	__P((pmap_t, vaddr_t));
@@ -912,6 +913,16 @@ pmap_remove(pmap, sva, eva)
 	pmap_t pmap;
 	vaddr_t sva, eva;
 {
+
+	pmap_do_remove(pmap, sva, eva, 1);
+}
+
+void
+pmap_do_remove(pmap, sva, eva, remove_wired)
+	pmap_t pmap;
+	vaddr_t sva, eva;
+	int remove_wired;
+{
 	vaddr_t nssva;
 	pt_entry_t *pte;
 	int flags;
@@ -937,10 +948,12 @@ pmap_remove(pmap, sva, eva)
 		}
 		/*
 		 * Invalidate every valid mapping within this segment.
+		 * If remove_wired is zero, skip the wired pages.
 		 */
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
-			if (pmap_pte_v(pte)) {
+			if (pmap_pte_v(pte) &&
+			    (remove_wired || !pmap_pte_w(pte))) {
 				pmap_remove_mapping(pmap, sva, pte, flags);
 			}
 			pte++;
@@ -1584,7 +1597,7 @@ pmap_collect(pmap)
 		 * entire address space.  Note: pmap_remove() performs
 		 * all necessary locking.
 		 */
-		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+		pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS, 0);
 		pmap_update();
 	}
 
