@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.54 2001/07/13 23:32:26 kristerw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.55 2001/08/03 00:41:46 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -123,7 +123,10 @@ svr4_setregs(p, epp, stack)
 	register struct pcb *pcb = &p->p_addr->u_pcb;
 
 	setregs(p, epp, stack);
-	pcb->pcb_savefpu.sv_env.en_cw = __SVR4_NPXCW__;
+	if (i386_use_fxsave)
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __SVR4_NPXCW__;
+	else
+		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __SVR4_NPXCW__;
 }
 
 void *
