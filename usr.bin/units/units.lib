@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.7 2001/01/30 12:26:11 wiz Exp $
+/	$NetBSD: units.lib,v 1.8 2001/10/16 12:09:04 bjh21 Exp $
 
 / primitive units
 
@@ -491,6 +491,7 @@ quarter			9 in
 quartersection		1|4 mi2
 quintal			100 kg
 quire			25
+rackunit		1.75 in
 rad			100 erg/gm
 ream			500
 registerton		100 ft3
@@ -499,6 +500,7 @@ rhe			10 m2/nt-sec
 rontgen			2.58e-4 curie/kg
 rood			1.21e+3 yd
 rope			20 ft
+RU			rackunit
 rutherford		1e+6 /sec
 rydberg			1.36054e+1 ev
 sabin			1 ft2
@@ -538,6 +540,7 @@ tonne			1e+6 gm
 torr			mm hg
 township		36 mi2
 tun			8 barrel
+U			rackunit
 water			gram g / cc
 wey			40 bu
 weymass			252 lb
