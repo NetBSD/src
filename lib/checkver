@@ -1,5 +1,5 @@
-#!/bin/ksh
-#	$NetBSD: checkver,v 1.4 1999/01/27 05:50:29 erh Exp $
+#!/bin/sh
+#	$NetBSD: checkver,v 1.5 1999/03/16 18:57:31 christos Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,10 +70,12 @@
 #
 
 TMP=/tmp/checkver.$$
-trap "exit 2" 1 2 3 4 5 6 7 8 10 11 12 13 14 15
+# Can't trap 11 (SEGV) in the Real Bourne Shell, since it uses it for
+# internal malloc!
+trap "exit 2" 1 2 3 4 5 6 7 8 10 12 13 14 15
 trap "[ -d $TMP ] && rm -rf $TMP" 0
 
-Usage ( ) {
+Usage() {
     echo "Usage: $1 [-q] -d [installedlibdir [library name]]"
     echo "       $1 [-q] -s [setlistdir [library name]]"
     echo "       $1 [-q] -f liblistfile [library name]"
@@ -124,7 +126,8 @@ fi
 if [ $usefile -eq 1 ] ; then
    LIBLIST="$arg1"
 else
-   if ! mkdir -m 0700 $TMP ; then
+   mkdir -m 0700 $TMP
+   if [ $?  != 0 ]; then
 	echo "$0: Unable to create temp directory."
 	exit 2
    fi
@@ -171,7 +174,8 @@ if [ "X$2" = "X" ] ; then
 else
     libname="$2"
 fi
-if ! echo $libname | grep -q "^lib" ; then
+echo $libname | grep "^lib" 1>&2 2> /dev/null
+if [ $? != 0 ]; then
     libname="lib$libname"
 fi
 
