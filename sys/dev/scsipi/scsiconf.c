@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.163 2001/10/21 23:25:04 mjl Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.164 2001/11/06 13:31:20 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -468,6 +468,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "VMware", "Virtual",           "1.0"},
 				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
+	{{T_CDROM, T_REMOV,
+	 "LITE-ON", "LTR-12101B",       "LS38"},  PQUIRK_ONLYBIG},
 
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     PQUIRK_AUTOSAVE},
