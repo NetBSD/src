@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.59 2004/08/01 21:40:41 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.60 2004/08/04 18:24:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.59 2004/08/01 21:40:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.60 2004/08/04 18:24:10 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -747,8 +747,6 @@ wdc_ata_bio_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer,
 	struct ata_bio *ata_bio = xfer->c_cmd;
 	int drive = xfer->c_drive;
 
-	callout_stop(&chp->ch_callout);
-	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
@@ -786,7 +784,8 @@ wdc_ata_bio_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	/* feed back residual bcount to our caller */
 	ata_bio->bcount = xfer->c_bcount;
 
-	/* remove this command from xfer queue */
+	/* mark controller inactive and free xfer */
+	chp->ch_queue->active_xfer = NULL;
 	wdc_free_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;

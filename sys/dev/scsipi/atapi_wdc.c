@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.72 2004/08/01 21:40:41 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.73 2004/08/04 18:24:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.72 2004/08/01 21:40:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.73 2004/08/04 18:24:11 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -173,23 +173,21 @@ wdc_atapi_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 
-	callout_stop(&chp->ch_callout);
 	/* remove this command from xfer queue */
 	switch (reason) {
 	case KILL_GONE:
 		sc_xfer->error = XS_DRIVER_STUFFUP;
-		wdc_free_xfer(chp, xfer);
-		scsipi_done(sc_xfer);
 		break;
 	case KILL_RESET:
 		sc_xfer->error = XS_RESET;
-		wdc_atapi_reset(chp, xfer);
 		break;
 	default:
 		printf("wdc_ata_bio_kill_xfer: unknown reason %d\n",
 		    reason);
 		panic("wdc_ata_bio_kill_xfer");
 	}
+	wdc_free_xfer(chp, xfer);
+	scsipi_done(sc_xfer);
 }
 
 static int
@@ -211,7 +209,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	wdc_c.r_command = ATAPI_SOFT_RESET;
 	wdc_c.r_st_bmask = 0;
 	wdc_c.r_st_pmask = 0;
-	wdc_c.flags = AT_POLL;
+	wdc_c.flags = AT_WAIT | AT_POLL;
 	wdc_c.timeout = WDC_RESET_WAIT;
 	if (wdc_exec_command(&chp->ch_drive[drive], &wdc_c) != WDC_COMPLETE) {
 		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
@@ -535,15 +533,15 @@ ready:
 	    ATAPI_CFG_IRQ_DRQ || (sc_xfer->xs_control & XS_CTL_POLL)) {
 		/* Wait for at last 400ns for status bit to be valid */
 		DELAY(1);
-		if (chp->ch_flags & WDCF_DMA_WAIT) {
-			wdc_dmawait(chp, xfer, sc_xfer->timeout);
-			chp->ch_flags &= ~WDCF_DMA_WAIT;
-		}
 		wdc_atapi_intr(chp, xfer, 0);
 	} else {
 		chp->ch_flags |= WDCF_IRQ_WAIT;
 	}
 	if (sc_xfer->xs_control & XS_CTL_POLL) {
+		if (chp->ch_flags & WDCF_DMA_WAIT) {
+			wdc_dmawait(chp, xfer, sc_xfer->timeout);
+			chp->ch_flags &= ~WDCF_DMA_WAIT;
+		}
 		while ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
 			/* Wait for at last 400ns for status bit to be valid */
 			DELAY(1);
@@ -979,7 +977,8 @@ wdc_atapi_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive,
 	    (u_int)xfer->c_flags), DEBUG_XFERS);
 	callout_stop(&chp->ch_callout);
-	/* remove this command from xfer queue */
+	/* mark controller inactive and free the command */
+	chp->ch_queue->active_xfer = NULL;
 	wdc_free_xfer(chp, xfer);
 
 	WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);

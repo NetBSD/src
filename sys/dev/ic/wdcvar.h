@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.60 2004/08/02 22:20:54 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.61 2004/08/04 18:24:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@ struct wdc_channel {
 
 	/* Our state */
 	volatile int ch_flags;
-#define WDCF_ACTIVE   0x01	/* channel is active */
 #define WDCF_SHUTDOWN 0x02	/* channel is shutting down */
 #define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
 #define WDCF_DMA_WAIT 0x20	/* controller is waiting for DMA */
