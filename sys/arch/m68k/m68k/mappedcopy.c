@@ -1,7 +1,7 @@
-/*	$NetBSD: mappedcopy.c,v 1.18 2003/08/07 16:28:17 agc Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.19 2003/12/04 13:05:16 keihan Exp $	*/
 
 /*
- * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
+ * XXX This doesn't work yet.  Soon.  --thorpej@NetBSD.org
  */
 
 /*
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.18 2003/08/07 16:28:17 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.19 2003/12/04 13:05:16 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.1 2003/11/20 08:31:13 sekiya Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.2 2003/12/04 13:05:17 keihan Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.1 2003/11/20 08:31:13 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.2 2003/12/04 13:05:17 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
