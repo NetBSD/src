@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.6 1996/05/07 02:40:51 thorpej Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.7 1996/06/14 22:22:02 cgd Exp $	*/
 
 /*
  * ppp_tty.c - Point-to-Point Protocol (PPP) driver for asynchronous
@@ -349,10 +349,7 @@ pppwrite(tp, uio, flag)
 	return (EMSGSIZE);
     for (mp = &m0; uio->uio_resid; mp = &m->m_next) {
 	MGET(m, M_WAIT, MT_DATA);
-	if ((*mp = m) == NULL) {
-	    m_freem(m0);
-	    return (ENOBUFS);
-	}
+	*mp = m;
 	m->m_len = 0;
 	if (uio->uio_resid >= MCLBYTES / 2)
 	    MCLGET(m, M_DONTWAIT);

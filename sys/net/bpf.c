@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.28 1996/05/22 13:41:54 mycroft Exp $	*/
+/*	$NetBSD: bpf.c,v 1.29 1996/06/14 22:21:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -200,8 +200,6 @@ bpf_movein(uio, linktype, mp, sockp)
 		return (EIO);
 
 	MGETHDR(m, M_WAIT, MT_DATA);
-	if (m == 0)
-		return (ENOBUFS);
 	m->m_pkthdr.rcvif = 0;
 	m->m_pkthdr.len = len - hlen;
 
