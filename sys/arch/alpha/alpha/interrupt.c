@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.23 1998/02/24 07:38:01 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.24 1998/07/08 00:42:14 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.23 1998/02/24 07:38:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.24 1998/07/08 00:42:14 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,6 @@ struct evcnt clock_intr_evcnt;	/* event counter for clock intrs. */
 #else
 #include <machine/intrcnt.h>
 #endif
-
-volatile int mc_expected, mc_received;
 
 void
 interrupt(a0, a1, a2, framep)
@@ -139,6 +137,7 @@ machine_check(mces, framep, vector, param)
 	struct trapframe *framep;
 	unsigned long vector, param;
 {
+	struct mchkinfo *mcp = &mchkinfo[alpha_pal_whami()];
 	const char *type;
 
 	/* Make sure it's an error we know about. */
@@ -150,22 +149,23 @@ machine_check(mces, framep, vector, param)
 	/* Machine checks. */
 	if (mces & ALPHA_MCES_MIP) {
 		/* If we weren't expecting it, then we punt. */
-		if (!mc_expected) {
+		if (!mcp->mc_expected) {
 			type = "unexpected machine check";
 			goto fatal;
 		}
-
-		mc_expected = 0;
-		mc_received = 1;
+		mcp->mc_expected = 0;
+		mcp->mc_received = 1;
 	}
 
 	/* System correctable errors. */
-	if (mces & ALPHA_MCES_SCE)
+	if (mces & ALPHA_MCES_SCE) {
 		printf("Warning: received system correctable error.\n");
+	}
 
 	/* Processor correctable errors. */
-	if (mces & ALPHA_MCES_PCE)
+	if (mces & ALPHA_MCES_PCE) {
 		printf("Warning: received processor correctable error.\n"); 
+	}
 
 	/* Clear pending machine checks and correctable errors */
 	alpha_pal_wrmces(mces);
@@ -205,14 +205,15 @@ badaddr_read(addr, size, rptr)
 	size_t size;
 	void *rptr;
 {
+	struct mchkinfo *mcp = &mchkinfo[alpha_pal_whami()];
 	long rcpt;
 
 	/* Get rid of any stale machine checks that have been waiting.  */
 	alpha_pal_draina();
 
 	/* Tell the trap code to expect a machine check. */
-	mc_received = 0;
-	mc_expected = 1;
+	mcp->mc_received = 0;
+	mcp->mc_expected = 1;
 
 	/* Read from the test address, and make sure the read happens. */
 	alpha_mb();
@@ -242,9 +243,12 @@ badaddr_read(addr, size, rptr)
 	alpha_pal_draina();
 
 	/* disallow further machine checks */
-	mc_expected = 0;
+	mcp->mc_expected = 0;
 
-	if (rptr) {
+	/*
+	 * And copy back read results (if no fault occurred).
+	 */
+	if (rptr && mcp->mc_received == 0) {
 		switch (size) {
 		case sizeof (u_int8_t):
 			*(volatile u_int8_t *)rptr = rcpt;
@@ -264,5 +268,5 @@ badaddr_read(addr, size, rptr)
 		}
 	}
 	/* Return non-zero (i.e. true) if it's a bad address. */
-	return (mc_received);
+	return (mcp->mc_received);
 }
