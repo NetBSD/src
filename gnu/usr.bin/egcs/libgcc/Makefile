@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1998/05/06 10:55:11 mycroft Exp $
+#	$NetBSD: Makefile,v 1.12 1998/05/06 14:37:42 mycroft Exp $
 
 .PATH: ${.CURDIR}/../../../dist/gcc/cp ${.CURDIR}/../../../dist/gcc/cp/inc
 LIB=	gcc
@@ -42,7 +42,11 @@ INCSDIR=	/usr/include/g++
 .if (${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "i386")
 LIB2OBJS+=_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
 .elif (${MACHINE_ARCH} == "powerpc")
-LIB2OBJS+=_divdi3.o _moddi3.o _udivdi3.o _umoddi3.o
+LIB2OBJS+=_muldi3.o _divdi3.o _moddi3.o _udivdi3.o _umoddi3.o _negdi2.o \
+	  _lshrdi3.o _lshldi3.o _ashldi3.o _ashrdi3.o _ffsdi2.o \
+	  _udiv_w_sdiv.o _udivmoddi4.o _cmpdi2.o _ucmpdi2.o _floatdidf.o \
+	  _floatdisf.o _fixunsdfsi.o _fixunssfsi.o _fixunsdfdi.o _fixdfdi.o \
+	  _fixunssfdi.o _fixsfdi.o
 .endif
 
 OBJS= ${LIB1OBJS} ${LIB2OBJS}
