@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/02/14 08:56:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/01/25 04:11:30 uwe Exp $
 #	@(#)Makefile	8.2 (Berkeley) 5/23/94
 
 .include <bsd.own.mk>
@@ -32,7 +32,7 @@ SUBDIR+= 19.curses
 #	16.lex 17.m4 18.gprof 19.curses 20.ipctut 21.ipc
 
 Title.ps: ${FILES}
-	groff Title > ${.TARGET}
+	groff -ms Title > ${.TARGET}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
