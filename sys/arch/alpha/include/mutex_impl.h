@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.2 2002/03/11 06:30:18 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.3 2002/03/14 17:15:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@ do {									\
 		"	br	3f		\n"			\
 		"2:	br	1b		\n"			\
 		"3:				\n"			\
+		"	# END MUTEX_SET_WAITERS"			\
 		: "=&r" (_tmp_), "=m" ((mtx)->m_owner)			\
 		: "i" (MUTEX_WAITERS), "m" ((mtx)->m_owner)		\
 		: "memory");						\
