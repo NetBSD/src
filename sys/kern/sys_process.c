@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.56 1997/04/28 02:29:52 mycroft Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.57 1997/04/28 04:49:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -171,13 +171,20 @@ sys_ptrace(p, v, retval)
 			return (EPERM);
 
 		/*
-		 *	(2) it's not being traced by _you_, or
+		 *	(2) it's being traced by procfs (which has
+		 *	    different signal delivery semantics),
+		 */
+		if (ISSET(t->p_flag, P_FSTRACE))
+			return (EBUSY);
+
+		/*
+		 *	(3) it's not being traced by _you_, or
 		 */
 		if (t->p_pptr != p)
 			return (EBUSY);
 
 		/*
-		 *	(3) it's not currently stopped.
+		 *	(4) it's not currently stopped.
 		 */
 		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
 			return (EBUSY);
