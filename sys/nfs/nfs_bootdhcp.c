@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.1 1997/08/29 16:10:31 gwr Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.2 1997/09/30 20:51:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -173,31 +173,50 @@ static const u_int8_t vm_rfc1048[4] = { 99, 130, 83, 99 };
 #define TAG_ROOT_PATH		((unsigned char)  17)
 /* End of stuff from bootp.h */
 
+#ifdef NFS_BOOT_DHCP
+#define TAG_REQ_ADDR		((unsigned char)  50)
+#define TAG_LEASETIME		((unsigned char)  51)
+#define TAG_OVERLOAD		((unsigned char)  52)
+#define TAG_DHCP_MSGTYPE	((unsigned char)  53)
+#define TAG_SERVERID		((unsigned char)  54)
+#define TAG_PARAM_REQ		((unsigned char)  55)
+#define TAG_MSG			((unsigned char)  56)
+#define TAG_MAXSIZE		((unsigned char)  57)
+#define TAG_T1			((unsigned char)  58)
+#define TAG_T2			((unsigned char)  59)
+#define TAG_CLASSID		((unsigned char)  60)
+#define TAG_CLIENTID		((unsigned char)  61)
+#endif
 
+#ifdef NFS_BOOT_DHCP
+#define DHCPDISCOVER 1
+#define DHCPOFFER 2
+#define DHCPREQUEST 3
+#define DHCPDECLINE 4
+#define DHCPACK 5
+#define DHCPNAK 6
+#define DHCPRELEASE 7
+#endif
+
+#ifdef NFS_BOOT_DHCP
+#define BOOTP_SIZE_MAX	(sizeof(struct bootp)+312-64)
+#else
 /*
  * The "extended" size is somewhat arbitrary, but is
  * constrained by the maximum message size specified
  * by RFC1533 (567 total).  This value increases the
  * space for options from 64 bytes to 256 bytes.
  */
-#define BOOTP_SIZE_MAX	(sizeof(struct bootp)+192)
+#define BOOTP_SIZE_MAX	(sizeof(struct bootp)+256-64)
+#endif
 #define BOOTP_SIZE_MIN	(sizeof(struct bootp))
-
-/*
- * What is the longest we will wait before re-sending a request?
- * Note this is also the frequency of "BOOTP timeout" messages.
- * The re-send loop counts up linearly to this maximum, so the
- * first complaint will happen after (1+2+3+4+5)=15 seconds.
- */
-#define	MAX_RESEND_DELAY 5	/* seconds */
-#define TOTAL_TIMEOUT   30	/* seconds */
 
 /* Convenience macro */
 #define INTOHL(ina) ((u_int32_t)ntohl((ina).s_addr))
 
 static int bootpc_call __P((struct socket *, struct ifnet *,
 			struct nfs_diskless *, struct proc *));
-
+static void bootp_extract __P((struct bootp *, int, struct nfs_diskless *));
 
 /* #define DEBUG	XXX */
 
@@ -258,6 +277,10 @@ nfs_bootdhcp(ifp, nd, procp)
 	/* This function call does the real send/recv work. */
 	error = bootpc_call(so, ifp, nd, procp);
 	/* Get rid of the temporary (zero) IP address. */
+	/*
+	 * XXX SIOCDIFADDR takes a "struct ifreq", which is
+	 * an exact subset of "struct ifaliasreq".
+	 */
 	(void) ifioctl(so, SIOCDIFADDR, (caddr_t)&iareq, procp);
 	/* NOW we can test the error from bootpc_call. */
 	if (error)
@@ -292,6 +315,136 @@ out:
 	return (error);
 }
 
+struct bootpcontext {
+	int xid;
+	u_char *haddr;
+	u_char halen;
+	struct bootp *replybuf;
+	int replylen;
+#ifdef NFS_BOOT_DHCP
+	char expected_dhcpmsgtype, dhcp_ok;
+	struct in_addr dhcp_serverip;
+#endif
+};
+
+static int bootpset __P((struct mbuf*, void*, int));
+static int bootpcheck __P((struct mbuf*, void*));
+
+static int bootpset(m, context, waited)
+struct mbuf *m;
+void *context;
+int waited;
+{
+	struct bootp *bootp;
+
+	/* we know it's contigous (in 1 mbuf cluster) */
+	bootp = mtod(m, struct bootp*);
+
+	bootp->bp_secs = htons(waited);
+
+	return(0);
+}
+
+static int bootpcheck(m, context)
+struct mbuf *m;
+void *context;
+{
+	struct bootp *bootp;
+	struct bootpcontext *bpc = context;
+	u_int tag, len;
+	u_char *p, *limit;
+
+	/*
+	 * Is this a valid reply?
+	 */
+	if (m->m_pkthdr.len < BOOTP_SIZE_MIN) {
+		DPRINT("short packet");
+		return(-1);
+	}
+	if (m->m_pkthdr.len > BOOTP_SIZE_MAX) {
+		DPRINT("long packet");
+		return(-1);
+	}
+
+	/*
+	 * don't make first checks more expensive than necessary
+	 */
+#define ofs(what, elem) ((int)&(((what *)0)->elem))
+	if (m->m_len < ofs(struct bootp, bp_secs)) {
+		m = m_pullup(m, ofs(struct bootp, bp_secs));
+		if (m == NULL)
+			return(-1);
+	}
+#undef ofs
+	bootp = mtod(m, struct bootp*);
+
+	if (bootp->bp_op != BOOTREPLY) {
+		DPRINT("not reply");
+		return(-1);
+	}
+	if (bootp->bp_hlen != bpc->halen) {
+		DPRINT("bad hwa_len");
+		return(-1);
+	}
+	if (bcmp(bootp->bp_chaddr, bpc->haddr, bpc->halen)) {
+		DPRINT("wrong hwaddr");
+		return(-1);
+	}
+	if (bootp->bp_xid != bpc->xid) {
+		DPRINT("wrong xid");
+		return(-1);
+	}
+
+	/*
+	 * OK, it's worth to look deeper.
+	 * We copy the mbuf into a flat buffer here because
+	 * m_pullup() is a bit limited for this purpose
+	 * (doesn't allocate a cluster if necessary).
+	 */
+	bpc->replylen = m->m_pkthdr.len;
+	m_copydata(m, 0, bpc->replylen, (caddr_t)bpc->replybuf);
+	bootp = bpc->replybuf;
+
+	/*
+	 * Check the vendor data.
+	 */
+	if (bcmp(bootp->bp_vend, vm_rfc1048, 4)) {
+		printf("nfs_boot: reply missing options\n");
+		return(-1);
+	}
+	p = &bootp->bp_vend[4];
+	limit = ((char*)bootp) + bpc->replylen;
+	while (p < limit) {
+		tag = *p++;
+		if (tag == TAG_END)
+			break;
+		if (tag == TAG_PAD)
+			continue;
+		len = *p++;
+		if ((p + len) > limit) {
+			printf("nfs_boot: option %d too long\n", tag);
+			return(-1);
+		}
+		switch (tag) {
+#ifdef NFS_BOOT_DHCP
+		    case TAG_DHCP_MSGTYPE:
+			if (*p != bpc->expected_dhcpmsgtype)
+				return(-1);
+			bpc->dhcp_ok = 1;
+			break;
+		    case TAG_SERVERID:
+			bcopy(p, &bpc->dhcp_serverip.s_addr,
+			      sizeof(bpc->dhcp_serverip.s_addr));
+			break;
+#endif
+		    default:
+			break;
+		}
+		p += len;
+	}
+	return(0);
+}
+
 static int
 bootpc_call(so, ifp, nd, procp)
 	struct socket *so;
@@ -300,31 +453,19 @@ bootpc_call(so, ifp, nd, procp)
 	struct proc *procp;
 {
 	static u_int32_t xid = ~0xFF;
-	struct uio uio;
-	struct iovec iov;
-	struct in_addr netmask;
-	struct in_addr gateway;
-	char *myname;	/* my hostname */
-	char *mydomain;	/* my domainname */
-	char *rootpath;
-	int mynamelen;
-	int mydomainlen;
-	int rootpathlen;
-	struct bootp *bootp;	/* request and reply */
+	struct bootp *bootp;	/* request */
 	struct mbuf *m, *nam;
 	struct sockaddr_in *sin;
-	int error, rcvflg, timo, secs, waited;
-	int sendlen, recvlen;
-	u_int tag, len;
-	u_char *p, *limit;
+	int error;
 	u_char *haddr;
 	u_char hafmt, halen;
+	struct bootpcontext bpc;
 
 	/*
 	 * Initialize to NULL anything that will hold an allocation,
 	 * and free each at the end if not null.
 	 */
-	bootp = NULL;
+	bpc.replybuf = NULL;
 	m = nam = NULL;
 
 	/* Record our H/W (Ethernet) address. */
@@ -354,30 +495,13 @@ bootpc_call(so, ifp, nd, procp)
 	}
 
 	/* Enable broadcast. */
-	{	int32_t *opt;
-		m = m_get(M_WAIT, MT_SOOPTS);
-		opt = mtod(m, int32_t *);
-		m->m_len = sizeof(*opt);
-		*opt = 1;
-		error = sosetopt(so, SOL_SOCKET, SO_BROADCAST, m);
-		m = NULL;	/* was consumed */
-	}
-	if (error) {
+	if ((error = nfs_boot_enbroadcast(so))) {
 		DPRINT("SO_BROADCAST");
 		goto out;
 	}
 
 	/* Set the receive timeout for the socket. */
-	{	struct timeval *tv;
-		m = m_get(M_WAIT, MT_SOOPTS);
-		tv = mtod(m, struct timeval *);
-		m->m_len = sizeof(*tv);
-		tv->tv_sec = 1;
-		tv->tv_usec = 0;
-		error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m);
-		m = NULL;	/* was consumed */
-	}
-	if (error) {
+	if ((error = nfs_boot_setrecvtimo(so))) {
 		DPRINT("SO_RCVTIMEO");
 		goto out;
 	}
@@ -385,15 +509,7 @@ bootpc_call(so, ifp, nd, procp)
 	/*
 	 * Bind the local endpoint to a bootp client port.
 	 */
-	m = m_getclr(M_WAIT, MT_SONAME);
-	sin = mtod(m, struct sockaddr_in *);
-	sin->sin_len = m->m_len = sizeof(*sin);
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = INADDR_ANY;
-	sin->sin_port = htons(IPPORT_BOOTPC);
-	error = sobind(so, m);
-	m_freem(m);
-	if (error) {
+	if ((error = nfs_boot_sobind_ipport(so, IPPORT_BOOTPC))) {
 		DPRINT("bind failed\n");
 		goto out;
 	}
@@ -409,44 +525,16 @@ bootpc_call(so, ifp, nd, procp)
 	sin->sin_port = htons(IPPORT_BOOTPS);
 
 	/*
-	 * Allocate buffer used for request/reply
+	 * Allocate buffer used for request
 	 */
-	bootp = malloc(BOOTP_SIZE_MAX, M_DEVBUF, M_WAITOK);
-	if (bootp == NULL)
-		panic("nfs_boot: malloc buf");
+	m = m_gethdr(M_WAIT, MT_DATA);
+	MCLGET(m, M_WAIT);
+	bootp = mtod(m, struct bootp*);
+	m->m_pkthdr.len = m->m_len = BOOTP_SIZE_MAX;
+	m->m_pkthdr.rcvif = NULL;
 
 	/*
-	 * Send it, repeatedly, until a reply is received,
-	 * but delay each re-send by an increasing amount.
-	 * If the delay hits the maximum, start complaining.
-	 * Try extended-length request first, and if that
-	 * results in total timeout, start over with the
-	 * standard-length BOOTP request.
-	 */
-	sendlen = BOOTP_SIZE_MAX;
-	waited = timo = 0;
-send_again:
-	waited += timo;
-	if (waited >= TOTAL_TIMEOUT) {
-		if (sendlen > BOOTP_SIZE_MIN) {
-			sendlen = BOOTP_SIZE_MIN;
-			waited = timo = 0;
-			printf("nfs_boot: trying short requests\n");
-			goto send_again;
-		}
-		error = ETIMEDOUT;
-		goto out;
-	}
-	/* Determine new timeout. */
-	if (timo < MAX_RESEND_DELAY)
-		timo++;
-	else
-		printf("nfs_boot: BOOTP timeout...\n");
-
-	/*
-	 * Build the BOOTP reqest message.  Do it every time
-	 * we send a new request because we reuse the buffer.
-	 * Also, use a new transaction ID for each request.
+	 * Build the BOOTP reqest message.
 	 * Note: xid is host order! (opaque to server)
 	 */
 	bzero((caddr_t)bootp, BOOTP_SIZE_MAX);
@@ -454,160 +542,159 @@ send_again:
 	bootp->bp_htype = hafmt;
 	bootp->bp_hlen  = halen;	/* Hardware address length */
 	bootp->bp_xid = ++xid;
-	bootp->bp_secs = htons(waited);
 	bcopy(haddr, bootp->bp_chaddr, halen);
 	/* Fill-in the vendor data. */
 	bcopy(vm_rfc1048, bootp->bp_vend, 4);
+#ifdef NFS_BOOT_DHCP
+	bootp->bp_vend[4] = TAG_DHCP_MSGTYPE;
+	bootp->bp_vend[5] = 1;
+	bootp->bp_vend[6] = DHCPDISCOVER;
+	bootp->bp_vend[7] = TAG_END;
+#else
 	bootp->bp_vend[4] = TAG_END;
+#endif
 
-	/*
-	 * The BOOTP request is complete.  Send it.
-	 */
-	iov.iov_base = (caddr_t) bootp;
-	iov.iov_len = sendlen;
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_segflg = UIO_SYSSPACE;
-	uio.uio_rw = UIO_WRITE;
-	uio.uio_offset = 0;
-	uio.uio_resid = sendlen;
-	uio.uio_procp = procp;
-	error = sosend(so, nam, &uio, NULL, NULL, 0);
-	if (error) {
-		printf("nfs_boot: sosend: %d\n", error);
+	bpc.xid = xid;
+	bpc.haddr = haddr;
+	bpc.halen = halen;
+	bpc.replybuf = malloc(BOOTP_SIZE_MAX, M_DEVBUF, M_WAITOK);
+	if (bpc.replybuf == NULL)
+		panic("nfs_boot: malloc reply buf");
+#ifdef NFS_BOOT_DHCP
+	bpc.expected_dhcpmsgtype = DHCPOFFER;
+	bpc.dhcp_ok = 0;
+#endif
+
+	error = nfs_boot_sendrecv(so, nam, bootpset, m,
+				  bootpcheck, 0, 0, &bpc);
+	if (error)
 		goto out;
-	}
 
-	/*
-	 * Wait for up to timo seconds for a reply.
-	 * The socket receive timeout was set to 1 second.
-	 */
-	secs = timo;
-	for (;;) {
-		iov.iov_base = (caddr_t) bootp;
-		iov.iov_len = BOOTP_SIZE_MAX;
-		uio.uio_iov = &iov;
-		uio.uio_iovcnt = 1;
-		uio.uio_segflg = UIO_SYSSPACE;
-		uio.uio_rw = UIO_READ;
-		uio.uio_offset = 0;
-		uio.uio_resid = BOOTP_SIZE_MAX;
-		uio.uio_procp = procp;
+#ifdef NFS_BOOT_DHCP
+	if (bpc.dhcp_ok) {
+		u_int32_t leasetime;
+		bootp->bp_vend[6] = DHCPREQUEST;
+		bootp->bp_vend[7] = TAG_REQ_ADDR;
+		bootp->bp_vend[8] = 4;
+		bcopy(&bpc.replybuf->bp_yiaddr, &bootp->bp_vend[9], 4);
+		bootp->bp_vend[13] = TAG_SERVERID;
+		bootp->bp_vend[14] = 4;
+		bcopy(&bpc.dhcp_serverip.s_addr, &bootp->bp_vend[15], 4);
+		bootp->bp_vend[19] = TAG_LEASETIME;
+		bootp->bp_vend[20] = 4;
+		leasetime = htonl(300);
+		bcopy(&leasetime, &bootp->bp_vend[21], 4);
+		bootp->bp_vend[25] = TAG_END;
 
-		rcvflg = 0;
-		error = soreceive(so, NULL, &uio, NULL, NULL, &rcvflg);
-		if (error == EWOULDBLOCK) {
-			if (--secs <= 0)
-				goto send_again;
-			continue;
-		}
+		bpc.expected_dhcpmsgtype = DHCPACK;
+
+		error = nfs_boot_sendrecv(so, nam, bootpset, m,
+					  bootpcheck, 0, 0, &bpc);
 		if (error)
 			goto out;
-		recvlen = BOOTP_SIZE_MAX - uio.uio_resid;
-
-		/*
-		 * Is this a valid reply?
-		 */
-		if (recvlen < BOOTP_SIZE_MIN) {
-			DPRINT("short packet");
-			continue;
-		}
-		if (bootp->bp_op != BOOTREPLY) {
-			DPRINT("not reply");
-			continue;
-		}
-		if (bootp->bp_hlen != halen) {
-			DPRINT("bad hwa_len");
-			continue;
-		}
-		if (bcmp(bootp->bp_chaddr, haddr, halen)) {
-			DPRINT("wrong hwaddr");
-			continue;
-		}
-		if (bootp->bp_xid != xid) {
-			DPRINT("wrong xid");
-			continue;
-		}
-
-		/*
-		 * OK, we have a valid reply.
-		 * Decode the vendor data.
-		 */
-		if (bcmp(bootp->bp_vend, vm_rfc1048, 4)) {
-			printf("nfs_boot: reply missing options\n");
-			continue;
-		}
-		/* Default these to "unspecified". */
-		netmask.s_addr = 0;
-		gateway.s_addr = 0;
-		mydomain    = myname    = rootpath = NULL;
-		mydomainlen = mynamelen = rootpathlen = 0;
-		p = &bootp->bp_vend[4];
-		limit = ((char*)bootp) + recvlen;
-		while (p < limit) {
-			tag = *p++;
-			if (tag == TAG_END)
-				break;
-			if (tag == TAG_PAD)
-				continue;
-			len = *p++;
-			if (len == 0)
-				continue;
-			if ((p + len) > limit) {
-				printf("nfs_boot: option %d too long\n", tag);
-				break;
-			}
-			switch (tag) {
-			case TAG_SUBNET_MASK:
-				bcopy(p, &netmask, 4);
-				break;
-			case TAG_GATEWAY:
-				/* Routers */
-				bcopy(p, &gateway, 4);
-				break;
-			case TAG_HOST_NAME:
-				if (len >= sizeof(hostname)) {
-					printf("nfs_boot: host name >=%d bytes",
-					       sizeof(hostname));
-					break;
-				}
-				myname = p;
-				mynamelen = len;
-				break;
-			case TAG_DOMAIN_NAME:
-				if (len >= sizeof(domainname)) {
-					printf("nfs_boot: domain name >=%d bytes",
-					       sizeof(domainname));
-					break;
-				}
-				mydomain = p;
-				mydomainlen = len;
-				break;
-			case TAG_ROOT_PATH:
-				/* Leave some room for the server name. */
-				if (len >= (MNAMELEN-10)) {
-					printf("nfs_boot: rootpath >=%d bytes",
-					       (MNAMELEN-10));
-					break;
-				}
-				rootpath = p;
-				rootpathlen = len;
-				break;
-			default:
-				break;
-			}
-			p += len;
-		}
-
-		if (rootpath == NULL) {
-			printf("nfs_boot: No root path offered\n");
-			continue;
-		}
-
-		/* OK, the reply has everything we need. */
-		break;
 	}
-	rootpath[rootpathlen] = '\0';
+#endif
+
+	/*
+	 * bootpcheck() has copied the receive mbuf into
+	 * the buffer at bpc.replybuf.
+	 */
+	bootp_extract(bpc.replybuf, bpc.replylen, nd);
+
+out:
+	if (bpc.replybuf)
+		free(bpc.replybuf, M_DEVBUF);
+	if (m)
+		m_freem(m);
+	if (nam)
+		m_freem(nam);
+	return (error);
+}
+
+static void bootp_extract(bootp, replylen, nd)
+	struct bootp *bootp;
+	int replylen;
+	struct nfs_diskless *nd;
+{
+	struct sockaddr_in *sin;
+	struct in_addr netmask;
+	struct in_addr gateway;
+	struct in_addr rootserver;
+	char *myname;	/* my hostname */
+	char *mydomain;	/* my domainname */
+	char *rootpath;
+	int mynamelen;
+	int mydomainlen;
+	int rootpathlen;
+	u_int tag, len;
+	u_char *p, *limit;
+
+	/* Default these to "unspecified". */
+	netmask.s_addr = 0;
+	gateway.s_addr = 0;
+	mydomain    = myname    = rootpath = NULL;
+	mydomainlen = mynamelen = rootpathlen = 0;
+	/* default root server to bootp next-server */
+	rootserver = bootp->bp_siaddr;
+
+	p = &bootp->bp_vend[4];
+	limit = ((char*)bootp) + replylen;
+	while (p < limit) {
+		tag = *p++;
+		if (tag == TAG_END)
+			break;
+		if (tag == TAG_PAD)
+			continue;
+		len = *p++;
+		if ((p + len) > limit) {
+			printf("nfs_boot: option %d too long\n", tag);
+			break;
+		}
+		switch (tag) {
+		    case TAG_SUBNET_MASK:
+			bcopy(p, &netmask, 4);
+			break;
+		    case TAG_GATEWAY:
+			/* Routers */
+			bcopy(p, &gateway, 4);
+			break;
+		    case TAG_HOST_NAME:
+			if (len >= sizeof(hostname)) {
+				printf("nfs_boot: host name >=%d bytes",
+				       sizeof(hostname));
+				break;
+			}
+			myname = p;
+			mynamelen = len;
+			break;
+		    case TAG_DOMAIN_NAME:
+			if (len >= sizeof(domainname)) {
+				printf("nfs_boot: domain name >=%d bytes",
+				       sizeof(domainname));
+				break;
+			}
+			mydomain = p;
+			mydomainlen = len;
+			break;
+		    case TAG_ROOT_PATH:
+			/* Leave some room for the server name. */
+			if (len >= (MNAMELEN-10)) {
+				printf("nfs_boot: rootpath >=%d bytes",
+				       (MNAMELEN-10));
+				break;
+			}
+			rootpath = p;
+			rootpathlen = len;
+			break;
+		    case TAG_SWAP_SERVER:
+			/* override NFS server address */
+			bcopy(p, &rootserver, 4);
+			break;
+		    default:
+			break;
+		}
+		p += len;
+	}
 
 	/*
 	 * Store and print network config info.
@@ -646,26 +733,24 @@ send_again:
 		bzero((caddr_t)sin, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
-		sin->sin_addr = bootp->bp_siaddr;
+		sin->sin_addr = rootserver;
 		/* Server name. */
-		strncpy(ndm->ndm_host, bootp->bp_sname, BP_SNAME_LEN-1);
-		len = strlen(ndm->ndm_host);
-		if ((len + 1 + rootpathlen + 1) > sizeof(ndm->ndm_host)) {
+		if (!bcmp(&rootserver, &bootp->bp_siaddr,
+			  sizeof(struct in_addr))) {
+			/* standard root server, we have the name */
+			strncpy(ndm->ndm_host, bootp->bp_sname, BP_SNAME_LEN-1);
+		} else {
 			/* Show the server IP address numerically. */
 			sprintf(ndm->ndm_host, "0x%8x",
-			        INTOHL(bootp->bp_siaddr));
-			len = strlen(ndm->ndm_host);
+				INTOHL(rootserver));
 		}
-		ndm->ndm_host[len++] = ':';
-		strncpy(ndm->ndm_host + len,
-		    rootpath, rootpathlen + 1);
+		len = strlen(ndm->ndm_host);
+		if (rootpath &&
+		    len + 1 + rootpathlen + 1 <= sizeof(ndm->ndm_host)) {
+			ndm->ndm_host[len++] = ':';
+			strncpy(ndm->ndm_host + len,
+				rootpath, rootpathlen);
+			ndm->ndm_host[len + rootpathlen] = '\0';
+		} /* else: upper layer will handle error */
 	}
-	error = 0;
-
-out:
-	if (bootp)
-		free(bootp, M_DEVBUF);
-	if (nam)
-		m_freem(nam);
-	return (error);
 }
