@@ -47,6 +47,7 @@ Cocos (Keeling) Islands	CC	CCK	166
 Colombia	CO	COL	170
 Comoros	KM	COM	174
 Congo	CG	COG	178
+Congo, The Democratic Republic of the	CD	COD	180
 Cook Islands	CK	COK	184
 Costa Rica	CR	CRI	188
 Cote d'Ivoire	CI	CIV	384
@@ -92,6 +93,7 @@ Guinea-Bissau	GW	GNB	624
 Guyana	GY	GUY	328
 Haiti	HT	HTI	332
 Heard and Mc Donald Islands	HM	HMD	334
+Holy See (Vatican City State)	VA	VAT	336
 Honduras	HN	HND	340
 Hong Kong	HK	HKG	344
 Hungary	HU	HUN	348
@@ -226,7 +228,6 @@ United States Minor Outlying Islands	UM	UMI	581
 Uruguay	UY	URY	858
 Uzbekistan	UZ	UZB	860
 Vanuatu	VU	VUT	548
-Vatican City State (Holy See)	VA	VAT	336
 Venezuela	VE	VEN	862
 Viet Nam	VN	VNM	704
 Virgin Islands (British)	VG	VGB	092
@@ -235,6 +236,5 @@ Wallis and Futuna Islands	WF	WLF	876
 Western Sahara	EH	ESH	732
 Yemen	YE	YEM	887
 Yugoslavia	YU	YUG	891
-Zaire	ZR	ZAR	180
 Zambia	ZM	ZMB	894
 Zimbabwe	ZW	ZWE	716
