@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.4 2004/10/06 15:06:29 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.5 2004/11/25 09:49:12 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.4 2004/10/06 15:06:29 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.5 2004/11/25 09:49:12 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -2021,10 +2021,19 @@ u_32_t *passp;
 			ATOMIC_INCL(frstats[out].fr_ads);
 		} else {
 			ATOMIC_INCL(frstats[out].fr_bads);
+#ifdef notdef
+			/*
+			 * This blocks ICMP ECHOREPLY. fr_addstate returning
+			 * NULL is not necessary a bad thing because there
+			 * is no state to be added on some packets, eg.
+			 * icmp reply packets. XXX: but for others this
+			 * is wrong.
+			 */
 			if (FR_ISPASS(pass)) {
 				pass &= ~FR_CMDMASK;
 				pass |= FR_BLOCK;
 			}
+#endif
 		}
 	}
 
