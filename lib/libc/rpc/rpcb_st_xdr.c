@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_st_xdr.c,v 1.1 2000/06/02 23:11:15 fvdl Exp $	*/
+/*	$NetBSD: rpcb_st_xdr.c,v 1.2 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -71,7 +71,7 @@ xdr_rpcbs_addrlist(xdrs, objp)
 	    if (!xdr_int(xdrs, &objp->failure)) {
 		return (FALSE);
 	    }
-	    if (!xdr_string(xdrs, &objp->netid, ~0)) {
+	    if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
 		return (FALSE);
 	    }
 
@@ -91,7 +91,7 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 	XDR *xdrs;
 	rpcbs_rmtcalllist *objp;
 {
-	register int32_t *buf;
+	int32_t *buf;
 
 	if (xdrs->x_op == XDR_ENCODE) {
 	buf = XDR_INLINE(xdrs, 6 * BYTES_PER_XDR_UNIT);
@@ -122,7 +122,7 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 		IXDR_PUT_LONG(buf, objp->failure);
 		IXDR_PUT_LONG(buf, objp->indirect);
 	}
-	if (!xdr_string(xdrs, &objp->netid, ~0)) {
+	if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
 		return (FALSE);
 	}
 	if (!xdr_pointer(xdrs, (char **)&objp->next,
@@ -153,14 +153,14 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 			return (FALSE);
 		}
 	} else {
-		objp->prog = IXDR_GET_U_LONG(buf);
-		objp->vers = IXDR_GET_U_LONG(buf);
-		objp->proc = IXDR_GET_U_LONG(buf);
-		objp->success = IXDR_GET_LONG(buf);
-		objp->failure = IXDR_GET_LONG(buf);
-		objp->indirect = IXDR_GET_LONG(buf);
+		objp->prog = (rpcprog_t)IXDR_GET_U_LONG(buf);
+		objp->vers = (rpcvers_t)IXDR_GET_U_LONG(buf);
+		objp->proc = (rpcproc_t)IXDR_GET_U_LONG(buf);
+		objp->success = (int)IXDR_GET_LONG(buf);
+		objp->failure = (int)IXDR_GET_LONG(buf);
+		objp->indirect = (int)IXDR_GET_LONG(buf);
 	}
-	if (!xdr_string(xdrs, &objp->netid, ~0)) {
+	if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
 		return (FALSE);
 	}
 	if (!xdr_pointer(xdrs, (char **)&objp->next,
@@ -188,7 +188,7 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 	if (!xdr_int(xdrs, &objp->indirect)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->netid, ~0)) {
+	if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
 		return (FALSE);
 	}
 	if (!xdr_pointer(xdrs, (char **)&objp->next,
@@ -204,8 +204,8 @@ xdr_rpcbs_proc(xdrs, objp)
 	XDR *xdrs;
 	rpcbs_proc objp;
 {
-	if (!xdr_vector(xdrs, (char *)objp, RPCBSTAT_HIGHPROC, sizeof (int),
-			(xdrproc_t)xdr_int)) {
+	if (!xdr_vector(xdrs, (char *)(void *)objp, RPCBSTAT_HIGHPROC,
+	    sizeof (int), (xdrproc_t)xdr_int)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -265,8 +265,8 @@ xdr_rpcb_stat_byvers(xdrs, objp)
     XDR *xdrs;
     rpcb_stat_byvers objp;
 {
-	if (!xdr_vector(xdrs, (char *)objp, RPCBVERS_STAT, sizeof (rpcb_stat),
-	    (xdrproc_t)xdr_rpcb_stat)) {
+	if (!xdr_vector(xdrs, (char *)(void *)objp, RPCBVERS_STAT,
+	    sizeof (rpcb_stat), (xdrproc_t)xdr_rpcb_stat)) {
 		return (FALSE);
 	}
 	return (TRUE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.2 2000/06/11 16:26:53 assar Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.3 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -94,8 +94,10 @@ static struct netid_af na_cvt[] = {
 	{ "local", AF_LOCAL, 0 }
 };
 
+#if 0
 static char *strlocase __P((char *));
-static int getnettype __P((char *));
+#endif
+static int getnettype __P((const char *));
 
 /*
  * Cache the result of getrlimit(), so we don't have to do an
@@ -111,7 +113,7 @@ __rpc_dtbsize()
 		return (tbsize);
 	}
 	if (getrlimit(RLIMIT_NOFILE, &rl) == 0) {
-		return (tbsize = rl.rlim_max);
+		return (tbsize = (int)rl.rlim_max);
 	}
 	/*
 	 * Something wrong.  I'll try to save face by returning a
@@ -125,6 +127,7 @@ __rpc_dtbsize()
  * Find the appropriate buffer size
  */
 u_int
+/*ARGSUSED*/
 __rpc_get_t_size(af, proto, size)
 	int af, proto;
 	int size;	/* Size requested */
@@ -171,6 +174,7 @@ __rpc_get_a_size(af)
 	return ((u_int)RPC_MAXADDRSIZE);
 }
 
+#if 0
 static char *
 strlocase(p)
 	char *p;
@@ -182,6 +186,7 @@ strlocase(p)
 			*p = tolower(*p);
 	return (t);
 }
+#endif
 
 /*
  * Returns the type of the network as defined in <rpc/nettype.h>
@@ -189,7 +194,7 @@ strlocase(p)
  */
 static int
 getnettype(nettype)
-	char *nettype;
+	const char *nettype;
 {
 	int i;
 
@@ -197,9 +202,11 @@ getnettype(nettype)
 		return (_RPC_NETPATH);	/* Default */
 	}
 
+#if 0
 	nettype = strlocase(nettype);
+#endif
 	for (i = 0; _rpctypelist[i].name; i++)
-		if (strcmp(nettype, _rpctypelist[i].name) == 0) {
+		if (strcasecmp(nettype, _rpctypelist[i].name) == 0) {
 			return (_rpctypelist[i].type);
 		}
 	return (_rpctypelist[i].type);
@@ -211,7 +218,7 @@ getnettype(nettype)
  */
 struct netconfig *
 __rpc_getconfip(nettype)
-	char *nettype;
+	const char *nettype;
 {
 	char *netid;
 	char *netid_tcp = (char *) NULL;
@@ -255,7 +262,7 @@ __rpc_getconfip(nettype)
 			syslog (LOG_ERR, "rpc: failed to open " NETCONFIG);
 			return (NULL);
 		}
-		while ((nconf = getnetconfig(confighandle))) {
+		while ((nconf = getnetconfig(confighandle)) != NULL) {
 			if (strcmp(nconf->nc_protofmly, NC_INET) == 0) {
 				if (strcmp(nconf->nc_proto, NC_TCP) == 0) {
 					netid_tcp = strdup(nconf->nc_netid);
@@ -290,10 +297,10 @@ __rpc_getconfip(nettype)
 	else if (strcmp(nettype, "tcp") == 0)
 		netid = netid_tcp;
 	else {
-		return ((struct netconfig *)NULL);
+		return (NULL);
 	}
 	if ((netid == NULL) || (netid[0] == NULL)) {
-		return ((struct netconfig *)NULL);
+		return (NULL);
 	}
 	dummy = getnetconfigent(netid);
 	return (dummy);
@@ -305,7 +312,7 @@ __rpc_getconfip(nettype)
  */
 void *
 __rpc_setconf(nettype)
-	char *nettype;
+	const char *nettype;
 {
 	struct handle *handle;
 
@@ -357,12 +364,12 @@ __rpc_getconf(vhandle)
 	if (handle == NULL) {
 		return (NULL);
 	}
-	while (1) {
+	for (;;) {
 		if (handle->nflag)
 			nconf = getnetpath(handle->nhandle);
 		else
 			nconf = getnetconfig(handle->nhandle);
-		if (nconf == (struct netconfig *)NULL)
+		if (nconf == NULL)
 			break;
 		if ((nconf->nc_semantics != NC_TPI_CLTS) &&
 			(nconf->nc_semantics != NC_TPI_COTS) &&
@@ -451,9 +458,9 @@ rpc_nullproc(clnt)
 {
 	struct timeval TIMEOUT = {25, 0};
 
-	if (clnt_call(clnt, NULLPROC, (xdrproc_t) xdr_void, (char *)NULL,
-		(xdrproc_t) xdr_void, (char *)NULL, TIMEOUT) != RPC_SUCCESS) {
-		return ((void *) NULL);
+	if (clnt_call(clnt, NULLPROC, (xdrproc_t) xdr_void, NULL,
+		(xdrproc_t) xdr_void, NULL, TIMEOUT) != RPC_SUCCESS) {
+		return (NULL);
 	}
 	return ((void *) clnt);
 }
@@ -475,6 +482,7 @@ __rpcgettp(fd)
 	if (!__rpc_sockinfo2netid(&si, &netid))
 		return NULL;
 
+	/*LINTED const castaway*/
 	return getnetconfigent((char *)netid);
 }
 
@@ -486,7 +494,7 @@ __rpc_fd2sockinfo(int fd, struct __rpc_sockinfo *sip)
 	struct sockaddr_storage ss;
 
 	len = sizeof ss;
-	if (getsockname(fd, (struct sockaddr *)&ss, &len) < 0)
+	if (getsockname(fd, (struct sockaddr *)(void *)&ss, &len) < 0)
 		return 0;
 	sip->si_alen = len;
 
@@ -525,7 +533,7 @@ __rpc_nconf2sockinfo(const struct netconfig *nconf, struct __rpc_sockinfo *sip)
 			sip->si_af = na_cvt[i].af;
 			sip->si_proto = na_cvt[i].protocol;
 			sip->si_socktype =
-			    __rpc_seman2socktype(nconf->nc_semantics);
+			    __rpc_seman2socktype((int)nconf->nc_semantics);
 			if (sip->si_socktype == -1)
 				return 0;
 			sip->si_alen = __rpc_get_a_size(sip->si_af);
@@ -602,8 +610,8 @@ __rpc_taddr2uaddr_af(int af, const struct netbuf *nbuf)
 		    == NULL)
 			return NULL;
 		port = ntohs(sin->sin_port);
-		if (asprintf(&ret, "%s.%u.%u", namebuf, port >> 8, port & 0xff)
-		    < 0)
+		if (asprintf(&ret, "%s.%u.%u", namebuf, ((u_int32_t)port) >> 8,
+		    port & 0xff) < 0)
 			return NULL;
 		break;
 #ifdef INET6
@@ -613,8 +621,8 @@ __rpc_taddr2uaddr_af(int af, const struct netbuf *nbuf)
 		    == NULL)
 			return NULL;
 		port = ntohs(sin6->sin6_port);
-		if (asprintf(&ret, "%s.%u.%u", namebuf6, port >> 8, port & 0xff)
-		    < 0)
+		if (asprintf(&ret, "%s.%u.%u", namebuf6, ((u_int32_t)port) >> 8,
+		    port & 0xff) < 0)
 			return NULL;
 		break;
 #endif
@@ -709,6 +717,7 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 		memset(sun, 0, sizeof *sun);
 		sun->sun_family = AF_LOCAL;
 		strncpy(sun->sun_path, addrstr, sizeof(sun->sun_path) - 1);
+		break;
 	default:
 		break;
 	}
@@ -791,20 +800,22 @@ __rpc_sockisbound(int fd)
 	socklen_t slen;
 
 	slen = sizeof (struct sockaddr_storage);
-	if (getsockname(fd, (struct sockaddr *)&ss, &slen) < 0)
+	if (getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
 		return 0;
 
 	switch (ss.ss_family) {
 		case AF_INET:
-			return (((struct sockaddr_in *)&ss)->sin_port != 0);
+			return (((struct sockaddr_in *)
+			    (void *)&ss)->sin_port != 0);
 #ifdef INET6
 		case AF_INET6:
-			return (((struct sockaddr_in6 *)&ss)->sin6_port != 0);
+			return (((struct sockaddr_in6 *)
+			    (void *)&ss)->sin6_port != 0);
 #endif
 		case AF_LOCAL:
 			/* XXX check this */
-			return
-			    (((struct sockaddr_un *)&ss)->sun_path[0] != '\0');
+			return (((struct sockaddr_un *)
+			    (void *)&ss)->sun_path[0] != '\0');
 		default:
 			break;
 	}

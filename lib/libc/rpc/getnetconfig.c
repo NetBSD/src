@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.2 2000/07/03 12:08:13 christos Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.3 2000/07/06 03:10:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -46,6 +46,8 @@ static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #include <netconfig.h>
 #include <stdlib.h>
 #include <string.h>
+#include <rpc/rpc.h>
+#include "rpc_com.h"
 
 #ifdef __weak_alias
 __weak_alias(getnetconfig,_getnetconfig)
@@ -126,7 +128,6 @@ struct netconfig_vars {
 #define NC_INVALID	0
 
 
-extern char *_get_next_token __P((char *, char));	/* getnetpath.c */
 static int *__nc_error __P((void));
 static int parse_ncp __P((char *, struct netconfig *));
 static struct netconfig *dup_ncp __P((struct netconfig *));
@@ -463,7 +464,7 @@ getnetconfigent(netid)
 	    break;
 	}
 	if (strlen(netid) == (len = tmpp - stringp) &&	/* a match */
-		strncmp(stringp, netid, len) == 0) {
+		strncmp(stringp, netid, (size_t)len) == 0) {
 	    if ((ncp = (struct netconfig *)
 		    malloc(sizeof (struct netconfig))) == NULL) {
 		break;
@@ -590,9 +591,9 @@ struct netconfig *ncp;	/* where to put results */
 	ncp->nc_nlookups = 0;
 	while ((cp = tokenp) != NULL) {
 	    tokenp = _get_next_token(cp, ',');
-	    ncp->nc_lookups[ncp->nc_nlookups++] = cp;
+	    ncp->nc_lookups[(size_t)ncp->nc_nlookups++] = cp;
 	    ncp->nc_lookups = (char **)realloc(ncp->nc_lookups,
-		(ncp->nc_nlookups+1) *sizeof(char *));	/* for next loop */
+		(size_t)(ncp->nc_nlookups+1) *sizeof(char *));	/* for next loop */
 	}
     }
     return (0);
@@ -670,7 +671,7 @@ struct netconfig	*ncp;
     p->nc_proto = (char *)strcpy(tmp,ncp->nc_proto);
     tmp = strchr(tmp, NULL) + 1;
     p->nc_device = (char *)strcpy(tmp,ncp->nc_device);
-    p->nc_lookups = (char **)malloc((p->nc_nlookups+1) * sizeof(char *));
+    p->nc_lookups = (char **)malloc((size_t)(p->nc_nlookups+1) * sizeof(char *));
     if (p->nc_lookups == NULL) {
 	free(p->nc_netid);
 	return(NULL);

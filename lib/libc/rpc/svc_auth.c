@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.c,v 1.11 2000/06/02 23:11:16 fvdl Exp $	*/
+/*	$NetBSD: svc_auth.c,v 1.12 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -65,8 +65,8 @@ __weak_alias(svc_auth_reg,_svc_auth_reg)
  *
  *	enum auth_stat
  *	flavorx_auth(rqst, msg)
- *		register struct svc_req *rqst;
- *		register struct rpc_msg *msg;
+ *		struct svc_req *rqst;
+ *		struct rpc_msg *msg;
  *
  */
 
@@ -98,11 +98,11 @@ static struct authsvc *Auths = NULL;
  */
 enum auth_stat
 _authenticate(rqst, msg)
-	register struct svc_req *rqst;
+	struct svc_req *rqst;
 	struct rpc_msg *msg;
 {
-	register int cred_flavor;
-	register struct authsvc *asp;
+	int cred_flavor;
+	struct authsvc *asp;
 	enum auth_stat dummy;
 #ifdef __REENT
 	extern mutex_t authsvc_lock;
@@ -174,10 +174,10 @@ _svcauth_null(rqst, msg)
 
 int
 svc_auth_reg(cred_flavor, handler)
-	register int cred_flavor;
+	int cred_flavor;
 	enum auth_stat (*handler) __P((struct svc_req *, struct rpc_msg *));
 {
-	register struct authsvc *asp;
+	struct authsvc *asp;
 #ifdef __REENT
 	extern mutex_t authsvc_lock;
 #endif
@@ -203,7 +203,7 @@ svc_auth_reg(cred_flavor, handler)
 		}
 
 		/* this is a new one, so go ahead and register it */
-		asp = (struct authsvc *)mem_alloc(sizeof (*asp));
+		asp = mem_alloc(sizeof (*asp));
 		if (asp == NULL) {
 			mutex_unlock(&authsvc_lock);
 			return (-1);
