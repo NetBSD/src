@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.7 1998/11/15 17:19:53 christos Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.8 1999/09/16 11:45:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,11 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetln.c,v 1.7 1998/11/15 17:19:53 christos Exp $");
+__RCSID("$NetBSD: fgetln.c,v 1.8 1999/09/16 11:45:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,6 +77,12 @@ __slbexpand(fp, newsize)
 #ifdef notdef
 	++newsize;
 #endif
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL)
+		return (-1);
+#endif
+
 	if (fp->_lb._size >= newsize)
 		return (0);
 	if ((p = realloc(fp->_lb._base, newsize)) == NULL)
@@ -99,6 +107,13 @@ fgetln(fp, lenp)
 	unsigned char *p;
 	size_t len;
 	size_t off;
+
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(lenp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL || lenp == NULL)
+		return (NULL);
+#endif
 
 	FLOCKFILE(fp);
 

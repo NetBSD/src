@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.33 1999/01/31 20:46:12 christos Exp $	 */
+/*	$NetBSD: yplib.c,v 1.34 1999/09/16 11:45:46 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,21 +33,24 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.33 1999/01/31 20:46:12 christos Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.34 1999/09/16 11:45:46 lukem Exp $");
 #endif
 
 #include "namespace.h"
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/uio.h>
+
 #include <arpa/nameser.h>
+
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
@@ -257,6 +260,13 @@ void
 __yp_unbind(ypb)
 	struct dom_binding *ypb;
 {
+
+	_DIAGASSERT(ypb != NULL);
+#ifdef _DIAGNOSTIC
+	if (ypb == NULL)
+		return;
+#endif
+
 	clnt_destroy(ypb->dom_client);
 	ypb->dom_client = NULL;
 	ypb->dom_socket = -1;
@@ -301,6 +311,8 @@ int
 yp_get_default_domain(domp)
 	char          **domp;
 {
+	if (domp == NULL)
+		return YPERR_BADARGS;
 	*domp = NULL;
 	if (_yp_domain[0] == '\0')
 		if (getdomainname(_yp_domain, sizeof _yp_domain))

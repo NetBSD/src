@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot.c,v 1.7 1998/02/13 05:52:27 lukem Exp $	*/
+/*	$NetBSD: pmap_prot.c,v 1.8 1999/09/16 11:45:23 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_prot.c 1.17 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_prot.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_prot.c,v 1.7 1998/02/13 05:52:27 lukem Exp $");
+__RCSID("$NetBSD: pmap_prot.c,v 1.8 1999/09/16 11:45:23 lukem Exp $");
 #endif
 #endif
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: pmap_prot.c,v 1.7 1998/02/13 05:52:27 lukem Exp $");
  */
 
 #include "namespace.h"
+
+#include <assert.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -62,6 +64,13 @@ xdr_pmap(xdrs, regs)
 	XDR *xdrs;
 	struct pmap *regs;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(regs != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || regs == NULL)
+		return (FALSE);
+#endif
 
 	if (xdr_u_long(xdrs, &regs->pm_prog) && 
 		xdr_u_long(xdrs, &regs->pm_vers) && 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ntoa.c,v 1.8 1998/11/13 15:46:55 christos Exp $	*/
+/*	$NetBSD: ns_ntoa.c,v 1.9 1999/09/16 11:45:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -38,12 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ns_ntoa.c,v 1.8 1998/11/13 15:46:55 christos Exp $");
+__RCSID("$NetBSD: ns_ntoa.c,v 1.9 1999/09/16 11:45:16 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <netns/ns.h>
+
+#include <assert.h>
 #include <stdio.h>
 
 static char *spectHex __P((char *));
@@ -92,6 +94,9 @@ spectHex(p0)
 	int ok = 0;
 	int nonzero = 0;
 	register char *p = p0;
+
+	_DIAGASSERT(p0 != NULL);
+
 	for (; *p; p++)
 		switch (*p) {
 		case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':

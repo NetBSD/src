@@ -1,4 +1,4 @@
-/*	$NetBSD: atof.c,v 1.9 1998/01/30 23:37:46 perry Exp $	*/
+/*	$NetBSD: atof.c,v 1.10 1999/09/16 11:45:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,15 +38,22 @@
 #if 0
 static char sccsid[] = "@(#)atof.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: atof.c,v 1.9 1998/01/30 23:37:46 perry Exp $");
+__RCSID("$NetBSD: atof.c,v 1.10 1999/09/16 11:45:33 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <stdlib.h>
 
 double
 atof(ascii)
 	const char *ascii;
 {
+	_DIAGASSERT(ascii != NULL);
+#ifdef _DIAGNOSTIC
+	if (ascii == NULL)
+		return ((double)0);
+#endif
+
 	return (strtod(ascii, NULL));
 }

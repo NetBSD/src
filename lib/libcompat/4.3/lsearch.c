@@ -39,11 +39,14 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.5 1999/05/04 17:10:10 christos Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.6 1999/09/16 11:45:47 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <string.h>
 #include <search.h>
 
@@ -57,6 +60,17 @@ lsearch(key, base, nelp, width, compar)
 	size_t *nelp, width;
 	cmp_fn_t compar;
 {
+
+	_DIAGASSERT(key != NULL);
+	_DIAGASSERT(base != NULL);
+	_DIAGASSERT(compar != NULL);
+#ifdef _DIAGNOSTIC
+	if (key == NULL || base == NULL || compar == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
+
 	return(linear_base(key, base, nelp, width, compar, 1));
 }
 
@@ -66,6 +80,17 @@ lfind(key, base, nelp, width, compar)
 	size_t *nelp, width;
 	cmp_fn_t compar;
 {
+
+	_DIAGASSERT(key != NULL);
+	_DIAGASSERT(base != NULL);
+	_DIAGASSERT(compar != NULL);
+#ifdef _DIAGNOSTIC
+	if (key == NULL || base == NULL || compar == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
+
 	return(linear_base(key, base, nelp, width, compar, 0));
 }
 
@@ -77,6 +102,10 @@ linear_base(key, base, nelp, width, compar, add_flag)
 	int add_flag;
 {
 	char *element, *end;
+
+	_DIAGASSERT(key != NULL);
+	_DIAGASSERT(base != NULL);
+	_DIAGASSERT(compar != NULL);
 
 	/* LINTED const castaway */
 	end = (char *)base + *nelp * width;

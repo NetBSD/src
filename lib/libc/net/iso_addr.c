@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.9 1999/09/16 11:45:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,12 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: iso_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $");
+__RCSID("$NetBSD: iso_addr.c,v 1.9 1999/09/16 11:45:15 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <netiso/iso.h>
+
+#include <assert.h>
 #include <string.h>
 
 /* States*/
@@ -64,6 +66,12 @@ iso_addr(addr)
 	char *cplim = cp + sizeof(out_addr.isoa_genaddr);
 	register int byte = 0, state = VIRGIN;
 	register int newaddr = 0;	/* pacify gcc */
+
+	_DIAGASSERT(addr != NULL);
+#ifdef _DIAGNOSTIC
+	if (addr == NULL)
+		return (NULL);
+#endif
 
 	(void)memset(&out_addr, 0, sizeof (out_addr));
 	do {
@@ -110,6 +118,12 @@ iso_ntoa(isoa)
 	register size_t i;
 	register u_char *in = (u_char *)isoa->isoa_genaddr;
 	u_char *inlim = in + isoa->isoa_len;
+
+	_DIAGASSERT(isoa != NULL);
+#ifdef _DIAGNOSTIC
+	if (isoa == NULL)
+		return (NULL);
+#endif
 
 	out[1] = 0;
 	while (in < inlim) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: regfree.c,v 1.9 1998/12/08 13:49:46 drochner Exp $	*/
+/*	$NetBSD: regfree.c,v 1.10 1999/09/16 11:45:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,15 +44,17 @@
 #if 0
 static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regfree.c,v 1.9 1998/12/08 13:49:46 drochner Exp $");
+__RCSID("$NetBSD: regfree.c,v 1.10 1999/09/16 11:45:21 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
+
+#include <assert.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <regex.h>
 
 #ifdef __weak_alias
 __weak_alias(regfree,_regfree);
@@ -71,6 +73,13 @@ regex_t *preg;
 {
 	struct re_guts *g;
 
+	_DIAGASSERT(preg != NULL);
+#ifdef _DIAGNOSTIC
+	if (preg == NULL)
+		return;
+#endif
+
+	_DIAGASSERT(preg->re_magic == MAGIC1);
 	if (preg->re_magic != MAGIC1)	/* oops */
 		return;			/* nice to complain, but hard */
 

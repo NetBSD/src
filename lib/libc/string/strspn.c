@@ -1,4 +1,4 @@
-/*	$NetBSD: strspn.c,v 1.7 1998/02/03 18:49:24 perry Exp $	*/
+/*	$NetBSD: strspn.c,v 1.8 1999/09/16 11:45:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)strspn.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strspn.c,v 1.7 1998/02/03 18:49:24 perry Exp $");
+__RCSID("$NetBSD: strspn.c,v 1.8 1999/09/16 11:45:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <string.h>
 
 /*
@@ -54,6 +55,13 @@ strspn(s1, s2)
 {
 	const char *p = s1, *spanp;
 	char c, sc;
+
+	_DIAGASSERT(s1 != NULL);
+	_DIAGASSERT(s2 != NULL);
+#ifdef _DIAGNOSTIC
+	if (s1 == NULL || s2 == NULL)
+		return (0);
+#endif
 
 	/*
 	 * Skip any characters in s2, excluding the terminating \0.

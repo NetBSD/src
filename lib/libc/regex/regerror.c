@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.12 1998/12/08 13:48:06 drochner Exp $	*/
+/*	$NetBSD: regerror.c,v 1.13 1999/09/16 11:45:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,18 +44,20 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.12 1998/12/08 13:48:06 drochner Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.13 1999/09/16 11:45:21 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
-#include <stdio.h>
-#include <string.h>
+
+#include <assert.h>
 #include <ctype.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <regex.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef __weak_alias
 __weak_alias(regerror,_regerror);
@@ -137,6 +139,13 @@ size_t errbuf_size;
 	const char *s;
 	char convbuf[50];
 
+	_DIAGASSERT(preg != NULL);
+	_DIAGASSERT(errbuf != NULL);
+#ifdef _DIAGNOSTIC
+	if (preg == NULL || errbuf == NULL)
+		return(0);
+#endif
+
 	if (errcode == REG_ATOI)
 		s = regatoi(preg, convbuf, sizeof convbuf);
 	else {
@@ -176,6 +185,9 @@ char *localbuf;
 size_t buflen;
 {
 	const struct rerr *r;
+
+	_DIAGASSERT(preg != NULL);
+	_DIAGASSERT(localbuf != NULL);
 
 	for (r = rerrs; r->code != 0; r++)
 		if (strcmp(r->name, preg->re_endp) == 0)

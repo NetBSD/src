@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.5 1999/05/04 17:12:21 christos Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.6 1999/09/16 11:45:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.5 1999/05/04 17:12:21 christos Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.6 1999/09/16 11:45:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: ruserpass.c,v 1.5 1999/05/04 17:12:21 christos Exp $");
 #include <sys/stat.h>
 #include <sys/param.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -101,6 +102,14 @@ ruserpass(host, aname, apass)
 	char myname[MAXHOSTNAMELEN + 1], *mydomain;
 	int t, i, c, usedefault = 0;
 	struct stat stb;
+
+	_DIAGASSERT(host != NULL);
+	_DIAGASSERT(aname != NULL);
+	_DIAGASSERT(apass != NULL);
+#ifdef _DIAGNOSTIC
+	if (host == NULL || aname == NULL || apass == NULL)
+		return (-1);
+#endif
 
 	hdir = getenv("HOME");
 	if (hdir == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.12 1998/02/03 18:23:45 perry Exp $	*/
+/*	$NetBSD: getpass.c,v 1.13 1999/09/16 11:44:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,17 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)getpass.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getpass.c,v 1.12 1998/02/03 18:23:45 perry Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.13 1999/09/16 11:44:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <termios.h>
-#include <signal.h>
 
+#include <assert.h>
 #include <paths.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
+#include <termios.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -66,6 +67,8 @@ getpass(prompt)
 	int echo;
 	static char buf[_PASSWORD_LEN + 1];
 	sigset_t oset, nset;
+
+	_DIAGASSERT(prompt != NULL);
 
 	/*
 	 * read and write to /dev/tty if possible; else read from
@@ -90,7 +93,8 @@ getpass(prompt)
 		term.c_lflag &= ~ECHO;
 		(void)tcsetattr(fileno(fp), TCSAFLUSH|TCSASOFT, &term);
 	}
-	(void)fputs(prompt, outfp);
+	if (prompt != NULL)
+		(void)fputs(prompt, outfp);
 	rewind(outfp);			/* implied flush */
 	for (p = buf; (ch = getc(fp)) != EOF && ch != '\n';)
 		if (p < buf + _PASSWORD_LEN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.4 1998/11/15 17:19:53 christos Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.5 1999/09/16 11:45:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,12 +29,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vasprintf.c,v 1.4 1998/11/15 17:19:53 christos Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.5 1999/09/16 11:45:31 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 
 int
 vasprintf(str, fmt, ap)
@@ -45,6 +46,15 @@ vasprintf(str, fmt, ap)
 	int ret;
 	FILE f;
 	unsigned char *_base;
+
+	_DIAGASSERT(str != NULL);
+	_DIAGASSERT(fmt != NULL);
+#ifdef _DIAGNOSTIC
+	if (str == NULL || fmt == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	f._flags = __SWR | __SSTR | __SALC;
 	f._bf._base = f._p = (unsigned char *)malloc(128);

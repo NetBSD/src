@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.15 1998/08/26 00:38:40 perry Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.16 1999/09/16 11:45:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,20 +38,23 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.15 1998/08/26 00:38:40 perry Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.16 1999/09/16 11:45:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <termios.h>
+
+#include <assert.h>
 #include <db.h>
-#include <string.h>
-#include <unistd.h>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <paths.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
 
 #ifdef __weak_alias
 __weak_alias(ttyname,_ttyname);
@@ -72,6 +75,14 @@ ttyname(fd)
 		mode_t type;
 		dev_t dev;
 	} bkey;
+
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (NULL);
+	}
+#endif
 
 	/* Must be a terminal. */
 	if (tcgetattr(fd, &ttyb) < 0)
@@ -104,6 +115,8 @@ oldttyname(sb)
 	struct dirent *dirp;
 	DIR *dp;
 	struct stat dsb;
+
+	_DIAGASSERT(sb != NULL);
 
 	if ((dp = opendir(_PATH_DEV)) == NULL)
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.12 1998/02/03 18:41:21 perry Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.13 1999/09/16 11:45:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: setvbuf.c,v 1.12 1998/02/03 18:41:21 perry Exp $");
+__RCSID("$NetBSD: setvbuf.c,v 1.13 1999/09/16 11:45:30 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "local.h"
@@ -64,6 +66,15 @@ setvbuf(fp, buf, mode, size)
 	int ret, flags;
 	size_t iosize;
 	int ttyflag;
+
+	_DIAGASSERT(fp != NULL);
+	/* buf may be NULL */
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (EOF);
+	}
+#endif
 
 	/*
 	 * Verify arguments.  The `int' limit on `size' is due to this

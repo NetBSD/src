@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.8 1998/11/13 12:31:50 christos Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.9 1999/09/16 11:45:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,13 +35,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.8 1998/11/13 12:31:50 christos Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.9 1999/09/16 11:45:02 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
 #include "namespace.h"
 #endif
 #include <sys/types.h>
+
+#include <assert.h>
 #include <err.h>
 #include <limits.h>
 #include <pwd.h>
@@ -68,6 +70,13 @@ pw_scan(bp, pw, flags)
 	int root, inflags;
 	char *ep;
 	const char *p, *sh;
+
+	_DIAGASSERT(bp != NULL);
+	_DIAGASSERT(pw != NULL);
+#ifdef _DIAGNOSTIC
+	if (bp == NULL || pw == NULL)
+		return (0);
+#endif
 
 	inflags = 0;
 	if (flags != (int *)NULL) {

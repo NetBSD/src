@@ -30,12 +30,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftime.c,v 1.6 1999/05/04 17:08:32 christos Exp $");
+__RCSID("$NetBSD: ftime.c,v 1.7 1999/09/16 11:45:46 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/timeb.h>
+
+#include <assert.h>
+#include <errno.h>
 
 int
 ftime(tbp)
@@ -43,6 +46,14 @@ ftime(tbp)
 {
         struct timezone tz;
         struct timeval t;
+
+	_DIAGASSERT(tbp != 0);
+#ifdef _DIAGNOSTIC
+	if (tbp == 0) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
         if (gettimeofday(&t, &tz) < 0)
                 return (-1);

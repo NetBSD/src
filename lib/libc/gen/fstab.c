@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.19 1999/02/23 17:00:53 mrg Exp $	*/
+/*	$NetBSD: fstab.c,v 1.20 1999/09/16 11:44:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,12 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.19 1999/02/23 17:00:53 mrg Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.20 1999/09/16 11:44:56 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
+
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fstab.h>
@@ -76,6 +78,10 @@ nextfld(str, sep)
 	const char *sep;
 {
 	char *ret;
+
+	_DIAGASSERT(str != NULL);
+	_DIAGASSERT(sep != NULL);
+
 	while ((ret = strsep(str, sep)) != NULL && *ret == '\0')
 		continue;
 	return ret;
@@ -177,6 +183,13 @@ struct fstab *
 getfsspec(name)
 	const char *name;
 {
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return NULL;
+#endif
+
 	if (setfsent())
 		while (fstabscan())
 			if (!strcmp(_fs_fstab.fs_spec, name))
@@ -188,6 +201,13 @@ struct fstab *
 getfsfile(name)
 	const char *name;
 {
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return NULL;
+#endif
+
 	if (setfsent())
 		while (fstabscan())
 			if (!strcmp(_fs_fstab.fs_file, name))

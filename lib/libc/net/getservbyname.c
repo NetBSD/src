@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname.c,v 1.6 1997/07/21 14:08:00 jtc Exp $	*/
+/*	$NetBSD: getservbyname.c,v 1.7 1999/09/16 11:45:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyname.c,v 1.6 1997/07/21 14:08:00 jtc Exp $");
+__RCSID("$NetBSD: getservbyname.c,v 1.7 1999/09/16 11:45:13 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <assert.h>
 #include <netdb.h>
 #include <string.h>
 
@@ -58,6 +59,13 @@ getservbyname(name, proto)
 {
 	register struct servent *p;
 	register char **cp;
+
+	_DIAGASSERT(name != NULL);
+	/* proto may be NULL */
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return (NULL);
+#endif
 
 	setservent(_serv_stayopen);
 	while ((p = getservent()) != NULL) {

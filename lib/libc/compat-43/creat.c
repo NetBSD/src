@@ -1,4 +1,4 @@
-/*	$NetBSD: creat.c,v 1.6 1998/02/02 06:26:35 perry Exp $	*/
+/*	$NetBSD: creat.c,v 1.7 1999/09/16 11:44:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,10 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)creat.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: creat.c,v 1.6 1998/02/02 06:26:35 perry Exp $");
+__RCSID("$NetBSD: creat.c,v 1.7 1999/09/16 11:44:54 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 
 int
@@ -53,5 +55,14 @@ creat(path, mode)
 	mode_t mode;
 #endif
 {
+
+	_DIAGASSERT(path != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (-1);
+	}
+#endif
+
 	return(open(path, O_WRONLY|O_CREAT|O_TRUNC, mode));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.10 1998/11/15 17:32:45 christos Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.11 1999/09/16 11:45:24 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_raw.c 1.15 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_raw.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.10 1998/11/15 17:32:45 christos Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.11 1999/09/16 11:45:24 lukem Exp $");
 #endif
 #endif
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: svc_raw.c,v 1.10 1998/11/15 17:32:45 christos Exp $");
 
 #include "namespace.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include <rpc/rpc.h>
@@ -120,6 +121,9 @@ svcraw_recv(xprt, msg)
 	struct svcraw_private *srp = svcraw_private;
 	XDR *xdrs;
 
+	_DIAGASSERT(xprt != NULL);
+	_DIAGASSERT(msg != NULL);
+
 	if (srp == 0)
 		return (0);
 	xdrs = &srp->xdr_stream;
@@ -138,6 +142,9 @@ svcraw_reply(xprt, msg)
 {
 	struct svcraw_private *srp = svcraw_private;
 	XDR *xdrs;
+
+	_DIAGASSERT(xprt != NULL);
+	_DIAGASSERT(msg != NULL);
 
 	if (srp == 0)
 		return (FALSE);
@@ -159,6 +166,9 @@ svcraw_getargs(xprt, xdr_args, args_ptr)
 {
 	struct svcraw_private *srp = svcraw_private;
 
+	_DIAGASSERT(xprt != NULL);
+	/* args_ptr may be NULL */
+
 	if (srp == 0)
 		return (FALSE);
 	return ((*xdr_args)(&srp->xdr_stream, args_ptr));
@@ -173,6 +183,9 @@ svcraw_freeargs(xprt, xdr_args, args_ptr)
 { 
 	struct svcraw_private *srp = svcraw_private;
 	XDR *xdrs;
+
+	_DIAGASSERT(xprt != NULL);
+	/* args_ptr may be NULL */
 
 	if (srp == 0)
 		return (FALSE);

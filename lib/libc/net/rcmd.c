@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.32 1999/07/04 00:43:44 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.33 1999/09/16 11:45:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.32 1999/07/04 00:43:44 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.33 1999/09/16 11:45:17 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,20 +55,21 @@ __RCSID("$NetBSD: rcmd.c,v 1.32 1999/07/04 00:43:44 itojun Exp $");
 #include <arpa/inet.h>
 #include <netgroup.h>
 
-#include <signal.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <pwd.h>
-#include <grp.h>
-#include <errno.h>
-#include <stdio.h>
+#include <assert.h>
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <grp.h>
+#include <netdb.h>
+#include <paths.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <stdlib.h>
-#include <paths.h>
-#include <err.h>
+#include <unistd.h>
 
 #include "pathnames.h"
 
@@ -91,6 +92,16 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 {
 	struct hostent *hp;
 	struct servent *sp;
+
+	_DIAGASSERT(ahost != NULL);
+	_DIAGASSERT(locuser != NULL);
+	_DIAGASSERT(remuser != NULL);
+	_DIAGASSERT(cmd != NULL);
+	/* fd2p may be NULL */
+#ifdef _DIAGNOSTIC
+	if (ahost == NULL || locuser == NULL || remuser == NULL || cmd == NULL)
+		return (-1);
+#endif
 
 	/*
 	 * Canonicalise hostname.
@@ -127,6 +138,16 @@ orcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 {
 	struct hostent *hp;
 
+	_DIAGASSERT(ahost != NULL);
+	_DIAGASSERT(locuser != NULL);
+	_DIAGASSERT(remuser != NULL);
+	_DIAGASSERT(cmd != NULL);
+	/* fd2p may be NULL */
+#ifdef _DIAGNOSTIC
+	if (ahost == NULL || locuser == NULL || remuser == NULL || cmd == NULL)
+		return (-1);
+#endif
+
 	hp = gethostbyname(*ahost);
 	if (hp == NULL) {
 		herror(*ahost);
@@ -152,6 +173,13 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 	int s, lport, timo;
 	int pollr;
 	char c;
+
+	_DIAGASSERT(hp != NULL);
+	_DIAGASSERT(ahost != NULL);
+	_DIAGASSERT(locuser != NULL);
+	_DIAGASSERT(remuser != NULL);
+	_DIAGASSERT(cmd != NULL);
+	/* fd2p may be NULL */
 
 	pid = getpid();
 	sigemptyset(&nmask);
@@ -298,6 +326,12 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 	char *p;
 	struct passwd *pw;
 
+	_DIAGASSERT(ahost != NULL);
+	_DIAGASSERT(locuser != NULL);
+	_DIAGASSERT(remuser != NULL);
+	_DIAGASSERT(cmd != NULL);
+	/* fd2p may be NULL */
+
 	/* What rsh/shell to use. */
 	if (rshcmd == NULL)
 		rshcmd = _PATH_BIN_RCMD;
@@ -397,6 +431,15 @@ int
 rresvport(alport)
 	int *alport;
 {
+
+	_DIAGASSERT(alport != NULL);
+#ifdef _DIAGNOSTIC
+	if (alport == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	return rresvport_af(alport, AF_INET);
 }
 
@@ -410,6 +453,14 @@ rresvport_af(alport, family)
 	int salen;
 	int s;
 	u_int16_t *portp;
+
+	_DIAGASSERT(alport != NULL);
+#ifdef _DIAGNOSTIC
+	if (alport == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	memset(&ss, 0, sizeof(ss));
 	sa = (struct sockaddr *)&ss;
@@ -481,6 +532,14 @@ ruserok(rhost, superuser, ruser, luser)
 #define MAXADDRS	35
 	u_int32_t addrs[MAXADDRS + 1];
 
+	_DIAGASSERT(rhost != NULL);
+	_DIAGASSERT(ruser != NULL);
+	_DIAGASSERT(luser != NULL);
+#ifdef _DIAGNOSTIC
+	if (rhost == NULL || ruser == NULL || luser == NULL)
+		return (-1);
+#endif
+
 	if ((hp = gethostbyname(rhost)) == NULL)
 		return (-1);
 	for (i = 0, ap = hp->h_addr_list; *ap && i < MAXADDRS; ++ap, ++i)
@@ -516,6 +575,13 @@ iruserok(raddr, superuser, ruser, luser)
 	gid_t gid;
 	int first;
 	char pbuf[MAXPATHLEN];
+
+	_DIAGASSERT(ruser != NULL);
+	_DIAGASSERT(luser != NULL);
+#ifdef _DIAGNOSTIC
+	if (ruser == NULL || luser == NULL)
+		return (-1);
+#endif
 
 	first = 1;
 	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "r");
@@ -598,6 +664,14 @@ __ivaliduser(hostf, raddr, luser, ruser)
 	char domain[MAXHOSTNAMELEN];
 
 	getdomainname(domain, sizeof(domain));
+
+	_DIAGASSERT(hostf != NULL);
+	_DIAGASSERT(luser != NULL);
+	_DIAGASSERT(ruser != NULL);
+#ifdef _DIAGNOSTIC
+	if (hostf == NULL || luser == NULL || ruser == NULL)
+		return (-1);
+#endif
 
 	while (fgets(buf, sizeof(buf), hostf)) {
 		p = buf;
@@ -737,6 +811,8 @@ __icheckhost(raddr, lhost)
 	struct hostent *hp;
 	struct in_addr laddr;
 	char **pp;
+
+	_DIAGASSERT(lhost != NULL);
 
 	/* Try for raw ip address first. */
 	if (isdigit((unsigned char)*lhost) && inet_aton(lhost, &laddr) != 0)

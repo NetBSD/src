@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.11 1999/08/22 12:54:02 kleink Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.12 1999/09/16 11:45:11 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,19 +41,22 @@
  */
 
 #include "namespace.h"
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
 #include <netdb.h>
 #include <resolv.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stddef.h>
-#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #if 0	/*quickhack*/
@@ -191,6 +194,12 @@ freeaddrinfo(ai)
 {
 	struct addrinfo *next;
 
+	_DIAGASSERT(ai != NULL);
+#ifdef _DIAGNOSTIC
+	if (ai == NULL)
+		return;
+#endif
+
 	do {
 		next = ai->ai_next;
 		if (ai->ai_canonname)
@@ -205,6 +214,9 @@ str_isnumber(p)
 	const char *p;
 {
 	char *q = (char *)p;
+
+	_DIAGASSERT(p != NULL);
+
 	while (*q) {
 		if (! isdigit(*q))
 			return NO;
@@ -239,6 +251,17 @@ getaddrinfo(hostname, servname, hints, res)
 				translate = YES;
 		}
 		firsttime = 0;
+	}
+#endif
+
+	/* hostname may be NULL */
+	/* servname may be NULL */
+	/* hints may be NULL */
+	_DIAGASSERT(res != NULL);
+#ifdef _DIAGNOSTIC
+	if (res == NULL) {
+		errno = EFAULT;
+		return EAI_SYSTEM;
 	}
 #endif
 
@@ -485,7 +508,15 @@ get_name(addr, afd, res, numaddr, pai, port0)
 	int error = 0;
 #ifdef USE_GETIPNODEBY
 	int h_error;
+#endif
 
+	_DIAGASSERT(addr != NULL);
+	_DIAGASSERT(afd != NULL);
+	_DIAGASSERT(res != NULL);
+	_DIAGASSERT(numaddr != NULL);
+	_DIAGASSERT(pai != NULL);
+
+#ifdef USE_GETIPNODEBY
 	hp = getipnodebyaddr(addr, afd->a_addrlen, afd->a_af, &h_error);
 #else
 	hp = gethostbyaddr(addr, afd->a_addrlen, afd->a_af);
@@ -522,15 +553,21 @@ get_addr(hostname, af, res0, pai, port0)
 	struct addrinfo *pai;
 	int port0;
 {
-#ifdef USE_GETIPNODEBY
-	return get_addr0(hostname, af, res0, pai, port0);
-#else
+#ifndef USE_GETIPNODEBY
 	int i, error, ekeep;
 	struct addrinfo *cur;
 	struct addrinfo **res;
 	int retry;
 	int s;
+#endif
 
+	_DIAGASSERT(hostname != NULL);
+	_DIAGASSERT(res != NULL);
+	_DIAGASSERT(pai != NULL);
+
+#ifdef USE_GETIPNODEBY
+	return get_addr0(hostname, af, res0, pai, port0);
+#else
 	res = res0;
 	ekeep = 0;
 	error = 0;
@@ -600,6 +637,10 @@ get_addr0(hostname, af, res, pai, port0)
 #ifndef USE_GETIPNODEBY
 	extern int h_errno;
 #endif
+
+	_DIAGASSERT(hostname != NULL);
+	_DIAGASSERT(res != NULL);
+	_DIAGASSERT(pai != NULL);
 
 	top = NULL;
 	sentinel.ai_next = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.12 1998/11/15 17:25:39 christos Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.13 1999/09/16 11:45:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
 static char *sccsid = "@(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.12 1998/11/15 17:25:39 christos Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.13 1999/09/16 11:45:22 lukem Exp $");
 #endif
 #endif
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: clnt_generic.c,v 1.12 1998/11/15 17:25:39 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <netdb.h>
 #include <string.h>
@@ -75,6 +76,16 @@ clnt_create(hostname, prog, vers, proto)
 	int sock;
 	struct timeval tv;
 	CLIENT *client;
+
+	_DIAGASSERT(hostname != NULL);
+	_DIAGASSERT(proto != NULL);
+#ifdef _DIAGNOSTIC
+	if (hostname == NULL || proto == NULL) {
+		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+		rpc_createerr.cf_error.re_errno = EFAULT; 
+		return (NULL);
+	}
+#endif
 
 	h = gethostbyname(hostname);
 	if (h == NULL) {
