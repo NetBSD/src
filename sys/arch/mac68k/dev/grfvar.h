@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.19 1997/08/03 06:52:23 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.20 1997/08/03 07:17:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,7 @@ struct grfbus_attach_args {
 	struct grfmode	*ga_grfmode;
 	nubus_slot	*ga_slot;
 	int	(*ga_mode) __P((struct grf_softc *, int, void *));
-	caddr_t	(*ga_phys) __P((struct grf_softc *, vm_offset_t));
+	caddr_t	(*ga_phys) __P((struct grf_softc *));
 };
 
 typedef	caddr_t (*grf_phys_t) __P((struct grf_softc *gp, vm_offset_t addr));
