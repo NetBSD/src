@@ -1,4 +1,4 @@
-.\"	$NetBSD: swap.8,v 1.1.2.1 1997/02/14 19:06:58 mrg Exp $
+.\"	$NetBSD: swap.8,v 1.1.2.2 1997/03/17 00:20:24 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -88,7 +88,10 @@ also be in the argument list.  The
 .Ar device
 is added to the kernel's list of swap devices using the
 .Xr swapon 2
-system call.  The priority set in the
+system call.  The priority set by having ``priority=N'' in the
+mount options field of the 
+.Xr fstab 5 
+file.
 .\" .It Fl d
 .\" The
 .\" .Fl d
@@ -135,4 +138,5 @@ The
 .Fl A
 option could also handle priorities in the fstab file somehow.
 .Sh SEE ALSO
-.Xr swapon 2 .
+.Xr swapon 2 ,
+.Xr fstab 5 .
