@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.11 1997/09/09 21:42:42 mycroft Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.12 1998/02/05 19:53:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -139,6 +139,21 @@ static __inline void
 enable_intr(void)
 {
 	__asm __volatile("sti");
+}
+
+static __inline u_long
+read_eflags(void)
+{
+	u_long	ef;
+
+	__asm __volatile("pushfl; popl %0" : "=r" (ef));
+	return (ef);
+}
+
+static __inline void
+write_eflags(u_long ef)
+{
+	__asm __volatile("pushl %0; popfl" : : "r" (ef));
 }
 
 /* Break into DDB/KGDB. */
