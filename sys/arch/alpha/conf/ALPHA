@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.174 2002/11/05 08:31:43 fair Exp $
+# $NetBSD: ALPHA,v 1.175 2002/11/30 07:06:40 itohy Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.174 $"
+ident		"ALPHA-$Revision: 1.175 $"
 
 maxusers 32
 
@@ -146,8 +146,8 @@ options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 #options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
 options 	USERCONF		# userconf(4) support
-#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
-options		FONT_GALLANT12x22	# Console font for TC devices
+#options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	FONT_GALLANT12x22	# Console font for TC devices
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -204,8 +204,8 @@ tc*	at	tcasic?
 ioasic*	at	tc? slot ? offset ?
 mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
-zsc0    at      ioasic? offset 0x100000   
-zsc1    at      ioasic? offset 0x180000
+zsc0	at	ioasic? offset 0x100000
+zsc1	at	ioasic? offset 0x180000
 bba0	at	ioasic? offset ?
 audio*	at	bba?
 tcds*	at	tc? slot ? offset ?

@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.14 2002/09/18 02:43:54 lukem Exp $
+# $NetBSD: BASIL,v 1.15 2002/11/30 07:06:41 itohy Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.14 $"
+#ident 		"BASIL-$Revision: 1.15 $"
 
 maxusers 64
 
@@ -105,7 +105,7 @@ options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	USERCONF		# userconf(4) support
-#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,

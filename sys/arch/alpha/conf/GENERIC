@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.220 2002/11/22 12:20:58 wiz Exp $
+# $NetBSD: GENERIC,v 1.221 2002/11/30 07:06:41 itohy Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel on NetBSD/alpha does enough to get booted,
 # etc., but not much more.  For a more complete kernel see the ALPHA
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.220 $"
+#ident 		"GENERIC-$Revision: 1.221 $"
 
 maxusers 32
 
@@ -55,7 +55,7 @@ options 	KTRACE			# System call tracing support
 options 	SYSTRACE		# System call vetting via systrace(1)
 options 	NTP			# kernel PLL for NTP
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
 
@@ -141,8 +141,8 @@ options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	PCMCIAVERBOSE
 options 	USERCONF		# userconf(4) support
-#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
-options		FONT_GALLANT12x22	# Console font for TC devices
+#options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	FONT_GALLANT12x22	# Console font for TC devices
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -199,8 +199,8 @@ tc*	at	tcasic?
 ioasic*	at	tc? slot ? offset ?
 mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
-zsc0    at      ioasic? offset 0x100000   
-zsc1    at      ioasic? offset 0x180000
+zsc0	at	ioasic? offset 0x100000
+zsc1	at	ioasic? offset 0x180000
 bba0	at	ioasic? offset ?
 audio*	at	bba?
 tcds*	at	tc? slot ? offset ?
@@ -532,13 +532,13 @@ pseudo-device	ccd		4
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_EVENODD=1
+# options 	RF_INCLUDE_RAID5_RS=1
+# options 	RF_INCLUDE_PARITYLOGGING=1
+# options 	RF_INCLUDE_CHAINDECLUSTER=1
+# options 	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
