@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.133 2004/04/28 05:33:58 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.134 2004/04/28 05:39:36 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1402,3 +1402,9 @@ sys/kern/kern_sysctl.c				1.173
 
 	Be consistent about using sysc_init_field()
 	[atatat, ticket #194]
+
+distrib/utils/sysinst/disks.c			1.77-1.83
+
+	Perform the same function in sysinst as the etc/rc.d/fixsb script. 
+	PR#25138
+	[dbj, ticket #195]
