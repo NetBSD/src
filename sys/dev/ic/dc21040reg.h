@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.10 1997/06/06 23:14:19 mellon Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.11 1997/06/08 18:44:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: dc21040reg.h,v 1.10 1997/06/06 23:14:19 mellon Exp $
+ * Id: dc21040reg.h,v 1.24 1997/05/16 19:47:09 thomas Exp
  */
 
 #if !defined(_DC21040_H)
