@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.21 2005/01/07 02:08:34 ginsbach Exp $
+.\"	$NetBSD: scsictl.8,v 1.22 2005/01/07 02:13:13 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,16 +69,15 @@ and displayed to the standard output.
 The following commands are supported for SCSI devices:
 .Pp
 .Nm defects
-.Oo primary Oc
-.Oo grown Oc
-.Oo block|byte|physical
-.Oc
+.Op primary
+.Op grown
+.Op block|byte|physical
 .Pp
-Read the primary and/or grown defect lists from the
-specified device in block, byte from index, or physical
-sector format. The default is to return both the primary
-and grown defect lists in physical sector format.  This
-command is only supported on direct access devices.
+Read the primary and/or grown defect lists from the specified device
+in block, byte from index, or physical sector format.
+The default is to return both the primary and grown defect lists
+in physical sector format.
+This command is only supported on direct access devices.
 .Pp
 .Nm format
 .Oo blocksize
