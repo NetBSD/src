@@ -1,4 +1,4 @@
-/*	$NetBSD: nullfs.c,v 1.2 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: nullfs.c,v 1.3 2002/05/28 14:26:01 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -79,37 +79,49 @@
 /*
  * Null filesystem
  */
-int	null_open (char *path, struct open_file *f)
+int
+null_open(char *path, struct open_file *f)
 {
-	errno  = EIO;
+
+	errno = EIO;
 	return -1;
 }
 
-int	null_close(struct open_file *f)
+int
+null_close(struct open_file *f)
 {
+
 	return 0;
 }
 
-ssize_t	null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
+ssize_t
+null_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
+
 	errno = EIO;
 	return -1;
 }
 
-ssize_t	null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
+ssize_t
+null_write(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
+
 	errno = EIO;
 	return -1;
 }
 
-off_t	null_seek (struct open_file *f, off_t offset, int where)
+off_t
+null_seek(struct open_file *f, off_t offset, int where)
 {
+
 	errno = EIO;
 	return -1;
 }
 
-int	null_stat (struct open_file *f, struct stat *sb)
+int
+null_stat(struct open_file *f, struct stat *sb)
 {
+
 	errno = EIO;
 	return -1;
 }
