@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 1996/04/29 06:15:32 mhitch Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 1996/04/30 05:00:51 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,8 +38,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/cpu.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <amiga/amiga/adosglue.h>
 
 /*
@@ -76,12 +76,12 @@ struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *), struct disklabel *,
     struct cpu_disklabel *));
 
 /* XXX unknown function but needed for /sys/scsi to link */
-int
+void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-	return(-1);
+	return;
 }
 
 /*
