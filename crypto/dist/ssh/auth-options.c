@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.1.1.11 2002/06/24 05:25:41 itojun Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.1.1.12 2002/10/01 13:39:55 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,9 +11,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-options.c,v 1.24 2002/05/13 20:44:58 markus Exp $");
+RCSID("$OpenBSD: auth-options.c,v 1.26 2002/07/30 17:03:55 markus Exp $");
 
-#include "packet.h"
 #include "xmalloc.h"
 #include "match.h"
 #include "log.h"
@@ -21,7 +20,6 @@ RCSID("$OpenBSD: auth-options.c,v 1.24 2002/05/13 20:44:58 markus Exp $");
 #include "channels.h"
 #include "auth-options.h"
 #include "servconf.h"
-#include "bufaux.h"
 #include "misc.h"
 #include "monitor_wrap.h"
 #include "auth.h"
@@ -136,7 +134,8 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			goto next_option;
 		}
 		cp = "environment=\"";
-		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
+		if (options.permit_user_env &&
+		    strncasecmp(opts, cp, strlen(cp)) == 0) {
 			char *s;
 			struct envstring *new_envstring;
 

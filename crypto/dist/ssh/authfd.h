@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.h,v 1.1.1.8 2002/06/24 05:25:43 itojun Exp $	*/
-/*	$OpenBSD: authfd.h,v 1.30 2002/06/19 00:27:55 deraadt Exp $	*/
+/*	$NetBSD: authfd.h,v 1.1.1.9 2002/10/01 13:39:56 itojun Exp $	*/
+/*	$OpenBSD: authfd.h,v 1.31 2002/09/11 18:27:25 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -67,6 +67,7 @@ typedef struct {
 	int	howmany;
 }	AuthenticationConnection;
 
+int	ssh_agent_present(void);
 int	ssh_get_authentication_socket(void);
 void	ssh_close_authentication_socket(int);
 

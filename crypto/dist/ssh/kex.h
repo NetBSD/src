@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.1.1.11 2002/06/24 05:25:48 itojun Exp $	*/
-/*	$OpenBSD: kex.h,v 1.31 2002/05/16 22:02:50 markus Exp $	*/
+/*	$NetBSD: kex.h,v 1.1.1.12 2002/10/01 13:39:57 itojun Exp $	*/
+/*	$OpenBSD: kex.h,v 1.32 2002/09/09 14:54:14 markus Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -97,7 +97,7 @@ struct Newkeys {
 };
 struct Kex {
 	u_char	*session_id;
-	int	session_id_len;
+	u_int	session_id_len;
 	Newkeys	*newkeys[MODE_MAX];
 	int	we_need;
 	int	server;
