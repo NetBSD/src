@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.64 1997/11/08 19:18:58 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1614,15 +1614,7 @@ msdosfs_readdir(v)
 				dirbuf.d_fileno = fileno;
 				dirbuf.d_type = DT_DIR;
 			} else {
-				/*
-				 * If the file's dirent lives in
-				 * root dir.
-				 */
-				fileno = cntobn(pmp, cn) * dirsperblk;
-				if (cn == MSDOSFSROOT)
-					fileno = roottobn(pmp, 0) * dirsperblk;
-				fileno += dentp - (struct direntry *)bp->b_data;
-				dirbuf.d_fileno = fileno;
+				dirbuf.d_fileno = offset / sizeof(struct direntry);
 				dirbuf.d_type = DT_REG;
 			}
 			if (chksum != winChksum(dentp->deName))
