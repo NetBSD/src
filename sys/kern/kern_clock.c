@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.30 1996/03/08 06:27:30 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.31 1996/03/15 07:56:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -259,44 +259,6 @@ extern struct timeval clock_offset; /* Highball clock offset */
 long clock_cpu = 0;		/* CPU clock adjust */
 #endif /* HIGHBALL */
 #endif /* EXT_CLOCK */
-
-/*
- * NetBSD notes:
- *
- * SHIFT_HZ is strongly recommended to be a constant, not a variable,
- * for performance reasons, so we define it appropriately here.
- * Ataris uses 48, or 96 Hz (as well as 64). Sparcs and Sun-3s use
- * 100Hz.  Non-power-of-two values for HZ are rounded up when
- * we define SHIFT_HZ, and then special-cased in the kernel
- * timekeeping code in kern_clock.c. 
- * Alphas use 1024.  Decstations use 256, which covers all the powers
- * of 2 from 64 to 1024, inclusive.
- * Precision timekeeping does not support 48 Hz, so Ataris at 48Hz are
- * out of luck.
- */
-
-#if HZ == 64 || HZ == 60
-# define SHIFT_HZ 6		/* log2(64) */
-#else
-#if HZ == 128 || HZ == 100 ||  HZ == 96
-# define SHIFT_HZ 7		/* log2(128), 100 and 96 are fudged. */
-#else
-#if HZ == 256
-# define SHIFT_HZ 8		/* log2(256) */
-#else
-#if HZ == 1024
-# define SHIFT_HZ 10		/* log2(1024) */
-#else
-#error HZ is not a supported value. Please change HZ in your kernel config file
-#endif /* 1024Hz */
-#endif /* 256Hz */
-#endif /* 128HZ or 100Hz (or 96Hz, untested) */
-#endif /* 64Hz or 60Hz */
-
-/*
- * End of SHIFT_HZ computation
- */
-
 #endif /* NTP */
 
 
@@ -322,7 +284,10 @@ static int psdiv, pscnt;		/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 int	tickfix, tickfixinterval;	/* used if tick not really integral */
 static int tickfixcnt;			/* number of ticks since last fix */
+#ifdef NTP
 int	fixtick;			/* used by NTP for same */
+int	shifthz;
+#endif
 
 volatile struct	timeval time;
 volatile struct	timeval mono_time;
@@ -349,6 +314,28 @@ initclocks()
 	if (profhz == 0)
 		profhz = i;
 	psratio = profhz / i;
+
+#ifdef NTP
+	switch (hz) {
+	case 60:
+	case 64:
+		shifthz = SHIFT_SCALE - 6;
+		break;
+	case 96:
+	case 100:
+	case 128:
+		shifthz = SHIFT_SCALE - 7;
+		break;
+	case 256:
+		shifthz = SHIFT_SCALE - 8;
+		break;
+	case 1024:
+		shifthz = SHIFT_SCALE - 10;
+		break;
+	default:
+		panic("weird hz");
+	}
+#endif
 }
 
 /*
@@ -445,12 +432,10 @@ hardclock(frame)
 #endif
 	BUMPTIME(&mono_time, delta);
 
-#ifdef NTP	/* XXX Start of David L. Mills' ntp precision-time fragment */
+#ifdef NTP
 	time_update = delta;
 
 	/*
-	 * Beginning of precision-kernel code fragment
-	 *
 	 * Compute the phase adjustment. If the low-order bits
 	 * (time_phase) of the update overflow, bump the high-order bits
 	 * (time_update).
@@ -460,8 +445,7 @@ hardclock(frame)
 		ltemp = -time_phase >> SHIFT_SCALE;
 		time_phase += ltemp << SHIFT_SCALE;
 		time_update -= ltemp;
-	}
-	else if (time_phase >= FINEUSEC) {
+	} else if (time_phase >= FINEUSEC) {
 		ltemp = time_phase >> SHIFT_SCALE;
 		time_phase -= ltemp << SHIFT_SCALE;
 		time_update += ltemp;
@@ -523,35 +507,35 @@ hardclock(frame)
 		 * replaced.
 		 */
 		switch (time_state) {
-
-			case TIME_OK:
+		case TIME_OK:
 			if (time_status & STA_INS)
 				time_state = TIME_INS;
 			else if (time_status & STA_DEL)
 				time_state = TIME_DEL;
 			break;
 
-			case TIME_INS:
+		case TIME_INS:
 			if (time.tv_sec % 86400 == 0) {
 				time.tv_sec--;
 				time_state = TIME_OOP;
 			}
 			break;
 
-			case TIME_DEL:
+		case TIME_DEL:
 			if ((time.tv_sec + 1) % 86400 == 0) {
 				time.tv_sec++;
 				time_state = TIME_WAIT;
 			}
 			break;
 
-			case TIME_OOP:
+		case TIME_OOP:
 			time_state = TIME_WAIT;
 			break;
 
-			case TIME_WAIT:
+		case TIME_WAIT:
 			if (!(time_status & (STA_INS | STA_DEL)))
 				time_state = TIME_OK;
+			break;
 		}
 
 		/*
@@ -571,9 +555,8 @@ hardclock(frame)
 				ltemp = (MAXPHASE / MINSEC) <<
 				    SHIFT_UPDATE;
 			time_offset += ltemp;
-			time_adj = -ltemp << (SHIFT_SCALE - SHIFT_HZ -
-			    SHIFT_UPDATE);
-		} else {
+			time_adj = -ltemp << (shifthz - SHIFT_UPDATE);
+		} else if (time_offset > 0) {
 			ltemp = time_offset;
 			if (!(time_status & STA_FLL))
 				ltemp >>= SHIFT_KG + time_constant;
@@ -581,9 +564,9 @@ hardclock(frame)
 				ltemp = (MAXPHASE / MINSEC) <<
 				    SHIFT_UPDATE;
 			time_offset -= ltemp;
-			time_adj = ltemp << (SHIFT_SCALE - SHIFT_HZ -
-			    SHIFT_UPDATE);
-		}
+			time_adj = ltemp << (shifthz - SHIFT_UPDATE);
+		} else
+			time_adj = 0;
 
 		/*
 		 * Compute the frequency estimate and additional phase
@@ -606,54 +589,43 @@ hardclock(frame)
 #endif /* PPS_SYNC */
 
 		if (ltemp < 0)
-			time_adj -= -ltemp >>
-			    (SHIFT_USEC + SHIFT_HZ - SHIFT_SCALE);
+			time_adj -= -ltemp >> (SHIFT_USEC - shifthz);
 		else
-			time_adj += ltemp >>
-			    (SHIFT_USEC + SHIFT_HZ - SHIFT_SCALE);
-		time_adj += (long)fixtick << (SHIFT_SCALE - SHIFT_HZ);
+			time_adj += ltemp >> (SHIFT_USEC - shifthz);
+		time_adj += (long)fixtick << shifthz;
 
-
-#if SHIFT_HZ == 7
 		/*
 		 * When the CPU clock oscillator frequency is not a
-		 * power of 2 in Hz, the SHIFT_HZ is only an approximate
-		 * scale factor. In the SunOS kernel, this results in a
-		 * PLL gain factor of 1/1.28 = 0.78 what it should be.
-		 * In the following code the overall gain is increased
-		 * by a factor of 1.25, which results in a residual
-		 * error less than 3 percent.
+		 * power of 2 in Hz, shifthz is only an approximate
+		 * scale factor.
 		 */
-		if (hz == 100) {
+		switch (hz) {
+		case 96:
+		case 100:
+			/*
+			 * In the following code the overall gain is increased
+			 * by a factor of 1.25, which results in a residual
+			 * error less than 3 percent.
+			 */
 			if (time_adj < 0)
 				time_adj -= -time_adj >> 2;
 			else
 				time_adj += time_adj >> 2;
-		}
-		else
-		if (hz == 96) {
-			if (time_adj < 0)
-				time_adj -= -time_adj >> 2;
-			else
-				time_adj += time_adj >> 2;
-		}
-
-#endif /* SHIFT_HZ */
-#if SHIFT_HZ == 6
-		/*
-		 * 60 Hz m68k and vaxes have a PLL gain factor of of
-		 * 60/64 (15/16) of what it should be.  In the following code
-		 * the overall gain is increased by a factor of 1.0625,
-		 * (17/16) which results in a residual error of just less
-		 * than 0.4 percent.
-		 */
-		if (hz == 60) {
+			break;
+		case 60:
+			/*
+			 * 60 Hz m68k and vaxes have a PLL gain factor of of
+			 * 60/64 (15/16) of what it should be.  In the following code
+			 * the overall gain is increased by a factor of 1.0625,
+			 * (17/16) which results in a residual error of just less
+			 * than 0.4 percent.
+			 */
 			if (time_adj < 0)
 				time_adj -= -time_adj >> 4;
 			else
 				time_adj += time_adj >> 4;
+			break;
 		}
-#endif /* SHIFT_HZ */
 
 #ifdef EXT_CLOCK
 		/*
@@ -697,10 +669,7 @@ hardclock(frame)
 #endif /* EXT_CLOCK */
 	}
 
-	/*
-	 * End of precision-kernel code fragment
-	 */
-#endif /*NTP*/	/* XXX End of David L. Mills' ntp precision-time fragment */
+#endif /* NTP */
 
 	/*
 	 * Process callouts at a very low cpu priority, so we don't keep the
