@@ -1,4 +1,4 @@
-/*	$NetBSD: param3x.h,v 1.3 1997/02/26 20:36:15 gwr Exp $	*/
+/*	$NetBSD: param3x.h,v 1.4 1997/02/27 18:12:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,7 +71,7 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 
-#define NBSG		0x80000	/* bytes/segment */
+#define NBSG		0x80000 	/* bytes/segment */
 #define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
 #define SEGSHIFT	19	        /* LOG2(NBSG) */
 
@@ -104,9 +104,14 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	2048		/* large enough for ether MTU */
-#define	MCLSHIFT	11
+
+#ifndef  MCLSHIFT
+# define MCLSHIFT	11		/* Makes MCLBYTES == 2048 */
+#endif	/* MCLSHIFT */
+
+#define	MCLBYTES	(1 << MCLSHIFT)
 #define	MCLOFSET	(MCLBYTES - 1)
+
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
