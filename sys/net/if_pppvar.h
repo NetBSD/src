@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.1 1995/07/04 06:28:24 paulus Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.2 1995/07/04 15:30:39 briggs Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
  *
@@ -98,7 +98,7 @@ struct	ppp_softc ppp_softc[NPPP];
 
 struct	ppp_softc *pppalloc __P((pid_t pid));
 void	pppdealloc __P((struct ppp_softc *sc));
-int	pppioctl __P((struct ppp_softc *sc, int cmd, caddr_t data,
+int	pppioctl __P((struct ppp_softc *sc, u_long cmd, caddr_t data,
 		      int flag, struct proc *p));
 void	ppppktin __P((struct ppp_softc *sc, struct mbuf *m, int lost));
 struct	mbuf *ppp_dequeue __P((struct ppp_softc *sc));
