@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.2 2003/09/26 18:05:01 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.3 2003/09/26 18:09:13 christos Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -116,12 +116,5 @@ struct x86_64_set_mtrr_args32 {
 	uint32_t mtrrp;
 	uint32_t n;
 };
-
-struct exec_package;
-void netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack);
-int netbsd32_sigreturn(struct lwp *l, void *v, register_t *retval);
-void netbsd32_sendsig(int sig, const sigset_t *mask, u_long code);
-
-extern char netbsd32_sigcode[], netbsd32_esigcode[];
 
 #endif /* _MACHINE_NETBSD32_H_ */
