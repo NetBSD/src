@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.12 2003/07/15 03:36:13 lukem Exp $	*/
+/*	$NetBSD: mbio.c,v 1.13 2004/12/13 02:14:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.12 2003/07/15 03:36:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbio.c,v 1.13 2004/12/13 02:14:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,8 @@ struct mbio_softc {
 CFATTACH_DECL(mbio, sizeof(struct mbio_softc),
     mbio_match, mbio_attach, NULL, NULL);
 
+static int mbio_attached;
+
 static	paddr_t mbio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       off_t, int, int));
 static	int _mbio_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
@@ -94,6 +96,9 @@ mbio_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
+	if (mbio_attached)
+		return 0;
+
 	return (cpu_has_multibus && (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
 }
 
@@ -112,13 +117,8 @@ mbio_attach(parent, self, aux)
 		NULL
 	};
 
-	/*
-	 * There is only one mbio bus
-	 */
-	if (self->dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
-	}
+	mbio_attached = 1;
+
 	printf("\n");
 
 	sc->sc_bustag = ma->ma_bustag;

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.35 2003/08/07 16:29:28 agc Exp $ */
+/* $NetBSD: sci.c,v 1.36 2004/12/13 02:14:13 chs Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.35 2003/08/07 16:29:28 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.36 2004/12/13 02:14:13 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -261,6 +261,8 @@ CFATTACH_DECL(sci, sizeof(struct sci_softc),
 
 extern struct cfdriver sci_cd;
 
+static int sci_attached;
+
 dev_type_open(sciopen);
 dev_type_close(sciclose);
 dev_type_read(sciread);
@@ -380,19 +382,11 @@ sci_getc(void)
 	return(c);
 }
 
-#if 0
-#define	SCI_MAX_UNITS 2
-#else
-#define	SCI_MAX_UNITS 1
-#endif
-
-
 static int
 sci_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_name, "sci")
-	    || cfp->cf_unit >= SCI_MAX_UNITS) //XXX __BROKEN_CONFIG_UNIT_USAGE
+	if (strcmp(cfp->cf_name, "sci") || sci_attached)
 		return 0;
 
 	return 1;
@@ -403,6 +397,8 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sci_softc *sc = (struct sci_softc *)self;
 	struct tty *tp;
+
+	sci_attached = 1;
 
 	sc->sc_hwflags = 0;	/* XXX */
 	sc->sc_swflags = 0;	/* XXX */

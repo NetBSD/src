@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.11 2004/01/04 16:19:44 wiz Exp $	*/
+/*	$NetBSD: mfp.c,v 1.12 2004/12/13 02:14:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.11 2004/01/04 16:19:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.12 2004/12/13 02:14:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ static void mfp_calibrate_delay __P((void));
 CFATTACH_DECL(mfp, sizeof(struct mfp_softc),
     mfp_match, mfp_attach, NULL, NULL);
 
+static int mfp_attached;
+
 static int
 mfp_match(parent, cf, aux)
 	struct device *parent;
@@ -74,7 +76,7 @@ mfp_match(parent, cf, aux)
 	/* mfp0 */
 	if (strcmp (ia->ia_name, "mfp") != 0)
 		return 0;
-	if (cf->cf_unit != 0)
+	if (mfp_attached)
 		return (0);
 
 	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
@@ -99,6 +101,8 @@ mfp_attach(parent, self, aux)
 {
 	struct mfp_softc *sc = (struct mfp_softc *)self;
 	struct intio_attach_args *ia = aux;
+
+	mfp_attached = 1;
 
 	mfp_init ();
 

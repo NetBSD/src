@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2004/10/23 17:07:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 2004/12/13 02:14:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2004/10/23 17:07:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2004/12/13 02:14:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,13 +259,15 @@ findroot(void)
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mbmatch, mbattach, NULL, NULL);
 
+static int mb_attached;
+
 int
 mbmatch(pdp, cfp, auxp)
 	struct device	*pdp;
 	struct cfdata	*cfp;
 	void		*auxp;
 {
-	if (cfp->cf_unit > 0)
+	if (mb_attached)
 		return(0);
 	/*
 	 * We are always here
@@ -281,6 +283,9 @@ mbattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
+
+	mb_attached = 1;
+
 	printf ("\n");
 	config_found(dp, "clock"   , simple_devprint);
 	config_found(dp, "grfbus"  , simple_devprint);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.8 2003/10/28 08:00:36 mrg Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.9 2004/12/13 02:14:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.8 2003/10/28 08:00:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.9 2004/12/13 02:14:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -107,6 +107,8 @@ paddr_t sun68k_vme_mmap_cookie __P((vme_addr_t, vme_am_t, bus_space_handle_t *))
 CFATTACH_DECL(sun68kvme, sizeof(struct sun68kvme_softc),
     sun68kvme_match, sun68kvme_attach, NULL, NULL);
 
+static int sun68kvme_attached;
+
 /*
  * The VME bus logic on sun68k machines maps DMA requests in the first MB
  * of VME space to the last MB of DVMA space.  The base bus_dma code
@@ -144,6 +146,9 @@ sun68kvme_match(parent, cf, aux)
 {
         struct mainbus_attach_args *ma = aux;
 
+	if (sun68kvme_attached)
+		return 0;
+
         return (cpu_has_vme && (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
 }
 
@@ -159,10 +164,7 @@ sun68kvme_attach(parent, self, aux)
 	struct sun68kvme_softc *sc = (struct sun68kvme_softc *)self;
 	struct vmebus_attach_args vba;
 
-	if (self->dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
-	}
+	sun68kvme_attached = 1;
 
 	sun68kvme_sc = sc;
 

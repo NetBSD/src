@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.25 2004/10/29 12:57:16 yamt Exp $	*/
+/*	$NetBSD: vs.c,v 1.26 2004/12/13 02:14:14 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.25 2004/10/29 12:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.26 2004/12/13 02:14:14 chs Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -107,6 +107,8 @@ extern struct cfdriver vs_cd;
 
 CFATTACH_DECL(vs, sizeof(struct vs_softc),
     vs_match, vs_attach, NULL, NULL);
+
+static int vs_attached;
 
 static const struct audio_hw_if vs_hw_if = {
 	vs_open,
@@ -185,7 +187,7 @@ vs_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "vs") || cf->cf_unit > 0)
+	if (strcmp(ia->ia_name, "vs") || vs_attached)
 		return 0;
 
 	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
@@ -220,6 +222,8 @@ vs_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct intio_attach_args *ia = aux;
+
+	vs_attached = 1;
 
 	printf("\n");
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2004/11/28 17:34:45 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21 2004/12/13 02:14:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,9 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2004/11/28 17:34:45 thorpej Exp $");
-
-#undef BTLBDEBUG
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2004/12/13 02:14:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +105,8 @@ CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
     mbmatch, mbattach, NULL, NULL);
 
 extern struct cfdriver mainbus_cd;
+
+static int mb_attached;
 
 /* from machdep.c */
 extern struct extent *hp700_io_extent;
@@ -1427,7 +1427,7 @@ mbmatch(parent, cf, aux)
 {
 
 	/* there will be only one */
-	if (cf->cf_unit)
+	if (mb_attached)
 		return 0;
 
 	return 1;
@@ -1462,6 +1462,8 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	struct confargs nca;
 	bus_space_handle_t ioh;
 	int i;
+
+	mb_attached = 1;
 
 	/* fetch the "default" cpu hpa */
 	if (pdc_call((iodcio_t)pdc, 0, PDC_HPA, PDC_HPA_DFLT, &pdc_hpa) < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.50 2004/06/27 16:08:42 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.51 2004/12/13 02:14:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.50 2004/06/27 16:08:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.51 2004/12/13 02:14:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -173,6 +173,8 @@ CFATTACH_DECL(vme_mainbus, sizeof(struct sparcvme_softc),
 CFATTACH_DECL(vme_iommu, sizeof(struct sparcvme_softc),
     vmematch_iommu, vmeattach_iommu, NULL, NULL);
 
+static int vme_attached;
+
 int	(*vmeerr_handler) __P((void));
 
 #define VMEMOD_D32 0x40 /* ??? */
@@ -274,7 +276,7 @@ vmematch_mainbus(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (!CPU_ISSUN4)
+	if (!CPU_ISSUN4 || vme_attached)
 		return (0);
 
 	return (strcmp("vme", ma->ma_name) == 0);
@@ -287,6 +289,9 @@ vmematch_iommu(parent, cf, aux)
 	void *aux;
 {
 	struct iommu_attach_args *ia = aux;
+
+	if (vme_attached)
+		return 0;
 
 	return (strcmp("vme", ia->iom_name) == 0);
 }
@@ -302,10 +307,7 @@ vmeattach_mainbus(parent, self, aux)
 	struct sparcvme_softc *sc = (struct sparcvme_softc *)self;
 	struct vmebus_attach_args vba;
 
-	if (self->dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
-	}
+	vme_attached = 1;
 
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
@@ -352,11 +354,6 @@ vmeattach_iommu(parent, self, aux)
 	bus_space_handle_t bh;
 	int node;
 	int cline;
-
-	if (self->dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
-	}
 
 	sc->sc_bustag = ia->iom_bustag;
 	sc->sc_dmatag = ia->iom_dmatag;

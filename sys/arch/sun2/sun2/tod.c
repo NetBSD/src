@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.c,v 1.8 2003/08/07 16:29:54 agc Exp $	*/
+/*	$NetBSD: tod.c,v 1.9 2004/12/13 02:14:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.8 2003/08/07 16:29:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.9 2004/12/13 02:14:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,8 @@ CFATTACH_DECL(tod_obio, sizeof(struct mm58167_softc),
 CFATTACH_DECL(tod_vme, sizeof(struct mm58167_softc),
     tod_vme_match, tod_vme_attach, NULL, NULL);
 
+static int tod_attached;
+
 static int
 tod_obio_match(parent, cf, args)
     struct device *parent;
@@ -133,7 +135,7 @@ tod_obio_match(parent, cf, args)
 	int matched;
 
 	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
+	if (tod_attached)
 		return (0);
 
 	/* Make sure there is something there... */
@@ -153,6 +155,8 @@ tod_obio_attach(parent, self, args)
 {
 	struct obio_attach_args *oba = args;
 	struct mm58167_softc *sc;
+
+	tod_attached = 1;
 
 	sc = (struct mm58167_softc *) self;
 
