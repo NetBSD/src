@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.13 2003/10/08 11:04:32 bouyer Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.14 2003/12/07 20:05:03 is Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.13 2003/10/08 11:04:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.14 2003/12/07 20:05:03 is Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,6 +89,7 @@ void
 wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_amiga_softc *sc = (void *)self;
+	int i;
 
 	printf("\n");
 
@@ -108,10 +109,21 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 	sc->wdc_channel.ctl_iot = &sc->ctl_iot;
 
 	if (bus_space_map(sc->wdc_channel.cmd_iot, 0, 0x40, 0,
-			  &sc->wdc_channel.cmd_ioh)) {
+			  &sc->wdc_channel.cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
+	}
+
+	for (i = 0; i < WDC_PIOC_REG_NPORTS; i++) {
+		if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, i,
+			i == 0 ? 4 : 1, &ch.cmd_iohs[i]) != 0) {
+			bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh,
+			    WDC_PIOC_REG_NPORTS);
+			printf("%s: couldn't map registers\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			return;
+		}
 	}
 
 	if (sc->sc_a1200)
