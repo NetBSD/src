@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.14 1995/06/05 03:07:34 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.15 1995/06/18 02:36:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -373,8 +373,8 @@ pci_map_int(tag, level, func, arg)
 
 	data = pci_conf_read(tag, PCI_INTERRUPT_REG);
 
-	pin = PCI_INTERRUPT_PIN_EXTRACT(data);
-	line = PCI_INTERRUPT_LINE_EXTRACT(data);
+	pin = PCI_INTERRUPT_PIN(data);
+	line = PCI_INTERRUPT_LINE(data);
 
 	if (pin == 0) {
 		/* No IRQ used. */
