@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.30 2002/10/02 16:52:15 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.31 2004/08/06 19:38:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.30 2002/10/02 16:52:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.31 2004/08/06 19:38:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,17 +94,22 @@ int	sm_pcmcia_funce_enaddr __P((struct device *, u_int8_t *));
 int	sm_pcmcia_lannid_ciscallback __P((struct pcmcia_tuple *, void *));
 
 const struct pcmcia_product sm_pcmcia_products[] = {
-	{ PCMCIA_STR_MEGAHERTZ2_XJACK,		PCMCIA_VENDOR_MEGAHERTZ2,
+	{ "",	PCMCIA_VENDOR_MEGAHERTZ2,
+	  PCMCIA_PRODUCT_MEGAHERTZ2_EM1144,	 0, },
+	{ "",	PCMCIA_VENDOR_MEGAHERTZ2,
+	  PCMCIA_PRODUCT_MEGAHERTZ2_EM1144,	 1, },
+
+	{ "",	PCMCIA_VENDOR_MEGAHERTZ2,
 	  PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,	 0, },
 
-	{ PCMCIA_STR_NEWMEDIA_BASICS,		PCMCIA_VENDOR_NEWMEDIA,
+	{ "",	PCMCIA_VENDOR_NEWMEDIA,
 	  PCMCIA_PRODUCT_NEWMEDIA_BASICS,	0, },
 
 #if 0
-	{ PCMCIA_STR_SMC_8020BT,		PCMCIA_VENDOR_SMC,
+	{ "",	PCMCIA_VENDOR_SMC,
 	  PCMCIA_PRODUCT_SMC_8020BT,		0, },
 #endif
-	{ PCMCIA_STR_PSION_GOLDCARD,		PCMCIA_VENDOR_PSION,
+	{ "",	PCMCIA_VENDOR_PSION,
 	  PCMCIA_PRODUCT_PSION_GOLDCARD,	0, },
 
 	{ NULL }
@@ -117,6 +122,10 @@ sm_pcmcia_match(parent, match, aux)
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
+
+	/* This is to differentiate the serial function of Megahertz cards. */
+	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
+		return (0);
 
 	if (pcmcia_product_lookup(pa, sm_pcmcia_products,
 	    sizeof sm_pcmcia_products[0], NULL) != NULL)
@@ -168,12 +177,12 @@ sm_pcmcia_attach(parent, self, aux)
 		goto iomap_failed;
 	}
 
+	printf("\n");
+
 	pp = pcmcia_product_lookup(pa, sm_pcmcia_products,
 	    sizeof sm_pcmcia_products[0], NULL);
 	if (pp == NULL)
 		panic("sm_pcmcia_attach: impossible");
-
-	printf(": %s\n", pp->pp_name);
 
 	/*
 	 * First try to get the Ethernet address from FUNCE/LANNID tuple.
@@ -185,20 +194,8 @@ sm_pcmcia_attach(parent, self, aux)
 	 * If that failed, try one of the CIS info strings.
 	 */
 	if (enaddr == NULL) {
-		char *cisstr = NULL;
-
-		switch (pa->manufacturer) {
-		case PCMCIA_VENDOR_MEGAHERTZ:
-		case PCMCIA_VENDOR_MEGAHERTZ2:
-			cisstr = pa->pf->sc->card.cis1_info[3];
-			break;
-
-		case PCMCIA_VENDOR_SMC:
-			cisstr = pa->pf->sc->card.cis1_info[2];
-			break;
-		}
-
-		if (cisstr != NULL && sm_pcmcia_ascii_enaddr(cisstr, myla))
+		if (sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[3], myla) ||
+		    sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[2], myla))
 			enaddr = myla;
 	}
 
@@ -255,6 +252,10 @@ sm_pcmcia_ascii_enaddr(cisstr, myla)
 {
 	u_int8_t digit;
 	int i;
+
+	/* No CIS string. */
+	if (cisstr == 0)
+		return (0);
 
 	memset(myla, 0, ETHER_ADDR_LEN);
 
