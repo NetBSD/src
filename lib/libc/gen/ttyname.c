@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.13 1998/02/27 19:01:03 perry Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.14 1998/08/10 02:43:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.13 1998/02/27 19:01:03 perry Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.14 1998/08/10 02:43:10 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,8 +87,8 @@ ttyname(fd)
 		key.data = &bkey;
 		key.size = sizeof(bkey);
 		if (!(db->get)(db, &key, &data, 0)) {
-			bcopy(data.data,
-			    buf + sizeof(_PATH_DEV) - 1, data.size);
+			memcpy(buf + sizeof(_PATH_DEV) - 1, data.data,
+			    data.size);
 			(void)(db->close)(db);
 			return (buf);
 		}
@@ -111,7 +111,7 @@ oldttyname(sb)
 	while ((dirp = readdir(dp)) != NULL) {
 		if (dirp->d_fileno != sb->st_ino)
 			continue;
-		bcopy(dirp->d_name, buf + sizeof(_PATH_DEV) - 1,
+		memcpy(buf + sizeof(_PATH_DEV) - 1, dirp->d_name,
 		    (size_t)(dirp->d_namlen + 1));
 		if (stat(buf, &dsb) || sb->st_dev != dsb.st_dev ||
 		    sb->st_ino != dsb.st_ino)

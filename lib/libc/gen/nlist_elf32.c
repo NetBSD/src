@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.9 1998/07/26 17:55:45 mycroft Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.10 1998/08/10 02:43:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -118,7 +118,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 		BADUNMAP;
 	ehdrp = (Elf_Ehdr *)&mappedfile[0];
 
-	if (bcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
+	if (memcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
 		BADUNMAP;
 
 	switch (ehdrp->e_machine) {

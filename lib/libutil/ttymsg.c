@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.9 1998/05/09 20:59:29 kleink Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.10 1998/08/10 02:47:35 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.9 1998/05/09 20:59:29 kleink Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.10 1998/08/10 02:47:35 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,7 +109,7 @@ ttymsg(iov, iovcnt, line, tmout)
 		if (wret >= 0) {
 			left -= wret;
 			if (iov != localiov) {
-				bcopy(iov, localiov,
+				memcpy(localiov, iov,
 				    iovcnt * sizeof(struct iovec));
 				iov = localiov;
 			}

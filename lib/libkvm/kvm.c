@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.60 1998/08/01 21:29:41 thorpej Exp $	*/
+/*	$NetBSD: kvm.c,v 1.61 1998/08/10 02:46:06 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.60 1998/08/01 21:29:41 thorpej Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.61 1998/08/10 02:46:06 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -731,7 +731,7 @@ kvm_dbopen(kd)
 	if (rec.data == 0 || rec.size > sizeof(dbversion))
 		goto close;
 
-	bcopy(rec.data, dbversion, rec.size);
+	memcpy(dbversion, rec.data, rec.size);
 	dbversionlen = rec.size;
 	/*
 	 * Read version string from kernel memory.
@@ -744,7 +744,7 @@ kvm_dbopen(kd)
 		goto close;
 	if (rec.data == 0 || rec.size != sizeof(struct nlist))
 		goto close;
-	bcopy((char *)rec.data, (char *)&nitem, sizeof(nitem));
+	memcpy((char *)&nitem, (char *)rec.data, sizeof(nitem));
 	if (kvm_read(kd, (u_long)nitem.n_value, kversion, dbversionlen) != 
 	    dbversionlen)
 		goto close;
@@ -752,7 +752,7 @@ kvm_dbopen(kd)
 	 * If they match, we win - otherwise clear out kd->db so
 	 * we revert to slow nlist().
 	 */
-	if (bcmp(dbversion, kversion, dbversionlen) == 0)
+	if (memcmp(dbversion, kversion, dbversionlen) == 0)
 		return (0);
 close:
 	(void)(kd->db->close)(kd->db);
@@ -810,11 +810,11 @@ kvm_nlist(kd, nl)
 		/*
 		 * Avoid alignment issues.
 		 */
-		bcopy((char *)&((struct nlist *)rec.data)->n_type,
-		      (char *)&p->n_type, 
+		memcpy((char *)&p->n_type,
+		      (char *)&((struct nlist *)rec.data)->n_type,
 		      sizeof(p->n_type));
-		bcopy((char *)&((struct nlist *)rec.data)->n_value,
-		      (char *)&p->n_value, 
+		memcpy((char *)&p->n_value,
+		      (char *)&((struct nlist *)rec.data)->n_value,
 		      sizeof(p->n_value));
 	}
 	/*

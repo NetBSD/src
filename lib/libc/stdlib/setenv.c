@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.12 1998/02/03 18:44:20 perry Exp $	*/
+/*	$NetBSD: setenv.c,v 1.13 1998/08/10 02:43:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.12 1998/02/03 18:44:20 perry Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.13 1998/08/10 02:43:10 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,7 +94,7 @@ setenv(name, value, rewrite)
 			p = malloc((size_t)(sizeof(char *) * (cnt + 2)));
 			if (!p)
 				return (-1);
-			bcopy(environ, p, cnt * sizeof(char *));
+			memcpy(p, environ, cnt * sizeof(char *));
 			environ = p;
 		}
 		environ[cnt + 1] = NULL;
