@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: dcm.c 1.26 91/01/21
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.11 1994/02/06 00:44:34 mycroft Exp $
+ *	$Id: dcm.c,v 1.12 1994/02/06 01:08:37 mycroft Exp $
  */
 
 /*
@@ -142,7 +142,6 @@ int	dcmconsinit;
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
 int	dcmconbrdbusy = 0;
 int	dcmmajor;
-extern	struct tty *constty;
 
 #ifdef KGDB
 /*
@@ -351,7 +350,7 @@ dcmopen(dev, flag, mode, p)
 	brd = BOARD(unit);
 	if (unit >= NDCMLINE || (dcm_active & (1 << brd)) == 0)
 		return (ENXIO);
-	if(!dcm_tty[unit])
+	if (!dcm_tty[unit])
 		tp = dcm_tty[unit] = ttymalloc();
 	else
 		tp = dcm_tty[unit];
@@ -425,8 +424,10 @@ dcmclose(dev, flag, mode, p)
 			unit, tp->t_state, tp->t_flags);
 #endif
 	ttyclose(tp);
+#if 0
 	ttyfree(tp);
 	dcm_tty[unit] = (struct tty *)NULL;
+#endif
 	return (0);
 }
  
@@ -434,9 +435,8 @@ dcmread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp;
+	register struct tty *tp = dcm_tty[UNIT(dev)];
  
-	tp = dcm_tty[UNIT(dev)];
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
  
@@ -444,18 +444,8 @@ dcmwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	int unit = UNIT(dev);
-	register struct tty *tp;
+	register struct tty *tp = dcm_tty[UNIT(dev)];
  
-	tp = dcm_tty[unit];
-	/*
-	 * XXX we disallow virtual consoles if the physical console is
-	 * a serial port.  This is in case there is a display attached that
-	 * is not the console.  In that situation we don't need/want the X
-	 * server taking over the console.
-	 */
-	if (constty && unit == dcmconsole)
-		constty = NULL;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
  
