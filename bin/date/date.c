@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)date.c	5.5 (Berkeley) 3/18/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/date/date.c,v 1.3 1993/03/23 00:25:32 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/date/date.c,v 1.4 1993/06/21 05:18:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -148,6 +148,7 @@ setthetime(p)
 
 	if (t = index(p, '.')) {		/* .ss */
 		*t++ = '\0';
+		lt->tm_sec = ATOI2(t);
 		if (lt->tm_sec > 61)
 			badformat();
 	} else
