@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.106 2003/06/11 08:59:57 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.107 2003/06/11 12:16:14 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -331,9 +331,9 @@ Notes:
 
 Package:	hunt
 Version:	1993-07-17
-Current Vers:	1993-07-17
+Current Vers:	2003-04-16
 Maintainer:	?
-Archive Site:	ftp://cgl.ucsf.edu/pub/
+Archive Site:	ftp://ftp.cgl.ucsf.edu/pub/hunt.shar.Z
 Responsible:	mrg
 Notes:
 
