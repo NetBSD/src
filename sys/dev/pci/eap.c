@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.69 2004/07/08 19:39:00 drochner Exp $	*/
+/*	$NetBSD: eap.c,v 1.70 2004/07/09 02:42:45 mycroft Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.69 2004/07/08 19:39:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.70 2004/07/09 02:42:45 mycroft Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -992,7 +992,7 @@ eap_open(void *addr, int flags)
 	struct eap_instance *ei = addr;
 
 	/* there is only one ADC */
-	if (ei->index == EAP_I2 && flags & AUOPEN_READ)
+	if (ei->index == EAP_I2 && flags & FREAD)
 		return (EOPNOTSUPP);
 
 	return (0);
@@ -1004,16 +1004,6 @@ eap_open(void *addr, int flags)
 void
 eap_close(void *addr)
 {
-	struct eap_instance *ei = addr;
-	struct eap_softc *sc = (struct eap_softc *)ei->parent;
-    
-	eap_halt_output(ei);
-	if (ei->index == EAP_I1) {
-		eap_halt_input(ei);
-		sc->sc_rintr = 0;
-	}
-
-	ei->ei_pintr = 0;
 }
 
 int
@@ -1391,6 +1381,7 @@ eap_halt_output(void *addr)
 	DPRINTF(("eap: eap_halt_output\n"));
 	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc & ~(EAP_DAC_EN(ei->index)));
+	ei->ei_pintr = 0;
 #ifdef DIAGNOSTIC
 	ei->ei_prun = 0;
 #endif
@@ -1409,9 +1400,11 @@ eap_halt_input(void *addr)
 	DPRINTF(("eap: eap_halt_input\n"));
 	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_ADC_EN);
+	sc->sc_rintr = 0;
 #ifdef DIAGNOSTIC
 	sc->sc_rrun = 0;
 #endif
+
 	return (0);
 }
 
