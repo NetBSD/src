@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.55 2004/10/22 13:08:23 augustss Exp $
+#	$NetBSD: files.usb,v 1.56 2004/10/23 13:38:26 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -178,9 +178,9 @@ attach	url at uhub
 file	dev/usb/if_url.c		url
 
 # ASIX AX88172
-device	uax: arp, ether, ifnet, mii, mii_phy
-attach	uax at uhub
-file	dev/usb/if_uax.c		uax
+device	axe: arp, ether, ifnet, mii, mii_phy
+attach	axe at uhub
+file	dev/usb/if_axe.c		axe
 
 # DAVICOM DM9601
 device	udav: arp, ether, ifnet, mii, mii_phy
