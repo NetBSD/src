@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.14 1994/10/26 08:46:11 cgd Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.15 1994/12/03 23:30:45 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -18,8 +18,13 @@
  *	Apples NB Ethernet card
  *	Interlan A310 Nubus Ethernet card
  *	Cayman Systems GatorCard
+ *	Asante MacCon II/E
  */
 
+/*
+ * $Id: if_ae.c,v 1.15 1994/12/03 23:30:45 briggs Exp $
+ */
+ 
 #include "ae.h"
 /* bpfilter included here in case it is needed in future net includes */
 #include "bpfilter.h"
@@ -76,8 +81,9 @@ struct	ae_softc {
 	char	*type_str;	/* pointer to type string */
 	u_char	vendor;		/* interface vendor */
 	u_char	type;		/* interface type code */
-#define	APPLE_CARD(sc)		((sc)->vendor == AE_VENDOR_APPLE)
-#define	REG_MAP(sc, reg)	(APPLE_CARD(sc) ? (0x0f-(reg))<<2 : (reg)<<2)
+	u_char	regs_rev;	/* registers are reversed */
+
+#define	REG_MAP(sc, reg)	((sc)->regs_rev ? (0x0f-(reg))<<2 : (reg)<<2)
 #define NIC_GET(sc, reg)	((sc)->nic_addr[REG_MAP(sc, reg)])
 #define NIC_PUT(sc, reg, val)	((sc)->nic_addr[REG_MAP(sc, reg)] = (val))
 	volatile caddr_t nic_addr; /* NIC (DS8390) I/O bus address */
@@ -85,6 +91,7 @@ struct	ae_softc {
 	caddr_t	smem_start;	/* shared memory start address */
 	caddr_t	smem_end;	/* shared memory end address */
 	u_long	smem_size;	/* total shared memory size */
+	u_char	smem_wr_short;	/* card memory requires int16 writes */
 	caddr_t	smem_ring;	/* start of RX ring-buffer (in smem) */
 
 	caddr_t	bpf;		/* BPF "magic cookie" */
@@ -93,7 +100,7 @@ struct	ae_softc {
 	u_char	txb_cnt;	/* Number of transmit buffers */
 	u_char	txb_next;	/* Pointer to next buffer ready to xmit */
 	u_short	txb_next_len;	/* next xmit buffer length */
-	u_char	data_buffered;	/* data has been buffered in interface memory */
+	u_char	data_buffered;	/* data has been buffered in interface mem */
 	u_char	tx_page_start;	/* first page of TX buffer area */
 
 	u_char	rec_page_start;	/* first page of RX ring-buffer */
@@ -133,6 +140,7 @@ struct vendor_S {
 	{ "3Com",  4, AE_VENDOR_APPLE },
 	{ "Dayna", 5, AE_VENDOR_DAYNA },
 	{ "Inter", 5, AE_VENDOR_INTERLAN },
+	{ "Asant", 5, AE_VENDOR_ASANTE },
 };
 
 static int numvend = sizeof(vend)/sizeof(vend[0]);
@@ -144,7 +152,7 @@ static int numvend = sizeof(vend)/sizeof(vend[0]);
  */
 
 void
-bbzero (char *addr, int len)
+bszero (u_short *addr, int len)
 {
 	while (len--) {
 		*addr++ = 0;
@@ -156,6 +164,36 @@ bbcopy (char *src, char *dest, int len)
 {
 	while (len--) {
 		*dest++ = *src++;
+	}
+}
+
+/*
+	short copy; assume destination is always aligned
+	and last byte of odd length copy is not important
+*/
+
+void
+bscopy (char *src, char *dest, int len)
+{
+	u_short *d = (u_short *)dest;
+	u_short *s = (u_short *)src;
+	char b1, b2;
+
+	/* odd case, src addr is unaligned */
+	if ( ((u_long)src) & 1 ) {
+		while (len > 0) {
+			b1 = *src++;
+			b2 = len > 1 ? *src++ : (*d & 0xff);
+			*d++ = (b1 << 8) | b2;
+			len -= 2;
+		}
+		return;
+	}
+
+	/* normal case, aligned src & dst */
+	while (len > 0) {
+		*d++ = *s++;
+		len -= 2;
 	}
 }
 
@@ -171,19 +209,58 @@ ae_id_card(nu, sc)
 	 */
 	sc->vendor = AE_VENDOR_UNKNOWN;
 	for (i=0 ; i<numvend ; i++) {
-		if (!strncmp(nu->Slot.manufacturer, vend[i].manu, vend[i].len)) {
+		if (!strncmp(nu->Slot.manufacturer, vend[i].manu, vend[i].len)) 
+		{
 			sc->vendor = vend[i].vendor;
 			break;
 		}
 	}
 	sc->type_str = (char *) (nu->Slot.manufacturer);
 
-	/* see if it's an Interlan/GatorCard
-	sc->rom_addr = nu->addr + GC_ROM_OFFSET;
-	if (sc->rom_addr[0x18] == 0x0 &&
-	    sc->rom_addr[0x1c] == 0x55) {
-		sc->vendor = AE_VENDOR_INTERLAN;
-	} */
+}
+
+int
+ae_size_card_memory(sc)
+	struct ae_softc	*sc;
+{
+	u_short *p;
+	u_short i1, i2, i3, i4;
+	int size;
+	
+	p = (u_short *)sc->smem_start;
+
+	/*
+	 * very simple size memory, assuming it's installed in 8k
+	 * banks; also assume it will generally mirror in upper banks
+	 * if not installed.
+	 */
+	i1 = (8192*0)/2;
+	i2 = (8192*1)/2;
+	i3 = (8192*2)/2;
+	i4 = (8192*3)/2;
+	
+	p[i1] = 0x1111;
+	p[i2] = 0x2222;
+	p[i3] = 0x3333;
+	p[i4] = 0x4444;
+	
+	size = 0;
+	if (p[i1] == 0x1111 && p[i2] == 0x2222 &&
+	    p[i3] == 0x3333 && p[i4] == 0x4444)
+		size = 8192*4;
+	else
+		if ((p[i1] == 0x1111 && p[i2] == 0x2222) ||
+		    (p[i1] == 0x3333 && p[i2] == 0x4444))
+			size = 8192*2;
+		else
+			if (p[i1] == 0x1111 || p[i1] == 0x4444)
+				size = 8192;
+
+	if (size == 0)
+	  return 0;
+
+	sc->smem_size = size;
+	return size;
 }
 
 int
@@ -202,12 +279,16 @@ ae_probe(parent, cf, aux)
 
 	ae_id_card(nu, sc);
 
+	sc->regs_rev = 0;
+	sc->smem_wr_short = 0;
+
 	switch (sc->vendor) {
 	      case AE_VENDOR_INTERLAN:
 		sc->nic_addr = nu->addr + GC_NIC_OFFSET;
 		sc->rom_addr = nu->addr + GC_ROM_OFFSET;
 		sc->smem_start = nu->addr + GC_DATA_OFFSET;
-		memsize = 8192;
+		if ((memsize = ae_size_card_memory(sc)) == 0)
+			return 0;
 
 		/* reset the NIC chip */
 		*((caddr_t)nu->addr + GC_RESET_OFFSET) = (char)zero;
@@ -217,11 +298,18 @@ ae_probe(parent, cf, aux)
 			sc->arpcom.ac_enaddr[i] = *(sc->rom_addr + i*4);
 		break;
 
+	      case AE_VENDOR_ASANTE:
+		/* memory writes require *(u_short *) */
+		sc->smem_wr_short = 1;
+		/* otherwise, pretend to be an apple card (fall through) */
+
 	      case AE_VENDOR_APPLE:
+		sc->regs_rev = 1;
 		sc->nic_addr = nu->addr + AE_NIC_OFFSET;
 		sc->rom_addr = nu->addr + AE_ROM_OFFSET;
 		sc->smem_start = nu->addr + AE_DATA_OFFSET;
-		memsize = 8192;
+		if ((memsize = ae_size_card_memory(sc)) == 0)
+			return 0;
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
@@ -251,11 +339,13 @@ ae_probe(parent, cf, aux)
 	 * allocate one xmit buffer if < 16k, two buffers otherwise
 	 */
 	if ((memsize < 16384) || (flags & AE_FLAGS_NO_DOUBLE_BUFFERING)) {
-		sc->smem_ring = sc->smem_start + (AE_PAGE_SIZE * AE_TXBUF_SIZE);
+		sc->smem_ring =
+		  sc->smem_start + (AE_PAGE_SIZE * AE_TXBUF_SIZE);
 		sc->txb_cnt = 1;
 		sc->rec_page_start = AE_TXBUF_SIZE;
 	} else {
-		sc->smem_ring = sc->smem_start + (AE_PAGE_SIZE * AE_TXBUF_SIZE * 2);
+		sc->smem_ring =
+		  sc->smem_start + (AE_PAGE_SIZE * AE_TXBUF_SIZE * 2);
 		sc->txb_cnt = 2;
 		sc->rec_page_start = AE_TXBUF_SIZE * 2;
 	}
@@ -268,11 +358,11 @@ ae_probe(parent, cf, aux)
 	/*
 	 * Now zero memory and verify that it is clear
 	 */
-	bbzero(sc->smem_start, memsize);
+	bszero((u_short *)sc->smem_start, memsize / 2);
 
 	for (i = 0; i < memsize; ++i)
 		if (sc->smem_start[i]) {
-	        	printf(": failed to clear shared memory at %x\n",
+	        	printf("ae: failed to clear shared memory at %x\n",
 			       sc->smem_start + i);
 
 			return(0);
@@ -375,9 +465,11 @@ ae_attach(parent, self, aux)
 	printf(": address %s, ", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	if (sc->type_str && (*sc->type_str != 0))
-		printf("type %s ", sc->type_str);
+		printf("type %s", sc->type_str);
 	else
-		printf("type unknown (0x%x) ", sc->type);
+		printf("type unknown (0x%x)", sc->type);
+
+	printf(", %dk mem", sc->smem_size / 1024);
 
 	printf("\n");
 
@@ -439,17 +531,10 @@ int
 ae_watchdog(unit)
 	short unit;
 {
+	struct ae_softc *sc = &ae_softc[unit];
+
 	log(LOG_ERR, "ae%d: device timeout\n", unit);
-{
-struct ae_softc *sc = &ae_softc[unit];
-printf("cr %x, isr %x\n", NIC_GET(sc, AE_P0_CR), NIC_GET(sc, AE_P0_ISR));
-/* via_dump(); */
-if (NIC_GET(sc, AE_P0_ISR)) {
-	aeintr(0);
-	return;
-}
-}
-	ae_reset(unit);
+	ae_reset(sc);
 }
 
 /*
@@ -461,7 +546,6 @@ ae_init(sc)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int i, s;
 	u_char	command;
-
 
 	/* address not known */
 	if (ifp->if_addrlist == (struct ifaddr *)0) return;
@@ -533,6 +617,9 @@ ae_init(sc)
 	 */
 	NIC_PUT(sc, AE_P0_ISR, ones);
 
+	/* make sure interrupts are vectored to us */
+	add_nubus_intr((int)sc->rom_addr & 0xFF000000, aeintr, sc - ae_softc);
+
 	/*
 	 * Enable the following interrupts: receive/transmit complete,
 	 *	receive/transmit error, and Receiver OverWrite.
@@ -583,9 +670,6 @@ ae_init(sc)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-
-	/* XXXXXX */
-	add_nubus_intr((int)sc->rom_addr & 0xFF000000, aeintr, sc - ae_softc);
 
 	/*
 	 * ...and attempt to start output
@@ -708,11 +792,11 @@ outloop:
 	len = 0;
 	for (m0 = m; m != 0; m = m->m_next) {
 		/*printf("ae: copy %d bytes @ %x\n", m->m_len, buffer);*/
-		bbcopy(mtod(m, caddr_t), buffer, m->m_len);
+		bscopy(mtod(m, caddr_t), buffer, m->m_len); 
 		buffer += m->m_len;
        		len += m->m_len;
 	}
-if (len & 1) len++;
+	if (len & 1) len++;
 
 	sc->txb_next_len = max(len, ETHER_MIN_LEN);
 
@@ -846,21 +930,22 @@ ae_rint(unit)
 		if ((len >= ETHER_MIN_LEN) && (len <= ETHER_MAX_LEN)) {
 			/*
 			 * Go get packet. len - 4 removes CRC from length.
-			 * (packet_ptr + 1) points to data just after the packet ring
-			 *	header (+4 bytes)
+			 * (packet_ptr + 1) points to data just after the
+			 * packet ring header (+4 bytes)
 			 */
 			ae_get_packet(sc, (caddr_t)(packet_ptr + 1), len - 4);
 			++sc->arpcom.ac_if.if_ipackets;
 		} else {
 			/*
-			 * Really BAD...probably indicates that the ring pointers
-			 *	are corrupted. Also seen on early rev chips under
-			 *	high load - the byte order of the length gets switched.
+			 * Really BAD...probably indicates that the ring
+			 * pointers are corrupted. Also seen on early rev
+			 * chips under high load - the byte order of the
+			 * length gets switched.
 			 */
 			log(LOG_ERR,
 				"ae%d: shared memory corrupt - invalid packet length %d\n",
 				unit, len);
-			ae_reset(unit);
+			ae_reset(sc);
 			return;
 		}
 
@@ -885,8 +970,8 @@ ae_rint(unit)
 		NIC_PUT(sc, AE_P0_BNRY, boundry);
 
 		/*
-		 * Set NIC to page 1 registers before looping to top (prepare to
-		 *	get 'CURR' current pointer)
+		 * Set NIC to page 1 registers before looping to top
+		 * (prepare to get 'CURR' current pointer)
 		 */
 		NIC_PUT(sc, AE_P0_CR, AE_CR_PAGE_1|AE_CR_RD2|AE_CR_STA);
 	}
@@ -1009,7 +1094,7 @@ aeintr(unit)
 				/*
 				 * Stop/reset/re-init NIC
 				 */
-				ae_reset(unit);
+				ae_reset(sc);
 			} else {
 
 			    /*
@@ -1141,7 +1226,7 @@ ae_ioctl(ifp, command, data)
 		 */
 		if (((ifp->if_flags & IFF_UP) == 0) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
-			ae_stop(ifp->if_unit);
+			ae_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else {
 		/*
@@ -1259,7 +1344,8 @@ ae_get_packet(sc, buf, len)
 		resid -= sizeof(struct trailer_header);
 		if (resid < 0) goto bad;	/* insanity */
 
-		m = ae_ring_to_mbuf(sc, ringoffset(sc, buf, off+4, char *), head, resid);
+		m = ae_ring_to_mbuf(sc, ringoffset(sc, buf, off+4, char *),
+				    head, resid);
 		if (m == 0) goto bad;
 
 		len = off;
@@ -1334,7 +1420,8 @@ ae_ring_copy(sc,src,dst,amount)
 	/* does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->smem_end) {
 		tmp_amount = sc->smem_end - src;
-		bbcopy(src, dst, tmp_amount);/* copy amount up to end of smem */
+		/* copy amount up to end of smem */
+		bbcopy(src, dst, tmp_amount);
 		amount -= tmp_amount;
 		src = sc->smem_ring;
 		dst += tmp_amount;
@@ -1366,7 +1453,8 @@ ae_ring_to_mbuf(sc,src,dst,total_len)
 	while (total_len) {
 		register u_short amount = min(total_len, M_TRAILINGSPACE(m));
 
-		if (amount == 0) { /* no more data in this mbuf, alloc another */
+		if (amount == 0) {
+		  /* no more data in this mbuf, alloc another */
 			/*
 			 * If there is enough data for an mbuf cluster, attempt
 			 * 	to allocate one of those, otherwise, a regular
@@ -1375,8 +1463,8 @@ ae_ring_to_mbuf(sc,src,dst,total_len)
 			 *	we get a cluster - getting a cluster does not
 			 *	allocate any mbufs, and one is needed to assign
 			 *	the cluster to. The mbuf that has a cluster
-			 *	extension can not be used to contain data - only
-			 *	the cluster can contain data.
+			 *	extension can not be used to contain data -
+			 *	only the cluster can contain data.
 			 */ 
 			dst = m;
 			MGET(m, M_DONTWAIT, MT_DATA);
@@ -1391,7 +1479,8 @@ ae_ring_to_mbuf(sc,src,dst,total_len)
 			amount = min(total_len, M_TRAILINGSPACE(m));
 		}
 
-		src = ae_ring_copy(sc, src, mtod(m, caddr_t) + m->m_len, amount);
+		src = ae_ring_copy(sc, src, mtod(m, caddr_t) + m->m_len,
+				   amount);
 
 		m->m_len += amount;
 		total_len -= amount;
