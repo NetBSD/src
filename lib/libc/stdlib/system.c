@@ -33,12 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)system.c	5.10 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: system.c,v 1.7 1993/08/26 00:48:16 jtc Exp $";
+static char *rcsid = "$Id: system.c,v 1.8 1995/02/28 01:14:45 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-#include <sys/signal.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <unistd.h>
