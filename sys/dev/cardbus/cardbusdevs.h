@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.15 2001/05/15 04:25:12 kanaoka Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.16 2001/06/20 05:39:36 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.17 2001/03/14 01:41:09 christos Exp 
+ *	NetBSD: cardbusdevs,v 1.19 2001/06/20 05:39:17 ichiro Exp 
  */
 
 /*
@@ -90,6 +90,7 @@
 
 /* Realtek (Creative Labs?) products */
 #define	CARDBUS_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 Ethernet */
+#define	CARDBUS_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 Ethernet */
 
 /* IO Data products */
 #define	CARDBUS_PRODUCT_IODATA_CBIDE2	0x0003		/* CBIDE2 IDE controller */
