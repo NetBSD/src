@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utilities.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: utilities.c,v 1.10 1994/09/23 14:27:22 mycroft Exp $";
+static char *rcsid = "$Id: utilities.c,v 1.11 1994/12/05 20:16:07 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -45,10 +45,14 @@ static char *rcsid = "$Id: utilities.c,v 1.10 1994/09/23 14:27:22 mycroft Exp $"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
+
 #include "fsck.h"
+#include "extern.h"
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
+int
 ftypeok(dp)
 	struct dinode *dp;
 {
@@ -70,6 +74,7 @@ ftypeok(dp)
 	}
 }
 
+int
 reply(question)
 	char *question;
 {
@@ -105,6 +110,7 @@ reply(question)
 /*
  * Malloc buffers and set up cache.
  */
+void
 bufinit()
 {
 	register struct bufarea *bp;
@@ -189,6 +195,7 @@ getblk(bp, blk, size)
 	}
 }
 
+void
 flush(fd, bp)
 	int fd;
 	register struct bufarea *bp;
@@ -214,6 +221,7 @@ flush(fd, bp)
 	}
 }
 
+void
 rwerror(mesg, blk)
 	char *mesg;
 	daddr_t blk;
@@ -226,6 +234,7 @@ rwerror(mesg, blk)
 		errexit("Program terminated\n");
 }
 
+void
 ckfini()
 {
 	register struct bufarea *bp, *nbp;
@@ -261,6 +270,7 @@ ckfini()
 	(void)close(fswritefd);
 }
 
+int
 bread(fd, buf, blk, size)
 	int fd;
 	char *buf;
@@ -299,6 +309,7 @@ bread(fd, buf, blk, size)
 	return (errs);
 }
 
+void
 bwrite(fd, buf, blk, size)
 	int fd;
 	char *buf;
@@ -335,6 +346,7 @@ bwrite(fd, buf, blk, size)
 /*
  * allocate a data block with the specified number of fragments
  */
+int
 allocblk(frags)
 	long frags;
 {
@@ -365,6 +377,7 @@ allocblk(frags)
 /*
  * Free a previously allocated block
  */
+void
 freeblk(blkno, frags)
 	daddr_t blkno;
 	long frags;
@@ -379,6 +392,7 @@ freeblk(blkno, frags)
 /*
  * Find a pathname
  */
+void
 getpathname(namebuf, curdir, ino)
 	char *namebuf;
 	ino_t curdir, ino;
@@ -387,7 +401,6 @@ getpathname(namebuf, curdir, ino)
 	register char *cp;
 	struct inodesc idesc;
 	static int busy = 0;
-	extern int findname();
 
 	if (curdir == ino && ino == ROOTINO) {
 		(void)strcpy(namebuf, "/");
@@ -474,6 +487,7 @@ voidquit()
 /*
  * determine whether an inode should be fixed.
  */
+int
 dofix(idesc, msg)
 	register struct inodesc *idesc;
 	char *msg;
