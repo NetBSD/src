@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.47 1998/08/08 22:33:17 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.48 1998/08/08 22:40:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.47 1998/08/08 22:33:17 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.48 1998/08/08 22:40:57 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1518,7 +1518,7 @@ void
 usage()
 {
 	fprintf(stderr,
-	    "usage: ifconfig [ -m ] interface\n%s%s%s%s%s%s%s%s%s%s%s",
+	    "usage: ifconfig [ -m ] interface\n%s%s%s%s%s%s%s%s%s%s%s%s",
 		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
 		"[ netmask mask ] ]\n",
 		"\t[ metric n ]\n",
@@ -1527,6 +1527,7 @@ usage()
 		"\t[ media mtype ]\n",
 		"\t[ mediaopt mopts ]\n",
 		"\t[ -mediaopt mopts ]\n",
+		"\t[ instance minst ]\n",
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n",
 		"       ifconfig -a [ -m ] [ -d ] [ -u ] [ af ]\n",
 		"       ifconfig -l [ -d ] [ -u ]\n");
