@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.13 2002/11/28 21:21:32 manu Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.14 2002/11/29 17:08:16 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.13 2002/11/28 21:21:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.14 2002/11/29 17:08:16 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,18 +268,6 @@ mach_sys_syscall_thread_switch(struct proc *p, void *v, register_t *r) {
 	*r = 0;
 	DPRINTF(("mach_sys_syscall_thread_switch(0x%x, %d, %d);\n",
 	    SCARG(ap, thread_name), SCARG(ap, option), SCARG(ap, option_time)));
-	return 0;
-}
-
-
-int
-mach_sys_timebase_info(struct proc *p, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_timebase_info_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_timebase_info(%p);\n",
-	    &SCARG(ap, info)));
 	return 0;
 }
 
