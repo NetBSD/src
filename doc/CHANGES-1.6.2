@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.158 2003/09/21 11:02:42 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.159 2003/09/22 12:03:44 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1822,4 +1822,10 @@ usr.sbin/pkg_install/view/pkg_view.sh		1.1-1.4
 
 	Update the package tools to version 20030918.
 	[jlam, ticket #1457]
+
+gnu/dist/toolchain/gcc/config/sparc/netbsd64.h	1.10
+
+	Add a missing backslash.
+	patch supplied in PR toolchain/20062 from Jed Davis
+	[martin, ticket #1480]
 
