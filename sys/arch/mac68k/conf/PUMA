@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.18 1997/01/31 06:02:21 thorpej Exp $
+#	$NetBSD: PUMA,v 1.19 1997/01/31 06:13:42 thorpej Exp $
 #
 # PUMA
 
@@ -11,7 +11,7 @@ options		DDB
 # Filesystem
 file-system	FFS
 file-system	MFS		# memory-based filesystem
-file-system	NFSCLIENT	# Sun NFS-compatible filesystem
+file-system	NFS		# Sun NFS-compatible filesystem
 file-system	NULLFS		# Null (formerly loop-back) filesystem
 file-system	UNION		# Union filesystem
 file-system	CD9660		# ISO-9660 w/ RockRidge
