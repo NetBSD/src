@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 1994/12/12 18:59:57 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 1994/12/30 17:17:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -50,6 +50,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
@@ -277,6 +278,7 @@ void clock_intr(frame)
  * fun, we guarantee that the time will be greater than the value
  * obtained by a previous call.
  */
+void
 microtime(tvp)
 	register struct timeval *tvp;
 {
