@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.26 1998/08/31 22:28:08 cgd Exp $	*/
+/*	$NetBSD: device.h,v 1.27 1998/08/31 23:05:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,8 +126,6 @@ struct cfdriver {
 	void	**cd_devs;		/* devices found */
 	char	*cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
-	/* XXX TEMPORARY */
-	void	*cd_lossage_prevention;	/* keep 'cd_ndevs' from being initted */
 	int	cd_ndevs;		/* size of cd_devs array */
 };
 
