@@ -1,4 +1,4 @@
-/* $NetBSD: pic.c,v 1.2 2004/01/13 13:05:17 sekiya Exp $	 */
+/* $NetBSD: pic.c,v 1.3 2004/01/13 14:31:37 sekiya Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -95,6 +95,7 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 		panic("pic_attach: could not allocate memory\n");
 
 	platform.bus_reset = pic_bus_reset;
+	platform.watchdog_reset = pic_watchdog_tickle;
 
 	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_SYSID);
 	reg = (reg >> PIC_SYSID_REVSHIFT) & PIC_SYSID_REVMASK;

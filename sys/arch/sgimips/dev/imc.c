@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.12 2004/01/13 13:05:17 sekiya Exp $	*/
+/*	$NetBSD: imc.c,v 1.13 2004/01/13 14:31:37 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.12 2004/01/13 13:05:17 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.13 2004/01/13 14:31:37 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,6 +110,7 @@ imc_attach(parent, self, aux)
                 panic("imc_attach: could not allocate memory\n");
 
 	platform.bus_reset = imc_bus_reset;
+	platform.watchdog_reset = imc_watchdog_tickle;
 
 	sysid = bus_space_read_4(isc.iot, isc.ioh, IMC_SYSID);
 

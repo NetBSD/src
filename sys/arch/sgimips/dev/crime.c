@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.15 2004/01/12 03:30:51 sekiya Exp $	*/
+/*	$NetBSD: crime.c,v 1.16 2004/01/13 14:31:37 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.15 2004/01/12 03:30:51 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.16 2004/01/13 14:31:37 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.15 2004/01/12 03:30:51 sekiya Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/machtype.h>
+#include <machine/sysconf.h>
 
 #include <sgimips/dev/crimevar.h>
 #include <sgimips/dev/crimereg.h>
@@ -57,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.15 2004/01/12 03:30:51 sekiya Exp $");
 
 static int	crime_match(struct device *, struct cfdata *, void *);
 static void	crime_attach(struct device *, struct device *, void *);
+void		crime_watchdog_tickle(void);
 
 struct crime_softc *crime_sc; /* only one per machine, okay to be global */
 
@@ -145,6 +147,8 @@ crime_attach(parent, self, aux)
 	bus_space_write_8(sc->iot, sc->ioh, CRIME_INTSTAT, 0);
 	bus_space_write_8(sc->iot, sc->ioh, CRIME_SOFTINT, 0);
 	bus_space_write_8(sc->iot, sc->ioh, CRIME_HARDINT, 0);
+
+	platform.watchdog_reset = crime_watchdog_tickle;
 }
 
 /*
@@ -191,3 +195,13 @@ crime_intr_mask(unsigned int intr)
 	mask |= (1 << intr);
 	bus_space_write_8(crime_sc->iot, crime_sc->ioh, CRIME_INTMASK, mask);
 }
+
+void
+crime_watchdog_tickle(void)
+{
+	/* enable watchdog timer, clear it */
+	bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+		CRIME_CONTROL, CRIME_CONTROL_DOG_ENABLE);
+	bus_space_write_8(crime_sc->iot, crime_sc->ioh, CRIME_WATCHDOG, 0);
+}
+
