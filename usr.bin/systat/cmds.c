@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.21.2.1 2000/09/01 16:36:04 ad Exp $	*/
+/*	$NetBSD: cmds.c,v 1.21.2.2 2000/09/04 16:22:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.21.2.1 2000/09/01 16:36:04 ad Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.21.2.2 2000/09/04 16:22:58 ad Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -58,6 +58,9 @@ command(char *cmd)
 	struct mode *p;
 	char *args;
 	sigset_t set;
+
+	if (cmd[0] == '\0')
+		return;
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGALRM);
@@ -106,8 +109,10 @@ switch_mode(struct mode *p)
 
 	switchfail = 0;
 
-	if (curmode == p)
+	if (curmode == p) {
+		status();
 		return;
+	}
 
 	alarm(0);
 	(*curmode->c_close)(wnd);
