@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.10.2.2 2004/08/03 10:52:42 skrll Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.10.2.3 2004/08/18 06:45:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.10.2.2 2004/08/03 10:52:42 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.10.2.3 2004/08/18 06:45:12 skrll Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -212,7 +212,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct vnode *vp, struct ucred *cred)
 }
 
 int
-ELFNAMEEND(coredump_countsegs)(struct lwp *p, struct vnode *vp,
+ELFNAMEEND(coredump_countsegs)(struct lwp *l, struct vnode *vp,
     struct ucred *cred, struct uvm_coredump_state *us)
 {
 	struct countsegs_state *cs = us->cookie;
@@ -296,7 +296,6 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l, struct vnode *vp,
 	struct lwp *l0;
 
 	size = 0;
-	p = l->l_proc;
 
 	/* First, write an elfcore_procinfo. */
 	notesize = sizeof(nhdr) + elfround(sizeof(ELF_NOTE_NETBSD_CORE_NAME)) +
