@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.21 1998/10/07 05:27:13 scottr Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.22 1998/10/07 06:08:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -906,7 +906,7 @@ opcode_addsub(dbuf, opc)
 		}
 	}
 	
-	if (IS_INST(ADDX,opc) || IS_INST(SUBX,opc)) {
+	if (!amode && (IS_INST(ADDX,opc) || IS_INST(SUBX,opc))) {
 		if (IS_INST(ADDX,opc))
 			addstr(dbuf,"addx");
 		else
