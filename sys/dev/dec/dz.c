@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.6 2002/09/19 23:22:56 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.7 2002/09/24 06:19:11 ad Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.6 2002/09/19 23:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.7 2002/09/24 06:19:11 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -127,15 +127,13 @@ const struct cdevsw dz_cdevsw = {
 int	dz_timer;	/* true if timer started */
 struct callout dzscan_ch;
 
-#define DZ_DZ	8		/* Unibus DZ-11 board linecount */
-#define DZ_DZV	4		/* Q-bus DZV-11 or DZQ-11 */
-
 void
-dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt)
+dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 {
 	int n;
 
 	sc->sc_rxint = sc->sc_brk = 0;
+	sc->sc_consline = consline;
 
 	sc->sc_dr.dr_tcrw = sc->sc_dr.dr_tcr;
 	DZ_WRITE_WORD(dr_csr, DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
@@ -163,7 +161,6 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt)
 		callout_reset(&dzscan_ch, hz, dzscan, NULL);
 	}
 	printf("\n");
-	return;
 }
 
 /* Receiver Interrupt */
@@ -199,8 +196,16 @@ dzrint(void *arg)
 			    sc->sc_dev.dv_xname, line);
 			overrun = 1;
 		}
-
-		/* A BREAK key will appear as a NULL with a framing error */
+#if defined(pmax) && defined(DDB)
+		else if (line == sc->sc_consline) {
+			/*
+			 * A BREAK key will appear as a NUL with a framing
+			 * error.
+			 */
+			if (cc == 0 && (c & DZ_RBUF_FRAMING_ERR) != 0)
+				Debugger();
+		}
+#endif
 		if (c & DZ_RBUF_FRAMING_ERR)
 			cc |= TTY_FE;
 		if (c & DZ_RBUF_PARITY_ERR)
@@ -707,7 +712,6 @@ dzscan(void *arg)
 	}
 	(void) splx(s);
 	callout_reset(&dzscan_ch, hz, dzscan, NULL);
-	return;
 }
 
 /*
