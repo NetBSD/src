@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.6 1993/09/16 05:59:43 mycroft Exp $
+ *	$Id: endian.h,v 1.7 1993/09/17 01:44:08 cgd Exp $
  */
 
 #ifndef _MACHINE_ENDIAN_H_
@@ -55,9 +55,7 @@
 
 #define	BYTE_ORDER	LITTLE_ENDIAN
 
-#ifndef KERNEL
 #include <sys/cdefs.h>
-#endif
 
 __BEGIN_DECLS
 unsigned long   htonl __P((unsigned long));
