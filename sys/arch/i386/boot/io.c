@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: io.c,v 1.7 1994/01/11 14:24:11 mycroft Exp $
+ *	$Id: io.c,v 1.8 1994/05/01 06:46:31 cgd Exp $
  */
 
 #include <sys/types.h>
@@ -80,8 +80,8 @@ printf(format,data)
 			putchar(c);
 			continue;
 		}
-		switch (c = *format++) {
-		case 'd': {
+		c = *format++;
+		if (c == 'd') {
 			int num = *dataptr++;
 			char buf[10], *ptr = buf;
 			if (num < 0) {
@@ -94,9 +94,7 @@ printf(format,data)
 			do
 				putchar(*--ptr);
 			while (ptr != buf);
-			break;
-		}
-		case 'x': {
+		} else if (c == 'x') {
 			int num = *dataptr++, dig;
 			char buf[8], *ptr = buf;
 			do
@@ -107,16 +105,12 @@ printf(format,data)
 			do
 				putchar(*--ptr);
 			while (ptr != buf);
-			break;
-		}
-		case 'c':
-			putchar((*dataptr++) & 0xff); break;
-		case 's': {
+		} else if (c == 'c') {
+			putchar((*dataptr++) & 0xff);
+		} else if (c == 's') {
 			char *ptr = (char *)*dataptr++;
 			while (c = *ptr++)
 				putchar(c);
-			break;
-		}
 		}
 	}
 }
@@ -150,19 +144,17 @@ gets(buf)
 
 	for (i = 240000; i > 0; i--)
 		if (ischar())
-			for (;;)
-				switch (*ptr = getchar() & 0xff) {
-				case '\n':
-				case '\r':
+			for (;;) {
+				*ptr = getchar() & 0xff;
+				if (*ptr == '\n' || *ptr == '\r') {
 					*ptr = '\0';
 					return 1;
-				case '\b':
+				} else if (*ptr == '\b') {
 					if (ptr > buf)
 						ptr--;
-					continue;
-				default:
+				} else
 					ptr++;
-				}
+			}
 	return 0;
 }
 
