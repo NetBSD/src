@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2002/03/05 04:48:03 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 2002/03/06 10:55:21 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2002/03/05 04:48:03 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2002/03/06 10:55:21 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -505,18 +505,16 @@ pmap_alloc_pv(pmap, mode)
 
 	simple_lock(&pvalloc_lock);
 
-	if (pv_freepages.tqh_first != NULL) {
-		pvpage = pv_freepages.tqh_first;
+	pvpage = TAILQ_FIRST(&pv_freepages);
+
+	if (pvpage != NULL) {
 		pvpage->pvinfo.pvpi_nfree--;
 		if (pvpage->pvinfo.pvpi_nfree == 0) {
 			/* nothing left in this one? */
 			TAILQ_REMOVE(&pv_freepages, pvpage, pvinfo.pvpi_list);
 		}
 		pv = pvpage->pvinfo.pvpi_pvfree;
-#ifdef DIAGNOSTIC
-		if (pv == NULL)
-			panic("pmap_alloc_pv: pvpi_nfree off");
-#endif
+		KASSERT(pv);
 		pvpage->pvinfo.pvpi_pvfree = pv->pv_next;
 		pv_nfpvents--;  /* took one from pool */
 	} else {
@@ -566,20 +564,17 @@ pmap_alloc_pvpage(pmap, mode)
 	 * if we need_entry and we've got unused pv_pages, allocate from there
 	 */
 
-	if (mode != ALLOCPV_NONEED && pv_unusedpgs.tqh_first != NULL) {
+	pvpage = TAILQ_FIRST(&pv_unusedpgs);
+	if (mode != ALLOCPV_NONEED && pvpage != NULL) {
 
 		/* move it to pv_freepages list */
-		pvpage = pv_unusedpgs.tqh_first;
 		TAILQ_REMOVE(&pv_unusedpgs, pvpage, pvinfo.pvpi_list);
 		TAILQ_INSERT_HEAD(&pv_freepages, pvpage, pvinfo.pvpi_list);
 
 		/* allocate a pv_entry */
 		pvpage->pvinfo.pvpi_nfree--;	/* can't go to zero */
 		pv = pvpage->pvinfo.pvpi_pvfree;
-#ifdef DIAGNOSTIC
-		if (pv == NULL)
-			panic("pmap_alloc_pvpage: pvpi_nfree off");
-#endif
+		KASSERT(pv);
 		pvpage->pvinfo.pvpi_pvfree = pv->pv_next;
 
 		pv_nfpvents--;  /* took one from pool */
@@ -604,11 +599,10 @@ pmap_alloc_pvpage(pmap, mode)
 
 	pg = uvm_pagealloc(NULL, pv_cachedva - vm_map_min(kernel_map), NULL,
 	    UVM_PGA_USERESERVE);
-	if (pg)
-		pg->flags &= ~PG_BUSY;	/* never busy */
 
 	if (pg == NULL)
 		return (NULL);
+	pg->flags &= ~PG_BUSY;	/* never busy */
 
 	/*
 	 * add a mapping for our new pv_page and free its entrys (save one!)
@@ -617,7 +611,8 @@ pmap_alloc_pvpage(pmap, mode)
 	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
+	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg),
+		VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
@@ -711,7 +706,7 @@ pmap_free_pv(pmap, pv)
 	 * Can't free the PV page if the PV entries were associated with
 	 * the kernel pmap; the pmap is already locked.
 	 */
-	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL &&
+	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
@@ -742,7 +737,7 @@ pmap_free_pvs(pmap, pvs)
 	 * Can't free the PV page if the PV entries were associated with
 	 * the kernel pmap; the pmap is already locked.
 	 */
-	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL &&
+	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
@@ -756,9 +751,6 @@ pmap_free_pvs(pmap, pvs)
  * => assume caller is holding the pvalloc_lock and that
  *	there is a page on the pv_unusedpgs list
  * => if we can't get a lock on the kmem_map we try again later
- * => note: analysis of MI kmem_map usage [i.e. malloc/free] shows
- *	that if we can lock the kmem_map then we are not already
- *	holding kmem_object's lock.
  */
 
 static void
@@ -771,7 +763,7 @@ pmap_free_pvpage()
 
 	s = splvm(); /* protect kmem_map */
 
-	pvp = pv_unusedpgs.tqh_first;
+	pvp = TAILQ_FIRST(&pv_unusedpgs);
 
 	/*
 	 * note: watch out for pv_initpage which is allocated out of
@@ -781,7 +773,6 @@ pmap_free_pvpage()
 		map = kernel_map;
 	else
 		map = kmem_map;
-
 	if (vm_map_lock_try(map)) {
 
 		/* remove pvp from pv_unusedpgs */
@@ -798,7 +789,6 @@ pmap_free_pvpage()
 
 		pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
 	}
-
 	if (pvp == pv_initpage)
 		/* no more initpage, we've freed it */
 		pv_initpage = NULL;
@@ -1341,7 +1331,7 @@ pmap_alloc_l1pt(void)
 
 	/* Map our physical pages into our virtual space */
 	pt->pt_va = va;
-	m = pt->pt_plist.tqh_first;
+	m = TAILQ_FIRST(&pt->pt_plist);
 	ptes = pmap_map_ptes(pmap_kernel());
 	while (m && va < (pt->pt_va + PD_SIZE)) {
 		pa = VM_PAGE_TO_PHYS(m);
@@ -1428,7 +1418,7 @@ pmap_allocpagedir(pmap)
 	pmap->pm_l1pt = pt;
 
 	/* Get the physical address of the start of the l1 */
-	pa = VM_PAGE_TO_PHYS(pt->pt_plist.tqh_first);
+	pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pt->pt_plist));
 
 	/* Store the virtual address of the l1 in the pmap. */
 	pmap->pm_pdir = (pd_entry_t *)pt->pt_va;
@@ -1614,14 +1604,8 @@ pmap_destroy(pmap)
 	 * entries looking for pt's
 	 * taken from i386 pmap.c
 	 */
-	while (pmap->pm_obj.memq.tqh_first != NULL) {
-		page = pmap->pm_obj.memq.tqh_first;
-#ifdef DIAGNOSTIC
-		if (page->flags & PG_BUSY)
-			panic("pmap_release: busy page table page");
-#endif
-		/* pmap_page_protect?  currently no need for it. */
-
+	while ((page = TAILQ_FIRST(&pmap->pm_obj.memq)) != NULL) {
+		KASSERT((page->flags & PG_BUSY) == 0);
 		page->wire_count = 0;
 		uvm_pagefree(page);
 	}
