@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.2 2000/05/14 22:50:01 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.2 2000/05/14 22:50:01 bjh21 Exp $");
+
+#include "opt_cputypes.h"
+#include "opt_ddb.h"
+#include "opt_ktrace.h"
 
 #include <sys/syscall.h>
 #include <sys/syslog.h>
@@ -49,10 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $");
 #ifdef DEBUG
 #include <arm32/arm32/disassem.h>
 #endif
-
-#include "opt_cputypes.h"
-#include "opt_ddb.h"
-#include "opt_ktrace.h"
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -363,8 +363,11 @@ prefetch_abort_handler(struct trapframe *tf)
 		printf("unhandled fault at %p (ret = %d)\n", (void *)pc, ret);
 		printf("Prefetch abort:\n");
 		printregs(tf);
+#ifdef DDB
+		Debugger();
 #endif
-		panic("prefetch_abort_handler: uvm_fault failed");
+#endif
+		trapsignal(p, SIGSEGV, pc);
 	}
 out:
 	userret(p, pc, sticks);
@@ -428,8 +431,11 @@ data_abort_handler(struct trapframe *tf)
 		printregs(tf);
 		printf("pc -> ");
 		disassemble(tf->tf_r15 & R15_PC);
+#ifdef DDB
+		Debugger();
 #endif
-		panic("data_abort_handler: uvm_fault failed");
+#endif
+		trapsignal(p, SIGSEGV, va);
 	}
 
 out:
@@ -632,17 +638,27 @@ address_exception_handler(struct trapframe *tf)
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
 		p->p_addr->u_pcb.pcb_tf = tf;
 	
-/*	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) */{
+	pc = tf->tf_r15 & R15_PC;
+
+	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
 #ifdef DEBUG
 		printf("Address exception:\n");
 		printregs(tf);
 		printf("pc -> ");
-		disassemble(tf->tf_r15 & R15_PC);
+		disassemble(pc);
 #endif
 		panic("address exception in kernel mode");
 	}
 
-	pc = tf->tf_r15 & R15_PC;
+#ifdef DEBUG
+	printf("Address exception:\n");
+	printregs(tf);
+	printf("pc -> ");
+	disassemble(pc);
+#ifdef DDB
+	Debugger();
+#endif
+#endif
 	sticks = p->p_sticks;
 	trapsignal(p, SIGBUS, pc);
 	userret(p, pc, sticks);
