@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.14 2001/03/17 20:34:43 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.15 2001/03/17 21:56:07 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.14 2001/03/17 20:34:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.15 2001/03/17 21:56:07 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -215,11 +215,11 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Set up bus spaces */
-	dsc->sc_regt = pa->pa_memc_t;
-	bus_space_subregion(dsc->sc_regt, pa->pa_memc_h, EH_DP8390, 0x10,
+	dsc->sc_regt = pa->pa_mod_t;
+	bus_space_subregion(dsc->sc_regt, pa->pa_mod_h, EH_DP8390, 0x10,
 	    &dsc->sc_regh);
-	sc->sc_datat = pa->pa_memc_t;
-	bus_space_subregion(sc->sc_datat, pa->pa_memc_h, EH_DATA, 1,
+	sc->sc_datat = pa->pa_mod_t;
+	bus_space_subregion(sc->sc_datat, pa->pa_mod_h, EH_DATA, 1,
 	    &sc->sc_datah);
 	sc->sc_ctlt = pa->pa_fast_t;
 	bus_space_subregion(sc->sc_ctlt, pa->pa_fast_h, EH_CTRL, 1,
