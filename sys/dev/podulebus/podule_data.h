@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.6 2002/03/29 00:18:24 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.7 2002/05/19 22:34:07 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.8 2002/03/29 00:16:51 bjh21 Exp 
+ *	NetBSD: podules,v 1.9 2002/05/19 22:29:57 bjh21 Exp 
  */
 
 /*
@@ -62,6 +62,7 @@ static struct podule_description podules_watford[] = {
 
 static struct podule_description podules_cconcepts[] = {
 	{ PODULE_CCONCEPTS_ROMRAM,	"ROM/RAM podule" },
+	{ PODULE_CCONCEPTS_FAXPACK,	"FaxPack modem" },
 	{ PODULE_CCONCEPTS_LASERDIRECT,	"laser direct (Canon LBP-4)" },
 	{ 0x0000, NULL }
 };
@@ -116,6 +117,11 @@ static struct podule_description podules_irlam[] = {
 
 static struct podule_description podules_oak[] = {
 	{ PODULE_OAK_SCSI,	"16 bit SCSI interface" },
+	{ 0x0000, NULL }
+};
+
+static struct podule_description podules_beebug[] = {
+	{ PODULE_BEEBUG_IDE8,	"8 bit IDE" },
 	{ 0x0000, NULL }
 };
 
@@ -251,6 +257,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_LINGENUITY, 	"Lingenuity", 	podules_lingenuity },
 	{ MANUFACTURER_IRLAM, 		"Irlam Instruments", 	podules_irlam },
 	{ MANUFACTURER_OAK, 		"Oak Solutions", 	podules_oak },
+	{ MANUFACTURER_BEEBUG, 		"BEEBUG (RISC Developments)", 	podules_beebug },
 	{ MANUFACTURER_SJ, 		"SJ Research", 	podules_sj },
 	{ MANUFACTURER_MORLEY, 		"Morley", 	podules_morley },
 	{ MANUFACTURER_HCCS2, 		"HCCS", 	podules_hccs2 },
