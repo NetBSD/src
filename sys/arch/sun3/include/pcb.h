@@ -1,11 +1,9 @@
-/*	$NetBSD: pcb.h,v 1.9 1996/06/18 16:03:45 gwr Exp $	*/
+/*	$NetBSD: pcb.h,v 1.10 1997/01/20 18:34:11 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
- * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -47,11 +45,15 @@
 
 /*
  * Sun3 process control block
+ *
+ * Note: we do not use pcb_ustp, but keep it for consistency
+ * with the other m68k ports so things like ps can be shared.
+ * XXX: pcb_ustp should really be part of struct pmap.
  */
 struct pcb {
 	short	pcb_flags;	/* misc. process flags */
 	short	pcb_ps; 	/* processor status word */
-	int	pcb_mmuctx;	/* MMU context number */
+	int	pcb_ustp;	/* user segment table pointer */
 	int	pcb_usp;	/* user stack pointer */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
