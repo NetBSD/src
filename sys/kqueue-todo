@@ -1,16 +1,16 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.8 2001/09/09 02:30:07 thorpej Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.9 2001/09/09 19:15:59 thorpej Exp $
 
 items todo from bill sommerfeld/thorpej:
-	- resolve si_klist (NetBSD) vs. si_note (FreeBSD)
 	- multiple entry points
 	- events should remain across fork()
 	- rewrite sowakeup()
 	- high-level docco overview of kqueues [c.f jlemon's various papers]
 	- kqfilter entry points for:
 		- smb_trantcp
-		- arch/amiga/dev/event.c
+		- dev/pci/bktr/bktr_os.c		??? doesn't poll?
+
+	- Test compile these:
 		- arch/arc/dev/opms.c
-		- arch/atari/dev/event.c
 		- arch/bebox/isa/lms.c
 		- arch/bebox/isa/mms.c
 		- arch/bebox/isa/pms.c
@@ -20,9 +20,16 @@ items todo from bill sommerfeld/thorpej:
 		- arch/pmax/dev/fb_usrreq.c
 		- arch/pmax/dev/px.c
 		- arch/sparc/dev/tctrl.c
-		- arch/x68k/dev/event.c
-		- dev/pci/bktr/bktr_os.c
 		- arch/hpcmips/dev/apm/apmdev.c
+		- arch/amiga/dev/event.c
+		- arch/amiga/dev/kbd.c
+		- arch/amiga/dev/ms.c
+		- arch/atari/dev/event.c
+		- arch/atari/dev/kbd.c
+		- arch/atari/dev/ms.c
+		- arch/x68k/dev/event.c
+		- arch/x68k/dev/kbd.c
+		- arch/x68k/dev/ms.c
 
 done:
 	- name->id lookup
