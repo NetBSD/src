@@ -1,5 +1,8 @@
 Important things to make ACPI useful on more machines:
 
+* Fix problems with ACPI_PCI_FIXUP.  CardBus slots do not work in some
+  machines currently.
+
 * Add support for attaching acpiec devices early using the ECDT.  Some
   systems need this because otherwise their _INI methods try to access
   regions in the EC space before it's initialized.
@@ -10,4 +13,4 @@ Important things to make ACPI useful on more machines:
 
 * Deal with the "implicit" return problem for older laptops.
 
-- mycroft, 2003/11/01
+- mycroft, 2003/11/02
