@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2002/03/28 15:27:04 uch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2002/05/09 12:40:03 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,26 +70,30 @@ cpu_configure()
 	config_hook_init();
 	softintr_init();
 	hd6446x_intr_init();
-	if (CPU_IS_SH3)	/* Jornada 690, HP620LX, HPW-50PA */
+#ifdef SH3
+	if (CPU_IS_SH3)	/* HD64461 (Jornada 690, HP620LX, HPW-50PA) */
 		intc_intr_establish(SH7709_INTEVT2_IRQ4, IST_LEVEL, IPL_TTY,
 		    (void *)1/* fake. see intc_intr(). */, 0);
-	else	/* HPW-650PA */
+#endif
+#ifdef SH4
+	if (CPU_IS_SH4)	/* HD64465 (HPW-650PA) */
 		intc_intr_establish(SH_INTEVT_IRL11, IST_LEVEL, IPL_TTY,
 		    (void *)1/* fake. see intc_intr(). */, 0);
+#endif
 
 	/* Kick off autoconfiguration. */
 	splhigh();
-
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
 	/* Configuration is finished, turn on interrupts. */
-	spl0();	/* enable all source forcing SOFT_INTs cleared */
+	spl0();
 }
 
 void
 cpu_rootconf()
 {
+
 	get_device(booted_device_name);
 
 	printf("boot device: %s\n",
@@ -101,6 +105,7 @@ cpu_rootconf()
 void
 makebootdev(const char *cp)
 {
+
 	strncpy(booted_device_name, cp, 16);
 }
 
@@ -140,5 +145,5 @@ get_device(char *name)
 				}
 			}
 		}
-	} 
+	}
 }
