@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.7 1999/04/03 03:16:39 lukem Exp $
+.\" $NetBSD: main,v 1.8 1999/04/17 16:18:18 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -197,7 +197,7 @@ support and bus-master DMA support on PCI IDE controllers.
 .It
 Lennart Augustsson has added full USB support, permitting the use of a
 wide variety of Universal Serial Bus peripherals. The drivers should
-easily port to any future platforms that suport the PCI bus.  See
+easily port to any future platforms that support the PCI bus.  See
 .Xr usb 4
 for an overview.
 .It
