@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.17 2004/03/02 16:03:00 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.18 2004/03/07 22:15:19 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.17 2004/03/02 16:03:00 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.18 2004/03/07 22:15:19 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -41,12 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.17 2004/03/02 16:03:00 oster Exp $")
 #include "rf_desc.h"
 #include "rf_shutdown.h"
 
-static struct pool rf_revent_pool;
 #define RF_MAX_FREE_REVENT 128
-#define RF_REVENT_INC        8
-#define RF_REVENT_INITIAL    8
-
-
+#define RF_MIN_FREE_REVENT  32
 
 #include <sys/proc.h>
 #include <sys/kernel.h>
@@ -58,18 +54,15 @@ GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type);
 
 static void rf_ShutdownReconEvent(void *ignored)
 {
-	pool_destroy(&rf_revent_pool);
+	pool_destroy(&rf_pools.revent);
 }
 
 int 
 rf_ConfigureReconEvent(RF_ShutdownList_t **listp)
 {
 
-	pool_init(&rf_revent_pool, sizeof(RF_ReconEvent_t),
-		  0, 0, 0, "rf_revent_pl", NULL);
-	pool_sethiwat(&rf_revent_pool, RF_MAX_FREE_REVENT);
-	pool_prime(&rf_revent_pool, RF_REVENT_INITIAL);
-
+	rf_pool_init(&rf_pools.revent, sizeof(RF_ReconEvent_t),
+		     "rf_revent_pl", RF_MIN_FREE_REVENT, RF_MAX_FREE_REVENT);
 	rf_ShutdownCreate(listp, rf_ShutdownReconEvent, NULL);
 
 	return (0);
@@ -185,7 +178,7 @@ GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type)
 {
 	RF_ReconEvent_t *t;
 
-	t = pool_get(&rf_revent_pool, PR_WAITOK);
+	t = pool_get(&rf_pools.revent, PR_WAITOK);
 	t->col = col;
 	t->arg = arg;
 	t->type = type;
@@ -196,5 +189,5 @@ GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type)
 void 
 rf_FreeReconEventDesc(RF_ReconEvent_t *event)
 {
-	pool_put(&rf_revent_pool, event);
+	pool_put(&rf_pools.revent, event);
 }
