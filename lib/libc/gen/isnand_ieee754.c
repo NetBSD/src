@@ -1,4 +1,4 @@
-/*	$NetBSD: isnan_ieee754.c,v 1.3 2003/10/27 00:05:46 kleink Exp $	*/
+/*	$NetBSD: isnand_ieee754.c,v 1.1 2004/03/04 23:42:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,25 +40,29 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isnan_ieee754.c,v 1.3 2003/10/27 00:05:46 kleink Exp $");
+__RCSID("$NetBSD: isnand_ieee754.c,v 1.1 2004/03/04 23:42:39 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
-#include <sys/types.h>
 #include <machine/ieee.h>
 #include <math.h>
 
+/* libc.so.12 ABI compatbility */
 #ifdef __weak_alias
-__weak_alias(isnan,_isnan)
+__weak_alias(isnan,__isnand)
 #endif
 
+/*
+ * 7.12.3.4 isnan - test for a NaN
+ *          IEEE 754 double-precision version
+ */
 int
-isnan(double d)
+__isnand(double x)
 {
 	union ieee_double_u u;
 
-	u.dblu_d = d;
+	u.dblu_d = x;
+
 	return (u.dblu_dbl.dbl_exp == DBL_EXP_INFNAN &&
 	    (u.dblu_dbl.dbl_frach != 0 || u.dblu_dbl.dbl_fracl != 0));
 }
