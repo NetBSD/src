@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 2002/03/15 05:55:37 gmcgarry Exp $	*/
+/*	$NetBSD: clock.c,v 1.28 2003/07/19 02:39:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2002/03/15 05:55:37 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2003/07/19 02:39:28 tsutsui Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2002/03/15 05:55:37 gmcgarry Exp $");
 #include <dev/clock_subr.h>
 
 #include <hp300/hp300/clockreg.h>
-#include <hp300/hp300/clockvar.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -91,10 +90,10 @@ static int timer3min;		/* current, from above choices */
 static int statprev;		/* previous value in stat timer */
 
 void
-clockattach(todr_chip_handle_t handle)
+todr_attach(todr_chip_handle_t handle)
 {
 	if (todr_handle != NULL)
-		panic("clockattach: multiple clocks");
+		panic("todr_attach: multiple clocks");
 
 	todr_handle = handle;
 }
