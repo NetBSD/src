@@ -1,6 +1,8 @@
-/*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+/*	$NetBSD: uudecode.c,v 1.5 1994/11/17 07:39:35 jtc Exp $	*/
+
+/*-
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,9 +33,16 @@
  * SUCH DAMAGE.
  */
 
+char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
 #ifndef lint
-/*static char sccsid[] = "from: @(#)uudecode.c	5.10 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: uudecode.c,v 1.4 1993/11/09 01:46:38 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
+#endif
+static char rcsid[] = "$NetBSD: uudecode.c,v 1.5 1994/11/17 07:39:35 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -48,6 +57,7 @@ static char rcsid[] = "$Id: uudecode.c,v 1.4 1993/11/09 01:46:38 jtc Exp $";
 #include <errno.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+
 #include <pwd.h>
 #include <unistd.h>
 
@@ -55,11 +65,10 @@ static int decode();
 static void usage();
 char *filename;
 
-/* ARGSUSED */
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int rval;
 
