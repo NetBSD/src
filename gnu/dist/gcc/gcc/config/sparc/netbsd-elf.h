@@ -170,9 +170,7 @@ Boston, MA 02111-1307, USA.  */
 	    %{!mf934: \
 	      %{!mv8*: \
 	        %{!msupersparc:-mcpu=ultrasparc}}}}}}} \
-    %{!mno-vis:%{!mcpu=v9:-mvis}} \
-    %{p:-mcmodel=medlow} \
-    %{pg:-mcmodel=medlow}}"
+    %{!mno-vis:%{!mcpu=v9:-mvis}}}"
 
 #define CC1_SPEC64 \
  "%{sun4:} %{target:} \
@@ -189,10 +187,7 @@ Boston, MA 02111-1307, USA.  */
 	  %{!mf930: \
 	    %{!mf934: \
 	      %{!mv8*: \
-		%{!msupersparc:-mcpu=cypress}}}}}}}} \
-  %{!m32: \
-    %{p:-mcmodel=medlow} \
-    %{pg:-mcmodel=medlow}}"
+		%{!msupersparc:-mcpu=cypress}}}}}}}}"
 
 /* Make sure we use the right output format.  Pick a default and then
    make sure -m32/-m64 switch to the right one.  */
