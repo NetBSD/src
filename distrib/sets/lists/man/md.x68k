@@ -6,10 +6,3 @@
 ./usr/share/man/cat3/dlsym.0
 ./usr/share/man/cat3/dlctl.0
 ./usr/share/man/cat3/dlerror.0
-./usr/share/man/cat1/bellctrl.0
-./usr/share/man/cat1/loadfont.0
-./usr/share/man/cat1/loadkmap.0
-./usr/share/man/cat1/palette.0
-./usr/share/man/cat1/tvctrl.0
-./usr/share/man/cat8/rtcalarm.0
-./usr/share/man/cat8/x68k/poffd.0
