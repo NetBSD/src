@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.21 2000/03/15 02:08:30 fvdl Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.22 2000/03/16 10:33:45 fvdl Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -635,6 +635,7 @@ struct ahc_softc {
 	u_int16_t		 user_tagenable;/* Tagged Queuing allowed */
 
 	void			*bus_data;
+	int			(*bus_intr)(struct ahc_softc *);
 };
 
 struct full_ahc_softc {
