@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.28 1997/02/02 21:20:58 thorpej Exp $	*/
+/*	$NetBSD: malloc.h,v 1.29 1997/02/04 22:23:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #ifndef _SYS_MALLOC_H_
 #define	_SYS_MALLOC_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_kmemstats.h"
 #endif
 
@@ -295,7 +295,7 @@ struct kmembuckets {
 /*
  * Macro versions for the usual cases of malloc/free
  */
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC)
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(_LKM)
 #define	MALLOC(space, cast, size, type, flags) \
 	(space) = (cast)malloc((u_long)(size), type, flags)
 #define	FREE(addr, type) free((caddr_t)(addr), type)
