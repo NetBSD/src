@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: memcmp.S,v 1.3 1993/12/06 23:08:46 mycroft Exp $"
+	.asciz "$Id: memcmp.S,v 1.4 1993/12/06 23:45:48 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* memcmp(s1, s2, n) */
@@ -95,6 +95,6 @@ bcnoteq:
 	clrl	d1
 	movb	a0@-,d0
 	movb	a1@-,d1
-	subql	d1,d0
+	subl	d1,d0
 bcdone:
 	rts
