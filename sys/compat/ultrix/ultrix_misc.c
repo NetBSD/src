@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.93 2004/04/21 07:05:07 simonb Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.94 2004/04/25 06:02:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.93 2004/04/21 07:05:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.94 2004/04/25 06:02:20 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -359,7 +359,7 @@ ultrix_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 #define		EMUL_IP_MULTICAST_LOOP		4
 #define		EMUL_IP_ADD_MEMBERSHIP		5
 #define		EMUL_IP_DROP_MEMBERSHIP	6
-		static int ipoptxlat[] = {
+		static const int ipoptxlat[] = {
 			IP_MULTICAST_IF,
 			IP_MULTICAST_TTL,
 			IP_MULTICAST_LOOP,
