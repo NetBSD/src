@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.22 2003/08/07 16:42:56 agc Exp $	*/
+/*	$NetBSD: scandir.c,v 1.23 2005/03/17 10:18:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,12 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.22 2003/08/07 16:42:56 agc Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.23 2005/03/17 10:18:22 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * Scan the directory dirname calling select to make a list of selected
+ * Scan the directory dirname calling selectfn to make a list of selected
  * directory entries then sort using qsort and compare routine dcomp.
  * Returns the number of entries and a pointer to a list of pointers to
  * struct dirent (through namelist). Returns -1 if there were any errors.
@@ -72,10 +72,10 @@ __weak_alias(alphasort,_alphasort)
 	    (((dp)->d_namlen + 1 + 3) &~ 3))
 
 int
-scandir(dirname, namelist, select, dcomp)
+scandir(dirname, namelist, selectfn, dcomp)
 	const char *dirname;
 	struct dirent ***namelist;
-	int (*select) __P((const struct dirent *));
+	int (*selectfn) __P((const struct dirent *));
 	int (*dcomp) __P((const void *, const void *));
 {
 	struct dirent *d, *p, **names, **newnames;
@@ -102,7 +102,7 @@ scandir(dirname, namelist, select, dcomp)
 
 	nitems = 0;
 	while ((d = readdir(dirp)) != NULL) {
-		if (select != NULL && !(*select)(d))
+		if (selectfn != NULL && !(*selectfn)(d))
 			continue;	/* just selected names */
 
 		/*
