@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.2 1997/10/17 11:37:09 lukem Exp $	*/
+/*	$NetBSD: md5.c,v 1.3 2001/03/20 18:46:26 atatat Exp $	*/
 
 /*
  * MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -19,7 +19,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: md5.c,v 1.2 1997/10/17 11:37:09 lukem Exp $");
+__RCSID("$NetBSD: md5.c,v 1.3 2001/03/20 18:46:26 atatat Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -30,10 +30,18 @@ __RCSID("$NetBSD: md5.c,v 1.2 1997/10/17 11:37:09 lukem Exp $");
 #include <string.h>
 #include <time.h>
 
-void	MDFilter __P((int));
-void	MDString __P((const char *));
-void	MDTestSuite __P((void));
-void	MDTimeTrial __P((void));
+void	MD5Filter __P((int));
+void	MD5String __P((const char *));
+void	MD5TestSuite __P((void));
+void	MD5TimeTrial __P((void));
+
+#ifndef HASHTYPE
+#define HASHTYPE "MD5"
+#endif
+
+#ifndef HASHLEN
+#define HASHLEN 32
+#endif
 
 /*
  * Length of test block, number of test blocks.
@@ -45,28 +53,29 @@ void	MDTimeTrial __P((void));
  * Digests a string and prints the result.
  */
 void
-MDString(string)
+MD5String(string)
 	const char *string;
 {
 	unsigned int len = strlen(string);
-	char buf[33];
+	char buf[HASHLEN + 1];
 
-	printf("MD5 (\"%s\") = %s\n", string, MD5Data(string, len, buf));
+	printf("%s (\"%s\") = %s\n", HASHTYPE, string,
+	       MD5Data(string, len, buf));
 }
 
 /*
  * Measures the time to digest TEST_BLOCK_COUNT TEST_BLOCK_LEN-byte blocks.
  */
 void
-MDTimeTrial()
+MD5TimeTrial()
 {
 	MD5_CTX context;
 	time_t endTime, startTime;
 	unsigned char block[TEST_BLOCK_LEN];
 	unsigned int i;
-	char *p, buf[33];
+	char *p, buf[HASHLEN + 1];
 
-	printf("MD5 time trial.  Digesting %d %d-byte blocks ...",
+	printf("%s time trial.  Digesting %d %d-byte blocks ...", HASHTYPE,
 	    TEST_BLOCK_LEN, TEST_BLOCK_COUNT);
 	fflush(stdout);
 
@@ -103,18 +112,19 @@ MDTimeTrial()
  * Digests a reference suite of strings and prints the results.
  */
 void
-MDTestSuite()
+MD5TestSuite()
 {
-	printf("MD5 test suite:\n");
+	printf("%s test suite:\n", HASHTYPE);
 
-	MDString("");
-	MDString("a");
-	MDString("abc");
-	MDString("message digest");
-	MDString("abcdefghijklmnopqrstuvwxyz");
-	MDString
+	MD5String("");
+	MD5String("a");
+	MD5String("abc");
+	MD5String("message digest");
+	MD5String("abcdefghijklmnopqrstuvwxyz");
+	MD5String("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq");
+	MD5String
 	    ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
-	MDString
+	MD5String
 	    ("1234567890123456789012345678901234567890\
 1234567890123456789012345678901234567890");
 }
@@ -123,13 +133,13 @@ MDTestSuite()
  * Digests the standard input and prints the result.
  */
 void
-MDFilter(pipe)
+MD5Filter(pipe)
 	int pipe;
 {
 	MD5_CTX context;
 	int len;
 	unsigned char buffer[BUFSIZ];
-	char buf[33];
+	char buf[HASHLEN + 1];
 
 	MD5Init(&context);
 	while ((len = fread(buffer, 1, BUFSIZ, stdin)) > 0) {

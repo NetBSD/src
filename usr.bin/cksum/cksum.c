@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.12 2001/02/19 23:03:45 cgd Exp $	*/
+/*	$NetBSD: cksum.c,v 1.13 2001/03/20 18:46:25 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.12 2001/02/19 23:03:45 cgd Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.13 2001/03/20 18:46:25 atatat Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -58,6 +58,10 @@ __RCSID("$NetBSD: cksum.c,v 1.12 2001/02/19 23:03:45 cgd Exp $");
 #include <fcntl.h>
 #include <locale.h>
 #include <md5.h>
+#include <md4.h>
+#include <md2.h>
+#include <sha1.h>
+#include <rmd160.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,9 +69,44 @@ __RCSID("$NetBSD: cksum.c,v 1.12 2001/02/19 23:03:45 cgd Exp $");
 
 #include "extern.h"
 
+#define HASH_MD2	0
+#define HASH_MD4	1
+#define HASH_MD5	2
+#define HASH_SHA1	3
+#define HASH_RMD160	4
+
+typedef char *(*_filefunc)(const char *, char *);
+
+struct hash {
+	const char *progname;
+	const char *hashname;
+	void (*stringfunc)(const char *);
+	void (*timetrialfunc)(void);
+	void (*testsuitefunc)(void);
+	void (*filterfunc)(int);
+	char *(*filefunc)(const char *, char *);
+} hashes[] = {
+	{ "md2", "MD2",
+	  MD2String, MD2TimeTrial, MD2TestSuite,
+	  MD2Filter, MD2File },
+	{ "md4", "MD4",
+	  MD4String, MD4TimeTrial, MD4TestSuite,
+	  MD4Filter, MD4File },
+	{ "md5", "MD5",
+	  MD5String, MD5TimeTrial, MD5TestSuite,
+	  MD5Filter, MD5File },
+	{ "sha1", "SHA1",
+	  SHA1String, SHA1TimeTrial, SHA1TestSuite,
+	  SHA1Filter, (_filefunc) SHA1File },
+	{ "rmd160", "RMD160",
+	  RMD160String, RMD160TimeTrial, RMD160TestSuite,
+	  RMD160Filter, (_filefunc) RMD160File },
+	{ NULL }
+};
+
 int	main __P((int, char **));
-int	md5_digest_file __P((char *));
-void	requiremd5 __P((const char *));
+int	hash_digest_file __P((char *, struct hash *));
+void	requirehash __P((const char *));
 void	usage __P((void));
 
 int
@@ -75,41 +114,81 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int ch, fd, rval, domd5, dosum, pflag, nomd5stdin;
+	register int ch, fd, rval, dosum, pflag, nohashstdin;
 	u_int32_t len, val;
 	char *fn;
+	const char *progname;
 	int (*cfncn) __P((int, u_int32_t *, u_int32_t *));
 	void (*pfncn) __P((char *, u_int32_t, u_int32_t));
+	struct hash *hash;
 
 	cfncn = NULL;
 	pfncn = NULL;
-	dosum = domd5 = pflag = nomd5stdin = 0;
+	dosum = pflag = nohashstdin = 0;
 
 	setlocale(LC_ALL, "");
 
-	if (!strcmp(getprogname(), "md5"))
-		domd5 = 1;
-	else if (!strcmp(getprogname(), "sum")) {
-		dosum = 1;
-		cfncn = csum1;
-		pfncn = psum1;
-	} else {
-		cfncn = crc;
-		pfncn = pcrc;
+	progname = getprogname();
+
+	for (hash = hashes; hash->hashname != NULL; hash++)
+		if (strcmp(progname, hash->progname) == 0)
+			break;
+
+	if (hash->hashname == NULL) {
+		hash = NULL;
+
+		if (!strcmp(progname, "sum")) {
+			dosum = 1;
+			cfncn = csum1;
+			pfncn = psum1;
+		} else {
+			cfncn = crc;
+			pfncn = pcrc;
+		}
 	}
 
-	while ((ch = getopt(argc, argv, "mo:ps:tx")) != -1)
+	while ((ch = getopt(argc, argv, "mo:ps:tx12456")) != -1)
 		switch(ch) {
+		case '2':
+			if (dosum) {
+				warnx("sum mutually exclusive with md2");
+				usage();
+			}
+			hash = &hashes[HASH_MD2];
+			break;
+		case '4':
+			if (dosum) {
+				warnx("sum mutually exclusive with md4");
+				usage();
+			}
+			hash = &hashes[HASH_MD4];
+			break;
 		case 'm':
+		case '5':
 			if (dosum) {
 				warnx("sum mutually exclusive with md5");
 				usage();
 			}
-			domd5 = 1;
+			hash = &hashes[HASH_MD5];
+			break;
+		case '1':
+			if (dosum) {
+				warnx("sum mutually exclusive with sha1");
+				usage();
+			}
+			hash = &hashes[HASH_SHA1];
+			break;
+		case '6':
+			if (dosum) {
+				warnx("sum mutually exclusive with rmd160");
+				usage();
+			}
+			hash = &hashes[HASH_RMD160];
 			break;
 		case 'o':
-			if (domd5) {
-				warnx("md5 mutually exclusive with sum");
+			if (hash) {
+				warnx("%s mutually exclusive with sum",
+				      hash->hashname);
 				usage();
 			}
 			if (!strcmp(optarg, "1")) {
@@ -124,27 +203,27 @@ main(argc, argv)
 			}
 			break;
 		case 'p':
-			if (!domd5)
-				requiremd5("-p");
+			if (hash == NULL)
+				requirehash("-p");
 			pflag = 1;
 			break;
 		case 's':
-			if (!domd5)
-				requiremd5("-s");
-			nomd5stdin = 1;
-			MDString(optarg);
+			if (hash == NULL)
+				requirehash("-s");
+			nohashstdin = 1;
+			hash->stringfunc(optarg);
 			break;
 		case 't':
-			if (!domd5)
-				requiremd5("-t");
-			MDTimeTrial();
-			nomd5stdin = 1;
+			if (hash == NULL)
+				requirehash("-t");
+			nohashstdin = 1;
+			hash->timetrialfunc();
 			break;
 		case 'x':
-			if (!domd5)
-				requiremd5("-x");
-			MDTestSuite();
-			nomd5stdin = 1;
+			if (hash == NULL)
+				requirehash("-x");
+			nohashstdin = 1;
+			hash->testsuitefunc();
 			break;
 		case '?':
 		default:
@@ -159,8 +238,8 @@ main(argc, argv)
 	do {
 		if (*argv) {
 			fn = *argv++;
-			if (domd5) {
-				if (md5_digest_file(fn)) {
+			if (hash != NULL) {
+				if (hash_digest_file(fn, hash)) {
 					warn("%s", fn);
 					rval = 1;
 				}
@@ -171,10 +250,11 @@ main(argc, argv)
 				rval = 1;
 				continue;
 			}
-		} else if (domd5 && !nomd5stdin)
-			MDFilter(pflag);
+		} else if (hash && !nohashstdin) {
+			hash->filterfunc(pflag);
+		}
 
-		if (!domd5) {
+		if (hash == NULL) {
 			if (cfncn(fd, &val, &len)) {
 				warn("%s", fn ? fn : "stdin");
 				rval = 1;
@@ -187,24 +267,26 @@ main(argc, argv)
 }
 
 int
-md5_digest_file(fn)
+hash_digest_file(fn, hash)
 	char *fn;
+	struct hash *hash;
 {
-	char buf[33], *cp;
+	char buf[41], *cp;
 
-	cp = MD5File(fn, buf);
+	cp = hash->filefunc(fn, buf);
 	if (cp == NULL)
 		return (1);
 
-	printf("MD5 (%s) = %s\n", fn, cp);
+	printf("%s (%s) = %s\n", hash->hashname, fn, cp);
 	return (0);
 }
 
 void
-requiremd5(flg)
+requirehash(flg)
 	const char *flg;
 {
-	warnx("%s flag requires `md5' or -m", flg);
+	warnx("%s flag requires `md2', `md4', `md5', `sha1', or `rmd160'",
+	    flg);
 	usage();
 }
 
@@ -215,6 +297,14 @@ usage()
 	(void)fprintf(stderr, "usage: cksum [-m | [-o 1 | 2]] [file ...]\n");
 	(void)fprintf(stderr, "       sum [file ...]\n");
 	(void)fprintf(stderr,
+	    "       md2 [-p | -t | -x | -s string] [file ...]\n");
+	(void)fprintf(stderr,
+	    "       md4 [-p | -t | -x | -s string] [file ...]\n");
+	(void)fprintf(stderr,
 	    "       md5 [-p | -t | -x | -s string] [file ...]\n");
+	(void)fprintf(stderr,
+	    "       sha1 [-p | -t | -x | -s string] [file ...]\n");
+	(void)fprintf(stderr,
+	    "       rmd160 [-p | -t | -x | -s string] [file ...]\n");
 	exit(1);
 }
