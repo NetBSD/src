@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.11 2002/10/06 13:23:00 simonb Exp $	*/
+/*	$NetBSD: elf.c,v 1.12 2002/10/07 02:33:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.11 2002/10/06 13:23:00 simonb Exp $");
+__RCSID("$NetBSD: elf.c,v 1.12 2002/10/07 02:33:55 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -118,7 +118,7 @@ read_sections(int fd, Elf_Ehdr *ehdr, char *shstrtab, struct elf_section **head)
 			errx(1, "failed to allocate %lu bytes", (u_long)sizeof(*s));
 		s->name = shstrtab + shdr.sh_name;
 		s->type = shdr.sh_type;
-		s->addr = (void*)shdr.sh_addr;
+		s->addr = (void *)shdr.sh_addr;
 		s->offset = shdr.sh_offset;
 		s->size = shdr.sh_size;
 		s->align = shdr.sh_addralign;
@@ -270,13 +270,13 @@ elf_mod_sizes(int fd,
 			    s->name, s->addr, (u_long)s->size, (u_long)s->align);
 		/* XXX try to get rid of the hole before the data
 		   section that GNU-ld likes to put there */
-		if (strcmp(s->name, ".data") == 0 && s->addr > (void*)off) {
+		if (strcmp(s->name, ".data") == 0 && s->addr > (void *)off) {
 #define	ROUND(V, S) (((V) + (S) - 1) & ~((S) - 1))
 			data_offset = ROUND(off, s->align);
 			if (debug)
 				fprintf(stderr, ".data section forced to "
 				    "offset %p (was %p)\n",
-				    (void*)data_offset,
+				    (void *)data_offset,
 				    s->addr);
 			/* later remove size of compressed hole from off */
 			data_hole = (ssize_t)s->addr - data_offset;
@@ -342,7 +342,7 @@ elf_linkcmd(char *buf,
 	else
 		n = snprintf(buf, len, LINKCMD2, kernel, entry,
 			     outfile, address,
-			     (const char*)address + data_offset, object);
+			     (const char *)address + data_offset, object);
 	if (n >= len)
 		errx(1, "link command longer than %lu bytes", (u_long)len);
 }
@@ -381,8 +381,8 @@ elf_mod_load(int fd)
 					/* if there is a gap in the prelinked
 				   	module, transfer some empty
 				   	space... */
-					zero_size += (char*)s->addr
-					 		- (char*)addr;
+					zero_size += (char *)s->addr
+					 		- (char *)addr;
 				}
 				if (zero_size) {
 					loadspace(zero_size);
@@ -400,7 +400,7 @@ elf_mod_load(int fd)
 					loadbuf(buf, n);
 					b -= n;
 				}
-				addr = (char*)s->addr + s->size;
+				addr = (char *)s->addr + s->size;
 			}
 		}
 	}
@@ -409,7 +409,7 @@ elf_mod_load(int fd)
 
 	free_sections(head);
 	free(shstrtab);
-	return (void*)ehdr.e_entry;
+	return (void *)ehdr.e_entry;
 }
 
 void

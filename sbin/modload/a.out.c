@@ -1,4 +1,4 @@
-/*	$NetBSD: a.out.c,v 1.2 2002/10/06 13:23:00 simonb Exp $	*/
+/*	$NetBSD: a.out.c,v 1.3 2002/10/07 02:33:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: a.out.c,v 1.2 2002/10/06 13:23:00 simonb Exp $");
+__RCSID("$NetBSD: a.out.c,v 1.3 2002/10/07 02:33:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -170,7 +170,7 @@ a_out_mod_load(int fd)
 		loadbuf(buf, n);
 		b -= n;
 	}
-	return (void*)info_buf.a_entry;
+	return (void *)info_buf.a_entry;
 }
 
 void
