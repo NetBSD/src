@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.9 2003/10/30 05:31:17 mycroft Exp $
+# $NetBSD: VME,v 1.9.2.1 2004/07/15 20:19:22 he Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.9 $"
+#ident 		"VME-$Revision: 1.9.2.1 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -29,6 +29,7 @@ options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Which kernel debugger?  Uncomment either this:
 options 	DDB
