@@ -1,4 +1,4 @@
-.\"	$NetBSD: mopd.8,v 1.2 1997/03/25 03:07:48 thorpej Exp $
+.\"	$NetBSD: mopd.8,v 1.3 1997/10/16 23:25:16 lukem Exp $
 .\"
 .\" Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
 .\"
@@ -33,25 +33,25 @@
 .Nm mopd
 .Nd MOP Loader Daemon
 .Sh SYNOPSIS
-.Nm mopd
+.Nm
 .Op Fl adf
 .Op Ar interface
 .Sh DESCRIPTION
-.Nm Mopd
+.Nm
 services MOP Load requests on the Ethernet connected to
 .Ar interface
 or all interfaces if
 .Sq Fl a
 is given.
 In a load request received by
-.Nm mopd
+.Nm
 a filename can be given. This is the normal case for e.g. terminal servers.
 If a filename isn't given
-.Nm mopd
+.Nm
 must know what image to load.
 .Pp
 Upon receiving a request, 
-.Nm mopd
+.Nm
 checks if the requested file exists in
 .Pa /tftpboot/mop , 
 the filename is normaly uppercase and with an extension of
@@ -61,14 +61,14 @@ filename, e.g.
 .Pa 08002b09f4de.SYS
 and it might be a soft link to another file.
 .Pp
-.Nm Mopd
+.Nm
 supports two kinds of files. The first type that is check is if the file is
 in
 .Xr a.out 5
 format. If not, a couple of Digital's formats are checked.
 .Pp
 In normal operation, 
-.Nm mopd
+.Nm
 forks a copy of itself and runs in
 the background.  Anomalies and errors are reported via 
 .Xr syslog 3 .
@@ -85,9 +85,6 @@ the foreground.
 .It Fl f
 Run in the foreground. 
 .El
-.Sh BUGS
-.Xr a.out 5
-isn't supported yet non bsd implementations (otherOS).
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /tftpboot/mop

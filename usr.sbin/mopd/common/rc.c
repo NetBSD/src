@@ -1,4 +1,4 @@
-/*	$NetBSD: rc.c,v 1.2 1997/03/25 03:07:35 thorpej Exp $	*/
+/*	$NetBSD: rc.c,v 1.3 1997/10/16 23:25:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -29,14 +29,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: rc.c,v 1.2 1997/03/25 03:07:35 thorpej Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: rc.c,v 1.3 1997/10/16 23:25:04 lukem Exp $");
 #endif
 
 #include "os.h"
-#include "common/get.h"
-#include "common/print.h"
-#include "common/mopdef.h"
+#include "get.h"
+#include "mopdef.h"
+#include "print.h"
+#include "rc.h"
 
 void
 mopDumpRC(fd, pkt, trans)
@@ -45,7 +47,7 @@ mopDumpRC(fd, pkt, trans)
 	int	 trans;
 {
 	int	i,index = 0;
-	long	tmpl;
+	int32_t	tmpl;
 	u_char	tmpc,code,control;
 	u_short	len,tmps,moplen;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.2 1997/03/25 03:07:30 thorpej Exp $	*/
+/*	$NetBSD: print.c,v 1.3 1997/10/16 23:24:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -29,19 +29,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: print.c,v 1.2 1997/03/25 03:07:30 thorpej Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print.c,v 1.3 1997/10/16 23:24:58 lukem Exp $");
 #endif
 
 #include <sys/types.h>
 #include <stdio.h>
 
 #include "os.h"
-#include "common/mopdef.h"
-#include "common/nmadef.h"
-#include "common/nma.h"
-#include "common/cmp.h"
-#include "common/get.h"
+#include "cmp.h"
+#include "get.h"
+#include "mopdef.h"
+#include "nma.h"
+#include "nmadef.h"
+#include "print.h"
 
 #define SHORT_PRINT
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.h,v 1.2 1997/03/25 03:07:29 thorpej Exp $	*/
+/*	$NetBSD: pf.h,v 1.3 1997/10/16 23:24:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,22 +28,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: pf.h,v 1.2 1997/03/25 03:07:29 thorpej Exp $
+ *	$NetBSD: pf.h,v 1.3 1997/10/16 23:24:56 lukem Exp $
  *
  */
 
 #ifndef _PF_H_
 #define _PF_H_
 
-#ifdef NO__P
-int	pfTrans	   (/* char * */);
-int	pfInit     (/* char *, int, u_short, int */);
-int	pfEthAddr  (/* int, u_char * */);
-int	pfAddMulti (/* int, char *, char * */);
-int	pfDelMulti (/* int, char *, char * */);
-int	pfRead     (/* int, u_char *, int */);
-int	pfWrite    (/* int, u_char *, int, int  */);
-#else
 __BEGIN_DECLS
 int	pfTrans	   __P((char *));
 int	pfInit     __P((char *, int, u_short, int));
@@ -53,6 +44,5 @@ int	pfDelMulti __P((int, char *, char *));
 int	pfRead     __P((int, u_char *, int));
 int	pfWrite    __P((int, u_char *, int, int));
 __END_DECLS
-#endif
 
 #endif _PF_H_
