@@ -1,11 +1,13 @@
 # $FreeBSD: src/gnu/usr.bin/groff/src/roff/troff/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
+DIST_SUBDIR=	src/roff/troff
+
 PROG_CXX=	troff
 SRCS=		dictionary.cpp div.cpp env.cpp glyphuni.cpp input.cpp \
 		majorminor.cpp node.cpp number.cpp reg.cpp symbol.cpp \
 		unicode.cpp uniglyph.cpp uniuni.cpp
-DPADD=		${LIBGROFF} ${LIBM}
-LDADD=		${LIBGROFF} -lm
+DPADD+=		${LIBGROFF} ${LIBM}
+LDADD+=		${LIBGROFF} -lm
 CLEANFILES=	majorminor.cpp ${MAN}
 
 .include <bsd.prog.mk>

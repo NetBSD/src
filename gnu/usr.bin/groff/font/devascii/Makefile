@@ -2,5 +2,7 @@
 
 DEV=		ascii
 
+DIST_SUBDIR=	font/devascii
+
 .include "../Makefile.tty"
 .include "../Makefile.dev"
