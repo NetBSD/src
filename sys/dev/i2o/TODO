@@ -1,6 +1,0 @@
-$NetBSD: TODO,v 1.4 2001/04/01 15:02:08 ad Exp $
-
-o Handle device control issues
-o Resolve portability issues
-o ld_iop: handle removable and non-direct access devices
-o Driver for LAN class device (some code exists already)
