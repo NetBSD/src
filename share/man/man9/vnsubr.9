@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.7 2002/10/14 04:21:14 gmcgarry Exp $
+.\"     $NetBSD: vnsubr.9,v 1.8 2002/10/14 04:56:49 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,20 +41,15 @@
 .Nm vnsubr ,
 .Nm vn_bwrite ,
 .Nm vn_close ,
-.Nm vn_closefile ,
 .Nm vn_default_error ,
-.Nm vn_fcntl ,
-.Nm vn_ioctl ,
 .Nm vn_isunder ,
 .Nm vn_lock ,
 .Nm vn_markexec ,
+.Nm vn_marktext ,
 .Nm vn_setrecurse ,
 .Nm vn_restorerecurse ,
 .Nm vn_open ,
-.Nm vn_read ,
-.Nm vn_poll ,
 .Nm vn_stat ,
-.Nm vn_write ,
 .Nm vn_writechk
 .Nd high-level convenience functions for vnode operations
 .Sh SYNOPSIS
@@ -66,19 +61,15 @@
 .Ft int
 .Fn vn_close "struct vnode *vp" "int flags" "struct ucred *cred" "struct proc *p"
 .Ft int
-.Fn vn_closefile "struct file *fp" "struct proc *p"
-.Ft int
 .Fn vn_default_error "void *v"
-.Ft int
-.Fn vn_fcntl "struct file *fp" "u_int com" "caddr_t data" "struct proc *p"
-.Ft int
-.Fn vn_ioctl "struct file *fp" "u_long com" "caddr_t data" "struct proc *p"
 .Ft int
 .Fn vn_isunder "struct vnode *dvp" "struct vnode *rvp" "struct proc *p"
 .Ft int
 .Fn vn_lock "struct vnode *vp" "int flags"
 .Ft void
 .Fn vn_markexec "struct vnode *vp"
+.Ft void
+.Fn vn_marktext "struct vnode *vp"
 .Ft u_int
 .Fn vn_setrecurse "struct vnode *vp"
 .Ft void
@@ -92,15 +83,9 @@
 .Fa "struct ucred *cred" "size_t *aresid" "struct proc *p"
 .Fc
 .Ft int
-.Fn vn_read "struct file *fp" "off_t *offset" "struct uio *uio" "struct ucred *cred" "int flags"
-.Ft int
 .Fn vn_readdir "struct file *fp" "char *buf" "int segflg" "u_int count" "int *done" "struct proc *p" "off_t **cookies" "int *ncookies"
 .Ft int
-.Fn vn_poll "struct file *fp" "int events" "struct proc *p"
-.Ft int
 .Fn vn_stat "struct vnode *vp" "struct stat *sb" "struct proc *p"
-.Ft int
-.Fn vn_write "struct file *fp" "off_t *offset" "struct uio *uio" "struct ucred *cred" "int flags"
 .Ft int
 .Fn vn_writechk "struct vnode *vp"
 .Sh DESCRIPTION
@@ -125,55 +110,10 @@ to return the vnode to the freelist or holdlist.  Note that
 expects an unlocked, referenced vnode and will dereference the vnode
 prior to returning.  If the operation is successful zero is returned,
 otherwise an appropriate error is returned.
-.It Fn vn_closefile "fp" "p"
-Common code for a file table vnode close operation.  The file is
-described by
-.Fa fp
-and
-.Fa p
-is the calling process.
-.Fn vn_closefile
-simply calls
-.Fn vn_close
-with the appropriate arguments.
 .It Fn vn_default_error "v"
 A generic "default" routine that just returns error.  It is used by a
 file system to specify unsupported operations in the vnode operations
 vector.
-.It Fn vn_fcntl "fp" "com" "data" "p"
-Common code for a file table vnode
-.Xr fcntl 2
-operation.  The file is
-specified by
-.Fa fp .
-The argument
-.Fa p
-is the calling process.
-.Fn vn_fcntl
-simply locks the vnode and invokes the vnode operation
-.Xr VOP_FCNTL 9
-with the command
-.Fa com
-and buffer
-.Fa data .
-The vnode is unlocked on return.  If the operation is successful zero
-is returned, otherwise an appropriate error is returned.
-.It Fn vn_ioctl "fp" "com" "data" "p"
-Common code for a file table vnode ioctl operation.  The file is
-specified by
-.Fa fp .
-The argument
-.Fa p
-is the calling process.
-.Fn vn_ioctl
-simply locks the vnode and invokes the vnode operation
-.Xr VOP_IOCTL 9
-with the command
-.Fa com
-and buffer
-.Fa data .
-The vnode is unlocked on return.  If the operation is successful zero
-is returned, otherwise an appropriate error is returned.
 .It Fn vn_isunder "dvp" "rvp" "p"
 Common code to check if one directory specified by the vnode
 .Fa rvp
@@ -212,6 +152,10 @@ should be used.
 Common code to mark the vnode
 .Fa vp
 as containing executable code of a running process.
+.It Fn vn_marktext "vp"
+Common code to mark the vnode
+.Fa vp
+as being the text of a running process.
 .It Fn vn_setrecurse "vp"
 Common code to enable LK_CANRECURSE on the vnode lock for vnode
 .Fa vp .
@@ -260,21 +204,6 @@ are the calling process and its credentials.  The remaining arguments
 specify the uio parameters.  For further information on these
 parameters see
 .Xr uiomove 9 .
-.It Fn vn_read "fp" "offset" "uio" "cred" "flags"
-Common code for a file table vnode read.  The argument
-.Fa fp
-is the file structure,  The argument
-.Fa offset
-is the offset into the file.  The argument
-.Fa uio
-is the uio structure describing the memory to read into.  The caller's
-credentials are specified in
-.Fa cred .
-The
-.Fa flags
-argument can define FOF_UPDATE_OFFSET to update the read position in
-the file.  If the operation is successful zero is returned, otherwise
-an appropriate error is returned.
 .It Fo vn_readdir
 .Fa "fp" "buf" "segflg" "count" "done" "p" "cookies"
 .Fa "ncookies"
@@ -297,17 +226,6 @@ should be NULL is they aren't required to be returned by
 .Fn vn_readdir .
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
-.It Fn vn_poll "fp" "events" "p"
-Common code for a file table vnode poll operation.
-.Fn vn_poll
-simply calls
-.Xr VOP_POLL 9
-with the events
-.Fa events
-and the calling process
-.Fa p .
-If the operation is success zero is returned, otherwise an appropriate
-error code is returned.
 .It Fn vn_stat "vp" "sb" "p"
 Common code for a vnode stat operation.  The vnode is specified by the
 argument
@@ -323,21 +241,6 @@ basically calls the vnode operation
 and transfer the contents of a vattr structure into a struct stat.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
-.It Fn vn_write "fp" "offset" "uio" "cred" "flags"
-Common code for a file table vnode write.  The argument
-.Fa fp
-is the file structure,  The argument
-.Fa offset
-is the offset into the file.  The argument
-.Fa uio
-is the uio structure describing the memory to read from.  The caller's
-credentials are specified in
-.Fa cred .
-The
-.Fa flags
-argument can define FOF_UPDATE_OFFSET to update the read position in
-the file.  If the operation is successful zero is returned, otherwise
-an appropriate error is returned.
 .It Fn vn_writechk "vp"
 Common code to check for write permission on the vnode
 .Fa vp .
