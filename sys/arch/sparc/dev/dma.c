@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.16 1996/01/12 22:03:39 chuck Exp $ */
+/*	$NetBSD: dma.c,v 1.17 1996/02/12 15:59:51 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -60,6 +60,8 @@ void dma_enintr		__P((struct dma_softc *));
 int dma_isintr		__P((struct dma_softc *));
 void dma_start		__P((struct dma_softc *, caddr_t *, size_t *, int));
 int dmaintr		__P((struct dma_softc *));
+int dma_setup		__P((struct dma_softc *, caddr_t *, size_t *, int, size_t *));
+void dma_go		__P((struct dma_softc *));
 
 struct cfdriver dmacd = {
 	NULL, "dma", dmamatch, dmaattach,
@@ -81,7 +83,7 @@ dmaprint(aux, name)
 	void *aux;
 	char *name;
 {
-	return -1;
+	return (UNCONF);
 }
 
 int
@@ -164,7 +166,8 @@ dmaattach(parent, self, aux)
 	sc->enintr = dma_enintr;
 	sc->isintr = dma_isintr;
 	sc->reset = dma_reset;
-	sc->start = dma_start;
+	sc->setup = dma_setup;
+	sc->go = dma_go;
 	sc->intr = dmaintr;
 
 	sc->sc_node = ca->ca_ra.ra_node;
@@ -205,6 +208,7 @@ dma_reset(sc)
 	DMAWAIT1(sc);				/* let things drain */
 	DMACSR(sc) |= D_RESET;			/* reset DMA */
 	DELAY(200);				/* what should this be ? */
+	DMAWAIT1(sc);
 	DMACSR(sc) &= ~D_RESET;			/* de-assert reset line */
 	DMACSR(sc) |= D_INT_EN;			/* enable interrupts */
 	if (sc->sc_rev > DMAREV_1)
@@ -227,25 +231,31 @@ dma_isintr(sc)
 	return (sc->sc_regs->csr & (D_INT_PEND|D_ERR_PEND));
 }
 
-#define ESPMAX		((sc->sc_esp->sc_rev > ESP100A) ? \
-			    (16 * 1024 * 1024) : (64 * 1024))
 #define DMAMAX(a)	(0x01000000 - ((a) & 0x00ffffff))
 
 /*
- * start a dma transfer or keep it going
+ * setup a dma transfer
  */
-void
-dma_start(sc, addr, len, datain)
+int
+dma_setup(sc, addr, len, datain, dmasize)
 	struct dma_softc *sc;
 	caddr_t *addr;
 	size_t *len;
 	int datain;
+	size_t *dmasize;	/* IN-OUT */
 {
-	/* we do the loading of the transfer counter */
-	size_t size;
 	u_long csr;
 
-	sc->sc_regs->csr &= ~D_INT_EN;
+	/* clear errors and D_TC flag */
+	DMAWAIT(sc);
+	DMA_DRAIN(sc);		/* ? */
+	DMAWAIT1(sc);
+	DMACSR(sc) |= D_INVALIDATE;
+	DMAWAIT1(sc);
+
+#if 0
+	DMACSR(sc) &= ~D_INT_EN;
+#endif
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
@@ -257,46 +267,47 @@ dma_start(sc, addr, len, datain)
 	 * of this DMA chip (64k for old and 16Mb for new),
 	 * and we cannot cross a 16Mb boundary.
 	 */
-	size = min(*sc->sc_dmalen, ESPMAX);
-	size = min(size, DMAMAX((size_t) *sc->sc_dmaaddr));
-	sc->sc_dmasize = size;
+	*dmasize = sc->sc_dmasize =
+		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
-	ESP_DMA(("dma_start: dmasize = %d\n", sc->sc_dmasize));
+	ESP_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
 
 	/* Program the DMA address */
-#if 1
-	/* clear errors and D_TC flag */
-	DMAWAIT(sc);
-	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc);
+#if defined(SUN4M)
+	if (sc->sc_dmasize && cputyp == CPU_SUN4M) {
+		/*
+		 * Use dvma mapin routines to map the buffer into DVMA space.
+		 */
+		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
+		sc->sc_dvmakaddr = kdvma_mapin(sc->sc_dvmaaddr,
+					       sc->sc_dmasize, 0);
+		if (sc->sc_dvmakaddr == NULL)
+			panic("dma: cannot allocate DVMA address");
+		DMADDR(sc) = sc->sc_dvmakaddr;
+	} else
 #endif
+		DMADDR(sc) = *sc->sc_dmaaddr;
 
-	DMADDR(sc) = *sc->sc_dmaaddr;
+	/* Setup DMA control register */
+	csr = DMACSR(sc);
+	if (datain)
+		csr |= D_WRITE;
+	else
+		csr &= ~D_WRITE;
+	csr |= D_INT_EN;
+	DMACSR(sc) = csr;
 
-	/* Program the SCSI counter */
-	ESP_WRITE_REG(sc->sc_esp, ESP_TCL, size);
-	ESP_WRITE_REG(sc->sc_esp, ESP_TCM, size >> 8);
-	if (sc->sc_esp->sc_rev > ESP100A) {
-		ESP_WRITE_REG(sc->sc_esp, ESP_TCH, size >> 16);
-	}  
-	/* load the count in */
-	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
+	return 0;
+}
 
-	/*
-	 * Note that if `size' is 0, we've already transceived all
-	 * the bytes we want but we're still in the DATA PHASE.
-	 * Apparently, the device needs padding. Also, a transfer
-	 * size of 0 means "maximum" to the chip DMA logic.
-	 */
-	ESPCMD(sc->sc_esp, (size==0?ESPCMD_TRPAD:ESPCMD_TRANS)|ESPCMD_DMA);
+void
+dma_go(sc)
+	struct dma_softc *sc;
+{
 
 	/* Start DMA */
-	csr = DMACSR(sc);
-	/* clear from last read if this is a write */
-	csr &= ~D_WRITE;
-	csr |= datain|D_EN_DMA|D_INT_EN;
+	DMACSR(sc) |= D_EN_DMA;
 	sc->sc_active = 1;
-	DMACSR(sc) = csr;
 }
 
 /*
@@ -311,15 +322,18 @@ dmaintr(sc)
 	struct dma_softc *sc;
 {
 	int trans = 0, resid = 0;
+	u_long csr;
 
-	 ESP_DMA(("%s: intr: addr %x, csr %b\n", sc->sc_dev.dv_xname,
-		  DMADDR(sc), DMACSR(sc), DMACSRBITS));
+	csr = DMACSR(sc);
 
-	if (DMACSR(sc) & D_ERR_PEND) {
+	ESP_DMA(("%s: intr: addr %x, csr %b\n", sc->sc_dev.dv_xname,
+		 DMADDR(sc), csr, DMACSRBITS));
+
+	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
 		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
-			DMACSR(sc), DMACSRBITS);
+			csr, DMACSRBITS);
 		return 0;
 	}
 
@@ -327,16 +341,16 @@ dmaintr(sc)
 	if (sc->sc_active == 0)
 		panic("dmaintr: DMA wasn't active");
 
+	/* clear errors and D_TC flag */
+	DMAWAIT(sc);
+	DMA_DRAIN(sc);		/* ? */
+	DMAWAIT1(sc);
+	DMACSR(sc) |= D_INVALIDATE;
+	DMAWAIT1(sc);
+
 	/* DMA has stopped */
 	DMACSR(sc) &= ~D_EN_DMA;
 	sc->sc_active = 0;
-
-	if ((DMACSR(sc) & D_WRITE)) {
-		DMAWAIT(sc);
-		/* clear errors and D_TC flag */
-		DMACSR(sc) |= D_INVALIDATE;
-		DMAWAIT1(sc);
-	}
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
@@ -348,11 +362,10 @@ dmaintr(sc)
 		return 0;
 	}
 
-	if (!(DMACSR(sc) & D_WRITE) &&
+	if (!(csr & D_WRITE) &&
 	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
-		printf("empty FIFO of %d ", resid);
+		ESP_DMA(("dmaintr: empty esp FIFO of %d ", resid));
 		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
-		DELAY(1);
 	}
 
 	resid += ESP_READ_REG(sc->sc_esp, ESP_TCL) |
@@ -378,8 +391,14 @@ dmaintr(sc)
 			? ESP_READ_REG(sc->sc_esp, ESP_TCH) : 0,
 		trans, resid));
 
-	if (DMACSR(sc) & D_WRITE)
+	if (csr & D_WRITE)
 		cache_flush(*sc->sc_dmaaddr, trans);
+
+#if defined(SUN4M)
+	if (cputyp == CPU_SUN4M && sc->sc_dvmakaddr)
+		dvma_mapout((vm_offset_t)sc->sc_dvmakaddr,
+			    (vm_offset_t)sc->sc_dvmaaddr, sc->sc_dmasize);
+#endif
 
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
