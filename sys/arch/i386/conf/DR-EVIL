@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.49 2002/07/22 11:06:00 wiz Exp $
+#	$NetBSD: DR-EVIL,v 1.50 2002/08/02 05:26:45 ichiro Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -543,7 +543,7 @@ ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon RayLink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
-#wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+#wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megaherz combo cards
