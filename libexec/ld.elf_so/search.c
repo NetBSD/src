@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.9 1999/11/04 02:00:18 erh Exp $	 */
+/*	$NetBSD: search.c,v 1.10 2000/07/27 10:44:39 kleink Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -76,7 +76,7 @@ _rtld_check_library(pathname)
 	if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr))
 		goto lose;
 
-	/* Elf_e_ident includes class */
+	/* ELF_Ehdr.e_ident includes class */
 	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0 ||
 	    ehdr.e_ident[EI_CLASS] != ELFCLASS)
 		goto lose;
