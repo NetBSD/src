@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2000/05/18 01:10:30 matt Exp $
+# $NetBSD: Makefile,v 1.3.4.1 2000/10/19 13:08:52 he Exp $
 # Build ping6 without IPSEC
 
 SRCDIR= ${.CURDIR}/../../../sbin/ping6
@@ -12,6 +12,9 @@ LDSTATIC?=-static
 
 # KAME scope id hack
 CPPFLAGS+=-DKAME_SCOPEID
+
+LDADD+=	-lm
+DPADD+=	${LIBM}
 
 .include <bsd.prog.mk>
 
