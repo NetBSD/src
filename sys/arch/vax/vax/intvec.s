@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.34 1998/10/06 02:07:31 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.35 1998/11/07 20:58:09 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -166,7 +166,7 @@ _rpb:
 	INTVEC(strayE4, ISTACK)		# Unused, E4
 	INTVEC(strayE8, ISTACK)		# Unused, E8
 	INTVEC(strayEC, ISTACK)		# Unused, EC
-#if VAX8200 & 0
+#if VAX8200
 	INTVEC(crx50int, ISTACK)	# Console storage on VAX 8200 (RX50)
 #else
 	INTVEC(strayF0, ISTACK)
@@ -477,8 +477,8 @@ ENTRY(slu3rintr)
 	STRAY(0,E4)
 	STRAY(0,E8)
 	STRAY(0,EC)
-#if VAX8200 & 0
-	FASTINTR(crx50int, crxintr)
+#if VAX8200
+	FASTINTR(crx50int,crxintr)
 #else
 	STRAY(0,F0)
 #endif
