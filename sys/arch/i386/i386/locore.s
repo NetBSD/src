@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.80 1994/08/03 22:35:02 mycroft Exp $
+ *	$Id: locore.s,v 1.81 1994/09/07 20:32:00 mycroft Exp $
  */
 
 /*
@@ -810,7 +810,6 @@ ENTRY(copyout)
 	addl	%ebx,%ecx
 	decl	%ecx
 	shrl	$PGSHIFT,%ecx
-	incl	%ecx
 
 	/* Compute PTE offset for start address. */
 	movl	%edi,%edx
@@ -837,7 +836,7 @@ ENTRY(copyout)
 
 2:	incl	%edx
 	decl	%ecx
-	jnz	1b			# check next page
+	jns	1b			# check next page
 #endif /* I386_CPU */
 
 3:	/* bcopy(%esi, %edi, %ebx); */
@@ -966,17 +965,15 @@ ENTRY(copyoutstr)
 	cld
 
 3:	subl	%ecx,%edx		# predecrement total count
-	incl	%ecx
 
 3:	decl	%ecx
-	jz	4f
+	js	4f
 	lodsb
 	stosb
 	testb	%al,%al
 	jnz	3b
 
 	/* Success -- 0 byte reached. */
-	decl	%ecx
 	addl	%ecx,%edx		# add back residual for this page
 	xorl	%eax,%eax
 	jmp	copystr_return
@@ -2063,3 +2060,80 @@ IDTVEC(syscall)
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
+
+/*
+ * bzero (void *b, size_t len)
+ *	write len zero bytes to the string b.
+ */
+
+ENTRY(bzero)
+	pushl	%edi
+	pushl	%ebx
+	movl	12(%esp),%edi
+	movl	16(%esp),%ecx
+
+	cld				/* set fill direction forward */
+	xorl	%eax,%eax		/* set fill data to 0 */
+
+	/*
+	 * if the string is too short, it's really not worth the overhead
+	 * of aligning to word boundries, etc.  So we jump to a plain
+	 * unaligned set.
+	 */
+	cmpl	$0x0f,%ecx
+	jle	9f
+
+	movl	%edi,%edx		/* compute misalignment */
+	negl	%edx
+	andl	$3,%edx
+	movl	%ecx,%ebx
+	subl	%edx,%ebx
+
+	movl	%edx,%ecx		/* zero until word aligned */
+	rep
+	stosb
+
+#if defined(I486_CPU)
+#if defined(I386_CPU) || defined(I586_CPU)
+	cmpl	$CPUCLASS_486,_cpu_class
+	jne	8f
+#endif
+
+	movl	%ebx,%ecx
+	shrl	$6,%ecx
+	jz	8f
+	andl	$63,%ebx
+1:	movl	%eax,(%edi)
+	movl	%eax,4(%edi)
+	movl	%eax,8(%edi)
+	movl	%eax,12(%edi)
+	movl	%eax,16(%edi)
+	movl	%eax,20(%edi)
+	movl	%eax,24(%edi)
+	movl	%eax,28(%edi)
+	movl	%eax,32(%edi)
+	movl	%eax,36(%edi)
+	movl	%eax,40(%edi)
+	movl	%eax,44(%edi)
+	movl	%eax,48(%edi)
+	movl	%eax,52(%edi)
+	movl	%eax,56(%edi)
+	movl	%eax,60(%edi)
+	addl	$64,%edi
+	decl	%ecx
+	jnz	1b
+#endif
+
+8:	movl	%ebx,%ecx		/* zero by words */
+	shrl	$2,%ecx
+	andl	$3,%ebx
+	rep
+	stosl
+
+7:	movl	%ebx,%ecx		/* zero remainder bytes */
+9:	rep
+	stosb
+
+	popl	%ebx
+	popl	%edi
+	ret
