@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.219 2000/04/28 20:54:39 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.220 2000/04/30 18:46:18 dante Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.212 2000/04/28 20:54:10 augustss Exp 
+ *	NetBSD: pcidevs,v 1.213 2000/04/30 18:34:53 dante Exp 
  */
 
 /*
@@ -668,6 +668,7 @@
 #define	PCI_PRODUCT_ADVSYS_ULTRA	0x1300		/* ABP-930/40UA */
 #define	PCI_PRODUCT_ADVSYS_WIDE	0x2300		/* ABP-940UW */
 #define	PCI_PRODUCT_ADVSYS_U2W	0x2500		/* ASB-3940U2W */
+#define	PCI_PRODUCT_ADVSYS_U3W	0x2700		/* ASB-3940U3W */
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
