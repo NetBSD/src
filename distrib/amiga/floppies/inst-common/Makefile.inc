@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 1996/08/30 17:32:23 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 1997/05/14 22:19:48 is Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -19,7 +19,8 @@ MTREE=		${COMMONDIR}/mtree.conf
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=128k count=32
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -c 64 -O -m 0 -o space ${VND_RDEV} miniroot
+	installboot ${MDEC}/xxboot ${VND_RDEV}
+	newfs -c 64 -m 0 -o space ${VND_RDEV} miniroot
 	mount -t ffs ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -29,6 +30,7 @@ all: ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
+	cat /*bin/* > /dev/null
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 1996/08/30 17:32:26 thorpej Exp $
+#	$NetBSD: list,v 1.8 1997/05/14 22:19:50 is Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -39,6 +39,7 @@ LINK	instbin			sbin/route
 LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
+LINK	instbin			usr/bin/awk
 LINK	instbin			usr/bin/chgrp
 LINK	instbin			usr/bin/ftp
 LINK	instbin			usr/bin/gunzip
@@ -62,7 +63,8 @@ SPECIAL	cd dev; sh MAKEDEV floppy
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec (XXX)
-# COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+COPY	${DESTDIR}/usr/sbin/installboot	usr/sbin/
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc
