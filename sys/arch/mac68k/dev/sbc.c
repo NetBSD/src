@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.33 1997/12/06 18:53:30 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.34 1998/01/12 19:22:17 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -88,10 +88,6 @@ struct scsipi_device sbc_dev = {
 	NULL,		/* Use default start handler.		*/
 	NULL,		/* Use default async handler.	    */
 	NULL,		/* Use default "done" routine.	    */
-};
-
-struct cfdriver sbc_cd = {
-	NULL, "sbc", DV_DULL
 };
 
 extern label_t	*nofault;

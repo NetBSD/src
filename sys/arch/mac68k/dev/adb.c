@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.18 1997/11/26 06:28:50 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.19 1998/01/12 19:22:00 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -88,10 +88,6 @@ static adb_event_t adb_rptevent;/* event to auto-repeat */
 /* Driver definition.  -- This should probably be a bus...  */
 struct cfattach adb_ca = {
 	sizeof(struct device), adbmatch, adbattach
-};
-
-struct cfdriver adb_cd = {
-	NULL, "adb", DV_DULL
 };
 
 static int
