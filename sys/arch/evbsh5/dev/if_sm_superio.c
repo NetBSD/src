@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_superio.c,v 1.2 2002/08/30 10:57:06 scw Exp $	*/
+/*	$NetBSD: if_sm_superio.c,v 1.3 2002/09/04 14:55:42 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.2 2002/08/30 10:57:06 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.3 2002/09/04 14:55:42 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,9 @@ sm_superio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* should always be enabled */
 	sc->sc_flags |= SMC_FLAGS_ENABLED;
+
+	/* read accesses are always 32-bits wide on Cayman ... */
+	sc->sc_flags |= SMC_FLAGS_32BIT_READ;
 
 	/* The PHY does not need to be isolated */
 	sc->sc_mii.mii_flags |= MIIF_NOISOLATE;
