@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.140 2001/02/15 15:00:51 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.141 2001/02/28 19:22:30 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -2670,6 +2670,62 @@ mail		mode=1777
 # ./var/msgs
 msgs		uname=daemon
 # ./var/msgs
+..
+
+# ./var/named
+named		mode=0750 gname=named
+
+# ./var/named/dev
+dev
+
+# ./var/named/dev
+..
+
+# ./var/named/etc
+etc
+
+# ./var/named/etc/namedb
+namedb
+
+# ./var/named/etc/namedb/cache
+cache		mode=0775 uname=named gname=named
+..
+
+# ./var/named/etc/namedb
+..
+
+# ./var/named/etc
+..
+
+
+# ./var/named/usr
+usr
+
+# ./var/named/usr/libexec
+libexec
+# ./var/named/usr/libexec
+..
+
+# ./var/named/usr
+..
+
+# ./var/named/var
+var
+
+# ./var/named/var/run
+run		mode=0775 gname=named
+# ./var/named/var/run
+..
+
+# ./var/named/var/tmp
+tmp		mode=01775 gname=named
+# ./var/named/var/tmp
+..
+
+# ./var/named/var
+..
+
+# ./var/named
 ..
 
 # ./var/obj				XXX
