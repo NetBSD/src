@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.11 1998/10/14 09:41:21 pk Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.12 1998/11/04 06:19:56 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -456,6 +456,8 @@ lockmgr_printinfo(lkp)
 int lockpausetime = 0;
 struct ctldebug debug2 = { "lockpausetime", &lockpausetime };
 int simplelockrecurse;
+LIST_HEAD(slocklist, simplelock) slockdebuglist;
+
 /*
  * Simple lock functions so that the debugger can see from whence
  * they are being called.
@@ -478,6 +480,8 @@ _simple_lock(alp, id, l)
 	const char *id;
 	int l;
 {
+	int s;
+
 	if (simplelockrecurse)
 		return;
 	if (alp->lock_data == 1) {
@@ -499,7 +503,13 @@ _simple_lock(alp, id, l)
 			    lockpausetime * hz);
 			printf(" continuing\n");
 		}
+		return;
 	}
+
+	s = splhigh();
+	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
+	splx(s);
+
 	alp->lock_data = 1;
 	alp->lock_file = id;
 	alp->lock_line = l;
@@ -513,6 +523,7 @@ _simple_lock_try(alp, id, l)
 	const char *id;
 	int l;
 {
+	int s;
 
 	if (alp->lock_data)
 		return (0);
@@ -521,6 +532,11 @@ _simple_lock_try(alp, id, l)
 	alp->lock_data = 1;
 	alp->lock_file = id;
 	alp->lock_line = l;
+
+	s = splhigh();
+	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
+	splx(s);
+
 	if (curproc)
 		curproc->p_simple_locks++;
 	return (1);
@@ -532,6 +548,7 @@ _simple_unlock(alp, id, l)
 	const char *id;
 	int l;
 {
+	int s;
 
 	if (simplelockrecurse)
 		return;
@@ -554,11 +571,56 @@ _simple_unlock(alp, id, l)
 			    lockpausetime * hz);
 			printf(" continuing\n");
 		}
+		return;
 	}
+
+	s = splhigh();
+	LIST_REMOVE(alp, list);
+	alp->list.le_next = NULL;
+	alp->list.le_prev = NULL;
+	splx(s);
+
 	alp->lock_data = 0;
 	alp->unlock_file = id;
 	alp->unlock_line = l;
 	if (curproc)
 		curproc->p_simple_locks--;
+}
+
+void
+simple_lock_dump()
+{
+	struct simplelock *alp;
+	int s;
+
+	s = splhigh();
+	printf("all simple locks:\n");
+	for (alp = LIST_FIRST(&slockdebuglist);
+	     alp != NULL;
+	     alp = LIST_NEXT(alp, list)) {
+		printf("%p  %s:%d\n", alp, alp->lock_file, alp->lock_line);
+	}
+	splx(s);
+}
+
+void
+simple_lock_freecheck(start, end)
+void *start, *end;
+{
+	struct simplelock *alp;
+	int s;
+
+	s = splhigh();
+	for (alp = LIST_FIRST(&slockdebuglist);
+	     alp != NULL;
+	     alp = LIST_NEXT(alp, list)) {
+		if ((void *)alp >= start && (void *)alp < end) {
+			printf("freeing simple_lock %p\n", alp);
+#ifdef DDB
+			Debugger();
+#endif
+		}
+	}
+	splx(s);
 }
 #endif /* LOCKDEBUG && ! MULTIPROCESSOR */

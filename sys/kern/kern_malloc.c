@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.37 1998/09/12 17:20:02 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.38 1998/11/04 06:19:56 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -492,6 +492,12 @@ free(addr, type)
 			panic("free: duplicated free");
 		}
 	}
+#ifdef LOCKDEBUG
+	/*
+	 * Check if we're freeing a locked simple lock.
+	 */
+	simple_lock_freecheck(addr, addr + size);
+#endif
 	/*
 	 * Copy in known text to detect modification after freeing
 	 * and to make it look free. Also, save the type being freed

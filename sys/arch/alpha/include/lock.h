@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.1 1998/09/24 22:32:35 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.2 1998/11/04 06:19:55 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,4 +46,9 @@ void	simple_lock_init __P((__volatile struct simplelock *));
 void	simple_lock __P((__volatile struct simplelock *));
 int	simple_lock_try __P((__volatile struct simplelock *));
 void	simple_unlock __P((__volatile struct simplelock *));
+
+#if defined(LOCKDEBUG)
+#define simple_lock_dump()
+#define simple_lock_freecheck(start, end)
+#endif /* LOCKDEBUG */
 #endif /* _KERNEL */

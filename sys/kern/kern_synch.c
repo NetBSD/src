@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.53 1998/09/11 12:50:11 mycroft Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.54 1998/11/04 06:19:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -582,8 +582,13 @@ mi_switch()
 	struct timeval tv;
 
 #ifdef DEBUG
-	if (p->p_simple_locks)
+	if (p->p_simple_locks) {
+		printf("p->p_simple_locks %d\n", p->p_simple_locks);
+#ifdef LOCKDEBUG
+		simple_lock_dump();
+#endif
 		panic("sleep: holding simple lock");
+	}
 #endif
 	/*
 	 * Compute the amount of time during which the current
