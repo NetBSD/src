@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.146.2.3 2004/07/02 17:13:21 he Exp $	*/
+/*	$NetBSD: ohci.c,v 1.146.2.4 2004/07/10 13:43:46 tron Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.146.2.3 2004/07/02 17:13:21 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.146.2.4 2004/07/10 13:43:46 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2239,7 +2239,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	}
 	/* Zap headp register if hardware pointed inside the xfer. */
 	if (hit) {
-		DPRINTFN(1,("ohci_abort_xfer: set hd=0x08%x, tl=0x%08x\n",
+		DPRINTFN(1,("ohci_abort_xfer: set hd=0x%08x, tl=0x%08x\n",
 			    (int)p->physaddr, (int)le32toh(sed->ed.ed_tailp)));
 		sed->ed.ed_headp = htole32(p->physaddr); /* unlink TDs */
 	} else {
@@ -3278,9 +3278,9 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 #endif
 
 	s = splusb();
+	sed->ed.ed_tailp = htole32(nsitd->physaddr);
 	opipe->tail.itd = nsitd;
 	sed->ed.ed_flags &= htole32(~OHCI_ED_SKIP);
-	sed->ed.ed_tailp = htole32(nsitd->physaddr);
 	splx(s);
 
 #ifdef OHCI_DEBUG
