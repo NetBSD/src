@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.10 1998/08/25 20:59:40 ross Exp $	*/
+/*	$NetBSD: netstat.c,v 1.10.2.1 1999/09/26 13:37:22 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.10 1998/08/25 20:59:40 ross Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.10.2.1 1999/09/26 13:37:22 he Exp $");
 #endif /* not lint */
 
 /*
@@ -198,7 +198,7 @@ fetchnetstat()
 		return;
 	}
 again:
-	KREAD(off, &pcbtable, sizeof (struct inpcbtable));
+	KREAD(off, &pcbtable, sizeof pcbtable);
 	prev = head = (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue;
 	next = pcbtable.inpt_queue.cqh_first;
 	while (next != head) {
