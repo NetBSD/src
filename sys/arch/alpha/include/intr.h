@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.7 1997/06/05 17:20:17 cgd Exp $ */
+/* $NetBSD: intr.h,v 1.8 1997/06/05 17:31:16 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -53,9 +53,14 @@
 #define splsoftclock()          splsoft()
 #define splsoftnet()            splsoft()
 
-/* IPL-raising macros */
-#define	_splraise(s)							\
-    (alpha_pal_swpipl(max(alpha_pal_rdps() & ALPHA_PSL_IPL_MASK, (s))))
+/* IPL-raising functions/macros */
+static __inline int
+_splraise(s)
+	int s;
+{
+	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
+	return (a > cur ? alpha_pal_swpipl(a) : cur);
+}
 #define splnet()                _splraise(ALPHA_PSL_IPL_IO)
 #define splbio()                _splraise(ALPHA_PSL_IPL_IO)
 #define splimp()                _splraise(ALPHA_PSL_IPL_IO)
