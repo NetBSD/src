@@ -1,38 +1,13 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: NetBSD.dist,v 1.4 1994/06/20 03:11:36 cgd Exp $
+#	$Id: NetBSD.dist,v 1.5 1994/07/09 05:04:35 mycroft Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
 .
 
-# ./a
-a
-# ./a
-..
-
 # ./altroot
 altroot
 # ./altroot
-..
-
-# ./amd
-amd	mode=0555
-# ./amd
-..
-
-# ./b
-b
-# ./b
-..
-
-# ./c
-c
-# ./c
-..
-
-# ./dump
-dump
-# ./dump	uname=operator gname=operator mode=0775
 ..
 
 # ./bin
