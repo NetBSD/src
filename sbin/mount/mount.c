@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.25 1996/10/23 22:50:05 cgd Exp $	*/
+/*	$NetBSD: mount.c,v 1.26 1997/03/10 03:59:54 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.25 1996/10/23 22:50:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.26 1997/03/10 03:59:54 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ static struct opt {
 	{ MNT_EXPORTANON,	1,	"anon uid mapping" },
 	{ MNT_EXRDONLY,		1,	"exported read-only" },
 	{ MNT_LOCAL,		0,	"local" },
+	{ MNT_NOATIME,		0,	"noatime" },
 	{ MNT_NOCOREDUMP,	0,	"nocoredump" },
 	{ MNT_NODEV,		0,	"nodev" },
 	{ MNT_NOEXEC,		0,	"noexec" },
