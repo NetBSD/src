@@ -1,24 +1,27 @@
-#	$NetBSD: Makefile,v 1.15 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2003/11/27 15:02:21 mrg Exp $
 
 .include <bsd.own.mk>
 
 TOP=		${NETBSDSRCDIR}/gnu
-DIST=		${TOP}/dist/toolchain
-GNUHOSTDIST=	${DIST}
 
+.include "${.CURDIR}/../common/Makefile.inc"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+GNUHOSTDIST=	${DIST}
 
 PROG=		ld
 SRCS=		${G_OFILES:.o=.c}
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
+		-I${DIST}/ld \
 		-DDEFAULT_EMULATION=\"${G_EMUL}\" \
 		-DSCRIPTDIR=\"/usr/share\" \
-		-DTARGET=\"${G_target_alias}\"
+		-DTARGET=\"${G_target_alias}\" \
+		-DBINDIR=\"/usr/bin\" \
+		-DTOOLBINDIR=\"/usr/bin\"
 
 LDADD=		-lintl
 DPADD=		${LIBINTL}
 
-BFDOBJ!=	cd ${TOP}/lib/libbfd && ${PRINTOBJDIR}
+BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
 .if ${MKPICLIB} != "no"
 DPADD+=		${BFDOBJ}/libbfd_pic.a
@@ -26,7 +29,7 @@ DPADD+=		${BFDOBJ}/libbfd_pic.a
 DPADD+=		${BFDOBJ}/libbfd.a
 .endif
 
-IBERTYOBJ!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
+IBERTYOBJ!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
 LDADD+=		-L${IBERTYOBJ} -liberty
 DPADD+=		${IBERTYOBJ}/libiberty.a
 
@@ -65,11 +68,19 @@ CLEANFILES+=	.depend.${f} e${f}.c
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	${_MKTARGET_CREATE}
+.if ${HAVE_BINUTILS214} == "no"
 	unset MACHINE || true; \
 	LIB_PATH=/usr/lib srcdir=${DIST}/ld \
 		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} ${f}
+.else
+	unset MACHINE || true; \
+	LIB_PATH=/usr/lib
+		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} "/usr" \
+		${G_target_alias} ${G_target_alias} ${G_target_alias} \
+		${G_EMUL} ${LIBDIR} no ${f} "${G_target_alias}"
+.endif
 
 #FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 

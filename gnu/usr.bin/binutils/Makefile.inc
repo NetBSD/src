@@ -1,15 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.12 2003/03/01 13:09:01 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2003/11/27 15:02:21 mrg Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../../dist/toolchain
-
-GCPPFLAGS=	${G_DEFS} ${G_INCLUDES}
-CPPFLAGS+=	${GCPPFLAGS:M-D*:N-DLOCALEDIR*} ${GCPPFLAGS:M-I*:N-I.*} \
-		-I${TOP}/lib/libbfd/arch/${MACHINE_ARCH} \
+GNUCPPFLAGS=	${G_DEFS} ${G_INCLUDES}
+CPPFLAGS+=	${GNUCPPFLAGS:M-D*:N-DLOCALEDIR*} ${GNUCPPFLAGS:M-I*:N-I.*} \
+		-I${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH} \
 		-I${DIST}/include -I${DIST}/bfd -I${DIST}/binutils \
 		-DLOCALEDIR=\"${LOCALEDIR}\"
 

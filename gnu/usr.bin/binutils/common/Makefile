@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2003/11/27 15:02:21 mrg Exp $
 
 .include <bsd.own.mk>
 
 TOP=		${NETBSDSRCDIR}/gnu
-DIST=		${TOP}/dist/toolchain
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../common/Makefile.inc"
 
 TEXINFO=	${G_TEXINFOS}
 INFOFLAGS=	-I${DIST}/binutils/doc -I{.CURDIR}
