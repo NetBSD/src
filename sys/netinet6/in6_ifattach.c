@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.11 1999/09/25 22:29:21 is Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.12 1999/09/26 20:04:08 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,12 +72,6 @@ laddr_to_eui64(dst, src, len)
 	size_t len;
 {
 	switch (len) {
-	case 1:
-		bzero(dst, 7);
-		dst[7] = src[0];
-		/* raise u bit to indicate that this is not globally unique */
-		dst[0] |= 0x02;
-		break;
 	case 6:
 		dst[0] = src[0];
 		dst[1] = src[1];
@@ -362,12 +356,10 @@ in6_ifattach(ifp, type, laddr, noloop)
 		rtflag = RTF_CLONING;
 		if (laddr == NULL)
 			break;
-		if (laddr_to_eui64(&ia->ia_addr.sin6_addr.s6_addr8[8],
-				laddr, 1) != 0) {
-			break;
-		}
-		/* invert u bit to convert EUI64 to RFC2373 interface ID. */
-		ia->ia_addr.sin6_addr.s6_addr8[8] ^= 0x02;
+
+		/* make non-global IF id out of link-level address */
+		bzero(&ia->ia_addr.sin6_addr.s6_addr8[8], 7);
+		ia->ia_addr.sin6_addr.s6_addr8[15] = *laddr;
 	}
 
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
