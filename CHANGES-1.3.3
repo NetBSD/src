@@ -393,6 +393,24 @@ sys/arch/i386/i386/trap.c			patch
   Don't corrupt 'edx' register when running under linux emulation
   (PR#6356).  (mycroft)
 
+usr.sbin/rpc.yppasswdd/rpc.yppasswdd.8		1.5-1.6
+
+  Don't mention /var/yp/yppasswdd.log, since it really isn't supported
+  (PR #5704 and PR#6393), and minor cosmetic cleanup.  (frueauf)
+
+usr.sbin/ypbind/ypbind.c			1.37 (patch)
+
+  Use syslog() (with LOG_DAEMON) instead of warn()/err().  Messages
+  will still be printed to stderr if ypbind is started in debug mode.
+  Also, don't exist if none of the servers listed in
+  /var/yp/binding/<domainname>.ypservers are reacheable.  It's a
+  temporary failure that can be recovered from.  (bouyer)
+
+sys/arch/i386/i386/machdep.c			1.304 (patch)
+
+  Implement handling of DMA boundaries by bus_dmamap_load(), as
+  specified in bus_dma(9).  (bouyer)
+
 
 NOT YET PULLED UP (expecting patches or further information):
 
