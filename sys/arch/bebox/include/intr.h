@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 1998/08/15 10:11:01 mycroft Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 1999/06/24 01:33:08 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,9 +83,14 @@ int  splsoftnet   __P((void));
 
 void do_pending_int __P((void));
 
+static __inline int splraise __P((int));
+static __inline int spllower __P((int));
+static __inline void splx __P((int));
+static __inline void set_sint __P((int));
 
 extern volatile int cpl, ipending, astpending, tickspending;
 extern int imask[];
+extern long intrcnt[];
 
 /*
  *  Reorder protection in the following inline functions is
