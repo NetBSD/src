@@ -2741,20 +2741,12 @@ elf32_arm_check_relocs (abfd, info, sec, relocs)
                later (it is never cleared).  We account for that
                possibility below by storing information in the
                pcrel_relocs_copied field of the hash table entry.  */
-	    if ((info->shared
-	         && (sec->flags & SEC_ALLOC) != 0
-	         && (ELF32_R_TYPE (rel->r_info) != R_ARM_PC24
-		     || (h != NULL
-		         && (! info->symbolic
-			     || h->root.type == bfd_link_hash_defweak
-			     || (h->elf_link_hash_flags
-			         & ELF_LINK_HASH_DEF_REGULAR) == 0))))
-	        || (!info->shared
-		    && (sec->flags & SEC_ALLOC) != 0
-		    && h != NULL
-		    && (h->root.type == bfd_link_hash_defweak
-		        || (h->elf_link_hash_flags
-			    & ELF_LINK_HASH_DEF_REGULAR) == 0)))
+	    if (info->shared
+	      && (ELF32_R_TYPE (rel->r_info) != R_ARM_PC24
+	        || (h != NULL
+		  && (! info->symbolic
+		    || (h->elf_link_hash_flags
+		      & ELF_LINK_HASH_DEF_REGULAR) == 0))))
 	      {
 	        /* When creating a shared object, we must copy these
                    reloc types into the output file.  We create a reloc
