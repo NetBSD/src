@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.37 2000/05/31 11:14:25 fvdl Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.38 2000/06/09 08:54:24 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -465,7 +465,8 @@ scsipi_size(sc_link, flags)
 	 */
 	if (scsipi_command(sc_link, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
-	    SCSIPIRETRIES, 20000, NULL, flags | XS_CTL_DATA_IN) != 0) {
+	    SCSIPIRETRIES, 20000, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK) != 0) {
 		sc_link->sc_print_addr(sc_link);
 		printf("could not get size\n");
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.29 2000/03/30 00:00:55 augustss Exp $	*/
+/*	$NetBSD: if_se.c,v 1.30 2000/06/09 08:54:22 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -783,7 +783,8 @@ se_add_proto(sc, proto)
 	_lto2b(sizeof(data), add_proto_cmd.length);
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *) &add_proto_cmd, sizeof(add_proto_cmd),
-	    data, sizeof(data), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
+	    data, sizeof(data), SERETRIES, SETIMEOUT, NULL,
+	    XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
 	return (error);
 }
 
@@ -799,7 +800,8 @@ se_get_addr(sc, myaddr)
 	_lto2b(ETHER_ADDR_LEN, get_addr_cmd.length);
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *) &get_addr_cmd, sizeof(get_addr_cmd),
-	    myaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_IN);
+	    myaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL,
+	    XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	printf("%s: ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(myaddr));
 	return (error);

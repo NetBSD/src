@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.19 2000/03/12 19:16:48 augustss Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.20 2000/06/09 08:54:29 enami Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -325,7 +325,7 @@ scanjet_ctl_write(ss, buf, size)
 	return (scsipi_command(ss->sc_link,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | XS_CTL_DATA_OUT));
+	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
 
@@ -351,7 +351,7 @@ scanjet_ctl_read(ss, buf, size)
 	return (scsipi_command(ss->sc_link,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | XS_CTL_DATA_IN));
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK));
 }
 
 
