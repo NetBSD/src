@@ -1,4 +1,4 @@
-#	$NetBSD: LAST_MINUTE,v 1.1.2.9 2004/02/27 04:31:00 jmc Exp $
+#	$NetBSD: LAST_MINUTE,v 1.1.2.10 2004/02/27 23:50:32 grant Exp $
 
 This file contains important information on the NetBSD 1.6.2 release that
 did not make it into the main documentation.
@@ -6,7 +6,7 @@ did not make it into the main documentation.
 [cats]
 
 	The xserver does not currently build for cats. This will be hopefully
-	fixed shortly. If absolutely required tne X builds from
+	fixed shortly. If absolutely required the X builds from
 	1.6.1 could be used, but those have known security issues as 
 	described in NetBSD-SA2003-015. The rest of the X sets from arm32 
 	builds are included.
