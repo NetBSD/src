@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 1997/01/31 01:43:37 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47 1997/01/31 23:26:10 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -59,6 +59,7 @@ struct devnametobdevmaj amiga_nam2blk[] = {
 #endif
 	{ NULL,		0 },
 };
+u_long boot_partition;
 
 /*
  * called at boot time, configure all devices on system
@@ -346,6 +347,57 @@ findroot(devpp, partp)
 
 	/* always partition 'a' */
 	*partp = 0;
+
+#if NSD > 0
+	/*
+	 * If we have the boot partition offset (boot_partition), try
+	 * to locate the device corresponding to that partition.
+	 */
+	if (boot_partition != 0) {
+	 	struct bdevsw *bdp;
+
+		for (unit = 0; unit < sd_cd.cd_ndevs; ++unit) {
+			if (sd_cd.cd_devs[unit] == NULL)
+				continue;
+
+			/*
+			 * Find the disk corresponding to the current
+			 * device.
+			 */
+			devs = (struct device **)sd_cd.cd_devs;
+			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
+				continue;
+
+			if (dkp->dk_driver == NULL ||
+			    dkp->dk_driver->d_strategy == NULL)
+				continue;
+			for (bdp = bdevsw; bdp < (bdevsw + nblkdev); bdp++)
+				if (bdp->d_strategy ==
+				    dkp->dk_driver->d_strategy)
+					break;
+			if (bdp->d_open(MAKEDISKDEV(4, unit, 0),
+			    FREAD | FNONBLOCK, 0, curproc))
+				continue;
+			bdp->d_close(MAKEDISKDEV(4, unit, 0),
+			    FREAD | FNONBLOCK, 0, curproc);
+			/*
+			 * XXX - assumes booting only from 'a' partition
+			 */
+			pp = &dkp->dk_label->d_partitions[0];
+			if (pp->p_size == 0 || pp->p_fstype != FS_BSDFFS)
+				continue;
+			if (pp->p_offset == boot_partition) {
+				if (*devpp == NULL) {
+					*devpp = devs[unit];
+					*partp = 0;	/* XXX */
+				} else
+					printf("Ambiguous boot device\n");
+			}
+		}
+	}
+	if (*devpp != NULL)
+		return;		/* we found the boot device */
+#endif
 
 	for (i = 0; genericconf[i] != NULL; i++) {
 		for (unit = genericconf[i]->cd_ndevs - 1; unit >= 0; unit--) {
