@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)init.c	5.6 (Berkeley) 3/27/91";*/
-static char rcsid[] = "$Id: init.c,v 1.2 1993/08/01 18:30:23 mycroft Exp $";
+static char rcsid[] = "$Id: init.c,v 1.3 1994/04/16 03:45:28 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -118,5 +118,6 @@ struct	gettyflags gettyflags[] = {
 	{ "ab", 0 },			/* auto-baud detect with '\r' */
 	{ "dx", 0 },			/* set decctlq */
 	{ "np", 0 },			/* no parity at all (8bit chars) */
+	{ "md", 0 },			/* do MDMBUF flow control */
 	{ 0 }
 };

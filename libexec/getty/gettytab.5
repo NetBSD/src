@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)gettytab.5	6.7 (Berkeley) 5/10/91
-.\"	$Id: gettytab.5,v 1.3 1994/04/12 03:55:47 cgd Exp $
+.\"	$Id: gettytab.5,v 1.4 1994/04/16 03:45:24 cgd Exp $
 .\"
 .Dd May 10, 1991
 .Dt GETTYTAB 5
@@ -130,6 +130,7 @@ hangup line on last close
 .No "``literal next'' character"
 .It "lo	str" Ta Pa /usr/bin/login Ta
 .No "program to exec when name obtained"
+.It "md	bool	false	do flow control based on carrier"
 .It "nd	num	0	newline (line-feed) delay"
 .It "nl	bool	false	terminal has (or might have) a newline character"
 .It "np bool	false	terminal uses no parity (i.e. 8-bit characters)"
@@ -319,6 +320,9 @@ The
 .Xr termcap
 format is horrid, something more rational should
 have been chosen.
+.Pp
+This should be converted to use
+.Xr termios 4 .
 .Sh HISTORY
 The
 .Nm gettytab
