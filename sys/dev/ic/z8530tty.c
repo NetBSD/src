@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.21 1997/11/01 15:59:26 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.22 1997/11/01 17:09:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -580,13 +580,15 @@ zsioctl(dev, cmd, data, flag, p)
 	register struct zstty_softc *zst;
 	register struct zs_chanstate *cs;
 	register struct tty *tp;
+	register struct linesw *line;
 	register int error;
 
 	zst = zstty_cd.cd_devs[minor(dev)];
 	cs = zst->zst_cs;
 	tp = zst->zst_tty;
+	line = &linesw[tp->t_line];
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*line->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -756,11 +758,13 @@ zsparam(tp, t)
 {
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
+	register struct linesw *line;
 	int s, bps, cflag, error;
 	u_char tmp3, tmp4, tmp5;
 
 	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
+	line = &linesw[tp->t_line];
 	bps = t->c_ospeed;
 	cflag = t->c_cflag;
 
@@ -797,6 +801,7 @@ zsparam(tp, t)
 	error = zs_set_modes(cs, cflag);
 	if (error)
 		return (error);
+	cs->cs_rr0_mask = cs->cs_rr0_cts | cs->cs_rr0_dcd;
 
 	/* OK, we are now committed to do it. */
 	tp->t_cflag = cflag;
@@ -846,7 +851,7 @@ zsparam(tp, t)
 	} else {
 		/* Drop DTR and RTS */
 		/* XXX: Should SOFTCAR prevent this? */
-		tmp5 &= ~(cs->cs_wr5_dtr);
+		tmp5 &= ~cs->cs_wr5_dtr;
 	}
 #endif
 
@@ -894,7 +899,7 @@ zsparam(tp, t)
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that if we
 	 * lose carrier while carrier detection is on.
 	 */
-	(void) (*linesw[tp->t_line].l_modem)(tp, cs->cs_rr0 & cs->cs_rr0_dcd);
+	(void) (*line->l_modem)(tp, (cs->cs_rr0 & cs->cs_rr0_dcd) != 0);
 
 	/* If we can throttle input, enable "high water" detection. */
 	if (cflag & CHWFLOW) {
@@ -1196,32 +1201,22 @@ zstty_stint(cs)
 		return;
 	}
 
-	/*
-	 * We have to accumulate status line changes here.
-	 * Otherwise, if we get multiple status interrupts
-	 * before the softint runs, we could fail to notice
-	 * some status line changes in the softint routine.
-	 * Fix from Bill Studenmund, October 1996.
-	 */
-	delta = (cs->cs_rr0 ^ rr0);
-	cs->cs_rr0_delta |= delta;
+	delta = rr0 ^ cs->cs_rr0;
 	cs->cs_rr0 = rr0;
+	if ((delta & cs->cs_rr0_mask) != 0) {
+		cs->cs_rr0_delta |= delta;
 
-	/*
-	 * Need to handle CTS output flow control here.
-	 * Output remains stopped as long as either the
-	 * zst_tx_stopped or TS_TTSTOP flag is set.
-	 * Never restart here; the softint routine will
-	 * do that after things are ready to move.
-	 */
-	if ((delta & cs->cs_rr0_cts) &&
-	    ((rr0 & cs->cs_rr0_cts) == 0))
-	{
-		zst->zst_tbc = 0;
-		zst->zst_heldtbc = 0;
-		zst->zst_tx_stopped = 1;
+		/*
+		 * Stop output immediately if we lose the output
+		 * flow control signal or carrier detect.
+		 */
+		if ((~rr0 & cs->cs_rr0_mask) != 0) {
+			zst->zst_tbc = 0;
+			zst->zst_heldtbc = 0;
+		}
+
+		zst->zst_st_check = 1;
 	}
-	zst->zst_st_check = 1;
 
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
@@ -1261,15 +1256,15 @@ zstty_softint(cs)
 	struct zs_chanstate *cs;
 {
 	register struct zstty_softc *zst;
-	register struct linesw *line;
 	register struct tty *tp;
+	register struct linesw *line;
 	register int get, c, s, t;
 	int ringmask, overrun;
 	register u_short ring_data;
 	register u_char rr0, delta;
 
-	zst  = cs->cs_private;
-	tp   = zst->zst_tty;
+	zst = cs->cs_private;
+	tp = zst->zst_tty;
 	line = &linesw[tp->t_line];
 	ringmask = zst->zst_ringmask;
 	overrun = 0;
@@ -1301,7 +1296,7 @@ zstty_softint(cs)
 		if (ring_data & ZSRR1_PE)
 			c |= TTY_PE;
 
-		line->l_rint(c, tp);
+		(*line->l_rint)(c, tp);
 	}
 	zst->zst_rbget = get;
 
@@ -1341,36 +1336,34 @@ zstty_softint(cs)
 		cs->cs_rr0_delta = 0;
 		splx(t);
 
-		/* Note, the MD code may use DCD for something else. */
-		if (delta & cs->cs_rr0_dcd) {
-			c = ((rr0 & cs->cs_rr0_dcd) != 0);
-			if (line->l_modem(tp, c) == 0)
-				zs_modem(zst, c);
+		if ((delta & cs->cs_rr0_dcd) != 0) {
+			/*
+			 * Inform the tty layer that carrier detect changed.
+			 */
+			(void) (*line->l_modem)(tp, (rr0 & cs->cs_rr0_dcd) != 0);
 		}
 
-		/* Note, cs_rr0_cts is set only with H/W flow control. */
-		if (delta & cs->cs_rr0_cts) {
-			/*
-			 * Only do restart here.  Stop is handled
-			 * at the h/w interrupt level.
-			 */
-			if (rr0 & cs->cs_rr0_cts) {
+		if ((delta & cs->cs_rr0_cts) != 0) {
+			/* Block or unblock output according to flow control. */
+			if ((rr0 & cs->cs_rr0_cts) != 0) {
 				zst->zst_tx_stopped = 0;
-				/* tp->t_state &= ~TS_TTSTOP; */
 				(*line->l_start)(tp);
+			} else {
+				zst->zst_tx_stopped = 1;
 			}
 		}
 	}
 
 	if (zst->zst_tx_done) {
 		zst->zst_tx_done = 0;
+
 		tp->t_state &= ~TS_BUSY;
 		if (tp->t_state & TS_FLUSH)
 			tp->t_state &= ~TS_FLUSH;
 		else
-			ndflush(&tp->t_outq, zst->zst_tba -
-				(caddr_t) tp->t_outq.c_cf);
-		line->l_start(tp);
+			ndflush(&tp->t_outq,
+			    (int)(zst->zst_tba - tp->t_outq.c_cf));
+		(*line->l_start)(tp);
 	}
 
 	splx(s);
