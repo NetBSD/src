@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.h,v 1.19 2002/08/12 21:33:40 mjacob Exp $ */
+/* $NetBSD: isp_target.h,v 1.20 2003/08/07 01:12:16 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -64,11 +64,8 @@
 #ifndef	_ISP_TARGET_H
 #define	_ISP_TARGET_H
 
-/*
- * Defines for all entry types
- */
+#define	QLTM_SENSELEN	18	/* non-FC cards only */
 #define QLTM_SVALID	0x80
-#define	QLTM_SENSELEN	18
 
 /*
  * Structure for Enable Lun and Modify Lun queue entries
@@ -302,7 +299,7 @@ typedef struct {
 	u_int16_t	at_rxid; 	/* response ID */
 	u_int16_t	at_flags;
 	u_int16_t	at_status;	/* firmware status */
-	u_int8_t	at_reserved1;
+	u_int8_t	at_crn;		/* command reference number */
 	u_int8_t	at_taskcodes;
 	u_int8_t	at_taskflags;
 	u_int8_t	at_execodes;
@@ -323,6 +320,9 @@ typedef struct {
 #define	ATIO2_TC_ATTR_ORDERED	2
 #define	ATIO2_TC_ATTR_ACAQ	4
 #define	ATIO2_TC_ATTR_UNTAGGED	5
+
+#define	ATIO2_EX_WRITE		0x1
+#define	ATIO2_EX_READ		0x2
 
 /*
  * Continue Target I/O Entry structure
@@ -489,14 +489,6 @@ typedef struct {
 			u_int32_t ct_datalen;
 			ispds_t ct_fcp_rsp_iudata;
 		} m2;
-		/*
-		 * CTIO2 returned from F/W...
-		 */
-		struct {
-			u_int32_t _reserved[4];
-			u_int16_t ct_scsi_status;
-			u_int8_t  ct_sense[QLTM_SENSELEN];
-		} fw;
 	} rsp;
 } ct2_entry_t;
 
@@ -513,6 +505,7 @@ typedef struct {
 #define CT2_DATAMASK	CT_DATAMASK
 #define	CT2_CCINCR	0x0100
 #define	CT2_FASTPOST	0x0200
+#define	CT2_TERMINATE	0x4000
 #define CT2_SENDSTATUS	0x8000
 
 /*

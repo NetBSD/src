@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.23 2003/03/03 20:54:12 mjacob Exp $ */
+/* $NetBSD: isp_target.c,v 1.24 2003/08/07 01:12:15 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.23 2003/03/03 20:54:12 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.24 2003/08/07 01:12:15 mjacob Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -570,6 +570,11 @@ isp_target_async(struct ispsoftc *isp, int bus, int event)
 		msg.nt_msg[0] = MSG_BUS_DEV_RESET;
 		(void) isp_async(isp, ISPASYNC_TARGET_MESSAGE, &msg);
 		break;
+	case ASYNC_CTIO_DONE:
+		evt.ev_bus = bus;
+		evt.ev_event = event;
+		(void) isp_async(isp, ISPASYNC_TARGET_EVENT, &evt);
+		return (0);
 	default:
 		isp_prt(isp, ISP_LOGERR,
 		    "isp_target_async: unknown event 0x%x", event);
@@ -1144,9 +1149,11 @@ isp_handle_ctio2(struct ispsoftc *isp, ct2_entry_t *ct)
 	case CT_PORTNOTAVAIL:
 		if (fmsg == NULL)
 			fmsg = "Port not available";
+		/*FALLTHROUGH*/
 	case CT_PORTCHANGED:
 		if (fmsg == NULL)
 			fmsg = "Port Changed";
+		/*FALLTHROUGH*/
 	case CT_NOACK:
 		if (fmsg == NULL)
 			fmsg = "unacknowledged Immediate Notify pending";
