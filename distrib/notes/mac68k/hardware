@@ -1,43 +1,60 @@
-NetBSD/mac68k 1.2 runs on several of the older Macintosh computers.
+NetBSD/mac68k _VER runs on several of the older Macintosh computers.
 4MB of RAM should be sufficient to boot and the system can probably
 be squeezed onto a 40MB hard disk by leaving off a package or two.
 To actually do much compiling or anything more interesting than
 booting, at least 8MB of RAM and more disk space is recommended.
-About 60MB will be necessary to install all of the NetBSD 1.2 binary
+About 75MB will be necessary to install all of the NetBSD _VER binary
 distribution (note that this does not count swap space!).  Much more
 disk space is required to install the source and objects as well (about
 another 200-300MB as a guess).
 
 Supported models:
-	Mac II, IIx, IIcx, IIci, SE/30, IIsi, IIvx, IIvi,
-	Performa 550, Performa 600,
-	LC III, LC 520,
-	MacTV
+	Mac II, IIx, IIcx, SE/30, IIci, IIsi, IIvx, IIvi,
+	Performa 400/405/410/430, Performa 450, Performa 460/466/467,
+	Performa 520, Performa 550/560, Performa 600,
+	LC II, LC III, LC III+, LC 520, LC 550,
+	MacTV,
+	Centris 650,
+	Quadra 610, Quadra 630, Quadra 650, Quadra 700, Quadra 800,
+	Quadra/Centris 660AV, Quadra 840AV,
 
 Supported devices on all of the above systems include:
-	Internal SCSI bus and most SCSI tapes, hard drives, and CD-ROMs
+	Onboard SCSI bus and most SCSI tapes, hard drives, and CD-ROMs
 	Internal sound--enough to beep on some machines, anyway
 	Most basic NuBUS video cards (there have been some
 		problems with some 24-bit color cards)
 	Both internal serial ports
-	ADB keyboards and mice
-	Ethernet cards based on the Natl. Semiconductor 8390
+	ADB keyboards and mice (both Apple and a number of third party
+		multi-button mice are supported)
+	Ethernet cards based on the Natl. Semiconductor 8390 and the
+		SONIC (DP83932) chips
 		(Asante, Apple, and a few others--problems still
 		 with ethernet and many NuBus video cards).
+	Onboard ethernet based on the SONIC chip for Quadra-series Macs
 	
 If your 68030 system is not listed above, it may be because of a problem
-with accessing the ADB and it may still work with a serial console.
+with accessing onboard video and it may still work with a serial console.
 Some of the known ones in this category:
-	Classic II (Performa 200?)
-	PowerBook 145, PowerBook 160
+	Classic-series Macs 
+	PowerBook 100-series and Duo-series Macs
+
+If your 68LC040 system is not listed above, it is due to a problem with
+floating point emulation (FPE) for this type of processor.  Machines in
+this category include:
+	Newer LC-series machines
+	Newer Performa-series machines
 
 What isn't supported, but often asked about:
-	68040-based Macs.  Work is in progress on these, but it is slow-
-		going.  This requires a new scsi driver and a new
-		ethernet driver.  When something is available, it will
-		be announced on port-mac68k@netbsd.org.
+	Macintosh IIfx:  This machine has unusual custom chips for the
+		ADB and serial interfaces which makes support for it
+		difficult.  Work is in progress on this, though.
+	Quadra 900/950:  These machines have I/O processor chips for their
+		ADB interfaces similar to those used in the IIfx and thus
+		face similar support problems.
 	PowerPC-based Macs.  This will be separate from this port.
  		The PowerPC is a much different processor as is much of
 		the hardware inside these machines.  If you are
 		interested in this, you might want to take a look at 
-		http://www.mklinux.apple.com/.
+		http://www.mklinux.apple.com/.  In addition, there is
+		also a NetBSD-powerpc port.  For more information, please
+		see http://www.tools.de/~ws/NetBSD/powerpc.html.
