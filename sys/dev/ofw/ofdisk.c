@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.27 2003/05/10 23:12:46 thorpej Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.28 2004/04/23 21:01:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.27 2003/05/10 23:12:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.28 2004/04/23 21:01:02 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -134,7 +134,7 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 	of->sc_ihandle = 0;
 	of->sc_dk.dk_driver = &ofdisk_dkdriver;
 	of->sc_dk.dk_name = of->sc_name;
-	strcpy(of->sc_name, of->sc_dev.dv_xname);
+	strlcpy(of->sc_name, of->sc_dev.dv_xname, sizeof(of->sc_name));
 	disk_attach(&of->sc_dk);
 	printf("\n");
 
@@ -175,7 +175,7 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 			path[l] = 0;
 		}
 
-		strcat(path, ":0");
+		strlcat(path, ":0", sizeof(path));
 
 		if ((of->sc_ihandle = OF_open(path)) == -1)
 			return ENXIO;
