@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1997/05/23 23:09:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/05/23 23:09:40 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $";
 
 # ifdef	attron
 #	include	<term.h>
-#	define	_tty	cur_term->Nttyb
 # endif	attron
 
 /*
@@ -77,7 +76,7 @@ char	*str;
 CARD
 getcard()
 {
-	reg int		c, c1;
+	register int		c, c1;
 
 	for (;;) {
 		while ((c = readch()) == '\n' || c == '\r' || c == ' ')
@@ -124,7 +123,7 @@ cont:		;
 }
 
 check_ext(forcomp)
-reg bool	forcomp; {
+register bool	forcomp; {
 
 
 	if (End == 700)
@@ -143,8 +142,8 @@ done:
 			}
 		}
 		else {
-			reg PLAY	*pp, *op;
-			reg int		i, safe, miles;
+			register PLAY	*pp, *op;
+			register int	i, safe, miles;
 
 			pp = &Player[COMP];
 			op = &Player[PLAYER];
@@ -178,9 +177,9 @@ done:
  * also allowed.  Return TRUE if the answer was yes, FALSE if no.
  */
 getyn(promptno)
-register int	promptno; {
-
-	reg char	c;
+register int	promptno;
+{
+	register char	c;
 
 	Saved = FALSE;
 	for (;;) {
@@ -249,7 +248,7 @@ check_more() {
 
 readch()
 {
-	reg int		cnt;
+	register int	cnt;
 	static char	c;
 
 	for (cnt = 0; read(0, &c, 1) <= 0; cnt++)
