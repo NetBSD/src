@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.70 1999/08/06 12:00:25 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.71 1999/08/09 09:55:18 bouyer Exp $ */
 
 
 /*
@@ -82,6 +82,7 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
@@ -111,7 +112,7 @@
 #define WDCNDELAY_DEBUG	50
 #endif
 
-LIST_HEAD(xfer_free_list, wdc_xfer) xfer_free_list;
+struct pool wdc_xfer_pool;
 
 static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int));
@@ -289,9 +290,12 @@ wdcattach(chp)
 		return;
 	}
 
-	/* init list only once */
+	/* initialise global data */
 	if (inited == 0) {
-		LIST_INIT(&xfer_free_list);
+		
+		/* Initialize the wdc_xfer pool. */
+		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
+		    0, 0, "wdcspl", 0, NULL, NULL, M_DEVBUF);
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
@@ -892,6 +896,7 @@ wdc_probe_caps(drvp)
 			break;
 		}
 		if (params.atap_extensions & WDC_EXT_UDMA_MODES) {
+			printed = 0;
 			for (i = 7; i >= 0; i--) {
 				if ((params.atap_udmamode_supp & (1 << i))
 				    == 0)
@@ -901,8 +906,11 @@ wdc_probe_caps(drvp)
 					if (ata_set_mode(drvp, 0x40 | i,
 					    AT_POLL) != CMD_OK)
 						continue;
-				printf("%s Ultra-DMA mode %d", sep, i);
-				sep = ",";
+				if (!printed) {
+					printf("%s Ultra-DMA mode %d", sep, i);
+					sep = ",";
+					printed = 1;
+				}
 				if (wdc->cap & WDC_CAPABILITY_UDMA) {
 					if ((wdc->cap & WDC_CAPABILITY_MODE) &&
 					    wdc->UDMA_cap < i)
@@ -1144,7 +1152,6 @@ __wdccommand_done(chp, xfer)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
 {
-	int needdone = xfer->c_flags & C_NEEDDONE;
 	struct wdc_command *wdc_c = xfer->cmd;
 
 	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
@@ -1177,12 +1184,10 @@ __wdccommand_done(chp, xfer)
 						    wd_precomp);
 	}
 	wdc_free_xfer(chp, xfer);
-	if (needdone) {
-		if (wdc_c->flags & AT_WAIT)
-			wakeup(wdc_c);
-		else
-			wdc_c->callback(wdc_c->callback_arg);
-	}
+	if (wdc_c->flags & AT_WAIT)
+		wakeup(wdc_c);
+	else if (wdc_c->callback)
+		wdc_c->callback(wdc_c->callback_arg);
 	wdcstart(chp);
 	return;
 }
@@ -1269,7 +1274,6 @@ wdc_exec_xfer(chp, xfer)
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);
-	xfer->c_flags |= C_NEEDDONE; /* we can now call upper level done() */
 }
 
 struct wdc_xfer *
@@ -1277,36 +1281,10 @@ wdc_get_xfer(flags)
 	int flags;
 {
 	struct wdc_xfer *xfer;
-	int s;
 
-	s = splbio();
-	if ((xfer = xfer_free_list.lh_first) != NULL) {
-		LIST_REMOVE(xfer, free_list);
-		splx(s);
-#ifdef DIAGNOSTIC
-		if ((xfer->c_flags & C_INUSE) != 0)
-			panic("wdc_get_xfer: xfer already in use\n");
-#endif
-	} else {
-		splx(s);
-		WDCDEBUG_PRINT(("wdc:making xfer %d\n",wdc_nxfer), DEBUG_XFERS);
-		xfer = malloc(sizeof(*xfer), M_DEVBUF,
-		    ((flags & WDC_NOSLEEP) != 0 ? M_NOWAIT : M_WAITOK));
-		if (xfer == NULL)
-			return 0;
-#ifdef DIAGNOSTIC
-		xfer->c_flags &= ~C_INUSE;
-#endif
-#ifdef WDCDEBUG
-		wdc_nxfer++;
-#endif
-	}
-#ifdef DIAGNOSTIC
-	if ((xfer->c_flags & C_INUSE) != 0)
-		panic("wdc_get_xfer: xfer already in use\n");
-#endif
+	xfer = pool_get(&wdc_xfer_pool,
+	    ((flags & WDC_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	memset(xfer, 0, sizeof(struct wdc_xfer));
-	xfer->c_flags = C_INUSE;
 	return xfer;
 }
 
@@ -1323,9 +1301,8 @@ wdc_free_xfer(chp, xfer)
 	s = splbio();
 	chp->ch_flags &= ~WDCF_ACTIVE;
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
-	xfer->c_flags &= ~C_INUSE;
-	LIST_INSERT_HEAD(&xfer_free_list, xfer, free_list);
 	splx(s);
+	pool_put(&wdc_xfer_pool, xfer);
 }
 
 static void
