@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/usr.bin/tn3270/tn3270/Attic/Makefile,v 1.3 1993/04/27 09:52:01 cgd Exp $
+# $Header: /cvsroot/src/usr.bin/tn3270/tn3270/Attic/Makefile,v 1.4 1993/04/29 11:06:05 cgd Exp $
 
 .include <../../Makefile.inc>
 
@@ -37,15 +37,18 @@ astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 	${.CURDIR}/../tools/mkastosc/obj/mkastosc ${.CURDIR}/../ctlr/hostctlr.h \
 		${.CURDIR}/../ctlr/function.h < ${.CURDIR}/../ctlr/${KBD} \
 		> ${.TARGET}
+	/bin/rm -f astosc.out
 	ln -s astosc.OUT astosc.out
 
 disp_asc.o: asc_disp.OUT disp_asc.OUT
 CLEANFILES += asc_disp.OUT asc_disp.out disp_asc.OUT disp_asc.out
 asc_disp.OUT: ${.CURDIR}/../tools/mkastods/obj/mkastods
 	${.CURDIR}/../tools/mkastods/obj/mkastods > ${.TARGET}
+	/bin/rm -f asc_disp.out
 	ln -s asc_disp.OUT asc_disp.out
 disp_asc.OUT: ${.CURDIR}/../tools/mkdstoas/obj/mkdstoas
 	${.CURDIR}/../tools/mkdstoas/obj/mkdstoas > ${.TARGET}
+	/bin/rm -f disp_asc.out
 	ln -s disp_asc.OUT disp_asc.out
 
 inbound.o: kbd.OUT
@@ -55,6 +58,7 @@ kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} \
 	${CC} ${CFLAGS} -E ${.CURDIR}/../ctlr/function.c > TMPfunc.out
 	${.CURDIR}/../tools/mkhits/obj/mkhits ${.CURDIR}/../ctlr/hostctlr.h \
 		TMPfunc.out < ${.CURDIR}/../ctlr/${KBD} > ${.TARGET}
+	/bin/rm -f kbd.out
 	ln -s kbd.OUT kbd.out
 
 # astosc.out
