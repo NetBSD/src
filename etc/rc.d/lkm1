@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: lkm1,v 1.3 2000/07/15 02:30:18 lukem Exp $
+# $NetBSD: lkm1,v 1.4 2000/08/21 23:34:45 lukem Exp $
 #
 
 # PROVIDE: beforenetlkm
-# REQUIRE: root
+# REQUIRE: root bootconf
 
 . /etc/rc.subr
 
