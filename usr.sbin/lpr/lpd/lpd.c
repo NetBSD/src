@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.38 2002/08/12 18:03:41 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.39 2002/09/19 20:08:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.38 2002/08/12 18:03:41 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.39 2002/09/19 20:08:58 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ __RCSID("$NetBSD: lpd.c,v 1.38 2002/08/12 18:03:41 itojun Exp $");
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/poll.h>
 #include <netinet/in.h>
 
 #include <err.h>
@@ -128,15 +129,15 @@ char	**blist;			/* list of addresses to bind(2) to */
 int	blist_size;
 int	blist_addrs;
 
-int               main(int, char **);
-static void       reapchild(int);
-static void       mcleanup(int);
-static void       doit(void);
-static void       startup(void);
-static void       chkhost(struct sockaddr *, int);
-static int	  ckqueue(char *);
-static void	  usage(void);
-static int	  *socksetup(int, int, const char *);
+int			main(int, char **);
+static void		reapchild(int);
+static void		mcleanup(int);
+static void		doit(void);
+static void		startup(void);
+static void		chkhost(struct sockaddr *, int);
+static int		ckqueue(char *);
+static void		usage(void);
+static struct pollfd	*socksetup(int, int, const char *, int *);
 
 uid_t	uid, euid;
 int child_count;
@@ -146,11 +147,11 @@ int child_count;
 int
 main(int argc, char **argv)
 {
-	fd_set defreadfds;
-	struct sockaddr_un un, fromunix;
+	struct sockaddr_un fromunix;
 	struct sockaddr_storage frominet;
 	sigset_t nmask, omask;
-	int lfd, errs, i, f, funix, *finet;
+	int lfd, errs, i, f, nfds;
+	struct pollfd *socks;
 	int child_max = 32;	/* more than enough to hose the system */
 	int options = 0, check_options = 0;
 	struct servent *sp;
@@ -269,12 +270,6 @@ main(int argc, char **argv)
 	 * Restart all the printers.
 	 */
 	startup();
-	(void)unlink(_PATH_SOCKETNAME);
-	funix = socket(AF_LOCAL, SOCK_STREAM, 0);
-	if (funix < 0) {
-		syslog(LOG_ERR, "socket: %m");
-		exit(1);
-	}
 
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGHUP);
@@ -283,34 +278,14 @@ main(int argc, char **argv)
 	sigaddset(&nmask, SIGTERM);
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
 
-	(void) umask(07);
 	signal(SIGHUP, mcleanup);
 	signal(SIGINT, mcleanup);
 	signal(SIGQUIT, mcleanup);
 	signal(SIGTERM, mcleanup);
-	memset(&un, 0, sizeof(un));
-	un.sun_family = AF_LOCAL;
-	strncpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path) - 1);
-#ifndef SUN_LEN
-#define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
-#endif
-	if (bind(funix, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
-		syslog(LOG_ERR, "ubind: %m");
-		exit(1);
-	}
-	(void) umask(0);
+
+	socks = socksetup(PF_UNSPEC, options, port, &nfds);
+
 	sigprocmask(SIG_SETMASK, &omask, (sigset_t *)0);
-	FD_ZERO(&defreadfds);
-	if (funix >= FD_SETSIZE) {
-		syslog(LOG_ERR, "descriptor too big");
-		exit(1);
-	}
-	FD_SET(funix, &defreadfds);
-	listen(funix, 5);
-	if (!sflag || blist_addrs)
-		finet = socksetup(PF_UNSPEC, options, port);
-	else
-		finet = NULL;	/* pretend we couldn't open TCP socket. */
 
 	if (blist != NULL) {
 		for (i = 0; i < blist_addrs; i++)
@@ -318,58 +293,47 @@ main(int argc, char **argv)
 		free(blist);
 	}
 
-	if (finet) {
-		for (i = 1; i <= *finet; i++) {
-			if (finet[i] >= FD_SETSIZE) {
-				syslog(LOG_ERR, "descriptor too big");
-				exit(1);
-			}
-			FD_SET(finet[i], &defreadfds);
-			listen(finet[i], 5);
-		}
-	}
 	/*
 	 * Main loop: accept, do a request, continue.
 	 */
 	memset(&frominet, 0, sizeof(frominet));
 	memset(&fromunix, 0, sizeof(fromunix));
 	for (;;) {
-		int domain, nfds, s, fromlen;
-		fd_set readfds;
+		int domain, rv, s, fromlen;
 		/* "short" so it overflows in about 2 hours */
-		short sleeptime = 10;
+		struct timespec sleeptime = {10, 0};
 
 		while (child_max < child_count) {
 			syslog(LOG_WARNING,
-			    "too many children, sleeping for %d seconds",
-				sleeptime);
-			sleep(sleeptime);
-			sleeptime <<= 1;
-			if (sleeptime < 0) {
+			    "too many children, sleeping for %ld seconds",
+				sleeptime.tv_sec);
+			nanosleep(&sleeptime, NULL);
+			sleeptime.tv_sec <<= 1;
+			if (sleeptime.tv_sec <= 0) {
 				syslog(LOG_CRIT, "sleeptime overflowed! help!");
-				sleeptime = 10;
+				sleeptime.tv_sec = 10;
 			}
 		}
 
-		FD_COPY(&defreadfds, &readfds);
-		nfds = select(20, &readfds, 0, 0, 0);
-		if (nfds <= 0) {
-			if (nfds < 0 && errno != EINTR)
-				syslog(LOG_WARNING, "select: %m");
+		rv = poll(socks, nfds, INFTIM);
+		if (rv <= 0) {
+			if (rv < 0 && errno != EINTR)
+				syslog(LOG_WARNING, "poll: %m");
 			continue;
 		}
-		if (FD_ISSET(funix, &readfds)) {
-			domain = AF_LOCAL;
-			fromlen = sizeof(fromunix);
-			s = accept(funix,
-			    (struct sockaddr *)&fromunix, &fromlen);
-		} else {
-                        for (i = 1; i <= *finet; i++) 
-				if (FD_ISSET(finet[i], &readfds)) {
-					domain = AF_INET, fromlen = sizeof(frominet);
-					s = accept(finet[i], (struct sockaddr *)&frominet, &fromlen);
+                for (i = 0; i < nfds; i++) 
+			if (socks[i].revents & POLLIN) {
+				if (i == 0) {
+					domain = AF_LOCAL;
+					fromlen = sizeof(fromunix);
+					s = accept(socks[i].fd, (struct sockaddr *)&fromunix, &fromlen);
+				} else {
+					domain = AF_INET;
+					fromlen = sizeof(frominet);
+					s = accept(socks[i].fd, (struct sockaddr *)&frominet, &fromlen);
 				}
-		}
+				break;
+			}
 		if (s < 0) {
 			if (errno != EINTR)
 				syslog(LOG_WARNING, "accept: %m");
@@ -383,10 +347,8 @@ main(int argc, char **argv)
 			signal(SIGINT, SIG_IGN);
 			signal(SIGQUIT, SIG_IGN);
 			signal(SIGTERM, SIG_IGN);
-			(void)close(funix);
-			if (!sflag && finet)
-                        	for (i = 1; i <= *finet; i++) 
-					(void)close(finet[i]);
+                       	for (i = 0; i < nfds; i++) 
+				(void)close(socks[i].fd);
 			dup2(s, 1);
 			(void)close(s);
 			if (domain == AF_INET) {
@@ -742,12 +704,46 @@ usage(void)
 /* setup server socket for specified address family */
 /* if af is PF_UNSPEC more than one socket may be returned */
 /* the returned list is dynamically allocated, so caller needs to free it */
-int *
-socksetup(int af, int options, const char *port)
+struct pollfd *
+socksetup(int af, int options, const char *port, int *nfds)
 {
+	struct sockaddr_un un;
 	struct addrinfo hints, *res, *r;
-	int error, maxs = 0, *s, *socks = NULL, blidx = 0;
+	int error, s, blidx = 0, n;
+	struct pollfd *socks;
 	const int on = 1;
+
+	*nfds = 0;
+
+	socks = malloc(1 * sizeof(int));
+	if (!socks) {
+		syslog(LOG_ERR, "couldn't allocate memory for sockets");
+		mcleanup(0);
+	}
+
+	s = socket(AF_LOCAL, SOCK_STREAM, 0);
+	if (s < 0) {
+		syslog(LOG_ERR, "socket(): %m");
+		exit(1);
+	}
+	memset(&un, 0, sizeof(un));
+	un.sun_family = AF_LOCAL;
+	strncpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path) - 1);
+	un.sun_len = SUN_LEN(&un);
+	(void)umask(07);
+	(void)unlink(_PATH_SOCKETNAME);
+	if (bind(s, (struct sockaddr *)&un, un.sun_len) < 0) {
+		syslog(LOG_ERR, "bind(): %m");
+		exit(1);
+	}
+	(void)umask(0);
+	listen(s, 5);
+	socks[*nfds].fd = s;
+	socks[*nfds].events = POLLIN;
+	(*nfds)++;
+
+	if (sflag && !blist_addrs)
+		return (socks);
 
 	do {
 		memset(&hints, 0, sizeof(hints));
@@ -766,60 +762,50 @@ socksetup(int af, int options, const char *port)
 		}
 
 		/* Count max number of sockets we may open */
-		for (r = res; r; r = r->ai_next, maxs++)
+		for (r = res, n = 0; r; r = r->ai_next, n++)
 			;
-		if (socks == NULL) {
-			socks = malloc((maxs + 1) * sizeof(int));
-			if (socks)
-				*socks = 0; /* num of sockets ctr at start */
-		} else
-			socks = realloc(socks, (maxs + 1) * sizeof(int));
+		socks = realloc(socks, (*nfds + n) * sizeof(int));
 		if (!socks) {
 			syslog(LOG_ERR, "couldn't allocate memory for sockets");
 			mcleanup(0);
 		}
 
-		s = socks + *socks + 1;
 		for (r = res; r; r = r->ai_next) {
-			*s = socket(r->ai_family, r->ai_socktype,
-			            r->ai_protocol);
-			if (*s < 0) {
+			s = socket(r->ai_family, r->ai_socktype,
+			    r->ai_protocol);
+			if (s < 0) {
 				syslog(LOG_DEBUG, "socket(): %m");
 				continue;
 			}
 			if (options & SO_DEBUG)
-				if (setsockopt(*s, SOL_SOCKET, SO_DEBUG,
+				if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
 					       &on, sizeof(on)) < 0) {
 					syslog(LOG_ERR,
 					       "setsockopt (SO_DEBUG): %m");
-					close (*s);
+					close(s);
 					continue;
 				}
-			if (setsockopt(*s, SOL_SOCKET, SO_REUSEPORT, &on,
+			if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &on,
 			    sizeof(on)) < 0) {
 				syslog(LOG_ERR,
 				    "setsockopt (SO_REUSEPORT): %m");
-				close (*s);
+				close(s);
 				continue;
 			}
-			if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+			if (bind(s, r->ai_addr, r->ai_addrlen) < 0) {
 				syslog(LOG_DEBUG, "bind(): %m");
-				close (*s);
+				close(s);
 				continue;
 			}
-			*socks = *socks + 1;
-			s++;
+			listen(s, 5);
+			socks[*nfds].fd = s;
+			socks[*nfds].events = POLLIN;
+			(*nfds)++;
 		}
 
 		if (res)
 			freeaddrinfo(res);
 	} while (++blidx < blist_addrs);
 
-	if (socks == NULL || *socks == 0) {
-		syslog(LOG_ERR, "Couldn't bind to any socket");
-		if (socks != NULL)
-			free(socks);
-		mcleanup(0);
-	}
-	return(socks);
+	return (socks);
 }
