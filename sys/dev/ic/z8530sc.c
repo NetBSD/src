@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.12 2000/03/30 12:45:32 augustss Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.13 2001/06/25 08:30:11 wdk Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -131,11 +131,7 @@ zs_loadchannelregs(cs)
 {
 	u_char *reg;
 
-	/* Copy "pending" regs to "current" */
-	bcopy((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16);
-	reg = cs->cs_creg;	/* current regs */
-
-	zs_write_csr(cs, ZSM_RESET_ERR);	/* XXX: reset error condition */
+	zs_write_csr(cs, ZSM_RESET_ERR); /* XXX: reset error condition */
 
 #if 1
 	/*
@@ -144,6 +140,13 @@ zs_loadchannelregs(cs)
 	 */
 	zs_iflush(cs);	/* XXX */
 #endif
+
+	if (bcmp((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16) == 0)
+	    return;	/* only change if values are different */
+
+	/* Copy "pending" regs to "current" */
+	bcopy((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16);
+	reg = cs->cs_creg;	/* current regs */
 
 	/* disable interrupts */
 	zs_write_reg(cs, 1, reg[1] & ~ZSWR1_IMASK);
