@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.18 2003/02/03 23:51:04 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.19 2003/02/04 03:31:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -155,11 +155,12 @@ char *tcptimers[] =
  * Init, arm, disarm, and test TCP timers.
  */
 #define	TCP_TIMER_INIT(tp, timer)					\
-	callout_init(&(tp)->t_timer[(timer)])
+	callout_setfunc(&(tp)->t_timer[(timer)],			\
+	    tcp_timer_funcs[(timer)], (tp))
 
 #define	TCP_TIMER_ARM(tp, timer, nticks)				\
-	callout_reset(&(tp)->t_timer[(timer)],				\
-	    (nticks) * (hz / PR_SLOWHZ), tcp_timer_funcs[(timer)], tp)
+	callout_schedule(&(tp)->t_timer[(timer)],			\
+	    (nticks) * (hz / PR_SLOWHZ))
 
 #define	TCP_TIMER_DISARM(tp, timer)					\
 	callout_stop(&(tp)->t_timer[(timer)])
