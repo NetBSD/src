@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.150 2003/01/21 04:26:01 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.151 2003/02/08 00:50:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,7 +121,7 @@ _C_LABEL(kernel_text):
 	mfc0	t0, MIPS_COP_0_STATUS
 	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
-	COP0_SYNC
+	COP0_HAZARD_FPUENABLE
 #endif
 	nop
 	nop
@@ -888,11 +888,7 @@ XNESTED(MachFPTrap)
 	sw	ra, CALLFRAME_RA(sp)
 	or	t0, t0, MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
-	COP0_SYNC
-	nop
-	nop
-	nop				# 1st extra nop for r4k
-	nop				# 2nd extra nop for r4k
+	COP0_HAZARD_FPUENABLE
 
 	cfc1	t0, MIPS_FPU_CSR	# stall til FP done
 	cfc1	t0, MIPS_FPU_CSR	# now get status
