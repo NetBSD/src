@@ -1,10 +1,10 @@
-/* $NetBSD: stubs.c,v 1.5 2003/09/30 00:35:30 thorpej Exp $ */
+/* $NetBSD: stubs.c,v 1.6 2004/08/28 22:12:40 thorpej Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.5 2003/09/30 00:35:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.6 2004/08/28 22:12:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,12 +88,4 @@ fuiword(base)
 	const void *base;
 {
 	panic("fuiword not implemented");
-}
-
-void
-pagemove(foo, bar, len)
-	caddr_t foo, bar;
-	size_t len;
-{
-	panic("pagemove not implemented");
 }

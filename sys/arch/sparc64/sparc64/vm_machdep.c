@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 2004/01/19 10:39:49 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.56 2004/08/28 22:12:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2004/01/19 10:39:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.56 2004/08/28 22:12:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,31 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2004/01/19 10:39:49 martin Exp $
 #include <machine/bus.h>
 
 #include <sparc64/sparc64/cache.h>
-
-/*
- * Move pages from one kernel virtual address to another.
- */
-void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
-{
-	paddr_t pa;
-
-	if (size & PGOFSET || (long)from & PGOFSET || (long)to & PGOFSET)
-		panic("pagemove 1");
-
-	while (size > 0) {
-		if (pmap_extract(pmap_kernel(), (vaddr_t)from, &pa) == FALSE)
-			panic("pagemove 2");
-		pmap_kremove((vaddr_t)from, PAGE_SIZE);
-		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ | VM_PROT_WRITE);
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-}
 
 /*
  * Map a user I/O request into kernel virtual address space.
