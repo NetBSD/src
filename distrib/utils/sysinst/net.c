@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.93 2003/08/06 13:56:59 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.94 2003/08/10 08:28:09 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -422,12 +422,12 @@ init_v6kernel(int autoconf)
 static int
 get_v6wait(void)
 {
-	long len = sizeof(int);
+	size_t len = sizeof(int);
 	int v;
 	int mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DAD_COUNT};
 
 	len = sizeof(v);
-	if (sysctl(mib, 4, (void *)&v, (size_t *)&len, NULL, 0) < 0) {
+	if (sysctl(mib, 4, (void *)&v, &len, NULL, 0) < 0) {
 		/* warn("sysctl(net.inet6.ip6.dadcount)"); */
 		return 1;	/* guess */
 	}
