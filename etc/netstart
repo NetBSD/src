@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.67 1999/12/20 15:51:14 itojun Exp $
+#	$NetBSD: netstart,v 1.68 2000/01/17 02:37:59 itojun Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -210,9 +210,6 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# you may want to enable them for experiments.
 	route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
 	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
-
-	# sysctl is in /usr - need to ensure it is mounted
-	mount /usr >/dev/null 2>&1	
 
 	sysctl -w net.inet6.ip6.forwarding=0
 	sysctl -w net.inet6.ip6.accept_rtadv=0
