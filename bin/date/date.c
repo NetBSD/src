@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.27 1998/10/24 03:45:51 mycroft Exp $	*/
+/*	$NetBSD: date.c,v 1.28 1998/11/04 12:51:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.27 1998/10/24 03:45:51 mycroft Exp $");
+__RCSID("$NetBSD: date.c,v 1.28 1998/11/04 12:51:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ setthetime(p)
 	int yearset, len;
 
 	for (t = p, dot = NULL; *t; ++t) {
-		if (isdigit(*t))
+		if (isdigit((unsigned char)*t))
 			continue;
 		if (*t == '.' && dot == NULL) {
 			dot = t;
