@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.17 2001/09/28 12:36:50 chs Exp $	*/
+/*	$NetBSD: bus.c,v 1.18 2001/12/19 14:53:26 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,13 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <m68k/cacheops.h>
 #include <machine/bus.h>
+
+#if defined(M68040) || defined(M68060)
+static inline void dmasync_flush(bus_addr_t, bus_size_t);
+static inline void dmasync_inval(bus_addr_t, bus_size_t);
+#endif
 
 int
 x68k_bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
@@ -318,6 +324,54 @@ x68k_bus_dmamap_unload(t, map)
 	map->dm_nsegs = 0;
 }
 
+#if defined(M68040) || defined(M68060)
+static inline void
+dmasync_flush(bus_addr_t addr, bus_size_t len)
+{
+	bus_addr_t end = addr+len;
+
+	if (len <= 1024) {
+		addr = addr & ~0xF;
+
+		do {
+			DCFL(addr);
+			addr += 16;
+		} while (addr < end);
+	} else {
+		addr = m68k_trunc_page(addr);
+
+		do {
+			DCFP(addr);
+			addr += NBPG;
+		} while (addr < end);
+	}
+}
+
+static inline void
+dmasync_inval(bus_addr_t addr, bus_size_t len)
+{
+	bus_addr_t end = addr+len;
+
+	if (len <= 1024) {
+		addr = addr & ~0xF;
+
+		do {
+			DCFL(addr);
+			ICPL(addr);
+			addr += 16;
+		} while (addr < end);
+	} else {
+		addr = m68k_trunc_page(addr);
+
+		do {
+			DCPL(addr);
+			ICPP(addr);
+			addr += NBPG;
+		} while (addr < end);
+	}
+}
+#endif
+
 /*
  * Common function for DMA map synchronization.  May be called
  * by bus-specific DMA map synchronization functions.
@@ -330,8 +384,50 @@ x68k_bus_dmamap_sync(t, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
+#if defined(M68040) || defined(M68060)
+	bus_dma_segment_t *ds = map->dm_segs;
+	bus_addr_t seg;
+	int i;
 
-	/* Nothing to do here. */
+	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTWRITE)) == 0)
+		return;
+#if defined(M68020) || defined(M68030)
+	if (mmutype != MMU_68040) {
+		if ((ops & BUS_DMASYNC_POSTWRITE) == 0)
+			return;	/* no copyback cache */
+		ICIA();		/* no per-page/per-line control */
+		DCIA();
+		return;
+	}		
+#endif
+	if (offset >= map->dm_mapsize)
+		return;	/* driver bug; warn it? */
+	if (offset+len > map->dm_mapsize)
+		len = map->dm_mapsize; /* driver bug; warn it? */
+
+	i = 0;
+	while (ds[i].ds_len <= offset) {
+		offset -= ds[i++].ds_len;
+		continue;
+	}
+	while (len > 0) {
+		seg = ds[i].ds_len - offset;
+		if (seg > len)
+			seg = len;
+		if (mmutype == MMU_68040 && (ops & BUS_DMASYNC_PREWRITE))
+			dmasync_flush(ds[i].ds_addr+offset, seg);
+		if (ops & BUS_DMASYNC_POSTREAD)
+			dmasync_inval(ds[i].ds_addr+offset, seg);
+		offset = 0;
+		len -= seg;
+		i++;
+	}
+#else  /* no 040/060 */
+	if ((ops & BUS_DMASYNC_POSTWRITE)) {
+		ICIA();		/* no per-page/per-line control */
+		DCIA();
+	}
+#endif
 }
 
 /*

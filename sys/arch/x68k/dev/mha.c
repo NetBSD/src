@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.25 2001/12/04 15:21:28 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.26 2001/12/19 14:53:26 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -1633,11 +1633,6 @@ mha_dataio_dma(dw, cw, sc, p, n)
 #if MHA_DMA_SHORT_BUS_CYCLE == 1
   if ((*(int *)&IODEVbase->io_sram[0xac]) & (1 << ((paddr_t)paddr >> 19)))
     dw &= ~(1 << 3);
-#endif
-  dma_cachectl((caddr_t) sc->sc_dmabuf, n);
-#if 0
-  printf("(%x,%x)->(%x,%x)\n", p, n, paddr, n);
-  PCIA();	/* XXX */
 #endif
   sc->sc_pc[0x80 + (((long)paddr >> 16) & 0xFF)] = 0;
   sc->sc_pc[0x180 + (((long)paddr >> 8) & 0xFF)] = 0;

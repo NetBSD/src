@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.38 2001/11/25 00:38:50 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.39 2001/12/19 14:53:26 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -327,10 +327,6 @@ fdc_dmastart(fdc, read, addr, count)
 					  DMAC_SCR_DAC_NO_COUNT),
 					 (u_int8_t*) (fdc->sc_addr +
 						      fddata));	/* XXX */
-#if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040)
-		dma_cachectl(addr, count);
-#endif
 
 	dmac_start_xfer(fdc->sc_dmachan->ch_softc, fdc->sc_xfer);
 }
