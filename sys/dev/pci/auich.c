@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.42 2003/10/02 07:41:53 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.43 2003/10/21 01:12:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.42 2003/10/02 07:41:53 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.43 2003/10/21 01:12:42 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,7 @@ static const struct auich_devtype {
 	    "AMD768 AC-97 Audio",		"AMD768" },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
 	    "AMD8111 AC-97 Audio",		"AMD8111" },
-	{ 0,
+	{ 0, 0,
 	    NULL,				NULL },
 };
 
