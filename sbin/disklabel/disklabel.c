@@ -43,7 +43,7 @@ static char copyright[] =
 #ifndef lint
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 /* from static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/5/93"; */
-static char rcsid[] = "$Id: disklabel.c,v 1.14 1994/07/05 03:09:21 deraadt Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.14.2.1 1994/07/20 05:08:29 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -431,7 +431,9 @@ writelabel(f, boot, lp)
 			l_perror("ioctl DIOCSDINFO");
 			return (1);
 		}
+#ifndef i386
 		(void)lseek(f, (off_t)0, SEEK_SET);
+#endif
 		/*
 		 * write enable label sector before write (if necessary),
 		 * disable after writing.
