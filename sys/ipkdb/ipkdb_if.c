@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_if.c,v 1.7 1998/01/13 02:26:06 thorpej Exp $	*/
+/*	$NetBSD: ipkdb_if.c,v 1.8 1998/07/05 22:29:52 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1993-1996 Wolfgang Solfrank.
@@ -30,7 +30,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "ether.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
