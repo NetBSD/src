@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.36 1998/03/19 06:37:26 thorpej Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.37 1998/03/27 01:46:20 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -207,12 +207,34 @@ vmspace_alloc(min, max, pageable)
 
 	vm = (struct vmspace *)
 		malloc(sizeof(struct vmspace), M_VMMAP, M_WAITOK);
+	vmspace_init(vm, NULL, min, max, pageable);
+	return (vm);
+}
+
+/*
+ * Initialize a vmspace structure.  The refcnt is set to 1.
+ * The remaining fields must be initialized by the caller.
+ */
+void
+vmspace_init(vm, pmap, min, max, pageable)
+	struct vmspace *vm;
+	struct pmap *pmap;
+	vm_offset_t min, max;
+	boolean_t pageable;
+{
+
 	/* Just clear the whole struct.  It is not large anyway. */
 	bzero(vm, sizeof(*vm));
+
 	vm_map_init(&vm->vm_map, min, max, pageable);
-	vm->vm_map.pmap = pmap_create(0);
+
+	if (pmap)
+		pmap_reference(pmap);
+	else
+		pmap = pmap_create(0);
+	vm->vm_map.pmap = pmap;
+
 	vm->vm_refcnt = 1;
-	return (vm);
 }
 
 /*
