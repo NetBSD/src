@@ -133,6 +133,10 @@ SOURCE=.\platid_mask.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\platid_name.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\preference.c
 # End Source File
 # Begin Source File

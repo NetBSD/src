@@ -1,21 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1999/11/30 15:11:00 uch Exp $
+#	$NetBSD: Makefile,v 1.3 2000/02/06 08:47:05 takemura Exp $
 
-HDR=../include/platid_generated.h
-MASK_HDR=../include/platid_mask.h
-GENERATEDS=${HDR} ${MASK_HDR} platid_mask.c
+SUBDIR=	platid_gen
 
 HOST_CC ?= /usr/bin/cc
-
-all: $(GENERATEDS)
-
-$(GENERATEDS): platid.def platid.awk
-	awk -f platid_copyright.awk  platid.def > ${HDR}
-	awk -f platid_copyright.awk  platid.def > ${MASK_HDR}
-	awk -f platid_copyright.awk  platid.def > platid_mask.c
-	cat platid.def | \
-        sed -e 's!\([{}:=?]\)! \1 !g' -e 's|\*/| */ |' -e 's|/\*| /* |' | \
-        tr ' \t' '\n\n' | \
-        awk -f platid.awk -v out_h=${HDR} -v out_mask_h=${MASK_HDR}
 
 test: platid_test
 	./platid_test > platid_test.out
@@ -26,5 +13,6 @@ platid_test: platid.c platid_mask.c platid_test.c
 	ln -sf ../../mips/include ./mips
 	$(HOST_CC) -I. -DPLATID_TEST platid.c platid_mask.c platid_test.c -o $@
 
-clean::
-	rm -rf platid_test platid_test.out $(GENERATEDS) machine mips
+CLEANFILES+=	platid_test platid_test.out machine mips
+
+.include <bsd.subdir.mk>
