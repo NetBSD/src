@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2004/01/08 04:22:11 rtr Exp $
+#	$NetBSD: Makefile,v 1.10 2004/01/08 05:07:41 lukem Exp $
+
+.include <bsd.own.mk>
 
 SUBDIR=	ddc doc drivers dummy etc fbdevhw \
 	i2c input int10 loader pcidata \
@@ -8,10 +10,37 @@ SUBDIR=	ddc doc drivers dummy etc fbdevhw \
 	.WAIT \
 	bin
 
-FILES=			XF86Config XF98Config
-FILESNAME_XF86Config=	XF86Config.eg
-FILESNAME_XF98Config=	XF86Config.98
-FILESDIR=		${X11LIBDIR}
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86
 
+BUILDSYMLINKS=	XF86Conf.cpp XF86Config.eg.cpp \
+		XF98Conf.cpp XF86Config.98.cpp
+
+CPPSCRIPTS=	XF86Config.eg XF86Config.98
+
+CPPSCRIPTFLAGS=	-DRGBPATH=\"${X11LIBDIR}/rgb\" \
+		-DMISCFONTPATH=\"${X11FONTDIR}/misc/\" \
+		-DLOCALFONTPATH=\"${X11FONTDIR}/local/\" \
+		-DT1FONTPATH=\"${X11FONTDIR}/Type1/\" \
+		-DCIDFONTPATH=\"${X11FONTDIR}/CID/\" \
+		-DSPFONTPATH=\"${X11FONTDIR}/Speedo/\" \
+		-DDPI75FONTPATH=\"${X11FONTDIR}/75dpi/\" \
+		-DDPI100FONTPATH=\"${X11FONTDIR}/100dpi/\" \
+		-DDPI75USFONTPATH=\"${X11FONTDIR}/75dpi/:unscaled\" \
+		-DDPI100USFONTPATH=\"${X11FONTDIR}/100dpi/:unscaled\" \
+		-DMANPAGE=${X11MANDIR}/cat5/XF86Config.0 \
+		-DMODULEPATH=\"${X11USRLIBDIR}/modules\"
+
+CPPSCRIPTFLAGS_XF86Config.98=${CPPSCRIPTFLAGS} \
+		-DFREEBSDMOUSEDEV='\#    Option	"Device"	"/dev/mse0"' \
+		-DNETBSDNEWMOUSEDEV='Option	"Device"	"/dev/lms0"' \
+		-DNETBSDOLDMOUSEDEV='\#    Option	"Device"	"/dev/mms0"' \
+		-DLINUXMOUSEDEV='\#    Option	"Device"	"/dev/mouse"' \
+
+${CPPSCRIPTS}: Makefile
+
+FILES=		${CPPSCRIPTS}
+FILESDIR=	${X11LIBDIR}
+
+.include <bsd.x11.mk>
 .include <bsd.files.mk>
 .include <bsd.subdir.mk>
