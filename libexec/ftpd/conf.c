@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1997/09/23 13:56:39 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1997/10/19 18:15:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.6 1997/09/23 13:56:39 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.7 1997/10/19 18:15:23 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -349,7 +349,7 @@ show_chdir_messages(code)
 	for (rlist = gl.gl_pathv; *rlist != NULL; rlist++) {
 		if (stat(*rlist, &st) != 0)
 			continue;
-		if ((st.st_mode & S_IFMT) != S_IFREG)
+		if (!S_ISREG(st.st_mode))
 			continue;
 		then = st.st_mtime;
 		lreply(code, "Please read the file %s", *rlist);
