@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.12 1997/07/30 23:49:48 jtc Exp $	*/
+/*	$NetBSD: catgets.c,v 1.13 1998/02/08 19:42:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ _catgets(catd, set_id, msg_id, s)
 			}
 
 			/* not found */
-			return (char *) s;
+			goto notfound;
 
 		} else if (r < 0) {
 			u = i - 1;
@@ -104,6 +104,8 @@ _catgets(catd, set_id, msg_id, s)
 		}
 	}
 
+notfound:
 	/* not found */
+	errno = ENOMSG;
 	return (char *) s;
 }
