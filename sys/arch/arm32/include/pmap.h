@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 1999/02/28 01:49:25 mark Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 2000/09/27 21:34:29 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -148,6 +148,7 @@ extern struct pmap	kernel_pmap_store;  /* kernel_pmap points to this */
 #define pmap_kernel()			(&kernel_pmap_store)
 #define pmap_update()			/*cpu_tlb_flushID()*/
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 #define pmap_phys_address(ppn)		(arm_page_to_byte((ppn)))
 
