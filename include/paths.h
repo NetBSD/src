@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.7 1994/10/26 00:56:12 cgd Exp $	*/
+/*	$NetBSD: paths.h,v 1.8 1996/10/12 00:49:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,6 +51,7 @@
 #define	_PATH_DEVNULL	"/dev/null"
 #define	_PATH_DRUM	"/dev/drum"
 #define	_PATH_KMEM	"/dev/kmem"
+#define	_PATH_KVMDB	"/var/db/kvm.db"
 #define	_PATH_LOCALE	"/usr/share/locale"
 #define	_PATH_MAILDIR	"/var/mail"
 #define	_PATH_MAN	"/usr/share/man"
