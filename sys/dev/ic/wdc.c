@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.33 1998/10/13 09:34:01 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.34 1998/10/13 15:02:42 bouyer Exp $ */
 
 
 /*
@@ -504,7 +504,9 @@ void wdc_reset_channel(drvp)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	int drive;
-	WDCDEBUG_PRINT(("ata_reset_channel\n"), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("ata_reset_channel %s:%d for drive %d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive),
+	    DEBUG_FUNCS);
 	(void) wdcreset(chp, VERBOSE);
 	for (drive = 0; drive < 2; drive++) {
 		chp->ch_drive[drive].state = 0;
@@ -605,7 +607,8 @@ wdcwait(chp, mask, bits, timeout)
 #ifdef WDCNDELAY_DEBUG
 	extern int cold;
 #endif
-	WDCDEBUG_PRINT(("wdcwait\n"), DEBUG_STATUS);
+	WDCDEBUG_PRINT(("wdcwait %s:%d\n", chp->wdc->sc_dev.dv_xname,
+	    chp->channel), DEBUG_STATUS);
 	chp->ch_error = 0;
 
 	timeout = timeout * 1000 / WDCDELAY; /* delay uses microseconds */
@@ -714,11 +717,9 @@ wdc_probe_caps(drvp)
 		}
 	}
 
-#if 0
 	/* An ATAPI device is at last PIO mode 3 */
 	if (drvp->drive_flags & DRIVE_ATAPI)
 		drvp->PIO_mode = 3;
-#endif
 
 	/*
 	 * It's not in the specs, but it seems that some drive 
@@ -766,6 +767,7 @@ wdc_probe_caps(drvp)
 			 * We didn't find a valid PIO mode.
 			 * Assume the values returned for DMA are buggy too
 			 */
+			printf("\n");
 			return;
 		}
 		printed = 0;
@@ -828,7 +830,9 @@ wdc_exec_command(drvp, wdc_c)
 	struct wdc_xfer *xfer;
 	int s, ret;
 
-	WDCDEBUG_PRINT(("wdc_exec_command\n"), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("wdc_exec_command %s:%d:%d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive),
+	    DEBUG_FUNCS);
 
 	/* set up an xfer and queue. Wait for completion */
 	xfer = wdc_get_xfer(wdc_c->flags & AT_WAIT ? WDC_CANSLEEP :
@@ -875,7 +879,9 @@ __wdccommand_start(chp, xfer)
 	int drive = xfer->drive;
 	struct wdc_command *wdc_c = xfer->cmd;
 
-	WDCDEBUG_PRINT(("__wdccommand_start\n"), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
+	    DEBUG_FUNCS);
 
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (drive << 4));
@@ -911,7 +917,8 @@ __wdccommand_intr(chp, xfer)
 	int bcount = wdc_c->bcount;
 	char *data = wdc_c->data;
 
-	WDCDEBUG_PRINT(("__wdccommand_intr\n"), DEBUG_INTR);
+	WDCDEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_INTR);
 	if (wdcwait(chp, wdc_c->r_st_pmask, wdc_c->r_st_pmask,
 	    wdc_c->timeout)) {
 		wdc_c->flags |= AT_ERROR;
@@ -951,7 +958,8 @@ __wdccommand_done(chp, xfer)
 	int needdone = xfer->c_flags & C_NEEDDONE;
 	struct wdc_command *wdc_c = xfer->cmd;
 
-	WDCDEBUG_PRINT(("__wdccommand_done\n"), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_FUNCS);
 	if (chp->ch_status & WDCS_DWF)
 		wdc_c->flags |= AT_DF;
 	if (chp->ch_status & WDCS_ERR) {
