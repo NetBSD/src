@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2000/11/27 08:53:55 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 2001/06/15 15:50:05 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,17 +45,29 @@
 
 #include <machine/bus.h>
 
-const struct prep_bus_space prep_io_space_tag = {
-	PREP_BUS_SPACE_IO,  0x80000000, 0x3f800000
+static int prep_memio_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	bus_space_handle_t *);
+static void prep_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+static int prep_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,
+	bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *,
+	bus_space_handle_t *);
+static void prep_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+
+const struct powerpc_bus_space prep_io_space_tag = {
+	PREP_BUS_SPACE_IO,  0x80000000, 0x80000000, 0x3f800000,
+	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
 };
-const struct prep_bus_space prep_isa_io_space_tag = {
-	PREP_BUS_SPACE_IO,  0x80000000, 0x00010000
+const struct powerpc_bus_space prep_isa_io_space_tag = {
+	PREP_BUS_SPACE_IO,  0x80000000, 0x80000000, 0x00010000,
+	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
 };
-const struct prep_bus_space prep_mem_space_tag = {
-	PREP_BUS_SPACE_MEM, 0xC0000000, 0x3f000000
+const struct powerpc_bus_space prep_mem_space_tag = {
+	PREP_BUS_SPACE_MEM, 0xC0000000, 0xC0000000, 0x3f000000,
+	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
 };
-const struct prep_bus_space prep_isa_mem_space_tag = {
-	PREP_BUS_SPACE_MEM, 0xC0000000, 0x01000000
+const struct powerpc_bus_space prep_isa_mem_space_tag = {
+	PREP_BUS_SPACE_MEM, 0xC0000000, 0xC0000000, 0x01000000,
+	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
 };
 static long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
@@ -88,7 +100,7 @@ prep_bus_space_mallocok()
 	ioport_malloc_safe = 1;
 }
 
-int
+static int
 prep_memio_map(t, bpa, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t bpa;
@@ -127,7 +139,7 @@ prep_memio_map(t, bpa, size, flags, bshp)
 	return (0);
 }
 
-void
+static void
 prep_memio_unmap(t, bsh, size)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
@@ -157,7 +169,7 @@ prep_memio_unmap(t, bsh, size)
 	}
 }
 
-int
+static int
 prep_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
     bpap, bshp)
 	bus_space_tag_t t;
@@ -200,7 +212,7 @@ prep_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 	return (0);
 }
 
-void    
+static void    
 prep_memio_free(t, bsh, size)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;

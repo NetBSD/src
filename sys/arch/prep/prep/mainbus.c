@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2000/11/27 08:53:55 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2001/06/15 15:50:05 nonaka Exp $	*/
 
 
 /*
@@ -41,15 +41,14 @@
 #include "pci.h"
 #include <dev/pci/pcivar.h>
 
-
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+int	mainbus_match(struct device *, struct cfdata *, void *);
+void	mainbus_attach(struct device *, struct device *, void *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-int	mainbus_print __P((void *, const char *));
+int	mainbus_print (void *, const char *);
 
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
@@ -102,8 +101,7 @@ mainbus_attach(parent, self, aux)
 	mba.mba_pba.pba_memt = &prep_mem_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 	mba.mba_pba.pba_bus = 0;
-	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED |
-	    PCI_FLAGS_MEM_ENABLED;
+	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found(self, &mba.mba_pba, mainbus_print);
 #endif
 }
