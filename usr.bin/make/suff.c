@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.43 2004/01/11 17:24:25 dsl Exp $	*/
+/*	$NetBSD: suff.c,v 1.44 2004/02/13 17:56:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.43 2004/01/11 17:24:25 dsl Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.44 2004/02/13 17:56:17 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.43 2004/01/11 17:24:25 dsl Exp $");
+__RCSID("$NetBSD: suff.c,v 1.44 2004/02/13 17:56:17 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -740,7 +740,7 @@ Suff_AddTransform(char *line)
  *
  * Side Effects:
  *	If the node has no commands or children, the children and parents
- *	lists of the affected suffices are altered.
+ *	lists of the affected suffixes are altered.
  *
  *-----------------------------------------------------------------------
  */

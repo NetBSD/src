@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_subst.c,v 1.14 2002/04/09 01:47:34 thorpej Exp $	*/
+/*	$NetBSD: ex_subst.c,v 1.15 2004/02/13 17:56:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -93,7 +93,7 @@ subagain:	return (ex_subagain(sp, cmdp));
 	/*
 	 * !!!
 	 * The full-blown substitute command reset the remembered
-	 * state of the 'c' and 'g' suffices.
+	 * state of the 'c' and 'g' suffixes.
 	 */
 	sp->c_suffix = sp->g_suffix = 0;
 

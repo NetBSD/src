@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.8 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.9 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -6701,7 +6701,7 @@ Changes from NetBSD 1.5 to NetBSD 1.6:
 	mca: IBM PS/2 MCA DMA controller access bus_dma'fied, uses i386
 		ISA bus_dma routines to bounce buffers on machines with
 		>16MB RAM, edc(4) and mca/ed(4) fixes [jdolecek 20011124]
-	dd(1): support 'g' (gigabyte) and 't' (terabyte)' suffices on sizes.
+	dd(1): support 'g' (gigabyte) and 't' (terabyte)' suffixes on sizes.
 		[lukem 20011125]
 	makefs(8): support size suffix parsing as per dd(1).  [lukem 20011125]
 	distrib/notes: Add a table of contents to the release notes.

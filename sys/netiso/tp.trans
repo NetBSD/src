@@ -1,4 +1,4 @@
-/*	$NetBSD: tp.trans,v 1.8 2003/08/11 15:17:29 itojun Exp $	*/
+/*	$NetBSD: tp.trans,v 1.9 2004/02/13 17:56:17 wiz Exp $	*/
 
 /* NEW */
 /*-
@@ -1066,7 +1066,7 @@ TP_REFWAIT 		<==		TP_CLOSING									TM_retrans
 
 /*
  * The resources are kept around until the ref timer goes off.
- * The suffices are wiped out sooner so they can be reused right away.
+ * The suffixes are wiped out sooner so they can be reused right away.
  */
 /* applicable in TP4, TP0 */
 TP_CLOSED 		<==		TP_REFWAIT 									TM_reference
