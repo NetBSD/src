@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53 1999/07/10 21:55:17 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.54 1999/08/01 12:07:31 ragge Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -252,33 +252,13 @@ cpu_coredump(p, vp, cred, chdr)
 }
 
 /*
- * cpu_swapin() is called just before a process shall be swapped in.
- * Kernel stack and pcb must be mapped when we swtch() to this new
- * process, to guarantee that we frob all pages here to ensure that
- * they actually are in-core. Kernel stack red zone is also updated
- * here.
+ * Kernel stack red zone need to be set when a process is swapped in.
  */
 void
 cpu_swapin(p)
 	struct proc *p;
 {
-	struct pte *pt;
-	u_int uarea, i, *j, rv;
-
-	uarea = (u_int)p->p_addr;
-
-	for (i = uarea;i < uarea + USPACE;i += PAGE_SIZE) {
-		j = (u_int *)kvtopte(i);
-		if ((*j & PG_V) == 0) {
-			rv = uvm_fault(kernel_map, i, 0,
-			    VM_PROT_WRITE|VM_PROT_READ);
-			if (rv != KERN_SUCCESS)
-				panic("cpu_swapin: rv %d",rv);
-		}
-	}
-
-	pt = kvtopte(uarea + REDZONEADDR);
-	pt->pg_v = 0; /* Set kernel stack red zone */
+	kvtopte((vaddr_t)p->p_addr + REDZONEADDR)->pg_v = 0;
 }
 
 #if VAX410 || VAX43
