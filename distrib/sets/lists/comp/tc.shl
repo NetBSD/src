@@ -1,4 +1,4 @@
-#	$NetBSD: tc.shl,v 1.1 2002/05/05 01:24:24 thorpej Exp $
+#	$NetBSD: tc.shl,v 1.2 2002/05/11 05:51:37 tron Exp $
 ./usr/lib/libbfd.so.4				comp-c-shlib
 ./usr/lib/libbfd.so.4.0				comp-c-shlib
 ./usr/lib/libg2c.so				comp-fortran-lib
@@ -7,10 +7,6 @@
 ./usr/lib/libg2c_pic.a				comp-fortran-lib
 ./usr/lib/libgcc_pic.a				comp-c-piclib
 ./usr/lib/libobjc.so				comp-objc-lib
-./usr/lib/libobjc.so.1				comp-objc-shlib
-./usr/lib/libobjc.so.1.0			comp-objc-shlib
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
 ./usr/lib/libstdc++.so				comp-cxx-lib
-./usr/lib/libstdc++.so.4			comp-cxx-shlib
-./usr/lib/libstdc++.so.4.0			comp-cxx-shlib
 ./usr/lib/libstdc++_pic.a			comp-cxx-piclib
