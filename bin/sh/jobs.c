@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)jobs.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: jobs.c,v 1.6 1993/08/01 18:58:14 mycroft Exp $";
+static char rcsid[] = "$Id: jobs.c,v 1.7 1993/08/06 21:50:16 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -50,7 +50,6 @@ static char rcsid[] = "$Id: jobs.c,v 1.6 1993/08/01 18:58:14 mycroft Exp $";
 #include "jobs.h"
 #include "options.h"
 #include "trap.h"
-#include "signames.h"
 #include "syntax.h"
 #include "input.h"
 #include "output.h"
@@ -61,6 +60,7 @@ static char rcsid[] = "$Id: jobs.c,v 1.6 1993/08/01 18:58:14 mycroft Exp $";
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
+#include <unistd.h>
 #ifdef BSD
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -123,8 +123,8 @@ setjobctl(on) {
 				return;
 			}
 			if (initialpgrp == -1)
-				initialpgrp = getpgrp(0);
-			else if (initialpgrp != getpgrp(0)) {
+				initialpgrp = getpgrp();
+			else if (initialpgrp != getpgrp()) {
 				killpg(initialpgrp, SIGTTIN);
 				continue;
 			}
@@ -272,8 +272,8 @@ showjobs(change) {
 				if ((i & 0xFF) == 0177)
 					i >>= 8;
 #endif
-				if ((i & 0x7F) <= MAXSIG && sigmesg[i & 0x7F])
-					scopy(sigmesg[i & 0x7F], s);
+				if ((i & 0x7F) < NSIG && sys_siglist[i & 0x7F])
+					scopy(sys_siglist[i & 0x7F], s);
 				else
 					fmtstr(s, 64, "Signal %d", i & 0x7F);
 				if (i & 0x80)
@@ -626,7 +626,7 @@ waitforjob(jp)
 	register struct job *jp;
 	{
 #if JOBS
-	int mypgrp = getpgrp(0);
+	int mypgrp = getpgrp();
 #endif
 	int status;
 	int st;
@@ -736,8 +736,8 @@ dowait(block, job)
 			if (status == SIGTSTP && rootshell && iflag)
 				outfmt(out2, "%%%d ", job - jobtab + 1);
 #endif
-			if (status <= MAXSIG && sigmesg[status])
-				out2str(sigmesg[status]);
+			if (status < NSIG && sys_siglist[status])
+				out2str(sys_siglist[status]);
 			else
 				outfmt(out2, "Signal %d", status);
 			if (core)
