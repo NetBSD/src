@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: resolv.c,v 1.1.1.4 2001/04/02 21:56:59 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: resolv.c,v 1.1.1.5 2001/06/18 18:13:17 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -70,8 +70,7 @@ void read_resolv_conf (parse_time)
 	}
 
 	cfile = (struct parse *)0;
-	new_parse (&cfile, file, (char *)0, 0, path_resolv_conf);
-	cfile -> eol_token = 1;
+	new_parse (&cfile, file, (char *)0, 0, path_resolv_conf, 1);
 
 	do {
 		token = next_token (&val, (unsigned *)0, cfile);

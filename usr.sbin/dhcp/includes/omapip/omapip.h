@@ -43,7 +43,7 @@
 
 #ifndef _OMAPIP_H_
 #define _OMAPIP_H_
-#include <isc/result.h>
+#include <isc-dhcp/result.h>
 
 typedef unsigned int omapi_handle_t;
 
@@ -395,6 +395,9 @@ isc_result_t omapi_io_stuff_values (omapi_object_t *,
 				    omapi_object_t *);
 isc_result_t omapi_waiter_signal_handler (omapi_object_t *,
 					  const char *, va_list);
+isc_result_t omapi_io_state_foreach (isc_result_t (*func) (omapi_object_t *,
+							   void *),
+				     void *p);
 
 isc_result_t omapi_generic_new (omapi_object_t **, const char *, int);
 isc_result_t omapi_generic_set_value  (omapi_object_t *, omapi_object_t *,
@@ -409,6 +412,7 @@ isc_result_t omapi_generic_signal_handler (omapi_object_t *,
 isc_result_t omapi_generic_stuff_values (omapi_object_t *,
 					 omapi_object_t *,
 					 omapi_object_t *);
+isc_result_t omapi_generic_clear_flags (omapi_object_t *);
 
 isc_result_t omapi_message_new (omapi_object_t **, const char *, int);
 isc_result_t omapi_message_set_value  (omapi_object_t *, omapi_object_t *,
@@ -521,6 +525,7 @@ isc_result_t omapi_object_update (omapi_object_t *, omapi_object_t *,
 int omapi_data_string_cmp (omapi_data_string_t *, omapi_data_string_t *);
 int omapi_ds_strcmp (omapi_data_string_t *, const char *);
 int omapi_td_strcmp (omapi_typed_data_t *, const char *);
+int omapi_td_strcasecmp (omapi_typed_data_t *, const char *);
 isc_result_t omapi_make_value (omapi_value_t **, omapi_data_string_t *,
 			       omapi_typed_data_t *, const char *, int);
 isc_result_t omapi_make_const_value (omapi_value_t **, omapi_data_string_t *,

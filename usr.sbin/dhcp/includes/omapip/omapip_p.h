@@ -69,8 +69,8 @@
 #include "cdefs.h"
 #include "osdep.h"
 
-#include <isc/dst.h>
-#include <isc/result.h>
+#include <isc-dhcp/dst.h>
+#include <isc-dhcp/result.h>
 
 #include <omapip/convert.h>
 #include <omapip/hash.h>
@@ -120,6 +120,7 @@ typedef struct __omapi_message_object {
 	struct __omapi_message_object *next, *prev;
 	omapi_object_t *object;
 	omapi_object_t *notify_object;
+	struct __omapi_protocol_object *protocol_object;
 	u_int32_t authlen;
 	omapi_typed_data_t *authenticator;
 	u_int32_t authid;
@@ -136,7 +137,7 @@ typedef struct __omapi_remote_auth {
 	omapi_object_t *a;
 } omapi_remote_auth_t;
 
-typedef struct {
+typedef struct __omapi_protocol_object {
 	OMAPI_OBJECT_PREAMBLE;
 	u_int32_t header_size;		
 	u_int32_t protocol_version;
@@ -216,6 +217,7 @@ typedef struct __omapi_io_object {
 typedef struct __omapi_generic_object {
 	OMAPI_OBJECT_PREAMBLE;
 	omapi_value_t **values;
+	u_int8_t *changed;
 	int nvalues, va_max;
 } omapi_generic_object_t;
 
@@ -291,4 +293,10 @@ int log_info (const char *, ...)
 int log_debug (const char *, ...)
 	__attribute__((__format__(__printf__,1,2)));
 void do_percentm (char *obuf, const char *ibuf);
+
+isc_result_t uerr2isc (int);
+isc_result_t ns_rcode_to_isc (int);
+
+extern omapi_message_object_t *omapi_registered_messages;
+
 #endif /* __OMAPIP_OMAPIP_P_H__ */
