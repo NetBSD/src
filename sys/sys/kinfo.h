@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kinfo.h	7.9 (Berkeley) 6/26/91
- *	$Id: kinfo.h,v 1.3 1993/05/20 16:22:30 cgd Exp $
+ *	$Id: kinfo.h,v 1.4 1994/01/28 04:50:16 cgd Exp $
  */
 
 #ifndef _SYS_KINFO_H_
@@ -72,6 +72,11 @@
  * file structures
  */
 #define KINFO_FILE		(3<<8)
+
+/*
+ * load average
+ */
+#define	KINFO_LOADAVG		(4<<8)
 
 /*
  * Locking and stats
