@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2005/03/19 23:32:55 thorpej Exp $	*/
+/*	$NetBSD: af_atalk.h,v 1.1 2005/03/19 23:32:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,37 +29,10 @@
  * SUCH DAMAGE.
  */
 
-#define	RIDADDR 0  
-#define	ADDR    1
-#define	MASK    2
-#define	DSTADDR 3
+void	setatrange(const char *, int);
+void	setatphase(const char *, int);
 
-struct afswtch {
-	const char *af_name;
-	short af_af;
-	void (*af_status)(int);
-	void (*af_getaddr)(const char *, int);
-	void (*af_getprefix)(const char *, int);
-	u_long af_difaddr;
-	u_long af_aifaddr;
-	u_long af_gifaddr;
-	void *af_ridreq;
-	void *af_addreq;
-};
+void	checkatrange(struct sockaddr *);
 
-extern const struct afswtch *afp;
-extern struct ifreq ifr;
-extern int s;
-extern char name[30];
-
-extern u_short flags;
-extern int zflag;
-
-extern struct ifreq ifr, ridreq;
-extern struct ifaliasreq addreq;
-
-const struct afswtch *lookup_af_byname(const char *);
-const struct afswtch *lookup_af_bynum(int);
-const char *get_string(const char *, const char *, u_int8_t *, int *);
-void	print_string(const u_int8_t *, int);
-void    getsock(int);
+void	at_status(int);
+void	at_getaddr(const char *, int);
