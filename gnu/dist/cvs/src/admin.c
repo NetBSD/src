@@ -211,19 +211,58 @@ makecmdline(argc, argv)
 }
 
 int
+admin_group_member()
+{
+    struct group *grp;
+    struct group *getgrnam();
+    int i;
+
+    if (CVS_admin_group == NULL)
+	return 1;
+
+    if ((grp = getgrnam(CVS_admin_group)) == NULL)
+	return 0;
+
+    {
+#ifdef HAVE_GETGROUPS
+	gid_t *grps;
+	int n;
+
+	/* get number of auxiliary groups */
+	n = getgroups (0, NULL);
+	if (n < 0)
+	    error (1, errno, "unable to get number of auxiliary groups");
+	grps = (gid_t *) xmalloc((n + 1) * sizeof *grps);
+	n = getgroups (n, grps);
+	if (n < 0)
+	    error (1, errno, "unable to get list of auxiliary groups");
+	grps[n] = getgid();
+	for (i = 0; i <= n; i++)
+	    if (grps[i] == grp->gr_gid) break;
+	free (grps);
+	if (i > n)
+	    return 0;
+#else
+	char *me = getcaller();
+	char **grnam;
+	
+	for (grnam = grp->gr_mem; *grnam; grnam++)
+	    if (strcmp (*grnam, me) == 0) break;
+	if (!*grnam && getgid() != grp->gr_gid)
+	    return 0;
+#endif
+    }
+}
+int
 admin (argc, argv)
     int argc;
     char **argv;
 {
     int err;
-#ifdef CVS_ADMIN_GROUP
-    struct group *grp;
-    struct group *getgrnam();
-#endif
     struct admin_data admin_data;
     int c;
     int i;
-    int only_k_option;
+    int only_limited_options = 1;
 
     if (argc <= 1)
 	usage (admin_usage);
@@ -237,12 +276,11 @@ admin (argc, argv)
        example, admin_data->branch should be not `-bfoo' but simply `foo'. */
 
     optind = 0;
-    only_k_option = 1;
     while ((c = getopt (argc, argv,
 			"+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)
     {
-	if (c != 'k' && c != 'q')
-	    only_k_option = 0;
+	if (CVS_admin_options == NULL || strchr(CVS_admin_options, c) == NULL)
+	    only_limited_options = 0;
 
 	switch (c)
 	{
@@ -254,8 +292,8 @@ admin (argc, argv)
 		error (0, 0, "run add or import to create an RCS file");
 		goto usage_error;
 
-#ifndef CVS_ADMIN_LIMITED
 	    case 'b':
+		
 		if (admin_data.branch != NULL)
 		{
 		    error (0, 0, "duplicate 'b' option");
@@ -270,7 +308,7 @@ admin (argc, argv)
 		    strcat (admin_data.branch, optarg);
 		}
 		break;
-#endif
+
 	    case 'c':
 		if (admin_data.comment != NULL)
 		{
@@ -282,7 +320,6 @@ admin (argc, argv)
 		strcat (admin_data.comment, optarg);
 		break;
 
-#ifndef CVS_ADMIN_LIMITED
 	    case 'a':
 		arg_add (&admin_data, 'a', optarg);
 		break;
@@ -349,14 +386,14 @@ admin (argc, argv)
 		   legal.  */
 		arg_add (&admin_data, 'N', optarg);
 		break;
-#endif
+
 	    case 'm':
 		/* Change log message.  Could also be parsing the syntax
 		   of optarg, although for now we just pass it to rcs
 		   as-is.  Note that multiple -m options are legal.  */
 		arg_add (&admin_data, 'm', optarg);
 		break;
-#ifndef CVS_ADMIN_LIMITED
+
 	    case 'o':
 		/* Delete revisions.  Probably should also be parsing the
 		   syntax of optarg, so that the client can give errors
@@ -381,7 +418,7 @@ admin (argc, argv)
 		/* Note that multiple -s options are legal.  */
 		arg_add (&admin_data, 's', optarg);
 		break;
-#endif
+
 	    case 't':
 		if (admin_data.desc != NULL)
 		{
@@ -449,53 +486,21 @@ admin (argc, argv)
     argc -= optind;
     argv += optind;
 
-#ifdef CVS_ADMIN_GROUP
-    /* The use of `cvs admin -k' is unrestricted.  However, any other
-       option is restricted if the group CVS_ADMIN_GROUP exists on the
-       server.  */
     if (
 # ifdef CLIENT_SUPPORT
+# ifndef SETXID_SUPPORT
         /* This is only "secure" on the server, since the user could edit the
 	 * RCS file on a local host, but some people like this kind of
 	 * check anyhow.  The alternative would be to check only when
 	 * (server_active) rather than when not on the client.
 	 */
         !current_parsed_root->isremote &&
+# endif
 # endif	/* CLIENT_SUPPORT */
-        !only_k_option
-	&& (grp = getgrnam(CVS_ADMIN_GROUP)) != NULL)
-    {
-#ifdef HAVE_GETGROUPS
-	gid_t *grps;
-	int n;
-
-	/* get number of auxiliary groups */
-	n = getgroups (0, NULL);
-	if (n < 0)
-	    error (1, errno, "unable to get number of auxiliary groups");
-	grps = (gid_t *) xmalloc((n + 1) * sizeof *grps);
-	n = getgroups (n, grps);
-	if (n < 0)
-	    error (1, errno, "unable to get list of auxiliary groups");
-	grps[n] = getgid();
-	for (i = 0; i <= n; i++)
-	    if (grps[i] == grp->gr_gid) break;
-	free (grps);
-	if (i > n)
-	    error (1, 0, "usage is restricted to members of the group %s",
-		   CVS_ADMIN_GROUP);
-#else
-	char *me = getcaller();
-	char **grnam;
-	
-	for (grnam = grp->gr_mem; *grnam; grnam++)
-	    if (strcmp (*grnam, me) == 0) break;
-	if (!*grnam && getgid() != grp->gr_gid)
-	    error (1, 0, "usage is restricted to members of the group %s",
-		   CVS_ADMIN_GROUP);
-#endif
-    }
-#endif /* defined CVS_ADMIN_GROUP */
+        !only_limited_options &&
+	!admin_group_member())
+	error (1, 0, "usage is restricted to members of the group %s",
+	       CVS_admin_group);
 
     for (i = 0; i < admin_data.ac; ++i)
     {

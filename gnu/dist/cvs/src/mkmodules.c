@@ -859,6 +859,10 @@ init (argc, argv)
 
     umask (cvsumask);
 
+    if (!admin_group_member())
+	error (1, 0, "usage is restricted to members of the group %s",
+	       CVS_admin_group);
+
     if (argc == -1 || argc > 1)
 	usage (init_usage);
 
