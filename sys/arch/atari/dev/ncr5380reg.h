@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.10 1996/05/15 09:21:53 leo Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.11 1996/07/05 19:35:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -249,6 +249,7 @@ static void scsi_main __P((struct ncr_softc *));
 static void scsi_reset_verbose __P((struct ncr_softc *, const char *));
 static int  scsi_select __P((SC_REQ *, int));
 static void show_data_sense __P((struct scsi_xfer *));
+static void show_phase __P((SC_REQ *, int));
 static void show_request __P((SC_REQ *, char *));
 static void show_signals __P((u_char, u_char));
 static void transfer_dma __P((SC_REQ *, u_int, int));
@@ -261,6 +262,5 @@ static int  wait_req_true __P((void));
 	 */
        void scsi_show __P((void));
        void scsi_reset __P((void));
-/* static void show_phase __P((SC_REQ *, int)); */
 
 #endif /* _NCR5380REG_H */
