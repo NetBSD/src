@@ -1,7 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/10/26 06:51:32 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2003/01/23 23:56:13 matt Exp $
 
 SRCS+=	byte_swap_2.S byte_swap_4.S bswap64.S \
-	fabs.S frexp.c infinity.c isinf.c isnan.c ldexp.S modf.S \
+	fabs.S frexp.c \
+	infinity.c isinf.c isnan.c \
+	ldexp.S \
+	makecontext.c modf.S \
+	resumecontext.c \
+	swapcontext.S \
 	udiv.S urem.S \
 	__setjmp14.S __sigsetjmp14.S _setjmp.S 
 
