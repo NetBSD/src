@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.5 2003/06/29 09:56:33 darrenr Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.6 2003/06/29 15:11:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.5 2003/06/29 09:56:33 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.6 2003/06/29 15:11:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,9 @@ union_mount(mp, path, data, ndp, l)
 	struct nameidata *ndp;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	int error = 0;
 	struct union_args args;
+	struct proc *p = l->l_proc;
 	struct vnode *lowerrootvp = NULLVP;
 	struct vnode *upperrootvp = NULLVP;
 	struct union_mount *um = 0;
@@ -415,7 +415,7 @@ union_root(mp, vpp, l)
 			      (struct componentname *) 0,
 			      um->um_uppervp,
 			      um->um_lowervp,
-			      1);
+			      1, l);
 
 	if (error) {
 		if (!loselock)
