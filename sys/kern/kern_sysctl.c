@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.159 2004/03/08 03:31:26 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.160 2004/03/24 15:25:43 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.159 2004/03/08 03:31:26 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.160 2004/03/24 15:25:43 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -871,8 +871,8 @@ sysctl_create(SYSCTLFN_RWARGS)
 				 */
 				e = nnode.sysctl_data;
 				do {
-					error = copystr(e, &v[0], sizeof(v),
-							&s);
+					error = copyinstr(e, &v[0], sizeof(v),
+							  &s);
 					if (error) {
 						if (error != ENAMETOOLONG)
 							return (error);
@@ -1634,7 +1634,7 @@ sysctl_createv(int flags, int type,
 	 * find it, add the new node.
 	 */
 	sz = sizeof(onode);
-	pnode = (rnode != NULL) ? *rnode : NULL;
+	pnode = rnode ? *rnode : NULL;
 	error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
 	if (error == 0)
 		error = sysctl_create(&name[ni], namelen - ni, &onode, &sz,
@@ -1680,9 +1680,24 @@ sysctl_createv(int flags, int type,
 		 * sysctl_create() gave us back a copy of the node,
 		 * but we need to know where it actually is...
 		 */
-		name[namelen - 1] = onode.sysctl_num;
 		pnode = *rnode;
-		error = sysctl_locate(NULL, &name[0], namelen, &pnode, &ni);
+		error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
+
+		/*
+		 * manual scan of last layer so that aliased nodes
+		 * aren't followed.
+		 */
+		if (error == 0) {
+			for (ni = 0; ni < pnode->sysctl_clen; ni++)
+				if (pnode->sysctl_child[ni].sysctl_num ==
+				    onode.sysctl_num)
+					break;
+			if (ni < pnode->sysctl_clen)
+				pnode = &pnode->sysctl_child[ni];
+			else
+				error = ENOENT;
+		}
+
 		/*
 		 * not expecting an error here, but...
 		 */
@@ -1738,7 +1753,7 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 	 * where is it?
 	 */
 	node = rnode;
-        error = sysctl_locate(NULL, &name[0], namelen, &node, &ni);
+	error = sysctl_locate(NULL, &name[0], namelen - 1, &node, &ni);
 	if (error) {
 		/* they want it gone and it's not there, so... */
 		sysctl_unlock(NULL);
@@ -1746,13 +1761,12 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 	}
 
 	/*
-	 * check to see if we crossed an aliased node
+	 * set up the deletion
 	 */
-	if (node->sysctl_num != name[namelen - 1]) {
-		memset(&dnode, 0, sizeof(dnode));
-		dnode.sysctl_num = name[namelen - 1];
-		node = &dnode;
-	}
+	pnode = node;
+	node = &dnode;
+	memset(&dnode, 0, sizeof(dnode));
+	dnode.sysctl_num = name[namelen - 1];
 
 	/*
 	 * we found it, now let's nuke it
