@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.24 2002/02/06 14:17:28 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.25 2002/03/25 17:56:06 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.24 2002/02/06 14:17:01 he Exp 
+ *	NetBSD: pcidevs,v 1.236.2.25 2002/03/25 17:55:22 he Exp 
  */
 
 /*
@@ -711,6 +711,13 @@
 #define	PCI_PRODUCT_AMD_PBC766_IDE	0x7411		/* AMD766 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC766_PMC	0x7413		/* AMD766 Power Management Controller */
 #define	PCI_PRODUCT_AMD_PBC766_USB	0x7414		/* AMD766 USB Host Controller */
+#define	PCI_PRODUCT_AMD_PBC768_ISA	0x7440		/* AMD768 PCI to ISA/LPC Bridge */
+#define	PCI_PRODUCT_AMD_PBC768_IDE	0x7441		/* AMD768 EIDE Controller */
+#define	PCI_PRODUCT_AMD_PBC768_PMC	0x7443		/* AMD768 Power Management Controller */
+#define	PCI_PRODUCT_AMD_PBC768_AC	0x7445		/* AMD768 AC97 Audio */
+#define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* AMD768 AC97 Modem */
+#define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* AMD768 PCI to PCI Bridge */
+#define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* AMD768 USB Controller */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit Host-PCI Bridge */
