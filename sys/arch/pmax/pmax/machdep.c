@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 1995/05/05 06:48:14 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 1995/05/12 23:27:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -522,7 +522,9 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Initialize interrupts.
 		 */
-		*(u_int *)ASIC_REG_IMSK(asic_base) = KN03_IM0;
+		kn03_tc3_imask = KN03_IM0 &
+			~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2);
+		*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
 		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
 		/* clear any memory errors from probes */
 		*(unsigned *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR) = 0;
@@ -1876,6 +1878,11 @@ kn03_enable_intr(slotno, on)
 {
 	register unsigned mask;
 
+#ifdef	DEBUG
+	printf("3MAX+ intr: mask %x, setting slot %d to %d\n",
+	       kn03_tc3_imask, slotno, on);
+#endif
+
 	switch (slotno) {
 	case 0:
 		mask = KN03_INTR_TC_0;
@@ -1903,12 +1910,17 @@ kn03_enable_intr(slotno, on)
 		mask = KN03_INTR_ASIC;
 		break;
 	default:
-		return;
+#ifdef DEBUG
+		printf("warning: enabling unknown intr %x\n", slotno);
+#endif
+		goto done;
 	}
 	if (on)
 		kn03_tc3_imask |= mask;
 	else
 		kn03_tc3_imask &= ~mask;
+done:
+	*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
 }
 #endif /* DS5000_240 */
 
@@ -1984,6 +1996,12 @@ kmin_slot_hand_fill(slot)
 	slot[KMIN_ASIC_SLOT].k1seg_address =
 		MACH_PHYS_TO_UNCACHED(KMIN_SYS_ASIC);
 	asic_init(0);
+
+	/*
+	 * Explicitly enable interrupts from on-motherboard `options'.
+	 */
+	for (i = KMIN_SCC0_SLOT; i >= KMIN_SCSI_SLOT; i--)
+		kmin_enable_intr(i, 1);
 }
 
 /*
@@ -2054,6 +2072,12 @@ xine_slot_hand_fill(slot)
 	slot[XINE_FRC_SLOT].k1seg_address =
 		MACH_PHYS_TO_UNCACHED(XINE_REG_FCTR);
 	asic_init(1);
+
+	/*
+	 * Explicitly enable interrupts from on-motherboard `options'.
+	 */
+	for (i = XINE_DTOP_SLOT ; i >= XINE_SCSI_SLOT; i--)
+		xine_enable_intr(i, 1);
 }
 
 #ifdef DS5000_240
