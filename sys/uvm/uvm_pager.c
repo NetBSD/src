@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.6 1998/03/09 00:58:58 mrg Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.7 1998/03/22 16:10:29 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -605,6 +605,7 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 {
 	int lcv;
 	boolean_t obj_is_alive; 
+	struct uvm_object *saved_uobj;
 
 	/*
 	 * if we need to reallocate swap space for the cluster we are dropping
@@ -684,8 +685,9 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 				panic("uvm_pager_dropcluster: no releasepg "
 				    "function");
 #endif
+			saved_uobj = ppsp[lcv]->uobject;
 			obj_is_alive =
-			    ppsp[lcv]->uobject->pgops->pgo_releasepg(pg, NULL);
+			    saved_uobj->pgops->pgo_releasepg(ppsp[lcv], NULL);
 			
 #ifdef DIAGNOSTIC
 			/* for normal objects, "pg" is still PG_BUSY by us,
@@ -694,8 +696,17 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 				panic("uvm_pager_dropcluster: object died "
 				    "with active page");
 #endif
-			if (!obj_is_alive)
-				continue;
+			/* only unlock the object if it is still alive...  */
+			if (obj_is_alive && saved_uobj != uobj)
+				simple_unlock(&saved_uobj->vmobjlock);
+
+			/*
+			 * XXXCDC: suppose uobj died in the pgo_releasepg?
+			 * how pass that
+			 * info up to caller.  we are currently ignoring it...
+			 */
+
+			continue;		/* next page */
 
 		} else {
 			ppsp[lcv]->flags &= ~(PG_BUSY|PG_WANTED);
