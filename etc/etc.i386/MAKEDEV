@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.156 2002/01/13 14:18:35 manu Exp $
+#	$NetBSD: MAKEDEV,v 1.157 2002/01/14 06:18:20 deberg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -135,6 +135,7 @@
 #	pci*	PCI bus access devices
 #	dpti*	DPT/Adaptec RAID management interface
 #	radio*	radio devices
+#	nsmb*	SMB requester
 #
 
 dialin=0
@@ -188,6 +189,7 @@ all)
 	sh $0 ed0 ed1
 	sh $0 cir0 cir1 irframe0 irframe1
 	sh $0 clockctl
+	sh $0 nsmb0 nsmb1 nsmb2 nsmb3
 	;;
 
 audio)
@@ -964,6 +966,16 @@ clockctl)
 	mknod clockctl c 89 0
 	chown root.ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+nsmb*)
+	unit=${i#nsmb}
+	nsmb=nsmb$unit
+	major=88
+	rm -f $nsmb
+	mknod $nsmb c $major $unit
+	chown root.wheel $nsmb
+	chmod 644 $nsmb
 	;;
 
 local)
