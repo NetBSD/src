@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.197 2000/02/26 20:47:02 mycroft Exp $
+#	$NetBSD: mi,v 1.198 2000/03/06 18:41:59 kleink Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1524,6 +1524,7 @@
 ./usr/share/man/cat3/atof.0	comp-c-catman
 ./usr/share/man/cat3/atoi.0	comp-c-catman
 ./usr/share/man/cat3/atol.0	comp-c-catman
+./usr/share/man/cat3/atoll.0	comp-c-catman
 ./usr/share/man/cat3/auth_destroy.0	comp-c-catman
 ./usr/share/man/cat3/authnone_create.0	comp-c-catman
 ./usr/share/man/cat3/authunix_create.0	comp-c-catman
@@ -1976,6 +1977,8 @@
 ./usr/share/man/cat3/list_insert_head.0	comp-c-catman
 ./usr/share/man/cat3/list_next.0	comp-c-catman
 ./usr/share/man/cat3/list_remove.0	comp-c-catman
+./usr/share/man/cat3/llabs.0	comp-c-catman
+./usr/share/man/cat3/lldiv.0	comp-c-catman
 ./usr/share/man/cat3/localeconv.0	comp-c-catman
 ./usr/share/man/cat3/localtime.0	comp-c-catman
 ./usr/share/man/cat3/localtime_r.0	comp-c-catman
@@ -2263,8 +2266,10 @@
 ./usr/share/man/cat3/strtok.0	comp-c-catman
 ./usr/share/man/cat3/strtok_r.0	comp-c-catman
 ./usr/share/man/cat3/strtol.0	comp-c-catman
+./usr/share/man/cat3/strtoll.0	comp-c-catman
 ./usr/share/man/cat3/strtoq.0	comp-c-catman
 ./usr/share/man/cat3/strtoul.0	comp-c-catman
+./usr/share/man/cat3/strtoull.0	comp-c-catman
 ./usr/share/man/cat3/strtouq.0	comp-c-catman
 ./usr/share/man/cat3/strunvis.0	comp-c-catman
 ./usr/share/man/cat3/strvis.0	comp-c-catman
@@ -3019,6 +3024,7 @@
 ./usr/share/man/man3/atof.3		comp-c-man
 ./usr/share/man/man3/atoi.3		comp-c-man
 ./usr/share/man/man3/atol.3		comp-c-man
+./usr/share/man/man3/atoll.3		comp-c-man
 ./usr/share/man/man3/auth_destroy.3		comp-c-man
 ./usr/share/man/man3/authnone_create.3		comp-c-man
 ./usr/share/man/man3/authunix_create.3		comp-c-man
@@ -3471,6 +3477,8 @@
 ./usr/share/man/man3/list_insert_head.3		comp-c-man
 ./usr/share/man/man3/list_next.3		comp-c-man
 ./usr/share/man/man3/list_remove.3		comp-c-man
+./usr/share/man/man3/llabs.3		comp-c-man
+./usr/share/man/man3/lldiv.3		comp-c-man
 ./usr/share/man/man3/localeconv.3		comp-c-man
 ./usr/share/man/man3/localtime.3		comp-c-man
 ./usr/share/man/man3/localtime_r.3		comp-c-man
@@ -3758,8 +3766,10 @@
 ./usr/share/man/man3/strtok.3		comp-c-man
 ./usr/share/man/man3/strtok_r.3		comp-c-man
 ./usr/share/man/man3/strtol.3		comp-c-man
+./usr/share/man/man3/strtoll.3		comp-c-man
 ./usr/share/man/man3/strtoq.3		comp-c-man
 ./usr/share/man/man3/strtoul.3		comp-c-man
+./usr/share/man/man3/strtoull.3		comp-c-man
 ./usr/share/man/man3/strtouq.3		comp-c-man
 ./usr/share/man/man3/strunvis.3		comp-c-man
 ./usr/share/man/man3/strvis.3		comp-c-man
