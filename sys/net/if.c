@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.65 2000/07/04 18:46:49 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.66 2000/07/19 06:00:39 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -121,6 +121,8 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_ether.h>
+#include <net/if_ieee80211.h>
 #include <net/if_types.h>
 #include <net/radix.h>
 #include <net/route.h>
@@ -1109,6 +1111,7 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSDRVSPEC:  
+	case SIOCS80211NWID:
 		/* XXX:  need to pass proc pointer through to driver... */
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
