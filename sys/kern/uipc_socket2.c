@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.9 1994/06/29 06:33:39 cgd Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.10 1995/08/16 01:03:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -348,7 +348,7 @@ sowakeup(so, sb)
  * 2. If the protocol supports the exchange of ``access rights'' (really
  *    just additional data associated with the message), and there are
  *    ``rights'' to be received, then a record containing this data
- *    should be present (mbuf's must be of type MT_RIGHTS).
+ *    should be present (mbuf's must be of type MT_CONTROL).
  * 3. If a name or rights record exists, then it must be followed by
  *    a data record, perhaps of zero length.
  *
