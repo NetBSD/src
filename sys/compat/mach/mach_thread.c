@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.24 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.25 2003/11/16 01:12:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.24 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.25 2003/11/16 01:12:30 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.24 2003/11/13 13:40:39 manu Exp $"
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/resource.h>
+#include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -105,6 +109,52 @@ mach_sys_syscall_thread_switch(l, v, retval)
 	}
 	return 0;
 }
+
+int
+mach_sys_swtch_pri(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+#if 0	/* pri is not used yet */
+	struct mach_sys_swtch_pri_args /* {
+		syscallarg(int) pri;
+	} */ *uap = v;
+#endif
+	int s;
+
+	/* 
+	 * Copied from preempt(9). We cannot just call preempt 
+	 * because we want  to return mi_switch(9) return value.
+	 */
+	SCHED_LOCK(s);
+	l->l_priority = l->l_usrpri;
+	l->l_stat = LSRUN;
+	setrunqueue(l);
+	l->l_proc->p_stats->p_ru.ru_nivcsw++;
+	*retval = mi_switch(l, NULL);
+	SCHED_ASSERT_UNLOCKED();
+	splx(s);
+	if ((l->l_flag & L_SA) != 0 && *retval != 0)
+		sa_preempt(l);
+
+	return 0;
+}
+
+int
+mach_sys_swtch(l, v, retval)
+	struct lwp *l;
+	void *v; 
+	register_t *retval;
+{
+	struct mach_sys_swtch_pri_args cup;
+
+	SCARG(&cup, pri) = 0;
+
+	return mach_sys_swtch_pri(l, &cup, retval);
+}
+
+
 
 
 int 
