@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.19 2002/02/08 22:29:07 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.20 2002/02/13 19:36:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -186,10 +186,10 @@ int
 pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
     pthread_t self)
 {
-	int i, resumecount;
+	int i, resume;
 	pthread_t victim, next;
 
-	resumecount = 0;
+	resume = 0;
 	next = self;
 
 	for (i = 0; i < nsas; i++) {
@@ -204,7 +204,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 			/* Case 1: Upcall */
 			/* Must be resumed. */
 				SDPRINTF((" upcall"));
-			resumecount++;
+			resume = 1;
 			if (victim->pt_next) {
 				/* Case 1A: Upcall in a chain */
 				/* Already part of a chain. We want to
@@ -226,7 +226,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 				/* Must be resumed. */
 				SDPRINTF((" lockholder %d",
 				    victim->pt_spinlocks));
-				resumecount++;
+				resume = 1;
 				if (victim->pt_next) {
 					/* Case 2A1: Lockholder on a chain */
 					/* Same deal as 1A. */
@@ -247,7 +247,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 					 * (must have just released a lock)
 					 */
 					SDPRINTF((" chain"));
-					resumecount++;
+					resume = 1;
 					for ( ; victim->pt_parent != NULL; 
 					      victim = victim->pt_parent) {
 						SDPRINTF((" parent %p", victim->pt_parent));
@@ -266,7 +266,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 
 	*qhead = next;
 
-	return resumecount;
+	return resume;
 }
 
 void
