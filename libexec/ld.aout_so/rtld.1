@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtld.1,v 1.11 2001/05/06 12:41:19 wiz Exp $
+.\"	$NetBSD: rtld.1,v 1.12 2001/05/06 13:49:03 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -145,7 +145,7 @@ its behaviour as follows:
 A colon separated list of directories, overriding the default search path
 for shared libraries.
 .It Ev LD_PRELOAD
-A space separated list of shared object filenames to be loaded
+A colon separated list of shared object filenames to be loaded
 .Em after
 the main program but
 .Em before
