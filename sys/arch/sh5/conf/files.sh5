@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh5,v 1.7 2002/09/28 13:08:22 scw Exp $
+#	$NetBSD: files.sh5,v 1.8 2002/10/05 09:51:17 scw Exp $
 
 
 #
@@ -121,12 +121,12 @@ file	arch/sh5/sh5/db_disasm.c		ddb
 file	arch/sh5/sh5/db_interface.c		ddb
 file	arch/sh5/sh5/db_memrw.c			ddb
 file	arch/sh5/sh5/db_trace.c			ddb
-file	arch/sh5/sh5/disksubr.c
 file	arch/sh5/sh5/dtf_comms.c		dtfcons
 file	arch/sh5/sh5/interrupt.c
 file	arch/sh5/sh5/mem.c
 file	arch/sh5/sh5/pmap.c
 file	arch/sh5/sh5/process_machdep.c
+file	arch/sh5/sh5/procfs_machdep.c		procfs
 file	arch/sh5/sh5/sh5_clock.c
 file	arch/sh5/sh5/sh5_machdep.c
 file	arch/sh5/sh5/sig_machdep.c
@@ -138,7 +138,9 @@ file	dev/clock_subr.c
 file	dev/cons.c
 file	dev/cninit.c
 
-file	arch/sh5/sh5/procfs_machdep.c		procfs
+# Use SH3's disklabel code, so disks are interchangeable between
+# the two architectures.
+file	arch/sh3/sh3/disksubr.c
 
 file	arch/sh5/sh5/in_cksum.c			inet
 file	netinet/in4_cksum.c			inet
