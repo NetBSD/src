@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.22 2002/12/20 15:33:27 thorpej Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.23 2003/01/02 06:41:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,12 @@
 #else
 #define SDPRINTF(x)
 #endif
+
+extern pthread_spin_t pthread__runqueue_lock;
+extern struct pthread_queue_t pthread__runqueue;
+
+extern pthread_spin_t pthread__allqueue_lock;
+extern struct pthread_queue_t pthread__allqueue;
 
 static pthread_spin_t	pt_sigacts_lock;
 static struct sigaction pt_sigacts[_NSIG];
@@ -259,7 +265,6 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 			if (!__sigsetequal(&tmp, &pt_process_sigmask))
 				pt_process_sigmask = tmp;
 			unblocked = 1; /* Well, maybe */
-			
 		} else 
 			retval = EINVAL;
 	}
@@ -341,18 +346,12 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
  * Dispatch a signal to thread t, if it is non-null, and to any
  * willing thread, if t is null.
  */
-extern pthread_spin_t runqueue_lock;
-extern struct pthread_queue_t runqueue;
-
 void
 pthread__signal(pthread_t t, int sig, int code)
 {
 	pthread_t self, target, good, okay;
 	sigset_t oldmask, *maskp;
 	ucontext_t *uc;
-
-	extern pthread_spin_t allqueue_lock;
-	extern struct pthread_queue_t allqueue;
 
 	self = pthread__self();
 	if (t) {
@@ -364,12 +363,12 @@ pthread__signal(pthread_t t, int sig, int code)
 		 * and can be reasonably forced to run. 
 		 */
 		okay = good = NULL;
-		pthread_spinlock(self, &allqueue_lock);
-		PTQ_FOREACH(target, &allqueue, pt_allq) {
+		pthread_spinlock(self, &pthread__allqueue_lock);
+		PTQ_FOREACH(target, &pthread__allqueue, pt_allq) {
 			/*
-			 * Changing to PT_STATE_ZOMBIE is protected
-			 * by the allqueue lock, so we can just test for
-			 * it here.
+			 * Changing to PT_STATE_ZOMBIE is protected by
+			 * the pthread__allqueue lock, so we can just
+			 * test for it here.
 			 */
 			if ((target->pt_state == PT_STATE_ZOMBIE) ||
 			    (target->pt_type != PT_THREAD_NORMAL))
@@ -391,7 +390,7 @@ pthread__signal(pthread_t t, int sig, int code)
 			}
 			pthread_spinunlock(self, &target->pt_siglock);
 		}
-		pthread_spinunlock(self, &allqueue_lock);
+		pthread_spinunlock(self, &pthread__allqueue_lock);
 		if (good) {
 			target = good;
 			if (okay)
@@ -466,9 +465,9 @@ pthread__signal(pthread_t t, int sig, int code)
 	pthread_spinlock(self, &target->pt_statelock);
 	switch (target->pt_state) {
 	case PT_STATE_RUNNABLE:
-		pthread_spinlock(self, &runqueue_lock);
-		PTQ_REMOVE(&runqueue, target, pt_runq);
-		pthread_spinunlock(self, &runqueue_lock);
+		pthread_spinlock(self, &pthread__runqueue_lock);
+		PTQ_REMOVE(&pthread__runqueue, target, pt_runq);
+		pthread_spinunlock(self, &pthread__runqueue_lock);
 		break;
 	case PT_STATE_BLOCKED_QUEUE:
 		pthread_spinlock(self, target->pt_sleeplock);
@@ -536,8 +535,8 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
 
 	self = pthread__self();
 
-	SDPRINTF(("(tramp %p): sig: %d %d  uc: %p maskp: %p\n", 
-	    self, sig, code, uc, oldmask));
+	SDPRINTF(("(tramp %p) sig %d uc %p oldmask %08x oldstate %d q %p\n", 
+	    self, sig, uc, oldmask->__bits[0], oldstate, oldsleepq));
 
 	/*
 	 * We should only ever get here if a handler is set. Signal
@@ -571,11 +570,11 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
 	next->pt_state = PT_STATE_RUNNING;
 	pthread_spinlock(self, &self->pt_statelock);
 	if (oldstate == PT_STATE_RUNNABLE) {
-		pthread_spinlock(self, &runqueue_lock);
+		pthread_spinlock(self, &pthread__runqueue_lock);
 		pthread_spinunlock(self, &self->pt_statelock);
 		self->pt_state = PT_STATE_RUNNABLE;
-		PTQ_INSERT_TAIL(&runqueue, self, pt_runq);
-		pthread__locked_switch(self, next, &runqueue_lock);
+		PTQ_INSERT_TAIL(&pthread__runqueue, self, pt_runq);
+		pthread__locked_switch(self, next, &pthread__runqueue_lock);
 	} else if (oldstate == PT_STATE_BLOCKED_QUEUE) {
 		pthread_spinlock(self, oldsleeplock);
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;

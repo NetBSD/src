@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.38 2003/01/02 02:21:25 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.39 2003/01/02 06:41:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,22 +63,22 @@ static void	pthread__create_tramp(void *(*start)(void *), void *arg);
 
 int pthread__started;
 
-pthread_spin_t allqueue_lock;
-struct pthread_queue_t allqueue;
+pthread_spin_t pthread__allqueue_lock;
+struct pthread_queue_t pthread__allqueue;
+
+pthread_spin_t pthread__deadqueue_lock;
+struct pthread_queue_t pthread__deadqueue;
+struct pthread_queue_t pthread__reidlequeue;
+
 static int nthreads;
-
-pthread_spin_t deadqueue_lock;
-struct pthread_queue_t deadqueue;
-struct pthread_queue_t reidlequeue;
-
-
 static int nextthread;
 static pthread_spin_t nextthread_lock;
 static pthread_attr_t pthread_default_attr;
 
-extern struct pthread_queue_t runqueue;
-extern struct pthread_queue_t idlequeue;
-extern pthread_spin_t runqueue_lock;
+extern pthread_spin_t pthread__runqueue_lock;
+extern struct pthread_queue_t pthread__runqueue;
+extern struct pthread_queue_t pthread__idlequeue;
+
 
 pthread_ops_t pthread_ops = {
 	pthread_mutex_init,
@@ -130,18 +130,18 @@ void pthread_init(void)
 
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
-	PTQ_INIT(&allqueue);
-	PTQ_INIT(&deadqueue);
-	PTQ_INIT(&reidlequeue);
-	PTQ_INIT(&runqueue);
-	PTQ_INIT(&idlequeue);
+	PTQ_INIT(&pthread__allqueue);
+	PTQ_INIT(&pthread__deadqueue);
+	PTQ_INIT(&pthread__reidlequeue);
+	PTQ_INIT(&pthread__runqueue);
+	PTQ_INIT(&pthread__idlequeue);
 
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
 	pthread__initthread(first, first);
 	first->pt_state = PT_STATE_RUNNING;
 	sigprocmask(0, NULL, &first->pt_sigmask);
-	PTQ_INSERT_HEAD(&allqueue, first, pt_allq);
+	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 
 	/* Start subsystems */
 	pthread__alarm_init();
@@ -175,7 +175,7 @@ pthread__start(void)
 		pthread__initthread(self, idle);
 		sigfillset(&idle->pt_sigmask);
 		idle->pt_type = PT_THREAD_IDLE;
-		PTQ_INSERT_HEAD(&allqueue, idle, pt_allq);
+		PTQ_INSERT_HEAD(&pthread__allqueue, idle, pt_allq);
 		pthread__sched_idle(self, idle);
 	}
 
@@ -257,13 +257,13 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 	self = pthread__self();
 
-	pthread_spinlock(self, &deadqueue_lock);
-	if (!PTQ_EMPTY(&deadqueue)) {
-		newthread= PTQ_FIRST(&deadqueue);
-		PTQ_REMOVE(&deadqueue, newthread, pt_allq);
-		pthread_spinunlock(self, &deadqueue_lock);
+	pthread_spinlock(self, &pthread__deadqueue_lock);
+	if (!PTQ_EMPTY(&pthread__deadqueue)) {
+		newthread= PTQ_FIRST(&pthread__deadqueue);
+		PTQ_REMOVE(&pthread__deadqueue, newthread, pt_allq);
+		pthread_spinunlock(self, &pthread__deadqueue_lock);
 	} else {
-		pthread_spinunlock(self, &deadqueue_lock);
+		pthread_spinunlock(self, &pthread__deadqueue_lock);
 		/* Set up a stack and allocate space for a pthread_st. */
 		ret = pthread__stackalloc(&newthread);
 		if (ret != 0)
@@ -288,10 +288,10 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	    startfunc, arg);
 
 	/* 4. Add to list of all threads. */
-	pthread_spinlock(self, &allqueue_lock);
-	PTQ_INSERT_HEAD(&allqueue, newthread, pt_allq);
+	pthread_spinlock(self, &pthread__allqueue_lock);
+	PTQ_INSERT_HEAD(&pthread__allqueue, newthread, pt_allq);
 	nthreads++;
-	pthread_spinunlock(self, &allqueue_lock);
+	pthread_spinunlock(self, &pthread__allqueue_lock);
 
 	SDPRINTF(("(pthread_create %p) Created new thread %p.\n", self, newthread));
 	/* 5. Put on run queue. */
@@ -333,10 +333,10 @@ pthread__idle(void)
 	 * but for the thread itself to be recovered, we need to be on
 	 * a list somewhere for the thread system to know about us.
 	 */
-	pthread_spinlock(self, &deadqueue_lock);
-	PTQ_INSERT_TAIL(&reidlequeue, self, pt_runq);
+	pthread_spinlock(self, &pthread__deadqueue_lock);
+	PTQ_INSERT_TAIL(&pthread__reidlequeue, self, pt_runq);
 	self->pt_flags |= PT_FLAG_IDLED;
-	pthread_spinunlock(self, &deadqueue_lock);
+	pthread_spinunlock(self, &pthread__deadqueue_lock);
 
 	/*
 	 * If we get to run this, then no preemption has happened
@@ -376,11 +376,11 @@ pthread_exit(void *retval)
 	if (self->pt_flags & PT_FLAG_DETACHED) {
 		pthread_spinunlock(self, &self->pt_join_lock);
 
-		pthread_spinlock(self, &allqueue_lock);
-		PTQ_REMOVE(&allqueue, self, pt_allq);
+		pthread_spinlock(self, &pthread__allqueue_lock);
+		PTQ_REMOVE(&pthread__allqueue, self, pt_allq);
 		nthreads--;
 		nt = nthreads;
-		pthread_spinunlock(self, &allqueue_lock);
+		pthread_spinunlock(self, &pthread__allqueue_lock);
 
 		self->pt_state = PT_STATE_DEAD;
 		if (nt == 0) {
@@ -389,15 +389,15 @@ pthread_exit(void *retval)
 		}
 
 		/* Yeah, yeah, doing work while we're dead is tacky. */
-		pthread_spinlock(self, &deadqueue_lock);
-		PTQ_INSERT_HEAD(&deadqueue, self, pt_allq);
-		pthread__block(self, &deadqueue_lock);
+		pthread_spinlock(self, &pthread__deadqueue_lock);
+		PTQ_INSERT_HEAD(&pthread__deadqueue, self, pt_allq);
+		pthread__block(self, &pthread__deadqueue_lock);
 	} else {
-		pthread_spinlock(self, &allqueue_lock);
+		pthread_spinlock(self, &pthread__allqueue_lock);
 		nthreads--;
 		nt = nthreads;
 		self->pt_state = PT_STATE_ZOMBIE;
-		pthread_spinunlock(self, &allqueue_lock);
+		pthread_spinunlock(self, &pthread__allqueue_lock);
 		if (nt == 0) {
 			/* Whoah, we're the last one. Time to go. */
 			exit(0);
@@ -480,13 +480,13 @@ pthread_join(pthread_t thread, void **valptr)
 	SDPRINTF(("(pthread_join %p) Joined %p.\n", self, thread));
 
 	/* Cleanup time. Move the dead thread from allqueue to the deadqueue */
-	pthread_spinlock(self, &allqueue_lock);
-	PTQ_REMOVE(&allqueue, thread, pt_allq);
-	pthread_spinunlock(self, &allqueue_lock);
+	pthread_spinlock(self, &pthread__allqueue_lock);
+	PTQ_REMOVE(&pthread__allqueue, thread, pt_allq);
+	pthread_spinunlock(self, &pthread__allqueue_lock);
 
-	pthread_spinlock(self, &deadqueue_lock);
-	PTQ_INSERT_HEAD(&deadqueue, thread, pt_allq);
-	pthread_spinunlock(self, &deadqueue_lock);
+	pthread_spinlock(self, &pthread__deadqueue_lock);
+	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_allq);
+	pthread_spinunlock(self, &pthread__deadqueue_lock);
 
 	return 0;
 }
@@ -781,11 +781,11 @@ pthread__find(pthread_t self, pthread_t id)
 {
 	pthread_t target;
 
-	pthread_spinlock(self, &allqueue_lock);
-	PTQ_FOREACH(target, &allqueue, pt_allq)
+	pthread_spinlock(self, &pthread__allqueue_lock);
+	PTQ_FOREACH(target, &pthread__allqueue, pt_allq)
 	    if (target == id)
 		    break;
-	pthread_spinunlock(self, &allqueue_lock);
+	pthread_spinunlock(self, &pthread__allqueue_lock);
 
 	if (target == NULL)
 		return ESRCH;
