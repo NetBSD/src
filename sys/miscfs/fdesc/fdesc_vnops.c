@@ -37,7 +37,7 @@
  * From:
  *	Id: fdesc_vnops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: fdesc_vnops.c,v 1.9 1994/01/05 11:07:44 cgd Exp $
+ *	$Id: fdesc_vnops.c,v 1.10 1994/01/05 15:11:32 cgd Exp $
  */
 
 /*
@@ -84,7 +84,7 @@ fdesc_allocvp(ftype, ix, mp, vpp)
 
 loop:
 	/* get stashed copy of the vnode */
-	if (ix >= 0 && ix < FD_MAX) {
+	if (ix >= 0 && ix < FD_MAX && ix != FD_ROOT) {
 		nvpp = &fdescvp[ix];
 		if (*nvpp) {
 			if (vget(*nvpp))
@@ -810,7 +810,7 @@ struct vnode *vp;
 #endif
 
 	ix = VTOFDESC(vp)->fd_ix;
-	if (ix >= 0 && ix < FD_MAX) {
+	if (ix >= 0 && ix < FD_MAX && ix != FD_ROOT) {
 		if (fdescvp[ix] != vp)
 			panic("fdesc_reclaim");
 		fdescvp[ix] = 0;
