@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.83 2000/04/02 06:32:41 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.84 2000/04/21 16:24:22 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -302,6 +302,7 @@ int	 getsubopt __P((char **, char * const *, char **));
 __aconst char *getusershell __P((void));
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
+int      issetugid __P((void));
 int	 nfssvc __P((int, void *));
 int	 profil __P((char *, size_t, u_long, u_int));
 void	 psignal __P((unsigned int, const char *));
