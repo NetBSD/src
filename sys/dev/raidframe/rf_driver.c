@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.81 2004/01/01 19:27:36 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.82 2004/01/05 01:19:07 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.81 2004/01/01 19:27:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.82 2004/01/05 01:19:07 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -377,13 +377,14 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
 	DO_RAID_INIT_CONFIGURE(rf_ConfigurePSStatus);
 
+#if RF_INCLUDE_CHAINDECLUSTER > 0
 	for (col = 0; col < raidPtr->numCol; col++) {
 		/*
 		 * XXX better distribution
 		 */
 		raidPtr->hist_diskreq[col] = 0;
 	}
-
+#endif
 	raidPtr->numNewFailures = 0;
 	raidPtr->copyback_in_progress = 0;
 	raidPtr->parity_rewrite_in_progress = 0;
