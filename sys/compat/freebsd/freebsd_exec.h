@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.h,v 1.4 1999/02/09 20:17:50 christos Exp $	*/
+/*	$NetBSD: freebsd_exec.h,v 1.5 1999/04/30 23:07:01 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ int exec_freebsd_aout_makecmds __P((struct proc *, struct exec_package *));
 #endif /* EXEC_AOUT */
 
 #ifdef EXEC_ELF32
-#define FREEBSD_ELF_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
+#define FREEBSD_ELF_AUX_ARGSIZ	howmany(sizeof(AuxInfo) * 8, sizeof(char *))
 
 #define FREEBSD_ELF_BRAND_STRING "FreeBSD"
 #define FREEBSD_ELF_INTERP_PREFIX_STRING "/usr/libexec/ld-elf.so"

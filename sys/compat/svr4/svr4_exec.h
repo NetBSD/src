@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.12 1999/04/19 21:22:56 kleink Exp $	 */
+/*	$NetBSD: svr4_exec.h,v 1.13 1999/04/30 23:07:01 cgd Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
 #define	_SVR4_EXEC_H_
 
 #ifdef SVR4_COMPAT_SOLARIS2
-# define SVR4_AUX_ARGSIZ (sizeof(AuxInfo) * 12 / sizeof(char *))
+# define SVR4_AUX_ARGSIZ howmany(sizeof(AuxInfo) * 12, sizeof(char *))
 #else
-# define SVR4_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
+# define SVR4_AUX_ARGSIZ howmany(sizeof(AuxInfo) * 8, sizeof(char *))
 #endif
 
 /*
