@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.6 1997/10/06 19:37:26 gwr Exp $ */
+/*	$NetBSD: bootxx.c,v 1.6.4.1 1998/01/27 02:35:29 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -43,16 +43,10 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/exec.h>
-
 #include <machine/mon.h>
-#include "stand.h"
 
-extern void ICIA();
-
-/*
- * Boot device is derived from ROM provided information.
- */
-#define LOADADDR	0x4000
+#include <stand.h>
+#include "libsa.h"
 
 /* This determines the largest boot program we can load. */
 #define MAXBLOCKNUM	64
@@ -71,7 +65,7 @@ daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
 main()
 {
 	struct open_file	f;
-	void	(*entry)();
+	void	*entry;
 	char	*addr;
 	int n, error;
 
@@ -91,9 +85,8 @@ main()
 #ifdef DEBUG
 		printf("bootxx: start 0x%x\n", (long)addr);
 #endif
-		entry = (void (*)())addr;
-		ICIA();
-		(*entry)();
+		entry = addr;
+		chain_to(entry);
 	}
 	/* copyboot had a problem... */
 	exit();

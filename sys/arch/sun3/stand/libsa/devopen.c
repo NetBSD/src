@@ -1,10 +1,11 @@
-/*	$NetBSD: devopen.c,v 1.3 1998/01/05 07:03:25 perry Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3.2.1 1998/01/27 02:35:33 gwr Exp $	*/
 
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <machine/mon.h>
+
 #include <stand.h>
-#include "promboot.h"
+#include "libsa.h"
 
 /*
  * Open the device named by the combined device/file name

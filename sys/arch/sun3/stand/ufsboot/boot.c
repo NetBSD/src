@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:52 gwr Exp $ */
+/*	$NetBSD: boot.c,v 1.2.20.1 1998/01/27 02:35:43 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,24 +37,13 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-
 #include <machine/mon.h>
 
-#include "stand.h"
-#include "promboot.h"
+#include <stand.h>
+#include "libsa.h"
 
-int debug;
-int errno;
-
-/*
- * Boot device is derived from ROM provided information.
- */
-#define LOADADDR	0x4000
-
-extern char		*version;
-char	defname[32] = "netbsd";
+char	defname[32] = "netbsd.sun3";
 char	line[80];
-
 
 main()
 {
@@ -63,6 +52,10 @@ main()
 
 	printf(">> NetBSD ufsboot [%s]\n", version);
 	prom_get_boot_info();
+
+	/* If running on a Sun3X, append an x. */
+	if (_is3x)
+		defname[11] = 'x';
 	file = defname;
 
 	cp = prom_bootfile;
@@ -71,13 +64,17 @@ main()
 
 	for (;;) {
 		if (prom_boothow & RB_ASKNAME) {
-			printf("boot: ");
+			printf("filename? [%s]: ", defname);
 			gets(line);
 			if (line[0])
 				file = line;
-		}
-		exec_sun(file, LOADADDR);
-		printf("boot: %s: %s\n", file, strerror(errno));
+			else
+				file = defname;
+		} else
+			printf("ufsboot: loading %s\n", file);
+
+		exec_sun(file, (char *)LOADADDR);
+		printf("ufsboot: %s: %s\n", file, strerror(errno));
 		prom_boothow |= RB_ASKNAME;
 	}
 }

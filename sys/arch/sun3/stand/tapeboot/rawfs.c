@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.1 1995/10/17 22:58:27 gwr Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.1.20.1 1998/01/27 02:35:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -40,7 +40,8 @@
 
 #include <sys/param.h>
 #include <stand.h>
-#include <rawfs.h>
+
+#include "rawfs.h"
 
 extern int debug;
 

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1997/09/05 04:31:55 gwr Exp $
+#	$NetBSD: Makefile,v 1.4.6.1 1998/01/27 02:35:43 gwr Exp $
 
 SA_PROG= ufsboot
-SRCS= boot.c conf.c version.c
+SRCS= boot.c conf.c
 OBJS= ${SRCS:.c=.o}
 
 # Using local rule for this

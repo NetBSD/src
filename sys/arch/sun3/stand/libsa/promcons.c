@@ -1,7 +1,6 @@
-/*	$NetBSD: promcons.c,v 1.4 1998/01/05 07:03:29 perry Exp $	*/
+/*	$NetBSD: promcons.c,v 1.4.2.1 1998/01/27 02:35:36 gwr Exp $	*/
 
 
-#include <stdarg.h>
 #include <sys/types.h>
 #include <machine/mon.h>
 

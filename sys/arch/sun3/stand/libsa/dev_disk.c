@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_disk.c,v 1.5 1997/02/05 17:39:24 gwr Exp $ */
+/*	$NetBSD: dev_disk.c,v 1.5.14.1 1998/01/27 02:35:32 gwr Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -42,16 +42,17 @@
 
 #include <sys/types.h>
 #include <machine/mon.h>
-#include <machine/saio.h>
 
-#include "stand.h"
+#include <stand.h>
 
+#include "libsa.h"
 #include "dvma.h"
-#include "promdev.h"
- 
+#include "saio.h"
+
+/* #include "dev_disk.h" XXX - stdarg woes */
+
 #define RETRY_COUNT 5
 
-extern int debug;
 int disk_opencount;
 struct saioreq disk_ioreq;
 
