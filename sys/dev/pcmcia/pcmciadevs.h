@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.45 1999/08/14 13:43:27 tron Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.46 1999/08/24 17:48:31 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.42 1999/08/14 13:43:03 tron Exp 
+ *	NetBSD: pcmciadevs,v 1.43 1999/08/24 17:47:45 tron Exp 
  */
 
 /*-
@@ -67,7 +67,9 @@
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
+#define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
+#define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 
 /*
@@ -251,6 +253,16 @@
 #define	PCMCIA_CIS_SMC_EZCARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_EZCARD	0x8022
 #define	PCMCIA_STR_SMC_EZCARD	"SMC EXCard 10 PCMCIA"
+
+/* Contec C-NET(PC) */
+#define	PCMCIA_CIS_CONTEC_CNETPC	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_CONTEC_CNETPC	0x0000
+#define	PCMCIA_STR_CONTEC_CNETPC	"Contec C-NET(PC)C"
+
+/* Allied Telesis K.K. */
+#define	PCMCIA_CIS_ALLIEDTELESIS_LA_PCM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM	0x0002
+#define	PCMCIA_STR_ALLIEDTELESIS_LA_PCM	"Allied Telesis LA-PCM"
 
 /* Lucent WaveLAN/IEEE */
 #define	PCMCIA_CIS_LUCENT_WAVELAN_IEEE	{ NULL, NULL, NULL, NULL }
