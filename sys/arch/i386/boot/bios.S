@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.9 1995/01/18 17:28:09 mycroft Exp $	*/
+/*	$NetBSD: bios.S,v 1.10 1995/01/18 17:50:51 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -87,13 +87,11 @@ ENTRY(biosread)
 				# prot_to_real will set %es to BOOTSEG
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+
 	movb	$0x2, %ah	# subfunction
 	addr32
 	movb	0x18(%ebp), %al	# number of sectors
-
-	sti
 	int	$0x13
-	cli
 
 	movl	%eax, %ebx	# save return value (actually movw %ax, %bx)
 
@@ -134,7 +132,6 @@ ENTRY(putc)
 	movb	0x8(%ebp), %cl
 
 	call	_C_LABEL(prot_to_real)
-	sti
 
 	movb	%cl, %al
 
@@ -149,7 +146,6 @@ ENTRY(putc)
 	int	$0x14		# display a byte
 #endif
 
-	cli
 	data32
 	call	_C_LABEL(real_to_prot)
 
@@ -179,7 +175,6 @@ ENTRY(getc)
 	pushl	%ebx
 
 	call	_C_LABEL(prot_to_real)
-	sti
 
 #ifndef SERIAL
 	movb	$0x00, %ah
@@ -192,7 +187,6 @@ ENTRY(getc)
 
 	movb	%al, %bl	# real_to_prot uses %eax
 
-	cli
 	data32
 	call	_C_LABEL(real_to_prot)
 
@@ -229,7 +223,6 @@ ENTRY(ischar)
 	pushl	%ebx
 
 	call	_C_LABEL(prot_to_real)
-	sti
 
 #ifndef SERIAL
 	movb	$0x01, %ah
@@ -244,7 +237,6 @@ ENTRY(ischar)
 
 	movb	%ah, %bl	# real_to_prot uses %eax
 
-	cli
 	data32
 	call	_C_LABEL(real_to_prot)
 
@@ -273,7 +265,6 @@ ENTRY(get_diskinfo)
 	movb	0x8(%ebp), %dl		# diskinfo(drive #)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
-	sti
 
 	movb	$0x08, %ah		# ask for disk info
 	int	$0x13
@@ -295,7 +286,6 @@ ENTRY(get_diskinfo)
 	# carry = 0
 
 ok:
-	cli
 	data32
 	call	_C_LABEL(real_to_prot)	# back to protected mode
 
@@ -331,7 +321,6 @@ ENTRY(memsize)
 	movl	8(%ebp), %ebx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
-	sti
 
 	testb	%bl, %bl
 	data32
@@ -348,7 +337,6 @@ xext:
 xdone:
 	movl	%eax, %ebx
 
-	cli
 	data32
 	call	_C_LABEL(real_to_prot)
 
