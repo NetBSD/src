@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.3 1996/07/10 22:53:55 explorer Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.4 1996/07/14 20:13:08 cgd Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -441,11 +441,7 @@ ahc_pci_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc
-#ifdef __OpenBSD__
-	    , ahc->sc_dev.dv_xname
-#endif
-	    );
+	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
 	if (ahc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		       ahc->sc_dev.dv_xname);
