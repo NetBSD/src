@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2004/04/06 16:01:50 cl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2004/04/11 00:44:15 cl Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2004/04/06 16:01:50 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2004/04/11 00:44:15 cl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2203,6 +2203,7 @@ cpu_reset()
 
 	disable_intr();
 
+#if 0
 	/*
 	 * Ensure the NVRAM reset byte contains something vaguely sane.
 	 */
@@ -2219,22 +2220,9 @@ cpu_reset()
 	delay(100000);
 	outb(IO_KBD + KBCMDP, KBC_PULSE0);
 	delay(100000);
-
-	/*
-	 * Try to cause a triple fault and watchdog reset by making the IDT
-	 * invalid and causing a fault.
-	 */
-	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
-	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
-
-#if 0
-	/*
-	 * Try to cause a triple fault and watchdog reset by unmapping the
-	 * entire address space and doing a TLB flush.
-	 */
-	memset((caddr_t)PTD, 0, PAGE_SIZE);
-	tlbflush();
 #endif
+
+	HYPERVISOR_exit();
 
 	for (;;);
 }
