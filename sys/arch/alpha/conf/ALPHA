@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.153 2001/09/15 04:33:38 thorpej Exp $
+# $NetBSD: ALPHA,v 1.154 2001/10/01 10:23:37 simonb Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.153 $"
+ident		"ALPHA-$Revision: 1.154 $"
 
 maxusers 32
 
@@ -193,6 +193,7 @@ bba0	at	ioasic? offset ?
 audio*	at	bba?
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
+asc*	at	tc? slot ? offset ?
 #cfb*	at	tc? slot ? offset ?
 #sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?

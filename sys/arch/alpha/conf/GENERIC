@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.193 2001/09/15 04:33:37 thorpej Exp $
+# $NetBSD: GENERIC,v 1.194 2001/10/01 10:23:37 simonb Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.193 $"
+#ident 		"GENERIC-$Revision: 1.194 $"
 
 maxusers 32
 
@@ -177,6 +177,7 @@ bba0	at	ioasic? offset ?
 audio*	at	bba?
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
+asc*	at	tc? slot ? offset ?
 #cfb*	at	tc? slot ? offset ?
 #sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
