@@ -1,7 +1,7 @@
 #	fs: /usr
 #
 #	@(#)BSD.usr.dist	5.5 (Berkeley) 5/9/91
-#	$Id: BSD.usr.dist,v 1.3 1994/01/28 00:24:41 jtc Exp $
+#	$Id: BSD.usr.dist,v 1.4 1994/01/28 00:36:09 jtc Exp $
 #
 
 .	type=dir
@@ -96,55 +96,17 @@ include	type=dir
 
 /set gname=bin mode=0755 uname=bin type=file
 lib	type=dir
-
-/set gname=bin mode=0755 uname=bin type=file
-	uucp	type=dir uname=uucp gname=daemon mode=0755
-	..
-..
-
-/set gname=bin mode=0755 uname=bin type=file
-libdata	type=dir
-	adb	type=dir uname=bin gname=bin mode=0755
-	..
-
-/set gname=bin mode=0755 uname=bin type=file
-	learn	type=dir
-		C	type=dir uname=bin mode=0755
-		..
-		bin	type=dir uname=bin mode=0755
-		..
-		editor	type=dir uname=bin mode=0755
-		..
-		eqn	type=dir uname=bin mode=0755
-		..
-		files	type=dir uname=bin mode=0755
-		..
-		macros	type=dir uname=bin mode=0755
-		..
-		morefiles	type=dir uname=bin mode=0755
-		..
-	..
-	lint	type=dir uname=bin mode=0755
-	..
-	pascal	type=dir uname=bin mode=0755
-	..
-	term	type=dir uname=bin mode=0755
-	..
-	troff_font	type=dir uname=bin mode=0755
-	..
 ..
 
 /set gname=bin mode=0755 uname=bin type=file
 libexec	type=dir
 	lpr	type=dir uname=bin gname=bin mode=0755
 	..
-	pascal	type=dir uname=bin gname=bin mode=0755
-	..
-	plot	type=dir uname=bin gname=bin mode=0755
-	..
 ..
 local	type=dir uname=bin gname=bin mode=0755
 	bin	type=dir uname=bin gname=bin  mode=0755
+	..
+	lib	type=dir uname=bin gname=bin  mode=0755
 	..
 	man	type=dir uname=bin gname=bin  mode=0755
 		cat1	type=dir uname=bin gname=bin  mode=0755
@@ -163,11 +125,25 @@ local	type=dir uname=bin gname=bin mode=0755
 		..
 		cat8	type=dir uname=bin gname=bin  mode=0755
 		..
+		man1	type=dir uname=bin gname=bin  mode=0755
+		..
+		man2	type=dir uname=bin gname=bin  mode=0755
+		..
+		man3	type=dir uname=bin gname=bin  mode=0755
+		..
+		man4	type=dir uname=bin gname=bin  mode=0755
+		..
+		man5	type=dir uname=bin gname=bin  mode=0755
+		..
+		man6	type=dir uname=bin gname=bin  mode=0755
+		..
+		man7	type=dir uname=bin gname=bin  mode=0755
+		..
+		man8	type=dir uname=bin gname=bin  mode=0755
+		..
 	..
 ..
 obj	type=dir uname=bin gname=bin mode=0755
-..
-old	type=dir uname=bin gname=bin mode=0755
 ..
 sbin	type=dir uname=bin gname=bin mode=0755
 ..
@@ -471,35 +447,29 @@ share	type=dir
 		..
 	..
 ..
-src	type=dir uname=bin gname=bin mode=0755
-	bin	type=dir uname=bin gname=bin mode=0755
+
+/set uname=bin gname=bin mode=0755 type=dir
+src
+	bin
 	..
-	contrib	type=dir uname=bin gname=bin mode=0755
+	etc	
 	..
-	etc	type=dir uname=bin gname=bin mode=0755
+	games
 	..
-	games	type=dir uname=bin gname=bin mode=0755
+	include
 	..
-	include	type=dir uname=bin gname=bin mode=0755
+	lib
 	..
-	kerberosIV	type=dir uname=bin gname=bin mode=0755
+	libexec
 	..
-	lib	type=dir uname=bin gname=bin mode=0755
+	sbin
 	..
-	libexec	type=dir uname=bin gname=bin mode=0755
+	share
 	..
-	old	type=dir uname=bin gname=bin mode=0755
+	sys
 	..
-	pgrm	type=dir uname=bin gname=bin mode=0755
+	usr.bin	
 	..
-	sbin	type=dir uname=bin gname=bin mode=0755
-	..
-	share	type=dir uname=bin gname=bin mode=0755
-	..
-	sys	type=dir uname=bin gname=sys mode=0755
-	..
-	usr.bin	type=dir uname=bin gname=bin mode=0755
-	..
-	usr.sbin	type=dir uname=bin gname=bin mode=0755
+	usr.sbin
 	..
 ..
