@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.527 2002/11/11 22:35:04 wiz Exp $
+# $NetBSD: mi,v 1.528 2002/11/17 06:14:39 itohy Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -597,6 +597,15 @@
 ./usr/share/man/cat4/dmphy.0			man-sys-catman
 ./usr/share/man/cat4/dpt.0			man-sys-catman
 ./usr/share/man/cat4/dpti.0			man-sys-catman
+./usr/share/man/cat4/dreamcast/g2bus.0		man-sys-catman
+./usr/share/man/cat4/dreamcast/gapspci.0	man-sys-catman
+./usr/share/man/cat4/dreamcast/gdrom.0		man-sys-catman
+./usr/share/man/cat4/dreamcast/maple.0		man-sys-catman
+./usr/share/man/cat4/dreamcast/mkbd.0		man-sys-catman
+./usr/share/man/cat4/dreamcast/mlcd.0		man-sys-catman
+./usr/share/man/cat4/dreamcast/mmem.0		man-sys-catman
+./usr/share/man/cat4/dreamcast/mms.0		man-sys-catman
+./usr/share/man/cat4/dreamcast/pvr.0		man-sys-catman
 ./usr/share/man/cat4/drum.0			man-sys-catman
 ./usr/share/man/cat4/dtide.0			man-sys-catman
 ./usr/share/man/cat4/dty.0			man-sys-catman
@@ -2354,6 +2363,15 @@
 ./usr/share/man/man4/dmphy.4			man-sys-man
 ./usr/share/man/man4/dpt.4			man-sys-man
 ./usr/share/man/man4/dpti.4			man-sys-man
+./usr/share/man/man4/dreamcast/g2bus.4		man-sys-man
+./usr/share/man/man4/dreamcast/gapspci.4	man-sys-man
+./usr/share/man/man4/dreamcast/gdrom.4		man-sys-man
+./usr/share/man/man4/dreamcast/maple.4		man-sys-man
+./usr/share/man/man4/dreamcast/mkbd.4		man-sys-man
+./usr/share/man/man4/dreamcast/mlcd.4		man-sys-man
+./usr/share/man/man4/dreamcast/mmem.4		man-sys-man
+./usr/share/man/man4/dreamcast/mms.4		man-sys-man
+./usr/share/man/man4/dreamcast/pvr.4		man-sys-man
 ./usr/share/man/man4/drum.4			man-sys-man
 ./usr/share/man/man4/dtide.4			man-sys-man
 ./usr/share/man/man4/dty.4			man-sys-man
