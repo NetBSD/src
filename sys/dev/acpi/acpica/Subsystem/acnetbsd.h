@@ -158,7 +158,6 @@
 #define	ACPI_EXTERNAL_XFACE     
 #define	ACPI_INTERNAL_XFACE
 #define	ACPI_INTERNAL_VAR_XFACE
-#define	ACPI_DISASSEMBLER
 
 #ifdef ACPI_DEBUG
 #define ACPI_DEBUG_OUTPUT
@@ -168,7 +167,9 @@
 #define DEBUGGER_THREADING 0	/* integrated with DDB */
 #include "opt_ddb.h"
 #ifdef DDB
+/* we enable debugger/disassembler component only when DDB is compiled in */
 #define ACPI_DEBUGGER
+#define ACPI_DISASSEMBLER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.38 2003/07/02 12:23:25 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.39 2003/07/03 14:37:34 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.38 2003/07/02 12:23:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.39 2003/07/03 14:37:34 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.38 2003/07/02 12:23:25 kochi Exp $");
 MALLOC_DECLARE(M_ACPI);
 
 #include <machine/acpi_machdep.h>
+
+#undef ENABLE_DEBUGGER
 
 #ifdef ENABLE_DEBUGGER
 #define	ACPI_DBGR_INIT		0x01
