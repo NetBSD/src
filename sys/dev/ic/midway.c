@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.44 2000/08/09 02:05:06 tv Exp $	*/
+/*	$NetBSD: midway.c,v 1.45 2000/09/06 18:48:36 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -1069,7 +1069,7 @@ int wmtry;
       EN_WRITE(sc, sc->dtq_chip, MID_MK_TXQ_ADP(lcv, 0, MID_DMA_END, 0));
     else
       EN_WRITE(sc, sc->dtq_chip, MID_MK_TXQ_ENI(count, 0, MID_DMA_END, bcode));
-    EN_WRITE(sc, sc->dtq_chip+4, vtophys(sp));
+    EN_WRITE(sc, sc->dtq_chip+4, vtophys((vaddr_t)sp));
     EN_WRITE(sc, MID_DMA_WRTX, MID_DTQ_A2REG(sc->dtq_chip+8));
     cnt = 1000;
     while (EN_READ(sc, MID_DMA_RDTX) == MID_DTQ_A2REG(sc->dtq_chip)) {
@@ -1095,7 +1095,7 @@ int wmtry;
       EN_WRITE(sc, sc->drq_chip, MID_MK_RXQ_ADP(lcv, 0, MID_DMA_END, 0));
     else
       EN_WRITE(sc, sc->drq_chip, MID_MK_RXQ_ENI(count, 0, MID_DMA_END, bcode));
-    EN_WRITE(sc, sc->drq_chip+4, vtophys(dp));
+    EN_WRITE(sc, sc->drq_chip+4, vtophys((vaddr_t)dp));
     EN_WRITE(sc, MID_DMA_WRRX, MID_DRQ_A2REG(sc->drq_chip+8));
     cnt = 1000;
     while (EN_READ(sc, MID_DMA_RDRX) == MID_DRQ_A2REG(sc->drq_chip)) {
@@ -2452,7 +2452,7 @@ struct en_launch *l;
               sc->sc_dev.dv_xname, chan, len, need, cur);
 #endif
       end = (need == 0) ? MID_DMA_END : 0;
-      EN_DTQADD(sc, len, chan, 0, vtophys(data), l->mlen, end);
+      EN_DTQADD(sc, len, chan, 0, vtophys((vaddr_t)data), l->mlen, end);
       if (end)
         goto done;
       dma = cur;	/* update dma pointer */
@@ -2487,7 +2487,7 @@ struct en_launch *l;
 #endif
       len -= cnt;
       end = (need == 0) ? MID_DMA_END : 0;
-      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      EN_DTQADD(sc, count, chan, bcode, vtophys((vaddr_t)data), l->mlen, end);
       if (end)
         goto done;
       data = (u_int32_t *) ((u_char *)data + cnt);
@@ -2516,7 +2516,7 @@ struct en_launch *l;
 #endif
       len -= cnt;
       end = (need == 0) ? MID_DMA_END : 0;
-      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      EN_DTQADD(sc, count, chan, bcode, vtophys((vaddr_t)data), l->mlen, end);
       if (end)
         goto done;
       data = (u_int32_t *) ((u_char *)data + cnt);
@@ -2535,7 +2535,7 @@ struct en_launch *l;
 #endif
       len -= cnt;
       end = (need == 0) ? MID_DMA_END : 0;
-      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      EN_DTQADD(sc, count, chan, bcode, vtophys((vaddr_t)data), l->mlen, end);
       if (end)
         goto done;
       data = (u_int32_t *) ((u_char *)data + cnt);
@@ -2555,7 +2555,7 @@ struct en_launch *l;
 #endif
       len -= cnt;
       end = (need == 0) ? MID_DMA_END : 0;
-      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      EN_DTQADD(sc, count, chan, bcode, vtophys((vaddr_t)data), l->mlen, end);
       if (end)
         goto done;
       data = (u_int32_t *) ((u_char *)data + cnt);
@@ -2578,7 +2578,7 @@ struct en_launch *l;
               sc->sc_dev.dv_xname, chan, len, need, cur);
 #endif
       end = (need == 0) ? MID_DMA_END : 0;
-      EN_DTQADD(sc, count, chan, bcode, vtophys(data), l->mlen, end);
+      EN_DTQADD(sc, count, chan, bcode, vtophys((vaddr_t)data), l->mlen, end);
       if (end)
         goto done;
     }
@@ -2613,7 +2613,7 @@ struct en_launch *l;
       bcode = (sc->is_adaptec) ? 0 : MIDDMA_BYTE;
       EN_COUNT(sc->tailflush);
       EN_WRAPADD(start, stop, cur, pad);
-      EN_DTQADD(sc, pad, chan, bcode, vtophys(l->t->m_data), 0, 0);
+      EN_DTQADD(sc, pad, chan, bcode, vtophys((vaddr_t)l->t->m_data), 0, 0);
       need -= pad;
 #ifdef EN_DEBUG
       printf("%s: tx%d: pad/FLUSH dma %d bytes (%d left, cur now 0x%x)\n", 
@@ -3254,7 +3254,7 @@ defer:					/* defer processing */
 		sc->sc_dev.dv_xname, slot, vci, tlen, need);
 #endif
       end = (need == 0 && !fill) ? MID_DMA_END : 0;
-      EN_DRQADD(sc, tlen, vci, 0, vtophys(data), mlen, slot, end);
+      EN_DRQADD(sc, tlen, vci, 0, vtophys((vaddr_t)data), mlen, slot, end);
       if (end)
         goto done;
       dma = cur;	/* update dma pointer */
@@ -3290,7 +3290,7 @@ defer:					/* defer processing */
 #endif
       tlen -= cnt;
       end = (need == 0 && !fill) ? MID_DMA_END : 0;
-      EN_DRQADD(sc, count, vci, bcode, vtophys(data), mlen, slot, end);
+      EN_DRQADD(sc, count, vci, bcode, vtophys((vaddr_t)data), mlen, slot, end);
       if (end)
         goto done;
       data = (u_int32_t *)((u_char *) data + cnt);   
@@ -3309,7 +3309,7 @@ defer:					/* defer processing */
 #endif
       tlen -= cnt;
       end = (need == 0 && !fill) ? MID_DMA_END : 0;
-      EN_DRQADD(sc, count, vci, bcode, vtophys(data), mlen, slot, end);
+      EN_DRQADD(sc, count, vci, bcode, vtophys((vaddr_t)data), mlen, slot, end);
       if (end)
         goto done;
       data = (u_int32_t *)((u_char *) data + cnt);   
@@ -3327,7 +3327,7 @@ defer:					/* defer processing */
 		sc->sc_dev.dv_xname, slot, vci, tlen, need);
 #endif
       end = (need == 0 && !fill) ? MID_DMA_END : 0;
-      EN_DRQADD(sc, count, vci, bcode, vtophys(data), mlen, slot, end);
+      EN_DRQADD(sc, count, vci, bcode, vtophys((vaddr_t)data), mlen, slot, end);
       if (end)
         goto done;
     }
