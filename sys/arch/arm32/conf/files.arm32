@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.77 1999/06/07 20:31:29 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.78 1999/07/07 00:05:29 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -423,7 +423,7 @@ file	arch/arm32/shark/ns87307.c	nsio & shark
 define	i8042
 file	arch/arm32/shark/i8042.c	i8042
 
-pseudo-device profiler: disk
+defpseudo profiler: disk
 file	arch/arm32/shark/profile.c	profiler needs-flag
 
 # SHARK pc console

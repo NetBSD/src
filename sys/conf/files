@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.297 1999/07/05 11:38:35 mjacob Exp $
+#	$NetBSD: files,v 1.298 1999/07/07 00:05:30 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -403,30 +403,30 @@ device	ohci: usbus
 file	dev/usb/ohci.c			ohci	needs-flag
 
 # legitimate pseudo-devices
-pseudo-device vnd: disk
-pseudo-device ccd: disk
-pseudo-device raid: disk
-pseudo-device md: disk
-pseudo-device vcoda
+defpseudo vnd: disk
+defpseudo ccd: disk
+defpseudo raid: disk
+defpseudo md: disk
+defpseudo vcoda
 
-pseudo-device pty: tty
-pseudo-device tb: tty
-pseudo-device rnd
+defpseudo pty: tty
+defpseudo tb: tty
+defpseudo rnd
 
-pseudo-device loop: ifnet
-pseudo-device sl: ifnet
-pseudo-device ppp: ifnet
-pseudo-device sppp: ifnet
-pseudo-device tun: ifnet
-pseudo-device bpfilter: ifnet
-pseudo-device strip: ifnet
-pseudo-device ipfilter: ifnet
-pseudo-device ipip: ifnet
-pseudo-device gre: ifnet
-pseudo-device gif: ifnet
-pseudo-device faith: ifnet
+defpseudo loop: ifnet
+defpseudo sl: ifnet
+defpseudo ppp: ifnet
+defpseudo sppp: ifnet
+defpseudo tun: ifnet
+defpseudo bpfilter: ifnet
+defpseudo strip: ifnet
+defpseudo ipfilter: ifnet
+defpseudo ipip: ifnet
+defpseudo gre: ifnet
+defpseudo gif: ifnet
+defpseudo faith: ifnet
 
-pseudo-device sequencer
+defpseudo sequencer
 
 # kernel sources
 file adosfs/adlookup.c			adosfs
