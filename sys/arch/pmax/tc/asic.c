@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.18 1997/06/16 01:45:12 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.19 1997/06/16 04:18:57 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,9 +34,9 @@
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 
+#include <machine/bus.h>			/* wbflush() */
 #include <machine/autoconf.h>
 #include <machine/pte.h>
-#include <machine/locore.h>	/* XXX wbflush() */
 
 #if 0
 #include <machine/rpb.h>
