@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.4 1996/02/22 10:10:54 leo Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.5 1996/04/12 08:46:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
