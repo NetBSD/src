@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.69 1997/08/26 19:04:00 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.70 1997/08/27 18:54:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -615,9 +615,10 @@ audio_open(dev, flags, ifmt, p)
 	struct audio_hw_if *hw;
 	struct audio_info ai;
 
-	sc = audio_cd.cd_devs[unit];
-	if (!sc)
+	if (unit >= audio_cd.cd_ndevs ||
+	    (sc = audio_cd.cd_devs[unit]) == NULL)
 		return ENXIO;
+
 	hw = sc->hw_if;
 	if (!hw)
 		return ENXIO;
@@ -2239,9 +2240,10 @@ mixer_open(dev, flags, ifmt, p)
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc;
 
-	sc = audio_cd.cd_devs[unit];
-	if (!sc)
+	if (unit >= audio_cd.cd_ndevs ||
+	    (sc = audio_cd.cd_devs[unit]) == NULL)
 		return ENXIO;
+
 	if (!sc->hw_if)
 		return (ENXIO);
 
