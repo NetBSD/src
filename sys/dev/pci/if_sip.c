@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.23 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.24 2001/02/06 02:49:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1890,7 +1890,7 @@ sip_dp83815_set_filter(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
-	ifp->if_flags |= ~IFF_ALLMULTI;
+	ifp->if_flags &= ~IFF_ALLMULTI;
 	sc->sc_rfcr |= RFCR_MHEN;
 	goto setit;
 
