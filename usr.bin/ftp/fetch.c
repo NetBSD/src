@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.88 1999/10/09 03:00:55 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.89 1999/10/10 22:33:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.88 1999/10/09 03:00:55 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.89 1999/10/10 22:33:55 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -435,7 +435,7 @@ cleanup_parse_url:
 	return (0);
 }
 
-jmp_buf	httpabort;
+sigjmp_buf	httpabort;
 
 /*
  * Retrieve URL, via a proxy if necessary, using HTTP.
