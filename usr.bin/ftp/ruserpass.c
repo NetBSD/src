@@ -1,4 +1,4 @@
-/*      $NetBSD: ruserpass.c,v 1.8 1996/11/28 03:12:42 lukem Exp $      */
+/*      $NetBSD: ruserpass.c,v 1.9 1996/12/06 02:06:53 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -182,7 +182,8 @@ next:
 				(void) fclose(cfile);
 				return (0);
 			}
-			while ((c=getc(cfile)) != EOF && c == ' ' || c == '\t');
+			while ((c=getc(cfile)) != EOF && c == ' ' || c == '\t')
+				;
 			if (c == EOF || c == '\n') {
 				printf("Missing macdef name argument.\n");
 				goto bad;
@@ -216,7 +217,8 @@ next:
 				macros[macnum].mac_start = macbuf;
 			}
 			else {
-				macros[macnum].mac_start = macros[macnum-1].mac_end + 1;
+				macros[macnum].mac_start =
+				    macros[macnum-1].mac_end + 1;
 			}
 			tmp = macros[macnum].mac_start;
 			while (tmp != macbuf + 4096) {

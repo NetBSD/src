@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp.c,v 1.15 1996/11/28 03:12:37 lukem Exp $      */
+/*      $NetBSD: ftp.c,v 1.16 1996/12/06 02:06:50 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.15 1996/11/28 03:12:37 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.16 1996/12/06 02:06:50 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,9 @@ int	ptflag = 0;
 struct	sockaddr_in myctladdr;
 off_t	restart_point = 0;
 char   *direction;
-struct	timeval start, stop;
-int	bytes;
+struct	timeval start;
+off_t	bytes;
+off_t	filesize;
 
 
 FILE	*cin, *cout;
@@ -232,7 +233,7 @@ login(host)
 		 * will accept the string "username@", and will
 		 * append the hostname itself.  We do this by default
 		 * since many servers are picky about not having
-		 * a FQDN in the anonymous password.
+		 * a FQDN in the anonymous password. - thorpej@netbsd.org
 		 */
 		snprintf(anonpass, sizeof(anonpass) - 1, "%s@",
 		    user);
@@ -350,13 +351,14 @@ va_dcl
 	return (r);
 }
 
-char reply_string[BUFSIZ];		/* last line of previous reply */
+char reply_string[BUFSIZ];		/* first line of previous reply */
 
 int
 getreply(expecteof)
 	int expecteof;
 {
-	int c, n;
+	char current_line[BUFSIZ];	/* last line of previous reply */
+	int c, n, line;
 	int dig;
 	int originalcode = 0, continuation = 0;
 	sig_t oldintr;
@@ -364,9 +366,9 @@ getreply(expecteof)
 	char *cp, *pt = pasv;
 
 	oldintr = signal(SIGINT, cmdabort);
-	for (;;) {
+	for (line = 0 ;; line++) {
 		dig = n = code = 0;
-		cp = reply_string;
+		cp = current_line;
 		while ((c = getc(cin)) != '\n') {
 			if (c == IAC) {     /* handle telnet commands */
 				switch (c = getc(cin)) {
@@ -407,7 +409,7 @@ getreply(expecteof)
 			if (c != '\r' && (verbose > 0 ||
 			    (verbose > -1 && n == '5' && dig > 4))) {
 				if (proxflag &&
-				   (dig == 1 || dig == 5 && verbose == 0))
+				   (dig == 1 || (dig == 5 && verbose == 0)))
 					printf("%s:", hostname);
 				(void) putchar(c);
 			}
@@ -432,13 +434,16 @@ getreply(expecteof)
 			}
 			if (n == 0)
 				n = c;
-			if (cp < &reply_string[sizeof(reply_string) - 1])
+			if (cp < &current_line[sizeof(current_line) - 1])
 				*cp++ = c;
 		}
-		if (verbose > 0 || verbose > -1 && n == '5') {
+		if (verbose > 0 || (verbose > -1 && n == '5')) {
 			(void) putchar(c);
 			(void) fflush (stdout);
 		}
+		if (line == 0)
+			strncpy(reply_string, current_line,
+			    sizeof(reply_string));
 		if (continuation && code != originalcode) {
 			if (originalcode == 0)
 				originalcode = code;
@@ -488,14 +493,16 @@ sendrequest(cmd, local, remote, printnames)
 {
 	struct stat st;
 	int c, d;
-	FILE *fin, *dout = 0, *popen();
+	FILE *fin, *dout = 0;
 	int (*closefunc) __P((FILE *));
 	sig_t oldinti, oldintr, oldintp;
-	long hashbytes = mark;
+	off_t hashbytes;
 	char *lmode, buf[BUFSIZ], *bufp;
 
+	hashbytes = mark;
 	direction = "sent";
 	bytes = 0;
+	filesize = -1;
 	if (verbose && printnames) {
 		if (local && *local != '-')
 			printf("local: %s ", local);
@@ -565,6 +572,7 @@ sendrequest(cmd, local, remote, printnames)
 			code = -1;
 			return;
 		}
+		filesize = st.st_size;
 	}
 	if (initconn()) {
 		(void) signal(SIGINT, oldintr);
@@ -633,6 +641,7 @@ sendrequest(cmd, local, remote, printnames)
 	if (dout == NULL)
 		goto abort;
 	(void) gettimeofday(&start, (struct timezone *)0);
+	progressmeter(-1);
 	oldintp = signal(SIGPIPE, SIG_IGN);
 	switch (curtype) {
 
@@ -644,15 +653,16 @@ sendrequest(cmd, local, remote, printnames)
 			for (bufp = buf; c > 0; c -= d, bufp += d)
 				if ((d = write(fileno(dout), bufp, c)) <= 0)
 					break;
-			if (hash) {
+			if (hash && !progress) {
 				while (bytes >= hashbytes) {
 					(void) putchar('#');
 					hashbytes += mark;
 				}
 				(void) fflush(stdout);
 			}
+			progressmeter(0);
 		}
-		if (hash && bytes > 0) {
+		if (hash && !progress && bytes > 0) {
 			if (bytes < mark)
 				(void) putchar('#');
 			(void) putchar('\n');
@@ -670,7 +680,8 @@ sendrequest(cmd, local, remote, printnames)
 	case TYPE_A:
 		while ((c = getc(fin)) != EOF) {
 			if (c == '\n') {
-				while (hash && (bytes >= hashbytes)) {
+				while (hash && !progress &&
+				    (bytes >= hashbytes)) {
 					(void) putchar('#');
 					(void) fflush(stdout);
 					hashbytes += mark;
@@ -682,12 +693,15 @@ sendrequest(cmd, local, remote, printnames)
 			}
 			(void) putc(c, dout);
 			bytes++;
-	/*		if (c == '\r') {			  	*/
-	/*		(void)	putc('\0', dout);  // this violates rfc */
-	/*			bytes++;				*/
-	/*		}                          			*/
+#if 0	/* this violates RFC */
+			if (c == '\r') {
+				(void)putc('\0', dout);
+				bytes++;
+			}
+#endif
+			progressmeter(0);
 		}
-		if (hash) {
+		if (hash && !progress) {
 			if (bytes < hashbytes)
 				(void) putchar('#');
 			(void) putchar('\n');
@@ -702,17 +716,18 @@ sendrequest(cmd, local, remote, printnames)
 		}
 		break;
 	}
+	if (bytes > 0)
+		progressmeter(1);
 	if (closefunc != NULL)
 		(*closefunc)(fin);
 	(void) fclose(dout);
-	(void) gettimeofday(&stop, (struct timezone *)0);
 	(void) getreply(0);
 	(void) signal(SIGINT, oldintr);
 	(void) signal(SIGINFO, oldinti);
 	if (oldintp)
 		(void) signal(SIGPIPE, oldintp);
 	if (bytes > 0)
-		ptransfer(direction, bytes, &start, &stop, 0);
+		ptransfer(0);
 	return;
 abort:
 	(void) signal(SIGINT, oldintr);
@@ -733,9 +748,8 @@ abort:
 	code = -1;
 	if (closefunc != NULL && fin != NULL)
 		(*closefunc)(fin);
-	(void) gettimeofday(&stop, (struct timezone *)0);
 	if (bytes > 0)
-		ptransfer(direction, bytes, &start, &stop, 0);
+		ptransfer(0);
 }
 
 jmp_buf	recvabort;
@@ -762,14 +776,15 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	int c, d, is_retr, tcrflag, bare_lfs = 0;
 	static int bufsize;
 	static char *buf;
-	long hashbytes = mark;
-	struct timeval stop;
+	off_t hashbytes;
 	struct stat st;
 	time_t mtime;
-	struct timeval tval;
+	struct timeval tval[2];
 
+	hashbytes = mark;
 	direction = "received";
 	bytes = 0;
+	filesize = -1;
 	is_retr = strcmp(cmd, "RETR") == 0;
 	if (is_retr && verbose && printnames) {
 		if (local && *local != '-')
@@ -851,8 +866,11 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	if (!is_retr) {
 		if (curtype != TYPE_A)
 			changetype(TYPE_A, 0);
-	} else if (curtype != type)
-		changetype(type, 0);
+	} else {
+		if (curtype != type)
+			changetype(type, 0);
+		filesize = remotesize(remote);
+	}
 	if (initconn()) {
 		(void) signal(SIGINT, oldintr);
 		(void) signal(SIGINFO, oldinti);
@@ -912,6 +930,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		bufsize = st.st_blksize;
 	}
 	(void) gettimeofday(&start, (struct timezone *)0);
+	progressmeter(-1);
 	switch (curtype) {
 
 	case TYPE_I:
@@ -928,15 +947,16 @@ recvrequest(cmd, local, remote, lmode, printnames)
 			if ((d = write(fileno(fout), buf, c)) != c)
 				break;
 			bytes += c;
-			if (hash) {
+			if (hash && !progress) {
 				while (bytes >= hashbytes) {
 					(void) putchar('#');
 					hashbytes += mark;
 				}
 				(void) fflush(stdout);
 			}
+			progressmeter(0);
 		}
-		if (hash && bytes > 0) {
+		if (hash && !progress && bytes > 0) {
 			if (bytes < mark)
 				(void) putchar('#');
 			(void) putchar('\n');
@@ -980,7 +1000,8 @@ done:
 			if (c == '\n')
 				bare_lfs++;
 			while (c == '\r') {
-				while (hash && (bytes >= hashbytes)) {
+				while (hash && !progress &&
+				    (bytes >= hashbytes)) {
 					(void) putchar('#');
 					(void) fflush(stdout);
 					hashbytes += mark;
@@ -1001,6 +1022,7 @@ done:
 			(void) putc(c, fout);
 			bytes++;
 	contin2:	;
+			progressmeter(0);
 		}
 break2:
 		if (bare_lfs) {
@@ -1008,7 +1030,7 @@ break2:
 			    "mode\n", bare_lfs);
 			printf("File may not have transferred correctly.\n");
 		}
-		if (hash) {
+		if (hash && !progress) {
 			if (bytes < hashbytes)
 				(void) putchar('#');
 			(void) putchar('\n');
@@ -1023,6 +1045,8 @@ break2:
 			warn("local: %s", local);
 		break;
 	}
+	if (bytes > 0)
+		progressmeter(1);
 	if (closefunc != NULL)
 		(*closefunc)(fout);
 	(void) signal(SIGINT, oldintr);
@@ -1030,16 +1054,17 @@ break2:
 	if (oldintp)
 		(void) signal(SIGPIPE, oldintp);
 	(void) fclose(din);
-	(void) gettimeofday(&stop, (struct timezone *)0);
 	(void) getreply(0);
 	if (bytes > 0 && is_retr) {
-		ptransfer(direction, bytes, &start, &stop, 0);
+		ptransfer(0);
 		if (preserve && (closefunc == fclose)) {
-			mtime = getmodtime(remote);
+			mtime = remotemodtime(remote);
 			if (mtime != -1) {
-				tval.tv_sec = mtime;
-				tval.tv_usec = 0;
-				if (utimes(local, &tval) == -1) {
+				(void) gettimeofday(&tval[0],
+				    (struct timezone *)0);
+				tval[1].tv_sec = mtime;
+				tval[1].tv_usec = 0;
+				if (utimes(local, tval) == -1) {
 					printf("Can't change modification time "
 						"on %s to %s", local,
 						asctime(localtime(&mtime)));
@@ -1072,9 +1097,8 @@ abort:
 		(*closefunc)(fout);
 	if (din)
 		(void) fclose(din);
-	(void) gettimeofday(&stop, (struct timezone *)0);
 	if (bytes > 0)
-		ptransfer(direction, bytes, &start, &stop, 0);
+		ptransfer(0);
 	(void) signal(SIGINT, oldintr);
 	(void) signal(SIGINFO, oldinti);
 }
@@ -1236,42 +1260,127 @@ dataconn(lmode)
 	return (fdopen(data, lmode));
 }
 
+/*
+ * Display a transfer progress bar if progress is non-zero.
+ * Initialise with flag < 0, run with flag = 0, and the
+ * finish with flag > 0.
+ */
 void
-ptransfer(direction, bytes, t0, t1, siginfo)
-	const char *direction;
-	long bytes;
-	struct timeval *t0, *t1;
+progressmeter(flag)
+	int flag;
+{
+	static struct timeval before;
+	static int ttywidth;
+	struct winsize winsize;
+	struct timeval now, td;
+	off_t cursize, abbrevsize;
+	double elapsed;
+	int ratio, barlength, i, remaining;
+	char prefixes[] = "bKMGTP";	/* 2 ^ 64 == 16384 Petabytes */
+
+	if (!progress || filesize < 0)
+		return;
+	if (flag < 0) {
+		before.tv_sec = -1;
+		if (ioctl(fileno(stdin), TIOCGWINSZ, &winsize) < 0)
+			ttywidth = 80;
+		else
+			ttywidth = winsize.ws_col;
+	} else if (flag == 0) {
+		(void) gettimeofday(&now, (struct timezone *)0);
+		if (now.tv_sec <= before.tv_sec)
+			return;
+	}
+	before = now;
+	cursize = bytes + restart_point;
+
+	ratio = cursize * 100 / filesize;
+	ratio = MAX(ratio, 0);
+	ratio = MIN(ratio, 100);
+	printf("\r%3d%% 0 ", ratio);
+
+	barlength = ttywidth - 30;
+	if (barlength > 0) {
+		i = barlength * ratio / 100;
+		printf("%.*s%*s", i, 
+"*****************************************************************************"
+"*****************************************************************************",
+		    barlength - i, "");
+	}
+
+	i = 0;
+	abbrevsize = cursize;
+	while (abbrevsize >= 100000 && i < sizeof(prefixes)) {
+		i++;
+		abbrevsize >>= 10;
+	}
+	printf(" %5qd %c", abbrevsize, prefixes[i]);
+
+	printf("  ETA: ");
+	timersub(&now, &start, &td);
+	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
+	if (bytes <= 0 || elapsed <= 0.0) {
+		printf("   --:--");
+	} else {
+		remaining = (int)((filesize - restart_point) /
+				  (bytes / elapsed) - elapsed);
+		i = remaining / 3600;
+		if (i)
+			printf("%.02d:", i);
+		else
+			printf("   ");
+		i = remaining % 3600;
+		printf("%02d:%02d", i / 60, i % 60);
+	}
+
+	if (flag > 0)
+		(void) putchar('\n');
+	fflush(stdout);
+}
+
+void
+ptransfer(siginfo)
 	int siginfo;
 {
-	struct timeval td;
-	double s;
-	long bs;
-	int meg;
+	struct timeval now, td;
+	double elapsed;
+	off_t bs;
+	int meg, remaining, hh;
 	char buf[100];
 
-	if (verbose || siginfo) {
-		timersub(t1, t0, &td);
-		s = td.tv_sec + (td.tv_usec / 1000000.0);
-		bs = bytes / (s == 0 ? 1 : s);
-		meg = 0;
-		if (bs > (1024 * 1024))
-			meg = 1;
-		(void)snprintf(buf, sizeof(buf),
-		    "%ld byte%s %s in %.2f seconds (%.2f %sB/s)\n",
-		    bytes, bytes == 1 ? "" : "s", direction, s,
-		    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
-		(void)write(siginfo ? STDERR_FILENO : STDOUT_FILENO,
-		    buf, strlen(buf));
+	if (!verbose && !siginfo)
+		return;
+
+	(void) gettimeofday(&now, (struct timezone *)0);
+	timersub(&now, &start, &td);
+	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
+	bs = bytes / (elapsed == 0.0 ? 1 : elapsed);
+	meg = 0;
+	if (bs > (1024 * 1024))
+		meg = 1;
+	(void)snprintf(buf, sizeof(buf),
+	    "%qd byte%s %s in %.2f seconds (%.2f %sB/s)\n",
+	    bytes, bytes == 1 ? "" : "s", direction, elapsed,
+	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
+	if (siginfo && bytes > 0 && elapsed > 0.0) {
+		remaining = (int)((filesize - restart_point) /
+				  (bytes / elapsed) - elapsed);
+		hh = remaining / 3600;
+		remaining %= 3600;
+		snprintf(buf + strlen(buf) - 1, sizeof(buf) - strlen(buf),
+		    "  ETA: %02d:%02d:%02d\n", hh, remaining / 60,
+		    remaining % 60);
 	}
+	(void)write(siginfo ? STDERR_FILENO : STDOUT_FILENO, buf, strlen(buf));
 }
 
 void
 psummary(notused)
 	int notused;
 {
-	(void) gettimeofday(&stop, (struct timezone *)0);
+
 	if (bytes > 0)
-		ptransfer(direction, bytes, &start, &stop, 1);
+		ptransfer(1);
 }
 
 void

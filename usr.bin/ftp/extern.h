@@ -1,4 +1,4 @@
-/*      $NetBSD: extern.h,v 1.6 1996/11/28 03:12:33 lukem Exp $      */
+/*      $NetBSD: extern.h,v 1.7 1996/12/06 02:06:48 lukem Exp $      */
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,6 @@ void	fatal __P((const char *));
 void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
-time_t	getmodtime __P((const char *));
 int	getreply __P((int));
 int	globulize __P((char **));
 char   *gunique __P((const char *));
@@ -91,13 +90,13 @@ void	modtime __P((int, char **));
 void	mput __P((int, char **));
 char   *onoff __P((int));
 void	newer __P((int, char **));
+void    progressmeter __P((int));
 void	proxabort __P(());
 void    proxtrans __P((const char *, const char *, const char *));
 void    psabort __P(());
 void	psummary __P((int));
 void    pswitch __P((int));
-void    ptransfer __P((const char *, long, struct timeval *, struct timeval *,
-	    int));
+void    ptransfer __P((int));
 void	put __P((int, char **));
 void	pwd __P((int, char **));
 void	quit __P((int, char **));
@@ -107,6 +106,8 @@ void    recvrequest __P((const char *, const char *, const char *,
 	    const char *, int));
 void	reget __P((int, char **));
 char   *remglob __P((char **, int));
+off_t	remotesize __P((const char *));
+time_t	remotemodtime __P((const char *));
 void	removedir __P((int, char **));
 void	renamefile __P((int, char **));
 void    reset __P((int, char **));
@@ -131,6 +132,7 @@ void	setpassive __P((int, char **));
 void	setpeer __P((int, char **));
 void	setport __P((int, char **));
 void	setpreserve __P((int, char **));
+void	setprogress __P((int, char **));
 void	setprompt __P((int, char **));
 void	setrunique __P((int, char **));
 void	setstruct __P((int, char **));
@@ -146,6 +148,7 @@ char   *slurpstring __P((void));
 void	status __P((int, char **));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
+void	usage __P(());
 void	user __P((int, char **));
 
 extern jmp_buf	abortprox;

@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.13 1996/11/28 03:12:35 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.14 1996/12/06 02:06:49 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -673,7 +673,9 @@ traffic.
 .Dv PASV
 command by RFC 1123, some do not.)
 .It Ic preserve
-Toggle preservation of modification times on retreived files.
+Toggle preservation of modification times on retrieved files.
+.It Ic progress
+Toggle display of transfer progress bar.
 .It Ic prompt
 Toggle interactive prompting.
 Interactive prompting
@@ -699,7 +701,7 @@ to the current file, and automatically answer
 to any remaining files for the current command.
 .It Ic p
 Answer
-.Dq yes
+.Sq yes
 to the current file, and turn off prompt mode
 (as is
 .Dq prompt off
