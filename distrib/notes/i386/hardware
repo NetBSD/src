@@ -1,12 +1,8 @@
-.\"	$NetBSD: hardware,v 1.93 2001/05/21 00:57:06 jhawk Exp $
+.\"	$NetBSD: hardware,v 1.94 2001/07/30 13:46:03 jdolecek Exp $
 .
 .Nx \*V
-runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
-with 386-family processors, with or without math coprocessors. Support
-for MCA systems (such as some
-.Tn IBM
-PS/2 systems) is present, but
-still very experimental and needs special setup. The
+runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
+with 386-family processors, with or without math coprocessors. The
 minimal configuration is said to require 4 MB of RAM and 50 MB of disk
 space, though we do not know of anyone running with a system quite
 this minimal today. To install the entire system requires much more
@@ -36,6 +32,8 @@ CMD Tech PCI0643, 0646, 0648 and 0649 IDE Controllers
 Contaq Microsystems/Cypress CY82C693 IDE Controller
 .It
 HighPoint HPT366 and HPT370
+.It
+IBM ESDI Fixed Disk Controllers [m]
 .It
 Intel PIIX, PIIX3 and PIIX4 IDE Controllers
 .It
@@ -143,15 +141,15 @@ MDA, CGA, VGA, SVGA, and HGC Display Adapters.
 Not all of the display adapters
 .Nx*M
 can work with are supported by X.
-See the XFree86 FAQ for more information. [m]
+See the XFree86 FAQ for more information.
 .Note)
 .Pp
 .It
 Serial ports
 .(bullet -compact
-8250/16450-based ports [m]
+8250/16450-based ports
 .It
-16550/16650/16750-based ports [m]
+16550/16650/16750-based ports
 .It
 AST-style 4-port serial cards [*]
 .It
@@ -173,7 +171,7 @@ Byte Runner Technologies TC-400 and TC-800 serial cards [*]
 PCI universal communication cards
 .bullet)
 .It
-Parallel ports. [*] [+] [m]
+Parallel ports. [*] [+]
 .It
 Ethernet adapters
 .(bullet -compact
@@ -186,6 +184,13 @@ Novell NE2100
 Kingston 21xx
 .It
 Digital EtherWORKS II ISA adapters (DE200/DE201/DE202)
+.bullet)
+.It
+AMD LANCE and PCnet-based MCA Ethernet adapters [m]
+.(bullet -compact
+SKNET Personal
+.It
+SKNET MC+
 .bullet)
 .It
 AMD PCnet-based PCI Ethernet adapters
@@ -213,6 +218,10 @@ AT\*&T StarLAN 10, EN100, and StarLAN Fiber
 3COM 3c507
 .It
 3COM 3c509, 3c579, 3c589, and 3c59X
+.It
+3COM 3c523 EtherLink/MC [m]
+.It
+3COM 3c529 EtherLink III [m]
 .It
 3COM 3c90X (including 3c905B), 3c450, 3c55X, 3c575, 3c980, 3cSOHO100
 .It
@@ -272,6 +281,8 @@ Fujitsu FMV-180 series
 .It
 Allied-Telesis AT1700 series
 .It
+Allied-Telesis AT1700 series MCA [m]
+.It
 Allied-Telesis RE2000 series
 .bullet)
 .It
@@ -288,6 +299,8 @@ RealTek 8129/8139 based boards
 SMC/WD 8003, 8013, and the SMC
 .Sq Elite16
 ISA boards
+.It
+SMC/WD 8003, 8013 and IBM PS/2 Adapter/A MCA boards [m]
 .It
 SMC/WD 8216 (the SMC
 .Sq "Elite16 Ultra"
@@ -348,7 +361,7 @@ Token-Ring Network Adapter/A [+]
 Token-Ring Network 16/4 Adapter [+]
 .It
 .Tn IBM
-Token-Ring Network 16/4 Adapter/A [+] [m]
+Token-Ring Network 16/4 Adapter/A [m]
 .It
 .Tn IBM
 16/4 ISA Adapter [+]
@@ -430,7 +443,7 @@ bus mice [*] [+]
 .It
 .Dq "PS/2"
 .Ns -style
-mice [*] [+] [m]
+mice [*] [+]
 .It
 Serial mice (no kernel support necessary)
 .bullet)
@@ -581,14 +594,7 @@ Devices require BIOS support for PCI-PCI bridging on your motherboard.
 Most reasonably modern Pentium motherboards have this support,
 or can acquire it via a BIOS upgrade.
 .It [m]
-Devices are also supported by MCA-enabled kernels, such as one compiled from the
-.Li PS2
-configuration file.
-Support for MCA is
-.Em not
-in the
-.Li GENERIC
-or installation kernels at this moment.
+Devices are only supported by MCA-enabled kernels.
 .tag)
 .Pp
 Hardware the we do
