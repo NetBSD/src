@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.43 1998/06/25 21:17:16 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.44 1998/08/02 04:41:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -49,6 +49,7 @@
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
@@ -169,7 +170,7 @@ fork1(p1, flags, retval, rnewprocp)
 	 */
 
 	/* Allocate new proc. */
-	MALLOC(newproc, struct proc *, sizeof(struct proc), M_PROC, M_WAITOK);
+	newproc = pool_get(&proc_pool, PR_WAITOK);
 
 	/*
 	 * Find an unused process ID.  We remember a range of unused IDs
