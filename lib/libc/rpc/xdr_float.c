@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.16 1998/02/13 05:52:42 lukem Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.17 1998/10/19 02:54:57 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.16 1998/02/13 05:52:42 lukem Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.17 1998/10/19 02:54:57 matt Exp $");
 #endif
 #endif
 
@@ -76,7 +76,7 @@ __weak_alias(xdr_float,_xdr_float);
 #define IEEEFP
 #endif
 
-#ifdef vax
+#if defined(__vax__)
 
 /* What IEEE single precision floating point looks like on a Vax */
 struct	ieee_single {
@@ -178,7 +178,7 @@ xdr_float(xdrs, fp)
 	return (FALSE);
 }
 
-#ifdef vax
+#if defined(__vax__)
 /* What IEEE double precision floating point looks like on a Vax */
 struct	ieee_double {
 	unsigned int	mantissa1 : 20;
