@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2003/05/08 13:22:05 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2003/07/31 12:46:00 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -23,14 +23,12 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 # For protection
 SRCS=	editline.c tokenizer.c history.c readline.c
 
-SRCS+=	common.h emacs.h fcns.h help.h vi.h
-
 LIBEDITDIR?=${.CURDIR}
 
 INCS= histedit.h
 INCSDIR=/usr/include
 
-CLEANFILES+=common.h editline.c emacs.h fcns.c fcns.h help.c help.h vi.h
+CLEANFILES+=editline.c fcns.c help.c ${OSRCS:.c=.d}
 CLEANFILES+=common.h.tmp editline.c.tmp emacs.h.tmp fcns.c.tmp fcns.h.tmp
 CLEANFILES+=help.c.tmp help.h.tmp vi.h.tmp
 CPPFLAGS+=-I. -I${LIBEDITDIR} 
@@ -40,6 +38,9 @@ CPPFLAGS+=#-DDEBUG_PASTE -DDEBUG_EDIT
 
 AHDR=vi.h emacs.h common.h 
 ASRC=${LIBEDITDIR}/vi.c ${LIBEDITDIR}/emacs.c ${LIBEDITDIR}/common.c
+
+DPHDRS=	${AHDR} fcns.h help.h
+DPSRCS+=${DPHDRS}
 
 SUBDIR=	readline
 
@@ -83,11 +84,11 @@ test.o:	${LIBEDITDIR}/TEST/test.c
 test:	libedit.a test.o 
 	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
 
-# minimal dependency to make "make depend" optional
-editline.o editline.po editline.so editline.ln:	\
-	common.h emacs.h fcns.c fcns.h help.c help.h vi.h
-readline.o readline.po readline.so readline.ln:	\
-	common.h emacs.h fcns.h help.h vi.h
-
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
+
+# minimal dependency to make "make depend" optional
+editline.o editline.po editline.so editline.ln:	${DPHDRS} fcns.c help.c
+readline.o readline.po readline.so readline.ln:	${DPHDRS}
+
+${DEPENDSRCS} ${OSRCS:.c=.d}: ${DPHDRS}
