@@ -1,4 +1,4 @@
-/*	$NetBSD: term.h,v 1.8 1999/10/04 23:24:05 lukem Exp $	*/
+/*	$NetBSD: term.h,v 1.9 2000/01/20 22:56:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,14 +55,16 @@ typedef struct {	/* Symbolic function key bindings	*/
 
 typedef struct {
     coord_t t_size;			/* # lines and cols	*/
-    bool_t  t_flags;
-#define TERM_CAN_INSERT		0x01	/* Has insert cap	*/
-#define TERM_CAN_DELETE		0x02	/* Has delete cap	*/
-#define TERM_CAN_CEOL		0x04	/* Has CEOL cap		*/
-#define TERM_CAN_TAB		0x08	/* Can use tabs		*/
-#define TERM_CAN_ME		0x10	/* Can turn all attrs.	*/
-#define TERM_CAN_UP		0x20	/* Can move up		*/
-#define TERM_HAS_META		0x40	/* Has a meta key	*/
+    int     t_flags;
+#define TERM_CAN_INSERT		0x001	/* Has insert cap	*/
+#define TERM_CAN_DELETE		0x002	/* Has delete cap	*/
+#define TERM_CAN_CEOL		0x004	/* Has CEOL cap		*/
+#define TERM_CAN_TAB		0x008	/* Can use tabs		*/
+#define TERM_CAN_ME		0x010	/* Can turn all attrs.	*/
+#define TERM_CAN_UP		0x020	/* Can move up		*/
+#define TERM_HAS_META		0x040	/* Has a meta key	*/
+#define TERM_HAS_AUTO_MARGINS	0x080	/* Has auto margins	*/
+#define TERM_HAS_MAGIC_MARGINS	0x100	/* Has magic margins	*/
     char   *t_buf;			/* Termcap buffer	*/
     int	    t_loc;			/* location used	*/
     char  **t_str;			/* termcap strings	*/
@@ -110,11 +112,13 @@ protected void term__flush		__P((void));
  */
 #define EL_FLAGS	(el)->el_term.t_flags
 
-#define EL_CAN_INSERT	(EL_FLAGS & TERM_CAN_INSERT)
-#define EL_CAN_DELETE	(EL_FLAGS & TERM_CAN_DELETE)
-#define EL_CAN_CEOL	(EL_FLAGS & TERM_CAN_CEOL)
-#define EL_CAN_TAB	(EL_FLAGS & TERM_CAN_TAB)
-#define EL_CAN_ME	(EL_FLAGS & TERM_CAN_ME)
-#define EL_HAS_META	(EL_FLAGS & TERM_HAS_META)
+#define EL_CAN_INSERT		(EL_FLAGS & TERM_CAN_INSERT)
+#define EL_CAN_DELETE		(EL_FLAGS & TERM_CAN_DELETE)
+#define EL_CAN_CEOL		(EL_FLAGS & TERM_CAN_CEOL)
+#define EL_CAN_TAB		(EL_FLAGS & TERM_CAN_TAB)
+#define EL_CAN_ME		(EL_FLAGS & TERM_CAN_ME)
+#define EL_HAS_META		(EL_FLAGS & TERM_HAS_META)
+#define EL_HAS_AUTO_MARGINS	(EL_FLAGS & TERM_HAS_AUTO_MARGINS)
+#define EL_HAS_MAGIC_MARGINS	(EL_FLAGS & TERM_HAS_MAGIC_MARGINS)
 
 #endif /* _h_el_term */
