@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2003/08/07 16:27:50 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2004/02/23 03:32:23 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2003/08/07 16:27:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2004/02/23 03:32:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2003/08/07 16:27:50 agc Exp $");
 static struct device *booted_device;
 static int booted_partition;
 static char booted_device_name[16];
+#ifndef MEMORY_DISK_IS_ROOT
 static void get_device(char *name);
+#endif
 
 void
 cpu_configure()
@@ -131,11 +133,12 @@ void
 cpu_rootconf()
 {
 
+#ifndef MEMORY_DISK_IS_ROOT
 	get_device(booted_device_name);
 
 	printf("boot device: %s\n",
 	       booted_device ? booted_device->dv_xname : "<unknown>");
-
+#endif
 	setroot(booted_device, booted_partition);
 }
 
@@ -146,6 +149,7 @@ makebootdev(const char *cp)
 	strncpy(booted_device_name, cp, 16);
 }
 
+#ifndef MEMORY_DISK_IS_ROOT
 static void
 get_device(char *name)
 {
@@ -181,3 +185,4 @@ get_device(char *name)
 		}
 	}
 }
+#endif /* MEMORY_DISK_IS_ROOT */
