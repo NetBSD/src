@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.68 2002/06/15 03:40:28 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.69 2002/06/30 04:54:43 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.68 2002/06/15 03:40:28 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.69 2002/06/30 04:54:43 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,32 +293,46 @@ cmd
 	| LPSV check_login CRLF
 		{
 			if ($2) {
-				if (epsvall)
-					reply(501,
-					    "LPSV disallowed after EPSV ALL");
-				else
-					long_passive("LPSV", PF_UNSPEC);
+				if (CURCLASS_FLAGS_ISSET(passive)) {
+					if (epsvall)
+						reply(501,
+						    "LPSV disallowed after EPSV ALL");
+					else
+						long_passive("LPSV", PF_UNSPEC);
+				} else
+					reply(500, "LPSV mode not available.");
 			}
 		}
 
 	| EPSV check_login SP NUMBER CRLF
 		{
-			if ($2)
-				long_passive("EPSV", epsvproto2af($4));
+			if ($2) {
+				if (CURCLASS_FLAGS_ISSET(passive))
+					long_passive("EPSV", epsvproto2af($4));
+				else
+					reply(500, "EPSV mode not available.");
+			}
 		}
 
 	| EPSV check_login SP ALL CRLF
 		{
 			if ($2) {
-				reply(200, "EPSV ALL command successful.");
-				epsvall++;
+				if (CURCLASS_FLAGS_ISSET(passive)) {
+					reply(200, "EPSV ALL command successful.");
+					epsvall++;
+				} else
+					reply(500, "EPSV mode not available.");
 			}
 		}
 
 	| EPSV check_login CRLF
 		{
-			if ($2)
-				long_passive("EPSV", PF_UNSPEC);
+			if ($2) {
+				if (CURCLASS_FLAGS_ISSET(passive))
+					long_passive("EPSV", PF_UNSPEC);
+				else
+					reply(500, "EPSV mode not available.");
+			}
 		}
 
 	| TYPE check_login SP type_code CRLF
