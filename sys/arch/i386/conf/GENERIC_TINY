@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.29 2001/09/14 21:44:21 nathanw Exp $
+#	$NetBSD: GENERIC_TINY,v 1.30 2001/11/06 01:57:07 enami Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -145,7 +145,7 @@ config		netbsd	root on ? type ?
 # wscons options
 #
 # builtin terminal emulations
-#options	WSEMUL_SUN              # sun terminal emulation
+#options 	WSEMUL_SUN              # sun terminal emulation
 options 	WSEMUL_VT100            # VT100 / VT220 emulation
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
@@ -158,7 +158,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD         # can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
-#options	WSDISPLAY_DEFAULTSCREENS=4
+#options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
 options 	PCDISPLAY_SOFTCURSOR
 
