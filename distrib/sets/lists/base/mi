@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.388 2003/03/05 16:50:20 tron Exp $
+# $NetBSD: mi,v 1.389 2003/03/09 13:50:56 he Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -537,6 +537,7 @@
 ./usr/libexec/postfix/nqmgr			base-postfix-bin
 ./usr/libexec/postfix/pickup			base-postfix-bin
 ./usr/libexec/postfix/pipe			base-postfix-bin
+./usr/libexec/postfix/proxymap			base-postfix-bin
 ./usr/libexec/postfix/qmgr			base-postfix-bin
 ./usr/libexec/postfix/sendmail			base-postfix-bin
 ./usr/libexec/postfix/showq			base-postfix-bin
