@@ -90,6 +90,10 @@ getrpcbynumber(number)
 {
 	register struct rpcdata *d = _rpcdata();
 	register struct rpcent *p;
+#ifdef	YP
+	int reason;
+	char adrstr[16];
+#endif
 
 	if (d == 0)
 		return (0);
