@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.h,v 1.4 1999/10/04 23:33:45 lukem Exp $	*/
+/*	$NetBSD: screen.h,v 1.5 2000/05/25 12:25:17 blymn Exp $	*/
 
 /*
  *  top - a top users display for Unix 4.2
@@ -9,7 +9,6 @@
 
 #define TCputs(str)	tputs(str, 1, putstdout)
 #define putcap(str)	(void)((str) != NULL ? TCputs(str) : 0)
-#define Move_to(x, y)	TCputs(tgoto(cursor_motion, x, y))
 
 /* declare return values for termcap functions */
 #ifdef __NetBSD__
@@ -43,3 +42,4 @@ void clear __P((void));
 int clear_eol __P((int));
 void go_home __P((void));
 int putstdout __P((int));
+void Move_to(int x, int y);

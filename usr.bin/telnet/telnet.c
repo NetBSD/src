@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.14 1999/12/30 09:52:03 itojun Exp $	*/
+/*	$NetBSD: telnet.c,v 1.15 2000/05/25 12:25:15 blymn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.14 1999/12/30 09:52:03 itojun Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.15 2000/05/25 12:25:15 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -748,7 +748,7 @@ is_unique(name, as, ae)
 }
 
 #ifdef	TERMCAP
-char termbuf[1024];
+char *termbuf;
 
 	/*ARGSUSED*/
 	int
@@ -756,12 +756,33 @@ setup_term(tname, fd, errp)
 	char *tname;
 	int fd, *errp;
 {
+	char zz[1024], *zz_ptr;
+	char *ext_tc, *newptr;
+	
+	if ((termbuf = (char *) malloc(1024)) == NULL)
+		goto error;
+	
 	if (tgetent(termbuf, tname) == 1) {
-		termbuf[1023] = '\0';
+		  /* check for ZZ capability, which indicates termcap truncated */
+		zz_ptr = zz;
+		if (tgetstr("ZZ", &zz_ptr) != NULL) {
+			  /* it was, fish back the full termcap */
+			sscanf(zz, "%p", &ext_tc);
+			if ((newptr = (char *) realloc(termbuf,
+						       strlen(ext_tc) + 1))
+			    == NULL) {
+				goto error;
+			}
+
+			strcpy(newptr, ext_tc);
+			termbuf = newptr;
+		}
+
 		if (errp)
 			*errp = 1;
 		return(0);
 	}
+  error:
 	if (errp)
 		*errp = 0;
 	return(-1);

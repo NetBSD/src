@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.40 2000/05/13 03:13:59 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.41 2000/05/25 12:25:14 blymn Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.40 2000/05/13 03:13:59 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.41 2000/05/25 12:25:14 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -2819,6 +2819,12 @@ sourceroute(ai, arg, cpp, protop, optp)
 	cp = arg;
 
 	*cpp = NULL;
+
+	  /* init these just in case.... */
+	lsrp = NULL;
+	lsrep = NULL;
+	cmsg = NULL;
+	
 	switch (ai->ai_family) {
 	case AF_INET:
 		lsrp = lsr;

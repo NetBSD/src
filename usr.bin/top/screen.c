@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.4 1999/10/04 23:33:45 lukem Exp $	*/
+/*	$NetBSD: screen.c,v 1.5 2000/05/25 12:25:16 blymn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -57,8 +57,8 @@ char ch_erase;
 char ch_kill;
 char smart_terminal;
 char PC;
-char termcap_buf[1024];
-char string_buffer[1024];
+struct tinfo *info;
+char *string_buffer;
 char home[15];
 char lower_left[15];
 char *clear_line;
@@ -130,7 +130,7 @@ int interactive;
     }
 
     /* now get the termcap entry */
-    if ((status = tgetent(termcap_buf, term_name)) != 1)
+    if ((status = t_getent(&info, term_name)) != 1)
     {
 	if (status == -1)
 	{
@@ -148,21 +148,21 @@ int interactive;
     }
 
     /* "hardcopy" immediately indicates a very stupid terminal */
-    if (tgetflag("hc"))
+    if (t_getflag(info, "hc"))
     {
 	smart_terminal = No;
 	return;
     }
 
     /* set up common terminal capabilities */
-    if ((screen_length = tgetnum("li")) <= 0)
+    if ((screen_length = t_getnum(info, "li")) <= 0)
     {
 	screen_length = smart_terminal = 0;
 	return;
     }
 
     /* screen_width is a little different */
-    if ((screen_width = tgetnum("co")) == -1)
+    if ((screen_width = t_getnum(info, "co")) == -1)
     {
 	screen_width = 79;
     }
@@ -172,37 +172,38 @@ int interactive;
     }
 
     /* terminals that overstrike need special attention */
-    overstrike = tgetflag("os");
+    overstrike = t_getflag(info, "os");
 
     /* initialize the pointer into the termcap string buffer */
-    bufptr = string_buffer;
+    string_buffer = NULL;
 
     /* get "ce", clear to end */
     if (!overstrike)
     {
-	clear_line = tgetstr("ce", &bufptr);
+	clear_line = t_agetstr(info, "ce", &string_buffer, &bufptr);
     }
 
     /* get necessary capabilities */
-    if ((clear_screen  = tgetstr("cl", &bufptr)) == NULL ||
-	(cursor_motion = tgetstr("cm", &bufptr)) == NULL)
+    if ((clear_screen  = t_agetstr(info, "cl", &string_buffer, &bufptr)) == NULL ||
+	(cursor_motion = t_agetstr(info, "cm", &string_buffer, &bufptr)) == NULL)
     {
 	smart_terminal = No;
 	return;
     }
 
     /* get some more sophisticated stuff -- these are optional */
-    clear_to_end   = tgetstr("cd", &bufptr);
-    terminal_init  = tgetstr("ti", &bufptr);
-    terminal_end   = tgetstr("te", &bufptr);
-    start_standout = tgetstr("so", &bufptr);
-    end_standout   = tgetstr("se", &bufptr);
+    clear_to_end   = t_agetstr(info, "cd", &string_buffer, &bufptr);
+    terminal_init  = t_agetstr(info, "ti", &string_buffer, &bufptr);
+    terminal_end   = t_agetstr(info, "te", &string_buffer, &bufptr);
+    start_standout = t_agetstr(info, "so", &string_buffer, &bufptr);
+    end_standout   = t_agetstr(info, "se", &string_buffer, &bufptr);
 
     /* pad character */
-    PC = (PCptr = tgetstr("pc", &bufptr)) ? *PCptr : 0;
+    PC = (PCptr = t_agetstr(info, "pc", &string_buffer, &bufptr)) ? *PCptr : 0;
 
     /* set convenience strings */
-    (void) strcpy(home, tgoto(cursor_motion, 0, 0));
+    home[0] = '\0';
+    t_goto(info, cursor_motion, 0, 0, home, 14);
     /* (lower_left is set in get_screensize) */
 
     /* get the actual screen size with an ioctl, if needed */
@@ -421,8 +422,8 @@ get_screensize()
 
 #endif /* TIOCGSIZE */
 #endif /* TIOCGWINSZ */
-
-    (void) strcpy(lower_left, tgoto(cursor_motion, 0, screen_length - 1));
+    lower_left[0] = '\0';
+    t_goto(info, cursor_motion, 0, screen_length - 1, lower_left, 14);
 }
 
 void
@@ -499,3 +500,11 @@ int ch;
     return (putchar(ch));
 }
 
+void
+Move_to(int x, int y)
+{
+	char buf[256];
+
+	if(t_goto(info,	cursor_motion, x, y, buf, 255) == 0)
+		TCputs(buf);
+}
