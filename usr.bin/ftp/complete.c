@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.18 1999/02/07 13:14:06 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.19 1999/02/08 05:27:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.18 1999/02/07 13:14:06 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.19 1999/02/08 05:27:56 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -369,7 +369,7 @@ complete(el, ch)
 	    && strncmp(word, margv[cursor_argc], cursor_argo) == 0)
 		dolist = 1;
 	else
-	    (void)strncpy(word, margv[cursor_argc], cursor_argo);
+		(void)strncpy(word, margv[cursor_argc], cursor_argo);
 	word[cursor_argo] = '\0';
 
 	if (cursor_argc == 0)
