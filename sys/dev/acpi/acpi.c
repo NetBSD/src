@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.23 2002/12/31 11:23:34 augustss Exp $	*/
+/*	$NetBSD: acpi.c,v 1.24 2003/01/01 00:10:16 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.23 2002/12/31 11:23:34 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.24 2003/01/01 00:10:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,25 +561,25 @@ acpi_print(void *aux, const char *pnp)
 #endif
 
 	if (pnp) {
-		printf("%s ", aa->aa_node->ad_devinfo.HardwareId);
+		aprint_normal("%s ", aa->aa_node->ad_devinfo.HardwareId);
 #if 0 /* Not until we fix acpi_eval_string */
 		if (acpi_eval_string(aa->aa_node->ad_handle,
 		    "_STR", &str) == AE_OK) {
-			printf("[%s] ", str);
+			aprint_normal("[%s] ", str);
 			AcpiOsFree(str);
 		}
 #endif
-		printf("at %s", pnp);
+		aprint_normal("at %s", pnp);
 	} else {
-		printf(" (%s", aa->aa_node->ad_devinfo.HardwareId);
+		aprint_normal(" (%s", aa->aa_node->ad_devinfo.HardwareId);
 		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_UID) {
 			if (aa->aa_node->ad_devinfo.UniqueId[0] == '\0')
 				uid = "<null>";
 			else
 				uid = aa->aa_node->ad_devinfo.UniqueId;
-			printf("-%s", uid);
+			aprint_normal("-%s", uid);
 		}
-		printf(")");
+		aprint_normal(")");
 	}
 
 	return (UNCONF);

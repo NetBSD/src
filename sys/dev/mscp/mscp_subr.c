@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.22 2002/10/02 16:34:24 thorpej Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.23 2003/01/01 00:10:22 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.22 2002/10/02 16:34:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.23 2003/01/01 00:10:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -466,10 +466,11 @@ mscp_print(aux, name)
 	int type = mp->mscp_guse.guse_mediaid;
 
 	if (name) {
-		printf("%c%c", MSCP_MID_CHAR(2, type), MSCP_MID_CHAR(1, type));
+		aprint_normal("%c%c", MSCP_MID_CHAR(2, type),
+		    MSCP_MID_CHAR(1, type));
 		if (MSCP_MID_ECH(0, type))
-			printf("%c", MSCP_MID_CHAR(0, type));
-		printf("%d at %s drive %d", MSCP_MID_NUM(type), name,
+			aprint_normal("%c", MSCP_MID_CHAR(0, type));
+		aprint_normal("%d at %s drive %d", MSCP_MID_NUM(type), name,
 		    mp->mscp_unit);
 	}
 	return UNCONF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.76 2002/12/30 02:44:32 dsainty Exp $	*/
+/*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.76 2002/12/30 02:44:32 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -374,7 +374,7 @@ usbctlprint(void *aux, const char *pnp)
 {
 	/* only "usb"es can attach to host controllers */
 	if (pnp)
-		printf("usb at %s", pnp);
+		aprint_normal("usb at %s", pnp);
 
 	return (UNCONF);
 }

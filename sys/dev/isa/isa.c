@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.115 2002/10/02 03:10:48 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.116 2003/01/01 00:10:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.115 2002/10/02 03:10:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.116 2003/01/01 00:10:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,27 +268,27 @@ isaprint(void *aux, const char *isa)
 		struct isa_pnpname *ipn;
 
 		if (ia->ia_pnpname != NULL)
-			printf("%s", ia->ia_pnpname);
+			aprint_normal("%s", ia->ia_pnpname);
 		if ((ipn = ia->ia_pnpcompatnames) != NULL) {
-			printf(" (");	/* ) */
+			aprint_normal(" (");	/* ) */
 			for (sep = ""; ipn != NULL;
 			     ipn = ipn->ipn_next, sep = " ") {
-				printf("%s%s", sep, ipn->ipn_name);
+				aprint_normal("%s%s", sep, ipn->ipn_name);
 			}
-	/* ( */		printf(")");
+	/* ( */		aprint_normal(")");
 		}
-		printf(" at %s", isa);
+		aprint_normal(" at %s", isa);
 	}
 
 	if (ia->ia_nio) {
 		sep = "";
-		printf(" port ");
+		aprint_normal(" port ");
 		for (i = 0; i < ia->ia_nio; i++) {
 			if (ia->ia_io[i].ir_size == 0)
 				continue;
-			printf("%s0x%x", sep, ia->ia_io[i].ir_addr);
+			aprint_normal("%s0x%x", sep, ia->ia_io[i].ir_addr);
 			if (ia->ia_io[i].ir_size > 1)
-				printf("-0x%x", ia->ia_io[i].ir_addr +
+				aprint_normal("-0x%x", ia->ia_io[i].ir_addr +
 				    ia->ia_io[i].ir_size - 1);
 			sep = ",";
 		}
@@ -296,13 +296,13 @@ isaprint(void *aux, const char *isa)
 
 	if (ia->ia_niomem) {
 		sep = "";
-		printf(" iomem ");
+		aprint_normal(" iomem ");
 		for (i = 0; i < ia->ia_niomem; i++) {
 			if (ia->ia_iomem[i].ir_size == 0)
 				continue;
-			printf("%s0x%x", sep, ia->ia_iomem[i].ir_addr);
+			aprint_normal("%s0x%x", sep, ia->ia_iomem[i].ir_addr);
 			if (ia->ia_iomem[i].ir_size > 1)
-				printf("-0x%x", ia->ia_iomem[i].ir_addr +
+				aprint_normal("-0x%x", ia->ia_iomem[i].ir_addr +
 				    ia->ia_iomem[i].ir_size - 1);
 			sep = ",";
 		}
@@ -310,22 +310,22 @@ isaprint(void *aux, const char *isa)
 
 	if (ia->ia_nirq) {
 		sep = "";
-		printf(" irq ");
+		aprint_normal(" irq ");
 		for (i = 0; i < ia->ia_nirq; i++) {
 			if (ia->ia_irq[i].ir_irq == ISACF_IRQ_DEFAULT)
 				continue;
-			printf("%s%d", sep, ia->ia_irq[i].ir_irq);
+			aprint_normal("%s%d", sep, ia->ia_irq[i].ir_irq);
 			sep = ",";
 		}
 	}
 
 	if (ia->ia_ndrq) {
 		sep = "";
-		printf(" drq ");
+		aprint_normal(" drq ");
 		for (i = 0; i < ia->ia_ndrq; i++) {
 			if (ia->ia_drq[i].ir_drq == ISACF_DRQ_DEFAULT)
 				continue;
-			printf("%s%d", sep, ia->ia_drq[i].ir_drq);
+			aprint_normal("%s%d", sep, ia->ia_drq[i].ir_drq);
 			sep = ",";
 		}
 	}

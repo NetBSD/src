@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.1 2002/02/12 20:38:49 scw Exp $	*/
+/*	$NetBSD: pcctwo.c,v 1.2 2003/01/01 00:10:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -124,11 +124,11 @@ pcctwoprint(aux, cp)
 	pa = aux;
 
 	if (cp)
-		printf("%s at %s", pa->pa_name, cp);
+		aprint_normal("%s at %s", pa->pa_name, cp);
 
-	printf(" offset 0x%lx", pa->pa_offset - pa->_pa_base);
+	aprint_normal(" offset 0x%lx", pa->pa_offset - pa->_pa_base);
 	if (pa->pa_ipl != -1)
-		printf(" ipl %d", pa->pa_ipl);
+		aprint_normal(" ipl %d", pa->pa_ipl);
 
 	return (UNCONF);
 }

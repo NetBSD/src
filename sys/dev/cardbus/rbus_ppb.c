@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.8 2002/10/02 16:33:43 thorpej Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.9 2003/01/01 00:10:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.8 2002/10/02 16:33:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.9 2003/01/01 00:10:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,8 +170,8 @@ rppbprint(aux, pnp)
 
 	/* only PCIs can attach to PPBs; easy. */
 	if (pnp)
-		printf("pci at %s", pnp);
-	printf(" bus %d (rbus)", pba->pba_bus);
+		aprint_normal("pci at %s", pnp);
+	aprint_normal(" bus %d (rbus)", pba->pba_bus);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.6 2002/10/02 03:10:50 thorpej Exp $	*/
+/*	$NetBSD: tcom.c,v 1.7 2003/01/01 00:10:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.6 2002/10/02 03:10:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.7 2003/01/01 00:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,8 +198,8 @@ tcomprint(aux, pnp)
 	struct commulti_attach_args *ca = aux;
 
 	if (pnp)
-		printf("com at %s", pnp);
-	printf(" slave %d", ca->ca_slave);
+		aprint_normal("com at %s", pnp);
+	aprint_normal(" slave %d", ca->ca_slave);
 	return (UNCONF);
 }
 
