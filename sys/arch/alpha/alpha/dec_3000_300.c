@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.23 1998/10/22 01:03:07 briggs Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.24 1999/02/26 03:57:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.23 1998/10/22 01:03:07 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.24 1999/02/26 03:57:10 thorpej Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -136,7 +136,7 @@ dec_3000_300_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %d\n",
+		panic("consinit: unknown console type %lu\n",
 		    ctb->ctb_term_type);
 	}
 #endif /* NEW_SCC_DRIVER */
