@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 2003/05/07 10:20:20 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.8 2003/05/18 07:44:41 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,7 +73,7 @@ md_get_info()
 	if (!valid_mbr(&mbr)) {
 		memset(&mbr.mbr_parts, 0, sizeof mbr.mbr_parts);
 		/* XXX check result and give up if < 0 */
-		mbr->mbr_signature = MBR_MAGIC;
+		mbr.mbr_signature = MBR_MAGIC;
 		mbr_len = MBR_SECSIZE;
 	} else
 		mbr_len = MBR_SECSIZE;
