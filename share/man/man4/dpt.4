@@ -1,6 +1,6 @@
-.\"	$NetBSD: dpt.4,v 1.4 2000/01/05 16:33:01 ad Exp $
+.\"	$NetBSD: dpt.4,v 1.5 2000/01/13 18:00:51 ad Exp $
 .\"
-.\" Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
+.\" Copyright (c) 1999, 2000 Andy Doran <ad@NetBSD.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 .Sh NAME
 .Nm dpt
 .Nd
-.Tn Driver for DPT EATA SCSI adapters
+.Tn DPT EATA SCSI adapter driver
 .Sh SYNOPSIS
 .Cd "dpt* at eisa? slot ?"
 .Cd "dpt* at pci? dev ? function ?"
@@ -47,12 +47,23 @@ adapters:
 .It Tn DPT SmartRAID IV
 .El
 .Sh DIAGNOSTICS
-.Bl -tag -width indent -compact
+None of these messages should be encountered under normal circumstances. It
+should be noted that the list below is not complete.
+.Pp
+.Bl -tag -width indent 
 .It dpt0: readcfg failed - see dpt(4)
 .br
 The EATA configuration data did not appear upon request. This may be caused
 by older firmware. Generally the solution is to power-cycle the affected
 machine.
+.br
+.It dpt0: spurious intr
+.br
+A spurious interrupt was recieved from the HBA.
+.br
+.It dpt0: bogus status (returned CCB id NNNN)
+.br
+A corrupt or incomplete status packet was recieved from the HBA.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
@@ -64,7 +75,9 @@ machine.
 .Sh AUTHOR
 The
 .Nm
-driver was written by Andy Doran, based upon the 
+driver was written by 
+.An Andy Doran Aq ad@netbsd.org , 
+based upon the 
 .Nm uha
 and
 .Nm bha
@@ -81,10 +94,9 @@ EATA adapters other than listed may function correctly with the
 .Nm 
 driver, however a definitive list is not avaiable.
 .Pp
-Older firmware may prove problematic when used with this driver. It is
-recommended that the latest available firmware be used. Contact DPT
-for a firmware update.
+Older firmware may prove problematic. It is recommended that the latest
+available firmware be used. Contact DPT for a firmware update.
 .Pp
-Boards that do not suppport scatter-gather I/O or DMA are not supported.
+Older boards that do not suppport scatter-gather I/O or DMA are not supported.
 .Pp
 An ISA front-end is needed.
