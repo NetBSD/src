@@ -1,4 +1,4 @@
-/* $NetBSD: wcstod.c,v 1.2 2001/09/28 09:29:17 yamt Exp $ */
+/* $NetBSD: wcstod.c,v 1.3 2001/10/02 01:20:03 erh Exp $ */
 
 /*-
  * Copyright (c)1999, 2000, 2001 Citrus Project,
@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <wchar.h>
 #include <wctype.h>
 
