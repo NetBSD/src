@@ -1,3 +1,5 @@
+/*	$NetBSD: setlogin.S,v 1.4 1996/09/16 18:12:02 jonathan Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setlogin.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: setlogin.S,v 1.3 1994/12/15 17:25:17 mycroft Exp $")
+	ASMSTR("$NetBSD: setlogin.S,v 1.4 1996/09/16 18:12:02 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 LEAF(setlogin)

@@ -1,8 +1,8 @@
-#ifndef lint
-static char rcsid[] = "$Id: infinity.c,v 1.2 1995/06/28 02:18:21 jonathan Exp $";
-#endif /* not lint */
+/*	$NetBSD: infinity.c,v 1.3 1996/09/16 18:10:54 jonathan Exp $	*/
 
-/* infinity.c */
+/*
+ * IEEE-compatible infinity.c -- public domain.
+ */
 
 #include <math.h>
 #include <machine/endian.h>

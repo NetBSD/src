@@ -1,3 +1,5 @@
+/*	$NetBSD: frexp.c,v 1.2 1996/09/16 18:10:53 jonathan Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +35,6 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "from: @(#)frexp.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: frexp.c,v 1.1 1994/05/24 07:12:27 glass Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
