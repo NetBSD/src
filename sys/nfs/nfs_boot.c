@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.40 1998/01/09 15:10:37 drochner Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.41 1998/01/11 05:55:40 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
 
 #include "opt_nfs_boot_bootp.h"
 #include "opt_nfs_boot_bootparam.h"
+#include "opt_nfs_boot_dhcp.h"
 
 /*
  * There are two implementations of NFS diskless boot.
@@ -79,7 +80,7 @@
  *    nfs_bootp.c:   BOOTP (RFC951, RFC1048)
  *    nfs_bootsun.c: Sun RPC/bootparams
  */
-#ifdef NFS_BOOT_BOOTP
+#if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
 int nfs_boot_rfc951 = 1; /* BOOTP enabled (default) */
 #endif
 #ifdef NFS_BOOT_BOOTPARAM
@@ -118,7 +119,7 @@ nfs_boot_init(nd, procp)
 	}
 
 	error = EADDRNOTAVAIL; /* ??? */
-#ifdef NFS_BOOT_BOOTP
+#if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
 	if (nfs_boot_rfc951) {
 		printf("nfs_boot: trying BOOTP/DHCP\n");
 		error = nfs_bootdhcp(ifp, nd, procp);

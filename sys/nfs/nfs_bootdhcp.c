@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.3 1998/01/09 15:13:44 drochner Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.4 1998/01/11 05:55:41 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,8 @@
 #include <nfs/nfsproto.h>
 /* #include <nfs/nfs.h> */
 #include <nfs/nfsdiskless.h>
+
+#include "opt_nfs_boot_dhcp.h"
 
 /*
  * There are two implementations of NFS diskless boot.
