@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.1.2.6 2002/04/26 22:10:49 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.1.2.7 2002/10/07 18:57:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,8 +83,8 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	/* Got one. */
 	pthread__tsd_alloc[i] = 1;
 	nextkey = (i + 1) % PTHREAD_KEYS_MAX;
-	pthread_mutex_unlock(&tsd_mutex);
 	pthread__tsd_destructors[i] = destructor;
+	pthread_mutex_unlock(&tsd_mutex);
 	*key = i;
 
 	return 0;
@@ -93,40 +93,76 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 int
 pthread_key_delete(pthread_key_t key)
 {
-	pthread_t self, thread;
-	extern pthread_spin_t allqueue_lock;
-	extern struct pthread_queue_t allqueue;
 
-	/* This takes a little work. When pthread_key_create() returns
-	 * a new key, the data for that key must be NULL in all threads.
-	 * To make pthread_key_create() easy, we want to nuke all non-NULL
-	 * values here. This means we have to iterate the list of all
-	 * threads. New threads aren't a problem, because the thread setup
-	 * will zero out their TSD array. We just have to keep the thread
-	 * under examiniation from being yanked out from under us.
-	 */
-
-	self = pthread__self();
-	/* XXX this is a long operation to protect with a spinlock */
-	pthread_spinlock(self, &allqueue_lock);
-	/* XXX this is a memory leak; standards-compliant, but
-	 * pthread_key_delete() is not a well-thought-out part of the
-	 * standard. Reconsider.
-	 * (well, it could be worse. we could be running destructors here,
-	 * which would be a total mess.)
+	/*
+	 * This is tricky.  The standard says of pthread_key_create()
+	 * that new keys have the value NULL associated with them in
+	 * all threads.  According to people who were present at the
+	 * standardization meeting, that requirement was written
+	 * before pthread_key_delete() was introduced, and not
+	 * reconsidered when it was.
+	 *
 	 * See David Butenhof's article in comp.programming.threads:
 	 * Subject: Re: TSD key reusing issue
 	 * Message-ID: <u97d8.29$fL6.200@news.cpqcorp.net>
 	 * Date: Thu, 21 Feb 2002 09:06:17 -0500
 	 * http://groups.google.com/groups?hl=en&selm=u97d8.29%24fL6.200%40news.cpqcorp.net
+	 * 
+	 * Given:
+	 *
+	 * 1: Applications are not required to clear keys in all
+	 *    threads before calling pthread_key_delete().
+	 * 2: Clearing pointers without running destructors is a
+	 *    memory leak.
+	 * 3: The pthread_key_delete() function is expressly forbidden
+	 *    to run any destructors.
+	 *
+	 * Option 1: Make this function effectively a no-op and
+	 * prohibit key reuse. This is a possible resource-exhaustion
+	 * problem given that we have a static storage area for keys,
+	 * but having a non-static storage area would make
+	 * pthread_setspecific() expensive (might need to realloc the
+	 * TSD array).
+	 *
+	 * Option 2: Ignore the specified behavior of
+	 * pthread_key_create() and leave the old values. If an
+	 * application deletes a key that still has non-NULL values in
+	 * some threads... it's probably a memory leak and hence
+	 * incorrect anyway, and we're within our rights to let the
+	 * application lose. However, it's possible (if unlikely) that
+	 * the application is storing pointers to non-heap data, or
+	 * non-pointers that have been wedged into a void pointer, so
+	 * we can't entirely write off such applications as incorrect.
+	 * This could also lead to running (new) destructors on old
+	 * data that was never supposed to be associated with that
+	 * destructor.
+	 *
+	 * Option 3: Follow the specified behavior of
+	 * pthread_key_create().  Either pthread_key_create() or
+	 * pthread_key_delete() would then have to clear the values in
+	 * every thread's slot for that key. In order to guarantee the
+	 * visibility of the NULL value in other threads, there would
+	 * have to be synchronization operations in both the clearer
+	 * and pthread_getspecific().  Putting synchronization in
+	 * pthread_getspecific() is a big performance lose.  But in
+	 * reality, only (buggy) reuse of an old key would require
+	 * this synchronization; for a new key, there has to be a
+	 * memory-visibility propagating event between the call to
+	 * pthread_key_create() and pthread_getspecific() with that
+	 * key, so setting the entries to NULL without synchronization
+	 * will work, subject to problem (2) above. However, it's kind
+	 * of slow.
+	 *
+	 * Note that the argument in option 3 only applies because we
+	 * keep TSD in ordinary memory which follows the pthreads
+	 * visibility rules. The visibility rules are not required by
+	 * the standard to apply to TSD, so this arguemnt doesn't
+	 * apply in general, just to this implementation.
 	 */
-	PTQ_FOREACH(thread, &allqueue, pt_allq)
-		thread->pt_specific[key] = NULL;
-	pthread_spinunlock(self, &allqueue_lock);
 
-	pthread__tsd_destructors[key] = NULL;
+	/* For the momemt, we're going with option 1. */
 	pthread_mutex_lock(&tsd_mutex);
-	pthread__tsd_alloc[key] = 0;
+	pthread__tsd_destructors[key] = NULL;
 	pthread_mutex_unlock(&tsd_mutex);
 
 	return 0;
@@ -141,7 +177,8 @@ pthread_setspecific(pthread_key_t key, const void *value)
 		return EINVAL;
 
 	self = pthread__self();
-	/* We can't win here on constness. Having been given a 
+	/*
+	 * We can't win here on constness. Having been given a 
 	 * "const void *", we can only assign it to other const void *,
 	 * and return it from functions that are const void *, without
 	 * generating a warning. 
@@ -169,6 +206,7 @@ pthread__destroy_tsd(pthread_t self)
 {
 	int i, done, iterations;
 	void *val;
+	void (*destructor)(void *);
 
 	/* Butenhof, section 5.4.2 (page 167):
 	 * 
@@ -199,12 +237,15 @@ pthread__destroy_tsd(pthread_t self)
 	do {
 		done = 1;
 		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
+			pthread_mutex_lock(&tsd_mutex);
+			destructor = pthread__tsd_destructors[i];
+			pthread_mutex_unlock(&tsd_mutex);
 			if ((self->pt_specific[i] != NULL) &&
-			    pthread__tsd_destructors[i] != NULL) {
+			    destructor != NULL) {
 				done = 0;
 				val = self->pt_specific[i];
 				self->pt_specific[i] = NULL; /* see above */
-				pthread__tsd_destructors[i](val);
+				(*destructor)(val);
 			}
 		}
 	} while (!done && iterations--);
