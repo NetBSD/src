@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.5 1997/11/10 19:22:46 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.6 1997/11/11 00:47:27 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -149,8 +149,11 @@ EXTERN int fake_sel;
 /* other vars for menu communication */
 EXTERN int  nodist;
 EXTERN int  got_dist;
-EXTERN char dist_dir[STRSIZE] INIT("/usr/INSTALL");
+/* Relative file name for storing a distribution. */
+EXTERN char dist_dir[STRSIZE] INIT("/usr/INSTALL");  
 EXTERN int  clean_dist_dir INIT(0);
+/* Absolute path name where the distribution should be extracted from. */
+EXTERN char ext_dir[STRSIZE] INIT("");
 EXTERN char ftp_host[STRSIZE] INIT("ftp.netbsd.org");
 EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-");
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
@@ -164,7 +167,7 @@ EXTERN char cdrom_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-");
 
 EXTERN char localfs_dev[SSTRSIZE] INIT("sd0");
 EXTERN char localfs_fs[SSTRSIZE] INIT("ffs");
-EXTERN char localfs_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-" REL "/" MACH);
+EXTERN char localfs_dir[STRSIZE] INIT("");
 
 EXTERN int  mnt2_mounted INIT(0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6.2.4 1997/11/10 19:23:31 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.6.2.5 1997/11/11 00:47:38 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -123,7 +123,7 @@ void run_makedev (void)
 }
 
 
-/* Load files from floppy. */
+/* Load files from floppy.  Requires a /mnt2 directory for mounting them. */
 int get_via_floppy (void)
 {
 	char distname[STRSIZE];
@@ -195,9 +195,9 @@ get_via_cdrom(void)
 	process_menu (MENU_cdromsource);
 
 	/* Fill in final default path. */
-	strncat (ftp_dir, rels, STRSIZE-strlen(ftp_dir));
-	strcat  (ftp_dir, "/");
-	strncat (ftp_dir, machine, STRSIZE-strlen(ftp_dir));
+	strncat (cdrom_dir, rels, STRSIZE-strlen(cdrom_dir));
+	strcat  (cdrom_dir, "/");
+	strncat (cdrom_dir, machine, STRSIZE-strlen(cdrom_dir));
 
 	/* Mount it */
 	while (run_prog ("/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
@@ -208,8 +208,8 @@ get_via_cdrom(void)
 	}
 
 	/* return location, don't clean... */
-	strcpy (dist_dir, "/mnt2");
-	strncat (dist_dir, cdrom_dir, STRSIZE-strlen(dist_dir)-1);
+	strcpy (ext_dir, "/mnt2");
+	strncat (ext_dir, cdrom_dir, STRSIZE-strlen(ext_dir)-1);
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
@@ -231,8 +231,8 @@ get_via_localfs(void)
 	}
 
 	/* return location, don't clean... */
-	strcpy (dist_dir, "/mnt2");
-	strncat (dist_dir, localfs_dir, STRSIZE-strlen(dist_dir)-1);
+	strcpy (ext_dir, "/mnt2");
+	strncat (ext_dir, localfs_dir, STRSIZE-strlen(ext_dir)-1);
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
@@ -240,6 +240,8 @@ get_via_localfs(void)
 
 void cd_dist_dir (char *forwhat)
 {
+	char *cwd;
+
 	/* ask user for the mountpoint. */
 	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE, forwhat);
 
@@ -248,6 +250,11 @@ void cd_dist_dir (char *forwhat)
 
 	clean_dist_dir = 1;
 	target_chdir_or_die(dist_dir);
+
+	/* Set ext_dir for absolute path. */
+	cwd = getcwd (NULL,0);
+	strncpy (ext_dir, cwd, STRSIZE);
+	free (cwd);
 }
 
 
@@ -308,16 +315,18 @@ extract_file (char *path)
 	free (owd);
 }
 
+
+/* Extract_dist **REQUIRES** an absolute path in ext_dir.  Any code
+ * that sets up dist_dir for use by extract_dist needs to put in the
+ * full path name to the directory. 
+ */
+
 void
 extract_dist (void)
 {
 	char distname[STRSIZE];
 	char fname[STRSIZE];
 	distinfo *list;
-	char extdir[STRSIZE];
-
-	/* For NFS,  distdir is mounted in the _current_ root.  */
-	strncpy(extdir, dist_dir, STRSIZE);
 
 	endwin();
 	list = dist_list;
@@ -325,7 +334,7 @@ extract_dist (void)
 		if (list->getit) {
 			(void)snprintf (distname, STRSIZE, list->name, rels,
 					dist_postfix);
-			(void)snprintf (fname, STRSIZE, "%s/%s", extdir,
+			(void)snprintf (fname, STRSIZE, "%s/%s", ext_dir,
 					distname);
 			extract_file (fname);
 		}
@@ -361,9 +370,9 @@ void get_and_unpack_sets(int success_msg, int failure_msg)
 		/* Other configuration. */
 		mnt_net_config();
 		
-		/* Clean up ... */
+		/* Clean up dist dir (use absolute path name) */
 		if (clean_dist_dir)
-			run_prog ("/bin/rm -rf %s", dist_dir);
+			run_prog ("/bin/rm -rf %s", ext_dir);
 
 		/* Mounted dist dir? */
 		if (mnt2_mounted)

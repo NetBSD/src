@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.2.2.3 1997/11/10 19:23:22 thorpej Exp $	*/
+/*	$NetBSD: target.c,v 1.2.2.4 1997/11/11 00:47:34 phil Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.2.2.3 1997/11/10 19:23:22 thorpej Exp $");
+__RCSID("$NetBSD: target.c,v 1.2.2.4 1997/11/11 00:47:34 phil Exp $");
 #endif
 
 
@@ -426,8 +426,9 @@ trunc_target_file(const char *path)
 static int do_target_chdir(const char *dir, int must_succeed)
 {
 	const char *tgt_dir;
-	int error = 0;
+	int error;
 
+	error = 0;
 	tgt_dir = target_expand(dir);
 
 #ifndef DEBUG
