@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.12 2002/04/27 18:46:49 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.13 2002/04/29 15:44:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.12 2002/04/27 18:46:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.13 2002/04/29 15:44:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -590,6 +590,13 @@ none:
 			printf("scsi gross error\n");
 			if (esiop_target)
 				esiop_target->target_c.flags &= ~TARF_DT;
+#ifdef DEBUG
+			printf("DSA=0x%x DSP=0x%lx\n",
+			    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA),
+			    (u_long)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
+				SIOP_DSP) -
+			    sc->sc_c.sc_scriptaddr));
+#endif
 			goto reset;
 		}
 		if ((sist & SIST0_MA) && need_reset == 0) {
@@ -2038,6 +2045,7 @@ esiop_update_scntl3(sc, _siop_target)
 	struct esiop_target *esiop_target = (struct esiop_target *)_siop_target;
 	esiop_script_write(sc, esiop_target->lun_table_offset,
 	    esiop_target->target_c.id);
+	esiop_script_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
