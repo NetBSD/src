@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.154 2003/09/18 15:41:30 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.155 2003/09/18 18:28:05 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1752,4 +1752,10 @@ crypto/dist/ssh/ssh-agent.c			1.23
 
 	typo.  markus@openbsd
 	[itojun, ticket #1476]
+
+crypto/dist/ssh/buffer.c			1.5
+
+	protect against double free; #660;  zardoz at users.sf.net
+	from openbsd
+	[christos, ticket #1477]
 
