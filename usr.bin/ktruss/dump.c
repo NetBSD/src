@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.10 2000/10/12 19:02:18 is Exp $	*/
+/*	$NetBSD: dump.c,v 1.11 2000/11/13 21:36:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.10 2000/10/12 19:02:18 is Exp $");
+__RCSID("$NetBSD: dump.c,v 1.11 2000/11/13 21:36:22 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,7 +86,6 @@ static char *ptrace_ops[] = {
 
 void	dumprecord __P((struct ktr_header *, int, int *, void **, FILE *));
 void	dumpheader __P((struct ktr_header *, char *, int, int *));
-void	dumpfile __P((char *, int, int));
 int	fread_tail __P((char *, int, int, FILE *));
 void	ioctldecode __P((u_long));
 int	ktrsyscall __P((struct ktr_syscall *, int, char *, int, int *));
@@ -198,7 +197,7 @@ dumprecord(ktr, trpoints, sizep, mp, fp)
 
 void
 dumpfile(file, fd, trpoints)
-	char *file;
+	const char *file;
 	int fd;
 	int trpoints;
 {
