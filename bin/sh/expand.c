@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.25 1997/01/11 02:04:32 tls Exp $	*/
+/*	$NetBSD: expand.c,v 1.26 1997/01/24 17:26:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: expand.c,v 1.25 1997/01/11 02:04:32 tls Exp $";
+static char rcsid[] = "$NetBSD: expand.c,v 1.26 1997/01/24 17:26:28 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ STATIC char *exptilde __P((char *, int));
 STATIC void expbackq __P((union node *, int, int));
 STATIC int subevalvar __P((char *, char *, int, int, int, int));
 STATIC char *evalvar __P((char *, int));
-STATIC int varisset __P((char *));
+STATIC int varisset __P((char *, int));
 STATIC void varvalue __P((char *, int, int));
 STATIC void recordregion __P((int, int, int));
 STATIC void ifsbreakup __P((char *, struct arglist *));
@@ -310,6 +310,16 @@ expari(flag)
 	int result;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
 
+	while (ifsfirst.next != NULL) {
+		struct ifsregion *ifsp;
+		INTOFF;
+		ifsp = ifsfirst.next->next;
+		ckfree(ifsfirst.next);
+		ifsfirst.next = ifsp;
+		INTON;
+	}
+	ifslastp = NULL;
+
 	/*
 	 * This routine is slightly over-compilcated for
 	 * efficiency.  First we make sure there is
@@ -336,8 +346,10 @@ expari(flag)
 		rmescapes(p+1);
 	result = arith(p+1);
 	fmtstr(p, 10, "%d", result);
+
 	while (*p++)
 		;
+
 	result = expdest - p + 1;
 	STADJUST(-result, expdest);
 }
@@ -469,7 +481,7 @@ subevalvar(p, str, strloc, subtype, startloc, varflags)
 		return 0;
 
 	case VSTRIMLEFT:
-		for (loc = startp; loc < str - 1; loc++) {
+		for (loc = startp; loc < str; loc++) {
 			c = *loc;
 			*loc = '\0';
 			if (patmatch(str, startp)) {
@@ -558,7 +570,7 @@ evalvar(p, flag)
 	p = strchr(p, '=') + 1;
 again: /* jump here after setting a variable with ${var=text} */
 	if (special) {
-		set = varisset(var);
+		set = varisset(var, varflags & VSNUL);
 		val = NULL;
 	} else {
 		val = lookupvar(var);
@@ -644,6 +656,10 @@ record:
 		if (subevalvar(p, NULL, expdest - stackblock(), subtype,
 			       startloc, varflags))
 			goto record;
+		else {
+			int amount = (expdest - pat) + 1;
+			STADJUST(-amount, expdest);
+		}
 		break;
 
 	case VSASSIGN:
@@ -690,23 +706,33 @@ record:
  */
 
 STATIC int
-varisset(name)
+varisset(name, nulok)
 	char *name;
-	{
+	int nulok;
+{
 	char **ap;
 
-	if (*name == '!') {
-		if (backgndpid == -1)
-			return 0;
-	} else if (*name == '@' || *name == '*') {
+	if (*name == '!')
+		return backgndpid != -1;
+	else if (*name == '@' || *name == '*') {
 		if (*shellparam.p == NULL)
 			return 0;
+
+		if (nulok) {
+			for (ap = shellparam.p; *ap; ap++)
+				if (**ap != '\0')
+					return 1;
+			return 0;
+		}
 	} else if (is_digit(*name)) {
 		int num = atoi(name);
-		ap = shellparam.p;
-		while (--num >= 0)
-			if (*ap++ == NULL)
+
+	    	for (ap = shellparam.p; --num >= 0; ap++)
+			if (*ap == NULL)
 				return 0;
+
+		if (nulok && (*ap == NULL || **ap == '\0'))
+			return 0;
 	}
 	return 1;
 }
