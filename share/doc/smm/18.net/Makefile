@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.3 1998/01/09 06:55:47 perry Exp $
+#
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
 DIR=	smm/18.net

@@ -1,3 +1,5 @@
+.\"	$NetBSD: e.t,v 1.2 1998/01/09 06:55:53 perry Exp $
+.\"
 .\" Copyright (c) 1983, 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
