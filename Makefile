@@ -1,11 +1,7 @@
-#	$NetBSD: Makefile,v 1.95.2.1 2000/08/26 19:00:36 he Exp $
+#	$NetBSD: Makefile,v 1.95.2.2 2000/09/09 16:29:26 he Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
-.PHONY: release
-
-TARGETS+=      release
-
 # information, see http://www.netbsd.org/developers/releng/index.html
 #
 # Not everything you can set or do is documented in this makefile. In
