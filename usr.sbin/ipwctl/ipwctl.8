@@ -1,4 +1,4 @@
-.\" $NetBSD: ipwctl.8,v 1.3 2004/08/23 13:20:21 wiz Exp $
+.\" $NetBSD: ipwctl.8,v 1.4 2004/08/23 13:23:47 wiz Exp $
 .\" Id: ipwctl.8,v 1.1.2.1 2004/08/19 16:24:50 damien Exp
 .\"
 .\" Copyright (c) 2004
@@ -31,7 +31,7 @@
 .Dt IPWCTL 8
 .Sh NAME
 .Nm ipwctl
-.Nd configure Intel(R) PRO/Wireless 2100 network adapter
+.Nd configure Intel PRO/Wireless 2100 network adapter
 .Sh SYNOPSIS
 .Nm
 .Op Fl i
@@ -42,27 +42,26 @@
 .Nm
 .Op Fl i
 .Ar iface Fl k
-(kill firmware)
 .Nm
 .Op Fl i
 .Ar iface Fl r
-(display radio transmitter state)
 .Sh DESCRIPTION
 The
 .Nm
-utility controls the operation of Intel(R) PRO/Wireless 2100 networking
+utility controls the operation of Intel PRO/Wireless 2100 networking
 devices via
 .Xr ipw 4
 driver.
 .Pp
-You should not use this program to configure IEEE 802.11 parameters. Use
+You should not use this program to configure IEEE 802.11 parameters.
+Use
 .Xr ifconfig 8
 instead.
 .Sh OPTIONS
 The options are as follows:
 .Bl -tag -width indent
 .It Fl i Ar iface
-Displays adapter's internal statistics.
+Display adapter's internal statistics.
 .It Fl i Ar iface Fl f Ar firmware
 Download firmware binary image
 .Ar firmware
