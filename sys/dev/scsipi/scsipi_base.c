@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.118 2004/09/18 18:00:05 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.119 2004/09/18 18:29:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.118 2004/09/18 18:00:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.119 2004/09/18 18:29:00 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -386,11 +386,7 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("scsipi_get_xs\n"));
 
-	/*
-	 * If we're cold, make sure we poll.
-	 */
-	if (cold)
-		flags |= XS_CTL_NOSLEEP | XS_CTL_POLL;
+	KASSERT(!cold);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1873,6 +1869,8 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
 	int oasync, async, poll, retries, error, s;
+
+	KASSERT(!cold);
 
 	(chan->chan_bustype->bustype_cmd)(xs);
 
