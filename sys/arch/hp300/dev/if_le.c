@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.30 1996/05/07 00:57:58 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.31 1996/05/09 21:11:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -151,11 +151,11 @@ leattach(hd)
 {
 	register struct lereg0 *ler0;
 	struct le_softc *lesc = &le_softc[hd->hp_unit];
-	struct am7990_softc sc = &lesc->sc_am7990;
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	char *cp;
 	int i;
 
-	ler0 = sc->sc_r0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
+	ler0 = lesc->sc_r0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
 	ler0->ler0_id = 0xFF;
 	DELAY(100);
 
