@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.46 2000/11/20 08:24:09 chs Exp $	*/
+/*	$NetBSD: fd.c,v 1.47 2001/01/13 02:08:15 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -946,7 +946,7 @@ fdputdisklabel(sc, dev)
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
-	bp->b_flags &= ~(B_READ|B_DONE)
+	bp->b_flags &= ~(B_READ|B_DONE);
 	bp->b_flags |= B_WRITE;
 	fdstrategy(bp);
 	error = biowait(bp);
