@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.159 2003/09/22 12:03:44 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.160 2003/09/24 11:05:21 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1828,4 +1828,11 @@ gnu/dist/toolchain/gcc/config/sparc/netbsd64.h	1.10
 	Add a missing backslash.
 	patch supplied in PR toolchain/20062 from Jed Davis
 	[martin, ticket #1480]
+
+sys/ufs/ffs/ffs_vfsops.c			1.121 (via patch)
+
+	Make sure to not get flags which are for internal use only from the
+	on-disk superblock.
+	Proposed in http://mail-index.netbsd.org/tech-kern/2003/09/06/0005.html
+	[bouyer, ticket #1464]
 
