@@ -1,4 +1,4 @@
-/* $NetBSD: pickmove.c,v 1.2 1996/12/28 18:57:04 tls Exp $
+/* $NetBSD: pickmove.c,v 1.3 1997/01/03 01:16:05 cgd Exp $
 */
 /*
  * Copyright (c) 1994
@@ -40,11 +40,13 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$NetBSD: pickmove.c,v 1.2 1996/12/28 18:57:04 tls Exp $";
+static char rcsid[] = "$NetBSD: pickmove.c,v 1.3 1997/01/03 01:16:05 cgd Exp $";
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <curses.h>
 #include <machine/limits.h>
 

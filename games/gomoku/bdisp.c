@@ -1,4 +1,4 @@
-/* $NetBSD: bdisp.c,v 1.2 1996/12/28 18:56:59 tls Exp $
+/* $NetBSD: bdisp.c,v 1.3 1997/01/03 01:16:04 cgd Exp $
 */
 /*
  * Copyright (c) 1994
@@ -40,12 +40,13 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$NetBSD: bdisp.c,v 1.2 1996/12/28 18:56:59 tls Exp $";
+static char rcsid[] = "$NetBSD: bdisp.c,v 1.3 1997/01/03 01:16:04 cgd Exp $";
 #endif
 #endif /* not lint */
 
 #include "gomoku.h"
 #include <stdio.h>
+#include <string.h>
 #include <curses.h>
 
 #define	SCRNH		24		/* assume 24 lines for the moment */
