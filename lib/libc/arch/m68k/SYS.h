@@ -35,25 +35,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.1 1993/11/25 23:34:10 paulus Exp $
+ *	$Id: SYS.h,v 1.2 1994/01/30 21:55:52 mycroft Exp $
  */
 
 #include <sys/syscall.h>
-
-#ifdef PROF
-#ifdef __GNUC__
-#define	ENTRY(x)	.globl _/**/x; .even; _/**/x:; \
-			.data; PROF/**/x:; .long 0; \
-			.text; link a6,#0; lea PROF/**/x,a0; \
-			jbsr mcount; unlk a6
-#else
-#define	ENTRY(x)	.globl _/**/x; .even; _/**/x:; \
-			.data; PROF/**/x:; .long 0; \
-			.text; lea PROF/**/x,a0; jbsr mcount
-#endif
-#else
-#define	ENTRY(x)	.globl _/**/x; .even; _/**/x:
-#endif	/* PROF */
+#include <machine/asm.h>
 
 #ifdef	PIC
 /* With PIC code, we can't pass the error to cerror in d0,
