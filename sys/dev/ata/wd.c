@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.254 2003/06/28 14:21:32 darrenr Exp $ */
+/*	$NetBSD: wd.c,v 1.255 2003/06/29 17:03:47 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.254 2003/06/28 14:21:32 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.255 2003/06/29 17:03:47 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.254 2003/06/28 14:21:32 darrenr Exp $");
 #include <sys/ataio.h>
 #include "locators.h"
 
-#define	WAITTIME	(4 * hz)	/* time to wait for a completion */
 #define	WDIORETRIES_SINGLE 4	/* number of retries before single-sector */
 #define	WDIORETRIES	5	/* number of retries before giving up */
 #define	RECOVERYTIME hz/2	/* time to wait before retrying a cmd */
