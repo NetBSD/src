@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.18 1998/07/28 04:01:03 mycroft Exp $	*/
+/*	$NetBSD: chmod.c,v 1.19 1998/07/28 04:12:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.18 1998/07/28 04:01:03 mycroft Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.19 1998/07/28 04:12:10 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ done:	argv += optind;
 		switch (p->fts_info) {
 		case FTS_D:
 			if (!Rflag)
-				fts_set(ftsp, p, FTS_SKIP);
+				(void)fts_set(ftsp, p, FTS_SKIP);
 			break;
 		case FTS_DNR:			/* Warn, chmod, continue. */
 			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
