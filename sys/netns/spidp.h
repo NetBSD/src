@@ -1,4 +1,4 @@
-/*	$NetBSD: spidp.h,v 1.5 1994/06/29 06:41:52 cgd Exp $	*/
+/*	$NetBSD: spidp.h,v 1.6 1997/06/24 02:26:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -43,9 +43,11 @@ struct spidp {
 	struct idp	si_i;
 	struct sphdr 	si_s;
 };
+LIST_HEAD(siqhead, spidp_q);
 struct spidp_q {
-	struct spidp_q	*si_next;
-	struct spidp_q	*si_prev;
+	LIST_ENTRY(spidp_q) si_q;
+	struct spidp *si_spidp;
+	struct mbuf *si_m;
 };
 #define SI(x)	((struct spidp *)x)
 #define si_sum	si_i.idp_sum

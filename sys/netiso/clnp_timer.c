@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_timer.c,v 1.7 1996/02/13 22:08:55 christos Exp $	*/
+/*	$NetBSD: clnp_timer.c,v 1.8 1997/06/24 02:26:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -126,7 +126,7 @@ clnp_freefrags(cfh)
 	}
 
 	/* free the fragment header */
-	m_freem(dtom(cfh));
+	FREE(cfh, M_FTABLE);
 
 	return (next);
 }

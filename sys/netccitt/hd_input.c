@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_input.c,v 1.11 1996/10/13 02:10:03 christos Exp $	*/
+/*	$NetBSD: hd_input.c,v 1.12 1997/06/24 02:26:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -134,7 +134,7 @@ process_rxframe(hdp, fbuf)
 	frame = mtod(fbuf, struct Hdlc_frame *);
 	pf = ((struct Hdlc_iframe *) frame)->pf;
 
-	hd_trace(hdp, RX, frame);
+	hd_trace(hdp, RX, fbuf);
 	if (frame->address != ADDRESS_A && frame->address != ADDRESS_B)
 		return (queued);
 

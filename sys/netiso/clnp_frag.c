@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.10 1996/10/13 02:04:15 christos Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.11 1997/06/24 02:26:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -414,7 +414,6 @@ clnp_newpkt(m, src, dst, seg)
 {
 	register struct clnp_fragl *cfh;
 	register struct clnp_fixed *clnp;
-	struct mbuf    *m0;
 
 	clnp = mtod(m, struct clnp_fixed *);
 
@@ -422,11 +421,11 @@ clnp_newpkt(m, src, dst, seg)
 	 * Allocate new clnp fragl structure to act as header of all
 	 * fragments for this datagram.
 	 */
-	MGET(m0, M_DONTWAIT, MT_FTABLE);
-	if (m0 == NULL) {
+	MALLOC(cfh, struct clnp_fragl *, sizeof (struct clnp_fragl),
+	   M_FTABLE, M_NOWAIT);
+	if (cfh == NULL) {
 		return (0);
 	}
-	cfh = mtod(m0, struct clnp_fragl *);
 
 	/*
 	 * Duplicate the header of this fragment, and save in cfh. Free m0
@@ -434,7 +433,7 @@ clnp_newpkt(m, src, dst, seg)
 	 */
 	cfh->cfl_orighdr = m_copy(m, 0, (int) clnp->cnf_hdr_len);
 	if (cfh->cfl_orighdr == NULL) {
-		m_freem(m0);
+		FREE(cfh, M_FTABLE);
 		return (0);
 	}
 	/* Fill in rest of fragl structure */
@@ -855,7 +854,7 @@ clnp_comp_pdu(cfh)
 		}
 
 		/* free cfh */
-		m_freem(dtom(cfh));
+		FREE(cfh, M_FTABLE);
 
 		return (hdr);
 	}

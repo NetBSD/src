@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.49 1997/04/15 00:41:52 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.50 1997/06/24 02:26:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -373,13 +373,6 @@ ours:
 	 * but it's not worth the time; just let them time out.)
 	 */
 	if (ip->ip_off & ~(IP_DF|IP_RF)) {
-		if (m->m_flags & M_EXT) {		/* XXX */
-			if ((m = m_pullup(m, sizeof (struct ip))) == 0) {
-				ipstat.ips_toosmall++;
-				goto next;
-			}
-			ip = mtod(m, struct ip *);
-		}
 		/*
 		 * Look for queue of fragments
 		 * of this datagram.
@@ -426,12 +419,13 @@ found:
 				goto bad;
 			}
 			ipqe->ipqe_mff = mff;
+			ipqe->ipqe_m = m;
 			ipqe->ipqe_ip = ip;
-			ip = ip_reass(ipqe, fp);
-			if (ip == 0)
+			m = ip_reass(ipqe, fp);
+			if (m == 0)
 				goto next;
 			ipstat.ips_reassembled++;
-			m = dtom(ip);
+			ip = mtod(m, struct ip *);
 		} else
 			if (fp)
 				ip_freef(fp);
@@ -455,12 +449,12 @@ bad:
  * reassembly of this datagram already exists, then it
  * is given as fp; otherwise have to make a chain.
  */
-struct ip *
+struct mbuf *
 ip_reass(ipqe, fp)
 	register struct ipqent *ipqe;
 	register struct ipq *fp;
 {
-	register struct mbuf *m = dtom(ipqe->ipqe_ip);
+	register struct mbuf *m = ipqe->ipqe_m;
 	register struct ipqent *nq, *p, *q;
 	struct ip *ip;
 	struct mbuf *t;
@@ -478,9 +472,10 @@ ip_reass(ipqe, fp)
 	 * If first fragment to arrive, create a reassembly queue.
 	 */
 	if (fp == 0) {
-		if ((t = m_get(M_DONTWAIT, MT_FTABLE)) == NULL)
+		MALLOC(fp, struct ipq *, sizeof (struct ipq),
+		    M_FTABLE, M_NOWAIT);
+		if (fp == NULL)
 			goto dropfrag;
-		fp = mtod(t, struct ipq *);
 		LIST_INSERT_HEAD(&ipq, fp, ipq_q);
 		fp->ipq_ttl = IPFRAGTTL;
 		fp->ipq_p = ipqe->ipqe_ip->ip_p;
@@ -511,7 +506,7 @@ ip_reass(ipqe, fp)
 		if (i > 0) {
 			if (i >= ipqe->ipqe_ip->ip_len)
 				goto dropfrag;
-			m_adj(dtom(ipqe->ipqe_ip), i);
+			m_adj(ipqe->ipqe_m, i);
 			ipqe->ipqe_ip->ip_off += i;
 			ipqe->ipqe_ip->ip_len -= i;
 		}
@@ -528,11 +523,11 @@ ip_reass(ipqe, fp)
 		if (i < q->ipqe_ip->ip_len) {
 			q->ipqe_ip->ip_len -= i;
 			q->ipqe_ip->ip_off += i;
-			m_adj(dtom(q->ipqe_ip), i);
+			m_adj(q->ipqe_m, i);
 			break;
 		}
 		nq = q->ipqe_q.le_next;
-		m_freem(dtom(q->ipqe_ip));
+		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
 		FREE(q, M_IPQ);
 	}
@@ -568,14 +563,14 @@ insert:
 		ip_freef(fp);
 		return (0);
 	}
-	m = dtom(q->ipqe_ip);
+	m = q->ipqe_m;
 	t = m->m_next;
 	m->m_next = 0;
 	m_cat(m, t);
 	nq = q->ipqe_q.le_next;
 	FREE(q, M_IPQ);
 	for (q = nq; q != NULL; q = nq) {
-		t = dtom(q->ipqe_ip);
+		t = q->ipqe_m;
 		nq = q->ipqe_q.le_next;
 		FREE(q, M_IPQ);
 		m_cat(m, t);
@@ -591,17 +586,17 @@ insert:
 	ip->ip_src = fp->ipq_src;
 	ip->ip_dst = fp->ipq_dst;
 	LIST_REMOVE(fp, ipq_q);
-	(void) m_free(dtom(fp));
+	FREE(fp, M_FTABLE);
 	m->m_len += (ip->ip_hl << 2);
 	m->m_data -= (ip->ip_hl << 2);
 	/* some debugging cruft by sklower, below, will go away soon */
 	if (m->m_flags & M_PKTHDR) { /* XXX this should be done elsewhere */
 		register int plen = 0;
-		for (t = m; m; m = m->m_next)
-			plen += m->m_len;
-		t->m_pkthdr.len = plen;
+		for (t = m; t; t = t->m_next)
+			plen += t->m_len;
+		m->m_pkthdr.len = plen;
 	}
-	return (ip);
+	return (m);
 
 dropfrag:
 	ipstat.ips_fragdropped++;
@@ -622,12 +617,12 @@ ip_freef(fp)
 
 	for (q = fp->ipq_fragq.lh_first; q != NULL; q = p) {
 		p = q->ipqe_q.le_next;
-		m_freem(dtom(q->ipqe_ip));
+		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
 		FREE(q, M_IPQ);
 	}
 	LIST_REMOVE(fp, ipq_q);
-	(void) m_free(dtom(fp));
+	FREE(fp, M_FTABLE);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.h,v 1.8 1996/05/22 13:55:58 mycroft Exp $	*/
+/*	$NetBSD: iso_pcb.h,v 1.9 1997/06/24 02:26:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -88,6 +88,8 @@ struct isopcb {
 	int             isop_x25crud_len;	/* x25 call request ud */
 	char            isop_x25crud[MAXX25CRUDLEN];
 	struct ifaddr  *isop_ifa;	/* ESIS interface assoc w/sock */
+	struct mbuf    *isop_mladdr;	/* dynamically allocated laddr */
+	struct mbuf    *isop_mfaddr;	/* dynamically allocated faddr */
 	struct sockaddr_iso isop_sladdr,	/* preallocated laddr */
 	                isop_sfaddr;	/* preallocated faddr */
 };

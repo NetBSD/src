@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_output.c,v 1.9 1996/10/13 02:10:04 christos Exp $	*/
+/*	$NetBSD: hd_output.c,v 1.10 1997/06/24 02:26:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -197,7 +197,7 @@ hd_send_iframe(hdp, buf, poll_bit)
 	}
 	hdp->hd_vs = (hdp->hd_vs + 1) % MODULUS;
 
-	hd_trace(hdp, TX, (struct Hdlc_frame *) iframe);
+	hd_trace(hdp, TX, buf);
 
 	/* Write buffer on device. */
 	m = hdp->hd_dontcopy ? buf : m_copy(buf, 0, (int) M_COPYALL);
