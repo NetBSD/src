@@ -3,7 +3,7 @@
    Turn data structures into printable text. */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,10 +43,86 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.3 2000/10/17 16:10:42 taca Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.4 2001/04/02 23:45:56 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
+
+char *quotify_string (const char *s, const char *file, int line)
+{
+	unsigned len = 0;
+	const char *sp;
+	char *buf, *nsp;
+
+	for (sp = s; sp && *sp; sp++) {
+		if (*sp == ' ')
+			len++;
+		else if (!isascii (*sp) || !isprint (*sp))
+			len += 4;
+		else if (*sp == '"' || *sp == '\\')
+			len += 2;
+		else
+			len++;
+	}
+
+	buf = dmalloc (len + 1, file, line);
+	if (buf) {
+		nsp = buf;
+		for (sp = s; sp && *sp; sp++) {
+			if (*sp == ' ')
+				*nsp++ = ' ';
+			else if (!isascii (*sp) || !isprint (*sp)) {
+				sprintf (nsp, "\\%03o",
+					 *(const unsigned char *)sp);
+				nsp += 4;
+			} else if (*sp == '"' || *sp == '\\') {
+				*nsp++ = '\\';
+				*nsp++ = *sp;
+			} else
+				*nsp++ = *sp;
+		}
+		*nsp++ = 0;
+	}
+	return buf;
+}
+
+char *quotify_buf (const unsigned char *s, unsigned len,
+		   const char *file, int line)
+{
+	unsigned nulen = 0;
+	char *buf, *nsp;
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if (s [i] == ' ')
+			nulen++;
+		else if (!isascii (s [i]) || !isprint (s [i]))
+			nulen += 4;
+		else if (s [i] == '"' || s [i] == '\\')
+			nulen += 2;
+		else
+			nulen++;
+	}
+
+	buf = dmalloc (nulen + 1, MDL);
+	if (buf) {
+		nsp = buf;
+		for (i = 0; i < len; i++) {
+			if (s [i] == ' ')
+				*nsp++ = ' ';
+			else if (!isascii (s [i]) || !isprint (s [i])) {
+				sprintf (nsp, "\\%3.3o", s [i]);
+				nsp += 4;
+			} else if (s [i] == '"' || s [i] == '\\') {
+				*nsp++ = '\\';
+				*nsp++ = s [i];
+			} else
+				*nsp++ = s [i];
+		}
+		*nsp++ = 0;
+	}
+	return buf;
+}
 
 char *print_hw_addr (htype, hlen, data)
 	int htype;
@@ -57,9 +133,9 @@ char *print_hw_addr (htype, hlen, data)
 	char *s;
 	int i;
 
-	if (htype == 0 || hlen == 0) {
-		strcpy (habuf, "<null>");
-	} else {
+	if (hlen == 0)
+		habuf [0] = 0;
+	else {
 		s = habuf;
 		for (i = 0; i < hlen; i++) {
 			sprintf (s, "%02x", data [i]);
@@ -87,10 +163,6 @@ void print_lease (lease)
 	t = gmtime (&lease -> ends);
 	strftime (tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
 	log_debug ("  end %s", tbuf);
-	
-	t = gmtime (&lease -> timestamp);
-	strftime (tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
-	log_debug ("  stamp %s", tbuf);
 	
 	if (lease -> hardware_addr.hlen)
 		log_debug ("    hardware addr = %s",
@@ -695,6 +767,10 @@ static unsigned print_subexpression (expr, buf, len)
 		s = "leased-address";
 		goto astring;
 
+	      case expr_client_state:
+		s = "client-state";
+		goto astring;
+
 	      case expr_host_decl_name:
 		s = "host-decl-name";
 		goto astring;
@@ -1024,11 +1100,19 @@ void print_dns_status (int status, ns_updque *uq)
 		switch (u -> r_opcode)
 		{
 		      case NXRRSET:
-			op = "doesn't exist";
+			op = "rrset doesn't exist";
 			position = 1;
 			break;
 		      case YXRRSET:
-			op = "exists";
+			op = "rrset exists";
+			position = 1;
+			break;
+		      case NXDOMAIN:
+			op = "domain doesn't exist";
+			position = 1;
+			break;
+		      case YXDOMAIN:
+			op = "domain exists";
 			position = 1;
 			break;
 		      case ADD:
@@ -1157,6 +1241,8 @@ void print_dns_status (int status, ns_updque *uq)
 		s += strlen (s);
 	}
 	errorp = 1;
+	en = isc_result_totext (status);
+#if 0
 	switch (status) {
 	      case -1:
 		en = "resolver failed";
@@ -1211,6 +1297,7 @@ void print_dns_status (int status, ns_updque *uq)
 		en = "unknown error";
 		break;
 	}
+#endif
 
 	if (s + 2 < end) {
 		*s++ = ':';

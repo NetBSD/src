@@ -163,3 +163,8 @@
    than one at a time. */
 
 #define COMPACT_LEASES
+
+/* Define this if you want to be able to save and playback server operational
+   traces. */
+
+#define TRACING

@@ -3,7 +3,7 @@
    Network input dispatcher... */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.4 2000/06/10 18:17:20 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.5 2001/04/02 23:45:55 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -53,6 +53,42 @@ static struct timeout *free_timeouts;
 
 int interfaces_invalidated;
 
+void set_time (u_int32_t t)
+{
+	/* Do any outstanding timeouts. */
+	if (cur_time != t) {
+		cur_time = t;
+		process_outstanding_timeouts ((struct timeval *)0);
+	}
+}
+
+struct timeval *process_outstanding_timeouts (struct timeval *tvp)
+{
+	/* Call any expired timeouts, and then if there's
+	   still a timeout registered, time out the select
+	   call then. */
+      another:
+	if (timeouts) {
+		struct timeout *t;
+		if (timeouts -> when <= cur_time) {
+			t = timeouts;
+			timeouts = timeouts -> next;
+			(*(t -> func)) (t -> what);
+			if (t -> unref)
+				(*t -> unref) (&t -> what, MDL);
+			t -> next = free_timeouts;
+			free_timeouts = t;
+			goto another;
+		}
+		if (tvp) {
+			tvp -> tv_sec = timeouts -> when;
+			tvp -> tv_usec = 0;
+		}
+		return tvp;
+	} else
+		return (struct timeval *)0;
+}
+
 /* Wait for packets to come in using select().   When one does, call
    receive_packet to receive the packet and possibly strip hardware
    addressing information from it, and then call through the
@@ -60,37 +96,12 @@ int interfaces_invalidated;
 
 void dispatch ()
 {
-	fd_set r, w, x;
-	struct protocol *l;
-	int max = 0;
-	int count;
 	struct timeval tv, *tvp;
 	isc_result_t status;
 
+	/* Wait for a packet or a timeout... XXX */
 	do {
-		/* Call any expired timeouts, and then if there's
-		   still a timeout registered, time out the select
-		   call then. */
-	      another:
-		if (timeouts) {
-			struct timeout *t;
-			if (timeouts -> when <= cur_time) {
-				t = timeouts;
-				timeouts = timeouts -> next;
-				(*(t -> func)) (t -> what);
-				if (t -> unref)
-					(*t -> unref) (&t -> what, MDL);
-				t -> next = free_timeouts;
-				free_timeouts = t;
-				goto another;
-			}
-			tv.tv_sec = timeouts -> when;
-			tv.tv_usec = 0;
-			tvp = &tv;
-		} else
-			tvp = (struct timeval *)0;
-
-		/* Wait for a packet or a timeout... XXX */
+		tvp = process_outstanding_timeouts (&tv);
 		status = omapi_one_dispatch (0, tvp);
 	} while (status == ISC_R_TIMEDOUT || status == ISC_R_SUCCESS);
 	log_fatal ("omapi_one_dispatch failed: %s -- exiting.",

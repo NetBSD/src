@@ -113,7 +113,7 @@ extern int h_errno;
 #endif
 
 /* NetBSD added socklen_t in 1.3J, just prior to the 1.4 release. */
-#if __NetBSD_Version__ > 103090000
+#if __NetBSD_Version__ < 103090000
 #define SOCKLEN_T int
 #endif
 
