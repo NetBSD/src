@@ -1,7 +1,7 @@
-/* $NetBSD: bf.c,v 1.1.1.2 2003/06/01 14:01:20 atatat Exp $ */
+/* $NetBSD: bf.c,v 1.1.1.3 2004/03/25 18:58:18 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bf.c,v 1.1.1.2 2003/06/01 14:01:20 atatat Exp $");
+__RCSID("$NetBSD: bf.c,v 1.1.1.3 2004/03/25 18:58:18 atatat Exp $");
 #endif
 
 /*
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: bf.c,v 1.1.1.2 2003/06/01 14:01:20 atatat Exp $");
 */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: bf.c,v 8.54.2.2 2002/06/21 19:58:40 gshapiro Exp")
+SM_RCSID("@(#)Id: bf.c,v 8.54.2.3 2003/09/03 19:58:26 ca Exp")
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -548,7 +548,7 @@ sm_bfwrite(fp, buf, nbytes)
 			/* Clear umask as bf_filemode are the true perms */
 			omask = umask(0);
 			retval = OPEN(bfp->bf_filename,
-				      O_RDWR | O_CREAT | O_TRUNC,
+				      O_RDWR | O_CREAT | O_TRUNC | QF_O_EXTRA,
 				      bfp->bf_filemode, bfp->bf_flags);
 			(void) umask(omask);
 

@@ -1,11 +1,11 @@
-/* $NetBSD: flags.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $ */
+/* $NetBSD: flags.c,v 1.1.1.3 2004/03/25 19:02:05 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: flags.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
+__RCSID("$NetBSD: flags.c,v 1.1.1.3 2004/03/25 19:02:05 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2001, 2003 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: flags.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: flags.c,v 1.20 2001/09/11 04:04:48 gshapiro Exp")
+SM_RCSID("@(#)Id: flags.c,v 1.20.2.1 2003/09/03 18:51:56 ca Exp")
 #include <sys/types.h>
 #include <sys/file.h>
 #include <errno.h>
@@ -41,7 +41,7 @@ sm_flags(flags)
 {
 	register int ret;
 
-	switch(flags)
+	switch(SM_IO_MODE(flags))
 	{
 	  case SM_IO_RDONLY:	/* open for reading */
 		ret = SMRD;
@@ -63,5 +63,7 @@ sm_flags(flags)
 		ret = 0;
 		break;
 	}
+	if (SM_IS_BINARY(flags))
+		ret |= SM_IO_BINARY;
 	return ret;
 }

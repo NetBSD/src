@@ -1,7 +1,7 @@
-/* $NetBSD: parseaddr.c,v 1.1.1.10 2003/06/01 14:01:26 atatat Exp $ */
+/* $NetBSD: parseaddr.c,v 1.1.1.11 2004/03/25 19:00:09 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parseaddr.c,v 1.1.1.10 2003/06/01 14:01:26 atatat Exp $");
+__RCSID("$NetBSD: parseaddr.c,v 1.1.1.11 2004/03/25 19:00:09 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: parseaddr.c,v 1.1.1.10 2003/06/01 14:01:26 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: parseaddr.c,v 8.359.2.6 2003/03/27 02:39:53 ca Exp")
+SM_RCSID("@(#)Id: parseaddr.c,v 8.359.2.9 2003/09/16 18:07:50 ca Exp")
 
 static void	allocaddr __P((ADDRESS *, int, char *, ENVELOPE *));
 static int	callsubr __P((char**, int, ENVELOPE *));
@@ -706,7 +706,11 @@ prescan(addr, delim, pvpbuf, pvpbsize, delimptr, toktab)
 						addr[MAXNAME] = '\0';
 	returnnull:
 					if (delimptr != NULL)
+					{
+						if (p > addr)
+							--p;
 						*delimptr = p;
+					}
 					CurEnv->e_to = saveto;
 					return NULL;
 				}
@@ -887,9 +891,12 @@ prescan(addr, delim, pvpbuf, pvpbsize, delimptr, toktab)
 		}
 	} while (c != '\0' && (c != delim || anglecnt > 0));
 	*avp = NULL;
-	p--;
 	if (delimptr != NULL)
+	{
+		if (p > addr)
+			p--;
 		*delimptr = p;
+	}
 	if (tTd(22, 12))
 	{
 		sm_dprintf("prescan==>");
@@ -972,6 +979,11 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 	char buf[MAXLINE];
 	char name[6];
 
+	/*
+	**  mlp will not exceed mlist[] because readcf enforces
+	**	the upper limit of entries when reading rulesets.
+	*/
+
 	if (ruleset < 0 || ruleset >= MAXRWSETS)
 	{
 		syserr("554 5.3.5 rewrite: illegal ruleset number %d", ruleset);
@@ -1005,6 +1017,8 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 		return EX_CONFIG;
 	}
 	if (pvp == NULL)
+		return EX_USAGE;
+	if (maxatom <= 0)
 		return EX_USAGE;
 
 	/*
@@ -1293,16 +1307,7 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 				while (pp <= m->match_last)
 				{
 					if (avp >= &npvp[maxatom])
-					{
-						syserr("554 5.3.0 rewrite: expansion too long");
-						if (LogLevel > 9)
-							sm_syslog(LOG_ERR,
-								e->e_id,
-								"rewrite: expansion too long, ruleset=%s, ruleno=%d",
-								rulename,
-								ruleno);
-						return EX_DATAERR;
-					}
+						goto toolong;
 					*avp++ = *pp++;
 				}
 			}
@@ -1409,7 +1414,7 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 			char **default_rvp;
 			char cbuf[MAXNAME + 1];
 			char *pvpb1[MAXATOM + 1];
-			char *argvect[10];
+			char *argvect[MAX_MAP_ARGS];
 			char pvpbuf[PSBUFSIZE];
 			char *nullpvp[1];
 
@@ -1433,13 +1438,19 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 			{
 				endtoken = LOOKUPEND;
 				mapname = *++rvp;
+				if (mapname == NULL)
+					syserr("554 5.3.0 rewrite: missing mapname");
 			}
 			map = stab(mapname, ST_MAP, ST_FIND);
 			if (map == NULL)
-				syserr("554 5.3.0 rewrite: map %s not found", mapname);
+				syserr("554 5.3.0 rewrite: map %s not found",
+					mapname);
 
 			/* extract the match part */
 			key_rvp = ++rvp;
+			if (key_rvp == NULL)
+				syserr("554 5.3.0 rewrite: missing key for map %s",
+					mapname);
 			default_rvp = NULL;
 			arg_rvp = argvect;
 			xpvp = NULL;
@@ -1448,7 +1459,8 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 			{
 				int nodetype = **rvp & 0377;
 
-				if (nodetype != CANONHOST && nodetype != CANONUSER)
+				if (nodetype != CANONHOST &&
+				    nodetype != CANONUSER)
 				{
 					rvp++;
 					continue;
@@ -1461,7 +1473,9 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 					cataddr(xpvp, NULL, replac,
 						&pvpbuf[sizeof pvpbuf] - replac,
 						'\0');
-					*++arg_rvp = replac;
+					if (arg_rvp <
+					    &argvect[MAX_MAP_ARGS - 1])
+						*++arg_rvp = replac;
 					replac += strlen(replac) + 1;
 					xpvp = NULL;
 				}
@@ -1483,9 +1497,13 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 				cataddr(xpvp, NULL, replac,
 					&pvpbuf[sizeof pvpbuf] - replac,
 					'\0');
-				*++arg_rvp = replac;
+				if (arg_rvp < &argvect[MAX_MAP_ARGS - 1])
+					*++arg_rvp = replac;
 			}
-			*++arg_rvp = NULL;
+			if (arg_rvp >= &argvect[MAX_MAP_ARGS - 1])
+				argvect[MAX_MAP_ARGS - 1] = NULL;
+			else
+				*++arg_rvp = NULL;
 
 			/* save the remainder of the input string */
 			trsize = (int) (avp - rvp + 1) * sizeof *rvp;
@@ -1674,7 +1692,7 @@ callsubr(pvp, reclevel, e)
 
 		/*
 		**  Now we need to call the ruleset specified for
-		**  the subroutine. we can do this inplace since
+		**  the subroutine. We can do this in place since
 		**  we call the "last" subroutine first.
 		*/
 
@@ -1872,6 +1890,7 @@ buildaddr(tv, a, flags, e)
 	register ENVELOPE *e;
 {
 	bool tempfail = false;
+	int maxatom;
 	struct mailer **mp;
 	register struct mailer *m;
 	register char *p;
@@ -1886,6 +1905,7 @@ buildaddr(tv, a, flags, e)
 		printav(tv);
 	}
 
+	maxatom = MAXATOM;
 	if (a == NULL)
 		a = (ADDRESS *) sm_rpool_malloc_x(e->e_rpool, sizeof *a);
 	memset((char *) a, '\0', sizeof *a);
@@ -1925,14 +1945,22 @@ badaddr:
 		return a;
 	}
 	mname = *++tv;
+	--maxatom;
 
 	/* extract host and user portions */
 	if (*++tv != NULL && (**tv & 0377) == CANONHOST)
+	{
 		hostp = ++tv;
+		--maxatom;
+	}
 	else
 		hostp = NULL;
+	--maxatom;
 	while (*tv != NULL && (**tv & 0377) != CANONUSER)
+	{
 		tv++;
+		--maxatom;
+	}
 	if (*tv == NULL)
 	{
 		syserr("554 5.3.5 buildaddr: no user");
@@ -1943,6 +1971,7 @@ badaddr:
 	else if (hostp != NULL)
 		cataddr(hostp, tv - 1, hbuf, sizeof hbuf, '\0');
 	cataddr(++tv, NULL, ubuf, sizeof ubuf, ' ');
+	--maxatom;
 
 	/* save away the host name */
 	if (sm_strcasecmp(mname, "error") == 0)
@@ -2047,6 +2076,7 @@ badaddr:
 	{
 		p++;
 		tv++;
+		--maxatom;
 		a->q_flags |= QNOTREMOTE;
 	}
 
@@ -2077,11 +2107,11 @@ badaddr:
 	    !bitset(RF_SENDERADDR|RF_HEADERADDR, flags))
 	{
 		/* sender addresses done later */
-		(void) REWRITE(tv, 2, e);
+		(void) rewrite(tv, 2, 0, e, maxatom);
 		if (m->m_re_rwset > 0)
-		       (void) REWRITE(tv, m->m_re_rwset, e);
+		       (void) rewrite(tv, m->m_re_rwset, 0, e, maxatom);
 	}
-	(void) REWRITE(tv, 4, e);
+	(void) rewrite(tv, 4, 0, e, maxatom);
 
 	/* save the result for the command line/RCPT argument */
 	cataddr(tv, NULL, ubuf, sizeof ubuf, '\0');
@@ -2167,7 +2197,7 @@ cataddr(pvp, evp, buf, sz, spacesub)
 			break;
 	}
 #if _FFR_CATCH_LONG_STRINGS
-	/* Don't silently truncate long strings */
+	/* Don't silently truncate long strings; broken for evp != NULL */
 	if (*pvp != NULL)
 		syserr("cataddr: string too long");
 #endif /* _FFR_CATCH_LONG_STRINGS */
@@ -2460,8 +2490,7 @@ emptyaddr(a)
 **
 **	Parameters:
 **		name -- the name to translate.
-**		m -- the mailer that we want to do rewriting relative
-**			to.
+**		m -- the mailer that we want to do rewriting relative to.
 **		flags -- fine tune operations.
 **		pstat -- pointer to status word.
 **		e -- the current envelope.
@@ -2656,7 +2685,6 @@ maplocaluser(a, sendq, aliaslevel, e)
 {
 	register char **pvp;
 	register ADDRESS *SM_NONVOLATILE a1 = NULL;
-	auto char *delimptr;
 	char pvpbuf[PSBUFSIZE];
 
 	if (tTd(29, 1))
@@ -2664,7 +2692,7 @@ maplocaluser(a, sendq, aliaslevel, e)
 		sm_dprintf("maplocaluser: ");
 		printaddr(a, false);
 	}
-	pvp = prescan(a->q_user, '\0', pvpbuf, sizeof pvpbuf, &delimptr, NULL);
+	pvp = prescan(a->q_user, '\0', pvpbuf, sizeof pvpbuf, NULL, NULL);
 	if (pvp == NULL)
 	{
 		if (tTd(29, 9))
@@ -3110,6 +3138,7 @@ rscheck(rwset, p1, p2, e, flags, logl, host, logid)
 **		e -- the current envelope.
 **		pvp -- pointer to token vector.
 **		pvpbuf -- buffer space.
+**		size -- size of buffer space.
 **
 **	Returns:
 **		EX_UNAVAILABLE -- ruleset doesn't exist.
@@ -3177,7 +3206,7 @@ rscap(rwset, p1, p2, e, pvp, pvpbuf, size)
 		QuickAbort = false;
 		*pvp = prescan(buf, '\0', pvpbuf, size, NULL, NULL);
 		if (*pvp != NULL)
-			rstat = REWRITE(*pvp, rsno, e);
+			rstat = rewrite(*pvp, rsno, 0, e, size);
 		else
 		{
 			if (tTd(48, 2))
