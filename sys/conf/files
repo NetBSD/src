@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.706 2005/01/10 22:01:36 kent Exp $
+#	$NetBSD: files,v 1.707 2005/01/13 20:16:02 petrov Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -51,7 +51,7 @@ defflag	opt_ntp.h		PPS_SYNC NTP
 
 defflag	opt_ptm.h		NO_DEV_PTM COMPAT_BSDPTY
 
-defparam opt_kmempages.h	NKMEMPAGES KMEMPAGES_MIN NKMEMPAGES_MAX
+defparam opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
 defflag	opt_malloclog.h		MALLOCLOG
 defparam opt_malloclog.h	MALLOCLOGSIZE
 defflag	opt_malloc_debug.h	MALLOC_DEBUG
