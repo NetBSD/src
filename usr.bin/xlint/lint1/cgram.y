@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.10 1997/05/09 18:07:23 mycroft Exp $	*/
+/*	$NetBSD: cgram.y,v 1.11 1997/11/03 22:36:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.10 1997/05/09 18:07:23 mycroft Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.11 1997/11/03 22:36:31 cgd Exp $";
 #endif
 
 #include <stdlib.h>
@@ -57,7 +57,7 @@ int	blklev;
 int	mblklev;
 
 static	int	toicon __P((tnode_t *));
-static	void	idecl __P((sym_t *, int));
+static	void	idecl __P((sym_t *, int, sbuf_t *));
 static	void	ignuptorp __P((void));
 
 %}
@@ -130,6 +130,7 @@ static	void	ignuptorp __P((void));
 %token			T_BREAK
 %token			T_RETURN
 %token			T_ASM
+%token			T_SYMBOLRENAME
 
 %left	T_COMMA
 %right	T_ASSIGN T_OPASS
@@ -206,6 +207,7 @@ static	void	ignuptorp __P((void));
 %type	<y_tnode>	opt_expr
 %type	<y_strg>	string
 %type	<y_strg>	string2
+%type	<y_sb>		opt_asm_or_symbolrename
 
 
 %%
@@ -759,24 +761,24 @@ type_init_decls:
 	;
 
 notype_init_decl:
-	  notype_decl opt_asm_spec {
-		idecl($1, 0);
+	  notype_decl opt_asm_or_symbolrename {
+		idecl($1, 0, $2);
 		chksz($1);
 	  }
-	| notype_decl opt_asm_spec {
-		idecl($1, 1);
+	| notype_decl opt_asm_or_symbolrename {
+		idecl($1, 1, $2);
 	  } T_ASSIGN initializer {
 		chksz($1);
 	  }
 	;
 
 type_init_decl:
-	  type_decl opt_asm_spec {
-		idecl($1, 0);
+	  type_decl opt_asm_or_symbolrename {
+		idecl($1, 0, $2);
 		chksz($1);
 	  }
-	| type_decl opt_asm_spec {
-		idecl($1, 1);
+	| type_decl opt_asm_or_symbolrename {
+		idecl($1, 1, $2);
 	  } T_ASSIGN initializer {
 		chksz($1);
 	  }
@@ -1017,10 +1019,10 @@ vararg_parameter_type_list:
 	;
 
 parameter_type_list:
-	  parameter_declaration opt_asm_spec {
+	  parameter_declaration {
 		$$ = $1;
 	  }
-	| parameter_type_list T_COMMA parameter_declaration opt_asm_spec {
+	| parameter_type_list T_COMMA parameter_declaration {
 		$$ = lnklst($1, $3);
 	  }
 	;
@@ -1053,10 +1055,16 @@ parameter_declaration:
 	  }
 	;
 
-opt_asm_spec:
-	  /* empty */
+opt_asm_or_symbolrename:		/* expect only one */
+	  /* empty */ {
+		$$ = NULL;
+	  }
 	| T_ASM T_LPARN T_STRING T_RPARN {
 		freeyyv(&$3, T_STRING);
+		$$ = NULL;
+	  }
+	| T_SYMBOLRENAME T_LPARN T_NAME T_RPARN {
+		$$ = $3;
 	  }
 	;
 
@@ -1647,25 +1655,49 @@ toicon(tn)
 }
 
 static void
-idecl(decl, initflg)
+idecl(decl, initflg, rename)
 	sym_t	*decl;
 	int	initflg;
+	sbuf_t	*rename;
 {
+	char *s;
+
 	initerr = 0;
 	initsym = decl;
 
 	switch (dcs->d_ctx) {
 	case EXTERN:
+		if (rename != NULL) {
+			if (decl->s_rename != NULL)
+				lerror("idecl() 1");
+
+			s = getlblk(1, rename->sb_len + 1);
+	                (void)memcpy(s, rename->sb_name, rename->sb_len + 1);
+			decl->s_rename = s;
+			freeyyv(&rename, T_NAME);
+		}
 		decl1ext(decl, initflg);
 		break;
 	case ARG:
+		if (rename != NULL) {
+			/* symbol renaming can't be used on function arguments */
+			error(310);
+			freeyyv(&rename, T_NAME);
+			break;
+		}
 		(void)decl1arg(decl, initflg);
 		break;
 	case AUTO:
+		if (rename != NULL) {
+			/* symbol renaming can't be used on automatic variables */
+			error(311);
+			freeyyv(&rename, T_NAME);
+			break;
+		}
 		decl1loc(decl, initflg);
 		break;
 	default:
-		lerror("idecl()");
+		lerror("idecl() 2");
 	}
 
 	if (initflg && !initerr)

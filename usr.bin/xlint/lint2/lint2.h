@@ -1,4 +1,4 @@
-/*	$NetBSD: lint2.h,v 1.3 1996/12/22 11:31:10 cgd Exp $	*/
+/*	$NetBSD: lint2.h,v 1.4 1997/11/03 22:37:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -179,6 +179,7 @@ typedef	struct hte {
 	usym_t	*h_usyms;	/* usage info */
 	usym_t	**h_lusym;	/* points to u_nxt of last usage info */
 	struct	hte *h_link;	/* next hte with same hash function */
+	struct  hte *h_hte;	/* pointer to other htes (for renames */
 } hte_t;
 
 /* maps type indices into pointers to type structs */
