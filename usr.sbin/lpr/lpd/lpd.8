@@ -1,4 +1,4 @@
-.\" $NetBSD: lpd.8,v 1.5 1995/11/15 22:49:52 pk Exp $
+.\" $NetBSD: lpd.8,v 1.6 1996/06/16 22:36:59 pk Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .\"
 .Dd April 19, 1994
 .Dt LPD 8
-.Os BSD 4.2
+.Os BSD 4.4
 .Sh NAME
 .Nm lpd
 .Nd line printer spooler daemon
@@ -225,7 +225,7 @@ spool directories
 minimum free space to leave
 .It Pa /dev/lp*
 line printer devices
-.It Pa /dev/printer
+.It Pa /var/run/printer
 socket for local requests
 .It Pa /etc/hosts.equiv
 lists machine names allowed printer access
@@ -242,7 +242,7 @@ but not under same administrative control.
 .Xr syslog 3 ,
 .Xr printcap 5
 .Rs
-.%T "4.2 BSD Line Printer Spooler Manual"
+.%T "4.3 BSD Line Printer Spooler Manual"
 .Re
 .Sh HISTORY
 An
