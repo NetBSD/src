@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.3 1998/01/31 14:40:35 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.4 2002/04/25 14:45:05 atatat Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -18,11 +18,17 @@
  */
 
 #include <sys/cdefs.h>
+#include <errno.h>
+#if SYS_TIME_H
+# include <sys/time.h>
+#else
+# include <time.h>
+#endif
 #if !defined(lint) && !defined(LINT)
 #if 0
 static char rcsid[] = "Id: job.c,v 1.6 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: job.c,v 1.3 1998/01/31 14:40:35 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.4 2002/04/25 14:45:05 atatat Exp $");
 #endif
 #endif
 
@@ -34,10 +40,14 @@ typedef	struct _job {
 	struct _job	*next;
 	entry		*e;
 	user		*u;
+	time_t		t;
 } job;
 
 
 static job	*jhead = NULL, *jtail = NULL;
+
+
+static int okay_to_go __P((job *));
 
 
 void
@@ -49,13 +59,17 @@ job_add(e, u)
 
 	/* if already on queue, keep going */
 	for (j=jhead; j; j=j->next)
-		if (j->e == e && j->u == u) { return; }
+		if (j->e == e && j->u == u) {
+			j->t = TargetTime;
+			return;
+		}
 
 	/* build a job queue element */
 	j = (job*)malloc(sizeof(job));
 	j->next = (job*) NULL;
 	j->e = e;
 	j->u = u;
+	j->t = TargetTime;
 
 	/* add it to the tail */
 	if (!jhead) { jhead=j; }
@@ -71,11 +85,41 @@ job_runqueue()
 	int	run = 0;
 
 	for (j=jhead; j; j=jn) {
-		do_command(j->e, j->u);
+		if (okay_to_go(j))
+			do_command(j->e, j->u);
+		else {
+			char *x = mkprints((u_char *)j->e->cmd,
+			    strlen(j->e->cmd));
+			char *usernm = env_get("LOGNAME", j->e->envp);
+
+			log_it(usernm, getpid(), "CMD (skipped)", x);
+			free(x);
+		}
 		jn = j->next;
 		free(j);
 		run++;
 	}
 	jhead = jtail = NULL;
 	return run;
+}
+
+
+static int
+okay_to_go(j)
+	job	*j;
+{
+	char *within, *t;
+	int delta;
+
+	within = env_get("CRON_WITHIN", j->e->envp);
+	if (within == NULL)
+		return (1);
+
+	/* XXX handle 2m, 4h, etc? */
+	errno = 0;
+	delta = strtol(within, &t, 10);
+	if (errno == ERANGE || *t != '\0' || delta <= 0)
+		return (1);
+
+	return ((j->t + delta) > time(NULL));
 }
