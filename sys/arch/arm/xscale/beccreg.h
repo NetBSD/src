@@ -1,4 +1,4 @@
-/*	$NetBSD: beccreg.h,v 1.1 2003/01/25 01:57:20 thorpej Exp $	*/
+/*	$NetBSD: beccreg.h,v 1.2 2003/04/05 04:18:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -124,7 +124,7 @@
 #define	DMASR_PTA		(1U << 2)	/* PCI target abort */
 #define	DMASR_PMA		(1U << 3)	/* PCI master abort */
 #define	DMASR_EOTI		(1U << 8)	/* end of transfer interrupt */
-#define	DMASR_CA		(1U << 9)	/* channel active */
+#define	DMASR_CA		(1U << 10)	/* channel active */
 #define	DMASR_IFU		(1U << 16)	/* inbound FIFO uflow */
 #define	DMASR_IFO		(1U << 17)	/* inbound FIFO oflow */
 #define	DMASR_OFU		(1U << 18)	/* outbound FIFO uflow */
