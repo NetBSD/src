@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.4 1996/04/26 20:59:11 mark Exp $ */
+/* $NetBSD: vt220.c,v 1.5 1996/05/06 00:47:20 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -201,7 +201,7 @@ do_scrolldown(vc)
 		if (ReadWord(0xf148a000) != vnodeconsolebug2) {
 			log(LOG_WARNING, "vnode 0xf148a000 v_flag changed from %08x to %08x in do_scrolldown(1)\n",
 			    vnodeconsolebug2, ReadWord(0xf148a000));
-			log(LOG_WARNING, "vc=%08x vcur=%08x charmap=%08x\n", vc, vconsole_current, vc->charmap);
+			log(LOG_WARNING, "vc=%08x vcur=%08x charmap=%08x\n", (u_int)vc, (u_int)vconsole_current, (u_int)vc->charmap);
 		}
 	}
 
@@ -242,7 +242,7 @@ do_scrolldown(vc)
 		if (ReadWord(0xf148a000) != vnodeconsolebug2) {
 			log(LOG_WARNING, "vnode 0xf148a000 v_flag changed from %08x to %08x in do_scrolldown(2)\n",
 			    vnodeconsolebug2, ReadWord(0xf148a000));
-			log(LOG_WARNING, "vc=%08x vcur=%08x charmap=%08x\n", vc, vconsole_current, vc->charmap);
+			log(LOG_WARNING, "vc=%08x vcur=%08x charmap=%08x\n", (u_int)vc, (u_int)vconsole_current, (u_int)vc->charmap);
 		}
 	}
 }
@@ -514,7 +514,7 @@ vt_ri(vc)
 			if (ReadWord(0xf148a000) != vnodeconsolebug2) {
 				log(LOG_WARNING, "vnode 0xf148a000 v_flag changed from %08x to %08x in vt_ri(1)\n",
 				    vnodeconsolebug2, ReadWord(0xf148a000));
-				log(LOG_WARNING, "vc=%08x ycur=%d scrr_beg=%d\n", vc, vc->ycur, cdata->scrr_beg);
+				log(LOG_WARNING, "vc=%08x ycur=%d scrr_beg=%d\n", (u_int)vc, vc->ycur, cdata->scrr_beg);
 				vnodeconsolebug2 = ReadWord(0xf148a000);
 			}
 		}
@@ -523,7 +523,7 @@ vt_ri(vc)
 			if (ReadWord(0xf148a000) != vnodeconsolebug2) {
 				log(LOG_WARNING, "vnode 0xf148a000 v_flag changed from %08x to %08x in vt_ri(2)\n",
 				    vnodeconsolebug2, ReadWord(0xf148a000));
-				log(LOG_WARNING, "vc=%08x ycur=%d scrr_beg=%d charmap=%08x\n", vc, vc->ycur, cdata->scrr_beg, vc->charmap);
+				log(LOG_WARNING, "vc=%08x ycur=%d scrr_beg=%d charmap=%08x\n", (u_int)vc, vc->ycur, cdata->scrr_beg, (u_int)vc->charmap);
 				vnodeconsolebug2 = ReadWord(0xf148a000);
 			}
 		}
@@ -1363,6 +1363,7 @@ TERMTYPE_PUTSTRING(string, length, vc)
     if ( ( c == 0x0a ) || ( c== 0x0d ) )
 	cdata->flags &= ~F_LASTCHAR;
 
+#ifndef RC7500
 /* Middle mouse button freezes the display while active */
 
         while ((ReadByte(IO_MOUSE_BUTTONS) & MOUSE_BUTTON_MIDDLE) == 0);
@@ -1371,6 +1372,7 @@ TERMTYPE_PUTSTRING(string, length, vc)
 
         if ((ReadByte(IO_MOUSE_BUTTONS) & MOUSE_BUTTON_LEFT) == 0)
           delay(5000);
+#endif
 
 /* Always process characters in the range of 0x00 to 0x1f */
 
@@ -1797,6 +1799,11 @@ dprintf ( "\r\nKEYPAD NUMERIC MODE\r\n ");
 
 				case 'f':
 				    vt_curadr ( vc );
+				    cdata->state = STATE_INIT;
+				    break;
+
+				case 'g':
+				    vt_clrtab ( vc );
 				    cdata->state = STATE_INIT;
 				    break;
 
