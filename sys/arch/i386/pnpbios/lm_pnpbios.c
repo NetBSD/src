@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_pnpbios.c,v 1.8 2002/11/15 14:55:45 ad Exp $ */
+/*	$NetBSD: lm_pnpbios.c,v 1.9 2005/02/03 20:08:55 perry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.8 2002/11/15 14:55:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.9 2005/02/03 20:08:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.8 2002/11/15 14:55:45 ad Exp $");
 #include <dev/ic/nslm7xvar.h>
 
 
-int lm_pnpbios_match __P((struct device *, struct cfdata *, void *));
-void lm_pnpbios_attach __P((struct device *, struct device *, void *));
-int lm_pnpbios_hints_index __P((const char *));
+int lm_pnpbios_match(struct device *, struct cfdata *, void *);
+void lm_pnpbios_attach(struct device *, struct device *, void *);
+int lm_pnpbios_hints_index(const char *);
 u_int8_t lm_pnpbios_readreg(struct lm_softc *, int);
 void lm_pnpbios_writereg(struct lm_softc *, int, int);
 
