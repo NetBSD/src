@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.10 2001/11/04 14:43:55 lukem Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.10.2.1 2002/12/07 22:30:16 he Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -863,6 +863,9 @@ try_rpcbind:
 			if ((address = got_entry(relp, nconf)) != NULL) {
 				xdr_free((xdrproc_t) xdr_rpcb_entry_list_ptr,
 				    (char *)(void *)&relp);
+				CLNT_CONTROL(client, CLGET_SVC_ADDR,
+					(char *)(void *)&servaddr);
+				__rpc_fixup_addr(address, &servaddr);
 				goto done;
 			}
 			/* Entry not found for this transport */
