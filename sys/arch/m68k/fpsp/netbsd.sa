@@ -1,4 +1,4 @@
-*	$NetBSD: netbsd.sa,v 1.4 2001/09/16 16:34:32 wiz Exp $
+*	$NetBSD: netbsd.sa,v 1.5 2001/10/02 06:34:52 chs Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -73,7 +73,7 @@ SKELETON	IDNT    2,1 Motorola 040 Floating Point Software Package
 *
 * XXX Note, this is NOT valid Motorola syntax, but what else can we do?
 *
-#include "../include/asm.h"
+#include <machine/asm.h>
 
 	xref	b1238_fix
 	xref	_C_LABEL(mmutype)
