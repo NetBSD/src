@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.661 2004/11/06 08:37:00 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.662 2004/11/14 15:24:05 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.662 2004/11/06 08:34:52 xtraeme Exp 
+ *	NetBSD: pcidevs,v 1.663 2004/11/14 15:23:42 soren Exp 
  */
 
 /*
@@ -65,7 +65,7 @@ const struct pci_vendor pci_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ATI,
-	    "ATI Technologies",
+	    "ATI",
 	},
 	{
 	    PCI_VENDOR_ULSI,
@@ -5745,27 +5745,27 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_1,
-	    "82801CA/CAM USB Controller",
+	    "82801CA USB Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_SMB,
-	    "82801CA/CAM SMBus Controller",
+	    "82801CA SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_2,
-	    "82801CA/CAM USB Controller",
+	    "82801CA USB Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC,
-	    "82801CA/CAM AC'97 Audio Controller",
+	    "82801CA AC'97 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_MOD,
-	    "82801CA/CAM Modem",
+	    "82801CA Modem",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USBC,
-	    "82801CA/CAM USB Controller",
+	    "82801CA USB Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_1,
@@ -5785,27 +5785,27 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_1,
-	    "82801DB/DBM USB UHCI Controller #1",
+	    "82801DB USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_SMB,
-	    "82801DB/DBM SMBus Controller",
+	    "82801DB SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_2,
-	    "82801DB/DBM USB UHCI Controller #2",
+	    "82801DB USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
-	    "82801DB/DBM AC97 Audio Controller",
+	    "82801DB AC97 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_MOD,
-	    "82801DB/DBM AC97 Modem Controller",
+	    "82801DB AC97 Modem Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_3,
-	    "82801DB/DBM USB UHCI Controller #3",
+	    "82801DB USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_IDE,
@@ -5821,7 +5821,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USBC,
-	    "82801DB/DBM USB EHCI Controller",
+	    "82801DB USB EHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC,
@@ -5833,7 +5833,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_0,
-	    "82801EB/ER USB UHCI Controller #0",
+	    "82801EB/ER USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SMB,
@@ -5841,7 +5841,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_1,
-	    "82801EB/ER USB UHCI Controller #1",
+	    "82801EB/ER USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC,
@@ -5853,7 +5853,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_2,
-	    "82801EB/ER USB UHCI Controller #2",
+	    "82801EB/ER USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_IDE,
@@ -5865,7 +5865,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_3,
-	    "82801EB/ER USB UHCI Controller #3",
+	    "82801EB/ER USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801ER_SATA,
@@ -6041,11 +6041,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_0,
-	    "6300ESB USB UHCI Controller #0",
+	    "6300ESB USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_1,
-	    "6300ESB USB UHCI Controller #1",
+	    "6300ESB USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_WDT,
@@ -6077,19 +6077,19 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_0,
-	    "82801FB/FR USB UHCI Controller #0",
+	    "82801FB/FR USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_1,
-	    "82801FB/FR USB UHCI Controller #1",
+	    "82801FB/FR USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_2,
-	    "82801FB/FR USB UHCI Controller #2",
+	    "82801FB/FR USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_3,
-	    "82801FB/FR USB UHCI Controller #3",
+	    "82801FB/FR USB UHCI Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EHCI,
@@ -6696,8 +6696,12 @@ const struct pci_product pci_products[] = {
 	    "AcceleRAID (i960)",
 	},
 	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID1100,
+	    "eXtremeRAID 1100",
+	},
+	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID,
-	    "eXtremeRAID (StrongARM)",
+	    "eXtremeRAID 2000/3000",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_352,
@@ -9816,4 +9820,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1877;
+const int pci_nproducts = 1878;
