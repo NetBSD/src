@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.49 1996/02/18 20:32:43 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.50 1996/02/22 23:37:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -294,6 +294,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, SDEV_NOLUNS},
 
+	{{T_DIRECT, T_FIXED,
+	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_FORCELUNS},
 	{{T_DIRECT, T_FIXED,
