@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.25 1995/04/21 02:47:53 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.26 1995/04/21 04:01:27 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -403,6 +403,14 @@ aeattach(parent, self, aux)
 
 	/* make sure interrupts are vectored to us */
 	add_nubus_intr((int) sc->rom_addr & 0xFF000000, aeintr, sc);
+
+	/*
+	 * XXX -- enable nubus interrupts here.  Should be done elsewhere,
+	 *        but that currently breaks with some nubus video cards'
+	 *	  interrupts.  So we only enable nubus interrupts if we
+	 *	  have an ethernet card...  i.e., we do it here.
+	 */
+	enable_nubus_intr();
 }
 /*
  * Reset interface.
