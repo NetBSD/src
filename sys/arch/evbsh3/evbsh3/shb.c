@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.17 2002/03/06 15:03:21 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.18 2002/03/17 14:05:11 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -49,14 +49,14 @@ void intr_calculatemasks __P((void));
 int fakeintr __P((void *));
 void	*shb_intr_establish __P((int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg));
-int intrhandler __P((int, int, int, int, struct trapframe));
-int check_ipending __P((int, int, int, int, struct trapframe));
 void mask_irq __P((int));
 void unmask_irq __P((int));
 void Xsoftserial __P((void));
 void Xsoftnet __P((void));
 void Xsoftclock __P((void));
 void init_soft_intr_handler __P((void));
+int intrhandler(u_int32_t, u_int32_t, struct trapframe *);
+int check_ipending(void);
 
 struct cfattach shb_ca = {
 	sizeof(struct shb_softc), shbmatch, shbattach
@@ -331,18 +331,15 @@ fakeintr(arg)
 
 #define	IRQ_BIT(irq_num)	(1 << (irq_num))
 
-/*ARGSUSED*/
 int	/* 1 = check ipending on return, 0 = fast intr return */
-intrhandler(p1, p2, p3, p4, frame)
-	int p1, p2, p3, p4; /* dummy param */
-	struct trapframe frame;
+intrhandler(u_int32_t ssr, u_int32_t spc, struct trapframe *frame)
 {
 	unsigned int irl;
 	struct intrhand *ih;
 	unsigned int irq_num;
 	int ocpl;
 
-	irl = (unsigned int)frame.tf_trapno;
+	irl = (unsigned int)frame->tf_trapno;
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
@@ -378,7 +375,7 @@ intrhandler(p1, p2, p3, p4, frame)
 		if (ih->ih_arg)
 			(*ih->ih_fun)(ih->ih_arg);
 		else
-			(*ih->ih_fun)(&frame);
+			(*ih->ih_fun)(frame);
 		ih = ih->ih_next;
 	}
 	_cpu_intr_suspend();
@@ -391,47 +388,22 @@ intrhandler(p1, p2, p3, p4, frame)
 }
 
 int	/* 1 = resume ihandler on return, 0 = go to fast intr return */
-check_ipending(p1, p2, p3, p4, frame)
-	int p1, p2, p3, p4; /* dummy param */
-	struct trapframe frame;
+check_ipending()
 {
-	int ir;
-	int i;
-	int mask;
-#define MASK_LEN 32
+	int ir, i;
 
-  restart:
-	ir = (~cpl) & ipending;
-	if (ir == 0)
-		return 0;
+	if ((ir = ipending & ~cpl) == 0)
+		return (0);
 
-	mask = 1 << IRQ_LOW;
-	for (i = IRQ_LOW; i <= IRQ_HIGH; i++, mask <<= 1) {
-		if (ir & mask)
-			break;
-	}
-	if (IRQ_HIGH < i) {
-		mask = 1 << SIR_LOW;
-		for (i = SIR_LOW; i <= SIR_HIGH; i++, mask <<= 1) {
-			if (ir & mask)
-				break;
-		}
-	}
+	i = ffs(ir) - 1;
+	ipending &= ~(1 << i);
 
-	if ((mask & ipending) == 0)
-		goto restart;
-
-	ipending &= ~mask;
-
-	if (i < SHB_MAX_HARDINTR) {
-		/* set interrupt event register, this value is referenced in ihandler */
+	if (i < SHB_MAX_HARDINTR)
 		_reg_write_4(SH_(INTEVT), (i << 5) + 0x200);
-	} else {
-		/* This is software interrupt */
-		_reg_write_4(SH_(INTEVT), INTEVT_SOFT + i);
-	}
+	else
+		_reg_write_4(SH_(INTEVT), INTEVT_SOFT + i); /* software intr */
 
-	return 1;
+	return (1);
 }
 
 #if !defined(SH4)
