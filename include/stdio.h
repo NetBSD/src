@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.49 2003/01/18 17:10:17 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.50 2003/02/27 15:56:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -446,23 +446,23 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define	__sfileno(p)	((p)->_file)
 
 #ifndef lint
-#ifndef _REENTRANT
+#if !defined(_REENTRANT) && !defined(_PTHREADS)
 #define	feof(p)		__sfeof(p)
 #define	ferror(p)	__sferror(p)
 #define	clearerr(p)	__sclearerr(p)
 
 #define	getc(fp)	__sgetc(fp)
 #define putc(x, fp)	__sputc(x, fp)
-#endif /* !_REENTRANT */
+#endif /* !_REENTRANT && !_PTHREADS */
 #endif /* lint */
 
 #define	getchar()	getc(stdin)
 #define	putchar(x)	putc(x, stdout)
 
 #ifndef _ANSI_SOURCE
-#ifndef _REENTRANT
+#if !defined(_REENTRANT) && !defined(_PTHREADS)
 #define	fileno(p)	__sfileno(p)
-#endif /* !_REENTRANT */
+#endif /* !_REENTRANT && !_PTHREADS */
 #endif /* !_ANSI_SOURCE */
 
 #if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
