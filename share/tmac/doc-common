@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.58 2002/07/18 22:50:46 wiz Exp $
+.\"	$NetBSD: doc-common,v 1.59 2002/07/19 08:24:04 scw Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -172,6 +172,7 @@
 .			if "\\$3"evbarm"   .as vT /\\$3\ 
 .			if "\\$3"evbmips"  .as vT /\\$3\ 
 .			if "\\$3"evbsh3"   .as vT /\\$3\ 
+.			if "\\$3"evbsh5"   .as vT /\\$3\ 
 .			if "\\$3"hp300"    .as vT /\\$3\ 
 .			if "\\$3"hp700"    .as vT /\\$3\ 
 .			if "\\$3"hpcarm"   .as vT /\\$3\ 
@@ -202,6 +203,7 @@
 .			if "\\$3"sbmips"   .as vT /\\$3\ 
 .			if "\\$3"sgimips"  .as vT /\\$3\ 
 .			if "\\$3"sh3"      .as vT /\\$3\ 
+.			if "\\$3"sh5"      .as vT /\\$3\ 
 .			if "\\$3"shark"    .as vT /\\$3\ 
 .			if "\\$3"sparc"    .as vT /\\$3\ 
 .			if "\\$3"sparc64"  .as vT /\\$3\ 
