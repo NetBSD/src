@@ -1,7 +1,7 @@
-/*	$NetBSD: amq.c,v 1.1.1.6 1998/08/08 22:05:34 christos Exp $	*/
+/*	$NetBSD: amq.c,v 1.1.1.7 1999/02/01 18:46:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amq.c,v 5.2.2.1 1992/02/09 15:09:16 jsp beta 
+ * Id: amq.c,v 1.3 1999/01/10 21:53:58 ezk Exp 
  *
  */
 
@@ -52,16 +52,16 @@
 #ifndef lint
 #if 0
 char copyright[] = "\
-@(#)Copyright (c) 1997-1998 Erez Zadok\n\
+@(#)Copyright (c) 1997-1999 Erez Zadok\n\
 @(#)Copyright (c) 1990 Jan-Simon Pendry\n\
 @(#)Copyright (c) 1990 Imperial College of Science, Technology & Medicine\n\
 @(#)Copyright (c) 1990 The Regents of the University of California.\n\
 @(#)All rights reserved.\n";
 #if __GNUC__ < 2
-static char rcsid[] = "Id: amq.c,v 6.0 1997-1998/01/01 15:09:16 ezk ";
+static char rcsid[] = "Id: amq.c,v 1.3 1999/01/10 21:53:58 ezk Exp ";
 static char sccsid[] = "%W% (Berkeley) %G%";
 #else
-__RCSID("$NetBSD: amq.c,v 1.1.1.6 1998/08/08 22:05:34 christos Exp $");
+__RCSID("$NetBSD: amq.c,v 1.1.1.7 1999/02/01 18:46:35 christos Exp $");
 #endif
 #endif /* __GNUC__ < 2 */
 #endif /* not lint */
@@ -73,7 +73,9 @@ __RCSID("$NetBSD: amq.c,v 1.1.1.6 1998/08/08 22:05:34 christos Exp $");
 #include <amq.h>
 
 /* locals */
+#if 0
 char *progname;
+#endif
 static int flush_flag;
 static int minfo_flag;
 static int getpid_flag;
@@ -93,7 +95,7 @@ static char *def_server = localhost;
 extern int optind;
 extern char *optarg;
 
-/* forward decalrations */
+/* forward declarations */
 #ifdef HAVE_TRANSPORT_TYPE_TLI
 static CLIENT *get_secure_amd_client(char *host, struct timeval *tv, int *sock);
 static int amq_bind_resv_port(int td, u_short *pp);
@@ -102,10 +104,13 @@ static int privsock(int ty);
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
 /* dummy variables */
+#if 0
 char hostname[MAXHOSTNAMELEN];
-int orig_umask, foreground, debug_flags;
 pid_t mypid;
 serv_state amd_state;
+int foreground, orig_umask;
+int debug_flags;
+#endif
 
 /* structures */
 enum show_opt {
@@ -316,6 +321,7 @@ main(int argc, char *argv[])
   struct hostent *hp;
   int nodefault = 0;
   struct timeval tv;
+  char *progname = NULL;
 #ifndef HAVE_TRANSPORT_TYPE_TLI
   enum clnt_stat cs;
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
@@ -333,11 +339,12 @@ main(int argc, char *argv[])
   }
   if (!progname)
     progname = "amq";
+  am_set_progname(progname);
 
   /*
    * Parse arguments
    */
-  while ((opt_ch = getopt(argc, argv, "fh:l:msuvx:D:M:pP:TU")) != EOF)
+  while ((opt_ch = getopt(argc, argv, "fh:l:msuvx:D:M:pP:TU")) != -1)
     switch (opt_ch) {
     case 'f':
       flush_flag = 1;
@@ -419,7 +426,7 @@ main(int argc, char *argv[])
     fprintf(stderr, "\
 Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
 \t[-l logfile|\"syslog\"] [-x log_flags] [-D dbg_opts] [-M mapent]\n\
-\t[-P prognum] [-T] [-U]\n", progname);
+\t[-P prognum] [-T] [-U]\n", am_get_progname());
     exit(1);
   }
 
@@ -441,7 +448,8 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
    * Get address of server
    */
   if ((hp = gethostbyname(server)) == 0 && !STREQ(server, localhost)) {
-    fprintf(stderr, "%s: Can't get address of %s\n", progname, server);
+    fprintf(stderr, "%s: Can't get address of %s\n",
+	    am_get_progname(), server);
     exit(1);
   }
   memset(&server_addr, 0, sizeof server_addr);
@@ -476,7 +484,7 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
   cs = pmap_ping(&server_addr);
   if (cs == RPC_TIMEDOUT) {
     fprintf(stderr, "%s: failed to contact portmapper on host \"%s\". %s\n",
-	    progname, server, clnt_sperrno(cs));
+	    am_get_progname(), server, clnt_sperrno(cs));
     exit(1);
   }
 
@@ -494,7 +502,7 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
   }
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
   if (!clnt) {
-    fprintf(stderr, "%s: ", progname);
+    fprintf(stderr, "%s: ", am_get_progname());
     clnt_pcreateerror(server);
     exit(1);
   }
@@ -509,10 +517,12 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     opt.as_str = debug_opts;
     rc = amqproc_setopt_1(&opt, clnt);
     if (rc && *rc < 0) {
-      fprintf(stderr, "%s: daemon not compiled for debug\n", progname);
+      fprintf(stderr, "%s: daemon not compiled for debug\n",
+	      am_get_progname());
       errs = 1;
     } else if (!rc || *rc > 0) {
-      fprintf(stderr, "%s: debug setting for \"%s\" failed\n", progname, debug_opts);
+      fprintf(stderr, "%s: debug setting for \"%s\" failed\n",
+	      am_get_progname(), debug_opts);
       errs = 1;
     }
   }
@@ -527,7 +537,8 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     opt.as_str = xlog_optstr;
     rc = amqproc_setopt_1(&opt, clnt);
     if (!rc || *rc) {
-      fprintf(stderr, "%s: setting log level to \"%s\" failed\n", progname, xlog_optstr);
+      fprintf(stderr, "%s: setting log level to \"%s\" failed\n",
+	      am_get_progname(), xlog_optstr);
       errs = 1;
     }
   }
@@ -542,7 +553,8 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     opt.as_str = amq_logfile;
     rc = amqproc_setopt_1(&opt, clnt);
     if (!rc || *rc) {
-      fprintf(stderr, "%s: setting logfile to \"%s\" failed\n", progname, amq_logfile);
+      fprintf(stderr, "%s: setting logfile to \"%s\" failed\n",
+	      am_get_progname(), amq_logfile);
       errs = 1;
     }
   }
@@ -557,7 +569,8 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     opt.as_str = "";
     rc = amqproc_setopt_1(&opt, clnt);
     if (!rc || *rc) {
-      fprintf(stderr, "%s: amd on %s cannot flush the map cache\n", progname, server);
+      fprintf(stderr, "%s: amd on %s cannot flush the map cache\n",
+	      am_get_progname(), server);
       errs = 1;
     }
   }
@@ -577,7 +590,8 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
       show_mi(ml, Full, &mwid, &dwid, &twid);
 
     } else {
-      fprintf(stderr, "%s: amd on %s cannot provide mount info\n", progname, server);
+      fprintf(stderr, "%s: amd on %s cannot provide mount info\n",
+	      am_get_progname(), server);
     }
   }
 
@@ -594,8 +608,8 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
 	errno = *rc;
       else
 	errno = ETIMEDOUT;
-      fprintf(stderr, "%s: could not start new ", progname);
-      perror("autmount point");
+      fprintf(stderr, "%s: could not start new ", am_get_progname());
+      perror("automount point");
     }
   }
 
@@ -608,7 +622,8 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
       fputs(*spp, stdout);
       XFREE(*spp);
     } else {
-      fprintf(stderr, "%s: failed to get version information\n", progname);
+      fprintf(stderr, "%s: failed to get version information\n",
+	      am_get_progname());
       errs = 1;
     }
   }
@@ -621,7 +636,7 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     if (ip && *ip) {
       printf("%d\n", *ip);
     } else {
-      fprintf(stderr, "%s: failed to get PID of amd\n", progname);
+      fprintf(stderr, "%s: failed to get PID of amd\n", am_get_progname());
       errs = 1;
     }
   }
@@ -653,11 +668,11 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
 		   dwid, dwid, "What");
 	    show_mt(mt, Stats, &mwid, &dwid, &twid);
 	  } else {
-	    fprintf(stderr, "%s: %s not automounted\n", progname, fs);
+	    fprintf(stderr, "%s: %s not automounted\n", am_get_progname(), fs);
 	  }
 	  xdr_pri_free((XDRPROC_T_TYPE) xdr_amq_mount_tree_p, (caddr_t) mtp);
 	} else {
-	  fprintf(stderr, "%s: ", progname);
+	  fprintf(stderr, "%s: ", am_get_progname());
 	  clnt_perror(clnt, server);
 	  errs = 1;
 	}
@@ -672,7 +687,7 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     if (ms) {
       show_ms(ms);
     } else {
-      fprintf(stderr, "%s: ", progname);
+      fprintf(stderr, "%s: ", am_get_progname());
       clnt_perror(clnt, server);
       errs = 1;
     }
@@ -697,13 +712,13 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
       }
 
     } else {
-      fprintf(stderr, "%s: ", progname);
+      fprintf(stderr, "%s: ", am_get_progname());
       clnt_perror(clnt, server);
       errs = 1;
     }
   }
   exit(errs);
-  return errs; /* should never reache here */
+  return errs; /* should never reach here */
 }
 
 
@@ -800,7 +815,7 @@ get_secure_amd_client(char *host, struct timeval *tv, int *sock)
 		      NULL);
     if (cs == RPC_TIMEDOUT) {
       fprintf(stderr, "%s: failed to contact portmapper on host \"%s\". %s\n",
-	      progname, host, clnt_sperrno(cs));
+	      am_get_progname(), host, clnt_sperrno(cs));
       exit(1);
     }
   }
@@ -818,12 +833,12 @@ get_secure_amd_client(char *host, struct timeval *tv, int *sock)
 
     if (!rpcb_getaddr(amd_program_number, AMQ_VERSION, nc, &nb, host)) {
       /*
-       * don't pring error messages here, since amd might legitimately
+       * don't print error messages here, since amd might legitimately
        * serve udp only
        */
       goto tryudp;
     }
-    /* Create priviledged TCP socket */
+    /* Create privileged TCP socket */
     *sock = t_open(nc->nc_device, O_RDWR, 0);
 
     if (*sock < 0) {
@@ -859,7 +874,7 @@ tryudp:
 	      clnt_spcreateerror("couldn't get amd address on udp"));
       return NULL;
     }
-    /* create priviledged UDP socket */
+    /* create privileged UDP socket */
     *sock = t_open(nc->nc_device, O_RDWR, 0);
 
     if (*sock < 0) {
