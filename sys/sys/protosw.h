@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.11 1996/05/22 13:56:34 mycroft Exp $	*/
+/*	$NetBSD: protosw.h,v 1.12 1996/05/24 11:58:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -62,6 +62,7 @@ struct mbuf;
 struct sockaddr;
 struct socket;
 struct domain;
+struct proc;
 
 struct protosw {
 	short	pr_type;		/* socket type used for */
