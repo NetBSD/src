@@ -1,4 +1,4 @@
-/*	$NetBSD: opmreg.h,v 1.2 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: opmreg.h,v 1.3 2001/05/02 13:00:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -65,6 +65,9 @@ struct opm_voice {
 
 #define	OPM1B_CT1MSK	(0x80)
 #define	OPM1B_CT2MSK	(0x40)
+
+#define VS_CLK_8MHZ	(0x00)
+#define VS_CLK_4MHZ	(0x80)
 
 #define	FDCSTBY	(0x00)
 #define	FDCRDY	(0x40)

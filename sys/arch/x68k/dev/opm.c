@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.5 1999/03/24 14:07:39 minoura Exp $	*/
+/*	$NetBSD: opm.c,v 1.6 2001/05/02 13:00:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -147,14 +147,15 @@ readopm(reg)
 }
 
 #include "fd.h"
+#include "vs.h"
 #include "bell.h"
 
-#if 0
+#if NVS > 0
 void
 adpcm_chgclk(clk)
 	u_char	clk;
 {
-	writeopm(0x1b, readopm(0x1b) & ~OPM1B_CT1MSK | clk);
+	writeopm(0x1b, (readopm(0x1b) & ~OPM1B_CT1MSK) | clk);
 }
 #endif
 
