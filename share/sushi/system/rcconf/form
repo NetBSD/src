@@ -1,4 +1,4 @@
-# $NetBSD: form,v 1.7 2002/04/02 03:00:05 garbled Exp $
+# $NetBSD: form,v 1.8 2002/04/11 13:20:22 martin Exp $
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
 iscript:3,1,999,script2,rcshutdown_timeout	Number of seconds before terminating shutdown
 escript:15,script2,hostname	Hostname, if blank use /etc/myname
@@ -115,8 +115,6 @@ script:script1,kdc		Run kerberos 5 KDC?
 escript:15,script2,kdc_flags	Flags for kerberos 5
 script:script1,isdnd		Run ISDN daemon?
 escript:15,script2,isdnd_flags	Flags for isdnd
-script:script1,isdn_autoupdown	Automatically bring isdn interfaces up?
-escript:15,script2,isdn_interfaces	List of interfaces to bring up
 script:script1,rwhod		Run rwhod?
 script:script1,apmd		Run apmd?
 escript:15,script2,apmd_flags	Flags for apmd
