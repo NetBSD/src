@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.t,v 1.3 2003/08/07 10:30:51 agc Exp $
+.\"	$NetBSD: 2.t,v 1.4 2003/08/13 02:07:06 itojun Exp $
 .\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -684,7 +684,8 @@ for (;;) {
 	FD_SET(s1, &read_template);
 	FD_SET(s2, &read_template);
 
-	nb = select(FD_SETSIZE, &read_template, (fd_set *) 0, (fd_set *) 0, &wait);
+	nb = select(s1 > s2 ? s1 + 1 : s2 + 1, &read_template, (fd_set *) 0,
+	    (fd_set *) 0, &wait);
 	if (nb <= 0) {
 		\fIAn error occurred during the \fPselect\fI, or
 		the \fPselect\fI timed out.\fP
