@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.4 1998/09/22 01:47:53 mark Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.5 1999/03/19 05:13:16 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
 #include <sys/systm.h>
 #include <machine/bus.h>
 #include <machine/pio.h>
-#include <arm32/isa/isa_machdep.h>
+#include <machine/isa_machdep.h>
 
 /* Proto types for all the bus_space structure functions */
 
