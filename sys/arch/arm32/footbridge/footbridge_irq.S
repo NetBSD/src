@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irq.S,v 1.5 2001/05/23 21:23:54 chris Exp $	*/
+/*	$NetBSD: footbridge_irq.S,v 1.6 2001/06/07 21:47:36 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -235,6 +235,8 @@ irqloop:
 	
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
+	addeq	lr, pc, #nextirq - . - 8   /* return address */
+	bic	r11, r11, r10		/* clear the IRQ bit */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 	
 #ifdef IRQSTATS
@@ -243,12 +245,12 @@ irqloop:
 #endif
 	/* stat info C */
 	add	r1, r1, #0x00000001
-	str	r1, [r4, #(V_INTR)]
 
 #ifdef IRQSTATS
 	ldr	r3, [r2, r3, lsl #2]!
 #endif
-	bic	r11, r11, r10		/* clear the IRQ bit */
+	/* stat info D */
+	str	r1, [r4, #(V_INTR)]
 
 #ifdef IRQSTATS
 	add	r3, r3, #0x00000001
@@ -270,7 +272,7 @@ nextinchain:
 	/* if it was it'll just fall through this: */
 	teq	r6, #0x00000000
 	bne	irqchainloop
-
+nextirq:
 	/* Check for next irq */
 	rsb	r4, r11, #0
 	ands	r10, r11, r4
