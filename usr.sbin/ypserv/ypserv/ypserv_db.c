@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.11 2001/06/19 13:42:23 wiz Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.12 2002/06/18 02:57:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.11 2001/06/19 13:42:23 wiz Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.12 2002/06/18 02:57:53 thorpej Exp $");
 #endif
 
 /*
@@ -317,9 +317,9 @@ ypdb_open_db(domain, map, status, map_info)
 		    "ypdb_open_db: cached open: domain=%s, map=%s, db=%p,",
 		    domain, map, m->db);
 		syslog(LOG_DEBUG,
-		    "\tdbdev %d new %d; dbino %d new %d; dbmtime %d new %d",
+		    "\tdbdev %d new %d; dbino %d new %d; dbmtime %ld new %ld",
 		    m->dbdev, finfo.st_dev, m->dbino, finfo.st_ino,
-		    m->dbmtime, finfo.st_mtime);
+		    (long) m->dbmtime, (long) finfo.st_mtime);
 #endif
 		/*
 		 * if status != YP_TRUE, then this cached database is now
