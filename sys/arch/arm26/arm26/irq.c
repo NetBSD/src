@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.22 2001/09/10 02:21:42 reinoud Exp $ */
+/* $NetBSD: irq.c,v 1.23 2001/10/20 22:15:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.22 2001/09/10 02:21:42 reinoud Exp $");
+__RCSID("$NetBSD: irq.c,v 1.23 2001/10/20 22:15:02 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -187,7 +187,9 @@ irq_handler(struct irqframe *irqf)
 	if (__predict_false(stray)) {
 		log(LOG_WARNING, "Stray IRQ, status = 0x%x, spl = %d, "
 		    "mask = 0x%x\n", status, s, irqmask[s]);
+#ifdef DDB
 		Debugger();
+#endif
 	}
 #if NFIQ > 0
 handled:
