@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbdisply - debug display commands
- *              xRevision: 98 $
+ *              xRevision: 100 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdisply.c,v 1.11 2003/12/13 18:11:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdisply.c,v 1.12 2004/02/14 16:57:24 kochi Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"
@@ -681,7 +681,7 @@ AcpiDbDisplayObjectType (
     {
         Info = Buffer.Pointer;
         AcpiOsPrintf ("HID: %s, ADR: %8.8X%8.8X, Status %8.8X\n",
-                        &Info->HardwareId,
+                        Info->HardwareId.Value,
                         ACPI_FORMAT_UINT64 (Info->Address),
                         Info->CurrentStatus);
 
@@ -689,7 +689,7 @@ AcpiDbDisplayObjectType (
         {
             for (i = 0; i < Info->CompatibilityId.Count; i++)
             {
-                AcpiOsPrintf ("CID #%d: %s\n", i, &Info->CompatibilityId.Id[i]);
+                AcpiOsPrintf ("CID #%d: %s\n", (UINT32) i, Info->CompatibilityId.Id[i].Value);
             }
         }
 
