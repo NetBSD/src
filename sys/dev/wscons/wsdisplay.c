@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.14 1999/01/13 16:21:02 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.15 1999/01/14 11:40:58 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.14 1999/01/13 16:21:02 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.15 1999/01/14 11:40:58 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -700,13 +700,17 @@ wsdisplayclose(dev, flag, mode, p)
 		(*linesw[tp->t_line].l_close)(tp, flag);
 		ttyclose(tp);
 	}
-	/* XXX RESET EMULATOR? */
 
 	if (scr->scr_syncops)
 		(*scr->scr_syncops->destroy)(scr->scr_synccookie);
 
-	if (WSSCREEN_HAS_EMULATOR(scr))
+	if (WSSCREEN_HAS_EMULATOR(scr)) {
 		scr->scr_flags &= ~SCR_GRAPHICS;
+		if (scr->scr_dconf->wsemul->reset != NULL)
+			(*scr->scr_dconf->wsemul->reset)
+				(scr->scr_dconf->wsemulcookie, WSEMUL_RESET);
+
+	}
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (scr->scr_rawkbd) {
@@ -1332,6 +1336,24 @@ wsdisplay_switch(dev, no, waitok)
 		return (res);
 	} else
 		return (wsdisplay_switch1(sc, waitok));
+}
+
+void
+wsdisplay_resetemul(dev)
+	struct device *dev;
+{
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
+	struct wsscreen *scr;
+
+	KASSERT(sc != NULL);
+	scr = sc->sc_focus;
+
+	if (!scr || !WSSCREEN_HAS_EMULATOR(scr))
+		return;
+
+	if (scr->scr_dconf->wsemul->reset != NULL)
+		(*scr->scr_dconf->wsemul->reset)
+			(scr->scr_dconf->wsemulcookie, WSEMUL_RESET);
 }
 
 /*
