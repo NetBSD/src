@@ -1,5 +1,9 @@
-#	$NetBSD: shlib_version,v 1.28 2003/01/09 12:48:06 blymn Exp $
+#	$NetBSD: shlib_version,v 1.29 2003/01/27 21:14:33 jdc Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
+#	Note - when the major number is next incremented :
+#		1) remove the function can_change_colors
+#		2) change the attribute bits of  __LDATA to support more
+#		   colors and change to macros to match
 major=5
-minor=5
+minor=6
