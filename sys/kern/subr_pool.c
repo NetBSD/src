@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.47 2000/12/10 17:03:34 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.48 2000/12/11 05:22:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1455,6 +1455,8 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 	     pc = TAILQ_NEXT(pc, pc_poollist)) {
 		(*pr)("\tcache %p: allocfrom %p freeto %p\n", pc,
 		    pc->pc_allocfrom, pc->pc_freeto);
+		(*pr)("\t    hits %lu misses %lu ngroups %lu nitems %lu\n",
+		    pc->pc_hits, pc->pc_misses, pc->pc_ngroups, pc->pc_nitems);
 		for (pcg = TAILQ_FIRST(&pc->pc_grouplist); pcg != NULL;
 		     pcg = TAILQ_NEXT(pcg, pcg_list)) {
 			(*pr)("\t\tgroup %p: avail %d\n", pcg, pcg->pcg_avail);
@@ -1557,6 +1559,13 @@ pool_cache_init(struct pool_cache *pc, struct pool *pp,
 	pc->pc_dtor = dtor;
 	pc->pc_arg  = arg;
 
+	pc->pc_hits   = 0;
+	pc->pc_misses = 0;
+
+	pc->pc_ngroups = 0;
+
+	pc->pc_nitems = 0;
+
 	simple_lock(&pp->pr_slock);
 	TAILQ_INSERT_TAIL(&pp->pr_cachelist, pc, pc_poollist);
 	simple_unlock(&pp->pr_slock);
@@ -1638,6 +1647,7 @@ pool_cache_get(struct pool_cache *pc, int flags)
 		 * the caller.  We will allocate a group, if necessary,
 		 * when the object is freed back to the cache.
 		 */
+		pc->pc_misses++;
 		simple_unlock(&pc->pc_slock);
 		object = pool_get(pc->pc_pool, flags);
 		if (object != NULL && pc->pc_ctor != NULL) {
@@ -1650,6 +1660,8 @@ pool_cache_get(struct pool_cache *pc, int flags)
 	}
 
  have_group:
+	pc->pc_hits++;
+	pc->pc_nitems--;
 	object = pcg_get(pcg);
 
 	if (pcg->pcg_avail == 0)
@@ -1690,6 +1702,7 @@ pool_cache_put(struct pool_cache *pc, void *object)
 		if (pcg != NULL) {
 			memset(pcg, 0, sizeof(*pcg));
 			simple_lock(&pc->pc_slock);
+			pc->pc_ngroups++;
 			TAILQ_INSERT_TAIL(&pc->pc_grouplist, pcg, pcg_list);
 			if (pc->pc_freeto == NULL)
 				pc->pc_freeto = pcg;
@@ -1707,6 +1720,7 @@ pool_cache_put(struct pool_cache *pc, void *object)
 	}
 
  have_group:
+	pc->pc_nitems++;
 	pcg_put(pcg, object);
 
 	if (pcg->pcg_avail == PCG_NOBJECTS)
@@ -1732,6 +1746,7 @@ pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
 	     pcg = npcg) {
 		npcg = TAILQ_NEXT(pcg, pcg_list);
 		while (pcg->pcg_avail != 0) {
+			pc->pc_nitems--;
 			object = pcg_get(pcg);
 			if (pcg->pcg_avail == 0 && pc->pc_allocfrom == pcg)
 				pc->pc_allocfrom = NULL;
@@ -1740,6 +1755,7 @@ pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
 			(*putit)(pc->pc_pool, object, __FILE__, __LINE__);
 		}
 		if (free_groups) {
+			pc->pc_ngroups--;
 			TAILQ_REMOVE(&pc->pc_grouplist, pcg, pcg_list);
 			if (pc->pc_freeto == pcg)
 				pc->pc_freeto = NULL;
