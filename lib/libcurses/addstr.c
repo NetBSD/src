@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)addstr.c	5.7 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: addstr.c,v 1.4 1993/08/07 05:48:40 mycroft Exp $";
+static char rcsid[] = "$Id: addstr.c,v 1.5 1993/08/15 16:23:58 mycroft Exp $";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -46,7 +46,7 @@ static char rcsid[] = "$Id: addstr.c,v 1.4 1993/08/07 05:48:40 mycroft Exp $";
 int
 waddstr(win, str)
 	WINDOW *win;
-	char *str;
+	const char *str;
 {
 #ifdef DEBUG
 	__TRACE("waddstr: (\"%s\")\n", str);
