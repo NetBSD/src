@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.27 1998/04/30 21:42:53 thorpej Exp $
+.\"	$NetBSD: sysctl.3,v 1.28 1998/05/02 04:19:58 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -509,6 +509,7 @@ The currently defined protocols and names are:
 .It tcp	compat_42	integer	yes
 .It tcp	cwm	integer	yes
 .It tcp	cwm_burstsize	integer	yes
+.It tcp	ack_on_push	integer	yes
 .It udp	checksum	integer	yes
 .It udp	sendspace	integer	yes
 .It udp	recvspace	integer	yes
@@ -604,6 +605,15 @@ that could otherwise occur when data begins flowing on an idle TCP
 connection.  These line-rate bursts can contribute to network and router
 congestion.  This can be particularly useful on World Wide Web servers
 which support HTTP/1.1, which has lingering connections.
+.It Li tcp.cwm_burstsize
+Returns the Congestion Window Monitoring allowed burst size, in terms
+of packet count.
+.It Li tcp.ack_on_push
+Returns 1 if TCP is to immediately transmit an ACK upon reception of
+a packet with PUSH set.  This can avoid losing a round trip time in some
+rare situations, but has the caveat of potentially defeating TCP's delayed
+ACK algorithm.  Use of this option is generally not recommended, but
+the variable exists in case your configuration really needs it.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
