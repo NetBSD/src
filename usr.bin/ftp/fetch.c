@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.45 1999/01/01 13:26:31 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.46 1999/01/05 00:31:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.45 1999/01/01 13:26:31 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.46 1999/01/05 00:31:20 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -583,9 +583,10 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 			fprintf(ttyout, "  (with authorization)\n");
 			fprintf(fin, "Authorization: %s\r\n", wwwauth);
 		}
-		if (proxyauth)
+		if (proxyauth) {
 			fprintf(ttyout, "  (with proxy authorization)\n");
 			fprintf(fin, "Proxy-Authorization: %s\r\n", proxyauth);
+		}
 		fprintf(fin, "\r\n");
 		if (fflush(fin) == EOF) {
 			warn("Writing HTTP request");
