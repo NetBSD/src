@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtowc.c,v 1.1 2002/09/11 14:54:35 minoura Exp $	*/
+/*	$NetBSD: mbrtowc.c,v 1.2 2002/09/12 12:50:04 minoura Exp $	*/
 
 /*
  * test code for mbrtowc
@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <wchar.h>
 #include <locale.h>
 #include <assert.h>
