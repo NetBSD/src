@@ -59,11 +59,17 @@
 #ifndef HEADER_ERR_H
 #define HEADER_ERR_H
 
+#ifndef NO_FP_API
 #include <stdio.h>
 #include <stdlib.h>
+#endif
 
+#ifndef NO_BIO
 #include <openssl/bio.h>
+#endif
+#ifndef NO_LHASH
 #include <openssl/lhash.h>
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
@@ -75,7 +81,11 @@ extern "C" {
 
 #define ERR_file_name	__FILE__
 
+#ifndef NO_ERR
 #define ERR_PUT_error(a,b,c,d,e)	ERR_put_error(a,b,c,d,e)
+#else
+#define ERR_PUT_error(a,b,c,d,e)	ERR_put_error(a,b,c,NULL,0)
+#endif
 
 #include <errno.h>
 
@@ -238,9 +248,13 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len);
 const char *ERR_lib_error_string(unsigned long e);
 const char *ERR_func_error_string(unsigned long e);
 const char *ERR_reason_error_string(unsigned long e);
+#ifndef NO_FP_API
 void ERR_print_errors_fp(FILE *fp);
+#endif
+#ifndef NO_BIO
 void ERR_print_errors(BIO *bp);
 void ERR_add_error_data(int num, ...);
+#endif
 void ERR_load_strings(int lib,ERR_STRING_DATA str[]);
 void ERR_load_ERR_strings(void);
 void ERR_load_crypto_strings(void);
@@ -249,9 +263,11 @@ void ERR_free_strings(void);
 void ERR_remove_state(unsigned long pid); /* if zero we look it up */
 ERR_STATE *ERR_get_state(void);
 
+#ifndef NO_LHASH
 LHASH *ERR_get_string_table(void);
 LHASH *ERR_get_err_state_table(void); /* even less thread-safe than
 				       * ERR_get_string_table :-) */
+#endif
 
 int ERR_get_next_error_library(void);
 

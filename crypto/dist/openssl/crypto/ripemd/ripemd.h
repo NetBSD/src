@@ -63,6 +63,9 @@
 extern "C" {
 #endif
 
+#ifdef NO_RIPEMD
+#error RIPEMD is disabled.
+#endif
 
 #if defined(WIN16) || defined(__LP32__)
 #define RIPEMD160_LONG unsigned long

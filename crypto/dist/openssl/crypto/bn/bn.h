@@ -59,7 +59,9 @@
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
+#ifndef NO_FP_API
 #include <stdio.h> /* FILE */
+#endif
 #include <openssl/opensslconf.h>
 
 #ifdef  __cplusplus
@@ -374,7 +376,9 @@ int	BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p,
 	BIGNUM *m,BN_CTX *ctx);
 int	BN_mask_bits(BIGNUM *a,int n);
 int	BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, const BIGNUM *m, BN_CTX *ctx);
+#ifndef NO_FP_API
 int	BN_print_fp(FILE *fp, const BIGNUM *a);
+#endif
 #ifdef HEADER_BIO_H
 int	BN_print(BIO *fp, const BIGNUM *a);
 #else

@@ -59,6 +59,9 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
+#ifdef NO_DES
+#error DES is disabled.
+#endif
 
 #ifdef _KERBEROS_DES_H
 #error <openssl/des.h> replaces <kerberos/des.h>.

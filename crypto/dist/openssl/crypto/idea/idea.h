@@ -59,6 +59,9 @@
 #ifndef HEADER_IDEA_H
 #define HEADER_IDEA_H
 
+#ifdef NO_IDEA
+#error IDEA is disabled.
+#endif
 
 #define IDEA_ENCRYPT	1
 #define IDEA_DECRYPT	0

@@ -63,6 +63,9 @@
 extern "C" {
 #endif
 
+#ifdef NO_MD4
+#error MD4 is disabled.
+#endif
 
 /*
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

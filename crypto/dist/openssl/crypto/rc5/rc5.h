@@ -63,6 +63,9 @@
 extern "C" {
 #endif
 
+#ifdef NO_RC5
+#error RC5 is disabled.
+#endif
 
 #define RC5_ENCRYPT	1
 #define RC5_DECRYPT	0

@@ -65,7 +65,9 @@
 #ifndef HEADER_X509_VFY_H
 #define HEADER_X509_VFY_H
 
+#ifndef NO_LHASH
 #include <openssl/lhash.h>
+#endif
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 
@@ -336,9 +338,11 @@ int X509_STORE_get_by_subject(X509_STORE_CTX *vs,int type,X509_NAME *name,
 int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
 	long argl, char **ret);
 
+#ifndef NO_STDIO
 int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
 int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type);
+#endif
 
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method);
@@ -354,9 +358,11 @@ int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, char *str,
 	int len, X509_OBJECT *ret);
 int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 
+#ifndef NO_STDIO
 int	X509_STORE_load_locations (X509_STORE *ctx,
 		const char *file, const char *dir);
 int	X509_STORE_set_default_paths(X509_STORE *ctx);
+#endif
 
 int X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);

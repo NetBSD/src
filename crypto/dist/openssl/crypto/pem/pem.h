@@ -59,8 +59,12 @@
 #ifndef HEADER_PEM_H
 #define HEADER_PEM_H
 
+#ifndef NO_BIO
 #include <openssl/bio.h>
+#endif
+#ifndef NO_STACK
 #include <openssl/stack.h>
+#endif
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem2.h>
@@ -167,7 +171,11 @@ typedef struct pem_ctx_st
 	int num_recipient;
 	PEM_USER **recipient;
 
+#ifndef NO_STACK
 	STACK *x509_chain;	/* certificate chain */
+#else
+	char *x509_chain;	/* certificate chain */
+#endif
 	EVP_MD *md;		/* signature type */
 
 	int md_enc;		/* is the md encrypted or not? */
@@ -190,6 +198,13 @@ typedef struct pem_ctx_st
  * IMPLEMENT_PEM_rw(...) or IMPLEMENT_PEM_rw_cb(...)
  */
 
+#ifdef NO_FP_API
+
+#define IMPLEMENT_PEM_read_fp(name, type, str, asn1) /**/
+#define IMPLEMENT_PEM_write_fp(name, type, str, asn1) /**/
+#define IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1) /**/
+
+#else
 
 #define IMPLEMENT_PEM_read_fp(name, type, str, asn1) \
 type *PEM_read_##name(FILE *fp, type **x, pem_password_cb *cb, void *u)\
@@ -214,6 +229,7 @@ int PEM_write_##name(FILE *fp, type *x, const EVP_CIPHER *enc, \
 		(char *)x,enc,kstr,klen,cb,u)); \
 	}
 
+#endif
 
 #define IMPLEMENT_PEM_read_bio(name, type, str, asn1) \
 type *PEM_read_bio_##name(BIO *bp, type **x, pem_password_cb *cb, void *u)\
@@ -279,6 +295,7 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 
 #endif
 
+#ifndef NO_BIO
 #define DECLARE_PEM_read_bio(name, type) \
 	type *PEM_read_bio_##name(BIO *bp, type **x, pem_password_cb *cb, void *u);
 
@@ -289,6 +306,13 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 	int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 	     unsigned char *kstr, int klen, pem_password_cb *cb, void *u);
 
+#else
+
+#define DECLARE_PEM_read_bio(name, type) /**/
+#define DECLARE_PEM_write_bio(name, type) /**/
+#define DECLARE_PEM_write_cb_bio(name, type) /**/
+
+#endif
 
 #define DECLARE_PEM_write(name, type) \
 	DECLARE_PEM_write_bio(name, type) \
@@ -459,6 +483,7 @@ int	PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher);
 int	PEM_do_header (EVP_CIPHER_INFO *cipher, unsigned char *data,long *len,
 	pem_password_cb *callback,void *u);
 
+#ifndef NO_BIO
 int	PEM_read_bio(BIO *bp, char **name, char **header,
 		unsigned char **data,long *len);
 int	PEM_write_bio(BIO *bp,const char *name,char *hdr,unsigned char *data,
@@ -471,6 +496,7 @@ int	PEM_ASN1_write_bio(int (*i2d)(),const char *name,BIO *bp,char *x,
 STACK_OF(X509_INFO) *	PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u);
 int	PEM_X509_INFO_write_bio(BIO *bp,X509_INFO *xi, EVP_CIPHER *enc,
 		unsigned char *kstr, int klen, pem_password_cb *cd, void *u);
+#endif
 
 #ifndef WIN16
 int	PEM_read(FILE *fp, char **name, char **header,
@@ -522,13 +548,16 @@ DECLARE_PEM_rw(PKCS8, X509_SIG)
 
 DECLARE_PEM_rw(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
 
+#ifndef NO_RSA
 
 DECLARE_PEM_rw_cb(RSAPrivateKey, RSA)
 
 DECLARE_PEM_rw(RSAPublicKey, RSA)
 DECLARE_PEM_rw(RSA_PUBKEY, RSA)
 
+#endif
 
+#ifndef NO_DSA
 
 DECLARE_PEM_rw_cb(DSAPrivateKey, DSA)
 
@@ -536,10 +565,13 @@ DECLARE_PEM_rw(DSA_PUBKEY, DSA)
 
 DECLARE_PEM_rw(DSAparams, DSA)
 
+#endif
 
+#ifndef NO_DH
 
 DECLARE_PEM_rw(DHparams, DH)
 
+#endif
 
 DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
 

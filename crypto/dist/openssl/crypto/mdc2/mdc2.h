@@ -65,6 +65,9 @@
 extern "C" {
 #endif
 
+#ifdef NO_MDC2
+#error MDC2 is disabled.
+#endif
 
 #define MDC2_BLOCK              8
 #define MDC2_DIGEST_LENGTH      16

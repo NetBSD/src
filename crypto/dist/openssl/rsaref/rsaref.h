@@ -59,6 +59,7 @@
 #ifndef HEADER_RSAREF_H
 #define HEADER_RSAREF_H
 
+#ifndef NO_RSA
 #include <openssl/rsa.h>
 
 #ifdef __cplusplus
@@ -134,6 +135,7 @@ RSA_METHOD *RSA_PKCS1_RSAref(void );
 
 #ifdef  __cplusplus
 }
+#endif
 #endif
 
 #ifdef  __cplusplus

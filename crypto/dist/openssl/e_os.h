@@ -180,6 +180,9 @@ extern "C" {
 #  define MS_FAR
 #endif
 
+#ifdef NO_STDIO
+#  define NO_FP_API
+#endif
 
 #if (defined(WINDOWS) || defined(MSDOS)) && !defined(__CYGWIN32__) && !defined(_UWIN)
 
@@ -332,12 +335,19 @@ extern "C" {
 #  if defined(WINDOWS) || defined(MSDOS)
       /* windows world */
 
+#    ifdef NO_SOCK
+#      define SSLeay_Write(a,b,c)	(-1)
+#      define SSLeay_Read(a,b,c)	(-1)
+#      define SHUTDOWN(fd)		close(fd)
+#      define SHUTDOWN2(fd)		close(fd)
+#    else
 #      include <winsock.h>
 extern HINSTANCE _hInstance;
 #      define SSLeay_Write(a,b,c)	send((a),(b),(c),0)
 #      define SSLeay_Read(a,b,c)	recv((a),(b),(c),0)
 #      define SHUTDOWN(fd)		{ shutdown((fd),0); closesocket(fd); }
 #      define SHUTDOWN2(fd)		{ shutdown((fd),2); closesocket(fd); }
+#    endif
 
 #  elif defined(MAC_OS_pre_X)
 
@@ -454,6 +464,18 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #define IRIX_CC_BUG	/* CDS++ up to V2.0Bsomething suffered from the same bug.*/
 #endif
 
+#ifdef NO_MD2
+#define MD2_Init MD2Init
+#define MD2_Update MD2Update
+#define MD2_Final MD2Final
+#define MD2_DIGEST_LENGTH 16
+#endif
+#ifdef NO_MD5
+#define MD5_Init MD5Init 
+#define MD5_Update MD5Update
+#define MD5_Final MD5Final
+#define MD5_DIGEST_LENGTH 16
+#endif
 
 #ifdef  __cplusplus
 }

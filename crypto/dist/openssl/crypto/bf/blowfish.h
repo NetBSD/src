@@ -63,6 +63,9 @@
 extern "C" {
 #endif
 
+#ifdef NO_BF
+#error BF is disabled.
+#endif
 
 #define BF_ENCRYPT	1
 #define BF_DECRYPT	0

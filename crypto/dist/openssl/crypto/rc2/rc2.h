@@ -59,6 +59,9 @@
 #ifndef HEADER_RC2_H
 #define HEADER_RC2_H
 
+#ifdef NO_RC2
+#error RC2 is disabled.
+#endif
 
 #define RC2_ENCRYPT	1
 #define RC2_DECRYPT	0

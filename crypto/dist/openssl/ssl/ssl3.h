@@ -112,7 +112,9 @@
 #ifndef HEADER_SSL3_H 
 #define HEADER_SSL3_H 
 
+#ifndef NO_COMP
 #include <openssl/comp.h>
+#endif
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
@@ -346,7 +348,9 @@ typedef struct ssl3_state_st
 
 		/* used to hold the new cipher we are going to use */
 		SSL_CIPHER *new_cipher;
+#ifndef NO_DH
 		DH *dh;
+#endif
 		/* used when SSL_ST_FLUSH_DATA is entered */
 		int next_state;			
 
@@ -365,7 +369,11 @@ typedef struct ssl3_state_st
 
 		const EVP_CIPHER *new_sym_enc;
 		const EVP_MD *new_hash;
+#ifndef NO_COMP
 		const SSL_COMP *new_compression;
+#else
+		char *new_compression;
+#endif
 		int cert_request;
 		} tmp;
 
