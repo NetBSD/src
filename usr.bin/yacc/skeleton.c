@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.23 2002/01/31 21:01:15 tv Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.24 2003/01/05 21:38:50 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: skeleton.c,v 1.23 2002/01/31 21:01:15 tv Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.24 2003/01/05 21:38:50 kristerw Exp $");
 #endif /* 0 */
 #endif /* not lint */
 
@@ -67,17 +67,10 @@ const char * const banner[] =
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
     "#if defined(__NetBSD__) && defined(__IDSTRING)",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.23 2002/01/31 21:01:15 tv Exp $\");",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.24 2003/01/05 21:38:50 kristerw Exp $\");",
     "#endif /* __NetBSD__ && __IDSTRING */",
     "#endif /* 0 */",
     "#endif /* lint */",
-    "#ifndef __P",
-    "#ifdef __STDC__",
-    "#define __P(x) x",
-    "#else",
-    "#define __P(x) ()",
-    "#endif",
-    "#endif",
     "#define YYBYACC 1",
     "#define YYMAJOR 1",
     "#define YYMINOR 9",
@@ -135,7 +128,7 @@ const char * const header[] =
     "short *yysslim;",
     "YYSTYPE *yyvs;",
     "int yystacksize;",
-    "int yyparse __P((void));",
+    "int yyparse(void);",
     0
 };
 
@@ -143,8 +136,8 @@ const char * const header[] =
 const char * const body[] =
 {
     "/* allocate initial stack or double stack size, up to YYMAXDEPTH */",
-    "static int yygrowstack __P((void));",
-    "static int yygrowstack __P((void))",
+    "static int yygrowstack(void);",
+    "static int yygrowstack(void)",
     "{",
     "    int newsize, i;",
     "    short *newss;",
@@ -175,7 +168,7 @@ const char * const body[] =
     "#define YYACCEPT goto yyaccept",
     "#define YYERROR goto yyerrlab",
     "int",
-    "yyparse __P((void))",
+    "yyparse(void)",
     "{",
     "    int yym, yyn, yystate;",
     "#if YYDEBUG",
