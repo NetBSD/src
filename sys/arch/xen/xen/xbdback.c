@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.3 2005/03/10 17:05:38 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -117,9 +117,9 @@ struct xbdback_request {
 	struct xbdback_instance *rq_xbdi; /* our xbd instance */
 	/* from the request: */
 	paddr_t rq_ma[BLKIF_MAX_PAGES_PER_REQUEST]; /* machine address to map */
-	int rq_nrsegments; /* number of ma entries */
-	int rq_id;
-	int rq_operation;
+	uint8_t rq_nrsegments; /* number of ma entries */
+	uint8_t rq_operation;
+	unsigned long rq_id;
 };
 
 struct pool xbdback_request_pool;
@@ -497,11 +497,18 @@ xbdback_evthandler(void *arg)
 
 	req_prod = xbdi->blk_ring->req_prod;
 	__insn_barrier(); /* ensure we see all requests up to req_prod */
-	req_prod = MASK_BLKIF_IDX(req_prod);
-
-	for (; xbdi->req_cons != req_prod;
-	    xbdi->req_cons = MASK_BLKIF_IDX(xbdi->req_cons + 1)) {
-		req = &xbdi->blk_ring->ring[xbdi->req_cons].req;
+	/*
+	 * note that we'll eventually get a full ring of request.
+	 * in this case, MASK_BLKIF_IDX(req_cons) == MASK_BLKIF_IDX(req_prod)
+	 */
+	for (; xbdi->req_cons != req_prod; xbdi->req_cons++) {
+		req = &xbdi->blk_ring->ring[MASK_BLKIF_IDX(xbdi->req_cons)].req;
+		XENPRINTF(("xbdback op %d req_cons 0x%x req_prod 0x%x/0x%x "
+		    "resp_prod 0x%x/0x%x\n", req->operation,
+			xbdi->req_cons,
+			req_prod, MASK_BLKIF_IDX(req_prod),
+			xbdi->blk_ring->resp_prod,
+			MASK_BLKIF_IDX(xbdi->blk_ring->resp_prod)));
 		switch(req->operation) {
 		case BLKIF_OP_PROBE:
 			error = xbdback_probe(xbdi, req);
