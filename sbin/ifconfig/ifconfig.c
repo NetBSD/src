@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ifconfig.c	5.1 (Berkeley) 2/28/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.6 1993/05/21 12:48:49 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.7 1993/06/06 08:55:30 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -139,11 +139,15 @@ struct	cmd {
  * principally by James O'Toole and Chris Torek.
  */
 int	in_status(), in_getaddr();
+int	in_s = -1;
+
 #ifdef NSIP
 int	xns_status(), xns_getaddr();
+int	xns_s = -1;
 #endif
 #ifdef EON
 int	iso_status(), iso_getaddr();
+int	iso_s = -1;
 #endif
 
 /* Known address families */
@@ -207,11 +211,28 @@ main(argc, argv)
 		rafp = afp;
 		af = ifr.ifr_addr.sa_family = rafp->af_af;
 	}
-	s = socket(af, SOCK_DGRAM, 0);
+	in_s = s = socket(af, SOCK_DGRAM, 0);
 	if (s < 0) {
 		perror("ifconfig: socket");
 		exit(1);
 	}
+#ifdef NSIP
+	xns_s = socket(AF_NS, SOCK_DGRAM, 0);
+	if(xns_s < 0) {
+		if (errno != EPROTONOSUPPORT) {
+			perror("ifconfig: xns: socket");
+		}
+	}
+#endif	
+#ifdef EON
+	iso_s = socket(AF_ISO, SOCK_DGRAM, 0);
+	if (iso_s < 0) {
+		if (errno != EPROTONOSUPPORT) {
+			perror("ifconfig: iso: socket");
+		}
+	}
+#endif
+
 	if(all) {
 		printall(af);
 		exit(0);
@@ -477,7 +498,7 @@ in_status(force)
 	char *inet_ntoa();
 
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
+	if (ioctl(in_s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
@@ -488,7 +509,7 @@ in_status(force)
 	sin = (struct sockaddr_in *)&ifr.ifr_addr;
 	printf("\tinet %s ", inet_ntoa(sin->sin_addr));
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
+	if (ioctl(in_s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
 		if (errno != EADDRNOTAVAIL)
 			perror("ioctl (SIOCGIFNETMASK)");
 		bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
@@ -496,7 +517,7 @@ in_status(force)
 		netmask.sin_addr =
 		    ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
 	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
+		if (ioctl(in_s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			else
@@ -508,7 +529,7 @@ in_status(force)
 	}
 	printf("netmask %x ", ntohl(netmask.sin_addr.s_addr));
 	if (flags & IFF_BROADCAST) {
-		if (ioctl(s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
+		if (ioctl(in_s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			else
@@ -529,15 +550,10 @@ xns_status(force)
 {
 	struct sockaddr_ns *sns;
 
-	close(s);
-	s = socket(AF_NS, SOCK_DGRAM, 0);
-	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
+	if (xns_s < 0)
 			return;
-		perror("ifconfig: socket");
-		exit(1);
-	}
-	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
+
+	if (ioctl(xns_s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
@@ -549,7 +565,7 @@ xns_status(force)
 	sns = (struct sockaddr_ns *)&ifr.ifr_addr;
 	printf("\tns %s ", ns_ntoa(sns->sns_addr));
 	if (flags & IFF_POINTOPOINT) { /* by W. Nesheim@Cornell */
-		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
+		if (ioctl(xns_s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			else
@@ -570,17 +586,11 @@ iso_status(force)
 	struct sockaddr_iso *siso;
 	struct iso_ifreq ifr;
 
-	close(s);
-	s = socket(AF_ISO, SOCK_DGRAM, 0);
-	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
+	if (iso_s < 0)
 			return;
-		perror("ifconfig: socket");
-		exit(1);
-	}
 	bzero((caddr_t)&ifr, sizeof(ifr));
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR_ISO, (caddr_t)&ifr) < 0) {
+	if (ioctl(iso_s, SIOCGIFADDR_ISO, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
@@ -593,14 +603,14 @@ iso_status(force)
 	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 	siso = &ifr.ifr_Addr;
 	printf("\tiso %s ", iso_ntoa(&siso->siso_addr));
-	if (ioctl(s, SIOCGIFNETMASK_ISO, (caddr_t)&ifr) < 0) {
+	if (ioctl(iso_s, SIOCGIFNETMASK_ISO, (caddr_t)&ifr) < 0) {
 		if (errno != EADDRNOTAVAIL)
 			perror("ioctl (SIOCGIFNETMASK_ISO)");
 	} else {
 		printf(" netmask %s ", iso_ntoa(&siso->siso_addr));
 	}
 	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR_ISO, (caddr_t)&ifr) < 0) {
+		if (ioctl(iso_s, SIOCGIFDSTADDR_ISO, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    bzero((char *)&ifr.ifr_Addr, sizeof(ifr.ifr_Addr));
 			else
