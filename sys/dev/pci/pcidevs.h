@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.381 2001/12/20 03:24:58 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.382 2001/12/29 22:31:10 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.376 2001/12/20 03:24:22 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.377 2001/12/29 22:30:33 ichiro Exp 
  */
 
 /*
@@ -1895,6 +1895,7 @@
 #define	PCI_PRODUCT_V3_V96DPC	0xc960		/* V96DPC i960 (Dual) Host-PCI Bridge */
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
+#define	PCI_PRODUCT_VIATECH_VT6305	0x0130		/* VT6305 OCHI IEEE 1394 Controller */
 #define	PCI_PRODUCT_VIATECH_VT8363_HB	0x0305		/* VT8363 KT133 System Controller */
 #define	PCI_PRODUCT_VIATECH_VT8371_HB	0x0391		/* VT8371 (Apollo KX133) Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8501_MVP4	0x0501		/* VT8501 MVP4 System Controller */
@@ -1919,6 +1920,7 @@
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
 #define	PCI_PRODUCT_VIATECH_VT3043	0x3043		/* VT3043 (Rhine) 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT6306	0x3044		/* VT3606 OCHI IEEE 1394 Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686A SMBus Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_AC97	0x3058		/* VT82C686A AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT8233_AC97	0x3059		/* VT8233 AC-97 Audio Controller */
