@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.16 2002/10/23 09:12:45 jdolecek Exp $	*/
+/*	$NetBSD: kbd.c,v 1.17 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,6 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.17 2003/07/15 01:44:52 lukem Exp $");
 
 #include "ite.h"
 #include "bell.h"

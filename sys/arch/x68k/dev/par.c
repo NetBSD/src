@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.17 2002/10/23 09:12:47 jdolecek Exp $	*/
+/*	$NetBSD: par.c,v 1.18 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -38,6 +38,9 @@
 /*
  * parallel port interface
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.18 2003/07/15 01:44:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

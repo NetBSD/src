@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24 2003/01/28 12:35:38 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.25 2003/07/15 01:44:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -45,6 +45,9 @@
  * Extra Z8530's can be installed for serial ports.  This driver
  * supports up to 5 chips including the built-in one.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25 2003/07/15 01:44:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.3 2001/05/30 15:24:40 lukem Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.4 2003/07/15 01:44:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -48,6 +48,9 @@
  * This file must be compiled with gcc -fno-defer-pop.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.4 2003/07/15 01:44:56 lukem Exp $");
+
 #include "opt_kgdb.h"
 
 #ifdef KGDB
@@ -58,7 +61,7 @@
 #include <machine/reg.h>
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.3 2001/05/30 15:24:40 lukem Exp $";
+static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.4 2003/07/15 01:44:56 lukem Exp $";
 #endif
 
 #define KGDB_STACKSIZE 0x800

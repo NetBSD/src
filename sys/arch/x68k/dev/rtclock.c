@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.14 2002/10/02 16:02:43 thorpej Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.15 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -34,6 +34,9 @@
  * X680x0 internal real time clock interface
  * alarm is not supported.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.15 2003/07/15 01:44:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

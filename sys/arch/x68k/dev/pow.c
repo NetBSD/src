@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.10 2002/10/23 09:12:47 jdolecek Exp $	*/
+/*	$NetBSD: pow.c,v 1.11 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -36,6 +36,9 @@
  *  1. accessing boot information.
  *  2. looking at the front or external power switch.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.11 2003/07/15 01:44:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

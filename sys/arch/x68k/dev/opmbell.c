@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.10 2002/10/23 09:12:46 jdolecek Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.11 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -37,6 +37,9 @@
 /*
  * bell device driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.11 2003/07/15 01:44:52 lukem Exp $");
 
 #include "bell.h"
 #if NBELL > 0

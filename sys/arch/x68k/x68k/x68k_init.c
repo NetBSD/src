@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.6 1999/03/16 16:30:24 minoura Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.7 2003/07/15 01:44:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.7 2003/07/15 01:44:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

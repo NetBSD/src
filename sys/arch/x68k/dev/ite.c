@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.33 2002/10/23 09:12:44 jdolecek Exp $	*/
+/*	$NetBSD: ite.c,v 1.34 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,9 @@
  * Supports VT200, a few terminal features will be unavailable until
  * the system actually probes the device (i.e. not after consinit())
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.34 2003/07/15 01:44:52 lukem Exp $");
 
 #include "ite.h"
 #if NITE > 0

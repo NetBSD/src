@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.16 2003/01/01 02:31:13 thorpej Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.17 2003/07/15 01:44:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -46,6 +46,9 @@
  * Graphics display driver for the HP300/400 DIO/DIO-II based machines.
  * This is the hardware-dependent configuration portion of the driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.17 2003/07/15 01:44:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

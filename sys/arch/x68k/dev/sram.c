@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.9 2002/10/23 09:12:48 jdolecek Exp $	*/
+/*	$NetBSD: sram.c,v 1.10 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.10 2003/07/15 01:44:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

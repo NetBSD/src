@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.9 2001/12/27 02:23:25 wiz Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.10 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.10 2003/07/15 01:44:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
