@@ -1,6 +1,7 @@
-#	$Id: Makefile,v 1.3 1994/12/28 22:12:35 cgd Exp $
+#	$Id: Makefile,v 1.4 1995/01/06 04:57:56 cgd Exp $
 
-SUBDIR+= bitstring stdarg varargs
+# missing files: stdarg varargs
+SUBDIR+= bitstring
 
 regress: _SUBDIRUSE
 
