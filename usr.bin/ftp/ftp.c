@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.118 2002/04/25 10:55:43 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.119 2002/05/07 02:04:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.118 2002/04/25 10:55:43 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.119 2002/05/07 02:04:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -736,7 +736,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		}
 		if (command("REST " LLF, (LLT)restart_point) != CONTINUE)
 			goto cleanupsend;
-		lmode = "r+w";
+		lmode = "r+";
 	}
 	if (remote) {
 		if (command("%s %s", cmd, remote) != PRELIM)
