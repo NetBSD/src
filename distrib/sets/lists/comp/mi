@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.137 1999/04/30 00:58:30 ross Exp $
+# $NetBSD: mi,v 1.138 1999/05/04 15:50:24 kleink Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1372,6 +1372,7 @@
 ./usr/share/man/cat3/alloca.0
 ./usr/share/man/cat3/alphasort.0
 ./usr/share/man/cat3/asctime.0
+./usr/share/man/cat3/asctime_r.0
 ./usr/share/man/cat3/asin.0
 ./usr/share/man/cat3/asinh.0
 ./usr/share/man/cat3/asprintf.0
@@ -1471,6 +1472,7 @@
 ./usr/share/man/cat3/crypt.0
 ./usr/share/man/cat3/ctermid.0
 ./usr/share/man/cat3/ctime.0
+./usr/share/man/cat3/ctime_r.0
 ./usr/share/man/cat3/ctype.0
 ./usr/share/man/cat3/curses.0
 ./usr/share/man/cat3/cuserid.0
@@ -1654,6 +1656,7 @@
 ./usr/share/man/cat3/glob.0
 ./usr/share/man/cat3/globfree.0
 ./usr/share/man/cat3/gmtime.0
+./usr/share/man/cat3/gmtime_r.0
 ./usr/share/man/cat3/group_from_gid.0
 ./usr/share/man/cat3/gtty.0
 ./usr/share/man/cat3/hash.0
@@ -1763,6 +1766,7 @@
 ./usr/share/man/cat3/list_remove.0
 ./usr/share/man/cat3/localeconv.0
 ./usr/share/man/cat3/localtime.0
+./usr/share/man/cat3/localtime_r.0
 ./usr/share/man/cat3/lockf.0
 ./usr/share/man/cat3/log.0
 ./usr/share/man/cat3/log10.0
@@ -2422,6 +2426,7 @@
 ./usr/share/man/man3/alloca.3
 ./usr/share/man/man3/alphasort.3
 ./usr/share/man/man3/asctime.3
+./usr/share/man/man3/asctime_r.3
 ./usr/share/man/man3/asin.3
 ./usr/share/man/man3/asinh.3
 ./usr/share/man/man3/asprintf.3
@@ -2521,6 +2526,7 @@
 ./usr/share/man/man3/crypt.3
 ./usr/share/man/man3/ctermid.3
 ./usr/share/man/man3/ctime.3
+./usr/share/man/man3/ctime_r.3
 ./usr/share/man/man3/ctype.3
 ./usr/share/man/man3/curses.3
 ./usr/share/man/man3/cuserid.3
@@ -2704,6 +2710,7 @@
 ./usr/share/man/man3/glob.3
 ./usr/share/man/man3/globfree.3
 ./usr/share/man/man3/gmtime.3
+./usr/share/man/man3/gmtime_r.3
 ./usr/share/man/man3/group_from_gid.3
 ./usr/share/man/man3/gtty.3
 ./usr/share/man/man3/hash.3
@@ -2813,6 +2820,7 @@
 ./usr/share/man/man3/list_remove.3
 ./usr/share/man/man3/localeconv.3
 ./usr/share/man/man3/localtime.3
+./usr/share/man/man3/localtime_r.3
 ./usr/share/man/man3/lockf.3
 ./usr/share/man/man3/log.3
 ./usr/share/man/man3/log10.3
