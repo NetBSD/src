@@ -1,7 +1,7 @@
-/* $NetBSD: signal.h,v 1.2 1996/02/01 22:29:44 mycroft Exp $ */
+/* $NetBSD: signal.h,v 1.3 1996/03/14 23:11:47 mark Exp $ */
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,9 +41,6 @@
  * Architecture dependant signal types and structures
  *
  * Created      : 30/09/94
- * Last updated : 25/01/95
- *
- *    $Id: signal.h,v 1.2 1996/02/01 22:29:44 mycroft Exp $
  */
 
 #ifndef _ARM32_SIGNAL_H_

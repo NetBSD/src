@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.1 1996/01/31 23:22:49 mark Exp $ */
+/* $NetBSD: ptrace.h,v 1.2 1996/03/14 23:11:38 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -29,8 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: ptrace.h,v 1.1 1996/01/31 23:22:49 mark Exp $
  */
 
 /*
