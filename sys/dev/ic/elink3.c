@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.23 1997/04/07 23:49:47 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.24 1997/04/22 21:19:11 cjs Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -1262,6 +1262,7 @@ epget(sc, totlen)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
+	u_long pad;
 	int len, remaining;
 	int sh;
 
@@ -1314,19 +1315,16 @@ epget(sc, totlen)
 			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
 		}
-		if (EP_IS_BUS_32(sc->bustype) )  {
-			u_long pad;
-			if (top == 0)  {
-			    /* align the struct ip header */
-			    pad = ALIGN(sizeof(struct ether_header))
-				 - sizeof(struct ether_header);
-			} else {
-			    /* XXX do we really need this? */
-			    pad = ALIGN(m->m_data) - (u_long) m->m_data;
-			}
-			m->m_data += pad;
-			len -= pad;
+		if (top == 0)  {
+		    /* align the struct ip header */
+		    pad = ALIGN(sizeof(struct ether_header))
+			 - sizeof(struct ether_header);
+		} else {
+		    /* XXX do we really need this? */
+		    pad = ALIGN(m->m_data) - (u_long) m->m_data;
 		}
+		m->m_data += pad;
+		len -= pad;
 		remaining = len = min(totlen, len);
 		if (EP_IS_BUS_32(sc->bustype)) {
 			u_long offset = mtod(m, u_long);
