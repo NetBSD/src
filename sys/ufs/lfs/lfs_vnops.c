@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.87 2003/02/22 01:52:25 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.88 2003/02/23 00:22:35 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.87 2003/02/22 01:52:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.88 2003/02/23 00:22:35 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1132,11 +1132,9 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 
 		/*
 		 * If any are dirty make all dirty; unbusy them,
-		 * but if we were asked to clean, take them off
-		 * of their queue so the pagedaemon doesn't bother
-		 * us about them while they're on their way to disk.
-		 *
-		 * (XXXUBC the page is now on *no* page queue.)
+		 * but if we were asked to clean, wire them so that
+		 * the pagedaemon doesn't bother us about them while
+		 * they're on their way to disk.
 		 */
 		for (i = 0; i == 0 || i < pages_per_block; i++) {
 			pg = pgs[i];
@@ -1153,6 +1151,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 					uvm_lock_pageq();
 					uvm_pagewire(pg);
 					uvm_unlock_pageq();
+
 					/* Suspended write flag */
 					pg->flags |= PG_DELWRI;
 				}
@@ -1406,13 +1405,6 @@ lfs_putpages(void *v)
 		sp = fs->lfs_sp;
 		sp->vp = vp;
 
-		/*
-		 * XXXUBC
-		 * There is some danger here that we might run out of
-		 * buffers if we flush too much at once.  If the number
-		 * of dirty buffers is too great, we should cut the range
-		 * down and write in chunks.
-		 */
 		while ((error = genfs_putpages(v)) == EDEADLK) {
 #ifdef DEBUG_LFS
 			printf("lfs_putpages: genfs_putpages returned EDEADLK"
@@ -1420,6 +1412,12 @@ lfs_putpages(void *v)
 			       ip->i_number, fs->lfs_offset,
 			       dtosn(fs, fs->lfs_offset));
 #endif
+			/* If nothing to write, short-circuit */
+			if (sp->cbpp - sp->bpp == 1) {
+				preempt(NULL);
+				simple_lock(&vp->v_interlock);
+				continue;
+			}
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
 			(void) lfs_writeseg(fs, sp);
@@ -1476,17 +1474,8 @@ lfs_putpages(void *v)
 
 	/*
 	 * Loop through genfs_putpages until all pages are gathered.
+	 * genfs_putpages() drops the interlock, so reacquire it if necessary.
 	 */
-		/*
-		 * There is some danger here that we might run out of
-		 * buffers if we flush too much at once.  If the number
-		 * of dirty buffers is too great, then, cut the range down
-		 * and write in chunks.
-		 *
-		 * XXXUBC this assumes a uniform dirtying of the pages
-		 * XXXUBC across the address space
-		 * XXXXXX do this
-		 */
 	simple_lock(&vp->v_interlock);
 	while ((error = genfs_putpages(v)) == EDEADLK) {
 #ifdef DEBUG_LFS
@@ -1495,6 +1484,12 @@ lfs_putpages(void *v)
 		       ip->i_number, fs->lfs_offset,
 		       dtosn(fs, fs->lfs_offset));
 #endif
+		/* If nothing to write, short-circuit */
+		if (sp->cbpp - sp->bpp == 1) {
+			preempt(NULL);
+			simple_lock(&vp->v_interlock);
+			continue;
+		}
 		/* Write gathered pages */
 		lfs_updatemeta(sp);
 		(void) lfs_writeseg(fs, sp);
@@ -1522,11 +1517,9 @@ lfs_putpages(void *v)
 	 */
 	lfs_updatemeta(fs->lfs_sp);
 	fs->lfs_sp->vp = NULL;
-	lfs_writeseg(fs, fs->lfs_sp);
-
 	/*
-	 * Clean up FIP.
-	 * (This should duplicate cleanup at the end of lfs_writefile().)
+	 * Clean up FIP, since we're done writing this file.
+	 * This should duplicate cleanup at the end of lfs_writefile().
 	 */
 	if (sp->fip->fi_nblocks != 0) {
 		sp->fip = (FINFO*)((caddr_t)sp->fip + sizeof(struct finfo) +
@@ -1536,6 +1529,8 @@ lfs_putpages(void *v)
 		sp->sum_bytes_left += sizeof(FINFO) - sizeof(int32_t);
 		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
 	}
+	lfs_writeseg(fs, fs->lfs_sp);
+
 	/*
 	 * XXX - with the malloc/copy writeseg, the pages are freed by now
 	 * even if we don't wait (e.g. if we hold a nested lock).  This

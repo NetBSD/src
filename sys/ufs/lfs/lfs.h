@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.49 2003/02/20 04:27:23 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.50 2003/02/23 00:22:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@
 typedef struct lfs_res_blk {
 	void *p;
 	LIST_ENTRY(lfs_res_blk) res;
+	int size;
 	char inuse;
 } res_t;
 
@@ -834,8 +835,8 @@ struct segment {
 	struct vnode	 *vp;		/* vnode being gathered */
 	void	 *segsum;		/* segment summary info */
 	u_int32_t ninodes;		/* number of inodes in this segment */
-	u_int32_t seg_bytes_left;	/* bytes left in segment */
-	u_int32_t sum_bytes_left;	/* bytes left in summary block */
+	int32_t seg_bytes_left;		/* bytes left in segment */
+	int32_t sum_bytes_left;		/* bytes left in summary block */
 	u_int32_t seg_number;		/* number of this segment */
 	/* XXX ondisk32 */
 	int32_t *start_lbp;		/* beginning lbn for this set */

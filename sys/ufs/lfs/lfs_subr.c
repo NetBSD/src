@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.33 2003/02/20 04:27:24 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.34 2003/02/23 00:22:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.33 2003/02/20 04:27:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.34 2003/02/23 00:22:34 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,28 +162,32 @@ lfs_setup_resblks(struct lfs *fs)
 	 * so we can't use the pool subsystem for them.
 	 */
 	for (i = 0, j = 0; j < LFS_N_SUMMARIES; j++, i++)
-		fs->lfs_resblk[i].p = malloc(fs->lfs_sumsize, M_SEGMENT,
-					    M_WAITOK);
+		fs->lfs_resblk[i].size = fs->lfs_sumsize;
 	for (j = 0; j < LFS_N_SBLOCKS; j++, i++)
-		fs->lfs_resblk[i].p = malloc(LFS_SBPAD, M_SEGMENT, M_WAITOK);
+		fs->lfs_resblk[i].size = LFS_SBPAD;
 	for (j = 0; j < LFS_N_IBLOCKS; j++, i++)
-		fs->lfs_resblk[i].p = malloc(fs->lfs_bsize, M_SEGMENT, M_WAITOK);
+		fs->lfs_resblk[i].size = fs->lfs_bsize;
 	for (j = 0; j < LFS_N_CLUSTERS; j++, i++)
-		fs->lfs_resblk[i].p = malloc(MAXPHYS, M_SEGMENT, M_WAITOK);
+		fs->lfs_resblk[i].size = MAXPHYS;
 	for (j = 0; j < LFS_N_CLEAN; j++, i++)
-		fs->lfs_resblk[i].p = malloc(MAXPHYS, M_SEGMENT, M_WAITOK);
+		fs->lfs_resblk[i].size = MAXPHYS;
+
+	for (i = 0; i < LFS_N_TOTAL; i++) {
+		fs->lfs_resblk[i].p = malloc(fs->lfs_resblk[i].size,
+					     M_SEGMENT, M_WAITOK);
+	}
 
 	/*
 	 * Initialize pools for small types (XXX is BPP small?)
 	 */
-	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
-	maxbpp = MIN(maxbpp, fs->lfs_ssize / fs->lfs_fsize + 2);
-	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0,
-		LFS_N_BPP, "lfsbpppl", &pool_allocator_nointr);
 	pool_init(&fs->lfs_clpool, sizeof(struct lfs_cluster), 0, 0,
 		LFS_N_CL, "lfsclpl", &pool_allocator_nointr);
 	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0,
 		LFS_N_SEG, "lfssegpool", &pool_allocator_nointr);
+	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
+	maxbpp = MIN(maxbpp, fs->lfs_ssize / fs->lfs_fsize + 2);
+	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0,
+		LFS_N_BPP, "lfsbpppl", &pool_allocator_nointr);
 }
 
 void
@@ -222,13 +226,18 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 	int i, s, start;
 	unsigned int h;
 
+	r = NULL;
+
 	/* If no mem allocated for this type, it just waits */
-	if (lfs_res_qty[type] == 0)
-		return malloc(size, M_SEGMENT, M_WAITOK);
+	if (lfs_res_qty[type] == 0) {
+		r = malloc(size, M_SEGMENT, M_WAITOK);
+		return r;
+	}
 
 	/* Otherwise try a quick malloc, and if it works, great */
-	if ((r = malloc(size, M_SEGMENT, M_NOWAIT)) != NULL)
+	if ((r = malloc(size, M_SEGMENT, M_NOWAIT)) != NULL) {
 		return r;
+	}
 
 	/*
 	 * If malloc returned NULL, we are forced to use one of our
@@ -245,6 +254,7 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 				re = fs->lfs_resblk + start + i;
 				re->inuse = 1;
 				r = re->p;
+				KASSERT(re->size >= size);
 				h = lfs_mhash(r);
 				s = splbio();
 				LIST_INSERT_HEAD(&fs->lfs_reshash[h], re, res);
@@ -289,7 +299,7 @@ lfs_free(struct lfs *fs, void *p, int type)
 #ifdef DEBUG
 	for (i = 0; i < LFS_N_TOTAL; i++) {
 		if (fs->lfs_resblk[i].p == p)
-			panic("lfs_free: inconsist reserved block");
+			panic("lfs_free: inconsistent reserved block");
 	}
 #endif
 	splx(s);
