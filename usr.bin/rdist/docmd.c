@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.21 2002/06/14 01:18:54 wiz Exp $	*/
+/*	$NetBSD: docmd.c,v 1.22 2002/12/06 03:09:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.21 2002/06/14 01:18:54 wiz Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.22 2002/12/06 03:09:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,7 @@ done:
 			if ((opts & IGNLNKS) || ihead->count == 0)
 				continue;
 			if (lfp)
-				log(lfp, "%s: Warning: missing links\n",
+				dolog(lfp, "%s: Warning: missing links\n",
 					ihead->pathname);
 		}
 	}
@@ -337,7 +337,7 @@ lostconn(int signo)
 	if (iamremote)
 		cleanup(0);
 	if (lfp)
-		log(lfp, "rdist: %s\n", buf);
+		dolog(lfp, "rdist: %s\n", buf);
 	else
 		error("%s\n", buf);
 	longjmp(env, 1);
@@ -474,7 +474,7 @@ cmptime(char *name)
 	}
 
 	if (stb.st_mtime > lastmod)
-		log(tfp, "new: %s\n", name);
+		dolog(tfp, "new: %s\n", name);
 }
 
 static void
