@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.163 2002/03/11 16:27:03 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.164 2002/03/12 00:18:25 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -416,7 +416,7 @@ bootstrapIIep()
 		      "node from prom");
 
 	if (bus_space_map2(&mainbus_space_tag,
-			   (bus_type_t)0, (bus_addr_t)MSIIEP_PCIC_PA,
+			   (bus_addr_t)MSIIEP_PCIC_PA,
 			   (bus_size_t)sizeof(struct msiiep_pcic_reg),
 			   BUS_SPACE_MAP_LINEAR,
 			   MSIIEP_PCIC_VA, &bh) != 0)
