@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: diag.c,v 1.3 1993/08/02 17:19:58 mycroft Exp $";
+static char rcsid[] = "$Id: diag.c,v 1.4 1994/10/21 21:26:06 mycroft Exp $";
 #endif /* not lint */
 
 /*	diag.c		Larn is copyrighted 1986 by Noah Morgan. */
@@ -82,9 +82,9 @@ diag()
 		}
 
 	lprcat("\n\nHere's the list of available potions:\n\n");
-	for (i=0; i<MAXPOTION; i++)	lprintf("%20s\n",&potionname[i][1]);
+	for (i=0; i<MAXPOTION; i++)	lprintf("%20s\n",&potionhide[i][1]);
 	lprcat("\n\nHere's the list of available scrolls:\n\n");
-	for (i=0; i<MAXSCROLL; i++)	lprintf("%20s\n",&scrollname[i][1]);
+	for (i=0; i<MAXSCROLL; i++)	lprintf("%20s\n",&scrollhide[i][1]);
 	lprcat("\n\nHere's the spell list:\n\n");
 	lprcat("spell          name           description\n");
 	lprcat("-------------------------------------------------------------------------------------------\n\n");
