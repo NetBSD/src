@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.4.2.1 1999/09/27 05:04:41 cgd Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.4.2.2 1999/09/28 04:46:58 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -63,6 +63,7 @@ rf_RewriteParity(raidPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_AccessStripeMapHeader_t *asm_h;
+	int ret_val;
 	int rc;
 	RF_PhysDiskAddr_t pda;
 	RF_SectorNum_t i;
@@ -80,10 +81,14 @@ rf_RewriteParity(raidPtr)
 		return (RF_PARITY_COULD_NOT_VERIFY);
 	}
 
+	ret_val = 0;
+
 	pda.startSector = 0;
 	pda.numSector = raidPtr->Layout.sectorsPerStripeUnit;
+	rc = RF_PARITY_OKAY;
 
-	for (i = 0; i < raidPtr->totalSectors; 
+	for (i = 0; i < raidPtr->totalSectors && 
+		     rc <= RF_PARITY_CORRECTED; 
 	     i += layoutPtr->dataSectorsPerStripe) {
 		asm_h = rf_MapAccess(raidPtr, i, 
 				     layoutPtr->dataSectorsPerStripe, 
@@ -97,23 +102,23 @@ rf_RewriteParity(raidPtr)
 			break;
 		case RF_PARITY_BAD:
 			printf("Parity bad during correction\n");
-			RF_PANIC();
+			ret_val = 1;
 			break;
 		case RF_PARITY_COULD_NOT_CORRECT:
 			printf("Could not correct bad parity\n");
-			RF_PANIC();
+			ret_val = 1;
 			break;
 		case RF_PARITY_COULD_NOT_VERIFY:
 			printf("Could not verify parity\n");
-			RF_PANIC();
+			ret_val = 1;
 			break;
 		default:
 			printf("Bad rc=%d from VerifyParity in RewriteParity\n", rc);
-			RF_PANIC();
+			ret_val = 1;
 		}
 		rf_FreeAccessStripeMap(asm_h);
 	}
-	return (0);
+	return (ret_val);
 }
 /*****************************************************************************************
  *
