@@ -1,4 +1,4 @@
-/*	$NetBSD: fixcoff.c,v 1.3 2001/02/19 22:48:58 cgd Exp $ */
+/*	$NetBSD: fixcoff.c,v 1.4 2002/09/17 03:55:40 briggs Exp $ */
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -46,7 +46,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "../../../../../gnu/dist/include/coff/rs6000.h"
+#include "../../../../../gnu/dist/toolchain/include/coff/rs6000.h"
 
 void
 usage(prog)
