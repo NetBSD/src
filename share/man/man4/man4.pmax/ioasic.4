@@ -1,5 +1,5 @@
 .\"
-.\" Copyright (c) 1996 Jonathan Stone.
+.\" Copyright (c) 1996, 1997 Jonathan Stone.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: ioasic.4,v 1.3 1997/10/13 11:23:50 lukem Exp $
+.\"	$NetBSD: ioasic.4,v 1.3.2.1 1997/11/03 19:28:17 mellon Exp $
 .\"
 .Dd August 6, 1996
 .Dt IOASIC 4 pmax
@@ -35,40 +35,44 @@
 .Sh NAME
 .Nm ioasic
 .Nd
-turbochannel SCSI adaptor
+baseboard IO control ASIC for DEC TurboChannel systems
 .Sh SYNOPSIS
-.Cd "ioasic? at mainbus"
+.Cd "ioasic0 at tc?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the DEC proprietary IOCTL asic found on
-Decstation 5000  series machines (excluding the 5000/200), and on
-Turbochannel-based Alphas.   On these machines (including the
-5000/200), all baseboard  devices should be configured as children
-of the
-.Nm ioasic .
+all DEC Turbochannel machines with MIPS (decstation 5000 series,
+excuding the 5000/200) and Alpha (3000-series) processors.  On these
+machines (including the 5000/200), all baseboard devices should be
+configured as children of the
+.Nm "" .
 The
-.nm
+.Nm
 provides hardware DMA channels and interrupt support for
 several baseboard devices, including one
 .Nm asc
-scsi device with a scatter/gather DMA channel, up to two
+scsi device with a scatter/gather DMA channel, an mc146818-compatible
+.Nm mcclock,
+one or two
 .Nm scc
-devices, a
-.Nm tc
-turbochannel expansion bus with  two, three, or six slots.
+two-port serial devices, and a am9770 LANCE
+.Nm le
+Ethternet interface.
 .Pp
 The
 .Nm
 is also used for theose 
 floppy-disc drive and audio/ISDN hardware
-on the Personal Decstation and Alpha.
+on the Personal Decstation and audio-equppied TC Alphas, where the 
 .Nm
-hardware is used to interface to
+hardware provides a
 a
-scatter-gather DMA channel.
+scatter-gather DMA channel betweent he 16-bit deviec and the 32-bit
+.Nm tc
+DMA address space.
 .Pp
-Support for scatter-gather DMA eliminates the need for copying.
+Support for scatter-gather DMA eliminates the need for additional copying.
 A baseboard
 .Nm asc
 SCSI adaptor attached to an
@@ -78,7 +82,7 @@ will give slightly better performance than its
 counterpart.
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr clock 4 ,
+.Xr mcclock 4 ,
 .Xr asc 4 ,
 .Xr le 4 ,
 .Xr scc 4 ,
@@ -89,7 +93,8 @@ The
 driver
 first appeared in
 .Nx 1.1 ,
-derived from the
+derived from DECstation boot-time configuration code in
+.Bx 4.4  .
 .Sh BUGS
 The Decstation 5000/200 does not actually have an
 .Nm ioasic
