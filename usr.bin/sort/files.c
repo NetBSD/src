@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.21 2003/10/16 07:01:51 itojun Exp $	*/
+/*	$NetBSD: files.c,v 1.22 2003/10/18 03:03:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.21 2003/10/16 07:01:51 itojun Exp $");
+__RCSID("$NetBSD: files.c,v 1.22 2003/10/18 03:03:20 itojun Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -229,7 +229,7 @@ makeline(flno, top, filelist, nfiles, recbuf, bufend, dummy2)
 			warnx("makeline: line too long: ignoring '%.100s...'", recbuf->data);
 
 			/* Consume the rest of line from input */
-			while((c = getc(fp)) != REC_D && c != EOF)
+			while ((c = getc(fp)) != REC_D && c != EOF)
 				;
 
 			recbuf->offset = 0;
