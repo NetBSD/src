@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.45 2002/11/24 08:32:22 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.46 2002/11/24 16:09:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.45 2002/11/24 08:32:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.46 2002/11/24 16:09:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,11 @@ extern int lfs_dostats;
  * up the vnode lock temporarily and wait for the space to become available.
  *
  * Called with vp locked.  (Note nowever that if fsb < 0, vp is ignored.)
+ *
+ * XXX YAMT
+ * it isn't safe to unlock vp here
+ * because we're passing data using inode from namei.
+ * (eg. i_offset)
  */
 int
 lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
