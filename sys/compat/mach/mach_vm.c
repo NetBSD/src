@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.30 2003/06/29 22:29:35 fvdl Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.31 2003/09/06 23:52:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.30 2003/06/29 22:29:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.31 2003/09/06 23:52:27 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -545,6 +545,65 @@ mach_vm_region(args)
 	rep->rep_count = req->req_count;
 
 	rbi = (struct mach_vm_region_basic_info *)&rep->rep_info[0];
+	rbi->protection = vme->protection;
+	rbi->inheritance = 1; /* vme->inheritance */
+	rbi->shared = 0; /* XXX how can we know? */
+	rbi->offset = vme->offset;
+	rbi->behavior = MACH_VM_BEHAVIOR_DEFAULT; /* XXX What is it? */
+	rbi->user_wired_count = vme->wired_count;
+
+	/* XXX Why this? */
+	*(short *)((u_long)&rbi->user_wired_count + sizeof(short)) = 1;
+
+	rep->rep_info[rep->rep_count + 1] = 8; /* This is the trailer */
+
+	return 0;
+}
+
+int
+mach_vm_region_64(args) 
+	struct mach_trap_args *args;
+{
+	mach_vm_region_64_request_t *req = args->smsg;
+	mach_vm_region_64_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	struct mach_vm_region_basic_info_64 *rbi;
+	struct vm_map_entry *vme;
+	
+	/* 
+	 * MACH_VM_REGION_BASIC_INFO is the only 
+	 * supported flavor in Darwin.
+	 */
+	if (req->req_flavor != MACH_VM_REGION_BASIC_INFO) 
+		return mach_msg_error(args, EINVAL);
+	if (req->req_count != (sizeof(*rbi) / sizeof(int))) /* This is 8 */
+		return mach_msg_error(args, EINVAL);
+	*msglen = sizeof(*rep) + ((req->req_count - 9) * sizeof(int));
+
+	vme = uvm_map_findspace(&l->l_proc->p_vmspace->vm_map, 
+			    req->req_addr, 1, (vaddr_t *)&rep->rep_addr, 
+			    NULL, 0, 0, UVM_FLAG_FIXED);
+	if (vme == NULL)
+		return mach_msg_error(args, ENOMEM);
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_obj.address = NULL;
+	rep->rep_obj.size = 0;
+	rep->rep_obj.deallocate = 0;
+	rep->rep_obj.copy = 0; 
+	rep->rep_obj.pad1 = 0x11; 
+	rep->rep_obj.type = 0;
+	rep->rep_size = PAGE_SIZE; /* XXX Why? */
+	rep->rep_count = req->req_count;
+
+	rbi = (struct mach_vm_region_basic_info_64 *)&rep->rep_info[0];
 	rbi->protection = vme->protection;
 	rbi->inheritance = 1; /* vme->inheritance */
 	rbi->shared = 0; /* XXX how can we know? */

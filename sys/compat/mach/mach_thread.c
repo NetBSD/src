@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.18 2003/01/30 19:14:19 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.19 2003/09/06 23:52:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.18 2003/01/30 19:14:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.19 2003/09/06 23:52:25 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -189,5 +189,98 @@ mach_thread_create_running(args)
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int 
+mach_thread_info(args)
+	struct mach_trap_args *args;
+{
+	mach_thread_info_request_t *req = args->smsg;
+	mach_thread_info_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	struct proc *p = l->l_proc;
+
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+
+	switch (req->req_flavor) {
+	case MACH_THREAD_BASIC_INFO: {
+		struct mach_thread_basic_info *tbi;
+
+		if (req->req_count != (sizeof(*tbi) / sizeof(int))) /* 10 */
+			return mach_msg_error(args, EINVAL);
+
+		tbi = (struct mach_thread_basic_info *)rep->rep_out;
+		tbi->user_time.seconds = p->p_uticks * hz / 1000000;
+		tbi->user_time.microseconds = 
+		    (p->p_uticks) * hz - tbi->user_time.seconds;
+		tbi->system_time.seconds = p->p_sticks * hz / 1000000;
+		tbi->system_time.microseconds = 
+		    (p->p_sticks) * hz - tbi->system_time.seconds;
+		tbi->cpu_usage = p->p_pctcpu;
+		tbi->policy = MACH_THREAD_STANDARD_POLICY;
+
+		/* XXX this is not very accurate */
+		tbi->run_state = MACH_TH_STATE_RUNNING;
+		tbi->flags = 0;
+		switch (l->l_stat) {
+		case LSRUN:
+			tbi->run_state = MACH_TH_STATE_RUNNING;
+			break;
+		case LSSTOP:
+			tbi->run_state = MACH_TH_STATE_STOPPED;
+			break;
+		case LSSLEEP:
+			tbi->run_state = MACH_TH_STATE_WAITING;
+			break;
+		case LSIDL:
+			tbi->run_state = MACH_TH_STATE_RUNNING;
+			tbi->flags = MACH_TH_FLAGS_IDLE;
+			break;
+		default:
+			break;
+		}
+
+		tbi->suspend_count = l->l_swtime;
+		tbi->sleep_time = l->l_slptime;
+		break;
+	}
+
+	case MACH_THREAD_SCHED_TIMESHARE_INFO: {
+		struct mach_policy_timeshare_info *pti;
+
+		if (req->req_count != (sizeof(*pti) / sizeof(int))) /* 5 */
+			return mach_msg_error(args, EINVAL);
+
+		pti = (struct mach_policy_timeshare_info *)rep->rep_out;
+
+		pti->max_priority = l->l_usrpri;
+		pti->base_priority = l->l_usrpri;
+		pti->cur_priority = l->l_usrpri;
+		pti->depressed = 0;
+		pti->depress_priority = l->l_usrpri;
+		break;
+	}
+
+	case MACH_THREAD_SCHED_RR_INFO:
+	case MACH_THREAD_SCHED_FIFO_INFO:
+		printf("Unimplemented thread_info flavor %d\n", 
+		    req->req_flavor);
+	default:
+		return mach_msg_error(args, EINVAL);
+		break;
+	}
+
+	rep->rep_count = req->req_count;
+	rep->rep_out[rep->rep_count + 1] = 8; /* This is the trailer */
+
+	*msglen = sizeof(*rep) + ((req->req_count - 12) * sizeof(int));
+
 	return 0;
 }
