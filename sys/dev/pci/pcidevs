@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.427 2002/05/19 00:17:34 sommerfeld Exp $
+$NetBSD: pcidevs,v 1.428 2002/05/19 16:00:19 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1996,7 +1996,9 @@ product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
-product TRIONES HPT366          0x0004  HPT366/370 IDE Controller
+product TRIONES HPT366		0x0004  HPT366/370 IDE Controller
+product TRIONES HPT372		0x0005  HPT372 IDE Controller
+product TRIONES HPT374		0x0008  HPT374 IDE Controller
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
