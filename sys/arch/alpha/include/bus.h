@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.42 2001/03/07 22:42:16 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.43 2001/06/21 12:15:03 wiz Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -583,7 +583,7 @@ struct alpha_bus_dma_tag {
 	/*
 	 * Some chipsets have a built-in boundary constraint, independent
 	 * of what the device requests.  This allows that boundary to
-	 * be specified.  If the device has a more restrictive contraint,
+	 * be specified.  If the device has a more restrictive constraint,
 	 * the map will use that, otherwise this boundary will be used.
 	 * This value is ignored if 0.
 	 */
