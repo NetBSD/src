@@ -31,9 +31,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)npx.c	7.2 (Berkeley) 5/12/91
+ *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
+ *	$Id: npx.c,v 1.4 1993/05/20 14:35:11 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/npx.c,v 1.3 1993/05/09 23:03:41 deraadt Exp $";
 #include "npx.h"
 #if NNPX > 0
 
@@ -315,11 +315,17 @@ npxattach(dvp)
 		printf("npx%d: exception 16\n", dvp->id_unit);
 	else if (npx_irq13)
 		;
-	else if (npx_exists)
-		printf("npx%d: error reporting broken, using emulator\n",
-			dvp->id_unit);
-	else
-		printf("npx%d: emulator\n", dvp->id_unit);
+	else {
+#ifdef MATH_EMULATE
+		if (npx_exists)
+			printf("npx%d: error reporting broken, using emulator\n",
+				dvp->id_unit);
+		else
+			printf("npx%d: emulator\n", dvp->id_unit);
+#else
+		panic("npxattach: no math emulator in kernel!");
+#endif
+	}
 	npxinit(__INITIAL_NPXCW__);
 	return (1);
 }
