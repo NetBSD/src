@@ -1,4 +1,4 @@
-.\"	$NetBSD: loadfont.1,v 1.4 1998/01/09 08:04:18 perry Exp $
+.\"	$NetBSD: loadfont.1,v 1.5 1998/04/29 20:11:30 fair Exp $
 .\"
 .\" Copyright (c) 1992, 1995 Hellmuth Michaelis
 .\"
@@ -35,7 +35,7 @@
 .Dt LOADFONT 1
 .Sh NAME
 .Nm loadfont
-.Nd EGA/VGA fontloader for pcvt video driver.
+.Nd EGA/VGA font loader for pcvt video driver.
 .Sh SYNOPSIS
 .Nm loadfont
 .Op Fl c Ar charsetno
@@ -45,28 +45,47 @@
 .Op Fl s Ar scanlines
 .Sh DESCRIPTION
 The
-.Nm loadfont
-utility is used to load fonts needed for proper operation of the pcvt
-VT220 driver on EGA and VGA boards into the font ram of this boards.
+.Nm
+utility is used to load fonts required for proper operation of the pcvt
+.Tn VT220
+driver on
+.Tn EGA
+and
+.Tn VGA
+boards into the font
+.Tn RAM
+of these boards.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c
-Specifies the slot, the font is to load into. EGA boards have four 
-slots and VGA boards have eight slots available for downloading fonts.
+Specifies the slot, the font is to load into.
+.Tn EGA
+boards have four slots and
+.Tn VGA
+boards have eight slots available for downloading fonts.
 .It Fl d
-Specifies the devicefile to use.
+Specifies the device file to use.
 .It Fl f
 Specifies the file which contains the font to be downloaded.
 .It Fl i
-Gives information what type(s) of font do currently reside in which slot.
-This is also the default behaviour if no options are specified on the commandline.
+Gives information what type(s) of font currently reside in which slot.
+This is also the default behaviour if no options are specified on
+the command line.
 .It Fl s
 Specifies the number of scanlines of the display.
 .El
 .Pp
-This utility is used only on EGA and VGA boards, as MDA, HCG and CGA boards
-do not have downloadable charactersets available.
+This utility is used only on
+.Tn EGA
+and
+.Tn VGA
+boards, as
+.Tn MDA ,
+.Tn HCG
+and
+.Tn CGA
+boards do not have downloadable character sets available.
 .Sh FILES
 The following fontfiles are available in the pcvt distribution:
 
@@ -83,11 +102,16 @@ The following fontfiles are available in the pcvt distribution:
 .Sh EXAMPLES
 The command
 .Dq Li loadfont -c0 -f/usr/share/misc/pcvtfonts/vt220l.816
-loads a 8x16 font containing the standard IBM characterset II into font slot
-0 on a VGA or EGA board.
+loads a 8x16 font containing the standard
+.Tn IBM
+character set II into font slot 0 on a
+.Tn VGA
+or
+.Tn EGA
+board.
 .Sh BUGS
 No known bugs
 .Sh SEE ALSO
 .Xr cursor 1 ,
 .Xr scon 1 ,
-.Xr pcvt 8
+.Xr pcvt 4
