@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.7 2003/10/27 01:11:47 kleink Exp $	*/
+/*	$NetBSD: ieee.h,v 1.8 2003/10/28 15:55:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  * v9 toolchain.
  */
 
-#ifdef __arch64__
+#if defined(__arch64__) || defined(_KERNEL)
 #define	EXT_EXPBITS	15
 #define	EXT_FRACBITS	112
 
@@ -94,4 +94,4 @@ union ieee_ext_u {
 	long double		extu_ld;
 	struct ieee_ext		extu_ext;
 };
-#endif /* __arch64__ */
+#endif /* __arch64__ || _KERNEL */
