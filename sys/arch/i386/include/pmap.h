@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43 2000/02/11 07:00:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.1 2000/02/20 17:45:52 sommerfeld Exp $	*/
 
 /*
  *
@@ -143,6 +143,7 @@
  * note that in the APTE_BASE space, the APDP appears at VA
  * "APDP_BASE" (0xfffff000).
  */
+/* XXX MP should we allocate one APDP_PDE per processor?? */
 
 /*
  * the following defines identify the slots used as described above.
@@ -336,11 +337,12 @@ struct pv_page {
  */
 
 #define PMAP_RR_MAX	16	/* max of 16 pages (64K) */
-
+#if 0
 struct pmap_remove_record {
 	int prr_npages;
 	vaddr_t prr_vas[PMAP_RR_MAX];
 };
+#endif
 
 /*
  * pmap_transfer_location: used to pass the current location in the
@@ -405,6 +407,12 @@ void		pmap_write_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
+
+#if defined(MULTIPROCESSOR)
+void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t));
+#endif /* MULTIPROCESSOR */
+void	pmap_tlb_dshootdown __P((pmap_t, vaddr_t, pt_entry_t));
+void	pmap_do_tlb_shootdown __P((void));
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
