@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_kernel.h,v 1.2 1998/09/08 17:12:48 rvb Exp $	*/
+/*	$NetBSD: coda_kernel.h,v 1.3 1998/09/15 02:02:58 rvb Exp $	*/
 
 /*
  * 
@@ -28,7 +28,7 @@
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
  * 
- * 	@(#) cfs/cfsk.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $ 
+ * 	@(#) coda/coda_kernel.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $ 
  */
 
 /* Macros to manipulate the queue */

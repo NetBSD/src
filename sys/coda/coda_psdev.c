@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.3 1998/09/12 15:05:48 rvb Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.4 1998/09/15 02:02:59 rvb Exp $	*/
 
 /*
  * 
@@ -28,7 +28,7 @@
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
  * 
- * 	@(#) cfs/cfs_psdev.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ * 	@(#) coda/coda_psdev.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
  */
 
 /* 
@@ -52,6 +52,9 @@
 /*
  * HISTORY
  * $Log: coda_psdev.c,v $
+ * Revision 1.4  1998/09/15 02:02:59  rvb
+ * Final piece of rename cfs->coda
+ *
  * Revision 1.3  1998/09/12 15:05:48  rvb
  * Change cfs/CFS in symbols, strings and constants to coda/CODA
  * to avoid fs conflicts.
@@ -169,10 +172,10 @@ extern int coda_nc_initialized;    /* Set if cache has been initialized */
 #include <sys/poll.h>
 #include <sys/select.h>
 
-#include <cfs/coda.h>
-#include <cfs/cnode.h>
-#include <cfs/cfsnc.h>
-#include <cfs/cfsio.h>
+#include <coda/coda.h>
+#include <coda/cnode.h>
+#include <coda/coda_namecache.h>
+#include <coda/coda_io.h>
 
 #define CTL_C
 
@@ -563,8 +566,9 @@ coda_call(mntinfo, inSize, outSize, buffer)
 	int error;
 #ifdef	CTL_C
 	struct proc *p = curproc;
-	unsigned int psig_omask = p->p_sigmask;
+	sigset_t psig_omask;
 	int i;
+	psig_omask = p->p_siglist;	/* array assignment */
 #endif
 	if (mntinfo == NULL) {
 	    /* Unlikely, but could be a race condition with a dying warden */
@@ -624,22 +628,31 @@ coda_call(mntinfo, inSize, outSize, buffer)
 	    	break;
 	    else if (error == EWOULDBLOCK) {
 		    printf("coda_call: tsleep TIMEOUT %d sec\n", 2+2*i);
-    	    } else if (p->p_siglist == sigmask(SIGIO)) {
-		    p->p_sigmask |= p->p_siglist;
+    	    } else if (sigismember(&p->p_siglist, SIGIO)) {
+		    sigaddset(&p->p_sigmask, SIGIO);
 		    printf("coda_call: tsleep returns %d SIGIO, cnt %d\n", error, i);
 	    } else {
+		    sigset_t tmp;
+		    tmp = p->p_siglist;		/* array assignment */
+		    sigminusset(&p->p_sigmask, &tmp);
+
 		    printf("coda_call: tsleep returns %d, cnt %d\n", error, i);
-		    printf("coda_call: siglist = %x, sigmask = %x, mask %x\n",
-			    p->p_siglist, p->p_sigmask,
-			    p->p_siglist & ~p->p_sigmask);
+		    printf("coda_call: siglist = %x.%x.%x.%x, sigmask = %x.%x.%x.%x, mask %x.%x.%x.%x\n",
+			    p->p_siglist.__bits[0], p->p_siglist.__bits[1],
+			    p->p_siglist.__bits[2], p->p_siglist.__bits[3],
+			    p->p_sigmask.__bits[0], p->p_sigmask.__bits[1],
+			    p->p_sigmask.__bits[2], p->p_sigmask.__bits[3],
+			    tmp.__bits[0], tmp.__bits[1], tmp.__bits[2], tmp.__bits[3]);
 		    break;
-		    p->p_sigmask |= p->p_siglist;
-		    printf("coda_call: new mask, siglist = %x, sigmask = %x, mask %x\n",
-			    p->p_siglist, p->p_sigmask,
-			    p->p_siglist & ~p->p_sigmask);
+		    sigminusset(&p->p_sigmask, &p->p_siglist);
+		    printf("coda_call: siglist = %x.%x.%x.%x, sigmask = %x.%x.%x.%x\n", 
+			    p->p_siglist.__bits[0], p->p_siglist.__bits[1],
+			    p->p_siglist.__bits[2], p->p_siglist.__bits[3],
+			    p->p_sigmask.__bits[0], p->p_sigmask.__bits[1],
+			    p->p_sigmask.__bits[2], p->p_sigmask.__bits[3]);
 	    }
 	} while (error && i++ < 128);
-	p->p_sigmask = psig_omask;
+	p->p_siglist = psig_omask;	/* array assignment */
 #else
 	(void) tsleep(&vmp->vm_sleep, coda_call_sleep, "coda_call", 0);
 #endif
@@ -708,3 +721,4 @@ coda_call(mntinfo, inSize, outSize, buffer)
 		error = ((struct coda_out_hdr *)buffer)->result;
 	return(error);
 }
+
