@@ -8,7 +8,7 @@ MAN+=	openssl_ca.1 openssl_dsa.1 openssl_gendsa.1 openssl_rsa.1 \
 	openssl_s_server.1 openssl_ciphers.1 openssl_s_client.1 openssl_dgst.1 \
 	openssl_verify.1 openssl_pkcs12.1 openssl_pkcs7.1 openssl_crl2pkcs7.1 \
 	openssl_pkcs8.1 openssl_x509.1
-MAN1+=	openssl.1
+MAN+=	openssl.1
 #MAN+=	CA.pl.1 
 
 MAN+=	ERR_GET_LIB.3 RSA_sign_ASN1_OCTET_STRING.3 DSA_dup_DH.3 \
