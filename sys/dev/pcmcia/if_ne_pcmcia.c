@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.90 2002/05/08 18:18:55 chris Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.90.4.1 2002/06/11 01:45:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.90 2002/05/08 18:18:55 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.90.4.1 2002/06/11 01:45:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,6 +273,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_DLINK_DE650,
       0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
+
+    { PCMCIA_STR_DLINK_DFE670TXD,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
+      PCMCIA_CIS_DLINK_DFE670TXD,
+      0, -1, { 0x00, 0x50, 0xba }, NE2000DVF_DL10019 },
 
     { PCMCIA_STR_MELCO_LPC2_TX,
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
@@ -696,6 +701,7 @@ ne_pcmcia_attach(parent, self, aux)
 	i = 0;
 again:
 	enaddr = NULL;			/* Ask ASIC by default */
+	typestr = "";			/* clear previous card-type */
 	for (; i < NE2000_NDEVS; i++) {
 		ne_dev = ne2000_match(pa->card, pa->pf->number, i);
 		if (ne_dev != NULL) {
@@ -709,8 +715,11 @@ again:
 		}
 	}
 	if (i == NE2000_NDEVS) {
-		printf("%s: can't match ethernet vendor code\n",
-		    dsc->sc_dev.dv_xname);
+		printf("%s (manf %08x prod %08x) cis %s %s: "
+		       "can't match ethernet vendor code\n",
+		       dsc->sc_dev.dv_xname,
+		       pa->manufacturer, pa->product,
+		       pa->card->cis1_info[0], pa->card->cis1_info[1]);
 		goto fail_5;
 	}
 
