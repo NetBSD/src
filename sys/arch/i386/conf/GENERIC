@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.400.2.23 2003/01/07 21:11:35 thorpej Exp $
+# $NetBSD: GENERIC,v 1.400.2.24 2003/01/08 16:58:22 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.400.2.23 $"
+#ident 		"GENERIC-$Revision: 1.400.2.24 $"
 
 maxusers	32		# estimated number of users
 
@@ -36,8 +36,8 @@ options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
-# eliminate delay no-ops in I/O; recommended on all but very old machines
-#options 	DUMMY_NOPS
+# insert delay no-ops in interrupts; recommended on very old machines
+#options 	PIC_DELAY
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -272,7 +272,7 @@ cpu* at mainbus?
 #fdc* 		at acpi?		# Floppy disk controller
 #lpt* 		at acpi?		# Parallel port
 #npx*		at acpi?		# Math coprocessor
-#pckbc* 	at acpi?		# PC keyboard controller
+#pckbc*  	at acpi?		# PC keyboard controller
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.46.2.10 2002/12/11 06:51:44 thorpej Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.46.2.11 2003/01/08 17:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.46.2.10 2002/12/11 06:51:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.46.2.11 2003/01/08 17:04:02 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -546,10 +546,7 @@ lfs_vfree(void *v)
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
 	}
-	if (ip->i_flag & IN_ADIROP) {
-		--fs->lfs_nadirop;
-		ip->i_flag &= ~IN_ADIROP;
-	}
+	lfs_unmark_vnode(vp);
 
 	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);
 	ip->i_flag &= ~IN_ALLMOD;

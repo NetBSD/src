@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.2.13 2002/12/29 20:57:20 thorpej Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.2.14 2003/01/08 17:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.13 2002/12/29 20:57:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.14 2003/01/08 17:04:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,11 +337,11 @@ lfs_inactive(void *v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
 
-	if (ip->i_flag & IN_ADIROP)
-		--ip->i_lfs->lfs_nadirop;
-	ip->i_flag &= ~IN_ADIROP;
+	KASSERT(VTOI(ap->a_vp)->i_ffs_nlink == VTOI(ap->a_vp)->i_ffs_effnlink);
+
+	lfs_unmark_vnode(ap->a_vp);
+
 	return ufs_inactive(v);
 }
 
@@ -409,9 +409,9 @@ lfs_set_dirop(struct vnode *vp, struct vnode *vp2)
 	fs->lfs_doifile = 1;						
 
 	/* Hold a reference so SET_ENDOP will be happy */
-	lfs_vref(vp);
-	if (vp2 != NULL)
-		lfs_vref(vp2);
+	vref(vp);
+	if (vp2)
+		vref(vp2);
 
 	return 0;
 
@@ -432,9 +432,9 @@ unreserve:
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
 	lfs_reserve((fs), vp, vp2, -NRESERVE(fs)); /* XXX */		\
-	lfs_vunref(vp);							\
-	if (vp2 != NULL)						\
-		lfs_vunref(vp2);					\
+	vrele(vp);							\
+	if (vp2)							\
+		vrele(vp2);						\
 }
 
 #define	MARK_VNODE(dvp)  do {                                           \
@@ -965,6 +965,8 @@ lfs_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error;
+
+	KASSERT(VTOI(vp)->i_ffs_nlink == VTOI(vp)->i_ffs_effnlink);
 
 	LFS_CLR_UINO(VTOI(vp), IN_ALLMOD);
 	if ((error = ufs_reclaim(vp, ap->a_p)))
