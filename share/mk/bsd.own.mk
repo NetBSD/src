@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.386 2003/10/28 07:09:03 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.387 2003/10/28 07:22:55 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -33,11 +33,11 @@ TOOLCHAIN_MISSING=	no
 #
 # not working:
 #
-#    ${MACHINE_ARCH} == "m68000" ||
 #    ${MACHINE_ARCH} == "sh3eb" ||
 #    ${MACHINE_ARCH} == "vax" ||
 # mostly working:
 #    ${MACHINE_ARCH} == "sh3el" ||
+#    ${MACHINE_ARCH} == "m68000" ||
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "armeb" || \
@@ -65,12 +65,11 @@ USE_TOOLS_TOOLCHAIN?=yes
 # Transitional for toolchain upgrade to GDB5.3
 #
 # not ported:
-#	${MACHINE_ARCH} == "armeb"
-#	${MACHINE_ARCH} == "hppa"
-#	${MACHINE_ARCH} == "m68000"
-#	${MACHINE_ARCH} == "sh3eb"
+#    ${MACHINE_ARCH} == "hppa" ||
 # in progress:
-#	${MACHINE_ARCH} == "arm"
+#    ${MACHINE_ARCH} == "arm" ||
+#    ${MACHINE_ARCH} == "armeb" ||
+#    ${MACHINE_ARCH} == "m68000" ||
 # working:
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "i386" || \
@@ -78,6 +77,7 @@ USE_TOOLS_TOOLCHAIN?=yes
     ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "sh3eb" || \
     ${MACHINE_ARCH} == "sh3el" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
