@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1.1.5 1997/11/22 09:13:50 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.1.1.6 1998/05/18 06:53:54 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -129,7 +129,7 @@ void discover_interfaces (state)
 #endif
 
 #ifdef SKIP_DUMMY_INTERFACES
-		if (!strncmp (ifr.ifr_name, "dummy", 5))
+		if (!strncmp (ifp -> ifr_name, "dummy", 5))
 			continue;
 #endif
 
@@ -210,6 +210,16 @@ void discover_interfaces (state)
 			      case ARPHRD_ETHER:
 				tmp -> hw_address.hlen = 6;
 				tmp -> hw_address.htype = ARPHRD_ETHER;
+				memcpy (tmp -> hw_address.haddr,
+					sa.sa_data, 6);
+				break;
+
+#ifndef ARPHRD_IEEE802
+# define ARPHRD_IEEE802 HTYPE_IEEE802
+#endif
+			      case ARPHRD_IEEE802:
+				tmp -> hw_address.hlen = 6;
+				tmp -> hw_address.htype = ARPHRD_IEEE802;
 				memcpy (tmp -> hw_address.haddr,
 					sa.sa_data, 6);
 				break;
@@ -466,7 +476,7 @@ void dispatch ()
 
 		/* Not likely to be transitory... */
 		if (count < 0) {
-			if (errno == EAGAIN || ERRNO == EINTR)
+			if (errno == EAGAIN || errno == EINTR)
 				continue;
 			else
 				error ("poll: %m");
