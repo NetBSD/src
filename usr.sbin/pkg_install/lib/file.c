@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.50 2002/06/09 11:57:00 yamt Exp $	*/
+/*	$NetBSD: file.c,v 1.51 2002/06/09 14:14:50 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.50 2002/06/09 11:57:00 yamt Exp $");
+__RCSID("$NetBSD: file.c,v 1.51 2002/06/09 14:14:50 yamt Exp $");
 #endif
 #endif
 
@@ -143,7 +143,7 @@ typedef struct url_t {
 }       url_t;
 
 /* A table of valid leading strings for URLs */
-static url_t urls[] = {
+static const url_t urls[] = {
 	{"ftp://", 6},
 	{"http://", 7},
 	{NULL}
@@ -155,7 +155,7 @@ static url_t urls[] = {
 int
 URLlength(char *fname)
 {
-	url_t  *up;
+	const url_t *up;
 	int     i;
 
 	if (fname != (char *) NULL) {
