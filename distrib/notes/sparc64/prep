@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8.2.2 2004/06/15 23:12:34 he Exp $
+.\"	$NetBSD: prep,v 1.8.2.3 2004/10/04 05:23:09 jmc Exp $
 .
 .Ss2 Deciding on partition sizes
 .
@@ -65,7 +65,10 @@ signal from your terminal (the method of sending
 varies from terminal to terminal).
 .Pp
 If the ethernet address of your \*M system is
-.Li ff:ff:ff:ff:ff:ff ,
+.Li ff:ff:ff:ff:ff:ff
+(check with the Open Firmware
+.Dq banner
+command),
 then your NVRAM battery is dead and you will have trouble using
 ethernet (among other problems).  Read the Sun NVRAM/Hostid FAQ.
 .Lk http://www.squirrel.com/squirrel/sun-nvram-hostid.faq.html
@@ -119,6 +122,14 @@ would use:
 .(disp
 .No ok Ic "boot disk2:d netbsd-GENERIC"
 .disp)
+.Pp
+If you get
+.Dq .... Fast Data MMU Miss
+when booting after the NetBSD installation, your OpenBoot PROM may
+need updating. It has been reported that version 3.31 lead to a
+successful boot on an Ultra Enterprise 420R, while version 3.23 did
+not. Exact values may vary, depending on your hardware, current
+OpenBoot PROM version and moon phase.
 .Pp
 .
 .Ss2 Determining how to boot from an SBUS or PCI card
