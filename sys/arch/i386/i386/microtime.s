@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.9 1994/10/27 04:15:36 cgd Exp $	*/
+/*	$NetBSD: microtime.s,v 1.10 1994/11/04 19:10:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -99,7 +99,7 @@ ENTRY(microtime)
 	
 	inb	$IO_ICU1,%al	# read IRR in ICU
 	orb	_ipending,%al	# and soft intr reg
-	testb	$IRQ0,%al	# is a timer interrupt pending?
+	testb	$(1 << 0),%al	# is a timer interrupt pending?
 	jz	1f
 	addl	$11932,%edx	# add another tick
 	
