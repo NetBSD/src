@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.14 2002/05/26 00:12:13 wiz Exp $	*/
+/*	$NetBSD: io.c,v 1.15 2005/02/03 02:23:02 perry Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.14 2002/05/26 00:12:13 wiz Exp $");
+__RCSID("$NetBSD: io.c,v 1.15 2005/02/03 02:23:02 perry Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -209,7 +209,7 @@ newgame()
 	long  *p, *pe;
 	for (p = c, pe = c + 100; p < pe; *p++ = 0);
 	time(&initialtime);
-	srand(initialtime);
+	seedrand(initialtime);
 	lcreat((char *) 0);	/* open buffering for output to terminal */
 }
 
