@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.7 2003/09/06 13:16:17 jdolecek Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.8 2003/09/06 13:30:50 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7 2003/09/06 13:16:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.8 2003/09/06 13:30:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -77,6 +77,7 @@ static const struct {
 		{ 2, sizeof(struct sys_lfs_segwait_args), 0,
 			sys_lfs_segwait } },
 };
+static struct sysent lfs_osysent[LFS_SYSENT_CNT];
 
 /*
  * This is the vfsops table for the file system in question
@@ -121,8 +122,10 @@ lfs_load(lkmtp, cmd)
 	}
 
 	/* now, put in the lfs syscalls */
-	for(i=0; i < LFS_SYSENT_CNT; i++)
+	for(i=0; i < LFS_SYSENT_CNT; i++) {
+		lfs_osysent[i] = sysent[lfs_sysents[i].sysno];
 		sysent[lfs_sysents[i].sysno] = lfs_sysents[i].sysent;
+	}
 
 	return 0;
 }
@@ -144,9 +147,8 @@ lfs_unload(lkmtp, cmd)
 			panic("LKM lfs_unload(): syscall %d not lfs syscall",
 				lfs_sysents[i].sysno);
 		}
-		sysent[lfs_sysents[i].sysno].sy_narg = 0;
-		sysent[lfs_sysents[i].sysno].sy_argsize = 0;
-		sysent[lfs_sysents[i].sysno].sy_call = sys_nosys;
+
+		sysent[lfs_sysents[i].sysno] = lfs_osysent[i];
 	}
 
 	return 0;
