@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.1.1.1 1996/03/11 21:04:02 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.2 1996/03/11 21:41:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
