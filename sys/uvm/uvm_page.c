@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.92 2003/11/05 15:45:54 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.93 2003/12/21 11:38:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.92 2003/11/05 15:45:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.93 2003/12/21 11:38:46 simonb Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -233,8 +233,7 @@ uvm_page_init_buckets(struct pgfreelist *pgfl)
 
 	for (color = 0; color < uvmexp.ncolors; color++) {
 		for (i = 0; i < PGFL_NQUEUES; i++) {
-			TAILQ_INIT(&pgfl->pgfl_buckets[
-			    color].pgfl_queues[i]);
+			TAILQ_INIT(&pgfl->pgfl_buckets[color].pgfl_queues[i]);
 		}
 	}
 }
