@@ -7,6 +7,12 @@
 # virtual mem file system on /tmp using swap (NBS\0) scsi id 0 size 5M
 # /dev/sd0b	/tmp	mfs	rw,-s10240
 
+# amigados file system on /amiga (DOS/1) all amiga and unknown
+# partitions follow bsd ones in the lettering.  Also it is
+# recomended that you mount it on a dir that matches the volume name
+# and then slinks will resolve correctly.
+# /dev/sd0e	/amiga	ados	rw
+
 # process file system
 # procfs	/proc	procfs	ro
 
