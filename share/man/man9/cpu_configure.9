@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_configure.9,v 1.1 2002/05/25 02:16:36 gmcgarry Exp $
+.\"     $NetBSD: cpu_configure.9,v 1.2 2002/05/25 11:08:21 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,16 +55,16 @@ function returns, interrupts must be enabled.
 performs the following tasks:
 .Bl -bullet
 .It
-initialise soft interrupts (see
+initialize soft interrupts (see
 .Xr softintr 9 )
 .It
-initialise CPU interrupts and SPLs
+initialize CPU interrupts and SPLs
 .It
 call
 .Fn config_rootfound
 for "mainbus"
 .It
-complete any initialisation deferred from
+complete any initialization deferred from
 .Fn cpu_startup .
 .El
 .Sh SEE ALSO
