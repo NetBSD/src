@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.21 2001/01/09 04:42:49 thorpej Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.22 2001/01/09 05:04:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,6 +48,7 @@ struct sl_softc {
 	struct	ifnet sc_if;		/* network-visible interface */
 	int	sc_unit;		/* XXX unit number */
 	struct	ifqueue sc_fastq;	/* interactive output queue */
+	struct	ifqueue sc_inq;		/* input queue */
 	struct	tty *sc_ttyp;		/* pointer to tty structure */
 	u_char	*sc_mp;			/* pointer to next available buf char */
 	u_char	*sc_ep;			/* pointer to last available buf char */
@@ -87,6 +88,7 @@ int	sloutput __P((struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *));
 void	slstart __P((struct tty *));
 int	sltioctl __P((struct tty *, u_long, caddr_t, int));
+void	slintr __P((void));
 #endif /* _KERNEL */
 
 #endif /* _NET_IF_SLVAR_H_ */
