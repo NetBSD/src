@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.10 1998/01/12 09:51:34 thorpej Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.11 1998/01/19 02:51:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -103,6 +103,9 @@ struct tcbus_attach_args {
 	void	(*tba_intr_establish) __P((struct device *, void *,
 		    tc_intrlevel_t, int (*)(void *), void *));
 	void	(*tba_intr_disestablish) __P((struct device *, void *));
+#ifdef __alpha__
+	bus_dma_tag_t (*tba_get_dma_tag) __P((int));
+#endif
 };
 
 /*
@@ -110,6 +113,9 @@ struct tcbus_attach_args {
  */
 struct tc_attach_args {
 	bus_space_tag_t ta_memt;
+#ifdef __alpha__
+	bus_dma_tag_t	ta_dmat;
+#endif
 
 	char		ta_modname[TC_ROM_LLEN+1];
 	u_int		ta_slot;
