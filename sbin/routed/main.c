@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2000/10/10 20:24:54 is Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2001/01/10 03:47:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@ static char sccsid[] __attribute__((unused)) = "@(#)main.c	8.1 (Berkeley) 6/5/93
 #define __COPYRIGHT(a) char copyright[] = a;
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.25 2000/10/10 20:24:54 is Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2001/01/10 03:47:41 lukem Exp $");
 #endif
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
@@ -120,7 +120,7 @@ main(int argc,
 	 */
 	signal(SIGHUP, SIG_IGN);
 
-	openlog("routed", LOG_PID | LOG_ODELAY, LOG_DAEMON);
+	openlog("routed", LOG_PID, LOG_DAEMON);
 	ftrace = stdout;
 
 	gettimeofday(&clk, 0);
