@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.15 1997/03/15 18:12:16 is Exp $	*/
+/*	$NetBSD: net.c,v 1.16 1997/06/26 19:11:42 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -42,7 +42,11 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#ifdef _STANDALONE
+#include <lib/libkern/libkern.h>
+#else
 #include <string.h>
+#endif
 
 #include <net/if.h>
 
