@@ -1,6 +1,8 @@
-#	$Id: Makefile,v 1.7 1993/08/02 17:18:45 mycroft Exp $
+#	$Id: Makefile,v 1.8 1993/08/06 01:20:44 mycroft Exp $
 
 PROG=		expr
+# XXX bsd.prog.mk should be able to generate this from expr.y without SRCS
+SRCS=		expr.c
 CFLAGS+=	-I.
 LDADD=		-lgnuregex
 DPADD=		/usr/lib/libgnuregex.a
