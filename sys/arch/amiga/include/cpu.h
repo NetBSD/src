@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 1995/05/11 23:05:50 chopps Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 1995/05/12 00:21:54 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,8 +56,7 @@
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
-#define	BROKEN_SWAP
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+#define	cpu_swapout(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
