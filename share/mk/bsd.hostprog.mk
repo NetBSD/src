@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.23 2002/01/03 22:45:26 tv Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.24 2002/03/29 18:58:19 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -48,7 +48,6 @@ LIBWRAP?=	/usr/lib/libwrap.a
 LIBY?=		/usr/lib/liby.a
 LIBZ?=		/usr/lib/libz.a
 
-CFLAGS+=	${COPTS}
 HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
 
 # Override these:
