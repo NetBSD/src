@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.19 1996/05/19 21:24:24 cgd Exp $
+#	$NetBSD: files.alpha,v 1.19.4.1 1996/05/25 22:06:56 jtc Exp $
 #
 # alpha-specific configuration info
 
@@ -233,7 +233,8 @@ file	dev/cons.c
 # Optional/miscellaneous files
 #
 
-file	arch/alpha/alpha/in_cksum.c		inet
+#file	arch/alpha/alpha/in_cksum.c		inet
+file	netinet/in_cksum.c			inet
 file	netns/ns_cksum.c			ns
 
 # XXX
