@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.23 2002/03/17 19:40:41 atatat Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.23.6.1 2004/03/12 06:05:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
@@ -247,6 +247,13 @@ vrpiuattach(struct device *parent, struct device *self, void *aux)
 			      { 912,  80, 799,   0 },
 			      { 912, 966, 799, 599 } } } },
 			{ &platid_mask_MACH_NEC_MCR_730,
+			  { 0, 0, 799, 599,
+			    4,
+			    { { 115,  80,   0,   0 },
+			      { 115, 966,   0, 599 },
+			      { 912,  80, 799,   0 },
+			      { 912, 966, 799, 599 } } } },
+			{ &platid_mask_MACH_NEC_MCR_730A,
 			  { 0, 0, 799, 599,
 			    4,
 			    { { 115,  80,   0,   0 },
