@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.2 1997/10/06 06:54:12 lukem Exp $ */
+/*	$NetBSD: hash.h,v 1.3 2002/07/06 01:00:15 wiz Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -60,10 +60,10 @@ struct group_entry {
 
 #define LINSIZ 1024 * 10
 
-char   *lookup __P((struct group_entry **, const char *));
-void	mstore __P((struct member_entry **, const char *, const char *, const
-char *));
-void	store __P((struct group_entry **, const char *, const char *));
-void	rng_endnetgrent __P((void));
-int	rng_getnetgrent __P((char **, char **, char **));
-void	rng_setnetgrent __P((const char *));
+char   *lookup(struct group_entry **, const char *);
+void	mstore(struct member_entry **, const char *, const char *,
+	       const char *);
+void	store(struct group_entry **, const char *, const char *);
+void	rng_endnetgrent(void);
+int	rng_getnetgrent(char **, char **, char **);
+void	rng_setnetgrent(const char *);
