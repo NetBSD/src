@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.1.1.1 2002/12/11 13:43:16 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.2 2002/12/11 14:30:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,10 +38,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: db.c,v 1.1.1.1 2002/12/11 13:43:16 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.2 2002/12/11 14:30:53 lukem Exp $");
 #endif /* not lint */
 
-#include <assert.h>
 #include <db.h>
 #include <ctype.h>
 #include <err.h>
@@ -231,6 +230,7 @@ main(int argc, char *argv[])
 			btreeinfo.lorder = 1234;
 		if (flags & F_DUPLICATES)
 			btreeinfo.flags = R_DUP;
+		btreeinfo.cachesize = 1024 * 1024;
 		oi.info = &btreeinfo;
 		oi.dbtype = DB_BTREE;
 	} else if (strcmp(oi.type, "hash") == 0) {
@@ -239,6 +239,7 @@ main(int argc, char *argv[])
 			hashinfo.lorder = 4321;
 		else if (flags & F_ENDIAN_LITTLE)
 			hashinfo.lorder = 1234;
+		hashinfo.cachesize = 1024 * 1024;
 		oi.info = &hashinfo;
 		oi.dbtype = DB_HASH;
 	} else {
@@ -423,9 +424,6 @@ parseline(FILE *fp, const char *sep, char **kp, char **vp)
 {
 	size_t	len;
 	char	*key, *val;
-
-	assert(kp != NULL);
-	/* vp may be NULL */
 
 	key = fgetln(fp, &len);
 	if (key == NULL)		/* end of file, or error */
