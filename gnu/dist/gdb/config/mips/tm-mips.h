@@ -35,7 +35,7 @@ struct value;
 #include "coff/symconst.h"
 
 #if !defined (TARGET_BYTE_ORDER)
-#define TARGET_BYTE_ORDER LITTLE_ENDIAN
+#define TARGET_BYTE_ORDER_SELECTABLE
 #endif
 
 #if !defined (GDB_TARGET_IS_MIPS64)
