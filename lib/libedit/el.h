@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.2 1997/01/11 06:47:53 lukem Exp $	*/
+/*	$NetBSD: el.h,v 1.3 1997/12/20 19:15:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 #define EL_BUFSIZ	1024		/* Maximum line size		*/
 
 #define HANDLE_SIGNALS	1
+#define NO_TTY		2
 
 typedef int bool_t;			/* True or not			*/
 

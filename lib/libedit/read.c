@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.6 1997/10/26 20:19:48 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.7 1997/12/20 19:15:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.6 1997/10/26 20:19:48 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.7 1997/12/20 19:15:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -341,14 +341,16 @@ el_gets(el, nread)
     if (el->el_flags & HANDLE_SIGNALS)
 	sig_set(el);
 
-    if (!isatty(el->el_infd)) {
+    if (el->el_flags & NO_TTY) {
 	char *cp = el->el_line.buffer;
 
-	while (read_char(el, cp) == 1)
-		if (*cp++ == '\n' || cp == el->el_line.limit) {
+	while (read_char(el, cp) == 1) {
+		cp++;
+		if (cp == el->el_line.limit || *cp == '\r' || *cp == '\n') {
 			--cp;
 			break;
 		}
+	}
 	el->el_line.cursor = el->el_line.lastchar = cp;
 	*cp = '\0';
 	if (nread)
