@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.12 2001/07/18 16:51:39 thorpej Exp $ */
+/*	$NetBSD: if_ni.c,v 1.13 2001/07/18 16:53:52 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -654,7 +654,7 @@ niintr(void *arg)
 			msg = (struct ni_msg *)data;
 			switch (msg->nm_opcode2) {
 				case NI_WPARAM:
-					bcopy(((struct ni_param *)&msg->nm_text[0])->np_dpa, sc->sc_enaddr, ETHER_ADDR_LEN);
+					memcpy(sc->sc_enaddr, ((struct ni_param *)&msg->nm_text[0])->np_dpa, ETHER_ADDR_LEN);
 					endwait = 1;
 					break;
 
@@ -850,7 +850,7 @@ ni_setup(struct ni_softc *sc)
 				}
 				msg->nm_len += 8;
 				ptdb->np_adrlen++;
-				bcopy(enm->enm_addrlo, ptdb->np_mcast[i++],
+				memcpy(ptdb->np_mcast[i++], enm->enm_addrlo,
 				    ETHER_ADDR_LEN);
 				ETHER_NEXT_MULTI(step, enm);
 			}
