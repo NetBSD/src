@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.1 1999/09/13 10:31:21 itojun Exp $	*/
+/*	$NetBSD: reg.h,v 1.2 2000/04/13 15:41:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,6 +83,8 @@ struct reg {
 	int r_spc;
 	int r_ssr;
 	int r_pr;
+	int r_mach;
+	int r_macl;
 	int r_r15;
 	int r_r14;
 	int r_r13;
