@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk48txx.4,v 1.4 2002/01/21 17:54:10 wiz Exp $
+.\"	$NetBSD: mk48txx.4,v 1.5 2002/01/21 18:48:31 kleink Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,8 @@ Specify bus space access to the chip's non-volatile memory
 .It Fa model
 The chip model which this instance should serve. Must be one of
 .Dq mk48t02 ,
-.Dq mk48t08
+.Dq mk48t08 ,
+.Dq mk48t18
 or
 .Dq mk48t59 .
 .It Fa year0
@@ -93,6 +94,7 @@ The following models are supported:
 .Bl -tag -width -offset indent -compact
 .It Tn Mostek MK48T02
 .It Tn Mostek MK48T08
+.It Tn Mostek MK48T18
 .It Tn Mostek MK48T59
 .El
 .Sh SEE ALSO
