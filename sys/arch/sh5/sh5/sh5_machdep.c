@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_machdep.c,v 1.3 2002/09/12 12:37:49 scw Exp $	*/
+/*	$NetBSD: sh5_machdep.c,v 1.4 2002/10/05 11:01:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,9 +37,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/mount.h>
+#include <sys/reboot.h>
 #include <sys/user.h>
+
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
 #include <machine/param.h>
@@ -91,3 +96,54 @@ cpu_dumpconf()
 	dumpsize = 0;
 }
 
+int waittime = -1;
+
+void
+sh5_reboot(int howto, char *bootstr)
+{
+
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
+
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		waittime = 0;
+		vfs_shutdown();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
+		resettodr();
+	}
+
+	/* Disable interrupts. */
+	splhigh();
+
+#ifdef notyet
+	/* Do a dump if requested. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+		dumpsys();
+#endif
+
+haltsys:
+	doshutdownhooks();
+
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* for proper keyboard command handling */
+		cngetc();
+		cnpollc(0);
+	}
+
+	printf("rebooting...\n");
+	delay(1000000);
+
+	/*
+	 * The board-specific code (which called us) will deal with the
+	 * nitty-gritty of arranging for a reset/reboot.
+	 */
+}

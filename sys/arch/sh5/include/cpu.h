@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2002/10/02 16:19:59 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2002/10/05 11:01:13 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -251,6 +251,8 @@ extern u_int _sh5_ctc_ticks_per_us;
 struct pcb;
 extern void savectx(struct pcb *);
 extern void dumpsys(void);
+
+extern void sh5_reboot(int, char *);
 #endif /* _KERNEL */
 
 #endif /* _SH5_CPU_H_ */
