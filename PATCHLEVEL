@@ -66,3 +66,6 @@ could cause systems to hang during fork().
 [user/generic]: Fix rarpd so that it only opens one BPF per interface 
 and not per address. Fixes problem where interface aliases caused 
 rarpd to open extra BPF's.
+
+[kernel/i386]: Fix register constraints so gcc-2.7.2 can be used to
+build kernels.
