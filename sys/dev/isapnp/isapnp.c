@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.13 1997/11/30 15:13:31 drochner Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.14 1997/12/01 18:47:01 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -572,10 +572,14 @@ isapnp_print(aux, str)
 static int
 isapnp_submatch(parent, match, aux)
 	struct device *parent;
+#ifdef	__BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
 	struct cfdata *match;
+#endif
 	void *aux;
 {
-	struct cfdata *cf = match;
+	struct cfdata *cf = (struct cfdata *) match;
 	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 #endif
