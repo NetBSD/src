@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.61 1999/03/07 13:57:20 tron Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.61.2.1 1999/10/18 05:05:25 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -710,7 +710,9 @@ msdosfs_mountfs(devvp, mp, p, argp)
 error_exit:;
 	if (bp)
 		brelse(bp);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+	VOP_UNLOCK(devvp, 0);
 	if (pmp) {
 		if (pmp->pm_inusemap)
 			free(pmp->pm_inusemap, M_MSDOSFSFAT);
@@ -773,9 +775,10 @@ msdosfs_unmount(mp, mntflags, p)
 		    ((u_int *)vp->v_data)[1]);
 	}
 #endif
+	vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(pmp->pm_devvp,
 	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
-	vrele(pmp->pm_devvp);
+	vput(pmp->pm_devvp);
 	free(pmp->pm_inusemap, M_MSDOSFSFAT);
 	free(pmp, M_MSDOSFSMNT);
 	mp->mnt_data = (qaddr_t)0;
