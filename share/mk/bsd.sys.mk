@@ -1,9 +1,9 @@
-#	$NetBSD: bsd.sys.mk,v 1.93 2003/07/22 06:53:23 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.94 2003/07/28 02:38:33 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
-.if !target(__bsd_sys_mk__)
-__bsd_sys_mk__:
+.if !defined(_BSD_SYS_MK_)
+_BSD_SYS_MK_=1
 
 .if defined(WARNS)
 .if ${WARNS} > 0
@@ -182,4 +182,4 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 .y.h: ${.TARGET:.h=.c}
 .endif
 
-.endif	# __bsd_sys_mk__
+.endif	# !defined(_BSD_SYS_MK_)
