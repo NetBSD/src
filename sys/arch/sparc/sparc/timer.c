@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.2 2002/03/28 19:50:21 uwe Exp $ */
+/*	$NetBSD: timer.c,v 1.3 2002/03/28 20:04:27 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,9 +210,13 @@ timermatch_msiiep(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+#if defined(MSIIEP)
 	struct msiiep_attach_args *msa = aux;
 
 	return (strcmp(msa->msa_name, "timer") == 0);
+#else
+	return (0);
+#endif
 }
 
 /* ARGSUSED */
