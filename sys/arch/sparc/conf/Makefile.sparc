@@ -1,5 +1,5 @@
 # from:	@(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
-# $Id: Makefile.sparc,v 1.3 1993/11/29 05:37:56 deraadt Exp $
+# $Id: Makefile.sparc,v 1.4 1993/11/29 06:14:06 deraadt Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -112,9 +112,10 @@ genassym: genassym.o
 genassym.o: ${SPARC}/sparc/genassym.c
 	${CC} -c ${CFLAGS} -I/tmp/usr/include -I/usr/include ${PARAM} $<
 
-SRCS=	${CFILES} ${SPARC}/sparc/genassym.c ioconf.c param.c ${SPARC}/sparc/conf.c
+SRCS= ${CFILES} ${SPARC}/sparc/locore.s ${SPARC}/sparc/bsd_audiointr.s \
+	${SPARC}/sparc/genassym.c ioconf.c param.c vnode_if.c
 depend: .depend
-.depend: ${SRCS}
+.depend: ${SRCS} assym.s
 	mkdep ${COPTS} ${SRCS}
 
 links:
@@ -139,10 +140,5 @@ param.c: $S/conf/param.c
 
 param.o: param.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} param.c
-
-#vnode_if.c: $S/kern/vnode_if.sh $S/kern/vnode_if.src
-#	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
-#vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
-#	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
 %RULES
