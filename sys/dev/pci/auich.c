@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.7 2002/01/12 16:17:06 tsutsui Exp $	*/
+/*	$NetBSD: auich.c,v 1.8 2002/01/14 01:29:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.7 2002/01/12 16:17:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.8 2002/01/14 01:29:13 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +270,8 @@ static const struct auich_devtype {
 	    "i82801BA (ICH2) AC-97 Audio",	"ICH2" },
 	{ PCI_PRODUCT_INTEL_82440MX_ACA,
 	    "i82440MX AC-97 Audio",		"440MX" },
+	{ PCI_PRODUCT_INTEL_82801CA_AC,
+	    "i82801CA AC-97 Audio",		"i830M" },
 
 	{ 0,
 	    NULL,			NULL },
