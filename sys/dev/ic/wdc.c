@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.132 2003/09/23 16:27:10 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.133 2003/09/25 09:38:09 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.132 2003/09/23 16:27:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.133 2003/09/25 09:38:09 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -559,9 +559,10 @@ wdc_channel_attach(chp)
 		}
 	}
 
-	if (chp->wdc->cap & WDC_CAPABILITY_MODE)
+	if (chp->wdc->cap & WDC_CAPABILITY_MODE) {
 		chp->wdc->set_modes(chp);
-	wdc_print_modes(chp);
+		wdc_print_modes(chp);
+	}
 
 #if NATARAID > 0
 	if (chp->wdc->cap & WDC_CAPABILITY_RAID)
