@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.37 2001/06/18 06:53:45 lukem Exp $
+# $NetBSD: rc.subr,v 1.38 2001/11/19 03:18:32 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,6 +66,18 @@ checkyesno()
 		return 1
 		;;
 	esac
+}
+
+# reverse_list list
+#	print the list in reverse order
+#
+reverse_list()
+{
+	_revlist=
+	for _revfile in $*; do
+		_revlist="$_revfile $_revlist"
+	done
+	echo $_revlist
 }
 
 #
