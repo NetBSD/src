@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.34 1997/04/25 18:15:48 thorpej Exp $
+#	$NetBSD: Makefile,v 1.35 1997/05/18 20:31:22 kleink Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
 SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libl \
-	libm libntp libpcap libresolv librmt librpcsvc libskey libterm libutil \
-	libwrap liby libz
+	libm libntp libpcap libposix libresolv librmt librpcsvc libskey \
+	libterm libutil libwrap liby libz
 
 .if	make(clean) || make(cleandir)
 SUBDIR+=	libkvm libkvm.old libtelnet
