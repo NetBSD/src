@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.3 1999/04/05 06:56:24 cgd Exp $
+# $NetBSD: Makefile,v 1.4 1999/09/10 07:31:18 ross Exp $
 
 PROG = ustarboot
 
-SRCS = start.S boot.c loadfile.c blkdev.c prom.c prom_disp.S OSFpal.c
+SRCS = start.S boot.c blkdev.c prom.c prom_disp.S OSFpal.c
 SRCS+= prom_swpal.S booted_dev.c
 
 BOOT_RELOC = ${UNIFIED_LOAD_ADDRESS}

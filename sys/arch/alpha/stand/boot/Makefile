@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.27 1999/08/18 20:01:06 cgd Exp $
+# $NetBSD: Makefile,v 1.28 1999/09/10 07:31:17 ross Exp $
 
 PROG = boot
 
-SRCS = start.S boot.c loadfile.c blkdev.c prom.c prom_disp.S OSFpal.c
+SRCS = start.S boot.c blkdev.c prom.c prom_disp.S OSFpal.c
 SRCS+= filesystem.c prom_swpal.S booted_dev.c
 
 # XXX for debugging primary and secondary together
