@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.26 1998/12/17 23:25:29 explorer Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.27 1998/12/19 01:14:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: if_fxp.c,v 1.47 1998/01/08 23:42:29 eivind Exp
+ *	Id: if_fxp.c,v 1.58 1998/10/22 02:00:49 dg Exp
  */
 
 /*
@@ -479,9 +479,10 @@ fxp_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	/*
-	 * Let the system queue as many packets as we have TX descriptors.
+	 * Let the system queue as many packets as we have available
+	 * TX descriptors.
 	 */
-	ifp->if_snd.ifq_maxlen = FXP_NTXCB;
+	ifp->if_snd.ifq_maxlen = FXP_NTXCB - 1;
 	ether_ifattach(ifp, enaddr);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
@@ -732,8 +733,11 @@ fxp_start(ifp)
 	/*
 	 * We're finished if there is nothing more to add to the list or if
 	 * we're all filled up with buffers to transmit.
+	 * NOTE: One TxCB is reserved to guarantee that fxp_mc_setup() can add
+	 *       a NOP command when needed.
 	 */
-	while (ifp->if_snd.ifq_head != NULL && sc->tx_queued < FXP_NTXCB) {
+	while (ifp->if_snd.ifq_head != NULL &&
+	       sc->tx_queued < (FXP_NTXCB - 1)) {
 		struct mbuf *mb_head;
 		int segment, error;
 
@@ -819,8 +823,21 @@ fxp_start(ifp)
 		txp->tbd_number = dmamap->dm_nsegs;
 		txp->cb_soft.mb_head = mb_head;
 		txp->cb_status = 0;
-		txp->cb_command =
-		    FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF | FXP_CB_COMMAND_S;
+		if (sc->tx_queued != FXP_CXINT_THRESH - 1) {
+			txp->cb_command =
+			    FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF |
+			    FXP_CB_COMMAND_S;
+		} else {
+			txp->cb_command =
+			    FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF |
+			    FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
+
+			/*
+			 * Set a 5 second timer just in case we don't hear
+			 * from the card again.
+			 */
+			ifp->if_timer = 5;
+		}
 		txp->tx_threshold = tx_threshold;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 		    FXP_TXDESCOFF(sc, txp), FXP_TXDESCSIZE,
@@ -865,12 +882,6 @@ fxp_start(ifp)
 	if (old_queued != sc->tx_queued) {
 		fxp_scb_wait(sc);
 		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_RESUME);
-
-		/*
-		 * Set a 5 second timer just in case we don't hear from the
-		 * card again.
-		 */
-		ifp->if_timer = 5;
 	}
 }
 
@@ -893,6 +904,46 @@ fxp_intr(arg)
 		 * First ACK all the interrupts in this pass.
 		 */
 		CSR_WRITE_1(sc, FXP_CSR_SCB_STATACK, statack);
+
+		/*
+		 * Free any finished transmit mbuf chains.
+		 */
+		if (statack & FXP_SCB_STATACK_CXTNO) {
+			struct fxp_cb_tx *txp;
+			bus_dmamap_t txmap;
+
+			for (txp = sc->cbl_first; sc->tx_queued;
+			    txp = txp->cb_soft.next) {
+				bus_dmamap_sync(sc->sc_dmat,
+				    sc->sc_dmamap, FXP_TXDESCOFF(sc, txp),
+				    FXP_TXDESCSIZE,
+				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+				if ((txp->cb_status & FXP_CB_STATUS_C) == 0)
+					break;
+				if (txp->cb_soft.mb_head != NULL) {
+					txmap = txp->cb_soft.dmamap;
+					bus_dmamap_sync(sc->sc_dmat, txmap,
+					    0, txmap->dm_mapsize,
+					    BUS_DMASYNC_POSTWRITE);
+					bus_dmamap_unload(sc->sc_dmat, txmap);
+					m_freem(txp->cb_soft.mb_head);
+					txp->cb_soft.mb_head = NULL;
+				}
+				sc->tx_queued--;
+			}
+			sc->cbl_first = txp;
+			ifp->if_timer = 0;
+			ifp->if_flags &= ~IFF_OACTIVE;
+			if (sc->tx_queued == 0) {
+				if (sc->need_mcsetup)
+					fxp_mc_setup(sc);
+			}
+			/*
+			 * Try to start more packets transmitting.
+			 */
+			if (ifp->if_snd.ifq_head != NULL)
+				fxp_start(ifp);
+		}
 
 		/*
 		 * Process receiver interrupts. If a no-resource (RNR)
@@ -978,45 +1029,6 @@ fxp_intr(arg)
 				    FXP_SCB_COMMAND_RU_START);
 			}
 		}
-		/*
-		 * Free any finished transmit mbuf chains.
-		 */
-		if (statack & FXP_SCB_STATACK_CNA) {
-			struct fxp_cb_tx *txp;
-			bus_dmamap_t txmap;
-
-			for (txp = sc->cbl_first; sc->tx_queued;
-			    txp = txp->cb_soft.next) {
-				bus_dmamap_sync(sc->sc_dmat,
-				    sc->sc_dmamap, FXP_TXDESCOFF(sc, txp),
-				    FXP_TXDESCSIZE,
-				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-				if ((txp->cb_status & FXP_CB_STATUS_C) == 0)
-					break;
-				if (txp->cb_soft.mb_head != NULL) {
-					txmap = txp->cb_soft.dmamap;
-					bus_dmamap_sync(sc->sc_dmat, txmap,
-					    0, txmap->dm_mapsize,
-					    BUS_DMASYNC_POSTWRITE);
-					bus_dmamap_unload(sc->sc_dmat, txmap);
-					m_freem(txp->cb_soft.mb_head);
-					txp->cb_soft.mb_head = NULL;
-				}
-				sc->tx_queued--;
-			}
-			sc->cbl_first = txp;
-			ifp->if_flags &= ~IFF_OACTIVE;
-			if (sc->tx_queued == 0) {
-				ifp->if_timer = 0;
-				if (sc->need_mcsetup)
-					fxp_mc_setup(sc);
-			}
-			/*
-			 * Try to start more packets transmitting.
-			 */
-			if (ifp->if_snd.ifq_head != NULL)
-				fxp_start(ifp);
-		}
 	}
 
 #if NRND > 0
@@ -1044,6 +1056,8 @@ fxp_tick(arg)
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
 	struct fxp_stats *sp = &sc->control_data->fcd_stats;
+	struct fxp_cb_tx *txp;
+	bus_dmamap_t txmap;
 	int s = splnet();
 
 	ifp->if_opackets += sp->tx_good;
@@ -1052,6 +1066,9 @@ fxp_tick(arg)
 		ifp->if_ipackets += sp->rx_good;
 		sc->rx_idle_secs = 0;
 	} else {
+		/*
+		 * Receiver's been idle for another second.
+		 */
 		sc->rx_idle_secs++;
 	}
 	ifp->if_ierrors +=
@@ -1068,6 +1085,33 @@ fxp_tick(arg)
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}
+	/*
+	 * Release any xmit buffers that have completed DMA.  This isn't
+	 * strictly necessary to do here, but it's advantagous for mbufs
+	 * with external storage to be released in a timely manner rather
+	 * than being defered for a potentially long time.  This limits
+	 * the delay to a maximum of one second.
+	 */
+	for (txp = sc->cbl_first; sc->tx_queued;
+	    txp = txp->cb_soft.next) {
+		bus_dmamap_sync(sc->sc_dmat,
+		    sc->sc_dmamap, FXP_TXDESCOFF(sc, txp),
+		    FXP_TXDESCSIZE,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		if ((txp->cb_status & FXP_CB_STATUS_C) == 0)
+			break;
+		if (txp->cb_soft.mb_head != NULL) {
+			txmap = txp->cb_soft.dmamap;
+			bus_dmamap_sync(sc->sc_dmat, txmap,
+			    0, txmap->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, txmap);
+			m_freem(txp->cb_soft.mb_head);
+			txp->cb_soft.mb_head = NULL;
+		}
+		sc->tx_queued--;
+	}
+	sc->cbl_first = txp;
 
 	/*
 	 * If we haven't received any packets in FXP_MAC_RX_IDLE seconds,
@@ -1265,7 +1309,7 @@ fxp_init(xsc)
 	cbp->dma_bce =		0;	/* (disable) dma max counters */
 	cbp->late_scb =		0;	/* (don't) defer SCB update */
 	cbp->tno_int =		0;	/* (disable) tx not okay interrupt */
-	cbp->ci_int =		0;	/* interrupt on CU not active */
+	cbp->ci_int =		1;	/* interrupt on CU idle */
 	cbp->save_bf =		prm;	/* save bad frames */
 	cbp->disc_short_rx =	!prm;	/* discard short packets */
 	cbp->underrun_retry =	1;	/* retry mode (1) on DMA underrun */
@@ -1740,7 +1784,7 @@ fxp_ioctl(ifp, command, data)
  *
  * We have an artificial restriction that the multicast setup command
  * must be the first command in the chain, so we take steps to ensure
- * that. By requiring this, it allows us to keep the performance of
+ * that. By requiring this, it allows us to keep up the performance of
  * the pre-initialized command ring (esp. link pointers) by not actually
  * inserting the mcsetup command in the ring - i.e. it's link pointer
  * points to the TxCB ring, but the mcsetup descriptor itself is not part
@@ -1760,9 +1804,64 @@ fxp_mc_setup(sc)
 	struct ether_multistep step;
 	int nmcasts;
 
+	/*
+	 * If there are queued commands, we must wait until they are all
+	 * completed. If we are already waiting, then add a NOP command
+	 * with interrupt option so that we're notified when all commands
+	 * have been completed - fxp_start() ensures that no additional
+	 * TX commands will be added when need_mcsetup is true.
+	 */
 	if (sc->tx_queued) {
+		struct fxp_cb_tx *txp;
+
+		/*
+		 * need_mcsetup will be true if we are already waiting for the
+		 * NOP command to be completed (see below).  In this case,
+		 * bail.
+		 */
+		if (sc->need_mcsetup)
+			return;
 		sc->need_mcsetup = 1;
-		return;
+
+		/*
+		 * Add a NOP command with interrupt so that we are notified
+		 * when all TX commands have been processed.
+		 */
+		txp = sc->cbl_last->cb_soft.next;
+		txp->cb_soft.mb_head = NULL;
+		txp->cb_status = 0;
+		txp->cb_command = FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S |
+		    FXP_CB_COMMAND_I;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    FXP_TXDESCOFF(sc, txp), FXP_TXDESCSIZE,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Advance the end of the list forward.
+		 */
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    FXP_TXDESCOFF(sc, sc->cbl_last), FXP_TXDESCSIZE,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		sc->cbl_last->cb_command &= ~FXP_CB_COMMAND_S;
+		sc->cbl_last = txp;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    FXP_TXDESCOFF(sc, sc->cbl_last), FXP_TXDESCSIZE,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		sc->tx_queued++;
+
+		/*
+		 * Issue a resume in case the CU has just suspended.
+		 */
+		fxp_scb_wait(sc);
+		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_RESUME);
+
+		/*
+		 * Set a 5 second timer just in case we don't hear from the
+		 * card again.
+		 */
+		ifp->if_timer = 5;
 	}
 	sc->need_mcsetup = 0;
 
@@ -1773,7 +1872,8 @@ fxp_mc_setup(sc)
 	mcsp->cb_soft.mb_head = NULL;
 	mcsp->cb_soft.dmamap = NULL;
 	mcsp->cb_status = 0;
-	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_S;
+	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_S |
+	    FXP_CB_COMMAND_I;
 	mcsp->link_addr = sc->sc_cddma + FXP_CDOFF(fcd_txcbs[0].cb_status);
 
 	nmcasts = 0;
@@ -1823,6 +1923,6 @@ fxp_mc_setup(sc)
 	    sc->sc_cddma + FXP_CDOFF(fcd_mcscb.cb_status));
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 
-	ifp->if_timer = 5;
+	ifp->if_timer = 2;
 	return;
 }
