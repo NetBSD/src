@@ -1,5 +1,5 @@
-/*	$NetBSD: session.h,v 1.1.1.4 2001/09/27 02:00:51 itojun Exp $	*/
-/*	$OpenBSD: session.h,v 1.11 2001/07/02 13:59:15 markus Exp $	*/
+/*	$NetBSD: session.h,v 1.1.1.5 2001/11/07 06:20:27 itojun Exp $	*/
+/*	$OpenBSD: session.h,v 1.13 2001/10/10 22:18:47 markus Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -33,6 +33,6 @@ int	 session_open(Authctxt*, int);
 void	 session_input_channel_req(int, void *);
 void	 session_close_by_pid(pid_t, int);
 void	 session_close_by_channel(int, void *);
-int	 session_have_children(void);
+void	 session_destroy_all(void);
 
 #endif
