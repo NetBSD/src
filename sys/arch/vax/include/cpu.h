@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.42 2000/03/19 14:56:53 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -32,10 +32,17 @@
 
 #ifndef _VAX_CPU_H_
 #define _VAX_CPU_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#endif
+
+
 #ifdef _KERNEL
 
 #include <sys/cdefs.h>
 #include <sys/device.h>
+#include <sys/lock.h>
 
 #include <machine/mtpr.h>
 #include <machine/pcb.h>
@@ -45,7 +52,6 @@
 #define enablertclock()
 #define	cpu_wait(p)
 #define	cpu_swapout(p)
-#define	cpu_number()			0
 
 /*
  * All cpu-dependent info is kept in this struct. Pointer to the
@@ -74,6 +80,49 @@ struct clockframe {
         int     ps;
 };
 
+#if defined(MULTIPROCESSOR)
+
+struct cpu_info {
+	/*
+	 * Public members.
+	 */
+	struct proc *ci_curproc;        /* current owner of the processor */
+	struct simplelock ci_slock;     /* lock on this data structure */
+	cpuid_t ci_cpuid;               /* our CPU ID */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;           /* # of spin locks held */
+	u_long ci_simple_locks;         /* # of simple locks held */
+#endif
+	/*
+	 * Private members.
+	 */
+	int	ci_want_resched;	/* Should change process */
+};
+
+/*
+ * VAX internal CPU numbering is not sequential; therefore have a separate
+ * function call that returns the cpu_info struct for this CPU.
+ *
+ * For the master CPU (or only) this struct is allocated early in startup;
+ * for other CPUs it is allocated when the CPU is found.
+ */
+extern	int (*vax_cpu_number)(void);
+extern	struct cpu_info *(*vax_curcpu)(void);
+
+#define	cpu_number()		(*vax_cpu_number)()
+#define	curcpu()		(*vax_curcpu)()
+#define	need_resched() {curcpu()->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
+#define	cpu_boot_secondary_processors()
+
+#else /* MULTIPROCESSOR */
+
+extern	int     want_resched;   /* resched() was called */
+
+#define	cpu_number()			0
+#define need_resched() { want_resched++; mtpr(AST_OK,PR_ASTLVL); }
+
+#endif /* MULTIPROCESSOR */
+
 extern struct device *booted_from;
 extern int mastercpu;
 extern int bootdev;
@@ -81,15 +130,6 @@ extern int bootdev;
 #define	setsoftnet()	mtpr(12,PR_SIRR)
 #define setsoftclock()	mtpr(8,PR_SIRR)
 #define	todr()		mfpr(PR_TODR)
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-
-#define need_resched(){ \
-	want_resched++; \
-	mtpr(AST_OK,PR_ASTLVL); \
-	}
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -98,7 +138,6 @@ extern int bootdev;
 
 #define signotify(p)     mtpr(AST_OK,PR_ASTLVL);
 
-extern	int     want_resched;   /* resched() was called */
 
 /*
  * Give a profiling tick to the current process when the user profiling
