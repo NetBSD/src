@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pica,v 1.18 1997/11/12 23:12:21 thorpej Exp $
+#	$NetBSD: Makefile.pica,v 1.19 1998/03/03 07:38:40 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -52,7 +52,7 @@ GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mips2 -mcpu=r4000 -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-T${MIPS}/conf/kern.ldscript -Ttext 80080000  -e start ${GP}
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g -X -x
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
