@@ -1,6 +1,6 @@
-#	$Id: Makefile.inc,v 1.1 1993/10/13 05:41:11 cgd Exp $
+#	$Id: Makefile.inc,v 1.2 1993/10/15 06:21:09 cgd Exp $
 
-SRCS+=  imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
+SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	bcmp.c bzero.s ffs.s strcat.c strcmp.c strcpy.c strlen.s strncpy.c \
 	htonl.s htons.s ntohl.s ntohs.s
 
