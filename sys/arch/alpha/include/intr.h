@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.28 2000/06/05 21:47:19 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.29 2000/06/09 01:40:12 cgd Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,9 +115,16 @@
 #ifdef	_KERNEL
 
 /* IPL-lowering/restoring macros */
-#define splx(s)								\
-    ((s) == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
-#define	spllowersoftclock()	alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
+void	spl0(void);
+static __inline void
+splx(int s)
+{
+	if (s == ALPHA_PSL_IPL_0)
+		spl0();
+	else
+		alpha_pal_swpipl(s);
+}
+#define	spllowersoftclock()	((void)alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT))
 
 /* IPL-raising functions/macros */
 static __inline int
