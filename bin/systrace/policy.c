@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.13 2003/06/01 00:12:34 provos Exp $	*/
+/*	$NetBSD: policy.c,v 1.14 2003/06/03 04:33:44 provos Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.13 2003/06/01 00:12:34 provos Exp $");
+__RCSID("$NetBSD: policy.c,v 1.14 2003/06/03 04:33:44 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -237,6 +237,47 @@ systrace_newpolicy(const char *emulation, const char *name)
 	TAILQ_INIT(&tmp->prefilters);
 
 	return (tmp);
+}
+
+void
+systrace_freepolicy(struct policy *policy)
+{
+	struct filter *filter;
+	struct policy_syscall *pflq;
+
+	if (policy->flags & POLICY_CHANGED) {
+		if (systrace_writepolicy(policy) == -1)
+			fprintf(stderr, "Failed to write policy for %s\n",
+			    policy->name);
+	}
+
+	while ((filter = TAILQ_FIRST(&policy->prefilters)) != NULL) {
+		TAILQ_REMOVE(&policy->prefilters, filter, policy_next);
+		filter_free(filter);
+	}
+
+	while ((filter = TAILQ_FIRST(&policy->filters)) != NULL) {
+		TAILQ_REMOVE(&policy->filters, filter, policy_next);
+		filter_free(filter);
+	}
+
+	while ((pflq = SPLAY_ROOT(&policy->pflqs)) != NULL) {
+		SPLAY_REMOVE(syscalltree, &policy->pflqs, pflq);
+
+		while ((filter = TAILQ_FIRST(&pflq->flq)) != NULL) {
+			TAILQ_REMOVE(&pflq->flq, filter, next);
+			filter_free(filter);
+		}
+
+		free(pflq);
+	}
+
+	SPLAY_REMOVE(policytree, &policyroot, policy);
+	if (policy->policynr != -1)
+		SPLAY_REMOVE(polnrtree, &polnrroot, policy);
+
+	free((char *)policy->name);
+	free(policy);
 }
 
 struct filterq *

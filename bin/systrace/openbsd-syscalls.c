@@ -1,4 +1,4 @@
-/*	$NetBSD: openbsd-syscalls.c,v 1.7 2002/11/02 19:57:02 provos Exp $	*/
+/*	$NetBSD: openbsd-syscalls.c,v 1.8 2003/06/03 04:33:44 provos Exp $	*/
 /*	$OpenBSD: openbsd-syscalls.c,v 1.12 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -615,6 +615,11 @@ obsd_read(int fd)
 		intercept_child_info(msg.msg_pid,
 		    msg.msg_data.msg_child.new_pid);
 		break;
+#ifdef SYSTR_MSG_POLICYFREE
+	case SYSTR_MSG_POLICYFREE:
+		intercept_policy_free(msg.msg_policy);
+		break;
+#endif
 	}
 	return (0);
 }
