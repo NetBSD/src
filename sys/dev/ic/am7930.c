@@ -1,4 +1,5 @@
-/*	$NetBSD: am7930.c,v 1.2 1995/05/04 19:43:27 pk Exp $ */
+/*	$NetBSD: am7930.c,v 1.3 1995/06/28 04:31:17 cgd Exp $	*/
+
 /*
  * Copyright (c) 1995 Rolf Grossmann
  * All rights reserved.
@@ -27,7 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include "audio.h"
@@ -46,7 +46,7 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 
-#include <dev/ic/amd7930.h>
+#include <dev/ic/am7930reg.h>
 #include <sparc/dev/amd7930var.h>
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.17 1995/05/05 22:28:17 mycroft Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.18 1995/06/28 04:31:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -115,7 +115,7 @@
 
 #if PCVT_NETBSD > 9
 #include "dev/cons.h"
-#include "dev/ic/mc146818.h"
+#include "dev/ic/mc146818reg.h"
 #include "i386/isa/nvram.h"
 #else
 #include "i386/i386/cons.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.76 1995/06/26 05:47:40 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.77 1995/06/28 04:30:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -61,7 +61,7 @@
 #include <dev/isa/isadmavar.h>
 #include <i386/isa/fdreg.h>
 
-#include <dev/ic/mc146818.h>			/* for NVRAM access */
+#include <dev/ic/mc146818reg.h>			/* for NVRAM access */
 #include <i386/isa/nvram.h>
 
 #define FDUNIT(dev)	(minor(dev) / 8)

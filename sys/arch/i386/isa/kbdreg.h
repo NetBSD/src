@@ -1,10 +1,10 @@
-/*	$NetBSD: kbdreg.h,v 1.6 1995/01/29 02:58:29 cgd Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.7 1995/06/28 04:30:59 cgd Exp $	*/
 
 /*
  * Keyboard definitions
  */
 
-#include <dev/ic/i8042.h>
+#include <dev/ic/i8042reg.h>
 
 /* keyboard commands */
 #define	KBC_RESET	0xFF	/* reset the keyboard */

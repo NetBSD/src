@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.38 1995/04/17 12:09:03 cgd Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.39 1995/06/28 04:31:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -146,7 +146,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <i386/isa/isa_machdep.h>	/* XXX USES ISA HOLE DIRECTLY */
-#include <dev/ic/i82586.h>
+#include <dev/ic/i82586reg.h>
 #include <dev/isa/if_ieatt.h>
 #include <dev/isa/if_ie507.h>
 #include <dev/isa/elink.h>
