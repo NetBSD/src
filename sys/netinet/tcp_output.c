@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.35 1998/04/29 03:44:12 kml Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.36 1998/04/30 18:27:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -110,13 +110,12 @@ extern struct mbuf *m_copypack();
 #define MAX_TCPOPTLEN	32	/* max # bytes that go in options */
 
 /*
- * Knob to enable Congestion Window Monitoring.
+ * Knob to enable Congestion Window Monitoring, and control the
+ * the burst size it allows.  Default burst is 4 packets, per
+ * the Internet draft.
  */
-#ifdef TCP_CWM
-int	tcp_cwm = 1;
-#else
 int	tcp_cwm = 0;
-#endif
+int	tcp_cwm_burstsize = 4;
 
 static __inline void tcp_segsize __P((struct tcpcb *, int *, int *));
 static __inline void
@@ -199,7 +198,7 @@ tcp_output(tp)
 		 * been acknowledged (i.e. transmission is idle).
 		 */
 		tp->snd_cwnd = min(tp->snd_cwnd,
-		    TCP_INITIAL_WINDOW(tcp_init_win, txsegsize) +
+		    (tcp_cwm_burstsize * txsegsize) +
 		    (tp->snd_nxt - tp->snd_una));
 	} else {
 		if (idle && tp->t_idle >= tp->t_rxtcur) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.44 1998/04/30 17:55:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.45 1998/04/30 18:27:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -384,7 +384,9 @@ struct	tcpstat {
 #define	TCPCTL_WSCALE		11	/* RFC1323 window scaling */
 #define	TCPCTL_TSTAMP		12	/* RFC1323 timestamps */
 #define	TCPCTL_COMPAT_42	13	/* 4.2BSD TCP bug work-arounds */
-#define	TCPCTL_MAXID		14
+#define	TCPCTL_CWM		14	/* Congestion Window Monitoring */
+#define	TCPCTL_CWM_BURSTSIZE	15	/* burst size allowed by CWM */
+#define	TCPCTL_MAXID		16
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -401,6 +403,8 @@ struct	tcpstat {
 	{ "win_scale", CTLTYPE_INT }, \
 	{ "timestamps", CTLTYPE_INT }, \
 	{ "compat_42", CTLTYPE_INT }, \
+	{ "cwm", CTLTYPE_INT }, \
+	{ "cwm_burstsize", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -415,6 +419,8 @@ extern	int tcp_mssdflt;	/* default seg size */
 extern	int tcp_init_win;	/* initial window */
 extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
 extern	int tcp_compat_42;	/* work around ancient broken TCP peers */
+extern	int tcp_cwm;		/* enable Congestion Window Monitoring */
+extern	int tcp_cwm_burstsize;	/* burst size allowed by CWM */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_cache_interval; /* compressed state timer */
@@ -439,6 +445,8 @@ extern	u_long syn_cache_count;
 	&tcp_do_win_scale, \
 	&tcp_do_timestamps, \
 	&tcp_compat_42, \
+	&tcp_cwm, \
+	&tcp_cwm_burstsize, \
 }
 
 int	 tcp_attach __P((struct socket *));
