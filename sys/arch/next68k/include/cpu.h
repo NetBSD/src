@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2001/05/12 22:35:29 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2001/05/13 16:55:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -190,11 +190,6 @@ void	doboot __P((void)) __attribute__((__noreturn__));
 /* sys_machdep.c functions */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 
-/* vm_machdep.c functions */
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-int	kvtop __P((caddr_t));
-
 /* clock.c functions */
 void	next68k_calibrate_delay __P((void));
 
@@ -208,7 +203,7 @@ void	next68k_calibrate_delay __P((void));
 #define	NEXT_SLOT_ID		0x0
 #ifdef	M68030
 #define	NEXT_SLOT_ID_BMAP	0x0
-#endif	M68030
+#endif	/* M68030 */
 #endif
 #ifdef	M68040
 #ifdef DISABLE_NEXT_BMAP_CHIP		/* @@@ For turbo testing */
@@ -217,7 +212,7 @@ void	next68k_calibrate_delay __P((void));
 #define	NEXT_SLOT_ID_BMAP	0x00100000
 #endif
 #define NEXT_SLOT_ID            0x0
-#endif	M68040
+#endif	/* M68040 */
 
 /****************************************************************/
 
