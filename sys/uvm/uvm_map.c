@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.65 1999/07/18 00:41:56 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.66 1999/07/19 17:45:23 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2573,7 +2573,7 @@ uvm_map_clean(map, start, end, flags)
 					simple_unlock(&anon->an_lock);
 					continue;
 				}
-				amap_unadd(&entry->aref, offset);
+				amap_unadd(&current->aref, offset);
 				refs = --anon->an_ref;
 				simple_unlock(&anon->an_lock);
 				if (refs == 0)
