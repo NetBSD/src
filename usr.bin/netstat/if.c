@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.51 2002/06/19 16:42:09 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.52 2002/06/19 23:38:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.51 2002/06/19 16:42:09 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.52 2002/06/19 23:38:59 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -287,7 +287,7 @@ intpr(interval, ifnetaddr, pfunc)
 						sin6.sin6_family = AF_INET6;
 						sin6.sin6_addr = inm.in6m_addr;
 #ifdef KAME_SCOPEID
-						if (sin6.sin6_addr.s6_addr[1] == 0x02) {
+						if (IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) {
 							sin6.sin6_scope_id =
 							    ntohs(*(u_int16_t *)
 								&sin6.sin6_addr.s6_addr[2]);
