@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.52 1998/07/24 15:18:21 rvb Exp $	*/
+/*	$NetBSD: vnode.h,v 1.53 1998/07/28 18:37:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -471,7 +471,7 @@ int	vn_lock __P((struct vnode *vp, int flags));
 int 	vn_open __P((struct nameidata *ndp, int fmode, int cmode));
 int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
-	    struct ucred *cred, int *aresid, struct proc *p));
+	    struct ucred *cred, size_t *aresid, struct proc *p));
 int	vn_read __P((struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags));
 int	vn_readdir __P((struct file *fp, char *buf, int segflg, u_int count,

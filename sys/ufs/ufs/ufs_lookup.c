@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.16 1998/06/13 16:26:23 kleink Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.17 1998/07/28 18:37:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -996,7 +996,8 @@ ufs_dirempty(ip, parentino, cred)
 	register off_t off;
 	struct dirtemplate dbuf;
 	register struct direct *dp = (struct direct *)&dbuf;
-	int error, count, namlen;
+	int error, namlen;
+	size_t count;
 #define	MINDIRSIZ (sizeof (struct dirtemplate) / 2)
 
 	for (off = 0; off < ip->i_ffs_size;
@@ -1081,7 +1082,7 @@ ufs_checkpath(source, target, cred)
 		}
 		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
 			sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
-			IO_NODELOCKED, cred, (int *)0, (struct proc *)0);
+			IO_NODELOCKED, cred, NULL, (struct proc *)0);
 		if (error != 0)
 			break;
 #if (BYTE_ORDER == LITTLE_ENDIAN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.92 1998/06/25 21:17:15 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.93 1998/07/28 18:37:47 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -99,7 +99,7 @@ check_exec(p, epp)
 	int error, i;
 	struct vnode *vp;
 	struct nameidata *ndp;
-	int resid;
+	size_t resid;
 
 	ndp = epp->ep_ndp;
 	ndp->ni_cnd.cn_nameiop = LOOKUP;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.32 1998/06/26 00:07:45 thorpej Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.33 1998/07/28 18:37:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -310,7 +310,7 @@ ELFNAME(read_from)(p, vp, off, buf, size)
 	int size;
 {
 	int error;
-	int resid;
+	size_t resid;
 
 	if ((error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE,
 	    0, p->p_ucred, &resid, p)) != 0)
