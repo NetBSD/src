@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.22 2002/09/08 01:42:55 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.23 2002/09/20 13:14:32 mycroft Exp $	*/
 /*	$KAME: rtadvd.c,v 1.74 2002/09/08 01:25:17 itojun Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/uio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
+#include <sys/poll.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -146,9 +147,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	fd_set *fdsetp, *selectfdp;
-	int fdmasks;
-	int maxfd = 0;
+	struct pollfd set[2];
 	struct timeval *timeout;
 	int i, ch;
 	int fflag = 0, logopt;
@@ -230,34 +229,19 @@ main(argc, argv)
 		    __func__);
 	}
 
-	maxfd = sock;
+	set[0].fd = sock;
+	set[0].events = POLLIN;
 	if (sflag == 0) {
 		rtsock_open();
-		if (rtsock > sock)
-			maxfd = rtsock;
+		set[1].fd = rtsock;
+		set[1].events = POLLIN;
 	} else
-		rtsock = -1;
-
-	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsetp = malloc(fdmasks)) == NULL) {
-		err(1, "malloc");
-		/*NOTREACHED*/
-	}
-	if ((selectfdp = malloc(fdmasks)) == NULL) {
-		err(1, "malloc");
-		/*NOTREACHED*/
-	}
-	memset(fdsetp, 0, fdmasks);
-	FD_SET(sock, fdsetp);
-	if (rtsock >= 0)
-		FD_SET(rtsock, fdsetp);
+		set[1].events = 0;
 
 	signal(SIGTERM, set_die);
 	signal(SIGUSR1, rtadvd_set_dump_file);
 
-	while (1) {
-		memcpy(selectfdp, fdsetp, fdmasks); /* reinitialize */
-
+	for (;;) {
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
 			rtadvd_dump_file(dumpfilename);
@@ -273,7 +257,7 @@ main(argc, argv)
 
 		if (timeout != NULL) {
 			syslog(LOG_DEBUG,
-			    "<%s> set timer to %ld:%ld. waiting for "
+			    "<%s> set timer to %ld.%06ld. waiting for "
 			    "inputs or timeout", __func__,
 			    (long int)timeout->tv_sec,
 			    (long int)timeout->tv_usec);
@@ -283,8 +267,8 @@ main(argc, argv)
 			    __func__);
 		}
 
-		if ((i = select(maxfd + 1, selectfdp, NULL, NULL,
-		    timeout)) < 0) {
+		if ((i = poll(set, 2, timeout ? (timeout->tv_sec * 1000 +
+		    timeout->tv_usec / 1000) : INFTIM)) < 0) {
 			/* EINTR would occur upon SIGUSR1 for status dump */
 			if (errno != EINTR)
 				syslog(LOG_ERR, "<%s> select: %s",
@@ -293,9 +277,9 @@ main(argc, argv)
 		}
 		if (i == 0)	/* timeout */
 			continue;
-		if (rtsock != -1 && FD_ISSET(rtsock, selectfdp))
+		if (rtsock != -1 && set[1].revents & POLLIN)
 			rtmsg_input();
-		if (FD_ISSET(sock, selectfdp))
+		if (set[0].revents & POLLIN)
 			rtadvd_input();
 	}
 	exit(0);		/* NOTREACHED */
