@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.66 1996/03/07 00:48:43 jtk Exp $
+#	$NetBSD: SUN_LAMP,v 1.67 1996/03/10 09:03:26 cgd Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -95,7 +95,7 @@ pc0	at isa? port 0x60 irq 1		# generic PC console device
 #com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9
 ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
-com*	at ast? slave ? flags 1
+com*	at ast? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
 
