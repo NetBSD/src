@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.33.2.1 2001/10/26 18:06:41 jhawk Exp $	*/
+/*	$NetBSD: getcap.c,v 1.33.2.2 2002/04/17 11:32:47 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.33.2.1 2001/10/26 18:06:41 jhawk Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.33.2.2 2002/04/17 11:32:47 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -822,6 +822,8 @@ cgetnext(bp, db_array)
 		/* 
 		 * Line points to a name line.
 		 */
+		if (len > sizeof(nbuf))
+			return -1;
 		done = 0;
 		np = nbuf;
 		for (;;) {
@@ -853,6 +855,8 @@ cgetnext(bp, db_array)
 					line[len - 1] = '\0';
 			}
 		}
+		if (len > sizeof(buf))
+			return -1;
 		rp = buf;
 		for(cp = nbuf; *cp != '\0'; cp++)
 			if (*cp == '|' || *cp == ':')
