@@ -1,4 +1,4 @@
-.\" $NetBSD: traceroute.8,v 1.15 2002/02/02 02:03:13 wiz Exp $
+.\" $NetBSD: traceroute.8,v 1.16 2002/02/04 10:49:19 fair Exp $
 .\"
 .\" Copyright (c) 1989, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,6 +149,10 @@ to pick an unused port range.
 .B \-P
 Set the "don't fragment" bit, and use the next hop mtu each time we get
 the "need fragmentation" error, thus probing the path MTU.
+.TP
+.B \-q
+Set the number of probe packets sent for each hop.  By default, traceroute
+sends three probe packets.
 .TP
 .B \-r
 Bypass the normal routing tables and send directly to a host on an attached
