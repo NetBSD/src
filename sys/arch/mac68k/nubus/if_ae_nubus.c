@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.22 1997/10/15 16:58:21 thorpej Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.23 1997/10/17 00:24:47 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -144,7 +144,6 @@ ae_nubus_attach(parent, self, aux)
 	sc->sc_regt = sc->sc_buft = bst;
 	sc->sc_flags = self->dv_cfdata->cf_flags;
 
-	sc->vendor = ae_nb_card_vendor(bst, bsh, na);
 	cardtype = nubus_get_card_name(bst, bsh, na->fmt);
 
 	sc->is790 = 0;
@@ -154,7 +153,7 @@ ae_nubus_attach(parent, self, aux)
 
 	success = 0;
 
-	switch (sc->vendor) {
+	switch (ae_nb_card_vendor(bst, bsh, na)) {
 	case DP8390_VENDOR_APPLE:	/* Apple-compatible cards */
 	case DP8390_VENDOR_ASANTE:
 		/* Map register offsets */
@@ -350,7 +349,7 @@ ae_nubus_attach(parent, self, aux)
 	/* Interface is always enabled. */
 	sc->sc_enabled = 1;
 
-	printf(": %s, %dKB memory\n", cardname, sc->mem_size / 1024);
+	printf(": %s, %dKB memory\n", cardtype, sc->mem_size / 1024);
 
 	if (dp8390_config(sc)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
@@ -367,7 +366,8 @@ ae_nubus_intr(arg, slot)
 	void *arg;
 	int slot;
 {
-
+	struct dp8390_softc *sc = (struct dp8390_softc *)arg;
+	
 	(void) dp8390_intr(sc);
 }
 
