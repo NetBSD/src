@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.70 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.71 2004/08/01 08:02:55 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.70 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.71 2004/08/01 08:02:55 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -866,7 +866,7 @@ inittodr(base)
 		if (base != 0)
 			printf("WARNING: preposterous time in file system\n");
 		/* not going to use it anyway, if the chip is readable */
-		base = 21*SECYR + 186*SECDAY + SECDAY/2;
+		base = 33*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
 	}
 
@@ -890,10 +890,15 @@ inittodr(base)
 		cc_microset(curcpu());
 		sparc_clock_time_is_ok = 1;
 
-		if (deltat < 0)
-			deltat = -deltat;
-		if (waszero || deltat < 2 * SECDAY)
+		if (waszero)
 			return;
+		if (deltat < 0) {
+			deltat = -deltat;
+			if (deltat < 2 * SECDAY)
+				return;
+		} else if (deltat < 2 * SECYR) {
+			return;
+		}
 		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
