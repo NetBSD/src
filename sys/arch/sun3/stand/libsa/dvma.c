@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.6 1996/01/31 17:20:39 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.7 1997/02/05 17:33:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -41,11 +41,9 @@
  */
 
 #include <sys/param.h>
+#include <machine/pte.h>
+#include <machine/control.h>
 #include "stand.h"
-
-/* XXX */
-extern int  get_segmap __P((int));
-extern void set_segmap __P((int, int));
 
 
 #define	DVMA_BASE 0xFFf00000
