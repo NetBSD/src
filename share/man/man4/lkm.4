@@ -1,4 +1,4 @@
-.\" $NetBSD: lkm.4,v 1.12 2000/11/07 06:43:26 lukem Exp $
+.\" $NetBSD: lkm.4,v 1.13 2000/12/11 13:58:02 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -69,8 +69,7 @@ programs.  Users should never have to interact with
 .Pa /dev/lkm
 directly.
 .Sh "MODULE TYPES"
-.Bl -tag -width indent
-.It System Call modules
+.Ss System Call modules
 System calls may be replaced by loading
 new ones via the
 .Nm
@@ -85,44 +84,60 @@ When a system call module is unloaded,
 the system call which
 was replaced by the loadable module
 is returned to its rightful place
-in the system call table.
-.It Virtual File System modules
-Virtual file systems may be added
-via the
+in the system call table by LKM code.
+.Ss Virtual File System modules
+Virtual file systems may be added via the
 .Nm
-interface.  At this time, only
-file systems which are already
-known to the system can be added,
-because of the way the
-.Xr mount 2
-system call is implemented.
-.It Device Driver modules
+interface.
+.Ss Device Driver modules
 New block and character device
 drivers may be loaded into the system with
 .Li "options LKM" .
-The major problem with loading
-a device driver is that the driver's
-device nodes must be exist for the
-devices to be accessed.  They are usually
-created by instructing
+A problem with loading a device driver is that the driver's device
+nodes must be exist for the devices to be accessed.  They are
+usually created by instructing
 .Xr modload 8
-to run an appropriate program when
-the driver has been successfully loaded.
-.It Execution Interpreters
-Execution interpreters allow
-the loading and execution of
-binaries which are normally not
-usable by the operating system.
-.It Miscellaneous modules
-Miscellaneous modules are modules
-for which there are not currently
-well-defined or well-used interfaces
-for extension.  The user is expected
-to write their own loader to manipulate
-whatever kernel data structures necessary
-to enable and disable the new module
-when it is loaded and unloaded.
-.El
+to run an appropriate program when the driver has been successfully loaded.
+.Ss Emulation modules
+Emulation modules allow to load an emulation support for foreight
+operating systems.
+.Ss Execution Interpreters
+Execution interpreters allow to load support for execution of new type
+of binaries, not normally supported by kernel. This also allows to load
+support for executing foreight system binaries.
+Execution Interpreters normally depend on
+Emulation modules, in that appropriate Emulation module has to
+be loaded before Execution Interpreter can be.
+.Ss Miscellaneous modules
+Miscellaneous modules are modules for which there are not currently
+well-defined or well-used interfaces for extension.
+They are provided for extension, and the user is expected to
+write their own loader to handle the kernel pointer/table
+manipulation to "wire in" their loaded module (and "unwire"
+it on uload).
+An example of a "miscellaneous module" might be a loader for
+card-specific VGA drivers or alternate terminal emualtions in
+an appropriately layered console driver.
+.Sh NOTES
+.Ss "Security considerations"
+Loaded kernel module can do anything with kernel structures. There is
+no memory protection between module and rest of kernel. Hence, potential
+attacker controlling
+.Pa /dev/lkm
+can do anything they want with the system.
+.Pp
+To avoid associated security risk, new LKMs cannot be loaded on
+.Pa securelevel
+higher than zero.
+.Ss "Module might crash system"
+Loading and using a buggy module is likely to crash operating system -
+since the module becomes part of kernel, a code error is much more
+fatal than for userland programs. If you are doing kernel development,
+this would hopefully end up happening
+less frequently than changing, recompiling, installing, and
+rebooting would normally occur.  This should speed developement
+considerably for a lot of the in-kernel work that is currently
+taking place.
 .Sh FILES
 .Bl -tag -width /usr/include/sys/lkm.h -compact
 .It Pa /dev/lkm
@@ -130,8 +145,11 @@ when it is loaded and unloaded.
 interface device
 .It Pa /usr/include/sys/lkm.h
 file containing definitions of module types
-.It Pa /usr/share/lkm
-example source code implementing several of the modules types
+.It Pa lkm/*
+subdirectory
+.Pa lkm
+within kernel source tree contains many LKMs which are suitable as a base
+for new ones
 .El
 .Sh SEE ALSO
 .Xr modload 8 ,
@@ -147,8 +165,3 @@ to the loadable kernel modules facility provided by
 .Bl -tag
 Terrence R. Lambert, terry@cs.weber.edu
 .El
-.Sh BUGS
-Loading a bogus module is likely to kill your machine.
-.Pp
-Loadable streams modules should and will be implemented
-when a streams implementation is written.
