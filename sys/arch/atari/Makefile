@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1995/03/26 07:12:03 leo Exp $
+#	$NetBSD: Makefile,v 1.2 1996/03/18 21:08:36 leo Exp $
 #
 #	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
 #
@@ -9,10 +9,9 @@ COMM=	$S/vm/*.[ch] $S/ufs/*.[ch] $S/sys/*.h $S/compat/sunos/*.[ch] \
 	$S/net/*.[ch] $S/miscfs/*/*.[ch] $S/kern/*.[ch] $S/dev/*.[ch] \
 	$S/scsi/*.[ch] $S/lib/libkern/m68k/*.[ch] $S/lib/libkern/*.[ch]
 
-# Makefile for atari tags file
+SUBDIR= stand
 
-all:
-	@echo "make tags or links only"
+# Makefile for atari tags file
 
 TATARI=	$S/arch/atari/tags
 SATARI=	$S/arch/m68k/m68k/*.c $S/arch/m68k/include/*.h \
@@ -41,5 +40,5 @@ links:
 	    rm -f $$i/tags; rm -f $$i/TAGS ; \
 	    ln -s ../tags $$i/tags; ln -s ../TAGS $$i/TAGS; done
 
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>
 
