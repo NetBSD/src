@@ -1,6 +1,8 @@
+/*	$NetBSD: chpass.c,v 1.5 1995/03/26 04:55:25 glass Exp $	*/
+
 /*-
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)chpass.c	5.17 (Berkeley) 3/3/91";*/
-static char rcsid[] = "$Id: chpass.c,v 1.4 1994/08/17 19:54:39 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
+#else 
+static char rcsid[] = "$NetBSD: chpass.c,v 1.5 1995/03/26 04:55:25 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,12 +52,21 @@ static char rcsid[] = "$Id: chpass.c,v 1.4 1994/08/17 19:54:39 deraadt Exp $";
 #include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
-#include <errno.h>
 #include <stdio.h>
-#include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#include <pw_scan.h>
+#include <pw_util.h>
+#include "pw_copy.h"
+
 #include "chpass.h"
 #include "pathnames.h"
 
@@ -66,15 +80,16 @@ int force_yp = 0;
 extern struct passwd *ypgetpwnam(), *ypgetpwuid();
 #endif
 
+void	baduser __P((void));
+void	usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
-	register enum { NEWSH, LOADENTRY, EDITENTRY } op;
-	register struct passwd *pw;
-	struct passwd lpw;
+	enum { NEWSH, LOADENTRY, EDITENTRY } op;
+	struct passwd *pw, lpw;
 	int ch, pfd, tfd;
 	char *arg;
 
@@ -99,9 +114,8 @@ main(argc, argv)
 			break;
 		case 'y':
 			if (!use_yp) {
-				fprintf(stderr, "chpass: YP not in use.\n");
+				warnx("YP not in use.");
 				usage();
-				exit(1);
 			}
 			force_yp = 1;
 			break;
@@ -114,10 +128,8 @@ main(argc, argv)
 	argv += optind;
 
 #ifdef	YP
-	if (op == LOADENTRY && use_yp) {
-		(void)fprintf(stderr, "chpass: cannot load entry using NIS.\n\tUse the -l flag to load local.\n");
-		exit(1);
-	}
+	if (op == LOADENTRY && use_yp)
+		errx(1, "cannot load entry using NIS.\n\tUse the -l flag to load local.");
 #endif
 	uid = getuid();
 
@@ -131,11 +143,8 @@ main(argc, argv)
 			else if (use_yp)
 				pw = ypgetpwuid(uid);
 #endif	/* YP */
-			if (!pw) {
-				(void)fprintf(stderr,
-				    "chpass: unknown user: uid %u\n", uid);
-				exit(1);
-			}
+			if (!pw)
+				errx(1, "unknown user: uid %u\n", uid);
 			break;
 		case 1:
 			pw = getpwnam(*argv);
@@ -145,11 +154,8 @@ main(argc, argv)
 			else if (use_yp)
 				pw = ypgetpwnam(*argv);
 #endif	/* YP */
-			if (!pw) {
-				(void)fprintf(stderr,
-				    "chpass: unknown user %s.\n", *argv);
-				exit(1);
-			}
+			if (!pw)
+				errx(1, "unknown user: %s", *argv);
 			if (uid && uid != pw->pw_uid)
 				baduser();
 			break;
@@ -227,14 +233,17 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 baduser()
 {
-	(void)fprintf(stderr, "chpass: %s\n", strerror(EACCES));
-	exit(1);
+
+	errx(1, "%s", strerror(EACCES));
 }
 
+void
 usage()
 {
+
 #ifdef	YP
 	(void)fprintf(stderr, "usage: chpass [-a list] [-s shell] [-l]%s [user]\n", use_yp?" [-y]":"");
 #else

@@ -1,3 +1,5 @@
+/*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
+
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -31,8 +33,11 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pw_yp.c	1.0 2/2/93";*/
-static char rcsid[] = "$Id: pw_yp.c,v 1.4 1994/08/17 19:54:23 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
+#else
+static char rcsid[] = "$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $";
+#endif
 #endif /* not lint */
 
 #ifdef	YP
