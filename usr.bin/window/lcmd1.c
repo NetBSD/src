@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd1.c,v 1.7 1997/11/21 08:36:03 lukem Exp $	*/
+/*	$NetBSD: lcmd1.c,v 1.8 1998/10/14 00:58:47 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,14 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)lcmd1.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lcmd1.c,v 1.7 1997/11/21 08:36:03 lukem Exp $");
+__RCSID("$NetBSD: lcmd1.c,v 1.8 1998/10/14 00:58:47 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
 #include <string.h>
 #include <unistd.h>
 #include "defs.h"
-#include "string.h"
+#include "window_string.h"
 #include "lcmd.h"
 #include "var.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.4 1997/11/21 08:35:58 lukem Exp $	*/
+/*	$NetBSD: context.c,v 1.5 1998/10/14 00:58:47 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,15 +41,18 @@
 #if 0
 static char sccsid[] = "@(#)context.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: context.c,v 1.4 1997/11/21 08:35:58 lukem Exp $");
+__RCSID("$NetBSD: context.c,v 1.5 1998/10/14 00:58:47 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
 #include <fcntl.h>
 #include <stdlib.h>
 #include "defs.h"
-#include "string.h"
+#include "window_string.h"
+#undef EXTERN
+#define EXTERN
 #include "context.h"
+#undef  EXTERN
 
 /*
  * Context push/pop for nested command files.

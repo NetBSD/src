@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd7.c,v 1.4 1997/11/21 08:35:54 lukem Exp $	*/
+/*	$NetBSD: cmd7.c,v 1.5 1998/10/14 00:58:47 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,14 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)cmd7.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd7.c,v 1.4 1997/11/21 08:35:54 lukem Exp $");
+__RCSID("$NetBSD: cmd7.c,v 1.5 1998/10/14 00:58:47 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <unistd.h>
 #include "defs.h"
-#include "string.h"
+#include "window_string.h"
 
 void	unyank __P((void));
 void	yank_highlight __P((int, int, int, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.h,v 1.3 1995/09/28 10:33:59 tls Exp $	*/
+/*	$NetBSD: alias.h,v 1.4 1998/10/14 00:58:46 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,6 +38,10 @@
  *	@(#)alias.h	8.1 (Berkeley) 6/6/93
  */
 
+#ifndef EXTERN
+#define EXTERN extern
+#endif
+
 #define alias var
 #define a_name r_name
 #define a_buf r_val.v_str
@@ -51,4 +55,4 @@
 #define alias_unset(n)		var_unset1(&alias_head, n)
 #define alias_lookup(n)		(*var_lookup1(&alias_head, n))
 
-struct var *alias_head;
+EXTERN struct var *alias_head;
