@@ -1,4 +1,4 @@
-/*	$NetBSD: pccardcis.h,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: pccardcis.h,v 1.3 1999/12/15 12:28:55 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 and 1998
@@ -33,8 +33,8 @@
  */
 
 
-#if !defined SYS_DEV_PCCARD_PCCARDCIS_H
-#define SYS_DEV_PCCARD_PCCARDCIS_H 1
+#ifndef _DEV_PCCARD_PCCARDCIS_H_
+#define _DEV_PCCARD_PCCARDCIS_H_
 
 #define CISTPL_NULL        0x00
 #define CISTPL_DEVICE      0x01
@@ -89,4 +89,4 @@
 #define TPL_FUNCE_LAN_CONN  5	/* connector type (shape) */
 
 
-#endif /* SYS_DEV_PCCARD_PCCARDCIS_H */
+#endif /* !_DEV_PCCARD_PCCARDCIS_H_ */

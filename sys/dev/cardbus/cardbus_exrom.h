@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.h,v 1.1 1999/10/28 22:27:00 joda Exp $ */
+/* $NetBSD: cardbus_exrom.h,v 1.2 1999/12/15 12:28:54 kleink Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __cardbus_exrom_h__
-#define __cardbus_exrom_h__
+#ifndef _DEV_CARDBUS_CARDBUS_EXROM_H_
+#define _DEV_CARDBUS_CARDBUS_EXROM_H_
 
 /* PCI ROM header fields */
 #define CARDBUS_EXROM_SIGNATURE	0x00
@@ -69,4 +69,4 @@ int
 cardbus_read_exrom __P((bus_space_tag_t, bus_space_handle_t, 
 			struct cardbus_rom_image_head*));
 
-#endif /* __cardbus_exrom_h__ */
+#endif /* !_DEV_CARDBUS_CARDBUS_EXROM_H_ */

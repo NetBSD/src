@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.h,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: rbus.h,v 1.3 1999/12/15 12:28:55 kleink Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -31,6 +31,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_CARDBUS_RBUS_H_
+#define _DEV_CARDBUS_RBUS_H_
+
 /*
  * This file defines rbus (pseudo) class
  *
@@ -60,9 +63,6 @@
  *  space when a client requests bus space to the bridge.
  */
 
-
-#if !defined SYS_DEV_CARDBUS_RBUS_H
-#define SYS_DEV_CARDBUS_RBUS_H
 
 /* require sys/extent.h */
 /* require machine/bus.h */
@@ -162,4 +162,4 @@ int rbus_delete __P((rbus_tag_t));
  */
 #include <machine/rbus_machdep.h>
 
-#endif /* SYS_DEV_CARDBUS_RBUS_H */
+#endif /* !_DEV_CARDBUS_RBUS_H_ */

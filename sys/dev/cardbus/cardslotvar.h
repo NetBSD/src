@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.3 1999/11/15 06:08:02 haya Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.4 1999/12/15 12:28:55 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -32,8 +32,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined SYS_DEV_CARDBUS_CARDSLOTVAR_H
-#define SYS_DEV_CARDBUS_CARDSLOTVAR_H
+#ifndef _DEV_CARDBUS_CARDSLOTVAR_H_
+#define _DEV_CARDBUS_CARDSLOTVAR_H_
 
 /* require sys/device.h */
 /* require sys/queue.h */
@@ -123,4 +123,4 @@ typedef struct cardslot_softc *cardslot_t;
 
 void cardslot_event_throw __P((cardslot_t cs, int ev));
 
-#endif /* SYS_DEV_CARDBUS_CARDSLOTVAR_H */
+#endif /* !_DEV_CARDBUS_CARDSLOTVAR_H_ */
