@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/07/09 13:47:34 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.7 2000/07/09 14:16:02 jdolecek Exp $
 
 RELOC=0x3F0000
 
@@ -28,10 +28,10 @@ install:
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	  netboot.bin ${DESTDIR}${MDEC_DIR}/netboot
 
-#afterdepend:	.depend
-#	@(TMP=/tmp/_depend$$$$; \
-#		sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o s\1.o:/' \
-#		< .depend > $$TMP; \
-#	mv $$TMP .depend)
-#
+afterdepend:	.depend
+	@(TMP=/tmp/_depend$$$$; \
+		sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o s\1.o:/' \
+		< .depend > $$TMP; \
+	mv $$TMP .depend)
+
 .include <bsd.prog.mk>
