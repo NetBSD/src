@@ -1,4 +1,4 @@
-.\"	$NetBSD: networks.5,v 1.5 1998/07/10 06:13:49 fair Exp $
+.\"	$NetBSD: networks.5,v 1.6 1998/07/10 06:38:53 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .Os BSD 4.2
 .Sh NAME
 .Nm networks
-.Nd network name data base
+.Nd Internet Protocol network name data base
 .Sh DESCRIPTION
 The
 .Nm
@@ -86,6 +86,31 @@ Network names may contain
 through
 .Qq z ,
 zero through nine, and dash.
+.Pp
+.Tn IP
+network numbers on the
+.Tn Internet
+are generally assigned to a site by its Internet Service Provider
+.Pq Tn ISP ,
+who, in turn, get network address space assigned to them by one of
+the regional Internet Registries (e.g. ARIN, RIPE NCC, APNIC).
+These registries, in turn, answer to the Internet Assigned Numbers
+Authority
+.Pq Tn IANA .
+.Pp
+If a site changes its ISP from one to another, it will generally
+be required to change all its assigned IP addresses as part of the
+conversion; that is, return the previous network numbers to the previous
+.Tn ISP ,
+and assign addresses to its hosts from
+.Tn IP
+network address space given by the new
+.Tn ISP .
+Thus, it is best for a savvy network manager to configure his
+hosts for easy renumbering, to preserve his ability to easily
+change his
+.Tn ISP
+should the need arise.
 .Sh FILES
 .Bl -tag -width /etc/networks -compact
 .It Pa /etc/networks
@@ -98,6 +123,8 @@ file resides in
 .Xr getnetent 3 ,
 .Xr resolv.conf 5 ,
 .Xr hostname 7 ,
+.Xr dhclient 8 ,
+.Xr dhcpd 8 ,
 .Xr named 8 ,
 .Rs
 .%R RFC
