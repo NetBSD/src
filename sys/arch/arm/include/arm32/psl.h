@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.4 2001/04/21 15:47:32 bjh21 Exp $	*/
+/*	$NetBSD: psl.h,v 1.5 2001/10/27 16:37:24 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -63,9 +63,10 @@
 #define _SPL_IMP	7
 #define _SPL_AUDIO	8
 #define _SPL_CLOCK	9
-#define _SPL_HIGH	10
-#define _SPL_SERIAL	11
-#define _SPL_LEVELS	12
+#define _SPL_STATCLOCK	10
+#define _SPL_HIGH	11
+#define _SPL_SERIAL	12
+#define _SPL_LEVELS	13
 
 #define spl0()		splx(_SPL_0)
 /*#define splsoft()	raisespl(_SPL_SOFT)*/
@@ -80,7 +81,7 @@
 #define splvm()		raisespl(_SPL_IMP)
 #define splaudio()	raisespl(_SPL_AUDIO)
 #define splclock()	raisespl(_SPL_CLOCK)
-#define splstatclock()	raisespl(_SPL_CLOCK)
+#define splstatclock()	raisespl(_SPL_STATCLOCK)
 #define splserial()	raisespl(_SPL_SERIAL)
 #define splhigh()	raisespl(_SPL_HIGH)
 
