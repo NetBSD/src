@@ -1,86 +1,99 @@
-# $NetBSD: rc.wscons,v 1.1 1999/03/13 14:54:22 drochner Exp $
+# $NetBSD: rc.wscons,v 1.2 1999/03/15 22:02:24 drochner Exp $
 
-# load fonts
-(
-cat <<END
+wscfg=/usr/sbin/wsconscfg
+wsfld=/usr/sbin/wsfontload
+config=/etc/wscons.conf
+usage="Usage: wsconfig [-n] [-f configfile] [-font fontpgm] [-screen screenpgm]"
+DOIT=
 
-# name	width	height	enc	file
-#ibm	-	8	ibm	/usr/share/pcvt/fonts/vt220l.808
-#pcvt	-	-	pcvt	/usr/share/pcvt/fonts/vt220h.816
-#pcvt	-	8	pcvt	/usr/share/pcvt/fonts/vt220h.808
+while [ $# -gt 0 ]; do
+	case $1 in
+		-n)
+			DOIT=echo
+			;;
+		-f)
+			config=$2
+			shift
+			;;
+		-font)
+			wsfld=$2
+			shift
+			;;
+		-screen)
+			wscfg=$2
+			shift
+			;;
+		*)
+			echo $usage
+			exit 1
+			;;
+	esac
+	shift
+done
 
-END
-) | while read name width height enc file; do
-	case $name in
+
+# args mean:
+#	screen idx scr emul
+#	font   name width height enc file
+( while read type arg1 arg2 arg3 arg4 arg5; do
+	case "$type" in
 		\#*|"")
 			continue
 			;;
-		*)
-			;;
-	esac
-	cmd="/usr/sbin/wsfontload"
-	case $width in
-		-)
-			;;
-		*)
-			cmd="$cmd -w $width"
-			;;
-	esac
-	case $height in
-		-)
-			;;
-		*)
-			cmd="$cmd -h $height"
-			;;
-	esac
-	case $enc in
-		-)
-			;;
-		*)
-			cmd="$cmd -e $enc"
-			;;
-	esac
-	cmd="$cmd -N $name $file"
-	$cmd
-done
+		font)
+			name=$arg1
+			width=$arg2
+			height=$arg3
+			enc=$arg4
+			file=$arg5
+			cmd=$wsfld
 
-# set up virtual screens
-(
-cat <<END
+			case $width in
+				-)
+					;;
+				*)
+					cmd="$cmd -w $width"
+					;;
+			esac
+			case $height in
+				-)
+					;;
+				*)
+					cmd="$cmd -h $height"
+					;;
+			esac
+			case $enc in
+				-)
+					;;
+				*)
+					cmd="$cmd -e $enc"
+					;;
+			esac
+			cmd="$cmd -N $name $file"
+			eval $DOIT $cmd
+			;;
+		screen)
+			idx=$arg1
+			scr=$arg2
+			emul=$arg3
+			cmd=$wscfg
 
-# idx	screen	emul
-0	-	vt100
-1	-	vt100
-2	-	vt100
-3	-	vt100
-4	-	-
-#4	80x25bf	vt100
-#5	80x50	vt100
-
-END
-) | while read idx scr emul; do
-	case $idx in
-		\#*|"")
-			continue
-			;;
-		*)
-			;;
-	esac
-	cmd="/usr/sbin/wsconscfg"
-	case $scr in
-		-)
-			;;
-		*)
-			cmd="$cmd -t $scr"
+			case $scr in
+				-)
+					;;
+				*)
+					cmd="$cmd -t $scr"
+					;;
+			esac
+			case $emul in
+				-)
+					;;
+				*)
+					cmd="$cmd -e $emul"
+					;;
+			esac
+			cmd="$cmd $idx"
+			eval $DOIT $cmd
 			;;
 	esac
-	case $emul in
-		-)
-			;;
-		*)
-			cmd="$cmd -e $emul"
-			;;
-	esac
-	cmd="$cmd $idx"
-	$cmd
-done
+done ) < $config
