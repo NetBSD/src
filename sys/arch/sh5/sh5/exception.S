@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.15 2002/09/12 12:39:34 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.16 2002/09/28 11:04:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -128,6 +128,7 @@
  * And there you have it. Exceptions from hell.
  */
 
+#ifdef PORTMASTER
 #define	CHECK_CRITICAL(base)						       \
 	pta/l	50f, tr0		/* Assume critical section is free */ ;\
 	ld.q	base, ES(ES_CRITICAL), r0 /* Fetch owner */		      ;\
@@ -135,7 +136,9 @@
 	pta/l	Lsh5_critical_fault, tr0				      ;\
 	blink	tr0, r0			/* Otherwise, we're toast. */	      ;\
 50:
-
+#else
+#define	CHECK_CRITICAL(base)	/* */
+#endif
 
 /*
  * The following three macros allow the _EXCEPTION_*, _INTR_FRAME_*
@@ -773,7 +776,7 @@ Ltrapepilogue:
 	blink	tr0, r63		/* Go back around to deal with it */
 
 Ltrapexit:
-#if defined(DIAGNOSTIC)
+#if defined(PORTMASTER)
 	movi	SH5_CONREG_SR_IMASK_ALL, r0
 	putcon	r0, sr
 	LEAF(_C_LABEL(validate_trapframe), r0)
@@ -1140,6 +1143,7 @@ Ltlbmiss_dotrap:
 	blink	tr0, r63
 
 
+#ifdef PORTMASTER
 /******************************************************************************
  *
  * Critical Fault Handler.
@@ -1217,6 +1221,8 @@ Lsh5_critical_fault:
 	or	r1, r63, r4	/* Where the error was detected */
 	blink	tr0, r63
 	/*NOTREACHED*/
+
+#endif	/* PORTMASTER */
 
 
 /******************************************************************************
