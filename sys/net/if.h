@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.101 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if.h,v 1.102 2005/02/28 18:44:45 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -397,7 +397,7 @@ do {									\
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
 #ifndef IFQ_MAXLEN
-#define	IFQ_MAXLEN	50
+#define	IFQ_MAXLEN	256
 #endif
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
 
