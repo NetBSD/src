@@ -612,6 +612,7 @@
 ./usr/share/man/cat8/mount_cd9660.0
 ./usr/share/man/cat8/mount_ext2fs.0
 ./usr/share/man/cat8/mount_fdesc.0
+./usr/share/man/cat8/mount_filecore.0
 ./usr/share/man/cat8/mount_ffs.0
 ./usr/share/man/cat8/mount_kernfs.0
 ./usr/share/man/cat8/mount_lfs.0
@@ -1634,6 +1635,7 @@
 ./usr/share/man/man8/mount_cd9660.8
 ./usr/share/man/man8/mount_ext2fs.8
 ./usr/share/man/man8/mount_fdesc.8
+./usr/share/man/man8/mount_filecore.8
 ./usr/share/man/man8/mount_ffs.8
 ./usr/share/man/man8/mount_kernfs.8
 ./usr/share/man/man8/mount_lfs.8
