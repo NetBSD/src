@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.8 2004/05/31 11:40:56 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.9 2004/07/15 05:46:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -406,7 +406,6 @@
 #define ATW_SPR_SCLK		BIT(1)		/* SEEPROM clock */
 #define ATW_SPR_SCS		BIT(0)		/* SEEPROM chip select */
 
-/* TBD CSR_TEST0 */
 #define ATW_TEST0_BE_MASK	BITS(31, 29)	/* Bus error state */
 #define ATW_TEST0_TS_MASK	BITS(28, 26)	/* Transmit process state */
 
@@ -610,6 +609,14 @@
 						 */
 #define ATW_CMDR_RTE		BIT(4)		/* enable Rx FIFO threshold */
 #define ATW_CMDR_DRT_MASK	BITS(3, 2)	/* drain Rx FIFO threshold */
+/* 32 bytes */
+#define ATW_CMDR_DRT_8DW	LSHIFT(0x0, ATW_CMDR_DRT_MASK)
+/* 64 bytes */
+#define ATW_CMDR_DRT_16DW	LSHIFT(0x1, ATW_CMDR_DRT_MASK)
+/* Store & Forward */
+#define ATW_CMDR_DRT_SF		LSHIFT(0x2, ATW_CMDR_DRT_MASK)
+/* Reserved */
+#define ATW_CMDR_DRT_RSVD	LSHIFT(0x3, ATW_CMDR_DRT_MASK)
 #define ATW_CMDR_SINT_MASK	BIT(1)		/* software interrupt---huh? */
 
 /* TBD PCIC */
@@ -752,9 +759,9 @@
 #define ATW_RMD_ATIMST		BIT(31)		/* ATIM frame TX status */
 #define ATW_RMD_CFP		BIT(30)		/* CFP indicator */
 #define ATW_RMD_PCNT		BITS(27,16)	/* idle time between
-						 * awake/ps mode
+						 * awake/ps mode, in seconds
 						 */
-#define ATW_RMD_RMRD		BITS(15,0)	/* max RX reception duration
+#define ATW_RMD_RMRD_MASK	BITS(15,0)	/* max RX reception duration
 						 * in us
 						 */
 
@@ -780,6 +787,7 @@
 						 * microseconds (huh?). To
 						 * match TSFT[25:10] (huh?).
 						 */
+#define	ATW_TBTTPRE_MASK	BITS(25, 10)
 #define ATW_TOFS1_TBTTOFS_MASK	BITS(7,0)	/* wake-up time offset before
 						 * TBTT in TU
 						 */
