@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.57 2004/06/05 21:19:00 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.58 2004/10/16 12:52:30 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -327,7 +327,6 @@ show_cmd(const char *scmd, struct winsize *win)
 {
 	int n, m;
 	WINDOW *actionwin;
-	const char *command = msg_string(MSG_Command);
 	int nrow;
 
 	wclear(stdscr);
