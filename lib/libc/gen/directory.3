@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)directory.3	6.7 (Berkeley) 4/19/91
-.\"	$Id: directory.3,v 1.5 1994/01/10 23:32:23 jtc Exp $
+.\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 19, 1991
+.Dd June 4, 1993
 .Dt DIRECTORY 3
 .Os BSD 4.2
 .Sh NAME
@@ -152,11 +151,11 @@ returns the integer file descriptor associated with the named
 see
 .Xr open 2 .
 .Pp
-Sample code which searches a directory for entry ``name'' is:
+Sample code which searchs a directory for entry ``name'' is:
 .Bd -literal -offset indent
 len = strlen(name);
 dirp = opendir(".");
-for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp))
+while ((dp = readdir(dirp)) != NULL)
 	if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
 		(void)closedir(dirp);
 		return FOUND;
