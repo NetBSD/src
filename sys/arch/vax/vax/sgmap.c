@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.1 1999/06/06 18:58:50 ragge Exp $ */
+/* $NetBSD: sgmap.c,v 1.2 1999/06/20 00:59:54 ragge Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ vax_sgmap_alloc(map, origlen, sgmap, flags)
 		panic("vax_sgmap_alloc: already have sgva space");
 #endif
 
-	map->_dm_sgvalen = round_page(len);
+	map->_dm_sgvalen = vax_round_page(len);
 
 #if 0
 	printf("len %x -> %x, _dm_sgvalen %x _dm_boundary %x boundary %x -> ",
@@ -210,8 +210,8 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 	 * allocations.
 	 *
 	 */
-	endva = round_page(va + buflen);
-	va = trunc_page(va);
+	endva = vax_round_page(va + buflen);
+	va = vax_trunc_page(va);
 	if ((map->_dm_flags & DMAMAP_HAS_SGMAP) == 0) {
 		error = vax_sgmap_alloc(map, (endva - va), sgmap, flags);
 		if (error)
