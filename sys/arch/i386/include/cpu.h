@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68 2001/02/14 01:29:45 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.69 2001/05/02 21:07:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,14 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
+
+	const struct i386_cache_info *ci_itlb_info;
+	const struct i386_cache_info *ci_itlb2_info;
+	const struct i386_cache_info *ci_dtlb_info;
+	const struct i386_cache_info *ci_dtlb2_info;
+	const struct i386_cache_info *ci_icache_info;
+	const struct i386_cache_info *ci_dcache_info;
+	const struct i386_cache_info *ci_l2cache_info;
 };
 
 #ifdef _KERNEL
@@ -131,6 +139,7 @@ struct cpu_nocpuid_nameclass {
 	const char *cpu_name;
 	int cpu_class;
 	void (*cpu_setup) __P((void));
+	void (*cpu_cacheinfo) __P((struct cpu_info *));
 };
 
 
@@ -142,6 +151,7 @@ struct cpu_cpuid_nameclass {
 		int cpu_class;
 		const char *cpu_models[CPU_MAXMODEL+2];
 		void (*cpu_setup) __P((void));
+		void (*cpu_cacheinfo) __P((struct cpu_info *));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
