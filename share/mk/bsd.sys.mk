@@ -1,6 +1,6 @@
-#	$NetBSD: bsd.sys.mk,v 1.57 2001/11/01 07:27:35 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.58 2001/11/11 21:41:00 tv Exp $
 #
-# Overrides used for NetBSD source tree builds.
+# Build definitions used for NetBSD source tree builds.
 
 .if defined(WARNS)
 .if ${WARNS} > 0
@@ -51,10 +51,12 @@ HOST_CPPFLAGS?=
 HOST_LD?=	ld
 HOST_LDFLAGS?=
 
-OBJCOPY?=	objcopy
-STRIP?=		strip
 CONFIG?=	config
+CRUNCHGEN?=	crunchgen
+OBJCOPY?=	objcopy
 RPCGEN?=	rpcgen
+STRIP?=		strip
+MDSETIMAGE?=	mdsetimage
 MKLOCALE?=	mklocale
 MTREE?=		mtree
 
