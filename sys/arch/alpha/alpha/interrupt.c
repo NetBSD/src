@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.30 1998/09/26 00:03:51 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.31 1998/09/29 07:02:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.30 1998/09/26 00:03:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.31 1998/09/29 07:02:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,13 +73,15 @@ interrupt(a0, a1, a2, framep)
 	unsigned long a0, a1, a2;
 	struct trapframe *framep;
 {
+#if defined(MULTIPROCESSOR)
+	u_long cpu_id = alpha_pal_whami();
+#endif
 
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
 	    {
 		struct cpu_softc *sc;
-		u_long cpu_id = alpha_pal_whami();
 		u_long pending_ipis, bit;
 
 		sc = cpus[cpu_id];
@@ -111,6 +113,11 @@ interrupt(a0, a1, a2, framep)
 		break;
 		
 	case ALPHA_INTR_CLOCK:	/* clock interrupt */
+#if defined(MULTIPROCESSOR)
+		/* XXX XXX XXX */
+		if (cpu_id != hwrpb->rpb_primary_cpu_id)
+			return;
+#endif
 #if defined(UVM)
 		uvmexp.intrs++;
 #else
@@ -134,6 +141,11 @@ interrupt(a0, a1, a2, framep)
 		break;
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
+#if defined(MULTIPROCESSOR)
+		/* XXX XXX XXX */
+		if (cpu_id != hwrpb->rpb_primary_cpu_id)
+			return;
+#endif
 #if defined(UVM)
 		uvmexp.intrs++;
 #else
@@ -155,8 +167,8 @@ interrupt(a0, a1, a2, framep)
 		break;
 
 	default:
-		printf("unexpected interrupt: type 0x%lx vec 0x%lx a2 0x%lx\n",
-		    a0, a1, a2);
+		printf("unexpected interrupt: type 0x%lx vec 0x%lx "
+		    "a2 0x%lx cpu %lu\n", a0, a1, a2, cpu_id);
 		panic("interrupt");
 		/* NOTREACHED */
 	}
