@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.8 1996/11/06 03:35:03 chuck Exp $
+#	$NetBSD: VME147,v 1.9 1996/11/08 22:40:51 chuck Exp $
 
 machine		mvme68k m68k
 
@@ -74,3 +74,5 @@ sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
 cd*		at scsibus? target ? lun ?
 ch*		at scsibus? target ? lun ?
+ss*		at scsibus? target ? lun ?	# SCSI scanners
+uk*		at scsibus? target ? lun ?	# SCSI unknown
