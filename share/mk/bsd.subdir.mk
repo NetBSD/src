@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.10 1995/07/24 04:22:29 cgd Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.11 1996/04/04 02:05:06 jtc Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
 .if !target(.MAIN)
@@ -58,6 +58,10 @@ clean: _SUBDIRUSE
 
 .if !target(cleandir)
 cleandir: _SUBDIRUSE
+.endif
+
+.if !target(includes)
+includes: _SUBDIRUSE
 .endif
 
 .if !target(depend)
