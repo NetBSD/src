@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.3 1999/02/03 06:03:37 mrg Exp $	*/
+/*	$NetBSD: qe.c,v 1.4 1999/03/09 00:42:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@
 #endif
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
@@ -514,6 +515,9 @@ qestop(sc)
 	bus_space_handle_t cr = sc->sc_cr;
 	int n;
 
+#if defined(SUN4U) || defined(__GNUC__)
+	(void)&t;
+#endif
 	/* Stop the schwurst */
 	bus_space_write_1(t, mr, QE_MRI_BIUCC, QE_MR_BIUCC_SWRST);
 	for (n = 200; n > 0; n--) {
@@ -572,6 +576,9 @@ qeintr(arg)
 	u_int32_t qecstat, qestat;
 	int r = 0;
 
+#if defined(SUN4U) || defined(__GNUC__)
+	(void)&t;
+#endif
 	/* Read QEC status and channel status */
 	qecstat = bus_space_read_4(t, sc->sc_qr, QEC_QRI_STAT);
 
@@ -971,6 +978,9 @@ qeinit(sc)
 	u_int8_t *ea;
 	int i, s;
 
+#if defined(SUN4U) || defined(__GNUC__)
+	(void)&t;
+#endif
 	s = splimp();
 	qestop(sc);
 
@@ -1067,6 +1077,9 @@ qe_mcreset(sc)
 	u_int8_t octet, maccc = 0, *ladrp = (u_int8_t *)&hash[0];
 	int i, j;
 
+#if defined(SUN4U) || defined(__GNUC__)
+	(void)&t;
+#endif
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		bus_space_write_1(t, mr, QE_MRI_IAC,
 				  QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
@@ -1147,6 +1160,9 @@ qe_ifmedia_sts(ifp, ifmr)
 	bus_space_handle_t mr = sc->sc_mr;
 	u_int8_t v;
 
+#if defined(SUN4U) || defined(__GNUC__)
+	(void)&t;
+#endif
 	v = bus_space_read_1(t, mr, QE_MRI_PLSCC);
 
 	switch (bus_space_read_1(t, mr, QE_MRI_PLSCC) & QE_MR_PLSCC_PORTMASK) {
@@ -1185,6 +1201,9 @@ qe_ifmedia_upd(ifp)
 	int newmedia = ifm->ifm_media;
 	u_int8_t plscc, phycc;
 
+#if defined(SUN4U) || defined(__GNUC__)
+	(void)&t;
+#endif
 	if (IFM_TYPE(newmedia) != IFM_ETHER)
 		return (EINVAL);
 
