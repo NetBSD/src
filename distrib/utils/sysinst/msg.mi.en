@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.50 1999/07/04 08:01:39 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.51 1999/07/04 09:41:03 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -177,13 +177,13 @@ message megname
 message layout
 {NetBSD uses a BSD disklabel to carve up the NetBSD portion of the disk
 into multiple BSD partitions.  You must now set up your BSD disklabel.
-You have several choices.  They are summarized below.
--- Standard: the BSD disklabel partitions are computed by this program.
--- Standard with X: twice the swap space, space for X binaries.
+You have several choices.  They are summarized below. 
+-- Standard: the BSD disklabel partitions are computed by this program. 
+-- Standard with X: twice the swap space, space for X binaries. 
 -- Custom: you specify the sizes of all the BSD disklabel partitions.
 
-The NetBSD part of your disk is %.2f Megabytes.
-Standard requires at least %.2f Megabytes.
+The NetBSD part of your disk is %.2f Megabytes. 
+Standard requires at least %.2f Megabytes. 
 Standard with X requires at least %.2f Megabytes.
 }
 
@@ -367,10 +367,11 @@ message ftpsource
 {The following is the ftp site, directory, user, and password currently
 ready to use.  If "user" is "ftp", then the password is not needed.
 
-host:      %s
-directory: %s
-user:      %s
-password:  }
+host:		%s
+directory:	%s
+user:		%s
+password:	%s
+}
 
 message host
 {host}
@@ -395,8 +396,8 @@ message nfssource
 located.  Remember, the directory should contain the .tgz files and
 must be nfs mountable.
 
-host:      %s
-directory: %s
+host:		%s
+directory:	%s
 }
 
 message nfsbadmount
@@ -407,8 +408,8 @@ message cdromsource
 the distribution is located.  Remember, the directory should contain
 the .tgz files.
 
-device:    %s
-directory: %s
+device:		%s
+directory:	%s
 }
 
 message localfssource
@@ -416,16 +417,16 @@ message localfssource
 the distribution is located.  Remember, the directory should contain
 the .tgz files.
 
-device:     %s
-filesystem: %s
-directory:  %s
+device:		%s
+filesystem:	%s
+directory:	%s
 }
 
 message localdir
 {Enter the already-mounted local directory where the distribution is
 located.  Remember, the directory should contain the .tgz files.
 
-directory:  %s
+directory:	%s
 }
 
 message filesys
@@ -487,13 +488,13 @@ message net_media
 message netok
 {The following are the values you entered.  Are they OK?
 
-Domain:        %s
-Host Name:     %s
-Host IP:       %s
-Netmask:       %s
-Nameserver IP: %s
-Gateway IP:    %s
-Media type:    %s
+Domain:		%s 
+Host Name:	%s 
+Host IP:	%s 
+Netmask:	%s 
+Nameserver IP:	%s 
+Gateway IP:	%s 
+Media type:	%s 
 }
 
 message netagain
@@ -586,7 +587,7 @@ Press <return> to continue.}
 
 message progdie
 {
-sysinst: Execution of "%s" failed unexpectedly with error code  %s.
+sysinst: Execution of "%s" failed unexpectedly with error code %s.
 Cannot recover, aborting.
 }
 
@@ -660,9 +661,9 @@ floppy with that file on it.}
 message fdremount
 {The floppy was not mounted successfully.  You may:
 
-    Try again and put in the floppy containing the file named "%s".
+Try again and put in the floppy containing the file named "%s".
 
-    Not load any more files from floppy and abort the process.
+Not load any more files from floppy and abort the process.
 }
 
 message mntnetconfig
@@ -714,7 +715,7 @@ geometry is %d cylinders %d sectors %d heads\n}
 
 message cmdfail
 {Command
-        %s
+	%s
 failed. I can't continue.}
 
 message noactivepart
