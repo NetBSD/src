@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.53 2001/02/04 07:08:51 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.54 2001/02/04 09:00:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -137,7 +137,7 @@ static int dofilereadv32 __P((struct proc *, int, struct file *, struct netbsd32
 			      int, off_t *, int, register_t *));
 static int dofilewritev32 __P((struct proc *, int, struct file *, struct netbsd32_iovec *, 
 			       int,  off_t *, int, register_t *));
-static int change_utimes32 __P((struct vnode *, struct timeval *, struct proc *));
+static int change_utimes32 __P((struct vnode *, netbsd32_timevalp_t, struct proc *));
 
 extern char netbsd32_sigcode[], netbsd32_esigcode[];
 extern struct sysent netbsd32_sysent[];
@@ -2572,7 +2572,7 @@ netbsd32_fcntl(p, v, retval)
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(cmd);
 	NETBSD32TOP_UAP(arg, void);
-	/* XXXX we can do this 'cause flock doesn't change */
+	/* we can do this because `struct flock' doesn't change */
 	return (sys_fcntl(p, &ua, retval));
 }
 
@@ -2888,42 +2888,6 @@ netbsd32_gettimeofday(p, v, retval)
 	return (error);
 }
 
-#if 0
-static int settime32 __P((struct timeval *));
-/* This function is used by clock_settime and settimeofday */
-static int
-settime32(tv)
-	struct timeval *tv;
-{
-	struct timeval delta;
-	int s;
-
-	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-	s = splclock();
-	timersub(tv, &time, &delta);
-	if ((delta.tv_sec < 0 || delta.tv_usec < 0) && securelevel > 1)
-		return (EPERM);
-#ifdef notyet
-	if ((delta.tv_sec < 86400) && securelevel > 0)
-		return (EPERM);
-#endif
-	time = *tv;
-	(void) spllowersoftclock();
-	timeradd(&boottime, &delta, &boottime);
-	timeradd(&runtime, &delta, &runtime);
-#	if defined(NFS) || defined(NFSSERVER)
-	{
-		extern void	nqnfs_lease_updatetime __P((int));
-
-		nqnfs_lease_updatetime(delta.tv_sec);
-	}
-#	endif
-	splx(s);
-	resettodr();
-	return (0);
-}
-#endif
-
 int
 netbsd32_settimeofday(p, v, retval)
 	struct proc *p;
@@ -2936,7 +2900,6 @@ netbsd32_settimeofday(p, v, retval)
 	} */ *uap = v;
 	struct netbsd32_timeval atv32;
 	struct timeval atv;
-	struct netbsd32_timezone atz;
 	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -2946,13 +2909,10 @@ netbsd32_settimeofday(p, v, retval)
 	    &atv32, sizeof(atv32))))
 		return (error);
 	netbsd32_to_timeval(&atv32, &atv);
-	/* XXX since we don't use tz, probably no point in doing copyin. */
-	if (SCARG(uap, tzp) && (error = copyin((caddr_t)(u_long)SCARG(uap, tzp),
-	    &atz, sizeof(atz))))
-		return (error);
 	if (SCARG(uap, tv))
 		if ((error = settime(&atv)))
 			return (error);
+	/* don't bother copying the tz in, we don't use it. */
 	/*
 	 * NetBSD has no kernel notion of time zone, and only an
 	 * obsolete program would try to set it, so we log a warning.
@@ -3456,7 +3416,7 @@ netbsd32_utimes(p, v, retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
-	error = change_utimes32(nd.ni_vp, (struct timeval *)(u_long)SCARG(uap, tptr), p);
+	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), p);
 
 	vrele(nd.ni_vp);
 	return (error);
@@ -3468,7 +3428,7 @@ netbsd32_utimes(p, v, retval)
 static int
 change_utimes32(vp, tptr, p)
 	struct vnode *vp;
-	struct timeval *tptr;
+	netbsd32_timevalp_t tptr;
 	struct proc *p;
 {
 	struct netbsd32_timeval tv32[2];
@@ -3482,12 +3442,12 @@ change_utimes32(vp, tptr, p)
 		tv[1] = tv[0];
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	} else {
-		error = copyin(tptr, tv, sizeof(tv));
+		error = copyin((caddr_t)(u_long)tptr, tv32, sizeof(tv32));
 		if (error)
 			return (error);
+		netbsd32_to_timeval(&tv32[0], &tv[0]);
+		netbsd32_to_timeval(&tv32[1], &tv[1]);
 	}
-	netbsd32_to_timeval(&tv32[0], &tv[0]);
-	netbsd32_to_timeval(&tv32[1], &tv[1]);
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vattr.va_atime.tv_sec = tv[0].tv_sec;
@@ -3553,7 +3513,7 @@ netbsd32_adjtime(p, v, retval)
 		atv.tv_sec = odelta / 1000000;
 		atv.tv_usec = odelta % 1000000;
 		(void) copyout(&atv, (caddr_t)(u_long)SCARG(uap, olddelta),
-		    sizeof(struct timeval));
+		    sizeof(atv));
 	}
 	return (0);
 }
@@ -3696,7 +3656,7 @@ netbsd32_sysarch(p, v, retval)
 
 	switch (SCARG(uap, op)) {
 	default:
-		printf("(sparc64) netbsd32_sysarch(%d)\n", SCARG(uap, op));
+		printf("(%s) netbsd32_sysarch(%d)\n", MACHINE, SCARG(uap, op));
 		return EINVAL;
 	}
 }
@@ -3845,7 +3805,7 @@ netbsd32_ntp_gettime(p, v, retval)
 		else
 			*retval = time_state;
 	}
-	return(error);
+	return (error);
 }
 
 int
@@ -3965,7 +3925,8 @@ netbsd32_ntp_gettime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return(ENOSYS);
+
+	return (ENOSYS);
 }
 
 int
@@ -3974,6 +3935,7 @@ netbsd32_ntp_adjtime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+
 	return (ENOSYS);
 }
 #endif
@@ -4030,21 +3992,8 @@ netbsd32_sys_lfs_bmapv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if 0
-	struct netbsd32_lfs_bmapv_args /* {
-		syscallarg(netbsd32_fsid_tp_t) fsidp;
-		syscallarg(netbsd32_block_infop_t) blkiov;
-		syscallarg(int) blkcnt;
-	} */ *uap = v;
-	struct sys_lfs_bmapv_args ua;
-
-	NETBSD32TOP_UAP(fdidp, struct fsid);
-	NETBSD32TO64_UAP(blkcnt);
-	/* XXX finish me */
-#else
 
 	return (ENOSYS);	/* XXX */
-#endif
 }
 
 int
@@ -4053,13 +4002,6 @@ netbsd32_sys_lfs_markv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if 0
-	struct netbsd32_lfs_markv_args /* {
-		syscallarg(netbsd32_fsid_tp_t) fsidp;
-		syscallarg(netbsd32_block_infop_t) blkiov;
-		syscallarg(int) blkcnt;
-	} */ *uap = v;
-#endif
 
 	return (ENOSYS);	/* XXX */
 }
@@ -4070,12 +4012,6 @@ netbsd32_sys_lfs_segclean(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if 0
-	struct netbsd32_lfs_segclean_args /* {
-		syscallarg(netbsd32_fsid_tp_t) fsidp;
-		syscallarg(netbsd32_u_long) segment;
-	} */ *uap = v;
-#endif
 
 	return (ENOSYS);	/* XXX */
 }
@@ -4086,12 +4022,6 @@ netbsd32_sys_lfs_segwait(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if 0
-	struct netbsd32_lfs_segwait_args /* {
-		syscallarg(netbsd32_fsid_tp_t) fsidp;
-		syscallarg(netbsd32_timevalp_t) tv;
-	} */ *uap = v;
-#endif
 
 	return (ENOSYS);	/* XXX */
 }
@@ -4545,7 +4475,7 @@ netbsd32_futimes(p, v, retval)
 		return (error);
 
 	error = change_utimes32((struct vnode *)fp->f_data, 
-				(struct timeval *)(u_long)SCARG(uap, tptr), p);
+				SCARG(uap, tptr), p);
 	FILE_UNUSE(fp, p);
 	return (error);
 }
@@ -5223,7 +5153,6 @@ netbsd32_fdatasync(p, v, retval)
 	struct sys_fdatasync_args ua;
 
 	NETBSD32TO64_UAP(fd);
-
 	return (sys_fdatasync(p, &ua, retval));
 }
 
@@ -5241,7 +5170,6 @@ netbsd32___posix_rename(p, v, retval)
 
 	NETBSD32TOP_UAP(from, const char);
 	NETBSD32TOP_UAP(to, const char);
-
 	return (sys___posix_rename(p, &ua, retval));
 }
 
@@ -5366,7 +5294,7 @@ netbsd32_lutimes(p, v, retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
-	error = change_utimes32(nd.ni_vp, (struct timeval *)(u_long)SCARG(uap, tptr), p);
+	error = change_utimes32(nd.ni_vp, SCARG(uap, tptr), p);
 
 	vrele(nd.ni_vp);
 	return (error);
