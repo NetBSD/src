@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.10 1994/06/15 05:18:47 glass Exp $
+ *      $Id: machdep.c,v 1.11 1994/07/05 04:24:14 glass Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -74,7 +74,6 @@
 #include <machine/pte.h>
 #include <machine/dc7085cons.h>
 
-#include <machine/exec.h>
 #include <sys/exec_ecoff.h>
 
 #include <pmax/stand/dec_prom.h>
