@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.11 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.12 2003/11/01 01:38:25 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.11 2003/10/31 20:54:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.12 2003/11/01 01:38:25 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,9 +372,8 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	 * events we cause while performing a transaction (e.g. IBE/OBF) get 
 	 * cleared before re-enabling the GPE.
 	 */
-	if ((rv = AcpiInstallGpeHandler(sc->sc_node->ad_handle, sc->sc_gpebit,
-	     ACPI_EVENT_LEVEL_TRIGGERED | ACPI_EVENT_EDGE_TRIGGERED,
-	     EcGpeHandler, sc)) != AE_OK) {
+	if ((rv = AcpiInstallGpeHandler(NULL, sc->sc_gpebit,
+	     ACPI_EVENT_EDGE_TRIGGERED, EcGpeHandler, sc)) != AE_OK) {
 		printf("%s: unable to install GPE handler: %d\n",
 		    sc->sc_dev.dv_xname, rv);
 		return;
