@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.16 2004/01/01 19:32:55 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.17 2004/01/02 11:52:15 hannken Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.16 2004/01/01 19:32:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.17 2004/01/02 11:52:15 hannken Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -214,7 +214,7 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 	 * buf list in the recon ctrl struct. */
 	if (!t) {
 		RF_ASSERT(!keep_it && !use_committed);
-		Dprintf2("RECON: row %d col %d failed to acquire floating rbuf\n", rbuf->row, rbuf->col);
+		Dprintf1("RECON: col %d failed to acquire floating rbuf\n", rbuf->col);
 
 		raidPtr->procsInBufWait++;
 		if ((raidPtr->procsInBufWait == raidPtr->numCol - 1) && (raidPtr->numFullReconBuffers == 0)) {
@@ -239,7 +239,7 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 		retcode = 1;
 		goto out;
 	}
-	Dprintf2("RECON: row %d col %d acquired rbuf\n", rbuf->row, rbuf->col);
+	Dprintf1("RECON: col %d acquired rbuf\n", rbuf->col);
 	RF_ETIMER_STOP(raidPtr->recon_tracerecs[rbuf->col].recon_timer);
 	RF_ETIMER_EVAL(raidPtr->recon_tracerecs[rbuf->col].recon_timer);
 	raidPtr->recon_tracerecs[rbuf->col].specific.recon.recon_return_to_submit_us +=
