@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.29.4.4 2001/05/01 11:01:25 he Exp $ */
+/* $NetBSD: lib.h,v 1.29.4.5 2002/02/23 18:13:56 he Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -187,7 +187,7 @@ int	findbestmatchingname_fn(const char *pkg, char *data);	/* neither */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
 int     ispkgpattern(const char *);
 char   *strnncpy(char *to, size_t tosize, char *from, size_t cc);
-void	strip_txz(char *buf, char *fname);
+void	strip_txz(char *buf, char *sfx, const char *fname);
 
 /* File */
 Boolean fexists(char *);
@@ -230,7 +230,7 @@ void    csum_plist_entry(char *, plist_t *);
 void    add_plist(package_t *, pl_ent_t, char *);
 void    add_plist_top(package_t *, pl_ent_t, char *);
 void    delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name);
-void    write_plist(package_t *, FILE *);
+void    write_plist(package_t *, FILE *, char *);
 void    read_plist(package_t *, FILE *);
 int     plist_cmd(char *, char **);
 int     delete_package(Boolean, Boolean, package_t *);
