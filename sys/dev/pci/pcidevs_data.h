@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.432 2002/05/24 11:54:23 lukem Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.433 2002/05/25 07:32:25 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.429 2002/05/24 11:50:20 lukem Exp 
+ *	NetBSD: pcidevs,v 1.430 2002/05/25 07:28:15 ichiro Exp 
  */
 
 /*
@@ -4022,6 +4022,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82451NX PCI Expander Bridge (PXB)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21555,
+	    0,
+	    "Intel",
+	    "21555 Non-Transparent PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
