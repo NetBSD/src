@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.47 2000/06/27 17:41:44 mrg Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.48 2000/08/18 14:12:47 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -466,6 +466,14 @@ m_copym0(m, off0, len, wait, deep)
 				n->m_ext = m->m_ext;
 				MCLADDREFERENCE(m, n);
 			} else {
+				/*
+				 * XXX the code falsely assumes that, if mbufs
+				 * are with M_EXT, the cluster region was
+				 * allocated with MCLGET() and is with the size
+				 * of MCLBYTES.
+				 * this is not the case.  for counter example,
+				 * see MEXTMALLOC() and MEXTADD().
+				 */
 				MCLGET(n, wait);
 				memcpy(mtod(n, caddr_t), mtod(m, caddr_t)+off,
 				    (unsigned)n->m_len);
