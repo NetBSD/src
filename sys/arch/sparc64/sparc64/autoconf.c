@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 2001/04/25 17:53:24 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.45 2001/05/10 23:11:53 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1068,6 +1068,8 @@ static struct {
 	{ "ide",	BUSCLASS_PCI,		"pciide" },
 	{ "disk",	BUSCLASS_NONE,		"wd" },  /* XXX */
 	{ "network",	BUSCLASS_NONE,		"hme" }, /* XXX */
+	{ "SUNW,fas",	BUSCLASS_NONE,		"esp" },
+	{ "SUNW,hme",	BUSCLASS_NONE,		"hme" },
 };
 
 static char *
