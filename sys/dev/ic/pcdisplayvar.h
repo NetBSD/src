@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.5 1999/02/12 11:25:24 drochner Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.6 1999/09/19 21:48:08 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,6 +32,8 @@
  *
  */
 
+#include "opt_pcdisplay.h"
+
 struct pcdisplayscreen {
 	struct pcdisplay_handle *hdl;
 
@@ -41,6 +43,9 @@ struct pcdisplayscreen {
 	u_int16_t *mem; /* backing store for contents */
 
 	int cursoron;		/* cursor displayed? */
+#ifdef PCDISPLAY_SOFTCURSOR
+	int cursortmp;		/* glyph & attribute behind software cursor */
+#endif
 	int vc_ccol, vc_crow;	/* current cursor position */
 
 	int dispoffset; /* offset of displayed area in video mem */
