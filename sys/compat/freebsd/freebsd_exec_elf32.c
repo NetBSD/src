@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.3 2001/10/23 16:41:36 christos Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.4 2001/10/23 16:43:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -71,9 +71,9 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
 #define EI_BRAND 8
 #endif
         if (eh->e_ident[EI_BRAND] == '\0'
-			|| strcmp(&eh->e_ident[EI_BRAND], wantBrand))
-			if (eh->e_ident[EI_OSABI] != ELFOSABI_FREEBSD)
-				return ENOEXEC;
+	    || strcmp(&eh->e_ident[EI_BRAND], wantBrand))
+		if (eh->e_ident[EI_OSABI] != ELFOSABI_FREEBSD)
+			return ENOEXEC;
 
 	i = eh->e_phnum;
 	if (i != 0) {
