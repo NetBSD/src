@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.5 1994/12/21 20:07:26 mycroft Exp $	*/
+/*	$NetBSD: quota.h,v 1.6 1995/03/26 20:38:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -109,7 +109,7 @@ struct dqblk {
 	time_t	  dqb_itime;		/* time limit for excessive files */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <sys/queue.h>
 
 /*
@@ -208,6 +208,6 @@ __BEGIN_DECLS
 void	chkdquot __P((struct inode *));
 __END_DECLS
 #endif
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #endif /* _QUOTA_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.5 1994/06/29 06:40:25 cgd Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.6 1995/03/26 20:35:29 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,7 +74,7 @@ SOFTWARE.
 #define		TP_DECBIT_CLEAR_COUNT	3
 
 /*#define 	N_TPREF				100 */
-#ifdef KERNEL
+#ifdef _KERNEL
 extern int N_TPREF;
 #endif
 
@@ -340,7 +340,7 @@ bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type)
 } }
 #endif /* ARGO_DEBUG */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern int tp_rttadd, tp_rttdiv;
 #include <sys/syslog.h>
 #define printf logpri(LOG_DEBUG),addlog
@@ -355,6 +355,6 @@ extern int tp_rttadd, tp_rttdiv;
 #endif /* defined(__STDC__) || defined(__cplusplus) */
 
 #endif  /* tp_NSTATES  */
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #endif /* _NETISO_TP_PARAM_H_ */

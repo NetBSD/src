@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.h,v 1.9 1994/06/29 06:48:39 cgd Exp $	*/
+/*	$NetBSD: vm_pager.h,v 1.10 1995/03/26 20:39:15 jtc Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -103,7 +103,7 @@ struct	pagerops {
 #define	VM_PAGER_ERROR	4
 #define VM_PAGER_AGAIN	5
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct pagerops *dfltpagerops;
 
 vm_pager_t	 vm_pager_allocate

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 1994/06/29 06:47:46 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 1995/03/26 20:39:07 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -86,7 +86,7 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 
 #include <machine/pmap.h>
 
-#ifdef KERNEL
+#ifdef _KERNEL
 __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
 void		 pmap_bootstrap( /* machine dependent */ );
