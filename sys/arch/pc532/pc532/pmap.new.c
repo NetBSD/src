@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.10.2.4 2000/04/26 22:15:16 he Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.10.2.5 2000/06/03 14:20:32 he Exp $	*/
 
 /*
  *
@@ -3399,6 +3399,7 @@ vaddr_t maxkvaddr;
 
       if (uvm_page_physget(&ptaddr) == FALSE)
 	panic("pmap_growkernel: out of memory");
+      pmap_zero_page(ptaddr);
 
       kpm->pm_pdir[PDSLOT_KERN + nkpde] = ptaddr | PG_RW | PG_V;
       kpm->pm_stats.resident_count++;	/* count PTP as resident */
