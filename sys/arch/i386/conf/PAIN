@@ -1,14 +1,13 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.31 1994/05/19 07:17:34 cgd Exp $
+#	$Id: PAIN,v 1.32 1994/05/21 08:37:40 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
 ident		PAIN
 timezone	8 dst
 maxusers	10
-maxfdescs	2048
 
 # "mandatory"
 options		SWAPPAGER,VNODEPAGER,DEVPAGER

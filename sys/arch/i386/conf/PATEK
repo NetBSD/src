@@ -1,7 +1,7 @@
 #
 # PATEK -- Mycroft's 486 test box
 #
-#	$Id: PATEK,v 1.13 1994/05/19 07:17:37 cgd Exp $
+#	$Id: PATEK,v 1.14 1994/05/21 08:37:42 cgd Exp $
 #
 
 machine		"i386"
@@ -13,7 +13,6 @@ options		XSERVER,UCONSOLE
 
 ident		PATEK
 maxusers	16
-maxfdescs	2048
 timezone	5 dst
 
 options		SWAPPAGER
