@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.20 2003/01/03 13:40:05 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.21 2003/01/21 04:06:07 matt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.20 2003/01/03 13:40:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.21 2003/01/21 04:06:07 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.20 2003/01/03 13:40:05 manu Exp $
 static struct pool mach_message_pool;
 
 int
-mach_sys_msg_overwrite_trap(p, v, retval)
-	struct proc *p;
+mach_sys_msg_overwrite_trap(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -89,6 +89,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 	} */ *uap = v;
 	struct mach_emuldata *med;
 	struct mach_port *mp;
+	struct proc *p = l->l_proc;
 	size_t send_size, rcv_size;
 	int error = 0;
 
@@ -148,8 +149,8 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		ln = sm->msgh_local_port;
 		rn = sm->msgh_remote_port;
 
-		lr = mach_right_check(ln, p, MACH_PORT_TYPE_ALL_RIGHTS);
-		rr = mach_right_check(rn, p, MACH_PORT_TYPE_ALL_RIGHTS);
+		lr = mach_right_check(ln, l, MACH_PORT_TYPE_ALL_RIGHTS);
+		rr = mach_right_check(rn, l, MACH_PORT_TYPE_ALL_RIGHTS);
 		if (rr == NULL) {
 #ifdef DEBUG_MACH
 			printf("msg id %d: invalid dest\n", sm->msgh_id);
@@ -164,7 +165,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		 * the remote port. 
 		 */
 		rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE);
-		if (mach_right_check(rn, p, rights) == NULL) {
+		if (mach_right_check(rn, l, rights) == NULL) {
 			*retval = MACH_SEND_INVALID_RIGHT;
 			goto out1;
 		}
@@ -224,7 +225,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			 */
 			rm = malloc(rcv_size, M_EMULDATA, M_WAITOK | M_ZERO);
 
-			args.p = p;
+			args.l = l;
 			args.smsg = sm;
 			args.rmsg = rm;
 			args.rsize = &rcv_size;
@@ -267,7 +268,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			 * Queue the message in the remote port.
 			 */
 			mp = rr->mr_port;
-			(void)mach_message_get(sm, send_size, mp, p);
+			(void)mach_message_get(sm, send_size, mp, l);
 #ifdef DEBUG_MACH_MSG
 			printf("pid %d: message queued on port %p (%d) [%p]\n", 
 			    p->p_pid, mp, sm->msgh_id, 
@@ -365,13 +366,13 @@ out1:
 		 * Check for receive right on the port 
 		 */
 		mn = SCARG(uap, rcv_name);
-		mr = mach_right_check(mn, p, MACH_PORT_TYPE_RECEIVE);
+		mr = mach_right_check(mn, l, MACH_PORT_TYPE_RECEIVE);
 		if (mr == NULL) {
 			
 			/* 
 			 * Is it a port set?
 			 */
-			mr = mach_right_check(mn, p, MACH_PORT_TYPE_PORT_SET);
+			mr = mach_right_check(mn, l, MACH_PORT_TYPE_PORT_SET);
 			if (mr == NULL) {
 				*retval = MACH_RCV_INVALID_NAME;
 				return 0;
@@ -383,7 +384,7 @@ out1:
 			 * and check if we have some message.
 			 */
 			LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
-				if ((mach_right_check(cmr->mr_name, p, 
+				if ((mach_right_check(cmr->mr_name, l, 
 				    MACH_PORT_TYPE_RECEIVE)) == NULL) {
 					*retval = MACH_RCV_INVALID_NAME;
 					return 0;
@@ -420,7 +421,7 @@ out1:
 				 * Check we did not loose the receive right
 				 * while we were sleeping.
 				 */
-				if ((mach_right_check(mn, p, 
+				if ((mach_right_check(mn, l, 
 				     MACH_PORT_TYPE_PORT_SET)) == NULL) {
 					*retval = MACH_RCV_PORT_DIED;
 					return 0;
@@ -476,7 +477,7 @@ out1:
 				 * Check we did not loose the receive right
 				 * while we were sleeping.
 				 */
-				if ((mach_right_check(mn, p, 
+				if ((mach_right_check(mn, l, 
 				     MACH_PORT_TYPE_RECEIVE)) == NULL) {
 					*retval = MACH_RCV_PORT_DIED;
 					return 0;
@@ -541,7 +542,7 @@ out1:
 		 * Get rights carried by the message if it is not a
 		 * reply from the kernel.
 		 */
-		if (mm->mm_p != NULL) {
+		if (mm->mm_l != NULL) {
 #ifdef DEBUG_MACH
 			printf("mach_msg: non kernel-reply message\n");
 #endif
@@ -582,11 +583,11 @@ out1:
 			mr = NULL;
 			if (nr != 0) {
 				mn = mm->mm_msg->msgh_local_port;
-				mr = mach_right_check(mn, mm->mm_p, or);
+				mr = mach_right_check(mn, mm->mm_l, or);
 			}
 
 			if (mr != NULL) {
-				nmr = mach_right_get(mr->mr_port, p, nr, 0);
+				nmr = mach_right_get(mr->mr_port, l, nr, 0);
 				mm->mm_msg->msgh_local_port = nmr->mr_name;
 			} else {
 				mm->mm_msg->msgh_local_port = 0;
@@ -629,11 +630,11 @@ out1:
 			mr = NULL;
 			if (nr != 0) {
 				mn = mm->mm_msg->msgh_remote_port;
-				mr = mach_right_check(mn, mm->mm_p, or);
+				mr = mach_right_check(mn, mm->mm_l, or);
 			}
 
 			if (mr != NULL) {
-				nmr = mach_right_get(mr->mr_port, p, nr, 0);
+				nmr = mach_right_get(mr->mr_port, l, nr, 0);
 				mm->mm_msg->msgh_remote_port = nmr->mr_name;
 			} else {
 				mm->mm_msg->msgh_remote_port = 0;
@@ -675,10 +676,10 @@ unlock:
 }
 
 int
-mach_sys_msg_trap(p, v, retval)
-	struct proc *p;
+mach_sys_msg_trap(l, v, retval)
+	struct lwp *l;
 	void *v;
-	 register_t *retval;
+	register_t *retval;
 {
 	struct mach_sys_msg_trap_args /* {
 		syscallarg(mach_msg_header_t *) msg;
@@ -701,7 +702,7 @@ mach_sys_msg_trap(p, v, retval)
 	SCARG(&cup, rcv_msg) = NULL;
 	SCARG(&cup, scatter_list_size) = 0;
 
-	return mach_sys_msg_overwrite_trap(p, &cup, retval);
+	return mach_sys_msg_overwrite_trap(l, &cup, retval);
 }
 
 void
@@ -713,11 +714,11 @@ mach_message_init(void)
 }
 
 struct mach_message *
-mach_message_get(msgh, size, mp, p)
+mach_message_get(msgh, size, mp, l)
 	mach_msg_header_t *msgh;
 	size_t size;
 	struct mach_port *mp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mach_message *mm;
 
@@ -726,7 +727,7 @@ mach_message_get(msgh, size, mp, p)
 	mm->mm_msg = msgh;
 	mm->mm_size = size;
 	mm->mm_port = mp;
-	mm->mm_p = p;
+	mm->mm_l = l;
 	
 	lockmgr(&mp->mp_msglock, LK_EXCLUSIVE, NULL);
 	TAILQ_INSERT_TAIL(&mp->mp_msglist, mm, mm_list);
@@ -786,22 +787,22 @@ mach_message_put_exclocked(mm)
 void 
 mach_debug_message(void)
 {
-	struct proc *p;
+	struct lwp *l;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	struct mach_right *mrs;
 	struct mach_port *mp;
 	struct mach_message *mm;
 
-	LIST_FOREACH(p, &allproc, p_list) {
-		if ((p->p_emul != &emul_mach) &&
+	LIST_FOREACH(l, &alllwp, p_list) {
+		if ((l->l_proc->p_emul != &emul_mach) &&
 #ifdef COMPAT_DARWIN
-		    (p->p_emul != &emul_darwin) &&
+		    (l->l_proc->p_emul != &emul_darwin) &&
 #endif
 		    1)
 			continue;
 
-		med = p->p_emuldata;
+		med = l->l_emuldata;
 		LIST_FOREACH(mr, &med->med_right, mr_list)
 			if ((mr->mr_type & MACH_PORT_TYPE_PORT_SET) == 0) {
 				mp = mr->mr_port;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.10 2002/12/12 00:29:24 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.11 2003/01/21 04:06:08 matt Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 typedef int mach_port_t;
 typedef int mach_port_name_t;
 typedef int mach_port_type_t;
-typedef int mach_kern_return_t;
+typedef register_t mach_kern_return_t;
 typedef int mach_clock_res_t;
 typedef int mach_clock_id_t;
 typedef int mach_boolean_t;
@@ -52,12 +52,12 @@ typedef int mach_integer_t;
 typedef int mach_cpu_type_t;
 typedef int mach_cpu_subtype_t;
 typedef int mach_port_right_t;
-typedef int mach_vm_address_t;
+typedef register_t mach_vm_address_t;
 typedef int mach_vm_inherit_t;
 typedef int mach_vm_prot_t;
 typedef int mach_thread_state_flavor_t;
 typedef unsigned int mach_natural_t;
-typedef unsigned int mach_vm_size_t;
+typedef unsigned long mach_vm_size_t;
 typedef unsigned long mach_vm_offset_t;
 
 /* 

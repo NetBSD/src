@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.20 2003/01/04 15:15:01 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.21 2003/01/21 04:06:07 matt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.20 2003/01/04 15:15:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.21 2003/01/21 04:06:07 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -156,10 +156,10 @@ mach_host_get_clock_service(args)
 	mach_host_get_clock_service_request_t *req = args->smsg;
 	mach_host_get_clock_service_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 	struct mach_right *mr;
 
-	mr = mach_right_get(mach_clock_port, p, MACH_PORT_TYPE_SEND, 0);
+	mr = mach_right_get(mach_clock_port, l, MACH_PORT_TYPE_SEND, 0);
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -200,13 +200,14 @@ mach_host_get_io_master(args)
 	mach_host_get_clock_service_request_t *req = args->smsg;
 	mach_host_get_clock_service_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct proc *p = args->p;
+	struct lwp *l = args->l;
 
 	/*
 	 * XXX Find out what this is supposed
 	 * to do and implement it
 	 */
-	printf("pid %d: unimplemented mach_host_get_io_master\n", p->p_pid);
+	printf("pid %d.%d: unimplemented mach_host_get_io_master\n",
+	    l->l_proc->p_pid, l->l_lid);
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
