@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.5 1999/12/08 15:54:11 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.6 1999/12/12 17:08:37 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -29,6 +29,7 @@
 #include "opt_tx39_debug.h"
 #include "m38813c.h"
 #include "p7416buf.h"
+#include "tc5165buf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +38,9 @@
 #include <machine/locore.h>   /* cpu_id */
 #include <machine/bootinfo.h> /* bootinfo */
 #include <machine/sysconf.h>  /* platform */
+
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -65,6 +69,9 @@
 #endif
 #if NM38813C > 0
 #include <hpcmips/dev/m38813cvar.h>
+#endif
+#if NTC5165BUF > 0
+#include <hpcmips/dev/tc5165bufvar.h>
 #endif
 
 extern unsigned nullclkread __P((void));
@@ -265,6 +272,8 @@ void
 tx_cons_init()
 {
 	int slot;
+#define CONSPLATIDMATCH(p) \
+	platid_match(&platid, &platid_mask_MACH_##p)
 
 #ifdef SERIALCONSSLOT
 	slot = SERIALCONSSLOT;
@@ -279,11 +288,20 @@ tx_cons_init()
 		}
 	} else {
 #if NP7416BUF > 0
-		if(p7416buf_cnattach(TX39_SYSADDR_CS3)) {
+		if(CONSPLATIDMATCH(COMPAQ_C) &&
+		   p7416buf_cnattach(TX39_SYSADDR_CS3)) {
 			panic("tx_cons_init: can't init console");
 		}
-#elif NM38813C > 0
-		if(m38813c_cnattach(TX39_SYSADDR_CARD1)) {
+#endif
+#if NM38813C > 0
+		if(CONSPLATIDMATCH(VICTOR_INTERLINK) &&
+		   m38813c_cnattach(TX39_SYSADDR_CARD1)) {
+			panic("tx_cons_init: can't init console");
+		}
+#endif
+#if NTC5165BUF > 0
+		if(CONSPLATIDMATCH(SHARP_TELIOS) &&
+		   tc5165buf_cnattach(TX39_SYSADDR_CS1)) {
 			panic("tx_cons_init: can't init console");
 		}
 #endif
