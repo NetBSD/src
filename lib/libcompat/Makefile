@@ -1,5 +1,5 @@
 LIB=compat
-SRCS=	ftime.c
+SRCS=	ftime.c regex.c
 	 
 CFLAGS+= -I. -I${.CURDIR} -DNDEBUG
 
