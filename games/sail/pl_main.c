@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.7 1999/02/10 00:45:46 hubertf Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.8 2000/01/31 11:08:53 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.7 1999/02/10 00:45:46 hubertf Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.8 2000/01/31 11:08:53 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,6 @@ int
 pl_main()
 {
 
-	if (!SCREENTEST()) {
-		printf("Can't sail on this terminal.\n");
-		exit(1);
-	}
 	initialize();
 	Msg("Aye aye, Sir");
 	play();
