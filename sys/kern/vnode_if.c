@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.11 1996/09/07 12:41:06 mycroft Exp 
+ *	NetBSD: vnode_if.src,v 1.12 1997/10/10 02:07:00 fvdl Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.11 1997/07/07 20:17:36 cgd Exp 
  */
