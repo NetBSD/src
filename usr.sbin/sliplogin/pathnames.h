@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 4/1/91
- *	$Id: pathnames.h,v 1.2 1993/08/01 17:55:45 mycroft Exp $
+ *	$Id: pathnames.h,v 1.3 1993/12/10 14:18:00 cgd Exp $
  */
 
 #include <paths.h>
 
-#define	_PATH_ACCESS	"/etc/slip.hosts"
-#define	_PATH_LOGIN	"/etc/slip.login"
-#define	_PATH_LOGOUT	"/etc/slip.logout"
+#define	_PATH_ACCESS	"/etc/sliphome/slip.hosts"
+#define	_PATH_LOGIN	"/etc/sliphome/slip.login"
+#define	_PATH_LOGOUT	"/etc/sliphome/slip.logout"
