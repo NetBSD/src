@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2000/10/19 14:24:21 tv Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2000/10/30 22:20:32 tv Exp $
 #
 # instfs.tgz is the filesystem image for disk 2 of the floppy based
 # installation method.
@@ -47,8 +47,8 @@ release:
 	@echo setenv RELEASEDIR first
 	@false
 .else
-release: $(INSTFS)
-	cp ${OBJDIR}/${INSTFS} $(RELEASEDIR)/installation/bootfs
+release: ${INSTFS}
+	cp ${INSTFS} $(RELEASEDIR)/installation/bootfs
 .endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
