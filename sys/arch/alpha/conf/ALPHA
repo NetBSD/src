@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.191.2.1 2004/04/29 21:42:10 jmc Exp $
+# $NetBSD: ALPHA,v 1.191.2.2 2004/07/15 20:22:03 he Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.191.2.1 $"
+ident		"ALPHA-$Revision: 1.191.2.2 $"
 
 maxusers 32
 
@@ -153,6 +153,7 @@ options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 options 	PCMCIAVERBOSE
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	FONT_GALLANT12x22	# Console font for TC devices
 
 # The Alpha console firmware network boots using the BOOTP
