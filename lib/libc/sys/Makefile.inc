@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.85 1998/06/30 19:46:01 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.86 1998/07/02 01:25:37 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -21,7 +21,8 @@ DPSRCS+= Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	ftruncate.c getdirentries.c lseek.c mmap.c msync.c semctl.c \
+SRCS+=	ftruncate.c getdirentries.c lseek.c mmap.c msync.c \
+	pread.c preadv.c pwrite.c pwritev.c semctl.c \
 	sigaltstack.c stat.c swapon.c truncate.c
 
 # "stub" POSIX.1b interfaces which return -1 and set errno to ENOSYS, so
@@ -46,7 +47,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	mlock.o mount.o mprotect.o msgctl.o msgget.o msgrcv.o \
 	msgsnd.o __msync13.o munlock.o munmap.o nanosleep.o \
 	nfssvc.o ntp_adjtime.o ntp_gettime.o open.o pathconf.o \
-	poll.o pread.o preadv.o profil.o pwrite.o pwritev.o quotactl.o read.o \
+	poll.o profil.o quotactl.o read.o \
 	readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o revoke.o \
 	rmdir.o select.o semconfig.o semget.o semop.o sendmsg.o sendto.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
