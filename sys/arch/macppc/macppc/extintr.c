@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.1 1998/05/15 10:15:58 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.2 1998/07/13 19:37:28 tsubai Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -138,7 +138,6 @@ intr_calculatemasks()
 	 * IPL_HIGH must block everything that can manipulate a run queue.
 	 */
 	imask[IPL_HIGH] |= imask[IPL_CLOCK];
-	imask[IPL_HIGH] |= 0xffffffff;
 
 	/*
 	 * We need serial drivers to run at the absolute highest priority to
@@ -348,6 +347,9 @@ start:
 
 		/*out32rb(INT_ENABLE_REG, ~imen);*/
 
+#if defined(UVM)
+		uvmexp.intrs++;
+#endif
 		intrcnt[irq]++;
 	}
 	int_state &= ~r_imen;
