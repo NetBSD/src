@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.21 2002/03/15 00:09:43 wiz Exp $
+.\"	$NetBSD: gif.4,v 1.22 2002/05/29 23:40:25 itojun Exp $
 .\"	$KAME: gif.4,v 1.24 2001/02/20 12:54:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -269,13 +269,3 @@ had a multi-destination behavior, configurable via
 .Dv IFF_LINK0
 flag.
 The behavior was obsoleted and is no longer supported.
-.Pp
-It should be possible to use the
-.Dv add
-command of
-.Xr route 8
-to add an interface route to a
-.Nm
-interface in one step rather than having to tweak it
-later with
-.Dv change .
