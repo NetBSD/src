@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.33 2002/02/28 22:43:42 pooka Exp $ */
+/*	$NetBSD: arp.c,v 1.34 2002/03/02 03:45:07 tv Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.33 2002/02/28 22:43:42 pooka Exp $");
+__RCSID("$NetBSD: arp.c,v 1.34 2002/03/02 03:45:07 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,8 @@ main(argc, argv)
 {
 	int ch;
 	int op = 0;
+
+	setprogname(argv[0]);
 
 	pid = getpid();
 
