@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.556 2002/10/04 23:04:53 elric Exp $
+#	$NetBSD: files,v 1.557 2002/10/05 15:16:10 tsutsui Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -748,6 +748,11 @@ file	dev/ic/we.c			we
 # Allied-Telesis Ethernet driver based on Fujitsu MB8696xA controllers
 #
 device	ate: arp, ether, ifnet, mb86960
+
+# Fujitsu FMV-18x Ethernet driver based on Fujitsu MB8696xA controllers
+#
+device	fmv: arp, ether, ifnet, mb86960
+file	dev/ic/fmv.c			fmv
 
 # Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
 #

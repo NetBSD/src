@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmvreg.h,v 1.1 2002/09/28 18:43:08 tsutsui Exp $	*/
+/*	$NetBSD: fmvreg.h,v 1.1 2002/10/05 15:16:11 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -56,12 +56,16 @@
 
 /* Model identification.  */
 #define FE_FMV0_MODEL		0x07
-#define FE_FMV0_MODEL_FMV181	0x05
-#define FE_FMV0_MODEL_FMV182	0x03
+#define FE_FMV0_MODEL_FMV181	0x05	/* FMV-181/181A		*/
+#define FE_FMV0_MODEL_FMV182	0x03	/* FMV-182/182A/184	*/
+#define FE_FMV0_MODEL_FMV183	0x04	/* FMV-183		*/
 
-/* Card type ID?  Always 0?  */
-#define FE_FMV1_CARDID_MASK	0xFF
-#define FE_FMV1_CARDID_ID	0x00
+/* Card type ID */
+#define FE_FMV1_MAGIC_MASK	0xB0
+#define FE_FMV1_MAGIC_VALUE	0x00
+#define FE_FMV1_CARDID_REV	0x0F
+#define FE_FMV1_CARDID_REV_A	0x01	/* FMV-181A/182A	*/
+#define FE_FMV1_CARDID_PNP	0x08	/* FMV-183/184		*/
 
 /* I/O port address assignment.  */
 #define FE_FMV2_ADDR		0x07
