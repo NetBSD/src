@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.613 2004/03/12 13:21:22 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.614 2004/03/25 14:10:08 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.613 2004/03/12 13:20:49 drochner Exp 
+ *	NetBSD: pcidevs,v 1.614 2004/03/25 14:09:46 drochner Exp 
  */
 
 /*
@@ -842,9 +842,10 @@
 #define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* AMD768 AC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* AMD768 PCI to PCI Bridge */
 #define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* AMD768 USB Controller */
-#define	PCI_PRODUCT_AMD_PCIX8131_PPB	0x7450		/* PCI-X Tunnel */
-#define	PCI_PRODUCT_AMD_PCIX8131_APIC	0x7451		/* IO Apic */
-#define	PCI_PRODUCT_AMD_SC8151	0x7454		/* AMD8151 AGP Bridge */
+#define	PCI_PRODUCT_AMD_PCIX8131_PPB	0x7450		/* AMD8131 PCI-X Tunnel */
+#define	PCI_PRODUCT_AMD_PCIX8131_APIC	0x7451		/* AMD8131 IO Apic */
+#define	PCI_PRODUCT_AMD_AGP8151_DEV	0x7454		/* AMD8151 AGP Device */
+#define	PCI_PRODUCT_AMD_AGP8151_PPB	0x7455		/* AMD8151 AGP Bridge */
 #define	PCI_PRODUCT_AMD_PBC8111	0x7460		/* AMD8111 I/O Hub */
 #define	PCI_PRODUCT_AMD_PBC8111_USB	0x7464		/* AMD8111 USB Host Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* AMD8111 LPC Controller */

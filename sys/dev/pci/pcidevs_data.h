@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.611 2004/03/12 13:21:22 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.612 2004/03/25 14:10:08 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.613 2004/03/12 13:20:49 drochner Exp 
+ *	NetBSD: pcidevs,v 1.614 2004/03/25 14:09:46 drochner Exp 
  */
 
 /*
@@ -1135,16 +1135,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX8131_PPB,
 	    0,
 	    "Advanced Micro Devices",
-	    "PCI-X Tunnel",
+	    "AMD8131 PCI-X Tunnel",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX8131_APIC,
 	    0,
 	    "Advanced Micro Devices",
-	    "IO Apic",
+	    "AMD8131 IO Apic",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC8151,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AGP8151_DEV,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8151 AGP Device",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AGP8151_PPB,
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD8151 AGP Bridge",
