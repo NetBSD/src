@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.4 1994/06/30 07:25:23 deraadt Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.5 1994/07/03 09:52:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -62,7 +62,7 @@
 #ifdef	__notanymore__
 int
 isonum_711 (p)
-unsigned char *p;
+u_char *p;
 {
 	return (*p);
 }
@@ -76,7 +76,7 @@ signed char *p;
 
 int
 isonum_721 (p)
-unsigned char *p;
+u_char *p;
 {
 	/* little endian short */
 #if BYTE_ORDER != LITTLE_ENDIAN
@@ -88,7 +88,7 @@ unsigned char *p;
 
 int
 isonum_722 (p)
-unsigned char *p;
+u_char *p;
 {
         /* big endian short */
 #if BYTE_ORDER != BIG_ENDIAN
@@ -100,7 +100,7 @@ unsigned char *p;
 
 int
 isonum_723 (p)
-unsigned char *p;
+u_char *p;
 {
 #if BYTE_ORDER == BIG_ENDIAN
         return isonum_722 (p + 2);
@@ -114,7 +114,7 @@ unsigned char *p;
 
 int
 isonum_731 (p)
-unsigned char *p;
+u_char *p;
 {
         /* little endian long */
 #if BYTE_ORDER != LITTLE_ENDIAN
@@ -126,7 +126,7 @@ unsigned char *p;
 
 int
 isonum_732 (p)
-unsigned char *p;
+u_char *p;
 {
         /* big endian long */
 #if BYTE_ORDER != BIG_ENDIAN
@@ -138,7 +138,7 @@ unsigned char *p;
 
 int
 isonum_733 (p)
-unsigned char *p;
+u_char *p;
 {
 #if BYTE_ORDER == BIG_ENDIAN
         return isonum_732 (p + 4);
@@ -157,10 +157,8 @@ unsigned char *p;
  */
 int
 isofncmp(fn, fnlen, isofn, isolen)
-	unsigned char *fn;
-	int fnlen;
-	unsigned char *isofn;
-	int isolen;
+	u_char *fn, *isofn;
+	int fnlen, isolen;
 {
 	int i, j;
 	char c;
@@ -217,10 +215,9 @@ isofncmp(fn, fnlen, isofn, isolen)
  */
 void
 isofntrans(infn, infnlen, outfn, outfnlen, original, assoc)
-	unsigned char *infn;
+	u_char *infn, *outfn;
 	int infnlen;
-	unsigned char *outfn;
-	unsigned short *outfnlen;
+	u_short *outfnlen;
 	int original;
 	int assoc;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.3 1994/06/29 06:32:01 cgd Exp $	*/
+/*	$NetBSD: iso.h,v 1.4 1994/07/03 09:52:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -96,8 +96,8 @@ struct iso_primary_descriptor {
 struct iso_directory_record {
 	char length			[ISODCL (1, 1)]; /* 711 */
 	char ext_attr_length		[ISODCL (2, 2)]; /* 711 */
-	unsigned char extent		[ISODCL (3, 10)]; /* 733 */
-	unsigned char size		[ISODCL (11, 18)]; /* 733 */
+	u_char extent			[ISODCL (3, 10)]; /* 733 */
+	u_char size			[ISODCL (11, 18)]; /* 733 */
 	char date			[ISODCL (19, 25)]; /* 7 by 711 */
 	char flags			[ISODCL (26, 26)];
 	char file_unit_size		[ISODCL (27, 27)]; /* 711 */
@@ -111,22 +111,22 @@ struct iso_directory_record {
 #define ISO_DIRECTORY_RECORD_SIZE	33
 
 struct iso_extended_attributes {
-	unsigned char owner		[ISODCL (1, 4)]; /* 723 */
-	unsigned char group		[ISODCL (5, 8)]; /* 723 */
-	unsigned char perm		[ISODCL (9, 10)]; /* 9.5.3 */
+	u_char owner			[ISODCL (1, 4)]; /* 723 */
+	u_char group			[ISODCL (5, 8)]; /* 723 */
+	u_char perm			[ISODCL (9, 10)]; /* 9.5.3 */
 	char ctime			[ISODCL (11, 27)]; /* 8.4.26.1 */
 	char mtime			[ISODCL (28, 44)]; /* 8.4.26.1 */
 	char xtime			[ISODCL (45, 61)]; /* 8.4.26.1 */
 	char ftime			[ISODCL (62, 78)]; /* 8.4.26.1 */
 	char recfmt			[ISODCL (79, 79)]; /* 711 */
 	char recattr			[ISODCL (80, 80)]; /* 711 */
-	unsigned char reclen		[ISODCL (81, 84)]; /* 723 */
+	u_char reclen			[ISODCL (81, 84)]; /* 723 */
 	char system_id			[ISODCL (85, 116)]; /* achars */
 	char system_use			[ISODCL (117, 180)];
 	char version			[ISODCL (181, 181)]; /* 711 */
 	char len_esc			[ISODCL (182, 182)]; /* 711 */
 	char reserved			[ISODCL (183, 246)];
-	unsigned char len_au		[ISODCL (247, 250)]; /* 723 */
+	u_char len_au			[ISODCL (247, 250)]; /* 723 */
 };
 
 /* CD-ROM Format type */
@@ -194,7 +194,7 @@ extern int (**cd9660_vnodeop_p)();
 
 extern inline int
 isonum_711(p)
-	unsigned char *p;
+	u_char *p;
 {
 	return *p;
 }
@@ -208,49 +208,48 @@ isonum_712(p)
 
 extern inline int
 isonum_721(p)
-	unsigned char *p;
+	u_char *p;
 {
 	return *p|((char)p[1] << 8);
 }
 
 extern inline int
 isonum_722(p)
-	unsigned char *p;
+	u_char *p;
 {
 	return ((char)*p << 8)|p[1];
 }
 
 extern inline int
 isonum_723(p)
-	unsigned char *p;
+	u_char *p;
 {
 	return isonum_721(p);
 }
 
 extern inline int
 isonum_731(p)
-	unsigned char *p;
+	u_char *p;
 {
 	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24);
 }
 
 extern inline int
 isonum_732(p)
-	unsigned char *p;
+	u_char *p;
 {
 	return (*p << 24)|(p[1] << 16)|(p[2] << 8)|p[3];
 }
 
 extern inline int
 isonum_733(p)
-	unsigned char *p;
+	u_char *p;
 {
 	return isonum_731(p);
 }
 
-int isofncmp __P((unsigned char *, int, unsigned char *, int));
-void isofntrans __P((unsigned char *, int, unsigned char *, unsigned short *,
-		     int, int));
+int isofncmp __P((u_char *, int, u_char *, int));
+void isofntrans __P((u_char *, int, u_char *, u_short *, int, int));
 
 /*
  * Associated files have a leading '='.

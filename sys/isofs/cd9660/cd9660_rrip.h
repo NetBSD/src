@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.h,v 1.3 1994/06/29 06:31:53 cgd Exp $	*/
+/*	$NetBSD: cd9660_rrip.h,v 1.4 1994/07/03 09:52:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -41,9 +41,9 @@
  */
 
 typedef struct {
-	char 	      type		[ISODCL (  0,    1)];
-	unsigned char length		[ISODCL (  2,    2)]; /* 711 */
-	unsigned char version		[ISODCL (  3,    3)];
+	char   type			[ISODCL (  0,    1)];
+	u_char length			[ISODCL (  2,    2)]; /* 711 */
+	u_char version			[ISODCL (  3,    3)];
 } ISO_SUSP_HEADER;
 
 typedef struct {
@@ -117,13 +117,13 @@ typedef struct {
 
 typedef struct {
 	ISO_SUSP_HEADER			h;
-	unsigned char flags		[ISODCL (  4,    4)];
-	unsigned char time		[ISODCL (  5,    5)];
+	u_char flags			[ISODCL (  4,    4)];
+	u_char time			[ISODCL (  5,    5)];
 } ISO_RRIP_TSTAMP;
 
 typedef struct {
 	ISO_SUSP_HEADER			h;
-	unsigned char flags		[ISODCL (  4,    4)];
+	u_char flags			[ISODCL (  4,    4)];
 } ISO_RRIP_IDFLAG;
 
 typedef struct {
