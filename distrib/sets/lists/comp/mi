@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.230 2000/06/17 06:07:53 matt Exp $
+#	$NetBSD: mi,v 1.231 2000/06/20 01:28:40 minoura Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1169,6 +1169,12 @@
 ./usr/share/ldscripts/elf32lmip.xr	comp-util-share
 ./usr/share/ldscripts/elf32lmip.xs	comp-util-share
 ./usr/share/ldscripts/elf32lmip.xu	comp-util-share
+./usr/share/ldscripts/elf32ppc.x	comp-util-share
+./usr/share/ldscripts/elf32ppc.xbn	comp-util-share
+./usr/share/ldscripts/elf32ppc.xn	comp-util-share
+./usr/share/ldscripts/elf32ppc.xr	comp-util-share
+./usr/share/ldscripts/elf32ppc.xs	comp-util-share
+./usr/share/ldscripts/elf32ppc.xu	comp-util-share
 ./usr/share/ldscripts/elf32shlunx.x	comp-util-share
 ./usr/share/ldscripts/elf32shlunx.xbn	comp-util-share
 ./usr/share/ldscripts/elf32shlunx.xn	comp-util-share
@@ -1181,12 +1187,6 @@
 ./usr/share/ldscripts/elf32shunx.xr	comp-util-share
 ./usr/share/ldscripts/elf32shunx.xs	comp-util-share
 ./usr/share/ldscripts/elf32shunx.xu	comp-util-share
-./usr/share/ldscripts/elf32ppc.x	comp-util-share
-./usr/share/ldscripts/elf32ppc.xbn	comp-util-share
-./usr/share/ldscripts/elf32ppc.xn	comp-util-share
-./usr/share/ldscripts/elf32ppc.xr	comp-util-share
-./usr/share/ldscripts/elf32ppc.xs	comp-util-share
-./usr/share/ldscripts/elf32ppc.xu	comp-util-share
 ./usr/share/ldscripts/elf64_sparc.x	comp-util-share
 ./usr/share/ldscripts/elf64_sparc.xbn	comp-util-share
 ./usr/share/ldscripts/elf64_sparc.xn	comp-util-share
@@ -1622,10 +1622,10 @@
 ./usr/share/man/cat3/clnt_pcreateerror.0	comp-c-catman
 ./usr/share/man/cat3/clnt_perrno.0	comp-c-catman
 ./usr/share/man/cat3/clnt_perror.0	comp-c-catman
+./usr/share/man/cat3/clnt_raw_create.0	comp-c-catman
 ./usr/share/man/cat3/clnt_spcreateerror.0	comp-c-catman
 ./usr/share/man/cat3/clnt_sperrno.0	comp-c-catman
 ./usr/share/man/cat3/clnt_sperror.0	comp-c-catman
-./usr/share/man/cat3/clnt_raw_create.0	comp-c-catman
 ./usr/share/man/cat3/clnt_tli_create.0	comp-c-catman
 ./usr/share/man/cat3/clnt_tp_create.0	comp-c-catman
 ./usr/share/man/cat3/clnt_vc_create.0	comp-c-catman
@@ -2795,8 +2795,8 @@
 ./usr/share/man/cat9/uiomove.0		comp-kern-catman
 ./usr/share/man/cat9/untimeout.0		comp-kern-catman
 ./usr/share/man/cat9/uprintf.0		comp-kern-catman
-./usr/share/man/cat9/useracc.0		comp-kern-catman
 ./usr/share/man/cat9/usbdi.0		comp-kern-catman
+./usr/share/man/cat9/useracc.0		comp-kern-catman
 ./usr/share/man/cat9/uvm.0		comp-kern-catman
 ./usr/share/man/cat9/uvm_chgkprot.0		comp-kern-catman
 ./usr/share/man/cat9/uvm_coredump.0		comp-kern-catman
@@ -3213,10 +3213,10 @@
 ./usr/share/man/man3/clnt_pcreateerror.3		comp-c-man
 ./usr/share/man/man3/clnt_perrno.3		comp-c-man
 ./usr/share/man/man3/clnt_perror.3		comp-c-man
+./usr/share/man/man3/clnt_raw_create.3	comp-c-man
 ./usr/share/man/man3/clnt_spcreateerror.3		comp-c-man
 ./usr/share/man/man3/clnt_sperrno.3		comp-c-man
 ./usr/share/man/man3/clnt_sperror.3		comp-c-man
-./usr/share/man/man3/clnt_raw_create.3	comp-c-man
 ./usr/share/man/man3/clnt_tli_create.3	comp-c-man
 ./usr/share/man/man3/clnt_tp_create.3	comp-c-man
 ./usr/share/man/man3/clnt_vc_create.3	comp-c-man
@@ -3948,7 +3948,6 @@
 ./usr/share/man/man3/svc_freeargs.3	comp-c-man
 ./usr/share/man/man3/svc_getargs.3		comp-c-man
 ./usr/share/man/man3/svc_getcaller.3		comp-c-man
-./usr/share/man/man3/svc_register.3		comp-c-man
 ./usr/share/man/man3/svc_getreq_common.3	comp-c-man
 ./usr/share/man/man3/svc_getreq_poll.3	comp-c-man
 ./usr/share/man/man3/svc_getreqset.3	comp-c-man
@@ -3956,6 +3955,7 @@
 ./usr/share/man/man3/svc_pollset.3	comp-c-man
 ./usr/share/man/man3/svc_raw_create.3	comp-c-man
 ./usr/share/man/man3/svc_reg.3	comp-c-man
+./usr/share/man/man3/svc_register.3		comp-c-man
 ./usr/share/man/man3/svc_run.3		comp-c-man
 ./usr/share/man/man3/svc_sendreply.3		comp-c-man
 ./usr/share/man/man3/svc_tli_create.3	comp-c-man
@@ -4456,8 +4456,8 @@
 ./usr/share/mk/bsd.hostprog.mk		comp-util-share
 ./usr/share/mk/bsd.inc.mk		comp-util-share
 ./usr/share/mk/bsd.info.mk		comp-util-share
-./usr/share/mk/bsd.kinc.mk		comp-util-share
 ./usr/share/mk/bsd.kernobj.mk		comp-util-share
+./usr/share/mk/bsd.kinc.mk		comp-util-share
 ./usr/share/mk/bsd.kmod.mk		comp-util-share
 ./usr/share/mk/bsd.lib.mk		comp-util-share
 ./usr/share/mk/bsd.links.mk		comp-util-share

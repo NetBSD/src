@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.27 2000/06/05 21:55:29 thorpej Exp $
+# $NetBSD: md.alpha,v 1.28 2000/06/20 01:28:38 minoura Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -48,14 +48,14 @@
 ./usr/include/alpha/setjmp.h	comp-c-include
 ./usr/include/alpha/signal.h	comp-c-include
 ./usr/include/alpha/stdarg.h	comp-c-include
+./usr/include/alpha/sysarch.h	comp-c-include
 ./usr/include/alpha/types.h	comp-c-include
 ./usr/include/alpha/varargs.h	comp-c-include
 ./usr/include/alpha/vmparam.h	comp-c-include
 ./usr/include/alpha/vuid_event.h	comp-c-include
 ./usr/include/alpha/z8530var.h	comp-c-include
-./usr/include/alpha/sysarch.h	comp-c-include
-./usr/lib/libalpha.so		comp-c-shlib
 ./usr/lib/libalpha.a		comp-c-lib
+./usr/lib/libalpha.so		comp-c-shlib
 ./usr/lib/libalpha_p.a		comp-c-proflib
 ./usr/lib/libalpha_pic.a	comp-c-piclib
 ./usr/libdata/lint/llib-lalpha.ln		comp-c-lintlib

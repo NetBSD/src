@@ -1,11 +1,19 @@
-# $NetBSD: md.atari,v 1.6 2000/01/11 14:20:44 tron Exp $
+# $NetBSD: md.atari,v 1.7 2000/06/20 01:28:50 minoura Exp $
 ./usr/X11R6/bin/X
+./usr/X11R6/bin/XF68_FBDev
 ./usr/X11R6/bin/XF68_SVGA
 ./usr/X11R6/bin/XF68_W32
-./usr/X11R6/bin/XF68_FBDev
 ./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/Xwrapper
+./usr/X11R6/include/X11/extensions/dpms.h
+./usr/X11R6/include/X11/extensions/dpmsstr.h
+./usr/X11R6/include/X11/extensions/xf86dga.h
+./usr/X11R6/include/X11/extensions/xf86dgastr.h
+./usr/X11R6/include/X11/extensions/xf86misc.h
+./usr/X11R6/include/X11/extensions/xf86mscstr.h
+./usr/X11R6/include/X11/extensions/xf86vmode.h
+./usr/X11R6/include/X11/extensions/xf86vmstr.h
 ./usr/X11R6/lib/X11/XF86Config.eg
 ./usr/X11R6/lib/X11/doc/AccelCards
 ./usr/X11R6/lib/X11/doc/BUILD
@@ -50,6 +58,10 @@
 ./usr/X11R6/lib/X11/doc/ServersOnly
 ./usr/X11R6/lib/X11/doc/VideoModes.doc
 ./usr/X11R6/lib/X11/doc/xinput
+./usr/X11R6/lib/libXdpms.a
+./usr/X11R6/lib/libXxf86dga.a
+./usr/X11R6/lib/libXxf86misc.a
+./usr/X11R6/lib/libXxf86vm.a
 ./usr/X11R6/lib/modules/xf86AceCad.so
 ./usr/X11R6/lib/modules/xf86Dial.so
 ./usr/X11R6/lib/modules/xf86Elo.so
@@ -59,19 +71,6 @@
 ./usr/X11R6/man/cat1/XF68_FBDev.0
 ./usr/X11R6/man/cat1/Xnest.0
 ./usr/X11R6/man/cat1/Xvfb.0
-./usr/X11R6/man/cat5/XF86Config.0
-./usr/X11R6/include/X11/extensions/dpms.h
-./usr/X11R6/include/X11/extensions/dpmsstr.h
-./usr/X11R6/include/X11/extensions/xf86dga.h
-./usr/X11R6/include/X11/extensions/xf86dgastr.h
-./usr/X11R6/include/X11/extensions/xf86misc.h
-./usr/X11R6/include/X11/extensions/xf86mscstr.h
-./usr/X11R6/include/X11/extensions/xf86vmode.h
-./usr/X11R6/include/X11/extensions/xf86vmstr.h
-./usr/X11R6/lib/libXdpms.a
-./usr/X11R6/lib/libXxf86dga.a
-./usr/X11R6/lib/libXxf86misc.a
-./usr/X11R6/lib/libXxf86vm.a
 ./usr/X11R6/man/cat3/XF86DGA.0
 ./usr/X11R6/man/cat3/XF86DGADirectVideo.0
 ./usr/X11R6/man/cat3/XF86DGAForkApp.0
@@ -101,3 +100,4 @@
 ./usr/X11R6/man/cat3/XF86VidModeQueryExtension.0
 ./usr/X11R6/man/cat3/XF86VidModeQueryVersion.0
 ./usr/X11R6/man/cat3/XF86VidModeSwitchMode.0
+./usr/X11R6/man/cat5/XF86Config.0
