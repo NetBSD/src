@@ -1,4 +1,4 @@
-/*	$NetBSD: msgcat.c,v 1.11 1995/02/27 13:06:51 cgd Exp $	*/
+/*	$NetBSD: msgcat.c,v 1.12 1996/03/22 01:11:49 jtc Exp $	*/
 
 /***********************************************************
 Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.
@@ -33,7 +33,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: msgcat.c,v 1.11 1995/02/27 13:06:51 cgd Exp $";
+static char *rcsid = "$NetBSD: msgcat.c,v 1.12 1996/03/22 01:11:49 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -61,6 +61,7 @@ static char *rcsid = "$NetBSD: msgcat.c,v 1.11 1995/02/27 13:06:51 cgd Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #ifndef True
 # define True	~0
@@ -97,7 +98,7 @@ int type;
 
     if (strchr(name, '/')) {
 	catpath = name;
-	if (stat(catpath, &sbuf)) return(0);
+	if (stat(catpath, &sbuf)) return(NLERR);
     } else {
 	if ((lang = (char *) getenv("LANG")) == NULL) lang = "C";
 	if ((nlspath = (char *) getenv("NLSPATH")) == NULL) {
@@ -138,7 +139,7 @@ int type;
 	free(base);
 	if (tmppath) free(tmppath);
 
-	if (!catpath) return(0);
+	if (!catpath) return(NLERR);
     }
 
     return(loadCat(catpath, type));
@@ -248,6 +249,11 @@ char *dflt;
     MCCatT	*cat = (MCCatT *) catd;
     char	*cptr;
 
+    if (catd == NLERR) {
+	errno = EBADF;
+	return dflt;
+    }
+
     msg = MCGetMsg(MCGetSet(cat, setId), msgId);
     if (msg) cptr = msg->msg.str;
     else cptr = dflt;
@@ -263,7 +269,10 @@ nl_catd catd;
     MCMsgT	*msg;
     int		i, j;
 
-    if (!cat) return -1;
+    if (catd == NLERR) {
+	errno = EBADF;
+	return -1;
+    }
     
     if (cat->loadType != MCLoadAll) close(cat->fd);
     for (i = 0; i < cat->numSets; ++i) {
@@ -285,7 +294,7 @@ nl_catd catd;
 
 /* Note that only malloc failures are allowed to return an error */
 #define ERRNAME	"Message Catalog System"
-#define CORRUPT() {fprintf(stderr, "%s: corrupt file.\n", ERRNAME); return(0);}
+#define CORRUPT() {fprintf(stderr, "%s: corrupt file.\n", ERRNAME); return(NLERR);}
 #define NOSPACE() {fprintf(stderr, "%s: no more memory.\n", ERRNAME); return(NLERR);}
 
 static nl_catd loadCat( catpath, type)
@@ -389,8 +398,3 @@ MCSetT *set;
     set->invalid = False;
     return(1);
 }
-	    
-	    
-		
-
-
