@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.114.2.2 2004/08/12 03:48:29 jmc Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.114.2.3 2004/08/15 14:06:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.114.2.2 2004/08/12 03:48:29 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.114.2.3 2004/08/15 14:06:29 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -382,7 +382,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * If emulation has process fork hook, call it now.
 	 */
 	if (p2->p_emul->e_proc_fork)
-		(*p2->p_emul->e_proc_fork)(p2, p1);
+		(*p2->p_emul->e_proc_fork)(p2, p1, flags);
 
 	/*
 	 * ...and finally, any other random fork hooks that subsystems
