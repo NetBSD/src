@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.3 2003/03/11 16:30:02 drochner Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.4 2003/03/12 13:15:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,20 +38,15 @@
 
 /*
  * This module implements a "raw device" interface suitable for
- * use by the stand-alone I/O library NFS code.  This interface
+ * use by the stand-alone I/O library NFS and TFTP code.  This interface
  * does not support any "block" access, and exists only for the
- * purpose of initializing the network interface, getting boot
- * parameters, and performing the NFS mount.
+ * purpose of initializing the network interface and getting boot
+ * parameters.
  *
  * At open time, this does:
  *
- * find interface      - netif_open()
- * RARP for IP address - rarp_getipaddress()
- * RPC/bootparams      - callrpc(d, RPC_BOOTPARAMS, ...)
- * RPC/mountd          - nfs_mount(sock, ip, path)
- *
- * the root file handle from mountd is saved in a global
- * for use by the NFS open code (NFS/lookup).
+ * find interface       - netif_open()
+ * BOOTP for IP address - bootp()
  */
 
 #include <machine/stdarg.h>
@@ -67,7 +62,6 @@
 #include "net.h"
 #include "netif.h"
 #include "nfs.h"
-#include "bootparam.h"
 #include "dev_net.h"
 
 static int netdev_sock = -1;
@@ -83,24 +77,18 @@ static int net_getparams __P((int sock));
 int
 net_open(struct open_file *f, ...)
 {
-	va_list ap;
-	char *devname;		/* Device part of file name (or NULL). */
 	int error = 0;
-
-	va_start(ap, f);
-	devname = va_arg(ap, char*);
-	va_end(ap);
 
 #ifdef	NETIF_DEBUG
 	if (debug)
-		printf("net_open: %s\n", devname);
+		printf("net_open\n");
 #endif
 
 	/* On first open, do netif open, mount, etc. */
 	if (netdev_opens == 0) {
 		/* Find network interface. */
 		if (netdev_sock < 0) {
-			netdev_sock = netif_open(devname);
+			netdev_sock = netif_open(0);
 			if (netdev_sock < 0) {
 				printf("net_open: netif_open() failed\n");
 				return (ENXIO);
