@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.51 2000/03/16 02:36:59 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.52 2000/04/10 13:34:19 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -4790,7 +4790,7 @@ dump_dtlb:
 	retl
 	 nop
 #endif /* DDB */
-#if defined(DEBUG) || defined(DDB)
+#if defined(DEBUG) && defined(DDB)
 	.globl	print_dtlb
 print_dtlb:
 #ifdef _LP64

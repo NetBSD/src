@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.16 2000/04/08 03:09:00 mrg Exp $	*/
+/*	$NetBSD: zs.c,v 1.17 2000/04/10 13:34:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ zs_get_chan_addr(zs_unit, channel)
 	if (zs_unit >= NZS)
 		return (NULL);
 	addr = zsaddr[zs_unit];
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DDB)
 	if (addr == NULL) {
 		db_printf("zs_get_chan_addr(): unit %d channel %d not found\n", zs_unit, channel);
 		Debugger();

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 2000/04/06 13:32:49 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.37 2000/04/10 13:34:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -549,7 +549,9 @@ trap(type, tstate, pc, tf)
 		       type < N_TRAP_TYPES ? trap_type[type] : 
 		       ((type == T_AST) ? "ast" : 
 			((type == T_RWRET) ? "rwret" : T)));
+#ifdef DDB
 		kdb_trap(type, tf);
+#endif
 	}
 #endif
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.9 2000/04/06 12:17:27 mrg Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.10 2000/04/10 13:34:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -116,7 +116,9 @@ sunos_sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sunos_sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc, oldsp);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 	/*
@@ -169,7 +171,9 @@ sunos_sendsig(catcher, sig, mask, code)
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sunos_sendsig: window save or copyout error\n");
 		printf("sunos_sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
@@ -193,7 +197,9 @@ sunos_sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sunos_sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, addr);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 }
@@ -223,7 +229,9 @@ sunos_sys_sigreturn(p, v, retval)
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sunos_sigreturn: %s[%d], sigcntxp %p\n",
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 
@@ -242,7 +250,9 @@ sunos_sys_sigreturn(p, v, retval)
 #ifdef DEBUG
 	{
 		printf("sunos_sigreturn: pc %p or npc %p invalid\n", scp->sc_pc, scp->sc_npc);
+#ifdef DDB
 		Debugger();
+#endif
 		return (EINVAL);
 	}
 #endif
@@ -258,7 +268,9 @@ sunos_sys_sigreturn(p, v, retval)
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sunos_sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
 		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
+#ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
+#endif
 	}
 #endif
 
