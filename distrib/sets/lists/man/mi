@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.635 2003/12/14 01:38:54 thorpej Exp $
+# $NetBSD: mi,v 1.636 2003/12/15 06:28:32 lonewolf Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -950,10 +950,12 @@
 ./usr/share/man/cat4/sfb.0			man-sys-catman
 ./usr/share/man/cat4/sgimips/crime.0		man-sys-catman
 ./usr/share/man/cat4/sgimips/gio.0		man-sys-catman
+./usr/share/man/cat4/sgimips/haltwo.0		man-sys-catman
 ./usr/share/man/cat4/sgimips/hpc.0		man-sys-catman
 ./usr/share/man/cat4/sgimips/imc.0		man-sys-catman
 ./usr/share/man/cat4/sgimips/intro.0		man-sys-catman
 ./usr/share/man/cat4/sgimips/mace.0		man-sys-catman
+./usr/share/man/cat4/sgimips/newport.0		man-sys-catman
 ./usr/share/man/cat4/si.0			man-sys-catman
 ./usr/share/man/cat4/siop.0			man-sys-catman
 ./usr/share/man/cat4/sip.0			man-sys-catman
@@ -2687,10 +2689,12 @@
 ./usr/share/man/man4/sfb.4			man-sys-man
 ./usr/share/man/man4/sgimips/crime.4		man-sys-man
 ./usr/share/man/man4/sgimips/gio.4		man-sys-man
+./usr/share/man/man4/sgimips/haltwo.4		man-sys-man
 ./usr/share/man/man4/sgimips/hpc.4		man-sys-man
 ./usr/share/man/man4/sgimips/imc.4		man-sys-man
 ./usr/share/man/man4/sgimips/intro.4		man-sys-man
 ./usr/share/man/man4/sgimips/mace.4		man-sys-man
+./usr/share/man/man4/sgimips/newport.4		man-sys-man
 ./usr/share/man/man4/si.4			man-sys-man
 ./usr/share/man/man4/siop.4			man-sys-man
 ./usr/share/man/man4/sip.4			man-sys-man
