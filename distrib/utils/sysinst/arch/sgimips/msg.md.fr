@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 2003/10/17 10:58:16 sekiya Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 2003/11/13 02:33:39 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,7 +56,7 @@ message dobootblks
 }
 
 message set_kernel_1
-{Kernel (GENERIC_IP22)}
+{Kernel (GENERIC32_IP2x)}
 
 message set_kernel_2
-{Kernel (GENERIC_IP32)}
+{Kernel (GENERIC32_IP3x)}
