@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.152 2001/03/26 13:13:33 ichiro Exp $
+$NetBSD: usbdevs,v 1.153 2001/03/26 15:26:54 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -637,6 +637,9 @@ product MICROSOFT DDS80		0x0014	Digital Sound System 80
 product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO	0x002b	Internet Keyboard Pro
+
+/* Microtech products */
+product MICROTECH DPCM		0x0006	USB CameraMate
 
 /* Microtek products */
 product MICROTEK 336CX		0x0094	Phantom 336CX - C3 scanner
