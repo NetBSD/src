@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.21.2.7 2001/02/26 17:47:46 he Exp $	*/
+/*	$NetBSD: siop.c,v 1.21.2.8 2002/01/05 17:59:34 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -83,7 +83,7 @@ void	siop_start __P((struct siop_softc *));
 void 	siop_timeout __P((void *));
 int	siop_scsicmd __P((struct scsipi_xfer *));
 void	siop_dump_script __P((struct siop_softc *));
-int	siop_morecbd __P((struct siop_softc *));
+int	siop_morecbd __P((struct siop_softc *, int));
 struct siop_lunsw *siop_get_lunsw __P((struct siop_softc *));
 void	siop_add_reselsw __P((struct siop_softc *, int));
 void	siop_update_scntl3 __P((struct siop_softc *, struct siop_target *));
@@ -202,6 +202,8 @@ siop_attach(sc)
 	TAILQ_INIT(&sc->free_list);
 	TAILQ_INIT(&sc->ready_list);
 	TAILQ_INIT(&sc->urgent_list);
+	sc->sc_cmd_total = 0;
+	sc->sc_cmd_reserved = 0;
 	TAILQ_INIT(&sc->cmds);
 	TAILQ_INIT(&sc->lunsw_list);
 	sc->sc_currschedslot = 0;
@@ -373,7 +375,8 @@ siop_intr(v)
 	for (cbdp = TAILQ_FIRST(&sc->cmds); cbdp != NULL;
 	    cbdp = TAILQ_NEXT(cbdp, next)) {
 		if (dsa >= cbdp->xferdma->dm_segs[0].ds_addr &&
-	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + NBPG) {
+	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + 
+		    cbdp->xferdma->dm_segs[0].ds_len) {
 			dsa -= cbdp->xferdma->dm_segs[0].ds_addr;
 			siop_cmd = &cbdp->cmds[dsa / sizeof(struct siop_xfer)];
 			siop_table_sync(siop_cmd,
@@ -558,7 +561,8 @@ siop_intr(v)
 			if (siop_cmd) {
 				siop_cmd->status = CMDST_DONE;
 				xs->error = XS_SELTIMEOUT;
-				freetarget = 1;
+				if (siop_target->status == TARST_PROBING)
+					freetarget = 1;
 				goto end;
 			} else {
 				printf("%s: selection timeout without "
@@ -956,12 +960,23 @@ end:
 		CALL_SCRIPT(Ent_script_sched);
 	else
 		restart = 1;
+	if ((xs->xs_control & XS_CTL_DISCOVERY) &&
+	    xs->cmd->opcode == INQUIRY &&
+	    siop_cmd->siop_tables.status == SCSI_OK &&
+	    siop_cmd->status == CMDST_DONE) {
+		/* check is there is really a LUN here */
+		struct scsipi_inquiry_data *inq =
+		    (struct scsipi_inquiry_data *)xs->data;
+		if ((inq->device & SID_QUAL) == SID_QUAL_RSVD ||
+		    (inq->device & SID_QUAL) == SID_QUAL_BAD_LU)
+			freetarget = 1;
+	}
 	siop_scsicmd_end(siop_cmd);
 	siop_lun->siop_tag[tag].active = NULL;
 	if (siop_cmd->status == CMDST_FREE) {
 		TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 		siop_lun->lun_flags &= ~SIOP_LUNF_FULL;
-		if (freetarget && siop_target->status == TARST_PROBING)
+		if (freetarget)
 			siop_del_dev(sc, target, lun);
 	}
 	siop_start(sc);
@@ -1243,20 +1258,32 @@ siop_scsicmd(xs)
 #ifdef SIOP_DEBUG_SCHED
 	printf("starting cmd for %d:%d\n", target, lun);
 #endif
+	if (xs->xs_control & XS_CTL_DISCOVERY &&
+	    (sc->targets[target] == NULL ||
+	    sc->targets[target]->siop_lun[lun] == NULL)) {
+		/* allocate resource for this target/lun */
+#ifdef SIOP_DEBUG
+		printf("%s: discovery target %d lun %d; sc->sc_cmd_total = %d"
+		    " sc->sc_cmd_reserved=%d\n",
+		    sc->sc_dev.dv_xname, target, lun,
+		    sc->sc_cmd_total, sc->sc_cmd_reserved);
+#endif
+		if (sc->sc_cmd_total - sc->sc_cmd_reserved < SIOP_NTAG) {
+			if (siop_morecbd(sc, SIOP_NTAG) != 0) {
+				xs->error = XS_DRIVER_STUFFUP;
+				splx(s);
+				return(TRY_AGAIN_LATER);
+			}
+		}
+	}
+				
 	siop_cmd = TAILQ_FIRST(&sc->free_list);
 	if (siop_cmd) {
 		TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
 	} else {
-		if (siop_morecbd(sc) == 0) {
-			siop_cmd = TAILQ_FIRST(&sc->free_list);
-#ifdef DIAGNOSTIC
-			if (siop_cmd == NULL)
-				panic("siop_morecbd succeed and does nothing");
-#endif
-			TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
-		}
-	}
-	if (siop_cmd == NULL) {
+		/* this shouldn't happen */
+		printf("%s:%d:%d: no free siop_cmd\n",
+		     sc->sc_dev.dv_xname, target, lun);
 		xs->error = XS_DRIVER_STUFFUP;
 		splx(s);
 		return(TRY_AGAIN_LATER);
@@ -1308,6 +1335,7 @@ siop_scsicmd(xs)
 			splx(s);
 			return(TRY_AGAIN_LATER);
 		}
+		sc->sc_cmd_reserved += SIOP_NTAG;
 		memset(sc->targets[target]->siop_lun[lun], 0,
 		    sizeof(struct siop_lun));
 	}
@@ -1607,8 +1635,9 @@ siop_dump_script(sc)
 }
 
 int
-siop_morecbd(sc)
+siop_morecbd(sc, ncbd)
 	struct siop_softc *sc;
+	int ncbd;
 {
 	int error, i, j;
 	bus_dma_segment_t seg;
@@ -1616,6 +1645,10 @@ siop_morecbd(sc)
 	struct siop_cbd *newcbd;
 	bus_addr_t dsa;
 	u_int32_t *scr;
+	int ncbdpgs, r_ncbd;
+
+	ncbdpgs = (ncbd + SIOP_NCMDPB - 1) / SIOP_NCMDPB;
+	r_ncbd = ncbdpgs * SIOP_NCMDPB;
 
 	/* allocate a new list head */
 	newcbd = malloc(sizeof(struct siop_cbd), M_DEVBUF, M_NOWAIT);
@@ -1628,37 +1661,37 @@ siop_morecbd(sc)
 
 	/* allocate cmd list */
 	newcbd->cmds =
-	    malloc(sizeof(struct siop_cmd) * SIOP_NCMDPB, M_DEVBUF, M_NOWAIT);
+	    malloc(sizeof(struct siop_cmd) * r_ncbd, M_DEVBUF, M_NOWAIT);
 	if (newcbd->cmds == NULL) {
 		printf("%s: can't allocate memory for command descriptors\n",
 		    sc->sc_dev.dv_xname);
 		error = ENOMEM;
 		goto bad3;
 	}
-	memset(newcbd->cmds, 0, sizeof(struct siop_cmd) * SIOP_NCMDPB);
-	error = bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT);
+	memset(newcbd->cmds, 0, sizeof(struct siop_cmd) * r_ncbd);
+	error = bus_dmamem_alloc(sc->sc_dmat, NBPG * ncbdpgs, NBPG,
+	    0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to allocate cbd DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto bad2;
 	}
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG * ncbdpgs,
 	    (caddr_t *)&newcbd->xfers, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: unable to map cbd DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto bad2;
 	}
-	error = bus_dmamap_create(sc->sc_dmat, NBPG, 1, NBPG, 0,
-	    BUS_DMA_NOWAIT, &newcbd->xferdma);
+	error = bus_dmamap_create(sc->sc_dmat, NBPG * ncbdpgs, 1,
+	    NBPG * ncbdpgs, 0, BUS_DMA_NOWAIT, &newcbd->xferdma);
 	if (error) {
 		printf("%s: unable to create cbd DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto bad1;
 	}
 	error = bus_dmamap_load(sc->sc_dmat, newcbd->xferdma, newcbd->xfers,
-	    NBPG, NULL, BUS_DMA_NOWAIT);
+	    NBPG * ncbdpgs, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load cbd DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1669,7 +1702,7 @@ siop_morecbd(sc)
 	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
 #endif
 	
-	for (i = 0; i < SIOP_NCMDPB; i++) {
+	for (i = 0; i < r_ncbd; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SIOP_NSG,
 		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &newcbd->cmds[i].dmamap_data);
@@ -1745,6 +1778,7 @@ siop_morecbd(sc)
 #endif
 	}
 	TAILQ_INSERT_TAIL(&sc->cmds, newcbd, next);
+	sc->sc_cmd_total += r_ncbd;
 	return 0;
 bad0:
 	bus_dmamap_destroy(sc->sc_dmat, newcbd->xferdma);
@@ -1980,6 +2014,7 @@ siop_del_dev(sc, target, lun)
 		return;
 	free(sc->targets[target]->siop_lun[lun], M_DEVBUF);
 	sc->targets[target]->siop_lun[lun] = NULL;
+	sc->sc_cmd_reserved -= SIOP_NTAG;
 	/* XXX compact sw entry too ? */
 	/* check if we can free the whole target */
 	for (i = 0; i < 8; i++) {
