@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 1995/05/03 23:05:46 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49 1995/05/07 21:07:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -161,9 +161,11 @@ cpu_exit(p)
 	extern int currentldt;
 	struct vmspace *vm;
 
+#if NNPX > 0
 	/* If we were using the FPU, forget about it. */
 	if (npxproc == p)
 		npxproc = 0;
+#endif
 
 #ifdef USER_LDT
 	pcb = &p->p_addr->u_pcb;
