@@ -15,7 +15,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.4 1993/12/18 04:21:24 mycroft Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.5 1994/05/12 05:21:45 glass Exp $ (LBL)
  */
 
 #include <sys/param.h>
@@ -266,11 +266,13 @@ config_attach(parent, cf, aux, print)
 		void **nsp;
 
 		if (old == 0) {
-			nsp = malloc(MINALLOCSIZE, M_DEVBUF, M_NOWAIT);	
+		        newbytes = max(MINALLOCSIZE,
+				       sizeof(void *) * (dev->dv_unit + 1));
+			nsp = malloc(newbytes, M_DEVBUF, M_NOWAIT);	
 			if (!nsp)
 			    panic("config_attach: expanding dev array");
-			bzero(nsp, MINALLOCSIZE);
-			cd->cd_ndevs = MINALLOCSIZE / sizeof(void *);
+			bzero(nsp, newbytes);
+			cd->cd_ndevs = newbytes / sizeof(void *);
 		} else {
 			new = cd->cd_ndevs;
 			do {
