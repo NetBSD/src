@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.1 2005/02/28 16:20:59 jonathan Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.2 2005/03/06 23:05:20 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.1 2005/02/28 16:20:59 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.2 2005/03/06 23:05:20 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -266,7 +266,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		}
 
 		/* Insertion sort. */
-		for (j = i; (j > 0) && SEQ_LT(left, t_sack_block[j - 1].left); j--) {
+		for (j = i; (j > 0) && SEQ_LT(left, t_sack_block[j - 1].left);
+		    j--) {
 			t_sack_block[j].left = t_sack_block[j - 1].left;
 			t_sack_block[j].right = t_sack_block[j - 1].right;
 		}
@@ -287,7 +288,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 
 		if (TAILQ_EMPTY(&tp->snd_holes)) {
 			/* First hole. */
-			cur = (struct sackhole *) pool_get(&sackhole_pool, PR_NOWAIT);
+			cur = (struct sackhole *)
+			    pool_get(&sackhole_pool, PR_NOWAIT);
 			if (cur == NULL) {
 				/* ENOBUFS, bail out*/
 				return;
@@ -318,7 +320,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 					/* Acks entire hole, so delete hole */
 					tmp = cur;
 					cur = TAILQ_NEXT(cur, sackhole_q);
-					TAILQ_REMOVE(&tp->snd_holes, tmp, sackhole_q);
+					TAILQ_REMOVE(&tp->snd_holes, tmp,
+					    sackhole_q);
 					pool_put(&sackhole_pool, tmp);
 					break;
 				}
@@ -345,7 +348,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				 * split current hole
 				 */
 				tmp = (struct sackhole *)
-						pool_get(&sackhole_pool, PR_NOWAIT);
+				    pool_get(&sackhole_pool, PR_NOWAIT);
 				if (tmp == NULL) {
 					/* ENOBUFS, bail out. */
 					return;
@@ -451,12 +454,14 @@ tcp_sack_newack(struct tcpcb *tp, struct tcphdr *th)
 		TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->t_rtttime = 0;
 
-	 	/* send one or 2 segments based on how much new data was acked */
+	 	/*
+		 * send one or 2 segments based on how much new data was acked
+		 */
  		if (((th->th_ack - tp->snd_una) / tp->t_segsz) > 2)
  			num_segs = 2;
 	 	(void)tcp_sack_output(tp, &sack_bytes_rxmt);
- 		tp->snd_cwnd = sack_bytes_rxmt + (tp->snd_nxt - tp->sack_newdata) +
- 			num_segs * tp->t_segsz;
+ 		tp->snd_cwnd = sack_bytes_rxmt +
+		    (tp->snd_nxt - tp->sack_newdata) + num_segs * tp->t_segsz;
   		tp->t_flags |= TF_ACKNOW;
 	  	(void) tcp_output(tp);
 	} else {
@@ -496,7 +501,8 @@ tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt)
 	*sack_bytes_rexmt = 0;
 	TAILQ_FOREACH(cur, &tp->snd_holes, sackhole_q) {
 		if (SEQ_LT(cur->rxmit, cur->end)) {
-			if (SEQ_LT(cur->rxmit, tp->snd_una)) {/* old SACK hole */
+			if (SEQ_LT(cur->rxmit, tp->snd_una)) {
+				/* old SACK hole */
 				continue;
 			}
 			*sack_bytes_rexmt += (cur->rxmit - cur->start);
