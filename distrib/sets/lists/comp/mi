@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.444 2002/05/30 21:40:49 itojun Exp $
+#	$NetBSD: mi,v 1.445 2002/05/31 11:11:26 kleink Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2967,6 +2967,7 @@
 ./usr/share/man/cat9/bus_space_set_region_8.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_subregion.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_unmap.0		comp-sys-catman
+./usr/share/man/cat9/bus_space_vaddr.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_write_1.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_write_2.0		comp-sys-catman
 ./usr/share/man/cat9/bus_space_write_4.0		comp-sys-catman
@@ -5485,6 +5486,7 @@
 ./usr/share/man/man9/bus_space_set_region_8.9		comp-sys-man
 ./usr/share/man/man9/bus_space_subregion.9		comp-sys-man
 ./usr/share/man/man9/bus_space_unmap.9		comp-sys-man
+./usr/share/man/man9/bus_space_vaddr.9		comp-sys-man
 ./usr/share/man/man9/bus_space_write_1.9		comp-sys-man
 ./usr/share/man/man9/bus_space_write_2.9		comp-sys-man
 ./usr/share/man/man9/bus_space_write_4.9		comp-sys-man
