@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.13 1995/09/14 02:43:51 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.14 1995/09/16 12:35:57 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -75,18 +75,27 @@ caddr_t	mrg_rompmintr = 0;			/* ROM PM (?) interrupt */
 char *mrg_romident = NULL;			/* ident string for ROMs */
 caddr_t mrg_ADBAlternateInit = 0;
 caddr_t mrg_InitEgret = 0;
+caddr_t	mrg_ADBIntrPtr = (caddr_t)0x0;	/* ADB interrupt taken from MacOS vector table*/
 
 /*
  * Last straw functions; we didn't set them up, so freak out!
  * When someone sees these called, we can finally go back and
  * bother to implement them.
  */
+
+void
+mrg_1sec_timer_tick()
+{	
+	/* The timer tick from the Egret chip triggers this routine via
+	 * Lvl1DT[0] (addr 0x192) once every second.
+	 */
+}
+  
 void
 mrg_lvl1dtpanic()		/* Lvl1DT stopper */
-{ /*
-   * The timer tick from the Egret triggers the routine via
-   * Lvl1DT[2] (addr 0x19a) every second.
-   */
+{
+	printf("Agh!  I was called from Lvl1DT!!!\n");
+	Debugger();
 }
 
 void
@@ -471,6 +480,12 @@ mrg_setvectors(rom)
 		return;		/* whoops!  ROM vectors not defined! */
 
 	mrg_romident = rom->romident;
+
+	if (0 != mrg_ADBIntrPtr) {
+		mrg_romadbintr = mrg_ADBIntrPtr;
+		printf("mrg_setvectors: using ADBIntrPtr passed from booter: 0x%08x\n", mrg_ADBIntrPtr);
+	} else
+ 		mrg_romadbintr = rom->adbintr;
 	mrg_romadbintr = rom->adbintr;
 	mrg_rompmintr = rom->pmintr;
 	mrg_ADBAlternateInit = rom->ADBAlternateInit;
@@ -489,6 +504,20 @@ mrg_setvectors(rom)
 	mrg_OStraps[0x7c] = rom->ADBOp;
 	mrg_OStraps[0x85] = rom->PMgrOp;
 	mrg_OStraps[0x51] = rom->ReadXPRam;
+
+	mrg_OStraps[0x38] = rom->WriteParam;	/* WriteParam */
+	mrg_OStraps[0x3a] = rom->SetDateTime;	/* SetDateTime */
+	mrg_OStraps[0x3f] = rom->InitUtil;	/* InitUtil */
+	mrg_OStraps[0x51] = rom->ReadXPRam;	/* ReadXPRam */
+	mrg_OStraps[0x52] = rom->WriteXPRam;	/* WriteXPRam */
+        jClkNoMem = (void (*)()) rom->jClkNoMem;
+
+	if (0 == jClkNoMem) {
+		printf("Help. Got NULL vector for jClkNoMem.\n");
+		panic("Please get this pointer in the sources (machdep.c) and comile a new kernel.\n");
+	}
+
+
 
 #if defined(MRG_DEBUG)
 	printf("mrg: ROM adbintr 0x%08x\n", mrg_romadbintr);
@@ -585,6 +614,7 @@ mrg_init()
 		Lvl1DT[i] = mrg_lvl1dtpanic;
 	for(i = 0; i < 8; i++) /* Set up fake Lvl2DT */
 		Lvl2DT[i] = mrg_lvl2dtpanic;
+	Lvl1DT[0] = (void (*)())mrg_1sec_timer_tick;
 	Lvl1DT[2] = (void (*)())mrg_romadbintr;
 	Lvl1DT[4] = (void (*)())mrg_rompmintr;
 	JADBProc = mrg_jadbprocpanic; /* Fake JADBProc for the time being */
@@ -677,8 +707,8 @@ mrg_initadbintr()
 	int i;
 
 	if (mac68k_machine.do_graybars)
-		printf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x\n",
-				HwCfgFlags, HwCfgFlags2, HwCfgFlags3);
+		printf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x, 0x%8x\n",
+				HwCfgFlags, HwCfgFlags2, HwCfgFlags3, HwCfgFlags4);
 
         if ( (HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0) ){
 
@@ -761,11 +791,17 @@ mrg_fixupROMBase(obase, nbase)
 	if (IS_ROM_ADDR(mrg_romident))
 		mrg_romident = mrg_romident - oldbase + newbase;
 
+	if (IS_ROM_ADDR(jClkNoMem))
+		jClkNoMem = jClkNoMem - oldbase + newbase;
+
 	if (IS_ROM_ADDR(mrg_ADBAlternateInit))
 		mrg_ADBAlternateInit = mrg_ADBAlternateInit - oldbase + newbase;
 
 	if (IS_ROM_ADDR(mrg_InitEgret))
 		mrg_InitEgret = mrg_InitEgret - oldbase + newbase;
+
+	if (IS_ROM_ADDR(HwCfgFlags4))
+		HwCfgFlags4 = HwCfgFlags4 - oldbase + newbase;
 }
 
 void
