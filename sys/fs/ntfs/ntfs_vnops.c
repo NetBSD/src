@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.17 2004/02/22 10:26:14 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.18 2004/02/29 11:08:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.17 2004/02/22 10:26:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.18 2004/02/29 11:08:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ static int	ntfs_fsync __P((struct vop_fsync_args *ap));
 #endif
 static int	ntfs_pathconf __P((void *));
 
-int	ntfs_prtactive = 1;	/* 1 => print out reclaim of active vnodes */
+extern int prtactive;
 
 #if defined(__FreeBSD__)
 int
@@ -251,7 +251,7 @@ ntfs_inactive(ap)
 
 	dprintf(("ntfs_inactive: vnode: %p, ntnode: %d\n", vp, ip->i_number));
 
-	if (ntfs_prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount != 0)
 		vprint("ntfs_inactive: pushing active", vp);
 
 	VOP_UNLOCK(vp, 0);
@@ -278,7 +278,7 @@ ntfs_reclaim(ap)
 
 	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %d\n", vp, ip->i_number));
 
-	if (ntfs_prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount != 0)
 		vprint("ntfs_reclaim: pushing active", vp);
 
 	if ((error = ntfs_ntget(ip)) != 0)
