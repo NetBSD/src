@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.27 2001/04/26 19:43:53 kleink Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.28 2001/08/19 01:37:39 itojun Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.27 2001/04/26 19:43:53 kleink Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.28 2001/08/19 01:37:39 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -331,10 +331,11 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 			char scopebuf[MAXHOSTNAMELEN];
 			int scopelen;
 
-			/* ip6_sa2str never fails */
 			scopelen = ip6_sa2str(
 			    (const struct sockaddr_in6 *)(const void *)sa,
 			    scopebuf, sizeof(scopebuf), 0);
+			if (scopelen < 0)
+				return ENI_MEMORY;
 			if (scopelen + 1 + numaddrlen + 1 > hostlen)
 				return ENI_MEMORY;
 			/*
@@ -361,6 +362,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 {
 	unsigned int ifindex;
 	const struct in6_addr *a6;
+	int n;
 
 	_DIAGASSERT(sa6 != NULL);
 	_DIAGASSERT(buf != NULL);
@@ -368,9 +370,13 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 	ifindex = (unsigned int)sa6->sin6_scope_id;
 	a6 = &sa6->sin6_addr;
 
-#ifdef notyet
-	if (flags & NI_NUMERICSCOPE) {
-		return(snprintf(buf, bufsiz, "%d", sa6->sin6_scope_id));
+#ifdef NI_NUMERICSCOPE
+	if ((flags & NI_NUMERICSCOPE) != 0) {
+		n = snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id);
+		if (n < 0 || n >= bufsiz)
+			return -1;
+		else
+			return n;
 	}
 #endif
 
@@ -384,6 +390,10 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 	}
 
 	/* last resort */
-	return(snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id));
+	n = snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id);
+	if (n < 0 || n >= bufsiz)
+		return -1;
+	else
+		return n;
 }
 #endif /* INET6 */
