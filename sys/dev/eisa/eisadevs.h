@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.5 1996/05/17 19:27:48 mycroft Exp 
+ *	NetBSD: eisadevs,v 1.7 1996/05/20 00:39:55 thorpej Exp 
  */
 
 /*
@@ -59,7 +59,10 @@
 
 /* Digital Equipment products */
 #define	EISA_PRODUCT_DEC4250	"Digital Equipment DE425 Ethernet"
-/* ??? DEC DEFEA */
+#define	EISA_PRODUCT_DEC3001	"Digital Equipment DEFEA FDDI Controller"
+#define	EISA_PRODUCT_DEC3002	"Digital Equipment DEFEA FDDI Controller"
+#define	EISA_PRODUCT_DEC3003	"Digital Equipment DEFEA FDDI Controller"
+#define	EISA_PRODUCT_DEC3004	"Digital Equipment DEFEA FDDI Controller"
 
 /* 3Com products */
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
@@ -67,4 +70,4 @@
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
 
 /* UltraStor products */
-#define	EISA_PRODUCT_USC0240	"UltraStor 24f SCSI"
+#define	EISA_PRODUCT_USC0240	"24f SCSI"
