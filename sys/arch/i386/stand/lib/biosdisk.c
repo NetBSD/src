@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.7 1997/10/13 09:26:29 drochner Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.7.2.1 1998/11/23 07:57:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -73,6 +73,10 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/saerrno.h>
 #include <machine/stdarg.h>
+
+#undef	DOSPTYP_NETBSD
+#define DOSPTYP_NETBSD	0xa9		/* NetBSD partition type */
+
 
 #include "libi386.h"
 #include "biosdisk_ll.h"
@@ -193,13 +197,29 @@ biosdiskopen(struct open_file *f, ...)
 		error = EIO;
 		goto out;
 	}
-	dptr = (struct dos_partition *) & d->buf[DOSPARTOFF];
 	sector = -1;
+	dptr = (struct dos_partition *) & d->buf[DOSPARTOFF];
+
+#ifndef NOCOMPAT_NETBSD_NEW
+	/* Look for NetBSD partition ID */
 	for (i = 0; i < NDOSPART; i++, dptr++)
 		if (dptr->dp_typ == DOSPTYP_NETBSD) {
 			sector = dptr->dp_start;
 			break;
 		}
+#endif
+
+	if (sector == -1) {
+		/* If we didn't find one, look for 386BSD partition ID */
+		dptr = (struct dos_partition *) & d->buf[DOSPARTOFF];
+		for (i = 0; i < NDOSPART; i++, dptr++)
+			if (dptr->dp_typ == DOSPTYP_386BSD) {
+				printf("WARNING: disk appears to be old-NetbSD or FreeBSD. See installboot(8).\n");
+				sector = dptr->dp_start;
+				break;
+			}
+	}
+
 	if (sector == -1) {
 		/*
 		 * One of two things:
