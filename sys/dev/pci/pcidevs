@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.198 2000/03/14 01:45:11 tsarna Exp $
+$NetBSD: pcidevs,v 1.199 2000/03/16 23:36:44 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1004,6 +1004,7 @@ product INTEL CDC		0x0483	82424ZX Cache and DRAM controller (CDC)
 product INTEL SIO		0x0484	82378ZB System I/O (SIO)
 product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
 product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
+product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL 82092AA		0x1222	82092AA IDE controller
 product INTEL SAA7116		0x1223	SAA7116
 product INTEL 82596		0x1226	82596 LAN Controller
