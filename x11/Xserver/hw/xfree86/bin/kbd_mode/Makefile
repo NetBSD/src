@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2004/11/29 16:34:32 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2004/11/29 18:34:15 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -19,10 +19,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/etc \
 		-I${XSERVERINCDIR}
 
 CPPFLAGS+=	-DWSCONS_SUPPORT
-
-.if ${MACHINE} == "cats"
-CPPFLAGS+=	-DPCVT_SUPPORT
-.endif
 
 .if ${MACHINE} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
