@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxvar.h,v 1.8 1999/11/03 13:45:11 ad Exp $ */
+/* 	$NetBSD: pxvar.h,v 1.9 2000/01/14 02:00:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PXVAR_H_
-#define _PXVAR_H_ 1
+#ifndef _PMAX_DEV_PXVAR_H_
+#define _PMAX_DEV_PXVAR_H_
 
 struct px_cliplist {
 	int	cl_cur;		/* current cliprect */
@@ -142,4 +142,4 @@ int	px_init __P((struct fbinfo *, char *, int, int));
 
 #endif /* _KERNEL */
 
-#endif /* _TC_PXVAR_H_ */
+#endif	/* !_PMAX_DEV_PXVAR_H_ */
