@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093reg.h,v 1.2 2003/05/04 23:46:41 fvdl Exp $ */
+/*	 $NetBSD: i82093reg.h,v 1.3 2003/05/11 15:46:57 fvdl Exp $ */
 
 #include <x86/i82093reg.h>
 
@@ -52,11 +52,12 @@
 	movl	IS_PIN(%r14),%esi				;\
 	leaq	0x10(%rsi,%rsi,1),%rsi				;\
 	movq	IOAPIC_SC_REG(%rdi),%r15			;\
+	movq	IOAPIC_SC_DATA(%rdi),%r13			;\
 	movl	%esi, (%r15)					;\
-	movq	IOAPIC_SC_DATA(%rdi),%r15			;\
-	movl	(%r15),%esi					;\
-	andl	$~IOAPIC_REDLO_MASK,%esi			;\
+	movl	(%r13),%r12d					;\
+	andl	$~IOAPIC_REDLO_MASK,%r12d			;\
 	movl	%esi,(%r15)					;\
+	movl	%r12d,(%r13)					;\
 	ioapic_asm_unlock(num)					;\
 79:
 
