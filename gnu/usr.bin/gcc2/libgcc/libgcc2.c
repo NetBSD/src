@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: libgcc2.c,v 1.3 1993/08/23 09:24:06 cgd Exp $
+	$Id: libgcc2.c,v 1.4 1993/12/30 13:26:40 cgd Exp $
 */
 
 /* As a special exception, if you link this library with files
@@ -1095,7 +1095,7 @@ __fixunssfsi (SFtype a)
 #undef double
 
 #ifdef L__gcc_bcmp
-
+#include <sys/types.h>
 /* Like bcmp except the sign is meaningful.
    Reult is negative if S1 is less than S2,
    positive if S1 is greater, 0 if S1 and S2 are equal.  */
@@ -1271,6 +1271,7 @@ __builtin_saveregs ()
 
 #undef NULL /* Avoid errors if stdio.h and our stddef.h mismatch.  */
 #include <stdio.h>
+#include <sys/types.h>
 /* This is used by the `assert' macro.  */
 void
 __eprintf (string, expression, line, filename)
@@ -1321,6 +1322,7 @@ __bb_init_func (blocks)
 /* frills for C++ */
 
 #ifdef L_op_new
+#include <sys/types.h>
 typedef void (*vfp)(void);
 
 extern vfp __new_handler;
@@ -1347,6 +1349,7 @@ __builtin_new (size_t sz)
 /* This gets us __GNU_LIBRARY__.  */
 #undef NULL /* Avoid errors if stdio.h and our stddef.h mismatch.  */
 #include <stdio.h>
+#include <sys/types.h>
 
 #ifdef __GNU_LIBRARY__
   /* Avoid forcing the library's meaning of `write' on the user program
