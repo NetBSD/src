@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.4 2002/09/27 20:35:03 thorpej Exp $ */
+/* $NetBSD: wdog.c,v 1.5 2002/10/01 02:49:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -62,9 +62,8 @@ struct wdog_softc {
 	int sc_wdog_period;
 };
 
-const struct cfattach wdog_ca = {
-	sizeof(struct wdog_softc), wdog_match, wdog_attach,
-};
+CFATTACH_DECL(wdog, sizeof(struct wdog_softc),
+    wdog_match, wdog_attach, NULL, NULL)
 
 static int
 wdog_match(struct device *parent, struct cfdata *cf, void *aux)
