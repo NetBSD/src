@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.36 1997/03/23 01:24:03 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.37 1997/04/07 01:48:30 jtk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -233,7 +233,7 @@ arp_rtrequest(req, rt, sa)
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
 		    gate->sa_len < sizeof(null_sdl)) {
-			log(LOG_DEBUG, "arp_rtrequest: bad gateway value");
+			log(LOG_DEBUG, "arp_rtrequest: bad gateway value\n");
 			break;
 		}
 		SDL(gate)->sdl_type = rt->rt_ifp->if_type;
@@ -356,7 +356,7 @@ arpresolve(ifp, rt, m, dst, desten)
 			rt = la->la_rt;
 	}
 	if (la == 0 || rt == 0) {
-		log(LOG_DEBUG, "arpresolve: can't allocate llinfo");
+		log(LOG_DEBUG, "arpresolve: can't allocate llinfo\n");
 		m_freem(m);
 		return (0);
 	}
