@@ -4,12 +4,26 @@ $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then __arch := AXP
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
+$	set noon
+$	define/user sys$output nla0:
+$	mcr 'exe_dir'openssl no-rsa
+$	save_severity=$SEVERITY
+$	set on
+$	if save_severity
+$	then
+$	    write sys$output "skipping RSA conversion test"
+$	    exit
+$	endif
+$
 $	cmd := mcr 'exe_dir'openssl rsa
 $
 $	t := testrsa.pem
 $	if p1 .nes. "" then t = p1
 $
 $	write sys$output "testing RSA conversions"
+$	if f$search("fff.*") .nes "" then delete fff.*;*
+$	if f$search("ff.*") .nes "" then delete ff.*;*
+$	if f$search("f.*") .nes "" then delete f.*;*
 $	copy 't' fff.p
 $
 $	write sys$output "p -> d"
@@ -52,27 +66,27 @@ $	write sys$output "p -> p"
 $	'cmd' -in f.p -inform p -outform p -out ff.p3
 $	if $severity .ne. 1 then exit 3
 $
-$	difference/output=nl: fff.p f.p
+$	backup/compare fff.p f.p
 $	if $severity .ne. 1 then exit 3
-$	difference/output=nl: fff.p ff.p1
+$	backup/compare fff.p ff.p1
 $	if $severity .ne. 1 then exit 3
-$!	difference/output=nl: fff.p ff.p2
+$!	backup/compare fff.p ff.p2
 $!	if $severity .ne. 1 then exit 3
-$	difference/output=nl: fff.p ff.p3
+$	backup/compare fff.p ff.p3
 $	if $severity .ne. 1 then exit 3
 $
-$!	difference/output=nl: f.t ff.t1
+$!	backup/compare f.t ff.t1
 $!	if $severity .ne. 1 then exit 3
-$!	difference/output=nl: f.t ff.t2
+$!	backup/compare f.t ff.t2
 $!	if $severity .ne. 1 then exit 3
-$!	difference/output=nl: f.t ff.t3
+$!	backup/compare f.t ff.t3
 $!	if $severity .ne. 1 then exit 3
 $
-$	difference/output=nl: f.p ff.p1
+$	backup/compare f.p ff.p1
 $	if $severity .ne. 1 then exit 3
-$!	difference/output=nl: f.p ff.p2
+$!	backup/compare f.p ff.p2
 $!	if $severity .ne. 1 then exit 3
-$	difference/output=nl: f.p ff.p3
+$	backup/compare f.p ff.p3
 $	if $severity .ne. 1 then exit 3
 $
 $	delete f.*;*,ff.*;*,fff.*;*

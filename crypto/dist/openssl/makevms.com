@@ -17,10 +17,14 @@ $!
 $! Specify one of the following build options for P1.
 $!
 $!      ALL       Just build "everything".
+$!      CONFIG    Just build the "[.CRYPTO]OPENSSLCONF.H" file.
 $!      BUILDINF  Just build the "[.CRYPTO]BUILDINF.H" file.
 $!      SOFTLINKS Just fix the Unix soft links.
+$!      BUILDALL  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done.
 $!      RSAREF    Just build the "[.xxx.EXE.RSAREF]LIBRSAGLUE.OLB" library.
 $!      CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
+$!      CRYPTO/x  Just build the x part of the
+$!                "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
 $!      SSL       Just build the "[.xxx.EXE.SSL]LIBSSL.OLB" library.
 $!      SSL_TASK  Just build the "[.xxx.EXE.SSL]SSL_TASK.EXE" program.
 $!      TEST      Just build the "[.xxx.EXE.TEST]" test programs for OpenSSL.
@@ -61,6 +65,16 @@ $!
 $! P6, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
 $!
+$! Check if we're in a batch job, and make sure we get to 
+$! the directory this script is in
+$!
+$ IF F$MODE() .EQS. "BATCH"
+$ THEN
+$   COMNAME=F$ENVIRONMENT("PROCEDURE")
+$   COMPATH=F$PARSE("A.;",COMNAME) - "A.;"
+$   SET DEF 'COMPATH'
+$ ENDIF
+$!
 $! Check Which Architecture We Are Using.
 $!
 $ IF (F$GETSYI("CPU").GE.128)
@@ -88,17 +102,25 @@ $ GOSUB CHECK_OPTIONS
 $!
 $! Check To See What We Are To Do.
 $!
-$ IF (BUILDALL.EQS."TRUE")
+$ IF (BUILDCOMMAND.EQS."ALL")
 $ THEN
 $!
-$!  Since Nothing Special Was Specified, Do Everything.
-$!  First, Fix The Unix Softlinks.
+$!  Start with building the OpenSSL configuration file.
 $!
-$   GOSUB SOFTLINKS
+$   GOSUB CONFIG
 $!
 $!  Create The "BUILDINF.H" Include File.
 $!
 $   GOSUB BUILDINF
+$!
+$!  Fix The Unix Softlinks.
+$!
+$   GOSUB SOFTLINKS
+$!
+$ ENDIF
+$!
+$ IF (BUILDCOMMAND.EQS."ALL".OR.BUILDCOMMAND.EQS."BUILDALL")
+$ THEN
 $!
 $!  Check To See If We Are Going To Be Building The 
 $!  [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library.
@@ -140,12 +162,121 @@ $ ELSE
 $!
 $!    Build Just What The User Wants Us To Build.
 $!
-$     GOSUB 'BUILDALL'
+$     GOSUB 'BUILDCOMMAND'
+$!
 $ ENDIF
 $!
 $! Time To EXIT.
 $!
-$ EXIT   
+$ EXIT
+$!
+$! Rebuild The "[.CRYPTO]OPENSSLCONF.H" file.
+$!
+$ CONFIG:
+$!
+$! Tell The User We Are Creating The [.CRYPTO]OPENSSLCONF.H File.
+$!
+$ WRITE SYS$OUTPUT "Creating [.CRYPTO]OPENSSLCONF.H Include File."
+$!
+$! Create The [.CRYPTO]OPENSSLCONF.H File.
+$!
+$ OPEN/WRITE H_FILE SYS$DISK:[.CRYPTO]OPENSSLCONF.H
+$!
+$! Write The [.CRYPTO]OPENSSLCONF.H File.
+$!
+$ WRITE H_FILE "/* This file was automatically built using makevms.com */"
+$ WRITE H_FILE "/* and [.CRYPTO]OPENSSLCONF.H_IN */"
+$
+$! Different tar version may have named the file differently
+$ IF F$SEARCH("[.CRYPTO]OPENSSLCONF.H_IN") .NES. ""
+$ THEN
+$   TYPE [.CRYPTO]OPENSSLCONF.H_IN /OUTPUT=H_FILE:
+$ ELSE
+$   IF F$SEARCH("[.CRYPTO]OPENSSLCONF_H.IN") .NES. ""
+$   THEN
+$     TYPE [.CRYPTO]OPENSSLCONF_H.IN /OUTPUT=H_FILE:
+$   ELSE
+$     WRITE SYS$ERROR "Couldn't find a [.CRYPTO]OPENSSLCONF.H_IN.  Exiting!"
+$     EXIT 0
+$   ENDIF
+$ ENDIF
+$!
+$ IF ARCH .EQS. "AXP"
+$ THEN
+$!
+$!  Write the Alpha specific data
+$!
+$   WRITE H_FILE "#if defined(HEADER_RC4_H)"
+$   WRITE H_FILE "#undef RC4_INT"
+$   WRITE H_FILE "#define RC4_INT unsigned int"
+$   WRITE H_FILE "#undef RC4_CHUNK"
+$   WRITE H_FILE "#define RC4_CHUNK unsigned long long"
+$   WRITE H_FILE "#endif"
+$!
+$   WRITE H_FILE "#if defined(HEADER_DES_LOCL_H)"
+$   WRITE H_FILE "#undef DES_LONG"
+$   WRITE H_FILE "#define DES_LONG unsigned int"
+$   WRITE H_FILE "#undef DES_PTR"
+$   WRITE H_FILE "#define DES_PTR"
+$   WRITE H_FILE "#undef DES_RISC1"
+$   WRITE H_FILE "#undef DES_RISC2"
+$   WRITE H_FILE "#define DES_RISC1"
+$   WRITE H_FILE "#undef DES_UNROLL"
+$   WRITE H_FILE "#define DES_UNROLL"
+$   WRITE H_FILE "#endif"
+$!
+$   WRITE H_FILE "#if defined(HEADER_BN_H)"
+$   WRITE H_FILE "#undef SIXTY_FOUR_BIT_LONG"
+$   WRITE H_FILE "#undef SIXTY_FOUR_BIT"
+$   WRITE H_FILE "#define SIXTY_FOUR_BIT"
+$   WRITE H_FILE "#undef THIRTY_TWO_BIT"
+$   WRITE H_FILE "#undef SIXTEEN_BIT"
+$   WRITE H_FILE "#undef EIGHT_BIT"
+$   WRITE H_FILE "#endif"
+$!
+$!  Else...
+$!
+$ ELSE
+$!
+$!  Write the VAX specific data
+$!
+$   WRITE H_FILE "#if defined(HEADER_RC4_H)"
+$   WRITE H_FILE "#undef RC4_INT"
+$   WRITE H_FILE "#define RC4_INT unsigned char"
+$   WRITE H_FILE "#undef RC4_CHUNK"
+$   WRITE H_FILE "#define RC4_CHUNK unsigned long"
+$   WRITE H_FILE "#endif"
+$!
+$   WRITE H_FILE "#if defined(HEADER_DES_LOCL_H)"
+$   WRITE H_FILE "#undef DES_LONG"
+$   WRITE H_FILE "#define DES_LONG unsigned long"
+$   WRITE H_FILE "#undef DES_PTR"
+$   WRITE H_FILE "#define DES_PTR"
+$   WRITE H_FILE "#undef DES_RISC1"
+$   WRITE H_FILE "#undef DES_RISC2"
+$   WRITE H_FILE "#undef DES_UNROLL"
+$   WRITE H_FILE "#endif"
+$!
+$   WRITE H_FILE "#if defined(HEADER_BN_H)"
+$   WRITE H_FILE "#undef SIXTY_FOUR_BIT_LONG"
+$   WRITE H_FILE "#undef SIXTY_FOUR_BIT"
+$   WRITE H_FILE "#undef THIRTY_TWO_BIT"
+$   WRITE H_FILE "#define THIRTY_TWO_BIT"
+$   WRITE H_FILE "#undef SIXTEEN_BIT"
+$   WRITE H_FILE "#undef EIGHT_BIT"
+$   WRITE H_FILE "#endif"
+$!
+$!  End
+$!
+$ ENDIF
+$!
+$! Close the [.CRYPTO]OPENSSLCONF.H file
+$!
+$ CLOSE H_FILE
+$!
+$! That's All, Time To RETURN.
+$!
+$ RETURN
 $!
 $! Rebuild The "[.CRYPTO]BUILDINF.H" file.
 $!
@@ -278,9 +409,9 @@ $ IF D .EQS. "," THEN GOTO LOOP_SDIRS_END
 $ tmp = EXHEADER_'D'
 $ IF D .EQS. ""
 $ THEN
-$   COPY [.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] /LOG
+$   COPY [.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $ ELSE
-$   COPY [.CRYPTO.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] /LOG
+$   COPY [.CRYPTO.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $ ENDIF
 $ GOTO LOOP_SDIRS
 $ LOOP_SDIRS_END:
@@ -323,7 +454,11 @@ $ SET DEFAULT SYS$DISK:[.CRYPTO]
 $!
 $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
-$ @CRYPTO-LIB 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @CRYPTO-LIB LIBRARY 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
+$!
+$! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
+$!  
+$ @CRYPTO-LIB APPS 'RSAREF' 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!
@@ -462,6 +597,16 @@ $! Check The User's Options.
 $!
 $ CHECK_OPTIONS:
 $!
+$! Check if there's a "part", and separate it out
+$!
+$ BUILDPART = F$ELEMENT(1,"/",P1)
+$ IF BUILDPART .EQS. "/"
+$ THEN
+$   BUILDPART = ""
+$ ELSE
+$   P1 = F$EXTRACT(0,F$LENGTH(P1) - F$LENGTH(BUILDPART) - 1, P1)
+$ ENDIF
+$!
 $! Check To See If P1 Is Blank.
 $!
 $ IF (P1.EQS."ALL")
@@ -469,7 +614,7 @@ $ THEN
 $!
 $!   P1 Is ALL, So Build Everything.
 $!
-$    BUILDALL = "TRUE"
+$    BUILDCOMMAND = "ALL"
 $!
 $! Else...
 $!
@@ -477,14 +622,15 @@ $ ELSE
 $!
 $!  Else, Check To See If P1 Has A Valid Arguement.
 $!
-$   IF (P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS").OR.(P1.EQS."CRYPTO") -
-       .OR.(P1.EQS."SSL").OR.(P1.EQS."RSAREF").OR.(P1.EQS."SSL_TASK") -
-       .OR.(P1.EQS."TEST").OR.(P1.EQS."APPS")
+$   IF (P1.EQS."CONFIG").OR.(P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS") -
+       .OR.(P1.EQS."BUILDALL") -
+       .OR.(P1.EQS."CRYPTO").OR.(P1.EQS."SSL").OR.(P1.EQS."RSAREF") -
+       .OR.(P1.EQS."SSL_TASK").OR.(P1.EQS."TEST").OR.(P1.EQS."APPS")
 $   THEN
 $!
 $!    A Valid Arguement.
 $!
-$     BUILDALL = P1
+$     BUILDCOMMAND = P1
 $!
 $!  Else...
 $!
@@ -496,10 +642,14 @@ $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The Option ",P1," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    ALL      :  Just Build Everything."
+$     WRITE SYS$OUTPUT "    CONFIG   :  Just build the [.CRYPTO]OPENSSLCONF.H file."
 $     WRITE SYS$OUTPUT "    BUILDINF :  Just build the [.CRYPTO]BUILDINF.H file."
 $     WRITE SYS$OUTPUT "    SOFTLINKS:  Just Fix The Unix soft links."
+$     WRITE SYS$OUTPUT "    BUILDALL :  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done."
 $     WRITE SYS$OUTPUT "    RSAREF   :  To Build Just The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library."
 $     WRITE SYS$OUTPUT "    CRYPTO   :  To Build Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
+$     WRITE SYS$OUTPUT "    CRYPTO/x :  To Build Just The x Part Of The"
+$     WRITE SYS$OUTPUT "                [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
 $     WRITE SYS$OUTPUT "    SSL      :  To Build Just The [.xxx.EXE.SSL]LIBSSL.OLB Library."
 $     WRITE SYS$OUTPUT "    SSL_TASK :  To Build Just The [.xxx.EXE.SSL]SSL_TASK.EXE Program."
 $     WRITE SYS$OUTPUT "    TEST     :  To Build Just The OpenSSL Test Programs."
