@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.85 2003/12/20 13:31:42 mrg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.86 2004/02/22 12:30:11 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.85 2003/12/20 13:31:42 mrg Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.86 2004/02/22 12:30:11 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ struct flagbit_desc {
 #endif
 
 void	filemode __P((void));
-int	getfiles __P((char **, int *));
+int	getfiles __P((char **, int *, char **));
 int	getflags __P((const struct flagbit_desc *, char *, u_int));
 struct mount *
 	getmnt __P((struct mount *));
@@ -878,7 +878,7 @@ filemode()
 	struct file *fp;
 	struct file *addr;
 	char flags[sizeof(filemode_flags) / sizeof(filemode_flags[0])];
-	char *buf;
+	char *buf, *offset;
 	int len, maxfile, nfile, ovflw;
 	static const char * const dtypes[] =
 		{ "???", "inode", "socket", "pipe" };
@@ -889,22 +889,22 @@ filemode()
 		(void)printf("%3d/%3d files\n", nfile, maxfile);
 		return;
 	}
-	if (getfiles(&buf, &len) == -1)
+	if (getfiles(&buf, &len, &offset) == -1)
 		return;
 	/*
 	 * Getfiles returns in malloc'd memory a pointer to the first file
 	 * structure, and then an array of file structs (whose addresses are
 	 * derivable from the previous entry).
 	 */
-	addr = ((struct filelist *)buf)->lh_first;
-	fp = (struct file *)(buf + sizeof(struct filelist));
+	addr = ((struct filelist *)offset)->lh_first;
+	fp = (struct file *)(offset + sizeof(struct filelist));
 	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
 
 	(void)printf("%d/%d open files\n", nfile, maxfile);
 	(void)printf("%*s%s%*s TYPE    FLG     CNT  MSG  %*s%s%*s  OFFSET\n",
 	    (PTRSTRWIDTH - 4) / 2, "", " LOC", (PTRSTRWIDTH - 4) / 2, "",
 	    (PTRSTRWIDTH - 4) / 2, "", "DATA", (PTRSTRWIDTH - 4) / 2, "");
-	for (; (char *)fp < buf + len; addr = fp->f_list.le_next, fp++) {
+	for (; (char *)fp < offset + len; addr = fp->f_list.le_next, fp++) {
 		if ((unsigned)fp->f_type > DTYPE_PIPE)
 			continue;
 		ovflw = 0;
@@ -916,7 +916,7 @@ filemode()
 		PRWORD(ovflw, " %*d", 5, 1, fp->f_msgcount);
 		PRWORD(ovflw, "  %*lx", PTRSTRWIDTH + 1, 2, (long)fp->f_data);
 		if (fp->f_offset < 0)
-			PRWORD(ovflw, "  %-*llx\n", PTRSTRWIDTH + 1, 2,
+			PRWORD(ovflw, "  %-*lld\n", PTRSTRWIDTH + 1, 2,
 			    (long long)fp->f_offset);
 		else
 			PRWORD(ovflw, "  %-*lld\n", PTRSTRWIDTH + 1, 2,
@@ -926,13 +926,15 @@ filemode()
 }
 
 int
-getfiles(abuf, alen)
+getfiles(abuf, alen, aoffset)
 	char **abuf;
 	int *alen;
+	char **aoffset;
 {
 	size_t len;
 	int mib[2];
 	char *buf;
+	size_t offset;
 
 	/*
 	 * XXX
@@ -947,14 +949,17 @@ getfiles(abuf, alen)
 		warn("sysctl: KERN_FILE");
 		return (-1);
 	}
-	if ((buf = malloc(len)) == NULL)
+	/* We need to align (struct file *) in the buffer. */
+	offset = len % sizeof(off_t);
+	if ((buf = malloc(len + offset)) == NULL)
 		err(1, "malloc");
-	if (sysctl(mib, 2, buf, &len, NULL, 0) == -1) {
+	if (sysctl(mib, 2, buf + offset, &len, NULL, 0) == -1) {
 		warn("sysctl: KERN_FILE");
 		return (-1);
 	}
 	*abuf = buf;
 	*alen = len;
+	*aoffset = (buf + offset);
 	return (0);
 }
 
