@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.4 1997/11/29 21:49:13 fvdl Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.5 1998/02/24 04:32:22 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,7 +82,10 @@ struct part_id {
 	{5, "Extended DOS"},
 	{6, "Primary DOS, 16-bit FAT >32MB"},
 	{7, "NTFS"},
-	{165, "NetBSD"},
+	{131, "Linux native"},
+	{131, "Linux swap"},
+	{165, "NetBSD/FreeBSD/386bsd"},
+	{169, "new NetBSD"},
 	{-1, "Unknown"},
 };
 
