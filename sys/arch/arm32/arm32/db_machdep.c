@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.8 1998/02/21 02:42:42 mark Exp $ */
+/*	$NetBSD: db_machdep.c,v 1.9 1998/06/02 20:41:47 mark Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -28,6 +28,7 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_uvm.h"
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -99,7 +100,6 @@ db_show_vnode_cmd(addr, have_addr, count, modif)
 	}
 }
 
-
 void
 db_show_vmstat_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
@@ -107,6 +107,7 @@ db_show_vmstat_cmd(addr, have_addr, count, modif)
 	db_expr_t       count;
 	char            *modif;
 {
+#if !defined(UVM)
 	struct vmmeter sum;
     
 	sum = cnt;
@@ -141,6 +142,50 @@ db_show_vmstat_cmd(addr, have_addr, count, modif)
 	db_printf("%9u pages active\n", sum.v_active_count);
 	db_printf("%9u pages inactive\n", sum.v_inactive_count);
 	db_printf("%9u bytes per page\n", sum.v_page_size);
+#else
+
+	db_printf("Current UVM status:\n");
+	db_printf("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d\n",
+	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
+	    uvmexp.pageshift);
+	db_printf("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
+	    uvmexp.npages, uvmexp.active, uvmexp.inactive, uvmexp.wired,
+	    uvmexp.free);
+	db_printf("  freemin=%d, free-target=%d, inactive-target=%d, "
+	    "wired-max=%d\n", uvmexp.freemin, uvmexp.freetarg, uvmexp.inactarg,
+	    uvmexp.wiredmax);
+	db_printf("  faults=%d, traps=%d, intrs=%d, ctxswitch=%d\n",
+	    uvmexp.faults, uvmexp.traps, uvmexp.intrs, uvmexp.swtch);
+	db_printf("  softint=%d, syscalls=%d, swapins=%d, swapouts=%d\n",
+	    uvmexp.softs, uvmexp.syscalls, uvmexp.swapins, uvmexp.swapouts);
+
+	db_printf("  fault counts:\n");
+	db_printf("    noram=%d, noanon=%d, pgwait=%d, pgrele=%d\n",
+	    uvmexp.fltnoram, uvmexp.fltnoanon, uvmexp.fltpgwait,
+	    uvmexp.fltpgrele);
+	db_printf("    ok relocks(total)=%d(%d), anget(retrys)=%d(%d), "
+	    "amapcopy=%d\n", uvmexp.fltrelckok, uvmexp.fltrelck,
+	    uvmexp.fltanget, uvmexp.fltanretry, uvmexp.fltamcopy);
+	db_printf("    neighbor anon/obj pg=%d/%d, gets(lock/unlock)=%d/%d\n",
+	    uvmexp.fltnamap, uvmexp.fltnomap, uvmexp.fltlget, uvmexp.fltget);
+	db_printf("    cases: anon=%d, anoncow=%d, obj=%d, prcopy=%d, przero=%d\n",
+	    uvmexp.flt_anon, uvmexp.flt_acow, uvmexp.flt_obj, uvmexp.flt_prcopy,
+	    uvmexp.flt_przero);
+
+	db_printf("  daemon and swap counts:\n");
+	db_printf("    woke=%d, revs=%d, scans=%d, swout=%d\n", uvmexp.pdwoke,
+	    uvmexp.pdrevs, uvmexp.pdscans, uvmexp.pdswout);
+	db_printf("    busy=%d, freed=%d, reactivate=%d, deactivate=%d\n",
+	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
+	db_printf("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,
+	    uvmexp.pdpending, uvmexp.nswget);
+	db_printf("    nswapdev=%d, nanon=%d, nfreeanon=%d\n", uvmexp.nswapdev,
+	    uvmexp.nanon, uvmexp.nfreeanon);
+
+	db_printf("  kernel pointers:\n");
+	db_printf("    objs(kmem/mb)=%p/%p\n", uvmexp.kmem_object,
+	    uvmexp.mb_object);
+#endif
 }
 
 void

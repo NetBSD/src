@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.17 1998/01/13 02:10:44 thorpej Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.18 1998/06/02 20:41:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -39,11 +39,12 @@
  * /dev/audio (partial) compatibility.
  */
 
-#include <sys/param.h>	/* proc.h */
-#include <sys/types.h>  /* dunno  */
-#include <sys/conf.h>   /* autoconfig functions */
-#include <sys/device.h> /* device calls */
-#include <sys/proc.h>	/* device calls */
+#include "opt_uvm.h"
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/proc.h>
 #include <sys/audioio.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -51,6 +52,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <dev/audio_if.h>
 
@@ -236,19 +241,19 @@ lmcaudio_attach(parent, self, aux)
 
 	/* Program the silence buffer and reset the DMA channel */
 
+#if defined(UVM)
+	ag.silence = uvm_km_alloc(kernel_map, NBPG);
+	ag.beep = uvm_km_zalloc(kernel_map, NBPG);
+#else
 	ag.silence = kmem_alloc(kernel_map, NBPG);
-	if (ag.silence == NULL)
-		panic("lmcaudio: Cannot allocate memory\n");
-
-	bzero((char *)ag.silence, NBPG);
-
 	ag.beep = kmem_alloc(kernel_map, NBPG);
-	if (ag.beep == NULL)
+#endif
+	if (ag.silence == NULL || ag.beep == NULL)
 		panic("lmcaudio: Cannot allocate memory\n");
-
+	bzero((char *)ag.silence, NBPG);
 	bcopy((char *)beep_waveform, (char *)ag.beep, sizeof(beep_waveform));
 
-	conv_jap((u_char *) ag.beep, sizeof(beep_waveform));
+	conv_jap((u_char *)ag.beep, sizeof(beep_waveform));
 
 	ag.buffer = 0;
 

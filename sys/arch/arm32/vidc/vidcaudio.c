@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.22 1998/01/18 03:48:38 mark Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.23 1998/06/02 20:41:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -43,6 +43,8 @@
  *
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>	/* proc.h */
 #include <sys/types.h>  /* dunno  */
 #include <sys/conf.h>   /* autoconfig functions */
@@ -54,6 +56,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <dev/audio_if.h>
 
@@ -222,9 +228,12 @@ vidcaudio_attach(parent, self, aux)
 
 	vidcaudio_rate(32); /* 24*1024*/
 
-/* Program the silence buffer and reset the DMA channel */
-
+	/* Program the silence buffer and reset the DMA channel */
+#if defined(UVM)
+	ag.silence = uvm_km_alloc(kernel_map, NBPG);
+#else
 	ag.silence = kmem_alloc(kernel_map, NBPG);
+#endif
 	if (ag.silence == NULL)
 		panic("vidcaudio: Cannot allocate memory\n");
 

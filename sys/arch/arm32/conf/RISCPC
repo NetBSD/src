@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.10 1998/05/08 23:40:21 mark Exp $
+#	$NetBSD: RISCPC,v 1.11 1998/06/02 20:41:53 mark Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -16,7 +16,7 @@ options 	SWAPPAGER	# paging; REQUIRED
 options 	VNODEPAGER	# mmap() of files
 options 	DEVPAGER	# mmap() of devices
 #options 	NTP		# NTP phase/frequency locked loop
-#options 	MACHINE_NEW_NONCONTIG
+#options 	UVM		# Use UVM instead of Mach VM.
 
 # CPU options
 

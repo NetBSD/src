@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 1998/06/02 14:34:55 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 1998/06/02 20:41:51 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,8 @@
  * Created      : 08/10/94
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -56,6 +58,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/pmap.h>
@@ -191,8 +197,9 @@ cpu_set_kpc(p, pc)
  *
  * We clean up a little and then call switch_exit() with the old proc as an
  * argument.  switch_exit() first switches to proc0's context, then does the
- * vmspace_free() and kmem_free() that we don't do here, and finally jumps
- * into switch() to wait for another process to wake up.
+ * vmspace_free() and kmem_free() (or their UVM counterparts) that we don't
+ * do here, and finally jumps into switch() to wait for another process
+ * to wake up.
  */
 
 void
@@ -221,8 +228,11 @@ cpu_exit(p)
 		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
 	}
 #endif	/* STACKCHECKS */
-
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p, &proc0);
 }
 
@@ -342,7 +352,11 @@ vmapbuf(bp, len)
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
+#if defined(UVM)
+	taddr = uvm_km_valloc_wait(phys_map, len);
+#else
 	taddr = kmem_alloc_wait(phys_map, len);
+#endif
 	bp->b_data = (caddr_t)(taddr + off);
 
 	/*
@@ -398,7 +412,11 @@ vunmapbuf(bp, len)
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, addr, len);
+#else
 	kmem_free_wakeup(phys_map, addr, len);
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 

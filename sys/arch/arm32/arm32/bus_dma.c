@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 1998/06/01 22:47:27 mark Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3 1998/06/02 20:41:47 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_uvm.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -54,6 +55,10 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#endif
 
 #define _ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -422,8 +427,11 @@ _bus_dmamem_free(t, segs, nsegs)
 			TAILQ_INSERT_TAIL(&mlist, m, pageq);
 		}
 	}
-
+#if defined(UVM)
+	uvm_pglistfree(&mlist);
+#else
 	vm_page_free_memory(&mlist);
+#endif
 }
 
 /*
@@ -449,7 +457,12 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 #endif	/* DEBUG_DMA */
 
 	size = round_page(size);
+#if defined(UVM)
+	va = uvm_km_valloc(kernel_map, size);
+#else
 	va = kmem_alloc_pageable(kmem_map, size);
+#endif
+
 	if (va == 0)
 		return (ENOMEM);
 
@@ -518,7 +531,11 @@ _bus_dmamem_unmap(t, kva, size)
 #endif	/* DIAGNOSTIC */
 
 	size = round_page(size);
+#if defined(UVM)
+	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
+#else
 	kmem_free(kmem_map, (vm_offset_t)kva, size);
+#endif
 }
 
 /*
@@ -691,8 +708,13 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&mlist);
+#if defined(UVM)
+	error = uvm_pglistalloc(size, low, high, alignment, boundary,
+	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+#else                    
 	error = vm_page_alloc_memory(size, low, high,
 	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+#endif
 	if (error)
 		return (error);
 

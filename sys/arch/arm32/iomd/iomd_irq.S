@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.15 1998/04/01 23:09:06 mark Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.16 1998/06/02 20:41:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -43,6 +43,7 @@
  * Created      : 27/09/94
  */
 
+#include "opt_uvm.h"
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
@@ -195,7 +196,7 @@ irqloop:
 	moveq	r0, r8			/* IRQ requests as arg 0 */
 	beq	_stray_irqhandler	/* call special handler */
 
-        ldr	r0, Lcnt
+	ldr	r0, Lcnt
 	ldr	r1, [r0, #(V_INTR)]
 	add	r1, r1, #0x00000001
 	str	r1, [r0, #(V_INTR)]
@@ -209,7 +210,7 @@ irqchainloop:
  */
 
 #ifdef IRQSTATS
-        ldr	r0, Lintrcnt
+	ldr	r0, Lintrcnt
 	ldr	r1, [r6, #(IH_NUM)]
 
 	add	r0, r0, r1, lsl #2
@@ -371,7 +372,11 @@ ENTRY(irq_setmasks)
 
 
 Lcnt:
+#if defined(UVM)
+	.word	_uvmexp
+#else
 	.word	_cnt
+#endif
 
 Lintrcnt:
 	.word	_intrcnt

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 1998/05/08 23:25:31 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.25 1998/06/02 20:41:48 mark Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -31,13 +31,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_uvm.h"
 #include "ipkdb.h"
 #include "assym.h"
+#include <sys/syscall.h>
+#include <sys/errno.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/param.h>
-#include <sys/syscall.h>
 
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
@@ -514,5 +516,43 @@ ENTRY(atomic_clear_bit)
 
 	msr	cpsr_all, r2
 	mov	pc, lr
+
+#if defined(UVM)
+/*
+ * kcopy(caddr_t from, caddr_t to, size_t len);
+ *
+ * Copy len bytes, abort on fault.
+ */
+Lcurpcb:
+	.word	_curpcb
+
+ENTRY(kcopy)
+	teq	r2, #0x00000000
+	moveq	r0, #0x00000000
+	moveq	pc, lr
+
+	stmfd	sp!, {r4, lr}
+	ldr	r4, Lcurpcb
+	ldr	r4, [r4]
+
+	add	r3, pc, #Lkcopyfault - . - 8
+	str	r3, [r4, #PCB_ONFAULT]
+
+Lkcopy_loop:
+	ldrb	r3, [r0], #0x0001
+	strb	r3, [r1], #0x0001
+	subs	r2, r2, #1
+	bne	Lkcopy_loop
+
+	mov	r0, #0x00000000
+	str	r0, [r4, #PCB_ONFAULT]
+	ldmfd	sp!, {r4, pc}
+
+Lkcopyfault:
+	mov	r0, #0x00000000
+	str	r0, [r4, #PCB_ONFAULT]
+	mov	r0, #EFAULT
+	ldmfd	sp!, {r4, pc}
+#endif
 
 /* End of locore.S */

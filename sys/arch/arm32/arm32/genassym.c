@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.12 1997/10/06 00:47:34 mark Exp $	*/
+/*	$NetBSD: genassym.c,v 1.13 1998/06/02 20:41:48 mark Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,6 +36,8 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -45,6 +47,10 @@
 #include <sys/signal.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/pmap.h>
 #include <machine/frame.h>
@@ -57,7 +63,11 @@ int
 main()
 {
 	struct proc *p = 0;
+#if defined(UVM)
+	struct uvmexp *uvme = 0;
+#else
 	struct vmmeter *vm = 0;
+#endif
 	struct pcb *pcb = 0;
 	struct trapframe *tf = 0;
 	struct sigframe *sigf = 0;
@@ -115,9 +125,15 @@ main()
 
 	def("USER_SIZE", sizeof(struct user));
 
+#if defined(UVM)
+	def("V_TRAP", &uvme->traps);
+	def("V_INTR", &uvme->intrs);
+	def("V_SOFT", &uvme->softs);
+#else
 	def("V_TRAP", &vm->v_trap);
 	def("V_INTR", &vm->v_intr);
 	def("V_SOFT", &vm->v_soft);
+#endif
 
 	def("VM_MAP", &vms->vm_map);
 	def("VM_PMAP", &vms->vm_map.pmap);

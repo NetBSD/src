@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.12 1998/01/13 02:10:43 thorpej Exp $	*/
+/*	$NetBSD: beep.c,v 1.13 1998/06/02 20:41:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,6 +42,7 @@
  *
  */
 
+#include "opt_uvm.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -56,6 +57,10 @@
 #include <dev/cons.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
@@ -147,8 +152,12 @@ beepattach(parent, self, aux)
 	sc->sc_iobase = mb->mb_iobase;
 	sc->sc_open = 0;
 	sc->sc_count = 0;
-    
+
+#if defined(UVM)
+	sc->sc_buffer0 = uvm_km_zalloc(kernel_map, NBPG);
+#else
 	sc->sc_buffer0 = kmem_alloc(kernel_map, NBPG);
+#endif
 	if (sc->sc_buffer0 == 0) 
 		panic("beep: Cannot allocate buffer memory\n");
 	if ((sc->sc_buffer0 & (NBPG -1)) != 0)

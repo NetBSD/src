@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.23 1998/05/01 15:44:51 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.24 1998/06/02 20:41:48 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -43,6 +43,7 @@
  * Created      : 28/11/94
  */
 
+#include "opt_uvm.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +53,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/frame.h>
 #include <machine/katelib.h>
@@ -149,7 +154,11 @@ data_abort_handler(frame)
 		enable_interrupts(I32_bit);
 
 	/* Update vmmeter statistics */
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 
 	/* Get fault address and status from the CPU */
 	fault_address = cpu_faultaddress();
@@ -431,7 +440,11 @@ copyfault:
 			goto out;
 		else {
 			/* The page must be mapped to cause a permission fault. */
+#if defined(UVM)
+			rv = uvm_fault(map, va, 0, ftype);
+#else
 			rv = vm_fault(map, va, ftype, FALSE);
+#endif
 #ifdef PMAP_DEBUG
 			if (pmap_debug_level >= 0)
 				printf("fault result=%d\n", rv);
@@ -536,7 +549,11 @@ copyfault:
 			}
 		}
 
+#if defined(UVM)
+		rv = uvm_fault(map, va, 0, ftype);
+#else
 		rv = vm_fault(map, va, ftype, FALSE);
+#endif
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
@@ -549,7 +566,7 @@ nogo:
 			printf("Failed page fault in kernel\n");
 			if (pcb->pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			printf("[u]vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
@@ -617,7 +634,11 @@ nogo:
 #endif
 		ftype = VM_PROT_READ;
 
+#if defined(UVM)
+		rv = uvm_fault(map, va, 0, ftype);
+#else
 		rv = vm_fault(map, va, ftype, FALSE);
+#endif
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
@@ -631,7 +652,7 @@ nogo1:
 			printf("Section fault in SVC mode\n");
 			if (pcb->pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			printf("[u]vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
@@ -689,7 +710,11 @@ prefetch_abort_handler(frame)
 		enable_interrupts(I32_bit);
 
 	/* Update vmmeter statistics */
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 
 	/* Call the cpu specific abort fixup routine */
 	error = cpu_prefetchabt_fixup(frame);
