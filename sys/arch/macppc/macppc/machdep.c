@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2000/05/26 21:19:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2000/06/09 10:54:48 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -153,6 +153,7 @@ initppc(startkernel, endkernel, args)
 	extern void callback __P((void *));
 	extern void ext_intr __P((void));
 	int exc, scratch;
+	struct mem_region *allmem, *availmem, *mp;
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -176,11 +177,14 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Map PCI memory space.
 	 */
-	battable[8].batl = BATL(0x80000000, BAT_I, BAT_PP_RW);
-	battable[8].batu = BATU(0x80000000, BAT_BL_256M, BAT_Vs);
+	battable[0x8].batl = BATL(0x80000000, BAT_I, BAT_PP_RW);
+	battable[0x8].batu = BATU(0x80000000, BAT_BL_256M, BAT_Vs);
 
-	battable[9].batl = BATL(0x90000000, BAT_I, BAT_PP_RW);
-	battable[9].batu = BATU(0x90000000, BAT_BL_256M, BAT_Vs);
+	battable[0x9].batl = BATL(0x90000000, BAT_I, BAT_PP_RW);
+	battable[0x9].batu = BATU(0x90000000, BAT_BL_256M, BAT_Vs);
+
+	battable[0xa].batl = BATL(0xa0000000, BAT_I, BAT_PP_RW);
+	battable[0xa].batu = BATU(0xa0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map obio devices.
@@ -198,6 +202,24 @@ initppc(startkernel, endkernel, args)
 	asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
 		      "mtdbatl 0,%0; mtdbatu 0,%1;"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+
+	/*
+	 * Set up battable to map all RAM regions.
+	 * This is here because mem_regions() call needs bat0 set up.
+	 */
+	mem_regions(&allmem, &availmem);
+	for (mp = allmem; mp->size; mp++) {
+		paddr_t pa = mp->start & 0xf0000000;
+		paddr_t end = mp->start + mp->size;
+
+		do {
+			u_int n = pa >> 28;
+
+			battable[n].batl = BATL(pa, BAT_M, BAT_PP_RW);
+			battable[n].batu = BATU(pa, BAT_BL_256M, BAT_Vs);
+			pa += 0x10000000;
+		} while (pa < end);
+	}
 
 	chosen = OF_finddevice("/chosen");
 	save_ofw_mapping();
@@ -337,10 +359,6 @@ initppc(startkernel, endkernel, args)
 	pmap_bootstrap(startkernel, endkernel);
 
 	restore_ofw_mapping();
-	battable[msgbuf_paddr >> 28].batl = BATL(msgbuf_paddr, BAT_M,
-	    BAT_PP_RW);
-	battable[msgbuf_paddr >> 28].batu = BATU(msgbuf_paddr, BAT_BL_256M,
-	    BAT_Vs);
 }
 
 static int N_mapping;
