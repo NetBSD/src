@@ -28,7 +28,6 @@
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/disklabel_acorn.h>
-#include <sys/disklabel_mbr.h>
 #include <sys/dkbad.h>
 #include <sys/dkio.h>
 #include <sys/dkstat.h>
