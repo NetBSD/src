@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24 2005/01/10 16:47:48 chs Exp $	*/
+/*	$NetBSD: zs.c,v 1.25 2005/01/10 17:01:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.24 2005/01/10 16:47:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25 2005/01/10 17:01:22 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -332,8 +332,8 @@ static volatile int zssoftpending;
 static int
 zshard(void *arg)
 {
-	register struct zsc_softc *zsc;
-	register int unit, rr3, rval, softreq;
+	struct zsc_softc *zsc;
+	int unit, rr3, rval, softreq;
 
 	if (!INTR_OCCURRED(NEXT_I_SCC))
 		return 0;
@@ -367,8 +367,8 @@ zshard(void *arg)
 static void
 zssoft(void *arg)
 {
-	register struct zsc_softc *zsc;
-	register int s, unit;
+	struct zsc_softc *zsc;
+	int s, unit;
 
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
@@ -513,7 +513,7 @@ zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val)
 u_char
 zs_read_csr(struct zs_chanstate *cs)
 {
-	register u_char val;
+	u_char val;
 
 	val = *cs->cs_reg_csr;
 	ZS_DELAY();
@@ -530,7 +530,7 @@ zs_write_csr(struct zs_chanstate *cs, u_char val)
 u_char
 zs_read_data(struct zs_chanstate *cs)
 {
-	register u_char val;
+	u_char val;
 
 	val = *cs->cs_reg_data;
 	ZS_DELAY();
@@ -562,7 +562,7 @@ void
 zs_abort(struct zs_chanstate *cs)
 {
 #if defined(ZS_CONSOLE_ABORT)
-	register volatile struct zschan *zc = zs_conschan;
+	volatile struct zschan *zc = zs_conschan;
 	int rr0;
 
 	/* Wait for end of break to avoid PROM abort. */
@@ -591,8 +591,8 @@ zs_abort(struct zs_chanstate *cs)
 int
 zs_getc(void *arg)
 {
-	register volatile struct zschan *zc = arg;
-	register int s, c, rr0;
+	volatile struct zschan *zc = arg;
+	int s, c, rr0;
 
 	s = splhigh();
 	/* Wait for a character to arrive. */
@@ -618,8 +618,8 @@ zs_getc(void *arg)
 void
 zs_putc(void *arg, int c)
 {
-	register volatile struct zschan *zc = arg;
-	register int s, rr0;
+	volatile struct zschan *zc = arg;
+	int s, rr0;
 
 	s = splhigh();
 	/* Wait for transmitter to become ready. */
