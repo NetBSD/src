@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.17 2002/02/23 22:35:15 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.18 2002/03/10 19:03:08 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.17 2002/02/23 22:35:15 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.18 2002/03/10 19:03:08 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -281,8 +281,8 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		 * (And also that the sections are not overlapping)
 		 */
 		pht--;
-		size = (pht->p_vaddr & ~(pht->p_align - 1)) + pht->p_align 
-		    - kph->p_vaddr;
+		size = ELF_ROUND((pht->p_vaddr + pht->p_memsz), pht->p_align) -
+		    ELF_TRUNC(kph->p_vaddr, kph->p_align);
 
 		/* Find a free place for the sections */
 		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
