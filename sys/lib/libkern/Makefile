@@ -1,18 +1,20 @@
-#	$NetBSD: Makefile,v 1.59 2001/02/16 16:58:27 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.60 2001/02/18 22:38:50 enami Exp $
 
 LIB=	kern
 MKPIC=	no
 
 .include <bsd.own.mk>
 
-.if exists(${KERNDIR}/arch/${MACHINE_ARCH})
+.if defined(MACHINE_ARCH) && !empty(MACHINE_ARCH) && \
+    exists(${KERNDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=     ${MACHINE_ARCH}
-.elif exists(${KERNDIR}/arch/${MACHINE_CPU}) 
+.elif defined(MACHINE_CPU) && !empty(MACHINE_CPU) && \
+    exists(${KERNDIR}/arch/${MACHINE_CPU}) 
 ARCHSUBDIR=     ${MACHINE_CPU}
 .else
 .BEGIN:
-        @echo no ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
-        @false
+	@echo no ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
+	@false
 .endif
 
 M= ${KERNDIR}/arch/${ARCHSUBDIR}
