@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.137 2002/02/01 04:35:31 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.138 2002/02/11 11:45:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.137 2002/02/01 04:35:31 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.138 2002/02/11 11:45:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1207,12 +1207,14 @@ retrieve(char *argv[], const char *name)
 	int log, sendrv, closerv, stderrfd, isconversion, isdata, isls;
 	struct timeval start, finish, td, *tdp;
 	const char *dispname;
+	char *error;
 
 	sendrv = closerv = stderrfd = -1;
 	isconversion = isdata = isls = log = 0;
 	tdp = NULL;
 	dispname = name;
 	fin = dout = NULL;
+	error = NULL;
 	if (argv == NULL) {		/* if not running a command ... */
 		log = 1;
 		isdata = 1;
@@ -1256,7 +1258,8 @@ retrieve(char *argv[], const char *name)
 	byte_count = -1;
 	if (argv == NULL
 	    && (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode))) {
-		reply(550, "%s: not a plain file.", dispname);
+		error = "Not a plain file";
+		reply(550, "%s: %s.", dispname, error);
 		goto done;
 	}
 	if (restart_point) {
@@ -1266,6 +1269,7 @@ retrieve(char *argv[], const char *name)
 
 			for (i = 0; i < restart_point; i++) {
 				if ((c=getc(fin)) == EOF) {
+					error = strerror(errno);
 					perror_reply(550, dispname);
 					goto done;
 				}
@@ -1273,6 +1277,7 @@ retrieve(char *argv[], const char *name)
 					i++;
 			}
 		} else if (lseek(fileno(fin), restart_point, SEEK_SET) < 0) {
+			error = strerror(errno);
 			perror_reply(550, dispname);
 			goto done;
 		}
@@ -1289,7 +1294,7 @@ retrieve(char *argv[], const char *name)
 	tdp = &td;
  done:
 	if (log)
-		logxfer("get", byte_count, name, NULL, tdp, NULL);
+		logxfer("get", byte_count, name, NULL, tdp, error);
 	closerv = (*closefunc)(fin);
 	if (sendrv == 0) {
 		FILE *errf;
@@ -1336,10 +1341,11 @@ store(const char *name, const char *fmode, int unique)
 	struct stat st;
 	int (*closefunc)(FILE *);
 	struct timeval start, finish, td, *tdp;
-	char *desc;
+	char *desc, *error;
 
 	din = NULL;
 	desc = (*fmode == 'w') ? "put" : "append";
+	error = NULL;
 	if (unique && stat(name, &st) == 0 &&
 	    (name = gunique(name)) == NULL) {
 		logxfer(desc, -1, name, NULL, NULL,
@@ -1365,6 +1371,7 @@ store(const char *name, const char *fmode, int unique)
 
 			for (i = 0; i < restart_point; i++) {
 				if ((c=getc(fout)) == EOF) {
+					error = strerror(errno);
 					perror_reply(550, name);
 					goto done;
 				}
@@ -1377,10 +1384,12 @@ store(const char *name, const char *fmode, int unique)
 			 * writing.
 			 */
 			if (fseek(fout, 0L, SEEK_CUR) < 0) {
+				error = strerror(errno);
 				perror_reply(550, name);
 				goto done;
 			}
 		} else if (lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
+			error = strerror(errno);
 			perror_reply(550, name);
 			goto done;
 		}
@@ -1401,7 +1410,7 @@ store(const char *name, const char *fmode, int unique)
 	timersub(&finish, &start, &td);
 	tdp = &td;
  done:
-	logxfer(desc, byte_count, name, NULL, tdp, NULL);
+	logxfer(desc, byte_count, name, NULL, tdp, error);
 	(*closefunc)(fout);
  cleanupstore:
 	;
@@ -2837,7 +2846,8 @@ conffilename(const char *s)
  *	if elapsed != NULL, append "in xxx.yyy seconds"
  *	if error != NULL, append ": " + error
  *
- * 	if doxferlog != 0, syslog a wu-ftpd style xferlog entry
+ * 	if doxferlog != 0, bytes != -1, and command is "get", "put",
+ *	or "append", syslog a wu-ftpd style xferlog entry
  */
 void
 logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
@@ -2884,7 +2894,7 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 		/*
 		 * syslog wu-ftpd style log entry, prefixed with "xferlog: "
 		 */
-	if (!doxferlog)
+	if (!doxferlog || bytes == -1)
 		return;
 
 	if (strcmp(command, "get") == 0)
@@ -2912,7 +2922,7 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 #endif
 	    elapsed == NULL ? 0 : elapsed->tv_sec + (elapsed->tv_usec > 0),
 	    remotehost,
-	    bytes == (off_t)-1 ? 0 : (LLT) bytes,
+	    (LLT) bytes,
 	    r1,
 	    type == TYPE_A ? 'a' : 'b',
 	    "_",		/* XXX: take conversions into account? */
