@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.28 2000/11/01 23:51:39 eeh Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.29 2000/11/15 01:41:22 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -187,8 +187,9 @@ ttyldisc_add(disc, no)
 	if (no == -1) {
 		/* Hunt for any slot */
 
-		for (no = slinesw; no-->0; )
-			if (linesw[no] == NULL) break;
+		for (no = slinesw; no-- > 0;)
+			if (linesw[no] == NULL)
+				break;
 		/* if no == -1 we should realloc linesw. */
 	}
 
@@ -210,7 +211,6 @@ ttyldisc_add(disc, no)
  * Remove a line discipline by its name.  Returns the
  * discipline on success or NULL on failure.
  */
-
 struct linesw *
 ttyldisc_remove(name) 
 	char *name;
@@ -221,7 +221,7 @@ ttyldisc_remove(name)
 	if (linesw == NULL)
 		panic("removing uninitialized linesw");
 
-	for (i=0; i<nlinesw; i++) {
+	for (i = 0; i < nlinesw; i++) {
 		if (linesw[i] && (strcmp(name, linesw[i]->l_name) == 0)) {
 			disc = linesw[i];
 			linesw[i] = NULL;
@@ -241,14 +241,13 @@ ttyldisc_remove(name)
 /*
  * Look up a line discipline by its name.
  */
-
 struct linesw *
 ttyldisc_lookup(name)
 	char *name;
 {
 	int i;
 
-	for (i=0; i<nlinesw; i++)
+	for (i = 0; i < nlinesw; i++)
 		if (linesw[i] && (strcmp(name, linesw[i]->l_name) == 0))
 			return (linesw[i]);
 	return (NULL);
@@ -258,20 +257,22 @@ ttyldisc_lookup(name)
 	do { \
 		if (ttyldisc_add(&(s), (v)) != (v)) \
 			panic(__CONCAT("ttyldisc_init: ", __STRING(s))); \
-	} while (0);
+	} while (0)
 
 /*
  * Register the basic line disciplines.
  */	
 void
-ttyldisc_init() {
+ttyldisc_init()
+{
+
 	/* Only initialize once */
 	if (linesw)
 		return;
 
 	slinesw = LSWITCHBRK;
 	linesw = malloc(slinesw * sizeof(struct linesw *), 
-			M_TTYS, M_WAITOK);
+	    M_TTYS, M_WAITOK);
 	bzero(linesw, slinesw * sizeof(struct linesw *));
 
 	TTYLDISCINIT(termios_disc, 0);
@@ -298,5 +299,4 @@ ttyldisc_init() {
 #if NSTRIP > 0
 	TTYLDISCINIT(strip_disc, 6);
 #endif
-
 }
