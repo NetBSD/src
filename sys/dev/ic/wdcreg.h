@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.30 2003/12/03 12:01:18 bouyer Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.31 2003/12/20 19:45:52 lha Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -167,6 +167,7 @@
 #define	WDSM_ATTR_AUTOSAVE_EN	0xd2
 #define	WDSM_SAVE_ATTR		0xd3
 #define	WDSM_EXEC_OFFL_IMM	0xd4
+#define	WDSM_RD_LOG		0xd5
 #define	WDSM_ENABLE_OPS		0xd8
 #define	WDSM_DISABLE_OPS	0xd9
 #define	WDSM_STATUS		0xda
