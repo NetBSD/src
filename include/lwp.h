@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.2 2003/01/18 10:32:11 thorpej Exp $	*/
+/*	$NetBSD: lwp.h,v 1.3 2004/10/02 07:59:11 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <sys/ucontext.h>
 
 __BEGIN_DECLS
-int	_lwp_self __P((void));
+lwpid_t	_lwp_self __P((void));
 int	_lwp_create __P((const ucontext_t *, unsigned  long, lwpid_t *));
 int	_lwp_exit __P((void));
 int	_lwp_wait __P((lwpid_t, lwpid_t *));
