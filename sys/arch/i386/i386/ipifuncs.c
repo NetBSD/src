@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.1.2.2 2000/02/21 18:51:00 sommerfeld Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
  */
 
 #include "opt_ddb.h"
+#include "npx.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,17 +60,25 @@
 #include <machine/i82093var.h>
 
 void i386_ipi_halt(void);
+void i386_ipi_fpsave(void);
+
+#if 0
 void i386_ipi_gmtb(void);
 void i386_ipi_nychi(void);
+#endif
 
 void (*ipifunc[I386_NIPI])(void) = 
 {
 	i386_ipi_halt,
 	pmap_do_tlb_shootdown,
+#if NNPX > 0
+	i386_ipi_fpsave,
+#else
+	0,
+#endif
 	0,
 	0,
-	i386_ipi_gmtb,
-	i386_ipi_nychi
+	0,
 };
 
 void
@@ -85,6 +94,17 @@ i386_ipi_halt(void)
 	}
 }
 
+#if NNPX > 0
+void
+i386_ipi_fpsave(void)
+{
+	struct cpu_info *ci = curcpu();
+	
+	npxsave_cpu(ci);
+}
+#endif
+
+#if 0
 void
 i386_ipi_gmtb(void)
 {
@@ -103,6 +123,7 @@ i386_ipi_nychi(void)
 	printf("%s: we were asked for the brain.\n", ci->ci_dev.dv_xname);
 #endif
 }
+#endif
 
 void
 i386_spurious (void)
@@ -110,14 +131,11 @@ i386_spurious (void)
 	printf("spurious intr\n");
 }
 
-
 void
-i386_send_ipi (int cpu_id, int ipimask)
+i386_send_ipi (struct cpu_info *ci, int ipimask)
 {
-	struct cpu_info *ci = cpu_info[cpu_id];
-
 	i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
-	i386_ipi(LAPIC_IPI_VECTOR, cpu_id, LAPIC_DLMODE_FIXED);
+	i386_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
 }
 
 void

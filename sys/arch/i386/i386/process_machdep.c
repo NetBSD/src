@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.30 1999/05/12 21:21:48 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.30.10.1 2000/06/26 02:04:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,10 +147,7 @@ process_read_fpregs(p, regs)
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
-
-		if (npxproc == p)
-			npxsave();
+		npxsave_proc(p);
 #endif
 	} else {
 		u_short cw;
@@ -251,10 +248,7 @@ process_write_fpregs(p, regs)
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
-
-		if (npxproc == p)
-			npxdrop();
+		npxdrop(p);
 #endif
 	} else {
 		p->p_md.md_flags |= MDP_USEDFPU;

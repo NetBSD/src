@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.4 2000/06/25 19:37:04 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.5 2000/06/26 02:04:08 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -159,9 +159,6 @@
 #include "isa.h"
 #include "isadma.h"
 #include "npx.h"
-#if NNPX > 0
-extern struct proc *npxproc;
-#endif
 
 #include "mca.h"
 #if NMCA > 0
@@ -1463,8 +1460,7 @@ setregs(p, pack, stack)
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (npxproc == p)
-		npxdrop();
+	npxdrop(p);
 #endif
 
 #ifdef USER_LDT

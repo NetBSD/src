@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.3 2000/06/25 19:37:08 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.4 2000/06/26 02:04:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -69,9 +69,6 @@
 #include <machine/specialreg.h>
 
 #include "npx.h"
-#if NNPX > 0
-extern struct proc *npxproc;
-#endif
 
 void	setredzone __P((u_short *, caddr_t));
 
@@ -107,15 +104,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 #if NNPX > 0
 	/*
-	 * If npxproc != p1, then the npx h/w state is irrelevant and the
-	 * state had better already be in the pcb.  This is true for forks
-	 * but not for dumps.
-	 *
-	 * If npxproc == p1, then we have to save the npx h/w state to
-	 * p1's pcb so that we can copy it.
+	 * Save p1's npx h/w state to p1's pcb so that we can copy it.
 	 */
-	if (npxproc == p1)
-		npxsave();
+	npxsave_proc(p1);
 #endif
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
@@ -179,8 +170,7 @@ cpu_swapout(p)
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	if (npxproc == p)
-		npxsave();
+	npxsave_proc(p);
 #endif
 }
 
@@ -198,8 +188,7 @@ cpu_exit(p)
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (npxproc == p)
-		npxproc = 0;
+	npxdrop(p);
 #endif
 
 	/*
