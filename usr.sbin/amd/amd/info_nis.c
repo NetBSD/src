@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_nis.c,v 1.9 1997/09/26 16:59:54 christos Exp $
+ * $Id: info_nis.c,v 1.10 1997/09/26 17:08:09 christos Exp $
  *
  */
 
@@ -66,7 +66,11 @@ int nis_mtime(mnt_map *m, char *map, time_t *tp);
 /* typedefs */
 typedef void (*nis_callback_fxn_t)(mnt_map *, char *, char *);
 /* do not change this. different OSs require a different prototype */
+#ifndef __NetBSD__
 typedef int (*ypall_callback_fxn_t)();
+#else
+typedef int (*ypall_callback_fxn_t)(int, char *, int, char *, int, char *);
+#endif
 
 struct nis_callback_data {
   mnt_map *ncd_m;
