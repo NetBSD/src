@@ -1,28 +1,32 @@
-#	$NetBSD: Makefile,v 1.2 1996/07/16 23:23:55 thorpej Exp $
-#	from: @(#)Makefile	8.1 (Berkeley) 6/16/93
+#	$NetBSD: Makefile,v 1.3 1997/10/11 09:10:29 mycroft Exp $
 
-# Makefile for pica links, tags file
+# Makefile for pica tags file and boot blocks
+
+# Find where mips source files are for inclusion in tags
+.include <../mips/Makefile.inc>
+
+TPICA=	../pica/tags
+SPICA=	../pica/pica/*.[ch] ../pica/include/*.[ch] \
+	../pica/dev/*.[ch] ../pica/ultrix/*.[ch]
+APICA=	../pica/pica/*.s
+
+# Directories in which to place tags links
+DPICA=	dev dist include pica
 
 .include "../kern/Make.tags.inc"
 
-all:
-	@echo "make links or tags only"
-
-DIRS=	conf dev dist include pica
-
-links::
-	-for i in ${DIRS}; do \
-	    (cd $$i && { rm -f tags; ln -s ${SYSTAGS} tags; }) done
-
-PICA=	/sys/pica/dev/*.[ch] /sys/pica/include/*.[ch] \
-	/sys/pica/pica/*.[ch] /sys/pica/ultrix/*.[ch]
-APICA=	/sys/pica/pica/*.s
-
-tags::
-	-ctags -wdt ${COMM} ${PICA}
-	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${APICA} | \
+tags:
+	-ctags -wdtf ${TPICA} ${SPICA} ${SMIPS} ${COMM}
+	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${APICA} ${AMIPS} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-		>> tags
-	sort -o tags tags
-	chown bin.wsrc tags
-	chmod 444 tags
+	    >> ${TPICA}
+	sort -o ${TPICA} ${TPICA}
+
+links:
+	-for i in ${DPICA}; do \
+	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
+
+SUBDIR=	
+
+.include <bsd.subdir.mk>
