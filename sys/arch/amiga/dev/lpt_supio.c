@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_supio.c,v 1.5 1999/02/16 23:34:12 is Exp $	*/
+/*	$NetBSD: lpt_supio.c,v 1.6 1999/06/22 21:12:00 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ lpt_supio_attach(parent, self, aux)
         if (bus_space_map(iot, iobase, LPT_NPORTS, 0, &lsc->sc_ioh))
 		panic("lpt_supio_attach: io mapping failed");
 
-	printf(" port 0x%x ipl %d\n", iobase, supa->supio_ipl);
+	printf(" port 0x%04x ipl %d\n", iobase, supa->supio_ipl);
 	lpt_attach_subr(lsc);
 
 	sc->sc_isr.isr_intr = lpt_supio_intr;
