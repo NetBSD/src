@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.3 1998/08/15 10:10:50 mycroft Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.4 1998/09/10 19:24:45 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 struct wdc_attachment_data {
 	/* manadatory fields */
 	int			cap;
+	int			flags;
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 	bus_space_tag_t		auxiot;
@@ -66,6 +67,9 @@ struct wdc_attachment_data {
 #define	WDC_CAPABILITY_DATA32	0x01		/* 32-bit data access */
 #define	WDC_CAPABILITY_DMA	0x02		/* DMA */
 #define	WDC_CAPABILITY_HWLOCK	0x04		/* Needs to lock HW */
+
+/* Flags passed from the attach routine to the wdc driver */
+#define WDC_NO_EXTRA_RESETS	0x01		/* Only reset once at attach */
 
 struct wdc_softc {
 	struct device sc_dev;
