@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.12 1995/10/07 06:27:00 mycroft Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -37,9 +37,12 @@
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/mount.h>
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
+#include <sys/syscallargs.h>
+
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/vm_map.h>
@@ -68,6 +71,11 @@ extern int linux_error[];
 extern char linux_sigcode[], linux_esigcode[];
 extern struct sysent linux_sysent[];
 extern char *linux_syscallnames[];
+
+int exec_linux_aout_prep_zmagic __P((struct proc *, struct exec_package *));
+int exec_linux_aout_prep_nmagic __P((struct proc *, struct exec_package *));
+int exec_linux_aout_prep_omagic __P((struct proc *, struct exec_package *));
+int exec_linux_aout_prep_qmagic __P((struct proc *, struct exec_package *));
 
 struct emul emul_linux_aout = {
 	"linux",
