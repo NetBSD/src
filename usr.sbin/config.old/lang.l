@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: lang.l,v 1.13 1996/06/10 02:32:23 thorpej Exp $	*/
+/*	$NetBSD: lang.l,v 1.14 1997/01/17 23:48:56 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -60,7 +60,6 @@ struct kt {
 	{ "device",	DEVICE },
 	{ "disk",	DISK },
 	{ "drive",	DRIVE },
-	{ "dst",	DST },
 	{ "dumps",	DUMPS },
 	{ "flags",	FLAGS },
 	{ "hz",		HZ },
@@ -86,7 +85,6 @@ struct kt {
 	{ "slave",	SLAVE },
 	{ "swap",	SWAP },
 	{ "tape",	DEVICE },
-	{ "timezone",	TIMEZONE },
 	{ "trace",	TRACE },
 	{ "vector",	VECTOR },
 	{ 0, 0 },
