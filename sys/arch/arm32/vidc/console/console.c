@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.20 2000/11/02 00:31:17 eeh Exp $	*/
+/*	$NetBSD: console.c,v 1.21 2000/12/16 21:09:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -379,7 +379,7 @@ physconopen(dev, flag, mode, p)
    
 	TP->t_winsize.ws_col = new->xchars;
 	TP->t_winsize.ws_row = new->ychars;
-	ret = ((*tp->t_linesw->l_open)(dev, TP));
+	ret = (*TP->t_linesw->l_open)(dev, TP);
  
 	if ( majorhack==1 ) {
 		struct vconsole *vc_store;
