@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.10 1999/01/17 01:30:06 mrg Exp $	*/
+/*	$NetBSD: mcount.c,v 1.11 2000/09/05 16:28:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.10 1999/01/17 01:30:06 mrg Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.11 2000/09/05 16:28:32 thorpej Exp $");
 #endif
 #endif
 
@@ -188,10 +188,12 @@ overflow:
 	return;
 }
 
+#ifdef MCOUNT
 /*
  * Actual definition of mcount function.  Defined in <machine/profile.h>,
  * which is included by <sys/gmon.h>.
  */
 MCOUNT
+#endif
 
 #endif /* !_STANDALONE */
