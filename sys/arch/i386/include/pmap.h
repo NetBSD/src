@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 1995/05/11 16:53:06 jtc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20 1995/06/26 13:25:29 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -79,7 +79,7 @@ extern pt_entry_t	PTmap[], APTmap[], Upte;
 extern pd_entry_t	PTD[], APTD[], PTDpde, APTDpde, Upde;
 extern pt_entry_t	*Sysmap;
 
-extern int	IdlePTD;	/* physical address of "Idle" state directory */
+extern int	PTDpaddr;	/* physical address of kernel PTD */
 
 void pmap_bootstrap __P((vm_offset_t start));
 boolean_t pmap_testbit __P((vm_offset_t, int));
