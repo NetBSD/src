@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.64 2000/12/18 18:57:21 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.65 2000/12/18 19:50:44 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -205,6 +205,7 @@ pppattach()
 	sc->sc_if.if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
 	sc->sc_if.if_type = IFT_PPP;
 	sc->sc_if.if_hdrlen = PPP_HDRLEN;
+	sc->sc_if.if_dlt = DLT_NULL;
 	sc->sc_if.if_ioctl = pppsioctl;
 	sc->sc_if.if_output = pppoutput;
 	IFQ_SET_MAXLEN(&sc->sc_if.if_snd, IFQ_MAXLEN);

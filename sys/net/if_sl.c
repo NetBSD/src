@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.61 2000/12/12 18:00:27 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.62 2000/12/18 19:50:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -212,6 +212,7 @@ slattach()
 		sc->sc_if.if_type = IFT_SLIP;
 		sc->sc_if.if_ioctl = slioctl;
 		sc->sc_if.if_output = sloutput;
+		sc->sc_if.if_dlt = DLT_SLIP;
 		sc->sc_if.if_snd.ifq_maxlen = 50;
 		sc->sc_fastq.ifq_maxlen = 32;
 		if_attach(&sc->sc_if);

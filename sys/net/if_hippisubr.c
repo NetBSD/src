@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.8 2000/12/13 22:07:51 thorpej Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.9 2000/12/18 19:44:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -361,6 +361,7 @@ hippi_ifattach(ifp, lla)
 	ifp->if_type = IFT_HIPPI;
 	ifp->if_addrlen = 6;  /* regular 802.3 MAC address */
 	ifp->if_hdrlen = sizeof(struct hippi_header) + 8; /* add CCI */
+	ifp->if_dlt = DLT_HIPPI;
 	ifp->if_mtu = HIPPIMTU;
 	ifp->if_output = hippi_output;
 	ifp->if_input = hippi_input;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.36 2000/12/13 22:07:50 thorpej Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.37 2000/12/18 19:44:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -877,6 +877,7 @@ fddi_ifattach(ifp)
 	ifp->if_type = IFT_FDDI;
 	ifp->if_addrlen = 6;
 	ifp->if_hdrlen = 21;
+	ifp->if_dlt = DLT_FDDI;
 	ifp->if_mtu = FDDIMTU;
 	ifp->if_output = fddi_output;
 	ifp->if_input = fddi_input;

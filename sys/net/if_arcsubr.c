@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.32 2000/12/12 18:00:25 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.33 2000/12/18 19:44:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -687,6 +687,7 @@ arc_ifattach(ifp, lla)
 	ifp->if_type = IFT_ARCNET;
 	ifp->if_addrlen = 1;
 	ifp->if_hdrlen = ARC_HDRLEN;
+	ifp->if_dlt = DLT_ARCNET;
 	if (ifp->if_flags & IFF_BROADCAST)
 		ifp->if_flags |= IFF_MULTICAST|IFF_ALLMULTI;
 	if (ifp->if_flags & IFF_LINK0 && arc_ipmtu > ARC_PHDS_MAXMTU)
