@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.2 1998/06/26 12:29:29 tsubai Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3 1998/07/24 15:52:04 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -538,8 +538,6 @@ static void
 setup()
 {
 	int chosen;
-	int options, l;
-	char name[32];
 
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		OF_exit();
@@ -548,16 +546,6 @@ setup()
 	    OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
 	    sizeof(stdout))
 		OF_exit();
-
-	options = OF_finddevice("/options");
-	bzero(name, sizeof(name));
-	l = OF_getprop(options, "output-device", name, sizeof(name));
-
-	if (l != -1 && l < sizeof(name)) {
-		l = OF_open(name);
-		if (l != -1)
-			stdout = l;
-	}
 }
 
 void
