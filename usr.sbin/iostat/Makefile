@@ -5,7 +5,7 @@ PROG=	iostat
 CFLAGS+=-D${MACHINE} -I${.CURDIR}/../../sys/arch
 .endif
 CFLAGS+=-I${.CURDIR}/../../usr.bin/vmstat
-MAN8=	iostat.0
+MAN=	iostat.8
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 BINGRP=	kmem
