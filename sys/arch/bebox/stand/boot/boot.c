@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 1999/06/28 01:20:43 sakamoto Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 1999/06/28 01:35:11 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -147,11 +147,9 @@ exec_kernel(name, bootinfo)
 	extern int tgets __P((char *buf));
 
 ret:
-	do {
-		printf("\nBoot: ");
-
-		memset(namebuf, 0, sizeof (namebuf));
-	} while (tgets(namebuf) == -1);
+	printf("\nBoot: ");
+	memset(namebuf, 0, sizeof (namebuf));
+	(void)tgets(namebuf);
 
 	ptr = namebuf;
 #ifdef DBMONITOR
