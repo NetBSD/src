@@ -1,4 +1,4 @@
-/*	$NetBSD: shl.x,v 1.3 2001/02/21 16:28:02 uch Exp $	*/
+/*	$NetBSD: shl-coff.x,v 1.1 2001/03/22 18:35:33 uch Exp $	*/
 
 OUTPUT_FORMAT("coff-shl")
 OUTPUT_ARCH(sh)
