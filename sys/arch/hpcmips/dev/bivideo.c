@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.11 2000/09/10 15:33:48 sato Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.12 2000/10/01 03:45:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.11 2000/09/10 15:33:48 sato Exp $";
+    "$Id: bivideo.c,v 1.12 2000/10/01 03:45:33 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,15 @@ struct bivideo_softc {
 	struct hpcfb_dspconf	sc_dspconf;
 	void			*sc_powerhook;	/* power management hook */
 	int			sc_powerstate;
+#define PWRSTAT_SUSPEND		(1<<0)
+#define PWRSTAT_LCD		(1<<1)
+#define PWRSTAT_BACKLIGHT	(1<<2)
+#define PWRSTAT_ALL		(0xffffffff)
 };
 static int bivideo_init __P((struct hpcfb_fbconf *fb));
 static void bivideo_power __P((int, void *));
+static void bivideo_update_powerstate __P((struct bivideo_softc *, int));
+
 
 /*
  *  static variables
@@ -143,7 +149,7 @@ bivideoattach(parent, self, aux)
 	printf("\n");
 
 	/* Add a suspend hook to power saving */
-	sc->sc_powerstate = 1;
+	sc->sc_powerstate = 0;
 	sc->sc_powerhook = powerhook_establish(bivideo_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -293,21 +299,31 @@ bivideo_power(why, arg)
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		sc->sc_powerstate = 0;
+		sc->sc_powerstate |= PWRSTAT_SUSPEND;
+		bivideo_update_powerstate(sc, PWRSTAT_ALL);
 		break;
 	case PWR_RESUME:
-		sc->sc_powerstate = 1;
+		sc->sc_powerstate &= ~PWRSTAT_SUSPEND;
+		bivideo_update_powerstate(sc, PWRSTAT_ALL);
 		break;
 	}
+}
 
-#if 0
-	config_hook_call(CONFIG_HOOK_POWERCONTROL,
-			 CONFIG_HOOK_POWERCONTROL_LCD,
-			 (void*)sc->sc_powerstate);
-	config_hook_call(CONFIG_HOOK_POWERCONTROL,
-			 CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-			 (void*)sc->sc_powerstate);
-#endif /* 0 */
+static void
+bivideo_update_powerstate(sc, updates)
+	struct bivideo_softc *sc;
+	int updates;
+{
+	if (updates & PWRSTAT_LCD)
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+		    CONFIG_HOOK_POWERCONTROL_LCD,
+		    (void*)!(sc->sc_powerstate & PWRSTAT_SUSPEND));
+
+	if (updates & PWRSTAT_BACKLIGHT)
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+		    (void*)(!(sc->sc_powerstate & PWRSTAT_SUSPEND) &&
+			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
 }
 
 int
@@ -322,6 +338,7 @@ bivideo_ioctl(v, cmd, data, flag, p)
 	struct hpcfb_fbconf *fbconf;
 	struct hpcfb_dspconf *dspconf;
 	struct wsdisplay_cmap *cmap;
+	struct wsdisplay_param *dispparam;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
@@ -349,6 +366,42 @@ bivideo_ioctl(v, cmd, data, flag, p)
 		 * This driver can't set color map.
 		 */
 		return (EINVAL);
+
+	case WSDISPLAYIO_GETPARAM:
+		dispparam = (struct wsdisplay_param*)data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			dispparam->min = 0;
+			dispparam->max = 1;
+			dispparam->curval =
+			    (sc->sc_powerstate & PWRSTAT_BACKLIGHT) ? 1 : 0;
+			break;
+		case WSDISPLAYIO_PARAM_CONTRAST:
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+		default:
+			return (EINVAL);
+		}
+		return (0);
+
+	case WSDISPLAYIO_SETPARAM:
+		dispparam = (struct wsdisplay_param*)data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			if (dispparam->curval < 0 ||
+			    1 < dispparam->curval)
+				return (EINVAL);
+			if (dispparam->curval == 0)
+				sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
+			else
+				sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+			bivideo_update_powerstate(sc, PWRSTAT_BACKLIGHT);
+			break;
+		case WSDISPLAYIO_PARAM_CONTRAST:
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+		default:
+			return (EINVAL);
+		}
+		return (0);
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;
