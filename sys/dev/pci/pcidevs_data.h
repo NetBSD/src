@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.496 2003/01/10 16:42:04 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.497 2003/01/16 00:32:47 gendalia Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -188,6 +188,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c905C-TX 10/100 Ethernet with mngmt",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905CXTX,
+	    0,
+	    "3Com",
+	    "3c905CX-TX 10/100 Ethernet with mngmt",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C980SRV,
@@ -5492,6 +5498,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia Corporation",
 	    "nForce MCP AC-97",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 MCP-T AC-97",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
