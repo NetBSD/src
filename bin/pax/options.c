@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.45 2002/10/15 14:51:04 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.46 2002/10/15 14:58:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.45 2002/10/15 14:51:04 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.46 2002/10/15 14:58:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -643,16 +643,15 @@ pax_options(int argc, char **argv)
 #define	OPT_UNLINK			2
 #define	OPT_HELP			3
 #define	OPT_ATIME_PRESERVE		4
-#define	OPT_FAST_READ			5
-#define	OPT_IGNORE_FAILED_READ		6
-#define	OPT_REMOVE_FILES		7
-#define	OPT_NULL			8
-#define	OPT_TOTALS			9
-#define	OPT_VERSION			10
-#define	OPT_EXCLUDE			11
-#define	OPT_BLOCK_COMPRESS		12
-#define	OPT_NORECURSE			13
-#define	OPT_FORCE_LOCAL			14
+#define	OPT_IGNORE_FAILED_READ		5
+#define	OPT_REMOVE_FILES		6
+#define	OPT_NULL			7
+#define	OPT_TOTALS			8
+#define	OPT_VERSION			9
+#define	OPT_EXCLUDE			10
+#define	OPT_BLOCK_COMPRESS		11
+#define	OPT_NORECURSE			12
+#define	OPT_FORCE_LOCAL			13
 
 struct option tar_longopts[] = {
 	{ "block-size",		required_argument,	0,	'b' },
@@ -667,6 +666,7 @@ struct option tar_longopts[] = {
 	{ "same-permissions",	no_argument,		0,	'p' },
 	{ "preserve-permissions", no_argument,		0,	'p' },
 	{ "preserve",		no_argument,		0,	'p' },
+	{ "fast-read",		no_argument,		0,	'q' },
 	{ "append",		no_argument,		0,	'r' },	/* F */
 	{ "update",		no_argument,		0,	'u' },	/* F */
 	{ "list",		no_argument,		0,	't' },	/* F */
@@ -704,8 +704,6 @@ struct option tar_longopts[] = {
 						OPT_HELP },
 	{ "info-script",	required_argument,	0,	'F' },
 	{ "new-volume-script",	required_argument,	0,	'F' },
-	{ "fast-read",		no_argument,		0,
-						OPT_FAST_READ },
 	{ "incremental",	no_argument,		0,	'G' },
 	{ "listed-incremental",	required_argument,	0,	'g' },
 	{ "ignore-zeros",	no_argument,		0,	'i' },
