@@ -1,10 +1,13 @@
-#	$NetBSD: Makefile,v 1.23 2000/01/23 17:04:12 mycroft Exp $
+#	$NetBSD: Makefile,v 1.24 2000/07/16 21:56:13 jdolecek Exp $
 
 LIB=sa
 
 MKLINT=no
 MKPIC=no
 MKPROFILE=no
+NOPROFILE=
+NOPIC=
+NOLINT=
 
 # Logically src/sys
 S=${.CURDIR}/../../../..
@@ -33,12 +36,12 @@ SRC_kern= ashrdi3.c bcmp.c bzero.c inet_addr.c intoa.c \
 SRC_here= clock.c dev_disk.c devopen.c exec_sun.c \
 	 gets.c idprom.c netif_sun.c panic.c \
 	 promboot.c promcons.c promdev.c \
-	 sun3.c sun3x.c version.c
+	 sun3.c sun3x.c vers.c xxboot.c
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_here}
-OBJS= ctrlsp.o
+SRCS+= ${S}/arch/sun3/sun3/ctrlsp.S
 
-realall: libsa.a SRT0.o SRT1.o
+all: SRT0.o SRT1.o
 
 # only needed during build
 libinstall::
@@ -54,18 +57,5 @@ SOBJS=
 
 ${OBJS} SRT0.o SRT1.o : machine m68k
 
-machine :
-	-rm -f $@
-	ln -s ${S}/arch/sun3/include $@
-
-m68k :
-	-rm -f $@
-	ln -s ${S}/arch/m68k/include $@
-
-ctrlsp.o : ${S}/arch/sun3/sun3/ctrlsp.S
-	${COMPILE.S} ${.IMPSRC}
-
-# This is for programs using ../Makefile.inc
-echo_objdir:
-	@echo ${.OBJDIR}
-
+vers.c: ${.CURDIR}/version
+	sh ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "sun3"

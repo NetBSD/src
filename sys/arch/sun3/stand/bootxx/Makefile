@@ -1,14 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 1997/09/05 04:31:52 gwr Exp $
+#	$NetBSD: Makefile,v 1.6 2000/07/16 21:56:13 jdolecek Exp $
 
 SA_PROG= bootxx
 SRCS=   bootxx.c conf.c
 
-all:	${SA_PROG}
-
 # Do not strip or remove a.out header for this one.
-proginstall: ${SA_PROG}
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	  ${SA_PROG} ${DESTDIR}${MDEC_DIR}/${SA_PROG}
+STRIPFLAG=
+
+all:	${SA_PROG}
 
 .include <bsd.prog.mk>
 

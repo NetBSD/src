@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 1998/06/29 20:09:14 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2000/07/16 21:56:12 jdolecek Exp $
 
 .if defined(SA_PROG)
 
@@ -6,7 +6,9 @@
 # But note: this is w.r.t. a subdirectory
 S=	${.CURDIR}/../../../..
 
-LIBSA!=cd ${.CURDIR}/../libsa; $(MAKE) echo_objdir
+LIBSA!=cd ${.CURDIR}/../libsa; \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+
 MDEC_DIR?=/usr/mdec
 
 SRCS?=	${SA_PROG}.c
@@ -41,14 +43,6 @@ ${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
 
 ${OBJS} : machine m68k
 
-machine :
-	-rm -f $@
-	ln -s ${S}/arch/sun3/include $@
-
-m68k :
-	-rm -f $@
-	ln -s ${S}/arch/m68k/include $@
-
 .if !target(cleanprog)
 cleanprog:
 	-rm -f ${SA_PROG}.tmp [Ee]rrs mklog core *.core
@@ -62,3 +56,12 @@ proginstall: ${SA_PROG}.bin
 .endif
 
 .endif	# defined(SA_PROG)
+
+machine :
+	-rm -f $@
+	ln -s ${S}/arch/sun3/include $@
+
+m68k :
+	-rm -f $@
+	ln -s ${S}/arch/m68k/include $@
+

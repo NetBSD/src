@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1996/01/29 23:54:14 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2000/07/16 21:56:14 jdolecek Exp $	*/
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -17,3 +17,7 @@ struct devsw devsw[] = {
 };
 int	ndevs = 1;
 
+void
+main() {
+	xxboot_main("netboot");
+}
