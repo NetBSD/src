@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.16 2000/08/25 05:27:49 toshii Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.17 2000/11/13 00:30:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.16 2000/08/25 05:27:49 toshii Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.17 2000/11/13 00:30:48 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -616,6 +616,11 @@ dump_super(lfsp)
 		"cksum    ", lfsp->lfs_cksum,
 		"maxfilesize  ", (long long)lfsp->lfs_maxfilesize);
 
+	(void)printf("%s%d\t%s%d\t%s%d\n",
+		"nclean   ", lfsp->lfs_nclean,
+		"dmeta    ", lfsp->lfs_dmeta,
+		"minfreeseg ", lfsp->lfs_minfreeseg);
+
 	(void)printf("Superblock disk addresses:\t");
 	for (i = 0; i < LFS_MAXNUMSB; i++) {
 		(void)printf(" 0x%x", lfsp->lfs_sboffs[i]);
@@ -630,9 +635,9 @@ dump_super(lfsp)
 		"idaddr   ", lfsp->lfs_idaddr,
 		"ifile    ", lfsp->lfs_ifile);
 	(void)printf("%s%d\t%s%d\t%s%d\n",
+		"uinodes  ", lfsp->lfs_uinodes,
 		"bfree    ", lfsp->lfs_bfree,
-		"avail    ", lfsp->lfs_avail,
-		"uinodes  ", lfsp->lfs_uinodes);
+		"avail    ", lfsp->lfs_avail);
 	(void)printf("%s%d\t%s0x%x\t%s0x%x\n%s0x%x\t%s0x%x\t",
 		"nfiles   ", lfsp->lfs_nfiles,
 		"lastseg  ", lfsp->lfs_lastseg,
@@ -640,20 +645,6 @@ dump_super(lfsp)
 		"curseg   ", lfsp->lfs_curseg,
 		"offset   ", lfsp->lfs_offset);
 	(void)printf("tstamp   %s", ctime((time_t *)&lfsp->lfs_tstamp));
-#if 0  /* This is no longer stored on disk! --ks */
-	(void)printf("\nIn-Memory Information\n");
-	(void)printf("%s%d\t%s0x%x\t%s%d%s%d\t%s%d\n",
-		"seglock  ", lfsp->lfs_seglock,
-		"iocount  ", lfsp->lfs_iocount,
-		"writer   ", lfsp->lfs_writer,
-		"dirops   ", lfsp->lfs_dirops,
-		"doifile  ", lfsp->lfs_doifile);
-	(void)printf("%s%d\t%s%d\t%s0x%x\t%s%d\n",
-		"nactive  ", lfsp->lfs_nactive,
-		"fmod     ", lfsp->lfs_fmod,
-		"clean    ", lfsp->lfs_clean,
-		"ronly    ", lfsp->lfs_ronly);
-#endif
 }
 
 static void
@@ -677,8 +668,10 @@ dump_cleaner_info(lfsp, ipage)
 	CLEANERINFO *cip;
 
 	cip = (CLEANERINFO *)ipage;
-	(void)printf("segments clean\t%d\tsegments dirty\t%d\n\n",
-	    cip->clean, cip->dirty);
+	(void)printf("clean\t%d\tdirty\t%d\n",
+		     cip->clean, cip->dirty);
+	(void)printf("bfree\t%d\tavail\t%d\n\n",
+		     cip->bfree, cip->avail);
 }
 
 static void
