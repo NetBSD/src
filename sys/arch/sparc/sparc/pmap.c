@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.168 2000/06/06 09:20:31 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.169 2000/06/19 21:06:32 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2199,7 +2199,9 @@ pv_link4_4c(pv, pm, va, nc)
 			}
 		}
 	}
-	npv = pool_get(&pv_pool, PR_WAITOK);
+	npv = pool_get(&pv_pool, PR_NOWAIT);
+	if (npv == NULL)
+		panic("pv_link: pv_pool exhausted");
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
@@ -2508,7 +2510,9 @@ pv_link4m(pv, pm, va, nc)
 			}
 		}
 	}
-	npv = pool_get(&pv_pool, PR_WAITOK);
+	npv = pool_get(&pv_pool, PR_NOWAIT);
+	if (npv == NULL)
+		panic("pv_link: pv_pool exhausted");
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
