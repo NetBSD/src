@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.13 2000/07/03 02:51:17 matt Exp $	*/
+/*	$NetBSD: getconf.c,v 1.14 2002/01/31 00:32:48 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.13 2000/07/03 02:51:17 matt Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.14 2002/01/31 00:32:48 kleink Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -139,6 +139,7 @@ const struct conf_variable conf_table[] =
   { "_POSIX_MEMLOCK",		SYSCONF,	_SC_MEMLOCK		},
   { "_POSIX_MEMLOCK_RANGE",	SYSCONF,	_SC_MEMLOCK_RANGE	},
   { "_POSIX_MEMORY_PROTECTION",	SYSCONF,	_SC_MEMORY_PROTECTION	},
+  { "_POSIX_MONOTONIC_CLOCK",	SYSCONF,	_SC_MONOTONIC_CLOCK	},
   { "_POSIX_SYNCHRONIZED_IO",	SYSCONF,	_SC_SYNCHRONIZED_IO	},
 
   { "_POSIX_SYNC_IO",		PATHCONF,	_PC_SYNC_IO		},
