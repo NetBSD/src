@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.25 2002/03/23 21:29:38 enami Exp $	*/
+/*	$NetBSD: wc.c,v 1.26 2002/03/23 21:32:21 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.25 2002/03/23 21:29:38 enami Exp $");
+__RCSID("$NetBSD: wc.c,v 1.26 2002/03/23 21:32:21 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,6 +160,7 @@ do_mb(wc, p, mblen, st, cnt, file)
 			mblen--;
 			p++;
 			memset(st, 0, sizeof(*st));
+			continue;
 		} else if (r == (size_t)-2)
 			break;
 		else if (r == 0)
