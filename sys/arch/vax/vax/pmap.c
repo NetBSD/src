@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.20 1996/02/02 18:09:02 mycroft Exp $     */
+/*      $NetBSD: pmap.c,v 1.21 1996/02/02 23:12:34 mycroft Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -58,7 +58,7 @@ static	void	free_pv_entry();
 
 
 #define	ISTACK_SIZE (4 * NBPG)
-#define	PTE_TO_PV(pte)	(PHYS_TO_PV((pte&PG_FRAME)<<PGSHIFT))
+#define	PTE_TO_PV(pte)	(PHYS_TO_PV(pte->pg_pfn<<PGSHIFT))
 
 
 
@@ -504,7 +504,8 @@ pmap_remove(pmap, start, slut)
 	pmap_t	pmap;
 	vm_offset_t	start, slut;
 {
-	u_int *ptestart, *pteslut,i,s,*temp;
+	pt_entry_t	*ptestart, *pteslut, *temp;
+	u_int		i,s;
 	pv_entry_t	pv;
 	vm_offset_t	countup;
 
@@ -523,8 +524,8 @@ if(startpmapdebug) printf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
 		if(pteslut>&temp[(pmap->pm_pcb->P0LR&~AST_MASK)])
 			pteslut=&temp[(pmap->pm_pcb->P0LR&~AST_MASK)];
 	} else if(start>0x7fffffff){ /* System region */
-		ptestart=(u_int *)&Sysmap[(start&0x3fffffff)>>PGSHIFT];
-		pteslut=(u_int *)&Sysmap[(slut&0x3fffffff)>>PGSHIFT];
+		ptestart=&Sysmap[(start&0x3fffffff)>>PGSHIFT];
+		pteslut=&Sysmap[(slut&0x3fffffff)>>PGSHIFT];
 	} else { /* P1 (stack) region */
 		if(!(temp=pmap->pm_pcb->P1BR)) return; /* No page table */
 		pteslut=&temp[(slut&0x3fffffff)>>PGSHIFT];
@@ -541,15 +542,15 @@ printf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
 	s=splimp();
 	for(countup=start;ptestart<pteslut;ptestart+=2, countup+=PAGE_SIZE){
 
-		if(!(*ptestart&PG_FRAME))
+		if(!ptestart->pg_pfn)
 			continue; /* not valid phys addr,no mapping */
 
-		pv=PTE_TO_PV(*ptestart);
+		pv=PTE_TO_PV(ptestart);
 		if(!remove_pmap_from_mapping(pv,pmap)){
 			panic("pmap_remove: pmap not in pv_table");
 		}
-		*ptestart=0;
-		*(ptestart+1)=0;
+		ptestart[0].pg_v = 0;
+		ptestart[1].pg_v = 0;
 	}
 	mtpr(0,PR_TBIA);
 	splx(s);
@@ -888,7 +889,8 @@ pmap_virt2pte(pmap,vaddr)
 	pmap_t	pmap;
 	u_int	vaddr;
 {
-	u_int *pte,scr;
+	pt_entry_t *pte;
+	u_int scr;
 
 	if(vaddr<0x40000000){
 		pte=pmap->pm_pcb->P0BR;
@@ -897,12 +899,12 @@ pmap_virt2pte(pmap,vaddr)
 		pte=pmap->pm_pcb->P1BR;
 		if(((vaddr&0x3fffffff)>>PGSHIFT)<pmap->pm_pcb->P1LR) return 0;
 	} else {
-		pte=(u_int *)Sysmap;
+		pte=Sysmap;
 	}
 
 	vaddr&=(u_int)0x3fffffff;
 
-	return((pt_entry_t *)&pte[vaddr>>PGSHIFT]);
+	return(&pte[vaddr>>PGSHIFT]);
 }
 
 pmap_expandp0(pmap,ny_storlek)
