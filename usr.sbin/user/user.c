@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.70 2003/06/12 17:00:53 agc Exp $ */
+/* $NetBSD: user.c,v 1.71 2003/10/21 02:58:50 fvdl Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.70 2003/06/12 17:00:53 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.71 2003/10/21 02:58:50 fvdl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -934,7 +934,7 @@ scantime(time_t *tp, char *s)
 			*tp = mktime(&tm);
 		} else if (strptime(s, "%B %d %Y", &tm) != NULL) {
 			*tp = mktime(&tm);
-		} else if (isdigit((unsigned char) s[0]) != NULL) {
+		} else if (isdigit((unsigned char) s[0]) != 0) {
 			*tp = atoi(s);
 		} else {
 			return 0;
