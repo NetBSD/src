@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.3 1998/08/12 18:11:53 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.4 1998/08/12 21:31:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ int seq_do_chnvoice __P((struct sequencer_softc *, seq_event_rec *));
 int seq_do_chncommon __P((struct sequencer_softc *, seq_event_rec *));
 int seq_do_timing __P((struct sequencer_softc *, seq_event_rec *));
 int seq_do_local __P((struct sequencer_softc *, seq_event_rec *));
+int seq_do_sysex __P((struct sequencer_softc *, seq_event_rec *));
 int seq_do_fullsize __P((struct sequencer_softc *, seq_event_rec *, 
 			 struct uio *));
 int seq_timer __P((struct sequencer_softc *, int, int, seq_event_rec *));
@@ -679,6 +680,8 @@ seq_do_command(sc, b)
 		return seq_do_chnvoice(sc, b);
 	case SEQ_CHN_COMMON:
 		return seq_do_chncommon(sc, b);
+	case SEQ_SYSEX:
+		return seq_do_sysex(sc, b);
 	/* COMPAT */
 	case SEQOLD_MIDIPUTC:
 		dev = b->arr[2];
@@ -808,6 +811,34 @@ seq_do_local(sc, b)
 	seq_event_rec *b;
 {
 	return (EINVAL);
+}
+
+int
+seq_do_sysex(sc, b)
+	struct sequencer_softc *sc;
+	seq_event_rec *b;
+{
+	int dev, i;
+	struct midi_dev *md;
+	u_int8_t c, *buf = &b->arr[2];
+
+	dev = SEQ_EDEV(b);
+	if (dev < 0 || dev >= sc->nmidi)
+		return (ENXIO);
+	md = sc->devs[dev];
+
+	if (!sc->doingsysex) {
+		c = MIDI_SYSEX_START;
+		midiout(md, &c, 1, 0);
+		sc->doingsysex = 1;
+	}
+
+	for (i = 0; i < 6 && buf[i] != 0xff; i++)
+		;
+	midiout(md, &c, i, 0);
+	if (i < 6)
+		sc->doingsysex = 0;
+	return (0);
 }
 
 int
