@@ -1,3 +1,4 @@
+.\" $NetBSD: 5.t,v 1.2 1995/11/15 22:54:33 pk Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"

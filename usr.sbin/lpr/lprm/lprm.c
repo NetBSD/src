@@ -1,3 +1,4 @@
+/*	$NetBSD: lprm.c,v 1.5 1995/11/15 22:52:21 pk Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
