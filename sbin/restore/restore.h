@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.11 2001/08/24 10:24:46 wiz Exp $	*/
+/*	$NetBSD: restore.h,v 1.12 2002/11/18 04:28:03 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -64,6 +64,7 @@ extern int32_t	ntrec;		/* number of TP_BSIZE records per tape block */
 extern time_t	dumptime;	/* time that this dump begins */
 extern time_t	dumpdate;	/* time that this dump was made */
 extern char	command;	/* opration being performed */
+extern size_t	pagesize;	/* system page size */
 extern FILE	*terminal;	/* file descriptor for the terminal input */
 extern char	*tmpdir;	/* where to store temporary files */
 extern int	oldinofmt;	/* reading tape with old format inodes */
