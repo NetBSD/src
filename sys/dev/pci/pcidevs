@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.316 2001/04/12 07:46:00 itojun Exp $
+$NetBSD: pcidevs,v 1.317 2001/04/13 19:00:31 hubertf Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1504,7 +1504,6 @@ product RNS FDDI	0x2200	2200 FDDI
 product S3 VIRGE	0x5631	ViRGE
 product S3 TRIO32	0x8810	Trio32
 product S3 TRIO64	0x8811	Trio32/64
-product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 product S3 AURORA64P	0x8812	Aurora64V+
 product S3 TRIO64UVP	0x8814	Trio64UV+
 product S3 VIRGE_VX	0x883d	ViRGE/VX
@@ -1705,6 +1704,7 @@ product TRIDENT	TGUI_9440	0x9440	TGUI 9440
 product TRIDENT	TGUI_9660	0x9660	TGUI 9660
 product TRIDENT	TGUI_9680	0x9680	TGUI 9680
 product TRIDENT	TGUI_9682	0x9682	TGUI 9682
+product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
