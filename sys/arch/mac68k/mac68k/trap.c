@@ -39,7 +39,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.3 1993/12/15 03:28:05 briggs Exp $
+ *	$Id: trap.c,v 1.4 1994/01/11 00:25:30 briggs Exp $
  */
 
 #include "param.h"
@@ -87,7 +87,7 @@ char	*trap_type[] = {
 	"Coprocessor violation",
 	"Async system trap"
 };
-#define	TRAP_TYPES	(sizeof trap_type / sizeof trap_type[0])
+int	trap_types = (sizeof trap_type / sizeof trap_type[0]);
 
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
@@ -157,7 +157,7 @@ dopanic:
 		regdump(frame.f_regs, 128);
 		type &= ~T_USER;
 stacknquit();
-		if ((unsigned)type < TRAP_TYPES)
+		if ((unsigned)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap");
 

@@ -102,11 +102,13 @@ void VIA_initialize()
 	via_reg(VIA1, vT2C) = 0;
 	via_reg(VIA1, vT2CH) = 0;
 
+#ifdef do_we_really_want_to
 	/* program direction and data for VIA #1 */
 	via_reg(VIA1, vBufA) = 0x01;
 	via_reg(VIA1, vDirA) = 0x3f;
 	via_reg(VIA1, vBufB) = 0x07;
 	via_reg(VIA1, vDirB) = 0x87;
+#endif
 
 	/* disable all interrupts */
 	via_reg(VIA1, vIFR) = 0x7f;
@@ -131,11 +133,13 @@ void VIA_initialize()
 	/* turn off timer latch */
 	via_reg(VIA2, vACR) &= 0x3f;
 
+#ifdef do_we_really_want_to
 	/* program direction and data for VIA #2 */
 	via_reg(VIA2, vBufA) = via_reg(VIA2, vBufA);
 	via_reg(VIA2, vDirA) = 0xc0;
 	via_reg(VIA2, vBufB) = 0x05;
 	via_reg(VIA2, vDirB) = 0x80;
+#endif
 
 	/* unlock nubus */
 	via_reg(VIA2, vPCR)   = 0x06;
