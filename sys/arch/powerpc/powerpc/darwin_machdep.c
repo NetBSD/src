@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.5 2002/12/08 21:53:11 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.6 2003/01/24 21:37:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.5 2002/12/08 21:53:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.6 2003/01/24 21:37:01 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,8 @@ darwin_sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	struct darwin_sigframe *sfp, sf;
@@ -78,7 +79,7 @@ darwin_sendsig(sig, mask, code)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	int error;
 
-	tf = trapframe(p);
+	tf = trapframe(l);
 
 	/* Use an alternate signal stack? */
 	onstack =
@@ -138,19 +139,19 @@ darwin_sendsig(sig, mask, code)
 
 	/* Copyout mcontext */
 	if ((error = copyout(&sf.dmc, &sfp->dmc, sizeof(sf.dmc))) != 0) {
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
 	/* Copyout ucontext */
 	if ((error = copyout(&sf.duc, &sfp->duc, sizeof(sf.duc))) != 0) {
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
 	/* Darwin only supports libc based trampoline */
 	if (ps->sa_sigdesc[sig].sd_vers != 1) {
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -178,14 +179,15 @@ darwin_sendsig(sig, mask, code)
  * before the signal delivery.
  */
 int
-darwin_sys_sigreturn(p, v, retval)
-	struct proc *p;
+darwin_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct darwin_sys_sigreturn_args /* {
 		syscallarg(struct darwin_ucontext *) uctx;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct darwin_ucontext uctx;
 	struct darwin_mcontext mctx;
 	struct trapframe *tf;
@@ -210,11 +212,11 @@ darwin_sys_sigreturn(p, v, retval)
 		return (error);
 
 	/* Check for security abuse */
-	tf = trapframe(p);
+	tf = trapframe(l);
 	mctx.ss.srr1 &= ~(PSL_POW | PSL_ILE | PSL_IP | PSL_LE | PSL_RI);
 	mctx.ss.srr1 |= (PSL_PR | PSL_ME | PSL_IR | PSL_DR | PSL_EE); 
 	if ((mctx.ss.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC)) {
-		DPRINTF(("uctx.ss.srr1 = 0x%08x, rf->srr1 = 0x%08x\n",
+		DPRINTF(("uctx.ss.srr1 = 0x%08x, rf->srr1 = 0x%08lx\n",
 		    mctx.ss.srr1, tf->srr1));
 		return (EINVAL);
 	}
@@ -259,8 +261,9 @@ void
 darwin_fork_child_return(arg)
 	void *arg;
 {
-	struct proc * const p = arg;
-	struct trapframe * const tf = trapframe(p);
+	struct lwp * const l = arg;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = trapframe(l);
 
 	child_return(arg);
 

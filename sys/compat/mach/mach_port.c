@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.31 2003/01/21 04:06:07 matt Exp $ */
+/*	$NetBSD: mach_port.c,v 1.32 2003/01/24 21:37:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.31 2003/01/21 04:06:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.32 2003/01/24 21:37:03 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,7 +97,7 @@ mach_sys_thread_self_trap(l, v, retval)
 	 * XXX for now thread kernel port and task kernel port are the same 
 	 * awaiting for struct lwp ...
 	 */
-	med = (struct mach_emuldata *)l->l_emuldata;
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 	mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
 	*retval = (register_t)mr->mr_name;
 
@@ -114,7 +114,7 @@ mach_sys_task_self_trap(l, v, retval)
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 
-	med = (struct mach_emuldata *)l->l_emuldata;
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 	mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
 	*retval = (register_t)mr->mr_name;
 
@@ -131,7 +131,7 @@ mach_sys_host_self_trap(l, v, retval)
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 
-	med = (struct mach_emuldata *)l->l_emuldata;
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 	mr = mach_right_get(med->med_host, l, MACH_PORT_TYPE_SEND, 0);
 	*retval = (register_t)mr->mr_name;
 
@@ -350,7 +350,7 @@ mach_port_move_member(args)
 	mach_port_move_member_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
-	struct mach_emuldata *med = l->l_emuldata;
+	struct mach_emuldata *med = l->l_proc->p_emuldata;
 	mach_port_t member = req->req_member;
 	mach_port_t after = req->req_after;
 	struct mach_right *mrr;
@@ -454,7 +454,7 @@ mach_right_get(mp, l, type, hint)
 	if (type == 0)
 		uprintf("mach_right_get: right = 0\n");
 #endif
-	med = (struct mach_emuldata *)l->l_emuldata;
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 
 	/* Send and receive right must return an existing right */
 	rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE);
@@ -518,7 +518,7 @@ mach_right_put(mr, right)
 	struct mach_right *mr;
 	int right;
 {
-	struct mach_emuldata *med = mr->mr_lwp->l_emuldata;
+	struct mach_emuldata *med = mr->mr_lwp->l_proc->p_emuldata;
 
 	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
 	mach_right_put_exclocked(mr, right);
@@ -532,7 +532,7 @@ mach_right_put_shlocked(mr, right)
 	struct mach_right *mr;
 	int right;
 {
-	struct mach_emuldata *med = mr->mr_lwp->l_emuldata;
+	struct mach_emuldata *med = mr->mr_lwp->l_proc->p_emuldata;
 
 	lockmgr(&med->med_rightlock, LK_UPGRADE, NULL);
 	mach_right_put_exclocked(mr, right);
@@ -551,7 +551,7 @@ mach_right_put_exclocked(mr, right)
 	int lright;
 	int kill_right;
 
-	med = mr->mr_lwp->l_emuldata;
+	med = mr->mr_lwp->l_proc->p_emuldata;
 
 #ifdef DEBUG_MACH_RIGHT
 	printf("mach_right_put: mr = %p\n", mr);
@@ -637,7 +637,7 @@ mach_right_check(mn, l, type)
 	if ((mn == 0) || (mn == -1) || (l == NULL))
 		return NULL;
 
-	med = (struct mach_emuldata *)l->l_emuldata;
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 
 	lockmgr(&med->med_rightlock, LK_SHARED, NULL);
 
@@ -674,7 +674,7 @@ mach_right_newname(l, hint)
 	struct mach_right *mr;
 	mach_port_t newname = -1;
 
-	med = l->l_emuldata;
+	med = l->l_proc->p_emuldata;
 
 	if (hint == 0)
 		hint = med->med_nextright;
@@ -701,16 +701,17 @@ mach_debug_port(void)
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	struct mach_right *mrs;
+	struct proc *p = l->l_proc;
 
 	LIST_FOREACH(l, &alllwp, l_list) {
-		if ((l->p_emul != &emul_mach) &&
+		if ((p->p_emul != &emul_mach) &&
 #ifdef COMPAT_DARWIN
-		    (l->p_emul != &emul_darwin) &&
+		    (p->p_emul != &emul_darwin) &&
 #endif
 		    1)
 			continue;
 
-		med = l->l_emuldata;
+		med = p->p_emuldata;
 		LIST_FOREACH(mr, &med->med_right, mr_list) {		
 			if ((mr->mr_type & MACH_PORT_TYPE_PORT_SET) == 0) {
 				printf("pid %d: %p(%x)=>%p", 
