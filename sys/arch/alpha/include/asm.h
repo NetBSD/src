@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.21 1998/10/13 11:39:26 kleink Exp $ */
+/* $NetBSD: asm.h,v 1.22 1998/12/02 00:58:42 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -620,6 +620,20 @@ label:	ASCIZ msg;						\
 	alias = sym
 #endif
 #endif
+
+/*
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced
+ * (ELF only).
+ */
+#ifdef __ELF__
+#ifdef __STDC__
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#else
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#endif /* __STDC__ */
+#endif /* __ELF__ */
 
 /*
  * Kernel RCS ID tag and copyright macros

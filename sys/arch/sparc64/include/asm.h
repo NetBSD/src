@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 1998/10/06 05:16:34 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.6 1998/12/02 00:58:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -109,5 +109,29 @@
 #define ASMSTR			.asciz
 
 #define RCSID(name)		.asciz name
+
+/*
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced.
+ */
+#ifdef __ELF__
+#ifdef __STDC__
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#else
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#endif /* __STDC__ */
+#else
+#ifdef __STDC__
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs \" ## msg ## \",30,0,0,0 ;				\
+	.stabs \"_ ## sym ## \",1,0,0,0
+#else
+#define	WARN_REFERENCES_STRING(x)	"x"
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg,30,0,0,0 ;						\
+	.stabs WARN_REFERENCES_STRING(_/**/sym),1,0,0,0
+#endif /* __STDC__ */
+#endif /* __ELF__ */
 
 #endif /* _ASM_H_ */
