@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.23 2001/07/22 22:53:02 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.24 2001/07/22 22:56:51 pooka Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -41,7 +41,7 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.45 2001/07/22 21:04:15 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.23 2001/07/22 22:53:02 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.24 2001/07/22 22:56:51 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -221,10 +221,7 @@ mprint(p, m)
 	union VALUETYPE *p;
 	struct magic *m;
 {
-	char *pp, *rt;
-	char *oldtz, tz[16];
 	uint32 v;
-	time_t curtime;
 	int32 t=0 ;
 
 
@@ -397,7 +394,6 @@ mconvert(p, m)
 		return 1;
 	case STRING:
 		{
-			char *ptr;
 			int n;
 
 			/* Null terminate and eat *trailing* return */
