@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.78 1998/09/08 23:44:41 thorpej Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.79 1998/09/13 13:21:37 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
