@@ -1,4 +1,4 @@
-/*	$NetBSD: lpkg.c,v 1.2 1999/08/24 00:48:39 hubertf Exp $	*/
+/*	$NetBSD: lpkg.c,v 1.3 1999/12/01 14:51:53 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -33,7 +33,7 @@
 #include "lib.h"
 
 /*
- * Add a package to the recursive delete list
+ * Add a package to the (add/recursive delete) list
  */
 lpkg_t *
 alloc_lpkg(const char *pkgname)

@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.34 1999/12/01 05:08:10 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.35 1999/12/01 14:51:53 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.34 1999/12/01 05:08:10 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.35 1999/12/01 14:51:53 hubertf Exp $");
 #endif
 #endif
 
@@ -86,7 +86,7 @@ ftpGetURL(char *url, int *retcode)
 }
 
 /*
- * Quick check to see if a file exists
+ * Quick check to see if a file (or dir ...) exists
  */
 Boolean
 fexists(char *fname)
@@ -317,6 +317,7 @@ fileGetURL(char *base, char *spec)
 			/* Otherwise, we've been given an environment variable hinting at the right location from sysinstall */
 			strcpy(fname, hint);
 			strcat(fname, spec);
+			strcat(fname, ".tgz");
 		}
 	} else
 		strcpy(fname, spec);
@@ -444,7 +445,7 @@ fileFindByPath(char *base, char *fname)
 }
 
 /*
- *  Expect "fname" to point at a +CONTENTS file, and read it into
+ *  Expect "fname" to point at a file, and read it into
  *  the buffer returned.
  */
 char   *
