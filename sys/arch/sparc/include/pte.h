@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.22 2001/04/30 19:35:13 kleink Exp $ */
+/*	$NetBSD: pte.h,v 1.23 2001/05/01 20:37:44 kleink Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -417,5 +417,6 @@ struct srmmu_pte {
 
 /* sun4m TLB probe */
 #define getpte4m(va)		lda((va & 0xFFFFF000) | ASI_SRMMUFP_L3, \
+				    ASI_SRMMUFP)
 
 #endif /* _KERNEL || _STANDALONE */
