@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.42 2000/05/27 00:40:45 sommerfeld Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.43 2000/05/28 15:27:51 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -326,9 +326,10 @@ ktrace_common (curp, ops, facs, pid, fp)
 	 * Mark fp non-blocking, to avoid problems from possible deadlocks.
 	 */
 
-	fp->f_flag |= FNONBLOCK;
-	(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&one, curp);
-
+	if (fp != NULL) {
+		fp->f_flag |= FNONBLOCK;
+		(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&one, curp);
+	}
 	
 	/*
 	 * need something to (un)trace (XXX - why is this here?)
