@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.15 2003/07/12 13:47:43 itojun Exp $	*/
+/*	$NetBSD: common.h,v 1.16 2003/07/30 08:51:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -35,9 +35,6 @@
 #define Close (void)close
 #define Fclose (void)fclose
 #define Fflush (void)fflush
-#define Sprintf (void)sprintf
-#define Strcpy (void)strcpy
-#define Strcat (void)strcat
 
 #include <stdio.h>
 #include <string.h>
