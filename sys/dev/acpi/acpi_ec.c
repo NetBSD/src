@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.1 2001/09/29 05:34:23 thorpej Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.2 2001/10/12 07:30:23 enami Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -657,7 +657,7 @@ EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
 	EcUnlock(sc);
 
 	if (Status != AE_OK)
-		printf("s: timed out waiting for EC to respond to "
+		printf("%s: timed out waiting for EC to respond to "
 		    "EC_COMMAND_QUERY\n", sc->sc_dev.dv_xname);
 
 	return (Status);
