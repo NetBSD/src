@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.8 2002/09/10 12:11:03 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.9 2002/09/11 11:03:08 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -821,6 +821,70 @@ ALTENTRY(suswintr)
 	blink	tr0, r63
 
 
+
+/******************************************************************************
+ *
+ * void pmap_asm_zero_page(vaddr_t kva)
+ *
+ * Fast, cache-friendly zero page function.
+ */
+ENTRY(pmap_asm_zero_page)
+	ptabs/u	r18, tr0
+	pta/l	1f, tr1
+#ifndef _LP64
+	add.l	r2, r63, r2		/* Ensure kva is sign-extended */
+#endif
+	movi	NBPG, r0
+	add	r2, r0, r0		/* End of page */
+	blink	tr1, r63
+
+	/* Cache-align the loop */
+	.balign	32
+1:	alloco	r2, 0			/* Allocate a cache block */
+	st.q	r2, 0, r63		/* Zero the block */
+	st.q	r2, 8, r63
+	st.q	r2, 16, r63
+	st.q	r2, 24, r63
+	addi	r2, 32, r2		/* Next block */
+	bne/l	r2, r0, tr1		/* Back for the next one, until done */
+	blink	tr0, r63
+
+
+/******************************************************************************
+ *
+ * void pmap_asm_copy_page(vaddr_t dst, vaddr_t src)
+ *
+ * Fast, cache-friendly copy page function.
+ */
+ENTRY(pmap_asm_copy_page)
+	ptabs/u	r18, tr0
+	pta/l	1f, tr1
+#ifndef _LP64
+	add.l	r2, r63, r2		/* Ensure src/dst are sign-extended */
+	add.l	r3, r63, r3
+#endif
+	movi	NBPG, r0
+	add	r2, r0, r0		/* End of page */
+	blink	tr1, r63
+
+	/* Cache-align the loop */
+	.balign	32
+1:	ld.q	r3, 0, r4		/* Fetch 32-bytes at a time */
+	ld.q	r3, 8, r5
+	ld.q	r3, 16, r6
+	ld.q	r3, 24, r7
+	alloco	r2, 0			/* Allocate a cache block for dst */
+	st.q	r2, 0, r4
+	st.q	r2, 8, r5
+	st.q	r2, 16, r6
+	st.q	r2, 24, r7
+	addi	r2, 32, r2		/* Next dst block */
+	addi	r3, 32, r3		/* Next src block */
+	bne/l	r2, r0, tr1		/* Back for the next one, until done */
+	blink	tr0, r63
+
+
+
 #include "dtfcons.h"
 #if NDTFCONS > 0
 /******************************************************************************
@@ -912,3 +976,34 @@ ENTRY_NOPROFILE(_dtf_trap_frob)
  */
 	.comm	Lcpu_info,SZ_CPU_INFO,8
 
+
+	.data
+	.balign 4
+
+/*
+ * Interrupt counters.
+ * XXXSCW: Will go away soon; kept here to keep vmstat happy
+ */
+GLOBAL(intrnames)
+	.asciz	"spur"
+	.asciz	"softmist"
+	.asciz	"softclock"
+	.asciz	"softnet"
+	.asciz	"softserial"
+	.asciz	"irq5"
+	.asciz	"irq6"
+	.asciz	"irq7"
+	.asciz	"irq8"
+	.asciz	"irq9"
+	.asciz	"irq10"
+	.asciz	"irq11"
+	.asciz	"irq12"
+	.asciz	"irq13"
+	.asciz	"clock"
+	.asciz	"irq15"
+GLOBAL(eintrnames)
+	.balign 4
+
+GLOBAL(intrcnt)
+	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+GLOBAL(eintrcnt)
