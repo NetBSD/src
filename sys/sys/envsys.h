@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.2 1999/12/15 20:34:35 simonb Exp $ */
+/* $NetBSD: envsys.h,v 1.3 2000/02/27 04:10:30 groo Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ struct envsys_tre_data {
 typedef struct envsys_tre_data envsys_temp_data_t;
 typedef struct envsys_tre_data envsys_rpm_data_t;
 typedef struct envsys_tre_data envsys_electrical_data_t;
+typedef struct envsys_tre_data envsys_tre_data_t;
 
 /* flags for warnflags */
 #define ENVSYS_WARN_OK		0x00000000	/* All is well */
@@ -106,6 +107,7 @@ struct envsys_basic_info {
 typedef struct envsys_basic_info envsys_temp_info_t;
 typedef struct envsys_basic_info envsys_rpm_info_t;
 typedef struct envsys_basic_info envsys_electrical_info_t;
+typedef struct envsys_basic_info envsys_basic_info_t;
 
 #define ENVSYS_STREINFO _IOWR('E', 3, envsys_temp_info_t)
 #define ENVSYS_GTREINFO _IOWR('E', 4, envsys_temp_info_t)
