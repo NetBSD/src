@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.h,v 1.1 2003/01/20 01:20:51 soren Exp $ */
+/* $NetBSD: hd44780_subr.h,v 1.2 2005/01/08 20:17:22 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -80,6 +80,7 @@ struct hd44780_chip {
 #define HD_MULTILINE		0x02	/* 2 lines if set, 1 otherwise */
 #define HD_BIGFONT		0x04	/* 5x10 if set, 5x8 otherwise */
 #define HD_KEYPAD		0x08	/* if set, keypad is connected */
+#define HD_UP			0x10	/* if set, lcd has been initialized */
 	u_char sc_flags;
 
 	u_char sc_rows;			/* visible rows */
@@ -91,18 +92,11 @@ struct hd44780_chip {
 	bus_space_handle_t sc_ioir;	/* instruction register */
 	bus_space_handle_t sc_iodr;	/* data register */
 
-	/*
-	 * This one is here to make initialization generic. If 4-bit
-	 * connection is used, the device still starts as if it was
-	 * 8-bit connected, so a special care is needed for such case.
-	 * If set to NULL, normal 'sc_rwrite()' function will be used
-	 * during initialization.
-	 */
-	void     (* sc_irwrite)(bus_space_tag_t, bus_space_handle_t, u_int8_t);
+	struct device *sc_dev;		/* Pointer to parent device */
 
 	/* Generic write/read byte entries. */
-	void     (* sc_rwrite)(bus_space_tag_t, bus_space_handle_t, u_int8_t);
-	u_int8_t (* sc_rread)(bus_space_tag_t, bus_space_handle_t);
+	void     (* sc_writereg)(struct hd44780_chip *, u_int32_t, u_int8_t);
+	u_int8_t (* sc_readreg)(struct hd44780_chip *, u_int32_t);
 };
 
 #define hd44780_busy_wait(sc) \
@@ -111,17 +105,17 @@ struct hd44780_chip {
 #define hd44780_ir_write(sc, dat) \
 	do {								\
 		hd44780_busy_wait(sc);					\
-		(sc)->sc_rwrite((sc)->sc_iot, (sc)->sc_ioir, (dat));	\
+		(sc)->sc_writereg((sc), 0, (dat));			\
 	} while(0)
 
 #define hd44780_ir_read(sc) \
-	(sc)->sc_rread((sc)->sc_iot, (sc)->sc_ioir)
+	(sc)->sc_readreg((sc), 0)
 
 #define hd44780_dr_write(sc, dat) \
-	(sc)->sc_rwrite((sc)->sc_iot, (sc)->sc_iodr, (dat))
+	(sc)->sc_writereg((sc), 1, (dat))
 
 #define hd44780_dr_read(sc) \
-	(sc)->sc_rread((sc)->sc_iot, (sc)->sc_iodr)
+	(sc)->sc_readreg((sc), 1)
 
 void hd44780_attach_subr(struct hd44780_chip *);
 int  hd44780_ioctl_subr(struct hd44780_chip *, u_long, caddr_t);
@@ -131,13 +125,9 @@ void hd44780_ddram_redraw(struct hd44780_chip *, struct hd44780_io *);
 #define HD_DDRAM_WRITE	0x1
 int  hd44780_ddram_io(struct hd44780_chip *, struct hd44780_io *, u_char);
 
-#if defined(HD44780_STD_SHORT)
-void     hd44780_irwrite(bus_space_tag_t, bus_space_handle_t, u_int8_t);
-#endif
-
 #if defined(HD44780_STD_WIDE) || defined(HD44780_STD_SHORT)
-void     hd44780_rwrite(bus_space_tag_t, bus_space_handle_t, u_int8_t);
-u_int8_t hd44780_rread(bus_space_tag_t, bus_space_handle_t);
+void     hd44780_writereg(struct hd44780_chip *, u_int32_t, u_int8_t);
+u_int8_t hd44780_readreg(struct hd44780_chip *, u_int32_t);
 #endif
 
 #endif /* _KERNEL */
