@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.15 1998/05/02 16:45:30 scottr Exp $	*/
+/*	$NetBSD: esp.c,v 1.16 1998/05/09 22:47:53 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -147,6 +147,9 @@ int	esp_quick_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
 	    size_t *, int, size_t *));
 void	esp_quick_dma_go __P((struct ncr53c9x_softc *));
 
+int	esp_dualbus_intr __P((register struct ncr53c9x_softc *sc));
+static struct esp_softc		*esp0 = NULL, *esp1 = NULL;
+
 static __inline__ int esp_dafb_have_dreq __P((struct esp_softc *esc));
 static __inline__ int esp_iosb_have_dreq __P((struct esp_softc *esc));
 int (*esp_have_dreq) __P((struct esp_softc *esc));
@@ -251,6 +254,7 @@ espattach(parent, self, aux)
 	 * Save the regs
 	 */
 	if (sc->sc_dev.dv_unit == 0) {
+		esp0 = esc;
 
 		esc->sc_reg = (volatile u_char *) SCSIBase;
 		via2_register_irq(VIA2_SCSIIRQ,
@@ -266,10 +270,12 @@ espattach(parent, self, aux)
 			printf(" (quick)");
 		}
 	} else {
+		esp1 = esc;
+
 		esc->sc_reg = (volatile u_char *) SCSIBase + 0x402;
-		via2_register_irq(VIA2_SCSIDRQ,
-		    (void (*)(void *))ncr53c9x_intr, esc);
-		esc->irq_mask = V2IF_SCSIDRQ; /* V2IF_T1? */
+		via2_register_irq(VIA2_SCSIIRQ,
+		    (void (*)(void *))esp_dualbus_intr, NULL);
+		esc->irq_mask = 0;
 		sc->sc_freq = 25000000;
 
 		if (esp_glue.gl_dma_go == esp_quick_dma_go) {
@@ -317,9 +323,11 @@ espattach(parent, self, aux)
 	/*
 	 * Configure interrupts.
 	 */
-	via2_reg(vPCR) = 0x22;
-	via2_reg(vIFR) = esc->irq_mask;
-	via2_reg(vIER) = 0x80 | esc->irq_mask;
+	if (esc->irq_mask) {
+		via2_reg(vPCR) = 0x22;
+		via2_reg(vIFR) = esc->irq_mask;
+		via2_reg(vIER) = 0x80 | esc->irq_mask;
+	}
 }
 
 /*
@@ -689,4 +697,17 @@ restart_dmago:
 gotintr:
 	ncr53c9x_intr(sc);
 	if (espspl != -1) splx(espspl); espspl = -1;
+}
+
+int
+esp_dualbus_intr(sc)
+	register struct ncr53c9x_softc *sc;
+{
+	if (esp0 && (esp0->sc_reg[NCR_STAT * 16] & 0x80))
+		ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
+
+	if (esp1 && (esp1->sc_reg[NCR_STAT * 16] & 0x80))
+		ncr53c9x_intr((struct ncr53c9x_softc *) esp1);
+
+	return 0;
 }
