@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.22 2002/02/08 01:28:17 ross Exp $
+.\"	$NetBSD: fcntl.2,v 1.23 2002/09/17 21:35:37 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,8 +86,12 @@ system calls.
 .El
 .It Dv F_GETFD
 Get the close-on-exec flag associated with the file descriptor
-.Fa fd .
-If the low-order bit of the returned value is 0,
+.Fa fd
+as
+.Dv FD_CLOEXEC .
+If the returned value ANDed with
+.Dv FD_CLOEXEC
+is 0,
 the file will remain open across
 .Fn exec ,
 otherwise the file will be closed upon execution of
@@ -97,9 +101,13 @@ is ignored).
 .It Dv F_SETFD
 Set the close-on-exec flag associated with
 .Fa fd
-to the low order bit of
+to
+.Fa arg ,
+where
 .Fa arg
-(0 or 1 as above).
+is either 0 or
+.Dv FD_CLOEXEC ,
+as described above.
 .It Dv F_GETFL
 Get descriptor status flags, as described below
 .Fa ( arg
