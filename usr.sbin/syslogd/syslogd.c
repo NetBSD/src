@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.74 2004/12/09 00:56:47 matt Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.75 2005/01/09 00:07:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.74 2004/12/09 00:56:47 matt Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.75 2005/01/09 00:07:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.74 2004/12/09 00:56:47 matt Exp $");
 
 #include <netinet/in.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -268,7 +269,7 @@ int	p_open(char *, pid_t *);
 void	trim_localdomain(char *);
 void	reapchild(struct kevent *); /* SIGCHLD kevent dispatch routine */
 void	usage(void);
-void	wallmsg(struct filed *, struct iovec *);
+void	wallmsg(struct filed *, struct iovec *, size_t);
 int	main(int, char *[]);
 void	logpath_add(char ***, int *, int *, char *);
 void	logpath_fileadd(char ***, int *, int *, char *);
@@ -1062,11 +1063,12 @@ logmsg(int pri, char *msg, char *from, int flags)
 void
 fprintlog(struct filed *f, int flags, char *msg)
 {
-	struct iovec iov[7];
+	struct iovec iov[10];
 	struct iovec *v;
 	struct addrinfo *r;
 	int j, l, lsent;
 	char line[MAXLINE + 1], repbuf[80], greetings[200];
+#define ADDEV() assert(++v - iov < A_CNT(iov))
 
 	v = iov;
 	if (f->f_type == F_WALL) {
@@ -1074,17 +1076,17 @@ fprintlog(struct filed *f, int flags, char *msg)
 		v->iov_len = snprintf(greetings, sizeof greetings,
 		    "\r\n\7Message from syslogd@%s at %.24s ...\r\n",
 		    f->f_prevhost, ctime(&now));
-		v++;
+		ADDEV();
 		v->iov_base = "";
 		v->iov_len = 0;
-		v++;
+		ADDEV();
 	} else {
 		v->iov_base = f->f_lasttime;
 		v->iov_len = 15;
-		v++;
+		ADDEV();
 		v->iov_base = " ";
 		v->iov_len = 1;
-		v++;
+		ADDEV();
 	}
 
 	if (LogFacPri) {
@@ -1125,14 +1127,14 @@ fprintlog(struct filed *f, int flags, char *msg)
 		v->iov_base = "";
 		v->iov_len = 0;
 	}
-	v++;
+	ADDEV();
 
 	v->iov_base = f->f_prevhost;
 	v->iov_len = strlen(v->iov_base);
-	v++;
+	ADDEV();
 	v->iov_base = " ";
 	v->iov_len = 1;
-	v++;
+	ADDEV();
 
 	if (msg) {
 		v->iov_base = msg;
@@ -1145,7 +1147,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		v->iov_base = f->f_prevline;
 		v->iov_len = f->f_prevlen;
 	}
-	v++;
+	ADDEV();
 
 	dprintf("Logging to %s", TypeNames[f->f_type]);
 	f->f_time = now;
@@ -1201,6 +1203,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		dprintf(" %s\n", f->f_un.f_pipe.f_pname);
 		v->iov_base = "\n";
 		v->iov_len = 1;
+		ADDEV();
 		if (f->f_un.f_pipe.f_pid == 0) {
 			if ((f->f_file = p_open(f->f_un.f_pipe.f_pname,
 						&f->f_un.f_pipe.f_pid)) < 0) {
@@ -1209,7 +1212,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 				break;
 			}
 		}
-		if (writev(f->f_file, iov, 7) < 0) {
+		if (writev(f->f_file, iov, v - iov) < 0) {
 			int e = errno;
 			if (f->f_un.f_pipe.f_pid > 0) {
 				(void) close(f->f_file);
@@ -1236,7 +1239,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 					logerror(f->f_un.f_pipe.f_pname);
 					break;
 				}
-				if (writev(f->f_file, iov, 7) < 0) {
+				if (writev(f->f_file, iov, v - iov) < 0) {
 					e = errno;
 					if (f->f_un.f_pipe.f_pid > 0) {
 					    (void) close(f->f_file);
@@ -1271,8 +1274,9 @@ fprintlog(struct filed *f, int flags, char *msg)
 			v->iov_base = "\n";
 			v->iov_len = 1;
 		}
+		ADDEV();
 	again:
-		if (writev(f->f_file, iov, 7) < 0) {
+		if (writev(f->f_file, iov, v - iov) < 0) {
 			int e = errno;
 			if (f->f_type == F_FILE && e == ENOSPC) {
 				int lasterror = f->f_lasterror;
@@ -1311,7 +1315,8 @@ fprintlog(struct filed *f, int flags, char *msg)
 		dprintf("\n");
 		v->iov_base = "\r\n";
 		v->iov_len = 2;
-		wallmsg(f, iov);
+		ADDEV();
+		wallmsg(f, iov, v - iov);
 		break;
 	}
 	f->f_prevcount = 0;
@@ -1324,7 +1329,7 @@ fprintlog(struct filed *f, int flags, char *msg)
  *	world, or a list of approved users.
  */
 void
-wallmsg(struct filed *f, struct iovec *iov)
+wallmsg(struct filed *f, struct iovec *iov, size_t iovcnt)
 {
 	static int reenter;			/* avoid calling ourselves */
 	int i;
@@ -1343,7 +1348,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 	/* NOSTRICT */
 	for (; ep; ep = ep->next) {
 		if (f->f_type == F_WALL) {
-			if ((p = ttymsg(iov, 7, ep->line, TTYMSGTIME))
+			if ((p = ttymsg(iov, iovcnt, ep->line, TTYMSGTIME))
 			    != NULL) {
 				errno = 0;	/* already in msg */
 				logerror(p);
@@ -1355,8 +1360,8 @@ wallmsg(struct filed *f, struct iovec *iov)
 			if (!f->f_un.f_uname[i][0])
 				break;
 			if (strcmp(f->f_un.f_uname[i], ep->name) == 0) {
-				if ((p = ttymsg(iov, 7, ep->line, TTYMSGTIME))
-				    != NULL) {
+				if ((p = ttymsg(iov, iovcnt, ep->line,
+				    TTYMSGTIME)) != NULL) {
 					errno = 0;	/* already in msg */
 					logerror(p);
 				}
