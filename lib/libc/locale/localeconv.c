@@ -1,4 +1,4 @@
-/*	$NetBSD: localeconv.c,v 1.9 1998/11/13 15:49:03 christos Exp $	*/
+/*	$NetBSD: localeconv.c,v 1.10 2001/01/02 10:53:25 kleink Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeconv.c,v 1.9 1998/11/13 15:49:03 christos Exp $");
+__RCSID("$NetBSD: localeconv.c,v 1.10 2001/01/02 10:53:25 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -50,6 +50,12 @@ localeconv()
 	ret.n_sep_by_space	= _CurrentMonetaryLocale->n_sep_by_space;
 	ret.p_sign_posn		= _CurrentMonetaryLocale->p_sign_posn;
 	ret.n_sign_posn		= _CurrentMonetaryLocale->n_sign_posn;
+	ret.int_p_cs_precedes	= _CurrentMonetaryLocale->int_p_cs_precedes;
+	ret.int_n_cs_precedes	= _CurrentMonetaryLocale->int_n_cs_precedes;
+	ret.int_p_sep_by_space	= _CurrentMonetaryLocale->int_p_sep_by_space;
+	ret.int_n_sep_by_space	= _CurrentMonetaryLocale->int_n_sep_by_space;
+	ret.int_p_sign_posn	= _CurrentMonetaryLocale->int_p_sign_posn;
+	ret.int_n_sign_posn	= _CurrentMonetaryLocale->int_n_sign_posn;
 	__mlocale_changed = 0;
     }
 

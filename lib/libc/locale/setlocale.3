@@ -1,4 +1,4 @@
-.\"	$NetBSD: setlocale.3,v 1.7 1999/09/05 09:19:35 kleink Exp $
+.\"	$NetBSD: setlocale.3,v 1.8 2001/01/02 10:53:25 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -156,19 +156,25 @@ struct lconv {
 	char	n_sep_by_space;
 	char	p_sign_posn;
 	char	n_sign_posn;
+	char	int_p_cs_precedes;
+	char	int_n_cs_precedes;
+	char	int_p_sep_by_space;
+	char	int_n_sep_by_space;
+	char	int_p_sign_posn;
+	char	int_n_sign_posn;
 };
 .Ed
 .Pp
 The individual fields have the following meanings:
 .Pp
-.Bl -tag -width mon_decimal_point
+.Bl -tag -width int_p_sep_by_space
 .It Fa decimal_point
-The decimal point character, except for currency values.
+The decimal point character, except for monetary values.
 .It Fa thousands_sep
 The separator between groups of digits
-before the decimal point, except for currency values.
+before the decimal point, except for monetary values.
 .It Fa grouping
-The sizes of the groups of digits, except for currency values.
+The sizes of the groups of digits, except for monetary values.
 This is a pointer to a vector of integers, each of size
 .Va char ,
 representing group size from low order digit groups
@@ -181,35 +187,35 @@ If the list is terminated with
 .Dv CHAR_MAX ,
 no more grouping is performed.
 .It Fa int_curr_symbol
-The standardized international currency symbol.
+The standardized (ISO 4217:1995) international currency symbol.
 .It Fa currency_symbol
 The local currency symbol.
 .It Fa mon_decimal_point
-The decimal point character for currency values.
+The decimal point character for monetary values.
 .It Fa mon_thousands_sep
-The separator for digit groups in currency values.
+The separator for digit groups in monetary values.
 .It Fa mon_grouping
 Like
 .Fa grouping
-but for currency values.
+but for monetary values.
 .It Fa positive_sign
-The character used to denote nonnegative currency values,
+The character used to denote nonnegative monetary values,
 usually the empty string.
 .It Fa negative_sign
-The character used to denote negative currency values,
+The character used to denote negative monetary values,
 usually a minus sign.
 .It Fa int_frac_digits
 The number of digits after the decimal point
-in an international-style currency value.
+in an internationally formatted monetary value.
 .It Fa frac_digits
 The number of digits after the decimal point
-in the local style for currency values.
+in an locally formatted monetary value.
 .It Fa p_cs_precedes
-1 if the currency symbol precedes the currency value
+1 if the currency symbol precedes the monetary value
 for nonnegative values, 0 if it follows.
 .It Fa p_sep_by_space
 1 if a space is inserted between the currency symbol
-and the currency value for nonnegative values, 0 otherwise.
+and the monetary value for nonnegative values, 0 otherwise.
 .It Fa n_cs_precedes
 Like
 .Fa p_cs_precedes
@@ -222,8 +228,45 @@ but for negative values.
 The location of the
 .Fa positive_sign
 with respect to a nonnegative quantity and the
+.Fa currency_symbol .
+.It Fa n_sign_posn
+Like
+.Fa p_sign_posn
+but for negative currency values.
+.It Fa int_p_cs_precedes
+1 if the currency symbol precedes the internationally
+formatted monetary value for nonnegative values, 0 if it follows.
+.It Fa int_n_cs_precedes
+Like
+.Fa int_p_cs_precedes
+but for negative values.
+.It Fa int_p_sep_by_space
+1 if a space is inserted between the currency symbol
+and the internationally formatted monetary value for
+nonnegative values, 0 otherwise.
+.It Fa int_n_sep_by_space
+Like
+.Fa int_p_sep_by_space
+but for negative values.
+.It Fa int_p_sign_posn
+The location of the
+.Fa positive_sign
+with respect to a nonnegative quantity and the
 .Fa currency_symbol ,
-coded as follows:
+for internationally formatted nonnegative monetary values.
+.It Fa int_n_sign_posn
+Like
+.Fa int_p_sign_posn
+but for negative values.
+.El
+.Pp
+The positional parameters in
+.Fa p_sign_posn ,
+.Fa n_sign_posn ,
+.Fa int_p_sign_posn
+and
+.Fa int_n_sign_posn
+are encoded as follows:
 .Bl -tag -width 3n -compact
 .It Li 0
 Parentheses around the entire string.
@@ -237,11 +280,6 @@ Just before
 .It Li 4
 Just after
 .Fa currency_symbol .
-.El
-.It Fa n_sign_posn
-Like
-.Fa p_sign_posn
-but for negative currency values.
 .El
 .Pp
 Unless mentioned above,
@@ -286,7 +324,20 @@ The
 and
 .Fn localeconv
 functions conform to
-.St -ansiC .
+.St -isoC .
+.Pp
+The
+.Fa int_p_cs_precedes ,
+.Fa int_n_cs_precedes ,
+.Fa int_p_sep_by_space ,
+.Fa int_n_sep_by_space ,
+.Fa int_p_sign_posn
+and
+.Fa int_n_sign_posn
+members of
+.Ft struct lconv
+were introduced in
+.St -isoC99 .
 .Sh HISTORY
 The
 .Fn setlocale

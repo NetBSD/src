@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.h,v 1.11 2000/12/21 11:29:48 itojun Exp $	*/
+/*	$NetBSD: locale.h,v 1.12 2001/01/02 10:53:24 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -57,6 +57,12 @@ struct lconv {
 	char	n_sep_by_space;
 	char	p_sign_posn;
 	char	n_sign_posn;
+	char	int_p_cs_precedes;
+	char	int_n_cs_precedes;
+	char	int_p_sep_by_space;
+	char	int_n_sep_by_space;
+	char	int_p_sign_posn;
+	char	int_n_sign_posn;
 };
 
 #include <sys/null.h>
