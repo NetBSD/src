@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.27 1999/12/11 00:33:01 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.28 2000/01/25 03:23:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -212,6 +212,9 @@ void	tlp_pci_cogent_21040_quirks __P((struct tulip_pci_softc *,
 void	tlp_pci_accton_21040_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
 
+void	tlp_pci_cobalt_21142_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
+
 const struct tlp_pci_quirks tlp_pci_21040_quirks[] = {
 	{ tlp_pci_znyx_21040_quirks,	{ 0x00, 0xc0, 0x95 } },
 	{ tlp_pci_smc_21040_quirks,	{ 0x00, 0x00, 0xc0 } },
@@ -239,6 +242,7 @@ const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
 	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
+	{ tlp_pci_cobalt_21142_quirks,	{ 0x00, 0x10, 0xe0 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -384,6 +388,12 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_21142:
 		if (sc->sc_rev >= 0x20)
 			sc->sc_chip = TULIP_CHIP_21143;
+		if (sc->sc_rev >= 0x41) {
+			/*
+			 * 21143 rev. 4.1 has a larger SROM.  See below.
+			 */
+			sc->sc_srom_addrbits = 8;
+		}
 		break;
 
 	case TULIP_CHIP_82C168:
@@ -541,7 +551,8 @@ tlp_pci_attach(parent, self, aux)
 	 * chips have a 128 byte SROM (6 address bits), and some
 	 * have a 512 byte SROM (8 address bits).
 	 */
-	sc->sc_srom_addrbits = 6;
+	if (sc->sc_srom_addrbits == 0)
+		sc->sc_srom_addrbits = 6;
  try_again:
 	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
@@ -714,9 +725,14 @@ tlp_pci_attach(parent, self, aux)
 		/* Check for new format SROM. */
 		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
 			/*
-			 * Not an ISV SROM; can't cope, for now.
+			 * Not an ISV SROM; try the old DEC Ethernet Address
+			 * ROM format.
 			 */
-			goto cant_cope;
+			if (tlp_parse_old_srom(sc, enaddr) == 0) {
+				printf("%s: unable to decode Ethernet "
+				    "Address ROM\n", sc->sc_dev.dv_xname);
+				return;
+			}
 		} else {
 			/*
 			 * We start out with the 2114x ISV media switch.
@@ -1107,4 +1123,17 @@ tlp_pci_asante_21140_reset(sc)
 	TULIP_WRITE(sc, CSR_GPP, 0x8);
 	delay(100);
 	TULIP_WRITE(sc, CSR_GPP, 0);
+}
+
+void
+tlp_pci_cobalt_21142_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Cobalt Networks interfaces are just MII-on-SIO.
+	 */
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
 }
