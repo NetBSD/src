@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.31 1998/11/23 10:17:12 msaitoh Exp $	*/
+/*	$NetBSD: route.c,v 1.32 1998/12/05 13:14:04 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.31 1998/11/23 10:17:12 msaitoh Exp $");
+__RCSID("$NetBSD: route.c,v 1.32 1998/12/05 13:14:04 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -659,6 +659,13 @@ netname(in, mask)
 				mask = (long)mask >> subnetshift;
 		}
 		net = i & mask;
+		/*
+		 * Note: shift the hosts bits out in octet units, since
+		 * not all versions of getnetbyaddr() do this for us (e.g.
+		 * the current `etc/networks' parser).
+		 */
+		while ((mask & 0xff) == 0)
+			mask >>= 8, net >>= 8;
 		np = getnetbyaddr(net, AF_INET);
 		if (np)
 			cp = np->n_name;
