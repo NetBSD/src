@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_id.c,v 1.3 2003/11/19 18:39:34 jonathan Exp $	*/
+/*	$NetBSD: ip_id.c,v 1.4 2003/11/25 18:13:55 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.3 2003/11/19 18:39:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.4 2003/11/25 18:13:55 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -85,7 +85,7 @@ const static u_int16_t pfacts[PFAC_N] = {
 };
 
 static u_int16_t ru_x;
-static u_int16_t ru_seed, ru_seed2;
+static u_int16_t ru_seed;
 static u_int16_t ru_a, ru_b;
 static u_int16_t ru_g;
 static u_int16_t ru_counter = 0;
@@ -137,7 +137,6 @@ ip_initid(void)
 
 	/* 15 bits of random seed */
 	ru_seed = (tmp >> 16) & 0x7FFF;
-	ru_seed2 = arc4random() & 0x7FFF;
 
 	/* Determine the LCG we use */
 	ru_b = ((tmp = arc4random()) & 0xfffe) | 1;
@@ -194,5 +193,5 @@ ip_randomid(void)
 
 	ru_counter += i;
 
-	return (ru_seed ^ pmod(ru_g, ru_seed2 ^ ru_x,RU_N)) | ru_msb;
+	return (ru_seed ^ pmod(ru_g, ru_x, RU_N)) | ru_msb;
 }
