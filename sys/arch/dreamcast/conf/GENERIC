@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.18 2002/03/02 22:26:25 uch Exp $
+# $NetBSD: GENERIC,v 1.19 2002/03/10 19:56:40 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,8 +24,8 @@ include 	"arch/dreamcast/conf/std.dreamcast"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=2880	# size of memory disk, in blocks
-#options 	MINIROOTSIZE=6000
+options 	MEMORY_DISK_SIZE=2880	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=6000
 
 # wscons options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation

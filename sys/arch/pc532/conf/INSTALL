@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.24 2002/01/27 13:23:24 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.25 2002/03/10 19:56:45 lukem Exp $
 #
 # INSTALL -- install kernel
 #
@@ -12,7 +12,7 @@ makeoptions	COPTS="-Os -msb"	# Don't inline, save space
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=4096	# size of memory disk, in blocks
+options 	MEMORY_DISK_SIZE=4096	# size of memory disk, in blocks
 
 # estimated number of users
 maxusers	2
