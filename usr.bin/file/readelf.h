@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.h,v 1.5 1999/11/01 17:39:27 christos Exp $	*/
+/*	$NetBSD: readelf.h,v 1.6 2001/12/09 23:21:07 thorpej Exp $	*/
 
 /*
  * readelf.h 
@@ -167,6 +167,8 @@ typedef struct {
 #define NT_PRFPREG	2
 #define NT_PRPSINFO	3
 #define NT_TASKSTRUCT	4
+
+#define	NT_NETBSD_CORE_PROCINFO		1
 
 /* Note header in a PT_NOTE section */
 typedef struct elf_note {

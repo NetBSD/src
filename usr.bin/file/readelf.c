@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.9 2000/11/23 23:21:15 pooka Exp $	*/
+/*	$NetBSD: readelf.c,v 1.10 2001/12/09 23:21:07 thorpej Exp $	*/
 
 #include "file.h"
 
@@ -20,7 +20,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.17 2000/08/05 19:00:12 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.9 2000/11/23 23:21:15 pooka Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.10 2001/12/09 23:21:07 thorpej Exp $");
 #endif
 #endif
 
@@ -237,6 +237,17 @@ size_t	prpsoffsets64[] = {
  * *do* have that binary, the debugger will probably tell you what
  * signal it was.)
  */
+
+#define	OS_STYLE_SVR4		0
+#define	OS_STYLE_FREEBSD	1
+#define	OS_STYLE_NETBSD		2
+
+static const char *os_style_names[] = {
+	"SVR4",
+	"FreeBSD",
+	"NetBSD",
+};
+
 static void
 dophn_core(class, swap, fd, off, num, size)
 	int class;
@@ -255,7 +266,7 @@ dophn_core(class, swap, fd, off, num, size)
 	int i, j;
 	char nbuf[BUFSIZ];
 	int bufsize;
-	int is_freebsd;
+	int os_style = -1;
 
 	/*
 	 * Loop through all the program headers.
@@ -289,20 +300,8 @@ dophn_core(class, swap, fd, off, num, size)
 			offset += nh_size;
 
 			/*
-			 * If this note isn't an NT_PRPSINFO note, it's
-			 * not what we're looking for.
-			 */
-			if (nh_type != NT_PRPSINFO) {
-				offset += nh_namesz;
-				offset = ((offset + 3)/4)*4;
-				offset += nh_descsz;
-				offset = ((offset + 3)/4)*4;
-				continue;
-			}
-
-			/*
 			 * Check whether this note has the name "CORE" or
-			 * "FreeBSD".
+			 * "FreeBSD", or "NetBSD-CORE".
 			 */
 			if (offset + nh_namesz >= bufsize) {
 				/*
@@ -329,17 +328,50 @@ dophn_core(class, swap, fd, off, num, size)
 			 * doesn't include the terminating null in the
 			 * name....
 			 */
-			if ((nh_namesz == 4 &&
-			      strncmp(&nbuf[nameoffset], "CORE", 4) == 0) ||
-			    (nh_namesz == 5 &&
-			      strcmp(&nbuf[nameoffset], "CORE") == 0))
-				is_freebsd = 0;
-			else if ((nh_namesz == 8 &&
-			      strcmp(&nbuf[nameoffset], "FreeBSD") == 0))
-				is_freebsd = 1;
-			else
-				continue;
-			if (nh_type == NT_PRPSINFO) {
+			if (os_style == -1) {
+				if ((nh_namesz == 4 &&
+				     strncmp(&nbuf[nameoffset],
+					    "CORE", 4) == 0) ||
+				    (nh_namesz == 5 &&
+				     strcmp(&nbuf[nameoffset],
+				     	    "CORE") == 0)) {
+					os_style = OS_STYLE_SVR4;
+				} else
+				if ((nh_namesz == 8 &&
+				     strcmp(&nbuf[nameoffset],
+				     	    "FreeBSD") == 0)) {
+					os_style = OS_STYLE_FREEBSD;
+				} else
+				if ((nh_namesz >= 11 &&
+				     strncmp(&nbuf[nameoffset],
+				     	     "NetBSD-CORE", 11) == 0)) {
+					os_style = OS_STYLE_NETBSD;
+				} else
+					continue;
+				printf(", %s-style", os_style_names[os_style]);
+			}
+
+			if (os_style == OS_STYLE_NETBSD &&
+			    nh_type == NT_NETBSD_CORE_PROCINFO) {
+				uint32_t signo;
+
+				/*
+				 * Extract the program name.  It is at
+				 * offset 0x7c, and is up to 32-bytes,
+				 * including the terminating NUL.
+				 */
+				printf(", from '%.31s'", &nbuf[offset + 0x7c]);
+				
+				/*
+				 * Extract the signal number.  It is at
+				 * offset 0x08.
+				 */
+				memcpy(&signo, &nbuf[offset + 0x08],
+				    sizeof(signo));
+				printf(" (signal %u)", getu32(swap, signo));
+			} else
+			if (os_style != OS_STYLE_NETBSD &&
+			    nh_type == NT_PRPSINFO) {
 				/*
 				 * Extract the program name.  We assume
 				 * it to be 16 characters (that's what it
