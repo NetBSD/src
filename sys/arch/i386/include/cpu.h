@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.106 2003/10/10 06:27:15 lukem Exp $	*/
+/*	$NetBSD: cpu.h,v 1.107 2003/10/10 11:53:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,10 +55,8 @@
 #include <sys/sched.h>
 
 #ifdef _KERNEL
+
 #include <lib/libkern/libkern.h>	/* offsetof */
-#else
-#include <stddef.h>			/* offsetof */
-#endif
 
 struct intrsource;
 
@@ -229,11 +227,7 @@ extern void need_resched __P((struct cpu_info *));
 
 #define	X86_MAXPROCS		1
 
-#ifdef _KERNEL
-
 #define	curcpu()		(&cpu_info_primary)
-
-#endif
 
 /*
  * definitions of cpu-dependent requirements
@@ -338,7 +332,6 @@ struct cpu_cpuid_nameclass {
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
-#ifdef _KERNEL
 extern int biosbasemem;
 extern int biosextmem;
 extern unsigned int cpu_feature;
