@@ -29,54 +29,51 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)seq.h	8.12 (Berkeley) 8/16/94
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
-#endif /* not lint */
-
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/time.h>
-
-#include <bitstring.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <termios.h>
-
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
-#include "vcmd.h"
 
 /*
- * v_zexit -- ZZ
- *	Save the file and exit.
+ * Map and abbreviation structures.
+ *
+ * The map structure is doubly linked list, sorted by input string and by
+ * input length within the string.  (The latter is necessary so that short
+ * matches will happen before long matches when the list is searched.)
+ * Additionally, there is a bitmap which has bits set if there are entries
+ * starting with the corresponding character.  This keeps us from walking
+ * the list unless it's necessary.
+ *
+ * The name and the output fields of a SEQ can be empty, i.e. NULL.
+ * Only the input field is required.
+ *
+ * XXX
+ * The fast-lookup bits are never turned off -- users don't usually unmap
+ * things, though, so it's probably not a big deal.
  */
-int
-v_zexit(sp, ep, vp)
-	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
-{
-	/* Write back any modifications. */
-	if (F_ISSET(ep, F_MODIFIED) &&
-	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
-		return (1);
+					/* Sequence type. */
+enum seqtype { SEQ_ABBREV, SEQ_COMMAND, SEQ_INPUT };
 
-	/* Check to make sure it's not a temporary file. */
-	if (file_m3(sp, ep, 0))
-		return (1);
+struct _seq {
+	LIST_ENTRY(_seq) q;		/* Linked list of all sequences. */
+	enum seqtype stype;		/* Sequence type. */
+	CHAR_T	*name;			/* Sequence name (if any). */
+	size_t	 nlen;			/* Name length. */
+	CHAR_T	*input;			/* Sequence input keys. */
+	size_t	 ilen;			/* Input keys length. */
+	CHAR_T	*output;		/* Sequence output keys. */
+	size_t	 olen;			/* Output keys length. */
 
-	/* Check for more files to edit. */
-	if (ex_ncheck(sp, 0))
-		return (1);
+#define	SEQ_FUNCMAP	0x01		/* If unresolved function key.*/
+#define	SEQ_SCREEN	0x02		/* If screen specific. */
+#define	SEQ_USERDEF	0x04		/* If user defined. */
+	u_int8_t flags;
+};
 
-	F_SET(sp, S_EXIT);
-	return (0);
-}
+int	 seq_delete __P((SCR *, CHAR_T *, size_t, enum seqtype));
+int	 seq_dump __P((SCR *, enum seqtype, int));
+SEQ	*seq_find __P((SCR *, SEQ **, CHAR_T *, size_t, enum seqtype, int *));
+void	 seq_init __P((SCR *));
+int	 seq_mdel __P((SEQ *));
+int	 seq_save __P((SCR *, FILE *, char *, enum seqtype));
+int	 seq_set __P((SCR *, CHAR_T *, size_t,
+	    CHAR_T *, size_t, CHAR_T *, size_t, enum seqtype, int));

@@ -29,54 +29,26 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)search.h	8.9 (Berkeley) 3/16/94
  */
 
-#ifndef lint
-static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
-#endif /* not lint */
+#define	RE_WSTART	"[[:<:]]"	/* Not-in-word search patterns. */
+#define	RE_WSTOP	"[[:>:]]"
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/time.h>
+#define	SEARCH_DELTA	0x001		/* A delta part of the search.*/
+#define	SEARCH_EOL	0x002		/* Offset past EOL is okay. */
+#define	SEARCH_FILE	0x004		/* Search the entire file. */
+#define	SEARCH_MSG	0x008		/* Display search warning messages. */
+#define	SEARCH_PARSE	0x010		/* Parse the search pattern. */
+#define	SEARCH_SET	0x020		/* Set search direction. */
+#define	SEARCH_TAG	0x040		/* Search pattern is a tag pattern. */
+#define	SEARCH_TERM	0x080		/* Search pattern should terminate. */
 
-#include <bitstring.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <termios.h>
+enum direction	{ NOTSET, FORWARD, BACKWARD };
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
-#include "vcmd.h"
-
-/*
- * v_zexit -- ZZ
- *	Save the file and exit.
- */
-int
-v_zexit(sp, ep, vp)
-	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
-{
-	/* Write back any modifications. */
-	if (F_ISSET(ep, F_MODIFIED) &&
-	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
-		return (1);
-
-	/* Check to make sure it's not a temporary file. */
-	if (file_m3(sp, ep, 0))
-		return (1);
-
-	/* Check for more files to edit. */
-	if (ex_ncheck(sp, 0))
-		return (1);
-
-	F_SET(sp, S_EXIT);
-	return (0);
-}
+/* Search functions. */
+int	b_search __P((SCR *, EXF *, MARK *, MARK *, char *, char **, u_int *));
+int	f_search __P((SCR *, EXF *, MARK *, MARK *, char *, char **, u_int *));
+int	re_conv __P((SCR *, char **, int *));
+void	re_error __P((SCR *, int, regex_t *));
