@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.5 1995/10/08 23:01:22 gwr Exp $	*/
+/*	$NetBSD: args.c,v 1.6 1996/02/20 19:29:01 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: args.c,v 1.5 1995/10/08 23:01:22 gwr Exp $";
+static char rcsid[] = "$NetBSD: args.c,v 1.6 1996/02/20 19:29:01 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -283,7 +283,7 @@ f_conv(arg)
 static struct conv {
 	char *name;
 	u_int set, noset;
-	u_char *ctab;
+	const u_char *ctab;
 } clist[] = {
 	{ "ascii",	C_ASCII,	C_EBCDIC,	e2a_POSIX },
 	{ "block",	C_BLOCK,	C_UNBLOCK,	NULL },
