@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.9 1999/06/04 01:50:01 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.10 1999/06/04 02:02:39 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -791,6 +791,8 @@ rf_add_hot_spare(raidPtr, sparePtr)
 		return(EINVAL);
 	}
 
+	RF_LOCK_MUTEX(raidPtr->mutex);
+
 	/* the beginning of the spares... */
 	disks = &raidPtr->Disks[0][raidPtr->numCol];
 
@@ -854,9 +856,11 @@ rf_add_hot_spare(raidPtr, sparePtr)
 				 
 
 	raidPtr->numSpare++;
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	return (0);
 
 fail:
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	return(ret);
 }
 
