@@ -1,4 +1,4 @@
-.\"	$NetBSD: gzip.1,v 1.4 2003/12/23 23:20:37 wiz Exp $
+.\"	$NetBSD: gzip.1,v 1.5 2003/12/26 15:15:49 mrg Exp $
 .\"
 .\" Copyright (c) 1997, 2003 Matthew R. Green
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nd compression/decompression tool using Lempel-Ziv coding (LZ77)
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdfhNnqrtVv
+.Op Fl cdfhlNnqrtVv
 .Op Fl S Ar suffix
 .Ar file
 .Oo
@@ -121,6 +121,12 @@ with the
 option, allowing non-compressed data to pass through unchanged.
 .It Fl h , -help
 This option prints a usage summary and exits.
+.It Fl l , -list
+This option displays information about the file's compressed and
+uncompressed size, ratio, uncompressed name.  With the
+.Fl v
+option, it also displays the compression method, crc, data & time
+embedded in the file.
 .It Fl N , -name
 This option causes the stored filename in the input file to be used
 as the output file.
