@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.4 1998/09/03 14:22:06 minoura Exp $	*/
+/*	$NetBSD: itevar.h,v 1.5 1999/03/24 14:11:47 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -208,8 +208,6 @@ enum emul_level {
    driver doesn't support key-repeat for console-mode, since it can't use
    timeout() for polled I/O. */
    
-enum caller { ITEFILT_TTY, ITEFILT_CONSOLE, ITEFILT_REPEATER };
-
 enum tab_size { TABSIZE = 8 };
 #define TABEND(u) (ite_tty[u]->t_windsize.ws_col - TABSIZE) /* XXX */
 
@@ -249,12 +247,12 @@ int	iteioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 void	itestart __P((struct tty *));
 
 /* ite functions */
-int	ite_on __P((dev_t, int));
-int	ite_off __P((dev_t, int));
+int	iteon __P((dev_t, int));
+void	iteoff __P((dev_t, int));
 void	ite_reinit __P((dev_t));
 void	ite_reset __P((struct ite_softc *));
-int	ite_cnfilter __P((u_char, enum caller));
-void	ite_filter __P((u_char ,enum caller));
+int	ite_cnfilter __P((u_char));
+void	ite_filter __P((u_char));
 
 /* lower layer functions */
 void	tv_init __P((struct ite_softc *));
