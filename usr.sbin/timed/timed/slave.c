@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)slave.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "globals.h"
@@ -278,7 +278,7 @@ loop:
 			}
 
 			setmaster(msg);
-			timevalsub(&ntime, &msg->tsp_time, &otime);
+			timersub(&msg->tsp_time, &otime, &ntime);
 			if (ntime.tv_sec < MAXADJ && ntime.tv_sec > -MAXADJ) {
 				/*
 				 * do not change the clock if we can adjust it
