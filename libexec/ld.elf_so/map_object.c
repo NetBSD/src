@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.3 1998/02/20 09:27:20 mycroft Exp $	*/
+/*	$NetBSD: map_object.c,v 1.4 1999/03/01 16:40:07 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -46,7 +46,7 @@
 #define ELFNAMEEND(x)   CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define ELFDEFNNAME(x)  CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
-static int protflags(int);	/* Elf flags -> mmap protection */
+static int protflags __P((int));	/* Elf flags -> mmap protection */
 
 /*
  * Map a shared object into memory.  The argument is a file descriptor,
@@ -56,202 +56,202 @@ static int protflags(int);	/* Elf flags -> mmap protection */
  * for the shared object.  Returns NULL on failure.
  */
 Obj_Entry *
-_rtld_map_object(
-    const char *path,
-    int fd)
+_rtld_map_object(path, fd)
+	const char *path;
+	int fd;
 {
-    Obj_Entry *obj;
-    union {
-	Elf_Ehdr hdr;
-	char buf[PAGESIZE];
-    } u;
-    int nbytes;
-    Elf_Phdr *phdr;
-    Elf_Phdr *phlimit;
-    Elf_Phdr *segs[2];
-    int nsegs;
-    Elf_Phdr *phdyn;
-    Elf_Phdr *phphdr;
-    caddr_t mapbase;
-    size_t mapsize;
-    Elf_Off base_offset;
-    Elf_Addr base_vaddr;
-    Elf_Addr base_vlimit;
-    caddr_t base_addr;
-    Elf_Off data_offset;
-    Elf_Addr data_vaddr;
-    Elf_Addr data_vlimit;
-    caddr_t data_addr;
+	Obj_Entry      *obj;
+	union {
+		Elf_Ehdr hdr;
+		char     buf[PAGESIZE];
+	} u;
+	int             nbytes;
+	Elf_Phdr       *phdr;
+	Elf_Phdr       *phlimit;
+	Elf_Phdr       *segs[2];
+	int             nsegs;
+	Elf_Phdr       *phdyn;
+	Elf_Phdr       *phphdr;
+	caddr_t         mapbase;
+	size_t          mapsize;
+	Elf_Off         base_offset;
+	Elf_Addr        base_vaddr;
+	Elf_Addr        base_vlimit;
+	caddr_t         base_addr;
+	Elf_Off         data_offset;
+	Elf_Addr        data_vaddr;
+	Elf_Addr        data_vlimit;
+	caddr_t         data_addr;
 #ifdef RTLD_LOADER
-    Elf_Addr clear_vaddr;
-    caddr_t clear_addr;
-    size_t nclear;
-    Elf_Addr bss_vaddr;
-    Elf_Addr bss_vlimit;
-    caddr_t bss_addr;
+	Elf_Addr        clear_vaddr;
+	caddr_t         clear_addr;
+	size_t          nclear;
+	Elf_Addr        bss_vaddr;
+	Elf_Addr        bss_vlimit;
+	caddr_t         bss_addr;
 #endif
 
-    if ((nbytes = read(fd, u.buf, PAGESIZE)) == -1) {
-	_rtld_error("%s: read error: %s", path, xstrerror(errno));
-	return NULL;
-    }
+	if ((nbytes = read(fd, u.buf, PAGESIZE)) == -1) {
+		_rtld_error("%s: read error: %s", path, xstrerror(errno));
+		return NULL;
+	}
+	/* Make sure the file is valid */
+	if (nbytes < sizeof(Elf_Ehdr) ||
+	    memcmp(Elf_e_ident, u.hdr.e_ident, Elf_e_siz) != 0) {
+		_rtld_error("%s: unrecognized file format", path);
+		return NULL;
+	}
+	/* Elf_e_ident includes class */
+	if (u.hdr.e_ident[Elf_ei_version] != Elf_ev_current ||
+	    u.hdr.e_version != Elf_ev_current ||
+	    u.hdr.e_ident[Elf_ei_data] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
+		_rtld_error("%s: Unsupported file version", path);
+		return NULL;
+	}
+	if (u.hdr.e_type != Elf_et_exec && u.hdr.e_type != Elf_et_dyn) {
+		_rtld_error("%s: Unsupported file type", path);
+		return NULL;
+	}
+	switch (u.hdr.e_machine) {
+		ELFDEFNNAME(MACHDEP_ID_CASES)
+	default:
+		_rtld_error("%s: Unsupported machine", path);
+		return NULL;
+	}
 
-    /* Make sure the file is valid */
-    if (nbytes < sizeof(Elf_Ehdr)
-       || memcmp(Elf_e_ident, u.hdr.e_ident, Elf_e_siz) != 0) {
-	_rtld_error("%s: unrecognized file format", path);
-	return NULL;
-    }
-    /* Elf_e_ident includes class */
-    if (u.hdr.e_ident[Elf_ei_version] != Elf_ev_current
-    || u.hdr.e_version != Elf_ev_current
-    || u.hdr.e_ident[Elf_ei_data] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
-	_rtld_error("%s: Unsupported file version", path);
-	return NULL;
-    }
-    if (u.hdr.e_type != Elf_et_exec && u.hdr.e_type != Elf_et_dyn) {
-	_rtld_error("%s: Unsupported file type", path);
-	return NULL;
-    }
-    switch (u.hdr.e_machine) {
-    ELFDEFNNAME(MACHDEP_ID_CASES) 
+	/*
+         * We rely on the program header being in the first page.  This is
+         * not strictly required by the ABI specification, but it seems to
+         * always true in practice.  And, it simplifies things considerably.
+         */
+	assert(u.hdr.e_phentsize == sizeof(Elf_Phdr));
+	assert(u.hdr.e_phoff + u.hdr.e_phnum * sizeof(Elf_Phdr) <= PAGESIZE);
+	assert(u.hdr.e_phoff + u.hdr.e_phnum * sizeof(Elf_Phdr) <= nbytes);
 
-    default:
-	_rtld_error("%s: Unsupported machine", path);
-	return NULL;
-    }
+	/*
+         * Scan the program header entries, and save key information.
+         *
+         * We rely on there being exactly two load segments, text and data,
+         * in that order.
+         */
+	phdr = (Elf_Phdr *) (u.buf + u.hdr.e_phoff);
+	phlimit = phdr + u.hdr.e_phnum;
+	nsegs = 0;
+	phdyn = NULL;
+	phphdr = NULL;
+	while (phdr < phlimit) {
+		switch (phdr->p_type) {
 
-    /*
-     * We rely on the program header being in the first page.  This is
-     * not strictly required by the ABI specification, but it seems to
-     * always true in practice.  And, it simplifies things considerably.
-     */
-    assert(u.hdr.e_phentsize == sizeof(Elf_Phdr));
-    assert(u.hdr.e_phoff + u.hdr.e_phnum*sizeof(Elf_Phdr) <= PAGESIZE);
-    assert(u.hdr.e_phoff + u.hdr.e_phnum*sizeof(Elf_Phdr) <= nbytes);
-
-    /*
-     * Scan the program header entries, and save key information.
-     *
-     * We rely on there being exactly two load segments, text and data,
-     * in that order.
-     */
-    phdr = (Elf_Phdr *) (u.buf + u.hdr.e_phoff);
-    phlimit = phdr + u.hdr.e_phnum;
-    nsegs = 0;
-    phdyn = NULL;
-    phphdr = NULL;
-    while(phdr < phlimit) {
-	switch(phdr->p_type) {
-
-	case Elf_pt_load:
+		case Elf_pt_load:
 #ifdef __mips__
-	    /* NetBSD/pmax 1.1 elf toolchain peculiarity */
-	    if (nsegs >= 2) {
-		    _rtld_error("%s: too many sections\n", path);
-		    return NULL;
-	    }
+			/* NetBSD/pmax 1.1 elf toolchain peculiarity */
+			if (nsegs >= 2) {
+				_rtld_error("%s: too many sections\n", path);
+				return NULL;
+			}
 #endif
-	    assert(nsegs < 2);
-	    segs[nsegs] = phdr;
-	    ++nsegs;
-	    break;
+			assert(nsegs < 2);
+			segs[nsegs] = phdr;
+			++nsegs;
+			break;
 
-	case Elf_pt_phdr:
-	    phphdr = phdr;
-	    break;
+		case Elf_pt_phdr:
+			phphdr = phdr;
+			break;
 
-	case Elf_pt_dynamic:
-	    phdyn = phdr;
-	    break;
+		case Elf_pt_dynamic:
+			phdyn = phdr;
+			break;
+		}
+
+		++phdr;
 	}
-
-	++phdr;
-    }
-    if (phdyn == NULL) {
-	_rtld_error("%s: not dynamically-linked", path);
-	return NULL;
-    }
-
-    assert(nsegs == 2);
+	if (phdyn == NULL) {
+		_rtld_error("%s: not dynamically-linked", path);
+		return NULL;
+	}
+	assert(nsegs == 2);
 #ifdef __i386__
-    assert(segs[0]->p_align <= PAGESIZE);
-    assert(segs[1]->p_align <= PAGESIZE);
+	assert(segs[0]->p_align <= PAGESIZE);
+	assert(segs[1]->p_align <= PAGESIZE);
 #endif
 
-    /*
-     * Map the entire address space of the object, to stake out our
-     * contiguous region, and to establish the base address for relocation.
-     */
-    base_offset = round_down(segs[0]->p_offset);
-    base_vaddr = round_down(segs[0]->p_vaddr);
-    base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
-    mapsize = base_vlimit - base_vaddr;
+	/*
+         * Map the entire address space of the object, to stake out our
+         * contiguous region, and to establish the base address for relocation.
+         */
+	base_offset = round_down(segs[0]->p_offset);
+	base_vaddr = round_down(segs[0]->p_vaddr);
+	base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
+	mapsize = base_vlimit - base_vaddr;
 #ifdef RTLD_LOADER
-    base_addr = u.hdr.e_type == Elf_et_exec ? (caddr_t) base_vaddr : NULL;
+	base_addr = u.hdr.e_type == Elf_et_exec ? (caddr_t) base_vaddr : NULL;
 #else
-    base_addr = NULL;
+	base_addr = NULL;
 #endif
 
-    mapbase = mmap(base_addr, mapsize, protflags(segs[0]->p_flags),
-	MAP_FILE|MAP_PRIVATE, fd, base_offset);
-    if (mapbase == (caddr_t) -1) {
-	_rtld_error("mmap of entire address space failed: %s", xstrerror(errno));
-	return NULL;
-    }
-    if (base_addr != NULL && mapbase != base_addr) {
-	_rtld_error("mmap returned wrong address: wanted %p, got %p", base_addr,
-	    mapbase);
-	munmap(mapbase, mapsize);
-	return NULL;
-    }
-
-    /* Overlay the data segment onto the proper region. */
-    data_offset = round_down(segs[1]->p_offset);
-    data_vaddr = round_down(segs[1]->p_vaddr);
-    data_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_filesz);
-    data_addr = mapbase + (data_vaddr - base_vaddr);
-    if (mmap(data_addr, data_vlimit - data_vaddr, protflags(segs[1]->p_flags),
-	    MAP_FILE|MAP_PRIVATE|MAP_FIXED, fd, data_offset) == (caddr_t) -1) {
-	_rtld_error("mmap of data failed: %s", xstrerror(errno));
-	return NULL;
-    }
-
-#ifdef RTLD_LOADER
-    /* Clear any BSS in the last page of the data segment. */
-    clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
-    clear_addr = mapbase + (clear_vaddr - base_vaddr);
-    if ((nclear = data_vlimit - clear_vaddr) > 0)
-	memset(clear_addr, 0, nclear);
-
-    /* Overlay the BSS segment onto the proper region. */
-    bss_vaddr = data_vlimit;
-    bss_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
-    bss_addr = mapbase +  (bss_vaddr - base_vaddr);
-    if (bss_vlimit > bss_vaddr) {	/* There is something to do */
-	if (mmap(bss_addr, bss_vlimit - bss_vaddr, protflags(segs[1]->p_flags),
-		MAP_ANON|MAP_PRIVATE|MAP_FIXED, -1, 0) == (caddr_t) -1) {
-	    _rtld_error("mmap of bss failed: %s", xstrerror(errno));
-	    return NULL;
+	mapbase = mmap(base_addr, mapsize, protflags(segs[0]->p_flags),
+		       MAP_FILE | MAP_PRIVATE, fd, base_offset);
+	if (mapbase == (caddr_t) - 1) {
+		_rtld_error("mmap of entire address space failed: %s",
+		    xstrerror(errno));
+		return NULL;
 	}
-    }
+	if (base_addr != NULL && mapbase != base_addr) {
+		_rtld_error("mmap returned wrong address: wanted %p, got %p", base_addr,
+			    mapbase);
+		munmap(mapbase, mapsize);
+		return NULL;
+	}
+	/* Overlay the data segment onto the proper region. */
+	data_offset = round_down(segs[1]->p_offset);
+	data_vaddr = round_down(segs[1]->p_vaddr);
+	data_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_filesz);
+	data_addr = mapbase + (data_vaddr - base_vaddr);
+	if (mmap(data_addr, data_vlimit - data_vaddr,
+	    protflags(segs[1]->p_flags), MAP_FILE | MAP_PRIVATE | MAP_FIXED,
+	    fd, data_offset) == (caddr_t)-1) {
+		_rtld_error("mmap of data failed: %s", xstrerror(errno));
+		return NULL;
+	}
+#ifdef RTLD_LOADER
+	/* Clear any BSS in the last page of the data segment. */
+	clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
+	clear_addr = mapbase + (clear_vaddr - base_vaddr);
+	if ((nclear = data_vlimit - clear_vaddr) > 0)
+		memset(clear_addr, 0, nclear);
+
+	/* Overlay the BSS segment onto the proper region. */
+	bss_vaddr = data_vlimit;
+	bss_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
+	bss_addr = mapbase + (bss_vaddr - base_vaddr);
+	if (bss_vlimit > bss_vaddr) {	/* There is something to do */
+		if (mmap(bss_addr, bss_vlimit - bss_vaddr,
+		    protflags(segs[1]->p_flags),
+		    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1,
+		    0) == (caddr_t)-1) {
+			_rtld_error("mmap of bss failed: %s", xstrerror(errno));
+			return NULL;
+		}
+	}
 #endif
 
-    obj = CNEW(Obj_Entry);
-    obj->mapbase = mapbase;
-    obj->mapsize = mapsize;
-    obj->textsize = round_up(segs[0]->p_vaddr + segs[0]->p_memsz) - base_vaddr;
-    obj->vaddrbase = base_vaddr;
-    obj->relocbase = mapbase - base_vaddr;
-    obj->dynamic = (Elf_Dyn *) (obj->relocbase + phdyn->p_vaddr);
-    if (u.hdr.e_entry != 0)
-	obj->entry = (caddr_t) (obj->relocbase + u.hdr.e_entry);
-    if (phphdr != NULL) {
-	obj->phdr = (const Elf_Phdr *) (obj->relocbase + phphdr->p_vaddr);
-	obj->phsize = phphdr->p_memsz;
-    }
-
-    return obj;
+	obj = CNEW(Obj_Entry);
+	obj->mapbase = mapbase;
+	obj->mapsize = mapsize;
+	obj->textsize = round_up(segs[0]->p_vaddr + segs[0]->p_memsz) -
+	    base_vaddr;
+	obj->vaddrbase = base_vaddr;
+	obj->relocbase = mapbase - base_vaddr;
+	obj->dynamic = (Elf_Dyn *)(obj->relocbase + phdyn->p_vaddr);
+	if (u.hdr.e_entry != 0)
+		obj->entry = (caddr_t)(obj->relocbase + u.hdr.e_entry);
+	if (phphdr != NULL) {
+		obj->phdr = (const Elf_Phdr *)
+		    (obj->relocbase + phphdr->p_vaddr);
+		obj->phsize = phphdr->p_memsz;
+	}
+	return obj;
 }
 
 /*
@@ -259,13 +259,17 @@ _rtld_map_object(
  * flags for MMAP.
  */
 static int
-protflags(int elfflags)
+protflags(elfflags)
+	int elfflags;
 {
-    int prot = 0;
-    if (elfflags & Elf_pf_r) prot |= PROT_READ;
+	int prot = 0;
+	if (elfflags & Elf_pf_r)
+		prot |= PROT_READ;
 #ifdef RTLD_LOADER
-    if (elfflags & Elf_pf_w) prot |= PROT_WRITE;
+	if (elfflags & Elf_pf_w)
+		prot |= PROT_WRITE;
 #endif
-    if (elfflags & Elf_pf_x) prot |= PROT_EXEC;
-    return prot;
+	if (elfflags & Elf_pf_x)
+		prot |= PROT_EXEC;
+	return prot;
 }
