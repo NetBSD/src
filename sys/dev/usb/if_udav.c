@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.1 2003/08/22 05:13:29 itojun Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.2 2003/09/04 15:17:38 tsutsui Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Shingo WATANABE.
- * 4. Neither the name of the author nor the names of any co-contributors
+ * 3. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -47,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.1 2003/08/22 05:13:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.2 2003/09/04 15:17:38 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
