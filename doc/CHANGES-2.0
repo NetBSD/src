@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.258 2004/06/06 06:54:28 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.259 2004/06/07 06:38:28 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3536,4 +3536,21 @@ usr.bin/awk/awk.1				1.14
 
 	Add history section noting nawk is default since 2.0, and bump date.
 	[jdolecek, ticket #447]
+
+sys/net/if_ethersubr.c 1.115
+
+	Detach ethernet(-like) devices from a bridge in ether_ifdetach().
+	PR#25721.
+	[dyoung, ticket #448]
+
+sys/net80211/ieee80211.c			1.16
+sys/dev/ic/wi.c					1.161
+	Fix for "ifconfig wi0 media DS11" panicing system: in
+	ieee80211_chan2mode(), do not dereference the marker for
+	"any channel", IEEE80211_CHAN_ANYC.
+	Fix for "SIOCSIFMEDIA: Invalid argument": refactor wi_media_change()
+	and ieee80211_media_change().  ieee80211_media_change() handles a
+	lot more conditions than wi_media_change() did.
+	PR#25604.
+	[dyoung, ticket #449]
 
