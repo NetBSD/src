@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.10 1997/10/14 01:28:52 lukem Exp $	*/
+/*	$NetBSD: msgs.c,v 1.11 1997/10/19 05:19:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: msgs.c,v 1.10 1997/10/14 01:28:52 lukem Exp $");
+__RCSID("$NetBSD: msgs.c,v 1.11 1997/10/19 05:19:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,8 +280,8 @@ main(argc, argv)
 		lastmsg = 0;
 
 		for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp)){
-			register char *cp = dp->d_name;
-			register int i = 0;
+			char *cp = dp->d_name;
+			int i = 0;
 
 			if (dp->d_ino == 0)
 				continue;
