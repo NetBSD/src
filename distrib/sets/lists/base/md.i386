@@ -1,7 +1,7 @@
 ./sbin/fdisk
 ./sbin/ldconfig
 ./usr/bin/fdformat
-./usr/lib/libamu.so.0.0
+./usr/lib/libamu.so.0.1
 ./usr/lib/libbfd.so.0.0
 ./usr/lib/libc.so.12.26
 ./usr/lib/libcrypt.so.0.0

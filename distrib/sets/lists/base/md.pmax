@@ -2,7 +2,7 @@
 ./usr/lib/crtn.o
 ./usr/lib/libamu.so
 ./usr/lib/libamu.so.0
-./usr/lib/libamu.so.0.0
+./usr/lib/libamu.so.0.1
 ./usr/lib/libbfd.so
 ./usr/lib/libbfd.so.0
 ./usr/lib/libbfd.so.0.0
