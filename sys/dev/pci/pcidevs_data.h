@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.617 2004/04/17 01:56:31 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.618 2004/04/22 11:28:11 skd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -8338,6 +8338,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "600 Power Mngmt Controller",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_180_SATA,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 180 SATA controller",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA,
 	    0,
 	    "Silicon Integrated System",
@@ -8546,6 +8552,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "SiS 963 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_964,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 964 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
