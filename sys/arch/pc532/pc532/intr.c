@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 1995/06/09 05:59:59 phil Exp $  */
+/*	$NetBSD: intr.c,v 1.3 1995/07/04 12:19:07 paulus Exp $  */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.2 1995/06/09 05:59:59 phil Exp $
+ *	$Id: intr.c,v 1.3 1995/07/04 12:19:07 paulus Exp $
  */
 
 #define DEFINE_SPLX
@@ -189,6 +189,10 @@ softnet()
 #endif
 #ifdef CCITT
 	if (isr & (1 << NETISR_CCITT)) ccittintr();
+#endif
+#include "ppp.h"
+#if NPPP > 0
+	if (isr & (1 << NETISR_PPP)) pppintr();
 #endif
 }
 
