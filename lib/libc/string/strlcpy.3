@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.6.2.2 2002/01/28 20:51:23 nathanw Exp $
+.\"	$NetBSD: strlcpy.3,v 1.6.2.3 2002/03/08 21:36:05 nathanw Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -36,7 +36,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <string.h>
+.Fd #include \*[Lt]string.h\*[Gt]
 .Ft size_t
 .Fn strlcpy "char *dst" "const char *src" "size_t size"
 .Ft size_t
@@ -160,9 +160,9 @@ char *dir, *file, pname[MAXPATHLEN];
 
 \&...
 
-if (strlcpy(pname, dir, sizeof(pname)) >= sizeof(pname))
+if (strlcpy(pname, dir, sizeof(pname)) \*[Ge] sizeof(pname))
 	goto toolong;
-if (strlcat(pname, file, sizeof(pname)) >= sizeof(pname))
+if (strlcat(pname, file, sizeof(pname)) \*[Ge] sizeof(pname))
 	goto toolong;
 .Ed
 .Pp
@@ -175,9 +175,9 @@ size_t n;
 \&...
 
 n = strlcpy(pname, dir, sizeof(pname));
-if (n >= sizeof(pname))
+if (n \*[Ge] sizeof(pname))
 	goto toolong;
-if (strlcpy(pname + n, file, sizeof(pname) - n) >= sizeof(pname) - n)
+if (strlcpy(pname + n, file, sizeof(pname) - n) \*[Ge] sizeof(pname) - n)
 	goto toolong;
 .Ed
 .Pp

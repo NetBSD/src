@@ -1,12 +1,12 @@
-/*	$NetBSD: zic.c,v 1.18 2000/12/12 15:25:41 kleink Exp $	*/
+/*	$NetBSD: zic.c,v 1.18.2.1 2002/03/08 21:36:55 nathanw Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)zic.c	7.101";
+static char	elsieid[] = "@(#)zic.c	7.104";
 #else
-__RCSID("$NetBSD: zic.c,v 1.18 2000/12/12 15:25:41 kleink Exp $");
+__RCSID("$NetBSD: zic.c,v 1.18.2.1 2002/03/08 21:36:55 nathanw Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -14,7 +14,16 @@ __RCSID("$NetBSD: zic.c,v 1.18 2000/12/12 15:25:41 kleink Exp $");
 #include "private.h"
 #include "locale.h"
 #include "tzfile.h"
-#include "sys/stat.h"			/* for umask manifest constants */
+
+#if HAVE_SYS_STAT_H
+#include "sys/stat.h"
+#endif
+#ifdef S_IRUSR
+#define MKDIR_UMASK (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
+#else
+#define MKDIR_UMASK 0755
+#endif
+
 #include "unistd.h"
 
 /*
@@ -622,7 +631,7 @@ const char * const	tofile;
 			(void) exit(EXIT_FAILURE);
 
 		result = link(fromname, toname);
-#if (HAVE_SYMLINK - 0) 
+#if (HAVE_SYMLINK - 0)
 		if (result != 0) {
 		        const char *s = tofile;
 		        register char * symlinkcontents = NULL;
@@ -1610,16 +1619,16 @@ const int			zonecount;
 	typecnt = 0;
 	charcnt = 0;
 	/*
-	** A guess that may well be corrected later.
-	*/
-	stdoff = 0;
-	/*
 	** Thanks to Earl Chew (earl@dnd.icp.nec.com.au)
 	** for noting the need to unconditionally initialize startttisstd.
 	*/
 	startttisstd = FALSE;
 	startttisgmt = FALSE;
 	for (i = 0; i < zonecount; ++i) {
+		/*
+		** A guess that may well be corrected later.
+		*/
+		stdoff = 0;
 		zp = &zpfirst[i];
 		usestart = i > 0 && (zp - 1)->z_untiltime > min_time;
 		useuntil = i < (zonecount - 1);
@@ -1639,8 +1648,7 @@ const int			zonecount;
 			if (usestart) {
 				addtt(starttime, type);
 				usestart = FALSE;
-			}
-			else if (stdoff != 0)
+			} else if (stdoff != 0)
 				addtt(min_time, type);
 		} else for (year = min_year; year <= max_year; ++year) {
 			if (useuntil && year > zp->z_untilrule.r_hiyear)
@@ -2201,7 +2209,7 @@ char * const	argname;
 			** created by some other multiprocessor, so we get
 			** to do extra checking.
 			*/
-			if (mkdir(name, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) != 0) {
+			if (mkdir(name, MKDIR_UMASK) != 0) {
 				const char *e = strerror(errno);
 
 				if (errno != EEXIST || !itsdir(name)) {

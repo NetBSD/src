@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111.2.7 2002/01/29 19:51:26 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.111.2.8 2002/03/08 21:36:11 nathanw Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # Generation and compilation of syscall stubs have moved to

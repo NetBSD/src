@@ -33,18 +33,18 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)alloca.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: alloca.S,v 1.1 1995/04/17 12:23:38 ragge Exp $"
+	.asciz "$NetBSD: alloca.S,v 1.1.22.1 2002/03/08 21:34:54 nathanw Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
 ENTRY(alloca, 0)
-	movl	4(ap),r0	# get allocation size
-	movl	16(fp),r2	# save return address before we smash it
-	movab	here,16(fp)
+	movl	4(%ap),%r0	# get allocation size
+	movl	16(%fp),%r2	# save return address before we smash it
+	movab	here,16(%fp)
 	ret
 here:
-	subl2	r0,sp		# create stack space
-	bicl2	$3,sp		# align to longword boundary
-	movl	sp,r0
-	jmp	(r2)
+	subl2	%r0,%sp		# create stack space
+	bicl2	$3,%sp		# align to longword boundary
+	movl	%sp,%r0
+	jmp	(%r2)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwcache.3,v 1.9.12.2 2002/01/28 20:50:33 nathanw Exp $
+.\"	$NetBSD: pwcache.3,v 1.9.12.3 2002/03/08 21:35:14 nathanw Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,7 @@
 .\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
-.\" 
+.\"
 .\"
 .\"     @(#)pwcache.3	8.1 (Berkeley) 6/9/93
 .\"
@@ -77,14 +77,14 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <pwd.h>
+.Fd #include \*[Lt]pwd.h\*[Gt]
 .Ft const char *
 .Fn user_from_uid "uid_t uid" "int nouser"
 .Ft int
 .Fn uid_from_user "const char *name" "uid_t *uid"
 .Ft int
 .Fn pwcache_userdb "int (*setpassent)(int)" "void (*endpwent)(void)" "struct passwd * (*getpwnam)(const char *)" "struct passwd * (*getpwuid)(uid_t)"
-.Fd #include <grp.h>
+.Fd #include \*[Lt]grp.h\*[Gt]
 .Ft const char *
 .Fn group_from_gid "gid_t gid" "int nogroup"
 .Ft int

@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.17.2.1 2001/10/08 20:22:13 nathanw Exp $
+.\"	$NetBSD: swapctl.2,v 1.17.2.2 2002/03/08 21:36:44 nathanw Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -41,8 +41,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
-.Fd #include <sys/swap.h>
+.Fd #include \*[Lt]unistd.h\*[Gt]
+.Fd #include \*[Lt]sys/swap.h\*[Gt]
 .Ft int
 .Fn swapctl "int cmd" "const void *arg" "int misc"
 .Sh DESCRIPTION
@@ -239,11 +239,11 @@ member was added to
 in
 .Nx 1.4 ,
 when the header file was also moved from
-.Pa <vm/vm_swap.h> ,
+.Pa \*[Lt]vm/vm_swap.h\*[Gt] ,
 to its current location in
-.Pa <sys/swap.h> .
+.Pa \*[Lt]sys/swap.h\*[Gt] .
 .Sh AUTHORS
 The current swap system was designed and implemented by Matthew Green
-<mrg@eterna.com.au>, with help from Paul Kranenburg <pk@NetBSD.ORG>
-and Leo Weppelman <leo@NetBSD.ORG>, and insights from Jason R. Thorpe
-<thorpej@NetBSD.ORG>.
+\*[Lt]mrg@eterna.com.au\*[Gt], with help from Paul Kranenburg \*[Lt]pk@NetBSD.ORG\*[Gt]
+and Leo Weppelman \*[Lt]leo@NetBSD.ORG\*[Gt], and insights from Jason R. Thorpe
+\*[Lt]thorpej@NetBSD.ORG\*[Gt].

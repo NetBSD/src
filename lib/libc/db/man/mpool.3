@@ -1,4 +1,4 @@
-.\"	$NetBSD: mpool.3,v 1.5 1997/11/14 02:04:37 mrg Exp $
+.\"	$NetBSD: mpool.3,v 1.5.12.1 2002/03/08 21:35:02 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,8 @@ mpool, mpool_open, mpool_filter, mpool_new, mpool_get, mpool_put, mpool_sync, mp
 .SH SYNOPSIS
 .nf
 .ft B
-#include <db.h>
-#include <mpool.h>
+#include \*[Lt]db.h\*[Gt]
+#include \*[Lt]mpool.h\*[Gt]
 
 MPOOL *
 mpool_open (DBT *key, int fd, pgno_t pagesize, pgno_t maxcache);

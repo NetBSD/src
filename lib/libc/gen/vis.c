@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.19.6.1 2002/01/28 20:50:38 nathanw Exp $	*/
+/*	$NetBSD: vis.c,v 1.19.6.2 2002/03/08 21:35:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,13 +34,10 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
 #include <sys/cdefs.h>
-#if !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.19.6.1 2002/01/28 20:50:38 nathanw Exp $");
-#endif /* not lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: vis.c,v 1.19.6.2 2002/03/08 21:35:21 nathanw Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -55,7 +52,6 @@ __weak_alias(strvis,_strvis)
 __weak_alias(strvisx,_strvisx)
 __weak_alias(svis,_svis)
 __weak_alias(vis,_vis)
-#endif
 #endif
 
 #if !HAVE_VIS_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.11 1999/09/20 04:39:47 lukem Exp $	*/
+/*	$NetBSD: strmode.c,v 1.11.10.1 2002/03/08 21:36:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.11 1999/09/20 04:39:47 lukem Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.11.10.1 2002/03/08 21:36:06 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 

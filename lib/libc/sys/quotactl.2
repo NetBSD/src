@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.15.4.1 2001/10/08 20:22:01 nathanw Exp $
+.\"	$NetBSD: quotactl.2,v 1.15.4.2 2002/03/08 21:36:35 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <ufs/ufs/quota.h>	/* for ufs quotas */
+.Fd #include \*[Lt]ufs/ufs/quota.h\*[Gt]	/* for ufs quotas */
 .Ft int
 .Fn quotactl "const char *path" "int cmd" "int id" "void *addr"
 .Sh DESCRIPTION

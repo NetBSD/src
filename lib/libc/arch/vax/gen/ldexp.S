@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/*.asciz "@(#)ldexp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: ldexp.S,v 1.4 2000/06/28 19:20:17 matt Exp $"
+	.asciz "$NetBSD: ldexp.S,v 1.4.2.1 2002/03/08 21:34:56 nathanw Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -61,30 +61,30 @@
 	.globl	_C_LABEL(errno)
 
 ENTRY(ldexp, 0)
-	movd	4(ap),r0	/* fetch "value" */
-	extzv	$7,$8,r0,r2	/* r2 := biased exponent */
+	movd	4(%ap),%r0	/* fetch "value" */
+	extzv	$7,$8,%r0,%r2	/* %r2 := biased exponent */
 	jeql	1f		/* if zero, done */
 
-	addl2	12(ap),r2	/* r2 := new biased exponent */
+	addl2	12(%ap),%r2	/* %r2 := new biased exponent */
 	jleq	2f		/* if <= 0, underflow */
-	cmpl	r2,$256		/* otherwise check if too big */
+	cmpl	%r2,$256		/* otherwise check if too big */
 	jgeq	3f		/* jump if overflow */
-	insv	r2,$7,$8,r0	/* put exponent back in result */
+	insv	%r2,$7,$8,%r0	/* put exponent back in result */
 1:
 	ret
 2:
-	clrd	r0
+	clrd	%r0
 	jbr	1f
 3:
-	movd	huge,r0		/* largest possible floating magnitude */
-	jbc	$15,4(ap),1f	/* jump if argument was positive */
-	mnegd	r0,r0		/* if arg < 0, make result negative */
+	movd	huge,%r0		/* largest possible floating magnitude */
+	jbc	$15,4(%ap),1f	/* jump if argument was positive */
+	mnegd	%r0,%r0		/* if arg < 0, make result negative */
 1:
 #ifdef _REENTRANT
-	pushl	r0
+	pushl	%r0
 	calls	$0,_C_LABEL(__errno)
-	movl	$ ERANGE,(r0)
-	movl	(sp)+,r0
+	movl	$ ERANGE,(%r0)
+	movl	(%sp)+,%r0
 #else
 	movl	$ ERANGE,_C_LABEL(errno)
 #endif

@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_bmapv.2,v 1.1.6.1 2001/10/08 20:21:49 nathanw Exp $
+.\"	$NetBSD: lfs_bmapv.2,v 1.1.6.2 2002/03/08 21:36:25 nathanw Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <ufs/lfs/lfs.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]ufs/lfs/lfs.h\*[Gt]
 .Ft int
 .Fn lfs_bmapv "fsid_t *fsidp" "BLOCK_INFO *blkiov" "int blkcnt"
 .Sh DESCRIPTION

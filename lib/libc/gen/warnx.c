@@ -1,4 +1,4 @@
-/*	$NetBSD: warnx.c,v 1.4 1999/08/17 03:44:00 mycroft Exp $	*/
+/*	$NetBSD: warnx.c,v 1.4.10.1 2002/03/08 21:35:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,12 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: warnx.c,v 1.4 1999/08/17 03:44:00 mycroft Exp $");
+__RCSID("$NetBSD: warnx.c,v 1.4.10.1 2002/03/08 21:35:21 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef __NO_NAMESPACE_H	/* XXX */
 #include "namespace.h"
+#endif
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 #include <err.h>
 

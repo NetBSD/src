@@ -1,4 +1,4 @@
-.\"	$NetBSD: re_format.7,v 1.5.22.1 2001/10/08 20:20:29 nathanw Exp $
+.\"	$NetBSD: re_format.7,v 1.5.22.2 2002/03/08 21:35:29 nathanw Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -168,7 +168,7 @@ A locale may provide others.
 A character class may not be used as an endpoint of a range.
 .PP
 There are two special cases\(dg of bracket expressions:
-the bracket expressions `[[:<:]]' and `[[:>:]]' match the null string at
+the bracket expressions `[[:\*[Lt]:]]' and `[[:\*[Gt]:]]' match the null string at
 the beginning and end of a word respectively.
 A word is defined as a sequence of
 word characters

@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigprocmask.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigprocmask.S,v 1.6 2000/06/30 23:46:36 matt Exp $"
+	.asciz "$NetBSD: sigprocmask.S,v 1.6.2.1 2002/03/08 21:35:01 nathanw Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -42,19 +42,19 @@ WARN_REFERENCES(sigprocmask, \
     "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
 
 ENTRY(sigprocmask, 0)
-	tstl	8(ap)			# check new sigset pointer
+	tstl	8(%ap)			# check new sigset pointer
 	bneq	1f			# if not null, indirect
-/*	movl	$0,8(ap)		# null mask pointer: block empty set */
-	movl	$1,4(ap)		# SIG_BLOCK
+/*	movl	$0,8(%ap)		# null mask pointer: block empty set */
+	movl	$1,4(%ap)		# SIG_BLOCK
 	jbr	2f
-1:	movl	*8(ap),8(ap)		# indirect to new mask arg
+1:	movl	*8(%ap),8(%ap)		# indirect to new mask arg
 2:	chmk	$ SYS_compat_13_sigprocmask13
 	jcc	3f
 	jmp	CERROR+2
 
-3:	tstl	12(ap)			# test if old mask requested
+3:	tstl	12(%ap)			# test if old mask requested
 	beql	out
-	movl	r0,*12(ap)		# store old mask
+	movl	%r0,*12(%ap)		# store old mask
 out:
-	clrl	r0
+	clrl	%r0
 	ret

@@ -1,4 +1,4 @@
-.\"	$NetBSD: time2posix.3,v 1.7.12.1 2001/10/08 20:22:22 nathanw Exp $
+.\"	$NetBSD: time2posix.3,v 1.7.12.2 2002/03/08 21:36:53 nathanw Exp $
 .Dd April 1, 2001
 .Dt TIME2POSIX 3
 .Os
@@ -9,7 +9,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <time.h>
+.Fd #include \*[Lt]time.h\*[Gt]
 .Ft time_t
 .Fn time2posix "time_t t"
 .Ft time_t
@@ -98,7 +98,7 @@ A leap second deletion would look like...
 .It ??/07/01	00:00:00	A+1	B+2	A+1
 .It ??/07/01	00:00:01	A+2	B+3	A+2
 .El
-[Note: posix2time(B+1) => A+0 or A+1]
+[Note: posix2time(B+1) =\*[Gt] A+0 or A+1]
 .Pp
 If leap-second support is not enabled, local
 .Va time_t Ns 's

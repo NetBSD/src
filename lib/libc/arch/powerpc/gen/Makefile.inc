@@ -1,15 +1,17 @@
-#	$NetBSD: Makefile.inc,v 1.7.6.2 2001/11/08 05:38:11 briggs Exp $
+#	$NetBSD: Makefile.inc,v 1.7.6.3 2002/03/08 21:34:50 nathanw Exp $
 
-SRCS+=	_lwp.c _setjmp.S setjmp.S sigsetjmp.S __setjmp14.S __sigsetjmp14.S
-SRCS+=	makecontext.c resumecontext.c swapcontext.S
-SRCS+=	isinf.c isnan.c ldexp.c fabs.c flt_rounds.c infinity.c nanf.c
+SRCS+=	_setjmp.S setjmp.S sigsetjmp.S __setjmp14.S __sigsetjmp14.S
 SRCS+=	bswap16.c bswap32.c bswap64.c
-SRCS+=	frexp.c modf.c
-SRCS+=	syncicache.c
+SRCS+=	fabs.c flt_rounds.c
 SRCS+=	fpgetround.c fpsetround.c fpgetmask.c fpsetmask.c
 SRCS+=	fpgetsticky.c fpsetsticky.c
+SRCS+=	syncicache.c
+SRCS+= _lwp.c makecontext.c resumecontext.c swapcontext.S
 
-KMSRCS+=syncicache.c
+# Common ieee754 constants and functions
+SRCS+=	ieee754_infinity.c ieee754_nanf.c
+SRCS+=	ieee754_frexp.c ieee754_isinf.c ieee754_isnan.c ieee754_ldexp.c
+SRCS+=	ieee754_modf.c
 
 LSRCS+=	Lint_swapcontext.c
 DPSRCS+=Lint_swapcontext.c

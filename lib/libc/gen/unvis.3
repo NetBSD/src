@@ -1,4 +1,4 @@
-.\"	$NetBSD: unvis.3,v 1.9.12.1 2001/10/08 20:19:37 nathanw Exp $
+.\"	$NetBSD: unvis.3,v 1.9.12.2 2002/03/08 21:35:19 nathanw Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <vis.h>
+.Fd #include \*[Lt]vis.h\*[Gt]
 .Ft int
 .Fn unvis "char *cp" "char c" "int *astate" "int flag"
 .Ft int
@@ -140,7 +140,7 @@ char out;
 
 while ((ch = getchar()) != EOF) {
 again:
-	switch(unvis(&out, ch, &state, 0)) {
+	switch(unvis(\*[Am]out, ch, \*[Am]state, 0)) {
 	case 0:
 	case UNVIS_NOCHAR:
 		break;
@@ -155,7 +155,7 @@ again:
 	exit(1);
 	}
 }
-if (unvis(&out, (char)0, &state, UNVIS_END) == UNVIS_VALID)
+if (unvis(\*[Am]out, (char)0, \*[Am]state, UNVIS_END) == UNVIS_VALID)
 	(void) putchar(out);
 .Ed
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmd160.3,v 1.2.2.1 2001/10/08 20:19:42 nathanw Exp $
+.\"	$NetBSD: rmd160.3,v 1.2.2.2 2002/03/08 21:35:22 nathanw Exp $
 .\"	$OpenBSD: rmd160.3,v 1.12 2000/04/18 03:01:29 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -42,8 +42,8 @@
 .Nm RMD160Data
 .Nd calculate the ``RIPEMD-160'' message digest
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <rmd160.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]rmd160.h\*[Gt]
 .Ft void
 .Fn RMD160Init "RMD160_CTX *context"
 .Ft void
@@ -165,13 +165,13 @@ int n;
 
 buf = "abc";
 n = strlen(buf);
-RMD160Init(&rmd);
-RMD160Update(&rmd, (u_char *)buf, n);
-RMD160Final(results, &rmd);
+RMD160Init(\*[Am]rmd);
+RMD160Update(\*[Am]rmd, (u_char *)buf, n);
+RMD160Final(results, \*[Am]rmd);
 
 /* Print the digest as one long hex value */
 printf("0x");
-for (n = 0; n < 20; n++)
+for (n = 0; n \*[Lt] 20; n++)
 	printf("%02x", results[n]);
 putchar('\\n');
 .Ed

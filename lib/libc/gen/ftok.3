@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftok.3,v 1.6.2.1 2001/10/08 20:18:53 nathanw Exp $
+.\"	$NetBSD: ftok.3,v 1.6.2.2 2002/03/08 21:35:04 nathanw Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -34,8 +34,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/ipc.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/ipc.h\*[Gt]
 .Ft key_t
 .Fn ftok "const char *path" "int id" ;
 .Sh DESCRIPTION
@@ -78,7 +78,7 @@ function originated with System V and is typically used by programs
 that use the System V IPC routines.
 .Sh AUTHORS
 .Bl -tag
-Thorsten Lockert <tholo@sigmasoft.com>
+Thorsten Lockert \*[Lt]tholo@sigmasoft.com\*[Gt]
 .El
 .Sh BUGS
 The returned key is computed based on the device and inode of the

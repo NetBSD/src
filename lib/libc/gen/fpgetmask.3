@@ -1,4 +1,4 @@
-.\"	$NetBSD: fpgetmask.3,v 1.1.12.1 2001/10/08 20:18:51 nathanw Exp $
+.\"	$NetBSD: fpgetmask.3,v 1.1.12.2 2002/03/08 21:35:04 nathanw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <ieeefp.h>
+.Fd #include \*[Lt]ieeefp.h\*[Gt]
 .Ft fp_except
 .Fn fpgetmask void
 .Ft fp_rnd
@@ -88,7 +88,6 @@ the values listed below.
 .It Dv FP_X_IMP Ta Imprecision (inexact)
 .It Dv FP_X_IOV Ta Integer\ Overflow
 .El
-.Pp
 .Pp
 The
 .Fn fpsetmask

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.12.6.1 2001/10/08 20:19:29 nathanw Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.12.6.2 2002/03/08 21:35:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.12.6.1 2001/10/08 20:19:29 nathanw Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.12.6.2 2002/03/08 21:35:16 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -146,6 +146,10 @@ sysconf(name)
 	case _SC_MEMORY_PROTECTION:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_MEMORY_PROTECTION;
+		goto yesno;
+	case _SC_MONOTONIC_CLOCK:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MONOTONIC_CLOCK;
 		goto yesno;
 
 /* 1003.1c */

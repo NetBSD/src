@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: Ovfork.S,v 1.5 2000/06/28 19:20:18 matt Exp $"
+	.asciz "$NetBSD: Ovfork.S,v 1.5.2.1 2002/03/08 21:34:59 nathanw Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -49,8 +49,8 @@ WARN_REFERENCES(vfork, \
 /*
  * pid = vfork();
  *
- * r1 == 0 in parent process, r1 == 1 in child process.
- * r0 == pid of child in parent, r0 == pid of parent in child.
+ * %r1 == 0 in parent process, %r1 == 1 in child process.
+ * %r0 == pid of child in parent, %r0 == pid of parent in child.
  *
  * trickery here, due to keith sklower, uses ret to clear the stack,
  * and then returns with a jump indirect, since only one person can return
@@ -58,26 +58,26 @@ WARN_REFERENCES(vfork, \
  */
 
 ENTRY(vfork, 0)
-	movl	16(fp),r2	# save return address before we smash it
-	movab	here,16(fp)
+	movl	16(%fp),%r2	# save return address before we smash it
+	movab	here,16(%fp)
 	ret
 here:
 	chmk	$ SYS_vfork
 	bcs	err		# if failed, set errno and return -1
 	/* this next trick is Chris Torek's fault */
-	mnegl	r1,r1		# r1 = 0xffffffff if child, 0 if parent
-	bicl2	r1,r0		# r0 &= ~r1, i.e., 0 if child, else unchanged
-	jmp	(r2)
+	mnegl	%r1,%r1		# %r1 = 0xffffffff if child, 0 if parent
+	bicl2	%r1,%r0		# %r0 &= ~%r1, i.e., 0 if child, else unchanged
+	jmp	(%r2)
 
 err:
 #ifdef _REENTRANT
 	pushr	$0x5
 	calls	$0,_C_LABEL(__errno)
-	movl	(sp)+,(r0)
-	mnegl	$1,r0
+	movl	(%sp)+,(%r0)
+	mnegl	$1,%r0
 	rsb
 #else
-	movl	r0,_C_LABEL(errno)
-	mnegl	$1,r0
-	jmp	(r2)
+	movl	%r0,_C_LABEL(errno)
+	mnegl	$1,%r0
+	jmp	(%r2)
 #endif

@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigpending.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigpending.S,v 1.3 1998/12/02 01:01:05 thorpej Exp $"
+	.asciz "$NetBSD: sigpending.S,v 1.3.12.1 2002/03/08 21:35:01 nathanw Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -42,6 +42,6 @@ WARN_REFERENCES(sigpending, \
     "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
 _SYSCALL(sigpending,compat_13_sigpending13)
-	movl	r0,*4(ap)		# store old mask
-	clrl	r0
+	movl	%r0,*4(%ap)		# store old mask
+	clrl	%r0
 	ret

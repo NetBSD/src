@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.2.6.2 2002/01/28 20:50:30 nathanw Exp $	*/
+/*	$NetBSD: dirname.c,v 1.2.6.3 2002/03/08 21:35:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,23 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dirname.c,v 1.2.6.2 2002/01/28 20:50:30 nathanw Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.2.6.3 2002/03/08 21:35:04 nathanw Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
 #include <libgen.h>
+#include <string.h>
 
 #ifdef __weak_alias
 __weak_alias(dirname,_dirname)
 #endif
-#endif
-
-#include <string.h>
 
 #if !HAVE_DIRNAME
 char *

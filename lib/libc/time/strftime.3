@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.7.6.2 2002/01/28 20:51:32 nathanw Exp $
+.\"	$NetBSD: strftime.3,v 1.7.6.3 2002/03/08 21:36:52 nathanw Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRFTIME 3
@@ -45,7 +45,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <time.h>
+.Fd #include \*[Lt]time.h\*[Gt]
 .Ft size_t
 .Fn strftime "char * restrict buf" "size_t maxsize" "const char * restrict format" "const struct tm * restrict timeptr"
 .Sh DESCRIPTION

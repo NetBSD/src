@@ -1,5 +1,5 @@
 .\"	@(#)bindresvport.3n	2.2 88/08/02 4.0 RPCSRC; from 1.7 88/03/14 SMI
-.\"	$NetBSD: bindresvport.3,v 1.8.2.1 2001/10/08 20:20:31 nathanw Exp $
+.\"	$NetBSD: bindresvport.3,v 1.8.2.2 2002/03/08 21:35:30 nathanw Exp $
 .\"
 .Dd November 22, 1987
 .Dt BINDRESVPORT 3
@@ -11,8 +11,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <rpc/rpc.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
 .Ft int
 .Fn bindresvport "int sd" "struct sockaddr_in *sin"
 .Ft int
@@ -36,18 +36,18 @@ is a pointer to a
 .Ft "struct sockaddr_in"
 then the appropriate fields in the structure should be defined.
 Note that
-.Fa sin->sin_family
+.Fa sin-\*[Gt]sin_family
 must be initialized to the address family of the socket, passed by
 .Fa sd .
 If
-.Fa sin->sin_port
+.Fa sin-\*[Gt]sin_port
 is
 .Sq 0
 then an anonymous port (in the range 600-1023) will be
 chosen, and if
 .Xr bind 2
 is successful, the
-.Fa sin->sin_port
+.Fa sin-\*[Gt]sin_port
 will be updated to contain the allocated port.
 .Pp
 If

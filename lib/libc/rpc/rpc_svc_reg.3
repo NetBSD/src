@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_call 1.6 89/07/20 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_reg.3,v 1.1.6.1 2001/10/08 20:20:39 nathanw Exp $
+.\"	$NetBSD: rpc_svc_reg.3,v 1.1.6.2 2002/03/08 21:35:33 nathanw Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_REG 3
 .Sh NAME
@@ -17,7 +17,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <rpc/rpc.h>
+.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
 .Ft bool_t
 .Fn rpc_reg "const rpcprog_t prognum" "const rpcvers_t versnum" "const rpcproc_t procnum" "const char *(*procname)()" "const xdrproc_t inproc" "const xdrproc_t outproc" "const char *nettype"
 .Ft int
@@ -99,9 +99,9 @@ then a mapping of the triple
 [
 .Fa prognum ,
 .Fa versnum ,
-.Fa netconf->nc_netid ]
+.Fa netconf-\*[Gt]nc_netid ]
 to
-.Fa xprt->xp_ltaddr
+.Fa xprt-\*[Gt]xp_ltaddr
 is established with the local rpcbind
 service.
 .Pp
