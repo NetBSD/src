@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.66 2002/03/18 07:54:33 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.67 2002/03/18 08:23:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.66 2002/03/18 07:54:33 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.67 2002/03/18 08:23:33 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.66 2002/03/18 07:54:33 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.67 2002/03/18 08:23:33 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2898,12 +2898,13 @@ JobInterrupt(runINTERRUPT, signo)
 
    (void) Lst_Open(jobs);
     while ((ln = Lst_Next(jobs)) != NILLNODE) {
-	job = (Job *) Lst_Datum(ln);
+	GNode *gn;
 
-	if (!Targ_Precious(job->node)) {
-	    char  	*file = (job->node->path == NULL ?
-				 job->node->name :
-				 job->node->path);
+	job = (Job *) Lst_Datum(ln);
+	gn = job->node;
+
+	if ((gn->type & (OP_JOIN|OP_PHONY)) == 0 && !Targ_Precious(gn)) {
+	    char *file = (gn->path == NULL ? gn->name : gn->path);
 	    if (!noExecute && eunlink(file) != -1) {
 		Error("*** %s removed", file);
 	    }
@@ -2944,7 +2945,10 @@ JobInterrupt(runINTERRUPT, signo)
 #ifdef REMOTE
    (void)Lst_Open(stoppedJobs);
     while ((ln = Lst_Next(stoppedJobs)) != NILLNODE) {
+	GNode *gn;
+
 	job = (Job *) Lst_Datum(ln);
+	gn = job->node;
 
 	if (job->flags & JOB_RESTART) {
 	    if (DEBUG(JOB)) {
@@ -2955,10 +2959,8 @@ JobInterrupt(runINTERRUPT, signo)
 	    }
 	    continue;
 	}
-	if (!Targ_Precious(job->node)) {
-	    char  	*file = (job->node->path == NULL ?
-				 job->node->name :
-				 job->node->path);
+	if ((gn->type & (OP_JOIN|OP_PHONY)) == 0 && !Targ_Precious(gn)) {
+	    char *file = (gn->path == NULL ? gn->name : gn->path);
 	    if (eunlink(file) == 0) {
 		Error("*** %s removed", file);
 	    }
