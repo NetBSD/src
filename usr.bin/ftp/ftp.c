@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.97 2000/05/30 02:11:42 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.98 2000/06/05 09:22:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.97 2000/05/30 02:11:42 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.98 2000/06/05 09:22:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2206,6 +2206,7 @@ abort_remote(FILE *din)
 void
 ai_unmapped(struct addrinfo *ai)
 {
+#ifdef INET6
 	struct sockaddr_in6 *sin6;
 	struct sockaddr_in sin;
 
@@ -2228,4 +2229,5 @@ ai_unmapped(struct addrinfo *ai)
 	ai->ai_family = AF_INET;
 	memcpy(ai->ai_addr, &sin, sin.sin_len);
 	ai->ai_addrlen = sin.sin_len;
+#endif
 }

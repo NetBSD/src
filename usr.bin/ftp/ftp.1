@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.68 2000/06/01 04:26:38 itojun Exp $
+.\" 	$NetBSD: ftp.1,v 1.69 2000/06/05 09:22:53 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd June 1, 2000
+.Dd June 5, 2000
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1963,7 +1963,9 @@ were implemented in
 and later releases
 by Luke Mewburn <lukem@netbsd.org>.
 .Pp
-IPv6 support was added by the WIDE/KAME project.
+IPv6 support was added by the WIDE/KAME project
+(but may not be present in all non-NetBSD versions of this program, depending
+if the operating system supports IPv6 in a similar manner to KAME).
 .Sh BUGS
 Correct execution of many commands depends upon proper behavior
 by the remote server.
