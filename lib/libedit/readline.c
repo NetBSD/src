@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.42 2003/11/02 01:45:14 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.43 2003/11/03 03:22:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.42 2003/11/02 01:45:14 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.43 2003/11/03 03:22:55 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2080,7 +2080,7 @@ rl_stuff_char(int c)
 static int
 _rl_event_read_char(EditLine *el, char *cp)
 {
-	int	n, num_read;
+	int	n, num_read = 0;
 
 	*cp = 0;
 	while (rl_event_hook) {
