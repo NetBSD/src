@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.44 2001/08/15 03:54:53 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.45 2001/08/17 02:18:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.44 2001/08/15 03:54:53 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.45 2001/08/17 02:18:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -341,7 +341,7 @@ setup(dev)
 	if (asblk.b_dirty && !bflag) {
 		memmove((struct fs*)sblk.b_un.b_fs, sblock, SBSIZE);
 		if (needswap)
-			ffs_sb_swap(sblock, (struct fs*)sblk.b_un.b_fs, 1);
+			ffs_sb_swap(sblock, (struct fs*)sblk.b_un.b_fs);
 		memmove(asblk.b_un.b_fs, sblk.b_un.b_fs, (size_t)sblock->fs_sbsize);
 		flush(fswritefd, &asblk);
 	}
@@ -510,11 +510,11 @@ readsb(listerr)
 		printf("** Swapped byte order\n");
 	/* swap SB byte order if asked */
 	if (doswap)
-		ffs_sb_swap(sblk.b_un.b_fs, sblk.b_un.b_fs, needswap);
+		ffs_sb_swap(sblk.b_un.b_fs, sblk.b_un.b_fs);
 
 	memmove(sblock, sblk.b_un.b_fs, SBSIZE);
 	if (needswap)
-		ffs_sb_swap(sblk.b_un.b_fs, sblock, 0);
+		ffs_sb_swap(sblk.b_un.b_fs, sblock);
 
 	/*
 	 * run a few consistency checks of the super block
@@ -551,11 +551,11 @@ readsb(listerr)
 		return (0);
 	/* swap SB byte order if asked */
 	if (doswap)
-		ffs_sb_swap(asblk.b_un.b_fs, asblk.b_un.b_fs, needswap);
+		ffs_sb_swap(asblk.b_un.b_fs, asblk.b_un.b_fs);
 
 	memmove(altsblock, asblk.b_un.b_fs, sblock->fs_sbsize);
 	if (needswap)
-		ffs_sb_swap(asblk.b_un.b_fs, altsblock, 0);
+		ffs_sb_swap(asblk.b_un.b_fs, altsblock);
 	if (cmpsblks(sblock, altsblock)) {
 		if (debug) {
 			long *nlp, *olp, *endlp;

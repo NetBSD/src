@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.50 2001/07/31 01:31:26 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.51 2001/08/17 02:18:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.50 2001/07/31 01:31:26 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.51 2001/08/17 02:18:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -606,7 +606,7 @@ next:
 	sblock.fs_time = utime;
 	memcpy(writebuf, &sblock, sbsize);
 	if (needswap)
-		ffs_sb_swap(&sblock, (struct fs*)writebuf, 1);
+		ffs_sb_swap(&sblock, (struct fs*)writebuf);
 	wtfs((int)SBOFF / sectorsize, sbsize, writebuf);
 	/* 
 	 * Write out the duplicate super blocks
