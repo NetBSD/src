@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
+ * $NetBSD: main.c,v 1.2 1997/01/21 18:26:14 is Exp $
  *
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -43,8 +43,8 @@
 #include <amiga/memlist.h>
 #include <include/cpu.h>
 
-#include "saerrno.h"
-#include "stand.h"
+#include <saerrno.h>
+#include <stand.h>
 
 #include "libstubs.h"
 #include "samachdep.h"
