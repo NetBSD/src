@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.106 2002/03/26 07:41:40 chs Exp $	*/
+/*	$NetBSD: tulip.c,v 1.107 2002/04/05 04:48:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.106 2002/03/26 07:41:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.107 2002/04/05 04:48:40 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -4579,7 +4579,8 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * active.
 			 */
 			word = TULIP_ROM_GETW(cp, 2);
-			tm->tm_opmode = TULIP_ROM_MB_OPMODE(word);
+			tm->tm_opmode &= OPMODE_FD;
+			tm->tm_opmode |= TULIP_ROM_MB_OPMODE(word);
 			if ((word & TULIP_ROM_MB_NOINDICATOR) == 0) {
 				tm->tm_actmask =
 				    TULIP_ROM_MB_BITPOS(word);
@@ -4898,7 +4899,8 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * active.
 			 */
 			word = TULIP_ROM_GETW(cp, 5);
-			tm->tm_opmode = TULIP_ROM_MB_OPMODE(word);
+			tm->tm_opmode &= OPMODE_FD;
+			tm->tm_opmode |= TULIP_ROM_MB_OPMODE(word);
 			if ((word & TULIP_ROM_MB_NOINDICATOR) == 0) {
 				tm->tm_actmask =
 				    TULIP_ROM_MB_BITPOS(word);
