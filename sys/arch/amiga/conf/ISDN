@@ -1,8 +1,11 @@
-# $NetBSD: ISDN,v 1.1 2001/01/21 22:23:07 is Exp $
+# $NetBSD: ISDN,v 1.2 2001/01/23 11:25:59 is Exp $
 
-# install kernel with ISDN
-
+# GENERIC kernel with ISDN. 
+# use other configuration files instead by adjusting the following line:
 include "arch/amiga/conf/GENERIC"
+
+# or instead, if you don't want to include:
+# ---- cut here and append the part below to your configuration file ---
 
 # BSC ISDN Master/ITH ISDN Master II/VMC ISDN Blaster at Z-bus:
 
