@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.140.2.1 2000/06/30 16:27:26 simonb Exp $	*/
+/*	$NetBSD: pccons.c,v 1.140.2.2 2000/10/16 21:39:41 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1212,6 +1212,9 @@ pcinit()
 	cursorat = inb(addr_6845+1) << 8;
 	outb(addr_6845, 15);
 	cursorat |= inb(addr_6845+1);
+
+	if (cursorat > COL * ROW)
+		cursorat = 0;
 
 #ifdef FAT_CURSOR
 	cursor_shape = 0x0012;
