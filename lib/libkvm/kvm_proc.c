@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.48 2003/02/26 23:04:37 enami Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.49 2003/02/26 23:05:53 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.48 2003/02/26 23:04:37 enami Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.49 2003/02/26 23:05:53 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -687,7 +687,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2c += esize;
 		}
 
-		free(kd->procbase);
+		_kvm_freeprocs(kd);
 	}
 	*cnt = nprocs;
 	return (kd->procbase2);
