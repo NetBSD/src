@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.175 2000/08/18 13:22:39 sommerfeld Exp $	*/
+/*	$NetBSD: com.c,v 1.176 2000/09/17 22:07:39 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ void	com_loadchannelregs __P((struct com_softc *));
 void	com_hwiflow	__P((struct com_softc *));
 void	com_break	__P((struct com_softc *, int));
 void	com_modem	__P((struct com_softc *, int));
-void	tiocm_to_com	__P((struct com_softc *, int, int));
+void	tiocm_to_com	__P((struct com_softc *, u_long, int));
 int	com_to_tiocm	__P((struct com_softc *));
 void	com_iflush	__P((struct com_softc *));
 
@@ -1210,7 +1210,8 @@ com_modem(sc, onoff)
 void
 tiocm_to_com(sc, how, ttybits)
 	struct com_softc *sc;
-	int how, ttybits;
+	u_long how;
+	int ttybits;
 {
 	u_char combits;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.68 2000/07/06 01:47:39 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.69 2000/09/17 22:07:40 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -224,7 +224,7 @@ static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
 static int	zsparam __P((struct tty *, struct termios *));
 static void zs_modem __P((struct zstty_softc *, int));
-static void tiocm_to_zs __P((struct zstty_softc *, int, int));
+static void tiocm_to_zs __P((struct zstty_softc *, u_long, int));
 static int  zs_to_tiocm __P((struct zstty_softc *));
 static int    zshwiflow __P((struct tty *, int));
 static void  zs_hwiflow __P((struct zstty_softc *));
@@ -1220,7 +1220,8 @@ zs_modem(zst, onoff)
 static void
 tiocm_to_zs(zst, how, ttybits)
 	struct zstty_softc *zst;
-	int how, ttybits;
+	u_long how;
+	int ttybits;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char zsbits;
