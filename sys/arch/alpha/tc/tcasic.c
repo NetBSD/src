@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.6 1996/07/09 00:55:36 cgd Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.7 1996/07/14 04:06:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -86,7 +86,7 @@ tcasicattach(parent, self, aux)
 {
 	struct tcbus_attach_args tba;
 	void (*intr_setup) __P((void));
-	void (*iointr) __P((void *, int));
+	void (*iointr) __P((void *, unsigned long));
 	struct alpha_bus_chipset bc;
 
 	printf("\n");
