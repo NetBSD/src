@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICADP,v 1.13 1996/03/16 06:09:04 thorpej Exp $
+#	$NetBSD: GENERICADP,v 1.14 1996/03/18 01:46:35 jtk Exp $
 #
 #	GENERICADP -- everything that's currently supported, except non-
 #                     Adaptec SCSI controllers.
@@ -167,7 +167,7 @@ sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
-#spkr0	at isa? port 0x61
+#spkr0	at pckbd? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
