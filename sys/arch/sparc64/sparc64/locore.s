@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.135 2001/08/08 18:30:45 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.136 2001/08/09 01:00:11 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -2100,15 +2100,16 @@ asmptechk:
 	ICACHE_ALIGN
 dmmu_write_fault:
 	mov	TLB_TAG_ACCESS, %g3
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	sethi	%hi(0x1fff), %g6			! 8K context mask
 	ldxa	[%g3] ASI_DMMU, %g3			! Get fault addr from Tag Target
+	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	or	%g6, %lo(0x1fff), %g6
 	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	and	%g3, 0x0fff, %g6			! Isolate context
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	inc	%g5					! (0 or -1) -> (1 or 0)
-	nop						! Cache line align
+	and	%g3, %g6, %g6				! Isolate context
 	
+	inc	%g5					! (0 or -1) -> (1 or 0)
+	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
 	ldx	[%g4+%g6], %g4				! Load up our page table.
 	srlx	%g3, STSHIFT, %g6
 	cmp	%g5, 1
@@ -2116,9 +2117,8 @@ dmmu_write_fault:
 	 srlx	%g3, PDSHIFT, %g5
 	and	%g6, STMASK, %g6
 	sll	%g6, 3, %g6
-	and	%g5, PDMASK, %g5
-	nop
 	
+	and	%g5, PDMASK, %g5
 	sll	%g5, 3, %g5
 	add	%g6, %g4, %g4
 	DLFLUSH(%g4,%g6)
@@ -2128,8 +2128,8 @@ dmmu_write_fault:
 	and	%g6, PTMASK, %g6
 	add	%g5, %g4, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
-	 nop
 	
+	 nop	
 	ldxa	[%g5] ASI_PHYS_CACHED, %g4
 	sll	%g6, 3, %g6
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
@@ -2137,8 +2137,7 @@ dmmu_write_fault:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
-	or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g7	! Update the modified bit
-	 nop
+	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g7	! Update the modified bit
 	
 	btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
@@ -2163,12 +2162,14 @@ dmmu_write_fault:
 	 ldxa	[%g0] ASI_DMMU, %g1			! Hard coded for unified 8K TSB		Load DMMU tag target register
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and write it out
 	
+	membar	#StoreLoad
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
 	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g4	! Update the modified bit
 	stx	%g1, [%g2]				! Update TSB entry tag
 	mov	SFSR, %g7
 	stx	%g4, [%g2+8]				! Update TSB entry data
+	nop
 #ifdef DEBUG
 	set	DATA_START, %g6	! debug
 	stx	%g1, [%g6+0x40]	! debug
@@ -2184,10 +2185,9 @@ dmmu_write_fault:
 #endif
 	mov	0x010, %g1				! Secondary flush
 	mov	0x020, %g5				! Nucleus flush
-	
 	stxa	%g0, [%g7] ASI_DMMU			! clear out the fault
 	membar	#Sync
-	sllx	%g3, (64-12), %g7			! Need to demap old entry first
+	sllx	%g3, (64-13), %g7			! Need to demap old entry first
 	andn	%g3, 0xfff, %g6
 	movrz	%g7, %g5, %g1				! Pick one
 	or	%g6, %g1, %g6
@@ -2228,14 +2228,16 @@ data_miss:
 	stw	%g4, [%g3]
 #endif
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	sethi	%hi(0x1fff), %g6			! 8K context mask
 	ldxa	[%g3] ASI_DMMU, %g3			! from tag access register
+	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	or	%g6, %lo(0x1fff), %g6
 	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	and	%g3, 0x0fff, %g6			! Isolate context
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	inc	%g5					! (0 or -1) -> (1 or 0)
+	and	%g3, %g6, %g6				! Isolate context
 	
+	inc	%g5					! (0 or -1) -> (1 or 0)
+	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
 	ldx	[%g4+%g6], %g4				! Load up our page table.
 #ifdef DEBUG
 	/* Make sure we don't try to replace a kernel translation */
@@ -2259,10 +2261,9 @@ data_miss:
 	bgu,pn %xcc, winfix				! Error!
 	 srlx	%g3, PDSHIFT, %g5
 	and	%g6, STMASK, %g6
+	
 	sll	%g6, 3, %g6
 	and	%g5, PDMASK, %g5
-	nop
-	
 	sll	%g5, 3, %g5
 	add	%g6, %g4, %g4
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
@@ -2270,8 +2271,8 @@ data_miss:
 	and	%g6, PTMASK, %g6
 	add	%g5, %g4, %g5
 	brz,pn	%g4, data_nfo				! NULL entry? check somewhere else
-	 nop
 	
+	 nop
 	ldxa	[%g5] ASI_PHYS_CACHED, %g4
 	sll	%g6, 3, %g6
 	brz,pn	%g4, data_nfo				! NULL entry? check somewhere else
@@ -2280,6 +2281,7 @@ data_miss:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, data_nfo				! Entry invalid?  Punt
 	 or	%g4, TTE_ACCESS, %g7			! Update the access bit
+	
 	btst	TTE_ACCESS, %g4				! Need to update access git?
 	bne,pt	%xcc, 1f
 	 nop
@@ -2289,6 +2291,7 @@ data_miss:
 	 or	%g4, TTE_ACCESS, %g4				! Update the modified bit
 1:	
 	stx	%g1, [%g2]				! Update TSB entry tag
+	
 	stx	%g4, [%g2+8]				! Update TSB entry data
 #ifdef DEBUG
 	set	DATA_START, %g6	! debug
@@ -2299,7 +2302,7 @@ data_miss:
 #endif
 #if 0
 	/* This was a miss -- should be nothing to demap. */
-	sllx	%g3, (64-12), %g6			! Need to demap old entry first
+	sllx	%g3, (64-13), %g6			! Need to demap old entry first
 	mov	0x010, %g1				! Secondary flush
 	mov	0x020, %g5				! Nucleus flush
 	movrz	%g6, %g5, %g1				! Pick one
@@ -2366,7 +2369,6 @@ winfault:
 #endif
 	mov	TLB_TAG_ACCESS, %g3	! Get real fault page from tag access register
 	ldxa	[%g3] ASI_DMMU, %g3	! And put it into the non-MMU alternate regs
-! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 winfix:
 	rdpr	%tl, %g2
 	subcc	%g2, 1, %g1
@@ -2504,7 +2506,6 @@ winfixfill:
 #endif
 	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
-! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 	ldxa	[SFAR] %asi, %g2			! sync virt addr; must be read first
 	ldxa	[SFSR] %asi, %g3			! get sync fault status register
 	stxa	%g0, [SFSR] %asi			! Clear out fault now
@@ -3030,7 +3031,6 @@ datafault:
 #endif
 	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
-! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
 	ldxa	[SFAR] %asi, %g2			! sync virt addr; must be read first
 	ldxa	[SFSR] %asi, %g3			! get sync fault status register
 	stxa	%g0, [SFSR] %asi			! Clear out fault now
@@ -3198,11 +3198,13 @@ instr_miss:
 	stw	%g4, [%g3]
 #endif
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	sethi	%hi(0x1fff), %g7			! 8K context mask
 	ldxa	[%g3] ASI_IMMU, %g3			! from tag access register
+	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	or	%g7, %lo(0x1fff), %g7
 	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	and	%g3, 0x0fff, %g6			! Isolate context
+	and	%g3, %g7, %g6				! Isolate context
 	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
 	inc	%g5					! (0 or -1) -> (1 or 0)
 	
@@ -3267,9 +3269,9 @@ instr_miss:
 	stx	%g4, [%g6]	! debug -- what we tried to enter in TLB
 	stb	%g3, [%g6+0x20]	! debug
 #endif
-#if 0
+#if 1
 	/* This was a miss -- should be nothing to demap. */
-	sllx	%g3, (64-12), %g6			! Need to demap old entry first
+	sllx	%g3, (64-13), %g6			! Need to demap old entry first
 	mov	0x010, %g1				! Secondary flush
 	mov	0x020, %g5				! Nucleus flush
 	movrz	%g6, %g5, %g1				! Pick one
@@ -5326,10 +5328,11 @@ dostart:
 	 * Ready to run C code; finish bootstrap.
 	 */
 	set	CTX_SECONDARY, %o1		! Store -1 in the context register
-	sub	%g0, 1, %o2
+	mov	-1, %o2
 	stxa	%o2, [%o1] ASI_DMMU
 	membar	#Sync
 	ldxa	[%o1] ASI_DMMU, %o0		! then read it back
+	membar	#Sync
 	stxa	%g0, [%o1] ASI_DMMU
 	membar	#Sync
 	clr	%g4				! Clear data segment pointer
@@ -5717,11 +5720,13 @@ _C_LABEL(cpu_initialize):
 	 *
 	 * XXXX -- move this to CPUINFO_VA+32KB?
 	 */
+	sethi	%hi(0x1fff), %l2
 	set	_C_LABEL(tsb), %l0
 	LDPTR	[%l0], %l0
 	set	_C_LABEL(tsbsize), %l1
+	or	%l2, %lo(0x1fff), %l2
 	ld	[%l1], %l1
-	andn	%l0, 0xfff, %l0			! Mask off size bits
+	andn	%l0, %l2, %l0			! Mask off size and split bits
 	or	%l0, %l1, %l0			! Make a TSB pointer
 !	srl	%l0, 0, %l0	! DEBUG -- make sure this is a valid pointer by zeroing the high bits
 
@@ -6817,6 +6822,7 @@ Ldocopy:
 	STPTR	%o4, [%o3 + PCB_ONFAULT]
 	cmp	%o2, BCOPY_SMALL
 Lcopyout_start:
+	membar	#StoreStore
 	bge,a	Lcopyout_fancy	! if >= this many, go be fancy.
 	 btst	7, %o0		! (part of being fancy)
 
@@ -6982,6 +6988,7 @@ Lcopyout_done:
 	STPTR	%g0, [%o3 + PCB_ONFAULT]
 !	jmp	%g7 + 8		! Original instr
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
+	membar	#StoreStore|#StoreLoad
 	retl			! New instr
 	 clr	%o0			! return 0
 
@@ -6993,7 +7000,7 @@ Lcopyfault:
 	sethi	%hi(CPCB), %o3
 	LDPTR	[%o3 + %lo(CPCB)], %o3
 	STPTR	%g0, [%o3 + PCB_ONFAULT]
-	membar	#Sync
+	membar	#StoreStore|#StoreLoad
 #ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
 	set	1f, %o0
@@ -7853,17 +7860,18 @@ ENTRY(fuword)
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o3
 	LDPTR	[%o2 + %lo(CPCB)], %o2
-	membar	#Sync
+	membar	#LoadStore
 	STPTR	%o3, [%o2 + PCB_ONFAULT]
 	membar	#Sync
 	LDPTRA	[%o0] ASI_AIUS, %o0	! fetch the word
 	membar	#Sync
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 	retl				! phew, made it, return the word
-	 STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	 membar	#StoreStore|#StoreLoad
 
 Lfserr:
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
-	membar	#Sync
+	membar	#StoreStore|#StoreLoad
 Lfsbadaddr:
 #ifndef _LP64
 	mov	-1, %o1
@@ -7879,6 +7887,7 @@ Lfsbadaddr:
 	.globl	_C_LABEL(Lfsbail)
 _C_LABEL(Lfsbail):
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	membar	#StoreStore|#StoreLoad
 	retl				! and return error indicator
 	 mov	-1, %o0
 
@@ -7894,8 +7903,9 @@ ENTRY(fuswintr)
 	membar	#Sync
 	lduha	[%o0] ASI_AIUS, %o0	! fetch the halfword
 	membar	#Sync
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 	retl				! made it
-	 STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	 membar	#StoreStore|#StoreLoad
 
 ENTRY(fusword)
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
@@ -7905,8 +7915,9 @@ ENTRY(fusword)
 	membar	#Sync
 	lduha	[%o0] ASI_AIUS, %o0		! fetch the halfword
 	membar	#Sync
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 	retl				! made it
-	 STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	 membar	#StoreStore|#StoreLoad
 
 ALTENTRY(fuibyte)
 ENTRY(fubyte)
@@ -7917,8 +7928,9 @@ ENTRY(fubyte)
 	membar	#Sync
 	lduba	[%o0] ASI_AIUS, %o0	! fetch the byte
 	membar	#Sync
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 	retl				! made it
-	 STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	 membar	#StoreStore|#StoreLoad
 
 ALTENTRY(suiword)
 ENTRY(suword)
@@ -7933,6 +7945,7 @@ ENTRY(suword)
 	STPTRA	%o1, [%o0] ASI_AIUS	! store the word
 	membar	#Sync
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
+	membar	#StoreStore|#StoreLoad
 	retl				! and return 0
 	 clr	%o0
 
@@ -7945,6 +7958,7 @@ ENTRY(suswintr)
 	stha	%o1, [%o0] ASI_AIUS	! store the halfword
 	membar	#Sync
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
+	membar	#StoreStore|#StoreLoad
 	retl				! and return 0
 	 clr	%o0
 
@@ -7957,6 +7971,7 @@ ENTRY(susword)
 	stha	%o1, [%o0] ASI_AIUS	! store the halfword
 	membar	#Sync
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
+	membar	#StoreStore|#StoreLoad
 	retl				! and return 0
 	 clr	%o0
 
@@ -7970,6 +7985,7 @@ ENTRY(subyte)
 	stba	%o1, [%o0] ASI_AIUS	! store the byte
 	membar	#Sync
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
+	membar	#StoreStore|#StoreLoad
 	retl				! and return 0
 	 clr	%o0
 
@@ -8051,8 +8067,9 @@ ENTRY(probeget)
 	DLFLUSH2(%o5)			!	flush cache line again
 1:
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
+	STPTR	%g0, [%o2 + PCB_ONFAULT]
 	retl				! made it, clear onfault and return
-	 STPTR	%g0, [%o2 + PCB_ONFAULT]
+	 membar	#StoreStore|#StoreLoad
 
 	/*
 	 * Fault handler for probeget
@@ -8064,6 +8081,7 @@ _C_LABEL(Lfsprobe):
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	mov	-1, %o1
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
+	membar	#StoreStore|#StoreLoad
 	retl				! and return error indicator
 	 mov	-1, %o0
 
@@ -8114,8 +8132,9 @@ ENTRY(probeset)
 1:	membar	#Sync
 	clr	%o0			! made it, clear onfault and return 0
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
+	STPTR	%g0, [%o2 + PCB_ONFAULT]
 	retl
-	 STPTR	%g0, [%o2 + PCB_ONFAULT]
+	 membar	#StoreStore|#StoreLoad
 
 /*
  * Insert entry into doubly-linked queue.
@@ -11075,7 +11094,9 @@ ENTRY(kcopy)
 	LDPTR	[%o5 + %lo(CPCB)], %o5
 	set	Lkcerr, %o3
 	LDPTR	[%o5 + PCB_ONFAULT], %g1! save current onfault handler
+	membar	#LoadStore
 	STPTR	%o3, [%o5 + PCB_ONFAULT]
+	membar	#StoreStore|#StoreLoad
 
 	cmp	%o2, BCOPY_SMALL
 Lkcopy_start:
@@ -11096,7 +11117,9 @@ Lkcopy_start:
 	bge	0b
 	 inc	%o1
 1:
+	membar	#Sync		! Make sure all fauls are processed
 	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
+	membar	#StoreStore|#StoreLoad
 	retl
 	 clr	%o0
 	NOTREACHED
@@ -11130,6 +11153,7 @@ Lkcopy_fancy:
 	 inc	%o1
 	membar	#Sync		! Make sure all traps are taken
 	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
+	membar	#StoreStore|#StoreLoad
 	retl
 	 clr	%o0
 	NOTREACHED
@@ -11231,6 +11255,7 @@ Lkcopy_mopw:
 	stb	%o4, [%o1 + 2]
 	membar	#Sync		! Make sure all traps are taken
 	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
+	membar	#StoreStore|#StoreLoad
 	retl
 	 clr	%o0
 	NOTREACHED
@@ -11243,6 +11268,7 @@ Lkcopy_mopb:
 Lkcopy_done:
 	membar	#Sync		! Make sure all traps are taken
 	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
+	membar	#StoreStore|#StoreLoad
 	retl
 	 clr	%o0
 	NOTREACHED
@@ -11251,6 +11277,7 @@ Lkcopy_done:
 	stb	%o4, [%o1]
 	membar	#Sync		! Make sure all traps are taken
 	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
+	membar	#StoreStore|#StoreLoad
 	retl
 	 clr	%o0
 	NOTREACHED
@@ -11275,6 +11302,7 @@ Lkcerr:
 3:
 #endif
 	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
+	membar	#StoreStore|#StoreLoad
 	retl				! and return error indicator
 	 mov	EFAULT, %o0
 	NOTREACHED
