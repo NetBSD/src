@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.37 2001/01/04 06:20:49 mycroft Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.38 2001/01/04 07:05:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,8 +119,6 @@ struct chan {
 	void	*arg;		/* arg for intr() */
 	usbd_pipe_handle pipe;
 	int	dir;		/* direction */
-#define	IN	0x01
-#define	OUT	0x02
 
 	u_int	sample_size;
 	u_int	sample_rate;
@@ -1146,7 +1144,7 @@ uaudio_process_as(struct uaudio_softc *sc, char *buf, int *offsp,
 	ai.asf1desc = asf1d;
 	uaudio_add_alt(sc, &ai);
 	sc->sc_chan.terminal = asid->bTerminalLink; /* XXX */
-	sc->sc_chan.dir |= dir == UE_DIR_IN ? IN : OUT;
+	sc->sc_chan.dir |= dir == UE_DIR_OUT ? AUMODE_PLAY : AUMODE_RECORD;
 	return (USBD_NORMAL_COMPLETION);
 }
 #undef offs
@@ -1205,7 +1203,7 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 		return (USBD_INVAL);
 	}
 #if 0
-	if (sc->sc_chan.dir == (OUT | IN))
+	if (sc->sc_chan.dir == (AUMODE_PLAY | AUMODE_RECORD))
 		sc->sc_props |= AUDIO_PROP_FULLDUPLEX;
 #endif
 	return (USBD_NORMAL_COMPLETION);
@@ -1390,9 +1388,9 @@ uaudio_open(void *addr, int flags)
 	if (sc->sc_chan.terminal < 0)
 		return (ENXIO);
 
-	if ((flags & FREAD) && !(sc->sc_chan.dir & IN))
+	if ((flags & FREAD) && !(sc->sc_chan.dir & AUMODE_RECORD))
 		return (EACCES);
-	if ((flags & FWRITE) && !(sc->sc_chan.dir & OUT))
+	if ((flags & FWRITE) && !(sc->sc_chan.dir & AUMODE_PLAY))
 		return (EACCES);
 
         sc->sc_chan.intr = 0;
@@ -2127,14 +2125,15 @@ uaudio_chan_set_param(struct chan *ch, struct audio_params *param,
 
 int
 uaudio_set_params(void *addr, int setmode, int usemode,
-		  struct audio_params *p, struct audio_params *r)
+		  struct audio_params *play, struct audio_params *rec)
 {
 	struct uaudio_softc *sc = addr;
 	int flags = sc->sc_altflags;
-	int pfactor, rfactor;
+	int factor;
 	int enc, i, j;
-	void (*pswcode)(void *, u_char *buf, int cnt);
-	void (*rswcode)(void *, u_char *buf, int cnt);
+	void (*swcode)(void *, u_char *buf, int cnt);
+	struct audio_params *p;
+	int mode;
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -2142,130 +2141,149 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	if (sc->sc_chan.pipe != NULL)
 		return (EBUSY);
 
-        pswcode = rswcode = 0;
-	pfactor = rfactor = 1;
-	enc = p->encoding;
-        switch (enc) {
-        case AUDIO_ENCODING_SLINEAR_BE:
-        	if (p->precision == 16) {
-                	rswcode = pswcode = swap_bytes;
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-		} else if (p->precision == 8 && !(flags & HAS_8)) {
-			pswcode = rswcode = change_sign8;
-			enc = AUDIO_ENCODING_ULINEAR_LE;
-		}
-		break;
-        case AUDIO_ENCODING_SLINEAR_LE:
-        	if (p->precision == 8 && !(flags & HAS_8)) {
-			pswcode = rswcode = change_sign8;
-			enc = AUDIO_ENCODING_ULINEAR_LE;
-		}
-        	break;
-        case AUDIO_ENCODING_ULINEAR_BE:
-        	if (p->precision == 16) {
-			pswcode = swap_bytes_change_sign16_le;
-			rswcode = change_sign16_swap_bytes_le;
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-		} else if (p->precision == 8 && !(flags & HAS_8U)) {
-			pswcode = rswcode = change_sign8;
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-		}
-		break;
-        case AUDIO_ENCODING_ULINEAR_LE:
-        	if (p->precision == 16) {
-			pswcode = rswcode = change_sign16_le;
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-		} else if (p->precision == 8 && !(flags & HAS_8U)) {
-			pswcode = rswcode = change_sign8;
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-		}
-        	break;
-        case AUDIO_ENCODING_ULAW:
-		if (!(flags & HAS_MULAW)) {
-			if ((flags & HAS_16) &&
-			    !(setmode & AUMODE_RECORD)) {
-				pswcode = mulaw_to_slinear16_le;
-				pfactor = 2;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else if (flags & HAS_8U) {
-				pswcode = mulaw_to_ulinear8;
-				rswcode = ulinear8_to_mulaw;
-				enc = AUDIO_ENCODING_ULINEAR_LE;
-			} else if (flags & HAS_8) {
-				pswcode = mulaw_to_slinear8;
-				rswcode = slinear8_to_mulaw;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else
-				return (EINVAL);
-		}
-                break;
-        case AUDIO_ENCODING_ALAW:
-		if (!(flags & HAS_ALAW)) {
-			if ((flags & HAS_16) &&
-			    !(setmode & AUMODE_RECORD)) {
-				pswcode = alaw_to_slinear16_le;
-				pfactor = 2;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else if (flags & HAS_8U) {
-				pswcode = alaw_to_ulinear8;
-				rswcode = ulinear8_to_alaw;
-				enc = AUDIO_ENCODING_ULINEAR_LE;
-			} else if (flags & HAS_8) {
-				pswcode = alaw_to_slinear8;
-				rswcode = slinear8_to_alaw;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else
-				return (EINVAL);
-		}
-                break;
-        default:
-        	return (EINVAL);
-        }
-	/* XXX do some other conversions... */
+	for (mode = AUMODE_RECORD; mode != -1;
+	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
+		if ((setmode & mode) == 0)
+			continue;
+		if ((sc->sc_chan.dir & mode) == 0)
+			continue;
 
-	DPRINTF(("uaudio_set_params: chan=%d prec=%d enc=%d rate=%ld\n",
-		 p->channels, p->precision, enc, p->sample_rate));
+		p = mode == AUMODE_PLAY ? play : rec;
 
-	for (i = 0; i < sc->sc_nalts; i++) {
-		struct usb_audio_streaming_type1_descriptor *a1d =
-			sc->sc_alts[i].asf1desc;
-		if (p->channels == a1d->bNrChannels &&
-		    p->precision == a1d->bBitResolution &&
-		    enc == sc->sc_alts[i].encoding &&
-		    (setmode == AUMODE_PLAY ? UE_DIR_OUT : UE_DIR_IN) ==
-		    UE_GET_DIR(sc->sc_alts[i].edesc->bEndpointAddress)) {
-			if (a1d->bSamFreqType == UA_SAMP_CONTNUOUS) {
-				DPRINTFN(2,("uaudio_set_params: cont %d-%d\n",
-				    UA_SAMP_LO(a1d), UA_SAMP_HI(a1d)));
-				if (UA_SAMP_LO(a1d) < p->sample_rate &&
-				    p->sample_rate < UA_SAMP_HI(a1d))
-					goto found;
-			} else {
-				for (j = 0; j < a1d->bSamFreqType; j++) {
-					DPRINTFN(2,("uaudio_set_params: disc #"
-					    "%d: %d\n", j, UA_GETSAMP(a1d, j)));
-					/* XXX allow for some slack */
-					if (UA_GETSAMP(a1d, j) ==
-					    p->sample_rate)
+		factor = 1;
+		swcode = 0;
+		enc = p->encoding;
+		switch (enc) {
+		case AUDIO_ENCODING_SLINEAR_BE:
+			if (p->precision == 16) {
+				swcode = swap_bytes;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			} else if (p->precision == 8 && !(flags & HAS_8)) {
+				swcode = change_sign8;
+				enc = AUDIO_ENCODING_ULINEAR_LE;
+			}
+			break;
+		case AUDIO_ENCODING_SLINEAR_LE:
+			if (p->precision == 8 && !(flags & HAS_8)) {
+				swcode = change_sign8;
+				enc = AUDIO_ENCODING_ULINEAR_LE;
+			}
+			break;
+		case AUDIO_ENCODING_ULINEAR_BE:
+			if (p->precision == 16) {
+				if (mode == AUMODE_PLAY)
+					swcode = swap_bytes_change_sign16_le;
+				else
+					swcode = change_sign16_swap_bytes_le;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			} else if (p->precision == 8 && !(flags & HAS_8U)) {
+				swcode = change_sign8;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			}
+			break;
+		case AUDIO_ENCODING_ULINEAR_LE:
+			if (p->precision == 16) {
+				swcode = change_sign16_le;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			} else if (p->precision == 8 && !(flags & HAS_8U)) {
+				swcode = change_sign8;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			}
+			break;
+		case AUDIO_ENCODING_ULAW:
+			if (!(flags & HAS_MULAW)) {
+				if (mode == AUMODE_PLAY &&
+				    (flags & HAS_16)) {
+					swcode = mulaw_to_slinear16_le;
+					factor = 2;
+					enc = AUDIO_ENCODING_SLINEAR_LE;
+				} else if (flags & HAS_8U) {
+					if (mode == AUMODE_PLAY)
+						swcode = mulaw_to_ulinear8;
+					else
+						swcode = ulinear8_to_mulaw;
+					enc = AUDIO_ENCODING_ULINEAR_LE;
+				} else if (flags & HAS_8) {
+					if (mode == AUMODE_PLAY)
+						swcode = mulaw_to_slinear8;
+					else
+						swcode = slinear8_to_mulaw;
+					enc = AUDIO_ENCODING_SLINEAR_LE;
+				} else
+					return (EINVAL);
+			}
+			break;
+		case AUDIO_ENCODING_ALAW:
+			if (!(flags & HAS_ALAW)) {
+				if (mode == AUMODE_PLAY &&
+				    (flags & HAS_16)) {
+					swcode = alaw_to_slinear16_le;
+					factor = 2;
+					enc = AUDIO_ENCODING_SLINEAR_LE;
+				} else if (flags & HAS_8U) {
+					if (mode == AUMODE_PLAY)
+						swcode = alaw_to_ulinear8;
+					else
+						swcode = ulinear8_to_alaw;
+					enc = AUDIO_ENCODING_ULINEAR_LE;
+				} else if (flags & HAS_8) {
+					if (mode == AUMODE_PLAY)
+						swcode = alaw_to_slinear8;
+					else
+						swcode = slinear8_to_alaw;
+					enc = AUDIO_ENCODING_SLINEAR_LE;
+				} else
+					return (EINVAL);
+			}
+			break;
+		default:
+			return (EINVAL);
+		}
+		/* XXX do some other conversions... */
+
+		DPRINTF(("uaudio_set_params: chan=%d prec=%d enc=%d rate=%ld\n",
+			 p->channels, p->precision, enc, p->sample_rate));
+
+		for (i = 0; i < sc->sc_nalts; i++) {
+			struct usb_audio_streaming_type1_descriptor *a1d =
+				sc->sc_alts[i].asf1desc;
+			if (p->channels == a1d->bNrChannels &&
+			    p->precision == a1d->bBitResolution &&
+			    enc == sc->sc_alts[i].encoding &&
+			    (mode == AUMODE_PLAY ? UE_DIR_OUT : UE_DIR_IN) ==
+			    UE_GET_DIR(sc->sc_alts[i].edesc->bEndpointAddress)) {
+				if (a1d->bSamFreqType == UA_SAMP_CONTNUOUS) {
+					DPRINTFN(2,("uaudio_set_params: cont %d-%d\n",
+					    UA_SAMP_LO(a1d), UA_SAMP_HI(a1d)));
+					if (UA_SAMP_LO(a1d) < p->sample_rate &&
+					    p->sample_rate < UA_SAMP_HI(a1d))
 						goto found;
+				} else {
+					for (j = 0; j < a1d->bSamFreqType; j++) {
+						DPRINTFN(2,("uaudio_set_params: disc #"
+						    "%d: %d\n", j, UA_GETSAMP(a1d, j)));
+						/* XXX allow for some slack */
+						if (UA_GETSAMP(a1d, j) ==
+						    p->sample_rate)
+							goto found;
+					}
 				}
 			}
 		}
-	}
-	return (EINVAL);
+		return (EINVAL);
 
- found:
-        p->sw_code = pswcode;
-        r->sw_code = rswcode;
-	p->factor  = pfactor;
-	r->factor  = rfactor;
-	sc->sc_curaltidx = i;
+	found:
+		p->sw_code = swcode;
+		p->factor  = factor;
+		if (usemode == mode)
+			sc->sc_curaltidx = i;
+	}
 
 	DPRINTF(("uaudio_set_params: use altidx=%d, altno=%d\n", 
 		 sc->sc_curaltidx, 
 		 sc->sc_alts[sc->sc_curaltidx].idesc->bAlternateSetting));
 	
-        return (0);
+	return (0);
 }
 
 usbd_status
