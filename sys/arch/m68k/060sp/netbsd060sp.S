@@ -1,5 +1,6 @@
+/*
 #
-# $NetBSD: netbsd060sp.S,v 1.5 1999/01/30 21:54:49 is Exp $
+# $NetBSD: netbsd060sp.S,v 1.5.18.1 2001/04/24 22:32:08 he Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -40,12 +41,18 @@
 # This file contains:
 #	- example "Call-Out"s required by both the ISP and FPSP.
 #
+*/
 
+#include <machine/asm.h>
+
+/*
 #
 # make the copyright notice appear in the binary:
 #
-	.include	"copyright.S"
+*/
+#include "copyright.S"
 
+/*
 #################################
 # EXAMPLE CALL-OUTS 		#
 # 				#
@@ -64,7 +71,9 @@
 # _060_real_trace()		#
 # _060_real_access()		#
 #################################
+*/
 
+/*
 # 
 # Each IO routine checks to see if the memory write/read is to/from user
 # or supervisor application space. The examples below use simple "move"
@@ -77,7 +86,9 @@
 # The result is that Unix processes are allowed to sleep as a consequence
 # of a page fault during a _copyout.
 #
+*/
 
+/*
 #
 # _060_dmem_write():
 #
@@ -91,25 +102,26 @@
 # OUTPUTS:
 #	d1 - 0 = success, !0 = failure
 #
-	.global	_060_dmem_write
-_060_dmem_write:
-	btst	#0x5,a6@(0x4)	|# check for supervisor state
+*/
+ASENTRY_NOPROFILE(_060_dmem_write)
+	btst	#0x5,%a6@(0x4)	|# check for supervisor state
 	beqs	user_write
 super_write:
-	moveb	a0@+,a1@+	|# copy 1 byte
-	subql	#0x1,d0		|# decr byte counter
+	moveb	%a0@+,%a1@+	|# copy 1 byte
+	subql	#0x1,%d0	|# decr byte counter
 	bnes	super_write	|# quit if ctr = 0
-	clrl	d1		|# return success
+	clrl	%d1		|# return success
 	rts
 user_write:
-	movel	d0,sp@-		|# pass: counter
-	movel	a1,sp@-		|# pass: user dst
-	movel	a0,sp@-		|# pass: supervisor src
-	bsrl	_copyout	|# write byte to user mem
-	movel	d0,d1		|# return success
-	addl	#0xc,sp		|# clear 3 lw params
+	movel	%d0,%sp@-	|# pass: counter
+	movel	%a1,%sp@-	|# pass: user dst
+	movel	%a0,%sp@-	|# pass: supervisor src
+	bsrl	_C_LABEL(copyout)	|# write byte to user mem
+	movel	%d0,%d1		|# return success
+	addl	#0xc,%sp	|# clear 3 lw params
 	rts
 
+/*
 #
 # _060_imem_read(), _060_dmem_read():
 #
@@ -123,27 +135,27 @@ user_write:
 # OUTPUTS:
 #	d1 - 0 = success, !0 = failure
 #
-	.global	_060_imem_read
-	.global	_060_dmem_read
-_060_imem_read:
-_060_dmem_read:
-	btst	#0x5,a6@(0x4)	|# check for supervisor state
+*/
+ASENTRY_NOPROFILE(_060_imem_read)
+ASENTRY_NOPROFILE(_060_dmem_read)
+	btst	#0x5,%a6@(0x4)	|# check for supervisor state
 	beqs	user_read
 super_read:
-	moveb	a0@+,a1@+	|# copy 1 byte
-	subql	#0x1,d0		|# decr byte counter
+	moveb	%a0@+,%a1@+	|# copy 1 byte
+	subql	#0x1,%d0	|# decr byte counter
 	bnes	super_read	|# quit if ctr = 0
-	clrl	d1		|# return success
+	clrl	%d1		|# return success
 	rts
 user_read:
-	movel	d0,sp@-		|# pass: counter
-	movel	a1,sp@-		|# pass: super dst
-	movel	a0,sp@-		|# pass: user src
-	bsrl	_copyin		|# read byte from user mem
-	movel	d0,d1		|# return success
-	addl	#0xc,sp		|# clear 3 lw params
+	movel	%d0,%sp@-	|# pass: counter
+	movel	%a1,%sp@-	|# pass: super dst
+	movel	%a0,%sp@-	|# pass: user src
+	bsrl	_C_LABEL(copyin)	|# read byte from user mem
+	movel	%d0,%d1		|# return success
+	addl	#0xc,%sp	|# clear 3 lw params
 	rts
 
+/*
 #
 # _060_dmem_read_byte():
 # 
@@ -156,22 +168,23 @@ user_read:
 #	d0 - data byte in d0
 #	d1 - 0 = success, !0 = failure
 #
-	.global	_060_dmem_read_byte
-_060_dmem_read_byte:
-	clrl	d1			|# return success
-	clrl	d0			|# clear whole longword
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+*/
+ASENTRY_NOPROFILE(_060_dmem_read_byte)
+	clrl	%d1			|# return success
+	clrl	%d0			|# clear whole longword
+	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmrbs			|# supervisor
 dmrbu:
-	movl	_curpcb,a1		| fault handler
-	movl	#Lferr,a1@(64)		| set it
-	movsb	a0@,d0
+	movl	_C_LABEL(curpcb),%a1	| fault handler
+	movl	#Lferr,%a1@(64)		| set it
+	movsb	%a0@,%d0
 	bra	Lfdone
 
 dmrbs:
-	moveb	a0@,d0			|# fetch super byte
+	moveb	%a0@,%d0		|# fetch super byte
 	rts
 
+/*
 #
 # _060_imem_read_word():
 # Read an instruction word from user memory.
@@ -186,24 +199,23 @@ dmrbs:
 #	d0 - data word in d0
 #	d1 - 0 = success, !0 = failure
 #
-	.global	_060_imem_read_word
-	.global	_060_dmem_read_word
-
-_060_imem_read_word:
-_060_dmem_read_word:
-	clrl	d1			|# return success
-	clrl	d0			|# clear whole longword
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+*/
+ASENTRY_NOPROFILE(_060_imem_read_word)
+ASENTRY_NOPROFILE(_060_dmem_read_word)
+	clrl	%d1			|# return success
+	clrl	%d0			|# clear whole longword
+	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmrws			|# supervisor
 dmrwu:
-	movl	_curpcb,a1		| fault handler
-	movl	#Lferr,a1@(64)		| set it
-	movsw	a0@,d0
+	movl	_C_LABEL(curpcb),%a1	| fault handler
+	movl	#Lferr,%a1@(64)		| set it
+	movsw	%a0@,%d0
 	bra	Lfdone
 dmrws:
-	movew	a0@,d0			|# fetch super word
+	movew	%a0@,%d0		|# fetch super word
 	rts
 
+/*
 # 
 # _060_imem_read_long():
 # Read an instruction longword from user memory.
@@ -211,7 +223,6 @@ dmrws:
 # _060_dmem_read_long():
 # Read an data longword from user memory.
 # 
-
 #
 # INPUTS:
 #	a0 - user source address
@@ -220,24 +231,22 @@ dmrws:
 #	d0 - data longword in d0
 #	d1 - 0 = success, !0 = failure
 #
-
-	.global	_060_dmem_read_long
-	.global	_060_imem_read_long
-
-_060_imem_read_long:
-_060_dmem_read_long:
-	clrl	d1			|# return success
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+*/
+ASENTRY_NOPROFILE(_060_imem_read_long)
+ASENTRY_NOPROFILE(_060_dmem_read_long)
+	clrl	%d1			|# return success
+	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmrls			|# supervisor
 dmrlu:
-	movl	_curpcb,a1		| fault handler
-	movl	#Lferr,a1@(64)		| set it
-	movsl	a0@,d0
+	movl	_C_LABEL(curpcb),%a1	| fault handler
+	movl	#Lferr,%a1@(64)		| set it
+	movsl	%a0@,%d0
 	bra	Lfdone
 dmrls:
-	movel	a0@,d0			|# fetch super longword
+	movel	%a0@,%d0		|# fetch super longword
 	rts
 
+/*
 #
 # _060_dmem_write_byte():
 #
@@ -250,20 +259,21 @@ dmrls:
 # OUTPUTS:
 #	d1 - 0 = success, !0 = failure
 #
-	.global	_060_dmem_write_byte
-_060_dmem_write_byte:
-	clrl	d1			|# return success
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+*/
+ASENTRY_NOPROFILE(_060_dmem_write_byte)
+	clrl	%d1			|# return success
+	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmwbs			|# supervisor
 dmwbu:
-	movl	_curpcb,a1		| fault handler
-	movl	#Lferr,a1@(64)		| set it
-	movsb	d0,a0@
+	movl	_C_LABEL(curpcb),%a1	| fault handler
+	movl	#Lferr,%a1@(64)		| set it
+	movsb	%d0,%a0@
 	bra	Lfdone
 dmwbs:
-	moveb	d0,a0@			|# store super byte
+	moveb	%d0,%a0@		|# store super byte
 	rts
 
+/*
 #
 # _060_dmem_write_word():
 #
@@ -276,20 +286,21 @@ dmwbs:
 # OUTPUTS:
 #	d1 - 0 = success, !0 = failure
 #
-	.global	_060_dmem_write_word
-_060_dmem_write_word:
-	clrl	d1			|# return success
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+*/
+ASENTRY_NOPROFILE(_060_dmem_write_word)
+	clrl	%d1			|# return success
+	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmwws			|# supervisor
 dmwwu:
-	movl	_curpcb,a1		| fault handler
-	movl	#Lferr,a1@(64)		| set it
-	movsw	d0,a0@
+	movl	_C_LABEL(curpcb),%a1	| fault handler
+	movl	#Lferr,%a1@(64)		| set it
+	movsw	%d0,%a0@
 	bra	Lfdone
 dmwws:
-	movew	d0,a0@			|# store super word
+	movew	%d0,%a0@		|# store super word
 	rts
 
+/*
 #
 # _060_dmem_write_long():
 #
@@ -302,29 +313,30 @@ dmwws:
 # OUTPUTS:
 #	d1 - 0 = success, !0 = failure
 #
-	.global	_060_dmem_write_long
-_060_dmem_write_long:
-	clrl	d1			|# return success
-	btst	#0x5,a6@(0x4)		|# check for supervisor state
+*/
+ASENTRY_NOPROFILE(_060_dmem_write_long)
+	clrl	%d1			|# return success
+	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmwls			|# supervisor
 dmwlu:
-	movl	_curpcb,a1		| fault handler
-	movl	#Lferr,a1@(64)		| set it
-	movsl	d0,a0@
+	movl	_C_LABEL(curpcb),%a1	| fault handler
+	movl	#Lferr,%a1@(64)		| set it
+	movsl	%d0,%a0@
 	bra	Lfdone
 dmwls:
-	movel	d0,a0@			|# store super longword
+	movel	%d0,%a0@		|# store super longword
 	rts
 
-############################################################################
+|############################################################################
 Lferr:
-	moveq	#-1,d1
+	moveq	#-1,%d1
 Lfdone:
-	clrl	a1@(64)	| clear fault handler
+	clrl	%a1@(64)		| clear fault handler
 	rts
 
-############################################################################
+|############################################################################
 
+/*
 #
 # _060_real_trace():
 #
@@ -334,10 +346,11 @@ Lfdone:
 #
 # The sample code below simply executes an "rte".
 #
-	.global	_060_real_trace,_trace
-_060_real_trace:
-	jra	_trace
+*/
+ASENTRY_NOPROFILE(_060_real_trace)
+	jra	_C_LABEL(trace)
 
+/*
 #
 # _060_real_access():
 #
@@ -349,9 +362,9 @@ _060_real_trace:
 # We jump directly to the 68060 buserr handler.
 # If we had a sane ld, we could use use that entry point directly...
 #
-	.globl	_060_real_access,_buserr60
-_060_real_access:
-	jra	_buserr60
+*/
+ASENTRY_NOPROFILE(_060_real_access)
+	jra	_C_LABEL(buserr60)
 
-	.include	"inetbsd.S"
-	.include	"fnetbsd.S"
+#include "inetbsd.S"
+#include "fnetbsd.S"
