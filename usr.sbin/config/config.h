@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.52 2001/02/21 00:03:43 cgd Exp $	*/
+/*	$NetBSD: config.h,v 1.53 2001/05/18 07:48:07 minoura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -182,7 +182,7 @@ struct devbase {
 	struct	devi **d_ipp;		/* used for tacking on more instances */
 	struct	deva *d_ahead;		/* first attachment, if any */
 	struct	deva **d_app;		/* used for tacking on attachments */
-	struct	attr *d_classattr;	/* device class sttribute (if any) */
+	struct	attr *d_classattr;	/* device class attribute (if any) */
 };
 
 struct deva {
