@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.6 2002/04/30 14:24:33 lukem Exp $	*/
+/*	$NetBSD: pmax.c,v 1.7 2002/05/14 06:18:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: pmax.c,v 1.6 2002/04/30 14:24:33 lukem Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.7 2002/05/14 06:18:52 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -154,10 +154,16 @@ pmax_clearboot(ib_params *params)
 	assert(params->filesystem != NULL);
 	assert(sizeof(struct pmax_boot_block) == PMAX_BOOT_BLOCK_BLOCKSIZE);
 
-	if (params->flags & (IB_STARTBLOCK | IB_APPEND)) {
+	if (params->flags & (IB_STAGE1START | IB_APPEND)) {
 		warnx("Can't use `-b bno' or `-o append' with `-c'");
 		return (0);
 	}
+	if (params->flags & IB_STAGE2START) {
+		warnx("`-B bno' is not supported for %s",
+		    params->machine->name);
+		return (0);
+	}
+
 	rv = pread(params->fsfd, &bb, sizeof(bb), PMAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1) {
 		warn("Reading `%s'", params->filesystem);
@@ -224,9 +230,14 @@ pmax_setboot(ib_params *params)
 	retval = 0;
 	bootstrapbuf = NULL;
 
-	if ((params->flags & IB_STARTBLOCK) &&
+	if ((params->flags & IB_STAGE1START) &&
 	    (params->flags & IB_APPEND)) {
 		warnx("Can't use `-b bno' with `-o append'");
+		goto done;
+	}
+	if (params->flags & IB_STAGE2START) {
+		warnx("`-B bno' is not supported for %s",
+		    params->machine->name);
 		goto done;
 	}
 
@@ -267,8 +278,8 @@ pmax_setboot(ib_params *params)
 		}
 		startblock = howmany(filesyssb.st_size,
 		    PMAX_BOOT_BLOCK_BLOCKSIZE);
-	} else if (params->flags & IB_STARTBLOCK) {
-		startblock = params->startblock;
+	} else if (params->flags & IB_STAGE1START) {
+		startblock = params->s1start;
 	} else {
 		startblock = PMAX_BOOT_BLOCK_OFFSET / PMAX_BOOT_BLOCK_BLOCKSIZE
 		    + 1;
