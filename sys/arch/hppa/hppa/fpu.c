@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.7 2004/07/24 18:59:05 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.8 2004/07/24 19:04:53 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.7 2004/07/24 18:59:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2004/07/24 19:04:53 chs Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -88,9 +88,6 @@ paddr_t fpu_cur_uspace;
 
 /* In locore.S, this swaps states in and out of the FPU. */
 void hppa_fpu_swap(struct pcb *, struct pcb *);
-
-/* XXX see trap.c */
-void hppa_trapsignal_hack(struct lwp *, int, u_long);
 
 #ifdef FPEMUL
 /*
@@ -360,6 +357,7 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 	u_int opcode, class, sub;
 	u_int *fpregs;
 	int exception;
+	ksiginfo_t ksi;
 
 	/*
 	 * If the process' state is in any hardware FPU, 
@@ -402,8 +400,14 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 	switch (opcode) {
 	case 0x09:
 	case 0x0b:
-		if (hppa_fpu_ls(frame, l) != 0)
-			hppa_trapsignal_hack(l, SIGSEGV, frame->tf_iioq_head);
+		if (hppa_fpu_ls(frame, l) != 0) {
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			ksi.ksi_trap = T_DTLBMISS;
+			ksi.ksi_addr = (void *)frame->tf_iioq_head;
+			trapsignal(l, &ksi);
+		}
 		return;
 	case 0x0c:
 		exception = decode_0c(inst, class, sub, fpregs);
@@ -424,9 +428,29 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)fpregs,
 		sizeof(l->l_addr->u_pcb.pcb_fpregs));
-	if (exception)
-		hppa_trapsignal_hack(l, (exception & UNIMPLEMENTEDEXCEPTION) ?
-			SIGILL : SIGFPE, frame->tf_iioq_head);
+	if (exception) {
+		KSI_INIT_TRAP(&ksi);
+		if (exception & UNIMPLEMENTEDEXCEPTION) {
+			ksi.ksi_signo = SIGILL;
+			ksi.ksi_code = ILL_COPROC;
+		} else {
+			ksi.ksi_signo = SIGFPE;
+			if (exception & INVALIDEXCEPTION) {
+				ksi.ksi_code = FPE_FLTINV;
+			} else if (exception & DIVISIONBYZEROEXCEPTION) {
+				ksi.ksi_code = FPE_FLTDIV;
+			} else if (exception & OVERFLOWEXCEPTION) {
+				ksi.ksi_code = FPE_FLTOVF;
+			} else if (exception & UNDERFLOWEXCEPTION) {
+				ksi.ksi_code = FPE_FLTUND;
+			} else if (exception & INEXACTEXCEPTION) {
+				ksi.ksi_code = FPE_FLTRES;
+			}
+		}
+		ksi.ksi_trap = T_EMULATION;
+		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+		trapsignal(l, &ksi);
+	}
 }
 
 #endif /* FPEMUL */
