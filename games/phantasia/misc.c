@@ -1,10 +1,11 @@
-/*	$NetBSD: misc.c,v 1.10 2004/01/01 16:03:46 jsm Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 2004/04/07 17:46:47 ross Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
  */
 
 #include "include.h"
+#include <curses.h>
 
 
 void

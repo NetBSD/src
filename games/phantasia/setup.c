@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.12 2003/05/08 13:03:49 wiz Exp $	*/
+/*	$NetBSD: setup.c,v 1.13 2004/04/07 17:46:47 ross Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -110,7 +110,7 @@ main(argc, argv)
 	}
 
     /* put holy grail info into energy void file */
-    Enrgyvoid.ev_active = TRUE;
+    Enrgyvoid.ev_active = 1;
     Enrgyvoid.ev_x = ROLL(-1.0e6, 2.0e6);
     Enrgyvoid.ev_y = ROLL(-1.0e6, 2.0e6);
     path = strrchr(_PATH_VOID, '/') + 1;
