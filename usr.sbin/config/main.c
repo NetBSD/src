@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.55 2001/02/21 00:03:43 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.56 2001/06/08 12:47:06 fredette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -326,6 +326,7 @@ mksymlinks(void)
 	int ret;
 	char *p, buf[MAXPATHLEN];
 	const char *q;
+	struct nvlist *nv;
 
 	sprintf(buf, "arch/%s/include", machine);
 	p = sourcepath(buf);
@@ -356,6 +357,21 @@ mksymlinks(void)
 		(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
 		    q, p, strerror(errno));
 	free(p);
+
+	for (nv = machinesubarches; nv != NULL; nv = nv->nv_next) {
+		q = nv->nv_name;
+		sprintf(buf, "arch/%s/include", q);
+		p = sourcepath(buf);
+		ret = unlink(q);
+		if (ret && errno != ENOENT)
+			(void)fprintf(stderr, "config: unlink(%s): %s\n",
+			    q, strerror(errno));
+		ret = symlink(p, q);
+		if (ret)
+			(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
+		    	q, p, strerror(errno));
+		free(p);
+	}
 
 	return (ret);
 }
