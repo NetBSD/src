@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.14 2004/02/24 15:12:52 wiz Exp $ */
+/* $NetBSD: atppc.c,v 1.15 2004/02/24 17:41:09 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.14 2004/02/24 15:12:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.15 2004/02/24 17:41:09 drochner Exp $");
 
 #include "opt_atppc.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.14 2004/02/24 15:12:52 wiz Exp $");
 #include <sys/syslog.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
+/*#include <machine/intr.h>*/
 
 #include <dev/isa/isareg.h>
 
@@ -89,7 +89,7 @@ int atppcintr(void *);
 
 /* Print function for config_found_sm() */
 static int atppc_print(void *, const char *);
-	
+
 /* Detection routines */
 static int atppc_detect_fifo(struct atppc_softc *);
 static int atppc_detect_chipset(struct atppc_softc *);
@@ -192,7 +192,7 @@ atppc_sc_attach(struct atppc_softc *lsc)
 #endif
 
 	/* Set up parport_adapter structure */
-	
+
 	/* Set capabilites */
 	sc_parport_adapter.capabilities = 0;
 	if (lsc->sc_has & ATPPC_HAS_INTR) {
@@ -233,7 +233,7 @@ atppc_sc_attach(struct atppc_softc *lsc)
 
 	/* Initialize handler list, may be added to by grandchildren */
 	SLIST_INIT(&(lsc->sc_handler_listhead));
-	
+
 	/* Initialize interrupt state */
 	lsc->sc_irqstat = ATPPC_IRQ_NONE;
 	lsc->sc_ecr_intr = lsc->sc_ctr_intr = lsc->sc_str_intr = 0;
@@ -267,7 +267,7 @@ int atppc_sc_detach(struct atppc_softc *lsc, int flag)
 
 	if (!(flag & DETACH_QUIET))
 		printf("%s detached", dev->dv_xname);
-	
+
 	return 0;
 }
 
@@ -321,7 +321,7 @@ atppc_detect_port(bus_space_tag_t iot, bus_space_handle_t ioh)
 	bus_space_write_1(iot, ioh, ATPPC_SPP_CTR, 0x0c);
 	bus_space_barrier(iot, ioh, 0, IO_LPTSIZE,
 		BUS_SPACE_BARRIER_WRITE);
-	
+
 	if (bus_space_read_1(iot, ioh, ATPPC_SPP_CTR) != 0x0c) {
 		rval = 0;
 	} else {
@@ -349,9 +349,9 @@ atppc_detect_port(bus_space_tag_t iot, bus_space_handle_t ioh)
 				rval = 0;
 			}
 		}
-	
+
 	}
-	
+
 	/* Restore registers */
 	bus_space_barrier(iot, ioh, 0, IO_LPTSIZE,
 		BUS_SPACE_BARRIER_READ);
@@ -440,7 +440,7 @@ atppc_detect_generic(struct atppc_softc *atppc)
 	atppc_barrier_w(atppc);
 	tmp = atppc_r_dtr(atppc);
 	atppc_barrier_r(atppc);
-	if (tmp != 0xaa) {	
+	if (tmp != 0xaa) {
 		atppc_w_dtr(atppc, 0x55);
 		atppc_barrier_w(atppc);
 		tmp = atppc_r_dtr(atppc);
@@ -449,7 +449,7 @@ atppc_detect_generic(struct atppc_softc *atppc)
 			atppc->sc_has |= ATPPC_HAS_PS2;
 		}
 	}
-	
+
 	/* Restore to previous state */
 	atppc_w_ecr(atppc, ecr_sav);
 	atppc_w_ctr(atppc, ctr_sav);
@@ -484,7 +484,7 @@ atppc_detect_fifo(struct atppc_softc *atppc)
 	ctr_sav = atppc_r_ctr(atppc);
 	str_sav = atppc_r_str(atppc);
 	atppc_barrier_r(atppc);
-	
+
 	/* Enter ECP configuration mode, no interrupt, no DMA */
 	atppc_w_ecr(atppc, (ATPPC_ECR_CFG | ATPPC_SERVICE_INTR) &
 		~ATPPC_ENABLE_DMA);
@@ -565,14 +565,14 @@ atppc_detect_fifo(struct atppc_softc *atppc)
 				__func__, dev->dv_xname));
 			goto error;
 		}
-		
+
 		cc = atppc_r_ecr(atppc);
 		atppc_barrier_r(atppc);
 		if ((atppc->sc_wthr == 0) && (cc & ATPPC_SERVICE_INTR)) {
 			/* writeIntrThreshold reached */
 			atppc->sc_wthr = atppc->sc_fifo - i;
 		}
-		
+
 		if (i > 0 && (cc & ATPPC_FIFO_EMPTY)) {
 			/* If FIFO empty before the last byte, error */
 			ATPPC_DPRINTF(("%s(%s): data lost in FIFO.\n", __func__,
@@ -640,7 +640,7 @@ atppcintr(void *arg)
 		else
 			claim = 0;
 		break;
-	
+
 	case ATPPC_MODE_NIBBLE:
 	case ATPPC_MODE_PS2:
 		/* nAck is set low by device and then high on ack */
@@ -651,8 +651,6 @@ atppcintr(void *arg)
 		atppc->sc_irqstat = ATPPC_IRQ_nACK;
 		if (atppc->sc_inb)
 			wake_up = READER;
-		else
-			claim = 0;
 		break;
 
 	case ATPPC_MODE_ECP:
@@ -663,7 +661,7 @@ atppcintr(void *arg)
 				atppc->sc_irqstat |= ATPPC_IRQ_DMA;
 			else
 				atppc->sc_irqstat |= ATPPC_IRQ_FIFO;
-			
+
 			/* Decide where top half will be waiting */
 			if (atppc->sc_mode & ATPPC_MODE_ECP) {
 				if (atppc->sc_ctr_intr & PCD) {
@@ -817,7 +815,7 @@ atppc_read(struct device *dev, char *buf, int len, int ioflag,
 	case ATPPC_MODE_FAST:
 		error = ENODEV;
 		break;
-	
+
 	case ATPPC_MODE_NIBBLE:
 		atppc_nibble_read(atppc);
 		break;
@@ -864,7 +862,7 @@ atppc_write(struct device *dev, char *buf, int len, int ioflag, size_t *cnt)
 	int s;
 
 	*cnt = 0;
-	
+
 	s = splatppc();
 	ATPPC_LOCK(atppc);
 
@@ -978,7 +976,7 @@ atppc_setmode(struct device *dev, int mode)
 		case PPBUS_COMPATIBLE:
 			/* Set standard mode */
 			ecr |= ATPPC_ECR_STD;
-			chipset_mode = ATPPC_MODE_STD;;
+			chipset_mode = ATPPC_MODE_STD;
 			break;
 
 		case PPBUS_NIBBLE:
@@ -1150,7 +1148,7 @@ atppc_ecp_sync(struct device *dev)
 end:
 	ATPPC_UNLOCK(atppc);
 	splx(s);
-	
+
 	return;
 }
 
@@ -1293,7 +1291,7 @@ atppc_exec_microseq(struct device *dev, struct ppbus_microseq **p_msq)
                        	if (--atppc->sc_accum > 0) {
                                	mi += mi->arg[0].i;
 			}
-	
+
 			mi++;
 			break;
 
@@ -1415,7 +1413,7 @@ atppc_io(struct device *dev, int iop, u_char *addr, int cnt, u_char byte)
 
 	s = splatppc();
 	ATPPC_LOCK(atppc);
-	
+
 	switch (iop) {
 	case PPBUS_OUTSB_EPP:
 		bus_space_write_multi_1(atppc->sc_iot, atppc->sc_ioh,
@@ -1493,7 +1491,7 @@ atppc_io(struct device *dev, int iop, u_char *addr, int cnt, u_char byte)
 
 	ATPPC_UNLOCK(atppc);
 	splx(s);
-	
+
 	return val;
 }
 
@@ -1507,7 +1505,7 @@ atppc_read_ivar(struct device *dev, int index, unsigned int *val)
 
 	s = splatppc();
 	ATPPC_LOCK(atppc);
-	
+
 	switch(index) {
 	case PPBUS_IVAR_EPP_PROTO:
 		if (atppc->sc_epp == ATPPC_EPP_1_9)
@@ -1531,7 +1529,7 @@ atppc_read_ivar(struct device *dev, int index, unsigned int *val)
 
 	ATPPC_UNLOCK(atppc);
 	splx(s);
-	
+
 	return rval;
 }
 
@@ -1545,7 +1543,7 @@ atppc_write_ivar(struct device *dev, int index, unsigned int *val)
 
 	s = splatppc();
 	ATPPC_LOCK(atppc);
-	
+
 	switch(index) {
 	case PPBUS_IVAR_EPP_PROTO:
 		if (*val == PPBUS_EPP_1_9 || *val == PPBUS_EPP_1_7)
@@ -1578,7 +1576,7 @@ atppc_write_ivar(struct device *dev, int index, unsigned int *val)
 
 	ATPPC_UNLOCK(atppc);
 	splx(s);
-	
+
 	return rval;
 }
 
@@ -1613,7 +1611,7 @@ atppc_add_handler(struct device *dev, void (*handler)(void *), void *arg)
 
 	ATPPC_UNLOCK(atppc);
 	splx(s);
-	
+
 	return rval;
 }
 
@@ -1628,7 +1626,7 @@ atppc_remove_handler(struct device *dev, void (*handler)(void *))
 
 	s = splatppc();
 	ATPPC_LOCK(atppc);
-	
+
 	if (SLIST_EMPTY(&(atppc->sc_handler_listhead)))
 		panic("%s(%s): attempt to remove handler from empty list.\n",
 			__func__, dev->dv_xname);
@@ -1646,7 +1644,7 @@ atppc_remove_handler(struct device *dev, void (*handler)(void *))
 
 	ATPPC_UNLOCK(atppc);
 	splx(s);
-	
+
 	return rval;
 }
 
@@ -1681,7 +1679,7 @@ atppc_nibble_read(struct atppc_softc *atppc)
 			atppc_barrier_w(atppc);
 		}
 	}
-	
+
 	while (atppc->sc_inbstart < (atppc->sc_inb + atppc->sc_inb_nbytes)) {
 		/* Check if device has data to send in idle phase */
 		str = atppc_r_str(atppc);
@@ -1755,7 +1753,7 @@ atppc_byte_read(struct atppc_softc * const atppc)
 			atppc_barrier_w(atppc);
 		}
 	}
-	
+
 	/* Byte-mode handshake transfer */
 	while (atppc->sc_inbstart < (atppc->sc_inb + atppc->sc_inb_nbytes)) {
 		/* Check if device has data to send */
@@ -1792,7 +1790,7 @@ atppc_byte_read(struct atppc_softc * const atppc)
 			atppc->sc_inerr = atppc_poll_str(atppc, PTRCLK, PTRCLK);
 		if (atppc->sc_inerr)
 			return;
-	
+
 		/* Event 16 - strobe */
 		str |= HOSTCLK;
 		atppc_w_str(atppc, str);
@@ -1865,7 +1863,7 @@ atppc_ecp_read(struct atppc_softc *atppc)
 	/* Clear device request if any */
 	if (atppc->sc_use & ATPPC_USE_INTR)
 		atppc->sc_irqstat &= ~ATPPC_IRQ_nFAULT;
-	
+
 	while (atppc->sc_inbstart < (atppc->sc_inb + atppc->sc_inb_nbytes)) {
 		ecr = atppc_r_ecr(atppc);
 		atppc_barrier_r(atppc);
@@ -1875,14 +1873,14 @@ atppc_ecp_read(struct atppc_softc *atppc)
 				atppc_ecp_read_error(atppc, worklen);
 				break;
 			}
-			
+
 			/* Check if device has data to send */
 			str = atppc_r_str(atppc);
 			atppc_barrier_r(atppc);
 			if (str & nDATAVAIL) {
 				break;
 			}
-		
+
 			if (atppc->sc_use & ATPPC_USE_INTR) {
 				/* Enable interrupts */
 				ecr &= ~ATPPC_SERVICE_INTR;
@@ -1917,7 +1915,7 @@ atppc_ecp_read(struct atppc_softc *atppc)
 		} else {
 			atppc_ecp_read_pio(atppc, &worklen, ecr);
 		}
-		
+
 		if (atppc->sc_inerr) {
 			atppc_ecp_read_error(atppc, worklen);
 			break;
@@ -1942,7 +1940,7 @@ atppc_ecp_read_dma(struct atppc_softc *atppc, unsigned int *length,
 	atppc->sc_dmastat = ATPPC_DMA_INIT;
 	atppc->sc_dma_start(atppc, atppc->sc_inbstart, *length,
 		ATPPC_DMA_MODE_READ);
-		
+
 	atppc->sc_dmastat = ATPPC_DMA_STARTED;
 
 	/* Enable interrupts, DMA */
@@ -1956,7 +1954,7 @@ atppc_ecp_read_dma(struct atppc_softc *atppc, unsigned int *length,
 		ATPPC_IRQ_DMA);
 	if (atppc->sc_inerr)
 		return;
-	
+
 	/* Get register value recorded by interrupt handler */
 	ecr = atppc->sc_ecr_intr;
 	/* Clear DMA programming */
@@ -1977,7 +1975,7 @@ atppc_ecp_read_pio(struct atppc_softc *atppc, unsigned int *length,
 	ecr &= ~ATPPC_ENABLE_DMA;
 	atppc_w_ecr(atppc, ecr);
 	atppc_barrier_w(atppc);
-	
+
 	/* Read from FIFO */
 	atppc_r_fifo_multi(atppc, atppc->sc_inbstart, *length);
 }
@@ -2112,7 +2110,7 @@ atppc_fifo_write(struct atppc_softc * const atppc)
 	unsigned char ecr;
 	const unsigned char ctr_sav = atppc_r_ctr(atppc);
 	const unsigned char ecr_sav = atppc_r_ecr(atppc);
-	
+
 	ctr = ctr_sav;
 	ecr = ecr_sav;
 	atppc_barrier_r(atppc);
@@ -2131,12 +2129,12 @@ atppc_fifo_write(struct atppc_softc * const atppc)
 	/* DMA or Programmed IO */
 	if ((atppc->sc_use & ATPPC_USE_DMA) &&
 		(atppc->sc_use & ATPPC_USE_INTR)) {
-		
+
 		atppc_fifo_write_dma(atppc, ecr, ctr);
 	} else {
 		atppc_fifo_write_pio(atppc, ecr, ctr);
 	}
-	
+
 	/* Restore original register values */
 	atppc_w_ctr(atppc, ctr_sav);
 	atppc_w_ecr(atppc, ecr_sav);
@@ -2153,18 +2151,18 @@ atppc_fifo_write_dma(struct atppc_softc * const atppc, unsigned char ecr,
 	for (len = (atppc->sc_outb + atppc->sc_outb_nbytes) -
 		atppc->sc_outbstart; len > 0; len = (atppc->sc_outb +
 		atppc->sc_outb_nbytes) - atppc->sc_outbstart) {
-		
+
 		/* Wait for device to become ready */
 		atppc->sc_outerr = atppc_poll_str(atppc, SPP_READY, SPP_MASK);
 		if (atppc->sc_outerr)
 			return;
-		
+
 		/* Reset chipset for next DMA transfer */
 		atppc_w_ecr(atppc, ATPPC_ECR_PS2);
 		atppc_barrier_w(atppc);
 		atppc_w_ecr(atppc, ecr);
 		atppc_barrier_w(atppc);
-		
+
 		/* Limit transfer to maximum DMA size and start it */
 		worklen = min(len, atppc->sc_dma_maxsize);
 		atppc->sc_dmastat = ATPPC_DMA_INIT;
@@ -2194,7 +2192,7 @@ atppc_fifo_write_dma(struct atppc_softc * const atppc, unsigned char ecr,
 		ecr &= ~ATPPC_ENABLE_DMA;
 		atppc_w_ecr(atppc, ecr);
 		atppc_barrier_w(atppc);
-			
+
 		/* Wait for FIFO to empty */
 		for (;;) {
 			if (ecr & ATPPC_FIFO_EMPTY) {
@@ -2206,19 +2204,19 @@ atppc_fifo_write_dma(struct atppc_softc * const atppc, unsigned char ecr,
 					break;
 				}
 			}
-		
+
 			/* Enable service interrupt */
 			ecr &= ~ATPPC_SERVICE_INTR;
 			atppc_w_ecr(atppc, ecr);
 			atppc_barrier_w(atppc);
-			
+
 			atppc->sc_outerr = atppc_wait_interrupt(atppc,
 				atppc->sc_outb, ATPPC_IRQ_FIFO);
 			if (atppc->sc_outerr) {
 				atppc_fifo_write_error(atppc, worklen);
 				return;
 			}
-		
+
 			/* Get register value recorded by interrupt handler */
 			ecr = atppc->sc_ecr_intr;
 		}
@@ -2240,16 +2238,16 @@ atppc_fifo_write_pio(struct atppc_softc * const atppc, unsigned char ecr,
 	ecr &= ~ATPPC_ENABLE_DMA;
 	atppc_w_ecr(atppc, ecr);
 	atppc_barrier_w(atppc);
-	
+
 	for (len = (atppc->sc_outb + atppc->sc_outb_nbytes) -
 		atppc->sc_outbstart; len > 0; len = (atppc->sc_outb +
 		atppc->sc_outb_nbytes) - atppc->sc_outbstart) {
-		
+
 		/* Wait for device to become ready */
 		atppc->sc_outerr = atppc_poll_str(atppc, SPP_READY, SPP_MASK);
 		if (atppc->sc_outerr)
 			return;
-		
+
 		/* Limit transfer to minimum of space in FIFO and buffer */
 		worklen = min(len, atppc->sc_fifo);
 
@@ -2260,7 +2258,7 @@ atppc_fifo_write_pio(struct atppc_softc * const atppc, unsigned char ecr,
 		if (atppc->sc_use & ATPPC_USE_INTR) {
 			ecr = atppc_r_ecr(atppc);
 			atppc_barrier_w(atppc);
-			
+
 			/* Wait for interrupt */
 			for (;;) {
 				if (ecr & ATPPC_FIFO_EMPTY) {
@@ -2278,21 +2276,21 @@ atppc_fifo_write_pio(struct atppc_softc * const atppc, unsigned char ecr,
 				ecr &= ~ATPPC_SERVICE_INTR;
 				atppc_w_ecr(atppc, ecr);
 				atppc_barrier_w(atppc);
-				
+
 				atppc->sc_outerr = atppc_wait_interrupt(atppc,
 					atppc->sc_outb, ATPPC_IRQ_FIFO);
 				if (atppc->sc_outerr) {
 					atppc_fifo_write_error(atppc, worklen);
 					return;
 				}
-			
+
 				/* Get ECR value saved by interrupt handler */
 				ecr = atppc->sc_ecr_intr;
 			}
 		} else {
 			for (; timecount < ((MAXBUSYWAIT/hz)*1000000);
 				timecount++) {
-				
+
 				ecr = atppc_r_ecr(atppc);
 				atppc_barrier_r(atppc);
 				if (ecr & ATPPC_FIFO_EMPTY) {
@@ -2307,14 +2305,14 @@ atppc_fifo_write_pio(struct atppc_softc * const atppc, unsigned char ecr,
 				}
 				DELAY(1);
 			}
-		
+
 			if (((timecount*hz)/1000000) >= MAXBUSYWAIT) {
 				atppc->sc_outerr = EIO;
 				atppc_fifo_write_error(atppc, worklen);
 				return;
 			}
 		}
-		
+
 		/* Update pointer */
 		atppc->sc_outbstart += worklen;
 	}
@@ -2342,7 +2340,7 @@ atppc_fifo_write_error(struct atppc_softc * const atppc,
 
 		ATPPC_DPRINTF(("%s(%s): FIFO not empty.\n", __func__,
 			atppc->sc_dev.dv_xname));
-			
+
 		/* Drive strobe low to stop data transfer */
 		ctr &= ~STROBE;
 		atppc_w_ctr(atppc, ctr);
@@ -2359,7 +2357,7 @@ atppc_fifo_write_error(struct atppc_softc * const atppc,
 		bytes_left = (atppc->sc_fifo) - (i + 1);
 		ATPPC_DPRINTF(("%s: %d bytes left in FIFO.\n", 	__func__,
 			bytes_left));
-		
+
 		/* Update counter */
 		atppc->sc_outbstart += (worklen - bytes_left);
 	} else {
@@ -2387,7 +2385,7 @@ atppc_poll_str(const struct atppc_softc * const atppc, const u_int8_t status,
 	/* Wait for str to have status for MAXBUSYWAIT */
 	for (timecount = 0; timecount < ((MAXBUSYWAIT/hz)*1000000);
 		timecount++) {
-		
+
 		str = atppc_r_str(atppc);
 		atppc_barrier_r(atppc);
 		if ((str & mask) == status) {
@@ -2408,11 +2406,11 @@ atppc_wait_interrupt(struct atppc_softc * const atppc, const caddr_t where,
 	int error = EIO;
 
 	atppc->sc_irqstat &= ~irqstat;
-	
+
 	/* Wait for interrupt for MAXBUSYWAIT */
 	error = ltsleep(where, PPBUSPRI | PCATCH, __func__, MAXBUSYWAIT,
 		ATPPC_SC_LOCK(atppc));
-			
+
 	if (!(error) && (atppc->sc_irqstat & irqstat)) {
 		atppc->sc_irqstat &= ~irqstat;
 		error = 0;
