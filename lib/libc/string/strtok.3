@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtok.3	8.2 (Berkeley) 2/3/94
-.\"	$NetBSD: strtok.3,v 1.11 2000/07/20 14:06:23 kleink Exp $
+.\"	$NetBSD: strtok.3,v 1.12 2000/10/11 18:26:04 phil Exp $
 .\"
 .Dd February 3, 1994
 .Dt STRTOK 3
@@ -75,7 +75,10 @@ function
 returns a pointer to the beginning of each subsequent token in the string,
 after replacing the separator character itself with a
 .Dv NUL
-character.
+character. 
+Separator characters at the beginning of the string or at the
+continuation point are skipped so that zero length tokens
+are not returned.
 When no more tokens remain, a null pointer is returned.
 .Pp
 The
