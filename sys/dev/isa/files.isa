@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.83 1999/03/22 22:33:36 bad Exp $
+#	$NetBSD: files.isa,v 1.84 1999/06/06 17:30:37 dante Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -70,6 +70,11 @@ file	dev/isa/lpt_isa.c		lpt_isa
 #
 # SCSI host adapters
 #
+
+# AdvanSys 514x family
+# device declaration in sys/conf/files
+attach  adv at isa with adv_isa: isadma
+file    dev/isa/adv_isa.c               adv_isa
 
 # Adaptec AHA-154x family
 # device declaration in sys/conf/files
