@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.8 2003/05/19 00:27:07 seb Exp $	*/
+/*	$NetBSD: db.c,v 1.9 2003/05/20 08:34:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: db.c,v 1.8 2003/05/19 00:27:07 seb Exp $");
+__RCSID("$NetBSD: db.c,v 1.9 2003/05/20 08:34:52 wiz Exp $");
 #endif /* not lint */
 
 #include <db.h>
@@ -621,9 +621,10 @@ usage(void)
 	const char *p = getprogname();
 
 	fprintf(stderr,
-    "Usage: %s [-KV] [-Niq] [-S chr] [-T str] [-X str] [-E end] [-f inf] [-O str] type dbfile [key [...]]\n"
-    "       %s -d [-Niq] [-U chr] [-E end] [-f inf] type dbfile [key [...]]\n"
-    "       %s -w [-Niq] [-U chr] [-E end] [-f inf] [-CDR] [-F sep] [-m mod]\n"
+    "Usage: %s [-KiNqV] [-E end] [-f inf] [-O str] [-S chr] [-T str] [-X str]\n"
+    "             type dbfile [key [...]]\n"
+    "       %s -d [-iNq] [-E end] [-f inf] [-U chr] type dbfile [key [...]]\n"
+    "       %s -w [-CDiNqR] [-E end] [-F sep] [-f inf] [-m mod] [-U chr]\n"
     "             type dbfile [key val [...]]\n"
 	    ,p ,p ,p );
 	fprintf(stderr,
@@ -636,19 +637,19 @@ usage(void)
 	    "\t-D\tallow duplicates\n"
 	    "\t-E end\tdatabase endian: `B'ig, `L'ittle, `H'ost  [default: H]\n"
 	    "\t-F sep\tfield separator character  [default: ' ']\n"
+	    "\t-f inf\tfile of keys (read|delete) or keys/vals (write)\n"
+	    "\t-i\tignore case of key by converting to lower case\n"
 	    "\t-K\tprint key\n"
+	    "\t-m mod\tmode of created database  [default: 0644]\n"
 	    "\t-N\tdon't NUL terminate key\n"
+	    "\t-O str\toutput field separator string [default: '\\t']\n"
+	    "\t-q\tquiet operation (missing keys aren't errors)\n"
 	    "\t-R\treplace existing keys\n"
 	    "\t-S chr\titems to strvis(3) encode: 'k'ey, 'v'alue, 'b'oth\n"
 	    "\t-T str\toptions to control -S encoding like vis(1) options\n"
 	    "\t-U chr\titems to strunvis(3) decode: 'k'ey, 'v'alue, 'b'oth\n"
 	    "\t-V\tprint value\n"
 	    "\t-X str\textra characters to encode with -S\n"
-	    "\t-f inf\tfile of keys (read|delete) or keys/vals (write)\n"
-	    "\t-i\tignore case of key by converting to lower case\n"
-	    "\t-m mod\tmode of created database  [default: 0644]\n"
-	    "\t-q\tquiet operation (missing keys aren't errors)\n"
-	    "\t-O str\toutput field separator string [default: '\\t']\n"
 	    );
 	exit(1);
 }
