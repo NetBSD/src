@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.7 2002/02/18 19:50:03 augustss Exp $	*/
+/*	$NetBSD: auconv.h,v 1.8 2002/03/07 14:37:02 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_AUCONV_H_
+#define _DEV_AUCONV_H_
+
 /* Convert between signed and unsigned. */
 extern void change_sign8(void *, u_char *, int);
 extern void change_sign16_le(void *, u_char *, int);
@@ -56,3 +59,21 @@ extern void ulinear8_to_slinear16_le(void *, u_char *, int);
 extern void ulinear8_to_slinear16_be(void *, u_char *, int);
 extern void slinear16_to_ulinear8_le(void *, u_char *, int);
 extern void slinear16_to_ulinear8_be(void *, u_char *, int);
+
+/* Sampling rate conversion */
+#define AUDIO_MAX_CHANNELS	6
+struct auconv_context {
+	long	count;
+	int32_t	prev[AUDIO_MAX_CHANNELS];
+	uint8_t	*ring_start;
+	uint8_t	*ring_end;
+};
+extern int auconv_check_params(const struct audio_params *);
+extern void auconv_init_context(struct auconv_context *, long, long, uint8_t *,
+				uint8_t *);
+extern int auconv_play(struct auconv_context *, const struct audio_params *,
+		       uint8_t *, const uint8_t *, int);
+extern int auconv_record(struct auconv_context *, const struct audio_params *,
+			 uint8_t *, const uint8_t *, int);
+
+#endif /* !_DEV_AUCONV_H_ */
