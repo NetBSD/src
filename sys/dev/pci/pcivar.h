@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.50 2002/05/16 01:01:30 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.51 2002/05/18 21:40:41 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -113,6 +113,7 @@ struct pci_attach_args {
 	pcitag_t	pa_intrtag;	/* intr. appears to come from here */
 	pci_intr_pin_t	pa_intrpin;	/* intr. appears on this pin */
 	pci_intr_line_t	pa_intrline;	/* intr. routing information */
+	pci_intr_pin_t  pa_rawintrpin; 	/* unswizzled pin */
 };
 
 /*
@@ -147,8 +148,8 @@ struct pci_quirkdata {
 struct pci_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot, sc_memt;
-	bus_dma_tag_t sc_dmat; 
-	pci_chipset_tag_t sc_pc; 
+	bus_dma_tag_t sc_dmat;
+	pci_chipset_tag_t sc_pc;
 	int sc_bus, sc_maxndevs;
 	pcitag_t *sc_bridgetag;
 	u_int sc_intrswiz;
