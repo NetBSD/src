@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: trace.c,v 8.20 1999/08/02 21:44:36 ca Exp";
+static char id[] = "@(#)Id: trace.c,v 8.20.22.1 2000/05/25 18:56:18 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -63,7 +63,7 @@ void
 tTflag(s)
 	register char *s;
 {
-	unsigned int first, last;
+	int first, last;
 	register unsigned int i;
 
 	if (*s == '\0')
