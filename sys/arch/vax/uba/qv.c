@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.1 1996/08/18 21:28:55 jonathan Exp $	*/
+/*	$NetBSD: qv.c,v 1.2 1996/09/02 06:44:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -956,8 +956,10 @@ out:
  * Stop output on a line, e.g. for ^S/^Q or output flush.
  */
 /*ARGSUSED*/
+void
 qvstop(tp, flag)
 	register struct tty *tp;
+	int flag;
 {
 	register int s;
 

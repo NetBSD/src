@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.7 1996/06/03 22:30:36 mark Exp $	*/
+/*	$NetBSD: com.c,v 1.8 1996/09/02 06:43:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -892,7 +892,7 @@ stopped:
 /*
  * Stop output on a line.
  */
-int
+void
 comstop(tp, flag)
 	struct tty *tp;
 	int flag;
@@ -904,7 +904,6 @@ comstop(tp, flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	splx(s);
-	return 0;
 }
 
 void
