@@ -1,7 +1,7 @@
-/*	$NetBSD: psychovar.h,v 1.1 1999/06/04 13:42:15 mrg Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.2 2000/04/10 16:11:23 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,6 @@ struct psycho_pbm {
 
 	/* and pointers into the psycho regs for our bits */
 	struct pci_ctl			*pp_pcictl;
-	struct strbuf_diag		*pp_sb_diag;
 };
 
 /*

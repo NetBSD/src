@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.4 2000/04/08 15:15:41 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.5 2000/04/10 16:11:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -218,14 +218,22 @@ sabre_init(sc, pba)
 
 	/* setup the PCI control register; there is only one for the sabre */
 	csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)&sc->sc_regs->psy_pcictl[0].pci_csr, 0);
-	csr = PCICTL_SERR | PCICTL_ARB_PARK | PCICTL_ERRINTEN | PCICTL_4ENABLE;
+	csr |= PCICTL_MRLM |
+	       PCICTL_ARB_PARK |
+	       PCICTL_ERRINTEN |
+	       PCICTL_4ENABLE;
+	csr &= ~(PCICTL_SERR |
+		 PCICTL_CPU_PRIO |
+		 PCICTL_ARB_PRIO |
+		 PCICTL_RTRYWAIT);
 	bus_space_write_8(sc->sc_bustag, &sc->sc_regs->psy_pcictl[0].pci_csr, 0, csr);
 
 	/* allocate a pair of psycho_pbm's for our simba's */
 	sc->sc_sabre = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
 	sc->sc_simba_a = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
 	sc->sc_simba_b = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_simba_a == NULL || sc->sc_simba_b == NULL)
+	if (sc->sc_sabre == NULL || sc->sc_simba_a == NULL ||
+	    sc->sc_simba_b == NULL)
 		panic("could not allocate simba pbm's");
 
 	memset(sc->sc_sabre, 0, sizeof *pp);
@@ -263,12 +271,10 @@ sabre_init(sc, pba)
 		if (simba_br[0] == 1) {		/* PCI B */
 			pp = sc->sc_simba_b;
 			pp->pp_pcictl = &sc->sc_regs->psy_pcictl[1];
-			pp->pp_sb_diag = &sc->sc_regs->psy_strbufdiag[1];
 			who = 'b';
 		} else {			/* PCI A */
 			pp = sc->sc_simba_a;
 			pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
-			pp->pp_sb_diag = &sc->sc_regs->psy_strbufdiag[0];
 			who = 'a';
 		}
 		/* link us in .. */
@@ -302,7 +308,6 @@ sabre_init(sc, pba)
 	pp->pp_intmap = NULL;
 	pp->pp_regs = NULL;
 	pp->pp_pcictl = sc->sc_psycho_this->pp_pcictl;
-	pp->pp_sb_diag = sc->sc_psycho_this->pp_sb_diag;
 	pba->pba_pc = psycho_alloc_chipset(pp, sc->sc_node,
 	    sc->sc_psycho_this->pp_pc);
 
