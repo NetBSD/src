@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.14 2001/04/06 16:52:41 wiz Exp $	*/
+/*	$NetBSD: fat.c,v 1.15 2003/02/28 05:50:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.14 2001/04/06 16:52:41 wiz Exp $");
+__RCSID("$NetBSD: fat.c,v 1.15 2003/02/28 05:50:33 matt Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -372,17 +372,17 @@ clearchain(boot, fat, head)
 }
 
 int
-tryclear(boot, fat, head, trunc)
+tryclear(boot, fat, head, truncp)
 	struct bootblock *boot;
 	struct fatEntry *fat;
 	cl_t head;
-	cl_t *trunc;
+	cl_t *truncp;
 {
 	if (ask(0, "Clear chain starting at %u", head)) {
 		clearchain(boot, fat, head);
 		return FSFATMOD;
 	} else if (ask(0, "Truncate")) {
-		*trunc = CLUST_EOF;
+		*truncp = CLUST_EOF;
 		return FSFATMOD;
 	} else
 		return FSERROR;
