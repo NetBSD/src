@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.98 2000/02/29 06:32:25 simonb Exp $
+#	$NetBSD: GENERIC,v 1.99 2000/03/31 08:27:43 scottr Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 maxusers	16		# estimated number of users
 
@@ -183,9 +183,9 @@ macfb*	at intvid?
 macfb*	at macvid?
 
 # Workstation Console devices
-wsdisplay0 at macfb? console ?
-wskbd0	at akbd? console ?
-wsmouse0 at ams?
+wsdisplay* at macfb? console ?
+wskbd*	at akbd? console ?
+wsmouse* at ams?
 
 
 # Serial Devices
