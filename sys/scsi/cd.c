@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.71 1995/07/24 06:55:37 cgd Exp $	*/
+/*	$NetBSD: cd.c,v 1.72 1995/08/05 23:48:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -841,35 +841,38 @@ void
 cdgetdisklabel(cd)
 	struct cd_softc *cd;
 {
+	struct disklabel *lp = &cd->sc_dk.dk_label;
 
-	bzero(&cd->sc_dk.dk_label, sizeof(struct disklabel));
+	bzero(lp, sizeof(struct disklabel));
 	bzero(&cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
-	cd->sc_dk.dk_label.d_secsize = cd->params.blksize;
-	cd->sc_dk.dk_label.d_ntracks = 1;
-	cd->sc_dk.dk_label.d_nsectors = 100;
-	cd->sc_dk.dk_label.d_ncylinders = (cd->params.disksize / 100) + 1;
-	cd->sc_dk.dk_label.d_secpercyl =
-	    cd->sc_dk.dk_label.d_ntracks * cd->sc_dk.dk_label.d_nsectors;
+	lp->d_secsize = cd->params.blksize;
+	lp->d_ntracks = 1;
+	lp->d_nsectors = 100;
+	lp->d_ncylinders = (cd->params.disksize / 100) + 1;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	strncpy(cd->sc_dk.dk_label.d_typename, "SCSI CD-ROM", 16);
-	cd->sc_dk.dk_label.d_type = DTYPE_SCSI;
-	strncpy(cd->sc_dk.dk_label.d_packname, "fictitious", 16);
-	cd->sc_dk.dk_label.d_secperunit = cd->params.disksize;
-	cd->sc_dk.dk_label.d_rpm = 300;
-	cd->sc_dk.dk_label.d_interleave = 1;
-	cd->sc_dk.dk_label.d_flags = D_REMOVABLE;
+	strncpy(lp->d_typename, "SCSI CD-ROM", 16);
+	lp->d_type = DTYPE_SCSI;
+	strncpy(lp->d_packname, "fictitious", 16);
+	lp->d_secperunit = cd->params.disksize;
+	lp->d_rpm = 300;
+	lp->d_interleave = 1;
+	lp->d_flags = D_REMOVABLE;
 
-	cd->sc_dk.dk_label.d_partitions[0].p_offset = 0;
-	cd->sc_dk.dk_label.d_partitions[0].p_size =
-	    cd->sc_dk.dk_label.d_secperunit *
-	    (cd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
-	cd->sc_dk.dk_label.d_partitions[0].p_fstype = FS_ISO9660;
-	cd->sc_dk.dk_label.d_npartitions = 1;
+	lp->d_partitions[0].p_offset = 0;
+	lp->d_partitions[0].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[0].p_fstype = FS_ISO9660;
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
+	lp->d_npartitions = RAW_PART + 1;
 
-	cd->sc_dk.dk_label.d_magic = DISKMAGIC;
-	cd->sc_dk.dk_label.d_magic2 = DISKMAGIC;
-	cd->sc_dk.dk_label.d_checksum = dkcksum(&cd->sc_dk.dk_label);
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
 }
 
 /*
