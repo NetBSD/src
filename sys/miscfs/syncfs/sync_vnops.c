@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.2.6.1 2000/07/27 02:46:52 mycroft Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.2.6.2 2000/12/14 23:36:19 he Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -124,6 +124,8 @@ sync_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *syncvp = ap->a_vp;
