@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.6 1999/08/26 02:40:27 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.7 2000/01/08 03:49:37 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -47,11 +47,6 @@
 
 #ifndef _RF__RF_ARCHS_H_
 #define _RF__RF_ARCHS_H_
-
-/*
- * Khalil's performance-displaying demo stuff.
- * Relies on CMU meter tools.
- */
 
 #define RF_INCLUDE_EVENODD       1
 
