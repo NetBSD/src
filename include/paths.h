@@ -52,7 +52,7 @@
 #define	_PATH_NOLOGIN	"/etc/nologin"
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
 #define	_PATH_TTY	"/dev/tty"
-#define	_PATH_UNIX	"/386bsd"
+#define	_PATH_UNIX	"/bsd"
 #define	_PATH_VI	"/usr/bin/vi"
 
 /* Provide trailing slash, since mostly used for building pathnames. */
