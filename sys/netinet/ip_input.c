@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.35 1996/09/09 14:51:16 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.36 1996/09/14 14:40:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -60,6 +60,10 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+
+#ifdef PFIL_HOOKS
+#include <net/pfil.h>
+#endif /* PFIL_HOOKS */
 
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
@@ -160,10 +164,10 @@ ipintr()
 	register struct in_ifaddr *ia;
 	struct ipqent *ipqe;
 	int hlen = 0, mff, len, s;
-#ifdef PACKET_FILTER
+#ifdef PFIL_HOOKS
 	struct packet_filter_hook *pfh;
 	struct mbuf *m0;
-#endif /* PACKET_FILTER */
+#endif /* PFIL_HOOKS */
 
 next:
 	/*
@@ -239,7 +243,7 @@ next:
 			m_adj(m, len - m->m_pkthdr.len);
 	}
 
-#ifdef PACKET_FILTER
+#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for input packets.
 	 */
@@ -250,7 +254,7 @@ next:
 				goto bad;
 			ip = mtod(m = m0, struct ip *);
 		}
-#endif /* PACKET_FILTER */
+#endif /* PFIL_HOOKS */
 
 	/*
 	 * Process options and, if not destined for us,
@@ -433,14 +437,14 @@ found:
 	(*inetsw[ip_protox[ip->ip_p]].pr_input)(m, hlen);
 	goto next;
 bad:
-#ifdef PACKET_FILTER
+#ifdef PFIL_HOOKS
 	m0 = m;
 	for (pfh = pfil_hook_get(PFIL_BAD); pfh; pfh = pfh->pfil_link.le_next)
 		if (pfh->pfil_func) {
 			(void)pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 2, &m0);
 			ip = mtod(m = m0, struct ip *);
 		}
-#endif /* PACKET_FILTER */
+#endif /* PFIL_HOOKS */
 	m_freem(m);
 	goto next;
 }
