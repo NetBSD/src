@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.33 1997/06/10 07:54:38 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.34 1997/06/10 18:59:12 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,11 +59,11 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
-#include <m68k/param.h>
-
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 #define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
+
+#include <m68k/param.h>
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
@@ -71,14 +71,6 @@
 #ifndef NKMEMCLUSTERS
 # define	NKMEMCLUSTERS	(2048 * 1024 / CLBYTES)
 #endif
-
-/*
- * Mach derived conversion macros
- */
-#define hp300_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define hp300_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define hp300_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define hp300_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 #define	delay(us)	_delay((us) << 8)
