@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.5 1998/04/13 12:12:59 ragge Exp $ */
+/*	$NetBSD: rpb.h,v 1.6 1998/07/01 09:37:11 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -119,6 +119,7 @@ struct rpb {		/* size		description */
 #define	BDEV_DE		97
 #define	BDEV_NI		98
 #define	BDEV_LE		99
+#define	BDEV_ZE		100
 
 #ifdef _KERNEL
 extern struct rpb rpb;
