@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.23 2003/08/07 16:33:37 agc Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.24 2003/08/11 15:17:29 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.23 2003/08/07 16:33:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.24 2003/08/11 15:17:29 itojun Exp $");
 
 #include "opt_iso.h"
 
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.23 2003/08/07 16:33:37 agc Exp $");
 #include <netccitt/pk_extern.h>
 #endif
 
-#define PCBNULL (struct isopcb *)0
 struct iso_addr zeroiso_addr = {
 	0
 };
