@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 1997/03/17 22:11:07 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 1997/03/18 21:30:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,6 +141,11 @@ extern struct emul emul_sunos;
 extern struct emul emul_svr4;
 #endif
 
+/* prototypes for local functions */ 
+void	identifycpu __P((void));
+void	initcpu __P((void));
+void	dumpsys __P((void));
+
 /*
  * On the 68020/68030, the value of delay_divisor is roughly
  * 2048 / cpuspeed (where cpuspeed is in MHz).
@@ -282,6 +287,7 @@ consinit()
 void
 cpu_startup()
 {
+	extern char *kernel_text, *etext;
 	register unsigned i;
 	register caddr_t v, firstaddr;
 	int base, residual;
@@ -313,7 +319,7 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
 	 * Allocate space for system data structures.
@@ -492,6 +498,27 @@ again:
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
+
+	/*
+	 * Tell the VM system that the area before the text segment
+	 * is invalid.
+	 *
+	 * XXX Should just change KERNBASE and VM_MIN_KERNEL_ADDRESS,
+	 * XXX but not right now.
+	 */
+	if (vm_map_protect(kernel_map, 0, round_page(&kernel_text),
+	    VM_PROT_NONE, TRUE) != KERN_SUCCESS)
+		panic("can't mark pre-text pages off-limits");
+
+	/*
+	 * Tell the VM system that writing to the kernel text isn't allowed.
+	 * If we don't, we might end up COW'ing the text segment!
+	 */
+	if (vm_map_protect(kernel_map, trunc_page(&kernel_text),
+	    round_page(&etext), VM_PROT_READ|VM_PROT_EXECUTE, TRUE)
+	    != KERN_SUCCESS)
+		panic("can't protect kernel text");
+
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
@@ -585,6 +612,7 @@ setregs(p, pack, stack, retval)
 char	cpu_model[120];
 extern	char version[];
 
+void
 identifycpu()
 {
 	char board_str[16];
@@ -841,52 +869,83 @@ dumpconf()
 }
 
 /*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
+ * Dump physical memory onto the dump device.
  */
+void
 dumpsys()
 {
+	daddr_t blkno;		/* current block to write */
+				/* dump routine */
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int pg;			/* page being dumped */
+	vm_offset_t maddr;	/* PA being dumped */
+	int error;		/* error code from (*dump)() */
 
+	/* Don't put dump messages in msgbuf. */
 	msgbufmapped = 0;
+
+	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
-	if (dumpsize == 0) {
+	if (dumpsize == 0) {  
 		dumpconf();
 		if (dumpsize == 0)
 			return;
 	}
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	if (dumplo < 0)
+		return;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	blkno = dumplo;
+
+	printf("\ndumping to dev 0x%x, offset %d\n", dumpdev, dumplo);
 
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	maddr = lowram;
+	for (pg = 0; pg < dumpsize; pg++) {
+#define	NPGMB	(1024*1024/NBPG)
+		/* print out how many MBs we have dumped */
+		if (pg && (pg % NPGMB) == 0)
+			printf("%d ", pg / NPGMB);
+#undef NPGMB
+		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+		    VM_PROT_READ, TRUE);
 
-	case ENXIO:
-		printf("device bad\n");
-		break;
+		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+		switch (error) {
+		case 0:
+			maddr += NBPG;
+			blkno += btodb(NBPG);
+			break;
 
-	case EFAULT:
-		printf("device not ready\n");
-		break;
+		case ENXIO:
+			printf("device bad\n");
+			return;
 
-	case EINVAL:
-		printf("area improper\n");
-		break;
+		case EFAULT:
+			printf("device not ready\n");
+			return;
 
-	case EIO:
-		printf("i/o error\n");
-		break;
+		case EINVAL:
+			printf("area improper\n");
+			return;
 
-	case EINTR:
-		printf("aborted from console\n");
-		break;
+		case EIO:
+			printf("i/o error\n");
+			return;
 
-	default:
-		printf("succeeded\n");
-		break;
+		case EINTR:
+			printf("aborted from console\n");
+			return;
+
+		default:
+			printf("error %d\n", error);
+			return;
+		}
 	}
+	printf("succeeded\n");
 }
 
+void
 initcpu()
 {
 #ifdef MAPPEDCOPY
