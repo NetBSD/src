@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.1 1997/10/19 01:31:49 cjs Exp $
+# $NetBSD: INSTALL,v 1.2 1997/12/31 16:44:37 cjs Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -19,18 +19,19 @@ makeoptions	LOADADDRESS="fffffc0000300000"
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
-options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
-options 	DEC_3000_300	# Pelican etc:	3000/300*
+#options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+#options 	DEC_3000_300	# Pelican etc:	3000/300*
 options 	DEC_AXPPCI_33	# NoName:	AXPpci33, Multia, etc.
 options 	DEC_EB164	# EB164:	AlphaPC 164
 options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
-options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
+#options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
 
 # File systems
 file-system	FFS		# Fast file system
 file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	NFS		# Sun NFS-compatible file system client
+file-system	KERNFS		# Kernel variable file system (/kern)
 
 # File system options
 options 	FIFO		# POSIX fifo support (in all file systems)
@@ -53,44 +54,44 @@ mainbus0 at	root
 cpu*	at	mainbus0
 
 # TurboLaser bus support and devices
-tlsb*	at	mainbus0
-gbus*	at	tlsb? node ? offset ?
-tlsbmem* at	tlsb? node ? offset ?
-kft*	at	tlsb? node ? offset ?
+#tlsb*	at	mainbus0
+#gbus*	at	tlsb? node ? offset ?
+#tlsbmem* at	tlsb? node ? offset ?
+#kft*	at	tlsb? node ? offset ?
 
 # Gbus Devices
-mcclock* at	gbus? offset 0x20000000
+#mcclock* at	gbus? offset 0x20000000
 
 # TurboChannel host bus adapter support
-tcasic*	at	mainbus0
+#tcasic*	at	mainbus0
 
 # TurboChannel bus support
-tc*	at	tcasic?
+#tc*	at	tcasic?
 
 # TurboChannel devices
-ioasic*	at	tc? slot ? offset ?
-mcclock* at	ioasic? offset ?
-le*	at	ioasic? offset ?
-scc0	at	ioasic? offset ?
-scc1	at	ioasic? offset ?
-tcds0	at	tc? slot ? offset ?
-asc0	at	tcds? slot ?
-asc1	at	tcds? slot ?
-le*	at	tc? slot ? offset ?
-fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
+#ioasic*	at	tc? slot ? offset ?
+#mcclock* at	ioasic? offset ?
+#le*	at	ioasic? offset ?
+#scc0	at	ioasic? offset ?
+#scc1	at	ioasic? offset ?
+#tcds0	at	tc? slot ? offset ?
+#asc0	at	tcds? slot ?
+#asc1	at	tcds? slot ?
+#le*	at	tc? slot ? offset ?
+#fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # PCI host bus adapter support
 apecs*	at	mainbus?
 cia*	at	mainbus?
 lca*	at	mainbus?
-dwlpx*	at	kft?
+#dwlpx*	at	kft?
 
 # PCI bus support
 pci*	at	apecs?
 pci*	at	cia?
 pci*	at	lca?
 pci*	at	ppb?
-pci*	at	dwlpx?
+#pci*	at	dwlpx?
 
 # PCI devices
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
@@ -132,7 +133,7 @@ fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 
 # SCSI bus support
 scsibus* at	ahc?
-scsibus* at	asc?
+#scsibus* at	asc?
 scsibus* at	bha?
 scsibus* at	isp?
 scsibus* at	ncr?
