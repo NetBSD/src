@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.32 1996/05/05 16:39:24 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.33 1996/05/18 18:54:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -160,9 +160,10 @@ cdev_decl(fd);
 cdev_decl(grf);
 #define NADB 1 /* #include "adb.h" */
 cdev_decl(adb);
-#include "ser.h"
-cdev_decl(ser);
-cdev_decl(cd);
+#include "zsc.h"
+cdev_decl(zsc);
+#include "zstty.h"
+cdev_decl(zs);
 cdev_decl(vnd);
 cdev_decl(ccd);
 #include "bpfilter.h"
@@ -193,7 +194,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 9 */
 	cdev_grf_init(1,grf),		/* 10: frame buffer */
 	cdev_tty_init(NITE,ite),	/* 11: console terminal emulator */
-	cdev_tty_init(NSER,ser),	/* 12: 2 mac serial ports -- BG*/
+	cdev_tty_init(NZSTTY,zs),	/* 12: 2 mac serial ports -- BG*/
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
@@ -305,15 +306,15 @@ chrtoblk(dev)
 
 #define itecnpollc	nullcnpollc
 cons_decl(ite);
-#define sercnpollc	nullcnpollc
-cons_decl(ser);
+#define zscnpollc	nullcnpollc
+cons_decl(zs);
 
 struct	consdev constab[] = {
 #if NITE > 0
 	cons_init(ite),
 #endif
-#if NSER > 0
-	cons_init(ser),
+#if NZSTTY > 0
+	cons_init(zs),
 #endif
 	{ 0 },
 };

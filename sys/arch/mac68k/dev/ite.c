@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.20 1996/05/07 15:52:19 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.21 1996/05/18 18:54:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1142,14 +1142,14 @@ itecngetc(dev_t dev)
 int
 itecnputc(dev_t dev, int c)
 {
-	extern dev_t mac68k_serdev;
-	extern int sercnputc __P((dev_t dev, int c));
+	extern dev_t mac68k_zsdev;
+	extern int zscnputc __P((dev_t dev, int c));
 
 	erasecursor();
 	ite_putchar(c);
 	drawcursor();
 	if (mac68k_machine.serial_boot_echo)
-		sercnputc(mac68k_serdev, c);
+		zscnputc(mac68k_zsdev, c);
 
 	return c;
 }
