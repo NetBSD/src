@@ -1,4 +1,4 @@
-/*	$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $	*/
+/*	$NetBSD: pig.c,v 1.3 1996/06/07 19:30:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pig.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $";
+static char rcsid[] = "$NetBSD: pig.c,v 1.3 1996/06/07 19:30:50 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,15 +98,21 @@ pigout(buf, len)
 	char *buf;
 	int len;
 {
-	register int ch, start;
-	int olen;
+	register int ch, start, i;
+	int olen, allupper, firstupper;
+
+	/* See if the word is all upper case */
+	allupper = firstupper = isupper(buf[0]);
+	for (i = 1; i < len && allupper; i++)
+		allupper = allupper && isupper(buf[i]);
 
 	/*
 	 * If the word starts with a vowel, append "way".  Don't treat 'y'
 	 * as a vowel if it appears first.
 	 */
 	if (index("aeiouAEIOU", buf[0]) != NULL) {
-		(void)printf("%.*sway", len, buf);
+		(void)printf("%.*s%s", len, buf,
+		    allupper ? "WAY" : "way");
 		return;
 	}
 
@@ -114,6 +120,8 @@ pigout(buf, len)
 	 * Copy leading consonants to the end of the word.  The unit "qu"
 	 * isn't treated as a vowel.
 	 */
+	if (!allupper)
+		buf[0] = tolower(buf[0]);
 	for (start = 0, olen = len;
 	    !index("aeiouyAEIOUY", buf[start]) && start < olen;) {
 		ch = buf[len++] = buf[start++];
@@ -121,7 +129,9 @@ pigout(buf, len)
 		    (buf[start] == 'u' || buf[start] == 'U'))
 			buf[len++] = buf[start++];
 	}
-	(void)printf("%.*say", olen, buf + start);
+	if (firstupper)
+		buf[start] = toupper(buf[start]);
+	(void)printf("%.*s%s", olen, buf + start, allupper ? "AY" : "ay");
 }
 
 void
