@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.102 2003/04/02 10:39:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.103 2003/04/23 07:20:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.102 2003/04/02 10:39:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.103 2003/04/23 07:20:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,33 +315,15 @@ lfs_fsync(void *v)
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT);
-	do {
-#ifdef DEBUG
-		struct buf *bp;
-#endif
-
-		simple_lock(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
-				round_page(ap->a_offhi),
-				PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
-		if (error)
-			return error;
-		error = VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
-		if (wait && error == 0 && !VPISEMPTY(vp)) {
-#ifdef DEBUG
-			printf("lfs_fsync: reflushing ino %d\n",
-				VTOI(vp)->i_number);
-			printf("vflags %x iflags %x npages %d\n",
-				vp->v_flag, VTOI(vp)->i_flag,
-				vp->v_uobj.uo_npages);
-			LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs)
-				printf("%" PRId64 " (%lx)", bp->b_lblkno,
-					bp->b_flags);
-			printf("\n");
-#endif
-			LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
-		}
-	} while (wait && error == 0 && !VPISEMPTY(vp));
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+			round_page(ap->a_offhi),
+			PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
+	if (error)
+		return error;
+	error = VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
+	if (wait && !VPISEMPTY(vp))
+		LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
 
 	return error;
 }
@@ -1369,7 +1351,7 @@ lfs_getpages(void *v)
 static int
 check_dirty(struct lfs *fs, struct vnode *vp,
 	    off_t startoffset, off_t endoffset, off_t blkeof,
-	    int flags)
+	    int flags, int checkfirst)
 {
 	int by_list;
 	struct vm_page *curpg, *pgs[MAXBSIZE / PAGE_SIZE], *pg;
@@ -1483,6 +1465,9 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
+
+		if (checkfirst && any_dirty)
+			return any_dirty;
 
 		if (by_list) {
 			curpg = TAILQ_NEXT(curpg, listq);
@@ -1657,16 +1642,27 @@ lfs_putpages(void *v)
 		return genfs_putpages(v);
 
 	/*
-	 * Make sure that all pages in any given block are dirty, or
-	 * none of them are.  Find out if any of the pages we've been
-	 * asked about are dirty.  If none are dirty, send them on
-	 * through genfs_putpages(), albeit with adjusted offsets.
-	 * XXXUBC I am assuming here that they can't be dirtied in
-	 * XXXUBC the meantime, but I bet that's wrong.
+	 * If there are more than one page per block, we don't want
+	 * to get caught locking them backwards; so set PGO_BUSYFAIL
+	 * to avoid deadlocks.
 	 */
-	dirty = check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags);
-	if (!dirty)
-		return genfs_putpages(v);
+	ap->a_flags |= PGO_BUSYFAIL;
+
+	do {
+		int r;
+
+		/* If no pages are dirty, we can just use genfs_getpages. */
+		if ((dirty = check_dirty(fs, vp, startoffset, endoffset, blkeof,
+					 ap->a_flags, 1)) != 0)
+			break;
+
+		if ((r = genfs_putpages(v)) != EDEADLK)
+			return r;
+
+		/* Start over. */
+		preempt(NULL);
+		simple_lock(&vp->v_interlock);
+	} while(1);
 		
 	/*
 	 * Dirty and asked to clean.
@@ -1716,19 +1712,13 @@ lfs_putpages(void *v)
 		/* XXX the flush should have taken care of this one too! */
 	}
 
-
 	/*
 	 * This is it.	We are going to write some pages.  From here on
 	 * down it's all just mechanics.
 	 *
-	 * If there are more than one page per block, we don't want to get
-	 * caught locking them backwards; so set PGO_BUSYFAIL to avoid
-	 * deadlocks.  Also, don't let genfs_putpages wait;
-	 * lfs_segunlock will wait for us, if need be.
+	 * Don't let genfs_putpages wait; lfs_segunlock will wait for us.
 	 */
 	ap->a_flags &= ~PGO_SYNCIO;
-	if (pages_per_block > 1)
-		ap->a_flags |= PGO_BUSYFAIL;
 
 	/*
 	 * If we've already got the seglock, flush the node and return.
@@ -1741,7 +1731,15 @@ lfs_putpages(void *v)
 		sp = fs->lfs_sp;
 		sp->vp = vp;
 
-		while ((error = genfs_putpages(v)) == EDEADLK) {
+		/*
+		 * Make sure that all pages in any given block are dirty, or
+		 * none of them are.
+		 */
+	    again:
+		check_dirty(fs, vp, startoffset, endoffset, blkeof,
+			    ap->a_flags, 1);
+
+		if ((error = genfs_putpages(v)) == EDEADLK) {
 #ifdef DEBUG_LFS
 			printf("lfs_putpages: genfs_putpages returned EDEADLK"
 			       " ino %d off %x (seg %d)\n",
@@ -1752,7 +1750,7 @@ lfs_putpages(void *v)
 			if (sp->cbpp - sp->bpp == 1) {
 				preempt(NULL);
 				simple_lock(&vp->v_interlock);
-				continue;
+				goto again;
 			}
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
@@ -1769,8 +1767,12 @@ lfs_putpages(void *v)
 
 			/* Give the write a chance to complete */
 			preempt(NULL);
+
+			/* We've lost the interlock.  Start over. */
 			simple_lock(&vp->v_interlock);
+			goto again;
 		}
+		lfs_updatemeta(sp);
 		return error;
 	}
 
@@ -1811,9 +1813,14 @@ lfs_putpages(void *v)
 	/*
 	 * Loop through genfs_putpages until all pages are gathered.
 	 * genfs_putpages() drops the interlock, so reacquire it if necessary.
+	 * Whenever we lose the interlock we have to rerun check_dirty, as
+	 * well.
 	 */
+    again2:
 	simple_lock(&vp->v_interlock);
-	while ((error = genfs_putpages(v)) == EDEADLK) {
+	check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags, 1);
+
+	if ((error = genfs_putpages(v)) == EDEADLK) {
 #ifdef DEBUG_LFS
 		printf("lfs_putpages: genfs_putpages returned EDEADLK [2]"
 		       " ino %d off %x (seg %d)\n",
@@ -1823,8 +1830,7 @@ lfs_putpages(void *v)
 		/* If nothing to write, short-circuit */
 		if (sp->cbpp - sp->bpp == 1) {
 			preempt(NULL);
-			simple_lock(&vp->v_interlock);
-			continue;
+			goto again2;
 		}
 		/* Write gathered pages */
 		lfs_updatemeta(sp);
@@ -1844,8 +1850,15 @@ lfs_putpages(void *v)
 
 		/* Give the write a chance to complete */
 		preempt(NULL);
-		simple_lock(&vp->v_interlock);
+
+		/* We've lost the interlock.  Start over. */
+		goto again2;
 	}
+
+	/* Write indirect blocks as well */
+	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_indir);
+	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_dindir);
+	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_tindir);
 
 	/*
 	 * Blocks are now gathered into a segment waiting to be written.
