@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 1994/12/16 04:14:13 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 1995/01/05 21:06:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,11 +48,17 @@ int	rawwrite	__P((dev_t, struct uio *, int));
 void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
+#ifndef LKM
+#define	lkmenodev	enodev
+#else
+int	lkmenodev();
+#endif
+
 #define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
-	int n __P((dev_t, int, caddr_t, int, struct proc *))
+	int n __P((dev_t, u_long, caddr_t, int, struct proc *))
 
 /* bdevsw-specific types */
 #define	dev_type_dump(n)	int n()
@@ -82,10 +88,17 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #define	bdev_swap_init() { \
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
 	swstrategy, (dev_type_ioctl((*))) enodev, \
-	(dev_type_dump((*))) enodev, 0, 0 }
+	(dev_type_dump((*))) enodev, 0 }
 
-#define	bdev_notdef()	bdev_tape_init(0,no)
-bdev_decl(no);	/* dummy declarations */
+#define	bdev_lkm_dummy() { \
+	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) enodev, \
+	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
+	(dev_type_dump((*))) enodev, 0 }
+
+#define	bdev_notdef() { \
+	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
+	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
+	(dev_type_dump((*))) enodev, 0 }
 
 #include "ct.h"
 #include "mt.h"
@@ -105,14 +118,20 @@ bdev_decl(vn);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_tape_init(NCT,ct),	/* 0: cs80 cartridge tape */
-	bdev_tape_init(NMT,mt),	/* 1: magnetic reel tape */
-	bdev_disk_init(NRD,rd),	/* 2: hpib disk */
-	bdev_swap_init(),	/* 3: swap pseudo-device */
-	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
-	bdev_disk_init(NCCD,ccd),/* 5: concatenated disk driver */
-	bdev_disk_init(NVN,vn),	/* 6: vnode disk driver (swap to files) */
-	bdev_tape_init(NST,st),	/* 7: exabyte tape */
+	bdev_tape_init(NCT,ct),		/* 0: cs80 cartridge tape */
+	bdev_tape_init(NMT,mt),		/* 1: magnetic reel tape */
+	bdev_disk_init(NRD,rd),		/* 2: hpib disk */
+	bdev_swap_init(),		/* 3: swap pseudo-device */
+	bdev_disk_init(NSD,sd),		/* 4: scsi disk */
+	bdev_disk_init(NCCD,ccd),	/* 5: concatenated disk driver */
+	bdev_disk_init(NVN,vn),		/* 6: vnode disk driver */
+	bdev_tape_init(NST,st),		/* 7: exabyte tape */
+	bdev_lkm_dummy(),		/* 8 */
+	bdev_lkm_dummy(),		/* 9 */
+	bdev_lkm_dummy(),		/* 10 */
+	bdev_lkm_dummy(),		/* 11 */
+	bdev_lkm_dummy(),		/* 12 */
+	bdev_lkm_dummy(),		/* 13 */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -123,7 +142,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 #define	dev_type_stop(n)	int n __P((struct tty *, int))
 #define	dev_type_reset(n)	int n __P((int))
 #define	dev_type_select(n)	int n __P((dev_t, int, struct proc *))
-#define	dev_type_map(n)	int n __P(())
+#define	dev_type_map(n)		int n __P(())
 
 #define	cdev_decl(n) \
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
@@ -154,14 +173,19 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	(dev_type_reset((*))) nullop, dev_tty_init(c,n), ttselect, \
 	(dev_type_map((*))) enodev, 0 }
 
+#define	cdev_lkm_dummy() { \
+	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) enodev, \
+	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
+	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, 0, seltrue, \
+	(dev_type_map((*))) enodev, 0 }
+
 #define	cdev_notdef() { \
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
 	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, seltrue, \
 	(dev_type_map((*))) enodev, 0 }
-
-cdev_decl(no);			/* dummy declarations */
 
 cdev_decl(cn);
 /* open, close, read, write, ioctl, select -- XXX should be a tty */
@@ -235,7 +259,7 @@ cdev_decl(ppi);
 /* open, close, read, write, ioctl -- XXX should be a generic device */
 #define	cdev_ppi_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
 	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) enodev, \
 	(dev_type_map((*))) enodev, 0 }
 
@@ -244,12 +268,6 @@ cdev_decl(dca);
 
 #include "ite.h"
 cdev_decl(ite);
-/* open, close, read, write, ioctl, tty -- XXX should be a tty! */
-#define	cdev_ite_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, dev_tty_init(c,n), ttselect, \
-	(dev_type_map((*))) enodev, 0 }
 
 /* XXX shouldn't this be optional? */
 cdev_decl(hil);
@@ -264,14 +282,7 @@ cdev_decl(hil);
 cdev_decl(dcm);
 
 cdev_decl(ccd);
-
 cdev_decl(vn);
-/* open, read, write, ioctl -- XXX should be a disk */
-#define	cdev_vn_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, rawread, rawwrite, \
-	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
-	0 }
 
 dev_type_open(fdopen);
 /* open */
@@ -283,22 +294,28 @@ dev_type_open(fdopen);
 	(dev_type_map((*))) enodev, 0 }
 
 #include "bpfilter.h"
+#include "tun.h"
 cdev_decl(bpf);
+cdev_decl(tun);
 /* open, close, read, write, ioctl, select -- XXX should be generic device */
-#define	cdev_bpf_init(c,n) { \
+#define	cdev_bpftun_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
 	(dev_type_map((*))) enodev, 0 }
 
-#include "tun.h"
-cdev_decl(tun);
-/* open, close, read, write, ioctl, select -- XXX should be generic device */
-#define cdev_tun_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
-	(dev_type_map((*))) enodev, 0 }
+#ifdef LKM
+#define	NLKM	1
+#else
+#define	NLKM	0
+#endif
+cdev_decl(lkm);
+/* open, close, ioctl */
+#define	cdev_lkm_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
+	(dev_type_select((*))) enodev, (dev_type_map((*))) enodev, 0 }
 
 struct cdevsw	cdevsw[] =
 {
@@ -315,17 +332,24 @@ struct cdevsw	cdevsw[] =
 	cdev_grf_init(NGRF,grf),	/* 10: frame buffer */
 	cdev_ppi_init(NPPI,ppi),	/* 11: printer/plotter interface */
 	cdev_tty_init(NDCA,dca),	/* 12: built-in single-port serial */
-	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
+	cdev_tty_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_hil_init(1,hil),		/* 14: human interface loop */
 	cdev_tty_init(NDCM,dcm),	/* 15: 4-port serial */
 	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
 	cdev_notdef(),			/* 18 */
-	cdev_vn_init(NVN,vn),		/* 19: vnode disk */
+	cdev_disk_init(NVN,vn),		/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
-	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
-	cdev_tun_init(NTUN,tun),	/* 23: network tunnel */
+	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
+	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
+	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
+	cdev_lkm_dummy(),		/* 25 */
+	cdev_lkm_dummy(),		/* 26 */
+	cdev_lkm_dummy(),		/* 27 */
+	cdev_lkm_dummy(),		/* 28 */
+	cdev_lkm_dummy(),		/* 29 */
+	cdev_lkm_dummy(),		/* 30 */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
