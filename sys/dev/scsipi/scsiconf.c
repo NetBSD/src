@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.223 2004/08/10 15:46:44 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.224 2004/08/12 14:36:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.223 2004/08/10 15:46:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.224 2004/08/12 14:36:46 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,9 +242,9 @@ scsibus_config(chan, arg)
 	free(scsi_initq, M_DEVBUF);
 	wakeup(&scsi_initq_head);
 
-	config_pending_decr();
-
 	scsipi_adapter_delref(chan->chan_adapter);
+
+	config_pending_decr();
 }
 
 int
