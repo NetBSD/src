@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.6 1995/02/23 17:51:41 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.7 1995/03/30 20:42:55 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -33,12 +33,11 @@
  /* All bugs are subject to removal without further notice */
 
 #include "sys/cdefs.h"
-#include "vax/include/mtpr.h"
-#include "vax/include/pcb.h"
+#include "machine/mtpr.h"
+#include "machine/pcb.h"
 
 #define enablertclock()
 #define	cpu_swapin(p)
-/* #define	cpu_set_init_frame(p,f) {extern u_int scratch;mtpr(scratch,PR_SSP);} */
 #define cpu_set_init_frame(p,f)\
 	 {extern u_int scratch;p->p_addr->u_pcb.framep=scratch;}
 #define	cpu_wait(p)
