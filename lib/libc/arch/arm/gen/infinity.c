@@ -1,7 +1,9 @@
-/*	$NetBSD: infinity.c,v 1.4 2003/10/25 16:17:44 kleink Exp $	*/
+/*	$NetBSD: infinity.c,v 1.5 2003/10/26 16:00:17 kleink Exp $	*/
 
 /*
  * IEEE-compatible infinity.c -- public domain.
+ * For VFP (plain double-precision) and
+ * for FPA (which is a different layout thereof).
  */
 
 #include <math.h>
