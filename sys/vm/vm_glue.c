@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.63 1996/10/27 21:50:33 gwr Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.64 1996/11/06 20:20:04 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -535,7 +535,7 @@ swapout(p)
 	s = splstatclock();
 	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
-		remrq(p);
+		remrunqueue(p);
 	splx(s);
 	p->p_swtime = 0;
 	++cnt.v_swpout;

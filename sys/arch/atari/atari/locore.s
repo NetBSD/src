@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23 1996/10/25 20:00:39 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.24 1996/11/06 20:19:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1101,8 +1101,8 @@ ENTRY(longjmp)
 
 /*
  * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs
- * have processes in them.  Setrunqueue puts processes into queues, Remrq
+ * _whichqs tells which of the 32 queues _qs have processes
+ * in them.  Setrunqueue puts processes into queues, remrunqueue
  * removes them from queues.  The running process is on no queue,
  * other processes are on a queue related to p->p_priority, divided by 4
  * actually to shrink the 0-127 range of priorities into the 32 available
@@ -1146,11 +1146,11 @@ Lset2:
 	.even
 
 /*
- * Remrq(p)
+ * remrunqueue(p)
  *
  * Call should be made at spl6().
  */
-ENTRY(remrq)
+ENTRY(remrunqueue)
 	movl	sp@(4),a0
 	clrl	d0
 	movb	a0@(P_PRIORITY),d0
@@ -1180,7 +1180,7 @@ Lrem2:
 	rts
 
 Lrem3:
-	.asciz	"remrq"
+	.asciz	"remrunqueue"
 Lsw0:
 	.asciz	"cpu_switch"
 	.even

@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.12 1996/10/15 22:04:19 mark Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.13 1996/11/06 20:19:25 cgd Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -89,7 +89,7 @@ pc	.req	r15
 	ldmfd	sp!, {r0}		
 
 /*
- * setrunqueue() and remrq()
+ * setrunqueue() and remrunqueue()
  *
  * Functions to add and remove a process for the run queue.
  */
@@ -188,8 +188,8 @@ Ltext2:
  *	r0 = process
  */
 
-	.global	_remrq
-_remrq:
+	.global	_remrunqueue
+_remrunqueue:
 
 /*
  * Local register usage

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.42 1996/10/15 23:00:10 cgd Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.43 1996/11/06 20:20:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -214,7 +214,7 @@ schedcpu(arg)
 			    p->p_stat == SRUN &&
 			    (p->p_flag & P_INMEM) &&
 			    (p->p_priority / PPQ) != (p->p_usrpri / PPQ)) {
-				remrq(p);
+				remrunqueue(p);
 				p->p_priority = p->p_usrpri;
 				setrunqueue(p);
 			} else
