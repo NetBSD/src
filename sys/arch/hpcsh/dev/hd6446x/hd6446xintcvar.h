@@ -1,7 +1,7 @@
-/*	$NetBSD: hd64461intcvar.h,v 1.2 2002/02/11 17:19:04 uch Exp $	*/
+/*	$NetBSD: hd6446xintcvar.h,v 1.1 2002/03/28 15:27:04 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,19 +36,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum hd64461_irq {
-	HD64461_IRQ_NONE = 0,
-	HD64461_IRQ_PCC0,
-	HD64461_IRQ_PCC1,
-	HD64461_IRQ_AFE,
-	HD64461_IRQ_GPIO,
-	HD64461_IRQ_TMU0,
-	HD64461_IRQ_TMU1,
-	HD64461_IRQ_IRDA,
-	HD64461_IRQ_UART,
-	HD64461_IRQ_MAX,
+#ifndef _HPCSH_DEV_HD6446XINTCVAR_H_
+#define _HPCSH_DEV_HD6446XINTCVAR_H_
+
+#define _HD6446X_INTR_N		16
+
+struct hd6446x_intrhand {
+	int (*hh_func)(void *);
+	void *hh_arg;
+	int hh_ipl;
+	u_int16_t hh_imask;
 };
 
-void *hd64461_intr_establish(enum hd64461_irq, int, int, int (*)(void *),
-    void *);
-void hd64461_intr_disestablish(void *);
+extern struct hd6446x_intrhand hd6446x_intrhand[];
+extern u_int16_t hd6446x_ienable;
+
+void hd6446x_intr_init(void);
+void hd6446x_intr_resume(int);
+int hd6446x_intr_raise(int);
+void *hd6446x_intr_establish(int, int, int, int (*)(void *), void *);
+void hd6446x_intr_disestablish(void *);
+void hd6446x_intr_priority(int, int);
+
+#endif /* !_HPCSH_DEV_HD6446XINTCVAR_H_ */
