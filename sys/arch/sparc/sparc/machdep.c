@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 1997/07/29 10:04:44 fair Exp $ */
+/*	$NetBSD: machdep.c,v 1.83.4.1 1997/09/08 23:42:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -472,6 +472,7 @@ sendsig(catcher, sig, mask, code)
 {
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
+	register struct sigaction *sa = &psp->ps_sigact[sig];
 	register struct sigframe *fp;
 	register struct trapframe *tf;
 	register int addr, oonstack, oldsp, newsp;
@@ -481,16 +482,16 @@ sendsig(catcher, sig, mask, code)
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
-					 psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    (sa->sa_flags & SA_ONSTACK)) {
+		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
+					 p->p_sigstk.ss_size);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
@@ -558,7 +559,7 @@ sendsig(catcher, sig, mask, code)
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
 #ifdef COMPAT_SUNOS
-	if (psp->ps_usertramp & sigmask(sig)) {
+	if (sa->sa_flags & SA_USERTRAMP) {
 		addr = (int)catcher;	/* user does his own trampolining */
 	} else
 #endif
@@ -625,9 +626,9 @@ sys_sigreturn(p, v, retval)
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
 	if (scp->sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
 }

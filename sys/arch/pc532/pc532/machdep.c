@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 1997/06/12 15:46:39 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.6.1 1997/09/08 23:39:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -434,20 +434,21 @@ sendsig(catcher, sig, mask, code)
 	register struct reg *regs;
 	register struct sigframe *fp;
 	struct sigacts *ps = p->p_sigacts;
+	struct sigaction *sa = &psp->ps_sigact[sig];
 	int oonstack;
 	extern char sigcode[], esigcode[];
 
 	regs = p->p_md.md_regs;
-	oonstack = ps->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
 	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp +
-		    ps->ps_sigstk.ss_size - sizeof(struct sigframe));
-		ps->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    (sa->sa_flags & SA_ONSTACK)) {
+		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size - sizeof(struct sigframe));
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct sigframe *)regs->r_sp - 1;
 	}
@@ -536,9 +537,9 @@ sys_sigreturn(p, v, retval)
 		return (EINVAL);
 
 	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 
 	/*
