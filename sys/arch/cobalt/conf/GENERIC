@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.48 2003/10/14 16:16:04 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.49 2003/10/17 18:20:10 cdi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.49 $"
 
 maxusers	32
 
@@ -312,6 +312,7 @@ pseudo-device	pty				# pseudo-terminals
 pseudo-device	rnd				# /dev/random & kernel generator
 #options 	RND_COM				# use "com" randomness (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	nullcons			# no-op console
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.
