@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.14 1998/09/22 03:01:29 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.15 1998/09/29 18:09:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -428,6 +428,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 #endif
 
 	simple_lock_init(&pp->pr_lock);
+	lockinit(&pp->pr_resourcelock, PSWP, wchan, 0, 0);
 
 	/*
 	 * Initialize private page header pool if we haven't done so yet.
@@ -514,28 +515,52 @@ pool_get(pp, flags)
 	 * never points at a page header which has PR_PHINPAGE set and
 	 * has no items in its bucket.
 	 */
-again:
-	if ((ph = pp->pr_curpage) == NULL) {
-		void *v = (*pp->pr_alloc)(pp->pr_pagesz, flags, pp->pr_mtype);
+	while ((ph = pp->pr_curpage) == NULL) {
+		void *v;
+		int lkflags = LK_EXCLUSIVE | LK_INTERLOCK |
+			      ((flags & PR_WAITOK) == 0 ? LK_NOWAIT : 0);
+
+		/* Get long-term lock on pool */
+		if (lockmgr(&pp->pr_resourcelock, lkflags, &pp->pr_lock) != 0)
+			return (NULL);
+
+		/* Check if pool became non-empty while we slept */
+		if ((ph = pp->pr_curpage) != NULL)
+			goto again;
+
+		/* Call the page back-end allocator for more memory */
+		v = (*pp->pr_alloc)(pp->pr_pagesz, flags, pp->pr_mtype);
 		if (v == NULL) {
 			if (flags & PR_URGENT)
 				panic("pool_get: urgent");
 			if ((flags & PR_WAITOK) == 0) {
 				pp->pr_nfail++;
-				simple_unlock(&pp->pr_lock);
+				lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 				return (NULL);
 			}
 
+			/*
+			 * Wait for items to be returned to this pool.
+			 * XXX: we actually want to wait just until
+			 * the page allocator has memory again. Depending
+			 * on this pool's usage, we might get stuck here
+			 * for a long time.
+			 */
 			pp->pr_flags |= PR_WANTED;
-			simple_unlock(&pp->pr_lock);
+			lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 			tsleep((caddr_t)pp, PSWP, pp->pr_wchan, 0);
 			simple_lock(&pp->pr_lock);
-		} else {
-			pp->pr_npagealloc++;
-			pool_prime_page(pp, v);
+			continue;
 		}
 
-		goto again;
+		/* We have more memory; add it to the pool */
+		pp->pr_npagealloc++;
+		pool_prime_page(pp, v);
+
+again:
+		/* Re-acquire pool interlock */
+		simple_lock(&pp->pr_lock);
+		lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 	}
 
 	if ((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL)
@@ -635,6 +660,8 @@ pool_put(pp, v)
 
 	if (pp->pr_flags & PR_WANTED) {
 		pp->pr_flags &= ~PR_WANTED;
+		if (ph->ph_nmissing == 0)
+			pp->pr_nidle++;
 		wakeup((caddr_t)pp);
 		simple_unlock(&pp->pr_lock);
 		return;
@@ -688,12 +715,12 @@ pool_prime(pp, n, storage)
 	/* !storage && static caught below */
 #endif
 
+	(void)lockmgr(&pp->pr_resourcelock, LK_EXCLUSIVE, NULL);
 	newnitems = pp->pr_minitems + n;
 	newpages =
 		roundup(pp->pr_itemsperpage,newnitems) / pp->pr_itemsperpage
 		- pp->pr_minpages;
 
-	simple_lock(&pp->pr_lock);
 	while (newpages-- > 0) {
 
 		if (pp->pr_flags & PR_STATIC) {
@@ -704,7 +731,7 @@ pool_prime(pp, n, storage)
 		}
 
 		if (cp == NULL) {
-			simple_unlock(&pp->pr_lock);
+			(void)lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 			return (ENOMEM);
 		}
 
@@ -717,7 +744,7 @@ pool_prime(pp, n, storage)
 	if (pp->pr_minpages >= pp->pr_maxpages)
 		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
 
-	simple_unlock(&pp->pr_lock);
+	(void)lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 	return (0);
 }
 
@@ -735,6 +762,8 @@ pool_prime_page(pp, storage)
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
 	int n;
+
+	simple_lock(&pp->pr_lock);
 
 	if ((pp->pr_flags & PR_PHINPAGE) != 0) {
 		ph = (struct pool_item_header *)(cp + pp->pr_phoffset);
@@ -793,6 +822,7 @@ pool_prime_page(pp, storage)
 	if (++pp->pr_npages > pp->pr_hiwat)
 		pp->pr_hiwat = pp->pr_npages;
 
+	simple_unlock(&pp->pr_lock);
 	return (0);
 }
 
@@ -801,13 +831,13 @@ pool_setlowat(pp, n)
 	pool_handle_t	pp;
 	int n;
 {
+
+	(void)lockmgr(&pp->pr_resourcelock, LK_EXCLUSIVE, NULL);
 	pp->pr_minitems = n;
-	if (n == 0) {
-		pp->pr_minpages = 0;
-		return;
-	}
-	pp->pr_minpages =
-		roundup(pp->pr_itemsperpage,n) / pp->pr_itemsperpage;
+	pp->pr_minpages = (n == 0)
+		? 0
+		: roundup(pp->pr_itemsperpage,n) / pp->pr_itemsperpage;
+	(void)lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 }
 
 void
@@ -815,12 +845,12 @@ pool_sethiwat(pp, n)
 	pool_handle_t	pp;
 	int n;
 {
-	if (n == 0) {
-		pp->pr_maxpages = 0;
-		return;
-	}
-	pp->pr_maxpages =
-		roundup(pp->pr_itemsperpage,n) / pp->pr_itemsperpage;
+
+	(void)lockmgr(&pp->pr_resourcelock, LK_EXCLUSIVE, NULL);
+	pp->pr_maxpages = (n == 0)
+		? 0
+		: roundup(pp->pr_itemsperpage,n) / pp->pr_itemsperpage;
+	(void)lockmgr(&pp->pr_resourcelock, LK_RELEASE, NULL);
 }
 
 

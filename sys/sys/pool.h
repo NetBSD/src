@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.9 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: pool.h,v 1.10 1998/09/29 18:09:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,16 @@ typedef struct pool {
 #define PR_URGENT	32
 #define PR_PHINPAGE	64
 #define PR_LOGGING	128
+
+	/*
+	 * `pr_lock' protects the pool's data structures when removing
+	 * items from or returning items to the pool.
+	 * `pr_resourcelock' is used to serialize access to the pool's
+	 * back-end page allocator. At the same time it also protects
+	 * the `pr_maxpages', `pr_minpages' and `pr_minitems' fields.
+	 */
 	struct simplelock	pr_lock;
+	struct lock		pr_resourcelock;
 
 	LIST_HEAD(,pool_item_header)		/* Off-page page headers */
 			pr_hashtab[PR_HASHTABSIZE];
