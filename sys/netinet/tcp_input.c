@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.11 1997/06/26 23:19:20 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.12 1997/06/28 00:48:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -498,7 +498,6 @@ findpcb:
 		}
 		if (so->so_options & SO_ACCEPTCONN) {
 			struct socket *oso;
-			oso = so;
   			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
 				if (tiflags & TH_RST)
 					syn_cache_reset(ti);
@@ -519,6 +518,7 @@ findpcb:
   				}
   				goto drop;
   			}
+			oso = so;
 			so = sonewconn(so, 0);
 			/*
 			 * Don't add to the SYN cache if established
@@ -542,7 +542,7 @@ findpcb:
 			 * we're committed to it below in TCPS_LISTEN.
 			 */
 			dropsocket++;
-			inp = (struct inpcb *)so->so_pcb;
+			inp = sotoinpcb(so);
 			inp->inp_laddr = ti->ti_dst;
 			inp->inp_lport = ti->ti_dport;
 			in_pcbstate(inp, INP_BOUND);
@@ -2012,7 +2012,7 @@ syn_cache_lookup(ti, prevp, headp)
                     sc->sc_dport == ti->ti_dport &&
                     sc->sc_dst.s_addr == ti->ti_dst.s_addr) {
 			*prevp = prev;
-			splx (s);
+			splx(s);
                         return (sc);
 		}
         }
@@ -2086,6 +2086,7 @@ syn_cache_get(so, m)
 	inp->inp_lport = sc->sc_dport;
 	inp->inp_faddr = sc->sc_src;
 	inp->inp_fport = sc->sc_sport;
+	in_pcbstate(inp, INP_BOUND);
 #if BSD>=43
 	inp->inp_options = ip_srcroute();
 #endif
