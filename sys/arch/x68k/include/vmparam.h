@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 1997/07/12 16:20:50 perry Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3.6.1 1998/10/13 21:23:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -233,3 +233,7 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
+
+#if defined (EXTMEM_LOW) && defined (EXTMEM_SIZE)
+#define MACHINE_NONCONTIG
+#endif
