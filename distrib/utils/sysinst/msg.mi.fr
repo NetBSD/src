@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.68 2003/08/09 21:36:27 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.69 2003/08/19 14:33:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -528,11 +528,12 @@ message dev
 {device}
 
 message nfssource
-{Donnez le nom du serveur nfs et du répertoire sur ce serveur où se trouvent
-les composants. Rappelez vous que le répertoire doit contenir les
+{Donnez le nom du serveur nfs et du répertoire sur ce serveur
+où se trouvent les composants. 
+Rappelez vous que le répertoire doit contenir les
 fichiers .tgz et qu'il doit être accessible par nfs.
 
-serveur:	%s
+serveur:	%s 
 répertoire:	%s
 }
 
@@ -540,27 +541,28 @@ message nfsbadmount
 {Le répertoire %s n'est pas montable par nfs.}
 
 message cdromsource
-{Donnez le nom de périphérique du CD-Rom à utiliser ainsi que le répertoire
-qui contient les composants. Rappelez-vous que le répertoire doit contenir les
-fichiers .tgz .
+{Donnez le nom de périphérique du CD-Rom à utiliser ainsi que
+le répertoire qui contient les composants. 
+Rappelez-vous que le répertoire doit contenir les fichiers .tgz .
 
-device:		%s
+device:		%s 
 répertoire:	%s
 }
 
 
 message localfssource
-{Donnez le nom du périphérique local (non-monté) à utiliser ainsi que le répertoire
-contenant les composants. Rappelez vous que le répertoire doit contenir les
-fichiers .tgz .
+{Donnez le nom du périphérique local (non-monté) à utiliser
+ainsi que le répertoire contenant les composants. 
+Rappelez vous que le répertoire doit contenir les fichiers .tgz .
 
-device:			%s
-système de fichiers:	%s
+device:			%s 
+système de fichiers:	%s 
 répertoire:		%s
 }
 
 message localdir
-{Entrez le répertoire local (déjà monté) ou se trouve la distribution.
+{Entrez le répertoire local (déjà monté) ou se trouve la
+distribution. 
 Rapellez vous que ce répertoire doit contenir les fichiers .tgz.
 
 Répertoire:	%s

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.30 2003/08/09 21:36:28 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.31 2003/08/19 14:33:17 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -511,7 +511,7 @@ message dev
 {urzadzenie}
 
 message nfssource
-{Wprowadz hosta nfs oraz katalog gdzie znajduje sie dystrybucja.
+{Wprowadz hosta nfs oraz katalog gdzie znajduje sie dystrybucja. 
 Pmietaj, ze katalog musi zawierac pliki .tgz oraz, ze musi byc
 dostepny via nfs.
 
@@ -524,24 +524,26 @@ message nfsbadmount
 
 message cdromsource
 {Podaj urzadzenie CDROM oraz katalog na CDROMie, w ktorym znajduje sie
-dystrybucja. Pamietaj, ze katalog musi zawierac pliki .tgz.
+dystrybucja. 
+Pamietaj, ze katalog musi zawierac pliki .tgz.
 
-urzadzenie:	%s
+urzadzenie:	%s 
 katalog:	%s
 }
 
 message localfssource
 {Podaj niezamountowane lokalne urzadzenie oraz katalog na nim, gdzie
-znajduje sie dystrybucja. Pamietaj, ze katalog musi zawierac pliki .tgz.
+znajduje sie dystrybucja. 
+Pamietaj, ze katalog musi zawierac pliki .tgz.
 
-urzadzenie:	%s
-system plikow:	%s
+urzadzenie:	%s 
+system plikow:	%s 
 katalog:	%s
 }
 
 message localdir
-{Podaj aktualnie zamountowany lokalny katalog, gdzie znajduje sie
-dystrybucja. Pamietaj, ze katalog musi zawierac pliki .tgz.
+{Podaj aktualnie zamountowany lokalny katalog, gdzie znajduje sie dystrybucja. 
+Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 katalog:	%s
 }
