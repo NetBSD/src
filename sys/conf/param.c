@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.42 2003/10/21 22:55:47 thorpej Exp $	*/
+/*	$NetBSD: param.c,v 1.43 2003/10/30 20:37:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.42 2003/10/21 22:55:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.43 2003/10/30 20:37:01 drochner Exp $");
 
 #include "opt_rtc_offset.h"
 #include "opt_sysv.h"
@@ -136,7 +136,7 @@ int	mcllowat = MCLLOWAT;
 #define	SHMMIN	1
 #endif
 #ifndef	SHMMNI
-#define	SHMMNI	128			/* <= SHMMMNI in shm.h */
+#define	SHMMNI	128		/* <64k, see IPCID_TO_IX in ipc.h */
 #endif
 #ifndef	SHMSEG
 #define	SHMSEG	128
