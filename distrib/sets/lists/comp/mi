@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.423 2002/01/06 21:31:55 deberg Exp $
+#	$NetBSD: mi,v 1.424 2002/01/07 01:13:21 deberg Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2804,7 +2804,9 @@
 ./usr/share/man/cat9/ETHER_FIRST_MULTI.0		comp-sys-catman
 ./usr/share/man/cat9/ETHER_IS_MULTICAST.0		comp-sys-catman
 ./usr/share/man/cat9/ETHER_NEXT_MULTI.0		comp-sys-catman
+./usr/share/man/cat9/FREE.0		comp-sys-catman
 ./usr/share/man/cat9/HOLDRELE.0		comp-sys-catman
+./usr/share/man/cat9/MALLOC.0		comp-sys-catman
 ./usr/share/man/cat9/MCHTYPE.0		comp-sys-catman
 ./usr/share/man/cat9/MCLGET.0		comp-sys-catman
 ./usr/share/man/cat9/MEXTADD.0		comp-sys-catman
@@ -5267,7 +5269,9 @@
 ./usr/share/man/man9/ETHER_FIRST_MULTI.9		comp-sys-man
 ./usr/share/man/man9/ETHER_IS_MULTICAST.9		comp-sys-man
 ./usr/share/man/man9/ETHER_NEXT_MULTI.9		comp-sys-man
+./usr/share/man/man9/FREE.9		comp-sys-man
 ./usr/share/man/man9/HOLDRELE.9		comp-sys-man
+./usr/share/man/man9/MALLOC.9		comp-sys-man
 ./usr/share/man/man9/MCHTYPE.9		comp-sys-man
 ./usr/share/man/man9/MCLGET.9		comp-sys-man
 ./usr/share/man/man9/MEXTADD.9		comp-sys-man
@@ -5313,6 +5317,7 @@
 ./usr/share/man/man9/VOP_FCNTL.9		comp-sys-man
 ./usr/share/man/man9/VOP_FSYNC.9		comp-sys-man
 ./usr/share/man/man9/VOP_GETATTR.9		comp-sys-man
+./usr/share/man/man9/VOP_GETPAGES.9		comp-sys-man
 ./usr/share/man/man9/VOP_INACTIVE.9		comp-sys-man
 ./usr/share/man/man9/VOP_IOCTL.9		comp-sys-man
 ./usr/share/man/man9/VOP_ISLOCKED.9		comp-sys-man
