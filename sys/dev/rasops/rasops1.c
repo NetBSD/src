@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.5.2.1 1999/06/21 01:19:00 thorpej Exp $ */
+/* 	$NetBSD: rasops1.c,v 1.5.2.2 1999/08/02 22:06:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.5.2.1 1999/06/21 01:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.5.2.2 1999/08/02 22:06:19 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,7 +80,7 @@ rasops1_init(ri)
 		break;
 	}
 		
-	if (ri->ri_font->fontwidth & 7) {
+	if ((ri->ri_font->fontwidth & 7) != 0) {
 		ri->ri_ops.erasecols = rasops1_erasecols;
 		ri->ri_ops.copycols = rasops1_copycols;
 		ri->ri_do_cursor = rasops1_do_cursor;
@@ -98,7 +98,7 @@ rasops1_putchar(cookie, row, col, uc, attr)
 	u_int uc;
 	long attr;
 {
-	int height, width, fs, rs, fb, bg, fg, lmask, rmask;
+	u_int32_t height, width, fs, rs, fb, bg, fg, lmask, rmask;
 	struct rasops_info *ri;
 	int32_t *rp;
 	u_char *fr;

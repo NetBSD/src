@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.37.2.2 1999/06/21 01:18:52 thorpej Exp $ */
+/*      $NetBSD: if_qe.c,v 1.37.2.3 1999/08/02 22:05:11 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -109,6 +109,7 @@ static	void	qeintr __P((int));
 static	int	qeioctl __P((struct ifnet *, u_long, caddr_t));
 static	int	qe_add_rxbuf __P((struct qe_softc *, int));
 static	void	qe_setup __P((struct qe_softc *));
+static	void	qetimeout __P((struct ifnet *));
 
 struct	cfattach qe_ca = {
 	sizeof(struct qe_softc), qematch, qeattach
@@ -352,6 +353,7 @@ qeattach(parent, self, aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = qestart;
 	ifp->if_ioctl = qeioctl;
+	ifp->if_watchdog = qetimeout;
 
 	/*
 	 * Attach the interface.
@@ -469,7 +471,7 @@ qestart(ifp)
 	struct qe_cdata *qc = sc->sc_qedata;
 	paddr_t	buffer;
 	struct mbuf *m, *m0;
-	int idx, len, s, i, oldidx = 0;
+	int idx, len, s, i, totlen, error;
 	short orword;
 
 	if ((QE_RCSR(QE_CSR_CSR) & QE_RCV_ENABLE) == 0)
@@ -492,12 +494,14 @@ qestart(ifp)
 		 * ring is really big.
 		 */
 		for (m0 = m, i = 0; m0; m0 = m0->m_next)
-			i++;
+			if (m0->m_len)
+				i++;
 		if (i >= TXDESCS)
 			panic("qestart");
 
 		if ((i + sc->sc_inq) >= (TXDESCS - 1)) {
 			IF_PREPEND(&sc->sc_if.if_snd, m);
+			ifp->if_flags |= IFF_OACTIVE;
 			goto out;
 		}
 		
@@ -509,19 +513,23 @@ qestart(ifp)
 		 * m now points to a mbuf chain that can be loaded.
 		 * Loop around and set it.
 		 */
+		totlen = 0;
 		for (m0 = m; m0; m0 = m0->m_next) {
-			bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[idx],
+			error = bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[idx],
 			    mtod(m0, void *), m0->m_len, 0, 0);
 			buffer = sc->sc_xmtmap[idx]->dm_segs[0].ds_addr;
 			len = m0->m_len;
+			if (len == 0)
+				continue;
 
+			totlen += len;
 			/* Word alignment calc */
 			orword = 0;
-			if (!m0->m_next) {
-				if (m->m_pkthdr.len < ETHER_MIN_LEN)
-					len += (ETHER_MIN_LEN -
-					    m->m_pkthdr.len);
+			if (totlen == m->m_pkthdr.len) {
+				if (totlen < ETHER_MIN_LEN)
+					len += (ETHER_MIN_LEN - totlen);
 				orword |= QE_EOMSG;
+				sc->sc_txmbuf[idx] = m;
 			}
 			if ((buffer & 1) || (len & 1))
 				len += 2;
@@ -535,12 +543,14 @@ qestart(ifp)
 			qc->qc_xmit[idx].qe_flag =
 			    qc->qc_xmit[idx].qe_status1 = QE_NOTYET;
 			qc->qc_xmit[idx].qe_addr_hi |= (QE_VALID | orword);
-			oldidx = idx;
 			if (++idx == TXDESCS)
 				idx = 0;
 			sc->sc_inq++;
 		}
-		sc->sc_txmbuf[oldidx] = m;
+#ifdef DIAGNOSTIC
+		if (totlen != m->m_pkthdr.len)
+			panic("qestart: len fault");
+#endif
 
 		/*
 		 * Kick off the transmit logic, if it is stopped.
@@ -555,7 +565,10 @@ qestart(ifp)
 	}
 	if (sc->sc_inq == (TXDESCS - 1))
 		ifp->if_flags |= IFF_OACTIVE;
-out:	splx(s);
+
+out:	if (sc->sc_inq)
+		ifp->if_timer = 5; /* If transmit logic dies */
+	splx(s);
 }
 
 void
@@ -609,7 +622,6 @@ qeintr(unit)
 				m_freem(m);
 				continue;
 			}
-				
 			(*ifp->if_input)(ifp, m);
 		}
 
@@ -634,6 +646,7 @@ qeintr(unit)
 				sc->sc_txmbuf[idx] = 0;
 			}
 		}
+		ifp->if_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		qestart(ifp); /* Put in more in queue */
 	}
@@ -862,4 +875,24 @@ qe_setup(sc)
 	if (++sc->sc_nexttx == TXDESCS)
 		sc->sc_nexttx = 0;
 	splx(s);
+}
+
+/*
+ * Check for dead transmit logic. Not uncommon.
+ */
+void
+qetimeout(ifp)
+	struct ifnet *ifp;
+{
+	struct qe_softc *sc = ifp->if_softc;
+
+	if (sc->sc_inq == 0)
+		return;
+
+	printf("%s: xmit logic died, resetting...\n", sc->sc_dev.dv_xname);
+	/*
+	 * Do a reset of interface, to get it going again.
+	 * Will it work by just restart the transmit logic?
+	 */
+	qeinit(sc);
 }

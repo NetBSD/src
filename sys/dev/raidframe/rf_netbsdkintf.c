@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.2.2.1 1999/06/21 01:18:58 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.2.2.2 1999/08/02 22:05:32 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -267,6 +267,16 @@ struct raid_softc {
 
 #define	raidunit(x)	DISKUNIT(x)
 static int numraid = 0;
+
+/* 
+ * Allow RAIDOUTSTANDING number of simultaneous IO's to this RAID device. 
+ * Be aware that large numbers can allow the driver to consume a lot of 
+ * kernel memory, especially on writes... 
+ */
+
+#ifndef RAIDOUTSTANDING
+#define RAIDOUTSTANDING   10
+#endif
 
 #define RAIDLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), raidunit((dev)), RAW_PART))
@@ -673,6 +683,7 @@ raidioctl(dev, cmd, data, flag, p)
 	int retcode = 0;
 	int row;
 	int column;
+	int s;
 	struct rf_recon_req *rrcopy, *rr;
 	RF_ComponentLabel_t *component_label;
 	RF_ComponentLabel_t ci_label;
@@ -790,8 +801,11 @@ raidioctl(dev, cmd, data, flag, p)
 		/* configure the system */
 
 		raidPtrs[unit]->raidid = unit;
+
 		retcode = rf_Configure(raidPtrs[unit], k_cfg);
 
+		/* allow this many simultaneous IO's to this RAID device */
+		raidPtrs[unit]->openings = RAIDOUTSTANDING;
 
 		if (retcode == 0) {
 			retcode = raidinit(dev, raidPtrs[unit], unit);
@@ -1011,8 +1025,10 @@ raidioctl(dev, cmd, data, flag, p)
 			return(EINVAL);
 		}
 		printf("Attempting a rebuild in place\n");
+		s = splbio();
 		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
 		retcode = rf_ReconstructInPlace(raidPtrs[unit], row, column);
+		splx(s);
 		return(retcode);
 
 		/* issue a test-unit-ready through raidframe to the indicated
@@ -1135,7 +1151,9 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_COPYBACK:
 		/* borrow the current thread to get this done */
 		raidPtrs[unit]->proc = p;	/* ICK.. but needed :-p  GO */
+		s = splbio();
 		rf_CopybackReconstructedData(raidPtrs[unit]);
+		splx(s);
 		return (0);
 
 		/* return the percentage completion of reconstruction */
@@ -1476,12 +1494,24 @@ rf_DoAccessKernel(raidPtr, bp, flags, cbFunc, cbArg)
 	}
 	db1_printf(("Calling DoAccess..\n"));
 
+
+	/* Put a throttle on the number of requests we handle simultanously */
+
+	RF_LOCK_MUTEX(raidPtr->mutex);
+
+	while(raidPtr->openings <= 0) {
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		(void)tsleep(&raidPtr->openings, PRIBIO, "rfdwait", 0);
+		RF_LOCK_MUTEX(raidPtr->mutex);
+	}
+	raidPtr->openings--;
+
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
+
 	/*
-	 * XXX For now, all writes are sync
+	 * Everything is async.
 	 */
 	do_async = 1;
-	if ((bp->b_flags & B_READ) == 0)
-		do_async = 0;
 
 	/* don't ever condition on bp->b_flags & B_WRITE.  always condition on
 	 * B_READ instead */
@@ -1495,12 +1525,6 @@ rf_DoAccessKernel(raidPtr, bp, flags, cbFunc, cbArg)
 	db1_printf(("After call to DoAccess: 0x%x 0x%x %d\n", bp,
 		bp->b_data, (int) bp->b_resid));
 #endif
-
-	/*
-	 * If we requested sync I/O, sleep here.
-	 */
-	if ((retcode == 0) && (do_async == 0))
-		tsleep(bp, PRIBIO, "raidsyncio", 0);
 
 	return (retcode);
 }

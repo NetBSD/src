@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.12.4.1 1999/07/01 23:40:23 thorpej Exp $	*/
+/*	$NetBSD: usb.c,v 1.12.4.2 1999/08/02 22:08:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ USB_ATTACH(usb)
 	}
 	sc->sc_bus->use_polling = 0;
 
-	kthread_create_deferred(usb_create_event_thread, sc);
+	kthread_create(usb_create_event_thread, sc);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -186,7 +186,7 @@ usb_create_event_thread(arg)
 {
 	struct usb_softc *sc = arg;
 
-	if (kthread_create(usb_event_thread, sc, &sc->event_thread,
+	if (kthread_create1(usb_event_thread, sc, &sc->event_thread,
 			   "%s", sc->sc_dev.dv_xname)) {
 		printf("%s: unable to create event thread for\n",
 		       sc->sc_dev.dv_xname);

@@ -1,7 +1,7 @@
-/* $NetBSD: cfb.c,v 1.10.4.1 1999/06/21 01:19:20 thorpej Exp $ */
+/* $NetBSD: cfb.c,v 1.10.4.2 1999/08/02 22:08:15 thorpej Exp $ */
 
 /*
- * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
+ * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.10.4.1 1999/06/21 01:19:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.10.4.2 1999/08/02 22:08:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.10.4.1 1999/06/21 01:19:20 thorpej Exp $")
 
 #include <uvm/uvm_extern.h>
 
-/* XXX BUS'IFYING XXX */
- 
 #if defined(pmax)
 #define	machine_btop(x) mips_btop(x)
 #define	MACHINE_KSEG0_TO_PHYS(x) MIPS_KSEG1_TO_PHYS(x)
@@ -84,15 +82,28 @@ __KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.10.4.1 1999/06/21 01:19:20 thorpej Exp $")
  *		} bt_lo;
  *		...
  * Although CX has single Bt459, 32bit R/W can be done w/o any trouble.
+ *
+ * struct bt459reg {
+ *         u_int32_t       bt_lo;
+ *         u_int32_t       bt_hi;
+ *         u_int32_t       bt_reg;
+ *         u_int32_t       bt_cmap;
+ * };
+ *
  */
-struct bt459reg {
-        u_int32_t       bt_lo;
-        u_int32_t       bt_hi;
-        u_int32_t       bt_reg;
-        u_int32_t       bt_cmap;
-};
 
-/* XXX XXX XXX */
+/* Bt459 hardware registers */
+#define bt_lo	0
+#define bt_hi	1
+#define bt_reg	2
+#define bt_cmap 3
+
+#define REG(base, index)	*((u_int32_t *)(base) + (index))
+#define SELECT(vdac, regno) do {			\
+	REG(vdac, bt_lo) = ((regno) & 0x00ff);		\
+	REG(vdac, bt_hi) = ((regno) & 0x0f00) >> 8;	\
+	tc_wmb();					\
+   } while (0)
 
 struct fb_devconfig {
 	vaddr_t dc_vaddr;		/* memory space virtual base address */
@@ -140,8 +151,8 @@ struct cfb_softc {
 	int nscreens;
 };
 
-#define	CX_MAGIC_X 220
-#define	CX_MAGIC_Y 35
+#define	CX_MAGIC_X	220
+#define	CX_MAGIC_Y 	35
 
 #define	CX_FB_OFFSET	0x000000
 #define	CX_FB_SIZE	0x100000
@@ -212,14 +223,6 @@ static int  set_cursor __P((struct cfb_softc *, struct wsdisplay_cursor *));
 static int  get_cursor __P((struct cfb_softc *, struct wsdisplay_cursor *));
 static void set_curpos __P((struct cfb_softc *, struct wsdisplay_curpos *));
 static void bt459_set_curpos __P((struct cfb_softc *));
-
-/* XXX XXX XXX */
-#define	BT459_SELECT(vdac, regno) do {		\
-	vdac->bt_lo = (regno) & 0x00ff;		\
-	vdac->bt_hi = ((regno)& 0x0f00) >> 8;	\
-	tc_wmb();				\
-   } while (0)
-/* XXX XXX XXX */
 
 /*
  * Compose 2 bit/pixel cursor image.  Bit order will be reversed.
@@ -355,7 +358,7 @@ cfbattach(parent, self, aux)
 	sc->sc_cursor.cc_magic.y = CX_MAGIC_Y;
 
 	/* Establish an interrupt handler, and clear any pending interrupts */
-        tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, cfbintr, sc);
+	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, cfbintr, sc);
 	*(u_int8_t *)(sc->sc_dc->dc_vaddr + CX_OFFSET_IREQ) = 0;
 
 	waa.console = console;
@@ -525,20 +528,20 @@ cfbintr(arg)
 	v = sc->sc_changed;
 	sc->sc_changed = 0;
 	if (v & DATA_ENB_CHANGED) {
-		BT459_SELECT(vdac, BT459_REG_CCR);
-		vdac->bt_reg = (sc->sc_curenb) ? 0xc0 : 0x00;
+		SELECT(vdac, BT459_REG_CCR);
+		REG(vdac, bt_reg) = (sc->sc_curenb) ? 0xc0 : 0x00;
 	}
 	if (v & DATA_CURCMAP_CHANGED) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
-		BT459_SELECT(vdac, BT459_REG_CCOLOR_2);
-		vdac->bt_reg = cp[1];	tc_wmb();
-		vdac->bt_reg = cp[3];	tc_wmb();
-		vdac->bt_reg = cp[5];	tc_wmb();
+		SELECT(vdac, BT459_REG_CCOLOR_2);
+		REG(vdac, bt_reg) = cp[1];	tc_wmb();
+		REG(vdac, bt_reg) = cp[3];	tc_wmb();
+		REG(vdac, bt_reg) = cp[5];	tc_wmb();
 
-		vdac->bt_reg = cp[0];	tc_wmb();
-		vdac->bt_reg = cp[2];	tc_wmb();
-		vdac->bt_reg = cp[4];	tc_wmb();
+		REG(vdac, bt_reg) = cp[0];	tc_wmb();
+		REG(vdac, bt_reg) = cp[2];	tc_wmb();
+		REG(vdac, bt_reg) = cp[4];	tc_wmb();
 	}
 	if (v & DATA_CURSHAPE_CHANGED) {
 		u_int8_t *ip, *mp, img, msk;
@@ -549,29 +552,29 @@ cfbintr(arg)
 		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
 
 		bcnt = 0;
-		BT459_SELECT(vdac, BT459_REG_CRAM_BASE+0);
+		SELECT(vdac, BT459_REG_CRAM_BASE+0);
 		/* 64 pixel scan line is consisted with 16 byte cursor ram */
 		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
 			/* pad right half 32 pixel when smaller than 33 */
 			if ((bcnt & 0x8) && sc->sc_cursor.cc_size.x < 33) {
-				vdac->bt_reg = 0; tc_wmb();
-				vdac->bt_reg = 0; tc_wmb();
+				REG(vdac, bt_reg) = 0; tc_wmb();
+				REG(vdac, bt_reg) = 0; tc_wmb();
 			}
 			else {
 				img = *ip++;
 				msk = *mp++;
 				img &= msk;	/* cookie off image */
 				u = (msk & 0x0f) << 4 | (img & 0x0f);
-				vdac->bt_reg = shuffle[u];	tc_wmb();
+				REG(vdac, bt_reg) = shuffle[u];	tc_wmb();
 				u = (msk & 0xf0) | (img & 0xf0) >> 4;
-				vdac->bt_reg = shuffle[u];	tc_wmb();
+				REG(vdac, bt_reg) = shuffle[u];	tc_wmb();
 			}
 			bcnt += 2;
 		}
 		/* pad unoccupied scan lines */
 		while (bcnt < CURSOR_MAX_SIZE * 16) {
-			vdac->bt_reg = 0; tc_wmb();
-			vdac->bt_reg = 0; tc_wmb();
+			REG(vdac, bt_reg) = 0; tc_wmb();
+			REG(vdac, bt_reg) = 0; tc_wmb();
 			bcnt += 2;
 		}
 	}
@@ -579,11 +582,11 @@ cfbintr(arg)
 		struct hwcmap256 *cm = &sc->sc_cmap;
 		int index;
 
-		BT459_SELECT(vdac, 0);
+		SELECT(vdac, 0);
 		for (index = 0; index < CMAP_SIZE; index++) {
-			vdac->bt_cmap = cm->r[index];	tc_wmb();
-			vdac->bt_cmap = cm->g[index];	tc_wmb();
-			vdac->bt_cmap = cm->b[index];	tc_wmb();
+			REG(vdac, bt_cmap) = cm->r[index];	tc_wmb();
+			REG(vdac, bt_cmap) = cm->g[index];	tc_wmb();
+			REG(vdac, bt_cmap) = cm->b[index];	tc_wmb();
 		}
 	}
 	return (1);
@@ -597,67 +600,67 @@ cfbinit(dc)
 	struct bt459reg *vdac = (void *)(cfbbase + CX_BT459_OFFSET);
 	int i;
 
-	BT459_SELECT(vdac, BT459_REG_COMMAND_0);
-	vdac->bt_reg = 0x40; /* CMD0 */	tc_wmb();
-	vdac->bt_reg = 0x0;  /* CMD1 */	tc_wmb();
-	vdac->bt_reg = 0xc0; /* CMD2 */	tc_wmb();
-	vdac->bt_reg = 0xff; /* PRM */	tc_wmb();
-	vdac->bt_reg = 0;    /* 205 */	tc_wmb();
-	vdac->bt_reg = 0x0;  /* PBM */	tc_wmb();
-	vdac->bt_reg = 0;    /* 207 */	tc_wmb();
-	vdac->bt_reg = 0x0;  /* ORM */	tc_wmb();
-	vdac->bt_reg = 0x0;  /* OBM */	tc_wmb();
-	vdac->bt_reg = 0x0;  /* ILV */	tc_wmb();
-	vdac->bt_reg = 0x0;  /* TEST */	tc_wmb();
+	SELECT(vdac, BT459_REG_COMMAND_0);
+	REG(vdac, bt_reg) = 0x40; /* CMD0 */	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;  /* CMD1 */	tc_wmb();
+	REG(vdac, bt_reg) = 0xc0; /* CMD2 */	tc_wmb();
+	REG(vdac, bt_reg) = 0xff; /* PRM */	tc_wmb();
+	REG(vdac, bt_reg) = 0;    /* 205 */	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;  /* PBM */	tc_wmb();
+	REG(vdac, bt_reg) = 0;    /* 207 */	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;  /* ORM */	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;  /* OBM */	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;  /* ILV */	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;  /* TEST */	tc_wmb();
 
-	BT459_SELECT(vdac, BT459_REG_CCR);
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
-	vdac->bt_reg = 0x0;	tc_wmb();
+	SELECT(vdac, BT459_REG_CCR);
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
+	REG(vdac, bt_reg) = 0x0;	tc_wmb();
 
 	/* build sane colormap */
-	BT459_SELECT(vdac, 0);
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
+	SELECT(vdac, 0);
+	REG(vdac, bt_cmap) = 0;	 tc_wmb();
+	REG(vdac, bt_cmap) = 0;	 tc_wmb();
+	REG(vdac, bt_cmap) = 0;	 tc_wmb();
 	for (i = 1; i < CMAP_SIZE; i++) {
-		vdac->bt_cmap = 0xff;	tc_wmb();
-		vdac->bt_cmap = 0xff;	tc_wmb();
-		vdac->bt_cmap = 0xff;	tc_wmb();
+		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
+		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
+		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
 	}
 
 	/* clear out cursor image */
-	BT459_SELECT(vdac, BT459_REG_CRAM_BASE);
+	SELECT(vdac, BT459_REG_CRAM_BASE);
 	for (i = 0; i < 1024; i++)
-		vdac->bt_reg = 0xff;	tc_wmb();
+		REG(vdac, bt_reg) = 0xff;	tc_wmb();
 
 	/*
 	 * 2 bit/pixel cursor.  Assign MSB for cursor mask and LSB for
 	 * cursor image.  CCOLOR_2 for mask color, while CCOLOR_3 for
 	 * image color.  CCOLOR_1 will be never used.
 	 */
-	BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
-	vdac->bt_reg = 0xff;	tc_wmb();
-	vdac->bt_reg = 0xff;	tc_wmb();
-	vdac->bt_reg = 0xff;	tc_wmb();
+	SELECT(vdac, BT459_REG_CCOLOR_1);
+	REG(vdac, bt_reg) = 0xff;	tc_wmb();
+	REG(vdac, bt_reg) = 0xff;	tc_wmb();
+	REG(vdac, bt_reg) = 0xff;	tc_wmb();
 
-	vdac->bt_reg = 0;	tc_wmb();
-	vdac->bt_reg = 0;	tc_wmb();
-	vdac->bt_reg = 0;	tc_wmb();
+	REG(vdac, bt_reg) = 0;	tc_wmb();
+	REG(vdac, bt_reg) = 0;	tc_wmb();
+	REG(vdac, bt_reg) = 0;	tc_wmb();
 
-	vdac->bt_reg = 0xff;	tc_wmb();
-	vdac->bt_reg = 0xff;	tc_wmb();
-	vdac->bt_reg = 0xff;	tc_wmb();
+	REG(vdac, bt_reg) = 0xff;	tc_wmb();
+	REG(vdac, bt_reg) = 0xff;	tc_wmb();
+	REG(vdac, bt_reg) = 0xff;	tc_wmb();
 }
 
 static int
@@ -808,11 +811,11 @@ bt459_set_curpos(sc)
 
 	s = spltty();
 
-	BT459_SELECT(vdac, BT459_REG_CURSOR_X_LOW);
-	vdac->bt_reg = x;	tc_wmb();
-	vdac->bt_reg = x >> 8;	tc_wmb();
-	vdac->bt_reg = y;	tc_wmb();
-	vdac->bt_reg = y >> 8;	tc_wmb();
+	SELECT(vdac, BT459_REG_CURSOR_X_LOW);
+	REG(vdac, bt_reg) = x;		tc_wmb();
+	REG(vdac, bt_reg) = x >> 8;	tc_wmb();
+	REG(vdac, bt_reg) = y;		tc_wmb();
+	REG(vdac, bt_reg) = y >> 8;	tc_wmb();
 
 	splx(s);
 }
