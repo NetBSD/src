@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.22.2.1 1998/12/23 16:47:27 minoura Exp $
+#	$NetBSD: files.x68k,v 1.22.2.2 1998/12/27 15:16:56 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -108,6 +108,10 @@ file	arch/x68k/dev/intio.c		intio
 device	test
 attach	test at intio
 file	arch/x68k/dev/test.c		test needs-count
+
+device	xel
+attach	xel at intio
+file	arch/x68k/dev/xel.c		xel
 
 device	mfp {}
 attach	mfp at intio
