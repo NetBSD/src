@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.40 2002/09/30 06:50:36 onoe Exp $	*/
+/*	$NetBSD: wireg.h,v 1.41 2002/10/02 17:11:36 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -524,12 +524,14 @@ struct wi_scan_data {
  */
 struct wi_frame {
 	u_int16_t		wi_status;	/* 0x00 */
-	u_int16_t		wi_rsvd0;	/* 0x02 */ /* 0 */
-	u_int16_t		wi_rsvd1;	/* 0x04 */ /* 0 */
-	u_int16_t		wi_q_info;	/* 0x06 */
-	u_int16_t		wi_rsvd2;	/* 0x08 */
-	u_int8_t		wi_tx_rtry;	/* 0x0a */ /* (Prism2 Only) */
-	u_int8_t		wi_tx_rate;	/* 0x0b */ /* (Prism2 Only) */
+	u_int16_t		wi_rx_tstamp1;	/* 0x02 */
+	u_int16_t		wi_rx_tstamp0;	/* 0x04 */
+	u_int8_t		wi_rx_silence;	/* 0x06 */
+	u_int8_t		wi_rx_signal;	/* 0x07 */
+	u_int8_t		wi_rx_rate;	/* 0x08 */
+	u_int8_t		wi_rx_flow;	/* 0x09 */
+	u_int8_t		wi_tx_rtry;	/* 0x0a */ /* Prism2 AP Only */
+	u_int8_t		wi_tx_rate;	/* 0x0b */ /* Prism2 AP Only */
 	u_int16_t		wi_tx_ctl;	/* 0x0c */
 	struct ieee80211_frame_addr4 wi_whdr;	/* 0x0e */
 	u_int16_t		wi_dat_len;	/* 0x2c */
