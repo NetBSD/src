@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.2 2000/06/01 14:28:59 augustss Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.2.2.1 2000/09/04 17:53:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@ USB_ATTACH(uftdi)
 	uca.ibufsize = UFTDIIBUFSIZE;
 	uca.obufsize = UFTDIOBUFSIZE - 1;
 	uca.ibufsizepad = UFTDIIBUFSIZE;
-	uca.obufsizepad = UFTDIOBUFSIZE;
+	uca.opkthdrlen = 1;
 	uca.device = dev;
 	uca.iface = iface;
 	uca.methods = &uftdi_methods;
