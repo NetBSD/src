@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2000/07/14 13:15:44 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.81 2000/07/14 21:07:10 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1015,7 +1015,7 @@ stackdump()
 		if( ((long)fp) & 1 ) {
 			fp64 = (struct frame64*)(((char*)fp)+BIAS);
 			/* 64-bit frame */
-			printf("%x(%llx,%llx,%llx,%llx,%llx,%llx,%llx)sp=%p",
+			printf("%x(%llx, %llx, %llx, %llx, %llx, %llx, %llx) fp = %p\n",
 			       fp64->fr_pc, fp64->fr_arg[0], fp64->fr_arg[1], fp64->fr_arg[2],
 			       fp64->fr_arg[3], fp64->fr_arg[4], fp64->fr_arg[5], fp64->fr_arg[6],
 			       fp64->fr_fp);
