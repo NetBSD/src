@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/01/16 02:37:00 wiz Exp $
+#	$NetBSD: Makefile,v 1.6 2003/10/20 01:15:03 lukem Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -10,13 +10,18 @@ MAN=	cvsbug.8
 CLEANFILES+=.fname cvsbug
 
 cvsbug: cvsbug.in
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	sed -e 's,@PACKAGE_BUGREPORT@,bug-cvs@gnu.org,g' \
 	    -e "s,@VERSION@,`cat .fname`,g" ${.ALLSRC} > ${.TARGET}
+	${_MKCMD}\
 	chmod a+x ${.TARGET}
 
 cvsbug: .fname
 
 .fname: configure
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	echo > .fname \
 	  cvs-`sed < ${.ALLSRC} \
 		    -e '/PACKAGE_VERSION/!d' \

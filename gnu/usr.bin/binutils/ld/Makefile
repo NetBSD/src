@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/08/01 17:03:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2003/10/20 01:15:03 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -37,9 +37,7 @@ INFOFLAGS=	-I${DIST}/ld -I${DIST}/bfd/doc
 .PATH: ${DIST}/ld ${DIST}/ld/emulparams \
 	${DIST}/ld/emultempl ${DIST}/ld/scripttempl ldscripts
 
-CLEANFILES+=	stringify.sed
-stringify.sed: ${G_STRINGIFY}
-	cp $> $@
+BUILDSYMLINKS+=	${G_STRINGIFY} stringify.sed
 
 .for f in ${G_EMULATION_OFILES:S/^e//:R}
 .if exists(.depend.${f})
@@ -47,6 +45,8 @@ stringify.sed: ${G_STRINGIFY}
 .endif
 
 .depend.${f}: ${f}.sh
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	(srcdir=${DIST}/ld . ${>:M*.sh} && \
 		if [ x"$$TEMPLATE_NAME" != x ]; then \
 			temp_emul=$$TEMPLATE_NAME.em; \
@@ -65,9 +65,11 @@ DPSRCS+=	.depend.${f} e${f}.c
 CLEANFILES+=	.depend.${f} e${f}.c
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	unset MACHINE || true; \
 	LIB_PATH=/usr/lib srcdir=${DIST}/ld \
-		sh ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
+		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} ${f}
 
@@ -89,4 +91,5 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 
 cleanprog: __cleanldscripts 
 __cleanldscripts:
-	-rm -rf ldscripts
+	${_MKCMD}\
+	rm -rf ldscripts

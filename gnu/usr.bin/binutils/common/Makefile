@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/03/05 07:19:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2003/10/20 01:15:03 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,10 @@ INFOFLAGS=	-I${DIST}/binutils/doc -I{.CURDIR}
 ${TEXINFO}: config.texi
 
 config.texi: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	rm -f config.texi
+	${_MKCMD}\
 	echo "@set VERSION ${VERSION}" > config.texi
 
 CLEANFILES+=	config.texi
