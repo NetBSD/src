@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.52 1999/07/30 16:03:49 drochner Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.53 1999/08/25 04:53:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -755,7 +755,7 @@ ultrix_sys_shmsys(p, v, retval)
 	/* Ultrix SVSHM weirndess: */
 	struct ultrix_sys_shmsys_args *uap = v;
 	struct sys_shmat_args shmat_args;
-	struct sys_shmctl_args shmctl_args;
+	struct compat_14_sys_shmctl_args shmctl_args;
 	struct sys_shmdt_args shmdt_args;
 	struct sys_shmget_args shmget_args;
 
@@ -770,8 +770,8 @@ ultrix_sys_shmsys(p, v, retval)
 	case 1:						/* Ultrix shmctl() */
 		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
-		SCARG(&shmctl_args, buf) = (struct shmid_ds *)SCARG(uap, a4);
-		return (sys_shmctl(p, &shmctl_args, retval));
+		SCARG(&shmctl_args, buf) = (struct shmid_ds14 *)SCARG(uap, a4);
+		return (compat_14_sys_shmctl(p, &shmctl_args, retval));
 
 	case 2:						/* Ultrix shmdt() */
 		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a2);

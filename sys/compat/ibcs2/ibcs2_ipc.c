@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.9 1998/10/19 22:34:49 tron Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.10 1999/08/25 04:52:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -68,6 +68,49 @@
 #define IBCS2_IPC_SET	1
 #define IBCS2_IPC_STAT	2
 
+struct ibcs2_ipc_perm {
+	ibcs2_uid_t uid;
+	ibcs2_gid_t gid;
+	ibcs2_uid_t cuid;
+	ibcs2_gid_t cgid;
+	ibcs2_mode_t mode;
+	u_short seq;
+	ibcs2_key_t key;
+};
+
+#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
+static void cvt_perm2iperm __P((struct ipc_perm14 *, struct ibcs2_ipc_perm *));
+static void cvt_iperm2perm __P((struct ibcs2_ipc_perm *, struct ipc_perm14 *));
+
+static void
+cvt_perm2iperm(bp, ibp)
+	struct ipc_perm14 *bp;
+	struct ibcs2_ipc_perm *ibp;
+{
+	ibp->cuid = bp->cuid;
+	ibp->cgid = bp->cgid;
+	ibp->uid = bp->uid;
+	ibp->gid = bp->gid;
+	ibp->mode = bp->mode;
+	ibp->seq = bp->seq;
+	ibp->key = bp->key;
+}
+
+static void
+cvt_iperm2perm(ibp, bp)
+	struct ibcs2_ipc_perm *ibp;
+	struct ipc_perm14 *bp;
+{
+	bp->cuid = ibp->cuid;
+	bp->cgid = ibp->cgid;
+	bp->uid = ibp->uid;
+	bp->gid = ibp->gid;
+	bp->mode = ibp->mode;
+	bp->seq = ibp->seq;
+	bp->key = ibp->key;
+}
+#endif /* SYSVMSG || SYSVSEM || SYSVMSG */
+
 #ifdef SYSVMSG
 
 /*
@@ -75,9 +118,9 @@
  */
 
 struct ibcs2_msqid_ds {
-	struct ipc_perm msg_perm;
-	struct msg *msg_first;
-	struct msg *msg_last;
+	struct ibcs2_ipc_perm msg_perm;
+	struct __msg *msg_first;
+	struct __msg *msg_last;
 	u_short msg_cbytes;
 	u_short msg_qnum;
 	u_short msg_qbytes;
@@ -88,15 +131,17 @@ struct ibcs2_msqid_ds {
 	ibcs2_time_t msg_ctime;
 };
 
-static void cvt_msqid2imsqid __P((struct msqid_ds *, struct ibcs2_msqid_ds *));
-static void cvt_imsqid2msqid __P((struct ibcs2_msqid_ds *, struct msqid_ds *));
+static void cvt_msqid2imsqid __P((struct msqid_ds14 *,
+	struct ibcs2_msqid_ds *));
+static void cvt_imsqid2msqid __P((struct ibcs2_msqid_ds *,
+	struct msqid_ds14 *));
 
 static void
 cvt_msqid2imsqid(bp, ibp)
-	struct msqid_ds *bp;
+	struct msqid_ds14 *bp;
 	struct ibcs2_msqid_ds *ibp;
 {
-	ibp->msg_perm = bp->msg_perm;
+	cvt_perm2iperm(&bp->msg_perm, &ibp->msg_perm);
 	ibp->msg_first = bp->msg_first;
 	ibp->msg_last = bp->msg_last;
 	ibp->msg_cbytes = (u_short)bp->msg_cbytes;
@@ -113,9 +158,9 @@ cvt_msqid2imsqid(bp, ibp)
 static void
 cvt_imsqid2msqid(ibp, bp)
 	struct ibcs2_msqid_ds *ibp;
-	struct msqid_ds *bp;
+	struct msqid_ds14 *bp;
 {
-	bp->msg_perm = ibp->msg_perm;
+	cvt_iperm2perm(&ibp->msg_perm, &bp->msg_perm);
 	bp->msg_first = ibp->msg_first;
 	bp->msg_last = ibp->msg_last;
 	bp->msg_cbytes = ibp->msg_cbytes;
@@ -157,20 +202,21 @@ ibcs2_sys_msgsys(p, v, retval)
 		SCARG(&margs, which) = 0;
 		SCARG(&margs, a2) = SCARG(uap, a2);
 		SCARG(&margs, a4) =
-		    (int)stackgap_alloc(&sg, sizeof(struct msqid_ds));
+		    (int)stackgap_alloc(&sg, sizeof(struct msqid_ds14));
 		SCARG(&margs, a3) = SCARG(uap, a3);
 		switch (SCARG(&margs, a3)) {
 		case IBCS2_IPC_STAT:
 			error = compat_10_sys_msgsys(p, &margs, retval);
 			if (!error)
-				cvt_msqid2imsqid((struct msqid_ds *)
+				cvt_msqid2imsqid((struct msqid_ds14 *)
 				    SCARG(&margs, a4),
 				    (struct ibcs2_msqid_ds *)SCARG(uap, a4));
 			return error;
 		case IBCS2_IPC_SET:
 			cvt_imsqid2msqid((struct ibcs2_msqid_ds *)SCARG(uap,
 									a4),
-					 (struct msqid_ds *) SCARG(&margs, a4));
+					 (struct msqid_ds14 *) SCARG(&margs,
+					 			     a4));
 			return compat_10_sys_msgsys(p, &margs, retval);
 		case IBCS2_IPC_RMID:
 			return compat_10_sys_msgsys(p, &margs, retval);
@@ -197,16 +243,6 @@ ibcs2_sys_msgsys(p, v, retval)
  * iBCS2 semsys call
  */
 
-struct ibcs2_ipc_perm {
-	ibcs2_uid_t uid;
-	ibcs2_gid_t gid;
-	ibcs2_uid_t cuid;
-	ibcs2_gid_t cgid;
-	ibcs2_mode_t mode;
-	u_short seq;
-	ibcs2_key_t key;
-};
-
 struct ibcs2_semid_ds {
 	struct ibcs2_ipc_perm sem_perm;
 	struct ibcs2_sem *sem_base;
@@ -223,15 +259,17 @@ struct ibcs2_sem {
 	u_short semzcnt;
 };
 
-static void cvt_semid2isemid __P((struct semid_ds *, struct ibcs2_semid_ds *));
-static void cvt_isemid2semid __P((struct ibcs2_semid_ds *, struct semid_ds *));
+static void cvt_semid2isemid __P((struct semid_ds14 *,
+	struct ibcs2_semid_ds *));
+static void cvt_isemid2semid __P((struct ibcs2_semid_ds *,
+	struct semid_ds14 *));
 #ifdef notdef
 static void cvt_sem2isem __P((struct sem *, struct ibcs2_sem *));
 static void cvt_isem2sem __P((struct ibcs2_sem *, struct sem *));
 
 static void
 cvt_sem2isem(bp, ibp)
-	struct sem *bp;
+	struct __sem *bp;
 	struct ibcs2_sem *ibp;
 {
 	ibp->semval = bp->semval;
@@ -244,7 +282,7 @@ cvt_sem2isem(bp, ibp)
 static void
 cvt_isem2sem(ibp, bp)
 	struct ibcs2_sem *ibp;
-	struct sem *bp;
+	struct __sem *bp;
 {
 	bp->semval = ibp->semval;
 	bp->sempid = ibp->sempid;
@@ -256,16 +294,10 @@ cvt_isem2sem(ibp, bp)
 
 static void
 cvt_semid2isemid(bp, ibp)
-	struct semid_ds *bp;
+	struct semid_ds14 *bp;
 	struct ibcs2_semid_ds *ibp;
 {
-	ibp->sem_perm.cuid = bp->sem_perm.cuid;
-	ibp->sem_perm.cgid = bp->sem_perm.cgid;
-	ibp->sem_perm.uid = bp->sem_perm.uid;
-	ibp->sem_perm.gid = bp->sem_perm.gid;
-	ibp->sem_perm.mode = bp->sem_perm.mode;
-	ibp->sem_perm.seq = bp->sem_perm.seq;
-	ibp->sem_perm.key = bp->sem_perm.key;
+	cvt_perm2iperm(&bp->sem_perm, &ibp->sem_perm);
 	ibp->sem_base = (struct ibcs2_sem *)bp->sem_base;
 	ibp->sem_nsems = bp->sem_nsems;
 	ibp->sem_otime = bp->sem_otime;
@@ -273,19 +305,14 @@ cvt_semid2isemid(bp, ibp)
 	return;
 }
 
+
 static void
 cvt_isemid2semid(ibp, bp)
 	struct ibcs2_semid_ds *ibp;
-	struct semid_ds *bp;
+	struct semid_ds14 *bp;
 {
-	bp->sem_perm.cuid = ibp->sem_perm.cuid;
-	bp->sem_perm.cgid = ibp->sem_perm.cgid;
-	bp->sem_perm.uid = ibp->sem_perm.uid;
-	bp->sem_perm.gid = ibp->sem_perm.gid;
-	bp->sem_perm.mode = ibp->sem_perm.mode;
-	bp->sem_perm.seq = ibp->sem_perm.seq;
-	bp->sem_perm.key = ibp->sem_perm.key;
-	bp->sem_base = (struct sem *)ibp->sem_base;
+	cvt_iperm2perm(&ibp->sem_perm, &bp->sem_perm);
+	bp->sem_base = (struct __sem *)ibp->sem_base;
 	bp->sem_nsems = ibp->sem_nsems;
 	bp->sem_otime = ibp->sem_otime;
 	bp->sem_ctime = ibp->sem_ctime;
@@ -314,11 +341,11 @@ ibcs2_sys_semsys(p, v, retval)
 		case IBCS2_IPC_STAT:
 		    {
 			    struct ibcs2_semid_ds *isp, isi;
-			    struct semid_ds *sp, s;
+			    struct semid_ds14 *sp, s;
 			    caddr_t sg = stackgap_init(p->p_emul);
   
 			    isp = (struct ibcs2_semid_ds *)SCARG(uap, a5);
-			    sp = stackgap_alloc(&sg, sizeof(struct semid_ds));
+			    sp = stackgap_alloc(&sg, sizeof(struct semid_ds14));
 			    SCARG(uap, a5) = (int)sp;
 			    error = compat_10_sys_semsys(p, uap, retval);
 			    if (error)
@@ -334,7 +361,7 @@ ibcs2_sys_semsys(p, v, retval)
 		case IBCS2_IPC_SET:
 		    {
 			    struct ibcs2_semid_ds isp;
-			    struct semid_ds *sp, s;
+			    struct semid_ds14 *sp, s;
 			    caddr_t sg = stackgap_init(p->p_emul);
   
 			    error = copyin((caddr_t)SCARG(uap, a5),
@@ -372,7 +399,7 @@ ibcs2_sys_semsys(p, v, retval)
  */
 
 struct ibcs2_shmid_ds {
-        struct ipc_perm shm_perm;
+        struct ibcs2_ipc_perm shm_perm;
 	int shm_segsz;
 	int pad1;
 	char pad2[4];
@@ -385,15 +412,17 @@ struct ibcs2_shmid_ds {
 	ibcs2_time_t shm_ctime;
 };
 
-static void cvt_shmid2ishmid __P((struct shmid_ds *, struct ibcs2_shmid_ds *));
-static void cvt_ishmid2shmid __P((struct ibcs2_shmid_ds *, struct shmid_ds *));
+static void cvt_shmid2ishmid __P((struct shmid_ds14 *,
+	struct ibcs2_shmid_ds *));
+static void cvt_ishmid2shmid __P((struct ibcs2_shmid_ds *,
+	struct shmid_ds14 *));
 
 static void
 cvt_shmid2ishmid(bp, ibp)
-	struct shmid_ds *bp;
+	struct shmid_ds14 *bp;
 	struct ibcs2_shmid_ds *ibp;
 {
-	ibp->shm_perm = bp->shm_perm;
+	cvt_perm2iperm(&bp->shm_perm, &ibp->shm_perm);
 	ibp->shm_segsz = bp->shm_segsz;
 	ibp->shm_lpid = bp->shm_lpid;
 	ibp->shm_cpid = bp->shm_cpid;
@@ -408,9 +437,9 @@ cvt_shmid2ishmid(bp, ibp)
 static void
 cvt_ishmid2shmid(ibp, bp)
 	struct ibcs2_shmid_ds *ibp;
-	struct shmid_ds *bp;
+	struct shmid_ds14 *bp;
 {
-	bp->shm_perm = ibp->shm_perm;
+	cvt_iperm2perm(&ibp->shm_perm, &bp->shm_perm);
 	bp->shm_segsz = ibp->shm_segsz;
 	bp->shm_lpid = ibp->shm_lpid;
 	bp->shm_cpid = ibp->shm_cpid;
@@ -446,7 +475,7 @@ ibcs2_sys_shmsys(p, v, retval)
 		case IBCS2_IPC_STAT:
 		    {
 			    struct ibcs2_shmid_ds *isp, is;
-			    struct shmid_ds *sp, s;
+			    struct shmid_ds14 *sp, s;
 			    caddr_t sg = stackgap_init(p->p_emul);
   
 			    isp = (struct ibcs2_shmid_ds *)SCARG(uap, a4);
@@ -466,7 +495,7 @@ ibcs2_sys_shmsys(p, v, retval)
 		case IBCS2_IPC_SET:
 		    {
 			    struct ibcs2_shmid_ds is;
-			    struct shmid_ds *sp, s;
+			    struct shmid_ds14 *sp, s;
 			    caddr_t sg = stackgap_init(p->p_emul);
   
 			    error = copyin((caddr_t)SCARG(uap, a4),
