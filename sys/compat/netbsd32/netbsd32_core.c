@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.3 2001/12/10 01:56:46 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.4 2001/12/10 04:05:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.3 2001/12/10 01:56:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.4 2001/12/10 04:05:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,11 +67,11 @@ struct coredump_state {
 	off_t offset;
 };
 
-int	coredump_writesegs_netbsd(struct proc *, struct vnode *,
+int	coredump_writesegs_netbsd32(struct proc *, struct vnode *,
 	    struct ucred *, struct uvm_coredump_state *);
 
 int
-coredump_netbsd(struct proc *p, struct vnode *vp, struct ucred *cred)
+coredump_netbsd32(struct proc *p, struct vnode *vp, struct ucred *cred)
 {
 	struct coredump_state cs;
 	struct vmspace *vm = p->p_vmspace;
@@ -104,7 +104,7 @@ coredump_netbsd(struct proc *p, struct vnode *vp, struct ucred *cred)
 
 	cs.offset = cs.core.c_hdrsize + cs.core.c_seghdrsize +
 	    cs.core.c_cpusize;
-	error = uvm_coredump_walkmap(p, vp, cred, coredump_writesegs_netbsd,
+	error = uvm_coredump_walkmap(p, vp, cred, coredump_writesegs_netbsd32,
 	    &cs);
 	if (error)
 		return (error);
@@ -118,8 +118,8 @@ coredump_netbsd(struct proc *p, struct vnode *vp, struct ucred *cred)
 }
 
 int
-coredump_writesegs_netbsd(struct proc *p, struct vnode *vp, struct ucred *cred,
-    struct uvm_coredump_state *us)
+coredump_writesegs_netbsd32(struct proc *p, struct vnode *vp,
+    struct ucred *cred, struct uvm_coredump_state *us)
 {
 	struct coredump_state *cs = us->cookie;
 	struct coreseg32 cseg;
