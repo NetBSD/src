@@ -127,6 +127,17 @@ CONFIGURATION
 
                  Default: ``yes''
 
+     MKHOSTOBJ   Can be set to ``yes'' or ``no''.  If set to ``yes'', then for
+                 programs intended to be run on the compile host, the name,
+                 release, and architecture of the host operating system will
+                 be suffixed to the name of the object directory created by
+                 ``make obj''.  (This allows multiple host systems to compile
+                 NetBSD for a single target.)  If set to ``no'', then programs
+                 built to be run on the compile host will use the same object
+                 directory names as programs built to be run on the target.
+
+                 Default: ``no''
+
      MKINFO      Can be set to ``yes'' or ``no''.  Indicates whether GNU Info
                  files, used for the documentation for most of the compilation
                  tools, will be created and installed during a build.
@@ -451,4 +462,4 @@ HISTORY
 BUGS
      Many platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
-NetBSD                         November 12, 2001                             7
+NetBSD                         November 12, 2001                             8
