@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.56 2000/05/29 14:58:59 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.57 2000/05/29 15:05:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -398,6 +398,24 @@ initclocks()
 
 #ifdef NTP
 	switch (hz) {
+	case 1:
+		shifthz = SHIFT_SCALE - 0;
+		break;
+	case 2:
+		shifthz = SHIFT_SCALE - 1;
+		break;
+	case 4:
+		shifthz = SHIFT_SCALE - 2;
+		break;
+	case 8:
+		shifthz = SHIFT_SCALE - 3;
+		break;
+	case 16:
+		shifthz = SHIFT_SCALE - 4;
+		break;
+	case 32:
+		shifthz = SHIFT_SCALE - 5;
+		break;
 	case 60:
 	case 64:
 		shifthz = SHIFT_SCALE - 6;
@@ -416,6 +434,25 @@ initclocks()
 	case 1000:
 	case 1024:
 		shifthz = SHIFT_SCALE - 10;
+		break;
+	case 1200:
+	case 2048:
+		shifthz = SHIFT_SCALE - 11;
+		break;
+	case 4096:
+		shifthz = SHIFT_SCALE - 12;
+		break;
+	case 8192:
+		shifthz = SHIFT_SCALE - 13;
+		break;
+	case 16384:
+		shifthz = SHIFT_SCALE - 14;
+		break;
+	case 32768:
+		shifthz = SHIFT_SCALE - 15;
+		break;
+	case 65536:
+		shifthz = SHIFT_SCALE - 16;
 		break;
 	default:
 		panic("weird hz");
@@ -677,13 +714,14 @@ hardclock(frame)
 		 *   obase=2
 		 *   idealhz/realhz
 		 * where `idealhz' is the next higher power of 2, and `realhz'
-		 * is the actual value.
+		 * is the actual value.  You may need to factor this result
+		 * into a sequence of 2 multipliers to get better precision.
 		 *
 		 * Likewise, the error can be calculated with (e.g. for 100Hz):
 		 *   bc -q
 		 *   scale=24
-		 *   ((1+2^-2+2^-5)*realhz-idealhz)/idealhz
-		 * (and then multiply by 100 to get %).
+		 *   ((1+2^-2+2^-5)*(1-2^-10)*realhz-idealhz)/idealhz
+		 * (and then multiply by 1000000 to get ppm).
 		 */
 		switch (hz) {
 		case 96:
