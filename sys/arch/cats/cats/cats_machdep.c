@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.26 2002/03/23 02:22:57 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.27 2002/03/25 04:51:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -550,7 +550,8 @@ initarm(bootargs)
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 
 	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
 	
 	pmap_link_l2pt(l1pagetable, PTE_BASE, &kernel_ptpt);
 

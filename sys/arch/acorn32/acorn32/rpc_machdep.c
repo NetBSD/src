@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.28 2002/03/24 18:12:54 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.29 2002/03/25 04:51:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.28 2002/03/24 18:12:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.29 2002/03/25 04:51:19 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -696,7 +696,8 @@ initarm(void *cookie)
 	    &kernel_pt_table[KERNEL_PT_VMEM]);
 
 	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");

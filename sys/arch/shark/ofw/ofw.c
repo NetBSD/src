@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.9 2002/03/23 02:23:00 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.10 2002/03/25 04:51:21 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1399,7 +1399,8 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_VMDATA_PTS) * 0x00400000) - 1;
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + (KERNEL_VMDATA_PTS * 0x00400000);
 	
 	/* 
          * gross hack for the sake of not thrashing the TLB and making

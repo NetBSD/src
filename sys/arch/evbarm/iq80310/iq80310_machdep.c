@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.34 2002/03/23 02:22:58 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.35 2002/03/25 04:51:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -565,7 +565,7 @@ initarm(void *arg)
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
-	    KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
+	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.18 2002/03/23 02:22:58 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.19 2002/03/25 04:51:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -625,7 +625,8 @@ initarm(bootinfo)
 	    &kernel_ptpt);
 
 	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");

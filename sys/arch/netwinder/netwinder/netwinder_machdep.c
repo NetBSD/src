@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.25 2002/03/23 02:23:00 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.26 2002/03/25 04:51:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -583,7 +583,8 @@ initarm(bootinfo)
 	    &kernel_ptpt);
 
 	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
