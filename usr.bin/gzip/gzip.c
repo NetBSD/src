@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.50 2004/06/22 12:01:29 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.51 2004/07/03 09:39:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.50 2004/06/22 12:01:29 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.51 2004/07/03 09:39:30 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -141,6 +141,7 @@ static	off_t	gz_compress(FILE *, int, off_t *, const char *, time_t);
 static	off_t	gz_uncompress(int, int, char *, size_t, off_t *, const char *);
 static	off_t	file_compress(char *, char *, size_t);
 static	off_t	file_uncompress(char *, char *, size_t);
+static	off_t	cat_fd(unsigned char *, size_t, off_t *, int fd);
 static	void	handle_pathname(char *);
 static	void	handle_file(char *, struct stat *);
 static	void	handle_stdin(void);
@@ -620,7 +621,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				if (tflag && vflag)
 					print_test(filename, 0);
 #endif
-				maybe_warn("failed to read stdin\n");
+				maybe_warn("failed to read stdin");
 				out_tot = -1;
 				goto stop;
 			} else if (in_size == 0)
@@ -634,7 +635,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		switch (state) {
 		case GZSTATE_MAGIC0:
 			if (*z.next_in != GZIP_MAGIC0) {
-				maybe_warn("input not gziped\n");
+				maybe_warnx("input not gziped");
 				out_tot = -1;
 				goto stop;
 			}
@@ -645,7 +646,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		case GZSTATE_MAGIC1:
 			if (*z.next_in != GZIP_MAGIC1 &&
 			    *z.next_in != GZIP_OMAGIC1) {
-				maybe_warn("input not gziped\n");
+				maybe_warnx("input not gziped");
 				out_tot = -1;
 				goto stop;
 			}
@@ -655,7 +656,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 		case GZSTATE_METHOD:
 			if (*z.next_in != Z_DEFLATED) {
-				maybe_warn("unknown compression method\n");
+				maybe_warnx("unknown compression method");
 				out_tot = -1;
 				goto stop;
 			}
@@ -740,7 +741,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 		case GZSTATE_INIT:
 			if (inflateInit2(&z, -MAX_WBITS) != Z_OK) {
-				maybe_warn("failed to inflateInit\n");
+				maybe_warnx("failed to inflateInit");
 				out_tot = -1;
 				goto stop;
 			}
@@ -780,7 +781,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				break;
 			}
 			if (error < 0) {
-				maybe_warnx("decompression error\n");
+				maybe_warnx("decompression error");
 				out_tot = -1;
 				goto stop;
 			}
@@ -1218,6 +1219,19 @@ close_header_read:
 		}
 	} else
 #endif
+
+#ifndef SMALL
+	if (method == FT_UNKNOWN) {
+		int in;
+
+		in = open(file, O_RDONLY);
+		if (in == -1) {
+			maybe_warn("can't open %s", file);
+			goto lose;
+		}
+		size = cat_fd(NULL, 0, NULL, in);
+	} else
+#endif
 	{
 		int in;
 
@@ -1294,7 +1308,7 @@ lose:
 
 #ifndef SMALL
 static off_t
-cat_stdin(unsigned char * prepend, size_t count, off_t *gsizep)
+cat_fd(unsigned char * prepend, size_t count, off_t *gsizep, int fd)
 {
 	char buf[BUFLEN];
 	size_t rv;
@@ -1306,11 +1320,17 @@ cat_stdin(unsigned char * prepend, size_t count, off_t *gsizep)
 		return -1;
 	}
 	for (;;) {
-		rv = read(STDIN_FILENO, buf, sizeof buf);
+		rv = read(fd, buf, sizeof buf);
+		if (rv == 0)
+			break;
+		if (rv < 0) {
+			maybe_warn("read from fd %d", fd);
+			break;
+		}
 
 		if (write(STDOUT_FILENO, buf, rv) != rv) {
 			maybe_warn("write to stdout");
-			return -1;
+			break;
 		}
 		in_tot += rv;
 	}
@@ -1363,7 +1383,7 @@ handle_stdin(void)
 			maybe_warnx("unknown compression format");
 			return;
 		}
-		usize = cat_stdin(header1, sizeof header1, &gsize);
+		usize = cat_fd(header1, sizeof header1, &gsize, STDIN_FILENO);
 		break;
 #endif
 	case FT_GZIP:
