@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printjob.c	5.13 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: printjob.c,v 1.2 1993/08/01 17:58:51 mycroft Exp $";
+static char rcsid[] = "$Id: printjob.c,v 1.3 1994/03/07 05:38:21 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -266,7 +266,7 @@ printit(file)
 	 */
 	for (i = 0; i < 4; i++)
 		strcpy(fonts[i], ifonts[i]);
-	strcpy(width+2, "0");
+	sprintf(&width[2], "%d", PW);
 	strcpy(indent+2, "0");
 
 	/*
