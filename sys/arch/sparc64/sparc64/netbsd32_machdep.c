@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.18 2001/09/21 17:12:22 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.19 2001/12/08 00:35:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -81,9 +81,7 @@ netbsd32_setregs(p, pack, stack)
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
 
-	/* Setup the coredump32 and ev_out32 hook's */
-	if (coredump32_hook == NULL)
-		coredump32_hook = coredump32;
+	/* Setup the ev_out32 hook */
 	if (ev_out32_hook == NULL)
 		ev_out32_hook = ev_out32;
 
