@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.5 1999/01/06 05:57:29 abs Exp $	*/
+/*	$NetBSD: atalk.c,v 1.5.2.1 2000/10/19 16:32:02 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.5 1999/01/06 05:57:29 abs Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.5.2.1 2000/10/19 16:32:02 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ atalkprotopr(off, name)
 	struct ddpcb    cb;
 	struct ddpcb *prev, *next;
 	struct ddpcb   *initial;
-
+	int width = 22;
 	if (off == 0)
 		return;
 	if (kread(off, (char *)&initial, sizeof(struct ddpcb *)) < 0)
@@ -264,23 +264,24 @@ atalkprotopr(off, name)
 			if (aflag)
 				printf(" (including servers)");
 			putchar('\n');
-			if (Aflag)
+			if (Aflag) {
+				width = 18;
 				printf("%-8.8s ", "PCB");
-			printf(Aflag ?
-			    "%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-			     "%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+			}
+			printf("%-5.5s %-6.6s %-6.6s  %*.*s %*.*s %s\n",
 			       "Proto", "Recv-Q", "Send-Q",
-			     "Local Address", "Foreign Address", "(state)");
+			       -width, width, "Local Address", 
+			       -width, width, "Foreign Address", "(state)");
 			first = 0;
 		}
 		if (Aflag)
 			printf("%8lx ", ppcb);
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 		       sockb.so_snd.sb_cc);
-		printf(Aflag ? " %-18.18s" : " %-22.22s", atalk_print(
-				  (struct sockaddr *)&ddpcb.ddp_lsat, 7));
-		printf(Aflag ? " %-18.18s" : " %-22.22s", atalk_print(
-				  (struct sockaddr *)&ddpcb.ddp_fsat, 7));
+		printf(" %*.*s", -width, width,
+		       atalk_print((struct sockaddr *)&ddpcb.ddp_lsat, 7));
+		printf(" %*.*s", -width, width,
+		       atalk_print((struct sockaddr *)&ddpcb.ddp_fsat, 7));
 		putchar('\n');
 	}
 }
