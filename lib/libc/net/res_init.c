@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)res_init.c	6.15 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: res_init.c,v 1.3 1993/08/26 00:46:17 jtc Exp $";
+static char *rcsid = "$Id: res_init.c,v 1.4 1994/01/28 03:10:35 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -105,6 +105,34 @@ res_init()
 		    if ((cp = index(_res.defdname, '\n')) != NULL)
 			    *cp = '\0';
 		    havesearch = 0;
+		    continue;
+		}
+		/* lookup types */
+		if (!strncmp(buf, "lookup", sizeof("lookup") -1)) {
+		    if (_res.lookups[0])
+			    continue;
+		    cp = buf + sizeof("lookup") - 1;
+		    while (*cp == ' ' || *cp == '\t')
+			    cp++;
+		    for (n = 0; *cp && n < MAXDNSLUS; ) {
+			    if ((*cp == '\0') || (*cp == '\n')) {
+				    n = MAXDNSLUS;
+				    continue;
+			    }
+			    if (!strncmp(cp, "bind", sizeof("bind")-1))
+				    _res.lookups[n++] = 'b';
+#ifdef YP
+			    else if (!strncmp(cp, "yp", sizeof("yp")-1))
+				    _res.lookups[n++] = 'y';
+#endif
+			    else if (!strncmp(cp, "file", sizeof("file")-1))
+				    _res.lookups[n++] = 'f';
+			    while (*cp != ' ' && *cp != '\t' &&
+				   *cp != '\n' && *cp != '\0')
+				    cp++;
+			    while (*cp == ' ' || *cp == '\t')
+				    cp++;
+		    }
 		    continue;
 		}
 		/* set search list */
