@@ -57,13 +57,10 @@ static void sh_elf_cons PARAMS ((int));
 symbolS *GOT_symbol;		/* Pre-defined "_GLOBAL_OFFSET_TABLE_" */
 #endif
 
-int shl = 0;
-
 static void
 little (ignore)
      int ignore ATTRIBUTE_UNUSED;
 {
-  shl = 1;
   target_big_endian = 0;
 }
 
@@ -421,9 +418,6 @@ md_begin ()
 #ifdef TE_PE
   /* The WinCE OS only supports little endian executables.  */
   target_big_endian = 0;
-#else
-  if (! shl)
-    target_big_endian = 1;
 #endif
 
   target_arch = arch_sh1_up & ~(sh_dsp ? arch_sh3e_up : arch_sh_dsp_up);
@@ -2154,7 +2148,6 @@ md_parse_option (c, arg)
       break;
 
     case OPTION_LITTLE:
-      shl = 1;
       target_big_endian = 0;
       break;
 
