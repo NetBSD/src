@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.11 1998/07/31 15:07:42 mycroft Exp $	*/
+/*	$NetBSD: endian.h,v 1.12 1998/12/16 11:11:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -73,14 +73,14 @@ __END_DECLS
 
 #ifdef __GNUC__
 
-#define __byte_swap_long_variable(x) \
+#define __byte_swap_long_variable(x) __extension__ \
 ({ register u_int32_t __x = (x); \
    __asm ("rotw 8,%1; rotd 16,%1; rotw 8,%1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
 
-#define __byte_swap_word_variable(x) \
+#define __byte_swap_word_variable(x) __extension__ \
 ({ register u_int16_t __x = (x); \
    __asm ("rotw 8,%1" \
 	: "=r" (__x) \
