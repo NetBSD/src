@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.17 2001/09/24 13:22:30 wiz Exp $	*/
+/*	$NetBSD: printw.c,v 1.18 2002/05/26 17:01:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,24 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.17 2001/09/24 13:22:30 wiz Exp $");
+__RCSID("$NetBSD: printw.c,v 1.18 2002/05/26 17:01:38 wiz Exp $");
 #endif
 #endif				/* not lint */
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "curses.h"
 #include "curses_private.h"
 
 /*
  * printw and friends.
- *
- * These routines make nonportable assumptions about varargs if __STDC__
- * is not in effect.
  */
 
 static int __winwrite __P((void *, const char *, int));
@@ -65,22 +58,12 @@ static int __winwrite __P((void *, const char *, int));
  *	Printf on the standard screen.
  */
 int
-#ifdef __STDC__
 printw(const char *fmt,...)
-#else
-printw(fmt, va_alist)
-	const char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 	int     ret;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwprintw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
@@ -90,23 +73,12 @@ va_dcl
  *	Printf on the given window.
  */
 int
-#ifdef __STDC__
 wprintw(WINDOW *win, const char *fmt,...)
-#else
-wprintw(win, fmt, va_alist)
-	WINDOW *win;
-	const char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 	int     ret;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwprintw(win, fmt, ap);
 	va_end(ap);
 	return (ret);
@@ -117,40 +89,21 @@ va_dcl
  *	arguments, they cannot be macros.  Sigh....
  */
 int
-#ifdef __STDC__
 mvprintw(int y, int x, const char *fmt,...)
-#else
-mvprintw(y, x, fmt, va_alist)
-	int     y, x;
-	const char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 	int     ret;
 
 	if (move(y, x) != OK)
 		return (ERR);
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwprintw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
 
 int
-#ifdef __STDC__
 mvwprintw(WINDOW * win, int y, int x, const char *fmt,...)
-#else
-mvwprintw(win, y, x, fmt, va_alist)
-	WINDOW *win;
-	int     y, x;
-	const char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 	int     ret;
@@ -158,11 +111,7 @@ va_dcl
 	if (wmove(win, y, x) != OK)
 		return (ERR);
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwprintw(win, fmt, ap);
 	va_end(ap);
 	return (ret);

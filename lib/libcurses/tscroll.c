@@ -1,4 +1,4 @@
-/*	$NetBSD: tscroll.c,v 1.9 2000/04/27 00:27:56 jdc Exp $	*/
+/*	$NetBSD: tscroll.c,v 1.10 2002/05/26 17:01:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)tscroll.c	8.4 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: tscroll.c,v 1.9 2000/04/27 00:27:56 jdc Exp $");
+__RCSID("$NetBSD: tscroll.c,v 1.10 2002/05/26 17:01:38 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -81,13 +81,7 @@ __tscroll(const char *cap, int n1, int n2)
  * is also defined but we don't support it (yet).
  */
 char	*
-#if __STDC__
 __parse_cap (char const *cap, ...)
-#else
-__parse_cap (cap, va_alist)
-	const char	*cap;
-	va_dcl
-#endif
 {
 	va_list	ap;
 	static char result[MAXRETURNSIZE];
@@ -95,11 +89,7 @@ __parse_cap (cap, va_alist)
 	char   *dp;
 	int	have_input;
 
-#if __STDC__
 	va_start (ap, cap);
-#else
-	va_start(ap);
-#endif
 	n = 0;			/* XXX gcc -Wuninitialized */
 
 	if (cap == NULL)

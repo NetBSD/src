@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.11 2001/09/24 13:22:30 wiz Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.12 2002/05/26 17:01:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,18 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.11 2001/09/24 13:22:30 wiz Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.12 2002/05/26 17:01:38 wiz Exp $");
 #endif
 #endif				/* not lint */
 
 #ifdef DEBUG
-#include <stdio.h>
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
+#include <stdio.h>
 
 #include <sys/time.h>
 #include <string.h>
@@ -64,13 +59,7 @@ __RCSID("$NetBSD: ctrace.c,v 1.11 2001/09/24 13:22:30 wiz Exp $");
 static FILE *tracefp;		/* Curses debugging file descriptor. */
 
 void
-#ifdef __STDC__
 __CTRACE(const char *fmt,...)
-#else
-__CTRACE(fmt, va_alist)
-	char   *fmt;
-va_dcl
-#endif
 {
 	struct timeval tv;
         static int seencr = 1;
@@ -85,11 +74,7 @@ va_dcl
                 gettimeofday(&tv, NULL);
                 (void) fprintf(tracefp, "%lu.%06lu: ", tv.tv_sec, tv.tv_usec);
         }
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
         (void) vfprintf(tracefp, fmt, ap);
         seencr = (strchr(fmt, '\n') != NULL);
 	va_end(ap);
