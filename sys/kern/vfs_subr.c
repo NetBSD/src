@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.150 2001/06/05 04:42:05 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.151 2001/06/26 15:51:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1785,7 +1785,8 @@ loop:
 		/*
 		 * Alias, but not in use, so flush it out.
 		 */
-		if (vq->v_usecount == 0 && vq != vp) {
+		if (vq->v_usecount == 0 && vq != vp &&
+		    (vq->v_flag & VXLOCK) == 0) {
 			simple_unlock(&spechash_slock);
 			vgone(vq);
 			goto loop;
