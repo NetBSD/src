@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.14 2000/08/19 17:53:24 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.15 2000/10/20 18:59:53 briggs Exp $
 
-SUBDIR+= _setjmp db md5sha popen regex setjmp sigsetjmp time
+SUBDIR+= _setjmp db gen md5sha popen regex setjmp sigsetjmp time
 .if (${MACHINE_ARCH} != "arm32" && ${MACHINE_ARCH} != "vax")
 SUBDIR+= ieeefp
 .endif
