@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.17.2.1 1993/09/24 08:57:54 mycroft Exp $
+ *	$Id: mount.h,v 1.17.2.2 1993/11/10 19:56:55 mycroft Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -78,7 +78,7 @@ struct statfs {
  */
 #define	MOUNT_NONE	0
 #define	MOUNT_EXPORT	MOUNT_NONE	/* use this for export mounting (mountd) */
-#define	MOUNT_UFS	1		/* UNIX "Fast" Filesystem */
+#define	MOUNT_UFS	1		/* Berkeley "Fast" Filesystem */
 #define	MOUNT_NFS	2		/* Network Filesystem */
 #define	MOUNT_MFS	3		/* Memory Filesystem */
 #define	MOUNT_MSDOS	4		/* MSDOS Filesystem */
