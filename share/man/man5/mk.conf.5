@@ -1,6 +1,6 @@
-.\"	$NetBSD: mk.conf.5,v 1.14 2002/06/17 20:22:48 skrll Exp $
+.\"	$NetBSD: mk.conf.5,v 1.15 2002/08/27 14:46:23 lukem Exp $
 .\"
-.\"  Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\"  Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
 .\"
 .\"  This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 .\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 27, 2001
+.Dd August 28, 2002
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -50,7 +50,7 @@ variables that may be set, the values to which each may be set,
 a brief description of what each variable does, and a reference to
 relevant manual pages.
 .Ss NetBSD System variables
-.Bl -tag -width NETBSDSRCDIR
+.Bl -tag -width MKDYNAMICROOT
 .It Sy NETBSDSRCDIR
 The path to the top level of the NetBSD sources.
 If
@@ -95,6 +95,23 @@ don't build or install the formatted manual pages.
 If
 .Sq no ,
 don't build or install the miscellaneous documentation.
+.It Sy MKDYNAMICROOT
+If
+.Sq no ,
+link programs in
+.Pa /bin
+and
+.Pa /sbin
+statically.
+Otherwise, link everything dynamically,
+and install shared libraries required by
+.Pa /bin
+and
+.Pa /sbin
+and the shared linker
+.Xr ld.elf_so 1
+into
+.Pa /lib .
 .It Sy MKINFO
 If
 .Sq no ,

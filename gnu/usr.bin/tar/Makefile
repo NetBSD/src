@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.20 1999/07/30 04:07:25 mycroft Exp $
+#	$NetBSD: Makefile,v 1.21 2002/08/27 14:46:13 lukem Exp $
 
-.include <bsd.own.mk>
+.include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 PROG=	tar
 SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.y \
@@ -15,7 +15,9 @@ CPPFLAGS+= -DHAVE_TERMIOS_H=1
 CPPFLAGS+= -DDEF_AR_FILE=\"/dev/rst0\" -DDEFBLOCKING=20
 CPPFLAGS+= -DSTDC_HEADERS -DENABLE_SPARSE
 
+.if (${MKDYNAMICROOT} == "no")
 LDSTATIC?= -static
+.endif
 
 MAN=tar.1
 

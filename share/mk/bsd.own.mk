@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.305 2002/08/03 22:10:07 chris Exp $
+#	$NetBSD: bsd.own.mk,v 1.306 2002/08/27 14:46:14 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -194,6 +194,12 @@ check_RELEASEDIR: .PHONY .NOTMAIN
 DESTDIR?=
 .endif
 
+# Build a dynamically linked /bin and /sbin, with the necessary shared
+# libraries moved from /usr/lib to /lib and the shared linker moved
+# from /usr/libexec to /lib
+#
+MKDYNAMICROOT?=	no
+
 # Where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj (for example).
 #
@@ -221,13 +227,21 @@ INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
+.if ${MKDYNAMICROOT} == "no"
 SHLIBDIR?=	/usr/lib
+.else
+SHLIBDIR?=	/lib
+.endif
 .if ${USE_SHLIBDIR:Uno} == "yes"
 _LIBSODIR?=	${SHLIBDIR}
 .else
 _LIBSODIR?=	${LIBDIR}
 .endif
+.if ${MKDYNAMICROOT} == "no"
 SHLINKDIR?=	/usr/libexec
+.else
+SHLINKDIR?=	/lib
+.endif
 LINTLIBDIR?=	/usr/libdata/lint
 LIBGRP?=	${BINGRP}
 LIBOWN?=	${BINOWN}
