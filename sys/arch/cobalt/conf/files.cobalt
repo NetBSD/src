@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.3 2000/05/27 03:52:26 soren Exp $
+#	$NetBSD: files.cobalt,v 1.4 2000/05/27 03:53:11 soren Exp $
 
 maxpartitions 16
 
@@ -55,8 +55,8 @@ file arch/cobalt/pci/pcib.c		pcib
 
 include "dev/mii/files.mii"
 include "dev/scsipi/files.scsipi"
-major {sd = 4}
-major {cd = 6}
+major {sd = 7}
+major {cd = 8}
 
 include "dev/ata/files.ata"
 major {wd = 6}
