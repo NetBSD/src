@@ -1,4 +1,4 @@
-/* $NetBSD: sbicvar.h,v 1.1.6.2 2000/11/20 20:02:56 bouyer Exp $ */
+/* $NetBSD: sbicvar.h,v 1.1.6.3 2001/01/22 18:23:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,7 +71,6 @@ struct sbic_acb {
 #define ACB_FREE	0x00
 #define ACB_ACTIVE	0x01
 #define ACB_DONE	0x04
-#define ACB_CHKSENSE	0x08
 #define ACB_BBUF	0x10	/* DMA input needs to be copied from bounce */
 #define	ACB_DATAIN	0x20	/* DMA direction flag */
 	struct scsi_generic cmd;	/* SCSI command block */
@@ -115,7 +114,7 @@ struct	sbic_softc {
 	} sc_sync[8];
 	u_char	target;			/* Currently active target */
 	u_char  lun;
-	struct	scsipi_link sc_link;	/* proto for sub devices */
+	struct	scsipi_channel sc_channel;
 	struct	scsipi_adapter sc_adapter;
 	sbic_regmap_p	sc_sbicp;	/* the SBIC */
 	volatile void 	*sc_cregs;	/* driver specific regs */
@@ -228,7 +227,8 @@ struct buf;
 struct scsipi_xfer;
 
 void sbic_minphys	__P((struct buf *bp));
-int sbic_scsicmd	__P((struct scsipi_xfer *));
+void sbic_scsipi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 void sbicinit		__P((struct sbic_softc *dev));
 int  sbicintr 		__P((struct sbic_softc *));
 void	sbic_dump	__P((struct sbic_softc *dev));

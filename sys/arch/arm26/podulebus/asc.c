@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.1.6.3 2001/01/18 09:22:17 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.1.6.4 2001/01/22 18:23:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -74,16 +74,9 @@ void asc_dmastop __P((struct sbic_softc *));
 int asc_dmanext __P((struct sbic_softc *));
 int asc_dmaintr __P((struct sbic_softc *));
 int asc_dmago	__P((struct sbic_softc *, char *, int, int));
-int asc_scsicmd __P((struct scsipi_xfer *xs));
+void asc_scsipi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 int asc_intr	__P((void *arg));
-void asc_minphys __P((struct buf *bp));
-
-struct scsipi_device asc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
 
 
 #ifdef DEBUG
@@ -153,20 +146,23 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_sbicp = (sbic_regmap_p) (pa->pa_memc_h + ASC_SBIC);
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 
-	sbic->sc_adapter.scsipi_cmd = asc_scsicmd;
-	sbic->sc_adapter.scsipi_minphys = asc_minphys;
+	sbic->sc_adapter.adapt_dev = &sbic->sc_dev;
+	sbic->sc_adapter.adapt_nchannels = 1;
+	sbic->sc_adapter.adapt_openings = 7;
+	sbic->sc_adapter.adapt_max_periph = 1;
+	sbic->sc_adapter.adapt_ioctl = NULL;
+	sbic->sc_adapter.adapt_minphys = minphys;
+	sbic->sc_adapter.adapt_request = asc_scsipi_request;
 
-	sbic->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sbic->sc_link.adapter_softc = sbic;
-	sbic->sc_link.scsipi_scsi.adapter_target = 7;
-	sbic->sc_link.adapter = &sbic->sc_adapter;
-	sbic->sc_link.device = &asc_scsidev;
-	sbic->sc_link.openings = 1;	/* was 2 */
-	sbic->sc_link.scsipi_scsi.max_target = 7;
-	sbic->sc_link.scsipi_scsi.max_lun = 7;
-	sbic->sc_link.type = BUS_SCSI;
+	memset(&sbic->sc_channel, 0, sizeof(sbic->sc_channel));
+	sbic->sc_channel.chan_adapter = &sc->sc_adapt;
+	sbic->sc_channel.chan_bustype = &scsi_bustype;
+	sbic->sc_channel.chan_channel = 0;
+	sbic->sc_channel.chan_ntargets = 8;
+	sbic->sc_channel.chan_nluns = 8;
+	sbic->sc_channel.chan_id = 7;
 
-	printf(": hostid=%d", sbic->sc_link.scsipi_scsi.adapter_target);
+	printf(": hostid=%d", sbic->sc_channel.chan_id);
 
 #if ASC_POLL > 0
 	if (asc_poll)
@@ -196,7 +192,7 @@ ascattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sbic->sc_link, scsiprint);
+	config_found(dp, &sbic->sc_channel, scsiprint);
 }
 
 
@@ -395,23 +391,29 @@ asc_dump()
 			sbic_dump(asc_cd.cd_devs[i]);
 }
 
-int
-asc_scsicmd(xs)
-	struct scsipi_xfer *xs;
+void
+asc_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-/*	struct scsipi_link *sc_link = xs->sc_link;*/
+	struct scsipi_xfer *xs;
 
-	/* ensure command is polling for the moment */
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+
+		/* ensure command is polling for the moment */
 #if ASC_POLL > 0
-	if (asc_poll)
-		xs->xs_control |= XS_CTL_POLL;
+		if (asc_poll)
+			xs->xs_control |= XS_CTL_POLL;
 #endif
 
-/*	printf("id=%d lun=%dcmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
-	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
-	    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);*/
-
-	return(sbic_scsicmd(xs));
+/*		printf("id=%d lun=%dcmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
+		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
+		    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);*/
+	}
+	sbic_scsipi_request(chan, req, arg);
 }
 
 
@@ -447,23 +449,3 @@ void PREP_DMA_MEM()
 {
 	panic("PREP_DMA_MEM");
 }
-
-/*
- * limit the transfer as required.
- */
-void
-asc_minphys(bp)
-	struct buf *bp;
-{
-#if 0
-	/*
-	 * We must limit the DMA xfer size
-	 */
-	if (bp->b_bcount > MAX_DMA_LEN) {
-		printf("asc: Reducing dma length\n");
-		bp->b_bcount = MAX_DMA_LEN;
-	}
-#endif
-	minphys(bp);
-}
-

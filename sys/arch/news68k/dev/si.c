@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.5.6.2 2000/11/20 20:16:10 bouyer Exp $	*/
+/*	$NetBSD: si.c,v 1.5.6.3 2001/01/22 18:25:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ si_attach(parent, self, aux)
 	ncr_sc->sc_pio_out = ncr5380_pio_out;
 
 	ncr_sc->sc_adapter.scsipi_minphys = minphys;
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
+	ncr_sc->sc_channel.chan_id = 7;
 
 	/* soft reset DMAC */
 	sc->sc_regs = (void *)IIOV(DMAC_BASE);
