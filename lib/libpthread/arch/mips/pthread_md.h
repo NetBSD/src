@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.2 2001/11/29 10:56:23 wdk Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.3 2002/12/01 10:02:01 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,37 @@ pthread__sp(void)
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_EPC])
 
-#define STACKSPACE 16			/* 4 integer values */
+/*
+ * Usable stack space below the ucontext_t.
+ *    For a good time, see comments in pthread_switch.S and
+ *    ../i386/pthread_switch.S about STACK_SWITCH.
+ */
+#define STACKSPACE	16		/* 4 integer valuses */
+
+/*
+ * Conversions between struct reg and struct mcontext. Used by
+ * libpthread_dbg.
+ */
+
+#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
+	memcpy(&(reg)->r_tstate, &(uc)->uc_mcontext.__gregs,		\
+	    sizeof(__gregset_t));					\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
+	memcpy(&(uc)->uc_mcontext.__gregs, &(reg)->r_tstate,		\
+	    sizeof(__gregset_t));					\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)       			\
+	memcpy((freg), &(uc)->uc_mcontext.__fpregs,			\
+	    sizeof(struct fpreg))					\
+
+#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {       	       		\
+	memcpy(&(uc)->uc_mcontext.__fpregs, (freg),			\
+	    sizeof(struct fpreg));					\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
 
 #endif /* !_LIB_PTHREAD_MIPS_MD_H */
