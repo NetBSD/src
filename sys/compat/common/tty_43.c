@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.1 1996/02/02 18:47:57 christos Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.2 1996/02/10 00:12:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -48,6 +48,7 @@
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/ioctl_compat.h>
 
 int ttydebug = 0;
 
