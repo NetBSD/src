@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.20.4.7 2001/02/26 15:15:51 he Exp $ */
+/* $NetBSD: user.c,v 1.20.4.8 2001/02/26 18:01:17 he Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.20.4.7 2001/02/26 15:15:51 he Exp $");
+__RCSID("$NetBSD: user.c,v 1.20.4.8 2001/02/26 18:01:17 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1692,6 +1692,7 @@ groupmod(int argc, char **argv)
 		cc += snprintf(&buf[cc], sizeof(buf) - cc, "%s%s", *cpp,
 			(cpp[1] == NULL) ? "" : ",");
 	}
+	cc += snprintf(&buf[cc], sizeof(buf) - cc, "\n");
 	if (!modify_gid(argv[optind], buf)) {
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
