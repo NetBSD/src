@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.40 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.41 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -172,3 +172,4 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	vnd(4): Now also available as an LKM.  [mrg 20021116]
 	etc/postinstall: Add support for examining the obsolete sets for
 		obsolete entries to check or remove.  [lukem 20021117]
+	named(8): Upgrade to BIND 8.3.4. [itojun 20021117]
