@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.9 2003/10/08 04:25:45 lukem Exp $
+# $NetBSD: Makefile.boot,v 1.10 2003/10/08 18:51:50 dsl Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -80,11 +80,11 @@ SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86
+.BEGIN: machine x86 lib
 .NOPATH: machine x86
 .endif
 
-realdepend realall: machine x86
+realdepend realall: machine x86 lib
 CLEANFILES+= machine x86
 
 machine::
@@ -95,30 +95,35 @@ x86::
 	-rm -f $@
 	ln -s $S/arch/x86/include $@
 
-${OBJS}: machine x86
+${OBJS}: machine x86 lib
+
+lib:
+.ifdef LIBOBJ
+	-rm -f $@
+	ln -s ${LIBOBJ}/lib .
+	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
+.else
+	mkdir lib
+.endif
 
 ### find out what to use for libi386
 I386DIR= ${I386_STAND_DIR}/lib
-I386DST= ${.OBJDIR}/../lib/i386
 .include "${I386DIR}/Makefile.inc"
 LIBI386= ${I386LIB}
 
 ### find out what to use for libsa
 SA_AS= library
-SADST= ${.OBJDIR}/../lib/libsa
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
 ### find out what to use for libkern
 KERN_AS= library
-KERNDST= ${.OBJDIR}/../lib/libkern
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN= ${KERNLIB}
 
 ### find out what to use for libz
 Z_AS= library
-ZDST= ${.OBJDIR}/../lib/libz
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ= ${ZLIB}
 
