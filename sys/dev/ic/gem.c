@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.29 2003/10/26 18:20:43 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.30 2003/10/26 19:11:33 christos Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.29 2003/10/26 18:20:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.30 2003/10/26 19:11:33 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -982,7 +982,7 @@ gem_start(ifp)
 	struct mbuf *m0, *m;
 	struct gem_txsoft *txs, *last_txs;
 	bus_dmamap_t dmamap;
-	int error, firsttx, nexttx, lasttx, ofree, seg;
+	int error, firsttx, nexttx, lasttx = -1, ofree, seg;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1123,6 +1123,8 @@ gem_start(ifp)
 				GEM_DMA_WRITE(sc, flags);
 			lasttx = nexttx;
 		}
+
+		KASSERT(lasttx != -1);
 
 #ifdef GEM_DEBUG
 		if (ifp->if_flags & IFF_DEBUG) {
