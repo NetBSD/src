@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.120 1997/11/01 20:31:57 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.121 1997/11/01 20:40:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -605,8 +605,9 @@ comopen(dev, flag, mode, p)
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
 		 * present, because otherwise we'd have to use TIOCSDTR
-		 * immediately after setting CLOCAL.  We will drop DTR only on
-		 * the next high-low transition of DCD, or by explicit request.
+		 * immediately after setting CLOCAL, which applications do not
+		 * expect.  We always assert DTR while the device is open
+		 * unless explicitly requested to deassert it.
 		 */
 		com_modem(sc, 1);
 
