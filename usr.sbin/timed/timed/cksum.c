@@ -36,13 +36,9 @@
 #if 0
 static char sccsid[] = "@(#)cksum.c	5.2 (Berkeley) 5/11/93";
 #else
-__RCSID("$NetBSD: cksum.c,v 1.2 1997/10/17 14:19:20 lukem Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.3 2001/09/02 00:13:06 reinoud Exp $");
 #endif
 #endif /* not lint */
-
-#ifdef sgi
-#ident "$Revision: 1.2 $"
-#endif
 
 #include <sys/types.h>
 #include "globals.h"
