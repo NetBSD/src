@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.8 1997/04/24 08:05:24 mycroft Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.9 1997/04/28 18:32:58 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -185,7 +185,7 @@ ofnread(of)
 #endif	
 	while (1) {
 		if ((len = OF_read(of->sc_ihandle, buf, sizeof buf)) < 0) {
-			if (len == -2)
+			if (len == -2 || len == 0)
 				return;
 			ifp->if_ierrors++;
 			continue;
@@ -223,6 +223,7 @@ ofnread(of)
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					ifp->if_ierrors++;
+					m_free(m);
 					m_freem(head);
 					head = 0;
 					break;
