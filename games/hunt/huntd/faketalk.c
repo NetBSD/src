@@ -190,7 +190,7 @@ do_announce(s)
 	msg.ctl_addr = ctl_addr;
 	msg.ctl_addr.sin_family = htons(msg.ctl_addr.sin_family);
 # endif
-	msg.id_num = (int) htonl((u_long) -1);	/* an impossible id_num */
+	msg.id_num = (int) htonl((u_int32_t) -1);	/* an impossible id_num */
 	ctl_transact(his_machine_addr, msg, ANNOUNCE, &response);
 	if (response.answer != SUCCESS)
 		return;
