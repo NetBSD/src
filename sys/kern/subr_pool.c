@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.88 2003/11/13 02:44:01 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.89 2003/12/29 16:04:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.88 2003/11/13 02:44:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.89 2003/12/29 16:04:58 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1067,6 +1067,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
 	int n;
+	int s;
 
 #ifdef DIAGNOSTIC
 	if (((u_long)cp & (pp->pr_alloc->pa_pagesz - 1)) != 0)
@@ -1080,7 +1081,9 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	TAILQ_INIT(&ph->ph_itemlist);
 	ph->ph_page = storage;
 	ph->ph_nmissing = 0;
-	memset(&ph->ph_time, 0, sizeof(ph->ph_time));
+	s = splclock();
+	ph->ph_time = mono_time;
+	splx(s);
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
 
