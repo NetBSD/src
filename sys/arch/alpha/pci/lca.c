@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.35 2000/02/26 18:53:12 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.36 2000/06/29 08:58:47 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,14 +69,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.35 2000/02/26 18:53:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.36 2000/06/29 08:58:47 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>

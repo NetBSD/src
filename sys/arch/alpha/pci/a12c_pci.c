@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_pci.c,v 1.2 1998/03/02 07:07:41 ross Exp $ */
+/* $NetBSD: a12c_pci.c,v 1.3 2000/06/29 08:58:45 mrg Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.2 1998/03/02 07:07:41 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.3 2000/06/29 08:58:45 mrg Exp $");
 __KERNEL_COPYRIGHT(0,
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -46,7 +46,8 @@ __KERNEL_COPYRIGHT(0,
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

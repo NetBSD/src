@@ -1,4 +1,4 @@
-/* $NetBSD: pci_a12.c,v 1.6 2000/06/05 21:47:23 thorpej Exp $ */
+/* $NetBSD: pci_a12.c,v 1.7 2000/06/29 08:58:48 mrg Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.6 2000/06/05 21:47:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.7 2000/06/29 08:58:48 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.6 2000/06/05 21:47:23 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/syslog.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 
