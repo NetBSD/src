@@ -1,11 +1,11 @@
-/*	$NetBSD: rtld_start.S,v 1.3 1999/03/01 03:39:39 kim Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 1999/03/01 14:40:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas & Paul Kranenburg.
+ * by Christos Zoulas and Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,23 +39,23 @@
 #include <machine/asm.h>
 
 	.section	".text"
-	.align	8
+	.align	4
 	.global	_rtld_start
 	.type	_rtld_start,@function
 _rtld_start:
-	mov	0, %fp			! Erect a fence post for ourselves
-	mov	%g1, %l1		! save ps_strings
-	sub	%sp, 8, %sp		! Make room for return args
+	mov	0, %fp			/* Erect a fence post for ourselves */
+	mov	%g1, %l1		/* save ps_strings */
+	sub	%sp, 8, %sp		/* Make room for return args */
 
 	call	_rtld
-	 add	%sp, 64, %o0		! &argc - 8
+	 add	%sp, 64, %o0		/* &argc - 8 */
 
-	ld	[%sp + 64], %g3		! arg: cleanup
-	ld	[%sp + 64 + 4], %g2	! arg: obj
-	add	%sp, 8, %sp		! restore stack pointer
+	ld	[%sp + 64], %g3		/* arg: cleanup */
+	ld	[%sp + 64 + 4], %g2	/* arg: obj */
+	add	%sp, 8, %sp		/* restore stack pointer */
 
 	jmp	%o0
-	 mov	%l1, %g1		! restore ps_strings
+	 mov	%l1, %g1		/* restore ps_strings */
 
 
 	.section	".text"
@@ -63,14 +63,14 @@ _rtld_start:
 	.global	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:	# (obj, reloff)
-	save	%sp, -96, %sp		! setup standard stack frame
-	ld	[%i7 + 8], %o0		! obj id is in second PLT slot
-	srl	%g1, 10, %o1		! offset is in high 22 bits
-	call	_rtld_bind		! Call _rtld_bind(obj, offset)
-	 sub	%o1, 12*4, %o1		! first 4 'pltrel' entries are missing!
+	save	%sp, -96, %sp		/* setup standard stack frame */
+	ld	[%i7 + 8], %o0		/* obj id is in second PLT slot */
+	srl	%g1, 10, %o1		/* offset is in high 22 bits */
+	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
+	 sub	%o1, 12*4, %o1		/* first 4 `pltrel' entries missing! */
 
-	mov	%o0, %g1		! return value == function address
-	restore				! get rid of our context
-	 jmp	%g1			! and the jmpslot context, then go.
-	restore				!
+	mov	%o0, %g1		/* return value == function address */
+	restore				/* get rid of our context */
+	 jmp	%g1			/* and the jmpslot context, then go. */
+	restore
 
