@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.8 1999/09/13 00:32:14 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1999/11/29 19:48:44 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.8 1999/09/13 00:32:14 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 1999/11/29 19:48:44 hubertf Exp $");
 #endif
 
 /*
@@ -117,9 +117,6 @@ check1pkg(const char *pkgdir)
 				dirp = dir;
 			}
 			break;
-		case PLIST_SRC:
-			warnx("@src is deprecated - please send-pr for %s!\n", PkgName);
-			break;
 		case PLIST_IGNORE:
 			p = p->next;
 			break;
@@ -227,9 +224,6 @@ rebuild(void)
 					(void) snprintf(dir, sizeof(dir), "%s/%s", PkgDBDir, de->d_name);
 					dirp = dir;
 				}
-				break;
-			case PLIST_SRC:
-				warnx("@src is deprecated - please send-pr for %s!\n", PkgName);
 				break;
 			case PLIST_IGNORE:
 				p = p->next;
