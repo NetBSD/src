@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.15 2004/01/05 23:23:39 jmmv Exp $ */
+/* $NetBSD: sunlabel.c,v 1.16 2004/10/30 15:46:31 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.15 2004/01/05 23:23:39 jmmv Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.16 2004/10/30 15:46:31 dsl Exp $");
 #endif
 
 #include <stdio.h>
@@ -661,7 +661,7 @@ scannum(const char **cpp, uint32_t *np, const char *tag)
 	nd = 0;
 
 	cp = *cpp;
-	while (*cp && isdigit(*cp)) {
+	while (*cp && isdigit((unsigned char)*cp)) {
 		v = (10 * v) + (*cp++ - '0');
 		nd++;
 	}
@@ -892,7 +892,7 @@ chvalue(const char *str)
 	}
 	skipspaces(&str);
 	cp = str;
-	while (*cp && !isspace(*cp))
+	while (*cp && !isspace((unsigned char)*cp))
 		cp++;
 	n = cp - str;
 	for (i = 0; fields[i].tag; i++) {
