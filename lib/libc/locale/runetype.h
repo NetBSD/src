@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.7 2002/03/17 22:14:31 tshiozak Exp $	*/
+/*	$NetBSD: runetype.h,v 1.8 2002/03/18 22:25:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -188,12 +188,9 @@ typedef struct _RuneLocale {
 
 typedef struct _RuneStatePriv {
 	_RuneLocale	*__runelocale;
-	/*
-	 * XXX: The element just after a pointer element is assumed to be
-	 * well-aligned.
-	 */
-	char		__private;
+	char		__private __attribute__((__aligned__));
 } _RuneStatePriv;
+
 typedef union _RuneState {
 	mbstate_t		__pad;
 	struct _RuneStatePriv	__priv;
