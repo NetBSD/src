@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.17 2004/12/06 08:05:26 itojun Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.18 2005/01/14 04:11:55 itojun Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -325,8 +325,8 @@ struct sadb_x_ipsecrequest {
 #define SADB_X_EALG_BLOWFISHCBC	7
 #define SADB_X_EALG_RIJNDAELCBC	12
 #define SADB_X_EALG_AES		12
+#define SADB_X_EALG_AESCTR	13
 /* private allocations should use 249-255 (RFC2407) */
-#define SADB_X_EALG_AESCTR	249	/* draft-ietf-ipsec-ciph-aes-ctr-03 */
 #define SADB_X_EALG_SKIPJACK    250
 
 /* private allocations - based on RFC2407/IANA assignment */
