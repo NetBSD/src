@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.14 2003/05/03 12:45:16 ragge Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.15 2003/05/03 18:25:36 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -152,6 +152,9 @@ extern void ofrootfound		__P((void));
 /* Local routines */
 static void process_kernel_args	__P((void));
 void ofw_device_register(struct device *, void *);
+
+/* Kernel text starts at the base of the kernel address space. */
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00000000)
 
 /**************************************************************/
 
