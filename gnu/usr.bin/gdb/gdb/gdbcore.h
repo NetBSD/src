@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: gdbcore.h,v 1.2 1994/05/17 14:01:47 pk Exp $
+	$Id: gdbcore.h,v 1.3 1995/01/12 10:20:30 pk Exp $
 */
 
 /* Interface routines for core, executable, etc.  */
@@ -82,10 +82,6 @@ specify_exec_file_hook PARAMS ((void (*hook) (char *filename)));
 /* Binary File Diddlers for the exec and core files */
 extern bfd *core_bfd;
 extern bfd *exec_bfd;
-
-/* Whether to open exec and core files read-only or read-write.  */
-
-extern int write_files;
 
 extern void
 core_file_command PARAMS ((char *filename, int from_tty));

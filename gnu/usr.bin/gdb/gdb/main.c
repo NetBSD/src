@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: main.c,v 1.2 1994/05/17 14:01:49 pk Exp $
+	$Id: main.c,v 1.3 1995/01/12 10:20:34 pk Exp $
 */
 
 #include "defs.h"
@@ -613,6 +613,8 @@ main (argc, argv)
 	{"tty", required_argument, 0, 't'},
 	{"baud", required_argument, 0, 'b'},
 	{"b", required_argument, 0, 'b'},
+	{"write", no_argument, &write_files, 1},
+	{"w", no_argument, &write_files, 1},
 #ifdef KERNEL_DEBUG
 	{"kernel", no_argument, &kernel_debugging, 1},
 	{"k", no_argument, &kernel_debugging, 1},
@@ -693,6 +695,9 @@ main (argc, argv)
 	      else
 		baud_rate = i;
 	    }
+	    break;
+	  case 'w':
+	    write_files = 1;
 	    break;
 #ifdef KERNEL_DEBUG
 	  case 'k':
@@ -789,7 +794,11 @@ Options:\n\
   -b BAUDRATE        Set serial port baud rate used for remote debugging.\n\
   --mapped           Use mapped symbol files if supported on this system.\n\
   --readnow          Fully read symbol files on first access.\n\
+  --write            Set writing into executable and core files.\n\
 ", stdout);
+#ifdef KERNEL_DEBUG
+      fputs ("  --kernel           Set kernel debugging mode.\n", stdout);
+#endif
 #ifdef ADDITIONAL_OPTION_HELP
       fputs (ADDITIONAL_OPTION_HELP, stdout);
 #endif
