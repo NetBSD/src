@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.3 2001/11/26 20:49:05 thorpej Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.4 2002/01/25 19:19:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ integrator_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			 * uncacheable.
 			 */
 			if (flags & BUS_DMA_COHERENT) {
-				cpu_cache_purgeD_rng(va, NBPG);	
+				cpu_dcache_wbinv_range(va, NBPG);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
 				*ptep = ((*ptep) & (~PT_C | PT_B));

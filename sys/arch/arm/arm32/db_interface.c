@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 2002/01/17 23:56:01 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.17 2002/01/25 19:19:24 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -270,7 +270,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 	} while (size != 0);
 
 	/* Sync the I-cache. */
-	cpu_cache_syncI_rng(addr, savesize);
+	cpu_icache_sync_range(addr, savesize);
 }
 
 /*
@@ -299,7 +299,7 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 		*dst++ = *data++;
 	}
 	/* make sure the caches and memory are in sync */
-	cpu_cache_syncI_rng(addr, size);
+	cpu_icache_sync_range(addr, size);
 
 	/* In case the current page tables have been modified ... */
 	cpu_tlb_flushID();

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.9 2002/01/07 21:40:59 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.10 2002/01/25 19:19:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -796,7 +796,7 @@ initarm_new_bootloader(bootconf)
 	 * After booting there are no gross reloations of the kernel thus
 	 * this problem will not occur after initarm().
 	 */
-	cpu_cache_cleanID();
+	cpu_idcache_wbinv_all();
 
 	/* if there is support for a serial console ...we should now reattach it */
 	/*      fcomcndetach();*/
@@ -827,7 +827,7 @@ initarm_new_bootloader(bootconf)
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI_rng(0, page0_end - page0);
+	cpu_icache_sync_range(0, page0_end - page0);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("\n");
@@ -1375,7 +1375,7 @@ initarm_old_bootloader(bootconf)
 	 * After booting there are no gross reloations of the kernel thus
 	 * this problem wil not occur after initarm().
 	 */
-	cpu_cache_cleanID();
+	cpu_idcache_wbinv_all();
 
 	/*
 	 * Since we have mapped the VRAM up into kernel space we must
@@ -1732,7 +1732,7 @@ initarm_old_bootloader(bootconf)
 	 * After booting there are no gross reloations of the kernel thus
 	 * this problem will not occur after initarm().
 	 */
-	cpu_cache_cleanID();
+	cpu_idcache_wbinv_all();
 
 	if (videodram_size != 0) {
 		bootconfig.display_start = VMEM_VBASE;
@@ -1750,7 +1750,7 @@ initarm_old_bootloader(bootconf)
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI_rng(0, page0_end - page0);
+	cpu_icache_sync_range(0, page0_end - page0);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
