@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.15 2002/09/30 23:22:06 bjh21 Exp $
+#	$NetBSD: files.acorn32,v 1.16 2002/10/05 23:30:03 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -21,6 +21,7 @@ file	dev/isa/isadma.c		isadma		needs-flag
 # Simtec Hydra multiprocessor system
 device	hydra { slave = -1 }
 attach	hydra at mainbus
+attach	cpu at hydra with cpu_hydra
 file	arch/acorn32/acorn32/hydra.c		hydra		needs-flag
 file	arch/acorn32/acorn32/hydra_boot.S	hydra		needs-flag
 
