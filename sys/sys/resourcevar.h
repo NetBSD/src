@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.21 2004/04/17 15:17:33 christos Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.22 2004/05/01 06:17:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -96,8 +96,8 @@ struct uidinfo {
 
 };
 #define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
-LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
-u_long uihash;		/* size of hash table - 1 */
+extern LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
+extern u_long uihash;		/* size of hash table - 1 */
 int       chgproccnt(uid_t, int);
 int       chgsbsize(uid_t, u_long *, u_long, rlim_t);
 

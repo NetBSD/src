@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.81 2004/04/25 22:18:08 kleink Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.82 2004/05/01 06:17:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.81 2004/04/25 22:18:08 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.82 2004/05/01 06:17:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.81 2004/04/25 22:18:08 kleink Ex
  */
 rlim_t maxdmap = MAXDSIZ;
 rlim_t maxsmap = MAXSSIZ;
+
+struct uihashhead *uihashtbl;
+u_long uihash;		/* size of hash table - 1 */
 
 static struct uidinfo *getuidinfo(uid_t);
 static void freeuidinfo(struct uidinfo *);
