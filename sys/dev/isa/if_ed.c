@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.117 1997/10/19 18:57:00 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.118 1997/11/02 00:57:24 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -12,8 +12,8 @@
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
  *
- * Currently supports the Western Digital/SMC 8003 and 8013 series, the SMC
- * Elite Ultra (8216), and the 3Com 3c503.
+ * Currently supports the Western Digital/SMC 8003 and 8013 series, and the
+ * SMC Elite Ultra (8216).
  */
 
 #include "bpfilter.h"
@@ -130,8 +130,6 @@ int ed_find __P((struct ed_softc *, struct cfdata *,
 int ed_probe_generic8390 __P((bus_space_tag_t, bus_space_handle_t, int));
 int ed_find_WD80x3 __P((struct ed_softc *, struct cfdata *,
     struct isa_attach_args *ia));
-int ed_find_3Com __P((struct ed_softc *, struct cfdata *,
-    struct isa_attach_args *ia));
 int edintr __P((void *));
 int edioctl __P((struct ifnet *, u_long, caddr_t));
 void edstart __P((struct ifnet *));
@@ -195,8 +193,6 @@ ed_find(sc, cf, ia)
 {
 
 	if (ed_find_WD80x3(sc, cf, ia))
-		return (1);
-	if (ed_find_3Com(sc, cf, ia))
 		return (1);
 	return (0);
 }
@@ -684,322 +680,6 @@ ed_find_WD80x3(sc, cf, ia)
 	return (rv);
 }
 
-int ed_3com_iobase[] = {0x2e0, 0x2a0, 0x280, 0x250, 0x350, 0x330, 0x310, 0x300};
-int ed_3com_maddr[] = {MADDRUNK, MADDRUNK, MADDRUNK, MADDRUNK, 0xc8000, 0xcc000, 0xd8000, 0xdc000};
-#if 0
-int ed_3com_irq[] = {IRQUNK, IRQUNK, IRQUNK, IRQUNK, 9, 3, 4, 5};
-#endif
-
-/*
- * Probe and vendor-specific initialization routine for 3Com 3c503 boards.
- */
-int
-ed_find_3Com(sc, cf, ia)
-	struct ed_softc *sc;
-	struct cfdata *cf;
-	struct isa_attach_args *ia;
-{
-	bus_space_tag_t iot;
-	bus_space_tag_t memt;
-	bus_space_handle_t ioh;
-	bus_space_handle_t memh;
-	int i;
-	u_int memsize, memfail;
-	u_char isa16bit, x;
-	int ptr, asicbase, nicbase;
-
-	/*
-	 * Hmmm...a 16bit 3Com board has 16k of memory, but only an 8k window
-	 * to it.
-	 */
-	memsize = 8192;
-
-	iot = ia->ia_iot;
-	memt = ia->ia_memt;
-
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
-		return (0);
-
-	/* Disallow wildcarded mem address. */
-	if (ia->ia_maddr == ISACF_IOMEM_DEFAULT)
-		return (0);
-
-	if (bus_space_map(iot, ia->ia_iobase, ED_3COM_IO_PORTS, 0, &ioh))
-		return (0);
-
-	sc->asic_base = asicbase = ED_3COM_ASIC_OFFSET;
-	sc->nic_base = nicbase = ED_3COM_NIC_OFFSET;
-
-	/*
-	 * Verify that the kernel configured I/O address matches the board
-	 * configured address.
-	 *
-	 * This is really only useful to see if something that looks like the
-	 * board is there; after all, we are already talking it at that
-	 * address.
-	 */
-	x = bus_space_read_1(iot, ioh, asicbase + ED_3COM_BCFR);
-	if (x == 0 || (x & (x - 1)) != 0)
-		goto err;
-	ptr = ffs(x) - 1;
-	if (ia->ia_iobase != IOBASEUNK) {
-		if (ia->ia_iobase != ed_3com_iobase[ptr]) {
-			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
-			    "iobase", sc->sc_dev.dv_xname, ia->ia_iobase,
-			    ed_3com_iobase[ptr]);
-			goto err;
-		}
-	} else
-		ia->ia_iobase = ed_3com_iobase[ptr];	/* XXX --thorpej */
-
-	x = bus_space_read_1(iot, ioh, asicbase + ED_3COM_PCFR);
-	if (x == 0 || (x & (x - 1)) != 0) {
-		printf("%s: The 3c503 is not currently supported with memory "
-		       "mapping disabled.\n%s: Reconfigure the card to "
-		       "enable memory mapping.\n",
-		       sc->sc_dev.dv_xname, sc->sc_dev.dv_xname);
-		goto err;
-	}
-	ptr = ffs(x) - 1;
-	if (ia->ia_maddr != MADDRUNK) {
-		if (ia->ia_maddr != ed_3com_maddr[ptr]) {
-			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
-			    "maddr", sc->sc_dev.dv_xname, ia->ia_maddr,
-			    ed_3com_maddr[ptr]);
-			goto err;
-		}
-	} else
-		ia->ia_maddr = ed_3com_maddr[ptr];
-
-#if 0
-	x = bus_space_read_1(iot, ioh, asicbase + ED_3COM_IDCFR) &
-	    ED_3COM_IDCFR_IRQ;
-	if (x == 0 || (x & (x - 1)) != 0)
-		goto out;
-	ptr = ffs(x) - 1;
-	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != ed_3com_irq[ptr]) {
-			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
-			    sc->sc_dev.dv_xname, ia->ia_irq,
-			    ed_3com_irq[ptr]);
-			goto err;
-		}
-	} else
-		ia->ia_irq = ed_3com_irq[ptr];
-#endif
-
-	/*
-	 * Reset NIC and ASIC.  Enable on-board transceiver throughout reset
-	 * sequence because it'll lock up if the cable isn't connected if we
-	 * don't.
-	 */
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_CR,
-	    ED_3COM_CR_RST | ED_3COM_CR_XSEL);
-
-	/* Wait for a while, then un-reset it. */
-	delay(50);
-
-	/*
-	 * The 3Com ASIC defaults to rather strange settings for the CR after a
-	 * reset - it's important to set it again after the following outb
-	 * (this is done when we map the PROM below).
-	 */
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_CR, ED_3COM_CR_XSEL);
-
-	/* Wait a bit for the NIC to recover from the reset. */
-	delay(5000);
-
-	sc->vendor = ED_VENDOR_3COM;
-	sc->type_str = "3c503";
-	sc->cr_proto = ED_CR_RD2;
-
-	/*
-	 * Get station address from on-board ROM.
-	 *
-	 * First, map ethernet address PROM over the top of where the NIC
-	 * registers normally appear.
-	 */
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_CR,
-	    ED_3COM_CR_EALO | ED_3COM_CR_XSEL);
-
-	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		sc->sc_enaddr[i] = NIC_GET(iot, ioh, nicbase, i);
-
-	/*
-	 * Unmap PROM - select NIC registers.  The proper setting of the
-	 * tranceiver is set in edinit so that the attach code is given a
-	 * chance to set the default based on a compile-time config option.
-	 */
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_CR, ED_3COM_CR_XSEL);
-
-	/* Determine if this is an 8bit or 16bit board. */
-
-	/* Select page 0 registers. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_CR,
-	    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STP);
-
-	/*
-	 * Attempt to clear WTS bit.  If it doesn't clear, then this is a
-	 * 16-bit board.
-	 */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_DCR, 0);
-
-	/* Select page 2 registers. */
-	NIC_PUT(iot, ioh, nicbase,
-	    ED_P0_CR, ED_CR_RD2 | ED_CR_PAGE_2 | ED_CR_STP);
-
-	/* The 3c503 forces the WTS bit to a one if this is a 16bit board. */
-	if (NIC_GET(iot, ioh, nicbase, ED_P2_DCR) & ED_DCR_WTS)
-		isa16bit = 1;
-	else
-		isa16bit = 0;
-
-	/* Select page 0 registers. */
-	NIC_PUT(iot, ioh, nicbase, ED_P2_CR,
-	    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STP);
-
-	if (bus_space_map(memt, ia->ia_maddr, memsize, 0, &memh))
-		goto err;
-	sc->mem_start = 0;		/* offset */
-	sc->mem_size = memsize;
-	sc->mem_end = sc->mem_start + memsize;
-
-	/*
-	 * We have an entire 8k window to put the transmit buffers on the
-	 * 16-bit boards.  But since the 16bit 3c503's shared memory is only
-	 * fast enough to overlap the loading of one full-size packet, trying
-	 * to load more than 2 buffers can actually leave the transmitter idle
-	 * during the load.  So 2 seems the best value.  (Although a mix of
-	 * variable-sized packets might change this assumption.  Nonetheless,
-	 * we optimize for linear transfers of same-size packets.)
-	 */
-	if (isa16bit) {
- 		if (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING)
-			sc->txb_cnt = 1;
-		else
-			sc->txb_cnt = 2;
-
-		sc->tx_page_start = ED_3COM_TX_PAGE_OFFSET_16BIT;
-		sc->rec_page_start = ED_3COM_RX_PAGE_OFFSET_16BIT;
-		sc->rec_page_stop =
-		    (memsize >> ED_PAGE_SHIFT) + ED_3COM_RX_PAGE_OFFSET_16BIT;
-		sc->mem_ring = sc->mem_start;
-	} else {
-		sc->txb_cnt = 1;
-		sc->tx_page_start = ED_3COM_TX_PAGE_OFFSET_8BIT;
-		sc->rec_page_start =
-		    ED_TXBUF_SIZE + ED_3COM_TX_PAGE_OFFSET_8BIT;
-		sc->rec_page_stop =
-		    (memsize >> ED_PAGE_SHIFT) + ED_3COM_TX_PAGE_OFFSET_8BIT;
-		sc->mem_ring =
-		    sc->mem_start + (ED_TXBUF_SIZE << ED_PAGE_SHIFT);
-	}
-
-	sc->isa16bit = isa16bit;
-
-	/*
-	 * Initialize GA page start/stop registers.  Probably only needed if
-	 * doing DMA, but what the Hell.
-	 */
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_PSTR, sc->rec_page_start);
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_PSPR, sc->rec_page_stop);
-
-	/* Set IRQ.  3c503 only allows a choice of irq 3-5 or 9. */
-	switch (ia->ia_irq) {
-	case 9:
-		bus_space_write_1(iot, ioh, asicbase + ED_3COM_IDCFR,
-		    ED_3COM_IDCFR_IRQ2);
-		break;
-	case 3:
-		bus_space_write_1(iot, ioh, asicbase + ED_3COM_IDCFR,
-		    ED_3COM_IDCFR_IRQ3);
-		break;
-	case 4:
-		bus_space_write_1(iot, ioh, asicbase + ED_3COM_IDCFR,
-		    ED_3COM_IDCFR_IRQ4);
-		break;
-	case 5:
-		bus_space_write_1(iot, ioh, asicbase + ED_3COM_IDCFR,
-		    ED_3COM_IDCFR_IRQ5);
-		break;
-	default:
-		printf("%s: invalid irq configuration (%d) must be 3-5 or 9 for 3c503\n",
-		    sc->sc_dev.dv_xname, ia->ia_irq);
-		goto out;
-	}
-
-	/*
-	 * Initialize GA configuration register.  Set bank and enable shared
-	 * mem.
-	 */
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_GACFR,
-	    ED_3COM_GACFR_RSEL | ED_3COM_GACFR_MBS0);
-
-	/*
-	 * Initialize "Vector Pointer" registers. These gawd-awful things are
-	 * compared to 20 bits of the address on ISA, and if they match, the
-	 * shared memory is disabled. We set them to 0xffff0...allegedly the
-	 * reset vector.
-	 */
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_VPTR2, 0xff);
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_VPTR1, 0xff);
-	bus_space_write_1(iot, ioh, asicbase + ED_3COM_VPTR0, 0x00);
-
-	/* Now zero memory and verify that it is clear. */
-	if (isa16bit) {
-		for (i = 0; i < memsize; i += 2)
-			bus_space_write_2(memt, memh, sc->mem_start + i, 0);
-	} else {
-		for (i = 0; i < memsize; ++i)
-			bus_space_write_1(memt, memh, sc->mem_start + i, 0);
-	}
-
-	memfail = 0;
-	if (isa16bit) {
-		for (i = 0; i < memsize; i += 2) {
-			if (bus_space_read_2(memt, memh, sc->mem_start + i)) {
-				memfail = 1;
-				break;
-			}
-		}
-	} else {
-		for (i = 0; i < memsize; ++i) {
-			if (bus_space_read_1(memt, memh, sc->mem_start + i)) {
-				memfail = 1;
-				break;
-			}
-		}
-	}
-
-	if (memfail) {
-		printf("%s: failed to clear shared memory at %x - "
-		    "check configuration\n",
-		    sc->sc_dev.dv_xname,
-		    (ia->ia_maddr + sc->mem_start + i));
-		goto out;
-	}
-
-	ia->ia_msize = memsize;
-	ia->ia_iosize = ED_3COM_IO_PORTS;
-
-	/*
-	 * XXX Sould always unmap, but we can't yet.
-	 * XXX Need to squish "indirect" first.
-	 */
-	sc->sc_iot = iot;
-	sc->sc_memt = memt;
-	sc->sc_ioh = ioh;
-	sc->sc_memh = memh;
-	return 1;
-
- out:
-	bus_space_unmap(memt, memh, memsize);
- err:
-	bus_space_unmap(iot, ioh, ED_3COM_IO_PORTS);
-	return 0;
-}
-
 /*
  * Install interface into kernel networking data structures.
  */
@@ -1012,7 +692,6 @@ edattach(parent, self, aux)
 	bus_space_handle_t ioh;
 	struct ed_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int asicbase;
 
@@ -1043,10 +722,6 @@ edattach(parent, self, aux)
 	 * for AUI operation), based on compile-time config option.
 	 */
 	switch (sc->vendor) {
-	case ED_VENDOR_3COM:
-		if (cf->cf_flags & ED_FLAGS_DISABLE_TRANCEIVER)
-			ifp->if_flags |= IFF_LINK0;
-		break;
 	case ED_VENDOR_WD_SMC:
 		if ((sc->type & ED_WD_SOFTCONFIG) == 0)
 			break;
@@ -1075,7 +750,6 @@ edattach(parent, self, aux)
 	case ED_VENDOR_WD_SMC:
 		if ((sc->type & ED_WD_SOFTCONFIG) == 0)
 			break;
-	case ED_VENDOR_3COM:
 		if (ifp->if_flags & IFF_LINK0)
 			printf(" aui");
 		else
@@ -1275,13 +949,6 @@ edinit(sc)
 	 */
 	switch (sc->vendor) {
 		u_char x;
-	case ED_VENDOR_3COM:
-		if (ifp->if_flags & IFF_LINK0)
-			bus_space_write_1(iot, ioh, asicbase + ED_3COM_CR, 0);
-		else
-			bus_space_write_1(iot, ioh, asicbase + ED_3COM_CR,
-			    ED_3COM_CR_XSEL);
-		break;
 	case ED_VENDOR_WD_SMC:
 		if ((sc->type & ED_WD_SOFTCONFIG) == 0)
 			break;
@@ -1399,17 +1066,6 @@ outloop:
 	/* Special case setup for 16 bit boards... */
 	switch (sc->vendor) {
 	/*
-	 * For 16bit 3Com boards (which have 16k of memory), we
-	 * have the xmit buffers in a different page of memory
-	 * ('page 0') - so change pages.
-	 */
-	case ED_VENDOR_3COM:
-		if (sc->isa16bit)
-			bus_space_write_1(iot, ioh,
-			    asicbase + ED_3COM_GACFR,
-			    ED_3COM_GACFR_RSEL);
-		break;
-	/*
 	 * Enable 16bit access to shared memory on WD/SMC
 	 * boards.
 	 */
@@ -1433,12 +1089,6 @@ outloop:
 
 	/* Restore previous shared memory access. */
 	switch (sc->vendor) {
-	case ED_VENDOR_3COM:
-		if (sc->isa16bit)
-			bus_space_write_1(iot, ioh,
-			    asicbase + ED_3COM_GACFR,
-			    ED_3COM_GACFR_RSEL | ED_3COM_GACFR_MBS0);
-		break;
 	case ED_VENDOR_WD_SMC:
 		bus_space_write_1(iot, ioh, asicbase + ED_WD_MSR,
 		    sc->wd_msr_proto);
