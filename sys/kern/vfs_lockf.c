@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.16 2000/06/12 14:33:06 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.16.2.1 2000/07/30 20:38:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -86,14 +86,12 @@ int	lockf_debug = 0;
  * Do an advisory lock operation.
  */
 int
-lf_advlock(head, size, id, op, fl, flags)
+lf_advlock(ap, head, size)
+	struct vop_advlock_args *ap;
 	struct lockf **head;
 	off_t size;
-	caddr_t id;
-	int op;
-	struct flock *fl;
-	int flags;
 {
+	struct flock *fl = ap->a_fl;
 	struct lockf *lock;
 	off_t start, end;
 	int error;
@@ -125,7 +123,7 @@ lf_advlock(head, size, id, op, fl, flags)
 	 * Avoid the common case of unlocking when inode has no locks.
 	 */
 	if (*head == (struct lockf *)0) {
-		if (op != F_SETLK) {
+		if (ap->a_op != F_SETLK) {
 			fl->l_type = F_UNLCK;
 			return (0);
 		}
@@ -141,16 +139,16 @@ lf_advlock(head, size, id, op, fl, flags)
 	MALLOC(lock, struct lockf *, sizeof(*lock), M_LOCKF, M_WAITOK);
 	lock->lf_start = start;
 	lock->lf_end = end;
-	lock->lf_id = id;
+	lock->lf_id = ap->a_id;
 	lock->lf_head = head;
 	lock->lf_type = fl->l_type;
 	lock->lf_next = (struct lockf *)0;
 	TAILQ_INIT(&lock->lf_blkhd);
-	lock->lf_flags = flags;
+	lock->lf_flags = ap->a_flags;
 	/*
 	 * Do the requested operation.
 	 */
-	switch (op) {
+	switch (ap->a_op) {
 
 	case F_SETLK:
 		return (lf_setlock(lock));

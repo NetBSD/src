@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.113 2000/05/26 08:36:48 enami Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.113.4.1 2000/07/30 20:38:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3051,8 +3051,7 @@ nfs_advlock(v)
 	} */ *ap = v;
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
-	return (lf_advlock(&np->n_lockf, np->n_size, ap->a_id, ap->a_op,
-	    ap->a_fl, ap->a_flags));
+	return lf_advlock(ap, &np->n_lockf, np->n_size);
 }
 
 /*

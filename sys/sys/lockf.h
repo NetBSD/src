@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.8 2000/06/12 14:33:04 sommerfeld Exp $	*/
+/*	$NetBSD: lockf.h,v 1.8.2.1 2000/07/30 20:38:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -73,8 +73,7 @@ struct lockf {
 
 __BEGIN_DECLS
 void	 lf_addblock __P((struct lockf *, struct lockf *));
-int	 lf_advlock __P((struct lockf **,
-	    off_t, caddr_t, int, struct flock *, int));
+int	 lf_advlock __P((struct vop_advlock_args *, struct lockf **, off_t));
 int	 lf_clearlock __P((struct lockf *));
 int	 lf_findoverlap __P((struct lockf *,
 	    struct lockf *, int, struct lockf ***, struct lockf **));

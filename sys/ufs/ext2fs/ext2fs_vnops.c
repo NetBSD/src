@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.26 2000/05/13 23:43:13 perseant Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.26.4.1 2000/07/30 20:38:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -1257,8 +1257,7 @@ ext2fs_advlock(v)
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
 
-	return (lf_advlock(&ip->i_lockf, ip->i_e2fs_size, ap->a_id, ap->a_op,
-	    ap->a_fl, ap->a_flags));
+	return lf_advlock(ap, &ip->i_lockf, ip->i_e2fs_size);
 }
 
 /*
