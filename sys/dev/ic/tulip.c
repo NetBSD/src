@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.113 2002/05/03 08:48:12 mycroft Exp $	*/
+/*	$NetBSD: tulip.c,v 1.114 2002/05/31 17:27:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.113 2002/05/03 08:48:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.114 2002/05/31 17:27:40 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -5149,13 +5149,6 @@ tlp_2114x_nway_service(sc, cmd)
 	}
 	return (0);
 }
-
-
-#define TULIP_SET(sc, reg, x) \
-        TULIP_WRITE((sc), (reg), TULIP_READ((sc), (reg)) | (x))
-
-#define TULIP_CLR(sc, reg, x) \
-	TULIP_WRITE((sc), (reg), TULIP_READ((sc), (reg)) & ~(x))
 
 void
 tlp_2114x_nway_auto(sc)
