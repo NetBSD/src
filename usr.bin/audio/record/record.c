@@ -1,7 +1,7 @@
-/*	$NetBSD: record.c,v 1.30 2002/07/20 08:40:16 grant Exp $	*/
+/*	$NetBSD: record.c,v 1.31 2002/10/13 00:56:44 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2002 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -219,6 +219,17 @@ main(argc, argv)
 	if (argc != 1)
 		usage();
 	if (argv[0][0] != '-' && argv[0][1] != '\0') {
+		/* intuit the file type from the name */
+		if (format == AUDIO_FORMAT_DEFAULT)
+		{
+			size_t flen = strlen(*argv);
+			const char *arg = *argv;
+
+			if (strcasecmp(arg + flen - 3, ".au") == 0)
+				format = AUDIO_FORMAT_SUN;
+			else if (strcasecmp(arg + flen - 4, ".wav") == 0)
+				format = AUDIO_FORMAT_WAV;
+		}
 		outfd = open(*argv, O_CREAT|(aflag ? O_APPEND : O_TRUNC)|O_WRONLY, 0666);
 		if (outfd < 0)
 			err(1, "could not open %s", *argv);
