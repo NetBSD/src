@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.4 2004/02/24 15:24:35 wiz Exp $
+REM $NetBSD: BtNetBSD,v 1.5 2004/12/08 13:19:00 reinoud Exp $
 REM
 REM Copyright (c) 2000, 2001, 2002 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -178,9 +178,9 @@ REM Remove all cursors
 *pointer 0
 SYS "OS_RemoveCursors"
 
-REM XXX is this OK ? What is this!
+REM Change screen's base address (VDU/displayed) to offset 0
 DIM buf 8
-buf!?3 = 2: buf!4 = 0: SYS "OS_Word", 22, buf+3
+buf?3 = 3: buf!4 = 0: SYS "OS_Word", 22, buf+3
 
 CALL relocate_entry%
 
@@ -941,7 +941,7 @@ DEF PROCassemble_relocate_code(virtaddress%, physaddress%, entry%, L1pages_phys%
       .loop_relocate_pages%
         LDR  r2, [r5], #4                      ; r2 = from address
         LDR  r3, [r5], #4                      ; r3 = to address
-        LDR  r7, [r5], #4                      ; r6 = number of bytes to travel
+        LDR  r7, [r5], #4                      ; r7 = number of bytes to travel
         MOV  r1, #0                            ; r1 = offset in page
       .loop_one_page%
         LDRB r0, [r2, r1]
