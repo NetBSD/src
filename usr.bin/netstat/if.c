@@ -110,6 +110,9 @@ intpr(interval, ifnetaddr)
 	ifaddraddr = 0;
 	while (ifnetaddr || ifaddraddr) {
 		struct sockaddr_in *sin;
+#ifdef ISO
+		struct sockaddr_iso *siso;
+#endif
 		register char *cp;
 		int n, m;
 		struct in_addr inet_makeaddr();
@@ -183,8 +186,24 @@ intpr(interval, ifnetaddr)
 				    cp = (char *)LLADDR(sdl);
 				    n = sdl->sdl_alen;
 				}
-				m = printf("<Link>");
+				m = printf("%-11.11s ","<Link>");
 				goto hexprint;
+#ifdef ISO
+			case AF_ISO:
+				siso = (struct sockaddr_iso *)sa;
+				if(nflag) {
+					printf("%27s ", 
+						iso_ntoa(&siso->siso_addr));
+				} else {
+					/* This will probably truncate the */
+					/* NSAP prefix */
+					printf("%-11.11s ", 
+						iso_ntoa(&siso->siso_addr));
+					printf("%-15.15s ",
+						iso_idtoa(&siso->siso_addr));
+				}
+				break;
+#endif
 			default:
 				m = printf("(%d)", sa->sa_family);
 				for (cp = sa->sa_len + (char *)sa;
