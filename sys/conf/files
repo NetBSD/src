@@ -1,14 +1,13 @@
-#	$NetBSD: files,v 1.188 1998/06/02 01:29:42 thorpej Exp $
+#	$NetBSD: files,v 1.189 1998/06/08 04:00:35 scottr Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
+defopt	INSECURE
 defopt	KMEMSTATS
 defopt	LOCKDEBUG
 defopt	RTC_OFFSET
-defopt	TCP_RECVSPACE
-defopt	TCP_SENDSPACE
 defopt	UCONSOLE
 
 defopt	DEVPAGER
@@ -20,15 +19,17 @@ defopt	opt_ntp.h	PPS_SYNC NTP
 defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
 			NFS_BOOT_GATEWAY
 
+defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
+
+defopt	opt_execfmt.h	EXEC_AOUT EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
+
+# networking options
 defopt	GATEWAY
 defopt	MROUTING
 defopt	TCP_COMPAT_42
 
-defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
-
-defopt	INSECURE
-
-defopt	opt_execfmt.h	EXEC_AOUT EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
+defopt	TCP_RECVSPACE
+defopt	TCP_SENDSPACE
 
 # these are not together so that turning on UVMHIST only affects files that
 # use it, not most of the kernel
@@ -47,6 +48,9 @@ deffs	fs_nfs.h NFS
 deffs	NULLFS FDESC PORTAL UMAPFS PROCFS
 deffs	fs_kernfs.h KERNFS		# XXX
 deffs	fs_union.h UNION
+
+# file system options
+defopt	QUOTA
 
 # device classes
 devclass disk
