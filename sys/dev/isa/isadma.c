@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.40 1999/02/22 02:32:43 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.41 1999/02/22 02:33:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -327,11 +327,6 @@ _isa_dmastart(ids, chan, addr, nbytes, p, flags, busdmaflags)
 	    "flags 0x%x, dmaflags 0x%x\n",
 	    chan, addr, nbytes, p, flags, busdmaflags);
 #endif
-
-	/* Can't specify LOOP and LOOPDEMAND together. */
-	if ((flags & (DMAMODE_LOOP|DMAMODE_LOOPDEMAND)) ==
-	    (DMAMODE_LOOP|DMAMODE_LOOPDEMAND))
-		return (EINVAL);
 
 	if (chan & 4) {
 		if (nbytes > (1 << 17) || nbytes & 1 || (u_long)addr & 1) {
