@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.13 2001/09/09 00:32:52 enami Exp $	*/
+/*	$NetBSD: rnd.h,v 1.14 2001/09/09 00:48:55 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,9 @@ typedef struct {
 #define	RND_TYPE_NET		2	/* source is a network device */
 #define	RND_TYPE_TAPE		3	/* source is a tape drive */
 #define	RND_TYPE_TTY		4	/* source is a tty device */
-#define	RND_TYPE_MAX		4	/* last type id used */
+#define	RND_TYPE_RNG		5	/* source is a random number
+					   generator */
+#define	RND_TYPE_MAX		5	/* last type id used */
 
 #ifdef _KERNEL
 typedef struct __rndsource_element rndsource_element_t;
@@ -152,6 +154,8 @@ int		rndpool_extract_data __P((rndpool_t *, void *, u_int32_t,
 
 void		rnd_init __P((void));
 void		rnd_add_uint32 __P((rndsource_element_t *, u_int32_t));
+void		rnd_add_data __P((rndsource_element_t *, void *, u_int32_t,
+		    u_int32_t));
 int		rnd_extract_data __P((void *, u_int32_t, u_int32_t));
 void		rnd_attach_source __P((rndsource_element_t *, char *,
 		    u_int32_t, u_int32_t));

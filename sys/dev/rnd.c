@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.23 2001/09/09 00:32:52 enami Exp $	*/
+/*	$NetBSD: rnd.c,v 1.24 2001/09/09 00:48:55 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -872,6 +872,28 @@ rnd_add_uint32(rndsource_element_t *rs, u_int32_t val)
 	 * the next random event.
 	 */
 	rst->state = rnd_sample_allocate_isr(rst);
+}
+
+void
+rnd_add_data(rndsource_element_t *rs, void *data, u_int32_t len,
+    u_int32_t entropy)
+{
+	rndsource_t *rst;
+
+	/* Mix in the random data directly into the pool. */
+	rndpool_add_data(&rnd_pool, data, len, entropy);
+
+	if (rs != NULL) {
+		rst = &rs->data;
+		rst->total += entropy;
+
+		if ((rst->flags & RND_FLAG_NO_ESTIMATE) == 0)
+			/* Estimate entropy using timing information */
+			rnd_add_uint32(rs, *(u_int8_t *)data);
+	}
+
+	/* Wake up any potential readers since we've just added some data. */
+	rnd_wakeup_readers();
 }
 
 /*

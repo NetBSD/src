@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.7 2001/03/30 12:05:02 mycroft Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.8 2001/09/09 00:48:54 enami Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -77,8 +77,9 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 				return;
 			}
 
-			if ((bus_space_read_1(sc->sc_st, sc->sc_sh,
-			    I82802_RNG_HWST) & I82802_RNG_HWST_PRESENT) == 0) {
+			reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
+			    I82802_RNG_HWST);
+			if ((reg8 & I82802_RNG_HWST_PRESENT) == 0) {
 				/*
 				 * Random number generator is not present.
 				 */
@@ -86,10 +87,16 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 			}
 
 			/* Enable the RNG. */
-			reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
-			    I82802_RNG_HWST);
 			bus_space_write_1(sc->sc_st, sc->sc_sh,
 			    I82802_RNG_HWST, reg8 | I82802_RNG_HWST_ENABLE);
+			reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh,
+			    I82802_RNG_HWST);
+			if ((reg8 & I82802_RNG_HWST_ENABLE) == 0) {
+				/*
+				 * Couldn't enable the RNG.
+				 */
+				return;
+			}
 
 			/* Check to see if we can read data from the RNG. */
 			for (i = 0; i < 1000; i++) {
@@ -133,8 +140,13 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 
 			callout_init(&sc->sc_rnd_ch);
 			rnd_attach_source(&sc->sc_rnd_source,
-			    sc->sc_dev.dv_xname, RND_TYPE_UNKNOWN, 0); /* XXX */
-			sc->sc_rnd_i = 4;
+			    sc->sc_dev.dv_xname, RND_TYPE_RNG,
+			    /*
+			     * We can't estimate entropy since we poll
+			     * random data periodically.
+			     */
+			    RND_FLAG_NO_ESTIMATE);
+			sc->sc_rnd_i = sizeof(sc->sc_rnd_ax);
 			pchb_rnd_callout(sc);
 			break;
 		default:
@@ -150,11 +162,13 @@ pchb_rnd_callout(void *v)
 
 	if ((bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_RNGST) &
 	     I82802_RNG_RNGST_DATAV) != 0) {
-		sc->sc_rnd_ax = (sc->sc_rnd_ax << 8) |
+		sc->sc_rnd_ax = (sc->sc_rnd_ax << NBBY) |
 		    bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_DATA);
 		if (--sc->sc_rnd_i == 0) {
-			sc->sc_rnd_i = 4;
-			rnd_add_uint32(&sc->sc_rnd_source, sc->sc_rnd_ax);
+			sc->sc_rnd_i = sizeof(sc->sc_rnd_ax);
+			rnd_add_data(&sc->sc_rnd_source, &sc->sc_rnd_ax,
+			    sizeof(sc->sc_rnd_ax),
+			    sizeof(sc->sc_rnd_ax) * NBBY);
 		}
 	}
 	callout_reset(&sc->sc_rnd_ch, 1, pchb_rnd_callout, sc);
