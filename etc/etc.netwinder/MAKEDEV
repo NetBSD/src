@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.34 2003/08/22 05:06:37 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.35 2003/08/30 11:00:32 dsl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -404,29 +404,37 @@ opty)
 
 pty*)
 	class=${i#pty}
-	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
-	case $name in
-	v)	echo "$0: $i: pty unit conflicts with console ttyv0 device."
-		continue ;;
-	?)	;;
-	*)	echo "$0: $i: pty unit must be between 0 and 15"
-		continue ;;
-	esac
+	set -- p q r s t u v w x y z P Q R S T
+	if [ "$class" -ge $# ]; then
+		echo "$MAKEDEV: $i: pty unit must be between 0 and 15"
+		continue
+	fi
+	shift $class
+	name=$1
+	if [ "$name" = v ]; then
+		echo "$MAKEDEV: $i: pty unit conflicts with console ttyv0 device."
+		continue
+	fi
 	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	jn=0
-	while [ $jn -lt 62 ]
+	unit=$(($class * 16))
+	names=
+	set -- - 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+	while
+		shift
+		j=$1
+		[ -n "$j" ]
 	do
-		j=`echo 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ | dd bs=1 count=1 skip=$jn 2>/dev/null`
-		skip=0
-		if [ $jn -ge 16 ]; then
-			skip=$(($class * 30 + 256 - 16))
+		if [ $j = g ]; then
+			unit=$(($unit + $class * 30 + 256 - 16))
 		fi
-		unit=$(($class * 16 + $jn + $skip))
-		mknod tty$name$j c 7 $unit
+		mknod tty$name$j c 5 $unit
 		mknod pty$name$j c 6 $unit
-		jn=$(($jn + 1))
+		names="$names tty$name$j pty$name$j"
+		unit=$(($unit + 1))
 	done
-	chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	chmod 666 $names
+	unset names
 	;;
 
 st*)
