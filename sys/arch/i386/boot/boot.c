@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.14 1994/01/11 14:13:49 mycroft Exp $
+ *	$Id: boot.c,v 1.15 1994/01/28 08:21:40 cgd Exp $
  */
 
 /*
@@ -64,6 +64,8 @@ char *names[] = {
 };
 #define NUMNAMES	(sizeof(names)/sizeof(char *))
 
+extern char *version;
+
 extern int end;
 boot(drive)
 int drive;
@@ -75,7 +77,7 @@ int drive;
 		ouraddr,
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
-		"$Revision: 1.14 $");
+		version);
 	printf("use hd(1,a)/netbsd to boot sd0 when wd0 is also installed\n");
 	gateA20();
     loadstart:
