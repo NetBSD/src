@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.214 2003/09/09 03:57:57 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.215 2003/09/10 05:35:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.214 2003/09/09 03:57:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.215 2003/09/10 05:35:50 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -755,12 +755,9 @@ scsi_probe_device(sc, target, lun)
 
 	/* Now go ask the device all about itself. */
 	memset(&inqbuf, 0, sizeof(inqbuf));
-	if (scsipi_inquire(periph, &inqbuf,
-	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0)
-		goto bad;
 	{
 		u_int8_t *extension = &inqbuf.flags1;
-		int len = inqbuf.additional_length;
+		int len = 0;
 		while (len < 3)
 			extension[len++] = '\0';
 		while (len < 3 + 28)
@@ -774,6 +771,9 @@ scsi_probe_device(sc, target, lun)
 		while (len < 3 + 28 + 20 + 1 + 1 + (8*2))
 			extension[len++] = ' ';
 	}
+	if (scsipi_inquire(periph, &inqbuf,
+	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0)
+		goto bad;
 
 	periph->periph_type = inqbuf.device & SID_TYPE;
 	if (inqbuf.dev_qual2 & SID_REMOVABLE)
