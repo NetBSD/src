@@ -42,12 +42,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cal.c	5.2 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: cal.c,v 1.3 1994/01/25 00:49:35 cgd Exp $";
+static char rcsid[] = "$Id: cal.c,v 1.4 1994/12/24 15:50:40 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 #define	THURSDAY		4		/* for reformation */
