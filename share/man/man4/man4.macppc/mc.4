@@ -1,4 +1,4 @@
-.\" $NetBSD: mc.4,v 1.2 2003/07/26 20:17:35 salo Exp $
+.\" $NetBSD: mc.4,v 1.3 2003/09/26 18:50:16 mbw Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,14 +42,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the AMD Am79C940 MACE
+driver provides support for the AMD Am79C940 MACE 10 Mb/s
 .Tn Ethernet
-chip found
-at least in Macintosh Centris and Quadra, Macintosh Power Macintoshes
-(from 7300 to 9500), and Apple Network Servers.
+chip found in Apple Power Macintosh 7300 through 9600 models,
+Apple Network Servers, and most other pre-G3 models.
 .Sh SEE ALSO
-.Xr de 4 ,
-.Xr gm 4 ,
+.Xr bm 4 ,
+.Xr gem 4 ,
 .Xr tlp 4
 .Sh HISTORY
 The
