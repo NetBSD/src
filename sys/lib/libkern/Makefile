@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 1998/07/31 23:44:41 perry Exp $
+#	$NetBSD: Makefile,v 1.45 1998/08/03 20:32:48 perry Exp $
 
 LIB=	kern
 NOPIC=
@@ -60,7 +60,7 @@ memcpy.ln: bcopy.c
 	    ${.ALLSRC}
 .endif
 
-# if no machine specific memcpy(3), build one out of bcopy(3).
+# if no machine specific memmove(3), build one out of bcopy(3).
 .if empty(SRCS:Mmemmove.S)
 OBJS+=	memmove.o
 memmove.o: bcopy.c
