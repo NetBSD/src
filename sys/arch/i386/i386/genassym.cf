@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24.2.10 2002/10/18 03:32:49 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.24.2.11 2002/11/26 22:08:42 skrll Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,6 +158,7 @@ define	L_CPU			offsetof(struct lwp, l_cpu)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
+define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 
 define	P_SYSTEM		P_SYSTEM
 
