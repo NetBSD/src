@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.28 2001/04/29 10:25:50 martin Exp $	*/
+/*	$NetBSD: gencode.c,v 1.29 2001/06/01 15:49:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.28 2001/04/29 10:25:50 martin Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.29 2001/06/01 15:49:53 itojun Exp $");
 #endif
 #endif
 
@@ -1300,7 +1300,10 @@ struct block *
 gen_proto_abbrev(proto)
 	int proto;
 {
-	struct block *b0, *b1;
+#ifdef INET6
+	struct block *b0;
+#endif
+	struct block *b1;
 
 	switch (proto) {
 
