@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.436 2001/11/13 17:54:51 augustss Exp $
+#	$NetBSD: GENERIC,v 1.437 2001/11/16 13:46:31 junyoung Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.436 $"
+#ident 		"GENERIC-$Revision: 1.437 $"
 
 maxusers	32		# estimated number of users
 
@@ -975,5 +975,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+

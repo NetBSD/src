@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.30 2001/11/13 17:54:51 augustss Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.31 2001/11/16 13:46:32 junyoung Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.30 $"
+#ident 		"GENERIC-$Revision: 1.31 $"
 
 maxusers	32		# estimated number of users
 
@@ -762,5 +762,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont

@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.20 2001/11/13 17:54:51 augustss Exp $
+#	$NetBSD: SWINGER,v 1.21 2001/11/16 13:46:32 junyoung Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.20 $"
+#ident 		"SWINGER-$Revision: 1.21 $"
 
 maxusers	64		# estimated number of users
 
@@ -814,5 +814,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
