@@ -1,4 +1,4 @@
-.\"	$NetBSD: nell.4,v 1.1 2002/03/29 10:23:08 martin Exp $
+.\"	$NetBSD: nell.4,v 1.2 2002/03/29 16:23:50 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,6 +48,9 @@ The
 .Nm
 is a pcmcia bridge for the sbus. It is also known as STP4020, the name
 of the chipset used to implement it, and has SUN part number 501-2367.
+.Sh SEE ALSO
+.Xr pcmcia 4 ,
+.Xr sbus 4
 .Sh BUGS
 The driver provides a big-endian pcmcia bus, which is wrong in the
 .Nx
@@ -64,6 +67,3 @@ only use it if this is the only wi card in your system:
 .Pp
 .Cd "options WI_AT_BIGENDIAN_BUS_HACK"
 .Cd "wi* at pcmcia? function ?"
-.Sh SEE ALSO
-.Xr sbus 4 ,
-.Xr pcmcia 4
