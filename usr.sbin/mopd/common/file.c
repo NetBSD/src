@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.5 1998/02/07 00:03:22 cgd Exp $	*/
+/*	$NetBSD: file.c,v 1.6 1998/07/25 06:01:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.5 1998/02/07 00:03:22 cgd Exp $");
+__RCSID("$NetBSD: file.c,v 1.6 1998/07/25 06:01:13 mycroft Exp $");
 #endif
 
 #include "os.h"
@@ -352,14 +352,15 @@ getCLBYTES(mid)
 		clbytes = 1024;
 		break;
 #endif
+#ifdef MID_I386
 	case MID_I386:
+#endif
 #ifdef MID_M68K4K
 	case MID_M68K4K:
 #endif
 #ifdef MID_NS32532
 	case MID_NS32532:
 #endif
-	case MID_SPARC:				/* It might be 8192 */
 #ifdef MID_PMAX
 	case MID_PMAX:
 #endif
@@ -369,15 +370,21 @@ getCLBYTES(mid)
 #ifdef MID_ARM6
 	case MID_ARM6:
 #endif
+#if defined(MID_I386) || defined(MID_M68K4K) || defined(MID_NS32532) || \
+    defined(MID_PMAX) || defined(MID_MIPS) || defined(MID_ARM6)
 		clbytes = 4096;
 		break;
+#endif
 #ifdef MID_M68K
 	case MID_M68K:
 #endif
 #ifdef MID_ALPHA
 	case MID_ALPHA:
 #endif
-#if defined(MID_M68K) || defined(MID_ALPHA)
+#ifdef MID_SPARC
+	case MID_SPARC:
+#endif
+#if defined(MID_M68K) || defined(MID_ALPHA) || defined(MID_SPARC)
 		clbytes = 8192;
 		break;
 #endif
