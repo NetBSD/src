@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.28 1999/12/31 12:21:06 ad Exp $
+# 	$NetBSD: INSTALL,v 1.29 2000/01/09 15:08:42 ad Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -133,7 +133,7 @@ dc*	at	ibus0 addr ?		# 5100 optional serial devices
 oldscsibus*	at sii?
 oldscsibus*	at asc?
 #
-# SCSI configuration for old 4.4bsd/pmax DECstation SCSI driver
+# SCSI configuration for old 4.4BSD/pmax DECstation SCSI driver
 #
 include 	"arch/pmax/conf/scsi.pmax"
 #include 	"arch/pmax/conf/mi.scsi"		# not yet supported

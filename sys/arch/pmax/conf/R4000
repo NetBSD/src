@@ -2,7 +2,7 @@
 # R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.17 1999/11/15 09:50:49 nisimura Exp $
+# 	$NetBSD: R4000,v 1.18 2000/01/09 15:08:42 ad Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -29,7 +29,7 @@ options 	KTRACE			# system call tracing support
 options 	LKM			# loadable kernel modules
 options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 
-#Old 4.4bsd/pmax kgdb options
+# Old 4.4BSD/pmax kgdb options
 #options 	KGDB			# support for kernel gdb
 #options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
 #options 	"KGDBDEV=15*256+0"	# device for kernel gdb
@@ -124,7 +124,7 @@ fta*	at	tc?			# PMAF-F FDDI
 
 oldscsibus*	at asc?
 #
-# SCSI configuration for old 4.4bsd/pmax DECstation SCSI driver
+# SCSI configuration for old 4.4BSD/pmax DECstation SCSI driver
 #
 include 	"arch/pmax/conf/scsi.pmax"
 #include 	"arch/pmax/conf/mi.scsi"		# not yet supported
