@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.104 2004/11/13 07:20:54 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.105 2004/11/13 08:58:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.104 2004/11/13 07:20:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.105 2004/11/13 08:58:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1165,65 +1165,5 @@ linux_sys_ioperm(l, v, retval)
 	if (SCARG(uap, val))
 		fp->tf_eflags |= PSL_IOPL;
 	*retval = 0;
-	return 0;
-}
-
-int
-linux_exec_setup_stack(struct proc *p, struct exec_package *epp)
-{
-	u_long max_stack_size;
-	u_long access_linear_min, access_size;
-	u_long noaccess_linear_min, noaccess_size;
-
-#ifndef	USRSTACK32
-#define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
-#endif
-
-	if (epp->ep_flags & EXEC_32) {
-		epp->ep_minsaddr = USRSTACK32;
-		max_stack_size = MAXSSIZ;
-	} else {
-		epp->ep_minsaddr = USRSTACK;
-		max_stack_size = MAXSSIZ;
-	}
-
-	if (epp->ep_minsaddr > LINUX_USRSTACK)
-		epp->ep_minsaddr = LINUX_USRSTACK;
-#ifdef DEBUG_LINUX
-	else {
-		/*
-		 * Someone needs to make KERNBASE and TEXTADDR
-		 * java versions < 1.4.2 need the stack to be
-		 * at 0xC0000000
-		 */
-		uprintf("Cannot setup stack to 0xC0000000, "
-		    "java will not work properly\n");
-	}
-#endif
-	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
-		max_stack_size);
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 */
-	access_size = epp->ep_ssize;
-	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
-	noaccess_size = max_stack_size - access_size;
-	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
-	    access_size), noaccess_size);
-	if (noaccess_size > 0) {
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE);
-	}
-	KASSERT(access_size > 0);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
-	    access_linear_min, NULLVP, 0, VM_PROT_READ | VM_PROT_WRITE);
-
 	return 0;
 }
