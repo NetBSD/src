@@ -1,7 +1,7 @@
-/*	$NetBSD: mk-amd-map.c,v 1.1.1.4 2001/05/13 17:50:33 veego Exp $	*/
+/*	$NetBSD: mk-amd-map.c,v 1.1.1.5 2002/11/29 22:59:09 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: mk-amd-map.c,v 1.5.2.1 2001/01/10 03:23:42 ezk Exp
+ * Id: mk-amd-map.c,v 1.9 2002/02/02 20:59:05 ezk Exp
  */
 
 /*
@@ -288,7 +287,22 @@ main(int argc, char *argv[])
       exit(1);
     }
 
+#ifdef HAVE_MKSTEMP
+    {
+      /*
+       * XXX: hack to avoid compiler complaints about mktemp not being
+       * secure, since we have to do a dbm_open on this anyway.  So use
+       * mkstemp if you can, and then close the fd, but we get a safe
+       * and unique file name.
+       */
+      int dummyfd;
+      dummyfd = mkstemp(maptmp);
+      if (dummyfd >= 0)
+	close(dummyfd);
+    }
+#else /* not HAVE_MKSTEMP */
     mktemp(maptmp);
+#endif /* not HAVE_MKSTEMP */
 
     /* remove existing temps (if any) */
 #ifdef HAVE_DB_SUFFIX

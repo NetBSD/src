@@ -1,7 +1,7 @@
-/*	$NetBSD: mtab.c,v 1.1.1.4 2001/05/13 17:50:32 veego Exp $	*/
+/*	$NetBSD: mtab.c,v 1.1.1.5 2002/11/29 22:59:06 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: mtab.c,v 1.3.2.3 2001/04/14 21:08:25 ezk Exp
+ * Id: mtab.c,v 1.10 2002/02/02 20:59:04 ezk Exp
  *
  */
 
@@ -62,11 +61,11 @@ mnt_free(mntent_t *mp)
   XFREE(mp->mnt_type);
   XFREE(mp->mnt_opts);
 
-#ifdef HAVE_FIELD_MNTENT_T_MNT_TIME
-# ifdef HAVE_FIELD_MNTENT_T_MNT_TIME_STRING
+#ifdef HAVE_MNTENT_T_MNT_TIME
+# ifdef HAVE_MNTENT_T_MNT_TIME_STRING
   XFREE(mp->mnt_time);
-# endif /* HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
-#endif /* HAVE_FIELD_MNTENT_T_MNT_TIME */
+# endif /* HAVE_MNTENT_T_MNT_TIME_STRING */
+#endif /* HAVE_MNTENT_T_MNT_TIME */
 
   XFREE(mp);
 }
@@ -156,22 +155,24 @@ hasmntval(mntent_t *mnt, char *opt)
     if (eq) { /* and had an = after it */
 
       char *endptr = NULL;
-      long int i = strtol(eq,&endptr,0); /* hex and octal allowed ;-) */
+      long int i = strtol(eq, &endptr, 0); /* hex and octal allowed ;-) */
 
-      if ( (! endptr) || /* endptr == NULL means all chars valid */
+      if (!endptr ||
 	  /*
 	   * endptr set means strtol saw a non-digit.  If the
 	   * non-digit is a comma, it's probably the start of the next
 	   * option.  If the comma is the first char though, complain about
 	   * it (foo=,bar is made noticeable by this).
+	   *
+	   * Similar reasoning for '\0' instead of comma, it's the end
+	   * of the string.
 	   */
-	   ((endptr == strchr(eq, ',')) && (endptr != eq))
-	   )
+	   (endptr != eq && (*endptr == ',' || *endptr == '\0')))
 	  return((int) i);
-      /* whatever was after = wasn't a number */
+      /* whatever was after the '=' sign wasn't a number */
       plog(XLOG_MAP, "invalid numeric option in \"%s\": \"%s\"", opt, str);
     } else {
-      /* No argument to option (= was missing) */
+      /* No argument to option ('=' sign was missing) */
       plog(XLOG_MAP, "numeric option to \"%s\" missing", opt);
     }
   }

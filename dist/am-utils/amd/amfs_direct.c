@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_direct.c,v 1.1.1.4 2001/05/13 17:50:11 veego Exp $	*/
+/*	$NetBSD: amfs_direct.c,v 1.1.1.5 2002/11/29 22:58:10 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amfs_direct.c,v 1.3.2.1 2001/01/10 03:23:00 ezk Exp
+ * Id: amfs_direct.c,v 1.14 2002/03/29 20:01:26 ib42 Exp
  *
  */
 
@@ -68,16 +67,18 @@ am_ops amfs_direct_ops =
   amfs_auto_match,
   0,				/* amfs_direct_init */
   amfs_toplvl_mount,
-  0,
   amfs_toplvl_umount,
-  0,
-  amfs_error_lookuppn,
+  amfs_auto_lookup_child,
+  amfs_auto_mount_child,
   amfs_error_readdir,
   amfs_direct_readlink,
-  amfs_toplvl_mounted,
+  amfs_auto_mounted,
   0,				/* amfs_auto_umounted */
   find_amfs_auto_srvr,
-  FS_MKMNT | FS_NOTIMEOUT | FS_BACKGROUND | FS_AMQINFO
+  FS_DIRECT | FS_MKMNT | FS_NOTIMEOUT | FS_BACKGROUND | FS_AMQINFO | FS_AUTOFS,
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_DIRECT_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -95,7 +96,9 @@ amfs_direct_readlink(am_node *mp, int *error_return)
   if (!xp) {
     if (!mp->am_mnt->mf_private)
       amfs_auto_mkcacheref(mp->am_mnt);	/* XXX */
-    xp = amfs_auto_lookuppn(mp, mp->am_path + 1, &rc, VLOOK_CREATE);
+    xp = amfs_auto_lookup_child(mp, mp->am_path + 1, &rc, VLOOK_CREATE);
+    if (xp && rc < 0)
+      xp = amfs_auto_mount_child(xp, &rc);
   }
   if (xp) {
     new_ttl(xp);		/* (7/12/89) from Rein Tollevik */

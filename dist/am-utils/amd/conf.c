@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.1.5 2002/11/29 22:58:13 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: conf.c,v 1.7.2.3 2001/04/14 21:08:21 ezk Exp
+ * Id: conf.c,v 1.13 2002/02/02 20:58:54 ezk Exp
  *
  */
 
@@ -96,6 +95,7 @@ static int gopt_local_domain(const char *val);
 static int gopt_log_file(const char *val);
 static int gopt_log_options(const char *val);
 static int gopt_map_options(const char *val);
+static int gopt_map_reload_interval(const char *val);
 static int gopt_map_type(const char *val);
 static int gopt_mount_type(const char *val);
 static int gopt_pid_file(const char *val);
@@ -154,6 +154,7 @@ static struct _func_map glob_functable[] = {
   {"log_file",			gopt_log_file},
   {"log_options",		gopt_log_options},
   {"map_options",		gopt_map_options},
+  {"map_reload_interval",	gopt_map_reload_interval},
   {"map_type",			gopt_map_type},
   {"mount_type",		gopt_mount_type},
   {"pid_file",			gopt_pid_file},
@@ -546,6 +547,16 @@ static int
 gopt_map_options(const char *val)
 {
   gopt.map_options = strdup((char *)val);
+  return 0;
+}
+
+
+static int
+gopt_map_reload_interval(const char *val)
+{
+  gopt.map_reload_interval = atoi(val);
+  if (gopt.map_reload_interval <= 0)
+    gopt.map_reload_interval = ONE_HOUR;
   return 0;
 }
 

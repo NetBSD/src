@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_irix6.h,v 1.1.1.4 2001/05/13 17:50:18 veego Exp $	*/
+/*	$NetBSD: nfs_prot_irix6.h,v 1.1.1.5 2002/11/29 22:58:34 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_irix6.h,v 1.4.2.4 2001/01/12 23:28:59 ro Exp
+ * Id: nfs_prot_irix6.h,v 1.10 2002/02/02 20:59:00 ezk Exp
  *
  */
 

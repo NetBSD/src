@@ -1,7 +1,7 @@
-/*	$NetBSD: stubs.c,v 1.1.1.4 2001/05/13 17:50:31 veego Exp $	*/
+/*	$NetBSD: stubs.c,v 1.1.1.5 2002/11/29 22:59:02 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: stubs.c,v 1.5.2.2 2001/01/10 03:23:36 ezk Exp
+ * Id: stubs.c,v 1.12 2002/02/02 20:59:03 ezk Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -125,7 +124,22 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     un_fattr.na_mtime = startup;
   }
 
+  if (getcreds(rqstp, &uid, &gid, nfsxprt) < 0) {
+    res.ns_status = NFSERR_STALE;
+    return &res;
+  }
   if (eq_fh(argp, &root)) {
+#if 0
+    /*
+     * XXX: increment mtime of parent directory, causes NFS clients to
+     * invalidate their cache for that directory.
+     * Some NFS clients may need this code.
+     */
+    if (uid != rootfattr.na_uid) {
+      rootfattr.na_mtime.nt_seconds++;
+      rootfattr.na_uid = uid;
+    }
+#endif
     res.ns_status = NFS_OK;
     res.ns_u.ns_attr_u = rootfattr;
   } else if (eq_fh(argp, &slink)) {
@@ -136,19 +150,19 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
      * values cache.  It forces the last-modified time of the symlink to be
      * current.  It is not needed if the O/S has an nfs flag to turn off the
      * symlink-cache at mount time (such as Irix 5.x and 6.x). -Erez.
+     *
+     * Additionally, Linux currently ignores the nt_useconds field,
+     * so we must update the nt_seconds field every time.
      */
-    if (++slinkfattr.na_mtime.nt_useconds == 0)
-      ++slinkfattr.na_mtime.nt_seconds;
+    if (uid != slinkfattr.na_uid) {
+      slinkfattr.na_mtime.nt_seconds++;
+      slinkfattr.na_uid = uid;
+    }
 #endif /* not MNT2_NFS_OPT_SYMTTL */
 
     res.ns_status = NFS_OK;
     res.ns_u.ns_attr_u = slinkfattr;
   } else {
-
-    if (getcreds(rqstp, &uid, &gid, nfsxprt) < 0) {
-      res.ns_status = NFSERR_STALE;
-      return &res;
-    }
     if (gid != hlfs_gid) {
       res.ns_status = NFSERR_STALE;
     } else {
@@ -158,10 +172,8 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 	res.ns_status = NFS_OK;
 	un_fattr.na_fileid = uid;
 	res.ns_u.ns_attr_u = un_fattr;
-#ifdef DEBUG
 	dlog("nfs_getattr: successful search for uid=%ld, gid=%ld",
 	     (long) uid, (long) gid);
-#endif /* DEBUG */
       } else {			/* not found */
 	res.ns_status = NFSERR_STALE;
       }
@@ -212,11 +224,26 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
     return &res;
   }
 
+  if (getcreds(rqstp, &uid, &gid, nfsxprt) < 0) {
+    res.dr_status = NFSERR_NOENT;
+    return &res;
+  }
   if (eq_fh(&argp->da_fhandle, &root)) {
     if (argp->da_name[0] == '.' &&
 	(argp->da_name[1] == '\0' ||
 	 (argp->da_name[1] == '.' &&
 	  argp->da_name[2] == '\0'))) {
+#if 0
+    /*
+     * XXX: increment mtime of parent directory, causes NFS clients to
+     * invalidate their cache for that directory.
+     * Some NFS clients may need this code.
+     */
+      if (uid != rootfattr.na_uid) {
+	rootfattr.na_mtime.nt_seconds++;
+	rootfattr.na_uid = uid;
+      }
+#endif
       res.dr_u.dr_drok_u.drok_fhandle = root;
       res.dr_u.dr_drok_u.drok_attributes = rootfattr;
       res.dr_status = NFS_OK;
@@ -230,9 +257,14 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
        * values cache.  It forces the last-modified time of the symlink to be
        * current.  It is not needed if the O/S has an nfs flag to turn off the
        * symlink-cache at mount time (such as Irix 5.x and 6.x). -Erez.
+       *
+       * Additionally, Linux currently ignores the nt_useconds field,
+       * so we must update the nt_seconds field every time.
        */
-      if (++slinkfattr.na_mtime.nt_useconds == 0)
-	++slinkfattr.na_mtime.nt_seconds;
+      if (uid != slinkfattr.na_uid) {
+	slinkfattr.na_mtime.nt_seconds++;
+	slinkfattr.na_uid = uid;
+      }
 #endif /* not MNT2_NFS_OPT_SYMTTL */
       res.dr_u.dr_drok_u.drok_fhandle = slink;
       res.dr_u.dr_drok_u.drok_attributes = slinkfattr;
@@ -240,7 +272,7 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
       return &res;
     }
 
-    if (getcreds(rqstp, &uid, &gid, nfsxprt) < 0 || gid != hlfs_gid) {
+    if (gid != hlfs_gid) {
       res.dr_status = NFSERR_NOENT;
       return &res;
     }
@@ -259,10 +291,8 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
 	      sizeof(am_nfs_fh) - sizeof(int));
       res.dr_u.dr_drok_u.drok_fhandle = un_fhandle;
       res.dr_status = NFS_OK;
-#ifdef DEBUG
       dlog("nfs_lookup: successful lookup for uid=%ld, gid=%ld: username=%s",
 	   (long) uid, (long) gid, untab[idx].username);
-#endif /* DEBUG */
       return &res;
     }
   } /* end of "if (eq_fh(argp->dir.data, root.data)) {" */
@@ -294,7 +324,7 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     res.rlr_status = NFS_OK;
     if (groupid == hlfs_gid) {
       res.rlr_u.rlr_data_u = DOTSTRING;
-    } else if (!(res.rlr_u.rlr_data_u = path_val = homedir(userid))) {
+    } else if (!(res.rlr_u.rlr_data_u = path_val = homedir(userid, groupid))) {
       /*
        * parent process (fork in homedir()) continues
        * processing, by getting a NULL returned as a
@@ -346,7 +376,6 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   else
     retval = 0;
 
-#ifdef DEBUG
   /*
    * If asked for -D nofork, then must return the value,
    * NOT exit, or else the main hlfsd server exits.
@@ -354,7 +383,6 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
    */
   amuDebugNo(D_FORK)
     return &res;
-#endif /* DEBUG */
 
   exit(retval);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_program.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: amfs_program.c,v 1.1.1.5 2002/11/29 22:58:11 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amfs_program.c,v 1.6.2.1 2001/01/10 03:23:03 ezk Exp
+ * Id: amfs_program.c,v 1.15 2002/03/29 20:01:27 ib42 Exp
  *
  */
 
@@ -56,8 +55,8 @@
 
 /* forward definitions */
 static char *amfs_program_match(am_opts *fo);
-static int amfs_program_fmount(mntfs *mf);
-static int amfs_program_fumount(mntfs *mf);
+static int amfs_program_mount(am_node *am, mntfs *mf);
+static int amfs_program_umount(am_node *am, mntfs *mf);
 static int amfs_program_init(mntfs *mf);
 
 /*
@@ -68,17 +67,19 @@ am_ops amfs_program_ops =
   "program",
   amfs_program_match,
   amfs_program_init,
-  amfs_auto_fmount,
-  amfs_program_fmount,
-  amfs_auto_fumount,
-  amfs_program_fumount,
-  amfs_error_lookuppn,
+  amfs_program_mount,
+  amfs_program_umount,
+  amfs_error_lookup_child,
+  amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* amfs_program_readlink */
   0,				/* amfs_program_mounted */
   0,				/* amfs_program_umounted */
   find_amfs_auto_srvr,
-  FS_BACKGROUND | FS_AMQINFO
+  FS_BACKGROUND | FS_AMQINFO,			/* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_PROGRAM_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -144,7 +145,6 @@ amfs_program_exec(char *info)
   /*
    * Try the exec
    */
-#ifdef DEBUG
   amuDebug(D_FULL) {
     char **cp = xivec;
     plog(XLOG_DEBUG, "executing (un)mount command...");
@@ -153,7 +153,6 @@ amfs_program_exec(char *info)
       cp++;
     }
   }
-#endif /* DEBUG */
 
   if (xivec[0] == 0 || xivec[1] == 0) {
     errno = EINVAL;
@@ -182,14 +181,14 @@ amfs_program_exec(char *info)
 
 
 static int
-amfs_program_fmount(mntfs *mf)
+amfs_program_mount(am_node *am, mntfs *mf)
 {
   return amfs_program_exec(mf->mf_fo->opt_mount);
 }
 
 
 static int
-amfs_program_fumount(mntfs *mf)
+amfs_program_umount(am_node *am, mntfs *mf)
 {
   return amfs_program_exec((char *) mf->mf_private);
 }

@@ -29,7 +29,7 @@ EXTRA_DIST = $(man_MANS)
 
 # dependencies
 $(PROGRAMS): $(LDADD)
-$(OBJECTS):					\
+$(amq_OBJECTS) $(pawd_OBJECTS):			\
 	../config.h				\
 	../aux_conf.h				\
 	$(top_srcdir)/include/am_compat.h	\

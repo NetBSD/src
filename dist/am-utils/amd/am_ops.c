@@ -1,7 +1,7 @@
-/*	$NetBSD: am_ops.c,v 1.1.1.4 2001/05/13 17:50:11 veego Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.1.1.5 2002/11/29 22:58:08 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: am_ops.c,v 1.6.2.3 2001/02/23 01:03:39 ezk Exp
+ * Id: am_ops.c,v 1.14 2002/02/02 20:58:52 ezk Exp
  *
  */
 
@@ -128,12 +127,11 @@ static am_ops *vops[] =
 #endif /* HAVE_FS_UMAPFS */
 
   /*
-   * These 5 should be last, in the order:
+   * These 4 should be last, in the order:
    *	(1) amfs_auto
    *	(2) amfs_direct
    *	(3) amfs_toplvl
-   *	(4) autofs
-   *	(5) amfs_error
+   *	(4) amfs_error
    */
 #ifdef HAVE_AMU_FS_AUTO
   &amfs_auto_ops,		/* Automounter F/S */
@@ -144,9 +142,6 @@ static am_ops *vops[] =
 #ifdef HAVE_AMU_FS_TOPLVL
   &amfs_toplvl_ops,		/* top-level mount F/S */
 #endif /* HAVE_AMU_FS_TOPLVL */
-#ifdef HAVE_FS_AUTOFS
-  &autofs_ops,			/* autofs mount F/S */
-#endif /* HAVE_FS_AUTOFS */
 #ifdef HAVE_AMU_FS_ERROR
   &amfs_error_ops,		/* error F/S */
 #endif /* HAVE_AMU_FS_ERROR */
@@ -442,6 +437,12 @@ ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym, char *map
       fo->opt_remopts = remmergedstr;
     }
   }
+
+  /*
+   * Initialize opt_mount_type to "nfs", if it's not initialized already
+   */
+  if (!fo->opt_mount_type)
+    fo->opt_mount_type = "nfs";
 
   /*
    * Check the filesystem is happy

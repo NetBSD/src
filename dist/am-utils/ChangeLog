@@ -1,8 +1,1330 @@
-2001-05-02  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+2002-06-25  Ion Badulescu  <ion@guppy.limebrokerage.com>
 
-	*******************************************************************
-	*** Released am-utils-6.0.6					***
-	*******************************************************************
+	* Released beta version 6.1b1
+
+2002-06-24  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* include/am_compat.h: better test for struct netconfig
+	(!HAVE_NETCONFIG_H && !HAVE_SYS_NETCONFIG_H)
+
+	* aux/macros/check_nfs_prot_headers.m4: added new header for aix5.1+
+
+	* buildall: fix 'buildall -b' on hpux9 and aix5.1
+
+2002-06-24  Ion Badulescu  <ionut@buggy.badula.org>
+
+	* INSTALL: updated
+
+	* conf/autofs/autofs_solaris_v1.c (autofs_link_mount): compile fix
+	(autofs_link_umount): ditto
+
+	* amd/mntfs.c (init_mntfs): don't use autofs if !amd_use_autofs
+
+2002-06-23  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* conf/autofs/autofs_linux.c: compile fixes for autofs v3
+
+2002-06-23  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* conf/autofs/autofs_solaris_v2_v3.c (autofs_mounted): no
+	expirations needed;
+	(autofs_timeout_mp): likewise
+
+	* conf/autofs/autofs_solaris_v1.c (autofs_mounted): no expirations
+	needed;
+	(autofs_timeout_mp): likewise
+
+	* conf/autofs/autofs_linux.c (autofs_mounted): set the first
+	expiration interval
+
+	* amd/autil.c (am_mounted): call autofs_mounted here, instead of
+	in mf_mounted()
+
+	* amd/amd.h (NEVER): moved here from map.c
+	(autofs_mounted): change argument from mntfs* to am_node*
+
+2002-06-23  Ion Badulescu  <lionut@gonzales.badula.org>
+
+	* conf/autofs/autofs_linux.c (autofs_mounted): set the kernel
+	timeout on the autofs mountpoint to cache_duration (gopt.am_timeo)
+	(autofs_timeout_mp): don't update the ttl if we're going down
+
+	* amd/map.c (timeout_mp): don't call autofs_timeout_mp unless the
+	timeout on that particular am_node has expired
+
+	* conf/autofs/autofs_linux.c (autofs_timeout_mp): really update
+	the ttl, as per the comment (compilers are not very good at
+	translating comments into code...)
+
+	* amd/amfs_auto.c (amfs_auto_lookup_one_mntfs): strdup am_path
+	instead of opt_rfs into opt_fs for autofs, thus avoiding conflicts
+	between link mounts pointing to the same target
+
+2002-06-23  Ion Badulescu  <lionut@gonzales.badula.org>
+
+	* conf/autofs/autofs_linux.c (send_fail, send_ready): new helper
+	functions for sending messages back to the kernel
+	(autofs_expire_one): initial implementation of the kernel-based
+	expiration handler
+	(autofs_handle_expire): call autofs_expire_one()
+	(autofs_handle_expire_multi): ditto
+	(autofs_umount_succeeded): search pending_umounts, send message
+	back to the kernel
+	(autofs_umount_failed): ditto
+	(autofs_mount_succeeded): tell amd core not to expire autofs entries
+	(autofs_timeout_mp): expiration function for autofs filesystems
+	(autofs_timeout_mp_task): helper function for autofs_timeout_mp
+
+	* conf/autofs/autofs_linux.h: new struct autofs_pending_umount for
+	keeping tracking of pending umounts
+	(autofs_fh_t) rename pending to pending_mounts, add pending_umounts
+
+	* conf/autofs/autofs_solaris_v1.c (autofs_timeout_mp): stub
+
+	* conf/autofs/autofs_solaris_v2_v3.c (autofs_timeout_mp): stub
+
+	* amd/map.c (timeout_mp): call autofs_timeout_mp() for autofs
+	filesystems
+
+	* amd/autil.c (mf_mounted): move here the call autofs_mounted()
+	from amfs_auto_mounted().
+
+2002-06-22  Erez Zadok  <ezk@whitestar.dyn.optonline.net>
+
+	* amd/nfs_start.c (mount_automounter): Security fix.  if user sets
+	-D noamq, don't even create listening socket.  Suggestion by Ed
+	Ravin <eravin@panix.com>.
+
+2002-06-22  Ion Badulescu  <lionut@gonzales.badula.org>
+
+	* hlfsd/homedir.c (homedir): use setgid() instead of setegid()
+
+	* ALL: #ifdef cleanups, unify some TLI/socket function prototypes
+
+2002-06-22  Erez Zadok  <ezk@whitestar.dyn.optonline.net>
+
+	* conf/nfs_prot/nfs_prot_netbsd1_4.h: minor port to support
+	na_gid and na_uid.  NetBSD patch from Jun-ichiro itojun Hagino
+	<itojun@iijlab.net>.
+
+	* doc/am-utils.texi (Option): document xlatecookie mount option.
+
+	* libamu/mount_fs.c (compute_nfs_args): support "xlatecookie"
+	NFS mount option.  Patch from Matthias Scheler <tron@zhadum.de>
+	for NetBSD.
+
+2002-06-22  Ion Badulescu  <ionut@edgar.badula.org>
+
+	* conf/autofs/autofs_solaris_v1.h: add FS_MBACKGROUND to
+	AUTOFS_LINK_FS_FLAGS
+
+	* conf/autofs/autofs_solaris_v1.c: convert link mounts to lofs
+	mounts in autofs_link_mount/umount
+
+2002-06-22  Ion Badulescu  <lionut@gonzales.badula.org>
+
+	* configure.in: check for devid inside struct umntrequest
+
+	* conf/autofs/autofs_solaris_v2_v3.c (xdr_umntrequest): handle the
+	new umntrequest structure in v4.
+	(autofs_unmount_2_req): ditto
+
+	* README.autofs: updated for Solaris 2.5/2.5.1
+
+2002-06-22  Erez Zadok  <ezk@whitestar.dyn.optonline.net>
+
+	* configure.in: only define LDAP/Hesiod if both the headers and
+	the libraries exist, and the user didn't explicitly disable those
+	maps.
+
+2002-06-22 Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* doc/am-utils.texi: fix typos.  Can't use ":" in @cindex entries.
+
+2002-06-22  Erez Zadok  <ezk@whitestar.dyn.optonline.net>
+
+	* doc/am-utils.texi, scripts/amd.conf.5, scripts/amd.conf-sample,
+	amd/amd.8, amd/get_args.c (get_args): document amd -A option.
+
+	* amd/get_args.c (get_args): support "amd -A arg" option to
+	override the system's detected architecture.  Patch from George
+	Ross <gdmr@dcs.ed.ac.uk>.
+
+	* amd/info_ldap.c (amu_ldap_rebind): don't use ldap_enable_cache()
+	if the system doesn't have it.
+
+	* configure.in: detect existence of ldap_enable_cache function,
+	because it doesn't exist on Solaris 9's latest ldap libraries. 
+
+	* amd/info_ldap.c: LDAP patches from George Ross
+	<gdmr@dcs.ed.ac.uk>.  Rework of old code, support for wildcards in
+	LDAP queries, and an FD leak fix.
+
+2002-06-22  Ion Badulescu  <lionut@gonzales.badula.org>
+
+	* buildall: use ksh for configure on aix5.1; pass the extra
+	arguments after "--" to configure, not to make
+
+	* Makefile.am: added nfs_prot_aix4_3.h to EXTRA_DIST_CONF
+
+	* conf/mount/mount_aix.c (mount_aix3): if the NFSv3 mount fails
+	with EINVAL and we have MOUNT_TYPE_NFS3_BIS defined, retry the
+	mount with the alternative nfs3_args structure
+
+	* conf/nfs_prot/nfs_prot_aix4_3.h: added alternative nfs3_args
+	structure, similar to that in aix5.1, for a hack that tries to
+	compensate for IBM's brain fart
+
+	* conf/nfs_prot/nfs_prot_aix5_1.h: new nfs_prot header for aix5.1+
+
+	* aux/macros/check_nfs_prot_headers.m4: added new header for aix5.1+
+
+	* BUGS: update for direct mounts on Linux; document the brokenness
+	of /bin/sh on AIX 5.1 and HP-UX 9
+
+	* NEWS: aix5.1 port, aix4.3 workaround
+
+2002-06-22 Erez Zadok <ezk@agora.fsl.cs.sunysb.edu>
+
+	* ltmain.sh: use libtool 1.4d, needed support for newer AIX.
+
+2002-06-21  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* aux/macros/check_autofs_style.m4: enable autofs_v2_v3 for
+	all solaris2.6+, not just for 2.[6-8]
+
+	* conf/autofs/autofs_default.h: disable autofs if configure
+	detects it
+
+2002-06-21  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* aux/macros/with_addon.m4: correct M4 quoting.
+
+	* aux/macros/cache_check_dynamic.m4: correct M4 quoting.
+
+	* bootstrap: show version of autotools being used.  Helps
+	maintainer debugging.
+
+	* configure.in: new proper syntax for libtool and
+	ansi2knr-filtering rules, required by autoconf 1.53 and higher.
+
+2002-06-21  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* aux/GNUmakefile: new search paths for "update" target.
+
+	* config.guess, config.sub, doc/texinfo.tex, ltmain: updates from
+	the latest GNU distributions.
+
+2002-06-11  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* amd/amfs_auto.c (amfs_auto_lookup_child): split part of this
+	function into the new amfs_auto_lookup_one_child function; return
+	null if all ivecs failed to match
+
+2002-05-30  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* config.guess.long: support SuSE version names in long
+	config.guess format.
+
+2002-05-01  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* scripts/lostaltmail.in (vrfy_user): unlink temp files if too
+	small.
+
+2002-04-07  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* hlfsd/hlfsd.c (main): compile fix for --enable-debug=no
+
+2002-03-29  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* README.autofs: solaris 2.5/2.5.1 info, other minor changes
+
+	* doc/am-utils.texi (History): document solaris 2.5+ support
+
+	* include/am_utils.h: new member in struct mntfs: mfs_real_mount;
+	autofs_fs_flags becomes conditional of HAVE_AUTOFS_FS; new
+	prototype for umount_fs2(); extra argument for UMOUNT_FS()
+
+	* hlfsd/hlfsd.c: use the new mount_fs2() and UMOUNT_FS()
+
+	* libamu/mount_fs.c (mount_fs): wrapper around the new mount_fs2()
+	function; swap mntdir and real_mntdir as necessary for solaris 2.5
+	autofs support
+
+	* conf/umount/umount_default.c (umount_fs2): swap mntdir and
+	real_mntdir as necessary for solaris 2.5 autofs support
+
+	* conf/umount/umount_*.c (umount_fs): wrapper around the new
+	umount_fs2() function
+	(umount_fs2): new function which takes the real mountpoint as an
+	extra argument
+
+	* conf/nfs_prot/nfs_prot_sunos5_5.h: allow autofs support to be
+	compiled in
+
+	* conf/autofs/autofs_solaris_v1.h (autofs_strdup_space_hack): new
+	function that appends a space at the end of a string (the famous
+	"Autofs Space Protocol")
+
+	* conf/autofs/autofs_solaris_v1.c: almost complete reimplementation
+
+	* conf/autofs/autofs_*.h (AUTOFS_*_FS_FLAGS): add
+	system-specific definitions for these macros
+
+	* conf/autofs/autofs_linux.c (create_autofs_service): remove hacks
+	which are now handled properly by more generic code
+	(autofs_link_umount): complain if umount_fs() fails, rmdir the
+	mountpoint on success
+	(autofs_umount_succeeded): remove the rmdirs() code, now handled
+	by generic code
+	(autofs_mount_succeeded): ditto
+
+	* amd/nfs_start.c (checkup): implement it as an emtpy stub if
+	DEBUG is not defined
+	(run_rpc): call autofs_add_fdset() after umount_exported() to
+	avoid passing invalid file descriptors to select(); use plog()
+	instead of perror()
+
+	* amd/mntfs.c (init_mntfs): initialize mf_real_mount from mp
+	(uninit_mntfs): free mf_real_mount
+
+	* amd/autil.c (am_unmounted): don't remove the mount point if a
+	remount is pending, also don't make the removal conditional on not
+	being an autofs mount point
+
+	* amd/amfs_nfsx.c (amfs_nfsx_remount): call mkdirs() on
+	mf->mf_real_mount instead of mf->mf_mount
+
+	* amd/amfs_nfsl.c, amd/amfs_nfsx.c: (amfs_nfsl_umounted): call
+	rmdirs() on mf->mf_real_mount instead of mf->mf_mount
+
+	* amd/amfs_host.c (make_mntpt): change the third argument to be
+	the mountpoint, not the entire mntfs structure
+	(do_mount): takes real_mntdir as an extra argument
+
+	* amd/amfs_auto.c (amfs_auto_bgmount): move the creation of the
+	mountpoint here from try_mount(), otherwise the change to mf_flags
+	is lost for background mounts; remove the mountpoint if we created
+	it and the mount fails
+	(amfs_auto_lookup_mntfs): re-initialize mf->mf_real_mount using
+	autofs_strdup_space_hack() if NEED_AUTOFS_SPACE_HACK is defined
+
+	* amfs_*.c, ops_*.c: initialize autofs_fs_flags using the
+	AUTOFS_*_FS_FLAGS macro defined in the system-specific autofs
+	header; UMOUNT_FS() takes mf->mf_real_mount as an extra argument;
+	mount_fs() becomes mount_fs2() and takes mf->mf_real_mount as an
+	extra argument
+
+	* amd/amd.h, amd/ops_nfs.c, amd/amfs_host.c: mount_nfs_fh takes
+	the real mountpoint as an additional argument
+
+2002-03-28  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* amd/ops_cdfs.c (mount_cdfs): correctly interpret error return
+	values back from mount_fs().  Return correct error number from
+	this function.
+
+	* conf/mount/mount_linux.c (do_mount_linux): cleanup loop mount
+	cruft from this function, moved elsewhere.
+	(mount_linux): prepare for loop-device mounts of ISO images.
+
+2002-03-28  Ion Badulescu  <ionut@buggy.badula.org>
+
+	* libamu/Makefile.am (EXTRA_DIST): added strerror.c
+
+	* libamu/strerror.c: strerror() implementation for systems lacking it
+
+	* doc/am-utils.texi (History): rewrote the history :) about autofs
+	support
+
+	* conf/autofs/autofs_solaris_v2_v3.c: updated copyright;
+	(autofs_unmount_2_req): minor cleanup
+	(create_autofs_service): print log message
+	(destroy_autofs_service): ditto
+
+	* conf/autofs/autofs_linux.c: updated copyright
+
+	* amd/nfs_start.c (mount_automounter): move the debug message into
+	create_autofs_service()
+
+	* amd/amd.c (main): call destroy_autofs_service() before
+	going_down(), not after
+
+	* configure.in: added strerror to AC_CHECK_FUNCS(); disable ldap
+	if the ldap headers are not found
+
+2002-03-28  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* amd/info_ldap.c: patch from "Sebastien Bahloul"
+	<sebastien.bahloul@medasys.org> to fix a simple initialization bug
+	and change "HE" to HE_ENT so as to compile on HPUX.
+
+2002-02-26  Erez Zadok  <ezk@t3.fsl.cs.sunysb.edu>
+
+	* conf/nfs_prot/nfs_prot_freebsd3.h (na_uid): freebsd4.5 uses nfs
+	atttributes field named "uid".  So #define na_uid to it.
+
+2002-02-12  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* scripts/lostaltmail.in: don't verify user if -noverify option
+	was turned on.  fix comment typo.
+
+2002-02-11  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* amd/Makefile.am (TESTS): enable one test script, test1.sh.
+
+	* amd/test1.sh: re-commit simple test script.
+
+2002-02-11  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* Released snapshot 6.1a5
+
+	* NEWS: Solaris autofs readdir() support, Linux autofs sublink fix
+
+	* README: require newer auto-tools, update mailing list address
+
+	* README.autofs: major update
+
+	* configure.in: version changed to 6.1a5
+
+2002-02-11  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* conf/autofs/autofs_linux.c (autofs_link_mount): don't do a
+	stat() on the am_link if called from the parent amd, to prevent
+	deadlocks
+
+	* amd/autil.c (am_unmounted): call amfs_link_ops.umount_fs if the
+	fstype is not link but we have a sublink (Linux autofs needs this)
+	(am_mounted): call amfs_link_ops.mount_fs if the fstype is not
+	link but we have a sublink (Linux autofs needs this)
+
+	* amd/amfs_auto.c (amfs_auto_bgmount): print the real mountpoint,
+	not the amd entry point
+
+2002-02-09  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* conf/autofs/autofs_solaris_v2_v3.c (amd_rddirres): new custom
+	structure for returning the results from readdir_2()
+	(xdr_amd_putrddirres): renamed from xdr_autofs_putrddirres,
+	changed to process our internal format (which is essentially the
+	NFS readdir format)
+	(xdr_autofs_getrddirres): not needed, deleted
+	(xdr_amd_rddirres): renamed from xdr_autofs_rddirres, other
+	changes to handle amd_rddirres instead of autofs_rddirres
+	(autofs_lookup_2_req): return AUTOFS_NONE instead of
+	AUTOFS_MOUNT_RQ, to prevent mount storms during ls -F
+	(autofs_readdir_2_req): implemented
+	(autofs_readdir_2_free): not needed, deleted
+	(autofs_program_2): changes from autofs_rddirres to amd_rddirres
+	(autofs_get_fh): changed initialization of the fh->map member, it
+	now gets the mountpoint path because it makes it easier to
+	implement readdir
+	(autofs_release_fh): put #ifdef HAVE_AUTOFS_ARGS_T_ADDR around
+	code touching fh->addr
+	(destroy_autofs_service): new function, deregister the autofs
+	service with the portmapper on exit
+
+	* conf/autofs/autofs_linux.c (autofs_handle_missing): update
+	statistics
+	(destroy_autofs_service): new stub
+
+	* amd/mapc.c (mapc_find): fixed indentation
+
+	* amd/map.c (find_ap_recursive): renamed from find_ap2(), made
+	static
+
+	* amd/amd.h: removed prototype for find_ap2(), added prototype for
+	destroy_autofs_service()
+
+	* amd/amd.c (main): call destroy_autofs_service() before going
+	down
+
+2002-02-07  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* aux/macros/check_field.m4: need also a new version of
+	AC_CHECK_MEMBERS (plural).
+
+2002-02-06  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* aux/macros/check_field.m4: include a fixed version of
+	AC_CHECK_MEMBER.  g/cc will fail to check a member if the .member
+	is itself a data structure, because you cannot compare, in C, a
+	data structure against NULL; you can compare a native data type
+	(int, char) or a pointer.  Solution: do what I did in my original
+	member checking macro: try to take the address of the member.  You
+	can always take the address of anything.
+
+2002-01-31  Erez Zadok  <ezk@localhost.localdomain>
+
+	* remove old '%W%' SCCS IDs from all sources.
+
+2002-01-21  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* conf/mount/mount_linux.c (mount_linux): fix breakage introduced
+	by the loop device mount support. Linux mount takes a real string
+	as the last argument, unless the mount type is NFS, NCP, or SMB.
+
+2002-01-20  Erez Zadok  <ezk@localhost.localdomain>
+
+	* hlfsd/hlfsd.h (HLFSD_VERSION): up version of hlfsd to 1.2,
+	because we made some important changes.
+
+2002-01-20  Ion Badulescu  <lionut@gonzales.badula.org>
+
+	* include/am_utils.h (D_ALL): do not include D_MTAB and D_HRTIME
+	by default
+
+	* NEWS: document latest changes
+
+	* amd/map.c (unmount_mp): same fix as for hlfsd, update the
+	seconds field in mtime because Linux ignores the useconds field
+
+	* hlfsd/homedir.c: made some global vars static
+	(plt_init): remove all trailing '/' chars from root's home;
+	use root's home, not the username (silly bugfix)
+
+2002-01-20  Ion Badulescu  <lionut@gonzales.badula.org>
+
+	* hlfsd/homedir.c (homedir): don't special case uid 0 as having /
+	as home; instead use the root account's home
+	(plt_init): properly initialize root_home from the root account's
+	home directory, or as "" if root doesn't exist
+	(plt_reset): free root_home
+
+2002-01-20  Erez Zadok  <ezk@localhost.localdomain>
+
+	* hlfsd/stubs.c (nfsproc_{lookup,getattr}_2_svc): non-SYMTTL code.
+	Increment seconds, not microseconds (which are ignored by NFS).
+	Set symlink owner to euid.
+
+	* hlfsd/homedir.c (homedir): pass gid to this function, so we can
+	also change the effective GID of the process writing to the user's
+	home dir, as well as the group of the hlfsd symlink.
+	(homedir): run setegid in the right places.
+
+2002-01-15  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* scripts/redhat-ctl-amd.in: refer to @sbindir@ not
+	${prefix}/sbin.
+
+	* scripts/ctl-{amd,hlfsd}.in: refer to @sysconfdir@ not
+	${prefix}/etc.  Bug report from "A Braunsdorf"
+	<ab@eas.purdue.edu>.
+
+2002-01-13  Erez Zadok  <ezk@localhost.localdomain>
+
+	* configure.in: only check for clock_gettime if --enable-debug was
+	used.
+
+	* aux/macros/opt_debug.m4: define a cache variable to record value
+	of debug option used.
+
+	* libamu/xutil.c (show_time_host_and_name): do not use
+	clock_gettime unless debugging was compiled in.  This way, if
+	debugging is not compiled, we don't bother linking with librt,
+	libpthread, and a whole lot of other libraries that aren't that
+	necessary (esp. on Linux).
+
+2002-01-12  Erez Zadok  <ezk@wavy.dyn.optonline.net>
+
+	* doc/am-utils.texi (opts Option): document loop option.
+
+	* include/am_utils.h: each mounted file system (mntfs) should
+	optionally store the loop device used in the field mf_loopdev.
+
+	* conf/nfs_prot/nfs_prot_linux.h: define HAVE_LOOP_DEVICE and some
+	loop function extern definitions.  For now this code is here
+	because we only support loop devices on Linux.
+
+	* conf/mount/mount_linux.c: recognize "loop" as a valid iso9660
+	mount option.
+	(parse_opts): when skipping over unknown mount options, skip over
+	"loop" (since it was given in amd map entry), but not over
+	loop=/dev/loopX, because the latter will go into /etc/mtab.
+	(do_mount_linux): override actual cdfs mounted  device name
+	because with loop devices you don't mount the .iso file directly,
+	but the /dev/loopX device that was setup for it.
+	(show_loop, is_loop_device, find_unused_loop_device,
+	setup_loop_device, delete_loop_device): support code for loop
+	devices.
+
+	* amd/ops_cdfs.c (mount_cdfs): pass loop device name to function.
+	setup loop device before isofs mount, if "loop" option was given,
+	before actual mount(2).
+	(cdfs_mount): pass loopdev name to mount_cdfs().
+	(cdfs_umount): delete/unset loop device after a successful
+	unmount, if a loop device was used.
+
+	* amd/mntfs.c (init_mntfs): initialize mf_loopdev to NULL.
+
+	* include/am_compat.h: If loop device (header file) exists, define
+	mount table option MNTTTAB_OPT_LOOP.
+
+	* conf/nfs_prot/nfs_prot_linux.h: hack: define HAVE_LOOP_DEVICE
+	here until we have a better way to detect /dev/loop devices.
+
+	* include/am_defs.h: include <linux/loop.h> if it exists.  Define
+	LARGEFILE support macros, possibly needed for loop devices.
+	Redefine dev_t apropriately for loop devices.
+
+	* configure.in: check for <linux/loop.h>.
+
+2002-01-10  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* conf/mount/mount_linux.c (mount_linux): tcp _must_ have a timeo
+	parameter 2 orders of magnitude larger than udp (patch from Trond
+	Myklebust)
+
+2002-01-09  Erez Zadok  <ezk@localhost.localdomain>
+
+	* aux/macros/linux_headers.m4: properly [quote] a long string in
+	m4 and use AC_MSG_WARN.
+
+	* ALL: put /* comments */ on #else/#endif lines everywhere.
+
+	* configure.in, aux/macros/with_addon.m4: due to limitation of
+	AC_HELP_STRING, pass 2nd arg to AMU_WITH_ADDON, listing name of
+	package for help string.
+
+	* doc/am-utils.texi (FSinfo): fixed various texinfo errors in the
+	FSinfo section of the manual.
+	(map_reload_interval Parameter): document new amd.conf global
+	parameter.
+
+	* scripts/amd.conf.5 document new global option
+	map_reload_interval.  Sort entries for nfs_vers and nfs_proto
+	alphabetically.
+
+	* amd/nfs_start.c (do_select): increment do_mapc_reload's value by
+	global map_reload_interval value, not by fixed ONE_HOUR.
+
+	* amd/amd.c (main): increment do_mapc_reload's value by global
+	map_reload_interval value, not by fixed ONE_HOUR.
+
+	* scripts/amd.conf-sample (map_reload_interval): usage example
+
+	* amd/amd.c (init_global_options): initialize map_reload_interval
+	to 3600 seconds.
+
+	* amd/conf.c (gopt_map_reload_interval): support a new global
+	amd.conf option map_reload_interval, to determine how often (in
+	seconds) Amd should check if the map source has changed and then
+	reload it it.  This value was hard-coded to one hour, now it's the
+	default if not otherwise specified.
+
+	* doc/am-utils.texi (plock Parameter): document plock=yes option
+	as using mlockall(2) if found.
+
+	* scripts/amd.conf.5: document -S option as using mlockall(2) if
+	found.
+
+	* include/am_defs.h: include <sys/mman.h> if it exists.
+
+	* configure.in: check for mlockall() function.  Check for
+	sys/mman.h.
+
+	* amd/amd.c (main): support mlockall() on systems that have it and
+	don't have plock(3) for plock=yes.  On systems that have both,
+	will try plock() first and then mlockall(), until one of them (if
+	any) succeeds.
+
+2002-01-09  Erez Zadok  <ezk@whitestar.dyn.optonline.net>
+
+	* aux/macros/opt_debug.m4, opt_cppflags.m4, opt_amu_cflags.m4,
+	with_addon.m4 (ac_upcase): fix help string formatting using
+	AC_HELP_STRING.
+
+	* amd/test1.sh: simple test script for "make check".  Runs "amd
+	-v".
+
+	* amd/Makefile.am (TESTS): add one simple test script, running
+	"amd -v" and checking its return value.  More tests can be added.
+
+	* aux/macros/linux_headers.m4: use AC_MSG_WARN directly.
+
+	* aux/macros/*.m4: avoid the cumbersome "changequote" M4 command.
+	Instead, list bracketed regexp patterns in [[double brackets]].
+
+	* aux/macros/header_templates.m4: remove all unnecessary
+	HAVE_FIELD_* definitions, now that we're using autoconf's new
+	AC_CHECK_MEMBERS.
+
+	* aux/macros/field_mntent_t_mnt_time_string.m4: don't call
+
+	* configure.in: use new syntax for AMU_CHECK_FIELD
+
+	* aux/macros/check_field.m4: use new and simpler macro
+	AC_CHECK_MEMBERS.  Change all sources to use HAVE_aggregate.member
+	instead of HAVE_FIELD_aggregate.member.
+
+	* aux/amdgrep: simple utility script to egrep the am-utils sources
+	for any pattern.
+
+	* aux/macros/{check_mnttab_style.m4, check_mount_style.m4,
+	check_umount_style.m4, check_network_transport_type.m4}: use newer
+	AC_LIBOBJ macros instead of modifying $LIBOBJS directly
+
+	* aux/macros/func_bad_memcmp.m4: redefine to use native
+	AC_FUNC_MEMCMP, and then define HAVE_BAD_MEMCMP as needed.
+
+	* fsinfo/fsi_gram.y, amd/conf_parse.y: indent #pragma command so
+	pre-ANSI C compilers will ignore it.
+
+	* conf/autofs/autofs_linux.c (autofs_link_mount): call s/getpgrp()
+	correctly depending on whether it takes a void or a 0.
+
+	* configure.in: check if s/getpgrp() takes void or a 0.
+
+2002-01-08  Erez Zadok  <ezk@whitestar.dyn.optonline.net>
+
+	* configure.in: use the newer AC_CONFIG_LINKS instead of
+	AC_LINK_FILES.
+
+	* aux/macros/check_autofs_style.m4, check_checkmount_style.m4,
+	check_mnttab_style.m4, check_mount_style.m4,
+	check_network_transport_type.m4, check_umount_style.m4,
+	check_nfs_prot_headers.m4: removed backward compatible code for
+	pre-autoconf-2.14.
+
+2002-01-07  Erez Zadok  <ezk@whitestar.dyn.optonline.net>
+
+	* doc/Makefile.am: define @SET_MAKE@ for AC_PROG_MAKE_SET macro, since
+	this Makefile could explicitly chdir to other directories and run
+	make there.
+	(install-ps): use ${MAKE} with ${MFLAGS}.
+
+	* Makefile.am (EXTRA_DIST_AUX): distribute new package_*.m4 files.
+	Define @SET_MAKE@ for AC_PROG_MAKE_SET macro, since this Makefile
+	could explicitly chdir to other directories and run make there.
+	(install-snapshot): use ${MAKE} ${MFLAGS}, not hardcoded "make".
+
+	* configure.in: call AC_PROG_MAKE_SET to check if make program
+	defines $MAKE variable.
+
+	* amd/get_args.c (get_version_string): use new PACKAGE_* macros
+	and also report the bug-reporting address.
+
+	* aux/macros/package_{name,version}.m4, header_templates.m4: using
+	new PACKAGE_{NAME,VERSION,BUGREPORT} macros.
+
+	* aux/macros/name_bugreport.m4: simple macro to print out the
+	bug-reporting address which was configured in AC_INIT.
+
+	* bootstrap: remove new autoconf messages about misuse of
+	m4_patsubst and m4_regexp (internal GNU M4 macros).
+
+	* configure.in: remove old comment above AC_OUTPUT.
+	Use AC_CONFIG_FILES and AC_OUTPUT separately.
+	Fix AC_REVISION use.
+	Add AC_COPYRIGHT.
+	Use new style for AC_INIT, listing package name, version, and
+	bug-reporting address.
+	Call new AMU_PACKAGE_* macros.
+
+	* updated copyright year to 2002 on all files
+
+	* configure.in: using newly renamed am-utils macros (AMU_*)
+
+	* aux/macros/*.m4: renamed ALL am-utils specific macros so they
+	start with AMU_*, not AC_*.  That way it is easier to distinguish
+	between macros that come with am-utils and those that are part of
+	Autoconf or Automake.  It helps to identify those am-utils macros
+	that can be removed once there is generic support for them in a
+	future version of Autoconf.
+
+	* bootstrap: run automake --copy
+	remove autom4te.cache dir before rerunning autoconf
+
+2001-12-13  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* scripts/amd.conf.5: correct title to section 5, not 8.  Correct
+	reversed meaning of nfs_proto and nfs_vers parameters.  Typos
+	reported by Peter Breitenlohner <peb@mppmu.mpg.de>.
+
+2001-12-02  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* scripts/ctl-amd.in: run "test" or "[" in front of -x/-f
+
+	* scripts/ctl-hlfsd.in: run "test" or "[" in front of -x/-f
+
+2001-12-02  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* hlfsd/homedir.c (plt_print): fix typo (s/plot/plog/) in
+	non-mkstemp code
+
+	* scripts/ctl-amd.in: touch/remove /var/lock/subsys/amd to make RH
+	happy
+
+	* scripts/ctl-hlfsd.in: ditto (for hlfsd)
+
+	* conf/mtab/mtab_file.c (rewrite_mtab): fchmod(644) the file we
+	get from mkstemp(), otherwise samba becomes very unhappy (sigsegv)
+
+	* conf/mtab/mtab_mach3.c (rewrite_mtab): ditto
+
+2001-11-29  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* tasks: updated
+
+	* NEWS: document the fixed autofs fd leak
+
+	* amq/amq.8: better document the -f option
+
+2001-11-29  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* libamu/mount_fs.c (mnt_flags): same this as for nolock option
+	handling, do for maxgrps.
+
+2001-11-29  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* conf/autofs/autofs_linux.c (hash_init): determine the max number
+	of fd's at runtime, use it to dynamically scale the hash and list
+	arrays
+	(autofs_get_fh): sanity check, don't allow a pipe() fd greater
+	than autofs_max_fds
+	(autofs_release_fh): close our end of the pipe here (no clue why
+	or when it got commented out)
+	(autofs_mounted): set kernelfd to -1 after closing it
+
+2001-11-28  Philippe Troin  <phil@fifi.org>
+
+	* libamu/mount_fs.c (mnt_flags): Drop nolock from generic mount
+	opts.
+	(compute_nfs_args): Added nolock handling.
+	Adapted from an original patch from Avery Pennarun <apenwarr@nit.ca>.
+
+2001-11-27  Erez Zadok  <ezk@a-hpux11i.fsl.cs.sunysb.edu>
+
+	* ported to ia64-hp-hpux11.20 using HP's ANSI/C compiler.
+	Couldn't use bison/flex because of 32-bit vs. 64-bit binaries
+	issues.  Had to use HP's own yacc/lex.
+
+2001-11-26  Erez Zadok  <ezk@a-hpux11i.fsl.cs.sunysb.edu>
+
+	* */Makefile.am: don't use $(OBJECTS) directly because it is no
+	longer automatically defined now that Automake has automatic
+	dependency tracking (which I turn off).  Instead, hard-code
+	minimal dependencies on am-utils' header files to depend on
+	PROG_OBJECTS (where PROG is the program name being built).  This
+	was discovered by using HP's non-GNU make program.
+
+	* amd/nfs_start.c (checkup): cast getpagesize() return val to
+	long, to avoid conflicts in division of a long by an int (on
+	hpux11i, with their ANSI/C compiler).
+
+ 	* INSTALL, doc/am-utils.texi: port updates
+
+	* minor new ports: ia64-hp-hpux11.20, i386-unknown-freebsd5.0,
+	i386-unknown-freebsd4.4, i386-pc-linux-rh7.2,
+	ia64-unknown-linux-rh7.1.
+
+	* include/am_defs.h: actually declare extern definition for
+	xdr_callmsg() if it doesn't already exist.
+
+	* aux/macros/header_templates.m4: declare template for
+	HAVE_EXTERN_XDR_CALLMSG.
+
+	* configure.in: check for extern definition for xdr_callmsg()
+	because hpux11 has that function but a bad <rpc/xdr.h> header file
+	that doesn't define it in the right place.
+
+	* libamu/mount_fs.c (print_nfs_args): cast ->rdev to u_long b/c
+	on hpux11 its type is dev_t.
+
+	* conf/nfs_prot/nfs_prot_hpux11.h: don't support autofs on hpux11
+	yet.
+
+2001-11-16  Erez Zadok  <ezk@fsl-gw.fsl.cs.sunysb.edu>
+
+	* buildall (Usage): separate $cnf_flags and $extra_cnf_flags due
+	to /bin/sh limitations.
+
+	* bootstrap (cmd): turn back on --ignore-deps (this Automake may
+	have problems)
+
+	* libamu/xutil.c: remove __attribute__ format_arg statement for 
+	expand_error() because this function, although taking a
+	printf-like string, does not use it in a printf function; it only
+	expands a non-printf amd-special syntax %m.
+
+2001-11-14  Erez Zadok  <ezk@fsl-gw.fsl.cs.sunysb.edu>
+
+	* conf/nfs_prot/nfs_prot_linux.h: define KERNEL_VERSION macro
+	before using it because older Linux systems don't define this
+	(e.g., Red Hat 4.2)
+
+2001-11-13  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* configure.in: convert to using autoconfig 2.52.  Use new macros.
+	AC_MSG_NOTICE for messages; AH_TOP and AH_BOTTOM to top and bottom
+	parts of autogenerated config.h.in; increase autoconf
+	pre-requisite to version 2.50; use AC_DISABLE_SHARED not
+	AM_DISABLE_SHARED.
+
+	* aux/macros/cache_check_dynamic.m4: finally I can use the new
+	$ECHO_N syntax in macros instead of $ac_n, since I'm using a new
+	autoconf.  Isn't it nice to be such forward looking and having
+	placed a comment "XXX: use the next line for autoconf-2.14 and
+	newer"... :-)
+
+	* aux/macros/save_state.m4: highlight message with ***'s
+
+	* aux/macros/host_macros.m4: use proper M4 quoting ([], not "")
+
+	* config.{guess,sub}: upated from latest prep ftp distributions
+	
+	* depcomp, missing, mkinstalldirs: upated from latest Automake 1.5
+
+	* ltmain.sh: updated from latest Libtool 1.4.2
+	
+	* bootstrap: finally, new autoconf doesn't print silly "AC_TRY_RUN
+	called without default to allow cross compiling" warnings.  And,
+	it only took like 3+ years to fix this.  But, now it has anoter,
+	albeit less annoying warning (which the manual says to ignore):
+	"AC_PROG_LEX invoked multiple times".
+	When autoheader is run, don't treat the "all clear" message
+	"config.h.in is update" as an error.
+
+	* ltconfig: removed. not needed with latest version of libtool
+
+	* aux/macros/header_templates.m4: replaces acconfig.h and defines
+	all CPP macros we use in this package, including their
+	accompanying C /* comments */.
+
+	* acconfig.h: removed. replaced by new autoconf system to generate
+	header templates using AH_TEMPLATE macros and such.
+
+	* aux/macros/msg.m4: removed.  Replaced with new macro
+	AC_MSG_NOTICE 
+
+	* Makefile.am (EXTRA_DIST_AUX): remove aux/macros/msg.m4.  Add
+	aux/macros/header_templates.m4
+
+	* configure.in: early, in host_macros.m4, I'm renaming silly linux
+	$host_os names such as linux-gnu and lignux to plain "linux".
+	Alas, RMS finally had his way and libtool will NOT recognize
+	"linux" as a valid system, only "linux-gnu".  Sigh.  Rich, I know
+	you're responsible to Linux's fame.  Kudos to you and your
+	cohorts.  But please don't force the rest of us to use those ugly
+	or long names.  Solution: temporarily name $host_os to "linux-gnu"
+	before calling the AC_PROG_LIBTOOL macro, then name it back to
+	"linux".  (That way I don't have to maintain my own version of
+	ltmain.sh.
+
+	* buildall: force running configure -C (to create and use a local
+	config.cache file).  New default behavior for autoconf is NOT to
+	use cache files.  Yeah, that's gonna fly real well with am-utils,
+	with its 700+ automatic tests.
+
+	* conf/mtab/mtab_mach3.c (rewrite_mtab): use mkstemp instead of
+	mktemp, if the former is available.
+
+	* conf/mtab/mtab_file.c (rewrite_mtab): use mkstemp instead of
+	mktemp, if the former is available.
+
+	* mk-amd-map/mk-amd-map.c (main): use mkstemp instead of mktemp,
+	if the former is available.
+
+	* aux/macros/check_nfs_socket_connection.m4: AC_DEFINE calls must
+	be on a separate line, as per new Autoconf manual, to avoid some
+	Bourne Shell syntactical bizarreness.
+
+2001-11-13  Erez Zadok  <ezk@a-rh71i.fsl.cs.suunysb.edu>
+
+	* amd/amfs_auto.c (amfs_auto_readdir_browsable): cast to u_long,
+	for IA64 Linux.
+
+2001-11-12  Ion Badulescu  <ionut@buggy.badula.org>
+
+	* libamu/mtab.c (hasmntval): strtol can return a non-NULL pointer
+	pointing to '\0' on success, so we need to allow for it. This
+	fixes the problem with rejecting numerical mount options if they
+	are the last option in the string.
+
+	* configure.in: increased library patchlevel
+
+	* NEWS: document the parsing bug
+
+2001-10-29  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* configure.in: bumped version up to 6.1a5-pre
+
+	* NEWS: fixed speeling mistaike
+
+2001-10-29  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* released snapshot am-utils-6.1a4
+
+2001-10-26  Ion Badulescu  <ionut@moisil.badula.org>
+
+	These changes fix autofs support for sublinks. While it is not
+	perfect by any means and is hardly better than non-autofs, at
+	least it works.
+
+	* conf/autofs/autofs_solaris_v2_v3.c (autofs_lookup_2_req): don't
+	reply if the mount is in progress
+	(autofs_mount_succeeded): handle both delayed lookups and mounts
+	(autofs_mount_failed): ditto
+
+	* amd/amfs_auto.c (amfs_auto_lookup_mntfs): don't dispose of the
+	original opt_fs if we have a sublink
+
+2001-10-23  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* amd/amfs_auto.c (amfs_auto_lookup_mntfs): fixed silly typo (mf
+	instead of new_mf) which was causing null pointer error when
+	sublinks were being used
+
+2001-10-22  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* README.autofs: updated
+
+	* NEWS: updated
+
+	* INSTALL: updated
+
+	* AUTHORS: added myself
+
+	* doc/am-utils.texi: updated
+
+	* conf/autofs/autofs_solaris_v2_v3.c (xdr_autofs_rddirargs): use
+	xdr_u_int() and cast things to (int) to appease Solaris 2.7 compile
+	(autofs_readdir_2_req): cast req->rda_offset to (int), same as
+	above
+
+2001-10-22  Ion Badulescu  <ionut@moisil.badula.org>
+
+	Autofs direct mounts have been verified to work on Solaris2.[67].
+
+	* conf/autofs/autofs_solaris_v2_v3.c (autofs_lookup_2_req):
+	retrieve the uid and gid from the lookup request
+	(autofs_mount_2_req): skip the first char in the name (it's a
+	leading '/') if this is a direct mount
+
+	* amd/amfs_direct.c (amfs_direct_ops): use amfs_auto_lookup_child
+	and amfs_auto_mount_child for amfs_direct's methods
+
+	* amd/amfs_auto.c (amfs_auto_lookup_child): don't leak an am_node
+	if the mntfs lookup fails
+
+2001-10-21  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* include/am_utils.h (AMF_REMOUNT): new flag, marks the node as
+	pending a remount
+	(mntfs): new member mf_fsflags, holds a copy of the filesystem's
+	fs_flags
+	(am_ops): new member autofs_fs_flags, holds the filesystem's flags
+	when mounted onto an autofs node; fs_flags renamed to nfs_fs_flags
+
+	* conf/autofs/autofs_linux.c (create_autofs_service): turn on
+	FS_MKMNT for amfs_auto and FS_MBACKGROUND for amfs_link
+	(autofs_umount_succeeded): don't rmdir the mountpoint if a remount
+	is needed [lest the access that triggered the remount will fail]
+
+	* amd/mntfs.c (init_mntfs): copy the filesystem's nfs_fs_flags
+	into mf_fsflags on initialization
+
+	* amd/autil.c (am_unmounted): start the remounting right away if
+	the node is marked as needing a remount [fixes the Linux autofs
+	deadlock when mount/unmount collide]
+
+	* amd/amfs_auto.c (amfs_auto_lookup_node): mark the node as
+	needing a remount if a mount request comes in while we're
+	unmounting it
+	(amfs_auto_lookup_mntfs): copy the filesystem's autofs_fs_flags
+	into mf_fsflags if this is an autofs node
+
+	* amd/amfs_*.c, amd/ops_*.c: added initialization for the new
+	autofs_fs_flags member of am_ops
+
+2001-10-20  Ion Badulescu  <ionut@moisil.badula.org>
+
+	With these changes, Solaris 2.[67] autofs support is finally
+	functional!
+
+	* conf/autofs/autofs_solaris_v2_v3.c (autofs_readdir_2_req): stub
+	(autofs_readdir_2_free, xdr_autofs_rddirargs, xdr_autofs_putrddirres,
+	xdr_autofs_getrddirres, xdr_autofs_rddirres): new functions
+	(autofs_lookup_2_req): do an actual lookup here, and tell the
+	kernel to create a symlink if necessary
+	(autofs_mount_2_req): no need to am_autofs_data
+	(autofs_program_2): enable AUTOFS_READDIR
+	(autofs_link_mount): no code needed here
+	(autofs_link_umount): return success
+	(autofs_mount_succeeded): lstat real mount points; don't mark
+	symlinks as NOTIMEOUT
+
+	* amd/mntfs.c (init_mntfs): mf_dev and mf_rdev don't exist anymore
+
+	* amd/map.c (init_map): init am_dev and am_rdev to -1
+	(free_map): free am_mfarray and all mntfs's listed
+
+	* amd/autil.c (mf_mounted): move the lstat of the node to the
+	autofs-specific code
+
+	* amd/amfs_link.c (amfs_link_ops): don't background symlink creation
+
+2001-10-18  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
+
+	* aux/macros/os_cflags.m4 (irix6*): Enforce N32 ABI/mips3 ISA with cc. 
+	* BUGS: Explain this.
+
+2001-10-02  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* doc/am-utils.texi (redhat-ctl-amd): document new script.
+
+	* scripts/Makefile.am: build redhat-ctl-amd but do not install it.
+
+	* scripts/redhat-ctl-amd.in: new script, useful to correctly
+	control Amd on Red Hat Linux systems.  Script adapted from ctl-amd
+	and Red Hat's own rc.d script.
+	
+2001-10-02  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
+
+	* conf/nfs_prot/nfs_prot_osf5.h: Renamed from nfs_prot_osf5_1.h.
+	(MNT2_NFS_OPT_AUTO): Disable.
+	* Makefile.am (EXTRA_DIST_CONF): Reflect new name.
+	* aux/macros/check_nfs_prot_headers.m4: Use this file for all
+	Tru64 UNIX V5 and up releases.
+
+2001-09-24  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* include/mount_headers1.h (MFS): define as 1 instead of nothing,
+	to fix compile problems on OS X (patch from Ahmon Dancy)
+
+	* aux/macros/try_compile_anyfs.m4 (MFS): ditto
+
+2001-08-13  Erez Zadok  <ezk@fsl-gw.fsl.cs.sunysb.edu>
+
+	* doc/am-utils.texi (in_network Selector Variable): document
+	expanded syntax
+
+	* libamu/wire.c (is_network_member): support for network/netmask
+	as well as network/bits syntax in in_network()
+
+2001-08-11  Erez Zadok  <ezk@a-linux64.fsl.cs.sunysb.edu>
+
+	* amq/amq.c (show_mti): print full four digits for year, and print
+	it in MM/DD/YYYY format, not in YY/MM/DD format.
+
+2001-08-11  Ion Badulescu  <lionut@gonzales.badula.org>
+
+	* conf/autofs/autofs_solaris_v2_v3.c (autofs_lookup_2_req):
+	initial attempt to do something useful -- but commented out for now
+	(autofs_link_mount): create an action structure with a link
+	request and pass it up
+	(autofs_mount_2_req): pass the link request to the kernel
+	(autofs_free_data): new helper function
+
+	* conf/autofs/autofs_linux.h: added definition for autofs_data_t
+
+	* conf/autofs/autofs_solaris_v2_v3.h: ditto
+
+	* amd/map.c (init_map): initialize am_autofs_data
+	(free_map): call the autofs cleanup function if necessary
+
+	* include/am_utils.h (am_node): added private data and cleanup
+	function for autofs
+
+	* tasks: removed some obsolete entries
+
+2001-08-11  Erez Zadok  <ezk@a-solaris8.fsl.cs.sunysb.edu>
+
+	* amd/map.c (free_map_if_success): run autofs_umount_failed() only
+	if this mount node is of type autofs.
+
+2001-08-11  Ion Badulescu  <lionut@gonzales.badula.org>
+
+	* amd/amd.h: removed mf_array from struct continuation (moved into
+	am_node)
+
+	* include/am_utils.h: removed VLOOK_LOOKUP; renamed vlookuppn to
+	vlookup_child; added vmount_child; added mount_child to the fs_ops
+	API; added prototypes for amfs_auto_mount_child and
+	amfs_error_mount_child
+
+	* amd/map.c (init_map): initialize am_mfarray to 0
+
+	* amd/amfs_*, amd/ops_*: new API function mount_child, old API
+	function lookuppn renamed to lookup_child
+
+	* amd/amfs_auto.c: renamed amfs_auto_lookuppn1 to
+	amfs_auto_lookup_node; renamed amfs_auto_lookuppn2 to
+	amfs_auto_lookup_mntfs; renamed amfs_auto_lookuppn3 to
+	amfs_auto_mount_child; moved the freeing of the error mntfs in the
+	newly allocated am_node from lookup_mntfs to mount_child; make
+	sure lookup_child returns a negative error if the node needs to be
+	mounted; removed the call to lookuppn3 from lookup_child
+
+	* amd/amfs_error.c: added stub implementations of
+	amfs_error_lookup_child and amfs_error_mount_child
+
+	* amd/amfs_direct.c, amd/amfs_union.c, amd/map.c, amd/nfs_subr.c,
+	conf/autofs/autofs_linux.c, conf/autofs/autofs_solaris_v2_v3.c:
+	call both lookup_child and mount_child, instead of the old
+	lookuppn API method
+
+2001-07-19  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* amd/get_args.c (get_args): a better way to handle GNU and
+	non-GNU getopts without strdup-ing the getopt string.
+
+2001-07-04  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* amd/info_ldap.c (amu_ldap_rebind): The first time you called
+	amu_ldap_init, aldh->ldap is not set.  So when amu_ldap_rebind is
+	called, this function is absolutely sure to return 0.  Then
+	amu_ldap_init return 0 without having opened any LDAP connection.
+	This is not the correct behaviour.
+	(get_ldap_timestamp, amu_ldap_search): error to free an object
+	("entry") that is automatically freed by the library.  Patch from
+	Sebastien Bahloul <sebastien.bahloul@mangoosta.fr>.
+
+2001-07-19  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* AUTHORS (variables): added Philippe Troin
+
+	* Makefile.am (EXTRA_DIST): added bootstrap
+
+	* include/am_compat.h (xfs_args_t): define as u_int if the
+	filesystem is supported but we can't autodetect the type for
+	xfs_args_t. This allows Linux to mount xfs filesystems.
+
+2001-07-12  Philippe Troin  <phil@fifi.org>
+
+	* doc/am-utils.texi: Added @dircategory Administration.
+
+2001-07-12  Philippe Troin  <phil@fifi.org>
+
+	* aux/macros/with_addon.m4: Created. Wrapper around AC_ARG_WITH
+	with only the `yes' and `no' as possible answers.
+
+	* configure.in: Added support for disabling LDAP and HESIOD even
+	if the supporting libraries are found.
+
+	* Makefile.am (EXTRA_DIST_AUX): Added with_addon.m4 macro file.
+
+2001-07-12  Philippe Troin  <phil@fifi.org>
+
+	* include/am_compat.h: Removed forced definition of MNTTAB_OPT_DEV
+	if MNT2_GEN_OPT_NODEV was found. Actually, the dev= (SVR4) options
+	and the linux nodev options are different beasts.
+
+	* conf/mount/mount_linux.c (opt_map): Removed the MNTTAB_OPT_DEV
+	entry (not really necessary on linux).
+
+2001-07-12  Philippe Troin  <phil@fifi.org>
+
+	* amd/get_args.c (get_args): Prepend "+" to the getopt string if
+	HAVE_GNU_GETOPT to avoid getting all options (even the ones after
+	the first non-option argument) slurped in by GNU getopt.
+
+	* aux/macros/check_gnu_getopt.m4: Created. Defines HAVE_GNU_GETOPT
+	if GNU/glibc getopt implementation is detected.
+
+	* configure.in: Added call to AC_CHECK_GNU_GETOPT.
+
+	* acconfig.h: Document HAVE_GNU_GETOPT.
+
+	* Makefile.am (EXTRA_DIST_AUX): Added check_gnu_getopt.m4 macro file.
+
+2001-06-25  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* LSM.am-utils, NEWS, README.y2k, ChangeLog: make sure all
+	am-utils URL references use www.am-utils.org, not the columbia
+	URL.
+
+2001-06-08  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* conf/transp/transp_sockets.c (create_nfs_service): cast to
+	u_long to ensure clean compile on freebsd5 and bsdi2.
+
+2001-05-23  Ion Badulescu  <ionut@moisil.badula.org>
+
+	WARNING: WORK IN PROGRESS
+
+	It works for me on Linux (both autofs and nfs mounts), for nfs and
+	link, but I won't make any guarantees outside those.
+
+	* amd/mntfs.c (find_mntfs): reuse the mntfs only if both the mount
+	point and the device/fileserver are the same. This is an important
+	change of philosophy, watch out for memory leaks!
+
+	* amd/map.c (get_ap_child): helper function for
+	amfs_auto_lookuppn, creates a new am_node for key fname, inits it,
+	and inserts it into all necessary structures
+
+	* amd/amfs_auto.c (free_continuation): free unused mntfs's; don't
+	free any of the removed fields
+	(amfs_auto_lookuppn, amfs_auto_bgmount): split lookuppn into three
+	subfunctions, including some code stolen from bgmount; lookuppn
+	now generates an array of possible mntfs to try mounting, and
+	bgmount will actually try to mount each of them.
+	(amfs_auto_lookuppn[123]): the three new subfunctions for lookuppn
+	(amfs_parse_defaults): new helper function for lookuppn
+
+2001-05-19  Erez Zadok  <ezk@kosh.dyn.optonline.net>
+
+	* conf/mount/mount_linux.c: typo: added comma after '0' element.
+
+2001-05-19  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* conf/autofs/autofs_linux.c (AUTOFS_MAX_VERSION): allow using
+	autofs-v4 again
+	(autofs_get_opts): don't pass pgrp, the kernel will get it
+	automatically anyway, not to mention that we were passing bogus
+	data if amd was not daemonized.
+
+	* conf/mount/mount_linux.c (linux_nfs_error): don't special case
+	the 0 result, just put it into the translation list
+
+2001-05-19  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* conf/mount/mount_linux.c (linux_nfs_error): don't report success
+	(0) as error (NE_IO)!
+
+2001-05-18  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* amd/amfs_host.c (amfs_host_mount): don't fail the mount if at
+	least one share is already mounted
+
+2001-05-17  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* libamu/util.c (str3cat): updated comment
+
+	* include/am_utils.h: added VLOOK_LOOKUP and FS_DIRECT
+
+	* conf/autofs/autofs_linux.c (autofs_get_fh): removed obsolete comment
+	(autofs_mounted): disable autofs support for host f/s if version < 4
+	(create_autofs_service): turn on FS_MKMNT on auto f/s if using autofs
+	(autofs_umount_succeeded): use rmdirs instead of rmdir
+	(autofs_mount_failed): ditto
+
+	* amd/opts.c (expand_op): align the debugging messages
+
+	* amd/map.c (mount_auto_node): use am_node *mp instead of casting
+	the void *arg; update the comment
+
+	* amd/autil.c (am_mounted): check the FS_DIRECT flag instead of
+	comparing to &amfs_direct_ops
+	(mount_node): ifs_mount doesn't exist, make note of it in the
+	comment
+
+	* amd/amfs_direct.c (amfs_direct_ops): added FS_DIRECT to fs_flags
+
+	* amd/amfs_auto.c (amfs_auto_mount): removed the autofs hack to
+	create the mountpoint directory for auto f/s; it is now handled in
+	autofs_linux.c
+	(amfs_auto_bgmount): renamed the mpe parameter to mp_error;
+	renamed dont_retry to retry and reverted its meaning as well;
+	moved the mp variable up one scope and made use of it throughout
+	the function;
+	(amfs_auto_readdir): whitespace
+	(amfs_auto_readdir_browsable): whitespace, also some debugging
+
+	* amd/am_ops.c (vops): updated a comment
+
+	* .cvsignore: added A.i386-pc-linux-rh7.[01]
 
 2001-05-01  Ion Badulescu  <ionut@gonzales.dev.hydraweb.com>
 
@@ -14,14 +1336,17 @@
 	* BUGS: added info about the direct mount problems on Linux and
 	about the kernel patches on www.am-utils.org.
 
+	* conf/autofs/autofs_solaris_v2_v3.c (autofs_unmount_2_req):
+	removed obsolete comment
+
 	* amd/autil.c (forcibly_timeout_mp): always log a message when the
 	forced unmount request is ignored
+	(mf_mounted): don't lstat unless this is an autofs mount point,
+	lest we deadlock
 
-2001-04-23  Ion Badulescu  <ionut@buggy.dev.hydraweb.com>
-
-	* amd/ops_autofs.c (autofs_lookuppn): renamed
-	CFM_ENABLE_DEFAULT_SELECTORS to CFM_SELECTORS_IN_DEFAULTS
-	(leftover from 03/29/01)
+	* amd/amfs_auto.c (amfs_auto_bgmount): don't gratuitously add
+	MFF_MKMNT to the flags, it causes deadlocks later on when
+	unmounting
 
 2001-04-14  Erez Zadok  <ezk@whitestar.dyn.optonline.net>
 
@@ -42,15 +1367,16 @@
 	function's name to the beginning of the function, before any other
 	messages are logged.
 
+2001-04-14  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* conf/mount/mount_linux.c (do_mount_linux): removed plog() of
+	binary data
+
 2001-04-05  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
 	* include/am_defs.h: define NFSCLIENT, NFS, PCFS, LOFS, RFS,
 	MSDOSFS, MFS and CD9660 to 1, so that both #if FOO and #ifdef FOO
 	work (needed for MacOS X); removed duplicate definition of NFS.
-
-2001-04-05  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
-
-	* released snapshot am-utils-6.0.6s2
 
 2001-03-29  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
@@ -62,7 +1388,35 @@
 	renamed CFM_ENABLE_DEFAULT_SELECTORS to CFM_SELECTORS_IN_DEFAULTS;
 	renamed gopt_selectors_on_default() to gopt_selectors_in_defaults()
 
+2001-03-19  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* amd/amfs_toplvl.c, amd/amfs_auto.c, amd/srvr_nfs.c,
+	include/am_utils.h: compile fixes for --enable-debug=no
+
 2001-03-15  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* NEWS: updated
+
+	* README.autofs: updated
+
+	* conf/mount/mount_linux.c (linux_version_code): export the fn
+
+	* conf/nfs_prot/nfs_prot_linux.h: ditto
+
+	* conf/autofs/autofs_linux.c (create_autofs_service): verify the
+	kernel version here, and turn off bind_works if the kernel is
+	older than 2.4.0.
+	(autofs_link_mount): don't touch bind_works here, it's useless
+	b/c we're in a child process; remove the mountpoint directory if
+	the bind mount fails
+
+	* amd/opts.c (eval_fs_opts): changed some annoying debugging plogs
+	into dlogs
+
+	* conf/autofs/autofs_linux.c (autofs_link_mount): zero out the
+	mntent struct before initializing it
+
+2001-03-14  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
 	* conf/mount/mount_linux.c (parse_opts): added support for lofs
 	(mount_linux): support lofs through bind mounts and/or FiST lofs
@@ -74,10 +1428,39 @@
 	kernel is newer than 2.4.0
 	(MNTTYPE_LOFS): ditto
 
-	* acconfig.h: added MNT2_GEN_OPT_BIND
+	* conf/autofs/autofs_solaris_v2_v3.c (autofs_link_umount): new stub
+	(autofs_lookup_failed): removed stub
 
-	* configure.in: bumped up library patchlevel; added detection for
-	the MS_BIND generic mount option
+	* conf/autofs/autofs_linux.c (autofs_lookup_failed): moved up in
+	the file, made static;
+	(autofs_link_mount): activate MNT2_GEN_OPT_BIND code; use stat()
+	and friends to determine if bind mounts can be used and to trigger
+	further cascading mounts; return proper error codes
+	(autofs_link_umount): distinguish between symlinks and bind mounts
+	and handle both correctly
+	(autofs_umount_succeeded): remove call to autofs_link_umount()
+
+	* amd/map.c (umount_exported): try to unmount all mount points on
+	an autofs filesystem; this isn't really needed and will be removed
+	when we start handling restarting autofs mounts
+
+	* amd/amfs_link.c (amfs_link_[u]mount): call autofs_link_[u]mount,
+	if necessary
+
+	* amd/amfs_auto.c (amfs_auto_bgmount): fixed a bug that was
+	causing the wrong mntfs to be selected when using autofs; removed
+	call to autofs_link_mount() (moved where it belongs, in
+	amfs_link.c)
+
+	* amd/amfs_link.c: added FS_MBACKGROUND to fs flags -- cleaner
+	solution is needed, because background mounting is only necessary
+	for linux autofs + bind mounts
+
+	* amd/amd.h: removed prototype for autofs_lookup_failed (internal
+	static function for linux autofs); added prototype for
+	autofs_link_umount
+
+	* configure.in: bump up library patchlevel
 
 2001-02-28  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
@@ -120,10 +1503,24 @@
 	freebsd5, not the stuff for freebsd2. This makes configure more
 	likely to succeed on new systems/versions.
 
+	* Makefile.am (EXTRA_DIST_AUX): added check_autofs_style.m4 (grr)
+
+2001-02-24  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* Makefile.am (install-snapshot): use a different symlink target
+	for the experimental snapshots.
+
 2001-02-23  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
 	* Makefile.am (EXTRA_DIST_CONF): include nfs_prot_darwin.h in
 	distributions.
+
+2001-02-22  Erez Zadok  <ezk@earth.cs.columbia.edu>
+
+	* released snapshot am-utils-6.1a3
+
+	* amd/Makefile.am (EXTRA_amd_SOURCES): don't forget to distribute
+	get_args.c
 
 2001-02-21  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
@@ -161,8 +1558,6 @@
 
 2001-02-18  Erez Zadok  <ezk@earth.cs.columbia.edu>
 
-	* released snapshot am-utils-6.0.6s1
-
 	* aux/macros/mount_headers.m4, include/mount_headers[12].h: split
 	mount_headers.h in two because one relative header (nfs_prot.h)
 	file cannot be included inside another from the start directory of
@@ -185,11 +1580,12 @@
 
 	* conf/mount/mount_linux.c: made linux_nfs_error() more robust.
 
-2001-02-02  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+2001-02-01  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
-	*******************************************************************
-	*** Released am-utils-6.0.5					***
-	*******************************************************************
+	* released snapshot am-utils-6.1a2
+
+	* updated ltmain.sh and ltconfig from latest stable version of
+	libtool-1.3.5
 
 2001-02-01  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
@@ -201,11 +1597,6 @@
 	nfs_errormap array, lest the following errno's get shifted up by
 	one!
 
-2001-01-12  Ion Badulescu  <ionut@buggy.dev.hydraweb.com>
-
-	* include/am_defs.h: don't allow linux/fs.h to be sucked in via
-	linux/auto_fs.h, it breaks the compile on glibc platforms.
-
 Sat Jan 13 00:04:38 2001  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
 
 	* amd/amd.h (autofs_lookuppn): Fixup whitespace.
@@ -216,6 +1607,7 @@ Sat Jan 13 00:04:38 2001  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
 	* amd/info_file.c (read_line): Likewise.
 	(search_or_reload_file): Likewise.
 	* amd/info_ldap.c (get_ldap_timestamp): Likewise.
+	* amd/map.c (get_root_ap): Likewise.
 	* amd/nfs_prot_svc.c: Likewise.
 	* amd/ops_TEMPLATE.c (foofs_match, foofs_lookuppn,
 	foofs_readlink, foofs_ffserver): Likewise. 
@@ -245,10 +1637,6 @@ Sat Jan 13 00:04:38 2001  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
 	amq_program_1): Likewise.
 	(nfsxprt): Moved declaration.
 
-Fri Jan 12 23:46:31 2001  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
-
-	* hlfsd/hlfsd.h (HLFSD_VERSION): Bump copyright year to 2001.
-
 Fri Jan 12 23:31:45 2001  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
 
 	Removed support for amq -M.
@@ -272,6 +1660,39 @@ Fri Jan 12 23:31:45 2001  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
 	(Controlling Amd): Likewise.
 
 	* tasks: Removed this task.
+
+Fri Jan 12 23:18:26 2001  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
+
+	* conf/autofs/autofs_*.c: Bump copyright year to 2001.
+	* hlfsd/hlfsd.h (HLFSD_VERSION): Likewise.
+
+	* aux/macros/check_autofs_style.m4: Renamed solaris[12] styles to
+	solaris_v1, solaris_v2_v3 to reflect that these are AutoFS
+	protocol version numbers, not solaris versions.
+	* conf/autofs/autofs_solaris[12].[ch]: Renamed to
+	autofs_solaris_{v1, 2_v3}.[ch] to reflect this.
+	* Makefile.am (EXTRA_DIST_CONF): Likewise.
+
+	* aux/macros/check_autofs_style.m4: Use solaris2 style for both
+	versions 2 and 3 of the AutoFS protocol.
+	
+	Handle missing AUTOFS_POSTUNMOUNT, AUTOFS_POSTMOUNT (unnecessary
+	with Solaris 8 mntfs).
+
+	* conf/autofs/autofs_solaris2.c (xdr_postumntreq, xdr_postumntres,
+	xdr_postmountreq, xdr_postmountres, autofs_postunmount_2_req,
+	autofs_postmount_2_req ): Don't define for version 3.
+	(autofs_program_2): Don't handle AUTOFS_POSTUNMOUNT,
+	AUTOFS_POSTMOUNT if missing.
+	
+	* conf/nfs_prot/nfs_prot_sunos5_8.h: Enable AutoFS support.
+
+	* aux/macros/check_autofs_style.m4: Use empty autofs_default.[ch]
+	files on systems without existing autofs port.
+	* conf/autofs/autofs_default.[ch]: New files, empty.  
+	* Makefile.am (EXTRA_DIST_CONF): Distribute them.
+	* INSTALL: With this change, Solaris 8 and Tru64 5.1 compile and
+	link.
 
 2001-01-12  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
@@ -326,33 +1747,110 @@ Fri Jan  5 05:12:02 2001  Erez Zadok  <ezk@subzero.cs.columbia.edu>
 	* conf/nfs_prot/nfs_prot_aix*.h: correct xdr_groups extern
 	definition.  Report from Ahmon Dancy <dancy@franz.com>.	
 
-2000-12-14  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+2000-12-06  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
-	* released snapshot am-utils-6.0.5s4
+	* include/am_defs.h: force non-inclusion of <linux/fs.h> via
+	<linux/auto_fs.h>
 
-	* minor port i386-unknown-freebsd4.2 (documented)
+	* conf/autofs/autofs_linux.c (autofs_mounted): rename
+	AUTOFS_MIN_PROTO_VERSION to AUTOFS_MIN_VERSION (leftover from
+	previous commit)
 
-2000-12-07  Ion Badulescu  <lionut@gonzales.dev.hydraweb.com>
-
-	* configure.in (LIBTOOL_LDFLAGS): fix libtool version
+	* configure.in: fixed libtool version
 
 2000-12-02  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
 	* doc/am-utils.texi (opts Option): document lock/nolock
 
+2000-12-02  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* conf/autofs/autofs_linux.h: added struct autofs_pending_mount;
+	modified autofs_fh_t to have a linked list of autofs_pending_mount;
+	added some support for autofs4
+
+	* conf/autofs/autofs_linux.c: use a linked list for pending
+	request, to allow for handling multiple simultaneous request;
+	incipient non-functional support for autofs4; incipient
+	non-functional support for bind-mounting
+
+	* amd/amd.c (main): print a warning if PROCLOCK is requested but
+	the O/S doesn't support it
+
 	* libamu/mount_fs.c (mnt_flags): allow the use of the "nolock"
 	option
 
-	* include/am_defs.h: don't include <linux/fs.h> on a glibc2 system
+	* include/am_defs.h: don't include <linux/fs.h> on a glibc2
+	system; include <linux/auto_fs4.h> if it exists, instead of
+	<linux/auto_fs.h>
 
 	* include/am_compat.h: define the "nolock" mnttab option if the
 	NONLM NFS mount option is defined
 
-	* acconfig.h: added MNT2_NFS_OPT_NONLM
+	* acconfig.h: added MNT2_NFS_OPT_NONLM, MNT2_GEN_OPT_BIND
 
 	* configure.in: added detection of the NONLM Linux NFS mount
 	option; added a clarification for the library versioning rules and
-	increased the patchlevel
+	increased the minor level; added detection of <linux/auto_fs4.h>
+	and the MS_BIND generic mount option
+
+2000-11-29  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* Enabled Solaris 2.7 autofs support (tested, works)
+
+	* Updated NEWS, README.autofs
+
+	* Updated Makefile's, make dist is now fixed
+
+	* Fixed potential memory leak in map.c
+
+	* Fixed autofs style detection for solaris 2.[67]
+
+	* Added a few casts in autofs_solaris2.c, needed on Solaris 2.7
+
+2000-11-28  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	More Solaris 2.[67] work in progress:
+
+	* changed the API for the mount/umount methods: fmount/fumount are
+	gone, and mount/umount now take two arguments (am_node and mntfs)
+
+	* changed the semantics of the MFF_AUTOFS flag: MFF_AUTOFS now
+	means the mntfs is a filesystem of type autofs, and AMF_AUTOFS
+	means the am_node is a node on a filesystem of type autofs.
+
+	* renamed nfs_program_2_transp to current_transp so it can be used
+	with autofs
+
+	* renamed quick_reply() to nfs_quick_reply()
+
+	* added two more autofs methods: autofs_umount_failed() and
+	autofs_compute_mount_flags() -- it turns out that on sol2.6 the
+	autofs mounts MUST be overlay'ed
+
+	* moved the autofs_mount_succeeded() into am_mounted()
+
+	* made amd *not* timeout autofs mounts -- the kernel will do it
+	for us
+
+	* store dev and rdev of a mounted filesystem in the mntfs
+	structure, to help autofs
+
+	* moved the rmdirs() call from uninit_mntfs() to am_umounted(), to
+	prevent deadlocking with autofs
+
+	* amd/Makefile.am: shuffled things around to make
+	update_build_version be the last thing that runs
+
+2000-11-27  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	* split amd/ops_autofs.c into conf/autofs/autofs_<system>.c files
+	and made configure create a symlink to the appropriate one
+
+	* moved the xdr autofs functions from libamu/xdr_func.c into the
+	system-specific conf/autofs/autofs*.c
+
+	* added some more experimental code to the sol2.6 autofs support,
+	but it's by no means functional
 
 2000-11-27  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
@@ -379,13 +1877,12 @@ Fri Jan  5 05:12:02 2001  Erez Zadok  <ezk@subzero.cs.columbia.edu>
 	* amd/srvr_nfs.c: comment on NFS proto search order.
 
 	* libamu/xutil.c (real_plog): don't try to write the last byte of
-	the fmt buf.  Security suggestion from NetBSD: Thomas Klausner
+	the fmt buf.  security suggtion from NetBSD: Thomas Klausner
 	<wiz@danbala.ifoer.tuwien.ac.at>
 
 2000-11-22  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
-	* amd/amfs_auto.c (amfs_auto_bgmount),
-	amd/ops_autofs.c (autofs_bgmount): removed the initialization of
+	* amd/amfs_auto.c (amfs_auto_bgmount): removed the initialization of
 	fattr.na_fileid, it is now done in map.c when the map is initialized
 
 	* amd/map.c (init_map): initialize fattr.na_fileid to am_gen, not
@@ -440,8 +1937,6 @@ Fri Jan  5 05:12:02 2001  Erez Zadok  <ezk@subzero.cs.columbia.edu>
 
 2000-11-19  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
-	* released snapshot am-utils-6.0.5s3
-
 	* updated config.guess, config.sub, and doc/texinfo.tex from
 	mirrors
 
@@ -450,10 +1945,6 @@ Fri Jan  5 05:12:02 2001  Erez Zadok  <ezk@subzero.cs.columbia.edu>
 
 	* aux/macros/check_nfs_prot_headers.m4: newer netbsd systems
 	reports their system name as "netbsdelf" in config.guess.
-
-2000-11-15  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
-
-	* released snapshot am-utils-6.0.5s2
 
 2000-11-13  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
@@ -467,18 +1958,34 @@ Fri Jan  5 05:12:02 2001  Erez Zadok  <ezk@subzero.cs.columbia.edu>
 	option in Amd, useful under DU-4.0 to process ACLs over NFS
 	mounts.
 
-2000-11-10  Ion Badulescu  <ib42@earth.cs.columbia.edu>
+2000-11-10  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
 
 	* conf/mount/mount_linux.c (mount_linux): removed unnecessary
 	rsize/wsize defaults -- performance killers on 2.2.18+ and 2.4.0+
 
-2000-11-01  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
-
-	* MIRRORS (Note): added a mirror at ufl.edu
-
 2000-10-16  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
 	* scripts/am-eject.in: accept "cdrom" and "floppy" as arguments.
+
+2000-11-05  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
+
+	Too many changes to list them here. Here's a high level
+	description:
+
+	* Forward-ported the Linux fixes from 6.0.5pre
+
+	* Got rid of a mountain of #ifdef DEBUG, replaced with smart
+	header-file #ifdef's
+
+	* and, the grand finale: initial Solaris 2.6 autofs
+	support. Compiles, mounts, gets requests; all the
+	infrastructure is in place to actually implement the calls. Linux
+	autofs might be a bit broken, but only compile-time so it'll be
+	easy to fix.
+
+2000-11-01  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* MIRRORS (Note): added a mirror at ufl.edu
 
 2000-10-11  Erez Zadok  <ezk@lorien.dev.hydraweb.com>
 
@@ -496,21 +2003,6 @@ Fri Jan  5 05:12:02 2001  Erez Zadok  <ezk@subzero.cs.columbia.edu>
 	* scripts/lostaltmail.in (vrfy_user): ensure that MAILDIR is
 	defined.
 
-2000-10-02  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
-
-	* aux/macros/mount_headers.m4: only include <linux/fs.h>
-	on a non-glibc2 system
-
-	* aux/macros/try_compile_anyfs.m4: ditto
-
-	* aux/macros/check_mount_type.m4: linux 2.4 stores loadable modules
-	in a different directory structure
-
-	* aux/macros/check_mnttab_type.m4: ditto
-
-	* aux/macros/check_fs_mntent.m4: ditto; also, replace the nfs3
-	linux hack with a hopefully more stable hack
-
 2000-09-18  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
 	* amd/opts.c (backslash): Bell char (ASCII 007) should be \g, not
@@ -521,15 +2013,6 @@ Fri Jan  5 05:12:02 2001  Erez Zadok  <ezk@subzero.cs.columbia.edu>
 	* include/am_utils.h: removed unused field opt_autopref
 
 	* amd/opts.c: removed unused variable $autopref
-
-2000-09-15  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
-
-	* released snapshot am-utils-6.0.5s1
-
-2000-09-11  Ion Badulescu  <ionut@moisil.dev.hydraweb.com>
-
-	* aux/macros/check_fs_mntent.m4 (_LINUX_NFS_XDR_H): define it so
-	linux/nfs_xdr.h doesn't get included (not intended for user space)
 
 2000-09-05  Erez Zadok  <ezk@aladdin.dev.hydraweb.com>
 
@@ -572,19 +2055,7 @@ Fri Jan  5 05:12:02 2001  Erez Zadok  <ezk@subzero.cs.columbia.edu>
 
 	* doc/am-utils.texi: updated URLs to www.am-utils.org.
 
-2000-07-08  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
-
-	*******************************************************************
-	*** Released am-utils-6.0.4					***
-	*******************************************************************
-
-2000-07-08  Erez Zadok  <ezk@earth.cs.columbia.edu>
-
-	* configure.in: update shared library information
-
 2000-07-04  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
-
-	* INSTALL: document osf4.0f
 
 	* doc/am-utils.texi (Supported Platforms): document osf4.0f
 
@@ -597,9 +2068,33 @@ Fri Jan  5 05:12:02 2001  Erez Zadok  <ezk@subzero.cs.columbia.edu>
 	literal '$' sign.  Otherwise there is no way to include a literal
 	dollar symbol in an amd map.
 
+2000-06-11  Ion Badulescu  <ib42@moisil.cs.columbia.edu>
+
+	* amd/opts.c (eval_selectors): don't deref opt after it's been
+	XFREE'd
+
 2000-06-11  Erez Zadok  <ezk@earth.cs.columbia.edu>
 
-	* amd/opts.c: correct comment name at top of opt_fields.
+	* amd/opts.c: move mount_type expansion until later in the list,
+	so common variable are "hit" first.
+
+2000-06-11  Ion Badulescu  <ib42@moisil.cs.columbia.edu>
+
+	* amd/opts.c (split_opts, eval_selectors): split old function
+	eval_opts into two, one that only splits non-selectors and
+	assigns the values to fs_static, and one that only evaluates
+	selectors; also simplified the rather obfuscated logic inside
+	these functions
+	(expand_op): made it take a char * instead of a structure from
+	which it was using only one field (a char *). Also now returns a
+	char * instead of modifying said structure in place
+	(expand_opts): deal with the change above
+	(expand_selectors): renamed from expand_key
+	(expand_options): new function, expands non-selectors; it's the
+	complement of expand_selectors, both of which are just wrappers
+	around expand_op()
+	(eval_fs_opts): use the new split_opts, eval_selectors to allow
+	using options (like ${rhost}) in selectors
 
 2000-06-11  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
 
@@ -624,8 +2119,6 @@ Fri Jun  9 16:06:56 2000  Erez Zadok  <ezk@defiant.dev.hydraweb.com>
 
 2000-06-07  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
-	* released snapshot am-utils-6.0.4s5
-
 	* Makefile.am, aux/GNUmakefile: fix maintainer rules to update
 	config.* and texinfo.tex files.
 
@@ -633,8 +2126,8 @@ Fri Jun  9 16:06:56 2000  Erez Zadok  <ezk@defiant.dev.hydraweb.com>
 	mtime update of the symlinks on the SYMTTL option, but rather
 	delay unmount of what was looked up using am_timeo_w.  Patch from
 	Nick Williams <Nick.Williams@msdw.com>.  As Nick says "Basically:
-	during unmount, increment the parent dir's mtime (fixes people
-	doing amq -u). During stat, increase the TTL (to fix bad-luck
+	during unmount, increment the parent dir's mtime (fixes
+	people doing amq -u). During stat, increase the TTL (to fix bad-luck
 	timeouts), but leave the mtime alone."
 
 	(nfsproc_lookup_2_svc, nfsproc_readlink_2_svc, unlink_or_rmdir,
@@ -689,6 +2182,12 @@ Fri Jun  9 16:06:56 2000  Erez Zadok  <ezk@defiant.dev.hydraweb.com>
 	* cvs-server.txt: instructions for maintainers to access the CVS
 	server for am-utils.
 
+2000-06-03  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* amd/restart.c (restart): grr.. passing around initialized
+	structures is *really* bad habit. memset(mo, 0) so at least we can
+	test for NULL pointers...
+
 2000-06-02  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
 	* amd/am_ops.c (ops_match): changed XLOG_USER messages about
@@ -698,31 +2197,114 @@ Fri Jun  9 16:06:56 2000  Erez Zadok  <ezk@defiant.dev.hydraweb.com>
 	* config.{guess,sub}: make sure chmod'ed a+rx.  Updated from
 	latest GNU copies.
 
-2000-05-30  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+2000-05-30  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
 
-	* released snapshot am-utils-6.0.4s4
+	* aux/configure.in: bump up the version to 6.1a2
 
 2000-05-29  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
 
+	* released snapshot am-utils-6.1a1
+
+2000-05-29  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* amd/ops_autofs.c (autofs_mounted): retrieve the autofs protocol
+	version and store it in the fh
+	(autofs_get_opts): support protocol version 4
+
+	* amd/mntfs.c (uninit_mntfs): clear the autofs fh pointer after
+	releasing it
+
 	* conf/transp/transp_sockets.c (amu_svc_getcaller): cast result of
 	svc_getcaller() to sockaddr_in, to appease glibc 2.2
+
+	* amd/amfs_auto.c (amfs_auto_bgmount): if the filesystem wants
+	autofs handling and the parent is already handled by autofs,
+	handle this filesystem as well
+	(amfs_auto_mount): create the mountpoint for an autofs mount
+	(amfs_auto_umount): do a real UMOUNT_FS() call for autofs mounts
+
+	* include/am_utils.h (FS_AUTOFS): new flag signalling that the
+	filesystem wants autofs handling; toplvl, auto, host and direct
+	have this flag, at least for now
 
 2000-05-28  Erez Zadok  <ezk@mulberry.mcl.cs.columbia.edu>
 
 	* doc/am-utils.texi (Network Filesystem Group): minor typos
 
+2000-05-28  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* amd/autil.c (am_unmounted): check mp->am_parent before dereferencing
+
+	* amd/srvr_nfs.c (find_nfs_srvr): if NFS_SCALEDOWN, force
+	version=2 and proto=udp and try again
+
+	* amd/ops_nfs.c (prime_nfs_fhandle_cache): take an explicit mntfs
+	instead of a voidp; handle the NFS_SCALEDOWN case by removing the
+	cached server entry and re-querying the server
+
+	* amd/amfs_toplvl.c (amfs_toplvl_mount): removed ugly if
+	statement, assign mnttype from the fs-specific mf_ops->fs_type
+	instead
+
+	* amd/amfs_nfsx.c (amfs_nfsx_init): call fs_init() only if it's
+	defined;
+	(amfs_nfsx_remount): removed superfluous check for fmount_fs -- it
+	always exists
+	(amfs_nfsx_umount): removed the hacked am_node -- umounted() now
+	takes an mntfs; call umounted() only if it's defined
+
+	* amd/amfs_auto.c: removed amfs_auto_umounted and moved its
+	functionality into am_umounted().
+	(amfs_auto_cont): Linux hack: if we got an EINVAL, mark the mntfs
+	as needing an "NFS scaledown" and retry the operation
+
+	* amd/amfs_*.c: changed all fmount/fumount functions to
+	mount/umount and made them take an am_node instead of an
+	mntfs. This is a first step towards an amfs/ops API separation.
+
+	* amd/{amfs,ops}_*.c: changed the umounted() function to take an
+	mntfs instead of an am_node
+
+2000-05-28  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* amd/amfs_toplvl.c (mount_amfs_toplvl): init error to 0 to shut
+	up gcc
+
+	* aux/macros/check_hide_mount_type.m4: revert to the 6.0 version
+	which always defines HIDE_MOUNT_TYPE
+
+	* amd/ops_autofs.c (autofs_mounted): remove MFF_AUTOFS
+	initialization -- now done in init_mntfs()
+
+	* amd/mntfs.c (init_mntfs): init mf_flags to MFF_AUTOFS if we are
+	mounting an autofs-style map
+
+	* amd/*.c: use the MFF_AUTOFS flag instead of doing a costly STREQ
+
+	* amd/amfs_toplvl.c (mount_amfs_toplvl): MTYPE_TYPE is not
+	necessarily a string type, so handle the nfs/autofs separation
+	differently
+
+	* amd/amfs_auto.c (amfs_auto_bgmount): removed initialization of
+	opt_mount_type (now done in ops_match())
+
+	* amd/am_ops.c (ops_match): need to initialize opt_mount_type if
+	it's not initialized yet
+
 2000-05-27  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
-
-	* amd/amfs_auto.c (amfs_auto_readdir_browsable): cast pointers to
-	long for 64-bit architectures.
-
-	* libamu/xutil.c (amu_release_controlling_tty): eliminate an
-	unused variable "tempfile"
 
 	* libamu/wire.c (getwire_lookup): handle calling irs_gen_acc with
 	one or two arguments (bsdi3 vs. bsdi4)
 
+2000-05-27  Ion Badulescu  <ib42@chestnut.mcl.cs.columbia.edu>
+
+	* libamu/xutil.c (amu_release_controlling_tty): removed an unused
+	variable from the previous patch
+
 2000-05-26  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* aux/macros/check_autofs_style.m4: fixed substitution for default
+	case
 
 	* libamu/xutil.c (amu_release_controlling_tty): close standard
 	file descriptors, re-open them as /dev/null
@@ -736,6 +2318,50 @@ Fri Jun  9 16:06:56 2000  Erez Zadok  <ezk@defiant.dev.hydraweb.com>
 	on lookup if MNT2_NFS_OPT_SYMTTL is not defined (copied from
 	getattr).  This fixes the problem introduced by the Linux nfsv3
 	patches.
+
+2000-05-12  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* Makefile.am (EXTRA_DIST_CONF): added conf/autofs/autofs_linux.h
+
+2000-05-10  Ion Badulescu  <ib42@earth.cs.columbia.edu>
+
+	* amd/ops_autofs.c (autofs_handle_fdset): call
+	autofs_lookup_failed instead of autofs_mount_failed, if the name
+	is not in the map
+	(autofs_umount_{succeeded,failed}): pass the actual mount point,
+	not its parent, as it's needed for clean-up; 
+
+	* amd/autil.c (am_unmounted): notify autofs that the umount
+	succeeded
+
+	* amd/amfs_link.c (amfs_link_[u]mount): autofs link notification
+	moved elsewhere
+
+2000-05-09  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* amd/amfs_auto.c (amfs_auto_bgmount): initialize opt_mount_type
+	if necessary;
+	(amfs_auto_mounted): test if opt_mount_type is NULL first
+	(amfs_auto_mount): revert earlier change
+
+	* amd/ops_autofs.c (autofs_mount_failed): remove autofs directory
+	if mount failed
+
+2000-05-09  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* amd/ops_autofs.c (autofs_link_mount): use am_link as target
+
+	* amd/map.c (unmount_mp): release file handle for autofs f/s about
+	to be unmounted; this leak was preventing the unmount altogether
+
+	* amd/amfs_auto.c (amfs_auto_umount): removed autofs-specific
+	code, was broken
+	(amfs_auto_bgmount): nfs mounts + sublinks is a valid combination,
+	handle it
+
+2000-05-07  Ion Badulescu  <ib42@moisil.cs.columbia.edu>
+
+	* Merged changes from stable branch
 
 2000-04-30  Erez Zadok  <ezk@beetle.mcl.cs.columbia.edu>
 
@@ -783,6 +2409,58 @@ Fri Jun  9 16:06:56 2000  Erez Zadok  <ezk@defiant.dev.hydraweb.com>
 	* amq/amq.c: disable last remains of insecure amq -M code.
 	(main): add amq -H option to show usage.
 	(main): new amq -w option, translates getpwd() into an amd path.
+
+2000-02-25  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* libamu/util.c (get_server_pid): new function
+
+	* hlfsd/hlfsd.c (main): make use of HIDE_MOUNT_TYPE
+
+	* conf/transp/transp_sockets.c: removed create_autofs_service
+
+	* conf/mount/mount_linux.c: added autofs mount options; split
+	mount_linux into two functions, itself and do_mount_linux
+
+	* aux/macros/check_hide_mount_type.m4: better failover
+
+	* aux/configure.in: changed version to 6.1a1; added
+	AC_CHECK_AUTOFS_STYLE
+
+	* aux/aux_conf.h.in: added @am_utils_autofs_style@
+
+	* amd/opts.c: added "mount_type" option
+
+	* amd/ops_autofs.c: ifdef-ed out solaris code; moved all autofs
+	variables in here; split create_autofs_service into sun and linux
+	specific functions
+
+	* amd/nfs_start.c: removed autofs-specific variables
+
+	* amd/map.c (get_root_nfs_fh): renamed root_fh to get_root_nfs_fh
+	(get_root_ap): renamed root_ap to get_root_ap
+
+	* amd/amfs_toplvl.c (amfs_toplvl_ops): replaced
+	amfs_toplvl_mounted with amfs_auto_mounted
+	(mount_amfs_toplvl): moved code around, added autofs handling
+	(amfs_toplvl_mounted): removed
+
+	* amd/amfs_nfsl.c (amfs_nfsl_ops): removed amfs_auto_fu?mount,
+	replaced with amfs_nfsl_u?mount
+
+	* amd/amfs_linkx.c (amfs_linkx_ops): removed amfs_auto_fumount,
+	replaced with amfs_link_umount
+
+	* amd/amfs_link.c (amfs_link_ops): removed amfs_auto_fu?mount,
+	replaced with amfs_link_u?mount
+
+	* amd/amfs_direct.c (amfs_direct_ops): changed "mounted" function
+	from amfs_toplvl_mounted to amfs_auto_mounted
+
+	* all: added autofs hooks throughout the code
+
+	* amd/am_ops.c (vops): autofs_ops doesn't belong in here, removed
+
+	* README.autofs: linux status update
 
 2000-02-24  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
@@ -3677,7 +5355,7 @@ Mon Oct 20 01:59:25 1997  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 	* doc/Makefile.am (EXTRA_DIST): include am-utils.dvi and
 	am-utils.ps in the distribution sources.
 	(html): generate html documentation for
-	http://www.cs.columbia.edu/~ezk/am-utils/
+	http://www.am-utils.org
 
 Sun Oct 19 12:35:49 1997  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_error.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: amfs_error.c,v 1.1.1.5 2002/11/29 22:58:10 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amfs_error.c,v 1.3.2.2 2001/01/12 23:28:56 ro Exp
+ * Id: amfs_error.c,v 1.12 2002/03/29 20:01:26 ib42 Exp
  *
  */
 
@@ -59,9 +58,8 @@
 #include <amd.h>
 
 static char *amfs_error_match(am_opts *fo);
-static int amfs_error_fmount(mntfs *mf);
-static int amfs_error_fumount(mntfs *mf);
-static void amfs_error_umounted(am_node *mp);
+static int amfs_error_mount(am_node *am, mntfs *mf);
+static int amfs_error_umount(am_node *am, mntfs *mf);
 
 
 /*
@@ -72,17 +70,19 @@ am_ops amfs_error_ops =
   "error",
   amfs_error_match,
   0,				/* amfs_error_init */
-  amfs_auto_fmount,
-  amfs_error_fmount,
-  amfs_auto_fumount,
-  amfs_error_fumount,
-  amfs_error_lookuppn,
+  amfs_error_mount,
+  amfs_error_umount,
+  amfs_error_lookup_child,
+  amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* amfs_error_readlink */
   0,				/* amfs_error_mounted */
-  amfs_error_umounted,
+  0,				/* amfs_error_umounted */
   find_amfs_auto_srvr,
-  FS_DISCARD
+  FS_DISCARD,			/* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_ERROR_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -98,14 +98,14 @@ amfs_error_match(am_opts *fo)
 
 
 static int
-amfs_error_fmount(mntfs *mf)
+amfs_error_mount(am_node *am, mntfs *mf)
 {
   return ENOENT;
 }
 
 
 static int
-amfs_error_fumount(mntfs *mf)
+amfs_error_umount(am_node *am, mntfs *mf)
 {
   /*
    * Always succeed
@@ -120,7 +120,20 @@ amfs_error_fumount(mntfs *mf)
  * If we do then just give an error.
  */
 am_node *
-amfs_error_lookuppn(am_node *mp, char *fname, int *error_return, int op)
+amfs_error_lookup_child(am_node *mp, char *fname, int *error_return, int op)
+{
+  *error_return = ESTALE;
+  return 0;
+}
+
+
+/*
+ * EFS interface to RPC lookup() routine.
+ * Should never get here in the automounter.
+ * If we do then just give an error.
+ */
+am_node *
+amfs_error_mount_child(am_node *ap, int *error_return)
 {
   *error_return = ESTALE;
   return 0;
@@ -136,17 +149,4 @@ int
 amfs_error_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count)
 {
   return ESTALE;
-}
-
-
-/*
- * umounted() callback for EFS.
- *
- * This prevents core-dumps on callbacks to error file-systems from
- * nfsx_fumount.
- */
-static void
-amfs_error_umounted(am_node *mp)
-{
-  /* nothing to do */
 }

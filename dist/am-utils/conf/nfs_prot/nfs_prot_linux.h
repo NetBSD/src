@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_linux.h,v 1.1.1.4 2001/05/13 17:50:18 veego Exp $	*/
+/*	$NetBSD: nfs_prot_linux.h,v 1.1.1.5 2002/11/29 22:58:34 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_linux.h,v 1.5.2.5 2001/03/15 08:32:44 ib42 Exp
+ * Id: nfs_prot_linux.h,v 1.16 2002/02/02 20:59:00 ezk Exp
  *
  */
 
@@ -58,6 +57,9 @@
  * name.
  */
 #include <linux/version.h>
+#ifndef KERNEL_VERSION
+# define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
+#endif /* not KERNEL_VERSION */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
 # ifndef MS_BIND
 #  define MS_BIND 4096
@@ -70,11 +72,11 @@
 
 #ifndef MNTTYPE_ISO9660
 # define MNTTYPE_ISO9660 "iso9660"
-#endif /* MNTTYPE_ISO9660 */
+#endif /* not MNTTYPE_ISO9660 */
 
 #ifndef FHSIZE
 # define FHSIZE 32
-#endif
+#endif /* not FHSIZE */
 #ifndef FHSIZE3
 # define FHSIZE3 64
 #endif /* not FHSIZE3 */
@@ -92,6 +94,14 @@
 # define NFS3_FHSIZE 64
 #endif /* not NFS3_FHSIZE */
 #endif /* HAVE_FS_NFS3 */
+
+/* XXX: hack until we have a better way to detect /dev/loop devices */
+#ifdef HAVE_LINUX_LOOP_H
+# define HAVE_LOOP_DEVICE
+extern char *setup_loop_device(const char *file);
+extern int delete_loop_device(const char *device);
+#endif /* HAVE_LINUX_LOOP_H */
+
 
 /*
  * MACROS:
@@ -211,37 +221,8 @@ typedef statfsres	nfsstatfsres;
 typedef symlinkargs	nfssymlinkargs;
 typedef writeargs	nfswriteargs;
 
-
-/*
- * AUTOFS definitions (missing on linux):
- */
-
-#define	AUTOFS_PROG ((unsigned long)(100099))
-#define	AUTOFS_VERS ((unsigned long)(1))
-#define	AUTOFS_MOUNT ((unsigned long)(1))
-#define	AUTOFS_UNMOUNT ((unsigned long)(2))
-#define	A_MAXNAME 255
-#define	A_MAXOPTS 255
-#define	A_MAXPATH 1024
-
-typedef struct mntrequest mntrequest;
-typedef struct mntres mntres;
-typedef struct umntrequest umntrequest;
-typedef struct umntres umntres;
-typedef struct auto_args autofs_args_t;
-
-struct auto_args {
-#if 0
-  struct netbuf	addr;		/* daemon address */
-#endif
-  char		*path;		/* autofs mountpoint */
-  char		*opts;		/* default mount options */
-  char		*map;		/* name of map */
-  int		mount_to;	/* time in sec the fs is to remain */
-				/* mounted after last reference */
-  int 		rpc_to;		/* timeout for rpc calls */
-  int		direct;		/* 1 = direct mount */
-};
+/* Autofs trick */
+typedef int autofs_args_t;
 
 /*
  * We use our own definitions here, because the definitions in the
@@ -277,28 +258,6 @@ struct nfs_args {
   struct nfs3_fh	root;		/* 4 */
 };
 typedef struct nfs_args nfs_args_t;
-
-struct mntrequest {
-  char *name;
-  char *map;
-  char *opts;
-  char *path;
-};
-
-struct mntres {
-  int status;
-};
-
-struct umntrequest {
-  int isdirect;
-  u_int devid;
-  u_long rdevid;
-  struct umntrequest *next;
-};
-
-struct umntres {
-  int status;
-};
 
 #ifdef HAVE_FS_NFS3
 typedef struct {
@@ -346,11 +305,6 @@ struct nfs_fh3 {
 typedef struct nfs_fh3 am_nfs_fh3;
 #endif /* HAVE_FS_NFS3 */
 
-extern bool_t xdr_mntrequest(XDR *, mntrequest *);
-extern bool_t xdr_mntres(XDR *, mntres *);
-extern bool_t xdr_umntrequest(XDR *, umntrequest *);
-extern bool_t xdr_umntres(XDR *, umntres *);
-
 /*
  * Missing definitions on redhat alpha linux
  */
@@ -375,6 +329,7 @@ extern bool_t xdr_umntres(XDR *, umntres *);
 /* turn off this (b/c of hlfsd) */
 #undef HAVE_RPC_AUTH_DES_H
 
+extern int linux_version_code();
 /* use a private mapper from errno's to NFS errors */
 extern int linux_nfs_error(int e);
 #define nfs_error(e)	linux_nfs_error(e)

@@ -38,7 +38,7 @@ fi
 bld_cmd=""
 bld_flags=""
 cnf_cmd=""
-cnf_flags=""
+cnf_flags="-C"			# use config.cache cache file
 mkcnf_cmd=""
 vars=""
 expvars=""
@@ -160,7 +160,7 @@ case "$1" in
     ;;
 
     -Ds )
-	cnf_cmd="../configure --prefix=/usr/local/AMD --enable-debug=yes"
+	cnf_cmd="../configure -enable-debug=yes"
 #  	cnf_cmd="../configure --prefix=/usr/local/AMD --enable-debug=yes --enable-shared --disable-static \
 #  	    --enable-cppflags=\"-I${HOME}/ldap/include -I${HOME}/hesiod/include\" \
 #  	    --enable-ldflags=\"-L${HOME}/ldap/lib -L${HOME}/hesiod/lib\""
@@ -195,13 +195,13 @@ case "$1" in
 
     -- )
 	shift
-	bld_flags="$*"
+	cmdline_cnf_flags="$*"
 	break	# from while loop
     ;;
 
     -h | * )
 cat <<EOF
-Usage: buildall [-b] [-[cCdD][s]] [-K] [-q] [-h] [-- makeopts]
+Usage: buildall [-b] [-[cCdD][s]] [-K] [-q] [-h] [-- configopts]
      -b: build only
      -c:  configure (debugging)
      -cs: configure (debugging, shared libs)
@@ -214,7 +214,7 @@ Usage: buildall [-b] [-[cCdD][s]] [-K] [-q] [-h] [-- makeopts]
      -K: run mkconf to update *.in files (developers only)
      -q: quick configure only (run config.status)
      -h: print usage
-     makeopts: options to pass to make (must be last and after a --)
+     configopts: options to pass to configure (must be last and after a --)
 You may pass variables: CFLAGS for build, MAKE for your make program
 and AM_CFLAGS for additional build flags.
 EOF
@@ -226,7 +226,7 @@ done
 
 # if AM_CFLAGS was set before, then add it to the configure option
 if test -n "${AM_CFLAGS}"; then
-    cnf_flags="--enable-am-cflags=${AM_CFLAGS}"
+    extra_cnf_flags="--enable-am-cflags=${AM_CFLAGS}"
 else
     :
 fi
@@ -275,11 +275,15 @@ fi
 # Some system's /bin/sh has limits/bugs which prevent it from being used
 # with configure
 case "${host_alias}" in
-    *hpux9* )
-	if test -f /bin/bash; then
-	    cnf_cmd="/bin/bash $cnf_cmd"
-	elif test -f /bin/ksh; then
-	    cnf_cmd="/bin/ksh $cnf_cmd"
+    *hpux9* | *aix5.1* )
+	if test -n "$cnf_cmd"; then
+	    if test -f /bin/bash; then
+		cnf_cmd="/bin/bash $cnf_cmd"
+	    elif test -f /bin/ksh; then
+		cnf_cmd="/bin/ksh $cnf_cmd"
+	    fi
+	else
+	    :
 	fi
 	echo "WARNING: do not use /bin/make under this system."
 	echo "Instead, use GNU make or 'ksh ./configure' directly."
@@ -310,12 +314,12 @@ if test -n "$cnf_cmd"; then
     else
 	:
     fi
-    if test -z "$cnf_flags"; then
+    if test -z "${cnf_flags}${extra_cnf_flags}"; then
 	echo $cnf_cmd
-	$cnf_cmd || exit 1
+	$cnf_cmd "$cmdline_cnf_flags" || exit 1
     else
-	echo $cnf_cmd "$cnf_flags"
-	$cnf_cmd "$cnf_flags" || exit 1
+	echo $cnf_cmd "$cnf_flags" "$extra_cnf_flags" 
+	$cnf_cmd "$cnf_flags" "$extra_cnf_flags" "$cmdline_cnf_flags" || exit 1
     fi
 else
     :
@@ -324,8 +328,8 @@ fi
 ##############################################################################
 # if need to [re]build
 if test -n "$bld_cmd"; then
-    echo $bld_cmd $bld_flags
-    $bld_cmd $bld_flags || exit 1
+    echo $bld_cmd
+    $bld_cmd || exit 1
 else
     :
 fi

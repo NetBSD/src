@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_root.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: amfs_root.c,v 1.1.1.5 2002/11/29 22:58:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amfs_root.c,v 1.3.2.1 2001/01/10 03:23:03 ezk Exp
+ * Id: amfs_root.c,v 1.10 2002/03/29 20:01:27 ib42 Exp
  *
  */
 
@@ -57,7 +56,7 @@
 /****************************************************************************
  *** FORWARD DEFINITIONS                                                  ***
  ****************************************************************************/
-static int amfs_root_mount(am_node *mp);
+static int amfs_root_mount(am_node *mp, mntfs *mf);
 
 /****************************************************************************
  *** OPS STRUCTURES                                                       ***
@@ -68,16 +67,18 @@ am_ops amfs_root_ops =
   0,				/* amfs_root_match */
   0,				/* amfs_root_init */
   amfs_root_mount,
-  0,
   amfs_auto_umount,
-  0,
-  amfs_auto_lookuppn,
+  amfs_auto_lookup_child,
+  amfs_auto_mount_child,
   amfs_auto_readdir,
   0,				/* amfs_root_readlink */
   0,				/* amfs_root_mounted */
   0,				/* amfs_root_umounted */
   find_amfs_auto_srvr,
-  FS_NOTIMEOUT | FS_AMQINFO | FS_DIRECTORY
+  FS_NOTIMEOUT | FS_AMQINFO | FS_DIRECTORY,	/* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_ROOT_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -89,10 +90,8 @@ am_ops amfs_root_ops =
  * Mount the root...
  */
 static int
-amfs_root_mount(am_node *mp)
+amfs_root_mount(am_node *mp, mntfs *mf)
 {
-  mntfs *mf = mp->am_mnt;
-
   mf->mf_mount = strealloc(mf->mf_mount, pid_fsname);
   mf->mf_private = (voidp) mapc_find(mf->mf_info, "", NULL);
   mf->mf_prfree = mapc_free;

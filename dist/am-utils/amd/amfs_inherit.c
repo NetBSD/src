@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_inherit.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: amfs_inherit.c,v 1.1.1.5 2002/11/29 22:58:11 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amfs_inherit.c,v 1.3.2.1 2001/01/10 03:23:01 ezk Exp
+ * Id: amfs_inherit.c,v 1.11 2002/03/29 20:01:26 ib42 Exp
  *
  */
 
@@ -63,10 +62,9 @@
  */
 
 static char *amfs_inherit_match(am_opts *fo);
-static int amfs_inherit_fmount(mntfs *mf);
-static int amfs_inherit_fumount(mntfs *mf);
+static int amfs_inherit_mount(am_node *mp, mntfs *mf);
+static int amfs_inherit_umount(am_node *mp, mntfs *mf);
 static int amfs_inherit_init(mntfs *mf);
-static int amfs_inherit_mount(am_node *mp);
 
 
 /*
@@ -78,16 +76,18 @@ am_ops amfs_inherit_ops =
   amfs_inherit_match,
   amfs_inherit_init,
   amfs_inherit_mount,
-  amfs_inherit_fmount,
-  amfs_auto_fumount,
-  amfs_inherit_fumount,
-  amfs_error_lookuppn,
+  amfs_inherit_umount,
+  amfs_error_lookup_child,
+  amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* amfs_inherit_readlink */
   0,				/* amfs_inherit_mounted */
   0,				/* amfs_inherit_umounted */
   find_amfs_auto_srvr,
-  FS_DISCARD
+  FS_DISCARD,
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_INHERIT_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -162,7 +162,7 @@ amfs_inherit_inherit(mntfs *mf)
 
 
 static int
-amfs_inherit_mount(am_node *mp)
+amfs_inherit_mount(am_node *mp, mntfs *mf)
 {
   mntfs *newmf = amfs_inherit_inherit(mp->am_mnt);
 
@@ -171,7 +171,7 @@ amfs_inherit_mount(am_node *mp)
     /*
      * XXX - must do the am_mounted call here
      */
-    if (newmf->mf_ops->fs_flags & FS_MBACKGROUND)
+    if (newmf->mf_fsflags & FS_MBACKGROUND)
       am_mounted(mp);
 
     new_ttl(mp);
@@ -181,6 +181,7 @@ amfs_inherit_mount(am_node *mp)
 }
 
 
+#if 0 /* huh? */
 static int
 amfs_inherit_fmount(mntfs *mf)
 {
@@ -190,10 +191,11 @@ amfs_inherit_fmount(mntfs *mf)
     return amfs_inherit_mount(mp);
   return amfs_inherit_inherit(mf) ? 0 : EINVAL;
 }
+#endif
 
 
 static int
-amfs_inherit_fumount(mntfs *mf)
+amfs_inherit_umount(am_node *am, mntfs *mf)
 {
   /*
    * Always succeed

@@ -1,7 +1,7 @@
-/*	$NetBSD: autil.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: autil.c,v 1.1.1.5 2002/11/29 22:58:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: autil.c,v 1.4.2.2 2001/04/29 05:08:35 ib42 Exp
+ * Id: autil.c,v 1.22 2002/06/24 03:05:15 ib42 Exp
  *
  */
 
@@ -131,16 +130,12 @@ strsplit(char *s, int ch, int qc)
      */
     ivec[ic++] = v;
     ivec = (char **) xrealloc((voidp) ivec, (ic + 1) * sizeof(char *));
-#ifdef DEBUG
     amuDebug(D_STR)
       plog(XLOG_DEBUG, "strsplit saved \"%s\"", v);
-#endif /* DEBUG */
   }
 
-#ifdef DEBUG
   amuDebug(D_STR)
     plog(XLOG_DEBUG, "strsplit saved a total of %d strings", ic);
-#endif /* DEBUG */
 
   ivec[ic] = 0;
 
@@ -187,9 +182,7 @@ host_normalize(char **chp)
     clock_valid = 0;
     hp = gethostbyname(*chp);
     if (hp && hp->h_addrtype == AF_INET) {
-#ifdef DEBUG
       dlog("Hostname %s normalized to %s", *chp, hp->h_name);
-#endif /* DEBUG */
       *chp = strealloc(*chp, (char *) hp->h_name);
     }
   }
@@ -255,6 +248,7 @@ mf_mounted(mntfs *mf)
     if (mf->mf_ops->mounted) {
       (*mf->mf_ops->mounted) (mf);
     }
+
     mf->mf_fo = 0;
   }
 
@@ -278,16 +272,21 @@ am_mounted(am_node *mp)
 
   mf_mounted(mf);
 
+#ifdef HAVE_FS_AUTOFS
+  if (mf->mf_flags & MFF_AUTOFS)
+    autofs_mounted(mp);
+#endif /* HAVE_FS_AUTOFS */
+
   /*
    * Patch up path for direct mounts
    */
-  if (mp->am_parent && mp->am_parent->am_mnt->mf_ops == &amfs_direct_ops)
+  if (mp->am_parent && mp->am_parent->am_mnt->mf_fsflags & FS_DIRECT)
     mp->am_path = str3cat(mp->am_path, mp->am_parent->am_path, "/", ".");
 
   /*
    * Check whether this mount should be cached permanently
    */
-  if (mf->mf_ops->fs_flags & FS_NOTIMEOUT) {
+  if (mf->mf_fsflags & FS_NOTIMEOUT) {
     mp->am_flags |= AMF_NOTIMEOUT;
   } else if (mf->mf_mount[1] == '\0' && mf->mf_mount[0] == '/') {
     mp->am_flags |= AMF_NOTIMEOUT;
@@ -322,10 +321,23 @@ am_mounted(am_node *mp)
     mp->am_parent->am_fattr.na_mtime.nt_seconds = mp->am_stats.s_mtime;
 
   /*
-   * Now, if we can, do a reply to our NFS client here
-   * to speed things up.
+   * This is ugly, but essentially unavoidable
+   * Sublinks must be treated separately as type==link
+   * when the base type is different.
    */
-  quick_reply(mp, 0);
+  if (mp->am_link && mp->am_mnt->mf_ops != &amfs_link_ops)
+    amfs_link_ops.mount_fs(mp, mp->am_mnt);
+
+#ifdef HAVE_FS_AUTOFS
+  if (mp->am_flags & AMF_AUTOFS)
+    autofs_mount_succeeded(mp);
+  else
+#endif /* HAVE_FS_AUTOFS */
+    /*
+     * Now, if we can, do a reply to our NFS client here
+     * to speed things up.
+     */
+    nfs_quick_reply(mp, 0);
 
   /*
    * Update stats
@@ -341,13 +353,14 @@ mount_node(am_node *mp)
   int error = 0;
 
   mf->mf_flags |= MFF_MOUNTING;
-  error = (*mf->mf_ops->mount_fs) (mp);
+  error = mf->mf_ops->mount_fs(mp, mf);
 
+  /* do this again, it might have changed */
   mf = mp->am_mnt;
   if (error >= 0)
     mf->mf_flags &= ~MFF_MOUNTING;
-  if (!error && !(mf->mf_ops->fs_flags & FS_MBACKGROUND)) {
-    /* ...but see ifs_mount */
+  if (!error && !(mf->mf_fsflags & FS_MBACKGROUND)) {
+    /* ...but see ifs_mount - Huh? ifs_mount doesn't exist */
     am_mounted(mp);
   }
 
@@ -367,7 +380,39 @@ am_unmounted(am_node *mp)
    * Do unmounted callback
    */
   if (mf->mf_ops->umounted)
-    (*mf->mf_ops->umounted) (mp);
+    mf->mf_ops->umounted(mf);
+
+  /*
+   * This is ugly, but essentially unavoidable.
+   * Sublinks must be treated separately as type==link
+   * when the base type is different.
+   */
+  if (mp->am_link && mp->am_mnt->mf_ops != &amfs_link_ops)
+    amfs_link_ops.umount_fs(mp, mp->am_mnt);
+
+#ifdef HAVE_FS_AUTOFS
+  if (mp->am_flags & AMF_AUTOFS)
+    autofs_umount_succeeded(mp);
+#endif /* HAVE_FS_AUTOFS */
+
+  /*
+   * Clean up any directories that were made
+   *
+   * If we remove the mount point of a pending mount, any queued access
+   * to it will fail. So don't do it in that case.
+   */
+  if (mf->mf_flags & MFF_MKMNT &&
+      !(mp->am_flags & AMF_REMOUNT)) {
+    plog(XLOG_INFO, "removing mountpoint directory '%s'", mf->mf_real_mount);
+    rmdirs(mf->mf_real_mount);
+  }
+
+  /*
+   * If this is a pseudo-directory then adjust the link count
+   * in the parent
+   */
+  if (mp->am_parent && mp->am_fattr.na_type == NFDIR)
+    --mp->am_parent->am_fattr.na_nlink;
 
   /*
    * Update mtime of parent node
@@ -375,7 +420,23 @@ am_unmounted(am_node *mp)
   if (mp->am_parent && mp->am_parent->am_mnt)
     mp->am_parent->am_fattr.na_mtime.nt_seconds = clocktime();
 
-  free_map(mp);
+  if (mp->am_flags & AMF_REMOUNT) {
+    char *fname = strdup(mp->am_name);
+    am_node *mp_parent = mp->am_parent;
+    int error = 0;
+
+    free_map(mp);
+    plog(XLOG_INFO, "am_unmounted: remounting %s", fname);
+    mp = amfs_auto_lookup_child(mp_parent, fname, &error, VLOOK_CREATE);
+    if (mp && error < 0)
+      mp = amfs_auto_mount_child(mp, &error);
+    if (error > 0) {
+      errno = error;
+      plog(XLOG_ERROR, "am_unmounted: could not remount %s: %m", fname);
+    }
+    XFREE(fname);
+  } else
+    free_map(mp);
 }
 
 
@@ -413,9 +474,7 @@ background(void)
   int pid = dofork();
 
   if (pid == 0) {
-#ifdef DEBUG
     dlog("backgrounded");
-#endif /* DEBUG */
     foreground = 0;
   }
   return pid;

@@ -31,7 +31,7 @@ EXTRA_DIST = $(man_MANS)
 
 # dependencies
 $(PROGRAMS): $(LDADD)
-$(OBJECTS):					\
+$(hlfsd_OBJECTS):				\
 	../config.h				\
 	../aux_conf.h				\
 	$(top_srcdir)/include/am_compat.h	\

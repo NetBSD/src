@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_TEMPLATE.c,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $	*/
+/*	$NetBSD: ops_TEMPLATE.c,v 1.1.1.5 2002/11/29 22:58:21 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: ops_TEMPLATE.c,v 1.3.2.2 2001/01/12 23:28:57 ro Exp
+ * Id: ops_TEMPLATE.c,v 1.11 2002/03/29 20:01:28 ib42 Exp
  *
  */
 
@@ -64,15 +63,13 @@
 /* forward declarations */
 static char *foofs_match(am_opts *fo);
 static int foofs_init(mntfs *mf);
-static int foofs_mount(am_node *mp);
-static int foofs_fmount(mntfs *mf);
-static int foofs_umount(am_node *mp);
-static int foofs_fumount(mntfs *mf);
+static int foofs_mount(am_node *mp, mntfs *mf);
+static int foofs_umount(am_node *mp, mntfs *mf);
 static am_node *foofs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
 static int foofs_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count);
 static am_node *foofs_readlink(am_node *mp, int *error_return);
-static void foofs_mounted(mntfs *mf);
-static void foofs_umounted(am_node *mp);
+static void foofs_mounted(am_node *am, mntfs *mf);
+static void foofs_umounted(am_node *mp, mntfs *mf);
 fserver *foofs_ffserver(mntfs *mf);
 
 
@@ -86,16 +83,18 @@ am_ops foofs_ops =
   foofs_match,			/* match */
   foofs_init,			/* initialize */
   foofs_mount,			/* mount vnode */
-  foofs_fmount,			/* mount vfs */
   foofs_umount,			/* unmount vnode */
-  foofs_fumount,		/* unmount VFS */
-  foofs_lookuppn,		/* lookup path-name */
+  foofs_lookup_child,		/* lookup path-name */
+  foofs_mount_child,		/* mount path-name */
   foofs_readdir,		/* read directory */
   foofs_readlink,		/* read link */
   foofs_mounted,		/* after-mount extra actions */
   foofs_umounted,		/* after-umount extra actions */
   foofs_ffserver,		/* find a file server */
-  FS_MKMNT | FS_BACKGROUND | FS_AMQINFO	/* flags */
+  FS_MKMNT | FS_BACKGROUND | FS_AMQINFO,	/* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_TEMPLATE_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 

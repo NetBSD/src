@@ -28,8 +28,9 @@ EXTRA_DIST = memcmp.c	\
 	alloca.c	\
 	clnt_sperrno.c	\
 	hasmntopt.c	\
-	strdup.c	\
 	strcasecmp.c	\
+	strdup.c	\
+	strerror.c	\
 	strstr.c	\
 	ualarm.c
 
@@ -42,6 +43,7 @@ DISTCLEANFILES = mountutil.c mtabutil.c transputil.c umount_fs.c
 #	memcmp.c (via AC_FUNC_MEMCMP)
 #	strcasecmp.c
 #	strdup.c
+#	strerror.c
 #	strstr.c
 #	ualarm.c
 #
@@ -75,7 +77,7 @@ AMU_CFLAGS = @AMU_CFLAGS@
 CFLAGS = @CFLAGS@ $(AMU_CFLAGS)
 
 # dependencies
-$(OBJECTS) $(libamu_la_LIBADD):			\
+$(libamu_la_OBJECTS) $(libamu_la_LIBADD):	\
 	../config.h				\
 	../aux_conf.h				\
 	$(top_srcdir)/include/am_compat.h	\

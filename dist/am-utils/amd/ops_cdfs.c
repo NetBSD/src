@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_cdfs.c,v 1.1.1.4 2001/05/13 17:50:14 veego Exp $	*/
+/*	$NetBSD: ops_cdfs.c,v 1.1.1.5 2002/11/29 22:58:19 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: ops_cdfs.c,v 1.4.2.1 2001/01/10 03:23:09 ezk Exp
+ * Id: ops_cdfs.c,v 1.16 2002/03/29 20:01:28 ib42 Exp
  *
  */
 
@@ -56,8 +55,8 @@
 
 /* forward declarations */
 static char *cdfs_match(am_opts *fo);
-static int cdfs_fmount(mntfs *mf);
-static int cdfs_fumount(mntfs *mf);
+static int cdfs_mount(am_node *am, mntfs *mf);
+static int cdfs_umount(am_node *am, mntfs *mf);
 
 /*
  * Ops structure
@@ -67,17 +66,19 @@ am_ops cdfs_ops =
   "cdfs",
   cdfs_match,
   0,				/* cdfs_init */
-  amfs_auto_fmount,
-  cdfs_fmount,
-  amfs_auto_fumount,
-  cdfs_fumount,
-  amfs_error_lookuppn,
+  cdfs_mount,
+  cdfs_umount,
+  amfs_error_lookup_child,
+  amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* cdfs_readlink */
   0,				/* cdfs_mounted */
   0,				/* cdfs_umounted */
   find_amfs_auto_srvr,
-  FS_MKMNT | FS_UBACKGROUND | FS_AMQINFO
+  FS_MKMNT | FS_UBACKGROUND | FS_AMQINFO,	/* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_CDFS_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -91,10 +92,8 @@ cdfs_match(am_opts *fo)
     plog(XLOG_USER, "cdfs: no source device specified");
     return 0;
   }
-#ifdef DEBUG
   dlog("CDFS: mounting device \"%s\" on \"%s\"",
        fo->opt_dev, fo->opt_fs);
-#endif /* DEBUG */
 
   /*
    * Determine magic cookie to put in mtab
@@ -104,11 +103,11 @@ cdfs_match(am_opts *fo)
 
 
 static int
-mount_cdfs(char *dir, char *fs_name, char *opts)
+mount_cdfs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_autofs, char **lpname)
 {
   cdfs_args_t cdfs_args;
   mntent_t mnt;
-  int genflags, cdfs_flags;
+  int genflags, cdfs_flags, retval;
 
   /*
    * Figure out the name of the file system type.
@@ -122,7 +121,7 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
    * Fill in the mount structure
    */
   memset((voidp) &mnt, 0, sizeof(mnt));
-  mnt.mnt_dir = dir;
+  mnt.mnt_dir = mntdir;
   mnt.mnt_fsname = fs_name;
   mnt.mnt_type = MNTTAB_TYPE_CDFS;
   mnt.mnt_opts = opts;
@@ -165,46 +164,89 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
 #endif /* defined(MNT2_CDFS_OPT_EXTATT) && defined(MNTTAB_OPT_EXTATT) */
 
   genflags = compute_mount_flags(&mnt);
+#ifdef HAVE_FS_AUTOFS
+  if (on_autofs)
+    genflags |= autofs_compute_mount_flags(&mnt);
+#endif /* HAVE_FS_AUTOFS */
 
-#ifdef HAVE_FIELD_CDFS_ARGS_T_FLAGS
+#ifdef HAVE_CDFS_ARGS_T_FLAGS
   cdfs_args.flags = cdfs_flags;
-#endif /* HAVE_FIELD_CDFS_ARGS_T_FLAGS */
+#endif /* HAVE_CDFS_ARGS_T_FLAGS */
 
-#ifdef HAVE_FIELD_CDFS_ARGS_T_ISO_FLAGS
+#ifdef HAVE_CDFS_ARGS_T_ISO_FLAGS
   cdfs_args.iso_flags = genflags | cdfs_flags;
-#endif /* HAVE_FIELD_CDFS_ARGS_T_ISO_FLAGS */
+#endif /* HAVE_CDFS_ARGS_T_ISO_FLAGS */
 
-#ifdef HAVE_FIELD_CDFS_ARGS_T_ISO_PGTHRESH
+#ifdef HAVE_CDFS_ARGS_T_ISO_PGTHRESH
   cdfs_args.iso_pgthresh = hasmntval(&mnt, MNTTAB_OPT_PGTHRESH);
-#endif /* HAVE_FIELD_CDFS_ARGS_T_ISO_PGTHRESH */
+#endif /* HAVE_CDFS_ARGS_T_ISO_PGTHRESH */
 
-#ifdef HAVE_FIELD_CDFS_ARGS_T_FSPEC
-  cdfs_args.fspec = fs_name;
-#endif /* HAVE_FIELD_CDFS_ARGS_T_FSPEC */
-
-#ifdef HAVE_FIELD_CDFS_ARGS_T_NORRIP
+#ifdef HAVE_CDFS_ARGS_T_NORRIP
   /* XXX: need to provide norrip mount opt */
   cdfs_args.norrip = 0;		/* use Rock-Ridge Protocol extensions */
-#endif /* HAVE_FIELD_CDFS_ARGS_T_NORRIP */
+#endif /* HAVE_CDFS_ARGS_T_NORRIP */
 
-#ifdef HAVE_FIELD_CDFS_ARGS_T_SSECTOR
+#ifdef HAVE_CDFS_ARGS_T_SSECTOR
   /* XXX: need to provide ssector mount option */
   cdfs_args.ssector = 0;	/* use 1st session on disk */
-#endif /* HAVE_FIELD_CDFS_ARGS_T_SSECTOR */
+#endif /* HAVE_CDFS_ARGS_T_SSECTOR */
+
+#ifdef HAVE_CDFS_ARGS_T_FSPEC
+  cdfs_args.fspec = fs_name;	/* NOTE: may be overridden below */
+#endif /* HAVE_CDFS_ARGS_T_FSPEC */
+
+#ifdef HAVE_LOOP_DEVICE
+  if (hasmntopt(&mnt, MNTTAB_OPT_LOOP)) {
+    *lpname = setup_loop_device(mnt.mnt_fsname);
+    if (*lpname) {
+      char *str;
+      int len;
+
+      plog(XLOG_INFO, "setup loop device %s on %s OK", *lpname, mnt.mnt_fsname);
+      cdfs_args.fspec = *lpname; /* NOTE: overriding cdfs device! */
+      /* XXX: hack, append loop=/dev/loopX to mnttab opts */
+      len = strlen(mnt.mnt_opts) + 7 + strlen(*lpname);
+      str = (char *) xmalloc(len);
+      if (str) {
+	sprintf(str, "%s,loop=%s", mnt.mnt_opts, *lpname);
+	XFREE(mnt.mnt_opts);
+	mnt.mnt_opts = str;
+      }
+    } else {
+      plog(XLOG_ERROR, "failed to set up a loop device: %m");
+      return errno;
+    }
+  }
+#endif /* HAVE_LOOP_DEVICE */
 
   /*
    * Call generic mount routine
    */
-  return mount_fs(&mnt, genflags, (caddr_t) &cdfs_args, 0, type, 0, NULL, mnttab_file_name);
+  retval = mount_fs2(&mnt, real_mntdir, genflags, (caddr_t) &cdfs_args, 0, type, 0, NULL, mnttab_file_name);
+
+#ifdef HAVE_LOOP_DEVICE
+  /* if mount failed and we used a loop device, then undo it */
+  if (retval != 0  &&  *lpname != NULL) {
+    if (delete_loop_device(*lpname) < 0) {
+      plog(XLOG_WARNING, "mount() failed to release loop device %s: %m", *lpname);
+    } else {
+      plog(XLOG_INFO, "mount() released loop device %s OK", *lpname);
+    }
+    XFREE(*lpname);
+  }
+#endif /* HAVE_LOOP_DEVICE */
+
+  return retval;
 }
 
 
 static int
-cdfs_fmount(mntfs *mf)
+cdfs_mount(am_node *am, mntfs *mf)
 {
   int error;
 
-  error = mount_cdfs(mf->mf_mount, mf->mf_info, mf->mf_mopts);
+  error = mount_cdfs(mf->mf_mount, mf->mf_real_mount, mf->mf_info, mf->mf_mopts,
+		     am->am_flags & AMF_AUTOFS, &mf->mf_loopdev);
   if (error) {
     errno = error;
     plog(XLOG_ERROR, "mount_cdfs: %m");
@@ -215,7 +257,22 @@ cdfs_fmount(mntfs *mf)
 
 
 static int
-cdfs_fumount(mntfs *mf)
+cdfs_umount(am_node *am, mntfs *mf)
 {
-  return UMOUNT_FS(mf->mf_mount, mnttab_file_name);
+  int retval;
+
+  retval = UMOUNT_FS(mf->mf_mount, mf->mf_real_mount, mnttab_file_name);
+
+#ifdef HAVE_LOOP_DEVICE
+  if (retval >= 0  &&  mf->mf_loopdev) {
+    if (delete_loop_device(mf->mf_loopdev) < 0) {
+      plog(XLOG_WARNING, "unmount() failed to release loop device %s: %m", mf->mf_loopdev);
+    } else {
+      plog(XLOG_INFO, "unmount() released loop device %s OK", mf->mf_loopdev);
+    }
+    XFREE(mf->mf_loopdev);
+  }
+#endif /* HAVE_LOOP_DEVICE */
+
+  return retval;
 }

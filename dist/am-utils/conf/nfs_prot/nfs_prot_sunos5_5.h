@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_sunos5_5.h,v 1.1.1.4 2001/05/13 17:50:22 veego Exp $	*/
+/*	$NetBSD: nfs_prot_sunos5_5.h,v 1.1.1.5 2002/11/29 22:58:38 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_sunos5_5.h,v 1.3.2.2 2001/01/10 03:23:25 ezk Exp
+ * Id: nfs_prot_sunos5_5.h,v 1.9 2002/03/29 20:01:30 ib42 Exp
  *
  */
 
@@ -382,21 +381,5 @@ struct statfsres {
     nfsstatfsokres sfr_reply_u;
   } sfr_u;
 };
-
-/*
- **************************************************************************
- * Solaris 2.5 autofs support is broken and needs a re-port.
- * For now, undefine it or define dummy entries.
- **************************************************************************
- */
-#ifdef MNTTYPE_AUTOFS
-# undef MNTTYPE_AUTOFS
-#endif /* MNTTYPE_AUTOFS */
-#ifdef MNTTAB_TYPE_AUTOFS
-# undef MNTTAB_TYPE_AUTOFS
-#endif /* MNTTAB_TYPE_AUTOFS */
-#ifdef HAVE_FS_AUTOFS
-# undef HAVE_FS_AUTOFS
-#endif /* HAVE_FS_AUTOFS */
 
 #endif /* not _AMU_NFS_PROT_H */

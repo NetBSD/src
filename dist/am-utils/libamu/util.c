@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.1.1.4 2001/05/13 17:50:32 veego Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.5 2002/11/29 22:59:06 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: util.c,v 1.3.2.1 2001/01/10 03:23:41 ezk Exp
+ * Id: util.c,v 1.9 2002/02/02 20:59:05 ezk Exp
  *
  */
 
@@ -67,7 +66,7 @@ strnsave(const char *str, int len)
 
 
 /*
- * Concatenate three strings and store in buffer pointed to
+ * Concatenate three strings and store the result in the buffer pointed to
  * by p, making p large enough to hold the strings
  */
 char *
@@ -111,9 +110,7 @@ mkdirs(char *path, int mode)
     if (mkdir(p2, mode) < 0) {
       error_so_far = errno;
     } else {
-#ifdef DEBUG
       dlog("mkdir(%s)", p2);
-#endif /* DEBUG */
     }
     *sp = '/';
   }
@@ -121,9 +118,7 @@ mkdirs(char *path, int mode)
   if (mkdir(p2, mode) < 0) {
     error_so_far = errno;
   } else {
-#ifdef DEBUG
     dlog("mkdir(%s)", p2);
-#endif /* DEBUG */
   }
 
   XFREE(p2);
@@ -161,9 +156,7 @@ rmdirs(char *dir)
 	  plog(XLOG_ERROR, "rmdir(%s): %m", xdp);
 	break;
       } else {
-#ifdef DEBUG
 	dlog("rmdir(%s)", xdp);
-#endif /* DEBUG */
       }
     } else {
       break;
@@ -175,4 +168,11 @@ rmdirs(char *dir)
   } while (dp && dp > xdp);
 
   XFREE(xdp);
+}
+
+
+long
+get_server_pid()
+{
+  return (long) (foreground ? am_mypid : getppid());
 }

@@ -1,8 +1,8 @@
-/*	$NetBSD: conf_tok.l,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $	*/
+/*	$NetBSD: conf_tok.l,v 1.1.1.5 2002/11/29 22:58:21 christos Exp $	*/
 
 %{
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,9 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
  *
- * Id: conf_tok.l,v 1.3.2.1 2001/01/10 03:23:05 ezk Exp
+ * Id: conf_tok.l,v 1.6 2002/02/02 20:58:54 ezk Exp
  *
  */
 

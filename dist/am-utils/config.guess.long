@@ -17,6 +17,10 @@ case "${GCONFIG}" in
 	    long=`cut -d '(' -f1 /etc/redhat-release | tr -dc '[0-9.]'`
 	    echo ${GCONFIG}-rh${long}
 	    exit 0
+	elif test -f /etc/SuSE-release ; then
+	    long=`grep VERSION /etc/SuSE-release | tr -dc '[0-9.]'`
+	    echo ${GCONFIG}-suse${long}
+	    exit 0
 	else
 	    echo ${GCONFIG}
 	fi

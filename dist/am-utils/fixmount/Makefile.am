@@ -28,7 +28,7 @@ DISTCLEANFILES = check_mount.c
 
 # dependencies
 $(PROGRAMS): $(LDADD)
-$(OBJECTS) $(EXTRA_fixmount_OBJECTS):		\
+$(fixmount_OBJECTS) $(EXTRA_fixmount_OBJECTS):	\
 	../config.h				\
 	../aux_conf.h				\
 	$(top_srcdir)/include/am_compat.h	\

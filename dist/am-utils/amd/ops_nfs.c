@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_nfs.c,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $	*/
+/*	$NetBSD: ops_nfs.c,v 1.1.1.5 2002/11/29 22:58:20 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: ops_nfs.c,v 1.6.2.3 2001/04/14 21:08:22 ezk Exp
+ * Id: ops_nfs.c,v 1.18 2002/06/23 01:05:39 ib42 Exp
  *
  */
 
@@ -121,17 +120,19 @@ am_ops nfs_ops =
   "nfs",
   nfs_match,
   nfs_init,
-  amfs_auto_fmount,
-  nfs_fmount,
-  amfs_auto_fumount,
-  nfs_fumount,
-  amfs_error_lookuppn,
+  nfs_mount,
+  nfs_umount,
+  amfs_error_lookup_child,
+  amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* nfs_readlink */
   0,				/* nfs_mounted */
   nfs_umounted,
   find_nfs_srvr,
-  FS_MKMNT | FS_BACKGROUND | FS_AMQINFO
+  FS_MKMNT | FS_BACKGROUND | FS_AMQINFO,	/* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_NFS_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -148,13 +149,11 @@ find_nfs_fhandle_cache(voidp idv, int done)
     }
   }
 
-#ifdef DEBUG
   if (fp2) {
     dlog("fh cache gives fp %#lx, fs %s", (unsigned long) fp2, fp2->fh_path);
   } else {
     dlog("fh cache search failed");
   }
-#endif /* DEBUG */
 
   if (fp2 && !done) {
     fp2->fh_error = ETIMEDOUT;
@@ -191,17 +190,13 @@ got_nfs_fh(voidp pkt, int len, struct sockaddr_in *sa, struct sockaddr_in *ia, v
 				    (XDRPROC_T_TYPE) xdr_fhstatus);
 
   if (!fp->fh_error) {
-#ifdef DEBUG
     dlog("got filehandle for %s:%s", fp->fh_fs->fs_host, fp->fh_path);
-#endif /* DEBUG */
 
     /*
      * Wakeup anything sleeping on this filehandle
      */
     if (fp->fh_wchan) {
-#ifdef DEBUG
       dlog("Calling wakeup on %#lx", (unsigned long) fp->fh_wchan);
-#endif /* DEBUG */
       wakeup(fp->fh_wchan);
     }
   }
@@ -229,9 +224,7 @@ discard_fh(voidp v)
 
   rem_que(&fp->fh_q);
   if (fp->fh_fs) {
-#ifdef DEBUG
     dlog("Discarding filehandle for %s:%s", fp->fh_fs->fs_host, fp->fh_path);
-#endif /* DEBUG */
     free_srvr(fp->fh_fs);
   }
   if (fp->fh_path)
@@ -244,15 +237,13 @@ discard_fh(voidp v)
  * Determine the file handle for a node
  */
 static int
-prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, voidp wchan)
+prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, mntfs *mf)
 {
   fh_cache *fp, *fp_save = 0;
   int error;
   int reuse_id = FALSE;
 
-#ifdef DEBUG
   dlog("Searching cache for %s:%s", fs->fs_host, path);
-#endif /* DEBUG */
 
   /*
    * First search the cache
@@ -262,13 +253,21 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, voidp w
       switch (fp->fh_error) {
       case 0:
 	plog(XLOG_INFO, "prime_nfs_fhandle_cache: NFS version %d", (int) fp->fh_nfs_version);
+
 #ifdef HAVE_FS_NFS3
 	if (fp->fh_nfs_version == NFS_VERSION3)
 	  error = fp->fh_error = unx_error(fp->fh_nfs_handle.v3.fhs_status);
 	else
 #endif /* HAVE_FS_NFS3 */
 	  error = fp->fh_error = unx_error(fp->fh_nfs_handle.v2.fhs_status);
+
 	if (error == 0) {
+	  if (mf->mf_flags & MFF_NFS_SCALEDOWN) {
+	    fp_save = fp;
+	    reuse_id = TRUE;
+	    break;
+	  }
+
 	  if (fhbuf) {
 #ifdef HAVE_FS_NFS3
 	    if (fp->fh_nfs_version == NFS_VERSION3)
@@ -345,7 +344,7 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, voidp w
   }
   if (!reuse_id)
     fp->fh_id = FHID_ALLOC(struct );
-  fp->fh_wchan = wchan;
+  fp->fh_wchan = (voidp) mf;
   fp->fh_error = -1;
   fp->fh_cid = timeout(FH_TTL, discard_fh, (voidp) fp);
 
@@ -372,7 +371,7 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, voidp w
   fp->fh_fs = dup_srvr(fs);
   fp->fh_path = strdup(path);
 
-  error = call_mountd(fp, MOUNTPROC_MNT, got_nfs_fh, wchan);
+  error = call_mountd(fp, MOUNTPROC_MNT, got_nfs_fh, (voidp) mf);
   if (error) {
     /*
      * Local error - cache for a short period
@@ -515,10 +514,8 @@ nfs_match(am_opts *fo)
    */
   xmtab = (char *) xmalloc(strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2);
   sprintf(xmtab, "%s:%s", fo->opt_rhost, fo->opt_rfs);
-#ifdef DEBUG
   dlog("NFS: mounting remote server \"%s\", remote fs \"%s\" on \"%s\"",
        fo->opt_rhost, fo->opt_rfs, fo->opt_fs);
-#endif /* DEBUG */
 
   return xmtab;
 }
@@ -534,14 +531,26 @@ nfs_init(mntfs *mf)
   am_nfs_handle_t fhs;
   char *colon;
 
-  if (mf->mf_private)
-    return 0;
+  if (mf->mf_private) {
+    if (mf->mf_flags & MFF_NFS_SCALEDOWN) {
+      fserver *fs;
+
+      /* tell remote mountd that we're done with this filehandle */
+      mf->mf_ops->umounted(mf);
+
+      mf->mf_prfree(mf->mf_private);
+      fs = mf->mf_ops->ffserver(mf);
+      free_srvr(mf->mf_server);
+      mf->mf_server = fs;
+    } else
+      return 0;
+  }
 
   colon = strchr(mf->mf_info, ':');
   if (colon == 0)
     return ENOENT;
 
-  error = prime_nfs_fhandle_cache(colon + 1, mf->mf_server, &fhs, (voidp) mf);
+  error = prime_nfs_fhandle_cache(colon + 1, mf->mf_server, &fhs, mf);
   if (!error) {
     mf->mf_private = (voidp) ALLOC(am_nfs_handle_t);
     mf->mf_prfree = (void (*)(voidp)) free;
@@ -552,7 +561,7 @@ nfs_init(mntfs *mf)
 
 
 int
-mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *mf)
+mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_autofs, mntfs *mf)
 {
   MTYPE_TYPE type;
   char *colon;
@@ -596,7 +605,7 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
   }
 
   memset((voidp) &mnt, 0, sizeof(mnt));
-  mnt.mnt_dir = dir;
+  mnt.mnt_dir = mntdir;
   mnt.mnt_fsname = fs_name;
   mnt.mnt_opts = xopts;
 
@@ -628,18 +637,19 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
   }
 #endif /* HAVE_FS_NFS3 */
   plog(XLOG_INFO, "mount_nfs_fh: NFS version %d", (int) nfs_version);
-#if defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI)
   plog(XLOG_INFO, "mount_nfs_fh: using NFS transport %s", nfs_proto);
-#endif /* defined(HAVE_FS_NFS3) || defined(HAVE_TRANSPORT_TYPE_TLI) */
 
   retry = hasmntval(&mnt, MNTTAB_OPT_RETRY);
   if (retry <= 0)
     retry = 1;			/* XXX */
 
   genflags = compute_mount_flags(&mnt);
+#ifdef HAVE_FS_AUTOFS
+  if (on_autofs)
+    genflags |= autofs_compute_mount_flags(&mnt);
+#endif /* HAVE_FS_AUTOFS */
 
   /* setup the many fields and flags within nfs_args */
-#ifdef HAVE_TRANSPORT_TYPE_TLI
   compute_nfs_args(&nfs_args,
 		   &mnt,
 		   genflags,
@@ -650,27 +660,14 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
 		   fhp,
 		   host,
 		   fs_name);
-#else /* not HAVE_TRANSPORT_TYPE_TLI */
-  compute_nfs_args(&nfs_args,
-		   &mnt,
-		   genflags,
-		   fs->fs_ip,
-		   nfs_version,
-		   nfs_proto,
-		   fhp,
-		   host,
-		   fs_name);
-#endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
   /* finally call the mounting function */
-#ifdef DEBUG
   amuDebug(D_TRACE) {
     print_nfs_args(&nfs_args, nfs_version);
     plog(XLOG_DEBUG, "Generic mount flags 0x%x used for NFS mount", genflags);
   }
-#endif /* DEBUG */
-  error = mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type,
-		   nfs_version, nfs_proto, mnttab_file_name);
+  error = mount_fs2(&mnt, real_mntdir, genflags, (caddr_t) &nfs_args, retry, type,
+		    nfs_version, nfs_proto, mnttab_file_name);
   XFREE(xopts);
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
@@ -683,40 +680,37 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *
 }
 
 
-static int
-mount_nfs(char *dir, char *fs_name, char *opts, mntfs *mf)
-{
-  if (!mf->mf_private) {
-    plog(XLOG_ERROR, "Missing filehandle for %s", fs_name);
-    return EINVAL;
-  }
-
-  return mount_nfs_fh((am_nfs_handle_t *) mf->mf_private, dir, fs_name, opts, mf);
-}
-
-
 int
-nfs_fmount(mntfs *mf)
+nfs_mount(am_node *am, mntfs *mf)
 {
   int error = 0;
 
-  error = mount_nfs(mf->mf_mount, mf->mf_info, mf->mf_mopts, mf);
+  if (!mf->mf_private) {
+    plog(XLOG_ERROR, "Missing filehandle for %s", mf->mf_info);
+    return EINVAL;
+  }
 
-#ifdef DEBUG
+  error = mount_nfs_fh((am_nfs_handle_t *) mf->mf_private,
+		       mf->mf_mount,
+		       mf->mf_real_mount,
+		       mf->mf_info,
+		       mf->mf_mopts,
+		       am->am_flags & AMF_AUTOFS,
+		       mf);
+
   if (error) {
     errno = error;
     dlog("mount_nfs: %m");
   }
-#endif /* DEBUG */
 
   return error;
 }
 
 
 int
-nfs_fumount(mntfs *mf)
+nfs_umount(am_node *am, mntfs *mf)
 {
-  int error = UMOUNT_FS(mf->mf_mount, mnttab_file_name);
+  int error = UMOUNT_FS(mf->mf_mount, mf->mf_real_mount, mnttab_file_name);
 
   /*
    * Here is some code to unmount 'restarted' file systems.
@@ -745,12 +739,12 @@ nfs_fumount(mntfs *mf)
 
       if (NSTREQ(mf->mf_mount, new_mf->mf_mount, len) &&
 	  new_mf->mf_mount[len] == '/') {
-	UMOUNT_FS(new_mf->mf_mount, mnttab_file_name);
+	UMOUNT_FS(new_mf->mf_mount, new_mf->mf_real_mount, mnttab_file_name);
 	didsome = 1;
       }
     }
     if (didsome)
-      error = UMOUNT_FS(mf->mf_mount, mnttab_file_name);
+      error = UMOUNT_FS(mf->mf_mount, mf->mf_real_mount, mnttab_file_name);
   }
   if (error)
     return error;
@@ -760,14 +754,8 @@ nfs_fumount(mntfs *mf)
 
 
 void
-nfs_umounted(am_node *mp)
+nfs_umounted(mntfs *mf)
 {
-  /*
-   * Don't bother to inform remote mountd that we are finished.  Until a
-   * full track of filehandles is maintained the mountd unmount callback
-   * cannot be done correctly anyway...
-   */
-  mntfs *mf = mp->am_mnt;
   fserver *fs;
   char *colon, *path;
 
@@ -788,9 +776,7 @@ nfs_umounted(am_node *mp)
   if (fs && colon) {
     fh_cache f;
 
-#ifdef DEBUG
     dlog("calling mountd for %s", mf->mf_info);
-#endif /* DEBUG */
     *path++ = '\0';
     f.fh_path = path;
     f.fh_sin = *fs->fs_ip;

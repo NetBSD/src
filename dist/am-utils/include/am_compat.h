@@ -1,4 +1,4 @@
-/*	$NetBSD: am_compat.h,v 1.1.1.4 2001/05/13 17:50:31 veego Exp $	*/
+/*	$NetBSD: am_compat.h,v 1.1.1.5 2002/11/29 22:59:02 christos Exp $	*/
 
 /*
  * am_compat.h:
@@ -157,10 +157,6 @@
  */
 #if defined(MNT2_GEN_OPT_NODEV) && !defined(MNTTAB_OPT_NODEV)
 # define MNTTAB_OPT_NODEV "nodev"
-/* this is missing under some versions of Linux */
-# ifndef MNTTAB_OPT_DEV
-#  define MNTTAB_OPT_DEV "dev"
-# endif /* not MNTTAB_OPT_DEV */
 #endif /* defined(MNT2_GEN_OPT_NODEV) && !defined(MNTTAB_OPT_NODEV) */
 
 #if defined(MNT2_GEN_OPT_NOEXEC) && !defined(MNTTAB_OPT_NOEXEC)
@@ -243,7 +239,7 @@ struct hsfs_args {
         int norrip;
 };
 # define cdfs_args_t struct hsfs_args
-# define HAVE_FIELD_CDFS_ARGS_T_NORRIP
+# define HAVE_CDFS_ARGS_T_NORRIP
 #endif /* not cdfs_args_t */
 
 /*
@@ -267,6 +263,13 @@ struct hsfs_args {
 # define efs_args_t u_int
 #endif /* defined(HAVE_FS_EFS) && !defined(efs_args_t) */
 
+/*
+ * if does not define struct xfs_args, assume integer bit-field (linux)
+ */
+#if defined(HAVE_FS_XFS) && !defined(xfs_args_t)
+# define xfs_args_t u_int
+#endif /* defined(HAVE_FS_XFS) && !defined(xfs_args_t) */
+
 #if defined(HAVE_FS_AUTOFS) && defined(MOUNT_TYPE_AUTOFS) && !defined(MNTTYPE_AUTOFS)
 # define MNTTYPE_AUTOFS "autofs"
 #endif /* defined(HAVE_FS_AUTOFS) && defined(MOUNT_TYPE_AUTOFS) && !defined(MNTTYPE_AUTOFS) */
@@ -283,5 +286,21 @@ struct hsfs_args {
 #  define MNTTAB_OPT_PROTO "proto"
 # endif /* not MNTTAB_OPT_PROTO */
 #endif /* not HAVE_FS_NFS3 */
+
+/*
+ * If loop device (header file) exists, define mount table option
+ */
+#if defined(HAVE_LOOP_DEVICE) && !defined(MNTTAB_OPT_LOOP)
+# define MNTTAB_OPT_LOOP "loop"
+#endif /* defined(HAVE_LOOP_DEVICE) && !defined(MNTTAB_OPT_LOOP) */
+
+/*
+ * Define a dummy struct netconfig for non-TLI systems
+ */
+#if !defined(HAVE_NETCONFIG_H) && !defined(HAVE_SYS_NETCONFIG_H)
+struct netconfig {
+  int dummy;
+};
+#endif /* not HAVE_NETCONFIG_H and not HAVE_SYS_NETCONFIG_H */
 
 #endif /* not _AM_COMPAT_H */

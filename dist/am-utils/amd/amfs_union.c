@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_union.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: amfs_union.c,v 1.1.1.5 2002/11/29 22:58:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amfs_union.c,v 1.3.2.2 2001/04/14 21:08:21 ezk Exp
+ * Id: amfs_union.c,v 1.11 2002/03/29 20:01:27 ib42 Exp
  *
  */
 
@@ -69,16 +68,18 @@ am_ops amfs_union_ops =
   amfs_auto_match,
   0,				/* amfs_auto_init */
   amfs_toplvl_mount,
-  0,
   amfs_toplvl_umount,
-  0,
-  amfs_auto_lookuppn,
+  amfs_auto_lookup_child,
+  amfs_auto_mount_child,
   amfs_auto_readdir,
   0,				/* amfs_toplvl_readlink */
   amfs_union_mounted,
   0,				/* amfs_toplvl_umounted */
   find_amfs_auto_srvr,
-  FS_MKMNT | FS_NOTIMEOUT | FS_BACKGROUND | FS_AMQINFO | FS_DIRECTORY
+  FS_MKMNT | FS_NOTIMEOUT | FS_BACKGROUND | FS_AMQINFO | FS_DIRECTORY,
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_UNION_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -91,7 +92,10 @@ create_amfs_union_node(char *dir, voidp arg)
 {
   if (!STREQ(dir, "/defaults")) {
     int error = 0;
-    (void) amfs_toplvl_ops.lookuppn(arg, dir, &error, VLOOK_CREATE);
+    am_node *am;
+    am = amfs_auto_lookup_child(arg, dir, &error, VLOOK_CREATE);
+    if (am && error < 0)
+      am = amfs_auto_mount_child(am, &error);
     if (error > 0) {
       errno = error;		/* XXX */
       plog(XLOG_ERROR, "unionfs: could not mount %s: %m", dir);

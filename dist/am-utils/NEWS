@@ -1,66 +1,120 @@
 # -*- text -*-
 
-*** Notes specific to am-utils version 6.0.6:
+*** Notes specific to am-utils version 6.1b1
 
-- new ports:
-	Apple OS X support (Darwin, Rhapsody)
+- Major Autofs work
+	Partial support for Sun Autofs v1
+	Documented known problems with Sun Autofs v1 (possible deadlocks)
+	Fixes for Sun Autofs v2/v3
+	Preliminary support for Sun Autofs v4 (Solaris 9)
+	Kernel-based expirations for Linux Autofs
 
-- reworked autoconf scripts so that newer versions of known OSs will default
-  their configuration to the last known version (better chance that it will
-  pass autoconf and work).
+- Minor new ports:
+	powerpc-ibm-aix5.1.0.0
+	i386-unknown-netbsd1.6A
 
-- linux support for lofs and "bind" mounts, so type:=lofs can work (whether
-  you're using autofs or not)
+- Work around IBM's NFSv3 ABI change in aix4.3
 
-- renamed amd.conf option "selectors_on_default" to "selectors_in_defaults"
-  (on -> in, and added "s").  Old name remains in place for compatibility.
+- trivial regression test suite started: run "make check" on a built
+  am-utils to execute tests.  Currently only one test which checks to see if
+  "amd -v" executes correctly.
 
-- lots of cleanups of debugging and logging messages
+- new command line option "amd -A arch" to overwrite the value of $arch.
 
-- Bugs fixed:
-	lots of Linux-related ones, so it compiles for recent kernels
-	better checking on various mount options of the form foo=N or foo=STR
-	fixed NFS errno mapping bug which mapped ENOENT to success
+- bugs fixed:
 
-*** Notes specific to am-utils version 6.0.5:
+	* Linux loop mounts of ISO images
+	* assorted LDAP fixes
+	* strerror not found on some systems
+	* small fixes for hpux9 and aix43
+	* exclude ldap/hesiod support unless both libraries+headers exist
+	* fully support "xlatecookie" mount option
+	* security: if -D noamq option, don't listen on socket.
 
-- Minor ports:
-	alphaev6-dec-osf5.1
-	i386-unknown-freebsd4.2
-	support for Linux 2.4 kernels and newer GLIBC versions
-	cleanup of AIX and IRIX6 ports
+*** Notes specific to am-utils version 6.1a5:
 
-- Support new mount options:
-	proplist (ACLs over NFS, DU-4.0)
-	kerb, rdirplus, readdirsize, and xlatecookie (NetBSD-1.5K+)
-	nonlm, lock, nolock (Linux)
+- browsable_dirs support for Solaris autofs, *without* mount storms!
 
-- Don't force rsize/wsize on Linux 2.2.18+ and 2.4.x.  Improves performance
-  a lot.
+- new amd.conf global parameter: map_reload_interval (default 1 hour).
+  Determines how often Amd checks to see if maps have changed at the source
+  (and then reloading only those that have changed).
 
-- Lots of documentation updates: texinfo, man pages, scripts, and more.
+- "amd -v" now lists bug-reporting address.
 
-- LDAP: included proposed Schema and Internet Draft for LDAP Schema.  See
-  README.ldap for more information.
+- assorted code cleanups and porting to use latest versions of GNU
+  Autotools.
 
-- Removed all remains of the dangerous amq -M code.
+- opts:=loop works for type:=cdfs, for mounting ISO-9660 files on Linux.
 
-- Major bug fix: initialize NFS fileid field correctly, to avoid cache
-  aliasing problems, esp. on Linux.
+- bugs fixed:
 
-- Major Linux bug fix: map errnos to NFS errors (mistakenly turned off a
-  while back).  Also support unused errno 41.
+	* fixed sublink support in Linux autofs (broken in a4)
+	* hlfsd takes uid 0's home from root's passwd entry instead of
+	  defaulting to '/'
+	* (not really our bug) Linux ignores the microseconds field in
+	  mtime, so hlfsd and amd need to increment the seconds field all
+	  the time to prevent symlink caching
+	* generic map parsing bug which was rejecting a numerical mount
+	  option if it was the last option in the string.
+	* file descriptor leak in Linux autofs.
+	* "nolock" is an NFS mount option, not a generic one.
+	* use mlockall(2) on systems that have it, for plock=yes.  Now
+	  pinning Amd's pages in memory works on Linux.
+	* ctl-amd/ctl-hlfsd correctly refer to @sysconfdir@ for alternate
+	  location of configuration files.
 
-- Other bugs fixes:
-	default MAXHOSTNAMELEN (if undefined) is 256, not 64
-	truncate hostnames to MAXHOSTNAMELEN (security fix)
-	alignment problem in getwire() on ALPHA
-	other buf overflow problems (security fixes)
-	ctl-amd supports "condrestart" (Red Hat)
-	bell char is \g not \a
-	lostaltmail verify MAILDIR is defined
-	am-eject accepts "floppy" and "cdrom" as args
-	other assorted small bug fixes
+*** Notes specific to am-utils version 6.1a4:
+
+- full autofs support for Solaris 2.[67], including symlinks, sublinks and
+  direct mounts
+
+- fixed mount/umount deadlock in Linux autofs
+
+- fixed sublinks in Linux autofs
+
+- support for network/netmask pairs in the in_network() selector
+
+- support disabling LDAP and Hesiod support using configure
+
+- forward-ported all the fixes from the stable branch (MacOS X support,
+  minor Linux fixes)
+
+- bind-mount support for type==link and type==lofs with Linux 2.4+
+
+- FiST lofs support under Linux (also in 6.0.6s2)
+
+*** Notes specific to am-utils version 6.1a3:
+
+- various things from the 6.0 branch:
+	compile fixes for Linux 2.4-ac and 2.2.19pre+
+	Darwin/Rhapsody/OS X support
+	much reduced configure script (works around a bug in Darwin's cpp)
+
+*** Notes specific to am-utils version 6.1a2:
+
+- working autofs support for Solaris 2.[67], but incomplete
+
+- forward-ported all the changes up to 6.0.5s2
+
+- removed support for amq -M
+
+- known bugs
+	nfsx support is broken
+	linux NFS codes fixes
+	NFS cache aliasing fixes
+	lots of stuff ported from 6.0 branch
+
+*** Notes specific to am-utils version 6.1a1:
+
+- working autofs (v3 and v4) support for Linux!
+
+- forward-ported all the changes in 6.0.4s4
+
+- bugs fixed
+	client-side fail-over to NFSv2/UDP
+
+- known bugs
+	autofs v3 will probably break with host maps
 
 *** Notes specific to am-utils version 6.0.4:
 
@@ -470,7 +524,7 @@ machine to NFS V.2 and retry again later.
 
 - minor code cleanups for netbsd
 
-- html docs now in http://www.cs.columbia.edu/~ezk/am-utils/
+- html docs now in http://www.am-utils.org
 
 - added README file in binaries ftp directory
 

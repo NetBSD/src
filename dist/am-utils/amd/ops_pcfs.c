@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_pcfs.c,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $	*/
+/*	$NetBSD: ops_pcfs.c,v 1.1.1.5 2002/11/29 22:58:20 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: ops_pcfs.c,v 1.3.2.1 2001/01/10 03:23:10 ezk Exp
+ * Id: ops_pcfs.c,v 1.12 2002/03/29 20:01:29 ib42 Exp
  *
  */
 
@@ -56,8 +55,8 @@
 
 /* forward definitions */
 static char *pcfs_match(am_opts *fo);
-static int pcfs_fmount(mntfs *mf);
-static int pcfs_fumount(mntfs *mf);
+static int pcfs_mount(am_node *am, mntfs *mf);
+static int pcfs_umount(am_node *am, mntfs *mf);
 
 /*
  * Ops structure
@@ -67,17 +66,19 @@ am_ops pcfs_ops =
   "pcfs",
   pcfs_match,
   0,				/* pcfs_init */
-  amfs_auto_fmount,
-  pcfs_fmount,
-  amfs_auto_fumount,
-  pcfs_fumount,
-  amfs_error_lookuppn,
+  pcfs_mount,
+  pcfs_umount,
+  amfs_error_lookup_child,
+  amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* pcfs_readlink */
   0,				/* pcfs_mounted */
   0,				/* pcfs_umounted */
   find_amfs_auto_srvr,
-  FS_MKMNT | FS_UBACKGROUND | FS_AMQINFO
+  FS_MKMNT | FS_UBACKGROUND | FS_AMQINFO,	/* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_PCFS_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -92,9 +93,7 @@ pcfs_match(am_opts *fo)
     plog(XLOG_USER, "pcfs: no source device specified");
     return 0;
   }
-#ifdef DEBUG
   dlog("PCFS: mounting device \"%s\" on \"%s\"", fo->opt_dev, fo->opt_fs);
-#endif /* DEBUG */
 
   /*
    * Determine magic cookie to put in mtab
@@ -104,7 +103,7 @@ pcfs_match(am_opts *fo)
 
 
 static int
-mount_pcfs(char *dir, char *fs_name, char *opts)
+mount_pcfs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_autofs)
 {
   pcfs_args_t pcfs_args;
   mntent_t mnt;
@@ -121,49 +120,54 @@ mount_pcfs(char *dir, char *fs_name, char *opts)
    * Fill in the mount structure
    */
   memset((voidp) &mnt, 0, sizeof(mnt));
-  mnt.mnt_dir = dir;
+  mnt.mnt_dir = mntdir;
   mnt.mnt_fsname = fs_name;
   mnt.mnt_type = MNTTAB_TYPE_PCFS;
   mnt.mnt_opts = opts;
 
   flags = compute_mount_flags(&mnt);
+#ifdef HAVE_FS_AUTOFS
+  if (on_autofs)
+    flags |= autofs_compute_mount_flags(&mnt);
+#endif /* HAVE_FS_AUTOFS */
 
-#ifdef HAVE_FIELD_PCFS_ARGS_T_FSPEC
+#ifdef HAVE_PCFS_ARGS_T_FSPEC
   pcfs_args.fspec = fs_name;
-#endif /* HAVE_FIELD_PCFS_ARGS_T_FSPEC */
+#endif /* HAVE_PCFS_ARGS_T_FSPEC */
 
-#ifdef HAVE_FIELD_PCFS_ARGS_T_MASK
+#ifdef HAVE_PCFS_ARGS_T_MASK
   pcfs_args.mask = 0777;	/* this may be the msdos file modes */
-#endif /* HAVE_FIELD_PCFS_ARGS_T_MASK */
+#endif /* HAVE_PCFS_ARGS_T_MASK */
 
-#ifdef HAVE_FIELD_PCFS_ARGS_T_UID
+#ifdef HAVE_PCFS_ARGS_T_UID
   pcfs_args.uid = 0;		/* root */
-#endif /* HAVE_FIELD_PCFS_ARGS_T_UID */
+#endif /* HAVE_PCFS_ARGS_T_UID */
 
-#ifdef HAVE_FIELD_PCFS_ARGS_T_GID
+#ifdef HAVE_PCFS_ARGS_T_GID
   pcfs_args.gid = 0;		/* wheel */
-#endif /* HAVE_FIELD_PCFS_ARGS_T_GID */
+#endif /* HAVE_PCFS_ARGS_T_GID */
 
-#ifdef HAVE_FIELD_PCFS_ARGS_T_SECONDSWEST
+#ifdef HAVE_PCFS_ARGS_T_SECONDSWEST
   pcfs_args.secondswest = 0;	/* XXX: fill in correct values */
-#endif /* HAVE_FIELD_PCFS_ARGS_T_SECONDSWEST */
-#ifdef HAVE_FIELD_PCFS_ARGS_T_DSTTIME
+#endif /* HAVE_PCFS_ARGS_T_SECONDSWEST */
+#ifdef HAVE_PCFS_ARGS_T_DSTTIME
   pcfs_args.dsttime = 0;	/* XXX: fill in correct values */
-#endif /* HAVE_FIELD_PCFS_ARGS_T_DSTTIME */
+#endif /* HAVE_PCFS_ARGS_T_DSTTIME */
 
   /*
    * Call generic mount routine
    */
-  return mount_fs(&mnt, flags, (caddr_t) & pcfs_args, 0, type, 0, NULL, mnttab_file_name);
+  return mount_fs2(&mnt, real_mntdir, flags, (caddr_t) & pcfs_args, 0, type, 0, NULL, mnttab_file_name);
 }
 
 
 static int
-pcfs_fmount(mntfs *mf)
+pcfs_mount(am_node *am, mntfs *mf)
 {
   int error;
 
-  error = mount_pcfs(mf->mf_mount, mf->mf_info, mf->mf_mopts);
+  error = mount_pcfs(mf->mf_mount, mf->mf_real_mount, mf->mf_info, mf->mf_mopts,
+		     am->am_flags & AMF_AUTOFS);
   if (error) {
     errno = error;
     plog(XLOG_ERROR, "mount_pcfs: %m");
@@ -175,7 +179,7 @@ pcfs_fmount(mntfs *mf)
 
 
 static int
-pcfs_fumount(mntfs *mf)
+pcfs_umount(am_node *am, mntfs *mf)
 {
-  return UMOUNT_FS(mf->mf_mount, mnttab_file_name);
+  return UMOUNT_FS(mf->mf_mount, mf->mf_real_mount, mnttab_file_name);
 }

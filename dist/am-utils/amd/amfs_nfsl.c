@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_nfsl.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: amfs_nfsl.c,v 1.1.1.5 2002/11/29 22:58:11 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amfs_nfsl.c,v 1.4.2.1 2001/01/10 03:23:02 ezk Exp
+ * Id: amfs_nfsl.c,v 1.13 2002/03/29 20:01:26 ib42 Exp
  *
  */
 
@@ -62,9 +61,9 @@
 /* forward declarations */
 static char *amfs_nfsl_match(am_opts *fo);
 static int amfs_nfsl_init(mntfs *mf);
-static int amfs_nfsl_fmount(mntfs *mf);
-static int amfs_nfsl_fumount(mntfs *mf);
-static void amfs_nfsl_umounted(am_node *mp);
+static int amfs_nfsl_mount(am_node *mp, mntfs *mf);
+static int amfs_nfsl_umount(am_node *mp, mntfs *mf);
+static void amfs_nfsl_umounted(mntfs *mf);
 static fserver *amfs_nfsl_ffserver(mntfs *mf);
 
 /*
@@ -75,17 +74,19 @@ am_ops amfs_nfsl_ops =
   "nfsl",			/* name of file system */
   amfs_nfsl_match,		/* match */
   amfs_nfsl_init,		/* initialize */
-  amfs_auto_fmount,		/* mount vnode */
-  amfs_nfsl_fmount,		/* mount vfs */
-  amfs_auto_fumount,		/* unmount vnode */
-  amfs_nfsl_fumount,		/* unmount VFS */
-  amfs_error_lookuppn,		/* lookup path-name */
+  amfs_nfsl_mount,		/* mount vnode */
+  amfs_nfsl_umount,		/* unmount vnode */
+  amfs_error_lookup_child,	/* lookup path-name */
+  amfs_error_mount_child,
   amfs_error_readdir,		/* read directory */
   0,				/* read link */
   0,				/* after-mount extra actions */
   amfs_nfsl_umounted,		/* after-umount extra actions */
   amfs_nfsl_ffserver,		/* find a file server */
-  FS_MKMNT | FS_BACKGROUND | FS_AMQINFO	/* flags */
+  FS_MKMNT | FS_BACKGROUND | FS_AMQINFO,	/* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_NFSL_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -148,16 +149,16 @@ amfs_nfsl_init(mntfs *mf)
  * Returns: 0 if OK, non-zero (errno) if failed.
  */
 static int
-amfs_nfsl_fmount(mntfs *mf)
+amfs_nfsl_mount(am_node *mp, mntfs *mf)
 {
   /*
    * If a link, do run amfs_link_fmount() (same as type:=link)
    * If non-link, do nfs_fmount (same as type:=nfs).
    */
   if (mf->mf_flags & MFF_NFSLINK) {
-    return amfs_link_fmount(mf);
+    return amfs_link_mount(mp, mf);
   } else {
-    return nfs_fmount(mf);
+    return nfs_mount(mp, mf);
   }
 }
 
@@ -167,16 +168,16 @@ amfs_nfsl_fmount(mntfs *mf)
  * Returns: 0 if OK, non-zero (errno) if failed.
  */
 static int
-amfs_nfsl_fumount(mntfs *mf)
+amfs_nfsl_umount(am_node *mp, mntfs *mf)
 {
   /*
-   * If a link, do run amfs_link_fumount() (same as type:=link)
-   * If non-link, do nfs_fumount (same as type:=nfs).
+   * If a link, do run amfs_link_umount() (same as type:=link)
+   * If non-link, do nfs_umount (same as type:=nfs).
    */
   if (mf->mf_flags & MFF_NFSLINK) {
-    return amfs_link_fumount(mf);
+    return amfs_link_umount(mp, mf);
   } else {
-    return nfs_fumount(mf);
+    return nfs_umount(mp, mf);
   }
 }
 
@@ -188,18 +189,16 @@ amfs_nfsl_fumount(mntfs *mf)
  * See amfs_auto_umounted(), host_umounted(), nfs_umounted().
  */
 static void
-amfs_nfsl_umounted(am_node *mp)
+amfs_nfsl_umounted(mntfs *mf)
 {
-  mntfs *mf = mp->am_mnt;
-
   /*
    * If a link, do nothing (same as type:=link)
-   * If non-link, do nfs_fumount (same as type:=nfs).
+   * If non-link, do nfs_umount (same as type:=nfs).
    */
   if (mf->mf_flags & MFF_NFSLINK) {
     return;
   } else {
-    nfs_umounted(mp);
+    nfs_umounted(mf);
     /*
      * MUST remove mount point directories, because if they remain
      * behind, the next nfsl access will think they are a link
@@ -207,7 +206,7 @@ amfs_nfsl_umounted(am_node *mp)
      * existence test)
      */
     if (mf->mf_flags & MFF_MKMNT)
-      rmdirs(mf->mf_mount);
+      rmdirs(mf->mf_real_mount);
     return;
   }
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: clock.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.1.5 2002/11/29 22:58:13 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: clock.c,v 1.4.2.1 2001/01/10 03:23:04 ezk Exp
+ * Id: clock.c,v 1.9 2002/06/23 05:37:53 ib42 Exp
  *
  */
 
@@ -61,7 +60,6 @@
 #include <am_defs.h>
 #include <amd.h>
 
-int timeout(u_int secs, void (*fn) (voidp), voidp closure);
 void reschedule_timeouts(time_t now, time_t then);
 
 typedef struct callout callout;
@@ -191,10 +189,8 @@ reschedule_timeouts(time_t now, time_t then)
   for (cp = callouts.c_next; cp; cp = cp->c_next) {
     if (cp->c_time >= now && cp->c_time <= then) {
       plog(XLOG_WARNING, "job %d rescheduled to run immediately", cp->c_id);
-#ifdef DEBUG
       dlog("rescheduling job %d back %ld seconds",
 	   cp->c_id, (long) (cp->c_time - now));
-#endif /* DEBUG */
       next_softclock = cp->c_time = now;
     }
   }

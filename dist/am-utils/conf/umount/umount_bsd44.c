@@ -1,7 +1,7 @@
-/*	$NetBSD: umount_bsd44.c,v 1.1.1.4 2001/05/13 17:50:23 veego Exp $	*/
+/*	$NetBSD: umount_bsd44.c,v 1.1.1.5 2002/11/29 22:58:40 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: umount_bsd44.c,v 1.3.2.1 2001/01/10 03:23:28 ezk Exp
+ * Id: umount_bsd44.c,v 1.7 2002/03/29 20:01:30 ib42 Exp
  *
  */
 
@@ -56,7 +55,13 @@
 
 
 int
-umount_fs(char *fs_name, const char *mnttabname)
+umount_fs(char *mntdir, const char *mnttabname)
+{
+  return umount_fs2(mntdir, mntdir, mnttabname);
+}
+
+int
+umount_fs2(char *fs_name, char *unused, const char *mnttabname)
 {
   int error;
 
@@ -74,17 +79,13 @@ eintr:
     break;
 
   case EINTR:
-#ifdef DEBUG
     /* not sure why this happens, but it does.  ask kirk one day... */
     dlog("%s: unmount: %m", fs_name);
-#endif /* DEBUG */
     goto eintr;
 
-#ifdef DEBUG
   default:
     dlog("%s: unmount: %m", fs_name);
     break;
-#endif /* DEBUG */
   }
 
   return error;

@@ -4,7 +4,7 @@
 # If not specified, delay=5 seconds and count=6 (total 30 seconds)
 # If at end of total delay amd is till up, return 1; else return 0.
 #
-# Package:	am-utils-6.0
+# Package:	am-utils-6.x
 # Author:	Erez Zadok <ezk@cs.columbia.edu>
 
 #set -x

@@ -14,6 +14,30 @@ dnl ======================================================================
 
 
 dnl ######################################################################
+dnl check if compiler can handle "void *"
+AC_DEFUN(AMU_C_VOID_P,
+[
+AC_CACHE_CHECK(if compiler can handle void *,
+ac_cv_c_void_p,
+[
+# try to compile a program which uses void *
+AC_TRY_COMPILE(
+[ ],
+[
+void *vp;
+], ac_cv_c_void_p=yes, ac_cv_c_void_p=no)
+])
+if test "$ac_cv_c_void_p" = yes
+then
+  AC_DEFINE(voidp, void *)
+else
+  AC_DEFINE(voidp, char *)
+fi
+])
+dnl ======================================================================
+
+
+dnl ######################################################################
 dnl New versions of the cache functions which also dynamically evaluate the
 dnl cache-id field, so that it may contain shell variables to expand
 dnl dynamically for the creation of $ac_cv_* variables on the fly.
@@ -22,15 +46,15 @@ dnl output on the command line, because it prints its own AC_MSG_CHECKING
 dnl after COMMANDS are run.
 dnl
 dnl ======================================================================
-dnl AC_CACHE_CHECK_DYNAMIC(MESSAGE, CACHE-ID, COMMANDS)
-define(AC_CACHE_CHECK_DYNAMIC,
+dnl AMU_CACHE_CHECK_DYNAMIC(MESSAGE, CACHE-ID, COMMANDS)
+define(AMU_CACHE_CHECK_DYNAMIC,
 [
 ac_tmp=`echo $2`
 if eval "test \"`echo '$''{'$ac_tmp'+set}'`\" = set"; then
   AC_MSG_CHECKING([$1])
-dnl XXX: use the next line for autoconf-2.14
-dnl  echo $ECHO_N "(cached) $ECHO_C" 1>&AC_FD_MSG
-  echo $ac_n "(cached) $ac_c" 1>&AC_FD_MSG
+  echo $ECHO_N "(cached) $ECHO_C" 1>&AS_MESSAGE_FD([])
+dnl XXX: for older autoconf versions
+dnl  echo $ac_n "(cached) $ac_c" 1>&AS_MESSAGE_FD([])
 else
   $3
   AC_MSG_CHECKING([$1])
@@ -47,13 +71,13 @@ dnl Usage: AC_CHECK_AMU_FS(<fs>, <msg>, [<depfs>])
 dnl Print the message in <msg>, and declare HAVE_AMU_FS_<fs> true.
 dnl If <depfs> is defined, then define this filesystem as tru only of the
 dnl filesystem for <depfs> is true.
-AC_DEFUN(AC_CHECK_AMU_FS,
+AC_DEFUN(AMU_CHECK_AMU_FS,
 [
 # store variable name of fs
 ac_upcase_am_fs_name=`echo $1 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=HAVE_AMU_FS_$ac_upcase_am_fs_name
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for $2 filesystem ($1),
+AMU_CACHE_CHECK_DYNAMIC(for $2 filesystem ($1),
 ac_cv_am_fs_$1,
 [
 # true by default
@@ -84,8 +108,43 @@ dnl ======================================================================
 
 
 dnl ######################################################################
+dnl check the autofs flavor
+AC_DEFUN(AMU_CHECK_AUTOFS_STYLE,
+[
+AC_CACHE_CHECK(autofs style,
+ac_cv_autofs_style,
+[
+# select the correct style to mount(2) a filesystem
+case "${host_os}" in
+       solaris1* | solaris2.[[0-4]] )
+	       ac_cv_autofs_style=default ;;
+       solaris2.5* )
+               ac_cv_autofs_style=solaris_v1 ;;
+       # Solaris 8+ uses the AutoFS V3 protocol, but it's very similar to V2,
+       # so use one style for both.
+       solaris* )
+               ac_cv_autofs_style=solaris_v2_v3 ;;
+#       irix* )
+#	       ac_cv_autofs_style=solaris_v1 ;;
+       linux* )
+               ac_cv_autofs_style=linux ;;
+       * )
+               ac_cv_autofs_style=default ;;
+esac
+])
+# always make a link and include the file name, otherwise on systems where
+# autofs support has not been ported yet check_fs_{headers, mntent}.m4 add
+# ops_autofs.o to AMD_FS_OBJS, but there's no way to build it.
+am_utils_autofs_style=$srcdir"/conf/autofs/autofs_"$ac_cv_autofs_style".h"
+am_utils_link_files=${am_utils_link_files}amd/ops_autofs.c:conf/autofs/autofs_${ac_cv_autofs_style}.c" "
+AC_SUBST_FILE(am_utils_autofs_style)
+])
+dnl ======================================================================
+
+
+dnl ######################################################################
 dnl check style of fixmount check_mount() function
-AC_DEFUN(AC_CHECK_CHECKMOUNT_STYLE,
+AC_DEFUN(AMU_CHECK_CHECKMOUNT_STYLE,
 [
 AC_CACHE_CHECK(style of fixmount check_mount(),
 ac_cv_style_checkmount,
@@ -108,9 +167,6 @@ esac
 ])
 am_utils_checkmount_style_file="check_mount.c"
 am_utils_link_files=${am_utils_link_files}fixmount/${am_utils_checkmount_style_file}:conf/checkmount/checkmount_${ac_cv_style_checkmount}.c" "
-dnl XXX: remove the next two lines after porting to autoconf-2.14
-am_utils_link_files_src=${am_utils_link_files_src}conf/checkmount/checkmount_${ac_cv_style_checkmount}.c" "
-am_utils_link_files_dst=${am_utils_link_files_dst}fixmount/${am_utils_checkmount_style_file}" "
 
 ])
 dnl ======================================================================
@@ -118,29 +174,27 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check for external definition for a function (not external variables)
-dnl Usage AC_CHECK_EXTERN(extern)
+dnl Usage AMU_CHECK_EXTERN(extern)
 dnl Checks for external definition for "extern" that is delimited on the
 dnl left and the right by a character that is not a valid symbol character.
 dnl
 dnl Note that $pattern below is very carefully crafted to match any system
 dnl external definition, with __P posix prototypes, with or without an extern
 dnl word, etc.  Think twice before changing this.
-AC_DEFUN(AC_CHECK_EXTERN,
+AC_DEFUN(AMU_CHECK_EXTERN,
 [
 # store variable name for external definition
 ac_upcase_extern_name=`echo $1 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=HAVE_EXTERN_$ac_upcase_extern_name
 # check for cached value and set it if needed
-AC_CACHE_CHECK_DYNAMIC(external function definition for $1,
+AMU_CACHE_CHECK_DYNAMIC(external function definition for $1,
 ac_cv_extern_$1,
 [
-changequote(<<, >>)dnl
 # the old pattern assumed that the complete external definition is on one
 # line but on some systems it is split over several lines, so only match
 # beginning of the extern definition including the opening parenthesis.
 #pattern="(extern)?.*[^a-zA-Z0-9_]$1[^a-zA-Z0-9_]?.*\(.*\).*;"
-pattern="(extern)?.*[^a-zA-Z0-9_]$1[^a-zA-Z0-9_]?.*\("
-changequote([, ])dnl
+pattern="(extern)?.*[[^a-zA-Z0-9_]]$1[[^a-zA-Z0-9_]]?.*\("
 AC_EGREP_CPP(${pattern},
 [
 #ifdef HAVE_SYS_TYPES_H
@@ -206,13 +260,13 @@ fi
 dnl ======================================================================
 
 dnl ######################################################################
-dnl run AC_CHECK_EXTERN on each argument given
-dnl Usage: AC_CHECK_EXTERNS(arg arg arg ...)
-AC_DEFUN(AC_CHECK_EXTERNS,
+dnl run AMU_CHECK_EXTERN on each argument given
+dnl Usage: AMU_CHECK_EXTERNS(arg arg arg ...)
+AC_DEFUN(AMU_CHECK_EXTERNS,
 [
 for ac_tmp_arg in $1
 do
-AC_CHECK_EXTERN($ac_tmp_arg)
+AMU_CHECK_EXTERN($ac_tmp_arg)
 done
 ])
 dnl ======================================================================
@@ -220,7 +274,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find if type 'fhandle' exists
-AC_DEFUN(AC_CHECK_FHANDLE,
+AC_DEFUN(AMU_CHECK_FHANDLE,
 [
 AC_CACHE_CHECK(if plain fhandle type exists,
 ac_cv_have_fhandle,
@@ -246,18 +300,63 @@ dnl ======================================================================
 
 
 dnl ######################################################################
+dnl FIXED VERSION OF AUTOCONF 2.50 AC_CHECK_MEMBER.  g/cc will fail to check
+dnl a member if the .member is itself a data structure, because you cannot
+dnl compare, in C, a data structure against NULL; you can compare a native
+dnl data type (int, char) or a pointer.  Solution: do what I did in my
+dnl original member checking macro: try to take the address of the member.
+dnl You can always take the address of anything.
+dnl -Erez Zadok, Feb 6, 2002.
+dnl
+# AC_CHECK_MEMBER2(AGGREGATE.MEMBER,
+#                 [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND],
+#                 [INCLUDES])
+# ---------------------------------------------------------
+# AGGREGATE.MEMBER is for instance `struct passwd.pw_gecos', shell
+# variables are not a valid argument.
+AC_DEFUN([AC_CHECK_MEMBER2],
+[AS_LITERAL_IF([$1], [],
+               [AC_FATAL([$0: requires literal arguments])])dnl
+m4_if(m4_regexp([$1], [\.]), -1,
+      [AC_FATAL([$0: Did not see any dot in `$1'])])dnl
+AS_VAR_PUSHDEF([ac_Member], [ac_cv_member_$1])dnl
+dnl Extract the aggregate name, and the member name
+AC_CACHE_CHECK([for $1], ac_Member,
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT([$4])],
+[dnl AGGREGATE ac_aggr;
+static m4_patsubst([$1], [\..*]) ac_aggr;
+dnl ac_aggr.MEMBER;
+if (&(ac_aggr.m4_patsubst([$1], [^[^.]*\.])))
+return 0;])],
+                [AS_VAR_SET(ac_Member, yes)],
+                [AS_VAR_SET(ac_Member, no)])])
+AS_IF([test AS_VAR_GET(ac_Member) = yes], [$2], [$3])dnl
+AS_VAR_POPDEF([ac_Member])dnl
+])# AC_CHECK_MEMBER
+
+# AC_CHECK_MEMBERS2([AGGREGATE.MEMBER, ...],
+#                  [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND]
+#                  [INCLUDES])
+# ---------------------------------------------------------
+# The first argument is an m4 list.
+AC_DEFUN([AC_CHECK_MEMBERS2],
+[m4_foreach([AC_Member], [$1],
+  [AC_CHECK_MEMBER2(AC_Member,
+         [AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_[]AC_Member), 1,
+                            [Define if `]m4_patsubst(AC_Member,
+                                                     [^[^.]*\.])[' is
+                             member of `]m4_patsubst(AC_Member, [\..*])['.])
+$2],
+                 [$3],
+                 [$4])])])
+
+
+dnl ######################################################################
 dnl find if structure $1 has field field $2
-AC_DEFUN(AC_CHECK_FIELD,
+AC_DEFUN(AMU_CHECK_FIELD,
 [
-# make variable name a concatenation of the structure name and the field
-ac_safe=`echo ac_cv_field_$1_$2 | tr '. ' '__'`
-ac_upcase_var_name=`echo HAVE_FIELD_$1_$2 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' | tr '. ' '__'`
-AC_CACHE_CHECK_DYNAMIC(if $1 field $2 exist,
-$ac_safe,
-[
-# try to compile a program
-AC_TRY_COMPILE(
-AC_MOUNT_HEADERS(
+AC_CHECK_MEMBERS2($1, , ,[
+AMU_MOUNT_HEADERS(
 [
 /* now set the typedef */
 #ifdef HAVE_STRUCT_MNTENT
@@ -288,9 +387,16 @@ typedef struct mnttab mntent_t;
 #ifdef HAVE_SYS_FS_UFS_MOUNT_H
 # include <sys/fs/ufs_mount.h>
 #endif /* HAVE_SYS_FS_UFS_MOUNT_H */
-#ifdef HAVE_SYS_FS_AUTOFS_PROT_H
-# include <sys/fs/autofs_prot.h>
-#endif /* HAVE_SYS_FS_AUTOFS_PROT_H */
+#ifdef HAVE_SYS_FS_AUTOFS_H
+# include <sys/fs/autofs.h>
+#endif /* HAVE_SYS_FS_AUTOFS_H */
+#ifdef HAVE_RPCSVC_AUTOFS_PROT_H
+# include <rpcsvc/autofs_prot.h>
+#else  /* not HAVE_RPCSVC_AUTOFS_PROT_H */
+# ifdef HAVE_SYS_FS_AUTOFS_PROT_H
+#  include <sys/fs/autofs_prot.h>
+# endif /* HAVE_SYS_FS_AUTOFS_PROT_H */
+#endif /* not HAVE_RPCSVC_AUTOFS_PROT_H */
 #ifdef HAVE_HSFS_HSFS_H
 # include <hsfs/hsfs.h>
 #endif /* HAVE_HSFS_HSFS_H */
@@ -299,16 +405,8 @@ typedef struct mnttab mntent_t;
 # include <ifaddrs.h>
 #endif /* HAVE_IFADDRS_H */
 
-]),
-[
-$1 a;
-char *cp = (char *) &(a.$2);
-], eval "$ac_safe=yes", eval "$ac_safe=no")
 ])
-if test "`eval echo '$''{'$ac_safe'}'`" = yes
-then
-  AC_DEFINE_UNQUOTED($ac_upcase_var_name)
-fi
+])
 ])
 dnl ======================================================================
 
@@ -316,10 +414,10 @@ dnl ======================================================================
 dnl ######################################################################
 dnl check if a filesystem exists (if any of its header files exist).
 dnl Usage: AC_CHECK_FS_HEADERS(<headers>..., <fs>, [<fssymbol>])
-dnl Check if if any of the headers <headers> exist.  If any exist, then
+dnl Check if any of the headers <headers> exist.  If any exist, then
 dnl define HAVE_FS_<fs>.  If <fssymbol> exits, then define
 dnl HAVE_FS_<fssymbol> instead...
-AC_DEFUN(AC_CHECK_FS_HEADERS,
+AC_DEFUN(AMU_CHECK_FS_HEADERS,
 [
 # find what name to give to the fs
 if test -n "$3"
@@ -332,7 +430,7 @@ fi
 ac_upcase_fs_name=`echo $2 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_fs_headers_safe=HAVE_FS_$ac_upcase_fs_name
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for $ac_fs_name filesystem in <$1>,
+AMU_CACHE_CHECK_DYNAMIC(for $ac_fs_name filesystem in <$1>,
 ac_cv_fs_header_$ac_fs_name,
 [
 # define to "no" by default
@@ -371,10 +469,11 @@ dnl ======================================================================
 dnl ######################################################################
 dnl check if a filesystem type exists (if its header files exist)
 dnl Usage: AC_CHECK_FS_MNTENT(<filesystem>, [<fssymbol>])
-dnl check in some headers for MNTTYPE_<filesystem> macro.  If that exist,
-dnl then define HAVE_FS_<filesystem>.  If <fssymbol> exits, then defined
+dnl
+dnl Check in some headers for MNTTYPE_<filesystem> macro.  If that exist,
+dnl then define HAVE_FS_<filesystem>.  If <fssymbol> exits, then define
 dnl HAVE_FS_<fssymbol> instead...
-AC_DEFUN(AC_CHECK_FS_MNTENT,
+AC_DEFUN(AMU_CHECK_FS_MNTENT,
 [
 # find what name to give to the fs
 if test -n "$2"
@@ -389,7 +488,7 @@ fi
 ac_upcase_fs_name=`echo $ac_fs_name | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=HAVE_FS_$ac_upcase_fs_name
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for $ac_fs_name$ac_fs_as_name mntent definition,
+AMU_CACHE_CHECK_DYNAMIC(for $ac_fs_name$ac_fs_as_name mntent definition,
 ac_cv_fs_$ac_fs_name,
 [
 # assume not found
@@ -400,7 +499,7 @@ do
 
   # first look for MNTTYPE_*
   AC_EGREP_CPP(yes,
-  AC_MOUNT_HEADERS(
+  AMU_MOUNT_HEADERS(
   [
 #ifdef MNTTYPE_$ac_upcase_fs_symbol
     yes
@@ -414,7 +513,7 @@ do
 
   # now try to look for MOUNT_ macro
   AC_EGREP_CPP(yes,
-  AC_MOUNT_HEADERS(
+  AMU_MOUNT_HEADERS(
   [
 #ifdef MOUNT_$ac_upcase_fs_symbol
     yes
@@ -428,7 +527,7 @@ do
 
   # now try to look for MNT_ macro
   AC_EGREP_CPP(yes,
-  AC_MOUNT_HEADERS(
+  AMU_MOUNT_HEADERS(
   [
 #ifdef MNT_$ac_upcase_fs_symbol
     yes
@@ -442,7 +541,7 @@ do
 
   # now try to look for GT_ macro (ultrix)
   AC_EGREP_CPP(yes,
-  AC_MOUNT_HEADERS(
+  AMU_MOUNT_HEADERS(
   [
 #ifdef GT_$ac_upcase_fs_symbol
     yes
@@ -476,9 +575,7 @@ do
   fi
 
   # in addition look for statically compiled filesystem (linux)
-changequote(<<, >>)dnl
-  if egrep "[^a-zA-Z0-9_]$ac_fs_tmp$" /proc/filesystems >/dev/null 2>&1
-changequote([, ])dnl
+  if egrep "[[^a-zA-Z0-9_]]$ac_fs_tmp$" /proc/filesystems >/dev/null 2>&1
   then
     eval "ac_cv_fs_$ac_fs_name=yes"
     break
@@ -548,6 +645,50 @@ dnl ======================================================================
 
 
 dnl ######################################################################
+dnl Do we have a GNUish getopt
+AC_DEFUN(AMU_CHECK_GNU_GETOPT,
+[
+AC_CACHE_CHECK([for GNU getopt], ac_cv_sys_gnu_getopt, [
+AC_TRY_RUN([
+#include <stdio.h>
+#include <unistd.h>
+int main()
+{
+   int argc = 3;
+   char *argv[] = { "actest", "arg", "-x", NULL };
+   int c;
+   FILE* rf;
+   int isGNU = 0;
+
+   rf = fopen("conftestresult", "w");
+   if (rf == NULL) exit(1);
+
+   while ( (c = getopt(argc, argv, "x")) != -1 ) {
+       switch ( c ) {
+          case 'x':
+	     isGNU=1;
+             break;
+          default:
+             exit(1);
+       }
+   }
+   fprintf(rf, isGNU ? "yes" : "no");
+   exit(0);
+}
+],[
+ac_cv_sys_gnu_getopt="`cat conftestresult`"
+],[
+AC_MSG_ERROR(could not test for getopt())
+])
+])
+if test "$ac_cv_sys_gnu_getopt" = "yes"
+then
+    AC_DEFINE(HAVE_GNU_GETOPT)
+fi
+])
+
+
+dnl ######################################################################
 dnl Define mount type to hide amd mounts from df(1)
 dnl
 dnl This has to be determined individually per OS.  Depending on whatever
@@ -558,7 +699,7 @@ dnl the headers, but still use it; and more.  After a long attempt to get
 dnl this automatically configured, I came to the conclusion that the semi-
 dnl automatic per-host-os determination here is the best.
 dnl
-AC_DEFUN(AC_CHECK_HIDE_MOUNT_TYPE,
+AC_DEFUN(AMU_CHECK_HIDE_MOUNT_TYPE,
 [
 AC_CACHE_CHECK(for mount type to hide from df,
 ac_cv_hide_mount_type,
@@ -586,7 +727,7 @@ dnl try with $5 if specified.
 dnl it adds $5 to $LIBS if it was needed -Erez.
 dnl AC_CHECK_LIB2(LIBRARY, FUNCTION [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND
 dnl              [, OTHER-LIBRARIES]]])
-AC_DEFUN(AC_CHECK_LIB2,
+AC_DEFUN(AMU_CHECK_LIB2,
 [AC_MSG_CHECKING([for $2 in -l$1])
 dnl Use a cache variable name containing both the library and function name,
 dnl because the test really is for library $1 defining function $2, not
@@ -632,10 +773,10 @@ ac_tmp="`eval echo '$''{ac_cv_lib_'$ac_lib_var'}'`"
 if test "${ac_tmp}" != no; then
   AC_MSG_RESULT(-l$ac_tmp)
   ifelse([$3], ,
-[changequote(, )dnl
-  ac_tr_lib=HAVE_LIB`echo $1 | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+[
+  ac_tr_lib=HAVE_LIB`echo $1 | sed -e 's/[[^a-zA-Z0-9_]]/_/g' \
     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
-changequote([, ])dnl
+
   AC_DEFINE_UNQUOTED($ac_tr_lib)
   LIBS="-l$ac_tmp $LIBS"
 ], [$3])
@@ -654,7 +795,7 @@ dnl Usage: AC_CHECK_MAP_FUNCS(<functions>..., <map>, [<mapsymbol>])
 dnl Check if any of the functions <functions> exist.  If any exist, then
 dnl define HAVE_MAP_<map>.  If <mapsymbol> exits, then defined
 dnl HAVE_MAP_<mapsymbol> instead...
-AC_DEFUN(AC_CHECK_MAP_FUNCS,
+AC_DEFUN(AMU_CHECK_MAP_FUNCS,
 [
 # find what name to give to the map
 if test -n "$3"
@@ -667,7 +808,7 @@ fi
 ac_upcase_map_name=`echo $2 | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=HAVE_MAP_$ac_upcase_map_name
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for $ac_map_name maps,
+AMU_CACHE_CHECK_DYNAMIC(for $ac_map_name maps,
 ac_cv_map_$ac_map_name,
 [
 # define to "no" by default
@@ -699,10 +840,10 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find CDFS-specific mount(2) options (hex numbers)
-dnl Usage: AC_CHECK_MNT2_CDFS_OPT(<fs>)
+dnl Usage: AMU_CHECK_MNT2_CDFS_OPT(<fs>)
 dnl Check if there is an entry for MS_<fs> or M_<fs> in sys/mntent.h or
 dnl mntent.h, then define MNT2_CDFS_OPT_<fs> to the hex number.
-AC_DEFUN(AC_CHECK_MNT2_CDFS_OPT,
+AC_DEFUN(AMU_CHECK_MNT2_CDFS_OPT,
 [
 # what name to give to the fs
 ac_fs_name=$1
@@ -710,7 +851,7 @@ ac_fs_name=$1
 ac_upcase_fs_name=`echo $ac_fs_name | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=MNT2_CDFS_OPT_$ac_upcase_fs_name
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for CDFS-specific mount(2) option $ac_fs_name,
+AMU_CACHE_CHECK_DYNAMIC(for CDFS-specific mount(2) option $ac_fs_name,
 ac_cv_mnt2_cdfs_opt_$ac_fs_name,
 [
 # undefine by default
@@ -720,24 +861,24 @@ value=notfound
 # first, try MS_* (most systems).  Must be the first test!
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_HEX(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_HEX(
+AMU_MOUNT_HEADERS
 , MS_$ac_upcase_fs_name)
 fi
 
 # if failed, try MNT_* (bsd44 systems)
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_HEX(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_HEX(
+AMU_MOUNT_HEADERS
 , MNT_$ac_upcase_fs_name)
 fi
 
 # if failed, try MS_*  as an integer (linux systems)
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_INT(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_INT(
+AMU_MOUNT_HEADERS
 , MS_$ac_upcase_fs_name)
 fi
 
@@ -747,22 +888,22 @@ fi
 # but I turned it back on by faking the inclusion of <sys/stream.h> already.
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_HEX(
+AMU_EXPAND_CPP_HEX(
 #ifndef _sys_stream_h
 # define _sys_stream_h
 #endif /* not _sys_stream_h */
 #ifndef _SYS_STREAM_H
 # define _SYS_STREAM_H
 #endif	/* not _SYS_STREAM_H */
-AC_MOUNT_HEADERS
+AMU_MOUNT_HEADERS
 , M_$ac_upcase_fs_name)
 fi
 
 # if failed, try ISOFSMNT_* as a hex (bsdi4 systems)
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_HEX(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_HEX(
+AMU_MOUNT_HEADERS
 , ISOFSMNT_$ac_upcase_fs_name)
 fi
 
@@ -779,13 +920,13 @@ fi
 dnl ======================================================================
 
 dnl ######################################################################
-dnl run AC_CHECK_MNT2_CDFS_OPT on each argument given
-dnl Usage: AC_CHECK_MNT2_CDFS_OPTS(arg arg arg ...)
-AC_DEFUN(AC_CHECK_MNT2_CDFS_OPTS,
+dnl run AMU_CHECK_MNT2_CDFS_OPT on each argument given
+dnl Usage: AMU_CHECK_MNT2_CDFS_OPTS(arg arg arg ...)
+AC_DEFUN(AMU_CHECK_MNT2_CDFS_OPTS,
 [
 for ac_tmp_arg in $1
 do
-AC_CHECK_MNT2_CDFS_OPT($ac_tmp_arg)
+AMU_CHECK_MNT2_CDFS_OPT($ac_tmp_arg)
 done
 ])
 dnl ======================================================================
@@ -793,11 +934,11 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find generic mount(2) options (hex numbers)
-dnl Usage: AC_CHECK_MNT2_GEN_OPT(<fs>)
+dnl Usage: AMU_CHECK_MNT2_GEN_OPT(<fs>)
 dnl Check if there is an entry for MS_<fs>, MNT_<fs>, or M_<fs>
 dnl (in that order) in mntent.h, sys/mntent.h, or mount.h...
 dnl then define MNT2_GEN_OPT_<fs> to the hex number.
-AC_DEFUN(AC_CHECK_MNT2_GEN_OPT,
+AC_DEFUN(AMU_CHECK_MNT2_GEN_OPT,
 [
 # what name to give to the fs
 ac_fs_name=$1
@@ -805,7 +946,7 @@ ac_fs_name=$1
 ac_upcase_fs_name=`echo $ac_fs_name | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=MNT2_GEN_OPT_$ac_upcase_fs_name
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for generic mount(2) option $ac_fs_name,
+AMU_CACHE_CHECK_DYNAMIC(for generic mount(2) option $ac_fs_name,
 ac_cv_mnt2_gen_opt_$ac_fs_name,
 [
 # undefine by default
@@ -815,24 +956,24 @@ value=notfound
 # first, try MS_* (most systems).  Must be the first test!
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_HEX(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_HEX(
+AMU_MOUNT_HEADERS
 , MS_$ac_upcase_fs_name)
 fi
 
 # if failed, try MNT_* (bsd44 systems)
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_HEX(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_HEX(
+AMU_MOUNT_HEADERS
 , MNT_$ac_upcase_fs_name)
 fi
 
 # if failed, try MS_*  as an integer (linux systems)
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_INT(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_INT(
+AMU_MOUNT_HEADERS
 , MS_$ac_upcase_fs_name)
 fi
 
@@ -842,14 +983,14 @@ fi
 # but I turned it back on by faking the inclusion of <sys/stream.h> already.
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_HEX(
+AMU_EXPAND_CPP_HEX(
 #ifndef _sys_stream_h
 # define _sys_stream_h
 #endif /* not _sys_stream_h */
 #ifndef _SYS_STREAM_H
 # define _SYS_STREAM_H
 #endif	/* not _SYS_STREAM_H */
-AC_MOUNT_HEADERS
+AMU_MOUNT_HEADERS
 , M_$ac_upcase_fs_name)
 fi
 
@@ -866,13 +1007,13 @@ fi
 dnl ======================================================================
 
 dnl ######################################################################
-dnl run AC_CHECK_MNT2_GEN_OPT on each argument given
-dnl Usage: AC_CHECK_MNT2_GEN_OPTS(arg arg arg ...)
-AC_DEFUN(AC_CHECK_MNT2_GEN_OPTS,
+dnl run AMU_CHECK_MNT2_GEN_OPT on each argument given
+dnl Usage: AMU_CHECK_MNT2_GEN_OPTS(arg arg arg ...)
+AC_DEFUN(AMU_CHECK_MNT2_GEN_OPTS,
 [
 for ac_tmp_arg in $1
 do
-AC_CHECK_MNT2_GEN_OPT($ac_tmp_arg)
+AMU_CHECK_MNT2_GEN_OPT($ac_tmp_arg)
 done
 ])
 dnl ======================================================================
@@ -880,10 +1021,10 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find NFS-specific mount(2) options (hex numbers)
-dnl Usage: AC_CHECK_MNT2_NFS_OPT(<fs>)
+dnl Usage: AMU_CHECK_MNT2_NFS_OPT(<fs>)
 dnl Check if there is an entry for NFSMNT_<fs> in sys/mntent.h or
 dnl mntent.h, then define MNT2_NFS_OPT_<fs> to the hex number.
-AC_DEFUN(AC_CHECK_MNT2_NFS_OPT,
+AC_DEFUN(AMU_CHECK_MNT2_NFS_OPT,
 [
 # what name to give to the fs
 ac_fs_name=$1
@@ -891,7 +1032,7 @@ ac_fs_name=$1
 ac_upcase_fs_name=`echo $ac_fs_name | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=MNT2_NFS_OPT_$ac_upcase_fs_name
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for NFS-specific mount(2) option $ac_fs_name,
+AMU_CACHE_CHECK_DYNAMIC(for NFS-specific mount(2) option $ac_fs_name,
 ac_cv_mnt2_nfs_opt_$ac_fs_name,
 [
 # undefine by default
@@ -901,16 +1042,16 @@ value=notfound
 # first try NFSMNT_* (most systems)
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_HEX(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_HEX(
+AMU_MOUNT_HEADERS
 , NFSMNT_$ac_upcase_fs_name)
 fi
 
 # next try NFS_MOUNT_* (linux)
 if test "$value" = notfound
 then
-AC_EXPAND_CPP_HEX(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_HEX(
+AMU_MOUNT_HEADERS
 , NFS_MOUNT_$ac_upcase_fs_name)
 fi
 
@@ -927,13 +1068,13 @@ fi
 dnl ======================================================================
 
 dnl ######################################################################
-dnl run AC_CHECK_MNT2_NFS_OPT on each argument given
-dnl Usage: AC_CHECK_MNT2_NFS_OPTS(arg arg arg ...)
-AC_DEFUN(AC_CHECK_MNT2_NFS_OPTS,
+dnl run AMU_CHECK_MNT2_NFS_OPT on each argument given
+dnl Usage: AMU_CHECK_MNT2_NFS_OPTS(arg arg arg ...)
+AC_DEFUN(AMU_CHECK_MNT2_NFS_OPTS,
 [
 for ac_tmp_arg in $1
 do
-AC_CHECK_MNT2_NFS_OPT($ac_tmp_arg)
+AMU_CHECK_MNT2_NFS_OPT($ac_tmp_arg)
 done
 ])
 dnl ======================================================================
@@ -948,14 +1089,14 @@ dnl macro MNTTAB, is defined as the _source_ of filesystems to mount, and
 dnl is set to /etc/fstab.  That is why I have to first check out
 dnl if MOUNTED exists, and if not, check for the MNTTAB macro.
 dnl
-AC_DEFUN(AC_CHECK_MNTTAB_FILE_NAME,
+AC_DEFUN(AMU_CHECK_MNTTAB_FILE_NAME,
 [
 AC_CACHE_CHECK(for name of mount table file name,
 ac_cv_mnttab_file_name,
 [
 # expand cpp value for MNTTAB
-AC_EXPAND_CPP_STRING(
-AC_MOUNT_HEADERS(
+AMU_EXPAND_CPP_STRING(
+AMU_MOUNT_HEADERS(
 [
 /* see M4 comment at the top of the definition of this macro */
 #ifdef MOUNTED
@@ -1000,9 +1141,9 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check if the mount table is kept in a file or in the kernel.
-AC_DEFUN(AC_CHECK_MNTTAB_LOCATION,
+AC_DEFUN(AMU_CHECK_MNTTAB_LOCATION,
 [
-AC_CACHE_CHECK_DYNAMIC(where mount table is kept,
+AMU_CACHE_CHECK_DYNAMIC(where mount table is kept,
 ac_cv_mnttab_location,
 [
 # assume location is on file
@@ -1029,10 +1170,10 @@ dnl ======================================================================
 dnl ######################################################################
 dnl check the string type of the name of a filesystem mount table entry
 dnl option.
-dnl Usage: AC_CHECK_MNTTAB_OPT(<fs>)
+dnl Usage: AMU_CHECK_MNTTAB_OPT(<fs>)
 dnl Check if there is an entry for MNTOPT_<fs> in sys/mntent.h or mntent.h
 dnl define MNTTAB_OPT_<fs> to the string name (e.g., "ro").
-AC_DEFUN(AC_CHECK_MNTTAB_OPT,
+AC_DEFUN(AMU_CHECK_MNTTAB_OPT,
 [
 # what name to give to the fs
 ac_fs_name=$1
@@ -1040,14 +1181,14 @@ ac_fs_name=$1
 ac_upcase_fs_name=`echo $ac_fs_name | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=MNTTAB_OPT_$ac_upcase_fs_name
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for mount table option $ac_fs_name,
+AMU_CACHE_CHECK_DYNAMIC(for mount table option $ac_fs_name,
 ac_cv_mnttab_opt_$ac_fs_name,
 [
 # undefine by default
 eval "ac_cv_mnttab_opt_$ac_fs_name=notfound"
 # and look to see if it was found
-AC_EXPAND_CPP_STRING(
-AC_MOUNT_HEADERS
+AMU_EXPAND_CPP_STRING(
+AMU_MOUNT_HEADERS
 , MNTOPT_$ac_upcase_fs_name)
 # set cache variable to value
 if test "${value}" != notfound
@@ -1068,13 +1209,13 @@ fi
 dnl ======================================================================
 
 dnl ######################################################################
-dnl run AC_CHECK_MNTTAB_OPT on each argument given
-dnl Usage: AC_CHECK_MNTTAB_OPTS(arg arg arg ...)
-AC_DEFUN(AC_CHECK_MNTTAB_OPTS,
+dnl run AMU_CHECK_MNTTAB_OPT on each argument given
+dnl Usage: AMU_CHECK_MNTTAB_OPTS(arg arg arg ...)
+AC_DEFUN(AMU_CHECK_MNTTAB_OPTS,
 [
 for ac_tmp_arg in $1
 do
-AC_CHECK_MNTTAB_OPT($ac_tmp_arg)
+AMU_CHECK_MNTTAB_OPT($ac_tmp_arg)
 done
 ])
 dnl ======================================================================
@@ -1082,7 +1223,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check style of accessing the mount table file
-AC_DEFUN(AC_CHECK_MNTTAB_STYLE,
+AC_DEFUN(AMU_CHECK_MNTTAB_STYLE,
 [
 AC_CACHE_CHECK(mount table style,
 ac_cv_style_mnttab,
@@ -1108,12 +1249,9 @@ case "${host_os_name}" in
 esac
 ])
 am_utils_link_files=${am_utils_link_files}libamu/mtabutil.c:conf/mtab/mtab_${ac_cv_style_mnttab}.c" "
-dnl XXX: remove the next two lines after porting to autoconf-2.14
-am_utils_link_files_src=${am_utils_link_files_src}conf/mtab/mtab_${ac_cv_style_mnttab}.c" "
-am_utils_link_files_dst=${am_utils_link_files_dst}libamu/mtabutil.c" "
 
 # append mtab utilities object to LIBOBJS for automatic compilation
-LIBOBJS="$LIBOBJS mtabutil.o"
+AC_LIBOBJ(mtabutil)
 ])
 dnl ======================================================================
 
@@ -1127,7 +1265,7 @@ dnl exist, then define MNTTAB_TYPE_<fssymbol> instead.  If <fssymbol> is
 dnl defined, then <fs> can be a list of fs strings to look for.
 dnl If no symbols have been defined, but the filesystem has been found
 dnl earlier, then set the mount-table type to "<fs>" anyway...
-AC_DEFUN(AC_CHECK_MNTTAB_TYPE,
+AC_DEFUN(AMU_CHECK_MNTTAB_TYPE,
 [
 # find what name to give to the fs
 if test -n "$2"
@@ -1140,7 +1278,7 @@ fi
 ac_upcase_fs_name=`echo $ac_fs_name | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ac_safe=MNTTAB_TYPE_$ac_upcase_fs_name
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for mnttab name for $ac_fs_name filesystem,
+AMU_CACHE_CHECK_DYNAMIC(for mnttab name for $ac_fs_name filesystem,
 ac_cv_mnttab_type_$ac_fs_name,
 [
 # undefine by default
@@ -1158,7 +1296,7 @@ do
 
   # first look for MNTTYPE_*
   AC_EGREP_CPP(yes,
-  AC_MOUNT_HEADERS(
+  AMU_MOUNT_HEADERS(
   [
 #ifdef MNTTYPE_$ac_upcase_fs_symbol
     yes
@@ -1194,17 +1332,15 @@ do
   fi
 
   # next look for statically compiled filesystem (linux)
-changequote(<<, >>)dnl
-  if egrep "[^a-zA-Z0-9_]$ac_fs_tmp$" /proc/filesystems >/dev/null 2>&1
-changequote([, ])dnl
+  if egrep "[[^a-zA-Z0-9_]]$ac_fs_tmp$" /proc/filesystems >/dev/null 2>&1
   then
     eval "ac_cv_mnttab_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""
     break
   fi
 
   # then try to run a program that derefences a static array (bsd44)
-  AC_EXPAND_RUN_STRING(
-  AC_MOUNT_HEADERS(
+  AMU_EXPAND_RUN_STRING(
+  AMU_MOUNT_HEADERS(
   [
 #ifndef INITMOUNTNAMES
 # error INITMOUNTNAMES not defined
@@ -1267,7 +1403,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check style of mounting filesystems
-AC_DEFUN(AC_CHECK_MOUNT_STYLE,
+AC_DEFUN(AMU_CHECK_MOUNT_STYLE,
 [
 AC_CACHE_CHECK(style of mounting filesystems,
 ac_cv_style_mount,
@@ -1302,19 +1438,16 @@ esac
 ])
 am_utils_mount_style_file="mountutil.c"
 am_utils_link_files=${am_utils_link_files}libamu/${am_utils_mount_style_file}:conf/mount/mount_${ac_cv_style_mount}.c" "
-dnl XXX: remove the next two lines after porting to autoconf-2.14
-am_utils_link_files_src=${am_utils_link_files_src}conf/mount/mount_${ac_cv_style_mount}.c" "
-am_utils_link_files_dst=${am_utils_link_files_dst}libamu/${am_utils_mount_style_file}" "
 
 # append mount utilities object to LIBOBJS for automatic compilation
-LIBOBJS="$LIBOBJS mountutil.o"
+AC_LIBOBJ(mountutil)
 ])
 dnl ======================================================================
 
 
 dnl ######################################################################
 dnl check the mount system call trap needed to mount(2) a filesystem
-AC_DEFUN(AC_CHECK_MOUNT_TRAP,
+AC_DEFUN(AMU_CHECK_MOUNT_TRAP,
 [
 AC_CACHE_CHECK(mount trap system-call style,
 ac_cv_mount_trap,
@@ -1370,7 +1503,7 @@ dnl exist, then define MOUNT_TYPE_<fssymbol> instead.  If <fssymbol> is
 dnl defined, then <fs> can be a list of fs strings to look for.
 dnl If no symbols have been defined, but the filesystem has been found
 dnl earlier, then set the mount-table type to "<fs>" anyway...
-AC_DEFUN(AC_CHECK_MOUNT_TYPE,
+AC_DEFUN(AMU_CHECK_MOUNT_TYPE,
 [
 # find what name to give to the fs
 if test -n "$2"
@@ -1383,7 +1516,7 @@ fi
 ac_upcase_fs_name=`echo $ac_fs_name | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 ##############################################################################
 # check for cache and set it if needed
-AC_CACHE_CHECK_DYNAMIC(for mount(2) type/name for $ac_fs_name filesystem,
+AMU_CACHE_CHECK_DYNAMIC(for mount(2) type/name for $ac_fs_name filesystem,
 ac_cv_mount_type_$ac_fs_name,
 [
 # undefine by default
@@ -1396,7 +1529,7 @@ do
 
   # first look for MNTTYPE_<fs>
   AC_EGREP_CPP(yes,
-  AC_MOUNT_HEADERS(
+  AMU_MOUNT_HEADERS(
   [
 #ifdef MNTTYPE_$ac_upcase_fs_symbol
     yes
@@ -1411,7 +1544,7 @@ do
 
   # next look for MOUNT_<fs>
   AC_EGREP_CPP(yes,
-  AC_MOUNT_HEADERS(
+  AMU_MOUNT_HEADERS(
   [
 #ifdef MOUNT_$ac_upcase_fs_symbol
     yes
@@ -1426,7 +1559,7 @@ do
 
   # next look for MNT_<fs>
   AC_EGREP_CPP(yes,
-  AC_MOUNT_HEADERS(
+  AMU_MOUNT_HEADERS(
   [
 #ifdef MNT_$ac_upcase_fs_symbol
     yes
@@ -1441,7 +1574,7 @@ do
 
   # next look for GT_<fs> (ultrix)
   AC_EGREP_CPP(yes,
-  AC_MOUNT_HEADERS(
+  AMU_MOUNT_HEADERS(
   [
 #ifdef GT_$ac_upcase_fs_symbol
     yes
@@ -1476,9 +1609,7 @@ do
   fi
 
   # in addition look for statically compiled filesystem (linux)
-changequote(<<, >>)dnl
-  if egrep "[^a-zA-Z0-9_]$ac_fs_tmp$" /proc/filesystems >/dev/null 2>&1
-changequote([, ])dnl
+  if egrep "[[^a-zA-Z0-9_]]$ac_fs_tmp$" /proc/filesystems >/dev/null 2>&1
   then
     eval "ac_cv_mount_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""
     break
@@ -1533,7 +1664,7 @@ dnl ######################################################################
 dnl check the correct printf-style type for the mount type in the mount()
 dnl system call.
 dnl If you change this one, you must also fix the check_mtype_type.m4.
-AC_DEFUN(AC_CHECK_MTYPE_PRINTF_TYPE,
+AC_DEFUN(AMU_CHECK_MTYPE_PRINTF_TYPE,
 [
 AC_CACHE_CHECK(printf string to print type field of mount() call,
 ac_cv_mtype_printf_type,
@@ -1556,7 +1687,7 @@ dnl ======================================================================
 dnl ######################################################################
 dnl check the correct type for the mount type in the mount() system call
 dnl If you change this one, you must also fix the check_mtype_printf_type.m4.
-AC_DEFUN(AC_CHECK_MTYPE_TYPE,
+AC_DEFUN(AMU_CHECK_MTYPE_TYPE,
 [
 AC_CACHE_CHECK(type of mount type field in mount() call,
 ac_cv_mtype_type,
@@ -1576,7 +1707,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check the correct network transport type to use
-AC_DEFUN(AC_CHECK_NETWORK_TRANSPORT_TYPE,
+AC_DEFUN(AMU_CHECK_NETWORK_TRANSPORT_TYPE,
 [
 AC_CACHE_CHECK(network transport type,
 ac_cv_transport_type,
@@ -1592,12 +1723,9 @@ case "${host_os_name}" in
 esac
 ])
 am_utils_link_files=${am_utils_link_files}libamu/transputil.c:conf/transp/transp_${ac_cv_transport_type}.c" "
-dnl XXX: remove the next two lines after porting to autoconf-2.14
-am_utils_link_files_src=${am_utils_link_files_src}conf/transp/transp_${ac_cv_transport_type}.c" "
-am_utils_link_files_dst=${am_utils_link_files_dst}libamu/transputil.c" "
 
 # append transport utilities object to LIBOBJS for automatic compilation
-LIBOBJS="$LIBOBJS transputil.o"
+AC_LIBOBJ(transputil)
 if test $ac_cv_transport_type = tli
 then
   AC_DEFINE(HAVE_TRANSPORT_TYPE_TLI)
@@ -1608,7 +1736,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check the correct way to dereference the address part of the nfs fhandle
-AC_DEFUN(AC_CHECK_NFS_FH_DREF,
+AC_DEFUN(AMU_CHECK_NFS_FH_DREF,
 [
 AC_CACHE_CHECK(nfs file-handle address dereferencing style,
 ac_cv_nfs_fh_dref_style,
@@ -1658,7 +1786,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check the correct way to dereference the hostname part of the nfs fhandle
-AC_DEFUN(AC_CHECK_NFS_HN_DREF,
+AC_DEFUN(AMU_CHECK_NFS_HN_DREF,
 [
 AC_CACHE_CHECK(nfs hostname dereferencing style,
 ac_cv_nfs_hn_dref_style,
@@ -1681,7 +1809,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check if system has NFS protocol headers
-AC_DEFUN(AC_CHECK_NFS_PROT_HEADERS,
+AC_DEFUN(AMU_CHECK_NFS_PROT_HEADERS,
 [
 AC_CACHE_CHECK(location of NFS protocol header files,
 ac_cv_nfs_prot_headers,
@@ -1734,14 +1862,16 @@ case "${host_os}" in
 			ac_cv_nfs_prot_headers=aix4 ;;
 	aix4.2* )
 			ac_cv_nfs_prot_headers=aix4_2 ;;
-	aix* )
+	aix4.3* )
 			ac_cv_nfs_prot_headers=aix4_3 ;;
+	aix* )
+			ac_cv_nfs_prot_headers=aix5_1 ;;
 	osf[[1-3]]* )
 			ac_cv_nfs_prot_headers=osf2 ;;
-	osf4* | osf5.0* )
+	osf4* )
 			ac_cv_nfs_prot_headers=osf4 ;;
 	osf* )
-			ac_cv_nfs_prot_headers=osf5_1 ;;
+			ac_cv_nfs_prot_headers=osf5 ;;
 	svr4* )
 			ac_cv_nfs_prot_headers=svr4 ;;
 	sysv4* )	# this is for NCR2 machines
@@ -1762,9 +1892,6 @@ esac
 # make sure correct header is linked in top build directory
 am_utils_nfs_prot_file="amu_nfs_prot.h"
 am_utils_link_files=${am_utils_link_files}${am_utils_nfs_prot_file}:conf/nfs_prot/nfs_prot_${ac_cv_nfs_prot_headers}.h" "
-dnl XXX: remove the next two lines after porting to autoconf-2.14
-am_utils_link_files_src=${am_utils_link_files_src}conf/nfs_prot/nfs_prot_${ac_cv_nfs_prot_headers}.h" "
-am_utils_link_files_dst=${am_utils_link_files_dst}${am_utils_nfs_prot_file}" "
 
 # define the name of the header to be included for other M4 macros
 AC_DEFINE_UNQUOTED(AMU_NFS_PROTOCOL_HEADER, "${srcdir}/conf/nfs_prot/nfs_prot_${ac_cv_nfs_prot_headers}.h")
@@ -1778,7 +1905,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check the correct way to dereference the address part of the nfs fhandle
-AC_DEFUN(AC_CHECK_NFS_SA_DREF,
+AC_DEFUN(AMU_CHECK_NFS_SA_DREF,
 [
 AC_CACHE_CHECK(nfs address dereferencing style,
 ac_cv_nfs_sa_dref_style,
@@ -1813,7 +1940,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check if need to turn on, off, or leave alone the NFS "noconn" option
-AC_DEFUN(AC_CHECK_NFS_SOCKET_CONNECTION,
+AC_DEFUN(AMU_CHECK_NFS_SOCKET_CONNECTION,
 [
 AC_CACHE_CHECK(if to turn on/off noconn option,
 ac_cv_nfs_socket_connection,
@@ -1830,8 +1957,12 @@ esac
 ])
 # set correct value
 case "$ac_cv_nfs_socket_connection" in
-	noconn )	AC_DEFINE(USE_UNCONNECTED_NFS_SOCKETS) ;;
-	conn )		AC_DEFINE(USE_CONNECTED_NFS_SOCKETS) ;;
+	noconn )
+		AC_DEFINE(USE_UNCONNECTED_NFS_SOCKETS)
+		;;
+	conn )
+		AC_DEFINE(USE_CONNECTED_NFS_SOCKETS)
+		;;
 esac
 ])
 dnl ======================================================================
@@ -1844,7 +1975,7 @@ dnl Using a typical macro has proven unsuccesful, because on some other
 dnl systems such as irix, including libnsl and or libsocket actually breaks
 dnl lots of code.  So I am forced to use a special purpose macro that sets
 dnl the libraries based on the OS.  Sigh.  -Erez.
-AC_DEFUN(AC_CHECK_OS_LIBS,
+AC_DEFUN(AMU_CHECK_OS_LIBS,
 [
 AC_CACHE_CHECK(for additional OS libraries,
 ac_cv_os_libs,
@@ -1869,7 +2000,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check if a system needs to restart its signal handlers
-AC_DEFUN(AC_CHECK_RESTARTABLE_SIGNAL_HANDLER,
+AC_DEFUN(AMU_CHECK_RESTARTABLE_SIGNAL_HANDLER,
 [
 AC_CACHE_CHECK(if system needs to restart signal handlers,
 ac_cv_restartable_signal_handler,
@@ -1893,7 +2024,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check style of unmounting filesystems
-AC_DEFUN(AC_CHECK_UMOUNT_STYLE,
+AC_DEFUN(AMU_CHECK_UMOUNT_STYLE,
 [
 AC_CACHE_CHECK(style of unmounting filesystems,
 ac_cv_style_umount,
@@ -1910,19 +2041,16 @@ esac
 ])
 am_utils_umount_style_file="umount_fs.c"
 am_utils_link_files=${am_utils_link_files}libamu/${am_utils_umount_style_file}:conf/umount/umount_${ac_cv_style_umount}.c" "
-dnl XXX: remove the next two lines after porting to autoconf-2.14
-am_utils_link_files_src=${am_utils_link_files_src}conf/umount/umount_${ac_cv_style_umount}.c" "
-am_utils_link_files_dst=${am_utils_link_files_dst}libamu/${am_utils_umount_style_file}" "
 
 # append un-mount utilities object to LIBOBJS for automatic compilation
-LIBOBJS="$LIBOBJS umount_fs.o"
+AC_LIBOBJ(umount_fs)
 ])
 dnl ======================================================================
 
 
 dnl ######################################################################
 dnl check the unmount system call arguments needed for
-AC_DEFUN(AC_CHECK_UNMOUNT_ARGS,
+AC_DEFUN(AMU_CHECK_UNMOUNT_ARGS,
 [
 AC_CACHE_CHECK(unmount system-call arguments,
 ac_cv_unmount_args,
@@ -1945,7 +2073,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check for the correct system call to unmount a filesystem.
-AC_DEFUN(AC_CHECK_UNMOUNT_CALL,
+AC_DEFUN(AMU_CHECK_UNMOUNT_CALL,
 [
 dnl make sure this one is called before [AC_CHECK_UNMOUNT_ARGS]
 AC_BEFORE([$0], [AC_CHECK_UNMOUNT_ARGS])
@@ -1973,35 +2101,11 @@ dnl ======================================================================
 
 
 dnl ######################################################################
-dnl check if compiler can handle "void *"
-AC_DEFUN(AC_C_VOID_P,
-[
-AC_CACHE_CHECK(if compiler can handle void *,
-ac_cv_c_void_p,
-[
-# try to compile a program which uses void *
-AC_TRY_COMPILE(
-[ ],
-[
-void *vp;
-], ac_cv_c_void_p=yes, ac_cv_c_void_p=no)
-])
-if test "$ac_cv_c_void_p" = yes
-then
-  AC_DEFINE(voidp, void *)
-else
-  AC_DEFINE(voidp, char *)
-fi
-])
-dnl ======================================================================
-
-
-dnl ######################################################################
 dnl Expand the value of a CPP macro into a printable hex number.
 dnl Takes: header, macro, [action-if-found, [action-if-not-found]]
 dnl It runs the header through CPP looking for a match between the macro
 dnl and a string pattern, and if sucessful, it prints the string value out.
-AC_DEFUN(AC_EXPAND_CPP_HEX,
+AC_DEFUN(AMU_EXPAND_CPP_HEX,
 [
 # we are looking for a regexp of a string
 AC_EGREP_CPP(0x,
@@ -2043,14 +2147,12 @@ dnl Expand the value of a CPP macro into a printable integer number.
 dnl Takes: header, macro, [action-if-found, [action-if-not-found]]
 dnl It runs the header through CPP looking for a match between the macro
 dnl and a string pattern, and if sucessful, it prints the string value out.
-AC_DEFUN(AC_EXPAND_CPP_INT,
+AC_DEFUN(AMU_EXPAND_CPP_INT,
 [
 # we are looking for a regexp of an integer (must not start with 0 --- those
 # are octals).
 AC_EGREP_CPP(
-changequote(<<, >>)dnl
-[1-9][0-9]*,
-changequote([, ])dnl
+[[1-9]][[0-9]]*,
 [$1]
 $2,
 value="notfound"
@@ -2089,7 +2191,7 @@ dnl Expand the value of a CPP macro into a printable string.
 dnl Takes: header, macro, [action-if-found, [action-if-not-found]]
 dnl It runs the header through CPP looking for a match between the macro
 dnl and a string pattern, and if sucessful, it prints the string value out.
-AC_DEFUN(AC_EXPAND_CPP_STRING,
+AC_DEFUN(AMU_EXPAND_CPP_STRING,
 [
 # we are looking for a regexp of a string
 AC_EGREP_CPP(\".*\",
@@ -2129,7 +2231,7 @@ dnl ======================================================================
 dnl ######################################################################
 dnl Run a program and print its output as a string
 dnl Takes: (header, code-to-run, [action-if-found, [action-if-not-found]])
-AC_DEFUN(AC_EXPAND_RUN_STRING,
+AC_DEFUN(AMU_EXPAND_RUN_STRING,
 [
 value="notfound"
 AC_TRY_RUN(
@@ -2155,7 +2257,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl find if "extern char *optarg" exists in headers
-AC_DEFUN(AC_EXTERN_OPTARG,
+AC_DEFUN(AMU_EXTERN_OPTARG,
 [
 AC_CACHE_CHECK(if external definition for optarg[] exists,
 ac_cv_extern_optarg,
@@ -2193,16 +2295,14 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl find if "extern char *sys_errlist[]" exist in headers
-AC_DEFUN(AC_EXTERN_SYS_ERRLIST,
+AC_DEFUN(AMU_EXTERN_SYS_ERRLIST,
 [
 AC_CACHE_CHECK(if external definition for sys_errlist[] exists,
 ac_cv_extern_sys_errlist,
 [
 # try to locate pattern in header files
-changequote(<<, >>)dnl
 #pattern="(extern)?.*char.*sys_errlist.*\[\]"
 pattern="(extern)?.*char.*sys_errlist.*"
-changequote([, ])dnl
 AC_EGREP_CPP(${pattern},
 [
 #ifdef HAVE_STDIO_H
@@ -2227,14 +2327,14 @@ dnl ======================================================================
 
 fdnl ######################################################################
 dnl find if mntent_t field mnt_time exists and is of type "char *"
-AC_DEFUN(AC_FIELD_MNTENT_T_MNT_TIME_STRING,
+AC_DEFUN(AMU_FIELD_MNTENT_T_MNT_TIME_STRING,
 [
 AC_CACHE_CHECK(if mntent_t field mnt_time exist as type string,
 ac_cv_field_mntent_t_mnt_time_string,
 [
 # try to compile a program
 AC_TRY_COMPILE(
-AC_MOUNT_HEADERS(
+AMU_MOUNT_HEADERS(
 [
 /* now set the typedef */
 #ifdef HAVE_STRUCT_MNTENT
@@ -2257,37 +2357,28 @@ i = mtt.mnt_time[0];
 ])
 if test "$ac_cv_field_mntent_t_mnt_time_string" = yes
 then
-  AC_DEFINE(HAVE_FIELD_MNTENT_T_MNT_TIME_STRING)
+  AC_DEFINE(HAVE_MNTENT_T_MNT_TIME_STRING)
 fi
 ])
 dnl ======================================================================
 
 
-dnl my version is similar to the one from Autoconf 2.12, but I also
-dnl define HAVE_BAD_MEMCMP so that I can smarter things to avoid
+dnl My version is similar to the one from Autoconf 2.52, but I also
+dnl define HAVE_BAD_MEMCMP so that I can do smarter things to avoid
 dnl linkage conflicts with bad memcmp versions that are in libc.
-AC_DEFUN(AC_FUNC_BAD_MEMCMP,
-[AC_CACHE_CHECK(for 8-bit clean memcmp, ac_cv_func_memcmp_clean,
-[AC_TRY_RUN([
-main()
-{
-  char c0 = 0x40, c1 = 0x80, c2 = 0x81;
-  exit(memcmp(&c0, &c2, 1) < 0 && memcmp(&c1, &c2, 1) < 0 ? 0 : 1);
-}
-], ac_cv_func_memcmp_clean=yes, ac_cv_func_memcmp_clean=no,
-ac_cv_func_memcmp_clean=no)])
-if test $ac_cv_func_memcmp_clean = no
+AC_DEFUN(AMU_FUNC_BAD_MEMCMP,
+[
+AC_FUNC_MEMCMP
+if test "$ac_cv_func_memcmp_working" = no
 then
-  LIBOBJS="$LIBOBJS memcmp.o"
-  AC_DEFINE(HAVE_BAD_MEMCMP)
+AC_DEFINE(HAVE_BAD_MEMCMP)
 fi
-dnl AC_SUBST(LIBOBJS)dnl
 ])
 
 
 dnl Check for a yp_all() function that does not leak a file descriptor
 dnl to the ypserv process.
-AC_DEFUN(AC_FUNC_BAD_YP_ALL,
+AC_DEFUN(AMU_FUNC_BAD_YP_ALL,
 [
 AC_CACHE_CHECK(for a file-descriptor leakage clean yp_all,
 ac_cv_func_yp_all_clean,
@@ -2314,20 +2405,936 @@ fi
 ])
 
 
+dnl FILE: aux/macros/header_templates.m4
+dnl defines descriptions for various am-utils specific macros
+
+AH_TEMPLATE([HAVE_AMU_FS_AUTO],
+[Define if have automount filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_DIRECT],
+[Define if have direct automount filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_TOPLVL],
+[Define if have "top-level" filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_ERROR],
+[Define if have error filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_INHERIT],
+[Define if have inheritance filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_PROGRAM],
+[Define if have program filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_LINK],
+[Define if have symbolic-link filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_LINKX],
+[Define if have symlink with existence check filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_HOST],
+[Define if have NFS host-tree filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_NFSL],
+[Define if have nfsl (NFS with local link check) filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_NFSX],
+[Define if have multi-NFS filesystem])
+
+AH_TEMPLATE([HAVE_AMU_FS_UNION],
+[Define if have union filesystem])
+
+AH_TEMPLATE([HAVE_MAP_FILE],
+[Define if have file maps (everyone should have it!)])
+
+AH_TEMPLATE([HAVE_MAP_NIS],
+[Define if have NIS maps])
+
+AH_TEMPLATE([HAVE_MAP_NISPLUS],
+[Define if have NIS+ maps])
+
+AH_TEMPLATE([HAVE_MAP_DBM],
+[Define if have DBM maps])
+
+AH_TEMPLATE([HAVE_MAP_NDBM],
+[Define if have NDBM maps])
+
+AH_TEMPLATE([HAVE_MAP_HESIOD],
+[Define if have HESIOD maps])
+
+AH_TEMPLATE([HAVE_MAP_LDAP],
+[Define if have LDAP maps])
+
+AH_TEMPLATE([HAVE_MAP_PASSWD],
+[Define if have PASSWD maps])
+
+AH_TEMPLATE([HAVE_MAP_UNION],
+[Define if have UNION maps])
+
+AH_TEMPLATE([HAVE_FS_UFS],
+[Define if have UFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_XFS],
+[Define if have XFS filesystem (irix)])
+
+AH_TEMPLATE([HAVE_FS_EFS],
+[Define if have EFS filesystem (irix)])
+
+AH_TEMPLATE([HAVE_FS_NFS],
+[Define if have NFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_NFS3],
+[Define if have NFS3 filesystem])
+
+AH_TEMPLATE([HAVE_FS_PCFS],
+[Define if have PCFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_LOFS],
+[Define if have LOFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_HSFS],
+[Define if have HSFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_CDFS],
+[Define if have CDFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_TFS],
+[Define if have TFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_TMPFS],
+[Define if have TMPFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_MFS],
+[Define if have MFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_CFS],
+[Define if have CFS (crypto) filesystem])
+
+AH_TEMPLATE([HAVE_FS_AUTOFS],
+[Define if have AUTOFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_CACHEFS],
+[Define if have CACHEFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_NULLFS],
+[Define if have NULLFS (loopback on bsd44) filesystem])
+
+AH_TEMPLATE([HAVE_FS_UNIONFS],
+[Define if have UNIONFS filesystem])
+
+AH_TEMPLATE([HAVE_FS_UMAPFS],
+[Define if have UMAPFS (uid/gid mapping) filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_UFS],
+[Mount(2) type/name for UFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_XFS],
+[Mount(2) type/name for XFS filesystem (irix)])
+
+AH_TEMPLATE([MOUNT_TYPE_EFS],
+[Mount(2) type/name for EFS filesystem (irix)])
+
+AH_TEMPLATE([MOUNT_TYPE_NFS],
+[Mount(2) type/name for NFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_NFS3],
+[Mount(2) type/name for NFS3 filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_PCFS],
+[Mount(2) type/name for PCFS filesystem. XXX: conf/trap/trap_hpux.h may override this definition for HPUX 9.0])
+
+AH_TEMPLATE([MOUNT_TYPE_LOFS],
+[Mount(2) type/name for LOFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_CDFS],
+[Mount(2) type/name for CDFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_TFS],
+[Mount(2) type/name for TFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_TMPFS],
+[Mount(2) type/name for TMPFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_MFS],
+[Mount(2) type/name for MFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_CFS],
+[Mount(2) type/name for CFS (crypto) filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_AUTOFS],
+[Mount(2) type/name for AUTOFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_CACHEFS],
+[Mount(2) type/name for CACHEFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_IGNORE],
+[Mount(2) type/name for IGNORE filesystem (not real just ignore for df)])
+
+AH_TEMPLATE([MOUNT_TYPE_NULLFS],
+[Mount(2) type/name for NULLFS (loopback on bsd44) filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_UNIONFS],
+[Mount(2) type/name for UNIONFS filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_UMAPFS],
+[Mount(2) type/name for UMAPFS (uid/gid mapping) filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_UFS],
+[Mount-table entry name for UFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_XFS],
+[Mount-table entry name for XFS filesystem (irix)])
+
+AH_TEMPLATE([MNTTAB_TYPE_EFS],
+[Mount-table entry name for EFS filesystem (irix)])
+
+AH_TEMPLATE([MNTTAB_TYPE_NFS],
+[Mount-table entry name for NFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_NFS3],
+[Mount-table entry name for NFS3 filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_PCFS],
+[Mount-table entry name for PCFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_LOFS],
+[Mount-table entry name for LOFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_CDFS],
+[Mount-table entry name for CDFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_TFS],
+[Mount-table entry name for TFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_TMPFS],
+[Mount-table entry name for TMPFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_MFS],
+[Mount-table entry name for MFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_CFS],
+[Mount-table entry name for CFS (crypto) filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_AUTOFS],
+[Mount-table entry name for AUTOFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_CACHEFS],
+[Mount-table entry name for CACHEFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_NULLFS],
+[Mount-table entry name for NULLFS (loopback on bsd44) filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_UNIONFS],
+[Mount-table entry name for UNIONFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_UMAPFS],
+[Mount-table entry name for UMAPFS (uid/gid mapping) filesystem])
+
+AH_TEMPLATE([MNTTAB_FILE_NAME],
+[Name of mount table file name])
+
+AH_TEMPLATE([HIDE_MOUNT_TYPE],
+[Name of mount type to hide amd mount from df(1)])
+
+AH_TEMPLATE([MNTTAB_OPT_RO],
+[Mount Table option string: Read only])
+
+AH_TEMPLATE([MNTTAB_OPT_RW],
+[Mount Table option string: Read/write])
+
+AH_TEMPLATE([MNTTAB_OPT_RQ],
+[Mount Table option string: Read/write with quotas])
+
+AH_TEMPLATE([MNTTAB_OPT_QUOTA],
+[Mount Table option string: Check quotas])
+
+AH_TEMPLATE([MNTTAB_OPT_NOQUOTA],
+[Mount Table option string: Don't check quotas])
+
+AH_TEMPLATE([MNTTAB_OPT_ONERROR],
+[Mount Table option string: action to taken on error])
+
+AH_TEMPLATE([MNTTAB_OPT_TOOSOON],
+[Mount Table option string: min. time between inconsistencies])
+
+AH_TEMPLATE([MNTTAB_OPT_SOFT],
+[Mount Table option string: Soft mount])
+
+AH_TEMPLATE([MNTTAB_OPT_SPONGY],
+[Mount Table option string: spongy mount])
+
+AH_TEMPLATE([MNTTAB_OPT_HARD],
+[Mount Table option string: Hard mount])
+
+AH_TEMPLATE([MNTTAB_OPT_SUID],
+[Mount Table option string: Set uid allowed])
+
+AH_TEMPLATE([MNTTAB_OPT_NOSUID],
+[Mount Table option string: Set uid not allowed])
+
+AH_TEMPLATE([MNTTAB_OPT_GRPID],
+[Mount Table option string: SysV-compatible gid on create])
+
+AH_TEMPLATE([MNTTAB_OPT_REMOUNT],
+[Mount Table option string: Change mount options])
+
+AH_TEMPLATE([MNTTAB_OPT_NOSUB],
+[Mount Table option string: Disallow mounts on subdirs])
+
+AH_TEMPLATE([MNTTAB_OPT_MULTI],
+[Mount Table option string: Do multi-component lookup])
+
+AH_TEMPLATE([MNTTAB_OPT_INTR],
+[Mount Table option string: Allow NFS ops to be interrupted])
+
+AH_TEMPLATE([MNTTAB_OPT_NOINTR],
+[Mount Table option string: Don't allow interrupted ops])
+
+AH_TEMPLATE([MNTTAB_OPT_PORT],
+[Mount Table option string: NFS server IP port number])
+
+AH_TEMPLATE([MNTTAB_OPT_SECURE],
+[Mount Table option string: Secure (AUTH_DES) mounting])
+
+AH_TEMPLATE([MNTTAB_OPT_KERB],
+[Mount Table option string: Secure (AUTH_Kerb) mounting])
+
+AH_TEMPLATE([MNTTAB_OPT_RSIZE],
+[Mount Table option string: Max NFS read size (bytes)])
+
+AH_TEMPLATE([MNTTAB_OPT_WSIZE],
+[Mount Table option string: Max NFS write size (bytes)])
+
+AH_TEMPLATE([MNTTAB_OPT_TIMEO],
+[Mount Table option string: NFS timeout (1/10 sec)])
+
+AH_TEMPLATE([MNTTAB_OPT_RETRANS],
+[Mount Table option string: Max retransmissions (soft mnts)])
+
+AH_TEMPLATE([MNTTAB_OPT_ACTIMEO],
+[Mount Table option string: Attr cache timeout (sec)])
+
+AH_TEMPLATE([MNTTAB_OPT_ACREGMIN],
+[Mount Table option string: Min attr cache timeout (files)])
+
+AH_TEMPLATE([MNTTAB_OPT_ACREGMAX],
+[Mount Table option string: Max attr cache timeout (files)])
+
+AH_TEMPLATE([MNTTAB_OPT_ACDIRMIN],
+[Mount Table option string: Min attr cache timeout (dirs)])
+
+AH_TEMPLATE([MNTTAB_OPT_ACDIRMAX],
+[Mount Table option string: Max attr cache timeout (dirs)])
+
+AH_TEMPLATE([MNTTAB_OPT_NOAC],
+[Mount Table option string: Don't cache attributes at all])
+
+AH_TEMPLATE([MNTTAB_OPT_NOCTO],
+[Mount Table option string: No close-to-open consistency])
+
+AH_TEMPLATE([MNTTAB_OPT_BG],
+[Mount Table option string: Do mount retries in background])
+
+AH_TEMPLATE([MNTTAB_OPT_FG],
+[Mount Table option string: Do mount retries in foreground])
+
+AH_TEMPLATE([MNTTAB_OPT_RETRY],
+[Mount Table option string: Number of mount retries])
+
+AH_TEMPLATE([MNTTAB_OPT_DEV],
+[Mount Table option string: Device id of mounted fs])
+
+AH_TEMPLATE([MNTTAB_OPT_FSID],
+[Mount Table option string: Filesystem id of mounted fs])
+
+AH_TEMPLATE([MNTTAB_OPT_POSIX],
+[Mount Table option string: Get static pathconf for mount])
+
+AH_TEMPLATE([MNTTAB_OPT_MAP],
+[Mount Table option string: Automount map])
+
+AH_TEMPLATE([MNTTAB_OPT_DIRECT],
+[Mount Table option string: Automount   direct map mount])
+
+AH_TEMPLATE([MNTTAB_OPT_INDIRECT],
+[Mount Table option string: Automount indirect map mount])
+
+AH_TEMPLATE([MNTTAB_OPT_LLOCK],
+[Mount Table option string: Local locking (no lock manager)])
+
+AH_TEMPLATE([MNTTAB_OPT_IGNORE],
+[Mount Table option string: Ignore this entry])
+
+AH_TEMPLATE([MNTTAB_OPT_NOAUTO],
+[Mount Table option string: No auto (what?)])
+
+AH_TEMPLATE([MNTTAB_OPT_NOCONN],
+[Mount Table option string: No connection])
+
+AH_TEMPLATE([MNTTAB_OPT_VERS],
+[Mount Table option string: protocol version number indicator])
+
+AH_TEMPLATE([MNTTAB_OPT_PROTO],
+[Mount Table option string: protocol network_id indicator])
+
+AH_TEMPLATE([MNTTAB_OPT_SYNCDIR],
+[Mount Table option string: Synchronous local directory ops])
+
+AH_TEMPLATE([MNTTAB_OPT_NOSETSEC],
+[Mount Table option string: Do no allow setting sec attrs])
+
+AH_TEMPLATE([MNTTAB_OPT_SYMTTL],
+[Mount Table option string: set symlink cache time-to-live])
+
+AH_TEMPLATE([MNTTAB_OPT_COMPRESS],
+[Mount Table option string: compress])
+
+AH_TEMPLATE([MNTTAB_OPT_PGTHRESH],
+[Mount Table option string: paging threshold])
+
+AH_TEMPLATE([MNTTAB_OPT_MAXGROUPS],
+[Mount Table option string: max groups])
+
+AH_TEMPLATE([MNTTAB_OPT_PROPLIST],
+[Mount Table option string: support property lists (ACLs)])
+
+AH_TEMPLATE([MNT2_GEN_OPT_ASYNC],
+[asynchronous filesystem access])
+
+AH_TEMPLATE([MNT2_GEN_OPT_AUTOMNTFS],
+[automounter filesystem (ignore) flag, used in bsdi-4.1])
+
+AH_TEMPLATE([MNT2_GEN_OPT_BIND],
+[directory hardlink])
+
+AH_TEMPLATE([MNT2_GEN_OPT_CACHE],
+[cache (what?)])
+
+AH_TEMPLATE([MNT2_GEN_OPT_DATA],
+[6-argument mount])
+
+AH_TEMPLATE([MNT2_GEN_OPT_FSS],
+[old (4-argument) mount (compatibility)])
+
+AH_TEMPLATE([MNT2_GEN_OPT_IGNORE],
+[ignore mount entry in df output])
+
+AH_TEMPLATE([MNT2_GEN_OPT_JFS],
+[journaling filesystem (AIX's UFS/FFS)])
+
+AH_TEMPLATE([MNT2_GEN_OPT_GRPID],
+[old BSD group-id on create])
+
+AH_TEMPLATE([MNT2_GEN_OPT_MULTI],
+[do multi-component lookup on files])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NEWTYPE],
+[use type string instead of int])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NFS],
+[NFS mount])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NOCACHE],
+[nocache (what?)])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NODEV],
+[do not interpret special device files])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NOEXEC],
+[no exec calls allowed])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NONDEV],
+[do not interpret special device files])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NOSUB],
+[Disallow mounts beneath this mount])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NOSUID],
+[Setuid programs disallowed])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NOTRUNC],
+[Return ENAMETOOLONG for long filenames])
+
+AH_TEMPLATE([MNT2_GEN_OPT_OPTIONSTR],
+[Pass mount option string to kernel])
+
+AH_TEMPLATE([MNT2_GEN_OPT_OVERLAY],
+[allow overlay mounts])
+
+AH_TEMPLATE([MNT2_GEN_OPT_QUOTA],
+[check quotas])
+
+AH_TEMPLATE([MNT2_GEN_OPT_RDONLY],
+[Read-only])
+
+AH_TEMPLATE([MNT2_GEN_OPT_REMOUNT],
+[change options on an existing mount])
+
+AH_TEMPLATE([MNT2_GEN_OPT_RONLY],
+[read only])
+
+AH_TEMPLATE([MNT2_GEN_OPT_SYNC],
+[synchronize data immediately to filesystem])
+
+AH_TEMPLATE([MNT2_GEN_OPT_SYNCHRONOUS],
+[synchronous filesystem access (same as SYNC)])
+
+AH_TEMPLATE([MNT2_GEN_OPT_SYS5],
+[Mount with Sys 5-specific semantics])
+
+AH_TEMPLATE([MNT2_GEN_OPT_UNION],
+[Union mount])
+
+AH_TEMPLATE([MNT2_NFS_OPT_AUTO],
+[hide mount type from df(1)])
+
+AH_TEMPLATE([MNT2_NFS_OPT_ACDIRMAX],
+[set max secs for dir attr cache])
+
+AH_TEMPLATE([MNT2_NFS_OPT_ACDIRMIN],
+[set min secs for dir attr cache])
+
+AH_TEMPLATE([MNT2_NFS_OPT_ACREGMAX],
+[set max secs for file attr cache])
+
+AH_TEMPLATE([MNT2_NFS_OPT_ACREGMIN],
+[set min secs for file attr cache])
+
+AH_TEMPLATE([MNT2_NFS_OPT_AUTHERR],
+[Authentication error])
+
+AH_TEMPLATE([MNT2_NFS_OPT_DEADTHRESH],
+[set dead server retry thresh])
+
+AH_TEMPLATE([MNT2_NFS_OPT_DISMINPROG],
+[Dismount in progress])
+
+AH_TEMPLATE([MNT2_NFS_OPT_DISMNT],
+[Dismounted])
+
+AH_TEMPLATE([MNT2_NFS_OPT_DUMBTIMR],
+[Don't estimate rtt dynamically])
+
+AH_TEMPLATE([MNT2_NFS_OPT_GRPID],
+[System V-style gid inheritance])
+
+AH_TEMPLATE([MNT2_NFS_OPT_HASAUTH],
+[Has authenticator])
+
+AH_TEMPLATE([MNT2_NFS_OPT_FSNAME],
+[provide name of server's fs to system])
+
+AH_TEMPLATE([MNT2_NFS_OPT_HOSTNAME],
+[set hostname for error printf])
+
+AH_TEMPLATE([MNT2_NFS_OPT_IGNORE],
+[ignore mount point])
+
+AH_TEMPLATE([MNT2_NFS_OPT_INT],
+[allow interrupts on hard mount])
+
+AH_TEMPLATE([MNT2_NFS_OPT_INTR],
+[allow interrupts on hard mount])
+
+AH_TEMPLATE([MNT2_NFS_OPT_INTERNAL],
+[Bits set internally])
+
+AH_TEMPLATE([MNT2_NFS_OPT_KERB],
+[Use Kerberos authentication])
+
+AH_TEMPLATE([MNT2_NFS_OPT_KERBEROS],
+[use kerberos credentials])
+
+AH_TEMPLATE([MNT2_NFS_OPT_KNCONF],
+[transport's knetconfig structure])
+
+AH_TEMPLATE([MNT2_NFS_OPT_LEASETERM],
+[set lease term (nqnfs)])
+
+AH_TEMPLATE([MNT2_NFS_OPT_LLOCK],
+[Local locking (no lock manager)])
+
+AH_TEMPLATE([MNT2_NFS_OPT_MAXGRPS],
+[set maximum grouplist size])
+
+AH_TEMPLATE([MNT2_NFS_OPT_MNTD],
+[Mnt server for mnt point])
+
+AH_TEMPLATE([MNT2_NFS_OPT_MYWRITE],
+[Assume writes were mine])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NFSV3],
+[mount NFS Version 3])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NOAC],
+[don't cache attributes])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NOCONN],
+[Don't Connect the socket])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NOCTO],
+[no close-to-open consistency])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NOINT],
+[disallow interrupts on hard mounts])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NQLOOKLEASE],
+[Get lease for lookup])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NONLM],
+[Don't use locking])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NQNFS],
+[Use Nqnfs protocol])
+
+AH_TEMPLATE([MNT2_NFS_OPT_POSIX],
+[static pathconf kludge info])
+
+AH_TEMPLATE([MNT2_NFS_OPT_RCVLOCK],
+[Rcv socket lock])
+
+AH_TEMPLATE([MNT2_NFS_OPT_RDIRALOOK],
+[Do lookup with readdir (nqnfs)])
+
+AH_TEMPLATE([MNT2_NFS_OPT_PROPLIST],
+[allow property list operations (ACLs over NFS)])
+
+AH_TEMPLATE([MNT2_NFS_OPTS_RDIRPLUS],
+[Use Readdirplus for NFSv3])
+
+AH_TEMPLATE([MNT2_NFS_OPT_READAHEAD],
+[set read ahead])
+
+AH_TEMPLATE([MNT2_NFS_OPT_READDIRSIZE],
+[Set readdir size])
+
+AH_TEMPLATE([MNT2_NFS_OPT_RESVPORT],
+[Allocate a reserved port])
+
+AH_TEMPLATE([MNT2_NFS_OPT_RETRANS],
+[set number of request retries])
+
+AH_TEMPLATE([MNT2_NFS_OPT_RONLY],
+[read only])
+
+AH_TEMPLATE([MNT2_NFS_OPT_RPCTIMESYNC],
+[use RPC to do secure NFS time sync])
+
+AH_TEMPLATE([MNT2_NFS_OPT_RSIZE],
+[set read size])
+
+AH_TEMPLATE([MNT2_NFS_OPT_SECURE],
+[secure mount])
+
+AH_TEMPLATE([MNT2_NFS_OPT_SNDLOCK],
+[Send socket lock])
+
+AH_TEMPLATE([MNT2_NFS_OPT_SOFT],
+[soft mount (hard is default)])
+
+AH_TEMPLATE([MNT2_NFS_OPT_SPONGY],
+[spongy mount])
+
+AH_TEMPLATE([MNT2_NFS_OPT_TIMEO],
+[set initial timeout])
+
+AH_TEMPLATE([MNT2_NFS_OPT_TCP],
+[use TCP for mounts])
+
+AH_TEMPLATE([MNT2_NFS_OPT_VER3],
+[linux NFSv3])
+
+AH_TEMPLATE([MNT2_NFS_OPT_WAITAUTH],
+[Wait for authentication])
+
+AH_TEMPLATE([MNT2_NFS_OPT_WANTAUTH],
+[Wants an authenticator])
+
+AH_TEMPLATE([MNT2_NFS_OPT_WANTRCV],
+[Want receive socket lock])
+
+AH_TEMPLATE([MNT2_NFS_OPT_WANTSND],
+[Want send socket lock])
+
+AH_TEMPLATE([MNT2_NFS_OPT_WSIZE],
+[set write size])
+
+AH_TEMPLATE([MNT2_NFS_OPT_SYMTTL],
+[set symlink cache time-to-live])
+
+AH_TEMPLATE([MNT2_NFS_OPT_PGTHRESH],
+[paging threshold])
+
+AH_TEMPLATE([MNT2_NFS_OPT_XLATECOOKIE],
+[32<->64 dir cookie translation])
+
+AH_TEMPLATE([MNT2_CDFS_OPT_DEFPERM],
+[Ignore permission bits])
+
+AH_TEMPLATE([MNT2_CDFS_OPT_NODEFPERM],
+[Use on-disk permission bits])
+
+AH_TEMPLATE([MNT2_CDFS_OPT_NOVERSION],
+[Strip off extension from version string])
+
+AH_TEMPLATE([MNT2_CDFS_OPT_RRIP],
+[Use Rock Ridge Interchange Protocol (RRIP) extensions])
+
+AH_TEMPLATE([HAVE_MNTENT_T_MNT_TIME_STRING],
+[does mntent_t have mnt_time field and is of type "char *" ?])
+
+AH_TEMPLATE([REINSTALL_SIGNAL_HANDLER],
+[should signal handlers be reinstalled?])
+
+AH_TEMPLATE([DEBUG],
+[Turn off general debugging by default])
+
+AH_TEMPLATE([DEBUG_MEM],
+[Turn off memory debugging by default])
+
+AH_TEMPLATE([PACKAGE_NAME],
+[Define package name (must be defined by configure.in)])
+
+AH_TEMPLATE([PACKAGE_VERSION],
+[Define version of package (must be defined by configure.in)])
+
+AH_TEMPLATE([PACKAGE_BUGREPORT],
+[Define bug-reporting address (must be defined by configure.in)])
+
+AH_TEMPLATE([HOST_CPU],
+[Define name of host machine's cpu (eg. sparc)])
+
+AH_TEMPLATE([HOST_ARCH],
+[Define name of host machine's architecture (eg. sun4)])
+
+AH_TEMPLATE([HOST_VENDOR],
+[Define name of host machine's vendor (eg. sun)])
+
+AH_TEMPLATE([HOST_OS],
+[Define name and version of host machine (eg. solaris2.5.1)])
+
+AH_TEMPLATE([HOST_OS_NAME],
+[Define only name of host machine OS (eg. solaris2)])
+
+AH_TEMPLATE([HOST_OS_VERSION],
+[Define only version of host machine (eg. 2.5.1)])
+
+AH_TEMPLATE([HOST_HEADER_VERSION],
+[Define the header version of (linux) hosts (eg. 2.2.10)])
+
+AH_TEMPLATE([HOST_NAME],
+[Define name of host])
+
+AH_TEMPLATE([USER_NAME],
+[Define user name])
+
+AH_TEMPLATE([CONFIG_DATE],
+[Define configuration date])
+
+AH_TEMPLATE([HAVE_TRANSPORT_TYPE_TLI],
+[what type of network transport type is in use?  TLI or sockets?])
+
+AH_TEMPLATE([time_t],
+[Define to `long' if <sys/types.h> doesn't define time_t])
+
+AH_TEMPLATE([voidp],
+[Define to "void *" if compiler can handle, otherwise "char *"])
+
+AH_TEMPLATE([am_nfs_fh],
+[Define a type/structure for an NFS V2 filehandle])
+
+AH_TEMPLATE([am_nfs_fh3],
+[Define a type/structure for an NFS V3 filehandle])
+
+AH_TEMPLATE([HAVE_NFS_PROT_HEADERS],
+[define if the host has NFS protocol headers in system headers])
+
+AH_TEMPLATE([AMU_NFS_PROTOCOL_HEADER],
+[define name of am-utils' NFS protocol header])
+
+AH_TEMPLATE([nfs_args_t],
+[Define a type for the nfs_args structure])
+
+AH_TEMPLATE([NFS_FH_FIELD],
+[Define the field name for the filehandle within nfs_args_t])
+
+AH_TEMPLATE([HAVE_FHANDLE],
+[Define if plain fhandle type exists])
+
+AH_TEMPLATE([SVC_IN_ARG_TYPE],
+[Define the type of the 3rd argument ('in') to svc_getargs()])
+
+AH_TEMPLATE([XDRPROC_T_TYPE],
+[Define to the type of xdr procedure type])
+
+AH_TEMPLATE([MOUNT_TABLE_ON_FILE],
+[Define if mount table is on file, undefine if in kernel])
+
+AH_TEMPLATE([HAVE_STRUCT_MNTENT],
+[Define if have struct mntent in one of the standard headers])
+
+AH_TEMPLATE([HAVE_STRUCT_MNTTAB],
+[Define if have struct mnttab in one of the standard headers])
+
+AH_TEMPLATE([HAVE_STRUCT_NFS_ARGS],
+[Define if have struct nfs_args in one of the standard nfs headers])
+
+AH_TEMPLATE([HAVE_STRUCT_NFS_GFS_MOUNT],
+[Define if have struct nfs_gfs_mount in one of the standard nfs headers])
+
+AH_TEMPLATE([YP_ORDER_OUTORDER_TYPE],
+[Type of the 3rd argument to yp_order()])
+
+AH_TEMPLATE([RECVFROM_FROMLEN_TYPE],
+[Type of the 6th argument to recvfrom()])
+
+AH_TEMPLATE([AUTH_CREATE_GIDLIST_TYPE],
+[Type of the 5rd argument to authunix_create()])
+
+AH_TEMPLATE([MTYPE_PRINTF_TYPE],
+[The string used in printf to print the mount-type field of mount(2)])
+
+AH_TEMPLATE([MTYPE_TYPE],
+[Type of the mount-type field in the mount() system call])
+
+AH_TEMPLATE([pcfs_args_t],
+[Define a type for the pcfs_args structure])
+
+AH_TEMPLATE([autofs_args_t],
+[Define a type for the autofs_args structure])
+
+AH_TEMPLATE([cachefs_args_t],
+[Define a type for the cachefs_args structure])
+
+AH_TEMPLATE([tmpfs_args_t],
+[Define a type for the tmpfs_args structure])
+
+AH_TEMPLATE([ufs_args_t],
+[Define a type for the ufs_args structure])
+
+AH_TEMPLATE([efs_args_t],
+[Define a type for the efs_args structure])
+
+AH_TEMPLATE([xfs_args_t],
+[Define a type for the xfs_args structure])
+
+AH_TEMPLATE([lofs_args_t],
+[Define a type for the lofs_args structure])
+
+AH_TEMPLATE([cdfs_args_t],
+[Define a type for the cdfs_args structure])
+
+AH_TEMPLATE([mfs_args_t],
+[Define a type for the mfs_args structure])
+
+AH_TEMPLATE([rfs_args_t],
+[Define a type for the rfs_args structure])
+
+AH_TEMPLATE([HAVE_BAD_MEMCMP],
+[define if have a bad version of memcmp()])
+
+AH_TEMPLATE([HAVE_BAD_YP_ALL],
+[define if have a bad version of yp_all()])
+
+AH_TEMPLATE([USE_UNCONNECTED_NFS_SOCKETS],
+[define if must use NFS "noconn" option])
+
+AH_TEMPLATE([USE_CONNECTED_NFS_SOCKETS],
+[define if must NOT use NFS "noconn" option])
+
+AH_TEMPLATE([HAVE_GNU_GETOPT],
+[define if your system's getopt() is GNU getopt() (are you using glibc)])
+
+AH_TEMPLATE([HAVE_EXTERN_SYS_ERRLIST],
+[does extern definition for sys_errlist[] exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_OPTARG],
+[does extern definition for optarg exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_CLNT_SPCREATEERROR],
+[does extern definition for clnt_spcreateerror() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_CLNT_SPERRNO],
+[does extern definition for clnt_sperrno() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_FREE],
+[does extern definition for free() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_GET_MYADDRESS],
+[does extern definition for get_myaddress() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_GETCCENT],
+[does extern definition for getccent() (hpux) exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_GETDOMAINNAME],
+[does extern definition for getdomainname() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_GETHOSTNAME],
+[does extern definition for gethostname() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_GETLOGIN],
+[does extern definition for getlogin() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_GETTABLESIZE],
+[does extern definition for gettablesize() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_GETPAGESIZE],
+[does extern definition for getpagesize() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_INNETGR],
+[does extern definition for innetgr() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_MKSTEMP],
+[does extern definition for mkstemp() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_SBRK],
+[does extern definition for sbrk() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_SETEUID],
+[does extern definition for seteuid() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_SETITIMER],
+[does extern definition for setitimer() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_STRCASECMP],
+[does extern definition for strcasecmp() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_STRDUP],
+[does extern definition for strdup() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_STRSTR],
+[does extern definition for strstr() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_USLEEP],
+[does extern definition for usleep() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_WAIT3],
+[does extern definition for wait3() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_VSNPRINTF],
+[does extern definition for vsnprintf() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_XDR_CALLMSG],
+[does extern definition for xdr_callmsg() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_XDR_OPAQUE_AUTH],
+[does extern definition for xdr_opaque_auth() exist?])
+
+
 dnl ######################################################################
 dnl AC_HOST_MACROS: define HOST_CPU, HOST_VENDOR, and HOST_OS
-AC_DEFUN(AC_HOST_MACROS,
+AC_DEFUN(AMU_HOST_MACROS,
 [
 # these are defined already by the macro 'CANONICAL_HOST'
-  AC_MSG_CHECKING("host cpu")
+  AC_MSG_CHECKING([host cpu])
   AC_DEFINE_UNQUOTED(HOST_CPU, "$host_cpu")
   AC_MSG_RESULT($host_cpu)
 
-  AC_MSG_CHECKING("vendor")
+  AC_MSG_CHECKING([vendor])
   AC_DEFINE_UNQUOTED(HOST_VENDOR, "$host_vendor")
   AC_MSG_RESULT($host_vendor)
 
-  AC_MSG_CHECKING("host full OS name and version")
+  AC_MSG_CHECKING([host full OS name and version])
   # normalize some host OS names
   case ${host_os} in
 	# linux is linux is linux, regardless of RMS.
@@ -2337,7 +3344,7 @@ AC_DEFUN(AC_HOST_MACROS,
   AC_MSG_RESULT($host_os)
 
 # break host_os into host_os_name and host_os_version
-  AC_MSG_CHECKING("host OS name")
+  AC_MSG_CHECKING([host OS name])
   host_os_name=`echo $host_os | sed 's/\..*//g'`
   # normalize some OS names
   case ${host_os_name} in
@@ -2348,10 +3355,8 @@ AC_DEFUN(AC_HOST_MACROS,
   AC_MSG_RESULT($host_os_name)
 
 # parse out the OS version of the host
-  AC_MSG_CHECKING("host OS version")
-changequote(<<, >>)dnl
-  host_os_version=`echo $host_os | sed 's/^[^0-9]*//g'`
-changequote([, ])dnl
+  AC_MSG_CHECKING([host OS version])
+  host_os_version=`echo $host_os | sed 's/^[[^0-9]]*//g'`
   if test -z "$host_os_version"
   then
 	host_os_version=`(uname -r) 2>/dev/null` || host_os_version=unknown
@@ -2365,7 +3370,7 @@ changequote([, ])dnl
   AC_MSG_RESULT($host_os_version)
 
 # figure out host architecture (different than CPU)
-  AC_MSG_CHECKING("host OS architecture")
+  AC_MSG_CHECKING([host OS architecture])
   host_arch=`(uname -m) 2>/dev/null` || host_arch=unknown
   # normalize some names
   case ${host_arch} in
@@ -2378,13 +3383,13 @@ changequote([, ])dnl
   AC_MSG_RESULT($host_arch)
 
 # figure out host name
-  AC_MSG_CHECKING("host name")
+  AC_MSG_CHECKING([host name])
   host_name=`(hostname || uname -n) 2>/dev/null` || host_name=unknown
   AC_DEFINE_UNQUOTED(HOST_NAME, "$host_name")
   AC_MSG_RESULT($host_name)
 
 # figure out user name
-  AC_MSG_CHECKING("user name")
+  AC_MSG_CHECKING([user name])
   if test -n "$USER"
   then
     user_name="$USER"
@@ -2400,7 +3405,7 @@ changequote([, ])dnl
   AC_MSG_RESULT($user_name)
 
 # figure out configuration date
-  AC_MSG_CHECKING("configuration date")
+  AC_MSG_CHECKING([configuration date])
   config_date=`(date) 2>/dev/null` || config_date=unknown_date
   AC_DEFINE_UNQUOTED(CONFIG_DATE, "$config_date")
   AC_MSG_RESULT($config_date)
@@ -2411,14 +3416,14 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl ensure that linux kernel headers match running kernel
-AC_DEFUN(AC_LINUX_HEADERS,
+AC_DEFUN(AMU_LINUX_HEADERS,
 [
 # test sanity of running kernel vs. kernel headers
   AC_MSG_CHECKING("host headers version")
   case ${host_os} in
     linux )
       host_header_version="bad"
-      AC_EXPAND_RUN_STRING(
+      AMU_EXPAND_RUN_STRING(
 [
 #include <stdio.h>
 #include <linux/version.h>
@@ -2429,8 +3434,8 @@ if (argc > 1)
 ],
 [ host_header_version=$value ],
 [ echo
-  echo "ERROR: cannot find UTS_RELEASE in <linux/version.h>"
-  AC_MSG_ERROR(This linux system may be misconfigured)
+  AC_MSG_ERROR([cannot find UTS_RELEASE in <linux/version.h>.
+  This Linux system may be misconfigured or unconfigured!])
 ])
 	;;
 	* ) host_header_version=$host_os_version ;;
@@ -2442,7 +3447,7 @@ if (argc > 1)
     linux )
 	if test "$host_os_version" != $host_header_version
 	then
-		echo "WARNING: Linux kernel $host_os_version mismatch with $host_header_version headers!!!"
+		AC_MSG_WARN([Linux kernel $host_os_version mismatch with $host_header_version headers!])
 	fi
     ;;
 esac
@@ -2455,7 +3460,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check if a local configuration file exists
-AC_DEFUN(AC_LOCALCONFIG,
+AC_DEFUN(AMU_LOCALCONFIG,
 [AC_MSG_CHECKING(a local configuration file)
 if test -f localconfig.h
 then
@@ -2470,7 +3475,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl an M4 macro to include a list of common headers being used everywhere
-define(AC_MOUNT_HEADERS,
+define(AMU_MOUNT_HEADERS,
 [
 #include "${srcdir}/include/mount_headers1.h"
 #include AMU_NFS_PROTOCOL_HEADER
@@ -2483,39 +3488,13 @@ dnl ======================================================================
 
 
 dnl ######################################################################
-dnl AC_MSG: a simple printout message
-define(AC_MSG,
-[echo "*** $1:" 1>&AC_FD_MSG])
-dnl ======================================================================
-
-
-dnl ######################################################################
-dnl Package name
-AC_DEFUN(AC_NAME_PACKAGE,
-[AC_MSG_CHECKING(package name)
-AC_DEFINE_UNQUOTED(PACKAGE, "$1")
-AC_MSG_RESULT(\"$1\")
-])
-dnl ======================================================================
-
-
-dnl ######################################################################
-dnl Version of package
-AC_DEFUN(AC_NAME_VERSION,
-[AC_MSG_CHECKING(version of package)
-AC_DEFINE_UNQUOTED(VERSION, "$1")
-AC_MSG_RESULT(\"$1\")
-])
-dnl ======================================================================
-
-
-dnl ######################################################################
 dnl Which options to add to CFLAGS for compilation?
 dnl NOTE: this is only for final compiltions, not for configure tests)
-AC_DEFUN(AC_OPT_AMU_CFLAGS,
+AC_DEFUN(AMU_OPT_AMU_CFLAGS,
 [AC_MSG_CHECKING(for additional C option compilation flags)
 AC_ARG_ENABLE(am-cflags,
-[  --enable-am-cflags=ARG  compile package with ARG additional C flags],
+AC_HELP_STRING([--enable-am-cflags=ARG],
+		[compile package with ARG additional C flags]),
 [
 if test "$enableval" = "" || test "$enableval" = "yes" || test "$enableval" = "no"; then
   AC_MSG_ERROR(am-cflags must be supplied if option is used)
@@ -2537,10 +3516,11 @@ dnl ======================================================================
 dnl ######################################################################
 dnl Initial settings for CPPFLAGS (-I options)
 dnl NOTE: this is for configuration as well as compilations!
-AC_DEFUN(AC_OPT_CPPFLAGS,
+AC_DEFUN(AMU_OPT_CPPFLAGS,
 [AC_MSG_CHECKING(for configuration/compilation (-I) preprocessor flags)
 AC_ARG_ENABLE(cppflags,
-[  --enable-cppflags=ARG   configure/compile with ARG (-I) preprocessor flags],
+AC_HELP_STRING([--enable-cppflags=ARG],
+	[configure/compile with ARG (-I) preprocessor flags]),
 [
 if test "$enableval" = "" || test "$enableval" = "yes" || test "$enableval" = "no"; then
   AC_MSG_ERROR(cppflags must be supplied if option is used)
@@ -2560,22 +3540,25 @@ dnl ======================================================================
 dnl ######################################################################
 dnl Debugging: "yes" means general, "mem" means general and memory debugging,
 dnl and "no" means none.
-AC_DEFUN(AC_OPT_DEBUG,
+AC_DEFUN(AMU_OPT_DEBUG,
 [AC_MSG_CHECKING(for debugging options)
 AC_ARG_ENABLE(debug,
-[  --enable-debug[=ARG]    enable debugging (yes/mem/no)],
+AC_HELP_STRING([--enable-debug=ARG],[enable debugging (yes/mem/no)]),
 [
 if test "$enableval" = yes; then
   AC_MSG_RESULT(yes)
   AC_DEFINE(DEBUG)
+  ac_cv_opt_debug=yes
 elif test "$enableval" = mem; then
   AC_MSG_RESULT(mem)
   AC_DEFINE(DEBUG)
   AC_DEFINE(DEBUG_MEM)
   AC_CHECK_LIB(mapmalloc, malloc_verify)
   AC_CHECK_LIB(malloc, mallinfo)
+  ac_cv_opt_debug=mem
 else
   AC_MSG_RESULT(no)
+  ac_cv_opt_debug=no
 fi
 ],
 [
@@ -2589,10 +3572,11 @@ dnl ======================================================================
 dnl ######################################################################
 dnl Initial settings for LDFLAGS (-L options)
 dnl NOTE: this is for configuration as well as compilations!
-AC_DEFUN(AC_OPT_LDFLAGS,
+AC_DEFUN(AMU_OPT_LDFLAGS,
 [AC_MSG_CHECKING(for configuration/compilation (-L) library flags)
 AC_ARG_ENABLE(ldflags,
-[  --enable-ldflags=ARG    configure/compile with ARG (-L) library flags],
+AC_HELP_STRING([--enable-ldflags=ARG],
+		[configure/compile with ARG (-L) library flags]),
 [
 if test "$enableval" = "" || test "$enableval" = "yes" || test "$enableval" = "no"; then
   AC_MSG_ERROR(ldflags must be supplied if option is used)
@@ -2612,10 +3596,11 @@ dnl ======================================================================
 dnl ######################################################################
 dnl Initial settings for LIBS (-l options)
 dnl NOTE: this is for configuration as well as compilations!
-AC_DEFUN(AC_OPT_LIBS,
+AC_DEFUN(AMU_OPT_LIBS,
 [AC_MSG_CHECKING(for configuration/compilation (-l) library flags)
 AC_ARG_ENABLE(libs,
-[  --enable-libs=ARG       configure/compile with ARG (-l) library flags],
+AC_HELP_STRING([--enable-libs=ARG],
+		[configure/compile with ARG (-l) library flags]),
 [
 if test "$enableval" = "" || test "$enableval" = "yes" || test "$enableval" = "no"; then
   AC_MSG_ERROR(libs must be supplied if option is used)
@@ -2634,7 +3619,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Specify additional compile options based on the OS and the compiler
-AC_DEFUN(AC_OS_CFLAGS,
+AC_DEFUN(AMU_OS_CFLAGS,
 [
 AC_CACHE_CHECK(additional compiler flags,
 ac_cv_os_cflags,
@@ -2644,7 +3629,7 @@ case "${host_os}" in
 		case "${CC}" in
 			cc )
 				# do not use 64-bit compiler
-				ac_cv_os_cflags="-32 -Wl,-woff,84"
+				ac_cv_os_cflags="-n32 -mips3 -Wl,-woff,84"
 				;;
 		esac
 		;;
@@ -2716,7 +3701,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Specify additional cpp options based on the OS and the compiler
-AC_DEFUN(AC_OS_CPPFLAGS,
+AC_DEFUN(AMU_OS_CPPFLAGS,
 [
 AC_CACHE_CHECK(additional preprocessor flags,
 ac_cv_os_cppflags,
@@ -2736,7 +3721,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Specify additional linker options based on the OS and the compiler
-AC_DEFUN(AC_OS_LDFLAGS,
+AC_DEFUN(AMU_OS_LDFLAGS,
 [
 AC_CACHE_CHECK(additional linker flags,
 ac_cv_os_ldflags,
@@ -2759,10 +3744,40 @@ dnl ======================================================================
 
 
 dnl ######################################################################
+dnl Bugreport name
+AC_DEFUN(AMU_PACKAGE_BUGREPORT,
+[AC_MSG_CHECKING(bug-reporting address)
+AC_DEFINE_UNQUOTED(PACKAGE_BUGREPORT, "$1")
+AC_MSG_RESULT(\"$1\")
+])
+dnl ======================================================================
+
+
+dnl ######################################################################
+dnl Package name
+AC_DEFUN(AMU_PACKAGE_NAME,
+[AC_MSG_CHECKING(package name)
+AC_DEFINE_UNQUOTED(PACKAGE_NAME, "$1")
+AC_MSG_RESULT(\"$1\")
+])
+dnl ======================================================================
+
+
+dnl ######################################################################
+dnl Version of package
+AC_DEFUN(AMU_PACKAGE_VERSION,
+[AC_MSG_CHECKING(version of package)
+AC_DEFINE_UNQUOTED(PACKAGE_VERSION, "$1")
+AC_MSG_RESULT(\"$1\")
+])
+dnl ======================================================================
+
+
+dnl ######################################################################
 dnl AC_SAVE_STATE: save confdefs.h onto dbgcf.h and write $ac_cv_* cache
 dnl variables that are known so far.
-define(AC_SAVE_STATE,
-AC_MSG(SAVING CONFIGURE STATE)
+define(AMU_SAVE_STATE,
+AC_MSG_NOTICE(*** SAVING CONFIGURE STATE ***)
 if test -f confdefs.h
 then
  cp confdefs.h dbgcf.h
@@ -2774,7 +3789,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the name of the nfs filehandle field in nfs_args_t.
-AC_DEFUN(AC_STRUCT_FIELD_NFS_FH,
+AC_DEFUN(AMU_STRUCT_FIELD_NFS_FH,
 [
 dnl make sure this is called before macros which depend on it
 AC_BEFORE([$0], [AC_TYPE_NFS_FH])
@@ -2811,14 +3826,14 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find if struct mntent exists anywhere in mount.h or mntent.h headers
-AC_DEFUN(AC_STRUCT_MNTENT,
+AC_DEFUN(AMU_STRUCT_MNTENT,
 [
 AC_CACHE_CHECK(for struct mntent,
 ac_cv_have_struct_mntent,
 [
 # try to compile a program which may have a definition for the structure
 AC_TRY_COMPILE(
-AC_MOUNT_HEADERS
+AMU_MOUNT_HEADERS
 ,
 [
 struct mntent mt;
@@ -2834,14 +3849,14 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find if struct mnttab exists anywhere in mount.h or mnttab.h headers
-AC_DEFUN(AC_STRUCT_MNTTAB,
+AC_DEFUN(AMU_STRUCT_MNTTAB,
 [
 AC_CACHE_CHECK(for struct mnttab,
 ac_cv_have_struct_mnttab,
 [
 # try to compile a program which may have a definition for the structure
 AC_TRY_COMPILE(
-AC_MOUNT_HEADERS
+AMU_MOUNT_HEADERS
 ,
 [
 struct mnttab mt;
@@ -2857,7 +3872,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find if struct nfs_args exists anywhere in typical headers
-AC_DEFUN(AC_STRUCT_NFS_ARGS,
+AC_DEFUN(AMU_STRUCT_NFS_ARGS,
 [
 dnl make sure this is called before [AC_TYPE_NFS_FH]
 AC_BEFORE([$0], [AC_TYPE_NFS_FH])
@@ -2875,6 +3890,14 @@ then
 AC_TRY_COMPILE_NFS(
 [ struct irix5_nfs_args na;
 ], ac_cv_have_struct_nfs_args="struct irix5_nfs_args", ac_cv_have_struct_nfs_args=notfound)
+fi
+
+# look for "struct aix51_nfs_args" (specially set in conf/nfs_prot/)
+if test "$ac_cv_have_struct_nfs_args" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ struct aix51_nfs_args na;
+], ac_cv_have_struct_nfs_args="struct aix51_nfs_args", ac_cv_have_struct_nfs_args=notfound)
 fi
 
 # look for "struct aix42_nfs_args" (specially set in conf/nfs_prot/)
@@ -2905,74 +3928,10 @@ dnl ======================================================================
 
 
 dnl ######################################################################
-dnl Find the structure of an NFS V3 filehandle.
-dnl if found, defined am_nfs_fh3 to it, else leave it undefined.
-AC_DEFUN(AC_STRUCT_NFS_FH3,
-[
-AC_CACHE_CHECK(for type/structure of NFS V3 filehandle,
-ac_cv_struct_nfs_fh3,
-[
-# try to compile a program which may have a definition for the type
-dnl need a series of compilations, which will test out every possible type
-dnl such as struct nfs_fh3, fhandle3_t, nfsv3fh_t, etc.
-# set to a default value
-ac_cv_struct_nfs_fh3=notfound
-
-# look for "nfs_fh3_freebsd3"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ nfs_fh3_freebsd3 nh;
-], ac_cv_struct_nfs_fh3="nfs_fh3_freebsd3", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "nfs_fh3"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ nfs_fh3 nh;
-], ac_cv_struct_nfs_fh3="nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "struct nfs_fh3"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ struct nfs_fh3 nh;
-], ac_cv_struct_nfs_fh3="struct nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "nfsv3fh_t"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ nfsv3fh_t nh;
-], ac_cv_struct_nfs_fh3="nfsv3fh_t", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "fhandle3_t"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ fhandle3_t nh;
-], ac_cv_struct_nfs_fh3="fhandle3_t", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-])
-
-if test "$ac_cv_struct_nfs_fh3" != notfound
-then
-  AC_DEFINE_UNQUOTED(am_nfs_fh3, $ac_cv_struct_nfs_fh3)
-fi
-])
-dnl ======================================================================
-
-
-dnl ######################################################################
 dnl Find the structure of an nfs filehandle.
 dnl if found, defined am_nfs_fh to it, else leave it undefined.
 dnl THE ORDER OF LOOKUPS IN THIS FILE IS VERY IMPORTANT!!!
-AC_DEFUN(AC_STRUCT_NFS_FH,
+AC_DEFUN(AMU_STRUCT_NFS_FH,
 [
 AC_CACHE_CHECK(for type/structure of NFS V2 filehandle,
 ac_cv_struct_nfs_fh,
@@ -3034,8 +3993,72 @@ dnl ======================================================================
 
 
 dnl ######################################################################
+dnl Find the structure of an NFS V3 filehandle.
+dnl if found, defined am_nfs_fh3 to it, else leave it undefined.
+AC_DEFUN(AMU_STRUCT_NFS_FH3,
+[
+AC_CACHE_CHECK(for type/structure of NFS V3 filehandle,
+ac_cv_struct_nfs_fh3,
+[
+# try to compile a program which may have a definition for the type
+dnl need a series of compilations, which will test out every possible type
+dnl such as struct nfs_fh3, fhandle3_t, nfsv3fh_t, etc.
+# set to a default value
+ac_cv_struct_nfs_fh3=notfound
+
+# look for "nfs_fh3_freebsd3"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ nfs_fh3_freebsd3 nh;
+], ac_cv_struct_nfs_fh3="nfs_fh3_freebsd3", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+# look for "nfs_fh3"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ nfs_fh3 nh;
+], ac_cv_struct_nfs_fh3="nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+# look for "struct nfs_fh3"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ struct nfs_fh3 nh;
+], ac_cv_struct_nfs_fh3="struct nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+# look for "nfsv3fh_t"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ nfsv3fh_t nh;
+], ac_cv_struct_nfs_fh3="nfsv3fh_t", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+# look for "fhandle3_t"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ fhandle3_t nh;
+], ac_cv_struct_nfs_fh3="fhandle3_t", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+])
+
+if test "$ac_cv_struct_nfs_fh3" != notfound
+then
+  AC_DEFINE_UNQUOTED(am_nfs_fh3, $ac_cv_struct_nfs_fh3)
+fi
+])
+dnl ======================================================================
+
+
+dnl ######################################################################
 dnl Find if struct nfs_gfs_mount exists anywhere in typical headers
-AC_DEFUN(AC_STRUCT_NFS_GFS_MOUNT,
+AC_DEFUN(AMU_STRUCT_NFS_GFS_MOUNT,
 [
 dnl make sure this is called before [AC_TYPE_NFS_FH]
 AC_BEFORE([$0], [AC_TYPE_NFS_FH])
@@ -3112,7 +4135,7 @@ AC_TRY_COMPILE(
 #  define MSDOSFS
 # endif /* not MSDOSFS */
 # ifndef MFS
-#  define MFS
+#  define MFS 1
 # endif /* not MFS */
 # ifndef CD9660
 #  define CD9660
@@ -3240,7 +4263,7 @@ dnl [$3] action to take if program did not compile (4rd arg to AC_TRY_COMPILE)
 AC_DEFUN(AC_TRY_COMPILE_NFS,
 [# try to compile a program which may have a definition for a structure
 AC_TRY_COMPILE(
-AC_MOUNT_HEADERS
+AMU_MOUNT_HEADERS
 , [$1], [$2], [$3])
 ])
 dnl ======================================================================
@@ -3273,7 +4296,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check the correct type for the 5th argument to authunix_create()
-AC_DEFUN(AC_TYPE_AUTH_CREATE_GIDLIST,
+AC_DEFUN(AMU_TYPE_AUTH_CREATE_GIDLIST,
 [
 AC_CACHE_CHECK(argument type of 5rd argument to authunix_create(),
 ac_cv_auth_create_gidlist,
@@ -3293,7 +4316,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for AUTOFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_AUTOFS_ARGS,
+AC_DEFUN(AMU_TYPE_AUTOFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of autofs mount(2) arguments,
 ac_cv_type_autofs_args,
@@ -3328,7 +4351,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for CACHEFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_CACHEFS_ARGS,
+AC_DEFUN(AMU_TYPE_CACHEFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of cachefs mount(2) arguments,
 ac_cv_type_cachefs_args,
@@ -3353,7 +4376,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for CDFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_CDFS_ARGS,
+AC_DEFUN(AMU_TYPE_CDFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of cdfs mount(2) arguments,
 ac_cv_type_cdfs_args,
@@ -3412,7 +4435,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for EFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_EFS_ARGS,
+AC_DEFUN(AMU_TYPE_EFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of efs mount(2) arguments,
 ac_cv_type_efs_args,
@@ -3439,7 +4462,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for LOFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_LOFS_ARGS,
+AC_DEFUN(AMU_TYPE_LOFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of lofs mount(2) arguments,
 ac_cv_type_lofs_args,
@@ -3471,7 +4494,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for MFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_MFS_ARGS,
+AC_DEFUN(AMU_TYPE_MFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of mfs mount(2) arguments,
 ac_cv_type_mfs_args,
@@ -3496,7 +4519,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for PC/FS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_PCFS_ARGS,
+AC_DEFUN(AMU_TYPE_PCFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of pcfs mount(2) arguments,
 ac_cv_type_pcfs_args,
@@ -3548,7 +4571,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check the correct type for the 6th argument to recvfrom()
-AC_DEFUN(AC_TYPE_RECVFROM_FROMLEN,
+AC_DEFUN(AMU_TYPE_RECVFROM_FROMLEN,
 [
 AC_CACHE_CHECK(non-pointer type of 6th (fromlen) argument to recvfrom(),
 ac_cv_recvfrom_fromlen,
@@ -3570,7 +4593,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for RFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_RFS_ARGS,
+AC_DEFUN(AMU_TYPE_RFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of rfs mount(2) arguments,
 ac_cv_type_rfs_args,
@@ -3595,7 +4618,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the type of the 3rd argument (in) to svc_sendreply() call
-AC_DEFUN(AC_TYPE_SVC_IN_ARG,
+AC_DEFUN(AMU_TYPE_SVC_IN_ARG,
 [
 AC_CACHE_CHECK(for type of 3rd arg ('in') arg to svc_sendreply(),
 ac_cv_type_svc_in_arg,
@@ -3636,14 +4659,14 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check for type of time_t (usually in <sys/types.h>)
-AC_DEFUN(AC_TYPE_TIME_T,
+AC_DEFUN(AMU_TYPE_TIME_T,
 [AC_CHECK_TYPE(time_t, long)])
 dnl ======================================================================
 
 
 dnl ######################################################################
 dnl Find the correct type for TMPFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_TMPFS_ARGS,
+AC_DEFUN(AMU_TYPE_TMPFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of tmpfs mount(2) arguments,
 ac_cv_type_tmpfs_args,
@@ -3668,7 +4691,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for UFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_UFS_ARGS,
+AC_DEFUN(AMU_TYPE_UFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of ufs mount(2) arguments,
 ac_cv_type_ufs_args,
@@ -3711,7 +4734,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check for type of xdrproc_t (usually in <rpc/xdr.h>)
-AC_DEFUN(AC_TYPE_XDRPROC_T,
+AC_DEFUN(AMU_TYPE_XDRPROC_T,
 [
 AC_CACHE_CHECK(for xdrproc_t,
 ac_cv_type_xdrproc_t,
@@ -3733,7 +4756,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl Find the correct type for XFS mount(2) arguments structure
-AC_DEFUN(AC_TYPE_XFS_ARGS,
+AC_DEFUN(AMU_TYPE_XFS_ARGS,
 [
 AC_CACHE_CHECK(for structure type of xfs mount(2) arguments,
 ac_cv_type_xfs_args,
@@ -3760,7 +4783,7 @@ dnl ======================================================================
 
 dnl ######################################################################
 dnl check the correct type for the 3rd argument to yp_order()
-AC_DEFUN(AC_TYPE_YP_ORDER_OUTORDER,
+AC_DEFUN(AMU_TYPE_YP_ORDER_OUTORDER,
 [
 AC_CACHE_CHECK(pointer type of 3rd argument to yp_order(),
 ac_cv_yp_order_outorder,
@@ -3781,6 +4804,34 @@ esac
 AC_DEFINE_UNQUOTED(YP_ORDER_OUTORDER_TYPE, $ac_cv_yp_order_outorder)
 ])
 dnl ======================================================================
+
+
+dnl ######################################################################
+dnl Do we want to compile with "ADDON" support? (hesiod, ldap, etc.)
+AC_DEFUN(AMU_WITH_ADDON,
+[AC_MSG_CHECKING([if $1 is wanted])
+ac_upcase=`echo $1|tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
+AC_ARG_WITH($1,
+ AC_HELP_STRING([--with-$1],
+		[enable $2 support (default=yes if found)]
+),[
+if test "$withval" = "yes"; then
+  with_$1=yes
+elif test "$withval" = "no"; then
+  with_$1=no
+else
+  AC_MSG_ERROR(please use \"yes\" or \"no\" with --with-$1)
+fi
+],[
+with_$1=yes
+])
+if test "$with_$1" = "yes"
+then
+  AC_MSG_RESULT([yes, will enable if all libraries are found])
+else
+  AC_MSG_RESULT([no])
+fi
+])
 
 
 dnl ######################################################################
