@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.6 2002/09/14 17:53:58 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.7 2002/09/16 02:35:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.6 2002/09/14 17:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.7 2002/09/16 02:35:17 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -265,7 +265,7 @@ rf_FreeReconBuffer(rbuf)
 	RF_Free(rbuf, sizeof(*rbuf));
 }
 
-
+#if RF_DEBUG_RECONBUFFER
 /******************************************************************************
  * debug only:  sanity check the number of floating recon bufs in use
  *****************************************************************************/
@@ -334,3 +334,5 @@ rf_CheckFloatingRbufCount(raidPtr, dolock)
 	if (dolock)
 		RF_UNLOCK_MUTEX(raidPtr->reconControl[frow]->rb_mutex);
 }
+#endif
+

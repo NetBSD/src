@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.37 2002/09/16 02:25:08 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.38 2002/09/16 02:35:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.37 2002/09/16 02:25:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.38 2002/09/16 02:35:17 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -880,9 +880,11 @@ ProcessReconEvent(raidPtr, frow, event)
 
 		/* a write I/O has completed */
 	case RF_REVENT_WRITEDONE:
+#if RF_DEBUG_RECONBUFFER
 		if (rf_floatingRbufDebug) {
 			rf_CheckFloatingRbufCount(raidPtr, 1);
 		}
+#endif
 		sectorsPerRU = raidPtr->Layout.sectorsPerStripeUnit * raidPtr->Layout.SUsPerRU;
 		rbuf = (RF_ReconBuffer_t *) event->arg;
 		rf_FreeDiskQueueData((RF_DiskQueueData_t *) rbuf->arg);
@@ -931,9 +933,11 @@ ProcessReconEvent(raidPtr, frow, event)
 	case RF_REVENT_BUFREADY:
 		Dprintf2("RECON: BUFREADY EVENT: row %d col %d\n", frow, event->col);
 		retcode = IssueNextWriteRequest(raidPtr, frow);
+#if RF_DEBUG_RECONBUFFER
 		if (rf_floatingRbufDebug) {
 			rf_CheckFloatingRbufCount(raidPtr, 1);
 		}
+#endif
 		break;
 
 		/* we need to skip the current RU entirely because it got
