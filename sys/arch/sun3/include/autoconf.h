@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.16 1997/04/28 21:45:47 gwr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.16.10.1 1998/01/27 02:17:55 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,11 +41,20 @@
  * (machdep parts of driver/kernel interface)
  */
 
-/* These are the "bus" types: */
-#define	BUS_OBMEM	0	/* "obmem" */
-#define	BUS_OBIO	1	/* "obio"  */
-#define	BUS_VME16	2	/* "vmes"  */
-#define	BUS_VME32	3	/* "vmel"  */
+/*
+ * These are the "bus" types, in attach order.
+ * Note tables in bus_subr.c and vme.c that
+ * care about the order of these.
+ */
+#define	BUS_OBIO    	0	/* on-board I/O */
+#define	BUS_OBMEM   	1	/* on-board memory */
+#define	BUS_VME16D16	2	/* VME A16/D16 */
+#define	BUS_VME16D32	3	/* VME A16/D32 */
+#define	BUS_VME24D16	4	/* VME A24/D16 */
+#define	BUS_VME24D32	5	/* VME A24/D32 */
+#define	BUS_VME32D16	6	/* VME A32/D16 */
+#define	BUS_VME32D32	7	/* VME A32/D32 */
+#define BUS__NTYPES 	8	/* not a valid bus type */
 
 /*
  * This is the "args" parameter to the bus match/attach functions.
