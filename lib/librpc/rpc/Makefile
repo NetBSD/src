@@ -16,10 +16,20 @@ UNSUPPORTED=	xdr_float.c
 HDRS=	auth.h auth_unix.h clnt.h pmap_clnt.h \
 	pmap_prot.h pmap_rmt.h rpc.h rpc_msg.h svc.h svc_auth.h types.h xdr.h
 
+INCDIR=	/usr/include/rpc
+
 all: librpc.a
 
 beforeinstall: ${HDRS}
+	@if [ ! -d ${DESTDIR}${INCDIR} ]; then \
+                /bin/rm -f ${DESTDIR}${INCDIR} ; \
+                mkdir -p ${DESTDIR}${INCDIR} ; \
+                chown root.wheel ${DESTDIR}${INCDIR} ; \
+                chmod 755 ${DESTDIR}${INCDIR} ; \
+        else \
+                true ; \
+        fi
 	cd ${.CURDIR}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${HDRS} \
-	    ${DESTDIR}/usr/include/rpc
+	    ${DESTDIR}${INCDIR}
 
 .include <bsd.lib.mk>
