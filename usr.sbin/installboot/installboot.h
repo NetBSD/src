@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.4 2002/04/12 06:50:41 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.5 2002/04/19 07:08:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,14 +59,19 @@ typedef enum {
 typedef struct {
 	ib_flags	 flags;
 	struct ib_mach	*machine;
-	const char	*fstype;	// XXX replace with struct *?
+	struct ib_fs	*fstype;
 	const char	*filesystem;
 	int		 fsfd;
 	const char	*stage1;
 	int		 s1fd;
 	const char	*stage2;
-	long		 startblock;
+	uint32_t	 startblock;
 } ib_params;
+
+typedef struct {
+	uint32_t	block;
+	uint32_t	blocksize;
+} ib_block;
 
 struct ib_mach {
 	const char	*name;
@@ -75,15 +80,38 @@ struct ib_mach {
 	int		(*clearboot)	(ib_params *);
 };
 
+struct ib_fs {
+	const char	*name;
+	int		(*match)	(ib_params *);
+	int		(*findstage2)	(ib_params *, uint32_t *, ib_block *);
+};
 
-extern struct ib_mach machines[];
+extern struct ib_mach	machines[];
+extern struct ib_fs	fstypes[];
 
+	/* installboot.c */
 int		parseoptionflag(ib_params *, const char *, ib_flags);
-u_int16_t	compute_sunsum(const u_int16_t *);
-int		set_sunsum(ib_params *, u_int16_t *, u_int16_t);
-
+uint16_t	compute_sunsum(const uint16_t *);
+int		set_sunsum(ib_params *, uint16_t *, uint16_t);
 int		no_parseopt(ib_params *, const char *);
 int		no_setboot(ib_params *);
 int		no_clearboot(ib_params *);
+
+	/* fstypes.c */
+int		ffs_match(ib_params *);
+int		ffs_findstage2(ib_params *, uint32_t *, ib_block *);
+
+	/* machines.c */
+int		alpha_parseopt(ib_params *, const char *);
+int		alpha_setboot(ib_params *);
+int		alpha_clearboot(ib_params *);
+int		pmax_parseopt(ib_params *, const char *);
+int		pmax_setboot(ib_params *);
+int		pmax_clearboot(ib_params *);
+int		sparc64_setboot(ib_params *);
+int		sparc64_clearboot(ib_params *);
+int		vax_parseopt(ib_params *, const char *);
+int		vax_setboot(ib_params *);
+int		vax_clearboot(ib_params *);
 
 #endif	/* _INSTALLBOOT_H */

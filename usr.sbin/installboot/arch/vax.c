@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.2 2002/04/12 06:50:41 lukem Exp $	*/
+/*	$NetBSD: vax.c,v 1.3 2002/04/19 07:08:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.2 2002/04/12 06:50:41 lukem Exp $");
+__RCSID("$NetBSD: vax.c,v 1.3 2002/04/19 07:08:54 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -88,11 +88,8 @@ __RCSID("$NetBSD: vax.c,v 1.2 2002/04/12 06:50:41 lukem Exp $");
 
 #include "installboot.h"
 
-int		vax_parseopt(ib_params *, const char *);
-int		vax_setboot(ib_params *);
-int		vax_clearboot(ib_params *);
 static int	load_bootstrap(ib_params *, char **,
-		    u_int32_t *, u_int32_t *, size_t *);
+		    uint32_t *, uint32_t *, size_t *);
 
 
 int
@@ -143,10 +140,10 @@ vax_clearboot(ib_params *params)
 	bb.bb_lbn_low = 0;
 
 	if (params->flags & IB_SUNSUM) {
-		u_int16_t	sum;
+		uint16_t	sum;
 
-		sum = compute_sunsum((u_int16_t *)&bb);
-		if (! set_sunsum(params, (u_int16_t *)&bb, sum))
+		sum = compute_sunsum((uint16_t *)&bb);
+		if (! set_sunsum(params, (uint16_t *)&bb, sum))
 			return (0);
 	}
 
@@ -173,10 +170,11 @@ vax_setboot(ib_params *params)
 {
 	struct stat		bootstrapsb;
 	struct vax_boot_block	bb;
-	int			startblock, retval;
+	uint32_t		startblock;
+	int			retval;
 	char			*bootstrapbuf;
 	size_t			bootstrapsize;
-	u_int32_t		bootstrapload, bootstrapexec;
+	uint32_t		bootstrapload, bootstrapexec;
 	ssize_t			rv;
 
 	assert(params != NULL);
@@ -241,8 +239,8 @@ vax_setboot(ib_params *params)
 
 	bb.bb_id_offset = offsetof(struct vax_boot_block, bb_magic1) / 2;
 	bb.bb_mbone = 1;
-	bb.bb_lbn_hi = htole16((u_int16_t) (startblock >> 16));
-	bb.bb_lbn_low = htole16((u_int16_t) (startblock >>  0));
+	bb.bb_lbn_hi = htole16((uint16_t) (startblock >> 16));
+	bb.bb_lbn_low = htole16((uint16_t) (startblock >>  0));
 	/*
 	 * Now the identification block
 	 */
@@ -262,10 +260,10 @@ vax_setboot(ib_params *params)
 	    + le32toh(bb.bb_entry));
 
 	if (params->flags & IB_SUNSUM) {
-		u_int16_t	sum;
+		uint16_t	sum;
 
-		sum = compute_sunsum((u_int16_t *)&bb);
-		if (! set_sunsum(params, (u_int16_t *)&bb, sum))
+		sum = compute_sunsum((uint16_t *)&bb);
+		if (! set_sunsum(params, (uint16_t *)&bb, sum))
 			goto done;
 	}
 
@@ -310,7 +308,7 @@ vax_setboot(ib_params *params)
 
 static int
 load_bootstrap(ib_params *params, char **data,
-	u_int32_t *loadaddr, u_int32_t *execaddr, size_t *len)
+	uint32_t *loadaddr, uint32_t *execaddr, size_t *len)
 {
 	ssize_t	cc;
 	size_t	buflen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.5 2002/04/12 06:50:41 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.6 2002/04/19 07:08:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.5 2002/04/12 06:50:41 lukem Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.6 2002/04/19 07:08:52 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: installboot.c,v 1.5 2002/04/12 06:50:41 lukem Exp $");
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -56,6 +57,7 @@ __RCSID("$NetBSD: installboot.c,v 1.5 2002/04/12 06:50:41 lukem Exp $");
 
 int		main(int, char *[]);
 static	int	getmachine(ib_params *, const char *, const char *);
+static	int	getfstype(ib_params *, const char *, const char *);
 static	void	usage(void);
 
 static	ib_params	installboot_params;
@@ -65,7 +67,7 @@ main(int argc, char *argv[])
 {
 	struct utsname	utsname;
 	ib_params	*params;
-	long		lval;
+	unsigned long	lval;
 	int		ch, rv, mode;
 	char 		*p;
 	const char	*op;
@@ -83,12 +85,12 @@ main(int argc, char *argv[])
 		case 'b':
 			if (*optarg == '\0')
 				goto badblock;
-			lval = strtol(optarg, &p, 0);
-			if (lval < 0 || lval >= LONG_MAX || *p != '\0') {
+			lval = strtoul(optarg, &p, 0);
+			if (lval > UINT32_MAX || *p != '\0') {
  badblock:
 				errx(1, "Invalid block number `%s'", optarg);
 			}
-			params->startblock = lval;
+			params->startblock = (uint32_t)lval;
 			params->flags |= IB_STARTBLOCK;
 			break;
 
@@ -118,7 +120,8 @@ main(int argc, char *argv[])
 			break;
 
 		case 't':
-			params->fstype = optarg;	// XXX: validate?
+			if (! getfstype(params, optarg, "-t"))
+				exit(1);
 			break;
 
 		case 'v':
@@ -146,7 +149,6 @@ main(int argc, char *argv[])
 		if (! getmachine(params, utsname.machine, "uname()"))
 			exit(1);
 	}
-	// XXX: set default params->fstype
 
 	params->filesystem = argv[0];
 	if (params->flags & IB_NOWRITE) {
@@ -159,6 +161,19 @@ main(int argc, char *argv[])
 	if ((params->fsfd = open(params->filesystem, mode, 0600)) == -1)
 		err(1, "Opening file system `%s' read-%s",
 		    params->filesystem, op);
+	if (params->fstype != NULL) {
+		if (! params->fstype->match(params))
+			err(1, "File system `%s' is not of type %s",
+			    params->filesystem, params->fstype->name);
+	} else {
+		params->fstype = &fstypes[0];
+		while (params->fstype->name != NULL &&
+			! params->fstype->match(params))
+			params->fstype++;
+		if (params->fstype->name == NULL)
+			err(1, "File system `%s' is of an unknown type",
+			    params->filesystem);
+	}
 
 	if (argc >= 2) {
 		params->stage1 = argv[1];
@@ -286,6 +301,34 @@ getmachine(ib_params *param, const char *mach, const char *provider)
 			fputs("\n", stderr);
 	}
 	if ((i % MACHS_PER_LINE) != 0)
+		fputs("\n", stderr);
+	return (0);
+}
+
+static int
+getfstype(ib_params *param, const char *fstype, const char *provider)
+{
+	int	i;
+
+	assert(param != NULL);
+	assert(fstype != NULL);
+
+	for (i = 0; fstypes[i].name != NULL; i++) {
+		if (strcmp(fstypes[i].name, fstype) == 0) {
+			param->fstype = &fstypes[i];
+			return (1);
+		}
+	}
+	warnx("Invalid file system type `%s' from %s", fstype, provider);
+	warnx("Supported file system types are:");
+#define FSTYPES_PER_LINE	10
+	for (i = 0; fstypes[i].name != NULL; i++) {
+		fputs((i % FSTYPES_PER_LINE) ? ", " : "\t", stderr);
+		fputs(fstypes[i].name, stderr);
+		if ((i % FSTYPES_PER_LINE) == (FSTYPES_PER_LINE - 1))
+			fputs("\n", stderr);
+	}
+	if ((i % FSTYPES_PER_LINE) != 0)
 		fputs("\n", stderr);
 	return (0);
 }
