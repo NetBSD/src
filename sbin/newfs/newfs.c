@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.76 2003/11/01 18:42:00 wiz Exp $	*/
+/*	$NetBSD: newfs.c,v 1.77 2003/12/11 12:11:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.76 2003/11/01 18:42:00 wiz Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.77 2003/12/11 12:11:27 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -686,18 +686,18 @@ getdisklabel(char *s, int fd)
 {
 	static struct disklabel lab;
 
-	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
 #ifdef COMPAT
-		if (disktype) {
-			struct disklabel *lp;
+	if (disktype) {
+		struct disklabel *lp;
 
-			unlabeled++;
-			lp = getdiskbyname(disktype);
-			if (lp == NULL)
-				errx(1, "%s: unknown disk type", disktype);
-			return (lp);
-		}
+		unlabeled++;
+		lp = getdiskbyname(disktype);
+		if (lp == NULL)
+			errx(1, "%s: unknown disk type", disktype);
+		return (lp);
+	}
 #endif
+	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
 		warn("ioctl (GDINFO)");
 		errx(1, lmsg, s);
 	}
