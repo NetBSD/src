@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/12 06:00:48 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2002/02/12 20:39:27 christos Exp $
 
-NOMAN=		# defined
+NOMAN=  	# defined
 
 regress:
-	sh ${.CURDIR}/test.sh -r | diff - ${.CURDIR}/test.out
+	sh ${.CURDIR}/varquote.sh
 
 .include <bsd.prog.mk>
