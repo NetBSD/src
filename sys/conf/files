@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.326 1999/10/27 13:18:02 augustss Exp $
+#	$NetBSD: files,v 1.327 1999/10/29 21:35:43 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -376,6 +376,10 @@ file	dev/ic/rtl80x9.c		rtl80x9
 # Common code for ESDI/IDE/etc. controllers
 device  wdc: ata, atapi, wdc_base
 file    dev/ic/wdc.c wdc_base
+
+# Common code for ISA/PCMCIA (non 802.11) WaveLAN adapters
+device	wl: ether, ifnet, arp
+file	dev/ic/wavelan.c		wavelan
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 device	tlp: arp, ether, ifnet, mii
