@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2002/02/28 01:56:59 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2002/02/28 16:54:28 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -173,8 +173,6 @@ static	int ioport_malloc_safe;
 void main(void) __attribute__((__noreturn__));
 void dreamcast_startup(void) __attribute__((__noreturn__));
 void setup_bootinfo __P((void));
-void dumpsys __P((void));
-void consinit __P((void));
 
 /*
  * Machine-dependent startup code
@@ -199,8 +197,6 @@ cpu_startup()
 	boothowto |= RB_SINGLE;
 #endif
 }
-
-#define CPUDEBUG
 
 /*
  * machine dependent system variables.
@@ -306,185 +302,6 @@ haltsys:
 	for(;;)
 		;
 	/*NOTREACHED*/
-}
-
-/*
- * These variables are needed by /sbin/savecore
- */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
-int 	dumpsize = 0;		/* pages */
-long	dumplo = 0; 		/* blocks */
-
-/*
- * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
- * in case there might be a disk label stored there.
- * If there is extra space, put dump at the end to
- * reduce the chance that swapping trashes it.
- */
-void
-cpu_dumpconf()
-{
-#ifdef	TODO
-	int nblks;	/* size of dump area */
-	int maj;
-
-	if (dumpdev == NODEV)
-		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
-		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= ctod(1))
-		return;
-
-	dumpsize = btoc(IOM_END + ctob(dumpmem_high));
-
-	/* Always skip the first CLBYTES, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
-
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
-#endif
-}
-
-/*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
- */
-#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
-static vaddr_t dumpspace;
-
-vaddr_t
-reserve_dumppages(p)
-	vaddr_t p;
-{
-
-	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
-}
-
-void
-dumpsys()
-{
-#ifdef	TODO
-	unsigned bytes, i, n;
-	int maddr, psize;
-	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	int error;
-
-	/* Save registers. */
-	savectx(&dumppcb);
-
-	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
-	if (dumpdev == NODEV)
-		return;
-
-	/*
-	 * For dumps during autoconfiguration,
-	 * if dump device has already configured...
-	 */
-	if (dumpsize == 0)
-		cpu_dumpconf();
-	if (dumplo < 0)
-		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
-
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-	printf("dump ");
-	if (psize == -1) {
-		printf("area unavailable\n");
-		return;
-	}
-
-#if 0	/* XXX this doesn't work.  grr. */
-        /* toss any characters present prior to dump */
-	while (sget() != NULL); /* syscons and pccons differ */
-#endif
-
-	bytes = ctob(dumpmem_high) + IOM_END;
-	maddr = 0;
-	blkno = dumplo;
-	dump = bdevsw[major(dumpdev)].d_dump;
-	error = 0;
-	for (i = 0; i < bytes; i += n) {
-		/*
-		 * Avoid dumping the ISA memory hole, and areas that
-		 * BIOS claims aren't in low memory.
-		 */
-		if (i >= ctob(dumpmem_low) && i < IOM_END) {
-			n = IOM_END - i;
-			maddr += n;
-			blkno += btodb(n);
-			continue;
-		}
-
-		/* Print out how many MBs we to go. */
-		n = bytes - i;
-		if (n && (n % (1024*1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
-
-		/* Limit size for next transfer. */
-		if (n > BYTES_PER_DUMP)
-			n =  BYTES_PER_DUMP;
-
-		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
-		error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
-		if (error)
-			break;
-		maddr += n;
-		blkno += btodb(n);			/* XXX? */
-
-#if 0	/* XXX this doesn't work.  grr. */
-		/* operator aborting dump? */
-		if (sget() != NULL) {
-			error = EINTR;
-			break;
-		}
-#endif
-	}
-
-	switch (error) {
-
-	case ENXIO:
-		printf("device bad\n");
-		break;
-
-	case EFAULT:
-		printf("device not ready\n");
-		break;
-
-	case EINVAL:
-		printf("area improper\n");
-		break;
-
-	case EIO:
-		printf("i/o error\n");
-		break;
-
-	case EINTR:
-		printf("aborted from console\n");
-		break;
-
-	case 0:
-		printf("succeeded\n");
-		break;
-
-	default:
-		printf("error %d\n", error);
-		break;
-	}
-	printf("\n\n");
-	delay(5000000);		/* 5 seconds */
-#endif	/* TODO */
 }
 
 /*
@@ -706,13 +523,6 @@ lookup_bootinfo(type)
 	return (0);
 }
 
-
-/*
- * consinit:
- * initialize the system console.
- * XXX - shouldn't deal with this initted thing, but then,
- * it shouldn't be called from init386 either.
- */
 void
 consinit()
 {
@@ -727,15 +537,4 @@ consinit()
 #ifdef DDB
 	ddb_init(0, NULL, NULL);	/* XXX XXX XXX */
 #endif
-}
-
-void
-cpu_reset()
-{
-
-	_cpu_exception_suspend();
-
-	goto *(u_int32_t *)0xa0000000;
-	for (;;)
-		;
 }

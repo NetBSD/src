@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2002/02/24 18:19:40 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2002/02/28 16:54:30 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -140,13 +140,6 @@ int cpu_debug_mode = 0;
 extern int	scdebug;
 #endif
 
-/*
- * These variables are needed by /sbin/savecore
- */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
-int 	dumpsize;		/* pages */
-long	dumplo; 		/* blocks */
-
 /* VM */
 static int	mem_cluster_init(paddr_t);
 static void	mem_cluster_load(void);
@@ -248,9 +241,9 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 				mountroot = nfs_mountroot;
 			else
 				makebootdev(p);
-#else
+#else /* NFS */
 			makebootdev(p);
-#endif
+#endif /* NFS */
 			break;
 		default:
 			BOOT_FLAG(*cp, boothowto);
@@ -493,30 +486,10 @@ cpu_reboot(int howto, char *bootstr)
 	hd64465_intr_reboot();
 #endif
 
-	goto *(u_int32_t *)0xa0000000;
-	while (1)
-		;
+	cpu_reset();
 	/*NOTREACHED*/
-}
-
-void
-cpu_dumpconf()
-{
-	// notyet;
-}
-
-/*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
- */
-vaddr_t
-reserve_dumppages(vaddr_t p)
-{
-#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
-	static vaddr_t dumpspace;
-	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
+	while(1)
+		;
 }
 
 /* return # of physical pages. */
