@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.47 2004/08/04 22:44:04 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.48 2004/08/11 17:49:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -121,6 +121,7 @@ struct ata_drive_datas {
 #define	DRIVE_RESET	0x0080	/* reset the drive state at next xfer */
 #define	DRIVE_WAITDRAIN	0x0100	/* device is waiting for the queue to drain */
 #define	DRIVE_ATAPIST	0x0200	/* device is an ATAPI tape drive */
+#define	DRIVE_NOSTREAM	0x0400	/* no stream methods on this drive */
 
 	/*
 	 * Current setting of drive's PIO, DMA and UDMA modes.

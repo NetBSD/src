@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.62 2004/08/04 22:44:04 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.63 2004/08/11 17:49:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -67,10 +67,8 @@ struct wdc_channel {
 	bus_space_handle_t    cmd_iohs[WDC_NREG+WDC_NSHADOWREG];
 	bus_space_tag_t       ctl_iot;
 	bus_space_handle_t    ctl_ioh;
-
-	/* data32{iot,ioh} are only used for 32 bit data xfers */
-	bus_space_tag_t         data32iot;
-	bus_space_handle_t      data32ioh;
+	bus_space_tag_t       data32iot;
+	bus_space_handle_t    data32ioh;
 
 	/* Our state */
 	volatile int ch_flags;
@@ -115,20 +113,21 @@ struct wdc_softc {
 	struct device sc_dev;		/* generic device info */
 
 	int           cap;		/* controller capabilities */
-#define	WDC_CAPABILITY_DATA16 0x0001    /* can do  16-bit data access */
-#define	WDC_CAPABILITY_DATA32 0x0002    /* can do 32-bit data access */
-#define WDC_CAPABILITY_MODE   0x0004	/* controller knows its PIO/DMA modes */
-#define	WDC_CAPABILITY_DMA    0x0008	/* DMA */
-#define	WDC_CAPABILITY_UDMA   0x0010	/* Ultra-DMA/33 */
-#define	WDC_CAPABILITY_HWLOCK 0x0020	/* Needs to lock HW */
+#define	WDC_CAPABILITY_DATA16	0x0001	/* can do 16-bit data access */
+#define	WDC_CAPABILITY_DATA32	0x0002	/* can do 32-bit data access */
+#define	WDC_CAPABILITY_DATA1K	0x8000	/* CF-style data port */
+#define WDC_CAPABILITY_MODE	0x0004	/* controller knows its PIO/DMA modes */
+#define	WDC_CAPABILITY_DMA	0x0008	/* DMA */
+#define	WDC_CAPABILITY_UDMA	0x0010	/* Ultra-DMA/33 */
+#define	WDC_CAPABILITY_HWLOCK	0x0020	/* Needs to lock HW */
 #define	WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
 #define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
-#define WDC_CAPABILITY_PREATA 0x0200	/* ctrl can be a pre-ata one */
-#define WDC_CAPABILITY_IRQACK 0x0400	/* callback to ack interrupt */
-#define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
-#define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
-#define	WDC_CAPABILITY_RAID   0x4000	/* Controller "supports" RAID */
+#define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
+#define WDC_CAPABILITY_IRQACK	0x0400	/* callback to ack interrupt */
+#define WDC_CAPABILITY_NOIRQ	0x1000	/* Controller never interrupts */
+#define WDC_CAPABILITY_SELECT	0x2000	/* Controller selects target */
+#define	WDC_CAPABILITY_RAID	0x4000	/* Controller "supports" RAID */
 	u_int8_t      PIO_cap;		/* highest PIO mode supported */
 	u_int8_t      DMA_cap;		/* highest DMA mode supported */
 	u_int8_t      UDMA_cap;		/* highest UDMA mode supported */
@@ -208,8 +207,11 @@ int	wdcwait(struct wdc_channel *, int, int, int, int);
 #define WDCWAIT_TOUT	-1 /* timed out */
 #define WDCWAIT_THR	1  /* return, the kernel thread has been awakened */
 
+void	wdc_datain_pio(struct wdc_channel *, int, void *, size_t);
+void	wdc_dataout_pio(struct wdc_channel *, int, void *, size_t);
+void	wdcbit_bucket(struct wdc_channel *, int);
+
 int	wdc_dmawait(struct wdc_channel *, struct ata_xfer *, int);
-void	wdcbit_bucket( struct wdc_channel *, int);
 void	wdccommand(struct wdc_channel *, u_int8_t, u_int8_t, u_int16_t,
 		   u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 void	wdccommandext(struct wdc_channel *, u_int8_t, u_int8_t, u_int64_t,

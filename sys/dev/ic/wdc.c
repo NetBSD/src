@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.189 2004/08/10 23:09:39 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.190 2004/08/11 17:49:27 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.189 2004/08/10 23:09:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.190 2004/08/11 17:49:27 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1595,6 +1595,15 @@ wdc_probe_caps(struct ata_drive_datas *drvp)
 		aprint_normal("\n");
 	}
 
+	drvp->drive_flags &= ~DRIVE_NOSTREAM;
+	if (drvp->drive_flags & DRIVE_ATAPI) {
+		if (wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)	
+			drvp->drive_flags |= DRIVE_NOSTREAM;
+	} else {
+		if (wdc->cap & WDC_CAPABILITY_ATA_NOSTREAM)	
+			drvp->drive_flags |= DRIVE_NOSTREAM;
+	}
+
 	/* Try to guess ATA version here, if it didn't get reported */
 	if (drvp->ata_vers == 0) {
 		if (drvp->drive_flags & DRIVE_UDMA)
@@ -1852,9 +1861,7 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 			bcount = bcount & 0x03;
 		}
 		if (bcount > 0)
-			bus_space_read_multi_2(chp->cmd_iot,
-			    chp->cmd_iohs[wd_data], 0,
-			    (u_int16_t *)data, bcount >> 1);
+			wdc_datain_pio(chp, DRIVE_NOSTREAM, data, bcount);
 		/* at this point the drive should be in its initial state */
 		wdc_c->flags |= AT_XFDONE;
 		/* XXX should read status register here ? */
@@ -1870,9 +1877,7 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 			bcount = bcount & 0x03;
 		}
 		if (bcount > 0)
-			bus_space_write_multi_2(chp->cmd_iot,
-			    chp->cmd_iohs[wd_data], 0,
-			    (u_int16_t *)data, bcount >> 1);
+			wdc_dataout_pio(chp, DRIVE_NOSTREAM, data, bcount);
 		wdc_c->flags |= AT_XFDONE;
 		if ((wdc_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
@@ -2252,5 +2257,71 @@ wdc_print_modes(struct wdc_channel *chp)
 		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
 			aprint_normal(" (using DMA data transfers)");
 		aprint_normal("\n");
+	}
+}
+
+void
+wdc_datain_pio(chp, flags, buf, len)
+	struct wdc_channel *chp;
+	int flags;
+	void *buf;
+	size_t len;
+{
+
+	if (flags & DRIVE_NOSTREAM) {
+		if (flags & DRIVE_CAP32) {
+			bus_space_read_multi_4(chp->data32iot,
+			    chp->data32ioh, 0, buf, len >> 2);
+			buf = (char *)buf + (len & ~3);
+			len &= 3;
+		}
+		if (len) {
+			bus_space_read_multi_2(chp->cmd_iot,
+			    chp->cmd_iohs[wd_data], 0, buf, len >> 1);
+		}
+	} else {
+		if (flags & DRIVE_CAP32) {
+			bus_space_read_multi_stream_4(chp->data32iot,
+			    chp->data32ioh, 0, buf, len >> 2);
+			buf = (char *)buf + (len & ~3);
+			len &= 3;
+		}
+		if (len) {
+			bus_space_read_multi_stream_2(chp->cmd_iot,
+			    chp->cmd_iohs[wd_data], 0, buf, len >> 1);
+		}
+	}
+}
+
+void
+wdc_dataout_pio(chp, flags, buf, len)
+	struct wdc_channel *chp;
+	int flags;
+	void *buf;
+	size_t len;
+{
+
+	if (flags & DRIVE_NOSTREAM) {
+		if (flags & DRIVE_CAP32) {
+			bus_space_write_multi_4(chp->data32iot,
+			    chp->data32ioh, 0, buf, len >> 2);
+			buf = (char *)buf + (len & ~3);
+			len &= 3;
+		}
+		if (len) {
+			bus_space_write_multi_2(chp->cmd_iot,
+			    chp->cmd_iohs[wd_data], 0, buf, len >> 1);
+		}
+	} else {
+		if (flags & DRIVE_CAP32) {
+			bus_space_write_multi_stream_4(chp->data32iot,
+			    chp->data32ioh, 0, buf, len >> 2);
+			buf = (char *)buf + (len & ~3);
+			len &= 3;
+		}
+		if (len) {
+			bus_space_write_multi_stream_2(chp->cmd_iot,
+			    chp->cmd_iohs[wd_data], 0, buf, len >> 1);
+		}
 	}
 }
