@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.21 2003/12/26 16:00:53 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.22 2004/01/17 03:30:14 atatat Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.21 2003/12/26 16:00:53 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.22 2004/01/17 03:30:14 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -311,11 +311,6 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	 * release the sysctl lock
 	 */
 	sysctl_unlock(l);
-
-	/*
-	 * lock state should now be only "needlock" and "canwait"
-	 */
-	/* XXX KASSERT */
 
 	/*
 	 * reset caller's oldlen, even if we got an error
