@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.2 1999/07/04 14:45:54 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.3 1999/07/04 21:59:19 itojun Exp $	*/
 
 /*
  * KAME Header: /cvsroot/hydrangea-freebsd/kit/src/route6d/Attic/route6d.c,v 1.1.2.12.2.5.2.8.2.10.2.30 1999/07/02 11:44:48 itojun Exp
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.2 1999/07/04 14:45:54 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.3 1999/07/04 21:59:19 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -262,7 +262,7 @@ int main(argc, argv)
 	int	argc;
 	char	**argv;
 {
-	char	ch;
+	int	ch;
 	int	error = 0;
 	struct	ifc *ifcp;
 	sigset_t mask, omask;
