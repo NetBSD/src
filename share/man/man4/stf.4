@@ -1,5 +1,5 @@
-.\"     $NetBSD: stf.4,v 1.2 2000/05/02 04:05:25 itojun Exp $
-.\"     $KAME: stf.4,v 1.20 2000/05/02 03:59:44 itojun Exp $
+.\"     $NetBSD: stf.4,v 1.3 2000/05/14 03:44:03 itojun Exp $
+.\"     $KAME: stf.4,v 1.21 2000/05/13 23:15:28 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -125,14 +125,17 @@ interface filters out the following packets.
 Note that the checks are no way complete:
 .Bl -bullet
 .It
+Packets with IPv4 unspecified addrss as outer IPv4 source/destination
+.Pq Li 0.0.0.0/8
+.It
+Packets with loopback address as outer IPv4 source/destination
+.Pq Li 127.0.0.0/8
+.It
 Packets with IPv4 multicast address as outer IPv4 source/destination
 .Pq Li 224.0.0.0/4
 .It
-Packets with IPv4 unspecified addrss as outer IPv4 source/destination
-.Pq Li 0.0.0.0/32
-.It
 Packets with limited broadcast address as outer IPv4 source/destination
-.Pq Li 255.255.255.255/32
+.Pq Li 255.0.0.0/8
 .It
 Packets with subnet broadcast address as outer IPv4 source/destination.
 The check is made against subnet broadcast addresses for
