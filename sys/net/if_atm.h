@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.3 1996/06/27 04:34:17 chuck Exp $       */
+/*      $NetBSD: if_atm.h,v 1.4 1996/06/28 02:34:34 chuck Exp $       */
 
 /*
  *
@@ -62,15 +62,16 @@ struct atm_pseudohdr {
 				/* XXX: could be 9188 with LLC/SNAP according
 					to comer */
 
-/* pseudo ioctl */
+/* user's ioctl hook for raw atm mode */
+#define SIOCRAWATM	_IOWR('a', 122, int)	/* set driver's raw mode */
 
+/* atm_pseudoioctl: turns on and off RX VCIs  [for internal use only!] */
 struct atm_pseudoioctl {
   struct atm_pseudohdr aph;
   struct socket *asock;
 };
-
-#define SIOCATMENA	_IOWR('a', 122, struct atm_pseudoioctl) /* enable */
-#define SIOCATMDIS	_IOWR('a', 123, struct atm_pseudoioctl) /* disable */
+#define SIOCATMENA	_IOWR('a', 123, struct atm_pseudoioctl) /* enable */
+#define SIOCATMDIS	_IOWR('a', 124, struct atm_pseudoioctl) /* disable */
 
 /*
  * XXX forget all the garbage in if_llc.h and do it the easy way
