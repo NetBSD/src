@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2000/05/23 05:11:28 eeh Exp $ */
+/*	$NetBSD: conf.c,v 1.9 2000/08/25 08:12:49 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,6 +71,7 @@
 #include "wd.h"
 #include "raid.h"
 
+#include "fb.h"
 #include "kbd.h"
 #include "ms.h"
 #include "zstty.h"
@@ -145,7 +146,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 19: SCSI autochanger */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
-	cdev_fb_init(1,fb),		/* 22: /dev/fb indirect driver */
+	cdev_fb_init(NFB,fb),		/* 22: /dev/fb indirect driver */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 25: ip-filter device */
