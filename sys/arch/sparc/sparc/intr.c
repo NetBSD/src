@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.73 2003/01/09 05:55:31 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.74 2003/01/09 10:27:24 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -491,7 +491,8 @@ intr_establish(level, classipl, ih, vec)
 		printf("intr_establish: untie fast vector at level %d\n",
 		    level);
 		uninst_fasttrap(level);
-	} else if (vec != NULL && intrhand[level] == NULL) {
+	} else if (vec != NULL &&
+		   intrhand[level] == NULL && sintrhand[level] == NULL) {
 		inst_fasttrap(level, vec);
 	}
 
