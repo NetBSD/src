@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.66 2003/05/23 10:06:18 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.67 2003/07/09 20:12:53 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.66 2003/05/23 10:06:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.67 2003/07/09 20:12:53 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1045,32 +1045,10 @@ sppp_dequeue(struct ifnet *ifp)
 	    (sppp_ncp_check(sp) || (sp->pp_flags & PP_CISCO) != 0)) {
 		IF_DEQUEUE(&sp->pp_fastq, m);
 		if (m == NULL)
-			IF_DEQUEUE(&sp->pp_if.if_snd, m);
+			IFQ_DEQUEUE(&sp->pp_if.if_snd, m);
 	}
 	splx(s);
 	return m;
-}
-
-/*
- * Pick the next packet, do not remove it from the queue.
- */
-struct mbuf *
-sppp_pick(struct ifnet *ifp)
-{
-	struct sppp *sp = (struct sppp *)ifp;
-	struct mbuf *m;
-	int s;
-
-	s= splnet();
-
-	m = sp->pp_cpq.ifq_head;
-	if (m == NULL &&
-	    (sp->pp_phase == SPPP_PHASE_NETWORK ||
-	     (sp->pp_flags & PP_CISCO) != 0))
-		if ((m = sp->pp_fastq.ifq_head) == NULL)
-			m = sp->pp_if.if_snd.ifq_head;
-	splx(s);
-	return (m);
 }
 
 /*
