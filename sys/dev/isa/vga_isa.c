@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.7 2002/01/07 21:47:13 thorpej Exp $ */
+/* $NetBSD: vga_isa.c,v 1.8 2002/06/25 21:07:43 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.7 2002/01/07 21:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.8 2002/06/25 21:07:43 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ vga_isa_attach(parent, self, aux)
 	printf("\n");
 
 	vga_common_attach(sc, ia->ia_iot, ia->ia_memt, WSDISPLAY_TYPE_ISAVGA,
-	    NULL);
+			  0, NULL);
 }
 
 int
