@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.100 1996/11/29 16:28:38 jtk Exp $	*/
+/*	$NetBSD: fd.c,v 1.101 1996/11/30 01:45:39 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -945,7 +945,7 @@ loop:
 	}
 
 	if (bp->b_flags & B_FORMAT)
-	    finfo = (struct ne7_fd_formb *)bp->b_data;
+		finfo = (struct ne7_fd_formb *)bp->b_data;
 
 	switch (fdc->sc_state) {
 	case DEVIDLE:
@@ -1002,8 +1002,8 @@ loop:
 	doio:
 		type = fd->sc_type;
 		if (finfo)
-		    fd->sc_skip = (char *)&(finfo->fd_formb_cylno(0)) -
-			(char *)finfo;
+			fd->sc_skip = (char *)&(finfo->fd_formb_cylno(0)) -
+				      (char *)finfo;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
 		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
@@ -1016,7 +1016,8 @@ loop:
 		{int block;
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+			 printf("fdcintr: block %d != blkno %d\n",	
+				block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
@@ -1025,23 +1026,23 @@ loop:
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
 #ifdef NEWCONFIG
 		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    fdc->sc_drq);
+		       fdc->sc_drq);
 #else
 		isa_dmastart(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    fdc->sc_drq);
+		       fdc->sc_drq);
 #endif
 		bus_space_write_2(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
-		    read ? "read" : "write", fd->sc_drive, fd->sc_cylin, head,
-		    sec, nblks);
+			read ? "read" : "write", fd->sc_drive, fd->sc_cylin,
+			head, sec, nblks);
 #endif
 		if (finfo) {
 			/* formatting */
 			if (out_fdc(iot, ioh, NE7CMD_FORMAT) < 0) {
-			    fdc->sc_errors = 4;
-			    fdcretry(fdc);
-			    goto loop;
+				fdc->sc_errors = 4;
+				fdcretry(fdc);
+				goto loop;
 			}
 			out_fdc(iot, ioh, (head << 2) | fd->sc_drive);
 			out_fdc(iot, ioh, finfo->fd_formb_secshift);
@@ -1049,18 +1050,18 @@ loop:
 			out_fdc(iot, ioh, finfo->fd_formb_gaplen);
 			out_fdc(iot, ioh, finfo->fd_formb_fillbyte);
 		} else {
-		if (read)
-			out_fdc(iot, ioh, NE7CMD_READ);	/* READ */
-		else
-			out_fdc(iot, ioh, NE7CMD_WRITE);	/* WRITE */
-		out_fdc(iot, ioh, (head << 2) | fd->sc_drive);
-		out_fdc(iot, ioh, fd->sc_cylin);		/* track */
-		out_fdc(iot, ioh, head);
-		out_fdc(iot, ioh, sec + 1);		/* sector +1 */
-		out_fdc(iot, ioh, type->secsize);	/* sector size */
-		out_fdc(iot, ioh, type->sectrac);	/* sectors/track */
-		out_fdc(iot, ioh, type->gap1);		/* gap1 size */
-		out_fdc(iot, ioh, type->datalen);	/* data length */
+			if (read)
+				out_fdc(iot, ioh, NE7CMD_READ);	/* READ */
+			else
+				out_fdc(iot, ioh, NE7CMD_WRITE); /* WRITE */
+			out_fdc(iot, ioh, (head << 2) | fd->sc_drive);
+			out_fdc(iot, ioh, fd->sc_cylin); /* track */
+			out_fdc(iot, ioh, head);
+			out_fdc(iot, ioh, sec + 1);	 /* sector +1 */
+			out_fdc(iot, ioh, type->secsize);/* sector size */
+			out_fdc(iot, ioh, type->sectrac);/* sectors/track */
+			out_fdc(iot, ioh, type->gap1);	 /* gap1 size */
+			out_fdc(iot, ioh, type->datalen);/* data length */
 		}
 		fdc->sc_state = IOCOMPLETE;
 
