@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.2 1994/06/10 15:17:13 pk Exp $
+ *	$Id: md.c,v 1.3 1994/06/29 11:15:34 pk Exp $
  */
 
 #include <sys/param.h>
@@ -140,13 +140,13 @@ char		n;
 	switch (n) {
 	case 1:
 		if (val < -64 || val > 63)
-			error("Byte displacement %d, out of range.\n", val);
+			warnx("Byte displacement %d, out of range.", val);
 		val &= 0x7f;
 		*addr++ = val;
 		break;
 	case 2:
 		if (val < -8192 || val > 8191)
-			error("Word displacement %d, out of range.\n", val);
+			warnx("Word displacement %d, out of range., val);
 		val &= 0x3fff;
 		val |= 0x8000;
 		*addr++ = (val >> 8);
@@ -158,7 +158,7 @@ char		n;
 #else
 		if (val < -0x20000000 || val >= 0x20000000)
 #endif
-			error("Double word displacement %d, out of range\n", val);
+			warnx("Double word displacement %d, out of range", val);
 		val |= 0xc0000000;
 		*addr++ = (val >> 24);
 		*addr++ = (val >> 16);
@@ -166,7 +166,7 @@ char		n;
 		*addr++ = val;
 		break;
 	default:
-		error("Internal logic error");
+		errx(1, "internal error: putdisp: n = %d", n);
 	}
 }
 
