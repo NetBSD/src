@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.2 2002/04/12 05:34:01 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.3 2002/04/12 05:50:19 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -12,6 +12,10 @@
 # Optional variables:
 #	MDSETDIR		where to install kernels with "release" target
 #	netbsd.${KERNEL}.post	run after ${STRIP}; kernel is netbsd.tmp
+#
+# Variables modified by this:
+#	KERNELS		List of kernel .gz files to build
+#	KERNELSYMS	List of kernel .symbol files to build
 #
 
 .include <bsd.kernobj.mk>
