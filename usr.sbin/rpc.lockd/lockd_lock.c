@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.13 2003/03/14 13:53:08 yamt Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.14 2003/03/14 14:03:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -115,8 +115,7 @@ testlock(lock, flags)
 
 	siglock();
 	/* search through the list for lock holder */
-	for (fl = LIST_FIRST(&lcklst_head); fl != NULL;
-	    fl = LIST_NEXT(fl, lcklst)) {
+	LIST_FOREACH(fl, &lcklst_head, lcklst) {
 		if (fl->status != LKST_LOCKED)
 			continue;
 		if (memcmp(&fl->filehandle, &filehandle, sizeof(filehandle)))
@@ -198,8 +197,7 @@ getlock(lckarg, rqstp, flags)
 	newfl->flags = flags;
 	siglock();
 	/* look for a lock rq from this host for this fh */
-	for (fl = LIST_FIRST(&lcklst_head); fl != NULL;
-	    fl = LIST_NEXT(fl, lcklst)) {
+	LIST_FOREACH(fl, &lcklst_head, lcklst) {
 		if (memcmp(&newfl->filehandle, &fl->filehandle,
 		    sizeof(fhandle_t)) == 0) {
 			if (strcmp(newfl->client_name, fl->client_name) == 0 &&
@@ -283,8 +281,7 @@ unlock(lck, flags)
 
 	memcpy(&filehandle, lck->fh.n_bytes, sizeof(fhandle_t));
 	siglock();
-	for (fl = LIST_FIRST(&lcklst_head); fl != NULL;
-	    fl = LIST_NEXT(fl, lcklst)) {
+	LIST_FOREACH(fl, &lcklst_head, lcklst) {
 		if (strcmp(fl->client_name, lck->caller_name) ||
 		    memcmp(&filehandle, &fl->filehandle, sizeof(fhandle_t)) ||
 		    fl->client.oh.n_len != lck->oh.n_len ||
@@ -364,8 +361,7 @@ sigchild_handler(sig)
 		 * if we're here we have a child that exited
 		 * Find the associated file_lock.
 		 */
-		for (fl = LIST_FIRST(&lcklst_head); fl != NULL;
-		    fl = LIST_NEXT(fl, lcklst)) {
+		LIST_FOREACH(fl, &lcklst_head, lcklst) {
 			if (pid == fl->locker)
 				break;
 		}
@@ -619,8 +615,7 @@ do_unlock(rfl)
 	LIST_REMOVE(rfl, lcklst);
 
 	/* process the next LKST_WAITING lock request for this fh */
-	for (fl = LIST_FIRST(&lcklst_head); fl != NULL;
-	     fl = LIST_NEXT(fl, lcklst)) {
+	LIST_FOREACH(fl, &lcklst_head, lcklst) {
 		if (fl->status != LKST_WAITING ||
 		    memcmp(&rfl->filehandle, &fl->filehandle,
 		    sizeof(fhandle_t)) != 0)
@@ -682,8 +677,7 @@ do_mon(hostname)
 	struct sm_stat_res res;
 	int retval;
 
-	for (hp = LIST_FIRST(&hostlst_head); hp != NULL;
-	    hp = LIST_NEXT(hp, hostlst)) {
+	LIST_FOREACH(hp, &hostlst_head, hostlst) {
 		if (strcmp(hostname, hp->name) == 0) {
 			/* already monitored, just bump refcnt */
 			hp->refcnt++;
