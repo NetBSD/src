@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.20 1998/09/13 16:05:34 kleink Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.21 1998/10/15 10:22:24 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.20 1998/09/13 16:05:34 kleink Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.21 1998/10/15 10:22:24 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -540,7 +540,7 @@ __p_rr(cp, msg, file)
 		switch (class) {
 		case C_IN:
 		case C_HS:
-			bcopy(cp, (char *)&inaddr, sizeof(inaddr));
+			(void)memcpy(&inaddr, cp, sizeof (inaddr));
 			if (dlen == 4) {
 				fprintf(file,"\t%s", inet_ntoa(inaddr));
 				cp += dlen;
@@ -757,7 +757,7 @@ __p_rr(cp, msg, file)
 	case T_WKS:
 		if (dlen < sizeof(u_int32_t) + 1)
 			break;
-		bcopy(cp, (char *)&inaddr, sizeof(inaddr));
+		(void)memcpy(&inaddr, cp, sizeof (inaddr));
 		cp += sizeof(u_int32_t);
 		fprintf(file, "\t%s %s ( ",
 			inet_ntoa(inaddr),
