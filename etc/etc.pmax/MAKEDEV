@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.25 1998/11/17 19:02:46 jonathan Exp $
+#	$NetBSD: MAKEDEV,v 1.26 1998/11/17 23:09:46 jonathan Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -53,16 +53,15 @@ do
 case $i in
 
 all)
-	sh $0 std fd rz0 rz1 rz2 rz3 rz4 rz5 rz6 rz7 tz0 tz1
-	sh $0 rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
-	sh $0 dc0 scc0 raid0 raid1 raid2 raid3
+	sh $0 minimal fd 
+	sh $0 raid0 raid1 raid2 raid3
 	sh $0 pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh $0 tun0 tun1 tun2 tun3
 	sh $0 bpf0 bpf1 bpf2 bpf3
 	sh $0 fb0 fb1 fb2
 	sh $0 mouse
-	sh $0 ipl random
-#	sh $0 lkm local			# XXX no lkm driver in 1.3_ALPHA(?)
+	sh $0 ipl random lkm
+ 	sh $0 local
 #	sh $0 audio pm0 cfb0 xcfb0 mfb0 sfb0
 #	sh $0 cd0 			 # no MI scsi yet
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
@@ -72,7 +71,7 @@ minimal)
 	sh $0 std
 	sh $0 rz0 rz1 rz2 rz3 rz4 rz5 rz6 rz7 tz0 tz1
 	sh $0 rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
-	sh $0 dz0  zs0
+	sh $0 md0 dz0 zs0
 	;;
 
 std)
@@ -136,15 +135,16 @@ bpf*|tun*)
 	;;
 
 lkm)
-#	rm -f lkm
-#	mknod lkm c 90 0
-#	chown root.kmem lkm
-#	chmod 640 lkm
+	rm -f lkm
+	mknod lkm c 94 0
+	chown root.kmem lkm
+	chmod 640 lkm
 	;;
 
-rz*|vnd*|ccd*|raid*)
+rz*|vnd*|md*|ccd*|raid*)
 	case $i in
 	rz*) name=rz;	unit=${i#rz};	blk=21; chr=56;;
+	md*) name=md;	unit=${i#md};	blk=17; chr=96;;
 	raid*) name=raid; unit=${i#raid}; blk=32; chr=96;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=2; chr=11;;
 	ccd*) name=ccd;	unit=${i#ccd};	blk=24; chr=87;;
