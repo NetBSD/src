@@ -1,7 +1,6 @@
 # Makefile.dist
 #
-# Copyright (c) 1996, 1997 The Internet Software Consortium.
-# All rights reserved.
+# Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -30,8 +29,14 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SUBDIR=	common omapip minires server client relay dhcpctl
+LIB    = dhcpctl
+SRCS   = dhcpctl.c callback.c remote.c
 
-all-server all-client all-relay: all-common
+MKLINT=	no
+MKPIC=	no
+MKPROFILE=no
 
-.include <bsd.subdir.mk>
+# only needed during build
+libinstall::
+
+.include <bsd.lib.mk>
