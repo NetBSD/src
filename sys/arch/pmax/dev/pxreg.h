@@ -1,4 +1,4 @@
-/* $NetBSD: pxreg.h,v 1.3 1999/04/24 08:01:06 simonb Exp $ */
+/* 	$NetBSD: pxreg.h,v 1.4 1999/04/26 04:37:33 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -307,23 +307,24 @@ struct stic_regs {
 #define STIC_INT_CLR	(STIC_INT_E_EN | STIC_INT_V_EN | STIC_INT_P_EN)
 
 /*
- * Convert a system physical address to STIC poll offset. Polling the
- * offset returned will initiate DMA at the provided address. For the
- * PMAG-{CA,C}, the STIC only sees 23-bits (8MB) of address space. Also,
- * bits 21-22 in physical address space map to bits 27-28 in the STIC's
- * warped view of the world. This is also true for bits 15-20, which map
- * to bits 18-23. Bits 0 and 1 are meaningless, because everything is
- * word aligned.
+ * Convert a system physical address to STIC poll offset. Polling the offset
+ * returned will initiate DMA at the provided address. For the PX, the STIC
+ * only sees 23-bits (8MB) of address space. Also, bits 21-22 in physical
+ * address space map to bits 27-28 in the STIC's warped view of the world.
+ * This is also true for bits 15-20, which map to bits 18-23. Bits 0 and 1
+ * are meaningless, because everything is word aligned.
  *
- * The final shift-right-by-9 is to map the address to poll register
- * offset. These begin at px_softc.poll (which should obviously be added
- * to the return value of this function to get a vaild poll address).
+ * The final shift-right-by-9 is to map the address to poll register offset.
+ * These begin at px_softc.poll (which should obviously be added to the
+ * return value of this function to get a vaild poll address).
  *
  * This shift right gives us a granularity of 512 bytes when DMAing. The
  * holes in STIC address space mean that DMAs can never cross a 32kB
  * boundary. The maximum size for a DMA AFAIK is about 4kB.
  *
- * The poll address will either return STAMP_OK, or STAMP_BUSY.
+ * For the PXG, the PA is relative to SRAM (i.e. i860) address space, not
+ * system address space. The poll address will either return STAMP_OK, or
+ * STAMP_BUSY.
  */
 static __inline__ u_long px_sys2stic __P((void *));
 static __inline__ u_long px_sys2dma __P((void *));

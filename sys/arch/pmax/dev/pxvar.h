@@ -1,4 +1,4 @@
-/* $NetBSD: pxvar.h,v 1.3 1999/04/24 08:01:06 simonb Exp $ */
+/* 	$NetBSD: pxvar.h,v 1.4 1999/04/26 04:37:33 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -48,6 +48,7 @@ struct px_info {
 
 	int32_t	*pxi_poll;	/* STIC DMA poll area */
 	caddr_t	pxi_stamp;	/* Undocumented stamp registers */
+	caddr_t	pxi_sram;	/* SRAM on the PXG */
 
 	int	pxi_unit;	/* unit # */
 	char	pxi_type[12];	/* card type (PMAG-??) */
