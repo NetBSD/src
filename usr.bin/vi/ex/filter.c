@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)filter.c	8.31 (Berkeley) 3/23/94";
+static const char sccsid[] = "@(#)filter.c	8.44 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,9 +74,9 @@ filtercmd(sp, ep, fm, tm, rp, cmd, ftype)
 	char *cmd;
 	enum filtertype ftype;
 {
-	FILE *ifp, *ofp;		/* GCC: can't be uninitialized. */
+	FILE *ifp, *ofp;
 	pid_t parent_writer_pid, utility_pid;
-	recno_t lno, nread;
+	recno_t nread;
 	int input[2], output[2], rval, teardown;
 	char *name;
 
@@ -102,7 +102,7 @@ filtercmd(sp, ep, fm, tm, rp, cmd, ftype)
 	 * up utility input pipe.
 	 */
 	teardown = 0;
-	ifp = ofp = NULL;
+	ofp = NULL;
 	input[0] = input[1] = output[0] = output[1] = -1;
 	if (ftype == FILTER_READ) {
 		if ((input[0] = open(_PATH_DEVNULL, O_RDONLY, 0)) < 0) {
@@ -110,16 +110,11 @@ filtercmd(sp, ep, fm, tm, rp, cmd, ftype)
 			    "filter: %s: %s", _PATH_DEVNULL, strerror(errno));
 			return (1);
 		}
-	} else {
+	} else
 		if (pipe(input) < 0) {
 			msgq(sp, M_SYSERR, "pipe");
 			goto err;
 		}
-		if ((ifp = fdopen(input[1], "w")) == NULL) {
-			msgq(sp, M_SYSERR, "fdopen");
-			goto err;
-		}
-	}
 
 	/* Open up utility output pipe. */
 	if (pipe(output) < 0) {
@@ -135,17 +130,18 @@ filtercmd(sp, ep, fm, tm, rp, cmd, ftype)
 	 * Save ex/vi terminal settings, and restore the original ones.
 	 * Restoration so that users can do things like ":r! cat /dev/tty".
 	 */
-	teardown = !ex_sleave(sp);
+	teardown = ftype != FILTER_WRITE && !ex_sleave(sp);
 
 	/* Fork off the utility process. */
+	SIGBLOCK(sp->gp);
 	switch (utility_pid = vfork()) {
 	case -1:			/* Error. */
+		SIGUNBLOCK(sp->gp);
+
 		msgq(sp, M_SYSERR, "vfork");
 err:		if (input[0] != -1)
 			(void)close(input[0]);
-		if (ifp != NULL)
-			(void)fclose(ifp);
-		else if (input[1] != -1)
+		if (input[1] != -1)
 			(void)close(input[1]);
 		if (ofp != NULL)
 			(void)fclose(ofp);
@@ -156,17 +152,18 @@ err:		if (input[0] != -1)
 		rval = 1;
 		goto ret;
 	case 0:				/* Utility. */
-		/*
-		 * The utility has default signal behavior.  Don't bother
-		 * using sigaction(2) 'cause we want the default behavior.
-		 */
-		(void)signal(SIGINT, SIG_DFL);
-		(void)signal(SIGQUIT, SIG_DFL);
+		/* The utility has default signal behavior. */
+		sig_end();
 
 		/*
-		 * Redirect stdin from the read end of the input pipe,
-		 * and redirect stdout/stderr to the write end of the
-		 * output pipe.
+		 * Redirect stdin from the read end of the input pipe, and
+		 * redirect stdout/stderr to the write end of the output pipe.
+		 *
+		 * !!!
+		 * Historically, ex only directed stdout into the input pipe,
+		 * letting stderr come out on the terminal as usual.  Vi did
+		 * not, directing both stdout and stderr into the input pipe.
+		 * We match that practice for both ex and vi for consistency.
 		 */
 		(void)dup2(input[0], STDIN_FILENO);
 		(void)dup2(output[1], STDOUT_FILENO);
@@ -189,6 +186,8 @@ err:		if (input[0] != -1)
 		_exit (127);
 		/* NOTREACHED */
 	default:			/* Parent-reader, parent-writer. */
+		SIGUNBLOCK(sp->gp);
+
 		/* Close the pipe ends neither parent will use. */
 		(void)close(input[0]);
 		(void)close(output[1]);
@@ -251,23 +250,31 @@ err:		if (input[0] != -1)
 	 */
 	rval = 0;
 	F_SET(ep, F_MULTILOCK);
+
+	SIGBLOCK(sp->gp);
 	switch (parent_writer_pid = fork()) {
 	case -1:			/* Error. */
-		rval = 1;
+		SIGUNBLOCK(sp->gp);
+
 		msgq(sp, M_SYSERR, "fork");
 		(void)close(input[1]);
 		(void)close(output[0]);
+		rval = 1;
 		break;
 	case 0:				/* Parent-writer. */
 		/*
-		 * Write the selected lines to the write end of the
-		 * input pipe.  Ifp is closed by ex_writefp.
+		 * Write the selected lines to the write end of the input
+		 * pipe.  This instance of ifp is closed by ex_writefp.
 		 */
 		(void)close(output[0]);
+		if ((ifp = fdopen(input[1], "w")) == NULL)
+			_exit (1);
 		_exit(ex_writefp(sp, ep, "filter", ifp, fm, tm, NULL, NULL));
 
 		/* NOTREACHED */
 	default:			/* Parent-reader. */
+		SIGUNBLOCK(sp->gp);
+
 		(void)close(input[1]);
 		if (ftype == FILTER_WRITE)
 			/*
@@ -290,16 +297,13 @@ err:		if (input[0] != -1)
 		    (long)parent_writer_pid, "parent-writer", 1);
 
 		/* Delete any lines written to the utility. */
-		if (ftype == FILTER && rval == 0) {
-			for (lno = tm->lno; lno >= fm->lno; --lno)
-				if (file_dline(sp, ep, lno)) {
-					rval = 1;
-					break;
-				}
-			if (rval == 0)
-				sp->rptlines[L_DELETED] +=
-				    (tm->lno - fm->lno) + 1;
+		if (rval == 0 && ftype == FILTER &&
+		    (cut(sp, ep, NULL, fm, tm, CUT_LINEMODE) ||
+		    delete(sp, ep, fm, tm, 1))) {
+			rval = 1;
+			break;
 		}
+
 		/*
 		 * If the filter had no output, we may have just deleted
 		 * the cursor.  Don't do any real error correction, we'll
@@ -340,8 +344,19 @@ proc_wait(sp, pid, cmd, okpipe)
 	size_t len;
 	int pstat;
 
-	/* Wait for the utility to finish. */
-	(void)waitpid((pid_t)pid, &pstat, 0);
+	/*
+	 * Wait for the utility to finish.  We can get interrupted
+	 * by SIGALRM, just ignore it.
+	 */
+	for (;;) {
+		errno = 0;
+		if (waitpid((pid_t)pid, &pstat, 0) != -1)
+			break;
+		if (errno != EINTR) {
+			msgq(sp, M_SYSERR, "wait error");
+			return (1);
+		}
+	}
 
 	/*
 	 * Display the utility's exit status.  Ignore SIGPIPE from the
@@ -351,7 +366,7 @@ proc_wait(sp, pid, cmd, okpipe)
 	if (WIFSIGNALED(pstat) && (!okpipe || WTERMSIG(pstat) != SIGPIPE)) {
 		for (; isblank(*cmd); ++cmd);
 		len = strlen(cmd);
-		msgq(sp, M_ERR, "%.*s%s: received signal: %s%s.",
+		msgq(sp, M_ERR, "%.*s%s: received signal: %s%s",
 		    MIN(len, 20), cmd, len > 20 ? "..." : "",
 		    sys_siglist[WTERMSIG(pstat)],
 		    WCOREDUMP(pstat) ? "; core dumped" : "");
@@ -370,32 +385,30 @@ proc_wait(sp, pid, cmd, okpipe)
 
 /*
  * filter_ldisplay --
- *	Display a line output from a utility.
+ *	Display output from a utility.
  *
- * XXX
- * This should probably be combined with some of the ex_print()
- * routines into a single display routine.
+ * !!!
+ * Historically, the characters were passed unmodified to the terminal.
+ * We use the ex print routines to make sure they're printable.
  */
 static int
 filter_ldisplay(sp, fp)
 	SCR *sp;
 	FILE *fp;
 {
-	EX_PRIVATE *exp;
 	size_t len;
 
-	exp = EXP(sp);
-	while (!ex_getline(sp, fp, &len)) {
-		(void)ex_printf(EXCOOKIE, "%.*s\n", (int)len, exp->ibp);
-		if (ferror(sp->stdfp)) {
-			msgq(sp, M_SYSERR, NULL);
-			(void)fclose(fp);
-			return (1);
-		}
+	EX_PRIVATE *exp;
+
+	F_SET(sp, S_INTERRUPTIBLE);
+	for (exp = EXP(sp); !ex_getline(sp, fp, &len);) {
+		if (ex_ldisplay(sp, exp->ibp, len, 0, 0))
+			break;
+		if (INTERRUPTED(sp))
+			break;
 	}
-	if (fclose(fp)) {
-		msgq(sp, M_SYSERR, NULL);
-		return (1);
-	}
+	if (ferror(fp))
+		msgq(sp, M_SYSERR, "filter input");
+	(void)fclose(fp);
 	return (0);
 }

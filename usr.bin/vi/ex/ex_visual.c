@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_visual.c	8.8 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_visual.c	8.14 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ ex_visual(sp, ep, cmdp)
 	/* If open option off, disallow visual command. */
 	if (!O_ISSET(sp, O_OPEN)) {
 		msgq(sp, M_ERR,
-		    "The visual command requires that the open option be set.");
+		    "The visual command requires that the open option be set");
 		return (1);
 	}
 
@@ -95,9 +95,13 @@ ex_visual(sp, ep, cmdp)
 		pos = '.';
 		break;
 	case E_F_PLUS:
-	default:
 		pos = '+';
 		break;
+	default:
+		sp->frp->lno = sp->lno;
+		sp->frp->cno = 0;
+		F_SET(sp->frp, FR_CURSORSET | FR_FNONBLANK);
+		goto nopush;
 	}
 
 	if (F_ISSET(cmdp, E_COUNT))
@@ -105,7 +109,7 @@ ex_visual(sp, ep, cmdp)
 		     "%luz%c%lu", sp->lno, pos, cmdp->count);
 	else
 		len = snprintf(buf, sizeof(buf), "%luz%c", sp->lno, pos);
-	(void)term_push(sp, buf, len, 0, CH_NOMAP | CH_QUOTED);
+	(void)term_push(sp, buf, len, CH_NOMAP | CH_QUOTED);
 
 	/*
 	 * !!!
@@ -126,7 +130,7 @@ ex_visual(sp, ep, cmdp)
 	}
 
 	/* Switch modes. */
-	F_CLR(sp, S_SCREENS);
+nopush:	F_CLR(sp, S_SCREENS);
 	F_SET(sp, sp->saved_vi_mode);
 
 	return (0);

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_source.c	8.4 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_source.c	8.6 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,5 +62,5 @@ ex_source(sp, ep, cmdp)
 	EXF *ep;
 	EXCMDARG *cmdp;
 {
-	return (ex_cfile(sp, ep, cmdp->argv[0]->bp));
+	return (ex_cfile(sp, ep, cmdp->argv[0]->bp, 0));
 }
