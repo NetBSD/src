@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.35 1993/11/02 22:02:12 pk Exp $
+#	$Id: bsd.lib.mk,v 1.36 1993/11/02 22:59:06 pk Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -102,7 +102,7 @@ lib${LIB}_pic.a:: ${SOBJS}
 
 lib${LIB}.so.${MAJOR}.${MINOR}:
 	@rm -f lib${LIB}.so.${MAJOR}.${MINOR}
-	$(LD) -Bforcearchive -o lib${LIB}.so.${MAJOR}.${MINOR} lib${LIB}_pic.a
+	$(LD) -Bshareable -Bforcearchive -o lib${LIB}.so.${MAJOR}.${MINOR} lib${LIB}_pic.a
 
 llib-l${LIB}.ln: ${SRCS}
 	${LINT} -C${LIB} ${CFLAGS} ${.ALLSRC:M*.c}
