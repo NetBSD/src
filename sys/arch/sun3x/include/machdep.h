@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.3 1997/01/17 16:25:02 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4 1997/01/23 21:23:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -99,6 +99,9 @@ extern int cold;
 extern int fpu_type;
 extern int has_iocache;
 
+/* This is set by locore.s with the monitor's root ptr. */
+extern struct mmu_rootptr mon_crp;
+
 extern label_t *nofault;
 
 extern vm_offset_t vmmap;	/* XXX - See mem.c */
@@ -106,6 +109,7 @@ extern vm_offset_t vmmap;	/* XXX - See mem.c */
 /* Lowest "managed" kernel virtual address. */
 extern vm_offset_t virtual_avail;
 
+/* Cache flush functions. */
 void	DCIAS __P((vm_offset_t));
 void	DCIA __P((void));
 void	DCIS __P((void));
@@ -145,16 +149,15 @@ void	initfpu __P((void));
 void	isr_init __P((void));
 void	isr_config __P((void));
 
+void	loadcrp __P((struct mmu_rootptr *));
+
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-
-void	loadcrp __P((struct mmu_rootptr *));
 
 void	netintr __P((void));
 void	proc_trampoline __P((void));
 
 void	pmap_bootstrap __P((vm_offset_t nextva));
-int 	pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
 int 	pmap_pa_exists __P((vm_offset_t pa));
 
 void	regdump __P((struct frame *, int));
@@ -162,10 +165,6 @@ void	regdump __P((struct frame *, int));
 void	savectx __P((struct pcb *));
 
 void	setvbr __P((void **));
-
-void	sun3x_mon_abort __P((void));
-void	sun3x_mon_halt __P((void));
-void	sun3x_mon_reboot __P((char *));
 
 void	swapconf __P((void));
 void	swapgeneric __P((void));
