@@ -320,8 +320,7 @@ f_fstype(plan, entry)
 {
 	static dev_t curdev;	/* need a guaranteed illegal dev value */
 	static int first = 1;
-	struct statfs sb;
-	static short val;
+	static struct statfs sb;
 	char *p, save[2];
 
 	/* only check when we cross mount point */
@@ -355,10 +354,9 @@ f_fstype(plan, entry)
 		}
 
 		first = 0;
-		val = plan->flags == MOUNT_NONE ? sb.f_flags : sb.f_type;
 	}
 	return(plan->flags == MOUNT_NONE ?
-	    val & MNT_LOCAL : val == plan->flags);
+	    sb.f_flags & plan->m_flags : sb.f_type == plan->flags);
 }
  
 PLAN *
@@ -380,6 +378,7 @@ c_fstype(arg)
 	case 'l':
 		if (!strcmp(arg, "local")) {
 			new->flags = MOUNT_NONE;
+			new->m_flags = MNT_LOCAL;
 			return(new);
 		}
 		break;
@@ -396,6 +395,13 @@ c_fstype(arg)
 	case 'n':
 		if (!strcmp(arg, "nfs")) {
 			new->flags = MOUNT_NFS;
+			return(new);
+		}
+		break;
+	case 'r':
+		if (!strcmp(arg, "rdonly")) {
+			new->flags = MOUNT_NONE;
+			new->m_flags = MNT_RDONLY;
 			return(new);
 		}
 		break;
