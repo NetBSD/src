@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.7 2001/06/20 02:21:58 toshii Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.8 2001/06/29 16:58:17 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #include <hpcarm/sa11x0/sa1111_reg.h>
 #include <hpcarm/sa11x0/sa1111_var.h>
 
-static	int	sacc_match(struct device *, struct cfdata *, void *);
+static	int	sacc_probe(struct device *, struct cfdata *, void *);
 static	void	sacc_attach(struct device *, struct device *, void *);
 static	int	sa1111_search(struct device *, struct cfdata *, void *);
 static	int	sa1111_print(void *, const char *);
@@ -77,7 +77,7 @@ struct platid_data sacc_platid_table[] = {
 };
 
 struct cfattach sacc_ca = {
-	sizeof(struct sacc_softc), sacc_match, sacc_attach
+	sizeof(struct sacc_softc), sacc_probe, sacc_attach
 };
 
 #ifdef INTR_DEBUG
@@ -87,11 +87,24 @@ struct cfattach sacc_ca = {
 #endif
 
 static int
-sacc_match(parent, match, aux)
+sacc_probe(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
+	struct sa11x0_attach_args *sa = aux;
+	bus_space_handle_t ioh;
+	u_int32_t skid;
+
+	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0, &ioh))
+		return (0);
+
+	skid = bus_space_read_4(sa->sa_iot, ioh, SACCSBI_SKID);
+	bus_space_unmap(sa->sa_iot, ioh, sa->sa_size);
+
+	if ((skid & 0xffffff00) != 0x690cc200)
+		return (0);
+
 	return (1);
 }
 
@@ -102,6 +115,7 @@ sacc_attach(parent, self, aux)
 	void *aux;
 {
 	int i, gpiopin;
+	u_int32_t skid;
 	struct sacc_softc *sc = (struct sacc_softc *)self;
 	struct sa11x0_softc *psc = (struct sa11x0_softc *)parent;
 	struct sa11x0_attach_args *sa = aux;
@@ -122,6 +136,11 @@ sacc_attach(parent, self, aux)
 		return;
 	}
 
+	skid = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCSBI_SKID);
+
+	printf("%s: SA1111 rev %d.%d\n", sc->sc_dev.dv_xname,
+	       (skid & 0xf0) >> 3, skid & 0xf);
+
 	for(i = 0; i < SACCIC_LEN; i++)
 		sc->sc_intrhand[i] = NULL;
 
@@ -140,7 +159,7 @@ sacc_attach(parent, self, aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search(sa1111_search, self, sa1111_print);
+	config_search(sa1111_search, self, NULL);
 }
 
 static int
@@ -160,7 +179,7 @@ sa1111_print(aux, name)
 	void *aux;
 	const char *name;
 {
-	printf("\n");
+
 	return (UNCONF);
 }
 
