@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.10 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.11 1999/03/25 21:54:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,8 +73,10 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #ifdef _KERNEL
-#include <sys/systm.h>
-#include <sys/lock.h>
+# include <sys/systm.h>
+# include <sys/lock.h>
+#else
+# include <stddef.h>
 #endif
 #include <sys/mount.h>
 #include <ufs/ufs/quota.h>
@@ -110,6 +112,6 @@ lfs_sb_cksum(fs)
 {
 	size_t size;  
 	
-	size = (size_t)&(((struct dlfs *)0)->dlfs_cksum);
+	size = (size_t)offsetof(struct dlfs, dlfs_cksum);
 	return cksum(fs,size);
 }

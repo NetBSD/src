@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.23 1999/03/25 21:39:18 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.24 1999/03/25 21:54:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -631,7 +631,7 @@ lfs_bmapv(p, v, retval)
 			 * here.  Instead, we try an unlocked access.
 			 */
 			vp = ufs_ihashlookup(ump->um_dev, blkp->bi_inode);
-			if (vp != NULL) {
+			if (vp != NULL && !(vp->v_flag & VXLOCK)) {
 				ip = VTOI(vp);
 				if(VOP_ISLOCKED(vp)) {
 					/* printf("inode %d inlocked in bmapv\n",ip->i_number); */
@@ -648,6 +648,9 @@ lfs_bmapv(p, v, retval)
 				if(error) {
 					v_daddr = LFS_UNUSED_DADDR;
 					need_unlock = 0;
+#ifdef DEBUG_LFS
+					printf("lfs_bmapv: vget of ino %d failed with %d)",blkp->bi_inode,error);
+#endif
 					continue;
 				} else {
 					need_unlock = FVG_PUT;
@@ -901,10 +904,12 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 		if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
 			lfs_vref(*vpp);
 			if ((*vpp)->v_flag & VXLOCK) {
-				/* printf("vnode VXLOCKed\n"); */
+				printf("vnode VXLOCKed for ino %d\n",ino);
 				clean_vnlocked++;
 #ifdef LFS_EAGAIN_FAIL
+#if 0 /* XXXX KS */
 				lfs_vunref(*vpp);
+#endif
 				return EAGAIN;
 #endif
 			}
@@ -959,6 +964,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	if (dinp) {
 		error = copyin(dinp, &ip->i_din.ffs_din, DINODE_SIZE);
 		if (error) {
+			printf("lfs_fastvget: dinode copyin failed for ino %d\n", ino);
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
@@ -997,6 +1003,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	 */
 	error = ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
+		printf("ufs_vinit returned %d for ino %d\n", error, ino);
 		lfs_vunref(vp);
 		*vpp = NULL;
 		return (error);
