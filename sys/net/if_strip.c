@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.5 1996/08/02 02:53:42 jonathan Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.6 1996/10/10 22:59:51 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ static void strip_timeout __P((void *x));
 
 
 #ifdef DEBUG
-#define DPRINTF(x)	printf x
+#define DPRINTF(x)	kprintf x
 #else
 #define DPRINTF(x)
 #endif
@@ -346,7 +346,7 @@ stripattach(n)
 
 	for (sc = st_softc; i < NSTRIP; sc++) {
 		sc->sc_unit = i;		/* XXX */
-		sprintf(sc->sc_if.if_xname, "st%d", i++);
+		ksprintf(sc->sc_if.if_xname, "st%d", i++);
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags = 0;
@@ -380,8 +380,8 @@ stripinit(sc)
 		if (p)
 			sc->sc_ep = (u_char *)p + SLBUFSIZE;
 		else {
-			printf("%s: can't allocate buffer\n",
-			       sc->sc_if.if_xname);
+			kprintf("%s: can't allocate buffer\n",
+			    sc->sc_if.if_xname);
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
 		}
@@ -393,8 +393,8 @@ stripinit(sc)
 		if (p)
 			sc->sc_rxbuf = (u_char *)p + SLBUFSIZE - SLMAX;
 		else {
-			printf("%s: can't allocate input buffer\n",
-			       sc->sc_if.if_xname);
+			kprintf("%s: can't allocate input buffer\n",
+			    sc->sc_if.if_xname);
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
 		}
@@ -406,8 +406,8 @@ stripinit(sc)
 		if (p)
 			sc->sc_txbuf = (u_char *)p + SLBUFSIZE - SLMAX;
 		else {
-			printf("%s: can't allocate buffer\n",
-				sc->sc_if.if_xname);
+			kprintf("%s: can't allocate buffer\n",
+			    sc->sc_if.if_xname);
 			
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
@@ -729,13 +729,12 @@ stripoutput(ifp, m, dst, rt)
 
 #ifdef DEBUG
 	   if (rt) {
-	   	printf("stripout, rt: dst af%d gw af%d",
-		       rt_key(rt)->sa_family,
-		       rt->rt_gateway->sa_family);
+	   	kprintf("stripout, rt: dst af%d gw af%d",
+		    rt_key(rt)->sa_family, rt->rt_gateway->sa_family);
 		if (rt_key(rt)->sa_family == AF_INET)
-		  printf(" dst %x",
-			 ((struct sockaddr_in *)rt_key(rt))->sin_addr.s_addr);
-		printf("\n");
+		  kprintf(" dst %x",
+		      ((struct sockaddr_in *)rt_key(rt))->sin_addr.s_addr);
+		kprintf("\n");
 	}
 #endif
 	switch (dst->sa_family) {
@@ -767,8 +766,8 @@ stripoutput(ifp, m, dst, rt)
 		 * `Cannot happen' (see stripioctl).  Someday we will extend
 		 * the line protocol to support other address families.
 		 */
-		printf("%s: af %d not supported\n", sc->sc_if.if_xname,
-			dst->sa_family);
+		kprintf("%s: af %d not supported\n", sc->sc_if.if_xname,
+		    dst->sa_family);
 		m_freem(m);
 		sc->sc_if.if_noproto++;
 		return (EAFNOSUPPORT);
@@ -1162,8 +1161,8 @@ stripinput(c, tp)
 
 #ifdef XDEBUG
  	if (len < 15 || sc->sc_flags & SC_ERROR)
-	  	printf("stripinput: end of pkt, len %d, err %d\n",
-			 len, sc->sc_flags & SC_ERROR); /*XXX*/
+	  	kprintf("stripinput: end of pkt, len %d, err %d\n",
+		    len, sc->sc_flags & SC_ERROR); /*XXX*/
 #endif
 	if(sc->sc_flags & SC_ERROR) {
 		sc->sc_flags &= ~SC_ERROR;
@@ -1318,7 +1317,7 @@ stripioctl(ifp, cmd, data)
 	default:
 
 #ifdef DEBUG
-	  printf("stripioctl: unknown request 0x%lx\n", cmd);
+	  kprintf("stripioctl: unknown request 0x%lx\n", cmd);
 #endif
 		error = EINVAL;
 	}
@@ -1354,7 +1353,7 @@ strip_resetradio(sc, tp)
 	 */
 
 	if ((i = b_to_q(InitString, sizeof(InitString) - 1, &tp->t_outq))) {
-		printf("resetradio: %d chars didn't fit in tty queue\n", i);
+		kprintf("resetradio: %d chars didn't fit in tty queue\n", i);
 		return;
 	}
 	sc->sc_if.if_obytes += sizeof(InitString) - 1;
@@ -1563,8 +1562,8 @@ strip_newpacket(sc, ptr, end)
 
 	/* Catch 'OK' responses which show radio has fallen out of starmode */
 	if (len >= 2 && ptr[0] == 'O' && ptr[1] == 'K') {
-		printf("%s: Radio is back in AT command mode: will reset\n",
-			sc->sc_if.if_xname);
+		kprintf("%s: Radio is back in AT command mode: will reset\n",
+		    sc->sc_if.if_xname);
 		FORCE_RESET(sc);		/* Do reset ASAP */
 	return 0;
 	}
@@ -1624,10 +1623,12 @@ strip_newpacket(sc, ptr, end)
 	packetlen = ((u_short)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
 
 #ifdef DIAGNOSTIC
-/*	printf("Packet %02x.%02x.%02x.%02x\n",
+#if 0
+	kprintf("Packet %02x.%02x.%02x.%02x\n",
 		sc->sc_rxbuf[0], sc->sc_rxbuf[1],
 		sc->sc_rxbuf[2], sc->sc_rxbuf[3]);
-	printf("Got %d byte packet\n", packetlen); */
+	kprintf("Got %d byte packet\n", packetlen);
+#endif
 #endif
 
 	/* Decode remainder of the IP packer */
@@ -1911,7 +1912,7 @@ RecvErr(msg, sc)
 		} else if (*ptr >= 32 && *ptr <= 126)
 			*p++ = *ptr;
 		else {
-			sprintf(p, "\\%02x", *ptr);
+			ksprintf(p, "\\%02x", *ptr);
 			p+= 3;
 		}
 		ptr++;
@@ -1994,15 +1995,15 @@ RecvErr_Message(strip_info, sendername, msg)
 		 *	command mode.
 		 */
 		RecvErr("radio error message:", strip_info);
-		printf("%s: Error! Packet size too big for radio.",
-			if_name);
+		kprintf("%s: Error! Packet size too big for radio.",
+		    if_name);
 		FORCE_RESET(strip_info);
 	}
 	else if (!strncmp(msg, ERR_008, sizeof(ERR_008)-1))
 	{
 		RecvErr("radio error message:", strip_info);
-		printf("%s: Radio name contains illegal character\n",
-			if_name);
+		kprintf("%s: Radio name contains illegal character\n",
+		    if_name);
 	}
 	else if (!strncmp(msg, ERR_009, sizeof(ERR_009)-1))
         	RecvErr("radio error message:", strip_info);
