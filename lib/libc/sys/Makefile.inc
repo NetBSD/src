@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111.2.14 2002/11/11 22:22:58 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.111.2.15 2003/01/08 20:01:13 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -48,7 +48,7 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	getdents.S getfh.S getfsstat.S getgroups.S getitimer.S \
 	__getlogin.S getpeername.S getpgid.S getpgrp.S \
 	getpriority.S getrlimit.S getrusage.S getsid.S getsockname.S \
-	getsockopt.S gettimeofday.S ioctl.S kevent.S kill.S kqueue.S \
+	getsockopt.S gettimeofday.S ioctl.S kevent.S kqueue.S \
 	ktrace.S \
 	lchflags.S lchmod.S lchown.S __lstat13.S lfs_bmapv.S lfs_markv.S \
 	lfs_segclean.S lfs_segwait.S link.S listen.S lutimes.S \
@@ -76,9 +76,9 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
 	timer_settime.S
 
-WEAKASM= sysarch.S close.S fcntl.S fsync.S msgrcv.S msgsnd.S __msync13.S \
+WEAKASM= close.S fcntl.S fsync.S kill.S msgrcv.S msgsnd.S __msync13.S \
 	 nanosleep.S open.S poll.S read.S readv.S \
-	 select.S __sigsuspend14.S wait4.S write.S writev.S
+	 select.S __sigsuspend14.S sysarch.S wait4.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 	issetugid.S sync.S
