@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.6 1998/03/29 22:10:33 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.7 1998/08/21 14:07:37 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ ie_obio_attach(parent, self, aux)
 	bus_space_handle_t bh;
 	struct bootpath *bp;
 	volatile struct ieob *ieo;
-	vm_offset_t pa;
+	paddr_t pa;
 	struct intrhand *ih;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 extern	void myetheraddr(u_char *);	/* should be elsewhere */
@@ -315,11 +315,11 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	 */
 
 #ifdef UVM
-	ie_map = uvm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE,
-		(vm_offset_t)IEOB_ADBASE + sc->sc_msize, TRUE);
+	ie_map = uvm_map_create(pmap_kernel(), (vaddr_t)IEOB_ADBASE,
+		(vaddr_t)IEOB_ADBASE + sc->sc_msize, TRUE);
 #else
-	ie_map = vm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE,
-		(vm_offset_t)IEOB_ADBASE + sc->sc_msize, 1);
+	ie_map = vm_map_create(pmap_kernel(), (vaddr_t)IEOB_ADBASE,
+		(vaddr_t)IEOB_ADBASE + sc->sc_msize, 1);
 #endif
 	if (ie_map == NULL)
 		panic("ie_map");
@@ -367,12 +367,12 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	 *
 	 */
 
-	pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);
+	pa = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr);
 	if (pa == 0)
 		panic("ie pmap_extract");
 
 	pmap_enter(pmap_kernel(), trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
-		   (vm_offset_t)pa | PMAP_NC /*| PMAP_IOC*/,
+		   pa | PMAP_NC /*| PMAP_IOC*/,
 		   VM_PROT_READ | VM_PROT_WRITE, 1);
 
 	/* Map iscp at location zero */
