@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.32 1998/07/10 22:15:47 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.33 1998/07/16 00:46:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -619,7 +619,6 @@ unp_connect(so, nam, p)
 	size_t addrlen;
 	int error;
 	struct nameidata nd;
-	struct mbuf *control;
 
 	/*
 	 * Allocate a temporary sockaddr.  We have to allocate one extra
@@ -668,21 +667,9 @@ unp_connect(so, nam, p)
 			unp3->unp_addrlen = unp2->unp_addrlen;
 		}
 		unp3->unp_flags = unp2->unp_flags;
-		error = unp_connect2(so, so3);
-
-		/*
-		 * If we're SOCK_STREAM and the listener wants credentials,
-		 * provide them now.  (Note, PR_CONNREQUIRED implies
-		 * SOCK_STREAM in the Unix domain.)
-		 */
-		if (error == 0 && unp3->unp_flags & UNP_WANTCRED) {
-			unp3->unp_flags &= ~UNP_WANTCRED;
-			control = unp_addsockcred(p, NULL);
-			if (sbappendcontrol(&so3->so_rcv, NULL, control) == 0)
-				m_freem(control);
-		}
-	} else
-		error = unp_connect2(so, so2);
+		so2 = so3;
+	}
+	error = unp_connect2(so, so2);
  bad:
 	vput(vp);
  bad2:
