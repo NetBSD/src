@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.7 2000/04/24 14:09:42 blymn Exp $	*/
+/*	$NetBSD: acs.c,v 1.8 2000/12/19 21:34:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.7 2000/04/24 14:09:42 blymn Exp $");
+__RCSID("$NetBSD: acs.c,v 1.8 2000/12/19 21:34:24 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -89,10 +89,10 @@ __init_acs(void)
 	ACS_VLINE = '|';
 	ACS_BULLET = 'o';
 
-	if (AC == NULL)
+	if (__tc_ac == NULL)
 		return;
 
-	aofac = AC;
+	aofac = __tc_ac;
 
 	while (*aofac != '\0') {
 		if ((acs = *aofac) == '\0')
@@ -110,6 +110,6 @@ __init_acs(void)
 #endif
 	}
 
-	if (Ea != NULL)
-		tputs(Ea, 0, __cputchar);
+	if (__tc_eA != NULL)
+		tputs(__tc_eA, 0, __cputchar);
 }

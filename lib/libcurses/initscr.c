@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.19 2000/06/15 21:20:16 jdc Exp $	*/
+/*	$NetBSD: initscr.c,v 1.20 2000/12/19 21:34:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.19 2000/06/15 21:20:16 jdc Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.20 2000/12/19 21:34:24 jdc Exp $");
 #endif
 #endif	/* not lint */
 
@@ -80,7 +80,7 @@ initscr(void)
 		return (NULL);
 
 	/* Need either homing or cursor motion for refreshes */
-	if (!HO && !CM)
+	if (!__tc_ho && !__tc_cm)
 		return (NULL);
 	
 	__winlistp = NULL;

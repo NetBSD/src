@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.40 2000/08/02 10:50:49 itojun Exp $	*/
+/*	$NetBSD: refresh.c,v 1.41 2000/12/19 21:34:25 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.40 2000/08/02 10:50:49 itojun Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.41 2000/12/19 21:34:25 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -240,7 +240,7 @@ doupdate(void)
 	if ((win->flags & __CLEAROK) || (curscr->flags & __CLEAROK) || curwin) {
 		if (curscr->wattr & __COLOR)
 			__unsetattr(0);
-		tputs(CL, 0, __cputchar);
+		tputs(__tc_cl, 0, __cputchar);
 		ly = 0;
 		lx = 0;
 		if (!curwin) {
@@ -252,7 +252,7 @@ doupdate(void)
 		__touchwin(win);
 		win->flags &= ~__CLEAROK;
 	}
-	if (!CA) {
+	if (!__CA) {
 		if (win->curx != 0)
 			__cputchar('\n');
 		if (!curwin)
@@ -408,7 +408,7 @@ makech(wy)
 		csp = &curscr->lines[wy]->line[wx];
 
 	nsp = &win->lines[wy]->line[wx];
-	if (CE && !curwin) {
+	if (__tc_ce && !curwin) {
 		cp = &win->lines[wy]->line[win->maxx - 1];
 		lspc = cp->attr & __COLOR;
 		while (cp->ch == ' ' && cp->attr == lspc)
@@ -417,7 +417,7 @@ makech(wy)
 		nlsp = cp - win->lines[wy]->line;
 	}
 	if (!curwin)
-		ce = CE;
+		ce = __tc_ce;
 	else
 		ce = NULL;
 
@@ -457,11 +457,11 @@ makech(wy)
 				__CTRACE("makech: clsp = %d, nlsp = %d\n",
 				    clsp, nlsp);
 #endif
-				if (((clsp - nlsp >= strlen(CE) &&
+				if (((clsp - nlsp >= strlen(__tc_ce) &&
 				    clsp < win->maxx * __LDATASIZE) ||
 				    wy == win->maxy - 1) &&
 				    (!(lspc & __COLOR) ||
-				    ((lspc & __COLOR) && UT))) {
+				    ((lspc & __COLOR) && __tc_ut))) {
 					__unsetattr(0);
 					if ((lspc & __COLOR) !=
 					    (curscr->wattr & __COLOR)) {
@@ -469,7 +469,7 @@ makech(wy)
 						curscr->wattr &= ~__COLOR;
 						curscr->wattr |= lspc & __COLOR;
 					}
-					tputs(CE, 0, __cputchar);
+					tputs(__tc_ce, 0, __cputchar);
 					lx = wx + win->begx;
 					while (wx++ <= clsp) {
 						csp->ch = ' ';
@@ -488,11 +488,11 @@ makech(wy)
 			 */
 			if (!(nsp->attr & __COLOR) &&
 			    (curscr->wattr & __COLOR)) {
-				if (OC != NULL && CC == NULL)
-					tputs(OC, 0, __cputchar);
-				if (OP != NULL) {
-					tputs(OP, 0, __cputchar);
-					curscr->wattr &= __mask_OP;
+				if (__tc_oc != NULL && __tc_cc == NULL)
+					tputs(__tc_oc, 0, __cputchar);
+				if (__tc_op != NULL) {
+					tputs(__tc_op, 0, __cputchar);
+					curscr->wattr &= __mask_op;
 				}
 			}
 
@@ -505,10 +505,10 @@ makech(wy)
 			 * 'mp' and 'mr').  Check to see if we also turn off
 			 * standout, attributes and colour.
 			 */
-			if (off & __TERMATTR && ME != NULL) {
-				tputs(ME, 0, __cputchar);
-				curscr->wattr &= __mask_ME;
-				off &= __mask_ME;
+			if (off & __TERMATTR && __tc_me != NULL) {
+				tputs(__tc_me, 0, __cputchar);
+				curscr->wattr &= __mask_me;
+				off &= __mask_me;
 			}
 
 			/*
@@ -516,10 +516,10 @@ makech(wy)
 			 * Check to see if we also turn off standout,
 			 * attributes and colour.
 			 */
-			if (off & __UNDERSCORE && UE != NULL) {
-				tputs(UE, 0, __cputchar);
-				curscr->wattr &= __mask_UE;
-				off &= __mask_UE;
+			if (off & __UNDERSCORE && __tc_ue != NULL) {
+				tputs(__tc_ue, 0, __cputchar);
+				curscr->wattr &= __mask_ue;
+				off &= __mask_ue;
 			}
 
 			/*
@@ -527,16 +527,16 @@ makech(wy)
 			 * Check to see if we also turn off underscore,
 			 * attributes and colour.
 			 * XXX
-			 * Should use UC if SO/SE not available.
+			 * Should use uc if so/se not available.
 			 */
-			if (off & __STANDOUT && SE != NULL) {
-				tputs(SE, 0, __cputchar);
-				curscr->wattr &= __mask_SE;
-				off &= __mask_SE;
+			if (off & __STANDOUT && __tc_se != NULL) {
+				tputs(__tc_se, 0, __cputchar);
+				curscr->wattr &= __mask_se;
+				off &= __mask_se;
 			}
 
-			if (off & __ALTCHARSET && AE != NULL) {
-				tputs(AE, 0, __cputchar);
+			if (off & __ALTCHARSET && __tc_ae != NULL) {
+				tputs(__tc_ae, 0, __cputchar);
 				curscr->wattr &= ~__ALTCHARSET;
 			}
 
@@ -545,54 +545,56 @@ makech(wy)
 			/*
 			 * Enter standout mode if appropriate.
 			 */
-			if (on & __STANDOUT && SO != NULL && SE != NULL) {
-				tputs(SO, 0, __cputchar);
+			if (on & __STANDOUT && __tc_so != NULL && __tc_se
+			    != NULL) {
+				tputs(__tc_so, 0, __cputchar);
 				curscr->wattr |= __STANDOUT;
 			}
 
 			/*
 			 * Enter underscore mode if appropriate.
 			 * XXX
-			 * Should use UC if US/UE not available.
+			 * Should use uc if us/ue not available.
 			 */
-			if (on & __UNDERSCORE && US != NULL && UE != NULL) {
-				tputs(US, 0, __cputchar);
+			if (on & __UNDERSCORE && __tc_us != NULL &&
+			    __tc_ue != NULL) {
+				tputs(__tc_us, 0, __cputchar);
 				curscr->wattr |= __UNDERSCORE;
 			}
 
 			/*
 			 * Set other attributes as appropriate.
 			 */
-			if (ME != NULL) {
-				if (on & __BLINK && MB != NULL) {
-					tputs(MB, 0, __cputchar);
+			if (__tc_me != NULL) {
+				if (on & __BLINK && __tc_mb != NULL) {
+					tputs(__tc_mb, 0, __cputchar);
 					curscr->wattr |= __BLINK;
 				}
-				if (on & __BOLD && MD != NULL) {
-					tputs(MD, 0, __cputchar);
+				if (on & __BOLD && __tc_md != NULL) {
+					tputs(__tc_md, 0, __cputchar);
 					curscr->wattr |= __BOLD;
 				}
-				if (on & __DIM && MH != NULL) {
-					tputs(MH, 0, __cputchar);
+				if (on & __DIM && __tc_mh != NULL) {
+					tputs(__tc_mh, 0, __cputchar);
 					curscr->wattr |= __DIM;
 				}
-				if (on & __BLANK && MK != NULL) {
-					tputs(MK, 0, __cputchar);
+				if (on & __BLANK && __tc_mk != NULL) {
+					tputs(__tc_mk, 0, __cputchar);
 					curscr->wattr |= __BLANK;
 				}
-				if (on & __PROTECT && MP != NULL) {
-					tputs(MP, 0, __cputchar);
+				if (on & __PROTECT && __tc_mp != NULL) {
+					tputs(__tc_mp, 0, __cputchar);
 					curscr->wattr |= __PROTECT;
 				}
-				if (on & __REVERSE && MR != NULL) {
-					tputs(MR, 0, __cputchar);
+				if (on & __REVERSE && __tc_mr != NULL) {
+					tputs(__tc_mr, 0, __cputchar);
 					curscr->wattr |= __REVERSE;
 				}
 			}
 
 			/* Set/change colour as appropriate. */
-			if ((nsp->attr & __COLOR) &&
-			    cO != NULL && (OC != NULL || OP != NULL)) {
+			if ((nsp->attr & __COLOR) && __tc_Co != NULL &&
+			    (__tc_oc != NULL || __tc_op != NULL)) {
 				if ((nsp->attr & __COLOR) !=
 				    (curscr->wattr & __COLOR)) {
 					__set_color(nsp->attr);
@@ -603,8 +605,9 @@ makech(wy)
 			}
 
 			/* Enter/exit altcharset mode as appropriate. */
-			if (on & __ALTCHARSET && AS != NULL && AE != NULL) {
-				tputs(AS, 0, __cputchar);
+			if (on & __ALTCHARSET && __tc_as != NULL &&
+			    __tc_ae != NULL) {
+				tputs(__tc_as, 0, __cputchar);
 				curscr->wattr |= __ALTCHARSET;
 			}
 
@@ -644,10 +647,10 @@ makech(wy)
 #ifdef DEBUG
 			__CTRACE("makech: putchar(%c)\n", nsp->ch & 0177);
 #endif
-			if (UC && ((nsp->attr & __STANDOUT) ||
+			if (__tc_uc && ((nsp->attr & __STANDOUT) ||
 			    (nsp->attr & __UNDERSCORE))) {
 				__cputchar('\b');
-				tputs(UC, 0, __cputchar);
+				tputs(__tc_uc, 0, __cputchar);
 			}
 			nsp++;
 #ifdef DEBUG
@@ -657,7 +660,7 @@ makech(wy)
 		if (lx == wx)	/* If no change. */
 			break;
 		lx = wx;
-		if (lx >= COLS && AM)
+		if (lx >= COLS && __tc_am)
 			lx = COLS - 1;
 		else
 			if (wx >= win->maxx) {
@@ -972,13 +975,13 @@ scrolln(starts, startw, curs, bot, top)
 	/*
 	 * XXX
 	 * The initial tests that set __noqch don't let us reach here unless
-	 * we have either CS + HO + SF/sf/SR/sr, or AL + DL.  SF/sf and SR/sr
+	 * we have either cs + ho + SF/sf/SR/sr, or AL + DL.  SF/sf and SR/sr
 	 * scrolling can only shift the entire scrolling region, not just a
 	 * part of it, which means that the quickch() routine is going to be
-	 * sadly disappointed in us if we don't have CS as well.
+	 * sadly disappointed in us if we don't have cs as well.
 	 *
-	 * If CS, HO and SF/sf are set, can use the scrolling region.  Because
-	 * the cursor position after CS is undefined, we need HO which gives us
+	 * If cs, ho and SF/sf are set, can use the scrolling region.  Because
+	 * the cursor position after cs is undefined, we need ho which gives us
 	 * the ability to move to somewhere without knowledge of the current
 	 * location of the cursor.  Still call __mvcur() anyway, to update its
 	 * idea of where the cursor is.
@@ -987,60 +990,63 @@ scrolln(starts, startw, curs, bot, top)
 	 * last line of the region to make the scroll happen.
 	 *
 	 * Doing SF/SR or AL/DL appears faster on the screen than either sf/sr
-	 * or al/dl, and, some terminals have AL/DL, sf/sr, and CS, but not
+	 * or AL/DL, and, some terminals have AL/DL, sf/sr, and cs, but not
 	 * SF/SR.  So, if we're scrolling almost all of the screen, try and use
 	 * AL/DL, otherwise use the scrolling region.  The "almost all" is a
 	 * shameless hack for vi.
 	 */
 	if (n > 0) {
-		if (CS != NULL && HO != NULL && (SF != NULL ||
-		    ((AL == NULL || DL == NULL ||
-		    top > 3 || bot + 3 < __virtscr->maxy) && sf != NULL))) {
-			tputs(__tscroll(CS, top, bot + 1), 0, __cputchar);
+		if (__tc_cs != NULL && __tc_ho != NULL && (__tc_SF != NULL ||
+		    ((__tc_AL == NULL || __tc_DL == NULL ||
+		    top > 3 || bot + 3 < __virtscr->maxy) &&
+		    __tc_sf != NULL))) {
+			tputs(__tscroll(__tc_cs, top, bot + 1), 0, __cputchar);
 			__mvcur(oy, ox, 0, 0, 1);
-			tputs(HO, 0, __cputchar);
+			tputs(__tc_ho, 0, __cputchar);
 			__mvcur(0, 0, bot, 0, 1);
-			if (SF != NULL)
-				tputs(__tscroll(SF, n, 0), 0, __cputchar);
+			if (__tc_SF != NULL)
+				tputs(__tscroll(__tc_SF, n, 0), 0, __cputchar);
 			else
 				for (i = 0; i < n; i++)
-					tputs(sf, 0, __cputchar);
-			tputs(__tscroll(CS, 0, (int) __virtscr->maxy), 0, __cputchar);
+					tputs(__tc_sf, 0, __cputchar);
+			tputs(__tscroll(__tc_cs, 0, (int) __virtscr->maxy), 0,
+			    __cputchar);
 			__mvcur(bot, 0, 0, 0, 1);
-			tputs(HO, 0, __cputchar);
+			tputs(__tc_ho, 0, __cputchar);
 			__mvcur(0, 0, oy, ox, 1);
 			return;
 		}
 
 		/* Scroll up the block. */
-		if (SF != NULL && top == 0) {
+		if (__tc_SF != NULL && top == 0) {
 			__mvcur(oy, ox, bot, 0, 1);
-			tputs(__tscroll(SF, n, 0), 0, __cputchar);
+			tputs(__tscroll(__tc_SF, n, 0), 0, __cputchar);
 		} else
-			if (DL != NULL) {
+			if (__tc_DL != NULL) {
 				__mvcur(oy, ox, top, 0, 1);
-				tputs(__tscroll(DL, n, 0), 0, __cputchar);
+				tputs(__tscroll(__tc_DL, n, 0), 0, __cputchar);
 			} else
-				if (dl != NULL) {
+				if (__tc_dl != NULL) {
 					__mvcur(oy, ox, top, 0, 1);
 					for (i = 0; i < n; i++)
-						tputs(dl, 0, __cputchar);
+						tputs(__tc_dl, 0, __cputchar);
 				} else
-					if (sf != NULL && top == 0) {
+					if (__tc_sf != NULL && top == 0) {
 						__mvcur(oy, ox, bot, 0, 1);
 						for (i = 0; i < n; i++)
-							tputs(sf, 0, __cputchar);
+							tputs(__tc_sf, 0,
+							    __cputchar);
 					} else
 						abort();
 
 		/* Push down the bottom region. */
 		__mvcur(top, 0, bot - n + 1, 0, 1);
-		if (AL != NULL)
-			tputs(__tscroll(AL, n, 0), 0, __cputchar);
+		if (__tc_AL != NULL)
+			tputs(__tscroll(__tc_AL, n, 0), 0, __cputchar);
 		else
-			if (al != NULL)
+			if (__tc_al != NULL)
 				for (i = 0; i < n; i++)
-					tputs(al, 0, __cputchar);
+					tputs(__tc_al, 0, __cputchar);
 			else
 				abort();
 		__mvcur(bot - n + 1, 0, oy, ox, 1);
@@ -1049,55 +1055,58 @@ scrolln(starts, startw, curs, bot, top)
 		 * !!!
 		 * n < 0
 		 *
-		 * If CS, HO and SR/sr are set, can use the scrolling region.
+		 * If cs, ho and SR/sr are set, can use the scrolling region.
 		 * See the above comments for details.
 		 */
-		if (CS != NULL && HO != NULL && (SR != NULL ||
-		    ((AL == NULL || DL == NULL ||
-		    top > 3 || bot + 3 < __virtscr->maxy) && sr != NULL))) {
-			tputs(__tscroll(CS, top, bot + 1), 0, __cputchar);
+		if (__tc_cs != NULL && __tc_ho != NULL && (__tc_SR != NULL ||
+		    ((__tc_AL == NULL || __tc_DL == NULL || top > 3 ||
+		    bot + 3 < __virtscr->maxy) && __tc_sr != NULL))) {
+			tputs(__tscroll(__tc_cs, top, bot + 1), 0, __cputchar);
 			__mvcur(oy, ox, 0, 0, 1);
-			tputs(HO, 0, __cputchar);
+			tputs(__tc_ho, 0, __cputchar);
 			__mvcur(0, 0, top, 0, 1);
 
-			if (SR != NULL)
-				tputs(__tscroll(SR, -n, 0), 0, __cputchar);
+			if (__tc_SR != NULL)
+				tputs(__tscroll(__tc_SR, -n, 0), 0, __cputchar);
 			else
 				for (i = n; i < 0; i++)
-					tputs(sr, 0, __cputchar);
-			tputs(__tscroll(CS, 0, (int) __virtscr->maxy), 0, __cputchar);
+					tputs(__tc_sr, 0, __cputchar);
+			tputs(__tscroll(__tc_cs, 0, (int) __virtscr->maxy), 0,
+			    __cputchar);
 			__mvcur(top, 0, 0, 0, 1);
-			tputs(HO, 0, __cputchar);
+			tputs(__tc_ho, 0, __cputchar);
 			__mvcur(0, 0, oy, ox, 1);
 			return;
 		}
 
 		/* Preserve the bottom lines. */
 		__mvcur(oy, ox, bot + n + 1, 0, 1);
-		if (SR != NULL && bot == __virtscr->maxy)
-			tputs(__tscroll(SR, -n, 0), 0, __cputchar);
+		if (__tc_SR != NULL && bot == __virtscr->maxy)
+			tputs(__tscroll(__tc_SR, -n, 0), 0, __cputchar);
 		else
-			if (DL != NULL)
-				tputs(__tscroll(DL, -n, 0), 0, __cputchar);
+			if (__tc_DL != NULL)
+				tputs(__tscroll(__tc_DL, -n, 0), 0, __cputchar);
 			else
-				if (dl != NULL)
+				if (__tc_dl != NULL)
 					for (i = n; i < 0; i++)
-						tputs(dl, 0, __cputchar);
+						tputs(__tc_dl, 0, __cputchar);
 				else
-					if (sr != NULL && bot == __virtscr->maxy)
+					if (__tc_sr != NULL &&
+					    bot == __virtscr->maxy)
 						for (i = n; i < 0; i++)
-							tputs(sr, 0, __cputchar);
+							tputs(__tc_sr, 0,
+							    __cputchar);
 					else
 						abort();
 
 		/* Scroll the block down. */
 		__mvcur(bot + n + 1, 0, top, 0, 1);
-		if (AL != NULL)
-			tputs(__tscroll(AL, -n, 0), 0, __cputchar);
+		if (__tc_AL != NULL)
+			tputs(__tscroll(__tc_AL, -n, 0), 0, __cputchar);
 		else
-			if (al != NULL)
+			if (__tc_al != NULL)
 				for (i = n; i < 0; i++)
-					tputs(al, 0, __cputchar);
+					tputs(__tc_al, 0, __cputchar);
 			else
 				abort();
 		__mvcur(top, 0, oy, ox, 1);
@@ -1107,7 +1116,7 @@ scrolln(starts, startw, curs, bot, top)
 /*
  * __unsetattr --
  *	Unset attributes on curscr.  Leave standout, attribute and colour
- *	modes if necessary (!MS).  Always leave altcharset (xterm at least
+ *	modes if necessary (!ms).  Always leave altcharset (xterm at least
  *	ignores a cursor move if we don't).
  */
 void /* ARGSUSED */
@@ -1116,7 +1125,7 @@ __unsetattr(int checkms)
 	int	isms;
 
 	if (checkms)
-		if (!MS) {
+		if (!__tc_ms) {
 			isms = 1;
 		} else {
 			isms = 0;
@@ -1124,47 +1133,47 @@ __unsetattr(int checkms)
 	else
 		isms = 1;
 #ifdef DEBUG
-	__CTRACE("__unsetattr: checkms = %d, MS = %s, wattr = %08x\n",
-	    checkms, MS ? "TRUE" : "FALSE", curscr->wattr);
+	__CTRACE("__unsetattr: checkms = %d, ms = %s, wattr = %08x\n",
+	    checkms, __tc_ms ? "TRUE" : "FALSE", curscr->wattr);
 #endif
 		
 	/*
-         * Don't leave the screen in standout mode (check against MS).  Check
+         * Don't leave the screen in standout mode (check against ms).  Check
 	 * to see if we also turn off underscore, attributes and colour.
 	 */
 	if (curscr->wattr & __STANDOUT && isms) {
-		tputs(SE, 0, __cputchar);
-		curscr->wattr &= __mask_SE;
+		tputs(__tc_se, 0, __cputchar);
+		curscr->wattr &= __mask_se;
 	}
 	/*
-	 * Don't leave the screen in underscore mode (check against MS).
+	 * Don't leave the screen in underscore mode (check against ms).
 	 * Check to see if we also turn off attributes.  Assume that we
 	 * also turn off colour.
 	 */
 	if (curscr->wattr & __UNDERSCORE && isms) {
-		tputs(UE, 0, __cputchar);
-		curscr->wattr &= __mask_UE;
+		tputs(__tc_ue, 0, __cputchar);
+		curscr->wattr &= __mask_ue;
 	}
 	/*
-	 * Don't leave the screen with attributes set (check against MS).
+	 * Don't leave the screen with attributes set (check against ms).
 	 * Assume that also turn off colour.
 	 */
 	if (curscr->wattr & __TERMATTR && isms) {
-		tputs(ME, 0, __cputchar);
-		curscr->wattr &= __mask_ME;
+		tputs(__tc_me, 0, __cputchar);
+		curscr->wattr &= __mask_me;
 	}
-	/* Don't leave the screen with altcharset set (don't check MS). */
+	/* Don't leave the screen with altcharset set (don't check ms). */
 	if (curscr->wattr & __ALTCHARSET) {
-		tputs(AE, 0, __cputchar);
+		tputs(__tc_ae, 0, __cputchar);
 		curscr->wattr &= ~__ALTCHARSET;
 	}
-	/* Don't leave the screen with colour set (check against MS). */
+	/* Don't leave the screen with colour set (check against ms). */
 	if (curscr->wattr & __COLOR && isms) {
-		if (OC != NULL && CC == NULL)
-			tputs(OC, 0, __cputchar);
-		if (OP != NULL) {
-			tputs(OP, 0, __cputchar);
-			curscr->wattr &= __mask_OP;
+		if (__tc_oc != NULL && __tc_cc == NULL)
+			tputs(__tc_oc, 0, __cputchar);
+		if (__tc_op != NULL) {
+			tputs(__tc_op, 0, __cputchar);
+			curscr->wattr &= __mask_op;
 		}
 	}
 }

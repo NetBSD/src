@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.12 2000/05/06 19:03:39 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.13 2000/12/19 21:34:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.12 2000/05/06 19:03:39 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.13 2000/12/19 21:34:24 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -91,8 +91,9 @@ __change_pair __P((short));
 bool
 has_colors(void)
 {
-	if (cO > 0 && PA > 0 && ((af != NULL && ab != NULL) || iP != NULL ||
-	    iC != NULL || (sB != NULL && sF != NULL)))
+	if (__tc_Co > 0 && __tc_pa > 0 && ((__tc_AF != NULL &&
+	    __tc_AB != NULL) || __tc_Ip != NULL || __tc_Ic != NULL ||
+	    (__tc_Sb != NULL && __tc_Sf != NULL)))
 		return(TRUE);
 	else
 		return(FALSE);
@@ -105,7 +106,7 @@ has_colors(void)
 bool
 can_change_colors(void)
 {
-	if (CC)
+	if (__tc_cc)
 		return(TRUE);
 	else
 		return(FALSE);
@@ -125,36 +126,36 @@ start_color(void)
 		return(ERR);
 
 	/* Max colours and colour pairs */
-	if (cO == -1)
+	if (__tc_Co == -1)
 		COLORS = 0;
 	else {
-		COLORS = cO > MAX_COLORS ? MAX_COLORS : cO;
-		if (PA == -1) {
+		COLORS = __tc_Co > MAX_COLORS ? MAX_COLORS : __tc_Co;
+		if (__tc_pa == -1) {
 			COLOR_PAIRS = 0;
 			COLORS = 0;
 		} else {
-			COLOR_PAIRS = PA > MAX_PAIRS ? MAX_PAIRS : PA;
+			COLOR_PAIRS = __tc_pa > MAX_PAIRS ? MAX_PAIRS : __tc_pa;
 		}
 	}
 	if (!COLORS)
 		return (ERR);
 
 	/* Reset terminal colour and colour pairs. */
-	if (OC != NULL)
-		tputs(OC, 0, __cputchar);
-	if (OP != NULL) {
-		tputs(OP, 0, __cputchar);
-		curscr->wattr &= __mask_OP;
+	if (__tc_oc != NULL)
+		tputs(__tc_oc, 0, __cputchar);
+	if (__tc_op != NULL) {
+		tputs(__tc_op, 0, __cputchar);
+		curscr->wattr &= __mask_op;
 	}
 
 	/* Type of colour manipulation - ANSI/TEK/HP/other */
-	if (af != NULL && ab != NULL)
+	if (__tc_AF != NULL && __tc_AB != NULL)
 		__color_type = COLOR_ANSI;
-	else if (iP != NULL)
+	else if (__tc_Ip != NULL)
 		__color_type = COLOR_HP;
-	else if (iC != NULL)
+	else if (__tc_Ic != NULL)
 		__color_type = COLOR_TEK;
-	else if (sB != NULL && sF != NULL)
+	else if (__tc_Sb != NULL && __tc_Sf != NULL)
 		__color_type = COLOR_OTHER;
 	else
 		return(ERR);		/* Unsupported colour method */
@@ -183,7 +184,7 @@ start_color(void)
 	 * Store these in an attr_t for wattrset()/wattron().
 	 */
 	__nca = __NORMAL;
-	if (nc != -1) {
+	if (__tc_NC != -1) {
 		temp_nc = (attr_t) t_getnum(_cursesi_genbuf, "NC");
 		if (temp_nc & 0x0001)
 			__nca |= __STANDOUT;
@@ -274,7 +275,7 @@ init_pair(short pair, short fore, short back)
 	pairs[pair].fore = fore;
 	pairs[pair].back = back;
 
-	/* XXX: need to initialise HP style (iP) */
+	/* XXX: need to initialise HP style (Ip) */
 
 	if (changed)
 		__change_pair(pair);
@@ -314,7 +315,7 @@ init_color(short color, short red, short green, short blue)
 	colors[color].blue = blue;
 	/* XXX Not yet implemented */
 	return(ERR);
-	/* XXX: need to initialise Tek style (iC) and support HLS */
+	/* XXX: need to initialise Tek style (Ic) and support HLS */
 }
 
 /*
@@ -350,8 +351,8 @@ __set_color(attr_t attr)
 	switch (__color_type) {
 	/* Set ANSI forground and background colours */
 	case COLOR_ANSI:
-		tputs(__parse_cap(af, pairs[pair].fore), 0, __cputchar);
-		tputs(__parse_cap(ab, pairs[pair].back), 0, __cputchar);
+		tputs(__parse_cap(__tc_AF, pairs[pair].fore), 0, __cputchar);
+		tputs(__parse_cap(__tc_AB, pairs[pair].back), 0, __cputchar);
 		break;
 	case COLOR_HP:
 		/* XXX: need to support HP style */
@@ -360,8 +361,8 @@ __set_color(attr_t attr)
 		/* XXX: need to support Tek style */
 		break;
 	case COLOR_OTHER:
-		tputs(__parse_cap(sF, pairs[pair].fore), 0, __cputchar);
-		tputs(__parse_cap(sB, pairs[pair].back), 0, __cputchar);
+		tputs(__parse_cap(__tc_Sf, pairs[pair].fore), 0, __cputchar);
+		tputs(__parse_cap(__tc_Sb, pairs[pair].back), 0, __cputchar);
 		break;
 	}
 }
@@ -373,13 +374,13 @@ __set_color(attr_t attr)
 void
 __restore_colors(void)
 {
-	if (CC != NULL)
+	if (__tc_cc != NULL)
 		switch (__color_type) {
 		case COLOR_HP:
-			/* XXX: need to re-initialise HP style (iP) */
+			/* XXX: need to re-initialise HP style (Ip) */
 			break;
 		case COLOR_TEK:
-			/* XXX: need to re-initialise Tek style (iC) */
+			/* XXX: need to re-initialise Tek style (Ic) */
 			break;
 		}
 }

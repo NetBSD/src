@@ -1,4 +1,4 @@
-/*	$NetBSD: curs_set.c,v 1.3 2000/04/24 14:09:43 blymn Exp $	*/
+/*	$NetBSD: curs_set.c,v 1.4 2000/12/19 21:34:24 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: curs_set.c,v 1.3 2000/04/24 14:09:43 blymn Exp $");
+__RCSID("$NetBSD: curs_set.c,v 1.4 2000/12/19 21:34:24 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -54,34 +54,34 @@ curs_set(int visibility)
 	old_one = old_mode;
 	switch (visibility) {
 		case 0: /* invisible */
-			if (VI != NULL) {
+			if (__tc_vi != NULL) {
 #ifdef DEBUG
 				__CTRACE("curs_set: invisible\n");
 #endif
 				old_mode = 0;
-				tputs(VI, 0, __cputchar);
+				tputs(__tc_vi, 0, __cputchar);
 				return old_one;
 			}
 			break;
 
 		case 1: /* normal */
-			if (VE != NULL) {
+			if (__tc_ve != NULL) {
 #ifdef DEBUG
 				__CTRACE("curs_set: normal\n");
 #endif
 				old_mode = 1;
-				tputs(VE, 0, __cputchar);
+				tputs(__tc_ve, 0, __cputchar);
 				return old_one;
 			}
 			break;
 
 		case 2: /* high visibility */
-			if (VS != NULL) {
+			if (__tc_vs != NULL) {
 #ifdef DEBUG
 				__CTRACE("curs_set: high vis\n");
 #endif
 				old_mode = 2;
-				tputs(VS, 0, __cputchar);
+				tputs(__tc_vs, 0, __cputchar);
 				return old_one;
 			}
 			break;
