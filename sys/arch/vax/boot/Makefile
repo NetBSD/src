@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1996/03/02 14:22:57 ragge Exp $
+#	$NetBSD: Makefile,v 1.9 1996/03/16 11:03:12 ragge Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
@@ -102,6 +102,14 @@ libkern.a: ${KERNOBJ}
 	@ar rv libkern.a `lorder ${KERNOBJ} | tsort`
 
 #
+install: boot xxboot
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 boot ${DESTDIR}/
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 xxboot ${DESTDIR}/usr/mdec
+	rm -f ${DESTDIR}/usr/mdec/raboot
+	ln ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/raboot
+	rm -f ${DESTDIR}/usr/mdec/hpboot
+	ln ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/hpboot
+
 clean::
 	rm -f start.o romread.o bootxx.o init.o xxboot boot racopy \
 	libsvax.a udiv.o urem.o consio.o ${DEVS} edlabel edlabel.o
