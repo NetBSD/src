@@ -1,10 +1,11 @@
-/* $NetBSD: pen.c,v 1.3 1997/10/16 00:32:26 hubertf Exp $ */
+/*	$NetBSD: pen.c,v 1.4 1997/10/17 14:54:46 lukem Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: pen.c,v 1.3 1997/10/16 00:32:26 hubertf Exp $";
+__RCSID("$NetBSD: pen.c,v 1.4 1997/10/17 14:54:46 lukem Exp $");
 #endif
 #endif
 

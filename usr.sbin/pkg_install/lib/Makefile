@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.4 1997/06/05 20:43:28 thorpej Exp $
+# $NetBSD: Makefile,v 1.5 1997/10/17 14:54:24 lukem Exp $
 # Original from FreeBSD, no rcs id.
 
 LIB=		install
-CFLAGS+=	-I${.CURDIR} ${DEBUG}
 SRCS=		exec.c file.c global.c msg.c pen.c plist.c str.c
 SRCS+=		ftpio.c ftperr.c 
 CLEANFILES+=	ftperr.c
