@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.9 1995/07/05 13:34:10 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.10 1995/08/18 10:30:16 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -227,6 +227,8 @@ void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
 #error 4
 #endif
 
+#define OBP_FDNAME	(cputyp == CPU_SUN4M ? "SUNW,fdtwo" : "fd")
+
 int
 fdcmatch(parent, match, aux)
 	struct device *parent;
@@ -236,8 +238,8 @@ fdcmatch(parent, match, aux)
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
-	/* Sun PROMs call the controller an "fd" */
-	if (strcmp("fd", ra->ra_name))
+	/* Sun PROMs call the controller an "fd" or "SUNW,fdtwo" */
+	if (strcmp(OBP_FDNAME, ra->ra_name))
 		return (0);
 	if (ca->ca_bustype == BUS_MAIN) {
 		if (ca->ca_ra.ra_vaddr &&
@@ -388,6 +390,16 @@ fdcattach(parent, self, aux)
 
 	printf(" pri %d, softpri %d: chip 8207%c\n", pri, PIL_FDSOFT, code);
 
+	/*
+	 * Controller and drives are represented by one and the same
+	 * Openprom node, so we can as well check for the floppy boots here.
+	 */
+	if (ca->ca_ra.ra_bp &&
+	    strcmp(ca->ca_ra.ra_bp->name, OBP_FDNAME) == 0 &&
+	    ca->ca_ra.ra_bp->val[0] == 0 && 
+	    ca->ca_ra.ra_bp->val[1] == 0)
+		bootdv = &fdc->sc_dk.dk_dev;
+
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		fa.fa_deftype = NULL;		/* unknown */
@@ -490,11 +502,9 @@ fdattach(parent, self, aux)
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
 	fd->sc_dk.dk_driver = &fddkdriver;
-#if 0
+
 	/* XXX Need to do some more fiddling with sc_dk. */
-	/* XXX sparc's dk_establish is bogus */
 	dk_establish(&fd->sc_dk, &fd->sc_dk.dk_dev);
-#endif
 }
 
 inline struct fd_type *
