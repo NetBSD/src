@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: nfsd,v 1.5 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: nfsd,v 1.6 2004/10/11 14:11:43 lukem Exp $
 #
 
 # PROVIDE: nfsd
-# REQUIRE: mountd
+# REQUIRE: rpcbind mountd
 
 $_rc_subr_loaded . /etc/rc.subr
 
