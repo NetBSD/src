@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.12 2003/08/07 16:33:15 agc Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.13 2003/11/20 16:21:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -69,9 +69,17 @@
  * if all data queued for output is included in the segment.
  */
 const u_char	tcp_outflags[TCP_NSTATES] = {
-    TH_RST|TH_ACK, 0, TH_SYN, TH_SYN|TH_ACK,
-    TH_ACK, TH_ACK,
-    TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
+	TH_RST|TH_ACK,	/* CLOSED */
+	0,		/* LISTEN */
+	TH_SYN,		/* SYN_SENT */
+	TH_SYN|TH_ACK,	/* SYN_RCVD */
+	TH_ACK,		/* ESTABLISHED */
+	TH_ACK,		/* CLOSE_WAIT */
+	TH_FIN|TH_ACK,	/* FIN_WAIT_1 */
+	TH_FIN|TH_ACK,	/* CLOSING */
+	TH_FIN|TH_ACK,	/* LAST_ACK */
+	TH_ACK,		/* FIN_WAIT_2 */
+	TH_ACK,		/* TIME_WAIT */
 };
 #endif
 
