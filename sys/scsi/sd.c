@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.72 1995/07/04 07:21:04 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.73 1995/07/24 06:56:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -543,13 +543,13 @@ sdstart(sd)
 	}
 }
 
-void 
+u_int 
 sdminphys(bp)
 	struct buf *bp;
 {
 	register struct sd_softc *sd = sdcd.cd_devs[SDUNIT(bp->b_dev)];
 
-	(sd->sc_link->adapter->scsi_minphys)(bp);
+	return (sd->sc_link->adapter->scsi_minphys)(bp);
 }
 
 int

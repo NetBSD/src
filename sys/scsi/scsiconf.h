@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.21 1995/07/12 09:42:00 cgd Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.22 1995/07/24 06:56:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -92,7 +92,7 @@ typedef	int			boolean;
  */
 struct scsi_adapter {
 /* 4*/	int		(*scsi_cmd)();
-/* 8*/	void		(*scsi_minphys)();
+/* 8*/	u_int		(*scsi_minphys) __P((struct buf *));
 /*12*/	int		(*open_target_lu)();
 /*16*/	int		(*close_target_lu)();
 };

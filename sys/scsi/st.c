@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.49 1995/07/04 07:21:07 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.50 1995/07/24 06:57:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -974,13 +974,13 @@ ststart(st)
 	} /* go back and see if we can cram more work in.. */
 }
 
-void 
+u_int 
 stminphys(bp)
 	struct buf *bp;
 {
 	register struct st_softc *st = stcd.cd_devs[STUNIT(bp->b_dev)];
 
-	(st->sc_link->adapter->scsi_minphys)(bp);
+	return (st->sc_link->adapter->scsi_minphys)(bp);
 }
 
 int
