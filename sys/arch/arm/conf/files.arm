@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.58 2002/04/12 18:56:58 thorpej Exp $
+#	$NetBSD: files.arm,v 1.59 2002/05/03 02:43:19 thorpej Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -8,6 +8,7 @@ defflag	opt_cputypes.h		CPU_ARM2 CPU_ARM250 CPU_ARM3
 defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_ARM9 CPU_SA110 CPU_SA1100 CPU_SA1110
 				CPU_XSCALE_80200 CPU_XSCALE_80321
+				CPU_XSCALE_PXA2X0
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
 
@@ -71,11 +72,13 @@ file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
 file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
 file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_sa110 |
 							cpu_xscale_80200 |
-							cpu_xscale_80321
+							cpu_xscale_80321 |
+							cpu_xscale_pxa2x0
 file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110
 file	arch/arm/arm/cpufunc_asm_sa11x0.S	cpu_sa110	# XXX
 file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
-						    cpu_xscale_80321
+						    cpu_xscale_80321 |
+						    cpu_xscale_pxa2x0
 file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/procfs_machdep.c		procfs
 file	arch/arm/arm/sig_machdep.c
