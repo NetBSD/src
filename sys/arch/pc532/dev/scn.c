@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.15 1995/04/21 18:36:32 phil Exp $	*/
+/* $NetBSD: scn.c,v 1.16 1995/04/27 07:18:02 phil Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,26 +71,38 @@
 
 #include "sl.h"
 
-int 	scnprobe();
-void    scnattach();
-int     scnintr(), scnparam();
-void	scnstart();
+struct scn_softc {
+	struct device      scn_dev;
+	struct tty        *scn_tty;
+	struct rs232_s     scn_line;
+	char 		   scn_swflags;
+#define SCN_SW_SOFTCAR 0x01
+#define SCN_SW_CLOCAL  0x02
+#define SCN_SW_CRTSCTS 0x04
+};
+
+int 	scnprobe __P((struct device *, void *, void *));
+void    scnattach __P((struct device *, struct device *, void *));
+int     scnintr __P((int));
+int	scnparam __P((struct tty *, struct termios *));
+void	scnstart __P((struct tty *));
+int	scnopen __P((dev_t, int, int, struct proc *));
+int	scnclose __P((dev_t, int, int, struct proc *));
 
 struct cfdriver scncd =
       {	NULL, "scn", scnprobe, scnattach,
-	DV_TTY, sizeof(struct device), NULL, 0 };
+	DV_TTY, sizeof(struct scn_softc), NULL, 0 };
 
-int	scnsoftCAR;
-int	scn_active;
-/* int	nlines = NLINES; */
+/* int	scnsoftCAR;
+int	scn_active;  To Be Deleted ... */
 int	scnconsole = SCN_CONSOLE;
 int	scnconsinit = 0;
 int	scndefaultrate = TTYDEF_SPEED;
 int	scnmajor;
 
 struct duart_info  uart[(NLINES+1)/2];
-struct rs232_s line[NLINES];
-struct tty *scn_tty[NLINES];
+/* struct rs232_s line[NLINES];
+   struct tty *scn_tty[NLINES];  To be deleted. */
 
 struct speedtab scnspeedtab[] = {
 	0,	0x40,	/* code for line-hangup */
@@ -144,13 +156,11 @@ extern int kgdb_debug_init;
 
 
 /* Debug routine to print out the rs line structures. */
-void print_rs(int unit)
+void print_rs (struct rs232_s *rs)
 {
-  struct rs232_s *rs = &line[unit];
-
   printf ("\nline frame overrun parity break\n");
   printf ("tty%1d state=%2x  f=%2d o=%2d p=%2d b=%2d in=%x, out=%x grp=%d\n",
-             unit, rs->framing_errors, rs->overrun_errors,
+             rs->unit, rs->framing_errors, rs->overrun_errors,
 	     rs->parity_errors, rs->break_interrupts, 
 	     rs->uart->i_speed[rs->a_or_b], rs->uart->o_speed[rs->a_or_b],
 	     rs->uart->speed_grp);
@@ -189,7 +199,9 @@ int data_bits;			/* 5, 6, 7, or 8 */
     return (EINVAL);
 
   /* Set up rs pointer. */
-  rs = &line[unit];
+  if (unit >= scncd.cd_ndevs)
+  	return  ENXIO;
+  rs = &((struct scn_softc *)scncd.cd_devs[unit])->scn_line;
   a_or_b = rs->a_or_b;
 
   /* Check out the Speeds. There are two groups of speeds.  If the new
@@ -259,10 +271,10 @@ int data_bits;			/* 5, 6, 7, or 8 */
 
 scnprobe(parent, cf, aux)
 	struct device	*parent;
-	struct cfdata	*cf;
+	void		*cf;
 	void		*aux;
 {
-  int unit = cf->cf_unit;
+  int unit = ((struct cfdata *)cf)->cf_unit;
 
  if (strcmp(*((char **) aux), scncd.cd_name)) {
     return 0;
@@ -301,14 +313,15 @@ scnprobe(parent, cf, aux)
 }
 
 void
-scnattach(parent, dev, aux)
-	struct device	*parent, *dev;
+scnattach(parent, self, aux)
+	struct device	*parent, *self;
 	void		*aux;
 {
-  struct	tty	*tp;
-  u_char	unit = dev->dv_unit;
-  u_char	duart = unit >> 1;
-  register struct rs232_s *rs = &line[unit];
+  struct  scn_softc *sc = (void *) self;
+  struct  tty  *tp;
+  u_char  unit = sc->scn_dev.dv_unit;
+  u_char  duart = unit >> 1;
+  register struct rs232_s *rs = &sc->scn_line;
   int	x;
   int speed;
   long line_base;
@@ -318,8 +331,7 @@ scnattach(parent, dev, aux)
 
   if (unit == 0)  DELAY(5);  /* Let the output go out.... */
 
-  scn_active |= 1 << unit;
-  scnsoftCAR |= 1 << unit;	/* XXX */
+  sc->scn_swflags |= SCN_SW_SOFTCAR;
  
   /* Record unit number, uart, channel a_or_b. */
   rs->unit = unit;
@@ -441,21 +453,28 @@ scnattach(parent, dev, aux)
 /* ARGSUSED */
 scnopen(dev_t dev, int flag, int mode, struct proc *p)
 {
+	struct  scn_softc *sc;
 	register struct tty *tp;
 	register int unit = UNIT(dev);
-	register struct rs232_s *rs = &line[unit];
+	register struct rs232_s *rs; 
 	int error = 0;
 	int x;
 
-	if (unit >= NLINES || (scn_active & (1 << unit)) == 0)
-		return (ENXIO);
+	/* Set up rs pointer. */
+	if (unit >= scncd.cd_ndevs)
+		return ENXIO;
+	sc = scncd.cd_devs[unit];
+	if (!sc)
+		return ENXIO;
+	rs = &sc->scn_line;
 
 	x = spltty();
 
-	if(!scn_tty[unit]) {
-		tp = scn_tty[unit] = ttymalloc();
+	if(!sc->scn_tty) {
+		tp = sc->scn_tty = ttymalloc();
 	} else
-		tp = scn_tty[unit];
+		tp = sc->scn_tty;
+
 	tp->t_oproc = scnstart;
 	tp->t_param = scnparam;
 	tp->t_dev = dev;
@@ -465,10 +484,10 @@ scnopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
-/* 386		if (sc->sc_swflags & COM_SW_CLOCAL)
+		if (sc->scn_swflags & SCN_SW_CLOCAL)
 			tp->t_cflag |= CLOCAL;
-		if (sc->sc_swflags & COM_SW_CRTSCTS)
-			tp->t_cflag |= CRTSCTS;  */
+		if (sc->scn_swflags & SCN_SW_CRTSCTS)
+			tp->t_cflag |= CRTSCTS;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = scndefaultrate;
 		scnparam(tp, &tp->t_termios);
@@ -479,7 +498,7 @@ scnopen(dev_t dev, int flag, int mode, struct proc *p)
 		rx_ints_on (rs);
 
 		/* Carrier?  XXX fix more like i386 */
-		if ((scnsoftCAR & (1 << unit)) || get_dcd(rs))
+		if ((sc->scn_swflags & SCN_SW_SOFTCAR) || get_dcd(rs))
 			tp->t_state |= TS_CARR_ON; 
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0) {
 		splx(x);
@@ -511,10 +530,10 @@ scnclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register scn;
 	register int unit = UNIT(dev);
-	register struct tty *tp = scn_tty[unit];
-	register struct rs232_s *rs = &line[unit];
+	struct   scn_softc *sc = scncd.cd_devs[unit];
+	register struct tty *tp = sc->scn_tty;
+	register struct rs232_s *rs = &sc->scn_line;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 #ifdef KGDB
@@ -533,7 +552,7 @@ scnclose(dev, flag, mode, p)
 #if 0
 	if ((tp->t_state&TS_ISOPEN) == 0) {
 		ttyfree(tp);
-		scn_tty[unit] = (struct tty *)NULL;
+		sc->scn_tty = (struct tty *)NULL;
 	}
 #endif
 	return(0);
@@ -543,7 +562,8 @@ scnread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = scn_tty[UNIT(dev)];
+	register struct scn_softc *sc = scncd.cd_devs[UNIT(dev)];
+	register struct tty *tp = sc->scn_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -552,10 +572,20 @@ scnwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	int unit = UNIT(dev);
-	register struct tty *tp = scn_tty[unit];
+	register struct scn_softc *sc = scncd.cd_devs[UNIT(dev)];
+	register struct tty *tp = sc->scn_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+scntty(dev)
+	dev_t dev;
+{
+	register struct scn_softc *sc = scncd.cd_devs[UNIT(dev)];
+	register struct tty *tp = sc->scn_tty;
+
+	return (tp);
 }
 
 void cts_int (struct rs232_s *rs, struct tty *tp)
@@ -568,11 +598,15 @@ scnintr(int uart_no)
   int line0 = uart_no << 1;
   int line1 = (uart_no << 1)+1;
 
-  register struct tty *tp0 = scn_tty[line0];
-  register struct tty *tp1 = scn_tty[line1];
+  register struct scn_softc *sc0 = scncd.cd_devs[line0];
+  register struct scn_softc *sc1 = scncd.cd_devs[line1];
 
-  register struct rs232_s *rs0 = &line[line0];
-  register struct rs232_s *rs1 = &line[line1];
+  register struct tty *tp0 = sc0->scn_tty;
+  register struct tty *tp1 = sc1->scn_tty;
+
+  register struct rs232_s *rs0 = &sc0->scn_line;
+  register struct rs232_s *rs1 = &sc1->scn_line;
+
   register struct duart_info *uart = rs0->uart;
 
   char   rs_work = TRUE;
@@ -615,11 +649,15 @@ scnintr(int uart_no)
   int line0 = uart_no << 1;
   int line1 = (uart_no << 1)+1;
 
-  register struct tty *tp0 = scn_tty[line0];
-  register struct tty *tp1 = scn_tty[line1];
+  register struct scn_softc *sc0 = scncd.cd_devs[line0];
+  register struct scn_softc *sc1 = scncd.cd_devs[line1];
 
-  register struct rs232_s *rs0 = &line[line0];
-  register struct rs232_s *rs1 = &line[line1];
+  register struct tty *tp0 = sc0->scn_tty;
+  register struct tty *tp1 = sc1->scn_tty;
+
+  register struct rs232_s *rs0 = &sc0->scn_line;
+  register struct rs232_s *rs1 = &sc1->scn_line;
+
   register struct duart_info *uart = rs0->uart;
 
   char   rs_work = TRUE;
@@ -718,14 +756,13 @@ scnioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct tty *tp;
 	register int unit = UNIT(dev);
-	register struct rs232_s *rs = &line[unit];
+	register struct scn_softc *sc = scncd.cd_devs[unit];
+	register struct tty *tp = sc->scn_tty;
+	register struct rs232_s *rs = &sc->scn_line;
 	register scn;
 	register int error;
 
- 
-	tp = scn_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
@@ -822,11 +859,12 @@ scnparam(tp, t)
 {
   int cflag = t->c_cflag;
   int unit = UNIT(tp->t_dev);
+  register struct scn_softc *sc = scncd.cd_devs[unit];
   int parity = LC_NONE,
       stop_bits = LC_STOP1,
       data_bits = LC_BITS8;
   int error;
-  struct rs232_s *rs = &line[unit];
+  struct rs232_s *rs = &sc->scn_line;
 
   /* Is this a hang up? */
   if (t->c_ospeed == B0) {
@@ -879,7 +917,8 @@ scnstart(tp)
 {
 	int s, c;
 	int unit = UNIT(tp->t_dev);
-	struct rs232_s *rs = &line[unit];
+	register struct scn_softc *sc = scncd.cd_devs[unit];
+	struct rs232_s *rs = &sc->scn_line;
  
 	s = spltty();
 	if (tp->t_state & (TS_BUSY|TS_TTSTOP))
