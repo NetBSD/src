@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 1999/07/03 12:30:28 simonb Exp $
+#	$NetBSD: Makefile,v 1.9 1999/07/12 22:05:42 thorpej Exp $
+
+SRCTOP=	../..
+.include <bsd.crypto.mk>
 
 LIB=	ntp
 SRCS=	utvtoa.c uinttoa.c uglydate.c tvtots.c tvtoa.c tstotv.c \
@@ -15,5 +18,9 @@ a_md5decrypt.c a_md512crypt.c
 SRCS += version.c
 
 CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../usr.sbin/xntp/include
+
+.if defined(CRYPTOPATH)
+.include "${CRYPTOPATH}/lib/libntp/Makefile.frag"
+.endif
 
 .include <bsd.lib.mk>

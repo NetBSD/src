@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.33 1999/07/02 05:52:14 itojun Exp $
+#	$NetBSD: Makefile,v 1.34 1999/07/12 22:06:03 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
+
+SRCTOP=	../..
+.include <bsd.crypto.mk>
 
 PROG=	ftpd
 SRCS=	conf.c ftpd.c ftpcmd.y logwtmp.c popen.c
@@ -20,6 +23,10 @@ CPPFLAGS+=-DINET6
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+= -lskey
+.endif
+
+.if defined(CRYPTOPATH)
+.include "${CRYPTOPATH}/libexec/ftpd/Makefile.frag"
 .endif
 
 .include <bsd.prog.mk>

@@ -1,17 +1,15 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.7 1997/10/23 03:24:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1999/07/12 22:05:42 thorpej Exp $
+
+SRCTOP=	../..
+.include <bsd.crypto.mk>
 
 LIB=	telnet
 SRCS=	auth.c encrypt.c genget.c getent.c misc.c
 CPPFLAGS+= -DHAS_CGETENT
 
-# These are the sources that have encryption stuff in them.
-CRYPT_SRC= auth.c enc-proto.h enc_des.c encrypt.c
-CRYPT_SRC+= encrypt.h kerberos.c kerberos5.c krb4encpwd.c
-CRYPT_SRC+= misc.c spx.c Makefile
-NOCRYPT_DIR=${.CURDIR}/Nocrypt
+.if defined(CRYPTOPATH)
+.include "${CRYPTOPATH}/lib/libtelnet/Makefile.frag"
+.endif
 
 .include <bsd.lib.mk>
-
-nocrypt:
-	@echo "Encryption code already removed."
