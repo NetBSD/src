@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayreg.h,v 1.7 1998/08/20 11:42:55 pk Exp $	*/
+/*	$NetBSD: midwayreg.h,v 1.8 1999/03/03 12:58:14 pk Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -21,7 +21,7 @@ typedef caddr_t bus_addr_t;
     ((void) t, ((void)(*(volatile u_int32_t *)((h) + (o)) = (v))))
 #endif
 
-#if defined(sparc)
+#if defined(__sparc__)
 #define vtophys(x) ((u_int32_t)(x))	/* sun4c dvma */
 #endif
 
