@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.29 2003/09/05 00:28:55 mycroft Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.30 2003/09/05 08:12:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.29 2003/09/05 00:28:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.30 2003/09/05 08:12:09 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,13 +95,21 @@ struct scsipi_inquiry_pattern sd_scsibus_patterns[] = {
 };
 
 struct sd_scsibus_mode_sense_data {
-	struct scsipi_mode_header header;
+	/*
+	 * XXX
+	 * We are not going to parse this as-is -- it just has to be large
+	 * enough.
+	 */
+	union {
+		struct scsipi_mode_header small;
+		struct scsipi_mode_header_big big;
+	} header;
 	struct scsi_blk_desc blk_desc;
 	union scsi_disk_pages pages;
 };
 
 static int	sd_scsibus_mode_sense __P((struct sd_softc *,
-		    struct sd_scsibus_mode_sense_data *, int, int));
+		    u_int8_t, void *, size_t, int, int, int *));
 static int	sd_scsibus_get_parms __P((struct sd_softc *,
 		    struct disk_parms *, int));
 static int	sd_scsibus_get_optparms __P((struct sd_softc *,
@@ -170,32 +178,26 @@ sd_scsibus_attach(parent, self, aux)
 }
 
 static int
-sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
+sd_scsibus_mode_sense(sd, byte2, sense, size, page, flags, big)
 	struct sd_softc *sd;
-	struct sd_scsibus_mode_sense_data *scsipi_sense;
+	u_int8_t byte2;
+	void *sense;
+	size_t size;
 	int page, flags;
+	int *big;
 {
-	/*
-	 * Make sure the sense buffer is clean before we do
-	 * the mode sense, so that checks for bogus values of
-	 * 0 will work in case the mode sense fails.
-	 */
-	memset(scsipi_sense, 0, sizeof(*scsipi_sense));
 
-	if ((sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) &&
-	    !(sd->sc_periph->periph_quirks & PQUIRK_NOBIGMODESENSE)) {
-		return scsipi_mode_sense_big(sd->sc_periph, 0, page,
-		   (struct scsipi_mode_header_big*)&scsipi_sense->header,
-		    sizeof(*scsipi_sense),
-		    flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
+	if (sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) {
+		*big = 1;
+		return scsipi_mode_sense_big(sd->sc_periph, byte2, page, sense,
+		    size, flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
 		    SDRETRIES, 6000);
 	} else {
-		return scsipi_mode_sense(sd->sc_periph, 0, page,
-		    &scsipi_sense->header, sizeof(*scsipi_sense),
-		    flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
+		*big = 0;
+		return scsipi_mode_sense(sd->sc_periph, byte2, page, sense,
+		    size, flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
 		    SDRETRIES, 6000);
 	}
-
 }
 
 static int
@@ -208,6 +210,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	u_int64_t sectors;
 	int error;
 
+/* XXXX */
 	dp->blksize = 512;
 	if ((sectors = scsipi_size(sd->sc_periph, flags)) == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
@@ -218,7 +221,8 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	 * However, there are stupid optical devices which does NOT
 	 * support the page 6. Ghaa....
 	 */
-	error = scsipi_mode_sense(sd->sc_periph, 0, 0x3f, &scsipi_sense.header,
+	error = scsipi_mode_sense(sd->sc_periph, 0, 0x3f,
+	    &scsipi_sense.header.small,
 	    sizeof(struct scsipi_mode_header) + sizeof(struct scsi_blk_desc),
 	    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
 
@@ -279,6 +283,7 @@ sd_scsibus_get_simplifiedparms(sd, dp, flags)
 	if (error != 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
+/* XXXX */
 	dp->blksize = _2btol(scsipi_sense.lbs);
 	if (dp->blksize == 0) 
 		dp->blksize = 512;
@@ -314,6 +319,13 @@ sd_scsibus_get_parms(sd, dp, flags)
 	struct sd_scsibus_mode_sense_data scsipi_sense;
 	u_int64_t sectors;
 	int error;
+	int big, bsize;
+	struct scsi_blk_desc *bdesc;
+	union scsi_disk_pages *pages;
+#if 0
+	int i;
+	u_int8_t *p;
+#endif
 
 	dp->rot_rate = 3600;		/* XXX any way of getting this? */
 
@@ -329,9 +341,26 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	sectors = scsipi_size(sd->sc_periph, flags);
 
-	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, 4, flags)) == 0) {
-		union scsi_disk_pages *pages = (void *)(((u_int8_t *)&scsipi_sense.blk_desc) + scsipi_sense.header.blk_desc_len);
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	if ((error = sd_scsibus_mode_sense(sd, 0, &scsipi_sense,
+	    sizeof(scsipi_sense), 4, flags, &big)) == 0) {
+		if (big) {
+			bdesc = (void *)(&scsipi_sense.header.big + 1);
+			bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
+		} else {
+			bdesc = (void *)(&scsipi_sense.header.small + 1);
+			bsize = scsipi_sense.header.small.blk_desc_len;
+		}
+		pages = (void *)(((u_int8_t *)bdesc) + bsize);
 
+#if 0
+printf("page 4 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
+printf("page 4 bsize=%d pg_code=%d sense=%p/%p/%p\n", bsize, pages->rigid_geometry.pg_code, &scsipi_sense, bdesc, pages);
+#endif
+
+		if ((pages->rigid_geometry.pg_code & PGCODE_MASK) != 4)
+			goto page5;
+			
 		SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(pages->rigid_geometry.ncyl),
@@ -352,28 +381,47 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 		if (dp->heads == 0 || dp->cyls == 0)
 			goto page5;
-		if (dp->rot_rate == 0)
-			dp->rot_rate = 3600;
 
-		if (scsipi_sense.header.blk_desc_len >= 8) {
-			dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
+		if (bsize >= 8) {
+			dp->blksize = _3btol(bdesc->blklen);
 			if (dp->blksize == 0)
 				dp->blksize = 512;
 		} else
 			dp->blksize = 512;
+		if (dp->rot_rate == 0)
+			dp->rot_rate = 3600;
 
 		dp->disksize = sectors;
 		dp->disksize512 = (sectors * dp->blksize) / DEV_BSIZE;
 		dp->sectors = sectors / (dp->heads * dp->cyls);	/* XXX */
 
-		printf("page 4 ok\n");
+#if 0
+printf("page 4 ok\n");
+#endif
 		return (SDGP_RESULT_OK);
 	}
 
 page5:
-	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, 5, flags)) == 0) {
-		union scsi_disk_pages *pages = (void *)(((u_int8_t *)&scsipi_sense.blk_desc) + scsipi_sense.header.blk_desc_len);
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	if ((error = sd_scsibus_mode_sense(sd, 0, &scsipi_sense,
+	    sizeof(scsipi_sense), 5, flags, &big)) == 0) {
+		if (big) {
+			bdesc = (void *)(&scsipi_sense.header.big + 1);
+			bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
+		} else {
+			bdesc = (void *)(&scsipi_sense.header.small + 1);
+			bsize = scsipi_sense.header.small.blk_desc_len;
+		}
+		pages = (void *)(((u_int8_t *)bdesc) + bsize);
 
+#if 0
+printf("page 5 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
+printf("page 5 bsize=%d pg_code=%d sense=%p/%p/%p\n", bsize, pages->flex_geometry.pg_code, &scsipi_sense, bdesc, pages);
+#endif
+
+		if ((pages->flex_geometry.pg_code & PGCODE_MASK) != 5)
+			goto fake_it;
+			
 		SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
 		    ("%d cyls, %d heads, %d sec, %d bytes/sec\n",
 		    _3btol(pages->flex_geometry.ncyl),
@@ -384,18 +432,26 @@ page5:
 		dp->heads = pages->flex_geometry.nheads;
 		dp->cyls = _2btol(pages->flex_geometry.ncyl);
 		dp->sectors = pages->flex_geometry.ph_sec_tr;
-		dp->blksize = _2btol(pages->flex_geometry.bytes_s);
+		dp->rot_rate = _2btol(pages->rigid_geometry.rpm);
 
 		if (dp->heads == 0 || dp->cyls == 0 || dp->sectors == 0)
 			goto fake_it;
 
-		if (dp->blksize == 0)
+		if (bsize >= 8) {
+			dp->blksize = _3btol(bdesc->blklen);
+			if (dp->blksize == 0)
+				dp->blksize = 512;
+		} else
 			dp->blksize = 512;
+		if (dp->rot_rate == 0)
+			dp->rot_rate = 3600;
 
 		dp->disksize = sectors;
 		dp->disksize512 = (sectors * dp->blksize) / DEV_BSIZE;
 
-		printf("page 5 ok\n");
+#if 0
+printf("page 5 ok\n");
+#endif
 		return (SDGP_RESULT_OK);
 	}
 
@@ -475,27 +531,42 @@ sd_scsibus_getcache(sd, bitsp)
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct sd_scsibus_mode_sense_data scsipi_sense;
 	int error, bits = 0;
+	int big;
+	union scsi_disk_pages *pages;
 
 	if (periph->periph_version < 2)
 		return (EOPNOTSUPP);
 
-	error = sd_scsibus_mode_sense(sd, &scsipi_sense, 8, 0);
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	error = sd_scsibus_mode_sense(sd, SMS_DBD, &scsipi_sense,
+	    sizeof(scsipi_sense), 8, 0, &big);
 	if (error)
 		return (error);
 
-	if ((scsipi_sense.pages.caching_params.flags & CACHING_RCD) == 0)
+	if (big)
+		pages = (void *)(&scsipi_sense.header.big + 1);
+	else
+		pages = (void *)(&scsipi_sense.header.small + 1);
+
+	if ((pages->caching_params.flags & CACHING_RCD) == 0)
 		bits |= DKCACHE_READ;
-	if (scsipi_sense.pages.caching_params.flags & CACHING_WCE)
+	if (pages->caching_params.flags & CACHING_WCE)
 		bits |= DKCACHE_WRITE;
-	if (scsipi_sense.pages.caching_params.pg_code & PGCODE_PS)
+	if (pages->caching_params.pg_code & PGCODE_PS)
 		bits |= DKCACHE_SAVE;
 
-	error = sd_scsibus_mode_sense(sd, &scsipi_sense,
-	    SMS_PAGE_CTRL_CHANGEABLE|8, 0);
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	error = sd_scsibus_mode_sense(sd, SMS_DBD, &scsipi_sense,
+	    sizeof(scsipi_sense), SMS_PAGE_CTRL_CHANGEABLE|8, 0, &big);
 	if (error == 0) {
-		if (scsipi_sense.pages.caching_params.flags & CACHING_RCD)
+		if (big)
+			pages = (void *)(&scsipi_sense.header.big + 1);
+		else
+			pages = (void *)(&scsipi_sense.header.small + 1);
+
+		if (pages->caching_params.flags & CACHING_RCD)
 			bits |= DKCACHE_RCHANGE;
-		if (scsipi_sense.pages.caching_params.flags & CACHING_WCE)
+		if (pages->caching_params.flags & CACHING_WCE)
 			bits |= DKCACHE_WCHANGE;
 	}
 
@@ -511,53 +582,59 @@ sd_scsibus_setcache(sd, bits)
 {
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct sd_scsibus_mode_sense_data scsipi_sense;
-	int error, size;
+	int error;
 	uint8_t oflags, byte2 = 0;
+	int big;
+	union scsi_disk_pages *pages;
 
 	if (periph->periph_version < 2)
 		return (EOPNOTSUPP);
 
-	error = sd_scsibus_mode_sense(sd, &scsipi_sense, 8, 0); 
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	error = sd_scsibus_mode_sense(sd, SMS_DBD, &scsipi_sense,
+	    sizeof(scsipi_sense), 8, 0, &big); 
 	if (error)
 		return (error);
 
-	oflags = scsipi_sense.pages.caching_params.flags;
+	if (big)
+		pages = (void *)(&scsipi_sense.header.big + 1);
+	else
+		pages = (void *)(&scsipi_sense.header.small + 1);
+
+	oflags = pages->caching_params.flags;
 
 	if (bits & DKCACHE_READ)
-		scsipi_sense.pages.caching_params.flags &= ~CACHING_RCD;
+		pages->caching_params.flags &= ~CACHING_RCD;
 	else
-		scsipi_sense.pages.caching_params.flags |= CACHING_RCD;
+		pages->caching_params.flags |= CACHING_RCD;
 
 	if (bits & DKCACHE_WRITE)
-		scsipi_sense.pages.caching_params.flags |= CACHING_WCE;
+		pages->caching_params.flags |= CACHING_WCE;
 	else
-		scsipi_sense.pages.caching_params.flags &= ~CACHING_WCE;
+		pages->caching_params.flags &= ~CACHING_WCE;
 
-	if (oflags == scsipi_sense.pages.caching_params.flags)
+	if (oflags == pages->caching_params.flags)
 		return (0);
 
-	scsipi_sense.pages.caching_params.pg_code &= PGCODE_MASK;
+	pages->caching_params.pg_code &= PGCODE_MASK;
 
 	if (bits & DKCACHE_SAVE)
 		byte2 |= SMS_SP;
 
-	size = sizeof(scsipi_sense.header) + sizeof(scsipi_sense.blk_desc) +
-	       sizeof(struct scsipi_mode_page_header) +
-	       scsipi_sense.pages.caching_params.pg_length;
-
-	if ((sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) &&
-	    !(sd->sc_periph->periph_quirks & PQUIRK_NOBIGMODESENSE)) {
-		scsipi_sense.header.data_length = 0;
-		/* 2nd length byte in BIG header */
-		scsipi_sense.header.medium_type = 0;
-		error = scsipi_mode_select_big(sd->sc_periph, SMS_PF,
-		   (struct scsipi_mode_header_big*)&scsipi_sense.header,
-		    size, /* XS_CTL_SILENT | */ XS_CTL_DATA_ONSTACK,
+	if (big) {
+		_lto2b(0, scsipi_sense.header.big.data_length);
+		error = scsipi_mode_select_big(sd->sc_periph, byte2|SMS_PF,
+		    (void *)&scsipi_sense, sizeof(scsipi_sense.header.big) +
+		    sizeof(struct scsipi_mode_page_header) +
+		    pages->caching_params.pg_length,
+		    /* XS_CTL_SILENT | */ XS_CTL_DATA_ONSTACK,
 		    SDRETRIES, 10000);
 	} else {
-		scsipi_sense.header.data_length = 0;
-		error = scsipi_mode_select(sd->sc_periph, SMS_PF,
-		    &scsipi_sense.header, size,
+		scsipi_sense.header.small.data_length = 0;
+		error = scsipi_mode_select(sd->sc_periph, byte2|SMS_PF,
+		    (void *)&scsipi_sense, sizeof(scsipi_sense.header.small) +
+		    sizeof(struct scsipi_mode_page_header) +
+		    pages->caching_params.pg_length,
 		    /* XS_CTL_SILENT | */ XS_CTL_DATA_ONSTACK,
 		    SDRETRIES, 10000);
 	}
