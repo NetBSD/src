@@ -1,4 +1,4 @@
-# $NetBSD: md.arm26,v 1.1 2001/07/28 12:08:13 bjh21 Exp $
+# $NetBSD: md.arm26,v 1.2 2001/07/28 12:45:42 bjh21 Exp $
 ./usr/lkm/adosfs.o		base-adosfs-lkm
 ./usr/lkm/cd9660.o		base-sys-lkm
 ./usr/lkm/coda.o		base-coda-lkm
@@ -17,3 +17,4 @@
 ./usr/lkm/procfs.o		base-sys-lkm
 ./usr/lkm/umapfs.o		base-miscfs-lkm
 ./usr/mdec/boot26		base-sysutil-bin
+./usr/mdec/boot26,ff8		base-sysutil-bin
