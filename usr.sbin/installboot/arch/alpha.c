@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.1 2002/04/03 10:21:03 lukem Exp $	*/
+/*	$NetBSD: alpha.c,v 1.2 2002/04/04 00:32:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.1 2002/04/03 10:21:03 lukem Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.2 2002/04/04 00:32:06 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -112,9 +112,10 @@ __RCSID("$NetBSD: alpha.c,v 1.1 2002/04/03 10:21:03 lukem Exp $");
 #include <unistd.h>
 
 #include <dev/dec/dec_boot.h>
-#include <dev/sun/disklabel.h>		// XXX: for SUN_DKMAGIC
 
 #include "installboot.h"
+
+#define	SUN_DKMAGIC	55998		/* XXX: from <dev/sun/disklabel.h> */
 
 int		alpha_parseopt(ib_params *, const char *);
 int		alpha_setboot(ib_params *);
