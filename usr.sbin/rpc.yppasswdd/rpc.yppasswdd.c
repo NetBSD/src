@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.8 2000/12/08 22:23:14 tron Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.9 2001/02/19 23:22:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.8 2000/12/08 22:23:14 tron Exp $");
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.9 2001/02/19 23:22:47 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,8 +54,6 @@ __RCSID("$NetBSD: rpc.yppasswdd.c,v 1.8 2000/12/08 22:23:14 tron Exp $");
 #include <rpcsvc/yppasswd.h>
 
 #include "extern.h"
-
-extern	char *__progname;		/* from crt0.s */
 
 int	noshell, nogecos, nopw;
 char	make_arg[_POSIX2_LINE_MAX] = "make";
@@ -176,6 +174,6 @@ usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-noshell] [-nogecos] [-nopw] "
-	    "[-m arg1 [arg2 ...]]\n", __progname);
+	    "[-m arg1 [arg2 ...]]\n", getprogname());
 	exit(EXIT_FAILURE);
 }

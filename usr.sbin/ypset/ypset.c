@@ -1,4 +1,4 @@
-/*	$NetBSD: ypset.c,v 1.12 2000/04/14 06:26:55 simonb Exp $	*/
+/*	$NetBSD: ypset.c,v 1.13 2001/02/19 23:22:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypset.c,v 1.12 2000/04/14 06:26:55 simonb Exp $");
+__RCSID("$NetBSD: ypset.c,v 1.13 2001/02/19 23:22:53 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -52,8 +52,6 @@ __RCSID("$NetBSD: ypset.c,v 1.12 2000/04/14 06:26:55 simonb Exp $");
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 #include <arpa/inet.h>
-
-extern char *__progname;
 
 int	main __P((int, char *[]));
 static void usage __P((void));
@@ -170,6 +168,6 @@ static void
 usage()
 {
 	(void) fprintf(stderr, "usage: %s [-h host ] [-d domain] server\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
