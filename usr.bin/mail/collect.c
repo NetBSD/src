@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.18 1998/12/19 16:31:57 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.19 1999/02/17 20:48:48 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.18 1998/12/19 16:31:57 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.19 1999/02/17 20:48:48 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,6 +242,10 @@ cont:
 			hadintr++;
 			collint(SIGINT);
 			exit(1);
+
+		case 'x':	/* exit, do not save in dead.letter */
+			goto err;
+
 		case 'h':
 			/*
 			 * Grab a bunch of headers.
@@ -275,6 +279,38 @@ cont:
 			 */
 			hp->h_bcc = cat(hp->h_bcc, extract(&linebuf[2], GBCC));
 			break;
+		case 'i':
+		case 'A':
+		case 'a':
+			/*
+			 * Insert named variable in message
+			 */
+
+			switch(c) {
+				case 'i':			
+					cp = &linebuf[2];
+					while(isspace((unsigned char) *cp))
+						cp++;
+
+					break;
+				case 'a':
+					cp = "sign";
+					break;
+				case 'A':
+					cp = "Sign";
+					break;
+				default:
+					goto err;
+			}
+
+			if(*cp && (cp = value(cp)) != NOSTR) {
+				printf("%s\n", cp);			
+				if(putline(collf, cp, 1) < 0)
+					goto err;
+			}
+
+			break;
+
 		case 'd':
 			strcpy(linebuf + 2, getdeadletter());
 			/* fall into . . . */
@@ -292,14 +328,53 @@ cont:
 				printf("Interpolate what file?\n");
 				break;
 			}
+
 			cp = expand(cp);
 			if (cp == NOSTR)
 				break;
-			if (isdir(cp)) {
+
+			if (*cp == '!') {	/* insert stdout of command */
+				extern char *tempEdit;
+				char *shell;
+				int nullfd;
+				int rc;
+
+				if((nullfd = open("/dev/null", O_RDONLY, 0)) == -1) {
+					perror("/dev/null");
+					break;
+				}
+
+				if ((fbuf = Fopen(tempEdit, "w+")) == NULL) {
+					perror(tempEdit);
+					break;
+				}
+				(void) unlink(tempEdit);
+
+				if ((shell = value("SHELL")) == NOSTR)
+					shell = _PATH_CSHELL;
+
+				rc = run_command(shell, 0, nullfd, fileno(fbuf), "-c", cp+1, NOSTR);
+
+				close(nullfd);
+
+				if (rc < 0) {
+					(void) Fclose(fbuf);
+					break;
+				}
+
+				if (fsize(fbuf) == 0) {
+					fprintf(stderr, "No bytes from command \"%s\"\n", cp+1);
+					(void) Fclose(fbuf);
+					break;
+				}
+
+				rewind(fbuf);
+			}
+			else if (isdir(cp)) {
 				printf("%s: Directory\n", cp);
 				break;
 			}
-			if ((fbuf = Fopen(cp, "r")) == NULL) {
+			else if ((fbuf = Fopen(cp, "r")) == NULL) {
 				perror(cp);
 				break;
 			}
