@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.8 2001/01/01 14:13:51 sommerfeld Exp $
+$NetBSD: UPDATING,v 1.9 2001/01/01 15:29:16 sommerfeld Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,10 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20010101:
+	bsd.subdir.mk committed 20001230 had a bug which caused
+	afterinstall targets to run too soon; update again.
 
 20001230:
 	New share/mk files needed to support .WAIT in SUBDIR variables.
