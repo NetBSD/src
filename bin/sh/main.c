@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1995/05/19 15:08:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1995/05/28 18:09:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	8.5 (Berkeley) 5/19/95";
+static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/28/95";
 #else
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/main.c,v 1.19 1995/05/19 15:08:58 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.20 1995/05/28 18:09:48 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static char rcsid[] = "$Header: /cvsroot/src/bin/sh/main.c,v 1.19 1995/05/19 15:
 #include "output.h"
 #include "parser.h"
 #include "nodes.h"
+#include "expand.h"
 #include "eval.h"
 #include "jobs.h"
 #include "input.h"
@@ -317,9 +318,15 @@ dotcmd(argc, argv)
 	int argc;
 	char **argv; 
 {
+	struct strlist *sp;
 	exitstatus = 0;
+
+	for (sp = cmdenviron; sp ; sp = sp->next)
+		setvareq(savestr(sp->text), VSTRFIXED|VTEXTFIXED);
+
 	if (argc >= 2) {		/* That's what SVR2 does */
 		char *fullname = find_dot_file(argv[1]);
+
 		setinputfile(fullname, 1);
 		commandname = fullname;
 		cmdloop(0);
