@@ -1,4 +1,4 @@
-/* $NetBSD: tcbus.c,v 1.4 2000/01/08 01:02:40 simonb Exp $ */
+/* $NetBSD: tcbus.c,v 1.5 2000/01/09 03:56:11 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.4 2000/01/08 01:02:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.5 2000/01/09 03:56:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.4 2000/01/08 01:02:40 simonb Exp $");
 
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/turbochannel.h>
 
 /*
  * Which system models were configured?
@@ -60,21 +61,20 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.4 2000/01/08 01:02:40 simonb Exp $");
  * We have to pass TC interrupt establish/disestablish requests up to
  * motherboard-specific code.
  */
-void	tc_ds_intr_establish __P((struct device *, void *,
+static void	tc_ds_intr_establish __P((struct device *, void *,
 				int, int (*)(void *), void *));
-void	tc_ds_intr_disestablish __P((struct device *, void *));
-extern void (*tc_enable_interrupt) __P((unsigned, int (*)(void *), void *, int));
+static void	tc_ds_intr_disestablish __P((struct device *, void *));
 /* XXX XXX XXX XXX XXX XXX XXX */
 
-bus_dma_tag_t tc_ds_get_dma_tag __P((int));
+static bus_dma_tag_t tc_ds_get_dma_tag __P((int));
 
-extern struct tcbus_attach_args kn02_tc_desc[];
-extern struct tcbus_attach_args kmin_tc_desc[];
-extern struct tcbus_attach_args xine_tc_desc[];
-extern struct tcbus_attach_args kn03_tc_desc[];
+extern struct tcbus_attach_args kn02_tc_desc[];	/* XXX */
+extern struct tcbus_attach_args kmin_tc_desc[];	/* XXX */
+extern struct tcbus_attach_args xine_tc_desc[];	/* XXX */
+extern struct tcbus_attach_args kn03_tc_desc[];	/* XXX */
 
-int  tcbus_match __P((struct device *, struct cfdata *, void *));
-void tcbus_attach __P((struct device *, struct device *, void *));
+static int	tcbus_match __P((struct device *, struct cfdata *, void *));
+static void	tcbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach tcbus_ca = {
 	sizeof(struct tc_softc), tcbus_match, tcbus_attach,
@@ -138,7 +138,7 @@ tcbus_attach(parent, self, aux)
 /*
  * Return the DMA tag for use by the specified TURBOchannel slot.
  */
-bus_dma_tag_t
+static bus_dma_tag_t
 tc_ds_get_dma_tag(slot)
 	int slot;
 {
@@ -154,7 +154,7 @@ tc_ds_get_dma_tag(slot)
  * interrupt-hanlder functions,  in case we need to recompute masks for
  * CPU interrupt lines.
  */
-void
+static void
 tc_ds_intr_establish(dev, cookie, level, handler, val)
 	struct device *dev;
 	void *cookie;
@@ -182,7 +182,7 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 	 (*tc_enable_interrupt)((unsigned)cookie, handler, val, 1);
 }
 
-void
+static void
 tc_ds_intr_disestablish(dev, arg)
 	struct device *dev;
 	void *arg;
@@ -204,13 +204,13 @@ tc_ds_intr_disestablish(dev, arg)
 #include <machine/fbvar.h>
 #include <pmax/dev/cfbvar.h>
 #include <pmax/dev/mfbvar.h>
+#include <machine/pmioctl.h>	/* XXX shouldn't need this here for pxvar.h */
+#include <pmax/dev/fbreg.h>	/* XXX shouldn't need this here for pxvar.h */
+#include <pmax/dev/pxreg.h>	/* XXX shouldn't need this here for pxvar.h */
+#include <pmax/dev/pxvar.h>
 #include <pmax/dev/sfbvar.h>
 
-int	px_init __P((struct fbinfo*, char *, int, int));
-
 #include <machine/dec_prom.h>
-
-int tcfb_cnattach __P((int));
 
 int
 tcfb_cnattach(slotno)

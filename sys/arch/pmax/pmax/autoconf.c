@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 2000/01/08 01:02:38 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 2000/01/09 03:55:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2000/01/08 01:02:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.44 2000/01/09 03:55:53 simonb Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2000/01/08 01:02:38 simonb Exp $")
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
 #include <machine/sysconf.h>
 
 #include <pmax/dev/device.h>
@@ -84,10 +85,7 @@ int	cpuspeed = 30;	/* approx # instr per usec. */
 tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 
 
-void	configure_scsi __P((void));
-
-void	findroot __P((struct device **, int *));
-void	makebootdev __P((char *));
+static void	findroot __P((struct device **, int *));
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -138,7 +136,7 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 /*
  * Attempt to find the device from which we were booted.
  */
-void
+static void
 findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
