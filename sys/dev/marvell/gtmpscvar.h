@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscvar.h,v 1.1 2003/03/05 22:08:22 matt Exp $	*/
+/*	$NetBSD: gtmpscvar.h,v 1.2 2003/03/17 16:42:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,17 +42,19 @@
  *
  * creation	Mon Apr  9 19:54:33 PDT 2001	cliff
  */
+#ifndef _DEV_MARVELL_GTMPSCVAR_H
+#define	_DEV_MARVELL_GTMPSCVAR_H
 
 #include "opt_marvell.h"
 
 #ifndef GT_MPSC_DEFAULT_BAUD_RATE        
-#define GT_MPSC_DEFAULT_BAUD_RATE	115200
+#define	GT_MPSC_DEFAULT_BAUD_RATE	115200
 #endif
-#define GTMPSC_CLOCK_DIVIDER            8
-#define GTMPSC_MMCR_HI_TCDV_DEFAULT     GTMPSC_MMCR_HI_TCDV_8X
-#define GTMPSC_MMCR_HI_RCDV_DEFAULT     GTMPSC_MMCR_HI_RCDV_8X
-#define BRG_DEFAULT_INPUT_RATE          100000000
-#define BRG_BCR_CDV_MAX                 0xffff
+#define	GTMPSC_CLOCK_DIVIDER            8
+#define	GTMPSC_MMCR_HI_TCDV_DEFAULT     GTMPSC_MMCR_HI_TCDV_8X
+#define	GTMPSC_MMCR_HI_RCDV_DEFAULT     GTMPSC_MMCR_HI_RCDV_8X
+#define	BRG_DEFAULT_INPUT_RATE          100000000
+#define	BRG_BCR_CDV_MAX                 0xffff
 
 /*
  * gtmpsc_poll_dmapage_t - used for MPSC getchar/putchar polled console 
@@ -60,10 +62,10 @@
  *	sdma descriptors must be 16 byte aligned
  *	sdma RX buffer pointers must be 8 byte aligned
  */
-#define GTMPSC_NTXDESC 64
-#define GTMPSC_NRXDESC 64
-#define GTMPSC_TXBUFSZ 16
-#define GTMPSC_RXBUFSZ 16
+#define	GTMPSC_NTXDESC 64
+#define	GTMPSC_NRXDESC 64
+#define	GTMPSC_TXBUFSZ 16
+#define	GTMPSC_RXBUFSZ 16
 
 typedef struct gtmpsc_polltx {
 	sdma_desc_t txdesc;
@@ -81,16 +83,17 @@ typedef struct {
 } gtmpsc_poll_sdma_t; 
 
 /* Size of the Rx FIFO */
-#define GTMPSC_RXFIFOSZ   (GTMPSC_NRXDESC * GTMPSC_RXBUFSZ * 2)
+#define	GTMPSC_RXFIFOSZ   (GTMPSC_NRXDESC * GTMPSC_RXBUFSZ * 2)
 
 /* Flags in sc->gtmpsc_flags */
-#define GTMPSCF_KGDB      1
+#define	GTMPSCF_KGDB      1
 
 typedef struct gtmpsc_softc {
 	struct device gtmpsc_dev;
 	bus_space_tag_t gtmpsc_memt;
+	bus_space_handle_t gtmpsc_memh;
 	bus_dma_tag_t gtmpsc_dmat;
-	struct gt_softc *gtmpsc_gt;		/* parent GT-64260 */
+	void *sc_si;				/* softintr cookie */
 	struct tty *gtmpsc_tty;			/* our tty */
 	int gtmpsc_unit;
 	unsigned int gtmpsc_flags;
@@ -125,10 +128,15 @@ typedef struct gtmpsc_softc {
 } gtmpsc_softc_t;
 
 /* Macros to clear/set/test flags. */
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
+#define	SET(t, f)       (t) |= (f)
+#define	CLR(t, f)       (t) &= ~(f)
+#define	ISSET(t, f)     ((t) & (f))
 
 /* Make receiver interrupt 8 times a second */
-#define GTMPSC_MAXIDLE(baudrate)  ((baudrate) / (10 * 8)) /* There are 10 bits
+#define	GTMPSC_MAXIDLE(baudrate)  ((baudrate) / (10 * 8)) /* There are 10 bits
 							   in a frame */
+
+int gtmpsccnattach(bus_space_tag_t, bus_space_handle_t, int, int, tcflag_t);
+int gtmpsc_is_console(bus_space_tag_t, int);
+
+#endif /* _DEV_MARVELL_GTPSCVAR_H */
