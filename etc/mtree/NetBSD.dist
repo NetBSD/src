@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.101 2000/03/10 20:21:57 windsor Exp $
+#	$NetBSD: NetBSD.dist,v 1.102 2000/04/30 18:10:28 perry Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -904,6 +904,11 @@ named
 # ./usr/share/examples/openssl
 openssl
 # ./usr/share/examples/openssl
+..
+
+# ./usr/share/examples/postfix
+postfix
+# ./usr/share/examples/postfix
 ..
 
 # ./usr/share/examples/supfiles
@@ -1874,11 +1879,6 @@ ms
 # ./usr/share/nls
 nls
 # ./usr/share/nls
-..
-
-# ./usr/share/postfix
-postfix
-# ./usr/share/postfix
 ..
 
 # ./usr/share/sendmail
