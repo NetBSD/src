@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.6 2000/05/22 16:52:03 thorpej Exp $ */
+/*	$NetBSD: ses.c,v 1.7 2000/07/08 17:12:08 sommerfeld Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -136,7 +136,8 @@ int sesclose __P((dev_t, int, int, struct proc *));
 int sesioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 
 static int ses_runcmd	__P((struct ses_softc *, char *, int, char *, int *));
-static void ses_log	__P((struct ses_softc *, const char *, ...));
+static void ses_log	__P((struct ses_softc *, const char *, ...))
+     __attribute__((__format__(__printf__, 2, 3)));
 
 /*
  * General NetBSD kernel stuff.
@@ -1469,7 +1470,7 @@ struct scfg {
 #define	SAFT_FLG2_LOCKDOOR	0x4
 #define	SAFT_PRIVATE		sizeof (struct scfg)
 
-static char *safte_2little = "Too Little Data Returned (%d) at line %d\n";
+static const char safte_2little[] = "Too Little Data Returned (%d) at line %d\n";
 #define	SAFT_BAIL(r, x, k, l)	\
 	if (r >= x) { \
 		SES_LOG(ssc, safte_2little, x, __LINE__);\
