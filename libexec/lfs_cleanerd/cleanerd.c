@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.32 2001/07/18 05:46:43 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.33 2001/07/18 06:24:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.32 2001/07/18 05:46:43 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.33 2001/07/18 06:24:38 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -732,11 +732,11 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 				btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf)
 		   && dtosn(&(fsp->fi_lfs), tba[i].bi_daddr) == id)
 		{
-			syslog(LOG_ERR, "bi_daddr = 0x%x = %db; %p - %p = %d",
+			syslog(LOG_ERR, "bi_daddr = 0x%x = %db; %p - %p = %ld",
 				tba[i].bi_daddr,
 				fsbtob(lfsp, tba[i].bi_daddr - seg_addr),
 				tba[i].bi_bp, seg_buf,
-				((char *)(tba[i].bi_bp) - seg_buf));
+				(long)(((char *)(tba[i].bi_bp) - seg_buf)));
 			syslog(LOG_ERR, "seg %d (0x%x), ino %d lbn %d, 0x%x != 0x%lx",
 			       id, seg_addr,
 			       tba[i].bi_inode,
