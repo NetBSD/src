@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.6 2002/11/17 02:48:09 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.7 2003/03/15 08:44:17 jdolecek Exp $
 ./usr/games/chess
 ./usr/games/hide/adventure
 ./usr/games/hide/arithmetic
@@ -40,3 +40,4 @@
 ./usr/share/games/larn/lfortune
 ./usr/share/man/cat6/chess.0
 ./usr/share/man/man6/chess.6
+./var/games/atc_scores
