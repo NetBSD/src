@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.7 1997/10/19 09:39:35 mrg Exp $	*/
+/*	$NetBSD: extract.c,v 1.7.2.1 1998/05/05 08:54:56 mycroft Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.7 1997/10/19 09:39:35 mrg Exp $");
+__RCSID("$NetBSD: extract.c,v 1.7.2.1 1998/05/05 08:54:56 mycroft Exp $");
 #endif
 #endif
 
@@ -129,6 +129,9 @@ extract_plist(char *home, Package *pkg)
 	    if (!Fake) {
 		char try[FILENAME_MAX];
 
+		if (strrchr(p->name,'\''))
+		  cleanup(0), errx(2, "Bogus filename \"%s\"", p->name);
+		
 		/* first try to rename it into place */
 		snprintf(try, FILENAME_MAX, "%s/%s", Directory, p->name);
 		if (fexists(try)) {
@@ -152,7 +155,7 @@ extract_plist(char *home, Package *pkg)
 		    if (p->name[0] == '/' || TOOBIG(p->name)) {
 			PUSHOUT(Directory);
 		    }
-		    add_count = snprintf(&perm_args[perm_count], maxargs - perm_count, "%s ", p->name);
+		    add_count = snprintf(&perm_args[perm_count], maxargs - perm_count, "'%s' ", p->name);
 		    if (add_count > maxargs - perm_count)
 			cleanup(0), errx(2, "oops, miscounted strings!");
 		    perm_count += add_count;
@@ -166,13 +169,13 @@ extract_plist(char *home, Package *pkg)
 		    else if (p->name[0] == '/' || TOOBIG(p->name)) {
 			PUSHOUT(Directory);
 		    }
-		    add_count = snprintf(&where_args[where_count], maxargs - where_count, " %s", p->name);
+		    add_count = snprintf(&where_args[where_count], maxargs - where_count, " '%s'", p->name);
 		    if (add_count > maxargs - where_count)
 			cleanup(0), errx(2, "oops, miscounted strings!");
 		    where_count += add_count;
 		    add_count = snprintf(&perm_args[perm_count],
 					 maxargs - perm_count,
-					 "%s ", p->name);
+					 "'%s' ", p->name);
 		    if (add_count > maxargs - perm_count)
 			cleanup(0), errx(2, "oops, miscounted strings!");
 		    perm_count += add_count;
