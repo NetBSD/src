@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.32 2000/05/07 20:46:10 wiz Exp $
+.\"	$NetBSD: pci.4,v 1.33 2000/05/15 06:31:56 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -92,6 +92,10 @@ and
 .Tn FibreChannel
 interfaces.
 .It ncr
+Symbios Logic/NCR 53c8xx-family
+.Tn SCSI
+interfaces.
+.It siop
 Symbios Logic/NCR 53c8xx-family
 .Tn SCSI
 interfaces.
@@ -238,7 +242,7 @@ USB UHCI host controller
 .Xr pcic 4 ,
 .Xr ppb 4 ,
 .Xr puc 4 ,
-.Xr rtk 4 ,
+.Xr siop 4 ,
 .Xr sv 4 ,
 .Xr tl 4 ,
 .Xr usb 4
