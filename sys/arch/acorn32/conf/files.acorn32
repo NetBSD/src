@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.20 2004/01/03 14:46:17 chris Exp $
+#	$NetBSD: files.acorn32,v 1.21 2004/01/20 19:58:00 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -32,10 +32,6 @@ attach	wdc at pioc with wdc_pioc
 file	arch/acorn32/mainbus/wdc_pioc.c		wdc_pioc
 
 # Standard parallel driver
-# including dev/ic/lpt.c from the ISA file ... this sux
-device	lpt
-file	dev/ic/lpt.c				lpt		needs-flag
-
 attach	lpt at pioc with lpt_pioc
 file	arch/acorn32/mainbus/lpt_pioc.c		lpt_pioc	needs-flag
 

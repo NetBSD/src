@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.6 2003/09/30 00:35:30 thorpej Exp $
+# $NetBSD: files.acorn26,v 1.7 2004/01/20 19:58:00 jdolecek Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -158,13 +158,6 @@ attach	arcaudio at root
 ###
 # 82C7xx Universal Peripheral Controller
 #
-
-# This section belongs in sys/conf/files, but some ports have their own
-# "lpt" devices, so it has to stay here.
-device	lpt
-file	dev/ic/lpt.c				lpt		needs-flag
-attach	lpt at upc with lpt_upc
-file	dev/ic/lpt_upc.c			lpt_upc
 
 # This section belongs here
 attach	upc at iobus with upc_iobus

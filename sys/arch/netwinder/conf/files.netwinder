@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.30 2003/10/21 08:15:40 skrll Exp $
+#	$NetBSD: files.netwinder,v 1.31 2004/01/20 19:58:00 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -96,11 +96,6 @@ include "dev/pci/files.pci"
 device	pcib: isabus
 attach	pcib at pci
 file	arch/netwinder/pci/pcib.c		pcib
-
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
-# XXX (when the conf/files and files.isa bogons are fixed, this can
-# XXX be fixed as well.)
 
 file	arch/netwinder/pci/pciide_machdep.c	pciide_common
 
