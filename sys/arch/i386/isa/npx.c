@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.42 1995/05/04 00:20:40 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.43 1995/05/04 00:30:56 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -325,6 +325,7 @@ npxattach(parent, self, aux)
 	switch (npx_type) {
 	case NPX_INTERRUPT:
 		printf("\n");
+		lcr0(rcr0() & ~CR0_NE);
 		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
 		    ISA_IPL_NONE, npxintr, 0);
 		break;
