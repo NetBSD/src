@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.3 2002/04/25 23:30:26 kleink Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.4 2002/05/04 20:46:23 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@netbsd.org)
@@ -46,6 +46,15 @@
 
 #include "byteorder.h"
 #include "magic.h"
+
+#ifndef	MBR_PTYPE_PREP
+#define	MBR_PTYPE_PREP		0x41
+#endif
+
+#ifndef	MBR_FLAGS_ACTIVE
+#define	MBR_FLAGS_ACTIVE	0x80
+#endif
+
 
 int
 main(argc, argv)
