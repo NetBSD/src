@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.32.2.2 2001/06/10 18:56:03 he Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.32.2.3 2002/02/10 14:12:10 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -524,7 +524,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	u_long *result;
 {
 	struct extent_region *rp, *myrp, *last, *bestlast;
-	u_long newstart, newend, beststart, bestovh, ovh;
+	u_long newstart, newend, exend, beststart, bestovh, ovh;
 	u_long dontcross;
 	int error;
 
@@ -605,6 +605,12 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	bestlast = NULL;
 
 	/*
+	 * Keep track of end of free region.  This is either the end of extent
+	 * or the start of a region past the subend.
+	 */
+	exend = ex->ex_end;
+
+	/*
 	 * For N allocated regions, we must make (N + 1)
 	 * checks for unallocated space.  The first chunk we
 	 * check is the area from the beginning of the subregion
@@ -647,6 +653,15 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 
 	for (; rp != NULL; rp = rp->er_link.le_next) {
 		/*
+		 * If the region pasts the subend, bail out and see
+		 * if we fit against the subend.
+		 */
+		if (rp->er_start >= subend) {
+			exend = rp->er_start;
+			break;
+		}
+
+		/*
 		 * Check the chunk before "rp".  Note that our
 		 * comparison is safe from overflow conditions.
 		 */
@@ -686,7 +701,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 					newend = newstart + (size - 1);
 					dontcross += boundary;
 					if (!LE_OV(newstart, size, rp->er_start))
-						continue;
+						goto skip;
 				}
 
 				/*
@@ -721,6 +736,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			}
 		}
 
+skip:
 		/*
 		 * Skip past the current region and check again.
 		 */
@@ -800,7 +816,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 		 * fit, or we're taking the first fit, insert
 		 * ourselves into the region list.
 		 */
-		ovh = ex->ex_end - newstart - (size - 1);
+		ovh = exend - newstart - (size - 1);
 		if ((flags & EX_FAST) || (ovh == 0))
 			goto found;
 
