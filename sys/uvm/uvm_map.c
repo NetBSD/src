@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.118 2002/03/08 20:48:47 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.118.2.1 2002/03/12 00:35:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.118 2002/03/08 20:48:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.118.2.1 2002/03/12 00:35:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.118 2002/03/08 20:48:47 thorpej Exp $"
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+
+#include <machine/intr.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -207,16 +209,13 @@ uvm_mapent_alloc(map)
 	struct vm_map *map;
 {
 	struct vm_map_entry *me;
-	int s;
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
 	if (map->flags & VM_MAP_INTRSAFE || cold) {
-		s = splvm();
-		simple_lock(&uvm.kentry_lock);
+		mutex_enter(&uvm.kentry_mutex);
 		me = uvm.kentry_free;
 		if (me) uvm.kentry_free = me->next;
-		simple_unlock(&uvm.kentry_lock);
-		splx(s);
+		mutex_exit(&uvm.kentry_mutex);
 		if (me == NULL) {
 			panic("uvm_mapent_alloc: out of static map entries, "
 			      "check MAX_KMAPENT (currently %d)",
@@ -244,18 +243,15 @@ static __inline void
 uvm_mapent_free(me)
 	struct vm_map_entry *me;
 {
-	int s;
 	UVMHIST_FUNC("uvm_mapent_free"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"<- freeing map entry=0x%x [flags=%d]",
 		me, me->flags, 0, 0);
 	if (me->flags & UVM_MAP_STATIC) {
-		s = splvm();
-		simple_lock(&uvm.kentry_lock);
+		mutex_enter(&uvm.kentry_mutex);
 		me->next = uvm.kentry_free;
 		uvm.kentry_free = me;
-		simple_unlock(&uvm.kentry_lock);
-		splx(s);
+		mutex_exit(&uvm.kentry_mutex);
 	} else if (me->flags & UVM_MAP_KMEM) {
 		pool_put(&uvm_map_entry_kmem_pool, me);
 	} else {
@@ -354,7 +350,7 @@ uvm_map_init()
 	 * now set up static pool of kernel map entrys ...
 	 */
 
-	simple_lock_init(&uvm.kentry_lock);
+	mutex_init(&uvm.kentry_mutex, MUTEX_SPIN, IPL_VM);
 	uvm.kentry_free = NULL;
 	for (lcv = 0 ; lcv < MAX_KMAPENT ; lcv++) {
 		kernel_map_entry[lcv].next = uvm.kentry_free;
