@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	5.4 (Berkeley) 6/10/91
- *	$Id: extern.h,v 1.4 1993/06/01 14:42:11 cgd Exp $
+ *	$Id: extern.h,v 1.5 1994/03/23 04:05:26 mycroft Exp $
  */
 
 __BEGIN_DECLS
@@ -39,15 +39,13 @@ int	c_cchars __P((const void *, const void *));
 int	c_modes __P((const void *, const void *));
 int	csearch __P((char ***, struct info *));
 void	checkredirect __P((void));
-void	err __P((const char *, ...));
 void	gprint __P((struct termios *, struct winsize *, int));
 void	gread __P((struct termios *, char *));
 int	ksearch __P((char ***, struct info *));
 int	msearch __P((char ***, struct info *));
 void	optlist __P((void));
 void	print __P((struct termios *, struct winsize *, int, enum FMT));
-void	warn __P((const char *, ...));
+void	usage __P((void));
 __END_DECLS
 
 extern struct cchar cchars1[], cchars2[];
-extern char *usage;

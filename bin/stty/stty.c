@@ -39,10 +39,11 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)stty.c	5.28 (Berkeley) 6/5/91";*/
-static char rcsid[] = "$Id: stty.c,v 1.8 1994/01/18 18:10:56 jtc Exp $";
+static char rcsid[] = "$Id: stty.c,v 1.9 1994/03/23 04:05:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
@@ -53,7 +54,13 @@ static char rcsid[] = "$Id: stty.c,v 1.8 1994/01/18 18:10:56 jtc Exp $";
 #include "stty.h"
 #include "extern.h"
 
-char *usage = "usage: stty: [-eg] [-f file] [options]";
+void
+usage()
+{
+
+	fprintf(stderr, "usage: stty: [-eg] [-f file] [options]\n");
+	exit(1);
+}
 
 main(argc, argv) 
 	int argc;
@@ -79,7 +86,7 @@ main(argc, argv)
 			break;
 		case 'f':
 			if ((i.fd = open(optarg, O_RDONLY | O_NONBLOCK)) < 0)
-				err("%s: %s", optarg, strerror(errno));
+				err(1, "%s", optarg);
 			break;
 		case 'g':
 			fmt = GFLAG;
@@ -93,11 +100,11 @@ args:	argc -= optind;
 	argv += optind;
 
 	if (ioctl(i.fd, TIOCGETD, &i.ldisc) < 0)
-		err("TIOCGETD: %s", strerror(errno));
+		err(1, "TIOCGETD");
 	if (tcgetattr(i.fd, &i.t) < 0)
-		err("tcgetattr: %s", strerror(errno));
+		err(1, "tcgetattr");
 	if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
-		warn("TIOCGWINSZ: %s\n", strerror(errno));
+		warn("TIOCGWINSZ");
 
 	switch(fmt) {
 	case NOTSET:
@@ -139,12 +146,13 @@ args:	argc -= optind;
 			continue;
 		}
 
-		err("illegal option -- %s\n%s", *argv, usage);
+		warnx("illegal option -- %s", *argv);
+		usage();
 	}
 
 	if (i.set && tcsetattr(i.fd, 0, &i.t) < 0)
-		err("tcsetattr: %s", strerror(errno));
+		err(1, "tcsetattr");
 	if (i.wset && ioctl(i.fd, TIOCSWINSZ, &i.win) < 0)
-		warn("TIOCSWINSZ: %s", strerror(errno));
+		warn("TIOCSWINSZ");
 	exit(0);
 }

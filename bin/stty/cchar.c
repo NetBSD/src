@@ -33,10 +33,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cchar.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: cchar.c,v 1.6 1993/12/10 09:51:38 cgd Exp $";
+static char rcsid[] = "$Id: cchar.c,v 1.7 1994/03/23 04:05:24 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,12 +62,14 @@ struct cchar cchars1[] = {
 	"intr",		VINTR,		CINTR,
 	"kill",		VKILL,		CKILL,
 	"lnext",	VLNEXT,		CLNEXT,
+	"min",		VMIN,		CMIN,
 	"quit",		VQUIT,		CQUIT,
 	"reprint",	VREPRINT, 	CREPRINT,
 	"start",	VSTART,		CSTART,
 	"status",	VSTATUS, 	CSTATUS,
 	"stop",		VSTOP,		CSTOP,
 	"susp",		VSUSP,		CSUSP,
+	"time",		VTIME,		CTIME,
 	"werase",	VWERASE,	CWERASE,
 	NULL,
 };
@@ -83,10 +87,10 @@ csearch(argvp, ip)
 	char ***argvp;
 	struct info *ip;
 {
-	extern char *usage;
 	register struct cchar *cp;
 	struct cchar tmp;
-	char *arg, *name;
+	long val;
+	char *arg, *ep, *name;
 	static int c_cchar __P((const void *, const void *));
 		
 	name = **argvp;
@@ -100,13 +104,32 @@ csearch(argvp, ip)
 		return(0);
 
 	arg = *++*argvp;
-	if (!arg)
-		err("option requires an argument -- %s\n%s", name, usage);
+	if (!arg) {
+		warnx("option requires an argument -- %s", name);
+		usage();
+	}
 
 #define CHK(s)  (*arg == s[0] && !strcmp(arg, s))
 	if (CHK("undef") || CHK("<undef>"))
 		ip->t.c_cc[cp->sub] = _POSIX_VDISABLE;
-	else if (arg[0] == '^')
+	else if (cp->sub == VMIN || cp->sub == VTIME) {
+		val = strtol(arg, &ep, 10);
+		if (val == _POSIX_VDISABLE) {
+			warnx("value of %ld would disable the option -- %s",
+			    val, name);
+			usage();
+		}
+		if (val > UCHAR_MAX) {
+			warnx("maximum option value is %d -- %s",
+			    UCHAR_MAX, name);
+			usage();
+		}
+		if (*ep != '\0') {
+			warnx("option requires a numeric argument -- %s", name);
+			usage();
+		}
+		ip->t.c_cc[cp->sub] = val;
+	} else if (arg[0] == '^')
 		ip->t.c_cc[cp->sub] = (arg[1] == '?') ? 0177 :
 		    (arg[1] == '-') ? _POSIX_VDISABLE : arg[1] & 037;
 	else

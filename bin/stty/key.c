@@ -33,10 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)key.c	5.3 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: key.c,v 1.7 1994/03/13 14:28:19 cgd Exp $";
+static char rcsid[] = "$Id: key.c,v 1.8 1994/03/23 04:05:29 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -110,10 +111,14 @@ ksearch(argvp, ip)
 	if (!(kp = (struct key *)bsearch(&tmp, keys,
 	    sizeof(keys)/sizeof(struct key), sizeof(struct key), c_key)))
 		return(0);
-	if (!(kp->flags & F_OFFOK) && ip->off)
-		err("illegal option -- %s\n%s", name, usage);
-	if (kp->flags & F_NEEDARG && !(ip->arg = *++*argvp))
-		err("option requires an argument -- %s\n%s", name, usage);
+	if (!(kp->flags & F_OFFOK) && ip->off) {
+		warnx("illegal option -- %s", name);
+		usage();
+	}
+	if (kp->flags & F_NEEDARG && !(ip->arg = *++*argvp)) {
+		warnx("option requires an argument -- %s", name);
+		usage();
+	}
 	kp->f(ip);
 	return(1);
 }
@@ -278,5 +283,5 @@ f_tty(ip)
 
 	tmp = TTYDISC;
 	if (ioctl(0, TIOCSETD, &tmp) < 0)
-		err("TIOCSETD: %s", strerror(errno));
+		err(1, "TIOCSETD");
 }
