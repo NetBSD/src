@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.17 2004/04/10 23:31:52 darrenr Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.18 2004/04/15 14:56:57 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -71,6 +71,7 @@ struct bpf_d {
 	struct bpf_insn *bd_filter; 	/* filter code */
 	u_long		bd_rcount;	/* number of packets received */
 	u_long		bd_dcount;	/* number of packets dropped */
+	u_long		bd_ccount;	/* number of packets captured */
 
 	u_char		bd_promisc;	/* true if listening promiscuously */
 	u_char		bd_state;	/* idle, waiting, or timed out */
