@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.10.2.1 1997/11/04 21:42:17 thorpej Exp $	*/
+/*	$NetBSD: cgram.y,v 1.10.2.2 1997/11/12 02:36:39 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,10 +34,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.10.2.1 1997/11/04 21:42:17 thorpej Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.10.2.2 1997/11/12 02:36:39 mellon Exp $";
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 #include <limits.h>
 
 #include "lint1.h"
