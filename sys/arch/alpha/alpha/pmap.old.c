@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.67 1998/03/24 22:02:44 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.68 1998/03/25 22:52:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.67 1998/03/24 22:02:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.68 1998/03/25 22:52:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1756,12 +1756,9 @@ pmap_kremove(va, size)
 		 */
 		pte = &VPT[VPT_INDEX(va)];
 #endif
-		*pte = PG_NV;
-		ALPHA_TBIS(va);
+		if (pmap_pte_v(pte))
+			pmap_remove_mapping(pmap_kernel(), va, pte);
 	}
-
-	/* Probably isn't needed, but what the hell... */
-	alpha_pal_imb();
 }
 #endif /* PMAP_NEW */
 
