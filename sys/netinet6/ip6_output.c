@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.35 2001/04/11 04:57:53 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.36 2001/06/11 13:49:18 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -101,10 +101,6 @@
 #include "loop.h"
 
 #include <net/net_osdep.h>
-
-#ifdef IPV6FIREWALL
-#include <netinet6/ip6_fw.h>
-#endif
 
 #ifdef PFIL_HOOKS
 extern struct pfil_head inet6_pfil_hook;	/* XXX */
