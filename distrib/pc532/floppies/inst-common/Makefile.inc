@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1995/11/28 23:58:56 jtc Exp $ 
+#	$NetBSD: Makefile.inc,v 1.5.4.1 1996/06/26 18:40:34 phil Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -39,7 +39,7 @@ all: netbsd
 
 inject.fs: ${CBIN} ${LISTS} netbsd.gz 
 	(cd ${PWDSRC}; ${MAKE})
-	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o
+	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o -lutil
 	dd if=/dev/zero of=${.TARGET} bs=128k count=16
 	vnconfig -v -c ${VND_DEV} ${.TARGET}
 	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV} rd
@@ -59,7 +59,6 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	(cd ${COMMONDIR}; ${MAKE} download.o)
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
