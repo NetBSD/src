@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_x86_64.c,v 1.2 2001/08/05 03:33:16 matt Exp $	*/
+/*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_x86_64.c,v 1.2 2001/08/05 03:33:16 matt Exp $");
+__RCSID("$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,11 +72,6 @@ __RCSID("$NetBSD: kvm_x86_64.c,v 1.2 2001/08/05 03:33:16 matt Exp $");
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
-#ifndef btop
-#define	btop(x)		(((unsigned)(x)) >> PGSHIFT)	/* XXX */
-#define	ptob(x)		((caddr_t)((x) << PGSHIFT))	/* XXX */
-#endif
-
 void
 _kvm_freevtop(kd)
 	kvm_t *kd;
@@ -105,12 +100,11 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-#if 0	/* tbd */
 	cpu_kcore_hdr_t *cpu_kh;
 	u_long page_off;
 	pd_entry_t pde;
 	pt_entry_t pte;
-	u_long pde_pa, pte_pa;
+	paddr_t pde_pa, pte_pa;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
@@ -121,29 +115,61 @@ _kvm_kvatop(kd, va, pa)
 	page_off = va & PGOFSET;
 
 	/*
-	 * Find and read the page directory entry.
+	 * Find and read all entries to get to the pa.
 	 */
-	pde_pa = cpu_kh->ptdpaddr + (pdei(va) * sizeof(pd_entry_t));
+
+	/*
+	 * Level 4.
+	 */
+	pde_pa = cpu_kh->ptdpaddr + (pl4_i(va) * sizeof(pd_entry_t));
 	if (pread(kd->pmfd, (void *)&pde, sizeof(pde),
 	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
-		_kvm_syserr(kd, 0, "could not read PDE");
+		_kvm_syserr(kd, 0, "could not read PT level 4 entry");
+		goto lose;
+	}
+	if ((pde & PG_V) == 0) {
+		_kvm_err(kd, 0, "invalid translation (invalid level 4 PDE)");
 		goto lose;
 	}
 
 	/*
-	 * Find and read the page table entry.
+	 * Level 3.
 	 */
-	if ((pde & PG_V) == 0) {
-		_kvm_err(kd, 0, "invalid translation (invalid PDE)");
+	pde_pa = (pde_pa + PG_FRAME) + (pl3_i(va) * sizeof(pd_entry_t));
+	if (pread(kd->pmfd, (void *)&pde, sizeof(pde),
+	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
+		_kvm_syserr(kd, 0, "could not read PT level 3 entry");
 		goto lose;
 	}
-	pte_pa = (pde & PG_FRAME) + (ptei(va) * sizeof(pt_entry_t));
+	if ((pde & PG_V) == 0) {
+		_kvm_err(kd, 0, "invalid translation (invalid level 3 PDE)");
+		goto lose;
+	}
+
+	/*
+	 * Level 2.
+	 */
+	pde_pa = (pde_pa & PG_FRAME) + (pl2_i(va) * sizeof(pd_entry_t));
+	if (pread(kd->pmfd, (void *)&pde, sizeof(pde),
+	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
+		_kvm_syserr(kd, 0, "could not read PT level 2 entry");
+		goto lose;
+	}
+	if ((pde & PG_V) == 0) {
+		_kvm_err(kd, 0, "invalid translation (invalid level 2 PDE)");
+		goto lose;
+	}
+
+
+	/*
+	 * Level 1.
+	 */
+	pte_pa = (pde_pa & PG_FRAME) + (pl1_i(va) * sizeof(pt_entry_t));
 	if (pread(kd->pmfd, (void *) &pte, sizeof(pte),
 	    _kvm_pa2off(kd, pte_pa)) != sizeof(pte)) {
 		_kvm_syserr(kd, 0, "could not read PTE");
 		goto lose;
 	}
-
 	/*
 	 * Validate the PTE and return the physical address.
 	 */
@@ -155,7 +181,6 @@ _kvm_kvatop(kd, va, pa)
 	return (int)(NBPG - page_off);
 
  lose:
-#endif
 	*pa = (u_long)~0L;
 	return (0);
 }
