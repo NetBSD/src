@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.57 1999/03/24 05:51:25 mrg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.57.2.1 1999/10/17 22:29:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -184,6 +184,7 @@ schedcpu(arg)
 	register struct proc *p;
 	register int s;
 	register unsigned int newcpu;
+	int clkhz;
 
 	wakeup((caddr_t)&lbolt);
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
@@ -206,15 +207,15 @@ schedcpu(arg)
 		/*
 		 * p_pctcpu is only for ps.
 		 */
-		KASSERT(profhz);
+		clkhz = stathz != 0 ? stathz : hz;
 #if	(FSHIFT >= CCPU_SHIFT)
-		p->p_pctcpu += (profhz == 100)?
+		p->p_pctcpu += (clkhz == 100)?
 			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
                 	100 * (((fixpt_t) p->p_cpticks)
-				<< (FSHIFT - CCPU_SHIFT)) / profhz;
+				<< (FSHIFT - CCPU_SHIFT)) / clkhz;
 #else
 		p->p_pctcpu += ((FSCALE - ccpu) *
-			(p->p_cpticks * FSCALE / profhz)) >> FSHIFT;
+			(p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
 #endif
 		p->p_cpticks = 0;
 		newcpu = (u_int)decay_cpu(loadfac, p->p_estcpu);
