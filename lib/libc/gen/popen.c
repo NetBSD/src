@@ -36,11 +36,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)popen.c	5.15 (Berkeley) 2/23/91";*/
-static char rcsid[] = "$Id: popen.c,v 1.3 1993/08/21 00:11:47 jtc Exp $";
+static char rcsid[] = "$Id: popen.c,v 1.4 1993/08/23 21:56:31 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
-#include <sys/signal.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <stdio.h>
@@ -126,11 +125,9 @@ pclose(iop)
 	if (pids == NULL || pids[fdes = fileno(iop)] == 0)
 		return (-1);
 	(void) fclose(iop);
-	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
 	do {
 		pid = waitpid(pids[fdes], &pstat, 0);
 	} while (pid == -1 && errno == EINTR);
-	(void) sigsetmask(omask);
 	pids[fdes] = 0;
 	return (pid == -1 ? -1 : pstat);
 }
