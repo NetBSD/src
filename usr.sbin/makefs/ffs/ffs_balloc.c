@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.2 2001/10/28 13:14:06 lukem Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.3 2001/11/22 02:47:26 lukem Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ffs_balloc.c,v 1.2 2001/10/28 13:14:06 lukem Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.3 2001/11/22 02:47:26 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -50,9 +50,9 @@ __RCSID("$NetBSD: ffs_balloc.c,v 1.2 2001/10/28 13:14:06 lukem Exp $");
 #include <stdio.h>
 #include <string.h>
 
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ffs/fs.h>
+#include "ufs/ufs/ufs_bswap.h"
+#include "ufs/ufs/inode.h"
+#include "ufs/ffs/fs.h"
 
 #include "ffs/buf.h"
 #include "ffs/ffs_extern.h"
