@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.412 2002/03/19 22:02:36 bouyer Exp $
+$NetBSD: pcidevs,v 1.413 2002/03/27 13:11:37 abs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1032,6 +1032,7 @@ product COMPEX RL100TX		0x9881	RL100-TX 10/100 Ethernet
 
 /* Conexant Systems products  */
 product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
+product CONEXANT 56KFAXMODEM	0x1085	HW 56K Fax Modem
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
