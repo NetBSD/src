@@ -1,11 +1,11 @@
-#	$NetBSD: P5064,v 1.6 2001/06/12 22:32:51 thorpej Exp $
+#	$NetBSD: P5064,v 1.7 2001/06/22 14:14:16 thorpej Exp $
 #
 # Algorithmics P-5064 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P5064-$Revision: 1.6 $"
+#ident 		"P5064-$Revision: 1.7 $"
 
 maxusers 32
 
@@ -35,6 +35,7 @@ file-system	NTFS		# Windows/NT file system (experimental)
 file-system	NFS		# Sun NFS-compatible file system client
 file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	PROCFS		# Process file system (/proc)
+file-system	FDESC		# /dev/fd file system
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
