@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.3 1995/05/28 08:50:17 mycroft Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.4 1995/05/28 08:52:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -619,10 +619,10 @@ linux_getsockopt(p, args, retval)
 			name = linux_to_bsd_ip_sockopt(lga.optname);
 			break;
 		case IPPROTO_TCP:
-			name = linux_to_bsd_tcp_sockopt(lsa.optname);
+			name = linux_to_bsd_tcp_sockopt(lga.optname);
 			break;
 		case IPPROTO_UDP:
-			name = linux_to_bsd_udp_sockopt(lsa.optname);
+			name = linux_to_bsd_udp_sockopt(lga.optname);
 			break;
 		default:
 			return EINVAL;
