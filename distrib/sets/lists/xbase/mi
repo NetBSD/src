@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37 2004/01/30 08:44:11 lukem Exp $
+# $NetBSD: mi,v 1.38 2004/02/09 07:59:01 lukem Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
@@ -764,6 +764,7 @@
 ./usr/X11R6/lib/X11/xman.help
 ./usr/X11R6/libexec/chooser
 ./usr/X11R6/libexec/rstartd.real
+./usr/X11R6/man/whatis.db			-unknown-		man
 ./usr/X11R6/man/cat1/Xmark.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/appres.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/atobm.0			-unknown-		.cat
