@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.448 2002/07/04 20:51:35 rjs Exp $
+$NetBSD: pcidevs,v 1.449 2002/07/05 13:59:14 enami Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -541,6 +541,7 @@ vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics, Inc.
 vendor TITAN		0x14d2  Titan Electronics, Inc.
+vendor AVLAB		0x14db  Avlab Technology, Inc.
 vendor INVERTEX		0x14e1	Invertex
 vendor BROADCOM		0x14e4	Broadcom Corporation
 vendor CONEXANT		0x14f1	Conexant Systems
@@ -928,6 +929,9 @@ product AVANCE AVG2302	0x2302	AVG2302
 product AVANCE2 ALG2301	0x2301	ALG2301
 product AVANCE2 ALG2302	0x2302	ALG2302
 product AVANCE2 ALS4000	0x4000	ALS4000 Audio
+
+/* Avlab Technology products */
+product AVLAB LPPCI4S	0x2150	Low Profile PCI 4 Serial
 
 /* CCUBE products */
 product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
