@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.312 2002/03/17 22:14:05 tshiozak Exp $
+# $NetBSD: mi,v 1.313 2002/03/22 10:11:13 martti Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -628,6 +628,7 @@
 ./usr/sbin/edquota		base-sysutil-bin
 ./usr/sbin/envstat		base-sysutil-bin
 ./usr/sbin/eshconfig		base-sysutil-bin
+./usr/sbin/etcupdate		base-sysutil-bin
 ./usr/sbin/faithd		base-router-bin
 ./usr/sbin/fixmount		base-nfsclient-bin
 ./usr/sbin/fsinfo		base-sysutil-bin
