@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.28 1998/03/21 20:11:31 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.29 1998/04/07 20:18:19 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -410,7 +410,7 @@ cgtwommap(dev, off, prot)
 {
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 	vme_mod_t mod;
-	int handle;
+	bus_space_handle_t bh;
 
 	if (off & PGOFSET)
 		panic("cgtwommap");
@@ -422,8 +422,8 @@ cgtwommap(dev, off, prot)
 	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D | VMEMOD_D32;
 
 	if (vme_bus_mmap_cookie(sc->sc_ct, sc->sc_paddr + off,
-				mod, sc->sc_bt, &handle) != 0)
+				mod, sc->sc_bt, &bh) != 0)
 		panic("cgtwommap");
 
-	return (handle);
+	return ((int)bh);
 }
