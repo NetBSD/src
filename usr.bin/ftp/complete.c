@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.21 1999/03/08 03:09:08 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.21.2.1 1999/06/25 01:14:57 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,11 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SMALL
-
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.21 1999/03/08 03:09:08 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.21.2.1 1999/06/25 01:14:57 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -57,6 +55,8 @@ __RCSID("$NetBSD: complete.c,v 1.21 1999/03/08 03:09:08 lukem Exp $");
 #include <string.h>
 
 #include "ftp_var.h"
+
+#ifndef NO_EDITCOMPLETE
 
 static int	     comparstr		__P((const void *, const void *));
 static unsigned char complete_ambiguous	__P((char *, int, StringList *));
@@ -219,11 +219,11 @@ complete_local(word, list)
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
 
-#ifndef __SVR4
-		if (len > dp->d_namlen)
+#if defined(__SVR4) || defined(__linux__)
+		if (len > strlen(dp->d_name))
 			continue;
 #else
-		if (len > strlen(dp->d_name))
+		if (len > dp->d_namlen)
 			continue;
 #endif
 		if (strncmp(file, dp->d_name, len) == 0) {
@@ -411,4 +411,4 @@ complete(el, ch)
 	return (CC_ERROR);
 }
 
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
