@@ -32,7 +32,6 @@
 #if NGRFCV > 0
 
 #undef CV64CONSOLE
-
 /*
  * Graphics routines for the CyberVision 64 board, using the S3 Trio64.
  *
@@ -136,7 +135,7 @@ grfcv_cnprobe()
 {
 	int rv;
 	rv = CN_DEAD;
-	return(rv);
+	return (rv);
 }
 
 /* standard driver stuff */
@@ -167,20 +166,20 @@ cv_has_4mb (volatile char *fb)
 	*testfbw = 0x87654321;
 	testfbr = (volatile unsigned long *)(fb + READ_OFFSET);
 	if (*testfbr != 0x87654321)
-		return(0);
+		return (0);
 	/* upper memory region */
 	testfbw = (volatile unsigned long *)(fb + 0x00200000);
 	testfbr = (volatile unsigned long *)(fb + 0x00200000 + READ_OFFSET);
 	*testfbw = 0x87654321;
 	if (*testfbr != 0x87654321)
-		return(0);
+		return (0);
 	*testfbw = 0xAAAAAAAA;
 	if (*testfbr != 0xAAAAAAAA)
-		return(0);
+		return (0);
 	*testfbw = 0x55555555;
 	if (*testfbr != 0x55555555)
-		return(0);
-	return(1);
+		return (0);
+	return (1);
 }
 
 int
@@ -195,12 +194,12 @@ grfcvmatch(pdp, cfp, auxp)
 
 #ifndef CV64CONSOLE
 	if (amiga_realconfig == 0)
-		 return(0);
+		 return (0);
 #endif
 
         /* Lets be Paranoid: Test man and prod id */
 	if (zap->manid != 8512 || zap->prodid != 34)
-		return(0);
+		return (0);
 
 	cv_boardaddr = zap->va;
 
@@ -210,7 +209,7 @@ grfcvmatch(pdp, cfp, auxp)
 	}
 #endif
 
-	return(1);
+	return (1);
 }
 
 void
@@ -280,7 +279,7 @@ grfcvprint(auxp, pnp)
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);
-	return(UNCONF);
+	return (UNCONF);
 }
 
 
@@ -556,25 +555,31 @@ cv_getvmode(gp, vm)
 	/* Handle grabbing console mode */
 	if (vm->mode_num == 255) {
 		bcopy(&cvconsole_mode, vm, sizeof(struct grfvideo_mode));
-		/* XXX so grfconfig can tell us the correct text
-		 * dimensions.
-		 */
+		/* XXX so grfconfig can tell us the correct text dimensions. */
 		vm->depth = cvconsole_mode.fy;
-		return(0);
-	}
+	} else
 #endif
-	if (vm->mode_num && vm->mode_num > monitor_def_max)
-		return(EINVAL);
+	{
+		if (vm->mode_num == 0)
+			vm->mode_num = (monitor_current - monitor_def) + 1;
+		if (vm->mode_num < 1 || vm->mode_num > monitor_def_max)
+			return (EINVAL);
+		gv = monitor_def + (vm->mode_num - 1);
+		if (gv->mode_num == 0)
+			return (EINVAL);
 
-	if (!vm->mode_num)
-		vm->mode_num = (monitor_current - monitor_def) + 1;
+		bcopy(gv, vm, sizeof(struct grfvideo_mode));
+	}
 
-	gv = monitor_def + (vm->mode_num - 1);
-	if (gv->mode_num == 0)
-		return(EINVAL);
+	/* adjust internal values to pixel values */
 
-	bcopy(gv, vm, sizeof(struct grfvideo_mode));
-	return(0);
+	vm->hblank_start *= 8;
+	vm->hblank_stop *= 8;
+	vm->hsync_start *= 8;
+	vm->hsync_stop *= 8;
+	vm->htotal *= 8;
+
+	return (0);
 }
 
 
@@ -585,11 +590,11 @@ cv_setvmode(gp, mode)
 {
 	if (!mode || (mode > monitor_def_max) ||
 	    monitor_def[mode-1].mode_num == 0)
-		return(EINVAL);
+		return (EINVAL);
 
 	monitor_current = monitor_def + (mode - 1);
 
-	return(0);
+	return (0);
 }
 
 void
@@ -612,11 +617,7 @@ cv_blank(gp, on)
 {
 	char *ba = gp->g_regkva;
 
-	if (*on)	/* 1 = blank, 0 = normal display */
-		gfx_on_off(1, ba);
-	else
-		gfx_on_off(0, ba);
-
+	gfx_on_off(*on ? 1 : 0, ba);
 	return (0);
 }
 
@@ -638,7 +639,7 @@ cv_mode(gp, cmd, arg, a2, a3)
 	case GM_GRFON:
 		error = cv_load_mon (gp,
 		    (struct grfcvtext_mode *) monitor_current) ? 0 : EINVAL;
-		return(error);
+		return (error);
 
 	case GM_GRFOFF:
 #ifndef CV64CONSOLE
@@ -646,33 +647,33 @@ cv_mode(gp, cmd, arg, a2, a3)
 #else
 		cv_load_mon(gp, &cvconsole_mode);
 #endif
-		return(0);
+		return (0);
 
 	case GM_GRFCONFIG:
-		return(0);
+		return (0);
 
 	case GM_GRFGETVMODE:
-		return(cv_getvmode (gp, (struct grfvideo_mode *) arg));
+		return (cv_getvmode (gp, (struct grfvideo_mode *) arg));
 
 	case GM_GRFSETVMODE:
 		error = cv_setvmode (gp, *(unsigned *) arg);
 		if (!error && (gp->g_flags & GF_GRFON))
 			cv_load_mon(gp,
 			    (struct grfcvtext_mode *) monitor_current);
-		return(error);
+		return (error);
 
 	case GM_GRFGETNUMVM:
 		*(int *)arg = monitor_def_max;
-		return(0);
+		return (0);
 
 	case GM_GRFIOCTL:
-		return(cv_ioctl (gp, (int) arg, (caddr_t) a2));
+		return (cv_ioctl (gp, (int) arg, (caddr_t) a2));
 
 	default:
 		break;
 	}
 
-	return(EINVAL);
+	return (EINVAL);
 }
 
 int
@@ -690,24 +691,24 @@ cv_ioctl (gp, cmd, data)
 		break;
 
 	case GRFIOCGETCMAP:
-		return(cv_getcmap (gp, (struct grf_colormap *) data));
+		return (cv_getcmap (gp, (struct grf_colormap *) data));
 
 	case GRFIOCPUTCMAP:
-		return(cv_putcmap (gp, (struct grf_colormap *) data));
+		return (cv_putcmap (gp, (struct grf_colormap *) data));
 
 	case GRFIOCBITBLT:
 		break;
 
 	case GRFTOGGLE:
-		return(cv_toggle (gp, 0));
+		return (cv_toggle (gp, 0));
 
 	case GRFIOCSETMON:
-		return(cv_setmonitor (gp, (struct grfvideo_mode *)data));
+		return (cv_setmonitor (gp, (struct grfvideo_mode *)data));
 
 	case GRFIOCBLANK:
-		return(cv_blank (gp, (int *)data));
+		return (cv_blank (gp, (int *)data));
 	}
-	return(EINVAL);
+	return (EINVAL);
 }
 
 int
@@ -717,31 +718,39 @@ cv_setmonitor(gp, gv)
 {
 	struct grfvideo_mode *md;
 
+	if (!cv_mondefok(gv))
+		return (EINVAL);
+
 #ifdef CV64CONSOLE
 	/* handle interactive setting of console mode */
-	if (gv->mode_num == 255 && gv->depth == 4) {
+	if (gv->mode_num == 255) {
 		bcopy(gv, &cvconsole_mode.gv, sizeof(struct grfvideo_mode));
+		cvconsole_mode.gv.hblank_start /= 8;
+		cvconsole_mode.gv.hblank_stop /= 8;
+		cvconsole_mode.gv.hsync_start /= 8;
+		cvconsole_mode.gv.hsync_stop /= 8;
+		cvconsole_mode.gv.htotal /= 8;
 		cvconsole_mode.rows = gv->disp_height / cvconsole_mode.fy;
 		cvconsole_mode.cols = gv->disp_width / cvconsole_mode.fx;
 		if (!(gp->g_flags & GF_GRFON))
 			cv_load_mon(gp, &cvconsole_mode);
 		ite_reinit(gp->g_itedev);
-		return(0);
+		return (0);
 	}
 #endif
 
-	if (!gv->mode_num || gv->mode_num > monitor_def_max)
-		return(EINVAL);
-
-	if ((gv->depth == 24 && (gv->pixel_clock > 50000000)) ||
-	    ((gv->depth == 15 || gv->depth == 16) && (gv->pixel_clock > 80000000)) ||
-	    (gv->pixel_clock > MAXPIXELCLOCK))
-		return(EINVAL);
-
 	md = monitor_def + (gv->mode_num - 1);
-
 	bcopy(gv, md, sizeof(struct grfvideo_mode));
-	return(0);
+
+	/* adjust pixel oriented values to internal rep. */
+
+	md->hblank_start /= 8;
+	md->hblank_stop /= 8;
+	md->hsync_start /= 8;
+	md->hsync_stop /= 8;
+	md->htotal /= 8;
+
+	return (0);
 }
 
 int
@@ -755,7 +764,7 @@ cv_getcmap(gfp, cmap)
 	int error;
 
 	if (cmap->count == 0 || cmap->index >= 256)
-		return 0;
+		return (0);
 
 	if (cmap->index + cmap->count > 256)
 		cmap->count = 256 - cmap->index;
@@ -778,9 +787,9 @@ cv_getcmap(gfp, cmap)
 	if (!(error = copyout (red + cmap->index, cmap->red, cmap->count))
 	    && !(error = copyout (green + cmap->index, cmap->green, cmap->count))
 	    && !(error = copyout (blue + cmap->index, cmap->blue, cmap->count)))
-		return(0);
+		return (0);
 
-	return(error);
+	return (error);
 }
 
 int
@@ -794,7 +803,7 @@ cv_putcmap(gfp, cmap)
 	int error;
 
 	if (cmap->count == 0 || cmap->index >= 256)
-		return(0);
+		return (0);
 
 	if (cmap->index + cmap->count > 256)
 		cmap->count = 256 - cmap->index;
@@ -816,10 +825,9 @@ cv_putcmap(gfp, cmap)
 			vgaw (ba, VDAC_DATA, *gp++ >> 2);
 			vgaw (ba, VDAC_DATA, *bp++ >> 2);
 		} while (x-- > 0);
-		return(0);
-	}
-	else
-		return(error);
+		return (0);
+	} else
+		return (error);
 }
 
 
@@ -837,37 +845,43 @@ cv_toggle(gp,wopp)
 	} else {
 		cvscreen(1,ba);
 	}
-	return(0);
+	return (0);
 }
 
 
 int
-cv_mondefok(mdp)
-	struct grfvideo_mode *mdp;
+cv_mondefok(gv)
+	struct grfvideo_mode *gv;
 {
-	if (mdp->mode_num == 0)
-		return(0);
+	unsigned long maxpix;
 
-	switch(mdp->depth) {
+	if (gv->mode_num < 1 || gv->mode_num > monitor_def_max)
+		if (gv->mode_num != 255 || gv->depth != 4)
+			return (0);
+
+	switch(gv->depth) {
 	   case 1:
 	   case 4:
-		return(0);	/* remove this when ite5 is ready */
+		/* remove this comment when ite5 is ready */
+		/* if (gv->mode_num != 255) */
+			return (0);
 	   case 8:
-		if (mdp->pixel_clock > MAXPIXELCLOCK)
-			return(0);
-		return(1);
+		maxpix = MAXPIXELCLOCK;
+		break;
 	   case 15:
 	   case 16:
-		if (mdp->pixel_clock > 80000000)
-			return(0);
-		return(1);
+		maxpix = MAXPIXELCLOCK - 55000000;
+		break;
 	   case 24:
-		if (mdp->pixel_clock > 50000000)
-			return(0);
-		return(1);
+		maxpix = MAXPIXELCLOCK - 85000000;
+		break;
 	   default:
-		return(0);
+		return (0);
 	}
+
+	if (gv->pixel_clock > maxpix)
+		return (0);
+	return (1);
 }
 
 int
@@ -880,7 +894,8 @@ cv_load_mon(gp, md)
 	volatile unsigned char *ba;
 	volatile unsigned char *fb;
 	unsigned short mnr;
-	unsigned short HT,HDE,HBS,HBE,HSS,HSE,VDE,VBS,VBE,VSS,VSE,VT;
+	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
+		VSE, VT;
 	char LACE, DBLSCAN, TEXT;
 	int uplim, lowlim;
 	char test;
@@ -894,15 +909,12 @@ cv_load_mon(gp, md)
 
 	if (!cv_mondefok(gv)) {
 		printf("mondef not ok\n");
-		return(0);
+		return (0);
 	}
-
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
-	/* provide all needed information in grf device-independant
-	 * locations
-	 */
+	/* provide all needed information in grf device-independant locations */
 	gp->g_data		= (caddr_t) gv;
 	gi = &gp->g_display;
 	gi->gd_regaddr		= (caddr_t) ztwopa (ba);
@@ -1163,7 +1175,7 @@ cv_load_mon(gp, md)
 	/* Pass-through */
 	cvscreen(0, ba - 0x2000000);
 
-	return(1);
+	return (1);
 }
 
 void
@@ -1178,29 +1190,23 @@ cv_inittextmode(gp)
 
 
 	/* load text font into beginning of display memory.
-	 * Each character cell is 32 bytes long (enough for
-	 * 4 planes)
+	 * Each character cell is 32 bytes long (enough for 4 planes)
 	 */
 
 	SetTextPlane(ba, 0x02);
-	c = (unsigned char *)(fb);
+	cv_memset(fb, 0, 256 * 32);
+	c = (unsigned char *) (fb) + (32 * tm->fdstart);
 	f = tm->fdata;
-	for (z = 0; z < tm->fdstart; z++, c+=(32-tm->fy))
-		for (y=0; y < tm->fy; y++)
-			*c++ = 0;
-	for (; z <= tm->fdend; z++, c+=(32-tm->fy))
-		for (y=0; y < tm->fy; y++)
+	for (z = tm->fdstart; z <= tm->fdend; z++, c += (32 - tm->fy))
+		for (y = 0; y < tm->fy; y++)
 			*c++ = *f++;
-	for (; z < 256; z++, c+=(32-tm->fy))
-		for (y=0; y < tm->fy; y++)
-			*c++ = 0;
 
 	/* clear out text/attr planes (three screens worth) */
 
 	SetTextPlane(ba, 0x01);
-	cv_memset(fb, 0x07, tm->cols*tm->rows*3);
+	cv_memset(fb, 0x07, tm->cols * tm->rows * 3);
 	SetTextPlane(ba, 0x00);
-	cv_memset(fb, 0x20, tm->cols*tm->rows*3);
+	cv_memset(fb, 0x20, tm->cols * tm->rows * 3);
 
 	/* print out a little init msg */
 
