@@ -1,23 +1,50 @@
 /*-
- * Copyright (c) 1989, 1991 Regents of the University of California.
+ * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that the above copyright notice and this paragraph are
- * duplicated in all such forms and that any documentation,
- * advertising materials, and other materials related to such
- * distribution and use acknowledge that the software was developed
- * by the University of California, Berkeley.  The name of the
- * University may not be used to endorse or promote products derived
- * from this software without specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- *    Van Jacobson (van@ee.lbl.gov), Dec 31, 1989:
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)slcompress.c	7.7 (Berkeley) 5/7/91
+ */
+
+/*
+ * Routines to compress and uncompess tcp packets (for transmission
+ * over low speed serial lines.
+ *
+ * Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *    - Initial distribution.
  *
- *	$Id: slcompress.c,v 1.3 1993/05/20 03:06:12 cgd Exp $
+ * Modified June 1993 by Paul Mackerras, paulus@cs.anu.edu.au,
+ * so that the entire packet being decompressed doesn't have
+ * to be in contiguous memory (just the compressed header).
+ *
+ *	$Id: slcompress.c,v 1.4 1993/08/14 06:38:40 deraadt Exp $
  */
   
 #include <sys/types.h>
@@ -380,6 +407,23 @@ sl_uncompress_tcp(bufp, len, type, comp)
 	u_int type;
 	struct slcompress *comp;
 {
+	return sl_uncompress_tcp_part(bufp, len, len, type, comp);
+}
+
+
+/*
+ * Uncompress a packet of total length total_len.  The first buflen
+ * bytes are at *bufp; this must include the entire (compressed or
+ * uncompressed) TCP/IP header.  In addition, there must be enough
+ * clear space before *bufp to build a full-length TCP/IP header.
+ */
+int
+sl_uncompress_tcp_part(bufp, buflen, total_len, type, comp)
+	u_char **bufp;
+	int buflen, total_len;
+	u_int type;
+	struct slcompress *comp;
+{
 	register u_char *cp;
 	register u_int hlen, changes;
 	register struct tcphdr *th;
@@ -402,7 +446,7 @@ sl_uncompress_tcp(bufp, len, type, comp)
 		cs->cs_ip.ip_sum = 0;
 		cs->cs_hlen = hlen;
 		INCR(sls_uncompressedin)
-		return (len);
+		return (total_len);
 
 	default:
 		goto bad;
@@ -483,20 +527,21 @@ sl_uncompress_tcp(bufp, len, type, comp)
 	 * prepend 128 bytes of header).  Adjust the length to account for
 	 * the new header & fill in the IP total length.
 	 */
-	len -= (cp - *bufp);
-	if (len < 0)
+	buflen -= (cp - *bufp);
+	total_len -= (cp - *bufp);
+	if (buflen < 0)
 		/* we must have dropped some characters (crc should detect
 		 * this but the old slip framing won't) */
 		goto bad;
 
 	if ((int)cp & 3) {
-		if (len > 0)
-			(void) ovbcopy(cp, (caddr_t)((int)cp &~ 3), len);
+		if (buflen > 0)
+			(void) ovbcopy(cp, (caddr_t)((int)cp &~ 3), buflen);
 		cp = (u_char *)((int)cp &~ 3);
 	}
 	cp -= cs->cs_hlen;
-	len += cs->cs_hlen;
-	cs->cs_ip.ip_len = htons(len);
+	total_len += cs->cs_hlen;
+	cs->cs_ip.ip_len = htons(total_len);
 	BCOPY(&cs->cs_ip, cp, cs->cs_hlen);
 	*bufp = cp;
 
@@ -509,7 +554,7 @@ sl_uncompress_tcp(bufp, len, type, comp)
 		changes = (changes & 0xffff) + (changes >> 16);
 		((struct ip *)cp)->ip_sum = ~ changes;
 	}
-	return (len);
+	return (total_len);
 bad:
 	comp->flags |= SLF_TOSS;
 	INCR(sls_errorin)

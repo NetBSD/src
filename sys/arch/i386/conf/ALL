@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.13 1993/08/07 08:03:26 cgd Exp $
+#	$Id: ALL,v 1.14 1993/08/14 06:38:06 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -99,6 +99,7 @@ pseudo-device vnodepager
 pseudo-device bpfilter3
 pseudo-device loop
 pseudo-device sl
+pseudo-device ppp
 #pseudo-device tun	missing header files
 pseudo-device ether #XXX
 pseudo-device speaker

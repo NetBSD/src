@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_types.h	7.3 (Berkeley) 6/28/90
- *	$Id: if_types.h,v 1.3 1993/05/20 03:06:04 cgd Exp $
+ *	$Id: if_types.h,v 1.4 1993/08/14 06:38:39 deraadt Exp $
  */
 
 #ifndef _NET_IF_TYPES_H_
@@ -65,5 +65,6 @@
 #define	IFT_XETHER	0x1a		/* obsolete 3MB experimental ethernet */
 #define	IFT_NSIP	0x1b		/* XNS over IP */
 #define	IFT_SLIP	0x1c		/* IP over generic TTY */
+#define	IFT_PPP		0x1d		/* PPP over generic TTY */
 
 #endif /* !_NET_IF_TYPES_H_ */

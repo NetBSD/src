@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.20 1993/08/13 11:35:13 cgd Exp $
+#	$Id: files.oldconf,v 1.21 1993/08/14 06:38:24 deraadt Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -88,6 +88,7 @@ net/bpf_filter.c	optional bpfilter device-driver
 net/if.c		standard
 net/if_ethersubr.c	optional ether device-driver
 net/if_loop.c		optional loop device-driver
+net/if_ppp.c		optional ppp device-driver
 net/if_sl.c		optional sl device-driver
 net/if_tun.c		optional tun device-driver requires broken
 net/radix.c		standard
@@ -95,7 +96,7 @@ net/raw_cb.c		standard
 net/raw_usrreq.c	standard
 net/route.c		standard
 net/rtsock.c		standard
-net/slcompress.c	optional sl
+net/slcompress.c	optional sl or ppp
 netccitt/ccitt_proto.c	optional ccitt
 netccitt/hd_debug.c	optional ccitt
 netccitt/hd_input.c	optional ccitt
