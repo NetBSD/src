@@ -1,4 +1,41 @@
-/* $NetBSD: machdep.c,v 1.109 1998/02/14 01:18:46 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.110 1998/02/16 03:59:55 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center and by Chris G. Demetriou.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 1998/02/14 01:18:46 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 1998/02/16 03:59:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 1998/02/14 01:18:46 cgd Exp $");
 #include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/mman.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -147,8 +185,6 @@ int	maxmem;			/* max memory per process */
 
 int	totalphysmem;		/* total amount of physical memory in system */
 int	physmem;		/* physical memory used by NetBSD + some rsvd */
-int	firstusablepage;	/* first usable memory page */
-int	lastusablepage;		/* last usable memory page */
 int	resvmem;		/* amount of memory reserved for PROM */
 int	unusedmem;		/* amount of memory for OS that we don't use */
 int	unknownmem;		/* amount of memory with an unknown use */
@@ -192,9 +228,18 @@ int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
 
+/*
+ * XXX This should be dynamically sized, but we have the chicken-egg problem!
+ * XXX it should also be larger than it is, because not all of the mddt
+ * XXX clusters end up being used for VM.
+ */
+phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];	/* low size bits overloaded */
+int	mem_cluster_cnt;
+
 caddr_t	allocsys __P((caddr_t));
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
+u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	netintr __P((void));
@@ -210,12 +255,14 @@ alpha_init(pfn, ptb, bim, bip, biv)
 {
 	extern char kernel_text[], _end[];
 	struct mddt *mddtp;
+	struct mddt_cluster *memc;
 	int i, mddtweird;
+	struct vm_physseg *vps;
 	vm_offset_t kernstart, kernend;
+	vm_offset_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	vm_size_t size;
 	char *p;
 	caddr_t v;
-	caddr_t start, w;
 	char *bootinfo_msg;
 
 	/* NO OUTPUT ALLOWED UNTIL FURTHER NOTICE */
@@ -397,50 +444,141 @@ nobootinfo:
 	kernend = (vm_offset_t)round_page(_end);
 #endif
 
+	kernstartpfn = atop(ALPHA_K0SEG_TO_PHYS(kernstart));
+	kernendpfn = atop(ALPHA_K0SEG_TO_PHYS(kernend));
+
 	/*
 	 * Find out how much memory is available, by looking at
 	 * the memory cluster descriptors.  This also tries to do
 	 * its best to detect things things that have never been seen
 	 * before...
-	 *
-	 * XXX Assumes that the first "system" cluster is the
-	 * only one we can use. Is the second (etc.) system cluster
-	 * (if one happens to exist) guaranteed to be contiguous?  or...?
 	 */
 	mddtp = (struct mddt *)(((caddr_t)hwrpb) + hwrpb->rpb_memdat_off);
 
-	/*
-	 * BEGIN MDDT WEIRDNESS CHECKING
-	 */
+	/* MDDT SANITY CHECKING */
 	mddtweird = 0;
-
-#define cnt	 mddtp->mddt_cluster_cnt
-#define	usage(n) mddtp->mddt_clusters[(n)].mddt_usage
-	if (cnt != 2 && cnt != 3) {
-		printf("WARNING: weird number (%ld) of mem clusters\n", cnt);
+	if (mddtp->mddt_cluster_cnt < 2) {
 		mddtweird = 1;
-	} else if (usage(0) != MDDT_PALCODE ||
-		   usage(1) != MDDT_SYSTEM ||
-	           (cnt == 3 && usage(2) != MDDT_PALCODE)) {
-		mddtweird = 1;
-		printf("WARNING: %ld mem clusters, but weird config\n", cnt);
+		printf("WARNING: weird number of mem clusters: %d\n",
+		    mddtp->mddt_cluster_cnt);
 	}
 
-	for (i = 0; i < cnt; i++) {
-		if ((usage(i) & MDDT_mbz) != 0) {
-			printf("WARNING: mem cluster %d has weird usage %lx\n",
-			    i, usage(i));
-			mddtweird = 1;
-		}
-		if (mddtp->mddt_clusters[i].mddt_pg_cnt == 0) {
-			printf("WARNING: mem cluster %d has pg cnt == 0\n", i);
-			mddtweird = 1;
-		}
-		/* XXX other things to check? */
-	}
-#undef cnt
-#undef usage
+#if 0
+	printf("Memory cluster count: %d\n", mddtp->mddt_cluster_cnt);
+#endif
 
+	for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
+		memc = &mddtp->mddt_clusters[i];
+#if 0
+		printf("MEMC %d: pfn 0x%lx cnt 0x%lx usage 0x%lx\n", i,
+		    memc->mddt_pfn, memc->mddt_pg_cnt, memc->mddt_usage);
+#endif
+		totalphysmem += memc->mddt_pg_cnt;
+		if (mem_cluster_cnt < VM_PHYSSEG_MAX) {	/* XXX */
+			mem_clusters[mem_cluster_cnt].start =
+			    ptoa(memc->mddt_pfn);
+			mem_clusters[mem_cluster_cnt].size =
+			    ptoa(memc->mddt_pg_cnt);
+			if (memc->mddt_usage & MDDT_mbz ||
+			    memc->mddt_usage & MDDT_NONVOLATILE || /* XXX */
+			    memc->mddt_usage & MDDT_PALCODE)
+				mem_clusters[mem_cluster_cnt].size |=
+				    PROT_READ;
+			else
+				mem_clusters[mem_cluster_cnt].size |=
+				    PROT_READ | PROT_WRITE | PROT_EXEC;
+			mem_cluster_cnt++;
+		}
+
+		if (memc->mddt_usage & MDDT_mbz) {
+			mddtweird = 1;
+			printf("WARNING: mem cluster %d has weird "
+			    "usage 0x%lx\n", i, memc->mddt_usage);
+			unknownmem += memc->mddt_pg_cnt;
+			continue;
+		}
+		if (memc->mddt_usage & MDDT_NONVOLATILE) {
+			/* XXX should handle these... */
+			printf("WARNING: skipping non-volatile mem "
+			    "cluster %d\n", i);
+			unusedmem += memc->mddt_pg_cnt;
+			continue;
+		}
+		if (memc->mddt_usage & MDDT_PALCODE) {
+			resvmem += memc->mddt_pg_cnt;
+			continue;
+		}
+
+		/*
+		 * We have a memory cluster available for system
+		 * software use.  We must determine if this cluster
+		 * holds the kernel.
+		 */
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+		/*
+		 * XXX If the kernel uses the PROM console, we only use the
+		 * XXX memory after the kernel in the first system segment,
+		 * XXX to avoid clobbering prom mapping, data, etc.
+		 */
+	    if (!pmap_uses_prom_console() || physmem == 0) {
+#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
+		physmem += memc->mddt_pg_cnt;
+		pfn0 = memc->mddt_pfn;
+		pfn1 = memc->mddt_pfn + memc->mddt_pg_cnt;
+		if (pfn0 <= kernstartpfn && kernendpfn <= pfn1) {
+			/*
+			 * Must compute the location of the kernel
+			 * within the segment.
+			 */
+#if 0
+			printf("Cluster %d contains kernel\n", i);
+#endif
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+		    if (!pmap_uses_prom_console()) {
+#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
+			if (pfn0 < kernstartpfn) {
+				/*
+				 * There is a chunk before the kernel.
+				 */
+#if 0
+				printf("Loading chunk before kernel: "
+				    "0x%lx / 0x%lx\n", pfn0, kernstartpfn);
+#endif
+				vm_page_physload(pfn0, kernstartpfn,
+				    pfn0, kernstartpfn);
+			}
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+		    }
+#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
+			if (kernendpfn < pfn1) {
+				/*
+				 * There is a chunk after the kernel.
+				 */
+#if 0
+				printf("Loading chunk after kernel: "
+				    "0x%lx / 0x%lx\n", kernendpfn, pfn1);
+#endif
+				vm_page_physload(kernendpfn, pfn1,
+				    kernendpfn, pfn1);
+			}
+		} else {
+			/*
+			 * Just load this cluster as one chunk.
+			 */
+#if 0
+			printf("Loading cluster %d: 0x%lx / 0x%lx\n", i,
+			    pfn0, pfn1);
+#endif
+			vm_page_physload(pfn0, pfn1, pfn0, pfn1);
+		}
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+	    }
+#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
+	}
+
+	/*
+	 * Dump out the MDDT if it looks odd...
+	 */
 	if (mddtweird) {
 		printf("\n");
 		printf("complete memory cluster information:\n");
@@ -463,52 +601,59 @@ nobootinfo:
 		}
 		printf("\n");
 	}
-	/*
-	 * END MDDT WEIRDNESS CHECKING
-	 */
 
-	for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
-		totalphysmem += mddtp->mddt_clusters[i].mddt_pg_cnt;
-#define	usage(n) mddtp->mddt_clusters[(n)].mddt_usage
-#define	pgcnt(n) mddtp->mddt_clusters[(n)].mddt_pg_cnt
-		if ((usage(i) & MDDT_mbz) != 0)
-			unknownmem += pgcnt(i);
-		else if ((usage(i) & ~MDDT_mbz) == MDDT_PALCODE)
-			resvmem += pgcnt(i);
-		else if ((usage(i) & ~MDDT_mbz) == MDDT_SYSTEM) {
-			/*
-			 * assumes that the system cluster listed is
-			 * one we're in...
-			 */
-			if (physmem != resvmem) {
-				physmem += pgcnt(i);
-				firstusablepage =
-				    mddtp->mddt_clusters[i].mddt_pfn;
-				lastusablepage = firstusablepage + pgcnt(i) - 1;
-			} else
-				unusedmem += pgcnt(i);
-		}
-#undef usage
-#undef pgcnt
-	}
 	if (totalphysmem == 0)
 		panic("can't happen: system seems to have no memory!");
-#ifdef        LIMITMEM
-	if (totalphysmem >= btoc(LIMITMEM << 20)) {
-		u_int64_t ovf = totalphysmem - btoc(LIMITMEM << 20);
-		printf("********LIMITING MEMORY TO %dMB**********\n", LIMITMEM);
-		physmem = totalphysmem = btoc(LIMITMEM << 20);
-		unusedmem += ovf;
-		lastusablepage = firstusablepage + physmem - 1;
+
+#ifdef LIMITMEM
+	/*
+	 * XXX Kludge so we can run on machines with memory larger
+	 * XXX than 1G until all device drivers are converted to
+	 * XXX use bus_dma.  (Relies on the fact that vm_physmem
+	 * XXX sorted in order of increasing addresses.)
+	 */
+	if (vm_physmem[vm_nphysseg - 1].end > atop(LIMITMEM * 1024 * 1024)) {
+
+		printf("******** LIMITING MEMORY TO %dMB **********\n",
+		    LIMITMEM);
+
+		do {
+			u_long ovf;
+
+			vps = &vm_physmem[vm_nphysseg - 1];
+
+			if (vps->start >= atop(LIMITMEM * 1024 * 1024)) {
+				/*
+				 * If the start is too high, just drop
+				 * the whole segment.
+				 *
+				 * XXX can start != avail_start in this
+				 * XXX case?  wouldn't that mean that
+				 * XXX some memory was stolen above the
+				 * XXX limit?  What to do?
+				 */
+				ovf = vps->end - vps->start;
+				vm_nphysseg--;
+			} else {
+				/*
+				 * If the start is OK, calculate how much
+				 * to drop and drop it.
+				 */
+				ovf = vps->end - atop(LIMITMEM * 1024 * 1024);
+				vps->end -= ovf;
+				vps->avail_end -= ovf;
+			}
+			physmem -= ovf;
+			unusedmem += ovf;
+		} while (vps->end > atop(LIMITMEM * 1024 * 1024));
 	}
-#endif
+#endif /* LIMITMEM */
+
 	maxmem = physmem;
 
 #if 0
 	printf("totalphysmem = %d\n", totalphysmem);
 	printf("physmem = %d\n", physmem);
-	printf("firstusablepage = %d\n", firstusablepage);
-	printf("lastusablepage = %d\n", lastusablepage);
 	printf("resvmem = %d\n", resvmem);
 	printf("unusedmem = %d\n", unusedmem);
 	printf("unknownmem = %d\n", unknownmem);
@@ -523,7 +668,7 @@ nobootinfo:
  	 *
 	 * It's for booting a GENERIC kernel on a large memory platform.
 	 */
-	if (physmem >= btoc(128 << 20)) {
+	if (physmem >= atop(128 * 1024 * 1024)) {
 		vm_mbuf_size <<= 1;
 		vm_kmem_size <<= 3;
 		vm_phys_size <<= 2;
@@ -532,16 +677,36 @@ nobootinfo:
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	lastusablepage -= btoc(MSGBUFSIZE);
-	msgbufaddr = (caddr_t) ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
-	initmsgbuf(msgbufaddr, alpha_round_page(MSGBUFSIZE));
+	{
+		size_t sz = round_page(MSGBUFSIZE);
+
+		vps = &vm_physmem[vm_nphysseg - 1];
+
+		/* shrink so that it'll fit in the last segment */
+		if ((vps->avail_end - vps->avail_start) < atop(sz))
+			sz = ptoa(vps->avail_end - vps->avail_start);
+
+		vps->end -= atop(sz);
+		vps->avail_end -= atop(sz);
+		msgbufaddr = (caddr_t) ALPHA_PHYS_TO_K0SEG(ptoa(vps->end));
+		initmsgbuf(msgbufaddr, sz);
+
+		/* Remove the last segment if it now has no pages. */
+		if (vps->start == vps->end)
+			vm_nphysseg--;
+
+		/* warn if the message buffer had to be shrunk */
+		if (sz != round_page(MSGBUFSIZE))
+			printf("WARNING: %d bytes not available for msgbuf in last cluster (%d used)\n",
+			    round_page(MSGBUFSIZE), sz);
+
+	}
 
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */
-	start = v = (caddr_t)kernend;
-	curproc->p_addr = proc0paddr = (struct user *)v;
-	v += UPAGES * NBPG;
+	proc0.p_addr = proc0paddr =
+	    (struct user *)pmap_steal_memory(UPAGES * PAGE_SIZE, NULL, NULL);
 
 	/*
 	 * Allocate space for system data structures.  These data structures
@@ -550,24 +715,18 @@ nobootinfo:
 	 * virtual address space.
 	 */
 	size = (vm_size_t)allocsys(0);
-	w = allocsys(v);
-	if ((w - v) != size)
+	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
+	if ((allocsys(v) - v) != size)
 		panic("alpha_init: table size inconsistency");
-	v = w;
-
-	/*
-	 * Clear allocated memory.
-	 */
-	bzero(start, v - start);
 
 	/*
 	 * Initialize the virtual memory system, and set the
 	 * page table base register in proc 0's PCB.
 	 */
 #ifndef NEW_PMAP
-	pmap_bootstrap((vm_offset_t)v, ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT));
+	pmap_bootstrap(ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT));
 #else
-	pmap_bootstrap((vm_offset_t)v, ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT),
+	pmap_bootstrap(ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT),
 	    hwrpb->rpb_max_asn);
 #endif
 
@@ -790,8 +949,8 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %u (%u reserved for PROM, %u used by NetBSD)\n",
-	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
+	printf("real mem = %lu (%lu reserved for PROM, %lu used by NetBSD)\n",
+	    ptoa(totalphysmem), ptoa(resvmem), ptoa(physmem));
 	if (unusedmem)
 		printf("WARNING: unused memory = %d bytes\n", ctob(unusedmem));
 	if (unknownmem)
@@ -1026,11 +1185,25 @@ cpu_dumpsize()
 	int size;
 
 	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)) +
-	    ALIGN(1 * sizeof(phys_ram_seg_t));
+	    ALIGN(mem_cluster_cnt * sizeof(phys_ram_seg_t));
 	if (roundup(size, dbtob(1)) != dbtob(1))
 		return -1;
 
 	return (1);
+}
+
+/*
+ * cpu_dump_mempagecnt: calculate size of RAM (in pages) to be dumped.
+ */
+u_long
+cpu_dump_mempagecnt()
+{
+	u_long i, n;
+
+	n = 0;
+	for (i = 0; i < mem_cluster_cnt; i++)
+		n += atop(mem_clusters[i].size);
+	return (n);
 }
 
 /*
@@ -1044,6 +1217,7 @@ cpu_dump()
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
+	int i;
 
 	dump = bdevsw[major(dumpdev)].d_dump;
 
@@ -1064,13 +1238,15 @@ cpu_dump()
 	 */
 	cpuhdrp->lev1map_pa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map);
 	cpuhdrp->page_size = PAGE_SIZE;
-	cpuhdrp->nmemsegs = 1;
+	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*
 	 * Fill in the memory segment descriptors.
 	 */
-	memsegp[0].start = ctob(firstusablepage);
-	memsegp[0].size = ctob(physmem);
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		memsegp[i].start = mem_clusters[i].start;
+		memsegp[i].size = mem_clusters[i].size & ~PAGE_MASK;
+	}
 
 	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
 }
@@ -1102,7 +1278,7 @@ cpu_dumpconf()
 	dumpblks = cpu_dumpsize();
 	if (dumpblks < 0)
 		goto bad;
-	dumpblks += ctod(physmem);
+	dumpblks += ctod(cpu_dump_mempagecnt());
 
 	/* If dump won't fit (incl. room for possible label), punt. */
 	if (dumpblks > (nblks - ctod(1)))
@@ -1112,7 +1288,7 @@ cpu_dumpconf()
 	dumplo = nblks - dumpblks;
 
 	/* dumpsize is in page units, and doesn't include headers. */
-	dumpsize = physmem;
+	dumpsize = cpu_dump_mempagecnt();
 	return;
 
 bad:
@@ -1128,8 +1304,9 @@ bad:
 void
 dumpsys()
 {
-	unsigned bytes, i, n;
-	int maddr, psize;
+	u_long totalbytesleft, bytes, i, n, memcl;
+	u_long maddr;
+	int psize;
 	daddr_t blkno;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error;
@@ -1167,30 +1344,35 @@ dumpsys()
 	if ((error = cpu_dump()) != 0)
 		goto err;
 
-	bytes = ctob(physmem);
-	maddr = ctob(firstusablepage);
+	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 	blkno = dumplo + cpu_dumpsize();
 	dump = bdevsw[major(dumpdev)].d_dump;
 	error = 0;
-	for (i = 0; i < bytes; i += n) {
 
-		/* Print out how many MBs we to go. */
-		n = bytes - i;
-		if (n && (n % (1024*1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+	for (memcl = 0; memcl < mem_cluster_cnt; memcl++) {
+		maddr = mem_clusters[memcl].start;
+		bytes = mem_clusters[memcl].size & ~PAGE_MASK;
 
-		/* Limit size for next transfer. */
-		if (n > BYTES_PER_DUMP)
-			n =  BYTES_PER_DUMP;
+		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 
-		error = (*dump)(dumpdev, blkno,
-		    (caddr_t)ALPHA_PHYS_TO_K0SEG(maddr), n);
-		if (error)
-			break;
-		maddr += n;
-		blkno += btodb(n);			/* XXX? */
+			/* Print out how many MBs we to go. */
+			if ((totalbytesleft % (1024*1024)) == 0)
+				printf("%d ", totalbytesleft / (1024 * 1024));
 
-		/* XXX should look for keystrokes, to cancel. */
+			/* Limit size for next transfer. */
+			n = bytes - i;
+			if (n > BYTES_PER_DUMP)
+				n =  BYTES_PER_DUMP;
+	
+			error = (*dump)(dumpdev, blkno,
+			    (caddr_t)ALPHA_PHYS_TO_K0SEG(maddr), n);
+			if (error)
+				goto err;
+			maddr += n;
+			blkno += btodb(n);			/* XXX? */
+
+			/* XXX should look for keystrokes, to cancel. */
+		}
 	}
 
 err:
@@ -1869,6 +2051,23 @@ cpu_exec_ecoff_hook(p, epp)
 	return 0;
 }
 #endif
+
+int
+alpha_pa_access(pa)
+	u_long pa;
+{
+	int i;
+
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		if (pa < mem_clusters[i].start)
+			continue;
+		if ((pa - mem_clusters[i].start) >=
+		    (mem_clusters[i].size & ~PAGE_MASK))
+			continue;
+		return (mem_clusters[i].size & PAGE_MASK);	/* prot */
+	}
+	return (PROT_NONE);
+}
 
 /* XXX XXX BEGIN XXX XXX */
 vm_offset_t alpha_XXX_dmamap_or;				/* XXX */
