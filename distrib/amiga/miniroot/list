@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 1997/09/19 14:17:22 chopps Exp $
+#	$NetBSD: list,v 1.3 1997/09/21 18:37:37 chopps Exp $
 
 # Amiga extra's
 #LINK	instbin			sbin/edahdi
@@ -46,4 +46,4 @@ COPYDIR	${DESTDIR}/usr/share/keymaps/amiga	usr/share/keymaps/amiga
 SPECIAL	rmdir usr/share/zoneinfo
 
 # Generic kernel
-COPY	${DESTDIR}/sys/arch/amiga/compile/GENERIC/netbsd	netbsd
+COPY	${CURDIR}/../../sys/arch/amiga/compile/GENERIC/netbsd	netbsd
