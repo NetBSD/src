@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.58 2001/02/20 15:16:38 minoura Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.59 2001/02/21 00:32:31 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -3234,13 +3234,13 @@ pccbb_powerhook(why, arg)
 	}
 
 	if (why == PWR_RESUME) {
-		if (pci_conf_read (sc, sc->sc_tag, PCI_SOCKBASE) == 0)
+		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
 			/* BIOS did not recover this register */
-			pci_conf_write (sc, sc->sc_tag,
+			pci_conf_write (sc->sc_pc, sc->sc_tag,
 					PCI_SOCKBASE, sc->sc_sockbase);
-		if (pci_conf_read (sc, sc->sc_tag, PCI_BUSNUM) == 0)
+		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_BUSNUM) == 0)
 			/* BIOS did not recover this register */
-			pci_conf_write (sc, sc->sc_tag,
+			pci_conf_write (sc->sc_pc, sc->sc_tag,
 					PCI_BUSNUM, sc->sc_busnum);
 		/* CSC Interrupt: Card detect interrupt on */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
