@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 1998/10/07 21:25:35 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49 1998/11/11 06:41:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -185,7 +185,7 @@ void	vm86_gpfault __P((struct proc *, int));
 #endif /* VM86 */
 
 /* trap.c */
-void	child_return __P((struct proc *, struct trapframe));
+void	child_return __P((void *));
 
 #endif /* _KERNEL */
 

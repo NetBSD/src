@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.39 1998/09/09 11:17:24 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.40 1998/11/11 06:41:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 1998/09/09 11:17:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.40 1998/11/11 06:41:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,11 @@ cpu_fork(p1, p2)
 	 * is started, to resume here, returning nonzero from setjmp.
 	 */
 #ifdef DIAGNOSTIC
-	if (p1 != curproc)
+	/*
+	 * If p1 != curproc && p1 == &proc0, we are creating a kernel
+	 * thread.
+	 */
+	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 	if ((up->u_pcb.pcb_hw.apcb_flags & ALPHA_PCB_FLAGS_FEN) != 0)
 		printf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
@@ -233,6 +237,8 @@ cpu_fork(p1, p2)
 		    (u_int64_t)child_return;		/* s0: pc */
 		up->u_pcb.pcb_context[1] =
 		    (u_int64_t)exception_return;	/* s1: ra */
+		up->u_pcb.pcb_context[2] =
+		    (u_int64_t)p2;			/* s2: arg */
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
 	}
@@ -251,15 +257,18 @@ cpu_fork(p1, p2)
  * (Note that cpu_fork(), above, uses an open-coded version of this.)
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct pcb *pcbp;
 
 	pcbp = &p->p_addr->u_pcb;
 	pcbp->pcb_context[0] = (u_int64_t)pc;	/* s0 - pc to invoke */
-	pcbp->pcb_context[1] = (u_int64_t)exception_return; /* s1 - return address */
+	pcbp->pcb_context[1] =
+	    (u_int64_t)exception_return;	/* s1 - return address */
+	pcbp->pcb_context[2] = (u_int64_t)arg;	/* s2 - arg */
 	pcbp->pcb_context[7] =
 	    (u_int64_t)switch_trampoline;	/* ra - assembly magic */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.94 1998/10/24 01:36:09 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.95 1998/11/11 06:41:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.94 1998/10/24 01:36:09 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 1998/11/11 06:41:27 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -418,7 +418,6 @@ extern void trap __P((u_int status, u_int cause, u_int vaddr,  u_int opc,
 static void userret __P((struct proc *p, unsigned pc, u_quad_t sticks));
 extern void syscall __P((unsigned status, unsigned cause, unsigned opc,
 			 struct frame *frame));
-extern void child_return __P((struct proc *p));
 extern void interrupt __P((unsigned status, unsigned cause, unsigned pc,
 			   struct frame *frame));
 extern void ast __P((unsigned pc));
@@ -621,9 +620,10 @@ syscall(status, cause, opc, frame)
  * no more FORK_BRAINDAMAGED.
  */
 void
-child_return(p)
-	struct proc *p;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
 	frame->f_regs[V0] = 0;

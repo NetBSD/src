@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 1998/10/06 09:22:01 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1186,15 +1186,18 @@ syscall(code, frame)
  * Process the tail end of a fork() for the child
  */
 void
-child_return(p, frame)
-	struct proc *p;
-	struct frame frame;
+child_return(arg)
+	void *arg;
 {
-	frame.f_regs[D0] = 0;
-	frame.f_sr &= ~PSL_C;	/* carry bit */
-	frame.f_format = FMT0;
+	struct proc *p = arg;
+	/* See cpu_fork() */
+	struct frame *f = (struct frame *)p->p_md.md_regs;
 
-	userret(p, &frame, 0, (u_int)0, 0);
+	f->f_regs[D0] = 0;
+	f->f_sr &= ~PSL_C;	/* carry bit */
+	f->f_format = FMT0;
+
+	userret(p, f, 0, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 1998/10/28 04:26:52 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 1998/11/11 06:41:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -184,6 +184,9 @@ extern void savefpregs __P((struct proc *));
 /* mips_machdep.c */
 extern void cpu_identify __P((void));
 extern void mips_vector_init __P((void));
+
+/* trap.c */
+extern void child_return __P((void *));
 
 /*
  * MIPS CPU types (cp_imp).

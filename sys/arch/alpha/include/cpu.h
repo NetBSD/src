@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.28 1998/10/07 18:29:26 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.29 1998/11/11 06:41:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -159,7 +159,7 @@ int	alpha_pa_access __P((u_long));
 void	ast __P((struct trapframe *));
 int	badaddr	__P((void *, size_t));
 int	badaddr_read __P((void *, size_t, void *));
-void	child_return __P((struct proc *p));
+void	child_return __P((void *));
 u_int64_t console_restart __P((u_int64_t, u_int64_t, u_int64_t));
 void	do_sir __P((void));
 void	dumpconf __P((void));

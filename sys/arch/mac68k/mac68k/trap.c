@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 1998/10/01 02:53:54 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.66 1998/11/11 06:41:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -150,7 +150,6 @@ int mmupid = -1;
 /* trap() and syscall() only called from locore */
 void	trap __P((int, u_int, u_int, struct frame));
 void	syscall __P((register_t, struct frame));
-void	child_return __P((struct proc *, struct frame)); /* XXX */
 
 static inline void userret __P((struct proc *p, struct frame *fp,
 	    u_quad_t oticks, u_int faultaddr, int fromtrap));
@@ -1157,22 +1156,22 @@ syscall(code, frame)
 #endif
 }
 
-void	child_return __P((struct proc *, struct frame));
-
 /*
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(p, frame)
-	struct proc	*p;
-	struct frame	frame;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
+	/* See cpu_fork() */
+	struct frame *f = (struct frame *)p->p_md.md_regs;
 
-	frame.f_regs[D0] = 0;	/* Return value. */
-	frame.f_sr &= ~PSL_C;	/* carry bit indicates error */
-	frame.f_format = FMT0;
+	f->f_regs[D0] = 0;	/* Return value. */
+	f->f_sr &= ~PSL_C;	/* carry bit indicates error */
+	f->f_format = FMT0;
 
-	userret(p, &frame, 0, (u_int)0, 0);
+	userret(p, f, 0, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
