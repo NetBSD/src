@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.2 2003/04/05 23:08:51 bjh21 Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.3 2004/08/21 11:20:10 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,4 +46,4 @@ _PROF_PROLOGUE
 	bic		r1, r1, #0x00FF0000
 	mov		r0, r0, ror #8
 	eor		r0, r0, r1, lsr #8
-	mov		pc, lr
+	RET

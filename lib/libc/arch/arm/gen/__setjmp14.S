@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.6 2004/08/21 11:20:10 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -69,7 +69,7 @@ ENTRY(__setjmp14)
 	/* Store integer registers */
         stmia	r0, {r4-r14}
         mov	r0, #0x00000000
-        mov	r15, r14
+        RET
 
 .Lsetjmp_magic:
 	.word	_JB_MAGIC_SETJMP
@@ -112,7 +112,7 @@ ENTRY(__longjmp14)
 	mov	r0, r1
 	teq	r0, #0x00000000
 	moveq	r0, #0x00000001
-	mov	r15, r14
+	RET
 
 	/* validation failed, die die die. */
 .Lbotch:
