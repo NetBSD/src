@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.8 1995/06/22 21:34:38 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.9 1995/06/24 20:20:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -40,7 +40,6 @@
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/dir.h>
-#include <sys/exec.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
@@ -112,7 +111,7 @@ linux_waitpid(p, uap, retval)
 	int error, *status, tstat;
 	caddr_t sg;
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 	status = (int *) stackgap_alloc(&sg, sizeof status);
 
 	SCARG(&w4a, pid) = SCARG(uap, pid);
@@ -149,7 +148,7 @@ linux_wait4(p, uap, retval)
 	int error, *status, tstat;
 	caddr_t sg;
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 	status = (int *) stackgap_alloc(&sg, sizeof status);
 
 	SCARG(&w4a, pid) = SCARG(uap, pid);
@@ -285,10 +284,10 @@ linux_statfs(p, uap, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&bsa, path) = SCARG(uap, path);
 	SCARG(&bsa, buf) = bsp;
@@ -319,7 +318,7 @@ linux_fstatfs(p, uap, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
 
 	SCARG(&bsa, fd) = SCARG(uap, fd);
@@ -579,8 +578,8 @@ linux_utime(p, uap, retval)
 	struct timeval tv[2], *tvp;
 	struct linux_utimbuf lut;
 
-	sg = stackgap_init();
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	sg = stackgap_init(p->p_emul);
+	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ua, path) = SCARG(uap, path);
 
@@ -590,7 +589,7 @@ linux_utime(p, uap, retval)
 		tv[0].tv_usec = tv[1].tv_usec = 0;
 		tv[0].tv_sec = lut.l_actime;
 		tv[1].tv_sec = lut.l_modtime;
-		tvp = (struct timeval *) stackgap_alloc(sizeof tv);
+		tvp = (struct timeval *) stackgap_alloc(&sg, sizeof(tv));
 		if ((error = copyout(tv, tvp, sizeof tv)))
 			return error;
 		SCARG(&ua, tptr) = tvp;
