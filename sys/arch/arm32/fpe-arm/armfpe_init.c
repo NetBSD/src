@@ -1,6 +1,6 @@
+/* $NetBSD: armfpe_init.c,v 1.2 1996/02/05 16:51:52 mark Exp $ */
+
 /*
- * $NetBSD: armfpe_init.c,v 1.1 1996/01/31 23:21:06 mark Exp $
- *
  * Copyright (C) 1996 Mark Brinicombe
  * Copyright (C) 1995 Neil A Carson.
  * All rights reserved.
@@ -39,9 +39,8 @@
  * Stuff needed to interface the ARM floating point emulator module to RiscBSD.
  *
  * Created      : 22/10/95
- * Last updated : 13/01/96
  *
- *    $Id: armfpe_init.c,v 1.1 1996/01/31 23:21:06 mark Exp $
+ *    $Id: armfpe_init.c,v 1.2 1996/02/05 16:51:52 mark Exp $
  */
 
 /*#define DEBUG*/
@@ -255,18 +254,21 @@ arm_fpe_boot(void)
  */
 
 void
-arm_fpe_postproc(fpframe)
+arm_fpe_postproc(fpframe, frame)
 	u_int fpframe;
+	struct trapframe *frame;
 {
 	register u_int s;
 	register int sig;
 	register struct proc *p;
 
 	p = curproc;
+	p->p_md.md_regs = frame;
 
 /* take pending signals */
 
 	while ((sig = (CURSIG(p))) != 0) {
+		printf("fpe_postproc: posting signale %d\n", CURSIG(p));
 		postsig(sig);
 	}
 
@@ -290,6 +292,7 @@ arm_fpe_postproc(fpframe)
 
 		(void)splx(s);
 		while ((sig = (CURSIG(p))) != 0) {
+			printf("fpe_postproc: posting signale %d\n", CURSIG(p));
 			postsig(sig);
 		}
 	}
@@ -323,7 +326,10 @@ arm_fpe_exception(exception, pc, fpframe)
 	u_int pc;
 	u_int fpframe;
 {
-	printf("fpe exception: %d - %s\n", exception, exception_errors[exception]);
+	if (exception >= 0 && exception < 6)
+		printf("fpe exception: %d - %s\n", exception, exception_errors[exception]);
+	else
+		printf("fpe exception: %d - unknown\n", exception);
 
 	trapsignal(curproc, SIGFPE, exception);
 

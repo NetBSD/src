@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.2 1996/02/02 02:36:09 mycroft Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.3 1996/02/05 16:51:56 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -38,9 +38,8 @@
  * Glue code for calling the ARM FPE core code
  *
  * Created      : 21/12/95
- * Last updated : 30/12/95
  *
- *    $Id: armfpe_glue.S,v 1.2 1996/02/02 02:36:09 mycroft Exp $
+ *    $Id: armfpe_glue.S,v 1.3 1996/02/05 16:51:56 mark Exp $
  */
 
 #include "assym.h"
@@ -250,7 +249,7 @@ fpe_panic_text:
 
 	.global	_arm_fpe_post_proc_glue
 _arm_fpe_post_proc_glue:
-	stmfd	sp!, {r0-r5, r10-r12, lr}
+	stmfd	sp!, {r0-r6, r10-r12, lr}
 
 /* This could be optimised as we are going from UND32->SVC32 mode */
 
@@ -260,6 +259,49 @@ _arm_fpe_post_proc_glue:
         msr     cpsr_all, r3
 
 	mov	r0, r12
+
+/* Reserve a trapframe on the SVC stack */
+
+	sub	sp, sp, #(TRAPFRAMESIZE)
+	mov	r1, sp
+
+	ldr	r2, [r0, #-0x0008]	/* Copy spsr */
+	str	r2, [r1, #0x0000]
+
+	ldr	r2, [r0, #0x0000]	/* Copy r0 */
+	str	r2, [r1, #0x0004]
+	ldr	r2, [r0, #0x0004]
+	str	r2, [r1, #0x0008]
+	ldr	r2, [r0, #0x0008]
+	str	r2, [r1, #0x000c]
+	ldr	r2, [r0, #0x000c]
+	str	r2, [r1, #0x0010]
+	ldr	r2, [r0, #0x0010]
+	str	r2, [r1, #0x0014]
+	ldr	r2, [r0, #0x0014]
+	str	r2, [r1, #0x0018]
+	ldr	r2, [r0, #0x0018]
+	str	r2, [r1, #0x001c]
+	ldr	r2, [r0, #0x001c]
+	str	r2, [r1, #0x0020]
+	ldr	r2, [r0, #0x0020]
+	str	r2, [r1, #0x0024]
+	ldr	r2, [r0, #0x0024]
+	str	r2, [r1, #0x0028]
+	ldr	r2, [r0, #0x0028]
+	str	r2, [r1, #0x002c]
+	ldr	r2, [r0, #0x002c]
+	str	r2, [r1, #0x0030]
+	ldr	r2, [r0, #0x0030]	/* Copy r12 */
+	str	r2, [r1, #0x0034]
+	ldr	r2, [r0, #0x0034]	/* Copy usr r13 */
+	str	r2, [r1, #0x0038]
+	ldr	r2, [r0, #0x0038]	/* Copy usr r14 */
+	str	r2, [r1, #0x003c]
+	ldr	r2, [r0, #0x003c]	/* Copy old pc */
+	str	r2, [r1, #0x0044]
+
+	str	r14, [r1, #0x0040]	/* SVC r14 */
 
 /*
  * OK Question Time ...
@@ -271,16 +313,57 @@ _arm_fpe_post_proc_glue:
  */
 
 	mov	r5, r14
+	mov	r6, r12
 
 /* More optimisation ... Need to code a assembly version of userret() */
 
 	bl	_arm_fpe_postproc
 
+/* Release the trapframe on the SVC stack */
+
+	ldr	r2, [sp, #0x0000]	/* Copy spsr */
+	str	r2, [r6, #-0x0008]
+
+	ldr	r2, [sp, #0x0004]	/* Copy r0 */
+	str	r2, [r6, #0x0000]
+	ldr	r2, [sp, #0x0008]	/* Copy r1 */
+	str	r2, [r6, #0x0004]
+	ldr	r2, [sp, #0x000c]	/* Copy r2 */
+	str	r2, [r6, #0x0008]
+	ldr	r2, [sp, #0x0010]	/* Copy r3 */
+	str	r2, [r6, #0x000c]
+	ldr	r2, [sp, #0x0014]	/* Copy r4 */
+	str	r2, [r6, #0x0010]
+	ldr	r2, [sp, #0x0018]	/* Copy r5 */
+	str	r2, [r6, #0x0014]
+	ldr	r2, [sp, #0x001c]	/* Copy r6 */
+	str	r2, [r6, #0x0018]
+	ldr	r2, [sp, #0x0020]	/* Copy r7 */
+	str	r2, [r6, #0x001c]
+	ldr	r2, [sp, #0x0024]	/* Copy r8 */
+	str	r2, [r6, #0x0020]
+	ldr	r2, [sp, #0x0028]	/* Copy r9 */
+	str	r2, [r6, #0x0024]
+	ldr	r2, [sp, #0x002c]	/* Copy r10 */
+	str	r2, [r6, #0x0028]
+	ldr	r2, [sp, #0x0030]	/* Copy r11 */
+	str	r2, [r6, #0x002c]
+	ldr	r2, [sp, #0x0034]	/* Copy r12 */
+	str	r2, [r6, #0x0030]
+	ldr	r2, [sp, #0x0038]	/* Copy usr r13 */
+	str	r2, [r6, #0x0034]
+	ldr	r2, [sp, #0x003c]	/* Copy usr r14 */
+	str	r2, [r6, #0x0038]
+	ldr	r2, [sp, #0x0044]	/* Copy pc */
+	str	r2, [r6, #0x003c]
+
+	add	sp, sp, #(TRAPFRAMESIZE)
+
 	mov	r14, r5
 
 	msr	cpsr_all, r4
 
-	ldmfd	sp!, {r0-r5,r10-r12, pc}
+	ldmfd	sp!, {r0-r6, r10-r12, pc}
 
 
 /*
