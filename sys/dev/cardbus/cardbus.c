@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.21 2000/03/07 00:30:57 mycroft Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.22 2000/03/07 09:36:52 haya Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -156,7 +156,7 @@ cardbusattach(parent, self, aux)
   int cdstatus;
 
   sc->sc_bus = cba->cba_bus;
-  sc->sc_device = cba->cba_function;
+  sc->sc_device = 0;
   sc->sc_intrline = cba->cba_intrline;
   sc->sc_cacheline = cba->cba_cacheline;
   sc->sc_lattimer = cba->cba_lattimer;
