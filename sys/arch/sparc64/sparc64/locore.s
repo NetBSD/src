@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.146 2002/02/07 22:23:01 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.147 2002/02/09 05:01:39 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -12125,7 +12125,6 @@ microtick:
 	mulx	%o2, %o5, %o5					! Now calculate usecs -- damn no remainder insn
 	sub	%o4, %o5, %o1					! %o1 has the remainder
 
-	add	%o1, %o3, %o1	! I think this is wrong
 	retl
 	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
 #endif
