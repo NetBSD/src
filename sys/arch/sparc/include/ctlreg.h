@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.6 1994/11/20 20:52:58 deraadt Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.7 1995/04/13 13:41:02 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,7 @@
 #define	ASI_CONTROL	0x02	/* cache enable, context reg, etc */
 #define	ASI_SEGMAP	0x03	/* segment maps (so we can reach each pmeg) */
 #define	ASI_PTE		0x04	/* PTE space (pmegs) */
+#define	ASI_REGMAP	0x06	/* region maps (3 level MMUs only) */
 #define	ASI_HWFLUSHSEG	0x05	/* hardware assisted version of FLUSHSEG */
 #define	ASI_HWFLUSHPG	0x06	/* hardware assisted version of FLUSHPG */
 #define	ASI_HWFLUSHCTX	0x07	/* hardware assisted version of FLUSHCTX */
@@ -77,6 +78,7 @@
 #define	ASI_KERNELD	0x0b	/* D-space (kernel) */
 
 #if defined(SUN4C) || defined(SUN4)
+#define	ASI_FLUSHREG	0x7	/* causes hardware to flush cache region */
 #define	ASI_FLUSHSEG	0x0c	/* causes hardware to flush cache segment */
 #define	ASI_FLUSHPG	0x0d	/* causes hardware to flush cache page */
 #define	ASI_FLUSHCTX	0x0e	/* causes hardware to flush cache context */
@@ -170,7 +172,9 @@
  */
 #define	SYSEN_DVMA	0x20		/* enable dvma */
 #define	SYSEN_CACHE	0x10		/* enable cache */
+#define	SYSEN_IOCACHE	0x40		/* enable IO cache */
 #define	SYSEN_RESET	0x04		/* reset the hardware */
+#define	SYSEN_RESETVME	0x02		/* reset the VME bus */
 #endif
 
 #if defined(SUN4M)
