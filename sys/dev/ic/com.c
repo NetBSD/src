@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.123 1997/11/02 08:55:52 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.124 1997/11/02 09:15:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1079,12 +1079,23 @@ comparam(tp, t)
 			com_loadchannelregs(sc);
 	}
 
+	if (!ISSET(t->c_cflag, CHWFLOW)) {
+		if (ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED)) {
+			CLR(sc->sc_rx_flags, RX_TTY_OVERFLOWED);
+			com_schedrx(sc);
+		}
+		if (ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED)) {
+			CLR(sc->sc_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED);
+			com_hwiflow(sc);
+		}
+	}
+
 	splx(s);
 
 	/*
 	 * Update the tty layer's idea of the carrier bit, in case we changed
-	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that if we
-	 * lose carrier while carrier detection is on.
+	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
+	 * explicit request.
 	 */
 	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(sc->sc_msr, MSR_DCD));
 
@@ -1095,25 +1106,10 @@ comparam(tp, t)
 
 	/* Block or unblock as needed. */
 	if (!ISSET(t->c_cflag, CHWFLOW)) {
-		s = splserial();
-		if (ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED)) {
-			CLR(sc->sc_rx_flags, RX_TTY_OVERFLOWED);
-			com_schedrx(sc);
-		}
-		if (ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED)) {
-			CLR(sc->sc_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED);
-			com_hwiflow(sc);
-		}
-		splx(s);
 		if (sc->sc_tx_stopped) {
 			sc->sc_tx_stopped = 0;
 			comstart(tp);
 		}
-	} else {
-		/* XXXXX FIX ME */
-#if 0
-		commsrint(sc, tp);
-#endif
 	}
 
 	return (0);
