@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.24 2002/05/05 16:26:30 jdolecek Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.24.2.1 2002/08/30 00:19:03 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -190,13 +190,12 @@ bootsync(void)
 void
 cpu_startup()
 {
-	int loop;
 	paddr_t minaddr;
 	paddr_t maxaddr;
 	caddr_t sysbase;
 	caddr_t size;
 	vsize_t bufsize;
-	int base, residual;
+	u_int loop, base, residual;
 	char pbuf[9];
 
 	proc0paddr = (struct user *)kernelstack.pv_va;
@@ -317,7 +316,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -378,6 +377,25 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return sysctl_rdstring(oldp, oldlenp, newp,
 			    booted_kernel);
 		return (EOPNOTSUPP);
+	}
+	case CPU_POWERSAVE: {
+		int error, newval;
+
+		newval = cpu_do_powersave;
+
+		if (cpufuncs.cf_sleep == (void *) cpufunc_nullop)
+			error = sysctl_rdint(oldp, oldlenp, newp, newval);
+		else
+			error = sysctl_int(oldp, oldlenp, newp, newlen,
+			    &newval);
+		if (error || newval == cpu_do_powersave)
+			return (error);
+
+		if (newval < 0 || newval > 1)
+			return (EINVAL);
+
+		cpu_do_powersave = newval;
+		return (0);
 	}
 
 	default:

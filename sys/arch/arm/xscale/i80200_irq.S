@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.1.12.1 2002/07/16 00:55:33 gehenna Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.1.12.2 2002/08/30 00:19:16 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,6 +36,7 @@
  */
 
 #include "assym.h"
+#include "opt_perfctrs.h"
 
 #include <machine/asm.h>
 #include <machine/cpu.h>
@@ -46,30 +47,26 @@
 /*
  * irq_entry:
  *
- *	Main entry point for the IRQ vector.
- *
- *	This function reads the 2 IQ80310 CPLD interrupt source
- *	registers, and then calls the installed handlers for each
- *	bit that is set.  The function stray_irqhandler is called
- *	if a handler is not defined for a particular interrupt.
- *
- *	If an interrupt handler is found, then it is called with
- *	r0 containing the argument defined in the handler structure.
- *	If the field ih_arg is zero, then a pointer to the IRQ frame
- *	on the stack is passed instead.
+ *	Main entry point for the IRQ vector on i80200 CPUs.  Calls
+ *	board-specific external interrupt dispatch routine.
  */
 
 	.text
 	.align	0
 
-Lcurrent_intr_depth: 
+.Lcurrent_intr_depth: 
 	.word	_C_LABEL(current_intr_depth)
 	.word	_C_LABEL(prev_intr_depth)
 
-Lintr_dispatch:
+.Lintr_dispatch:
 	.word	_C_LABEL(i80200_extirq_dispatch)
 
-Lastpending:
+#if defined(PERFCTRS)
+.Lpmc_dispatch:
+	.word	_C_LABEL(xscale_pmc_dispatch)
+#endif
+
+.Lastpending:
 	.word	_C_LABEL(astpending)
 
 ASENTRY_NP(irq_entry)
@@ -83,8 +80,8 @@ ASENTRY_NP(irq_entry)
 	 * determine if we are in an IRQ.  Instead, we will
 	 * count each time the interrupt handler is nested.
 	 */
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r2, Lcurrent_intr_depth+4
+	ldr	r0, .Lcurrent_intr_depth
+	ldr	r2, .Lcurrent_intr_depth+4
 	ldr	r1, [r0]
 	str	r1, [r2]
 	add	r1, r1, #1
@@ -95,9 +92,22 @@ ASENTRY_NP(irq_entry)
 	 */
 	mrc	p13, 0, r4, c4, c0, 0
 
+#if defined(PERFCTRS)
 	/*
-	 * XXX Right here will be a good place to check for PMU
-	 * XXX interrupts, if we decide to use IRQs for them.
+	 * Check for PMU interrupts.
+	 * If we have one, call the routine to handle it.
+	 */
+	tst	r4, #(INTSRC_PI)
+	beq	.Lpmc_intr_return
+	mov	r1, r4
+	add	lr, pc, #.Lpmc_intr_return - . - 8
+	mov	r0, sp
+	ldr	pc, .Lpmc_dispatch
+.Lpmc_intr_return:
+#endif
+
+	/*
+	 * XXX - any need to handle BMU interrupts?
 	 */
 
 	/*
@@ -108,16 +118,16 @@ ASENTRY_NP(irq_entry)
 	 * disabled.
 	 */
 	tst	r4, #(INTSRC_II)
-	beq	Lextirq_return		/* no external IRQ pending */
-	ldr	r1, Lintr_dispatch
-	add	lr, pc, #Lextirq_return - . - 8
+	beq	.Lextirq_return		/* no external IRQ pending */
+	ldr	r1, .Lintr_dispatch
+	add	lr, pc, #.Lextirq_return - . - 8
 	mov	r0, sp
 	ldr	pc, [r1]
-Lextirq_return:
+.Lextirq_return:
 
 	/* Decremement the nest count. */
-	ldr	r0, Lcurrent_intr_depth 
-	ldr	r2, Lcurrent_intr_depth+4
+	ldr	r0, .Lcurrent_intr_depth 
+	ldr	r2, .Lcurrent_intr_depth+4
 	ldr	r1, [r0]
 	str	r1, [r2]
 	sub	r1, r1, #1
@@ -129,28 +139,28 @@ Lextirq_return:
 	ldr	r0, [sp]		/* Get the SPSR from stack */
 	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
 	teq	r0, #(PSR_USR32_MODE)
-	bne	Lirqout			/* Nope, get out now */
+	bne	.Lirqout		/* Nope, get out now */
 
-Lastloop:
-	ldr	r0, Lastpending		/* Do we have an AST pending? */
+.Lastloop:
+	ldr	r0, .Lastpending	/* Do we have an AST pending? */
 	ldr	r1, [r0]
 	teq	r1, #0x00000000
-	beq	Lirqout			/* Nope, get out now */
+	beq	.Lirqout		/* Nope, get out now */
 
 	mov	r1, #0x00000000
 	str	r1, [r0]		/* Clear astpending */
 
-	mrs	r4, cpsr_all		/* save CPSR */
+	mrs	r4, cpsr		/* save CPSR */
 	bic	r0, r4, #(I32_bit)	/* Enable IRQs */
-	msr	cpsr_all, r0
+	msr	cpsr_c, r0
 
 	mov	r0, sp
 	bl	_C_LABEL(ast)		/* ast(frame) */
 
-	msr	cpsr_all, r4		/* Disable IRQs */
-	b	Lastloop		/* Check for more ASTs */
+	msr	cpsr_c, r4		/* Disable IRQs */
+	b	.Lastloop		/* Check for more ASTs */
 
-Lirqout:
+.Lirqout:
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
 
