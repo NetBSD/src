@@ -1,4 +1,4 @@
-/* 
+/ * 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,8 +33,8 @@
  *	@(#)queue.h	8.3 (Berkeley) 12/13/93
  */
 
-#ifndef	_QUEUE_H_
-#define	_QUEUE_H_
+#ifndef	_SYS_QUEUE_H_
+#define	_SYS_QUEUE_H_
 
 /*
  * This file defines three types of data structures: lists, tail queues,
@@ -242,4 +242,4 @@ struct {								\
 		(elm)->field.cqe_prev->field.cqe_next =			\
 		    (elm)->field.cqe_next;				\
 }
-#endif	/* !_QUEUE_H_ */
+#endif	/* !_SYS_QUEUE_H_ */
