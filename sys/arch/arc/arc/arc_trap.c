@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.10 2000/03/03 12:50:19 soda Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.11 2000/03/04 05:21:20 nisimura Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -45,36 +45,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/signalvar.h>
-#include <sys/syscall.h>
-#include <sys/user.h>
-#include <sys/buf.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#include <net/netisr.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-
-#include <machine/trap.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
-#include <machine/cpu.h>
-#include <machine/pio.h>
 #include <machine/autoconf.h>
-#include <machine/mips_opcode.h>
+#include <machine/intr.h>
+#include <machine/pio.h>
 
 #include <arc/pica/pica.h>
 #include <arc/pica/rd94.h>
 #include <arc/arc/arctype.h>
-
-#include <sys/cdefs.h>
-#include <sys/syslog.h>
 
 #define	MIPS_INT_LEVELS	8
 
@@ -162,38 +141,3 @@ set_intr(mask, int_hand, prio)
 		break;
 	}
 }
-
-#if 0
-/*
- *----------------------------------------------------------------------
- *
- * MemErrorInterrupts --
- *   arc_errintr - for the ACER PICA_61
- *
- *	Handler an interrupt for the control register.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-static void
-arc_errintr()
-{
-	volatile u_short *sysCSRPtr =
-		(u_short *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
-	u_short csr;
-
-	csr = *sysCSRPtr;
-
-	if (csr & KN01_CSR_MERR) {
-		printf("Memory error at 0x%x\n",
-			*(unsigned *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
-		panic("Mem error interrupt");
-	}
-	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
-}
-#endif
