@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 1998/05/08 16:55:17 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 1998/05/28 08:12:17 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -72,6 +72,8 @@ struct bat battable[16];
 int astpending;
 
 char *bootpath;
+
+#define MSGBUFADDR 0x3000
 
 caddr_t allocsys __P((caddr_t));
 
@@ -356,7 +358,12 @@ cpu_startup()
 	caddr_t v;
 	vm_offset_t minaddr, maxaddr;
 	int base, residual;
-	
+
+	/*
+	 * Initialize error message buffer (at end of core).
+	 */
+	initmsgbuf((caddr_t)MSGBUFADDR, round_page(MSGBUFSIZE));
+
 	proc0.p_addr = proc0paddr;
 	v = (caddr_t)proc0paddr + USPACE;
 

@@ -1,17 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.7 1998/02/24 05:45:51 mycroft Exp $
-#
-# First try for powerpc-specific configuration info
-#
-maxpartitions 16
-
-maxusers 2 8 64
-
-file	arch/powerpc/powerpc/autoconf.c
-file	arch/powerpc/powerpc/clock.c
-file	arch/powerpc/powerpc/conf.c
-file	arch/powerpc/powerpc/disksubr.c		disk
-file	arch/powerpc/powerpc/machdep.c
-file	arch/powerpc/powerpc/vm_machdep.c
+#	$Id: files.powerpc,v 1.8 1998/05/28 08:19:49 sakamoto Exp $
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/bcopy.c
@@ -22,11 +9,8 @@ file	arch/powerpc/powerpc/fpu.c
 file	arch/powerpc/powerpc/fubyte.c
 file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/in_cksum.c
-file	arch/powerpc/powerpc/ipkdb_glue.c	ipkdb
+file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/mem.c
-file	arch/powerpc/powerpc/ofw_machdep.c
-file	arch/powerpc/powerpc/ofwmagic.S
-file	arch/powerpc/powerpc/openfirm.c
 file	arch/powerpc/powerpc/pmap.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/subyte.c
@@ -34,40 +18,9 @@ file	arch/powerpc/powerpc/suword.c
 file	arch/powerpc/powerpc/suswintr.c
 file	arch/powerpc/powerpc/sys_machdep.c
 file	arch/powerpc/powerpc/trap.c
-file	dev/cons.c
-file	dev/cninit.c
+file	arch/powerpc/powerpc/vm_machdep.c
 file    arch/powerpc/powerpc/setjmp.S                   ddb
 file    arch/powerpc/powerpc/db_memrw.c                 ddb
 file    arch/powerpc/powerpc/db_disasm.c                ddb
 file    arch/powerpc/powerpc/db_interface.c             ddb
 file    arch/powerpc/powerpc/db_trace.c                 ddb
-
-# Firmworks OpenFirmware Bug Workarounds
-file	arch/powerpc/powerpc/ofwreal.S		firmworksbugs
-
-
-#
-# Generic OpenFirmware device support
-#
-include "dev/ofw/files.ofw"
-major	{ofdisk = 0}
-
-
-# For now, hardwire soft interrupt handling
-file	arch/powerpc/powerpc/soft_spl.c
-
-# FirePower specific code
-#device firepower: ofbus
-#attach firepower at root
-
-#file	arch/powerpc/firepower/firedep.c	firepower needs-flag
-#file	arch/powerpc/firepower/fireirq.c	firepower
-
-
-#
-# System bus types
-#
-define	mainbus {}
-device	mainbus: mainbus, ofbus
-attach	mainbus at root
-file	arch/powerpc/powerpc/mainbus.c		mainbus
