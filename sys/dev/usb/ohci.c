@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.24 1999/01/10 16:38:54 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.25 1999/01/10 18:42:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
 
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
-#include "dev/usb/queue.addendum.h"
 
 #define delay(d)                DELAY(d)
 
@@ -158,9 +157,9 @@ void		ohci_dump_ed __P((ohci_soft_ed_t *));
 #define OREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 #define OREAD2(sc, r) bus_space_read_2((sc)->iot, (sc)->ioh, (r))
 #elif defined(__FreeBSD__)
-#define OWRITE4(sc, r, x) outl((sc)->sc_iobase + (r), (x))
-#define OREAD4(sc, r) inl((sc)->sc_iobase + (r))
-#define OREAD2(sc, r) inw((sc)->sc_iobase + (r))
+#define OWRITE4(sc, r, x) *(unsigned int *) ((sc)->sc_iobase + (r)) = x
+#define OREAD4(sc, r) (*(unsigned int *) ((sc)->sc_iobase + (r)))
+#define OREAD2(sc, r) (*(unsigned short *) ((sc)->sc_iobase + (r)))
 #endif
 
 /* Reverse the bits in a value 0 .. 31 */
@@ -435,8 +434,8 @@ ohci_init(sc)
 	}
 
 	/*
-	 * This reset should be necessary according to the OHCI spec, but
-	 * without it some controller don't start.
+	 * This reset should not be necessary according to the OHCI spec, but
+	 * without it some controllers do not start.
 	 */
 	DPRINTF(("%s: resetting\n", USBDEVNAME(sc->sc_bus.bdev)));
 	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
@@ -569,7 +568,7 @@ ohci_intr(p)
 	ohci_physaddr_t done;
 
 	/* In case the interrupt occurs before initialization has completed. */
-	if (sc->sc_hcca == NULL) {
+	if (sc == NULL || sc->sc_hcca == NULL) {	/* NWH added sc==0 */
 #ifdef DIAGNOSTIC
 		printf("ohci_intr: sc->sc_hcca == NULL\n");
 #endif
