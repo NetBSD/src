@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.6 2002/04/29 08:23:35 lukem Exp $
+# $NetBSD: postinstall,v 1.7 2002/04/29 08:31:01 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -318,15 +318,17 @@ do_ssh()
 			fi
 		done
 		for f in sshd.conf ssh.conf ; do
-				# /etc/ssh{,d}.conf -> /etc/ssh/ssh{,d}_config
+				# /etc/ssh/ssh{,d}.conf -> ssh{,d}_config
+				#
 			if ! move_file ${op} \
-			    ${DEST_ETC}/${f} ${_etcssh}/${f%.conf}_config ;
+			    ${_etcssh}/${f} ${_etcssh}/${f%.conf}_config ;
 			then
 				failed=1
 			fi
-				# /etc/ssh/ssh{,d}.conf -> ssh{,d}_config
+				# /etc/ssh{,d}.conf -> /etc/ssh/ssh{,d}_config
+				#
 			if ! move_file ${op} \
-			    ${_etcssh}/${f} ${_etcssh}/${f%.conf}_config ;
+			    ${DEST_ETC}/${f} ${_etcssh}/${f%.conf}_config ;
 			then
 				failed=1
 			fi
