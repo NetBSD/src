@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.20 1994/10/30 21:47:31 cgd Exp $	*/
+/*	$NetBSD: cons.c,v 1.21 1994/10/30 22:16:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,6 +94,7 @@ cnopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+
 	if (cn_tab == NULL)
 		return (0);
 
@@ -142,6 +143,7 @@ cnread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
+
 	/*
 	 * If we would redirect input, punt.  This will keep strange
 	 * things from happening to people who are using the real
@@ -163,6 +165,7 @@ cnwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
+
 	/*
 	 * Redirect output, if that's appropriate.
 	 * If there's no real console, return ENXIO.
@@ -220,6 +223,7 @@ cnselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
+
 	/*
 	 * Redirect the ioctl, if that's appropriate.
 	 * I don't want to think of the possible side effects
@@ -237,6 +241,7 @@ cnselect(dev, rw, p)
 int
 cngetc()
 {
+
 	if (cn_tab == NULL)
 		return (0);
 	return ((*cn_tab->cn_getc)(cn_tab->cn_dev));
@@ -246,6 +251,7 @@ int
 cnputc(c)
 	register int c;
 {
+
 	if (cn_tab == NULL)
 		return;
 	if (c) {
@@ -269,4 +275,11 @@ cnpollc(on)
 		(*cn_tab->cn_pollc)(cn_tab->cn_dev, on);
 	if (on)
 		++refcount;
+}
+
+void
+nullcnpollc(on)
+	int on;
+{
+
 }
