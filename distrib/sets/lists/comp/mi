@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.194 2000/02/20 06:58:48 mycroft Exp $
+#	$NetBSD: mi,v 1.195 2000/02/24 03:00:10 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1732,6 +1732,7 @@
 ./usr/share/man/cat3/fread.0	comp-c-catman
 ./usr/share/man/cat3/free.0	comp-c-catman
 ./usr/share/man/cat3/freeaddrinfo.0	comp-c-catman
+./usr/share/man/cat3/freeifaddrs.0	comp-c-catman
 ./usr/share/man/cat3/freopen.0	comp-c-catman
 ./usr/share/man/cat3/frexp.0	comp-c-catman
 ./usr/share/man/cat3/fropen.0	comp-c-catman
@@ -1781,6 +1782,7 @@
 ./usr/share/man/cat3/gethostent.0	comp-c-catman
 ./usr/share/man/cat3/gethostid.0	comp-c-catman
 ./usr/share/man/cat3/gethostname.0	comp-c-catman
+./usr/share/man/cat3/getifaddrs.0	comp-c-catman
 ./usr/share/man/cat3/getloadavg.0	comp-c-catman
 ./usr/share/man/cat3/getmaxpartitions.0	comp-c-catman
 ./usr/share/man/cat3/getmntinfo.0	comp-c-catman
@@ -3225,6 +3227,7 @@
 ./usr/share/man/man3/fread.3		comp-c-man
 ./usr/share/man/man3/free.3		comp-c-man
 ./usr/share/man/man3/freeaddrinfo.3		comp-c-man
+./usr/share/man/man3/freeifaddrs.3		comp-c-man
 ./usr/share/man/man3/freopen.3		comp-c-man
 ./usr/share/man/man3/frexp.3		comp-c-man
 ./usr/share/man/man3/fropen.3		comp-c-man
@@ -3274,6 +3277,7 @@
 ./usr/share/man/man3/gethostent.3		comp-c-man
 ./usr/share/man/man3/gethostid.3		comp-c-man
 ./usr/share/man/man3/gethostname.3		comp-c-man
+./usr/share/man/man3/getifaddrs.3		comp-c-man
 ./usr/share/man/man3/getloadavg.3		comp-c-man
 ./usr/share/man/man3/getmaxpartitions.3		comp-c-man
 ./usr/share/man/man3/getmntinfo.3		comp-c-man
