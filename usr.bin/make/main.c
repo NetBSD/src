@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.96 2004/01/05 23:23:35 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.97 2004/02/03 19:25:29 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.96 2004/01/05 23:23:35 jmmv Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.97 2004/02/03 19:25:29 chuck Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.96 2004/01/05 23:23:35 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.97 2004/02/03 19:25:29 chuck Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -206,6 +206,7 @@ MainParseArgs(int argc, char **argv)
 {
 	char *p;
 	int c;
+	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
 	optind = 1;	/* since we're called more than once */
 #ifdef REMOTE
@@ -391,7 +392,16 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
 			break;
 		case 'm':
-			(void) Dir_AddDir(sysIncPath, optarg);
+			/* look for magic parent directory search string */
+			if (strncmp(".../", optarg, 4) == 0) {
+				if (!Dir_FindHereOrAbove(curdir, optarg+4,
+				    found_path, sizeof(found_path)))
+					break;		/* nothing doing */
+				(void) Dir_AddDir(sysIncPath, found_path);
+				
+			} else {
+				(void) Dir_AddDir(sysIncPath, optarg);
+			}
 			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -565,6 +575,7 @@ main(int argc, char **argv)
 	char *cp = NULL, *start;
 					/* avoid faults on read-only strings */
 	static char defsyspath[] = _PATH_DEFSYSPATH;
+	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 	
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
@@ -808,11 +819,17 @@ main(int argc, char **argv)
 	for (start = syspath; *start != '\0'; start = cp) {
 		for (cp = start; *cp != '\0' && *cp != ':'; cp++)
 			continue;
-		if (*cp == '\0') {
+		if (*cp == ':') {
+			*cp++ = '\0';
+		}
+		/* look for magic parent directory search string */
+		if (strncmp(".../", start, 4) != 0) {
 			(void) Dir_AddDir(defIncPath, start);
 		} else {
-			*cp++ = '\0';
-			(void) Dir_AddDir(defIncPath, start);
+			if (Dir_FindHereOrAbove(curdir, start+4, 
+			    found_path, sizeof(found_path))) {
+				(void) Dir_AddDir(defIncPath, found_path);
+			}
 		}
 	}
 	if (syspath != defsyspath)
