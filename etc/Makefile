@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112.2.1 1999/04/04 09:28:35 fair Exp $
+#	$NetBSD: Makefile,v 1.112.2.2 1999/04/04 10:27:38 fair Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -261,8 +261,11 @@ KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
 
 # This target builds the GENERIC kernel (which must exist for all
 # ports) and puts it in binary/sets/kern.tgz, and also builds any
-# kernels specified in EXTRA_KERNELS and puts them in
-# binary/kernel/netbsd.${KERN}.gz
+# kernels specified in EXTRA_KERNELS. Since NetBSD's kernel build
+# system can create more than one kernel from a single configuration
+# we figure out how many there are, what they're named, and move them
+# to binary/kernel/${KERNEL}.${CONFIGFILE}.gz - most often KERNEL will
+# simply be "netbsd".
 #
 snap_kern:
 	cd ${KERNCONFDIR} && config \
@@ -272,18 +275,21 @@ snap_kern:
 .endif
 	cd ${KERNOBJDIR}/GENERIC &&	\
 		${MAKE} depend && ${MAKE} ${_J} &&	\
-		tar cf - netbsd |\
+		tar cf - `awk '$$1=="config" {print $$2}'  \
+			${KERNCONFDIR}/GENERIC` |\
 		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
-.for kernel in ${EXTRA_KERNELS}
+.for configfile in ${EXTRA_KERNELS}
 	cd ${KERNCONFDIR} && config \
-		-b ${KERNOBJDIR}/${kernel} -s ${KERNSRCDIR} ${kernel}
+		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
 .ifndef UPDATE
-	cd ${KERNOBJDIR}/${kernel} && ${MAKE} clean 
+	cd ${KERNOBJDIR}/${configfile} && ${MAKE} clean 
 .endif
-	cd ${KERNOBJDIR}/${kernel} &&	\
+	cd ${KERNOBJDIR}/${configfile} &&	\
 		${MAKE} depend && ${MAKE} ${_J} &&	\
-		gzip -c -9 < netbsd > \
-			${RELEASEDIR}/binary/kernel/netbsd.${kernel}.gz
+		for kernel in `awk '$$1=="config" {print $$2}' \
+			${KERNCONFDIR}/${configfile}` ; {   \
+		gzip -c -9 < $${kernel} > \
+			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile}.gz ; }
 .endfor # EXTRA_KERNELS
 
 .endif # RELEASEDIR check
