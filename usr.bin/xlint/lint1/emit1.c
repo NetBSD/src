@@ -1,4 +1,4 @@
-/*	$NetBSD: emit1.c,v 1.3 1995/10/02 17:14:14 jpo Exp $	*/
+/*	$NetBSD: emit1.c,v 1.4 1995/10/02 17:21:28 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: emit1.c,v 1.3 1995/10/02 17:14:14 jpo Exp $";
+static char rcsid[] = "$NetBSD: emit1.c,v 1.4 1995/10/02 17:21:28 jpo Exp $";
 #endif
 
 #include <ctype.h>
@@ -277,9 +277,8 @@ outsym(sym, sc, def)
  * they are called with proper argument types
  */
 void
-outfdef(fsym, tp, posp, rval, osdef, args)
+outfdef(fsym, posp, rval, osdef, args)
 	sym_t	*fsym, *args;
-	type_t	*tp;
 	pos_t	*posp;
 	int	rval, osdef;
 {
@@ -362,9 +361,9 @@ outfdef(fsym, tp, posp, rval, osdef, args)
 		outint(narg);
 		for (arg = args; arg != NULL; arg = arg->s_nxt)
 			outtype(arg->s_type);
-		outtype(tp->t_subt);
+		outtype(fsym->s_type->t_subt);
 	} else {
-		outtype(tp);
+		outtype(fsym->s_type);
 	}
 }
 
