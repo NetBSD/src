@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.20.2.1 2000/01/08 22:42:09 he Exp $ */
+/* $NetBSD: ispvar.h,v 1.20.2.2 2000/05/13 17:14:04 he Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -37,23 +37,26 @@
 #include <dev/ic/ispmbox.h>
 #ifdef	ISP_TARGET_MODE
 #include <dev/ic/isp_target.h>
+#include <dev/ic/isp_tpublic.h>
 #endif
 #endif
 #ifdef	__FreeBSD__
 #include <dev/isp/ispmbox.h>
 #ifdef	ISP_TARGET_MODE
 #include <dev/isp/isp_target.h>
+#include <dev/isp/isp_tpublic.h>
 #endif
 #endif
 #ifdef	__linux__
 #include "ispmbox.h"
 #ifdef	ISP_TARGET_MODE
 #include "isp_target.h"
+#include "isp_tpublic.h"
 #endif
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	1
-#define	ISP_CORE_VERSION_MINOR	12
+#define	ISP_CORE_VERSION_MINOR	14
 
 /*
  * Vector for bus specific code to provide specific services.
@@ -225,11 +228,12 @@ typedef struct {
 
 typedef struct {
 	u_int32_t		isp_fwoptions	: 16,
-						: 7,
+						: 4,
 				loop_seen_once	: 1,
 				isp_loopstate	: 3,	/* Current Loop State */
 				isp_fwstate	: 3,	/* ISP F/W state */
 				isp_gotdparms	: 1,
+				isp_topo	: 3,
 				isp_onfabric	: 1;
 	u_int8_t		isp_loopid;	/* hard loop id */
 	u_int8_t		isp_alpa;	/* ALPA */
@@ -254,11 +258,11 @@ typedef struct {
 	 */
 	struct lportdb {
 		u_int
-					loopid	: 8,
-						: 4,
-					fabdev	: 1,
-					roles	: 2,
-					valid	: 1;
+					loopid		: 8,
+							: 4,
+					loggedin	: 1,
+					roles		: 2,
+					valid		: 1;
 		u_int32_t		portid;
 		u_int64_t		node_wwn;
 		u_int64_t		port_wwn;
@@ -284,6 +288,12 @@ typedef struct {
 #define	LOOP_LIP_RCVD		1
 #define	LOOP_PDB_RCVD		2
 #define	LOOP_READY		7
+
+#define	TOPO_NL_PORT		0
+#define	TOPO_FL_PORT		1
+#define	TOPO_N_PORT		2
+#define	TOPO_F_PORT		3
+#define	TOPO_PTP_STUB		4
 
 /*
  * Soft Structure per host adapter
@@ -367,6 +377,7 @@ struct ispsoftc {
 #define	ISP_CFG_NONVRAM		0x40	/* ignore NVRAM */
 #define	ISP_CFG_FULL_DUPLEX	0x01	/* Full Duplex (Fibre Channel only) */
 #define	ISP_CFG_OWNWWN		0x02	/* override NVRAM wwn */
+#define	ISP_CFG_NPORT		0x04	/* try to force N- instead of L-Port */
 
 #define	ISP_FW_REV(maj, min, mic)	((maj << 24) | (min << 16) | mic)
 #define	ISP_FW_REVX(xp)	((xp[0]<<24) | (xp[1] << 16) | xp[2])
@@ -391,6 +402,7 @@ struct ispsoftc {
 #define	ISP_HA_SCSI_1240	0x8
 #define	ISP_HA_SCSI_1080	0x9
 #define	ISP_HA_SCSI_1280	0xa
+#define	ISP_HA_SCSI_12160	0xb
 #define	ISP_HA_FC		0xf0
 #define	ISP_HA_FC_2100		0x10
 #define	ISP_HA_FC_2200		0x20
@@ -399,12 +411,17 @@ struct ispsoftc {
 #define	IS_1240(isp)	(isp->isp_type == ISP_HA_SCSI_1240)
 #define	IS_1080(isp)	(isp->isp_type == ISP_HA_SCSI_1080)
 #define	IS_1280(isp)	(isp->isp_type == ISP_HA_SCSI_1280)
-#define	IS_12X0(isp)	\
-	(isp->isp_type == ISP_HA_SCSI_1240 || isp->isp_type == ISP_HA_SCSI_1280)
-#define	IS_DUALBUS(isp)	IS_12X0(isp)
-#define	IS_ULTRA2(isp)	\
-	(isp->isp_type == ISP_HA_SCSI_1080 || isp->isp_type == ISP_HA_SCSI_1280)
+#define	IS_12160(isp)	(isp->isp_type == ISP_HA_SCSI_12160)
+
+#define	IS_12X0(isp)	(IS_1240(isp) || IS_1280(isp))
+#define	IS_DUALBUS(isp)	(IS_12X0(isp) || IS_12160(isp))
+#define	IS_ULTRA2(isp)	(IS_1080(isp) || IS_1280(isp) || IS_12160(isp))
+#define	IS_ULTRA3(isp)	(IS_12160(isp))
+
 #define	IS_FC(isp)	(isp->isp_type & ISP_HA_FC)
+#define	IS_2100(isp)	(isp->isp_type == ISP_HA_FC_2100)
+#define	IS_2200(isp)	(isp->isp_type == ISP_HA_FC_2200)
+
 
 /*
  * Function Prototypes

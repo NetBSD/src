@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.12.2.1 2000/01/08 22:43:15 he Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.12.2.2 2000/05/13 17:14:03 he Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -585,6 +585,9 @@ isp_async(isp, cmd, arg)
 			 */
 			if (sdp->isp_lvdmode || period < 0xc) {
 				switch (period) {
+				case 0x9:
+					mhz = 80;
+					break;
 				case 0xa:
 					mhz = 40;
 					break;
