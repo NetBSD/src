@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_krbrlm.c,v 1.4 2001/09/17 12:21:42 assar Exp $");
+RCSID("$Id: get_krbrlm.c,v 1.5 2001/09/17 15:06:49 assar Exp $");
 
 /*
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills
@@ -64,7 +64,7 @@ krb_get_lrealm_f(char *r, int n, FILE *f)
 	    return KFAILURE;
 
     /* We now have the n:th line, remove initial white space. */
-    rstart = p = buf + strspn(buf, " \t");
+    p = buf + strspn(buf, " \t");
 
     /* Collect realmname. */
     nchar    = strcspn(p, " \t\n");
