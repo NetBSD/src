@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.c,v 1.6 2003/05/15 14:34:39 itojun Exp $	*/
+/*	$NetBSD: ifaddrlist.c,v 1.7 2003/05/15 14:47:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: ifaddrlist.c,v 1.2 97/04/22 13:31:05 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: ifaddrlist.c,v 1.6 2003/05/15 14:34:39 itojun Exp $");
+__RCSID("$NetBSD: ifaddrlist.c,v 1.7 2003/05/15 14:47:49 itojun Exp $");
 #endif
 #endif
 
@@ -66,9 +66,7 @@ struct rtentry;
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
-#endif
 
 #include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
@@ -77,20 +75,11 @@ struct rtentry;
 
 #include "ifaddrlist.h"
 
-
 /* Not all systems have IFF_LOOPBACK */
-#ifdef HAVE_IFADDRS_H
 #ifdef IFF_LOOPBACK
 #define ISLOOPBACK(p) ((p)->ifa_flags & IFF_LOOPBACK)
 #else
 #define ISLOOPBACK(p) (strcmp((p)->ifa_name, "lo0") == 0)
-#endif
-#else
-#ifdef IFF_LOOPBACK
-#define ISLOOPBACK(p) ((p)->ifr_flags & IFF_LOOPBACK)
-#else
-#define ISLOOPBACK(p) (strcmp((p)->ifr_name, "lo0") == 0)
-#endif
 #endif
 
 #define MAX_IPADDR 256
@@ -101,7 +90,6 @@ struct rtentry;
 int
 ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 {
-#ifdef HAVE_IFADDRS_H
 	int nipaddr;
 	struct sockaddr_in *sin;
 	struct ifaddrs *ifap, *ifa;
@@ -141,91 +129,4 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 	*ipaddrp = ifaddrlist;
 	freeifaddrs(ifap);
 	return (nipaddr);
-#else
-	int fd, nipaddr;
-#ifdef HAVE_SOCKADDR_SA_LEN
-	int n;
-#endif
-	struct ifreq *ifrp, *ifend, *ifnext, *mp;
-	struct sockaddr_in *sin;
-	struct ifaddrlist *al;
-	struct ifconf ifc;
-	struct ifreq ibuf[MAX_IPADDR], ifr;
-	char device[sizeof(ifr.ifr_name) + 1];
-	static struct ifaddrlist ifaddrlist[MAX_IPADDR];
-
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (fd < 0) {
-		(void)snprintf(errbuf, buflen, "socket: %s", strerror(errno));
-		return (-1);
-	}
-	ifc.ifc_len = sizeof(ibuf);
-	ifc.ifc_buf = (caddr_t)ibuf;
-
-	if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		(void)snprintf(errbuf, buflen, "SIOCGIFCONF: %s", strerror(errno));
-		(void)close(fd);
-		return (-1);
-	}
-	ifrp = ibuf;
-	ifend = (struct ifreq *)((char *)ibuf + ifc.ifc_len);
-
-	al = ifaddrlist;
-	mp = NULL;
-	nipaddr = 0;
-	for (; ifrp < ifend; ifrp = ifnext) {
-#ifdef HAVE_SOCKADDR_SA_LEN
-		n = ifrp->ifr_addr.sa_len + sizeof(ifrp->ifr_name);
-		if (n < sizeof(*ifrp))
-			ifnext = ifrp + 1;
-		else
-			ifnext = (struct ifreq *)((char *)ifrp + n);
-		if (ifrp->ifr_addr.sa_family != AF_INET)
-			continue;
-#else
-		ifnext = ifrp + 1;
-#endif
-		/*
-		 * Need a template to preserve address info that is
-		 * used below to locate the next entry.  (Otherwise,
-		 * SIOCGIFFLAGS stomps over it because the requests
-		 * are returned in a union.)
-		 */
-		strncpy(ifr.ifr_name, ifrp->ifr_name, sizeof(ifr.ifr_name));
-		if (ioctl(fd, SIOCGIFFLAGS, (char *)&ifr) < 0) {
-			if (errno == ENXIO)
-				continue;
-			(void)snprintf(errbuf, buflen, "SIOCGIFFLAGS: %.*s: %s",
-			    (int)sizeof(ifr.ifr_name), ifr.ifr_name,
-			    strerror(errno));
-			(void)close(fd);
-			return (-1);
-		}
-
-		/* Must be up */
-		if ((ifr.ifr_flags & IFF_UP) == 0)
-			continue;
-
-		/*
-		 * Must not be a loopback address (127/8)
-		 */
-		sin = (struct sockaddr_in *)&ifrp->ifr_addr;
-		if (ISLOOPBACK(&ifr))
-			if (ntohl(sin->sin_addr.s_addr) == INADDR_LOOPBACK)
-				continue;
-
-		(void)strncpy(device, ifrp->ifr_name, sizeof(ifrp->ifr_name));
-		device[sizeof(device) - 1] = '\0';
-
-		al->addr = sin->sin_addr.s_addr;
-		al->device = strdup(device);
-		++al;
-		++nipaddr;
-	}
-	(void)close(fd);
-
-	*ipaddrp = ifaddrlist;
-	return (nipaddr);
-#endif
 }
