@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.80 2001/08/04 11:38:58 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.81 2001/08/07 13:57:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -173,6 +173,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_CNET_NE2000,
       0, -1, { 0x00, 0x80, 0xad } },
+
+    { PCMCIA_STR_ZONET_ZEN,
+      PCMCIA_VENDOR_ZONET, PCMCIA_PRODUCT_ZONET_ZEN,
+      PCMCIA_CIS_ZONET_ZEN,
+      0, -1, { 0x00, 0x00, 0x00 } },       
 
     /*
      * You have to add new entries which contains
