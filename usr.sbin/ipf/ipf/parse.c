@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.14 1998/08/27 18:03:44 ross Exp $	*/
+/*	$NetBSD: parse.c,v 1.15 1998/10/30 15:42:57 ws Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -658,6 +658,11 @@ u_char	*cp;
 				comp = FR_OUTRANGE;
 			else if (!strcmp(**seg, "><"))
 				comp = FR_INRANGE;
+			else {
+				(void)fprintf(stderr,"unknown range operator (%s)\n",
+						**seg);
+				return -1;
+			}
 			(*seg)++;
 			*tp = portnum(**seg);
 		} else if (!strcmp(**seg, "=") || !strcasecmp(**seg, "eq"))
