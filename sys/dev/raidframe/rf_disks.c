@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.49 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.50 2004/03/13 03:32:08 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.49 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.50 2004/03/13 03:32:08 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -328,7 +328,7 @@ rf_AllocDiskStructures(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 
 	/* get space for device specific stuff.. */
 	RF_MallocAndAdd(raidPtr->raid_cinfo,
-			(raidPtr->numCol + raidPtr->numSpare) * 
+			(raidPtr->numCol + RF_MAXSPARE) * 
 			sizeof(struct raidcinfo), (struct raidcinfo *),
 			raidPtr->cleanupList);
 
