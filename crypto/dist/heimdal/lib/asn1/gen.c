@@ -34,8 +34,8 @@
 #include "gen_locl.h"
 
 #ifdef __RCSID
-__RCSID("$Heimdal: gen.c,v 1.49 2002/09/04 15:06:18 joda Exp $"
-        "$NetBSD: gen.c,v 1.5 2002/09/13 19:09:00 thorpej Exp $");
+__RCSID("$Heimdal: gen.c,v 1.50 2003/04/17 07:09:18 lha Exp $"
+        "$NetBSD: gen.c,v 1.6 2003/05/15 21:36:39 lha Exp $");
 #endif
 
 FILE *headerfile, *codefile, *logfile;

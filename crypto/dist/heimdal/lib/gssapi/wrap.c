@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: wrap.c,v 1.20 2002/09/03 17:33:36 joda Exp $"
-        "$NetBSD: wrap.c,v 1.7 2003/05/15 20:44:17 lha Exp $");
+__RCSID("$Heimdal: wrap.c,v 1.21 2003/03/16 17:57:48 lha Exp $"
+        "$NetBSD: wrap.c,v 1.8 2003/05/15 21:36:45 lha Exp $");
 
 OM_uint32
 gss_krb5_get_localkey(const gss_ctx_id_t context_handle,

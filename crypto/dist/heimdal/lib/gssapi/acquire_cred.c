@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: acquire_cred.c,v 1.10 2002/08/20 12:02:45 nectar Exp $"
-        "$NetBSD: acquire_cred.c,v 1.10 2003/05/15 20:44:15 lha Exp $");
+__RCSID("$Heimdal: acquire_cred.c,v 1.13 2003/04/06 00:31:55 lha Exp $"
+        "$NetBSD: acquire_cred.c,v 1.11 2003/05/15 21:36:40 lha Exp $");
 
 static krb5_error_code
 get_keytab(krb5_keytab *keytab)
