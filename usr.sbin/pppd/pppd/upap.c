@@ -1,4 +1,4 @@
-/*	$NetBSD: upap.c,v 1.10 1997/09/26 19:53:22 christos Exp $	*/
+/*	$NetBSD: upap.c,v 1.11 1999/08/25 02:07:45 christos Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: upap.c,v 1.11 1997/04/30 05:59:56 paulus Exp ";
+#define RCSID	"Id: upap.c,v 1.20 1999/08/24 05:29:26 paulus Exp "
 #else
-__RCSID("$NetBSD: upap.c,v 1.10 1997/09/26 19:53:22 christos Exp $");
+__RCSID("$NetBSD: upap.c,v 1.11 1999/08/25 02:07:45 christos Exp $");
 #endif
 #endif
 
@@ -34,12 +34,30 @@ __RCSID("$NetBSD: upap.c,v 1.10 1997/09/26 19:53:22 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <syslog.h>
 
 #include "pppd.h"
 #include "upap.h"
+
+#ifdef RCSID
+static const char rcsid[] = RCSID;
+#endif
+
+static bool hide_password;
+
+/*
+ * Command-line options.
+ */
+static option_t pap_option_list[] = {
+    { "hide-password", o_bool, &hide_password,
+      "Don't output passwords to log", 1 },
+    { "pap-restart", o_int, &upap[0].us_timeouttime,
+      "Set retransmit timeout for PAP" },
+    { "pap-max-authreq", o_int, &upap[0].us_maxtransmits,
+      "Set max number of transmissions for auth-reqs" },
+    { "pap-timeout", o_int, &upap[0].us_reqtimeout,
+      "Set time limit for peer PAP authentication" },
+    { NULL }
+};
 
 /*
  * Protocol entry points.
@@ -65,6 +83,8 @@ struct protent pap_protent = {
     NULL,
     1,
     "PAP",
+    NULL,
+    pap_option_list,
     NULL,
     NULL,
     NULL
@@ -172,7 +192,7 @@ upap_timeout(arg)
 
     if (u->us_transmits >= u->us_maxtransmits) {
 	/* give up in disgust */
-	syslog(LOG_ERR, "No response to PAP authenticate-requests");
+	error("No response to PAP authenticate-requests");
 	u->us_clientstate = UPAPCS_BADAUTH;
 	auth_withpeer_fail(u->us_unit, PPP_PAP);
 	return;
@@ -259,11 +279,11 @@ upap_protrej(unit)
     upap_state *u = &upap[unit];
 
     if (u->us_clientstate == UPAPCS_AUTHREQ) {
-	syslog(LOG_ERR, "PAP authentication failed due to protocol-reject");
+	error("PAP authentication failed due to protocol-reject");
 	auth_withpeer_fail(unit, PPP_PAP);
     }
     if (u->us_serverstate == UPAPSS_LISTEN) {
-	syslog(LOG_ERR, "PAP authentication of peer failed (protocol-reject)");
+	error("PAP authentication of peer failed (protocol-reject)");
 	auth_peer_fail(unit, PPP_PAP);
     }
     upap_lowerdown(unit);
@@ -290,18 +310,18 @@ upap_input(unit, inpacket, l)
      */
     inp = inpacket;
     if (l < UPAP_HEADERLEN) {
-	UPAPDEBUG((LOG_INFO, "pap_input: rcvd short header."));
+	UPAPDEBUG(("pap_input: rcvd short header."));
 	return;
     }
     GETCHAR(code, inp);
     GETCHAR(id, inp);
     GETSHORT(len, inp);
     if (len < UPAP_HEADERLEN) {
-	UPAPDEBUG((LOG_INFO, "pap_input: rcvd illegal length."));
+	UPAPDEBUG(("pap_input: rcvd illegal length."));
 	return;
     }
     if (len > l) {
-	UPAPDEBUG((LOG_INFO, "pap_input: rcvd short packet."));
+	UPAPDEBUG(("pap_input: rcvd short packet."));
 	return;
     }
     len -= UPAP_HEADERLEN;
@@ -344,8 +364,6 @@ upap_rauthreq(u, inp, id, len)
     char *msg;
     int msglen;
 
-    UPAPDEBUG((LOG_INFO, "pap_rauth: Rcvd id %d.", id));
-
     if (u->us_serverstate < UPAPSS_LISTEN)
 	return;
 
@@ -366,20 +384,20 @@ upap_rauthreq(u, inp, id, len)
      * Parse user/passwd.
      */
     if (len < sizeof (u_char)) {
-	UPAPDEBUG((LOG_INFO, "pap_rauth: rcvd short packet."));
+	UPAPDEBUG(("pap_rauth: rcvd short packet."));
 	return;
     }
     GETCHAR(ruserlen, inp);
     len -= sizeof (u_char) + ruserlen + sizeof (u_char);
     if (len < 0) {
-	UPAPDEBUG((LOG_INFO, "pap_rauth: rcvd short packet."));
+	UPAPDEBUG(("pap_rauth: rcvd short packet."));
 	return;
     }
     ruser = (char *) inp;
     INCPTR(ruserlen, inp);
     GETCHAR(rpasswdlen, inp);
     if (len < rpasswdlen) {
-	UPAPDEBUG((LOG_INFO, "pap_rauth: rcvd short packet."));
+	UPAPDEBUG(("pap_rauth: rcvd short packet."));
 	return;
     }
     rpasswd = (char *) inp;
@@ -419,7 +437,6 @@ upap_rauthack(u, inp, id, len)
     u_char msglen;
     char *msg;
 
-    UPAPDEBUG((LOG_INFO, "pap_rauthack: Rcvd id %d.", id));
     if (u->us_clientstate != UPAPCS_AUTHREQ) /* XXX */
 	return;
 
@@ -427,17 +444,19 @@ upap_rauthack(u, inp, id, len)
      * Parse message.
      */
     if (len < sizeof (u_char)) {
-	UPAPDEBUG((LOG_INFO, "pap_rauthack: rcvd short packet."));
-	return;
+	UPAPDEBUG(("pap_rauthack: ignoring missing msg-length."));
+    } else {
+	GETCHAR(msglen, inp);
+	if (msglen > 0) {
+	    len -= sizeof (u_char);
+	    if (len < msglen) {
+		UPAPDEBUG(("pap_rauthack: rcvd short packet."));
+		return;
+	    }
+	    msg = (char *) inp;
+	    PRINTMSG(msg, msglen);
+	}
     }
-    GETCHAR(msglen, inp);
-    len -= sizeof (u_char);
-    if (len < msglen) {
-	UPAPDEBUG((LOG_INFO, "pap_rauthack: rcvd short packet."));
-	return;
-    }
-    msg = (char *) inp;
-    PRINTMSG(msg, msglen);
 
     u->us_clientstate = UPAPCS_OPEN;
 
@@ -458,7 +477,6 @@ upap_rauthnak(u, inp, id, len)
     u_char msglen;
     char *msg;
 
-    UPAPDEBUG((LOG_INFO, "pap_rauthnak: Rcvd id %d.", id));
     if (u->us_clientstate != UPAPCS_AUTHREQ) /* XXX */
 	return;
 
@@ -466,21 +484,23 @@ upap_rauthnak(u, inp, id, len)
      * Parse message.
      */
     if (len < sizeof (u_char)) {
-	UPAPDEBUG((LOG_INFO, "pap_rauthnak: rcvd short packet."));
-	return;
+	UPAPDEBUG(("pap_rauthnak: ignoring missing msg-length."));
+    } else {
+	GETCHAR(msglen, inp);
+	if (msglen > 0) {
+	    len -= sizeof (u_char);
+	    if (len < msglen) {
+		UPAPDEBUG(("pap_rauthnak: rcvd short packet."));
+		return;
+	    }
+	    msg = (char *) inp;
+	    PRINTMSG(msg, msglen);
+	}
     }
-    GETCHAR(msglen, inp);
-    len -= sizeof (u_char);
-    if (len < msglen) {
-	UPAPDEBUG((LOG_INFO, "pap_rauthnak: rcvd short packet."));
-	return;
-    }
-    msg = (char *) inp;
-    PRINTMSG(msg, msglen);
 
     u->us_clientstate = UPAPCS_BADAUTH;
 
-    syslog(LOG_ERR, "PAP authentication failed");
+    error("PAP authentication failed");
     auth_withpeer_fail(u->us_unit, PPP_PAP);
 }
 
@@ -512,8 +532,6 @@ upap_sauthreq(u)
 
     output(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
 
-    UPAPDEBUG((LOG_INFO, "pap_sauth: Sent id %d.", u->us_id));
-
     TIMEOUT(upap_timeout, u, u->us_timeouttime);
     ++u->us_transmits;
     u->us_clientstate = UPAPCS_AUTHREQ;
@@ -543,8 +561,6 @@ upap_sresp(u, code, id, msg, msglen)
     PUTCHAR(msglen, outp);
     BCOPY(msg, outp, msglen);
     output(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
-
-    UPAPDEBUG((LOG_INFO, "pap_sresp: Sent code %d, id %d.", code, id));
 }
 
 /*
@@ -598,7 +614,10 @@ upap_printpkt(p, plen, printer, arg)
 	printer(arg, " user=");
 	print_string(user, ulen, printer, arg);
 	printer(arg, " password=");
-	print_string(pwd, wlen, printer, arg);
+	if (!hide_password)
+	    print_string(pwd, wlen, printer, arg);
+	else
+	    printer(arg, "<hidden>");
 	break;
     case UPAP_AUTHACK:
     case UPAP_AUTHNAK:

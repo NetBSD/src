@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.h,v 1.9 1997/09/26 19:52:59 christos Exp $	*/
+/*	$NetBSD: lcp.h,v 1.10 1999/08/25 02:07:43 christos Exp $	*/
 
 /*
  * lcp.h - Link Control Protocol definitions.
@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: lcp.h,v 1.12 1996/10/08 04:35:02 paulus Exp 
+ * Id: lcp.h,v 1.13 1998/11/07 06:59:27 paulus Exp 
  */
 
 /*
@@ -46,19 +46,19 @@
  * The state of options is described by an lcp_options structure.
  */
 typedef struct lcp_options {
-    int passive : 1;		/* Don't die if we don't get a response */
-    int silent : 1;		/* Wait for the other end to start first */
-    int restart : 1;		/* Restart vs. exit after close */
-    int neg_mru : 1;		/* Negotiate the MRU? */
-    int neg_asyncmap : 1;	/* Negotiate the async map? */
-    int neg_upap : 1;		/* Ask for UPAP authentication? */
-    int neg_chap : 1;		/* Ask for CHAP authentication? */
-    int neg_magicnumber : 1;	/* Ask for magic number? */
-    int neg_pcompression : 1;	/* HDLC Protocol Field Compression? */
-    int neg_accompression : 1;	/* HDLC Address/Control Field Compression? */
-    int neg_lqr : 1;		/* Negotiate use of Link Quality Reports */
-    int neg_cbcp : 1;		/* Negotiate use of CBCP */
-    u_short mru;		/* Value of MRU */
+    bool passive;		/* Don't die if we don't get a response */
+    bool silent;		/* Wait for the other end to start first */
+    bool restart;		/* Restart vs. exit after close */
+    bool neg_mru;		/* Negotiate the MRU? */
+    bool neg_asyncmap;		/* Negotiate the async map? */
+    bool neg_upap;		/* Ask for UPAP authentication? */
+    bool neg_chap;		/* Ask for CHAP authentication? */
+    bool neg_magicnumber;	/* Ask for magic number? */
+    bool neg_pcompression;	/* HDLC Protocol Field Compression? */
+    bool neg_accompression;	/* HDLC Address/Control Field Compression? */
+    bool neg_lqr;		/* Negotiate use of Link Quality Reports */
+    bool neg_cbcp;		/* Negotiate use of CBCP */
+    int  mru;			/* Value of MRU */
     u_char chap_mdtype;		/* which MD type (hashing algorithm) */
     u_int32_t asyncmap;		/* Value of async map */
     u_int32_t magicnumber;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.19 1998/09/04 19:13:04 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.20 1999/08/25 02:07:43 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: lcp.c,v 1.32 1998/05/13 05:49:19 paulus Exp ";
+#define RCSID	"Id: lcp.c,v 1.44 1999/08/13 06:46:14 paulus Exp "
 #else
-__RCSID("$NetBSD: lcp.c,v 1.19 1998/09/04 19:13:04 christos Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.20 1999/08/25 02:07:43 christos Exp $");
 #endif
 #endif
 
@@ -34,19 +34,92 @@ __RCSID("$NetBSD: lcp.c,v 1.19 1998/09/04 19:13:04 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
-#include <syslog.h>
-#include <assert.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <netinet/in.h>
+#include <stdlib.h>
 
 #include "pppd.h"
 #include "fsm.h"
 #include "lcp.h"
 #include "chap.h"
 #include "magic.h"
+
+#ifdef RCSID
+static const char rcsid[] = RCSID;
+#endif
+
+/*
+ * LCP-related command-line options.
+ */
+int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
+int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
+bool	lax_recv = 0;		/* accept control chars in asyncmap */
+
+static int setescape __P((char **));
+
+static option_t lcp_option_list[] = {
+    /* LCP options */
+    { "noaccomp", o_bool, &lcp_wantoptions[0].neg_accompression,
+      "Disable address/control compression",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_accompression },
+    { "-ac", o_bool, &lcp_wantoptions[0].neg_accompression,
+      "Disable address/control compression",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_accompression },
+    { "default-asyncmap", o_bool, &lcp_wantoptions[0].neg_asyncmap,
+      "Disable asyncmap negotiation",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_asyncmap },
+    { "-am", o_bool, &lcp_wantoptions[0].neg_asyncmap,
+      "Disable asyncmap negotiation",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_asyncmap },
+    { "asyncmap", o_uint32, &lcp_wantoptions[0].asyncmap,
+      "Set asyncmap (for received packets)",
+      OPT_OR, &lcp_wantoptions[0].neg_asyncmap },
+    { "-as", o_uint32, &lcp_wantoptions[0].asyncmap,
+      "Set asyncmap (for received packets)",
+      OPT_OR, &lcp_wantoptions[0].neg_asyncmap },
+    { "nomagic", o_bool, &lcp_wantoptions[0].neg_magicnumber,
+      "Disable magic number negotiation (looped-back line detection)",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_magicnumber },
+    { "-mn", o_bool, &lcp_wantoptions[0].neg_magicnumber,
+      "Disable magic number negotiation (looped-back line detection)",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_magicnumber },
+    { "default-mru", o_bool, &lcp_wantoptions[0].neg_mru,
+      "Disable MRU negotiation (use default 1500)",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_mru },
+    { "-mru", o_bool, &lcp_wantoptions[0].neg_mru,
+      "Disable MRU negotiation (use default 1500)",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_mru },
+    { "mru", o_int, &lcp_wantoptions[0].mru,
+      "Set MRU (maximum received packet size) for negotiation",
+      0, &lcp_wantoptions[0].neg_mru },
+    { "nopcomp", o_bool, &lcp_wantoptions[0].neg_pcompression,
+      "Disable protocol field compression",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_pcompression },
+    { "-pc", o_bool, &lcp_wantoptions[0].neg_pcompression,
+      "Disable protocol field compression",
+      OPT_A2COPY, &lcp_allowoptions[0].neg_pcompression },
+    { "-p", o_bool, &lcp_wantoptions[0].passive,
+      "Set passive mode", 1 },
+    { "passive", o_bool, &lcp_wantoptions[0].passive,
+      "Set passive mode", 1 },
+    { "silent", o_bool, &lcp_wantoptions[0].silent,
+      "Set silent mode", 1 },
+    { "escape", o_special, setescape,
+      "List of character codes to escape on transmission" },
+    { "lcp-echo-failure", o_int, &lcp_echo_fails,
+      "Set number of consecutive echo failures to indicate link failure" },
+    { "lcp-echo-interval", o_int, &lcp_echo_interval,
+      "Set time in seconds between LCP echo requests" },
+    { "lcp-restart", o_int, &lcp_fsm[0].timeouttime,
+      "Set time in seconds between LCP retransmissions" },
+    { "lcp-max-terminate", o_int, &lcp_fsm[0].maxtermtransmits,
+      "Set maximum number of LCP terminate-request transmissions" },
+    { "lcp-max-configure", o_int, &lcp_fsm[0].maxconfreqtransmits,
+      "Set maximum number of LCP configure-request transmissions" },
+    { "lcp-max-failure", o_int, &lcp_fsm[0].maxnakloops,
+      "Set limit on number of LCP configure-naks" },
+    { "receive-all", o_bool, &lax_recv,
+      "Accept all received control characters", 1 },
+    {NULL}
+};
 
 /* global vars */
 fsm lcp_fsm[NUM_PPP];			/* LCP fsm structure (global)*/
@@ -58,7 +131,7 @@ u_int32_t xmit_accm[NUM_PPP][8];		/* extended transmit ACCM */
 
 static u_int32_t lcp_echos_pending = 0;	/* Number of outstanding echo msgs */
 static u_int32_t lcp_echo_number   = 0;	/* ID number of next echo frame */
-static u_int32_t lcp_echo_timer_running = 0;  /* TRUE if a timer is running */
+static u_int32_t lcp_echo_timer_running = 0;  /* set if a timer is running */
 
 static u_char nak_buffer[PPP_MRU];	/* where we construct a nak packet */
 
@@ -134,6 +207,8 @@ struct protent lcp_protent = {
     1,
     "LCP",
     NULL,
+    lcp_option_list,
+    NULL,
     NULL,
     NULL
 };
@@ -154,6 +229,37 @@ int lcp_loopbackfail = DEFLOOPBACKFAIL;
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
 			 (x) == CONFNAK ? "NAK" : "REJ")
 
+
+/*
+ * setescape - add chars to the set we escape on transmission.
+ */
+static int
+setescape(argv)
+    char **argv;
+{
+    int n, ret;
+    char *p, *endp;
+
+    p = *argv;
+    ret = 1;
+    while (*p) {
+	n = strtol(p, &endp, 16);
+	if (p == endp) {
+	    option_error("escape parameter contains invalid hex number '%s'",
+			 p);
+	    return 0;
+	}
+	p = endp;
+	if (n < 0 || n == 0x5E || n > 0xFF) {
+	    option_error("can't escape character 0x%x", n);
+	    ret = 0;
+	} else
+	    xmit_accm[0][n >> 5] |= 1 << (n & 0x1F);
+	while (*p == ',' || *p == ' ')
+	    ++p;
+    }
+    return ret;
+}
 
 /*
  * lcp_init - Initialize LCP.
@@ -178,7 +284,7 @@ lcp_init(unit)
 					   implementations */
     wo->neg_mru = 1;
     wo->mru = DEFMRU;
-    wo->neg_asyncmap = 0;
+    wo->neg_asyncmap = 1;
     wo->asyncmap = 0;
     wo->neg_chap = 0;			/* Set to 1 on server */
     wo->neg_upap = 0;			/* Set to 1 on server */
@@ -273,7 +379,7 @@ lcp_lowerup(unit)
      */
     ppp_set_xaccm(unit, xmit_accm[unit]);
     ppp_send_config(unit, PPP_MRU, 0xffffffff, 0, 0);
-    ppp_recv_config(unit, PPP_MRU, 0xffffffff,
+    ppp_recv_config(unit, PPP_MRU, (lax_recv? 0: 0xffffffff),
 		    wo->neg_pcompression, wo->neg_accompression);
     peer_mru[unit] = PPP_MRU;
     lcp_allowoptions[unit].asyncmap = xmit_accm[unit][0];
@@ -328,7 +434,6 @@ lcp_extcode(f, code, id, inp, len)
     case ECHOREQ:
 	if (f->state != OPENED)
 	    break;
-	LCPDEBUG((LOG_INFO, "lcp: Echo-Request, Rcvd id %d", id));
 	magp = inp;
 	PUTLONG(lcp_gotoptions[f->unit].magicnumber, magp);
 	fsm_sdata(f, ECHOREP, id, inp, len);
@@ -363,27 +468,19 @@ lcp_rprotrej(f, inp, len)
     struct protent *protp;
     u_short prot;
 
-    LCPDEBUG((LOG_INFO, "lcp_rprotrej."));
-
     if (len < sizeof (u_short)) {
-	LCPDEBUG((LOG_INFO,
-		  "lcp_rprotrej: Rcvd short Protocol-Reject packet!"));
+	LCPDEBUG(("lcp_rprotrej: Rcvd short Protocol-Reject packet!"));
 	return;
     }
 
     GETSHORT(prot, inp);
-
-    LCPDEBUG((LOG_INFO,
-	      "lcp_rprotrej: Rcvd Protocol-Reject packet for %x!",
-	      prot));
 
     /*
      * Protocol-Reject packets received in any state other than the LCP
      * OPENED state SHOULD be silently discarded.
      */
     if( f->state != OPENED ){
-	LCPDEBUG((LOG_INFO, "Protocol-Reject discarded: LCP in state %d",
-		  f->state));
+	LCPDEBUG(("Protocol-Reject discarded: LCP in state %d", f->state));
 	return;
     }
 
@@ -396,8 +493,7 @@ lcp_rprotrej(f, inp, len)
 	    return;
 	}
 
-    syslog(LOG_WARNING, "Protocol-Reject for unsupported protocol 0x%x",
-	   prot);
+    warn("Protocol-Reject for unsupported protocol 0x%x", prot);
 }
 
 
@@ -412,8 +508,7 @@ lcp_protrej(unit)
     /*
      * Can't reject LCP!
      */
-    LCPDEBUG((LOG_WARNING,
-	      "lcp_protrej: Received Protocol-Reject for LCP!"));
+    error("Received Protocol-Reject for LCP!");
     fsm_protreject(&lcp_fsm[unit]);
 }
 
@@ -548,7 +643,7 @@ lcp_addci(f, ucp, lenp)
 
     if (ucp - start_ucp != *lenp) {
 	/* this should never happen, because peer_mtu should be 1500 */
-	syslog(LOG_ERR, "Bug in lcp_addci: wrong length");
+	error("Bug in lcp_addci: wrong length");
     }
 }
 
@@ -677,7 +772,7 @@ lcp_ackci(f, p, len)
 	goto bad;
     return (1);
 bad:
-    LCPDEBUG((LOG_WARNING, "lcp_acki: received bad Ack!"));
+    LCPDEBUG(("lcp_acki: received bad Ack!"));
     return (0);
 }
 
@@ -963,18 +1058,16 @@ lcp_nakci(f, p, len)
 	p = next;
     }
 
-    /* If there is still anything left, this packet is bad. */
-    if (len != 0)
-	goto bad;
-
     /*
      * OK, the Nak is good.  Now we can update state.
+     * If there are any options left we ignore them.
      */
     if (f->state != OPENED) {
 	if (looped_back) {
 	    if (++try.numloops >= lcp_loopbackfail) {
-		syslog(LOG_NOTICE, "Serial line is looped back.");
+		notice("Serial line is looped back.");
 		lcp_close(f->unit, "Loopback detected");
+		status = EXIT_LOOPBACK;
 	    }
 	} else
 	    try.numloops = 0;
@@ -984,7 +1077,7 @@ lcp_nakci(f, p, len)
     return 1;
 
 bad:
-    LCPDEBUG((LOG_WARNING, "lcp_nakci: received bad Nak!"));
+    LCPDEBUG(("lcp_nakci: received bad Nak!"));
     return 0;
 }
 
@@ -1025,7 +1118,6 @@ lcp_rejci(f, p, len)
 	len -= CILEN_VOID; \
 	INCPTR(CILEN_VOID, p); \
 	try.neg = 0; \
-	LCPDEBUG((LOG_INFO, "lcp_rejci rejected void opt %d", opt)); \
     }
 #define REJCISHORT(opt, neg, val) \
     if (go->neg && \
@@ -1039,7 +1131,6 @@ lcp_rejci(f, p, len)
 	if (cishort != val) \
 	    goto bad; \
 	try.neg = 0; \
-	LCPDEBUG((LOG_INFO,"lcp_rejci rejected short opt %d", opt)); \
     }
 #define REJCICHAP(opt, neg, val, digest) \
     if (go->neg && \
@@ -1055,7 +1146,6 @@ lcp_rejci(f, p, len)
 	    goto bad; \
 	try.neg = 0; \
 	try.neg_upap = 0; \
-	LCPDEBUG((LOG_INFO,"lcp_rejci rejected chap opt %d", opt)); \
     }
 #define REJCILONG(opt, neg, val) \
     if (go->neg && \
@@ -1069,7 +1159,6 @@ lcp_rejci(f, p, len)
 	if (cilong != val) \
 	    goto bad; \
 	try.neg = 0; \
-	LCPDEBUG((LOG_INFO,"lcp_rejci rejected long opt %d", opt)); \
     }
 #define REJCILQR(opt, neg, val) \
     if (go->neg && \
@@ -1084,7 +1173,6 @@ lcp_rejci(f, p, len)
 	if (cishort != PPP_LQR || cilong != val) \
 	    goto bad; \
 	try.neg = 0; \
-	LCPDEBUG((LOG_INFO,"lcp_rejci rejected LQR opt %d", opt)); \
     }
 #define REJCICBCP(opt, neg, val) \
     if (go->neg && \
@@ -1098,7 +1186,6 @@ lcp_rejci(f, p, len)
 	if (cichar != val) \
 	    goto bad; \
 	try.neg = 0; \
-	LCPDEBUG((LOG_INFO,"lcp_rejci rejected Callback opt %d", opt)); \
     }
 
     REJCISHORT(CI_MRU, neg_mru, go->mru);
@@ -1126,7 +1213,7 @@ lcp_rejci(f, p, len)
     return 1;
 
 bad:
-    LCPDEBUG((LOG_WARNING, "lcp_rejci: received bad Reject!"));
+    LCPDEBUG(("lcp_rejci: received bad Reject!"));
     return 0;
 }
 
@@ -1176,7 +1263,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	if (l < 2 ||			/* Not enough data for CI header or */
 	    p[1] < 2 ||			/*  CI length too small or */
 	    p[1] > l) {			/*  CI length too big? */
-	    LCPDEBUG((LOG_WARNING, "lcp_reqci: bad CI length!"));
+	    LCPDEBUG(("lcp_reqci: bad CI length!"));
 	    orc = CONFREJ;		/* Reject bad CI */
 	    cilen = l;			/* Reject till end of packet */
 	    l = 0;			/* Don't loop again */
@@ -1190,14 +1277,12 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 
 	switch (citype) {		/* Check CI type */
 	case CI_MRU:
-	    LCPDEBUG((LOG_INFO, "lcp_reqci: rcvd MRU"));
 	    if (!ao->neg_mru ||		/* Allow option? */
 		cilen != CILEN_SHORT) {	/* Check CI length */
 		orc = CONFREJ;		/* Reject CI */
 		break;
 	    }
 	    GETSHORT(cishort, p);	/* Parse MRU */
-	    LCPDEBUG((LOG_INFO, "(%d)", cishort));
 
 	    /*
 	     * He must be able to receive at least our minimum.
@@ -1216,14 +1301,12 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    break;
 
 	case CI_ASYNCMAP:
-	    LCPDEBUG((LOG_INFO, "lcp_reqci: rcvd ASYNCMAP"));
 	    if (!ao->neg_asyncmap ||
 		cilen != CILEN_LONG) {
 		orc = CONFREJ;
 		break;
 	    }
 	    GETLONG(cilong, p);
-	    LCPDEBUG((LOG_INFO, "(%x)", (unsigned int) cilong));
 
 	    /*
 	     * Asyncmap must have set at least the bits
@@ -1241,7 +1324,6 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    break;
 
 	case CI_AUTHTYPE:
-	    LCPDEBUG((LOG_INFO, "lcp_reqci: rcvd AUTHTYPE"));
 	    if (cilen < CILEN_SHORT ||
 		!(ao->neg_upap || ao->neg_chap)) {
 		/*
@@ -1251,7 +1333,6 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		break;
 	    }
 	    GETSHORT(cishort, p);
-	    LCPDEBUG((LOG_INFO, "(%x)", cishort));
 
 	    /*
 	     * Authtype must be UPAP or CHAP.
@@ -1267,8 +1348,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    if (cishort == PPP_PAP) {
 		if (ho->neg_chap ||	/* we've already accepted CHAP */
 		    cilen != CILEN_SHORT) {
-		    LCPDEBUG((LOG_WARNING,
-			      "lcp_reqci: rcvd AUTHTYPE PAP, rejecting..."));
+		    LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE PAP, rejecting..."));
 		    orc = CONFREJ;
 		    break;
 		}
@@ -1286,8 +1366,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    if (cishort == PPP_CHAP) {
 		if (ho->neg_upap ||	/* we've already accepted PAP */
 		    cilen != CILEN_CHAP) {
-		    LCPDEBUG((LOG_INFO,
-			      "lcp_reqci: rcvd AUTHTYPE CHAP, rejecting..."));
+		    LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE CHAP, rejecting..."));
 		    orc = CONFREJ;
 		    break;
 		}
@@ -1334,7 +1413,6 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    break;
 
 	case CI_QUALITY:
-	    LCPDEBUG((LOG_INFO, "lcp_reqci: rcvd QUALITY"));
 	    if (!ao->neg_lqr ||
 		cilen != CILEN_LQR) {
 		orc = CONFREJ;
@@ -1343,7 +1421,6 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 
 	    GETSHORT(cishort, p);
 	    GETLONG(cilong, p);
-	    LCPDEBUG((LOG_INFO, "(%x %x)", cishort, (unsigned int) cilong));
 
 	    /*
 	     * Check the protocol and the reporting period.
@@ -1360,14 +1437,12 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    break;
 
 	case CI_MAGICNUMBER:
-	    LCPDEBUG((LOG_INFO, "lcp_reqci: rcvd MAGICNUMBER"));
 	    if (!(ao->neg_magicnumber || go->neg_magicnumber) ||
 		cilen != CILEN_LONG) {
 		orc = CONFREJ;
 		break;
 	    }
 	    GETLONG(cilong, p);
-	    LCPDEBUG((LOG_INFO, "(%x)", (unsigned int) cilong));
 
 	    /*
 	     * He must have a different magic number.
@@ -1387,7 +1462,6 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 
 
 	case CI_PCOMPRESSION:
-	    LCPDEBUG((LOG_INFO, "lcp_reqci: rcvd PCOMPRESSION"));
 	    if (!ao->neg_pcompression ||
 		cilen != CILEN_VOID) {
 		orc = CONFREJ;
@@ -1397,7 +1471,6 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    break;
 
 	case CI_ACCOMPRESSION:
-	    LCPDEBUG((LOG_INFO, "lcp_reqci: rcvd ACCOMPRESSION"));
 	    if (!ao->neg_accompression ||
 		cilen != CILEN_VOID) {
 		orc = CONFREJ;
@@ -1407,14 +1480,12 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    break;
 
 	default:
-	    LCPDEBUG((LOG_INFO, "lcp_reqci: rcvd unknown option %d",
-		      citype));
+	    LCPDEBUG(("lcp_reqci: rcvd unknown option %d", citype));
 	    orc = CONFREJ;
 	    break;
 	}
 
 endswitch:
-	LCPDEBUG((LOG_INFO, " (%s)", CODENAME(orc)));
 	if (orc == CONFACK &&		/* Good CI */
 	    rc != CONFACK)		/*  but prior CI wasnt? */
 	    continue;			/* Don't send this one */
@@ -1460,7 +1531,7 @@ endswitch:
 	break;
     }
 
-    LCPDEBUG((LOG_INFO, "lcp_reqci: returning CONF%s.", CODENAME(rc)));
+    LCPDEBUG(("lcp_reqci: returning CONF%s.", CODENAME(rc)));
     return (rc);			/* Return final code */
 }
 
@@ -1492,7 +1563,7 @@ lcp_up(f)
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
     ppp_recv_config(f->unit, (go->neg_mru? MAX(wo->mru, go->mru): PPP_MRU),
-		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
+		    (lax_recv? 0: go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
 
     if (ho->neg_mru)
@@ -1665,7 +1736,7 @@ lcp_printpkt(p, plen, printer, arg)
 		if (olen >= CILEN_CHAR) {
 		    p += 2;
 		    printer(arg, "callback ");
-		    GETSHORT(cishort, p);
+		    GETCHAR(cishort, p);
 		    switch (cishort) {
 		    case CBCP_OPT:
 			printer(arg, "CBCP");
@@ -1743,9 +1814,10 @@ void LcpLinkFailure (f)
     fsm *f;
 {
     if (f->state == OPENED) {
-	syslog(LOG_INFO, "No response to %d echo-requests", lcp_echos_pending);
-        syslog(LOG_NOTICE, "Serial link appears to be disconnected.");
+	info("No response to %d echo-requests", lcp_echos_pending);
+        notice("Serial link appears to be disconnected.");
         lcp_close(f->unit, "Peer not responding");
+	status = EXIT_PEER_DEAD;
     }
 }
 
@@ -1758,11 +1830,14 @@ LcpEchoCheck (f)
     fsm *f;
 {
     LcpSendEchoRequest (f);
+    if (f->state != OPENED)
+	return;
 
     /*
      * Start the timer for the next interval.
      */
-    assert (lcp_echo_timer_running==0);
+    if (lcp_echo_timer_running)
+	warn("assertion lcp_echo_timer_running==0 failed");
     TIMEOUT (LcpEchoTimeout, f, lcp_echo_interval);
     lcp_echo_timer_running = 1;
 }
@@ -1794,13 +1869,13 @@ lcp_received_echo_reply (f, id, inp, len)
 
     /* Check the magic number - don't count replies from ourselves. */
     if (len < 4) {
-	syslog(LOG_DEBUG, "lcp: received short Echo-Reply, length %d", len);
+	dbglog("lcp: received short Echo-Reply, length %d", len);
 	return;
     }
     GETLONG(magic, inp);
     if (lcp_gotoptions[f->unit].neg_magicnumber
 	&& magic == lcp_gotoptions[f->unit].magicnumber) {
-	syslog(LOG_WARNING, "appear to have received our own echo-reply!");
+	warn("appear to have received our own echo-reply!");
 	return;
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccp.c,v 1.9 1998/05/02 14:19:14 christos Exp $	*/
+/*	$NetBSD: ccp.c,v 1.10 1999/08/25 02:07:41 christos Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -30,21 +30,65 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: ccp.c,v 1.22 1998/03/25 01:25:02 paulus Exp ";
+#define RCSID	"Id: ccp.c,v 1.29 1999/08/13 06:46:11 paulus Exp "
 #else
-__RCSID("$NetBSD: ccp.c,v 1.9 1998/05/02 14:19:14 christos Exp $");
+__RCSID("$NetBSD: ccp.c,v 1.10 1999/08/25 02:07:41 christos Exp $");
 #endif
 #endif
 
+#include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
 
 #include "pppd.h"
 #include "fsm.h"
 #include "ccp.h"
 #include <net/ppp-comp.h>
+
+#ifdef RCSID
+static const char rcsid[] = RCSID;
+#endif
+
+/*
+ * Command-line options.
+ */
+static int setbsdcomp __P((char **));
+static int setdeflate __P((char **));
+
+static option_t ccp_option_list[] = {
+    { "noccp", o_bool, &ccp_protent.enabled_flag,
+      "Disable CCP negotiation" },
+    { "-ccp", o_bool, &ccp_protent.enabled_flag,
+      "Disable CCP negotiation" },
+    { "bsdcomp", o_special, setbsdcomp,
+      "Request BSD-Compress packet compression" },
+    { "nobsdcomp", o_bool, &ccp_wantoptions[0].bsd_compress,
+      "don't allow BSD-Compress", OPT_A2COPY,
+      &ccp_allowoptions[0].bsd_compress },
+    { "-bsdcomp", o_bool, &ccp_wantoptions[0].bsd_compress,
+      "don't allow BSD-Compress", OPT_A2COPY,
+      &ccp_allowoptions[0].bsd_compress },
+    { "deflate", 1, setdeflate,
+      "request Deflate compression" },
+    { "nodeflate", o_bool, &ccp_wantoptions[0].deflate,
+      "don't allow Deflate compression", OPT_A2COPY,
+      &ccp_allowoptions[0].deflate },
+    { "-deflate", o_bool, &ccp_wantoptions[0].deflate,
+      "don't allow Deflate compression", OPT_A2COPY,
+      &ccp_allowoptions[0].deflate },
+    { "nodeflatedraft", o_bool, &ccp_wantoptions[0].deflate_draft,
+      "don't use draft deflate #", OPT_A2COPY,
+      &ccp_allowoptions[0].deflate_draft },
+    { "predictor1", o_bool, &ccp_wantoptions[0].predictor_1,
+      "request Predictor-1", 1, &ccp_allowoptions[0].predictor_1 },
+    { "nopredictor1", o_bool, &ccp_wantoptions[0].predictor_1,
+      "don't allow Predictor-1", OPT_A2COPY,
+      &ccp_allowoptions[0].predictor_1 },
+    { "-predictor1", o_bool, &ccp_wantoptions[0].predictor_1,
+      "don't allow Predictor-1", OPT_A2COPY,
+      &ccp_allowoptions[0].predictor_1 },
+
+    { NULL }
+};
 
 /*
  * Protocol entry points from main code.
@@ -74,6 +118,8 @@ struct protent ccp_protent = {
     ccp_datainput,
     1,
     "CCP",
+    "Compressed",
+    ccp_option_list,
     NULL,
     NULL,
     NULL
@@ -135,6 +181,83 @@ static int ccp_localstate[NUM_PPP];
 #define RACKTIMEOUT	1	/* second */
 
 static int all_rejected[NUM_PPP];	/* we rejected all peer's options */
+
+/*
+ * Option parsing.
+ */
+static int
+setbsdcomp(argv)
+    char **argv;
+{
+    int rbits, abits;
+    char *str, *endp;
+
+    str = *argv;
+    abits = rbits = strtol(str, &endp, 0);
+    if (endp != str && *endp == ',') {
+	str = endp + 1;
+	abits = strtol(str, &endp, 0);
+    }
+    if (*endp != 0 || endp == str) {
+	option_error("invalid parameter '%s' for bsdcomp option", *argv);
+	return 0;
+    }
+    if ((rbits != 0 && (rbits < BSD_MIN_BITS || rbits > BSD_MAX_BITS))
+	|| (abits != 0 && (abits < BSD_MIN_BITS || abits > BSD_MAX_BITS))) {
+	option_error("bsdcomp option values must be 0 or %d .. %d",
+		     BSD_MIN_BITS, BSD_MAX_BITS);
+	return 0;
+    }
+    if (rbits > 0) {
+	ccp_wantoptions[0].bsd_compress = 1;
+	ccp_wantoptions[0].bsd_bits = rbits;
+    } else
+	ccp_wantoptions[0].bsd_compress = 0;
+    if (abits > 0) {
+	ccp_allowoptions[0].bsd_compress = 1;
+	ccp_allowoptions[0].bsd_bits = abits;
+    } else
+	ccp_allowoptions[0].bsd_compress = 0;
+    return 1;
+}
+
+static int
+setdeflate(argv)
+    char **argv;
+{
+    int rbits, abits;
+    char *str, *endp;
+
+    str = *argv;
+    abits = rbits = strtol(str, &endp, 0);
+    if (endp != str && *endp == ',') {
+	str = endp + 1;
+	abits = strtol(str, &endp, 0);
+    }
+    if (*endp != 0 || endp == str) {
+	option_error("invalid parameter '%s' for deflate option", *argv);
+	return 0;
+    }
+    if ((rbits != 0 && (rbits < DEFLATE_MIN_SIZE || rbits > DEFLATE_MAX_SIZE))
+	|| (abits != 0 && (abits < DEFLATE_MIN_SIZE
+			  || abits > DEFLATE_MAX_SIZE))) {
+	option_error("deflate option values must be 0 or %d .. %d",
+		     DEFLATE_MIN_SIZE, DEFLATE_MAX_SIZE);
+	return 0;
+    }
+    if (rbits > 0) {
+	ccp_wantoptions[0].deflate = 1;
+	ccp_wantoptions[0].deflate_size = rbits;
+    } else
+	ccp_wantoptions[0].deflate = 0;
+    if (abits > 0) {
+	ccp_allowoptions[0].deflate = 1;
+	ccp_allowoptions[0].deflate_size = abits;
+    } else
+	ccp_allowoptions[0].deflate = 0;
+    return 1;
+}
+
 
 /*
  * ccp_init - initialize CCP.
@@ -245,7 +368,7 @@ ccp_input(unit, p, len)
     oldstate = f->state;
     fsm_input(f, p, len);
     if (oldstate == OPENED && p[0] == TERMREQ && f->state != OPENED)
-	syslog(LOG_NOTICE, "Compression disabled by peer.");
+	notice("Compression disabled by peer.");
 
     /*
      * If we get a terminate-ack and we're not asking for compression,
@@ -596,11 +719,8 @@ ccp_nakci(f, p, len)
     /*
      * Predictor-1 and 2 have no options, so they can't be Naked.
      *
-     * XXX What should we do with any remaining options?
+     * There may be remaining options but we ignore them.
      */
-
-    if (len != 0)
-	return 0;
 
     if (f->state != OPENED)
 	*go = try;
@@ -879,27 +999,28 @@ method_name(opt, opt2)
     case CI_DEFLATE:
     case CI_DEFLATE_DRAFT:
 	if (opt2 != NULL && opt2->deflate_size != opt->deflate_size)
-	    sprintf(result, "Deflate%s (%d/%d)",
-		    (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
-		    opt->deflate_size, opt2->deflate_size);
+	    slprintf(result, sizeof(result), "Deflate%s (%d/%d)",
+		     (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
+		     opt->deflate_size, opt2->deflate_size);
 	else
-	    sprintf(result, "Deflate%s (%d)",
-		    (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
-		    opt->deflate_size);
+	    slprintf(result, sizeof(result), "Deflate%s (%d)",
+		     (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
+		     opt->deflate_size);
 	break;
     case CI_BSD_COMPRESS:
 	if (opt2 != NULL && opt2->bsd_bits != opt->bsd_bits)
-	    sprintf(result, "BSD-Compress (%d/%d)", opt->bsd_bits,
-		    opt2->bsd_bits);
+	    slprintf(result, sizeof(result), "BSD-Compress (%d/%d)",
+		     opt->bsd_bits, opt2->bsd_bits);
 	else
-	    sprintf(result, "BSD-Compress (%d)", opt->bsd_bits);
+	    slprintf(result, sizeof(result), "BSD-Compress (%d)",
+		     opt->bsd_bits);
 	break;
     case CI_PREDICTOR_1:
 	return "Predictor 1";
     case CI_PREDICTOR_2:
 	return "Predictor 2";
     default:
-	sprintf(result, "Method %d", opt->method);
+	slprintf(result, sizeof(result), "Method %d", opt->method);
     }
     return result;
 }
@@ -919,19 +1040,16 @@ ccp_up(f)
     if (ANY_COMPRESS(*go)) {
 	if (ANY_COMPRESS(*ho)) {
 	    if (go->method == ho->method) {
-		syslog(LOG_NOTICE, "%s compression enabled",
-		       method_name(go, ho));
+		notice("%s compression enabled", method_name(go, ho));
 	    } else {
-		strcpy(method1, method_name(go, NULL));
-		syslog(LOG_NOTICE, "%s / %s compression enabled",
+		strlcpy(method1, method_name(go, NULL), sizeof(method1));
+		notice("%s / %s compression enabled",
 		       method1, method_name(ho, NULL));
 	    }
 	} else
-	    syslog(LOG_NOTICE, "%s receive compression enabled",
-		   method_name(go, NULL));
+	    notice("%s receive compression enabled", method_name(go, NULL));
     } else if (ANY_COMPRESS(*ho))
-	syslog(LOG_NOTICE, "%s transmit compression enabled",
-	       method_name(ho, NULL));
+	notice("%s transmit compression enabled", method_name(ho, NULL));
 }
 
 /*
@@ -1083,7 +1201,7 @@ ccp_datainput(unit, pkt, len)
 	    /*
 	     * Disable compression by taking CCP down.
 	     */
-	    syslog(LOG_ERR, "Lost compression sync: disabling compression");
+	    error("Lost compression sync: disabling compression");
 	    ccp_close(unit, "Lost compression sync");
 	} else {
 	    /*

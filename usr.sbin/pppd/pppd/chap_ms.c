@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.9 1998/10/24 18:14:13 christos Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.10 1999/08/25 02:07:42 christos Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: chap_ms.c,v 1.9 1998/09/04 18:48:12 christos Exp ";
+#define RCSID	"Id: chap_ms.c,v 1.15 1999/08/13 06:46:12 paulus Exp "
 #else
-__RCSID("$NetBSD: chap_ms.c,v 1.9 1998/10/24 18:14:13 christos Exp $");
+__RCSID("$NetBSD: chap_ms.c,v 1.10 1999/08/25 02:07:42 christos Exp $");
 #endif
 #endif
 
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: chap_ms.c,v 1.9 1998/10/24 18:14:13 christos Exp $");
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <syslog.h>
 #include <unistd.h>
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>
@@ -63,6 +62,10 @@ __RCSID("$NetBSD: chap_ms.c,v 1.9 1998/10/24 18:14:13 christos Exp $");
 
 #ifndef USE_CRYPT
 #include <des.h>
+#endif
+
+#ifdef RCSID
+static const char rcsid[] = RCSID;
 #endif
 
 typedef struct {
@@ -88,6 +91,11 @@ static void	Expand __P((u_char *, u_char *));
 static void	Collapse __P((u_char *, u_char *));
 #endif
 
+#ifdef MSLANMAN
+bool	ms_lanman = 0;    	/* Use LanMan password instead of NT */
+			  	/* Has meaning only with MS-CHAP challenges */
+#endif
+
 static void
 ChallengeResponse(challenge, pwHash, response)
     u_char *challenge;	/* IN   8 octets */
@@ -100,7 +108,8 @@ ChallengeResponse(challenge, pwHash, response)
     BCOPY(pwHash, ZPasswordHash, MD4_SIGNATURE_SIZE);
 
 #if 0
-    log_packet(ZPasswordHash, sizeof(ZPasswordHash), "ChallengeResponse - ZPasswordHash", LOG_DEBUG);
+    dbglog("ChallengeResponse - ZPasswordHash %.*B",
+	   sizeof(ZPasswordHash), ZPasswordHash);
 #endif
 
     DesEncrypt(challenge, ZPasswordHash +  0, response + 0);
@@ -108,7 +117,7 @@ ChallengeResponse(challenge, pwHash, response)
     DesEncrypt(challenge, ZPasswordHash + 14, response + 16);
 
 #if 0
-    log_packet(response, 24, "ChallengeResponse - response", LOG_DEBUG);
+    dbglog("ChallengeResponse - response %.24B", response);
 #endif
 }
 
@@ -130,8 +139,7 @@ DesEncrypt(clear, key, cipher)
     setkey(crypt_key);
 
 #if 0
-    CHAPDEBUG((LOG_INFO, "DesEncrypt: 8 octet input : %02X%02X%02X%02X%02X%02X%02X%02X",
-	       clear[0], clear[1], clear[2], clear[3], clear[4], clear[5], clear[6], clear[7]));
+    CHAPDEBUG((LOG_INFO, "DesEncrypt: 8 octet input : %.8B", clear));
 #endif
 
     Expand(clear, des_input);
@@ -139,8 +147,7 @@ DesEncrypt(clear, key, cipher)
     Collapse(des_input, cipher);
 
 #if 0
-    CHAPDEBUG((LOG_INFO, "DesEncrypt: 8 octet output: %02X%02X%02X%02X%02X%02X%02X%02X",
-	       cipher[0], cipher[1], cipher[2], cipher[3], cipher[4], cipher[5], cipher[6], cipher[7]));
+    CHAPDEBUG((LOG_INFO, "DesEncrypt: 8 octet output: %.8B", cipher));
 #endif
 }
 
@@ -160,15 +167,13 @@ DesEncrypt(clear, key, cipher)
     des_set_key(&des_key, key_schedule);
 
 #if 0
-    CHAPDEBUG((LOG_INFO, "DesEncrypt: 8 octet input : %02X%02X%02X%02X%02X%02X%02X%02X",
-	       clear[0], clear[1], clear[2], clear[3], clear[4], clear[5], clear[6], clear[7]));
+    CHAPDEBUG((LOG_INFO, "DesEncrypt: 8 octet input : %.8B", clear));
 #endif
 
     des_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher, key_schedule, 1);
 
 #if 0
-    CHAPDEBUG((LOG_INFO, "DesEncrypt: 8 octet output: %02X%02X%02X%02X%02X%02X%02X%02X",
-	       cipher[0], cipher[1], cipher[2], cipher[3], cipher[4], cipher[5], cipher[6], cipher[7]));
+    CHAPDEBUG((LOG_INFO, "DesEncrypt: 8 octet output: %.8B", cipher));
 #endif
 }
 
@@ -247,10 +252,8 @@ static void MakeKey(key, des_key)
 #endif
 
 #if 0
-    CHAPDEBUG((LOG_INFO, "MakeKey: 56-bit input : %02X%02X%02X%02X%02X%02X%02X",
-	       key[0], key[1], key[2], key[3], key[4], key[5], key[6]));
-    CHAPDEBUG((LOG_INFO, "MakeKey: 64-bit output: %02X%02X%02X%02X%02X%02X%02X%02X",
-	       des_key[0], des_key[1], des_key[2], des_key[3], des_key[4], des_key[5], des_key[6], des_key[7]));
+    CHAPDEBUG((LOG_INFO, "MakeKey: 56-bit input : %.7B", key));
+    CHAPDEBUG((LOG_INFO, "MakeKey: 64-bit output: %.8B", des_key));
 #endif
 }
 
@@ -263,6 +266,12 @@ ChapMS_NT(rchallenge, rchallenge_len, secret, secret_len, response)
     MS_ChapResponse    *response;
 {
     int			i;
+#ifdef __NetBSD__
+    /* NetBSD uses the libc md4 routines which take bytes instead of bits */
+    int			mdlen = secret_len * 2;
+#else
+    int			mdlen = secret_len * 2 * 8;
+#endif
     MD4_CTX		md4Context;
     u_char		hash[MD4_SIGNATURE_SIZE];
     u_char		unicodePassword[MAX_NT_PASSWORD * 2];
@@ -274,7 +283,8 @@ ChapMS_NT(rchallenge, rchallenge_len, secret, secret_len, response)
 	unicodePassword[i * 2] = (u_char)secret[i];
 
     MD4Init(&md4Context);
-    MD4Update(&md4Context, unicodePassword, secret_len * 2);
+    MD4Update(&md4Context, unicodePassword, mdlen);
+
     MD4Final(hash, &md4Context); 	/* Tell MD4 we're done */
 
     ChallengeResponse(rchallenge, hash, response->NTResp);
@@ -314,9 +324,6 @@ ChapMS(cstate, rchallenge, rchallenge_len, secret, secret_len)
     int secret_len;
 {
     MS_ChapResponse	response;
-#ifdef MSLANMAN
-    extern int ms_lanman;
-#endif
 
 #if 0
     CHAPDEBUG((LOG_INFO, "ChapMS: secret is '%.*s'", secret_len, secret));

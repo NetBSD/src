@@ -1,9 +1,9 @@
-/*	$NetBSD: pathnames.h,v 1.10 1997/09/26 19:53:12 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.11 1999/08/25 02:07:45 christos Exp $	*/
 
 /*
  * define path names
  *
- * Id: pathnames.h,v 1.9 1996/08/28 06:41:46 paulus Exp 
+ * Id: pathnames.h,v 1.11 1999/08/13 01:58:05 paulus Exp 
  */
 
 #ifdef HAVE_PATHS_H
@@ -25,6 +25,12 @@
 #define _PATH_CONNERRS	"/etc/ppp/connect-errors"
 #define _PATH_USEROPT	".ppprc"
 #define _PATH_PEERFILES	"/etc/ppp/peers/"
+#define _PATH_RESOLV	"/etc/ppp/resolv.conf"
+
+#ifdef INET6
+#define _PATH_IPV6UP     "/etc/ppp/ipv6-up"
+#define _PATH_IPV6DOWN   "/etc/ppp/ipv6-down"
+#endif
 
 #ifdef IPX_CHANGE
 #define _PATH_IPXUP	"/etc/ppp/ipx-up"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.h,v 1.11 1998/09/04 19:13:04 christos Exp $	*/
+/*	$NetBSD: ipcp.h,v 1.12 1999/08/25 02:07:43 christos Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: ipcp.h,v 1.11 1998/04/28 23:38:11 paulus Exp 
+ * Id: ipcp.h,v 1.13 1999/03/02 05:35:09 paulus Exp 
  */
 
 /*
@@ -45,17 +45,20 @@
 				/* compression option*/ 
 
 typedef struct ipcp_options {
-    int neg_addr : 1;		/* Negotiate IP Address? */
-    int old_addrs : 1;		/* Use old (IP-Addresses) option? */
-    int req_addr : 1;		/* Ask peer to send IP address? */
-    int default_route : 1;	/* Assign default route through interface? */
-    int proxy_arp : 1;		/* Make proxy ARP entry for peer? */
-    int neg_vj : 1;		/* Van Jacobson Compression? */
-    int old_vj : 1;		/* use old (short) form of VJ option? */
-    int accept_local : 1;	/* accept peer's value for ouraddr */
-    int accept_remote : 1;	/* accept peer's value for hisaddr */
-    u_short vj_protocol;	/* protocol value to use in VJ option */
-    u_char maxslotindex, cflag;	/* values for RFC1332 VJ compression neg. */
+    bool neg_addr;		/* Negotiate IP Address? */
+    bool old_addrs;		/* Use old (IP-Addresses) option? */
+    bool req_addr;		/* Ask peer to send IP address? */
+    bool default_route;		/* Assign default route through interface? */
+    bool proxy_arp;		/* Make proxy ARP entry for peer? */
+    bool neg_vj;		/* Van Jacobson Compression? */
+    bool old_vj;		/* use old (short) form of VJ option? */
+    bool accept_local;		/* accept peer's value for ouraddr */
+    bool accept_remote;		/* accept peer's value for hisaddr */
+    bool req_dns1;		/* Ask peer to send primary DNS address? */
+    bool req_dns2;		/* Ask peer to send secondary DNS address? */
+    int  vj_protocol;		/* protocol value to use in VJ option */
+    int  maxslotindex;		/* values for RFC1332 VJ compression neg. */
+    bool cflag;
     u_int32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
     u_int32_t dnsaddr[2];	/* Primary and secondary MS DNS entries */
     u_int32_t winsaddr[2];	/* Primary and secondary MS WINS entries */

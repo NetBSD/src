@@ -1,4 +1,4 @@
-/*	$NetBSD: demand.c,v 1.8 1999/05/12 18:50:52 thorpej Exp $	*/
+/*	$NetBSD: demand.c,v 1.9 1999/08/25 02:07:42 christos Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: demand.c,v 1.7 1997/11/27 06:08:26 paulus Exp ";
+#define RCSID	"Id: demand.c,v 1.12 1999/08/13 06:46:12 paulus Exp "
 #else
-__RCSID("$NetBSD: demand.c,v 1.8 1999/05/12 18:50:52 thorpej Exp $");
+__RCSID("$NetBSD: demand.c,v 1.9 1999/08/25 02:07:42 christos Exp $");
 #endif
 #endif
 
@@ -33,7 +33,6 @@ __RCSID("$NetBSD: demand.c,v 1.8 1999/05/12 18:50:52 thorpej Exp $");
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <syslog.h>
 #include <netdb.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,6 +51,10 @@ __RCSID("$NetBSD: demand.c,v 1.8 1999/05/12 18:50:52 thorpej Exp $");
 #include "fsm.h"
 #include "ipcp.h"
 #include "lcp.h"
+
+#ifdef RCSID
+static const char rcsid[] = RCSID;
+#endif
 
 char *frame;
 int framelen;
@@ -270,7 +273,7 @@ loop_frame(frame, len)
 {
     struct packet *pkt;
 
-    /* log_packet(frame, len, "from loop: ", LOG_DEBUG); */
+    /* dbglog("from loop: %P", frame, len); */
     if (len < PPP_HDRLEN)
 	return 0;
     if ((PPP_PROTOCOL(frame) & 0x8000) != 0)
