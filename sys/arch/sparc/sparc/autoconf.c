@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.82 1998/01/12 20:24:04 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.83 1998/01/25 16:47:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -502,13 +502,13 @@ bootpath_fake(bp, cp)
 
 		/*
 		 *  xylogics VME dev: xd, xy, xt
-		 *  fake looks like: /vmel0/xdc0/xd@1,0
+		 *  fake looks like: /vme0/xdc0/xd@1,0
 		 */
 		if (cp[0] == 'x') {
 			if (cp[1] == 'd') {/* xd? */
-				BP_APPEND(bp, "vmel", -1, 0, 0);
+				BP_APPEND(bp, "vme", -1, 0, 0);
 			} else {
-				BP_APPEND(bp, "vmes", -1, 0, 0);
+				BP_APPEND(bp, "vme", -1, 0, 0);
 			}
 			sprintf(tmpname,"x%cc", cp[1]); /* e.g. xdc */
 			BP_APPEND(bp, tmpname,-1, v0val[0], 0);
@@ -531,7 +531,7 @@ bootpath_fake(bp, cp)
 		/*
 		 * scsi: sd, st, sr
 		 * assume: 4/100 = sw: /obio0/sw0/sd@0,0:a
-		 * 4/200 & 4/400 = si/sc: /vmes0/si0/sd@0,0:a
+		 * 4/200 & 4/400 = si/sc: /vme0/si0/sd@0,0:a
  		 * 4/300 = esp: /obio0/esp0/sd@0,0:a
 		 * (note we expect sc to mimic an si...)
 		 */
@@ -543,7 +543,7 @@ bootpath_fake(bp, cp)
 			switch (cpuinfo.cpu_type) {
 			case CPUTYP_4_200:
 			case CPUTYP_4_400:
-				BP_APPEND(bp, "vmes", -1, 0, 0);
+				BP_APPEND(bp, "vme", -1, 0, 0);
 				BP_APPEND(bp, "si", -1, v0val[0], 0);
 				break;
 			case CPUTYP_4_100:
@@ -822,7 +822,7 @@ configure()
 		rr.rr_iospace = PMAP_OBIO;
 		rr.rr_paddr = (void *)memregcf->cf_loc[0];
 		rr.rr_len = NBPG;
-		par_err_reg = (u_int *)bus_map(&rr, NBPG);
+		par_err_reg = (u_int *)obio_bus_map(&rr, NBPG);
 		if (par_err_reg == NULL)
 			panic("configure: ROM hasn't mapped memreg!");
 	}
@@ -1062,8 +1062,7 @@ mainbus_attach(parent, dev, aux)
 #endif
 #if defined(SUN4)
 	static const char *const oldmon_special[] = {
-		"vmel",
-		"vmes",
+		"vme",
 		NULL
 	};
 #endif /* SUN4 */
@@ -1292,7 +1291,7 @@ findzs(zs)
 
 		rr.rr_iospace = PMAP_OBIO;
 		rr.rr_len = NBPG;
-		vaddr = bus_map(&rr, NBPG);
+		vaddr = obio_bus_map(&rr, NBPG);
 		if (vaddr)
 			return (vaddr);
 	}
