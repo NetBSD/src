@@ -1,4 +1,4 @@
-/*	$NetBSD: mskanji.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: mskanji.c,v 1.6 2001/01/25 01:25:07 itojun Exp $	*/
 
 /*
  *    ja_JP.SJIS locale table for BSD4.4/rune
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mskanji.c	1.0 (Phase One) 5/5/95";
 #else
-__RCSID("$NetBSD: mskanji.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: mskanji.c,v 1.6 2001/01/25 01:25:07 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: mskanji.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
 
 static int _mskanji1 __P((int));
 static int _mskanji2 __P((int));
+const char *_MSKanji_magic __P((void));
 int _MSKanji_init __P((_RuneLocale *));
 size_t _MSKanji_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *,
 	size_t, void *));
@@ -95,6 +96,13 @@ _mskanji2(c)
 		return 1;
 	else
 		return 0;
+}
+
+const char *
+_MSKanji_magic()
+{
+
+	return _RUNE_MODULE_1("LC_CTYPE");
 }
 
 int

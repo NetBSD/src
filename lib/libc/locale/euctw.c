@@ -1,4 +1,4 @@
-/*	$NetBSD: euctw.c,v 1.7 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: euctw.c,v 1.8 2001/01/25 01:25:06 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: euctw.c,v 1.7 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: euctw.c,v 1.8 2001/01/25 01:25:06 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: euctw.c,v 1.7 2001/01/03 15:23:26 lukem Exp $");
 #define inline
 #endif
 
+const char *_EUCTW_magic __P((void));
 int _EUCTW_init __P((_RuneLocale *));
 static inline int _euc_set __P((u_int));
 static inline int _euc_count __P((int));
@@ -69,6 +70,13 @@ static _RuneState _EUCTW_RuneState = {
 	_EUCTW_packstate,		/* packstate */
 	_EUCTW_unpackstate		/* unpackstate */
 };
+
+const char *
+_EUCTW_magic()
+{
+
+	return _RUNE_MODULE_1("LC_CTYPE");
+}
 
 int
 _EUCTW_init(rl)

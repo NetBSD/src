@@ -1,4 +1,4 @@
-/*	$NetBSD: euc.c,v 1.6 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: euc.c,v 1.7 2001/01/25 01:25:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)euc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: euc.c,v 1.6 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: euc.c,v 1.7 2001/01/25 01:25:06 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: euc.c,v 1.6 2001/01/03 15:23:26 lukem Exp $");
 #define inline
 #endif
 
+const char *_EUC_magic __P((void));
 int _EUC_init __P((_RuneLocale *));
 static inline int _euc_set __P((u_int));
 size_t _EUC_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
@@ -87,6 +88,13 @@ typedef struct {
 	rune_t	bits[4];
 	rune_t	mask;
 } _EucInfo;
+
+const char *
+_EUC_magic()
+{
+
+	return _RUNE_MODULE_1("LC_CTYPE");
+}
 
 int
 _EUC_init(rl)
