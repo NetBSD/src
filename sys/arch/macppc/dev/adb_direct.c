@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.24 2002/05/05 18:36:03 tsutsui Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.25 2003/07/15 02:43:26 lukem Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -58,6 +58,9 @@
  *    the actual cause of this bug, the calls to timeout and the 
  *    adb_cuda_tickle routine can be removed.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.25 2003/07/15 02:43:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>

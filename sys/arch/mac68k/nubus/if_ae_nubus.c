@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.33 2002/10/02 05:36:38 thorpej Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.34 2003/07/15 02:43:23 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -38,6 +38,9 @@
  *	Asante MacCon II/E
  *	Kinetics EtherPort SE/30
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.34 2003/07/15 02:43:23 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

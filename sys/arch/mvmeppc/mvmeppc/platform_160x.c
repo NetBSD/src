@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_160x.c,v 1.1 2002/02/27 21:02:25 scw Exp $	*/
+/*	$NetBSD: platform_160x.c,v 1.2 2003/07/15 02:43:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.2 2003/07/15 02:43:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_sqrt.c,v 1.2 1999/05/30 20:17:49 briggs Exp $ */
+/*	$NetBSD: fpu_sqrt.c,v 1.3 2003/07/15 02:43:11 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * Perform an FPU square root (return sqrt(x)).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.3 2003/07/15 02:43:11 lukem Exp $");
 
 #include <sys/types.h>
 

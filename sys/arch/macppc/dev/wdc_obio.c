@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.25 2003/06/19 22:36:06 hamajima Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.26 2003/07/15 02:43:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.26 2003/07/15 02:43:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

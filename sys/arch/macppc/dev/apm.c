@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.8 2003/06/29 22:28:33 fvdl Exp $	*/
+/*	$NetBSD: apm.c,v 1.9 2003/07/15 02:43:28 lukem Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -35,6 +35,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.9 2003/07/15 02:43:28 lukem Exp $");
 
 #include "apm.h"
 

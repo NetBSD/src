@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.49 2003/06/29 22:28:37 fvdl Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.50 2003/07/15 02:43:38 lukem Exp $	*/
 
 /*
  * Mach Operating System
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.50 2003/07/15 02:43:38 lukem Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"

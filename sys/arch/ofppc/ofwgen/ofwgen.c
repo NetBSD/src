@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen.c,v 1.2 2001/10/29 19:04:26 thorpej Exp $	*/
+/*	$NetBSD: ofwgen.c,v 1.3 2003/07/15 02:46:33 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Support routines for generic OpenFirmware driver configurations.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofwgen.c,v 1.3 2003/07/15 02:46:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

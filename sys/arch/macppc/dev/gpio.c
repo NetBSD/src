@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.6 2003/01/01 01:47:30 thorpej Exp $	*/
+/*	$NetBSD: gpio.c,v 1.7 2003/07/15 02:43:28 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.7 2003/07/15 02:43:28 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fmovecr.c,v 1.9 2002/09/27 15:36:13 provos Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.10 2003/07/15 02:43:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -30,6 +30,9 @@
  *
  *	@(#)fpu_fmovecr.c	10/8/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.10 2003/07/15 02:43:09 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

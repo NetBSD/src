@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.40 2003/06/29 22:28:36 fvdl Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.41 2003/07/15 02:43:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,9 @@
  *
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.41 2003/07/15 02:43:37 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"

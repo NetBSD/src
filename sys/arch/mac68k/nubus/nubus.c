@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.56 2003/01/01 01:44:30 thorpej Exp $	*/
+/*	$NetBSD: nubus.c,v 1.57 2003/07/15 02:43:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.57 2003/07/15 02:43:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

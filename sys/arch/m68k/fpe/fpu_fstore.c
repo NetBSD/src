@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.7 1999/05/30 20:17:48 briggs Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.8 2003/07/15 02:43:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -24,6 +24,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.8 2003/07/15 02:43:10 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

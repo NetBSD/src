@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.4 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.5 2003/07/15 02:43:14 lukem Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.5 2003/07/15 02:43:14 lukem Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.2 2003/01/17 23:36:13 thorpej Exp $ */
+/*	$NetBSD: linux_trap.c,v 1.3 2003/07/15 02:43:38 lukem Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.3 2003/07/15 02:43:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
