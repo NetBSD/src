@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 2002/01/18 20:39:23 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 2002/01/21 19:49:51 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,12 +33,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mem.c,v 1.1 2002/01/18 20:39:23 thorpej Exp $");
+__RCSID("$NetBSD: mem.c,v 1.2 2002/01/21 19:49:51 tv Exp $");
 #endif
 
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 
 #include "lint.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.24 2001/10/24 02:31:10 thorpej Exp $ */
+/* $NetBSD: xlint.c,v 1.25 2002/01/21 19:49:52 tv Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,22 +34,21 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.24 2001/10/24 02:31:10 thorpej Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.25 2002/01/21 19:49:52 tv Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <err.h>
-#include <errno.h>
-#include <paths.h>
 
 #include "lint.h"
 #include "pathnames.h"
@@ -130,7 +129,7 @@ static	void	freelst(char ***);
 static	char	*concat2(const char *, const char *);
 static	char	*concat3(const char *, const char *, const char *);
 static	void	terminate(int) __attribute__((__noreturn__));
-static	const	char *basename(const char *, int);
+static	const	char *lbasename(const char *, int);
 static	void	appdef(char ***, const char *);
 static	void	usage(void);
 static	void	fname(const char *, int);
@@ -256,7 +255,7 @@ terminate(int signo)
  * Returns strg if the string does not contain delim.
  */
 static const char *
-basename(const char *strg, int delim)
+lbasename(const char *strg, int delim)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -426,6 +425,7 @@ main(int argc, char *argv[])
 			sflag = 1;
 			break;
 
+#if !HAVE_CONFIG_H
 		case 't':
 			if (sflag)
 				usage();
@@ -437,6 +437,7 @@ main(int argc, char *argv[])
 			appcstrg(&l2flags, "-t");
 			tflag = 1;
 			break;
+#endif
 
 		case 'x':
 			appcstrg(&l2flags, "-x");
@@ -496,15 +497,15 @@ main(int argc, char *argv[])
 			Vflag = 1;
 			break;
 
-		case '?':
-			usage();
-			/* NOTREACHED */
-
 		case -1:
 			/* filename */
 			fname(argv[optind], argc == optind+1);
 			first = 0;
 			optind++;
+
+		default:
+			usage();
+			/* NOTREACHED */
 		}
 
 	}
@@ -552,8 +553,8 @@ fname(const char *name, int last)
 	int	fd;
 
 	is_stdin = (strcmp(name, "-") == 0);
-	bn = basename(name, '/');
-	suff = basename(bn, '.');
+	bn = lbasename(name, '/');
+	suff = lbasename(bn, '.');
 
 	if (strcmp(suff, "ln") == 0) {
 		/* only for lint2 */
@@ -704,7 +705,11 @@ runchild(const char *path, char *const *args, const char *crfn, int fdout)
 	}
 	if (WIFSIGNALED(status)) {
 		signo = WTERMSIG(status);
+#if HAVE_DECL_SYS_SIGNAME
 		warnx("%s got SIG%s", path, sys_signame[signo]);
+#else
+		warnx("%s got signal %d", path, signo);
+#endif
 		terminate(-1);
 	}
 	if (WEXITSTATUS(status) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.5 2001/05/28 12:40:38 lukem Exp $	*/
+/*	$NetBSD: msg.c,v 1.6 2002/01/21 19:49:52 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,16 +33,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: msg.c,v 1.5 2001/05/28 12:40:38 lukem Exp $");
+__RCSID("$NetBSD: msg.c,v 1.6 2002/01/21 19:49:52 tv Exp $");
 #endif
-
-#include <string.h>
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "lint2.h"
-
 
 static	const	char *msgs[] = {
 	"%s used( %s ), but not defined",			      /* 0 */
@@ -66,7 +64,7 @@ static	const	char *msgs[] = {
 	"%s renamed multiple times  \t%s  ::  %s",		      /* 18 */
 };
 
-static	const	char *basename(const char *);
+static	const	char *lbasename(const char *);
 
 void
 msg(int n, ...)
@@ -85,7 +83,7 @@ msg(int n, ...)
  * Return a pointer to the last component of a path.
  */
 static const char *
-basename(const char *path)
+lbasename(const char *path)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -123,7 +121,7 @@ mkpos(pos_t *posp)
 	}
 	qm = !Hflag && posp->p_src != posp->p_isrc;
 
-	len = strlen(fn = basename(fnames[src]));
+	len = strlen(fn = lbasename(fnames[src]));
 	len += 3 * sizeof (u_short) + 4;
 
 	if (len > blen)

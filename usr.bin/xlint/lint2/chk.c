@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.14 2002/01/18 21:01:39 thorpej Exp $ */
+/* $NetBSD: chk.c,v 1.15 2002/01/21 19:49:52 tv Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,13 +34,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: chk.c,v 1.14 2002/01/18 21:01:39 thorpej Exp $");
+__RCSID("$NetBSD: chk.c,v 1.15 2002/01/21 19:49:52 tv Exp $");
 #endif
 
-#include <stdlib.h>
 #include <ctype.h>
 #include <limits.h>
-#include <err.h>
+#include <stdlib.h>
 
 #include "lint2.h"
 

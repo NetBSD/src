@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.1 2002/01/18 21:01:38 thorpej Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.2 2002/01/21 19:49:51 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,13 +33,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inittyp.c,v 1.1 2002/01/18 21:01:38 thorpej Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.2 2002/01/21 19:49:51 tv Exp $");
 #endif
 
-#include <stdlib.h>
 #include <ctype.h>
 #include <limits.h>
-#include <err.h>
+#include <stdlib.h>
 
 #include "lint.h"
 
