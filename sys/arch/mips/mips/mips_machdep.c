@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.11 1997/06/16 23:41:52 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.12 1997/06/19 06:30:08 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -57,7 +57,9 @@ mips_locore_jumpvec_t R2000_locore_vec =
 	mips1_TLBUpdate,
 	mips1_TLBWriteIndexed,
 	mips1_wbflush,
-	mips1_proc_trampoline
+	mips1_proc_trampoline,
+	mips1_switch_exit,
+	mips1_cpu_switch_resume
 };
 
 void
@@ -115,7 +117,9 @@ mips_locore_jumpvec_t R4000_locore_vec =
 	mips3_TLBUpdate,
 	mips3_TLBWriteIndexed,
 	mips3_wbflush,
-	mips3_proc_trampoline
+	mips3_proc_trampoline,
+	mips3_switch_exit,
+	mips3_cpu_switch_resume
 };
 
 void
@@ -265,7 +269,7 @@ cpu_identify()
 		break;
 
 	case MIPS_R4000:
-		if(machPrimaryInstCacheSize == 16384)
+		if(mips_L1InstCacheSize == 16384)
 			printf("MIPS R4400 CPU");
 		else
 			printf("MIPS R4000 CPU");
@@ -371,9 +375,9 @@ cpu_identify()
 
 #ifdef MIPS3
 	printf("        Primary cache size: %dkb Instruction, %dkb Data, %dkb Secondary.\n",
-	    machPrimaryInstCacheSize / 1024,
-	    machPrimaryDataCacheSize / 1024,
-	    machSecondaryCacheSize / 1024);
+	    mips_L1InstCacheSize / 1024,
+	    mips_L1DataCacheSize / 1024,
+	    mips_L2CacheSize / 1024);
 #endif
 /* XXX cache sizes for MIPS1? */
 }
