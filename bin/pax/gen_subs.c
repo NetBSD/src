@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.16 1999/10/22 10:38:41 mrg Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.17 2000/02/17 03:12:24 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.16 1999/10/22 10:38:41 mrg Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.17 2000/02/17 03:12:24 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ ls_list(arcn, now)
 
 /*
  * tty_ls()
- * 	print a short summary of file to tty.
+ *	print a short summary of file to tty.
  */
 
 #if __STDC__
@@ -215,7 +215,7 @@ ls_tty(arcn)
 /*
  * zf_strncpy()
  *	copy src to dest up to len chars (stopping at first '\0'), when src is
- *	shorter than len, pads to len with '\0'. big performance win (and 
+ *	shorter than len, pads to len with '\0'. big performance win (and
  *	a lot easier to code) over strncpy(), then a strlen() then a
  *	memset(). (or doing the memset() first).
  */
@@ -320,7 +320,7 @@ asc_ul(str, len, base)
 				break;
 		}
 	} else {
- 		while ((str < stop) && (*str >= '0') && (*str <= '7'))
+		while ((str < stop) && (*str >= '0') && (*str <= '7'))
 			tval = (tval << 3) + (*str++ - '0');
 	}
 	return(tval);
@@ -347,7 +347,7 @@ ul_asc(val, str, len, base)
 {
 	char *pt;
 	u_long digit;
-	
+
 	/*
 	 * WARNING str is not '\0' terminated by this routine
 	 */
@@ -362,7 +362,7 @@ ul_asc(val, str, len, base)
 		while (pt >= str) {
 			if ((digit = (val & 0xf)) < 10)
 				*pt-- = '0' + (char)digit;
-			else 
+			else
 				*pt-- = 'a' + (char)(digit - 10);
 			if ((val = (val >> 4)) == (u_long)0)
 				break;
@@ -434,7 +434,7 @@ asc_uqd(str, len, base)
 				break;
 		}
 	} else {
- 		while ((str < stop) && (*str >= '0') && (*str <= '7'))
+		while ((str < stop) && (*str >= '0') && (*str <= '7'))
 			tval = (tval << 3) + (*str++ - '0');
 	}
 	return(tval);
@@ -461,7 +461,7 @@ uqd_asc(val, str, len, base)
 {
 	char *pt;
 	u_quad_t digit;
-	
+
 	/*
 	 * WARNING str is not '\0' terminated by this routine
 	 */
@@ -476,7 +476,7 @@ uqd_asc(val, str, len, base)
 		while (pt >= str) {
 			if ((digit = (val & 0xf)) < 10)
 				*pt-- = '0' + (char)digit;
-			else 
+			else
 				*pt-- = 'a' + (char)(digit - 10);
 			if ((val = (val >> 4)) == (u_quad_t)0)
 				break;

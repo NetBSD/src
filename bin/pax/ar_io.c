@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.16 2000/02/17 03:08:40 itohy Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.17 2000/02/17 03:12:22 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.16 2000/02/17 03:08:40 itohy Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.17 2000/02/17 03:12:22 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,8 +72,8 @@ __RCSID("$NetBSD: ar_io.c,v 1.16 2000/02/17 03:08:40 itohy Exp $");
 #define EXT_MODE	O_RDONLY	/* open mode for list/extract */
 #define AR_MODE		(O_WRONLY | O_CREAT | O_TRUNC)	/* mode for archive */
 #define APP_MODE	O_RDWR		/* mode for append */
-#define STDO		"<STDOUT>"	/* psuedo name for stdout */
-#define STDN		"<STDIN>"	/* psuedo name for stdin */
+#define STDO		"<STDOUT>"	/* pseudo name for stdout */
+#define STDN		"<STDIN>"	/* pseudo name for stdin */
 static int arfd = -1;			/* archive file descriptor */
 static int artyp = ISREG;		/* archive type: file/FIFO/tape */
 static int arvol = 1;			/* archive volume number */
@@ -85,7 +85,7 @@ static struct stat arsb;		/* stat of archive device at open */
 static int invld_rec;			/* tape has out of spec record size */
 static int wr_trail = 1;		/* trailer was rewritten in append */
 static int can_unlnk = 0;		/* do we unlink null archives?  */
-const char *arcname;                  	/* printable name of archive */
+const char *arcname;			/* printable name of archive */
 const char *gzip_program;		/* name of gzip program */
 time_t starttime;			/* time the run started */
 int minusCfd = -1;			/* active -C directory */
@@ -115,7 +115,7 @@ ar_open(name)
 	const char *name;
 #endif
 {
-        struct mtget mb;
+	struct mtget mb;
 
 	/*
 	 * change back to the current directory (for now).
@@ -296,7 +296,7 @@ ar_open(name)
 			if ((arsb.st_size % rdblksz) == 0)
 				break;
 		/*
-		 * When we cannont find a match, we may have a flawed archive.
+		 * When we cannot find a match, we may have a flawed archive.
 		 */
 		if (rdblksz <= 0)
 			rdblksz = FILEBLK;
@@ -310,7 +310,7 @@ ar_open(name)
 		break;
 	default:
 		/*
-		 * should never happen, worse case, slow... 
+		 * should never happen, worse case, slow...
 		 */
 		blksz = rdblksz = BLKMULT;
 		break;
@@ -468,8 +468,8 @@ ar_set_wr()
 	 * will stop us if the archive containing the trailer was not written
 	 */
 	wr_trail = 0;
-	
-	/* 
+
+	/*
 	 * Add any device dependent code as required here
 	 */
 	if (artyp != ISREG)
@@ -490,7 +490,7 @@ ar_set_wr()
 /*
  * ar_app_ok()
  *	check if the last volume in the archive allows appends. We cannot check
- *	this until we are ready to write since there is no spec that says all 
+ *	this until we are ready to write since there is no spec that says all
  *	volumes in a single archive have to be of the same type...
  * Return:
  *	0 if we can append, -1 otherwise.
@@ -730,7 +730,7 @@ ar_read(buf, cnt)
 	else if (!is_oldgnutar)
 		tty_warn(0, "End of archive volume %d reached", arvol);
 	return(res);
-} 
+}
 
 /*
  * ar_write()
@@ -781,10 +781,10 @@ ar_write(buf, bsz)
 	case ISREG:
 		if ((res > 0) && (res % BLKMULT)) {
 			/*
-		 	 * try to fix up partial writes which are not BLKMULT
+			 * try to fix up partial writes which are not BLKMULT
 			 * in size by forcing the runt record to next archive
 			 * volume
-		 	 */
+			 */
 			if ((cpos = lseek(arfd, (off_t)0L, SEEK_CUR)) < 0)
 				break;
 			cpos -= (off_t)res;
@@ -830,7 +830,7 @@ ar_write(buf, bsz)
 	/*
 	 * Better tell the user the bad news...
 	 * if this is a block aligned archive format, we may have a bad archive
-	 * if the format wants the header to start at a BLKMULT boundry. While
+	 * if the format wants the header to start at a BLKMULT boundary. While
 	 * we can deal with the mis-aligned data, it violates spec and other
 	 * archive readers will likely fail. if the format is not block
 	 * aligned, the user may be lucky (and the archive is ok).
@@ -850,8 +850,8 @@ ar_write(buf, bsz)
 		    "Unable to append, trailer re-write failed. Quitting.");
 		return(res);
 	}
-		
-	if (res == 0) 
+
+	if (res == 0)
 		tty_warn(0, "End of archive volume %d reached", arvol);
 	else if (res < 0)
 		syswarn(1, errno, "Failed write to archive volume: %d", arvol);
@@ -882,7 +882,7 @@ ar_rdsync()
 	long fsbz;
 	off_t cpos;
 	off_t mpos;
-        struct mtop mb;
+	struct mtop mb;
 
 	/*
 	 * Fail resync attempts at user request (done) or this is going to be
@@ -905,7 +905,7 @@ ar_rdsync()
 		 * if the last i/o was a successful data transfer, we assume
 		 * the fault is just a bad record on the tape that we are now
 		 * past. If we did not get any data since the last resync try
-		 * to move the tape foward one PHYSICAL record past any
+		 * to move the tape forward one PHYSICAL record past any
 		 * damaged tape section. Some tape drives are stubborn and need
 		 * to be pushed.
 		 */
@@ -932,7 +932,7 @@ ar_rdsync()
 		if ((cpos = lseek(arfd, (off_t)0L, SEEK_CUR)) < 0)
 			break;
 		mpos = fsbz - (cpos % (off_t)fsbz);
-		if (lseek(arfd, mpos, SEEK_CUR) < 0) 
+		if (lseek(arfd, mpos, SEEK_CUR) < 0)
 			break;
 		lstrval = 1;
 		break;
@@ -954,7 +954,7 @@ ar_rdsync()
 
 /*
  * ar_fow()
- *	Move the I/O position within the archive foward the specified number of
+ *	Move the I/O position within the archive forward the specified number of
  *	bytes as supported by the device. If we cannot move the requested
  *	number of bytes, return the actual number of bytes moved in skipped.
  * Return:
@@ -980,7 +980,7 @@ ar_fow(sksz, skipped)
 		return(0);
 
 	/*
-	 * we cannot move foward at EOF or error
+	 * we cannot move forward at EOF or error
 	 */
 	if (lstrval <= 0)
 		return(lstrval);
@@ -989,7 +989,7 @@ ar_fow(sksz, skipped)
 	 * Safer to read forward on devices where it is hard to find the end of
 	 * the media without reading to it. With tapes we cannot be sure of the
 	 * number of physical blocks to skip (we do not know physical block
-	 * size at this point), so we must only read foward on tapes!
+	 * size at this point), so we must only read forward on tapes!
 	 */
 	if (artyp == ISTAPE || artyp == ISPIPE)
 		return(0);
@@ -998,12 +998,12 @@ ar_fow(sksz, skipped)
 	 * figure out where we are in the archive
 	 */
 	if ((cpos = lseek(arfd, (off_t)0L, SEEK_CUR)) >= 0) {
-		/* 
-	 	 * we can be asked to move farther than there are bytes in this
+		/*
+		 * we can be asked to move farther than there are bytes in this
 		 * volume, if so, just go to file end and let normal buf_fill()
 		 * deal with the end of file (it will go to next volume by
 		 * itself)
-	 	 */
+		 */
 		mpos = cpos + sksz;
 		if (artyp == ISREG && mpos > arsb.st_size)
 			mpos = arsb.st_size;
@@ -1015,7 +1015,7 @@ ar_fow(sksz, skipped)
 		if (artyp != ISREG)
 			return(0);		/* non-seekable device */
 	}
-	syswarn(1, errno, "Foward positioning operation on archive failed");
+	syswarn(1, errno, "Forward positioning operation on archive failed");
 	lstrval = -1;
 	return(-1);
 }
@@ -1041,8 +1041,8 @@ ar_rev(sksz)
 #endif
 {
 	off_t cpos;
-        struct mtop mb;
-	int phyblk; 
+	struct mtop mb;
+	int phyblk;
 
 	/*
 	 * make sure we do not have try to reverse on a flawed archive
@@ -1052,7 +1052,7 @@ ar_rev(sksz)
 
 	switch(artyp) {
 	case ISPIPE:
-		if (sksz <= 0) 
+		if (sksz <= 0)
 			break;
 		/*
 		 * cannot go backwards on these critters
@@ -1108,12 +1108,12 @@ ar_rev(sksz)
 		break;
 	case ISTAPE:
 		/*
-	 	 * Calculate and move the proper number of PHYSICAL tape
+		 * Calculate and move the proper number of PHYSICAL tape
 		 * blocks. If the sksz is not an even multiple of the physical
 		 * tape size, we cannot do the move (this should never happen).
 		 * (We also cannot handler trailers spread over two vols).
 		 * get_phys() also makes sure we are in front of the filemark.
-	 	 */
+		 */
 		if ((phyblk = get_phys()) <= 0) {
 			lstrval = -1;
 			return(-1);
@@ -1162,7 +1162,7 @@ ar_rev(sksz)
 /*
  * get_phys()
  *	Determine the physical block size on a tape drive. We need the physical
- *	block size so we know how many bytes we skip over when we move with 
+ *	block size so we know how many bytes we skip over when we move with
  *	mtio commands. We also make sure we are BEFORE THE TAPE FILEMARK when
  *	return.
  *	This is one really SLOW routine...
@@ -1228,7 +1228,7 @@ get_phys()
 	}
 
 	/*
-	 * read foward to the file mark, then back up in front of the filemark
+	 * read forward to the file mark, then back up in front of the filemark
 	 * (this is a bit paranoid, but should be safe to do).
 	 */
 	while ((res = read_with_restart(arfd, scbuf, sizeof(scbuf))) > 0)
@@ -1363,7 +1363,7 @@ ar_next()
 				/*
 				 * we are to continue with the same device
 				 */
-				if (ar_open(arcname) >= 0) 
+				if (ar_open(arcname) >= 0)
 					return(0);
 				tty_prnt("Cannot re-open %s, try again\n",
 					arcname);
@@ -1402,10 +1402,10 @@ ar_next()
 			tty_prnt("Empty file name, try again\n");
 			continue;
 		}
-                if (!strcmp(buf, "..")) {
-                        tty_prnt("Illegal file name: .. try again\n");
-                        continue;
-                }
+		if (!strcmp(buf, "..")) {
+			tty_prnt("Illegal file name: .. try again\n");
+			continue;
+		}
 		if (strlen(buf) > PAXPATHLEN) {
 			tty_prnt("File name too long, try again\n");
 			continue;
@@ -1563,13 +1563,13 @@ ar_summary(n)
 	 * could have written anything yet.
 	 */
 	if (frmt == NULL) {
-		len = snprintf(buf, sizeof(buf), 
+		len = snprintf(buf, sizeof(buf),
 		    "unknown format, %s skipped in %s\n",
 		    sizefmt(s1buf, sizeof(s1buf), rdcnt),
 		    timefmt(tbuf, sizeof(tbuf), rdcnt, secs));
 		if (n == 0)
 			(void)fprintf(outf, "%s: %s", argv0, buf);
-		else	
+		else
 			(void)write(STDERR_FILENO, buf, len);
 		return;
 	}
@@ -1609,7 +1609,7 @@ ar_summary(n)
  *	writing archives, where
  *	N:	number of -C options
  *	M:	number of files in archive
- *    
+ *
  * Returns 0 if all went well, else -1.
  */
 
