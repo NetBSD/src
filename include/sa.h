@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.1.2.2 2002/08/31 00:05:42 nathanw Exp $	*/
+/*	$NetBSD: sa.h,v 1.1.2.3 2003/01/17 03:36:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,13 +46,13 @@
 
 
 __BEGIN_DECLS
-int	sa_register(sa_upcall_t, sa_upcall_t *, int);
-int	sa_stacks(int, stack_t *);
-size_t	sa_getstacksize(void);
-int	sa_enable(void);
-int	sa_setconcurrency(int);
-int	sa_yield(void);
-int	sa_preempt(int);
+int	sa_register __P((sa_upcall_t, sa_upcall_t *, int));
+int	sa_stacks __P((int, stack_t *));
+size_t	sa_getstacksize __P((void));
+int	sa_enable __P((void));
+int	sa_setconcurrency __P((int));
+int	sa_yield __P((void));
+int	sa_preempt __P((int));
 __END_DECLS
 
-#endif /* !_LWP_H_ */
+#endif /* !_SA_H_ */
