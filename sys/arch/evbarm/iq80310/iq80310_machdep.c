@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.38 2002/04/09 23:44:03 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.39 2002/04/12 00:58:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -194,11 +194,7 @@ void	consinit(void);
  * what the firmware provided with the board defaults to.
  */
 #ifndef CONSPEED
-#if defined(IOP310_TEAMASA_NPWR)
-#define CONSPEED B19200
-#else /* Default to stock IQ80310 */
 #define CONSPEED B115200
-#endif /* list of IQ80310-based designs */
 #endif /* ! CONSPEED */
 
 #ifndef CONUNIT
