@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.16 2001/11/13 06:23:17 chs Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.17 2002/05/11 12:23:53 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.16 2001/11/13 06:23:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.17 2002/05/11 12:23:53 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,14 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
 		if (bp == NULL) {
-			return ENOMEM;
+
+			/*
+			 * getblk() above returns NULL only iff we are
+			 * pagedaemon.  See the implementation of getblk
+			 * for detail.
+			 */
+
+			return (ENOMEM);
 		}
 		if (bp->b_flags & (B_DONE | B_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
