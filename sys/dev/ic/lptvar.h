@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lptvar.h,v 1.13 1994/02/19 03:36:12 mycroft Exp $
+ *	$Id: lptvar.h,v 1.14 1994/03/06 17:19:11 mycroft Exp $
  */
 
 /*
@@ -144,7 +144,7 @@ lpt_port_test(port, data, mask)
 	outb(port, data);
 	timeout = 1000;
 	do {
-		DELAY(10);
+		delay(10);
 		temp = inb(port) & mask;
 	} while (temp != data && --timeout);
 	lprintf("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", port, data,
@@ -292,7 +292,7 @@ lptopen(dev, flag)
 	if ((flags & LPT_NOPRIME) == 0) {
 		/* assert INIT for 100 usec to start up printer */
 		outb(iobase + lpt_control, LPC_SELECT);
-		DELAY(100);
+		delay(100);
 	}
 
 	control = LPC_SELECT | LPC_NINIT;

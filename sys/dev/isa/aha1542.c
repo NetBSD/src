@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.17 1994/01/03 23:53:29 mycroft Exp $
+ *	$Id: aha1542.c,v 1.18 1994/03/06 17:18:43 mycroft Exp $
  */
 
 /*
@@ -497,7 +497,7 @@ ahaattach(struct isa_device *dev)
 		}
 	}
 	if(!(speedprint & (1<<masunit))) {
-		DELAY(1000000);
+		delay(1000000);
 		speedprint |= (1<<masunit);
 		printf("aha%d: bus speed %dns\n", masunit, speed[masunit]);
 	}
@@ -755,7 +755,7 @@ aha_init(int unit)
 	 * Assume we have a board at this stage
 	 * setup dma channel from jumpers and save int level
 	 */
-	DELAY(1000);
+	delay(1000);
 	aha_cmd(unit, 0, sizeof(conf), 0, (u_char *)&conf, AHA_CONF_GET);
 	switch(conf.chan) {
 	case CHAN0:

@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.5 1994/03/03 15:30:27 mycroft Exp $
+ *	$Id: if_el.c,v 1.6 1994/03/06 17:19:00 mycroft Exp $
  */
 
 /*
@@ -143,7 +143,7 @@ el_probe(isa_dev)
 	/* Reset the board. */
 	dprintf(("Resetting board...\n"));
 	outb(iobase+EL_AC, EL_AC_RESET);
-	DELAY(5);
+	delay(5);
 	outb(iobase+EL_AC, 0);
 
 	/* Now read the address. */
@@ -277,7 +277,7 @@ el_hardreset(sc)
 	int i;
 
 	outb(iobase+EL_AC, EL_AC_RESET);
-	DELAY(5);
+	delay(5);
 	outb(iobase+EL_AC, 0);
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)

@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.5 1994/02/16 20:52:37 mycroft Exp $
+ *	$Id: if_ie.c,v 1.6 1994/03/06 17:19:04 mycroft Exp $
  */
 
 /*
@@ -1354,7 +1354,7 @@ check_ie_present(sc, where, size)
 	(sc->reset_586)(sc);
 	(sc->chan_attn)(sc);
 	
-	DELAY(100);			/* wait a while... */
+	delay(100);			/* wait a while... */
 	
 	if (iscp->ie_busy) {
 		splx(s);
@@ -1377,7 +1377,7 @@ check_ie_present(sc, where, size)
 	(sc->reset_586)(sc);
 	(sc->chan_attn)(sc);
 	
-	DELAY(100);
+	delay(100);
 	
 	if (iscp->ie_busy) {
 		splx(s);
@@ -1424,9 +1424,9 @@ el_reset_586(sc)
 {
 
 	outb(PORT + IE507_CTRL, EL_CTRL_RESET);
-	DELAY(100);
+	delay(100);
 	outb(PORT + IE507_CTRL, EL_CTRL_NORMAL);
-	DELAY(100);
+	delay(100);
 }
 
 void

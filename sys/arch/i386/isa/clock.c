@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.17 1994/02/08 05:10:48 mycroft Exp $
+ *	$Id: clock.c,v 1.18 1994/03/06 17:18:48 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -171,7 +171,7 @@ enablertclock(void) {
 void
 spinwait(int millisecs)
 {
-	DELAY(1000 * millisecs);
+	delay(1000 * millisecs);
 }
 
 static int first_rtcopen_ever = 1;

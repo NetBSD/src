@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.89 1994/02/25 22:30:34 mycroft Exp $
+ *	$Id: machdep.c,v 1.90 1994/03/06 17:20:08 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -617,7 +617,7 @@ boot(arghowto)
 			if (nbusy == 0)
 				break;
 			printf("%d ", nbusy);
-			DELAY(40000 * iter);
+			delay(40000 * iter);
 		}
 		if (nbusy)
 			printf("giving up\n");
@@ -629,7 +629,7 @@ boot(arghowto)
 		 */
 		resettodr();
 
-		DELAY(10000);			/* wait for printf to finish */
+		delay(10000);			/* wait for printf to finish */
 	}
 	splhigh();
 	devtype = major(rootdev);
@@ -700,7 +700,7 @@ dumpsys()
 		break;
 	}
 	printf("\n\n");
-	DELAY(1000);
+	delay(1000);
 }
 
 #ifdef HZ

@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.35 1994/03/02 22:47:36 mycroft Exp $
+ *	$Id: if_ed.c,v 1.36 1994/03/06 17:18:57 mycroft Exp $
  */
 
 #include "ed.h"
@@ -244,7 +244,7 @@ ed_probe_WD80x3(isa_dev)
 
 #ifdef TOSH_ETHER
 	outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_POW);
-	DELAY(10000);
+	delay(10000);
 #endif
 
 	/*
@@ -273,11 +273,11 @@ ed_probe_WD80x3(isa_dev)
 #else
 	outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_RST);
 #endif
-	DELAY(100);
+	delay(100);
 	outb(sc->asic_addr + ED_WD_MSR,
 	    inb(sc->asic_addr + ED_WD_MSR) & ~ED_WD_MSR_RST);
 	/* Wait in the case this card is reading it's EEROM. */
-	DELAY(5000);
+	delay(5000);
 
 	sc->vendor = ED_VENDOR_WD_SMC;
 	sc->type = inb(sc->asic_addr + ED_WD_CARD_ID);
@@ -668,7 +668,7 @@ ed_probe_3Com(isa_dev)
 	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_RST | ED_3COM_CR_XSEL);
 
 	/* Wait for a while, then un-reset it. */
-	DELAY(50);
+	delay(50);
 	/*
 	 * The 3Com ASIC defaults to rather strange settings for the CR after a
 	 * reset - it's important to set it again after the following outb
@@ -677,7 +677,7 @@ ed_probe_3Com(isa_dev)
 	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
 
 	/* Wait a bit for the NIC to recover from the reset. */
-	DELAY(5000);
+	delay(5000);
 
 	sc->vendor = ED_VENDOR_3COM;
 	sc->type_str = "3c503";
@@ -866,7 +866,7 @@ ed_probe_Novell(isa_dev)
 	 * the invasive thing for now.  Yuck.]
 	 */
 	outb(sc->asic_addr + ED_NOVELL_RESET, tmp);
-	DELAY(5000);
+	delay(5000);
 
 	/*
 	 * This is needed because some NE clones apparently don't reset the NIC
@@ -876,7 +876,7 @@ ed_probe_Novell(isa_dev)
 	 */
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2 | ED_CR_STP);
 
-	DELAY(5000);
+	delay(5000);
 
 	/* Make sure that we really have an 8390 based board. */
 	if (!ed_probe_generic8390(sc))

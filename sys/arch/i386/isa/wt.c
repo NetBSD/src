@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wt.c	7.1 (Berkeley) 5/9/91
- *	$Id: wt.c,v 1.7 1994/02/09 21:13:58 mycroft Exp $
+ *	$Id: wt.c,v 1.8 1994/03/06 17:19:22 mycroft Exp $
  */
 
 /*
@@ -526,7 +526,7 @@ int	dev, flag;
 #ifdef DEBUG
 		debug("Waiting for rew to finish\n");
 #endif
-		DELAY(1000000);	/* delay one second */
+		delay(1000000);	/* delay one second */
 	}
 	/* Only do reset and select when tape light is off, and tape is rewound.
 	 * This allows multiple volumes. */
@@ -786,7 +786,7 @@ rdyexc(ticks)
 		if (!(s & READY))	/* check if controller is ready */
 			break;
 		s = splbio();
-		DELAY((ticks/HZ)*1000000); /* */
+		delay((ticks/HZ)*1000000); /* */
 		splx(s);
 	}
 #ifdef DEBUG
@@ -996,7 +996,7 @@ t_reset()
 	register i;
 	mbits |= RESET;
 	outb(CTLPORT, mbits);		/* send reset */
-	DELAY(20);
+	delay(20);
 	mbits &= ~RESET;
 	outb(CTLPORT, mbits);		/* turn off reset */
 	if ((inb(STATPORT) & RESETMASK) == RESETVAL)

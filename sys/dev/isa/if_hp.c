@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_hp.c,v 1.14 1994/02/10 17:18:01 mycroft Exp $
+ *	$Id: if_hp.c,v 1.15 1994/03/06 17:19:03 mycroft Exp $
  */
 
 /*
@@ -192,7 +192,7 @@ hpprobe(dvp)
 #if 0
 	outb(hpc + ds0_isr, 0xff);
 	outb(hpc + ds_cmd, DSCM_NODMA | DSCM_PG0 | DSCM_STOP);
-	DELAY(1000);
+	delay(1000);
 
 	/* Check cmd reg and fail if not right */
 	if ((i = inb(hpc + ds_cmd)) != (DSCM_NODMA | DSCM_PG0 | DSCM_STOP)) {

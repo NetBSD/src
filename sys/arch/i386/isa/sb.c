@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.4 1994/03/02 16:23:10 hpeyerl Exp $
+ *	$Id: sb.c,v 1.5 1994/03/06 17:19:16 mycroft Exp $
  */
 
 #include "sb.h"
@@ -362,7 +362,7 @@ sbreset(register u_long base)
 	 * Gee, what a brilliant hardware design.
 	 */
 	outb(base + SBP_DSP_RESET, 1);
-	DELAY(3);
+	delay(3);
 	outb(base + SBP_DSP_RESET, 0);
 	if (rdsp(base) != SB_MAGIC)
 		return (-1);
@@ -383,7 +383,7 @@ void
 sb_spkron(struct sb_softc *sc)
 {
 	(void)wdsp(sc->sc_base, SB_DSP_SPKR_ON);
-	DELAY(1000);
+	delay(1000);
 }
 
 /*

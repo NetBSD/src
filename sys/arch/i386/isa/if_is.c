@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.23 1994/02/16 20:22:16 mycroft Exp $
+ *	$Id: if_is.c,v 1.24 1994/03/06 17:19:07 mycroft Exp $
  */
 
 /* TODO
@@ -258,7 +258,7 @@ lance_probe(sc)
 
 	/* Stop the LANCE chip and put it in a known state. */
 	iswrcsr(sc, 0, STOP);
-	DELAY(100);
+	delay(100);
 
 	if (isrdcsr(sc, 0) != STOP)
 		return 0;

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.24 1994/02/06 10:04:40 mycroft Exp $
+ *	$Id: fd.c,v 1.25 1994/03/06 17:18:54 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -206,7 +206,7 @@ struct isa_device *dev;
 
 	/* Try a reset, don't change motor on */
 	set_motor(fdcu,0,1);
-	DELAY(100);
+	delay(100);
 	set_motor(fdcu,0,0);
 	/* see if it can handle a command */
 	if (out_fdc(fdcu,NE7CMD_SPECIFY) < 0)
@@ -769,7 +769,7 @@ int fdstate(fdcu_t fdcu, fdc_p fdc)
 	case RESETCTLR:
 		/* Try a reset, keep motor on */
 		set_motor(fdcu,fd->fdsu,1);
-		DELAY(100);
+		delay(100);
 		set_motor(fdcu,fd->fdsu,0);
 		outb(fdc->baseport+fdctl,fd->ft->trans);
 		TRACE1("[0x%x->fdctl]",fd->ft->trans);

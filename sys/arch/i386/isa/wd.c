@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.60 1994/03/05 08:17:06 mycroft Exp $
+ *	$Id: wd.c,v 1.61 1994/03/06 17:19:19 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -1465,9 +1465,9 @@ wdreset(du, err)
 
 	/* reset the device  */
 	outb(wdc+wd_ctlr, WDCTL_RST | WDCTL_IDS);
-	DELAY(1000);
+	delay(1000);
 	outb(wdc+wd_ctlr, WDCTL_IDS);
-	DELAY(1000);
+	delay(1000);
 	(void) inb(wdc+wd_error);
 	outb(wdc+wd_ctlr, WDCTL_4BIT);
 
@@ -1490,7 +1490,7 @@ wdc_wait(du, mask)
 			break;
 		if (++timeout > WDCNDELAY)
 			return -1;
-		DELAY(WDCDELAY);
+		delay(WDCDELAY);
 	}
 #ifdef WDCNDELAY_DEBUG
 	if (timeout > WDCNDELAY_DEBUG)
