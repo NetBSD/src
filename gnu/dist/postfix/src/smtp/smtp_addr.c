@@ -269,6 +269,19 @@ static DNS_RR *smtp_find_self(DNS_RR *addr_list)
     }
 
     /*
+     * Find out if this mail system has a proxy listening on this address.
+     */
+    self = proxy_inet_addr_list();
+    for (addr = addr_list; addr; addr = addr->next) {
+	for (i = 0; i < self->used; i++)
+	    if (INADDRP(addr->data)->s_addr == self->addrs[i].s_addr) {
+		if (msg_verbose)
+		    msg_info("%s: found at pref %d", myname, addr->pref);
+		return (addr);
+	    }
+    }
+
+    /*
      * Didn't find myself.
      */
     if (msg_verbose)
