@@ -568,4 +568,7 @@
 /* syscall: "clock_getres" ret: "int" args: "clockid_t" "struct timespec *" */
 #define	SYS_clock_getres	234
 
+/* syscall: "nanosleep" ret: "int" args: "const struct timespec *" "struct timespec *" */
+#define	SYS_nanosleep	240
+
 #define	SYS_MAXSYSCALL	241

@@ -983,6 +983,11 @@ struct sys_clock_getres_args {
 	syscallarg(struct timespec *) tp;
 };
 
+struct sys_nanosleep_args {
+	syscallarg(const struct timespec *) rqtp;
+	syscallarg(struct timespec *) rmtp;
+};
+
 /*
  * System call prototypes.
  */
@@ -1229,3 +1234,4 @@ int	sys_shmget	__P((struct proc *, void *, register_t *));
 int	sys_clock_gettime	__P((struct proc *, void *, register_t *));
 int	sys_clock_settime	__P((struct proc *, void *, register_t *));
 int	sys_clock_getres	__P((struct proc *, void *, register_t *));
+int	sys_nanosleep	__P((struct proc *, void *, register_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.26 1997/01/31 02:34:23 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.27 1997/04/16 14:41:29 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -66,7 +66,6 @@ static void	settime __P((struct timeval *));
  * and decrementing interval timers, optionally reloading the interval
  * timers when they expire.
  */
-
 
 /* This function is used by clock_settime and settimeofday */
 static void
@@ -175,6 +174,64 @@ sys_clock_getres(p, v, retval)
 	return error;
 }
 
+/* ARGSUSED */
+int
+sys_nanosleep(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	static int nanowait;
+	register struct sys_nanosleep_args/* {
+		syscallarg(struct timespec *) rqtp;
+		syscallarg(struct timespec *) rmtp;
+	} */ *uap = v;
+	struct timespec rqt;
+	struct timespec rmt;
+	struct timeval atv, utv;
+	int error, s, timo;
+
+	error = copyin((caddr_t)SCARG(uap, rqtp), (caddr_t)&rqt,
+		       sizeof(struct timespec));
+	if (error)
+		return (error);
+
+	TIMESPEC_TO_TIMEVAL(&atv,&rqt)
+	if (itimerfix(&atv))
+		return (EINVAL);
+
+	s = splclock();
+	timeradd(&atv,&time,&atv);
+	timo = hzto(&atv);
+	/* 
+	 * Avoid inadvertantly sleeping forever
+	 */
+	if (timo == 0)
+		timo = 1;
+	splx(s);
+
+	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
+	if (error == ERESTART)
+		error = EINTR;
+	if (error == EWOULDBLOCK)
+		error = 0;
+
+	if (SCARG(uap, rmtp)) {
+		s = splclock();
+		utv = time;
+		splx(s);
+
+		timersub(&atv, &utv, &utv);
+		if (utv.tv_sec < 0)
+			timerclear(&utv);
+
+		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
+		error = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
+			sizeof(rmt));		
+	}
+
+	return error;
+}
 
 /* ARGSUSED */
 int
