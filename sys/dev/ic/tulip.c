@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.64 2000/05/18 03:02:45 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.65 2000/05/25 16:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2645,8 +2645,7 @@ tlp_filter_setup(sc)
 	    htole32(TULIP_CDSPADDR(sc));
 	sc->sc_txdescs[sc->sc_txnext].td_ctl =
 	    htole32((TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
-	    sc->sc_filtmode | TDCTL_Tx_SET | TDCTL_Tx_FS |
-	    TDCTL_Tx_LS | TDCTL_Tx_IC | sc->sc_tdctl_ch |
+	    sc->sc_filtmode | TDCTL_Tx_SET | TDCTL_Tx_IC | sc->sc_tdctl_ch |
 	    (sc->sc_txnext == (TULIP_NTXDESC - 1) ? sc->sc_tdctl_er : 0));
 	sc->sc_txdescs[sc->sc_txnext].td_status = htole32(TDSTAT_OWN);
 	TULIP_CDTXSYNC(sc, sc->sc_txnext, txs->txs_ndescs,
