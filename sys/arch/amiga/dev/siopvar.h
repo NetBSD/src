@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.14 1996/04/21 21:12:38 veego Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.14.10.1 1997/07/01 17:33:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@ struct siop_ds {
  */
 struct siop_acb {
 	TAILQ_ENTRY(siop_acb) chain;
-	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
+	struct scsipi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int		flags;	/* Status */
 #define ACB_FREE	0x00
 #define ACB_ACTIVE	0x01
@@ -130,7 +130,7 @@ struct	siop_softc {
 	u_char	sc_sstat0;
 	u_char	sc_sstat1;
 	u_long	sc_intcode;
-	struct	scsi_link sc_link;	/* proto for sub devices */
+	struct	scsipi_link sc_link;	/* proto for sub devices */
 	u_long	sc_scriptspa;		/* physical address of scripts */
 	siop_regmap_p	sc_siopp;	/* the SIOP */
 	u_long	sc_active;		/* number of active I/O's */
@@ -196,7 +196,7 @@ struct	siop_softc {
 #define	STS_EXT		0x80	/* Extended status valid */
 
 void siop_minphys __P((struct buf *bp));
-int siop_scsicmd __P((struct scsi_xfer *));
+int siop_scsicmd __P((struct scsipi_xfer *));
 void siopinitialize __P((struct siop_softc *));
 void siopintr __P((struct siop_softc *));
 #ifdef DEBUG

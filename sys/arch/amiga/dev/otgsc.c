@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.17 1996/12/23 09:10:27 veego Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.17.8.1 1997/07/01 17:33:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,8 +39,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/scireg.h>
@@ -56,14 +57,14 @@ int otgsc_dma_xfer_out __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
 int otgsc_intr __P((void *));
 
-struct scsi_adapter otgsc_scsiswitch = {
+struct scsipi_adapter otgsc_scsiswitch = {
 	sci_scsicmd,
 	sci_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device otgsc_scsidev = {
+struct scsipi_device otgsc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
@@ -149,13 +150,14 @@ otgscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = 7;
+	sc->sc_link.scsipi_scsi.adapter_target = 7;
 	sc->sc_link.adapter = &otgsc_scsiswitch;
 	sc->sc_link.device = &otgsc_scsidev;
 	sc->sc_link.openings = 1;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	/*

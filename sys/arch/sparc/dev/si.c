@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.36 1997/05/24 20:16:31 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.36.2.1 1997/07/01 17:34:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,9 +102,10 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_debug.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -226,16 +227,16 @@ void si_obio_dma_stop __P((struct ncr5380_softc *));
 void si_obio_intr_on __P((struct ncr5380_softc *));
 void si_obio_intr_off __P((struct ncr5380_softc *));
 
-static struct scsi_adapter	si_ops = {
-	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
-	si_minphys,			/* scsi_minphys()	*/
-	NULL,				/* open_target_lu()	*/
+static struct scsipi_adapter	si_ops = {
+	ncr5380_scsi_cmd,		/* scsipi_cmd()		*/
+	si_minphys,			/* scsipi_minphys()	*/
+	NULL,				/* open_arget_lu()	*/
 	NULL,				/* close_target_lu()	*/
 };
 
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
-static struct scsi_device si_dev = {
+static struct scsipi_device si_dev = {
 	NULL,		/* Use default error handler.		*/
 	NULL,		/* Use default start handler.		*/
 	NULL,		/* Use default async handler.		*/
@@ -353,11 +354,11 @@ si_attach(parent, self, args)
 		mapiodev(ra->ra_reg, 0, sizeof(struct si_regs));
 
 	/*
-	 * Fill in the prototype scsi_link.
+	 * Fill in the prototype scsipi_link.
 	 */
-	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.adapter_target = 7;
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &si_ops;
 	ncr_sc->sc_link.device = &si_dev;
 
@@ -630,7 +631,7 @@ si_dma_alloc(ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
+	struct scsipi_xfer *xs = sr->sr_xs;
 	struct si_dma_handle *dh;
 	int i, xlen;
 	u_long addr;

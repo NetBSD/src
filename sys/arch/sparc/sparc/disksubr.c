@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 1996/07/03 22:02:09 pk Exp $ */
+/*	$NetBSD: disksubr.c,v 1.18.8.1 1997/07/01 17:34:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -40,8 +40,9 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.7 1997/06/06 23:31:04 thorpej Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.7.2.1 1997/07/01 17:35:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -69,7 +69,7 @@ struct bha_softc {
 	struct bha_ccb *sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, bha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_numccbs, sc_mbofull;
-	struct scsi_link sc_link;	/* prototype for devs */
+	struct scsipi_link sc_link;	/* prototype for devs */
 
 	char sc_model[7],
 	     sc_firmware[6];
@@ -81,7 +81,7 @@ struct bha_probe_data {
 	int sc_iswide;			/* adapter is wide */
 };
 
-#define	ISWIDE(sc)	(sc->sc_link.max_target >= 8)
+#define	ISWIDE(sc)	(sc->sc_link.scsipi_scsi.max_target >= 8)
 
 int	bha_find __P((bus_space_tag_t, bus_space_handle_t,
 	    struct bha_probe_data *));

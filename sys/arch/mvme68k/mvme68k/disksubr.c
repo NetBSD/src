@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 1997/01/31 01:56:03 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12.6.1 1997/07/01 17:34:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -37,8 +37,9 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
 

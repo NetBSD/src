@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.13 1996/12/23 09:09:58 veego Exp $	*/
+/*	$NetBSD: empsc.c,v 1.13.8.1 1997/07/01 17:33:15 bouyer Exp $	*/
 
 /*
 
@@ -40,8 +40,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
@@ -53,14 +54,14 @@ void empscattach __P((struct device *, struct device *, void *));
 int empscmatch __P((struct device *, struct cfdata *, void *));
 int empsc_intr __P((void *));
 
-struct scsi_adapter empsc_scsiswitch = {
+struct scsipi_adapter empsc_scsiswitch = {
 	sci_scsicmd,
 	sci_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device empsc_scsidev = {
+struct scsipi_device empsc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
@@ -139,13 +140,14 @@ empscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = 7;
+	sc->sc_link.scsipi_scsi.adapter_target = 7;
 	sc->sc_link.adapter = &empsc_scsiswitch;
 	sc->sc_link.device = &empsc_scsidev;
 	sc->sc_link.openings = 1;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	/*

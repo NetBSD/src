@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.71 1997/04/29 05:17:13 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.71.2.1 1997/07/01 17:35:50 bouyer Exp $
 
 # mac68k-specific configuration info
 
@@ -67,7 +67,7 @@ file	arch/mac68k/dev/if_sn.c		sn
 file	arch/mac68k/dev/if_sn_obio.c	sn_obio
 file	arch/mac68k/dev/if_sn_nubus.c	sn_nubus
 
-include "scsi/files.scsi"
+include "dev/scsipi/files.scsipi"
 
 # Option 1 for ncr5380 support
 device	ncrscsi: scsi

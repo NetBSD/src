@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.6 1997/06/25 13:31:01 hannken Exp $	*/
+/*	$NetBSD: aha.c,v 1.6.2.1 1997/07/01 17:34:55 bouyer Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -103,8 +103,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/ahareg.h>
 #include <dev/ic/ahavar.h>
@@ -134,12 +135,12 @@ void aha_done __P((struct aha_softc *, struct aha_ccb *));
 void aha_init __P((struct aha_softc *));
 void aha_inquire_setup_information __P((struct aha_softc *));
 void ahaminphys __P((struct buf *));
-int aha_scsi_cmd __P((struct scsi_xfer *));
-int aha_poll __P((struct aha_softc *, struct scsi_xfer *, int));
+int aha_scsi_cmd __P((struct scsipi_xfer *));
+int aha_poll __P((struct aha_softc *, struct scsipi_xfer *, int));
 void aha_timeout __P((void *arg));
 int aha_create_ccbs __P((struct aha_softc *, void *, size_t, int));
 
-struct scsi_adapter aha_switch = {
+struct scsipi_adapter aha_switch = {
 	aha_scsi_cmd,
 	ahaminphys,
 	0,
@@ -147,7 +148,7 @@ struct scsi_adapter aha_switch = {
 };
 
 /* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device aha_dev = {
+struct scsipi_device aha_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -306,15 +307,16 @@ aha_attach(sc, apd)
 	TAILQ_INIT(&sc->sc_waiting_ccb);
 
 	/*
-	 * fill in the prototype scsi_link.
+	 * fill in the prototype scsipi_link.
 	 */
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = apd->sc_scsi_dev;
+	sc->sc_link.scsipi_scsi.adapter_target = apd->sc_scsi_dev;
 	sc->sc_link.adapter = &aha_switch;
 	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	aha_inquire_setup_information(sc);
 	aha_init(sc);
@@ -760,8 +762,8 @@ aha_done(sc, ccb)
 	struct aha_ccb *ccb;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	struct scsi_sense_data *s1, *s2;
-	struct scsi_xfer *xs = ccb->xs;
+	struct scsipi_sense_data *s1, *s2;
+	struct scsipi_xfer *xs = ccb->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("aha_done\n"));
 
@@ -807,9 +809,9 @@ aha_done(sc, ccb)
 		} else if (ccb->target_stat != SCSI_OK) {
 			switch (ccb->target_stat) {
 			case SCSI_CHECK:
-				s1 = (struct scsi_sense_data *) (((char *) (&ccb->scsi_cmd)) +
+				s1 = (struct scsipi_sense_data *) (((char *) (&ccb->scsi_cmd)) +
 				    ccb->scsi_cmd_length);
-				s2 = &xs->sense;
+				s2 = &xs->sense.scsi_sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
 				break;
@@ -827,7 +829,7 @@ aha_done(sc, ccb)
 	}
 	aha_free_ccb(sc, ccb);
 	xs->flags |= ITSDONE;
-	scsi_done(xs);
+	scsipi_done(xs);
 }
 
 /*
@@ -1169,9 +1171,9 @@ ahaminphys(bp)
  */
 int
 aha_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct aha_softc *sc = sc_link->adapter_softc;
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct aha_ccb *ccb;
@@ -1266,8 +1268,8 @@ aha_scsi_cmd(xs)
 
 	ccb->data_out = 0;
 	ccb->data_in = 0;
-	ccb->target = sc_link->target;
-	ccb->lun = sc_link->lun;
+	ccb->target = sc_link->scsipi_scsi.target;
+	ccb->lun = sc_link->scsipi_scsi.lun;
 	ccb->req_sense_length = sizeof(ccb->scsi_sense);
 	ccb->host_stat = 0x00;
 	ccb->target_stat = 0x00;
@@ -1307,7 +1309,7 @@ bad:
 int
 aha_poll(sc, xs, count)
 	struct aha_softc *sc;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int count;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1334,12 +1336,12 @@ aha_timeout(arg)
 	void *arg;
 {
 	struct aha_ccb *ccb = arg;
-	struct scsi_xfer *xs = ccb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_xfer *xs = ccb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct aha_softc *sc = sc_link->adapter_softc;
 	int s;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	printf("timed out");
 
 	s = splbio();

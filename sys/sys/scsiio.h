@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiio.h,v 1.3 1994/06/29 06:45:09 cgd Exp $	*/
+/*	$NetBSD: scsiio.h,v 1.3.14.1 1997/07/01 17:35:42 bouyer Exp $	*/
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_
@@ -49,9 +49,20 @@ typedef struct	scsireq {
 #define SCIOCDEBUG	_IOW('Q', 2, int)	/* from 0 to 15 */
 
 struct	scsi_addr {
-	int	scbus;		/* -1 if wildcard */
-	int	target;		/* -1 if wildcard */
-	int	lun;		/* -1 if wildcard */
+	int type;		/* bus type */
+#define TYPE_SCSI 0
+#define TYPE_ATAPI 1
+	union {
+		struct _scsi {
+			int	scbus;		/* -1 if wildcard */
+			int	target;		/* -1 if wildcard */
+			int	lun;		/* -1 if wildcard */
+	} scsi;
+		struct _atapi {
+				int atbus;	/* -1 if wildcard */
+				int drive;	/* -1 if wildcard */
+		} atapi;
+	} addr;
 } ;
 
 #define SCIOCREPROBE	_IOW('Q', 3, struct scsi_addr) /* look for new devs */

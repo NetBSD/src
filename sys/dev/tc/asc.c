@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39 1997/06/16 03:46:29 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.2.1 1997/07/01 17:35:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -135,8 +135,9 @@
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
@@ -418,14 +419,14 @@ struct cfdriver asc_cd = {
 
 #ifdef USE_NEW_SCSI
 /* Glue to the machine-independent scsi */
-struct scsi_adapter asc_switch = {
+struct scsipi_adapter asc_switch = {
 	NULL, /* XXX - asc_scsi_cmd */
 /*XXX*/	minphys,		/* no max transfer size; DMA engine deals */
 	NULL,
 	NULL,
 };
 
-struct scsi_device asc_dev = {
+struct scsipi_device asc_dev = {
 /*XXX*/	NULL,			/* Use default error handler */
 /*XXX*/	NULL,			/* have a queue, served by this */
 /*XXX*/	NULL,			/* have no async handler */
@@ -546,13 +547,14 @@ ascattach(asc, dmabufsize, bus_speed)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
-	asc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	asc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	asc->sc_link.adapter_softc = asc;
-	asc->sc_link.adapter_target = asc->sc_id;
+	asc->sc_link.scsipi_scsi.adapter_target = asc->sc_id;
 	asc->sc_link.adapter = &asc_switch;
 	asc->sc_link.device = &asc_dev;
 	asc->sc_link.openings = 2;
-	asc->sc_link.max_target = 7;
+	asc->sc_link.scsipi_scsi.max_target = 7;
+	asc->sc_link.type = BUS_SCSI;
 
 	/*
 	 * Now try to attach all the sub-devices.
@@ -617,7 +619,7 @@ asc_poll(asc, target)
 	struct asc_softc *asc;
 	int target;
 {
-	struct scsi_xfer *scsicmd = asc->cmd[target];
+	struct scsipi_xfer *scsicmd = asc->cmd[target];
 	int count = scsicmd->timeout * 10;
 
 	while(count) {
@@ -1390,7 +1392,7 @@ asc_end(asc, status, ss, ir)
 #ifdef USE_NEW_SCSI
 	if(scsicmd->error == XS_NOERROR && !(state->flags & CHECK_SENSE)) {
 		if((state->statusByte & ST_MASK) == SCSI_CHECK) {
-			struct scsi_sense *ss = (void *)&state->cmd;
+			struct scsipi_sense *ss = (void *)&state->cmd;
 			/* Save return values */
 			scsicmd->resid = state->buflen;
 			scsicmd->status = state->statusByte;
@@ -1398,10 +1400,10 @@ asc_end(asc, status, ss, ir)
 			bzero(ss, sizeof(*ss));
 			ss->opcode = REQUEST_SENSE;
 			ss->byte2 = sc_link->lun << 5;
-			ss->length = sizeof(struct scsi_sense_data);
+			ss->length = sizeof(struct scsipi_sense_data);
 			state->cmdlen = sizeof(*ss);
 			state->buf = (vm_offset_t)&scsicmd->sense;
-			state->buflen = sizeof(struct scsi_sense_data);
+			state->buflen = sizeof(struct scsipi_sense_data);
 			state->flags |= CHECK_SENSE;
 			MachFlushDCache(state->buf, state->buflen);
 			asc->cmd[target] = scsicmd;

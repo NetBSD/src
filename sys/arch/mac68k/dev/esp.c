@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.10 1997/03/05 15:19:18 briggs Exp $	*/
+/*	$NetBSD: esp.c,v 1.10.2.1 1997/07/01 17:34:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -89,9 +89,10 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-#include <scsi/scsi_message.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsi_message.h>
 
 #include <machine/cpu.h>
 #include <machine/param.h>
@@ -115,14 +116,14 @@ struct cfdriver esp_cd = {
 	NULL, "esp", DV_DULL
 };
 
-struct scsi_adapter esp_switch = {
+struct scsipi_adapter esp_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
 };
 
-struct scsi_device esp_dev = {
+struct scsipi_device esp_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */

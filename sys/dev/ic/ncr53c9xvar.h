@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.6 1997/05/01 22:16:27 pk Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.6.2.1 1997/07/01 17:35:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -85,13 +85,13 @@
  * ECB. Holds additional information for each SCSI command Comments: We
  * need a separate scsi command block because we may need to overwrite it
  * with a request sense command.  Basicly, we refrain from fiddling with
- * the scsi_xfer struct (except do the expected updating of return values).
+ * the scsipi_xfer struct (except do the expected updating of return values).
  * We'll generally update: xs->{flags,resid,error,sense,status} and
  * occasionally xs->retries.
  */
 struct ncr53c9x_ecb {
 	TAILQ_ENTRY(ncr53c9x_ecb) chain;
-	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
+	struct scsipi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int flags;
 #define	ECB_ALLOC	0x01
 #define	ECB_NEXUS	0x02
@@ -223,7 +223,7 @@ struct ncr53c9x_softc {
 	struct device sc_dev;			/* us as a device */
 
 	struct evcnt sc_intrcnt;		/* intr count */
-	struct scsi_link sc_link;		/* scsi lint struct */
+	struct scsipi_link sc_link;		/* scsipi lint struct */
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
 
@@ -374,7 +374,7 @@ struct ncr53c9x_softc {
 	((250 * (cpb)) / (sc)->sc_freq)
 
 void	ncr53c9x_attach __P((struct ncr53c9x_softc *,
-	    struct scsi_adapter *, struct scsi_device *));
-int	ncr53c9x_scsi_cmd __P((struct scsi_xfer *));
+	    struct scsipi_adapter *, struct scsipi_device *));
+int	ncr53c9x_scsi_cmd __P((struct scsipi_xfer *));
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
 int	ncr53c9x_intr __P((struct ncr53c9x_softc *));

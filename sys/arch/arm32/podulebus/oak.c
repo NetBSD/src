@@ -1,4 +1,4 @@
-/* $NetBSD: oak.c,v 1.9 1996/10/14 23:42:18 mark Exp $ */
+/* $NetBSD: oak.c,v 1.9.8.1 1997/07/01 17:33:44 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson 1996.
@@ -54,8 +54,9 @@
 
 /* SCSI bus includes */
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 /* Hardware related include chip/card/bus ***********************************/
 
@@ -97,14 +98,14 @@ int oak_pio_in  __P((struct ncr5380_softc *, int, int, unsigned char *));
 int oak_pio_out __P((struct ncr5380_softc *, int, int, unsigned char *));
 #endif
 
-struct scsi_adapter oak_adapter = {
+struct scsipi_adapter oak_adapter = {
 	ncr5380_scsi_cmd,
 	oakminphys,
 	NULL,
 	NULL,
 };
 
-struct scsi_device oak_device = {
+struct scsipi_device oak_device = {
 	NULL,
 	NULL,
 	NULL,
@@ -147,11 +148,12 @@ oakattach(parent, self, aux)
 
 	printf(" 16-bit");
 
-	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.adapter_target = 7;
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &oak_adapter;
 	ncr_sc->sc_link.device = &oak_device;
+	ncr_sc->sc_link.type = BUS_SCSI;
 
 	ncr_sc->sci_r0 = (volatile u_char *)sc->sc_base + 0x00;
 	ncr_sc->sci_r1 = (volatile u_char *)sc->sc_base + 0x04;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.3 1997/04/07 05:56:28 scottr Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.3.2.1 1997/07/01 17:34:07 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -40,9 +40,10 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_debug.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
@@ -161,11 +162,12 @@ sbc_obio_attach(parent, self, args)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
-	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.adapter_target = 7;
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &sbc_ops;
 	ncr_sc->sc_link.device = &sbc_dev;
+	ncr_sc->sc_link.type = BUS_SCSI;
 
 	/*
 	 * Initialize fields used by the MI code

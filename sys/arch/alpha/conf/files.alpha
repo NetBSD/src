@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.47 1997/06/06 23:49:38 thorpej Exp $
+# $NetBSD: files.alpha,v 1.47.2.1 1997/07/01 17:35:44 bouyer Exp $
 #
 # alpha-specific configuration info
 
@@ -51,7 +51,7 @@ file	arch/alpha/alpha/cpu.c		cpu
 # Machine-independent SCSI drivers
 #
 
-include "scsi/files.scsi"
+include "dev/scsipi/files.scsipi"
 major { st = 2 }
 major { cd = 3 }
 major { sd = 8 }

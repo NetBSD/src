@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.8 1997/06/07 19:08:23 cgd Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.8.2.1 1997/07/01 17:33:03 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.8 1997/06/07 19:08:23 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.8.2.1 1997/07/01 17:33:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.8 1997/06/07 19:08:23 cgd Exp $");
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 const char *
 dec_kn8ae_model_name()
@@ -181,12 +182,12 @@ dec_kn8ae_device_register(dev, aux)
 	    (!strcmp(cd->cd_name, "sd") ||
 	     !strcmp(cd->cd_name, "st") ||
 	     !strcmp(cd->cd_name, "cd"))) {
-		struct scsibus_attach_args *sa = aux;
+		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_sc_link->target)
+		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
 			return;
 
 		/* XXX LUN! */

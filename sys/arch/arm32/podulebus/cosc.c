@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.4 1997/01/28 04:21:01 mark Exp $	*/
+/*	$NetBSD: cosc.c,v 1.4.6.1 1997/07/01 17:33:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,8 +45,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
@@ -60,16 +61,16 @@
 
 void coscattach	__P((struct device *, struct device *, void *));
 int coscmatch	__P((struct device *, void *, void *));
-int cosc_scsicmd	__P((struct scsi_xfer *));
+int cosc_scsicmd	__P((struct scsipi_xfer *));
 
-struct scsi_adapter cosc_scsiswitch = {
+struct scsipi_adapter cosc_scsiswitch = {
 	cosc_scsicmd,		/* Eventually call esc_scsicmd directly */
 	esc_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device cosc_scsidev = {
+struct scsipi_device cosc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start function */
 	NULL,		/* have no async handler */
@@ -258,13 +259,14 @@ coscattach(pdp, dp, auxp)
 
 	escinitialize((struct esc_softc *)sc);
 
-	sc->sc_softc.sc_link.channel	    = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_softc.sc_link.scsipi_scsi.channel	    = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_softc.sc_link.adapter_softc  = sc;
-	sc->sc_softc.sc_link.adapter_target = sc->sc_softc.sc_host_id;
+	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
 	sc->sc_softc.sc_link.adapter	    = &cosc_scsiswitch;
 	sc->sc_softc.sc_link.device	    = &cosc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
-	sc->sc_softc.sc_link.max_target     = 7;
+	sc->sc_softc.sc_link.scsipi_scsi.max_target     = 7;
+	sc->sc_softc.sc_link.type = BUS_SCSI;
 
 	/* initialise the card */
 #if 0
@@ -440,18 +442,18 @@ cosc_build_dma_chain(sc, chain, p, l)
 
 int
 cosc_scsicmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-/*	struct scsi_link *sc_link = xs->sc_link;*/
+/*	struct scsipi_link *sc_link = xs->sc_link;*/
 
 #if COSC_POLL > 0
 	if (cosc_poll)
 		xs->flags |= SCSI_POLL;
 #endif
 #if 0
-	if (sc_link->lun == 0)
+	if (sc_link->scsipi_scsi.lun == 0)
 	printf("id=%d lun=%d cmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
-	    sc_link->target, sc_link->lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
+	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
 	    xs->flags, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);
 #endif
 	return(esc_scsicmd(xs));

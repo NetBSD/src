@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.9 1997/06/06 23:30:02 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.9.2.1 1997/07/01 17:34:49 bouyer Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -103,8 +103,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>
@@ -134,7 +135,7 @@ struct ahb_softc {
 	TAILQ_HEAD(, ahb_ecb) sc_free_ecb;
 	struct ahb_ecb *sc_immed_ecb;	/* an outstanding immediete command */
 	int sc_numecbs;
-	struct scsi_link sc_link;
+	struct scsipi_link sc_link;
 };
 
 struct ahb_probe_data {
@@ -152,15 +153,15 @@ void	ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
 int	ahb_find __P((bus_space_tag_t, bus_space_handle_t, struct ahb_probe_data *));
 void	ahb_init __P((struct ahb_softc *));
 void	ahbminphys __P((struct buf *));
-int	ahb_scsi_cmd __P((struct scsi_xfer *));
-int	ahb_poll __P((struct ahb_softc *, struct scsi_xfer *, int));
+int	ahb_scsi_cmd __P((struct scsipi_xfer *));
+int	ahb_poll __P((struct ahb_softc *, struct scsipi_xfer *, int));
 void	ahb_timeout __P((void *));
 int	ahb_create_ecbs __P((struct ahb_softc *));
 
 integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 integrate void ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 
-struct scsi_adapter ahb_switch = {
+struct scsipi_adapter ahb_switch = {
 	ahb_scsi_cmd,
 	ahbminphys,
 	0,
@@ -168,7 +169,7 @@ struct scsi_adapter ahb_switch = {
 };
 
 /* the below structure is so we have a default dev struct for our link struct */
-struct scsi_device ahb_dev = {
+struct scsipi_device ahb_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -276,15 +277,16 @@ ahbattach(parent, self, aux)
 	TAILQ_INIT(&sc->sc_free_ecb);
 
 	/*
-	 * fill in the prototype scsi_link.
+	 * fill in the prototype scsipi_link.
 	 */
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = apd.sc_scsi_dev;
+	sc->sc_link.scsipi_scsi.adapter_target = apd.sc_scsi_dev;
 	sc->sc_link.adapter = &ahb_switch;
 	sc->sc_link.device = &ahb_dev;
 	sc->sc_link.openings = 4;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	if (eisa_intr_map(ec, apd.sc_irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
@@ -342,7 +344,8 @@ ahb_send_mbox(sc, opcode, ecb)
 	 */
 	bus_space_write_4(iot, ioh, MBOXOUT0,
 	    ecb->dmamap_self->dm_segs[0].ds_addr);
-	bus_space_write_1(iot, ioh, ATTN, opcode | ecb->xs->sc_link->target);
+	bus_space_write_1(iot, ioh, ATTN, opcode |
+		ecb->xs->sc_link->scsipi_scsi.target);
 
 	if ((ecb->xs->flags & SCSI_POLL) == 0)
 		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
@@ -374,7 +377,8 @@ ahb_send_immed(sc, cmd, ecb)
 
 	bus_space_write_4(iot, ioh, MBOXOUT0, cmd);	/* don't know this will work */
 	bus_space_write_1(iot, ioh, G2CNTRL, G2CNTRL_SET_HOST_READY);
-	bus_space_write_1(iot, ioh, ATTN, OP_IMMED | ecb->xs->sc_link->target);
+	bus_space_write_1(iot, ioh, ATTN, OP_IMMED |
+		ecb->xs->sc_link->scsipi_scsi.target);
 
 	if ((ecb->xs->flags & SCSI_POLL) == 0)
 		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
@@ -646,8 +650,8 @@ ahb_done(sc, ecb)
 	struct ahb_ecb *ecb;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	struct scsi_sense_data *s1, *s2;
-	struct scsi_xfer *xs = ecb->xs;
+	struct scsipi_sense_data *s1, *s2;
+	struct scsipi_xfer *xs = ecb->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahb_done\n"));
 
@@ -690,7 +694,7 @@ ahb_done(sc, ecb)
 			switch (ecb->ecb_status.target_stat) {
 			case SCSI_CHECK:
 				s1 = &ecb->ecb_sense;
-				s2 = &xs->sense;
+				s2 = &xs->sense.scsi_sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
 				break;
@@ -708,7 +712,7 @@ ahb_done(sc, ecb)
 done:
 	ahb_free_ecb(sc, ecb);
 	xs->flags |= ITSDONE;
-	scsi_done(xs);
+	scsipi_done(xs);
 }
 
 /*
@@ -828,9 +832,9 @@ ahbminphys(bp)
  */
 int
 ahb_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct ahb_softc *sc = sc_link->adapter_softc;
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct ahb_ecb *ecb;
@@ -883,7 +887,7 @@ ahb_scsi_cmd(xs)
 	 */
 	ecb->opcode = ECB_SCSI_OP;
 	ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
-	ecb->opt2 = sc_link->lun | ECB_NRB;
+	ecb->opt2 = sc_link->scsipi_scsi.lun | ECB_NRB;
 	bcopy(xs->cmd, &ecb->scsi_cmd, ecb->scsi_cmd_length = xs->cmdlen);
 	ecb->sense_ptr = ecb->dmamap_self->dm_segs[0].ds_addr +
 	    offsetof(struct ahb_ecb, ecb_sense);
@@ -983,7 +987,7 @@ bad:
 int
 ahb_poll(sc, xs, count)
 	struct ahb_softc *sc;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int count;
 {				/* in msec  */
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1009,12 +1013,12 @@ ahb_timeout(arg)
 	void *arg;
 {
 	struct ahb_ecb *ecb = arg;
-	struct scsi_xfer *xs = ecb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_xfer *xs = ecb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct ahb_softc *sc = sc_link->adapter_softc;
 	int s;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	printf("timed out");
 
 	s = splbio();

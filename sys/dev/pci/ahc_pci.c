@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.15 1997/05/08 04:39:03 thorpej Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.15.2.1 1997/07/01 17:35:33 bouyer Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,8 +49,11 @@
 #include <machine/intr.h>
 #endif /* defined(__NetBSD__) */
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#if defined (__NetBSD__)
+#endif
+#include <dev/scsipi/scsiconf.h>
 
 #if defined(__FreeBSD__)
 

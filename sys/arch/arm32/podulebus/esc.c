@@ -1,4 +1,4 @@
-/* $NetBSD: esc.c,v 1.2 1997/01/18 01:57:19 mark Exp $ */
+/* $NetBSD: esc.c,v 1.2.6.1 1997/07/01 17:33:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -58,8 +58,9 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
@@ -77,9 +78,9 @@ extern pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 void escinitialize __P((struct esc_softc *));
 void esc_minphys   __P((struct buf *bp));
-int  esc_scsicmd   __P((struct scsi_xfer *xs));
+int  esc_scsicmd   __P((struct scsipi_xfer *xs));
 void esc_donextcmd __P((struct esc_softc *dev, struct esc_pending *pendp));
-void esc_scsidone  __P((struct esc_softc *dev, struct scsi_xfer *xs,
+void esc_scsidone  __P((struct esc_softc *dev, struct scsipi_xfer *xs,
 			 int stat));
 void escintr	    __P((struct esc_softc *dev));
 void esciwait	    __P((struct esc_softc *dev));
@@ -214,17 +215,17 @@ escinitialize(dev)
  * used by specific esc controller
  */
 int
-esc_scsicmd(struct scsi_xfer *xs)
+esc_scsicmd(struct scsipi_xfer *xs)
 {
 	struct esc_softc	*dev;
-	struct scsi_link	*slp;
+	struct scsipi_link	*slp;
 	struct esc_pending	*pendp;
 	int			 flags, s, target;
 
 	slp = xs->sc_link;
 	dev = slp->adapter_softc;
 	flags = xs->flags;
-	target = slp->target;
+	target = slp->scsipi_scsi.target;
 
 	if (flags & SCSI_DATA_UIO)
 		panic("esc: scsi data uio requested");
@@ -317,7 +318,7 @@ esc_donextcmd(dev, pendp)
 void
 esc_scsidone(dev, xs, stat)
 	struct esc_softc *dev;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int		 stat;
 {
 	struct esc_pending	*pendp;
@@ -354,7 +355,7 @@ esc_scsidone(dev, xs, stat)
 	s = splbio();
 	pendp = dev->sc_xs_pending.tqh_first;
 	while(pendp) {
-		if (!(dev->sc_nexus[pendp->xs->sc_link->target].flags &
+		if (!(dev->sc_nexus[pendp->xs->sc_link->scsipi_scsi.target].flags &
 		      ESC_NF_UNIT_BUSY))
 			break;
 		pendp = pendp->link.tqe_next;
@@ -365,7 +366,7 @@ esc_scsidone(dev, xs, stat)
 	}
 
 	splx(s);
-	scsi_done(xs);
+	scsipi_done(xs);
 
 	if (pendp)
 		esc_donextcmd(dev, pendp);
@@ -771,8 +772,8 @@ esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 {
 	int	sync, target, lun;
 
-	target = pendp->xs->sc_link->target;
-	lun    = pendp->xs->sc_link->lun;
+	target = pendp->xs->sc_link->scsipi_scsi.target;
+	lun    = pendp->xs->sc_link->scsipi_scsi.lun;
 
 /*
  * Adopt mode to reflect the config flags.
@@ -891,7 +892,7 @@ escselect(dev, pendp, cbuf, clen, buf, len, mode)
 	struct nexus	*nexus;
 
 /* Get the nexus struct. */
-	nexus = esc_arbitate_target(dev, pendp->xs->sc_link->target);
+	nexus = esc_arbitate_target(dev, pendp->xs->sc_link->scsipi_scsi.target);
 	if (nexus == NULL)
 		return(0);
 
@@ -899,7 +900,7 @@ escselect(dev, pendp, cbuf, clen, buf, len, mode)
 	esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode);
 
 /* Post it to the interrupt machine. */
-	esc_select_unit(dev, pendp->xs->sc_link->target);
+	esc_select_unit(dev, pendp->xs->sc_link->scsipi_scsi.target);
 
 	return(1);
 }
@@ -909,9 +910,9 @@ esc_request_sense(dev, nexus)
 	struct esc_softc *dev;
 	struct nexus	 *nexus;
 {
-	struct scsi_xfer	*xs;
+	struct scsipi_xfer	*xs;
 	struct esc_pending	 pend;
-	struct scsi_sense	 rqs;
+	struct scsipi_sense	 rqs;
 	int			 mode;
 
 	xs = nexus->xs;
@@ -920,11 +921,12 @@ esc_request_sense(dev, nexus)
 	pend.xs			= xs;
 
 	rqs.opcode = REQUEST_SENSE;
-	rqs.byte2 = xs->sc_link->lun << 5;
+	rqs.byte2 = xs->sc_link->scsipi_scsi.lun << 5;
 #ifdef not_yet
-	rqs.length=xs->req_sense_length?xs->req_sense_length:sizeof(xs->sense);
+	rqs.length=xs->req_sense_length?
+		xs->req_sense_length:sizeof(xs->sense.scsi_sense);
 #else
-	rqs.length=sizeof(xs->sense);
+	rqs.length=sizeof(xs->sense.scsi_sense);
 #endif
 
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
@@ -939,10 +941,10 @@ esc_request_sense(dev, nexus)
 
 /* Setup the nexus struct for sensing. */
 	esc_setup_nexus(dev, nexus, &pend, (char *)&rqs, sizeof(rqs),
-			(char *)&xs->sense, rqs.length, mode);
+			(char *)&xs->sense.scsi_sense, rqs.length, mode);
 
 /* Post it to the interrupt machine. */
-	esc_select_unit(dev, xs->sc_link->target);
+	esc_select_unit(dev, xs->sc_link->scsipi_scsi.target);
 }
 
 int
@@ -1687,7 +1689,7 @@ escicmd(dev, pendp)
 	esc_regmap_p	 rp;
 	struct nexus	*nexus;
 
-	nexus = &dev->sc_nexus[pendp->xs->sc_link->target];
+	nexus = &dev->sc_nexus[pendp->xs->sc_link->scsipi_scsi.target];
 	rp = dev->sc_esc;
 
 	if (!escselect(dev, pendp, (char *)pendp->xs->cmd, pendp->xs->cmdlen,

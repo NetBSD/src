@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.12 1997/04/07 23:39:51 cgd Exp $ */
+/* $NetBSD: disksubr.c,v 1.12.2.1 1997/07/01 17:33:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12 1997/04/07 23:39:51 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.2.1 1997/07/01 17:33:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -39,8 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12 1997/04/07 23:39:51 cgd Exp $");
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
