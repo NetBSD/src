@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.12 1995/11/30 14:25:40 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.13 1995/12/01 15:14:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -392,7 +392,14 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 #ifdef AUTO_SENSE
 		if (link) {
 			link->link = reqp;
-			link->xcmd.bytes[link->xs->cmdlen-1] |= 1;
+			/*
+			 * bytes[cmdlen - 2] is the last byte of the command
+			 * because the opcode is not stored in xcmd.bytes...
+			 */
+#if 0
+/* Some devices aren't handling linked commands. */
+			link->xcmd.bytes[link->xs->cmdlen-2] |= 1;
+#endif
 		}
 #endif
 	}
