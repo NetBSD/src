@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.9 1998/10/12 16:09:20 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.10 1998/10/13 08:59:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,8 +41,6 @@
  * 5/16/94" from the PCI SIG.
  *
  */
-
-#define WDCDEBUG
 
 #define DEBUG_DMA   0x01
 #define DEBUG_XFERS  0x02
@@ -1042,7 +1040,7 @@ pio:			/* use PIO mode */
 			    drvp->drv_softc->dv_xname,
 			    sc->sc_wdcdev.sc_dev.dv_xname,
 			    channel, drive, drvp->PIO_mode);
-			if (drvp[drive].drive_flags & DRIVE_DMA)
+			if (drvp->drive_flags & DRIVE_DMA)
 			    printf(", DMA mode %d", drvp->DMA_mode);
 			if (drvp->drive_flags & DRIVE_UDMA)
 			    printf(", UDMA mode %d", drvp->UDMA_mode);
