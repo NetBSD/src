@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getmntinfo.3	6.5 (Berkeley) 4/19/91
-.\"	$Id: getmntinfo.3,v 1.2 1993/07/30 08:36:35 mycroft Exp $
+.\"	$Id: getmntinfo.3,v 1.3 1993/11/30 21:52:46 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt GETMNTINFO 3
@@ -78,8 +78,9 @@ will be lost.
 The
 .Fn getmntinfo
 function
-may fail and set errno for any of the errors specified for the library 
-routines
+may fail and set 
+.Va errno 
+for any of the errors specified for the library routines
 .Xr getfsstat 2
 or 
 .Xr malloc 3 .
