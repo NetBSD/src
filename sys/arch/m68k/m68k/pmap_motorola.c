@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.8 2003/10/27 02:03:10 cl Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.9 2003/10/28 20:43:00 mycroft Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.8 2003/10/27 02:03:10 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.9 2003/10/28 20:43:00 mycroft Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -1675,13 +1675,8 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	boolean_t rv = FALSE;
 	paddr_t pa;
 	u_int pte;
-
-#ifdef DEBUG
-	pa = 0;	/* XXX: gcc */
-#endif
 
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_extract(%p, %lx) -> ", pmap, va));
@@ -1692,18 +1687,18 @@ pmap_extract(pmap, va, pap)
 			pa = (pte & PG_FRAME) | (va & ~PG_FRAME);
 			if (pap != NULL)
 				*pap = pa;
-			rv = TRUE;
+#ifdef DEBUG
+			if (pmapdebug & PDB_FOLLOW)
+				printf("%lx\n", pa);
+#endif
+			return (TRUE);
 		}
 	}
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		if (rv)
-			printf("%lx\n", pa);
-		else
-			printf("failed\n");
-	}
+	if (pmapdebug & PDB_FOLLOW)
+		printf("failed\n");
 #endif
-	return (rv);
+	return (FALSE);
 }
 
 /*
