@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.56 2003/10/21 08:03:16 skrll Exp $
+# $NetBSD: GENERIC,v 1.57 2003/10/21 08:15:40 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -480,7 +480,7 @@ lpt1	at isa? port 0x278 irq 5
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?			# PC speaker
 
-dsrtc0	at isa? port 0x72		# Dallas RTC
+ds1687rtc0	at isa? port 0x72	# Dallas 1687 RTC
 
 # ISA Plug-and-Play audio devices
 ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
