@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.31 2002/11/12 01:37:30 itojun Exp $	*/
+/*	$NetBSD: route.h,v 1.32 2002/11/12 02:10:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -302,6 +302,7 @@ void	 rt_timer_init __P((void));
 struct rttimer_queue *
 	 rt_timer_queue_create __P((u_int));
 void	 rt_timer_queue_change __P((struct rttimer_queue *, long));
+void	 rt_timer_queue_remove_all __P((struct rttimer_queue *, int));
 void	 rt_timer_queue_destroy __P((struct rttimer_queue *, int));
 void	 rt_timer_remove_all __P((struct rtentry *, int));
 unsigned long	rt_timer_count __P((struct rttimer_queue *));
