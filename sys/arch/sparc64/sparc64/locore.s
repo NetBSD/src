@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.49 2000/01/10 03:53:21 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.50 2000/01/16 03:13:24 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -4002,9 +4002,8 @@ _C_LABEL(sparc_interrupt):
 0:	
 	jmpl	%o1, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
-	brz,pt	%o0, intrcmplt		! Done?
-	 nop
-	mov	1, %o1
+	brnz,pt	%o0, intrcmplt		! Done?
+	 mov	1, %o1
 	call	_C_LABEL(strayintr)	! strayintr(&intrframe, 1)
 	 add	%sp, CC64FSZ + STKB, %o0
 	ba,a,pt	%icc, intrcmplt		! done
