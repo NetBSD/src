@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.c	7.20 (Berkeley) 6/27/91
- *	$Id: param.c,v 1.8 1994/05/21 08:32:32 cgd Exp $
+ *	$Id: param.c,v 1.9 1994/06/08 11:20:27 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -48,7 +48,7 @@
 #include <sys/callout.h>
 #include <sys/clist.h>
 #include <sys/mbuf.h>
-#include <ufs/quota.h>
+#include <ufs/ufs/quota.h>
 #include <sys/kernel.h>
 #include <sys/utsname.h>
 #ifdef SYSVSHM
@@ -83,7 +83,7 @@ struct	timezone tz = { TIMEZONE, DST };
 int	maxproc = NPROC;
 #define	NTEXT (80 + NPROC / 8)			/* actually the object cache */
 #define	NVNODE (NPROC + NTEXT + 100)
-long	desiredvnodes = NVNODE;
+int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
 int	ncallout = 16 + NPROC;
 int	nclist = 60 + 12 * MAXUSERS;
