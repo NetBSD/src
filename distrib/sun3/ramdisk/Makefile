@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/06/19 23:46:08 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.15 2001/02/13 03:11:26 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -58,6 +58,11 @@ ${IMAGE}.fs: ${TREE} ${LISTS} ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND_DEV}
+	-/bin/rm -f ${IMAGE}.fs
 
 # Do not delete this if I change my mind and kill make...
 .PRECIOUS: ${IMAGE}.fs
