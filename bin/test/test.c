@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: test.c,v 1.13 1994/06/30 05:12:38 jtc Exp $";
+static char *rcsid = "$Id: test.c,v 1.14 1994/07/07 19:08:11 cgd Exp $";
 #endif
 
 #include <sys/types.h>
@@ -25,7 +25,7 @@ static char *rcsid = "$Id: test.c,v 1.13 1994/06/30 05:12:38 jtc Exp $";
 /* test(1) accepts the following grammar:
 	oexpr	::= aexpr | aexpr "-o" oexpr ;
 	aexpr	::= nexpr | nexpr "-a" aexpr ;
-	nexpr	::= primary ! "!" primary
+	nexpr	::= primary | "!" primary
 	primary	::= unary-operator operand
 		| operand binary-operator operand
 		| operand
@@ -143,6 +143,7 @@ static enum token t_lex();
 static int oexpr();
 static int aexpr();
 static int nexpr();
+static int binop();
 static int primary();
 static int filstat();
 static int getn();
@@ -158,7 +159,6 @@ main(argc, argv)
 {
 	int	res;
 
-	t_wp = argv+1;
 	if (strcmp(argv[0], "[") == 0) {
 		if (strcmp(argv[--argc], "]"))
 			errx(2, "missing ]");
@@ -175,8 +175,28 @@ main(argc, argv)
 		if (argv[1][0] == '!' && argv[1][1] == '\0') {
 			return !(*argv[2] == '\0');
 		}
+		break;
+	case 4:
+		if (argv[1][0] != '!' || argv[1][1] != '\0') {
+			if (t_lex(argv[2]), 
+			    t_wp_op && t_wp_op->op_type == BINOP) {
+				t_wp = &argv[1];
+				return (binop() == 0);
+			}
+		}
+		break;
+	case 5:
+		if (argv[1][0] == '!' && argv[1][1] == '\0') {
+			if (t_lex(argv[3]), 
+			    t_wp_op && t_wp_op->op_type == BINOP) {
+				t_wp = &argv[2];
+				return !(binop() == 0);
+			}
+		}
+		break;
 	}
 
+	t_wp = &argv[1];
 	res = !oexpr(t_lex(*t_wp));
 
 	if (*t_wp != NULL && *++t_wp != NULL)
@@ -235,7 +255,6 @@ static int
 primary(n)
 	enum token n;
 {
-	register char *opnd1, *opnd2;
 	int res;
 
 	if (n == EOI)
@@ -261,45 +280,56 @@ primary(n)
 			return filstat(*t_wp, n);
 		}
 	}
+
+	if (t_lex(t_wp[1]), t_wp_op && t_wp_op->op_type == BINOP) {
+		return binop();
+	}	  
+
+	return strlen(*t_wp) > 0;
+}
+
+static int
+binop()
+{
+	register const char *opnd1, *opnd2;
+	struct t_op const *op;
+
 	opnd1 = *t_wp;
 	(void) t_lex(*++t_wp);
-	if (t_wp_op && t_wp_op->op_type == BINOP) {
-		struct t_op const *op = t_wp_op;
+	op = t_wp_op;
 
-		if ((opnd2 = *++t_wp) == (char *)0)
-			syntax(op->op_text, "argument expected");
+	if ((opnd2 = *++t_wp) == (char *)0)
+		syntax(op->op_text, "argument expected");
 		
-		switch (op->op_num) {
-		case STREQ:
-			return strcmp(opnd1, opnd2) == 0;
-		case STRNE:
-			return strcmp(opnd1, opnd2) != 0;
-		case STRLT:
-			return strcmp(opnd1, opnd2) < 0;
-		case STRGT:
-			return strcmp(opnd1, opnd2) > 0;
-		case INTEQ:
-			return getn(opnd1) == getn(opnd2);
-		case INTNE:
-			return getn(opnd1) != getn(opnd2);
-		case INTGE:
-			return getn(opnd1) >= getn(opnd2);
-		case INTGT:
-			return getn(opnd1) > getn(opnd2);
-		case INTLE:
-			return getn(opnd1) <= getn(opnd2);
-		case INTLT:
-			return getn(opnd1) < getn(opnd2);
-		case FILNT:
-			return newerf (opnd1, opnd2);
-		case FILOT:
-			return olderf (opnd1, opnd2);
-		case FILEQ:
-			return equalf (opnd1, opnd2);
-		}
+	switch (op->op_num) {
+	case STREQ:
+		return strcmp(opnd1, opnd2) == 0;
+	case STRNE:
+		return strcmp(opnd1, opnd2) != 0;
+	case STRLT:
+		return strcmp(opnd1, opnd2) < 0;
+	case STRGT:
+		return strcmp(opnd1, opnd2) > 0;
+	case INTEQ:
+		return getn(opnd1) == getn(opnd2);
+	case INTNE:
+		return getn(opnd1) != getn(opnd2);
+	case INTGE:
+		return getn(opnd1) >= getn(opnd2);
+	case INTGT:
+		return getn(opnd1) > getn(opnd2);
+	case INTLE:
+		return getn(opnd1) <= getn(opnd2);
+	case INTLT:
+		return getn(opnd1) < getn(opnd2);
+	case FILNT:
+		return newerf (opnd1, opnd2);
+	case FILOT:
+		return olderf (opnd1, opnd2);
+	case FILEQ:
+		return equalf (opnd1, opnd2);
 	}
-	t_wp--;
-	return strlen(opnd1) > 0;
+	/* NOTREACHED */
 }
 
 static int
