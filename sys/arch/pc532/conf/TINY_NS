@@ -1,7 +1,7 @@
 #
 # TINY 532 Distribution, used only for early testing and initial distribution.
 #
-#	$Id: TINY_NS,v 1.2 1993/09/13 07:23:47 phil Exp $
+#	TINY_NS,v 1.2 1993/09/13 07:23:47 phil Exp
 #
 machine		"pc532"
 cpu		"ns532"
@@ -10,7 +10,8 @@ timezone	8 dst
 maxusers	8
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		"COMPAT_43"
-options		"RD_SIZE=1536000"
+options		"RAMD_SIZE=1536000"
+#options		"RAMD_ADR=0x400000"
 options		"COMDEF_SPEED=B19200"
 
 options		SCSI
