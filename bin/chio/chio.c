@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.7 1998/07/13 12:06:18 hpeyerl Exp $	*/
+/*	$NetBSD: chio.c,v 1.8 1998/07/27 15:25:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Jason R. Thorpe <thorpej@and.com>
@@ -39,7 +39,7 @@
 #ifndef lint
 __COPYRIGHT(
     "@(#) Copyright (c) 1996, 1998 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.7 1998/07/13 12:06:18 hpeyerl Exp $");
+__RCSID("$NetBSD: chio.c,v 1.8 1998/07/27 15:25:06 mycroft Exp $");
 #endif
 
 #include <sys/param.h>
@@ -67,7 +67,7 @@ static	int parse_element_type __P((char *));
 static	int parse_element_unit __P((char *));
 static	int parse_special __P((char *));
 static	int is_special __P((char *));
-static	char *bits_to_string __P((int, const char *));
+static	const char *bits_to_string __P((int, const char *));
 
 static	int do_move __P((char *, int, char **));
 static	int do_exchange __P((char *, int, char **));
@@ -111,7 +111,7 @@ const struct special_word specials[] = {
 };
 
 static	int changer_fd;
-static	char *changer_name;
+static	const char *changer_name;
 
 int
 main(argc, argv)
@@ -718,28 +718,32 @@ is_special(cp)
 	return (0);
 }
 
-static char *
+static const char *
 bits_to_string(v, cp)
 	int v;
 	const char *cp;
 {
 	const char *np;
-	char f, sep, *bp;
+	char f, *bp;
+	int first;
 	static char buf[128];
 
 	bp = buf;
-	(void) memset(buf, 0, sizeof(buf));
-
-	for (sep = '<'; (f = *cp++) != 0; cp = np) {
+	*bp++ = '<';
+	for (first = 1; (f = *cp++) != 0; cp = np) {
 		for (np = cp; *np >= ' ';)
 			np++;
 		if ((v & (1 << (f - 1))) == 0)
 			continue;
-		bp += sprintf(bp, "%c%.*s", sep, (int)(long)(np - cp), cp);
-		sep = ',';
+		if (first)
+			first = 0;
+		else
+			*bp++ = ',';
+		memcpy(bp, cp, np - cp);
+		bp += np - cp;
 	}
-	if (sep != '<')
-		*bp = '>';
+	*bp++ = '>';
+	*bp = '\0';
 
 	return (buf);
 }
