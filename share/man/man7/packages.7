@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.58 2001/09/11 01:25:14 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.59 2001/09/14 01:52:39 jlam Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -401,9 +401,6 @@ Says that the package uses the Xpm library. If it is not included
 in the installed X11 distribution the xpm package will be used.
 .It USE_GTEXINFO
 Says that the package uses gtexinfo.
-.It USE_MOTIF
-Says that the package uses Motif (it will use lesstif if
-Motif is unavailable)
 .It NO_INSTALL_MANPAGES
 For imake packages that don't like the install.man target.
 .It HAS_CONFIGURE
@@ -432,7 +429,7 @@ build stage.
 .It LDFLAGS
 Any LDFLAGS you wish passed to the configure script and/or sub-make in
 build stage.  LDFLAGS is pre-loaded with rpath settings for ELF machines
-depending on the setting of USE_X11 or USE_MOTIF.  If you do not wish
+depending on the setting of USE_IMAKE or USE_X11BASE.  If you do not wish
 to override these settings, use LDFLAGS+=.
 .It MAKE_ENV
 Additional environment variables passed to sub-make in build stage.
@@ -553,14 +550,22 @@ to denote such a package.
 .El
 .Sh MOTIF SUPPORT
 This section documents variables related to the use and installation of
-Motif and/or LessTiF.
+Motif and/or LessTif.  Also, packages that require a Motif installation need
+to include motif.buildlink.mk.
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
-.It USE_MOTIF
-Set this in your package if it requires Motif.
-If Motif is not present on your system, the lesstif package will be
+.It USE_MOTIF12
+Set this in your package if it requires Motif-1.2 headers and/or libraries.
+If Motif is not present on your system, the lesstif12 package will be
 installed for you.
+.It MOTIFBASE
+If set, it points to an existing Motif-2.0 installation.  Otherwise, this is
+set automatically to the directory of the Motif-2.0 installation used.
+.It MOTIF12BASE
+If set, it points to an existing Motif-1.2 installation.  Otherwise, this is
+set automatically to the directory of the Motif-1.2 installation used.
 .It MOTIFLIB
-Set automatically to the Motif or Lesstif library name.
+Set automatically to the flags and libraries needed to link the Motif or
+LessTif library.
 .El
 .Sh PACKAGE DISTFILE REPOSITORIES
 The following variables allow to override the default package
