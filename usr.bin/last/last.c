@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.24 2004/11/11 01:01:22 wiz Exp $	*/
+/*	$NetBSD: last.c,v 1.25 2004/11/19 21:41:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.24 2004/11/11 01:01:22 wiz Exp $");
+__RCSID("$NetBSD: last.c,v 1.25 2004/11/19 21:41:25 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: last.c,v 1.24 2004/11/11 01:01:22 wiz Exp $");
 #ifdef SUPPORT_UTMP
 #include <utmp.h>
 #endif
+#include <util.h>
 
 #ifndef UT_NAMESIZE
 #define UT_NAMESIZE 8
