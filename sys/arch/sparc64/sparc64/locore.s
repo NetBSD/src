@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.174 2003/04/04 21:35:39 petrov Exp $	*/
+/*	$NetBSD: locore.s,v 1.175 2003/04/27 10:42:53 ragge Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -92,6 +92,8 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/asm.h>
+
+#include "ksyms.h"
 
 /* A few convenient abbreviations for trapframe fields. */
 #define	TF_G	TF_GLOBAL
@@ -5371,7 +5373,7 @@ dostart:
 	wrpr	%g0, 13, %pil
 	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
 	wr	%o0, FPRS_FEF, %fprs		! Turn on FPU
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/*
 	 * First, check for DDB arguments.  A pointer to an argument
 	 * is passed in %o1 who's length is passed in %o2.  Our
@@ -11944,7 +11946,7 @@ ENTRY(OF_val2sym32)
 
 	.data
 	_ALIGN
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	.globl	_C_LABEL(esym)
 _C_LABEL(esym):
 	POINTER	0
