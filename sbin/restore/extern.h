@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2003/08/07 10:04:37 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2004/07/27 02:17:06 enami Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,6 +45,8 @@ void		 createlinks __P((void));
 long		 deletefile __P((char *, ino_t, int));
 void		 deleteino __P((ino_t));
 void		 delwhiteout __P((struct entry *));
+const struct digest_desc *
+		 digest_lookup __P((const char *));
 ino_t		 dirlookup __P((const char *));
 void		 dumpsymtable __P((char *, int32_t));
 void	 	 extractdirs __P((int));
