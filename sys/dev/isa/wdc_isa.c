@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.16 2000/02/07 22:07:31 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.17 2000/02/08 18:40:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,8 +175,8 @@ wdc_isa_dma_setup(sc)
 	bus_size_t maxsize;
 
 	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq)) < MAXPHYS) {
-		printf("%s: max DMA size %d is less than required %d\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, maxsize, MAXPHYS);
+		printf("%s: max DMA size %lu is less than required %d\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, (u_long)maxsize, MAXPHYS);
 		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
 		return;
 	}
