@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.15 2003/06/28 14:21:46 darrenr Exp $	*/
+/*	$NetBSD: uirda.c,v 1.16 2003/06/29 22:30:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.15 2003/06/28 14:21:46 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.16 2003/06/29 22:30:57 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,14 +227,14 @@ struct uirda_softc {
 
 #define UIRDA_WR_TIMEOUT 200
 
-int uirda_open(void *h, int flag, int mode, struct lwp *l);
-int uirda_close(void *h, int flag, int mode, struct lwp *l);
+int uirda_open(void *h, int flag, int mode, usb_proc_ptr p);
+int uirda_close(void *h, int flag, int mode, usb_proc_ptr p);
 int uirda_read(void *h, struct uio *uio, int flag);
 int uirda_write(void *h, struct uio *uio, int flag);
 int uirda_set_params(void *h, struct irda_params *params);
 int uirda_get_speeds(void *h, int *speeds);
 int uirda_get_turnarounds(void *h, int *times);
-int uirda_poll(void *h, int events, struct lwp *l);
+int uirda_poll(void *h, int events, usb_proc_ptr p);
 int uirda_kqfilter(void *h, struct knote *kn);
 
 struct irframe_methods uirda_methods = {
@@ -441,7 +441,7 @@ uirda_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uirda_open(void *h, int flag, int mode, struct lwp *l)
+uirda_open(void *h, int flag, int mode, usb_proc_ptr p)
 {
 	struct uirda_softc *sc = h;
 	int error;
@@ -510,7 +510,7 @@ bad1:
 }
 
 int
-uirda_close(void *h, int flag, int mode, struct lwp *l)
+uirda_close(void *h, int flag, int mode, usb_proc_ptr p)
 {
 	struct uirda_softc *sc = h;
 
@@ -657,7 +657,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 }
 
 int
-uirda_poll(void *h, int events, struct lwp *l)
+uirda_poll(void *h, int events, usb_proc_ptr p)
 {
 	struct uirda_softc *sc = h;
 	int revents = 0;
@@ -674,7 +674,7 @@ uirda_poll(void *h, int events, struct lwp *l)
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			DPRINTFN(2,("%s: recording select\n", __func__));
-			selrecord(l, &sc->sc_rd_sel);
+			selrecord(p, &sc->sc_rd_sel);
 		}
 	}
 	splx(s);

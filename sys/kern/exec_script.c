@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.35 2003/06/28 14:21:52 darrenr Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.36 2003/06/29 22:31:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.35 2003/06/28 14:21:52 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.36 2003/06/29 22:31:16 fvdl Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -66,14 +66,13 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.35 2003/06/28 14:21:52 darrenr Exp
  * into the exec package.
  */
 int
-exec_script_makecmds(struct lwp *l, struct exec_package *epp)
+exec_script_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error, hdrlinelen, shellnamelen, shellarglen;
 	char *hdrstr = epp->ep_hdr;
 	char *cp, *shellname, *shellarg, *oldpnbuf;
 	char **shellargp, **tmpsap;
 	struct vnode *scriptvp;
-	struct proc *p = l->l_proc;
 #ifdef SETUIDSCRIPTS
 	/* Gcc needs those initialized for spurious uninitialized warning */
 	uid_t script_uid = (uid_t) -1;
@@ -242,9 +241,9 @@ check_shell:
 	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
 #ifdef VERIFIED_EXEC
-	if ((error = check_exec(l, epp, 0)) == 0) {
+	if ((error = check_exec(p, epp, 0)) == 0) {
 #else
-	if ((error = check_exec(l, epp)) == 0) {
+	if ((error = check_exec(p, epp)) == 0) {
 #endif
 		/* note that we've clobbered the header */
 		epp->ep_flags |= EXEC_DESTR|EXEC_HASES;
@@ -257,7 +256,7 @@ check_shell:
 		 */
 		if ((epp->ep_flags & EXEC_HASFD) == 0) {
 			vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(scriptvp, FREAD, p->p_ucred, l);
+			VOP_CLOSE(scriptvp, FREAD, p->p_ucred, p);
 			vput(scriptvp);
 		}
 
@@ -293,10 +292,10 @@ fail:
 	/* kill the opened file descriptor, else close the file */
         if (epp->ep_flags & EXEC_HASFD) {
                 epp->ep_flags &= ~EXEC_HASFD;
-                (void) fdrelease(l, epp->ep_fd);
+                (void) fdrelease(p, epp->ep_fd);
         } else if (scriptvp) {
 		vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(scriptvp, FREAD, p->p_ucred, l);
+		VOP_CLOSE(scriptvp, FREAD, p->p_ucred, p);
 		vput(scriptvp);
 	}
 

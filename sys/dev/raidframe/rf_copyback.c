@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.24 2003/06/28 14:21:42 darrenr Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.25 2003/06/29 22:30:32 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.24 2003/06/28 14:21:42 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.25 2003/06/29 22:30:32 fvdl Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -99,7 +99,7 @@ rf_CopybackReconstructedData(raidPtr)
 	struct partinfo dpart;
 	struct vnode *vp;
 	struct vattr va;
-	struct lwp *l;
+	struct proc *proc;
 
 	int ac;
 
@@ -123,7 +123,7 @@ rf_CopybackReconstructedData(raidPtr)
 	}
 	badDisk = &raidPtr->Disks[frow][fcol];
 
-	l = LIST_FIRST(&raidPtr->engine_thread->p_lwps);
+	proc = raidPtr->engine_thread;
 
 	/* This device may have been opened successfully the first time. Close
 	 * it before trying to open it again.. */
@@ -143,7 +143,7 @@ rf_CopybackReconstructedData(raidPtr)
 	printf("About to (re-)open the device: %s\n",
 	    raidPtr->Disks[frow][fcol].devname);
 
-	retcode = raidlookup(raidPtr->Disks[frow][fcol].devname, l, &vp);
+	retcode = raidlookup(raidPtr->Disks[frow][fcol].devname, proc, &vp);
 
 	if (retcode) {
 		printf("raid%d: copyback: raidlookup on device: %s failed: %d!\n",
@@ -159,12 +159,11 @@ rf_CopybackReconstructedData(raidPtr)
 		/* Ok, so we can at least do a lookup... How about actually
 		 * getting a vp for it? */
 
-		if ((retcode = VOP_GETATTR(vp, &va,
-		    l->l_proc->p_ucred, l)) != 0) {
+		if ((retcode = VOP_GETATTR(vp, &va, proc->p_ucred, proc)) != 0) {
 			return;
 		}
 		retcode = VOP_IOCTL(vp, DIOCGPART, &dpart,
-		    FREAD, l->l_proc->p_ucred, l);
+		    FREAD, proc->p_ucred, proc);
 		if (retcode) {
 			return;
 		}

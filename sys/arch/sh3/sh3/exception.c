@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.7 2003/06/28 14:21:06 darrenr Exp $	*/
+/*	$NetBSD: exception.c,v 1.8 2003/06/29 22:28:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -541,7 +541,7 @@ child_return(void *arg)
 	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
 

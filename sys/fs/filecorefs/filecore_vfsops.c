@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.4 2003/06/28 14:21:49 darrenr Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.5 2003/06/29 22:31:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.4 2003/06/28 14:21:49 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5 2003/06/29 22:31:09 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -150,20 +150,18 @@ filecore_mountroot()
  * mount system call
  */
 int
-filecore_mount(mp, path, data, ndp, l)
+filecore_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vnode *devvp;
 	struct filecore_args args;
-	struct proc *p;
 	int error;
 	struct filecore_mnt *fcmp = NULL;
-
-	p = l->l_proc;
+	
 	if (mp->mnt_flag & MNT_GETARGS) {
 		fcmp = VFSTOFILECORE(mp);
 		if (fcmp == NULL)
@@ -195,7 +193,7 @@ filecore_mount(mp, path, data, ndp, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 	devvp = ndp->ni_vp;
@@ -447,12 +445,12 @@ filecore_root(mp, vpp)
  */
 /* ARGSUSED */
 int
-filecore_quotactl(mp, cmd, uid, arg, .)
+filecore_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	caddr_t arg;
-	struct lwp *.;
+	struct proc *p;
 {
 
 	return (EOPNOTSUPP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_blkio.c,v 1.8 2003/06/28 14:21:20 darrenr Exp $	*/
+/*	$NetBSD: linux_blkio.c,v 1.9 2003/06/29 22:29:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.8 2003/06/28 14:21:20 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.9 2003/06/29 22:29:26 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,16 +59,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.8 2003/06/28 14:21:20 darrenr Exp 
 #include <compat/linux/linux_syscallargs.h>
 
 int
-linux_ioctl_blkio(struct lwp *l, struct linux_sys_ioctl_args *uap,
+linux_ioctl_blkio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		  register_t *retval)
 {
-	struct  proc *p = l->l_proc;
 	u_long com;
 	long size;
 	int error;
 	struct filedesc *fdp;
 	struct file *fp;
-	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
+	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
 	struct partinfo partp;
 	struct disklabel label;
 
@@ -88,9 +87,9 @@ linux_ioctl_blkio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		 * fails, it may be a disk without label; try to get
 		 * the default label and compute the size from it.
 		 */
-		error = ioctlf(fp, DIOCGPART, (caddr_t)&partp, l);
+		error = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
 		if (error != 0) {
-			error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, l);
+			error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
 			if (error != 0)
 				break;
 			size = label.d_nsectors * label.d_ntracks *
@@ -100,7 +99,7 @@ linux_ioctl_blkio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		error = copyout(&size, SCARG(uap, data), sizeof size);
 		break;
 	case LINUX_BLKSECTGET:
-		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, l);
+		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
 		if (error != 0)
 			break;
 		error = copyout(&label.d_secsize, SCARG(uap, data),
@@ -121,7 +120,7 @@ linux_ioctl_blkio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		error = ENOTTY;
 	}
 
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 
 	return error;
 }

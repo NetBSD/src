@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.54 2003/06/28 14:20:45 darrenr Exp $ */
+/* $NetBSD: bus_dma.c,v 1.55 2003/06/29 22:28:04 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.54 2003/06/28 14:20:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.55 2003/06/29 22:28:04 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ _bus_dmamap_load_uio_direct(bus_dma_tag_t t, bus_dmamap_t map,
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_lwp->l_proc;
+		p = uio->uio_procp;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
 			panic("_bus_dmamap_load_uio_direct: "

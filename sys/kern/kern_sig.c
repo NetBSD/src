@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.142 2003/06/28 14:21:54 darrenr Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.143 2003/06/29 22:31:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.142 2003/06/28 14:21:54 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143 2003/06/29 22:31:22 fvdl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -748,7 +748,7 @@ trapsignal(struct lwp *l, int signum, u_long code)
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(l, signum,
+			ktrpsig(p, signum,
 			    SIGACTION_PS(ps, signum).sa_handler,
 			    &p->p_sigctx.ps_sigmask, code);
 #endif
@@ -1465,7 +1465,7 @@ postsig(int signum)
 	action = SIGACTION_PS(ps, signum).sa_handler;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG))
-		ktrpsig(l,
+		ktrpsig(p,
 		    signum, action, p->p_sigctx.ps_flags & SAS_OLDMASK ?
 		    &p->p_sigctx.ps_oldmask : &p->p_sigctx.ps_sigmask, 0);
 #endif
@@ -1686,7 +1686,7 @@ coredump(struct lwp *l)
 	if (error)
 		return error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 	error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE, S_IRUSR | S_IWUSR);
 	if (error)
 		return (error);
@@ -1694,21 +1694,21 @@ coredump(struct lwp *l)
 
 	/* Don't dump to non-regular files or files with links. */
 	if (vp->v_type != VREG ||
-	    VOP_GETATTR(vp, &vattr, cred, l) || vattr.va_nlink != 1) {
+	    VOP_GETATTR(vp, &vattr, cred, p) || vattr.va_nlink != 1) {
 		error = EINVAL;
 		goto out;
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
-	VOP_LEASE(vp, l, cred, LEASE_WRITE);
-	VOP_SETATTR(vp, &vattr, cred, l);
+	VOP_LEASE(vp, p, cred, LEASE_WRITE);
+	VOP_SETATTR(vp, &vattr, cred, p);
 	p->p_acflag |= ACORE;
 
 	/* Now dump the actual core file. */
 	error = (*p->p_execsw->es_coredump)(l, vp, cred);
  out:
 	VOP_UNLOCK(vp, 0);
-	error1 = vn_close(vp, FWRITE, cred, l);
+	error1 = vn_close(vp, FWRITE, cred, p);
 	if (error == 0)
 		error = error1;
 	return (error);

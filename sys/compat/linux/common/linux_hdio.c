@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.7 2003/06/28 14:21:21 darrenr Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.8 2003/06/29 22:29:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.7 2003/06/28 14:21:21 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.8 2003/06/29 22:29:29 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,16 +63,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.7 2003/06/28 14:21:21 darrenr Exp $
 #include <compat/linux/linux_syscallargs.h>
 
 int
-linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
+linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		 register_t *retval)
 {
-	struct proc *p = l->l_proc;
 	u_long com;
 	int error, error1;
 	caddr_t sg;
 	struct filedesc *fdp;
 	struct file *fp;
-	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
+	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
 	struct ataparams *atap, ata;
 	struct atareq req;
 	struct disklabel label, *labp;
@@ -107,7 +106,7 @@ linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		req.databuf = (caddr_t)atap;
 		req.datalen = DEV_BSIZE;
 		req.timeout = 1000;
-		error = ioctlf(fp, ATAIOCCOMMAND, (caddr_t)&req, l);
+		error = ioctlf(fp, ATAIOCCOMMAND, (caddr_t)&req, p);
 		if (error != 0)
 			break;
 		if (req.retsts != ATACMD_OK)
@@ -123,11 +122,11 @@ linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		    com == LINUX_HDIO_GET_IDENTITY ? sizeof ata : 142);
 		break;
 	case LINUX_HDIO_GETGEO:
-		error = linux_machdepioctl(l, uap, retval);
+		error = linux_machdepioctl(p, uap, retval);
 		if (error == 0)
 			break;
-		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, l);
-		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, l);
+		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
+		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			break;
@@ -140,12 +139,12 @@ linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		error = copyout(&hdg, SCARG(uap, data), sizeof hdg);
 		break;
 	case LINUX_HDIO_GETGEO_BIG:
-		error = linux_machdepioctl(l, uap, retval);
+		error = linux_machdepioctl(p, uap, retval);
 		if (error == 0)
 			break;
 	case LINUX_HDIO_GETGEO_BIG_RAW:
-		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, l);
-		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, l);
+		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
+		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			break;
@@ -181,7 +180,7 @@ linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		error = EINVAL;
 	}
 
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 
 	return error;
 }

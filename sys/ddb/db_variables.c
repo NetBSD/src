@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.27 2003/06/28 14:21:29 darrenr Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.28 2003/06/29 22:29:55 fvdl Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.27 2003/06/28 14:21:29 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.28 2003/06/29 22:29:55 fvdl Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -100,7 +100,7 @@ db_rw_internal_variable(const struct db_variable *vp, db_expr_t *valp, int rw)
  */
 int
 ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct lwp *l)
+    size_t newlen, struct proc *p)
 {
 
 	/* All sysctl names at this level are terminal. */

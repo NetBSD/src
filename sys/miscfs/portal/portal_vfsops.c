@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.36 2003/06/29 18:43:34 thorpej Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.37 2003/06/29 22:31:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.36 2003/06/29 18:43:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37 2003/06/29 22:31:44 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -71,21 +71,21 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.36 2003/06/29 18:43:34 thorpej E
 void	portal_init __P((void));
 void	portal_done __P((void));
 int	portal_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct lwp *));
-int	portal_start __P((struct mount *, int, struct lwp *));
-int	portal_unmount __P((struct mount *, int, struct lwp *));
+			  struct nameidata *, struct proc *));
+int	portal_start __P((struct mount *, int, struct proc *));
+int	portal_unmount __P((struct mount *, int, struct proc *));
 int	portal_root __P((struct mount *, struct vnode **));
 int	portal_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			     struct lwp *));
-int	portal_statfs __P((struct mount *, struct statfs *, struct lwp *));
-int	portal_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+			     struct proc *));
+int	portal_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	portal_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	portal_vget __P((struct mount *, ino_t, struct vnode **));
 int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	portal_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	portal_vptofh __P((struct vnode *, struct fid *));
 int	portal_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			   struct lwp *));
+			   struct proc *));
 
 void
 portal_init()
@@ -101,22 +101,20 @@ portal_done()
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
-portal_mount(mp, path, data, ndp, l)
+portal_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct file *fp;
 	struct portal_args args;
 	struct portalmount *fmp;
 	struct socket *so;
 	struct vnode *rvp;
-	struct proc *p;
 	int error;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		fmp = VFSTOPORTAL(mp);
 		if (fmp == NULL)
@@ -167,24 +165,24 @@ portal_mount(mp, path, data, ndp, l)
 	vfs_getnewfsid(mp);
 
 	return set_statfs_info(path, UIO_USERSPACE, args.pa_config,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp, p);
 }
 
 int
-portal_start(mp, flags, l)
+portal_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (0);
 }
 
 int
-portal_unmount(mp, mntflags, l)
+portal_unmount(mp, mntflags, p)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vnode *rootvp = VFSTOPORTAL(mp)->pm_root;
 	int error, flags = 0;
@@ -227,7 +225,7 @@ portal_unmount(mp, mntflags, l)
 	 * Discard reference to underlying file.  Must call closef because
 	 * this may be the last reference.
 	 */
-	closef(VFSTOPORTAL(mp)->pm_server, (struct lwp *) 0);
+	closef(VFSTOPORTAL(mp)->pm_server, (struct proc *) 0);
 	/*
 	 * Finally, throw away the portalmount structure
 	 */
@@ -254,22 +252,22 @@ portal_root(mp, vpp)
 }
 
 int
-portal_quotactl(mp, cmd, uid, arg, l)
+portal_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	caddr_t arg;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-portal_statfs(mp, sbp, l)
+portal_statfs(mp, sbp, p)
 	struct mount *mp;
 	struct statfs *sbp;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	sbp->f_bsize = DEV_BSIZE;
@@ -290,11 +288,11 @@ portal_statfs(mp, sbp, l)
 
 /*ARGSUSED*/
 int
-portal_sync(mp, waitfor, uc, l)
+portal_sync(mp, waitfor, uc, p)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *uc;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (0);
@@ -341,14 +339,14 @@ portal_vptofh(vp, fhp)
 }
 
 int
-portal_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+portal_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	return (EOPNOTSUPP);
 }

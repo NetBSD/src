@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.7 2003/06/29 18:43:31 thorpej Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.8 2003/06/29 22:31:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -77,7 +77,7 @@
 void	layerfs_init __P((void));
 void	layerfs_done __P((void));
 int	layer_node_alloc __P((struct mount *, struct vnode *, struct vnode **));
-int	layer_node_create __P((struct mount *, struct vnode *,struct vnode **));
+int	layer_node_create __P((struct mount *, struct vnode *, struct vnode **));
 struct vnode *
 	layer_node_find __P((struct mount *, struct vnode *));
 #define LOG2_SIZEVNODE	7		/* log2(sizeof struct vnode) */
@@ -86,19 +86,19 @@ struct vnode *
 		(lmp)->layerm_node_hash]))
 
 /* vfs routines */
-int	layerfs_start __P((struct mount *, int, struct lwp *));
+int	layerfs_start __P((struct mount *, int, struct proc *));
 int	layerfs_root __P((struct mount *, struct vnode **));
 int	layerfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			     struct lwp *));
-int	layerfs_statfs __P((struct mount *, struct statfs *, struct lwp *));
-int	layerfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+			     struct proc *));
+int	layerfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	layerfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	layerfs_vget __P((struct mount *, ino_t, struct vnode **));
 int	layerfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	layerfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	layerfs_vptofh __P((struct vnode *, struct fid *));
 int	layerfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			   struct lwp *));
+			   struct proc *));
 
 /* VOP routines */
 int	layer_bypass __P((void *));

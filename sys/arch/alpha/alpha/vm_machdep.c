@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.79 2003/06/29 15:14:13 simonb Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.80 2003/06/29 22:28:04 fvdl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.79 2003/06/29 15:14:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2003/06/29 22:28:04 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	int error;
 	struct md_coredump cpustate;
 	struct coreseg cseg;
+	struct proc *p = l->l_proc;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
@@ -79,13 +80,13 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 
 	if (!error)
 		chdr->c_nseg++;

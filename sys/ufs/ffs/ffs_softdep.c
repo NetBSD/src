@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.49 2003/06/29 18:43:41 thorpej Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.50 2003/06/29 22:32:35 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.49 2003/06/29 18:43:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50 2003/06/29 22:32:35 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -131,8 +131,8 @@ LIST_HEAD(, buf) pcbphashhead[PCBPHASHSIZE];
 static	void softdep_error __P((char *, int));
 static	void drain_output __P((struct vnode *, int));
 static	int getdirtybuf __P((struct buf **, int));
-static	void clear_remove __P((struct lwp *));
-static	void clear_inodedeps __P((struct lwp *));
+static	void clear_remove __P((struct proc *));
+static	void clear_inodedeps __P((struct proc *));
 static	int flush_pagedep_deps __P((struct vnode *, struct mount *,
 	    struct diraddhd *));
 static	int flush_inodedep_deps __P((struct fs *, ino_t));
@@ -621,7 +621,7 @@ static int
 softdep_process_worklist(matchmnt)
 	struct mount *matchmnt;
 {
-	struct lwp *l = curlwp;		/* XXX */
+	struct proc *p = CURPROC;
 	struct worklist *wk, *wkend;
 	struct fs *matchfs;
 	int matchcnt;
@@ -638,7 +638,7 @@ softdep_process_worklist(matchmnt)
 	 * Record the process identifier of our caller so that we can give
 	 * this process preferential treatment in request_cleanup below.
 	 */
-	filesys_syncer = l->l_proc;
+	filesys_syncer = p;
 	matchcnt = 0;
 	matchfs = NULL;
 	if (matchmnt != NULL)
@@ -655,12 +655,12 @@ softdep_process_worklist(matchmnt)
 	 * If requested, try removing inode or removal dependencies.
 	 */
 	if (req_clear_inodedeps) {
-		clear_inodedeps(l);
+		clear_inodedeps(p);
 		req_clear_inodedeps = 0;
 		wakeup(&proc_waiting);
 	}
 	if (req_clear_remove) {
-		clear_remove(l);
+		clear_remove(p);
 		req_clear_remove = 0;
 		wakeup(&proc_waiting);
 	}
@@ -722,12 +722,12 @@ softdep_process_worklist(matchmnt)
 		 * If requested, try removing inode or removal dependencies.
 		 */
 		if (req_clear_inodedeps) {
-			clear_inodedeps(l);
+			clear_inodedeps(p);
 			req_clear_inodedeps = 0;
 			wakeup(&proc_waiting);
 		}
 		if (req_clear_remove) {
-			clear_remove(l);
+			clear_remove(p);
 			req_clear_remove = 0;
 			wakeup(&proc_waiting);
 		}
@@ -772,16 +772,13 @@ softdep_move_dependencies(oldbp, newbp)
  * Purge the work list of all items associated with a particular mount point.
  */
 int
-softdep_flushfiles(oldmnt, flags, l)
+softdep_flushfiles(oldmnt, flags, p)
 	struct mount *oldmnt;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vnode *devvp;
 	int error, loopcnt;
-	struct proc *p;
-
-	p = l->l_proc;
 
 	/*
 	 * Await our turn to clear out the queue.
@@ -789,7 +786,7 @@ softdep_flushfiles(oldmnt, flags, l)
 	while (softdep_worklist_busy)
 		tsleep(&lbolt, PRIBIO, "softflush", 0);
 	softdep_worklist_busy = 1;
-	if ((error = ffs_flushfiles(oldmnt, flags, l)) != 0) {
+	if ((error = ffs_flushfiles(oldmnt, flags, p)) != 0) {
 		softdep_worklist_busy = 0;
 		return (error);
 	}
@@ -807,7 +804,7 @@ softdep_flushfiles(oldmnt, flags, l)
 			 * Do another flush in case any vnodes were brought in
 			 * as part of the cleanup operations.
 			 */
-			if ((error = ffs_flushfiles(oldmnt, flags, l)) != 0)
+			if ((error = ffs_flushfiles(oldmnt, flags, p)) != 0)
 				break;
 			/*
 			 * If we still found nothing to do, we are really done.
@@ -816,8 +813,7 @@ softdep_flushfiles(oldmnt, flags, l)
 				break;
 		}
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_FSYNC(devvp, p->p_ucred,
-		    FSYNC_WAIT, 0, 0, l);
+		error = VOP_FSYNC(devvp, p->p_ucred, FSYNC_WAIT, 0, 0, p);
 		VOP_UNLOCK(devvp, 0);
 		if (error)
 			break;
@@ -3158,7 +3154,7 @@ static void
 handle_workitem_remove(dirrem)
 	struct dirrem *dirrem;
 {
-	struct lwp *l = curlwp;	/* XXX */
+	struct proc *p = CURPROC;	/* XXX */
 	struct inodedep *inodedep;
 	struct vnode *vp;
 	struct inode *ip;
@@ -3203,7 +3199,7 @@ handle_workitem_remove(dirrem)
 		panic("handle_workitem_remove: bad dir delta");
 	inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 	FREE_LOCK(&lk);
-	if ((error = VOP_TRUNCATE(vp, (off_t)0, 0, l->l_proc->p_ucred, l)) != 0)
+	if ((error = VOP_TRUNCATE(vp, (off_t)0, 0, p->p_ucred, p)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
 	/*
 	 * Rename a directory to a new parent. Since, we are both deleting
@@ -4587,7 +4583,7 @@ softdep_fsync(vp)
 	struct inode *ip;
 	struct buf *bp;
 	struct fs *fs;
-	struct lwp *l = curlwp;		/* XXX */
+	struct proc *p = CURPROC;		/* XXX */
 	int error, flushparent;
 	ino_t parentino;
 	daddr_t lbn;
@@ -4668,8 +4664,8 @@ softdep_fsync(vp)
 				return (error);
 			}
 			if ((pagedep->pd_state & NEWBLOCK) &&
-			    (error = VOP_FSYNC(pvp, l->l_proc->p_ucred,
-			    FSYNC_WAIT, 0, 0, l))) {
+			    (error = VOP_FSYNC(pvp, p->p_ucred, FSYNC_WAIT,
+			      0, 0, p))) {
 				vput(pvp);
 				return (error);
 			}
@@ -4677,8 +4673,8 @@ softdep_fsync(vp)
 		/*
 		 * Flush directory page containing the inode's name.
 		 */
-		error = bread(pvp, lbn, blksize(fs, VTOI(pvp), lbn),
-		    l->l_proc->p_ucred, &bp);
+		error = bread(pvp, lbn, blksize(fs, VTOI(pvp), lbn), p->p_ucred,
+		    &bp);
 		if (error == 0)
 			error = VOP_BWRITE(bp);
 		vput(pvp);
@@ -4993,7 +4989,7 @@ loop:
 		if (vp->v_type == VBLK && vp->v_specmountpoint &&
 		    !VOP_ISLOCKED(vp) &&
 		    (error = VFS_SYNC(vp->v_specmountpoint, MNT_WAIT,
-		     ap->a_cred, ap->a_l)) != 0)
+		     ap->a_cred, ap->a_p)) != 0)
 			return (error);
 		ACQUIRE_LOCK(&lk);
 	}
@@ -5138,7 +5134,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 	struct mount *mp;
 	struct diraddhd *diraddhdp;
 {
-	struct lwp *l = curlwp;	/* XXX */
+	struct proc *p = CURPROC;	/* XXX */
 	struct inodedep *inodedep;
 	struct ufsmount *ump;
 	struct diradd *dap;
@@ -5187,10 +5183,8 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 			ipflag = vn_setrecurse(pvp);	/* XXX */
 			if ((error = VFS_VGET(mp, inum, &vp)) != 0)
 				break;
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_ucred,
-					       0, 0, 0, l)) ||
-			    (error = VOP_FSYNC(vp, l->l_proc->p_ucred,
-					       0, 0, 0, l))) {
+			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, 0, 0, p)) ||
+			    (error = VOP_FSYNC(vp, p->p_ucred, 0, 0, 0, p))) {
 				vput(vp);
 				break;
 			}
@@ -5267,12 +5261,13 @@ request_cleanup(resource, islocked)
 	int resource;
 	int islocked;
 {
+	struct proc *p = CURPROC;
 	int s;
 
 	/*
 	 * We never hold up the filesystem syncer process.
 	 */
-	if (curproc == filesys_syncer)		/* XXX */
+	if (p == filesys_syncer)
 		return (0);
 	/*
 	 * If we are resource constrained on inode dependencies, try
@@ -5352,8 +5347,8 @@ pause_timer(arg)
  * reduce the number of dirrem, freefile and freeblks dependency structures.
  */
 static void
-clear_remove(l)
-	struct lwp *l;
+clear_remove(p)
+	struct proc *p;
 {
 	struct pagedep_hashhead *pagedephd;
 	struct pagedep *pagedep;
@@ -5378,7 +5373,7 @@ clear_remove(l)
 				softdep_error("clear_remove: vget", error);
 				return;
 			}
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_ucred, 0, 0, 0, l)))
+			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, 0, 0, p)))
 				softdep_error("clear_remove: fsync", error);
 			drain_output(vp, 0);
 			vput(vp);
@@ -5393,8 +5388,8 @@ clear_remove(l)
  * the number of inodedep dependency structures.
  */
 static void
-clear_inodedeps(l)
-	struct lwp *l;
+clear_inodedeps(p)
+	struct proc *p;
 {
 	struct inodedep_hashhead *inodedephd;
 	struct inodedep *inodedep;
@@ -5448,11 +5443,11 @@ clear_inodedeps(l)
 			return;
 		}
 		if (ino == lastino) {
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_ucred, FSYNC_WAIT,
-				    0, 0, l)))
+			if ((error = VOP_FSYNC(vp, p->p_ucred, FSYNC_WAIT,
+				    0, 0, p)))
 				softdep_error("clear_inodedeps: fsync1", error);
 		} else {
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_ucred, 0, 0, 0, l)))
+			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, 0, 0, p)))
 				softdep_error("clear_inodedeps: fsync2", error);
 			drain_output(vp, 0);
 		}

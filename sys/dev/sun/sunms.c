@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.15 2003/06/29 10:46:04 martin Exp $	*/
+/*	$NetBSD: sunms.c,v 1.16 2003/06/29 22:30:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.15 2003/06/29 10:46:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.16 2003/06/29 22:30:49 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ sunmsiopen(dev, flags)
 {
 	struct ms_softc *ms = (void *) dev;
 	struct tty *tp = (struct tty *)ms->ms_cs;
-	struct lwp *l = curlwp ? curlwp : &lwp0;
+	struct proc *p = curproc ? curproc : &proc0;
 	struct termios t;
 	const struct cdevsw *cdev;
 	int error;
@@ -203,7 +203,7 @@ sunmsiopen(dev, flags)
 
 	/* Open the lower device */
 	if ((error = (*cdev->d_open)(tp->t_dev, O_NONBLOCK|flags,
-				     0/* ignored? */, l)) != 0)
+				     0/* ignored? */, p)) != 0)
 		return (error);
 
 	/* Now configure it for the console. */

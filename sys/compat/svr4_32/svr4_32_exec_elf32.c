@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.11 2003/06/29 13:35:43 martin Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.12 2003/06/29 22:29:50 fvdl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.11 2003/06/29 13:35:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.12 2003/06/29 22:29:50 fvdl Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -204,8 +204,8 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 }
 #else
 int
-svr4_32_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
+svr4_32_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -216,7 +216,7 @@ svr4_32_copyargs(l, pack, arginfo, stackp, argp)
 	struct elf_args *ap;
 	int error;
 
-	if ((error = netbsd32_copyargs(l, pack, arginfo, stackp, argp)) != 0)
+	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
@@ -275,8 +275,8 @@ svr4_32_copyargs(l, pack, arginfo, stackp, argp)
 #endif
 
 int
-svr4_32_elf32_probe(l, epp, eh, itp, pos)
-	struct lwp *l;
+svr4_32_elf32_probe(p, epp, eh, itp, pos)
+	struct proc *p;
 	struct exec_package *epp;
 	void *eh;
 	char *itp;
@@ -285,8 +285,7 @@ svr4_32_elf32_probe(l, epp, eh, itp, pos)
 	int error;
 
 	if (itp[0]) {
-		if ((error = emul_find_interp(l,
-		    epp->ep_esch->es_emul->e_path, itp)))
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path, itp)))
 			return error;
 	}
 	epp->ep_flags |= EXEC_32;

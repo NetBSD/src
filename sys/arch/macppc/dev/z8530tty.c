@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.17 2003/06/29 11:02:22 darrenr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.18 2003/06/29 22:28:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -436,11 +436,11 @@ zs_shutdown(zst)
  * Open a zs serial (tty) port.
  */
 int
-zsopen(dev, flags, mode, l)
+zsopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = ZSUNIT(dev);
 	struct zstty_softc *zst;
@@ -463,7 +463,7 @@ zsopen(dev, flags, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -574,11 +574,11 @@ bad:
  * Close a zs serial port.
  */
 int
-zsclose(dev, flags, mode, l)
+zsclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	struct tty *tp = zst->zst_tty;
@@ -630,24 +630,24 @@ zswrite(dev, uio, flags)
 }
 
 int
-zspoll(dev, events, l)
+zspoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	struct tty *tp = zst->zst_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-zsioctl(dev, cmd, data, flag, l)
+zsioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	struct zs_chanstate *cs = zst->zst_cs;
@@ -655,11 +655,11 @@ zsioctl(dev, cmd, data, flag, l)
 	int error;
 	int s;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, l);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -687,7 +687,7 @@ zsioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = suser(p->p_ucred, &p->p_acflag);
 		if (error)
 			break;
 		zst->zst_swflags = *(int *)data;

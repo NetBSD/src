@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2003/06/28 14:21:06 darrenr Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10 2003/06/29 22:28:53 fvdl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -424,6 +424,6 @@ child_return(void *arg)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
+		ktrsysret(l->l_proc, SYS_fork, 0, 0);
 #endif
 }

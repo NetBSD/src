@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.76 2003/06/29 18:43:31 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.77 2003/06/29 22:31:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.76 2003/06/29 18:43:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77 2003/06/29 22:31:38 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ int	fdesc_pathconf	__P((void *));
 #define fdesc_revoke	genfs_revoke
 #define fdesc_putpages	genfs_null_putpages
 
-static int fdesc_attr __P((int, struct vattr *, struct ucred *, struct lwp *));
+static int fdesc_attr __P((int, struct vattr *, struct ucred *, struct proc *));
 
 int (**fdesc_vnodeop_p) __P((void *));
 const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
@@ -289,10 +289,9 @@ fdesc_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
-	struct lwp *l = cnp->cn_lwp;
+	struct proc *p = cnp->cn_proc;
 	const char *pname = cnp->cn_nameptr;
-	struct proc *p;
-	int nfiles;
+	int nfiles = p->p_fd->fd_nfiles;
 	unsigned fd = 0;
 	int error;
 	struct vnode *fvp;
@@ -303,9 +302,6 @@ fdesc_lookup(v)
 		VREF(dvp);
 		return (0);
 	}
-
-	p = l->l_proc;
-	nfiles = p->p_fd->fd_nfiles;
 
 	switch (VTOFDESC(dvp)->fd_type) {
 	default:
@@ -443,7 +439,7 @@ fdesc_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -457,11 +453,11 @@ fdesc_open(v)
 		 * take the actions in dupfdopen.  Other callers of vn_open or
 		 * VOP_OPEN will simply report the error.
 		 */
-		ap->a_l->l_proc->p_dupfd = VTOFDESC(vp)->fd_fd;	/* XXX */
+		ap->a_p->p_dupfd = VTOFDESC(vp)->fd_fd;	/* XXX */
 		return (ENODEV);
 
 	case Fctty:
-		return ((*ctty_cdevsw.d_open)(devctty, ap->a_mode, 0, ap->a_l));
+		return ((*ctty_cdevsw.d_open)(devctty, ap->a_mode, 0, ap->a_p));
 	case Froot:
 	case Fdevfd:
 	case Flink:
@@ -472,13 +468,12 @@ fdesc_open(v)
 }
 
 static int
-fdesc_attr(fd, vap, cred, l)
+fdesc_attr(fd, vap, cred, p)
 	int fd;
 	struct vattr *vap;
 	struct ucred *cred;
-	struct lwp *l;
+	struct proc *p;
 {
-	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct stat stb;
@@ -490,7 +485,7 @@ fdesc_attr(fd, vap, cred, l)
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
 		simple_unlock(&fp->f_slock);
-		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred, l);
+		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred, p);
 		if (error == 0 && vap->va_type == VDIR) {
 			/*
 			 * directories can cause loops in the namespace,
@@ -503,8 +498,8 @@ fdesc_attr(fd, vap, cred, l)
 	default:
 		FILE_USE(fp);
 		memset(&stb, 0, sizeof(stb));
-		error = (*fp->f_ops->fo_stat)(fp, &stb, l);
-		FILE_UNUSE(fp, l);
+		error = (*fp->f_ops->fo_stat)(fp, &stb, p);
+		FILE_UNUSE(fp, p);
 		if (error)
 			break;
 
@@ -550,7 +545,7 @@ fdesc_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
@@ -609,7 +604,7 @@ fdesc_getattr(v)
 
 	case Fdesc:
 		fd = VTOFDESC(vp)->fd_fd;
-		error = fdesc_attr(fd, vap, ap->a_cred, ap->a_l);
+		error = fdesc_attr(fd, vap, ap->a_cred, ap->a_p);
 		break;
 
 	default:
@@ -631,9 +626,9 @@ fdesc_setattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
-	struct filedesc *fdp = ap->a_l->l_proc->p_fd;
+	struct filedesc *fdp = ap->a_p->p_fd;
 	struct file *fp;
 	unsigned fd;
 
@@ -714,7 +709,7 @@ fdesc_readdir(v)
 		break;
 	}
 
-	fdp = uio->uio_lwp->l_proc->p_fd;
+	fdp = uio->uio_procp->p_fd;
 
 	if (uio->uio_resid < UIO_MX)
 		return (EINVAL);
@@ -746,7 +741,7 @@ fdesc_readdir(v)
 		     uio->uio_resid >= UIO_MX && i < nfdesc_targets; ft++, i++) {
 			switch (ft->ft_fileno) {
 			case FD_CTTY:
-				if (cttyvp(uio->uio_lwp->l_proc) == NULL)
+				if (cttyvp(uio->uio_procp) == NULL)
 					continue;
 				break;
 
@@ -910,7 +905,7 @@ fdesc_ioctl(v)
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	int error = EOPNOTSUPP;
 
@@ -918,7 +913,7 @@ fdesc_ioctl(v)
 	case Fctty:
 		error = (*ctty_cdevsw.d_ioctl)(devctty, ap->a_command,
 					       ap->a_data, ap->a_fflag,
-					       ap->a_l);
+					       ap->a_p);
 		break;
 
 	default:
@@ -936,13 +931,13 @@ fdesc_poll(v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	int revents;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		revents = (*ctty_cdevsw.d_poll)(devctty, ap->a_events, ap->a_l);
+		revents = (*ctty_cdevsw.d_poll)(devctty, ap->a_events, ap->a_p);
 		break;
 
 	default:
@@ -963,7 +958,6 @@ fdesc_kqfilter(v)
 	} */ *ap = v;
 	int error;
 	struct proc *p;
-	struct lwp *l;
 	struct file *fp;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
@@ -973,14 +967,13 @@ fdesc_kqfilter(v)
 
 	case Fdesc:
 		/* just invoke kqfilter for the underlying descriptor */
-		l = curlwp;	/* XXX hopefully ok to use curproc here */
-		p = l->l_proc;
+		p = curproc;	/* XXX hopefully ok to use curproc here */
 		if ((fp = fd_getfile(p->p_fd, VTOFDESC(ap->a_vp)->fd_fd)) == NULL)
 			return (1);
 			
 		FILE_USE(fp);
 		error = (*fp->f_ops->fo_kqfilter)(fp, ap->a_kn);
-		FILE_UNUSE(fp, l);
+		FILE_UNUSE(fp, p);
 		break;
 
 	default:
@@ -996,7 +989,7 @@ fdesc_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.12 2003/06/28 14:21:38 darrenr Exp $	*/
+/*	$NetBSD: oboe.c,v 1.13 2003/06/29 22:30:26 fvdl Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -72,14 +72,14 @@ void oboe_attach(struct device *parent, struct device *self, void *aux);
 int oboe_activate(struct device *self, enum devact act);
 int oboe_detach(struct device *self, int flags);
 
-int oboe_open(void *h, int flag, int mode, struct lwp *l);
-int oboe_close(void *h, int flag, int mode, struct lwp *l);
+int oboe_open(void *h, int flag, int mode, struct proc *p);
+int oboe_close(void *h, int flag, int mode, struct proc *p);
 int oboe_read(void *h, struct uio *uio, int flag);
 int oboe_write(void *h, struct uio *uio, int flag);
 int oboe_set_params(void *h, struct irda_params *params);
 int oboe_get_speeds(void *h, int *speeds);
 int oboe_get_turnarounds(void *h, int *times);
-int oboe_poll(void *h, int events, struct lwp *l);
+int oboe_poll(void *h, int events, struct proc *p);
 int oboe_kqfilter(void *h, struct knote *kn);
 
 #ifdef OBOE_DEBUG
@@ -279,7 +279,7 @@ oboe_detach(struct device *self, int flags)
 }
 
 int
-oboe_open(void *h, int flag, int mode, struct lwp *l)
+oboe_open(void *h, int flag, int mode, struct proc *p)
 {
 	struct oboe_softc *sc = h;
 
@@ -294,7 +294,7 @@ oboe_open(void *h, int flag, int mode, struct lwp *l)
 }
 
 int
-oboe_close(void *h, int flag, int mode, struct lwp *l)
+oboe_close(void *h, int flag, int mode, struct proc *p)
 {
 	struct oboe_softc *sc = h;
 	int error = 0;
@@ -457,7 +457,7 @@ oboe_get_turnarounds(void *h, int *turnarounds)
 }
 
 int
-oboe_poll(void *h, int events, struct lwp *l)
+oboe_poll(void *h, int events, struct proc *p)
 {
 	struct oboe_softc *sc = h;
 	int revents = 0;
@@ -474,7 +474,7 @@ oboe_poll(void *h, int events, struct lwp *l)
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			DPRINTF(("%s: recording select\n", __FUNCTION__));
-			selrecord(l, &sc->sc_rsel);
+			selrecord(p, &sc->sc_rsel);
 		}
 	}
 	splx(s);

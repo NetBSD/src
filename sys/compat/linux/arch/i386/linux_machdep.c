@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.88 2003/06/28 14:21:20 darrenr Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.89 2003/06/29 22:29:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.88 2003/06/28 14:21:20 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.89 2003/06/29 22:29:24 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -803,8 +803,8 @@ fd2biosinfo(p, fp)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(l, v, retval)
-	struct lwp *l;
+linux_machdepioctl(p, v, retval)
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -829,12 +829,11 @@ linux_machdepioctl(l, v, retval)
 	int fd;
 	struct disklabel label, *labp;
 	struct partinfo partp;
-	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
+	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
 	u_long start, biostotal, realtotal;
 	u_char heads, sectors;
 	u_int cylinders;
 	struct ioctl_pt pt;
-	struct proc *p = l->l_proc;
 
 	fd = SCARG(uap, fd);
 	SCARG(&bia, fd) = fd;
@@ -966,8 +965,8 @@ linux_machdepioctl(l, v, retval)
 		 */
 		bip = fd2biosinfo(p, fp);
 		ioctlf = fp->f_ops->fo_ioctl;
-		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, l);
-		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, l);
+		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
+		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			goto out;
@@ -1018,8 +1017,8 @@ linux_machdepioctl(l, v, retval)
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
-		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, l);
-		FILE_UNUSE(fp, l);
+		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
+		FILE_UNUSE(fp, p);
 		if (error == EJUSTRETURN) {
 			retval[0] = (register_t)pt.data;
 			error = 0;
@@ -1034,7 +1033,7 @@ linux_machdepioctl(l, v, retval)
 	/* XXX NJWLWP */
 	error = sys_ioctl(curlwp, &bia, retval);
 out:
-	FILE_UNUSE(fp ,l);
+	FILE_UNUSE(fp ,p);
 	return error;
 }
 

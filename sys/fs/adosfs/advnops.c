@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.5 2003/06/29 18:53:52 thorpej Exp $	*/
+/*	$NetBSD: advnops.c,v 1.6 2003/06/29 22:31:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.5 2003/06/29 18:53:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6 2003/06/29 22:31:07 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -163,7 +163,7 @@ adosfs_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *sp = v;
 	struct vattr *vap;
 	struct adosfsmount *amp;
@@ -795,7 +795,7 @@ adosfs_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *sp = v;
 	struct anode *ap;
 	struct vnode *vp = sp->a_vp;
@@ -867,16 +867,16 @@ adosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *sp = v;
 	struct vnode *vp = sp->a_vp;
-	struct lwp *l = sp->a_l;
+	struct proc *p = sp->a_p;
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
 	VOP_UNLOCK(vp, 0);
 	/* XXX this needs to check if file was deleted */
-	vrecycle(vp, NULL, l);
+	vrecycle(vp, NULL, p);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");

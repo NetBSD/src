@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fpregs.c,v 1.12 2003/06/28 14:22:04 darrenr Exp $	*/
+/*	$NetBSD: procfs_fpregs.c,v 1.13 2003/06/29 22:31:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fpregs.c,v 1.12 2003/06/28 14:22:04 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fpregs.c,v 1.13 2003/06/29 22:31:45 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,21 +53,21 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_fpregs.c,v 1.12 2003/06/28 14:22:04 darrenr E
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_dofpregs(curl, l, pfs, uio)
-	struct lwp *curl;		/* tracer */
+procfs_dofpregs(curp, l, pfs, uio)
+	struct proc *curp;		/* tracer */
 	struct lwp *l;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
 
-	return (process_dofpregs(curl, l, uio));
+	return (process_dofpregs(curp, l, uio));
 }
 
 int
-procfs_validfpregs(l, mp)
-	struct lwp *l;
+procfs_validfpregs(p, mp)
+	struct proc *p;
 	struct mount *mp;
 {
 
-	return (process_validfpregs(l));
+	return (process_validfpregs(p));
 }

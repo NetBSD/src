@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.26 2003/06/28 14:21:23 darrenr Exp $ */
+/*	$NetBSD: mach_message.c,v 1.27 2003/06/29 22:29:34 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.26 2003/06/28 14:21:23 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27 2003/06/29 22:29:34 fvdl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -141,7 +141,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 #ifdef KTRACE
 		/* Dump the Mach message */
 		if (KTRPOINT(p, KTR_MMSG))
-			ktrmmsg(l, (char *)sm, send_size); 
+			ktrmmsg(p, (char *)sm, send_size); 
 #endif
 		/*
 		 * Handle rights in the message
@@ -215,7 +215,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			 * facility does not produce a perfect result,
 			 * but at least we have the information.
 			 */
-			ktruser(l, map->map_name, NULL, 0, 0);
+			ktruser(p, map->map_name, NULL, 0, 0);
 #endif
 			/* 
 			 * Invoke the handler. We give it the opportunity
@@ -533,7 +533,7 @@ out1:
 #ifdef KTRACE
 			/* Dump the Mach message */
 			if (KTRPOINT(p, KTR_MMSG))
-				ktrmmsg(l, (char *)&sr, sizeof(sr)); 
+				ktrmmsg(p, (char *)&sr, sizeof(sr)); 
 #endif
 			goto unlock;
 		}
@@ -663,7 +663,7 @@ out1:
 #ifdef KTRACE
 		/* Dump the Mach message */
 		if (KTRPOINT(p, KTR_MMSG))
-			ktrmmsg(l, (char *)mm->mm_msg, mm->mm_size); 
+			ktrmmsg(p, (char *)mm->mm_msg, mm->mm_size); 
 #endif
 
 		free(mm->mm_msg, M_EMULDATA);

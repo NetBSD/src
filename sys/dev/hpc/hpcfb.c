@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.29 2003/06/29 11:20:44 ichiro Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.30 2003/06/29 22:30:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.29 2003/06/29 11:20:44 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.30 2003/06/29 22:30:07 fvdl Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.29 2003/06/29 11:20:44 ichiro Exp $";
+    "$NetBSD: hpcfb.c,v 1.30 2003/06/29 22:30:07 fvdl Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ int	hpcfbmatch(struct device *, struct cfdata *, void *);
 void	hpcfbattach(struct device *, struct device *, void *);
 int	hpcfbprint(void *, const char *);
 
-int	hpcfb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	hpcfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	hpcfb_mmap(void *, off_t, int);
 
 void	hpcfb_refresh_screen(struct hpcfb_softc *);
@@ -541,7 +541,7 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 }
 
 int
-hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct hpcfb_softc *sc = v;
 	struct hpcfb_devconfig *dc = sc->sc_dc;
@@ -601,7 +601,7 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
 		return ((*sc->sc_accessops->ioctl)(sc->sc_accessctx,
-		    cmd, data, flag, l->l_proc));
+		    cmd, data, flag, p));
 
 	default:
 		if (IOCGROUP(cmd) != 't')

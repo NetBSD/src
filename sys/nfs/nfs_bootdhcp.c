@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.23 2003/06/28 14:22:17 darrenr Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.24 2003/06/29 22:32:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.23 2003/06/28 14:22:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.24 2003/06/29 22:32:14 fvdl Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -223,7 +223,7 @@ static const u_int8_t vm_rfc1048[4] = { 99, 130, 83, 99 };
 /* Convenience macro */
 #define INTOHL(ina) ((u_int32_t)ntohl((ina).s_addr))
 
-static int bootpc_call __P((struct nfs_diskless *, struct lwp *));
+static int bootpc_call __P((struct nfs_diskless *, struct proc *));
 static void bootp_extract __P((struct bootp *, int, struct nfs_diskless *));
 
 /* #define DEBUG	XXX */
@@ -239,9 +239,9 @@ static void bootp_extract __P((struct bootp *, int, struct nfs_diskless *));
  * Get our boot parameters using BOOTP.
  */
 int
-nfs_bootdhcp(nd, lwp)
+nfs_bootdhcp(nd, procp)
 	struct nfs_diskless *nd;
-	struct lwp *lwp;
+	struct proc *procp;
 {
 	struct ifnet *ifp = nd->nd_ifp;
 	int error;
@@ -250,7 +250,7 @@ nfs_bootdhcp(nd, lwp)
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  Use address zero for now.
 	 */
-	error = nfs_boot_setaddress(ifp, lwp, INADDR_ANY, INADDR_ANY,
+	error = nfs_boot_setaddress(ifp, procp, INADDR_ANY, INADDR_ANY,
 				    INADDR_BROADCAST);
 	if (error) {
 		printf("nfs_boot: set ifaddr zero, error=%d\n", error);
@@ -258,10 +258,10 @@ nfs_bootdhcp(nd, lwp)
 	}
 
 	/* This function call does the real send/recv work. */
-	error = bootpc_call(nd, lwp);
+	error = bootpc_call(nd, procp);
 
 	/* Get rid of the temporary (zero) IP address. */
-	(void) nfs_boot_deladdress(ifp, lwp, INADDR_ANY);
+	(void) nfs_boot_deladdress(ifp, procp, INADDR_ANY);
 
 	/* NOW we can test the error from bootpc_call. */
 	if (error)
@@ -270,7 +270,7 @@ nfs_bootdhcp(nd, lwp)
 	/*
 	 * Do ifconfig with our real IP address and mask.
 	 */
-	error = nfs_boot_setaddress(ifp, lwp, nd->nd_myip.s_addr,
+	error = nfs_boot_setaddress(ifp, procp, nd->nd_myip.s_addr,
 				    nd->nd_mask.s_addr, INADDR_ANY);
 	if (error) {
 		printf("nfs_boot: set ifaddr real, error=%d\n", error);
@@ -279,7 +279,7 @@ nfs_bootdhcp(nd, lwp)
 
 out:
 	if (error) {
-		(void) nfs_boot_ifupdown(ifp, lwp, 0);
+		(void) nfs_boot_ifupdown(ifp, procp, 0);
 		nfs_boot_flushrt(ifp);
 	}
 	return (error);
@@ -432,9 +432,9 @@ warn:
 }
 
 static int
-bootpc_call(nd, lwp)
+bootpc_call(nd, procp)
 	struct nfs_diskless *nd;
-	struct lwp *lwp;
+	struct proc *procp;
 {
 	struct socket *so;
 	struct ifnet *ifp = nd->nd_ifp;

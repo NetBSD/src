@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.33 2003/06/29 13:33:53 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.34 2003/06/29 22:29:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -618,6 +618,7 @@ cpu_coredump32(l, vp, cred, chdr)
 	int i, error;
 	struct md_coredump32 md_core;
 	struct coreseg32 cseg;
+	struct proc *p = l->l_proc;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
@@ -658,13 +659,13 @@ cpu_coredump32(l, vp, cred, chdr)
 	cseg.c_size = chdr->c_cpusize;
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	if (!error)
 		chdr->c_nseg++;
 
@@ -1041,11 +1042,11 @@ netbsd32_from_opiocdesc(p, s32p)
 }
 
 int
-netbsd32_md_ioctl(fp, com, data32, l)
+netbsd32_md_ioctl(fp, com, data32, p)
 	struct file *fp;
 	netbsd32_u_long com;
 	void *data32;
-	struct lwp *l;
+	struct proc *p;
 {
 	u_int size;
 	caddr_t data, memp = NULL;
@@ -1071,7 +1072,7 @@ netbsd32_md_ioctl(fp, com, data32, l)
 	case OPIOCNEXTPROP32:
 		IOCTL_STRUCT_CONV_TO(OPIOCNEXTPROP, opiocdesc);
 	default:
-		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, p);
 	}
 	if (memp)
 		free(memp, M_IOCTLOPS);

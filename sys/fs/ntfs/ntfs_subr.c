@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.6 2003/06/29 18:43:24 thorpej Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.7 2003/06/29 22:31:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.6 2003/06/29 18:43:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.7 2003/06/29 22:31:10 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ ntfs_ntvattrget(
 		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
 				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
-				VG_EXT, curlwp, &newvp);	/* XXX */
+				VG_EXT, curproc, &newvp);
 		if (error) {
 			printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
 			       aalp->al_inumber);
@@ -1008,7 +1008,7 @@ ntfs_ntlookupfile(
 			error = ntfs_vgetex(ntmp->ntm_mountp,
 				   iep->ie_number, attrtype, attrname,
 				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
-				   curlwp, &nvp);	/* XXX */
+				   curproc, &nvp);
 			if (error)
 				goto fail;
 

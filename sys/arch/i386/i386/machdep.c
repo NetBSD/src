@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.525 2003/06/28 14:20:55 darrenr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.526 2003/06/29 22:28:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.525 2003/06/28 14:20:55 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526 2003/06/29 22:28:24 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -497,14 +497,14 @@ i386_bufinit()
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	dev_t consdev;
 	struct btinfo_bootpath *bibp;
@@ -2149,14 +2149,14 @@ exec_nomid(p, epp)
  * if COMPAT_NOMID is given as a kernel option.
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
 
 #ifdef COMPAT_NOMID
-	if ((error = exec_nomid(l->l_proc, epp)) == 0)
+	if ((error = exec_nomid(p, epp)) == 0)
 		return error;
 #endif /* ! COMPAT_NOMID */
 
