@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.46 2004/11/10 04:20:26 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.47 2004/11/10 04:22:31 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.46 2004/11/10 04:20:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.47 2004/11/10 04:22:31 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,7 +613,6 @@ auvia_set_params(void *addr, int setmode, int usemode,
 	struct audio_params *p;
 	struct ac97_codec_if* codec;
 	int reg, mode;
-	u_int16_t ext_id;
 
 	codec = sc->codec_if;
 	/* for mode in (RECORD, PLAY) */
@@ -633,7 +632,6 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		}
 
 		if (ch->sc_base == VIA8233_MP_BASE && mode == AUMODE_PLAY) {
-			ext_id = codec->vtbl->get_extcaps(codec);
 			if (p->channels == 1) {
 				/* ok */
 			} else if (p->channels == 2) {
