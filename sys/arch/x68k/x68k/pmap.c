@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 1999/03/27 03:37:53 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 1999/03/27 05:57:06 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -604,8 +604,9 @@ pmap_collect_pv()
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
 		if (pvp->pvp_pgi.pgi_nfree > NPVPPG / 3) {
 			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp, pvp_pgi.pgi_list);
-			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
+			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp,
+			    pvp_pgi.pgi_list);
+			pv_nfree -= NPVPPG;
 			pvp->pvp_pgi.pgi_nfree = -1;
 		}
 	}
@@ -622,7 +623,8 @@ pmap_collect_pv()
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
 				pvp = pv_page_freelist.tqh_first;
 				if (--pvp->pvp_pgi.pgi_nfree == 0) {
-					TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+					TAILQ_REMOVE(&pv_page_freelist, pvp,
+					    pvp_pgi.pgi_list);
 				}
 				npv = pvp->pvp_pgi.pgi_freelist;
 #ifdef DIAGNOSTIC
