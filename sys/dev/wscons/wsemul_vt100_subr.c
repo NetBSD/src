@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.6 2000/02/25 17:42:51 mycroft Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -41,7 +41,7 @@
 #include <dev/wscons/wsemul_vt100var.h>
 
 static int vt100_selectattribute __P((struct wsemul_vt100_emuldata *,
-				      int, int, int, long *));
+				      int, int, int, long *, long *));
 static int vt100_ansimode __P((struct wsemul_vt100_emuldata *, int, int));
 static int vt100_decmode __P((struct wsemul_vt100_emuldata *, int, int));
 #define VTMODE_SET 33
@@ -74,7 +74,7 @@ wsemul_vt100_scrollup(edp, n)
 	}
 	(*edp->emulops->eraserows)(edp->emulcookie,
 				   edp->scrreg_startrow + help, n,
-				   edp->defattr);
+				   edp->bkgdattr);
 	if (edp->dblwid)
 		memset(&edp->dblwid[edp->scrreg_startrow + help], 0, n);
 	CHECK_DW;
@@ -106,7 +106,7 @@ wsemul_vt100_scrolldown(edp, n)
 	}
 	(*edp->emulops->eraserows)(edp->emulcookie,
 				   edp->scrreg_startrow, n,
-				   edp->defattr);
+				   edp->bkgdattr);
 	if (edp->dblwid)
 		memset(&edp->dblwid[edp->scrreg_startrow], 0, n);
 	CHECK_DW;
@@ -124,12 +124,12 @@ wsemul_vt100_ed(edp, arg)
 
 	switch (arg) {
 	    case 0: /* cursor to end */
-		ERASECOLS(edp->ccol, COLS_LEFT + 1, edp->defattr);
+		ERASECOLS(edp->ccol, COLS_LEFT + 1, edp->bkgdattr);
 		n = edp->nrows - edp->crow - 1;
 		if (n > 0) {
 			(*edp->emulops->eraserows)(edp->emulcookie,
 						   edp->crow + 1, n,
-						   edp->defattr);
+						   edp->bkgdattr);
 			if (edp->dblwid)
 				memset(&edp->dblwid[edp->crow + 1], 0, n);
 		}
@@ -138,16 +138,16 @@ wsemul_vt100_ed(edp, arg)
 		if (edp->crow > 0) {
 			(*edp->emulops->eraserows)(edp->emulcookie,
 						   0, edp->crow,
-						   edp->defattr);
+						   edp->bkgdattr);
 			if (edp->dblwid)
 				memset(&edp->dblwid[0], 0, edp->crow);
 		}
-		ERASECOLS(0, edp->ccol + 1, edp->defattr);
+		ERASECOLS(0, edp->ccol + 1, edp->bkgdattr);
 		break;
 	    case 2: /* complete display */
 		(*edp->emulops->eraserows)(edp->emulcookie,
 					   0, edp->nrows,
-					   edp->defattr);
+					   edp->bkgdattr);
 		if (edp->dblwid)
 			memset(&edp->dblwid[0], 0, edp->nrows);
 		break;
@@ -170,15 +170,15 @@ wsemul_vt100_el(edp, arg)
 {
 	switch (arg) {
 	    case 0: /* cursor to end */
-		ERASECOLS(edp->ccol, COLS_LEFT + 1, edp->defattr);
+		ERASECOLS(edp->ccol, COLS_LEFT + 1, edp->bkgdattr);
 		break;
 	    case 1: /* beginning to cursor */
-		ERASECOLS(0, edp->ccol + 1, edp->defattr);
+		ERASECOLS(0, edp->ccol + 1, edp->bkgdattr);
 		break;
 	    case 2: /* complete line */
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
 					   0, edp->ncols,
-					   edp->defattr);
+					   edp->bkgdattr);
 		break;
 	    default:
 #ifdef VT100_PRINTUNKNOWN
@@ -197,7 +197,7 @@ wsemul_vt100_handle_csi(edp, c)
 	u_char c;
 {
 	int n, help, flags, fgcol, bgcol;
-	long attr;
+	long attr, bkgdattr;
 
 #define A3(a, b, c) (((a) << 16) | ((b) << 8) | (c))
 	switch (A3(edp->modif1, edp->modif2, c)) {
@@ -399,7 +399,7 @@ wsemul_vt100_handle_csi(edp, c)
 		help = NCOLS - (edp->ccol + n);
 		if (help > 0)
 			COPYCOLS(edp->ccol, edp->ccol + n, help);
-		ERASECOLS(edp->ccol, n, edp->defattr);
+		ERASECOLS(edp->ccol, n, edp->bkgdattr);
 		break;
 	    case 'A': /* CUU */
 		edp->crow -= min(DEF1_ARG(0), ROWS_ABOVE);
@@ -449,11 +449,11 @@ wsemul_vt100_handle_csi(edp, c)
 		help = NCOLS - (edp->ccol + n);
 		if (help > 0)
 			COPYCOLS(edp->ccol + n, edp->ccol, help);
-		ERASECOLS(NCOLS - n, n, edp->defattr);
+		ERASECOLS(NCOLS - n, n, edp->bkgdattr);
 		break;
 	    case 'X': /* ECH erase character */
 		n = min(DEF1_ARG(0), COLS_LEFT + 1);
-		ERASECOLS(edp->ccol, n, edp->defattr);
+		ERASECOLS(edp->ccol, n, edp->bkgdattr);
 		break;
 	    case 'c': /* DA primary */
 		if (ARG(0) == 0)
@@ -483,17 +483,16 @@ wsemul_vt100_handle_csi(edp, c)
 		for (n = 0; n < edp->nargs; n++) {
 			switch (ARG(n)) {
 			    case 0: /* reset */
-				attr = edp->defattr;
+				if (n == edp->nargs - 1) {
+					edp->bkgdattr = edp->curattr = edp->defattr;
+					edp->attrflags = 0;
+					edp->fgcol = WSCOL_WHITE;
+					edp->bgcol = WSCOL_BLACK;
+					return;
+				}
 				flags = 0;
 				fgcol = WSCOL_WHITE;
 				bgcol = WSCOL_BLACK;
-				if (n == edp->nargs - 1) {
-					edp->curattr = attr;
-					edp->attrflags = flags;
-					edp->fgcol = fgcol;
-					edp->bgcol = bgcol;
-					return;
-				}
 				break;
 			    case 1: /* bold */
 				flags |= WSATTR_HILIT;
@@ -537,13 +536,15 @@ wsemul_vt100_handle_csi(edp, c)
 #endif
 			}
 		}
-		if (vt100_selectattribute(edp, flags, fgcol, bgcol, &attr)) {
+		if (vt100_selectattribute(edp, flags, fgcol, bgcol, &attr,
+		    &bkgdattr)) {
 #ifdef VT100_DEBUG
 			printf("error allocating attr %d/%d/%x\n",
 			       fgcol, bgcol, flags);
 #endif
 		} else {
 			edp->curattr = attr;
+			edp->bkgdattr = bkgdattr;
 			edp->attrflags = flags;
 			edp->fgcol = fgcol;
 			edp->bgcol = bgcol;
@@ -625,11 +626,25 @@ wsemul_vt100_handle_csi(edp, c)
  * is not supported
  */
 static int
-vt100_selectattribute(edp, flags, fgcol, bgcol, attr)
+vt100_selectattribute(edp, flags, fgcol, bgcol, attr, bkgdattr)
 	struct wsemul_vt100_emuldata *edp;
 	int flags, fgcol, bgcol;
-	long *attr;
+	long *attr, *bkgdattr;
 {
+	int error;
+
+	if ((flags & WSATTR_WSCOLORS) &&
+	    !(edp->scrcapabilities & WSSCREEN_WSCOLORS)) {
+		flags &= ~WSATTR_WSCOLORS;
+#ifdef VT100_DEBUG
+		printf("colors ignored (impossible)\n");
+#endif
+	}
+	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
+					    flags & WSATTR_WSCOLORS, bkgdattr);
+	if (error)
+		return (error);
+
 	if ((flags & WSATTR_HILIT) &&
 	    !(edp->scrcapabilities & WSSCREEN_HILIT)) {
 		flags &= ~WSATTR_HILIT;
@@ -677,16 +692,12 @@ vt100_selectattribute(edp, flags, fgcol, bgcol, attr)
 #endif
 		}
 	}
-	if ((flags & WSATTR_WSCOLORS) &&
-	    !(edp->scrcapabilities & WSSCREEN_WSCOLORS)) {
-		flags &= ~WSATTR_WSCOLORS;
-#ifdef VT100_DEBUG
-		printf("colors ignored (impossible)\n");
-#endif
-	}
-	return ((*edp->emulops->alloc_attr)(edp->emulcookie,
-					    fgcol, bgcol, flags,
-					    attr));
+	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
+					    flags, attr);
+	if (error)
+		return (error);
+
+	return (0);
 }
 
 /*
