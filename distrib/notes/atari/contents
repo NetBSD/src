@@ -1,5 +1,5 @@
 The Atari-specific portion of the NetBSD 1.2 release is found in the
-"atari" subdirectory of the distribution.  That subdirectory is layed
+"atari" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
 .../NetBSD-1.2/atari/
@@ -19,14 +19,14 @@ out as follows:
 
 There are three atari floppy images to be found in the "atari/floppies"
 subdirectory of the NetBSD 1.2 distribution.  One of them is a
-bootable TOS kernel floppy and the other two are installation floppy's.
+bootable TOS kernel floppy and the other two are installation floppies.
 They are described in more detail below.  There are gzipped versions
 of each available, for easier downloading.  (The gzipped version
 have the ".gz" extension added to their names.)
 
 Bootable Kernel floppy:
 
-	This TOS disk contains the loadbsd and chg_part programs
+	This TOS disk contains the loadbsd and chg_pid programs
 	and the BOOT kernel.  It is setup so that you can insert it
 	int your floppy drive, and start the programs from GEM.
 
