@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.h,v 1.38 1999/08/25 20:34:56 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.39 1999/08/25 23:23:33 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -83,6 +83,7 @@
 #define	USB_VENDOR_BELKIN	0x05ab		/* In-System Design */
 #define	USB_VENDOR_APPLE	0x05ac		/* Apple Computer */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
+#define	USB_VENDOR_PIENGINEERING	0x05f3		/* P.I. Engineering */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
 #define	USB_VENDOR_MULTITECH	0x06e0		/* MultiTech */
@@ -201,6 +202,9 @@
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
 #define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
 #define	USB_PRODUCT_LOGITECH_USBPS2	0xc001		/* USB-PS/2 mouse */
+
+/* P.I. Engineering products */
+#define	USB_PRODUCT_PIENGINEERING_PS2USB	0x020b		/* PS2 to Mac USB Adapter */
 
 /* Chic Technology products */
 #define	USB_PRODUCT_CHIC_MOUSE1	0x0001		/* mouse */
