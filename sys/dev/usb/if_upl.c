@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.5 2000/08/07 17:34:41 drochner Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.6 2000/08/12 14:35:20 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 /*
  * 7  6  5  4  3  2  1  0
- *  tx rx 1  0
+ * tx rx 1  0
  * 1110 0000 rxdata
  * 1010 0000 idle
  * 0010 0000 tx over
