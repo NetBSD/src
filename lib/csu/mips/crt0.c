@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.7 1998/02/07 20:44:40 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.8 1998/07/25 04:34:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -37,13 +37,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
 #ifdef ECOFF_COMPAT
 #undef DYNAMIC
 #endif
 
-#include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/syscall.h>
 #include <vm/vm.h>
@@ -227,7 +224,7 @@ __start(sp, cleanup, obj, ps_strings)
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.7 1998/02/07 20:44:40 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.8 1998/07/25 04:34:13 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 

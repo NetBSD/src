@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.18 1997/10/20 13:49:54 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.19 1998/07/25 04:34:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -31,9 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#include <sys/param.h>
-
 #include <stdlib.h>
 
 #include "common.h"
@@ -59,7 +56,7 @@ start:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.18 1997/10/20 13:49:54 mycroft Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.19 1998/07/25 04:34:13 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void

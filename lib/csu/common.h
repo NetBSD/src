@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.8 1998/07/25 04:23:44 mycroft Exp $	*/
+/*	$NetBSD: common.h,v 1.9 1998/07/25 04:34:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -65,7 +65,7 @@ static int		_strncmp __P((char *, char *, int));
 #ifdef sun
 #define LDSO	"/usr/lib/ld.so"
 #endif
-#ifdef BSD
+#ifdef __NetBSD__
 #define LDSO	"/usr/libexec/ld.so"
 #endif
 
