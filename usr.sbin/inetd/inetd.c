@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.85 2003/02/12 08:52:03 tron Exp $	*/
+/*	$NetBSD: inetd.c,v 1.86 2003/02/12 10:03:47 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.85 2003/02/12 08:52:03 tron Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.86 2003/02/12 10:03:47 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,52 +349,52 @@ struct	servtab {
 #define ISMUXPLUS(sep)	((sep)->se_type == MUXPLUS_TYPE)
 
 
-void		chargen_dg (int, struct servtab *);
-void		chargen_stream (int, struct servtab *);
-void		close_sep (struct servtab *);
-void		config (int);
-void		daytime_dg (int, struct servtab *);
-void		daytime_stream (int, struct servtab *);
-void		discard_dg (int, struct servtab *);
-void		discard_stream (int, struct servtab *);
-void		echo_dg (int, struct servtab *);
-void		echo_stream (int, struct servtab *);
-void		endconfig (void);
-struct servtab *enter (struct servtab *);
-void		freeconfig (struct servtab *);
-struct servtab *getconfigent (void);
-void		goaway (int);
-void		machtime_dg (int, struct servtab *);
-void		machtime_stream (int, struct servtab *);
-char	       *newstr (char *);
-char	       *nextline (FILE *);
-void		print_service (char *, struct servtab *);
-void		reapchild (int);
-void		retry (int);
-void		run_service (int, struct servtab *);
-int		setconfig (void);
-void		setup (struct servtab *);
-char	       *sskip (char **);
-char	       *skip (char **);
-void		tcpmux (int, struct servtab *);
-void		usage (void);
-void		register_rpc (struct servtab *);
-void		unregister_rpc (struct servtab *);
-void		bump_nofile (void);
-void		inetd_setproctitle (char *, int);
-void		initring (void);
-uint32_t	machtime (void);
-int 		port_good_dg (struct sockaddr *);
-int 		dg_broadcast (struct in_addr *);
+void		chargen_dg(int, struct servtab *);
+void		chargen_stream(int, struct servtab *);
+void		close_sep(struct servtab *);
+void		config(int);
+void		daytime_dg(int, struct servtab *);
+void		daytime_stream(int, struct servtab *);
+void		discard_dg(int, struct servtab *);
+void		discard_stream(int, struct servtab *);
+void		echo_dg(int, struct servtab *);
+void		echo_stream(int, struct servtab *);
+void		endconfig(void);
+struct servtab *enter(struct servtab *);
+void		freeconfig(struct servtab *);
+struct servtab *getconfigent(void);
+void		goaway(int);
+void		machtime_dg(int, struct servtab *);
+void		machtime_stream(int, struct servtab *);
+char	       *newstr(char *);
+char	       *nextline(FILE *);
+void		print_service(char *, struct servtab *);
+void		reapchild(int);
+void		retry(int);
+void		run_service(int, struct servtab *);
+int		setconfig(void);
+void		setup(struct servtab *);
+char	       *sskip(char **);
+char	       *skip(char **);
+void		tcpmux(int, struct servtab *);
+void		usage(void);
+void		register_rpc(struct servtab *);
+void		unregister_rpc(struct servtab *);
+void		bump_nofile(void);
+void		inetd_setproctitle(char *, int);
+void		initring(void);
+uint32_t	machtime(void);
+int 		port_good_dg(struct sockaddr *);
+int 		dg_broadcast(struct in_addr *);
 static int	my_kevent(const struct kevent *, size_t, struct kevent *,
 		size_t);
-static int	getline (int, char *, int);
-int		main (int, char *[]);
-void		spawn (struct servtab *, int);
+static int	getline(int, char *, int);
+int		main(int, char *[]);
+void		spawn(struct servtab *, int);
 #ifdef MULOG
-void		dolog (struct servtab *, int);
-static void	timeout (int);
-char		*rfc931_name (struct sockaddr *, int);
+void		dolog(struct servtab *, int);
+static void	timeout(int);
+char		*rfc931_name(struct sockaddr *, int);
 #endif
 
 struct biltin {
@@ -402,7 +402,7 @@ struct biltin {
 	int	bi_socktype;		/* type of socket supported */
 	short	bi_fork;		/* 1 if should fork before call */
 	short	bi_wait;		/* 1 if should wait for child */
-	void	(*bi_fn) (int, struct servtab *);
+	void	(*bi_fn)(int, struct servtab *);
 					/* function which performs it */
 } biltins[] = {
 	/* Echo received data */
