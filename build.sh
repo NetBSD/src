@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.130 2004/07/02 04:25:24 jmc Exp $
+#	$NetBSD: build.sh,v 1.131 2004/08/17 14:00:30 junyoung Exp $
 #
 # Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -335,13 +335,18 @@ unsetmakeenv()
 	makeenv="${makeenv} $1"
 }
 
+# Convert possibly-relative path to absolute path by prepending
+# ${TOP} if necessary.  Also delete trailing "/", if any.
 resolvepath()
 {
 	case "${OPTARG}" in
+	/)
+		;;
 	/*)
+		OPTARG="${OPTARG%/}"
 		;;
 	*)
-		OPTARG="${TOP}/${OPTARG}"
+		OPTARG="${TOP}/${OPTARG%/}"
 		;;
 	esac
 }
@@ -856,7 +861,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.130 2004/07/02 04:25:24 jmc Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.131 2004/08/17 14:00:30 junyoung Exp $
 # with these arguments: ${_args}
 #
 EOF
