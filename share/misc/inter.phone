@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.4 1997/03/26 06:30:57 mikel Exp $
+#	$NetBSD: inter.phone,v 1.5 1997/04/17 06:02:03 mikel Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -27,11 +27,12 @@
 31:10:Rotterdam:Netherlands
 31:13:Tilburg:Netherlands
 31:20:Amsterdam:Netherlands
+31:24:Nijmegen:Netherlands
+31:26:Arnhem:Netherlands
 31:30:Utrecht:Netherlands
 31:40:Eindhoven:Netherlands
 31:70:The Hague:Netherlands
 31:76:Breda:Netherlands
-31:85:Arnhem:Netherlands
 32:15:Malines (Mechelen):Belgium
 32:2:Brussels:Belgium
 32:3:Antwerp:Belgium
