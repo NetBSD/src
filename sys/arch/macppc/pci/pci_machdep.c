@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.21 2003/07/15 02:43:33 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.22 2003/08/18 07:08:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21 2003/07/15 02:43:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2003/08/18 07:08:11 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -295,13 +295,20 @@ fixpci(parent, pc)
 	int node;
 	pcitag_t tag;
 	pcireg_t csr, intr;
-	int len, i;
+	int len, i, ilen;
 	int32_t irqs[4];
 	struct {
 		u_int32_t phys_hi, phys_mid, phys_lo;
 		u_int32_t size_hi, size_lo;
 	} addr[8];
+	struct {
+		u_int32_t phys_hi, phys_mid, phys_lo;
+		u_int32_t icells[5];
+	} iaddr;
 
+	len = OF_getprop(parent, "#interrupt-cells", &ilen, sizeof(ilen));
+	if (len < 0)            
+		ilen = 0;       
 	for (node = OF_child(parent); node; node = OF_peer(node)) {
 		len = OF_getprop(node, "assigned-addresses", addr,
 				 sizeof(addr));
@@ -337,9 +344,22 @@ fixpci(parent, pc)
 		 * Make sure the line register is programmed with the
 		 * interrupt mapping.
 		 */
-		if (find_node_intr(node, &addr[0].phys_hi, irqs) == -1)
+		if (ilen == 0)
 			continue;
-
+		iaddr.phys_hi = addr[0].phys_hi;
+		iaddr.phys_mid = addr[0].phys_mid;
+		iaddr.phys_lo = addr[0].phys_lo;
+		/*
+		 * Thankfully, PCI can only have one entry in its "interrupts" 
+		 * property.
+		 */
+		len = OF_getprop(node, "interrupts", &iaddr.icells[0], 4*ilen);
+		if (len != 4*ilen)
+			continue;
+		if (find_node_intr(node, &iaddr.phys_hi, irqs) == -1) {
+			printf("find_node_intr failed\n");
+			continue;
+		}
 		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 		intr &= ~PCI_INTERRUPT_LINE_MASK;
 		intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
@@ -357,9 +377,10 @@ find_node_intr(node, addr, intr)
 {
 	int parent, len, mlen, iparent;
 	int match, i;
-	u_int32_t map[160], *mp;
+	u_int32_t map[160];
+	const u_int32_t *mp;
 	u_int32_t imask[8], maskedaddr[8];
-	u_int32_t icells;
+	u_int32_t acells, icells;
 	char name[32];
 
 	len = OF_getprop(node, "AAPL,interrupts", intr, 4) ;
@@ -370,6 +391,9 @@ find_node_intr(node, addr, intr)
 	len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
 	mlen = OF_getprop(parent, "interrupt-map-mask", imask, sizeof(imask));
 
+	if (mlen != -1)
+		memcpy(maskedaddr, addr, mlen);
+again:
 	if (len == -1 || mlen == -1)
 		goto nomap;
 
@@ -381,33 +405,63 @@ find_node_intr(node, addr, intr)
 #endif
 
 	/* mask addr by "interrupt-map-mask" */
-	memcpy(maskedaddr, addr, mlen);
 	for (i = 0; i < mlen / 4; i++)
 		maskedaddr[i] &= imask[i];
 
 	mp = map;
+	i = 0;
 	while (len > mlen) {
 		match = memcmp(maskedaddr, mp, mlen);
 		mp += mlen / 4;
 		len -= mlen;
 
 		/*
-		 * We must read "#interrupt-cells" for each time because
-		 * interrupt-parent may be different.
+		 * We must read "#address-cells" and "#interrupt-cells" each
+		 * time because each interrupt-parent may be different.
 		 */
 		iparent = *mp++;
 		len -= 4;
+		if (OF_getprop(iparent, "#address-cells", &acells, 4) != 4)
+			return -1;
 		if (OF_getprop(iparent, "#interrupt-cells", &icells, 4) != 4)
-			goto nomap;
+			return -1;
 
 		/* Found. */
 		if (match == 0) {
-			memcpy(intr, mp, icells * 4);
-			return icells * 4;
+			/*
+			 * We matched on address/interrupt, but are we done?
+			 */
+			if (acells == 0) { /* XXX */
+				/*
+				 * If we are at the interrupt controller,
+				 * we are finally done.  Save the result and
+				 * return.
+				 */
+				memcpy(intr, mp, icells * 4);
+				return icells * 4;
+			}
+			/*
+			 * We are now at an intermedia interrupt node.  We
+			 * need to use its interrupt mask and map the 
+			 * supplied address/interupt via its map.
+			 */
+			mlen = OF_getprop(iparent, "interrupt-map-mask",
+			    imask, sizeof(imask));
+#ifdef DIAGNOSTIC
+			if (mlen != (acells + icells)*4) {
+				printf("interrupt-map inconsistent (%d, %d)\n",
+				    mlen, (acells + icells)*4);
+				return -1;
+			}
+#endif
+			memcpy(maskedaddr, mp, mlen);
+			len = OF_getprop(iparent, "interrupt-map", map,
+			    sizeof(map));
+			goto again;
 		}
 
-		mp += icells;
-		len -= icells * 4;
+		mp += (acells + icells);
+		len -= (acells + icells) * 4;
 	}
 
 nomap:
@@ -422,6 +476,7 @@ nomap:
 		len = OF_getprop(parent, "AAPL,interrupts", intr, 4) ;
 		if (len == 4)
 			return len;
+#if 0
 		/*
 		 * XXX I don't know what is the correct local address.
 		 * XXX Use the first entry for now.
@@ -431,12 +486,15 @@ nomap:
 			addr = &map[5];
 			return find_node_intr(parent, addr, intr);
 		}
+#endif
 	}
 
+#if 0
 	/* XXX This may be wrong... */
 	len = OF_getprop(node, "interrupts", intr, 4) ;
 	if (len == 4)
 		return len;
+#endif
 
 	return -1;
 }
