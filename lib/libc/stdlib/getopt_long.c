@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.10 2001/01/04 03:35:29 lukem Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.11 2001/02/12 23:59:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.10 2001/01/04 03:35:29 lukem Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.11 2001/02/12 23:59:17 cgd Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -100,8 +100,6 @@ static const char noarg[] = "option doesn't take an argument -- %.*s";
 static const char illoptchar[] = "illegal option -- %c";
 static const char illoptstring[] = "illegal option -- %s";
 
-
-extern char *__progname;
 
 /*
  * Compute the greatest common divisor of a and b.
