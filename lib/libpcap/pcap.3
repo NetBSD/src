@@ -1,4 +1,4 @@
-.\" $NetBSD: pcap.3,v 1.13 2002/09/22 16:13:01 thorpej Exp $
+.\" $NetBSD: pcap.3,v 1.14 2002/09/25 00:30:24 wiz Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd June 24, 1998
+.Dd September 25, 2002
 .Os
 .Dt PCAP 3
 .Sh NAME
@@ -272,13 +272,13 @@ to the type specified by
 This operation is supported only of the interface associated with
 the pcap descriptor supports multiple data link types.
 .Em \-1
-is return on faulure;
+is return on failure;
 .Em 0
 is returned on success.
 .Pp
 .Fn pcap_list_datalinks
 is used to get a list of the support data link types of the interface
-assocated with the pcap descriptor.
+associated with the pcap descriptor.
 .Fn pcap_list_datalinks
 allocates an array to hold the list and sets
 .Fa *dlt_buf .
