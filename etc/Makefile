@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.37 1994/02/10 23:23:34 cgd Exp $
+#	$Id: Makefile,v 1.38 1994/02/17 00:12:56 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -69,6 +69,8 @@ distribution: distrib-dirs
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	install -c -o ${BINOWN} -g operator -m 664 /dev/null \
 		${DESTDIR}/etc/dumpdates
+	install -c -o root -g wheel -m 600 /dev/null \
+		${DESTDIR}/var/cron/log
 	install -c -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
