@@ -1,7 +1,7 @@
 #!/bin/sh
 # grog -- guess options for groff command
 # Like doctype in Kernighan & Pike, Unix Programming Environment, pp 306-8.
-# $Id: grog.sh,v 1.3 1995/04/12 00:57:54 jtc Exp $
+# $Id: grog.sh,v 1.4 1995/09/27 09:43:21 pk Exp $
 
 soelim=soelim
 
@@ -75,5 +75,5 @@ END {
 		printf "%s", opts
 	if (files != "")
 		printf " %s", files
-	print
+	print ""
 }' "opts=$opts" "files=$*" -
