@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.5 1995/11/01 04:40:21 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.6 1996/03/17 01:33:18 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -83,8 +83,12 @@ static adb_event_t adb_rptevent;/* event to auto-repeat */
 extern int matchbyname();
 
 /* Driver definition. */
-struct cfdriver adbcd = {
-	NULL, "adb", matchbyname, adbattach, DV_DULL, sizeof(struct device),
+struct cfattach adb_ca = {
+	sizeof(struct device), matchbyname, adbattach
+};
+
+struct cfdriver adb_cd = {
+	NULL, "adb", DV_DULL
 };
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.40 1996/02/02 15:30:56 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.41 1996/03/17 01:33:24 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -126,8 +126,12 @@ static inline void ae_xmit __P((struct ae_softc *));
 static inline caddr_t ae_ring_copy __P((
 		/* struct ae_softc *, caddr_t, caddr_t, u_short */ ));
 
-struct cfdriver aecd = {
-	NULL, "ae", aeprobe, aeattach, DV_IFNET, sizeof(struct ae_softc)
+struct cfattach ae_ca = {
+	sizeof(struct ae_softc), aeprobe, aeattach
+};
+
+struct cfdriver ae_cd = {
+	NULL, "ae", DV_IFNET
 };
 
 #define	ETHER_MIN_LEN	64
@@ -415,7 +419,7 @@ aeattach(parent, self, aux)
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = aecd.cd_name;
+	ifp->if_name = ae_cd.cd_name;
 	ifp->if_start = aestart;
 	ifp->if_ioctl = aeioctl;
 	ifp->if_watchdog = aewatchdog;
@@ -491,7 +495,7 @@ void
 aewatchdog(unit)
 	int     unit;
 {
-	struct ae_softc *sc = aecd.cd_devs[unit];
+	struct ae_softc *sc = ae_cd.cd_devs[unit];
 
 #if 1
 /*
@@ -679,7 +683,7 @@ void
 aestart(ifp)
 	struct ifnet *ifp;
 {
-	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
+	struct ae_softc *sc = ae_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m0;
 	caddr_t buffer;
 	int     len;
@@ -1026,7 +1030,7 @@ aeioctl(ifp, cmd, data)
 	u_long  cmd;
 	caddr_t data;
 {
-	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
+	struct ae_softc *sc = ae_cd.cd_devs[ifp->if_unit];
 	register struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s, error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.16 1995/07/17 01:24:34 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.17 1996/03/17 01:33:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -748,8 +748,12 @@ iteattach(struct device * parent, struct device * dev, void *aux)
 
 extern int matchbyname();
 
-struct cfdriver itecd = {
-	NULL, "ite", matchbyname, iteattach, DV_TTY, sizeof(struct device)
+struct cfattach ite_ca = {
+	sizeof(struct device), matchbyname, iteattach
+};
+
+struct cfdriver ite_cd = {
+	NULL, "ite", DV_TTY
 };
 
 int

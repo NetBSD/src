@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.92 1996/03/16 06:08:46 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.93 1996/03/17 01:31:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -118,8 +118,12 @@ int pcprobe __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 
-struct cfdriver pccd = {
-	NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct pc_softc)
+struct cfattach pc_ca = {
+	sizeof(struct pc_softc), pcprobe, pcattach
+};
+
+struct cfdriver pc_cd = {
+	NULL, "pc", DV_TTY
 };
 
 #define	COL		80
@@ -492,9 +496,9 @@ pcopen(dev, flag, mode, p)
 	int unit = PCUNIT(dev);
 	struct tty *tp;
 
-	if (unit >= pccd.cd_ndevs)
+	if (unit >= pc_cd.cd_ndevs)
 		return ENXIO;
-	sc = pccd.cd_devs[unit];
+	sc = pc_cd.cd_devs[unit];
 	if (sc == 0)
 		return ENXIO;
 
@@ -529,7 +533,7 @@ pcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
@@ -546,7 +550,7 @@ pcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -558,7 +562,7 @@ pcwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -568,7 +572,7 @@ struct tty *
 pctty(dev)
 	dev_t dev;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -611,7 +615,7 @@ pcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -794,8 +798,8 @@ pccnpollc(dev, on)
 		 * interrupts.
 		 */
 		unit = PCUNIT(dev);
-		if (pccd.cd_ndevs > unit) {
-			sc = pccd.cd_devs[unit];
+		if (pc_cd.cd_ndevs > unit) {
+			sc = pc_cd.cd_devs[unit];
 			if (sc != 0) {
 				s = spltty();
 				pcintr(sc);

@@ -909,6 +909,15 @@ struct vt_softc {
 int pcprobe ();
 void pcattach ();
 
+#if PCVT_NETBSD > 110
+struct cfattach vt_ca = {
+	sizeof(struct vt_softc), pcprobe, pcattach
+};
+
+struct cfdriver vt_cd = {
+	NULL, "vt", DV_TTY
+};
+#else /* !PCVT_NETBSD > 110 */
 #if PCVT_NETBSD > 101
 struct cfdriver vtcd = {
 	NULL, "vt", pcprobe, pcattach, DV_TTY, sizeof(struct vt_softc)
@@ -918,6 +927,7 @@ struct cfdriver vtcd = {
 	NULL, "vt", pcprobe, pcattach, DV_TTY, sizeof(struct device)
 };
 #endif /* PCVT_NETBSD > 101 */
+#endif /* PCVT_NETBSD > 110 */
 
 #else /* !PCVT_NETBSD > 9 */
 
