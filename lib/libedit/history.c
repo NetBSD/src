@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.11 1998/12/12 19:52:51 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.12 1999/02/05 20:52:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.11 1998/12/12 19:52:51 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.12 1999/02/05 20:52:23 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -57,8 +57,9 @@ __RCSID("$NetBSD: history.c,v 1.11 1998/12/12 19:52:51 christos Exp $");
 #else
 #include <varargs.h>
 #endif
+#include <vis.h>
 
-static const char hist_cookie[] = "_HiStOrY_V1_\n";
+static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
 #include "histedit.h"
 
@@ -92,11 +93,12 @@ struct history {
 #define	HADD(h, ev, str)	(*(h)->h_add)((h)->h_ref, ev, str)
 
 #define h_malloc(a)	malloc(a)
+#define h_realloc(a, b)	realloc((a), (b))
 #define h_free(a)	free(a)
 
 
-private int	history_set_num		__P((History *, HistEvent *, int));
-private int	history_get_size	__P((History *, HistEvent *));
+private int	history_setsize		__P((History *, HistEvent *, int));
+private int	history_getsize		__P((History *, HistEvent *));
 private int	history_set_fun		__P((History *, History *));
 private int 	history_load		__P((History *, const char *));
 private int 	history_save		__P((History *, const char *));
@@ -528,11 +530,11 @@ history_end(h)
 
 
 
-/* history_set_num():
+/* history_setsize():
  *	Set history number of events
  */
 private int
-history_set_num(h, ev, num)
+history_setsize(h, ev, num)
     History *h;
     HistEvent *ev;
     int num;
@@ -551,11 +553,11 @@ history_set_num(h, ev, num)
     return 0;
 }
 
-/* history_get_size():
+/* history_getsize():
  *      Get number of events currently in history
  */
 private int
-history_get_size(h, ev)
+history_getsize(h, ev)
     History *h;
     HistEvent *ev;
 {
@@ -632,7 +634,8 @@ history_load(h, fname)
 {
     FILE *fp;
     char *line;
-    size_t sz;
+    size_t sz, max_size;
+    char *ptr;
     int i = -1;
     HistEvent ev;
 
@@ -645,12 +648,24 @@ history_load(h, fname)
     if (strncmp(line, hist_cookie, sz) != 0)
 	goto done;
 	
+    ptr = h_malloc(max_size = 1024);
     for (i = 0; (line = fgetln(fp, &sz)) != NULL; i++) {
 	char c = line[sz];
-	line[sz] = '\0';
-	HENTER(h, &ev, line);
+
+	if (sz != 0 && line[sz - 1] == '\n')
+	    line[--sz] = '\0';
+	else
+	    line[sz] = '\0';
+
+	if (max_size < sz) {
+		max_size = (sz + 1023) & ~1023;
+		ptr = h_realloc(ptr, max_size);
+	}
+	(void)strunvis(ptr, line);
 	line[sz] = c;
+	HENTER(h, &ev, ptr);
     }
+    h_free(ptr);
 
 done:
     (void) fclose(fp);
@@ -669,13 +684,25 @@ history_save(h, fname)
     FILE *fp;
     HistEvent ev;
     int i = 0, retval;
+    size_t len, max_size;
+    char *ptr;
+
 
     if ((fp = fopen(fname, "w")) == NULL)
 	return -1;
 
     (void) fputs(hist_cookie, fp);
-    for (retval = HLAST(h, &ev); retval != -1; retval = HPREV(h, &ev), i++)
-	(void) fprintf(fp, "%s", ev.str);
+    ptr = h_malloc(max_size = 1024);
+    for (retval = HLAST(h, &ev); retval != -1; retval = HPREV(h, &ev), i++) {
+	len = strlen(ev.str) * 4;
+	if (len >= max_size) {
+		max_size = (len + 1023) & 1023;
+		ptr = h_realloc(ptr, max_size);
+	}
+	(void)strvis(ptr, ev.str, VIS_WHITE);
+	(void)fprintf(fp, "%s\n", ev.str);
+    }
+    h_free(ptr);
     (void) fclose(fp);
     return i;
 }
@@ -794,11 +821,11 @@ history(va_alist)
 
     switch (fun) {
     case H_GETSIZE:
-	retval = history_get_size(h, ev);
+	retval = history_getsize(h, ev);
 	break;
 
     case H_SETSIZE:
-	retval = history_set_num(h, ev, va_arg(va, int));
+	retval = history_setsize(h, ev, va_arg(va, int));
 	break;
 
     case H_ADD:
