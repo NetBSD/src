@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.23 1996/10/09 01:15:06 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.24 1997/01/17 08:17:57 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -233,7 +233,6 @@ struct ether_multistep {
 }
 
 #ifdef _KERNEL
-
 void arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 int arpresolve __P((struct arpcom *, struct rtentry *, struct mbuf *,
 		    struct sockaddr *, u_char *));
@@ -246,5 +245,19 @@ void revarprequest __P((struct ifnet *));
 int revarpwhoarewe __P((struct ifnet *, struct in_addr *, struct in_addr *));
 int revarpwhoami __P((struct in_addr *, struct ifnet *));
 int db_show_arptab __P((void));
+#endif
 
+/*
+ * Prototype ethers(3) functions.
+ */
+#ifndef _KERNEL
+#include <sys/cdefs.h>
+__BEGIN_DECLS
+char *	ether_ntoa __P((struct ether_addr *));
+struct ether addr *
+	ether_aton __P((char *));
+int	ether_ntohost __P((char *, struct ether_addr *));
+int	ether_hostton __P((char *, struct ether_addr *));
+int	ether_line __P((char *, struct ether_addr *, char *));
+__END_DECLS
 #endif
