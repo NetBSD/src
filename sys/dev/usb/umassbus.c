@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.2 2001/04/13 12:42:40 augustss Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.3 2001/04/17 00:50:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,9 +104,9 @@ umass_attach_bus(struct umass_softc *sc)
 	/*
 	 * fill in the prototype scsipi_link.
 	 */
-	switch (sc->proto & PROTO_COMMAND) {
-	case PROTO_RBC:
-	case PROTO_SCSI:
+	switch (sc->cmd_proto) {
+	case CPROTO_RBC:
+	case CPROTO_SCSI:
 		sc->bus.u.sc_link.type = BUS_SCSI;
 		sc->bus.u.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 		sc->bus.u.sc_link.adapter_softc = sc;
@@ -120,8 +120,8 @@ umass_attach_bus(struct umass_softc *sc)
 		break;
 
 #if NATAPIBUS > 0
-	case PROTO_UFI:
-	case PROTO_ATAPI:
+	case CPROTO_UFI:
+	case CPROTO_ATAPI:
 		sc->bus.u.aa.sc_aa.aa_type = T_ATAPI;
 		sc->bus.u.aa.sc_aa.aa_channel = 0;
 		sc->bus.u.aa.sc_aa.aa_openings = 1;
@@ -136,8 +136,8 @@ umass_attach_bus(struct umass_softc *sc)
 #endif
 
 	default:
-		printf("%s: proto=0x%x not supported yet\n", 
-		       USBDEVNAME(sc->sc_dev), sc->proto);
+		printf("%s: cmd proto=0x%x not supported yet\n", 
+		       USBDEVNAME(sc->sc_dev), sc->cmd_proto);
 		return (1);
 	}
 
@@ -372,7 +372,7 @@ umass_scsipi_getgeom(struct scsipi_link *sc_link, struct disk_parms *dp,
 	struct umass_softc *sc = sc_link->adapter_softc;
 
 	/* If it's not a floppy, we don't know what to do. */
-	if (!(sc->proto & PROTO_UFI))
+	if (sc->cmd_proto != CPROTO_UFI)
 		return (0);
 
 	switch (sectors) {
@@ -427,7 +427,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		sc->bus.sc_sense_cmd.length = sizeof(xs->sense);
 
 		cmdlen = sizeof(sc->bus.sc_sense_cmd);
-		if (sc->proto & PROTO_UFI) /* XXX */
+		if (sc->cmd_proto == CPROTO_UFI) /* XXX */
 			cmdlen = UFI_COMMAND_LENGTH;
 		sc->transfer(sc, sc_link->scsipi_scsi.lun,
 			     &sc->bus.sc_sense_cmd, cmdlen,
