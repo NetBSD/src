@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.3 2000/05/03 10:57:31 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.4 2000/05/04 00:52:59 itojun Exp $
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
 /usr/share/doc/smm/03.fsck/2.t
@@ -17,7 +17,6 @@
 /usr/share/doc/smm/09.sendmail/Makefile
 /usr/share/doc/smm/09.sendmail/intro.me
 /usr/share/sendmail/cf/clientproto.mc
-/usr/share/sendmail/cf/sun-lamp.mc
 /usr/share/sendmail/cf/tcpproto.mc
 /usr/share/sendmail/cf/uucpproto.mc
 /usr/share/sendmail/m4/nullrelay.m4

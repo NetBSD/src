@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2000/05/03 10:50:56 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2000/05/04 00:52:58 itojun Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
 .PATH: ${DIST}/sendmail/cf/cf
 
 FILESDIR=	/usr/share/sendmail/cf
-FILES=		boat-anchor.mc chimera.mc ihack.net.mc netbsd-proto.mc \
-		zhadum.mc Makefile
+FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
+		netbsd-proto.mc sun-lamp.mc zhadum.mc Makefile
 
 .if (${.CURDIR} == ${FILESDIR})
 CFDIR=		${.CURDIR}/..
