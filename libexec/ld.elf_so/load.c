@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.8 1999/12/13 10:47:38 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.9 1999/12/15 05:22:37 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -143,7 +143,6 @@ _rtld_load_by_name(name, obj, needed, dodebug)
 	Library_Xform *x = _rtld_xforms;
 	Obj_Entry *o = NULL;
 	size_t i, j;
-	int ctlname[2];
 	char *libpath;
 	bool got = false;
 	union {
@@ -151,30 +150,28 @@ _rtld_load_by_name(name, obj, needed, dodebug)
 		char s[16];
 	} val;
 
-	ctlname[0] = CTL_MACHDEP;
 	if (dodebug)
 		dbg(("load by name %s %p", name, x));
 	for (; x; x = x->next) {
 		if (strcmp(x->name, name) != 0)
 			continue;
 
-		ctlname[1] = x->ctl;
-
 		i = sizeof(val);
 
-		if (sysctl(ctlname, 2, &val, &i, NULL, 0) == -1) {
+		if (sysctl(x->ctl, x->ctlmax, &val, &i, NULL, 0) == -1) {
 			warn("sysctl");
 			break;
 		}
 
-		switch (x->ctltype) {
+		switch (x->ctltype[x->ctlmax - 1]) {
 		case CTLTYPE_INT:
 			xsnprintf(val.s, sizeof(val.s), "%d", val.i);
 			break;
 		case CTLTYPE_STRING:
 			break;
 		default:
-			warnx("unsupported sysctl type %d", x->ctltype);
+			warnx("unsupported sysctl type %d",
+			    x->ctltype[x->ctlmax - 1]);
 			break;
 		}
 
