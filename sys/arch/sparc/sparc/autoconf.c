@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 1995/08/27 18:58:48 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.33 1995/08/29 19:59:49 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1504,7 +1504,7 @@ setroot()
 		 * because swap must be on same device as root, for
 		 * network devices this is easy.
 		 */
-		if (bootdv != NULL && bootdv->dv_class == DV_IFNET) {
+		if (bootdv->dv_class == DV_IFNET) {
 			goto gotswap;
 		}
 		for (;;) {
@@ -1539,10 +1539,15 @@ gotswap:
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
+
 	} else if (mountroot == NULL) {
+
 		/*
 		 * `swap generic': Use the device the ROM told us to use.
 		 */
+		if (bootdv == NULL)
+			panic("boot device not known");
+
 		majdev = findblkmajor(bootdv);
 		if (majdev >= 0) {
 			/*
@@ -1562,7 +1567,9 @@ gotswap:
 		}
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
+
 	} else {
+
 		/*
 		 * `root DEV swap DEV': honour rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
@@ -1570,8 +1577,6 @@ gotswap:
 		return;
 	}
 
-	if (bootdv == NULL)
-		panic("boot device not known");
 	switch (bootdv->dv_class) {
 #if defined(NFSCLIENT)
 	case DV_IFNET:
