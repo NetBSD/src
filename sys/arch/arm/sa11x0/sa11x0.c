@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.12 2003/04/03 17:47:04 he Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.13 2003/04/14 14:17:43 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -110,10 +110,6 @@ sa11x0_print(aux, name)
                 aprint_normal(" addr 0x%lx", sa->sa_addr);
         if (sa->sa_size > 1)
                 aprint_normal("-0x%lx", sa->sa_addr + sa->sa_size - 1);
-	if (sa->sa_memsize)
-		aprint_normal(" membase 0x%lx", sa->sa_membase);
-	if (sa->sa_memsize > 1)
-		aprint_normal("-0x%lx", sa->sa_membase + sa->sa_memsize - 1);
         if (sa->sa_intr > 1)
                 aprint_normal(" intr %d", sa->sa_intr);
 	if (sa->sa_gpio != -1)
@@ -216,8 +212,6 @@ sa11x0_search(parent, cf, aux)
         sa.sa_iot = sc->sc_iot;
         sa.sa_addr = cf->cf_loc[SAIPCF_ADDR];
         sa.sa_size = cf->cf_loc[SAIPCF_SIZE];
-	sa.sa_membase = cf->cf_loc[SAIPCF_MEMBASE];
-        sa.sa_memsize = cf->cf_loc[SAIPCF_MEMSIZE];
         sa.sa_intr = cf->cf_loc[SAIPCF_INTR];
 	sa.sa_gpio = cf->cf_loc[SAIPCF_GPIO];
 

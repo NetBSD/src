@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.3 2002/12/18 04:25:56 bsh Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.4 2003/04/14 14:16:10 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,10 +69,6 @@ typedef void *sacc_chipset_tag_t;
 struct sa1111_attach_args {
 	bus_addr_t		sa_addr;	/* i/o address  */
 	bus_size_t		sa_size;
-#if 0
-	bus_addr_t		sa_membase;	/* mem address  */
-	bus_size_t		sa_memsize;
-#endif
 	int			sa_intr;
 };
 
