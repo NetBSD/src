@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.105 1999/09/28 23:43:07 ad Exp $
+# $NetBSD: ALPHA,v 1.106 1999/09/29 10:43:14 kleink Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -194,11 +194,13 @@ bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
+#eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x
-ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
-esh*	at	pci? dev ? function ?		# Essential HIPPI card
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
+esh*	at	pci? dev ? function ?		# Essential HIPPI card
+eso*	at	pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
+ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
@@ -214,8 +216,13 @@ tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
-#eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
+
 #audio*	at	eap?
+audio*	at	eso?
+
+opl*	at	eso?
+
+mpu*	at	eso?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
