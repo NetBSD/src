@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.104.2.5 2002/11/01 13:27:22 tron Exp $
+.\"	$NetBSD: hardware,v 1.104.2.6 2003/08/16 16:02:55 tron Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -41,7 +41,7 @@ IBM ESDI Fixed Disk Controllers [m]
 .It
 Intel PIIX, PIIX3 and PIIX4 IDE Controllers
 .It
-Intel 82801 (ICH/ICH0/ICH2/ICH4) IDE Controllers
+Intel 82801 (ICH/ICH0/ICH2/ICH4/ICH5) IDE Controllers
 .It
 Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66), PDC20265/PDC20267 (Ultra/100),
 PDC20268 (Ultra/100TX2 and Ultra/100TX2v2) and Ultra/133, Ultra/133TX2
