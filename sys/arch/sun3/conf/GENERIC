@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101.2.1 2004/06/30 21:26:36 jdc Exp $
+# $NetBSD: GENERIC,v 1.101.2.2 2004/07/02 17:39:52 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101.2.1 $"
+#ident 		"GENERIC-$Revision: 1.101.2.2 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -45,6 +45,7 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
