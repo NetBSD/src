@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.47 2003/10/05 11:10:25 tsutsui Exp $
+#	$NetBSD: files.mips,v 1.48 2003/10/29 23:41:49 christos Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -61,6 +61,7 @@ file	arch/mips/mips/procfs_machdep.c		procfs
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/mips/mips/compat_13_machdep.c	compat_13 | compat_ultrix
+file	arch/mips/mips/compat_16_machdep.c	compat_16
 
 # Ultrix Binary Compatibility (COMPAT_ULTRIX)
 include "compat/ultrix/files.ultrix"
