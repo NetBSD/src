@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";*/
-static char rcsid[] = "$NetBSD: syslogd.c,v 1.5 1996/01/02 17:48:41 perry Exp $";
+static char rcsid[] = "$NetBSD: syslogd.c,v 1.6 1996/01/24 15:49:52 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -1057,7 +1057,7 @@ cfline(line, f)
 		if (hp == NULL) {
 			extern int h_errno;
 
-			logerror(hstrerror(h_errno));
+			logerror((char *)hstrerror(h_errno));
 			break;
 		}
 		memset(&f->f_un.f_forw.f_addr, 0,
