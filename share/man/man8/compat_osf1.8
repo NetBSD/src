@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_osf1.8,v 1.5 2001/09/05 23:47:15 wiz Exp $
+.\" $NetBSD: compat_osf1.8,v 1.6 2001/12/26 01:15:47 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,6 +100,9 @@ And the files
 .Pp
 Or, simply NFS mount the appropriate directories under
 .Pa /emul/osf1 .
+.Sh SEE ALSO
+.Xr options 4 ,
+.Xr config 8
 .Sh BUGS
 Certain values in
 .Pa /emul/osf1/etc/svc.conf
@@ -108,6 +111,3 @@ can cause programs to fail with
 .Pp
 Pathnames pointed to by symbolic links are not looked up in the
 shadow root when running a OSF/1 executable. This is not consistent.
-.Sh SEE ALSO
-.Xr options 4 ,
-.Xr config 8
