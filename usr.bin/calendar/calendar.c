@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.19 1999/11/02 10:52:49 lukem Exp $	*/
+/*	$NetBSD: calendar.c,v 1.20 1999/11/02 10:56:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.19 1999/11/02 10:52:49 lukem Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.20 1999/11/02 10:56:10 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -102,7 +102,7 @@ main(argc, argv)
 	int ch;
 	const char *caldir;
 
-	while ((ch = getopt(argc, argv, "ad:f:l:w:")) != -1)
+	while ((ch = getopt(argc, argv, "-ad:f:l:w:")) != -1)
 		switch (ch) {
 		case '-':		/* backward contemptible */
 		case 'a':
