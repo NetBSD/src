@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.12 2000/04/05 07:18:07 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.13 2000/04/05 07:29:18 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -447,8 +447,6 @@ pm_pmgrop_pm1(pmdata)
 					/* restore formar value */
 					via_reg(VIA1, vDirA) = via1_vDirA;
 					via_reg(VIA1, vIER) = via1_vIER;
-					if (s != 0x81815963)
-						splx(s);
 					return 0xffffcd38;
 				}
 
@@ -494,7 +492,9 @@ pm_pmgrop_pm1(pmdata)
 				/* restore formar value */
 				via_reg(VIA1, vDirA) = via1_vDirA;
 				via_reg(VIA1, vIER) = via1_vIER;
-					return 0xffffcd38;
+				if (s != 0x81815963)
+					splx(s);
+				return 0xffffcd38;
 			}
 
 			/* send # of PM data */
