@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.19 1999/05/08 01:42:24 matt Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.20 1999/08/27 01:52:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -79,7 +79,7 @@ struct	arphdr {
 #define ar_spa(ap) (((caddr_t)((ap)+1))+  (ap)->ar_hln)
 #define ar_tha(ap) (((caddr_t)((ap)+1))+  (ap)->ar_hln+(ap)->ar_pln)
 #define ar_tpa(ap) (((caddr_t)((ap)+1))+2*(ap)->ar_hln+(ap)->ar_pln)
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 
 /*
