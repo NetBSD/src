@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.15 1999/03/16 18:13:44 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.15.2.1 1999/09/03 09:50:47 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.15 1999/03/16 18:13:44 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.15.2.1 1999/09/03 09:50:47 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,8 +88,9 @@ static FTSENT	*fts_build __P((FTS *, int));
 static void	 fts_lfree __P((FTSENT *));
 static void	 fts_load __P((FTS *, FTSENT *));
 static size_t	 fts_maxarglen __P((char * const *));
-static void	 fts_padjust __P((FTS *, void *));
+static size_t	 fts_pow2 __P((size_t));
 static int	 fts_palloc __P((FTS *, size_t));
+static void	 fts_padjust __P((FTS *, FTSENT *));
 static FTSENT	*fts_sort __P((FTS *, FTSENT *, size_t));
 static u_short	 fts_stat __P((FTS *, FTSENT *, int));
 
@@ -601,8 +602,8 @@ fts_build(sp, type)
 	size_t nitems;
 	FTSENT *cur, *tail;
 	DIR *dirp;
-	void *adjaddr;
-	int cderrno, descend, len, level, maxlen, nlinks, saved_errno;
+	int adjust, cderrno, descend, len, level, nlinks, saved_errno, nostat;
+	size_t maxlen;
 #ifdef FTS_WHITEOUT
 	int oflag;
 #endif
@@ -636,12 +637,16 @@ fts_build(sp, type)
 	 * directory if we're cheating on stat calls, 0 if we're not doing
 	 * any stat calls at all, -1 if we're doing stats on everything.
 	 */
-	if (type == BNAMES)
+	if (type == BNAMES) {
 		nlinks = 0;
-	else if (ISSET(FTS_NOSTAT) && ISSET(FTS_PHYSICAL))
+		nostat = 1;
+	} else if (ISSET(FTS_NOSTAT) && ISSET(FTS_PHYSICAL)) {
 		nlinks = cur->fts_nlink - (ISSET(FTS_SEEDOT) ? 0 : 2);
-	else
+		nostat = 1;
+	} else {
 		nlinks = -1;
+		nostat = 0;
+	}
 
 #ifdef notdef
 	(void)printf("nlinks == %d (cur: %d)\n", nlinks, cur->fts_nlink);
@@ -686,32 +691,33 @@ fts_build(sp, type)
 	 * If not changing directories set a pointer so that can just append
 	 * each new name into the path.
 	 */
-	maxlen = sp->fts_pathlen - cur->fts_pathlen - 1;
 	len = NAPPEND(cur);
 	if (ISSET(FTS_NOCHDIR)) {
 		cp = sp->fts_path + len;
 		*cp++ = '/';
 	}
+	len++;
+	maxlen = sp->fts_pathlen - len;
 
 	level = cur->fts_level + 1;
 
 	/* Read the directory, attaching each entry to the `link' pointer. */
-	adjaddr = NULL;
+	adjust = 0;
 	for (head = tail = NULL, nitems = 0; (dp = readdir(dirp)) != NULL;) {
 		size_t dlen;
 
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
-#if defined(__svr4__) || defined(__SVR4)
+#if defined(__svr4__) || defined(__SVR4) || defined(__linux__)
 		dlen = strlen(dp->d_name);
 #else
 		dlen = dp->d_namlen;
 #endif
 		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
 			goto mem1;
-		if (dlen > maxlen) {
-			if (fts_palloc(sp, dlen)) {
+		if (dlen >= maxlen) {	/* include space for NUL */
+			if (fts_palloc(sp, len + dlen + 1)) {
 				/*
 				 * No more memory for path or structures.  Save
 				 * errno, free up the current structure and the
@@ -727,11 +733,13 @@ mem1:				saved_errno = errno;
 				SET(FTS_STOP);
 				return (NULL);
 			}
-			adjaddr = sp->fts_path;
-			maxlen = sp->fts_pathlen - sp->fts_cur->fts_pathlen - 1;
+			adjust = 1;
+			if (ISSET(FTS_NOCHDIR))
+				cp = sp->fts_path + len;
+			maxlen = sp->fts_pathlen - len;
 		}
 
-		p->fts_pathlen = len + dlen + 1;
+		p->fts_pathlen = len + dlen;
 		p->fts_parent = sp->fts_cur;
 		p->fts_level = level;
 
@@ -749,7 +757,7 @@ mem1:				saved_errno = errno;
 			p->fts_accpath = cur->fts_accpath;
 		} else if (nlinks == 0
 #ifdef DT_DIR
-		    || (nlinks > 0 && 
+		    || (nostat && 
 		    dp->d_type != DT_DIR && dp->d_type != DT_UNKNOWN)
 #endif
 		    ) {
@@ -789,8 +797,8 @@ mem1:				saved_errno = errno;
 	 * If had to realloc the path, adjust the addresses for the rest
 	 * of the tree.
 	 */
-	if (adjaddr)
-		fts_padjust(sp, adjaddr);
+	if (adjust)
+		fts_padjust(sp, head);
 
 	/*
 	 * If not changing directories, reset the path back to original
@@ -929,12 +937,13 @@ fts_sort(sp, head, nitems)
 	 * 40 so don't realloc one entry at a time.
 	 */
 	if (nitems > sp->fts_nitems) {
-		sp->fts_nitems = nitems + 40;
-		if ((sp->fts_array = realloc(sp->fts_array,
-		    (size_t)(sp->fts_nitems * sizeof(FTSENT *)))) == NULL) {
-			sp->fts_nitems = 0;
+		FTSENT **new;
+
+		new = realloc(sp->fts_array, sizeof(FTSENT *) * (nitems + 40));
+		if (new == 0)
 			return (head);
-		}
+		sp->fts_array = new;
+		sp->fts_nitems = nitems + 40;
 	}
 	for (ap = sp->fts_array, p = head; p; p = p->fts_link)
 		*ap++ = p;
@@ -997,20 +1006,54 @@ fts_lfree(head)
 	}
 }
 
+static size_t
+fts_pow2(x)
+	size_t x;
+{
+
+	x--;
+	x |= x>>1;
+	x |= x>>2;
+	x |= x>>4;
+	x |= x>>8;
+	x |= x>>16;
+#if LONG_BIT > 32
+	x |= x>>32;
+#endif
+#if LONG_BIT > 64
+	x |= x>>64;
+#endif
+	x++;
+	return (x);
+}
+
 /*
  * Allow essentially unlimited paths; find, rm, ls should all work on any tree.
  * Most systems will allow creation of paths much longer than MAXPATHLEN, even
- * though the kernel won't resolve them.  Add the size (not just what's needed)
- * plus 256 bytes so don't realloc the path 2 bytes at a time. 
+ * though the kernel won't resolve them.  Round up the new size to a power of 2,
+ * so we don't realloc the path 2 bytes at a time. 
  */
 static int
-fts_palloc(sp, more)
+fts_palloc(sp, size)
 	FTS *sp;
-	size_t more;
+	size_t size;
 {
-	sp->fts_pathlen += more + 256;
-	sp->fts_path = realloc(sp->fts_path, (size_t)sp->fts_pathlen);
-	return (sp->fts_path == NULL);
+	char *new;
+
+#if 1
+	/* Protect against fts_pathlen overflow. */
+	if (size > USHRT_MAX + 1) {
+		errno = ENOMEM;
+		return (1);
+	}
+#endif
+	size = fts_pow2(size);
+	new = realloc(sp->fts_path, size);
+	if (new == 0)
+		return (1);
+	sp->fts_path = new;
+	sp->fts_pathlen = size;
+	return (0);
 }
 
 /*
@@ -1018,23 +1061,28 @@ fts_palloc(sp, more)
  * already returned.
  */
 static void
-fts_padjust(sp, addr)
+fts_padjust(sp, head)
 	FTS *sp;
-	void *addr;
+	FTSENT *head;
 {
 	FTSENT *p;
+	char *addr;
 
 #define	ADJUST(p) {							\
-	(p)->fts_accpath =						\
-	    (char *)addr + ((p)->fts_accpath - (p)->fts_path);		\
+	if ((p)->fts_accpath != (p)->fts_name)				\
+		(p)->fts_accpath =					\
+		    addr + ((p)->fts_accpath - (p)->fts_path);		\
 	(p)->fts_path = addr;						\
 }
+
+	addr = sp->fts_path;
+
 	/* Adjust the current set of children. */
 	for (p = sp->fts_child; p; p = p->fts_link)
 		ADJUST(p);
 
-	/* Adjust the rest of the tree. */
-	for (p = sp->fts_cur; p->fts_level >= FTS_ROOTLEVEL;) {
+	/* Adjust the rest of the tree, including the current level. */
+	for (p = head; p->fts_level >= FTS_ROOTLEVEL;) {
 		ADJUST(p);
 		p = p->fts_link ? p->fts_link : p->fts_parent;
 	}
@@ -1049,5 +1097,5 @@ fts_maxarglen(argv)
 	for (max = 0; *argv; ++argv)
 		if ((len = strlen(*argv)) > max)
 			max = len;
-	return (max);
+	return (max + 1);
 }
