@@ -1,4 +1,4 @@
-/*	$NetBSD: ppt.c,v 1.12 2002/11/26 21:34:07 kim Exp $	*/
+/*	$NetBSD: ppt.c,v 1.13 2002/11/26 21:39:18 kim Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ppt.c,v 1.12 2002/11/26 21:34:07 kim Exp $");
+__RCSID("$NetBSD: ppt.c,v 1.13 2002/11/26 21:39:18 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,10 +117,10 @@ main(argc, argv)
 	} else {
 		(void) puts(EDGE);
 		if (argc > 1)
-			while ((p = *++argv)) {
+			while ((p = *argv++)) {
 				for (; *p; ++p)
 					putppt((int)*p);
-				if ((*(argv + 1)))
+				if ((*(argv)))
 					putppt((int)' ');
 			}
 		else while ((c = getchar()) != EOF)
