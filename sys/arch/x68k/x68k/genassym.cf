@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1997/07/14 14:42:53 oki Exp $
+#	$NetBSD: genassym.cf,v 1.2 1997/10/12 18:02:32 oki Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -82,6 +82,7 @@ define	FPU_NONE		FPU_NONE
 define	FPU_68881		FPU_68881
 define	FPU_68882		FPU_68882
 define	FPU_68040		FPU_68040
+define	FPU_68060		FPU_68060
 
 # values for ectype
 define	EC_PHYS			EC_PHYS
