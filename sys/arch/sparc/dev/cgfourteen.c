@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.30 2002/10/02 16:02:13 thorpej Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.31 2002/10/23 09:12:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -117,13 +117,13 @@ dev_type_mmap(cgfourteenmmap);
 
 const struct cdevsw cgfourteen_cdevsw = {
 	cgfourteenopen, cgfourteenclose, noread, nowrite, cgfourteenioctl,
-	nostop, notty, nopoll, cgfourteenmmap,
+	nostop, notty, nopoll, cgfourteenmmap, nokqfilter,
 };
 
 /* frame buffer generic driver */
 static struct fbdriver cgfourteenfbdriver = {
 	cgfourteenunblank, cgfourteenopen, cgfourteenclose, cgfourteenioctl,
-	nopoll, cgfourteenmmap
+	nopoll, cgfourteenmmap, nokqfilter
 };
 
 static void cg14_set_video __P((struct cgfourteen_softc *, int));

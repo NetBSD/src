@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.53 2002/10/02 16:52:49 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.54 2002/10/23 09:13:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.53 2002/10/02 16:52:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.54 2002/10/23 09:13:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,10 +124,11 @@ dev_type_close(chclose);
 dev_type_read(chread);
 dev_type_ioctl(chioctl);
 dev_type_poll(chpoll);
+dev_type_kqfilter(chkqfilter);
 
 const struct cdevsw ch_cdevsw = {
 	chopen, chclose, chread, nowrite, chioctl,
-	nostop, notty, chpoll, nommap,
+	nostop, notty, chpoll, nommap, chkqfilter,
 };
 
 /* SCSI glue */
@@ -479,6 +480,59 @@ chpoll(dev, events, p)
 	return (revents);
 }
 
+static void
+filt_chdetach(struct knote *kn)
+{
+	struct ch_softc *sc = kn->kn_hook;
+
+	SLIST_REMOVE(&sc->sc_selq.si_klist, kn, knote, kn_selnext);
+}
+
+static int
+filt_chread(struct knote *kn, long hint)
+{
+	struct ch_softc *sc = kn->kn_hook;
+
+	if (sc->sc_events == 0)
+		return (0);
+	kn->kn_data = CHANGER_EVENT_SIZE;
+	return (1);
+}
+
+static const struct filterops chread_filtops =
+	{ 1, NULL, filt_chdetach, filt_chread };
+
+static const struct filterops chwrite_filtops =
+	{ 1, NULL, filt_chdetach, filt_seltrue };
+
+int
+chkqfilter(dev_t dev, struct knote *kn)
+{
+	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct klist *klist;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_selq.si_klist;
+		kn->kn_fop = &chread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->sc_selq.si_klist;
+		kn->kn_fop = &chwrite_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+
+	return (0);
+}
+
 int
 ch_interpret_sense(xs)
 	struct scsipi_xfer *xs;
@@ -547,7 +601,7 @@ ch_event(sc, event)
 {
 
 	sc->sc_events |= event;
-	selwakeup(&sc->sc_selq);
+	selnotify(&sc->sc_selq, 0);
 }
 
 int

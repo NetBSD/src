@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.95 2002/10/21 17:37:53 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.96 2002/10/23 09:14:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.95 2002/10/21 17:37:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.96 2002/10/23 09:14:17 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -484,6 +484,11 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Now can be swapped.
 	 */
 	PRELE(p1);
+
+	/*
+	* Notify any interested parties about the new process.
+	*/
+	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
 
 	/*
 	 * Update stats now that we know the fork was successful.

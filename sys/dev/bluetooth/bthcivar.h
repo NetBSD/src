@@ -1,4 +1,4 @@
-/*	$NetBSD: bthcivar.h,v 1.1 2002/08/24 17:30:13 augustss Exp $	*/
+/*	$NetBSD: bthcivar.h,v 1.2 2002/10/23 09:13:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct bthci_methods {
 	int (*bt_read)(void *h, struct uio *uio, int flag);
 	int (*bt_write)(void *h, struct uio *uio, int flag);
 	int (*bt_poll)(void *h, int events, struct proc *p);
+	int (*bt_kqfilter)(void *h, struct knote *kn);
 };
 
 struct bthci_softc {

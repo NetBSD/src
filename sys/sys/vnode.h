@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.98 2002/10/23 06:45:51 gmcgarry Exp $	*/
+/*	$NetBSD: vnode.h,v 1.99 2002/10/23 09:15:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
 #ifndef _SYS_VNODE_H_
 #define	_SYS_VNODE_H_
 
+#include <sys/event.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
 
@@ -111,6 +112,7 @@ struct vnode {
 	struct lock	v_lock;			/* lock for this vnode */
 	struct lock	*v_vnlock;		/* pointer to lock */
 	void 		*v_data;		/* private data for fs */
+	struct klist	v_klist;		/* knotes attached to vnode */
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
@@ -313,6 +315,8 @@ vref(struct vnode *vp)
 #endif /* DIAGNOSTIC */
 
 #define	NULLVP	((struct vnode *)NULL)
+
+#define	VN_KNOTE(vp, b)		KNOTE(&vp->v_klist, (b))
 
 /*
  * Global vnode data.
@@ -529,6 +533,7 @@ int	vn_readdir(struct file *fp, char *buf, int segflg, u_int count,
 void	vn_restorerecurse(struct vnode *vp, u_int flags);
 u_int	vn_setrecurse(struct vnode *vp);
 int	vn_stat(struct vnode *vp, struct stat *sb, struct proc *p);
+int	vn_kqfilter(struct file *fp, struct knote *kn);
 int	vn_writechk(struct vnode *vp);
 
 /* initialise global vnode management */

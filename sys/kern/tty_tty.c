@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.18 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.19 2002/10/23 09:14:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.18 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.19 2002/10/23 09:14:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,10 +59,11 @@ dev_type_read(cttyread);
 dev_type_write(cttywrite);
 dev_type_ioctl(cttyioctl);
 dev_type_poll(cttypoll);
+dev_type_kqfilter(cttykqfilter);
 
 const struct cdevsw ctty_cdevsw = {
 	cttyopen, nullclose, cttyread, cttywrite, cttyioctl,
-	nullstop, notty, cttypoll, nommap, D_TTY
+	nullstop, notty, cttypoll, nommap, cttykqfilter, D_TTY
 };
 
 /*ARGSUSED*/
@@ -169,4 +170,18 @@ cttypoll(dev, events, p)
 	if (ttyvp == NULL)
 		return (seltrue(dev, events, p));
 	return (VOP_POLL(ttyvp, events, p));
+}
+
+int
+cttykqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	/* This is called from filt_fileattach() by the attaching process. */
+	struct proc *p = curproc;
+	struct vnode *ttyvp = cttyvp(p);
+
+	if (ttyvp == NULL)
+		return (1);
+	return (VOP_KQFILTER(ttyvp, kn));
 }

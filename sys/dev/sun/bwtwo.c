@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.6 2002/10/23 09:13:53 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.6 2002/10/23 09:13:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ dev_type_mmap(bwtwommap);
 
 const struct cdevsw bwtwo_cdevsw = {
 	bwtwoopen, nullclose, noread, nowrite, bwtwoioctl,
-	nostop, notty, nopoll, bwtwommap,
+	nostop, notty, nopoll, bwtwommap, nokqfilter,
 };
 
 /* XXX we do not handle frame buffer interrupts (do not know how) */
@@ -127,7 +127,8 @@ static void	bwtwounblank(struct device *);
 
 /* frame buffer generic driver */
 static struct fbdriver bwtwofbdriver = {
-	bwtwounblank, bwtwoopen, nullclose, bwtwoioctl, nopoll, bwtwommap
+	bwtwounblank, bwtwoopen, nullclose, bwtwoioctl, nopoll, bwtwommap,
+	nokqfilter
 };
 
 int

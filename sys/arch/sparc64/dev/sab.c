@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.6 2002/10/02 16:02:19 thorpej Exp $	*/
+/*	$NetBSD: sab.c,v 1.7 2002/10/23 09:12:15 jdolecek Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ dev_type_poll(sabpoll);
 
 const struct cdevsw sabtty_cdevsw = {
 	sabopen, sabclose, sabread, sabwrite, sabioctl,
-	sabstop, sabtty, sabpoll, nommap, D_TTY
+	sabstop, sabtty, sabpoll, nommap, ttykqfilter, D_TTY
 };
 
 struct sabtty_rate {

@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.21 2002/09/27 15:37:33 provos Exp $	*/
+/*	$NetBSD: stic.c,v 1.22 2002/10/23 09:13:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.21 2002/09/27 15:37:33 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.22 2002/10/23 09:13:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ dev_type_mmap(sticmmap);
 
 const struct cdevsw stic_cdevsw = {
 	sticopen, sticclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, sticmmap,
+	nostop, notty, nopoll, sticmmap, nokqfilter,
 };
 
 /* Colormap for wscons, matching WSCOL_*. Upper 8 are high-intensity. */

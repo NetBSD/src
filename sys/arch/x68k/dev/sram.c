@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.8 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: sram.c,v 1.9 2002/10/23 09:12:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -60,7 +60,7 @@ dev_type_ioctl(sramioctl);
 
 const struct cdevsw sram_cdevsw = {
 	sramopen, sramclose, noread, nowrite, sramioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /* 

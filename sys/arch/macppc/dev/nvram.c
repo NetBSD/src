@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.7 2002/10/02 05:30:42 thorpej Exp $	*/
+/*	$NetBSD: nvram.c,v 1.8 2002/10/23 09:11:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -39,6 +39,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
@@ -70,7 +71,7 @@ dev_type_mmap(nvrammmap);
 
 const struct cdevsw nvram_cdevsw = {
 	nullopen, nullclose, nvramread, nvramwrite, noioctl,
-	nostop, notty, nopoll, nvrammmap,
+	nostop, notty, nopoll, nvrammmap, nokqfilter,
 };
 
 int

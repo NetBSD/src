@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.8 2002/10/02 05:02:30 thorpej Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.9 2002/10/23 09:10:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -129,7 +129,7 @@ dev_type_poll(fcompoll);
 
 const struct cdevsw fcom_cdevsw = {
 	fcomopen, fcomclose, fcomread, fcomwrite, fcomioctl,
-	nostop, fcomtty, fcompoll, nommap, D_TTY
+	nostop, fcomtty, fcompoll, nommap, ttykqfilter, D_TTY
 };
 
 void fcominit	 	__P((bus_space_tag_t, bus_space_handle_t, int, int));

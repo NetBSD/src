@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.74 2002/09/25 22:21:46 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.75 2002/10/23 09:14:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.74 2002/09/25 22:21:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.75 2002/10/23 09:14:41 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -124,10 +124,11 @@ dev_type_read(bpfread);
 dev_type_write(bpfwrite);
 dev_type_ioctl(bpfioctl);
 dev_type_poll(bpfpoll);
+dev_type_kqfilter(bpfkqfilter);
 
 const struct cdevsw bpf_cdevsw = {
 	bpfopen, bpfclose, bpfread, bpfwrite, bpfioctl,
-	nostop, notty, bpfpoll, nommap,
+	nostop, notty, bpfpoll, nommap, bpfkqfilter,
 };
 
 static int
@@ -533,7 +534,7 @@ bpf_wakeup(d)
 			psignal (p, SIGIO);
 	}
 
-	selwakeup(&d->bd_sel);
+	selnotify(&d->bd_sel, 0);
 	/* XXX */
 	d->bd_sel.si_pid = 0;
 }
@@ -1057,6 +1058,59 @@ bpfpoll(dev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_bpfrdetach(struct knote *kn)
+{
+	struct bpf_d *d = kn->kn_hook;
+	int s;
+
+	s = splnet();
+	SLIST_REMOVE(&d->bd_sel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_bpfread(struct knote *kn, long hint)
+{
+	struct bpf_d *d = kn->kn_hook;
+
+	kn->kn_data = d->bd_hlen;
+	if (d->bd_immediate)
+		kn->kn_data += d->bd_slen;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops bpfread_filtops =
+	{ 1, NULL, filt_bpfrdetach, filt_bpfread };
+
+int
+bpfkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &d->bd_sel.si_klist;
+		kn->kn_fop = &bpfread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = d;
+
+	s = splnet();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 /*

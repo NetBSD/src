@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.56 2002/10/02 05:15:53 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.57 2002/10/23 09:11:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56 2002/10/02 05:15:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.57 2002/10/23 09:11:06 jdolecek Exp $");
 
 #include "hil.h"
 
@@ -142,7 +142,7 @@ dev_type_poll(itepoll);
 
 const struct cdevsw ite_cdevsw = {
 	iteopen, iteclose, iteread, itewrite, iteioctl,
-	nostop, itetty, itepoll, nommap, D_TTY
+	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

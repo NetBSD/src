@@ -1,4 +1,4 @@
-/*	$NetBSD: olms.c,v 1.8 2002/10/02 05:47:13 thorpej Exp $	*/
+/*	$NetBSD: olms.c,v 1.9 2002/10/23 09:11:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.8 2002/10/02 05:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.9 2002/10/23 09:11:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,10 +88,11 @@ dev_type_close(lmsclose);
 dev_type_read(lmsread);
 dev_type_ioctl(lmsioctl);
 dev_type_poll(lmspoll);
+dev_type_kqfilter(lmskqfilter);
  
 const struct cdevsw olms_cdevsw = {
 	lmsopen, lmsclose, lmsread, nowrite, lmsioctl,
-	nostop, notty, lmspoll, nommap,
+	nostop, notty, lmspoll, nommap, lmskqfilter,
 };
 
 #define	LMSUNIT(dev)	(minor(dev))
@@ -386,7 +387,7 @@ olmsintr(arg)
 			sc->sc_state &= ~LMS_ASLP;
 			wakeup((caddr_t)sc);
 		}
-		selwakeup(&sc->sc_rsel);
+		selnotify(&sc->sc_rsel, 0);
 	}
 
 	return -1;
@@ -411,4 +412,53 @@ lmspoll(dev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_lmsrdetach(struct knote *kn)
+{
+	struct olms_softc *sc = kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_lmsread(struct knote *kn, long hint)
+{
+	struct olms_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops lmsread_filtops =
+	{ 1, NULL, filt_lmsrdetach, filt_lmsread };
+
+int
+lmskqfilter(dev_t dev, struct knote *kn)
+{
+	struct olms_softc *sc = olms_cd.cd_devs[LMSUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &lmsread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }

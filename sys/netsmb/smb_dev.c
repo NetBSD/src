@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.8 2002/10/11 21:35:42 jdolecek Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.9 2002/10/23 09:14:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -107,7 +107,7 @@ dev_type_ioctl(nsmb_dev_ioctl);
 
 const struct cdevsw netsmb_cdevsw = {
 	nsmb_dev_open, nsmb_dev_close, noread, nowrite,
-	nsmb_dev_ioctl, nostop, notty, nopoll, nommap,
+	nsmb_dev_ioctl, nostop, notty, nopoll, nommap, nokqfilter,
 };
 #else
 static struct cdevsw nsmb_cdevsw = {

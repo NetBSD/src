@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.25 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mem.c,v 1.26 2002/10/23 09:11:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,13 +64,13 @@ dev_type_ioctl(mmioctl);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 #if defined(pmax)
 const struct cdevsw mem_ultrix_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 #endif /* defined(pmax) */
 

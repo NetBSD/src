@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.27 2002/10/22 13:42:33 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.28 2002/10/23 09:13:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.27 2002/10/22 13:42:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.28 2002/10/23 09:13:12 jdolecek Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -113,7 +113,7 @@ dev_type_ioctl(iopioctl);
 
 const struct cdevsw iop_cdevsw = {
 	iopopen, iopclose, noread, nowrite, iopioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 #define	IC_CONFIGURE	0x01

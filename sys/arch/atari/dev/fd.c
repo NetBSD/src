@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.42 2002/10/02 05:04:25 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.43 2002/10/23 09:10:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -276,7 +276,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mem.c,v 1.13 2002/10/23 09:11:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
 };
 
 /*ARGSUSED*/
