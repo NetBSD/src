@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.55 2002/04/26 03:57:31 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.56 2002/05/06 00:18:15 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.55 2002/04/26 03:57:31 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.56 2002/05/06 00:18:15 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -997,6 +997,7 @@ genfs_putpages(void *v)
 	struct vm_page *pgs[n], *pg, *nextpg, *tpg, curmp, endmp;
 	boolean_t wasclean, by_list, needs_clean, yield;
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
+	boolean_t pagedaemon = curproc == uvm.pagedaemon_proc;
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
 	KASSERT(flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE));
@@ -1037,7 +1038,7 @@ genfs_putpages(void *v)
 	 * current last page.
 	 */
 
-	freeflag = (curproc == uvm.pagedaemon_proc) ? PG_PAGEOUT : PG_RELEASED;
+	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
 	curmp.uobject = uobj;
 	curmp.offset = (voff_t)-1;
 	curmp.flags = PG_BUSY;
@@ -1087,9 +1088,9 @@ genfs_putpages(void *v)
 		 */
 
 		yield = (curproc->p_cpu->ci_schedstate.spc_flags &
-		    SPCF_SHOULDYIELD) && curproc != uvm.pagedaemon_proc;
+		    SPCF_SHOULDYIELD) && !pagedaemon;
 		if (pg->flags & PG_BUSY || yield) {
-			KASSERT(curproc != uvm.pagedaemon_proc);
+			KASSERT(!pagedaemon);
 			UVMHIST_LOG(ubchist, "busy %p", pg,0,0,0);
 			if (by_list) {
 				TAILQ_INSERT_BEFORE(pg, &curmp, listq);
@@ -1205,7 +1206,7 @@ genfs_putpages(void *v)
 				pmap_page_protect(tpg, VM_PROT_NONE);
 				if (tpg->flags & PG_BUSY) {
 					tpg->flags |= freeflag;
-					if (freeflag == PG_PAGEOUT) {
+					if (pagedaemon) {
 						uvmexp.paging++;
 						uvm_pagedequeue(tpg);
 					}
