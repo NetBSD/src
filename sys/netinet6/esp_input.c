@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.23 2002/08/14 00:23:38 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.24 2002/08/21 23:12:01 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.23 2002/08/14 00:23:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.24 2002/08/21 23:12:01 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -216,6 +216,10 @@ esp4_input(m, va_alist)
 	if (!sumalgo)
 		goto noreplaycheck;
 	siz = (((*sumalgo->sumsiz)(sav) + 3) & ~(4 - 1));
+	if (m->m_pkthdr.len < off + ESPMAXLEN + siz) {
+		ipsecstat.in_inval++;
+		goto bad;
+	}
 	if (AH_MAXSUMSIZE < siz) {
 		ipseclog((LOG_DEBUG,
 		    "internal error: AH_MAXSUMSIZE must be larger than %lu\n",
@@ -630,6 +634,10 @@ esp6_input(mp, offp, proto)
 	if (!sumalgo)
 		goto noreplaycheck;
 	siz = (((*sumalgo->sumsiz)(sav) + 3) & ~(4 - 1));
+	if (m->m_pkthdr.len < off + ESPMAXLEN + siz) {
+		ipsecstat.in_inval++;
+		goto bad;
+	}
 	if (AH_MAXSUMSIZE < siz) {
 		ipseclog((LOG_DEBUG,
 		    "internal error: AH_MAXSUMSIZE must be larger than %lu\n",
