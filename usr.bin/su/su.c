@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.22 1998/07/06 06:55:08 mrg Exp $	*/
+/*	$NetBSD: su.c,v 1.23 1998/07/06 11:36:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.22 1998/07/06 06:55:08 mrg Exp $");
+__RCSID("$NetBSD: su.c,v 1.23 1998/07/06 11:36:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(argc, argv)
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	char *user, *shell, *avshell, *username, *cleanenv[10], **np;
-	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
+	char avshellbuf[MAXPATHLEN];
 
 	asme = asthem = fastlogin = 0;
 	shell = NULL;
@@ -152,26 +152,18 @@ main(argc, argv)
 	if (username == NULL || (pwd = getpwnam(username)) == NULL ||
 	    pwd->pw_uid != ruid)
 		pwd = getpwuid(ruid);
-	if (pwd == NULL) {
+	if (pwd == NULL)
 		errx(1, "who are you?");
-	}
 	username = strdup(pwd->pw_name);
-	if (asme)
-		if (pwd->pw_shell && *pwd->pw_shell)
-			shell = strncpy(shellbuf, pwd->pw_shell,
-			    sizeof(shellbuf) + 1);
-		else {
-			shell = _PATH_BSHELL;
-			iscsh = NO;
-		}
+	if (username == NULL)
+		err(1, "strdup");
 
 	/* get target login information, default to root */
 	user = *argv ? *argv : "root";
 	np = *argv ? argv : argv-1;
 
-	if ((pwd = getpwnam(user)) == NULL) {
+	if ((pwd = getpwnam(user)) == NULL)
 		errx(1, "unknown login %s", user);
-	}
 
 	if (ruid) {
 #ifdef KERBEROS
