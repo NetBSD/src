@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: passwd.c,v 1.5 1997/05/09 18:37:45 mycroft Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.6 1997/05/22 03:08:42 lukem Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -293,9 +293,9 @@ pw_scan(bp, pw, flags)
 	struct passwd *pw;
 	int *flags;
 {
-	long id;
+	unsigned long id;
 	int root;
-	char *p, *sh;
+	char *p, *sh, *ep;
 
 	if (flags != (int *)NULL)
 		*flags = 0;
@@ -309,19 +309,27 @@ pw_scan(bp, pw, flags)
 
 	if (!(p = strsep(&bp, ":")))			/* uid */
 		goto fmt;
-	id = atol(p);
+	id = strtoul(p, &ep, 10);
 	if (root && id) {
 		warnx("root uid should be 0");
 		return (0);
 	}
-	pw->pw_uid = id;
+	if (id > UID_MAX || *ep != '\0') {
+		warnx("invalid uid '%s'", p);
+		return (0);
+	}
+	pw->pw_uid = (uid_t)id;
 	if ((*p == '\0') && (flags != (int *)NULL))
 		*flags |= _PASSWORD_NOUID;
 
 	if (!(p = strsep(&bp, ":")))			/* gid */
 		goto fmt;
-	id = atol(p);
-	pw->pw_gid = id;
+	id = strtoul(p, &ep, 10);
+	if (id > GID_MAX || *ep != '\0') {
+		warnx("invalid gid '%s'", p);
+		return (0);
+	}
+	pw->pw_gid = (gid_t)id;
 	if ((*p == '\0') && (flags != (int *)NULL))
 		*flags |= _PASSWORD_NOGID;
 
