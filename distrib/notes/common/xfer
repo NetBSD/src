@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.35 2002/09/01 16:44:27 nsmrtks Exp $
+.\"	$NetBSD: xfer,v 1.36 2002/10/16 04:09:11 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,8 +72,10 @@ are said to have 4M may have 640k of base memory and 3072k of extended
 memory, which currently will not work, as this is a total of 3712k.
 .Pp
 For old machines that may have EISA, SCSI and more RAM, but only
-have an 1.2M floppy drive, use
-.Pa boot-small.fs .
+have a 1.2M floppy drive, use
+.Pa boot-small1.fs
+and
+.Pa boot-small2.fs .
 .Pp
 For old IBM PS/2 machines with MCA, use
 .Pa boot-ps2.fs .
@@ -86,8 +88,11 @@ and
 .Pp
 For the 2-floppy sets (and the CD boot image), utilities to repair
 a badly crashed systems are included.
-The -small and -tiny images have separate rescue floppy images because
-of lack of space.
+The
+.Pa boot-tiny.fs
+image has a separate
+.Pa rescue-tiny.fs
+rescue floppy image because of lack of space.
 .Pp
 If you are using a
 .Ul
