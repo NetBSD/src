@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.28 2004/08/24 01:44:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.29 2004/08/24 01:45:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ struct pthread_lock_ops {
 #define PT_FLAG_SIGDEFERRED     0x0020	/* There are signals to take */
 #define PT_FLAG_SCOPE_SYSTEM	0x0040
 #define PT_FLAG_EXPLICIT_SCHED	0x0080
-#define	PT_FLAG_SUSPENDED	0x0100	/* In the suspended queue */
+#define PT_FLAG_SUSPENDED	0x0100	/* In the suspended queue */
 #define PT_FLAG_SIGNALED	0x0200
 
 #define PT_MAGIC	0x11110001
