@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.8 2003/11/16 00:16:06 jonathan Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.9 2003/11/19 03:18:33 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.8 2003/11/16 00:16:06 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.9 2003/11/19 03:18:33 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,9 +129,10 @@ int	cryptodev_dokey(struct crypt_kop *kop, struct crparam kvp[]);
 static int	cryptodev_cb(void *);
 static int	cryptodevkey_cb(void *);
 
-int	usercrypto = 1;		/* userland may do crypto requests */
-int	userasymcrypto = 1;	/* userland may do asymmetric crypto reqs */
-int	cryptodevallowsoft = 1;	/* only use hardware crypto */
+/*
+ * sysctl-able control variables for /dev/crypto now defined in crypto.c:
+ * crypto_usercrypto, crypto_userasmcrypto, crypto_devallowsoft.
+ */
 
 /* ARGSUSED */
 int
@@ -272,7 +273,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 		}
 
 		error = crypto_newsession(&sid, (txform ? &crie : &cria),
-			    0);
+			    crypto_devallowsoft);
 		if (error) {
 			/* this is an auditable security event? */
 		  	printf("SIOCSESSION violates kernel parameters\n");
