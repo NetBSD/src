@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2001/02/03 17:18:30 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2001/03/19 00:29:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -114,8 +114,8 @@
  * Reduce UBC KVM usage from its default (8Mb when I looked).
  * Also make sure the window size is at least the page size.
  */
-#ifndef UBC_WINSIZE
-#define UBC_WINSIZE NBPG
+#ifndef UBC_WINSHIFT
+#define UBC_WINSHIFT PAGE_SHIFT
 #endif
 #ifndef UBC_NWINS
 #define UBC_NWINS 32
