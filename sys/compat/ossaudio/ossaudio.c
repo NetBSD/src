@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.3 1997/03/19 05:12:13 mycroft Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.4 1997/03/20 04:21:31 mycroft Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ linux_ioctl_audio(p, uap, retval)
 		if (error)
 			return error;
 		break;
-	case LINUX_SOUND_PCM_WRITE_CHANNELS:
+	case LINUX_SNDCTL_DSP_CHANNELS:
 		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error)
