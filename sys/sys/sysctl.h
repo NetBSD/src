@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.50 2000/06/13 01:27:02 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.51 2000/06/16 00:18:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -164,7 +164,8 @@ struct ctlname {
 #define	KERN_CCPU		50	/* int: fixpt ccpu */
 #define	KERN_CP_TIME		51	/* struct: cpu time counters */
 #define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
-#define	KERN_MAXID		53	/* number of valid kern ids */
+#define	KERN_MSGBUF		53	/* kernel message buffer */
+#define	KERN_MAXID		54	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -220,6 +221,7 @@ struct ctlname {
 	{ "ccpu", CTLTYPE_INT }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
 	{ "sysvipc_info", CTLTYPE_STRUCT }, \
+	{ "msgbuf", CTLTYPE_STRUCT }, \
 }
 
 /*
