@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.95 1998/10/05 18:15:12 tron Exp $
+#	$NetBSD: Makefile,v 1.96 1998/10/18 01:06:31 perry Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 #
 # not yet done: catman
 
-# XXX Temporary for USE_BIND8
+# XXX Temporary for USE_BIND8 and USE_VMAILER
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
@@ -15,12 +15,16 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
 	netgroup_mkdb nfsd nfsiod pkg_install portmap pppd pstat \
 	pwd_mkdb quot quotacheck quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
-	rpc.statd rpc.yppasswdd rwhod sa screenblank sendmail \
+	rpc.statd rpc.yppasswdd rwhod sa screenblank \
 	sliplogin slstats spray sup sysctl syslogd tcpdchk \
 	tcpdmatch tcpdump timed traceroute trpt trsp update \
 	usbd usbdevs videomode vipw vnconfig xntp \
 	ypbind yppoll ypserv ypset \
 	zdump zic
+
+.ifndef USE_VMAILER
+SUBDIR+=	sendmail
+.endif
 
 .ifdef USE_BIND8
 SUBDIR+=	bind
