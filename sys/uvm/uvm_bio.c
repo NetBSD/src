@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.1.2.1 1998/11/09 06:06:37 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.1.2.2 1999/02/25 04:10:14 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -40,16 +40,13 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-
-#include <sys/vnode.h>	/* XXX temp */
+#include <sys/vnode.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
-
-UVMHIST_DECL(ubchist); /* XXX */
 
 /*
  * global data structures
@@ -121,7 +118,7 @@ struct uvm_pagerops ubc_pager =
 
 
 /* XXX */
-static int nubc = 256;
+static int ubc_nwins = 16;
 
 
 /*
@@ -149,21 +146,21 @@ ubc_init()
 	ubc_object.uobj.uo_npages = 0;
 	ubc_object.uobj.uo_refs = UVM_OBJ_KERN;
 
-	ubc_object.umap = malloc(nubc * sizeof(struct ubc_map),
+	ubc_object.umap = malloc(ubc_nwins * sizeof(struct ubc_map),
 				 M_TEMP, M_NOWAIT);
 	if (ubc_object.umap == NULL) {
 		panic("ubc_init: failed to allocate ubc_maps");
 	}
-	bzero(ubc_object.umap, nubc * sizeof(struct ubc_map));
+	bzero(ubc_object.umap, ubc_nwins * sizeof(struct ubc_map));
 
 	TAILQ_INIT(&ubc_object.inactive);
 	for (umap = ubc_object.umap;
-	     umap < &ubc_object.umap[nubc];
+	     umap < &ubc_object.umap[ubc_nwins];
 	     umap++) {
 		TAILQ_INSERT_TAIL(&ubc_object.inactive, umap, inactive);
 	}
 
-	ubc_object.hash = hashinit(nubc / 4, M_TEMP, M_NOWAIT,
+	ubc_object.hash = hashinit(ubc_nwins / 4, M_TEMP, M_NOWAIT,
 				   &ubc_object.hashmask);
 	if (ubc_object.hash == NULL) {
 		panic("ubc_init: failed to allocate hash\n");
@@ -173,8 +170,8 @@ ubc_init()
 		LIST_INIT(&ubc_object.hash[i]);
 	}
 
-	if (uvm_map(kernel_map, (vaddr_t *)&ubc_object.kva, nubc * MAXBSIZE,
-		    &ubc_object.uobj, 0,
+	if (uvm_map(kernel_map, (vaddr_t *)&ubc_object.kva,
+		    ubc_nwins * MAXBSIZE, &ubc_object.uobj, 0,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE))
 	    != KERN_SUCCESS) {
@@ -198,16 +195,19 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	struct uvm_faultinfo *ufi;
 	vaddr_t ign1;
 	vm_page_t *ign2;
-	int ign3, ign4, flags;
+	int ign3, ign4;
 	vm_fault_t fault_type;
 	vm_prot_t access_type;
+	int flags;
 {
 	struct uvm_object *uobj;
 	struct uvm_vnode *uvn;
 	struct ubc_map *umap;
-	vaddr_t va, ubc_offset, umap_offset;
-	int rv, npages;
+	vaddr_t va, eva, ubc_offset, umap_offset;
+	int i, rv, npages;
 	struct vm_page *pages[MAXBSIZE >> PAGE_SHIFT];
+	boolean_t retry;
+
 	UVMHIST_FUNC("ubc_fault");  UVMHIST_CALLED(ubchist);
 
 	va = ufi->orig_rvaddr;
@@ -217,7 +217,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	if (ufi->entry->object.uvm_obj != &ubc_object.uobj) {
 		panic("ubc_fault: not ubc_object");
 	}
-	if (ubc_offset >= nubc * MAXBSIZE) {
+	if (ubc_offset >= ubc_nwins * MAXBSIZE) {
 		panic("ubc_fault: fault addr 0x%lx outside ubc mapping", va);
 	}
 #endif
@@ -262,8 +262,8 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	 * uvn_get is currently pretty dumb about read-ahead,
 	 * so right now this will only ever get the 1 page that we need.
 	 */
-  again:
 
+again:
 	/*
 	 * XXX workaround for nfs.
 	 * if we're writing, make sure that the vm system's notion
@@ -297,6 +297,13 @@ UVMHIST_LOG(ubchist, "setting PGO_OVERWRITE", 0,0,0,0);
 	else { UVMHIST_LOG(ubchist, "NOT setting PGO_OVERWRITE", 0,0,0,0); }
 	/* XXX be sure to zero any part of the page past EOF */
 
+	/*
+	 * XXX
+	 * ideally we'd like to pre-fault all of the pages we're overwriting.
+	 * so for PGO_OVERWRITE, we should call pgo_get() with all of the
+	 * pages in [writeoff, writeoff+writesize] instead of just the one.
+	 */
+
 	UVMHIST_LOG(ubchist, "pgo_get vp %p offset 0x%x npages %d",
 		    uobj, umap->offset + umap_offset, npages, 0);
 
@@ -321,80 +328,80 @@ UVMHIST_LOG(ubchist, "setting PGO_OVERWRITE", 0,0,0,0);
 		return rv;
 	}
 
-	if (npages != 0) {
-		vaddr_t va, eva;
-		int i;
-		boolean_t retry = FALSE;
+	if (npages == 0) {
+		return VM_PAGER_OK;
+	}
 
-		va = ufi->orig_rvaddr;
-		eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
-		UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0,0);
-		for (i = 0; va < eva; i++, va += PAGE_SIZE) {
-			UVMHIST_LOG(ubchist, "pages[%d] = %p", i, pages[i],0,0);
+	retry = FALSE;
+	va = ufi->orig_rvaddr;
+	eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
-			if (pages[i] == NULL || pages[i] == PGO_DONTCARE) {
-				continue;
-			}
+	UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0,0);
+	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
+		UVMHIST_LOG(ubchist, "pages[%d] = %p", i, pages[i],0,0);
 
-			if (pages[i]->flags & PG_WANTED) {
-				wakeup(pages[i]);
-			}
+		if (pages[i] == NULL || pages[i] == PGO_DONTCARE) {
+			continue;
+		}
+		if (pages[i]->flags & PG_WANTED) {
+			wakeup(pages[i]);
+		}
 
 #if 0
-			/*
-			 * since we have a reference on the uobj,
-			 * it can't have been killed while we were sleeping.
-			 */
+		/*
+		 * since we have a reference on the uobj,
+		 * it can't have been killed while we were sleeping.
+		 */
 #ifdef DIAGNOSTIC
-			if (pages[i]->flags & PG_RELEASED) {
-				panic("ubc_fault: pgo_get gave us "
-				      "a RELEASED page: vp %p pg %p",
-				      uobj, pages[i]);
-			}
+		if (pages[i]->flags & PG_RELEASED) {
+			panic("ubc_fault: pgo_get gave us a RELEASED page: "
+			      "vp %p pg %p", uobj, pages[i]);
+		}
 #endif
 #else
-			/*
-			 * unfortunately, there seems to be a way
-			 * that we could get a PG_RELEASED page.
-			 * if an nfs file that has a page in the cache is
-			 * truncated by another client, we don't learn of
-			 * the truncation until we try to read again.
-			 * the read will succeed but it will also cause the
-			 * page to become PG_RELEASED, which will trip us up.
-			 * so if we get a PG_RELEASED page, free it and retry.
-			 * 
-			 * XXX this seems to happen even when we're the
-			 * client that does the truncate.
-			 */
+		/*
+		 * unfortunately, there seems to be a way
+		 * that we could get a PG_RELEASED page.
+		 * if an nfs vnode that has a page in the cache is
+		 * truncated by another client, we don't learn of
+		 * the truncation until we try to read again.
+		 * the read will succeed but it will also cause the
+		 * page to become PG_RELEASED, which will trip us up.
+		 * so if we get a PG_RELEASED page, free it and retry.
+		 * 
+		 * XXX this seems to happen even when we're the
+		 * client that does the truncate.
+		 */
 
-			if (pages[i]->flags & PG_RELEASED) {
-				simple_lock(&uobj->vmobjlock);
-				rv = uobj->pgops->pgo_releasepg(pages[i], NULL);
-				if (!rv) {
-					panic("ubc_fault: object died");
-				}
-				simple_unlock(&uobj->vmobjlock);
-				retry = TRUE;
-				continue;
+		if (pages[i]->flags & PG_RELEASED) {
+			simple_lock(&uobj->vmobjlock);
+			rv = uobj->pgops->pgo_releasepg(pages[i], NULL);
+#ifdef DIAGNOSTIC
+			if (!rv) {
+				panic("ubc_fault: object died");
 			}
 #endif
-
-			uvm_lock_pageq();
-			uvm_pageactivate(pages[i]);
-			uvm_unlock_pageq();
-
-			/* uvmexp.fltnomap++; */
-			pmap_enter(ufi->orig_map->pmap, va,
-				   VM_PAGE_TO_PHYS(pages[i]), VM_PROT_ALL, 0);
-
-			pages[i]->flags &= ~(PG_BUSY);
-			UVM_PAGE_OWN(pages[i], NULL);
+			simple_unlock(&uobj->vmobjlock);
+			retry = TRUE;
+			continue;
 		}
+#endif
 
-		if (retry) {
-			goto again;
-		}
+		uvm_lock_pageq();
+		uvm_pageactivate(pages[i]);
+		uvm_unlock_pageq();
+
+		/* uvmexp.fltnomap++; XXX? */
+		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pages[i]),
+			   VM_PROT_ALL, 0);
+
+		pages[i]->flags &= ~(PG_BUSY);
+		UVM_PAGE_OWN(pages[i], NULL);
+	}
+
+	if (retry) {
+		goto again;
 	}
 
 	return VM_PAGER_OK;
@@ -419,18 +426,6 @@ ubc_find_mapping(uobj, offset)
 			return umap;
 		}
 	}
-
-#ifdef DEBUG
-	for (umap = ubc_object.umap;
-	     umap < &ubc_object.umap[nubc];
-	     umap++) {
-		if (umap->uobj == uobj && umap->offset == offset) {
-printf("ubc_find_mapping didn't find uobj %p off 0x%x\n", uobj, (int)offset);
-Debugger();
-		}
-	}
-#endif
-
 	return NULL;
 }
 
@@ -592,7 +587,7 @@ ubc_flush(uobj, start, end)
 	s = splbio(); 
 	simple_lock(&ubc_object.uobj.vmobjlock);
 	for (umap = ubc_object.umap;
-	     umap < &ubc_object.umap[nubc];
+	     umap < &ubc_object.umap[ubc_nwins];
 	     umap++) {
 
 		if (umap->uobj != uobj || 
@@ -627,7 +622,7 @@ ubc_print()
 
 	printf("addr        uobj        offset      refs  writeoff  writelen\n");
 	for (umap = ubc_object.umap;
-	     umap < &ubc_object.umap[nubc];
+	     umap < &ubc_object.umap[ubc_nwins];
 	     umap++) {
 		if (umap->uobj == NULL) {
 			continue;
