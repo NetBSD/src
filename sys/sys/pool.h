@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.10 1998/09/29 18:09:29 pk Exp $	*/
+/*	$NetBSD: pool.h,v 1.11 1998/12/16 04:28:23 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -138,6 +138,10 @@ void		pool_sethiwat __P((pool_handle_t, int));
 void		pool_print __P((pool_handle_t, char *));
 void		pool_reclaim __P((pool_handle_t));
 void		pool_drain __P((void *));
+#ifdef DEBUG
+void		pool_print __P((struct pool *, char *));
+int		pool_chk __P((struct pool *, char *));
+#endif
 
 /*
  * Alternate pool page allocator, provided for pools that know they
