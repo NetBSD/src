@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2002/01/07 04:47:10 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2002/03/06 12:27:08 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -6,7 +6,7 @@ COMMONDIR=	${TOP}/bootfloppy-common
 
 .include <bsd.kernobj.mk>
 
-IMAGE?=		xxx-${REV}.fs
+IMAGE?=		xxx-${DISTRIBREV}.fs
 .ifndef INSTKERNEL
 INSTKERNNAME?=	netbsd.xxx.gz
 INSTKERNODIR!=	cd ${INSTKERNDIR} ; ${MAKE} print-objdir
