@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.63 2002/06/29 08:32:30 lukem Exp $
+.\"	$NetBSD: contents,v 1.64 2002/06/30 12:28:56 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -190,7 +190,8 @@ A gzipped
 .Nx
 kernel (ELF format) containing code for everything supported in this
 release.
-It also includes a RAM-disk installer with sysinst.
+It also includes a RAM-disk installer with
+.Ic sysinst .
 .			It Pa netbsd.INSTALL.img.gz
 Same as the above, but in the format expected by the firmware.
 .\}
@@ -1089,13 +1090,15 @@ The important files in this directory are as follows:
 .(tag pbsdboot1.exe
 .It Pa netbsd.gz
 .Nx*M
-kernel with system installer (sysinst).
+kernel with system installer
+.Pq Ic sysinst .
 This kernel runs on Vr41xx and TX3922 CPU only.
 .br
 .Em 1.98 MB gzipped, 6.7 MB uncompressed
 .It Pa netbsd.TX3912.gz
 .Nx*M
-kernel with system installer (sysinst).
+kernel with system installer
+.Pq Ic sysinst .
 This kernel runs on TX3912 CPU only.
 .br
 .Em 1.98 MB gzipped, 6.7 MB uncompressed
