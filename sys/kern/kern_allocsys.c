@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.2 1999/05/20 20:01:28 thorpej Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.3 1999/05/21 00:05:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -177,6 +177,12 @@ allocsys(v, mdcallback)
 		panic("bufpages = 0\n");
 #endif
 
+	/*
+	 * Call the mdcallback now; it may need to adjust bufpages.
+	 */
+	if (mdcallback != NULL)
+		v = mdcallback(v);
+
 	/* 
 	 * Ensure a minimum of 16 buffers.
 	 */
@@ -204,9 +210,6 @@ allocsys(v, mdcallback)
 			nswbuf = 256;		/* sanity */
 	}
 	ALLOCSYS(v, buf, struct buf, nbuf);
-
-	if (mdcallback != NULL)
-		v = mdcallback(v);
 
 	return (v);
 }
