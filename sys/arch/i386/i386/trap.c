@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.23 1994/01/04 00:15:28 mycroft Exp $
+ *	$Id: trap.c,v 1.24 1994/01/09 22:53:16 mycroft Exp $
  */
 
 /*
@@ -67,7 +67,6 @@
 
 struct	sysent sysent[];
 int	nsysent;
-unsigned rcr2();
 extern int cpl;
 
 /*
@@ -126,7 +125,7 @@ userret(p, pc, syst)
 	curpri = p->p_pri;
 }
 
-char *trapstr[] = {
+char	*trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
@@ -146,6 +145,7 @@ char *trapstr[] = {
 	"segment not present fault",		/* 16 T_SEGNPFLT */
 	"stack fault",				/* 17 T_STKFLT */
 };
+int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
 /*
  * trap(frame):
@@ -219,9 +219,8 @@ trap(frame)
 			return;
 #endif
 
-		if (frame.tf_trapno < (sizeof(trapstr) / sizeof(trapstr[0])) &&
-		    trapstr[frame.tf_trapno])
-			printf("fatal %s", trapstr[frame.tf_trapno]);
+		if (frame.tf_trapno < trap_types)
+			printf("fatal %s", trap_type[frame.tf_trapno]);
 		else
 			printf("unknown trap %d", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
