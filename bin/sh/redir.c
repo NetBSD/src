@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.16 1997/07/04 21:02:21 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.17 1998/07/27 17:12:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,11 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.16 1997/07/04 21:02:21 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.17 1998/07/27 17:12:45 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/param.h>	/* PIPE_BUF */
 #include <signal.h>
 #include <string.h>
 #include <fcntl.h>
@@ -68,7 +69,11 @@ __RCSID("$NetBSD: redir.c,v 1.16 1997/07/04 21:02:21 christos Exp $");
 
 
 #define EMPTY -2		/* marks an unused slot in redirtab */
-#define PIPESIZE 4096		/* amount of buffering in a pipe */
+#ifndef PIPE_BUF
+# define PIPESIZE 4096		/* amount of buffering in a pipe */
+#else
+# define PIPESIZE PIPE_BUF
+#endif
 
 
 MKINIT
