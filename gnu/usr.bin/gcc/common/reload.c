@@ -3613,20 +3613,7 @@ find_reloads (insn, replace, ind_levels, live_known, reload_reg_p)
       {
 	int opno = recog_dup_num[i];
 	*recog_dup_loc[i] = *recog_operand_loc[opno];
-#ifdef GCC_27_ARM32_PIC_SUPPORT
-       /*
-        * This is a patch for a bug found when implementing arm32 PIC support
-        * that should be fixed in 2.8
-        */
-        /*  is there is a label that is duplicated
-         *   we cannot reload it
-         *   - it appears that insn_n_operands - does not include labels
-         */
-	if ((opno < insn_n_operands[insn_code_number])
-             && (operand_reloadnum[opno] >= 0))
-#else
 	if (operand_reloadnum[opno] >= 0)
-#endif
 	  push_replacement (recog_dup_loc[i], operand_reloadnum[opno],
 			    insn_operand_mode[insn_code_number][opno]);
       }
