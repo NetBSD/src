@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.12 2002/05/26 00:02:07 wiz Exp $	*/
+/*	$NetBSD: identd.c,v 1.13 2002/09/18 20:17:55 mycroft Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
@@ -41,6 +41,7 @@
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 #ifndef _AUX_SOURCE
 #  include <sys/file.h>
 #endif
@@ -54,10 +55,6 @@
 
 #ifndef HPUX7
 #  include <arpa/inet.h>
-#endif
-
-#ifdef _AIX32
-# include <sys/select.h>
 #endif
 
 #if defined(MIPS) || defined(BSD43)
@@ -284,9 +281,6 @@ int main(argc,argv)
     int i, len;
     struct sockaddr_in sin;
     struct in_addr laddr, faddr;
-#ifndef USE_SIGALARM
-    struct timeval tv;
-#endif
     int one = 1;
 
     int background_flag = 0;
@@ -652,7 +646,7 @@ int main(argc,argv)
     if (background_flag)
     {
 	int nfds, fd;
-	fd_set read_set;
+	struct pollfd set[1];
 	struct sockaddr sad;
 	int sadlen;
 	
@@ -671,6 +665,9 @@ int main(argc,argv)
 	signal(SIGCHLD, child_handler);
 #endif
     
+	set[0].fd = 0;
+	set[0].events = POLLIN;
+
 	/*
 	** Loop and dispatch client handling processes
 	*/
@@ -693,29 +690,12 @@ int main(argc,argv)
 	    */
 	    do
 	    {
-		FD_ZERO(&read_set);
-		FD_SET(0, &read_set);
-		
 #ifndef USE_SIGALARM
 		if (timeout)
-		{
-		    tv.tv_sec = timeout;
-		    tv.tv_usec = 0;
-#ifdef __hpux
-		    nfds = select(FD_SETSIZE,
-				  (int *) &read_set, NULL, NULL, &tv);
-#else
-		    nfds = select(FD_SETSIZE, &read_set, NULL, NULL, &tv);
-#endif
-		}
+		    nfds = poll(set, 1, timeout * 1000);
 		else
 #endif
-
-#ifdef __hpux
-		nfds = select(FD_SETSIZE, (int *) &read_set, NULL, NULL, NULL);
-#else
-		nfds = select(FD_SETSIZE, &read_set, NULL, NULL, NULL);
-#endif
+		nfds = poll(set, 1, INFTIM);
 	    } while (nfds < 0  && errno == EINTR);
 	    
 	    /*
