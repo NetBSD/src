@@ -1,4 +1,4 @@
-/*	$NetBSD: names.h,v 1.10 2000/05/14 22:53:38 christos Exp $	*/
+/*	$NetBSD: names.h,v 1.10.4.1 2000/09/30 06:20:45 simonb Exp $	*/
 
 /*
  * Names.h - names and types used by ascmagic in file(1).
@@ -34,24 +34,26 @@
 #define	L_JAVA	10		/* Java code */
 #define	L_HTML	11		/* HTML */
 #define	L_BCPL	12		/* BCPL */
+#define	L_M4	13		/* M4 */
 
 static const struct {
 	char *human;
 	char *mime;
 } types[] = {
-	{ "C program text",				"text/x-c", },
-	{ "C++ program text",				"text/x-c++" },
-	{ "FORTRAN program text",			"text/x-fortran" },
-	{ "make commands text",				"text/x-makefile" },
-	{ "PL/1 program text",				"text/x-pl1" },
-	{ "assembler program text",			"text/x-asm" },
-	{ "English text",				"text/plain, English" },
-	{ "Pascal program text",			"text/x-pascal" },
-	{ "mail text",					"text/x-mail" },
-	{ "news text",					"text/x-news" },
-	{ "Java program text",				"text/x-java" },
-	{ "HTML document text",				"text/html", },
-	{ "BCPL program text",				"text/x-bcpl" },
+	{ "C program",					"text/x-c", },
+	{ "C++ program",				"text/x-c++" },
+	{ "FORTRAN program",				"text/x-fortran" },
+	{ "make commands",				"text/x-makefile" },
+	{ "PL/1 program",				"text/x-pl1" },
+	{ "assembler program",				"text/x-asm" },
+	{ "English",					"text/plain, English" },
+	{ "Pascal program",				"text/x-pascal" },
+	{ "mail",					"text/x-mail" },
+	{ "news",					"text/x-news" },
+	{ "Java program",				"text/x-java" },
+	{ "HTML document",				"text/html", },
+	{ "BCPL program",				"text/x-bcpl" },
+	{ "M4 macro language pre-processor",		"text/x-m4" },
 	{ "can't happen error on names.h/types",	"error/x-error" },
 	{ 0, 0}
 };
@@ -98,6 +100,7 @@ static struct names {
 } names[] = {
 	/* These must be sorted by eye for optimal hit rate */
 	/* Add to this list only after substantial meditation */
+	{"dnl",		L_M4},
 	{"import",	L_JAVA},
 	{"\"libhdr\"",	L_BCPL},
 	{"\"LIBHDR\"",	L_BCPL},

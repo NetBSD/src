@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.11 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.11.6.1 2000/09/30 06:20:45 simonb Exp $	*/
 
 /*
  * is_tar() -- figure out whether file is a tar archive.
@@ -25,7 +25,7 @@
 #if 0
 FILE_RCSID("@(#)Id: is_tar.c,v 1.12 1999/02/14 17:16:08 christos Exp ")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.11 1999/11/01 17:39:26 christos Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.11.6.1 2000/09/30 06:20:45 simonb Exp $");
 #endif
 #endif
 
@@ -41,13 +41,13 @@ static int from_oct __P((int, char *));	/* Decode octal number */
  */
 int
 is_tar(buf, nbytes)
-unsigned char *buf;
-int nbytes;
+	unsigned char *buf;
+	int nbytes;
 {
-	register union record *header = (union record *)buf;
-	register int	i;
-	register int	sum, recsum;
-	register char	*p;
+	union record *header = (union record *)buf;
+	int	i;
+	int	sum, recsum;
+	char	*p;
 
 	if (nbytes < sizeof(union record))
 		return 0;
@@ -86,12 +86,12 @@ int nbytes;
  */
 static int
 from_oct(digs, where)
-	register int	digs;
-	register char	*where;
+	int	digs;
+	char	*where;
 {
-	register int	value;
+	int	value;
 
-	while (isspace((unsigned char)*where)) {		/* Skip spaces */
+	while (isspace((unsigned char)*where)) {	/* Skip spaces */
 		where++;
 		if (--digs <= 0)
 			return -1;		/* All blank field */
