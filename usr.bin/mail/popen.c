@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.7 1997/10/19 05:03:45 lukem Exp $	*/
+/*	$NetBSD: popen.c,v 1.8 1997/10/31 22:48:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.7 1997/10/19 05:03:45 lukem Exp $");
+__RCSID("$NetBSD: popen.c,v 1.8 1997/10/31 22:48:12 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -271,7 +271,7 @@ prepare_child(nset, infd, outfd)
 	int infd, outfd;
 {
 	int i;
-	sigset_t fset;
+	sigset_t eset;
 
 	/*
 	 * All file descriptors other than 0, 1, and 2 are supposed to be
@@ -281,17 +281,13 @@ prepare_child(nset, infd, outfd)
 		dup2(infd, 0);
 	if (outfd >= 0)
 		dup2(outfd, 1);
-	if (nset == NULL)
-		return;
-	if (nset != NULL) {
-		for (i = 1; i < NSIG; i++)
-			if (sigismember(nset, i))
-				(void) signal(i, SIG_IGN);
-	}
+	for (i = 1; i < NSIG; i++)
+		if (nset != NULL && sigismember(nset, i))
+			(void) signal(i, SIG_IGN);
 	if (nset == NULL || !sigismember(nset, SIGINT))
 		(void) signal(SIGINT, SIG_DFL);
-	sigfillset(&fset);
-	(void) sigprocmask(SIG_UNBLOCK, &fset, NULL);
+	sigemptyset(&eset);
+	(void) sigprocmask(SIG_SETMASK, &eset, NULL);
 }
 
 int
