@@ -220,7 +220,7 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
-	test -z "$(libdir)" || $(mkdir_p) "$(DESTDIR)$(libdir)"
+	test -z "$(libdir)" || $(mkinstalldirs) "$(DESTDIR)$(libdir)"
 	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
 	    f="`echo $$p | sed -e 's|^.*/||'`"; \
@@ -249,7 +249,7 @@ libmagic.la: $(libmagic_la_OBJECTS) $(libmagic_la_DEPENDENCIES)
 	$(LINK) -rpath $(libdir) $(libmagic_la_LDFLAGS) $(libmagic_la_OBJECTS) $(libmagic_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(bindir)" || $(mkinstalldirs) "$(DESTDIR)$(bindir)"
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
 	  if test -f $$p \
@@ -333,7 +333,7 @@ distclean-libtool:
 uninstall-info-am:
 install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
-	test -z "$(includedir)" || $(mkdir_p) "$(DESTDIR)$(includedir)"
+	test -z "$(includedir)" || $(mkinstalldirs) "$(DESTDIR)$(includedir)"
 	@list='$(include_HEADERS)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  f="`echo $$p | sed -e 's|^.*/||'`"; \
@@ -407,7 +407,7 @@ distdir: $(DISTFILES)
 	  dir=`echo "$$file" | sed -e 's,/[^/]*$$,,'`; \
 	  if test "$$dir" != "$$file" && test "$$dir" != "."; then \
 	    dir="/$$dir"; \
-	    $(mkdir_p) "$(distdir)$$dir"; \
+	    $(mkinstalldirs) "$(distdir)$$dir"; \
 	  else \
 	    dir=''; \
 	  fi; \
@@ -429,7 +429,7 @@ install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(includedir)"; do \
-	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
+	  test -z "$$dir" || $(mkinstalldirs) "$$dir"; \
 	done
 install: install-am
 install-exec: install-exec-am
