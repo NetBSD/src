@@ -1,3 +1,5 @@
+/*	$NetBSD: if_fpa.c,v 1.28.10.1 1999/11/30 13:34:01 itojun Exp $	*/
+
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
  * All rights reserved.
@@ -31,6 +33,9 @@
  *   This module supports the DEC DEFPA PCI FDDI Controller
  */
 
+#ifdef __NetBSD__
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -187,7 +192,8 @@ pdq_pci_attach(
     int unit)
 {
     pdq_softc_t *sc;
-    vm_offset_t va_csrs, pa_csrs;
+    vaddr_t va_csrs;
+    paddr_t pa_csrs;
     pdq_uint32_t data;
 
     if (unit == NFPA) {
@@ -355,7 +361,7 @@ pdq_pci_attach(
     sc->sc_if.if_unit = sc->sc_dev.dv_unit;
     sc->sc_if.if_name = "fpa";
     sc->sc_if.if_flags = 0;
-    sc->sc_membase = (pdq_bus_memaddr_t) mapphys((vm_offset_t)ia->ia_maddr, ia->ia_msize);
+    sc->sc_membase = (pdq_bus_memaddr_t) mapphys((vaddr_t)ia->ia_maddr, ia->ia_msize);
 
     sc->sc_pdq = pdq_initialize(PDQ_BUS_PCI, sc->sc_membase,
 				sc->sc_if.if_name, sc->sc_if.if_unit,
@@ -393,11 +399,7 @@ struct cfdriver fpacd = {
 static int
 pdq_pci_match(
     struct device *parent,
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match,
-#else
     struct cfdata *match,
-#endif
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -416,11 +418,14 @@ pdq_pci_attach(
     struct device * const self,
     void * const aux)
 {
-    pdq_softc_t * const sc = (pdq_softc_t *) self;
+    pdq_softc_t * const sc = (pdq_softc_t *)self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     pdq_uint32_t data;
     pci_intr_handle_t intrhandle;
     const char *intrstr;
+    bus_space_tag_t iot, memt;
+    bus_space_handle_t ioh, memh;
+    int ioh_valid, memh_valid;
 
     data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFLT);
     if ((data & 0xFF00) < (DEFPA_LATENCY << 8)) {
@@ -432,14 +437,42 @@ pdq_pci_attach(
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
-    if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-		       &sc->sc_csrtag, &sc->sc_membase, NULL, NULL)
-	&& pci_mapreg_map(pa, PCI_CBMA,
-			  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-			  &sc->sc_csrtag, &sc->sc_membase, NULL, NULL)) {
+
+    ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+		 &iot, &ioh, NULL, NULL) == 0);
+    memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
+		  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+		  &memt, &memh, NULL, NULL) == 0);
+
+#if defined(DEFPA_IOMAPED)
+    if (ioh_valid) {
+	sc->sc_csrtag = iot;
+	sc->sc_membase = ioh;
+    } else if (memh_valid) {
+	sc->sc_csrtag = memt;
+	sc->sc_membase = memh;
+    }
+#else /* defined(DEFPA_IOMAPPED) */
+    if (memh_valid) {
+	sc->sc_csrtag = memt;
+	sc->sc_membase = memh;
+    } else if (ioh_valid) {
+	sc->sc_csrtag = iot;
+	sc->sc_membase = ioh;
+    }
+#endif /* DEFPA_IOMAPPED */
+    else {
         printf(": unable to map device registers\n");
         return;
     }
+
+    sc->sc_dmatag = pa->pa_dmat;
+
+    /* Make sure bus mastering is enabled. */
+    pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		   pci_conf_read(pa->pa_pc, pa->pa_tag,
+				 PCI_COMMAND_STATUS_REG) |
+		   PCI_COMMAND_MASTER_ENABLE);
 
     sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
@@ -475,10 +508,6 @@ pdq_pci_attach(
 
 struct cfattach fpa_ca = {
     sizeof(pdq_softc_t), pdq_pci_match, pdq_pci_attach
-};
-
-struct cfdriver fpa_cd = {
-    0, "fpa", DV_IFNET
 };
 
 #endif /* __NetBSD__ */
