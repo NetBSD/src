@@ -1,7 +1,7 @@
-/*      $NetBSD: item.c,v 1.3 1999/11/30 15:58:16 kleink Exp $	*/
+/*      $Id: item.c,v 1.4 1999/12/16 12:08:07 blymn Exp $ */
 
 /*-
- * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
+ * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -99,7 +99,7 @@ item_description(item)
 int
 set_item_init(menu, func)
         MENU *menu;
-	_menui_menu_hook func;
+	Menu_Hook func;
 {
 	if (menu == NULL)
 		_menui_default_menu.item_init = func;
@@ -112,7 +112,7 @@ set_item_init(menu, func)
 /*
  * Return a pointer to the item initialisation routine.
  */
-_menui_menu_hook
+Menu_Hook
 item_init(menu)
         MENU *menu;
 {
@@ -129,7 +129,7 @@ item_init(menu)
 int
 set_item_term(menu, func)
         MENU *menu;
-        _menui_menu_hook func;
+        Menu_Hook func;
 {
 	if (menu == NULL)
 		_menui_default_menu.item_term = func;
@@ -141,7 +141,7 @@ set_item_term(menu, func)
 /*
  * Return a pointer to the termination function
  */
-_menui_menu_hook
+Menu_Hook
 item_term(menu)
         MENU *menu;
 {

@@ -1,7 +1,7 @@
-/*      $NetBSD: internals.c,v 1.2 1999/11/24 12:43:15 kleink Exp $	*/
+/*      $Id: internals.c,v 1.3 1999/12/16 12:08:07 blymn Exp $ */
 
 /*-
- * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
+ * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,9 @@
 
 /* internal function prototypes */
 static void
-__menui_calc_neighbours(MENU *, int, int, int, int, ITEM **, ITEM **,
+_menui_calc_neighbours(MENU *, int, int, int, int, ITEM **, ITEM **,
 			ITEM **, ITEM **);
-static void __menui_redraw_menu __P((MENU *, int, int));
+static void _menui_redraw_menu __P((MENU *, int, int));
 
   /*
    * Link all the menu items together to speed up navigation.  We need
@@ -46,7 +46,7 @@ static void __menui_redraw_menu __P((MENU *, int, int));
    * calculated and the item structures updated.
    */
 int
-__menui_stitch_items(menu)
+_menui_stitch_items(menu)
 	MENU *menu;
 {
 	int i, cycle, row_major;
@@ -72,7 +72,7 @@ __menui_stitch_items(menu)
 	}
 	
 
-	__menui_max_item_size(menu);
+	_menui_max_item_size(menu);
 
 	for (i = 0; i < menu->item_count; i++) {
 		  /* Calculate the neighbours.  The ugliness here deals with
@@ -80,7 +80,7 @@ __menui_stitch_items(menu)
 		   * the neighbour calculation so we change the arguments
 		   * around depending on the layout style.
 		   */
-		__menui_calc_neighbours(menu, i, cycle,
+		_menui_calc_neighbours(menu, i, cycle,
 					(row_major) ? menu->item_rows
 					: menu->item_cols,
 					(row_major) ? menu->item_cols
@@ -115,10 +115,10 @@ __menui_stitch_items(menu)
    * style.
    */
 static void
-__menui_calc_neighbours(menu, index, cycle, item_rows, item_cols, next, prev,
+_menui_calc_neighbours(menu, item_no, cycle, item_rows, item_cols, next, prev,
 			major_next, major_prev)
 	MENU *menu;
-	int index;
+	int item_no;
 	int cycle;
 	int item_rows;
 	int item_cols;
@@ -131,24 +131,24 @@ __menui_calc_neighbours(menu, index, cycle, item_rows, item_cols, next, prev,
 
 	if (item_rows < 2) {
 		if (cycle) {
-			*major_next = menu->items[index];
-			*major_prev = menu->items[index];
+			*major_next = menu->items[item_no];
+			*major_prev = menu->items[item_no];
 		} else {
 			*major_next = NULL;
 			*major_prev = NULL;
 		}
 	} else {
-		neighbour = index + item_cols;
+		neighbour = item_no + item_cols;
 		if (neighbour >= menu->item_count) {
 			if (cycle) {
 				if (item_rows == 2) {
-					neighbour = index - item_cols;
+					neighbour = item_no - item_cols;
 					if (neighbour < 0)
-						neighbour = index;
+						neighbour = item_no;
 					*major_next = menu->items[neighbour];
 				} else {
 					*major_next =
-						menu->items[index % item_cols];
+						menu->items[item_no % item_cols];
 				}
 			} else
 				*major_next = NULL;
@@ -156,20 +156,20 @@ __menui_calc_neighbours(menu, index, cycle, item_rows, item_cols, next, prev,
 			*major_next = menu->items[neighbour];
 		
 		
-		neighbour = index - item_cols;
+		neighbour = item_no - item_cols;
 		if (neighbour < 0) {
 			if (cycle) {
 				if (item_rows == 2) {
-					neighbour = index + item_cols;
+					neighbour = item_no + item_cols;
 					if (neighbour >= menu->item_count)
-						neighbour = index;
+						neighbour = item_no;
 					*major_prev = menu->items[neighbour];
 				} else {
-					neighbour = index +
+					neighbour = item_no +
 						(item_rows - 1) * item_cols;
 
 					if (neighbour >= menu->item_count)
-						neighbour = index +
+						neighbour = item_no +
 							(item_rows - 2)
 							* item_cols;
 					
@@ -181,15 +181,15 @@ __menui_calc_neighbours(menu, index, cycle, item_rows, item_cols, next, prev,
 			*major_prev = menu->items[neighbour];
 	}
 	
-	if ((index % item_cols) == 0) {
+	if ((item_no % item_cols) == 0) {
 		if (cycle) {
 			if (item_cols  < 2) {
-				*prev = menu->items[index];
+				*prev = menu->items[item_no];
 			} else {
-				neighbour = index + item_cols - 1;
+				neighbour = item_no + item_cols - 1;
 				if (neighbour >= menu->item_count) {
 					if (item_cols == 2) {
-						*prev = menu->items[index];
+						*prev = menu->items[item_no];
 					} else {
 						*prev = menu->items[menu->item_count - 1];
 					}
@@ -199,19 +199,19 @@ __menui_calc_neighbours(menu, index, cycle, item_rows, item_cols, next, prev,
 		} else
 			*prev = NULL;
 	} else
-		*prev = menu->items[index - 1];
+		*prev = menu->items[item_no - 1];
 	
-	if ((index % item_cols) == (item_cols - 1)) {
+	if ((item_no % item_cols) == (item_cols - 1)) {
 		if (cycle) {
 			if (item_cols  < 2) {
-				*next = menu->items[index];
+				*next = menu->items[item_no];
 			} else {
-				neighbour = index - item_cols + 1;
+				neighbour = item_no - item_cols + 1;
 				if (neighbour >= menu->item_count) {
 					if (item_cols == 2) {
-						*next = menu->items[index];
+						*next = menu->items[item_no];
 					} else {
-						neighbour = item_cols * index / item_cols;
+						neighbour = item_cols * item_no / item_cols;
 						
 						*next = menu->items[neighbour];
 					}
@@ -221,7 +221,7 @@ __menui_calc_neighbours(menu, index, cycle, item_rows, item_cols, next, prev,
 		} else
 			*next = NULL;
 	} else {
-		neighbour = index + 1;
+		neighbour = item_no + 1;
 		if (neighbour >= menu->item_count) {
 			if (cycle) {
 				neighbour = item_cols * (item_rows - 1);
@@ -238,10 +238,10 @@ __menui_calc_neighbours(menu, index, cycle, item_rows, item_cols, next, prev,
  * accordingly.  Call the term and init functions if required.
  */
 int
-__menui_goto_item(menu, item, top_row)
+_menui_goto_item(menu, item, new_top_row)
 	MENU *menu;
 	ITEM *item;
-	int top_row;
+	int new_top_row;
 {
 	int old_top_row = menu->top_row, old_cur_item = menu->cur_item;
 	
@@ -250,10 +250,10 @@ __menui_goto_item(menu, item, top_row)
 		return E_REQUEST_DENIED;
 
 	menu->in_init = 1;
-	if (menu->top_row != top_row) {
+	if (menu->top_row != new_top_row) {
 		if ((menu->posted == 1) && (menu->menu_term != NULL))
 			menu->menu_term(menu);
-		menu->top_row = top_row;
+		menu->top_row = new_top_row;
 
 		if ((menu->posted == 1) && (menu->menu_init != NULL))
 			menu->menu_init(menu);
@@ -270,7 +270,7 @@ __menui_goto_item(menu, item, top_row)
 		menu->cur_col = item->col;
 
 		if (menu->posted == 1)
-			__menui_redraw_menu(menu, old_top_row, old_cur_item);
+			_menui_redraw_menu(menu, old_top_row, old_cur_item);
 		
 		if ((menu->posted == 1) && (menu->item_init != NULL))
 			menu->item_init(menu);
@@ -287,7 +287,7 @@ __menui_goto_item(menu, item, top_row)
  * otherwise return E_NO_MATCH
  */
 int
-__menui_match_items(menu, direction, item_matched)
+_menui_match_items(menu, direction, item_matched)
 	MENU *menu;
 	int direction;
 	int *item_matched;
@@ -310,14 +310,15 @@ __menui_match_items(menu, direction, item_matched)
 			if (caseless) {
 				if (strncasecmp(menu->items[i]->name.string,
 						menu->pattern,
-						menu->plen) == 0) {
+						(size_t) menu->plen) == 0) {
 					*item_matched = i;
 					menu->match_len = menu->plen;
 					return E_OK;
 				}
 			} else {
 				if (strncmp(menu->items[i]->name.string,
-					    menu->pattern, menu->plen) == 0) {
+					    menu->pattern,
+					    (size_t) menu->plen) == 0) {
 					*item_matched = i;
 					menu->match_len = menu->plen;
 					return E_OK;
@@ -345,7 +346,7 @@ __menui_match_items(menu, direction, item_matched)
  * index of the item that matched the pattern.
  */
 int
-__menui_match_pattern(menu, c, direction, item_matched)
+_menui_match_pattern(menu, c, direction, item_matched)
 	MENU *menu;
 	char c;
 	int direction;
@@ -376,14 +377,14 @@ __menui_match_pattern(menu, c, direction, item_matched)
 			return E_NO_MATCH;
 		}
 		
-		if (__menui_match_items(menu, direction,
+		if (_menui_match_items(menu, direction,
 					item_matched) == E_NO_MATCH) {
 			menu->pattern[--menu->plen] = '\0';
 			return E_NO_MATCH;
 		} else
 			return E_OK;
 	} else {
-		if (__menui_match_items(menu, direction,
+		if (_menui_match_items(menu, direction,
 					item_matched) == E_OK) {
 			return E_OK;
 		} else {
@@ -396,7 +397,7 @@ __menui_match_pattern(menu, c, direction, item_matched)
  * Draw an item in the subwindow complete with appropriate highlighting.
  */
 void
-__menui_draw_item(menu, item)
+_menui_draw_item(menu, item)
 	MENU *menu;
 	int item;
 {
@@ -471,7 +472,7 @@ __menui_draw_item(menu, item)
  * Draw the menu in the subwindow provided.
  */
 int
-__menui_draw_menu(menu)
+_menui_draw_menu(menu)
 	MENU *menu;
 {
 	int rowmajor, i, j, max_items, last_item, row = -1, col = -1;
@@ -522,7 +523,7 @@ __menui_draw_menu(menu)
 			for (j = 0; j < menu->col_width; j++)
 				waddch(menu->menu_subwin, ' ');
 		} else {
-			__menui_draw_item(menu, i);
+			_menui_draw_item(menu, i);
 			
 		}
 
@@ -542,7 +543,7 @@ __menui_draw_menu(menu)
  *
  */
 void
-__menui_max_item_size(menu)
+_menui_max_item_size(menu)
 	MENU *menu;
 {
 	int i, with_desc, width;
@@ -565,7 +566,7 @@ __menui_max_item_size(menu)
  * unhighlight the old item and highlight the new one.
  */
 static void
-__menui_redraw_menu(menu, old_top_row, old_cur_item)
+_menui_redraw_menu(menu, old_top_row, old_cur_item)
 	MENU *menu;
 	int old_top_row;
 	int old_cur_item;
@@ -579,13 +580,13 @@ __menui_redraw_menu(menu, old_top_row, old_cur_item)
 		   * XXXX changed lines.
 		   */
 		wclear(menu->menu_subwin);
-		__menui_draw_menu(menu);
+		_menui_draw_menu(menu);
 	} else {
 		if (menu->cur_item != old_cur_item) {
 			  /* redo the old item as a normal one. */
-			__menui_draw_item(menu, old_cur_item);
+			_menui_draw_item(menu, old_cur_item);
 		}
 		  /* and then redraw the current item */
-		__menui_draw_item(menu, menu->cur_item);
+		_menui_draw_item(menu, menu->cur_item);
 	}
 }
