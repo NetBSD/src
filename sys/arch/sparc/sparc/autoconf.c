@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.197 2003/07/15 00:05:00 lukem Exp $ */
+/*	$NetBSD: autoconf.c,v 1.198 2003/08/01 12:25:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.197 2003/07/15 00:05:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.198 2003/08/01 12:25:45 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1092,7 +1092,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 	struct mainbus_attach_args ma;
 	char namebuf[32];
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
 	const char *const *ssp, *sp = NULL;
 	int node0, node;
 	const char *const *openboot_special;
