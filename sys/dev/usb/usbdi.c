@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.64 2000/03/02 15:49:29 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.65 2000/03/08 15:34:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -315,8 +315,10 @@ usbd_transfer(xfer)
 				if (xfer->done)
 					break;
 			}
-			if (!xfer->done)
+			if (!xfer->done) {
 				pipe->methods->abort(xfer);
+				xfer->status = USBD_TIMEOUT;
+			}
 		} else
 		/* XXX End hack XXX */
 			tsleep(xfer, PRIBIO, "usbsyn", 0);
