@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: nubus.c,v 1.2 1993/11/29 00:32:51 briggs Exp $
+ * $Id: nubus.c,v 1.3 1993/12/21 03:18:00 briggs Exp $
  *
  */
 
@@ -618,6 +618,17 @@ struct imagedata *NUBUS_GetImageData(struct slot *Slot,
 }
 
 struct	nubus_hw nubus_table[NUBUS_MAXSLOTS];
+
+extern int
+nubus_addr_to_slot(caddr_t addr)
+{
+	int nubus_num;
+
+	for (nubus_num = 0 ; nubus_num < NUBUS_MAXSLOTS ; nubus_num++)
+		if (nubus_table[nubus_num].addr == addr)
+			return nubus_num;
+	return -1;
+}
 
 static void
 find_nubus(void)
