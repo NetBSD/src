@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 2001/06/02 18:09:21 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.107 2001/07/19 23:35:42 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@
 
 /* #include "fb.h" */
 
-int bus_space_debug = 1; /* This may be used by macros elsewhere. */
+int bus_space_debug = 0; /* This may be used by macros elsewhere. */
 #ifdef DEBUG
 #define DPRINTF(l, s)   do { if (bus_space_debug & l) printf s; } while (0)
 #else
