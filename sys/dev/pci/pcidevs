@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.91 1998/11/29 01:53:33 thorpej Exp $
+$NetBSD: pcidevs,v 1.92 1998/11/29 01:54:02 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -482,7 +482,6 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
-vendor REALTEK2		0x1211	Realtek Semiconductor (2nd PCI Vendor ID)
 vendor 2MICRO		0x1217  2 Micro Inc
 vendor 3DFX		0x121a	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
@@ -960,7 +959,6 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 product	REALTEK	RT8029	0x8029	8029 Ethernet
 product REALTEK	RT8129	0x8129	8129 10/100 Ethernet
 product REALTEK RT8139	0x8139	8139 10/100 Ethernet
-product REALTEK2 RT8139_2 0x1211 8139 10/100 Ethernet (2nd PCI Device ID)
 
 /* RISCom (SDL Communications, Inc?) products */
 product RISCOM N2	0x5568	N2
