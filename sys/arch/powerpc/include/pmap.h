@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 1999/09/12 01:17:18 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2000/03/30 16:18:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -90,6 +90,8 @@ void pmap_procwr __P((struct proc *, vaddr_t, size_t));
  */
 #define	PMAP_MAP_POOLPAGE(pa)	(pa)
 #define	PMAP_UNMAP_POOLPAGE(pa)	(pa)
+
+static __inline paddr_t vtophys __P((vaddr_t));
 
 static __inline paddr_t
 vtophys(va)
