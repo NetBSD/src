@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.42 2003/08/07 10:04:14 agc Exp $	*/
+/*	$NetBSD: traverse.c,v 1.43 2004/03/24 12:28:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.42 2003/08/07 10:04:14 agc Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.43 2004/03/24 12:28:51 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,8 +91,9 @@ blockest(union dinode *dp)
 	 *	dump blocks (sizeest vs. blkest in the indirect block
 	 *	calculation).
 	 */
-	blkest = howmany(dbtob((u_int64_t)DIP(dp, blocks)), TP_BSIZE);
-	sizeest = howmany(DIP(dp, size), TP_BSIZE);
+	blkest = howmany(ufs_fragroundup(ufsib,
+	    dbtob((u_int64_t)DIP(dp, blocks))), TP_BSIZE);
+	sizeest = howmany(ufs_fragroundup(ufsib, DIP(dp, size)), TP_BSIZE);
 	if (blkest > sizeest)
 		blkest = sizeest;
 	if (DIP(dp, size) > ufsib->ufs_bsize * NDADDR) {
