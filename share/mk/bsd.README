@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.160 2005/01/10 00:20:21 he Exp $
+#	$NetBSD: bsd.README,v 1.161 2005/01/10 21:06:39 manu Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -206,8 +206,7 @@ MKOBJDIRS	If "no", don't create objdirs during a "make build".
 
 MKPAM		If "no", disables building of PAM authentication
 		infrastructure (libraries and support programs).
-		Default: yes if target supports shared libraries and
-		MKPIC is not set to "no"
+		Default: no
 
 MKPIC		If "no", don't build or install shared libraries, and
 		also acts as "MKPICLIB=no"
