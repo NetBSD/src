@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.37 2003/01/07 20:02:10 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.38 2003/02/03 23:51:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.37 2003/01/07 20:02:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.38 2003/02/03 23:51:03 thorpej Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -346,7 +346,6 @@ void pppoe_softintr_handler(void *dummy)
 {
 	int s = splnet();
 	pppoe_input();
-	callout_deactivate(&pppoe_softintr);
 	splx(s);
 }
 #endif
