@@ -1,4 +1,4 @@
-/* $NetBSD: sccvar.h,v 1.6 1999/08/08 01:44:58 ross Exp $ */
+/* $NetBSD: sccvar.h,v 1.7 2001/08/26 16:39:56 simonb Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -98,6 +98,15 @@ typedef struct {
 	do { (v) = ((d) >> 8) & 0xff; alpha_mb(); DELAY(5); } while (0)
 #define	scc_set_datum(d, v) \
 	do { (d) = (volatile unsigned int)(v) << 8; alpha_mb(); DELAY(5); } while (0)
+
+/* From <pmax/dev/pdma.h>. */
+struct pdma {
+	void	*p_addr;
+	char	*p_mem;
+	char	*p_end;
+	int	p_arg;
+	void	(*p_fcn) __P((struct tty *tp));
+};
 
 /*
  * Minor device numbers for scc.  Weird because B channel comes first and
