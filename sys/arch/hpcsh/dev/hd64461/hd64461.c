@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.10 2002/10/01 02:59:57 thorpej Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.11 2002/10/02 15:45:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ STATIC void hd64461_info(void);
 #endif
 
 CFATTACH_DECL(hd64461if, sizeof(struct device),
-    hd64461_match, hd64461_attach, NULL, NULL)
+    hd64461_match, hd64461_attach, NULL, NULL);
 
 int
 hd64461_match(struct device *parent, struct cfdata *cf, void *aux)

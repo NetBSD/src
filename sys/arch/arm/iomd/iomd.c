@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.7 2002/10/01 03:10:13 thorpej Exp $	*/
+/*	$NetBSD: iomd.c,v 1.8 2002/10/02 15:45:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -84,7 +84,7 @@ static void iomdattach	__P((struct device *parent, struct device *self,
 static int iomdprint	__P((void *aux, const char *iomdbus));
 
 CFATTACH_DECL(iomd, sizeof(struct iomd_softc),
-    iomdmatch, iomdattach, NULL, NULL)
+    iomdmatch, iomdattach, NULL, NULL);
 
 extern struct bus_space iomd_bs_tag;
 
