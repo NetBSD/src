@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2004/04/17 12:56:27 cl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2004/04/21 18:06:51 cl Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2004/04/17 12:56:27 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2004/04/21 18:06:51 cl Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -398,6 +398,7 @@ findroot(void)
 {
 	struct btinfo_bootdisk *bid;
 	struct device *dv;
+	char bootdev[16]; /* sizeof(dv_xname) */
 #ifdef COMPAT_OLDBOOT
 	int i, majdev, unit, part;
 	char buf[32];
@@ -476,6 +477,29 @@ found:
 			return;
 	}
 
+	xen_parse_cmdline(bootdev, NULL);
+	if (bootdev[0] == 0)
+		strcat(bootdev, "xbd0");
+
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (is_valid_disk(dv) == 0)
+			continue;
+
+		if (strncmp(bootdev, dv->dv_xname, strlen(dv->dv_xname)))
+			continue;
+
+		if (strlen(bootdev) != strlen(dv->dv_xname)) {
+			booted_partition =
+				toupper(bootdev[strlen(dv->dv_xname)]) - 'A';
+		}
+
+		booted_device = dv;
+		break;
+	}
+
+	if (booted_device)
+		return;
+
 #ifdef COMPAT_OLDBOOT
 #if 0
 	printf("howto %x bootdev %x ", boothowto, bootdev);
@@ -529,13 +553,6 @@ device_register(struct device *dev, void *aux)
 #endif
 			goto found;
 		}
-	}
-	if (dev->dv_class == DV_DISK) {
-		char bootdev[16]; /* sizeof(dv_xname) */
-
-		xen_parse_cmdline(bootdev, NULL);
-		if (strncmp(bootdev, dev->dv_xname, 16) == 0)
-			goto found;
 	}
 #endif
 	if (dev->dv_class == DV_IFNET) {
@@ -603,5 +620,6 @@ is_valid_disk(struct device *dv)
 	name = dv->dv_cfdata->cf_name;
 
 	return (strcmp(name, "sd") == 0 || strcmp(name, "wd") == 0 ||
-	    strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0);
+	    strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0 ||
+	    strcmp(name, "xbd") == 0);
 }
