@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.49 2002/08/22 00:09:38 christos Exp $
+#	$NetBSD: Makefile,v 1.50 2002/09/18 06:24:34 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
-.include <bsd.obj.mk>
+.include <bsd.own.mk>
 
 PROG=	ftpd
 SRCS=	cmds.c conf.c ftpd.c ftpcmd.y logutmp.c logwtmp.c popen.c
