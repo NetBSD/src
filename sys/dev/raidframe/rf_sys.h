@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sys.h,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
+/*	$NetBSD: rf_sys.h,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
 /*
  * rf_sys.h
  *
@@ -36,6 +36,6 @@
 
 #include "rf_types.h"
 
-int rf_ConfigureEtimer(RF_ShutdownList_t **listp);
+int     rf_ConfigureEtimer(RF_ShutdownList_t ** listp);
 
-#endif /* !_RF__RF_SYS_H_ */
+#endif				/* !_RF__RF_SYS_H_ */

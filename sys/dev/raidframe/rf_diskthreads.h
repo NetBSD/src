@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskthreads.h,v 1.2 1999/01/26 02:33:56 oster Exp $	*/
+/*	$NetBSD: rf_diskthreads.h,v 1.3 1999/02/05 00:06:10 oster Exp $	*/
 /*
  * rf_diskthreads.h
  */
@@ -40,16 +40,17 @@
 
 /* this is the information that a disk thread needs to do its job */
 struct RF_DiskId_s {
-  RF_DiskQueue_t  *queue;
-  RF_Raid_t       *raidPtr;
-  RF_RaidDisk_t   *disk;
-  int              fd;       /* file descriptor */
-  RF_RowCol_t      row, col; /* debug only */
+	RF_DiskQueue_t *queue;
+	RF_Raid_t *raidPtr;
+	RF_RaidDisk_t *disk;
+	int     fd;		/* file descriptor */
+	RF_RowCol_t row, col;	/* debug only */
 };
 
-int rf_ConfigureDiskThreads(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
-	RF_Config_t *cfgPtr);
+int 
+rf_ConfigureDiskThreads(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
+    RF_Config_t * cfgPtr);
 
-int rf_ShutdownDiskThreads(RF_Raid_t *raidPtr);
+int     rf_ShutdownDiskThreads(RF_Raid_t * raidPtr);
 
-#endif /* !_RF__RF_DISKTHREADS_H_ */
+#endif				/* !_RF__RF_DISKTHREADS_H_ */

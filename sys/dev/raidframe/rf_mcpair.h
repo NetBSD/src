@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,17 +37,16 @@
 #include "rf_threadstuff.h"
 
 struct RF_MCPair_s {
-  RF_DECLARE_MUTEX(mutex)
-  RF_DECLARE_COND(cond)
-  int           flag;
-  RF_MCPair_t  *next;
+	RF_DECLARE_MUTEX(mutex)
+	RF_DECLARE_COND(cond)
+	int     flag;
+	RF_MCPair_t *next;
 };
-
 #define RF_WAIT_MCPAIR(_mcp)  tsleep(&((_mcp)->flag), PRIBIO | PCATCH, "mcpair", 0)
 
-int rf_ConfigureMCPair(RF_ShutdownList_t **listp);
+int     rf_ConfigureMCPair(RF_ShutdownList_t ** listp);
 RF_MCPair_t *rf_AllocMCPair(void);
-void rf_FreeMCPair(RF_MCPair_t *t);
-void rf_MCPairWakeupFunc(RF_MCPair_t *t);
+void    rf_FreeMCPair(RF_MCPair_t * t);
+void    rf_MCPairWakeupFunc(RF_MCPair_t * t);
 
-#endif /* !_RF__RF_MCPAIR_H_ */
+#endif				/* !_RF__RF_MCPAIR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.h,v 1.2 1999/01/26 02:33:50 oster Exp $	*/
+/*	$NetBSD: rf_callback.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -47,16 +47,18 @@
 #include "rf_types.h"
 
 struct RF_CallbackDesc_s {
-  void              (*callbackFunc)(RF_CBParam_t); /* function to call */
-  RF_CBParam_t        callbackArg;     /* args to give to function, or just info about this callback  */
-  RF_CBParam_t        callbackArg2;
-  RF_RowCol_t         row;             /* disk row and column IDs to give to the callback func */
-  RF_RowCol_t         col;
-  RF_CallbackDesc_t  *next;            /* next entry in list */
+	void    (*callbackFunc) (RF_CBParam_t);	/* function to call */
+	RF_CBParam_t callbackArg;	/* args to give to function, or just
+					 * info about this callback  */
+	RF_CBParam_t callbackArg2;
+	RF_RowCol_t row;	/* disk row and column IDs to give to the
+				 * callback func */
+	RF_RowCol_t col;
+	RF_CallbackDesc_t *next;/* next entry in list */
 };
 
-int                 rf_ConfigureCallback(RF_ShutdownList_t **listp);
-RF_CallbackDesc_t  *rf_AllocCallbackDesc(void);
-void                rf_FreeCallbackDesc(RF_CallbackDesc_t *p);
+int     rf_ConfigureCallback(RF_ShutdownList_t ** listp);
+RF_CallbackDesc_t *rf_AllocCallbackDesc(void);
+void    rf_FreeCallbackDesc(RF_CallbackDesc_t * p);
 
-#endif /* !_RF__RF_CALLBACK_H_ */
+#endif				/* !_RF__RF_CALLBACK_H_ */

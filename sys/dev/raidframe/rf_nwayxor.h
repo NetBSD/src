@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_nwayxor.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
+/*	$NetBSD: rf_nwayxor.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
 /*
  * rf_nwayxor.h
  */
@@ -39,15 +39,15 @@
 #include "rf_raid.h"
 #include "rf_reconstruct.h"
 
-int rf_ConfigureNWayXor(RF_ShutdownList_t **listp);
-void rf_nWayXor1(RF_ReconBuffer_t **src_rbs, RF_ReconBuffer_t *dest_rb, int len);
-void rf_nWayXor2(RF_ReconBuffer_t **src_rbs, RF_ReconBuffer_t *dest_rb, int len);
-void rf_nWayXor3(RF_ReconBuffer_t **src_rbs, RF_ReconBuffer_t *dest_rb, int len);
-void rf_nWayXor4(RF_ReconBuffer_t **src_rbs, RF_ReconBuffer_t *dest_rb, int len);
-void rf_nWayXor5(RF_ReconBuffer_t **src_rbs, RF_ReconBuffer_t *dest_rb, int len);
-void rf_nWayXor6(RF_ReconBuffer_t **src_rbs, RF_ReconBuffer_t *dest_rb, int len);
-void rf_nWayXor7(RF_ReconBuffer_t **src_rbs, RF_ReconBuffer_t *dest_rb, int len);
-void rf_nWayXor8(RF_ReconBuffer_t **src_rbs, RF_ReconBuffer_t *dest_rb, int len);
-void rf_nWayXor9(RF_ReconBuffer_t **src_rbs, RF_ReconBuffer_t *dest_rb, int len);
+int     rf_ConfigureNWayXor(RF_ShutdownList_t ** listp);
+void    rf_nWayXor1(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
+void    rf_nWayXor2(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
+void    rf_nWayXor3(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
+void    rf_nWayXor4(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
+void    rf_nWayXor5(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
+void    rf_nWayXor6(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
+void    rf_nWayXor7(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
+void    rf_nWayXor8(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
+void    rf_nWayXor9(RF_ReconBuffer_t ** src_rbs, RF_ReconBuffer_t * dest_rb, int len);
 
-#endif /* !_RF__RF_NWAYXOR_H_ */
+#endif				/* !_RF__RF_NWAYXOR_H_ */

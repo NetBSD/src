@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.h,v 1.2 1999/01/26 02:33:53 oster Exp $	*/
+/*	$NetBSD: rf_dagffrd.h,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,17 +32,21 @@
 #include "rf_types.h"
 
 /* fault-free read DAG creation routines */
-void rf_CreateFaultFreeReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-  RF_DagHeader_t *dag_h, void *bp, RF_RaidAccessFlags_t flags,
-  RF_AllocListElem_t *allocList);
-void rf_CreateNonredundantDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-  RF_DagHeader_t *dag_h, void *bp, RF_RaidAccessFlags_t flags,
-  RF_AllocListElem_t *allocList, RF_IoType_t type);
-void rf_CreateMirrorIdleReadDAG(RF_Raid_t *raidPtr,
-  RF_AccessStripeMap_t *asmap, RF_DagHeader_t *dag_h, void *bp,
-  RF_RaidAccessFlags_t flags, RF_AllocListElem_t *allocList);
-void rf_CreateMirrorPartitionReadDAG(RF_Raid_t *raidPtr,
-  RF_AccessStripeMap_t *asmap, RF_DagHeader_t *dag_h, void *bp,
-  RF_RaidAccessFlags_t flags, RF_AllocListElem_t *allocList);
+void 
+rf_CreateFaultFreeReadDAG(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
+    RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
+    RF_AllocListElem_t * allocList);
+void 
+rf_CreateNonredundantDAG(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
+    RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
+    RF_AllocListElem_t * allocList, RF_IoType_t type);
+void 
+rf_CreateMirrorIdleReadDAG(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
+void 
+rf_CreateMirrorPartitionReadDAG(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
 
-#endif /* !_RF__RF_DAGFFRD_H_ */
+#endif				/* !_RF__RF_DAGFFRD_H_ */

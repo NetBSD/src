@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -84,13 +84,13 @@
 
 
 struct raidcinfo {
-	struct vnode	*ci_vp;			/* device's vnode */
-	dev_t		ci_dev;			/* XXX: device's dev_t */
+	struct vnode *ci_vp;	/* device's vnode */
+	dev_t   ci_dev;		/* XXX: device's dev_t */
 #if 0
-	size_t		ci_size; 		/* size */
-	char		*ci_path;		/* path to component */
-	size_t		ci_pathlen;		/* length of component path */
+	size_t  ci_size;	/* size */
+	char   *ci_path;	/* path to component */
+	size_t  ci_pathlen;	/* length of component path */
 #endif
 };
-#endif /* _KERNEL */
-#endif /*  _RF__RF_NETBSDSTUFF_H_ */
+#endif				/* _KERNEL */
+#endif				/* _RF__RF_NETBSDSTUFF_H_ */

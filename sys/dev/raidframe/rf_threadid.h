@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadid.h,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
+/*	$NetBSD: rf_threadid.h,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -51,4 +51,4 @@
 
 #define rf_get_threadid(_id_) _id_ = 0;
 
-#endif /* !_RF__RF_THREADID_H_ */
+#endif				/* !_RF__RF_THREADID_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid4.h,v 1.2 1999/01/26 02:34:01 oster Exp $	*/
+/*	$NetBSD: rf_raid4.h,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,20 +31,26 @@
 #ifndef _RF__RF_RAID4_H_
 #define _RF__RF_RAID4_H_
 
-int  rf_ConfigureRAID4(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
-	RF_Config_t *cfgPtr);
-int rf_GetDefaultNumFloatingReconBuffersRAID4(RF_Raid_t *raidPtr);
-RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitRAID4(RF_Raid_t *raidPtr);
-void rf_MapSectorRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-	RF_RowCol_t *row, RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap);
-void rf_MapParityRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-	RF_RowCol_t *row, RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap);
-void rf_IdentifyStripeRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
-	RF_RowCol_t **diskids, RF_RowCol_t *outRow);
-void rf_MapSIDToPSIDRAID4(RF_RaidLayout_t *layoutPtr,
-	RF_StripeNum_t stripeID, RF_StripeNum_t *psID,
-	RF_ReconUnitNum_t *which_ru);
-void rf_RAID4DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
-	RF_AccessStripeMap_t *asmap, RF_VoidFuncPtr *createFunc);
+int 
+rf_ConfigureRAID4(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
+    RF_Config_t * cfgPtr);
+int     rf_GetDefaultNumFloatingReconBuffersRAID4(RF_Raid_t * raidPtr);
+RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitRAID4(RF_Raid_t * raidPtr);
+void 
+rf_MapSectorRAID4(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
+    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+void 
+rf_MapParityRAID4(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
+    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+void 
+rf_IdentifyStripeRAID4(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
+    RF_RowCol_t ** diskids, RF_RowCol_t * outRow);
+void 
+rf_MapSIDToPSIDRAID4(RF_RaidLayout_t * layoutPtr,
+    RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
+    RF_ReconUnitNum_t * which_ru);
+void 
+rf_RAID4DagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
+    RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);
 
-#endif /* !_RF__RF_RAID4_H_ */
+#endif				/* !_RF__RF_RAID4_H_ */

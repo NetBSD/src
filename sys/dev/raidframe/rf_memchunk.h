@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_memchunk.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
+/*	$NetBSD: rf_memchunk.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,14 +34,14 @@
 #include "rf_types.h"
 
 struct RF_ChunkDesc_s {
-  int              size;
-  int              reuse_count;
-  char            *buf;
-  RF_ChunkDesc_t  *next;
+	int     size;
+	int     reuse_count;
+	char   *buf;
+	RF_ChunkDesc_t *next;
 };
 
-int rf_ConfigureMemChunk(RF_ShutdownList_t **listp);
+int     rf_ConfigureMemChunk(RF_ShutdownList_t ** listp);
 RF_ChunkDesc_t *rf_GetMemChunk(int size);
-void rf_ReleaseMemChunk(RF_ChunkDesc_t *chunk);
+void    rf_ReleaseMemChunk(RF_ChunkDesc_t * chunk);
 
-#endif /* !_RF__RF_MEMCHUNK_H_ */
+#endif				/* !_RF__RF_MEMCHUNK_H_ */

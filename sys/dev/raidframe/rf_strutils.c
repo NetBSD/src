@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_strutils.c,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
+/*	$NetBSD: rf_strutils.c,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
 /*
  * rf_strutils.c
  *
@@ -40,15 +40,16 @@
 #include "rf_utils.h"
 
 /* finds a non-white character in the line */
-char *rf_find_non_white(char *p)
+char   *
+rf_find_non_white(char *p)
 {
-  for (; *p != '\0' && (*p == ' ' || *p == '\t'); p++);
-  return(p);
+	for (; *p != '\0' && (*p == ' ' || *p == '\t'); p++);
+	return (p);
 }
-
 /* finds a white character in the line */
-char *rf_find_white(char *p)
+char   *
+rf_find_white(char *p)
 {
-  for (; *p != '\0' && (*p != ' ' && *p != '\t'); p++);
-  return(p);
+	for (; *p != '\0' && (*p != ' ' && *p != '\t'); p++);
+	return (p);
 }

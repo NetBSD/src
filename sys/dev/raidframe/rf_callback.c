@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.2 1999/01/26 02:33:50 oster Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -47,43 +47,47 @@ static RF_FreeList_t *rf_callback_freelist;
 #define RF_CALLBACK_INITIAL   4
 
 static void rf_ShutdownCallback(void *);
-static void rf_ShutdownCallback(ignored)
-  void  *ignored;
+static void 
+rf_ShutdownCallback(ignored)
+	void   *ignored;
 {
-	RF_FREELIST_DESTROY(rf_callback_freelist,next,(RF_CallbackDesc_t *));
+	RF_FREELIST_DESTROY(rf_callback_freelist, next, (RF_CallbackDesc_t *));
 }
 
-int rf_ConfigureCallback(listp)
-  RF_ShutdownList_t  **listp;
+int 
+rf_ConfigureCallback(listp)
+	RF_ShutdownList_t **listp;
 {
-	int rc;
+	int     rc;
 
 	RF_FREELIST_CREATE(rf_callback_freelist, RF_MAX_FREE_CALLBACK,
-		RF_CALLBACK_INC, sizeof(RF_CallbackDesc_t));
+	    RF_CALLBACK_INC, sizeof(RF_CallbackDesc_t));
 	if (rf_callback_freelist == NULL)
-		return(ENOMEM);
+		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownCallback, NULL);
 	if (rc) {
 		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-			__LINE__, rc);
+		    __LINE__, rc);
 		rf_ShutdownCallback(NULL);
-		return(rc);
+		return (rc);
 	}
-	RF_FREELIST_PRIME(rf_callback_freelist, RF_CALLBACK_INITIAL,next,
-		(RF_CallbackDesc_t *));
-	return(0);
+	RF_FREELIST_PRIME(rf_callback_freelist, RF_CALLBACK_INITIAL, next,
+	    (RF_CallbackDesc_t *));
+	return (0);
 }
 
-RF_CallbackDesc_t *rf_AllocCallbackDesc()
+RF_CallbackDesc_t *
+rf_AllocCallbackDesc()
 {
 	RF_CallbackDesc_t *p;
 
-	RF_FREELIST_GET(rf_callback_freelist,p,next,(RF_CallbackDesc_t *));
-	return(p);
+	RF_FREELIST_GET(rf_callback_freelist, p, next, (RF_CallbackDesc_t *));
+	return (p);
 }
 
-void rf_FreeCallbackDesc(p)
-  RF_CallbackDesc_t *p;
+void 
+rf_FreeCallbackDesc(p)
+	RF_CallbackDesc_t *p;
 {
-	RF_FREELIST_FREE(rf_callback_freelist,p,next);
+	RF_FREELIST_FREE(rf_callback_freelist, p, next);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.h,v 1.2 1999/01/26 02:33:57 oster Exp $	*/
+/*	$NetBSD: rf_engine.h,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,11 +35,13 @@
 #ifndef _RF__RF_ENGINE_H_
 #define _RF__RF_ENGINE_H_
 
-int rf_ConfigureEngine(RF_ShutdownList_t **listp,
-	RF_Raid_t *raidPtr, RF_Config_t *cfgPtr);
+int 
+rf_ConfigureEngine(RF_ShutdownList_t ** listp,
+    RF_Raid_t * raidPtr, RF_Config_t * cfgPtr);
 
-int rf_FinishNode(RF_DagNode_t *node, int context); /* return finished node to engine */
+int     rf_FinishNode(RF_DagNode_t * node, int context);	/* return finished node
+								 * to engine */
 
-int rf_DispatchDAG(RF_DagHeader_t *dag, void (*cbFunc)(void *), void *cbArg); /* execute dag */
+int     rf_DispatchDAG(RF_DagHeader_t * dag, void (*cbFunc) (void *), void *cbArg);	/* execute dag */
 
-#endif /* !_RF__RF_ENGINE_H_ */
+#endif				/* !_RF__RF_ENGINE_H_ */

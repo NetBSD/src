@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -58,10 +58,11 @@
 #define rf_init_threadgroup(a) _rf_init_threadgroup(a,__FILE__,__LINE__)
 #define rf_destroy_threadgroup(a) _rf_destroy_threadgroup(a,__FILE__,__LINE__)
 
-int _rf_init_threadgroup(RF_ThreadGroup_t *g, char *file, int line);
-int _rf_destroy_threadgroup(RF_ThreadGroup_t *g, char *file, int line);
-int _rf_init_managed_threadgroup(RF_ShutdownList_t **listp,
-	RF_ThreadGroup_t *g, char *file, int line);
+int     _rf_init_threadgroup(RF_ThreadGroup_t * g, char *file, int line);
+int     _rf_destroy_threadgroup(RF_ThreadGroup_t * g, char *file, int line);
+int 
+_rf_init_managed_threadgroup(RF_ShutdownList_t ** listp,
+    RF_ThreadGroup_t * g, char *file, int line);
 
 #include <sys/lock.h>
 #define decl_simple_lock_data(a,b) a struct simplelock b;
@@ -100,13 +101,12 @@ typedef void *RF_ThreadArg_t;
 	    (struct proc **)&(_handle_), "raid")
 
 struct RF_ThreadGroup_s {
-  int  created;
-  int  running;
-  int  shutdown;
-  RF_DECLARE_MUTEX(mutex)
-  RF_DECLARE_COND(cond)
+	int     created;
+	int     running;
+	int     shutdown;
+	        RF_DECLARE_MUTEX(mutex)
+	        RF_DECLARE_COND(cond)
 };
-
 /*
  * Someone has started a thread in the group
  */
@@ -160,8 +160,8 @@ struct RF_ThreadGroup_s {
 	RF_UNLOCK_MUTEX((_g_)->mutex); \
 }
 #else
-  /* XXX Note that we've removed the assert.  That should get put back
-     in once we actually get something like a kernel thread running */
+ /* XXX Note that we've removed the assert.  That should get put back in once
+  * we actually get something like a kernel thread running */
 #define RF_THREADGROUP_WAIT_STOP(_g_) { \
 	RF_LOCK_MUTEX((_g_)->mutex); \
 	while((_g_)->shutdown < (_g_)->running) { \
@@ -172,13 +172,15 @@ struct RF_ThreadGroup_s {
 #endif
 
 
-int rf_mutex_init(struct simplelock *);
-int rf_mutex_destroy(struct simplelock *);
-int _rf_create_managed_mutex(RF_ShutdownList_t **, struct simplelock *, 
-			     char *, int);
-int _rf_create_managed_cond(RF_ShutdownList_t **listp, int *, 
-			    char *file, int line);
+int     rf_mutex_init(struct simplelock *);
+int     rf_mutex_destroy(struct simplelock *);
+int 
+_rf_create_managed_mutex(RF_ShutdownList_t **, struct simplelock *,
+    char *, int);
+int 
+_rf_create_managed_cond(RF_ShutdownList_t ** listp, int *,
+    char *file, int line);
 
-int rf_cond_init(int *c); /* XXX need to write?? */
-int rf_cond_destroy(int *c); /* XXX need to write?? */
-#endif /* !_RF__RF_THREADSTUFF_H_ */
+int     rf_cond_init(int *c);	/* XXX need to write?? */
+int     rf_cond_destroy(int *c);/* XXX need to write?? */
+#endif				/* !_RF__RF_THREADSTUFF_H_ */

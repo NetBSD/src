@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.h,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.h,v 1.2 1999/02/05 00:06:17 oster Exp $	*/
 /*
  * rf_shutdown.h
  */
@@ -50,18 +50,17 @@
  */
 
 struct RF_ShutdownList_s {
-  void               (*cleanup)(void *arg);
-  void                *arg;
-  char                *file;
-  int                  line;
-  RF_ShutdownList_t   *next;
+	void    (*cleanup) (void *arg);
+	void   *arg;
+	char   *file;
+	int     line;
+	RF_ShutdownList_t *next;
 };
-
 #define rf_ShutdownCreate(_listp_,_func_,_arg_) \
   _rf_ShutdownCreate(_listp_,_func_,_arg_,__FILE__,__LINE__)
 
-int _rf_ShutdownCreate(RF_ShutdownList_t **listp, void (*cleanup)(void *arg),
-	void *arg, char *file, int line);
-int rf_ShutdownList(RF_ShutdownList_t **listp);
+int     _rf_ShutdownCreate(RF_ShutdownList_t ** listp, void (*cleanup) (void *arg),
+            void *arg, char *file, int line);
+int     rf_ShutdownList(RF_ShutdownList_t ** listp);
 
-#endif /* !_RF__RF_SHUTDOWN_H_ */
+#endif				/* !_RF__RF_SHUTDOWN_H_ */
