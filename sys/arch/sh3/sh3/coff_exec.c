@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.6 2000/01/02 13:39:51 msaitoh Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.7 2000/04/11 04:37:48 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -331,7 +331,7 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 #endif
 		return ETXTBSY;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 	
 	DPRINTF(("VMCMD: addr %lx size %lx offset %lx\n", epp->ep_taddr,
 		 epp->ep_tsize, offset));

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.16 2000/04/11 04:37:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -126,7 +126,7 @@ exec_aout_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.41 2000/03/30 09:27:15 augustss Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.42 2000/04/11 04:37:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -183,6 +183,16 @@ vn_writechk(vp)
 	if ((vp->v_flag & VTEXT) && !uvm_vnp_uncache(vp))
 		return (ETXTBSY);
 	return (0);
+}
+
+/*
+ * Mark a vnode as being the text image of a running process.
+ */
+void
+vn_marktext(vp)
+	struct vnode *vp;
+{
+	vp->v_flag |= VTEXT;
 }
 
 /*
