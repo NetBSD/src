@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.6 2000/03/03 12:32:15 soda Exp $
+$NetBSD: TODO,v 1.7 2000/03/04 06:54:17 nisimura Exp $
 
 To do list (not in any particular order).
 
@@ -27,7 +27,12 @@ To do list (not in any particular order).
  	-   introduce struct platform and remove ugly ``switch (cputype)''
 	    in many places.
 
-	-   implement and use bus_dma
+	-   redesign interrupt handler framework to be flexible for
+	    possible variations; must be sane and useful for R4030/R4230
+	    'local' devices and any combinations with ISA/EISA/PCI
+
+	-   implement and use bus_dma, keeping in mind TLB assisted VDMA
+	    that R4030/R4230 chip provides
 
 	-   clean up bus_space implementation, remove inb/outb
 
