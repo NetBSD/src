@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.10 1996/06/20 04:11:55 scottr Exp $
+#	$NetBSD: SPOT,v 1.11 1996/08/05 01:52:17 scottr Exp $
 #
 # SPOT
 
@@ -16,6 +16,7 @@ options		KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb
 #options	GDB			# support for normal gdb
 #options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
+options		UCONSOLE		# non-root can grab console
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
@@ -48,7 +49,7 @@ options		GATEWAY		# IP packet forwarding
 #options	TPIP
 #options	EON
 options		PPP_BSDCOMP
-#options	PPP_DEFLATE
+options		PPP_DEFLATE
 options		COMPAT_42
 options		COMPAT_43
 #options	NS
@@ -76,6 +77,9 @@ macvid*		at nubus?
 # Attach grf semantics to all video hardware as it is found
 grf*		at intvid?
 grf*		at macvid?
+
+# Attach ite semantics to the appropriate grf device
+ite0		at grf?
 
 #ncrscsi0	at obio?		# SCSI NCR 5380
 #ncr96scsi0	at obio?		# SCSI NCR 53C96
