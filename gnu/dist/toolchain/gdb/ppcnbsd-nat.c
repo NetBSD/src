@@ -43,6 +43,8 @@ supply_regs (regs)
   supply_register (XER_REGNUM, regs + (34 * 4));
   supply_register (CTR_REGNUM, regs + (35 * 4));
   supply_register (PC_REGNUM,  regs + (36 * 4));
+  i = 0;
+  supply_register (PS_REGNUM,  (char *) &i);
 }
 
 static void
