@@ -1,4 +1,4 @@
-/*	$NetBSD: chk.c,v 1.6 1998/07/27 12:10:24 mycroft Exp $	*/
+/*	$NetBSD: chk.c,v 1.7 1998/07/27 13:50:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: chk.c,v 1.6 1998/07/27 12:10:24 mycroft Exp $");
+__RCSID("$NetBSD: chk.c,v 1.7 1998/07/27 13:50:49 mycroft Exp $");
 #endif
 
 #include <stdlib.h>
@@ -446,7 +446,7 @@ chkfaui(hte, def, decl)
 		return;
 
 	/*
-	 * If we find a function definition, we use this for comparision,
+	 * If we find a function definition, we use this for comparison,
 	 * otherwise the first prototype we can find. If there is no
 	 * definition or prototype declaration, the first function call
 	 * is used.
@@ -1289,8 +1289,8 @@ chkadecl(hte, def, decl)
  *
  * ignqual	if set, ignore qualifiers of outhermost type; used for
  *		function arguments
- * promote	if set, promote left type before comparision; used for
- *		comparisions of arguments with parameters of old style
+ * promote	if set, promote left type before comparison; used for
+ *		comparisons of arguments with parameters of old style
  *		definitions
  * asgn		left indirected type must have at least the same qualifiers
  *		like right indirected type (for assignments and function
