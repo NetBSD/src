@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1993/10/07 02:21:27 cgd Exp $
+#	$Id: Makefile,v 1.8 1993/12/21 22:16:33 davidb Exp $
 
 .include <../../Makefile.inc>
 
@@ -30,11 +30,40 @@ DEPSRCS += tn3270.c utilities.c
 
 PROG = tn3270
 
+.if exists(${.CURDIR}/../tools/mkastosc/obj.${MACHINE})
+MKASTOSC=	$(.CURDIR)/../tools/mkastosc/obj.${MACHINE}/mkastosc
+.elif exists(${.CURDIR}/../tools/mkastosc/obj)
+MKASTOSC=	$(.CURDIR)/../tools/mkastosc/obj/mkastosc
+.else
+MKASTOSC=	$(.CURDIR)/../tools/mkastosc/mkastosc
+.endif
+.if exists(${.CURDIR}/../tools/mkastods/obj.${MACHINE})
+MKASTODS=	$(.CURDIR)/../tools/mkastods/obj.${MACHINE}/mkastods
+.elif exists(${.CURDIR}/../tools/mkastods/obj)
+MKASTODS=	$(.CURDIR)/../tools/mkastods/obj/mkastods
+.else
+MKASTODS=	$(.CURDIR)/../tools/mkastods/mkastods
+.endif
+.if exists(${.CURDIR}/../tools/mkdstoas/obj.${MACHINE})
+MKDSTOAS=	$(.CURDIR)/../tools/mkdstoas/obj.${MACHINE}/mkdstoas
+.elif exists(${.CURDIR}/../tools/mkdstoas/obj)
+MKDSTOAS=	$(.CURDIR)/../tools/mkdstoas/obj/mkdstoas
+.else
+MKDSTOAS=	$(.CURDIR)/../tools/mkdstoas/mkdstoas
+.endif
+.if exists(${.CURDIR}/../tools/mkhits/obj.${MACHINE})
+MKHITS=	$(.CURDIR)/../tools/mkhits/obj.${MACHINE}/mkhits
+.elif exists(${.CURDIR}/../tools/mkhits/obj)
+MKHITS=	$(.CURDIR)/../tools/mkhits/obj/mkhits
+.else
+MKHITS=	$(.CURDIR)/../tools/mkhits/mkhits
+.endif
+
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out
 astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
-	    ${.CURDIR}/../ctlr/${KBD} ${.CURDIR}/../tools/mkastosc/obj/mkastosc
-	${.CURDIR}/../tools/mkastosc/obj/mkastosc ${.CURDIR}/../ctlr/hostctlr.h \
+	    ${.CURDIR}/../ctlr/${KBD} ${MKASTOSC}
+	${MKASTOSC} ${.CURDIR}/../ctlr/hostctlr.h \
 		${.CURDIR}/../ctlr/function.h < ${.CURDIR}/../ctlr/${KBD} \
 		> ${.TARGET}
 	/bin/rm -f astosc.out
@@ -42,21 +71,21 @@ astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 
 disp_asc.o: asc_disp.OUT disp_asc.OUT
 CLEANFILES += asc_disp.OUT asc_disp.out disp_asc.OUT disp_asc.out
-asc_disp.OUT: ${.CURDIR}/../tools/mkastods/obj/mkastods
-	${.CURDIR}/../tools/mkastods/obj/mkastods > ${.TARGET}
+asc_disp.OUT: ${MKASTODS}
+	${MKASTODS} > ${.TARGET}
 	/bin/rm -f asc_disp.out
 	ln -s asc_disp.OUT asc_disp.out
-disp_asc.OUT: ${.CURDIR}/../tools/mkdstoas/obj/mkdstoas
-	${.CURDIR}/../tools/mkdstoas/obj/mkdstoas > ${.TARGET}
+disp_asc.OUT: ${MKDSTOAS}
+	${MKDSTOAS} > ${.TARGET}
 	/bin/rm -f disp_asc.out
 	ln -s disp_asc.OUT disp_asc.out
 
 inbound.o: kbd.OUT
 CLEANFILES += TMPfunc.out kbd.OUT kbd.out
 kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} \
-	 ${.CURDIR}/../tools/mkhits/obj/mkhits
+	 ${MKHITS}
 	${CC} ${CFLAGS} -E ${.CURDIR}/../ctlr/function.c > TMPfunc.out
-	${.CURDIR}/../tools/mkhits/obj/mkhits ${.CURDIR}/../ctlr/hostctlr.h \
+	${MKHITS} ${.CURDIR}/../ctlr/hostctlr.h \
 		TMPfunc.out < ${.CURDIR}/../ctlr/${KBD} > ${.TARGET}
 	/bin/rm -f kbd.out
 	ln -s kbd.OUT kbd.out
@@ -66,13 +95,13 @@ kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} \
 # default.map
 # kbd.out
 
-${.CURDIR}/../tools/mkastosc/obj/mkastosc:
+${MKASTOSC}:
 	cd ${.CURDIR}/../tools/mkastosc; make
-${.CURDIR}/../tools/mkastods/obj/mkastods:
+${MKASTODS}:
 	cd ${.CURDIR}/../tools/mkastods; make
-${.CURDIR}/../tools/mkdstoas/obj/mkdstoas:
+${MKDSTOAS}:
 	cd ${.CURDIR}/../tools/mkdstoas; make
-${.CURDIR}/../tools/mkhits/obj/mkhits:
+${MKHITS}:
 	cd ${.CURDIR}/../tools/mkhits; make
 
 
