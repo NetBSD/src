@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:31 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/09 21:36:37 garbled Exp $
 
 FILES=	form help defaults
 FILESDIR=${BINDIR}/sushi/system/sshdconf
-SCRIPTS= script script1 script2 script3 script4 script5 script6
+SCRIPTS= script script1 script2 script3 script4 script5 script6 script7
 SCRIPTSDIR=${BINDIR}/sushi/system/sshdconf
 NOOBJ=	# defined
 
