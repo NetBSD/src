@@ -1,10 +1,11 @@
-# 	$NetBSD: INSTALL,v 1.8 1997/10/20 03:45:08 jonathan Exp $
+# 	$NetBSD: INSTALL,v 1.9 1997/10/20 03:50:08 jonathan Exp $
 #
-# Distribution root-on-NFS  network install kernel (any  model)
-#    root on NFS  to boot diskless for installation,
-#    disk drivers for labelling disks and installation on local disk.
+# Distribution  install kernel (any  model)
+#    netbsd:    cut-down kernel for miniroots.
+#    nfsnetbsd: root on NFS  to boot diskless for installation,
+#    	disk drivers for labelling disks and installation on local disk.
 #
-#    Kernel must be under 1Mbyte to boot on 3100s with old PROMs.
+#    Kernel must be under 1Mbyte to net-boot on 3100s with old PROMs.
 #
 #
 include		"arch/pmax/conf/std.pmax"
