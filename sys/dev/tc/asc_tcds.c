@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.8 2002/10/02 16:53:01 thorpej Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.9 2003/02/22 05:13:35 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.8 2002/10/02 16:53:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.9 2003/02/22 05:13:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ asc_tcds_attach(parent, self, aux)
 	sc->sc_id = tcdsdev->tcdsda_id;
 	sc->sc_freq = tcdsdev->tcdsda_freq;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	tcds_intr_establish(parent, tcdsdev->tcdsda_chip, ncr53c9x_intr, sc);
