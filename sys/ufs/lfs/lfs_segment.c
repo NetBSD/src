@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.42 2000/03/30 12:41:13 augustss Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.43 2000/05/05 20:59:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -343,6 +343,7 @@ lfs_writevnodes(fs, mp, sp, op)
 	struct inode *ip;
 	struct vnode *vp;
 	int inodes_written=0, only_cleaning;
+	int needs_unlock;
 
 #ifndef LFS_NO_BACKVP_HACK
 	/* BEGIN HACK */
@@ -405,6 +406,23 @@ lfs_writevnodes(fs, mp, sp, op)
 			continue;
 		}
 #endif
+
+		needs_unlock = 0;
+		if(VOP_ISLOCKED(vp)) {
+			if (vp != fs->lfs_ivnode &&
+			    vp->v_lock.lk_lockholder != curproc->p_pid) {
+#ifdef DEBUG_LFS
+				printf("lfs_writevnodes: not writing ino %d, locked by pid %d\n",
+					VTOI(vp)->i_number,
+					vp->v_lock.lk_lockholder);
+#endif
+				continue;
+			}
+		} else {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			needs_unlock = 1;
+		}
+
 		only_cleaning = 0;
 		/*
 		 * Write the inode/file if dirty and it's not the
@@ -437,6 +455,9 @@ lfs_writevnodes(fs, mp, sp, op)
 			(void) lfs_writeinode(fs, sp, ip);
 			inodes_written++;
 		}
+
+		if(needs_unlock)
+			VOP_UNLOCK(vp,0);
 
 		if(lfs_clean_vnhead && only_cleaning)
 			lfs_vunref_head(vp);
@@ -907,6 +928,11 @@ loop:	for (bp = vp->v_dirtyblkhd.lh_first; bp && bp->b_vnbufs.le_next != NULL;
 			bwrite(bp);
 		} else {
 #ifdef DIAGNOSTIC
+			if ((bp->b_flags & (B_CALL|B_INVAL))==B_INVAL) {
+				printf("lfs_gather: lbn %d is B_INVAL\n",
+					bp->b_lblkno);
+				VOP_PRINT(bp->b_vp);
+			}
 			if (!(bp->b_flags & B_DELWRI))
 				panic("lfs_gather: bp not B_DELWRI");
 			if (!(bp->b_flags & B_LOCKED)) {
@@ -940,12 +966,13 @@ lfs_updatemeta(sp)
 	struct segment *sp;
 {
 	SEGUSE *sup;
-	struct buf *bp;
+	struct buf *bp, *ibp;
 	struct lfs *fs;
 	struct vnode *vp;
 	struct indir a[NIADDR + 2], *ap;
 	struct inode *ip;
 	ufs_daddr_t daddr, lbn, off;
+	daddr_t ooff;
 	int error, i, nblocks, num;
 	
 	vp = sp->vp;
@@ -993,10 +1020,26 @@ lfs_updatemeta(sp)
 		ip = VTOI(vp);
 		switch (num) {
 		case 0:
-			ip->i_ffs_db[lbn] = off;
+			ooff = ip->i_ffs_db[lbn];
+			if(vp != fs->lfs_ivnode && (ooff == 0 || ooff == UNASSIGNED)) {
+#ifdef DEBUG_LFS
+				printf("lfs_updatemeta[1]: warning: writing ino %d lbn %d at 0x%x, was 0x%x\n", ip->i_number, lbn, off, ooff);
+#else
+				;
+#endif
+			} else
+				ip->i_ffs_db[lbn] = off;
 			break;
 		case 1:
-			ip->i_ffs_ib[a[0].in_off] = off;
+			ooff = ip->i_ffs_ib[a[0].in_off];
+			if(vp != fs->lfs_ivnode && (ooff == 0 || ooff == UNASSIGNED)) {
+#ifdef DEBUG_LFS
+				printf("lfs_updatemeta[2]: warning: writing ino %d lbn %d at 0x%x, was 0x%x\n", ip->i_number, lbn, off, ooff);
+#else
+				;
+#endif
+			} else
+				ip->i_ffs_ib[a[0].in_off] = off;
 			break;
 		default:
 			ap = &a[num - 1];
@@ -1006,17 +1049,49 @@ lfs_updatemeta(sp)
 			/*
 			 * Bread may create a new (indirect) block which needs
 			 * to get counted for the inode.
+			 *
+			 * XXX - why would it ever do this (except possibly
+			 * for the Ifile)?  lfs_balloc is supposed to take
+			 * care of this.
 			 */
-			if (/* bp->b_blkno == -1 && */
-			    !(bp->b_flags & (B_DELWRI|B_DONE))) {
+			if (bp->b_blkno == UNASSIGNED) {
 				ip->i_ffs_blocks += fsbtodb(fs, 1);
 				fs->lfs_bfree -= fragstodb(fs, fs->lfs_frag);
+
+				/* Note the new address */
+				bp->b_blkno = UNWRITTEN;
+				
+				if(num == 2) {
+					ip->i_ffs_ib[a[0].in_off] = UNWRITTEN;
+				} else {
+					ap = &a[num - 2];
+					if (bread(vp, ap->in_lbn,
+						  fs->lfs_bsize, NOCRED, &ibp))
+						panic("lfs_updatemeta: bread bno %d",
+						      ap->in_lbn);
+					((ufs_daddr_t *)ibp->b_data)[ap->in_off] = UNWRITTEN;
+					VOP_BWRITE(ibp);
+				}
 			}
-			((ufs_daddr_t *)bp->b_data)[ap->in_off] = off;
-			VOP_BWRITE(bp);
+#ifdef DEBUG
+			else if(!(bp->b_flags & (B_DONE|B_DELWRI)))
+                        	printf("lfs_updatemeta: unaccounted indirect block ino %d block %d\n", ip->i_number, ap->in_lbn);
+#endif
+			ooff = ((ufs_daddr_t *)bp->b_data)[ap->in_off];
+			if(vp != fs->lfs_ivnode && (ooff == 0 || ooff == UNASSIGNED)) {
+#ifdef DEBUG_LFS
+				printf("lfs_updatemeta[3]: warning: writing ino %d lbn %d at 0x%x, was 0x%x\n", ip->i_number, lbn, off, ooff);
+#else
+				;
+#endif
+				brelse(bp);
+			} else {
+				((ufs_daddr_t *)bp->b_data)[ap->in_off] = off;
+				VOP_BWRITE(bp);
+			}
 		}
 		/* Update segment usage information. */
-		if (daddr != UNASSIGNED && !(daddr >= fs->lfs_lastpseg && daddr <= off)) {
+		if (daddr > 0 && !(daddr >= fs->lfs_lastpseg && daddr <= off)) {
 			LFS_SEGENTRY(sup, fs, datosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
 			if (sup->su_nbytes < (*sp->start_bpp)->b_bcount) {
@@ -1195,9 +1270,6 @@ lfs_writeseg(fs, sp)
 	if ((nblocks = sp->cbpp - sp->bpp) == 1)
 		return (0);
 	
-#ifdef DEBUG_LFS
-	lfs_check_bpp(fs,sp,__FILE__,__LINE__);
-#endif
 	i_dev = VTOI(fs->lfs_ivnode)->i_dev;
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
