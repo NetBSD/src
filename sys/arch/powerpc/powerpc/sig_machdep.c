@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.20 2004/04/04 17:20:15 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.21 2004/04/04 17:26:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20 2004/04/04 17:20:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21 2004/04/04 17:26:10 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -160,6 +160,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 	gr[_REG_LR]  = tf->lr;
 	gr[_REG_PC]  = tf->srr0;
 	gr[_REG_MSR] = tf->srr1;
+#ifdef PPC_HAVE_FPU
+	gr[_REG_MSR] |= pcb->pcb_flags & (PCB_FE0|PCB_FE1);
+#endif
 	gr[_REG_CTR] = tf->ctr;
 	gr[_REG_XER] = tf->xer;
 #ifdef PPC_OEA
@@ -203,6 +206,14 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		if ((gr[_REG_MSR] & PSL_USERSTATIC) !=
 		    (tf->srr1 & PSL_USERSTATIC))
 			return (EINVAL);
+
+#ifdef PPC_HAVE_FPU
+		/*
+		 * Always save the FP exception mode in the PCB.
+		 */
+		pcb->pcb_flags &= ~(PCB_FE0|PCB_FE1);
+		pcb->pcb_flags |= gr[_REG_MSR] & (PCB_FE0|PCB_FE1);
+#endif
 
 		(void)memcpy(&tf->fixreg, gr, 32 * sizeof (gr[0]));
 		tf->cr   = gr[_REG_CR];
