@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.9 1999/12/10 09:14:28 jun Exp $ */
+/* $Id: platid_mask.h,v 1.10 1999/12/26 05:51:25 shin Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -153,6 +153,10 @@ extern platid_t platid_mask_MACH_NEC_MCR_500A;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_500A ((int)&platid_mask_MACH_NEC_MCR_500A)
 #endif
+extern platid_t platid_mask_MACH_NEC_MCR_530;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define NEC_MCR_530 ((int)&platid_mask_MACH_NEC_MCR_530)
+#endif
 extern platid_t platid_mask_MACH_NEC_MCR_7XX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_7XX ((int)&platid_mask_MACH_NEC_MCR_7XX)
@@ -280,6 +284,10 @@ extern platid_t platid_mask_MACH_FUJITSU_INTERTOP_ITXXX;
 extern platid_t platid_mask_MACH_FUJITSU_INTERTOP_IT300;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define FUJITSU_INTERTOP_IT300 ((int)&platid_mask_MACH_FUJITSU_INTERTOP_IT300)
+#endif
+extern platid_t platid_mask_MACH_FUJITSU_INTERTOP_IT310;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define FUJITSU_INTERTOP_IT310 ((int)&platid_mask_MACH_FUJITSU_INTERTOP_IT310)
 #endif
 extern platid_t platid_mask_MACH_PHILIPS;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
