@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.3 2003/11/10 08:51:52 wiz Exp $	*/
+/*	$NetBSD: wdc.c,v 1.4 2003/12/14 11:53:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ wdcprobe(chp)
 int
 wdc_init(sc, unit)
 	struct wd_softc *sc;
-	u_int8_t *unit;
+	u_int *unit;
 {
 	if (pciide_init(&sc->sc_channel, unit) != 0)
 		return (ENXIO);

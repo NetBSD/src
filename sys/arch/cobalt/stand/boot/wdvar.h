@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.2 2003/10/08 04:25:44 lukem Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.3 2003/12/14 11:53:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -58,8 +58,8 @@ struct wd_softc {
 #define WDF_LBA48	0x0002
 	u_int16_t sc_flags;
 
-	u_int8_t sc_part;
-	u_int8_t sc_unit;
+	u_int sc_part;
+	u_int sc_unit;
 
 	u_int64_t sc_capacity;
 
@@ -84,12 +84,12 @@ struct wdc_command {
 	u_int64_t r_blkno;
 };
 
-int	wdc_init		(struct wd_softc*, u_int8_t*);
+int	wdc_init		(struct wd_softc*, u_int*);
 int	wdccommand		(struct wd_softc*, struct wdc_command*);
 int	wdccommandext		(struct wd_softc*, struct wdc_command*);
 int	wdc_exec_read		(struct wd_softc*, u_int8_t, daddr_t, void*);
 int	wdc_exec_identify	(struct wd_softc*, void*);
 
-int	pciide_init		(struct channel_softc*, u_int8_t*);
+int	pciide_init		(struct channel_softc*, u_int*);
 
 #endif /* _STAND_WDVAR_H */
