@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.137 2002/09/23 03:17:36 itojun Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.138 2002/09/23 03:28:41 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.137 2002/09/23 03:17:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.138 2002/09/23 03:28:41 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2819,7 +2819,7 @@ rf_reasonable_label(clabel)
 }
 
 
-#if 0
+#if DEBUG
 void
 rf_print_component_label(clabel)
 	RF_ComponentLabel_t *clabel;
