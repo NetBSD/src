@@ -28,11 +28,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/pmap.h,v 1.6 1994/02/04 08:20:04 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/include/pmap.h,v 1.7 1994/04/24 20:10:18 glass Exp $
  */
 
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
+
+#include <sys/queue.h>
 
 /*
  * Pmap stuff
@@ -40,35 +42,41 @@
  */
 
 struct context_state {
-    queue_chain_t  context_link;    
-    int            context_num;
-    struct pmap   *context_upmap;
+	TAILQ_ENTRY(context_state) context_link;
+	int            context_num;
+	struct pmap   *context_upmap;
 };
 
 typedef struct context_state *context_t;
 
 struct pmap {
-    int		                pm_refcount;	/* pmap reference count */
-    simple_lock_data_t	        pm_lock;	/* lock on pmap */
-    struct pmap_statistics	pm_stats;	/* pmap statistics */
-    context_t                   pm_context;     /* context if any */
-    int                         pm_version;
-    unsigned char               *pm_segmap;
+	int	                pm_refcount;	/* pmap reference count */
+	simple_lock_data_t      pm_lock;	/* lock on pmap */
+	struct pmap_statistics	pm_stats;	/* pmap statistics */
+	context_t               pm_context;     /* context if any */
+	int                     pm_version;
+	unsigned char           *pm_segmap;
 };
 
 typedef struct pmap *pmap_t;
 
 extern pmap_t kernel_pmap;
 
+#define PMEGQ_FREE     0
+#define PMEGQ_INACTIVE 1
+#define PMEGQ_ACTIVE   2
+#define PMEGQ_NONE     3
+
 struct pmeg_state {
-    queue_chain_t  pmeg_link;
-    int            pmeg_index;
-    pmap_t         pmeg_owner;
-    int            pmeg_owner_version;
-    vm_offset_t    pmeg_va;
-    int            pmeg_wired_count;
-    int            pmeg_reserved;
-    int            pmeg_vpages;
+	TAILQ_ENTRY(pmeg_state) pmeg_link;
+	int            pmeg_index;
+	pmap_t         pmeg_owner;
+	int            pmeg_owner_version;
+	vm_offset_t    pmeg_va;
+	int            pmeg_wired_count;
+	int            pmeg_reserved;
+	int            pmeg_vpages;
+	int            pmeg_qstate;
 };
 
 typedef struct pmeg_state *pmeg_t;

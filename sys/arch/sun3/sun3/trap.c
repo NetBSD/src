@@ -106,7 +106,7 @@ char	*trap_type[] = {
 	"Async system trap"
 };
 #define	TRAP_TYPES	(sizeof trap_type / sizeof trap_type[0])
-
+int trap_types = TRAP_TYPES;
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
  */
