@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.1 2001/12/11 00:18:23 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.2 2001/12/11 05:54:56 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -132,7 +132,7 @@ static void	msiiep_attach(struct device *, struct device *, void *);
 static int	msiiep_print(void *, const char *);
 
 struct cfattach msiiep_ca = {
-        sizeof(struct msiiep_softc), msiiep_match, msiiep_attach
+	sizeof(struct msiiep_softc), msiiep_match, msiiep_attach
 };
 
 
@@ -277,7 +277,7 @@ msiiep_swap_endian(on)
 		pioctl |= MSIIEP_PIO_CTRL_BIG_ENDIAN;
 	else
 		pioctl &= ~MSIIEP_PIO_CTRL_BIG_ENDIAN;
-        msiiep->pcic_pio_ctrl = pioctl;
+	msiiep->pcic_pio_ctrl = pioctl;
 
 	/* read it back to make sure transaction completed */
 	pioctl = msiiep->pcic_pio_ctrl;
@@ -291,7 +291,7 @@ int
 msiiep_assigned_intterupt(line)
 	int line;
 {
-        unsigned int intrmap;
+	unsigned int intrmap;
 
 	if (line < 0 || line > 7)
 		return (-1);
@@ -381,7 +381,7 @@ msiiep_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
-        bus_size_t buflen;
+	bus_size_t buflen;
 	struct proc *p;
 	int flags;
 {
@@ -420,7 +420,7 @@ msiiep_dmamem_map(tag, segs, nsegs, size, kvap, flags)
 	bus_dma_tag_t tag;
 	bus_dma_segment_t *segs;
 	int nsegs;
-        size_t size;
+	size_t size;
 	caddr_t *kvap;
 	int flags;
 {
