@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.13 2001/09/01 23:08:45 atatat Exp $
+#	$NetBSD: GENERIC,v 1.14 2001/09/12 21:05:38 manu Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	32
 
@@ -34,7 +34,7 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
-#options 	COMPAT_LINUX   # Linux binary compatibility (experimental)
+#options 	COMPAT_LINUX   # Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	MSGBUFSIZE=65536
