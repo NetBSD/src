@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.167.4.5 2002/09/18 19:37:42 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.167.4.6 2002/11/19 21:30:26 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.167.4.5 2002/09/18 19:37:19 thorpej Exp 
+ *	NetBSD
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -49,6 +49,7 @@
  */
 
 #define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu Corporation */
+#define	PCMCIA_VENDOR_NETGEAR_2	0x000b	/* Netgear */
 #define	PCMCIA_VENDOR_PANASONIC	0x0032	/* Matsushita Electric Industrial Co. */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk Corporation */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* New Media Corporation */
@@ -472,6 +473,9 @@
 #define	PCMCIA_CIS_NETGEAR_FA411	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NETGEAR_FA411	0x0411
 #define	PCMCIA_STR_NETGEAR_FA411	"Netgear FA411"
+#define	PCMCIA_CIS_NETGEAR_2_MA401	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NETGEAR_2_MA401	0x7300
+#define	PCMCIA_STR_NETGEAR_2_MA401	"Netgear MA401"
 
 /* National Instruments */
 #define	PCMCIA_CIS_NI_PCMCIA_GPIB	{ NULL, NULL, NULL, NULL }
