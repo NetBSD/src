@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 1996/01/26 05:37:16 phil Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 1996/03/11 20:56:50 phil Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -72,6 +72,29 @@
  * gcc to load a register variable.
  */
 #define movd(src, dst) __asm __volatile("movd %1,%0" : "=g" (dst) : "g" (src))
+
+/*
+ * movs[bdw] for fast blockmoves.
+ */
+#define movs(type, from, to, n) do { \
+		register int r0 __asm ("r0") = n; \
+		register u_char *r1 __asm("r1") = from; \
+		register u_char *r2 __asm("r2") = to; \
+		__asm __volatile ("movs" type \
+			: "=r" (r1), "=r" (r2) \
+			: "0" (r1), "1" (r2), "r" (r0) \
+			: "r0", "memory" \
+		); \
+		from = r1; to = r2; \
+	} while (0)
+#define movsd(from, to, n)	movs("d", from, to, n)
+#define movsw(from, to, n)	movs("w", from, to, n)
+#define movsb(from, to, n)	movs("b", from, to, n)
+
+/*
+ * Invalidate data and/or instruction cache lines.
+ */
+#define cinv(mode, adr) __asm __volatile("cinv " #mode ",%0" : : "g" (adr))
 
 /*
  * Load the ptb. This loads ptb0 and ptb1 to
