@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.30 2001/08/18 19:31:48 ad Exp $	*/
+/*	$NetBSD: passwd.c,v 1.31 2001/10/23 00:25:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.30 2001/08/18 19:31:48 ad Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.31 2001/10/23 00:25:21 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -501,7 +501,7 @@ pw_getconf(char *data, size_t max, const char *key, const char *option)
 	found = 0;
 	result[0] = '\0';
 
-	if ((fp = fopen(_PATH_PASSWDCONF, "r")) == NULL) {
+	if ((fp = fopen(_PATH_PASSWD_CONF, "r")) == NULL) {
 		if ((cp = pw_default(option)) != NULL)
 			strlcpy(data, cp, max);
 		else
