@@ -1,4 +1,4 @@
-/*	$NetBSD: am_compat.h,v 1.1.1.4 1998/08/08 22:05:25 christos Exp $	*/
+/*	$NetBSD: am_compat.h,v 1.1.1.4.2.1 1999/09/21 04:57:30 cgd Exp $	*/
 
 /*
  * am_compat.h:
@@ -113,6 +113,16 @@
 #if defined(MNT2_CDFS_OPT_RRIP) && !defined(MNTTAB_OPT_RRIP)
 # define MNTTAB_OPT_RRIP "rrip"
 #endif /* defined(MNT2_CDFS_OPT_RRIP) && !defined(MNTTAB_OPT_RRIP) */
+#if defined(MNT2_CDFS_OPT_NORRIP) && !defined(MNTTAB_OPT_NORRIP)
+# define MNTTAB_OPT_NORRIP "norrip"
+#endif /* defined(MNT2_CDFS_OPT_NORRIP) && !defined(MNTTAB_OPT_NORRIP) */
+
+#if defined(MNT2_CDFS_OPT_GENS) && !defined(MNTTAB_OPT_GENS)
+# define MNTTAB_OPT_GENS "gens"
+#endif /* defined(MNT2_CDFS_OPT_GENS) && !defined(MNTTAB_OPT_GENS) */
+#if defined(MNT2_CDFS_OPT_EXTATT) && !defined(MNTTAB_OPT_EXTATT)
+# define MNTTAB_OPT_EXTATT "extatt"
+#endif /* defined(MNT2_CDFS_OPT_EXTATT) && !defined(MNTTAB_OPT_EXTATT) */
 
 /*
  * Complete MNTTAB_OPT_* options based on MNT2_GEN_OPT_* mount options.
