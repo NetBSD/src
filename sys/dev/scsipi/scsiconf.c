@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.93 1997/10/03 02:04:17 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.93.2.1 1998/05/05 08:29:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -388,6 +388,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "Chinon  ", "CD-ROM CDS-525  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "DEC     ", "RRD42   (C) DEC ", ""},     SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-535  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "DENON   ", "DRD-25X         ", "V"},    SDEV_NOLUNS},
@@ -430,6 +432,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "TOSHIBA ", "XM-4101TASUNSLCD", "1755"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "JVC     ", "R2626           ", "1.55"}, SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"}, SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     SDEV_AUTOSAVE},
@@ -450,9 +454,11 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "0663H",		 ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
-	 "IBM",	  "0664",		 ""},	  SDEV_AUTOSAVE},
+	 "IBM",	     "0664",		 ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
-	 "IBM     ", "KZ-C",         ""},     SDEV_AUTOSAVE},
+	 "IBM     ", "H3171-S2",	 ""},	  SDEV_NOLUNS|SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "IBM     ", "KZ-C",		 ""},	  SDEV_AUTOSAVE},
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  SDEV_AUTOSAVE},
@@ -481,6 +487,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "NEC     ", "D3847           ", "0307"}, SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
+	 "QUANTUM ", "ELS85S          ", ""},     SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "LPS525S         ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "P105S 910-10-94x", ""},     SDEV_NOLUNS},
@@ -499,7 +507,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST296N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
-	 "SEAGATE ", "ST19171FC       ", ""},     SDEV_NOMODESENSE},
+	 "SEAGATE ", "ST19171FC", ""},            SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST34501FC       ", ""},     SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
@@ -549,14 +557,18 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNCWIDE},
 
 	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "Astra 1200S     ", "V2.9"}, SDEV_NOLUNS},
+	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "UMAX S-12       ", "V2.1"}, SDEV_NOLUNS},
 
 	{{T_PROCESSOR, T_FIXED,
 	 "LITRONIC", "PCMCIA          ", ""},     SDEV_NOLUNS},
 };
 
 /*
- * given a target and lu, ask the device what
+ * given a target and lun, ask the device what
  * it is, and find the correct driver table
  * entry.
  */
