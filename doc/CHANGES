@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.421 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.422 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -211,3 +211,5 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[kim 20050131]
 	/etc/security, security.conf(5): Add option to permit
 		non-alphanumeric login names. [jdolecek 20050205]
+	groupadd(8): Add the -r option, used to specify a gid range in which
+		groups can be created. [jmmv 20050205]
