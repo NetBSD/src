@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.31.2.5 2001/01/15 09:27:42 bouyer Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.31.2.6 2001/01/22 18:02:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -1012,7 +1012,7 @@ next_job:
 #ifdef	NCR5380_DEBUG
 	if (ncr5380_debug & NCR_DBG_CMDS) {
 		printf("ncr5380_sched: begin, target=%d, LUN=%d\n",
-		    xs->sc_link->scsipi_scsi.target, xs->sc_link->scsipi_scsi.lun);
+		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun);
 		ncr5380_show_scsi_cmd(xs);
 	}
 #endif
@@ -2482,21 +2482,15 @@ ncr5380_show_scsi_cmd(xs)
 	u_char	*b = (u_char *) xs->cmd;
 	int	i  = 0;
 
+	scsipi_printaddr(xs->xs_periph);
 	if ( ! ( xs->xs_control & XS_CTL_RESET ) ) {
-		printf("si(%d:%d:%d)-",
-		    xs->sc_link->scsipi_scsi.scsibus,
-		    xs->sc_link->scsipi_scsi.target,
-		    xs->sc_link->scsipi_scsi.lun);
 		while (i < xs->cmdlen) {
 			if (i) printf(",");
 			printf("%x",b[i++]);
 		}
-		printf("-\n");
+		printf("\n");
 	} else {
-		printf("si(%d:%d:%d)-RESET-\n",
-		    xs->sc_link->scsipi_scsi.scsibus,
-		    xs->sc_link->scsipi_scsi.target,
-		    xs->sc_link->scsipi_scsi.lun);
+		printf("RESET\n");
 	}
 }
 
@@ -2658,7 +2652,6 @@ ncr5380_attach(sc)
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = SCI_OPENINGS;
 	adapt->adapt_max_periph = 1;
-	/* adapt_request filled in by front-end */
 	/* adapt_minphys filled in by front-end */
 
 	/*
