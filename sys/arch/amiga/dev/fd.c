@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.16 1995/04/10 09:14:00 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.17 1995/04/13 11:59:28 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1845,4 +1845,10 @@ mfmblkdecode(rp, dp, cp, len)
 	if (cp)
 		*cp &= 0x55555555;
 	return(rp + len);
+}
+
+int
+fddump()
+{
+	return (EINVAL);
 }
