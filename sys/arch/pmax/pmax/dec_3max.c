@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6.2.11 1999/10/29 16:49:42 drochner Exp $ */
+/* $NetBSD: dec_3max.c,v 1.6.2.12 1999/11/12 11:07:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,27 +73,26 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.11 1999/10/29 16:49:42 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.12 1999/11/12 11:07:20 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
+#include <sys/termios.h>
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 
-#include <pmax/pmax/pmaxtype.h> 
-
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
-#include <pmax/pmax/clockreg.h>
+#include <pmax/pmax/kn02.h>
+#include <pmax/pmax/memc.h>
+#include <mips/mips/mips_mcclock.h>
 
 #include <dev/tc/tcvar.h>
 #include <pmax/ibus/ibusvar.h>
-#include <pmax/pmax/kn02.h>
-#include <pmax/pmax/memc.h>
 
-#include "dckbd.h"
+#include "wsdisplay.h"
 
 void dec_3max_init __P((void));
 void dec_3max_bus_reset __P((void));
@@ -108,10 +107,10 @@ void kn02_intr_disestablish __P((struct device *, void *));
 static void dec_3max_memerr __P((void));
 
 extern void kn02_wbflush __P((void));
-extern unsigned nullclkread __P((void));
-extern unsigned (*clkread) __P((void));
-
-extern char cpu_model[];
+extern void prom_findcons __P((int *, int *, int *));
+extern int dc_cnattach __P((paddr_t, int, int, int));
+extern void dckbd_cnattach __P((paddr_t));
+extern int tc_fb_cnattach __P((int));
 
 int _splraise_kn02 __P((int));
 int _spllower_kn02 __P((int));
@@ -127,32 +126,25 @@ struct splsw spl_3max = {
 	{ _splrestore_kn02,	0 },
 };
 
-extern volatile struct chiptime *mcclock_addr;	/* XXX */
 
 void
 dec_3max_init()
 {
 	u_int32_t csr;
+	extern char cpu_model[];
 
 	platform.iobus = "tc3max";
 	platform.bus_reset = dec_3max_bus_reset;
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
+	platform.iointr = dec_3max_intr;
+	/* no high resolution timer available */
 
+	/* clear any memory errors */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
-	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
 	mips_hardware_intr = dec_3max_intr;
-
-	/*
-	 * Enable ECC memory correction, turn off LEDs, and
-	 * disable all TURBOchannel interrupts.
-	 */
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
-	csr &= ~(KN02_CSR_WRESERVED|KN02_CSR_IOINTEN|KN02_CSR_CORRECT|0xff);
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
-	kn02_wbflush();
 
 #ifdef NEWSPL
 	__spl = &spl_3max;
@@ -165,17 +157,22 @@ dec_3max_init()
 	splvec.splstatclock = MIPS_SPL_0_1;
 #endif
 	
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
+	/* calibrate cpu_mhz value */
+	mc_cpuspeed(
+	    (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK), MIPS_INT_MASK_1);
 
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
+	/*
+	 * Enable ECC memory correction, turn off LEDs, and
+	 * disable all TURBOchannel interrupts.
+	 */
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	csr &= ~(KN02_CSR_WRESERVED|KN02_CSR_IOINTEN|KN02_CSR_CORRECT|0xff);
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	kn02_wbflush();
 
 	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
 }
 
-/*
- * Initalize the memory system and I/O buses.
- */
 void
 dec_3max_bus_reset()
 {
@@ -186,14 +183,6 @@ dec_3max_bus_reset()
 	kn02_wbflush();
 }
 
-#include <dev/cons.h>
-#include <sys/termios.h>
-
-extern void prom_findcons __P((int *, int *, int *));
-extern int dc_cnattach __P((paddr_t, int, int, int));
-extern void dckbd_cnattach __P((paddr_t));
-extern int tc_fb_cnattach __P((int));
-
 void
 dec_3max_cons_init()
 {
@@ -203,12 +192,11 @@ dec_3max_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NDCKBD > 0
+#if NWSDISPLAY > 0
 		dckbd_cnattach(KN02_SYS_DZ);
-#endif
 		if (tc_fb_cnattach(crt) > 0)
 			return;
-
+#endif
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
 	}
@@ -217,7 +205,7 @@ dec_3max_cons_init()
 	 * FIFO depth * character time,
 	 * character time = (1000000 / (defaultrate / 10))
 	 */
-	DELAY(160000000 / 9600);        /* XXX */
+	DELAY(160000000 / 9600);	/* XXX */
 
 	if (dc_cnattach(KN02_SYS_DZ, 3,
 	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
@@ -255,8 +243,6 @@ dec_3max_intr(cpumask, pc, status, cause)
 	/* handle clock interrupts ASAP */
 	if (cpumask & MIPS_INT_MASK_1) {
 		struct clockframe cf;
-		struct chiptime *clk;
-		volatile int temp;
 
 		csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		if ((csr & KN02_CSR_PSWARN) && !warned) {
@@ -268,9 +254,8 @@ dec_3max_intr(cpumask, pc, status, cause)
 			printf("WARNING: power supply is OK again\n");
 		}
 	       
-		clk = (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
-		temp = clk->regc;	/* XXX clear interrupt bits */
-
+		__asm __volatile("lbu $0,48(%0)" ::
+			"r"(MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
@@ -323,16 +308,17 @@ dec_3max_intr(cpumask, pc, status, cause)
 static void
 dec_3max_memerr()
 {
-	u_int32_t erradr, errsyn;
+	u_int32_t erradr, errsyn, csr;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
 	errsyn = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN);
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 
 	/* Send to kn02/kn03 memory subsystem handler */
-	dec_mtasic_err(erradr, errsyn);
+	dec_mtasic_err(erradr, errsyn, csr & KN02_CSR_BNK32M);
 }
 
 #define	KV(x)	MIPS_PHYS_TO_KSEG1(x)
@@ -358,7 +344,7 @@ static struct tc_builtin tc_kn02_builtins[] = {
 struct tcbus_attach_args kn02_tc_desc = {
 	"tc", 0,
 	TC_SPEED_25_MHZ,
-	8, tc_kn02_slots,
+	3, tc_kn02_slots,
 	3, tc_kn02_builtins,
 	kn02_intr_establish, kn02_intr_disestablish
 };
@@ -379,6 +365,7 @@ static struct ibus_attach_args kn02sys_devs[] = {
 	{ "mc146818",	KV(KN02_SYS_CLOCK), C(SYS_DEV_BOGUS), },
 	{ "dc",  	KV(KN02_SYS_DZ), C(SYS_DEV_SCC0), },
 };
+static int kn02sys_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
 
 void
 kn02_intr_establish(ioa, cookie, level, func, arg)
@@ -445,14 +432,16 @@ kn02sys_attach(parent, self, aux)
         struct device *self;
         void *aux;
 {
-	struct ibus_dev_attach_args ibd;
+	struct ibus_softc *sc = (struct ibus_softc *)self;
+	struct tc_attach_args *ta = aux;
 
-	ibd.ibd_busname = "ibus";	/* XXX */
-	ibd.ibd_devs = kn02sys_devs;
-	ibd.ibd_ndevs = sizeof(kn02sys_devs)/sizeof(kn02sys_devs[0]);
-	ibd.ibd_establish = kn02_intr_establish;
-	ibd.ibd_disestablish = kn02_intr_disestablish;
-	ibus_devattach(self, &ibd);
+	sc->sc_bst = ta->ta_memt;
+	sc->ibd_establish = kn02_intr_establish;
+	sc->ibd_disestablish = kn02_intr_disestablish;
+
+	printf("\n");
+
+	ibus_attach_devs(sc, kn02sys_devs, kn02sys_ndevs);
 }
 
 /*

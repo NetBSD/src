@@ -1,4 +1,4 @@
-/*	$NetBSD: kn230.h,v 1.1.4.1 1999/05/07 02:33:31 nisimura Exp $	*/
+/* $NetBSD: kn230.h,v 1.1.4.2 1999/11/12 11:07:19 nisimura Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Jonathan Stone.
@@ -153,7 +153,7 @@
 
 /*
  * NVRAM state defintions.  
- * Used under Ultrix for  PrestoServe.
+ * Used under Ultrix for PrestoServe.
  */
 #define KN230_SYS_NVRAM_DIAG	0x1f000300	/* NVRAM diagnostic register */
 #define KN230_NVRAM_PRESENT	0x00000001

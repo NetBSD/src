@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10.4.2 1999/05/11 06:43:15 nisimura Exp $	*/
+/* $NetBSD: cpu.c,v 1.10.4.3 1999/11/12 11:07:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,9 +34,8 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-/* Definition of the driver for autoconfig. */
-static int	cpumatch(struct device *, struct cfdata *, void *);
-static void	cpuattach(struct device *, struct device *, void *);
+static int  cpumatch __P((struct device *, struct cfdata *, void *));
+static void cpuattach __P((struct device *, struct device *, void *));
 
 struct cfattach cpu_ca = {
 	sizeof (struct device), cpumatch, cpuattach
@@ -62,8 +61,7 @@ cpumatch(parent, cf, aux)
 
 static void
 cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
+	struct device *parent, *dev;
 	void *aux;
 {
 	printf("\n");
@@ -79,14 +77,14 @@ extern int mips1_dcsize __P((void));
 extern int mips1_iflush __P((vaddr_t, vsize_t));
 extern int mips1_dflush __P((vaddr_t, vsize_t));
 
-#define IC_LINE_SIZE(rr)	(16 << ((rr) >> 5) & 1)
-#define IC_TOTAL_SIZE(rr)	(4*1024 << ((rr) >> 12) & 7)
-#define DC_LINE_SIZE(rr)	(16 << ((rr) >> 4) & 1)
-#define DC_TOTAL_SIZE(rr)	(4*1024 << ((rr) >>  9) & 7)
-#define L2_PRESENT(rr)		((rr) & 0x00020000)
-#define L2_LINE_SIZE(rr)	(4 << ((rr) >> 2) & 3)
-#define L2_TOTAL_SIZE(rr)	(512*1024 << (((rr) >> 20) & 3))
-#define L2_IS_SPLITED(rr)	((rr) & 0x00200000)
+#define IC_LINE(rr)	(16 << ((rr) >> 5) & 1)
+#define IC_SIZE(rr)	(4*1024 << ((rr) >> 12) & 7)
+#define DC_LINE(rr)	(16 << ((rr) >> 4) & 1)
+#define DC_SIZE(rr)	(4*1024 << ((rr) >>  9) & 7)
+#define L2_EXIST(rr)	((rr) & 0x00020000)
+#define L2_LINE(rr)	(4 << ((rr) >> 2) & 3)
+#define L2_SIZE(rr)	(512*1024 << (((rr) >> 20) & 3))
+#define L2_SPLITTED(rr)	((rr) & 0x00200000)
 
 struct cpuinfo {
 	int	arch;
@@ -112,8 +110,8 @@ struct cacheinfo {
 struct cacheinfo cacheinfo;
 
 struct cpuops {
-	void	(*flush_tlb) __P((void));
-	void	(*flush_tlbaddr) __P((void));
+	void	(*flush_tlbentire) __P((void));
+	void	(*flush_tlbsingle) __P((vaddr_t));
 	void	(*flush_icache) __P((vaddr_t, vsize_t));
 	void	(*flush_dcache) __P((vaddr_t, vsize_t));
 	void	(*flush_pcache) __P((void));
@@ -165,16 +163,16 @@ cpuparams()
 		__asm __volatile("mtc0 %0, $16" : "=r"(cp0r16));
 		cacheinfo.c_physical = 0;
 		cacheinfo.c_split = 0;
-		cacheinfo.ic_linesize =	 IC_LINE_SIZE(cp0r16);
-		cacheinfo.ic_totalsize = IC_TOTAL_SIZE(cp0r16);
-		cacheinfo.dc_linesize =	 DC_LINE_SIZE(cp0r16);
-		cacheinfo.dc_totalsize = DC_TOTAL_SIZE(cp0r16);
-		cacheinfo.sc_totalsize = L2_PRESENT(cp0r16) ? -1 : 0;
-		cacheinfo.sc_linesize =	 L2_LINE_SIZE(cp0r16);
+		cacheinfo.ic_linesize =	 IC_LINE(cp0r16);
+		cacheinfo.ic_totalsize = IC_SIZE(cp0r16);
+		cacheinfo.dc_linesize =	 DC_LINE(cp0r16);
+		cacheinfo.dc_totalsize = DC_SIZE(cp0r16);
+		cacheinfo.sc_totalsize = L2_EXIST(cp0r16) ? -1 : 0;
+		cacheinfo.sc_linesize =	 L2_LINE(cp0r16);
 		if (cacheinfo.sc_totalsize == -1 && cpuinfo.arch == 4)
-			cacheinfo.sc_totalsize = L2_TOTAL_SIZE(cp0r16);
+			cacheinfo.sc_totalsize = L2_SIZE(cp0r16);
 		if (cpuinfo.arch == 3)
-			cacheinfo.c_split = L2_IS_SPLITED(cp0r16);
+			cacheinfo.c_split = L2_SPLITTED(cp0r16);
 		break;
 	}
 	cpu_arch = cpuinfo.arch; /* XXX */
