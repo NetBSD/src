@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)crt0.s	8.2 (Berkeley) 3/21/94
- *	$Id: crt0.S,v 1.4 1995/05/03 22:13:15 mellon Exp $    
+ *	$Id: crt0.S,v 1.5 1995/06/15 21:56:58 mellon Exp $    
  */
 
 #include <machine/regdef.h>
@@ -47,7 +47,7 @@ $L1:
 	.word	0		# null string plus padding
 	.text
 
-NON_LEAF(start, 24, ra)
+NON_LEAF(__start, 24, ra)
 	.set	noreorder
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL (_gp)
