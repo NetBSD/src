@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.2 2002/04/04 22:17:29 christos Exp $	*/
+/*	$NetBSD: linux_siginfo.h,v 1.3 2002/04/08 13:27:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,9 +48,9 @@ typedef union linux_sigval {
 #define SI_PAD_SIZE	((SI_MAX_SIZE/sizeof(int)) - 3)
 
 typedef struct linux_siginfo {
-	int	si_signo;
-	int	si_errno;
-	int	si_code;
+	int	lsi_signo;
+	int	lsi_errno;
+	int	lsi_code;
 	union {
 		int _pad[SI_PAD_SIZE];
 
@@ -106,8 +106,8 @@ typedef struct linux_siginfo {
 #define LINUX_SI_ASYNCIO	-4
 #define LINUX_SI_SIGIO		-5
 
-#define LINUX_SI_FROMUSER(sp)	((sp)->si_code <= 0)
-#define LINUX_SI_FROMKERENL(sp)	((sp)->si_code > 0)
+#define LINUX_SI_FROMUSER(sp)	((sp)->lsi_code <= 0)
+#define LINUX_SI_FROMKERENL(sp)	((sp)->lsi_code > 0)
 
 
 #endif /* !_M68K_LINUX_SIGINFO_H */
