@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.55 2002/09/05 16:33:57 junyoung Exp $	 */
+/*	$NetBSD: reloc.c,v 1.56 2002/09/05 17:01:13 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -370,8 +370,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 #endif /* ! __alpha__ */
 #endif /* __alpha__ || __i386__ || __m68k__ || __sh__ */
 
-#if defined(__alpha__) || defined(__hppa__) || defined(__i386__) || \
-    defined(__m68k__) || defined(__sh__)
+#if !defined(__mips__)
 	case R_TYPE(COPY):
 		/*
 		 * These are deferred until all other relocations have
@@ -456,14 +455,6 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    (void *)*where, defobj->path));
 		break;
 
-	case R_TYPE(COPY):
-		rdbg(dodebug, ("COPY"));
-		break;
-
-	case R_TYPE(JMP_SLOT):
-		rdbg(dodebug, ("JMP_SLOT"));
-		break;
-
 	case R_TYPE(RELATIVE):	/* word32 B + A */
 		tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
 		if (*where != tmp)
@@ -482,14 +473,6 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		rdbg(dodebug, ("GLOB_DAT %s in %s --> %p @ %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
 		    (void *)*where, where, defobj->path));
-		break;
-
-	case R_TYPE(COPY):
-		rdbg(dodebug, ("COPY"));
-		break;
-
-	case R_TYPE(JUMP_SLOT):
-		rdbg(dodebug, ("JUMP_SLOT"));
 		break;
 
 	case R_TYPE(ABS32):	/* word32 B + S + A */
