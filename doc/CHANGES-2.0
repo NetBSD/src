@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.23 2004/04/01 07:10:01 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.24 2004/04/01 12:02:12 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -219,4 +219,22 @@ gnu/dist/cvs/src/server.c			1.14
 	Correctly fallback into the normal path when SETXID_SUPPORT is defined
 	but the binary was the normal one.  Fixes PR#23471.
 	[jmc, ticket #35]
+
+sys/netinet/ip_fil_netbsd.c			1.4
+
+	Untangle ioctl copyin/copyout confusion. IP-Filter now actually works
+	on sparc64 (and probably everywhere else).
+	[martin, ticket #39]
+
+dist/ipf/tools/ipf_y.y				1.2
+
+	ioctl(2) "request" arguments should be ioctlcmd_t, not u_int.
+	[martin, ticket #40]
+
+sys/kern/kern_ras.c				1.8-1.9
+
+	ras_install: don't do pool_get(PR_WAITOK) while we're holding a
+	             spinlock.
+	ras_fork:    don't do PR_WAITOK holding a spinlock.
+	[yamt, ticket #41]
 
