@@ -1,0 +1,11 @@
+# $NetBSD: files.rasops,v 1.1 1999/04/13 00:17:58 ad Exp $
+
+file dev/rasops/rasops.c	rasterconsole
+file dev/rasops/rasops1.c	rasterconsole
+file dev/rasops/rasops8.c	rasterconsole
+file dev/rasops/rasops15.c	rasterconsole
+file dev/rasops/rasops24.c	rasterconsole
+file dev/rasops/rasops32.c	rasterconsole
+
+defopt opt_rasops.h 	RASOPS1 RASOPS8 RASOPS15 RASOPS16 RASOPS24 RASOPS32
+			RASOPS_CLIPPING
