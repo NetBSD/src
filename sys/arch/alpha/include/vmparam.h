@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.15 1999/12/04 21:20:00 ragge Exp $ */
+/* $NetBSD: vmparam.h,v 1.16 2000/01/26 09:44:10 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,18 +99,6 @@
 #endif
 
 /*
- * Boundary at which to place first MAPMEM segment if not explicitly
- * specified.  Should be a power of two.  This allows some slop for
- * the data segment to grow underneath the first mapped segment.
- */
-#define MMSEG		0x200000
-
-/*
- * The size of the clock loop.
- */
-#define	LOOPPAGES	(maxfree - firstfree)
-
-/*
  * The time for a process to be blocked before being very swappable.
  * This is a number of seconds which the system takes as being a non-trivial
  * amount of real time.  You probably shouldn't change this;
@@ -120,17 +108,6 @@
  * change over time.
  */
 #define	MAXSLP 		20
-
-/*
- * A swapped in process is given a small amount of core without being bothered
- * by the page replacement algorithm.  Basically this says that if you are
- * swapped in you deserve some resources.  We protect the last SAFERSS
- * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES pages which are not
- * paged anyways, in addition to SAFERSS.
- */
-#define	SAFERSS		10		/* nominal ``small'' resident set size
-					   protected against replacement */
 
 /*
  * Mach derived constants
