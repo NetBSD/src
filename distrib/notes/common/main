@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.39 1999/12/18 22:59:24 pooka Exp $
+.\" $NetBSD: main,v 1.40 1999/12/27 11:52:36 soren Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -910,9 +910,11 @@ them, and would like to mentioned, tell us!)
 .It Ta Izumi Tsutsui Ta Mt tsutsui@NetBSD.ORG
 .It Ta UCHIYAMA Yasushi Ta Mt uch@NetBSD.ORG
 .It Ta Todd Vierling Ta Mt tv@NetBSD.ORG
+.It Ta Aymeric Vincent Ta Mt aymeric@NetBSD.ORG
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.ORG
 .It Ta Krister Walfridsson Ta Mt kristerw@NetBSD.ORG
 .It Ta Lex Wennmacher Ta Mt wennmach@NetBSD.ORG
+.It Ta Assar Westerlund Ta Mt assar@NetBSD.ORG
 .It Ta Rob Windsor Ta Mt windsor@NetBSD.ORG
 .It Ta Dan Winship Ta Mt danw@NetBSD.ORG
 .It Ta Jim Wise Ta Mt jwise@NetBSD.ORG
