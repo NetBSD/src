@@ -34,17 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.38 1994/02/25 16:43:48 mycroft Exp $
+ *	$Id: wd.c,v 1.39 1994/02/25 16:54:41 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
 /* The following defines represent only a very small part of the mods, most */
 /* of them are not marked in any way.  -tih				 */
 
-#define	TIHMODS		/* wdopen() workaround, some splx() calls */
 #define	QUIETWORKS	/* define this when wdopen() can actually set DKFL_QUIET */
 #define INSTRUMENT	/* Add instrumentation stuff by Brad Parker */
-#define TIPCAT		/* theo says: whatever it is, it looks important! */
 
 /* TODO: peel out buffer at low ipl, speed improvement */
 /* TODO: find and fix the timing bugs apparent on some controllers */
@@ -991,7 +989,6 @@ tryagainrecal:
 #endif
 		s = splbio();		/* not called from intr level ... */
 		wdgetctlr(unit, du);
-#ifdef TIPCAT
 
 		for (timeout = 0; (inb(wdc+wd_status) & WDCS_READY) == 0;) {
 			DELAY(WDCDELAY);
@@ -1005,11 +1002,9 @@ tryagainrecal:
 			printf("wdc%d: timeout took %dus\n", ctrlr,
 			    WDCDELAY * timeout);
 #endif
-#endif
 		outb(wdc+wd_sdh, WDSD_IBM | (unit << 4));
 		wdtab[ctrlr].b_active = 1;
 		outb(wdc+wd_command, WDCC_RESTORE | WD_STEP);
-#ifdef TIPCAT
 		for (timeout = 0; (inb(wdc+wd_status) & WDCS_READY) == 0;) {
 			DELAY(WDCDELAY);
 			if (++timeout < WDCNDELAY)
@@ -1021,7 +1016,6 @@ tryagainrecal:
 		if (timeout > WDCNDELAY_DEBUG)
 			printf("wdc%d: timeout took %dus\n", ctrlr,
 			    WDCDELAY * timeout);
-#endif
 #endif
 		du->dk_state = RECAL;
 		splx(s);
@@ -1158,7 +1152,6 @@ wdgetctlr(int u, struct disk *du)
     
 	x = splbio();		/* not called from intr level ... */
 	wdc = du->dk_port;
-#ifdef TIPCAT
 	for (timeout = 0; (inb(wdc+wd_status) & WDCS_BUSY);) {
 		DELAY(WDCDELAY);
 		if (++timeout > WDCNDELAY) {
@@ -1170,9 +1163,7 @@ wdgetctlr(int u, struct disk *du)
 	if (timeout > WDCNDELAY_DEBUG)
 		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
 #endif
-#endif
 	outb(wdc+wd_sdh, WDSD_IBM | (u << 4));
-#ifdef TIPCAT
 	for (timeout = 0; (inb(wdc+wd_status) & WDCS_READY) == 0;) {
 		DELAY(WDCDELAY);
 		if (++timeout > WDCNDELAY) {
@@ -1183,10 +1174,8 @@ wdgetctlr(int u, struct disk *du)
 #ifdef WDCNDELAY_DEBUG
 	if (timeout > WDCNDELAY_DEBUG)
 		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
-#endif
 #endif
 	stat = wdcommand(du, WDCC_READP);
-#ifdef TIPCAT
 	for (timeout = 0; (inb(wdc+wd_status) & WDCS_READY) == 0;) {
 		DELAY(WDCDELAY);
 		if (++timeout > WDCNDELAY) {
@@ -1197,7 +1186,6 @@ wdgetctlr(int u, struct disk *du)
 #ifdef WDCNDELAY_DEBUG
 	if (timeout > WDCNDELAY_DEBUG)
 		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
-#endif
 #endif
     
 	if (stat < 0) {
