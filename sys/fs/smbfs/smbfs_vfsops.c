@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.40 2004/05/04 13:26:58 jrf Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.41 2004/05/20 05:39:34 atatat Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.40 2004/05/04 13:26:58 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.41 2004/05/20 05:39:34 atatat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -365,6 +365,8 @@ smbfs_init(void)
 	malloc_type_attach(M_SMBNODENAME);
 	malloc_type_attach(M_SMBFSDATA);
 	malloc_type_attach(M_SMBFSHASH);
+	pool_init(&smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0,
+	    "smbfsnopl", &pool_allocator_nointr);
 #endif
 
 	SMBVDEBUG("init.\n");
@@ -385,6 +387,7 @@ smbfs_done(void)
 
 #ifdef _LKM
 	/* Need explicit detach if LKM */
+	pool_destroy(&smbfs_node_pool);
 	malloc_type_detach(M_SMBNODENAME);
 	malloc_type_detach(M_SMBFSDATA);
 	malloc_type_detach(M_SMBFSHASH);
