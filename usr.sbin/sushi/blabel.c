@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.c,v 1.3 2001/01/09 17:08:47 augustss Exp $       */
+/*      $NetBSD: blabel.c,v 1.4 2001/01/09 19:01:57 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -175,7 +175,10 @@ do_shell(EObjectType cdktype, void *object, void *clientdata, chtype key)
 	wrefresh(stdscr);
 	savetty();
 	reset_shell_mode();
-	system("/bin/sh");
+	if (getenv("SHELL") != NULL)
+		system(getenv("SHELL"));
+	else
+		system("/bin/sh");
 	resetty();
 	wclear(stdscr);
 	wrefresh(stdscr);
