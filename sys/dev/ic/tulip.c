@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.40 2000/01/28 22:23:58 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.41 2000/01/28 23:23:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -287,6 +287,15 @@ tlp_attach(sc, enaddr)
 
 	/*
 	 * Set up various chip-specific quirks.
+	 *
+	 * Note that wherever we can, we use the "ring" option for
+	 * transmit and receive descriptors.  This is because some
+	 * clone chips apparently have problems when using chaining,
+	 * although some *only* support chaining.
+	 *
+	 * What we do is always program the "next" pointer, and then
+	 * conditionally set the TDCTL_CH and TDCTL_ER bits in the
+	 * appropriate places.
 	 */
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21140:
@@ -299,11 +308,21 @@ tlp_attach(sc, enaddr)
 	case TULIP_CHIP_MX98715:	/* 21143-like */
 	case TULIP_CHIP_MX98715A:	/* 21143-like */
 	case TULIP_CHIP_MX98725:	/* 21143-like */
+		/*
+		 * Run these chips in ring mode.
+		 */
+		sc->sc_tdctl_ch = 0;
+		sc->sc_tdctl_er = TDCTL_ER;
 		sc->sc_preinit = tlp_2114x_preinit;
 		break;
 
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
+		/*
+		 * Run these chips in ring mode.
+		 */
+		sc->sc_tdctl_ch = 0;
+		sc->sc_tdctl_er = TDCTL_ER;
 		sc->sc_preinit = tlp_pnic_preinit;
 
 		/*
@@ -314,11 +333,20 @@ tlp_attach(sc, enaddr)
 		break;
 
 	case TULIP_CHIP_WB89C840F:
+		/*
+		 * Run this chip in chained mode.
+		 */
+		sc->sc_tdctl_ch = TDCTL_CH;
+		sc->sc_tdctl_er = 0;
 		sc->sc_flags |= TULIPF_IC_FS;
 		break;
 
 	default:
-		/* Nothing. */
+		/*
+		 * Default to running in ring mode.
+		 */
+		sc->sc_tdctl_ch = 0;
+		sc->sc_tdctl_er = TDCTL_ER;
 	}
 
 	/*
@@ -645,7 +673,9 @@ tlp_start(ifp)
 			    htole32(dmamap->dm_segs[seg].ds_addr);
 			sc->sc_txdescs[nexttx].td_ctl =
 			    htole32((dmamap->dm_segs[seg].ds_len <<
-			        TDCTL_SIZE1_SHIFT) | TDCTL_CH);
+			        TDCTL_SIZE1_SHIFT) | sc->sc_tdctl_ch |
+				(nexttx == (TULIP_NTXDESC - 1) ?
+				 sc->sc_tdctl_er : 0));
 			lasttx = nexttx;
 		}
 
@@ -1543,10 +1573,11 @@ tlp_init(sc)
 	 */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	for (i = 0; i < TULIP_NTXDESC; i++) {
-		sc->sc_txdescs[i].td_ctl = htole32(TDCTL_CH);
+		sc->sc_txdescs[i].td_ctl = htole32(sc->sc_tdctl_ch);
 		sc->sc_txdescs[i].td_bufaddr2 =
 		    htole32(TULIP_CDTXADDR(sc, TULIP_NEXTTX(i)));
 	}
+	sc->sc_txdescs[TULIP_NTXDESC - 1].td_ctl |= htole32(sc->sc_tdctl_er);
 	TULIP_CDTXSYNC(sc, 0, TULIP_NTXDESC,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = TULIP_NTXDESC;
@@ -2388,8 +2419,9 @@ tlp_filter_setup(sc)
 	    htole32(TULIP_CDSPADDR(sc));
 	sc->sc_txdescs[sc->sc_txnext].td_ctl =
 	    htole32((TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
-	    sc->sc_filtmode | TDCTL_Tx_SET | TDCTL_Tx_FS | TDCTL_Tx_LS |
-	    TDCTL_Tx_IC | TDCTL_CH);
+	    sc->sc_filtmode | TDCTL_Tx_SET | TDCTL_Tx_FS |
+	    TDCTL_Tx_LS | TDCTL_Tx_IC | sc->sc_tdctl_ch |
+	    (sc->sc_txnext == (TULIP_NTXDESC - 1) ? sc->sc_tdctl_er : 0));
 	sc->sc_txdescs[sc->sc_txnext].td_status = htole32(TDSTAT_OWN);
 	TULIP_CDTXSYNC(sc, sc->sc_txnext, txs->txs_ndescs,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
