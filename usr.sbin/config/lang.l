@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lang.l	5.8 (Berkeley) 4/19/91
- *	$Id: lang.l,v 1.10 1994/05/21 08:34:04 cgd Exp $
+ *	$Id: lang.l,v 1.11 1994/06/24 14:22:13 hpeyerl Exp $
  */
 
 #include <ctype.h>
@@ -73,6 +73,7 @@ struct kt {
 #endif MACHINE_I386
 	{ "hz",		HZ },
 	{ "ident",	IDENT },
+	{ "interleave",	INTERLEAVE },
 #if MACHINE_I386
 	{ "iomem",	IOMEM },
 	{ "iosiz",	IOSIZ },
@@ -102,6 +103,7 @@ struct kt {
 #endif
 	{ "pseudo-device",PSEUDO_DEVICE },
 	{ "root",	ROOT },
+	{ "sequential",	SEQUENTIAL },
 #if MACHINE_HP300
 	{ "scode",	NEXUS },
 #endif
