@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.244 2002/04/18 17:40:57 tshiozak Exp $
+$NetBSD: usbdevs,v 1.245 2002/05/03 15:19:15 kent Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ vendor ALARIS		0x0620	Alaris
 vendor APEX		0x0624	Apex
 vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
+vendor SANWASUPPLY	0x0663	Sanwa Supply
 vendor LINKSYS		0x066b	Linksys
 vendor ACERSA		0x066e	Acer Semiconductor America
 vendor SIGMATEL		0x066f	Sigmatel
@@ -286,6 +287,7 @@ vendor BILLIONTON	0x08dd	Billionton Systems
 vendor EXTENDED		0x08e9	Extended Systems
 vendor MSYSTEMS		0x08ec	M-Systems
 vendor AUTHENTEC	0x08ff	AuthenTec
+vendor AUDIOTECHNICA	0x0909	Audio-Technica
 vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor BIOMETRIC	0x0929	American Biometric Company
@@ -463,6 +465,9 @@ product ATI2 205		0xa001	USB Cable 205
 /* Atmel Comp. products */
 product ATMEL UHB124		0x3301	UHB124 hub
 product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
+
+/* Audio-Technica products */
+product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
 
 /* Avision products */
 product AVISION 1200U		0x0268	1200U scanner
@@ -723,6 +728,8 @@ product INTEL TESTBOARD		0x9890	82930 test board
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
 /* I/O DATA products */
+product IODATA USBSSMRW		0x0314	USB-SSMRW SD-card adapter
+product IODATA USBSDRW		0x031e	USB-SDRW SD-card adapter
 product IODATA USBETT		0x0901	USB ETT
 product IODATA USBETTX		0x0904	USB ETTX
 product IODATA USBETTXS		0x0913	USB ETTX
@@ -818,7 +825,9 @@ product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
 product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH UN58A		0xc030	iFeel Mouse
+product LOGITECH WMFFGP		0xc293	WingMan Formula Force GP (GT-Force)
 product LOGITECH BB13		0xc401	USB-PS/2 Trackball
+product LOGITECH BB18		0xc404	TrackMan Wheel
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMJOY		0xc281	WingMan Force joystick 
 product LOGITECH RK53		0xc501	Cordless mouse
@@ -854,6 +863,7 @@ product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
 product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
 product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
+product MICROSOFT TBEXPLORER	0x0024  Trackball Explorer
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO	0x002b	Internet Keyboard Pro
 
@@ -1041,6 +1051,7 @@ product	RAINBOW IKEY2000	0x1200	i-Key 2000
 
 /* Roland products */
 product	ROLAND UM1		0x0009	UM-1 MIDI I/F
+product ROLAND UA3		0x000f	EDIROL UA-3 USB audio I/F
 product	ROLAND UM880N		0x0014	EDIROL UM-880 MIDI I/F (native)
 product	ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
 
@@ -1058,6 +1069,9 @@ product SANDISK SDDR05A		0x0001	ImageMate SDDR-05a
 product SANDISK SDDR31		0x0002	ImageMate SDDR-31
 product SANDISK SDDR12		0x0100	ImageMate SDDR-12
 product SANDISK SDDR09		0x0200	ImageMate SDDR-09
+
+/* Sanwa Supply products */
+product SANWASUPPLY JYDV9USB	0x9806	JY-DV9USB gamepad
 
 /* ScanLogic products */
 product SCANLOGIC SL11R		0x0002	SL11R-IDE
@@ -1118,6 +1132,9 @@ product SONY MSACUS1		0x002d	Memorystick MSAC-US1
 product SONY HANDYCAM		0x002e	Handycam
 product SONY MSC		0x0032	MSC memory stick slot
 product SONY CLIE_35		0x0038	Sony Clie v3.5
+product SONY PS2KEYBOARD	0x005c	PlayStation2 keyboard
+product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
+product SONY PS2MOUSE		0x0061	PlayStatoin2 mouse
 product SONY CLIE_40		0x0066	Sony Clie v4.0
 product SONY CLIE_40_MS		0x006d	Sony Clie v4.0 Memory Stick slot
 
@@ -1213,6 +1230,7 @@ product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 /* Yamaha products */
 product YAMAHA UX256		0x1000	UX256 MIDI I/F
 product	YAMAHA UX96		0x1008	UX96 MIDI I/F
+product YAMAHA RPU200		0x3104	RP-U200
 
 /* Yano products */
 product YANO U640MO		0x0101	U640MO-03
