@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_namespace.h,v 1.2 2003/06/26 12:09:56 tshiozak Exp $	*/
+/*	$NetBSD: citrus_namespace.h,v 1.3 2003/07/12 15:39:20 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -141,7 +141,7 @@
 #define _mapper_open_direct	_citrus_mapper_open_direct
 #define _mapper_close		_citrus_mapper_close
 #define _MAPPER_CONVERT_SUCCESS	_CITRUS_MAPPER_CONVERT_SUCCESS
-#define _MAPPER_CONVERT_INVAL	_CITRUS_MAPPER_CONVERT_INVAL
+#define _MAPPER_CONVERT_NONIDENTICAL _CITRUS_MAPPER_CONVERT_NONIDENTICAL
 #define _MAPPER_CONVERT_SRC_MORE _CITRUS_MAPPER_CONVERT_SRC_MORE
 #define _MAPPER_CONVERT_DST_MORE _CITRUS_MAPPER_CONVERT_DST_MORE
 #define _MAPPER_CONVERT_ILSEQ	_CITRUS_MAPPER_CONVERT_ILSEQ
