@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.19 2000/06/12 17:04:52 soda Exp $	*/
+/*	$NetBSD: pccons.c,v 1.20 2000/06/17 07:23:06 soda Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
@@ -87,6 +87,8 @@
 #include <machine/kbdreg.h>
 
 #include <dev/cons.h>
+
+#include "pc.h"
 
 #define	XFREE86_BUG_COMPAT
 
@@ -187,13 +189,16 @@ struct cfattach pc_pica_ca = {
 struct cfattach pc_isa_ca = {
 	 sizeof(struct pc_softc), pcprobe, pcattach
 };
+
 int opmsprobe __P((struct device *, struct cfdata *, void *));
 void opmsattach __P((struct device *, struct device *, void *));
 int opmsintr __P((void *));
 
+#if NOPMS > 0
 struct cfattach opms_ca = {
 	sizeof(struct opms_softc), opmsprobe, opmsattach
 };
+#endif
 
 extern struct cfdriver opms_cd;
 
@@ -215,11 +220,66 @@ void sput __P((u_char *, int));
 void	pcstart __P((struct tty *));
 int	pcparam __P((struct tty *, struct termios *));
 static __inline void wcopy __P((void *, void *, u_int));
+void	pcinithandle __P((void));
 
 extern void fillw __P((int, u_int16_t *, int));
 
 #define	KBD_DELAY \
 		DELAY(10);
+
+void
+pcinithandle()
+{
+	static int initialized = 0;
+
+	if (initialized)
+		return;
+	initialized = 1;
+
+	switch (cputype) {
+
+	case ACER_PICA_61:
+	case NEC_R96: /* XXX - not really confirmed */
+		mono_base += PICA_V_LOCAL_VIDEO_CTRL;
+		mono_buf += PICA_V_LOCAL_VIDEO;
+		cga_base += PICA_V_LOCAL_VIDEO_CTRL;
+		cga_buf += PICA_V_LOCAL_VIDEO;
+	case MAGNUM:
+	case NEC_R94:
+	case NEC_RAx94:
+	case NEC_RD94:
+		kbd_cmdp = PICA_SYS_KBD + 0x61;
+		kbd_datap = PICA_SYS_KBD + 0x60;
+		break;
+
+	case DESKSTATION_TYNE:
+		bus_space_map(&arc_bus_io, mono_base, 2, 0, &mono_base);
+		bus_space_map(&arc_bus_mem, mono_buf, 0x20000, 0, &mono_buf);
+		bus_space_map(&arc_bus_io, cga_base, 2, 0, &cga_base);
+		bus_space_map(&arc_bus_mem, cga_buf, 0x20000, 0, &cga_buf);
+		bus_space_map(&arc_bus_io, 0x64, 1, 0, &kbd_cmdp);
+		bus_space_map(&arc_bus_io, 0x60, 1, 0, &kbd_datap);
+		break;
+
+	case DESKSTATION_RPC44:
+		bus_space_map(&arc_bus_io, mono_base, 2, 0, &mono_base);
+		bus_space_map(&arc_bus_mem, mono_buf, 0x20000, 0, &mono_buf);
+		bus_space_map(&arc_bus_io, cga_base, 2, 0, &cga_base);
+		bus_space_map(&arc_bus_mem, 0xa0000, 0x20000, 0, &cga_buf);
+		bus_space_map(&arc_bus_io, 0x64, 1, 0, &kbd_cmdp);
+		bus_space_map(&arc_bus_io, 0x60, 1, 0, &kbd_datap);
+		break;
+
+	case SNI_RM200:
+		bus_space_map(&arc_bus_io, mono_base, 2, 0, &mono_base);
+		bus_space_map(&arc_bus_mem, mono_buf, 0x20000, 0, &mono_buf);
+		bus_space_map(&arc_bus_io, cga_base, 2, 0, &cga_base);
+		bus_space_map(&arc_bus_mem, cga_buf, 0x20000, 0, &cga_buf);
+		bus_space_map(&arc_bus_io, 0x64, 1, 0, &kbd_cmdp);
+		bus_space_map(&arc_bus_io, 0x60, 1, 0, &kbd_datap);
+		break;
+	}
+}
 
 /*
  * bcopy variant that only moves word-aligned 16-bit entities,
@@ -293,6 +353,8 @@ kbd_flush_input()
 int
 kbc_8042sysreset()
 {
+
+	pcinithandle();
 
 	if (!kbd_wait_output())
 		return 0;
@@ -491,9 +553,27 @@ pcprobe(parent, match, aux)
 
 	/* Make shure we're looking for this type of device */
 	if(!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "pica")) {
-		if(!BUS_MATCHNAME(ca, "pc"))
+		if(!BUS_MATCHNAME(ca, "pckbd"))
 			return(0);
+
+		switch (cputype) { /* XXX ick */
+		case ACER_PICA_61:
+		case NEC_R96: /* XXX - not really confirmed */
+			break;
+		default:
+			return (0);
+		}
+	} else { /* ISA */
+		switch (cputype) { /* XXX ick */
+		case DESKSTATION_RPC44:
+		case DESKSTATION_TYNE:
+			break;
+		default:
+			return (0);
+		}
 	}
+
+	pcinithandle();
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -579,7 +659,7 @@ pcattach(parent, self, aux)
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	switch(cputype) {
+	switch (cputype) {
 	case ACER_PICA_61:
 	case NEC_R96:
 		BUS_INTR_ESTABLISH(ca, pcintr, (void *)(long)sc);
@@ -858,25 +938,15 @@ pccnattach()
 	 * For now, don't screw with it.
 	 */
 	/* crtat = 0; */
-	switch(cputype) {
+	pcinithandle();
+
+	switch (cputype) {
 
 	case ACER_PICA_61:
 	case NEC_R96: /* XXX - not really confirmed */
-		mono_base += PICA_V_LOCAL_VIDEO_CTRL;
-		mono_buf += PICA_V_LOCAL_VIDEO;
-		cga_base += PICA_V_LOCAL_VIDEO_CTRL;
-		cga_buf += PICA_V_LOCAL_VIDEO;
-		kbd_cmdp = PICA_SYS_KBD + 0x61;
-		kbd_datap = PICA_SYS_KBD + 0x60;
 		break;
 
 	case DESKSTATION_TYNE:
-		bus_space_map(&arc_bus_io, mono_base, 2, 0, &mono_base);
-		bus_space_map(&arc_bus_mem, mono_buf, 0x20000, 0, &mono_buf);
-		bus_space_map(&arc_bus_io, cga_base, 2, 0, &cga_base);
-		bus_space_map(&arc_bus_mem, cga_buf, 0x20000, 0, &cga_buf);
-		bus_space_map(&arc_bus_io, 0x64, 1, 0, &kbd_cmdp);
-		bus_space_map(&arc_bus_io, 0x60, 1, 0, &kbd_datap);
 		outb(arc_bus_io.bs_vbase + 0x3ce, 6);	/* Correct video mode */
 		outb(arc_bus_io.bs_vbase + 0x3cf,
 			inb(arc_bus_io.bs_vbase + 0x3cf) | 0xc);
@@ -884,22 +954,10 @@ pccnattach()
 		break;
 
 	case DESKSTATION_RPC44:
-		bus_space_map(&arc_bus_io, mono_base, 2, 0, &mono_base);
-		bus_space_map(&arc_bus_mem, mono_buf, 0x20000, 0, &mono_buf);
-		bus_space_map(&arc_bus_io, cga_base, 2, 0, &cga_base);
-		bus_space_map(&arc_bus_mem, 0xa0000, 0x20000, 0, &cga_buf);
-		bus_space_map(&arc_bus_io, 0x64, 1, 0, &kbd_cmdp);
-		bus_space_map(&arc_bus_io, 0x60, 1, 0, &kbd_datap);
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
 		break;
 
 	case SNI_RM200:
-		bus_space_map(&arc_bus_io, mono_base, 2, 0, &mono_base);
-		bus_space_map(&arc_bus_mem, mono_buf, 0x20000, 0, &mono_buf);
-		bus_space_map(&arc_bus_io, cga_base, 2, 0, &cga_base);
-		bus_space_map(&arc_bus_mem, cga_buf, 0x20000, 0, &cga_buf);
-		bus_space_map(&arc_bus_io, 0x64, 1, 0, &kbd_cmdp);
-		bus_space_map(&arc_bus_io, 0x60, 1, 0, &kbd_datap);
 		break;
 	}
 
@@ -1992,6 +2050,8 @@ pc_xmode_off()
 
 #define	FLUSHQ(q) { if((q)->c_cc) ndflush(q, (q)->c_cc); }
 
+#if NOPMS > 0
+
 int opmsopen __P((dev_t, int));
 int opmsclose __P((dev_t, int));
 int opmsread __P((dev_t, struct uio *, int));
@@ -2043,6 +2103,7 @@ opmsprobe(parent, match, aux)
 	if(!BUS_MATCHNAME(ca, "pms"))
 		return(0);
 
+	pcinithandle();
 	pms_dev_cmd(KBC_RESET);
 	pms_aux_cmd(PMS_MAGIC_1);
 	delay(10000);
@@ -2324,3 +2385,5 @@ opmspoll(dev, events, p)
 	splx(s);
 	return (revents);
 }
+
+#endif /* NOPMS > 0 */
