@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.78 2001/05/28 02:50:53 chs Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.78.4.1 2001/07/10 13:55:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -70,8 +70,8 @@
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/lfs/lfs_extern.h>
 
-static int ufs_chmod(struct vnode *, int, struct ucred *, struct proc *);
-static int ufs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
+static int	ufs_chmod(struct vnode *, int, struct ucred *, struct proc *);
+static int	ufs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
 		    struct proc *);
 
 union _qcvt {
@@ -95,6 +95,8 @@ do {									\
 	(q) = tmp.qcvt;							\
 } while (0)
 
+#define	VN_KNOTE(vp, b)		KNOTE((struct klist *)&vp->v_klist, (b))
+
 /*
  * A virgin directory (no blushing please).
  */
@@ -115,10 +117,15 @@ ufs_create(void *v)
 		struct componentname	*a_cnp;
 		struct vattr		*a_vap;
 	} */ *ap = v;
+	int	error;
 
-	return
+	error =
 	    ufs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
 			  ap->a_dvp, ap->a_vpp, ap->a_cnp);
+	if (error)
+		return (error);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	return (0);
 }
 
 /*
@@ -145,6 +152,7 @@ ufs_mknod(void *v)
 	    ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
 	    ap->a_dvp, vpp, ap->a_cnp)) != 0)
 		return (error);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
@@ -446,6 +454,7 @@ ufs_setattr(void *v)
 			return (EROFS);
 		error = ufs_chmod(vp, (int)vap->va_mode, cred, p);
 	}
+	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
 }
 
@@ -597,6 +606,8 @@ ufs_remove(void *v)
 		error = EPERM;
 	else
 		error = ufs_dirremove(dvp, ip, ap->a_cnp->cn_flags, 0);
+	VN_KNOTE(vp, NOTE_DELETE);
+	VN_KNOTE(dvp, NOTE_WRITE);
 	if (dvp == vp)
 		vrele(vp);
 	else
@@ -676,6 +687,8 @@ ufs_link(void *v)
 	if (dvp != vp)
 		VOP_UNLOCK(vp, 0);
  out2:
+	VN_KNOTE(vp, NOTE_LINK);
+	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
 	return (error);
 }
@@ -881,6 +894,7 @@ ufs_rename(void *v)
 		oldparent = dp->i_number;
 		doingdirectory = 1;
 	}
+	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
 	/* vrele(fdvp); */
 
 	/*
@@ -989,6 +1003,7 @@ ufs_rename(void *v)
 			}
 			goto bad;
 		}
+		VN_KNOTE(tdvp, NOTE_WRITE);
 		vput(tdvp);
 	} else {
 		if (xp->i_dev != dp->i_dev || xp->i_dev != ip->i_dev)
@@ -1066,7 +1081,9 @@ ufs_rename(void *v)
 			    tcnp->cn_cred, tcnp->cn_proc)))
 				goto bad;
 		}
+		VN_KNOTE(tdvp, NOTE_WRITE);
 		vput(tdvp);
+		VN_KNOTE(tvp, NOTE_DELETE);
 		vput(tvp);
 		xp = NULL;
 	}
@@ -1119,6 +1136,7 @@ ufs_rename(void *v)
 		error = ufs_dirremove(fdvp, xp, fcnp->cn_flags, 0);
 		xp->i_flag &= ~IN_RENAME;
 	}
+	VN_KNOTE(fvp, NOTE_RENAME);
 	if (dp)
 		vput(fdvp);
 	if (xp)
@@ -1293,6 +1311,7 @@ ufs_mkdir(void *v)
 	error = ufs_direnter(dvp, tvp, &newdir, cnp, bp);
  bad:
 	if (error == 0) {
+		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 		*ap->a_vpp = tvp;
 	} else {
 		dp->i_ffs_effnlink--;
@@ -1394,6 +1413,7 @@ ufs_rmdir(void *v)
 		}
 		goto out;
 	}
+	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
 	/*
 	 * Truncate inode.  The only stuff left in the directory is "." and
@@ -1412,6 +1432,7 @@ ufs_rmdir(void *v)
 	}
 	cache_purge(vp);
  out:
+	VN_KNOTE(vp, NOTE_DELETE);
 	vput(dvp);
 	vput(vp);
 	return (error);
@@ -1439,6 +1460,7 @@ ufs_symlink(void *v)
 			      vpp, ap->a_cnp);
 	if (error)
 		return (error);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vp = *vpp;
 	len = strlen(ap->a_target);
 	if (len < vp->v_mount->mnt_maxsymlinklen) {
@@ -2030,4 +2052,88 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	tvp->v_type = VNON;
 	vput(tvp);
 	return (error);
+}
+
+
+static int	filt_ufsread(struct knote *kn, long hint);
+static int	filt_ufsvnode(struct knote *kn, long hint);
+static void	filt_ufsdetach(struct knote *kn);
+
+static struct filterops ufsread_filtops = 
+	{ 1, NULL, filt_ufsdetach, filt_ufsread };
+static struct filterops ufsvnode_filtops = 
+	{ 1, NULL, filt_ufsdetach, filt_ufsvnode };
+
+int
+ufs_kqfilter(void *v)
+{
+	struct vop_kqfilter_args /* {
+		struct vnode	*a_vp;
+		struct knote	*a_kn;
+	} */ *ap = v;
+	struct vnode *vp;
+	struct knote *kn;
+
+	vp = ap->a_vp;
+	kn = ap->a_kn;
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &ufsread_filtops;
+		break;
+	case EVFILT_VNODE:
+		kn->kn_fop = &ufsvnode_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (caddr_t)vp;
+
+	/* XXXLUKEM lock the struct? */
+	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
+
+	return (0);
+}
+
+static void
+filt_ufsdetach(struct knote *kn)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+
+	/* XXXLUKEM lock the struct? */
+	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
+}
+
+/*ARGSUSED*/
+static int
+filt_ufsread(struct knote *kn, long hint)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	struct inode *ip = VTOI(vp);
+
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+	/* XXXLUKEM: freebsd uses i_size instead of i_ffs_size */
+        kn->kn_data = ip->i_ffs_size - kn->kn_fp->f_offset;
+        return (kn->kn_data != 0);
+}
+
+static int
+filt_ufsvnode(struct knote *kn, long hint)
+{
+
+	if (kn->kn_sfflags & hint)
+		kn->kn_fflags |= hint;
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	return (kn->kn_fflags != 0);
 }
