@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sbrk.S,v 1.2 1994/11/14 23:49:42 dean Exp $")
+	ASMSTR("$Id: sbrk.S,v 1.3 1994/11/28 18:56:40 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #define	SYS_brk		17
@@ -46,10 +46,10 @@
 	.data
 	.globl	minbrk
 minbrk:
-	.word	end
+	.word	_end
 	.globl	curbrk
 curbrk:
-	.word	end
+	.word	_end
 	.text
 
 LEAF(_sbrk)
