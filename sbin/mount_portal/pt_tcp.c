@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.18 2004/03/01 23:01:18 itojun Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.19 2005/02/09 13:57:57 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_tcp.c,v 1.18 2004/03/01 23:01:18 itojun Exp $");
+__RCSID("$NetBSD: pt_tcp.c,v 1.19 2005/02/09 13:57:57 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -63,12 +63,7 @@ __RCSID("$NetBSD: pt_tcp.c,v 1.18 2004/03/01 23:01:18 itojun Exp $");
  * An unrecognised suffix is an error.
  */
 int
-portal_tcp(pcr, key, v, kso, fdp)
-	struct portal_cred *pcr;
-	char *key;
-	char **v;
-	int kso;
-	int *fdp;
+portal_tcp(struct portal_cred *pcr, char *key, char **v, int kso, int *fdp)
 {
 	char host[MAXHOSTNAMELEN];
 	char port[MAXHOSTNAMELEN];

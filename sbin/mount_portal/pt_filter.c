@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.4 2001/01/10 03:33:16 lukem Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.5 2005/02/09 13:57:57 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.4 2001/01/10 03:33:16 lukem Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.5 2005/02/09 13:57:57 xtraeme Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -60,14 +60,10 @@ __RCSID("$NetBSD: pt_filter.c,v 1.4 2001/01/10 03:33:16 lukem Exp $");
 
 #define FILTER_CMD_SIZE	8192
 
-static void fill_cmd __P((char **, char *, char *, int));
+static void fill_cmd(char **, char *, char *, int);
 
 static void
-fill_cmd(cmdv, path, buff, n)
-	char  **cmdv;
-	char   *path;
-	char   *buff;
-	int     n;
+fill_cmd(char **cmdv, char *path, char *buff, int n)
 {
 	int     i;
 	/* Make tempbuff at least as large as buff. */
@@ -89,12 +85,7 @@ fill_cmd(cmdv, path, buff, n)
  * of the path, and exec v[2] v[3] ... on the remainder.
  */
 int
-portal_rfilter(pcr, key, v, kso, fdp)
-	struct portal_cred *pcr;
-	char   *key;
-	char  **v;
-	int     kso;
-	int    *fdp;
+portal_rfilter(struct portal_cred *pcr, char *key, char **v, int kso, int *fdp)
 {
 	char    cmd[FILTER_CMD_SIZE];
 	char   *path;
@@ -134,7 +125,7 @@ portal_rfilter(pcr, key, v, kso, fdp)
 	 * v[3] could be NULL, or could point to "".
 	 */
 	if (!v[3] || strlen(v[3]) == 0)
-	  v[3] = "%s";	/* Handle above assumption. */
+	  (const char *)v[3] = "%s";	/* Handle above assumption. */
 	path = key;
 	/* Strip out stripkey if it matches leading part of key. */
 	if (!strncmp(v[1], key, strlen(v[1])))
@@ -177,12 +168,7 @@ portal_rfilter(pcr, key, v, kso, fdp)
 }
 
 int
-portal_wfilter(pcr, key, v, kso, fdp)
-	struct portal_cred *pcr;
-	char   *key;
-	char  **v;
-	int     kso;
-	int    *fdp;
+portal_wfilter(struct portal_cred *pcr, char *key, char **v, int kso, int *fdp)
 {
 	char    cmd[FILTER_CMD_SIZE];
 	char   *path;

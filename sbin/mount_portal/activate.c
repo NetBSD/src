@@ -1,4 +1,4 @@
-/*	$NetBSD: activate.c,v 1.12 2003/08/07 10:04:30 agc Exp $	*/
+/*	$NetBSD: activate.c,v 1.13 2005/02/09 13:57:57 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: activate.c,v 1.12 2003/08/07 10:04:30 agc Exp $");
+__RCSID("$NetBSD: activate.c,v 1.13 2005/02/09 13:57:57 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,22 +55,17 @@ __RCSID("$NetBSD: activate.c,v 1.12 2003/08/07 10:04:30 agc Exp $");
 
 #include "portald.h"
 
-static	int	activate_argv __P((struct portal_cred *, char *, char **,
-				    int, int *));
-static	int	get_request __P((int, struct portal_cred *, char *, int));
-static	void	send_reply __P((int, int, int));
+static	int	activate_argv(struct portal_cred *, char *, char **,
+				    int, int *);
+static	int	get_request(int, struct portal_cred *, char *, int);
+static	void	send_reply(int, int, int);
 
 /*
  * Scan the providers list and call the
  * appropriate function.
  */
 static int
-activate_argv(pcr, key, v, so, fdp)
-	struct portal_cred *pcr;
-	char *key;
-	char **v;
-	int so;
-	int *fdp;
+activate_argv(struct portal_cred *pcr, char *key, char **v, int so, int *fdp)
 {
 	provider *pr;
 
@@ -82,11 +77,7 @@ activate_argv(pcr, key, v, so, fdp)
 }
 
 static int
-get_request(so, pcr, key, klen)
-	int so;
-	struct portal_cred *pcr;
-	char *key;
-	int klen;
+get_request(int so, struct portal_cred *pcr, char *key, int klen)
 {
 	struct iovec iov[2];
 	struct msghdr msg;
@@ -115,10 +106,7 @@ get_request(so, pcr, key, klen)
 }
 
 static void
-send_reply(so, fd, error)
-	int so;
-	int fd;
-	int error;
+send_reply(int so, int fd, int error)
 {
 	int n;
 	struct iovec iov;
@@ -192,9 +180,7 @@ send_reply(so, fd, error)
 }
 
 void
-activate(q, so)
-	qelem *q;
-	int so;
+activate(qelem *q, int so)
 {
 	struct portal_cred pcred;
 	char key[MAXPATHLEN+1];
