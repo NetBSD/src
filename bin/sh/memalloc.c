@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.20 1997/07/04 21:02:08 christos Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.21 1998/01/31 12:36:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,9 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.20 1997/07/04 21:02:08 christos Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.21 1998/01/31 12:36:17 christos Exp $");
 #endif
 #endif /* not lint */
+
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "shell.h"
 #include "output.h"
@@ -51,8 +54,6 @@ __RCSID("$NetBSD: memalloc.c,v 1.20 1997/07/04 21:02:08 christos Exp $");
 #include "error.h"
 #include "machdep.h"
 #include "mystring.h"
-#include <stdlib.h>
-#include <unistd.h>
 
 /*
  * Like malloc, but returns an error when out of space.
