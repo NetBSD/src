@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.2 2002/06/24 05:48:31 itojun Exp $	*/
+/*	$NetBSD: msg.c,v 1.3 2002/06/24 15:32:58 agc Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -37,7 +37,7 @@ msg_send(int fd, u_char type, Buffer *m)
 	u_char buf[5];
 	u_int mlen = buffer_len(m);
 
-	debug3("msg_send: type %d", type);
+	debug3("msg_send: type %d", (int) type);
 
 	PUT_32BIT(buf, mlen + 1);
 	buf[4] = type;		/* 1st byte of payload is mesg-type */
@@ -60,7 +60,7 @@ msg_recv(int fd, Buffer *m)
 	if (res != sizeof(buf)) {
 		if (res == 0)
 			return -1;
-		fatal("msg_recv: read: header %d", res);
+		fatal("msg_recv: read: header %d", (int) res);
 	}
 	msg_len = GET_32BIT(buf);
 	if (msg_len > 256 * 1024)
