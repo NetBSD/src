@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.18 1998/02/08 19:04:31 kleink Exp $	*/
+/*	$NetBSD: errno.h,v 1.19 1998/10/01 19:53:54 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,11 +47,12 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#if !defined(_REENTRANT)
-extern int errno;
-#else
+#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT)
 extern int *__errno __P((void));
 #define errno (*__errno())
+#else
+extern int errno;
 #endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
