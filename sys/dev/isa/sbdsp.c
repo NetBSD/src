@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.36 1997/03/20 11:04:51 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.37 1997/03/20 16:04:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -631,16 +631,6 @@ sbdsp_round_blocksize(addr, blk)
 
 	sc->sc_last_hs_size = 0;
 
-	/* Higher speeds need bigger blocks to avoid popping and silence gaps. */
-	if (blk < NBPG/4 || blk > NBPG/2) {
-		if (ISSB16CLASS(sc)) {
-			if (sc->sc_orate > 8000 || sc->sc_irate > 8000)
-				blk = NBPG/2;
-		} else {
-			if (sc->sc_otc > SB_8K || sc->sc_itc < SB_8K)
-				blk = NBPG/2;
-		}
-	}
 	/* don't try to DMA too much at once, though. */
 	if (blk > NBPG)
 		blk = NBPG;

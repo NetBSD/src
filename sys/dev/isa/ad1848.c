@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.19 1997/03/20 06:48:51 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.20 1997/03/20 16:04:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1108,9 +1108,6 @@ ad1848_round_blocksize(addr, blk)
 
     sc->sc_lastcc = -1;
 
-    /* Higher speeds need bigger blocks to avoid popping and silence gaps. */
-    if (sc->speed > 8000 && blk < NBPG/2)
-	    blk = NBPG/2;
     /* don't try to DMA too much at once, though. */
     if (blk > NBPG)
 	blk = NBPG;
@@ -1118,7 +1115,7 @@ ad1848_round_blocksize(addr, blk)
     if (sc->channels == 2)
 	return (blk & ~1); /* must be even to preserve stereo separation */
     else
-	return(blk);	/* Anything goes :-) */
+	return (blk);	/* Anything goes :-) */
 }
 
 int
