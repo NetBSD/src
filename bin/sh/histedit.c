@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.9 1996/06/25 16:43:34 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.10 1996/10/16 14:40:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: histedit.c,v 1.9 1996/06/25 16:43:34 christos Exp $";
+static char rcsid[] = "$NetBSD: histedit.c,v 1.10 1996/10/16 14:40:32 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ STATIC char *fc_replace __P((const char *, char *, char *));
  * have changed (figures out what to do).
  */
 void
-histedit() 
+histedit()
 {
 
 #define editing (Eflag || Vflag)
@@ -155,7 +155,7 @@ sethistsize(hs)
 	int histsize;
 
 	if (hist != NULL) {
-		if (hs == NULL || *hs == '\0' || 
+		if (hs == NULL || *hs == '\0' ||
 		   (histsize = atoi(hs)) < 0)
 			histsize = 100;
 		history(hist, H_EVENT, histsize);
@@ -204,7 +204,7 @@ histcmd(argc, argv)
 
 	if (hist == NULL)
 		error("history not active");
-	
+
 	if (argc == 1)
 		error("missing history argument");
 
@@ -277,7 +277,7 @@ histcmd(argc, argv)
 	/*
 	 * If executing, parse [old=new] now
 	 */
-	if (lflg == 0 && argc > 0 && 
+	if (lflg == 0 && argc > 0 &&
 	     ((repl = strchr(argv[0], '=')) != NULL)) {
 		pat = argv[0];
 		*repl++ = '\0';
@@ -315,7 +315,7 @@ histcmd(argc, argv)
 	}
 	/*
 	 * XXX - this should not depend on the event numbers
-	 * always increasing.  Add sequence numbers or offset 
+	 * always increasing.  Add sequence numbers or offset
 	 * to the history element in next (diskbased) release.
 	 */
 	direction = first < last ? H_PREV : H_NEXT;
@@ -331,7 +331,7 @@ histcmd(argc, argv)
 			error("can't create temporary file %s", editfile);
 		if ((efp = fdopen(fd, "w")) == NULL) {
 			close(fd);
-			error("can't allocate stdio buffer for temp\n");
+			error("can't allocate stdio buffer for temp");
 		}
 	}
 
@@ -351,7 +351,7 @@ histcmd(argc, argv)
 				out1fmt("%5d ", he->num);
 			out1str(he->str);
 		} else {
-			char *s = pat ? 
+			char *s = pat ?
 			   fc_replace(he->str, pat, repl) : (char *)he->str;
 
 			if (sflg) {
@@ -361,7 +361,7 @@ histcmd(argc, argv)
 				evalstring(s);
 				if (displayhist && hist) {
 					/*
-					 *  XXX what about recursive and 
+					 *  XXX what about recursive and
 					 *  relative histnums.
 					 */
 					history(hist, H_ENTER, s);
@@ -387,7 +387,7 @@ histcmd(argc, argv)
 		readcmdfile(editfile);	/* XXX - should read back - quick tst */
 		unlink(editfile);
 	}
-		
+
 	if (lflg == 0 && active > 0)
 		--active;
 	if (displayhist)
@@ -471,7 +471,7 @@ str_to_event(str, last)
 			       str);
 	} else {
 		/*
-		 * pattern 
+		 * pattern
 		 */
 		he = history(hist, H_PREV_STR, str);
 		if (he == NULL)
