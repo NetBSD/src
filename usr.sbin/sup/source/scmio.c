@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.5.4.1 1999/04/12 21:27:10 pk Exp $	*/
+/*	$NetBSD: scmio.c,v 1.5.4.2 2000/01/23 12:03:45 he Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -164,8 +164,6 @@
 #include "supcdefs.h"
 #include "supextern.h"
 #include "supmsg.h"
-
-extern int errno;
 
 /*************************
  ***    M A C R O S    ***
