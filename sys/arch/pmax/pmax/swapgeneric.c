@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)swapgeneric.c	8.1 (Berkeley) 6/16/93
- *      $Id: swapgeneric.c,v 1.3 1994/05/27 09:04:07 glass Exp $
+ *      $Id: swapgeneric.c,v 1.4 1994/06/16 05:11:06 glass Exp $
  */
 
 #include <sys/param.h>
@@ -45,8 +45,8 @@
 
 #include <pmax/dev/device.h>
 
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
+extern int ffs_mountroot();
+int (*mountroot)() = ffs_mountroot;
 
 /*
  * Generic configuration;  all in one
