@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.6 1994/11/21 21:33:36 gwr Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.7 1995/03/10 02:29:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -168,7 +168,8 @@ struct eeprom {
 };
 
 #ifdef	KERNEL
-/* Offset of eeConsole (for zs driver). */
-#define	EE_CONS_OFFSET		0x1F
+/* Value of eeConsole (for convenience of drivers). */
+extern int ee_console;
+/* Function to get other bytes. */
 extern int ee_get_byte(int off, int canwait);
 #endif	/* KERNEL */
