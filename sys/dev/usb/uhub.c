@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.12 1998/12/28 02:23:25 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.13 1998/12/30 18:06:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ USB_ATTACH(uhub)
 	}
 
 	/* Wait with power off for a while. */
-	usbd_delay_ms(dev->bus, USB_POWER_DOWN_TIME);
+	usbd_delay_ms(dev, USB_POWER_DOWN_TIME);
 
 	for (p = 0; p < nports; p++) {
 		struct usbd_port *up = &hub->ports[p];
@@ -269,7 +269,7 @@ uhub_init_port(up)
 		/* Port lacks power, turn it on */
 
 		/* First let the device go through a good power cycle, */
-		usbd_delay_ms(dev->bus, USB_PORT_POWER_DOWN_TIME);
+		usbd_delay_ms(dev, USB_PORT_POWER_DOWN_TIME);
 
 		/* then turn the power on. */
 		r = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
@@ -283,8 +283,8 @@ uhub_init_port(up)
 			 port, UGETW(up->status.wPortStatus),
 			 UGETW(up->status.wPortChange)));
 		/* Wait for stable power. */
-		usbd_delay_ms(dev->bus, dev->hub->hubdesc.bPwrOn2PwrGood * 
-			                UHD_PWRON_FACTOR);
+		usbd_delay_ms(dev, dev->hub->hubdesc.bPwrOn2PwrGood * 
+			           UHD_PWRON_FACTOR);
 	}
 	if (dev->self_powered)
 		/* Self powered hub, give ports maximum current. */
@@ -380,7 +380,7 @@ uhub_explore(dev)
 		up->restartcnt = 0;
 
 		/* Wait for maximum device power up time. */
-		usbd_delay_ms(dev->bus, USB_PORT_POWERUP_DELAY);
+		usbd_delay_ms(dev, USB_PORT_POWERUP_DELAY);
 
 		/* Reset port, which implies enabling it. */
 		if (usbd_reset_port(dev, port, &up->status) != 

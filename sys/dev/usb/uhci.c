@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.19 1998/12/30 13:25:54 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.20 1998/12/30 18:06:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ uhci_busreset(sc)
 	uhci_softc_t *sc;
 {
 	UHCICMD(sc, UHCI_CMD_GRESET);	/* global reset */
-	usbd_delay_ms(&sc->sc_bus, USB_BUS_RESET_DELAY); /* wait a little */
+	usb_delay_ms(&sc->sc_bus, USB_BUS_RESET_DELAY); /* wait a little */
 	UHCICMD(sc, 0);			/* do nothing */
 }
 
@@ -878,7 +878,7 @@ uhci_waitintr(sc, reqh)
 
 	reqh->status = USBD_IN_PROGRESS;
 	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
-		usbd_delay_ms(&sc->sc_bus, 1);
+		usb_delay_ms(&sc->sc_bus, 1);
 		DPRINTFN(10,("uhci_waitintr: 0x%04x\n", UREAD2(sc, UHCI_STS)));
 		if (UREAD2(sc, UHCI_STS) & UHCI_STS_USBINT) {
 			uhci_intr(sc);
@@ -950,7 +950,7 @@ uhci_run(sc, run)
 			splx(s);
 			return (USBD_NORMAL_COMPLETION);
 		}
-		usbd_delay_ms(&sc->sc_bus, 1);
+		usb_delay_ms(&sc->sc_bus, 1);
 	}
 	splx(s);
 	printf("%s: cannot %s\n", USBDEVNAME(sc->sc_bus.bdev),
@@ -1277,7 +1277,7 @@ uhci_device_bulk_abort(reqh)
 	usbd_request_handle reqh;
 {
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1);/* make sure it is done */
+	usb_delay_ms(reqh->pipe->device->bus, 1);/* make sure it is done */
 	/* XXX call done */
 }
 
@@ -1432,7 +1432,7 @@ uhci_device_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
+	usb_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
 	/* XXX call done */
 }
 
@@ -1456,7 +1456,7 @@ uhci_device_intr_abort(reqh)
 
 	DPRINTFN(1, ("uhci_device_intr_abort: reqh=%p\n", reqh));
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 2); /* make sure it is done */
+	usb_delay_ms(reqh->pipe->device->bus, 2); /* make sure it is done */
 	if (reqh->pipe->intrreqh == reqh) {
 		DPRINTF(("uhci_device_intr_abort: remove\n"));
 		reqh->pipe->intrreqh = 0;
@@ -1488,7 +1488,7 @@ uhci_device_intr_close(pipe)
 	 * We now have to wait for any activity on the physical
 	 * descriptors to stop.
 	 */
-	usbd_delay_ms(&sc->sc_bus, 2);
+	usb_delay_ms(&sc->sc_bus, 2);
 
 	for(i = 0; i < npoll; i++)
 		uhci_free_sqh(sc, upipe->u.intr.qhs[i]);
@@ -1692,7 +1692,7 @@ uhci_device_isoc_close(pipe)
 
 	for (i = 0; i < UHCI_VFRAMELIST_COUNT; i++)
 		iso->stds[i]->td->td_status &= ~UHCI_TD_ACTIVE;
-	usbd_delay_ms(&sc->sc_bus, 2); /* wait for completion */
+	usb_delay_ms(&sc->sc_bus, 2); /* wait for completion */
 
 	uhci_lock_frames(sc);
 	for (i = 0; i < UHCI_VFRAMELIST_COUNT; i++) {
@@ -2502,7 +2502,7 @@ uhci_root_ctrl_start(reqh)
 		case UHF_PORT_RESET:
 			x = UREAD2(sc, port);
 			UWRITE2(sc, port, x | UHCI_PORTSC_PR);
-			usbd_delay_ms(&sc->sc_bus, 10);
+			usb_delay_ms(&sc->sc_bus, 10);
 			UWRITE2(sc, port, x & ~UHCI_PORTSC_PR);
 			delay(100);
 			x = UREAD2(sc, port);
