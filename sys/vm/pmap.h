@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1996/02/05 01:53:50 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 1996/02/10 00:08:01 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -105,6 +105,8 @@ void		 pmap_destroy __P((pmap_t));
 void		 pmap_enter __P((pmap_t,
 		    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
 vm_offset_t	 pmap_extract __P((pmap_t, vm_offset_t));
+u_long		 pmap_page_index __P((vm_offset_t));
+
 #ifndef	MACHINE_NONCONTIG
 void		 pmap_init __P((vm_offset_t, vm_offset_t));
 #else

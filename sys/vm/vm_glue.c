@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.50 1996/02/04 02:10:14 christos Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.51 1996/02/10 00:08:06 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -68,6 +68,9 @@
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/user.h>
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -384,7 +387,7 @@ loop:
 	}
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: running, procp %x pri %d\n", pp, ppri);
+		printf("scheduler: running, procp %p pri %d\n", pp, ppri);
 #endif
 	/*
 	 * Nothing to do, back to sleep
@@ -402,7 +405,7 @@ loop:
 	if (cnt.v_free_count > atop(USPACE)) {
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPIN)
-			printf("swapin: pid %d(%s)@%x, pri %d free %d\n",
+			printf("swapin: pid %d(%s)@%p, pri %d free %d\n",
 			       p->p_pid, p->p_comm, p->p_addr,
 			       ppri, cnt.v_free_count);
 #endif
@@ -490,7 +493,7 @@ swapout_threads()
 			p = outp2;
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
-			printf("swapout_threads: no duds, try procp %x\n", p);
+			printf("swapout_threads: no duds, try procp %p\n", p);
 #endif
 		if (p)
 			swapout(p);
@@ -508,6 +511,7 @@ swapout(p)
 	if (swapdebug & SDB_SWAPOUT)
 		printf("swapout: pid %d(%s)@%x, stat %x pri %d free %d\n",
 		       p->p_pid, p->p_comm, p->p_addr, p->p_stat,
+/*###511 [cc] warning: unsigned int format, pointer arg (arg 4)%%%*/
 		       p->p_slptime, cnt.v_free_count);
 #endif
 

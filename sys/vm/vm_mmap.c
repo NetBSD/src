@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.44 1996/02/05 01:54:01 christos Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.45 1996/02/10 00:08:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -695,7 +695,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		(void) pager_cache(object, FALSE);
 #ifdef DEBUG
 		if (mmapdebug & MDB_MAPIT)
-			printf("vm_mmap(%d): ANON *addr %x size %x pager %x\n",
+			printf("vm_mmap(%d): ANON *addr %x size %x pager %p\n",
 			       curproc->p_pid, *addr, size, pager);
 #endif
 	}
@@ -725,7 +725,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 	else {
 #ifdef DEBUG
 		if (object == NULL)
-			printf("vm_mmap: no object: vp %x, pager %x\n",
+			printf("vm_mmap: no object: vp %p, pager %p\n",
 			       vp, pager);
 #endif
 		/*
@@ -876,7 +876,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		}
 #ifdef DEBUG
 		if (mmapdebug & MDB_MAPIT)
-			printf("vm_mmap(%d): FILE *addr %x size %x pager %x\n",
+			printf("vm_mmap(%d): FILE *addr %x size %x pager %p\n",
 			       curproc->p_pid, *addr, size, pager);
 #endif
 	}
