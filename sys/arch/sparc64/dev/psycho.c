@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.29 2001/02/11 00:02:58 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.30 2001/02/28 15:21:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -249,12 +249,10 @@ sabre_init(sc, ma, pba)
 	 * (0) per-PBM PCI configuration space, containing only the
 	 *     PBM 256-byte PCI header
 	 * (1) the shared psycho configuration registers (struct psychoreg)
-	 *
-	 * XXX use the prom address for the psycho registers?  we do so far.
 	 */
 	sc->sc_regs = (struct psychoreg *)(u_long)ma->ma_address[0];
 	sc->sc_basepaddr = (paddr_t)ma->ma_reg[0].ur_paddr;
-	sc->sc_ign = 0x7c0; /* XXX - try not to hardcode? */
+	sc->sc_ign = 0x7c0; /* APB IGN is always 0x7c */
 
 	/* who? said a voice, incredulous */
 	sc->sc_mode = PSYCHO_MODE_SABRE;
@@ -419,14 +417,15 @@ sabre_init(sc, ma, pba)
 
 /*
  * SUNW,psycho initialisation ..
- *	- XXX what do we do here?
- *
- * i think that an attaching psycho should here find it's partner psycho
- * and if they haven't been attached yet, allocate both psycho_pbm's and
- * fill them both in here, and when the partner attaches, there is little
- * to do... perhaps keep a static array of what psycho have been found so
- * far (or perhaps those that have not yet been finished).  .mrg.
- * note that the partner can be found via matching `ranges' properties.
+ *	- find the per-psycho registers
+ *	- figure out the IGN.
+ *	- find our partner psycho
+ *	- configure ourselves
+ *	- bus range, bus, 
+ *	- get interrupt-map and interrupt-map-mask
+ *	- setup the chipsets.
+ *	- if we're the first of the pair, initialise the IOMMU, otherwise
+ *	  just copy it's tags and addresses.
  */
 static void
 psycho_init(sc, ma, pba)
