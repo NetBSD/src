@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.345 2003/07/25 16:24:08 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.346 2003/07/27 14:49:22 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -31,14 +31,40 @@ TOOLCHAIN_MISSING=	no
 .endif
 
 #
+# Transitional for toolchain upgrade to GCC3.3
+#
+USE_TOOLS_TOOLCHAIN=	yes
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "mipseb" || \
+    ${MACHINE_ARCH} == "mipsel" || \
+    ${MACHINE_ARCH} == "m68k" || \
+    ${MACHINE_ARCH} == "m68000" || \
+    ${MACHINE_ARCH} == "sh3el" || \
+    ${MACHINE_ARCH} == "sh3eb" || \
+    ${MACHINE_ARCH} == "sparc" || \
+    ${MACHINE_ARCH} == "sparc64"
+USE_TOOLS_TOOLCHAIN?=	no
+.else
+USE_TOOLS_TOOLCHAIN?=	yes
+.endif
+
+#
 # XXX TEMPORARY: If ns32k and not using an external toolchain, then we have
 # to use -idirafter rather than -isystem, because the compiler is too old
 # to use -isystem.
 #
 .if ${MACHINE_CPU} == "ns32k" && !defined(EXTERNAL_TOOLCHAIN)
 CPPFLAG_ISYSTEM=	-idirafter
+CPPFLAG_ISYSTEMXX=	-isystem
 .else
 CPPFLAG_ISYSTEM=	-isystem
+.if ${USE_TOOLS_TOOLCHAIN} == "yes"
+CPPFLAG_ISYSTEMXX=	-isystem
+.else
+CPPFLAG_ISYSTEMXX=	-I
+.endif
 .endif
 
 .if empty(.MAKEFLAGS:M-V*)
@@ -412,16 +438,6 @@ NOPIC=		# defined
 #
 .if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
 MKPICLIB:=	no
-.endif
-
-#
-# Transitional for toolchain upgrade
-#
-USE_TOOLS_TOOLCHAIN=	yes
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE} == "sparc"
-USE_TOOLS_TOOLCHAIN?=	no
-.else
-USE_TOOLS_TOOLCHAIN?=	yes
 .endif
 
 #

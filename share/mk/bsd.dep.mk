@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.46 2003/07/18 04:06:18 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.47 2003/07/27 14:49:22 mrg Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -47,7 +47,7 @@ __acpp_flags=	-traditional-cpp
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${CXXFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} $$files; \
 	  ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CXXFLAGS:M-[ID]*} ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include/g++} ${CPPFLAGS} $$files; \
+	    ${CXXFLAGS:M-[ID]*} ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++} ${CPPFLAGS} $$files; \
 	fi
 .else
 #
@@ -104,7 +104,7 @@ ${F:C/(.*)/\1.dep/g}: ${F}
 	@echo ${MKDEP} -a -f $@ ${MKDEPFLAGS} \
 	    ${CXXFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${.ALLSRC}
 	@${MKDEP} -a -f $@ ${MKDEPFLAGS} ${CXXFLAGS:M-[ID]*} \
-	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEM} \
+	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
 	    ${DESTDIR}/usr/include/g++} ${CPPFLAGS} ${.ALLSRC}
 .endfor
 
