@@ -1,4 +1,4 @@
-/*	$NetBSD: ___runetype_mb.c,v 1.6 2003/03/02 22:18:12 tshiozak Exp $	*/
+/*	$NetBSD: ___runetype_mb.c,v 1.7 2003/03/04 15:09:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ___runetype_mb.c,v 1.6 2003/03/02 22:18:12 tshiozak Exp $");
+__RCSID("$NetBSD: ___runetype_mb.c,v 1.7 2003/03/04 15:09:54 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wctype.h>
@@ -53,7 +53,7 @@ ___runetype_mb(c)
 	_RuneRange *rr = &_CurrentRuneLocale->rl_runetype_ext;
 	_RuneEntry *re = rr->rr_rune_ranges;
 
-	if (c < 0 || c == EOF)
+	if (c < 0 || c == WEOF)
 		return(0U);
 
 	for (x = 0; x < rr->rr_nranges; ++x, ++re) {
