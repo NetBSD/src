@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sbin/mount_isofs/Attic/mount_isofs.c,v 1.3 1993/03/23 00:29:01 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/mount_isofs/Attic/mount_isofs.c,v 1.4 1993/07/19 11:41:47 cgd Exp $";
 #endif
 
 #include <stdio.h>
@@ -45,7 +45,7 @@ char **argv;
 	dir = argv[optind + 1];
 
 	args.fspec = dev;
-	args.exflags = MNT_EXRDONLY;
+	args.exflags = MNT_EXRDONLY | opts;
 	args.exroot = 0;
 
 	if (mount (MOUNT_ISOFS, dir, MNT_RDONLY, &args) < 0) {
