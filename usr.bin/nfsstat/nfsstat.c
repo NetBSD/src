@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsstat.c	5.9 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: nfsstat.c,v 1.2 1993/08/01 18:10:36 mycroft Exp $";
+static char rcsid[] = "$Id: nfsstat.c,v 1.3 1994/05/27 11:19:08 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,6 +66,7 @@ static char rcsid[] = "$Id: nfsstat.c,v 1.2 1993/08/01 18:10:36 mycroft Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <kvm.h>
 
 struct nlist nl[] = {
 #define	N_NFSSTAT	0
@@ -83,11 +84,11 @@ struct nlist nl[] = {
 struct pte *Sysmap;
 #endif
 
-int kflag, kmem;
+int kflag;
+kvm_t *kmem;
 char *kernel = _PATH_UNIX;
 char *kmemf = _PATH_KMEM;
 
-off_t klseek();
 void intpr(), printhdr(), sidewaysintpr(), usage();
 
 main(argc, argv)
@@ -133,10 +134,11 @@ main(argc, argv)
 		(void)fprintf(stderr, "nfsstate: %s: no namelist\n", kernel);
 		exit(1);
 	}
-	kmem = open(kmemf, O_RDONLY);
-	if (kmem < 0) {
+	kmem = kvm_open(NULL,NULL,NULL,O_RDONLY,"kvm_open");
+	if (kmem == NULL) {
 		(void)fprintf(stderr,
 		    "nfsstat: %s: %s\n", kmemf, strerror(errno));
+		kvm_close(kmem);
 		exit(1);
 	}
 	if (kflag) {
@@ -152,21 +154,21 @@ main(argc, argv)
 			(void)fprintf(stderr, "nfsstat: %s\n", strerror(errno));
 			exit(1);
 		}
-		off = nl[N_SYSMAP].n_value & ~KERNBASE;
-		(void)lseek(kmem, off, L_SET);
-		(void)read(kmem, (char *)Sysmap,
-		    (int)(nl[N_SYSSIZE].n_value * sizeof(struct pte)));
+		kvm_read(kmem, (long) nl[N_SYSMAP].n_value, (char *)Sysmap,
+			(int)(nl[N_SYSSIZE].n_value * sizeof(struct pte)));
 #endif
 	}
 
 	if (!nl[N_NFSSTAT].n_value) {
 		(void)fprintf(stderr, "nfsstat: nfsstats symbol not defined\n");
+		kvm_close(kmem);
 		exit(1);
 	}
 	if (interval)
 		sidewaysintpr(interval, nl[N_NFSSTAT].n_value);
 	else
 		intpr(nl[N_NFSSTAT].n_value);
+	kvm_close(kmem);
 	exit(0);
 }
 
@@ -179,8 +181,7 @@ intpr(nfsstataddr)
 {
 	struct nfsstats nfsstats;
 
-	klseek(kmem, nfsstataddr, 0L);
-	read(kmem, (char *)&nfsstats, sizeof(struct nfsstats));
+	kvm_read(kmem, nfsstataddr, (char *)&nfsstats, sizeof(struct nfsstats));
 	printf("Client Info:\n");
 	printf("Rpc Counts:\n");
 	printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
@@ -293,8 +294,6 @@ sidewaysintpr(interval, off)
 	int hdrcnt, oldmask;
 	void catchalarm();
 
-	klseek(kmem, off, 0L);
-
 	(void)signal(SIGALRM, catchalarm);
 	signalled = 0;
 	(void)alarm(interval);
@@ -305,8 +304,8 @@ sidewaysintpr(interval, off)
 			printhdr();
 			hdrcnt = 20;
 		}
-		klseek(kmem, off, 0L);
-		read(kmem, (char *)&nfsstats, sizeof nfsstats);
+		kvm_read(kmem, off, (char *)&nfsstats,
+			sizeof(struct nfsstats));
 		printf("Client: %8d %8d %8d %8d %8d %8d %8d %8d\n",
 		    nfsstats.rpccnt[1]-lastst.rpccnt[1],
 		    nfsstats.rpccnt[4]-lastst.rpccnt[4],
@@ -354,24 +353,6 @@ void
 catchalarm()
 {
 	signalled = 1;
-}
-
-/*
- * Seek into the kernel for a value.
- */
-off_t
-klseek(fd, base, off)
-	int fd, off;
-	off_t base;
-{
-#ifndef NEWVM
-	if (kflag) {
-		/* get kernel pte */
-		base &= ~KERNBASE;
-		base = ctob(Sysmap[btop(base)].pg_pfnum) + (base & PGOFSET);
-	}
-#endif
-	return (lseek(fd, base, off));
 }
 
 void
