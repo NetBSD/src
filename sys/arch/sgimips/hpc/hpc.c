@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.26 2004/02/28 00:53:56 sekiya Exp $	*/
+/*	$NetBSD: hpc.c,v 1.27 2004/04/10 21:59:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.26 2004/02/28 00:53:56 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.27 2004/04/10 21:59:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,12 +73,12 @@ const struct hpc_device {
 	{ "zsc",        /* serial 0/1 duart 1 */
 	  0x0d10, 0,
 	  5,
-	  HPCDEV_IP20 },
+	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "zsc",        /* serial 0/1 duart 0 */
 	  0x0d00, 0,
 	  5,
-	  HPCDEV_IP20 },
+	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "pckbc",
 	  HPC_PBUS_CH6_DEVREGS + IOC_KB_REGS, 0,
@@ -93,7 +93,7 @@ const struct hpc_device {
 	{ "sq",
 	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
 	  3,
-	  HPCDEV_IP20 },
+	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "wdsc",
 	  HPC_SCSI0_DEVREGS, HPC_SCSI0_REGS,
@@ -108,12 +108,12 @@ const struct hpc_device {
 	{ "wdsc",
 	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
 	  2,    /* XXX 1 = IRQ_LOCAL0 + 2 */    
-	  HPCDEV_IP20 },
+	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "dpclock",
 	  HPC1_PBUS_BBRAM, 0,
 	  -1,
-	  HPCDEV_IP20 },
+	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "dsclock",
 	  HPC_PBUS_BBRAM, 0,
@@ -318,9 +318,15 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	struct gio_attach_args* ga = aux;
 	struct hpc_attach_args ha;
 	const struct hpc_device *hd;
-	int sysmask, hpctype;
+	uint32_t hpctype;
+	int sysmask;
 
 	switch (mach_type) {
+	case MACH_SGI_IP12:
+		hpctype = 1;
+		sysmask = HPCDEV_IP12;
+		break;
+
 	case MACH_SGI_IP20:
 		hpctype = 15;
 		sysmask = HPCDEV_IP20;
@@ -338,10 +344,16 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		panic("hpc_attach: can't handle HPC on an IP%d", mach_type);
 	};
 
-	/* Verify HPC1 or HPC1.5 */
-	if (hpctype != 3) {
-		hpctype = *(u_int32_t *)
-			MIPS_PHYS_TO_KSEG1(ga->ga_addr + HPC1_BIGENDIAN);
+	/*
+	 * Verify HPC1 or HPC1.5
+	 *
+	 * For some reason the endian register isn't mapped on all
+	 * machines (HPC1 machines?).
+	 */
+	if (hpctype != 3 &&
+	    !badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr+HPC1_BIGENDIAN),4)){
+		hpctype = *(uint32_t *)
+		    MIPS_PHYS_TO_KSEG1(ga->ga_addr + HPC1_BIGENDIAN);
 
 		if (((hpctype >> HPC1_REVSHIFT) & HPC1_REVMASK) == HPC1_REV15)
 			hpctype = 15;
@@ -349,9 +361,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 			hpctype = 1;
 
 		/* force big-endian mode */
-		*(u_int32_t *)MIPS_PHYS_TO_KSEG1(ga->ga_addr + HPC1_BIGENDIAN) =
-			hpctype & 0xe0;
-		
+		*(uint32_t *)MIPS_PHYS_TO_KSEG1(ga->ga_addr + HPC1_BIGENDIAN)
+		    = hpctype & 0xe0;
 	}
 	
 	printf(": SGI HPC%d%s\n", (hpctype ==  3) ? 3 : 1,
