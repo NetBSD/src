@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 2004/11/13 10:26:39 sekiya Exp $	*/
+/*	$NetBSD: md.c,v 1.18 2004/11/14 18:36:11 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -118,7 +118,8 @@ md_post_disklabel(void)
 		return run_program(RUN_DISPLAY,
 		    "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip3xboot",
 		    diskdev);
-	else if (strstr(instsys.version, "(INSTALL32_IP2x)")) {
+
+	if (strstr(instsys.version, "(INSTALL32_IP2x)")) {
 		run_program(RUN_DISPLAY,
 		  "%s %s", "/usr/mdec/sgivol -f -w aoutboot /usr/mdec/aoutboot",
 		  diskdev);
@@ -126,6 +127,9 @@ md_post_disklabel(void)
 		  "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip2xboot",
 		  diskdev);
 	}
+
+	/* Presumably an IP12, we add the boot code later... */
+	return 0;
 }
 
 int
