@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.10 1993/12/21 07:49:30 cgd Exp $
+ *	$Id: nfs_vfsops.c,v 1.11 1993/12/21 08:07:09 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -517,6 +517,8 @@ nfs_root(mp, vpp)
 	struct nfsmount *nmp;
 	struct nfsnode *np;
 	int error;
+	struct vattr va;
+	struct proc *p = curproc /* XXX */;
 
 	nmp = VFSTONFS(mp);
 	if (error = nfs_nget(mp, &nmp->nm_fh, &np))
