@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)tmpnam.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: tmpnam.c,v 1.4 1993/08/26 00:47:31 jtc Exp $";
+static char *rcsid = "$Id: tmpnam.c,v 1.5 1994/03/29 10:46:37 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -46,10 +46,12 @@ char *
 tmpnam(s)
 	char *s;
 {
+	static u_long tmpcount;
 	static char buf[L_tmpnam];
 
 	if (s == NULL)
 		s = buf;
-	(void)snprintf(s, L_tmpnam, "%stmp.XXXXXX", P_tmpdir);
+	(void)snprintf(s, L_tmpnam, "%stmp.%lu.XXXXXX", P_tmpdir, tmpcount);
+	++tmpcount;
 	return(mktemp(s));
 }
