@@ -20,7 +20,7 @@ along with GAS or GDB; see the file COPYING.	If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.	*/
 
 /*
- * $Id: sparc.h,v 1.2 1994/02/02 11:03:37 pk Exp $
+ * $Id: sparc.h,v 1.3 1994/02/02 19:50:05 pk Exp $
  */
 
  /* FIXME-someday: perhaps the ,a's and such should be embedded in the
@@ -636,14 +636,19 @@ static const struct sparc_opcode sparc_opcodes[] = {
 { "call",	F3(2, 0x38, 0)|RD(0xf), F3(~2, ~0x38, ~0)|RD(~0xf)|ASI_RS2(~0), "1", F_DELAYED, v6 }, /* jmpl rs1+%g0, %o7 */
 { "call",	F3(2, 0x38, 0)|RD(0xf), F3(~2, ~0x38, ~0)|RD(~0xf)|ASI_RS2(~0), "1,#", F_DELAYED, v6 },
 
+{ "call",	F3(2, 0x38, 0)|RD(0xf), F3(~2, ~0x38, ~0)|RD(~0xf),
+"1+2", F_DELAYED, v6 }, /* jmpl rs1+rs2,%o7 */
+{ "call",	F3(2, 0x38, 0)|RD(0xf), F3(~2, ~0x38, ~0)|RD(~0xf),
+"1+2,#", F_DELAYED, v6 }, /* jmpl rs1+rs2,%o7 */
+
 { "call",	F3(2, 0x38, 1)|RD(0xf), F3(~2, ~0x38, ~1)|RD(~0xf),
 "1+i", F_DELAYED, v6 }, /* jmpl rs1+i,%o7 */
 { "call",	F3(2, 0x38, 1)|RD(0xf), F3(~2, ~0x38, ~1)|RD(~0xf),
 "1+i,#", F_DELAYED, v6 }, /* jmpl rs1+i,%o7 */
 { "call",	F3(2, 0x38, 1)|RD(0xf), F3(~2, ~0x38, ~1)|RD(~0xf),
-"i+1", F_DELAYED, v6 }, /* jmpl rs1+i,%o7 */
+"i+1", F_DELAYED, v6 }, /* jmpl i+rs1,%o7 */
 { "call",	F3(2, 0x38, 1)|RD(0xf), F3(~2, ~0x38, ~1)|RD(~0xf),
-"i+1,#", F_DELAYED, v6 }, /* jmpl rs1+i,%o7 */
+"i+1,#", F_DELAYED, v6 }, /* jmpl i+rs1,%o7 */
 
 /* Conditional instructions.
 
