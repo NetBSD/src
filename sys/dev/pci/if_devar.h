@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.18 1997/10/13 00:47:45 explorer Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.19 1997/10/15 06:12:44 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -30,6 +30,12 @@
 #define _DEVAR_H
 
 #if defined(__NetBSD__)
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 typedef bus_addr_t tulip_csrptr_t;
 
 #define TULIP_CSR_READ(sc, csr) \
