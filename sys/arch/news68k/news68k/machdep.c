@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2000/01/19 20:05:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2000/02/08 16:17:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,7 @@
 
 #include <dev/cons.h>
 
-#define	MAXMEM	64*1024		/* XXX - from cmap.h */
+#define MAXMEM	64*1024		/* XXX - from cmap.h */
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -120,8 +120,8 @@ extern struct emul emul_hpux;
 #endif
 
 /* prototypes for local functions */
-void    identifycpu __P((void));
-void    initcpu __P((void));
+void	identifycpu __P((void));
+void	initcpu __P((void));
 void	parityenable __P((void));
 void	parityerror __P((void));
 void	init_intreg __P((void));
@@ -131,10 +131,16 @@ int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
 
+#ifdef news1700
+void	news1700_init __P((void));
+#endif
+#ifdef news1200
+void	news1200_init __P((void));
+#endif
 /* functions called from locore.s */
-void    dumpsys __P((void));
+void	dumpsys __P((void));
 void	news68k_init __P((void));
-void    straytrap __P((int, u_short));
+void	straytrap __P((int, u_short));
 
 /*
  * Machine-dependent crash dump header info.
@@ -144,8 +150,7 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 /*
  * Note that the value of delay_divisor is roughly
  * 2048 / cpuspeed (where cpuspeed is in MHz) on 68020
- * and 68030 systems.  See clock.c for the delay
- * calibration algorithm.
+ * and 68030 systems.
  */
 int	cpuspeed = 25;		/* relative cpu speed; XXX skewed on 68040 */
 int	delay_divisor = 82;	/* delay constant */
@@ -167,18 +172,23 @@ news68k_init()
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 
-	/* Initialize the interrupt handlers. */
-	init_intreg();
-	parityenable();
-	isrinit();
-
-	/* Calibrate the delay loop. */
-#if 0
-	news68k_calibrate_delay();
-#else
-	delay_divisor = 82; /* XXX 25MHz news1700 only now... */
+	/* Initialize system variables. */
+	switch (systype) {
+#ifdef news1700
+	case NEWS1700:
+		news1700_init();
+		break;
 #endif
-	
+#ifdef news1200
+	case NEWS1200:
+		news1200_init();
+		break;
+#endif
+	default:
+		panic("impossible system type");
+	}
+
+	isrinit();
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -373,86 +383,19 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	cpu_model[124];
-extern	char version[];
+char cpu_model[124];
+extern char version[];
 
-struct idrom idrom;
-int	news_model_id;
-int	news_machine_id;
-
-struct news68k_model {
-	const int id;
-	const char *name;
-};
-
-const struct news68k_model news68k_models[] = {
-	{ ICK001,	"ICK001"	},	/*  1 */
-	{ ICK00X,	"ICK00X"	},	/*  2 */
-	{ NWS799,	"NWS-799"	},	/*  3 */
-	{ NWS800,	"NWS-800"	},	/*  4 */
-	{ NWS801,	"NWS-801"	},	/*  5 */
-	{ NWS802,	"NWS-802"	},	/*  6 */
-	{ NWS711,	"NWS-711"	},	/*  7 */
-	{ NWS721,	"NWS-721"	},	/*  8 */
-	{ NWS1850,	"NWS-1850"	},	/*  9 */
-	{ NWS810,	"NWS-810"	},	/* 10 */
-	{ NWS811,	"NWS-811"	},	/* 11 */
-	{ NWS1830,	"NWS-1830"	},	/* 12 */
-	{ NWS1750,	"NWS-1750"	},	/* 13 */
-	{ NWS1720,	"NWS-1720"	},	/* 14 */
-	{ NWS1930,	"NWS-1930"	},	/* 15 */
-	{ NWS1960,	"NWS-1960"	},	/* 16 */
-	{ NWS712,	"NWS-712"	},	/* 17 */
-	{ NWS1860,	"NWS-1860"	},	/* 18 */
-	{ PWS1630,	"PWS-1630"	},	/* 19 */
-	{ NWS820,	"NWS-820"	},	/* 20 */
-	{ NWS821,	"NWS-821"	},	/* 21 */
-	{ NWS1760,	"NWS-1760"	},	/* 22 */
-	{ NWS1710,	"NWS-1710"	},	/* 23 */
-	{ NWS830,	"NWS-830"	},	/* 30 */
-	{ NWS831,	"NWS-831"	},	/* 31 */
-	{ NWS841,	"NWS-841"	},	/* 41 */
-	{ PWS1570,	"PWS-1570"	},	/* 52 */
-	{ PWS1590,	"PWS-1590"	},	/* 54 */
-	{ NWS1520,	"NWS-1520"	},	/* 56 */
-	{ PWS1550,	"PWS-1550"	},	/* 73 */
-	{ PWS1520,	"PWS-1520"	},	/* 74 */
-	{ PWS1560,	"PWS-1560"	},	/* 75 */
-	{ NWS1530,	"NWS-1530"	},	/* 76 */
-	{ NWS1580,	"NWS-1580"	},	/* 77 */
-	{ NWS1510,	"NWS-1510"	},	/* 78 */
-	{ NWS1410,	"NWS-1410"	},	/* 81 */
-	{ NWS1450,	"NWS-1450"	},	/* 85 */
-	{ NWS1460,	"NWS-1460"	},	/* 86 */
-	{ NWS891,	"NWS-891"	},	/* 91 */
-	{ NWS911,	"NWS-911"	},	/* 111 */
-	{ NWS921,	"NWS-921"	},	/* 121 */
-	{ 0,		NULL		}
-};
+int news_machine_id;
 
 void
 identifycpu()
 {
-	const char *t;
-	int i;
 
-	readidrom((u_char *)&idrom);
-	news_model_id = idrom.id_model;
-	news_machine_id = idrom.id_serial[0] * 0x100 + idrom.id_serial[1];
-
-	for (t = NULL, i = 0; news68k_models[i].name != NULL; i++) {
-		if (news68k_models[i].id == news_model_id) {
-			t = news68k_models[i].name;
-		}
-	}
-
-	if (t == NULL)
-		panic("unexpected Model ID %d\n", news_model_id);
-
-	printf("SONY NET WORK STATION, Model %s, ", t);
+	printf("SONY NET WORK STATION, Model %s, ", cpu_model);
 	printf("Machine ID #%d\n", news_machine_id);
 
-	cpuspeed = 25; /* XXX news1700 only now */
+	delay_divisor = (20480 / cpuspeed + 5) / 10; /* XXX */
 }
 
 /*
@@ -544,6 +487,7 @@ cpu_reboot(howto, bootstr)
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		DELAY(1000000);
 		doboot(RB_POWERDOWN);
+		/* NOTREACHED */
 	}
 
 	if (howto & RB_HALT) {
@@ -555,7 +499,7 @@ cpu_reboot(howto, bootstr)
 	printf("rebooting...\n");
 	DELAY(1000000);
 	doboot(RB_AUTOBOOT);
-	/*NOTREACHED*/
+	/* NOTREACHED */
 }
 
 /*
@@ -884,76 +828,6 @@ badbaddr(addr)
 }
 
 /*
- * parity error handling (vectored NMI?)
- */
-
-#define CTRL_PARITY	0xe1080000
-#define CTRL_PARITY_CLR	0xe1a00000
-#define	PARITY_VECTOR	0xe1c00200
-#define	INT_STATUS      0xe1c00200
-#define	CTRL_INT2       0xe1180000
-
-static volatile u_char *ctrl_parity;
-static volatile u_char *ctrl_parity_clr;
-static volatile u_char *parity_vector;
-static volatile u_char *int_status;
-
-volatile u_char *ctrl_int2;
-
-void
-init_intreg()
-{
-
-	/* XXX news1700 only */
-	ctrl_parity = (u_char *)IIOV(CTRL_PARITY);
-	ctrl_parity_clr = (u_char *)IIOV(CTRL_PARITY_CLR);
-	parity_vector = (u_char *)IIOV(PARITY_VECTOR);
-
-	ctrl_int2 = (u_char *)IIOV(CTRL_INT2);
-	int_status = (u_char *)IIOV(INT_STATUS);
-}
-
-#define	PARITY_VECT 0xc0
-#define	PARITY_PRI 7
-
-void
-parityenable()
-{
-
-	*parity_vector = PARITY_VECT;
-
-	isrlink_vectored((int (*)(void *))parityerror, NULL,
-			 PARITY_PRI, PARITY_VECT);
-
-	*ctrl_parity_clr = 1;
-	*ctrl_parity = 1;
-
-#ifdef DEBUG
-	printf("enable parity check\n");
-#endif
-}
-
-static int innmihand;	/* simple mutex */
-
-void
-parityerror()
-{
-
-	/* Prevent unwanted recursion. */
-	if (innmihand)
-		return;
-	innmihand = 1;
-
-#if 0 /* XXX need to implement XXX */
-	panic("parity error");
-#else
-	printf("parity error detected.\n");
-	*ctrl_parity_clr = 1;
-#endif
-	innmihand = 0;
-}
-
-/*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
  * 
@@ -1000,22 +874,187 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 /*
- * readidrom() - from newsmips
+ *  System dependent initilization
  */
 
-#define IDROM 0xe1c00000
+static volatile u_char *dip_switch, *int_status;
 
-int
-readidrom(rom)
-	u_char *rom;
+volatile u_char *idrom_addr, *ctrl_int2;
+volatile u_char *lance_mem, *ctrl_timer, *ctrl_led, *sccport0a;
+
+#ifdef news1700
+static volatile u_char *ctrl_parity, *ctrl_parity_clr, *parity_vector;
+
+struct news68k_model {
+	const int id;
+	const char *name;
+};
+
+const struct news68k_model news68k_models[] = {
+	{ ICK001,	"ICK001"	},	/*  1 */
+	{ ICK00X,	"ICK00X"	},	/*  2 */
+	{ NWS799,	"NWS-799"	},	/*  3 */
+	{ NWS800,	"NWS-800"	},	/*  4 */
+	{ NWS801,	"NWS-801"	},	/*  5 */
+	{ NWS802,	"NWS-802"	},	/*  6 */
+	{ NWS711,	"NWS-711"	},	/*  7 */
+	{ NWS721,	"NWS-721"	},	/*  8 */
+	{ NWS1850,	"NWS-1850"	},	/*  9 */
+	{ NWS810,	"NWS-810"	},	/* 10 */
+	{ NWS811,	"NWS-811"	},	/* 11 */
+	{ NWS1830,	"NWS-1830"	},	/* 12 */
+	{ NWS1750,	"NWS-1750"	},	/* 13 */
+	{ NWS1720,	"NWS-1720"	},	/* 14 */
+	{ NWS1930,	"NWS-1930"	},	/* 15 */
+	{ NWS1960,	"NWS-1960"	},	/* 16 */
+	{ NWS712,	"NWS-712"	},	/* 17 */
+	{ NWS1860,	"NWS-1860"	},	/* 18 */
+	{ PWS1630,	"PWS-1630"	},	/* 19 */
+	{ NWS820,	"NWS-820"	},	/* 20 */
+	{ NWS821,	"NWS-821"	},	/* 21 */
+	{ NWS1760,	"NWS-1760"	},	/* 22 */
+	{ NWS1710,	"NWS-1710"	},	/* 23 */
+	{ NWS830,	"NWS-830"	},	/* 30 */
+	{ NWS831,	"NWS-831"	},	/* 31 */
+	{ NWS841,	"NWS-841"	},	/* 41 */
+	{ PWS1570,	"PWS-1570"	},	/* 52 */
+	{ PWS1590,	"PWS-1590"	},	/* 54 */
+	{ NWS1520,	"NWS-1520"	},	/* 56 */
+	{ PWS1550,	"PWS-1550"	},	/* 73 */
+	{ PWS1520,	"PWS-1520"	},	/* 74 */
+	{ PWS1560,	"PWS-1560"	},	/* 75 */
+	{ NWS1530,	"NWS-1530"	},	/* 76 */
+	{ NWS1580,	"NWS-1580"	},	/* 77 */
+	{ NWS1510,	"NWS-1510"	},	/* 78 */
+	{ NWS1410,	"NWS-1410"	},	/* 81 */
+	{ NWS1450,	"NWS-1450"	},	/* 85 */
+	{ NWS1460,	"NWS-1460"	},	/* 86 */
+	{ NWS891,	"NWS-891"	},	/* 91 */
+	{ NWS911,	"NWS-911"	},	/* 111 */
+	{ NWS921,	"NWS-921"	},	/* 121 */
+	{ 0,		NULL		}
+};
+
+void
+news1700_init()
 {
-	u_char *p = (u_char *)IIOV(IDROM);
+	struct oidrom idrom;
+	const char *t;
+	u_char *p, *q;
 	int i;
 
-	for (i = 0; i < sizeof (struct idrom); i++, p += 2)
-		*rom++ = ((*p & 0x0f) << 4) + (*(p + 1) & 0x0f);
-	return (0);
+	dip_switch	= (u_char *)IIOV(0xe1c00100);
+	int_status	= (u_char *)IIOV(0xe1c00200);
+
+	idrom_addr	= (u_char *)IIOV(0xe1c00000);
+	ctrl_int2	= (u_char *)IIOV(0xe1180000);
+
+	lance_mem	= (u_char *)IIOV(0xe0e00000);
+	ctrl_timer	= (u_char *)IIOV(0xe1000000);
+	ctrl_led	= (u_char *)IIOV(0xe0dc0000);
+	sccport0a	= (u_char *)IIOV(0xe0d40002);
+
+	p = (u_char *)idrom_addr;
+	q = (u_char *)&idrom;
+
+	for (i = 0; i < sizeof(idrom); i++, p += 2)
+		*q++ = ((*p & 0x0f) << 4) | (*(p + 1) & 0x0f);
+
+	for (i = 0; news68k_models[i].name != NULL; i++) {
+		if (news68k_models[i].id == idrom.id_model) {
+			t = news68k_models[i].name;
+		}
+	}
+	if (t == NULL)
+		panic("unexpected system model.\n");
+
+	strcat(cpu_model, t);
+	news_machine_id = (idrom.id_serial[0] << 8) + idrom.id_serial[1];
+
+	ctrl_parity	= (u_char *)IIOV(0xe1080000);
+	ctrl_parity_clr	= (u_char *)IIOV(0xe1a00000);
+	parity_vector	= (u_char *)IIOV(0xe1c00200);
+
+	parityenable();
+
+	cpuspeed = 25;
 }
+
+/*
+ * parity error handling (vectored NMI?)
+ */
+
+void
+parityenable()
+{
+
+#define PARITY_VECT 0xc0
+#define PARITY_PRI 7
+
+	*parity_vector = PARITY_VECT;
+
+	isrlink_vectored((int (*) __P((void *)))parityerror, NULL,
+			 PARITY_PRI, PARITY_VECT);
+
+	*ctrl_parity_clr = 1;
+	*ctrl_parity = 1;
+
+#ifdef DEBUG
+	printf("enable parity check\n");
+#endif
+}
+
+static int innmihand;	/* simple mutex */
+
+void
+parityerror()
+{
+
+	/* Prevent unwanted recursion. */
+	if (innmihand)
+		return;
+	innmihand = 1;
+
+#if 0 /* XXX need to implement XXX */
+	panic("parity error");
+#else
+	printf("parity error detected.\n");
+	*ctrl_parity_clr = 1;
+#endif
+	innmihand = 0;
+}
+#endif /* news1700 */
+
+#ifdef news1200
+void
+news1200_init()
+{
+	struct idrom idrom;
+	u_char *p, *q;
+	int i;
+
+	dip_switch	= (u_char *)IIOV(0xe1680000);
+	int_status	= (u_char *)IIOV(0xe1200000);
+
+	idrom_addr	= (u_char *)IIOV(0xe1400000);
+	ctrl_int2	= (u_char *)IIOV(0xe10c0000);
+
+	lance_mem	= (u_char *)IIOV(0xe1a00000);
+	ctrl_timer	= (u_char *)IIOV(0xe1140000);
+	ctrl_led	= (u_char *)IIOV(0xe1500001);
+	sccport0a	= (u_char *)IIOV(0xe1780002);
+
+	p = (u_char *)idrom_addr;
+	q = (u_char *)&idrom;
+	for (i = 0; i < sizeof(idrom); i++, p += 2)
+		*q++ = ((*p & 0x0f) << 4) | (*(p + 1) & 0x0f);
+
+	strcat(cpu_model, idrom.id_model);
+	news_machine_id = idrom.id_serial;
+
+	cpuspeed = 25;
+}
+#endif /* news1200 */
 
 /*
  * interrupt handlers
@@ -1085,7 +1124,6 @@ init_sir()
 	next_sir = NEXT_SIR;
 }
 
-
 void
 intrhand_lev3()
 {
@@ -1099,7 +1137,6 @@ intrhand_lev3()
 #endif
 }
 
-
 void
 intrhand_lev4()
 {
@@ -1111,7 +1148,7 @@ intrhand_lev4()
 	extern int si_intr __P((int));
 #endif
 
-#define	INTST_LANCE	0x04
+#define INTST_LANCE	0x04
 #define INTST_SCSI	0x80
 
 	stat = *int_status;
@@ -1154,14 +1191,14 @@ intrhand_lev5()
  * to choose and initialize a console.
  * XXX need something better here.
  */
-#define	SCC_CONSOLE	0
-#define	SW_CONSOLE	0x07
-#define	SW_NWB512	0x04
-#define	SW_NWB225	0x01
-#define	SW_FBPOP	0x02
-#define	SW_FBPOP1	0x06
-#define	SW_FBPOP2	0x03
-#define	SW_AUTOSEL	0x07
+#define SCC_CONSOLE	0
+#define SW_CONSOLE	0x07
+#define SW_NWB512	0x04
+#define SW_NWB225	0x01
+#define SW_FBPOP	0x02
+#define SW_FBPOP1	0x06
+#define SW_FBPOP2	0x03
+#define SW_AUTOSEL	0x07
 
 struct consdev *cn_tab = NULL;
 extern struct consdev consdev_bm, consdev_zs;
@@ -1181,9 +1218,7 @@ void
 consinit()
 {
 
-#define DIP_SWITCH 0xe1c00100
-
-	int dipsw = (int)*(volatile u_char *)IIOV(DIP_SWITCH);
+	int dipsw = *dip_switch;
 
 #if NFB > 0
 	fbbm_probe(dipsw);
