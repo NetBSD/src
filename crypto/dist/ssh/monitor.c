@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.8 2002/09/09 06:45:18 itojun Exp $	*/
+/*	$NetBSD: monitor.c,v 1.9 2002/10/01 14:07:33 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.21 2002/06/27 10:35:47 deraadt Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.29 2002/09/26 11:38:43 markus Exp $");
 
 #include <openssl/dh.h>
 
@@ -117,6 +117,9 @@ int mm_answer_rsa_response(int, Buffer *);
 int mm_answer_sesskey(int, Buffer *);
 int mm_answer_sessid(int, Buffer *);
 
+#ifdef KRB4
+int mm_answer_krb4(int, Buffer *);
+#endif
 #ifdef KRB5
 int mm_answer_krb5(int, Buffer *);
 #endif
@@ -128,8 +131,8 @@ static BIGNUM *ssh1_challenge = NULL;	/* used for ssh1 rsa auth */
 static u_char *key_blob = NULL;
 static u_int key_bloblen = 0;
 static int key_blobtype = MM_NOKEY;
-static u_char *hostbased_cuser = NULL;
-static u_char *hostbased_chost = NULL;
+static char *hostbased_cuser = NULL;
+static char *hostbased_chost = NULL;
 static char *auth_method = "unknown";
 static int session_id2_len = 0;
 static u_char *session_id2 = NULL;
@@ -193,6 +196,9 @@ struct mon_table mon_dispatch_proto15[] = {
 #ifdef SKEY
     {MONITOR_REQ_SKEYQUERY, MON_ISAUTH, mm_answer_skeyquery},
     {MONITOR_REQ_SKEYRESPOND, MON_AUTH, mm_answer_skeyrespond},
+#endif
+#ifdef KRB4
+    {MONITOR_REQ_KRB4, MON_ONCE|MON_AUTH, mm_answer_krb4},
 #endif
 #ifdef KRB5
     {MONITOR_REQ_KRB5, MON_ONCE|MON_AUTH, mm_answer_krb5},
@@ -576,7 +582,8 @@ mm_answer_authpassword(int socket, Buffer *m)
 {
 	static int call_count;
 	char *passwd;
-	int authenticated, plen;
+	int authenticated;
+	u_int plen;
 
 	passwd = buffer_get_string(m, &plen);
 	/* Only authenticate if the context is valid */
@@ -723,7 +730,8 @@ int
 mm_answer_keyallowed(int socket, Buffer *m)
 {
 	Key *key;
-	u_char *cuser, *chost, *blob;
+	char *cuser, *chost;
+	u_char *blob;
 	u_int bloblen;
 	enum mm_keytype type = 0;
 	int allowed = 0;
@@ -799,7 +807,7 @@ static int
 monitor_valid_userblob(u_char *data, u_int datalen)
 {
 	Buffer b;
-	u_char *p;
+	char *p;
 	u_int len;
 	int fail = 0;
 
@@ -852,11 +860,11 @@ monitor_valid_userblob(u_char *data, u_int datalen)
 }
 
 static int
-monitor_valid_hostbasedblob(u_char *data, u_int datalen, u_char *cuser,
-    u_char *chost)
+monitor_valid_hostbasedblob(u_char *data, u_int datalen, char *cuser,
+    char *chost)
 {
 	Buffer b;
-	u_char *p;
+	char *p;
 	u_int len;
 	int fail = 0;
 
@@ -974,8 +982,8 @@ mm_record_login(Session *s, struct passwd *pw)
 	 * the address be 0.0.0.0.
 	 */
 	memset(&from, 0, sizeof(from));
+	fromlen = sizeof(from);
 	if (packet_connection_is_on_socket()) {
-		fromlen = sizeof(from);
 		if (getpeername(packet_get_connection_in(),
 			(struct sockaddr *) & from, &fromlen) < 0) {
 			debug("getpeername: %.100s", strerror(errno));
@@ -985,7 +993,7 @@ mm_record_login(Session *s, struct passwd *pw)
 	/* Record that there was a login on that tty from the remote host. */
 	record_login(s->pid, s->tty, pw->pw_name, pw->pw_uid,
 	    get_remote_name_or_ip(utmp_len, options.verify_reverse_mapping),
-	    (struct sockaddr *)&from);
+	    (struct sockaddr *)&from, fromlen);
 }
 
 static void
@@ -1249,6 +1257,51 @@ mm_answer_rsa_response(int socket, Buffer *m)
 	return (success);
 }
 
+#ifdef KRB4
+int
+mm_answer_krb4(int socket, Buffer *m)
+{
+	KTEXT_ST auth, reply;
+	char  *client, *p;
+	int success;
+	u_int alen;
+
+	reply.length = auth.length = 0;
+ 
+	p = buffer_get_string(m, &alen);
+	if (alen >=  MAX_KTXT_LEN)
+		 fatal("%s: auth too large", __func__);
+	memcpy(auth.dat, p, alen);
+	auth.length = alen;
+	memset(p, 0, alen);
+	xfree(p);
+
+	success = options.kerberos_authentication &&
+	    authctxt->valid &&
+	    auth_krb4(authctxt, &auth, &client, &reply);
+
+	memset(auth.dat, 0, alen);
+	buffer_clear(m);
+	buffer_put_int(m, success);
+
+	if (success) {
+		buffer_put_cstring(m, client);
+		buffer_put_string(m, reply.dat, reply.length);
+		if (client)
+			xfree(client);
+		if (reply.length)
+			memset(reply.dat, 0, reply.length);
+	}
+
+	debug3("%s: sending result %d", __func__, success);
+	mm_request_send(socket, MONITOR_ANS_KRB4, m);
+
+	auth_method = "kerberos";
+
+	/* Causes monitor loop to terminate if authenticated */
+	return (success);
+}
+#endif
 
 #ifdef KRB5
 int
@@ -1263,7 +1316,9 @@ mm_answer_krb5(int socket, Buffer *m)
 	tkt.data = buffer_get_string(m, &len);
 	tkt.length = len;
 
-	success = auth_krb5(authctxt, &tkt, &client_user, &reply);
+	success = options.kerberos_authentication &&
+	    authctxt->valid &&
+	    auth_krb5(authctxt, &tkt, &client_user, &reply);
 
 	if (tkt.length)
 		xfree(tkt.data);
@@ -1462,10 +1517,10 @@ mm_get_keystate(struct monitor *pmonitor)
 void *
 mm_zalloc(struct mm_master *mm, u_int ncount, u_int size)
 {
-	int len = size * ncount;
+	size_t len = size * ncount;
 	void *address;
 
-	if (len <= 0 || size > 65535 || ncount > 65535)
+	if (len == 0 || ncount > SIZE_T_MAX / size)
 		fatal("%s: mm_zalloc(%u, %u)", __func__, ncount, size);
 
 	address = mm_malloc(mm, len);

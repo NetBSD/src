@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.21 2002/07/01 06:17:11 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.22 2002/10/01 14:07:30 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.103 2002/06/30 21:59:45 deraadt Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.104 2002/08/22 19:38:42 stevesk Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -636,16 +636,18 @@ process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 				snprintf(string, sizeof string,
 "%c?\r\n\
 Supported escape sequences:\r\n\
-~.  - terminate connection\r\n\
-~C  - open a command line\r\n\
-~R  - Request rekey (SSH protocol 2 only)\r\n\
-~^Z - suspend ssh\r\n\
-~#  - list forwarded connections\r\n\
-~&  - background ssh (when waiting for connections to terminate)\r\n\
-~?  - this message\r\n\
-~~  - send the escape character by typing it twice\r\n\
+%c.  - terminate connection\r\n\
+%cC  - open a command line\r\n\
+%cR  - Request rekey (SSH protocol 2 only)\r\n\
+%c^Z - suspend ssh\r\n\
+%c#  - list forwarded connections\r\n\
+%c&  - background ssh (when waiting for connections to terminate)\r\n\
+%c?  - this message\r\n\
+%c%c  - send the escape character by typing it twice\r\n\
 (Note that escapes are only recognized immediately after newline.)\r\n",
-					 escape_char);
+				    escape_char, escape_char, escape_char, escape_char,
+				    escape_char, escape_char, escape_char, escape_char,
+				    escape_char, escape_char);
 				buffer_append(berr, string, strlen(string));
 				continue;
 

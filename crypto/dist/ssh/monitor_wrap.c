@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.6 2002/09/09 06:45:18 itojun Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.7 2002/10/01 14:07:34 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_wrap.c,v 1.14 2002/06/30 21:59:45 deraadt Exp $");
+RCSID("$OpenBSD: monitor_wrap.c,v 1.19 2002/09/26 11:38:43 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -445,7 +445,6 @@ mm_newkeys_to_blob(int mode, u_char **blobp, u_int *lenp)
 {
 	Buffer b;
 	int len;
-	u_char *buf;
 	Enc *enc;
 	Mac *mac;
 	Comp *comp;
@@ -483,14 +482,14 @@ mm_newkeys_to_blob(int mode, u_char **blobp, u_int *lenp)
 	buffer_put_cstring(&b, comp->name);
 
 	len = buffer_len(&b);
-	buf = xmalloc(len);
-	memcpy(buf, buffer_ptr(&b), len);
-	memset(buffer_ptr(&b), 0, len);
-	buffer_free(&b);
 	if (lenp != NULL)
 		*lenp = len;
-	if (blobp != NULL)
-		*blobp = buf;
+	if (blobp != NULL) {
+		*blobp = xmalloc(len);
+		memcpy(*blobp, buffer_ptr(&b), len);
+	}
+	memset(buffer_ptr(&b), 0, len);
+	buffer_free(&b);
 	return len;
 }
 
@@ -599,7 +598,7 @@ int
 mm_pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 {
 	Buffer m;
-	u_char *p;
+	char *p;
 	int success = 0;
 
 	buffer_init(&m);
@@ -919,6 +918,42 @@ mm_auth_rsa_verify_response(Key *key, BIGNUM *p, u_char response[16])
 
 	return (success);
 }
+
+#ifdef KRB4
+int
+mm_auth_krb4(Authctxt *authctxt, void *_auth, char **client, void *_reply)
+{
+	KTEXT auth, reply;
+ 	Buffer m;
+	u_int rlen;
+	int success = 0;
+	char *p;
+
+	debug3("%s entering", __func__);
+	auth = _auth;
+	reply = _reply;
+
+	buffer_init(&m);
+	buffer_put_string(&m, auth->dat, auth->length);
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_KRB4, &m);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_KRB4, &m);
+
+	success = buffer_get_int(&m);
+	if (success) {
+		*client = buffer_get_string(&m, NULL);
+		p = buffer_get_string(&m, &rlen);
+		if (rlen >= MAX_KTXT_LEN)
+			fatal("%s: reply from monitor too large", __func__);
+		reply->length = rlen;
+		memcpy(reply->dat, p, rlen);
+		memset(p, 0, rlen);
+		xfree(p);
+	}
+	buffer_free(&m);
+	return (success); 
+}
+#endif
 
 #ifdef KRB5
 int

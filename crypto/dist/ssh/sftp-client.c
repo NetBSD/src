@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.17 2002/07/01 05:56:45 itojun Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.18 2002/10/01 14:07:38 itojun Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -29,7 +29,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.34 2002/06/27 10:35:47 deraadt Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.35 2002/09/11 22:41:49 djm Exp $");
 
 #include <sys/queue.h>
 
@@ -413,12 +413,6 @@ do_lsreaddir(struct sftp_conn *conn, char *path, int printflag,
 	xfree(handle);
 
 	return(0);
-}
-
-int
-do_ls(struct sftp_conn *conn, char *path)
-{
-	return(do_lsreaddir(conn, path, 1, NULL));
 }
 
 int

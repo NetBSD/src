@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.16 2002/07/01 06:17:11 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.17 2002/10/01 14:07:32 itojun Exp $	*/
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: key.c,v 1.46 2002/06/30 21:59:45 deraadt Exp $");
+RCSID("$OpenBSD: key.c,v 1.49 2002/09/09 14:54:14 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -495,7 +495,8 @@ key_write(Key *key, FILE *f)
 {
 	int n, success = 0;
 	u_int len, bits = 0;
-	u_char *blob, *uu;
+	u_char *blob;
+	char *uu;
 
 	if (key->type == KEY_RSA1 && key->rsa != NULL) {
 		/* size of modulus 'n' */
@@ -730,7 +731,6 @@ key_to_blob(Key *key, u_char **blobp, u_int *lenp)
 {
 	Buffer b;
 	int len;
-	u_char *buf;
 
 	if (key == NULL) {
 		error("key_to_blob: key == NULL");
@@ -756,14 +756,14 @@ key_to_blob(Key *key, u_char **blobp, u_int *lenp)
 		return 0;
 	}
 	len = buffer_len(&b);
-	buf = xmalloc(len);
-	memcpy(buf, buffer_ptr(&b), len);
-	memset(buffer_ptr(&b), 0, len);
-	buffer_free(&b);
 	if (lenp != NULL)
 		*lenp = len;
-	if (blobp != NULL)
-		*blobp = buf;
+	if (blobp != NULL) {
+		*blobp = xmalloc(len);
+		memcpy(*blobp, buffer_ptr(&b), len);
+	}
+	memset(buffer_ptr(&b), 0, len);
+	buffer_free(&b);
 	return len;
 }
 

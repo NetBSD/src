@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.18 2002/07/01 06:17:11 itojun Exp $	*/
+/*	$NetBSD: auth2.c,v 1.19 2002/10/01 14:07:27 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.94 2002/06/30 21:54:16 deraadt Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.95 2002/08/22 21:33:58 markus Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -196,7 +196,8 @@ userauth_finish(Authctxt *authctxt, int authenticated, char *method)
 		    authctxt->user);
 
 	/* Special handling for root */
-	if (authenticated && authctxt->pw->pw_uid == 0 &&
+	if (!use_privsep &&
+	    authenticated && authctxt->pw->pw_uid == 0 &&
 	    !auth_root_allowed(method))
 		authenticated = 0;
 

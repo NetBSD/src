@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.14 2002/06/24 05:48:27 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.15 2002/10/01 14:07:26 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.43 2002/05/17 14:27:55 millert Exp $");
+RCSID("$OpenBSD: auth.c,v 1.45 2002/09/20 18:41:29 stevesk Exp $");
 
 #include <libgen.h>
 
@@ -430,7 +430,7 @@ check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
 
 /*
  * Check a given file for security. This is defined as all components
- * of the path to the file must either be owned by either the owner of
+ * of the path to the file must be owned by either the owner of
  * of the file or root and no directories must be group or world writable.
  *
  * XXX Should any specific check be done for sym links ?
@@ -514,7 +514,12 @@ getpwnamallow(const char *user)
 	struct passwd *pw;
 
 	pw = getpwnam(user);
-	if (pw == NULL || !allowed_user(pw))
+	if (pw == NULL) {
+		log("Illegal user %.100s from %.100s",
+		    user, get_remote_ipaddr());
+		return (NULL);
+	}
+	if (!allowed_user(pw))
 		return (NULL);
 #ifdef HAVE_LOGIN_CAP
 	if ((lc = login_getclass(pw->pw_class)) == NULL) {

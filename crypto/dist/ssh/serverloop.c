@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.19 2002/06/26 14:08:31 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.20 2002/10/01 14:07:37 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,13 +36,14 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.103 2002/06/24 14:33:27 markus Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.104 2002/09/19 16:03:15 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
 #include "buffer.h"
 #include "log.h"
 #include "servconf.h"
+#include "canohost.h"
 #include "sshpty.h"
 #include "channels.h"
 #include "compat.h"
@@ -348,14 +349,17 @@ process_input(fd_set * readset)
 	if (FD_ISSET(connection_in, readset)) {
 		len = read(connection_in, buf, sizeof(buf));
 		if (len == 0) {
-			verbose("Connection closed by remote host.");
+			verbose("Connection closed by %.100s",
+			    get_remote_ipaddr());
 			connection_closed = 1;
 			if (compat20)
 				return;
 			fatal_cleanup();
 		} else if (len < 0) {
 			if (errno != EINTR && errno != EAGAIN) {
-				verbose("Read error from remote host: %.100s", strerror(errno));
+				verbose("Read error from remote host "
+				    "%.100s: %.100s",
+				    get_remote_ipaddr(), strerror(errno));
 				fatal_cleanup();
 			}
 		} else {

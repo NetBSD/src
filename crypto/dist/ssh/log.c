@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.3 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$NetBSD: log.c,v 1.4 2002/10/01 14:07:32 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: log.c,v 1.22 2002/02/22 12:20:34 markus Exp $");
+RCSID("$OpenBSD: log.c,v 1.24 2002/07/19 15:43:33 markus Exp $");
 
 #include "log.h"
 #include "xmalloc.h"
@@ -90,6 +90,7 @@ SyslogFacility
 log_facility_number(char *name)
 {
 	int i;
+
 	if (name != NULL)
 		for (i = 0; log_facilities[i].name; i++)
 			if (strcasecmp(log_facilities[i].name, name) == 0)
@@ -101,6 +102,7 @@ LogLevel
 log_level_number(char *name)
 {
 	int i;
+
 	if (name != NULL)
 		for (i = 0; log_levels[i].name; i++)
 			if (strcasecmp(log_levels[i].name, name) == 0)
@@ -114,6 +116,7 @@ void
 error(const char *fmt,...)
 {
 	va_list args;
+
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_ERROR, fmt, args);
 	va_end(args);
@@ -125,6 +128,7 @@ void
 log(const char *fmt,...)
 {
 	va_list args;
+
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_INFO, fmt, args);
 	va_end(args);
@@ -136,6 +140,7 @@ void
 verbose(const char *fmt,...)
 {
 	va_list args;
+
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_VERBOSE, fmt, args);
 	va_end(args);
@@ -147,6 +152,7 @@ void
 debug(const char *fmt,...)
 {
 	va_list args;
+
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_DEBUG1, fmt, args);
 	va_end(args);
@@ -156,6 +162,7 @@ void
 debug2(const char *fmt,...)
 {
 	va_list args;
+
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_DEBUG2, fmt, args);
 	va_end(args);
@@ -165,6 +172,7 @@ void
 debug3(const char *fmt,...)
 {
 	va_list args;
+
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_DEBUG3, fmt, args);
 	va_end(args);
@@ -211,6 +219,18 @@ fatal_remove_cleanup(void (*proc) (void *context), void *context)
 	}
 	fatal("fatal_remove_cleanup: no such cleanup function: 0x%lx 0x%lx",
 	    (u_long) proc, (u_long) context);
+}
+
+/* Remove all cleanups, to be called after fork() */
+void
+fatal_remove_all_cleanups(void)
+{
+	struct fatal_cleanup *cu, *next_cu;
+
+	for (cu = fatal_cleanups; cu; cu = next_cu) {
+		next_cu = cu->next;
+		xfree(cu);
+	}
 }
 
 /* Cleanup and exit */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.21 2002/08/08 15:12:42 itojun Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.22 2002/10/01 14:07:45 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.51 2002/05/23 19:24:30 markus Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.52 2002/08/08 13:50:23 aaron Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>

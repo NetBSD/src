@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.17 2002/06/24 05:48:31 itojun Exp $	*/
+/*	$NetBSD: packet.c,v 1.18 2002/10/01 14:07:34 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.96 2002/06/23 21:10:02 deraadt Exp $");
+RCSID("$OpenBSD: packet.c,v 1.97 2002/07/04 08:12:15 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -135,6 +135,7 @@ void
 packet_set_connection(int fd_in, int fd_out)
 {
 	Cipher *none = cipher_by_name("none");
+
 	if (none == NULL)
 		fatal("packet_set_connection: cannot load cipher 'none'");
 	connection_in = fd_in;
@@ -398,6 +399,7 @@ packet_set_encryption_key(const u_char *key, u_int keylen,
     int number)
 {
 	Cipher *cipher = cipher_by_number(number);
+
 	if (cipher == NULL)
 		fatal("packet_set_encryption_key: unknown cipher number %d", number);
 	if (keylen < 20)
@@ -439,6 +441,7 @@ void
 packet_put_char(int value)
 {
 	char ch = value;
+
 	buffer_append(&outgoing_packet, &ch, 1);
 }
 void
@@ -990,7 +993,8 @@ packet_read_poll2(u_int32_t *seqnr_p)
 		buffer_clear(&incoming_packet);
 		buffer_append(&incoming_packet, buffer_ptr(&compression_buffer),
 		    buffer_len(&compression_buffer));
-		DBG(debug("input: len after de-compress %d", buffer_len(&incoming_packet)));
+		DBG(debug("input: len after de-compress %d",
+		    buffer_len(&incoming_packet)));
 	}
 	/*
 	 * get packet type, implies consume.
@@ -1098,6 +1102,7 @@ u_int
 packet_get_char(void)
 {
 	char ch;
+
 	buffer_get(&incoming_packet, &ch, 1);
 	return (u_char) ch;
 }
@@ -1131,6 +1136,7 @@ void *
 packet_get_raw(int *length_ptr)
 {
 	int bytes = buffer_len(&incoming_packet);
+
 	if (length_ptr != NULL)
 		*length_ptr = bytes;
 	return buffer_ptr(&incoming_packet);
@@ -1203,6 +1209,7 @@ packet_disconnect(const char *fmt,...)
 	char buf[1024];
 	va_list args;
 	static int disconnecting = 0;
+
 	if (disconnecting)	/* Guard against recursive invocations. */
 		fatal("packet_disconnect called recursively.");
 	disconnecting = 1;
@@ -1245,6 +1252,7 @@ void
 packet_write_poll(void)
 {
 	int len = buffer_len(&output);
+
 	if (len > 0) {
 		len = write(connection_out, buffer_ptr(&output), len);
 		if (len <= 0) {
@@ -1358,6 +1366,7 @@ int
 packet_set_maxsize(int s)
 {
 	static int called = 0;
+
 	if (called) {
 		log("packet_set_maxsize: called twice: old %d new %d",
 		    max_packet_size, s);

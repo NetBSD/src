@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.18 2002/07/01 06:17:12 itojun Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.19 2002/10/01 14:07:41 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.62 2002/06/26 14:51:33 markus Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.63 2002/09/19 15:51:23 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -285,7 +285,7 @@ usage(void)
 	fprintf(stderr, "  -d          Delete identity.\n");
 	fprintf(stderr, "  -D          Delete all identities.\n");
 	fprintf(stderr, "  -x          Lock agent.\n");
-	fprintf(stderr, "  -x          Unlock agent.\n");
+	fprintf(stderr, "  -X          Unlock agent.\n");
 	fprintf(stderr, "  -t life     Set lifetime (in seconds) when adding identities.\n");
 #ifdef SMARTCARD
 	fprintf(stderr, "  -s reader   Add key in smartcard reader.\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-glob.c,v 1.9 2002/07/01 06:17:12 itojun Exp $	*/
+/*	$NetBSD: sftp-glob.c,v 1.10 2002/10/01 14:07:39 itojun Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-glob.c,v 1.11 2002/06/30 21:59:45 deraadt Exp $");
+RCSID("$OpenBSD: sftp-glob.c,v 1.13 2002/09/11 22:41:50 djm Exp $");
 
 #include <glob.h>
 
@@ -54,8 +54,10 @@ fudge_opendir(const char *path)
 
 	r = xmalloc(sizeof(*r));
 
-	if (do_readdir(cur.conn, (char *)path, &r->dir))
+	if (do_readdir(cur.conn, (char *)path, &r->dir)) {
+		xfree(r);
 		return(NULL);
+	}
 
 	r->offset = 0;
 
@@ -82,25 +84,6 @@ fudge_closedir(struct SFTP_OPENDIR *od)
 {
 	free_sftp_dirents(od->dir);
 	xfree(od);
-}
-
-static void
-attrib_to_stat(Attrib *a, struct stat *st)
-{
-	memset(st, 0, sizeof(*st));
-
-	if (a->flags & SSH2_FILEXFER_ATTR_SIZE)
-		st->st_size = a->size;
-	if (a->flags & SSH2_FILEXFER_ATTR_UIDGID) {
-		st->st_uid = a->uid;
-		st->st_gid = a->gid;
-	}
-	if (a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS)
-		st->st_mode = a->perm;
-	if (a->flags & SSH2_FILEXFER_ATTR_ACMODTIME) {
-		st->st_atime = a->atime;
-		st->st_mtime = a->mtime;
-	}
 }
 
 static int
