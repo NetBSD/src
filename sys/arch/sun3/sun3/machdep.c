@@ -99,6 +99,7 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
+int *nofault;
 
 extern vm_offset_t u_area_va;
 
@@ -139,7 +140,6 @@ void cpu_startup()
     vm_size_t size;    
     vm_offset_t minaddr, maxaddr, uarea_pages;
 
-    printf("got to cpu_startup()\n");
 
     /* msgbuf mapped earlier, should figure out why? */
     printf(version);
@@ -244,9 +244,9 @@ void cpu_startup()
     /*
      * Configure the system.
      */
-    printf("about to call configure\n");
+    nofault = NULL;
     configure();
-
+    
     cold = 0;
 }
 
@@ -258,9 +258,7 @@ void internal_configure()
 void consinit()
 {
     extern void cninit();
-    mon_printf("determining console\n");
     cninit();
-    mon_printf("determining console (completed)\n");
 }
 
 void cpu_reset()
@@ -900,3 +898,10 @@ hexstr(val, len)
 	return(nbuf);
 }
 
+straytrap(pc, evec)
+	int pc;
+	u_short evec;
+{
+	printf("unexpected trap (vector offset %x) from %x\n",
+	       evec & 0xFFF, pc);
+}

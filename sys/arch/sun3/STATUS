@@ -1,35 +1,25 @@
-						<$Revision: 1.4 $> 
+						<$Revision: 1.5 $> 
 
 This is to be a summary of the status of code, its problems,
 and the directions it should and take in the future.
 
+Summary: Tries to exec init but can't since there I don't have one compiled
+	 for it.  Does see icode syscalls though.
+
 The major bugs:
 	
-	the clock interrupts are coming at a rate 100 times greater than
-	they are programmed for.  When the clock interrupts are going
-	at this rate, and the clock interrupt is calling hardclock(),
-	it makes no progress beyond enablertclock().  this bug is
-	priority one.  Until this works, we won't be able to get
-	nfsdiskless operation to work at all.
-
-	trap code.  the assembly part of the trap handling code is
-	not currently being used, because at until its time for the
-	fork(), it doesn't do much and the sun3 monitor diagnostics
-	are better than anything in the trap code.  (note: buserr must
-	get special delay code for timeouts, and the memory error register
-	needs to be mapped (i think the mapping is commented out in
-	obio_internal_configure())
-
 	This code has been hosted under SunOs.  Its not clear whether
 	the sun boot blocks can load kernels linked with our a.out, etc.
-	This is a question that *must* be answered.
+	This is a question that *must* be answered.  This problem will
+        be alleviated by the sun3 port of 'netboot' which is almost finished.
 
-	I'm not running a current tree, because i can't afford a slip
-	connection at the moment.
+	I'm not running a current tree, because I can't afford a slip
+	connection at the moment.  Soon to change.
 
 	there is an insane hack in 'swapnfs', and the
 	TIMESINK.nfsdiskless stuff because we don't have any way of
-	getting nfsdiskless information yet.  
+	getting nfsdiskless information yet.  This will go away as soon as
+	'netboot' works.
 
 	my tree doesn't have the non-contig phys memory changes.  This port
 	needs them on the 3/50 or maybe its the 3/60 where the framebuffer
@@ -37,7 +27,6 @@ The major bugs:
 	is that the kernel is still *relatively* small.
 
 Note:
-
 	the only ok config file is 'TIMESINK'.  the others need to be updated.
 
 Core code: (i.e sun3/sun3, sun3/include)
@@ -92,7 +81,7 @@ Device driver support:
 ----------------------
 
 Missing functionality: 
-	OBIO probe support
+	OBIO probe support needed
 	match/probe re-computation of default parameters
 	OBIO space collision avoidance
 
@@ -149,10 +138,7 @@ Currently requires sun bootblks, secondary boot support, etc.  Needs
 to be replaced with attention paid to NetBSD's as yet un-developed
 NFS diskless architecture.
 
-Some code exists from Sprite for using PROM's exported drivers for
-bootstrapping.  This would have to be re-written and added to some
-small NFS code perhaps from LBL's bootbootp stuff, etc.  Lots of work
-to be done here.
+'netboot' is the NFS diskless solution, but the port doesn't work yet.
 
 Compatibility:
 --------------

@@ -77,6 +77,9 @@
 
 #define	UPAGES		3		/* pages of u-area */
 
+#define CLOCK_VA            (0x0FFE0000+(UPAGES*NBPG*2))
+#define INTERREG_VA         (0x0FFE0000+(UPAGES*NBPG*2)+NBPG)
+
 /*
  * Constants related to network buffer management.
  * MCLBYTES must be no larger than CLBYTES (the software page size), and,
