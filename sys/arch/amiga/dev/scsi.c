@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: scsi.c,v 1.8 1994/02/13 21:10:56 chopps Exp $
+ *	$Id: scsi.c,v 1.9 1994/02/21 06:30:41 chopps Exp $
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
@@ -51,7 +51,7 @@
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.8 1994/02/13 21:10:56 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.9 1994/02/21 06:30:41 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */
@@ -79,18 +79,28 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1
 
 extern u_int kvtop();
 
-static int sbic_wait (volatile sbic_padded_regmap_t *regs, char until, int timeo, int line);
-static void scsiabort (register struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, char *where);
-static void scsierror (register struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, u_char csr);
-static int issue_select (register struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, u_char target, u_char our_addr);
-static int wait_for_select (register struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs);
-static int ixfer_start (register volatile sbic_padded_regmap_t *regs, int len, u_char phase, register int wait);
-static int ixfer_out (register volatile sbic_padded_regmap_t *regs, int len, register u_char *buf, int phase);
-static void ixfer_in (register volatile sbic_padded_regmap_t *regs, int len, register u_char *buf);
-static int scsiicmd (struct scsi_softc *dev, int target, u_char *cbuf, int clen, u_char *buf, int len, u_char xferphase);
-static void finishxfer (struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, int target);
-static int check_dma_buf (char *buffer, u_long len, u_long mask);
-
+static int sbic_wait __P((volatile sbic_padded_regmap_t *regs, char until, 
+    int timeo, int line));
+static void scsiabort __P((register struct scsi_softc *dev, 
+    register volatile sbic_padded_regmap_t *regs, char *where));
+static void scsierror __P((register struct scsi_softc *dev,
+    register volatile sbic_padded_regmap_t *regs, u_char csr));
+static int issue_select __P((register struct scsi_softc *dev,
+    register volatile sbic_padded_regmap_t *regs, u_char target,
+    u_char our_addr));
+static int wait_for_select __P((register struct scsi_softc *dev,
+    register volatile sbic_padded_regmap_t *regs)) ;
+static int ixfer_start __P((register volatile sbic_padded_regmap_t *regs,
+    int len, u_char phase, register int wait));
+static int ixfer_out __P((register volatile sbic_padded_regmap_t *regs,
+    int len, register u_char *buf, int phase));
+static void ixfer_in __P((register volatile sbic_padded_regmap_t *regs,
+    int len, register u_char *buf));
+static int scsiicmd __P((struct scsi_softc *dev, int target, u_char *cbuf,
+    int clen, u_char *buf, int len, u_char xferphase));
+static void finishxfer __P((struct scsi_softc *dev,
+    register volatile sbic_padded_regmap_t *regs, int target));
+static int check_dma_buf __P((char *buffer, u_long len, u_long mask)); 
 
 /*
  * SCSI delays
@@ -103,39 +113,32 @@ static int check_dma_buf (char *buffer, u_long len, u_long mask);
 extern void _insque();
 extern void _remque();
 
-#if 0
-int	scsiinit(), scsigo(), scsiintr(), scsixfer();
-void	scsistart(), scsidone(), scsifree(), scsireset();
-struct	driver scsidriver = {
-	scsiinit, "scsi", (int (*)())scsistart, scsigo, scsiintr,
-	(int (*)())scsidone, scsiustart, scsireq, scsifree, scsireset,
-	scsi_delay, scsi_test_unit_rdy, scsi_start_stop_unit,
-	scsi_request_sense, scsi_immed_command, scsi_tt_read, scsi_tt_write,
-#if NST > 0
-	scsi_tt_oddio
-#else
-	NULL
-#endif
-};
-#endif
 
-void scsistart (int unit);
-int scsigo (int ctlr, int slave, int unit, struct buf *bp, struct scsi_fmt_cdb *cdb, int pad);
-int scsiintr (int unit);
-void scsidone (int unit);
-int scsiustart (int unit);
-int scsireq (register struct devqueue *dq);
-void scsifree (register struct devqueue *dq);
-void scsireset (int unit);
-void scsi_delay (int delay);
-int scsi_test_unit_rdy (int ctlr, int slave, int unit);
-int scsi_start_stop_unit (int ctlr, int slave, int unit, int start);
-int scsi_request_sense (int ctlr, int slave, int unit, u_char *buf, unsigned int len);
-int scsi_immed_command (int ctlr, int slave, int unit, struct scsi_fmt_cdb *cdb, u_char *buf, unsigned int len, int rd);
-int scsi_tt_read (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
-int scsi_tt_write (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
+void scsistart __P((int unit));
+void scsidone __P((int unit));
+void scsifree __P((register struct devqueue *dq));
+void scsireset __P((int unit));
+void scsi_delay __P((int delay));
+int scsigo __P((int ctlr, int slave, int unit, struct buf *bp,
+    struct scsi_fmt_cdb *cdb, int pad));
+int scsiintr __P((int unit));
+int scsiustart __P((int unit));
+int scsireq __P((register struct devqueue *dq));
+int scsi_test_unit_rdy __P((int ctlr, int slave, int unit));
+int scsi_start_stop_unit __P((int ctlr, int slave, int unit, int start));
+int scsi_request_sense __P((int ctlr, int slave, int unit, u_char *buf,
+    unsigned int len));
+int scsi_immed_command __P((int ctlr, int slave, int unit,
+    struct scsi_fmt_cdb *cdb, u_char *buf, unsigned int len, int rd));
+int scsi_immed_command_nd __P((int ctlr, int slave, int unit,
+    struct scsi_fmt_cdb *cdb));
+int scsi_tt_read __P((int ctlr, int slave, int unit, u_char *buf,
+    u_int len, daddr_t blk, int bshift));
+int scsi_tt_write __P((int ctlr, int slave, int unit, u_char *buf,
+    u_int len, daddr_t blk, int bshift));
 #if NST > 0
-int scsi_tt_oddio (int ctlr, int slave, int unit, u_char *buf, u_int len, int b_flags, int freedma);
+int scsi_tt_oddio __P((int ctlr, int slave, int unit, u_char *buf,
+    u_int len, int b_flags, int freedma));
 #endif
 
 
@@ -147,7 +150,8 @@ struct driver a3000scsidriver = {
 	(int (*)(int,...)) scsigo, (int (*)(int,int)) scsiintr,
 	(int (*)())scsidone, scsiustart, scsireq, scsifree, scsireset,
 	scsi_delay, scsi_test_unit_rdy, scsi_start_stop_unit,
-	scsi_request_sense, scsi_immed_command, scsi_tt_read, scsi_tt_write,
+	scsi_request_sense, scsi_immed_command, scsi_immed_command_nd,
+	scsi_tt_read, scsi_tt_write,
 #if NST > 0
 	scsi_tt_oddio
 #else
@@ -164,7 +168,8 @@ struct driver a2091scsidriver = {
 	(int (*)(int,...)) scsigo, (int (*)(int,int)) scsiintr,
 	(int (*)())scsidone, scsiustart, scsireq, scsifree, scsireset,
 	scsi_delay, scsi_test_unit_rdy, scsi_start_stop_unit,
-	scsi_request_sense, scsi_immed_command, scsi_tt_read, scsi_tt_write,
+	scsi_request_sense, scsi_immed_command, scsi_immed_command_nd,
+	scsi_tt_read, scsi_tt_write,
 #if NST > 0
 	scsi_tt_oddio
 #else
@@ -183,7 +188,8 @@ struct driver gvp11scsidriver = {
 	(int (*)(int,...)) scsigo, (int (*)(int,int)) scsiintr,
 	(int (*)())scsidone, scsiustart, scsireq, scsifree, scsireset,
 	scsi_delay, scsi_test_unit_rdy, scsi_start_stop_unit,
-	scsi_request_sense, scsi_immed_command, scsi_tt_read, scsi_tt_write,
+	scsi_request_sense, scsi_immed_command, scsi_immed_command_nd,
+	scsi_tt_read, scsi_tt_write,
 #if NST > 0
 	scsi_tt_oddio
 #else
@@ -1345,19 +1351,33 @@ scsi_start_stop_unit (ctlr, slave, unit, start)
 			 STATUS_PHASE));
 }
 
-
 int
 scsi_request_sense(ctlr, slave, unit, buf, len)
 	int ctlr, slave, unit;
 	u_char *buf;
 	unsigned len;
 {
-	register struct scsi_softc *dev = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_REQUEST_SENSE };
+	struct scsi_softc *dev;
 
+	dev = &scsi_softc[ctlr];
 	cdb.lun = unit;
 	cdb.len = len;
-	return (scsiicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), buf, len, DATA_IN_PHASE));
+
+	return(scsiicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), buf, len,
+	    DATA_IN_PHASE)); 
+}
+
+int
+scsi_immed_command_nd(ctlr, slave, unit, cdb)
+	int ctlr, slave, unit;
+	struct scsi_fmt_cdb *cdb;
+{
+	register struct scsi_softc *dev = &scsi_softc[ctlr];
+
+	cdb->cdb[1] |= (unit << 5);
+	return(scsiicmd(dev, slave, (u_char *) cdb->cdb, cdb->len,
+	    0, 0, STATUS_PHASE));
 }
 
 int
