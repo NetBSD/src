@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/03/15 21:02:29 heinz Exp $
+#	$NetBSD: Makefile,v 1.15 2002/04/08 16:09:58 sakamoto Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -10,7 +10,7 @@ CSRCS+= boot.c clock.c com.c conf.c cons.c cpu.c devopen.c
 CSRCS+= fd.c filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
 CSRCS+= kbd.c ns16550.c vreset.c vga.c video.c
 
-CLEANFILES+= vers.c ${BOOTPROG}
+CLEANFILES+= vers.c vers.o ${BOOTPROG}
 
 CPPFLAGS= -I${.CURDIR} -I${.CURDIR}/../elf2pef -I${.CURDIR}/../../..
 CPPFLAGS+= -I${S} -I${S}/lib/libsa
@@ -58,12 +58,13 @@ vers.c: version
 
 realall: ${BOOTPROG}
 
-${BOOTPROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+${BOOTPROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} vers.o
 	${LD} -o ${BOOTPROG} -s -N -T ${.CURDIR}/ld.script -Ttext ${RELOC} ${OBJS} \
 		${LIBSA} ${LIBZ} ${LIBKERN} vers.o
 
-remake: cleanobjs all
-cleanobjs:
-	rm -f ${OBJS}
+cleandir distclean: cleanlibdir
+
+cleanlibdir:
+	rm -rf lib
 
 .include <bsd.prog.mk>
