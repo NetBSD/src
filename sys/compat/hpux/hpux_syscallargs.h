@@ -309,3 +309,196 @@ struct hpux_nshmctl_args {
 };
 
 #undef	syscallarg
+
+/*
+ * System call prototypes.
+ */
+
+int	nosys	__P((struct proc *, void *, register_t *));
+int	exit	__P((struct proc *, void *, register_t *));
+int	hpux_fork	__P((struct proc *, void *, register_t *));
+int	hpux_read	__P((struct proc *, void *, register_t *));
+int	hpux_write	__P((struct proc *, void *, register_t *));
+int	hpux_open	__P((struct proc *, void *, register_t *));
+int	close	__P((struct proc *, void *, register_t *));
+int	hpux_wait	__P((struct proc *, void *, register_t *));
+int	hpux_creat	__P((struct proc *, void *, register_t *));
+int	link	__P((struct proc *, void *, register_t *));
+int	unlink	__P((struct proc *, void *, register_t *));
+int	hpux_execv	__P((struct proc *, void *, register_t *));
+int	chdir	__P((struct proc *, void *, register_t *));
+int	mknod	__P((struct proc *, void *, register_t *));
+int	chmod	__P((struct proc *, void *, register_t *));
+int	chown	__P((struct proc *, void *, register_t *));
+int	obreak	__P((struct proc *, void *, register_t *));
+int	compat_43_lseek	__P((struct proc *, void *, register_t *));
+int	getpid	__P((struct proc *, void *, register_t *));
+int	setuid	__P((struct proc *, void *, register_t *));
+int	getuid	__P((struct proc *, void *, register_t *));
+int	hpux_ptrace	__P((struct proc *, void *, register_t *));
+int	access	__P((struct proc *, void *, register_t *));
+int	sync	__P((struct proc *, void *, register_t *));
+int	hpux_kill	__P((struct proc *, void *, register_t *));
+int	hpux_stat	__P((struct proc *, void *, register_t *));
+int	hpux_lstat	__P((struct proc *, void *, register_t *));
+int	hpux_dup	__P((struct proc *, void *, register_t *));
+int	pipe	__P((struct proc *, void *, register_t *));
+int	profil	__P((struct proc *, void *, register_t *));
+int	setgid	__P((struct proc *, void *, register_t *));
+int	getgid	__P((struct proc *, void *, register_t *));
+int	hpux_ioctl	__P((struct proc *, void *, register_t *));
+int	symlink	__P((struct proc *, void *, register_t *));
+int	hpux_utssys	__P((struct proc *, void *, register_t *));
+int	readlink	__P((struct proc *, void *, register_t *));
+int	execve	__P((struct proc *, void *, register_t *));
+int	umask	__P((struct proc *, void *, register_t *));
+int	chroot	__P((struct proc *, void *, register_t *));
+int	hpux_fcntl	__P((struct proc *, void *, register_t *));
+int	hpux_ulimit	__P((struct proc *, void *, register_t *));
+int	hpux_vfork	__P((struct proc *, void *, register_t *));
+int	hpux_read	__P((struct proc *, void *, register_t *));
+int	hpux_write	__P((struct proc *, void *, register_t *));
+int	hpux_mmap	__P((struct proc *, void *, register_t *));
+int	munmap	__P((struct proc *, void *, register_t *));
+int	mprotect	__P((struct proc *, void *, register_t *));
+int	getgroups	__P((struct proc *, void *, register_t *));
+int	setgroups	__P((struct proc *, void *, register_t *));
+int	hpux_getpgrp2	__P((struct proc *, void *, register_t *));
+int	hpux_setpgrp2	__P((struct proc *, void *, register_t *));
+int	setitimer	__P((struct proc *, void *, register_t *));
+int	hpux_wait3	__P((struct proc *, void *, register_t *));
+int	getitimer	__P((struct proc *, void *, register_t *));
+int	dup2	__P((struct proc *, void *, register_t *));
+int	hpux_fstat	__P((struct proc *, void *, register_t *));
+int	select	__P((struct proc *, void *, register_t *));
+int	fsync	__P((struct proc *, void *, register_t *));
+int	sigreturn	__P((struct proc *, void *, register_t *));
+int	hpux_sigvec	__P((struct proc *, void *, register_t *));
+int	hpux_sigblock	__P((struct proc *, void *, register_t *));
+int	hpux_sigsetmask	__P((struct proc *, void *, register_t *));
+int	hpux_sigpause	__P((struct proc *, void *, register_t *));
+int	compat_43_sigstack	__P((struct proc *, void *, register_t *));
+int	gettimeofday	__P((struct proc *, void *, register_t *));
+int	hpux_readv	__P((struct proc *, void *, register_t *));
+int	hpux_writev	__P((struct proc *, void *, register_t *));
+int	settimeofday	__P((struct proc *, void *, register_t *));
+int	fchown	__P((struct proc *, void *, register_t *));
+int	fchmod	__P((struct proc *, void *, register_t *));
+int	hpux_setresuid	__P((struct proc *, void *, register_t *));
+int	hpux_setresgid	__P((struct proc *, void *, register_t *));
+int	rename	__P((struct proc *, void *, register_t *));
+int	compat_43_truncate	__P((struct proc *, void *, register_t *));
+int	compat_43_ftruncate	__P((struct proc *, void *, register_t *));
+int	hpux_sysconf	__P((struct proc *, void *, register_t *));
+int	mkdir	__P((struct proc *, void *, register_t *));
+int	rmdir	__P((struct proc *, void *, register_t *));
+int	hpux_getrlimit	__P((struct proc *, void *, register_t *));
+int	hpux_setrlimit	__P((struct proc *, void *, register_t *));
+int	hpux_rtprio	__P((struct proc *, void *, register_t *));
+int	hpux_netioctl	__P((struct proc *, void *, register_t *));
+int	hpux_lockf	__P((struct proc *, void *, register_t *));
+#ifdef SYSVSEM
+int	semget	__P((struct proc *, void *, register_t *));
+int	__semctl	__P((struct proc *, void *, register_t *));
+int	semop	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#ifdef SYSVMSG
+int	msgget	__P((struct proc *, void *, register_t *));
+int	msgctl	__P((struct proc *, void *, register_t *));
+int	msgsnd	__P((struct proc *, void *, register_t *));
+int	msgrcv	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#ifdef SYSVSHM
+int	shmget	__P((struct proc *, void *, register_t *));
+int	hpux_shmctl	__P((struct proc *, void *, register_t *));
+int	shmat	__P((struct proc *, void *, register_t *));
+int	shmdt	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	hpux_advise	__P((struct proc *, void *, register_t *));
+int	hpux_getcontext	__P((struct proc *, void *, register_t *));
+int	hpux_getaccess	__P((struct proc *, void *, register_t *));
+int	hpux_waitpid	__P((struct proc *, void *, register_t *));
+int	pathconf	__P((struct proc *, void *, register_t *));
+int	fpathconf	__P((struct proc *, void *, register_t *));
+int	compat_43_getdirentries	__P((struct proc *, void *, register_t *));
+int	compat_09_getdomainname	__P((struct proc *, void *, register_t *));
+int	compat_09_setdomainname	__P((struct proc *, void *, register_t *));
+int	hpux_sigaction	__P((struct proc *, void *, register_t *));
+int	hpux_sigprocmask	__P((struct proc *, void *, register_t *));
+int	hpux_sigpending	__P((struct proc *, void *, register_t *));
+int	hpux_sigsuspend	__P((struct proc *, void *, register_t *));
+int	compat_43_getdtablesize	__P((struct proc *, void *, register_t *));
+int	fchdir	__P((struct proc *, void *, register_t *));
+int	compat_43_accept	__P((struct proc *, void *, register_t *));
+int	bind	__P((struct proc *, void *, register_t *));
+int	connect	__P((struct proc *, void *, register_t *));
+int	compat_43_getpeername	__P((struct proc *, void *, register_t *));
+int	compat_43_getsockname	__P((struct proc *, void *, register_t *));
+int	getsockopt	__P((struct proc *, void *, register_t *));
+int	listen	__P((struct proc *, void *, register_t *));
+int	compat_43_recv	__P((struct proc *, void *, register_t *));
+int	compat_43_recvfrom	__P((struct proc *, void *, register_t *));
+int	compat_43_recvmsg	__P((struct proc *, void *, register_t *));
+int	compat_43_send	__P((struct proc *, void *, register_t *));
+int	compat_43_sendmsg	__P((struct proc *, void *, register_t *));
+int	sendto	__P((struct proc *, void *, register_t *));
+int	hpux_setsockopt2	__P((struct proc *, void *, register_t *));
+int	shutdown	__P((struct proc *, void *, register_t *));
+int	socket	__P((struct proc *, void *, register_t *));
+int	socketpair	__P((struct proc *, void *, register_t *));
+#ifdef SYSVSEM
+int	__semctl	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#ifdef SYSVMSG
+int	msgctl	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#ifdef SYSVSHM
+int	hpux_nshmctl	__P((struct proc *, void *, register_t *));
+#else
+#endif
+
+#ifdef COMPAT_HPUX_6X
+#define compat_hpux_6x(func) __CONCAT(compat_hpux_6x_,func)
+
+int	compat_hpux_6x(time)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(stat)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(stime)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(alarm)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(fstat)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(pause)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(utime)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(stty)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(gtty)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(nice)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(ftime)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(setpgrp)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(times)	__P((struct proc *, void *, register_t *));
+int	compat_hpux_6x(ssig)	__P((struct proc *, void *, register_t *));
+#ifdef SYSVSEM
+#else
+#endif
+#ifdef SYSVMSG
+#else
+#endif
+#ifdef SYSVSHM
+#else
+#endif
+#ifdef SYSVSEM
+#else
+#endif
+#ifdef SYSVMSG
+#else
+#endif
+#ifdef SYSVSHM
+#else
+#endif
+
+#else /* COMPAT_HPUX_6X */
+#define compat_hpux_6x(func) nosys
+#endif /* COMPAT_HPUX_6X */
+
