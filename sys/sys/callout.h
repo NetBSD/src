@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.19 2003/09/25 10:44:11 scw Exp $	*/
+/*	$NetBSD: callout.h,v 1.20 2003/10/30 04:32:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -114,6 +114,12 @@ void	callout_reset(struct callout *, int, void (*)(void *), void *);
 void	callout_schedule(struct callout *, int);
 void	callout_stop(struct callout *);
 int	callout_hardclock(void);
+
+#define	callout_setfunc(c, f, a)					\
+do {									\
+	(c)->c_func = (f);						\
+	(c)->c_arg = (a);						\
+} while (/*CONSTCOND*/0)
 
 #define	callout_pending(c)	((c)->c_flags & CALLOUT_PENDING)
 #define	callout_expired(c)	((c)->c_flags & CALLOUT_FIRED)
