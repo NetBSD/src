@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	7.13 (Berkeley) 10/31/90
- *	$Id: if_arp.c,v 1.3 1993/06/27 06:02:37 andrew Exp $
+ *	$Id: if_arp.c,v 1.4 1993/12/12 20:43:06 hpeyerl Exp $
  */
 
 /*
@@ -193,6 +193,12 @@ arpresolve(ac, m, destip, desten, usetrailers)
 		    sizeof(etherbroadcastaddr));
 		return (1);
 	}
+#ifdef MULTICAST
+	if (m->m_flags & M_MCAST) {	/* multicast */
+		ETHER_MAP_IP_MULTICAST(destip, desten);
+		return(1);
+	}
+#endif
 	lna = in_lnaof(*destip);
 	/* if for us, use software loopback driver if up */
 	for (ia = in_ifaddr; ia; ia = ia->ia_next)
