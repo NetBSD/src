@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.44 2004/11/16 14:40:32 jschauma Exp $
+# $NetBSD: mi,v 1.45 2005/03/21 14:43:44 tron Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
@@ -908,9 +908,9 @@
 ./usr/X11R6/man/cat1/xwininfo.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xwud.0			-unknown-		.cat
 ./usr/X11R6/man/cat7/X.0			-unknown-		.cat
-./usr/X11R6/man/cat7/X.Org.0			-unknown-		.cat
-./usr/X11R6/man/cat7/XConsortium.0		-unknown-		.cat
-./usr/X11R6/man/cat7/XProjectTeam.0		-unknown-		.cat
+./usr/X11R6/man/cat7/X.Org.0			xbase-obsolete		obsolete
+./usr/X11R6/man/cat7/XConsortium.0		xbase-obsolete		obsolete
+./usr/X11R6/man/cat7/XProjectTeam.0		xbase-obsolete		obsolete
 ./usr/X11R6/man/cat7/XStandards.0		-unknown-		.cat
 ./usr/X11R6/man/cat7/Xsecurity.0		-unknown-		.cat
 ./usr/X11R6/man/man1/Xmark.1			-unknown-		.man
@@ -1028,11 +1028,11 @@
 ./usr/X11R6/man/man1/xwininfo.1			-unknown-		.man
 ./usr/X11R6/man/man1/xwud.1			-unknown-		.man
 ./usr/X11R6/man/man7/X.7			-unknown-		.man
-./usr/X11R6/man/man7/X.Org.7			-unknown-		.man
-./usr/X11R6/man/man7/XConsortium.7		-unknown-		.man
-./usr/X11R6/man/man7/XProjectTeam.7		-unknown-		.man
-./usr/X11R6/man/man7/XStandards.7		-unknown-		.man
-./usr/X11R6/man/man7/Xsecurity.7		-unknown-		.man
+./usr/X11R6/man/man7/X.Org.7			xbase-obsolete		obsolete
+./usr/X11R6/man/man7/XConsortium.7		xbase-obsolete		obsolete
+./usr/X11R6/man/man7/XProjectTeam.7		xbase-obsolete		obsolete
+./usr/X11R6/man/man7/XStandards.7		-unknown-		man
+./usr/X11R6/man/man7/Xsecurity.7		-unknown-		man
 ./usr/X11R6/man/whatis.db			-unknown-		man
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-1337.ad
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-NeXTish.ad
