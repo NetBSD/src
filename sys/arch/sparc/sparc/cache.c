@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.17 1997/03/21 01:32:20 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.18 1997/03/21 01:49:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -610,6 +610,12 @@ viking_pcache_flush_line(va, pa)
 	i = CACHEINFO.dc_associativity;
 	cmask = CACHEINFO.ic_totalsize - 1;
 	cshift = CACHEINFO.ic_l2linesize;
+
+	if (i == 0) {
+		/* In bootstrap; flash-clear entire cache */
+		sta(0, ASI_DCACHECLR, 0);
+		return;
+	}
 
 	/*
 	 * Construct a virtual address that hits the same cache line
