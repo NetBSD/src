@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.19.2.3 2000/07/21 18:47:29 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.19.2.4 2000/07/21 18:55:58 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -547,6 +547,12 @@ awi_ioctl(ifp, cmd, data)
 		else
 			p = sc->sc_mib_mac.aDesired_ESS_ID;
 		error = copyout(p + 1, ifr->ifr_data, 1 + IEEE80211_NWID_LEN);
+		break;
+	case SIOCS80211NWKEY:
+		error = awi_wep_setnwkey(sc, (struct ieee80211_nwkey *)data);
+		break;
+	case SIOCG80211NWKEY:
+		error = awi_wep_getnwkey(sc, (struct ieee80211_nwkey *)data);
 		break;
 #ifdef IFM_IEEE80211
 	case SIOCSIFMEDIA:
