@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.61 1998/07/26 06:45:18 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62 1999/03/19 21:40:24 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -66,6 +66,9 @@ void
 configure()
 {
 	int s;
+#ifdef DEBUG_KERNEL_START
+	int i;
+#endif
 
 	/*
 	 * this is the real thing baby (i.e. not console init)
@@ -98,9 +101,14 @@ configure()
 		/* also enable hardware aided software interrupts */
 		custom.intena = INTF_SETCLR | INTF_SOFTINT;
 	}
-	splx(s);
 #ifdef DEBUG_KERNEL_START
+	for (i=splhigh(); i>=s ;i-=0x100) {
+		splx(i);
+		printf("%d...", (i>>8) & 7);
+	}
 	printf("survived interrupt enable\n");
+#else
+	splx(s);
 #endif
 	cold = 0;
 }
