@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.34 2001/02/07 23:30:27 chs Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.35 2002/05/13 20:30:09 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,8 +38,6 @@
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
-
-extern label_t	*db_recover;
 
 /*
  * Register list

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.18 2002/05/10 15:28:45 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.19 2002/05/13 20:30:10 matt Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -45,7 +45,6 @@
 
 #include <sh3/ubcreg.h>
 
-extern label_t *db_recover;
 extern char *exp_type[];
 extern int exp_types;
 
