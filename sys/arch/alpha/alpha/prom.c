@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.35.4.1 1999/06/21 00:46:06 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.35.4.2 1999/08/02 19:32:42 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.35.4.1 1999/06/21 00:46:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.35.4.2 1999/08/02 19:32:42 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -344,14 +344,22 @@ hwrpb_restart_setup()
 }
 
 u_int64_t
-console_restart(ra, ai, pv)
-	u_int64_t ra, ai, pv;
+console_restart(framep)
+	struct trapframe *framep;
 {
 	struct pcs *p;
 
 	/* Clear restart-capable flag, since we can no longer restart. */
 	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	p->pcs_flags &= ~PCS_RC;
+
+	/* Fill in the missing frame slots */
+
+	framep->tf_regs[FRAME_PS] = p->pcs_halt_ps;
+	framep->tf_regs[FRAME_PC] = p->pcs_halt_pc;
+	framep->tf_regs[FRAME_T11] = p->pcs_halt_r25;
+	framep->tf_regs[FRAME_RA] = p->pcs_halt_r26;
+	framep->tf_regs[FRAME_T12] = p->pcs_halt_r27;
 
 	panic("user requested console halt");
 
