@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/07/08 15:40:53 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.11 2000/07/21 21:34:27 jdolecek Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -52,8 +52,9 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.PHONY: vers.c
 vers.c: version
-	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "bebox" ${NEWVERSWHAT}
 
 realall: ${BOOTPROG}
 
