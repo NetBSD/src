@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/06/25 00:06:09 itojun Exp $
+#	$NetBSD: Makefile,v 1.1 2004/11/11 11:54:51 yamt Exp $
 #	$OpenBSD: Makefile,v 1.10 2003/11/20 23:23:09 avsm Exp $
 
 PROG=	authpf
