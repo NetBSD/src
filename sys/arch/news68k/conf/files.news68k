@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.10 2001/01/17 00:07:30 fvdl Exp $
+#	$NetBSD: files.news68k,v 1.11 2001/01/25 14:33:31 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -15,6 +15,7 @@ attach mainbus at root
 file	arch/news68k/news68k/autoconf.c
 file	arch/news68k/news68k/bus_space.c
 file	arch/news68k/news68k/conf.c
+#file	arch/news68k/news68k/cons_machdep.c
 file	arch/news68k/news68k/clock.c
 file	arch/news68k/news68k/db_memrw.c		ddb | kgdb
 file	arch/news68k/news68k/disksubr.c		disk
@@ -57,19 +58,28 @@ file arch/news68k/dev/clock_hb.c		clock_hb
 attach le at hb: le24
 file arch/news68k/dev/if_le.c			le needs-count
 
-# mouse; not yet
-device ms
-attach ms at hb
-file arch/news68k/dev/ms.c			ms needs-flag
+# keyboard/mouse
 
-# keyboard; not yet
-device kb
-attach kb at hb
+device kbc {}
+attach kbc at hb
+file arch/news68k/dev/kbc.c			kbc
+
+include "dev/wscons/files.wscons"
+
+device kb: wskbddev
 file arch/news68k/dev/kb.c			kb needs-flag
-file arch/news68k/dev/kbms_if.c			kb | ms
-file arch/news68k/dev/keyconf.c			kb
-file arch/news68k/dev/kb_ctrl.c			kb
-file arch/news68k/dev/kb_encode.c		kb
+file dev/news/newskeymap.c			kb
+attach kb at kbc with kb_kbc
+file arch/news68k/dev/kb_kbc.c			kb_kbc
+attach kb at hb with kb_hb
+file arch/news68k/dev/kb_hb.c			kb_hb
+
+device ms: wsmousedev
+file arch/news68k/dev/ms.c			ms needs-flag
+attach ms at kbc with ms_kbc
+file arch/news68k/dev/ms_kbc.c			ms_kbc
+attach ms at hb with ms_hb
+file arch/news68k/dev/ms_hb.c			ms_hb
 
 # serial
 device zsc { [channel = -1] }
@@ -81,24 +91,13 @@ device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-count
 
-# framebuffers; not yet
-device fb
-attach fb at hb
-file arch/news68k/dev/fb.c			fb needs-flag
-file arch/news68k/dev/fb_conf.c			fb
-file arch/news68k/dev/fb_mfbs.c			fb
-file arch/news68k/dev/fb_probe.c		fb
-file arch/news68k/dev/fb_start.c		fb
-file arch/news68k/dev/fb_sub.c			fb
-file arch/news68k/dev/fbbm_225.c		fb
-file arch/news68k/dev/fbbm_514.c		fb
-file arch/news68k/dev/bmcons.c			fb
-file arch/news68k/dev/bitmapif.c		fb
-file arch/news68k/dev/fnt.c			fb
-file arch/news68k/dev/fnt24.c			fb
-file arch/news68k/dev/vt100.c			fb
-file arch/news68k/dev/vt100esc.c		fb
-file arch/news68k/dev/vt100if.c			fb
+# framebuffers
+include "dev/wsfont/files.wsfont"
+include "dev/rasops/files.rasops"
+
+#device cfb: wsemuldisplaydev, rasops8
+#attach cfb at hb
+#file arch/news68k/dev/cfb.c			cfb needs-flag
 
 # floppy; not yet
 device fdc {}
@@ -128,7 +127,6 @@ major {raid = 32}
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include	"compat/svr4/files.svr4"
-
 
 # SunOS binary compatibility (COMPAT_SUNOS)
 include	"compat/sunos/files.sunos"
