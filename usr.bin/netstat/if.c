@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.30 1999/01/11 12:31:53 mrg Exp $	*/
+/*	$NetBSD: if.c,v 1.31 1999/03/14 22:28:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.30 1999/01/11 12:31:53 mrg Exp $");
+__RCSID("$NetBSD: if.c,v 1.31 1999/03/14 22:28:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,15 +117,14 @@ intpr(interval, ifnetaddr)
 			"Ibytes", "Obytes");
 	} else {
 		printf("%-5.5s %-5.5s %-13.13s %-17.17s "
-			"%8.8s %5.5s %8.8s %5.5s",
+			"%8.8s %5.5s %8.8s %5.5s %5.5s",
 			"Name", "Mtu", "Network", "Address", "Ipkts", "Ierrs",
-			"Opkts", "Oerrs");
-		printf(" %5s", "Coll");
+			"Opkts", "Oerrs", "Colls");
 	}
 	if (tflag)
-		printf(" %s", "Time");
+		printf(" %4.4s", "Time");
 	if (dflag)
-		printf(" %s", "Drop");
+		printf(" %5.5s", "Drops");
 	putchar('\n');
 	ifaddraddr = 0;
 	while (ifnetaddr || ifaddraddr) {
@@ -264,9 +263,9 @@ intpr(interval, ifnetaddr)
 			       ifnet.if_collisions);
 		}
 		if (tflag)
-			printf(" %3d", ifnet.if_timer);
+			printf(" %4d", ifnet.if_timer);
 		if (dflag)
-			printf(" %3d", ifnet.if_snd.ifq_drops);
+			printf(" %5d", ifnet.if_snd.ifq_drops);
 		putchar('\n');
 	}
 }
@@ -322,7 +321,7 @@ sidewaysintpr(interval, off)
 		if (kread(off, (char *)&ifnet, sizeof ifnet))
 			break;
 		memset(ip->ift_name, 0, sizeof(ip->ift_name));
-		snprintf(ip->ift_name, IFNAMSIZ, "(%s)", ifnet.if_xname);
+		snprintf(ip->ift_name, IFNAMSIZ, "%s", ifnet.if_xname);
 		if (interface && strcmp(ifnet.if_xname, interface) == 0)
 			interesting = ip;
 		ip++;
@@ -341,11 +340,25 @@ sidewaysintpr(interval, off)
 	signalled = NO;
 	(void)alarm(interval);
 banner:
-	printf("   input    %-6.6s    output       ", interesting->ift_name);
+	if (bflag)
+		printf("%7.7s in %8.8s %6.6s out %5.5s",
+		    interesting->ift_name, " ",
+		    interesting->ift_name, " ");
+	else
+		printf("%5.5s in %5.5s%5.5s out %5.5s %5.5s",
+		    interesting->ift_name, " ",
+		    interesting->ift_name, " ", " ");
+	if (dflag)
+		printf(" %5.5s", " ");
 	if (lastif - iftot > 0) {
+		if (bflag)
+			printf("  %7.7s in %8.8s %6.6s out %5.5s",
+			    "total", " ", "total", " ");
+		else
+			printf("  %5.5s in %5.5s%5.5s out %5.5s %5.5s",
+			    "total", " ", "total", " ", " ");
 		if (dflag)
-			printf("      ");
-		printf("     input   (Total)    output");
+			printf(" %5.5s", " ");
 	}
 	for (ip = iftot; ip < iftot + MAXIF; ip++) {
 		ip->ift_ip = 0;
@@ -358,26 +371,24 @@ banner:
 		ip->ift_dr = 0;
 	}
 	putchar('\n');
-	if (bflag) {
+	if (bflag)
 		printf("%10.10s %8.8s %10.10s %5.5s",
-			"bytes", " ", "bytes", " ");
-	} else {
-		printf("%8.8s %5.5s %8.8s %5.5s %5.5s ",
-			"packets", "errs", "packets", "errs", "colls");
-	}
-	if (dflag)
-		printf("%5.5s ", "drops");
-	if (lastif - iftot > 0) {
-		if (bflag) {
-			printf("%10.10s %8.8s %10.10s %5.5s",
-				"bytes", " ", "bytes", " ");
-		} else {
-			printf("%8.8s %5.5s %8.8s %5.5s %5.5s ",
-				"packets", "errs", "packets", "errs", "colls");
-		}
-	}
+		    "bytes", " ", "bytes", " ");
+	else
+		printf("%8.8s %5.5s %8.8s %5.5s %5.5s",
+		    "packets", "errs", "packets", "errs", "colls");
 	if (dflag)
 		printf(" %5.5s", "drops");
+	if (lastif - iftot > 0) {
+		if (bflag)
+			printf("  %10.10s %8.8s %10.10s %5.5s",
+			    "bytes", " ", "bytes", " ");
+		else
+			printf("  %8.8s %5.5s %8.8s %5.5s %5.5s",
+			    "packets", "errs", "packets", "errs", "colls");
+		if (dflag)
+			printf(" %5.5s", "drops");
+	}
 	putchar('\n');
 	fflush(stdout);
 	line = 0;
