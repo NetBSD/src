@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2003/01/19 16:05:46 christos Exp $
+#	$NetBSD: Makefile,v 1.82 2003/01/24 01:52:42 thorpej Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 SUBDIR=	csu libc .WAIT libarch libbz2 libcdk libcompat libcrypt libcurses \
 	libedit libform libintl libkvm libl libm libmenu libossaudio libpcap \
 	libpci libpmc libposix libpthread libpthread_dbg libresolv librmt \
-	librpcsvc libterm libusbhid libutil libwrap liby libz
+	librpcsvc librt libterm libusbhid libutil libwrap liby libz
 
 .if (${MKSKEY} != "no")
 SUBDIR+= libskey
