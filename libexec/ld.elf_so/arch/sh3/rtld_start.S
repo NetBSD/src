@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 2002/02/04 18:18:51 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 2003/06/30 00:50:47 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -44,43 +44,25 @@
 	.type	.rtld_start,@function
 
 .rtld_start:
+	mova	2f,r0
+	mov.l	@r0,r2
+	add	r0,r2		/* GOT */
+	mov.l	@(4,r0),r4
+	add	r2,r4		/* _DYNAMIC */
+	mov.l	@(12,r0),r1
+	mov.l	@(8,r0),r0
+	mov	r4,r5
+	mov.l	@(r0,r2),r0	/* Where linker thinks _DYNAMIC is */
+	sub	r0,r5		/* compute relocation base */
+	bsrf	r1		/* _rtld_relocate_nonplt_self(dynp, relocbase) */
+	mov.l	r5,@-r15	/* delay slot: save relocbase */
 
-	/* relocate GOT, so that we can use global function calls in rtld.c */
-
-	mova	1f,r0
-	mov.l	@r0,r1
-	add	r1,r0		/* r0 = _GLOBAL_OFFSET_TABLE_ */
-
-	mov.l	2f,r1
-	add	r0,r1		/* r1 = GOT end */
-	mov.l	3f,r2
-	mov.l	@(r0,r2),r3	/* r3 = where the linker thinks GOT end is */
-	mov	r1,r2
-	sub	r3,r2		/* r2 = displacement */
-4:
-	mov.l	@r0+,r3		/* add displacement to all GOT entries */
-	cmp/hs	r1,r0
-	add	#-4,r0
-	add	r2,r3
-	mov.l	r3,@r0
-	bf/s	4b
-	add	#4,r0
-
-	bra	4f		/* all done */
-	nop	
-		
-	.align	2
-1:	.long	_GLOBAL_OFFSET_TABLE_
-2:	.long	_DYNAMIC@GOTOFF
-3:	.long	_DYNAMIC@GOT
-
-			
-4:
+4:	
+	mov.l	@r15+,r5	/* restore relocbase */
 	add	#-8,r15		/* Make room for return args */
 	mov	r15,r4
 	mov.l	1f,r0
-	add	#(1f-3f),r0
-	bsrf	r0		/* _rtld(sp) */
+	bsrf	r0		/* _rtld(sp, relocbase) */
 	mov.l	r9,@-r15	/* save ps_strings */
 3:
 	mov.l	@r15+,r9	/* restore ps_strings */
@@ -99,13 +81,17 @@
 	jmp	@r0
 	add	#8,r6
 	.align	2
-1:	.long	_rtld-.
+1:	.long	_rtld-3b
+2:	.long	_GLOBAL_OFFSET_TABLE_
+	.long	_DYNAMIC@GOTOFF
+	.long	_DYNAMIC@GOT
+	.long	_rtld_relocate_nonplt_self-4b
 	.size	.rtld_start,.-.rtld_start
 	
 	.align	2
 	.globl	_rtld_bind_start
 	.type	_rtld_bind_start,@function
-_rtld_bind_start:		/* r0 = flag, r1 = reloff, r2 = obj */
+_rtld_bind_start:		/* r0 = obj, r1 = reloff */
 	mov.l	r3,@-r15	/* save registers */
 	mov.l	r4,@-r15
 	mov.l	r5,@-r15
@@ -115,11 +101,10 @@ _rtld_bind_start:		/* r0 = flag, r1 = reloff, r2 = obj */
 	sts.l	macl,@-r15
 	sts.l	pr,@-r15
 
+	mov	r0,r4		/* copy of obj */
 	mov.l	2f,r0
-	add	#(2f-4f),r0
-	mov	r2,r4		/* copy of obj */
 	bsrf	r0		/* call the binder */
-	mov	r1,r5		/* copy of relobj */
+	mov	r1,r5		/* copy of reloff */
 4:	
 	lds.l	@r15+,pr	/* restore registers */
 	lds.l	@r15+,macl
@@ -131,7 +116,7 @@ _rtld_bind_start:		/* r0 = flag, r1 = reloff, r2 = obj */
 	jmp	@r0
 	mov.l	@r15+,r3
 	.align	2
-2:	.long	_rtld_bind-.
+2:	.long	_rtld_bind-4b
 	.size	_rtld_bind_start,.-_rtld_bind_start
 
 	.end

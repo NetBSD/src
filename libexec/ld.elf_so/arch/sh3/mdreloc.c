@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.14 2002/10/03 20:39:23 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.15 2003/06/30 00:50:46 marcus Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,6 +13,30 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 {
 	obj->pltgot[1] = (Elf_Addr) obj;
 	obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
+}
+
+void
+_rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
+{
+	const Elf_Rela *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
+	Elf_Addr *where;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_RELA:
+			rela = (const Elf_Rela *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	for (; rela < relalim; rela++) {
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+		*where = (Elf_Addr)(relocbase + rela->r_addend);
+	}
 }
 
 int
@@ -150,6 +174,32 @@ _rtld_relocate_plt_lazy(obj)
 	}
 
 	return 0;
+}
+
+caddr_t
+_rtld_bind(obj, reloff)
+	const Obj_Entry *obj;
+	Elf_Word reloff;
+{
+	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
+	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	Elf_Addr new_value;
+	const Elf_Sym  *def;
+	const Obj_Entry *defobj;
+
+	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
+
+	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
+	if (def == NULL)
+		_rtld_die();
+
+	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	rdbg(("bind now/fixup in %s --> old=%p new=%p",
+	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
+	if (*where != new_value)
+		*where = new_value;
+
+	return (caddr_t)new_value;
 }
 
 int
