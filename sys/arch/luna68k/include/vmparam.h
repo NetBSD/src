@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 2002/12/10 05:14:29 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 2003/04/02 00:03:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,14 @@
 
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
+
+/*
+ * We use 4K pages on the hp300.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * USRSTACK is the top (end) of the user stack.
