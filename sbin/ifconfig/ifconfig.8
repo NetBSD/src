@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.37 2000/07/06 11:02:02 onoe Exp $
+.\"	$NetBSD: ifconfig.8,v 1.38 2000/07/20 18:42:02 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,8 @@
 .Nm ""
 .Fl s
 .Ar interface
+.Nm ""
+.Fl C
 .Sh DESCRIPTION
 .Nm
 is used to assign an address
@@ -413,6 +415,12 @@ with all other flags and commands, except for
 (only list interfaces that may be connected),
 .Fl b
 (only list broadcast interfaces).
+.Pp
+The
+.Fl C
+flag may be used to list all of the interface cloners available on
+the system, with no additional information.  Use of this flag is
+mutually exclusive with all other flags and commands.
 .Pp
 Only the super-user may modify the configuration of a network interface.
 .Sh DIAGNOSTICS
