@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.42 1995/04/21 22:09:53 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.43 1995/05/04 03:11:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -280,8 +280,10 @@ getnewvnode(tag, mp, vops, vpp)
 			*vpp = 0;
 			return (ENFILE);
 		}
-		if (vp->v_usecount)
+		if (vp->v_usecount) {
+			vprint("free vnode", vp);
 			panic("free vnode isn't");
+		}
 		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
 		/* see comment on why 0xdeadb is set at end of vgone (below) */
 		vp->v_freelist.tqe_prev = (struct vnode **)0xdeadb;
@@ -289,8 +291,10 @@ getnewvnode(tag, mp, vops, vpp)
 		if (vp->v_type != VBAD)
 			vgone(vp);
 #ifdef DIAGNOSTIC
-		if (vp->v_data)
+		if (vp->v_data) {
+			vprint("cleaned vnode", vp);
 			panic("cleaned vnode isn't");
+		}
 		s = splbio();
 		if (vp->v_numoutput)
 			panic("Clean vnode has pending I/O's");
