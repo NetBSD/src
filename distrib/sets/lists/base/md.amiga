@@ -15,3 +15,4 @@
 ./usr/lib/libutil.so.3.1
 ./usr/libexec/ld.so
 ./usr/sbin/iteconfig
+./usr/sbin/videomode
