@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.31 2004/02/13 11:36:19 wiz Exp $
+#	$NetBSD: INSTALL,v 1.31.2.1 2004/07/15 20:21:52 he Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -99,6 +99,7 @@ options 	COMPAT_15
 
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Kernel(s) to compile
