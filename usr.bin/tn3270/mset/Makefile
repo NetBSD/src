@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1997/05/09 07:50:32 mycroft Exp $
+#	$NetBSD: Makefile,v 1.19 1997/05/09 13:33:07 mycroft Exp $
 
 .include "../../Makefile.inc"
 
@@ -6,7 +6,8 @@ CFLAGS += -I${.CURDIR} -I.
 
 MAN = mset.1 map3270.5
 
-SRCS += astosc.OUT astosc.c map3270.c mset.c
+SRCS=	astosc.c map3270.c mset.c
+DPSRCS=	astosc.OUT
 
 # this and the dependency hacks below to make 'depend' target
 # work right...
