@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.8 2000/06/29 07:51:46 mrg Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.9 2003/04/02 02:24:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -61,7 +61,7 @@ kgdb_acc(va, len)
 		pte = kvtopte(va);
 		if ((*pte & PG_V) == 0)
 			return (0);
-		va  += NBPG;
+		va  += PAGE_SIZE;
 	} while (va < last_va);
 
 	return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.19 2002/10/20 02:37:29 chs Exp $	*/
+/*	$NetBSD: sbic.c,v 1.20 2003/04/02 02:19:29 thorpej Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -314,10 +314,10 @@ sbic_load_ptrs(dev)
         vaddr = acb->sc_kv.dc_addr;
         paddr = acb->sc_pa.dc_addr = (char *) kvtop((caddr_t)vaddr);
 
-        for (count = (NBPG - ((int)vaddr & PGOFSET));
+        for (count = (PAGE_SIZE - ((int)vaddr & PGOFSET));
              count < acb->sc_kv.dc_count &&
              (char*)kvtop((caddr_t)(vaddr + count + 4)) == paddr + count + 4;
-             count += NBPG)
+             count += PAGE_SIZE)
             ;   /* Do nothing */
 
         /*
@@ -2546,7 +2546,7 @@ sbiccheckdmap(bp, len, mask)
     while ( len ) {
 
         phy_buf = kvtop((caddr_t)buffer);
-        phy_len = NBPG - ((int) buffer & PGOFSET);
+        phy_len = PAGE_SIZE - ((int) buffer & PGOFSET);
 
         if ( len < phy_len )
             phy_len = len;

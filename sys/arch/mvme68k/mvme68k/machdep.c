@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2003/01/17 23:42:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 2003/04/02 02:19:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -137,7 +137,7 @@ int	safepri = PSL_LOWIPL;
 #ifndef ETHER_DATA_BUFF_PAGES
 #define	ETHER_DATA_BUFF_PAGES	4
 #endif
-u_long	ether_data_buff_size = ETHER_DATA_BUFF_PAGES * NBPG;
+u_long	ether_data_buff_size = ETHER_DATA_BUFF_PAGES * PAGE_SIZE;
 u_char	mvme_ea[6];
 
 extern	u_int lowram;
@@ -276,8 +276,8 @@ mvme68k_init()
 	 * Initialize error message buffer (at end of core).
 	 */
 	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 	pmap_update(pmap_kernel());
@@ -509,7 +509,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -548,7 +548,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -859,7 +859,7 @@ cpu_init_kcore_hdr()
 	 * Initialize the `dispatcher' portion of the header.
 	 */
 	strcpy(h->name, machine);
-	h->page_size = NBPG;
+	h->page_size = PAGE_SIZE;
 	h->kernbase = KERNBASE;
 
 	/*
@@ -972,7 +972,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first PAGE_SIZE of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -1079,8 +1079,8 @@ dumpsys()
 
 			/* Limit size for next transfer. */
 			n = bytes - i;
-			if (n > NBPG)
-				n = NBPG;
+			if (n > PAGE_SIZE)
+				n = PAGE_SIZE;
 
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 			    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
@@ -1152,7 +1152,7 @@ initcpu()
 	 * VAC machines as it loses big time.
 	 */
 	if (mappedcopysize == 0) {
-		mappedcopysize = NBPG;
+		mappedcopysize = PAGE_SIZE;
 	}
 #endif
 

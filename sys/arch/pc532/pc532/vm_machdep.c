@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53 2002/09/22 05:41:27 gmcgarry Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54 2003/04/02 02:24:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -265,7 +265,7 @@ setredzone(pte, vaddr)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of NBPG.
+ * and size must be a multiple of PAGE_SIZE.
  */
 void
 pagemove(from, to, size)
@@ -274,12 +274,12 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 
-	if (size % NBPG)
+	if (size % PAGE_SIZE)
 		panic("pagemove");
 	fpte = kvtopte((vaddr_t)from);
 	tpte = kvtopte((vaddr_t)to);
 
-	if (size <= NBPG * 16) {
+	if (size <= PAGE_SIZE * 16) {
 		while (size > 0) {
 			otpte = *tpte;
 			ofpte = *fpte;
@@ -289,17 +289,17 @@ pagemove(from, to, size)
 				tlbflush_entry((vaddr_t) to);
 			if (ofpte & PG_V)
 				tlbflush_entry((vaddr_t) from);
-			from += NBPG;
-			to += NBPG;
-			size -= NBPG;
+			from += PAGE_SIZE;
+			to += PAGE_SIZE;
+			size -= PAGE_SIZE;
 		}
 	} else {
 		while (size > 0) {
 			*tpte++ = *fpte;
 			*fpte++ = 0;
-			from += NBPG;
-			to += NBPG;
-			size -= NBPG;
+			from += PAGE_SIZE;
+			to += PAGE_SIZE;
+			size -= PAGE_SIZE;
 		}
 		tlbflush();
 	}

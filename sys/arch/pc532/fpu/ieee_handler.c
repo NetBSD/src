@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.13 2002/05/26 07:37:08 simonb Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.14 2003/04/02 02:24:15 thorpej Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -83,7 +83,7 @@
 
 #ifdef MACH
 /* Mach only defines this if KERNEL, NetBSD defines it always */
-# define ns532_round_page(addr) (((addr) + NBPG - 1) & ~(NBPG - 1))
+# define ns532_round_page(addr) (((addr) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.20 2002/06/02 14:44:37 drochner Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.21 2003/04/02 02:19:29 thorpej Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2002/06/02 14:44:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21 2003/04/02 02:19:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
@@ -513,15 +513,15 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 			e = (pe + 15) & ~0xf;
 
 			/* flush cache line (060 too) */
-			while((p < e) && (p % NBPG)) {
+			while((p < e) && (p % PAGE_SIZE)) {
 				DCFL_40(p);
 				p += 16;
 			}
 
 			/* flush page (060 too) */
-			while((p + NBPG) <= e) {
+			while((p + PAGE_SIZE) <= e) {
 				DCFP_40(p);
-				p += NBPG;
+				p += PAGE_SIZE;
 			}
 
 			/* flush cache line (060 too) */
@@ -553,17 +553,17 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 			e = pe & ~0xf;
 
 			/* purge cache line */
-			while((p < e) && (p % NBPG)) {
+			while((p < e) && (p % PAGE_SIZE)) {
 				DCPL_40(p);
 				ICPL_40(p);
 				p += 16;
 			}
 
 			/* purge page */
-			while((p + NBPG) <= e) {
+			while((p + PAGE_SIZE) <= e) {
 				DCPP_40(p);
 				ICPP_40(p);
-				p += NBPG;
+				p += PAGE_SIZE;
 			}
 
 			/* purge cache line */
@@ -762,7 +762,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg]._ds_cpuaddr;
 		    addr < (segs[curseg]._ds_cpuaddr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 
