@@ -40,4 +40,5 @@
 ./usr/lkm/umapfs.o
 ./usr/mdec/fdboot
 ./usr/mdec/sdboot
+./usr/mdec/writefdboot
 ./usr/sbin/poffd
