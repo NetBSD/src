@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.3 2004/12/20 23:05:41 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.4 2004/12/21 09:07:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -239,7 +239,14 @@
 #define RTW_TCR_LBK_BBP		LSHIFT(2, RTW_TCR_LBK_MASK) /* baseband loop. */
 #define RTW_TCR_LBK_CONT	LSHIFT(3, RTW_TCR_LBK_MASK) /* continuous Tx */
 
-#define RTW_TCR_CRC	BIT(16)		/* host lets RTL8180 append CRC32 */
+#define RTW_TCR_CRC	BIT(16)		/* 0: RTL8180 appends CRC32
+					 * 1: host appends CRC32
+					 *
+					 * (I *think* this is right.
+					 *  The docs have a mysterious
+					 *  description in the
+					 *  passive voice.)
+					 */
 #define RTW_TCR_SRL_MASK	BITS(15,8)	/* Short Retry Limit */
 #define RTW_TCR_LRL_MASK	BITS(7,0)	/* Long Retry Limit */
 
