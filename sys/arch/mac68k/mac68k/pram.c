@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.14 1997/08/11 22:53:50 scottr Exp $	*/
+/*	$NetBSD: pram.c,v 1.15 1997/11/07 07:33:17 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -129,10 +129,12 @@ pram_readtime(void)
 {
    unsigned long	timedata;
 
+#if MRG_ADB
    if (0 == jClkNoMem)
 	timedata = 0;	/* cause comparision of MacOS boottime */
 			/* and PRAM time to fail */
    else
+#endif
 	timedata = getPramTime();
 #if DEBUG
    printf("time read from PRAM: 0x%lx\n", timedata);
@@ -145,9 +147,11 @@ pram_readtime(void)
 void
 pram_settime(unsigned long time)
 {
+#if MRG_ADB
    if (0 == jClkNoMem)
 	return;
    else
+#endif
 	return setPramTime(time);
 }
 
@@ -157,7 +161,7 @@ pram_settime(unsigned long time)
  * the MRG method of accessing the ADB/PRAM/RTC.
  */
 
-extern int adbHardware;	/* from newadb.c */
+extern int adbHardware;	/* from adb_direct.c */
 
 /*
  * getPramTime
@@ -177,6 +181,7 @@ getPramTime(void)
 		return time;
 
 	case ADB_HW_IISI:	/* access PRAM via pseudo-adb functions */
+	case ADB_HW_CUDA:
 		if (0 != adb_read_date_time(&time))
 			return 0;
 		else
@@ -207,6 +212,7 @@ setPramTime(unsigned long time)
 		return;
 
 	case ADB_HW_IISI:	/* access PRAM via pseudo-adb functions */
+	case ADB_HW_CUDA:
 		adb_set_date_time(time);
 		return;
 
