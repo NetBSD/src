@@ -1,4 +1,4 @@
-.\"     $NetBSD: awi.4,v 1.8 2000/07/04 14:37:37 onoe Exp $
+.\"     $NetBSD: awi.4,v 1.9 2000/07/21 17:39:58 onoe Exp $
 .\"
 .Dd October 31, 1999
 .Dt AWI 4 
@@ -14,7 +14,8 @@ AMD PCnetMobile IEEE 802.11 PCMCIA wireless network driver
 The
 .Nm
 driver supports various IEEE 802.11 wireless cards
-which run AMD PCnetMobile firmware based on AMD 79c930 controller.
+which run AMD PCnetMobile firmware based on AMD 79c930 controller
+with Intersil (formerly Harris) PRISM radio chipset.
 It provides access to 32kb of memory shared between the controller
 and the host.
 All host/device interaction is via this shared memory, which can be
@@ -37,8 +38,8 @@ the coverage is limited spatially due to lack of roaming capability.
 .Pp
 In addition to these two mode in IEEE 802.11 specification, the
 .Nm
-driver also supports a variant of adhoc mode out of spec, which makes
-possible to communicate with adhoc mode of
+driver also supports a variant of adhoc mode out of spec for DS radio cards,
+which makes possible to communicate with adhoc mode of
 .Xr wi 8
 driver.  The NWID doesn't affect in this mode.
 .Pp
@@ -74,6 +75,8 @@ driver include:
 .Pp
 The original Xircom Netwave AirSurfer is supported by the 
 .Xr cnw 4
+driver, and the PRISM-II cards are supported by the
+.Xr wi 4
 driver.
 .Sh MEDIA SELECTION
 The DS cards support
@@ -85,7 +88,7 @@ media types, while the FH cards support
 media type.  For each media type,
 .Em adhoc
 mediaopt can be used to indicate the driver to operate in adhoc mode.
-Also,
+For DS radio cards,
 .Em adhoc,flag0
 mediaopt can be used for
 .Xr wi 4
