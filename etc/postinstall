@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.4 2002/04/28 22:17:43 bjh21 Exp $
+# $NetBSD: postinstall,v 1.5 2002/04/29 06:05:24 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -88,16 +88,17 @@ additem()
 	eval desc_$1=\"$2\"
 }
 
-# cmpdir op src dest file [file ...]
+# cmpdir op src dest mode file [file ...]
 #	perform op ("check" or "fix") on files in src/ against dest/
 #
 cmpdir()
 {
-	[ $# -ge 4 ] || err 2 "USAGE: cmpdir op src dest file [file ...]"
+	[ $# -ge 5 ] || err 2 "USAGE: cmpdir op src dest mode file [file ...]"
 	_op=$1
 	_src=$2
 	_dest=$3
-	shift 3
+	_mode=$4
+	shift 4
 	_files=$*
 
 	if [ ! -d "${_dest}" ]; then
@@ -112,7 +113,7 @@ cmpdir()
 		fi
 	fi
 
-	failed=0
+	_cmpdir_rv=0
 	for f in ${_files}; do
 		fs=${_src}/${f}
 		fd=${_dest}/${f}
@@ -126,16 +127,43 @@ cmpdir()
 		fi
 		if [ "${_op}" = "check" ]; then
 			msg ${error}
-			failed=1
+			_cmpdir_rv=1
 		elif ! cp ${fs} ${fd}; then
 			msg "Can't copy ${fs} to ${fd}"
-			failed=1
+			_cmpdir_rv=1
+		elif ! chmod ${_mode} ${fd}; then
+			msg "Can't change mode of ${fd} to ${_mode}"
+			_cmpdir_rv=1
 		else
 			msg "Copied ${fs} to ${fd}"
 		fi
 	done
-	return $failed
+	return $_cmpdir_rv
 }
+
+# rcconf_isset name var --
+#	load the rcconf for name, and check if obsolete rc.conf(5) variable
+#	var is defined or not. returns 0 if defined (even to ""), otherwise 1.
+#
+rcconf_isset()
+{
+	[ $# -eq 2 ] || err 2 "USAGE: rcconf_isset name var"
+	_name=$1
+	_var=$2
+	(
+		for f in ${DEST_ETC}/rc.conf ${DEST_ETC}/rc.conf.d/${_name}; do
+			[ -f "${f}" ] && . "${f}";
+		done
+		if eval "[ -n \"\${${_var}}\" \
+			    -o \"\${${_var}-UNSET}\" != \"UNSET\" ]"; then
+			msg "Obsolete rc.conf(5) variable '\$${_var}' found."
+			exit 0
+		else
+			exit 1
+		fi
+	)
+}
+
 
 #
 #	items
@@ -150,9 +178,8 @@ do_defaults()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_defaults  fix|check"
 
-	cmpdir $1 ${SRC_ETC}/defaults ${DEST_ETC}/defaults \
+	cmpdir $1 ${SRC_ETC}/defaults ${DEST_ETC}/defaults 444 \
 		daily.conf monthly.conf rc.conf security.conf weekly.conf
-	return $?
 }
 
 #
@@ -163,9 +190,8 @@ do_mtree()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_mtree  fix|check"
 
-	cmpdir $1 ${SRC_ETC}/mtree ${DEST_ETC}/mtree \
+	cmpdir $1 ${SRC_ETC}/mtree ${DEST_ETC}/mtree 444 \
 		NetBSD.dist special
-	return $?
 }
 
 #
@@ -179,11 +205,11 @@ do_rc()
 	op=$1
 	rv=0
 
-	cmpdir ${op} ${SRC_ETC} ${DEST_ETC} \
+	cmpdir ${op} ${SRC_ETC} ${DEST_ETC} 644 \
 		rc rc.subr rc.shutdown
 	rv=$(( ${rv} + $? ))
 
-	cmpdir ${op} ${SRC_ETC}/rc.d ${DEST_ETC}/rc.d \
+	cmpdir ${op} ${SRC_ETC}/rc.d ${DEST_ETC}/rc.d 555 \
 		DAEMON LOGIN NETWORKING SERVERS accounting altqd amd \
 		apmd bootparams bootconf.sh ccd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces fsck \
@@ -226,8 +252,8 @@ do_periodic()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_periodic  fix|check"
 
-	cmpdir $1 ${SRC_ETC} ${DEST_ETC} daily weekly monthly security
-	return $?
+	cmpdir $1 ${SRC_ETC} ${DEST_ETC} 644 \
+		daily weekly monthly security
 }
 
 
@@ -254,7 +280,7 @@ do_ssh()
 		fi
 	fi
 
-	if [ $failed -eq 0 ]; then
+	if [ ${failed} -eq 0 ]; then
 		for f in \
 			    sshd.conf ssh.conf \
 			    ssh_known_hosts ssh_known_hosts2 \
@@ -306,9 +332,13 @@ do_ssh()
 				msg "${sshdconf} changes applied:"
 			fi
 			while read _line; do
-				msg "	$_line"
+				msg "	${_line}"
 			done < ${SCRATCHDIR}/sshd_config.diffs
 		fi
+	fi
+
+	if rcconf_isset sshd sshd_conf_dir ; then
+		failed=1
 	fi
 
 	return ${failed}
@@ -353,7 +383,7 @@ list()
 	echo "  Item          Description"
 	echo "  ----          -----------"
 	for i in ${items}; do
-		eval desc="\$desc_$i"
+		eval desc="\${desc_${i}}"
 		printf "  %-12s  %s\n" "${i}" "${desc}"
 	done
 }
@@ -397,7 +427,7 @@ main()
 		# ensure that all supplied items are valid
 		#
 		for i in ${todo}; do
-			eval desc=\"\$desc_$i\"
+			eval desc=\"\${desc_${i}}\"
 			[ -n "${desc}" ] || err 1 "Unsupported ${op} '"${i}"'"
 		done
 
@@ -416,13 +446,13 @@ main()
 		done
 
 		if [ "${op}" = "fix" ]; then
-			plural="Fixes"
+			plural="fixes"
 		else
-			plural="Checks"
+			plural="checks"
 		fi
 
-		echo "${plural} passed:${items_passed}"
-		echo "${plural} failed:${items_failed}"
+		echo "${PROGNAME} ${plural} passed:${items_passed}"
+		echo "${PROGNAME} ${plural} failed:${items_failed}"
 
 		;;
 		
@@ -456,9 +486,8 @@ mkdtemp ()
 PROGNAME=${0##*/}
 SRC_ETC=/usr/src/etc
 DEST_ETC=/etc
-SCRATCHDIR=$( mkdtemp ) ||
-    err 1 "Can't create scratch directory"
-trap "/bin/rm -rf $SCRATCHDIR ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
+SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
+trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
 umask 022
 
 main $*
