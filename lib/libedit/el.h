@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.8 2001/01/06 14:44:50 jdolecek Exp $	*/
+/*	$NetBSD: el.h,v 1.9 2001/09/27 19:29:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -106,6 +106,7 @@ typedef struct el_state_t {
 #include "parse.h"
 #include "sig.h"
 #include "help.h"
+#include "read.h"
 
 struct editline {
 	char		 *el_prog;	/* the program name		*/
@@ -129,6 +130,7 @@ struct editline {
 	el_history_t	  el_history;	/* History stuff		*/
 	el_search_t	  el_search;	/* Search stuff			*/
 	el_signal_t	  el_signal;	/* Signal handling stuff	*/
+	el_read_t	  el_read;	/* Character reading stuff	*/
 };
 
 protected int	el_editmode(EditLine *, int, char **);
