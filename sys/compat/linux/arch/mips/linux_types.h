@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.1 2001/08/26 18:53:20 manu Exp $ */
+/*	$NetBSD: linux_types.h,v 1.2 2001/09/02 08:39:37 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -49,20 +49,34 @@ typedef struct {
 typedef int linux_uid_t;
 typedef int linux_gid_t;
 typedef unsigned int linux_dev_t;
-typedef unsigned long linux_ino_t;
 typedef unsigned int linux_mode_t;
-typedef int linux_nlink_t;
 typedef long linux_time_t;
 typedef long linux_clock_t;
 typedef long linux_off_t;
 typedef int linux_pid_t;
+#if defined(ELFSIZE) && (ELFSIZE == 64)
+typedef unsigned int linux_ino_t;
+typedef unsigned int linux_nlink_t;
+typedef unsigned long linux_ino_t32;
+typedef int linux_nlink_t32;
+#else
+typedef unsigned long linux_ino_t;
+typedef int linux_nlink_t;
+typedef linux_ino_t linux_ino_t32;
+typedef linux_nlink_t linux_nlink_t32;
+#endif
 
 /* 
  * From Linux's include/asm-mips/termbits.h 
  */
 typedef unsigned char linux_cc_t;
+#if defined(ELFSIZE) && (ELFSIZE == 64)
 typedef unsigned int linux_speed_t;
 typedef unsigned int linux_tcflag_t;
+#else
+typedef unsigned long speed_t;
+typedef unsigned long tcflag_t;
+#endif
 
 /* 
  * From Linux's include/asm-mips/statfs.h 
@@ -81,40 +95,62 @@ struct linux_statfs {
 	long l_fspare[6];	
 };
 
+#if defined(ELFSIZE) && (ELFSIZE == 64)
 /* 
- * From Linux's include/asm-mips/stat.h 
+ * From Linux's include/asm-mips64/stat.h
+ * 64 bit version of struct linux_stat memory layout is the 
+ * same as of struct stat64 of the 32-bit Linux kernel
  */
-struct linux_stat {  /* warning: there is also a old_kernel_stat in Linux*/
-	linux_dev_t	lst_dev; 
-	long		lst_pad[13];
-	linux_ino_t	lst_ino;
+struct linux_stat {
+	linux_dev_t	lst_dev;
+	unsigned int	lst_pad0[3];
+	unsigned long	lst_ino;
 	linux_mode_t	lst_mode;
 	linux_nlink_t	lst_nlink;
 	linux_uid_t	lst_uid;
 	linux_gid_t	lst_gid;
 	linux_dev_t	lst_rdev;
-	long		lst_pad2[2];
+	unsigned int	lst_pad1[3];
 	linux_off_t	lst_size;
-	long		lst_pad3;
-	linux_time_t	lst_atime;
-	long		lreserved0;
-	linux_time_t	lst_mtime;
-	long		lreserved1;
-	linux_time_t	lst_ctime;
-	long		lreserved2;
-	long		lst_blksize;
-	long		lst_blocks;
-	char		lst_fstype[16];
-	long		lst_pad4[8];
-	unsigned int	lst_flags
-	unsigned int	lst_gen;
+	unsigned int	lst_atime;
+	unsigned int	lreserved0;
+	unsigned int	lst_mtime;
+	unsigned int	lreserved1;
+	unsigned int	lst_ctime;
+	unsigned int	lreserved2;
+	unsigned int	lst_blksize;
+	unsigned int	lst_pad2;
+	unsigned long	lst_blocks;
 };
 
+struct stat32 {
+	linux_dev_t	lst_dev;
+ 	int		lst_pad1[3];
+ 	linux_ino_t32	lst_ino;
+ 	linux_mode_t	lst_mode;
+ 	linux_nlink_t32	lst_nlink;
+ 	linux_uid_t	lst_uid;
+ 	linux_gid_t	lst_gid;
+ 	linux_dev_t	lst_rdev;
+ 	int		lst_pad2[2];
+ 	linux_off_t	lst_size;
+ 	int		lst_pad3;
+ 	linux_time_t	lst_atime;
+ 	int		lreserved0;
+ 	linux_time_t	lst_mtime;
+ 	int		lreserved1;
+ 	linux_time_t	lst_ctime;
+ 	int		lreserved2;
+ 	int		lst_blksize;
+ 	int		lst_blocks;
+ 	int		lst_pad4[14];
+};
+#else
 /* 
  * This matches struct stat64 in glibc2.1, hence the absolutely
  * insane amounts of padding around dev_t's.
  *
- * Still from Linux'sinclude/asm-mips/stat.h 
+ * Still from Linux's include/asm-mips/stat.h 
  */  
 struct linux_stat64 {
 	unsigned long	lst_dev;   
@@ -136,5 +172,36 @@ struct linux_stat64 {
 	unsigned long	lst_blksize;
 	long long 	lst_blocks;
 };
+
+/* 
+ * struct linux_stat is defined in Linux's include/asm-mips/stat.h
+ * There is also a old_kernel_stat in Linux
+ */
+struct linux_stat {
+	linux_dev_t	lst_dev; 
+	long		lst_pad[3];
+	linux_ino_t32	lst_ino;
+	linux_mode_t	lst_mode;
+	linux_nlink_t32	lst_nlink;
+	linux_uid_t	lst_uid;
+	linux_gid_t	lst_gid;
+	linux_dev_t	lst_rdev;
+	long		lst_pad2[2];
+	linux_off_t	lst_size;
+	long		lst_pad3;
+	linux_time_t	lst_atime;
+	long		lreserved0;
+	linux_time_t	lst_mtime;
+	long		lreserved1;
+	linux_time_t	lst_ctime;
+	long		lreserved2;
+	long		lst_blksize;
+	long		lst_blocks;
+	char		lst_fstype[16];
+	long		lst_pad4[8];
+	unsigned int	lst_flags
+	unsigned int	lst_gen;
+};
+#endif
 
 #endif /* !_MIPS_LINUX_TYPES_H */
