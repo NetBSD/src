@@ -1,12 +1,12 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.15 1993/12/04 02:39:41 cgd Exp $
+#	$Id: Makefile.inc,v 1.16 1994/03/31 18:39:41 mycroft Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S reboot.S \
-	sbrk.S setlogin.S sigpending.S sigprocmask.S sigreturn.S \
+SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S lseek.S pipe.S ptrace.S \
+	reboot.S sbrk.S setlogin.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S
 
 # modules with default implementations on all architectures:
@@ -19,7 +19,7 @@ ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
 	getpagesize.o getpeername.o getpgrp.o getpid.o getppid.o \
 	getpriority.o getrlimit.o getrusage.o getsockname.o getsockopt.o \
 	gettimeofday.o getuid.o ioctl.o kill.o ktrace.o link.o listen.o \
-	lseek.o lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o \
+	lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o \
 	mmap.o mount.o mprotect.o msgsys.o msync.o munmap.o nfssvc.o open.o \
 	profil.o quotactl.o read.o readlink.o readv.o recvfrom.o recvmsg.o \
 	rename.o revoke.o rmdir.o select.o semsys.o sendmsg.o sendto.o \
