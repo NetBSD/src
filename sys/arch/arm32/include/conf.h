@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.19.2.1 2001/07/10 14:03:29 lukem Exp $	*/
+/*	$NetBSD: conf.h,v 1.19.2.2 2001/09/09 03:47:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -56,6 +56,7 @@ cdev_decl(raid);
 
 /* open, close, read, write, ioctl, tty, mmap -- XXX should be a tty */
 #define cdev_physcon_init(c,n)	cdev__ttym_init(c,n,0)
+#define	physconkqfilter		ttykqfilter
 
 /* open, close, ioctl */
 #define cdev_beep_init(c,n)	cdev__oci_init(c,n)
