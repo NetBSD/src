@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 1999/02/05 21:21:27 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.33 1999/03/27 13:46:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.32 1999/02/05 21:21:27 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 1999/03/27 13:46:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ state2:
 	}
 state3:
 	state = 4;
-	if (minusc) {
+	if (sflag == 0 || minusc) {
 		static int sigs[] =  {
 		    SIGINT, SIGQUIT, SIGHUP, 
 #ifdef SIGTSTP
@@ -206,8 +206,11 @@ state3:
 
 		for (i = 0; i < SIGSSIZE; i++)
 		    setsignal(sigs[i]);
-		evalstring(minusc);
 	}
+
+	if (minusc)
+		evalstring(minusc);
+
 	if (sflag || minusc == NULL) {
 state4:	/* XXX ??? - why isn't this before the "if" statement */
 		cmdloop(1);
