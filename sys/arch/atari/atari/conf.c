@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.48 2001/05/28 08:12:47 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.49 2001/05/28 14:40:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -384,7 +384,7 @@ chrtoblk(dev)
 cons_decl(ser);
 #define	itecnpollc	nullcnpollc
 cons_decl(ite);
-cons_decl(vga)
+cons_decl(vga);
 
 struct	consdev constab[] = {
 #if NSER > 0
