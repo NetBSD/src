@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2000/01/24 03:01:54 mycroft Exp $
 
 PROG=	unfdpass
 MKMAN=	no
 
-CLEANFILES+=file1 file2 output test-sock
+CLEANFILES+=file1 file2 file3 file4 file5 file6 file7 file8 file9 file10 \
+	file11 file12 file13 file14 file15 file16 file17 file18 file19 \
+	file20 file21 file22 file23 file24 output test-sock
 
 regress:
 	@./unfdpass > output
