@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.elf_so.1,v 1.3 2001/11/02 15:28:36 skrll Exp $
+.\"	$NetBSD: ld.elf_so.1,v 1.4 2002/02/08 01:30:08 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,13 +99,13 @@ The list of default paths which is set to
 .El
 .Pp
 The filename string can be considered free form, however, it will almost
-always take the form lib<name>.so.<number>, where name specifies the
+always take the form lib\*[Lt]name\*[Gt].so.\*[Lt]number\*[Gt], where name specifies the
 .Sq library
 name and number is conceptually the library's major version number.
 .Pp
-This name and another of the form lib<name>.so are normally symbolic links
+This name and another of the form lib\*[Lt]name\*[Gt].so are normally symbolic links
 to the real shared object which has a filename of the form
-lib<name>.so.<major>.<minor>[.<teeny>].
+lib\*[Lt]name\*[Gt].so.\*[Lt]major\*[Gt].\*[Lt]minor\*[Gt][.\*[Lt]teeny\*[Gt]].
 This naming convention allows a versioning scheme similar to
 .Xr a.out 5 .
 .Ss Relocation

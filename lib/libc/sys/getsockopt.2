@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.22 2001/10/22 20:59:03 kleink Exp $
+.\"	$NetBSD: getsockopt.2,v 1.23 2002/02/08 01:28:18 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
 .Ft int
 .Fn getsockopt "int s" "int level" "int optname" "void * restrict optval" "socklen_t * restrict optlen"
 .Ft int

@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_get_mtrr.2,v 1.4 2001/11/10 22:57:02 wiz Exp $
+.\"     $NetBSD: i386_get_mtrr.2,v 1.5 2002/02/08 01:28:13 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 .Sh LIBRARY
 .Lb libi386
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <machine/sysarch.h>
-.Fd #include <machine/mtrr.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]machine/sysarch.h\*[Gt]
+.Fd #include \*[Lt]machine/mtrr.h\*[Gt]
 .Ft int
 .Fn i386_get_mtrr "struct mtrr *mtrrp" "int *n"
 .Ft int
