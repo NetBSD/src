@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.4 1998/12/05 19:43:41 mjacob Exp $	*/
+/*	$NetBSD: csc.c,v 1.5 1998/12/31 09:44:42 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ cscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;	
 	sc->sc_softc.sc_link.adapter_softc  = sc;
 	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
-	sc->sc_softc.sc_link.adapter	    = &sc->sc_adapter;
+	sc->sc_softc.sc_link.adapter	    = &sc->sc_softc.sc_adapter;
 	sc->sc_softc.sc_link.device	    = &csc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
 	sc->sc_softc.sc_link.scsipi_scsi.max_target = 7;
