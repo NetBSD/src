@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.7 2003/07/14 15:17:14 lukem Exp $ */
+/* $NetBSD: conf.c,v 1.8 2003/07/14 22:48:20 lukem Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -29,10 +29,10 @@
  * conf.c -- Device switch tables and related gumf.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.8 2003/07/14 22:48:20 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.7 2003/07/14 15:17:14 lukem Exp $");
-
 #include <sys/conf.h>
 #include <dev/cons.h>
 

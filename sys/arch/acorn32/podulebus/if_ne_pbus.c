@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.9 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.10 2003/07/14 22:48:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  *
  * EtherM - Needs proper media support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.10 2003/07/14 22:48:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.8 2003/01/01 00:25:02 thorpej Exp $	*/
+/*	$NetBSD: amps.c,v 1.9 2003/07/14 22:48:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
 /*
  * Thanks to Martin Coulson, Atomwide, for providing the hardware
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.9 2003/07/14 22:48:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

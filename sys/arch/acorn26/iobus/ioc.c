@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.8 2003/07/14 15:17:17 lukem Exp $ */
+/* $NetBSD: ioc.c,v 1.9 2003/07/14 22:48:21 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -30,10 +30,10 @@
  * ioc.c - Acorn/ARM I/O Controller (Albion/VC2311/VL2311/VY86C410)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.9 2003/07/14 22:48:21 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.8 2003/07/14 15:17:17 lukem Exp $");
-
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>

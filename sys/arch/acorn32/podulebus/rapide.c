@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.8 2003/02/04 23:40:21 perry Exp $	*/
+/*	$NetBSD: rapide.c,v 1.9 2003/07/14 22:48:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -66,6 +66,9 @@
  * Opps just noticed a mistake. The interrupt request register is different
  * between cards so the card level attach routine will need to consider this.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.9 2003/07/14 22:48:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

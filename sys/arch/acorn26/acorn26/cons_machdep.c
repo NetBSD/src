@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.4 2003/07/14 15:17:15 lukem Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.5 2003/07/14 22:48:20 lukem Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -29,10 +29,10 @@
  * cons_machdep.c -- machine dependent console routines
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.5 2003/07/14 22:48:20 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.4 2003/07/14 15:17:15 lukem Exp $");
-
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/ksyms.h>

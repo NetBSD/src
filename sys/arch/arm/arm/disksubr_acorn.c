@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.1 2001/03/04 05:06:51 matt Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.2 2003/07/14 22:48:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -65,6 +65,9 @@
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.2 2003/07/14 22:48:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

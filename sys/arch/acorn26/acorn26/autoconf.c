@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.3 2003/07/14 15:17:13 lukem Exp $ */
+/* $NetBSD: autoconf.c,v 1.4 2003/07/14 22:48:19 lukem Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -29,10 +29,10 @@
  * autoconf.c - top level device-finding code
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2003/07/14 22:48:19 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2003/07/14 15:17:13 lukem Exp $");
-
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.10 2003/05/03 18:10:41 wiz Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.11 2003/07/14 22:48:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -44,6 +44,9 @@
  * Thanks to Alsystems for loaning a development card and providing
  * programming information.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.11 2003/07/14 22:48:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

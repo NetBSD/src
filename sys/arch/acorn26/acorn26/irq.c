@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.3 2003/07/14 15:17:15 lukem Exp $ */
+/* $NetBSD: irq.c,v 1.4 2003/07/14 22:48:20 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -30,10 +30,10 @@
  * irq.c - IOC IRQ handler.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.4 2003/07/14 22:48:20 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.3 2003/07/14 15:17:15 lukem Exp $");
-
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
