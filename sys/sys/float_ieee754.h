@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee754.h,v 1.2 2003/08/07 16:34:04 agc Exp $	*/
+/*	$NetBSD: float_ieee754.h,v 1.3 2003/10/22 16:18:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,6 +35,7 @@
 #define _SYS_FLOAT_IEEE754_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #ifndef FLT_ROUNDS
 __BEGIN_DECLS
@@ -42,6 +43,19 @@ extern int __flt_rounds __P((void));
 __END_DECLS
 #define FLT_ROUNDS	__flt_rounds()
 #endif
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#ifndef FLT_EVAL_METHOD
+#if __GNUC_PREREQ__(3, 3)
+#define	FLT_EVAL_METHOD	__FLT_EVAL_METHOD__
+#endif /* GCC >= 3.3 */
+#endif /* defined(FLT_EVAL_METHOD) */
+#endif /* !defined(_ANSI_SOURCE) && ... */
 
 #define FLT_RADIX	2		/* b */
 
