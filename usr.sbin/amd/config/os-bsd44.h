@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
- *	$Id: os-bsd44.h,v 1.9 1994/06/15 04:12:24 deraadt Exp $
+ *	$Id: os-bsd44.h,v 1.10 1995/03/22 17:15:17 mycroft Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -158,6 +158,8 @@ XXX - Probably no hope of running Amd on this machine!
 
 #define	MNTOPT_SOFT	"soft"		/* soft mount */
 #define	MNTOPT_INTR	"intr"		/* interrupts allowed */
+#define	MNTOPT_NOCONN	"noconn"	/* accept any responder */
+#define	MNTOPT_RESVPORT	"resvport"	/* use reserved port */
 
 #define NFSMNT_HOSTNAME	0		/* hostname on 4.4 is not optional */
 
