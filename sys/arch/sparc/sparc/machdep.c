@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.5 1993/10/13 09:01:07 deraadt Exp $
+ * $Id: machdep.c,v 1.6 1993/10/13 10:05:03 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -385,7 +385,6 @@ sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	unsigned code;
 {
-#ifdef notdef		/* TDR: fix this */
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sigframe *fp;
@@ -397,16 +396,16 @@ sendsig(catcher, sig, mask, code)
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_onstack;
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	if (!psp->ps_onstack && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
-					 psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		fp = (struct sigframe *)(psp->ps_sigsp
+					 - sizeof(struct sigframe));
+		psp->ps_onstack = 1;
 	} else
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
@@ -489,7 +488,6 @@ sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig: about to return to catcher\n");
 #endif
-#endif /* notdef */
 }
 
 /*
@@ -510,7 +508,6 @@ sigreturn(p, uap, retval)
 	struct sigreturn_args *uap;
 	int *retval;
 {
-#ifdef notdef		/* TDR: fix this */
 	register struct sigcontext *scp;
 	register struct trapframe *tf;
 
@@ -541,13 +538,9 @@ sigreturn(p, uap, retval)
 	tf->tf_global[1] = scp->sc_g1;
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
-	if (scp->sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+	p->p_sigacts->ps_onstack = scp->sc_onstack & 1;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
-#endif /* notdef */
 }
 
 int	waittime = -1;
