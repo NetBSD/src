@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_buffer.3,v 1.9 2004/11/24 11:57:09 blymn Exp $
+.\"	$NetBSD: form_field_buffer.3,v 1.10 2004/11/24 12:09:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 1, 2001
+.Dd November 24, 2004
 .Dt FORMS 3
 .Os
 .Sh NAME
@@ -62,13 +62,16 @@ function returns the contents of the buffer number specified by
 for the given field.
 If the requested buffer number exceeds the
 number of buffers attached to the field then NULL will be returned.
-If the field option O_REFORMAT is enabled on the given field then
+If the field option
+.Dv O_REFORMAT
+is enabled on the given field then
 storage will be allocated to hold the reformatted buffer.
 This storage must be release by calling
 .Xr free 3
 when it is no longer required.
-If the O_REFORMAT field option is not set then no extra storage is
-allocated.
+If the
+.Dv O_REFORMAT
+field option is not set then no extra storage is allocated.
 The field buffer may be set by calling
 .Fn set_field_buffer
 which will set the given buffer number to the contents of the string
@@ -84,8 +87,11 @@ does.
 Calling
 .Fn field_status
 will return the status of the first buffer attached to the field.
-If the field has been modified then the function will return TRUE
-otherwise FALSE is returned, the status of the first buffer may be
+If the field has been modified then the function will return
+.Dv TRUE
+otherwise
+.Dv FALSE
+is returned, the status of the first buffer may be
 programmatically set by calling
 .Fn set_field_status .
 The maximum growth of a dynamic field can be set by calling
@@ -93,7 +99,9 @@ The maximum growth of a dynamic field can be set by calling
 which limits the fields rows if the field is a multiline field or the
 fields columns if the field only has a single row.
 .Sh RETURN VALUES
-Functions returning pointers will return NULL if an error is detected.
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
 The functions that return an int will return one of the following error
 values:
 .Pp
@@ -110,11 +118,11 @@ A system error occurred performing the function.
 .Xr forms 3
 .Sh NOTES
 The header
-.Pa \*[Lt]form.h\*[Gt]
+.Aq Pa form.h
 automatically includes both
-.Pa \*[Lt]curses.h\*[Gt]
+.Aq Pa curses.h
 and
-.Pa \*[Lt]eti.h\*[Gt] .
+.Aq Pa eti.h .
 The function
 .Fn set_field_printf
 is a
