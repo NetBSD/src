@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.85 2000/11/27 22:29:26 jdolecek Exp $ */
+/* $NetBSD: locore.s,v 1.86 2000/12/13 00:38:20 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.85 2000/11/27 22:29:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.86 2000/12/13 00:38:20 mycroft Exp $");
 
 #include "assym.h"
 
@@ -364,7 +364,9 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	2b
 
 	/* We've got an AST */
-6:	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
+6:	stq	zero, CPU_INFO_ASTPENDING(v0)	/* no AST pending */
+
+	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
 	call_pal PAL_OSF1_swpipl
 	mov	v0, s2				/* remember old IPL */
 
