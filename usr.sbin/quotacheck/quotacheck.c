@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.29 2004/01/05 00:17:07 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.30 2004/01/05 17:26:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.29 2004/01/05 00:17:07 christos Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.30 2004/01/05 17:26:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "Usage:\t%s -a [-guv]\n\t%s [-guv] filesys ...\n", getprogname(),
+	    "Usage:\t%s -a [-gquv]\n\t%s [-gquv] filesys ...\n", getprogname(),
 	    getprogname());
 	exit(1);
 }
