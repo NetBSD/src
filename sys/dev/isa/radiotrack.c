@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.2 2002/01/02 04:10:02 augustss Exp $ */
+/* $NetBSD: radiotrack.c,v 1.3 2002/01/02 12:42:23 augustss Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -134,7 +134,7 @@ rt_probe(struct device *parent, struct cfdata *cf, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-
+	u_int r;
 	int iosize = 1, iobase = ia->ia_iobase;
 
 	if (!RT_BASE_VALID(iobase)) {
@@ -145,13 +145,13 @@ rt_probe(struct device *parent, struct cfdata *cf, void *aux)
 	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
 		return 0;
 
+	r = rt_find(iot, ioh);
+
 	bus_space_unmap(iot, ioh, iosize);
 
-	if (!rt_find(iot, ioh))
-		return 0;
-
 	ia->ia_iosize = iosize;
-	return 1;
+
+	return (r != 0);
 }
 
 void
