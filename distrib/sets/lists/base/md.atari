@@ -2,6 +2,7 @@
 ./sbin/edahdi
 ./sbin/edlabel
 ./usr/bin/fdformat
+./usr/bin/msconfig
 ./usr/lib/libc.so.12.17
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
