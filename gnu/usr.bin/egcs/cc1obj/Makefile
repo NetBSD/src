@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 1998/04/01 21:13:24 tv Exp $
+#	$NetBSD: Makefile,v 1.4 1998/04/02 06:39:52 mrg Exp $
 
 PROG=	cc1obj
-SRCS=	objc-parse.c objc-act.c 
-
-CLEANFILES+=	objc-parse.c
+SRCS=	objc-parse.y objc-act.c 
 
 # XXX needs to be before dist/gcc or tree.c comes from the
 # wrong place..
