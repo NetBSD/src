@@ -24,7 +24,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.7 2001/02/08 00:04:52 markus Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.11 2001/03/07 10:11:23 djm Exp $");
 
 /* XXX: commandline mode */
 /* XXX: copy between two remote hosts (commandline) */
@@ -43,6 +43,7 @@ RCSID("$OpenBSD: sftp.c,v 1.7 2001/02/08 00:04:52 markus Exp $");
 int use_ssh1 = 0;
 char *ssh_program = _PATH_SSH_PROGRAM;
 char *sftp_server = NULL;
+FILE* infile;
 
 static void
 connect_to_server(char **args, int *in, int *out, pid_t *sshpid)
@@ -91,24 +92,14 @@ make_ssh_args(char *add_arg)
 	static char **args = NULL;
 	static int nargs = 0;
 	char debug_buf[4096];
-	int i, use_subsystem = 1;
-
-	/* no subsystem if protocol 1 or the server-spec contains a '/' */
-	if (use_ssh1 ||
-	    (sftp_server != NULL && strchr(sftp_server, '/') != NULL))
-		use_subsystem = 0;
+	int i;
 
 	/* Init args array */
 	if (args == NULL) {
-		nargs = use_subsystem ? 6 : 5;
+		nargs = 2;
 		i = 0;
 		args = xmalloc(sizeof(*args) * nargs);
 		args[i++] = "ssh";
-		args[i++] = use_ssh1 ? "-oProtocol=1" : "-oProtocol=2";
-		if (use_subsystem)
-			args[i++] = "-s";
-		args[i++] = "-oForwardAgent=no";
-		args[i++] = "-oForwardX11=no";
 		args[i++] = NULL;
 	}
 
@@ -120,6 +111,13 @@ make_ssh_args(char *add_arg)
 		args[i++] = NULL;
 		return(NULL);
 	}
+
+	/* no subsystem if the server-spec contains a '/' */
+	if (sftp_server == NULL || strchr(sftp_server, '/') == NULL)
+		make_ssh_args("-s");
+	make_ssh_args("-oForwardX11=no");
+	make_ssh_args("-oForwardAgent=no");
+	make_ssh_args(use_ssh1 ? "-oProtocol=1" : "-oProtocol=2");
 
 	/* Otherwise finish up and return the arg array */
 	if (sftp_server != NULL)
@@ -143,7 +141,7 @@ make_ssh_args(char *add_arg)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: sftp [-1vC] [-osshopt=value] [user@]host\n");
+	fprintf(stderr, "usage: sftp [-1vC] [-b batchfile] [-osshopt=value] [user@]host\n");
 	exit(1);
 }
 
@@ -157,9 +155,10 @@ main(int argc, char **argv)
 	extern int optind;
 	extern char *optarg;
 
+	infile = stdin;		/* Read from STDIN unless changed by -b */
 	debug_level = compress_flag = 0;
 
-	while ((ch = getopt(argc, argv, "1hvCo:s:S:")) != -1) {
+	while ((ch = getopt(argc, argv, "1hvCo:s:S:b:")) != -1) {
 		switch (ch) {
 		case 'C':
 			compress_flag = 1;
@@ -181,6 +180,14 @@ main(int argc, char **argv)
 			break;
 		case 'S':
 			ssh_program = optarg;
+			break;
+		case 'b':
+			if (infile == stdin) {
+				infile = fopen(optarg, "r");
+				if (infile == NULL) 
+					fatal("%s (%s).", strerror(errno), optarg);
+			} else 
+				fatal("Filename already specified.");
 			break;
 		case 'h':
 		default:
@@ -242,15 +249,12 @@ main(int argc, char **argv)
 
 	connect_to_server(make_ssh_args(NULL), &in, &out, &sshpid);
 
-	do_init(in, out);
-
 	interactive_loop(in, out);
 
 	close(in);
 	close(out);
-
-	if (kill(sshpid, SIGHUP) == -1)
-		fatal("Couldn't terminate ssh process: %s", strerror(errno));
+	if (infile != stdin)
+		fclose(infile);
 
 	if (waitpid(sshpid, NULL, 0) == -1)
 		fatal("Couldn't wait for ssh process: %s", strerror(errno));

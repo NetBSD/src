@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kex.c,v 1.21 2001/02/11 12:59:24 markus Exp $");
+RCSID("$OpenBSD: kex.c,v 1.23 2001/03/10 17:51:04 markus Exp $");
 
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
@@ -42,6 +42,7 @@ RCSID("$OpenBSD: kex.c,v 1.21 2001/02/11 12:59:24 markus Exp $");
 #include "key.h"
 #include "log.h"
 #include "mac.h"
+#include "match.h"
 
 #define KEX_COOKIE_LEN	16
 
@@ -138,15 +139,33 @@ dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
 }
 
 void
-dh_gen_key(DH *dh)
+dh_gen_key(DH *dh, int need)
 {
-	int tries = 0;
+	int i, bits_set = 0, tries = 0;
 
+	if (dh->p == NULL)
+		fatal("dh_gen_key: dh->p == NULL");
+	if (2*need >= BN_num_bits(dh->p))
+		fatal("dh_gen_key: group too small: %d (2*need %d)",
+		    BN_num_bits(dh->p), 2*need);
 	do {
+		if (dh->priv_key != NULL)
+			BN_free(dh->priv_key);
+		dh->priv_key = BN_new();
+		if (dh->priv_key == NULL)
+			fatal("dh_gen_key: BN_new failed");
+		/* generate a 2*need bits random private exponent */
+		if (!BN_rand(dh->priv_key, 2*need, 0, 0))
+			fatal("dh_gen_key: BN_rand failed");
 		if (DH_generate_key(dh) == 0)
 			fatal("DH_generate_key");
+		for (i = 0; i <= BN_num_bits(dh->priv_key); i++)
+			if (BN_is_bit_set(dh->priv_key, i))
+				bits_set++;
+		debug("dh_gen_key: priv key bits set: %d/%d",
+		    bits_set, BN_num_bits(dh->priv_key));
 		if (tries++ > 10)
-			fatal("dh_new_group1: too many bad keys: giving up");
+			fatal("dh_gen_key: too many bad keys: giving up");
 	} while (!dh_pub_is_valid(dh, dh->pub_key));
 }
 
@@ -354,49 +373,10 @@ derive_key(int id, int need, u_char *hash, BIGNUM *shared_secret)
 	return digest;
 }
 
-#define NKEYS	6
-
-#define	MAX_PROP	20
-#define	SEP	","
-
-static char *
-get_match(char *client, char *server)
-{
-	char *sproposals[MAX_PROP];
-	char *c, *s, *p, *ret, *cp, *sp;
-	int i, j, nproposals;
-
-	c = cp = xstrdup(client);
-	s = sp = xstrdup(server);
-
-	for ((p = strsep(&sp, SEP)), i=0; p && *p != '\0';
-	     (p = strsep(&sp, SEP)), i++) {
-		if (i < MAX_PROP)
-			sproposals[i] = p;
-		else
-			break;
-	}
-	nproposals = i;
-
-	for ((p = strsep(&cp, SEP)), i=0; p && *p != '\0';
-	     (p = strsep(&cp, SEP)), i++) {
-		for (j = 0; j < nproposals; j++) {
-			if (strcmp(p, sproposals[j]) == 0) {
-				ret = xstrdup(p);
-				xfree(c);
-				xfree(s);
-				return ret;
-			}
-		}
-	}
-	xfree(c);
-	xfree(s);
-	return NULL;
-}
 static void
 choose_enc(Enc *enc, char *client, char *server)
 {
-	char *name = get_match(client, server);
+	char *name = match_list(client, server, NULL);
 	if (name == NULL)
 		fatal("no matching cipher found: client %s server %s", client, server);
 	enc->cipher = cipher_by_name(name);
@@ -410,7 +390,7 @@ choose_enc(Enc *enc, char *client, char *server)
 static void
 choose_mac(Mac *mac, char *client, char *server)
 {
-	char *name = get_match(client, server);
+	char *name = match_list(client, server, NULL);
 	if (name == NULL)
 		fatal("no matching mac found: client %s server %s", client, server);
 	if (mac_init(mac, name) < 0)
@@ -425,7 +405,7 @@ choose_mac(Mac *mac, char *client, char *server)
 static void
 choose_comp(Comp *comp, char *client, char *server)
 {
-	char *name = get_match(client, server);
+	char *name = match_list(client, server, NULL);
 	if (name == NULL)
 		fatal("no matching comp found: client %s server %s", client, server);
 	if (strcmp(name, "zlib") == 0) {
@@ -440,7 +420,7 @@ choose_comp(Comp *comp, char *client, char *server)
 static void
 choose_kex(Kex *k, char *client, char *server)
 {
-	k->name = get_match(client, server);
+	k->name = match_list(client, server, NULL);
 	if (k->name == NULL)
 		fatal("no kex alg");
 	if (strcmp(k->name, KEX_DH1) == 0) {
@@ -453,7 +433,7 @@ choose_kex(Kex *k, char *client, char *server)
 static void
 choose_hostkeyalg(Kex *k, char *client, char *server)
 {
-	char *hostkeyalg = get_match(client, server);
+	char *hostkeyalg = match_list(client, server, NULL);
 	if (hostkeyalg == NULL)
 		fatal("no hostkey alg");
 	k->hostkey_type = key_type_from_name(hostkeyalg);
@@ -506,6 +486,7 @@ kex_choose_conf(char *cprop[PROPOSAL_MAX], char *sprop[PROPOSAL_MAX], int server
 	return k;
 }
 
+#define NKEYS	6
 int
 kex_derive_keys(Kex *k, u_char *hash, BIGNUM *shared_secret)
 {
