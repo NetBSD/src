@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.101 2001/03/14 14:39:46 toshii Exp $
+#	$NetBSD: files.arm32,v 1.102 2001/03/20 00:01:37 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -199,6 +199,8 @@ attach	podulebus at root
 file	arch/arm32/podulebus/podulebus.c	podulebus needs-flag
 file	arch/arm32/podulebus/podulebus_io.c	podulebus
 file	arch/arm32/podulebus/podulebus_io_asm.S	podulebus
+
+include "dev/podulebus/files.podulebus"
 
 # Ethernet devices
 
