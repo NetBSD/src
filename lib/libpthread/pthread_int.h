@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.20 2003/11/09 18:56:48 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.21 2003/11/25 22:36:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -297,57 +297,6 @@ int	pthread__find(pthread_t self, pthread_t target);
 	(ucp)->uc_flags = _UC_CPU | _UC_STACK;				\
 	_INITCONTEXT_U_MD(ucp)						\
 	} while (/*CONSTCOND*/0)
-
-#ifdef __PTHREAD_SIGNAL_PRIVATE
-#ifndef __HAVE_SIGINFO
-
-/*
- * Macros for converting from ucontext to sigcontext and vice-versa.
- * Note that going from sigcontext->ucontext is only safe for a
- * sigcontext that was first created from a ucontext.
- *
- * Arch-specific code can override this, if necessary.  It may also
- * be necessary for arch-specific code to include extra info along with
- * the sigcontext.
- */
-#ifndef PTHREAD_SIGCONTEXT_EXTRA
-#define	PTHREAD_SIGCONTEXT_EXTRA
-#endif
-
-struct pthread__sigcontext {
-	struct sigcontext	psc_context;
-	PTHREAD_SIGCONTEXT_EXTRA
-};
-
-#ifndef PTHREAD_UCONTEXT_TO_SIGCONTEXT
-#define	PTHREAD_UCONTEXT_TO_SIGCONTEXT(mask, uc, psc)			\
-do {									\
-	(uc)->uc_sigmask = *(mask);					\
-	/*								\
-	 * XXX We may want to check for _UC_USER here and do a		\
-	 * XXX _INITCONTEXT_U_MD() and clearing _UC_USER on such	\
-	 * XXX contexts before converting to a signcontext, thus	\
-	 * XXX allowing signal handlers to modify the non-_UC_USER	\
-	 * XXX registers.  Hazy territory; ignore it for now.		\
-	 */								\
-	_UCONTEXT_TO_SIGCONTEXT((uc), &(psc)->psc_context);		\
-} while (/*CONSTCOND*/0)
-
-#define	PTHREAD_SIGCONTEXT_TO_UCONTEXT(psc, uc)				\
-do {									\
-	_SIGCONTEXT_TO_UCONTEXT(&(psc)->psc_context, (uc));		\
-	(uc)->uc_flags &= ~_UC_SIGMASK;					\
-} while (/*CONSTCOND*/0)
-#else
-void	pthread__ucontext_to_sigcontext(const sigset_t *, ucontext_t *,
-	    struct pthread__sigcontext *);
-void	pthread__sigcontext_to_ucontext(const struct pthread__sigcontext *,
-	    ucontext_t *);
-#endif /* PTHREAD_UCONTEXT_TO_SIGCONTEXT */
-
-#endif /* __HAVE_SIGINFO */
-
-#endif /* __PTHREAD_SIGNAL_PRIVATE */
 
 #ifdef PTHREAD_MACHINE_HAS_ID_REGISTER
 #define pthread__id(reg) (reg)
