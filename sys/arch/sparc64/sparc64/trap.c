@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2003/10/26 19:17:41 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.97 2003/10/27 00:15:24 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2003/10/26 19:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2003/10/27 00:15:24 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -1311,7 +1311,7 @@ kfault:
 				? SEGV_ACCERR : SEGV_MAPERR);
 		}
 		ksi.ksi_trap = type;
-		ksi.ksi_addr = (void *)addr;
+		ksi.ksi_addr = (void *)sfva;
 #ifdef __HAVE_SIGINFO
 		trapsignal(l, &ksi);
 #else
@@ -1489,7 +1489,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 	ksi.ksi_signo = SIGSEGV;
 	ksi.ksi_code = SEGV_MAPERR;
 	ksi.ksi_trap = type;
-	ksi.ksi_addr = (void *)sfva;
+	ksi.ksi_addr = (void *)afva;
 #ifdef __HAVE_SIGINFO
 	trapsignal(l, &ksi);
 #else
