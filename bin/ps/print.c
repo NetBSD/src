@@ -64,6 +64,7 @@ static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #include <string.h>
 #include <vis.h>
 #include <tzfile.h>
+#include <unistd.h>
 
 #include "ps.h"
 

@@ -46,6 +46,7 @@ static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #include <nlist.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "ps.h"
 

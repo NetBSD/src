@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.2 (Berkeley) 4/18/94
- *	$Id: extern.h,v 1.2 1994/06/13 16:33:53 jtc Exp $
+ *	$Id: extern.h,v 1.3 1994/12/04 07:11:52 cgd Exp $
  */
 
 /*
@@ -173,6 +173,11 @@ int ul_asc __P((u_long, register char *, register int, register int));
 u_quad_t asc_uqd __P((register char *, int, register int));
 int uqd_asc __P((u_quad_t, register char *, register int, register int));
 #endif
+
+/* 
+ * getoldopt.c
+ */
+int getoldopt __P((int, char **, char *));
 
 /*
  * options.c

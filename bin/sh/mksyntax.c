@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mksyntax.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: mksyntax.c,v 1.7 1994/06/14 05:49:21 jtc Exp $";
+static char *rcsid = "$Id: mksyntax.c,v 1.8 1994/12/04 07:12:23 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -106,8 +106,18 @@ int size;		/* number of values which a char variable can have */
 int nbits;		/* number of bits in a character */
 int digit_contig;	/* true if digits are contiguous */
 
+void add __P((char *, char *));
+void digit_convert();
+void filltable __P((char *));
+void init();
+void output_type_macros();
+void print __P((char *));
 
-main() {
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
+{
 	char c;
 	char d;
 	int sign;
@@ -249,9 +259,10 @@ main() {
  * Clear the syntax table.
  */
 
+void
 filltable(dftval)
 	char *dftval;
-	{
+{
 	int i;
 
 	for (i = 0 ; i < size ; i++)
@@ -263,6 +274,7 @@ filltable(dftval)
  * Initialize the syntax table with default values.
  */
 
+void
 init() {
 	filltable("CWORD");
 	syntax[0] = "CEOF";
@@ -280,9 +292,10 @@ init() {
  * Add entries to the syntax table.
  */
 
+void
 add(p, type)
 	char *p, *type;
-	{
+{
 	while (*p)
 		syntax[*p++ + base] = type;
 }
@@ -293,9 +306,10 @@ add(p, type)
  * Output the syntax table.
  */
 
+void
 print(name)
 	char *name;
-	{
+{
 	int i;
 	int col;
 
@@ -335,7 +349,9 @@ char *macro[] = {
 	NULL
 };
 
-output_type_macros() {
+void
+output_type_macros() 
+{
 	char **pp;
 
 	if (digit_contig)
@@ -354,7 +370,9 @@ output_type_macros() {
  * Output digit conversion table (if digits are not contiguous).
  */
 
-digit_convert() {
+void
+digit_convert() 
+{
 	int maxdigit;
 	static char digit[] = "0123456789";
 	char *p;
