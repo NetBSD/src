@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.38 1998/03/29 04:41:44 mrg Exp $	*/
+/*	$NetBSD: parser.c,v 1.39 1998/07/28 11:41:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.38 1998/03/29 04:41:44 mrg Exp $");
+__RCSID("$NetBSD: parser.c,v 1.39 1998/07/28 11:41:57 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,8 +122,8 @@ STATIC int readtoken __P((void));
 STATIC int xxreadtoken __P((void));
 STATIC int readtoken1 __P((int, char const *, char *, int));
 STATIC int noexpand __P((char *));
-STATIC void synexpect __P((int));
-STATIC void synerror __P((char *));
+STATIC void synexpect __P((int)) __attribute__((noreturn));
+STATIC void synerror __P((char *)) __attribute__((noreturn));
 STATIC void setprompt __P((int));
 
 
@@ -481,6 +481,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		goto checkneg;
 	default:
 		synexpect(-1);
+		/* NOTREACHED */
 	}
 
 	/* Now check for redirection which may follow command */
@@ -1497,6 +1498,7 @@ synexpect(token)
 		fmtstr(msg, 64, "%s unexpected", tokname[lasttoken]);
 	}
 	synerror(msg);
+	/* NOTREACHED */
 }
 
 
@@ -1508,6 +1510,7 @@ synerror(msg)
 		outfmt(&errout, "%s: %d: ", commandname, startlinno);
 	outfmt(&errout, "Syntax error: %s\n", msg);
 	error((char *)NULL);
+	/* NOTREACHED */
 }
 
 STATIC void

@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.40 1998/07/26 19:44:12 mycroft Exp $	*/
+/*	$NetBSD: expand.c,v 1.41 1998/07/28 11:41:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.40 1998/07/26 19:44:12 mycroft Exp $");
+__RCSID("$NetBSD: expand.c,v 1.41 1998/07/28 11:41:54 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -469,7 +469,7 @@ subevalvar(p, str, strloc, subtype, startloc, varflags, recorded)
 		error("%.*s: parameter %snot set", p - str - 1,
 		      str, (varflags & VSNUL) ? "null or "
 					      : nullstr);
-		return 0;
+		/* NOTREACHED */
 
 	case VSTRIMLEFT:
 		for (loc = startp; loc < str; loc++) {

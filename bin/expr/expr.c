@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.8 1998/07/28 05:15:46 mycroft Exp $	*/
+/*	$NetBSD: expr.c,v 1.9 1998/07/28 11:41:48 mycroft Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -183,11 +183,10 @@ int
 is_zero_or_null(vp)
 	struct val     *vp;
 {
-	if (vp->type == integer) {
+	if (vp->type == integer)
 		return (vp->u.i == 0);
-	} else {
+	else
 		return (*vp->u.s == 0 || (to_integer(vp) && vp->u.i == 0));
-	}
 	/* NOTREACHED */
 }
 
@@ -250,10 +249,8 @@ eval6()
 		nexttoken();
 		v = eval0();
 
-		if (token != LP) {
+		if (token != LP)
 			error();
-			/* NOTREACHED */
-		}
 		nexttoken();
 		return v;
 	} else {
@@ -538,10 +535,8 @@ main(argc, argv)
 	nexttoken();
 	vp = eval0();
 
-	if (token != EOI) {
+	if (token != EOI)
 		error();
-		/* NOTREACHED */
-	}
 
 	if (vp->type == integer)
 		(void)printf("%d\n", vp->u.i);

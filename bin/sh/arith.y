@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith.y,v 1.10 1998/05/18 22:48:53 christos Exp $	*/
+/*	$NetBSD: arith.y,v 1.11 1998/07/28 11:41:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith.y,v 1.10 1998/05/18 22:48:53 christos Exp $");
+__RCSID("$NetBSD: arith.y,v 1.11 1998/07/28 11:41:52 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,4 +199,5 @@ yyerror(s)
 	yyclearin;
 	arith_lex_reset();	/* reprime lex */
 	error("arithmetic expression: %s: \"%s\"", s, arith_startbuf);
+	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.12 1998/07/28 02:47:19 mycroft Exp $	*/
+/*	$NetBSD: err.c,v 1.13 1998/07/28 11:41:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.12 1998/07/28 02:47:19 mycroft Exp $");
+__RCSID("$NetBSD: err.c,v 1.13 1998/07/28 11:41:42 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -398,10 +398,8 @@ stderror(id, va_alist)
     /*
      * Go away if -e or we are a child shell
      */
-    if (exiterr || child) {
+    if (exiterr || child)
 	xexit(1);
-	/* NOTREACHED */
-    }
 
     /*
      * Reset the state of the input. This buffered seek to end of file will

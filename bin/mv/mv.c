@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.18 1998/07/28 05:31:26 mycroft Exp $	*/
+/*	$NetBSD: mv.c,v 1.19 1998/07/28 11:41:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.18 1998/07/28 05:31:26 mycroft Exp $");
+__RCSID("$NetBSD: mv.c,v 1.19 1998/07/28 11:41:49 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,6 @@ main(argc, argv)
 		if (argc > 2)
 			usage();
 		exit(do_move(argv[0], argv[1]));
-		/* NOTREACHED */
 	}
 
 	/* It's a directory, move each file into it. */
@@ -312,7 +311,6 @@ copy(from, to)
 		execl(_PATH_CP, "mv", "-PRp", from, to, NULL);
 		warn("%s", _PATH_CP);
 		_exit(1);
-		/* NOTREACHED */
 	}
 	if (waitpid(pid, &status, 0) == -1) {
 		warn("%s: waitpid", _PATH_CP);
@@ -331,7 +329,6 @@ copy(from, to)
 		execl(_PATH_RM, "mv", "-rf", from, NULL);
 		warn("%s", _PATH_RM);
 		_exit(1);
-		/* NOTREACHED */
 	}
 	if (waitpid(pid, &status, 0) == -1) {
 		warn("%s: waitpid", _PATH_RM);

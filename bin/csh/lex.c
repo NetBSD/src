@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $	*/
+/*	$NetBSD: lex.c,v 1.15 1998/07/28 11:41:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $");
+__RCSID("$NetBSD: lex.c,v 1.15 1998/07/28 11:41:45 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -599,10 +599,8 @@ getdol()
 		c = 's';
 	    }
 	    if (!any("htrqxes", c)) {
-		if ((amodflag || gmodflag) && c == '\n') {
+		if ((amodflag || gmodflag) && c == '\n')
 		    stderror(ERR_VARSYN);	/* strike */
-		    /* NOTREACHED */
-		}
 		seterror(ERR_VARMOD, c);
 		*np = 0;
 		addla(name);
@@ -1392,7 +1390,6 @@ top:
 	    if (wanteof)
 		return (-1);
 	    exitstat();
-	    /* NOTREACHED */
 	}
 	if (arginp) {
 	    if ((c = *arginp++) == 0) {

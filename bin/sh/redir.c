@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.18 1998/07/28 05:31:28 mycroft Exp $	*/
+/*	$NetBSD: redir.c,v 1.19 1998/07/28 11:41:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.18 1998/07/28 05:31:28 mycroft Exp $");
+__RCSID("$NetBSD: redir.c,v 1.19 1998/07/28 11:41:58 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ again:
 				default:
 					INTON;
 					error("%d: %s", fd, strerror(errno));
-					break;
+					/* NOTREACHED */
 				}
 			}
 			if (!try) {
@@ -276,7 +276,6 @@ openhere(redir)
 		else
 			expandhere(redir->nhere.doc, pip[1]);
 		_exit(0);
-		/* NOTREACHED */
 	}
 out:
 	close(pip[1]);

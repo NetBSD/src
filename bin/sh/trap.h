@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.11 1996/10/16 15:45:20 christos Exp $	*/
+/*	$NetBSD: trap.h,v 1.12 1998/07/28 11:41:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,4 +47,4 @@ void ignoresig __P((int));
 void onsig __P((int));
 void dotrap __P((void));
 void setinteractive __P((int));
-void exitshell __P((int));
+void exitshell __P((int)) __attribute__((noreturn));

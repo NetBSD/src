@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.23 1998/07/28 05:31:23 mycroft Exp $	*/
+/*	$NetBSD: csh.c,v 1.24 1998/07/28 11:41:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.23 1998/07/28 05:31:23 mycroft Exp $");
+__RCSID("$NetBSD: csh.c,v 1.24 1998/07/28 11:41:41 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,18 +218,12 @@ main(argc, argv)
     (void) fclose(cshin);
     (void) fclose(cshout);
     (void) fclose(csherr);
-    if (!(cshin  = funopen((void *) &SHIN,  readf, writef, seekf, closef))) {
+    if (!(cshin  = funopen((void *) &SHIN,  readf, writef, seekf, closef)))
 	exit(1);
-	/* NOTREACHED */
-    }
-    if (!(cshout = funopen((void *) &SHOUT, readf, writef, seekf, closef))) {
+    if (!(cshout = funopen((void *) &SHOUT, readf, writef, seekf, closef)))
 	exit(1);
-	/* NOTREACHED */
-    }
-    if (!(csherr = funopen((void *) &SHERR, readf, writef, seekf, closef))) {
+    if (!(csherr = funopen((void *) &SHERR, readf, writef, seekf, closef)))
 	exit(1);
-	/* NOTREACHED */
-    }
     (void) setvbuf(cshin,  NULL, _IOLBF, 0);
     (void) setvbuf(cshout, NULL, _IOLBF, 0);
     (void) setvbuf(csherr, NULL, _IOLBF, 0);
@@ -323,10 +317,8 @@ main(argc, argv)
 		break;
 
 	    case 'c':		/* -c	Command input from arg */
-		if (argc == 1) {
+		if (argc == 1)
 		    xexit(0);
-		    /* NOTREACHED */
-		}
 		argc--, tempv++;
 		arginp = SAVE(tempv[0]);
 		prompt = 0;
@@ -401,7 +393,6 @@ main(argc, argv)
 	if (nofile < 0) {
 	    child = 1;		/* So this doesn't return */
 	    stderror(ERR_SYSTEM, tempv[0], strerror(errno));
-	    /* NOTREACHED */
 	}
 	ffile = SAVE(tempv[0]);
 	/*
@@ -436,7 +427,6 @@ main(argc, argv)
 	    errno = EACCES;
 	    child = 1;		/* So this doesn't return */
 	    stderror(ERR_SYSTEM, "csh", strerror(errno));
-	    /* NOTREACHED */
 	}
     }
     /*
@@ -803,10 +793,8 @@ srcunit(unit, onlyown, hflg)
     /*
      * If process reset() (effectively an unwind) then we must also unwind.
      */
-    if (my_reenter) {
+    if (my_reenter)
 	stderror(ERR_SILENT);
-	/* NOTREACHED */
-    }
     insource = oinsource;
 }
 
@@ -952,6 +940,7 @@ pintr(notused)
 	int notused;
 {
     pintr1(1);
+    /* NOTREACHED */
 }
 
 void
@@ -972,7 +961,6 @@ pintr1(wantnl)
 	    (void) fprintf(cshout, "\n");
 	    dojobs(jobargv, NULL);
 	    stderror(ERR_NAME | ERR_INTR);
-	    /* NOTREACHED */
 	}
     }
     (void) sigdelset(&osigset, SIGCHLD);
@@ -1120,10 +1108,8 @@ process(catch)
 	/*
 	 * Print lexical error messages, except when sourcing history lists.
 	 */
-	if (!enterhist && seterr) {
+	if (!enterhist && seterr)
 	    stderror(ERR_OLD);
-	    /* NOTREACHED */
-	}
 
 	/*
 	 * If had a history command :p modifier then this is as far as we
@@ -1138,10 +1124,8 @@ process(catch)
 	 * Parse the words of the input into a parse tree.
 	 */
 	savet = syntax(paraml.next, &paraml, 0);
-	if (seterr) {
+	if (seterr)
 	    stderror(ERR_OLD);
-	    /* NOTREACHED */
-	}
 
 	execute(savet, (tpgrp > 0 ? tpgrp : -1), NULL, NULL);
 
@@ -1168,20 +1152,16 @@ dosource(v, t)
 
     v++;
     if (*v && eq(*v, STRmh)) {
-	if (*++v == NULL) {
+	if (*++v == NULL)
 	    stderror(ERR_NAME | ERR_HFLAG);
-	    /* NOTREACHED */
-	}
 	hflg++;
     }
     (void) Strcpy(buf, *v);
     f = globone(buf, G_ERROR);
     (void) strcpy((char *) buf, short2str(f));
     xfree((ptr_t) f);
-    if (!srcfile((char *) buf, 0, hflg) && !hflg) {
+    if (!srcfile((char *) buf, 0, hflg) && !hflg)
 	stderror(ERR_SYSTEM, (char *) buf, strerror(errno));
-	/* NOTREACHED */
-    }
 }
 
 /*

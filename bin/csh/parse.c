@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.9 1998/07/28 02:23:39 mycroft Exp $	*/
+/*	$NetBSD: parse.c,v 1.10 1998/07/28 11:41:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.9 1998/07/28 02:23:39 mycroft Exp $");
+__RCSID("$NetBSD: parse.c,v 1.10 1998/07/28 11:41:45 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,10 +96,8 @@ alias(lex)
 	resexit(osetexit);
 	reset();
     }
-    if (--aleft == 0) {
+    if (--aleft == 0)
 	stderror(ERR_ALIASLOOP);
-	/* NOTREACHED */
-    }
     asyntax(lex->next, lex);
     resexit(osetexit);
 }
@@ -134,10 +132,8 @@ asyn0(p1, p2)
 
 	case ')':
 	    l--;
-	    if (l < 0) {
+	    if (l < 0)
 		stderror(ERR_TOOMANYRP);
-		/* NOTREACHED */
-	    }
 	    continue;
 
 	case '>':
@@ -191,7 +187,6 @@ asyn3(p1, p2)
     if (seterr) {
 	freelex(&alout);
 	stderror(ERR_OLD);
-	/* NOTREACHED */
     }
     if (p1->word[0] && eq(p1->word, alout.next->word)) {
 	Char   *cp = alout.next->word;

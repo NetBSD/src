@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.18 1998/07/28 05:31:28 mycroft Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.19 1998/07/28 11:41:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mkinit.c,v 1.18 1998/07/28 05:31:28 mycroft Exp $");
+__RCSID("$NetBSD: mkinit.c,v 1.19 1998/07/28 11:41:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -487,7 +487,6 @@ ckfopen(file, mode)
 	if ((fp = fopen(file, mode)) == NULL) {
 		fprintf(stderr, "Can't open %s\n", file);
 		exit(2);
-		/* NOTREACHED */
 	}
 	return fp;
 }

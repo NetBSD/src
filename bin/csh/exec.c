@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.14 1998/07/28 02:47:19 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.15 1998/07/28 11:41:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.14 1998/07/28 02:47:19 mycroft Exp $");
+__RCSID("$NetBSD: exec.c,v 1.15 1998/07/28 11:41:43 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ static int hits, misses;
 /* Dummy search path for just absolute search when no path */
 static Char *justabs[] = {STRNULL, 0};
 
-static void	pexerr __P((void));
+static void	pexerr __P((void)) __attribute__((noreturn));
 static void	texec __P((Char *, Char **));
 static int	hashname __P((Char *));
 static int 	tellmewhat __P((struct wordent *, Char *));
@@ -138,7 +138,6 @@ doexec(v, t)
 	if (pv == 0) {
 	    setname(vis_str(blk[0]));
 	    stderror(ERR_NAME | ERR_NOMATCH);
-	    /* NOTREACHED */
 	}
 	gargv = 0;
     }
@@ -170,7 +169,6 @@ doexec(v, t)
 	    blkfree(pv);
 	    setname(vis_str(expath));
 	    stderror(ERR_NAME | ERR_NOMATCH);
-	    /* NOTREACHED */
 	}
 	gargv = 0;
     }
@@ -247,6 +245,7 @@ cont:
     Vsav = 0;
     xfree((ptr_t) sav);
     pexerr();
+    /* NOTREACHED */
 }
 
 static void
@@ -310,7 +309,6 @@ texec(sf, st)
 		     * We *know* what ENOEXEC means.
 		     */
 		    stderror(ERR_ARCH, f, strerror(errno));
-		    /* NOTREACHED */
 		}
 	    }
 #ifdef _PATH_BSHELL
@@ -437,10 +435,8 @@ execash(t, kp)
     OLDSTD = dmove(saveSTD, oOLDSTD);
 
     resexit(osetexit);
-    if (my_reenter) {
+    if (my_reenter)
 	stderror(ERR_SILENT);
-	/* NOTREACHED */
-    }
 }
 
 void

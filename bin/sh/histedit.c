@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.19 1998/05/20 00:29:26 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.20 1998/07/28 11:41:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.19 1998/05/20 00:29:26 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.20 1998/07/28 11:41:55 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -241,9 +241,11 @@ histcmd(argc, argv)
 			break;
 		case ':':
 			error("option -%c expects argument", optopt);
+			/* NOTREACHED */
 		case '?':
 		default:
 			error("unknown option: -%c", optopt);
+			/* NOTREACHED */
 		}
 	argc -= optind, argv += optind;
 
@@ -313,6 +315,7 @@ histcmd(argc, argv)
 		break;
 	default:
 		error("too many args");
+		/* NOTREACHED */
 	}
 	/*
 	 * Turn into event numbers.
@@ -499,6 +502,6 @@ histcmd(argc, argv)
 	char **argv;
 {
 	error("not compiled with history support");
-	return 0;
+	/* NOTREACHED */
 }
 #endif
