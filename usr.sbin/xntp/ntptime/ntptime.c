@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptime.c,v 1.6 1998/03/06 18:17:20 christos Exp $	*/
+/*	$NetBSD: ntptime.c,v 1.7 1998/03/30 02:27:57 mrg Exp $	*/
 
 /*
  * NTP test program
@@ -89,7 +89,7 @@ static volatile int pll_control; /* (0) daemon, (1) kernel loop */
 char* progname;
 static char optargs[] = "cde:f:hm:o:rs:t:";
 
-void
+int
 main(argc, argv)
      int argc;
      char *argv[];

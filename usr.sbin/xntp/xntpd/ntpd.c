@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.4 1998/03/30 02:27:57 mrg Exp $	*/
 
 #define	HAVE_POSIX_MMAN
 /*
@@ -178,7 +178,7 @@ CALL(xntpd,"xntpd",xntpdmain);
  * and loop waiting for I/O and/or timer expiries.
  */
 #if !defined(VMS)
-void
+int
 #endif /* VMS */
 #ifndef NO_MAIN_ALLOWED
 main
