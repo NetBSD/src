@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.7 2004/11/14 02:48:27 nathanw Exp $
+# $NetBSD: md.cats,v 1.8 2004/11/14 19:53:59 nathanw Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/gtf
@@ -127,6 +127,7 @@
 ./usr/X11R6/lib/modules/drivers/tseng_drv.o
 ./usr/X11R6/lib/modules/drivers/vesa_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
+./usr/X11R6/lib/modules/drivers/wsfb.o	xserver-obsolete	obsolete
 ./usr/X11R6/lib/modules/drivers/wsfb_drv.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
