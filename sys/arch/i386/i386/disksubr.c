@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 1998/08/13 18:18:54 rvb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33 1998/08/14 02:20:07 rvb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -181,7 +181,7 @@ readdisklabel(dev, strat, lp, osdep)
 				    dp->dp_start;
 				if (lp->d_ntracks != dp->dp_ehd + 1 ||
 				    lp->d_nsectors != DPSECT(dp->dp_esect)) {
-					printf("disklabel: readjusting chs %d/%d/%d to ",
+					printf("disklabel: BIOS sees chs %d/%d/%d as ",
 						lp->d_ncylinders, lp->d_ntracks,
 						lp->d_nsectors);
 					lp->d_ntracks = dp->dp_ehd + 1;
