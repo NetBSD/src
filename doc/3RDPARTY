@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.109 2003/06/14 18:59:00 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.110 2003/06/17 23:05:35 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -397,7 +397,7 @@ Notes:
 Many changes to make less act as more when invoked as more.  Beware.
 Use the src/usr.bin/less/less2netbsd script to prepare source tree
 for importation.  Run ./configure before hand to generate "defines.h".
-Talk to mrg before importing any new vesrion.  (less 381's configure
+Talk to mrg before importing any new version.  (less 381's configure
 does not detect NetBSD has a sigset_t due to a bad test; this is fixed
 by hand in defines.h.)
 
