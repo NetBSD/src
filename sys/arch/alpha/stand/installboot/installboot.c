@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.8 1998/11/19 02:44:40 ross Exp $ */
+/* $NetBSD: installboot.c,v 1.9 1998/11/25 21:19:35 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -182,52 +182,57 @@ main(argc, argv)
 	/* Extract and load block numbers */
 	if (stat(boot, &bootsb) == -1)	
 		err(1, "stat: %s", boot);
+	/*
+	 * The error below doesn't matter in conblockmode, but leave it in
+	 * because it may catch misplaced arguments; this program doesn't
+	 * get run enough for people to be familiar with it.
+	 */
 	if (!S_ISREG(bootsb.st_mode))
 		errx(1, "%s must be a regular file", boot);
-	if ((minor(disksb.st_rdev) / getmaxpartitions()) != 
-	    (minor(bootsb.st_dev) / getmaxpartitions()))
-		errx(1, "%s must be somewhere on %s", boot, dev);
-
-	/*
-	 * Determine the file system type of the file system on which
-	 * the boot program resides.
-	 */
-	if (statfs(boot, &fssb) == -1)
-		err(1, "statfs: %s", boot);
-	if (strcmp(fssb.f_fstypename, MOUNT_CD9660) == 0) {
+	if(!conblockmode) {
+		if ((minor(disksb.st_rdev) / getmaxpartitions()) != 
+		    (minor(bootsb.st_dev) / getmaxpartitions()))
+			errx(1, "%s must be somewhere on %s", boot, dev);
 		/*
-		 * Installing a boot block on a CD-ROM image.
+		 * Determine the file system type of the file system on which
+		 * the boot program resides.
 		 */
-		cd9660 = 1;
-	} else if (!conblockmode && strcmp(fssb.f_fstypename, MOUNT_FFS) != 0) {
+		if (statfs(boot, &fssb) == -1)
+			err(1, "statfs: %s", boot);
+		if (strcmp(fssb.f_fstypename, MOUNT_CD9660) == 0) {
+			/*
+			 * Installing a boot block on a CD-ROM image.
+			 */
+			cd9660 = 1;
+		} else if (strcmp(fssb.f_fstypename, MOUNT_FFS) != 0) {
+			/*
+			 * Some other file system type, which is not FFS.
+			 * Can't handle these.
+			 */
+			errx(1, "unsupported file system type: %s",
+			    fssb.f_fstypename);
+		}
+		if (verbose)
+			printf("file system type: %s\n", fssb.f_fstypename);
 		/*
-		 * Some other file system type, which is not FFS.
-		 * Can't handle these.
+		 * Find the offset of the secondary boot block's partition
+		 * into the disk.
 		 */
-		errx(1, "unsupported file system type: %s",
-		    fssb.f_fstypename);
+		if (ioctl(devfd, DIOCGDINFO, &dl) == -1)
+			err(1, "read disklabel: %s", dev);
+		partoffset = dl.d_partitions[minor(bootsb.st_dev) %
+		    getmaxpartitions()].p_offset;
+		if (verbose)
+			printf("%s partition offset = 0x%lx\n",
+				boot, partoffset);
+		/* 
+		 * sync filesystems (make sure boot's block numbers are stable)
+		 */
+		sync();
+		sleep(2);
+		sync();
+		sleep(2);
 	}
-
-	if (verbose)
-		printf("file system type: %s\n", fssb.f_fstypename);
-
-	/*
-	 * Find the offset of the secondary boot block's partition
-	 * into the disk.
-	 */
-	if (ioctl(devfd, DIOCGDINFO, &dl) == -1)
-		err(1, "read disklabel: %s", dev);
-	partoffset = dl.d_partitions[minor(bootsb.st_dev) %
-	    getmaxpartitions()].p_offset;
-	if (verbose)
-		printf("%s partition offset = 0x%lx\n", boot, partoffset);
-
-	/* Sync filesystems (make sure boot's block numbers are stable) */
-	sync();
-	sleep(2);
-	sync();
-	sleep(2);
-
 	if (conblockmode)
 		loadblocknums_func = loadblocknums_passthru;
 	else if (cd9660)
