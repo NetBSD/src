@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.2 2002/02/16 16:52:11 thorpej Exp $	*/
+/*	$NetBSD: pxe.c,v 1.3 2002/02/18 17:01:46 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -419,11 +419,6 @@ pxe_init(void)
 	}
 	pvbcopy((void *)((gci->Buffer.segment << 4) + gci->Buffer.offset),
 	    &bootplayer, gci->BufferSize);
-
-	/*
-	 * Make sure that bootp() presents us as a PXE client.
-	 */
-	bootp_flags |= BOOTP_PXE;
 
 	/*
 	 * Get network interface information.
