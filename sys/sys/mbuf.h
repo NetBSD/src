@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.90 2004/03/22 17:56:30 matt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.90.2.1 2004/04/09 16:10:59 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 #include <sys/queue.h>
 
 /* For offsetof() */
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/systm.h>
 #else
 #include <stddef.h>
