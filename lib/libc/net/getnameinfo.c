@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.2 1999/07/04 00:43:43 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.3 1999/08/01 06:45:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -97,7 +97,6 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	int family, len, i;
 	char *addr, *p;
 	u_long v4a;
-	u_char pfx;
 	int h_error;
 	char numserv[512];
 	char numaddr[512];
@@ -150,15 +149,35 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		pfx = ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr8[0];
-		if (pfx == 0 || pfx == 0xfe || pfx == 0xff)
-			flags |= NI_NUMERICHOST;
+	    {
+		struct sockaddr_in6 *sin6;
+		sin6 = (struct sockaddr_in6 *)sa;
+		switch (sin6->sin6_addr.s6_addr8[0]) {
+		case 0x00:
+			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
+				;
+			else if (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr))
+				;
+			else
+				flags |= NI_NUMERICHOST;
+			break;
+		default:
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				flags |= NI_NUMERICHOST;
+			else if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))
+				flags |= NI_NUMERICHOST;
+			break;
+		}
+	    }
 		break;
 #endif
 	}
 	if (host == NULL || hostlen == 0) {
 		/* what should we do? */
 	} else if (flags & NI_NUMERICHOST) {
+		/* NUMERICHOST and NAMEREQD conflicts with each other */
+		if (flags & NI_NAMEREQD)
+			return ENI_NOHOSTNAME;
 		if (inet_ntop(afd->a_af, addr, numaddr, sizeof(numaddr))
 		    == NULL)
 			return ENI_SYSTEM;
