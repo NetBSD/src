@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.225 2001/02/04 17:30:36 ad Exp $
+# $NetBSD: mi,v 1.226 2001/02/06 19:40:33 tron Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1083,6 +1083,7 @@
 ./usr/share/locale/zh_CN.eucCN			base-locale-zh
 ./usr/share/locale/zh_CN.eucCN/LC_CTYPE		base-locale-zh
 ./usr/share/locale/zh_TW.BIG5			base-locale-zh
+./usr/share/locale/zh_TW.BIG5/LC_CTYPE		base-locale-zh
 ./usr/share/locale/zh_TW.Big5			base-locale-zh
 ./usr/share/locale/zh_TW.Big5/LC_CTYPE		base-locale-zh
 ./usr/share/locale/zh_TW.eucTW			base-locale-zh
