@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.124 2000/10/13 18:16:36 augustss Exp $
+$NetBSD: usbdevs,v 1.125 2000/10/15 17:53:17 explorer Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -227,6 +227,7 @@ vendor ACCTON		0x083a	Accton Technology Corp.
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR, Inc.
 vendor ACTIVEWIRE	0x0854	ActiveWire, Inc.
+vendor METRICOM		0x0870	Metricom
 vendor ADESSOKBTEK	0x087c	ADESSO/Kbtek America, Inc.
 vendor APT		0x0880	APT Technologies, Inc.
 vendor BOCARESEARCH	0x0885	Boca Research, Inc.
@@ -587,6 +588,9 @@ product MCT USB232		0x0210	USB-232 Interface
 
 /* Melco, Inc products */
 product MELCO LUATX		0x0001	LU-ATX Ethernet
+
+/* Metricom products */
+product METRICOM RICOCHET_GS	0x0001	Ricochet GS
 
 /* Microsoft products */
 product MICROSOFT SIDEPREC	0x0008	SideWinder Precision Pro
