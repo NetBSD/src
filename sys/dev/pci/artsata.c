@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.2 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: artsata.c,v 1.3 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -127,6 +127,8 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	interface = PCI_INTERFACE(pa->pa_class);
 

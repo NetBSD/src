@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.58 2004/08/13 02:16:40 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.59 2004/08/14 15:08:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -35,6 +35,15 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 
+/* XXX For scsipi_adapter and scsipi_channel. */
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/atapiconf.h>
+
+/*
+ * Max number of drives per channel.
+ */
+#define	ATA_MAXDRIVES		2
+
 /*
  * Description of a command to be handled by an ATA controller.  These
  * commands are queued in a list.
@@ -43,7 +52,7 @@ struct ata_xfer {
 	__volatile u_int c_flags;	/* command state flags */
 	
 	/* Channel and drive that are to process the request. */
-	struct wdc_channel *c_chp;
+	struct ata_channel *c_chp;
 	int	c_drive;
 
 	void	*c_cmd;			/* private request structure pointer */
@@ -56,9 +65,9 @@ struct ata_xfer {
 	TAILQ_ENTRY(ata_xfer) c_xferchain;
 
 	/* Low-level protocol handlers. */
-	void	(*c_start)(struct wdc_channel *, struct ata_xfer *);
-	int	(*c_intr)(struct wdc_channel *, struct ata_xfer *, int);
-	void	(*c_kill_xfer)(struct wdc_channel *, struct ata_xfer *, int);
+	void	(*c_start)(struct ata_channel *, struct ata_xfer *);
+	int	(*c_intr)(struct ata_channel *, struct ata_xfer *, int);
+	void	(*c_kill_xfer)(struct ata_channel *, struct ata_xfer *, int);
 };
 
 /* vlags in c_flags */
@@ -81,7 +90,7 @@ struct ata_queue {
 /* ATA bus instance state information. */
 struct atabus_softc {
 	struct device sc_dev;
-	struct wdc_channel *sc_chan;	/* XXXwdc */
+	struct ata_channel *sc_chan;
 	int sc_flags;
 #define ATABUSCF_OPEN	0x01
 };
@@ -296,6 +305,51 @@ struct ata_device {
 	struct ata_drive_datas *adev_drv_data;
 };
 
+/*
+ * Per-channel data
+ */
+struct ata_channel {
+	struct callout ch_callout;	/* callout handle */
+	int ch_channel;			/* location */
+	struct wdc_softc *ch_wdc;	/* controller's softc */
+
+	/* Our state */
+	volatile int ch_flags;
+#define ATACH_SHUTDOWN 0x02	/* channel is shutting down */
+#define ATACH_IRQ_WAIT 0x10	/* controller is waiting for irq */
+#define ATACH_DMA_WAIT 0x20	/* controller is waiting for DMA */
+#define	ATACH_DISABLED 0x80	/* channel is disabled */
+#define ATACH_TH_RUN   0x100	/* the kenrel thread is working */
+#define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
+	u_int8_t ch_status;	/* copy of status register */
+	u_int8_t ch_error;	/* copy of error register */
+
+	/* for the reset callback */
+	int ch_reset_flags;
+
+	/* per-drive info */
+	int ch_ndrive;
+	struct ata_drive_datas ch_drive[ATA_MAXDRIVES];
+
+	struct device *atabus;	/* self */
+
+	/* ATAPI children */
+	struct device *atapibus;
+	struct scsipi_channel ch_atapi_channel;
+
+	/* ATA children */
+	struct device *ata_drives[ATA_MAXDRIVES];
+
+	/*
+	 * Channel queues.  May be the same for all channels, if hw
+	 * channels are not independent.
+	 */
+	struct ata_queue *ch_queue;
+
+	/* The channel kernel thread */
+	struct proc *ch_thread;
+};
+
 #ifdef _KERNEL
 int	atabusprint(void *aux, const char *);
 int	ataprint(void *aux, const char *);
@@ -309,17 +363,17 @@ int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
 #define CMD_AGAIN 2
 
 struct ata_xfer *ata_get_xfer(int);
-void	ata_free_xfer(struct wdc_channel *, struct ata_xfer *);
+void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 #define	ATAXF_CANSLEEP	0x00
 #define	ATAXF_NOSLEEP	0x01
 
-void	ata_exec_xfer(struct wdc_channel *, struct ata_xfer *);
+void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_kill_pending(struct ata_drive_datas *);
 
-int	ata_addref(struct wdc_channel *);
-void	ata_delref(struct wdc_channel *);
-void	atastart(struct wdc_channel *);
-void	ata_print_modes(struct wdc_channel *);
+int	ata_addref(struct ata_channel *);
+void	ata_delref(struct ata_channel *);
+void	atastart(struct ata_channel *);
+void	ata_print_modes(struct ata_channel *);
 int	ata_downgrade_mode(struct ata_drive_datas *, int);
 void	ata_probe_caps(struct ata_drive_datas *);
 
