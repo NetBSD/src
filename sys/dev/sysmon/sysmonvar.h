@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.3 2000/11/05 04:06:14 thorpej Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.4 2003/04/10 18:04:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -40,8 +40,14 @@
 #include <sys/wdog.h>
 #include <sys/queue.h>
 
+struct proc;
+
 #define	SYSMON_MINOR_ENVSYS	0
 #define	SYSMON_MINOR_WDOG	1
+
+/*****************************************************************************
+ * Environmental sensor support
+ *****************************************************************************/
 
 struct sysmon_envsys {
 	int32_t sme_envsys_version;	/* ENVSYS API version */
@@ -63,6 +69,17 @@ struct sysmon_envsys {
 
 #define	SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
 
+int	sysmonopen_envsys(dev_t, int, int, struct proc *);
+int	sysmonclose_envsys(dev_t, int, int, struct proc *);
+int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct proc *);
+
+int	sysmon_envsys_register(struct sysmon_envsys *);
+void	sysmon_envsys_unregister(struct sysmon_envsys *);
+
+/*****************************************************************************
+ * Watchdog timer support
+ *****************************************************************************/
+
 struct sysmon_wdog {
 	const char *smw_name;		/* watchdog device name */
 
@@ -76,15 +93,6 @@ struct sysmon_wdog {
 	u_int smw_refcnt;		/* references */
 	pid_t smw_tickler;		/* last process to tickle */
 };
-
-struct proc;
-
-int	sysmonopen_envsys(dev_t, int, int, struct proc *);
-int	sysmonclose_envsys(dev_t, int, int, struct proc *);
-int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct proc *);
-
-int	sysmon_envsys_register(struct sysmon_envsys *);
-void	sysmon_envsys_unregister(struct sysmon_envsys *);
 
 int	sysmonopen_wdog(dev_t, int, int, struct proc *);
 int	sysmonclose_wdog(dev_t, int, int, struct proc *);
