@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2002/06/18 13:30:03 wiz Exp $
+#	$NetBSD: Makefile,v 1.59 2002/06/19 09:28:02 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	compat_freebsd.8 compat_hpux.8 compat_ibcs2.8 compat_linux.8 \
@@ -25,7 +25,7 @@ SUBDIR=	man8.acorn26 man8.acorn32 man8.algor man8.alpha man8.amiga \
 	man8.next68k man8.pc532 man8.playstation2 man8.pmax \
 	man8.pmppc man8.prep man8.sandpoint man8.sbmips man8.sgimips \
 	man8.shark man8.sparc man8.sparc64 \
-	man8.sun2 man8.sun3 man8.vax man8.walnut man8.x68k
+	man8.sun2 man8.sun3 man8.vax man8.walnut man8.x68k man8.x86_64
 
 # to create man8.${arch}/MAKEDEV.8 from ../../etc/etc.${arch}/MAKEDEV
 # set ARCHS to desired architectures, or leave empty for all.
