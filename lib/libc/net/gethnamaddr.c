@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.8 1998/11/13 15:46:53 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.9 1999/01/16 07:48:23 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.8 1998/11/13 15:46:53 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.9 1999/01/16 07:48:23 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,6 +88,7 @@ __RCSID("$NetBSD: gethnamaddr.c,v 1.8 1998/11/13 15:46:53 christos Exp $");
 
 #define MULTI_PTRS_ARE_ALIASES 1	/* XXX - experimental */
 
+#include <nsswitch.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -157,9 +158,7 @@ struct hostent *gethostbyaddr __P((const char *, int, int ));
 void _sethtent __P((int));
 void _endhtent __P((void));
 struct hostent *_gethtent __P((void));
-struct hostent *_gethtbyname __P((const char *));
 struct hostent *_gethtbyname2 __P((const char *, int));
-struct hostent *_gethtbyaddr __P((const char *, int, int ));
 void ht_sethostent __P((int));
 void ht_endhostent __P((void));
 struct hostent *ht_gethostbyname __P((char *));
@@ -167,10 +166,14 @@ struct hostent *ht_gethostbyaddr __P((const char *, int, int ));
 struct hostent *gethostent __P((void));
 void dns_service __P((void));
 int dn_skipname __P((const u_char *, const u_char *));
+int _gethtbyaddr __P((void *, void *, va_list));
+int _gethtbyname __P((void *, void *, va_list));
+int _dns_gethtbyaddr __P((void *, void *, va_list));
+int _dns_gethtbyname __P((void *, void *, va_list));
 #ifdef YP
-struct hostent *_yphostent __P((char *));
-struct hostent *_yp_gethtbyaddr __P((const char *, int, int ));
-struct hostent *_yp_gethtbyname __P((const char *));
+struct hostent *_yphostent __P((char *, int));
+int _yp_gethtbyaddr __P((void *, void *, va_list));
+int _yp_gethtbyname __P((void *, void *, va_list));
 #endif
 
 
@@ -488,24 +491,23 @@ gethostbyname2(name, af)
 	const char *name;
 	int af;
 {
-	querybuf buf;
 	const char *cp;
 	char *bp;
-	int n, size, type, len, i;
-	char lookups[MAXDNSLUS];
+	int size, len;
 	struct hostent *hp;
-
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
-		return (_gethtbyname(name));
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_gethtbyname, NULL),
+		{ NSSRC_DNS, _dns_gethtbyname, NULL },	/* force -DHESIOD */
+		NS_NIS_CB(_yp_gethtbyname, NULL),
+		{ NULL, NULL, NULL }
+	};
 
 	switch (af) {
 	case AF_INET:
 		size = INADDRSZ;
-		type = T_A;
 		break;
 	case AF_INET6:
 		size = IN6ADDRSZ;
-		type = T_AAAA;
 		break;
 	default:
 		h_errno = NETDB_INTERNAL;
@@ -592,31 +594,12 @@ gethostbyname2(name, af)
 				break;
 		}
 
-	(void)memcpy(lookups, _res.lookups, sizeof lookups);
-	if (lookups[0] == '\0')
-		strncpy(lookups, "bf", sizeof lookups);
-
 	hp = (struct hostent *)NULL;
-	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
-		switch (lookups[i]) {
-#ifdef YP
-		case 'y':
-			hp = _yp_gethtbyname(name);
-			break;
-#endif
-		case 'b':
-			if ((n = res_search(name, C_IN, T_A, buf.buf,
-			    sizeof(buf))) < 0) {
-				dprintf("res_search failed (%d)\n", n);
-				break;
-			}
-			hp = getanswer(&buf, n, name, type);
-			break;
-		case 'f':
-			hp = _gethtbyname(name);
-			break;
-		}
+	if (nsdispatch(&hp, dtab, NSDB_HOSTS, name, len, af) != NS_SUCCESS) {
+		h_errno = HOST_NOT_FOUND;
+		return (struct hostent *)NULL;
 	}
+	h_errno = NETDB_SUCCESS;
 	return (hp);
 }
 
@@ -628,15 +611,15 @@ gethostbyaddr(addr, len, af)
 	const u_char *uaddr = (const u_char *)addr;
 	static const u_char mapped[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0xff,0xff };
 	static const u_char tunnelled[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0,0 };
-	int n, size, i;
-	querybuf buf;
+	int size;
 	struct hostent *hp;
-	char qbuf[MAXDNAME+1], *qp;
-	char lookups[MAXDNSLUS];
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_gethtbyaddr, NULL),
+		{ NSSRC_DNS, _dns_gethtbyaddr, NULL },	/* force -DHESIOD */
+		NS_NIS_CB(_yp_gethtbyaddr, NULL),
+		{ NULL, NULL, NULL }
+	};
 	
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
-		return (_gethtbyaddr(addr, len, af));
-		
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (!memcmp(uaddr, mapped, sizeof mapped) ||
 	     !memcmp(uaddr, tunnelled, sizeof tunnelled))) {
@@ -663,66 +646,10 @@ gethostbyaddr(addr, len, af)
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}
-	switch (af) {
-	case AF_INET:
-		(void) sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
-			       (uaddr[3] & 0xff),
-			       (uaddr[2] & 0xff),
-			       (uaddr[1] & 0xff),
-			       (uaddr[0] & 0xff));
-		break;
-	case AF_INET6:
-		qp = qbuf;
-		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
-			qp += sprintf(qp, "%x.%x.",
-				       uaddr[n] & 0xf,
-				       ((u_int32_t)uaddr[n] >> 4) & 0xf);
-		}
-		strcpy(qp, "ip6.int");
-		break;
-	default:
-		abort();
-	}
-
-	(void)memcpy(lookups, _res.lookups, sizeof lookups);
-	if (lookups[0] == '\0')
-		strncpy(lookups, "bf", sizeof lookups);
-
 	hp = (struct hostent *)NULL;
-	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
-		switch (lookups[i]) {
-#ifdef YP
-		case 'y':
-			hp = _yp_gethtbyaddr(addr, len, af);
-			break;
-#endif
-		case 'b':
-			n = res_query(qbuf, C_IN, T_PTR, (u_char *)(void *)&buf,
-			    sizeof(buf));
-			if (n < 0) {
-				dprintf("res_query failed (%d)\n", n);
-				break;
-			}
-			hp = getanswer(&buf, n, qbuf, T_PTR);
-			if (hp == NULL)
-				break;
-			hp->h_addrtype = af;
-			hp->h_length = len;
-			(void)memcpy(host_addr, addr, (size_t)len);
-			h_addr_ptrs[0] = (char *)&host_addr;
-			h_addr_ptrs[1] = (char *)0;
-			if (af == AF_INET && (_res.options & RES_USE_INET6)) {
-				map_v4v6_address((char*)host_addr,
-				    (char*)host_addr);
-				hp->h_addrtype = AF_INET6;
-				hp->h_length = IN6ADDRSZ;
-			}
-			h_errno = NETDB_SUCCESS;
-			break;
-		case 'f':
-			hp = _gethtbyaddr(addr, len, af);
-			break;
-		}
+	if (nsdispatch(&hp, dtab, NSDB_HOSTS, uaddr, len, af) != NS_SUCCESS) {
+		h_errno = HOST_NOT_FOUND;
+		return (struct hostent *)NULL;
 	}
 	return (hp);
 }
@@ -812,18 +739,31 @@ _gethtent()
 	return (&host);
 }
 
-struct hostent *
-_gethtbyname(name)
-	const char *name;
+int
+_gethtbyname(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
 {
 	struct hostent *hp;
+	const char *name;
+	int len, af;
 
-	if (_res.options & RES_USE_INET6) {
+	name = va_arg(ap, char *);
+	len = va_arg(ap, int);
+	af = va_arg(ap, int);
+
+	hp = NULL;
+	if (_res.options & RES_USE_INET6)
 		hp = _gethtbyname2(name, AF_INET6);
-		if (hp)
-			return (hp);
+	if (hp==NULL)
+		hp = _gethtbyname2(name, AF_INET);
+	*((struct hostent **)rv) = hp;
+	if (hp==NULL) {
+		h_errno = HOST_NOT_FOUND;
+		return NS_NOTFOUND;
 	}
-	return (_gethtbyname2(name, AF_INET));
+	return NS_SUCCESS;
 }
 
 struct hostent *
@@ -849,12 +789,20 @@ _gethtbyname2(name, af)
 	return (p);
 }
 
-struct hostent *
-_gethtbyaddr(addr, len, af)
-	const char *addr;
-	int len, af;
+int
+_gethtbyaddr(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
 {
 	register struct hostent *p;
+	const unsigned char *addr;
+	int len, af;
+
+	addr = va_arg(ap, unsigned char *);
+	len = va_arg(ap, int);
+	af = va_arg(ap, int);
+	
 
 	_sethtent(0);
 	while ((p = _gethtent()) != NULL)
@@ -862,7 +810,12 @@ _gethtbyaddr(addr, len, af)
 		    (size_t)len))
 			break;
 	_endhtent();
-	return (p);
+	*((struct hostent **)rv) = p;
+	if (p==NULL) {
+		h_errno = HOST_NOT_FOUND;
+		return NS_NOTFOUND;
+	}
+	return NS_SUCCESS;
 }
 
 static void
@@ -1009,10 +962,131 @@ dn_skipname(comp_dn, eom)
 }
 #endif /*old-style libc with yp junk in it*/
 
+int
+_dns_gethtbyname(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	querybuf buf;
+	int n, type;
+	struct hostent *hp;
+	const char *name;
+	int len, af;
+
+	name = va_arg(ap, char *);
+	len = va_arg(ap, int);
+#ifdef __GNUC__                 /* to shut up gcc warnings */
+	(void)&len;
+#endif
+	af = va_arg(ap, int);
+
+	switch (af) {
+	case AF_INET:
+		type = T_A;
+		break;
+	case AF_INET6:
+		type = T_AAAA;
+		break;
+	default:
+		return NS_UNAVAIL;
+	}
+	if ((n = res_search(name, C_IN, T_A, buf.buf, sizeof(buf))) < 0) {
+		dprintf("res_search failed (%d)\n", n);
+		return NS_NOTFOUND;
+	}
+	hp = getanswer(&buf, n, name, type);
+	if (hp == NULL)
+		switch (h_errno) {
+		case HOST_NOT_FOUND:
+			return NS_NOTFOUND;
+		case TRY_AGAIN:
+			return NS_TRYAGAIN;
+		default:
+			return NS_UNAVAIL;
+		}
+	*((struct hostent **)rv) = hp;
+	return NS_SUCCESS;
+}
+
+int
+_dns_gethtbyaddr(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	char qbuf[MAXDNAME + 1], *qp;
+	int n;
+	querybuf buf;
+	struct hostent *hp;
+	const unsigned char *uaddr;
+	int len, af;
+
+	uaddr = va_arg(ap, unsigned char *);
+	len = va_arg(ap, int);
+#ifdef __GNUC__                 /* to shut up gcc warnings */
+	(void)&len;
+#endif
+	af = va_arg(ap, int);
+
+	switch (af) {
+	case AF_INET:
+		(void)sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
+			(uaddr[3] & 0xff),
+			(uaddr[2] & 0xff),
+			(uaddr[1] & 0xff),
+			(uaddr[0] & 0xff));
+		break;
+
+	case AF_INET6:
+		qp = qbuf;
+		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
+			qp += sprintf(qp, "%x.%x.",
+				       uaddr[n] & 0xf,
+				       (uaddr[n] >> 4) & 0xf);
+		}
+		strcpy(qp, "ip6.int");
+		break;
+	default:
+		abort();
+	}
+
+	n = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf, sizeof(buf));
+	if (n < 0) {
+		dprintf("res_query failed (%d)\n", n);
+		return NS_NOTFOUND;
+	}
+	hp = getanswer(&buf, n, qbuf, T_PTR);
+	if (hp == NULL)
+		switch (h_errno) {
+		case HOST_NOT_FOUND:
+			return NS_NOTFOUND;
+		case TRY_AGAIN:
+			return NS_TRYAGAIN;
+		default:
+			return NS_UNAVAIL;
+		}
+	hp->h_addrtype = af;
+	hp->h_length = len;
+	(void)memcpy(host_addr, (char *)uaddr, (size_t)len);
+	h_addr_ptrs[0] = (char *)&host_addr;
+	h_addr_ptrs[1] = (char *)0;
+	if (af == AF_INET && (_res.options & RES_USE_INET6)) {
+		map_v4v6_address((char*)host_addr, (char*)host_addr);
+		hp->h_addrtype = AF_INET6;
+		hp->h_length = IN6ADDRSZ;
+	}
+
+	*((struct hostent **)rv) = hp;
+	h_errno = NETDB_SUCCESS;
+	return NS_SUCCESS;
+}
+
 #ifdef YP
 struct hostent *
-_yphostent(line)
+_yphostent(line, af)
 	char *line;
+	int af;
 {
 	static struct in_addr host_addrs[MAXADDRS];
 	char *p = line;
@@ -1029,6 +1103,9 @@ _yphostent(line)
 	buf = host_addrs;
 	q = host.h_aliases = host_aliases;
 
+	/*
+	 * XXX: maybe support IPv6 parsing, based on 'af' setting
+	 */
 nextline:
 	more = 0;
 	cp = strpbrk(p, " \t");
@@ -1083,49 +1160,77 @@ done:
 	return (&host);
 }
 
-/* ARGSUSED */
-struct hostent *
-_yp_gethtbyaddr(addr, len, type)
-	const char *addr;
-	int len, type;
+int
+_yp_gethtbyaddr(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
 {
 	struct hostent *hp = (struct hostent *)NULL;
 	static char *__ypcurrent;
 	int __ypcurrentlen, r;
 	char name[sizeof("xxx.xxx.xxx.xxx") + 1];
+	const unsigned char *uaddr;
+	int len, af;
+
+	uaddr = va_arg(ap, unsigned char *);
+	len = va_arg(ap, int);
+#ifdef __GNUC__                 /* to shut up gcc warnings */
+	(void)&len;
+#endif
+	af = va_arg(ap, int);
 	
 	if (!__ypdomain) {
 		if (_yp_check(&__ypdomain) == 0)
-			return (hp);
+			return NS_UNAVAIL;
 	}
+	/*
+	 * XXX: based on the value of af, it would be possible to lookup
+	 *	IPv6 names in YP, by changing the following snprintf().
+	 *	Is it worth it?
+	 */
 	(void)snprintf(name, sizeof name, "%u.%u.%u.%u",
-		((unsigned)addr[0] & 0xff),
-		((unsigned)addr[1] & 0xff),
-		((unsigned)addr[2] & 0xff),
-		((unsigned)addr[3] & 0xff));
+		(uaddr[0] & 0xff),
+		(uaddr[1] & 0xff),
+		(uaddr[2] & 0xff),
+		(uaddr[3] & 0xff));
 	if (__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
 	r = yp_match(__ypdomain, "hosts.byaddr", name,
 		(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
 	if (r==0)
-		hp = _yphostent(__ypcurrent);
-	if (hp==NULL)
+		hp = _yphostent(__ypcurrent, af);
+	if (hp==NULL) {
 		h_errno = HOST_NOT_FOUND;
-	return (hp);
+		return NS_NOTFOUND;
+	}
+	*((struct hostent **)rv) = hp;
+	return NS_SUCCESS;
 }
 
-struct hostent *
-_yp_gethtbyname(name)
-	const char *name;
+int
+_yp_gethtbyname(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
 {
 	struct hostent *hp = (struct hostent *)NULL;
 	static char *__ypcurrent;
 	int __ypcurrentlen, r;
+	const char *name;
+	int len, af;
+
+	name = va_arg(ap, char *);
+	len = va_arg(ap, int);
+#ifdef __GNUC__                 /* to shut up gcc warnings */
+	(void)&len;
+#endif
+	af = va_arg(ap, int);
 
 	if (!__ypdomain) {
 		if (_yp_check(&__ypdomain) == 0)
-			return (hp);
+			return NS_UNAVAIL;
 	}
 	if (__ypcurrent)
 		free(__ypcurrent);
@@ -1133,9 +1238,12 @@ _yp_gethtbyname(name)
 	r = yp_match(__ypdomain, "hosts.byname", name,
 		(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
 	if (r==0)
-		hp = _yphostent(__ypcurrent);
-	if (hp==NULL)
+		hp = _yphostent(__ypcurrent, af);
+	if (hp==NULL) {
 		h_errno = HOST_NOT_FOUND;
-	return (hp);
+		return NS_NOTFOUND;
+	}
+	*((struct hostent **)rv) = hp;
+	return NS_SUCCESS;
 }
 #endif

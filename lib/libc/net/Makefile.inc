@@ -1,18 +1,17 @@
-#	$NetBSD: Makefile.inc,v 1.38 1999/01/15 12:53:23 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.39 1999/01/16 07:48:23 lukem Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
 
-SRCS+=	base64.c ethers.c gethnamaddr.c getnetbyaddr.c getnetbyname.c \
-	getnetnamadr.c getnetent.c getproto.c getprotoent.c getprotoname.c \
-	getservbyname.c getservbyport.c getservent.c herror.c hesiod.c \
-	inet_lnaof.c inet_makeaddr.c inet_net_ntop.c inet_net_pton.c \
-	inet_neta.c inet_ntop.c inet_pton.c inet_netof.c inet_network.c \
-	inet_ntoa.c iso_addr.c linkaddr.c nsdispatch.c nslexer.c nsparser.c \
-	ns_addr.c ns_ntoa.c nsap_addr.c rcmd.c recv.c res_comp.c res_data.c \
-	res_debug.c res_init.c res_mkquery.c res_query.c res_send.c send.c \
-	sethostent.c
+SRCS+=	base64.c ethers.c gethnamaddr.c getnetnamadr.c getnetent.c getproto.c \
+	getprotoent.c getprotoname.c getservbyname.c getservbyport.c \
+	getservent.c herror.c hesiod.c inet_lnaof.c inet_makeaddr.c \
+	inet_net_ntop.c inet_net_pton.c inet_neta.c inet_ntop.c inet_pton.c \
+	inet_netof.c inet_network.c inet_ntoa.c iso_addr.c linkaddr.c \
+	nsdispatch.c nslexer.c nsparser.c ns_addr.c ns_ntoa.c nsap_addr.c \
+	rcmd.c recv.c res_comp.c res_data.c res_debug.c res_init.c \
+	res_mkquery.c res_query.c res_send.c send.c sethostent.c
 
 SRCS+=	__dn_comp.c __res_close.c __res_send.c
 CPPFLAGS+=-DRESOLVSORT -I.
