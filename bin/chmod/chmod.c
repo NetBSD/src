@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.16 1997/10/06 13:37:34 enami Exp $	*/
+/*	$NetBSD: chmod.c,v 1.17 1997/10/11 03:11:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.16 1997/10/06 13:37:34 enami Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.17 1997/10/11 03:11:04 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,6 +221,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: chmod [-R [-H | -L | -P]] mode file ...\n");
+	    "usage: chmod [-R [-H | -L | -P]] [-h] mode file ...\n");
 	exit(1);
 }
