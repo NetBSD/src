@@ -1,6 +1,8 @@
+/*	$NetBSD: ns_stats.c,v 1.3 1997/10/04 15:12:12 mrg Exp $	*/
+
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_stats.c	4.10 (Berkeley) 6/27/90";
-static char rcsid[] = "$Id: ns_stats.c,v 1.2 1997/04/13 10:51:49 mrg Exp $";
+static char rcsid[] = "from: Id: ns_stats.c,v 8.8 1996/09/22 00:13:10 vixie Exp ";
 #endif /* not lint */
 
 /*
