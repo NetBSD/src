@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.27 1997/06/05 17:50:54 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.28 1997/06/05 18:07:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -61,9 +61,16 @@
  * The idea here is to provide a single interface for multiple swap devices,
  * of any kind and priority in a simple and fast way.
  *
- * Each swap device has several properties:
+ * Each swap device has these properties:
  *	* swap in use.
  *	* swap enabled.
+ *	* map information in `/dev/drum'.
+ *	* vnode pointer.
+ * Files have these additional properties:
+ *	* block size.
+ *	* maximum byte count in buffer.
+ *	* buffer.
+ *	* credentials.
  *
  * The arguments to swapctl(2) are:
  *	int cmd;
@@ -85,15 +92,6 @@
  *		misc value.
  */
 
-/*
- * XXX
- *
- * Does all the manipulation of the swap_priority list, etc, need to
- * be locked ?
- */
-
-#define SWAPDEBUG
-
 #ifdef SWAPDEBUG
 #define	VMSDB_SWON	0x0001
 #define VMSDB_SWOFF	0x0002
@@ -101,8 +99,7 @@
 #define VMSDB_SWALLOC	0x0008
 #define VMSDB_SWFLOW	0x0010
 #define VMSDB_INFO	0x0020
-int vmswapdebug = VMSDB_SWON | VMSDB_SWOFF | VMSDB_SWINIT | VMSDB_SWALLOC |
-    VMSDB_SWFLOW | VMSDB_INFO;
+int vmswapdebug = 0;
 #endif
 
 #define SWAP_TO_FILES
@@ -681,12 +678,6 @@ swap_alloc(size)
 	if (nswapdev < 1)
 		return 0;
 	
-	/*
-	 * XXX
-	 * should we lock the swap_priority list and each swap device
-	 * in turn while doing this search ?
-	 */
-
 	_swaplist_lock();
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next) {
