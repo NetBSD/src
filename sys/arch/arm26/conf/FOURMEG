@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.10 2000/12/20 22:17:31 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.11 2000/12/29 23:07:30 bjh21 Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -51,7 +51,6 @@ options 	FFS_EI		# FFS endianness-independence support
 options 	NFS_V2_ONLY	# Make a smaller NFS
 
 # Executable format options
-#options 	EXEC_AOUT
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 

@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.11 2000/12/26 19:55:52 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.12 2000/12/29 23:07:30 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -222,8 +222,6 @@ file	arch/arm26/arm26/db_trace.c		ddb
 file	arch/arm26/arm26/disksubr.c		disk
 file	arch/arm26/arm26/disksubr_mbr.c		disk
 file	arch/arm26/arm26/disksubr_acorn.c	disk
-
-file	arch/arm26/arm26/aout_machdep.c		exec_aout
 
 file	arch/arm26/arm26/start.c
 file	arch/arm26/arm26/autoconf.c
