@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.117 2003/09/23 05:26:50 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.118 2003/09/24 10:22:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.117 2003/09/23 05:26:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.118 2003/09/24 10:22:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1943,7 +1943,7 @@ lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 
 	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);
-	if ((flags & GOP_SIZE_WRITE) && nlbn < NDADDR && olbn <= nlbn) {
+	if (!(flags & GOP_SIZE_MEM) && nlbn < NDADDR && olbn <= nlbn) {
 		*eobp = fragroundup(fs, size);
 	} else {
 		*eobp = blkroundup(fs, size);
