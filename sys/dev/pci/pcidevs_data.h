@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.396 2002/01/26 16:31:19 ichiro Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.397 2002/01/26 22:41:47 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.393 2002/01/26 16:30:00 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.394 2002/01/26 22:40:46 tron Exp 
  */
 
 /*
@@ -9790,6 +9790,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_SIIG, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Siig Inc.",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_DOMEX, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Domex",
@@ -9841,6 +9847,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CMEDIA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "C-Media Electronics Inc",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_LAVA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Lava Semiconductor Manufacturing, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ETIMEDIA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "eTIMedia Technology Co. Ltd.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_OXFORDSEMI, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Oxford Semiconductor Ltd.",
 	    NULL,
 	},
 	{
@@ -9955,12 +9979,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TEKRAM2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Tekram Technology (2nd PCI Vendor ID)",
-	    NULL,
-	},
-	{
-	    PCI_VENDOR_LAVA, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Lava Semiconductor Manufacturing, Inc.",
 	    NULL,
 	},
 	{
