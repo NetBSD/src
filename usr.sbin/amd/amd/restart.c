@@ -1,3 +1,5 @@
+/*	$NetBSD: restart.c,v 1.6 1997/10/26 00:25:20 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: restart.c,v 1.5 1997/09/22 22:10:42 christos Exp $
+ * Id: restart.c,v 5.2.2.2 1992/08/02 10:42:21 jsp Exp 
  *
  */
 

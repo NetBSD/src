@@ -1,3 +1,5 @@
+/*	$NetBSD: ops_mfs.c,v 1.3 1997/10/26 00:25:11 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_mfs.c,v 1.2 1997/07/24 23:17:00 christos Exp $
+ * Id: ops_mfs.c,v 5.2.2.3 1992/08/02 10:42:21 jsp Exp 
  *
  */
 

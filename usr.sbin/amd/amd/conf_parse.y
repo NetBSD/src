@@ -38,11 +38,13 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: conf_parse.y,v 1.2 1997/07/24 23:16:24 christos Exp $
+ * Id: conf_parse.y,v 5.2.2.1 1992/02/09 15:09:35 jsp beta 
  *
  */
 
 %{
+/*	$NetBSD: conf_parse.y,v 1.3 1997/10/26 00:24:54 christos Exp $	*/
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif /* HAVE_CONFIG_H */

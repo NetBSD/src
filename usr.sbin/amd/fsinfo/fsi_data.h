@@ -1,3 +1,5 @@
+/*	$NetBSD: fsi_data.h,v 1.6 1997/10/26 00:25:37 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: fsi_data.h,v 1.5 1997/07/24 23:18:23 christos Exp $
+ * Id: fsi_data.h,v 5.2.2.1 1992/02/09 15:09:53 jsp beta 
  *
  */
 

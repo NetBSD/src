@@ -1,3 +1,5 @@
+/*	$NetBSD: ops_afs.c,v 1.5 1997/10/26 00:25:06 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_afs.c,v 1.4 1997/09/26 17:00:10 christos Exp $
+ * Id: ops_afs.c,v 1.1 1997/06/30 19:22:30 ezk Exp ezk 
  *
  */
 
@@ -320,6 +322,9 @@ mount_toplvl(char *dir, char *opts)
 #ifdef MNT2_NFS_OPT_AUTO
   nfs_args.flags |= MNT2_NFS_OPT_AUTO;
 #endif /* MNT2_NFS_OPT_AUTO */
+#ifdef MNT2_NFS_OPT_IGNORE
+  nfs_args.flags |= MNT2_NFS_OPT_IGNORE;
+#endif /* MNT2_NFS_OPT_IGNORE */
 
   retry = hasmntval(&mnt, "retry");
   if (retry <= 0)
