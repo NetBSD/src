@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1997/09/14 14:54:32 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1998/02/28 15:53:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -114,6 +114,7 @@ int gid_name __P((char *, gid_t *));
 /*
  * cpio.c
  */
+extern int cpio_swp_head;
 int cpio_strd __P((void));
 int cpio_subtrail __P((ARCHD *));
 int cpio_endwr __P((void));

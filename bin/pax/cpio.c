@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.7 1997/07/20 20:32:24 christos Exp $	*/
+/*	$NetBSD: cpio.c,v 1.8 1998/02/28 15:53:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cpio.c,v 1.7 1997/07/20 20:32:24 christos Exp $");
+__RCSID("$NetBSD: cpio.c,v 1.8 1998/02/28 15:53:00 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ static int com_rd __P((ARCHD *));
  * Routines which support the different cpio versions
  */
 
-static int swp_head;		/* binary cpio header byte swap */
+int cpio_swp_head;		/* binary cpio header byte swap */
 
 /*
  * Routines common to all versions of cpio
@@ -982,8 +982,8 @@ bcpio_id(blk, size)
 	if (((u_short)SHRT_EXT(blk)) == MAGIC)
 		return(0);
 	if (((u_short)RSHRT_EXT(blk)) == MAGIC) {
-		if (!swp_head)
-			++swp_head;
+		if (!cpio_swp_head)
+			++cpio_swp_head;
 		return(0);
 	}
 	return(-1);
@@ -1019,7 +1019,7 @@ bcpio_rd(arcn, buf)
 
 	arcn->pad = 0L;
 	hd = (HD_BCPIO *)buf;
-	if (swp_head) {
+	if (cpio_swp_head) {
 		/*
 		 * header has swapped bytes on 16 bit boundries
 		 */
