@@ -1,10 +1,10 @@
-#       $NetBSD: Makefile,v 1.7 1996/06/22 22:57:39 pk Exp $
+#       $NetBSD: Makefile,v 1.8 1996/06/23 14:04:44 pk Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	access.9 boot.9 copy.9 disk.9 doshutdownhooks.9 fetch.9 malloc.9 \
 	physio.9 inittodr.9 psignal.9 resettodr.9 shutdownhook_establish.9 \
-	store.9 time.9 vslock.9
+	sleep.9 store.9 time.9 vslock.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
@@ -20,5 +20,6 @@ MLINKS+=vslock.9 vsunlock.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
 MLINKS+=malloc.9 free.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
+MLINKS+=sleep.9 wakeup.9 sleep.9 tsleep.9
 
 .include <bsd.prog.mk>
