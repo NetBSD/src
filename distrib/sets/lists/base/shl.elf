@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.13 1999/07/04 20:07:52 fvdl Exp $
+# $NetBSD: shl.elf,v 1.14 1999/11/23 11:20:29 blymn Exp $
 ./usr/lib/libamu.so.1
 ./usr/lib/libbfd.so.3
 ./usr/lib/libbz2.so.0
@@ -11,6 +11,7 @@
 ./usr/lib/libipsec.so.0
 ./usr/lib/libkvm.so.5
 ./usr/lib/libm.so.0
+./usr/lib/libmenu.so.0
 ./usr/lib/libntp.so.0
 ./usr/lib/libobjc.so.0
 ./usr/lib/libossaudio.so.0
