@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_boot.cpp,v 1.1 2001/02/09 18:34:52 uch Exp $	*/
+/*	$NetBSD: arm_boot.cpp,v 1.2 2001/03/11 11:47:24 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,8 @@ ARMBoot::setup(struct HpcMenuInterface::HpcMenuPreferences &pref)
 	platid.dw.dw1 = pref.platid_lo;
 
 	if (platid_match(&platid, &platid_mask_CPU_ARM_STRONGARM_SA1100))
+		args.architecture = ARCHITECTURE_ARM_SA1100;
+	else if (platid_match(&platid, &platid_mask_CPU_ARM_STRONGARM_SA1110))
 		args.architecture = ARCHITECTURE_ARM_SA1100;
 	else
 		return FALSE;
