@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/08/22 20:18:38 explorer Exp $
+#	$NetBSD: Makefile,v 1.2 1996/08/23 05:39:16 mrg Exp $
 
-.PATH:	/sys/miscfs/kernfs ${.CURDIR}/../..
+.include "../Makefile.inc"
+
+.PATH:	$S/miscfs/kernfs ${.CURDIR}/../..
 
 NOMAN=	yep
 

@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/08/22 20:18:18 explorer Exp $
+#	$NetBSD: Makefile,v 1.2 1996/08/23 05:39:00 mrg Exp $
 
-.PATH:	/sys/compat/linux /sys/arch/i386/i386
+.include "../Makefile.inc"
+
+.PATH:	$S/compat/linux $S/arch/i386/i386
 
 CFLAGS+=	-DVM86	-DNVT=1
 
