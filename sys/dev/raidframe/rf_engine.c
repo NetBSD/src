@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.18 2002/09/19 22:36:23 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.19 2002/09/23 04:19:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.18 2002/09/19 22:36:23 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.19 2002/09/23 04:19:05 oster Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -188,7 +188,6 @@ BranchDone(RF_DagNode_t * node)
 				return RF_FALSE;
 		return RF_TRUE;	/* node and all succedent branches aren't in
 				 * fired state */
-		break;
 	case rf_bad:
 		/* succedents can't fire */
 		return (RF_TRUE);
@@ -201,7 +200,6 @@ BranchDone(RF_DagNode_t * node)
 		/* XXX need to fix this case */
 		/* for now, assume that we're done */
 		return (RF_TRUE);
-		break;
 	default:
 		/* illegal node status */
 		RF_PANIC();
