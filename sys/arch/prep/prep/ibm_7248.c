@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_7248.c,v 1.7 2003/07/15 02:54:52 lukem Exp $	*/
+/*	$NetBSD: ibm_7248.c,v 1.8 2005/01/13 23:57:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_7248.c,v 1.7 2003/07/15 02:54:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm_7248.c,v 1.8 2005/01/13 23:57:04 kleink Exp $");
 
 #include <sys/param.h>
 
 #include <machine/intr.h>
 #include <machine/platform.h>
 
-static void pci_intr_fixup_ibm_7248(int, int, int *);
+static void pci_intr_fixup_ibm_7248(int, int, int, int *);
 
 struct platform platform_ibm_7248 = {
 	"IBM PPS Model 7248 (E)",		/* model */
@@ -58,7 +58,7 @@ struct platform platform_ibm_7248 = {
 };
 
 static void
-pci_intr_fixup_ibm_7248(int bus, int dev, int *line)
+pci_intr_fixup_ibm_7248(int bus, int dev, int swiz, int *line)
 {
 	if (bus != 0)
 		return;
