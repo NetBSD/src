@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.38 1995/05/03 00:09:13 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.39 1995/05/03 23:09:37 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -482,7 +482,6 @@ npxsave1()
 {
 	register struct pcb *pcb;
 
-	clts();
 	npx_nointr = 1;
 	pcb = &npxproc->p_addr->u_pcb;
 	fnsave(&pcb->pcb_savefpu);
@@ -506,7 +505,6 @@ npxdna()
 	if ((pcb->pcb_cr0 & CR0_EM) != 0) {
 		if (npx_type != NPX_NONE) {
 			iprintf(("Init"));
-			lcr0(pcb->pcb_cr0 &= ~CR0_EM);
 			npxinit();
 			return (1);
 		}
@@ -518,6 +516,7 @@ npxdna()
 	if (cpl != 0 || npx_nointr != 0)
 		panic("npxdna: masked");
 #endif
+	clts();
 	if (npxproc != 0) {
 #ifdef DIAGNOSTIC
 		if (npxproc == curproc)
@@ -525,8 +524,7 @@ npxdna()
 #endif
 		iprintf(("Save"));
 		npxsave1();
-	} else
-		clts();
+	}
 	/*
 	 * The following frstor may cause an IRQ13 when the state being
 	 * restored has a pending error.  The error will appear to have been
@@ -554,6 +552,7 @@ npxsave()
 		panic("npxsave: masked");
 #endif
 	iprintf(("Fork"));
+	clts();
 	npxsave1();
 	if (npxproc == curproc)
 		stts();
@@ -578,16 +577,15 @@ npxinit()
 	if (cpl != 0 && !cold || npx_nointr != 0)
 		panic("npxinit: masked");
 #endif
+	lcr0(pcb->pcb_cr0 &= ~(CR0_EM|CR0_TS));
 	if (npxproc != 0 && npxproc != curproc)
 		npxsave1();
 	else {
-		clts();
 		npx_nointr = 1;
 		fninit();
 		fwait();
 		npx_nointr = 0;
 	}
-	pcb->pcb_cr0 &= ~CR0_TS;
 	pcb->pcb_flags |= PCB_USEDFPU;
 	npxproc = curproc;
 	fldcw(&control);
