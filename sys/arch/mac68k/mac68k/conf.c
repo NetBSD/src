@@ -65,7 +65,7 @@
  */
 /*-
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.10 1994/08/03 02:53:36 briggs Exp $
+ *	$Id: conf.c,v 1.11 1994/08/30 11:04:17 briggs Exp $
  */
 /*
    ALICE
@@ -159,7 +159,7 @@ bdev_decl(no);	/* dummy declarations */
 #include "sd.h"
 #include "cd.h"
 #include "ch.h"
-#define NVN 0 /*#include "vn.h"*/
+#include "vn.h"
 
 bdev_decl(st);
 bdev_decl(sd);
