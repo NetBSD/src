@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.145 1999/07/26 19:20:09 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.146 1999/07/31 03:18:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2027,9 +2027,20 @@ sys_chflags(p, v, retval)
 	vp = nd.ni_vp;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	/* Non-superusers cannot change the flags on devices, even if they
+	   own them. */
+	if (suser(p->p_ucred, &p->p_acflag)) {
+		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+			goto out;
+		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
+			error = EINVAL;
+			goto out;
+		}
+	}
 	VATTR_NULL(&vattr);
 	vattr.va_flags = SCARG(uap, flags);
 	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+out:
 	vput(vp);
 	return (error);
 }
@@ -2059,9 +2070,21 @@ sys_fchflags(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	/* Non-superusers cannot change the flags on devices, even if they
+	   own them. */
+	if (suser(p->p_ucred, &p->p_acflag)) {
+		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p))
+		    != 0)
+			goto out;
+		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
+			error = EINVAL;
+			goto out;
+		}
+	}
 	VATTR_NULL(&vattr);
 	vattr.va_flags = SCARG(uap, flags);
 	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+out:
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
 	return (error);
