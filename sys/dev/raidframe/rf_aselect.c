@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.15 2004/02/29 01:49:13 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.16 2004/02/29 01:50:23 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.15 2004/02/29 01:49:13 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.16 2004/02/29 01:50:23 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.15 2004/02/29 01:49:13 oster Exp $"
 #include "rf_desc.h"
 #include "rf_map.h"
 
-static int InitHdrNode(RF_DagHeader_t **, RF_Raid_t *);
+static void InitHdrNode(RF_DagHeader_t **, RF_Raid_t *);
 int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
 
 /******************************************************************************
@@ -54,7 +54,7 @@ int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
  * Create and Initialiaze a dag header and termination node
  *
  *****************************************************************************/
-static int 
+static void
 InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr)
 {
 	/* create and initialize dag hdr */
@@ -64,7 +64,6 @@ InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr)
 	(*hdr)->numSuccedents = 0;
 	(*hdr)->raidPtr = raidPtr;
 	(*hdr)->next = NULL;
-	return (0);
 }
 
 /******************************************************************************
