@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.25 2002/01/21 19:49:52 tv Exp $ */
+/* $NetBSD: xlint.c,v 1.26 2002/01/22 01:14:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.25 2002/01/21 19:49:52 tv Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.26 2002/01/22 01:14:03 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -502,6 +502,7 @@ main(int argc, char *argv[])
 			fname(argv[optind], argc == optind+1);
 			first = 0;
 			optind++;
+			break;
 
 		default:
 			usage();
