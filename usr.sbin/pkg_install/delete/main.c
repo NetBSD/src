@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.26 2003/06/12 13:50:38 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2003/06/19 08:54:29 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 2003/06/12 13:50:38 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2003/06/19 08:54:29 agc Exp $");
 #endif
 #endif
 
@@ -150,6 +150,16 @@ main(int argc, char **argv)
 				errx(EXIT_FAILURE, "error expanding '%s' ('%s' nonexistent?)", *argv, _pkgdb_getPKGDB_DIR());
 			}
 		} else {
+			char   *dbdir;
+			char   *tmp;
+
+			dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
+			if (**argv == '/' && strncmp(*argv, dbdir, strlen(dbdir)) == 0) {
+				*argv += strlen(dbdir) + 1;
+				if ((*argv)[strlen(*argv) - 1] == '/') {
+					(*argv)[strlen(*argv) - 1] = 0;
+				}
+			}
 			lpp = alloc_lpkg(*argv);
 			TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
 		}
