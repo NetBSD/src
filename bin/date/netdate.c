@@ -1,4 +1,4 @@
-/* $NetBSD: netdate.c,v 1.21 2001/11/03 13:08:16 lukem Exp $ */
+/* $NetBSD: netdate.c,v 1.22 2002/09/21 18:15:57 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.21 2001/11/03 13:08:16 lukem Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.22 2002/09/21 18:15:57 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: netdate.c,v 1.21 2001/11/03 13:08:16 lukem Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <poll.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -75,11 +76,10 @@ int
 netsettime(time_t tval)
 {
 	struct sockaddr_in dest, from, nsin;
-	struct timeval tout;
 	struct tsp msg;
 	char hostname[MAXHOSTNAMELEN];
 	struct servent *sp;
-	fd_set ready;
+	struct pollfd ready[1];
 	long waittime;
 	int error, found, s, timed_ack;
 	socklen_t length;
@@ -148,13 +148,10 @@ netsettime(time_t tval)
 
 	timed_ack = -1;
 	waittime = WAITACK;
+	ready[0].fd = s;
+	ready[0].events = POLLIN;
 loop:
-	tout.tv_sec = waittime;
-	tout.tv_usec = 0;
-
-	FD_ZERO(&ready);
-	FD_SET(s, &ready);
-	found = select(FD_SETSIZE, &ready, (fd_set *)0, (fd_set *)0, &tout);
+	found = poll(ready, 1, waittime * 1000);
 
 	length = sizeof(error);
 	if (!getsockopt(s,
@@ -164,7 +161,7 @@ loop:
 		goto bad;
 	}
 
-	if (found > 0 && FD_ISSET(s, &ready)) {
+	if (found > 0 && ready[0].revents & POLLIN) {
 		length = sizeof(struct sockaddr_in);
 		if (recvfrom(s, &msg, sizeof(struct tsp), 0,
 		    (struct sockaddr *)&from, &length) < 0) {
