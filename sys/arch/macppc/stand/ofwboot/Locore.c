@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.15 2003/12/26 13:43:29 aymeric Exp $	*/
+/*	$NetBSD: Locore.c,v 1.16 2004/03/17 23:32:22 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,7 +89,23 @@ asm(
 "	mtmsr	%r8		\n"
 "	isync			\n"
 "				\n"
-"	b	startup		\n"
+	/*
+	 * Make sure that .bss is zeroed
+	 */
+"				\n"
+"	li	%r0,0		\n"
+"	lis	%r8,_edata@ha	\n"
+"	addi	%r8,%r8,_edata@l\n"
+"	lis	%r9,_end@ha	\n"
+"	addi	%r9,%r9,_end@l	\n"
+"				\n"
+"5:	cmpw	0,%r8,%r9	\n"
+"	bge	6f		\n"
+"	stw	%r0,0(%r8)	\n"
+"	addi	%r8,%r8,4	\n"
+"	b	5b		\n"
+"				\n"
+"6:	b	startup		\n"
 );
 
 #if 0
@@ -108,7 +124,6 @@ startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
 	extern char etext[], _end[], _edata[];
 
-	memset(_edata, 0, (_end - _edata));
 	openfirmware = openfirm;
 	setup();
 	main();
