@@ -29,6 +29,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <syslog.h>
 
