@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.76 2004/07/24 23:53:49 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.77 2004/07/27 23:57:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.76 2004/07/24 23:53:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.77 2004/07/27 23:57:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2675,6 +2675,8 @@ atw_detach(struct atw_softc *sc)
 	 */
 	if ((sc->sc_flags & ATWF_ATTACHED) == 0)
 		return (0);
+
+	callout_stop(&sc->sc_scan_ch);
 
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
