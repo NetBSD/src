@@ -65,6 +65,7 @@ int	setgroups();
 int	getpgrp();
 int	sun_setpgid();
 int	setitimer();
+int	sun_wait3();
 int	swapon();
 int	getitimer();
 int	ogethostname();
@@ -81,6 +82,7 @@ int	oaccept();
 int	getpriority();
 int	osend();
 int	orecv();
+int	sigreturn();
 int	bind();
 int	sun_setsockopt();
 int	listen();
@@ -164,7 +166,6 @@ int	osun_times();
 int	osun_setgid();
 int	osun_ssig();
 int	ovlimit();
-int	owait();
 int	ovtimes();
 #ifdef SYSVMSG
 #else
@@ -265,7 +266,7 @@ struct sysent ultrix_sysent[] = {
 	{ 1, getpgrp },			/* 81 = getpgrp */
 	{ 2, sun_setpgid },			/* 82 = sun_setpgid */
 	{ 3, setitimer },			/* 83 = setitimer */
-	{ compat(0,wait) },		/* 84 = old wait */
+	{ 3, sun_wait3 },			/* 84 = sun_wait3 */
 	{ 1, swapon },			/* 85 = swapon */
 	{ 2, getitimer },			/* 86 = getitimer */
 	{ 2, ogethostname },			/* 87 = ogethostname */
@@ -284,7 +285,7 @@ struct sysent ultrix_sysent[] = {
 	{ 2, getpriority },			/* 100 = getpriority */
 	{ 4, osend },			/* 101 = osend */
 	{ 4, orecv },			/* 102 = orecv */
-	{ 0, nosys },			/* 103 = sigreturn XXXXXXX */
+	{ 1, sigreturn },			/* 103 = sigreturn */
 	{ 3, bind },			/* 104 = bind */
 	{ 5, sun_setsockopt },			/* 105 = sun_setsockopt */
 	{ 2, listen },			/* 106 = listen */

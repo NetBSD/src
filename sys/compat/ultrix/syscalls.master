@@ -1,4 +1,4 @@
-	$Id: syscalls.master,v 1.1 1994/06/02 06:25:39 glass Exp $
+	$Id: syscalls.master,v 1.2 1994/06/15 05:18:07 glass Exp $
 ;	from: @(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
@@ -104,7 +104,7 @@
 81	STD	1 getpgrp
 82	STD	2 sun_setpgid
 83	STD	3 setitimer
-84	COMPAT	0 wait
+84	STD	3 sun_wait3
 85	STD	1 swapon
 86	STD	2 getitimer
 87	STD	2 ogethostname
@@ -123,7 +123,7 @@
 100	STD	2 getpriority
 101	STD	4 osend
 102	STD	4 orecv
-103	UNIMPL	0 sigreturn XXXXXXX
+103	STD	1 sigreturn
 104	STD	3 bind
 105	STD	5 sun_setsockopt
 106	STD	2 listen
