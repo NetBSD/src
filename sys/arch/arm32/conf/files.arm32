@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.56 1998/07/31 16:42:01 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.57 1998/08/15 02:59:01 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -110,6 +110,7 @@ include "dev/ofisa/files.ofisa"
 file	arch/arm32/ofw/ofisa_machdep.c		ofisa
 file	arch/arm32/ofw/com_ofisa_machdep.c	com_ofisa
 file	arch/arm32/ofw/com_ofisa_consolehack.c	com_ofisa	# XXX
+file	arch/arm32/ofw/if_cs_ofisa_machdep.c	cs_ofisa
 file	arch/arm32/ofw/lpt_ofisa_machdep.c	lpt_ofisa
 file	arch/arm32/ofw/wdc_ofisa_machdep.c	wdc_ofisa
 

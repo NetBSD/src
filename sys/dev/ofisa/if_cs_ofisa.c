@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.1 1998/07/27 01:26:43 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.2 1998/08/15 02:59:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,8 +84,11 @@ cs_ofisa_match(parent, cf, aux)
 	int rv = 0;
 
 	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)
-		rv = 1;
-
+		rv = 5;
+#ifdef _CS_OFISA_MD_MATCH
+	if (rv == 0)
+		rv = cs_ofisa_md_match(parent, cf, aux);
+#endif
 	return (rv);
 }
 
@@ -124,6 +127,9 @@ cs_ofisa_attach(parent, self, aux)
 	io_addr = mem_addr = -1;
 
 	n = ofisa_reg_get(aa->oba.oba_phandle, reg, 2);
+#ifdef _CS_OFISA_MD_REG_FIXUP
+	n = cs_ofisa_md_reg_fixup(parent, self, aux, &reg, 2, n);
+#endif
 	if (n < 1 || n > 2) {
 		printf(": error getting register data\n");
 		return;
@@ -156,6 +162,9 @@ cs_ofisa_attach(parent, self, aux)
 	}
 
 	n = ofisa_intr_get(aa->oba.oba_phandle, &intr, 1);
+#ifdef _CS_OFISA_MD_INTR_FIXUP
+	n = cs_ofisa_md_intr_fixup(parent, self, aux, &intr, 1, n);
+#endif
 	if (n != 1) {
 		printf(": error getting interrupt data\n");
 		return;
@@ -168,14 +177,12 @@ cs_ofisa_attach(parent, self, aux)
 	}
 
 	sc->sc_drq = ISACF_DRQ_DEFAULT;
-	if (OF_getproplen(aa->oba.oba_phandle, "no-dma") < 0 &&
-	    ofisa_dma_get(aa->oba.oba_phandle, &dma, 1) == 1) {
-#ifdef SHARK	/* XXX machdep ofw hook */
-		sc->sc_drq = 6;
-#else
-		sc->sc_drq = dma.drq;
+	n = ofisa_dma_get(aa->oba.oba_phandle, &dma, 1);
+#ifdef _CS_OFISA_MD_DMA_FIXUP
+	n = cs_ofisa_md_dma_fixup(parent, self, aux, &dma, 1, n);
 #endif
-	}
+	if (n == 1)
+		sc->sc_drq = dma.drq;
 
 	if (io_addr == (bus_addr_t) -1) {
 		printf(": no I/O space\n");
@@ -207,6 +214,10 @@ cs_ofisa_attach(parent, self, aux)
 	/* Dig media out of the firmware. */
 	media = of_network_decode_media(aa->oba.oba_phandle, &nmedia,
 	    &defmedia);
+#ifdef _CS_OFISA_MD_MEDIA_FIXUP
+	media = cs_ofisa_md_media_fixup(parent, self, aux, media, &nmedia,
+	    &defmedia);
+#endif
 	if (media == NULL) {
 		printf(": unable to get media information\n");
 		return;
@@ -240,8 +251,8 @@ cs_ofisa_attach(parent, self, aux)
 		return;
 	}
 
-#ifdef SHARK	/* XXX machdep ofw hook */
-	sc->sc_cfgflags |= CFGFLG_USE_SA|CFGFLG_IOCHRDY|CFGFLG_NOT_EEPROM;
+#ifdef _CS_OFISA_MD_CFGFLAGS_FIXUP
+	sc->sc_cfgflags |= cs_ofisa_md_cfgflags_fixup(parent, self, aux);
 #endif
 
 	cs_attach(sc, enaddr, media, nmedia, defmedia);
