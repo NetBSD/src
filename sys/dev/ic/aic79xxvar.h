@@ -1070,8 +1070,6 @@ struct ahd_softc {
 	bus_space_tag_t           tags[2];
 	bus_space_handle_t        bshs[2];
 
-	scsipi_adapter_req_t	  sc_req;
-
 	void 			 *shutdown_hook;
 	struct scb_data		  scb_data;
 
