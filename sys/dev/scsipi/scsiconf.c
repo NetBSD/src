@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.90 1997/09/19 14:08:48 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.91 1997/09/29 11:00:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -441,6 +441,11 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_FORCELUNS|SDEV_AUTOSAVE},
+	/* Gives non-media hardware failure in response to start-unit command */
+	{{T_DIRECT, T_FIXED,
+	 "HITACHI", "DK515C",		"CP16"},  SDEV_NOSTARTUNIT},
+	{{T_DIRECT, T_FIXED,
+	 "HITACHI", "DK515C",		"CP15"},  SDEV_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
 	 "IBMRAID ", "0662S",		 ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
@@ -528,6 +533,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Following entry reported as a Tandberg 3600; ref. PR1933 */
 	{{T_SEQUENTIAL, T_REMOV,
 	 "ARCHIVE ", "VIPER 150  21247", ""},     SDEV_NOLUNS},
+	/* Following entry for a Cipher ST150S; ref. PR4171 */
+	{{T_SEQUENTIAL, T_REMOV,
+	 "ARCHIVE ", "VIPER 1500 21247", "2.2G"}, SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "ARCHIVE ", "Python 28454-XXX", ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
