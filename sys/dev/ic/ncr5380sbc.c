@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.26 1998/09/14 05:56:14 scottr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.27 1998/09/16 05:36:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -670,8 +670,7 @@ new:
 		if ((xs->flags & ITSDONE) == 0)
 			panic("ncr5380_scsi_cmd: poll didn't finish");
 		rv = COMPLETE;
-	} else if ((xs->flags & ITSDONE))
-		rv = COMPLETE;
+	}
 
 out:
 	splx(s);
