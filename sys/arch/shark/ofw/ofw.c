@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.23 2003/04/02 04:27:20 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.24 2003/04/18 11:11:52 scw Exp $	*/
 
 /*
  * Copyright 1997
@@ -780,7 +780,24 @@ ofw_configmem(void)
 	OF_set_callback(ofw_callbackhandler);
 
 	/* Switch to the proc0 pagetables. */
+#ifndef ARM32_PMAP_NEW
 	setttb(proc0_ttbbase.pv_pa);
+#else
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+	setttb(proc0_ttbbase.pv_pa);
+	cpu_tlb_flushID();
+	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
+
+	/*
+	 * Moved from cpu_startup() as data_abort_handler() references
+	 * this during uvm init
+	 */
+	{
+		extern struct user *proc0paddr;
+		proc0paddr = (struct user *)kernelstack.pv_va;
+		lwp0.l_addr = proc0paddr;
+	}
+#endif
 
 	/* Aaaaaaaah, running in the proc0 address space! */
 	/* I feel good... */
@@ -944,7 +961,11 @@ ofw_configmem(void)
 	}
 
 	/* Initialize pmap module. */
+#ifndef ARM32_PMAP_NEW
 	pmap_bootstrap((pd_entry_t *)proc0_ttbbase.pv_va, proc0_ptpt);
+#else
+	pmap_bootstrap((pd_entry_t *)proc0_ttbbase.pv_va);
+#endif
 }
 
 
@@ -1272,6 +1293,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	pv_addr_t *proc0_ptpt;
 {
 	int i, oft;
+#ifndef ARM32_PMAP_NEW
 	pv_addr_t proc0_pagedir;
 	pv_addr_t proc0_pt_pte;
 	pv_addr_t proc0_pt_sys;
@@ -1280,6 +1302,16 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	pv_addr_t proc0_pt_ofw[KERNEL_OFW_PTS];
 	pv_addr_t proc0_pt_io[KERNEL_IO_PTS];
 	pv_addr_t msgbuf;
+#else
+	static pv_addr_t proc0_pagedir;
+	static pv_addr_t proc0_pt_pte;
+	static pv_addr_t proc0_pt_sys;
+	static pv_addr_t proc0_pt_kernel[KERNEL_IMG_PTS];
+	static pv_addr_t proc0_pt_vmdata[KERNEL_VMDATA_PTS];
+	static pv_addr_t proc0_pt_ofw[KERNEL_OFW_PTS];
+	static pv_addr_t proc0_pt_io[KERNEL_IO_PTS];
+	static pv_addr_t msgbuf;
+#endif
 	vm_offset_t L1pagetable;
 	struct mem_translation *tp;
 
@@ -1449,13 +1481,22 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 * cached ...
 	 * Really these should be uncached when allocated.
 	 */
+#ifndef ARM32_PMAP_NEW
 	pmap_map_entry(L1pagetable, proc0_pt_pte.pv_va,
 	    proc0_pt_pte.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+#else
+	pmap_map_entry(L1pagetable, proc0_pt_pte.pv_va,
+	    proc0_pt_pte.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#endif
 	for (i = 0; i < (L1_TABLE_SIZE / PAGE_SIZE); ++i)
 		pmap_map_entry(L1pagetable,
 		    proc0_pagedir.pv_va + PAGE_SIZE * i,
 		    proc0_pagedir.pv_pa + PAGE_SIZE * i,
+#ifndef ARM32_PMAP_NEW
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#else
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+#endif
 
 	/*
 	 * Construct the proc0 L2 pagetables that map page tables.
@@ -1471,10 +1512,17 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		    PTE_BASE + ((KERNEL_BASE + i * 0x00400000) >> (PGSHIFT-2)),
 		    proc0_pt_kernel[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#ifndef ARM32_PMAP_NEW
 	pmap_map_entry(L1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    proc0_pt_pte.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+#else
+	pmap_map_entry(L1pagetable,
+	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
+	    proc0_pt_pte.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+#endif
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		pmap_map_entry(L1pagetable,
 		    PTE_BASE + ((KERNEL_VM_BASE + i * 0x00400000)
@@ -1517,6 +1565,30 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			}
 		}
 	}
+
+#ifdef ARM32_PMAP_NEW
+	/*
+	 * This is not a pretty sight, but it works.
+	 */
+	proc0_pt_sys.pv_va = PTE_BASE + (0x00000000 >> (PGSHIFT-2));
+	proc0_pt_pte.pv_va = PTE_BASE + (PTE_BASE >> (PGSHIFT-2));
+	for (i = 0; i < KERNEL_IMG_PTS; i++) {
+		proc0_pt_kernel[i].pv_va = PTE_BASE +
+		    ((KERNEL_BASE + i * 0x00400000) >> (PGSHIFT-2));
+	}
+	for (i = 0; i < KERNEL_VMDATA_PTS; i++) {
+		proc0_pt_vmdata[i].pv_va = PTE_BASE +
+		    ((KERNEL_VM_BASE + i * 0x00400000) >> (PGSHIFT-2));
+	}
+	for (i = 0; i < KERNEL_OFW_PTS; i++) {
+		proc0_pt_ofw[i].pv_va = PTE_BASE +
+		    ((OFW_VIRT_BASE + i * 0x00400000) >> (PGSHIFT-2));
+	}
+	for (i = 0; i < KERNEL_IO_PTS; i++) {
+		proc0_pt_io[i].pv_va = PTE_BASE +
+		    ((IO_VIRT_BASE + i * 0x00400000) >> (PGSHIFT-2));
+	}
+#endif
 
 	/* OUT parameters are the new ttbbase and the pt which maps pts. */
 	*proc0_ttbbase = proc0_pagedir;

@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.7 2002/10/10 09:17:05 jdolecek Exp $
+#	$NetBSD: OFWGENCFG,v 1.8 2003/04/18 11:11:51 scw Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -100,6 +100,8 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	ARM32_PMAP_NEW	# Use new pmap
+options 	ARM32_PMAP_NEEDS_PTE_SYNC
 
 # Development and Debugging options
 
