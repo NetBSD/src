@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)queue.3	8.2 (Berkeley) 1/24/94
+.\"	@(#)queue.3	8.3 (Berkeley) 8/20/94
 .\"
-.Dd "January 24, 1994"
+.Dd "August 20, 1994"
 .Dt QUEUE 3
 .Os BSD 4
 .Sh NAME
@@ -39,12 +39,14 @@
 .Nm LIST_HEAD ,
 .Nm LIST_INIT ,
 .Nm LIST_INSERT_AFTER ,
+.Nm LIST_INSERT_BEFORE ,
 .Nm LIST_INSERT_HEAD ,
 .Nm LIST_REMOVE ,
 .Nm TAILQ_ENTRY ,
 .Nm TAILQ_HEAD ,
 .Nm TAILQ_INIT ,
 .Nm TAILQ_INSERT_AFTER ,
+.Nm TAILQ_INSERT_BEFORE ,
 .Nm TAILQ_INSERT_HEAD ,
 .Nm TAILQ_INSERT_TAIL ,
 .Nm TAILQ_REMOVE ,
@@ -64,6 +66,7 @@
 .Fn LIST_HEAD "HEADNAME" "TYPE"
 .Fn LIST_INIT "LIST_HEAD *head"
 .Fn LIST_INSERT_AFTER "LIST_ENTRY *listelm" "TYPE *elm" "LIST_ENTRY NAME"
+.Fn LIST_INSERT_BEFORE "LIST_ENTRY *listelm" "TYPE *elm" "LIST_ENTRY NAME"
 .Fn LIST_INSERT_HEAD "LIST_HEAD *head" "TYPE *elm" "LIST_ENTRY NAME"
 .Fn LIST_REMOVE "TYPE *elm" "LIST_ENTRY NAME"
 .sp
@@ -71,6 +74,7 @@
 .Fn TAILQ_HEAD "HEADNAME" "TYPE"
 .Fn TAILQ_INIT "TAILQ_HEAD *head"
 .Fn TAILQ_INSERT_AFTER "TAILQ_HEAD *head" "TYPE *listelm" "TYPE *elm" "TAILQ_ENTRY NAME"
+.Fn TAILQ_INSERT_BEFORE "TAILQ_HEAD *head" "TYPE *listelm" "TYPE *elm" "TAILQ_ENTRY NAME"
 .Fn TAILQ_INSERT_HEAD "TAILQ_HEAD *head" "TYPE *elm" "TAILQ_ENTRY NAME"
 .Fn TAILQ_INSERT_TAIL "TAILQ_HEAD *head" "TYPE *elm" "TAILQ_ENTRY NAME"
 .Fn TAILQ_REMOVE "TAILQ_HEAD *head" "TYPE *elm" "TAILQ_ENTRY NAME"
@@ -92,6 +96,8 @@ All three structures support the following functionality:
 Insertion of a new entry at the head of the list.
 .It
 Insertion of a new entry after any element in the list.
+.It
+Insertion of a new entry before any element in the list.
 .It
 Removal of any entry in the list.
 .It
@@ -121,8 +127,6 @@ Circular queues add the following functionality:
 .Bl -enum -compact -offset indent
 .It
 Entries can be added at the end of a list.
-.It
-Entries can be added before another entry.
 .It
 They may be traversed backwards, from tail to head.
 .El
@@ -167,7 +171,7 @@ This structure contains a single pointer to the first element
 on the list.
 The elements are doubly linked so that an arbitrary element can be
 removed without traversing the list.
-New elements can be added to the list after an existing element or
+New elements can be added to the list before or after an existing element or
 at the head of the list.
 A
 .Fa LIST_HEAD
@@ -216,6 +220,13 @@ after the element
 .Fa listelm .
 .Pp
 The macro
+.Nm LIST_INSERT_BEFORE
+inserts the new element
+.Fa elm
+before the element
+.Fa listelm .
+.Pp
+The macro
 .Nm LIST_REMOVE
 removes the element
 .Fa elm
@@ -237,6 +248,9 @@ LIST_INSERT_HEAD(&head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert after. */
 LIST_INSERT_AFTER(n1, n2, entries);
+
+n2 = malloc(sizeof(struct entry));	/* Insert before. */
+LIST_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
 for (np = head.lh_first; np != NULL; np = np->entries.le_next)
 	np-> ...
@@ -308,6 +322,13 @@ after the element
 .Fa listelm .
 .Pp
 The macro
+.Nm TAILQ_INSERT_BEFORE
+inserts the new element
+.Fa elm
+before the element
+.Fa listelm .
+.Pp
+The macro
 .Nm TAILQ_REMOVE
 removes the element
 .Fa elm
@@ -332,6 +353,9 @@ TAILQ_INSERT_TAIL(&head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert after. */
 TAILQ_INSERT_AFTER(&head, n1, n2, entries);
+
+n2 = malloc(sizeof(struct entry));	/* Insert before. */
+TAILQ_INSERT_BEFORE(&head, n1, n2, entries);
 					/* Forward traversal. */
 for (np = head.tqh_first; np != NULL; np = np->entries.tqe_next)
 	np-> ...
