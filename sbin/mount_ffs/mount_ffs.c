@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ffs.c,v 1.7 1998/03/01 02:20:29 fvdl Exp $	*/
+/*	$NetBSD: mount_ffs.c,v 1.8 1998/07/26 15:05:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ffs.c,v 1.7 1998/03/01 02:20:29 fvdl Exp $");
+__RCSID("$NetBSD: mount_ffs.c,v 1.8 1998/07/26 15:05:37 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,8 @@ main(argc, argv)
 	extern int optreset;
 	struct ufs_args args;
 	int ch, mntflags;
-	char *fs_name, *errcause;
+	char *fs_name;
+	const char *errcause;
 
 	mntflags = 0;
 	optind = optreset = 1;		/* Reset for parse of new argv. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.52 1998/07/06 06:47:58 mrg Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.53 1998/07/26 14:57:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.52 1998/07/06 06:47:58 mrg Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.53 1998/07/26 14:57:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -610,7 +610,7 @@ pass(passwd)
 {
 	int rval;
 	FILE *fd;
-	char *cp, *shell, *home;
+	char const *cp, *shell, *home;
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");

@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.5 1998/07/05 14:26:06 mrg Exp $	*/
+/*	$NetBSD: field.c,v 1.6 1998/07/26 15:13:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)field.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: field.c,v 1.5 1998/07/05 14:26:06 mrg Exp $");
+__RCSID("$NetBSD: field.c,v 1.6 1998/07/26 15:13:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: field.c,v 1.5 1998/07/05 14:26:06 mrg Exp $");
 /* ARGSUSED */
 int
 p_login(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
@@ -90,7 +90,7 @@ p_login(p, pw, ep)
 /* ARGSUSED */
 int
 p_passwd(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
@@ -108,7 +108,7 @@ p_passwd(p, pw, ep)
 /* ARGSUSED */
 int
 p_uid(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
@@ -136,7 +136,7 @@ p_uid(p, pw, ep)
 /* ARGSUSED */
 int
 p_gid(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
@@ -169,7 +169,7 @@ p_gid(p, pw, ep)
 /* ARGSUSED */
 int
 p_class(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
@@ -187,7 +187,7 @@ p_class(p, pw, ep)
 /* ARGSUSED */
 int
 p_change(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
@@ -201,7 +201,7 @@ p_change(p, pw, ep)
 /* ARGSUSED */
 int
 p_expire(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
@@ -215,7 +215,7 @@ p_expire(p, pw, ep)
 /* ARGSUSED */
 int
 p_gecos(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
@@ -232,7 +232,7 @@ p_gecos(p, pw, ep)
 /* ARGSUSED */
 int
 p_hdir(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
@@ -251,11 +251,11 @@ p_hdir(p, pw, ep)
 /* ARGSUSED */
 int
 p_shell(p, pw, ep)
-	char *p;
+	const char *p;
 	struct passwd *pw;
 	ENTRY *ep;
 {
-	char *t;
+	const char *t;
 
 	if (!*p) {
 		pw->pw_shell = _PATH_BSHELL;
