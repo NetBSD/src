@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.16.2.1 1999/08/22 17:44:38 he Exp $
+.\" $NetBSD: pkg_create.1,v 1.16.2.2 1999/12/20 15:35:00 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -61,6 +61,9 @@
 .Op Fl k Ar dscript
 .Ek
 .Bk -words
+.Op Fl L Ar SrcDir
+.Ek
+.Bk -words
 .Op Fl m Ar mtreefile
 .Ek
 .Bk -words
@@ -68,6 +71,12 @@
 .Ek
 .Bk -words
 .Op Fl r Ar rscript
+.Ek
+.Bk -words
+.Op Fl s Ar size-pkg-file
+.Ek
+.Bk -words
+.Op Fl S Ar size-all-file
 .Ek
 .Bk -words
 .Op Fl t Ar template
@@ -105,7 +114,7 @@ were used to control the build when creating the
 binary package. This allows various build definitions
 to be retained in a binary package and viewed wherever it is installed,
 using
-.Xr pkginfo 1 .
+.Xr pkg_info 1 .
 .It Fl C Ar cpkgs
 Set the initial package conflict list to
 .Ar cpkgs .
@@ -113,6 +122,9 @@ This is assumed to be a whitespace separated list of package names
 and is meant as a convenient shorthand for specifying multiple
 .Cm @pkgcfl
 directives in the packing list (see PACKING LIST DETAILS section below).
+.It Fl L Ar SrcDir
+This sets the package's @src directive; see below for a description
+of what this does.
 .It Fl D Ar displayfile
 Display the file after installing the package. Useful for things like
 legal notices on almost-free software, etc.
@@ -132,11 +144,18 @@ directives in the packing list (see PACKING LIST DETAILS section below).
 Re-order any directories in the pkg/PLIST file into reverse alphabetic
 order, so that child directories will automatically be removed before
 parent directories.
+.It Fl S Ar size-all-file
+Store the given file for later querying with the
+.Xr pkg_info 1 
+.Ar -S
+flag. The file is expected to contain the the size (in bytes) of all files of
+this package plus any required packages added up and stored as a
+ASCII string, terminated by a newline.
 .It Fl X Ar excludefile
 Pass
 .Ar excludefile
 as a
-.Fl exclude-from
+.Fl -exclude-from
 argument to
 .Cm tar
 when creating final package.  See
@@ -232,6 +251,12 @@ to be the ``requirements'' procedure for the package.  This can be any
 executable program (or shell script).  It will be invoked automatically
 at installation/deinstallation time to determine whether or not
 installation/deinstallation should proceed.
+.It Fl s Ar size-pkg-file
+Store the given file for later querying with the
+.Xr pkg_info 1 
+.Ar -s
+flag. The file is expected to contain the the size (in bytes) of all files of
+this package added up and stored as a ASCII string, terminated by a newline.
 .It Fl t Ar template
 Use
 .Ar template
@@ -446,7 +471,7 @@ refined it for
 .Nx
 .It "Hubert Feyrer"
 .Nx
-wildcard dependency processing, pkgdb, etc. 
+wildcard dependency processing, pkgdb, pkg size recording etc. 
 .El
 .Sh BUGS
 Hard links between files in a distribution must be bracketed by
