@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprestore.h,v 1.8 1998/02/10 00:38:16 perry Exp $	*/
+/*	$NetBSD: dumprestore.h,v 1.8.12.1 2002/01/14 21:37:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -70,8 +70,8 @@ union u_spcl {
 	char dummy[TP_BSIZE];
 	struct	s_spcl {
 		int32_t	c_type;		    /* record type (see below) */
-		time_t	c_date;		    /* date of this dump */
-		time_t	c_ddate;	    /* date of previous dump */
+		int32_t	c_date;		    /* date of this dump */
+		int32_t	c_ddate;	    /* date of previous dump */
 		int32_t	c_volume;	    /* dump volume number */
 		daddr_t	c_tapea;	    /* logical block of this record */
 		ino_t	c_inumber;	    /* number of inode */
