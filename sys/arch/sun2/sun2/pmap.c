@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2001/04/10 12:39:56 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2001/04/21 23:51:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -3676,19 +3676,6 @@ pmap_wired_pages(pmap)
 	return (pages);
 }
 
-
-/*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void
-pmap_update()
-{
-}
 
 /*
  *	pmap_copy_page copies the specified (machine independent)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2001/04/21 17:25:07 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 2001/04/21 23:51:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1728,20 +1728,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
 	    dst_pmap, src_pmap, dst_addr, len, src_addr));
-}
-
-/*
- * pmap_update:
- *
- *	Require that all active physical maps contain no
- *	incorrect entires NOW, by processing any deferred
- *	pmap operations.
- */
-void
-pmap_update()
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_update()\n"));
 }
 
 /*

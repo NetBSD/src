@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2001/04/21 17:25:06 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.29 2001/04/21 23:51:19 thorpej Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -1680,21 +1680,6 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
 		       dst_pmap, src_pmap, dst_addr, len, src_addr);
-#endif
-}
-
-/*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void pmap_update()
-{
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
 #endif
 }
 

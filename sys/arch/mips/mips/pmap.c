@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.119 2001/03/21 03:16:06 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120 2001/04/21 23:51:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2001/03/21 03:16:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2001/04/21 23:51:18 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1486,24 +1486,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
 		     dst_pmap, src_pmap, dst_addr, len, src_addr);
-#endif
-}
-
-/*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void
-pmap_update()
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
 #endif
 }
 

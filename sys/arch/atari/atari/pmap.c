@@ -1494,17 +1494,6 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 }
 
 /*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void pmap_update()
-{
-}
-
-/*
  *	Routine:	pmap_collect
  *	Function:
  *		Garbage collects the physical map system for

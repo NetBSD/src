@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.188 2001/04/21 17:25:06 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.189 2001/04/21 23:51:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6151,15 +6151,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 		}
 	}
 #endif
-}
-
-/*
- * Require that all active physical maps contain no
- * incorrect entries NOW.
- */
-void
-pmap_update()
-{
 }
 
 /*

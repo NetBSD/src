@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.26 1998/03/16 16:25:38 gwr Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.27 2001/04/21 23:51:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,6 +75,8 @@ extern segsz_t pmap_wired_pages(pmap_t);
 
 /* We use the PA plus some low bits for device mmap. */
 #define pmap_phys_address(addr) 	(addr)
+
+#define	pmap_update()			/* nothing (yet) */
 
 /* Our memory is contiguous (or nearly so). */
 #define pmap_page_index(pa) (atop(pa))
