@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.34 2004/04/19 01:36:32 lukem Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.35 2005/03/19 14:22:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.34 2004/04/19 01:36:32 lukem Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.35 2005/03/19 14:22:50 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,25 +69,36 @@ __RCSID("$NetBSD: miscbltin.c,v 1.34 2004/04/19 01:36:32 lukem Exp $");
 
 
 /*
- * The read builtin.  The -e option causes backslashes to escape the
- * following character.
+ * The read builtin.
+ * Backslahes escape the next char unless -r is specified.
  *
  * This uses unbuffered input, which may be avoidable in some cases.
+ *
+ * Note that if IFS=' :' then read x y should work so that:
+ * 'a b'	x='a', y='b'
+ * ' a b '	x='a', y='b'
+ * ':b'		x='',  y='b'
+ * ':'		x='',  y=''
+ * '::'		x='',  y=''
+ * ': :'	x='',  y=''
+ * ':::'	x='',  y='::'
+ * ':b c:'	x='',  y='b c:'
  */
 
 int
 readcmd(int argc, char **argv)
 {
 	char **ap;
-	int backslash;
 	char c;
 	int rflag;
 	char *prompt;
-	char *ifs;
+	const char *ifs;
 	char *p;
 	int startword;
 	int status;
 	int i;
+	int is_ifs;
+	int saveall = 0;
 
 	rflag = 0;
 	prompt = NULL;
@@ -97,17 +108,20 @@ readcmd(int argc, char **argv)
 		else
 			rflag = 1;
 	}
+
 	if (prompt && isatty(0)) {
 		out2str(prompt);
 		flushall();
 	}
+
 	if (*(ap = argptr) == NULL)
 		error("arg count");
+
 	if ((ifs = bltinlookup("IFS", 1)) == NULL)
-		ifs = nullstr;
+		ifs = " \t\n";
+
 	status = 0;
-	startword = 1;
-	backslash = 0;
+	startword = 2;
 	STARTSTACKSTR(p);
 	for (;;) {
 		if (read(0, &c, 1) != 1) {
@@ -116,43 +130,79 @@ readcmd(int argc, char **argv)
 		}
 		if (c == '\0')
 			continue;
-		if (backslash) {
-			backslash = 0;
-			if (c != '\n')
-				STPUTC(c, p);
-			continue;
-		}
-		if (!rflag && c == '\\') {
-			backslash++;
-			continue;
-		}
-		if (c == '\n')
-			break;
-		if (startword && *ifs == ' ' && strchr(ifs, c)) {
-			continue;
-		}
-		startword = 0;
-		if (backslash && c == '\\') {
+		if (c == '\\' && !rflag) {
 			if (read(0, &c, 1) != 1) {
 				status = 1;
 				break;
 			}
-			STPUTC(c, p);
-		} else if (ap[1] != NULL && strchr(ifs, c) != NULL) {
-			STACKSTRNUL(p);
-			setvar(*ap, stackblock(), 0);
-			ap++;
-			startword = 1;
-			STARTSTACKSTR(p);
-		} else {
-			STPUTC(c, p);
+			if (c != '\n')
+				STPUTC(c, p);
+			continue;
 		}
+		if (c == '\n')
+			break;
+		if (strchr(ifs, c))
+			is_ifs = strchr(" \t\n", c) ? 1 : 2;
+		else
+			is_ifs = 0;
+
+		if (startword != 0) {
+			if (is_ifs == 1) {
+				/* Ignore leading IFS whitespace */
+				if (saveall)
+					STPUTC(c, p);
+				continue;
+			}
+			if (is_ifs == 2 && startword == 1) {
+				/* Only one non-whitespace IFS per word */
+				startword = 2;
+				if (saveall)
+					STPUTC(c, p);
+				continue;
+			}
+		}
+
+		if (is_ifs == 0) {
+			/* append this character to the current variable */
+			startword = 0;
+			if (saveall)
+				/* Not just a spare terminator */
+				saveall++;
+			STPUTC(c, p);
+			continue;
+		}
+
+		/* end of variable... */
+		startword = is_ifs;
+
+		if (ap[1] == NULL) {
+			/* Last variable needs all IFS chars */
+			saveall++;
+			STPUTC(c, p);
+			continue;
+		}
+
+		STACKSTRNUL(p);
+		setvar(*ap, stackblock(), 0);
+		ap++;
+		STARTSTACKSTR(p);
 	}
 	STACKSTRNUL(p);
-	/* Remove trailing blanks */
-	while (stackblock() <= --p && strchr(ifs, *p) != NULL)
-		*p = '\0';
+
+	/* Remove trailing IFS chars */
+	for (; stackblock() <= --p; *p = 0) {
+		if (!strchr(ifs, *p))
+			break;
+		if (strchr(" \t\n", *p))
+			/* Always remove whitespace */
+			continue;
+		if (saveall > 1)
+			/* Don't remove non-whitespace unless it was naked */
+			break;
+	}
 	setvar(*ap, stackblock(), 0);
+
+	/* Set any remaining args to "" */
 	while (*++ap != NULL)
 		setvar(*ap, nullstr, 0);
 	return status;
