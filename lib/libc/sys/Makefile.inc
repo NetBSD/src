@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.46 1996/11/19 02:48:26 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.47 1996/12/22 11:37:37 cgd Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -44,16 +44,20 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
+LASM=	${ASM:.o=.ln}
 
 NOERR=	getegid.o geteuid.o getgid.o getpid.o getppid.o getuid.o sync.o
 PNOERR= ${NOERR:.o=.po}
 SNOERR= ${NOERR:.o=.so}
+LNOERR= ${NOERR:.o=.ln}
 
 PSEUDO=	_exit.o
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
+LPSEUDO=${PSEUDO:.o=.ln}
 
 OBJS+=	${ASM} ${NOERR} ${PSEUDO}
+LOBJS+=	${LASM} ${LNOERR} ${LPSEUDO}
 
 ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
@@ -80,6 +84,12 @@ ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+
+${LASM} ${LNOERR}: /usr/include/sys/syscall.h \
+    ${.CURDIR}/sys/makelintstub
+	@echo creating ${.TARGET}
+	@${.CURDIR}/sys/makelintstub ${.PREFIX} | \
+	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
 
 ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
@@ -132,6 +142,11 @@ ${PSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
+
+${LPSEUDO}: /usr/include/sys/syscall.h ${.CURDIR}/sys/makelintstub
+	@echo creating ${.TARGET}
+	@${.CURDIR}/sys/makelintstub ${.PREFIX:S/_//} ${.PREFIX} | \
+	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	chmod.2 chown.2 chroot.2 close.2 connect.2 dup.2 execve.2 _exit.2 \
