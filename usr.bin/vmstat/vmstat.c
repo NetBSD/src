@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.106 2002/11/21 01:39:15 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.107 2002/11/22 13:30:34 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.106 2002/11/21 01:39:15 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.107 2002/11/22 13:30:34 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,10 +172,6 @@ struct nlist namelist[] =
 #define	X_TIME		13
 	{ "_time" },
 #define	X_END		14
-#if defined(pc532)
-#define	X_IVT		(X_END)
-	{ "_ivt" },
-#endif
 	{ NULL },
 };
 
@@ -817,42 +813,6 @@ cpustats(void)
 	(void)printf("%2.0f", cur.cp_time[CP_IDLE] * pct);
 }
 
-#if defined(pc532)
-/* To get struct iv ...*/
-#define	_KERNEL
-#include <machine/intr.h>
-#include <machine/psl.h>
-#undef _KERNEL
-void
-dointr(int verbose)
-{
-	long i, j, inttotal, uptime;
-	static char iname[64];
-	struct iv ivt[32], *ivp = ivt;
-
-	iname[sizeof(iname)-1] = '\0';
-	uptime = getuptime();
-	kread(X_IVT, ivp, sizeof(ivt));
-
-	for (i = 0; i < 2; i++) {
-		(void)printf("%sware interrupts:\n", i ? "\nsoft" : "hard");
-		(void)printf("interrupt       total     rate\n");
-		inttotal = 0;
-		for (j = 0; j < 16; j++, ivp++) {
-			if (ivp->iv_vec && ivp->iv_use &&
-			    (ivp->iv_cnt || verbose)) {
-				deref_kptr(ivp->iv_use, iname, sizeof(iname)-1,
-				    "iv_use");
-				(void)printf("%-12s %8ld %8ld\n", iname,
-				    ivp->iv_cnt, ivp->iv_cnt / uptime);
-				inttotal += ivp->iv_cnt;
-			}
-		}
-		(void)printf("Total        %8ld %8ld\n",
-		    inttotal, inttotal / uptime);
-	}
-}
-#else
 void
 dointr(int verbose)
 {
@@ -911,7 +871,6 @@ dointr(int verbose)
 	(void)printf("%-34s %16llu %8llu\n", "Total", inttotal,
 	    (unsigned long long)(inttotal / uptime));
 }
-#endif
 
 void
 doevcnt(int verbose)
