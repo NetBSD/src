@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.10 1997/10/17 14:34:44 lukem Exp $
+#	$NetBSD: xntp2netbsd,v 1.11 1997/10/25 06:58:55 lukem Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -264,7 +264,7 @@ SUBDIR= ntpdate ntpq ntptime ntptrace xntpd xntpdc
 %% file usr.sbin/xntp/Makefile.inc
 %% NetBSD #
 WARNS?=	0
-CFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H
+CPPFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H
 LDADD += -lntp
 DPADD += ${LIBNTP}
 
@@ -326,7 +326,7 @@ LIB=	ntp
 %% srcs libntp
 SRCS += version.c
 
-CFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../usr.sbin/xntp/include
+CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../usr.sbin/xntp/include
 
 .include <bsd.lib.mk>
 %% file domestic/lib/libntp/Makefile
@@ -336,7 +336,7 @@ LIB=	ntp
 %% srcs libntp
 SRCS += version.c
 
-CFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../../usr.sbin/xntp/include
+CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../../usr.sbin/xntp/include
 .PATH: ${.CURDIR}/../../../lib/libntp
 
 .include <bsd.lib.mk>
