@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.13 1994/12/24 15:08:04 cgd Exp $	*/
+/*	$NetBSD: time.h,v 1.14 1995/03/21 13:14:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -85,22 +85,22 @@ struct timezone {
 	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
 	    ((tvp)->tv_usec cmp (uvp)->tv_usec) :			\
 	    ((tvp)->tv_sec cmp (uvp)->tv_sec))
-#define	__timeradd(tvp, uvp)						\
+#define	timeradd(tvp, uvp, vvp)						\
 	do {								\
-		(tvp)->tv_sec += (uvp)->tv_sec;				\
-		(tvp)->tv_usec += (uvp)->tv_usec;			\
-		if ((tvp)->tv_usec >= 1000000) {			\
-			(tvp)->tv_sec++;				\
-			(tvp)->tv_usec -= 1000000;			\
+		(vvp)->tv_sec = (tvp)->tv_sec + (uvp)->tv_sec;		\
+		(vvp)->tv_usec = (tvp)->tv_usec + (uvp)->tv_usec;	\
+		if ((vvp)->tv_usec >= 1000000) {			\
+			(vvp)->tv_sec++;				\
+			(vvp)->tv_usec -= 1000000;			\
 		}							\
 	} while (0)
-#define	__timersub(tvp, uvp)						\
+#define	timersub(tvp, uvp, vvp)						\
 	do {								\
-		(tvp)->tv_sec -= (uvp)->tv_sec;				\
-		(tvp)->tv_usec -= (uvp)->tv_usec;			\
-		if ((tvp)->tv_usec < 0) {				\
-			(tvp)->tv_sec--;				\
-			(tvp)->tv_usec += 1000000;			\
+		(vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;		\
+		(vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;	\
+		if ((vvp)->tv_usec < 0) {				\
+			(vvp)->tv_sec--;				\
+			(vvp)->tv_usec += 1000000;			\
 		}							\
 	} while (0)
 
