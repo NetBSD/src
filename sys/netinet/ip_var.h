@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.28 1998/04/29 20:43:29 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.29 1998/04/29 21:37:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -133,6 +133,7 @@ struct	ipstat {
 	u_long	ips_fragdropped;	/* frags dropped (dups, out of space) */
 	u_long	ips_fragtimeout;	/* fragments timed out */
 	u_long	ips_forward;		/* packets forwarded */
+	u_long	ips_fastforward;	/* packets fast forwarded */
 	u_long	ips_cantforward;	/* packets rcvd for unreachable dest */
 	u_long	ips_redirectsent;	/* packets forwarded on same net */
 	u_long	ips_noproto;		/* unknown or unsupported protocol */
@@ -152,6 +153,21 @@ struct	ipstat {
 	u_long	ips_toolong;		/* ip length > max ip packet size */
 };
 
+#define	IPFLOW_HASHBITS			6 /* should not be a multiple of 8 */
+struct ipflow {
+	LIST_ENTRY(ipflow) ipf_next;	/* next ipflow in bucket */
+	struct in_addr ipf_dst;		/* destination address */
+	struct in_addr ipf_src;		/* source address */
+	u_int8_t ipf_tos;		/* type-of-service */
+	struct route ipf_ro;		/* associated route entry */
+	u_long ipf_uses;		/* number of uses in this period */
+	u_long ipf_last_uses;		/* number of uses in last period */
+	u_long ipf_dropped;		/* ENOBUFS returned by if_output */
+	u_long ipf_errors;		/* other errors returned by if_output */
+	int ipf_timer;			/* remaining lifetime of this entry */
+	time_t ipf_start;		/* creation time */
+};
+
 #ifdef _KERNEL
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
@@ -160,10 +176,11 @@ struct	ipstat {
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 
-struct	  ipstat ipstat;
-LIST_HEAD(ipqhead, ipq)	ipq;		/* ip reass. queue */
-u_int16_t    ip_id;			/* ip packet ctr, for ids */
-int          ip_defttl;			/* default IP ttl */
+extern struct ipstat ipstat;		/* ip statistics */
+extern LIST_HEAD(ipqhead, ipq) ipq;	/* ip reass. queue */
+extern u_int16_t ip_id;			/* ip packet ctr, for ids */
+extern int   ip_defttl;			/* default IP ttl */
+extern int   ipforwarding;		/* ip forwarding */
 extern int   ip_mtudisc;		/* mtu discovery */
 extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 extern int   anonportmin;		/* minimum ephemeral port */
