@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.26 2002/08/07 11:03:45 blymn Exp $       */
+/*      $NetBSD: scanform.c,v 1.27 2003/06/13 07:26:41 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -573,19 +573,21 @@ LABEL(FIELD_RECORD *x)
 {
 	char *tmp;
 	FIELD *f = new_field(1, (int)(strlen(x->v)+2), x->frow, x->fcol, 0, 0);
+	size_t l;
 
 	if (f) {
 		x->v = realloc(x->v, sizeof(char *) * (strlen(x->v)+2));
-		tmp = malloc(sizeof(char *) * strlen(x->v));
+		l = strlen(x->v);
+		tmp = malloc(sizeof(char *) * l);
 		if (x->v == NULL || tmp == NULL)
 			bailout("malloc: %s", strerror(errno));
 
 		if (x->required == 1)
-			(void)strcpy(tmp, "* ");
+			(void)strlcpy(tmp, "* ", l);
 		else
-			(void)strcpy(tmp, "  ");
-		(void)strcat(tmp, x->v);
-		(void)strcpy(x->v, tmp);
+			(void)strlcpy(tmp, "  ", l);
+		(void)strlcat(tmp, x->v, l);
+		(void)strlcpy(x->v, tmp, l + 2);
 		set_field_buffer(f, 0, x->v);
 		free(tmp);
 		field_opts_off(f, O_ACTIVE);
@@ -1083,13 +1085,15 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	size_t len;
 	int i, cur;
 	int lmax = 10;
+	size_t l;
 
 	qo = q = strdup(ftp->data);
 	comm = malloc(sizeof(char) * strlen(q) + 2);
+	l = strlen(q) + 2;
 	if (comm == NULL)
 		bailout("malloc: %s", strerror(errno));
 	p = strsep(&q, ",");
-	(void)strcpy(comm, p);
+	(void)strlcpy(comm, p, l);
 	po = NULL;
 	if (q != NULL)
 		for (po=p=strdup(q); p != NULL; p = strsep(&q, ",")) {
@@ -1169,6 +1173,7 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	size_t len;
 	int cur;
 /*	struct stat sb; */
+	size_t l;
 
 	if (ftp->data == NULL)
 		bailout(catgets(catalog, 1, 22,
@@ -1177,10 +1182,11 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 		qo = q = strdup(ftp->data);
 
 	comm = malloc(sizeof(char) * strlen(q) + 2);
+	l = strlen(q) + 2;
 	if (comm == NULL)
 		bailout("malloc: %s", strerror(errno));
 	p = strsep(&q, ",");
-	(void)strcpy(comm, p);
+	(void)strlcpy(comm, p, l);
 	po = NULL;
 	if (q != NULL)
 		for (po=p=strdup(q); p != NULL; p = strsep(&q, ",")) {
@@ -1279,6 +1285,7 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 /*	struct stat sb; */
 	size_t len;
 	int cur, min, maxi, pre;
+	size_t l;
 
 	qo = q = strdup(ftp->data);
 	tmp = strsep(&q, ",");
@@ -1289,10 +1296,11 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	maxi = atoi(tmp);
 
 	comm = malloc(sizeof(char) * strlen(q) + 2);
+	l = strlen(q) + 2;
 	if (comm == NULL)
 		bailout("malloc: %s", strerror(errno));
 	tmp = strsep(&q, ",");
-	(void)strcpy(comm, tmp);
+	(void)strlcpy(comm, tmp, l);
 	po = NULL;
 	if (q != NULL)
 		for (po=p=strdup(q); p != NULL; p = strsep(&q, ",")) {
