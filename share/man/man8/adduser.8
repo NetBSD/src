@@ -1,4 +1,4 @@
-.\"	$NetBSD: adduser.8,v 1.5 1999/01/24 05:47:47 erh Exp $
+.\"	$NetBSD: adduser.8,v 1.6 1999/01/25 03:23:06 erh Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,15 @@
 .Nm adduser
 .Nd procedure for adding new users
 .Sh OVERVIEW
-There is no single adduser command.  This is a brief description of the
-actions that should be taken to add a user:
+Although there exists an
+.Nm addnerd
+package for adding users (see the
+.Nm SEE ALSO
+section below), the standard
+.Nx
+distribution does not include an
+adduser command.  This is a brief description of the actions that
+should be taken to add a user:
 
 .Bl -bullet -compact
 .It
@@ -266,8 +273,11 @@ for more information about these commands.
 For many useful programs, including
 .Em ssh
 and
-.Em addnerd , 
-see the NetBSD packages collection.  Information about packages can be
+.Em addnerd
+(a utility for adding users), 
+see the
+.Nx
+packages collection.  Information about packages can be
 found at
 .Em http://www.netbsd.org/Documentation/software/packages.html
 
