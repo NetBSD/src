@@ -1,3 +1,3 @@
-/*	$NetBSD: platid.h,v 1.4 2001/01/28 02:52:37 uch Exp $	*/
+/*	$NetBSD: platid.h,v 1.5 2002/02/01 18:16:06 uch Exp $	*/
 
-#include <hpc/hpc/platid.h>
+#include <hpc/include/platid.h>
