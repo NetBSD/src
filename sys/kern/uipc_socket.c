@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.50.4.3 2001/10/08 19:47:51 he Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.50.4.4 2002/06/12 20:41:45 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -569,6 +569,7 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	struct mbuf *nextrecord;
 	int moff, type = 0;
 	int orig_resid = uio->uio_resid;
+	int mbuf_removed = 0;
 
 	mp = mp0;
 	if (paddr)
@@ -683,6 +684,7 @@ dontblock:
 			m = m->m_next;
 		} else {
 			sbfree(&so->so_rcv, m);
+			mbuf_removed = 1;
 			if (paddr) {
 				*paddr = m;
 				so->so_rcv.sb_mb = m->m_next;
@@ -701,6 +703,7 @@ dontblock:
 			m = m->m_next;
 		} else {
 			sbfree(&so->so_rcv, m);
+			mbuf_removed = 1;
 			if (controlp) {
 				if (pr->pr_domain->dom_externalize &&
 				    mtod(m, struct cmsghdr *)->cmsg_type ==
@@ -757,8 +760,24 @@ dontblock:
 			splx(s);
 			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
 			s = splsoftnet();
-			if (error)
+			if (error) {
+				/*
+				 * If any part of the record has been removed
+				 * (such as the MT_SONAME mbuf, which will
+				 * happen when PR_ADDR, and thus also
+				 * PR_ATOMIC, is set), then drop the entire
+				 * record to maintain the atomicity of the
+				 * receive operation.
+				 *
+				 * This avoids a later panic("receive 1a")
+				 * when compiled with DIAGNOSTIC.
+				 */
+				if (m && mbuf_removed
+				    && (pr->pr_flags & PR_ATOMIC))
+					(void) sbdroprecord(&so->so_rcv);
+
 				goto release;
+			}
 		} else
 			uio->uio_resid -= len;
 		if (len == m->m_len - moff) {
