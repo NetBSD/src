@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fixunsdfsi.s	5.1	12/17/90
- *	$Id: fixunsdfsi.S,v 1.4 1993/10/21 02:03:39 jtc Exp $
+ *	$Id: fixunsdfsi.S,v 1.5 1993/12/06 23:27:04 pk Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: fixunsdfsi.S,v 1.4 1993/10/21 02:03:39 jtc Exp $"
+	.asciz "$Id: fixunsdfsi.S,v 1.5 1993/12/06 23:27:04 pk Exp $"
 #endif
 
 #include "DEFS.h"
@@ -71,12 +71,11 @@ ENTRY(__fixunsdfsi)
 	PIC_EPILOGUE
 	fsubl	(%eax)
 #else
-	fsubl	PIC_GOTOFF(fbiggestsigned)	/* reduce for proper conversion */
+	fsubl	fbiggestsigned	/* reduce for proper conversion */
 #endif
 	fistpl	4(%esp)		/* convert */
 	movl	4(%esp),%eax
 	orl	$0x80000000,%eax	/* restore bias */
-	PIC_EPILOGUE
 	ret
 
 fbiggestsigned:	.double	0r2147483648.0
