@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.17 1998/02/08 14:03:54 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.18 1998/05/21 13:06:24 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -60,6 +60,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
 #include <machine/cpu.h>
@@ -169,10 +170,7 @@ int
 ra_putonline(ra)
 	struct ra_softc *ra;
 {
-	struct	mscp *mp;
-	struct	mscp_softc *mi = (struct mscp_softc *)ra->ra_dev.dv_parent;
 	struct	disklabel *dl;
-	volatile int i;
 	char *msg;
 
 	if (rx_putonline(ra) != MSCP_DONE)
@@ -380,7 +378,7 @@ raioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	register int unit = DISKUNIT(dev);
-	register struct disklabel *lp;
+	register struct disklabel *lp, *tp;
 	register struct ra_softc *ra = ra_cd.cd_devs[unit];
 	int error = 0;
 
@@ -420,6 +418,19 @@ raioctl(dev, cmd, data, flag, p)
 		break;
 
 	case DIOCGDEFLABEL:
+		tp = (struct disklabel *)data;
+		bzero(data, sizeof(struct disklabel));
+		tp->d_secsize = lp->d_secsize;
+		tp->d_nsectors = lp->d_nsectors;
+		tp->d_ntracks = lp->d_ntracks;
+		tp->d_ncylinders = lp->d_ncylinders;
+		tp->d_secpercyl = lp->d_secpercyl;
+		tp->d_secperunit = lp->d_secperunit;
+		tp->d_type = DTYPE_MSCP;
+		tp->d_rpm = 3600;
+		rrmakelabel(tp, ra->ra_mediaid);
+		break;
+
 	default:
 		error = ENOTTY;
 		break;

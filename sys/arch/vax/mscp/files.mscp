@@ -1,11 +1,11 @@
-#	$NetBSD: files.mscp,v 1.4 1998/02/16 22:12:48 thorpej Exp $
+#	$NetBSD: files.mscp,v 1.5 1998/05/21 13:06:24 ragge Exp $
 #
 # File and device description for MSCP devices.
 #
 
 define	mscp {}
-file	arch/vax/mscp/mscp.c
-file	arch/vax/mscp/mscp_subr.c
+file	arch/vax/mscp/mscp.c		mscp
+file	arch/vax/mscp/mscp_subr.c	mscp
 
 device	mscpbus {drive = -1}
 attach	mscpbus at mscp

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.7 1998/02/08 14:03:49 ragge Exp $	*/
+/*	$NetBSD: mscp.c,v 1.8 1998/05/21 13:06:24 ragge Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -47,6 +47,8 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <vax/mscp/mscp.h>
 #include <vax/mscp/mscpvar.h>
@@ -446,10 +448,12 @@ void
 mscp_requeue(mi)
 	struct mscp_softc *mi;
 {
+#if 0
 	register struct mscp_device *me = mi->mi_me;
 	register struct buf *bp, *dp;
 	register int unit;
 	struct buf *nextbp;
+#endif
 
 panic("mscp_requeue");
 	/*

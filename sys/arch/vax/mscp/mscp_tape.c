@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.9 1998/02/08 14:04:01 ragge Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.10 1998/05/21 13:06:24 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,6 +51,8 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
+#include <machine/cpu.h>
+
 #include <vax/mscp/mscp.h>
 #include <vax/mscp/mscpvar.h>
 
@@ -89,6 +91,7 @@ int	mtioctl __P((dev_t, int, caddr_t, int, struct proc *));
 int	mtdump __P((dev_t, daddr_t, caddr_t, size_t));
 int	mtcmd __P((struct mt_softc *, int, int, int));
 void	mtcmddone __P((struct device *, struct mscp *));
+int	mt_putonline __P((struct mt_softc *));
 
 struct	mscp_device mt_device = {
 	mtdgram,
@@ -421,7 +424,7 @@ mtioctl(dev, cmd, data, flag, p)
 	register struct mt_softc *mt = mt_cd.cd_devs[unit];
 	struct	mtop *mtop;
 	struct	mtget *mtget;
-	int error = 0, i, count;
+	int error = 0, count;
 
 	count = mtop->mt_count;
 
