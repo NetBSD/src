@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.57 2001/02/27 05:19:15 lukem Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.58 2001/05/06 19:22:33 manu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -922,6 +922,9 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 		return (error);
 	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0)) != 0)
 		goto free1;
+	/* remember this socket pair implements a pipe */
+	wso->so_state |= SS_ISAPIPE;
+	rso->so_state |= SS_ISAPIPE;
 	/* falloc() will use the descriptor for us */
 	if ((error = falloc(p, &rf, &fd)) != 0)
 		goto free2;

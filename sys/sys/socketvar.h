@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.45 2001/04/30 01:13:21 lukem Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.46 2001/05/06 19:22:33 manu Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -143,6 +143,7 @@ struct socket {
 					 * hint from sosend to lower layer;
 					 * more data coming
 					 */
+#define 	SS_ISAPIPE 		0x800 /* socket is implementing a pipe */
 
 
 /*
