@@ -231,7 +231,7 @@ state(k, ve)
 #endif
 		*cp++ = 'V';
 #ifdef NEWVM
-	if (flag & (P_SYSTEM | P_NOSWAP | P_PHYSIO))
+	if ((flag & P_SYSTEM) || p->p_holdcnt)
 #else
 	if (flag & (SSYS|SLOCK|SULOCK|SKEEP|SPHYSIO))
 #endif
