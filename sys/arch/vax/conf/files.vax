@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.84 2001/05/01 13:21:27 ragge Exp $
+#       $NetBSD: files.vax,v 1.85 2001/05/16 05:36:54 matt Exp $
 #
 # new style config file for vax architecture
 #
@@ -20,7 +20,7 @@ defopt	opt_cputype.h	VAX780 VAX750 VAX730
         VAX8200 VAX8800 VAX8600 VAX610
 	VAX6200 VAX6300 VAX6400 VAX6500 VAX6600
 	VAX410 VAX43 VAX46 VAX48 VAX49 VAX53
-	VAX630 VAX640 VAX650 VAX660 VAX670 VAX680
+	VAX630 VAX650 VAX660 VAX670 VAX680 VAXANY
 
 defopt	opt_emulate.h	NO_INSN_EMULATE
 
@@ -38,8 +38,8 @@ attach	sbi at mainbus with sbi_mainbus
 file	arch/vax/vax/sbi.c		sbi
 
 attach	mem at sbi with mem_sbi
-file	arch/vax/vax/ka780.c		vax780 | mem_sbi
-file	arch/vax/vax/cfl.c		vax780 | mem_sbi
+file	arch/vax/vax/ka780.c		vax780 | mem_sbi | vaxany
+file	arch/vax/vax/cfl.c		vax780 | mem_sbi | vaxany
 
 # Abus and related devices
 device	abus { }
@@ -54,13 +54,14 @@ attach	cmi at mainbus
 file	arch/vax/vax/cmi.c		cmi
 
 attach	mem at cmi with mem_cmi
-file	arch/vax/vax/ka750.c		vax750 | mem_cmi
-file	arch/vax/vax/ctu.c		vax750 | mem_cmi
+file	arch/vax/vax/ka750.c		vax750 | mem_cmi | vaxany
+file	arch/vax/vax/ctu.c		vax750 | mem_cmi | vaxany
 
 device	vsbus { csr }
 attach	vsbus at mainbus
 file	arch/vax/vsa/vsbus.c		vsbus
-file	arch/vax/vsa/vsbus_dma.c	vsbus & (vax46 | vax48 | vax49 | vax53)
+file	arch/vax/vsa/vsbus_dma.c	vsbus & (vax46 | vax48 | vax49 |
+					         vax53 | vaxany)
 
 device	ibus { }
 attach	ibus at mainbus
@@ -328,31 +329,33 @@ file	arch/vax/uba/dh.c		dh needs-flag
 # These are general files needed for compilation.
 file	dev/cons.c
 file	dev/cninit.c
-file	dev/clock_subr.c	vax8200 | vax410 | vax43 | vax630 | vax660 |
-				vax670 | vax680 | vax46 | vax48 | vax49 | vax53
+file	dev/clock_subr.c		vax8200 | vax410 | vax630 | vax43  |
+					vax660  | vax670 | vax680 | vax46  |
+					vax48   | vax49  | vax53  | vaxany
 file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
-file	arch/vax/vax/gencons.c	vax8600 | vax8200 | vax780 | vax750 | vax630 |
-				vax650 | vax660 | vax670 | vax680
+file	arch/vax/vax/gencons.c		vax8600 | vax780 | vax750 | vax630 |
+					vax8200 | vax680 | vax650 | vax660 |
+					vax670  | vaxany
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/machdep.c
-file	arch/vax/vax/ka820.c		vax8200
-file	arch/vax/vax/crx.c		vax8200
-file	arch/vax/vax/ka88.c		vax8800
-file	arch/vax/vax/ka6400.c		vax6400
-file	arch/vax/vax/ka410.c		vax410
-file	arch/vax/vax/ka43.c		vax43
-file	arch/vax/vax/ka46.c		vax46
-file	arch/vax/vax/ka48.c		vax48
-file	arch/vax/vax/ka49.c		vax49
-file	arch/vax/vax/ka53.c		vax53
-file	arch/vax/vax/ka610.c		vax610
-file	arch/vax/vax/ka630.c		vax630
-file	arch/vax/vax/ka650.c		vax650
-file	arch/vax/vax/ka660.c		vax660
-file	arch/vax/vax/ka670.c		vax670
-file	arch/vax/vax/ka680.c		vax680
+file	arch/vax/vax/ka820.c		vax8200 | vaxany
+file	arch/vax/vax/crx.c		vax8200 | vaxany
+file	arch/vax/vax/ka88.c		vax8800 | vaxany
+file	arch/vax/vax/ka6400.c		vax6400 | vaxany
+file	arch/vax/vax/ka410.c		vax410  | vaxany
+file	arch/vax/vax/ka43.c		vax43   | vaxany
+file	arch/vax/vax/ka46.c		vax46   | vaxany
+file	arch/vax/vax/ka48.c		vax48   | vaxany
+file	arch/vax/vax/ka49.c		vax49   | vaxany
+file	arch/vax/vax/ka53.c		vax53   | vaxany
+file	arch/vax/vax/ka610.c		vax610  | vaxany
+file	arch/vax/vax/ka630.c		vax630  | vaxany
+file	arch/vax/vax/ka650.c		vax650  | vaxany
+file	arch/vax/vax/ka660.c		vax660  | vaxany
+file	arch/vax/vax/ka670.c		vax670  | vaxany
+file	arch/vax/vax/ka680.c		vax680  | vaxany
 file	arch/vax/vax/emulate.s		!no_insn_emulate
 file	arch/vax/vax/unimpl_emul.s	!no_insn_emulate
 file	arch/vax/vax/scb.c
