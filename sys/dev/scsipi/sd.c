@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.206 2003/09/09 02:43:35 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.207 2003/09/13 14:44:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.206 2003/09/09 02:43:35 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.207 2003/09/13 14:44:50 mycroft Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -411,10 +411,17 @@ sdopen(dev, flag, fmt, p)
 			goto bad3;
 		}
 	} else {
+		int silent;
+
+		if (part == RAW_PART && fmt == S_IFCHR)
+			silent = XS_CTL_SILENT;
+		else
+			silent = 0;
+
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    XS_CTL_SILENT_NODEV);
+		    XS_CTL_SILENT_NODEV | silent);
 
 		/*
 		 * Start the pack spinning if necessary. Always allow the
@@ -422,12 +429,8 @@ sdopen(dev, flag, fmt, p)
 		 * will check for SDEV_MEDIA_LOADED.
 		 */
 		if (error == EIO) {
-			int silent, error2;
+			int error2;
 
-			if (part == RAW_PART && fmt == S_IFCHR)
-				silent = XS_CTL_SILENT;
-			else
-				silent = 0;
 			error2 = scsipi_start(periph, SSS_START, silent);
 			switch (error2) {
 			case 0:
@@ -435,16 +438,17 @@ sdopen(dev, flag, fmt, p)
 				break;
 			case EIO:
 			case EINVAL:
-				if (silent)
-					goto out;
 				break;
 			default:
 				error = error2;
 				break;
 			}
 		}
-		if (error)
+		if (error) {
+			if (silent)
+				goto out;
 			goto bad3;
+		}
 
 		periph->periph_flags |= PERIPH_OPEN;
 
