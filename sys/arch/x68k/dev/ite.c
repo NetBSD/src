@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.35 2003/08/07 16:30:24 agc Exp $	*/
+/*	$NetBSD: ite.c,v 1.36 2003/11/01 12:56:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.35 2003/08/07 16:30:24 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.36 2003/11/01 12:56:32 jdolecek Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -151,7 +151,6 @@ static int ite_argnum __P((struct ite_softc *ip));
 static int ite_zargnum __P((struct ite_softc *ip));
 static void ite_sendstr __P((struct ite_softc *ip, char *str));
 __inline static int atoi __P((const char *cp));
-__inline static char *index __P((const char *cp, char ch));
 void ite_reset __P((struct ite_softc *ip));
 struct ite_softc *getitesp __P((dev_t));
 int iteon __P((dev_t, int));
@@ -948,9 +947,9 @@ ite_filter(c)
 			code |= 0x80;
 	} else if ((key.mode & KBD_MODE_KPAD) &&
 	       (kbd_ite && kbd_ite->keypad_appmode)) {
-		static char *in = "0123456789-+.\r()/*";
-		static char *out = "pqrstuvwxymlnMPQRS";
-		char *cp = index (in, code);
+		static const char * const in = "0123456789-+.\r()/*";
+		static const char * const out = "pqrstuvwxymlnMPQRS";
+		char *cp = strchr(in, code);
 
 		/* 
 		 * keypad-appmode sends SS3 followed by the above
@@ -978,7 +977,7 @@ ite_filter(c)
 		 */
 		if (c >= 0x3b && c <= 0x3e && kbd_ite->cursor_appmode
 		    && !memcmp(str, "\x03\x1b[", 3) &&
-		    index("ABCD", str[3]))
+		    strchr("ABCD", str[3]))
 			str = app_cursor + 4 * (str[3] - 'A');
 
 		/* 
@@ -1249,16 +1248,6 @@ atoi (cp)
 	for (n = 0; *cp && *cp >= '0' && *cp <= '9'; cp++)
 		n = n * 10 + *cp - '0';
 	return n;
-}
-
-__inline static char *
-index(cp, ch)
-	const char *cp;
-	char ch;
-{
-	while (*cp && *cp != ch)
-		cp++;
-	return *cp ? (char *) cp : 0;
 }
 
 __inline static int
@@ -1836,7 +1825,7 @@ iteputchar(c, ip)
 				*ip->ap = 0;
 				y = atoi (ip->argbuf);
 				x = 0;
-				cp = index (ip->argbuf, ';');
+				cp = strchr(ip->argbuf, ';');
 				if (cp)
 					x = atoi (cp + 1);
 				if (x) x--;
@@ -1983,7 +1972,7 @@ iteputchar(c, ip)
 				x = atoi (ip->argbuf);
 				x = x ? x : 1;
 				y = ip->rows;
-				cp = index (ip->argbuf, ';');
+				cp = strchr(ip->argbuf, ';');
 				if (cp) {
 					y = atoi (cp + 1);
 					y = y ? y : ip->rows;
