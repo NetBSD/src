@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: srvr_afs.c,v 1.4 1997/07/24 23:17:18 christos Exp $
+ * $Id: srvr_afs.c,v 1.5 1997/09/26 17:00:23 christos Exp $
  *
  */
 
@@ -110,8 +110,10 @@ wakeup_srvr(fserver *fs)
  * Called when final ttl of server has expired
  */
 static void
-timeout_srvr(fserver *fs)
+timeout_srvr(voidp v)
 {
+  fserver *fs = v;
+
   /*
    * If the reference count is still zero then
    * we are free to remove this node

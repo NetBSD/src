@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_subr.c,v 1.6 1997/09/22 22:10:07 christos Exp $
+ * $Id: amq_subr.c,v 1.7 1997/09/26 16:59:48 christos Exp $
  *
  */
 /*
@@ -50,6 +50,10 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amd.h>
+
+/* forward definitions */
+bool_t xdr_amq_mount_tree_node(XDR *xdrs, amq_mount_tree *objp);
+bool_t xdr_amq_mount_subtree(XDR *xdrs, amq_mount_tree *objp);
 
 
 voidp

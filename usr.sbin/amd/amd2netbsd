@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.6 1997/09/23 08:40:57 veego Exp $
+#	$NetBSD: amd2netbsd,v 1.7 1997/09/26 16:59:44 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -15,10 +15,10 @@
 #	SRCDIR - am-utils source directory
 #	TARGETDIR - name of the high level directory to make
 #
-#  Written by Christos Zoulas July 17, 1997 for am-utils-6.0a8
+#  Written by Christos Zoulas July 17, 1997 for am-utils-6.0a12
 #
 
-$version = "6.0a8";
+$version = "6.0a12";
 
 # definitions ...
 
@@ -26,10 +26,11 @@ $version = "6.0a8";
 	    "usr.sbin/amd/amd", "usr.sbin/amd/hlfsd",
 	    "usr.sbin/amd/amq", "usr.sbin/amd/fsinfo",
 	    "usr.sbin/amd/fixmount", "usr.sbin/amd/mk-amd-map",
-	    "usr.sbin/amd/doc");
+	    "usr.sbin/amd/wire-test", "usr.sbin/amd/doc");
 
 
-@includef = ("am_compat.h", "am_defs.h", "am_utils.h", "amq_defs.h");
+@includef = ("am_compat.h", "am_defs.h", "am_utils.h", "amq_defs.h",
+	     "am_xdr_func.h");
 
 
 @libamuf = ("hasmntopt.c", "misc_rpc.c", "mount_fs.c", "mtab.c",
@@ -54,7 +55,7 @@ $version = "6.0a8";
 	 "ops_sfsx.c", "ops_ufs.c", "opts.c", "restart.c", "rpc_fwd.c",
 	 "sched.c", "srvr_afs.c", "srvr_nfs.c");
 
-@amddf = ("build_version.h", "conf_tok.l", "conf_parse.y", "amd.8");
+@amddf = ("conf_tok.l", "conf_parse.y", "amd.8");
 
 @amdef = ("conf_tok.c", "conf_parse.c");
 
@@ -94,6 +95,12 @@ $version = "6.0a8";
 @mkamdmapdf = ("mk-amd-map.8");
 
 @mkamdmapef = ();
+
+@wiretestf = ("wire-test.c");
+
+@wiretestdf = ("wire-test.8");
+
+@wiretestef = ();
 
 
 @docf = ("am-utils.info", "am-utils.info-1", "am-utils.info-2",
@@ -232,6 +239,10 @@ print "Populating the usr.sbin/amd/mk-amd-map directory.\n";
 &copyfiles ("$srcdir/mk-amd-map", "$targetdir/usr.sbin/amd/mk-amd-map",
 	    @mkamdmapf, @mkamdmapdf);
 
+print "Populating the usr.sbin/amd/wire-test directory.\n";
+&copyfiles ("$srcdir/wire-test", "$targetdir/usr.sbin/amd/wire-test",
+	    @wiretestf, @wiretestdf);
+
 #
 # Build makefiles
 #
@@ -269,6 +280,8 @@ while ($line = <DATA>) {
 		&dumpsrcs (@libamuf, @libamuef);
 	    } elsif ($cmd[2] eq "mk-amd-map") {
 		&dumpsrcs (@mkamdmapf, @mkamdmapef);
+	    } elsif ($cmd[2] eq "wire-test") {
+		&dumpsrcs (@wiretestf, @wiretestef);
 	    } elsif ($cmd[2] eq "doc") {
 		&dumpsrcs (@docf, @docef);
 	    } else {
@@ -308,11 +321,12 @@ foreach $n (keys(%sedlist)) {
 __END__
 %% file usr.sbin/amd/Makefile
 %% NetBSD #
-SUBDIR= libamu amd amq hlfsd fixmount fsinfo mk-amd-map
+SUBDIR= libamu amd amq hlfsd fixmount fsinfo mk-amd-map wire-test
 
 .include <bsd.subdir.mk>
 %% file usr.sbin/amd/Makefile.inc
 %% NetBSD #
+WARNS ?= 1
 LIBAMU != cd ${.CURDIR}/../libamu;\
     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 CFLAGS += -I${.CURDIR}/../include -I${.CURDIR} -I${LIBAMU} -I. -DHAVE_CONFIG_H
@@ -367,6 +381,14 @@ PROG= mk-amd-map
 MAN+= mk-amd-map.8
 
 .include <bsd.prog.mk>
+%% file usr.sbin/amd/wire-test/Makefile
+%% NetBSD #
+
+PROG= wire-test
+%% srcs wire-test
+MAN+= wire-test.8
+
+.include <bsd.prog.mk>
 %% file usr.sbin/amd/fsinfo/Makefile
 %% NetBSD #
 
@@ -387,7 +409,7 @@ fsi_gram.c fsi_gram.h: fsi_gram.y
 %% NetBSD #
 
 LIB= amu
-%% srcs libamu config_local.h
+%% srcs libamu
 
 config_local.h: mkconf
 	@rm -f ${.TARGET}
@@ -1100,7 +1122,7 @@ clean:
 /* #undef HAVE_FIELD_MNTENT_T_MNT_TIME */
 
 /* does mntent_t have mnt_time field and is of type "char *" ? */
-/* #undef HAVE_FIELD_MNTENT_T_TIME_STRING */
+/* #undef HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
 
 /* does mntent_t have mnt_ro field? */
 /* #undef HAVE_FIELD_MNTENT_T_MNT_RO */
@@ -1108,14 +1130,26 @@ clean:
 /* does cdfs_args_t have norrip field? */
 /* #undef HAVE_FIELD_CDFS_ARGS_T_NORRIP */
 
+/* does cdfs_args_t have ssector field? */
+/* #undef HAVE_FIELD_CDFS_ARGS_T_SSECTOR */
+
+/* does pcfs_args_t have dsttime field? */
+/* #undef HAVE_FIELD_PCFS_ARGS_T_DSTTIME */
+
 /* does pcfs_args_t have fspec field? */
 #define HAVE_FIELD_PCFS_ARGS_T_FSPEC 1
+
+/* does pcfs_args_t have gid field? */
+#define HAVE_FIELD_PCFS_ARGS_T_GID 1
+
+/* does pcfs_args_t have mask field? */
+#define HAVE_FIELD_PCFS_ARGS_T_MASK 1
 
 /* does pcfs_args_t have secondswest field? */
 /* #undef HAVE_FIELD_PCFS_ARGS_T_SECONDSWEST */
 
-/* does pcfs_args_t have dsttime field? */
-/* #undef HAVE_FIELD_PCFS_ARGS_T_DSTTIME */
+/* does pcfs_args_t have uid field? */
+#define HAVE_FIELD_PCFS_ARGS_T_UID 1
 
 /* does ufs_args_t have flags field? */
 /* #undef HAVE_FIELD_UFS_ARGS_T_FLAGS */
@@ -1273,7 +1307,7 @@ clean:
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0a10"
+#define VERSION "6.0a12"
 
 /* Define name of host machine's cpu (eg. sparc) */
 #define HOST_CPU MACHINE
@@ -1770,6 +1804,9 @@ clean:
 /* Define if you have the <hsfs/hsfs.h> header file.  */
 /* #undef HAVE_HSFS_HSFS_H */
 
+/* Define if you have the <isofs/cd9660/cd9660_mount.h> header file.  */
+/* #undef HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
+
 /* Define if you have the <jfs/jfsmount.h> header file.  */
 /* #undef HAVE_JFS_JFSMOUNT_H */
 
@@ -1811,6 +1848,9 @@ clean:
 
 /* Define if you have the <mount.h> header file.  */
 /* #undef HAVE_MOUNT_H */
+
+/* Define if you have the <msdosfs/msdosfsmount.h> header file.  */
+/* #undef HAVE_MSDOSFS_MSDOSFSMOUNT_H */
 
 /* Define if you have the <ndbm.h> header file.  */
 #define HAVE_NDBM_H 1

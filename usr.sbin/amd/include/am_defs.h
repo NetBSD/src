@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: am_defs.h,v 1.3 1997/09/22 22:11:05 christos Exp $
+ * $Id: am_defs.h,v 1.4 1997/09/26 17:00:38 christos Exp $
  *
  */
 
@@ -577,6 +577,13 @@ extern int errno;
 # ifdef NOERROR
 #  undef NOERROR
 # endif /* NOERROR */
+/*
+ * Conflicts with <sys/tpicommon.h> which is included from <sys/tiuser.h>
+ * on Solaris 2.6 systems.  So undefine it first.
+ */
+# ifdef T_UNSPEC
+#  undef T_UNSPEC
+# endif /* T_UNSPEC */
 # include <arpa/nameser.h>
 #endif /* HAVE_ARPA_NAMESER_H */
 
@@ -614,6 +621,13 @@ extern int errno;
 #ifdef HAVE_SYS_FS_PC_FS_H
 # include <sys/fs/pc_fs.h>
 #endif /* HAVE_SYS_FS_PC_FS_H */
+
+/*
+ * Actions to take if <msdosfs/msdosfsmount.h> exists.
+ */
+#ifdef HAVE_MSDOSFS_MSDOSFSMOUNT_H
+# include <msdosfs/msdosfsmount.h>
+#endif /* HAVE_MSDOSFS_MSDOSFSMOUNT_H */
 
 /*
  * Actions to take if <sys/fs/tmp.h> exists.
@@ -684,6 +698,13 @@ extern int errno;
 #ifdef HAVE_HSFS_HSFS_H
 # include <hsfs/hsfs.h>
 #endif /* HAVE_HSFS_HSFS_H */
+
+/*
+ * Actions to take if <isofs/cd9660/cd9660_mount.h> exists.
+ */
+#ifdef HAVE_ISOFS_CD9660_CD9660_MOUNT_H
+# include <isofs/cd9660/cd9660_mount.h>
+#endif /* HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
 
 /*
  * Actions to take if <mount.h> exists.
@@ -1171,25 +1192,10 @@ extern char *strdup(const char *s);
 extern u_int ualarm(u_int usecs, u_int interval);
 #endif /* not HAVE_UALARM */
 
-#ifndef HAVE_XDR_EXPORTS
-bool_t xdr_exports(XDR *xdrs, exports *objp);
-#endif /* not HAVE_XDR_EXPORTS */
-
-#ifndef HAVE_XDR_FHSTATUS
-extern bool_t xdr_fhstatus(XDR *xdrs, fhstatus *objp);
-#endif /* not HAVE_XDR_FHSTATUS */
-
-#ifndef HAVE_XDR_FTYPE
-extern bool_t xdr_ftype(XDR *xdrs, nfsftype *objp);
-#endif /* not HAVE_XDR_FTYPE */
-
-#ifndef HAVE_XDR_NFSSTAT
-extern bool_t xdr_nfsstat(XDR *xdrs, nfsstat *objp);
-#endif /* not HAVE_XDR_NFSSTAT */
-
-#ifndef HAVE_XDR_POINTER
-extern bool_t xdr_pointer(register XDR *xdrs, char **objpp, u_int obj_size, XDRPROC_T_TYPE xdr_obj);
-#endif /* not HAVE_XDR_POINTER */
-
+/*
+ * include definitions of all possible xdr functions that are otherwise
+ * not defined elsewhere.
+ */
+#include <am_xdr_func.h>
 
 #endif /* not _AM_DEFS_H */

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amd.c,v 1.5 1997/09/22 22:10:06 christos Exp $
+ * $Id: amd.c,v 1.6 1997/09/26 16:59:47 christos Exp $
  *
  */
 
@@ -179,7 +179,7 @@ daemon_mode(void)
 #endif /* not HAVE_SIGACTION */
 
   if (gopt.flags & CFM_PRINT_PID) {
-    printf("%ld\n", mypid);
+    printf("%ld\n", (long) mypid);
     fflush(stdout);
     (void) fclose(stdout);
   }
@@ -514,7 +514,7 @@ main(int argc, char *argv[])
 #endif /* DEBUG */
     ppid = daemon_mode();
 
-  sprintf(pid_fsname, "%s:(pid%ld)", hostname, mypid);
+  sprintf(pid_fsname, "%s:(pid%ld)", hostname, (long) mypid);
 
   do_mapc_reload = clocktime() + ONE_HOUR;
 
