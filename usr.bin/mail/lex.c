@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.19 2002/03/04 03:16:10 wiz Exp $	*/
+/*	$NetBSD: lex.c,v 1.20 2002/03/05 20:26:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.19 2002/03/04 03:16:10 wiz Exp $");
+__RCSID("$NetBSD: lex.c,v 1.20 2002/03/05 20:26:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,9 @@ __RCSID("$NetBSD: lex.c,v 1.19 2002/03/04 03:16:10 wiz Exp $");
  * Lexical processing of commands.
  */
 
+extern char *tmpdir;
 extern char *version;
 extern const struct cmd cmdtab[];
-extern char *tempMesg;
 
 char	*prompt = "& ";
 
@@ -67,11 +67,12 @@ int
 setfile(char *name)
 {
 	FILE *ibuf;
-	int i;
+	int i, fd;
 	struct stat stb;
 	char isedit = *name != '%' || getuserid(myname) != getuid();
 	char *who = name[1] ? name + 1 : myname;
 	static int shudclob;
+	char tempname[PATHSIZE];
 
 	if ((name = expand(name)) == NULL)
 		return -1;
@@ -137,17 +138,16 @@ setfile(char *name)
 	if (name != mailname)
 		strcpy(mailname, name);
 	mailsize = fsize(ibuf);
-	if ((otf = fopen(tempMesg, "w")) == NULL) {
-		perror(tempMesg);
-		exit(1);
-	}
-	(void) fcntl(fileno(otf), F_SETFD, 1);
-	if ((itf = fopen(tempMesg, "r")) == NULL) {
-		perror(tempMesg);
-		exit(1);
-	}
-	(void) fcntl(fileno(itf), F_SETFD, 1);
-	rm(tempMesg);
+	(void)snprintf(tempname, sizeof(tempname),
+	    "%s/mail.RxXXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(tempname)) == -1 ||
+	    (otf = fdopen(fd, "w")) == NULL)
+		err(1, "%s", tempname);
+	(void)fcntl(fileno(otf), F_SETFD, 1);
+	if ((itf = fopen(tempname, "r")) == NULL)
+		err(1, "%s", tempname);
+	(void)fcntl(fileno(itf), F_SETFD, 1);
+	rm(tempname);
 	setptr(ibuf, 0);
 	setmsize(msgCount);
 	/*
