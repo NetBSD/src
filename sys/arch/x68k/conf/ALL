@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.29 1999/03/24 06:06:11 mrg Exp $
+#	$NetBSD: ALL,v 1.29.2.1 1999/04/19 04:55:17 cjs Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -227,6 +227,8 @@ pseudo-device	bell			# OPM bell
 
 xcom0	at mainbus0			# NS16550 fast serial
 xcom1	at mainbus0
+
+par0	at mainbus0			# Builtin printer port
 
 ## Audio device; broken
 #okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3
