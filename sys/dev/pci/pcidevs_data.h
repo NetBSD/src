@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.220 2000/05/12 17:47:06 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.221 2000/05/14 14:58:15 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.215 2000/05/12 17:46:47 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.216 2000/05/14 14:56:53 soren Exp 
  */
 
 /*
@@ -3056,6 +3056,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Samsung Semiconductors",
 	    "KS8920 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
+	    0,
+	    "Silicon Graphics",
+	    "IOC3",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
