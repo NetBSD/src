@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.71 1999/12/24 13:56:35 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.72 2000/01/16 10:27:51 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -150,9 +150,8 @@ struct uhci_pipe {
 LIST_HEAD(, uhci_intr_info) uhci_ii_free;
 
 static void		uhci_busreset __P((uhci_softc_t *));
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+static void		uhci_shutdown __P((void *v));
 static void		uhci_power __P((int, void *));
-#endif
 static usbd_status	uhci_run __P((uhci_softc_t *, int run));
 static uhci_soft_td_t *uhci_alloc_std __P((uhci_softc_t *));
 static void		uhci_free_std __P((uhci_softc_t *, uhci_soft_td_t *));
@@ -425,6 +424,8 @@ uhci_init(sc)
 	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(uhci_power, sc);
 
+	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
+
 	DPRINTFN(1,("uhci_init: enabling\n"));
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE | 
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
@@ -470,6 +471,8 @@ uhci_detach(sc, flags)
 		return (rv);
 
 	powerhook_disestablish(sc->sc_powerhook);
+	shutdownhook_disestablish(sc->sc_shutdownhook);
+
 	/* free data structures XXX */
 
 	return (rv);
@@ -494,7 +497,19 @@ uhci_freem(bus, dma)
 	usb_freemem(&((struct uhci_softc *)bus)->sc_bus, dma);
 }
 
-#if defined(__NetBSD__)
+/*
+ * Shut down the controller when the system is going down.
+ */
+void
+uhci_shutdown(v)
+	void *v;
+{
+	uhci_softc_t *sc = v;
+
+	DPRINTF(("uhci_shutdown: stopping the HC\n"));
+	uhci_run(sc, 0); /* stop the controller */
+}
+
 /*
  * Handle suspend/resume.
  *
@@ -564,7 +579,6 @@ uhci_power(why, v)
 	}
 	splx(s);
 }
-#endif /* defined(__NetBSD__) */
 
 #ifdef UHCI_DEBUG
 static void
@@ -1583,7 +1597,8 @@ uhci_abort_xfer(xfer, status)
 
 	xfer->hcpriv = ii;
 
-	/* make sure hardware has completed, */
+#if 1
+	/* Make sure hardware has completed. */
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
 		timeout(uhci_abort_xfer_end, xfer, hz / USB_FRAMES_PER_SECOND);
@@ -1596,6 +1611,10 @@ uhci_abort_xfer(xfer, status)
 		/* and call final part of interrupt handler. */
 		uhci_abort_xfer_end(xfer);
 	}
+#else
+	delay(1000);
+	uhci_abort_xfer_end(xfer);
+#endif
 }
 
 void

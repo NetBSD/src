@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.58 1999/12/06 21:06:59 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.59 2000/01/16 10:27:51 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ static usbd_status	ohci_alloc_std_chain __P((struct ohci_pipe *,
 			    ohci_softc_t *, int, int, int, usb_dma_t *, 
 			    ohci_soft_td_t *, ohci_soft_td_t **));
 
+static void		ohci_shutdown __P((void *v));
 static void		ohci_power __P((int, void *));
 static usbd_status	ohci_open __P((usbd_pipe_handle));
 static void		ohci_poll __P((struct usbd_bus *));
@@ -348,6 +349,8 @@ ohci_detach(sc, flags)
 		return (rv);
 
 	powerhook_disestablish(sc->sc_powerhook);
+	shutdownhook_disestablish(sc->sc_shutdownhook);
+
 	/* free data structures XXX */
 
 	return (rv);
@@ -697,6 +700,8 @@ ohci_init(sc)
 
 	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
 
+	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
+
 	return (USBD_NORMAL_COMPLETION);
 
  bad3:
@@ -733,7 +738,26 @@ ohci_freem(bus, dma)
 	usb_freemem(&sc->sc_bus, dma);
 }
 
-#if defined(__NetBSD__)
+/*
+ * Shut down the controller when the system is going down.
+ */
+void
+ohci_shutdown(v)
+	void *v;
+{
+	ohci_softc_t *sc = v;
+
+	DPRINTF(("ohci_shutdown: stopping the HC\n"));
+	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
+}
+
+/*
+ * Handle suspend/resume.
+ *
+ * We need to switch to polling mode here, because this routine is
+ * called from an intterupt context.  This is all right since we
+ * are almost suspended anyway.
+ */
 void
 ohci_power(why, v)
 	int why;
@@ -747,7 +771,6 @@ ohci_power(why, v)
 	ohci_dumpregs(sc);
 #endif
 }
-#endif /* defined(__NetBSD__) */
 
 #ifdef OHCI_DEBUG
 void
