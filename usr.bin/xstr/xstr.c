@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.8 1998/09/27 18:29:15 christos Exp $	*/
+/*	$NetBSD: xstr.c,v 1.9 1998/12/20 19:13:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.8 1998/09/27 18:29:15 christos Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.9 1998/12/20 19:13:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,8 @@ process(name)
 			break;
 		}
 		if (linebuf[0] == '#') {
-			if (linebuf[1] == ' ' && isdigit(linebuf[2]))
+			if (linebuf[1] == ' ' &&
+			    isdigit((unsigned char)linebuf[2]))
 				printf("#line%s", &linebuf[1]);
 			else
 				printf("%s", linebuf);
@@ -290,7 +291,7 @@ octdigit(c)
 	char c;
 {
 
-	return (isdigit(c) && c != '8' && c != '9');
+	return (isdigit((unsigned char)c) && c != '8' && c != '9');
 }
 
 static void

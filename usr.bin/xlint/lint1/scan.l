@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.12 1998/04/09 00:32:38 tv Exp $	*/
+/*	$NetBSD: scan.l,v 1.13 1998/12/20 19:05:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.12 1998/04/09 00:32:38 tv Exp $");
+__RCSID("$NetBSD: scan.l,v 1.13 1998/12/20 19:05:19 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -969,7 +969,7 @@ directive()
 	/* Go to first non-whitespace after # */
 	for (cp = yytext + 1; (c = *cp) == ' ' || c == '\t'; cp++) ;
 
-	if (!isdigit(c)) {
+	if (!isdigit((unsigned char)c)) {
 	error:
 		/* undefined or invalid # directive */
 		warning(255);
