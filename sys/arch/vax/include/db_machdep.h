@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.5 1998/04/13 12:12:59 ragge Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.6 1998/08/10 14:33:33 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,6 +37,7 @@
 #include <sys/param.h>
 #include <vm/vm.h>
 #include <machine/trap.h>
+#include <machine/psl.h>
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
