@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.22 2001/01/05 19:54:30 is Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.23 2001/02/05 12:35:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -232,7 +232,7 @@ fpu_emulate(frame, fpf)
       */
     if ((sig == 0) || (sig == SIGFPE))
 	frame->f_pc += insn.is_advance;
-#if defined(DDB) && defined(DEBUG)
+#if defined(DDB) && defined(DEBUG_FPE)
     else {
 	printf("fpu_emulate: sig=%d, opcode=%x, word1=%x\n",
 	       sig, insn.is_opcode, insn.is_word1);
