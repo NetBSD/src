@@ -1,3 +1,5 @@
+/*	$NetBSD: dns_lookup.c,v 1.8 2004/05/31 00:46:47 heas Exp $	*/
+
 /*++
 /* NAME
 /*	dns_lookup 3
