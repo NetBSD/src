@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.77 2001/03/17 20:56:31 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.78 2001/04/10 13:59:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1691,9 +1691,9 @@ L60bpe:		.long	0
 #endif
 #ifdef DEBUG
 
-GLOBAL(fulltflush)
+ASLOCAL(fulltflush)
 	.long	0
-GLOBAL(fullcflush)
+ASLOCAL(fullcflush)
 	.long	0
 GLOBAL(timebomb)
 	.long	0
