@@ -1,4 +1,4 @@
-/*	$NetBSD: rawwrite.c,v 1.5 1997/12/10 09:32:35 leo Exp $	*/
+/*	$NetBSD: rawwrite.c,v 1.6 1997/12/15 09:21:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -53,7 +53,7 @@ int	v_flag = 0;	/* Verbose (a dot for each track copied)	*/
 int	V_flag = 0;	/* Show version					*/
 char	*progname;
 
-const char version[] = "$Revision: 1.5 $";
+const char version[] = "$Revision: 1.6 $";
 
 int
 main(argc, argv)
@@ -114,7 +114,7 @@ char	*argv[];
 	for (i = 0; i < NTRK; i++) {
 		n = read(fd, buf, nsect * SECT_SIZE);
 		if (n == 0) {
-			eprintf("Only %d sectors in input file\r\n", i + 1);
+			eprintf("Only %d sectors in input file\r\n", i);
 			break;
 		}
 		if (n != (nsect * SECT_SIZE))
@@ -137,7 +137,10 @@ brwrite(buf, trk, spt)
 char	*buf;
 int	trk, spt;
 {
-	static u_char	trbuf[NSECT_DD * SECT_SIZE * 2];
+	/*
+	 * These need to be static with my version of osbind.h :-(
+	 */
+	static u_char	trbuf[NSECT_HD * SECT_SIZE * 2];
 	static u_int	sideno  = 0;
 
 	for (sideno = 0; sideno < 2; sideno++) {
@@ -149,6 +152,7 @@ int	trk, spt;
 		buf += (spt/2) * SECT_SIZE;
 	}
 }
+
 static void
 usage()
 {
