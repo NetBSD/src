@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 1999/02/01 02:46:59 jonathan Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 1999/02/22 10:23:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,23 +133,27 @@ loadfile(fname)
 		goto cerr;
 	}
 
-	/* read the code and initialized data */
-	printf("Size: %d+%d", aout.a_text, aout.a_data);
+	/* read the code ... */
+	printf("Size: %d", aout.a_text);
 #if 0
 	/* In an OMAGIC file, we're already there. */
 	if (lseek(fd, (off_t)N_TXTOFF(aout), 0) < 0) {
 		goto cerr;
 	}
 #endif
+	n = read(fd, buf = (char *)aout.a_entry, aout.a_text);
+	/* ... and initialized data */
+	printf("+%d", aout.a_data);
+	n += read(fd, buf + aout.a_text, aout.a_data);
 	i = aout.a_text + aout.a_data;
-	n = read(fd, buf = (char *)aout.a_entry, i);
-/* XXX symbols */
+
 	if (aout.a_syms) {
 		/*
 		 * Copy exec header to start of bss.
 		 * Load symbols into end + sizeof(int).
 		 */
 		memcpy(buf += i, (char *)&aout, sizeof(aout));
+		printf("+[%d]", aout.a_syms + 4);
 		n += read(fd, buf += aout.a_bss + 4, aout.a_syms + 4);
 		i += aout.a_syms + 4;
 		buf += aout.a_syms;
