@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.21 2000/04/14 14:51:22 augustss Exp $
+#	$NetBSD: files.usb,v 1.22 2000/09/23 04:32:23 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -109,3 +109,8 @@ file	dev/usb/if_upl.c		upl
 device	uftdi: ucombus
 attach	uftdi at uhub
 file	dev/usb/uftdi.c			uftdi
+
+# Scanners
+device	uscanner
+attach	uscanner at uhub
+file	dev/usb/uscanner.c		uscanner	needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.34 2000/08/24 14:13:38 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.35 2000/09/23 04:32:23 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #define UZCOM_DEBUG 1
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
+#define USCANNER_DEBUG 1
 #define Static
 #else
 #define Static static
@@ -162,7 +163,7 @@ __CONCAT(dname,_detach)(self, flags) \
 	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \
 		return (ENXIO); \
 	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
-	if (!sc) \
+	if (sc == NULL) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
@@ -195,6 +196,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define UZCOM_DEBUG 1
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
+#define USCANNER_DEBUG 1
 #endif
 
 #define Static
@@ -320,7 +322,7 @@ __CONCAT(dname,_detach)(self, flags) \
 	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \
 		return (ENXIO); \
 	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
-	if (!sc) \
+	if (sc == NULL) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
@@ -429,7 +431,7 @@ __CONCAT(dname,_detach)(device_t self)
 
 #define USB_GET_SC_OPEN(dname, unit, sc) \
 	sc = devclass_get_softc(__CONCAT(dname,_devclass), unit); \
-	if (!sc) \
+	if (sc == NULL) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
