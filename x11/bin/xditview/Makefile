@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 06:41:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/05 13:08:57 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,9 @@ DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
 LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
 DPADD+= ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
+
+FILES=	ldblarrow rdblarrow
+FILESDIR=${X11INCDIR}/X11/bitmaps
 
 .PATH:	${X11SRCDIR.xc}/programs/${PROG}
 
