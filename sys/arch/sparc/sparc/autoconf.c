@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.94 1998/08/20 11:47:39 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.95 1998/08/30 21:30:41 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -268,8 +268,9 @@ bootstrap()
 			      "node from prom");
 
 		vaddrs = vstore;
-		if (getpropA(node, "address", sizeof(int),
-			     &nvaddrs, (void **)&vaddrs) != 0) {
+		nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
+		if (getprop(node, "address", sizeof(int),
+			    &nvaddrs, (void **)&vaddrs) != 0) {
 			printf("bootstrap: could not get interrupt properties");
 			romhalt();
 		}
@@ -753,6 +754,7 @@ st_crazymap(n)
 	return prom_st_crazymap[n];
 }
 
+#if 0
 struct devnametobdevmaj sparc_nam2blk[] = {
 	{ "xy",		3 },
 	{ "md",		5 },
@@ -763,6 +765,7 @@ struct devnametobdevmaj sparc_nam2blk[] = {
 	{ "cd",		18 },
 	{ NULL,		0 },
 };
+#endif
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -833,7 +836,7 @@ cpu_rootconf()
 	bootdv = bp == NULL ? NULL : bp->dev;
 	bootpartition = bp == NULL ? 0 : bp->val[2];
 
-	setroot(bootdv, bootpartition, sparc_nam2blk);
+	setroot(bootdv, bootpartition, dev_name2blk);
 }
 
 /*
@@ -913,81 +916,6 @@ findnode(first, name)
 	return (0);
 }
 
-#if 0
-/*
- * Fill in a romaux.  Returns 1 on success, 0 if the register property
- * was not the right size.
- */
-int
-romprop(rp, cp, node)
-	register struct romaux *rp;
-	const char *cp;
-	register int node;
-{
-	register int len;
-	union { char regbuf[256]; struct rom_reg rr[RA_MAXREG]; } u;
-	static const char pl[] = "property length";
-
-	bzero(u.regbuf, sizeof u);
-	len = getprop(node, "reg", (void *)u.regbuf, sizeof(u.regbuf));
-	if (len == -1 &&
-	    node_has_property(node, "device_type") &&
-	    strcmp(getpropstring(node, "device_type"), "hierarchical") == 0)
-		len = 0;
-	if (len % sizeof(struct rom_reg)) {
-		printf("%s \"reg\" %s = %d (need multiple of %d)\n",
-			cp, pl, len, sizeof(struct rom_reg));
-		return (0);
-	}
-	if (len > RA_MAXREG * sizeof(struct rom_reg))
-		printf("warning: %s \"reg\" %s %d > %d, excess ignored\n",
-		    cp, pl, len, RA_MAXREG * sizeof(struct rom_reg));
-	rp->ra_node = node;
-	rp->ra_name = cp;
-	rp->ra_nreg = len / sizeof(struct rom_reg);
-	bcopy(u.rr, rp->ra_reg, len);
-
-	len = getprop(node, "address", (void *)rp->ra_vaddrs,
-		      sizeof(rp->ra_vaddrs));
-	if (len == -1) {
-		rp->ra_vaddr = 0;	/* XXX - driver compat */
-		len = 0;
-	}
-	if (len & 3) {
-		printf("%s \"address\" %s = %d (need multiple of 4)\n",
-		    cp, pl, len);
-		len = 0;
-	}
-	rp->ra_nvaddrs = len >> 2;
-
-	len = getprop(node, "intr", (void *)&rp->ra_intr, sizeof rp->ra_intr);
-	if (len == -1)
-		len = 0;
-	if (len & 7) {
-		printf("%s \"intr\" %s = %d (need multiple of 8)\n",
-		    cp, pl, len);
-		len = 0;
-	}
-	rp->ra_nintr = len >>= 3;
-	/* SPARCstation interrupts are not hardware-vectored */
-	while (--len >= 0) {
-		if (rp->ra_intr[len].int_vec) {
-			printf("WARNING: %s interrupt %d has nonzero vector\n",
-			    cp, len);
-			break;
-		}
-#if defined(SUN4M)
-		if (CPU_ISSUN4M) {
-			/* What's in these high bits anyway? */
-			rp->ra_intr[len].int_pri &= 0xf;
-			/* Look at "interrupts" property too? */
-		}
-#endif
-
-	}
-	return (1);
-}
-#endif
 
 int
 mainbus_match(parent, cf, aux)
@@ -1314,8 +1242,9 @@ findzs(zs)
 			 * device has multi-valued register properties.
 			 */
 			vaddrs = vstore;
-			if (getpropA(node, "address", sizeof(int),
-				     &nvaddrs, (void **)&vaddrs) != 0) {
+			nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
+			if (getprop(node, "address", sizeof(int),
+				    &nvaddrs, (void **)&vaddrs) != 0) {
 				panic("findzs: zs%d not mapped by PROM", zs);
 			}
 			return ((void *)vaddrs[0]);
@@ -1338,8 +1267,10 @@ makememarr(ap, max, which)
 		int	len;
 	} v2rmi[200];		/* version 2 rom meminfo layout */
 #define	MAXMEMINFO (sizeof(v2rmi) / sizeof(*v2rmi))
-	register struct v0mlist *mp;
-	register int i, node, len;
+	void *p;
+
+	struct v0mlist *mp;
+	int i, node, len;
 	char *prop;
 #endif
 
@@ -1407,8 +1338,8 @@ makememarr(ap, max, which)
 		}
 		if ((node = findnode(firstchild(findroot()), "memory")) == 0)
 			panic("makememarr: cannot find \"memory\" node");
-		switch (which) {
 
+		switch (which) {
 		case MEMARR_AVAILPHYS:
 			prop = "available";
 			break;
@@ -1420,8 +1351,12 @@ makememarr(ap, max, which)
 		default:
 			panic("makememarr");
 		}
-		len = getprop(node, prop, (void *)v2rmi, sizeof v2rmi) /
-		    sizeof(struct v2rmi);
+
+		len = MAXMEMINFO;
+		p = v2rmi;
+		if (getprop(node, prop, sizeof(struct v2rmi), &len, &p) != 0)
+			panic("makememarr: cannot get property");
+
 		for (i = 0; i < len; i++) {
 			if (i >= max)
 				goto overflow;
@@ -1450,46 +1385,10 @@ overflow:
 }
 
 /*
- * Internal form of getprop().  Returns the actual length.
+ *
  */
 int
-getprop(node, name, buf, bufsiz)
-	int node;
-	char *name;
-	void *buf;
-	register int bufsiz;
-{
-#if defined(SUN4C) || defined(SUN4M)
-	register struct nodeops *no;
-	register int len;
-#endif
-
-#if defined(SUN4)
-	if (CPU_ISSUN4) {
-		printf("WARNING: getprop not valid on sun4! %s\n", name);
-		return (0);
-	}
-#endif
-
-#if defined(SUN4C) || defined(SUN4M)
-	no = promvec->pv_nodeops;
-	len = no->no_proplen(node, name);
-	if (len > bufsiz) {
-		printf("node 0x%x property %s length %d > %d\n",
-		    node, name, len, bufsiz);
-#ifdef DEBUG
-		panic("getprop");
-#else
-		return (0);
-#endif
-	}
-	no->no_getprop(node, name, buf);
-	return (len);
-#endif
-}
-
-int
-getpropA(node, name, size, nitem, bufp)
+getprop(node, name, size, nitem, bufp)
 	int	node;
 	char	*name;
 	int	size;
@@ -1531,8 +1430,8 @@ getprop_reg1(node, rrp)
 	struct rom_reg *rrp0 = NULL;
 	char buf[32];
 
-	error = getpropA(node, "reg", sizeof(struct rom_reg),
-			 &n, (void **)&rrp0);
+	error = getprop(node, "reg", sizeof(struct rom_reg),
+			&n, (void **)&rrp0);
 	if (error != 0) {
 		if (error == ENOENT &&
 		    node_has_property(node, "device_type") &&
@@ -1557,8 +1456,8 @@ getprop_intr1(node, ip)
 	int error, n;
 	struct rom_intr *rip = NULL;
 
-	error = getpropA(node, "intr", sizeof(struct rom_intr),
-			 &n, (void **)&rip);
+	error = getprop(node, "intr", sizeof(struct rom_intr),
+			&n, (void **)&rip);
 	if (error != 0) {
 		if (error == ENOENT) {
 			*ip = 0;
@@ -1580,7 +1479,7 @@ getprop_address1(node, vpp)
 	int error, n;
 	void **vp = NULL;
 
-	error = getpropA(node, "address", sizeof(u_int32_t), &n, (void **)&vp);
+	error = getprop(node, "address", sizeof(u_int32_t), &n, (void **)&vp);
 	if (error != 0) {
 		if (error == ENOENT) {
 			*vpp = 0;
@@ -1617,14 +1516,9 @@ getpropstring(node, name)
 	int node;
 	char *name;
 {
-	register int len;
 	static char stringbuf[32];
 
-	len = getprop(node, name, (void *)stringbuf, sizeof stringbuf - 1);
-	if (len == -1)
-		len = 0;
-	stringbuf[len] = '\0';	/* usually unnecessary */
-	return (stringbuf);
+	return (getpropstringA(node, name, stringbuf));
 }
 
 /* Alternative getpropstring(), where caller provides the buffer */
@@ -1636,7 +1530,7 @@ getpropstringA(node, name, buffer)
 {
 	int blen;
 
-	if (getpropA(node, name, 1, &blen, (void **)&buffer) != 0)
+	if (getprop(node, name, 1, &blen, (void **)&buffer) != 0)
 		blen = 0;
 
 	buffer[blen] = '\0';	/* usually unnecessary */
@@ -1653,13 +1547,13 @@ getpropint(node, name, deflt)
 	char *name;
 	int deflt;
 {
-	register int len;
-	char intbuf[16];
+	int intbuf, *ip = &intbuf;
+	int len;
 
-	len = getprop(node, name, (void *)intbuf, sizeof intbuf);
-	if (len != 4)
+	if (getprop(node, name, sizeof(int), &len, (void **)&ip) != 0)
 		return (deflt);
-	return (*(int *)intbuf);
+
+	return (*ip);
 }
 
 /*
