@@ -1,3 +1,5 @@
+.\" $NetBSD: vpo.4,v 1.2 2004/01/23 19:36:23 wiz Exp $
+.\"
 .\" Copyright (c) 1998, 1999, Nicolas Souchu
 .\" All rights reserved.
 .\"
@@ -35,23 +37,22 @@
 .Cd "scsibus* at vpo?"
 .Sh DESCRIPTION
 The primary purpose of the
-.Nm 
-driver is to provide access to the Adaptec AIC-7110 SCSI controller built
-in the Iomega ZIP drive.
+.Nm
+driver is to provide access to the Adaptec AIC-7110 SCSI controller
+built in the Iomega ZIP drive.
 But it should also work with the Iomega Jaz Traveller
 parallel to SCSI interface.
 .Pp
 The driver has been extended to the ZIP+ drive which is based on the
 Iomega Matchmaker Parallel to SCSI interface.
-.Pp 
+.Pp
 The driver should let you use a printer connected to the drive while
 transferring data.
 .Pp
 DOS and
-.Fx
+.Nx
 filesystems are supported.
-When mounting a DOS filesystem or
-formating a
+When mounting a DOS filesystem or formating a
 .Fx
 filesystem, check the slice of the disk with the
 .Xr fdisk 8
@@ -69,29 +70,33 @@ zip|zip 100:\\
 and use
 .Xr disklabel 8 .
 .Sh SEE ALSO
-.Xr sd 4 ,
+.Xr atppc 4 ,
 .Xr lpt 4 ,
 .Xr ppbus 4 ,
-.Xr atppc 4 ,
-.Xr scsi 4
-.Sh BUGS
-During boot, the driver firstly try to detect a classic ZIP, then a ZIP+.
-The ZIP+ detection is intrusive and may send erroneous characters to your
-printer if the drive is not connected to your parallel port.
-.Pp
-If you have trouble with your driver, your parallel chip set may not run
-properly at the detected mode (NIBBLE, PS2 or EPP). Tune the
-.Xr atppc 4
-boot flags to force other modes.
+.Xr scsi 4 ,
+.Xr sd 4
 .Sh HISTORY
 The
 .Nm
 manual page first appeared in
 .Fx 3.0 .
 .Sh AUTHORS
-This
-manual page is based the 
+This manual page is based the
 .Fx
-.Xr vpo 4
-and was updated for NetBSD's port by 
+.Nm vpo
+and was updated for the
+.Nx
+port by
 .An Gary Thorpe .
+.Sh BUGS
+During boot, the driver firstly try to detect a classic ZIP, then
+a ZIP+.
+The ZIP+ detection is intrusive and may send erroneous characters
+to your printer if the drive is not connected to your parallel
+port.
+.Pp
+If you have trouble with your driver, your parallel chip set may
+not run properly at the detected mode (NIBBLE, PS2 or EPP).
+Tune the
+.Xr atppc 4
+boot flags to force other modes.
