@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.12 2004/01/07 22:06:57 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.12.2.1 2004/05/11 12:33:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -274,6 +274,11 @@ static const struct pciide_product_desc pciide_satalink_products[] =  {
 	{ PCI_PRODUCT_CMDTECH_3112,
 	  0,
 	  "Silicon Image SATALink 3112",
+	  sii3112_chip_map,
+	},
+	{ PCI_PRODUCT_CMDTECH_3512,
+	  0,
+	  "Silicon Image SATALink 3512",
 	  sii3112_chip_map,
 	},
 	{ PCI_PRODUCT_CMDTECH_3114,
