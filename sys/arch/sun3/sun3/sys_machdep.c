@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.9 1999/02/26 22:03:29 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10 1999/02/26 22:37:58 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -124,7 +124,7 @@ int
 cachectl1(req, addr, len, p)
 	unsigned long req;
 	caddr_t	addr;
-	int len;
+	size_t len;
 	struct proc *p;
 {
 	int error = 0;

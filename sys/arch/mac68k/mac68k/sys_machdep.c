@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.12 1999/02/25 23:13:41 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13 1999/02/26 22:37:58 is Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -154,9 +154,9 @@ void	ICIA __P((void));
 /*ARGSUSED1*/
 int
 cachectl1(req, addr, len, p)
-	int req;
+	unsigned long req;
 	vaddr_t	addr;
-	int len;
+	size_t len;
 	struct proc *p;
 {
 	int error = 0;
