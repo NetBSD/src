@@ -1,4 +1,4 @@
-/*	$NetBSD: amrvar.h,v 1.2 2003/05/04 16:15:36 ad Exp $	*/
+/*	$NetBSD: amrvar.h,v 1.3 2003/05/14 11:22:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #define	AMR_NCCB_RESV		2
 #define	AMR_ENQUIRY_BUFSIZE	2048
 #define	AMR_SGL_SIZE		(sizeof(struct amr_sgentry) * AMR_MAX_SEGS)
+#define	AMR_TIMEOUT		30
 
 /*
  * Logical drive information.
@@ -84,6 +85,7 @@ struct amr_softc {
 	struct amr_ccb		*amr_ccbs;
 	SLIST_HEAD(, amr_ccb)	amr_ccb_freelist;
 	SIMPLEQ_HEAD(, amr_ccb)	amr_ccb_queue;
+	TAILQ_HEAD(, amr_ccb)	amr_ccb_active;
 	int			amr_maxqueuecnt;
 
 	int	(*amr_get_work)(struct amr_softc *, struct amr_mailbox_resp *);
@@ -115,12 +117,14 @@ struct amr_ccb {
 	union {
 		SIMPLEQ_ENTRY(amr_ccb) simpleq;
 		SLIST_ENTRY(amr_ccb) slist;
+		TAILQ_ENTRY(amr_ccb) tailq;
 	} ac_chain;
 
 	u_int		ac_flags;
 	u_int		ac_status;
 	u_int		ac_ident;
 	u_int		ac_xfer_size;
+	time_t		ac_start_time;
 	bus_dmamap_t	ac_xfer_map;
 	void		(*ac_handler)(struct amr_ccb *);
 	void 		*ac_context;
@@ -132,6 +136,7 @@ struct amr_ccb {
 #define	AC_COMPLETE	0x04	/* Command completed */
 #define	AC_ACTIVE	0x08	/* Command active */
 #define	AC_NOSGL	0x10	/* No scatter/gather list */
+#define AC_MOAN		0x20	/* We have already moaned */
 
 struct amr_attach_args {
 	int		amra_unit;

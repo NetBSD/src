@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.9 2003/05/04 16:15:35 ad Exp $	*/
+/*	$NetBSD: amr.c,v 1.10 2003/05/14 11:22:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.9 2003/05/04 16:15:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.10 2003/05/14 11:22:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.9 2003/05/04 16:15:35 ad Exp $");
 #include <dev/pci/amrvar.h>
 
 void	amr_attach(struct device *, struct device *, void *);
+void	amr_ccb_dump(struct amr_softc *, struct amr_ccb *);
 void	*amr_enquire(struct amr_softc *, u_int8_t, u_int8_t, u_int8_t, void *);
 int	amr_init(struct amr_softc *, const char *,
 			 struct pci_attach_args *pa);
@@ -394,6 +395,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	ac = malloc(sizeof(*ac) * AMR_MAX_CMDS, M_DEVBUF, M_NOWAIT | M_ZERO);
 	amr->amr_ccbs = ac;
 	SLIST_INIT(&amr->amr_ccb_freelist);
+	TAILQ_INIT(&amr->amr_ccb_active);
 	amr->amr_flags |= AMRF_CCBS;
 
 	if (amr_max_xfer == 0) {
@@ -773,6 +775,11 @@ amr_intr(void *cookie)
 			ac->ac_status = mbox.mb_status;
 			ac->ac_flags = (ac->ac_flags & ~AC_ACTIVE) |
 			    AC_COMPLETE;
+			TAILQ_REMOVE(&amr->amr_ccb_active, ac, ac_chain.tailq);
+
+			if ((ac->ac_flags & AC_MOAN) != 0)
+				printf("%s: ccb %d completed\n",
+				    amr->amr_dv.dv_xname, ac->ac_ident);
 
 			/* Pass notification to upper layers. */
 			if (ac->ac_handler != NULL)
@@ -825,6 +832,7 @@ amr_thread(void *cookie)
 	struct amr_ccb *ac;
 	struct amr_logdrive *al;
 	struct amr_enquiry *ae;
+	time_t curtime;
 	int rv, i, s;
 
 	amr = cookie;
@@ -841,6 +849,17 @@ amr_thread(void *cookie)
 
 		s = splbio();
 		amr_intr(cookie);
+		curtime = (time_t)mono_time.tv_sec;
+		if ((ac = TAILQ_FIRST(&amr->amr_ccb_active)) != NULL) {
+			if (ac->ac_start_time + AMR_TIMEOUT > curtime)
+				break;
+			if ((ac->ac_flags & AC_MOAN) == 0) {
+				printf("%s: ccb %d timed out; mailbox:\n",
+				    amr->amr_dv.dv_xname, ac->ac_ident);
+				amr_ccb_dump(amr, ac);
+				ac->ac_flags |= AC_MOAN;
+			}
+		}
 		splx(s);
 
 		if ((rv = amr_ccb_alloc(amr, &ac)) != 0) {
@@ -995,6 +1014,7 @@ amr_ccb_enqueue(struct amr_softc *amr, struct amr_ccb *ac)
 		if ((*amr->amr_submit)(amr, ac) != 0)
 			break;
 		SIMPLEQ_REMOVE_HEAD(&amr->amr_ccb_queue, ac_chain.simpleq);
+		TAILQ_INSERT_TAIL(&amr->amr_ccb_active, ac, ac_chain.tailq);
 	}
 
 	splx(s);
@@ -1080,6 +1100,7 @@ amr_ccb_poll(struct amr_softc *amr, struct amr_ccb *ac, int timo)
 
 	if ((rv = (*amr->amr_submit)(amr, ac)) != 0)
 		return (rv);
+	TAILQ_INSERT_TAIL(&amr->amr_ccb_active, ac, ac_chain.tailq);
 
 	for (timo *= 10; timo != 0; timo--) {
 		amr_intr(amr);
@@ -1148,11 +1169,6 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 	if (amr->amr_mbox->mb_cmd.mb_busy != 0)
 		return (EAGAIN);
 
-	amr->amr_mbox->mb_segment = 0;
-	memcpy(&amr->amr_mbox->mb_cmd, &ac->ac_cmd, sizeof(ac->ac_cmd));
-	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
-	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
-
 	v = amr_inl(amr, AMR_QREG_IDB);
 	if ((v & (AMR_QIDB_SUBMIT | AMR_QIDB_ACK)) != 0) {
 		amr->amr_mbox->mb_cmd.mb_busy = 0;
@@ -1163,6 +1179,12 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 		return (EAGAIN);
 	}
 
+	amr->amr_mbox->mb_segment = 0;
+	memcpy(&amr->amr_mbox->mb_cmd, &ac->ac_cmd, sizeof(ac->ac_cmd));
+	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
+	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
+
+	ac->ac_start_time = (time_t)mono_time.tv_sec;
 	ac->ac_flags |= AC_ACTIVE;
 	amr_outl(amr, AMR_QREG_IDB, amr->amr_mbox_paddr | AMR_QIDB_SUBMIT);
 	return (0);
@@ -1181,22 +1203,6 @@ amr_std_submit(struct amr_softc *amr, struct amr_ccb *ac)
 	if (amr->amr_mbox->mb_cmd.mb_busy != 0)
 		return (EAGAIN);
 
-	amr->amr_mbox->mb_segment = 0;
-	memcpy(&amr->amr_mbox->mb_cmd, &ac->ac_cmd, sizeof(ac->ac_cmd));
-	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
-	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
-
-#if 0
-	for (i = 0; i < 128/4; i++) {
-		if ((i & 3) == 0)
-			printf("amr0: ");
-		printf("%08x ", ((u_int32_t *)amr->amr_mbox)[i]);
-		if ((i & 3) == 3)
-			printf("\n");
-	}
-	printf("amr0: end mailbox\n");
-#endif
-
 	if ((amr_inb(amr, AMR_SREG_MBOX_BUSY) & AMR_SMBOX_BUSY_FLAG) != 0) {
 		amr->amr_mbox->mb_cmd.mb_busy = 0;
 		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
@@ -1206,6 +1212,12 @@ amr_std_submit(struct amr_softc *amr, struct amr_ccb *ac)
 		return (EAGAIN);
 	}
 
+	amr->amr_mbox->mb_segment = 0;
+	memcpy(&amr->amr_mbox->mb_cmd, &ac->ac_cmd, sizeof(ac->ac_cmd));
+	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
+	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
+
+	ac->ac_start_time = (time_t)mono_time.tv_sec;
 	ac->ac_flags |= AC_ACTIVE;
 	amr_outb(amr, AMR_SREG_CMD, AMR_SCMD_POST);
 	return (0);
@@ -1277,4 +1289,15 @@ amr_std_get_work(struct amr_softc *amr, struct amr_mailbox_resp *mbsave)
 	amr_outb(amr, AMR_SREG_CMD, AMR_SCMD_ACKINTR);
 
 	return (0);
+}
+
+void
+amr_ccb_dump(struct amr_softc *amr, struct amr_ccb *ac)
+{
+	int i;
+
+	printf("%s: ", amr->amr_dv.dv_xname);
+	for (i = 0; i < 4; i++)
+		printf("%08x ", ((u_int32_t *)&ac->ac_cmd)[i]);
+	printf("\n");
 }
