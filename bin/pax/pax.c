@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.20 2002/10/15 16:16:30 christos Exp $	*/
+/*	$NetBSD: pax.c,v 1.21 2002/10/17 00:42:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.20 2002/10/15 16:16:30 christos Exp $");
+__RCSID("$NetBSD: pax.c,v 1.21 2002/10/17 00:42:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ static int gen_init(void);
 /*
  * Variables that can be accessed by any routine within pax
  */
-int	act = DEFOP;		/* read/write/append/copy */
+int	act = ERROR;		/* read/write/append/copy */
 FSUB	*frmt = NULL;		/* archive format type */
 int	cflag;			/* match all EXCEPT pattern/file */
 int	cwdfd;			/* starting cwd */
