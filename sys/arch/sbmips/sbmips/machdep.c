@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6 2002/06/01 16:14:23 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.7 2002/06/07 01:34:03 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -526,7 +526,12 @@ haltsys:
 	printf("rebooting...\n\n");
 
 	if (cfe_present) {
-		cfe_exit(1, (howto & RB_DUMP) ? 1 : 0);
+		/*
+		 * XXX
+		 * For some reason we can't return to CFE with
+		 * and do a warm start.  Need to look into this...
+		 */
+		cfe_exit(0, (howto & RB_DUMP) ? 1 : 0);
 		printf("cfe_exit didn't!\n");
 	}
 
