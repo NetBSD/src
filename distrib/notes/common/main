@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.123 2001/05/21 01:09:55 jhawk Exp $
+.\"	$NetBSD: main,v 1.124 2001/05/21 21:39:51 manu Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1252,6 +1252,7 @@ them, and would like to mentioned, tell us!)
 .It-span Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
 .It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
+.It Ta Emmanuel Dreyfus Ta Mt manu@netbsd.org
 .It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
 .It Ta Ted Lemon Ta Mt mellon@netbsd.org
 .It Ta John Hawkinson Ta Mt jhawk@netbsd.org
