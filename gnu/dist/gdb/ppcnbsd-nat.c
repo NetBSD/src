@@ -158,23 +158,22 @@ void
 fetch_kcore_registers (pcb)
      struct pcb *pcb;
 {
-  struct trapframe tf;
-  int regno, regs[32];
+  struct switchframe sf;
+  int regno;
 
   /*
    * get the register values out of the sys pcb and
    * store them where `read_register' will find them.
    */
-  if (target_read_memory(pcb->pcb_sp, (char *)&tf, sizeof(tf)))
-    error("Cannot read trapframe.");
-  for (regno = 0; regno < 32; regno++)
-    supply_register(regno, (char *)&tf.fixreg[regno]);
-  supply_register(LR_REGNUM, (char *)&tf.lr);
-  supply_register(PC_REGNUM, (char *)&tf.srr0);
-  supply_register(PS_REGNUM, (char *)&tf.srr1);
-  supply_register(CR_REGNUM, (char *)&tf.cr);
-  supply_register(XER_REGNUM, (char *)&tf.xer);
-  supply_register(CTR_REGNUM, (char *)&tf.ctr);
+  if (target_read_memory(pcb->pcb_sp, (char *)&sf, sizeof(sf)))
+    error("Cannot read switchframe.");
+  supply_register(1, (char *)&pcb->pcb_sp);
+  supply_register(2, (char *)&sf.fixreg2);
+  supply_register(PC_REGNUM, (char *)&sf.fill);
+  supply_register(LR_REGNUM, (char *)&sf.fill);
+  supply_register(CR_REGNUM, (char *)&sf.cr);
+  for (regno = 13; regno < 32; regno++)
+    supply_register(regno, (char *)&sf.fixreg[regno - 13]);
 
   /* The kernel does not use the FPU, so ignore it. */
   registers_fetched ();
