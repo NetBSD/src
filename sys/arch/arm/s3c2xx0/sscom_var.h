@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.4 2003/07/31 19:08:10 bsh Exp $ */
+/* $NetBSD: sscom_var.h,v 1.5 2003/08/04 12:28:49 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -68,6 +68,7 @@
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_sscom.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +76,11 @@
 #include <sys/termios.h>
 #include <sys/callout.h>
 #include <machine/bus.h>
+
+#ifdef	SSCOM_S3C2410
+#include <arm/s3c2xx0/s3c2410reg.h>
+#include <arm/s3c2xx0/s3c2410var.h>
+#endif
 
 /* Hardware flag masks */
 #define	SSCOM_HW_FLOW		0x02
@@ -199,20 +205,55 @@ struct sscom_uart_info {
 #define sscom_getc(iot,ioh) bus_space_read_1((iot), (ioh), SSCOM_URXH)
 #define sscom_geterr(iot,ioh) bus_space_read_1((iot), (ioh), SSCOM_UERSTAT)
 
-#define sscom_enable_rxint(sc)	(s3c2xx0_unmask_interrupts(1<<sc->sc_rx_irqno), \
-				    (sc->sc_hwflags |= SSCOM_HW_RXINT))
-#define sscom_disable_rxint(sc)	(s3c2xx0_mask_interrupts(1<<sc->sc_rx_irqno), \
-				    (sc->sc_hwflags &= ~SSCOM_HW_RXINT))
-#define sscom_enable_txint(sc)	(s3c2xx0_unmask_interrupts(1<<sc->sc_tx_irqno), \
-				    (sc->sc_hwflags |= SSCOM_HW_TXINT))
-#define sscom_disable_txint(sc)	(s3c2xx0_mask_interrupts(1<<sc->sc_tx_irqno), \
-				    (sc->sc_hwflags &= ~SSCOM_HW_TXINT))
-#define sscom_enable_txrxint(sc)	\
-	(s3c2xx0_unmask_interrupts((1<<sc->sc_tx_irqno)|(1<<sc->sc_rx_irqno)), \
-		    (sc->sc_hwflags |= (SSCOM_HW_TXINT|SSCOM_HW_RXINT)))
-#define sscom_disable_txrxint(sc)		\
-	(s3c2xx0_mask_interrupts((1<<sc->sc_tx_irqno)|(1<<sc->sc_rx_irqno)), \
-		    (sc->sc_hwflags &= ~(SSCOM_HW_TXINT|SSCOM_HW_RXINT)))
+/* 
+ * we need to tweak interrupt controller to mask/unmask rxint and/or txint.
+ */
+#ifdef SSCOM_S3C2410
+/* RXINTn, TXINTn and ERRn interrupts are cascaded to UARTn irq. */
+
+#define	_sscom_intbit(irqno)	(1<<((irqno)-S3C2410_SUBIRQ_MIN))
+
+#define	sscom_unmask_rxint(sc)	\
+	s3c2410_unmask_subinterrupts(_sscom_intbit((sc)->sc_rx_irqno))
+#define	sscom_mask_rxint(sc)	\
+	s3c2410_mask_subinterrupts(_sscom_intbit((sc)->sc_rx_irqno))
+#define	sscom_unmask_txint(sc)	\
+	s3c2410_unmask_subinterrupts(_sscom_intbit((sc)->sc_tx_irqno))
+#define	sscom_mask_txint(sc)	\
+	s3c2410_mask_subinterrupts(_sscom_intbit((sc)->sc_tx_irqno))
+#define	sscom_unmask_txrxint(sc)                                      \
+	s3c2410_unmask_subinterrupts(_sscom_intbit((sc)->sc_tx_irqno) | \
+			             _sscom_intbit((sc)->sc_rx_irqno))
+#define	sscom_mask_txrxint(sc)	                                    \
+	s3c2410_mask_subinterrupts(_sscom_intbit((sc)->sc_tx_irqno) | \
+			           _sscom_intbit((sc)->sc_rx_irqno))
+
+#else
+
+/* for S3C2800 and S3C2400 */
+#define	sscom_unmask_rxint(sc)	s3c2xx0_unmask_interrupts(1<<(sc)->sc_rx_irqno)
+#define	sscom_mask_rxint(sc)	s3c2xx0_mask_interrupts(1<<(sc)->sc_rx_irqno)
+#define	sscom_unmask_txint(sc)	s3c2xx0_unmask_interrupts(1<<(sc)->sc_tx_irqno)
+#define	sscom_mask_txint(sc)	s3c2xx0_mask_interrupts(1<<(sc)->sc_tx_irqno)
+#define	sscom_unmask_txrxint(sc) \
+	s3c2xx0_unmask_interrupts((1<<(sc)->sc_tx_irqno)|(1<<(sc)->sc_rx_irqno))
+#define	sscom_mask_txrxint(sc)	\
+	s3c2xx0_mask_interrupts((1<<(sc)->sc_tx_irqno)|(1<<(sc)->sc_rx_irqno))
+
+#endif /* SSCOM_S3C2410 */
+
+#define sscom_enable_rxint(sc)		\
+	(sscom_unmask_rxint(sc), ((sc)->sc_hwflags |= SSCOM_HW_RXINT))
+#define sscom_disable_rxint(sc)		\
+	(sscom_mask_rxint(sc), ((sc)->sc_hwflags &= ~SSCOM_HW_RXINT))
+#define sscom_enable_txint(sc)		\
+	(sscom_unmask_txint(sc), ((sc)->sc_hwflags |= SSCOM_HW_TXINT))
+#define sscom_disable_txint(sc)		\
+	(sscom_mask_txint(sc),((sc)->sc_hwflags &= ~SSCOM_HW_TXINT))
+#define sscom_enable_txrxint(sc) 	\
+	(sscom_unmask_txrxint(sc),((sc)->sc_hwflags |= (SSCOM_HW_TXINT|SSCOM_HW_RXINT)))
+#define sscom_disable_txrxint(sc)	\
+	(sscom_mask_txrxint(sc),((sc)->sc_hwflags &= ~(SSCOM_HW_TXINT|SSCOM_HW_RXINT)))
 
 
 int	sscomspeed(long, long);
