@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.5 2001/11/13 01:06:21 lukem Exp $
+ *	$Id: i4b_ctl.c,v 1.6 2002/03/16 16:56:03 martin Exp $
  *
  * $FreeBSD$
  *
@@ -36,15 +36,11 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.5 2001/11/13 01:06:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.6 2002/03/16 16:56:03 martin Exp $");
 
-#include "i4bctl.h"
+#include "isdnctl.h"
 
-#if NI4BCTL > 1
-#error "only 1 (one) i4bctl device allowed!"
-#endif
-
-#if NI4BCTL > 0
+#if NISDNCTL > 0
 
 #include <sys/param.h>
 
@@ -150,10 +146,10 @@ static void *devfs_token;
 
 #ifndef __FreeBSD__
 #define PDEVSTATIC	/* */
-void i4bctlattach __P((void));
-int i4bctlopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4bctlclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4bctlioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+void isdnctlattach __P((void));
+int isdnctlopen __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdnctlclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdnctlioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 #endif	/* !FreeBSD */
 
 #if BSD > 199306 && defined(__FreeBSD__)
@@ -208,14 +204,11 @@ dummy_i4bctlattach(struct device *parent, struct device *self, void *aux)
  *---------------------------------------------------------------------------*/
 PDEVSTATIC void
 #ifdef __FreeBSD__
-i4bctlattach(void *dummy)
+isdnctlattach(void *dummy)
 #else
-i4bctlattach()
+isdnctlattach()
 #endif
 {
-#ifndef HACK_NO_PSEUDO_ATTACH_MSG
-	printf("i4bctl: ISDN system control port attached\n");
-#endif
 
 #if defined(__FreeBSD__)
 #if __FreeBSD__ == 3
@@ -236,7 +229,7 @@ i4bctlattach()
  *	i4bctlopen - device driver open routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bctlopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdnctlopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	if(minor(dev))
 		return (ENXIO);
@@ -253,7 +246,7 @@ i4bctlopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bctlclose - device driver close routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bctlclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdnctlclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	openflag = 0;
 	return (0);
@@ -263,7 +256,7 @@ i4bctlclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bctlioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #if DO_I4B_DEBUG
 	ctl_debug_t *cdbg;	
@@ -360,11 +353,11 @@ i4bctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
  *	i4bctlpoll - device driver poll routine
  *---------------------------------------------------------------------------*/
 static int
-i4bctlpoll (dev_t dev, int events, struct proc *p)
+isdnctlpoll (dev_t dev, int events, struct proc *p)
 {
 	return (ENODEV);
 }
 
 #endif
 
-#endif /* NI4BCTL > 0 */
+#endif /* NISDNCTL > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 2002/01/12 13:00:46 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 2002/03/16 16:55:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,16 +73,16 @@ cdev_decl(scsibus);
 cdev_decl(ses);
 #include "ld.h"
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 #include "clockctl.h"
 cdev_decl(clockctl);
 
@@ -147,11 +147,11 @@ struct cdevsw cdevsw[] =
 	cdev_ses_init(NSES,ses),	/* 25: SCSI SES/SAF-TE */
 	cdev_tty_init(NCOM,com),        /* 26: com serial port */
 	cdev_disk_init(NLD,ld),         /* 27: logical disk driver */
-	cdev_i4b_init(NI4B, i4b),	/* 28: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 29: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 30: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 31: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 32: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),	/* 28: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 29: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 30: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 31: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel),	/* 32: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 33: clockctl pseudo device */
 
 };
