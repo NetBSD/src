@@ -1,7 +1,7 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.24 1993/08/26 00:26:50 cgd Exp $
+#	$Id: GENERICAHA,v 1.25 1993/08/29 01:54:22 mycroft Exp $
 #
 
 machine		"i386"
@@ -75,7 +75,7 @@ device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr
 pseudo-device	ether
 pseudo-device	log
 pseudo-device	loop
-pseudo-device	pty	4
+pseudo-device	pty	32
 pseudo-device	sl	1
 pseudo-device	speaker
 
