@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/09/03 14:21:51 drochner Exp $
+#	$NetBSD: Makefile,v 1.19 2003/09/04 04:17:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,18 +9,11 @@ LINKS=		${BINDIR}/cpp ${BINDIR}/gcpp
 
 TEXINFO=	cpp.texi
 
-MAN=		cpp.1
-MLINKS=		cpp.1 gcpp.1
+MAN=		cccp.1
+MLINKS=		cccp.1 gcpp.1 cccp.1 cpp.1
+
 
 .include "../Makefile.frontend"
-
-# delete "cccp" man page before netbsd 2.0 if you remember...
-CLEANFILES+=	cpp.1
-${.OBJDIR}/cpp.1: ${DIST}/gcc/cccp.1
-	rm -f cpp.1
-	cp ${DIST}/gcc/cccp.1 cpp.1
-
-cpp.cat1: ${.OBJDIR}/cpp.1
 
 .PATH: ${DIST}/gcc
 
