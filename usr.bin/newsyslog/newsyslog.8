@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.28 2003/03/15 19:18:41 wiz Exp $
+.\"	$NetBSD: newsyslog.8,v 1.29 2003/06/27 22:25:08 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -251,17 +251,19 @@ equivalent:
 The lead-in character for day, week and month specification is a
 .So Li \&$ Sc Ns No -sign .
 The particular format of day, week and month specification is:
-.Sm off
 .Oo
 .Va D\&hh
 .Oc ,
+.Sm off
 .Oo
 .Va W\&w
 .Oo
 .Va D\&hh
 .Oc
 .Oc
+.Sm on
 and
+.Sm off
 .Oo
 .Va M\&dd
 .Oo
