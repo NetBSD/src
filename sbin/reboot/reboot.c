@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.23 1998/08/29 11:17:20 augustss Exp $	*/
+/*	$NetBSD: reboot.c,v 1.24 1998/10/09 18:50:35 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.23 1998/08/29 11:17:20 augustss Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.24 1998/10/09 18:50:35 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,30 +189,14 @@ main(argc, argv)
 
 	/*
 	 * After the processes receive the signal, start the rest of the
-	 * buffers on their way.
+	 * buffers on their way.  Wait 5 seconds between the SIGTERM and
+	 * the SIGKILL to pretend to give everybody a chance.
 	 */
 	sleep(2);
 	if (!nflag)
 		sync();
+	sleep(3);
 
-	/*
-	 * Wait for up to 30 seconds for processes that need a long 
-	 * time to shut down (e.g., X servers on old slow notebook PCs with
-	 * only 8 MB of RAM and a slow disk; or databases), but probe at
-	 * 1 second intervals and continue immediately if none are left.
-	 */
-	for (i=0; i<30; ++i) {
-		if (kill(-1, 0) == -1) {
-			if (errno == ESRCH)
-				break;
-			goto restart;
-		}
-		sleep(1);
-	}
-
-	/*
-	 * They've had their chance. SIGKILL the remaining processes.
-	 */
 	for (i = 1;; ++i) {
 		if (kill(-1, SIGKILL) == -1) {
 			if (errno == ESRCH)
