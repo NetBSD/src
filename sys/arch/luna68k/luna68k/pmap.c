@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $ */
+/* $NetBSD: pmap.c,v 1.2 2000/01/11 08:24:14 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1037,8 +1037,8 @@ pmap_protect(pmap, sva, eva, prot)
 				if (isro && mmutype == MMU_68040) {
 					paddr_t pa = pmap_pte_pa(pte);
 
-					DCFP(pa);
-					ICPP(pa);
+					DCFP_40(pa);
+					ICPP_40(pa);
 				}
 #endif
 				pmap_pte_set_prot(pte, isro);
@@ -1264,8 +1264,8 @@ validate:
 	wired = ((*pte ^ npte) == PG_W);
 #if defined(M68040)
 	if (mmutype == MMU_68040 && !wired) {
-		DCFP(pa);
-		ICPP(pa);
+		DCFP_40(pa);
+		ICPP_40(pa);
 	}
 #endif
 	*pte = npte;
@@ -1445,8 +1445,8 @@ pmap_update()
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_update()\n"));
 
-#if (defined(M68020)||defined(M68040)||defined(M68060))
-	TBIA();
+#if defined(M68040)
+	TBIA_40();
 #endif
 }
 
@@ -1625,7 +1625,7 @@ pmap_zero_page(phys)
 
 	npte = phys | PG_V;
 
-#if defined(M68040) || defined(M68060)
+#if defined(M68040)
 	if (mmutype == MMU_68040) {
 		/*
 		 * Set copyback caching on the page; this is required
@@ -1673,7 +1673,7 @@ pmap_copy_page(src, dst)
 	npte1 = src | PG_RO | PG_V;
 	npte2 = dst | PG_V;
 
-#if defined(M68040) || defined(M68060)
+#if defined(M68040)
 	if (mmutype == MMU_68040) {
 		/*
 		 * Set copyback caching on the pages; this is required
@@ -2160,8 +2160,8 @@ pmap_changebit(pa, set, mask)
 				     (set & PG_CMASK) ||
 				     (mask & PG_CMASK) == 0)) {
 					firstpage = FALSE;
-					DCFP(pa);
-					ICPP(pa);
+					DCFP_40(pa);
+					ICPP_40(pa);
 				}
 #endif
 				*pte = npte;

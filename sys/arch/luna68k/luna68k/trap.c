@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.2 2000/01/07 09:09:35 nisimura Exp $ */
+/* $NetBSD: trap.c,v 1.3 2000/01/11 08:24:14 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.2 2000/01/07 09:09:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.3 2000/01/11 08:24:14 nisimura Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -56,8 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.2 2000/01/07 09:09:35 nisimura Exp $");
 #include <sys/proc.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
+#include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/syscall.h>
+#include <sys/syslog.h>
 #include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -598,6 +600,7 @@ out:
 }
 
 #ifdef M68040
+#include <m68k/cacheops_40.h>
 #ifdef DEBUG
 struct writebackstats {
 	int calls;
@@ -668,7 +671,7 @@ writeback(fp, docachepush)
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
-			DCFL(pa);
+			DCFL_40(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 				    (vaddr_t)&vmmap[NBPG]);
 		} else
