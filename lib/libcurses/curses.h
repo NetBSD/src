@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.35 2000/04/16 01:23:11 thorpej Exp $	*/
+/*	$NetBSD: curses.h,v 1.36 2000/04/16 09:52:49 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -423,6 +423,8 @@ int addbytes(const char *bytes, int count);
 int addch(chtype ch);
 int addnstr(const char *str, int n);
 int addstr(const char *str);
+int bkgd(chtype ch);
+void bkgdset(chtype ch);
 int border(chtype left, chtype right, chtype top, chtype bottom,
 	   chtype topleft, chtype topright, chtype botleft, chtype botright);
 int clear(void);
