@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 1997/06/22 07:43:06 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 1997/10/17 09:35:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  *	@(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.24 1997/10/17 09:35:08 jonathan Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -52,13 +55,13 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 
-#include <mips/locore.h>
-#include <mips/pte.h>
-#include <machine/cpu.h>
-
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <mips/locore.h>
+#include <mips/pte.h>
+#include <machine/cpu.h>
 
 extern struct proc *fpcurproc;			/* trap.c */
 

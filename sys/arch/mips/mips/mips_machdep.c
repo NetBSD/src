@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.20 1997/09/11 23:02:10 mycroft Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.21 1997/10/17 09:35:11 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -13,6 +13,10 @@
  * express or implied warranty.
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.21 1997/10/17 09:35:11 jonathan Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/exec.h>
@@ -23,6 +27,8 @@
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
 #include <sys/user.h>
+
+#include <vm/vm.h>
 
 #include <mips/cpu.h>			/* declaration of of cpu_id */
 #include <mips/regnum.h>			/* symbolic register indices */
