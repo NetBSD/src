@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_acct.c	8.1 (Berkeley) 6/14/93
- *	$Id: kern_acct.c,v 1.26 1994/05/21 09:00:22 mycroft Exp $
+ *	$Id: kern_acct.c,v 1.27 1994/05/24 06:49:14 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -260,7 +260,9 @@ encode_comp_t(s, us)
 
 /*
  * Periodically check the file system to see if accounting
- * should be turned on or off.
+ * should be turned on or off.  Beware the case where the vnode
+ * has been vgone()'d out from underneath us, e.g. when the file
+ * system containing the accounting file has been forcibly unmounted.
  */
 /* ARGSUSED */
 void
@@ -269,14 +271,14 @@ acctwatch(a)
 {
 	struct statfs sb;
 
-	if (savacctp != NULLVP) {
+	if (savacctp != NULLVP && savacctp->v_type != VBAD) {
 		(void)VFS_STATFS(savacctp->v_mount, &sb, (struct proc *)0);
 		if (sb.f_bavail > acctresume * sb.f_blocks / 100) {
 			acctp = savacctp;
 			savacctp = NULLVP;
 			log(LOG_NOTICE, "Accounting resumed\n");
 		}
-	} else if (acctp != NULLVP) {
+	} else if (acctp != NULLVP && acctp->v_type != VBAD) {
 		(void)VFS_STATFS(acctp->v_mount, &sb, (struct proc *)0);
 		if (sb.f_bavail <= acctsuspend * sb.f_blocks / 100) {
 			savacctp = acctp;
