@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.34 2003/08/07 16:29:10 agc Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.35 2003/10/31 03:29:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qvss_compat.c,v 1.34 2003/08/07 16:29:10 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qvss_compat.c,v 1.35 2003/10/31 03:29:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,6 +595,7 @@ genDeconfigMouse()
 	default:
 		printf("Can't deconfigure mouse/keyboard\n");
 	};
+	splx(s);
 }
 
 
