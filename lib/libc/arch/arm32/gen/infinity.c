@@ -1,4 +1,4 @@
-/* $NetBSD: infinity.c,v 1.2 1996/05/12 20:43:54 mark Exp $ */
+/*	$NetBSD: infinity.c,v 1.3 1997/10/06 00:18:35 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
