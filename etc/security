@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.23 1997/06/23 11:59:30 lukem Exp $
+#	$NetBSD: security,v 1.24 1997/06/24 01:16:47 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -399,8 +399,8 @@ if [ "$check_devices" = YES ]; then
 			-o -fstype procfs \) -a -prune -o \
 	    \( \( -perm -u+s -a ! -type d \) -o \
 	       \( -perm -g+s -a ! -type d \) -o \
-	       -type b -o -type c \) -print | \
-	sort | sed -e 's/^/ls -ldgT /' | sh > $LIST) 2> $OUTPUT
+	       -type b -o -type c \) -print0 | \
+	xargs -0 ls -ldgTq | sort +9 > $LIST) 2> $OUTPUT
 
 	# Display any errors that occurred during system file walk.
 	if [ -s $OUTPUT ] ; then
