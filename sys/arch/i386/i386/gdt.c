@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.27 2002/10/08 20:16:09 fvdl Exp $	*/
+/*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.27 2002/10/08 20:16:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,14 +58,8 @@ struct lock gdt_lock_store;
 
 static __inline void gdt_lock __P((void));
 static __inline void gdt_unlock __P((void));
-#if 0
-void gdt_compact __P((void));
-#endif
 void gdt_init __P((void));
 void gdt_grow __P((void));
-#if 0
-void gdt_shrink __P((void));
-#endif
 int gdt_get_slot __P((void));
 void gdt_put_slot __P((int));
 
@@ -226,30 +220,6 @@ gdt_grow()
 	}
 }
 
-#if 0
-void
-gdt_shrink()
-{
-	size_t old_len, new_len;
-	struct vm_page *pg;
-	paddr_t pa;
-	vaddr_t va;
-
-	old_len = gdt_size * sizeof(gdt[0]);
-	gdt_size >>= 1;
-	new_len = old_len >> 1;
-
-	for (va = (vaddr_t)gdt + new_len; va < (vaddr_t)gdt + old_len;
-	    va += PAGE_SIZE) {
-		if (!pmap_extract(pmap_kernel(), va, &pa)) {
-			panic("gdt_shrink botch");
-		}
-		pg = PHYS_TO_VM_PAGE(pa);
-		pmap_kremove(va, PAGE_SIZE);
-		uvm_pagefree(pg);
-	}
-}
-#endif
 /*
  * Allocate a GDT slot as follows:
  * 1) If there are entries on the free list, use those.
@@ -295,23 +265,8 @@ gdt_put_slot(int slot)
 	gdt_count--;
 
 	gdt[slot].gd.gd_type = SDT_SYSNULL;
-#if 0
-	/*
-	 * shrink the GDT if we're using less than 1/4 of it.
-	 * Shrinking at that point means we'll still have room for
-	 * almost 2x as many processes as are now running without
-	 * having to grow the GDT.
-	 */
-	if (gdt_size > MINGDTSIZ && gdt_count <= gdt_size / 4) {
-		gdt_compact();
-		gdt_shrink();
-	} else {
-#endif
-		gdt[slot].gd.gd_selector = gdt_free;
-		gdt_free = slot;
-#if 0
-	}
-#endif
+	gdt[slot].gd.gd_selector = gdt_free;
+	gdt_free = slot;
 
 	gdt_unlock();
 }
