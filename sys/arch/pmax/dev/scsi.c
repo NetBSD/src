@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.10 2000/01/10 03:24:33 simonb Exp $	*/
+/*	$NetBSD: scsi.c,v 1.11 2001/07/07 14:21:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -217,9 +217,9 @@ scsiPrintInquiry(inqbuf, i)
 	else {
 		char vid[9], pid[17], revl[5];
 
-		bcopy((caddr_t)inqbuf->vendorID, (caddr_t)vid, 8);
-		bcopy((caddr_t)inqbuf->productID, (caddr_t)pid, 16);
-		bcopy((caddr_t)inqbuf->revLevel, (caddr_t)revl, 4);
+		memcpy(vid, inqbuf->vendorID, 8);
+		memcpy(pid, inqbuf->productID, 16);
+		memcpy(revl, inqbuf->revLevel, 4);
 		for (i = 8; --i > 0; )
 			if (vid[i] != ' ')
 				break;

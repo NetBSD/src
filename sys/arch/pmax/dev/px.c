@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.34 2000/10/11 17:55:56 mhitch Exp $	*/
+/* 	$NetBSD: px.c,v 1.35 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.34 2000/10/11 17:55:56 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35 2001/07/07 14:21:00 simonb Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -378,9 +378,9 @@ px_init(fi, slotbase, unit, console)
 
 	pxi->pxi_slotbase = TC_PHYS_TO_UNCACHED(slotbase);
 	pxi->pxi_unit = unit;
-	pxi->pxi_stamp = (caddr_t) (pxi->pxi_slotbase + PX_STAMP_OFFSET);
-	pxi->pxi_poll = (int32_t *) (pxi->pxi_slotbase + PX_STIC_POLL_OFFSET);
-	pxi->pxi_stic = (struct stic_regs *) (pxi->pxi_slotbase + PX_STIC_OFFSET);
+	pxi->pxi_stamp = (caddr_t)(pxi->pxi_slotbase + PX_STAMP_OFFSET);
+	pxi->pxi_poll = (int32_t *)(pxi->pxi_slotbase + PX_STIC_POLL_OFFSET);
+	pxi->pxi_stic = (struct stic_regs *)(pxi->pxi_slotbase + PX_STIC_OFFSET);
 	pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG1(bufpa);
 	pxi->pxi_rbuf_phys = bufpa;
 	pxi->pxi_rbuf_size = PXMAP_RBUF_SIZE;
@@ -420,7 +420,7 @@ px_init(fi, slotbase, unit, console)
 	px_bt459_init(pxi);
 
 	/* Clear ringbuffer and then the screen */
-	bzero(pxi->pxi_rbuf, pxi->pxi_rbuf_size);
+	memset(pxi->pxi_rbuf, 0, pxi->pxi_rbuf_size);
 	px_rect(pxi, 0, 0, 1280, 1024, 0);
 
 	/* Connect to rcons if this is the console device */
@@ -518,7 +518,7 @@ px_bt459_init(pxi)
 	BT459_WRITE_REG(vdac, 0xffffff);
 
 	/* Build and load a sane colormap */
-	bzero(pxi->pxi_cmap, sizeof(pxi->pxi_cmap));
+	memset(pxi->pxi_cmap, 0, sizeof(pxi->pxi_cmap));
 	memcpy(pxi->pxi_cmap, px_cmap, 16 * 3);
 	pxi->pxi_cmap[255*3+0] = 0xff;
 	pxi->pxi_cmap[255*3+1] = 0xff;
@@ -730,7 +730,7 @@ px_make_cursor(pxi)
 
 	ip = pxi->pxi_cursor;
 	mp = pxi->pxi_cursor + (sizeof(pxi->pxi_cursor) >> 1);
-	bzero(pxi->pxi_cursor, sizeof(pxi->pxi_cursor));
+	memset(pxi->pxi_cursor, 0, sizeof(pxi->pxi_cursor));
 
 	for (r = 0; r < pxi->pxi_font->fontheight; r++) {
 		for (c = 0; c < pxi->pxi_font->fontwidth; c++) {
@@ -758,7 +758,7 @@ px_conv_cursor(pxi, sip)
 
 	ip = (u_short *)pxi->pxi_cursor;
 	mp = (u_short *)(pxi->pxi_cursor + (sizeof(pxi->pxi_cursor) >> 1));
-	bzero(pxi->pxi_cursor, sizeof(pxi->pxi_cursor));
+	memset(pxi->pxi_cursor, 0, sizeof(pxi->pxi_cursor));
 
 	for (r = 0; r < 16; r++) {
 		*ip = sip[0];
@@ -1938,6 +1938,5 @@ px_mmap_info (p, dev, va)
 	flags = MAP_SHARED | MAP_FILE;
 	*va = round_page((vaddr_t)p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
 	return uvm_mmap(&p->p_vmspace->vm_map, va, size, prot,
-	    VM_PROT_ALL, flags, (caddr_t)&vn, 0,
-	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	    VM_PROT_ALL, flags, &vn, 0, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 }
