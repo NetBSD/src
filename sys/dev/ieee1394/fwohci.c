@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.49 2002/01/12 16:58:16 tsutsui Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.50 2002/01/16 01:47:36 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.49 2002/01/12 16:58:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.50 2002/01/16 01:47:36 eeh Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -944,13 +944,12 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 	int buf2cnt;
 #endif
 
-	fc = malloc(sizeof(*fc) + sizeof(*fb) * bufcnt, M_DEVBUF,
-	    M_WAITOK|M_ZERO);
+	fc = malloc(sizeof(*fc), M_DEVBUF, M_WAITOK|M_ZERO);
 	LIST_INIT(&fc->fc_handler);
 	TAILQ_INIT(&fc->fc_buf);
 	fc->fc_ctx = ctx;
+	fc->fc_buffers = fb = malloc(sizeof(*fb) * bufcnt, M_DEVBUF, M_WAITOK|M_ZERO);
 	fc->fc_bufcnt = bufcnt;
-	fb = (struct fwohci_buf *)&fc[1];
 #if DOUBLEBUF
 	TAILQ_INIT(&fc->fc_buf2); /* for isochronous */
 	if (ctxtype == FWOHCI_CTX_ISO_MULTI) {
@@ -1051,6 +1050,7 @@ fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		fwohci_buf_free(sc, fb);
 	}
 #endif /* DOUBLEBUF */
+	free(fc->fc_buffers, M_DEVBUF);
 	free(fc, M_DEVBUF);
 }
 
@@ -2379,7 +2379,7 @@ fwohci_selfid_init(struct fwohci_softc *sc)
 #ifdef DIAGNOSTIC
 	if ((fb->fb_dmamap->dm_segs[0].ds_addr & 0x7ff) != 0)
 		panic("fwohci_selfid_init: not aligned: %p (%ld) %p",
-		    (caddr_t)fb->fb_dmamap->dm_segs[0].ds_addr,
+		    (caddr_t)(unsigned long)fb->fb_dmamap->dm_segs[0].ds_addr,
 		    (unsigned long)fb->fb_dmamap->dm_segs[0].ds_len, fb->fb_buf);
 #endif
 	memset(fb->fb_buf, 0, fb->fb_dmamap->dm_segs[0].ds_len);
