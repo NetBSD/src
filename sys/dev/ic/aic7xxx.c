@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.40 2000/02/03 06:25:09 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.41 2000/02/12 19:12:53 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -2526,7 +2526,7 @@ ahc_scsi_cmd(xs)
 	u_short	mask;
 	int	s;
 #if defined(__NetBSD__)			/* XXX */
-	int	dontqueue = 0, fromqueue = 0;
+	int	dontqueue = 0, fromqueue = 0, nowait = 0;
 	int	error;
 #endif
 
@@ -2553,6 +2553,7 @@ ahc_scsi_cmd(xs)
 	if (xs == TAILQ_FIRST(&ahc->sc_q)) {
 		TAILQ_REMOVE(&ahc->sc_q, xs, adapter_q);
 		fromqueue = 1;
+		nowait = 1;
 		goto get_scb;
 	}
 
@@ -2591,6 +2592,8 @@ ahc_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->xs_control;
+	if (nowait)
+		flags |= XS_CTL_NOSLEEP;
 	if (!(scb = ahc_get_scb(ahc, flags))) {
 #if defined(__NetBSD__)			/* XXX */
 		/*

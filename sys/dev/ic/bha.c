@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.33 1999/10/09 22:46:20 mycroft Exp $	*/
+/*	$NetBSD: bha.c,v 1.34 2000/02/12 19:12:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -292,7 +292,7 @@ bha_scsi_cmd(xs)
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct bha_ccb *ccb;
 	int error, seg, flags, s;
-	int fromqueue = 0, dontqueue = 0;
+	int fromqueue = 0, dontqueue = 0, nowait = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("bha_scsi_cmd\n"));
 
@@ -305,6 +305,7 @@ bha_scsi_cmd(xs)
 	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
 		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
+		nowait = 1;
 		goto get_ccb;
 	}
 
@@ -341,6 +342,8 @@ bha_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->xs_control;
+	if (nowait)
+		flags |= XS_CTL_NOSLEEP;
 	if ((ccb = bha_get_ccb(sc, flags)) == NULL) {
 		/*
 		 * If we can't queue, we lose.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.17 2000/01/16 14:08:42 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.18 2000/02/12 19:12:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.17 2000/01/16 14:08:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.18 2000/02/12 19:12:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -801,7 +801,7 @@ int
 dpt_scsi_cmd(xs)
 	struct scsipi_xfer *xs;
 {
-	int error, i, flags, s, fromqueue, dontqueue;
+	int error, i, flags, s, fromqueue, dontqueue, nowait;
 	struct scsipi_link *sc_link;
 	struct dpt_softc *sc;
 	struct dpt_ccb *ccb;
@@ -816,6 +816,7 @@ dpt_scsi_cmd(xs)
 	dmat = sc->sc_dmat;
 	fromqueue = 0;
 	dontqueue = 0;
+	nowait = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("dpt_scsi_cmd\n"));
 
@@ -829,6 +830,7 @@ dpt_scsi_cmd(xs)
 	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
 		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
+		nowait = 1;
 	} else {
 		/* Cmds must be no more than 12 bytes for us */
 		if (xs->cmdlen > 12) {
@@ -867,6 +869,8 @@ dpt_scsi_cmd(xs)
 	}
 
 	/* Get a CCB */
+	if (nowait)
+		flags |= XS_CTL_NOSLEEP;
 	if ((ccb = dpt_alloc_ccb(sc, flags)) == NULL) {
 		/* If we can't queue, we lose */
 		if (dontqueue) {
