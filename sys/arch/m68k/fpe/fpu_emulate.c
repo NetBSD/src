@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.13 1996/12/17 19:27:51 gwr Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.14 1996/12/18 05:44:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -88,7 +88,7 @@ fpu_emulate(frame, fpf)
 {
     static struct instruction insn;
     static struct fpemu fe;
-    u_int savedpc;
+    u_int savedpc = 0;	/* XXX work around gcc -O lossage */
     int word, optype, sig;
 
 #ifdef DEBUG
