@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.9.4.4 2003/08/30 12:09:16 jlam Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.9.4.5 2003/09/01 12:14:25 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.9.4.4 2003/08/30 12:09:16 jlam Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.9.4.5 2003/09/01 12:14:25 jlam Exp $");
 #endif
 
 /*
@@ -45,6 +45,16 @@ __RCSID("$NetBSD: pkgdb.c,v 1.9.4.4 2003/08/30 12:09:16 jlam Exp $");
 #include "lib.h"
 
 #define PKGDB_FILE	"pkgdb.byfile.db"	/* indexed by filename */
+
+/*
+ * Where we put logging information by default if PKG_DBDIR is unset.
+ */
+#ifndef DEF_LOG_DIR
+#define DEF_LOG_DIR		"/var/db/pkg"
+#endif
+
+/* just in case we change the environment variable name */
+#define PKG_DBDIR		"PKG_DBDIR"
 
 static DB   *pkgdbp;
 static char *pkgdb_dir = NULL;
