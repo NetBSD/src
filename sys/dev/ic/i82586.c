@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.5 1997/07/29 20:24:47 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.6 1997/08/01 20:04:40 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Paul Kranenburg.
@@ -96,6 +96,16 @@ Mode of operation:
    routines should run at splnet(), and should post an acknowledgement
    to every interrupt they generate.
 
+   To save the expense of shipping a command to 82586 every time we
+   want to send a frame, we use a linked list of commands consisting
+   of alternate XMIT and NOP commands. The links of these elements
+   are manipulated (in iexmit()) such that the NOP command loops back
+   to itself whenever the following XMIT command is not yet ready to
+   go. Whenever an XMIT is ready, the preceding NOP link is pointed
+   at it, while its own link field points to the following NOP command.
+   Thus, a single transmit command sets off an interlocked traversal
+   of the xmit command chain, with the host processor in control of
+   the synchronization.
 */
 
 #include "bpfilter.h"
@@ -165,6 +175,7 @@ static __inline int check_eh __P((struct ie_softc *, struct ether_header *,
 static __inline int ie_buflen __P((struct ie_softc *, int));
 static __inline int ie_packet_len __P((struct ie_softc *));
 static __inline void iexmit __P((struct ie_softc *));
+static void i82586_start_transceiver __P((struct ie_softc *));
 
 static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
 static void iestop __P((struct ie_softc *));
@@ -175,6 +186,8 @@ void print_rbd __P((volatile struct ie_recv_buf_desc *));
 int in_ierint = 0;
 int in_ietint = 0;
 #endif
+
+int i82586_xmitnopchain = 1; /* Controls use of xmit NOP chains */
 
 struct cfdriver ie_cd = {
 	NULL, "ie", DV_IFNET
@@ -235,6 +248,7 @@ ie_ack(sc, mask)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 
+	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
 	command_and_wait(sc, SWAP(scb->ie_status) & mask, 0, 0);
 }
 
@@ -297,13 +311,10 @@ iewatchdog(ifp)
  */
 int
 ieintr(v)
-void *v;
+	void *v;
 {
 	struct ie_softc *sc = v;
-	register u_short status;
-
-	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
-	status = SWAP(sc->scb->ie_status);
+	u_int status;
 
         /*
          * Implementation dependent interrupt handling.
@@ -311,9 +322,17 @@ void *v;
 	if (sc->intrhook)
 		(*sc->intrhook)(sc);
 
+	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
+	status = SWAP(sc->scb->ie_status) & IE_ST_WHENCE;
+
+	if (status == 0) {
+		printf("%s: spurious interrupt; status=0x%x\n",
+			sc->sc_dev.dv_xname, status);
+		return (0);
+	}
 loop:
 	/* Ack interrupts FIRST in case we receive more during the ISR. */
-	ie_ack(sc, IE_ST_WHENCE & status);
+	ie_ack(sc, status);
 
 	if (status & (IE_ST_FR | IE_ST_RNR)) {
 #ifdef IEDEBUG
@@ -340,7 +359,8 @@ loop:
 	}
 
 	if (status & IE_ST_RNR) {
-		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
+		printf("%s: receiver not ready; status=0x%x\n",
+			sc->sc_dev.dv_xname, status);
 		sc->sc_ethercom.ec_if.if_ierrors++;
 		iereset(sc);
 		return (1);
@@ -348,12 +368,12 @@ loop:
 
 #ifdef IEDEBUG
 	if ((status & IE_ST_CNA) && (sc->sc_debug & IED_CNA))
-		printf("%s: cna\n", sc->sc_dev.dv_xname);
+		printf("%s: cna; status=0x%x\n", sc->sc_dev.dv_xname, status);
 #endif
 
 	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
-	status = SWAP(sc->scb->ie_status);
-	if (status & IE_ST_WHENCE)
+	status = SWAP(sc->scb->ie_status) & IE_ST_WHENCE;
+	if (status != 0)
 		goto loop;
 
 	return (1);
@@ -372,6 +392,7 @@ ierint(sc)
 
 	i = sc->rfhead;
 	for (;;) {
+		bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
 		status = SWAP(sc->rframes[i]->ie_fd_status);
 
 		if ((status & IE_FD_COMPLETE) && (status & IE_FD_OK)) {
@@ -390,11 +411,7 @@ ierint(sc)
 		} else {
 			if ((status & IE_FD_RNR) != 0 &&
 			    (SWAP(scb->ie_status) & IE_RU_READY) == 0) {
-				sc->rframes[0]->ie_fd_buf_desc =
-					MK_16(sc->sc_maddr, sc->rbuffs[0]);
-				scb->ie_recv_list =
-					MK_16(sc->sc_maddr, sc->rframes[0]);
-				command_and_wait(sc, IE_RU_START, 0, 0);
+				i82586_start_transceiver(sc);
 			}
 			break;
 		}
@@ -417,10 +434,21 @@ ietint(sc)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+#ifdef IEDEBUG
+	if (sc->xmit_busy <= 0) {
+	    printf("ietint: WEIRD: xmit_busy = %d, xctail = %d, xchead=%d\n",
+		sc->xmit_busy, sc->xctail, sc->xchead);
+		return;
+	}
+#endif
+
 	status = SWAP(sc->xmit_cmds[sc->xctail]->ie_xmit_status);
 
-	if ((status & IE_STAT_COMPL) == 0 || (status & IE_STAT_BUSY))
-		printf("ietint: command still busy!\n");
+	if ((status & IE_STAT_COMPL) == 0 || (status & IE_STAT_BUSY)) {
+		printf("ietint: command still busy; status=0x%x; tail=%d\n",
+			status, sc->xctail);
+		printf("iestatus = 0x%x\n", SWAP(sc->scb->ie_status));
+	}
 
 	if (status & IE_STAT_OK) {
 		ifp->if_opackets++;
@@ -654,37 +682,66 @@ ie_packet_len(sc)
 
 /*
  * Setup all necessary artifacts for an XMIT command, and then pass the XMIT
- * command to the chip to be executed.  On the way, if we have a BPF listener
- * also give him a copy.
+ * command to the chip to be executed.
  */
 static __inline void
 iexmit(sc)
 	struct ie_softc *sc;
 {
+	int cur, prev;
+
+	cur = sc->xctail;
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_XMIT)
-		printf("%s: xmit buffer %d\n", sc->sc_dev.dv_xname,
-			sc->xctail);
+		printf("%s: xmit buffer %d\n", sc->sc_dev.dv_xname, cur);
 #endif
 
-	sc->xmit_buffs[sc->xctail]->ie_xmit_flags |= SWAP(IE_XMIT_LAST);
-	sc->xmit_buffs[sc->xctail]->ie_xmit_next = SWAP(0xffff);
-	ST_24(sc->xmit_buffs[sc->xctail]->ie_xmit_buf,
-	      MK_24(sc->sc_iobase, sc->xmit_cbuffs[sc->xctail]));
+	sc->xmit_buffs[cur]->ie_xmit_flags |= SWAP(IE_XMIT_LAST);
+	sc->xmit_buffs[cur]->ie_xmit_next = SWAP(0xffff);
+	ST_24(sc->xmit_buffs[cur]->ie_xmit_buf,
+	      MK_24(sc->sc_iobase, sc->xmit_cbuffs[cur]));
 
-	sc->xmit_cmds[sc->xctail]->com.ie_cmd_link = SWAP(0xffff);
-	sc->xmit_cmds[sc->xctail]->com.ie_cmd_cmd =
-		SWAP(IE_CMD_XMIT | IE_CMD_INTR | IE_CMD_LAST);
+	sc->xmit_cmds[cur]->ie_xmit_desc =
+		MK_16(sc->sc_maddr, sc->xmit_buffs[cur]);
 
-	sc->xmit_cmds[sc->xctail]->ie_xmit_status = SWAP(0);
-	sc->xmit_cmds[sc->xctail]->ie_xmit_desc =
-		MK_16(sc->sc_maddr, sc->xmit_buffs[sc->xctail]);
+	sc->xmit_cmds[cur]->ie_xmit_status = SWAP(0);
 
-	sc->scb->ie_command_list =
-		MK_16(sc->sc_maddr, sc->xmit_cmds[sc->xctail]);
+	if (i82586_xmitnopchain) {
+		/* Gate this XMIT to following NOP */
+		sc->xmit_cmds[cur]->com.ie_cmd_link =
+			MK_16(sc->sc_maddr, sc->nop_cmds[cur]);
+		sc->xmit_cmds[cur]->com.ie_cmd_cmd =
+			SWAP(IE_CMD_XMIT | IE_CMD_INTR);
 
-	command_and_wait(sc, IE_CU_START, 0, 0);
+		/* Loopback at following NOP */
+		sc->nop_cmds[cur]->ie_cmd_status = SWAP(0);
+		sc->nop_cmds[cur]->ie_cmd_link =
+			MK_16(sc->sc_maddr, sc->nop_cmds[cur]);
+
+		/* Gate preceding NOP to this XMIT command */
+		prev = (cur + NTXBUF - 1) % NTXBUF;
+		sc->nop_cmds[prev]->ie_cmd_status = SWAP(0);
+		sc->nop_cmds[prev]->ie_cmd_link =
+			MK_16(sc->sc_maddr, sc->xmit_cmds[cur]);
+		bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_WRITE);
+		if ((SWAP(sc->scb->ie_status) & IE_CU_ACTIVE) == 0) {
+			printf("iexmit: CU not active\n");
+			i82586_start_transceiver(sc);
+		}
+	} else {
+		sc->xmit_cmds[cur]->com.ie_cmd_link = SWAP(0xffff);
+		sc->xmit_cmds[cur]->com.ie_cmd_cmd =
+			SWAP(IE_CMD_XMIT | IE_CMD_INTR | IE_CMD_LAST);
+
+		sc->scb->ie_command_list =
+			MK_16(sc->sc_maddr, sc->xmit_cmds[cur]);
+
+		bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_WRITE);
+		if (command_and_wait(sc, IE_CU_START, 0, 0))
+			printf("%s: iexmit: start xmit command timed out\n",
+				sc->sc_dev.dv_xname);
+	}
 
 	sc->sc_ethercom.ec_if.if_timer = 5;
 }
@@ -951,6 +1008,7 @@ iestart(ifp)
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;
+	int s;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -995,12 +1053,15 @@ iestart(ifp)
 
 		sc->xmit_buffs[sc->xchead]->ie_xmit_flags = SWAP(len);
 
+		sc->xchead = (sc->xchead + 1) % NTXBUF;
+
+		s = splnet();
 		/* Start the first packet transmitting. */
 		if (sc->xmit_busy == 0)
 			iexmit(sc);
 
-		sc->xchead = (sc->xchead + 1) % NTXBUF;
 		sc->xmit_busy++;
+		splx(s);
 	}
 }
 
@@ -1074,18 +1135,18 @@ iereset(sc)
 	if (command_and_wait(sc, IE_RU_DISABLE | IE_CU_STOP, 0, 0))
 		printf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
 
-
-#if 1
 	if (sc->hwreset)
 		(sc->hwreset)(sc);
-#endif
+
 	ie_ack(sc, IE_ST_WHENCE);
+
 #ifdef notdef
 	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
 		panic("ie disappeared!\n");
 #endif
 
-	ieinit(sc);
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP) != 0)
+		ieinit(sc);
 
 	splx(s);
 }
@@ -1128,9 +1189,11 @@ command_and_wait(sc, cmd, pcmd, mask)
 		 * kernel.)
 		 */
 		for (i = 0; i < 369000; i++) {
-			delay(1);
+			bus_space_barrier(sc->bt, sc->bh, 0, 0,
+					  BUS_SPACE_BARRIER_READ);
 			if ((SWAP(cc->ie_cmd_status) & mask))
 				return (0);
+			delay(1);
 		}
 
 	} else {
@@ -1138,9 +1201,11 @@ command_and_wait(sc, cmd, pcmd, mask)
 		 * Otherwise, just wait for the command to be accepted.
 		 */
 
-		/* XXX spin lock; wait at most 0.1 seconds */
-		for (i = 0; i < 100000; i++) {
-			if (scb->ie_command)
+		/* XXX spin lock; wait at most 0.9 seconds */
+		for (i = 0; i < 900000; i++) {
+			bus_space_barrier(sc->bt, sc->bh, 0, 0,
+					  BUS_SPACE_BARRIER_READ);
+			if (scb->ie_command == 0)
 				return (0);
 			delay(1);
 		}
@@ -1226,7 +1291,8 @@ setup_bufs(sc)
 	(sc->memzero)(ptr, sc->buf_area_sz);
 	ptr = (sc->align)(ptr);	/* set alignment and stick with it */
 
-	n = (int)(sc->align)((caddr_t) sizeof(struct ie_xmit_cmd)) +
+	n = (int)(sc->align)((caddr_t) sizeof(struct ie_cmd_common)) +
+	    (int)(sc->align)((caddr_t) sizeof(struct ie_xmit_cmd)) +
 	    (int)(sc->align)((caddr_t) sizeof(struct ie_xmit_buf)) + IE_TBUF_SIZE;
 	n *= NTXBUF;		/* n = total size of xmit area */
 
@@ -1254,6 +1320,10 @@ setup_bufs(sc)
 	 *  step 1a: lay out and zero frame data structures for transmit and recv
 	 */
 	for (n = 0; n < NTXBUF; n++) {
+		sc->nop_cmds[n] = (volatile struct ie_cmd_common *) ptr;
+		ptr = (sc->align)(ptr + sizeof(struct ie_cmd_common));
+	}
+	for (n = 0; n < NTXBUF; n++) {
 		sc->xmit_cmds[n] = (volatile struct ie_xmit_cmd *) ptr;
 		ptr = (sc->align)(ptr + sizeof(struct ie_xmit_cmd));
 	}
@@ -1271,6 +1341,16 @@ setup_bufs(sc)
 		    MK_16(sc->sc_maddr, sc->rframes[(n + 1) % sc->nframes]);
 	}
 	sc->rframes[sc->nframes - 1]->ie_fd_last |= SWAP(IE_FD_LAST);
+
+	/*
+	 * step 1c: link the xmit no-op frames to themselves
+	 */
+	for (n = 0; n < NTXBUF; n++) {
+		sc->nop_cmds[n]->ie_cmd_status = SWAP(0);
+		sc->nop_cmds[n]->ie_cmd_cmd = SWAP(IE_CMD_NOP);
+		sc->nop_cmds[n]->ie_cmd_link =
+			MK_16(sc->sc_maddr, sc->nop_cmds[n]);
+	}
 
 	/*
 	 * step 2a: lay out and zero frame buffer structures for xmit and recv
@@ -1327,9 +1407,6 @@ setup_bufs(sc)
 	sc->rbhead = 0;
 	sc->rbtail = sc->nrxbuf - 1;
 
-	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
-	sc->rframes[0]->ie_fd_buf_desc = MK_16(sc->sc_maddr, sc->rbuffs[0]);
-
 #ifdef IEDEBUG
 	printf("IE_DEBUG: reserved %d bytes\n", ptr - sc->buf_area);
 #endif
@@ -1351,10 +1428,10 @@ mc_setup(sc, ptr)
 	cmd->com.ie_cmd_link = SWAP(0xffff);
 
 	(sc->memcopy)((caddr_t)sc->mcast_addrs, (caddr_t)cmd->ie_mcast_addrs,
-	    sc->mcast_count * sizeof *sc->mcast_addrs);
+		       sc->mcast_count * sizeof *sc->mcast_addrs);
 
 	cmd->ie_mcast_bytes =
-	  SWAP(sc->mcast_count * ETHER_ADDR_LEN); /* grrr... */
+		SWAP(sc->mcast_count * ETHER_ADDR_LEN); /* grrr... */
 
 	sc->scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
@@ -1363,6 +1440,8 @@ mc_setup(sc, ptr)
 		    sc->sc_dev.dv_xname);
 		return 0;
 	}
+
+	i82586_start_transceiver(sc);
 	return 1;
 }
 
@@ -1442,18 +1521,47 @@ ieinit(sc)
 	 */
 	setup_bufs(sc);
 
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
-
-	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
-	command_and_wait(sc, IE_RU_START, 0, 0);
-
 	ie_ack(sc, IE_ST_WHENCE);
 
 	if (sc->hwinit)
 		(sc->hwinit)(sc);
 
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	if (NTXBUF < 2)
+		i82586_xmitnopchain = 0;
+
+	i82586_start_transceiver(sc);
+
 	return 0;
+}
+
+static void
+i82586_start_transceiver(sc)
+	struct ie_softc *sc;
+{
+	sc->rframes[0]->ie_fd_buf_desc = MK_16(sc->sc_maddr, sc->rbuffs[0]);
+	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
+
+	if (i82586_xmitnopchain) {
+		/* Stop transmit command chain */
+		if (command_and_wait(sc, IE_CU_STOP|IE_RU_DISABLE, 0, 0))
+			printf("%s: CU/RU stop command timed out\n",
+				sc->sc_dev.dv_xname);
+
+		/* Start the receiver & transmitter chain */
+		sc->scb->ie_command_list =
+			MK_16(sc->sc_maddr,
+			      sc->nop_cmds[(sc->xctail + NTXBUF - 1) % NTXBUF]);
+		if (command_and_wait(sc, IE_CU_START|IE_RU_START, 0, 0))
+			printf("%s: CU/RU command timed out\n",
+				sc->sc_dev.dv_xname);
+	} else {
+		if (command_and_wait(sc, IE_RU_START, 0, 0))
+			printf("%s: RU command timed out\n",
+				sc->sc_dev.dv_xname);
+	}
 }
 
 static void
@@ -1461,7 +1569,8 @@ iestop(sc)
 	struct ie_softc *sc;
 {
 
-	command_and_wait(sc, IE_RU_DISABLE, 0, 0);
+	if (command_and_wait(sc, IE_RU_DISABLE | IE_CU_STOP, 0, 0))
+		printf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
 }
 
 int
