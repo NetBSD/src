@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.25 2002/01/06 23:19:18 tron Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.26 2002/01/07 10:43:43 tron Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.25 2002/01/06 23:19:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.26 2002/01/07 10:43:43 tron Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.25 2002/01/06 23:19:18 tron Exp $");
 
 #define FIFO_RISC_DISABLED      0
 #define ALL_INTS_DISABLED       0
-
 
 /*******************/
 /* *** FreeBSD *** */
@@ -139,10 +138,6 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 /**************************/
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 
-#ifdef __NetBSD__
-#include "radio.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -153,9 +148,6 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/vnode.h>
-#if defined(__NetBSD__) && (NRADIO > 0)
-#include <sys/radioio.h>
-#endif
 
 #ifndef __NetBSD__
 #include <vm/vm.h>
@@ -168,9 +160,6 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-#if defined(__NetBSD__) && (NRADIO > 0)
-#include <dev/radio_if.h>
-#endif
 
 #define BKTR_DEBUG
 #ifdef BKTR_DEBUG
@@ -204,7 +193,16 @@ int bktr_debug = 0;
 #endif
 #endif
 
-
+/* Support for radio(4) under NetBSD */
+#ifdef __NetBSD__
+#include "radio.h"
+#if NRADIO > 0
+#include <sys/radioio.h>
+#include <dev/radio_if.h>
+#endif
+#else
+#define	NRADIO	0
+#endif
 
 /****************************/
 /* *** FreeBSD 4.x code *** */
@@ -1332,7 +1330,7 @@ struct cfdriver bktr_cd = {
 #endif
 
 
-#if defined(__NetBSD__) && (NRADIO > 0)
+#if NRADIO > 0
 /* for radio(4) */
 int	bktr_get_info(void *, struct radio_info *);
 int	bktr_set_info(void *, struct radio_info *);
@@ -1528,7 +1526,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 
 	common_bktr_attach(bktr, unit, fun, rev);
 
-#if defined(__NetBSD__) && (NRADIO > 0)
+#if NRADIO > 0
 	/* attach to radio(4) */
 	radio_attach_mi(&bktr_hw_if, bktr, &bktr->bktr_dev);
 #endif
@@ -1788,7 +1786,7 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 #endif
 }
 
-#if defined(__NetBSD__) && (NRADIO > 0)
+#if NRADIO > 0
 int
 bktr_set_info(void *v, struct radio_info *ri)
 {
