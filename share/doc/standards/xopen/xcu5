@@ -1,4 +1,4 @@
-.\" $NetBSD: xcu5,v 1.1.1.1 1999/06/01 02:36:07 jwise Exp $
+.\" $NetBSD: xcu5,v 1.2 1999/06/01 04:42:13 jwise Exp $
 .de xopen
 .Tn X/Open
 ..
@@ -246,5 +246,463 @@ or
 .
 .\" ---- cd ----
 .Ss cd - change the working directory
+.unfinished
+.
+.\" ---- cflow ----
+.Ss cflow - generate a C-language flowgraph (DEVELOPMENT)
+.unfinished
+.
+.\" ---- chgrp ----
+.Ss chgrp - change the file group ownership
+.unfinished
+.
+.\" ---- chmod ----
+.Ss chmod - change the file modes
+.unfinished
+.
+.\" ---- chown ----
+.Ss chown - change the file ownership
+.unfinished
+.
+.\" ---- cksum ----
+.Ss cksum - write file checksums and sizes
+.unfinished
+.
+.\" ---- cmp ----
+.Ss cmp - compare two files
+.unfinished
+.
+.\" ---- col ----
+.Ss col - filter reverse line-feeds (LEGACY)
+.unfinished
+.
+.\" ---- comm ----
+.Ss comm - select or reject lines common to two files
+.unfinished
+.
+.\" ---- command ----
+.Ss command - execute a simple command
+.unfinished
+.
+.\" ---- compress ----
+.Ss compress - compress data
+.unfinished
+.
+.\" ---- cp ----
+.Ss cp - copy files
+.unfinished
+.
+.\" ---- cpio ----
+.Ss cpio - copy file archives in and out (LEGACY)
+.unfinished
+.
+.\" ---- crontab ----
+.Ss crontab - schedule periodic background work
+.unfinished
+.
+.\" ---- csplit ----
+.Ss csplit - split files based on context
+.unfinished
+.
+.\" ---- ctags ----
+.Ss ctags - create a tags file (DEVELOPMENT, FORTRAN)
+.unfinished
+.
+.\" ---- cu ----
+.Ss cu - call another system (LEGACY)
+.unfinished
+.
+.\" ---- cut ----
+.Ss cut - cut out selected fields of each line of a file
+.unfinished
+.
+.\" ---- cxref ----
+.Ss cxref - generate a C-language program cross-reference table (DEVELOPMENT)
+.unfinished
+.
+.\" ---- date ----
+.Ss date - write the date and time
+.unfinished
+.
+.\" ---- dd ----
+.Ss dd - convert and copy a file
+.unfinished
+.
+.\" ---- delta ----
+.Ss delta - make a delta (change) to an SCCS file (DEVELOPMENT)
+.unfinished
+.
+.\" ---- df ----
+.Ss df - report free disk space
+.unfinished
+.
+.\" ---- diff ----
+.Ss diff - compare two files
+.unfinished
+.
+.\" ---- dircmp ----
+.Ss dircmp - directory comparison (LEGACY)
+.unfinished
+.
+.\" ---- dirname ----
+.Ss dirname - return the directory portion of pathname
+.unfinished
+.
+.\" ---- dis ----
+.Ss dis - disassembler (DEVELOPMENT, LEGACY)
+.unfinished
+.
+.\" ---- du ----
+.\" please note that corrigendum U025/3 removed the LEGACY designation from du
+.Ss du - estimate file space usage
+.unfinished
+.
+.\" ---- echo ----
+.Ss echo - write arguments to standard output
+.unfinished
+.
+.\" ---- ed ----
+.\" ed is the standard unix text editor!  ed is the way, the truth, and the light!
+.Ss ed - edit text
+.unfinished
+.
+.\" ---- egrep ----
+.Ss egrep - search a file with an ERE pattern (LEGACY)
+.unfinished
+.
+.\" ---- env ----
+.Ss env - set the environment for command invocation
+.unfinished
+.
+.\" ---- ex ----
+.Ss ex - text editor
+.unfinished
+.
+.\" ---- expand ----
+.Ss expand - convert tabs to spaces
+.unfinished
+.
+.\" ---- expr ----
+.Ss expr - evaluate arguments as an expression
+.unfinished
+.
+.\" ---- false ----
+.Ss false - return false value
+.unfinished
+.
+.\" ---- fc ----
+.Ss fc - process the command history list 
+.unfinished
+.
+.\" ---- fg ----
+.Ss fg - run jobs in the foreground
+.unfinished
+.
+.\" ---- fgrep ----
+.Ss fgrep - search a file for a fixed-string pattern (LEGACY)
+.unfinished
+.
+.\" ---- file ----
+.Ss file - determine file type
+.unfinished
+.
+.\" ---- find ----
+.Ss find - find files
+.unfinished
+.
+.\" ---- fold ----
+.Ss fold - filter for folding lines
+.unfinished
+.
+.\" ---- fort77 ----
+.Ss fort77 - FORTRAN compiler (FORTRAN)
+.unfinished
+.
+.\" ---- fuser ----
+.Ss fuser - list process IDs of all processes that have one or more files open
+.unfinished
+.
+.\" ---- gencat ----
+.Ss gencat - generate a formatted message catalogue
+.unfinished
+.
+.\" ---- get ----
+.Ss get - get a version of an SCCS file (DEVELOPMENT)
+.unfinished
+.
+.\" ---- getconf ----
+.Ss getconf - get configuration values
+.unfinished
+.
+.\" ---- getopts ----
+.Ss getopts - parse utility options
+.unfinished
+.
+.\" ---- grep ----
+.Ss grep - search a file for a pattern
+.unfinished
+.
+.\" ---- hash ----
+.Ss hash - remember or report utility locations
+.unfinished
+.
+.\" ---- head ----
+.Ss head - copy the first part of files
+.unfinished
+.
+.\" ---- iconv ----
+.Ss iconv - codeset conversion
+.unfinished
+.
+.\" ---- id ----
+.Ss id - return user identity
+.unfinished
+.
+.\" ---- ipcrm ----
+.Ss ipcrm - remove a message queue, semaphore set or shared memory segment identifier
+.unfinished
+.
+.\" ---- ipcs ----
+.Ss ipcs - report inter-process communication facilities status
+.unfinished
+.
+.\" ---- jobs ----
+.Ss jobs - display status of jobs in the current session
+.unfinished
+.
+.\" ---- join ----
+.Ss join - relational database operator
+.unfinished
+.
+.\" ---- kill ----
+.Ss kill - terminate or signal processes
+.unfinished
+.
+.\" ---- lex ----
+.Ss lex - generate programs for lexical tasks (DEVELOPMENT)
+.unfinished
+.
+.\" ---- line ----
+.Ss line - read one line (LEGACY)
+.unfinished
+.
+.\" ---- link ----
+.Ss link - call the link() function
+.unfinished
+.
+.\" ---- lint ----
+.Ss lint - check C-language programs (DEVELOPMENT, LEGACY)
+.unfinished
+.
+.\" ---- ln ----
+.Ss ln - link files
+.unfinished
+.
+.\" ---- locale ----
+.Ss locale - get locale-specific information
+.unfinished
+.
+.\" ---- localedef ----
+.Ss localedef - define locale environment
+.unfinished
+.
+.\" ---- logger ----
+.Ss logger - log messages
+.unfinished
+.
+.\" ---- logname ----
+.Ss logname - return the user's login name
+.unfinished
+.
+.\" ---- lp ----
+.Ss lp - send files to a printer
+.unfinished
+.
+.\" ---- lpstat ----
+.Ss lpstat - report printer status information (LEGACY)
+.unfinished
+.
+.\" ---- ls ----
+.Ss ls - list directory contents
+.unfinished
+.
+.\" ---- m4 ----
+.Ss m4 - macro processor (DEVELOPMENT)
+.unfinished
+.
+.\" ---- mail ----
+.Ss mail - send or read mail (LEGACY)
+.unfinished
+.
+.\" ---- mailx ----
+.Ss mailx - process messages
+.unfinished
+.
+.\" ---- make ----
+.Ss make - maintain, update and regenerate groups of programs (DEVELOPMENT)
+.unfinished
+.
+.\" ---- man ----
+.Ss man - display system documentation
+.unfinished
+.
+.\" ---- mesg ----
+.Ss mesg - permit or deny messages
+.unfinished
+.
+.\" ---- mkdir ----
+.Ss mkdir - make directories
+.unfinished
+.
+.\" ---- mkfifo ----
+.Ss mkfifo - make FIFO special files
+.unfinished
+.
+.\" ---- more ----
+.Ss more - display files on a page-by-page basis
+.unfinished
+.
+.\" ---- mv ----
+.Ss mv - move files
+.unfinished
+.
+.\" ---- newgrp ----
+.Ss newgrp - change to a new group
+.unfinished
+.
+.\" ---- nice ----
+.Ss nice - invoke a utility with an altered system scheduling priority
+.unfinished
+.
+.\" ---- nl ----
+.Ss nl - line numbering filter
+.unfinished
+.
+.\" ---- nm ----
+.Ss nm - write the name list of an object file (DEVELOPMENT)
+.unfinished
+.
+.\" ---- nohup ----
+.Ss nohup - invoke a utility immune to hangups
+.unfinished
+.
+.\" ---- od ----
+.Ss od - dump files in various formats
+.unfinished
+.
+.\" ---- pack ----
+.Ss pack - compress files (LEGACY)
+.unfinished
+.
+.\" ---- paste ----
+.Ss paste - merge corresponding or subsequent lines of files
+.unfinished
+.
+.\" ---- patch ----
+.Ss patch - apply changes to files
+.unfinished
+.
+.\" ---- pathchk ----
+.Ss pathchk - check pathname
+.unfinished
+.
+.\" ---- pax ----
+.Ss pax - portable archive interchange
+.unfinished
+.
+.\" ---- pcat ----
+.Ss pcat - expand and concatenate files (LEGACY)
+.unfinished
+.
+.\" ---- pg ----
+.Ss pg - file perusal filter for soft-copy terminals (LEGACY)
+.unfinished
+.
+.\" ---- pr ----
+.Ss pr - print files
+.unfinished
+.
+.\" ---- printf ----
+.Ss printf - write formatted output
+.unfinished
+.
+.\" ---- prs ----
+.Ss prs - print an SCCS file (DEVELOPMENT)
+.unfinished
+.
+.\" ---- ps ----
+.Ss ps - report process status
+.unfinished
+.
+.\" ---- pwd ----
+.Ss pwd - return working directory name
+.unfinished
+.
+.\" ---- read ----
+.Ss read - read a line from standard input
+.unfinished
+.
+.\" ---- renice ----
+.Ss renice - set system scheduling priorities of running processes
+.unfinished
+.
+.\" ---- rm ----
+.Ss rm - remove directory entries
+.unfinished
+.
+.\" ---- rmdel ----
+.Ss rmdel - remove a delta from an SCCS file (DEVELOPMENT)
+.unfinished
+.
+.\" ---- rmdir ----
+.Ss rmdir - remove directories
+.unfinished
+.
+.\" ---- sact ----
+.Ss sact - print current SCCS file-editing activity (DEVELOPMENT)
+.unfinished
+.
+.\" ---- sccs ----
+.Ss sccs - front end for the SCCS subsystem (DEVELOPMENT)
+.unfinished
+.
+.\" ---- sed ----
+.Ss sed - stream editor
+.unfinished
+.
+.\" ---- sh ----
+.Ss sh - shell, the standard command language interpreter
+.unfinished
+.
+.\" ---- sleep ----
+.Ss sleep - suspend execution for an interval
+.unfinished
+.
+.\" ---- sort ----
+.Ss sort - sort, merge or sequence check text files
+.unfinished
+.
+.\" ---- spell ----
+.Ss spell - find spelling errors (LEGACY) 
+.unfinished
+.
+.\" ---- split ----
+.Ss split - split files into pieces
+.unfinished
+.
+.\" ---- strings ----
+.Ss strings - find printable strings in files
+.unfinished
+.
+.\" ---- strip ----
+.Ss strip - remove unnecessary information from executable files (DEVELOPMENT)
+.unfinished
+.
+.\" ---- stty ----
+.Ss stty - set the options for a terminal
+.unfinished
+.
+.\" ---- sum ----
+.Ss sum - print checksum and block count of a file (LEGACY)
 .unfinished
 .
