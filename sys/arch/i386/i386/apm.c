@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.79 2003/06/29 22:28:23 fvdl Exp $ */
+/*	$NetBSD: apm.c,v 1.80 2003/09/13 11:12:06 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.79 2003/06/29 22:28:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.80 2003/09/13 11:12:06 simonb Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -958,13 +958,11 @@ apm_set_ver(self)
 	struct apm_softc *self;
 {
 	struct bioscallregs regs;
-	int error;
 
 	regs.CX = 0x0102;	/* APM Version 1.2 */
 	regs.BX = APM_DEV_APM_BIOS;
 	
-	if (apm_v12_enabled &&
-	    (error = apmcall(APM_DRIVER_VERSION, &regs)) == 0) {
+	if (apm_v12_enabled && apmcall(APM_DRIVER_VERSION, &regs) == 0) {
 		apm_majver = 1;
 		apm_minver = 2;
 		goto ok;
@@ -973,8 +971,7 @@ apm_set_ver(self)
 	regs.CX = 0x0101;	/* APM Version 1.1 */
 	regs.BX = APM_DEV_APM_BIOS;
 	
-	if (apm_v11_enabled &&
-	    (error = apmcall(APM_DRIVER_VERSION, &regs)) == 0) {
+	if (apm_v11_enabled && apmcall(APM_DRIVER_VERSION, &regs) == 0) {
 		apm_majver = 1;
 		apm_minver = 1;
 	} else {
