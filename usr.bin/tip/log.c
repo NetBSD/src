@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.5 1997/11/22 07:28:44 lukem Exp $	*/
+/*	$NetBSD: log.c,v 1.6 1997/11/22 08:29:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: log.c,v 1.5 1997/11/22 07:28:44 lukem Exp $");
+__RCSID("$NetBSD: log.c,v 1.6 1997/11/22 08:29:59 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -87,8 +87,13 @@ logent(group, num, acu, message)
 void
 loginit()
 {
-	flog = fopen(value(LOG), "a");
+	char *logfile;
+
+	logfile = value(LOG);
+	if (logfile[0] == '\0')			/* sanity check */
+		return;
+	flog = fopen(logfile, "a");
 	if (flog == NULL)
-		fprintf(stderr, "can't open log file %s.\r\n", value(LOG));
+		fprintf(stderr, "can't open log file %s.\r\n", logfile);
 }
 #endif

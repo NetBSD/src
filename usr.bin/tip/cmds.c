@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.8 1997/11/22 07:28:41 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.9 1997/11/22 08:29:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.8 1997/11/22 07:28:41 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.9 1997/11/22 08:29:58 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -628,7 +628,7 @@ setscript()
 	 * enable TIPOUT side for dialogue
 	 */
 	kill(pid, SIGEMT);
-	if (boolean(value(SCRIPT)))
+	if (boolean(value(SCRIPT)) && strlen(value(RECORD)))
 		write(fildes[1], value(RECORD), strlen(value(RECORD)));
 	write(fildes[1], "\n", 1);
 	/*
@@ -682,7 +682,8 @@ finish(dummy)
 {
 	char *dismsg;
 
-	if ((dismsg = value(DISCONNECT)) != NULL) {
+	dismsg = value(DISCONNECT);
+	if (dismsg != NULL && dismsg[0] != '\0') {
 		write(FD, dismsg, strlen(dismsg));
 		sleep(5);
 	}

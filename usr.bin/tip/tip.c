@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.15 1997/11/22 07:28:47 lukem Exp $	*/
+/*	$NetBSD: tip.c,v 1.16 1997/11/22 08:30:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.15 1997/11/22 07:28:47 lukem Exp $");
+__RCSID("$NetBSD: tip.c,v 1.16 1997/11/22 08:30:01 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -101,7 +101,6 @@ main(argc, argv)
 		exit(1);
 	}
 
-/* XXX: use getopt */
 	for (; argc > 1; argv++, argc--) {
 		if (argv[1][0] != '-')
 			system = argv[1];
@@ -385,7 +384,8 @@ tipin()
 		if ((gch == character(value(ESCAPE))) && bol) {
 			if (!(gch = escape()))
 				continue;
-		} else if (!cumode && gch == character(value(RAISECHAR))) {
+		} else if (!cumode && 
+		    gch && gch == character(value(RAISECHAR))) {
 			setboolean(value(RAISE), !boolean(value(RAISE)));
 			continue;
 		} else if (gch == '\r') {
@@ -394,7 +394,7 @@ tipin()
 			if (boolean(value(HALFDUPLEX)))
 				printf("\r\n");
 			continue;
-		} else if (!cumode && gch == character(value(FORCE)))
+		} else if (!cumode && gch && gch == character(value(FORCE)))
 			gch = getchar()&STRIP_PAR;
 		bol = any(gch, value(EOL));
 		if (boolean(value(RAISE)) && islower(gch))
@@ -581,7 +581,7 @@ setparity(defparity)
 	int i, flip, clr, set;
 	char *parity;
 
-	if (value(PARITY) == NULL)
+	if (value(PARITY) == NULL || (value(PARITY))[0] == '\0')
 		value(PARITY) = defparity;
 	parity = value(PARITY);
 	if (equal(parity, "none")) {
