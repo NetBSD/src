@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.24 1995/06/27 00:12:21 gwr Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.25 1995/07/13 13:19:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -584,7 +584,7 @@ union_access(ap)
 		VOP_LOCK(vp);
 		error = VOP_ACCESS(vp, ap->a_mode, ap->a_cred, ap->a_p);
 		if (error == 0) {
-			struct union_mount *um = MOUNTTOUNIONMOUNT(vp->v_mount);
+			struct union_mount *um = MOUNTTOUNIONMOUNT(ap->a_vp->v_mount);
 
 			if (um->um_op == UNMNT_BELOW)
 				error = VOP_ACCESS(vp, ap->a_mode,
@@ -1164,7 +1164,7 @@ union_rmdir(ap)
 
 		if (union_dowhiteout(un, cnp->cn_cred, cnp->cn_proc))
 			cnp->cn_flags |= DOWHITEOUT;
-		error = VOP_RMDIR(dvp, vp, ap->a_cnp);
+		error = VOP_RMDIR(dvp, vp, cnp);
 		if (!error)
 			union_removed_upper(un);
 	} else {
