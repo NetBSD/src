@@ -1,4 +1,4 @@
-#define SWDEBUG
+#undef SWDEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vm_machdep.c,v 1.2 1994/08/16 23:47:39 ragge Exp $
+ *	$Id: vm_machdep.c,v 1.3 1994/10/08 15:48:20 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -37,6 +37,8 @@
 
 #include "sys/types.h"
 #include "vm/vm.h"
+#include "vm/vm_kern.h"
+#include "vm/vm_page.h"
 #include "vax/include/vmparam.h"
 #include "vax/include/mtpr.h"
 #include "vax/include/pmap.h"
@@ -47,7 +49,6 @@
 #include "sys/exec.h"
 #include "sys/vnode.h"
 
-extern int startpmapdebug;
 volatile int whichqs;
 
 pagemove(from, to, size)
@@ -71,7 +72,7 @@ pagemove(from, to, size)
 
 
 #define VIRT2PHYS(x) \
-	(((*(int *)((((((int)x)&0x7fffffff)>>9)*4)+0x87f00000))&0x1fffff)<<9)
+	(((*(int *)((((((int)x)&0x7fffffff)>>9)*4)+(unsigned int)Sysmap))&0x1fffff)<<9)
 
 volatile unsigned int ustat,uofset;
 
@@ -81,6 +82,7 @@ cpu_fork(p1, p2)
 	unsigned int *i,ksp,uorig,uchld;
 	struct pcb *nyproc;
 	struct pte *ptep;
+	extern int sigsida;
 
 	uorig=(unsigned int)p1->p_addr;
 	nyproc=uchld=(unsigned int)p2->p_addr;
@@ -94,40 +96,46 @@ cpu_fork(p1, p2)
 	ksp=mfpr(PR_KSP);
 #define	UAREA	(NBPG*UPAGES)
 #define	size	(uorig+UAREA-ksp)
-#ifdef SWDEBUG
+#if 0
 printf("cpu_fork: uorig %x, uchld %x, UAREA %x\n",uorig, uchld, UAREA);
 printf("cpu_fork: ksp: %x, usp: %x, size: %x\n",ksp,(uchld+UAREA-size),size);
 printf("cpu_fork: pid %d, namn %s\n",p1->p_pid,p1->p_comm);
 #endif
 	bcopy(ksp,(uchld+UAREA-size),size);
 	ustat=(uchld+UAREA-size)-8; /* Kompensera f|r PC + PSL */
-	mtpr(uchld,PR_ESP);
 /*
  * Ett VIDRIGT karpen-s{tt att s{tta om s} att sp f}r r{tt adress...
  */
 
-	for(i=ustat;i<uchld+UAREA;i++){
-/*		printf("Upp-i %x\n",i); */
-		if(*i<(uorig+UAREA)&& *i>ksp){
-/*			printf("Hittat int: %x\n",*i);  */
+	for(i=ustat;i<uchld+UAREA;i++)
+		if(*i<(uorig+UAREA)&& *i>ksp)
 			*i = *i+(uchld-uorig);
-		}
-	}
+		
+	
 /*
  * Det som nu skall g|ras {r:
  *	1: synka stackarna
  *	2: l{gga r{tt v{rde f|r R0 i nya PCB.
  */
 
-/* Set up page registers */
+
+
+/* Set up page table registers, map sigreturn page into user space */
 	ptep=p2->p_vmspace->vm_pmap.pm_ptab;
-printf("cpu_fork: ptep: %x\n",ptep);
+
+/*	*(int *)((int)ptep+USRPTSIZE*4-4)=(0xa0000000|(sigsida>>9)); */
+
         nyproc->P0BR=ptep;
-	nyproc->P0LR=(((MAXTSIZ+MAXDSIZ)>>PG_SHIFT)<<2);
-	nyproc->P1BR=(((int)ptep+VAX_MAX_PT_SIZE)-0x800000);
-	nyproc->P1LR=(0x200000-((MAXSSIZ>>PG_SHIFT)<<2));
+	nyproc->P0LR=(((MAXTSIZ+MAXDSIZ)>>PG_SHIFT));
+	nyproc->P1BR=(((int)ptep+USRPTSIZE*4)-0x800000);
+	nyproc->P1LR=(0x200000-((MAXSSIZ>>PG_SHIFT)));
+/*
+printf("P0BR %x, P1BR %x, P1BR+0x800000 %x\n",ptep,((int)ptep+USRPTSIZE*4),
+		(((int)ptep+USRPTSIZE*4)-0x800000));
+*/
 	mtpr(VIRT2PHYS(uchld),PR_PCBB);
-/* printf("cpu_fork: physaddr %x\n",VIRT2PHYS(uchld)); */
+	mtpr(uchld,PR_ESP); /* Kan ev. faulta ibland XXX */
+
         asm("movpsl  -(sp)");
         asm("jsb _savectx");
 	asm("movl r0,_ustat");
@@ -145,39 +153,67 @@ printf("cpu_fork: ptep: %x\n",ptep);
 }
 
 void 
-setrunqueue(struct proc *p){
-	struct proc *a1;
+setrunqueue(p)
+	struct proc *p;
+{
+	struct proc *q;
 	int knummer;
 
-/*	printf("processp: %x\n",p); */
-	if(p->p_back) panic("sket sig i setrunqueue\n");
-/*	printf("p->p_priority: %x\n",p->p_priority); */
+/*	printf("setrunqueue: pid %x, whichqs %x, qs %x, p_pri %x\n",
+		p->p_pid,whichqs,qs,p->p_priority); */
+	if(p->p_back) 
+		panic("sket sig i setrunqueue\n");
 	knummer=(p->p_priority>>2);
 	whichqs |= (1<<knummer);
-	a1=(knummer<<1)+(int *)qs;
-#ifdef SWDEBUG
-/*	printf("setrunqueue: qs %x, a1 %x, knummer %x, whichqs %x\n",qs,a1,knummer,whichqs); */
-#endif
-	p->p_forw=a1;
-	p->p_back=a1->p_back;
-	a1->p_back=p;
-        p->p_back->p_forw=p;
+	q=(knummer<<1)+(int *)qs;
+
+	p->p_back=q->p_back;
+	p->p_forw=q;
+        q->p_back->p_forw=p;
+	q->p_back=p;
+
 	return;
+}
+
+void
+remrq(p)
+	struct proc *p;
+{
+        struct proc *a1;
+        int d0,d1;
+
+/* printf("remrq: pid %d, whichqs %x, qs %x, p_pri %x\n",
+	p->p_pid, whichqs, qs, p->p_priority); */
+/* Calculate queue */
+        d0=(1<<(p->p_priority>>2));
+	d1=whichqs;
+	if(!(d1&d0))
+		panic("remrq: Process not in queue\n");
+	d1&= ~d0;
+	whichqs=d1;
+
+/* Remove from queue */
+	p->p_forw->p_back=p->p_back;
+	p->p_back->p_forw=p->p_forw;
+	p->p_back=NULL;
+
+
+/* Calculate queue address */
+	a1=((p->p_priority>>2)<<1)+(int *)qs;
+	if(a1->p_forw!=a1)
+		whichqs|=d0; /* Set queue flag again */
 }
 
 volatile caddr_t curpcb,nypcb;
 
-swtch(){
+cpu_switch(){
 	int i,j,s;
-	struct proc *cp,*cq, *cr;
-	extern int want_resched;
+	struct proc *p,*q;
+	extern unsigned int want_resched,scratch;
 
 hej:	s=splhigh();
 	/* F|rst: Hitta en k|. */
 	j=whichqs;
-#ifdef SWDEBUG
-/*	printf("swtch: whichqs %x\n",whichqs); */
-#endif
 	for(i=0;j;i++){
 		if(j&1) goto found;
 		j=j>>1;
@@ -185,34 +221,37 @@ hej:	s=splhigh();
 	goto idle;
 
 found:
-/*	printf("resched\n"); */
-	j=1<<i;
-	whichqs &= (!j);
-/*	printf("i %x, j %x, whichqs %x\n",i,j,whichqs); */
-	cq=qs+i;
-	if(cq->p_forw==cq) panic("Process inte i processk|n...");
-	cp=cq->p_forw;
-	cq->p_forw = cp->p_forw;
-	cr=cp->p_forw;
-	cr->p_back=cp->p_back;
-	if(!(cp->p_forw==cq)) whichqs |= j;
+	asm(".data;savpsl:	.long	0;.text;movpsl savpsl");
 	splhigh();
-	curpcb=VIRT2PHYS(curproc->p_addr);
-	nypcb=VIRT2PHYS(&cp->p_addr->u_pcb);
-if(startpmapdebug)
+	j=1<<i;
+	whichqs &= ~j;
+	q=qs+i;
+	if(q->p_forw==q) 
+		panic("swtch: no process queued");
+
+	p=q->p_forw;
+        p->p_forw->p_back=p->p_back;
+        p->p_back->p_forw=p->p_forw;
+        p->p_back=NULL;
+
+
+	if(q->p_forw!=q) whichqs |= j;
+	if(curproc) curpcb=VIRT2PHYS(&curproc->p_addr->u_pcb);
+	else curpcb=scratch;
+	nypcb=VIRT2PHYS(&p->p_addr->u_pcb);
+#if 0
 if(curpcb!=nypcb){
 	printf("swtch: pcb %x, pid %x, namn %s  -> ", curproc->p_addr,
 		curproc->p_pid,curproc->p_comm);
 	printf(" pcb %x, pid %x, namn %s\n", cp->p_addr,
 		cp->p_pid,cp->p_comm);
 }
-
+#endif
 	want_resched=0;
-	curproc=cp;
-	cp->p_back=0;
+	curproc=p;
 	if(curpcb==nypcb) return;
 
-	asm("movpsl  -(sp)");
+	asm("pushl savpsl");
 	asm("jsb _loswtch");
 
 	return; /* New process! */
@@ -222,14 +261,14 @@ idle:
 	while(!whichqs);
 	goto hej;
 }
-
+int startstr=0;
 /* Should check that values is in bounds XXX */
 copyinstr(from, to, maxlen, lencopied)
 char *from, *to;
 int *lencopied;
 {
 	int i;
-
+if(startstr)printf("copyinstr: from %x, to %x, maxlen %d, lencopied %x\n",from, to, maxlen,lencopied);
 	for(i=0;i<maxlen;i++){
 		*(to+i)=*(from+i);
 		if(!(*(to+i))) goto ok;
@@ -237,7 +276,7 @@ int *lencopied;
 
 	return(ENAMETOOLONG);
 ok:
-	*lencopied=i+1;
+	if(lencopied) *lencopied=i+1;
 	return(0);
 }
 
@@ -247,10 +286,7 @@ char *from, *to;
 int *lencopied;
 {
         int i;
-
-#ifdef SWDEBUG
-printf("copyoutstr: from %x, to %x, maxlen %x\n",from, to, maxlen);
-#endif
+if(startstr)printf("copyoutstr: from %x, to %x, maxlen %d\n",from, to, maxlen);
 	for(i=0;i<maxlen;i++){
 		*(to+i)=*(from+i);
 		if(!(*(to+i))) goto ok;
@@ -283,9 +319,11 @@ printf("a.out-compat: midmag %x\n",ep->a_midmag);
                 error = reno_zmagic(p, epp);
                 break;
         case 0x108:
+printf("Warning: reno_nmagic\n");
                 error = exec_aout_prep_nmagic(p, epp);
                 break;
         case 0x107:
+printf("Warning: reno_omagic\n");
                 error = exec_aout_prep_omagic(p, epp);
                 break;
         default:
@@ -344,3 +382,36 @@ reno_zmagic(p, epp)
         return exec_aout_setup_stack(p, epp);
 }
 
+void
+cpu_exit(p)
+        struct proc *p;
+{
+	extern unsigned int scratch;
+
+        vmspace_free(p->p_vmspace);
+
+        (void) splimp();
+	mtpr(scratch+NBPG,PR_KSP);/* Must change kernel stack before freeing */
+        kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	cpu_switch();
+        /* NOTREACHED */
+}
+
+/*
+ * Hehe, we don't need these on VAX :)))
+ */
+
+vmapbuf(){}
+vunmapbuf(){}
+
+cpu_set_init_frame()
+{
+	extern u_int scratch;
+	mtpr(scratch,PR_SSP);
+}
+
+suword(ptr,val)
+	int *ptr,val;
+{
+	*ptr=val;
+}

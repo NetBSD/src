@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *	from: kd.c,v 1.2 1994/05/05 04:46:51 gwr Exp $
- *	$Id: gencons.c,v 1.1 1994/08/16 23:47:26 ragge Exp $
+ *	$Id: gencons.c,v 1.2 1994/10/08 15:48:04 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -43,14 +43,16 @@
 #include "sys/conf.h"
 #include "sys/device.h"
 #include "dev/cons.h"
+#include "vax/include/mtpr.h"
+#include "vax/vax/gencons.h"
 
-struct	tty gencnttyst;
-struct tty *gencntty=&gencnttyst;
+struct	tty *gencntty[1];
 
-#define	BURST	64
+int consinied=0;
 
 int	gencnparam();
 void	gencnstart();
+
 int
 gencnopen(dev, flag, mode, p)
 	dev_t	dev;
@@ -63,10 +65,8 @@ gencnopen(dev, flag, mode, p)
         unit = minor(dev);
         if (unit) return ENXIO;
 
-	tp=gencntty;
+	tp=gencntty[0];
 
-	skrivstr("gencnopen\n");
-asm("halt");
         tp->t_oproc = gencnstart;
         tp->t_param = gencnparam;
         tp->t_dev = dev;
@@ -83,6 +83,8 @@ asm("halt");
         } else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
                 return EBUSY;
         tp->t_state |= TS_CARR_ON;
+	mtpr(GC_RIE,PR_RXCS); /* Turn on interrupts */
+	mtpr(GC_TIE,PR_TXCS);
 
         return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
@@ -94,7 +96,7 @@ gencnclose(dev, flag, mode, p)
         struct proc *p;
 {
         int unit = minor(dev);
-        struct tty *tp = gencntty;
+        struct tty *tp = gencntty[0];
 
         (*linesw[tp->t_line].l_close)(tp, flag);
         ttyclose(tp);
@@ -109,7 +111,8 @@ gencnread(dev, uio, flag)
         int flag;
 {
         int unit = minor(dev);
-        struct tty *tp = gencntty;
+        struct tty *tp = gencntty[0];
+if(consinied)printf("gencnread: dev %x, uio %x, flag %x\n", dev,uio,flag);
 
         return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -121,8 +124,7 @@ gencnwrite(dev, uio, flag)
         int flag;
 {
         int unit = minor(dev);
-        struct tty *tp = gencntty;
-
+        struct tty *tp = gencntty[0];
         return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
@@ -136,13 +138,13 @@ gencnioctl(dev, cmd, data, flag, p)
 {
         int error;
         int unit = minor(dev);
-        struct tty *tp = gencntty;
+        struct tty *tp = gencntty[0];
 
         error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
         if (error >= 0)
                 return error;
         error = ttioctl(tp, cmd, data, flag, p);
-        if (error >= 0)
+        if (error >= 0) return error;
  
 	return ENOTTY;
 }
@@ -152,41 +154,42 @@ gencnstart(tp)
         struct tty *tp;
 {
         struct clist *cl;
-        int s, len,i;
-        u_char buf[BURST];
+        int s, ch;
 
-	skrivstr("gencnstart\n");
-asm("halt");
         s = spltty();
         if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
                 goto out;
-        tp->t_state |= TS_BUSY;
         cl = &tp->t_outq;
 
-        /*
-         * XXX - It might be nice to have our own fbputs() so
-         * we would not have to use the (slow) PROM printf.
-         */
-        while ((len = q_to_b(cl, buf, BURST-1)) > 0) {
-                buf[len] = '\0';
-                (void) splhigh();
+	if(cl->c_cc){
+        	tp->t_state |= TS_BUSY;
+		ch=getc(cl);
+		mtpr(ch,PR_TXDB);
+	} else {
+		if (tp->t_state & TS_ASLEEP) {
+			tp->t_state &= ~TS_ASLEEP;
+			wakeup((caddr_t)cl);
+		}
+		selwakeup(&tp->t_wsel);
+	}
 
-		for(i=0;i<len;i++)
-			ocnputc(buf[i]);
-
-                (void) spltty();
-        }
-
-        tp->t_state &= ~TS_BUSY;
-        if (tp->t_state & TS_ASLEEP) {
-                tp->t_state &= ~TS_ASLEEP;
-                wakeup((caddr_t)cl);
-        }
-        selwakeup(&tp->t_wsel);
-out:
-        splx(s);
+out:	splx(s);
 }
 
+gencnrint(){
+	struct tty *tp=gencntty[0];
+
+	(*linesw[tp->t_line].l_rint)(mfpr(PR_RXDB),tp);
+	return;
+}
+
+gencntint(){
+	struct tty *tp=gencntty[0];
+
+	tp->t_state &= ~TS_BUSY;
+
+	gencnstart(tp);
+}
 
 int
 gencnparam(tp, t)
@@ -219,7 +222,10 @@ int
 gencninit(cndev)
 	struct	consdev *cndev;
 {
-/* Nothing yet */
+}
+
+gencnslask(){
+	gencntty[0]=ttymalloc();
 }
 
 int
@@ -227,20 +233,24 @@ gencnputc(dev,ch)
 	dev_t	dev;
 	int	ch;
 {
-	ocnputc(ch);
+	while((mfpr(PR_TXCS)&GC_RDY)==0); /* Wait until xmit ready */
+	mtpr(ch,PR_TXDB);	/* xmit character */
+	if(ch==10)
+		gencnputc(dev,13); /* CR/LF */
+
 }
 
 int
 gencngetc(dev)
 	dev_t	dev;
 {
-	return ocngetc();
+	while((mfpr(PR_RXCS)&GC_DON)==0); /* Receive chr */
+	return mfpr(PR_RXDB);
 }
 
-
-skrivstr(char *ptr){
-	int i;
-
-	for(i=0;*(ptr+i);i++)
-		ocnputc(*(ptr+i));
+conout(str)
+	char *str;
+{
+	while(*str)
+		gencnputc(0,*str++);
 }

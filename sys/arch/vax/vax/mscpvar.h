@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mscpvar.h	7.3 (Berkeley) 6/28/90
- *	$Id: mscpvar.h,v 1.1 1994/08/02 20:22:07 ragge Exp $
+ *	$Id: mscpvar.h,v 1.2 1994/10/08 15:48:13 ragge Exp $
  */
 
 /*
@@ -192,7 +192,7 @@ struct	mscp *mscp_getcp();	/* get a command packet */
  *
  * Changed to new buf structure 940605/Ragge
  */
-#define	APPEND(bp, queue, link) { \
+#define	MSCP_APPEND(bp, queue, link) { \
 	struct buf *tmp; \
 	\
 	(bp)->link = NULL; \

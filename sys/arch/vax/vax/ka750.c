@@ -33,7 +33,7 @@
  *
  *	from: @(#)ka750.c	7.4 (Berkeley) 5/9/91
  *      also from: @(#)autoconf.c  7.20 (Berkeley) 5/9/91
- *	$Id: ka750.c,v 1.1 1994/08/02 20:21:58 ragge Exp $
+ *	$Id: ka750.c,v 1.2 1994/10/08 15:48:07 ragge Exp $
  */
 
 /* All bugs are subject to removal without further notice */
@@ -58,6 +58,14 @@
 
 struct nexus *nexus;
 
+int
+v750_loinit()
+{
+	/* Normal memory, count it up is the only thing needed */
+	return memory_test();
+}
+
+int
 conf_750(){
 	extern int cpu_type, nmcr, nmba, numuba;
 	int i,j,k,l,m,cardinfo,nexnum;

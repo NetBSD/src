@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intvec.s,v 1.2 1994/08/16 23:47:28 ragge Exp $
+ *	$Id: intvec.s,v 1.3 1994/10/08 15:48:06 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -38,9 +38,10 @@
 #include "vax/include/pte.h"
 #include "uba.h"
 
-		.globl	Interrupt_scb
-	
-Interrupt_scb:
+		.text
+
+		.globl	_kernbase
+_kernbase:
                 .long trp_0x00+1	# Unused.
 _V_MACHINE_CHK: .long trp_0x04+1	# Machine Check.
 _V_K_STK_INV:   .long trp_0x08+1	# Kernel Stack Invalid.
@@ -116,10 +117,10 @@ _V_INTERVAL:    .long trp_0xC0+1               # Interval Timer
                 .long trp_0xE8+1               # Unused
                 .long trp_0xEC+1               # Unused
 
-_V_CONSOLE_SR:  .long trp_0xF0+1               # Console Storage Recieve Interrupt
-_V_CONSOLE_ST:  .long trp_0xF4+1               # Console Storage Transmit Interrupt
-_V_CONSOLE_TR:  .long trp_0xF8+1               # Console Terminal Recieve Interrupt
-_V_CONSOLE_TT:  .long trp_0xFC+1               # Console Terminal Transmit Interrupt
+_V_CONSOLE_SR:  .long trp_0xF0+1       # Console Storage Recieve Interrupt
+_V_CONSOLE_ST:  .long trp_0xF4+1       # Console Storage Transmit Interrupt
+_V_CONSOLE_TR:  .long trp_0xF8+1       # Console Terminal Recieve Interrupt
+_V_CONSOLE_TT:  .long trp_0xFC+1       # Console Terminal Transmit Interrupt
 		.globl _V_DEVICE_VEC
 _V_DEVICE_VEC:  .space 0x100
 
@@ -381,6 +382,10 @@ trp_0x3C:	pushal	msg_trp_0x3C
 	.globl	trp_0x40
 trp_0x40:
 #	halt
+	pushl	r5
+	pushl	r4
+	pushl	r2
+	pushl	r3
 	pushl	r0
 	pushl	r1
 	pushl	ap
@@ -388,6 +393,10 @@ trp_0x40:
 	calls	$2,_syscall
 	movl	(sp)+,r1
 	movl	(sp)+,r0
+	movl	(sp)+,r3
+	movl	(sp)+,r2
+	movl	(sp)+,r4
+	movl	(sp)+,r5
 	addl2	$4,sp
 	mtpr	$0x1f,$PR_IPL
 #	halt
@@ -637,14 +646,18 @@ trp_0xF4:	pushal	msg_trp_0xF4
 		halt
 
 		.align 2
-trp_0xF8:	pushal	msg_trp_0xF8
-		calls	$1,_conout
-		halt
+trp_0xF8:
+		pushr   $0x3f
+		calls   $0,_gencnrint
+		popr	$0x3f
+		rei
 
 		.align 2
-trp_0xFC:	pushal	msg_trp_0xFC
-		calls	$1,_conout
-		halt
+trp_0xFC:	
+		pushr	$0x3f
+		calls	$0,_gencntint
+		popr	$0x3f
+		rei
 
 
 
