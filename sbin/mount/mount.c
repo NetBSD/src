@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.76 2005/02/05 14:44:46 xtraeme Exp $	*/
+/*	$NetBSD: mount.c,v 1.76.2.1 2005/03/19 13:19:55 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.76 2005/02/05 14:44:46 xtraeme Exp $");
+__RCSID("$NetBSD: mount.c,v 1.76.2.1 2005/03/19 13:19:55 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 
 		if (init_flags & MNT_UPDATE) {
 			/*
-			 * Try lookin up the canonical path first,
+			 * Try looking up the canonical path first,
 			 * then try exactly what the user entered.
 			 */
 			if ((canonical_path == NULL ||
@@ -235,11 +235,12 @@ main(int argc, char *argv[])
 			mountopts  = NULL;
 		} else {
 			/*
-			 * Try lookin up the canonical path first,
+			 * Try looking up the canonical path first,
 			 * then try exactly what the user entered.
 			 */
-			if ((fs = getfsfile(canonical_path)) == NULL &&
-			    (fs = getfsspec(canonical_path)) == NULL)
+			if (canonical_path == NULL ||
+			    ((fs = getfsfile(canonical_path)) == NULL &&
+			     (fs = getfsspec(canonical_path)) == NULL))
 			{
 				if ((fs = getfsfile(*argv)) == NULL &&
 				    (fs = getfsspec(*argv)) == NULL)
