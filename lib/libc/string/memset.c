@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.8 1998/02/03 18:49:16 perry Exp $	*/
+/*	$NetBSD: memset.c,v 1.9 1998/02/04 09:01:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.8 1998/02/03 18:49:16 perry Exp $");
+__RCSID("$NetBSD: memset.c,v 1.9 1998/02/04 09:01:44 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,7 +117,7 @@ memset(dst0, c0, length)
 	}
 #endif
 	/* Align destination by filling in bytes. */
-	if ((t = (int)dst & wmask) != 0) {
+	if ((t = (u_long)dst & wmask) != 0) {
 		t = wsize - t;
 		length -= t;
 		do {
