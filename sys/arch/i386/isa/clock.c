@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.24 1994/05/05 05:36:30 cgd Exp $
+ *	$Id: clock.c,v 1.25 1994/07/25 00:19:47 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -365,6 +365,8 @@ dectohexdec(n)
 	return((char)(((n/10)<<4)&0xF0) | ((n%10)&0x0F));
 }
 
+static int timeset;
+
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
@@ -389,6 +391,8 @@ inittodr(base)
 		return;
 	}
 	splx(s);
+
+	timeset = 1;
 
 	sec = hexdectodec(rtclk.rtc_sec);
 	min = hexdectodec(rtclk.rtc_min);
@@ -427,6 +431,13 @@ resettodr()
 	time_t n;
 	int diff, i, j;
 	int s;
+
+	/*
+	 * We might have been called by boot() due to a crash early
+	 * on.  Don't reset the clock chip in this case.
+	 */
+	if (!timeset)
+		return;
 
 	s = splclock();
 	if (rtcget(&rtclk))
