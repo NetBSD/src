@@ -51,4 +51,4 @@ DESC: DESC.proto
 	    -e "s/^fonts .*$$/fonts `set $(FONTS); echo $$#` $(FONTS)/" \
 	    $(.CURDIR)/DESC.proto >$@
 
-.include "../Makefile.dev"
+.include "${.CURDIR}/../Makefile.dev"
