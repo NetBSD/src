@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.18 2003/10/27 16:51:05 cl Exp $	*/
+/*	$NetBSD: machines.c,v 1.19 2003/11/08 16:44:35 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.18 2003/10/27 16:51:05 cl Exp $");
+__RCSID("$NetBSD: machines.c,v 1.19 2003/11/08 16:44:35 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -47,22 +47,24 @@ __RCSID("$NetBSD: machines.c,v 1.18 2003/10/27 16:51:05 cl Exp $");
 struct ib_mach machines[] = {
 	{ "alpha",	alpha_setboot,	alpha_clearboot,
 		IB_STAGE1START | IB_ALPHASUM | IB_APPEND | IB_SUNSUM },
-	{ "amiga",	amiga_setboot,	no_clearboot,
-		IB_STAGE1START | IB_STAGE2START | IB_COMMAND },
-	{ "i386",	i386_setboot,	no_clearboot,
+	{ "amd64",	i386_setboot,	no_clearboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED |
 		IB_PASSWORD | IB_TIMEOUT },
-	{ "amd64",	i386_setboot,	no_clearboot,
+	{ "amiga",	amiga_setboot,	no_clearboot,
+		IB_STAGE1START | IB_STAGE2START | IB_COMMAND },
+	{ "hp300",	hp300_setboot, no_clearboot,
+		0 },
+	{ "i386",	i386_setboot,	no_clearboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED |
 		IB_PASSWORD | IB_TIMEOUT },
 	{ "macppc",	macppc_setboot,	macppc_clearboot,
 		IB_STAGE2START },
 	{ "news68k",	news68k_setboot, news68k_clearboot,
 		IB_STAGE2START },
-	{ "next68k",	next68k_setboot, no_clearboot,
-		0 },
 	{ "newsmips",	newsmips_setboot, newsmips_clearboot,
 		IB_STAGE2START },
+	{ "next68k",	next68k_setboot, no_clearboot,
+		0 },
 	{ "pmax",	pmax_setboot,	pmax_clearboot,
 		IB_STAGE1START | IB_APPEND | IB_SUNSUM },
 	{ "shark",	no_setboot,	no_clearboot, },
