@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.2 1996/08/23 06:14:37 mrg Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.3 1996/08/27 22:15:52 explorer Exp $
 
 S!=	cd ..;pwd
 
@@ -12,12 +12,7 @@ KERN=	$S/kern
 
 .include <bsd.own.mk>
 
-KMODOWN?=	bin
-KMODGRP?=	bin
-KMODMODE?=	444
-KMODDIR?=	/usr/lkm
-
-CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I{.CURDIR} -I$S -I$S/arch
+CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I${.CURDIR} -I$S -I$S/arch
 
 DPSRCS+= ${SRCS:M*.h}
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
