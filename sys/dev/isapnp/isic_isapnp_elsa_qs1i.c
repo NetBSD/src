@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro ISA
  *	=====================================================================
  *
- *	$Id: isic_isapnp_elsa_qs1i.c,v 1.7 2002/04/14 12:24:27 martin Exp $
+ *	$Id: isic_isapnp_elsa_qs1i.c,v 1.8 2002/04/15 06:59:51 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.7 2002/04/14 12:24:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.8 2002/04/15 06:59:51 martin Exp $");
 
 #include "opt_isicpnp.h"
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_ELSA_PCC16)
@@ -470,46 +470,68 @@ elsa_command_req(struct isic_softc *sc, int command, void *data)
 	int v, s;
 	u_int8_t led_val;
 
-	if (command != CMR_SETLEDS)
-		return;
+	switch (command) {
+	case CMR_DOPEN:
+		s = splnet();
 
-	s = splnet();
+		v = ELSA_CTRL_SECRET & ~ELSA_CTRL_RESET;
+	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, v);
+		delay(20);
+		v |= ELSA_CTRL_RESET;
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, v);
+		delay(20);
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_IRQ, 0xff);
 
-	led_val = ELSA_CTRL_SECRET;
-	v = (int)data;
-	if (v & CMRLEDS_TEI)
-		led_val |= ELSA_CTRL_LED_GREEN;
-	if (v & (CMRLEDS_B0|CMRLEDS_B1))
-		led_val |= ELSA_CTRL_LED_YELLOW;
+		splx(s);
+		break;
 
-	/* XXX - this does not work, no idea why yet */
+	case CMR_DCLOSE:
+		s = splnet();
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_IRQ, 0);
+		v = ELSA_CTRL_SECRET & ~ELSA_CTRL_RESET;
+	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, v);
+		delay(20);
+		v |= ELSA_CTRL_RESET;
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, v);
+		splx(s);
+		break;
+
+	case CMR_SETLEDS:
+		s = splnet();
+
+		led_val = ELSA_CTRL_SECRET;
+		v = (int)data;
+		if (v & CMRLEDS_TEI)
+			led_val |= ELSA_CTRL_LED_GREEN;
+		if (v & (CMRLEDS_B0|CMRLEDS_B1))
+			led_val |= ELSA_CTRL_LED_YELLOW;
+
+		/* XXX - this does not work, no idea why yet */
 #if 0
-	printf("%s: LED change, writing 0x%02x to ctrl port\n",
-	    sc->sc_dev.dv_xname, led_val);
+		printf("%s: LED change, writing 0x%02x to ctrl port\n",
+		    sc->sc_dev.dv_xname, led_val);
+
+		bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
+		    ELSA_OFF_CTRL, led_val);
 #endif
 
-        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h,
-	    ELSA_OFF_CTRL, led_val);
+		splx(s);
+		break;
 
-	splx(s);
+	default:
+		return;
+	}
 }
 
 void
 isic_attach_Eqs1pi(struct isic_softc *sc)
 {
-	bus_space_tag_t t = sc->sc_maps[0].t;
-	bus_space_handle_t h = sc->sc_maps[0].h;
-	u_char byte = ELSA_CTRL_SECRET;
-
-	byte &= ~ELSA_CTRL_RESET;
-        bus_space_write_1(t, h, ELSA_OFF_CTRL, byte);
-        DELAY(20);
-	byte |= ELSA_CTRL_RESET;
-        bus_space_write_1(t, h, ELSA_OFF_CTRL, byte);
-
-        DELAY(20);
-        bus_space_write_1(t, h, ELSA_OFF_IRQ, 0xff);
-
 	/* setup access routines */
 
 	sc->clearirq = i4b_eq1i_clrirq;
