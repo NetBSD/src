@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.5.2.9 2002/09/21 19:40:35 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.5.2.10 2002/09/22 08:37:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.5.2.9 2002/09/21 19:40:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.5.2.10 2002/09/22 08:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1910,6 +1910,11 @@ filt_pipedetach(struct knote *kn)
 	case EVFILT_WRITE:
 		/* need the peer structure, not our own */
 		cpipe = cpipe->pipe_peer;
+
+		/* if reader end already closed, just return */
+		if (!cpipe)
+			return;
+
 		break;
 	default:
 		/* nothing to do */
