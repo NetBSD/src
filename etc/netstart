@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.53 1998/11/25 03:54:27 abs Exp $
+#	$NetBSD: netstart,v 1.54 1999/03/02 23:10:17 abs Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -165,6 +165,8 @@ fi
 # for pppd.  each value in $ppp_peers that has a file in /etc/ppp/peers
 # of the same name, will be run as `pppd <peer>'.
 if [ -n "$ppp_peers" ]; then
+	# pppd is in /usr - need to ensure it is mounted
+	mount /usr >/dev/null 2>&1	
 	set -- $ppp_peers
 	echo -n "starting pppd:"
 	while [ $# -ge 1 ]; do
