@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.73 2002/09/27 20:42:12 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.74 2002/09/30 17:36:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.73 2002/09/27 20:42:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.74 2002/09/30 17:36:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -163,13 +163,20 @@ __volatile int config_pending;		/* semaphore for mountroot */
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
 
+static int config_initialized;		/* config_init() has been called. */
+
 /*
- * Configure the system's hardware.
+ * Initialize the autoconfiguration data structures.  Normally this
+ * is done by configure(), but some platforms need to do this very
+ * early (to e.g. initialize the console).
  */
 void
-configure(void)
+config_init(void)
 {
 	int i;
+
+	if (config_initialized)
+		return;
 
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++)
@@ -184,6 +191,19 @@ configure(void)
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&interrupt_config_queue);
 	TAILQ_INIT(&alldevs); 
+
+	config_initialized = 1;
+}
+
+/*
+ * Configure the system's hardware.
+ */
+void
+configure(void)
+{
+
+	/* Initialize data structures. */
+	config_init();
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
@@ -393,6 +413,8 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 	struct cftable *ct;
 	struct cfdata *cf;
 	struct matchinfo m;
+
+	KASSERT(config_initialized);
 
 	m.fn = fn;
 	m.parent = parent;
