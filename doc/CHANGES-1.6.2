@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.101 2003/08/04 04:27:00 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.102 2003/08/09 06:49:05 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1150,3 +1150,9 @@ lib/libc/gen/getcwd.c				1.29
 
 	fix off-by-one error in realpath()
 	[itojun, ticket #1394]
+
+sys/dev/ic/dpt.c				1.38
+
+	Fix printf format warnings in previous.
+	[jmc, ticket #1403]
+
