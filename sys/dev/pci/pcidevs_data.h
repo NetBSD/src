@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.674 2004/12/18 11:55:02 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.675 2004/12/27 17:21:46 reinoud Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.675 2004/12/18 11:54:03 xtraeme Exp 
+ *	NetBSD: pcidevs,v 1.676 2004/12/27 17:20:32 reinoud Exp 
  */
 
 /*
@@ -4770,6 +4770,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9802,
 	    "LP9802 FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_MCR510,
+	    "MCR510 PCI Memory Card Reader Controller",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
@@ -9880,4 +9884,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1891;
+const int pci_nproducts = 1892;
