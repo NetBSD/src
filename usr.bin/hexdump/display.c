@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.16 2003/09/12 12:59:34 cl Exp $	*/
+/*	$NetBSD: display.c,v 1.17 2003/10/22 12:30:39 dmcmahill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,9 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.16 2003/09/12 12:59:34 cl Exp $");
+__RCSID("$NetBSD: display.c,v 1.17 2003/10/22 12:30:39 dmcmahill Exp $");
 #endif
 #endif /* not lint */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>

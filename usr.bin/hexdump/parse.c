@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.15 2003/08/07 11:14:05 agc Exp $	*/
+/*	$NetBSD: parse.c,v 1.16 2003/10/22 12:30:39 dmcmahill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,9 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.15 2003/08/07 11:14:05 agc Exp $");
+__RCSID("$NetBSD: parse.c,v 1.16 2003/10/22 12:30:39 dmcmahill Exp $");
 #endif
 #endif /* not lint */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/file.h>
