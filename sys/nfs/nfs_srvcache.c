@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.19 2001/11/10 10:59:10 lukem Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.20 2002/12/01 23:02:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.19 2001/11/10 10:59:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.20 2002/12/01 23:02:11 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.19 2001/11/10 10:59:10 lukem Exp 
 #include <nfs/nfs_var.h>
 
 extern struct nfsstats nfsstats;
-extern int nfsv2_procid[NFS_NPROCS];
+extern const int nfsv2_procid[NFS_NPROCS];
 long numnfsrvcache, desirednfsrvcache = NFSRVCACHESIZ;
 
 #define	NFSRCHASH(xid) \
