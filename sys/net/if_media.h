@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.18 2000/01/25 00:58:59 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.19 2000/01/25 20:18:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -168,9 +168,12 @@ struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
 #define	IFM_100_T4	8		/* 100BaseT4 - 4 pair cat 3 */
 #define	IFM_100_VG	9		/* 100VG-AnyLAN */
 #define	IFM_100_T2	10		/* 100BaseT2 */
-#define	IFM_1000_FX	11		/* 1000BaseFX - gigabit over fiber */
+#define	IFM_1000_SX	11		/* 1000BaseSX - multi-mode fiber */
 #define	IFM_10_STP	12		/* 10BaseT over shielded TP */
 #define	IFM_10_FL	13		/* 10BaseFL - Fiber */
+#define	IFM_1000_LX	14		/* 1000baseLX - single-mode fiber */
+#define	IFM_1000_CX	15		/* 1000baseCX - 150ohm STP */
+#define	IFM_1000_TX	16		/* 1000baseTX - 4 pair cat 5 */
 
 /*
  * Token ring
@@ -325,14 +328,20 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_100_VG,		"100VG" },			\
 	{ IFM_ETHER|IFM_100_T2,		"100baseT2" },			\
 	{ IFM_ETHER|IFM_100_T2,		"100T2" },			\
-	{ IFM_ETHER|IFM_1000_FX,	"1000baseFX" },			\
-	{ IFM_ETHER|IFM_1000_FX,	"1000FX" },			\
+	{ IFM_ETHER|IFM_1000_SX,	"1000baseSX" },			\
+	{ IFM_ETHER|IFM_1000_SX,	"1000SX" },			\
 	{ IFM_ETHER|IFM_10_STP,		"10baseSTP" },			\
 	{ IFM_ETHER|IFM_10_STP,		"STP" },			\
 	{ IFM_ETHER|IFM_10_STP,		"10STP" },			\
 	{ IFM_ETHER|IFM_10_FL,		"10baseFL" },			\
 	{ IFM_ETHER|IFM_10_FL,		"FL" },				\
 	{ IFM_ETHER|IFM_10_FL,		"10FL" },			\
+	{ IFM_ETHER|IFM_1000_LX,	"1000baseLX" },			\
+	{ IFM_ETHER|IFM_1000_LX,	"1000LX" },			\
+	{ IFM_ETHER|IFM_1000_CX,	"1000baseCX" },			\
+	{ IFM_ETHER|IFM_1000_CX,	"1000CX" },			\
+	{ IFM_ETHER|IFM_1000_TX,	"1000baseTX" },			\
+	{ IFM_ETHER|IFM_1000_TX,	"1000TX" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"4STP" },			\
