@@ -1,3 +1,5 @@
+/*	$NetBSD: pcidevs_data.h,v 1.50 1998/01/09 06:54:56 thorpej Exp $	*/
+
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
