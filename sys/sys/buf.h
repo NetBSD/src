@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.55 2002/10/06 17:05:56 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.56 2003/02/01 21:07:02 erh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -252,7 +252,6 @@ extern	u_int nbuf;		/* The number of buffer headers */
 extern	struct buf *buf;	/* The buffer headers. */
 extern	char *buffers;		/* The buffer contents. */
 extern	u_int bufpages;		/* Number of memory pages in the buffer pool. */
-extern	u_int nswbuf;		/* Number of swap I/O buffer headers. */
 
 extern	struct pool bufpool;	/* I/O buf pool */
 
