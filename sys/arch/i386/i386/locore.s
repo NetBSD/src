@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91 1994/11/05 02:47:02 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.92 1994/11/06 20:21:29 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1522,17 +1522,12 @@ ENTRY(remrq)
  * something to come ready.
  */
 ENTRY(idle)
-	sti
-	movl	$0,_cpl
-	call	_spllower		# process pending interrupts
-
-	ALIGN_TEXT
-1:	cli
+	cli
 	movl	_whichqs,%ecx
 	testl	%ecx,%ecx
 	jnz	sw1
 	sti
-	jmp	1b
+	jmp	_idle
 
 #ifdef DIAGNOSTIC
 ENTRY(switch_error)
@@ -1554,9 +1549,19 @@ ENTRY(cpu_switch)
 	pushl	%edi
 	pushl	_cpl
 
-	/* Don't accumulate system time while idle. */
 	movl	_curproc,%esi
+
+	/*
+	 * Clear curproc so that we don't accumulate system time while idle.
+	 * This also insures that schedcpu() will move the old process to
+	 * the correct queue if it happens to get called from the spllower()
+	 * below and changes the priority.  (See corresponding comment in
+	 * userret()).
+	 */
 	movl	$0,_curproc
+
+	movl	$0,_cpl			# spl0()
+	call	_spllower		# process pending interrupts
 
 switch_search:
 	/*
@@ -1608,6 +1613,9 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	/* Isolate process.  XXX Is this necessary? */
 	movl	%eax,P_BACK(%edi)
+
+	/* Record new process. */
+	movl	%edi,_curproc
 
 	/* It's okay to take interrupts here. */
 	sti
@@ -1703,12 +1711,11 @@ switch_exited:
 	sti
 
 switch_return:
-	/* Record new process. */
-	movl	%edi,_curproc
-
-	/* Old _cpl is already on the stack. */
+	/*
+	 * Restore old cpl from stack.  Note that this is always an increase,
+	 * due to the spl0() on entry.
+	 */
 	popl	_cpl
-	call    _spllower		# restore the process's ipl
 
 	movl	%edi,%eax		# return (p);
 	popl	%edi
