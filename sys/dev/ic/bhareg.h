@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.3 1996/11/05 03:04:31 jonathan Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.4 1996/12/20 06:20:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -237,7 +237,18 @@ struct bha_extended_inquire {
 #define	BHA_BUS_TYPE_32BIT	'E'	/* EISA/VLB/PCI bus */
 #define	BHA_BUS_TYPE_MCA	'M'	/* MicroChannel bus */
 		u_char	bios_address;	/* Address of adapter BIOS */
-		u_short	max_segment;	/* ? */
+		u_short sg_limit;
+		u_char	mbox_count;
+		u_char	mbox_baseaddr[4]; /* packed/unaligned uint_32_t */
+		u_char	intrflags;
+#define BHA_INTR_LEVEL	0x40		/* bit 6: level-sensitive interrupt */
+		u_char	firmware_level[3]; /* last 3 digits of firmware rev */
+		u_char	scsi_flags;	/* supported SCSI  features */
+#define BHA_SCSI_WIDE		0x01
+#define BHA_SCSI_DIFFERENTIAL	0x02
+#define BHA_SCSI_AUTOCONF	0x04
+#define BHA_SCSI_ULTRA		0x08
+#define BHA_SCSI_TERMINATION	0x10
 	} reply;
 };
 
