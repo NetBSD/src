@@ -1,4 +1,4 @@
-/*	$NetBSD: make_level.c,v 1.4 1997/10/12 14:09:58 lukem Exp $	*/
+/*	$NetBSD: make_level.c,v 1.5 1997/10/12 14:16:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)make_level.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: make_level.c,v 1.4 1997/10/12 14:09:58 lukem Exp $");
+__RCSID("$NetBSD: make_level.c,v 1.5 1997/10/12 14:16:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ make_level()
 		cp->y = -1;
 	My_pos.y = -1;
 
-	bzero(Field, sizeof Field);
+	memset(Field, 0, sizeof Field);
 	Min.y = Y_FIELDSIZE;
 	Min.x = X_FIELDSIZE;
 	Max.y = 0;

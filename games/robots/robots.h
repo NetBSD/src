@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.6 1997/10/12 14:10:04 lukem Exp $	*/
+/*	$NetBSD: robots.h,v 1.7 1997/10/12 14:16:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,6 +38,7 @@
 # include	<sys/ttydefaults.h>
 # include	<ctype.h>
 # include	<curses.h>
+# include	<err.h>
 # include	<fcntl.h>
 # include	<pwd.h>
 # include	<setjmp.h>
