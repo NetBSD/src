@@ -1,3 +1,5 @@
+/*	$NetBSD: if_tokensubr.c,v 1.2 1999/03/22 23:01:38 bad Exp $	*/
+
 /*
  * Copyright (c) 1997-1999
  *	Onno van der Linden
@@ -35,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_trsubr.c	8.1 (Berkeley) 6/10/93
- *	from: $NetBSD: if_tokensubr.c,v 1.1 1999/03/22 22:22:52 bad Exp $
+ *	from: $NetBSD: if_tokensubr.c,v 1.2 1999/03/22 23:01:38 bad Exp $
  */
 #include "opt_inet.h"
 #include "opt_atalk.h"

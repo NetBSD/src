@@ -1,3 +1,5 @@
+/*	$NetBSD: if_tr_isapnp.c,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
+
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
