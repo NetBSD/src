@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1 2001/01/10 19:02:05 bjh21 Exp $	*/
+/*	$NetBSD: asm.h,v 1.2 2001/04/26 23:20:02 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,8 +76,13 @@
 	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
 
 #ifdef GPROF
-# define _PROF_PROLOGUE	\
+# ifdef __ELF__
+#  define _PROF_PROLOGUE	\
+	mov ip, lr; bl __mcount
+# else
+#  define _PROF_PROLOGUE	\
 	mov ip,lr; bl mcount
+# endif
 #else
 # define _PROF_PROLOGUE
 #endif
