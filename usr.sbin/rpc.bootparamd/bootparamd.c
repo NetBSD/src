@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.18 1999/03/24 22:01:38 nathanw Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.19 1999/04/26 02:35:17 abs Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.18 1999/03/24 22:01:38 nathanw Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.19 1999/04/26 02:35:17 abs Exp $");
 #endif
 
 #include <sys/types.h>
@@ -341,8 +341,16 @@ lookup_bootparam(client, client_canonical, id, server, path)
 				 * the client we are looking for
 				 */
 				struct hostent *hp = gethostbyname(word);
-				if (hp == NULL ||
-				    strcasecmp(hp->h_name, client))
+				if (hp == NULL ) {
+					if (debug)
+						warnx(
+					    "Unknown bootparams host %s", word);
+					if (dolog)
+						syslog(LOG_NOTICE,
+					    "Unknown bootparams host %s", word);
+					continue;
+				}
+				if (strcasecmp(hp->h_name, client))
 					continue;
 			}
 			contin *= -1;
