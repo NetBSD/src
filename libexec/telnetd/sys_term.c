@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.15 1999/02/12 05:30:12 dean Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.16 1999/08/12 23:05:22 aidan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.15 1999/02/12 05:30:12 dean Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.16 1999/08/12 23:05:22 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,6 +189,9 @@ char **addarg __P((char **, char *));
 void scrub_env __P((void));
 int getent __P((char *, char *));
 char *getstr __P((char *, char **));
+#ifdef KRB5
+extern void kerberos5_cleanup __P((void));
+#endif
 
 /*
  * init_termbuf()
@@ -1980,6 +1983,9 @@ cleanup(sig)
 #  endif /* CRAY */
 	rmut(line);
 	close(pty);
+#ifdef KRB5
+	kerberos5_cleanup();
+#endif
 	(void) shutdown(net, 2);
 #  ifdef CRAY
 	if (t == 0)
