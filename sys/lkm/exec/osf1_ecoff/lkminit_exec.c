@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.4 2001/12/08 00:37:13 thorpej Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.5 2001/12/14 20:51:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.4 2001/12/08 00:37:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.5 2001/12/14 20:51:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ static struct execsw exec_osf1_ecoff =
 	    2 * (MAXPATHLEN + 1), sizeof (char *)), /* exec & loader names */
 	  osf1_copyargs,
 	  cpu_exec_ecoff_setregs,
-	  NULL,
 	  coredump_netbsd };
 
 /*
