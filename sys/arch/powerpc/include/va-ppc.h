@@ -17,7 +17,7 @@ typedef struct __gnuc_va_list__ {
   char *overflow_arg_area;	/* location on stack that holds the next
 				   overflow argument */
   char *reg_save_area;		/* where r3:r10 and f1:f8, if saved are stored */
-} *__gnuc_va_list;
+} __gnuc_va_list[1];
 #endif /* not __GNUC_VA_LIST */
 
 /* If this is for internal libc use, don't define anything but
@@ -59,7 +59,6 @@ typedef struct {
 #define __va_start_common(AP, FAKE)					\
 __extension__ ({							\
    register int __words = __va_words - FAKE;				\
-   (AP) = (__gnuc_va_list)__builtin_alloca(sizeof(__gnuc_va_list *));	\
 									\
    (AP)->gpr = (__words < 8) ? __words : 8;				\
    (AP)->fpr = __va_fregno - 33;					\
