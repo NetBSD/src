@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.111 2003/07/07 21:26:33 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.112 2003/07/08 17:38:57 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -855,6 +855,9 @@ some files were not extracted correctly and your system will not be
 complete.
 
 Continue extracting sets?}
+
+message must_be_one_root
+{There must be a single partition marked to be mounted on '/'.}
 
 message partitions_overlap
 {partitions %c and %c overlap.}

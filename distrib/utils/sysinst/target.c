@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.37 2003/07/07 12:30:22 dsl Exp $	*/
+/*	$NetBSD: target.c,v 1.38 2003/07/08 17:38:58 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.37 2003/07/07 12:30:22 dsl Exp $");
+__RCSID("$NetBSD: target.c,v 1.38 2003/07/08 17:38:58 dsl Exp $");
 #endif
 
 /*
@@ -267,11 +267,12 @@ target_already_root(void)
 
 	if (strcmp(diskdev, "") == 0) {
 		/* no root partition was ever selected. Assume that
-		 * the currently mounted one should be used */
+		 * the currently mounted one should be used
+		 */
 		result = 1;
 	} else {
 		/* append 'a' to the partitionless target disk device name. */
-		snprintf(diskdevroot, STRSIZE, "%s%c", diskdev, 'a');
+		snprintf(diskdevroot, STRSIZE, "%s%c", diskdev, 'a' + rootpart);
 		result = is_active_rootpart(diskdevroot);
 	}
 	return (result);
