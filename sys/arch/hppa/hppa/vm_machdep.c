@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 2004/07/18 20:27:11 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11 2004/07/18 23:21:35 chs Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.10 2004/07/18 20:27:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11 2004/07/18 23:21:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,15 +221,40 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	printf("cpu_setfunc not implemented\n");
+	struct pcb *pcbp;
+	struct trapframe *tf;
+	register_t sp, osp;
+
+	pcbp = &l->l_addr->u_pcb;
+	sp = (register_t)pcbp + PAGE_SIZE;
+	l->l_md.md_regs = tf = (struct trapframe *)sp;
+	sp += sizeof(struct trapframe);
+
+	cpu_swapin(l);
+
+	osp = sp;
+	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
+	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
+	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
+	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
+	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
+	pcbp->pcb_ksp = sp;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
 }
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
 
-	/* Flush the LWP out of the FPU. */
-	hppa_fpu_flush(l);
+	/*
+	 * If this thread was using the FPU, disable the FPU and record
+	 * that it's unused.
+	 */
+
+	if (fpu_cur_uspace == l->l_md.md_regs->tf_cr30) {
+		fpu_cur_uspace = 0;
+		mtctl(0, CR_CCR);
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2004/05/18 15:33:11 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 2004/07/18 23:21:35 chs Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -155,6 +155,10 @@ pmap_prot(struct pmap *pmap, vm_prot_t prot)
 
 	return (pmap == kernel_pmap ? kern_prot : user_prot)[prot];
 }
+
+#define	pmap_sid(pmap, va) \
+	((((va) & 0xc0000000) != 0xc0000000) ? \
+	 (pmap)->pmap_space : HPPA_SID_KERNEL)
 
 #endif /* _KERNEL */
 

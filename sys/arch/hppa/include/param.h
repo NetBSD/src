@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2003/09/20 22:28:19 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2004/07/18 23:21:35 chs Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -70,7 +70,6 @@
 #define	SSIZE		(1)		/* initial stack size/NBPG */
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
-#define	UADDR		0x7ffe6000	/* u-area lives here */
 #define	USHIFT		(3)		/* log2(UPAGES) */
 #define	UPAGES		(1<<USHIFT)	/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* pages for user struct and kstack */
