@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
+/*	$NetBSD: dd.c,v 1.7 1997/07/20 21:58:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,17 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $";
+__RCSID("$NetBSD: dd.c,v 1.7 1997/07/20 21:58:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,8 @@ static void dd_close __P((void));
 static void dd_in __P((void));
 static void getfdtype __P((IO *));
 static void setup __P((void));
+
+int main __P((int, char *[]));
 
 IO	in, out;		/* input/output state */
 STAT	st;			/* statistics */
@@ -151,12 +153,12 @@ setup()
 	 */
 	if (!(ddflags & (C_BLOCK|C_UNBLOCK))) {
 		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL)
-			err(1, NULL);
+			err(1, "%s", "");
 		out.db = in.db;
 	} else if ((in.db =
 	    malloc((u_int)(MAX(in.dbsz, cbsz) + cbsz))) == NULL ||
 	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	in.dbp = in.db;
 	out.dbp = out.db;
 
@@ -170,7 +172,7 @@ setup()
 	 * Truncate the output file; ignore errors because it fails on some
 	 * kinds of output files, tapes, for example.
 	 */
-	if (ddflags & (C_OF | C_SEEK | C_NOTRUNC) == (C_OF | C_SEEK))
+	if ((ddflags & (C_OF | C_SEEK | C_NOTRUNC)) == (C_OF | C_SEEK))
 		(void)ftruncate(out.fd, (off_t)out.offset * out.dbsz);
 
 	/*
