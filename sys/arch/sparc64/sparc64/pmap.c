@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 2000/06/12 23:32:48 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 2000/06/15 15:51:07 mrg Exp $	*/
 #undef NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -1043,11 +1043,11 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			paddr_t newp;
 
 			pmap_get_page(&pa);
-			prom_map_phys(phys_msgbuf, NBPG, va, -1);
+			prom_map_phys(pa, NBPG, va, -1);
 #ifdef NO_VCACHE
 			tte.data.data = TSB_DATA(0 /* global */,
 				TLB_8K,
-				phys_msgbuf,
+				pa,
 				1 /* priv */,
 				1 /* Write */,
 				1 /* Cacheable */,
@@ -1057,7 +1057,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #else
 			tte.data.data = TSB_DATA(0 /* global */,
 				TLB_8K,
-				phys_msgbuf,
+				pa,
 				1 /* priv */,
 				1 /* Write */,
 				1 /* Cacheable */,
