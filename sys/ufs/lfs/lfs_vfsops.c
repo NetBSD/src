@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28.2.4 1999/12/17 23:55:06 he Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28.2.5 2000/01/15 17:52:06 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ struct vfsops lfs_vfsops = {
 	lfs_vptofh,
 	lfs_init,
 	lfs_sysctl,
-	NULL,
+	lfs_mountroot,
 	ufs_check_export,
 	lfs_vnodeopv_descs,
 };
