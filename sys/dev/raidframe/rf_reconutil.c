@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.21 2004/03/07 02:46:59 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.22 2004/03/07 22:15:19 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.21 2004/03/07 02:46:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.22 2004/03/07 22:15:19 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -219,7 +219,7 @@ rf_MakeReconBuffer(RF_Raid_t *raidPtr, RF_RowCol_t col, RF_RbufType_t type)
 	RF_ReconBuffer_t *t;
 	u_int   recon_buffer_size = rf_RaidAddressToByte(raidPtr, layoutPtr->SUsPerRU * layoutPtr->sectorsPerStripeUnit);
 
-	t = pool_get(&rf_reconbuffer_pool, PR_WAITOK);
+	t = pool_get(&rf_pools.reconbuffer, PR_WAITOK);
 	RF_Malloc(t->buffer, recon_buffer_size, (caddr_t));
 	t->raidPtr = raidPtr;
 	t->col = col;
@@ -241,7 +241,7 @@ rf_FreeReconBuffer(RF_ReconBuffer_t *rbuf)
 	recon_buffer_size = rf_RaidAddressToByte(raidPtr, raidPtr->Layout.SUsPerRU * raidPtr->Layout.sectorsPerStripeUnit);
 
 	RF_Free(rbuf->buffer, recon_buffer_size);
-	pool_put(&rf_reconbuffer_pool, rbuf);
+	pool_put(&rf_pools.reconbuffer, rbuf);
 }
 
 #if RF_DEBUG_RECON
