@@ -1,8 +1,0 @@
-	$NetBSD: upgrade,v 1.7 1998/01/09 18:47:27 perry Exp $	
-
-To upgrade to NetBSD _VER from a previous version follow the instructions
-in the section "Installing NetBSD", but run the script `upgrade.sh'
-in stead of `install.sh'.
-
-The upgrade script will use the existing disk partitions to install the
-new system in, and also preserves the files in `/etc'.
