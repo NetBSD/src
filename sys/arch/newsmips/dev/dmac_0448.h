@@ -1,3 +1,4 @@
+/*	$NetBSD: dmac_0448.h,v 1.2 1999/02/15 04:36:33 hubertf Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,4 @@
+/*	$NetBSD: bmcons.c,v 1.4 1999/02/15 04:36:33 hubertf Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
