@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.342 2001/05/16 13:48:53 ad Exp $
+#	$NetBSD: mi,v 1.343 2001/05/26 00:37:04 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2998,6 +2998,9 @@
 ./usr/share/man/cat9/gsignal.0		comp-sys-catman
 ./usr/share/man/cat9/humanize_number.0		comp-sys-catman
 ./usr/share/man/cat9/i386/bioscall.0		comp-sys-catman
+./usr/share/man/cat9/in4_cksum.0		comp-sys-catman
+./usr/share/man/cat9/in6_cksum.0		comp-sys-catman
+./usr/share/man/cat9/in_cksum.0		comp-sys-catman
 ./usr/share/man/cat9/inittodr.0		comp-sys-catman
 ./usr/share/man/cat9/intro.0		comp-sys-catman
 ./usr/share/man/cat9/ioctl.0		comp-sys-catman
@@ -4949,6 +4952,9 @@
 ./usr/share/man/man9/gsignal.9		comp-sys-man
 ./usr/share/man/man9/humanize_number.9		comp-sys-man
 ./usr/share/man/man9/i386/bioscall.9	comp-sys-man
+./usr/share/man/man9/in4_cksum.9	comp-sys-man
+./usr/share/man/man9/in6_cksum.9	comp-sys-man
+./usr/share/man/man9/in_cksum.9		comp-sys-man
 ./usr/share/man/man9/inittodr.9		comp-sys-man
 ./usr/share/man/man9/intro.9		comp-sys-man
 ./usr/share/man/man9/ioctl.9		comp-sys-man
