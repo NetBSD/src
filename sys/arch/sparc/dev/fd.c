@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.48 1997/03/31 20:27:32 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.49 1997/04/07 21:01:56 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -160,7 +160,7 @@ struct fd_type {
 	int	steprate;	/* step rate and head unload time */
 	int	gap1;		/* gap len between sectors */
 	int	gap2;		/* formatting gap */
-	int	tracks;		/* total num of tracks */
+	int	cylinders;	/* total num of cylinders */
 	int	size;		/* size of disk in sectors */
 	int	step;		/* steps per cylinder */
 	int	rate;		/* transfer speed code */
@@ -528,7 +528,7 @@ fdmatch(parent, match, aux)
 		/* wait for motor to spin up */
 		delay(250000);
 	} else {
-		auxregbisc(AUXIO_FDS, 0);
+		auxregbisc(AUXIO4C_FDS, 0);
 	}
 	fdc->sc_nstat = 0;
 	out_fdc(fdc, NE7CMD_RECAL);
@@ -568,7 +568,7 @@ fdmatch(parent, match, aux)
 		/* select drive and turn on motor */
 		*fdc->sc_reg_dor = FDO_FRST;
 	} else {
-		auxregbisc(0, AUXIO_FDS);
+		auxregbisc(0, AUXIO4C_FDS);
 	}
 
 	return (ok);
@@ -592,7 +592,7 @@ fdattach(parent, self, aux)
 
 	if (type)
 		printf(": %s %d cyl, %d head, %d sec\n", type->name,
-		    type->tracks, type->heads, type->sectrac);
+		    type->cylinders, type->heads, type->sectrac);
 	else
 		printf(": density unknown\n");
 
@@ -801,9 +801,9 @@ fd_set_motor(fdc)
 			if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
 				on = 1;
 		if (on) {
-			auxregbisc(AUXIO_FDS, 0);
+			auxregbisc(AUXIO4C_FDS, 0);
 		} else {
-			auxregbisc(0, AUXIO_FDS);
+			auxregbisc(0, AUXIO4C_FDS);
 		}
 	}
 }
@@ -1097,7 +1097,6 @@ fdchwintr(fdc)
 		FD_SET_SWINTR;
 		return (1);
 	case ISTATE_SPURIOUS:
-		auxregbisc(0, AUXIO_FDS);	/* Does this help? */
 		fdcresult(fdc);
 		fdc->sc_istate = ISTATE_SPURIOUS;
 		printf("fdc: stray hard interrupt... ");
@@ -1132,10 +1131,8 @@ fdchwintr(fdc)
 			*fdc->sc_reg_fifo = *fdc->sc_data++;
 		}
 		if (--fdc->sc_tc == 0) {
-			auxregbisc(AUXIO_FTC, 0);
 			fdc->sc_istate = ISTATE_IDLE;
-			delay(10);
-			auxregbisc(0, AUXIO_FTC);
+			FTC_FLIP;
 			fdcresult(fdc);
 			FD_SET_SWINTR;
 			break;
@@ -1243,7 +1240,7 @@ loop:
 		/* Make sure the right drive is selected. */
 		fd_set_motor(fdc);
 
-		/* fall through */
+		/*FALLTHROUGH*/
 	case DOSEEK:
 	doseek:
 		if ((fdc->sc_flags & FDC_EIS) &&
@@ -1354,7 +1351,7 @@ loop:
 			timeout(fdcpseudointr, fdc, hz / 50);
 			return (1);		/* will return later */
 		}
-
+		/*FALLTHROUGH*/
 	case SEEKCOMPLETE:
 		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
 
@@ -1372,10 +1369,9 @@ loop:
 		goto doio;
 
 	case IOTIMEDOUT:
-		auxregbisc(AUXIO_FTC, 0);
-		delay(10);
-		auxregbisc(0, AUXIO_FTC);
+		FTC_FLIP;
 		(void)fdcresult(fdc);
+		/*FALLTHROUGH*/
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1654,7 +1650,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		form_parms = (struct fdformat_parms *)addr;
 		form_parms->fdformat_version = FDFORMAT_VERSION;
 		form_parms->nbps = 128 * (1 << fd->sc_type->secsize);
-		form_parms->ncyl = fd->sc_type->tracks;
+		form_parms->ncyl = fd->sc_type->cylinders;
 		form_parms->nspt = fd->sc_type->sectrac;
 		form_parms->ntrk = fd->sc_type->heads;
 		form_parms->stepspercyl = fd->sc_type->step;
@@ -1715,13 +1711,13 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd->sc_type->seccyl = form_parms->nspt * form_parms->ntrk;
 		fd->sc_type->secsize = ffs(i)-1;
 		fd->sc_type->gap2 = form_parms->gaplen;
-		fd->sc_type->tracks = form_parms->ncyl;
+		fd->sc_type->cylinders = form_parms->ncyl;
 		fd->sc_type->size = fd->sc_type->seccyl * form_parms->ncyl *
 			form_parms->nbps / DEV_BSIZE;
 		fd->sc_type->step = form_parms->stepspercyl;
 		fd->sc_type->fillbyte = form_parms->fillbyte;
 		fd->sc_type->interleave = form_parms->interleave;
-		return 0;
+		return (0);
 
 	case FDIOCFORMAT_TRACK:
 		if((flag & FWRITE) == 0)
@@ -1733,7 +1729,7 @@ fdioctl(dev, cmd, addr, flag, p)
 			return (EINVAL);
 
 		if (form_cmd->head >= fd->sc_type->heads ||
-		    form_cmd->cylinder >= fd->sc_type->tracks) {
+		    form_cmd->cylinder >= fd->sc_type->cylinders) {
 			return (EINVAL);
 		}
 
@@ -1745,11 +1741,11 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd_formb.fd_formb_gaplen = fd->sc_type->gap2;
 		fd_formb.fd_formb_fillbyte = fd->sc_type->fillbyte;
 
-		bzero(il,sizeof il);
+		bzero(il, sizeof il);
 		for (j = 0, i = 1; i <= fd_formb.fd_formb_nsecs; i++) {
-			while (il[(j%fd_formb.fd_formb_nsecs)+1])
+			while (il[(j%fd_formb.fd_formb_nsecs) + 1])
 				j++;
-			il[(j%fd_formb.fd_formb_nsecs)+1] = i;
+			il[(j%fd_formb.fd_formb_nsecs) + 1] = i;
 			j += fd->sc_type->interleave;
 		}
 		for (i = 0; i < fd_formb.fd_formb_nsecs; i++) {
@@ -1838,8 +1834,8 @@ fdformat(dev, finfo, p)
 	bp->b_dev = dev;
 
 	/*
-	 * calculate a fake blkno, so fdstrategy() would initiate a
-	 * seek to the requested cylinder
+	 * Calculate a fake blkno, so fdstrategy() would initiate a
+	 * seek to the requested cylinder.
 	 */
 	bp->b_blkno = (finfo->cyl * (type->sectrac * type->heads)
 		       + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
@@ -1849,7 +1845,7 @@ fdformat(dev, finfo, p)
 
 #ifdef FD_DEBUG
 	if (fdc_debug)
-		printf("fdformat: blkno %x count %lx\n",
+		printf("fdformat: blkno %x count %ld\n",
 			bp->b_blkno, bp->b_bcount);
 #endif
 
@@ -1894,7 +1890,7 @@ fdgetdisklabel(dev)
 	lp->d_secsize = FDC_BSIZE;
 	lp->d_secpercyl = fd->sc_type->seccyl;
 	lp->d_nsectors = fd->sc_type->sectrac;
-	lp->d_ncylinders = fd->sc_type->tracks;
+	lp->d_ncylinders = fd->sc_type->cylinders;
 	lp->d_ntracks = fd->sc_type->heads;	/* Go figure... */
 	lp->d_rpm = 3600;	/* XXX like it matters... */
 
@@ -1943,10 +1939,14 @@ fdgetdisklabel(dev)
 void
 fd_do_eject()
 {
-
-	auxregbisc(AUXIO_FDS, AUXIO_FEJ);
-	delay(10);
-	auxregbisc(AUXIO_FEJ, AUXIO_FDS);
+	if (CPU_ISSUN4C) {
+		auxregbisc(AUXIO4C_FDS, AUXIO4C_FEJ);
+		delay(10);
+		auxregbisc(AUXIO4C_FEJ, AUXIO4C_FDS);
+	}
+	if (CPU_ISSUN4M) {
+		/*notyet*/
+	}
 }
 
 #ifdef MEMORY_DISK_HOOKS
