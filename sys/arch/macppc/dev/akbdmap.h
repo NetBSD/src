@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
+/*	$NetBSD: akbdmap.h,v 1.4 2002/03/04 04:03:36 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(49),			KS_space,
     KC(50),			KS_grave,	KS_asciitilde,
     KC(51),			KS_Delete,
-
+    KC(52),			KS_KP_Enter,    /* Maybe we should pretend this is alt-R */
     KC(53),			KS_Escape,
     KC(54),			KS_Control_L,
     KC(55),  KS_Cmd,				/* Command */
@@ -128,8 +128,30 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(92),			KS_KP_9,
 
     KC(95),			KS_comma,	/* XXX KS_KP_comma */
+    KC(96),			KS_f5,
+    KC(97),			KS_f6,
+    KC(98),			KS_f7,
+    KC(99),			KS_f3,
+    KC(100),			KS_f8,
+
+    KC(101),			KS_f9,
+
+    KC(103),			KS_f11,
 
     KC(106),			KS_KP_Enter,
+
+    KC(109),			KS_f10,
+
+    KC(111),			KS_f12,
+
+    KC(115),			KS_Home,
+    KC(116),			KS_Prior,
+
+    KC(118),			KS_f4,
+    KC(119),			KS_End,
+    KC(120),			KS_f2,
+    KC(121),			KS_Next,
+    KC(122),			KS_f1,
 
     KC(127),  KS_Cmd_Debugger,
 };
