@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.6 1996/12/10 21:28:02 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.7 1997/03/29 02:32:31 mycroft Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -8,7 +8,7 @@
 #endif
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -117,8 +117,9 @@ struct cfdriver uha_cd = {
  * Attach all the sub-devices we can find
  */
 void
-uha_attach(sc)
+uha_attach(sc, upd)
 	struct uha_softc *sc;
+	struct uha_probe_data *upd;
 {
 
 	(sc->init)(sc);
@@ -129,7 +130,7 @@ uha_attach(sc)
 	 */
 	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_scsi_dev;
+	sc->sc_link.adapter_target = upd->sc_scsi_dev;
 	sc->sc_link.adapter = &uha_switch;
 	sc->sc_link.device = &uha_dev;
 	sc->sc_link.openings = 2;
