@@ -19,7 +19,7 @@
  * 4. The name of Theo de Raadt may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- *	$Id: tty_subr.c,v 1.1.4.1 1993/09/24 08:51:49 mycroft Exp $
+ *	$Id: tty_subr.c,v 1.1.4.2 1993/10/13 02:46:47 deraadt Exp $
  */
 
 #include "param.h"
@@ -29,8 +29,6 @@
 #include "tty.h"
 #include "clist.h"
 #include "malloc.h"
-
-#include "machine/cpu.h"
 
 /*
  * At compile time, choose:
@@ -190,14 +188,30 @@ ndqb(clp, flag)
 	int s;
 
 	s = spltty();
-	if ((cc = clp->c_cc) == 0 || flag == 0)
+	if ((cc = clp->c_cc) == 0)
 		goto out;
 
+	if (flag == 0) {
+		count = clp->c_cl - clp->c_cf;
+		if (count < 0)
+			count = clp->c_ce - clp->c_cf;
+		goto out;
+	}
+
 	i = clp->c_cf - clp->c_cs;
-	while (cc-- > 0 && (clp->c_cs[i++] & flag) == 0) {
-		count++;
-		if (i == clp->c_cn)
-			break;
+	if(flag & TTY_QUOTE) {
+		while (cc-- > 0 && (clp->c_cs[i++] & (flag & ~TTY_QUOTE)) &&
+		    !isset(clp->c_cq, i)) {
+			count++;
+			if (i == clp->c_cn)
+				break;
+		}
+	} else {
+		while (cc-- > 0 && (clp->c_cs[i++] & flag)) {
+			count++;
+			if (i == clp->c_cn)
+				break;
+		}
 	}
 out:
 	splx(s);
