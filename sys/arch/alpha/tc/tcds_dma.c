@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.16 1997/02/27 01:27:55 thorpej Exp $	*/
+/* $NetBSD: tcds_dma.c,v 1.17 1997/04/06 22:32:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/types.h>
 #include <sys/param.h>

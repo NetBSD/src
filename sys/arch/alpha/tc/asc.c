@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.2 1997/03/15 18:09:16 is Exp $	*/
+/* $NetBSD: asc.c,v 1.3 1997/04/06 22:31:45 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -99,6 +99,8 @@
  * inspired by the work of Julian Elischer (julian@tfs.com) and
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/types.h>
 #include <sys/param.h>

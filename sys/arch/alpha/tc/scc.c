@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.29 1996/12/08 00:22:22 cgd Exp $	*/
+/* $NetBSD: scc.c,v 1.30 1997/04/06 22:31:56 cgd Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -62,6 +62,8 @@
  *
  *	@(#)scc.c	8.2 (Berkeley) 11/30/93
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include "scc.h"
 #if NSCC > 0
