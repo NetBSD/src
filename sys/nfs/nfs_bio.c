@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.45.4.1 1999/06/07 04:25:32 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45.4.2 1999/07/04 01:45:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1320,7 +1320,7 @@ nfs_getpages(v)
 	 * read at last part of the page.
 	 */
 
-	kva = uvm_pagermapin(&pgs[vidx], npages, NULL, M_WAITOK);
+	kva = uvm_pagermapin(&pgs[vidx], npages, M_WAITOK);
 	if (kva == 0) {
 		return VM_PAGER_AGAIN;
 	}
@@ -1417,7 +1417,7 @@ nfs_putpages(v)
 	}
 
 	m = ap->a_m[0];
-	kva = uvm_pagermapin(ap->a_m, ap->a_count, NULL, M_WAITOK);
+	kva = uvm_pagermapin(ap->a_m, ap->a_count, M_WAITOK);
 	if (kva == 0) {
 		return VM_PAGER_AGAIN;
 	}
