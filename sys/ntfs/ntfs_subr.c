@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.13 1999/09/07 08:16:13 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.14 1999/09/28 06:10:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -63,6 +63,9 @@ MALLOC_DEFINE(M_NTFSRUN, "NTFS vrun", "NTFS vrun storage");
 MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
 #endif
 
+static int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
+static int ntfs_findvattr __P((struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t));
+
 /* table for mapping Unicode chars into uppercase; it's filled upon first
  * ntfs mount, freed upon last ntfs umount */
 static wchar *ntfs_toupper_tab;
@@ -71,12 +74,17 @@ static wchar *ntfs_toupper_tab;
 static struct lock ntfs_toupper_lock;
 static signed int ntfs_toupper_usecount;
 
+/* support macro for ntfs_ntvattrget() */
+#define NTFS_AALPCMP(aalp,type,name,namelen) (				\
+  (aalp->al_type == type) && (aalp->al_namelen == namelen) &&		\
+  !ntfs_uastrcmp(aalp->al_name,aalp->al_namelen,name,namelen) )
+
 /*
  * 
  */
 int
-ntfs_ntvattrrele(
-		 struct ntvattr * vap)
+ntfs_ntvattrrele(vap)
+	struct ntvattr * vap;
 {
 	dprintf(("ntfs_ntvattrrele: ino: %d, type: 0x%x\n",
 		 vap->va_ip->i_number, vap->va_type));
@@ -84,6 +92,54 @@ ntfs_ntvattrrele(
 	ntfs_ntrele(vap->va_ip);
 
 	return (0);
+}
+
+/*
+ * find the attribute in the ntnode
+ */
+static int
+ntfs_findvattr(ntmp, ip, lvapp, vapp, type, name, namelen, vcn)
+	struct ntfsmount *ntmp;
+	struct ntnode *ip;
+	struct ntvattr **lvapp, **vapp;
+	u_int32_t type;
+	const char *name;
+	size_t namelen;
+	cn_t vcn;
+{
+	int error;
+	struct ntvattr *vap;
+
+	if((ip->i_flag & IN_LOADED) == 0) {
+		dprintf(("ntfs_findvattr: node not loaded, ino: %d\n",
+		       ip->i_number));
+		error = ntfs_loadntnode(ntmp,ip);
+		if (error) {
+			printf("ntfs_findvattr: FAILED TO LOAD INO: %d\n",
+			       ip->i_number);
+			return (error);
+		}
+	}
+
+	*lvapp = NULL;
+	*vapp = NULL;
+	for (vap = ip->i_valist.lh_first; vap; vap = vap->va_list.le_next) {
+		ddprintf(("ntfs_findvattr: type: 0x%x, vcn: %d - %d\n", \
+			  vap->va_type, (u_int32_t) vap->va_vcnstart, \
+			  (u_int32_t) vap->va_vcnend));
+		if ((vap->va_type == type) &&
+		    (vap->va_vcnstart <= vcn) && (vap->va_vcnend >= vcn) &&
+		    (vap->va_namelen == namelen) &&
+		    (strncmp(name, vap->va_name, namelen) == 0)) {
+			*vapp = vap;
+			ntfs_ntref(vap->va_ip);
+			return (0);
+		}
+		if (vap->va_type == NTFS_A_ATTRLIST)
+			*lvapp = vap;
+	}
+
+	return (-1);
 }
 
 /*
@@ -98,18 +154,18 @@ ntfs_ntvattrget(
 		struct ntfsmount * ntmp,
 		struct ntnode * ip,
 		u_int32_t type,
-		char *name,
+		const char *name,
 		cn_t vcn,
 		struct ntvattr ** vapp)
 {
-	int             error;
-	struct ntvattr *vap;
 	struct ntvattr *lvap = NULL;
 	struct attr_attrlist *aalp;
 	struct attr_attrlist *nextaalp;
+	struct vnode   *newvp;
+	struct ntnode  *newip;
 	caddr_t         alpool;
-	int             namelen;
-	size_t		len;
+	size_t		namelen, len;
+	int             error;
 
 	*vapp = NULL;
 
@@ -126,32 +182,9 @@ ntfs_ntvattrget(
 		namelen = 0;
 	}
 
-	if((ip->i_flag & IN_LOADED) == 0) {
-		dprintf(("ntfs_ntvattrget: node not loaded, ino: %d\n",
-		       ip->i_number));
-		error = ntfs_loadntnode(ntmp,ip);
-		if(error) {
-			printf("ntfs_ntvattrget: FAILED TO LOAD INO: %d\n",
-			       ip->i_number);
-			return (error);
-		}
-	}
-
-	for (vap = ip->i_valist.lh_first; vap; vap = vap->va_list.le_next) {
-		ddprintf(("type: 0x%x, vcn: %d - %d\n", \
-			  vap->va_type, (u_int32_t) vap->va_vcnstart, \
-			  (u_int32_t) vap->va_vcnend));
-		if ((vap->va_type == type) &&
-		    (vap->va_vcnstart <= vcn) && (vap->va_vcnend >= vcn) &&
-		    (vap->va_namelen == namelen) &&
-		    (!strncmp(name, vap->va_name, namelen))) {
-			*vapp = vap;
-			ntfs_ntref(vap->va_ip);
-			return (0);
-		}
-		if (vap->va_type == NTFS_A_ATTRLIST)
-			lvap = vap;
-	}
+	error = ntfs_findvattr(ntmp, ip, &lvap, vapp, type, name, namelen, vcn);
+	if (error >= 0)
+		return (error);
 
 	if (!lvap) {
 		dprintf(("ntfs_ntvattrget: UNEXISTED ATTRIBUTE: " \
@@ -170,7 +203,7 @@ ntfs_ntvattrget(
 	aalp = (struct attr_attrlist *) alpool;
 	nextaalp = NULL;
 
-	while (len > 0) {
+	for(; len > 0; aalp = nextaalp) {
 		dprintf(("ntfs_ntvattrget: " \
 			 "attrlist: ino: %d, attr: 0x%x, vcn: %d\n", \
 			 aalp->al_inumber, aalp->al_type, \
@@ -183,71 +216,40 @@ ntfs_ntvattrget(
 		}
 		len -= aalp->reclen;
 
-#define AALPCMP(aalp,type,name,namelen) (				\
-  (aalp->al_type == type) && (aalp->al_namelen == namelen) &&		\
-  !ntfs_uastrcmp(aalp->al_name,aalp->al_namelen,name,namelen) )
+		if (!NTFS_AALPCMP(aalp, type, name, namelen) ||
+		    (nextaalp && (nextaalp->al_vcnstart <= vcn) &&
+		     NTFS_AALPCMP(nextaalp, type, name, namelen)))
+			continue;
 
-		if (AALPCMP(aalp, type, name, namelen) &&
-		    (!nextaalp || (nextaalp->al_vcnstart > vcn) ||
-		     !AALPCMP(nextaalp, type, name, namelen))) {
-			struct vnode   *newvp;
-			struct ntnode  *newip;
-
-			dprintf(("ntfs_ntvattrget: attrbute in ino: %d\n",
+		dprintf(("ntfs_ntvattrget: attribute in ino: %d\n",
 				 aalp->al_inumber));
 
 /*
-			error = VFS_VGET(ntmp->ntm_mountp, aalp->al_inumber,
-					 &newvp);
+		error = VFS_VGET(ntmp->ntm_mountp, aalp->al_inumber, &newvp);
 */
-			error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
-					NTFS_A_DATA, NULL, LK_EXCLUSIVE,
+		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
+				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
 					VG_EXT, curproc, &newvp);
-			if (error) {
-				printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
-				       aalp->al_inumber);
-				goto out;
-			}
-			newip = VTONT(newvp);
-			/* XXX have to lock ntnode */
-			if(~newip->i_flag & IN_LOADED) {
-				dprintf(("ntfs_ntvattrget: node not loaded," \
-					 " ino: %d\n", newip->i_number));
-				error = ntfs_loadntnode(ntmp,ip);
-				if(error) {
-					printf("ntfs_ntvattrget: CAN'T LOAD " \
-					       "INO: %d\n", newip->i_number);
-					vput(newvp);
-					goto out;
-				}
-			}
-			for (vap = newip->i_valist.lh_first; vap; vap = vap->va_list.le_next) {
-				if ((vap->va_type == type) &&
-				    (vap->va_vcnstart <= vcn) &&
-				    (vap->va_vcnend >= vcn) &&
-				    (vap->va_namelen == namelen) &&
-				  (!strncmp(name, vap->va_name, namelen))) {
-					*vapp = vap;
-					ntfs_ntref(vap->va_ip);
-					vput(newvp);
-					error = 0;
-					goto out;
-				}
-				if (vap->va_type == NTFS_A_ATTRLIST)
-					lvap = vap;
-			}
-			printf("ntfs_ntvattrget: ATTRLIST ERROR.\n");
-			vput(newvp);
-			break;
+		if (error) {
+			printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
+			       aalp->al_inumber);
+			goto out;
 		}
-#undef AALPCMP
-		aalp = nextaalp;
+		newip = VTONT(newvp);
+		/* XXX have to lock ntnode */
+		error = ntfs_findvattr(ntmp, newip, &lvap, vapp,
+				type, name, namelen, vcn);
+		vput(newvp);
+		if (error == 0)
+			goto out;
+		printf("ntfs_ntvattrget: ATTRLIST ERROR.\n");
+		break;
 	}
 	error = ENOENT;
 
 	dprintf(("ntfs_ntvattrget: UNEXISTED ATTRIBUTE: " \
-	       "ino: %d, type: 0x%x, name: %s, vcn: %d\n", \
-	       ip->i_number, type, name, (u_int32_t) vcn));
+	       "ino: %d, type: 0x%x, name: %.*s, vcn: %d\n", \
+	       ip->i_number, type, namelen, name, (u_int32_t) vcn));
 out:
 	FREE(alpool, M_TEMP);
 	return (error);
@@ -353,8 +355,8 @@ out:
  * ntfs_ntput.
  */
 int
-ntfs_ntget(
-	   struct ntnode *ip)
+ntfs_ntget(ip)
+	struct ntnode *ip;
 {
 	dprintf(("ntfs_ntget: get ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
@@ -663,11 +665,11 @@ ntfs_runtovrun(
  * Compare to unicode strings case insensible.
  */
 int
-ntfs_uustricmp(
-	       wchar * str1,
-	       int str1len,
-	       wchar * str2,
-	       int str2len)
+ntfs_uustricmp(str1, str1len, str2, str2len)
+	const wchar *str1;
+	int str1len;
+	const wchar *str2;
+	int str2len;
 {
 	int             i;
 	int             res;
@@ -808,7 +810,7 @@ ntfs_frele(
  * $ATTR_TYPE is searched in attrdefs read from $AttrDefs.
  * If $ATTR_TYPE nott specifed, ATTR_A_DATA assumed.
  */
-int
+static int
 ntfs_ntlookupattr(
 		struct ntfsmount * ntmp,
 		const char * name,
@@ -842,18 +844,13 @@ ntfs_ntlookupattr(
 				continue;
 
 			*attrtype = adp->ad_type;
-			if (namelen) {
-				MALLOC((*attrname), char *, namelen,
-					M_TEMP, M_WAITOK);
-				memcpy((*attrname), name, namelen);
-				(*attrname)[namelen] = '\0';
-			}
-			return (0);
+			goto out;
 		}
 		return (ENOENT);
 	}
 
-	if(namelen) {
+    out:
+	if (namelen) {
 		MALLOC((*attrname), char *, namelen, M_TEMP, M_WAITOK);
 		memcpy((*attrname), name, namelen);
 		(*attrname)[namelen] = '\0';
@@ -973,7 +970,14 @@ ntfs_ntlookupfile(
 			{
 				VREF(vp);
 				*vpp = vp;
+				error = 0;
 				goto fail;
+			}
+
+			/* free the buffer returned by ntfs_ntlookupattr() */
+			if (attrname) {
+				FREE(attrname, M_TEMP);
+				attrname = NULL;
 			}
 
 			/* vget node, but don't load it */
@@ -1055,6 +1059,7 @@ ntfs_ntlookupfile(
 	dprintf(("finish\n"));
 
 fail:
+	if (attrname) FREE(attrname, M_TEMP);
 	ntfs_ntvattrrele(vap);
 	ntfs_ntput(ip);
 	FREE(rdbuf, M_TEMP);
@@ -1346,8 +1351,6 @@ ntfs_filesize(
 
 /*
  * This is one of write routine.
- *
- * ntnode should be locked.
  */
 int
 ntfs_writeattr_plain(
@@ -1646,8 +1649,6 @@ ntfs_readntvattr_plain(
 
 /*
  * This is one of read routines.
- *
- * ntnode should be locked.
  */
 int
 ntfs_readattr_plain(
@@ -1703,8 +1704,6 @@ ntfs_readattr_plain(
 
 /*
  * This is one of read routines.
- *
- * ntnode should be locked.
  */
 int
 ntfs_readattr(
