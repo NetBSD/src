@@ -1,13 +1,10 @@
-#	$NetBSD: files.hpcarm,v 1.6 2001/02/25 18:28:28 bjh21 Exp $
+#	$NetBSD: files.hpcarm,v 1.7 2001/02/27 17:56:32 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
 
 maxpartitions	8
 maxusers 2 8 64
-
-# Floating point emulator
-defopt	ARMFPE
 
 # Maintain Interrupt statistics
 defopt	IRQSTATS

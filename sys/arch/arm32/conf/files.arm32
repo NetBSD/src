@@ -1,13 +1,10 @@
-#	$NetBSD: files.arm32,v 1.95 2001/02/25 18:28:27 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.96 2001/02/27 17:56:32 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
 
 maxpartitions	8
 maxusers 2 8 64
-
-# Floating point emulator
-defopt	ARMFPE
 
 # COMPAT_OLD_OFW for SHARKs
 defopt	COMPAT_OLD_OFW
