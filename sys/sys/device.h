@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.42 2000/06/13 22:36:16 cgd Exp $ */
+/* $NetBSD: device.h,v 1.43 2000/07/06 00:42:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -254,6 +254,7 @@ void config_defer(struct device *, void (*)(struct device *));
 void config_interrupts(struct device *, void (*)(struct device *));
 void config_pending_incr(void);
 void config_pending_decr(void);
+
 #ifdef __HAVE_DEVICE_REGISTER
 void device_register(struct device *, void *);
 #endif
@@ -265,6 +266,10 @@ void	evcnt_detach(struct evcnt *);
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
+
+/* convenience definitions */
+#define	device_lookup(cfd, unit)					\
+	(((unit) < (cfd)->cd_ndevs) ? (cfd)->cd_devs[(unit)] : NULL)
 
 #endif /* _KERNEL */
 
