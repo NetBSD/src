@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.21 2002/02/24 18:19:43 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.22 2002/03/02 22:26:25 uch Exp $
 #
 maxpartitions 8
 
@@ -85,7 +85,7 @@ attach	hd64461pcmcia at hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461pcmcia.c	hd64461pcmcia
 
 attach	com at hd64461if with hd64461uart
-file	arch/hpcsh/dev/hd64461/hd64461uart.c	hd64461uart
+file	arch/hpcsh/dev/hd64461/hd64461uart.c	hd64461uart	needs-flag
 
 device	hd64461video: hpcfbif
 attach	hd64461video at hd64461if
@@ -101,7 +101,7 @@ attach	hd64465if at shb
 file	arch/hpcsh/dev/hd64465/hd64465.c	hd64465if	needs-flag
 
 attach	com at hd64465if with hd64465uart
-file	arch/hpcsh/dev/hd64465/hd64465uart.c	hd64465uart
+file	arch/hpcsh/dev/hd64465/hd64465uart.c	hd64465uart	needs-flag
 
 device	hd64465pcmcia: pcmciabus
 attach	hd64465pcmcia at hd64465if

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.7 2002/02/11 17:32:35 uch Exp $	*/
+/*	$NetBSD: console.c,v 1.8 2002/03/02 22:26:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,14 +37,12 @@
  */
 
 #include "opt_kgdb.h"
-
 #include "biconsdev.h"
 #include "hpcfb.h"
-#include "sci.h"
 #include "scif.h"
-#include "com.h"
+#include "hd64461uart.h"
+#include "hd64465uart.h"
 #include "hd64461video.h"
-
 #include "wskbd.h"
 #include "pfckbd.h"
 
@@ -55,35 +53,29 @@
 
 #include <machine/bootinfo.h>
 
-#if !defined(NBICONSDEV) || !defined(NHPCFB) || !defined(NPFCKBD) ||	\
-	!defined(NHD64461VIDEO) || !defined(NSCI) || !defined(NSCIF) ||	\
-	!defined(NCOM)
-#error
-#endif
-
-#if NBICONSDEV > 0
-#include <dev/hpc/biconsvar.h>
-#include <dev/hpc/bicons.h>
-#endif
-
-#if NHPCFB > 0
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
+#include <dev/hpc/bicons.h>
+#include <dev/hpc/biconsvar.h>
 #include <dev/hpc/hpcfbvar.h>
-#endif
-
-#if NPFCKBD > 0
+#include <sh3/dev/scifvar.h>
 #include <hpcsh/dev/pfckbdvar.h>
-#endif
+#include <hpcsh/dev/hd64461/hd64461uartvar.h>
+#include <hpcsh/dev/hd64465/hd64465uartvar.h>
 
-/* serial console */
-#define scicnpollc	nullcnpollc
-cons_decl(sci);
+/* Serial console */
 #define scifcnpollc	nullcnpollc
 cons_decl(scif);
-cons_decl(com);
+#define	hd64461uartcnputc	comcnputc
+#define	hd64461uartcngetc	comcngetc
+#define	hd64461uartcnpollc	comcnpollc
+cons_decl(hd64461uart);
+#define	hd64465uartcnputc	comcnputc
+#define	hd64465uartcngetc	comcngetc
+#define	hd64465uartcnpollc	comcnpollc
+cons_decl(hd64465uart);
 
-/* builtin video console */
+/* Builtin video console */
 #if NBICONSDEV > 0
 #define biconscnpollc	nullcnpollc
 cons_decl(bicons);
@@ -95,7 +87,7 @@ cons_decl(hd64461video_);
 #if NWSKBD > 0
 #include <dev/wscons/wskbdvar.h>
 #define hd64461video_cngetc	wskbd_cngetc
-#else
+#else /* NWSKBD > 0 */
 int
 hd64461video_cngetc(dev_t dev)
 {
@@ -104,10 +96,10 @@ hd64461video_cngetc(dev_t dev)
 		;
 	/* NOTREACHED */
 }
-#endif
+#endif /* NWSKBD > 0 */
 #define hd64461video_cnputc	wsdisplay_cnputc
 #define	hd64461video_cnpollc	nullcnpollc
-#endif
+#endif /* NHD64461VIDEO > 0 */
 
 struct consdev constab[] = {
 #if NBICONSDEV > 0
@@ -116,25 +108,19 @@ struct consdev constab[] = {
 #if NHD64461VIDEO > 0
 	cons_init(hd64461video_),
 #endif
-#if NSCI > 0
-	cons_init(sci),
-#endif
 #if NSCIF > 0
 	cons_init(scif),
 #endif
-#if NCOM > 0
-	cons_init(com),
+#if NHD64461UART > 0
+	cons_init(hd64461uart),
+#endif
+#if NHD64465UART > 0
+	cons_init(hd64465uart),
 #endif
 	{ 0 } /* terminator */
 };
 #define CN_ENABLE(x)	set_console(x ## cnputc, x ## cnprobe)
 
-#ifdef KGDB
-#ifndef KGDB_DEVNAME
-#define KGDB_DEVNAME "nodev"
-#endif
-const char kgdb_devname[] = KGDB_DEVNAME;
-#endif
 static int initialized;
 static int attach_kbd  __attribute__((__unused__)) = 1;
 static void set_console(void (*)(dev_t, int), void (*)(struct consdev *));
@@ -165,21 +151,19 @@ consinit()
 		attach_kbd = 1;
 #endif
 		break;
-	case BI_CNUSE_SCI:
-#if NSCI > 0
-		CN_ENABLE(sci);
-#endif
-		break;
 	case BI_CNUSE_SCIF:
 #if NSCIF > 0
 		CN_ENABLE(scif);
 #endif
 		break;
-	case BI_CNUSE_HD64465COM:
-		/* FALLTHROUGH */
 	case BI_CNUSE_HD64461COM:
-#if NCOM > 0
-		CN_ENABLE(com);
+#if NHD64461UART > 0
+		CN_ENABLE(hd64461uart);
+#endif
+		break;
+	case BI_CNUSE_HD64465COM:
+#if NHD64465UART > 0
+		CN_ENABLE(hd64465uart);
 #endif
 		break;
 	}
@@ -203,6 +187,18 @@ consinit()
 	if (cn_tab->cn_putc == biconscnputc)
 		hpcfb_cnattach(0);
 #endif
+
+#ifdef KGDB
+#if NSCIF > 0
+	scif_kgdb_init();
+#endif
+#if NHD64461UART > 0
+	hd64461uart_kgdb_init();
+#endif
+#if NHD64465UART > 0
+	hd64465uart_kgdb_init();
+#endif
+#endif /* KGDB */
 }
 
 static void

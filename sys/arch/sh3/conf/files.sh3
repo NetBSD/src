@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.20 2002/02/28 01:57:01 uch Exp $
+#	$NetBSD: files.sh3,v 1.21 2002/03/02 22:26:27 uch Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -6,7 +6,7 @@
 defparam PCLOCK
 
 file	arch/sh3/sh3/db_disasm.c	ddb
-file	arch/sh3/sh3/db_interface.c	ddb
+file	arch/sh3/sh3/db_interface.c	ddb | kgdb
 file	arch/sh3/sh3/db_memrw.c		ddb | kgdb
 file	arch/sh3/sh3/db_trace.c		ddb
 file	arch/sh3/sh3/sh3disasm.c	ddb
