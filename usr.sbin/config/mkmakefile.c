@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.33 1997/01/31 03:12:33 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -184,6 +184,8 @@ emitdefs(fp)
 		return (1);
 	sp = "";
 	for (nv = options; nv != NULL; nv = nv->nv_next) {
+		if (ht_lookup(defopttab, nv->nv_name) != NULL)
+			continue;
 		if (fprintf(fp, "%s-D%s", sp, nv->nv_name) < 0)
 		    return 1;
 		if (nv->nv_str)
