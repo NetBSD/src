@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.8 2001/05/28 20:52:06 tshiozak Exp $	*/
+/*	$NetBSD: umidi.c,v 1.9 2001/09/29 22:00:47 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -391,6 +391,7 @@ alloc_all_endpoints(struct umidi_softc *sc)
 	usbd_status err;
 	struct umidi_endpoint *ep;
 	int i;
+
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_FIXED_EP)) {
 		err = alloc_all_endpoints_fixed_ep(sc);
 	} else if (UMQ_ISTYPE(sc, UMQ_TYPE_YAMAHA)) {
@@ -646,8 +647,8 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 		} else if (desc->bDescriptorType==UDESC_CS_ENDPOINT &&
 			   remain>=UMIDI_CS_ENDPOINT_DESCRIPTOR_SIZE &&
 			   epaddr!=-1) {
-			num_ep--;
 			if (num_ep>0) {
+				num_ep--;
 				p->sc = sc;
 				p->addr = epaddr;
 				p->num_jacks = TO_CSEPD(desc)->bNumEmbMIDIJack;
