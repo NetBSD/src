@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.4 2000/05/21 08:13:20 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.5 2000/05/22 15:54:53 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -75,7 +75,7 @@ from_0x0A:			# uVAX from disk
 
 from_0x08:			# Any machine from VMB
 	movzbl	$4,_from		# Booted from full VMB
-	halt			# Can't handle this...
+	halt			# Cannot handle this...
 
 _from:	.long	0		# boot prog type
 	.globl	_from
