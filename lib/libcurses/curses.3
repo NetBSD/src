@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.24 2000/04/26 12:29:47 blymn Exp $
+.\"	$NetBSD: curses.3,v 1.25 2000/04/27 00:28:28 jdc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -123,6 +123,7 @@ normal, 2 is high visibility.  Returns previous value on success.
 .It derwin(win,lines,cols,begin_y,begin_x)\ 	create a subwindow
 relative to 
 .Em win.
+.It doupdate()	make current screen look like virtual screen 
 .It dupwin(win)	duplicate
 .Em win
 .It echo()	set echo mode
@@ -314,6 +315,9 @@ on window
 .Em win
 .It wmove(win,y,x)	set current (y,x) co-ordinates on
 .Em win
+.It wnoutrefresh(win)	add
+.Em win
+to virtual screen
 .It wprintw(win,fmt,arg1,arg2,...)\ 	printf on
 .Em win
 .It wrefresh(win)	make screen look like
