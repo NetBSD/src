@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.13 1998/03/18 17:01:24 bouyer Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.14 2002/05/06 03:17:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1b.c,v 1.13 1998/03/18 17:01:24 bouyer Exp $");
+__RCSID("$NetBSD: pass1b.c,v 1.14 2002/05/06 03:17:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: pass1b.c,v 1.13 1998/03/18 17:01:24 bouyer Exp $");
 
 #include "fsck.h"
 #include "extern.h"
+#include "fsutil.h"
 
 static  struct dups *duphead;
 static int pass1bcheck __P((struct inodesc *));
@@ -70,6 +71,13 @@ pass1b()
 	duphead = duplist;
 	inumber = 0;
 	for (c = 0; c < sblock->fs_ncg; c++) {
+		if (got_siginfo) {
+			fprintf(stderr,
+			    "%s: phase 1b: cyl group %d of %d (%d%%)\n",
+			    cdevname(), c, sblock->fs_ncg,
+			    c * 100 / sblock->fs_ncg);
+			got_siginfo = 0;
+		}
 		for (i = 0; i < sblock->fs_ipg; i++, inumber++) {
 			if (inumber < ROOTINO)
 				continue;

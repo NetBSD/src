@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.27 2001/08/17 02:18:47 lukem Exp $	*/
+/*	$NetBSD: fsck.h,v 1.28 2002/05/06 03:17:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -216,6 +216,8 @@ extern int	lfmode;		/* lost & found directory creation mode */
 
 ufs_daddr_t n_blks;		/* number of blocks in use */
 ufs_daddr_t n_files;		/* number of files in use */
+
+int	got_siginfo;		/* received a SIGINFO */
 
 #define	clearinode(dp)	(*(dp) = zino)
 struct	dinode zino;

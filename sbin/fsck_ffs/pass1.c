@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.23 2001/01/05 02:02:57 lukem Exp $	*/
+/*	$NetBSD: pass1.c,v 1.24 2002/05/06 03:17:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.23 2001/01/05 02:02:57 lukem Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.24 2002/05/06 03:17:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,13 @@ pass1()
 	n_files = n_blks = 0;
 	resetinodebuf();
 	for (c = 0; c < sblock->fs_ncg; c++) {
+		if (got_siginfo) {
+			fprintf(stderr,
+			    "%s: phase 1: cyl group %d of %d (%d%%)\n",
+			    cdevname(), c, sblock->fs_ncg,
+			    c * 100 / sblock->fs_ncg);
+			got_siginfo = 0;
+		}
 		for (i = 0; i < sblock->fs_ipg; i++, inumber++) {
 			if (inumber < ROOTINO)
 				continue;

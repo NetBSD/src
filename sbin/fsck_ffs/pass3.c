@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.12 2001/01/10 08:22:20 mycroft Exp $	*/
+/*	$NetBSD: pass3.c,v 1.13 2002/05/06 03:17:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: pass3.c,v 1.12 2001/01/10 08:22:20 mycroft Exp $");
+__RCSID("$NetBSD: pass3.c,v 1.13 2002/05/06 03:17:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: pass3.c,v 1.12 2001/01/10 08:22:20 mycroft Exp $");
 
 #include "fsck.h"
 #include "extern.h"
+#include "fsutil.h"
 
 void
 pass3()
@@ -59,6 +60,14 @@ pass3()
 	int loopcnt;
 
 	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--) {
+		if (got_siginfo) {
+			int inpindex = inpp - inpsort;
+			fprintf(stderr,
+			    "%s: phase 3: dir %d of %d (%d%%)\n", cdevname(),
+			    (int)(inplast - inpindex - 1), (int)inplast,
+			    (int)((inplast - inpindex - 1) * 100 / inplast));
+			got_siginfo = 0;
+		}
 		inp = *inpp;
 		if (inp->i_number == ROOTINO ||
 		    !(inp->i_parent == 0 || statemap[inp->i_number] == DSTATE))
