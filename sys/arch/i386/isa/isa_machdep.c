@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.15 1996/08/30 15:39:31 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.16 1996/11/20 14:09:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
 typedef (*vector) __P((void));
-extern vector IDTVEC(intr)[], IDTVEC(fast)[];
+extern vector IDTVEC(intr)[];
 extern struct gate_descriptor idt[];
 void isa_strayintr __P((int));
 void intr_calculatemasks __P((void));
@@ -137,7 +137,6 @@ isa_strayintr(irq)
 		    strays >= 5 ? "; stopped logging" : "");
 }
 
-int fastvec;
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
