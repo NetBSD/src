@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.c,v 1.7 2003/03/09 01:38:46 christos Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.8 2003/07/14 17:20:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -126,7 +126,7 @@ fsi_get_args(int c, char *v[])
       break;
 
     case 'h':
-      strncpy(hostname, optarg, sizeof(hostname) - 1);
+      strlcpy(hostname, optarg, sizeof(hostname));
       break;
 
     case 'e':

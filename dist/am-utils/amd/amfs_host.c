@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_host.c,v 1.1.1.6 2003/03/09 01:13:07 christos Exp $	*/
+/*	$NetBSD: amfs_host.c,v 1.2 2003/07/14 17:20:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -449,7 +449,7 @@ amfs_host_mount(am_node *am, mntfs *mf)
    * error code 0 at the end.  If they all fail then return
    * the last error code.
    */
-  strncpy(fs_name, mf->mf_info, sizeof(fs_name));
+  strlcpy(fs_name, mf->mf_info, sizeof(fs_name));
   if ((rfs_dir = strchr(fs_name, ':')) == (char *) 0) {
     plog(XLOG_FATAL, "amfs_host_mount: mf_info has no colon");
     error = EINVAL;

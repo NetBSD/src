@@ -1,4 +1,4 @@
-/*	$NetBSD: fixmount.c,v 1.1.1.6 2003/03/09 01:13:51 christos Exp $	*/
+/*	$NetBSD: fixmount.c,v 1.2 2003/07/14 17:20:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -121,7 +121,7 @@ is_same_host(char *name1, char *name2, struct in_addr addr2)
     } else if (!(he = gethostbyname(name1))) {
       return 0;
     } else {
-      strncpy(lasthost, name1, sizeof(lasthost) - 1);
+      strlcpy(lasthost, name1, sizeof(lasthost));
       memcpy(&addr1, he->h_addr, sizeof(addr1));
       return (addr1.s_addr == addr2.s_addr);
     }
@@ -165,7 +165,7 @@ remove_mount(CLIENT *client, char *host, mountlist ml, int fixit)
   struct timeval tv;
   char *pathp = dir_path;
 
-  strncpy(dir_path, ml->ml_directory, sizeof(dir_path));
+  strlcpy(dir_path, ml->ml_directory, sizeof(dir_path));
 
   if (!fixit) {
     printf("%s: bogus mount %s:%s\n", host, ml->ml_hostname, ml->ml_directory);
@@ -327,8 +327,7 @@ main(int argc, char *argv[])
       break;
 
     case 'h':
-      strncpy(thishost, optarg, sizeof(thishost));
-      thishost[sizeof(thishost) - 1] = '\0';
+      strlcpy(thishost, optarg, sizeof(thishost));
       break;
 
     case '?':
@@ -368,8 +367,7 @@ main(int argc, char *argv[])
 	      inet_ntoa(thisaddr));
       exit(1);
     }
-    strncpy(thishost, he->h_name, sizeof(thishost));
-    thishost[sizeof(thishost) - 1] = '\0';
+    strlcpy(thishost, he->h_name, sizeof(thishost));
   } else {
     thisaddr.s_addr = INADDR_NONE;
   }
