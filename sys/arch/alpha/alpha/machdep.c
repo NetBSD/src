@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.2 2001/08/30 23:43:40 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.3 2001/09/13 18:38:57 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.2 2001/08/30 23:43:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.3 2001/09/13 18:38:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1990,7 +1990,7 @@ fpusave_proc(struct lwp *l, int save)
 #endif
 
 	KDASSERT(l->l_addr != NULL);
-	KDASSERT(l->l_flag & P_INMEM);
+	KDASSERT(l->l_flag & L_INMEM);
 
 	FPCPU_LOCK(&l->l_addr->u_pcb, s);
 
@@ -2269,6 +2269,9 @@ cpu_setmcontext(l, mcp, flags)
 	if (flags & _UC_CPU) {
 		regtoframe((struct reg *)mcp->sc_regs, l->l_md.md_tf);
 		alpha_pal_wrusp(mcp->sc_regs[R_SP]);
+		l->l_md.md_tf->tf_regs[FRAME_PC] = mcp->sc_pc;
+		l->l_md.md_tf->tf_regs[FRAME_PS] =
+		    (mcp->sc_ps | ALPHA_PSL_USERSET) & ~ALPHA_PSL_USERCLR;
 	}
 
 	if (flags & _UC_FPU) {
