@@ -1,6 +1,5 @@
-# $NetBSD: md.acorn26,v 1.4 2003/01/18 17:50:20 thorpej Exp $
+# $NetBSD: md.acorn26,v 1.5 2003/09/21 20:16:10 matt Exp $
 ./usr/include/acorn26			comp-c-include
-./usr/include/acorn26/_G_config.h	comp-c-include
 ./usr/include/acorn26/ansi.h		comp-c-include
 ./usr/include/acorn26/aout_machdep.h	comp-c-include
 ./usr/include/acorn26/asm.h		comp-c-include
