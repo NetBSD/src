@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.8 2000/05/12 18:46:34 jhawk Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.9 2000/07/09 00:46:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -119,6 +119,8 @@ const struct fxp_pci_product {
 } fxp_pci_products[] = {
 	{ PCI_PRODUCT_INTEL_82557,
 	  "Intel i82557 Ethernet" },
+	{ PCI_PRODUCT_INTEL_82559ER,
+	  "Intel i82559ER Ethernet" },
 	{ PCI_PRODUCT_INTEL_IN_BUSINESS,
 	  "Intel InBusiness Ethernet" },
 
