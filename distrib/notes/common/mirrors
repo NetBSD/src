@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of May 22, 1999.
+The following sites mirror NetBSD as of May 27, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -112,6 +112,11 @@ If you wish to become a distribution site for NetBSD, contact
 .mirror "ftp.ru.netbsd.org" \
 "Landau Institute for Theoretical Physics, Chernogolovka" \
 "ftp://ftp.ru.netbsd.org/pub/NetBSD/"
+.
+.Country "South Africa"
+.mirror "ftp.za.netbsd.org" \
+"UUNET (SA), Cape Town, South Africa" \
+"ftp://ftp.za.netbsd.org/pub/NetBSD/"
 .
 .Country "Sweden"
 .mirror "ftp.stacken.kth.se" \
