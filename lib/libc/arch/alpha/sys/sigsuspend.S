@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.3 1998/09/29 03:01:38 thorpej Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.4 1998/12/02 01:01:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,6 +28,9 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 LEAF(sigsuspend, 1)
 	ldl	a0, 0(a0)		/* pass *mask instead of mask */

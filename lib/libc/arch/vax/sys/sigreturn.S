@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigreturn.S,v 1.4 1998/09/30 18:37:39 ragge Exp $"
+	.asciz "$NetBSD: sigreturn.S,v 1.5 1998/12/02 01:01:05 thorpej Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -47,5 +47,8 @@
 	.globl _ ## x; .align 2; _ ## x ## : .word 0; pushr $0x3f; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount; popr $0x3f;
 #endif /* GPROF */
+
+WARN_REFERENCES(sigreturn, \
+    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)

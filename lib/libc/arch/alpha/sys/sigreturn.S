@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.2 1998/09/29 03:01:38 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.3 1998/12/02 01:01:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,5 +34,8 @@
  * However, that doesn't involve any special work on the Alpha.
  * (XXX PROFILING)
  */
+
+WARN_REFERENCES(sigreturn, \
+    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)

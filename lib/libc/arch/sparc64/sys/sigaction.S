@@ -1,4 +1,4 @@
-/*	$NetBSD: sigaction.S,v 1.1 1998/10/08 02:27:59 eeh Exp $	*/
+/*	$NetBSD: sigaction.S,v 1.2 1998/12/02 01:01:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,5 +38,8 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigaction, \
+    "warning: reference to compatibility sigaction(); include <signal.h> for correct reference")
 
 PSEUDO(sigaction,compat_13_sigaction13)

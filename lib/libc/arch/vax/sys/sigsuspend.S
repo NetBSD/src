@@ -33,13 +33,16 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigsuspend.S,v 1.3 1998/09/30 18:37:39 ragge Exp $"
+	.asciz "$NetBSD: sigsuspend.S,v 1.4 1998/12/02 01:01:05 thorpej Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 err:
 	jmp	cerror
+
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend, 0)
 	movl	*4(ap),4(ap)		# indirect to mask arg

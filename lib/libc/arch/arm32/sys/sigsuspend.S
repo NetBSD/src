@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.4 1998/09/29 20:23:27 thorpej Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.5 1998/12/02 01:01:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,9 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend)
 	ldr	r0, [r0]
