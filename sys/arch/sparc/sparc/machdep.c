@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.199 2002/08/25 20:21:42 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.200 2002/08/30 20:38:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1821,6 +1821,8 @@ static	vaddr_t iobase;
 
 		error = bus_translate_address_generic(t->ranges, t->nranges,
 		    ba, &addr);
+		if (error)
+			return (error);
 		return (bus_space_map2(t->parent, addr, size, flags, va, hp));
 	}
 
