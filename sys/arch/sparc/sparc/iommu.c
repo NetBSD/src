@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.59.4.8 2002/12/19 00:38:02 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.59.4.9 2003/01/03 16:55:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -123,7 +123,7 @@ iommu_print(args, iommu)
 	struct iommu_attach_args *ia = args;
 
 	if (iommu)
-		printf("%s at %s", ia->iom_name, iommu);
+		aprint_normal("%s at %s", ia->iom_name, iommu);
 	return (UNCONF);
 }
 

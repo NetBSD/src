@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.3.2.3 2002/10/18 02:39:58 nathanw Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.3.2.4 2003/01/03 16:55:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ cpuunit_print(void *aux, const char *pnp)
 	struct cpuunit_attach_args *cpua = aux;
 
 	if (pnp)
-		printf("%s at %s", cpua->cpua_name, pnp);
+		aprint_normal("%s at %s", cpua->cpua_name, pnp);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.3.2.3 2002/10/18 02:39:51 nathanw Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.3.2.4 2003/01/03 16:55:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,10 +157,10 @@ bootbus_print(void *aux, const char *pnp)
 	int i;
 
 	if (pnp)
-		printf("%s at %s", baa->ba_name, pnp);
-	printf(" slot %d offset 0x%x", baa->ba_slot, baa->ba_offset);
+		aprint_normal("%s at %s", baa->ba_name, pnp);
+	aprint_normal(" slot %d offset 0x%x", baa->ba_slot, baa->ba_offset);
 	for (i = 0; i < baa->ba_nintr; i++)
-		printf(" ipl %d", baa->ba_intr[i].oi_pri);
+		aprint_normal(" ipl %d", baa->ba_intr[i].oi_pri);
 
 	return (UNCONF);
 }
