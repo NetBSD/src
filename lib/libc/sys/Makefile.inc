@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.82 1998/02/14 20:19:35 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.83 1998/06/08 14:17:29 kleink Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -34,7 +34,7 @@ SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	chmod.o chown.o chroot.o clock_getres.o clock_gettime.o \
 	clock_settime.o close.o connect.o dup.o dup2.o execve.o \
-	fchdir.o fchflags.o fchmod.o fchown.o fcntl.o flock.o \
+	fchdir.o fchflags.o fchmod.o fchown.o fcntl.o fdatasync.o flock.o \
 	fpathconf.o __fstat13.o fstatfs.o fsync.o futimes.o \
 	getdents.o getfh.o getfsstat.o getgroups.o getitimer.o \
 	__getlogin.o getpeername.o getpgid.o getpgrp.o \
@@ -171,8 +171,8 @@ LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 close.2 connect.2 dup.2 \
-	execve.2 _exit.2 fcntl.2 flock.2 fork.2 fsync.2 getdents.2 \
-	getdirentries.3 getfh.2 getfsstat.2 getgid.2 getgroups.2 \
+	execve.2 _exit.2 fcntl.2 fdatasync.2 flock.2 fork.2 fsync.2 \
+	getdents.2 getdirentries.3 getfh.2 getfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
 	getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 kill.2 \
