@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530reg.h,v 1.6 1996/10/16 22:34:52 gwr Exp $ */
+/*	$NetBSD: z8530reg.h,v 1.7 1996/10/23 00:32:31 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,6 +181,7 @@
 #define	ZSWR3_RX_7		0x40	/* receive 7 bits per char */
 #define	ZSWR3_RX_6		0x80	/* receive 6 bits per char */
 #define	ZSWR3_RX_8		0xc0	/* receive 8 bits per char */
+#define	ZSWR3_RXSIZE		0xc0	/* receive char size mask */
 
 #define	ZSWR3_HFC		0x20	/* hardware flow control */
 #define	ZSWR3_HUNT		0x10	/* enter hunt mode */
@@ -197,19 +198,23 @@
 #define	ZSWR4_CLK_X16		0x40	/* clock divisor = 16 */
 #define	ZSWR4_CLK_X32		0x80	/* clock divisor = 32 */
 #define	ZSWR4_CLK_X64		0xc0	/* clock divisor = 64 */
+#define	ZSWR4_CLK_MASK		0xc0	/* clock divisor mask */
 
 #define	ZSWR4_MONOSYNC		0x00	/* 8 bit sync char (sync only) */
 #define	ZSWR4_BISYNC		0x10	/* 16 bit sync char (sync only) */
-#define	ZSWR4_SDLC		0x20	/* SDLC mode */
+#define	ZSWR4_SDLC  		0x20	/* SDLC mode */
 #define	ZSWR4_EXTSYNC		0x30	/* external sync mode */
+#define	ZSWR4_SYNC_MASK		0x30	/* sync mode bit mask */
 
-#define	ZSWR4_SYNCMODE		0x00	/* one of the above sync modes */
-#define	ZSWR4_ONESB		0x04	/* 1 stop bit */
-#define	ZSWR4_1P5SB		0x08	/* 1.5 stop bits (clk cannot be 1x) */
-#define	ZSWR4_TWOSB		0x0c	/* 2 stop bits */
+#define	ZSWR4_SYNCMODE		0x00	/* no stop bit (sync mode only) */
+#define	ZSWR4_ONESB 		0x04	/* 1 stop bit */
+#define	ZSWR4_1P5SB 		0x08	/* 1.5 stop bits (clk cannot be 1x) */
+#define	ZSWR4_TWOSB 		0x0c	/* 2 stop bits */
+#define	ZSWR4_SBMASK		0x0c	/* mask of all stop bits */
 
-#define	ZSWR4_EVENP		0x02	/* check for even parity */
+#define	ZSWR4_EVENP 		0x02	/* check for even parity */
 #define	ZSWR4_PARENB		0x01	/* enable parity checking */
+#define	ZSWR4_PARMASK		0x03	/* mask of all parity bits */
 
 /*
  * Bits in Write Register 5 (`Transmit Parameter and Controls').
@@ -222,6 +227,7 @@
 #define	ZSWR5_TX_7		0x20	/* transmit 7 bits */
 #define	ZSWR5_TX_6		0x40	/* transmit 6 bits */
 #define	ZSWR5_TX_8		0x60	/* transmit 8 bits */
+#define	ZSWR5_TXSIZE		0x60	/* transmit char size mask */
 
 #define	ZSWR5_BREAK		0x10	/* send break (continuous 0s) */
 #define	ZSWR5_TX_ENABLE		0x08	/* enable transmitter */
