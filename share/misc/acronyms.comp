@@ -1,5 +1,7 @@
-$NetBSD: acronyms.comp,v 1.5 2003/06/07 22:33:30 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.6 2003/06/19 18:23:59 jschauma Exp $
 
+ABI	application binary interface
+API	application program interface
 AGP	accelerated graphics port
 ATA	advanced technology attachment
 BIOS	basic input/output system
