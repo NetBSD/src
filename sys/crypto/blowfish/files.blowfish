@@ -1,7 +1,8 @@
-#	$NetBSD: files.blowfish,v 1.1 2002/10/11 01:52:08 thorpej Exp $
+#	$NetBSD: files.blowfish,v 1.2 2003/08/26 23:51:14 thorpej Exp $
 
 define	blowfish
 
+file	crypto/blowfish/bf_ecb.c	blowfish
 file	crypto/blowfish/bf_enc.c	blowfish
 file	crypto/blowfish/bf_cbc.c	blowfish
 file	crypto/blowfish/bf_skey.c	blowfish
