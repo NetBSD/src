@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.224 2000/05/30 00:20:41 matt Exp $
+$NetBSD: pcidevs,v 1.225 2000/06/05 11:29:28 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -931,9 +931,10 @@ product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
 /* ESS Technology Inc products */
-product ESSTECH	MAESTRO2	0x1968	Maestro 2
+product ESSTECH	MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
+product ESSTECH	MAESTRO2	0x1968	Maestro 2 PCI Audio Accelerator
 product ESSTECH	SOLO1		0x1969	Solo-1 PCI AudioDrive
-product ESSTECH	MAESTRO2E	0x1978	Maestro 2E
+product ESSTECH	MAESTRO2E	0x1978	Maestro 2E PCI Audio Accelerator
 
 /* O2 Micro Inc */
 product O2MICRO  OZ6832	0x6832	OZ6832 CardBus Controller
