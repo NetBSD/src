@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.3.2.1 2000/07/21 18:45:47 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.3.2.2 2000/07/21 18:56:02 onoe Exp $	*/
 
 
 #ifndef _NET_IF_IEEE80211_H_
@@ -119,5 +119,18 @@ struct ieee80211_nwid {
 
 #define	SIOCS80211NWID		_IOWR('i', 230, struct ifreq)
 #define	SIOCG80211NWID		_IOWR('i', 231, struct ifreq)
+
+/* the first member must be matched with struct ifreq */
+struct ieee80211_nwkey {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_wepon;		/* wep enabled flag */
+	int		i_defkid;		/* default encrypt key id */
+	struct {
+		int		i_keylen;
+		u_int8_t	*i_keydat;
+	}		i_key[IEEE80211_WEP_NKID];
+};
+#define	SIOCS80211NWKEY		 _IOW('i', 232, struct ieee80211_nwkey)
+#define	SIOCG80211NWKEY		_IOWR('i', 233, struct ieee80211_nwkey)
 
 #endif /* !_NET_IF_IEEE80211_H_ */

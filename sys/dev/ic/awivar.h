@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.10.2.1 2000/07/14 14:37:32 onoe Exp $ */
+/* $NetBSD: awivar.h,v 1.10.2.2 2000/07/21 18:56:01 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -212,6 +212,8 @@ int awi_init __P((struct awi_softc *sc));
 int awi_init_region __P((struct awi_softc *));
 int awi_wicfg __P((struct ifnet *, u_long, caddr_t));
 
+int awi_wep_setnwkey __P((struct awi_softc *, struct ieee80211_nwkey *));
+int awi_wep_getnwkey __P((struct awi_softc *, struct ieee80211_nwkey *));
 int awi_wep_getalgo __P((struct awi_softc *));
 int awi_wep_setalgo __P((struct awi_softc *, int));
 int awi_wep_setkey __P((struct awi_softc *, int, unsigned char *, int));
