@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.4 2004/11/20 19:56:44 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.5 2004/11/21 21:49:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.4 2004/11/20 19:56:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.5 2004/11/21 21:49:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,7 +518,7 @@ cd9660_rrip_loop(isodir, ana, table)
 	ISO_SUSP_HEADER *pend;
 	struct buf *bp = NULL;
 	char *pwhead;
-	u_char c;
+	u_int16_t c;
 	int result;
 
 	/*
@@ -649,7 +649,7 @@ cd9660_rrip_getname(isodir, outbuf, outlen, inump, imp)
 {
 	ISO_RRIP_ANALYZE analyze;
 	const RRIP_TABLE *tab;
-	u_char c;
+	u_int16_t c;
 
 	analyze.outbuf = outbuf;
 	analyze.outlen = outlen;
