@@ -294,12 +294,12 @@ typedef int		pid_t;
 
 
 /*
-**  386BSD / FreeBSD 1.0E (works) / NetBSD (not tested)
+**  386BSD / FreeBSD 1.0E / NetBSD (all architectures, all versions)
 **
 **  4.3BSD clone, closer to 4.4BSD
 */
 
-#ifdef __386BSD__
+#if defined(__386BSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
 # define HASUNSETENV	1	/* has unsetenv(3) call */
 # define HASSETSID	1	/* has the setsid(2) POSIX syscall */
 # define HASSTATFS	1	/* has the statfs(2) syscall */
