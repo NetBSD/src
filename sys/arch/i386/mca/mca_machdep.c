@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.8 2001/05/04 07:22:07 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.9 2001/05/14 14:14:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -266,21 +266,20 @@ mca_busprobe()
 	scp = (struct bios_config *)ISA_HOLE_VADDR(paddr);
 
 #if 1 /* MCAVERBOSE */
-	printf("BIOS CFG: Model-Submodel-Revision: %02x-%02x-%02x\n",
-		scp->model, scp->submodel, scp->bios_rev);
-
 	bitmask_snprintf(scp->feature1,
 		"\20"
-		"\01MCABUS+ISABUS"
-		"\02MCABUS"
+		"\01MCA+ISA"
+		"\02MCA"
 		"\03EBDA"
 		"\04WAITEV"
 		"\05KBDINT"
 		"\06RTC"
 		"\07IC2"
-		"\010DMA3USED\n",
+		"\010DMA3B\n",
 		buf, sizeof(buf));
-	printf("BIOS CFG: features 0x%s\n", buf);
+
+	printf("BIOS CFG: Model-SubMod-Rev: %02x-%02x-%02x, 0x%s\n",
+		scp->model, scp->submodel, scp->bios_rev, buf);
 #endif
 
 	MCA_system = (scp->feature1 & FEATURE_MCABUS) ? 1 : 0;
