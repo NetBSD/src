@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.68 1999/09/29 00:44:01 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.69 1999/09/30 05:38:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.68 1999/09/29 00:44:01 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.69 1999/09/30 05:38:19 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -675,6 +675,8 @@ static const char prefixes[] = " KMGTP";
 static struct timeval start;
 static struct timeval lastupdate;
 
+#define BUFLEFT	(sizeof(buf) - len)
+
 void
 progressmeter(flag)
 	int flag;
@@ -731,8 +733,6 @@ progressmeter(flag)
 	 */
 	if (! foregroundproc())
 		return;
-
-#define BUFLEFT	(sizeof(buf) - len)
 
 	ratio = (int)((double)cursize * 100.0 / (double)filesize);
 	ratio = MAX(ratio, 0);
