@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.17 1999/09/29 17:40:18 ad Exp $
+$NetBSD: eisadevs,v 1.18 2000/07/12 22:59:23 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -77,6 +77,7 @@ product BUS 4201	Bt74xB SCSI
 product BUS 4202	Bt74xC SCSI
 
 /* Digital Equipment products */
+product DEC 4220	DE422 Ethernet
 product DEC 4250	DE425 Ethernet
 product DEC 3001	DEFEA FDDI Controller
 product DEC 3002	DEFEA FDDI Controller
