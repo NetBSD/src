@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.23 1994/03/10 19:50:47 mycroft Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.24 1994/03/10 20:13:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -656,7 +656,8 @@ char *shandler();
 char *sirq();
 
 #define	i386_scsidev(x) \
-	(eq(x, "aha") || eq(x, "ahb") || eq(x, "bt") || eq(x, "uha"))
+	(eq(x, "aha") || eq(x, "ahb") || eq(x, "bt") || eq(x, "uha") || \
+	 eq(x, "wds"))
 
 i386_ioconf()
 {
@@ -766,8 +767,7 @@ isa_devtab(fp, table)
     fprintf(fp, "%6s, %2d, C 0x%05X, %5d, %8s,  %2d, 0x%04X, %d, %d },\n",
 	    sirq(dp->d_irq), dp->d_drq, dp->d_maddr,
 	    dp->d_msize, shandler(dp), dp->d_unit,
-	    dp->d_flags,
-	    0, dp->d_type==CONTROLLER ? 0 : -1);
+	    dp->d_flags, 0, -1);
   }
   fprintf(fp, "0\n};\n");
 }
