@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.16 2000/12/14 06:27:26 thorpej Exp $	*/
+/*	$NetBSD: tropic.c,v 1.17 2000/12/14 17:48:23 thorpej Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -1050,7 +1050,7 @@ tr_intr(arg)
 					    sc->sc_dev.dv_xname);
 					ifp->if_flags &= ~IFF_RUNNING;
 					ifp->if_flags &= ~IFF_UP;
-					if_qflush(&ifp->if_snd);
+					IFQ_PURGE(&ifp->if_snd);
 					callout_reset(&sc->sc_reinit_callout,
 					    hz * 30, tr_reinit, sc);
 				}
