@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.70 2000/03/06 01:06:17 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.71 2000/03/06 08:08:15 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.70 2000/03/06 01:06:17 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.71 2000/03/06 08:08:15 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -1697,7 +1697,7 @@ in6_status(force)
 		/* Now copy the whole thing. */
 		if (sizeof(ifrbuf) < siz)
 			errx(1, "ifr too big");
-		memcpy(ifrbuf, ifr, siz);
+		memcpy(ifrbuf, cp, siz);
 
 		if (!strncmp(name, ifr->ifr_name, sizeof(ifr->ifr_name))) {
 			if (ifr->ifr_addr.sa_family == AF_INET6)
