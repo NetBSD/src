@@ -1,4 +1,4 @@
-/* $NetBSD: svc32.S,v 1.1 1996/01/31 23:18:38 mark Exp $ */
+/* $NetBSD: svc32.S,v 1.2 1996/06/03 21:25:03 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1955 Mark Brinicombe.
@@ -39,11 +39,8 @@
  * svc32.s
  *
  * Created      : 12/09/94
- * Last updated : 12/09/94
  *
  * Based on kate/library/svc32.s
- *
- *    $Id: svc32.S,v 1.1 1996/01/31 23:18:38 mark Exp $
  */
 
 #include "regs.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: strstr.c,v 1.1 1996/01/31 23:18:34 mark Exp $ */
+/* $NetBSD: strstr.c,v 1.2 1996/06/03 21:25:02 mark Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,8 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: strstr.c,v 1.4 1995/06/15 00:08:43 jtc Exp 
- *
- *	$Id: strstr.c,v 1.1 1996/01/31 23:18:34 mark Exp $
  */
 
 #include <sys/param.h>

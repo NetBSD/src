@@ -1,4 +1,4 @@
-/* $NetBSD: bcopy_page.S,v 1.1 1996/01/31 23:15:17 mark Exp $ */
+/* $NetBSD: bcopy_page.S,v 1.2 1996/06/03 21:21:31 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -36,9 +36,6 @@
  * page optimised bcopy and bzero routines
  *
  * Created      : 08/04/95
- * Last updated : 12/05/95
- *
- *    $Id: bcopy_page.S,v 1.1 1996/01/31 23:15:17 mark Exp $
  */
 
 #include <machine/param.h>
