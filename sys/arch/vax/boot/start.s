@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.3 1995/06/16 15:08:08 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.4 1995/09/16 16:20:21 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,8 @@
 #include "sys/disklabel.h"
 #undef LOCORE
 
+#define ASSEMBLER
+#include "../include/mtpr.h"
 #include "../include/asm.h"		
 #include "bootdefs.h"
 
@@ -53,7 +55,7 @@ _start:	.globl _start		# this is the symbolic name for the start
 
 .org	0x02			# information used by uVAX-ROM
 	.byte (LABELOFFSET + d_end_)/2 # offset in words to identification area 
-	.byte	1		# this byte must be 1(defined by DEC)
+	.byte	1		# this byte must be 1
 	.word	0		# logical block number (word swapped) 
 	.word	0		# of the secondary image
 
@@ -63,24 +65,16 @@ _start:	.globl _start		# this is the symbolic name for the start
 .org	0x0A			# uVAX booted from disk starts here
 	brb	from_0x0A	# skip ...
 
-.org	0x0C			# 11/750 starts here
+.org	0x0C			# 11/750  & 8200 starts here
 	brw	cont_750
 
-#--------------------
-from_0x00:			# uVAX from TK50 
-	xorl2	$4, bootinfo	# this variable tells the difference
-from_0x0A:			# uVAX from disk
-	pushr	regmask		# save registers ...
-	xorl2	$1, bootinfo	# mark where we came from
-	brw	cont_uvax	# all(?) uVAXen continue there
 
-from_0x08:			#
-	pushr	regmask		#
-        xorl2   $1, bootinfo		/* bertram: ??? */
-	cmpb	102(r11), $35		/* check if device-type == TK50 */
-	bneq	1f
-	xorl2   $4, bootinfo		/* yes, it's a TK50 */
-1:	brw	cont_tape
+from_0x00:			# uVAX from TK50 
+from_0x0A:			# uVAX from disk
+	brw	start_uvax	# all(?) uVAXen continue there
+
+from_0x08:			# What comes here???
+	halt
 
 .org	LABELOFFSET - 6
 regmask: 	.word 0x0fff	# using a variable saves 3 bytes !!!
@@ -94,6 +88,11 @@ bootinfo:	.long 0x0	# another 3 bytes if within byte-offset
 /*
  * Parameter block for uVAX boot.
  */
+#define VOLINFO         0       /* 1=single-sided  81=double-sided volumes */
+#define SISIZE          16      /* size in blocks of secondary image */
+#define SILOAD          0       /* load offset (usually 0) from the default */
+#define SIOFF           0x0A    /* byte offset into secondary image */
+
 .org    LABELOFFSET + d_end_
 	.byte	0x18		# must be 0x18 
 	.byte	0x00		# must be 0x00 (MBZ) 
@@ -110,28 +109,6 @@ bootinfo:	.long 0x0	# another 3 bytes if within byte-offset
 	.long	SILOAD		# load offset (usually 0) 
 	.long 	SIOFF		# byte offset into secondary image 
 	.long	(SISIZE + SILOAD + SIOFF)	# sum of previous 3 
-
-
-#--------------------
-cont_tape:				# uVAXen from tape /* ??? */
-	movl	52(r11), r7		# load iovec into r7 
-	addl3	(r7), r7, funcaddr	# store address of qio-entry 
-	moval	LBN1, bufaddr;
-					# start pushing arguments for qio: 
-	pushl	r11				# base of RPB 
-	pushl	$0				# virtual flag 
-	pushl	$33				# read-logical-block 
-	pushl	$1				# LBN to start reading
-	pushl	$(512 * LOADSIZE)		# bytes to read 
-	pushl	bufaddr				# buffer-address 
-	calls	$6, *funcaddr		# and call the qio-routine 
-	blbs	r0, cont_uvax		# if successful, goto next stage 
-	halt				# if not: FATAL !!!
-
-
-cont_uvax:
-	brw	start_uvax
-
 
 /*
  * After bootblock (LBN0) has been loaded into the first page 
@@ -156,10 +133,10 @@ cont_uvax:
 	.align 2
 cont_750:
         movl    r0,r10
-        movl    r5,r11 /* No conversion of bdev in block 0 */
+        movl    r5, ap	# ap not used here
         clrl    r5
         clrl    r4
-        movl    $0xa0000,sp
+        movl    $_start,sp
 1:      incl    r4
         movl    r4,r8
         addl2   $0x200,r5
@@ -168,44 +145,23 @@ cont_750:
         pushl   r5
         jsb     (r6)
         blbs    r0,1b
-2:      movl	r10,r0
-	movl	r11,r5
+2:      movl	r10, r0
+	movl	r11, r5
+	brw	start_all
 
-	brw	start_750
 
-.org	512 - 8 			/* make room for variables */
-
-funcaddr:	.long 0x11111111
-bufaddr:	.long 0x33333333
+start_uvax:
+	mtpr	$0, $PR_MAPEN	# Turn off MM, please.
+	movl    $_start, sp
+	movl	48(r11), ap
+	brb	start_all
 
 /*
- * Start of LBN1. This is on uVAX brought in by those parameters
- * in IAREA, on 750 by code cont_750 in LBN0.
+ * start_all: stack already at RELOC, we save registers, move ourself
+ * to RELOC and loads boot.
  */
-
-.org	512				/* might be paranoid ... */
-LBN1:
-
-#--------------------
-start_uvax:
-	popr	regmask		# restore contents of boot-regs
-	jsb	saveregs	# and save them
-	movzbl	102(r11), r10	# rpb->devtype describes device	(bdev)
-	movl	r5, r11		# r5 holds boot-control-flags 	(howto)
-	brb	start_all
-
-#--------------------
-start_750:			# stack has moved. Thus don\'t pop boot-regs
-	jsb 	saveregs	# save the boot-registers as they are now
-	movl	r0, r10		# r0 holds type of boot-device	(bdev)
-	movl	r5, r11		# r5 holds boot-control-flags 	(howto)
-	brb	start_all
-
-#--------------------
 start_all:
-	movl	$_start, sp	# new stack directly beyond reloc
-	subl2	$48, sp		# don\'t overwrite saved boot-registers
-	pushr	$0xfff		#
+	pushr	$0xfff			# save all regs, used later.
 
 	subl3	$_start, $_edata, r0	# get size of text+data (w/o bss)
 	moval	_start, r1		# get actual base-address of code
@@ -213,40 +169,20 @@ start_all:
 	movl	$_start, r3		# get relocated base-address of code
 	movc5	r0, (r1), $0, r2, (r3)	# copy code to new location
 	
-	popr	$0xfff
-	jsb	1f		   # jump to some subroutine where 
-1:	movl	$relocated, (sp)   # return-address on top of stack 
-	rsb			   # can be replaced with new address
-relocated:			# now relocation is done !!!
-	calls	$0, _main	# call main() which is 
-	halt			# not intended to return ...
+	movl	$relocated, -(sp)	# return-address on top of stack 
+	rsb	 			# can be replaced with new address
+relocated:				# now relocation is done !!!
+	movl	sp, _bootregs
+	movl	ap, _boothowto
+	calls	$0, _main		# call main() which is 
+	halt				# not intended to return ...
 
-#----------------------------------------------------------------------
+/*
+ * hoppabort() is called when jumping to the newly loaded program.
+ */
 ENTRY(hoppabort, 0)
         movl    4(ap),r6
         movl    8(ap),r11
         movl    0xc(ap),r10
-	movl	0x10(ap),r9
         calls   $0,(r6)
 	halt
-
-#----------------------------------------------------------------------
-save_sp: .long
-
-saveregs:
-	movl	sp, save_sp		# save stack
-	movl	$_start, sp		# make new/dummy stack
-	pushr	$0xfff			# push registers r0 - r11
-	movl	save_sp, sp		# and restore stack
-	rsb	
-#----------------------------------------------------------------------
-/*
- * int relocate (int base, int size, int top)
- */
-ENTRY(relocate, 0)
-	subl2	8(ap), 12(ap)		# decrease top-address by size
-	bicl2	$1023, 12(ap)		# make the address page-aligned
-	movc3	8(ap), *4(ap), *12(ap)	# copy the area/data
-	movl	12(ap), r0		# return the new base-address
-	ret
-#----------------------------------------------------------------------
