@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.40 1995/07/08 00:34:23 cgd Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.41 1995/07/24 07:17:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -363,7 +363,7 @@ void bt_done __P((struct bt_softc *, struct bt_ccb *));
 int bt_find __P((struct bt_softc *));
 void bt_init __P((struct bt_softc *));
 void bt_inquire_setup_information __P((struct bt_softc *));
-void btminphys __P((struct buf *));
+u_int btminphys __P((struct buf *));
 int bt_scsi_cmd __P((struct scsi_xfer *));
 int bt_poll __P((struct bt_softc *, struct scsi_xfer *, int));
 void bt_timeout __P((void *arg));
@@ -1128,13 +1128,14 @@ bt_inquire_setup_information(bt)
 	}
 }
 
-void 
+u_int 
 btminphys(bp)
 	struct buf *bp;
 {
 
 	if (bp->b_bcount > ((BT_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((BT_NSEG - 1) << PGSHIFT);
+	return (minphys(bp));
 }
 
 /*

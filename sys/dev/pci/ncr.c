@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.14 1995/04/17 12:09:43 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.15 1995/07/24 07:18:51 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1164,7 +1164,7 @@ void    ncr_int_sto     (ncb_p np);
 #ifndef NEW_SCSICONF
 u_long	ncr_lookup	(char* id);
 #endif /* NEW_SCSICONF */
-void	ncr_min_phys	(struct buf *bp);
+u_int	ncr_minphys	(struct buf *bp);
 void	ncr_negotiate	(struct ncb* np, struct tcb* tp);
 void	ncr_openings	(ncb_p np, lcb_p lp, struct scsi_xfer * xp);
 void	ncb_profile	(ncb_p np, ccb_p cp);
@@ -1204,7 +1204,7 @@ void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.14 1995/04/17 12:09:43 cgd Exp $\n";
+	"\n$Id: ncr.c,v 1.15 1995/07/24 07:18:51 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -1265,7 +1265,7 @@ struct	pci_driver ncr_device = {
 struct scsi_adapter ncr_switch =
 {
 	ncr_start,
-	ncr_min_phys,
+	ncr_minphys,
 	0,
 	0,
 #ifndef __NetBSD__
@@ -1288,7 +1288,7 @@ struct scsi_device ncr_dev =
 struct scsi_switch ncr_switch =
 {
 	ncr_start,
-	ncr_min_phys,
+	ncr_minphys,
 	0,
 	0,
 	ncr_info,
@@ -3058,19 +3058,16 @@ void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 **	Reduce the transfer length to the max value
 **	we can transfer safely.
 **
-**      Reading a block greater then MAX_SIZE from the
-**	raw (character) device exercises a memory leak
-**	in the vm subsystem. This is common to ALL devices.
-**	We have submitted a description of this bug to
-**	<FreeBSD-bugs@freefall.cdrom.com>.
-**	It should be fixed in the current release.
-**
 **----------------------------------------------------------
 */
 
-void ncr_min_phys (struct  buf *bp)
+u_int
+ncr_minphys (struct  buf *bp)
 {
-	if (bp->b_bcount > MAX_SIZE) bp->b_bcount = MAX_SIZE;
+
+	if (bp->b_bcount > MAX_SIZE)
+		bp->b_bcount = MAX_SIZE;
+	return (minphys(bp));
 }
 
 /*----------------------------------------------------------
@@ -3311,7 +3308,7 @@ void ncr_attach (pcici_t config_id, int unit)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.14 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.15 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*

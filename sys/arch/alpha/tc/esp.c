@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.3 1995/04/22 12:41:05 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.4 1995/07/24 07:18:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -67,7 +67,6 @@ int esp_debug = ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS; /**/
 
 void	espattach	__P((struct device *, struct device *, void *));
 int	espmatch	__P((struct device *, void *, void *));
-void	esp_minphys	__P((struct buf *));
 int	espprint	__P((void *, char *));
 void	espreadregs	__P((struct esp_softc *));
 u_char	espgetbyte	__P((struct esp_softc *));
@@ -94,7 +93,7 @@ struct cfdriver espcd = {
 
 struct scsi_adapter esp_switch = {
 	esp_scsi_cmd,
-	esp_minphys,
+	minphys,		/* no max transfer size; DMA engine deals */
 	NULL,
 	NULL,
 };
@@ -665,18 +664,6 @@ esp_scsi_cmd(xs)
 	ESP_MISC(("SUCCESSFULLY_QUEUED"));
 	return SUCCESSFULLY_QUEUED;
 
-}
-
-/*
- * Adjust transfer size in buffer structure
- *
- * We have no max transfer size, since the DMA driver will break it
- * down into watever is needed.
- */
-void 
-esp_minphys(bp)
-	struct buf *bp;
-{
 }
 
 /*

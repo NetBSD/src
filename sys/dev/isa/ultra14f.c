@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.49 1995/04/17 12:09:27 cgd Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.50 1995/07/24 07:17:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -295,7 +295,7 @@ int u14_find __P((struct uha_softc *, struct isa_attach_args *));
 int u24_find __P((struct uha_softc *, struct isa_attach_args *));
 void u14_init __P((struct uha_softc *));
 void u24_init __P((struct uha_softc *));
-void uhaminphys __P((struct buf *));
+u_int uhaminphys __P((struct buf *));
 int uha_scsi_cmd __P((struct scsi_xfer *));
 void uha_timeout __P((void *arg));
 #ifdef UHADEBUG
@@ -1096,13 +1096,14 @@ u24_init(uha)
 	outb(0x92, iobase + U24_SMASK);	/* XXX */
 }
 
-void
+u_int
 uhaminphys(bp)
 	struct buf *bp;
 {
 
 	if (bp->b_bcount > ((UHA_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((UHA_NSEG - 1) << PGSHIFT);
+	return (minphys(bp));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.43 1995/07/08 00:34:16 cgd Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.44 1995/07/24 07:16:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -335,7 +335,7 @@ struct aha_mbx_out *aha_send_mbo __P((struct aha_softc *, int, struct aha_ccb *)
 void aha_done __P((struct aha_softc *, struct aha_ccb *));
 int aha_find __P((struct aha_softc *));
 void aha_init __P((struct aha_softc *));
-void ahaminphys __P((struct buf *));
+u_int ahaminphys __P((struct buf *));
 int aha_scsi_cmd __P((struct scsi_xfer *));
 int aha_poll __P((struct aha_softc *, struct scsi_xfer *, int));
 int aha_set_bus_speed __P((struct aha_softc *));
@@ -1105,13 +1105,14 @@ aha_init(aha)
 	aha->aha_mbx.tmbi = &aha->aha_mbx.mbi[0];
 }
 
-void 
+u_int 
 ahaminphys(bp)
 	struct buf *bp;
 {
 
 	if (bp->b_bcount > ((AHA_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((AHA_NSEG - 1) << PGSHIFT);
+	return (minphys(bp));
 }
 
 /*
