@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.7 2003/11/09 23:44:48 lukem Exp $
+# $NetBSD: buildfloppies.sh,v 1.8 2004/06/12 18:39:53 dsl Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -151,34 +151,30 @@ fi
 #
 curdisk=1
 image=
+seek=0
+skip=0
 floppysize8k=$(( ${floppysize} / 16 ))
 while [ ${curdisk} -le ${numdisks} ]; do
 	image="${floppybase}${curdisk}${suffix}"
 	echo "Creating disk ${curdisk} to ${image}"
 	if [ ${curdisk} -eq 1 ]; then
-		seek=0
-		skip=0
 		: > ${image}
 	else
-		seek=1
-		skip=$(( (${curdisk} - 1) * (${floppysize8k} - 1) + 1 ))
 		echo USTARFS ${curdisk} > ${image}
 	fi
 	count=$(( ${floppysize8k} - ${seek} ))
-# echo 1>&2 " DEBUG: disk ${curdisk} seek=${seek} skip=${skip} count=${count}"
 	dd bs=8k conv=sync seek=${seek} skip=${skip} count=${count} \
 	    if=${floppy} of=${image} 2>/dev/null
 
 	curdisk=$(( ${curdisk} + 1 ))
+	skip=$(( $skip + $count ))
+	seek=1
 done
 
 #	pad last disk if necessary
 #
 if [ -n "${pad}" ]; then
-	padseek=$(( ${floppysize} - ${padcount} ))
-# echo 1>&2 " DEBUG: padding ${image} with $(( ${padcount} * 512 )) at offset $(( ${padseek} * 512 ))"
-	dd seek=${padseek} count=${padcount} \
-	    if=/dev/zero of=${image} 2>/dev/null
+	dd if=$image of=$image conv=notrunc conv=sync bs=${floppysize}b count=1
 fi
 
 
