@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.6 1994/06/29 06:39:31 cgd Exp $	*/
+/*	$NetBSD: esis.c,v 1.7 1995/06/13 05:52:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -530,8 +530,9 @@ struct snpa_hdr	*shp;	/* subnetwork header */
 		{
 		/* See if we want to compress out multiple nsaps differing
 		   only by nsel */
-			register struct ifaddr *ifa = shp->snh_ifp->if_addrlist;
-			for (; ifa; ifa = ifa->ifa_next)
+			register struct ifaddr *ifa;
+			for (ifa = shp->snh_ifp->if_addrlist.tqh_first; ifa != 0;
+			    ifa = ifa->ifa_list.tqe_next)
 				if (ifa->ifa_addr->sa_family == AF_ISO) {
 					nsellength = ((struct iso_ifaddr *)ifa)->ia_addr.siso_tlen;
 					break;
@@ -767,14 +768,15 @@ esis_config()
 	 * transmit it.  This could work to advantage for non-broadcast media
 	 */
 	
-	for (ifp = ifnet; ifp; ifp = ifp->if_next) {
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		if ((ifp->if_flags & IFF_UP) &&
 		    (ifp->if_flags & IFF_BROADCAST)) {
 			/* search for an ISO address family */
-			struct ifaddr	*ia;
+			struct ifaddr *ifa;
 
-			for (ia = ifp->if_addrlist; ia; ia = ia->ifa_next) {
-				if (ia->ifa_addr->sa_family == AF_ISO) {
+			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+			    ifa = ifa->ifa_list.tqe_next) {
+				if (ifa->ifa_addr->sa_family == AF_ISO) {
 					esis_shoutput(ifp, 
 						iso_systype & SNPA_ES ? ESIS_ESH : ESIS_ISH,
 						esis_holding_time,
