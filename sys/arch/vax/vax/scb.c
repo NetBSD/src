@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.3 1999/03/13 15:16:48 ragge Exp $ */
+/*	$NetBSD: scb.c,v 1.4 1999/03/26 19:35:30 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -125,12 +125,15 @@ int
 scb_vecref(rvec, ripl)
 	int *rvec, *ripl;
 {
+	int save;
+
 	if (rvec)
 		*rvec = vector;
 	if (ripl)
 		*ripl = ipl;
-	vector = ipl = 0;
-	return gotintr;
+	save = gotintr;
+	gotintr = vector = ipl = 0;
+	return save;
 }
 
 /*
