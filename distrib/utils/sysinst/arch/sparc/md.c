@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.33 2003/05/18 18:54:09 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.34 2003/05/31 08:10:01 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,6 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-#include "bsddisklabel.c"
 
 int
 md_get_info(void)

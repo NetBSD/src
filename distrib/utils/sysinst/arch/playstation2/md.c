@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2003/05/07 11:42:03 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.7 2003/05/31 08:10:00 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,6 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-#include "bsddisklabel.c"
 
 #ifdef __mips__
 extern mbr_sector_t mbr;
