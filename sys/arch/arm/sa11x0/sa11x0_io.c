@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.3 2001/09/10 21:19:36 chris Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.4 2001/09/12 12:32:16 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -72,6 +72,9 @@ struct bus_space sa11x0_bs_tag = {
 
 	/* get kernel virtual address */
 	sa11x0_bs_vaddr,
+
+	/* mmap bus space for userland */
+	bs_notimpl_bs_mmap,
 
 	/* barrier */
 	sa11x0_bs_barrier,
