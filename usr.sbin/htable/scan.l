@@ -32,9 +32,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)scan.l	5.8 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: scan.l,v 1.2 1993/08/01 17:59:38 mycroft Exp $";
+#if 0
+static char sccsid[] = "from: @(#)scan.l	5.8 (Berkeley) 4/19/91";
+#else
+__RCSID("$NetBSD: scan.l,v 1.3 1997/10/17 08:00:54 lukem Exp $");
+#endif
 #endif /* not lint */
 
 extern int yylineno;

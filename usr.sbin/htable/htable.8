@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)htable.8	6.6 (Berkeley) 3/16/91
-.\"	$Id: htable.8,v 1.2 1993/08/01 07:25:00 mycroft Exp $
+.\"	$NetBSD: htable.8,v 1.3 1997/10/17 08:00:32 lukem Exp $
 .\"
 .Dd March 16, 1991
 .Dt HTABLE 8
@@ -41,19 +41,19 @@
 .Tn NIC
 standard format host tables
 .Sh SYNOPSIS
-.Nm htable
+.Nm
 .Op Fl c Ar connected-nets
 .Op Fl l Ar local-nets
 .Ar file
 .Sh DESCRIPTION
-.Nm Htable
+.Nm
 is used to convert host files in the format specified
 in Internet
 .Tn RFC
 810 to the format used by the network
 library routines.  Three files are created as a result
 of running 
-.Nm htable :
+.Nm "" :
 .Pa hosts ,
 .Pa networks ,
 and
@@ -82,7 +82,7 @@ see
 for an explanation.
 .Pp
 Options available for
-.Nm htable :
+.Nm "" :
 .Bl -tag -width Ds
 .It Fl c Ar connected-nets
 If the gateways file is to be used,
@@ -95,7 +95,7 @@ for example:
 \-c arpanet,128.32,local-ether-net.
 .Ed
 .Pp
-.Nm Htable
+.Nm
 only includes gateways
 which are directly connected to one of the networks specified,
 or which can be reached from another gateway on a connected net.
@@ -128,7 +128,7 @@ Only one gateway to each network will be placed in the gateways file;
 a gateway listed in the localgateways file will override any in the
 input file.
 .Pp
-.Nm Htable
+.Nm
 is best used in conjunction with the
 .Xr gettable 8
 program which retrieves the
@@ -141,7 +141,7 @@ database from a host.
 .Sh BUGS
 If the name-domain system provided network name mapping well as host
 name mapping,
-.Nm htable
+.Nm
 would no longer be needed.
 .Sh HISTORY
 The
