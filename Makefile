@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.178 2002/06/20 08:21:59 enami Exp $
+#	$NetBSD: Makefile,v 1.179 2002/06/26 00:10:16 thorpej Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -94,6 +94,10 @@ regression-tests:
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
 
+.if defined(UNPRIVED)
+NOPOSTINSTALL=	# defined
+.endif
+
 afterinstall:
 .if ${MKMAN} != "no"
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
@@ -101,8 +105,8 @@ afterinstall:
 .if defined(UNPRIVED) && (${MKINFO} != "no")
 	(cd ${.CURDIR}/gnu/usr.bin/texinfo/install-info && ${MAKE} infodir-meta)
 .endif
-.if !defined(DESTDIR) || ${DESTDIR} == "" || ${DESTDIR} == "/"
-	(cd ${.CURDIR} && ${MAKE} postinstall-check)
+.if !defined(NOPOSTINSTALL)
+	(${MAKE} postinstall-check)
 .endif
 
 postinstall-check:
@@ -158,12 +162,14 @@ build:
 # Build a full distribution, but not a release (i.e. no sets into
 # ${RELEASEDIR}).
 
-distribution: build
+distribution:
+	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 distribution)
 
 # Build a release or snapshot (implies "make build").
 
-release snapshot: build
+release snapshot:
+	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 release)
 
 # Special components of the "make build" process.
