@@ -1,4 +1,6 @@
-/*	$NetBSD: channels.h,v 1.7 2001/12/06 03:54:05 itojun Exp $	*/
+/*	$NetBSD: channels.h,v 1.8 2002/03/08 02:00:52 itojun Exp $	*/
+/*	$OpenBSD: channels.h,v 1.65 2002/03/04 17:27:39 stevesk Exp $	*/
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,7 +13,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 /*
- * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +35,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* RCSID("$OpenBSD: channels.h,v 1.53 2001/11/29 21:10:51 stevesk Exp $"); */
 
 #ifndef CHANNEL_H
 #define CHANNEL_H
@@ -69,8 +70,8 @@ struct Channel {
 	int     type;		/* channel type/state */
 	int     self;		/* my own channel identifier */
 	int     remote_id;	/* channel identifier for remote peer */
-	int     istate;		/* input from channel (state of receive half) */
-	int     ostate;		/* output to channel  (state of transmit half) */
+	u_int   istate;		/* input from channel (state of receive half) */
+	u_int   ostate;		/* output to channel  (state of transmit half) */
 	int     flags;		/* close sent/rcvd */
 	int     rfd;		/* read fd */
 	int     wfd;		/* write fd */
@@ -97,13 +98,12 @@ struct Channel {
 	int	local_consumed;
 	int	local_maxpacket;
 	int     extended_usage;
+	int	single_connection;
 
 	char   *ctype;		/* type */
 
 	/* callback */
-	channel_callback_fn	*cb_fn;
-	void	*cb_arg;
-	int	cb_event;
+	channel_callback_fn	*confirm;
 	channel_callback_fn	*detach_user;
 
 	/* filter */
@@ -115,24 +115,24 @@ struct Channel {
 #define CHAN_EXTENDED_WRITE		2
 
 /* default window/packet sizes for tcp/x11-fwd-channel */
-#define CHAN_SES_WINDOW_DEFAULT	(32*1024)
-#define CHAN_SES_PACKET_DEFAULT	(CHAN_SES_WINDOW_DEFAULT/2)
-#define CHAN_TCP_WINDOW_DEFAULT	(32*1024)
-#define CHAN_TCP_PACKET_DEFAULT	(CHAN_TCP_WINDOW_DEFAULT/2)
-#define CHAN_X11_WINDOW_DEFAULT	(4*1024)
-#define CHAN_X11_PACKET_DEFAULT	(CHAN_X11_WINDOW_DEFAULT/2)
+#define CHAN_SES_PACKET_DEFAULT	(32*1024)
+#define CHAN_SES_WINDOW_DEFAULT	(4*CHAN_SES_PACKET_DEFAULT)
+#define CHAN_TCP_PACKET_DEFAULT	(32*1024)
+#define CHAN_TCP_WINDOW_DEFAULT	(4*CHAN_TCP_PACKET_DEFAULT)
+#define CHAN_X11_PACKET_DEFAULT	(16*1024)
+#define CHAN_X11_WINDOW_DEFAULT	(4*CHAN_X11_PACKET_DEFAULT)
 
 /* possible input states */
-#define CHAN_INPUT_OPEN			0x01
-#define CHAN_INPUT_WAIT_DRAIN		0x02
-#define CHAN_INPUT_WAIT_OCLOSE		0x04
-#define CHAN_INPUT_CLOSED		0x08
+#define CHAN_INPUT_OPEN			0
+#define CHAN_INPUT_WAIT_DRAIN		1
+#define CHAN_INPUT_WAIT_OCLOSE		2
+#define CHAN_INPUT_CLOSED		3
 
 /* possible output states */
-#define CHAN_OUTPUT_OPEN		0x10
-#define CHAN_OUTPUT_WAIT_DRAIN		0x20
-#define CHAN_OUTPUT_WAIT_IEOF		0x40
-#define CHAN_OUTPUT_CLOSED		0x80
+#define CHAN_OUTPUT_OPEN		0
+#define CHAN_OUTPUT_WAIT_DRAIN		1
+#define CHAN_OUTPUT_WAIT_IEOF		2
+#define CHAN_OUTPUT_CLOSED		3
 
 #define CHAN_CLOSE_SENT			0x01
 #define CHAN_CLOSE_RCVD			0x02
@@ -141,33 +141,31 @@ struct Channel {
 
 Channel	*channel_lookup(int);
 Channel *channel_new(char *, int, int, int, int, int, int, int, char *, int);
-void	 channel_set_fds(int, int, int, int, int, int);
+void	 channel_set_fds(int, int, int, int, int, int, u_int);
 void	 channel_free(Channel *);
 void	 channel_free_all(void);
 void	 channel_stop_listening(void);
 
 void	 channel_send_open(int);
-void	 channel_request(int, char *, int);
 void	 channel_request_start(int, char *, int);
-void	 channel_register_callback(int, int mtype, channel_callback_fn *, void *);
 void	 channel_register_cleanup(int, channel_callback_fn *);
+void	 channel_register_confirm(int, channel_callback_fn *);
 void	 channel_register_filter(int, channel_filter_fn *);
 void	 channel_cancel_cleanup(int);
 int	 channel_close_fd(int *);
 
 /* protocol handler */
 
-void	 channel_input_channel_request(int, int, void *);
-void	 channel_input_close(int, int, void *);
-void	 channel_input_close_confirmation(int, int, void *);
-void	 channel_input_data(int, int, void *);
-void	 channel_input_extended_data(int, int, void *);
-void	 channel_input_ieof(int, int, void *);
-void	 channel_input_oclose(int, int, void *);
-void	 channel_input_open_confirmation(int, int, void *);
-void	 channel_input_open_failure(int, int, void *);
-void	 channel_input_port_open(int, int, void *);
-void	 channel_input_window_adjust(int, int, void *);
+void	 channel_input_close(int, u_int32_t, void *);
+void	 channel_input_close_confirmation(int, u_int32_t, void *);
+void	 channel_input_data(int, u_int32_t, void *);
+void	 channel_input_extended_data(int, u_int32_t, void *);
+void	 channel_input_ieof(int, u_int32_t, void *);
+void	 channel_input_oclose(int, u_int32_t, void *);
+void	 channel_input_open_confirmation(int, u_int32_t, void *);
+void	 channel_input_open_failure(int, u_int32_t, void *);
+void	 channel_input_port_open(int, u_int32_t, void *);
+void	 channel_input_window_adjust(int, u_int32_t, void *);
 
 /* file descriptor handling (read/write) */
 
@@ -190,19 +188,16 @@ void     channel_input_port_forward_request(int, int);
 int	 channel_connect_to(const char *, u_short);
 int	 channel_connect_by_listen_address(u_short);
 void	 channel_request_remote_forwarding(u_short, const char *, u_short);
-int	 channel_request_local_forwarding(u_short, const char *, u_short, int);
-int
-channel_request_forwarding(const char *, u_short, const char *, u_short, int,
-    int);
+int	 channel_setup_local_fwd_listener(u_short, const char *, u_short, int);
+int	 channel_setup_remote_fwd_listener(const char *, u_short, int);
 
 /* x11 forwarding */
 
 int	 x11_connect_display(void);
-int	 x11_create_display_inet(int, int);
-void     x11_input_open(int, int, void *);
-void     x11_request_forwarding(void);
+int	 x11_create_display_inet(int, int, int);
+void     x11_input_open(int, u_int32_t, void *);
 void	 x11_request_forwarding_with_spoofing(int, const char *, const char *);
-void	 deny_input_open(int, int, void *);
+void	 deny_input_open(int, u_int32_t, void *);
 
 /* agent forwarding */
 
@@ -210,25 +205,21 @@ void	 auth_request_forwarding(void);
 char	*auth_get_socket_name(void);
 void	 auth_sock_cleanup_proc(void *);
 int	 auth_input_request_forwarding(struct passwd *);
-void	 auth_input_open_request(int, int, void *);
+void	 auth_input_open_request(int, u_int32_t, void *);
 
 /* channel close */
 
 int	 chan_is_dead(Channel *, int);
 void	 chan_mark_dead(Channel *);
-void 	 chan_init_iostates(Channel *);
-void	 chan_init(void);
 
-typedef void    chan_event_fn(Channel *);
+/* channel events */
 
-/* for the input state */
-extern chan_event_fn	*chan_rcvd_oclose;
-extern chan_event_fn	*chan_read_failed;
-extern chan_event_fn	*chan_ibuf_empty;
+void	 chan_rcvd_oclose(Channel *);
+void	 chan_read_failed(Channel *);
+void	 chan_ibuf_empty(Channel *);
 
-/* for the output state */
-extern chan_event_fn	*chan_rcvd_ieof;
-extern chan_event_fn	*chan_write_failed;
-extern chan_event_fn	*chan_obuf_empty;
+void	 chan_rcvd_ieof(Channel *);
+void	 chan_write_failed(Channel *);
+void	 chan_obuf_empty(Channel *);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.2 2002/02/10 16:23:33 bjh21 Exp $	*/
+/*	$NetBSD: log.c,v 1.3 2002/03/08 02:00:53 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: log.c,v 1.18 2001/06/26 17:27:23 markus Exp $");
+RCSID("$OpenBSD: log.c,v 1.22 2002/02/22 12:20:34 markus Exp $");
 
 #include "log.h"
 #include "xmalloc.h"
@@ -86,8 +86,6 @@ static struct {
 	{ NULL,		SYSLOG_LEVEL_NOT_SET }
 };
 
-static void	 do_log(LogLevel level, const char *fmt, va_list args);
-
 SyslogFacility
 log_facility_number(char *name)
 {
@@ -108,17 +106,6 @@ log_level_number(char *name)
 			if (strcasecmp(log_levels[i].name, name) == 0)
 				return log_levels[i].val;
 	return SYSLOG_LEVEL_NOT_SET;
-}
-/* Fatal messages.  This function never returns. */
-
-void
-fatal(const char *fmt,...)
-{
-	va_list args;
-	va_start(args, fmt);
-	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
-	va_end(args);
-	fatal_cleanup();
 }
 
 /* Error messages that should be logged. */
@@ -240,7 +227,7 @@ fatal_cleanup(void)
 	for (cu = fatal_cleanups; cu; cu = next_cu) {
 		next_cu = cu->next;
 		debug("Calling cleanup 0x%lx(0x%lx)",
-		      (u_long) cu->proc, (u_long) cu->context);
+		    (u_long) cu->proc, (u_long) cu->context);
 		(*cu->proc) (cu->context);
 	}
 	exit(255);
@@ -321,7 +308,7 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 
 #define MSGBUFSIZ 1024
 
-static void
+void
 do_log(LogLevel level, const char *fmt, va_list args)
 {
 	char msgbuf[MSGBUFSIZ];

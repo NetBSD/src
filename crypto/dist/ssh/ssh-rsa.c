@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-rsa.c,v 1.8 2001/12/06 03:54:06 itojun Exp $	*/
+/*	$NetBSD: ssh-rsa.c,v 1.9 2002/03/08 02:00:56 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-rsa.c,v 1.14 2001/12/05 10:06:12 deraadt Exp $");
+RCSID("$OpenBSD: ssh-rsa.c,v 1.16 2002/02/24 19:14:59 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -41,12 +41,12 @@ RCSID("$OpenBSD: ssh-rsa.c,v 1.14 2001/12/05 10:06:12 deraadt Exp $");
 int
 ssh_rsa_sign(
     Key *key,
-    u_char **sigp, int *lenp,
-    u_char *data, int datalen)
+    u_char **sigp, u_int *lenp,
+    u_char *data, u_int datalen)
 {
 	const EVP_MD *evp_md;
 	EVP_MD_CTX md;
-	u_char *digest, *sig, *ret;
+	u_char digest[EVP_MAX_MD_SIZE], *sig, *ret;
 	u_int slen, dlen, len;
 	int ok, nid;
 	Buffer b;
@@ -64,18 +64,15 @@ ssh_rsa_sign(
 		error("ssh_rsa_sign: EVP_get_digestbynid %d failed", nid);
 		return -1;
 	}
-	dlen = evp_md->md_size;
-	digest = xmalloc(dlen);
 	EVP_DigestInit(&md, evp_md);
 	EVP_DigestUpdate(&md, data, datalen);
-	EVP_DigestFinal(&md, digest, NULL);
+	EVP_DigestFinal(&md, digest, &dlen);
 
 	slen = RSA_size(key->rsa);
 	sig = xmalloc(slen);
 
 	ok = RSA_sign(nid, digest, dlen, sig, &len, key->rsa);
-	memset(digest, 'd', dlen);
-	xfree(digest);
+	memset(digest, 'd', sizeof(digest));
 
 	if (ok != 1) {
 		int ecode = ERR_get_error();
@@ -114,14 +111,14 @@ ssh_rsa_sign(
 int
 ssh_rsa_verify(
     Key *key,
-    u_char *signature, int signaturelen,
-    u_char *data, int datalen)
+    u_char *signature, u_int signaturelen,
+    u_char *data, u_int datalen)
 {
 	Buffer b;
 	const EVP_MD *evp_md;
 	EVP_MD_CTX md;
 	char *ktype;
-	u_char *sigblob, *digest;
+	u_char digest[EVP_MAX_MD_SIZE], *sigblob;
 	u_int len, dlen;
 	int rlen, ret, nid;
 
@@ -162,15 +159,12 @@ ssh_rsa_verify(
 		xfree(sigblob);
 		return -1;
 	}
-	dlen = evp_md->md_size;
-	digest = xmalloc(dlen);
 	EVP_DigestInit(&md, evp_md);
 	EVP_DigestUpdate(&md, data, datalen);
-	EVP_DigestFinal(&md, digest, NULL);
+	EVP_DigestFinal(&md, digest, &dlen);
 
 	ret = RSA_verify(nid, digest, dlen, sigblob, len, key->rsa);
-	memset(digest, 'd', dlen);
-	xfree(digest);
+	memset(digest, 'd', sizeof(digest));
 	memset(sigblob, 's', len);
 	xfree(sigblob);
 	if (ret == 0) {

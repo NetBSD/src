@@ -1,5 +1,5 @@
-.\"	$NetBSD: ssh-agent.1,v 1.9 2001/11/27 04:10:25 itojun Exp $
-.\" $OpenBSD: ssh-agent.1,v 1.29 2001/11/19 18:40:46 stevesk Exp $
+.\"	$NetBSD: ssh-agent.1,v 1.10 2002/03/08 02:00:55 itojun Exp $
+.\" $OpenBSD: ssh-agent.1,v 1.31 2002/02/04 20:41:16 stevesk Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -95,9 +95,11 @@ Keys are added using
 .Xr ssh-add 1 .
 When executed without arguments,
 .Xr ssh-add 1
-adds the
-.Pa $HOME/.ssh/identity
-file.
+adds the files
+.Pa $HOME/.ssh/id_rsa ,
+.Pa $HOME/.ssh/id_dsa 
+and
+.Pa $HOME/.ssh/identity .
 If the identity has a passphrase,
 .Xr ssh-add 1
 asks for the passphrase (using a small X11 application if running
@@ -153,15 +155,6 @@ line terminates.
 .Bl -tag -width Ds
 .It Pa $HOME/.ssh/identity
 Contains the protocol version 1 RSA authentication identity of the user.
-This file should not be readable by anyone but the user.
-It is possible to
-specify a passphrase when generating the key; that passphrase will be
-used to encrypt the private part of this file.
-This file is not used by
-.Nm
-but is normally added to the agent using
-.Xr ssh-add 1
-at login time.
 .It Pa $HOME/.ssh/id_dsa
 Contains the protocol version 2 DSA authentication identity of the user.
 .It Pa $HOME/.ssh/id_rsa

@@ -1,4 +1,4 @@
-/*	$NetBSD: authfd.c,v 1.8 2001/12/06 03:54:05 itojun Exp $	*/
+/*	$NetBSD: authfd.c,v 1.9 2002/03/08 02:00:51 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.46 2001/12/05 10:06:12 deraadt Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.48 2002/02/24 19:14:59 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -345,7 +345,7 @@ ssh_decrypt_challenge(AuthenticationConnection *auth,
 	buffer_put_bignum(&buffer, key->rsa->e);
 	buffer_put_bignum(&buffer, key->rsa->n);
 	buffer_put_bignum(&buffer, challenge);
-	buffer_append(&buffer, (char *) session_id, 16);
+	buffer_append(&buffer, session_id, 16);
 	buffer_put_int(&buffer, response_type);
 
 	if (ssh_request_reply(auth, &buffer, &buffer) == 0) {
@@ -375,8 +375,8 @@ ssh_decrypt_challenge(AuthenticationConnection *auth,
 int
 ssh_agent_sign(AuthenticationConnection *auth,
     Key *key,
-    u_char **sigp, int *lenp,
-    u_char *data, int datalen)
+    u_char **sigp, u_int *lenp,
+    u_char *data, u_int datalen)
 {
 	extern int datafellows;
 	Buffer msg;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh.1,v 1.16 2001/11/27 04:10:26 itojun Exp $
+.\"	$NetBSD: ssh.1,v 1.17 2002/03/08 02:00:56 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.141 2001/11/08 17:49:53 markus Exp $
+.\" $OpenBSD: ssh.1,v 1.148 2002/02/18 17:55:20 markus Exp $
 .Dd September 25, 1999
 .Dt SSH 1
 .Os
@@ -208,8 +208,8 @@ the password cannot be seen by someone listening on the network.
 .Pp
 .Ss SSH protocol version 2
 .Pp
-When a user connects using the protocol version 2
-different authentication methods are available.
+When a user connects using protocol version 2
+similar authentication methods are available.
 Using the default values for
 .Cm PreferredAuthentications ,
 the client will try to authenticate first using the hostbased method;
@@ -444,11 +444,15 @@ something like
 .It Fl g
 Allows remote hosts to connect to local forwarded ports.
 .It Fl i Ar identity_file
-Selects the file from which the identity (private key) for
+Selects a file from which the identity (private key) for
 RSA or DSA authentication is read.
-Default is
+The default is
 .Pa $HOME/.ssh/identity
-in the user's home directory.
+for protocol version 1, and
+.Pa $HOME/.ssh/id_rsa
+and
+.Pa $HOME/.ssh/id_dsa
+for protocol version 2.
 Identity files may also be specified on
 a per-host basis in the configuration file.
 It is possible to have multiple
@@ -518,7 +522,6 @@ for older servers.
 .It Fl q
 Quiet mode.
 Causes all warning and diagnostic messages to be suppressed.
-Only fatal errors are displayed.
 .It Fl s
 May be used to request invocation of a subsystem on the remote system. Subsystems are a feature of the SSH2 protocol which facilitate the use
 of SSH as a secure transport for other applications (eg. sftp). The
@@ -901,7 +904,7 @@ is similar to
 Specifies the protocol version 2 host key algorithms
 that the client wants to use in order of preference.
 The default for this option is:
-.Dq ssh-rsa,ssh-dss
+.Dq ssh-rsa,ssh-dss .
 .It Cm HostKeyAlias
 Specifies an alias that should be used instead of the
 real host name when looking up or saving the host key
@@ -916,10 +919,14 @@ Numeric IP addresses are also permitted (both on the command line and in
 .Cm HostName
 specifications).
 .It Cm IdentityFile
-Specifies the file from which the user's RSA or DSA authentication identity
-is read (default
+Specifies a file from which the user's RSA or DSA authentication identity
+is read. The default is
 .Pa $HOME/.ssh/identity
-in the user's home directory).
+for protocol version 1, and
+.Pa $HOME/.ssh/id_rsa
+and
+.Pa $HOME/.ssh/id_dsa
+for protocol version 2.
 Additionally, any identities represented by the authentication agent
 will be used for authentication.
 The file name may use the tilde
@@ -928,7 +935,7 @@ It is possible to have
 multiple identity files specified in configuration files; all these
 identities will be tried in sequence.
 .It Cm KeepAlive
-Specifies whether the system should send keepalive messages to the
+Specifies whether the system should send TCP keepalive messages to the
 other side.
 If they are sent, death of the connection or crash of one
 of the machines will be properly noticed.
@@ -943,8 +950,7 @@ if the network goes down or the remote host dies.
 This is important in scripts, and many users want it too.
 .Pp
 To disable keepalives, the value should be set to
-.Dq no
-in both the server and the client configuration files.
+.Dq no .
 .It Cm KerberosAuthentication
 Specifies whether Kerberos authentication will be used.
 The argument to this keyword must be
@@ -972,8 +978,9 @@ Only the superuser can forward privileged ports.
 Gives the verbosity level that is used when logging messages from
 .Nm ssh .
 The possible values are:
-QUIET, FATAL, ERROR, INFO, VERBOSE and DEBUG.
-The default is INFO.
+QUIET, FATAL, ERROR, INFO, VERBOSE, DEBUG, DEBUG1, DEBUG2 and DEBUG3.
+The default is INFO.  DEBUG and DEBUG1 are equivalent.  DEBUG2
+and DEBUG3 each specify higher levels of verbose output.
 .It Cm MACs
 Specifies the MAC (message authentication code) algorithms
 in order of preference.
@@ -1014,7 +1021,7 @@ authentication methods. This allows a client to prefer one method (e.g.
 over another method (e.g.
 .Cm password )
 The default for this option is:
-.Dq hostbased,publickey,keyboard-interactive,password
+.Dq hostbased,publickey,keyboard-interactive,password .
 .It Cm Protocol
 Specifies the protocol versions
 .Nm
@@ -1501,6 +1508,10 @@ or with F-Secure SSH, using the
 .Dq Fl u
 option to
 .Xr ssh-keygen 1 .
+.Sh DIAGNOSTICS
+.Nm
+exits with the exit status of the remote command or with 255
+if an error occurred.
 .Sh AUTHORS
 OpenSSH is a derivative of the original and free
 ssh 1.2.12 release by Tatu Ylonen.
