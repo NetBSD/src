@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.1.2.3 2004/11/29 07:24:33 skrll Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.1.2.4 2005/02/09 08:26:13 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_irc_pxy.c,v 2.39.2.2 2004/05/24 14:01:48 darrenr Exp
+ * Id: ip_irc_pxy.c,v 2.39.2.3 2004/12/09 19:40:59 darrenr Exp
  */
 
 #define	IPF_IRC_PROXY

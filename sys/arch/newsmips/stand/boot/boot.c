@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12.6.4 2005/02/06 08:59:22 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.12.6.5 2005/02/09 08:26:13 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -68,7 +68,7 @@ boot(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4,
 	u_long marks[MARK_MAX];
 	char devname[32], file[32];
 	void (*entry)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
-	    uint32_t));
+	    uint32_t);
 	struct btinfo_symtab bi_sym;
 	struct btinfo_bootarg bi_arg;
 	struct btinfo_bootpath bi_bpath;
