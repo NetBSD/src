@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.38 2003/08/07 11:25:36 agc Exp $
+.\"	$NetBSD: mtree.8,v 1.39 2004/07/22 16:51:45 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,9 +27,43 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
+.\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Luke Mewburn of Wasabi Systems.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 22, 2002
+.Dd July 22, 2004
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -37,7 +71,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm
-.Op Fl cCdDelLPruUWx
+.Op Fl cCdDelLMPruUWx
 .Bk -words
 .Op Fl i | Fl m
 .Ek
@@ -167,6 +201,9 @@ this is only possible with securelevel less than 1 (i. e. in single user mode
 or while the system is running in insecure mode). See
 .Xr init 8
 for information on security levels.
+.It Fl M
+Permit merging of specification entries with different types,
+with the last entry take precedence.
 .It Fl N Ar dbdir
 Use the user database text file
 .Pa master.passwd
@@ -508,7 +545,9 @@ All parent directories referenced in the path name must exist.
 The current directory path used by relative path names will be updated
 appropriately.
 Multiple entries for the same full path are permitted if the types
-are the same;
+are the same (unless
+.Fl M
+is given, and then the types may differ);
 in this case the settings for the last entry take precedence.
 .Pp
 A path name that does not contain a slash will be treated as a relative path.
