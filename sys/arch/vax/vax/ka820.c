@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.27 2000/06/29 07:14:28 mrg Exp $	*/
+/*	$NetBSD: ka820.c,v 1.28 2000/07/26 11:44:25 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,6 +75,7 @@
 struct ka820port *ka820port_ptr;
 struct rx50device *rx50device_ptr;
 static volatile struct ka820clock *ka820_clkpage;
+static int mastercpu;
 
 static int ka820_match(struct device *, struct cfdata *, void *);
 static void ka820_attach(struct device *, struct device *, void*);
@@ -156,6 +157,7 @@ ka820_attach(struct device *parent, struct device *self, void *aux)
 	u_short rev;
 
 	rev = bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE) >> 16;
+	mastercpu = mfpr(PR_BINID);
 	strcpy(cpu_model, "VAX 8200");
 	cpu_model[6] = rev & 0x8000 ? '5' : '0';
 	printf(": ka82%c (%s) cpu rev %d, u patch rev %d, sec patch %d\n",

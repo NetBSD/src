@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66 2000/06/29 07:14:22 mrg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.67 2000/07/26 11:44:26 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -64,7 +64,6 @@
 void	gencnslask __P((void));
 
 struct cpu_dep *dep_call;
-int mastercpu;	/* chief of the system */
 struct device *booted_device;
 int booted_partition;	/* defaults to 0 (aka 'a' partition */
 
