@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.20 2003/01/18 12:05:39 martin Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.21 2004/08/21 21:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20 2003/01/18 12:05:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.21 2004/08/21 21:29:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,17 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.20 2003/01/18 12:05:39 martin Exp $
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 int
-scsipi_command(periph, cmd, cmdlen, data_addr, datalen, retries, timeout, bp,
-     flags)
-	struct scsipi_periph *periph;
-	struct scsipi_generic *cmd;
-	int cmdlen;
-	u_char *data_addr;
-	int datalen;
-	int retries;
-	int timeout;
-	struct buf *bp;
-	int flags;
+scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
+    int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
+    struct buf *bp, int flags)
 {
 	int error;
  
@@ -104,8 +96,7 @@ scsipi_command(periph, cmd, cmdlen, data_addr, datalen, retries, timeout, bp,
  * allocate and init a scsipi_periph structure for a new device.
  */
 struct scsipi_periph *
-scsipi_alloc_periph(malloc_flag)
-	int malloc_flag;
+scsipi_alloc_periph(int malloc_flag)
 {
 	struct scsipi_periph *periph;
 	u_int i;
@@ -137,11 +128,8 @@ scsipi_alloc_periph(malloc_flag)
  * the patterns for the particular driver.
  */
 caddr_t
-scsipi_inqmatch(inqbuf, base, nmatches, matchsize, bestpriority)
-	struct scsipi_inquiry_pattern *inqbuf;
-	caddr_t base;
-	int nmatches, matchsize;
-	int *bestpriority;
+scsipi_inqmatch(struct scsipi_inquiry_pattern *inqbuf, caddr_t base,
+    int nmatches, int matchsize, int *bestpriority)
 {
 	u_int8_t type;
 	caddr_t bestmatch;
@@ -186,8 +174,7 @@ scsipi_inqmatch(inqbuf, base, nmatches, matchsize, bestpriority)
 }
 
 char *
-scsipi_dtype(type)
-	int type;
+scsipi_dtype(int type)
 {
 	char *dtype;
 
@@ -251,9 +238,7 @@ scsipi_dtype(type)
 }
 
 void
-scsipi_strvis(dst, dlen, src, slen)
-	u_char *dst, *src;
-	int dlen, slen;
+scsipi_strvis(u_char *dst, int dlen, u_char *src, int slen)
 {
 
 	/* Trim leading and trailing blanks and NULs. */

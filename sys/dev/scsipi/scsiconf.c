@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.225 2004/08/18 11:50:59 drochner Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.226 2004/08/21 21:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.225 2004/08/18 11:50:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.226 2004/08/21 21:29:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.225 2004/08/18 11:50:59 drochner Exp 
 
 #include "locators.h"
 
-const struct scsipi_periphsw scsi_probe_dev = {
+static const struct scsipi_periphsw scsi_probe_dev = {
 	NULL,
 	NULL,
 	NULL,
@@ -92,17 +92,17 @@ static TAILQ_HEAD(, scsi_initq) scsi_initq_head =
     TAILQ_HEAD_INITIALIZER(scsi_initq_head);
 static struct simplelock scsibus_interlock = SIMPLELOCK_INITIALIZER;
 
-int	scsi_probe_device __P((struct scsibus_softc *, int, int));
+static int	scsi_probe_device(struct scsibus_softc *, int, int);
 
-int	scsibusmatch __P((struct device *, struct cfdata *, void *));
-void	scsibusattach __P((struct device *, struct device *, void *));
-int	scsibusactivate __P((struct device *, enum devact));
-int	scsibusdetach __P((struct device *, int flags));
-int	scsibusrescan(struct device *, const char *, const int *);
-void	scsidevdetached(struct device *, struct device *);
+static int	scsibusmatch(struct device *, struct cfdata *, void *);
+static void	scsibusattach(struct device *, struct device *, void *);
+static int	scsibusactivate(struct device *, enum devact);
+static int	scsibusdetach(struct device *, int flags);
+static int	scsibusrescan(struct device *, const char *, const int *);
+static void	scsidevdetached(struct device *, struct device *);
 
-int	scsibussubmatch __P((struct device *, struct cfdata *,
-		const locdesc_t *, void *));
+static int	scsibussubmatch(struct device *, struct cfdata *,
+		    const locdesc_t *, void *);
 
 CFATTACH_DECL2(scsibus, sizeof(struct scsibus_softc),
     scsibusmatch, scsibusattach, scsibusdetach, scsibusactivate,
@@ -110,17 +110,17 @@ CFATTACH_DECL2(scsibus, sizeof(struct scsibus_softc),
 
 extern struct cfdriver scsibus_cd;
 
-dev_type_open(scsibusopen);
-dev_type_close(scsibusclose);
-dev_type_ioctl(scsibusioctl);
+static dev_type_open(scsibusopen);
+static dev_type_close(scsibusclose);
+static dev_type_ioctl(scsibusioctl);
 
 const struct cdevsw scsibus_cdevsw = {
 	scsibusopen, scsibusclose, noread, nowrite, scsibusioctl,
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-int	scsibusprint __P((void *, const char *));
-void	scsibus_config __P((struct scsipi_channel *, void *));
+static int	scsibusprint(void *, const char *);
+static void	scsibus_config(struct scsipi_channel *, void *);
 
 const struct scsipi_bustype scsi_bustype = {
 	SCSIPI_BUSTYPE_SCSI,
@@ -131,9 +131,7 @@ const struct scsipi_bustype scsi_bustype = {
 };
 
 int
-scsiprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+scsiprint(void *aux, const char *pnp)
 {
 	struct scsipi_channel *chan = aux;
 	struct scsipi_adapter *adapt = chan->chan_adapter;
@@ -149,11 +147,8 @@ scsiprint(aux, pnp)
 	return (UNCONF);
 }
 
-int
-scsibusmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+scsibusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct scsipi_channel *chan = aux;
 
@@ -167,10 +162,8 @@ scsibusmatch(parent, cf, aux)
 	return (1);
 }
 
-void
-scsibusattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+scsibusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct scsibus_softc *sc = (void *) self;
 	struct scsipi_channel *chan = aux;
@@ -204,10 +197,8 @@ scsibusattach(parent, self, aux)
 	}
 }
 
-void
-scsibus_config(chan, arg)
-	struct scsipi_channel *chan;
-	void *arg;
+static void
+scsibus_config(struct scsipi_channel *chan, void *arg)
 {
 	struct scsibus_softc *sc = arg;
 	struct scsi_initq *scsi_initq;
@@ -251,7 +242,7 @@ scsibus_config(chan, arg)
 	config_pending_decr();
 }
 
-int
+static int
 scsibussubmatch(struct device *parent, struct cfdata *cf,
 	const locdesc_t *ldesc, void *aux)
 {
@@ -265,10 +256,8 @@ scsibussubmatch(struct device *parent, struct cfdata *cf,
 	return (config_match(parent, cf, aux));
 }
 
-int
-scsibusactivate(self, act)
-	struct device *self;
-	enum devact act;
+static int
+scsibusactivate(struct device *self, enum devact act)
 {
 	struct scsibus_softc *sc = (void *) self;
 	struct scsipi_channel *chan = sc->sc_channel;
@@ -303,10 +292,8 @@ scsibusactivate(self, act)
 	return (error);
 }
 
-int
-scsibusdetach(self, flags)
-	struct device *self;
-	int flags;
+static int
+scsibusdetach(struct device *self, int flags)
 {
 	struct scsibus_softc *sc = (void *) self;
 	struct scsipi_channel *chan = sc->sc_channel;
@@ -353,9 +340,7 @@ scsibusdetach(self, flags)
  * target and lun optionally narrow the search if not -1
  */
 int
-scsi_probe_bus(sc, target, lun)
-	struct scsibus_softc *sc;
-	int target, lun;
+scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 {
 	struct scsipi_channel *chan = sc->sc_channel;
 	int maxtarget, mintarget, maxlun, minlun;
@@ -412,7 +397,7 @@ scsi_probe_bus(sc, target, lun)
 	return (0);
 }
 
-int
+static int
 scsibusrescan(struct device *sc, const char *ifattr, const int *locators)
 {
 
@@ -423,7 +408,7 @@ scsibusrescan(struct device *sc, const char *ifattr, const int *locators)
 		locators[SCSIBUSCF_TARGET], locators[SCSIBUSCF_LUN]));
 }
 
-void
+static void
 scsidevdetached(struct device *sc, struct device *dev)
 {
 	struct scsibus_softc *ssc = (struct scsibus_softc *)sc;
@@ -451,10 +436,8 @@ scsidevdetached(struct device *sc, struct device *dev)
  * or having the device driver call a special function to print out
  * the standard device information.
  */
-int
-scsibusprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+static int
+scsibusprint(void *aux, const char *pnp)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_inquiry_pattern *inqbuf;
@@ -485,7 +468,7 @@ scsibusprint(aux, pnp)
 	return (UNCONF);
 }
 
-const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
+static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-431  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
@@ -746,10 +729,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
  * it is, and find the correct driver table
  * entry.
  */
-int
-scsi_probe_device(sc, target, lun)
-	struct scsibus_softc *sc;
-	int target, lun;
+static int
+scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 {
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
@@ -1002,11 +983,8 @@ bad:
 
 /****** Entry points for user control of the SCSI bus. ******/
 
-int
-scsibusopen(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+static int
+scsibusopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct scsibus_softc *sc;
 	int error, unit = minor(dev);
@@ -1026,11 +1004,8 @@ scsibusopen(dev, flag, fmt, p)
 	return (0);
 }
 
-int
-scsibusclose(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+static int
+scsibusclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 
@@ -1041,13 +1016,8 @@ scsibusclose(dev, flag, fmt, p)
 	return (0);
 }
 
-int
-scsibusioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+static int
+scsibusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 	struct scsipi_channel *chan = sc->sc_channel;
