@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.19.8.2 1997/06/26 21:57:04 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.19.8.3 1997/06/28 00:49:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -129,11 +129,15 @@ struct tcpcb {
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
 };
 
-/* This structure should not exceed 32 bytes. */
+/*
+ * This structure should not exceed 32 bytes.
+ * XXX On the Alpha, it's already 36-bytes, which rounds to 40.
+ * XXX Need to eliminate the pointer.
+ */
 struct syn_cache {
 	struct syn_cache *sc_next;
-	unsigned sc_tstmp :  1;
-	unsigned sc_hash  : 31;
+	u_int32_t sc_tstmp		: 1,
+		  sc_hash		: 31;
 	struct in_addr sc_src;
 	struct in_addr sc_dst;
 	tcp_seq sc_irs;
@@ -142,8 +146,8 @@ struct syn_cache {
 	u_int16_t sc_dport;
 	u_int16_t sc_peermaxseg;
 	u_int8_t sc_timer;
-	unsigned sc_request_r_scale   : 4;
-	unsigned sc_requested_s_scale : 4;
+	u_int8_t sc_request_r_scale	: 4,
+		 sc_requested_s_scale	: 4;
 };
 
 struct syn_cache_head {
