@@ -1,3 +1,4 @@
+/* this code is un-altered from the hp300 code */
 /*
  * Emulation of VAX REI instruction.
  *
@@ -92,6 +93,7 @@ Lnosir:
 Ldorte:
 	rte				| real return
 
+/* this code is un-altered from the hp300 version */
 /*
  * Set processor priority level calls.  Most are implemented with
  * inline asm expansions.  However, spl0 requires special handling

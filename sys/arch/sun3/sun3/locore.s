@@ -8,7 +8,8 @@
 .data
 .space NBPG
 tmpstk:
-
+.set	_kstack,MONSHORTSEG
+.globl _kstack
 .text
 .globl start; .globl _start
 
@@ -66,13 +67,35 @@ bsszero: clrl a0@
 	addql #4, a0
 	cmpl a0, a1
 	bne bsszero
-	movw #PSL_LOWIPL, sr		| nothing blocked
-	movl #tmpstk, sp
-	jsr _sun3_bootstrap
-	movl #KSTACK_ADDR, a1		| proc0 kernel stack
+
+final_before_main:
+
+	lea tmpstk, sp			| switch to tmpstack
+	jsr _sun3_bootstrap		| init everything but calling main()
+	lea _kstack, a1			| proc0 kernel stack
 	lea a1@(UPAGES*NBPG-4),sp	| set kernel stack to end of area
+	pea _kstack_fall_off		| push something to fall back on :)
+	movl #USRSTACK-4, a2		
+	movl a2, usp			| set user stack
+	movl	_proc0paddr,a1		| get proc0 pcb addr
+	movl	a1,_curpcb		| proc0 is running
+	clrw	a1@(PCB_FLAGS)		| clear flags
+#ifdef FPCOPROC
+	clrl	a1@(PCB_FPCTX)		| ensure null FP context
+	movl	a1,sp@-
+	jbsr	_m68881_restore		| restore it (does not kill a1)
+	addql	#4,sp
+#endif
+	movw #PSL_LOWIPL, sr		| nothing blocked
 	jsr _main
-	rts				|should never get here
+/* proc[1] == init now running here;
+ * create a null exception frame and return to user mode in icode
+ */
+post_main:
+	clrw	sp@-			| vector offset/frame type
+	clrl	sp@-			| return to icode location 0
+	movw	#PSL_USER,sp@-		| in user mode
+	rte				|should get here :)
 .text
 /*
  * Icode is copied out to process 1 to exec init.

@@ -1408,6 +1408,7 @@ void pmap_activate(pmap, pcbp)
     int s;
 
     PMAP_LOCK();
+    printf("pmap_activate called\n");
     if (pmap->pm_context) {
 	set_context(pmap->pm_context->context_num);
 	PMAP_UNLOCK();
