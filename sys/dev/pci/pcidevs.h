@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.632 2004/07/15 13:11:36 junyoung Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.633 2004/07/17 20:05:02 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.631 2004/07/15 13:09:21 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.632 2004/07/17 20:04:32 mycroft Exp 
  */
 
 /*
@@ -1780,8 +1780,8 @@
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
 
 /* Intersil products */
-#define	PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN	0x3873		/* Intersil PRISM2.5 Mini-PCI WLAN */
-#define	PCI_PRODUCT_INTERSIL_MINI_PCI_P54	0x3890		/* Intersil PRISM-54 Mini-PCI WLAN */
+#define	PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN	0x3873		/* PRISM2.5 Mini-PCI WLAN */
+#define	PCI_PRODUCT_INTERSIL_MINI_PCI_P54	0x3890		/* PRISM-54 Mini-PCI WLAN */
 
 /* Invertex */
 #define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON */
