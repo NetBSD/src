@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 2002/09/27 15:36:33 provos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 2002/11/04 05:41:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -608,7 +608,7 @@ cpu_dump()
 
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL)
-		return;
+		return (ENXIO);
 
         dump = bdev->d_dump;
 
