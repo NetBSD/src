@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.42 1996/10/10 22:54:03 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.43 1996/10/13 04:16:35 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -243,7 +243,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 #ifdef MSDOSFS_DEBUG
-	kprintf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp, pmp, pmp->pm_inusemap);
+	printf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp, pmp, pmp->pm_inusemap);
 #endif
 	return (0);
 }
@@ -562,16 +562,16 @@ msdosfs_unmount(mp, mntflags, p)
 	pmp = VFSTOMSDOSFS(mp);
 	pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #ifdef MSDOSFS_DEBUG
-	kprintf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
-	kprintf("flag %08x, usecount %d, writecount %d, holdcnt %d\n",
+	printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
+	printf("flag %08x, usecount %d, writecount %d, holdcnt %d\n",
 	    vp->v_flag, vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
-	kprintf("lastr %d, id %d, mount %08x, op %08x\n",
+	printf("lastr %d, id %d, mount %08x, op %08x\n",
 	    vp->v_lastr, vp->v_id, vp->v_mount, vp->v_op);
-	kprintf("freef %08x, freeb %08x, mountf %08x, mountb %08x\n",
+	printf("freef %08x, freeb %08x, mountf %08x, mountb %08x\n",
 	    vp->v_freef, vp->v_freeb, vp->v_mountf, vp->v_mountb);
-	kprintf("cleanblkhd %08x, dirtyblkhd %08x, numoutput %d, type %d\n",
+	printf("cleanblkhd %08x, dirtyblkhd %08x, numoutput %d, type %d\n",
 	    vp->v_cleanblkhd, vp->v_dirtyblkhd, vp->v_numoutput, vp->v_type);
-	kprintf("union %08x, tag %d, data[0] %08x, data[1] %08x\n",
+	printf("union %08x, tag %d, data[0] %08x, data[1] %08x\n",
 	    vp->v_socket, vp->v_tag, vp->v_data[0], vp->v_data[1]);
 #endif
 	error = VOP_CLOSE(pmp->pm_devvp,
@@ -594,7 +594,7 @@ msdosfs_root(mp, vpp)
 	int error;
 
 #ifdef MSDOSFS_DEBUG
-	kprintf("msdosfs_root(); mp %08x, pmp %08x, ndep %08x, vp %08x\n",
+	printf("msdosfs_root(); mp %08x, pmp %08x, ndep %08x, vp %08x\n",
 	    mp, pmp, ndep, DETOV(ndep));
 #endif
 	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep)) != 0)

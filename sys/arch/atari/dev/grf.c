@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.15 1996/10/11 00:09:19 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.16 1996/10/13 04:10:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -145,7 +145,7 @@ void		*auxp;
     if(dp == NULL) /* Console init	*/
 	atari_config_found(cfdata_gbus, NULL, (void*)&grf_auxp, grfbusprint);
     else {
-	kprintf("\n");
+	printf("\n");
 	config_found(dp, (void*)&grf_auxp, grfbusprint);
     }
 }
