@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.4 2002/08/30 17:09:31 itojun Exp $	*/
+/*	$NetBSD: policy.c,v 1.5 2002/09/16 04:31:46 itojun Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.4 2002/08/30 17:09:31 itojun Exp $");
+__RCSID("$NetBSD: policy.c,v 1.5 2002/09/16 04:31:46 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -570,6 +570,8 @@ systrace_dumppolicy(void)
 		if (systrace_writepolicy(policy) == -1)
 			fprintf(stderr, "Failed to write policy for %s\n",
 			    policy->name);
+		else
+			policy->flags &= ~POLICY_CHANGED;
 	}
 
 	return (0);
