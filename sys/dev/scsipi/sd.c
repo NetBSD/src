@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.91 1996/03/19 03:05:15 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.92 1996/03/24 07:36:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -870,7 +870,7 @@ sd_get_parms(sd, flags)
 	} else {
 		SC_DEBUG(sd->sc_link, SDEV_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
-		    _3btol(&scsi_sense.pages.rigid_geometry.ncyl_2),
+		    _3btol(&scsi_sense.pages.rigid_geometry.ncyl),
 		    scsi_sense.pages.rigid_geometry.nheads,
 		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
 		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
