@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 1999/08/25 04:45:24 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.6 1999/09/16 18:18:28 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -83,8 +83,8 @@
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
 			    int flags); }
-19	NOARGS		{ long sys_lseek(int fd, long offset, int whence); } \
-			    olseek
+19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
+			    int whence); } olseek
 20	NOARGS		{ pid_t sys_getpid(void); }
 21	STD		{ int aout_sys_mount(const char *type, \
 			    const char *path, int flags, void *data); }
