@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: cd.c,v 1.18.2.8 1994/02/06 10:06:41 mycroft Exp $
+ *      $Id: cd.c,v 1.18.2.9 1994/02/16 00:42:31 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -598,21 +598,27 @@ cdioctl(dev, cmd, addr, flag)
 		return 0;
 	}
 	case CDIOREADTOCENTRYS: {
+		struct cd_toc {
+			struct ioc_toc_header header;
+			struct cd_toc_entry entries[65];
+		} data;
 		struct ioc_read_toc_entry *te =
 		(struct ioc_read_toc_entry *) addr;
-		struct cd_toc_entry data[65];
 		struct ioc_toc_header *th;
 		u_int32 len = te->data_len;
-		th = (struct ioc_toc_header *) data;
+		th = &data.header;
 
-		if (len > sizeof(data) || len < sizeof(struct cd_toc_entry))
+		if (len > sizeof(data.entries) ||
+		    len < sizeof(struct cd_toc_entry))
 			return EINVAL;
 		if (error = cd_read_toc(cd, te->address_format,
-					te->starting_track, data, len))
+					te->starting_track,
+					(struct cd_toc_entry *)&data,
+					len + sizeof(struct ioc_toc_header)))
 			return error;
-		len = MIN(len, ((((th->len & 0xff) << 8) + ((th->len >> 8))) +
-			sizeof(*th)));
-		return copyout(th, te->data, len);
+		len = MIN(len, ntohs(th->len) - (sizeof(th->starting_track) +
+						 sizeof(th->ending_track)));
+		return copyout(data.entries, te->data, len);
 	}
 	case CDIOCSETPATCH: {
 		struct ioc_patch *arg = (struct ioc_patch *) addr;
