@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 1997/11/13 10:43:20 veego Exp $ */
+/*	$NetBSD: intr.c,v 1.22 1997/11/19 23:03:47 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,7 @@ strayintr(fp)
 
 	printf("stray interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%b\n",
 		fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
+
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 9)
@@ -107,9 +108,6 @@ strayintr(fp)
 		nstray = 1;
 	}
 }
-
-static struct intrhand level10 = { clockintr };
-static struct intrhand level14 = { statintr };
 
 /*
  * Level 1 software interrupt (could also be Sbus level 1 interrupt).
@@ -196,11 +194,11 @@ struct intrhand *intrhand[15] = {
 	NULL,			/*  7 = video + Sbus level 5 */
 	NULL,			/*  8 = Sbus level 6 */
 	NULL,			/*  9 = Sbus level 7 */
-	&level10,		/* 10 = counter 0 = clock */
+	NULL, 			/* 10 = counter 0 = clock */
 	NULL,			/* 11 = floppy */
 	NULL,			/* 12 = zs hardware interrupt */
 	NULL,			/* 13 = audio chip */
-	&level14,		/* 14 = counter 1 = profiling timer */
+	NULL, 			/* 14 = counter 1 = profiling timer */
 };
 
 static int fastvec;		/* marks fast vectors (see below) */
