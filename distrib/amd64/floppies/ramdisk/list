@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2004/04/18 20:04:26 dsl Exp $
+#	$NetBSD: list,v 1.7 2005/01/18 12:38:45 lukem Exp $
 #
 
 SRCDIRS	usr.bin/less
@@ -41,11 +41,9 @@ PROG	sbin/mount_nfs
 PROG	sbin/mount_ntfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
-PROG	sbin/ping6
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore
 PROG	sbin/route
-PROG	sbin/rtsol
 PROG	sbin/shutdown
 PROG	sbin/swapctl
 PROG	sbin/umount
@@ -64,7 +62,6 @@ PROG	usr/sbin/wiconfig
 SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
-SPECIAL	ping6		srcdir	distrib/utils/x_ping6
 SPECIAL	route		srcdir	distrib/utils/x_route
 
 LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz

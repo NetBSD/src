@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.17 2003/09/15 03:14:54 isaki Exp $
+#	$NetBSD: list,v 1.18 2005/01/18 12:38:45 lukem Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/x68k/stand
 
@@ -37,10 +37,8 @@ PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
-PROG	sbin/ping6
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/route
-PROG	sbin/rtsol
 PROG	sbin/shutdown
 #PROG	sbin/slattach
 PROG	sbin/swapctl
@@ -63,7 +61,6 @@ SPECIAL gzip		srcdir	distrib/utils/x_gzip
 SPECIAL ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL more		srcdir	distrib/utils/more
 SPECIAL ping		srcdir	distrib/utils/x_ping
-SPECIAL ping6		srcdir	distrib/utils/x_ping6
 SPECIAL route		srcdir	distrib/utils/x_route
 SPECIAL	installboot	srcdir	sys/arch/x68k/stand/installboot
 
