@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.107 1998/12/12 20:20:42 is Exp $
+#	$NetBSD: bsd.own.mk,v 1.108 1998/12/12 20:48:23 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -116,11 +116,10 @@ OBJECT_FMT?=a.out
 .endif
 
 # Some platforms are already transitioned to egcs.
-# XXX should switch all of m68k, as soon as !amiga is verified.
 .if (${MACHINE_ARCH} == "alpha") || \
-    (${MACHINE} == "amiga") || \
     (${MACHINE_ARCH} == "arm32") || \
     (${MACHINE_ARCH} == "i386") || \
+    (${MACHINE_ARCH} == "m68k") || \
     (${MACHINE_ARCH} == "ns32k") || \
     (${MACHINE_ARCH} == "mips") || \
     (${MACHINE_ARCH} == "powerpc") || \
