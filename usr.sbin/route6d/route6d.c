@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.39 2002/09/20 19:51:33 mycroft Exp $	*/
+/*	$NetBSD: route6d.c,v 1.40 2002/09/20 22:04:32 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.39 2002/09/20 19:51:33 mycroft Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.40 2002/09/20 22:04:32 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: route6d.c,v 1.39 2002/09/20 19:51:33 mycroft Exp $");
 #include <errno.h>
 #include <err.h>
 #include <util.h>
+#include <poll.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,7 +57,6 @@ __RCSID("$NetBSD: route6d.c,v 1.39 2002/09/20 19:51:33 mycroft Exp $");
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
-#include <sys/poll.h>
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <net/if_var.h>
@@ -440,7 +440,8 @@ main(int argc, char **argv)
 			continue;
 		}
 
-		switch (poll(set, 2, INFTIM)) {
+		switch (poll(set, 2, INFTIM))
+		{
 		case -1:
 			if (errno != EINTR) {
 				fatal("select");
@@ -450,12 +451,14 @@ main(int argc, char **argv)
 		case 0:
 			continue;
 		default:
-			if (set[0].revents & POLLIN) {
+			if (set[0].revents & POLLIN)
+			{
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				riprecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
 			}
-			if (set[1].revents & POLLIN) {
+			if (set[1].revents & POLLIN)
+			{
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				rtrecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -642,8 +645,9 @@ init(void)
 		}
 		set[1].fd = rtsock;
 		set[1].events = POLLIN;
-	} else
+	} else {
 		set[1].fd = -1;
+	}
 }
 
 #define	RIPSIZE(n) \
