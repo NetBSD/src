@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.2 1997/06/12 17:14:56 mrg Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.3 1997/07/17 16:56:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -53,6 +53,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -64,6 +65,8 @@
 
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
+
+extern struct lock ufs_hashlock;
 
 int ext2fs_sbupdate __P((struct ufsmount *, int));
 int ext2fs_check_export __P((struct mount *, struct ufid *, struct mbuf *,
@@ -821,12 +824,15 @@ ext2fs_vget(mp, ino, vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-	if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
-		return (0);
+	do {
+		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
+			return (0);
+	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0, curproc));
 
 	/* Allocate a new vnode/inode. */
 	if ((error = getnewvnode(VT_EXT2FS, mp, ext2fs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
+		lockmgr(&ufs_hashlock, LK_RELEASE, 0, curproc);
 		return (error);
 	}
 	MALLOC(ip, struct inode *, sizeof(struct inode), M_EXT2FSNODE, M_WAITOK);
@@ -846,6 +852,7 @@ ext2fs_vget(mp, ino, vpp)
 	 * disk portion of this inode to be read.
 	 */
 	ufs_ihashins(ip);
+	lockmgr(&ufs_hashlock, LK_RELEASE, 0, curproc);
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
