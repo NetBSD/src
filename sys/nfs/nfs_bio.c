@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.39 1997/10/23 14:12:14 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.40 1997/11/23 13:52:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -357,15 +357,18 @@ diragain:
 			}
 			return (error);
 		    }
-		    /*
-		     * Just return if we hit EOF right away with this
-		     * block.
-		     */
-		    if (np->n_direofoffset != 0 && 
+		}
+
+		/*
+		 * Just return if we hit EOF right away with this
+		 * block. Always check here, because direofoffset
+		 * may have been set by an nfsiod since the last
+		 * check.
+		 */
+		if (np->n_direofoffset != 0 && 
 			ndp->dc_blkcookie == np->n_direofoffset) {
-			    brelse(bp);
-			    return (0);
-		    }
+			brelse(bp);
+			return (0);
 		}
 
 		/*
