@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.8 1996/08/31 20:58:19 mycroft Exp $	*/
+/*	$NetBSD: gram.y,v 1.9 1996/08/31 21:15:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,7 @@ static	void	setmaxpartitions __P((int));
 
 %token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
 %token	XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS
-%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP VECTOR WITH
+%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP WITH
 %token	<val> FFLAG NUMBER
 %token	<str> PATHNAME WORD
 
@@ -119,7 +119,6 @@ static	void	setmaxpartitions __P((int));
 %type	<str>	atname
 %type	<list>	loclist_opt loclist locdef
 %type	<str>	locdefault
-%type	<list>	veclist_opt veclist
 %type	<list>	attrs_opt attrs
 %type	<list>	locators locator
 %type	<list>	swapdev_list dev_spec
@@ -230,9 +229,8 @@ one_def:
 	DEFINE WORD interface_opt	= { (void)defattr($2, $3); } |
 	DEVICE devbase interface_opt attrs_opt
 					= { defdev($2, 0, $3, $4); } |
-	ATTACH devbase AT atlist veclist_opt devattach_opt attrs_opt
-					= { defdevattach($6, $2, $4, $5,
-					    $7); } |
+	ATTACH devbase AT atlist devattach_opt attrs_opt
+					= { defdevattach($5, $2, $4, $6); } |
 	MAXUSERS NUMBER NUMBER NUMBER	= { setdefmaxusers($2, $3, $4); } |
 	PSEUDO_DEVICE devbase attrs_opt = { defdev($2,1,NULL,$3); } |
 	MAJOR '{' majorlist '}';
@@ -244,15 +242,6 @@ atlist:
 atname:
 	WORD				= { $$ = $1; } |
 	ROOT				= { $$ = NULL; };
-
-veclist_opt:
-	VECTOR veclist			= { $$ = $2; } |
-	/* empty */			= { $$ = NULL; };
-
-/* veclist order matters, must use right recursion */
-veclist:
-	WORD veclist			= { $$ = new_nx($1, $2); } |
-	WORD				= { $$ = new_n($1); };
 
 devbase:
 	WORD				= { $$ = getdevbase($1); };
