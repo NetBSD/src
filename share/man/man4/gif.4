@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.15 2001/02/20 12:55:24 itojun Exp $
+.\"	$NetBSD: gif.4,v 1.16 2001/05/14 13:35:20 itojun Exp $
 .\"	$KAME: gif.4,v 1.24 2001/02/20 12:54:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,79 +78,9 @@ Finally, use routing table to route the packets toward
 interface.
 .Pp
 .Nm
-interface can be configued to perform bidirectional tunnel, or
-multi-destination tunnel.
-This is controlled by
-.Dv IFF_LINK0
-interface flag.
-Also,
-.Nm
 can be configured to be ECN friendly.
 This can be configured by
 .Dv IFF_LINK1 .
-.\"
-.Ss Bidirectional and multi-destination mode
-Usually,
-.Nm
-implements bidirectional tunnel.
-.Xr ifconfig 8
-should configure a tunnel ingress point
-.Pq this node
-and an egress point
-.Pq tunnel endpoint ,
-and
-one
-.Nm
-interface will tunnel to only a single tunnel endpoint,
-and accept from only a single tunnel endpoint.
-Source and destination address for outer IP header is always the
-ingress and the egress point configued by
-.Xr ifconfig 8 .
-.Pp
-With
-.Dv IFF_LINK0
-interface flag,
-.Nm
-can be configured to implement multi-destination tunnel.
-With
-.Dv IFF_LINK0 ,
-it is able to configure egress point to IPv4 wildcard address
-.Pq Nm 0.0.0.0
-or IPv6 unspecified address
-.Pq Nm 0::0 .
-In this case, destination address for the outer IP header is
-determined based on the routing table setup.
-Therefore, one
-.Nm
-interface can tunnel to multiple destinations.
-Also,
-.Nm
-will accept tunneled traffic from any outer source address.
-.Pp
-When finding a
-.Nm gif
-interface from the inbound tunneled traffic,
-bidirectional mode interface is preferred than multi-destination mode interface.
-For example, if you have the following three
-.Nm
-interfaces on node A, tunneled traffic from C to A will match the second
-.Nm
-interface, not the third one.
-.Bl -bullet -compact -offset indent
-.It
-bidirectional, A to B
-.It
-bidirectional, A to C
-.It
-multi-destination, A to any
-.El
-.Pp
-Please note that multi-destination mode is far less secure
-than bidirectional mode.
-Multi-destination mode
-.Nm
-can accept tunneled packet from anybody,
-and can be attacked from a malicious node.
 .Pp
 .Ss ECN friendly behavior
 .Nm
@@ -217,10 +147,6 @@ You may want to secure your node by using packet filters.
 Ingress filter can be turned off by
 .Dv IFF_LINK2
 bit.
-.Pp
-As mentioned above, multi-destination mode
-.Pq Dv IFF_LINK0
-is far less secure than bidirectional mode.
 .\"
 .Sh SEE ALSO
 .Xr inet 4 ,
@@ -270,7 +196,9 @@ and your node will generate packets with a spoofed source address.
 If the outer protocol is IPv6, path MTU discovery for encapsulated packet
 may affect communication over the interface.
 .Pp
-.Xr gif 4
-is an
-.Dv IFF_POINTOPOINT
-device, however, it supports NBMA behavior in multi-destination mode.
+In the past,
+.Nm
+had a multi-destination behavior, configurable via
+.Dv IFF_LINK0
+flag.
+The behavior was obsoleted and is no longer supported.
