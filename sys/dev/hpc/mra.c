@@ -1,4 +1,4 @@
-/*	$NetBSD: mra.c,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
+/*	$NetBSD: mra.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -30,16 +30,16 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-int mra_Y_AX1_BX2_C __P((int *y, int ys, int *x1, int x1s, int *x2, int x2s,
-			 int n, int scale, int *a, int *b, int *c));
+int mra_Y_AX1_BX2_C(int *, int, int *, int, int *, int, int, int, int *,
+    int *, int *);
 
 /*
  * multiple regression analysis
  * Y = AX1 + BX2 + C
  */
 int
-mra_Y_AX1_BX2_C(y, ys, x1, x1s, x2, x2s, n, scale, a, b, c)
-	int *y, ys, *x1, x1s, *x2, x2s, n, scale, *a, *b, *c;
+mra_Y_AX1_BX2_C(int *y, int ys, int *x1, int x1s, int *x2, int x2s, int n,
+    int scale, int *a, int *b, int *c)
 {
 	int i;
 	int64_t X1a, X2a, Ya;

@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ static void dotbpp_unimpl(struct video_chip *, int, int);
 
 int
 cmap_work_alloc(u_int8_t **r, u_int8_t **g, u_int8_t **b, u_int32_t **rgb,
-		int cnt)
+    int cnt)
 {
 	KASSERT(r && g && b && rgb && LEGAL_CLUT_INDEX(cnt - 1));
 
@@ -197,7 +197,7 @@ rgb24_compose(u_int32_t *rgb24, u_int8_t *r, u_int8_t *g, u_int8_t *b, int cnt)
 
 void
 rgb24_decompose(u_int32_t *rgb24, u_int8_t *r, u_int8_t *g, u_int8_t *b,
-		int cnt)
+    int cnt)
 {
 	int i;
 	KASSERT(rgb24 && r && g && b && LEGAL_CLUT_INDEX(cnt - 1));

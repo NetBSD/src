@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideovar.h,v 1.1 2001/02/22 18:37:54 uch Exp $	*/
+/*	$NetBSD: bivideovar.h,v 1.2 2001/06/04 18:59:31 uch Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -28,4 +28,4 @@
  */
 
 extern int bivideo_dont_attach;
-int bivideo_getcnfb __P((struct hpcfb_fbconf* fb));
+int bivideo_getcnfb(struct hpcfb_fbconf *);

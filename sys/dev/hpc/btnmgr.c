@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.1 2001/02/22 18:37:54 uch Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.2 2001/06/04 18:59:31 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -79,18 +79,10 @@ struct btnmgr_softc {
 #endif
 };
 
-/*
-static struct btnmgr_softc *the_btnmgr_sc;
-*/
-
-/*
-void		btnmgrattach  __P((int));
- */
-int btnmgrmatch __P((struct device *, struct cfdata *, void *));
-void btnmgrattach __P((struct device *, struct device *, void *));
-char*		btnmgr_name __P((long));
-static int	btnmgr_hook __P((void *, int, long, void *));
-
+int btnmgrmatch(struct device *, struct cfdata *, void *);
+void btnmgrattach(struct device *, struct device *, void *);
+char *btnmgr_name(long);
+static int btnmgr_hook(void *, int, long, void *);
 
 /*
  * global/static data
@@ -100,9 +92,9 @@ struct cfattach btnmgr_ca = {
 };
 
 /* wskbd accessopts */
-int	btnmgr_wskbd_enable __P((void *, int));
-void	btnmgr_wskbd_set_leds __P((void *, int));
-int	btnmgr_wskbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	btnmgr_wskbd_enable(void *, int);
+void	btnmgr_wskbd_set_leds(void *, int);
+int	btnmgr_wskbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 const struct wskbd_accessops btnmgr_wskbd_accessops = {
 	btnmgr_wskbd_enable,
@@ -137,15 +129,15 @@ static const int n_button_config =
 #define KC(n) KS_KEYCODE(n)
 static const keysym_t btnmgr_keydesc_default[] = {
 /*  pos				normal			shifted		*/
-    KC(1), 			KS_Escape,
-    KC(28), 			KS_Return,
-    KC(57),	KS_Cmd,		KS_Cmd_BacklightToggle,
-    KC(67), 			KS_f9,
-    KC(68), 			KS_f10,
-    KC(72), 			KS_KP_Up,
-    KC(80), 			KS_KP_Down,
-    KC(87), 			KS_f11,
-    KC(88), 			KS_f12,
+	KC(1), 			KS_Escape,
+	KC(28), 			KS_Return,
+	KC(57),	KS_Cmd,		KS_Cmd_BacklightToggle,
+	KC(67), 			KS_f9,
+	KC(68), 			KS_f10,
+	KC(72), 			KS_KP_Up,
+	KC(80), 			KS_KP_Down,
+	KC(87), 			KS_f11,
+	KC(88), 			KS_f12,
 };
 #undef KC
 #define KBD_MAP(name, base, map) \
@@ -165,10 +157,7 @@ struct wskbd_mapdata btnmgr_keymapdata = {
  *  function bodies
  */
 int
-btnmgrmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+btnmgrmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
     
@@ -179,9 +168,7 @@ btnmgrmatch(parent, match, aux)
 }
 
 void
-btnmgrattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+btnmgrattach(struct device *parent, struct device *self, void *aux)
 {
 	int id;
 	struct btnmgr_softc *sc = (struct btnmgr_softc *)self;
@@ -195,8 +182,8 @@ btnmgrattach(parent, self, aux)
 	for (id = 0; id <= CONFIG_HOOK_MAX_ID; id++)
 		if (button_config[id].name != NULL)
 			sc->sc_hook_tag = config_hook(CONFIG_HOOK_BUTTONEVENT,
-						      id, CONFIG_HOOK_SHARE,
-						      btnmgr_hook, sc);
+			    id, CONFIG_HOOK_SHARE,
+			    btnmgr_hook, sc);
 
 	/*
 	 * attach wskbd
@@ -210,11 +197,7 @@ btnmgrattach(parent, self, aux)
 }
 
 static int
-btnmgr_hook(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+btnmgr_hook(void *ctx, int type, long id, void *msg)
 {
 	struct btnmgr_softc *sc = ctx;
 
@@ -228,35 +211,32 @@ btnmgr_hook(ctx, type, id, msg)
 			int n;
 			u_char data[16];
 			n = pckbd_encode(evtype, button_config[id].keycode,
-					 data);
+			    data);
 			wskbd_rawinput(sc->sc_wskbddev, data, n);
 		} else
 #endif
-		wskbd_input(sc->sc_wskbddev, evtype, 
+			wskbd_input(sc->sc_wskbddev, evtype, 
 			    button_config[id].keycode);
 	}
 
 	if (id == CONFIG_HOOK_BUTTONEVENT_POWER && msg)
 		config_hook_call(CONFIG_HOOK_PMEVENT, 
-				 CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
+		    CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
 
 
 	return (0);
 }
 
 char*
-btnmgr_name(id)
-	long id;
+btnmgr_name(long id)
 {
 	if (id < n_button_config)
-		return button_config[id].name;
+		return (button_config[id].name);
 	return ("unknown");
 }
 
 int
-btnmgr_wskbd_enable(scx, on)
-	void *scx;
-	int on;
+btnmgr_wskbd_enable(void *scx, int on)
 {
 	struct btnmgr_softc *sc = scx;
 
@@ -272,9 +252,7 @@ btnmgr_wskbd_enable(scx, on)
 }
 
 void
-btnmgr_wskbd_set_leds(scx, leds)
-	void *scx;
-	int leds;
+btnmgr_wskbd_set_leds(void *scx, int leds)
 {
 	/*
 	 * We have nothing to do.
@@ -282,12 +260,8 @@ btnmgr_wskbd_set_leds(scx, leds)
 }
 
 int
-btnmgr_wskbd_ioctl(scx, cmd, data, flag, p)
-	void *scx;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+btnmgr_wskbd_ioctl(void *scx, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct btnmgr_softc *sc = scx;
@@ -295,10 +269,10 @@ btnmgr_wskbd_ioctl(scx, cmd, data, flag, p)
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_HPC_BTN;
-		return 0;
+		return (0);
 	case WSKBDIO_SETLEDS:
 		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
-		return 0;
+		return (0);
 	case WSKBDIO_GETLEDS:
 		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
 		*(int *)data = 0;
@@ -307,7 +281,7 @@ btnmgr_wskbd_ioctl(scx, cmd, data, flag, p)
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = (*(int *)data == WSKBD_RAW);
 		DPRINTF(("%s(%d): rawkbd is %s\n", __FILE__, __LINE__,
-			sc->sc_rawkbd ? "on" : "off"));
+		    sc->sc_rawkbd ? "on" : "off"));
 		return (0);
 #endif
 	}
@@ -316,48 +290,31 @@ btnmgr_wskbd_ioctl(scx, cmd, data, flag, p)
 
 #ifdef notyet
 int
-btnmgropen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+btnmgropen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (EINVAL);
 }
 
 int
-btnmgrclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+btnmgrclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (EINVAL);
 }
 
 int
-btnmgrread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+btnmgrread(dev_t dev, struct uio *uio, int flag)
 {
 	return (EINVAL);
 }
 
 int
-btnmgrwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+btnmgrwrite(dev_t dev, struct uio *uio, int flag)
 {
 	return (EINVAL);
 }
 
 int
-btnmgrioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+btnmgrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	return (EINVAL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.4 2001/05/08 17:23:09 uch Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.5 2001/06/04 18:59:32 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -385,7 +385,7 @@ __hpckbd_input(void *arg, int flag, int scancode)
 			wskbd_rawinput(hc->hc_wskbddev, data, n);
 		} else
 #endif
-		wskbd_input(hc->hc_wskbddev, type, hc->hc_keymap[scancode]);
+			wskbd_input(hc->hc_wskbddev, type, hc->hc_keymap[scancode]);
 	}
 
 	return (0);

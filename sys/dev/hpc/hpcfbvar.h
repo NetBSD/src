@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbvar.h,v 1.1 2001/02/22 18:37:55 uch Exp $	*/
+/*	$NetBSD: hpcfbvar.h,v 1.2 2001/06/04 18:59:31 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -40,16 +40,16 @@
  * video access functions (must be provided by all video).
  */
 struct hpcfb_accessops {
-	int	(*ioctl) __P((void *, u_long, caddr_t, int, struct proc *));
-	paddr_t	(*mmap) __P((void *, off_t, int));
-	void	(*cursor) __P((void *, int, int, int, int, int));
-	void	(*bitblit) __P((void *, int, int, int, int, int, int));
-	void	(*erase) __P((void *, int, int, int, int, int));
-	void	(*putchar) __P((void *, int, int, struct wsdisplay_font *,
-				int, int, u_int, int));
-	void	(*setclut) __P((void *, struct rasops_info *));
-	void	(*font) __P((void *, struct wsdisplay_font *));	/* load fonts */
-	void	(*iodone) __P((void *));	/* wait i/o done */
+	int	(*ioctl)(void *, u_long, caddr_t, int, struct proc *);
+	paddr_t	(*mmap)(void *, off_t, int);
+	void	(*cursor)(void *, int, int, int, int, int);
+	void	(*bitblit)(void *, int, int, int, int, int, int);
+	void	(*erase)(void *, int, int, int, int, int);
+	void	(*putchar)(void *, int, int, struct wsdisplay_font *,
+				int, int, u_int, int);
+	void	(*setclut)(void *, struct rasops_info *);
+	void	(*font)(void *, struct wsdisplay_font *); /* load fonts */
+	void	(*iodone)(void *);	/* wait i/o done */
 };
 
 /*
@@ -68,5 +68,5 @@ struct hpcfb_attach_args {
 	struct hpcfb_dspconf *ha_dspconflist;
 };
 
-int	hpcfb_cnattach __P((struct hpcfb_fbconf *));
-int	hpcfbprint __P((void *aux, const char *pnp));
+int	hpcfb_cnattach(struct hpcfb_fbconf *);
+int	hpcfbprint(void *aux, const char *pnp);

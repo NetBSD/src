@@ -1,4 +1,4 @@
-/*	$NetBSD: fontconv.c,v 1.1 2001/02/22 18:37:55 uch Exp $	*/
+/*	$NetBSD: fontconv.c,v 1.2 2001/06/04 18:59:31 uch Exp $	*/
 
 #include <stdio.h>
 
@@ -41,7 +41,7 @@ fc_rasops(int ac, char* av[])
 
 	code = 0;
 	fprintf(ofp, "static u_char %s%dx%d_data[] = {\n",
-		fontname, width, height, code);
+	    fontname, width, height, code);
 	while (1) {
 		int n;
 		int i, j, k;
@@ -85,7 +85,7 @@ fc_rasops(int ac, char* av[])
 	fprintf(ofp, "};\n");
 
 	fprintf(ofp, "struct wsdisplay_font %s%dx%d = {\n",
-		fontname, width, height);
+	    fontname, width, height);
 	fprintf(ofp, "    \"%s\",\t\t\t/* typeface name */\n", fontname);
 	fprintf(ofp, "    0x%02x,\t\t\t/* firstchar */\n", code_min);
 	fprintf(ofp, "    %d,\t\t\t/* numchars */\n", code_max - code_min + 1);
@@ -96,7 +96,7 @@ fc_rasops(int ac, char* av[])
 	fprintf(ofp, "    WSDISPLAY_FONTENC_L2R,\t/* bit order */\n");
 	fprintf(ofp, "    WSDISPLAY_FONTENC_L2R,\t/* byte order */\n");
 	fprintf(ofp, "    %s%dx%d_data\t\t/* data */\n",
-		fontname, width, height);
+	    fontname, width, height);
 	fprintf(ofp, "};\n");
 }
 
@@ -128,7 +128,7 @@ fc_rcons(int ac, char* av[])
 		}
 
 		fprintf(ofp, "static u_int32_t %s%dx%d_%d_pix[] = {\n",
-			fontname, width, height, code);
+		    fontname, width, height, code);
 
 		k = 0;
 		for (i = 0; i < height; i++) {
@@ -144,9 +144,9 @@ fc_rcons(int ac, char* av[])
 		}
 		fprintf(ofp, "};\n");
 		fprintf(ofp, "static struct raster %s%dx%d_%d = {",
-			fontname, width, height, code);
+		    fontname, width, height, code);
 		fprintf(ofp, " %d, %d, 1, 1, %s%dx%d_%d_pix, 0 };\n",
-			width, height, fontname, width, height, code);
+		    width, height, fontname, width, height, code);
 		if (code < code_min) {
 			code_min = code;
 		}
@@ -157,13 +157,13 @@ fc_rcons(int ac, char* av[])
 	}
 
 	fprintf(ofp, "struct raster_font %s%dx%d = {\n",
-		fontname, width, height);
+	    fontname, width, height);
 	fprintf(ofp, "    %d, %d, %d, ", width, height, ascent);
 	fprintf(ofp, "RASFONT_FIXEDWIDTH|RASFONT_NOVERTICALMOVEMENT,\n");
 	fprintf(ofp, "    {\n");
 	for (code = code_min; code <= code_max; code++) {
 		fprintf(ofp, "        { &%s%dx%d_%d, ",
-			fontname, width, height, code);
+		    fontname, width, height, code);
 		fprintf(ofp, "%d, %d, %d, %d },\n", 0, -ascent, width, 0);
 	}
 	fprintf(ofp, "    },\n");

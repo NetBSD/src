@@ -1,4 +1,4 @@
-/*	$NetBSD: hpciovar.h,v 1.3 2001/05/06 14:25:15 takemura Exp $	*/
+/*	$NetBSD: hpciovar.h,v 1.4 2001/06/04 18:59:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin.
@@ -42,7 +42,8 @@ struct hpcio_chip {
 	void *hc_sc;
 	int (*hc_portread)(hpcio_chip_t, int);
 	void (*hc_portwrite)(hpcio_chip_t, int, int);
-	hpcio_intr_handle_t(*hc_intr_establish)(hpcio_chip_t, int, int, int (*)(void *), void*);
+	hpcio_intr_handle_t(*hc_intr_establish)(hpcio_chip_t, int, int,
+	    int (*)(void *), void *);
 	void (*hc_intr_disestablish)(hpcio_chip_t, hpcio_intr_handle_t);
 	void (*hc_intr_clear)(hpcio_chip_t, hpcio_intr_handle_t);
 	void (*hc_register_iochip)(hpcio_chip_t, hpcio_chip_t);
@@ -58,21 +59,21 @@ struct hpcio_attach_args {
 };
 #define HPCIO_BUSNAME	"hpcioif"
 
-#define hpcio_portread(hc, port)	\
+#define hpcio_portread(hc, port)					\
 		((*(hc)->hc_portread)((hc), (port)))
-#define hpcio_portwrite(hc, port, data)	\
+#define hpcio_portwrite(hc, port, data)					\
 		((*(hc)->hc_portwrite)((hc), (port), (data)))
-#define hpcio_intr_establish(hc, port, mode, func, arg)	\
+#define hpcio_intr_establish(hc, port, mode, func, arg)			\
 		((*(hc)->hc_intr_establish)((hc),(port),(mode),(func),(arg)))
-#define hpcio_intr_disestablish(hc, handle)	\
+#define hpcio_intr_disestablish(hc, handle)				\
 		((*(hc)->hc_intr_disestablish)((hc), (handle)))
-#define hpcio_intr_clear(hc, handle)	\
+#define hpcio_intr_clear(hc, handle)					\
 		((*(hc)->hc_intr_clear)((hc), (handle)))
-#define hpcio_register_iochip(hc, iochip)	\
+#define hpcio_register_iochip(hc, iochip)				\
 		((*(hc)->hc_register_iochip)((hc), (iochip)))
-#define hpcio_update(hc)	\
+#define hpcio_update(hc)						\
 		((*(hc)->hc_update)(hc))
-#define hpcio_dump(hc)	\
+#define hpcio_dump(hc)							\
 		((*(hc)->hc_dump)(hc))
 
 /* interrupt trigger options. */
@@ -85,17 +86,17 @@ struct hpcio_attach_args {
 #define HPCIO_INTR_POSEDGE	(1<<3)
 #define HPCIO_INTR_NEGEDGE	(1<<4)
 
-#define HPCIO_INTR_LEVEL_HIGH_HOLD	\
+#define HPCIO_INTR_LEVEL_HIGH_HOLD					\
 		(HPCIO_INTR_LEVEL|HPCIO_INTR_HIGH|HPCIO_INTR_HOLD)
-#define HPCIO_INTR_LEVEL_HIGH_THROUGH	\
+#define HPCIO_INTR_LEVEL_HIGH_THROUGH					\
 		(HPCIO_INTR_LEVEL|HPCIO_INTR_HIGH|HPCIO_INTR_THROUGH)
-#define HPCIO_INTR_LEVEL_LOW_HOLD	\
+#define HPCIO_INTR_LEVEL_LOW_HOLD					\
 		(HPCIO_INTR_LEVEL|HPCIO_INTR_LOW|HPCIO_INTR_HOLD)
-#define HPCIO_INTR_LEVEL_LOW_THROUGH	\
+#define HPCIO_INTR_LEVEL_LOW_THROUGH					\
 		(HPCIO_INTR_LEVEL|HPCIO_INTR_LOW|HPCIO_INTR_THROUGH)
-#define HPCIO_INTR_EDGE_HOLD	\
+#define HPCIO_INTR_EDGE_HOLD						\
 		(HPCIO_INTR_EDGE|HPCIO_INTR_HOLD)
-#define HPCIO_INTR_EDGE_THROUGH	\
+#define HPCIO_INTR_EDGE_THROUGH						\
 		(HPCIO_INTR_EDGE|HPCIO_INTR_THROUGH)
 
 #endif /* !_DEV_HPC_HPCIOVAR_H_ */

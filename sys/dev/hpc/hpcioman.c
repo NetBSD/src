@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.2 2001/05/01 00:25:17 takemura Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.3 2001/06/04 18:59:32 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -69,11 +69,11 @@ hpcioman_match(struct device *parent, struct cfdata *cf, void *aux)
 	platid_mask_t mask;
 
 	if (strcmp(haa->haa_busname, HPCIO_BUSNAME))
-		return 0;
+		return (0);
 	/* select platform */
 	mask = PLATID_DEREF(cf->cf_loc[HPCIOIFCF_PLATFORM]);
 
-	return platid_match(&platid, &mask);
+	return (platid_match(&platid, &mask));
 }
 
 void
@@ -155,18 +155,21 @@ hpcioman_print(void *aux, const char *pnp)
 
 	if (!pnp)  {
 		printf(" iochip %s, port %d, type %d, id %d",
-		       hma->hma_hc ? hma->hma_hc->hc_name : "not found",
-		       hma->hma_port, type, hma->hma_id);
+		    hma->hma_hc ? hma->hma_hc->hc_name : "not found",
+		    hma->hma_port, type, hma->hma_id);
 		if (type == CONFIG_HOOK_BUTTONEVENT ||
 		    type == CONFIG_HOOK_PMEVENT || 
 		    type == CONFIG_HOOK_EVENT) {
 			if (hma->hma_intr_mode & HPCIO_INTR_EDGE)
 				printf (", interrupt edge [%s%s]",
-				    (hma->hma_intr_mode&HPCIO_INTR_POSEDGE) ? "p" : "",
-				    (hma->hma_intr_mode&HPCIO_INTR_NEGEDGE) ? "n" : "");
+				    (hma->hma_intr_mode&HPCIO_INTR_POSEDGE)
+				    ? "p" : "",
+				    (hma->hma_intr_mode&HPCIO_INTR_NEGEDGE)
+				    ? "n" : "");
 			else
 				printf (", interrupt level %s",
-				    (hma->hma_intr_mode&HPCIO_INTR_HIGH) ? "high" : "low");
+				    (hma->hma_intr_mode&HPCIO_INTR_HIGH) ?
+				    "high" : "low");
 		}
 		if (hma->hma_initvalue != -1)
 			printf(", initial value %d", hma->hma_initvalue);
@@ -174,5 +177,5 @@ hpcioman_print(void *aux, const char *pnp)
 			printf(", active low");
 	}
 	
-	return QUIET;
+	return (QUIET);
 }
