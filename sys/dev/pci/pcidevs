@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.554 2003/07/23 10:16:16 kleink Exp $
+$NetBSD: pcidevs,v 1.555 2003/07/27 01:16:10 jonathan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -555,6 +555,7 @@ vendor ENE		0x1524	ENE Technology, Inc.
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
+vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	Broadcom Corp. (SiByte)
@@ -1024,6 +1025,10 @@ product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
 product BIT3 PCIVME618		0x0010	PCI-VME Interface Mod. 618
 product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
 
+/* Bluesteel Networks */
+product BLUESTEEL 5501		0x0000	5501
+product BLUESTEEL 5601		0x5601	5601
+
 /* Broadcom Corporation products */
 product BROADCOM BCM5700	0x1644	BCM5700 10/100/1000 Ethernet
 product BROADCOM BCM5701	0x1645	BCM5701 10/100/1000 Ethernet
@@ -1037,6 +1042,13 @@ product BROADCOM BCM5704S	0x16a8	BCM5704S Gigabit Ethernet (1000BASE-X)
 product BROADCOM BCM5705	0x1653	BCM5705 10/100/1000 Ethernet
 product BROADCOM BCM5705M	0x165d	BCM5705M 10/100/1000 Ethernet
 product BROADCOM BCM4401	0x4401	BCM4401 10/100 Ethernet
+product BROADCOM 5801		0x5801	5801 Security processor
+product BROADCOM 5802		0x5802	5802 Security processor
+product BROADCOM 5805		0x5805	5805 Security processor
+product BROADCOM 5820		0x5820	5820 Security processor
+product BROADCOM 5821		0x5821	5821 Security processor
+product BROADCOM 5822		0x5822	5822 Security processor
+product BROADCOM 5823		0x5822	5823 Security processor
 
 /* Brooktree products */
 product BROOKTREE BT848		0x0350	Bt848 Video Capture
