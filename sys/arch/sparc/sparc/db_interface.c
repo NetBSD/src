@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.42 2001/06/08 09:49:28 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.43 2001/06/30 20:16:49 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -201,7 +201,9 @@ void db_dump_pcb __P((db_expr_t, int, db_expr_t, char *));
 void db_lock_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_simple_lock_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_uvmhistdump __P((db_expr_t, int, db_expr_t, char *));
+#ifdef MULTIPROCESSOR
 void db_cpu_cmd __P((db_expr_t, int, db_expr_t, char *));
+#endif
 void db_page_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 /*
@@ -492,6 +494,47 @@ db_simple_lock_cmd(addr, have_addr, count, modif)
 	db_printf("\n");
 }
 
+#if defined(MULTIPROCESSOR)
+extern void cpu_debug_dump(void); /* XXX */
+
+void
+db_cpu_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	struct cpu_info *ci;
+	if (!have_addr) {
+		cpu_debug_dump();
+		return;
+	}
+	
+	if ((addr < 0) || (addr >= ncpu)) {
+		db_printf("%ld: cpu out of range\n", addr);
+		return;
+	}
+	ci = cpus[addr];
+	if (ci == NULL) {
+		db_printf("cpu %ld not configured\n", addr);
+		return;
+	}
+	if (ci != curcpu()) {
+		if (!(ci->flags & CPUFLG_PAUSED)) {
+			db_printf("cpu %ld not paused\n", addr);
+			return;
+		}
+	}
+	if (ci->ci_ddb_regs == 0) {
+		db_printf("cpu %ld has no saved regs\n", addr);
+		return;
+	}
+	db_printf("using cpu %ld", addr);
+	ddb_regp = ci->ci_ddb_regs;
+}
+
+#endif /* MULTIPROCESSOR */
+
 #include <uvm/uvm.h>
 
 extern void uvmhist_dump __P((struct uvm_history *));
@@ -755,43 +798,3 @@ db_inst_store(inst)
 	return 0;
     }
 }
-
-#ifdef MULTIPROCESSOR
-extern void cpu_debug_dump(void); /* XXX */
-
-void
-db_cpu_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
-{
-	struct cpu_info *ci;
-	if (!have_addr) {
-		cpu_debug_dump();
-		return;
-	}
-	
-	if ((addr < 0) || (addr >= ncpu)) {
-		db_printf("%ld: cpu out of range\n", addr);
-		return;
-	}
-	ci = cpus[addr];
-	if (ci == NULL) {
-		db_printf("cpu %ld not configured\n", addr);
-		return;
-	}
-	if (ci != curcpu()) {
-		if (!(ci->flags & CPUFLG_PAUSED)) {
-			db_printf("cpu %ld not paused\n", addr);
-			return;
-		}
-	}
-	if (ci->ci_ddb_regs == 0) {
-		db_printf("cpu %ld has no saved regs\n", addr);
-		return;
-	}
-	db_printf("using cpu %ld", addr);
-	ddb_regp = ci->ci_ddb_regs;
-}
-#endif
