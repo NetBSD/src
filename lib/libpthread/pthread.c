@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.39 2003/01/02 06:41:07 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.40 2003/01/02 19:06:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,9 +75,9 @@ static int nextthread;
 static pthread_spin_t nextthread_lock;
 static pthread_attr_t pthread_default_attr;
 
-extern pthread_spin_t pthread__runqueue_lock;
-extern struct pthread_queue_t pthread__runqueue;
-extern struct pthread_queue_t pthread__idlequeue;
+pthread_spin_t pthread__runqueue_lock;
+struct pthread_queue_t pthread__runqueue;
+struct pthread_queue_t pthread__idlequeue;
 
 
 pthread_ops_t pthread_ops = {
