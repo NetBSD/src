@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14.2.3 1993/11/24 23:06:29 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14.2.4 1993/11/27 01:06:20 mycroft Exp $
  */
 
 /*
@@ -628,7 +628,7 @@ ahaattach(parent, self, aux)
  */
 u_int 
 aha_adapter_info(aha)
-	int aha;
+	struct aha_data *aha;
 {
 
 	return 2;	/* 2 outstanding requests at a time per device */
