@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.57 2002/02/08 17:31:38 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.58 2002/02/08 17:44:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.57 2002/02/08 17:31:38 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.58 2002/02/08 17:44:23 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.57 2002/02/08 17:31:38 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.58 2002/02/08 17:44:23 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -325,7 +325,7 @@ static void JobFinish __P((Job *, int *));
 static void JobExec __P((Job *, char **));
 #endif
 static void JobMakeArgv __P((Job *, char **));
-static void JobRestart __P((Job *));
+static int JobRestart __P((Job *));
 static int JobStart __P((GNode *, int, Job *));
 static char *JobOutput __P((Job *, char *, char *, int));
 static void JobDoOutput __P((Job *, Boolean));
@@ -1506,11 +1506,11 @@ JobMakeArgv(job, argv)
  *	Restart a job that stopped for some reason.
  *
  * Results:
- *	None.
+ *	1 if max number of running jobs has been reached, 0 otherwise.
  *
  *-----------------------------------------------------------------------
  */
-static void
+static int
 JobRestart(job)
     Job 	  *job;    	/* Job to restart */
 {
@@ -1572,7 +1572,7 @@ JobRestart(job)
 		   (void) fflush(stdout);
   		}
 		(void)Lst_AtFront(stoppedJobs, (ClientData)job);
-		return;
+		return 1;
 	    }
 #ifdef REMOTE
 	} else {
@@ -1626,7 +1626,7 @@ JobRestart(job)
 		    (void) fflush(stdout);
 		}
 		(void)Lst_AtFront(stoppedJobs, (ClientData)job);
-		return;
+		return 1;
 	    } else {
 		/*
 		 * Job may be run locally.
@@ -1719,8 +1719,10 @@ JobRestart(job)
 		(void) fflush(stdout);
 	    }
 	    (void) Lst_AtFront(stoppedJobs, (ClientData)job);
+	    return 1;
 	}
     }
+    return 0;
 }
 
 /*-
@@ -3221,7 +3223,8 @@ JobRestartJobs()
 	    (void) fprintf(stdout, "Restarting a stopped job.\n");
 	    (void) fflush(stdout);
 	}
-	JobRestart((Job *)Lst_DeQueue(stoppedJobs));
+	if (JobRestart((Job *)Lst_DeQueue(stoppedJobs)) == 0)
+		break;
     }
 }
 
