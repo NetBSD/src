@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.4 2000/01/07 03:04:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -79,7 +79,6 @@
 #define FLUSH
 
 #define HASH_STRIPEID(_sid_)  ( (_sid_) & (rf_lockTableSize-1) )
-#define MAX_FREELIST 100
 
 static void AddToWaitersQueue(RF_LockTableEntry_t * lockTable, RF_StripeLockDesc_t * lockDesc, RF_LockReqDesc_t * lockReqDesc);
 static RF_StripeLockDesc_t *AllocStripeLockDesc(RF_StripeNum_t stripeID);
