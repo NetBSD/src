@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.39 2005/01/13 19:56:02 christos Exp $	*/
+/*	$NetBSD: pass2.c,v 1.40 2005/01/19 17:33:59 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.39 2005/01/13 19:56:02 christos Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.40 2005/01/19 17:33:59 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,11 +56,11 @@ __RCSID("$NetBSD: pass2.c,v 1.39 2005/01/13 19:56:02 christos Exp $");
 
 #define MINDIRSIZE	(sizeof (struct dirtemplate))
 
-static int blksort __P((const void *, const void *));
-static int pass2check __P((struct inodesc *));
+static int blksort (const void *, const void *);
+static int pass2check (struct inodesc *);
 
 void
-pass2()
+pass2(void)
 {
 	union dinode *dp;
 	struct inoinfo **inpp, *inp, *pinp;
@@ -315,8 +315,7 @@ pass2()
 }
 
 static int
-pass2check(idesc)
-	struct inodesc *idesc;
+pass2check(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
@@ -607,8 +606,7 @@ again:
  * Routine to sort disk blocks.
  */
 static int
-blksort(arg1, arg2)
-	const void *arg1, *arg2;
+blksort(const void *arg1, const void *arg2)
 {
 
 	return ((*(struct inoinfo **)arg1)->i_blks[0] -

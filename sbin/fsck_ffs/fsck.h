@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.41 2005/01/13 19:56:02 christos Exp $	*/
+/*	$NetBSD: fsck.h,v 1.42 2005/01/19 17:33:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -165,7 +165,7 @@ enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 struct inodesc {
 	enum fixstate id_fix;	/* policy on fixing errors */
 	int (*id_func)		/* function to be applied to blocks of inode */
-	    __P((struct inodesc *));
+	    (struct inodesc *);
 	ino_t id_number;	/* inode number described */
 	ino_t id_parent;	/* for DATA nodes, their parent */
 	daddr_t id_blkno;	/* current block number being examined */
@@ -305,9 +305,9 @@ struct	ufs2_dinode ufs2_zino;
 #define	EEXIT	8		/* Standard error exit. */
 
 /* some inline functs to help the byte-swapping mess */
-static __inline u_int16_t iswap16 __P((u_int16_t));
-static __inline u_int32_t iswap32 __P((u_int32_t));
-static __inline u_int64_t iswap64 __P((u_int64_t));
+static __inline u_int16_t iswap16 (u_int16_t);
+static __inline u_int32_t iswap32 (u_int32_t);
+static __inline u_int64_t iswap64 (u_int64_t);
 
 static __inline u_int16_t iswap16(x)
 	u_int16_t x;
