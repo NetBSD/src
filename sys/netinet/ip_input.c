@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.114.4.8 2002/02/26 21:07:56 he Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.114.4.9 2002/11/10 19:58:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -310,9 +310,7 @@ ip_init()
 	TAILQ_INIT(&in_ifaddr);
 	in_ifaddrhashtbl = 
 	    hashinit(IN_IFADDR_HASH_SIZE, M_IFADDR, M_WAITOK, &in_ifaddrhash);
-	if (ip_mtudisc != 0)
-		ip_mtudisc_timeout_q = 
-		    rt_timer_queue_create(ip_mtudisc_timeout);
+	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
 	ipflow_init();
 #endif
