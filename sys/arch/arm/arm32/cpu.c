@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.52 2003/09/03 02:07:08 mycroft Exp $	*/
+/*	$NetBSD: cpu.c,v 1.53 2003/09/06 09:42:12 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2003/09/03 02:07:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2003/09/06 09:42:12 rearnsha Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -169,9 +169,9 @@ enum cpu_class {
 	CPU_CLASS_ARM8,
 	CPU_CLASS_ARM9TDMI,
 	CPU_CLASS_ARM9ES,
+	CPU_CLASS_ARM10E,
 	CPU_CLASS_SA1,
-	CPU_CLASS_XSCALE,
-	CPU_CLASS_ARM10E
+	CPU_CLASS_XSCALE
 };
 
 static const char * const generic_steppings[16] = {
@@ -299,6 +299,11 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_TI925T,	CPU_CLASS_ARM9TDMI,	"TI ARM925T",
 	  generic_steppings },
 
+	{ CPU_ID_ARM1020E,	CPU_CLASS_ARM10E,	"ARM1020E",
+	  generic_steppings },
+	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022E-S",
+	  generic_steppings },
+
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110",
 	  sa110_steppings },
 	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100",
@@ -341,9 +346,6 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_IXP425_266,	CPU_CLASS_XSCALE,	"IXP425 266MHz",
 	  ixp425_steppings },
 
-	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
-	  generic_steppings },
-
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
 
@@ -363,9 +365,9 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM8",	"CPU_ARM8" },		/* CPU_CLASS_ARM8 */
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
+	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
 	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
-	{ "ARM10E",	NULL },			/* CPU_CLASS_ARM10E */
 };
 
 /*
@@ -437,6 +439,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 			aprint_normal(" IDC enabled");
 		break;
 	case CPU_CLASS_ARM9TDMI:
+	case CPU_CLASS_ARM10E:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
@@ -511,6 +514,9 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #endif
 #ifdef CPU_ARM9
 	case CPU_CLASS_ARM9TDMI:
+#endif
+#ifdef CPU_ARM10
+	case CPU_CLASS_ARM10E:
 #endif
 #if defined(CPU_SA110) || defined(CPU_SA1100) || \
     defined(CPU_SA1110) || defined(CPU_IXP12X0)
