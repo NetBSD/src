@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile,v 1.8 2000/04/28 22:01:14 is Exp $
+#	$NetBSD: Makefile,v 1.9 2001/12/12 01:24:13 tv Exp $
 
-MKMAN=no
-PROG=dotest
-SRCS=dotest.c dotestsubs.S
-AFLAGS+=-I.
-CPPFLAGS+=-I.
-SPDIR=${.CURDIR}/../../../../../sys/arch/m68k/060sp
-CLEANFILES+=itest.S ftest.S
+PROG=		dotest
+SRCS=		dotest.c dotestsubs.S
+NOMAN=		# defined
+AFLAGS+=	-I.
+CPPFLAGS+=	-I.
+SPDIR=		${.CURDIR}/../../../../../sys/arch/m68k/060sp
+CLEANFILES+=	itest.S ftest.S
 
 .SUFFIXES: .S .sa
 
-.sa.S: ; sh ${SPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
+.sa.S:
+	sh ${SPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 
 .PATH: ${SPDIR}/dist
 

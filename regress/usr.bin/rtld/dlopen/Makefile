@@ -1,16 +1,14 @@
-# $NetBSD: Makefile,v 1.3 2001/11/14 00:41:52 tv Exp $
+# $NetBSD: Makefile,v 1.4 2001/12/12 01:24:18 tv Exp $
 
-MKMAN=  no
-
-PROG=	dlopen
+PROG=		dlopen
+NOMAN=  	# defined
+CLEANFILES+=	dlopen.out
 
 regress:
 	if [ -f ${TESTLIBDIR}/testlib.so ]; then \
 		./${PROG} ${TESTLIBDIR}/testlib.so >dlopen.out; \
 		tail +4 ${.CURDIR}/dlopen.exp | diff - dlopen.out; \
 	fi
-
-CLEANFILES+=	dlopen.out
 
 .include <bsd.prog.mk>
 

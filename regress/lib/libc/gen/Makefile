@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/10/20 18:59:54 briggs Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:01 tv Exp $
 
-PROG=	tfmtcheck
-SRCS=	tfmtcheck.c
-MKMAN=	no
+PROG=		tfmtcheck
+NOMAN=		# defined
 
 regress: ${PROG}
 	./${PROG}

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/08 04:39:31 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:01 tv Exp $
 
-PROG=	div
-NOMAN=	noman, no way, man
-WARNS?=	1
+PROG=		div
+NOMAN=		# defined
+WARNS?=		1
 
 regress: ${PROG}
 	./${PROG}

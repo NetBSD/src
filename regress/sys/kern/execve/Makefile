@@ -1,27 +1,26 @@
-#	$NetBSD: Makefile,v 1.15 2001/10/31 15:57:56 tv Exp $
+#	$NetBSD: Makefile,v 1.16 2001/12/12 01:24:15 tv Exp $
 
-PROG=	doexec
-MKMAN=	no
-
-LDSTATIC= -static		# only static compilation makes sense here
+PROG=		doexec
+NOMAN=		# defined
+LDSTATIC=	-static		# only static compilation makes sense here
 
 .include <bsd.own.mk>		# May define DESTDIR in mk.conf..
 .if defined(DESTDIR)
-LDLIBS+= -lgcc -lc -lgcc ${LIBCRTEND}
-GOODAOUT_LIB= -nostdlib -L${DESTDIR}/usr/lib ${LDSTATIC} 
-GOODAOUT_LIB+= ${LIBCRT0} ${LIBCRTBEGIN}
+LDLIBS+=	-lgcc -lc -lgcc ${LIBCRTEND}
+GOODAOUT_LIB=	-nostdlib -L${DESTDIR}/usr/lib ${LDSTATIC} \
+		${LIBCRT0} ${LIBCRTBEGIN}
 .else
-GOODAOUT_LIB= ${LDSTATIC}
+GOODAOUT_LIB=	${LDSTATIC}
 .endif
 
-RP=	./${PROG}
-TD=	${.CURDIR}/tests
-OD=	${.CURDIR}/good
+RP=		./${PROG}
+TD=		${.CURDIR}/tests
+OD=		${.CURDIR}/good
 
-TESTSCRIPTS=empty nonexistshell devnullscript badinterplen goodscript \
-	scriptarg scriptarg-nospace
+TESTSCRIPTS=	empty nonexistshell devnullscript badinterplen goodscript \
+		scriptarg scriptarg-nospace
 
-all:	${PROG} goodaout truncaout ${TESTSCRIPTS}
+all:		${PROG} goodaout truncaout ${TESTSCRIPTS}
 
 .for x in ${TESTSCRIPTS}
 ${x}: ${TD}/${x}
@@ -29,7 +28,7 @@ ${x}: ${TD}/${x}
 	chmod +x ${x}
 .endfor
 
-CLEANFILES+= goodaout truncaout ${TESTSCRIPTS}
+CLEANFILES+=	goodaout truncaout ${TESTSCRIPTS}
 
 regress:	test-empty test-nonexist \
 		test-nonexistshell test-devnullscript test-badinterplen \
