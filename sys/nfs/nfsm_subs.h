@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.26 2003/04/24 21:21:07 drochner Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.27 2003/05/06 13:52:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -301,13 +301,6 @@
 			m_freem(mrep); \
 			error = EBADRPC; \
 			goto nfsmout; \
-		} }
-
-#define	nfsm_srvstrsiz(s,m) \
-		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(uint32_t,*tl)) > (m) || (s) <= 0) { \
-			error = EBADRPC; \
-			nfsm_reply(0); \
 		} }
 
 #define	nfsm_srvnamesiz(s) \
