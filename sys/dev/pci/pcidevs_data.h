@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.255 2000/08/29 01:18:17 wiz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.256 2000/09/02 00:33:26 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.250 2000/08/21 15:28:17 enami Exp 
+ *	NetBSD: pcidevs,v 1.252 2000/09/02 00:32:15 cgd Exp 
  */
 
 /*
@@ -226,7 +226,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "GLINT 500MX",
 	},
 	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDI2,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA2,
 	    0,
 	    "3D Labs",
 	    "GLINT Permedia 2",
