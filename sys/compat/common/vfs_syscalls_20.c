@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.2 2004/05/22 20:46:53 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.3 2004/05/22 20:53:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.2 2004/05/22 20:46:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.3 2004/05/22 20:53:26 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -162,10 +162,10 @@ compat_20_sys_statfs(l, v, retval)
 	vrele(nd.ni_vp);
 
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
-	if ((error = dostatvfs(mp, &sbuf, p, 0, 1)) != 0)
+	if ((error = dostatvfs(mp, sbuf, p, 0, 1)) != 0)
 		goto done;
 
-	error = vfs2fs(SCARG(uap, buf), &sbuf);
+	error = vfs2fs(SCARG(uap, buf), sbuf);
 done:
 	free(sbuf, M_TEMP);
 	return error;
