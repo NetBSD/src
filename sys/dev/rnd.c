@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.8 1997/10/19 11:43:05 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.9 1997/10/20 15:05:05 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,9 +94,8 @@ typedef struct _rnd_event_t {
 } rnd_event_t;
 
 typedef struct _rnd_eventq_t {
-	u_int16_t    count;
-	u_int16_t    head;
-	u_int16_t    tail;
+	int    head;
+	int    tail;
 	rnd_event_t  events[RND_EVENTQSIZE];
 } rnd_eventq_t;
 
@@ -680,7 +679,6 @@ rnd_init(void)
 
 	LIST_INIT(&rnd_sources);
 
-	rnd_events.count = 0;
 	rnd_events.head = 0;
 	rnd_events.tail = 0;
 
@@ -727,8 +725,7 @@ void
 rnd_detach_source(rs)
 	rndsource_element_t *rs;
 {
-	u_int16_t    count;
-	u_int16_t    elem;
+	int	     elem;
 	rnd_event_t *ev;
 	int          s;
 
@@ -737,18 +734,15 @@ rnd_detach_source(rs)
 	LIST_REMOVE(rs, list);
 
 	/*
-	 * If there are events queued up, remove them from the event queue
+	 * If there are events queued up, "remove" them from the event queue
 	 */
-	count = rnd_events.count;
 	elem = rnd_events.tail;
 
-	while (count--) {
-		ev = &rnd_events.events[elem++];
-		if (elem == RND_EVENTQSIZE)
-			elem = 0;
-
+	while (elem != rnd_events.head) {
+		ev = &rnd_events.events[elem];
 		if (ev->source == &rs->data)
 			ev->source = &rnd_source_no_collect;
+		elem = (elem + 1) & (RND_EVENTQSIZE - 1);
 	}
 
 	splx(s);
@@ -765,11 +759,17 @@ rnd_add_uint32(rs, val)
 	u_int32_t val;
 {
 	rndsource_t    *rst;
+	rnd_event_t    *ev;
 	int		s;
+	int		nexthead;
 
 	s = splhigh();
 
-	if (rnd_events.count == RND_EVENTQSIZE) {
+	/*
+	 * check for full ring
+	 */
+	nexthead = (rnd_events.head + 1) & (RND_EVENTQSIZE - 1);
+	if (nexthead == rnd_events.tail) {
 		splx(s);
 		return;
 	}
@@ -793,24 +793,31 @@ rnd_add_uint32(rs, val)
 
 	/*
 	 * Otherwise, queue it up for later addition, and schedule a
-	 * timeout to process it.
+	 * timeout to process it.  Since we are at splhigh, this is
+	 * an atomic operation...
 	 */
-	rnd_events.events[rnd_events.head].source = rst;
-	rnd_events.events[rnd_events.head].val = val;
-	rnd_events.events[rnd_events.head].timestamp = rnd_timestamp();
-	rnd_events.head++;
-	if (rnd_events.head == RND_EVENTQSIZE)
-		rnd_events.head = 0;
-	rnd_events.count++;
+	ev = &rnd_events.events[rnd_events.head];
+	ev->source = rst;
+	ev->val = val;
+	ev->timestamp = rnd_timestamp();
+	rnd_events.head = nexthead;
 
+#if 0
 	if ((rnd_status & RND_TIMEOUTPEND) == 0) {
 		rnd_status |= RND_TIMEOUTPEND;
-		timeout(rnd_timeout, rst, 1);
+#endif
+		timeout(rnd_timeout, NULL, 1);
+#if 0
 	}
+#endif
 
 	splx(s);
 }
 
+/*
+ * timeout, run to process the events in the ring buffer.  Only one of these
+ * can possibly be running at a time, and we are run at splsoftclock().
+ */
 static void
 rnd_timeout(arg)
 	void *arg;
@@ -818,8 +825,6 @@ rnd_timeout(arg)
 	u_int32_t	entropy;
 	rnd_event_t    *ev;
 	int		s;
-	u_int16_t	count;
-	u_int16_t	processed;
 
 	/*
 	 * make certain nothing else can tweak our magic flag while we
@@ -827,26 +832,20 @@ rnd_timeout(arg)
 	 * queued, but there should be at most one other.
 	 */
 	s = splhigh();
-	count = rnd_events.count;
 	rnd_status &= ~RND_TIMEOUTPEND;
 	splx(s);
 
-	if (count == 0)
+	/*
+	 * check for empty queue
+	 */
+	if (rnd_events.head == rnd_events.tail)
 		return;
 
-	processed = 0;
-
-	s = splsoftclock();
-	while (count-- > 0) {
-		processed++;
-
-		/*
-		 * we only modify the tail in this function, and always at
-		 * splsoftclock.
-		 */
-		ev = &rnd_events.events[rnd_events.tail++];
-		if (rnd_events.tail == RND_EVENTQSIZE)
-			rnd_events.tail = 0;
+	/*
+	 * Run through the event queue, processing events.
+	 */
+	while (rnd_events.head != rnd_events.tail) {
+		ev = &rnd_events.events[rnd_events.tail];
 
 		/*
 		 * We repeat this check here, since it is possible the source
@@ -854,7 +853,6 @@ rnd_timeout(arg)
 		 * was queued.
 		 */
 		if ((ev->source->tyfl & RND_FLAG_NO_COLLECT) == 0) {
-
 			rndpool_add_uint32(&rnd_pool, ev->val, 0);
 
 			/*
@@ -871,19 +869,13 @@ rnd_timeout(arg)
 			rndpool_add_uint32(&rnd_pool, ev->timestamp, entropy);
 			ev->source->total += entropy;
 		}
-
+		rnd_events.tail = (rnd_events.tail + 1) & (RND_EVENTQSIZE - 1);
 	}
 
 	/*
 	 * wake up any potential readers waiting.
 	 */
 	rnd_wakeup_readers();
-
-	splx(s);
-
-	s = splhigh();
-	rnd_events.count -= processed;
-	splx(s);
 }
 
 void
