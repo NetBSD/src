@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.19 2002/04/09 19:37:16 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.20 2002/04/10 19:35:23 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -179,7 +179,7 @@ db_validate_address(vaddr_t addr)
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t	addr;
 	size_t	size;
 	char	*data;
 {

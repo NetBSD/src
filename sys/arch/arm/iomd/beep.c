@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.7 2002/04/04 16:56:36 thorpej Exp $	*/
+/*	$NetBSD: beep.c,v 1.8 2002/04/10 19:35:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.7 2002/04/04 16:56:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.8 2002/04/10 19:35:23 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -79,8 +79,8 @@ struct beep_softc {
 	u_int sc_sound_end0; 
 	u_int sc_sound_cur1; 
 	u_int sc_sound_end1; 
-	vm_offset_t sc_buffer0;
-	vm_offset_t sc_buffer1;
+	vaddr_t sc_buffer0;
+	vaddr_t sc_buffer1;
 };
 
 int	beepprobe	__P((struct device *parent, struct cfdata *cf, void *aux));

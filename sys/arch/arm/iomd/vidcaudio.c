@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.7 2002/04/05 16:58:06 thorpej Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.8 2002/04/10 19:35:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.7 2002/04/05 16:58:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.8 2002/04/10 19:35:24 thorpej Exp $");
 
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
@@ -67,14 +67,14 @@ extern int *vidc_base;
 #undef DEBUG
 
 struct audio_general {
-	vm_offset_t silence;
+	vaddr_t silence;
 	irqhandler_t ih;
 
 	void (*intr) (void *);
 	void *arg;
 
-	vm_offset_t next_cur;
-	vm_offset_t next_end;
+	paddr_t next_cur;
+	paddr_t next_end;
 	void (*next_intr) (void *);
 	void *next_arg;
 
@@ -97,7 +97,7 @@ int  vidcaudio_open	__P((void *addr, int flags));
 void vidcaudio_close	__P((void *addr));
 
 int vidcaudio_intr	__P((void *arg));
-int vidcaudio_dma_program	__P((vm_offset_t cur, vm_offset_t end, void (*intr)(void *), void *arg));
+int vidcaudio_dma_program	__P((vaddr_t cur, vaddr_t end, void (*intr)(void *), void *arg));
 void vidcaudio_dummy_routine	__P((void *arg));
 int vidcaudio_stereo	__P((int channel, int position));
 int vidcaudio_rate	__P((int rate));
@@ -396,7 +396,7 @@ vidcaudio_start_output(addr, p, cc, intr, arg)
 			cc = NBPG;
 		}
 	}
-	vidcaudio_dma_program((vm_offset_t)p, (vm_offset_t)((char *)p+cc),
+	vidcaudio_dma_program((vaddr_t)p, (vaddr_t)((char *)p+cc),
 	    intr, arg);
 	return 0;
 }
@@ -523,8 +523,8 @@ vidcaudio_stereo(channel, position)
 
 int
 vidcaudio_dma_program(cur, end, intr, arg)
-	vm_offset_t cur;
-	vm_offset_t end;
+	vaddr_t cur;
+	vaddr_t end;
 	void (*intr)(void *);
 	void *arg;
 {
