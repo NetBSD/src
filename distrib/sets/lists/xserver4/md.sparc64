@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.3 2004/03/07 21:52:40 heas Exp $
+# $NetBSD: md.sparc64,v 1.4 2005/03/19 15:26:23 martin Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -8,6 +8,7 @@
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/getconfig
 ./usr/X11R6/bin/getconfig.pl
+./usr/X11R6/bin/pcitweak
 ./usr/X11R6/bin/xf86cfg
 ./usr/X11R6/lib/X11/XF86Config.98
 ./usr/X11R6/lib/X11/XF86Config.eg
@@ -48,6 +49,7 @@
 ./usr/X11R6/lib/X11/getconfig/cfg.sample
 ./usr/X11R6/lib/X11/getconfig/xfree86.cfg
 ./usr/X11R6/lib/libxf86config.a
+./usr/X11R6/man/cat1/pcitweak.0
 ./usr/X11R6/man/cat1/Xsun.0
 ./usr/X11R6/man/cat1/Xsun24.0
 ./usr/X11R6/man/cat1/XsunMono.0
@@ -72,7 +74,15 @@
 ./usr/X11R6/man/cat4/penmount.0
 ./usr/X11R6/man/cat4/r128.0
 ./usr/X11R6/man/cat4/radeon.0
+./usr/X11R6/man/cat4/sunbw2.0
+./usr/X11R6/man/cat4/suncg14.0
+./usr/X11R6/man/cat4/suncg3.0
+./usr/X11R6/man/cat4/suncg6.0
+./usr/X11R6/man/cat4/sunffb.0
+./usr/X11R6/man/cat4/sunleo.0
+./usr/X11R6/man/cat4/suntcx.0
 ./usr/X11R6/man/cat4/tek4957.0
+./usr/X11R6/man/cat4/vga.0
 ./usr/X11R6/man/cat4/void.0
 ./usr/X11R6/man/cat4/wacom.0
 ./usr/X11R6/man/cat5/XF86Config.0
