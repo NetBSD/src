@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.2.6.6 2002/08/01 02:42:33 nathanw Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.2.6.7 2002/08/27 01:04:26 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -891,6 +891,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	sw	t0, FRAME_PPL(k1)
 	.set noat
 #endif
+	lw	t0, L_PROC(a0)			# curlwp->l_proc (used below)
 	addu	sp, k1, -CALLFRAME_SIZ
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
@@ -899,7 +900,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
  * Turn off fpu and enter kernel mode
  */
 	.set	at
-	lw	t1, P_MD_SYSCALL(a0)		# t1 = syscall
+	lw	t1, P_MD_SYSCALL(t0)		# t1 = syscall
 	and	t0, a1, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK)
 	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
