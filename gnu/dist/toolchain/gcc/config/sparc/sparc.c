@@ -141,6 +141,8 @@ int sparc_align_loops;
 int sparc_align_jumps;
 int sparc_align_funcs;
 
+char sparc_hard_reg_printed[8];
+
 struct sparc_cpu_select sparc_select[] =
 {
   /* switch	name,		tune	arch */
@@ -212,8 +214,11 @@ sparc_override_options ()
     /* TEMIC sparclet */
     { "tsc701",     PROCESSOR_TSC701, MASK_ISA, MASK_SPARCLET },
     { "v9",         PROCESSOR_V9, MASK_ISA, MASK_V9 },
-    /* TI ultrasparc */
-    { "ultrasparc", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9 },
+    /* TI ultrasparc I, II, IIi */
+    { "ultrasparc", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9
+    /* Although insns using %y are deprecated, it is a clear win on current
+       ultrasparcs. */
+    						    |MASK_DEPRECATED_V8_INSNS },
     { 0, 0, 0, 0 }
   };
   struct cpu_table *cpu;
@@ -3104,6 +3109,32 @@ build_big_number (file, num, reg)
     }
 }
 
+/* Output any necessary .register pseudo-ops.  */
+void
+sparc_output_scratch_registers (file)
+     FILE *file;
+{
+#ifdef HAVE_AS_REGISTER_PSEUDO_OP
+  int i;
+
+  if (TARGET_ARCH32)
+    return;
+
+  /* Check if %g[2367] were used without
+     .register being printed for them already.  */
+  for (i = 2; i < 8; i++)
+    {
+      if (regs_ever_live [i]
+	  && ! sparc_hard_reg_printed [i])
+	{
+	  sparc_hard_reg_printed [i] = 1;
+	  fprintf (file, "\t.register\t%%g%d, #scratch\n", i);
+	}
+      if (i == 3) i = 5;
+    }
+#endif
+}
+
 /* Output code for the function prologue.  */
 
 void
@@ -3112,6 +3143,8 @@ output_function_prologue (file, size, leaf_function)
      int size;
      int leaf_function;
 {
+  sparc_output_scratch_registers (file);
+
   /* Need to use actual_fsize, since we are also allocating
      space for our callee (and our own register save area).  */
   actual_fsize = compute_frame_size (size, leaf_function);
@@ -3749,6 +3782,14 @@ function_arg_record_value_3 (bitpos, parms)
   while (intslots > 0);
 }
 
+/* A subroutine of function_arg_record_value.  Traverse the structure
+   recusively and determine how many registers will be required.  */
+
+/* A subroutine of function_arg_record_value.  Traverse the structure
+   recursively and assign bits to floating point registers.  Track which
+   bits in between need integer registers; invoke function_arg_record_value_3
+   to make that happen.  */
+
 static void
 function_arg_record_value_2 (type, startbitpos, parms)
      tree type;
@@ -3808,6 +3849,9 @@ function_arg_record_value_2 (type, startbitpos, parms)
     }
 }
 
+/* Used by function_arg and function_value to implement the complex
+   Sparc64 structure calling conventions.  */
+
 static rtx
 function_arg_record_value (type, mode, slotno, named, regbase)
      tree type;
@@ -3830,10 +3874,12 @@ function_arg_record_value (type, mode, slotno, named, regbase)
 
   if (parms.intoffset != -1)
     {
+      unsigned int startbit, endbit;
       int intslots, this_slotno;
 
-      intslots = (typesize*BITS_PER_UNIT - parms.intoffset + BITS_PER_WORD - 1)
-	/ BITS_PER_WORD;
+      startbit = parms.intoffset & -BITS_PER_WORD;
+      endbit = (typesize*BITS_PER_UNIT + BITS_PER_WORD - 1) & -BITS_PER_WORD;
+      intslots = (endbit - startbit) / BITS_PER_WORD;
       this_slotno = slotno + parms.intoffset / BITS_PER_WORD;
 
       intslots = MIN (intslots, SPARC_INT_ARG_MAX - this_slotno);
@@ -5846,6 +5892,8 @@ sparc_flat_output_function_prologue (file, size)
 {
   char *sp_str = reg_names[STACK_POINTER_REGNUM];
   unsigned long gmask = current_frame_info.gmask;
+
+  sparc_output_scratch_registers (file);
 
   /* This is only for the human reader.  */
   fprintf (file, "\t%s#PROLOGUE# 0\n", ASM_COMMENT_START);

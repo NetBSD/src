@@ -2495,7 +2495,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
         (high:DI (match_operand:DI 1 "sp64_medium_pic_operand" "")))]
   "(TARGET_CM_MEDLOW || TARGET_CM_EMBMEDANY) && check_pic (1)"
-  "sethi\\t%%lo(%a1), %0"
+  "sethi\\t%%hi(%a1), %0"
   [(set_attr "type" "move")
    (set_attr "length" "1")])
 
@@ -5166,9 +5166,8 @@
 
 ;; Integer Multiply/Divide.
 
-;; The 32 bit multiply/divide instructions are deprecated on v9 and shouldn't
-;; we used.  We still use them in 32 bit v9 compilers.
-;; The 64 bit v9 compiler will (/should) widen the args and use muldi3.
+;; The 32 bit multiply/divide instructions are deprecated on v9, but at
+;; least in UltraSPARC I, II and IIi it is a win tick-wise.
 
 (define_insn "mulsi3"
   [(set (match_operand:SI 0 "register_operand" "=r")
@@ -5226,15 +5225,13 @@
 }"
   [(set_attr "length" "9,8")])
 
-;; It is not known whether this will match.
-
 (define_insn "*cmp_mul_set"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(mult:SI (match_operand:SI 1 "arith_operand" "%r")
-		 (match_operand:SI 2 "arith_operand" "rI")))
-   (set (reg:CC_NOOV 100)
-	(compare:CC_NOOV (mult:SI (match_dup 1) (match_dup 2))
-			 (const_int 0)))]
+  [(set (reg:CC 100)
+	(compare:CC (mult:SI (match_operand:SI 1 "arith_operand" "%r")
+		    (match_operand:SI 2 "arith_operand" "rI"))
+		    (const_int 0)))
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(mult:SI (match_dup 1) (match_dup 2)))]
   "TARGET_V8 || TARGET_SPARCLITE || TARGET_DEPRECATED_V8_INSNS"
   "smulcc\\t%1, %2, %0"
   [(set_attr "type" "imul")
@@ -5250,12 +5247,11 @@
   if (CONSTANT_P (operands[2]))
     {
       if (TARGET_V8PLUS)
-	{
-	  emit_insn (gen_const_mulsidi3_v8plus (operands[0], operands[1],
-						operands[2]));
-	  DONE;
-	}
-      emit_insn (gen_const_mulsidi3 (operands[0], operands[1], operands[2]));
+	emit_insn (gen_const_mulsidi3_v8plus (operands[0], operands[1],
+					      operands[2]));
+      else
+	emit_insn (gen_const_mulsidi3_sp32 (operands[0], operands[1],
+					    operands[2]));
       DONE;
     }
   if (TARGET_V8PLUS)
@@ -5305,14 +5301,22 @@
 	(if_then_else (eq_attr "isa" "sparclet")
 		      (const_int 1) (const_int 2)))])
 
+(define_insn "*mulsidi3_sp64"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
+		 (sign_extend:DI (match_operand:SI 2 "register_operand" "r"))))]
+  "TARGET_DEPRECATED_V8_INSNS && TARGET_ARCH64"
+  "smul\\t%1, %2, %0"
+  [(set_attr "length" "1")])
+
 ;; Extra pattern, because sign_extend of a constant isn't valid.
 
 ;; XXX
-(define_insn "const_mulsidi3"
+(define_insn "const_mulsidi3_sp32"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
 		 (match_operand:SI 2 "small_int" "I")))]
-  "TARGET_HARD_MUL"
+  "TARGET_HARD_MUL32"
   "*
 {
   return TARGET_SPARCLET ? \"smuld\\t%1, %2, %L0\" : \"smul\\t%1, %2, %L0\\n\\trd\\t%%y, %H0\";
@@ -5321,13 +5325,21 @@
 	(if_then_else (eq_attr "isa" "sparclet")
 		      (const_int 1) (const_int 2)))])
 
+(define_insn "const_mulsidi3_sp64"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
+		 (match_operand:SI 2 "small_int" "I")))]
+  "TARGET_DEPRECATED_V8_INSNS && TARGET_ARCH64"
+  "smul\\t%1, %2, %0"
+  [(set_attr "length" "1")])
+
 (define_expand "smulsi3_highpart"
   [(set (match_operand:SI 0 "register_operand" "")
 	(truncate:SI
 	 (lshiftrt:DI (mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" ""))
 			       (sign_extend:DI (match_operand:SI 2 "arith_operand" "")))
 		      (const_int 32))))]
-  "TARGET_HARD_MUL"
+  "TARGET_HARD_MUL && TARGET_ARCH32"
   "
 {
   if (CONSTANT_P (operands[2]))
@@ -5403,8 +5415,7 @@
 	 (lshiftrt:DI (mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
 			       (sign_extend:DI (match_operand:SI 2 "register_operand" "r")))
 		      (const_int 32))))]
-  "TARGET_HARD_MUL32
-   && ! TARGET_LIVE_G0"
+  "TARGET_HARD_MUL32 && ! TARGET_LIVE_G0"
   "smul\\t%1, %2, %%g0\\n\\trd\\t%%y, %0"
   [(set_attr "length" "2")])
 
@@ -5415,8 +5426,7 @@
 	 (lshiftrt:DI (mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
 			       (match_operand:SI 2 "register_operand" "r"))
 		      (const_int 32))))]
-  "TARGET_HARD_MUL32
-   && ! TARGET_LIVE_G0"
+  "TARGET_HARD_MUL32 && ! TARGET_LIVE_G0"
   "smul\\t%1, %2, %%g0\\n\\trd\\t%%y, %0"
   [(set_attr "length" "2")])
 
@@ -5430,12 +5440,11 @@
   if (CONSTANT_P (operands[2]))
     {
       if (TARGET_V8PLUS)
-	{
-	  emit_insn (gen_const_umulsidi3_v8plus (operands[0], operands[1],
-						 operands[2]));
-	  DONE;
-	}
-      emit_insn (gen_const_umulsidi3 (operands[0], operands[1], operands[2]));
+	emit_insn (gen_const_umulsidi3_v8plus (operands[0], operands[1],
+					       operands[2]));
+      else
+	emit_insn (gen_const_umulsidi3_sp32 (operands[0], operands[1],
+					     operands[2]));
       DONE;
     }
   if (TARGET_V8PLUS)
@@ -5471,10 +5480,18 @@
 	(if_then_else (eq_attr "isa" "sparclet")
 		      (const_int 1) (const_int 2)))])
 
+(define_insn "*umulsidi3_sp64"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand" "r"))
+		 (zero_extend:DI (match_operand:SI 2 "register_operand" "r"))))]
+  "TARGET_DEPRECATED_V8_INSNS && TARGET_ARCH64"
+  "umul\\t%1, %2, %0"
+  [(set_attr "length" "1")])
+
 ;; Extra pattern, because sign_extend of a constant isn't valid.
 
 ;; XXX
-(define_insn "const_umulsidi3"
+(define_insn "const_umulsidi3_sp32"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand" "r"))
 		 (match_operand:SI 2 "uns_small_int" "")))]
@@ -5486,6 +5503,14 @@
   [(set (attr "length")
 	(if_then_else (eq_attr "isa" "sparclet")
 		      (const_int 1) (const_int 2)))])
+
+(define_insn "const_umulsidi3_sp64"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand" "r"))
+		 (match_operand:SI 2 "uns_small_int" "")))]
+  "TARGET_DEPRECATED_V8_INSNS && TARGET_ARCH64"
+  "umul\\t%1, %2, %0"
+  [(set_attr "length" "1")])
 
 ;; XXX
 (define_insn "const_umulsidi3_v8plus"
@@ -5505,7 +5530,7 @@
 	 (lshiftrt:DI (mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand" ""))
 			       (zero_extend:DI (match_operand:SI 2 "uns_arith_operand" "")))
 		      (const_int 32))))]
-  "TARGET_HARD_MUL"
+  "TARGET_HARD_MUL && TARGET_ARCH32"
   "
 {
   if (CONSTANT_P (operands[2]))
@@ -5564,8 +5589,7 @@
 	 (lshiftrt:DI (mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand" "r"))
 			       (zero_extend:DI (match_operand:SI 2 "register_operand" "r")))
 		      (const_int 32))))]
-  "TARGET_HARD_MUL32
-   && ! TARGET_LIVE_G0"
+  "TARGET_HARD_MUL32 && ! TARGET_LIVE_G0"
   "umul\\t%1, %2, %%g0\\n\\trd\\t%%y, %0"
   [(set_attr "length" "2")])
 
@@ -5576,39 +5600,63 @@
 	 (lshiftrt:DI (mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand" "r"))
 			       (match_operand:SI 2 "uns_small_int" ""))
 		      (const_int 32))))]
-  "TARGET_HARD_MUL32
-   && ! TARGET_LIVE_G0"
+  "TARGET_HARD_MUL32 && ! TARGET_LIVE_G0"
   "umul\\t%1, %2, %%g0\\n\\trd\\t%%y, %0"
   [(set_attr "length" "2")])
 
 ;; The v8 architecture specifies that there must be 3 instructions between
 ;; a y register write and a use of it for correct results.
 
-;; XXX SHEESH
-(define_insn "divsi3"
+(define_expand "divsi3"
+  [(parallel [(set (match_operand:SI 0 "register_operand" "=r,r")
+		   (div:SI (match_operand:SI 1 "register_operand" "r,r")
+			   (match_operand:SI 2 "input_operand" "rI,m")))
+	      (clobber (match_scratch:SI 3 "=&r,&r"))])]
+  "TARGET_V8 || TARGET_DEPRECATED_V8_INSNS"
+  "
+{
+  if (TARGET_ARCH64)
+    {
+      operands[3] = gen_reg_rtx(SImode);
+      emit_insn (gen_ashrsi3 (operands[3], operands[1], GEN_INT (31)));
+      emit_insn (gen_divsi3_sp64 (operands[0], operands[1], operands[2],
+				  operands[3]));
+      DONE;
+    }
+}")
+
+(define_insn "divsi3_sp32"
   [(set (match_operand:SI 0 "register_operand" "=r,r")
 	(div:SI (match_operand:SI 1 "register_operand" "r,r")
 		(match_operand:SI 2 "input_operand" "rI,m")))
    (clobber (match_scratch:SI 3 "=&r,&r"))]
-  "(TARGET_V8
-    || TARGET_DEPRECATED_V8_INSNS)
-   && ! TARGET_LIVE_G0"
+  "(TARGET_V8 || TARGET_DEPRECATED_V8_INSNS)
+   && TARGET_ARCH32"
   "*
 {
   if (which_alternative == 0)
-  if (TARGET_V9)
-    return \"sra\\t%1, 31, %3\\n\\twr\\t%%g0, %3, %%y\\n\\tsdiv\\t%1, %2, %0\";
-  else
-    return \"sra\\t%1, 31, %3\\n\\twr\\t%%g0, %3, %%y\\n\\tnop\\n\\tnop\\n\\tnop\\n\\tsdiv\\t%1, %2, %0\";
+    if (TARGET_V9)
+      return \"sra\\t%1, 31, %3\\n\\twr\\t%3, 0, %%y\\n\\tsdiv\\t%1, %2, %0\";
+    else
+      return \"sra\\t%1, 31, %3\\n\\twr\\t%3, 0, %%y\\n\\tnop\\n\\tnop\\n\\tnop\\n\\tsdiv\\t%1, %2, %0\";
   else
     if (TARGET_V9)
-      return \"sra\\t%1, 31, %3\\n\\twr\\t%%g0, %3, %%y\\n\\tld\\t%2, %3\\n\\tsdiv\\t%1, %3, %0\";
+      return \"sra\\t%1, 31, %3\\n\\twr\\t%3, 0, %%y\\n\\tld\\t%2, %3\\n\\tsdiv\\t%1, %3, %0\";
     else
-      return \"sra\\t%1, 31, %3\\n\\twr\\t%%g0, %3, %%y\\n\\tld\\t%2, %3\\n\\tnop\\n\\tnop\\n\\tsdiv\\t%1, %3, %0\";
+      return \"sra\\t%1, 31, %3\\n\\twr\\t%3, 0, %%y\\n\\tld\\t%2, %3\\n\\tnop\\n\\tnop\\n\\tsdiv\\t%1, %3, %0\";
 }"
   [(set (attr "length")
 	(if_then_else (eq_attr "isa" "v9")
 		      (const_int 4) (const_int 7)))])
+
+(define_insn "divsi3_sp64"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(div:SI (match_operand:SI 1 "register_operand" "r")
+		(match_operand:SI 2 "input_operand" "rI")))
+   (use (match_operand:SI 3 "register_operand" "r"))]
+  "TARGET_DEPRECATED_V8_INSNS && TARGET_ARCH64"
+  "wr\\t%%g0, %3, %%y\\n\\tsdiv\\t%1, %2, %0"
+  [(set_attr "length" "2")])
 
 (define_insn "divdi3"
   [(set (match_operand:DI 0 "register_operand" "=r")
@@ -5617,47 +5665,47 @@
   "TARGET_ARCH64"
   "sdivx\\t%1, %2, %0")
 
-;; It is not known whether this will match.
-
-;; XXX I hope it doesn't fucking match...
 (define_insn "*cmp_sdiv_cc_set"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(div:SI (match_operand:SI 1 "register_operand" "r")
-		(match_operand:SI 2 "arith_operand" "rI")))
-   (set (reg:CC 100)
-	(compare:CC (div:SI (match_dup 1) (match_dup 2))
+  [(set (reg:CC 100)
+	(compare:CC (div:SI (match_operand:SI 1 "register_operand" "r")
+			    (match_operand:SI 2 "arith_operand" "rI"))
 		    (const_int 0)))
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(div:SI (match_dup 1) (match_dup 2)))
    (clobber (match_scratch:SI 3 "=&r"))]
-  "(TARGET_V8
-    || TARGET_DEPRECATED_V8_INSNS)
-   && ! TARGET_LIVE_G0"
+  "TARGET_V8 || TARGET_DEPRECATED_V8_INSNS"
   "*
 {
   if (TARGET_V9)
-    return \"sra\\t%1, 31, %3\\n\\twr\\t%%g0, %3, %%y\\n\\tsdivcc\\t%1, %2, %0\";
+    return \"sra\\t%1, 31, %3\\n\\twr\\t%3, 0, %%y\\n\\tsdivcc\\t%1, %2, %0\";
   else
-    return \"sra\\t%1, 31, %3\\n\\twr\\t%%g0, %3, %%y\\n\\tnop\\n\\tnop\\n\\tnop\\n\\tsdivcc\\t%1, %2, %0\";
+    return \"sra\\t%1, 31, %3\\n\\twr\\t%3, 0, %%y\\n\\tnop\\n\\tnop\\n\\tnop\\n\\tsdivcc\\t%1, %2, %0\";
 }"
   [(set (attr "length")
 	(if_then_else (eq_attr "isa" "v9")
 		      (const_int 3) (const_int 6)))])
 
 ;; XXX
-(define_insn "udivsi3"
+(define_expand "udivsi3"
+  [(set (match_operand:SI 0 "register_operand" "")
+	(udiv:SI (match_operand:SI 1 "reg_or_nonsymb_mem_operand" "")
+		 (match_operand:SI 2 "input_operand" "")))]
+  "(TARGET_V8 || TARGET_DEPRECATED_V8_INSNS) && ! TARGET_LIVE_G0"
+  "")
+
+(define_insn "udivsi3_sp32"
   [(set (match_operand:SI 0 "register_operand" "=r,&r,&r")
 	(udiv:SI (match_operand:SI 1 "reg_or_nonsymb_mem_operand" "r,r,m")
 		 (match_operand:SI 2 "input_operand" "rI,m,r")))]
   "(TARGET_V8
     || TARGET_DEPRECATED_V8_INSNS)
-   && ! TARGET_LIVE_G0"
+   && TARGET_ARCH32 && ! TARGET_LIVE_G0"
   "*
 {
   output_asm_insn (\"wr\\t%%g0, %%g0, %%y\", operands);
   switch (which_alternative)
     {
     default:
-  if (TARGET_V9)
-	return \"udiv\\t%1, %2, %0\";
       return \"nop\\n\\tnop\\n\\tnop\\n\\tudiv\\t%1, %2, %0\";
     case 1:
       return \"ld\\t%2, %0\\n\\tnop\\n\\tnop\\n\\tudiv\\t%1, %0, %0\";
@@ -5665,10 +5713,15 @@
       return \"ld\\t%1, %0\\n\\tnop\\n\\tnop\\n\\tudiv\\t%0, %2, %0\";
     }
 }"
-  [(set (attr "length")
-	(if_then_else (and (eq_attr "isa" "v9")
-			   (eq_attr "alternative" "0"))
-		      (const_int 2) (const_int 5)))])
+  [(set_attr "length" "5")])
+
+(define_insn "udivsi3_sp64"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(udiv:SI (match_operand:SI 1 "reg_or_nonsymb_mem_operand" "r")
+		 (match_operand:SI 2 "input_operand" "rI")))]
+  "TARGET_DEPRECATED_V8_INSNS && TARGET_ARCH64"
+  "wr\\t%%g0, 0, %%y\\n\\tudiv\\t%1, %2, %0"
+  [(set_attr "length" "2")])
 
 (define_insn "udivdi3"
   [(set (match_operand:DI 0 "register_operand" "=r")
@@ -5677,16 +5730,13 @@
   "TARGET_ARCH64"
   "udivx\\t%1, %2, %0")
 
-;; It is not known whether this will match.
-
-;; XXX I hope it doesn't fucking match...
 (define_insn "*cmp_udiv_cc_set"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(udiv:SI (match_operand:SI 1 "register_operand" "r")
-		(match_operand:SI 2 "arith_operand" "rI")))
-   (set (reg:CC 100)
-	(compare:CC (udiv:SI (match_dup 1) (match_dup 2))
-		    (const_int 0)))]
+  [(set (reg:CC 100)
+	(compare:CC (udiv:SI (match_operand:SI 1 "register_operand" "r")
+			     (match_operand:SI 2 "arith_operand" "rI"))
+		    (const_int 0)))
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(udiv:SI (match_dup 1) (match_dup 2)))]
   "(TARGET_V8
     || TARGET_DEPRECATED_V8_INSNS)
    && ! TARGET_LIVE_G0"
@@ -7248,6 +7298,84 @@
   "TARGET_V8PLUS"
   "*return sparc_v8plus_shift (operands, insn, \"srlx\");"
   [(set_attr "length" "5,5,6")])
+
+(define_insn ""
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(ashiftrt:SI (subreg:SI (lshiftrt:DI (match_operand:DI 1 "register_operand" "r")
+					     (const_int 32)) 0)
+		     (match_operand:SI 2 "small_int_or_double" "n")))]
+  "TARGET_ARCH64
+   && ((GET_CODE (operands[2]) == CONST_INT
+        && (unsigned HOST_WIDE_INT) INTVAL (operands[2]) < 32)
+       || (GET_CODE (operands[2]) == CONST_DOUBLE
+	   && !CONST_DOUBLE_HIGH (operands[2])
+           && (unsigned HOST_WIDE_INT) CONST_DOUBLE_LOW (operands[2]) < 32))"
+  "*
+{
+  operands[2] = GEN_INT (INTVAL (operands[2]) + 32);
+
+  return \"srax\\t%1, %2, %0\";
+}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "1")])
+
+(define_insn ""
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(lshiftrt:SI (subreg:SI (ashiftrt:DI (match_operand:DI 1 "register_operand" "r")
+					     (const_int 32)) 0)
+		     (match_operand:SI 2 "small_int_or_double" "n")))]
+  "TARGET_ARCH64
+   && ((GET_CODE (operands[2]) == CONST_INT
+        && (unsigned HOST_WIDE_INT) INTVAL (operands[2]) < 32)
+       || (GET_CODE (operands[2]) == CONST_DOUBLE
+	   && !CONST_DOUBLE_HIGH (operands[2])
+           && (unsigned HOST_WIDE_INT) CONST_DOUBLE_LOW (operands[2]) < 32))"
+  "*
+{
+  operands[2] = GEN_INT (INTVAL (operands[2]) + 32);
+
+  return \"srlx\\t%1, %2, %0\";
+}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "1")])
+
+(define_insn ""
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(ashiftrt:SI (subreg:SI (ashiftrt:DI (match_operand:DI 1 "register_operand" "r")
+					     (match_operand:SI 2 "small_int_or_double" "n")) 0)
+		     (match_operand:SI 3 "small_int_or_double" "n")))]
+  "TARGET_ARCH64
+   && GET_CODE (operands[2]) == CONST_INT && GET_CODE (operands[3]) == CONST_INT
+   && (unsigned HOST_WIDE_INT) INTVAL (operands[2]) >= 32
+   && (unsigned HOST_WIDE_INT) INTVAL (operands[3]) < 32
+   && (unsigned HOST_WIDE_INT) (INTVAL (operands[2]) + INTVAL (operands[3])) < 64"
+  "*
+{
+  operands[2] = GEN_INT (INTVAL (operands[2]) + INTVAL (operands[3]));
+
+  return \"srax\\t%1, %2, %0\";
+}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "1")])
+
+(define_insn ""
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(lshiftrt:SI (subreg:SI (lshiftrt:DI (match_operand:DI 1 "register_operand" "r")
+					     (match_operand:SI 2 "small_int_or_double" "n")) 0)
+		     (match_operand:SI 3 "small_int_or_double" "n")))]
+  "TARGET_ARCH64
+   && GET_CODE (operands[2]) == CONST_INT && GET_CODE (operands[3]) == CONST_INT
+   && (unsigned HOST_WIDE_INT) INTVAL (operands[2]) >= 32
+   && (unsigned HOST_WIDE_INT) INTVAL (operands[3]) < 32
+   && (unsigned HOST_WIDE_INT) (INTVAL (operands[2]) + INTVAL (operands[3])) < 64"
+  "*
+{
+  operands[2] = GEN_INT (INTVAL (operands[2]) + INTVAL (operands[3]));
+
+  return \"srlx\\t%1, %2, %0\";
+}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "1")])
 
 ;; Unconditional and other jump instructions
 ;; On the Sparc, by setting the annul bit on an unconditional branch, the
