@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.3 1999/07/03 21:30:20 thorpej Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.4 1999/07/04 02:01:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -506,7 +506,7 @@ udp6_output(in6p, m, addr6, control)
 		/*
 		 * Must block input while temporarily connected.
 		 */
-		s = splnet();
+		s = splsoftnet();
 		error = in6_pcbconnect(in6p, addr6);
 		if (error) {
 			splx(s);
@@ -623,7 +623,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 			error = EINVAL;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		error = in6_pcballoc(so, &udb6);
 		splx(s);
 		if (error)
@@ -644,7 +644,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		break;
 
 	case PRU_BIND:
-		s = splnet();
+		s = splsoftnet();
 		error = in6_pcbbind(in6p, addr6);
 		splx(s);
 		break;
@@ -658,7 +658,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 			error = EISCONN;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		error = in6_pcbconnect(in6p, addr6);
 		if (ip6_auto_flowlabel) {
 			in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
@@ -683,7 +683,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 			error = ENOTCONN;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		in6_pcbdisconnect(in6p);
 		bzero((caddr_t)&in6p->in6p_laddr, sizeof(in6p->in6p_laddr));
 		splx(s);
@@ -746,7 +746,7 @@ static void
 udp6_detach(in6p)
 	struct in6pcb *in6p;
 {
-	int	s = splnet();
+	int	s = splsoftnet();
 
 	if (in6p == udp6_last_in6pcb)
 		udp6_last_in6pcb = &udb6;

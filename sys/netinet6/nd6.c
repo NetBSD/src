@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.4 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: nd6.c,v 1.5 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -375,7 +375,7 @@ nd6_timer(ignored_arg)
 	register struct nd_defrouter *dr;
 	register struct nd_prefix *pr;
 	
-	s = splnet();
+	s = splsoftnet();
 	timeout(nd6_timer, (caddr_t)0, nd6_prune * hz);
 
 	ln = llinfo_nd6.ln_next;
@@ -636,7 +636,7 @@ nd6_free(rt)
 		int s;
 		in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
 
-		s = splnet();
+		s = splsoftnet();
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->
 				      sin6_addr,
 				      rt->rt_ifp);
@@ -1046,7 +1046,7 @@ nd6_ioctl(cmd, data, ifp)
 	switch (cmd) {
 	case SIOCGDRLST_IN6:
 		bzero(drl, sizeof(*drl));
-		s = splnet();
+		s = splsoftnet();
 		dr = nd_defrouter.lh_first;
 		while (dr && i < DRLSTSIZ) {
 			drl->defrouter[i].rtaddr = dr->rtaddr;
@@ -1071,7 +1071,7 @@ nd6_ioctl(cmd, data, ifp)
 		break;
 	case SIOCGPRLST_IN6:
 		bzero(prl, sizeof(*prl));
-		s = splnet();
+		s = splsoftnet();
 		pr = nd_prefix.lh_first;
 		while (pr && i < PRLSTSIZ) {
 			struct nd_pfxrouter *pfr;
@@ -1131,7 +1131,7 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the prefix advertised by routers */
 		struct nd_prefix *pr, *next;
 
-		s = splnet();
+		s = splsoftnet();
 		for (pr = nd_prefix.lh_first; pr; pr = next) {
 			next = pr->ndpr_next;
 			if (!IN6_IS_ADDR_UNSPECIFIED(&pr->ndpr_addr))
@@ -1146,7 +1146,7 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the default routers */
 		struct nd_defrouter *dr, *next;
 
-		s = splnet();
+		s = splsoftnet();
 		if ((dr = nd_defrouter.lh_first) != NULL) {
 			/*
 			 * The first entry of the list may be stored in
@@ -1165,7 +1165,7 @@ nd6_ioctl(cmd, data, ifp)
 	    {
 		  struct llinfo_nd6 *ln;
 
-		  s = splnet();
+		  s = splsoftnet();
 		  if ((rt = nd6_lookup(&nbi->addr, 0, ifp)) == NULL) {
 			  error = EINVAL;
 			  break;
@@ -1376,7 +1376,7 @@ static void
 nd6_slowtimo(ignored_arg)
     void *ignored_arg;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	register int i;
 	register struct nd_ifinfo *nd6if;
 

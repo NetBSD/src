@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.5 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.6 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -723,7 +723,7 @@ in6_setpeeraddr(in6p, nam)
  * Call the protocol specific routine (if any) to report
  * any errors for each matching socket.
  *
- * Must be called at splnet.
+ * Must be called at splsoftnet.
  */
 int
 in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)

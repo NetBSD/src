@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.3 1999/07/03 21:30:17 thorpej Exp $	*/
+/*	$NetBSD: frag6.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -537,7 +537,7 @@ void
 frag6_slowtimo()
 {
 	struct ip6q *q6;
-	int s = splnet();
+	int s = splsoftnet();
 #if 0
 	extern struct	route_in6 ip6_forward_rt;
 #endif

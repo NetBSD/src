@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -680,7 +680,7 @@ nd6_na_input(m, off, icmp6len)
 			int s;
 
 			in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
-			s = splnet();
+			s = splsoftnet();
 			dr = defrouter_lookup(in6, rt->rt_ifp);
 			if (dr)
 				defrtrlist_del(dr);
@@ -961,7 +961,7 @@ nd6_dad_timer(ifa)
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
 
-	s = splnet();	/*XXX*/
+	s = splsoftnet();	/*XXX*/
 
 	/* Sanity check */
 	if (ia == NULL) {
