@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.177 2003/02/03 23:50:59 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.178 2003/02/05 21:38:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.177 2003/02/03 23:50:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.178 2003/02/05 21:38:41 pk Exp $");
 
 #include "rnd.h"
 
@@ -647,6 +647,7 @@ cdstrategy(bp)
 			}
 
 			/* Set up the IOP to the bounce buffer. */
+			simple_lock_init(&nbp->b_interlock);
 			nbp->b_error = 0;
 			nbp->b_proc = bp->b_proc;
 			nbp->b_vp = NULLVP;

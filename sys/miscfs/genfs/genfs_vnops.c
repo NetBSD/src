@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.70 2003/01/21 00:01:14 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.71 2003/02/05 21:38:42 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.70 2003/01/21 00:01:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.71 2003/02/05 21:38:42 pk Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -653,6 +653,7 @@ genfs_getpages(void *v)
 	s = splbio();
 	mbp = pool_get(&bufpool, PR_WAITOK);
 	splx(s);
+	simple_lock_init(&mbp->b_interlock);
 	mbp->b_bufsize = totalbytes;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
@@ -786,6 +787,7 @@ genfs_getpages(void *v)
 			s = splbio();
 			bp = pool_get(&bufpool, PR_WAITOK);
 			splx(s);
+			simple_lock_init(&bp->b_interlock);
 			bp->b_data = (char *)kva + offset - startoffset;
 			bp->b_resid = bp->b_bcount = iobytes;
 			bp->b_flags = B_BUSY|B_READ|B_CALL|B_ASYNC;
@@ -1067,7 +1069,9 @@ genfs_putpages(void *v)
 
 	error = 0;
 	s = splbio();
+	simple_lock(&global_v_numoutput_slock);
 	wasclean = (vp->v_numoutput == 0);
+	simple_unlock(&global_v_numoutput_slock);
 	splx(s);
 	off = startoff;
 	if (endoff == 0 || flags & PGO_ALLPAGES) {
@@ -1341,10 +1345,16 @@ genfs_putpages(void *v)
 	splx(s);
 	if (!wasclean && !async) {
 		s = splbio();
+		/*
+		 * XXX - we want simple_unlock(&global_v_numoutput_slock);
+		 *	 but the slot in ltsleep() is taken!
+		 * XXX - try to recover from missed wakeups with a timeout..
+		 *	 must think of something better.
+		 */
 		while (vp->v_numoutput != 0) {
 			vp->v_flag |= VBWAIT;
 			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput, slock, FALSE,
-			    "genput2", 0);
+			    "genput2", hz);
 			simple_lock(slock);
 		}
 		splx(s);
@@ -1390,8 +1400,11 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	    UVMPAGER_MAPIN_WRITE | UVMPAGER_MAPIN_WAITOK);
 
 	s = splbio();
+	simple_lock(&global_v_numoutput_slock);
 	vp->v_numoutput += 2;
+	simple_unlock(&global_v_numoutput_slock);
 	mbp = pool_get(&bufpool, PR_WAITOK);
+	simple_lock_init(&mbp->b_interlock);
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
 	    vp, mbp, vp->v_numoutput, bytes);
 	splx(s);
@@ -1428,11 +1441,12 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			bp = mbp;
 		} else {
 			s = splbio();
-			vp->v_numoutput++;
+			V_INCR_NUMOUTPUT(vp);
 			bp = pool_get(&bufpool, PR_WAITOK);
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
 			    vp, bp, vp->v_numoutput, 0);
 			splx(s);
+			simple_lock_init(&bp->b_interlock);
 			bp->b_data = (char *)kva +
 			    (vaddr_t)(offset - pg->offset);
 			bp->b_resid = bp->b_bcount = iobytes;
@@ -1635,10 +1649,11 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	error = VOP_WRITE(vp, &uio, 0, cred);
 
 	s = splbio();
-	vp->v_numoutput++;
+	V_INCR_NUMOUTPUT(vp);
 	bp = pool_get(&bufpool, PR_WAITOK);
 	splx(s);
 
+	simple_lock_init(&bp->b_interlock);
 	bp->b_flags = B_BUSY | B_WRITE | B_AGE;
 	bp->b_vp = vp;
 	bp->b_lblkno = offset >> vp->v_mount->mnt_fs_bshift;
