@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsmouse.9,v 1.1 2001/10/22 03:29:58 gmcgarry Exp $
+.\"     $NetBSD: wsmouse.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -131,7 +131,7 @@ Obsolute mode in z-direction.
 The default wsmouse printing routine used by
 .Fn config_found .
 (see
-.Xr autoconf 9 ).
+.Xr autoconf 9 ) .
 .El
 .Sh AUTOCONFIGURATION
 Mouse drivers which want to utilise the wsmouse module must be a
@@ -144,7 +144,7 @@ device, the mouse driver must allocate and populate a
 structure with the supported operations and callbacks and call
 .Fn config_found
 to perform the attach (see
-.Xr autoconf 9 ).
+.Xr autoconf 9 ) .
 .Sh OPERATION
 When a mouse-movement event is received, the device driver must
 perform any necessary movement decoding to wscons events and pass the
@@ -162,7 +162,7 @@ functions are relatively simple and self-explanatory.  The
 .Fn ioctl
 function is called by the wscons interface to perform
 mouse-specific ioctl operations (see
-.Xr ioctl 2 ).
+.Xr ioctl 2 ) .
 The argument
 .Fa cmd
 to the
@@ -177,7 +177,7 @@ This section describes places within the
 source tree where actual code implementing or utilising the
 machine-independent wscons subsystem can be found.  All pathnames are
 relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The wscons subsystem is implemented within the directory
 .Pa sys/dev/wscons .

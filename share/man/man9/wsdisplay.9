@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.1 2001/10/22 03:29:58 gmcgarry Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -276,12 +276,12 @@ terminal emulations can be active at the same time on one display.
 The default wsdisplay printing routine used by
 .Fn config_found .
 (see
-.Xr autoconf 9 ).
+.Xr autoconf 9 ) .
 .It Fn wsemuldisplaydevprint "aux" "pnp"
 The default wsemul printing routine used by
 .Fn config_found .
 (see
-.Xr autoconf 9 ).
+.Xr autoconf 9 ) .
 .El
 .Sh AUTOCONFIGURATION
 Display drivers which want to utilise the wsdisplay module must be a
@@ -294,7 +294,7 @@ device, the display driver must allocate and populate a
 structure with the supported operations and callbacks and call
 .Fn config_found
 to perform the attach (see
-.Xr autoconf 9 ).
+.Xr autoconf 9 ) .
 .Pp
 Display drivers which want to utilise the wscons terminal emulation
 module must be a parent to the
@@ -320,7 +320,7 @@ structure.  The
 .Fn ioctl
 function is called by the wscons interface to perform display-specific
 ioctl operations (see
-.Xr ioctl 2 ).
+.Xr ioctl 2 ) .
 The argument
 .Fa cmd to the
 .Fn ioctl
@@ -331,17 +331,13 @@ Operations for terminal emulation are performed using the callbacks
 defined in the
 .Em wsdisplay_emulops
 structure.
-.Pp
-
-
-
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
 machine-independent wscons subsystem can be found.  All pathnames are
 relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The wscons subsystem is implemented within the directory
 .Pa sys/dev/wscons .
