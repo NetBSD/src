@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.44 1997/04/02 03:58:25 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.45 1997/04/29 21:01:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -86,16 +86,9 @@ struct audio_hw_if sb_hw_if = {
 	sbopen,
 	sbdsp_close,
 	NULL,
-	sbdsp_set_in_sr,
-	sbdsp_get_in_sr,
-	sbdsp_set_out_sr,
-	sbdsp_get_out_sr,
 	sbdsp_query_encoding,
-	sbdsp_set_format,
-	sbdsp_get_encoding,
-	sbdsp_get_precision,
-	sbdsp_set_channels,
-	sbdsp_get_channels,
+	sbdsp_set_out_params,
+	sbdsp_set_in_params,
 	sbdsp_round_blocksize,
 	sbdsp_set_out_port,
 	sbdsp_get_out_port,

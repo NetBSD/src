@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.22 1997/04/06 00:54:22 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.23 1997/04/29 21:01:43 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -357,24 +357,10 @@ int	gus_set_in_gain __P((caddr_t, u_int, u_char));
 int	gus_get_in_gain __P((caddr_t));
 int	gus_set_out_gain __P((caddr_t, u_int, u_char));
 int	gus_get_out_gain __P((caddr_t));
-int 	gus_set_in_sr __P((void *, u_long));
-u_long 	gus_get_in_sr __P((void *));
-int 	gusmax_set_in_sr __P((void *, u_long));
-u_long 	gusmax_get_in_sr __P((void *));
-int 	gus_set_out_sr __P((void *, u_long));
-u_long 	gus_get_out_sr __P((void *));
-int 	gusmax_set_out_sr __P((void *, u_long));
-u_long 	gusmax_get_out_sr __P((void *));
-int	gus_set_format __P((void *, u_int, u_int));
-int	gus_get_encoding __P((void *));
-int	gus_get_precision __P((void *));
-int	gusmax_set_format __P((void *, u_int, u_int));
-int	gusmax_get_encoding __P((void *));
-int	gusmax_get_precision __P((void *));
-int	gus_set_channels __P((void *, int));
-int	gus_get_channels __P((void *));
-int	gusmax_set_channels __P((void *, int));
-int	gusmax_get_channels __P((void *));
+int 	gus_set_in_params __P((void *, struct audio_params *));
+int 	gus_set_out_params __P((void *, struct audio_params *));
+int 	gusmax_set_in_params __P((void *, struct audio_params *));
+int 	gusmax_set_out_params __P((void *, struct audio_params *));
 int	gus_round_blocksize __P((void *, int));
 int	gus_set_out_port __P((void *, int));
 int	gus_get_out_port __P((void *));
@@ -402,6 +388,7 @@ int	gusmax_get_out_port __P((void *));
 int	gusmax_set_in_port __P((void *, int));
 int	gusmax_get_in_port __P((void *));
 int	gus_getdev __P((void *, struct audio_device *));
+int	gus_set_io_params __P((struct gus_softc *, struct audio_params *));
 
 STATIC void	gus_deinterleave __P((struct gus_softc *, void *, int));
 STATIC void	gus_expand __P((void *, int, u_char *, int));
@@ -615,18 +602,11 @@ struct audio_hw_if gus_hw_if = {
 	gusopen,
 	gusclose,
 	NULL,				/* drain */
-	gus_set_in_sr,
-	gus_get_in_sr,
-	gus_set_out_sr,
-	gus_get_out_sr,
 
 	gus_query_encoding,
-	gus_set_format,
-	gus_get_encoding,
-	gus_get_precision,
 
-	gus_set_channels,
-	gus_get_channels,
+	gus_set_out_params,
+	gus_set_in_params,
 
 	gus_round_blocksize,
 
@@ -2113,33 +2093,83 @@ gus_set_volume(sc, voice, volume)
 }
 
 /*
- * Interface to the audio layer - set the data encoding type
+ * Interface to the audio layer.
  */
 
 int
-gusmax_set_format(addr, encoding, precision)
-	void * addr;
-	u_int encoding, precision;
+gusmax_set_in_params(addr, p)
+	void *addr;
+	struct audio_params *p;
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
 	int error;
 
-	error = ad1848_set_format(ac, encoding, precision);
-	return (error ? error : gus_set_format(sc, encoding, precision));
+	error = ad1848_set_in_params(ac, p);
+	if (error)
+		return error;
+	return gus_set_in_params(sc, p);
 }
 
 int
-gus_set_format(addr, encoding, precision)
-	void * addr;
-	u_int encoding, precision;
+gusmax_set_out_params(addr, p)
+	void *addr;
+	struct audio_params *p;
+{
+	register struct ad1848_softc *ac = addr;
+	register struct gus_softc *sc = ac->parent;
+	int error;
+
+	error = ad1848_set_in_params(ac, p);
+	if (error)
+		return error;
+	return gus_set_in_params(sc, p);
+}
+
+int
+gus_set_in_params(addr, p)
+	void *addr;
+	struct audio_params *p;
 {
 	register struct gus_softc *sc = addr;
+	int error;
+	
+	error = gus_set_io_params(sc, p);
+	if (error)
+		return error;
+	sc->sc_irate = p->sample_rate;
+	return 0;
+}
+
+int
+gus_set_out_params(addr, p)
+	void *addr;
+	struct audio_params *p;
+{
+	register struct gus_softc *sc = addr;
+	int rate = p->sample_rate;
+	int error;
+	
+	error = gus_set_io_params(sc, p);
+	if (error)
+		return error;
+
+	if (rate > gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES])
+		rate = gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES];
+
+	p->sample_rate = sc->sc_orate = rate;
+
+	return 0;
+}
+
+int
+gus_set_io_params(sc, p)
+	struct gus_softc *sc;
+	struct audio_params *p;
+{
 	int s;
 
-	DPRINTF(("gus_set_format called\n"));
-
-	switch (encoding) {
+	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_PCM16:
 	case AUDIO_ENCODING_PCM8:
@@ -2150,7 +2180,7 @@ gus_set_format(addr, encoding, precision)
 
 	s = splaudio();
 
-	if (precision == 8) {
+	if (p->precision == 8) {
 		sc->sc_voc[GUS_VOICE_LEFT].voccntl &= ~GUSMASK_DATA_SIZE16;
 		sc->sc_voc[GUS_VOICE_RIGHT].voccntl &= ~GUSMASK_DATA_SIZE16;
 	} else {
@@ -2158,44 +2188,14 @@ gus_set_format(addr, encoding, precision)
 		sc->sc_voc[GUS_VOICE_RIGHT].voccntl |= GUSMASK_DATA_SIZE16;
 	}
 
-	sc->sc_encoding = encoding;
-	sc->sc_precision = precision;
+	sc->sc_encoding = p->encoding;
+	sc->sc_precision = p->precision;
 
 	splx(s);
 
 	return 0;
 }
-
-int
-gusmax_set_channels(addr, channels)
-	void * addr;
-	int channels;
-{
-	register struct ad1848_softc *ac = addr;
-	register struct gus_softc *sc = ac->parent;
-	int error;
-
-	error = ad1848_set_channels(ac, channels);
-	return (error ? error : gus_set_channels(sc, channels));
-}
-
-int
-gus_set_channels(addr, channels)
-	void * addr;
-	int channels;
-{
-	register struct gus_softc *sc = addr;
-
-	DPRINTF(("gus_set_channels called\n"));
-
-	if (channels != 1 && channels != 2)
-		return EINVAL;
-
-	sc->sc_channels = channels;
-
-	return 0;
-}
-
+  
 /*
  * Interface to the audio layer - set the blocksize to the correct number
  * of units
@@ -2248,109 +2248,6 @@ gus_round_blocksize(addr, blocksize)
 	return blocksize;
 }
 
-/*
- * Interfaces to the audio layer - return values from the software config
- * struct
- */
-
-int
-gusmax_get_encoding(addr)
-	void * addr;
-{
-	register struct ad1848_softc *ac = addr;
-	register struct gus_softc *sc = ac->parent;
-	return gus_get_encoding(sc);
-}
-
-int
-gus_get_encoding(addr)
-	void * addr;
-{
-	register struct gus_softc *sc = addr;
-
-	DPRINTF(("gus_get_encoding called\n"));
-
-	/* XXX TODO: codec stuff */
-	return sc->sc_encoding;
-}
-
-int
-gusmax_get_channels(addr)
-	void * addr;
-{
-	register struct ad1848_softc *ac = addr;
-	register struct gus_softc *sc = ac->parent;
-	return gus_get_channels(sc);
-}
-
-int
-gus_get_channels(addr)
-	void * addr;
-{
-	register struct gus_softc *sc = addr;
-
-	DPRINTF(("gus_get_channels called\n"));
-
-	return sc->sc_channels;
-}
-
-u_long
-gus_get_in_sr(addr)
-	void * addr;
-{
-	register struct gus_softc *sc = addr;
-
-	DPRINTF(("gus_get_in_sr called\n"));
-	return sc->sc_irate;
-}
-
-u_long
-gusmax_get_in_sr(addr)
-	void * addr;
-{
-	register struct ad1848_softc *ac = addr;
-	register struct gus_softc *sc = ac->parent;
-	return gus_get_in_sr(sc);
-}
-
-u_long
-gusmax_get_out_sr(addr)
-	void * addr;
-{
-	register struct ad1848_softc *ac = addr;
-	register struct gus_softc *sc = ac->parent;
-	return gus_get_out_sr(sc);
-}
-
-u_long
-gus_get_out_sr(addr)
-	void * addr;
-{
-	register struct gus_softc *sc = addr;
-
-	DPRINTF(("gus_get_out_sr called\n"));
-	return sc->sc_orate;
-}
-
-int
-gusmax_get_precision(addr)
-	void * addr;
-{
-	register struct ad1848_softc *sc = addr;
-	return gus_get_precision(sc->parent);
-}
-
-int
-gus_get_precision(addr)
-	void * addr;
-{
-	register struct gus_softc *sc = addr;
-
-	DPRINTF(("gus_get_precision called\n"));
-
-	return sc->sc_precision;
-}
-
 int
 gus_get_out_gain(addr)
 	caddr_t addr;
@@ -2359,40 +2256,6 @@ gus_get_out_gain(addr)
 
 	DPRINTF(("gus_get_out_gain called\n"));
 	return sc->sc_ogain / 2;
-}
-
-/*
- * Interface to the audio layer - set the sample rate of the output voices
- */
-
-int
-gusmax_set_out_sr(addr, rate)
-	void * addr;
-	u_long rate;
-{
-	register struct ad1848_softc *ac = addr;
-	register struct gus_softc *sc = ac->parent;
-	int error;
-
-	error = ad1848_set_out_sr(ac, rate);
-	return (error ? error : gus_set_out_sr(sc, rate));
-}
-
-int
-gus_set_out_sr(addr, rate)
-	void * addr;
-	u_long rate;
-{
-	register struct gus_softc *sc = addr;
-
-	DPRINTF(("gus_set_out_sr called\n"));
-
-	if (rate > gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES])
-		rate = gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES];
-
-	sc->sc_orate = rate;
-
-	return 0;
 }
 
 STATIC inline void gus_set_voices(sc, voices)
@@ -2522,37 +2385,6 @@ gus_set_samprate(sc, voice, freq)
 
 }
 
-/*
- * Interface to the audio layer - set the recording sampling rate
- */
-
-int
-gusmax_set_in_sr(addr, rate)
-	void * addr;
-	u_long rate;
-{
-	register struct ad1848_softc *ac = addr;
-	register struct gus_softc *sc = ac->parent;
-	int error;
-
-	error = ad1848_set_in_sr(ac, rate);
-	return (error ? error : gus_set_in_sr(sc, rate));
-}
-
-
-int
-gus_set_in_sr(addr, rate)
-	void *addr;
-	u_long rate;
-{
-	register struct gus_softc *sc = addr;
-
-	DPRINTF(("gus_set_in_sr called\n"));
-
-	sc->sc_irate = rate;
-
-	return 0;
-}
 /*
  * Set the sample rate of the recording frequency.  Formula is from the GUS
  * SDK.  Called at splgus().
@@ -2966,18 +2798,11 @@ gus_init_cs4231(sc)
 			gusopen,
 			gusmax_close,
 			NULL,				/* drain */
-			gusmax_set_in_sr,
-			gusmax_get_in_sr,
-			gusmax_set_out_sr,
-			gusmax_get_out_sr,
 
 			ad1848_query_encoding, /* query encoding */
-			gusmax_set_format,
-			gusmax_get_encoding,
-			gusmax_get_precision,
 
-			gusmax_set_channels,
-			gusmax_get_channels,
+			gusmax_set_out_params,
+			gusmax_set_in_params,
 
 			gusmax_round_blocksize,
 

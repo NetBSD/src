@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.12 1997/04/05 23:50:24 augustss Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.13 1997/04/29 21:01:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -78,8 +78,6 @@ struct ad1848_softc {
 	char	*chip_name;
 	int	mode;
 	
-	u_long	speed;
-	u_int	encoding;		/* ulaw/linear -- keep track */
 	u_int	precision;		/* 8/16 bits */
 	int	channels;
 	
@@ -109,16 +107,9 @@ void	ad1848_close __P((void *));
     
 void	ad1848_forceintr __P((struct ad1848_softc *));
 
-int	ad1848_set_in_sr __P((void *, u_long));
-u_long	ad1848_get_in_sr __P((void *));
-int	ad1848_set_out_sr __P((void *, u_long));
-u_long	ad1848_get_out_sr __P((void *));
 int	ad1848_query_encoding __P((void *, struct audio_encoding *));
-int	ad1848_set_format __P((void *, u_int, u_int));
-int	ad1848_get_encoding __P((void *));
-int	ad1848_get_precision __P((void *));
-int	ad1848_set_channels __P((void *, int));
-int	ad1848_get_channels __P((void *));
+int	ad1848_set_in_params __P((void *, struct audio_params *));
+int	ad1848_set_out_params __P((void *, struct audio_params *));
 
 int	ad1848_round_blocksize __P((void *, int));
 

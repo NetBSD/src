@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.22 1997/04/06 00:54:27 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.23 1997/04/29 21:01:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -162,16 +162,9 @@ struct audio_hw_if wss_hw_if = {
 	wssopen,
 	ad1848_close,
 	NULL,
-	ad1848_set_in_sr,
-	ad1848_get_in_sr,
-	ad1848_set_out_sr,
-	ad1848_get_out_sr,
 	ad1848_query_encoding,
-	ad1848_set_format,
-	ad1848_get_encoding,
-	ad1848_get_precision,
-	ad1848_set_channels,
-	ad1848_get_channels,
+	ad1848_set_out_params,
+	ad1848_set_in_params,
 	ad1848_round_blocksize,
 	wss_set_out_port,
 	wss_get_out_port,
@@ -900,8 +893,9 @@ madprobe(sc, iobase)
     }
 
 #ifdef AUDIO_DEBUG
-    for (i = MC1_PORT; i <= MC7_PORT; i++)
-	printf("mad: port %03x = %02x\n", i, mad_read(sc, chip_type, i));
+    if (wssdebug)
+	for (i = MC1_PORT; i <= MC7_PORT; i++)
+	    printf("mad: port %03x = %02x\n", i, mad_read(sc, chip_type, i));
 #endif
 
     /* Set the WSS address. */

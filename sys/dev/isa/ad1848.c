@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.24 1997/04/06 17:21:45 jtk Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.25 1997/04/29 21:01:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -148,8 +148,9 @@ static int ad1848_init_values[] = {
 };
 
 void	ad1848_reset __P((struct ad1848_softc *));
-int	ad1848_set_speed __P((struct ad1848_softc *, u_long));
+int	ad1848_set_speed __P((struct ad1848_softc *, u_long *));
 void	ad1848_mute_monitor __P((void *, int));
+int	ad1848_set_params __P((void *, struct audio_params *));
 
 static int ad_read __P((struct ad1848_softc *, int));
 static __inline void ad_write __P((struct ad1848_softc *, int, int));
@@ -491,6 +492,7 @@ ad1848_attach(sc)
     int i;
     struct ad1848_volume vol_mid = {150, 150};
     struct ad1848_volume vol_0   = {0, 0};
+    struct audio_params params;
     
     sc->sc_locked = 0;
 
@@ -507,10 +509,12 @@ ad1848_attach(sc)
     ad1848_reset(sc);
 
     /* Set default parameters (mono, 8KHz, ULAW) */
-    (void) ad1848_set_channels(sc, 1);
-    (void) ad1848_set_speed(sc, 8000);
-    (void) ad1848_set_format(sc, AUDIO_ENCODING_ULAW, 8);
-    (void) ad1848_commit_settings(sc);
+    params.sample_rate = 8000;
+    params.precision = 8;
+    params.channels = 1;
+    params.encoding = AUDIO_ENCODING_ULAW;
+    (void) ad1848_set_in_params(sc, &params);
+    (void) ad1848_set_out_params(sc, &params);
 
     /* Set default gains */
     (void) ad1848_set_rec_gain(sc, &vol_mid);
@@ -915,48 +919,6 @@ ad1848_get_aux2_gain(sc, gp)
 }
 
 int
-ad1848_set_in_sr(addr, sr)
-    void *addr;
-    u_long sr;
-{
-    register struct ad1848_softc *sc = addr;
-
-    DPRINTF(("ad1848_set_in_sr: %d\n", sr));
-
-    return (ad1848_set_speed(sc, sr));
-}
-
-u_long
-ad1848_get_in_sr(addr)
-    void *addr;
-{
-    register struct ad1848_softc *sc = addr;
-
-    return (sc->speed);
-}
-
-int
-ad1848_set_out_sr(addr, sr)
-    void *addr;
-    u_long sr;
-{
-    register struct ad1848_softc *sc = addr;
-
-    DPRINTF(("ad1848_set_out_sr: %d\n", sr));
-
-    return (ad1848_set_speed(sc, sr));
-}
-
-u_long
-ad1848_get_out_sr(addr)
-    void *addr;
-{
-    register struct ad1848_softc *sc = addr;
-
-    return (sc->speed);
-}
-
-int
 ad1848_query_encoding(addr, fp)
     void *addr;
     struct audio_encoding *fp;
@@ -986,87 +948,67 @@ ad1848_query_encoding(addr, fp)
 }
 
 int
-ad1848_set_format(addr, encoding, precision)
+ad1848_set_params(addr, p)
     void *addr;
-    u_int encoding, precision;
+    struct audio_params *p;
 {
     register struct ad1848_softc *sc = addr;
-    static u_char format2bits[] =  {
-      /* AUDIO_ENCODING_NONE */   0,
-      /* AUDIO_ENCODING_ULAW */   FMT_ULAW >> 5,
-      /* AUDIO_ENCODING_ALAW */   FMT_ALAW >> 5, 
-      /* AUDIO_ENCODING_PCM16 */  FMT_TWOS_COMP >> 5,
-      /* AUDIO_ENCODING_PCM8 */   FMT_PCM8 >> 5,
-      /* AUDIO_ENCODING_ADPCM */  0,
-    };
+    int error, bits;
 
-    DPRINTF(("ad1848_set_format: encoding=%d precision=%d\n", encoding, precision));
-    
-    switch (encoding) {
+    DPRINTF(("ad1848_set_params: %d %d %d %d\n", 
+	     p->encoding, p->precision, p->channels, p->sample_rate));
+
+    switch (p->encoding) {
     case AUDIO_ENCODING_ULAW:
+	bits = FMT_ULAW >> 5;
+	break;
     case AUDIO_ENCODING_ALAW:
+	bits = FMT_ALAW >> 5;
+	break;
     case AUDIO_ENCODING_PCM16:
+	bits = FMT_TWOS_COMP >> 5;
+	break;
     case AUDIO_ENCODING_PCM8:
+	bits = FMT_PCM8 >> 5;
 	break;
     default:
 	return (EINVAL);
     }
 
-    sc->encoding = encoding;
-    sc->precision = precision;
-    sc->format_bits = format2bits[encoding];
+    if (p->channels < 1 || p->channels > 2)
+	return(EINVAL);
+
+    error = ad1848_set_speed(sc, &p->sample_rate);
+    if (error)
+	return error;
+
+    sc->format_bits = bits;
+    sc->channels = p->channels;
+    sc->precision = p->precision;
     sc->need_commit = 1;
 
-    DPRINTF(("ad1848_set_format: bits=%x\n", sc->format_bits));
-
+    DPRINTF(("ad1848_set_params succeeded\n"));
     return (0);
 }
 
+/* We always set both play and record parameters */
 int
-ad1848_get_encoding(addr)
+ad1848_set_in_params(addr, p)
     void *addr;
+    struct audio_params *p;
 {
-    register struct ad1848_softc *sc = addr;
-
-    return (sc->encoding);
+    return ad1848_set_params(addr, p);
 }
 
+/* We always set both play and record parameters */
 int
-ad1848_get_precision(addr)
+ad1848_set_out_params(addr, p)
     void *addr;
+    struct audio_params *p;
 {
-    register struct ad1848_softc *sc = addr;
-
-    return (sc->precision);
+    return ad1848_set_params(addr, p);
 }
-
-int
-ad1848_set_channels(addr, channels)
-    void *addr;
-    int channels;
-{
-    register struct ad1848_softc *sc = addr;
-	
-    DPRINTF(("ad1848_set_channels: %d\n", channels));
-
-    if (channels != 1 && channels != 2)
-	return (EINVAL);
-
-    sc->channels = channels;
-    sc->need_commit = 1;
-
-    return (0);
-}
-
-int
-ad1848_get_channels(addr)
-    void *addr;
-{
-    register struct ad1848_softc *sc = addr;
-
-    return (sc->channels);
-}
-
+  
 int
 ad1848_set_rec_port(sc, port)
     register struct ad1848_softc *sc;
@@ -1292,9 +1234,9 @@ ad1848_reset(sc)
 }
 
 int
-ad1848_set_speed(sc, arg)
+ad1848_set_speed(sc, argp)
     register struct ad1848_softc *sc;
-    u_long arg;
+    u_long *argp;
 {
     /*
      * The sampling speed is encoded in the least significant nible of I8. The
@@ -1308,6 +1250,7 @@ ad1848_set_speed(sc, arg)
 	int	speed;
 	u_char	bits;
     } speed_struct;
+    u_long arg = *argp;
 
     static speed_struct speed_table[] =  {
 	{5510, (0 << 1) | 1},
@@ -1356,9 +1299,9 @@ ad1848_set_speed(sc, arg)
 	selected = 3;
     }
 
-    sc->speed = speed_table[selected].speed;
     sc->speed_bits = speed_table[selected].bits;
     sc->need_commit = 1;
+    *argp = speed_table[selected].speed;
 
     return (0);
 }

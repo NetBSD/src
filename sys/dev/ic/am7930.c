@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.17 1997/03/20 16:51:38 mycroft Exp $	*/
+/*	$NetBSD: am7930.c,v 1.18 1997/04/29 21:01:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -205,16 +205,8 @@ static const u_short ger_coeff[] = {
  */
 int	amd7930_open __P((dev_t, int));
 void	amd7930_close __P((void *));
-int	amd7930_set_in_sr __P((void *, u_long));
-u_long	amd7930_get_in_sr __P((void *));
-int	amd7930_set_out_sr __P((void *, u_long));
-u_long	amd7930_get_out_sr __P((void *));
 int	amd7930_query_encoding __P((void *, struct audio_encoding *));
-int	amd7930_set_format __P((void *, u_int, u_int));
-int	amd7930_get_encoding __P((void *));
-int	amd7930_get_precision __P((void *));
-int	amd7930_set_channels __P((void *, int));
-int	amd7930_get_channels __P((void *));
+int	amd7930_set_params __P((void *, struct audio_params *));
 int	amd7930_round_blocksize __P((void *, int));
 int	amd7930_set_out_port __P((void *, int));
 int	amd7930_get_out_port __P((void *));
@@ -240,16 +232,9 @@ struct audio_hw_if sa_hw_if = {
 	amd7930_open,
 	amd7930_close,
 	NULL,
-	amd7930_set_in_sr,
-	amd7930_get_in_sr,
-	amd7930_set_out_sr,
-	amd7930_get_out_sr,
 	amd7930_query_encoding,
-	amd7930_set_format,
-	amd7930_get_encoding,
-	amd7930_get_precision,
-	amd7930_set_channels,
-	amd7930_get_channels,
+	amd7930_set_params,
+	amd7930_set_params,
 	amd7930_round_blocksize,
 	amd7930_set_out_port,
 	amd7930_get_out_port,
@@ -413,39 +398,17 @@ amd7930_close(addr)
 }
 
 int
-amd7930_set_in_sr(addr, sr)
+amd7930_set_params(addr, p)
 	void *addr;
-	u_long sr;
+	struct audio_params *p;
 {
-	if (sr != 8000)
+	if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
+	    p->encoding != AUDIO_ENCODING_ULAW ||
+	    p->precision != 8 ||
+	    p->channels != 1)
 		return EINVAL;
-
-	return(0);	/* no other sampling rates supported by amd chip */
-}
-
-u_long
-amd7930_get_in_sr(addr)
-	void *addr;
-{
-	return(8000);
-}
-
-int
-amd7930_set_out_sr(addr, sr)
-	void *addr;
-	u_long sr;
-{
-	if (sr != 8000)
-		return(EINVAL);
-
-	return(0);	/* no other sampling rates supported by amd chip */
-}
-
-u_long
-amd7930_get_out_sr(addr)
-	void *addr;
-{
-	return(8000);
+	p->sample_rate = 8000;
+	return 0;	/* no other sampling rates supported by amd chip */
 }
 
 int
@@ -463,52 +426,6 @@ amd7930_query_encoding(addr, fp)
 		    /*NOTREACHED*/
 	}
 	return(0);
-}
-
-int
-amd7930_set_format(addr, encoding, precision)
-	void *addr;
-	u_int encoding, precision;
-{
-
-	if (encoding != AUDIO_ENCODING_ULAW)
-		return(EINVAL);
-	if (precision != 8)
-		return(EINVAL);
-
-	return(0);		/* no other encoding supported by amd chip */
-}
-
-int
-amd7930_get_encoding(addr)
-	void *addr;
-{
-	return(AUDIO_ENCODING_ULAW);
-}
-
-int
-amd7930_get_precision(addr)
-	void *addr;
-{
-	return(8);
-}
-
-int
-amd7930_set_channels(addr, chans)
-	void *addr;
-	int chans;
-{
-	if (chans != 1)
-		return(EINVAL);
-
-	return(0);		/* only 1 channel supported by amd chip */
-}
-
-int
-amd7930_get_channels(addr)
-	void *addr;
-{
-	return(1);
 }
 
 int

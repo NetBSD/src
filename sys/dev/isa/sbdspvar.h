@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.18 1997/03/20 21:42:14 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.19 1997/04/29 21:01:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -115,7 +115,6 @@ struct sbdsp_softc {
 	int	dmachan;		/* active DMA channel */
 	int	sc_last_hs_size;	/* last HS dma size */
 
-	u_int	sc_encoding;		/* ulaw/linear -- keep track */
 	u_int	sc_precision;		/* size of samples */
 	int	sc_channels;		/* # of channels */
 
@@ -162,18 +161,9 @@ int	sbdsp_set_out_gain_real __P((void *, u_int, u_char));
 int	sbdsp_get_out_gain __P((void *));
 int	sbdsp_set_monitor_gain __P((void *, u_int));
 int	sbdsp_get_monitor_gain __P((void *));
-int	sbdsp_set_in_sr __P((void *, u_long));
-int	sbdsp_set_in_sr_real __P((void *, u_long));
-u_long	sbdsp_get_in_sr __P((void *));
-int	sbdsp_set_out_sr __P((void *, u_long));
-int	sbdsp_set_out_sr_real __P((void *, u_long));
-u_long	sbdsp_get_out_sr __P((void *));
 int	sbdsp_query_encoding __P((void *, struct audio_encoding *));
-int	sbdsp_set_format __P((void *, u_int, u_int));
-int	sbdsp_get_encoding __P((void *));
-int	sbdsp_get_precision __P((void *));
-int	sbdsp_set_channels __P((void *, int));
-int	sbdsp_get_channels __P((void *));
+int	sbdsp_set_out_params __P((void *, struct audio_params *));
+int	sbdsp_set_in_params __P((void *, struct audio_params *));
 int	sbdsp_set_ifilter __P((void *, int));
 int	sbdsp_get_ifilter __P((void *));
 int	sbdsp_round_blocksize __P((void *, int));
