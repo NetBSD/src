@@ -1952,7 +1952,8 @@ init_main (void)
   write_history_p = 0;
 
   /* Setup important stuff for command line editing.  */
-  rl_completion_entry_function = (int (*)()) readline_line_completion_function;
+  rl_completion_entry_function =
+      (Function *)readline_line_completion_function;
   rl_completer_word_break_characters =
 				 get_gdb_completer_word_break_characters ();
   rl_completer_quote_characters = get_gdb_completer_quote_characters ();
@@ -1961,7 +1962,8 @@ init_main (void)
 
   /* The name for this defun comes from Bash, where it originated.
      15 is Control-o, the same binding this function has in Bash.  */
-  rl_add_defun ("operate-and-get-next", gdb_rl_operate_and_get_next, 15);
+  rl_add_defun ("operate-and-get-next",
+      (Function *)gdb_rl_operate_and_get_next, 15);
 
   /* The set prompt command is different depending whether or not the
      async version is run. NOTE: this difference is going to
