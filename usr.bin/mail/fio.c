@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.6 1996/12/28 07:11:02 tls Exp $	*/
+/*	$NetBSD: fio.c,v 1.7 1997/05/13 06:15:54 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: fio.c,v 1.6 1996/12/28 07:11:02 tls Exp $";
+static char rcsid[] = "$NetBSD: fio.c,v 1.7 1997/05/13 06:15:54 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ setptr(ibuf, offset)
 	int omsgCount;
 
 	/* Get temporary file. */
-	(void)sprintf(linebuf, "%s/mail.XXXXXX", tmpdir);
+	(void)snprintf(linebuf, LINESIZE, "%s/mail.XXXXXX", tmpdir);
 	if ((c = mkstemp(linebuf)) == -1 ||
 	    (mestmp = Fdopen(c, "r+")) == NULL) {
 		(void)fprintf(stderr, "mail: can't open %s\n", linebuf);
@@ -373,12 +373,12 @@ expand(name)
 		/* fall through */
 	}
 	if (name[0] == '+' && getfold(cmdbuf) >= 0) {
-		sprintf(xname, "%s/%s", cmdbuf, name + 1);
+		snprintf(xname, PATHSIZE, "%s/%s", cmdbuf, name + 1);
 		name = savestr(xname);
 	}
 	/* catch the most common shell meta character */
 	if (name[0] == '~' && (name[1] == '/' || name[1] == '\0')) {
-		sprintf(xname, "%s%s", homedir, name + 1);
+		snprintf(xname, PATHSIZE, "%s%s", homedir, name + 1);
 		name = savestr(xname);
 	}
 	if (!anyof(name, "~{[*?$`'\"\\"))
@@ -387,7 +387,7 @@ expand(name)
 		perror("pipe");
 		return name;
 	}
-	sprintf(cmdbuf, "echo %s", name);
+	snprintf(cmdbuf, PATHSIZE, "echo %s", name);
 	if ((shell = value("SHELL")) == NOSTR)
 		shell = _PATH_CSHELL;
 	pid = start_command(shell, 0, -1, pivec[1], "-c", cmdbuf, NOSTR);
@@ -397,7 +397,7 @@ expand(name)
 		return NOSTR;
 	}
 	close(pivec[1]);
-	l = read(pivec[0], xname, BUFSIZ);
+	l = read(pivec[0], xname, PATHSIZE);
 	close(pivec[0]);
 	if (wait_child(pid) < 0 && wait_status.w_termsig != SIGPIPE) {
 		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
@@ -411,11 +411,11 @@ expand(name)
 		fprintf(stderr, "\"%s\": No match.\n", name);
 		return NOSTR;
 	}
-	if (l == BUFSIZ) {
+	if (l == PATHSIZE) {
 		fprintf(stderr, "\"%s\": Expansion buffer overflow.\n", name);
 		return NOSTR;
 	}
-	xname[l] = 0;
+	xname[l] = '\0';
 	for (cp = &xname[l-1]; *cp == '\n' && cp > xname; cp--)
 		;
 	cp[1] = '\0';
@@ -437,10 +437,12 @@ getfold(name)
 
 	if ((folder = value("folder")) == NOSTR)
 		return (-1);
-	if (*folder == '/')
-		strcpy(name, folder);
+	if (*folder == '/') {
+		strncpy(name, folder, PATHSIZE - 1);
+		name[PATHSIZE - 1] = '\0' ;
+	}
 	else
-		sprintf(name, "%s/%s", homedir, folder);
+		snprintf(name, PATHSIZE, "%s/%s", homedir, folder);
 	return (0);
 }
 
@@ -457,7 +459,7 @@ getdeadletter()
 	else if (*cp != '/') {
 		char buf[PATHSIZE];
 
-		(void) sprintf(buf, "~/%s", cp);
+		(void) snprintf(buf, PATHSIZE, "~/%s", cp);
 		cp = expand(buf);
 	}
 	return cp;

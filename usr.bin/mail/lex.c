@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.8 1996/12/28 07:11:04 tls Exp $	*/
+/*	$NetBSD: lex.c,v 1.9 1997/05/13 06:15:55 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: lex.c,v 1.8 1996/12/28 07:11:04 tls Exp $";
+static char rcsid[] = "$NetBSD: lex.c,v 1.9 1997/05/13 06:15:55 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,8 +151,8 @@ setfile(name)
 	setptr(ibuf, 0);
 	setmsize(msgCount);
 	/*
-	 * New mail mail have arrived while we were reading
-	 * up the mail file, so reset mailsize to be where
+	 * New mail may have arrived while we were reading
+	 * the mail file, so reset mailsize to be where
 	 * we really are in the file...
 	 */
 	mailsize = ftell(ibuf);
@@ -184,7 +184,7 @@ incfile()
 	holdsigs();
 	newsize = fsize(ibuf);
 	if (newsize == 0)
-		return -1;		 /* mail box is now empty??? */
+		return -1;		/* mail box is now empty??? */
 	if (newsize < mailsize)
 		return -1;              /* mail box has shrunk??? */
 	if (newsize == mailsize)
@@ -628,8 +628,8 @@ newfileinfo(omsgCount)
 	int omsgCount;
 {
 	register struct message *mp;
-	register int u, n, mdot, d, s;
-	char fname[BUFSIZ], zname[BUFSIZ], *ename;
+	register int u, n, mdot, d, s, l;
+	char fname[PATHSIZE], zname[PATHSIZE], *ename;
 
 	for (mp = &message[omsgCount]; mp < &message[msgCount]; mp++)
 		if (mp->m_flag & MNEW)
@@ -655,9 +655,12 @@ newfileinfo(omsgCount)
 	}
 	ename = mailname;
 	if (getfold(fname) >= 0) {
-		strcat(fname, "/");
-		if (strncmp(fname, mailname, strlen(fname)) == 0) {
-			sprintf(zname, "+%s", mailname + strlen(fname));
+		l = strlen(fname);
+		if (l < PATHSIZE - 1)
+			fname[l++] = '/';
+		if (strncmp(fname, mailname, l) == 0) {
+			snprintf(zname, PATHSIZE, "+%s",
+			    mailname + l);
 			ename = zname;
 		}
 	}

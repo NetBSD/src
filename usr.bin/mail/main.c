@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1996/12/28 07:11:07 tls Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ main(argc, argv)
 	bcc = NIL;
 	smopts = NIL;
 	subject = NOSTR;
-	while ((i = getopt(argc, argv, "INT:b:c:dfins:u:v")) != EOF) {
+	while ((i = getopt(argc, argv, "INT:b:c:dfins:u:v")) != -1) {
 		switch (i) {
 		case 'T':
 			/*
