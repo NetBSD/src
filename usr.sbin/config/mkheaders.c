@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.21 1998/10/16 14:27:17 christos Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.22 1999/01/21 13:10:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,6 +232,8 @@ locators_print(name, value, arg)
 			for (cp = namedup; *cp; cp++)
 				if (islower(*cp))
 					*cp = toupper(*cp);
+				else if (*cp == ARRCHR)
+					*cp = '_';
 			if (fprintf(fp, "#define %sCF_%s %d\n",
 			    locdup, namedup, i) < 0)
 				return 1;
