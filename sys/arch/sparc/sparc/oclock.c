@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.3 2002/10/01 18:57:49 thorpej Exp $ */
+/*	$NetBSD: oclock.c,v 1.4 2002/10/02 16:02:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ static int oclockmatch(struct device *, struct cfdata *, void *);
 static void oclockattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(oclock, sizeof(struct device),
-    oclockmatch, oclockattach, NULL, NULL)
+    oclockmatch, oclockattach, NULL, NULL);
 
 #if defined(SUN4)
 static bus_space_tag_t i7_bt;

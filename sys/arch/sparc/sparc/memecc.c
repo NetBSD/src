@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.5 2002/10/01 18:57:49 thorpej Exp $	*/
+/*	$NetBSD: memecc.c,v 1.6 2002/10/02 16:02:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ static int	memecc_error  __P((void));
 int	(*memerr_handler) __P((void));
 
 CFATTACH_DECL(eccmemctl, sizeof(struct memecc_softc),
-    memecc_match, memecc_attach, NULL, NULL)
+    memecc_match, memecc_attach, NULL, NULL);
 
 int
 memecc_match(parent, cf, aux)

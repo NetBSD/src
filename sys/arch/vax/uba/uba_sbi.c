@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.18 2002/10/01 05:19:01 thorpej Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.19 2002/10/02 16:02:34 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -100,7 +100,7 @@ static	void	dw780_purge(struct uba_softc *, int);
 #endif
 
 CFATTACH_DECL(uba_sbi, sizeof(struct uba_vsoftc),
-    dw780_match, dw780_attach, NULL, NULL)
+    dw780_match, dw780_attach, NULL, NULL);
 
 static struct evcnt strayint = EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "uba","stray intr");
 static int strayinit = 0;

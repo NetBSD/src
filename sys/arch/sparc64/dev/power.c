@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.3 2002/10/01 18:40:07 thorpej Exp $ */
+/*	$NetBSD: power.c,v 1.4 2002/10/02 16:02:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@ static int powermatch __P((struct device *, struct cfdata *, void *));
 static void powerattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(power, sizeof(struct device),
-    powermatch, powerattach, NULL, NULL)
+    powermatch, powerattach, NULL, NULL);
 
 extern struct cfdriver power_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auxiotwo.c,v 1.5 2002/10/01 18:57:48 thorpej Exp $	*/
+/*	$NetBSD: auxiotwo.c,v 1.6 2002/10/02 16:02:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ static void auxiotwoattach
 		__P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(auxiotwo_obio, sizeof(struct device),
-     auxiotwomatch, auxiotwoattach, NULL, NULL)
+     auxiotwomatch, auxiotwoattach, NULL, NULL);
 
 /*
  * The OPENPROM calls this "auxio2".

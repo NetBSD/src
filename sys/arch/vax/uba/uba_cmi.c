@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.9 2002/10/01 05:19:01 thorpej Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.10 2002/10/02 16:02:34 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -73,7 +73,7 @@ static	void	dw750_purge(struct uba_softc *, int);
 #endif
 
 CFATTACH_DECL(uba_cmi, sizeof(struct uba_vsoftc),
-    dw750_match, dw750_attach, NULL, NULL)
+    dw750_match, dw750_attach, NULL, NULL);
 
 extern	struct vax_bus_space vax_mem_bus_space;
 

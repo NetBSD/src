@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.4 2002/10/01 18:57:52 thorpej Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.5 2002/10/02 16:02:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -66,11 +66,11 @@ static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 /* Mr.Coffee */
 CFATTACH_DECL(pckbc_obio, sizeof(struct pckbc_js_softc),
-    pckbc_obio_match, pckbc_obio_attach, NULL, NULL)
+    pckbc_obio_match, pckbc_obio_attach, NULL, NULL);
 
 /* ms-IIep */
 CFATTACH_DECL(pckbc_ebus, sizeof(struct pckbc_js_softc),
-    pckbc_ebus_match, pckbc_ebus_attach, NULL, NULL)
+    pckbc_ebus_match, pckbc_ebus_attach, NULL, NULL);
 
 #define PCKBC_PROM_DEVICE_NAME "8042"
 

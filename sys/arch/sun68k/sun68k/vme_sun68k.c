@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.5 2002/10/01 05:20:21 thorpej Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.6 2002/10/02 16:02:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ static int	sun68k_vme_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 paddr_t sun68k_vme_mmap_cookie __P((vme_addr_t, vme_am_t, bus_space_handle_t *));
 
 CFATTACH_DECL(sun68kvme, sizeof(struct sun68kvme_softc),
-    sun68kvme_match, sun68kvme_attach, NULL, NULL)
+    sun68kvme_match, sun68kvme_attach, NULL, NULL);
 
 /*
  * The VME bus logic on sun68k machines maps DMA requests in the first MB

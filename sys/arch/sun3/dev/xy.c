@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.40 2002/10/01 05:32:44 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.41 2002/10/02 16:02:27 thorpej Exp $	*/
 
 /*
  *
@@ -197,10 +197,10 @@ int	xygetdisklabel __P((struct xy_softc *, void *));
  */
 
 CFATTACH_DECL(xyc, sizeof(struct xyc_softc),
-    xycmatch, xycattach, NULL, NULL)
+    xycmatch, xycattach, NULL, NULL);
 
 CFATTACH_DECL(xy, sizeof(struct xy_softc),
-    xymatch, xyattach, NULL, NULL)
+    xymatch, xyattach, NULL, NULL);
 
 extern struct cfdriver xy_cd;
 
