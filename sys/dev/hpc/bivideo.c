@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.18 2003/11/13 03:09:29 chs Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.19 2004/12/12 21:03:07 abs Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.18 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.19 2004/12/12 21:03:07 abs Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -559,7 +559,7 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return (EINVAL);
 		}
 		/*
-		 * nothing to do because we have only one configration
+		 * nothing to do because we have only one configuration
 		 */
 		return (0);
 	case HPCFBIO_GDSPCONF:
@@ -582,7 +582,7 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		/*
 		 * nothing to do
-		 * because we have only one unit and one configration
+		 * because we have only one unit and one configuration
 		 */
 		return (0);
 	case HPCFBIO_GOP:
