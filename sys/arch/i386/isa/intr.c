@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: intr.c,v 1.18 1994/04/24 01:34:08 mycroft Exp $
+ *	$Id: intr.c,v 1.19 1994/04/25 22:12:14 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -191,4 +191,65 @@ intr_establish(mask, ih)
 	INTREN(mask);
 }
 
-void intr_disestablish __P((int intr, struct intrhand *));
+void
+intr_disestablish(mask, ih)
+	int mask;
+	struct intrhand *ih;
+{
+	int n, irq, maxirq;
+	struct intrhand **p, *q;
+
+	irq = ffs(mask) - 1;
+
+	if (irq < 0 || irq > ICU_LEN)
+		panic("intr_disestablish: bogus irq");
+	if (fastvec & mask)
+		fastvec &= ~mask;
+
+	/* Remove the handler from the chain. */
+	for (p = &intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
+		;
+	if (q)
+		*p = q->ih_next;
+	else
+		panic("intr_disestablish: handler not registered");
+
+	/* See if there are still any handlers with the same level. */
+	for (q = intrhand[irq]; q; q = q->ih_next)
+		if (q->ih_level == ih->ih_level)
+			break;
+	/* If so, we're done. */
+	if (q)
+		return;
+
+	/*
+	 * Remove the IRQ from any interrupt masks with the old IPL, and remove
+	 * anu IRQs which no longer share a common level from this IRQ's mask.
+	 */
+	if (ih->ih_level != IPL_NONE) {
+		intrlevel[irq] &= ~(1 << ih->ih_level);
+		for (n = 0; n < ICU_LEN; n++)
+			if ((intrlevel[n] & (1 << ih->ih_level)) &&
+			    (intrlevel[n] & intrlevel[irq]) == 0) {
+				intrmask[n] &= ~mask;
+				intrmask[irq] &= ~(1 << n);
+			}
+	}
+
+	/* If there are more handlers on this IRQ, we're done. */
+	if (intrhand[irq])
+		return;
+
+	/* Figure out if we should deactivate the slave IRQ. */
+	maxirq = 7;
+	for (n = 8; n < ICU_LEN; n++)
+		if (intrhand[n]) {
+			maxirq = n;
+			break;
+		}
+	if (maxirq < 8)
+		mask |= IRQ_SLAVE;
+
+	/* Deactivate the interrupt. */
+	INTRDIS(mask);
+}
