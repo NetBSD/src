@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.16 2003/11/13 01:48:12 jonathan Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.17 2004/07/21 12:09:43 yamt Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.16 2003/11/13 01:48:12 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.17 2004/07/21 12:09:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,15 +128,20 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	 * chop the current mbuf into two pieces, set off to 0.
 	 */
 	if (len <= n->m_len - off) {
+		struct mbuf *mlast;
+
 		o = m_dup(n, off, n->m_len - off, M_DONTWAIT);
 		if (o == NULL) {
 			m_freem(m);
 			return NULL;	/* ENOBUFS */
 		}
+		KASSERT(o->m_len >= len);
+		for (mlast = o; mlast->m_next != NULL; mlast = mlast->m_next)
+			;
 		n->m_len = off;
-		o->m_next = n->m_next;
+		mlast->m_next = n->m_next;
 		n->m_next = o;
-		n = n->m_next;
+		n = o;
 		off = 0;
 		goto ok;
 	}
