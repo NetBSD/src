@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.52 2003/01/17 04:20:38 lonewolf Exp $ */
+/*	$NetBSD: idesc.c,v 1.53 2003/06/18 08:58:35 drochner Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.52 2003/01/17 04:20:38 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.53 2003/06/18 08:58:35 drochner Exp $");
 
 /*
  * A4000 IDE interface, emulating a SCSI controller
@@ -80,9 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.52 2003/01/17 04:20:38 lonewolf Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/dkstat.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>

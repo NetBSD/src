@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.55 2003/05/03 18:11:07 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.56 2003/06/18 08:58:42 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/uio.h>

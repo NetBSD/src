@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2003/06/18 08:58:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,7 +50,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/dkstat.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/device.h>

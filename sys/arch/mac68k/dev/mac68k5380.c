@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.38 2003/04/02 01:09:19 thorpej Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.39 2003/06/18 08:58:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -37,7 +37,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/dkstat.h>
 #include <sys/syslog.h>
 #include <sys/buf.h>
 

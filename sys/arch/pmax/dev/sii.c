@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.46 2003/05/03 18:10:57 wiz Exp $	*/
+/*	$NetBSD: sii.c,v 1.47 2003/06/18 08:58:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,7 +49,6 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/dkstat.h>
 #include <sys/systm.h>
 
 #include <machine/locore.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.20 2003/04/01 21:26:33 thorpej Exp $ */
+/*	$NetBSD: siop2.c,v 1.21 2003/06/18 08:58:36 drochner Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -46,13 +46,12 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.20 2003/04/01 21:26:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.21 2003/06/18 08:58:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
 
