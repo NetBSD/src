@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.38 2003/09/08 07:04:40 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2003/09/08 22:11:12 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.38 2003/09/08 07:04:40 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2003/09/08 22:11:12 jlam Exp $");
 #endif
 
 /*
@@ -173,7 +173,7 @@ add1pkg(const char *pkgdir)
 
 	PkgDBDir = _pkgdb_getPKGDB_DIR();
 	(void) snprintf(contents, sizeof(contents), "%s/%s", PkgDBDir, pkgdir);
-	if (!isdir(contents))
+	if (!(isdir(contents) || islinktodir(contents)))
 		errx(EXIT_FAILURE, "`%s' does not exist.", contents);
 
 	(void) strlcat(contents, "/", sizeof(contents));
@@ -276,7 +276,7 @@ rebuild(void)
 	if (dp == NULL)
 		err(EXIT_FAILURE, "opendir failed");
 	while ((de = readdir(dp))) {
-		if (!isdir(de->d_name))
+		if (!(isdir(de->d_name) || islinktodir(de->d_name)))
 			continue;
 
 		if (strcmp(de->d_name, ".") == 0 ||
@@ -318,7 +318,7 @@ checkall(void)
 	if (dp == NULL)
 		err(EXIT_FAILURE, "opendir failed");
 	while ((de = readdir(dp))) {
-		if (!isdir(de->d_name))
+		if (!(isdir(de->d_name) || islinktodir(de->d_name)))
 			continue;
 
 		if (strcmp(de->d_name, ".") == 0 ||
