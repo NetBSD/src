@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.2 2001/01/04 16:17:15 lukem Exp $	*/
+/*	$NetBSD: gzip.c,v 1.3 2001/02/19 22:40:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Matthew R. Green
@@ -55,8 +55,6 @@
 
 #define BUFLEN 4096
 
-extern	char	*__progname;	/* XXX */
-
 static	char	gzip_version[] = "NetBSD gzip 1.0";
 
 static	char	gzipflags[3] = "";	/* `w' or `r', possible with [1-9] */
@@ -94,6 +92,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	const char *progname = getprogname();
 	int ch;
 
 	gzipflags[0] = 'w';
@@ -103,10 +102,10 @@ main(argc, argv)
 	 * XXX
 	 * handle being called `gunzip', `zcat' and `gzcat'
 	 */
-	if (strcmp(__progname, "gunzip") == 0)
+	if (strcmp(progname, "gunzip") == 0)
 		dflag = 1;
-	else if (strcmp(__progname, "zcat") == 0 ||
-		 strcmp(__progname, "gzcat") == 0)
+	else if (strcmp(progname, "zcat") == 0 ||
+		 strcmp(progname, "gzcat") == 0)
 		dflag = cflag = 1;
 
 	while ((ch = getopt(argc, argv, "cdfhnqrS:tvV123456789")) != -1)
@@ -625,7 +624,7 @@ usage()
 
 	fprintf(stderr,
 	    "Usage: %s [-cdfhnqrtVv123456789] [<file> [<file> ...]]\n",
-	    __progname);
+	    getprogname());
 	fflush(stderr);
 	exit(0);
 }
