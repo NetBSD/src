@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.14 2002/08/11 03:39:21 thorpej Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.15 2002/08/28 09:38:08 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -412,6 +412,7 @@ struct ieee80211com {
 	struct ifqueue		ic_mgtq;
 	int			ic_flags;
 	enum ieee80211_state	ic_state;
+	caddr_t			ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_bss	ic_bss;		/* information for this node */
 	int			ic_bss_privlen;	/* size for bs_private */
 	u_int8_t		ic_ibss_chan;
