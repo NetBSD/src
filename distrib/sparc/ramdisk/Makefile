@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.4.1 2000/10/19 14:24:22 tv Exp $
+#	$NetBSD: Makefile,v 1.18.4.2 2000/11/01 03:06:26 tv Exp $
 #
 # ramdisk.fs is the microroot filesystem intended for use with
 # the INSTALL kernel. It provides just enough tools to extract the
@@ -75,16 +75,6 @@ HACKSRC=${TOP}/../utils/libhack
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	${CBIN}.conf *.o *.cro *.c
-
-.ifndef RELEASEDIR
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-release: $(IMAGE)
-	gzip -c -9 < $(.OBJDIR)/ramdisk.fs \
-		> $(RELEASEDIR)/installation/bootfs/ramdisk.fs.gz
-.endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
