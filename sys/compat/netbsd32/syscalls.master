@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2003/10/13 18:53:35 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.25 2003/10/25 16:27:25 chs Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -180,7 +180,7 @@
 106	STD		{ int netbsd32_listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	COMPAT_43	{ int netbsd32_osigvec(int signum, netbsd32_sigvecp_t nsv, netbsd32_sigvecp_t osv); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 109	COMPAT_43	{ int netbsd32_sigblock(int mask); }
 110	COMPAT_43	{ int netbsd32_sigsetmask(int mask); }
 #else
@@ -219,14 +219,14 @@
 140	STD		{ int netbsd32_adjtime(const netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
 141	COMPAT_43	{ int netbsd32_ogetpeername(int fdes, netbsd32_caddr_t asa, netbsd32_intp alen); }
 142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 143	COMPAT_43	{ int netbsd32_sethostid(int32_t hostid); }
 #else
 143	OBSOL		sethostid
 #endif
 144	COMPAT_43	{ int netbsd32_ogetrlimit(int which, netbsd32_orlimitp_t rlp); }
 145	COMPAT_43	{ int netbsd32_osetrlimit(int which, const netbsd32_orlimitp_t rlp); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 146	COMPAT_43	{ int netbsd32_killpg(int pgid, int signum); }
 #else
 146	OBSOL		killpg
