@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.3 1997/06/24 05:22:38 mikel Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.4 1997/06/25 23:18:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -35,6 +35,8 @@
 /*
  * swapctl command:
  *	-A		add all devices listed as `sw' in /etc/fstab
+ *	-t [blk|noblk]	if -A, add either all block device or all non-block
+ *			devices
  *	-a <dev>	add this device
  *	-d <dev>	remove this swap device (not supported yet)
  *	-l		list swap devices
@@ -46,10 +48,13 @@
  * or, if invoked as "swapon" (compatibility mode):
  *
  *	-a		all devices listed as `sw' in /etc/fstab
+ *	-t		same as -t above (feature not present in old
+ *			swapon(8) command)
  *	<dev>		add this device
  */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <vm/vm_swap.h>
 
@@ -98,6 +103,9 @@ int	kflag;		/* display in 1K blocks */
 int	pflag;		/* priority was specified */
 #define	PFLAG_CMDS	(CMD_A | CMD_a | CMD_c)
 
+char	*tflag;		/* swap device type (blk or noblk) */
+#define	TFLAG_CMDS	(CMD_A)
+
 int	pri;		/* uses 0 as default pri */
 
 static	void change_priority __P((char *));
@@ -131,7 +139,7 @@ main(argc, argv)
 	}
 #endif
 
-	while ((c = getopt(argc, argv, "Aacdlkp:s")) != -1) {
+	while ((c = getopt(argc, argv, "Aacdlkp:st:")) != -1) {
 		switch (c) {
 		case 'A':
 			SET_COMMAND(CMD_A);
@@ -167,6 +175,12 @@ main(argc, argv)
 			SET_COMMAND(CMD_s);
 			break;
 
+		case 't':
+			if (tflag != NULL)
+				usage();
+			tflag = optarg;
+			break;
+
 		default:
 			usage();
 			/* NOTREACHED */
@@ -198,6 +212,15 @@ main(argc, argv)
 	/* To change priority, you have to specify one. */
 	if ((command == CMD_c) && pflag == 0)
 		usage();
+
+	/* Sanity-check -t */
+	if (tflag != NULL) {
+		if (command != CMD_A)
+			usage();
+		if (strcmp(tflag, "blk") != 0 &&
+		    strcmp(tflag, "noblk") != 0)
+			usage();
+	}
 
 	/* Dispatch the command. */
 	switch (command) {
@@ -239,10 +262,15 @@ swapon_command(argc, argv)
 {
 	int ch, fiztab = 0;
 
-	while ((ch = getopt(argc, argv, "a")) != -1) {
+	while ((ch = getopt(argc, argv, "at:")) != -1) {
 		switch (ch) {
 		case 'a':
 			fiztab = 1;
+			break;
+		case 't':
+			if (tflag != NULL)
+				usage();
+			tflag = optarg;
 			break;
 		default:
 			goto swapon_usage;
@@ -254,9 +282,15 @@ swapon_command(argc, argv)
 	if (fiztab) {
 		if (argc)
 			goto swapon_usage;
+		/* Sanity-check -t */
+		if (tflag != NULL) {
+			if (strcmp(tflag, "blk") != 0 &&
+			    strcmp(tflag, "noblk") != 0)
+				usage();
+		}
 		do_fstab();
 		exit(0);
-	} else if (argc == 0)
+	} else if (argc == 0 || tflag != NULL)
 		goto swapon_usage;
 
 	while (argc) {
@@ -268,7 +302,7 @@ swapon_command(argc, argv)
 	/* NOTREACHED */
 
  swapon_usage:
-	fprintf(stderr, "usage: %s -a\n", __progname);
+	fprintf(stderr, "usage: %s -a [-t blk|noblk]\n", __progname);
 	fprintf(stderr, "       %s <path> ...\n", __progname);
 	exit(1);
 }
@@ -315,6 +349,8 @@ do_fstab()
 	struct	fstab *fp;
 	char	*s;
 	long	priority;
+	struct	stat st;
+	int	isblk;
 
 #define PRIORITYEQ	"priority="
 #define NFSMNTPT	"nfsmntpt="
@@ -326,6 +362,7 @@ do_fstab()
 			continue;
 
 		spec = fp->fs_spec;
+		isblk = 0;
 
 		if ((s = strstr(fp->fs_mntops, PRIORITYEQ))) {
 			s += sizeof(PRIORITYEQ) - 1;
@@ -335,6 +372,14 @@ do_fstab()
 
 		if ((s = strstr(fp->fs_mntops, NFSMNTPT))) {
 			char *t, cmd[2*PATH_MAX+sizeof(PATH_MOUNT)+2];
+
+			/*
+			 * Skip this song and dance if we're only
+			 * doing block devices.
+			 */
+			if (tflag != NULL &&
+			    strcmp(tflag, "blk") == 0)
+				continue;
 
 			t = strpbrk(s, ",");
 			if (t != 0)
@@ -357,6 +402,26 @@ do_fstab()
 				warnx("%s: mount failed", fp->fs_spec);
 				continue;
 			}
+		} else {
+			/*
+			 * Determine blk-ness.
+			 */
+			if (stat(spec, &st) < 0) {
+				warn(spec);
+				continue;
+			}
+			if (S_ISBLK(st.st_mode))
+				isblk = 1;
+		}
+
+		/*
+		 * Skip this type if we're told to.
+		 */
+		if (tflag != NULL) {
+			if (strcmp(tflag, "blk") == 0 && isblk == 0)
+				continue;
+			if (strcmp(tflag, "noblk") == 0 && isblk == 1)
+				continue;
 		}
 
 		if (swapctl(SWAP_ON, spec, (int)priority) < 0)
@@ -374,7 +439,8 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: %s -A [-p priority]\n", __progname);
+	fprintf(stderr, "usage: %s -A [-p priority] [-t blk|noblk]\n",
+	    __progname);
 	fprintf(stderr, "       %s -a [-p priority] path\n", __progname);
 	fprintf(stderr, "       %s -c -p priority path\n", __progname);
 	fprintf(stderr, "       %s -d path\n", __progname);
