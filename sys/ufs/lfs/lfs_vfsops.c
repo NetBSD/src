@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.151 2004/05/25 04:44:44 atatat Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.152 2004/05/25 14:55:46 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.151 2004/05/25 04:44:44 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.152 2004/05/25 14:55:46 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -153,6 +153,7 @@ struct vfsops lfs_vfsops = {
 	NULL,
 	lfs_mountroot,
 	ufs_check_export,
+	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	lfs_vnodeopv_descs,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.34 2003/08/07 16:34:29 agc Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.35 2004/05/25 14:54:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.34 2003/08/07 16:34:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.35 2004/05/25 14:54:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -385,6 +385,11 @@ ffs_balloc_ufs1(v)
 		}
 	}
 
+	if (flags & B_METAONLY) {
+		*bpp = bp;
+		return (0);
+	}
+
 	/*
 	 * Get the data block, allocating if necessary.
 	 */
@@ -517,7 +522,7 @@ fail:
 		}
 	}
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
-		ffs_blkfree(ip, *blkp, fs->fs_bsize);
+		ffs_blkfree(fs, ip->i_devvp, *blkp, fs->fs_bsize, ip->i_number);
 		deallocated += fs->fs_bsize;
 	}
 	if (deallocated) {
@@ -937,6 +942,11 @@ ffs_balloc_ufs2(v)
 		}
 	}
 
+	if (flags & B_METAONLY) {
+		*bpp = bp;
+		return (0);
+	}
+
 	/*
 	 * Get the data block, allocating if necessary.
 	 */
@@ -1069,7 +1079,7 @@ fail:
 		}
 	}
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
-		ffs_blkfree(ip, *blkp, fs->fs_bsize);
+		ffs_blkfree(fs, ip->i_devvp, *blkp, fs->fs_bsize, ip->i_number);
 		deallocated += fs->fs_bsize;
 	}
 	if (deallocated) {
