@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vnops.c,v 1.12 1993/09/07 15:41:21 ws Exp $
+ *	$Id: kernfs_vnops.c,v 1.13 1993/11/20 01:57:07 cgd Exp $
  */
 
 /*
@@ -65,7 +65,9 @@ REG_TARGET("hostname",	0,		KTT_HOSTNAME,	KTM_RW_PERMS	)
 REG_TARGET("hz",	&hz,		KTT_INT,	KTM_RO_PERMS	)
 REG_TARGET("loadavg",	0,		KTT_AVENRUN,	KTM_RO_PERMS	)
 REG_TARGET("physmem",	&physmem,	KTT_INT,	KTM_RO_PERMS	)
+#ifdef KERNFS_HAVE_ROOTDIR	
 DIR_TARGET("root",	0,		KTT_NULL,	KTM_DIR_PERMS	)
+#endif
 BLK_TARGET("rootdev",	0,		KTT_NULL,	KTM_RO_PERMS	)
 CHR_TARGET("rrootdev",	0,		KTT_NULL,	KTM_RO_PERMS	)
 REG_TARGET("time",	0,		KTT_TIME,	KTM_RO_PERMS	)
@@ -185,7 +187,8 @@ kernfs_lookup(dvp, ndp, p)
 		/*VOP_LOCK(dvp);*/
 		return (0);
 	}
-	
+
+#ifdef KERNFS_HAVE_ROOTDIR	
 	if (ndp->ni_namelen == 4 && bcmp(pname, "root", 4) == 0) {
 		ndp->ni_dvp = dvp;
 		ndp->ni_vp = rootdir;
@@ -193,7 +196,8 @@ kernfs_lookup(dvp, ndp, p)
 		VOP_LOCK(rootdir);
 		return (0);
 	}
-	
+#endif
+
 	/*
 	 * /kern/rootdev is the root device
 	 */
