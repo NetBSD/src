@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.10 2004/03/17 01:29:13 dan Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.11 2004/08/10 02:29:34 rumble Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.10 2004/03/17 01:29:13 dan Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.11 2004/08/10 02:29:34 rumble Exp $");
 #endif
 
 #include <err.h>
@@ -266,6 +266,14 @@ getkey(const char *dev, struct keygen *kg, int len)
 			break;
 		default:
 			warnx("unrecognised keygen method %d in getkey()",
+			    kg->kg_method);
+			if (ret)
+				bits_free(ret);
+			return NULL;
+		}
+
+		if (!tmp) {
+			warnx("keygen method %d failed in getkey()",
 			    kg->kg_method);
 			if (ret)
 				bits_free(ret);
@@ -735,6 +743,8 @@ generate_convert(struct params *p, int argc, char **argv, const char *outfile)
 	}
 
 	oldp->key = getkey("old file", oldp->keygen, oldp->keylen);
+	if (!oldp->key)
+		goto bail;
 
 	/* we copy across the non-keygen info, here. */
 
