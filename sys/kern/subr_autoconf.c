@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.11 1994/10/30 21:47:46 cgd Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.12 1994/11/03 22:01:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,10 +67,12 @@ extern short cfroots[];
 struct matchinfo {
 	cfmatch_t fn;
 	struct	device *parent;
+	void	*match;
 	void	*aux;
-	struct	cfdata *match;
 	int	pri;
 };
+
+struct device *config_make_softc __P((struct cfdata *cf));
 
 /*
  * Apply the matching function and choose the best.  This is used
@@ -82,20 +84,37 @@ mapply(m, cf)
 	register struct cfdata *cf;
 {
 	register int pri;
+	void *match;
+	int indirect;
+
+	indirect = m->parent && m->parent->cf_driver->cd_indirect;
+	if (indirect) {
+		match = config_make_softc(cf);
+		cf->cf_driver->cd_devs[cf->cf_unit] = match;
+	} else
+		match = cf;
 
 	if (m->fn != NULL)
-		pri = (*m->fn)(m->parent, cf, m->aux);
+		pri = (*m->fn)(m->parent, match, m->aux);
 	else {
 	        if (cf->cf_driver->cd_match == NULL) {
-		    printf("mapply: no match function for '%s' device\n",
-			   cf->cf_driver->cd_name);
-		    panic("mapply: not match function\n");
+			panic("mapply: no match function for '%s' device\n",
+			    cf->cf_driver->cd_name);
 		}
-		pri = (*cf->cf_driver->cd_match)(m->parent, cf, m->aux);
+		pri = (*cf->cf_driver->cd_match)(m->parent, match, m->aux);
 	}
+
+	if (indirect)
+		cf->cf_driver->cd_devs[cf->cf_unit] = NULL;
+
 	if (pri > m->pri) {
-		m->match = cf;
+		if (indirect && m->match)
+			free(m->match, M_DEVBUF);
+		m->match = match;
 		m->pri = pri;
+	} else {
+		if (indirect)
+			free(match, M_DEVBUF);
 	}
 }
 
@@ -110,7 +129,7 @@ mapply(m, cf)
  * an arbitrary function to all potential children (its return value
  * can be ignored).
  */
-struct cfdata *
+void *
 config_search(fn, parent, aux)
 	cfmatch_t fn;
 	register struct device *parent;
@@ -143,7 +162,7 @@ config_search(fn, parent, aux)
  * Find the given root device.
  * This is much like config_search, but there is no parent.
  */
-struct cfdata *
+void *
 config_rootsearch(fn, rootname, aux)
 	register cfmatch_t fn;
 	register char *rootname;
@@ -186,14 +205,14 @@ config_found(parent, aux, print)
 	void *aux;
 	cfprint_t print;
 {
-	struct cfdata *cf;
+	void *match;
 
-	if ((cf = config_search((cfmatch_t)NULL, parent, aux)) != NULL) {
-		config_attach(parent, cf, aux, print);
+	if ((match = config_search((cfmatch_t)NULL, parent, aux)) != NULL) {
+		config_attach(parent, match, aux, print);
 		return (1);
 	}
 	if (print)
-	    printf(msgs[(*print)(aux, parent->dv_xname)]);
+		printf(msgs[(*print)(aux, parent->dv_xname)]);
 	return (0);
 }
 
@@ -205,10 +224,11 @@ config_rootfound(rootname, aux)
 	char *rootname;
 	void *aux;
 {
-	struct cfdata *cf;
+	void *match;
 
-	if ((cf = config_rootsearch((cfmatch_t)NULL, rootname, aux)) != NULL) {
-		config_attach(ROOT, cf, aux, (cfprint_t)NULL);
+	if ((match = config_rootsearch((cfmatch_t)NULL, rootname, aux))
+	    != NULL) {
+		config_attach(ROOT, match, aux, (cfprint_t)NULL);
 		return (1);
 	}
 	printf("root device %s not configured\n", rootname);
@@ -235,32 +255,70 @@ number(ep, n)
  * Attach a found device.  Allocates memory for device variables.
  */
 void
-config_attach(parent, cf, aux, print)
+config_attach(parent, match, aux, print)
 	register struct device *parent;
-	register struct cfdata *cf;
+	void *match;
 	register void *aux;
 	cfprint_t print;
+{
+	register struct cfdata *cf;
+	register struct device *dev;
+	static struct device **nextp = &alldevs;
+
+	if (parent && parent->cf_driver->cd_indirect) {
+		dev = match;
+		cf = dev->dv_cfdata;
+	} else {
+		cf = match;
+		dev = config_make_softc(cf);
+	}
+
+	cf->cf_driver->cd_devs[cf->cf_unit] = dev;
+
+	if (cf->cf_fstate == FSTATE_STAR)
+		cf->cf_unit++;
+	else
+		cf->cf_fstate = FSTATE_FOUND;
+
+	*nextp = dev;			/* link up */
+	nextp = &dev->dv_next;
+
+	if (parent == ROOT)
+		printf("%s (root)", dev->dv_xname);
+	else {
+		printf("%s at %s", dev->dv_xname, parent->dv_xname);
+		if (print)
+			(void) (*print)(aux, (char *)0);
+	}
+
+	/*
+	 * Before attaching, clobber any unfound devices that are
+	 * otherwise identical.
+	 */
+	for (cf = cfdata; cf->cf_driver; cf++)
+		if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit &&
+		    cf->cf_fstate == FSTATE_NOTFOUND)
+			cf->cf_fstate = FSTATE_FOUND;
+	(*cd->cd_attach)(parent, dev, aux);
+}
+
+struct device *
+config_make_softc(cf)
+	struct cfdata *cf;
 {
 	register struct device *dev;
 	register struct cfdriver *cd;
 	register size_t lname, lunit;
 	register char *xunit;
-	int myunit;
 	char num[10];
-	static struct device **nextp = &alldevs;
 
 	cd = cf->cf_driver;
 	if (cd->cd_devsize < sizeof(struct device))
-		panic("config_attach");
-	myunit = cf->cf_unit;
-	if (cf->cf_fstate == FSTATE_NOTFOUND)
-		cf->cf_fstate = FSTATE_FOUND;
-	else
-		cf->cf_unit++;
+		panic("config_make_softc");
 
 	/* compute length of name and decimal expansion of unit number */
 	lname = strlen(cd->cd_name);
-	xunit = number(&num[sizeof num], myunit);
+	xunit = number(&num[sizeof num], cf->cf_unit);
 	lunit = &num[sizeof num] - xunit;
 	if (lname + lunit >= sizeof(dev->dv_xname))
 		panic("config_attach: device name too long");
@@ -270,21 +328,12 @@ config_attach(parent, cf, aux, print)
 	if (!dev)
 	    panic("config_attach: memory allocation for device softc failed");
 	bzero(dev, cd->cd_devsize);
-	*nextp = dev;			/* link up */
-	nextp = &dev->dv_next;
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
-	dev->dv_unit = myunit;
+	dev->dv_unit = cf->cf_unit;
 	bcopy(cd->cd_name, dev->dv_xname, lname);
 	bcopy(xunit, dev->dv_xname + lname, lunit);
 	dev->dv_parent = parent;
-	if (parent == ROOT)
-		printf("%s (root)", dev->dv_xname);
-	else {
-		printf("%s at %s", dev->dv_xname, parent->dv_xname);
-		if (print)
-		    (void) (*print)(aux, (char *)0);
-	}
 
 	/* put this device in the devices array */
 	if (dev->dv_unit >= cd->cd_ndevs) {
@@ -314,17 +363,8 @@ config_attach(parent, cf, aux, print)
 	}
 	if (cd->cd_devs[dev->dv_unit])
 		panic("config_attach: duplicate %s", dev->dv_xname);
-	cd->cd_devs[dev->dv_unit] = dev;
 
-	/*
-	 * Before attaching, clobber any unfound devices that are
-	 * otherwise identical.
-	 */
-	for (cf = cfdata; cf->cf_driver; cf++)
-		if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit &&
-		    cf->cf_fstate == FSTATE_NOTFOUND)
-			cf->cf_fstate = FSTATE_FOUND;
-	(*cd->cd_attach)(parent, dev, aux);
+	return (dev);
 }
 
 /*
