@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 1998/07/28 05:31:23 mycroft Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 1999/07/29 19:03:31 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 1998/07/28 05:31:23 mycroft Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 1999/07/29 19:03:31 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,9 @@ summary()
 {
 	time_t secs;
 	char buf[100];
+
+	if (progress)
+		(void)write(STDERR_FILENO, "\n", 1);
 
 	(void)time(&secs);
 	if ((secs -= st.start) == 0)
