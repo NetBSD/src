@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.6 1998/09/05 22:14:25 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.7 1998/09/05 22:29:49 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,9 +92,9 @@ struct sbus_attach_args {
 	int		sa_nintr;	/* Number of interrupts */
 #define sa_pri		sa_intr[0].sbi_pri
 
-	int		*sa_promvaddrs;/* PROM-supplied virtual addresses -- 32-bit */
+	u_int32_t	*sa_promvaddrs;/* PROM-supplied virtual addresses -- 32-bit */
 	int		sa_npromvaddrs;	/* Number of PROM VAs */
-#define sa_promvaddr	sa_promvaddrs[0]
+#define sa_promvaddr	((void *)sa_promvaddrs[0])
 
 	struct bootpath *sa_bp;		/* used for locating boot device */
 };
