@@ -1,12 +1,12 @@
-/*	$NetBSD: warnings.c,v 1.23 1998/12/17 14:34:52 pk Exp $	*/
+/*	$NetBSD: warnings.c,v 1.24 1999/01/11 22:39:59 kleink Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include <sys/errno.h>
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>

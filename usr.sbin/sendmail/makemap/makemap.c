@@ -1,4 +1,4 @@
-/*	$NetBSD: makemap.c,v 1.13 1998/01/09 08:10:46 perry Exp $	*/
+/*	$NetBSD: makemap.c,v 1.14 1999/01/11 22:40:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992 Eric P. Allman.
@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)makemap.c	8.38 (Berkeley) 9/23/97";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/errno.h>
+#include <errno.h>
 #ifndef ISC_UNIX
 # include <sys/file.h>
 #endif
