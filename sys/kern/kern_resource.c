@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.76 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.77 2004/04/04 18:22:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.76 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.77 2004/04/04 18:22:44 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.76 2004/03/24 15:34:53 atatat Ex
 /*
  * Maximum process data and stack limits.
  * They are variables so they are patchable.
- *
- * XXXX Do we really need them to be patchable?
  */
 rlim_t maxdmap = MAXDSIZ;
 rlim_t maxsmap = MAXSSIZ;
