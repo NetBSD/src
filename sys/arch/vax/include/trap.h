@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.2 1994/10/26 08:02:31 cgd Exp $	*/
+/*      $NetBSD: trap.h,v 1.3 1994/11/25 19:09:01 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,12 +48,13 @@
 #define	T_RESOPFLT	2	/* reserved operand */
 #define	T_BPTFLT	3	/* breakpoint instruction */
 #define	T_SYSCALL	5	/* system call (kcall) */
-#define	T_ARITHTRAP	6	/* arithmetic trap */
+#define	T_ARITHFLT	6	/* arithmetic trap */
 #define	T_ASTFLT	7	/* system forced exception */
-#define	T_SEGFLT	8	/* segmentation (limit) fault */
-#define	T_PROTFLT	9	/* protection fault */
+#define	T_ACCFLT	8	/* Access control violation fault */
+#define	T_TRANSFLT	9	/* translation fault */
+
 #define	T_TRCTRAP	10	/* trace trap */
-/* 11: Was compatibility mode fault on VAX */
+#define	T_COMPAT	11	/* compatibility mode fault on VAX */
 #define	T_PAGEFLT	12	/* page fault */
 #define	T_TABLEFLT	13	/* page table fault */
 /* #define	T_ALIGNFLT	14	/* alignment fault */
@@ -96,4 +97,21 @@
 #define	    BUS_SEGM_FAULT	T_RESERVED	/* segment protection base */
 
 /* Trap's coming from user mode */
-/* #define	T_USER	0x100 */
+#define	T_USER	0x100
+
+#ifndef ASSEMBLER
+/* If we want to alter USP in some syscall, we do it with mtpr */
+struct	sysc_frame {
+	int	fp;	/* Stack frame pointer */
+        int     ap;     /* Argument pointer on user stack */
+        int     r0;     /* General registers saved upon syscall */
+        int     r1;		/* (shouldn't be necessary) */
+        int     r2;
+        int     r3;
+        int     r4;
+        int     r5;
+        int     type;   /* System call number */
+        int     pc;     /* User pc */
+        int     psl;    /* User psl */
+};
+#endif /* ASSEMBLER */

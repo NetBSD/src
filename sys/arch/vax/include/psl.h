@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.3 1994/10/26 08:02:22 cgd Exp $	*/
+/*      $NetBSD: psl.h,v 1.4 1994/11/25 19:08:58 ragge Exp $      */
 
 /*
  * Rewritten for the VAX port. Based on Berkeley code. /IC
@@ -81,10 +81,11 @@
 #define	PSL_IPL1D	0x001d0000	/* interrupt priority level 29 */
 #define	PSL_IPL1E	0x001e0000	/* interrupt priority level 30 */
 #define	PSL_IPL1F	0x001f0000	/* interrupt priority level 31 */
-#define	PSL_K		0x00000000	/* user mode */
-#define	PSL_E		0x01000000     	/* supervisor mode */
+#define	PSL_PREVU	0x00c00000	/* Previous user mode */
+#define	PSL_K		0x00000000	/* kernel mode */
+#define	PSL_E		0x01000000     	/* executive mode */
 #define	PSL_S		0x02000000     	/* executive mode */
-#define	PSL_U		0x03000000	/* kernel mode */
+#define	PSL_U		0x03000000	/* user mode */
 #define	PSL_IS		0x04000000	/* interrupt stack select */
 #define	PSL_FPD	        0x04000000	/* first part done flag */
 #define PSL_TP          0x40000000      /* trace pending */
@@ -103,7 +104,7 @@
 /*
  * Macros to decode processor status word.
  */
-#define	CLKF_USERMODE(framep)	((((framep)->ps) & (PSL_U)) != 0)
+#define	CLKF_USERMODE(framep)	((((framep)->ps) & (PSL_U)) == PSL_U)
 #define	CLKF_BASEPRI(framep)	((((framep)->ps) & (PSL_IPL1F)) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	0
