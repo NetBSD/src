@@ -1,4 +1,4 @@
-#	$NetBSD: ramdisk.list,v 1.5 1997/12/18 22:18:43 gwr Exp $
+#	$NetBSD: ramdisk.list,v 1.6 2000/06/10 04:05:49 tsutsui Exp $
 
 # various files that we need in /etc for the install
 
@@ -20,5 +20,5 @@ SPECIAL	mkfifo dev/pipe
 # Using a hacked MAKEDEV to conserve inodes...
 # No block devices, and only partitions a-d.
 COPY	${TOPDIR}/common/rd.MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0
+SPECIAL	cd dev; sh MAKEDEV std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0 fd0
 SPECIAL	/bin/rm dev/MAKEDEV
