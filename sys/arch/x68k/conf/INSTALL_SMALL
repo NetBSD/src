@@ -1,10 +1,12 @@
-#	$NetBSD: INSTALL_SMALL,v 1.1 1999/12/24 17:02:16 minoura Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.2 2000/02/05 14:35:41 minoura Exp $
 
 #
-#	INSTALL -- installation kernel.
+#	INSTALL_SMALL -- `small' installation kernel.
 #
 
 include "arch/x68k/conf/std.x68k"
+
+#ident 		"INSTALL_SMALL-$Revision: 1.2 $"
 
 maxusers	8
 
@@ -147,6 +149,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem (buggy)
+#file-system 	OVERLAY		# overlay file system
 #file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	UMAPFS		# uid/gid remapping filesystem
