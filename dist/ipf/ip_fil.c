@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.3.2.1 2004/08/13 03:56:19 jmc Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.3.2.1.2.1 2005/02/06 07:43:26 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -577,9 +577,9 @@ int v;
     (defined(__FreeBSD__) && (__FreeBSD_version >= 501113))
 	(void) strncpy(ifp->if_xname, name, sizeof(ifp->if_xname));
 #else
-	for (s = name; *s && !isdigit(*s); s++)
+	for (s = name; *s && !ISDIGIT(*s); s++)
 		;
-	if (*s && isdigit(*s)) {
+	if (*s && ISDIGIT(*s)) {
 		ifp->if_unit = atoi(s);
 		ifp->if_name = (char *)malloc(s - name + 1);
 		(void) strncpy(ifp->if_name, name, s - name);
