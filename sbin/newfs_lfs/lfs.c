@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.21.2.2 2001/06/29 03:56:44 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.21.2.3 2001/07/02 17:48:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.21.2.2 2001/06/29 03:56:44 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.21.2.3 2001/07/02 17:48:14 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,10 +123,10 @@ static struct lfs lfs_default =  {
 		/* dlfs_curseg */	0,
 		/* dlfs_offset */	0,
 		/* dlfs_lastpseg */	0,
-		/* dlfs_u */		{ 0 },
+		/* dlfs_inopf */	0,
 		/* dlfs_minfree */	MINFREE,
 		/* dlfs_maxfilesize */	0,
-		/* dlfs_dbpseg */	DFL_LFSSEG/DEV_BSIZE,
+		/* dlfs_fsbpseg */	0,
 		/* dlfs_inopb */	DFL_LFSBLOCK/sizeof(struct dinode),
 		/* dlfs_ifpb */		DFL_LFSBLOCK/sizeof(IFILE),
 		/* dlfs_sepb */		DFL_LFSBLOCK/sizeof(SEGUSE),
@@ -143,7 +143,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_bmask */	DFL_LFSBLOCK_MASK,
 		/* dlfs_ffmask */	DFL_LFS_FFMASK,
 		/* dlfs_fbmask */	DFL_LFS_FBMASK,
-		/* dlfs_fsbtodb */	0,
+		/* dlfs_blktodb */	0,
 		/* dlfs_sushift */	0,
 		/* dlfs_maxsymlinklen */	MAXSYMLINKLEN,
 		/* dlfs_sboffs */	{ 0 },
@@ -152,7 +152,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_pflags */       0,
 		/* dlfs_dmeta */	0,
 		/* dlfs_minfreeseg */   0,
-		/* dlfs_sumsize */	LFS_DFL_SUMMARY_SIZE,
+		/* dlfs_sumsize */	0,
 		/* dlfs_serial */	0,
 		/* dlfs_ibsize */	DFL_LFSFRAG,
 		/* dlfs_start */	0,
@@ -160,6 +160,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_tstamp */       0,
 		/* dlfs_interleave */   0,
 		/* dlfs_ident */        0,
+		/* dlfs_fsbtodb */      0,
 
 		/* dlfs_pad */ 		{ 0 },
 		/* dlfs_cksum */	0
@@ -226,7 +227,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	int block_array_size;	/* How many entries in block array */
 	int bsize;		/* Block size */
 	int fsize;		/* Fragment size */
-	int db_per_fb;		/* Disk blocks per file block */
+	int db_per_blk;		/* Disk blocks per file block */
 	int i, j;
 	off_t off, startoff;	/* Offset at which to write */
 	int sb_interval;	/* number of segs between super blocks */
@@ -235,6 +236,9 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	int sum_size;		/* Size of the summary block */
 	int warned_segtoobig=0;
 	double fssize;
+	int label_fsb, sb_fsb;
+	int curw, ww;
+	char tbuf[BUFSIZ];
 
 	lfsp = &lfs_default;
 
@@ -263,7 +267,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	if (version > 1) {
 		if (ibsize == 0)
 			ibsize = fsize;
-		if (ibsize <= 0 || ibsize % lp->d_secsize)
+		if (ibsize <= 0 || ibsize % fsize)
 			fatal("illegal inode block size: %d\n", ibsize);
 	} else if (ibsize && ibsize != bsize)
 		fatal("cannot specify inode block size when version == 1\n");
@@ -288,7 +292,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	if (version == 1) {
 		if (start)
 			warnx("filesystem offset ignored for version 1 filesystem");
-		start = btodb(LFS_LABELPAD);
+		start = LFS_LABELPAD / lp->d_secsize;
 	}
 
     tryagain:
@@ -322,9 +326,15 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 		lfsp->lfs_sepb = bsize / sizeof(SEGUSE_V1);
 		lfsp->lfs_ssize = ssize >> lfsp->lfs_bshift;
 	} else {
-		if (dbtob(btodb(ssize)) != ssize)
-			fatal("%d: segment size not a multiple of sector size",
-			      ssize);
+		if (ssize % fsize) {
+			fprintf(stderr, 
+				"Segment size %d is not a multiple of frag size; ",
+				 ssize);
+			ssize = roundup(ssize, fsize);
+			fprintf(stderr, "trying size %d.\n", ssize);
+			goto tryagain;
+		}
+		lfsp->lfs_sumsize = fsize;
 		lfsp->lfs_segshift = 0;
 		lfsp->lfs_segmask = 0;
 		lfsp->lfs_sepb = bsize / sizeof(SEGUSE);
@@ -332,12 +342,10 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 		lfsp->lfs_ibsize = ibsize;
 	}
 	lfsp->lfs_inopb = lfsp->lfs_ibsize / sizeof(struct dinode);
-	if (version > 1)
-		lfsp->lfs_inops = lp->d_secsize/DINODE_SIZE;
-
-	lfsp->lfs_dbpseg = btodb(ssize);
 	lfsp->lfs_minfree = minfree;
+
 	if (version > 1) {
+		lfsp->lfs_inopf = lp->d_secsize/DINODE_SIZE;
 		lfsp->lfs_interleave = interleave;
 		if (roll_id == 0) {
 			/* Pick one; even time(NULL) would almost do */
@@ -351,14 +359,21 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	 * Fill in parts of superblock that can be computed from file system
 	 * size, disk geometry and current time.
 	 */
-	db_per_fb = bsize/lp->d_secsize;
-	lfsp->lfs_fsbtodb = log2(db_per_fb);
-	if (version == 1)
+	db_per_blk = bsize/lp->d_secsize;
+	lfsp->lfs_blktodb = log2(db_per_blk);
+	lfsp->lfs_fsbtodb = log2(fsize / lp->d_secsize);
+	if (version == 1) {
 		lfsp->lfs_sushift = log2(lfsp->lfs_sepb);
+		lfsp->lfs_fsbtodb = 0;
+		lfsp->lfs_size = partp->p_size >> lfsp->lfs_blktodb;
+	}
+	label_fsb = btofsb(lfsp, roundup(LFS_LABELPAD, fsize));
+	sb_fsb = btofsb(lfsp, roundup(LFS_SBPAD, fsize));
+	lfsp->lfs_fsbpseg = dbtofsb(lfsp, ssize / lp->d_secsize);
 	lfsp->lfs_size = partp->p_size >> lfsp->lfs_fsbtodb;
-	lfsp->lfs_dsize = lfsp->lfs_size -
-		MAX((LFS_LABELPAD >> lfsp->lfs_bshift), dbtofsb(lfsp, start));
-	lfsp->lfs_nseg = fsbtodb(lfsp, lfsp->lfs_dsize) / segtodb(lfsp, 1);
+	lfsp->lfs_dsize = dbtofsb(lfsp, partp->p_size) -
+		MAX(label_fsb, dbtofsb(lfsp, start));
+	lfsp->lfs_nseg = lfsp->lfs_dsize / segtod(lfsp, 1);
 
 	lfsp->lfs_nclean = lfsp->lfs_nseg - 1;
 	lfsp->lfs_maxfilesize = maxtable[lfsp->lfs_bshift] << lfsp->lfs_bshift;
@@ -401,10 +416,11 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	 * be written due to fragmentation.
 	 */
 	lfsp->lfs_dsize = (lfsp->lfs_nseg - lfsp->lfs_minfreeseg) *
-		segtodb(lfsp, 1);
-
+		segtod(lfsp, 1);
 	lfsp->lfs_bfree = lfsp->lfs_dsize;
-	lfsp->lfs_bfree -= fsbtodb(lfsp, lfsp->lfs_nseg / 2);
+	lfsp->lfs_bfree -= dbtofsb(lfsp, ((lfsp->lfs_nseg / 2) << 
+		lfsp->lfs_blktodb));
+
 	lfsp->lfs_segtabsz = SEGTABSIZE_SU(lfsp);
 	lfsp->lfs_cleansz = CLEANSIZE_SU(lfsp);
 	if ((lfsp->lfs_tstamp = time(NULL)) == -1)
@@ -416,7 +432,8 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 		sb_interval = LFS_MIN_SBINTERVAL;
 
 	/* To start, one inode block and one segsum are dirty metadata */
-	lfsp->lfs_dmeta = btodb(lfsp->lfs_sumsize + lfsp->lfs_ibsize);
+	lfsp->lfs_dmeta = btofsb(lfsp, lfsp->lfs_sumsize + lfsp->lfs_ibsize);
+
 	/*
 	 * Now, lay out the file system.  We need to figure out where
 	 * the superblocks go, initialize the checkpoint information
@@ -427,22 +444,22 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	 */
 
 	/* Figure out where the superblocks are going to live */
-	lfsp->lfs_sboffs[0] = lfsp->lfs_start = btodb(LFS_LABELPAD); /* XXX */
+	lfsp->lfs_sboffs[0] = label_fsb;
 	if (version == 1)
 		lfsp->lfs_start = lfsp->lfs_sboffs[0];
 	else
-		lfsp->lfs_start = start;
-	lfsp->lfs_dsize -= btodb(LFS_SBPAD);
+		lfsp->lfs_start = dbtofsb(lfsp, start);
+        lfsp->lfs_dsize -= sb_fsb;
 	for (i = 1; i < LFS_MAXNUMSB; i++) {
-		sb_addr = ((i * sb_interval) * segtodb(lfsp, 1))
+		sb_addr = ((i * sb_interval) * segtod(lfsp, 1))
 		    + lfsp->lfs_sboffs[0];
 		/* Segment 0 eats the label, except for version 1 */
-		if (lfsp->lfs_version > 1 && start < btodb(LFS_LABELPAD))
-			sb_addr -= btodb(LFS_LABELPAD) - start;
-		if (sb_addr > partp->p_size)
+		if (lfsp->lfs_version > 1 && lfsp->lfs_start < label_fsb)
+			sb_addr -= label_fsb - start;
+		if (sb_addr > dbtofsb(lfsp, partp->p_size))
 			break;
 		lfsp->lfs_sboffs[i] = sb_addr;
-		lfsp->lfs_dsize -= btodb(LFS_SBPAD);
+		lfsp->lfs_dsize -= sb_fsb;
 	}
 
 	/* We need >= 2 superblocks */
@@ -452,8 +469,8 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	}
 
 	last_sb_addr = lfsp->lfs_sboffs[i - 1];
-	lfsp->lfs_lastseg = sntoda(lfsp, 0);
-	lfsp->lfs_nextseg = sntoda(lfsp, 1);
+	lfsp->lfs_lastseg = sntod(lfsp, 0);
+	lfsp->lfs_nextseg = sntod(lfsp, 1);
 	lfsp->lfs_curseg = lfsp->lfs_lastseg;
 
 	/*
@@ -477,7 +494,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	blocks_used = lfsp->lfs_segtabsz + lfsp->lfs_cleansz + 4;
 	segp->su_nbytes = ((lfsp->lfs_segtabsz + lfsp->lfs_cleansz + 1) <<
 			   lfsp->lfs_bshift) +
-		2 * roundup(DIRBLKSIZ,lfsp->lfs_fsize) +
+		2 * roundup(DIRBLKSIZ, lfsp->lfs_fsize) +
 		3 * DINODE_SIZE;
 	if (version == 1)
 		segp->su_olastmod = lfsp->lfs_tstamp;
@@ -487,16 +504,16 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	segp->su_ninos = 1;	/* 1 inode block */
 	segp->su_flags = SEGUSE_SUPERBLOCK | SEGUSE_DIRTY;
 
-	lfsp->lfs_bfree -= btodb(lfsp->lfs_sumsize);
-	lfsp->lfs_bfree -=
-	     fsbtodb(lfsp, lfsp->lfs_cleansz + lfsp->lfs_segtabsz + 4);
+	lfsp->lfs_bfree -= btofsb(lfsp, lfsp->lfs_sumsize);
+	lfsp->lfs_bfree -= fragstofsb(lfsp, blkstofrags(lfsp, 
+		(lfsp->lfs_cleansz + lfsp->lfs_segtabsz + 4)));
 
 	/* 
 	 * Now figure out the address of the ifile inode. The inode block
 	 * appears immediately after the segment summary.
 	 */
-	lfsp->lfs_idaddr = (LFS_LABELPAD + LFS_SBPAD + lfsp->lfs_sumsize) /
-	    lp->d_secsize;
+	lfsp->lfs_idaddr = label_fsb + sb_fsb +
+		btofsb(lfsp, lfsp->lfs_sumsize);
 
 	for (i = 1, j = 1; i < lfsp->lfs_nseg; i++) {
 		segp = (SEGUSE *)(((char *)segtable) +
@@ -506,7 +523,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 							  sizeof(SEGUSE)));
 		if ((i % sb_interval) == 0 && j < LFS_MAXNUMSB) {
 			segp->su_flags = SEGUSE_SUPERBLOCK;
-			lfsp->lfs_bfree -= (LFS_SBPAD / lp->d_secsize);
+			lfsp->lfs_bfree -= sb_fsb;
 			++j;
 		} else
 			segp->su_flags = 0;
@@ -552,9 +569,9 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	 * lfsp->lfs_idaddr;
 	 */
 	ifibc = 0;
-	sb_addr = lfsp->lfs_idaddr + lfsp->lfs_ibsize / lp->d_secsize;
+	sb_addr = lfsp->lfs_idaddr + btofsb(lfsp, lfsp->lfs_ibsize);
 	sb_addr = make_dinode(LFS_IFILE_INUM, dip, 
-		(lfsp->lfs_cleansz + lfsp->lfs_segtabsz+1)<<lfsp->lfs_fbshift,
+		blkstofrags(lfsp, lfsp->lfs_cleansz + lfsp->lfs_segtabsz+1),
 		sb_addr, lfsp);
 	dip->di_mode = IFREG|IREAD|IWRITE;
 	dip->di_flags = SF_IMMUTABLE; /* XXX KS */
@@ -572,7 +589,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	sb_addr = make_dinode(ROOTINO, ++dip, howmany(DIRBLKSIZ,lfsp->lfs_fsize), sb_addr, lfsp);
 	dip->di_mode = IFDIR | UMASK;
 	dip->di_size = DIRBLKSIZ;
-	dip->di_blocks = howmany(roundup(DIRBLKSIZ,lfsp->lfs_fsize),DEV_BSIZE);
+	dip->di_blocks = btofsb(lfsp, roundup(DIRBLKSIZ,lfsp->lfs_fsize));
 	dip->di_nlink = 3;
 	if (version == 1) {
 		ip_v1 = &ifile_v1[ROOTINO];
@@ -588,7 +605,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	sb_addr = make_dinode(LOSTFOUNDINO, ++dip, howmany(DIRBLKSIZ,lfsp->lfs_fsize), sb_addr, lfsp);
 	dip->di_mode = IFDIR | UMASK;
 	dip->di_size = DIRBLKSIZ;
-	dip->di_blocks = howmany(roundup(DIRBLKSIZ,lfsp->lfs_fsize),DEV_BSIZE);
+	dip->di_blocks = btofsb(lfsp, roundup(DIRBLKSIZ,lfsp->lfs_fsize));
 	dip->di_nlink = 2;
 	if (version == 1) {
 		ip_v1 = &ifile_v1[LOSTFOUNDINO];
@@ -626,20 +643,20 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 
 	/* XXX Check to make sure it will all fit in one segment. */
 	/* XXX When we have a partial-segment writer this can go away. */
-	if (datosn(lfsp, sb_addr - 1) != 0) {
+	if (dtosn(lfsp, sb_addr - 1) != 0) {
 		if (!warned_segtoobig) {
 			fprintf(stderr, "Segment size %d is too small; ",
 				ssize);
 			if (version == 1)
-				while(ssize < dbtob(sb_addr))
+				while(ssize < fsbtob(lfsp, sb_addr))
 					ssize <<= 1;
 			else
-				ssize = dbtob(sb_addr);
+				ssize = fsbtob(lfsp, sb_addr);
 			fprintf(stderr, "trying size %d.\n", ssize);
 			goto tryagain;
 		}
 		fatal("Can't fit %d bytes into one segment sized %d",
-		      dbtob(sb_addr), ssize);
+		      fsbtob(lfsp, sb_addr), ssize);
 	}
 
 	/* Now, write the segment */
@@ -669,11 +686,10 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	/* Still need the root and l+f bytes; get them later */
 
 	/* Write out the inode block */
-	startoff = LFS_LABELPAD + LFS_SBPAD;
-	if (startoff < dbtob(lfsp->lfs_start))
-		startoff = dbtob(lfsp->lfs_start);
+	startoff = fsbtob(lfsp, label_fsb + sb_fsb);
+	if (startoff < fsbtob(lfsp, lfsp->lfs_start))
+		startoff = fsbtob(lfsp, lfsp->lfs_start);
 	off = startoff + lfsp->lfs_sumsize;
-	/* printf("writing inode block at 0x%lx\n", (u_long)btodb(off)); */
 	put(fd, off, dpagep, lfsp->lfs_ibsize);
 	off += lfsp->lfs_ibsize;
 
@@ -693,8 +709,6 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	/* Write the indirect blocks */
 	for (i = 0; i < ifibc; i++) {
 		*dp++ = ((u_long *)(ifibp[i]))[0];
-		/* printf("writing #%d indir blk at daddr 0x%lx\n", i,
-		       (long)btodb(off)); */
 		put(fd, off, ifibp[i], lfsp->lfs_bsize);
 		off += lfsp->lfs_bsize;
 	}
@@ -722,16 +736,24 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	off += dblksize(lfsp, dip, 0);
 
 	/* Write Superblock */
-	lfsp->lfs_offset = off / lp->d_secsize;
-	lfsp->lfs_avail = lfsp->lfs_dsize - btodb(off - startoff);
-	if (lfsp->lfs_start < btodb(LFS_LABELPAD))
-		lfsp->lfs_avail -= btodb(LFS_LABELPAD) - lfsp->lfs_start;
+	lfsp->lfs_offset = btofsb(lfsp, off);
+	lfsp->lfs_avail = lfsp->lfs_dsize - btofsb(lfsp, (off - startoff));
+	if (lfsp->lfs_start < label_fsb)
+		lfsp->lfs_avail -= label_fsb - lfsp->lfs_start;
 	lfsp->lfs_bfree = lfsp->lfs_avail; /* XXX */
 	/* Slop for an imperfect cleaner */
-	lfsp->lfs_avail += segtodb(lfsp, lfsp->lfs_minfreeseg / 2);
+	lfsp->lfs_avail += segtod(lfsp, lfsp->lfs_minfreeseg / 2);
 	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 
 	put(fd, (off_t)LFS_LABELPAD, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
+	/* If that was different from lfs_sboffs[0], write the latter too */
+	if (LFS_LABELPAD < fsbtob(lfsp, (off_t)lfsp->lfs_sboffs[0])) {
+		printf("Writing 1st superblock at both %lld and %lld bytes\n",
+		       (long long)LFS_LABELPAD,
+		       fsbtob(lfsp, (long long)lfsp->lfs_sboffs[0]));
+		put(fd, (off_t)lfsp->lfs_sboffs[0], &(lfsp->lfs_dlfs),
+		    sizeof(struct dlfs));
+	}
 
 	/* 
 	 * Finally, calculate all the fields for the summary structure
@@ -843,17 +865,27 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	/* Now, write the rest of the superblocks */
 	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 	printf("super-block backups (for fsck -b #) at:\n");
+	curw = 0;
+	ww = 0;
 	for (i = 0; i < LFS_MAXNUMSB; i++) {
 		seg_addr = lfsp->lfs_sboffs[i];
 
-		printf("%d%s ", seg_addr, (i == LFS_MAXNUMSB - 1 ? "" : ","));
+		sprintf(tbuf, "%d%s ", fsbtodb(lfsp, seg_addr),
+			(i == LFS_MAXNUMSB - 1 ? "" : ","));
+		ww = strlen(tbuf);
+		curw += ww;
+		if (curw + ww > 78) {
+			printf("%s\n", tbuf);
+			curw = 0;
+		} else
+			printf("%s", tbuf);
 
 		/* Leave the time stamp on the alt sb, zero the rest */
 		if(i == 2) {
 			lfsp->lfs_tstamp = 0;
 			lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 		}
-		seg_seek = (off_t)seg_addr * lp->d_secsize;
+		seg_seek = fsbtob(lfsp, (off_t)seg_addr);
 		put(fd, seg_seek, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 	}
 	printf("\n");
@@ -871,7 +903,8 @@ put(int fd, off_t off, void *p, size_t len)
 		return;
 
 	if (lseek(fd, off, SEEK_SET) < 0)
-		fatal("%s: seek: %s", special, strerror(errno));
+		fatal("%s: seek %lld: %s", special, (long long)off,
+		      strerror(errno));
 	if ((wbytes = write(fd, p, len)) < 0)
 		fatal("%s: write: %d at %lld: %s", special, len,
 			(long long)off, strerror(errno));
@@ -888,7 +921,7 @@ put(int fd, off_t off, void *p, size_t len)
 static daddr_t
 make_dinode(ino_t ino, struct dinode *dip, int nfrags, daddr_t saddr, struct lfs *lfsp)
 {
-	int db_per_fb, i;
+	int fsb_per_blk, i;
 	int nblocks, bb, ibi, base, factor, lvl;
 
 	nblocks = howmany(nfrags, lfsp->lfs_frag);
@@ -896,7 +929,7 @@ make_dinode(ino_t ino, struct dinode *dip, int nfrags, daddr_t saddr, struct lfs
 		nfrags = roundup(nfrags, lfsp->lfs_frag);
 
 	dip->di_nlink = 1;
-	dip->di_blocks = fragstodb(lfsp, nfrags);
+	dip->di_blocks = fragstofsb(lfsp, nfrags);
 
 	dip->di_size = (nfrags << lfsp->lfs_ffshift);
 	dip->di_atime = dip->di_mtime = dip->di_ctime = lfsp->lfs_tstamp;
@@ -904,7 +937,7 @@ make_dinode(ino_t ino, struct dinode *dip, int nfrags, daddr_t saddr, struct lfs
 	dip->di_inumber = ino;
 	dip->di_gen = 1;
 
-	db_per_fb = 1 << lfsp->lfs_fsbtodb;
+	fsb_per_blk = fragstofsb(lfsp, blkstofrags(lfsp, 1));
 
 	if (NDADDR < nblocks) {
 		/* Count up how many indirect blocks we need, recursively */
@@ -921,32 +954,32 @@ make_dinode(ino_t ino, struct dinode *dip, int nfrags, daddr_t saddr, struct lfs
 			ifibp[i] = (daddr_t *)malloc(lfsp->lfs_bsize);
 			memset(ifibp[i], 0, lfsp->lfs_bsize);
 		}
-		dip->di_blocks += fsbtodb(lfsp, ifibc);
+		dip->di_blocks += fragstofsb(lfsp, blkstofrags(lfsp, ifibc));
 	}
 
 	/* Assign the block addresses for the ifile */
-	for (i = 0; i < MIN(nblocks,NDADDR); i++, saddr += db_per_fb) {
+	for (i = 0; i < MIN(nblocks,NDADDR); i++, saddr += fsb_per_blk) {
 		dip->di_db[i] = saddr;
 		/* printf("direct block %d at 0x%x\n", i, saddr); */
 	}
 	if (nfrags & lfsp->lfs_fbmask) {
 		/* Last block is a fragment */
-		saddr -= db_per_fb - fragstodb(lfsp, nfrags & lfsp->lfs_fbmask);
+		saddr -= fsb_per_blk - fragstofsb(lfsp, nfrags & lfsp->lfs_fbmask);
 	}
 	if(nblocks > NDADDR) {
-		for (i = 0; i < nblocks - NDADDR; i++, saddr += db_per_fb) {
+		for (i = 0; i < nblocks - NDADDR; i++, saddr += fsb_per_blk) {
 			ifibp[i / NINDIR(lfsp)][i % NINDIR(lfsp)] = saddr;
 			/* printf("direct block %d at 0x%x\n", i + NDADDR, saddr); */
 		}
 		/* printf("indir block ib[0] (%d) at 0x%x\n", -NDADDR, saddr);*/
 		dip->di_ib[0] = saddr;
-		saddr += db_per_fb;
+		saddr += fsb_per_blk;
 		bb = howmany(nblocks - NDADDR, NINDIR(lfsp)) - 1;
 		factor = NINDIR(lfsp);
 		base = -NDADDR - factor;
 		lvl = 1;
 		while (bb > 0) {
-			for (ibi = 0; ibi < bb; i++, ibi++, saddr += db_per_fb) {
+			for (ibi = 0; ibi < bb; i++, ibi++, saddr += fsb_per_blk) {
 				ifibp[i / NINDIR(lfsp)][i % NINDIR(lfsp)] =
 					saddr;
 				/* printf("indir block %d at 0x%x\n",
@@ -955,7 +988,7 @@ make_dinode(ino_t ino, struct dinode *dip, int nfrags, daddr_t saddr, struct lfs
 			/* printf("indir block ib[%d] (%d) at 0x%x\n", lvl,
 			       base - lvl, saddr); */
 			dip->di_ib[lvl] = saddr;
-			saddr += db_per_fb;
+			saddr += fsb_per_blk;
 			bb = howmany(bb, NINDIR(lfsp));
 			--bb;
 			factor *= NINDIR(lfsp);

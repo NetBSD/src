@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.47.2.3 2001/06/29 06:02:58 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.47.2.4 2001/07/02 17:48:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -149,9 +149,9 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	 * The inode is not in use.  Find it on the free list.
 	 */
 	/* If the Ifile is too short to contain this inum, extend it */
-	while (VTOI(fs->lfs_ivnode)->i_ffs_size <=
-	       dbtob(fsbtodb(fs, ino / fs->lfs_ifpb + fs->lfs_cleansz +
-			     fs->lfs_segtabsz))) {
+	while (VTOI(fs->lfs_ivnode)->i_ffs_size <= (ino / 
+		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz) 
+		<< fs->lfs_bshift) {
 		extend_ifile(fs, NOCRED);
 	}
 
@@ -529,17 +529,17 @@ lfs_vfree(void *v)
 	LFS_PUT_FREEINUM(fs, cip, cbp, ino);
 	(void) VOP_BWRITE(bp); /* Ifile */
 #ifdef DIAGNOSTIC
-	if(fs->lfs_free == LFS_UNUSED_INUM) {
+	if(ino == LFS_UNUSED_INUM) {
 		panic("inode 0 freed");
 	}
 #endif /* DIAGNOSTIC */
 	if (old_iaddr != LFS_UNUSED_DADDR) {
-		LFS_SEGENTRY(sup, fs, datosn(fs, old_iaddr), bp);
+		LFS_SEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < DINODE_SIZE) {
 			printf("lfs_vfree: negative byte count"
 			       " (segment %d short by %d)\n",
-			       datosn(fs, old_iaddr),
+			       dtosn(fs, old_iaddr),
 			       (int)DINODE_SIZE - sup->su_nbytes);
 			panic("lfs_vfree: negative byte count");
 			sup->su_nbytes = DINODE_SIZE;

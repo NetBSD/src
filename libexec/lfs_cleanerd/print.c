@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9.2.3 2001/06/30 01:28:31 perseant Exp $	*/
+/*	$NetBSD: print.c,v 1.9.2.4 2001/07/02 17:48:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.9.2.3 2001/06/30 01:28:31 perseant Exp $");
+__RCSID("$NetBSD: print.c,v 1.9.2.4 2001/07/02 17:48:16 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 		*iaddrp = dp;
 	}
 
-	ddp = addr + btodb(lfsp->lfs_sumsize);
+	ddp = addr + btofsb(lfsp, lfsp->lfs_sumsize);
 	if (lfsp->lfs_version == 1)
 		fp = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
 	else
@@ -126,20 +126,20 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 		/* printf("finfo %d: ddp=%lx, *idp=%lx\n",i,ddp,*idp); */
 		while(ddp == *idp) {
 			 /* printf(" [ino %lx]",ddp); */
-			datap[blk++] = *(u_long*)((caddr_t)sp + dbtob(ddp-addr));
+			datap[blk++] = *(u_long*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
 			--idp;
-			ddp += btodb(lfsp->lfs_bsize);
+			ddp += btofsb(lfsp, lfsp->lfs_ibsize);
 			accino++;
 		}
 		for(j=0;j<fp->fi_nblocks;j++) {
 			if(j==fp->fi_nblocks-1) {
-				size = btodb(fp->fi_lastlength);
+				size = btofsb(lfsp, fp->fi_lastlength);
 				/* printf(" %lx:%d",ddp,size); */
 			} else {
-				size = btodb(lfsp->lfs_bsize);
+				size = btofsb(lfsp, lfsp->lfs_bsize);
 				/* printf(" %lx/%d",ddp,size); */
 			}
-			datap[blk++] = *(u_long*)((caddr_t)sp + dbtob(ddp-addr));
+			datap[blk++] = *(u_long*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
 			ddp += size;
 		}
 		numblocks += fp->fi_nblocks;
@@ -161,7 +161,7 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 	while(*idp >= ddp && accino < howmany(sp->ss_ninos,INOPB(lfsp))) {
 		ddp = *idp;
 		/* printf(" [ino %lx]",ddp); */
-		datap[blk++] = *(u_long*)((caddr_t)sp + dbtob(ddp-addr));
+		datap[blk++] = *(u_long*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
 		--idp;
 		accino++;
 	}
