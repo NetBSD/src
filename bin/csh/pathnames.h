@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	5.6 (Berkeley) 6/8/91
- *
- *	$Header: /cvsroot/src/bin/csh/pathnames.h,v 1.3 1993/03/23 00:25:06 cgd Exp $
+ *	from: @(#)pathnames.h	5.6 (Berkeley) 6/8/91
+ *	$Id: pathnames.h,v 1.4 1993/08/01 19:00:54 mycroft Exp $
  */
 
 #define	_PATH_BIN		"/bin"

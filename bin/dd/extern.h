@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	5.4 (Berkeley) 11/13/91
+ *	from: @(#)extern.h	5.4 (Berkeley) 11/13/91
+ *	$Id: extern.h,v 1.2 1993/08/01 19:00:13 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
