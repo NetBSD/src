@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.2 2001/05/26 21:47:30 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.3 2001/05/26 21:48:32 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.4 2001/05/26 21:47:09 bjh21 Exp 
+ *	NetBSD: podules,v 1.5 2001/05/26 21:48:21 bjh21 Exp 
  */
 
 /*
@@ -129,6 +129,11 @@ static struct podule_description podules_morley[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_hccs2[] = {
+	{ PODULE_HCCS2_USERANALOGUE,	"User and Analogue ports" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_vti[] = {
 	{ PODULE_VTI_SCSI,	"SCSI interface" },
 	{ 0x0000, NULL }
@@ -246,6 +251,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_OAK, 		"Oak Solutions", 	podules_oak },
 	{ MANUFACTURER_SJ, 		"SJ Research", 	podules_sj },
 	{ MANUFACTURER_MORLEY, 		"Morley", 	podules_morley },
+	{ MANUFACTURER_HCCS2, 		"HCCS", 	podules_hccs2 },
 	{ MANUFACTURER_VTI, 		"Vertical Twist", 	podules_vti },
 	{ MANUFACTURER_CUMANA, 		"Cumana", 	podules_cumana },
 	{ MANUFACTURER_ICS, 		"ICS", 	podules_ics },
