@@ -1,4 +1,4 @@
-/*	$NetBSD: shlock.c,v 1.7 2003/06/23 13:05:52 agc Exp $	*/
+/*	$NetBSD: shlock.c,v 1.8 2004/07/13 12:16:12 wiz Exp $	*/
 
 /*
 ** Program to produce reliable locks for shell scripts.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shlock.c,v 1.7 2003/06/23 13:05:52 agc Exp $");
+__RCSID("$NetBSD: shlock.c,v 1.8 2004/07/13 12:16:12 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: shlock.c,v 1.7 2003/06/23 13:05:52 agc Exp $");
 
 int	Debug = FALSE;
 char	*Pname;
-const char USAGE[] = "%s: USAGE: shlock -f file -p pid [-d][-u]\n";
+const char USAGE[] = "%s: USAGE: %s [-du] [-p PID] -f file\n";
 const char E_unlk[] = "%s: unlink(%s): %s\n";
 const char E_open[] = "%s: open(%s): %s\n";
 
@@ -272,7 +272,7 @@ linkloop:
 void
 bad_usage(void)
 {
-	fprintf(stderr, USAGE, Pname);
+	fprintf(stderr, USAGE, Pname, Pname);
 	exit(LOCK_FAIL);
 }
 
@@ -318,8 +318,7 @@ main(int ac, char **av)
 				}
 				break;
 			default:
-				fprintf(stderr, USAGE, Pname);
-				exit(LOCK_FAIL);
+				bad_usage();
 			}
 		}
 	}
