@@ -192,12 +192,16 @@ struct sl_softc sl_softc[NSL];
 
 #define t_sc T_LINEP
 
-int sloutput(), slioctl();
+int slioctl __P((struct ifnet *, int, caddr_t));
+int sloutput __P((struct ifnet *, struct mbuf *, struct sockaddr *));
+void slstart __P((struct tty *tp));
+
 extern struct timeval time;
 
 /*
  * Called from boot code to establish sl interfaces.
  */
+void
 slattach()
 {
 	register struct sl_softc *sc;
@@ -249,7 +253,9 @@ slinit(sc)
  */
 /* ARGSUSED */
 int
-slopen(dev_t dev, struct tty *tp)
+slopen(dev, tp)
+	dev_t dev;
+	struct tty *tp;
 {
 	struct proc *p = curproc;		/* XXX */
 	register struct sl_softc *sc;
@@ -346,6 +352,7 @@ sltioctl(tp, cmd, data, flag)
 /*
  * Queue a packet.  Start transmission if not active.
  */
+int
 sloutput(ifp, m, dst)
 	struct ifnet *ifp;
 	register struct mbuf *m;
@@ -803,6 +810,7 @@ newpack:
 /*
  * Process an ioctl request.
  */
+int
 slioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	int cmd;
