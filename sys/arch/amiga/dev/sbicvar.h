@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.8 1995/08/18 15:28:05 chopps Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.9 1995/09/04 13:04:48 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -139,7 +139,7 @@ struct	sbic_softc {
 	struct	dma_chain *sc_last;
 	int  (*sc_dmago)	__P((struct sbic_softc *, char *, int, int));
 	int  (*sc_dmanext)	__P((struct sbic_softc *));
-	void (*sc_dmafree)	__P((struct sbic_softc *));
+	void (*sc_enintr)	__P((struct sbic_softc *));
 	void (*sc_dmastop)	__P((struct sbic_softc *));
 	u_short	gtsc_bankmask;		/* GVP specific bank selected */
 };
