@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.23 2001/08/23 16:14:12 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -419,7 +419,7 @@ pci_intr_map(pa, ihp)
 	}
 
 	if (OF_mapintr(node, &interrupts, sizeof(interrupts), 
-		sizeof(interrupts)) > 0) {
+		sizeof(interrupts)) < 0) {
 		printf("OF_mapintr failed\n");
 	}
 	/* Try to find an IPL for this type of device. */
