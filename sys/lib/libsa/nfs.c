@@ -25,7 +25,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: nfs.c,v 1.1 1994/05/08 16:11:31 brezak Exp $
+ *	$Id: nfs.c,v 1.2 1994/06/20 07:50:17 glass Exp $
  */
 
 #include <sys/param.h>
@@ -171,13 +171,13 @@ getnfsinfo(d, tp, sp, fp, mp, up, gp)
 		return(-1);
 	}
 	if (tp) {
-		*tp = ntohl(rdata.fa.fa_mtime.tv_sec);
-		t = ntohl(rdata.fa.fa_atime.tv_sec);
+		*tp = ntohl(rdata.fa.fa_nfsmtime.nfs_sec);
+		t = ntohl(rdata.fa.fa_nfsatime.nfs_sec);
 		if (*tp < t)
 			*tp = t;
 	}
 	if (sp)
-		*sp = ntohl(rdata.fa.fa_size);
+		*sp = ntohl(rdata.fa.fa_nfssize);
 	if (fp)
 		*fp = ntohl(rdata.fa.fa_type);
 	if (mp)
@@ -245,9 +245,9 @@ lookupfh(d, name, fhp, tp, sp, fp)
 	}
 	bcopy(rdata.fh, fhp, sizeof(rdata.fh));
 	if (tp)
-		*tp = ntohl(rdata.fa.fa_ctime.tv_sec);
+		*tp = ntohl(rdata.fa.fa_nfsctime.nfs_sec);
 	if (sp)
-		*sp = ntohl(rdata.fa.fa_size);
+		*sp = ntohl(rdata.fa.fa_nfssize);
 	if (fp)
 		*fp = ntohl(rdata.fa.fa_type);
 	return (0);
