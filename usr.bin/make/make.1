@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.38 2000/02/08 12:56:28 sjg Exp $
+.\"	$NetBSD: make.1,v 1.39 2000/04/16 22:08:06 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -843,7 +843,8 @@ The syntax of a for loop is:
 .Bl -tag -width Ds
 .It Xo
 .Ic \&.for
-.Ar variable
+.Ar variable 
+.Op Ar variable ...
 .Ic in
 .Ar expression
 .Xc
@@ -856,12 +857,17 @@ The syntax of a for loop is:
 .El
 After the for
 .Ic expression
-is evaluated, it is split into words. The
-iteration
-.Ic variable
-is successively set to each word, and substituted in the
+is evaluated, it is split into words. On each iteration of the loop, 
+one word is taken and assigned to each
+.Ic variable ,
+in order, and these
+.Ic variables
+are substituted into the
 .Ic make-rules
 inside the body of the for loop.
+The number of words must come out even; that is, if there are three
+iteration variables, the number of words provided must be a multiple
+of three.
 .Sh COMMENTS
 Comments begin with a hash
 .Pq Ql \&#
