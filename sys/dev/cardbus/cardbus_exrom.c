@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.c,v 1.1 1999/10/28 22:27:00 joda Exp $ */
+/* $NetBSD: cardbus_exrom.c,v 1.2 1999/11/12 18:17:36 joda Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -109,8 +109,14 @@ cardbus_read_exrom(romt, romh, head)
 	    return 1;
 	}
 	dataptr = addr + READ_INT16(romt, romh, addr + CARDBUS_EXROM_DATA_PTR);
+	/* get the ROM image size, in blocks */
 	image_size = READ_INT16(romt, romh, 
-		         dataptr + CARDBUS_EXROM_DATA_IMAGE_LENGTH) << 9;
+		         dataptr + CARDBUS_EXROM_DATA_IMAGE_LENGTH);
+	if(image_size == 0) 
+	    /* XXX some ROMs seem to have this as zero, can we assume
+               this means 1 block? */
+	    image_size = 1;
+	image_size <<= 9;
 	image = malloc(sizeof(*image), M_DEVBUF, M_NOWAIT);
 	image->rom_image = rom_image;
 	image->image_size = image_size;
