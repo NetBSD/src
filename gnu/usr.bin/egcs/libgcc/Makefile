@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/04/01 22:34:33 tv Exp $
+#	$NetBSD: Makefile,v 1.5 1998/04/02 06:38:12 mrg Exp $
 
 .PATH: ${.CURDIR}/../../../dist/gcc/cp ${.CURDIR}/../../../dist/gcc/cp/inc
 LIB=	gcc
@@ -39,7 +39,7 @@ INCSDIR=	/usr/include/g++
 LIB2OBJS+=_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
 .endif
 
-OBJS= ${LIB1OBJS} ${LIB2OBJS} ${CXX_LIB2OBJS}
+OBJS= ${LIB1OBJS} ${LIB2OBJS}
 #LIB1SOBJS=${LIB1OBJS:.o=.so}
 LIB2SOBJS=${LIB2OBJS:.o=.so}
 
