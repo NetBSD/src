@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.l,v 1.1.1.1.8.2 2002/07/01 17:14:40 he Exp $	*/
+/*	$NetBSD: commands.l,v 1.1.1.1.8.3 2003/11/27 19:05:03 cyber Exp $	*/
 
 %{
 
@@ -79,7 +79,6 @@ static char sccsid[] = "@(#)commands.l	5.13 (Berkeley) 7/24/90";
  *	exit		- exit the program
  *	root		- set default server to the root
  *	ls NAME		- list the domain NAME
- *	view FILE	- sorts and view the file with more
  *	set OPTION	- set an option
  *	help		- print help information
  *	?		- print help information
@@ -104,7 +103,6 @@ static char sccsid[] = "@(#)commands.l	5.13 (Berkeley) 7/24/90";
 
 extern char rootServerName[];
 extern void PrintHelp();
-extern void ViewList(char *);
 
 %}
 WS	[ \t]
