@@ -43,15 +43,15 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";*/
-static char rcsid[] = "$Id: join.c,v 1.2 1993/08/01 18:14:22 mycroft Exp $";
+static char rcsid[] = "$Id: join.c,v 1.3 1993/10/13 18:34:23 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <errno.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 /*
  * There's a structure per input file which encapsulates the state of the

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dmesg.c	5.9 (Berkeley) 5/2/91";*/
-static char rcsid[] = "$Id: dmesg.c,v 1.4 1993/08/01 18:27:55 mycroft Exp $";
+static char rcsid[] = "$Id: dmesg.c,v 1.5 1993/10/13 18:33:58 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$Id: dmesg.c,v 1.4 1993/08/01 18:27:55 mycroft Exp $";
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 
 struct nlist nl[] = {
 #define	X_MSGBUFP	0

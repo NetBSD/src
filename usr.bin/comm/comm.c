@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comm.c	5.7 (Berkeley) 11/1/90";*/
-static char rcsid[] = "$Id: comm.c,v 1.3 1993/09/21 23:20:36 jtc Exp $";
+static char rcsid[] = "$Id: comm.c,v 1.4 1993/10/13 18:33:45 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$Id: comm.c,v 1.3 1993/09/21 23:20:36 jtc Exp $";
 #include <string.h>
 #include <limits.h>
 #include <locale.h>
+#include <unistd.h>
 
 #define	MAXLINELEN	(_POSIX2_LINE_MAX + 1)
 

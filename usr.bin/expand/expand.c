@@ -39,12 +39,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)expand.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: expand.c,v 1.3 1993/08/28 02:34:04 jtc Exp $";
+static char rcsid[] = "$Id: expand.c,v 1.4 1993/10/13 18:34:09 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <unistd.h>
 
 /*
  * expand - expand tabs to equivalent spaces

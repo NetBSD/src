@@ -42,12 +42,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fold.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: fold.c,v 1.4 1993/08/28 04:30:02 jtc Exp $";
+static char rcsid[] = "$Id: fold.c,v 1.5 1993/10/13 18:34:13 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <err.h>
 
 #define	DEFLINEWIDTH	80
