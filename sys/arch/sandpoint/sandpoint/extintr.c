@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.3 2001/08/30 02:08:45 briggs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.4 2002/05/13 06:41:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -64,7 +64,7 @@ extern void comsoft __P((void));
 #endif
 
 unsigned int imen = 0xffffffff;
-volatile int cpl, ipending, astpending, tickspending;
+volatile int cpl, ipending, tickspending;
 int imask[NIPL];
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2002/04/23 12:41:08 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2002/05/13 06:41:30 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -114,9 +114,6 @@ struct vm_map *phys_map = NULL;
 char machine[] = MACHINE;		/* machine */
 char machine_arch[] = MACHINE_ARCH;	/* machine architecture */
 
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_store;
-
 struct pcb *curpcb;
 struct pmap *curpm;
 struct proc *fpuproc;
@@ -127,8 +124,6 @@ struct bat battable[16];
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
-
-int astpending;
 
 char *bootpath;
 unsigned char *eumb_base;
