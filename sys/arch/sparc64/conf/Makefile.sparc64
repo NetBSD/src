@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.22 2000/04/13 16:57:51 eeh Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.23 2000/05/09 00:56:27 hubertf Exp $
 
 # Makefile for NetBSD
 #
@@ -229,5 +229,17 @@ machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
 
 locore.o: ${SPARC64}/sparc64/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES
