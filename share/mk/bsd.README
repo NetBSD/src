@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.150 2004/04/13 12:25:03 lukem Exp $
+#	$NetBSD: bsd.README,v 1.151 2004/04/18 13:07:00 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -1106,6 +1106,10 @@ AR		Create, modify, and extract from archives.  [ar]
 
 ARFLAGS		Options to ${AR}.  [rl]
 
+AS		Assembler.  [as]
+
+AFLAGS		Options to ${AS}.  []
+
 CC		C compiler.  [cc]
 
 CFLAGS		Options to ${CC}.  [Usually -O or -O2]
@@ -1114,7 +1118,7 @@ CPP		C Pre-Processor.  [cpp]
 
 CPPFLAGS	Options to ${CPP}.  []
 
-CPUFLAGS	Optimization flags for ${CC}
+CPUFLAGS	Optimization flags for ${CC}.  []
 
 CXX		C++ compiler.  [c++]
 
