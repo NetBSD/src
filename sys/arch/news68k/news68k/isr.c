@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.4 2000/07/02 04:40:42 cgd Exp $	*/
+/*	$NetBSD: isr.c,v 1.5 2000/11/06 16:54:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -307,10 +307,15 @@ get_vector_entry(entry)
 void
 netintr()
 {
+	int s, isr;
+
+	s = splnet();
+	isr = netisr;
+	netisr = 0;
+	splx(s);
 
 #define DONETISR(bit, fn) do {		\
 	if (netisr & (1 << bit)) {	\
-		netisr &= ~(1 << bit);	\
 		fn();			\
 	}				\
 } while (0)
