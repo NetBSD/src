@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.28.4.2 2005/03/17 17:39:55 tron Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.28.4.3 2005/03/17 17:43:28 tron Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.28.4.2 2005/03/17 17:39:55 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.28.4.3 2005/03/17 17:43:28 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -734,7 +734,10 @@ void
 siop_sdp(siop_cmd)
 	struct siop_common_cmd *siop_cmd;
 {
-	/* save data pointer. Handle async only for now */
+	/*
+	 * Save data pointer when a phase mistmatch occurs. We need to compute
+	 * how much of the current table was written.
+	 */
 	int offset, dbc, sstat;
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	scr_table_t *table; /* table to patch */
@@ -789,6 +792,9 @@ siop_sdp(siop_cmd)
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST3) |
 		    CTEST3_CLF);
 	}
+	/* correct xs->resid for this partial transfer */
+	siop_cmd->xs->resid -= le32toh(table->count) - dbc;
+	/* "cut" already transfered data from this table */
 	table->addr =
 	    htole32(le32toh(table->addr) + le32toh(table->count) - dbc);
 	table->count = htole32(dbc);
