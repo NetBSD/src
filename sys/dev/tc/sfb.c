@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.37 2000/06/28 17:05:23 mrg Exp $ */
+/* $NetBSD: sfb.c,v 1.38 2000/10/27 07:24:04 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.37 2000/06/28 17:05:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.38 2000/10/27 07:24:04 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,8 +352,10 @@ sfbattach(parent, self, aux)
 	struct sfb_softc *sc = (struct sfb_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
+	struct hwcmap256 *cm;
+	const u_int8_t *p;
 	caddr_t sfbasic;
-	int console;
+	int console, index;
 
 	console = (ta->ta_addr == sfb_consaddr);
 	if (console) {
@@ -369,7 +371,13 @@ sfbattach(parent, self, aux)
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
-	memcpy(&sc->sc_cmap, rasops_cmap, sizeof(struct hwcmap256));
+	cm = &sc->sc_cmap;
+	p = rasops_cmap;
+	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
+		cm->r[index] = p[0];
+		cm->g[index] = p[1];
+		cm->b[index] = p[2];
+	}
 
 	sc->sc_cursor.cc_magic.x = HX_MAGIC_X;
 	sc->sc_cursor.cc_magic.y = HX_MAGIC_Y;
@@ -626,6 +634,7 @@ sfbinit(dc)
 {
 	caddr_t sfbasic = (caddr_t)(dc->dc_vaddr + SFB_ASIC_OFFSET);
 	caddr_t vdac = (void *)(dc->dc_vaddr + SFB_RAMDAC_OFFSET);
+	const u_int8_t *p;
 	int i;
 
 	*(u_int32_t *)(sfbasic + SFB_ASIC_PLANEMASK) = ~0;
@@ -665,13 +674,11 @@ sfbinit(dc)
 
 	/* build sane colormap */
 	SELECT(vdac, 0);
-	for (i = 0; i < CMAP_SIZE; i++) {
-		REG(vdac, bt_cmap) = rasops_cmap[3 * i + 0];
-		tc_wmb();
-		REG(vdac, bt_cmap) = rasops_cmap[3 * i + 1];
-		tc_wmb();
-		REG(vdac, bt_cmap) = rasops_cmap[3 * i + 2];
-		tc_wmb();
+	p = rasops_cmap;
+	for (i = 0; i < CMAP_SIZE; i++, p += 3) {
+		REG(vdac, bt_cmap) = p[0];	tc_wmb();
+		REG(vdac, bt_cmap) = p[1];	tc_wmb();
+		REG(vdac, bt_cmap) = p[2];	tc_wmb();
 	}
 
 	/* clear out cursor image */
