@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.11 1999/04/26 01:02:25 mrg Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.12 2000/03/05 11:35:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -33,8 +33,9 @@
  *	-A		add all devices listed as `sw' in /etc/fstab (also
  *			(sets the the dump device, if listed in fstab)
  *	-D <dev>	set dumpdev to <dev>
- *	-t [blk|noblk]	if -A, add either all block device or all non-block
- *			devices
+ *	-U		remove all devices listed as `sw' in /etc/fstab.
+ *	-t [blk|noblk]	if -A or -U , add (remove) either all block device
+ *			or all non-block devices
  *	-a <dev>	add this device
  *	-d <dev>	remove this swap device (not supported yet)
  *	-l		list swap devices
@@ -71,13 +72,14 @@ int	command;
 /*
  * Commands for swapctl(8).  These are mutually exclusive.
  */
-#define	CMD_A		0x01	/* process /etc/fstab */
+#define	CMD_A		0x01	/* process /etc/fstab for adding */
 #define	CMD_D		0x02	/* set dumpdev */
-#define	CMD_a		0x04	/* add a swap file/device */
-#define	CMD_c		0x08	/* change priority of a swap file/device */
-#define	CMD_d		0x10	/* delete a swap file/device */
-#define	CMD_l		0x20	/* list swap files/devices */
-#define	CMD_s		0x40	/* summary of swap files/devices */
+#define	CMD_U		0x04	/* process /etc/fstab for removing */
+#define	CMD_a		0x08	/* add a swap file/device */
+#define	CMD_c		0x10	/* change priority of a swap file/device */
+#define	CMD_d		0x20	/* delete a swap file/device */
+#define	CMD_l		0x40	/* list swap files/devices */
+#define	CMD_s		0x80	/* summary of swap files/devices */
 
 #define	SET_COMMAND(cmd) \
 do { \
@@ -91,7 +93,7 @@ do { \
  * line, and the ones which require that none exist.
  */
 #define	REQUIRE_PATH	(CMD_D | CMD_a | CMD_c | CMD_d)
-#define	REQUIRE_NOPATH	(CMD_A | CMD_l | CMD_s)
+#define	REQUIRE_NOPATH	(CMD_A | CMD_U | CMD_l | CMD_s)
 
 /*
  * Option flags, and the commands with which they are valid.
@@ -103,16 +105,16 @@ int	pflag;		/* priority was specified */
 #define	PFLAG_CMDS	(CMD_A | CMD_a | CMD_c)
 
 char	*tflag;		/* swap device type (blk or noblk) */
-#define	TFLAG_CMDS	(CMD_A)
+#define	TFLAG_CMDS	(CMD_A | CMD_U )
 
 int	pri;		/* uses 0 as default pri */
 
 static	void change_priority __P((const char *));
-static	void add_swap __P((const char *));
-static	void delete_swap __P((const char *));
+static	int  add_swap __P((const char *, int));
+static	int  delete_swap __P((const char *));
 static	void set_dumpdev __P((const char *));
 	int  main __P((int, char *[]));
-static	void do_fstab __P((void));
+static	void do_fstab __P((int));
 static	void usage __P((void));
 static	void swapon_command __P((int, char **));
 #if 0
@@ -140,7 +142,7 @@ main(argc, argv)
 	}
 #endif
 
-	while ((c = getopt(argc, argv, "ADacdlkp:st:")) != -1) {
+	while ((c = getopt(argc, argv, "ADUacdlkp:st:")) != -1) {
 		switch (c) {
 		case 'A':
 			SET_COMMAND(CMD_A);
@@ -148,6 +150,10 @@ main(argc, argv)
 
 		case 'D':
 			SET_COMMAND(CMD_D);
+			break;
+
+		case 'U':
+			SET_COMMAND(CMD_U);
 			break;
 
 		case 'a':
@@ -220,7 +226,7 @@ main(argc, argv)
 
 	/* Sanity-check -t */
 	if (tflag != NULL) {
-		if (command != CMD_A)
+		if (command != CMD_A && command != CMD_U)
 			usage();
 		if (strcmp(tflag, "blk") != 0 &&
 		    strcmp(tflag, "noblk") != 0)
@@ -242,19 +248,25 @@ main(argc, argv)
 		break;
 
 	case CMD_a:
-		add_swap(argv[0]);
+		if (! add_swap(argv[0], pri))
+			exit(1);
 		break;
 
 	case CMD_d:
-		delete_swap(argv[0]);
+		if (! delete_swap(argv[0]))
+			exit(1);
 		break;
 
 	case CMD_A:
-		do_fstab();
+		do_fstab(1);
 		break;
 
 	case CMD_D:
 		set_dumpdev(argv[0]);
+		break;
+
+	case CMD_U:
+		do_fstab(0);
 		break;
 	}
 
@@ -264,7 +276,7 @@ main(argc, argv)
 /*
  * swapon_command: emulate the old swapon(8) program.
  */
-void
+static void
 swapon_command(argc, argv)
 	int argc;
 	char **argv;
@@ -297,13 +309,14 @@ swapon_command(argc, argv)
 			    strcmp(tflag, "noblk") != 0)
 				usage();
 		}
-		do_fstab();
+		do_fstab(1);
 		exit(0);
 	} else if (argc == 0 || tflag != NULL)
 		goto swapon_usage;
 
 	while (argc) {
-		add_swap(argv[0]);
+		if (! add_swap(argv[0], pri))
+			exit(1);
 		argc--;
 		argv++;
 	}
@@ -319,7 +332,7 @@ swapon_command(argc, argv)
 /*
  * change_priority:  change the priority of a swap device.
  */
-void
+static void
 change_priority(path)
 	const char	*path;
 {
@@ -331,9 +344,10 @@ change_priority(path)
 /*
  * add_swap:  add the pathname to the list of swap devices.
  */
-void
-add_swap(path)
+static int
+add_swap(path, priority)
 	const char *path;
+	int priority;
 {
 	struct stat sb;
 
@@ -345,24 +359,30 @@ add_swap(path)
 	if (sb.st_mode & S_IWOTH)
 		warnx("%s is writable by the world", path);
 
-	if (swapctl(SWAP_ON, path, pri) < 0)
+	if (swapctl(SWAP_ON, path, priority) < 0) {
 oops:
-		err(1, "%s", path);
+		warn("%s", path);
+		return (0);
+	}
+	return (1);
 }
 
 /*
  * delete_swap:  remove the pathname to the list of swap devices.
  */
-void
+static int
 delete_swap(path)
 	const char *path;
 {
 
-	if (swapctl(SWAP_OFF, path, pri) < 0)
-		err(1, "%s", path);
+	if (swapctl(SWAP_OFF, path, pri) < 0) {
+		warn("%s", path);
+		return (0);
+	}
+	return (1);
 }
 
-void
+static void
 set_dumpdev(path)
 	const char *path;
 {
@@ -373,8 +393,9 @@ set_dumpdev(path)
 		printf("%s: setting dump device to %s\n", __progname, path);
 }
 
-void
-do_fstab()
+static void
+do_fstab(add)
+	int add;
 {
 	struct	fstab *fp;
 	char	*s;
@@ -382,16 +403,19 @@ do_fstab()
 	struct	stat st;
 	int	isblk;
 	int	gotone = 0;
+#define PATH_MOUNT	"/sbin/mount_nfs"
+#define PATH_UMOUNT	"/sbin/umount"
+	char	cmd[2*PATH_MAX+sizeof(PATH_MOUNT)+2];
 
 #define PRIORITYEQ	"priority="
 #define NFSMNTPT	"nfsmntpt="
-#define PATH_MOUNT	"/sbin/mount_nfs"
 	while ((fp = getfsent()) != NULL) {
 		const char *spec;
 
 		spec = fp->fs_spec;
+		cmd[0] = '\0';
 
-		if (strcmp(fp->fs_type, "dp") == 0) {
+		if (strcmp(fp->fs_type, "dp") == 0 && add) {
 			set_dumpdev(spec);
 			continue;
 		}
@@ -407,14 +431,13 @@ do_fstab()
 			priority = pri;
 
 		if ((s = strstr(fp->fs_mntops, NFSMNTPT)) != NULL) {
-			char *t, cmd[2*PATH_MAX+sizeof(PATH_MOUNT)+2];
+			char *t;
 
 			/*
 			 * Skip this song and dance if we're only
 			 * doing block devices.
 			 */
-			if (tflag != NULL &&
-			    strcmp(tflag, "blk") == 0)
+			if (tflag != NULL && strcmp(tflag, "blk") == 0)
 				continue;
 
 			t = strpbrk(s, ",");
@@ -432,11 +455,16 @@ do_fstab()
 				free((char *)spec);
 				continue;
 			}
-			snprintf(cmd, sizeof(cmd), "%s %s %s",
-				PATH_MOUNT, fp->fs_spec, spec);
-			if (system(cmd) != 0) {
-				warnx("%s: mount failed", fp->fs_spec);
-				continue;
+			if (add) {
+				snprintf(cmd, sizeof(cmd), "%s %s %s",
+					PATH_MOUNT, fp->fs_spec, spec);
+				if (system(cmd) != 0) {
+					warnx("%s: mount failed", fp->fs_spec);
+					continue;
+				}
+			} else {
+				snprintf(cmd, sizeof(cmd), "%s %s",
+					PATH_UMOUNT, fp->fs_spec);
 			}
 		} else {
 			/*
@@ -460,12 +488,26 @@ do_fstab()
 				continue;
 		}
 
-		if (swapctl(SWAP_ON, spec, (int)priority) < 0)
-			warn("%s", spec);
-		else {
-			gotone = 1;
-			printf("%s: adding %s as swap device at priority %d\n",
-			    __progname, fp->fs_spec, (int)priority);
+		if (add) {
+			if (add_swap(spec, (int)priority)) {
+				gotone = 1;
+				printf(
+			    	"%s: adding %s as swap device at priority %d\n",
+				    __progname, fp->fs_spec, (int)priority);
+			}
+		} else {
+			if (delete_swap(spec)) {
+				gotone = 1;
+				printf(
+				    "%s: removing %s as swap device\n",
+				    __progname, fp->fs_spec);
+			}
+			if (cmd[0]) {
+				if (system(cmd) != 0) {
+					warnx("%s: umount failed", fp->fs_spec);
+					continue;
+				}
+			}
 		}
 
 		if (spec != fp->fs_spec)
@@ -475,13 +517,14 @@ do_fstab()
 		exit(1);
 }
 
-void
+static void
 usage()
 {
 
 	fprintf(stderr, "usage: %s -A [-p priority] [-t blk|noblk]\n",
 	    __progname);
 	fprintf(stderr, "       %s -D dumppath\n", __progname);
+	fprintf(stderr, "       %s -U [-t blk|noblk]\n", __progname);
 	fprintf(stderr, "       %s -a [-p priority] path\n", __progname);
 	fprintf(stderr, "       %s -c -p priority path\n", __progname);
 	fprintf(stderr, "       %s -d path\n", __progname);
