@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.3 2000/03/05 18:46:14 thorpej Exp $ */
+/* $NetBSD: atomic.h,v 1.4 2000/05/23 05:12:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -44,32 +44,36 @@
 #ifndef _ALPHA_ATOMIC_H_
 #define	_ALPHA_ATOMIC_H_
 
-static __inline void alpha_atomic_setbits_q __P((__volatile unsigned long *,
-	unsigned long)) __attribute__((__unused__));
-static __inline void alpha_atomic_clearbits_q __P((__volatile unsigned long *,
-	unsigned long)) __attribute__((__unused__));
+static __inline void atomic_setbits_ulong
+	__P((__volatile unsigned long *, unsigned long))
+	__attribute__((__unused__));
+static __inline void atomic_clearbits_ulong
+	__P((__volatile unsigned long *, unsigned long))
+	__attribute__((__unused__));
 
-static __inline void alpha_atomic_add_q __P((__volatile unsigned long *,
-	unsigned long)) __attribute__((__unused__));
-static __inline void alpha_atomic_sub_q __P((__volatile unsigned long *,
-	unsigned long)) __attribute__((__unused__));
+static __inline void atomic_add_ulong
+	__P((__volatile unsigned long *, unsigned long))
+	__attribute__((__unused__));
+static __inline void atomic_sub_ulong
+	__P((__volatile unsigned long *, unsigned long))
+	__attribute__((__unused__));
 
-static __inline unsigned long alpha_atomic_loadlatch_q
+static __inline unsigned long atomic_loadlatch_ulong
 	__P((__volatile unsigned long *, unsigned long))
 	__attribute__((__unused__));
 
 /*
- * alpha_atomic_setbits_q:
+ * atomic_setbits_ulong:
  *
- *	Atomically set bits in a quadword.
+ *	Atomically set bits in a `unsigned long'.
  */
 static __inline void
-alpha_atomic_setbits_q(__volatile unsigned long *ulp, unsigned long v)
+atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
 	__asm __volatile(
-		"# BEGIN alpha_atomic_setbits_q\n"
+		"# BEGIN atomic_setbits_ulong\n"
 		"1:	ldq_l	%0, %3		\n"
 		"	or	%0, %2, %0	\n"
 		"	stq_c	%0, %1		\n"
@@ -78,23 +82,23 @@ alpha_atomic_setbits_q(__volatile unsigned long *ulp, unsigned long v)
 		"	br	3f		\n"
 		"2:	br	1b		\n"
 		"3:				\n"
-		"	# END alpha_atomic_setbits_q"
+		"	# END atomic_setbits_ulong"
 		: "=r" (t0), "=m" (*ulp)
 		: "r" (v), "1" (*ulp));
 }
 
 /*
- * alpha_atomic_clearbits_q:
+ * atomic_clearbits_ulong:
  *
- *	Atomically clear bits in a quadword.
+ *	Atomically clear bits in a `unsigned long'.
  */
 static __inline void
-alpha_atomic_clearbits_q(__volatile unsigned long *ulp, unsigned long v)
+atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
 	__asm __volatile(
-		"# BEGIN alpha_atomic_clearbits_q\n"
+		"# BEGIN atomic_clearbits_ulong\n"
 		"1:	ldq_l	%0, %3		\n"
 		"	and	%0, %2, %0	\n"
 		"	stq_c	%0, %1		\n"
@@ -103,23 +107,23 @@ alpha_atomic_clearbits_q(__volatile unsigned long *ulp, unsigned long v)
 		"	br	3f		\n"
 		"2:	br	1b		\n"
 		"3:				\n"
-		"	# END alpha_atomic_clearbits_q"
+		"	# END atomic_clearbits_ulong"
 		: "=r" (t0), "=m" (*ulp)
 		: "r" (~v), "1" (*ulp));
 }
 
 /*
- * alpha_atomic_add_q:
+ * atomic_add_ulong:
  *
- *	Atomically add a value to a quadword.
+ *	Atomically add a value to a `unsigned long'.
  */
 static __inline void
-alpha_atomic_add_q(__volatile unsigned long *ulp, unsigned long v)
+atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
 	__asm __volatile(
-		"# BEGIN alpha_atomic_add_q\n"
+		"# BEGIN atomic_add_ulong\n"
 		"1:	ldq_l	%0, %3		\n"
 		"	addq	%0, %2, %0	\n"
 		"	stq_c	%0, %1		\n"
@@ -128,23 +132,23 @@ alpha_atomic_add_q(__volatile unsigned long *ulp, unsigned long v)
 		"	br	3f		\n"
 		"2:	br	1b		\n"
 		"3:				\n"
-		"	# END alpha_atomic_add_q"
+		"	# END atomic_add_ulong"
 		: "=r" (t0), "=m" (*ulp)
 		: "r" (v), "1" (*ulp));
 }
 
 /*
- * alpha_atomic_sub_q:
+ * atomic_sub_ulong:
  *
- *	Atomically subtract a value from a quadword.
+ *	Atomically subtract a value from a `unsigned long'.
  */
 static __inline void
-alpha_atomic_sub_q(__volatile unsigned long *ulp, unsigned long v)
+atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
 	__asm __volatile(
-		"# BEGIN alpha_atomic_sub_q\n"
+		"# BEGIN atomic_sub_ulong\n"
 		"1:	ldq_l	%0, %3		\n"
 		"	subq	%0, %2, %0	\n"
 		"	stq_c	%0, %1		\n"
@@ -153,23 +157,23 @@ alpha_atomic_sub_q(__volatile unsigned long *ulp, unsigned long v)
 		"	br	3f		\n"
 		"2:	br	1b		\n"
 		"3:				\n"
-		"	# END alpha_atomic_sub_q"
+		"	# END atomic_sub_ulong"
 		: "=r" (t0), "=m" (*ulp)
 		: "r" (v), "1" (*ulp));
 }
 
 /*
- * alpha_atomic_loadlatch_q:
+ * atomic_loadlatch_ulong:
  *
- *	Atomically load and latch a quadword value.
+ *	Atomically load and latch a `unsigned long' value.
  */
 static __inline unsigned long
-alpha_atomic_loadlatch_q(__volatile unsigned long *ulp, unsigned long v)
+atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0, v0;
 
 	__asm __volatile(
-		"# BEGIN alpha_atomic_loadlatch_q\n"
+		"# BEGIN atomic_loadlatch_ulong\n"
 		"1:	mov	%3, %0		\n"
 		"	ldq_l	%1, %4		\n"
 		"	stq_c	%0, %2		\n"
@@ -178,7 +182,7 @@ alpha_atomic_loadlatch_q(__volatile unsigned long *ulp, unsigned long v)
 		"	br	3f		\n"
 		"2:	br	1b		\n"
 		"3:				\n"
-		"	# END alpha_atomic_loadlatch_q"
+		"	# END atomic_loadlatch_ulong"
 		: "=r" (t0), "=r" (v0), "=m" (*ulp)
 		: "r" (v), "2" (*ulp));
 
