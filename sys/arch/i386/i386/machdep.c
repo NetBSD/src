@@ -36,10 +36,9 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.102 1994/05/05 05:35:48 cgd Exp $
+ *	$Id: machdep.c,v 1.103 1994/05/06 01:43:34 mycroft Exp $
  */
 
-#include <stddef.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -519,7 +518,7 @@ check_selectors(u_short cs, u_short ss, u_short ds, u_short es)
  * a machine fault.
  */
 struct sigreturn_args {
-	struct sigcontext *sigcntxp;
+	struct sigcontext *scp;
 };
 
 sigreturn(p, uap, retval)
@@ -539,13 +538,7 @@ sigreturn(p, uap, retval)
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	scp = uap->sigcntxp;
-	fp = (struct sigframe *)
-	    ((caddr_t)scp - offsetof(struct sigframe, sf_sc));
-
-	if (useracc((caddr_t)fp, sizeof(*fp), 0) == 0)
-		return(EFAULT);
-
+	scp = uap->scp;
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
 		return(EFAULT);
 
