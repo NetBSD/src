@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.2 2000/01/12 15:00:47 uch Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.3 2000/02/28 12:34:32 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -101,6 +101,9 @@ tpcalib_ioctl(sc, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSMOUSEIO_SCALIBCOORDS:
+		if (d->samplelen == WSMOUSE_CALIBCOORDS_RESET) {
+			tpcalib_reset(sc);
+		} else
 		if (mra_Y_AX1_BX2_C(&d->samples[0].x, s,
 				    &d->samples[0].rawx, s,
 				    &d->samples[0].rawy, s,
