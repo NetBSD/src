@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.15 2004/04/11 11:25:34 kochi Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.16 2004/05/01 12:03:48 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.15 2004/04/11 11:25:34 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.16 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,21 +71,21 @@ static const char * const sleep_button_hid[] = {
 
 #define	ACPIBUT_F_VERBOSE		0x01	/* verbose events */
 
-int	acpibut_match(struct device *, struct cfdata *, void *);
-void	acpibut_attach(struct device *, struct device *, void *);
+static int	acpibut_match(struct device *, struct cfdata *, void *);
+static void	acpibut_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpibut, sizeof(struct acpibut_softc),
     acpibut_match, acpibut_attach, NULL, NULL);
 
-void	acpibut_pressed_event(void *);
-void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *context);
+static void	acpibut_pressed_event(void *);
+static void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *context);
 
 /*
  * acpibut_match:
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 acpibut_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -107,7 +107,7 @@ acpibut_match(struct device *parent, struct cfdata *match, void *aux)
  *
  *	Autoconfiguration `attach' routine.
  */
-void
+static void
 acpibut_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpibut_softc *sc = (void *) self;
@@ -157,7 +157,7 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Deal with a button being pressed.
  */
-void
+static void
 acpibut_pressed_event(void *arg)
 {
 	struct acpibut_softc *sc = arg;
@@ -173,7 +173,7 @@ acpibut_pressed_event(void *arg)
  *
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
-void
+static void
 acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct acpibut_softc *sc = context;

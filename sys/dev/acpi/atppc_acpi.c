@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.4 2004/04/11 10:36:35 kochi Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.5 2004/05/01 12:03:48 kochi Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.4 2004/04/11 10:36:35 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.5 2004/05/01 12:03:48 kochi Exp $");
 
 #include "opt_atppc.h"
 
@@ -220,7 +220,7 @@ atppc_acpi_dma_abort(struct atppc_softc * lsc)
 }
 
 /* Allocate memory for DMA over ISA bus */
-int
+static int
 atppc_acpi_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr,
 	bus_size_t size)
 {
@@ -230,7 +230,7 @@ atppc_acpi_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr,
 }
 
 /* Free memory allocated by atppc_isa_dma_malloc() */
-void
+static void
 atppc_acpi_dma_free(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr,
 	bus_size_t size)
 {

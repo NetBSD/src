@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.21 2004/04/11 10:36:35 kochi Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.22 2004/05/01 12:03:48 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.21 2004/04/11 10:36:35 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.22 2004/05/01 12:03:48 kochi Exp $");
 
 #include "rnd.h"
 
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.21 2004/04/11 10:36:35 kochi Exp $");
 
 #include <dev/acpi/fdc_acpireg.h>
 
-int	fdc_acpi_match(struct device *, struct cfdata *, void *);
-void	fdc_acpi_attach(struct device *, struct device *, void *);
+static int	fdc_acpi_match(struct device *, struct cfdata *, void *);
+static void	fdc_acpi_attach(struct device *, struct device *, void *);
 
 struct fdc_acpi_softc {
 	struct fdc_softc sc_fdc;
@@ -91,7 +91,7 @@ static const char * const fdc_acpi_ids[] = {
 /*
  * fdc_acpi_match: autoconf(9) match routine
  */
-int
+static int
 fdc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -105,7 +105,7 @@ fdc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 /*
  * fdc_acpi_attach: autoconf(9) attach routine
  */
-void
+static void
 fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_acpi_softc *asc = (struct fdc_acpi_softc *)self;

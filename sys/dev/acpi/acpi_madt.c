@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.12 2004/03/24 13:02:23 kochi Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.13 2004/05/01 12:03:48 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.12 2004/03/24 13:02:23 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.13 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -177,7 +177,7 @@ acpi_madt_walk(ACPI_STATUS (*func)(APIC_HEADER *, void *), void *aux)
 }
 
 #ifdef ACPI_MADT_DEBUG
-void
+static void
 acpi_madt_print(void)
 {
 	MULTIPLE_APIC_TABLE *ap;

@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $ */
+/* $NetBSD: com_acpi.c,v 1.15 2004/05/01 12:03:48 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.15 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $");
 
 #include <dev/ic/comvar.h>
 
-int	com_acpi_match(struct device *, struct cfdata *, void *);
-void	com_acpi_attach(struct device *, struct device *, void *);
+static int	com_acpi_match(struct device *, struct cfdata *, void *);
+static void	com_acpi_attach(struct device *, struct device *, void *);
 
 struct com_acpi_softc {
 	struct com_softc sc_com;
@@ -76,7 +76,7 @@ static const char * const com_acpi_ids[] = {
 /*
  * com_acpi_match: autoconf(9) match routine
  */
-int
+static int
 com_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -90,7 +90,7 @@ com_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 /*
  * com_acpi_attach: autoconf(9) attach routine
  */
-void
+static void
 com_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_acpi_softc *asc = (struct com_acpi_softc *)self;

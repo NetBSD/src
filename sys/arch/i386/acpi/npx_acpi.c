@@ -1,4 +1,4 @@
-/* $NetBSD: npx_acpi.c,v 1.8 2004/04/11 10:36:45 kochi Exp $ */
+/* $NetBSD: npx_acpi.c,v 1.9 2004/05/01 12:05:01 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.8 2004/04/11 10:36:45 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.9 2004/05/01 12:05:01 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.8 2004/04/11 10:36:45 kochi Exp $");
 
 #include <i386/isa/npxvar.h>
 
-int	npx_acpi_match(struct device *, struct cfdata *, void *);
-void	npx_acpi_attach(struct device *, struct device *, void *);
+static int	npx_acpi_match(struct device *, struct cfdata *, void *);
+static void	npx_acpi_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(npx_acpi, sizeof(struct npx_softc), npx_acpi_match,
     npx_acpi_attach, NULL, NULL);
@@ -64,7 +64,7 @@ static const char * const npx_acpi_ids[] = {
 /*
  * npx_acpi_match: autoconf(9) match routine
  */
-int
+static int
 npx_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -78,7 +78,7 @@ npx_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 /*
  * npx_acpi_attach: autoconf(9) attach routine
  */
-void
+static void
 npx_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct npx_softc *sc = (struct npx_softc *)self;

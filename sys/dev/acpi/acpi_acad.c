@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.14 2004/04/11 06:48:25 kochi Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.15 2004/05/01 12:03:48 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.14 2004/04/11 06:48:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.15 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ struct acpiacad_softc {
 	struct simplelock sc_lock;
 };
 
-const struct envsys_range acpiacad_range[] = {
+static const struct envsys_range acpiacad_range[] = {
 	{ 0, 2,		ENVSYS_INDICATOR },
 	{ 1, 0, 	-1},
 };
@@ -135,7 +135,7 @@ static int acpiacad_streinfo(struct sysmon_envsys *, struct envsys_basic_info *)
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 acpiacad_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -151,7 +151,7 @@ acpiacad_match(struct device *parent, struct cfdata *match, void *aux)
  *
  *	Autoconfiguration `attach' routine.
  */
-void
+static void
 acpiacad_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpiacad_softc *sc = (void *) self;
@@ -193,7 +193,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Get, and possibly display, the current AC line status.
  */
-void
+static void
 acpiacad_get_status(void *arg)
 {
 	struct acpiacad_softc *sc = arg;
@@ -219,7 +219,7 @@ acpiacad_get_status(void *arg)
 /*
  * Clear status
  */
-void
+static void
 acpiacad_clear_status(struct acpiacad_softc *sc)
 {
 
@@ -235,7 +235,7 @@ acpiacad_clear_status(struct acpiacad_softc *sc)
  *
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
-void
+static void
 acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct acpiacad_softc *sc = context;
@@ -269,7 +269,7 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 	}
 }
 
-void
+static void
 acpiacad_init_envsys(struct acpiacad_softc *sc)
 {
 	int i;
@@ -305,7 +305,7 @@ acpiacad_init_envsys(struct acpiacad_softc *sc)
 		    sc->sc_dev.dv_xname);
 }
 
-int
+static int
 acpiacad_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct acpiacad_softc *sc = sme->sme_cookie;
@@ -321,7 +321,7 @@ acpiacad_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 }
 
 
-int
+static int
 acpiacad_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 {
 

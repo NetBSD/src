@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.10 2004/04/10 11:48:11 kochi Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.11 2004/05/01 12:03:48 kochi Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.10 2004/04/10 11:48:11 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.11 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,12 +59,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.10 2004/04/10 11:48:11 kochi Exp $");
 #define ATZ_SENSOR_TEMP	0	/* thermal zone temperature */
 #define ATZ_NUMSENSORS	1	/* number of sensors */
 
-const struct envsys_range acpitz_ranges[] = {
+static const struct envsys_range acpitz_ranges[] = {
 	{ 0, 1,	ATZ_SENSOR_TEMP },
 };
 
-int	acpitz_match(struct device *, struct cfdata *, void *);
-void	acpitz_attach(struct device *, struct device *, void *);
+static int	acpitz_match(struct device *, struct cfdata *, void *);
+static void	acpitz_attach(struct device *, struct device *, void *);
 
 /*
  * ACPI Temperature Zone information. Note all temperatures are reported
@@ -108,9 +108,9 @@ struct acpitz_softc {
 	int sc_rate;		/* tz poll rate */
 };
 
-void	acpitz_get_status(void *);
+static void	acpitz_get_status(void *);
 static void	acpitz_print_status(struct acpitz_softc *);
-void	acpitz_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	acpitz_notify_handler(ACPI_HANDLE, UINT32, void *);
 static void	acpitz_tick(void *);
 static void	acpitz_init_envsys(struct acpitz_softc *);
 static int	acpitz_gtredata(struct sysmon_envsys *,
@@ -124,7 +124,7 @@ CFATTACH_DECL(acpitz, sizeof(struct acpitz_softc), acpitz_match,
 /*
  * acpitz_match: autoconf(9) match routine
  */
-int
+static int
 acpitz_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -138,7 +138,7 @@ acpitz_match(struct device *parent, struct cfdata *match, void *aux)
 /*
  * acpitz_attach: autoconf(9) attach routine
  */
-void
+static void
 acpitz_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpitz_softc *sc = (struct acpitz_softc *)self;
@@ -185,7 +185,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	acpitz_init_envsys(sc);
 }
 
-void
+static void
 acpitz_get_status(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
@@ -226,7 +226,7 @@ acpitz_print_status(struct acpitz_softc *sc)
 	return;
 }
 
-void
+static void
 acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
@@ -313,7 +313,7 @@ acpitz_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	return 0;
 }
 
-int
+static int
 acpitz_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 {
 

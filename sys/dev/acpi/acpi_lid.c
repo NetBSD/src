@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.14 2004/04/11 06:48:25 kochi Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.15 2004/05/01 12:03:48 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.14 2004/04/11 06:48:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.15 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,21 +63,21 @@ static const char * const lid_hid[] = {
 	NULL
 };
 
-int	acpilid_match(struct device *, struct cfdata *, void *);
-void	acpilid_attach(struct device *, struct device *, void *);
+static int	acpilid_match(struct device *, struct cfdata *, void *);
+static void	acpilid_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpilid, sizeof(struct acpilid_softc),
     acpilid_match, acpilid_attach, NULL, NULL);
 
-void	acpilid_status_changed(void *);
-void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *context);
+static void	acpilid_status_changed(void *);
+static void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *context);
 
 /*
  * acpilid_match:
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 acpilid_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -93,7 +93,7 @@ acpilid_match(struct device *parent, struct cfdata *match, void *aux)
  *
  *	Autoconfiguration `attach' routine.
  */
-void
+static void
 acpilid_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpilid_softc *sc = (void *) self;
@@ -126,7 +126,7 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Get, and possibly display, the lid status, and take action.
  */
-void
+static void
 acpilid_status_changed(void *arg)
 {
 	struct acpilid_softc *sc = arg;
@@ -146,7 +146,7 @@ acpilid_status_changed(void *arg)
  *
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
-void
+static void
 acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct acpilid_softc *sc = context;
