@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24 1998/08/12 05:42:45 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.25 1998/08/12 06:55:24 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -479,8 +479,7 @@ zshard(arg)
 	if (zsc == NULL)
 		return 0;
 
-	rval = 0;
-	rval |= zsc_intr_hard(zsc);
+	rval = zsc_intr_hard(zsc);
 	if ((zsc->zsc_cs[0]->cs_softreq) || (zsc->zsc_cs[1]->cs_softreq)) {
 		/* zsc_req_softint(zsc); */
 		/* We are at splzs here, so no need to lock. */
