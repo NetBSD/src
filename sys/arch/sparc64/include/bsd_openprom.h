@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.4 2002/08/23 01:08:46 thorpej Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.5 2002/08/23 02:45:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
  * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
  * All rights reserved.
  */
+
+#ifndef _BSD_OPENPROM_H_
+#define	_BSD_OPENPROM_H_ 
 
 /*
  * This file defines the interface between the kernel and the Openboot PROM.
@@ -355,3 +358,5 @@ void	romboot __P((char *))
     __attribute__((__noreturn__));
 
 extern struct promvec *promvec;
+
+#endif /* _BSD_OPENPROM_H_ */
