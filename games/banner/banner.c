@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.4 1995/04/22 11:55:15 cgd Exp $	*/
+/*	$NetBSD: banner.c,v 1.5 1997/01/07 11:40:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -43,8 +43,9 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)banner.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: banner.c,v 1.4 1995/04/22 11:55:15 cgd Exp $";
+static char rcsid[] = "$NetBSD: banner.c,v 1.5 1997/01/07 11:40:25 tls Exp $";
 #endif
+static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #endif /* not lint */
 
 /*
@@ -1032,26 +1033,26 @@ int	width = DWIDTH;	/* -w option: scrunch letters to 80 columns */
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 { 
 	int ch;
 
 	while ((ch = getopt(argc, argv, "w:td")) != EOF)
-		switch(ch) {
-		case 'w':
-			width = atoi(optarg);
-			if (width <= 0)
-				width = 80;
-			break;
+		switch (ch) {
 		case 'd':
 			debug = 1;
 			break;
 		case 't':
 			trace = 1;
 			break;
+		case 'w':
+			width = atoi(optarg);
+			if (width <= 0)
+				errx(1, "illegal argument for -w option");
+			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: banner [-w width]\n");
+			(void)fprintf(stderr, "usage: banner [-w width]\n");
 			exit(1);
 		}
 	argc -= optind;
