@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.5 1996/10/29 04:26:57 briggs Exp $
+#	$NetBSD: MYSTERY,v 1.6 1996/11/11 18:02:57 scottr Exp $
 #
 # SPOT
 
@@ -8,7 +8,6 @@ maxusers	16
 
 makeoptions CC="cc -m68030"
 options 	MYSTERY
-options 	MAXFDESCS=2048
 
 # Standard system options
 options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
