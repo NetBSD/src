@@ -1,4 +1,4 @@
-/*	$NetBSD: autil.c,v 1.1.1.6 2003/03/09 01:13:09 christos Exp $	*/
+/*	$NetBSD: autil.c,v 1.2 2003/04/12 21:57:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -287,7 +287,13 @@ am_mounted(am_node *mp)
    * Check whether this mount should be cached permanently
    */
   if (mf->mf_fsflags & FS_NOTIMEOUT) {
-    mp->am_flags |= AMF_NOTIMEOUT;
+    mntent_t mnt;
+    mnt.mnt_opts = mf->mf_mopts;
+
+    if (mf->mf_mopts && amu_hasmntopt(&mnt, "unmount"))
+      mp->am_flags &= ~AMF_NOTIMEOUT;
+    else
+      mp->am_flags |= AMF_NOTIMEOUT;
   } else if (mf->mf_mount[1] == '\0' && mf->mf_mount[0] == '/') {
     mp->am_flags |= AMF_NOTIMEOUT;
   } else {
@@ -296,6 +302,8 @@ am_mounted(am_node *mp)
       mnt.mnt_opts = mf->mf_mopts;
       if (amu_hasmntopt(&mnt, "nounmount"))
 	mp->am_flags |= AMF_NOTIMEOUT;
+      if (amu_hasmntopt(&mnt, "unmount"))
+	mp->am_flags &= ~AMF_NOTIMEOUT;
       if ((mp->am_timeo = hasmntval(&mnt, "utimeout")) == 0)
 	mp->am_timeo = gopt.am_timeo;
     }
