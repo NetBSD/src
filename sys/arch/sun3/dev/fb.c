@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.2 1995/04/07 02:52:28 gwr Exp $ */
+/*	$NetBSD: fb.c,v 1.3 1995/04/10 05:45:56 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ fbioctl(dev, cmd, data, flags, p)
 }
 
 int
-fbmap(dev, off, prot)
+fbmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
