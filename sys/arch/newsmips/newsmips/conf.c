@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2000/04/14 13:41:25 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2000/04/16 05:42:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ dev_t	swapdev = makedev(4, 0);
 #include "tun.h"
 #include "pty.h"
 #include "bpfilter.h"
-#include "zsc.h"
+#include "zstty.h"
 #include "ms.h"
 #include "fb.h"
 #define fbpoll seltrue
