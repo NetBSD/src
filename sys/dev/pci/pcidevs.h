@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.144 1999/07/15 18:06:39 ross Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.145 1999/07/20 20:59:03 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.137 1999/07/15 18:02:08 ross Exp 
+ *	NetBSD: pcidevs,v 1.138 1999/07/20 20:58:20 drochner Exp 
  */
 
 /*
@@ -1173,6 +1173,7 @@
 
 /* Texas Instruments products */
 #define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */
+#define	PCI_PRODUCT_TI_TVP4020	0x3d07		/* TVP4020 Permedia 2 */
 #define	PCI_PRODUCT_TI_PCILYNX	0x8000		/* LYNX FireWire Host Controller */
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1031	0xac13		/* PCI1031 PCI-pcmcia Bridge */
