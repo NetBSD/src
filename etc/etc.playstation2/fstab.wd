@@ -1,5 +1,0 @@
-#	$NetBSD: fstab.wd,v 1.1 2001/10/15 16:22:53 uch Exp $
-/dev/wd0a	/	ffs	rw		1 1
-/dev/wd0b	none	swap	sw		0 0
-kernfs		/kern	kernfs	rw		0 0
-procfs		/proc	procfs	rw		0 0

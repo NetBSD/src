@@ -1,4 +1,0 @@
-# $NetBSD: md.macppc,v 1.3 2000/10/05 02:27:04 tv Exp $
-./usr/X11R6/bin/X
-./usr/X11R6/bin/Xmacppc
-./usr/X11R6/lib/X11/rgb.db

@@ -1,5 +1,0 @@
-#	$NetBSD: Makefile.vax,v 1.5 1998/08/20 15:18:26 matt Exp $
-#	from: @(#)Makefile.vax	6.1 (Berkeley) 3/3/91
-
-CPPFLAGS+=	-DPIC
-SRCS+=		tc-vax.c atof-vax.c

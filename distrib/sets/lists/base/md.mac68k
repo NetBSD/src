@@ -1,2 +1,0 @@
-# $NetBSD: md.mac68k,v 1.34 2001/01/25 08:29:19 jwise Exp $
-./usr/lkm/iwmfd.o	base-sys-lkm

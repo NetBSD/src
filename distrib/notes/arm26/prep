@@ -1,5 +1,0 @@
-.\"	$NetBSD: prep,v 1.2 2000/10/10 12:55:17 lukem Exp $
-.
-.Nx*M
-cannot currently be installed to a local disk,
-so there's not a lot to do to prepare a machine to run it.
