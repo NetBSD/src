@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.6 1998/09/02 21:33:50 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.7 1999/02/05 20:53:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.6 1998/09/02 21:33:50 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.7 1999/02/05 20:53:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -179,7 +179,7 @@ c_setpat(el)
 	el->el_search.patlen = EL_CURSOR(el) - el->el_line.buffer;
 	if (el->el_search.patlen >= EL_BUFSIZ) 
 	    el->el_search.patlen = EL_BUFSIZ -1;
-	if (el->el_search.patlen >= 0)  {
+	if (el->el_search.patlen != 0)  {
 	    (void) strncpy(el->el_search.patbuf, el->el_line.buffer, 
 			   el->el_search.patlen);
 	    el->el_search.patbuf[el->el_search.patlen] = '\0';
