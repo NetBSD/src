@@ -1,4 +1,4 @@
-.\"	$NetBSD: wds.4,v 1.1 1997/02/23 23:55:46 jonathan Exp $
+.\"	$NetBSD: wds.4,v 1.2 1998/04/30 08:50:15 fair Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan	Stone
 .\" All rights reserved.
@@ -10,7 +10,7 @@
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -24,24 +24,28 @@
 .\"
 .Dd February 17, 1997
 .Dt WDS 4
-.Os NetBSD 
+.Os NetBSD
 .Sh NAME
 .Nm wds
-.Nd WD7000 compatible SCSI driver
+.Nd WD7000 compatible ISA SCSI driver
 .Sh SYNOPSIS
 .Cd "wds0    at isa? port 0x350 irq 15 drq 6		# WD7000, TMC-7000"
 .Cd "wds1    at isa? port 0x358 irq 11 drq 5"
 .Cd "scsibus* at wds?"
 .Sh DESCRIPTION
 The
-.Nm wds 
-driver supports the WD7000 family of SCSI adaptors
-and	compatibles,	including:
+.Nm
+driver supports the WD7000 family of
+.Tn SCSI
+adaptors and compatibles, including:
 .Bl -tag -width xxxxxxxxxxxxx -offset xxxx -compact
 .It WD7000-ASC
 busmastering DMA controller
-.It	WD7000-ASE
-an ASC with floppy controller and ESDI, manufactured for Apollo
+.It WD7000-ASE
+an ASC with floppy controller and
+.Tn ESDI ,
+manufactured for
+.Tn Apollo
 workstations.
 .It WD7000-FASST2
 an ASC with new firmware and scatter-gather hardware.
@@ -50,8 +54,8 @@ an ASC with new firmware and scatter-gather hardware.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
 .Xr cd 4 ,
 .Xr ch 4 .
-

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.8 1997/11/11 05:50:28 thorpej Exp $
+.\"	$NetBSD: pci.4,v 1.9 1998/04/30 08:50:09 fair Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -42,59 +42,102 @@
 Other
 .Nm
 attachments are machine-dependent and depend on the bus topology and
-PCI bus interface of your system.  See
+.Tn PCI
+bus interface of your system.
+See
 .Xr intro 4
 for your system for details.
 .Sh INTRODUCTION
 .Nx
-includes a machine-independent PCI bus subsystem and
-several machine-independent PCI device drivers.
+includes a machine-independent
+.Tn PCI
+bus subsystem and
+several machine-independent
+.Tn PCI
+device drivers.
 .Pp
-Your system may support additional PCI devices.  Drivers for PCI
+Your system may support additional
+.Tn PCI
+devices.
+Drivers for
+.Tn PCI
 devices not listed here are machine-dependent.
 Consult your system's
 .Xr intro 4
 for additional information.
 .Sh SUPPORTED DEVICES
 .Nx
-includes machine-independent PCI drivers, sorted by device type and
-driver name:
+includes machine-independent
+.Tn PCI
+drivers, sorted by device type and driver name:
 .Pp
 .Ss SCSI interfaces
 .Bl -tag -width speaker -offset indent
 .It ahc
-Adaptec 29xx, 39xx, and other AIC-7xxx-based SCSI interfaces.
+Adaptec 29xx, 39xx, and other AIC-7xxx-based
+.Tn SCSI
+interfaces.
 .It bha
-Buslogic BT-9xx SCSI interfaces.
+Buslogic BT-9xx
+.Tn SCSI
+interfaces.
 .It isp
-QLogic ISP-1020, ISP-1040, and ISP-2100 SCSI and FibreChannel interfaces.
+QLogic ISP-1020, ISP-1040, and ISP-2100
+.Tn SCSI
+and
+.Tn FibreChannel
+interfaces.
 .It ncr
-Symbios Logic/NCR 53c8xx-family SCSI interfaces.
+Symbios Logic/NCR 53c8xx-family
+.Tn SCSI
+interfaces.
 .El
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent
 .It de
-DEC DC21x4x (Tulip) based Ethernet interfaces, including the DE435,
+.Tn DEC
+DC21x4x (Tulip) based
+.Tn Ethernet
+interfaces, including the DE435,
 DE450, and DE500, and Znyx, SMC, Cogent/Adaptec, and Asante single- and
-multi-port Ethernet interfaces.  Multi-port interfaces are typically
-configured as a PCI-PCI bridge with multiple
+multi-port
+.Tn Ethernet
+interfaces.  Multi-port interfaces are typically
+configured as a
+.Tn PCI Ns \- Ns Tn PCI
+bridge with multiple
 .Em de
-instances on the PCI bus on the other side of the bridge.
+instances on the
+.Tn PCI
+bus on the other side of the bridge.
 .It en
 Midway-based Efficent Networks Inc. and Adaptec ATM interfaces.
 .It ep
-3Com 3c590, 3c595, 3c900, and 3c905 Ethernet interfaces.
+3Com 3c590, 3c595, 3c900, and 3c905
+.Tn Ethernet
+interfaces.
 .It fpa
-DEC DEFPA FDDI interfaces.
+.Tn DEC
+DEFPA
+.Tn FDDI
+interfaces.
 .It fxp
-Intel EtherExpress PRO 10+/100B Ethernet interfaces.
+Intel EtherExpress PRO 10+/100B
+.Tn Ethernet
+interfaces.
 .It le
-PCNet-PCI Ethernet interfaces.
+PCNet-PCI
+.Tn Ethernet
+interfaces.
 .It ne
-NE2000-compatible Ethernet interfaces.
+NE2000-compatible
+.Tn Ethernet
+interfaces.
 .It tl
-Texas Instruments ThunderLAN-based Ethernet interfaces.
+Texas Instruments ThunderLAN-based
+.Tn Ethernet
+interfaces.
 .El
 .Pp
 .Ss Serial interfaces
@@ -107,9 +150,15 @@ device interface
 .Ss Miscellaneous devices
 .Bl -tag -width speaker -offset indent
 .It pcic
-PCI PCMCIA controllers, including the Cirrus Logic GD6729.
+.Tn PCI
+.Tn PCMCIA
+controllers, including the Cirrus Logic GD6729.
 .It ppb
-Generic PCI-PCI bridges, including PCI expansion backplanes.
+Generic
+.Tn PCI Ns \- Ns Tn PCI
+bridges, including
+.Tn PCI
+expansion backplanes.
 .El
 .Pp
 .Sh SEE ALSO
@@ -130,5 +179,7 @@ Generic PCI-PCI bridges, including PCI expansion backplanes.
 .Xr ppb 4 ,
 .Xr tl 4
 .Sh HISTORY
-The machine-independent PCI subsystem appeared in
+The machine-independent
+.Tn PCI
+subsystem appeared in
 .Nx 1.2 .
