@@ -3141,15 +3141,15 @@ _svr4_esigcode:
 #ifdef GPROF
 	.globl	mcount
 #define	ENTRY(x) \
-	.globl _##x; _##x: ; \
+	.globl _/**/x; _/**/x: ; \
 	save	%sp, -CCFSZ, %sp; \
 	call	mcount; \
 	nop; \
 	restore
 #else
-#define	ENTRY(x)	.globl _##x; _##x:
+#define	ENTRY(x)	.globl _/**/x; _/**/x:
 #endif
-#define	ALTENTRY(x)	.globl _##x; _##x:
+#define	ALTENTRY(x)	.globl _/**/x; _/**/x:
 
 /*
  * getfp() - get stack frame pointer
