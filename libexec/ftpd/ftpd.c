@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.89 2000/05/20 23:34:55 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.90 2000/05/30 05:31:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.89 2000/05/20 23:34:55 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.90 2000/05/30 05:31:31 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -319,6 +319,8 @@ main(int argc, char *argv[])
 		/*
 		 * IPv4 control connection arrived to AF_INET6 socket.
 		 * I hate to do this, but this is the easiest solution.
+		 *
+		 * The assumption is untrue on SIIT environment.
 		 */
 		union sockunion tmp_addr;
 		const int off = sizeof(struct in6_addr) - sizeof(struct in_addr);
