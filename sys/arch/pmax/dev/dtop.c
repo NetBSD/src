@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.40 1999/11/13 22:56:56 mhitch Exp $	*/
+/*	$NetBSD: dtop.c,v 1.41 1999/11/29 15:02:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.40 1999/11/13 22:56:56 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.41 1999/11/29 15:02:38 ad Exp $");
 
 #include "rasterconsole.h"
 
@@ -826,7 +826,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 {
 	u_char *ls, *le, *ns, *ne;
 	u_char save[11], retc;
-	int msg_len, c, s;
+	int msg_len, c, s, cl;
 	char *cp;
 #ifdef RCONS_BRAINDAMAGE
 	struct tty *tp = DTOP_TTY(0);
@@ -905,7 +905,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	ls = &dev->keyboard.last_codes[dev->keyboard.last_codes_count - 1];
 	for ( ; ls >= le; ls--)
 	    if ((c = *ls) != 0) {
-		(void) kbdMapChar(c);
+		(void) kbdMapChar(c, &cl);
 
 		if (outc == 0 && dtopDivertXInput &&
 		    (keymodes[(c >> 5) & 0x7] & (1 << (c & 0x1f))))
@@ -919,7 +919,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	retc = 0;
 	for ( ; ns >= ne; ns--)
 	    if (*ns) {
-		cp = kbdMapChar(*ns);
+		cp = kbdMapChar(*ns, &cl);
 #ifdef DDB
 		if (*ns == LK_DO) {
 			spl0();
@@ -931,7 +931,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 			(*dtopDivertXInput)(*ns);
 			c = -1; /* consumed by X */
 		    } else if (cp /*&& tp != NULL*/) {
-			for (; *cp; cp++) {
+			for (; cl; cl--, cp++) {
 #if 0
 				(*linesw[tp->t_line].l_rint)(*cp, tp);
 #else
@@ -968,9 +968,8 @@ dtop_keyboard_repeat(arg)
 	void *arg;
 {
 	dtop_device_t dev = (dtop_device_t)arg;
-	int i, c;
+	int i, c, cl;
 	char *cp;
-
 #if 0
 	struct tty *tp = DTOP_TTY(0);
 #endif
@@ -987,8 +986,8 @@ dtop_keyboard_repeat(arg)
 				continue;
 			}
 
-			if ((cp = kbdMapChar(KEY_REPEAT)) != NULL) {
-				for (; *cp; cp++) {
+			if ((cp = kbdMapChar(KEY_REPEAT, &cl)) != NULL) {
+				for (; cl; cl--, cp++) {
 #if 0
 					(*linesw[tp->t_line].l_rint)(*cp, tp);
 #else
