@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_cons.c	7.8 (Berkeley) 5/9/91
- *	$Id: tp_cons.c,v 1.3 1993/12/18 00:43:27 mycroft Exp $
+ *	$Id: tp_cons.c,v 1.4 1993/12/18 04:58:03 mycroft Exp $
  */
 
 /***********************************************************
@@ -106,7 +106,8 @@ SOFTWARE.
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
 
-#include "if_cons.c"
+#include <netiso/if_cons.c>
+
 int tpcons_output();
 
 /*

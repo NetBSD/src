@@ -1,4 +1,4 @@
-/* $Id: tp_driver.c,v 1.3 1993/12/18 00:43:29 mycroft Exp $ */
+/* $Id: tp_driver.c,v 1.4 1993/12/18 04:55:38 mycroft Exp $ */
 
 #define _XEBEC_PG static
 
@@ -8,7 +8,7 @@ static struct act_ent {
 	int a_newstate;
 	int a_action;
 } statetable[] = { {0,0},
-#include "tp_states.init"
+#include <netiso/tp_states.init>
 };
 
 #include <sys/param.h>
