@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.4 2004/06/03 12:50:37 uebayasi Exp $
+# $NetBSD: linkfarm.sh,v 1.5 2004/06/03 13:13:42 uebayasi Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -135,18 +135,19 @@ yes)
 	checkdir $fromdir
 	(cd $fromdir
 	ex=0
-	for f in `$findprog . ! -type d -print`; do
-		newf=`echo $f | $sedprog -e 's|^\./||'`
-		if [ -e $todir/$newf ]; then
+	$findprog . ! -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	while read f; do
+		if [ -e $todir/$f ]; then
 			ignore=no
 			for i in $ignorefiles; do
-				case $newf in
+				case $f in
 				$i)	ignore=yes; break ;;
 				esac
 			done
 			case $ignore in
 			no)	
-				echo "${newf}"; ex=1 ;;
+				echo "${f}"; ex=1 ;;
 			esac
 		fi
 	done
@@ -159,23 +160,27 @@ case $delete in
 yes)	
 	checkdir $fromdir
 	(cd $fromdir
-	for f in `$findprog . ! -type d -print`; do
-		newf=`echo $f | $sedprog -e 's|^\./||'`
+	$findprog . ! -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	while read f; do
 		ignore=no
 		for i in $ignorefiles; do
-			case $newf in
+			case $f in
 			$i)	ignore=yes; break ;;
 			esac
 		done
 		case $ignore in
 		no)	
 			if [ $verbose -gt 0 ]; then
-				echo "$rmprog -f $todir/$newf"
+				echo "$rmprog -f $todir/$f"
 			fi
 			$doit $rmprog -f $todir/$f ;;
 		esac
 	done
-	for d in `$findprog . -type d -print | $sortprog -r`; do
+	$findprog . -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	$sortprog -r | \
+	while read d; do
 		if [ $verbose -gt 0 ]; then
 			echo "$rmdirprog $todir/$d"
 		fi
@@ -189,30 +194,32 @@ case $create in
 yes)
 	checkdir $fromdir
 	(cd $fromdir
-	for d in `$findprog . -type d -print`; do
-		newd=`echo $d | $sedprog -e 's|^\./||'`
+	$findprog . -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	while read d; do
 		case "$d" in
 		"")	continue ;;
 		esac
 		if [ $verbose -gt 0 ]; then
-			echo "$mkdirprog -p $todir/$newd"
+			echo "$mkdirprog -p $todir/$d"
 		fi
-		$doit $mkdirprog -p $todir/$newd > /dev/null 2>&1
+		$doit $mkdirprog -p $todir/$d > /dev/null 2>&1
 	done
-	for f in `$findprog . ! -type d -print`; do
-		newf=`echo $f | $sedprog -e 's|^\./||'`
+	$findprog . ! -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	while read f; do
 		ignore=no
 		for i in $ignorefiles; do
-			case $newf in
+			case $f in
 			$i)	ignore=yes; break ;;
 			esac
 		done
 		case $ignore in
 		no)
 			if [ $verbose -gt 0 ]; then
-				echo "$lnprog ${linktype} $fromdir/$newf $todir/$newf"
+				echo "$lnprog ${linktype} $fromdir/$f $todir/$f"
 			fi
-			$doit $lnprog ${linktype} $fromdir/$newf $todir/$newf ;;
+			$doit $lnprog ${linktype} $fromdir/$f $todir/$f ;;
 		esac
 	done)
 	;;
