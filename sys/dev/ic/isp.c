@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.18 1998/01/28 19:09:24 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.19 1998/02/13 21:58:40 thorpej Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -59,7 +59,6 @@
 
 #include <dev/scsipi/scsi_message.h>
 #include <dev/scsipi/scsipi_debug.h>
-#include <dev/scsipi/scsiconf.h>
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
