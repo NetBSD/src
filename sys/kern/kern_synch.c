@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.77 2000/06/08 05:50:37 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.78 2000/06/10 18:44:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -355,15 +355,18 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	int catch = priority & PCATCH;
 	int relock = (priority & PNORELOCK) == 0;
 #if 0 /* XXXSMP */
-	int dobiglock = (p->p_flags & P_BIGLOCK) != 0;
+	int dobiglock;
 #endif
 
 	/*
 	 * XXXSMP
 	 * This is probably bogus.  Figure out what the right
 	 * thing to do here really is.
+	 * Note that not sleeping if ltsleep is called with curproc == NULL 
+	 * in the shutdown case is disgusting but partly necessary given
+	 * how shutdown (barely) works.
 	 */
-	if (cold || panicstr) {
+	if (cold || (doing_shutdown && (panicstr || (p == NULL)))) {
 		/*
 		 * After a panic, or during autoconfiguration,
 		 * just give interrupts a chance, then just return;
@@ -377,6 +380,10 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 			simple_unlock(interlock);
 		return (0);
 	}
+
+#if 0 /* XXXSMP */
+	dobiglock = (p->p_flags & P_BIGLOCK) != 0;
+#endif
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
