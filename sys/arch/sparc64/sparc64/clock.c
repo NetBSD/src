@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19.2.1 2000/07/18 16:23:25 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.19.2.2 2000/07/31 02:06:39 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -435,15 +435,22 @@ void
 myetheraddr(cp)
 	u_char *cp;
 {
-	register struct clockreg *cl = clockreg;
-	register struct idprom *idp;
+	struct clockreg *cl = clockreg;
+	struct idprom *idp;
 
 	if (!cl) {
-		printf("myetheraddr: clockreg not setup yet\n");
-		return;
-	}
+		int node, n;
 
-	idp = &cl->cl_idprom;
+		node = findroot();
+		idp = NULL;
+		if (getprop(node, "idprom", sizeof *idp, &n, (void **)&idp) ||
+		    n != 1) {
+			printf("\nmyetheraddr: clock not setup yet, "
+			       "and no idprom property in /\n");
+			return;
+		}
+	} else
+		idp = &cl->cl_idprom;
 
 	cp[0] = idp->id_ether[0];
 	cp[1] = idp->id_ether[1];
@@ -451,6 +458,8 @@ myetheraddr(cp)
 	cp[3] = idp->id_ether[3];
 	cp[4] = idp->id_ether[4];
 	cp[5] = idp->id_ether[5];
+	if (idp != &cl->cl_idprom)
+		free(idp, M_DEVBUF);
 }
 
 /*
@@ -606,6 +615,8 @@ clockintr(cap)
 	return (1);
 }
 
+int poll_console = 0;
+
 /*
  * Level 10 (clock) interrupts.  If we are using the FORTH PROM for
  * console input, we need to check for that here as well, and generate
@@ -631,10 +642,8 @@ tickintr(cap)
 	splx(s);
 
 	hardclock((struct clockframe *)cap);
-#if	NKBD > 0
-	if (rom_console_input && cnrom())
+	if (poll_console)
 		setsoftint();
-#endif
 
 	return (1);
 }
