@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.11 2002/05/20 16:05:26 lukem Exp $	*/
+/*	$NetBSD: machines.c,v 1.12 2002/06/02 10:44:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,5 +52,6 @@ struct ib_mach machines[] = {
 	{ "sun2",	no_parseopt,	sun68k_setboot,	sun68k_clearboot },
 	{ "sun3",	no_parseopt,	sun68k_setboot,	sun68k_clearboot },
 	{ "vax",	vax_parseopt,	vax_setboot,	vax_clearboot },
+	{ "x68k",	no_parseopt,	x68k_setboot,	x68k_clearboot },
 	{ 0, 0, 0, 0 },
 };
