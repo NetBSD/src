@@ -1,4 +1,4 @@
-#	$Id: files.powerpc,v 1.10 1998/09/18 06:04:19 sakamoto Exp $
+#	$NetBSD: files.powerpc,v 1.11 1999/02/15 04:29:33 hubertf Exp $
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/copyinstr.c

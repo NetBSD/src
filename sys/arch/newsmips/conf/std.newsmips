@@ -1,3 +1,4 @@
+#	$NetBSD: std.newsmips,v 1.4 1999/02/15 04:32:34 hubertf Exp $
 
 machine newsmips mips
 
