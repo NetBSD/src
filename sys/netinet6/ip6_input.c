@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.50 2001/12/21 03:58:15 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.51 2001/12/22 01:40:03 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.50 2001/12/21 03:58:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.51 2001/12/22 01:40:03 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1447,9 +1447,11 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPV6CTL_DEFMCASTHLIM:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&ip6_defmcasthlim);
+#if NGIF > 0
 	case IPV6CTL_GIF_HLIM:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&ip6_gif_hlim);
+#endif
 	case IPV6CTL_KAME_VERSION:
 		return sysctl_rdstring(oldp, oldlenp, newp, __KAME_VERSION);
 	case IPV6CTL_USE_DEPRECATED:
