@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.25 2002/04/10 17:18:01 briggs Exp $
+# $NetBSD: ad.m68k,v 1.25.2.1 2002/07/18 04:47:31 lukem Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/m68k	comp-c-include
 ./usr/include/m68k/ansi.h	comp-c-include
@@ -48,6 +48,4 @@
 ./usr/include/m68k/types.h	comp-c-include
 ./usr/include/m68k/varargs.h	comp-c-include
 ./usr/lib/libm68k.a		comp-c-lib
-./usr/lib/libm68k.so		comp-c-lib
 ./usr/lib/libm68k_p.a		comp-c-lib
-./usr/lib/libm68k_pic.a		comp-c-lib
