@@ -1,4 +1,4 @@
-/* $NetBSD: aout_syscalls.c,v 1.11 2000/08/18 19:35:16 cgd Exp $ */
+/* $NetBSD: aout_syscalls.c,v 1.12 2000/11/13 21:32:16 jdolecek Exp $ */
 
 /*
  * System call names.
@@ -24,7 +24,7 @@
 #include <compat/aout/aout_syscallargs.h>
 #endif /* _KERNEL && ! _LKM */
 
-char *aout_syscallnames[] = {
+const char * const aout_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */

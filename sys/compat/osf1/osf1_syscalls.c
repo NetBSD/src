@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscalls.c,v 1.35 2000/08/18 19:35:22 cgd Exp $ */
+/* $NetBSD: osf1_syscalls.c,v 1.36 2000/11/13 21:32:19 jdolecek Exp $ */
 
 /*
  * System call names.
@@ -19,7 +19,7 @@
 #include <compat/osf1/osf1_syscallargs.h>
 #endif /* _KERNEL && ! _LKM */
 
-char *osf1_syscallnames[] = {
+const char * const osf1_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */
