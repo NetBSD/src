@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.50 2000/04/23 20:30:37 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.51 2000/05/20 13:38:59 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,11 +30,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_netbsd.h"
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/buf.h>
 #include <sys/conf.h>
 
 #include <vm/vm.h>
@@ -50,6 +53,7 @@
 #include <machine/ka650.h>
 #include <machine/clock.h>
 #include <machine/rpb.h>
+#include <machine/bus.h>
 
 #include <vax/vax/gencons.h>
 
@@ -90,15 +94,12 @@ cpu_rootconf()
 	 * The device we booted from are looked for during autoconfig.
 	 * There can only be one match.
 	 */
-	if ((bootdev & B_MAGICMASK) == (u_long)B_DEVMAGIC) {
+	if (rpb.rpb_base != (void *)-1)
 		booted_device = booted_from;
-		booted_partition = B_PARTITION(bootdev);
-	}
 
 #ifdef DEBUG
-	printf("booted from type %d unit %d controller %d adapter %d\n",
-	    B_TYPE(bootdev), B_UNIT(bootdev), B_CONTROLLER(bootdev),
-	    B_ADAPTOR(bootdev));
+	printf("booted from type %d unit %d csr 0x%lx adapter %lx slave %d\n",
+	    rpb.devtyp, rpb.unit, rpb.csrphy, rpb.adpphy, rpb.slave);
 #endif
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -134,6 +135,7 @@ mainbus_attach(parent, self, hej)
 	struct	device	*parent, *self;
 	void	*hej;
 {
+
 	printf("\n");
 
 	/*
@@ -144,6 +146,12 @@ mainbus_attach(parent, self, hej)
 
 	if (dep_call->cpu_subconf)
 		(*dep_call->cpu_subconf)(self);
+
+#if defined(COMPAT_14)
+	if (rpb.rpb_base == (void *)-1)
+		printf("\nWARNING: you must update your boot blocks.\n\n");
+#endif
+
 }
 
 struct	cfattach mainbus_ca = {
@@ -153,11 +161,15 @@ struct	cfattach mainbus_ca = {
 #include "sd.h"
 #include "cd.h"
 #include "rl.h"
+#include "ra.h"
+#include "hp.h"
 
 int	booted_qe(struct device *, void *);
 int	booted_ze(struct device *, void *);
 int	booted_sd(struct device *, void *);
 int	booted_rl(struct device *, void *);
+int	booted_ra(struct device *, void *);
+int	booted_hp(struct device *, void *);
 
 int (*devreg[])(struct device *, void *) = {
 	booted_qe,
@@ -168,8 +180,16 @@ int (*devreg[])(struct device *, void *) = {
 #if NRL > 0
 	booted_rl,
 #endif
+#if NRA
+	booted_ra,
+#endif
+#if NHP
+	booted_hp,
+#endif
 	0,
 };
+
+#define	ubreg(x) ((x) & 017777)
 
 void
 device_register(dev, aux)
@@ -192,7 +212,7 @@ booted_ze(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	if ((B_TYPE(bootdev) == BDEV_ZE) &&
+	if ((rpb.devtyp == BDEV_ZE) &&
 	    !strcmp("ze", dev->dv_cfdata->cf_driver->cd_name))
 		return 1;
 	return 0;
@@ -203,12 +223,9 @@ booted_qe(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	if ((B_TYPE(bootdev) == BDEV_QE) &&
+	if ((rpb.devtyp == BDEV_QE) &&
 	    !strcmp("qe", dev->dv_cfdata->cf_driver->cd_name) &&
-	    ((dev->dv_cfdata->cf_loc[0] == 0174440 &&
-			B_CONTROLLER(bootdev) == 0) || /* XQA0 */
-	     (dev->dv_cfdata->cf_loc[0] == 0174460 &&
-			B_CONTROLLER(bootdev) == 1)))  /* XQB0 */
+	    (ubreg(dev->dv_cfdata->cf_loc[0]) == ubreg(rpb.csrphy)))
 		return 1;
 	return 0;
 }
@@ -225,7 +242,7 @@ booted_sd(dev, aux)
 	struct device *ppdev;
 
 	/* Did we boot from SCSI? */
-	if (B_TYPE(bootdev) != BDEV_SD)
+	if (rpb.devtyp != BDEV_SD)
 		return 0;
 
 	/* Is this a SCSI device? */
@@ -236,19 +253,19 @@ booted_sd(dev, aux)
 	if (sa->sa_sc_link->type != BUS_SCSI)
 		return 0; /* ``Cannot happen'' */
 
-	if (sa->sa_sc_link->scsipi_scsi.target != B_UNIT(bootdev))
+	if (sa->sa_sc_link->scsipi_scsi.target != rpb.unit)
 		return 0; /* Wrong unit */
 
 	ppdev = dev->dv_parent->dv_parent;
 
 	/* VS3100 NCR 53C80 */
 	if ((strcmp(ppdev->dv_cfdata->cf_driver->cd_name, "ncr") == 0) &&
-	    (ppdev->dv_unit == B_CONTROLLER(bootdev)))
+	    (ppdev->dv_cfdata->cf_loc[0] == rpb.csrphy))
 			return 1;
 
 	/* VS4000 NCR 53C94 */
 	if ((strcmp(ppdev->dv_cfdata->cf_driver->cd_name, "asc") == 0) &&
-	    (ppdev->dv_unit == B_CONTROLLER(bootdev)))
+	    (ppdev->dv_cfdata->cf_loc[0] == rpb.csrphy))
 			return 1;
 
 	return 0; /* Where did we come from??? */
@@ -260,9 +277,68 @@ booted_rl(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	if ((B_TYPE(bootdev) == BDEV_RL) &&
+	if ((rpb.devtyp == BDEV_RL) &&
 	    !strcmp("rl", dev->dv_cfdata->cf_driver->cd_name))
 		return 1; /* XXX should check unit number also */
 	return 0;
+}
+#endif
+
+#if NRA
+#include <dev/mscp/mscp.h>
+#include <dev/mscp/mscpreg.h>
+#include <dev/mscp/mscpvar.h>
+int
+booted_ra(struct device *dev, void *aux)
+{
+	struct drive_attach_args *da = aux;
+	struct mscp_softc *pdev = (void *)dev->dv_parent;
+	paddr_t ioaddr;
+
+	if (rpb.devtyp != BDEV_UDA && rpb.devtyp != BDEV_KDB)
+		return 0; /* Not boot device type */
+	if (strcmp("ra", dev->dv_cfdata->cf_driver->cd_name))
+		return 0; /* Not RA disk drive */
+
+	if (da->da_mp->mscp_unit != rpb.unit)
+		return 0; /* Wrong unit number */
+
+	ioaddr = kvtophys(pdev->mi_iph); /* Get phys addr of CSR */
+	if (rpb.devtyp == BDEV_UDA && rpb.csrphy == ioaddr)
+		return 1; /* Did match CSR */
+
+	if (rpb.devtyp == BDEV_KDB && 0) /* XXX - fix this */
+		return 0;
+	return 0;
+}
+#endif
+#if NHP
+#include <vax/mba/mbavar.h>
+int
+booted_hp(struct device *dev, void *aux)
+{
+	static int mbaaddr;
+
+	if (rpb.devtyp != BDEV_HP)
+		return 0;
+
+	/* Save last adapter address */
+	if (strcmp("mba", dev->dv_cfdata->cf_driver->cd_name) == 0) {
+		struct sbi_attach_args *sa = aux;
+
+		mbaaddr = (int)sa->nexaddr;
+		return 0;
+	}
+
+	if (strcmp("hp", dev->dv_cfdata->cf_driver->cd_name))
+		return 0;
+
+	if (((struct mba_attach_args *)aux)->unit != rpb.unit)
+		return 0;
+
+	if (mbaaddr != rpb.csrphy)
+		return 0;
+
+	return 1;
 }
 #endif
