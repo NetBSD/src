@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv4.c,v 1.4 2001/02/10 14:57:53 blymn Exp $	*/
+/*	$NetBSD: type_ipv4.c,v 1.5 2001/02/13 01:00:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -69,6 +69,9 @@ ipv4_check_field(FIELD *field, char *args)
 	if (asprintf(&keeper, "%s", args) < 0)
 		return FALSE;
 
+#ifdef DEBUG
+	fprintf(dbg, "ipv4_check_field: enter with args of %s\n", keeper);
+#endif
 	style = FORMI_DOTTED_QUAD;
 	buf = keeper;
 
@@ -94,7 +97,7 @@ ipv4_check_field(FIELD *field, char *args)
 	case FORMI_DOTTED_QUAD:
 		for (i = 0; i < 4; i++) {
 			p = strsep(&buf, ".");
-			if (*p == '\0')
+			if ((p == NULL) || (*p == '\0'))
 				goto FAIL;
 			vals[i] = atoi(p);
 			if (vals[i] > 255)
@@ -107,20 +110,16 @@ ipv4_check_field(FIELD *field, char *args)
 		hex_val = strtoul(buf, NULL, 16);
 		if ((hex_val == ULONG_MAX) && (errno == ERANGE))
 			goto FAIL;
+		
 		working = hex_val;
-		for (i = 3; i < 0; i--) {
-			vals[i] = (unsigned int)(working & 0xff);
+		for (i = 3; i >= 0; i--) {
+			vals[i] = (unsigned int)(working & 0xffUL);
 			working = working >> 8;
 		}
 		break;
 
 	}
 	
-		
-	  /* check for null buffer pointer, indicates trailing garbage */
-	if (buf != NULL)
-		goto FAIL;
-
 	free(keeper);
 
 	buf1 = NULL;
@@ -129,6 +128,9 @@ ipv4_check_field(FIELD *field, char *args)
 	case FORMI_DOTTED_QUAD:
 		if (asprintf(&buf, "%d.%d.%d.%d", vals[0], vals[1], vals[2],
 			     vals[3]) < 0)
+			return FALSE;
+		if (asprintf(&buf1, "%d.%d.%d.%d", vals[0], vals[1],
+			     vals[2], vals[3]) < 0)
 			return FALSE;
 		break;
 
@@ -157,12 +159,15 @@ ipv4_check_field(FIELD *field, char *args)
 	   * Set the field buffer 1 to the dotted quad format regardless
 	   * of the input format, only if buffer 1 exists.
 	   */
-	if ((field->nbuf > 1) && (buf1 != NULL))
+	if (field->nbuf > 1)
 		set_field_buffer(field, 1, buf1);
-	
+
+#ifdef DEBUG
+	fprintf(dbg, "ipv4_check_field: buf0 set to %s\n", buf);
+	fprintf(dbg, "ipv4_check_field: buf1 set to %s\n", buf1);
+#endif
 	free(buf);
-	if (buf1 != NULL)
-		free(buf1);
+	free(buf1);
 	
 	return TRUE;
 
@@ -179,8 +184,8 @@ ipv4_check_field(FIELD *field, char *args)
 static int
 ipv4_check_char(/* ARGSUSED1 */ int c, char *args)
 {
-	return (isxdigit(c) || (c == '.') || (tolower(c) == 'x'))
-		? TRUE : FALSE;
+	return (isxdigit(c) || (c == '.') || (tolower(c) == 'x') ||
+		(c == '/'))? TRUE : FALSE;
 }
 
 static FIELDTYPE builtin_ipv4 = {
