@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.72 1994/05/27 11:18:26 mycroft Exp $
+ *	$Id: locore.s,v 1.73 1994/05/29 06:48:35 mycroft Exp $
  */
 
 /*
@@ -1570,8 +1570,6 @@ ENTRY(cpu_switch)
 	pushl	%edi
 	pushl	_cpl
 
-	incl	_cnt+V_SWTCH
-
 	/* Don't accumulate system time while idle. */
 	movl	_curproc,%esi
 	movl	$0,_curproc
@@ -1745,8 +1743,6 @@ switch_return:
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_proc0,%ebx
-
-	incl	_cnt+V_SWTCH
 
 	/* In case we fault... */
 	movl	$0,_curproc
