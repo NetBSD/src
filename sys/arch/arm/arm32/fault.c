@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.42 2003/11/14 21:22:08 briggs Exp $	*/
+/*	$NetBSD: fault.c,v 1.43 2003/11/15 20:18:34 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.42 2003/11/14 21:22:08 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.43 2003/11/15 20:18:34 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,15 +429,17 @@ data_abort_handler(trapframe_t *tf)
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
 
+	KSI_INIT_TRAP(&ksi);
+
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
 		    (l->l_proc->p_cred && l->l_proc->p_ucred) ?
 		     l->l_proc->p_ucred->cr_uid : -1);
-	}
+		ksi.ksi_signo = SIGKILL;
+	} else
+		ksi.ksi_signo = SIGSEGV;
 
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGSEGV;
 	ksi.ksi_code = (error == EACCES) ? SEGV_ACCERR : SEGV_MAPERR;
 	ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
 	ksi.ksi_trap = fsr;
@@ -750,15 +752,17 @@ prefetch_abort_handler(trapframe_t *tf)
 	if (__predict_true(error == 0))
 		goto out;
 
+	KSI_INIT_TRAP(&ksi);
+
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
 		    (l->l_proc->p_cred && l->l_proc->p_ucred) ?
 		     l->l_proc->p_ucred->cr_uid : -1);
-	}
+		ksi.ksi_signo = SIGKILL;
+	} else
+		ksi.ksi_signo = SIGSEGV;
 
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGSEGV;
 	ksi.ksi_code = SEGV_MAPERR;
 	ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
 	ksi.ksi_trap = fault_pc;
