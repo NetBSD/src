@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.16 1993/12/18 00:45:55 mycroft Exp $
+ *	$Id: nfs_vnops.c,v 1.17 1993/12/22 13:03:22 cgd Exp $
  */
 
 /*
@@ -257,9 +257,7 @@ nfs_access(vp, mode, cred, p)
 found:
 		;
 	}
-	if ((vap->va_mode & mode) == mode)
-		return (0);
-	return (EACCES);
+	return ((vap->va_mode & mode) == mode ? 0 : EACCES);
 }
 
 /*
@@ -935,6 +933,17 @@ nfs_rename(sndp, tndp, p)
 	u_long xid;
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct vnode *fvp, *tdvp, *tvp;
+
+	/* Check for cross-device rename */
+	fvp = sndp->ni_vp;
+	tdvp = tndp->ni_dvp;
+	tvp = tndp->ni_vp;
+	if ((fvp->v_mount != tdvp->v_mount) ||
+	    (tvp && (fvp->v_mount != tvp->v_mount))) {
+		error = EXDEV;
+		goto out;
+	}
 
 	nfsstats.rpccnt[NFSPROC_RENAME]++;
 	nfsm_reqhead(nfs_procids[NFSPROC_RENAME], tndp->ni_cred,
@@ -953,6 +962,8 @@ nfs_rename(sndp, tndp, p)
 			cache_purge(tndp->ni_dvp);
 		cache_purge(sndp->ni_dvp);
 	}
+
+out:
 	if (tndp->ni_dvp == tndp->ni_vp)
 		vrele(tndp->ni_dvp);
 	else
@@ -1017,6 +1028,10 @@ nfs_link(vp, ndp, p)
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 
+	if (vp->v_mount != ndp->ni_dvp->v_mount) {
+		free(ndp->ni_pnbuf, M_NAMEI);
+		return (EXDEV);
+	}
 	if (ndp->ni_dvp != vp)
 		nfs_lock(vp);
 	nfsstats.rpccnt[NFSPROC_LINK]++;
@@ -1725,7 +1740,7 @@ nfs_advlock(vp, id, op, fl, flags)
 /*
  * Print out the contents of an nfsnode.
  */
-void
+int
 nfs_print(vp)
 	struct vnode *vp;
 {
@@ -1739,13 +1754,13 @@ nfs_print(vp)
 #endif /* FIFO */
 	printf("%s\n", (np->n_flag & NLOCKED) ? " (LOCKED)" : "");
 	if (np->n_lockholder == 0)
-		return;
+		return (0);
 	printf("\towner pid %d", np->n_lockholder);
 	if (np->n_lockwaiter)
 		printf(" waiting pid %d", np->n_lockwaiter);
 	printf("\n");
+	return (0);
 }
-
 
 /*
  * Attribute cache routines.
