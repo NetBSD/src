@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.8 2000/11/30 22:54:32 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.9 2000/12/03 15:37:46 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@
 #include <mvme68k/dev/pcctworeg.h>
 #include <mvme68k/dev/pcctwovar.h>
 
-
 /*
  * Autoconfiguration stuff.
  */
@@ -89,41 +88,19 @@ struct pcctwo_device {
 #define VEC2ICSR_REG(x)		((x) & 0xff)
 #define VEC2ICSR_INIT(x)	((x) >> 8)
 
-/*
- * Devices that live on both mvme16x and mvme17x boards.
- */
-#include "memc.h"
-#include "ie_pcctwo.h"
-#include "ncrsc_pcctwo.h"
-
 #if defined(MVME167) || defined(MVME177)
 /*
  * Devices that live on the PCCchip2, attached in this order.
  */
-#include "clmpcc_pcctwo.h"
-#include "lpt_pcctwo.h"
-
 static struct pcctwo_device pcctwo_devices[] = {
 	{"clock", PCCTWO_RTC_OFF},
-#if 0
-	{"nvram", PCCTWO_NVRAM_OFF},
-#endif
-#if NMEMC
 	{"memc", PCCTWO_MEMC1_OFF},
 	{"memc", PCCTWO_MEMC2_OFF},
-#endif
-#if NCLMPCC_PCCTWO
 	{"clmpcc", PCCTWO_SCC_OFF},
-#endif
-#if NIE_PCCTWO
 	{"ie", PCCTWO_IE_OFF},
-#endif
-#if NNCRSC_PCCTWO
 	{"ncrsc", PCCTWO_NCRSC_OFF},
-#endif
-#if NLPT_PCCTWO
 	{"lpt", PCCTWO_LPT_OFF},
-#endif
+	{"nvram", PCCTWO_NVRAM_OFF},
 	{NULL, 0}
 };
 
@@ -151,27 +128,15 @@ static int pcctwo_vec2icsr_1x7[] = {
 /*
  * Devices that live on the MCchip, attached in this order.
  */
-#include "zsc_pcctwo.h"
-
 static struct pcctwo_device mcchip_devices[] = {
 	{"clock", PCCTWO_RTC_OFF},
-#if 0
-	{"nvram", PCCTWO_NVRAM_OFF},
-#endif
-#if NMEMC
 	{"memc", PCCTWO_MEMC1_OFF},
 	{"memc", PCCTWO_MEMC2_OFF},
-#endif
-#if NZSC_PCCTWO
 	{"zsc", MCCHIP_ZS0_OFF},
 	{"zsc", MCCHIP_ZS1_OFF},
-#endif
-#if NIE_PCCTWO
 	{"ie", PCCTWO_IE_OFF},
-#endif
-#if NNCRSC_PCCTWO
 	{"ncrsc", PCCTWO_NCRSC_OFF},
-#endif
+	{"nvram", PCCTWO_NVRAM_OFF},
 	{NULL, 0}
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2000/11/30 22:54:32 scw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2000/12/03 15:37:46 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 
 #include <mvme68k/dev/mainbus.h>
 
+
 void mainbus_attach __P((struct device *, struct device *, void *));
 int mainbus_match __P((struct device *, struct cfdata *, void *));
 int mainbus_print __P((void *, const char *));
@@ -76,13 +77,9 @@ static struct mainbus_devices mainbusdevs_147[] = {
 #endif
 
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
-#include "vmetwo.h"
-
 static struct mainbus_devices mainbusdevs_1x7[] = {
 	{"pcctwo", MAINBUS_PCCTWO_OFFSET},
-#if NVMETWO
 	{"vmetwo", MAINBUS_VMETWO_OFFSET},
-#endif
 	{NULL, 0}
 };
 #endif
