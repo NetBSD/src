@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.2 1999/02/05 00:06:11 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.3 1999/08/13 03:41:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,6 @@
 #include "rf_map.h"
 #include "rf_pq.h"
 #include "rf_mcpair.h"
-#include "rf_sys.h"
 #include "rf_evenodd.h"
 #include "rf_evenodd_dagfuncs.h"
 #include "rf_evenodd_dags.h"

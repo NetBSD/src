@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.4 1999/08/13 03:41:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -46,7 +46,6 @@
 #include "rf_general.h"
 #include "rf_map.h"
 #include "rf_pq.h"
-#include "rf_sys.h"
 
 RF_RedFuncs_t rf_pFuncs = {rf_RegularONPFunc, "Regular Old-New P", rf_SimpleONPFunc, "Simple Old-New P"};
 RF_RedFuncs_t rf_pRecoveryFuncs = {rf_RecoveryPFunc, "Recovery P Func", rf_RecoveryPFunc, "Recovery P Func"};

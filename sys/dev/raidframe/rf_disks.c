@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.11 1999/08/10 22:56:20 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.12 1999/08/13 03:41:56 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,6 @@
 #include "rf_configure.h"
 #include "rf_general.h"
 #include "rf_options.h"
-#include "rf_sys.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.4 1999/08/13 03:41:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,7 +43,6 @@
 #include "rf_freelist.h"
 #include "rf_map.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 #define SNUM_DIFF(_a_,_b_) (((_a_)>(_b_))?((_a_)-(_b_)):((_b_)-(_a_)))
 

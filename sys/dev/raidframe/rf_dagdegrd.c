@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.4 1999/08/13 03:41:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include "rf_memchunk.h"
 #include "rf_general.h"
 #include "rf_dagdegrd.h"
-#include "rf_sys.h"
 
 
 /******************************************************************************

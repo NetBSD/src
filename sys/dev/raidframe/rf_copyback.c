@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.7 1999/03/02 03:18:49 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.8 1999/08/13 03:41:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -52,7 +52,6 @@
 #include "rf_decluster.h"
 #include "rf_driver.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 #define RF_COPYBACK_DATA   0
 #define RF_COPYBACK_PARITY 1

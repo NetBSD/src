@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.4 1999/08/13 03:41:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,7 +39,6 @@
 #include "rf_map.h"
 #include "rf_freelist.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 static void rf_FreePDAList(RF_PhysDiskAddr_t * start, RF_PhysDiskAddr_t * end, int count);
 static void 
