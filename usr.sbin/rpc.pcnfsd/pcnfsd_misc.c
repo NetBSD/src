@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.7 2002/08/02 02:49:27 christos Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.8 2002/08/02 14:06:07 christos Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -323,7 +323,7 @@ wlogin(name, req)
 	logwtmp("PC-NFS", name, host);
 #endif
 #ifdef SUPPORT_UTMPX
-	logwtmpx("PC-NFS", name, host, USER_PROCESS, 0);
+	logwtmpx("PC-NFS", name, host, 0, USER_PROCESS);
 #endif
 }
 #endif				/* WTMP */
