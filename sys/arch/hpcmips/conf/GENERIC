@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.15 1999/11/21 14:00:40 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.16 1999/11/28 04:29:37 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -118,6 +118,7 @@ options 	__NO_SOFT_SERIAL_INTERRUPT
 com*	at vrip? addr 0x0c000000 size 0x20 intr 9
 vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
+vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
 
 #
 # MC-R300

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.4 1999/11/21 07:01:54 uch Exp $	*/
+/*	$NetBSD: vr.c,v 1.5 1999/11/28 04:29:39 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -55,6 +56,11 @@
 #include <hpcmips/vr/rtcreg.h>
 #include <hpcmips/hpcmips/machdep.h>	/* XXXjrs replace with vectors */
 #include <machine/bootinfo.h>
+
+#include "vrdsu.h"
+#if NVRDSU > 0
+#include <hpcmips/vr/vrdsuvar.h>
+#endif
 
 #include "com.h"
 #if NCOM > 0
@@ -92,6 +98,7 @@ void	vr_cons_init __P((void));
 void	vr_device_register __P((struct device *, void *));
 void    vr_fb_init __P((caddr_t*));
 int     vr_mem_init __P((caddr_t));
+void	vr_reboot __P((int howto, char *bootstr));
 
 char	*vrbcu_vrip_getcpuname __P((void));
 int	vrbcu_vrip_getcpumajor __P((void));
@@ -129,6 +136,7 @@ vr_init()
 	platform.device_register = vr_device_register;
 	platform.fb_init = vr_fb_init;
 	platform.mem_init = vr_mem_init;
+	platform.reboot = vr_reboot;
 
 	sprintf(cpu_model, "NEC %s rev%d.%d", 
 		vrbcu_vrip_getcpuname(),
@@ -265,6 +273,22 @@ vr_device_register(dev, aux)
 	printf("%s(%d): vr_device_register() not implemented.\n",
 	       __FILE__, __LINE__);
 	panic("abort");
+}
+
+void
+vr_reboot(howto, bootstr)
+	int howto;
+	char *bootstr;
+{
+	splhigh();
+	if ( !(howto & RB_HALT)) {
+#if NVRDSU
+		vrdsu_reset();
+#else
+		printf("%s(%d): There is no DSU.", __FILE__, __LINE__);
+#endif
+	}
+	while (1);
 }
 
 void *
