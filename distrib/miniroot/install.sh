@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.5.2.3 1996/06/27 13:49:21 pk Exp $
+#	$NetBSD: install.sh,v 1.5.2.4 1996/08/22 03:23:45 mrg Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,6 +63,7 @@ MODE="install"
 #	md_congrats()		- display friendly message
 #	md_native_fstype()	- native filesystem type for disk installs
 #	md_native_fsopts()	- native filesystem options for disk installs
+#	md_install_sets()	- any MD install sets go in `MDSETS'
 
 # include machine dependent subroutines
 . install.md
@@ -339,7 +340,8 @@ echo ""
 munge_fstab /tmp/fstab /tmp/fstab.shadow
 mount_fs /tmp/fstab.shadow
 
-install_sets $ALLSETS
+md_install_sets
+install_sets $ALLSETS $MDSETS
 
 # Copy in configuration information and make devices in target root.
 (
