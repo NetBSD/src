@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.19 2001/11/10 10:59:10 lukem Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.19.10.1 2004/06/05 19:42:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.19 2001/11/10 10:59:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.19.10.1 2004/06/05 19:42:24 jdc Exp $");
 
 #include "opt_iso.h"
 
@@ -180,12 +180,6 @@ nfsrv_getcache(nd, slp, repp)
 	caddr_t bpos;
 	int ret;
 
-	/*
-	 * Don't cache recent requests for reliable transport protocols.
-	 * (Maybe we should for the case of a reconnect, but..)
-	 */
-	if (!nd->nd_nam2)
-		return (RC_DOIT);
 loop:
 	for (rp = NFSRCHASH(nd->nd_retxid)->lh_first; rp != 0;
 	    rp = rp->rc_hash.le_next) {
