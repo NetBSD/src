@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.22 2000/03/14 13:06:29 fvdl Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.23 2000/03/15 16:31:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -245,7 +245,6 @@ ffs_fsync(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct inode *ip;
 	struct buf *bp, *nbp;
 	struct timespec ts;
 	int s, error, passes, skipmeta;
@@ -255,16 +254,6 @@ ffs_fsync(v)
 	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
 		softdep_fsync_mountdev(vp);
 
-	ip = VTOI(vp);
-	s = splbio();
-	/* XXX can there be dirty blocks if the inode's flags are empty? */
-	if (vp->v_dirtyblkhd.lh_first == NULL && !DOINGSOFTDEP(vp) &&
-	    (ip->i_flag & (IN_MODIFIED|IN_UPDATE|IN_CHANGE|IN_ACCESS))==0) {
-	        splx(s);
-	        return 0;
-	}
-	splx(s);
-	
 	/* 
 	 * Flush all dirty buffers associated with a vnode
 	 */
@@ -317,6 +306,7 @@ loop:
 			splx(s);
 			return 0;
 		}
+
 
 		/* 
 		 * Ensure that any filesystem metadata associated
