@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.28 2001/11/13 17:45:07 augustss Exp $ */
+/* $NetBSD: pckbd.c,v 1.29 2001/12/09 13:42:01 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.28 2001/11/13 17:45:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.29 2001/12/09 13:42:01 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,8 +383,8 @@ pckbd_enable(v, on)
 		pckbc_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 1);
 
 		cmd[0] = KBC_ENABLE;
-		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-					cmd, 1, 0, 1, 0);
+		res = pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+					cmd, 1, 0, NULL, 0);
 		if (res) {
 			printf("pckbd_enable: command error\n");
 			return (res);
