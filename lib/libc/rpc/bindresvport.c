@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.6 1996/03/29 23:00:50 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
 /*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft Exp $";
+static char *rcsid = "$NetBSD: bindresvport.c,v 1.6 1996/03/29 23:00:50 jtc Exp $";
 #endif
 
 /*
@@ -48,6 +48,7 @@ static char *rcsid = "$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft 
 /*
  * Bind a socket to a privileged IP port
  */
+int
 bindresvport(sd, sin)
 	int sd;
 	struct sockaddr_in *sin;
