@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.107.2.3 2000/08/11 20:18:08 mason Exp $
+# 	$NetBSD: GENERIC,v 1.107.2.4 2001/05/01 15:54:45 he Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.107.2.3 $"
+#ident 		"GENERIC-$Revision: 1.107.2.4 $"
 
 maxusers	32
 
@@ -495,6 +495,7 @@ pseudo-device	ipfilter
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 #### Audio and video devices
 
