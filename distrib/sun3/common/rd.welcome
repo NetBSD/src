@@ -6,6 +6,10 @@ This environment is designed to do only three things:
 2:  Copy a miniroot image into the swap partition  (/dev/rsd0b)
 3:  Reboot (using the swap partition, i.e. /dev/sd?b).
 
+Note that the sun3 firmware cannot boot from a partition located
+more than 1 GB from the beginning of the disk, so the swap partition
+should be completely below the 1 GB boundary.
+
 Copying the miniroot can be done several ways, allowing
 the source of the miniroot image to be on any of these:
     boot tape,  NFS server, TFTP server, rsh server
