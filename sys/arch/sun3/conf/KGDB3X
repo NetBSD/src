@@ -1,13 +1,12 @@
-#	$NetBSD: KGDB3X,v 1.10 1997/10/07 17:08:36 gwr Exp $
-#
+# $NetBSD: KGDB3X,v 1.11 1997/10/07 17:49:26 gwr Exp $
+
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
-#
 
 include "arch/sun3x/conf/std.sun3x"
 
 # Machines to be supported by this kernel
-# options 	FPU_EMULATE		# XXX - Ever needed?
+# options 	FPU_EMULATE	# XXX - Ever needed?
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
@@ -75,11 +74,11 @@ config		netbsd root on ? type ?
 #
 # Serial ports
 #
-zstty0 at zsc1 channel 0	# ttya
-zstty1 at zsc1 channel 1	# ttyb
+zstty0	at zsc1 channel 0	# ttya
+zstty1	at zsc1 channel 1	# ttyb
 
-kbd0   at zsc0 channel 0	# keyboard
-ms0    at zsc0 channel 1	# mouse
+kbd0	at zsc0 channel 0	# keyboard
+ms0	at zsc0 channel 1	# mouse
 
 #
 # Network devices
@@ -95,6 +94,7 @@ le0 at obio0 addr 0x65002000 ipl 3
 # Disk and tape devices
 #
 
+# Emulex SCSI (3/80 only)
 # Note the flags on the esp entries below, that work around
 # deficiencies in the current driver:
 #	bits 0-7:  disable disconnect/reselect for the corresponding target
@@ -104,7 +104,6 @@ le0 at obio0 addr 0x65002000 ipl 3
 #	      devices should be allowed to disconnect for the SCSI bus
 #	      to operate acceptably.
 #
-# Emulex SCSI (3/80 only)
 esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
 
 # Floppy drive
