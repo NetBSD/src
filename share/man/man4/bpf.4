@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.20 2002/08/29 12:20:21 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.21 2002/08/29 12:23:42 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,7 @@ A separate device file is required for each minor device.
 If a file is in use, the open will fail and
 .Va errno
 will be set to
-.Ev EBUSY .
+.Er EBUSY .
 .Pp
 Associated with each open instance of a
 .Nm
@@ -131,7 +131,7 @@ allowable size will be set and returned in the argument.
 A read call will result in EIO if it is passed a buffer that is not this size.
 .It Dv BIOCGDLT (u_int)
 Returns the type of the data link layer underlying the attached interface.
-.Ev EINVAL
+.Er EINVAL
 is returned if no interface has been specified.
 The device types, prefixed with
 .Dq DLT_ ,
@@ -151,7 +151,7 @@ The available type is returned to the array pointed to the
 field while its length in u_int is supplied to the
 .Va bfl_len
 field.
-.Ev ENOMEM
+.Er ENOMEM
 is returned if there is not enough buffer.  The
 .Va bfl_len
 field is modified on return to indicate the actual length in u_int
@@ -165,7 +165,7 @@ the
 field is returned to indicate the required length of an array in u_int.
 .It Dv BIOCSDLT (u_int)
 Change the type of the data link layer underlying the attached interface.
-.Ev EINVAL
+.Er EINVAL
 is returned if no interface has been specified or the specified
 type is not available for the interface.
 .It Dv BIOCPROMISC
@@ -306,7 +306,7 @@ Set or clear non-blocking I/O.  If arg is non-zero, then doing a
 when no data is available will return -1 and
 .Va errno
 will be set to
-.Ev EAGAIN .
+.Er EAGAIN .
 If arg is zero, non-blocking I/O is disabled.  Note:  setting this
 overrides the timeout set by
 .Dv BIOCSRTIMEOUT .
@@ -685,7 +685,7 @@ Data link protocols with variable length headers are not currently supported.
 .Pp
 Under SunOS, if a BPF application reads more than 2^31 bytes of
 data, read will fail in
-.Ev EINVAL .
+.Er EINVAL .
 You can either fix the bug in SunOS,
 or lseek to 0 when read fails for this reason.
 .Pp
