@@ -1,4 +1,4 @@
-/*	$NetBSD: bereg.h,v 1.1 1999/01/16 13:19:11 pk Exp $	*/
+/*	$NetBSD: bereg.h,v 1.2 1999/01/17 20:47:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -158,6 +158,12 @@ struct be_bregs {
 #define BE_BR_STAT_LCCNTEXP	0x00002000	/* late-collision cntr exp */
 #define BE_BR_STAT_FCNTEXP	0x00004000	/* first-collision cntr exp */
 #define BE_BR_STAT_DTIMEXP	0x00008000	/* defer-timer expired */
+#define BE_BR_STAT_BITS		"\177\020"				\
+			"b\0GOTFRAME\0b\1RCNTEXP\0b\2ACNTEXP\0"		\
+			"b\3CCNTEXP\0b\5LCNTEXP\0b\6RFIFOVF\0"		\
+			"b\7CVCNTEXP\0b\10SENTFRAME\0b\11TFIFO_UND\0"	\
+			"b\12MAXPKTERR\0b\13NCNTEXP\0b\14ECNTEXP\0"	\
+			"b\15LCCNTEXP\0b\16FCNTEXP\0b\17DTIMEXP\0\0"
 
 /* be_bregs.imask: interrupt mask. */
 #define BE_BR_IMASK_GOTFRAME	0x00000001	/* received a frame */

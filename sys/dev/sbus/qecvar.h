@@ -1,4 +1,4 @@
-/*	$NetBSD: qecvar.h,v 1.3 1999/01/16 12:46:08 pk Exp $	*/
+/*	$NetBSD: qecvar.h,v 1.4 1999/01/17 20:47:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ struct qec_softc {
 	bus_dma_tag_t	sc_dmatag;
 	struct	sbus_range *sc_range;	/* PROM ranges */
 	int	sc_nrange;		/*	       */
+	struct	sbus_intr *sc_intr;	/* interrupt info */
 
 	bus_space_handle_t sc_regs;	/* QEC registers */
 	int	sc_nchannels;		/* # of channels on board */
@@ -53,3 +54,24 @@ struct qec_softc {
 	u_int	sc_msize;		/* QEC buffer offset per channel */
 	u_int	sc_rsize;		/* QEC buffer size for receive */
 };
+
+struct qec_ring {
+	/* Ring Descriptors */
+	caddr_t		rb_membase;	/* Packet buffer: CPU address */
+	bus_addr_t	rb_dmabase;	/* Packet buffer: DMA address */
+	struct	qec_xd	*rb_txd;	/* Transmit descriptors */
+	bus_addr_t	rb_txddma;	/* DMA address of same */
+	struct	qec_xd	*rb_rxd;	/* Receive descriptors */
+	bus_addr_t	rb_rxddma;	/* DMA address of same */
+	caddr_t		rb_txbuf;	/* Transmit buffers */
+	caddr_t		rb_rxbuf;	/* Receive buffers */
+	int		rb_ntbuf;	/* # of transmit buffers */
+	int		rb_nrbuf;	/* # of receive buffers */
+
+	/* Ring Descriptor state */
+	int	rb_tdhead, rb_tdtail;
+	int	rb_rdtail;
+	int	rb_td_nbusy;
+};
+
+void	qec_meminit __P((struct qec_ring *, unsigned int));

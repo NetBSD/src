@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.7 1999/01/16 12:46:08 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.8 1999/01/17 20:47:50 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,12 @@ static int qec_bus_map __P((
 		int,			/*flags*/
 		vaddr_t,		/*preferred virtual address */
 		bus_space_handle_t *));
+static void *qec_intr_establish __P((
+		bus_space_tag_t,
+		int,			/*level*/
+		int,			/*flags*/
+		int (*) __P((void *)),	/*handler*/
+		void *));		/*arg*/
 
 struct cfattach qec_ca = {
 	sizeof(struct qec_softc), qecmatch, qecattach
@@ -202,6 +208,18 @@ qecattach(parent, self, aux)
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
 	sbt->sparc_bus_map = qec_bus_map;
+	sbt->sparc_intr_establish = qec_intr_establish;
+
+	/*
+	 * Save interrupt information for use in our qec_intr_establish()
+	 * function below. Apparently, the intr level for the quad
+	 * ethernet board (qe) is stored in the QEC node rather then
+	 * separately in each of the QE nodes.
+	 *
+	 * XXX - qe.c should call bus_intr_establish() with `level = 0'..
+	 * XXX - maybe we should have our own attach args for all that.
+	 */
+	sc->sc_intr = sa->sa_intr;
 
 	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
 
@@ -248,6 +266,32 @@ qec_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	return (EINVAL);
 }
 
+void *
+qec_intr_establish(t, level, flags, handler, arg)
+	bus_space_tag_t t;
+	int level;      
+	int flags;
+	int (*handler) __P((void *)); 
+	void *arg;      
+{
+	struct qec_softc *sc = t->cookie;
+
+	if (level == 0) {
+		/*
+		 * qe.c calls bus_intr_establish() with `level = 0'
+		 * XXX - see also comment in qec_attach().
+		 */
+		if (sc->sc_intr == NULL) {
+			printf("%s: warning: no interrupts\n",
+				sc->sc_dev.dv_xname);
+			return (NULL);
+		}
+		level = sc->sc_intr->sbi_pri;
+	}
+
+	return (bus_intr_establish(t->parent, level, flags, handler, arg));
+}
+
 void
 qec_init(sc)
 	struct qec_softc *sc;
@@ -279,4 +323,82 @@ qec_init(sc)
 	v = bus_space_read_4(t, qr, QEC_QRI_CTRL);
 	v = (v & QEC_CTRL_MODEMASK) | burst;
 	bus_space_write_4(t, qr, QEC_QRI_CTRL, v);
+}
+
+/*
+ * Common routine to initialize the QEC packet ring buffer.
+ * Called from be & qe drivers.
+ */
+void
+qec_meminit(qr, pktbufsz)
+	struct qec_ring *qr;
+	unsigned int pktbufsz;
+{
+	bus_addr_t txbufdma, rxbufdma;
+	bus_addr_t dma;
+	caddr_t p;
+	unsigned int ntbuf, nrbuf, i;
+
+	p = qr->rb_membase;
+	dma = qr->rb_dmabase;
+
+	ntbuf = qr->rb_ntbuf;
+	nrbuf = qr->rb_nrbuf;
+
+	/*
+	 * Allocate transmit descriptors
+	 */
+	qr->rb_txd = (struct qec_xd *)p;
+	qr->rb_txddma = dma;
+	p += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+
+	/*
+	 * Allocate receive descriptors
+	 */
+	qr->rb_rxd = (struct qec_xd *)p;
+	qr->rb_rxddma = dma;
+	p += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+
+
+	/*
+	 * Allocate transmit buffers
+	 */
+	qr->rb_txbuf = p;
+	txbufdma = dma;
+	p += ntbuf * pktbufsz;
+	dma += ntbuf * pktbufsz;
+
+	/*
+	 * Allocate receive buffers
+	 */
+	qr->rb_rxbuf = p;
+	rxbufdma = dma;
+	p += nrbuf * pktbufsz;
+	dma += nrbuf * pktbufsz;
+
+	/*
+	 * Initialize transmit buffer descriptors
+	 */
+	for (i = 0; i < QEC_XD_RING_MAXSIZE; i++) {
+		qr->rb_txd[i].xd_addr = (u_int32_t)
+			(txbufdma + (i % ntbuf) * pktbufsz);
+		qr->rb_txd[i].xd_flags = 0;
+	}
+
+	/*
+	 * Initialize receive buffer descriptors
+	 */
+	for (i = 0; i < QEC_XD_RING_MAXSIZE; i++) {
+		qr->rb_rxd[i].xd_addr = (u_int32_t)
+			(rxbufdma + (i % nrbuf) * pktbufsz);
+		qr->rb_rxd[i].xd_flags = (i < nrbuf)
+			? QEC_XD_OWN | (pktbufsz & QEC_XD_LENGTH)
+			: 0;
+	}
+
+	qr->rb_tdhead = qr->rb_tdtail = 0;
+	qr->rb_td_nbusy = 0;
+	qr->rb_rdtail = 0;
 }
