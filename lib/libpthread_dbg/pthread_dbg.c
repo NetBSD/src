@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.10 2003/11/27 16:32:09 cl Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.11 2003/12/31 16:46:34 cl Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.10 2003/11/27 16:32:09 cl Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.11 2003/12/31 16:46:34 cl Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -198,7 +198,7 @@ td_thr_iter(td_proc_t *proc, int (*call)(td_thread_t *, void *), void *callarg)
 int
 td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 {
-	int val, tmp;
+	int tmp, tmp1, val;
 	struct pthread_queue_t queue;
 
 	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
@@ -210,8 +210,18 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 
 	info->thread_addr = thread->addr;
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_state), 
+	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
 	    &tmp, sizeof(tmp))) != 0)
+		return val;
+	if ((val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    &tmp1, sizeof(tmp1))) != 0)
+		return val;
+	if (tmp != tmp1)
+		tmp = _PT_STATE_BLOCKED_SYS;
+	else if ((val = READ(thread->proc, 
+		      thread->addr + offsetof(struct __pthread_st, pt_state), 
+		      &tmp, sizeof(tmp))) != 0)
 		return val;
 	switch (tmp) {
 	case PT_STATE_RUNNING:
@@ -220,7 +230,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	case PT_STATE_RUNNABLE:
 		info->thread_state = TD_STATE_RUNNABLE;
 		break;
-	case PT_STATE_BLOCKED_SYS:
+	case _PT_STATE_BLOCKED_SYS:
 		info->thread_state = TD_STATE_BLOCKED;
 		break;
 	case PT_STATE_BLOCKED_QUEUE:
@@ -318,14 +328,23 @@ td_thr_getname(td_thread_t *thread, char *name, int len)
 int
 td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 {
-	int tmp, val;
+	int tmp, tmp1, val;
 	caddr_t addr;
 	ucontext_t uc;
 
-	val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_state), 
-	    &tmp, sizeof(tmp));
-	if (val != 0)
+	if ((val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    &tmp, sizeof(tmp))) != 0)
+		return val;
+	if ((val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    &tmp1, sizeof(tmp1))) != 0)
+		return val;
+	if (tmp != tmp1)
+		tmp = _PT_STATE_BLOCKED_SYS;
+	else if ((val = READ(thread->proc, 
+		      thread->addr + offsetof(struct __pthread_st, pt_state), 
+		      &tmp, sizeof(tmp))) != 0)
 		return val;
 
 	switch (tmp) {
@@ -339,17 +358,27 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 			return val;
 		break;
 	case PT_STATE_RUNNABLE:
-	case PT_STATE_BLOCKED_SYS:
+	case _PT_STATE_BLOCKED_SYS:
 	case PT_STATE_BLOCKED_QUEUE:
 		/*
 		 * The register state of the thread is in the ucontext_t 
 		 * of the thread structure.
 		 */
-		val = READ(thread->proc, 
-		    thread->addr + offsetof(struct __pthread_st, pt_trapuc),
-		    &addr, sizeof(addr));
-		if (val != 0)
-			return val;
+		if (tmp == _PT_STATE_BLOCKED_SYS) {
+			val = READ(thread->proc, 
+			    thread->addr + offsetof(struct __pthread_st, pt_blockuc),
+			    &addr, sizeof(addr));
+			if (val != 0)
+				return val;
+		} else
+			addr = 0;
+		if (addr == 0) {
+			val = READ(thread->proc, 
+			    thread->addr + offsetof(struct __pthread_st, pt_trapuc),
+			    &addr, sizeof(addr));
+			if (val != 0)
+				return val;
+		}
 		if (addr == 0) {
 			val = READ(thread->proc, 
 			    thread->addr + offsetof(struct __pthread_st, pt_uc),
@@ -383,15 +412,23 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 int
 td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 {
-
-	int tmp, val;
+	int val, tmp, tmp1;
 	caddr_t addr;
 	ucontext_t uc;
 
-	val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_state), 
-	    &tmp, sizeof(tmp));
-	if (val != 0)
+	if ((val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    &tmp, sizeof(tmp))) != 0)
+		return val;
+	if ((val = READ(thread->proc, 
+	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    &tmp1, sizeof(tmp1))) != 0)
+		return val;
+	if (tmp != tmp1)
+		tmp = _PT_STATE_BLOCKED_SYS;
+	else if ((val = READ(thread->proc, 
+		      thread->addr + offsetof(struct __pthread_st, pt_state), 
+		      &tmp, sizeof(tmp))) != 0)
 		return val;
 
 	switch (tmp) {
@@ -405,7 +442,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 			return val;
 		break;
 	case PT_STATE_RUNNABLE:
-	case PT_STATE_BLOCKED_SYS:
+	case _PT_STATE_BLOCKED_SYS:
 	case PT_STATE_BLOCKED_QUEUE:
 		/*
 		 * The register state of the thread is in the ucontext_t 
@@ -414,11 +451,21 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 		 * Fetch the uc first, since there is state in it
 		 * besides the registers that should be preserved.
 		 */
-		val = READ(thread->proc, 
-		    thread->addr + offsetof(struct __pthread_st, pt_trapuc),
-		    &addr, sizeof(addr));
-		if (val != 0)
-			return val;
+		if (tmp == _PT_STATE_BLOCKED_SYS) {
+			val = READ(thread->proc, 
+			    thread->addr + offsetof(struct __pthread_st, pt_blockuc),
+			    &addr, sizeof(addr));
+			if (val != 0)
+				return val;
+		} else
+			addr = 0;
+		if (addr == 0) {
+			val = READ(thread->proc, 
+			    thread->addr + offsetof(struct __pthread_st, pt_trapuc),
+			    &addr, sizeof(addr));
+			if (val != 0)
+				return val;
+		}
 		if (addr == 0) {
 			val = READ(thread->proc, 
 			    thread->addr + offsetof(struct __pthread_st, pt_uc),
