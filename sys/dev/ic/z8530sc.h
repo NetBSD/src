@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.19 2003/08/07 16:31:04 agc Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.20 2004/06/20 18:07:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,9 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifdef _KERNEL_OPT
+#include "locators.h"
+#endif
 
 /*
  * Function vector - per channel
@@ -176,6 +179,9 @@ struct zsc_attach_args {
 	/* `consdev' is only valid if ZS_HWFLAG_USE_CONSDEV is set */
 	struct consdev *consdev;
 };
+
+#define	zsccf_channel		cf_loc[ZSCCF_CHANNEL]
+
 /* In case of split console devices, use these: */
 #define ZS_HWFLAG_CONSOLE_INPUT		1
 #define ZS_HWFLAG_CONSOLE_OUTPUT	2

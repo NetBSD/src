@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.94 2004/01/23 05:01:19 simonb Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.95 2004/06/20 18:07:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.94 2004/01/23 05:01:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.95 2004/06/20 18:07:35 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -303,11 +303,11 @@ zstty_match(parent, cf, aux)
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match is better than wildcard. */
-	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
+	if (cf->zsccf_channel == args->channel)
 		return 2;
 
 	/* This driver accepts wildcard. */
-	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT)
+	if (cf->zsccf_channel == ZSCCF_CHANNEL_DEFAULT)
 		return 1;
 
 	return 0;
