@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 386
 #
-#	$Id: TDR,v 1.10 1993/05/22 11:29:08 deraadt Exp $
+#	$Id: TDR,v 1.11 1993/05/26 10:15:16 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -49,7 +49,7 @@ pseudo-device	loop
 pseudo-device	ether
 #pseudo-device	sl	2
 pseudo-device	log
-pseudo-device	pty	8
+pseudo-device	pty	32
 pseudo-device	bpfilter 4
 
 pseudo-device	swappager
