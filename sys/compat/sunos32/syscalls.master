@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.5 2001/05/30 11:37:31 mrg Exp $
+;	$NetBSD: syscalls.master,v 1.6 2002/01/03 00:59:01 mrg Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp 
 
@@ -168,7 +168,7 @@
 94	UNIMPL		setdopt
 95	NOARGS		{ int netbsd32_fsync(int fd); }
 96	NOARGS		{ int netbsd32_setpriority(int which, int who, int prio); }
-97	NOARGS		{ int netbsd32_socket(int domain, int type, int protocol); }
+97	NOARGS		{ int sunos32_sys_socket(int domain, int type, int protocol); }
 98	NOARGS		{ int netbsd32_connect(int s, netbsd32_caddr_t name, int namelen); }
 99	NOARGS		{ int compat_43_netbsd32_oaccept(int s, netbsd32_caddr_t name, netbsd32_intp anamelen); }
 100	NOARGS		{ int netbsd32_getpriority(int which, int who); }
@@ -221,7 +221,7 @@
 133	NOARGS		{ int netbsd32_sendto(int s, netbsd32_caddr_t buf, netbsd32_size_t len, \
 			    int flags, netbsd32_caddr_t to, int tolen); }
 134	NOARGS		{ int netbsd32_shutdown(int s, int how); }
-135	NOARGS		{ int netbsd32_socketpair(int domain, int type, \
+135	NOARGS		{ int sunos32_sys_socketpair(int domain, int type, \
 			    int protocol, netbsd32_intp rsv); }
 136	NOARGS		{ int netbsd32_mkdir(netbsd32_charp path, int mode); }
 137	NOARGS		{ int netbsd32_rmdir(netbsd32_charp path); }
