@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.236 2001/05/15 22:31:38 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.237 2001/05/16 04:18:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -99,6 +99,9 @@
 #include <machine/specialreg.h>
 #include <machine/trap.h>
 #include <machine/bootinfo.h>
+
+/* LINTSTUB: include <sys/systm.h> */
+/* LINTSTUB: include <machine/cpu.h> */
 
 /*
  * override user-land alignment before including asm.h
@@ -754,10 +757,10 @@ _C_LABEL(esigcode):
  * -- Perry Metzger, May 7, 2001
  */
 /*
- * void fillw(short pattern, caddr_t addr, size_t len);
+ * void fillw(short pattern, void *addr, size_t len);
  * Write len copies of pattern at addr.
  */
-/* LINTSTUB: Func: void fillw(short pattern, caddr_t addr, size_t len) */
+/* LINTSTUB: Func: void fillw(short pattern, void *addr, size_t len) */
 ENTRY(fillw)
 	pushl	%edi
 	movl	8(%esp),%eax
@@ -1384,11 +1387,11 @@ ENTRY(copystr)
 	ret
 
 /*
- * int fuword(void *uaddr);
+ * long fuword(const void *uaddr);
  * Fetch an int from the user's address space.
  * see fuword(9)
  */
-/* LINTSTUB: Func: int fuword(void *base) */
+/* LINTSTUB: Func: long fuword(const void *base) */
 ENTRY(fuword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
@@ -1400,11 +1403,11 @@ ENTRY(fuword)
 	ret
 	
 /*
- * int fusword(void *uaddr);
+ * int fusword(const void *uaddr);
  * Fetch a short from the user's address space.
  * see fusword(9)
  */
-/* LINTSTUB: Func: int fusword(void *base) */
+/* LINTSTUB: Func: int fusword(const void *base) */
 ENTRY(fusword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
@@ -1416,12 +1419,12 @@ ENTRY(fusword)
 	ret
 	
 /*
- * int fuswintr(void *uaddr);
+ * int fuswintr(const void *uaddr);
  * Fetch a short from the user's address space.  Can be called during an
  * interrupt.
  * see fuswintr(9)
  */
-/* LINTSTUB: Func: int fuswintr(void *base) */
+/* LINTSTUB: Func: int fuswintr(const void *base) */
 ENTRY(fuswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
@@ -1433,11 +1436,11 @@ ENTRY(fuswintr)
 	ret
 	
 /*
- * int fubyte(void *uaddr);
+ * int fubyte(const void *uaddr);
  * Fetch a byte from the user's address space.
  * see fubyte(9)
  */
-/* LINTSTUB: Func: int fubyte(void *base) */
+/* LINTSTUB: Func: int fubyte(const void *base) */
 ENTRY(fubyte)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
@@ -1693,7 +1696,7 @@ NENTRY(lgdt)
  * If it is part of the MI/MD interface, it needs documentation, IMHO.
  * -- Perry Metzger, May 7, 2001
  */
-/* LINTSTUB: Func: int setjmp (label_t *) */
+/* LINTSTUB: Func: int setjmp (label_t *l) */
 ENTRY(setjmp)
 	movl	4(%esp),%eax
 	movl	%ebx,(%eax)		# save ebx
@@ -1713,7 +1716,7 @@ ENTRY(setjmp)
  * If it is part of the MI/MD interface, it needs documentation, IMHO.
  * -- Perry Metzger, May 7, 2001
  */
-/* LINTSTUB: Func: void longjmp (label_t *) */
+/* LINTSTUB: Func: void longjmp (label_t *l) */
 ENTRY(longjmp)
 	movl	4(%esp),%eax
 	movl	(%eax),%ebx		# restore ebx
