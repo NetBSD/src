@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.11 1997/02/11 09:24:06 mrg Exp $	*/
+/*	$NetBSD: tip.c,v 1.12 1997/04/19 06:04:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tip.c,v 1.11 1997/02/11 09:24:06 mrg Exp $";
+static char rcsid[] = "$NetBSD: tip.c,v 1.12 1997/04/19 06:04:54 thorpej Exp $";
 #endif /* not lint */
 
 /*
@@ -303,6 +303,7 @@ prompt(s, p)
 	char *s;
 	register char *p;
 {
+	register int c;
 	register char *b = p;
 	sig_t oint, oquit;
 
@@ -312,7 +313,7 @@ prompt(s, p)
 	unraw();
 	printf("%s", s);
 	if (setjmp(promptbuf) == 0)
-		while ((*p = getchar()) != EOF && *p != '\n')
+		while ((c = getchar()) != -1 && (*p = c) != '\n')
 			p++;
 	*p = '\0';
 
