@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.7 2000/02/13 06:17:58 itojun Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.8 2000/02/27 23:10:51 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.7 2000/02/13 06:17:58 itojun Exp $
+ *	$Id: if_wi.c,v 1.8 2000/02/27 23:10:51 enami Exp $
  */
 
 /*
@@ -115,7 +115,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.7 2000/02/13 06:17:58 itojun Exp $";
+	"$Id: if_wi.c,v 1.8 2000/02/27 23:10:51 enami Exp $";
 #endif
 
 #ifdef foo
@@ -131,7 +131,7 @@ static int wi_intr __P((void *arg));
 
 static void wi_reset		__P((struct wi_softc *));
 static int wi_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static void wi_init		__P((void *));
+static void wi_init		__P((struct wi_softc *));
 static void wi_start		__P((struct ifnet *));
 static void wi_stop		__P((struct wi_softc *));
 static void wi_watchdog		__P((struct ifnet *));
@@ -150,16 +150,15 @@ static int wi_write_data	__P((struct wi_softc *, int,
 static int wi_seek		__P((struct wi_softc *, int, int, int));
 static int wi_alloc_nicmem	__P((struct wi_softc *, int, int *));
 static void wi_inquire		__P((void *));
-static void wi_setdef		__P((struct wi_softc *, struct wi_req *));
+static int wi_setdef		__P((struct wi_softc *, struct wi_req *));
+static int wi_getdef		__P((struct wi_softc *, struct wi_req *));
 static int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
 static void wi_shutdown		__P((void *));
 
 static int wi_enable __P((struct wi_softc *));
-static int wi_disable __P((struct wi_softc *));
+static void wi_disable __P((struct wi_softc *));
 
-
-struct cfattach wi_ca =
-{
+struct cfattach wi_ca = {
 	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
 };
 
@@ -179,7 +178,9 @@ int
 wi_enable(sc)
 	struct wi_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	if (sc->sc_enabled != 0)
+		return (0);
 
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET, wi_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -189,32 +190,26 @@ wi_enable(sc)
 	}
 	if (pcmcia_function_enable(sc->sc_pf) != 0) {
 		printf("%s: couldn't enable card\n", sc->sc_dev.dv_xname);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 		return (EIO);
 	}
 
-	wi_init(sc);
-	ifp->if_flags |= IFF_RUNNING;
-	return 0;
+	sc->sc_enabled = 1;
+	return (0);
 }
 
-int
+void
 wi_disable(sc)
 	struct wi_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	if (ifp->if_flags & IFF_RUNNING) {
-		wi_stop(sc);
-		pcmcia_function_disable(sc->sc_pf);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-	}
-	ifp->if_flags &= ~IFF_RUNNING;
-	ifp->if_timer = 0;
+	if (sc->sc_enabled == 0)
+		return;
 
-	/* XXX */;
-	return 0;
+	pcmcia_function_disable(sc->sc_pf);
+	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+	sc->sc_enabled = 0;
 }
-
 
 /*
  * Attach the card.
@@ -339,9 +334,6 @@ wi_attach(parent, self, aux)
 	gen.wi_len = 2;
 	wi_read_record(sc, &gen);
 	sc->wi_has_wep = gen.wi_val;
-
-	wi_init(sc);
-	wi_stop(sc);
 
 	/*
 	 * Call MI attach routines.
@@ -915,7 +907,7 @@ static void wi_setmulti(sc)
 #if 0
 		/* Punt on ranges. */
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-			 sizeof(enm->enm_addrlo)) != 0)
+		    sizeof(enm->enm_addrlo)) != 0)
 			break;
 #endif
 		bcopy(enm->enm_addrlo,
@@ -930,12 +922,14 @@ static void wi_setmulti(sc)
 	return;
 }
 
-static void wi_setdef(sc, wreq)
+static int
+wi_setdef(sc, wreq)
 	struct wi_softc		*sc;
 	struct wi_req		*wreq;
 {
 	struct sockaddr_dl	*sdl;
 	struct ifnet		*ifp;
+	int error = 0;
 
 	ifp = &sc->sc_ethercom.ec_if;
 
@@ -943,7 +937,7 @@ static void wi_setdef(sc, wreq)
 	case WI_RID_MAC_NODE:
 		sdl = (struct sockaddr_dl *)ifp->if_sadl;
 		bcopy((char *)&wreq->wi_val, (char *)&sc->sc_macaddr,
-		   ETHER_ADDR_LEN);
+		    ETHER_ADDR_LEN);
 		bcopy((char *)&wreq->wi_val, LLADDR(sdl), ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
@@ -993,16 +987,103 @@ static void wi_setdef(sc, wreq)
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		bcopy((char *)wreq, (char *)&sc->wi_keys,
-		      sizeof(struct wi_ltv_keys));
+		    sizeof(struct wi_ltv_keys));
 		break;
 	default:
+		error = EINVAL;
 		break;
 	}
 
-	/* Reinitialize WaveLAN. */
-	wi_init(sc);
+	return (error);
+}
 
-	return;
+static int
+wi_getdef(sc, wreq)
+	struct wi_softc		*sc;
+	struct wi_req		*wreq;
+{
+	struct sockaddr_dl	*sdl;
+	struct ifnet		*ifp;
+	int error = 0;
+
+	ifp = &sc->sc_ethercom.ec_if;
+
+	wreq->wi_len = 2;			/* XXX */
+	switch (wreq->wi_type) {
+	case WI_RID_MAC_NODE:
+		wreq->wi_len += ETHER_ADDR_LEN / 2 - 1;
+		sdl = (struct sockaddr_dl *)ifp->if_sadl;
+		bcopy(&sc->sc_macaddr, &wreq->wi_val, ETHER_ADDR_LEN);
+		bcopy(LLADDR(sdl), &wreq->wi_val, ETHER_ADDR_LEN);
+		break;
+	case WI_RID_PORTTYPE:
+		wreq->wi_val[0] = sc->wi_ptype;
+		break;
+	case WI_RID_TX_RATE:
+		wreq->wi_val[0] = sc->wi_tx_rate;
+		break;
+	case WI_RID_MAX_DATALEN:
+		wreq->wi_val[0] = sc->wi_max_data_len;
+		break;
+	case WI_RID_RTS_THRESH:
+		wreq->wi_val[0] = sc->wi_rts_thresh;
+		break;
+	case WI_RID_SYSTEM_SCALE:
+		wreq->wi_val[0] = sc->wi_ap_density;
+		break;
+	case WI_RID_CREATE_IBSS:
+		wreq->wi_val[0] = sc->wi_create_ibss;
+		break;
+	case WI_RID_OWN_CHNL:
+		wreq->wi_val[0] = sc->wi_channel;
+		break;
+	case WI_RID_NODENAME:
+		bzero(&wreq->wi_val[0], sizeof(wreq->wi_val));
+		wreq->wi_val[0] = strlen(sc->wi_node_name);
+		wreq->wi_len += roundup(wreq->wi_val[0], 2) / 2 - 1;
+		bcopy(sc->wi_node_name, &wreq->wi_val[1], 30);
+		break;
+	case WI_RID_DESIRED_SSID:
+		bzero(&wreq->wi_val[0], sizeof(wreq->wi_val));
+		wreq->wi_val[0] = strlen(sc->wi_net_name);
+		wreq->wi_len += roundup(wreq->wi_val[0], 2) / 2 - 1;
+		bcopy(sc->wi_net_name, &wreq->wi_val[1], 30);
+		break;
+	case WI_RID_OWN_SSID:
+		bzero(&wreq->wi_val[0], sizeof(wreq->wi_val));
+		wreq->wi_val[0] = strlen(sc->wi_ibss_name);
+		wreq->wi_len += roundup(wreq->wi_val[0], 2) / 2 - 1;
+		bcopy(sc->wi_ibss_name, &wreq->wi_val[1], 30);
+		break;
+	case WI_RID_PM_ENABLED:
+		wreq->wi_val[0] = sc->wi_pm_enabled;
+		break;
+	case WI_RID_MAX_SLEEP:
+		wreq->wi_val[0] = sc->wi_max_sleep;
+		break;
+	case WI_RID_ENCRYPTION:
+		wreq->wi_val[0] = sc->wi_use_wep;
+		break;
+	case WI_RID_TX_CRYPT_KEY:
+		wreq->wi_val[0] = sc->wi_tx_key;
+		break;
+	case WI_RID_DEFLT_CRYPT_KEYS:
+		wreq->wi_len += sizeof(struct wi_ltv_keys) / 2 - 1;
+		bcopy(&sc->wi_keys, wreq, sizeof(struct wi_ltv_keys));
+		break;
+	default:
+#if 0
+		error = EIO;
+#else
+#ifdef DIAGNOSTIC
+		printf("%s: wi_getdef: unknown request %d\n",
+		    sc->sc_dev.dv_xname, wreq->wi_type);
+#endif
+#endif
+		break;
+	}
+
+	return (error);
 }
 
 static int wi_ioctl(ifp, command, data)
@@ -1011,38 +1092,34 @@ static int wi_ioctl(ifp, command, data)
 	caddr_t			data;
 {
 	int			s, error = 0;
-	struct wi_softc		*sc;
+	struct wi_softc		*sc = ifp->if_softc;
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
 	struct proc *p = curproc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
+
 	s = splimp();
 
-	sc = ifp->if_softc;
 	ifr = (struct ifreq *)data;
-
-	if (sc->wi_gone)
-		return(ENODEV);
-
 	switch (command) {
 	case SIOCSIFADDR:
-		if (!(ifp->if_flags & IFF_RUNNING) &&
-		    (error = wi_enable(sc)) != 0)
+		if ((error = wi_enable(sc)) != 0)
 			break;
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
 			wi_init(sc);
-			arp_ifinit(&sc->sc_ethercom.ec_if, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
 			wi_init(sc);
 			break;
 		}
-		error = 0;
 		break;
 #if 0
 	case SIOCSIFMTU:
@@ -1050,30 +1127,47 @@ static int wi_ioctl(ifp, command, data)
 		break;
 #endif
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) == 0)
-				wi_enable(sc);
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->wi_if_flags & IFF_PROMISC)) {
-				WI_SETVAL(WI_RID_PROMISC, 1);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->wi_if_flags & IFF_PROMISC) {
-				WI_SETVAL(WI_RID_PROMISC, 0);
-			} else
+		if ((ifp->if_flags & IFF_UP) == 0 &&
+		    (ifp->if_flags & IFF_RUNNING) != 0) {
+			/*
+			 * If interface is marked down and it is running, then
+			 * stop it.
+			 */
+			wi_stop(sc);
+			wi_disable(sc);
+		} else if ((ifp->if_flags & IFF_UP) != 0 &&
+		    (ifp->if_flags & IFF_RUNNING) == 0) {
+			/*
+			 * If interface is marked up and it is stopped, then
+			 * start it.
+			 */
+			if ((error = wi_enable(sc)) != 0)
+				break;
+			wi_init(sc);
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			/*
+			 * Reset the interface to pick up changes in any other
+			 * flags that affect hardware registers.
+			 */
+#if 0
+			/* XXX We need to call wi_setmulti(), don't we? */
+			if ((ifp->if_flags & IFF_PROMISC) ^
+			    (sc->wi_if_flags & IFF_PROMISC))
+				WI_SETVAL(WI_RID_PROMISC,
+				    (ifp->if_flags & IFF_PROMISC) != 0);
+			else
+#endif
 				wi_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING) {
-				wi_stop(sc);
-				wi_disable(sc);
-			}
 		}
 		sc->wi_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if (sc->sc_enabled == 0) {
+			error = EIO;
+			break;
+		}
+
 		/* Update our multicast list. */
 		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ethercom) :
@@ -1096,17 +1190,18 @@ static int wi_ioctl(ifp, command, data)
 			/* For non-root user, return all-zeroes keys */
 			if (suser(p->p_ucred, &p->p_acflag))
 				bzero((char *)&wreq,
-				      sizeof(struct wi_ltv_keys));
+				    sizeof(struct wi_ltv_keys));
 			else
 				bcopy((char *)&sc->wi_keys, (char *)&wreq,
-				      sizeof(struct wi_ltv_keys));
+				    sizeof(struct wi_ltv_keys));
 		} else {
-			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
+			if (sc->sc_enabled == 0)
+				error = wi_getdef(sc, &wreq);
+			else if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq))
 				error = EINVAL;
-				break;
-			}
 		}
-		error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
+		if (error == 0)
+			error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
 		break;
 	case SIOCSWAVELAN:
 		error = suser(p->p_ucred, &p->p_acflag);
@@ -1122,9 +1217,14 @@ static int wi_ioctl(ifp, command, data)
 			error = wi_mgmt_xmit(sc, (caddr_t)&wreq.wi_val,
 			    wreq.wi_len);
 		} else {
-			error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
-			if (!error)
-				wi_setdef(sc, &wreq);
+			if (sc->sc_enabled != 0)
+				error = wi_write_record(sc,
+				    (struct wi_ltv_gen *)&wreq);
+			if (error == 0)
+				error = wi_setdef(sc, &wreq);
+			if (error == 0 && sc->sc_enabled != 0)
+				/* Reinitialize WaveLAN. */
+				wi_init(sc);
 		}
 		break;
 	default:
@@ -1134,29 +1234,21 @@ static int wi_ioctl(ifp, command, data)
 
 	splx(s);
 
-	return(error);
+	return (error);
 }
 
-static void wi_init(xsc)
-	void			*xsc;
+static void
+wi_init(sc)
+	struct wi_softc *sc;
 {
-	struct wi_softc		*sc = xsc;
-	struct ifnet		*ifp = &sc->sc_ethercom.ec_if;
-	int			s;
-	struct wi_ltv_macaddr	mac;
-	int			id = 0;
-	int			running;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct wi_ltv_macaddr mac;
+	int s, id = 0;
 
-	if (sc->wi_gone)
-		return;
+	wi_stop(sc);
+	wi_reset(sc);
 
 	s = splimp();
-
-	running = ifp->if_flags & IFF_RUNNING;
-	if (running)
-		wi_stop(sc);
-
-	wi_reset(sc);
 
 	/* Program max data length. */
 	WI_SETVAL(WI_RID_MAX_DATALEN, sc->wi_max_data_len);
@@ -1220,7 +1312,7 @@ static void wi_init(xsc)
 	wi_setmulti(sc);
 
 	/* Enable desired port */
-	wi_cmd(sc, WI_CMD_ENABLE|sc->wi_portnum, 0);
+	wi_cmd(sc, WI_CMD_ENABLE | sc->wi_portnum, 0);
 
 	if (wi_alloc_nicmem(sc, 1518 + sizeof(struct wi_frame) + 8, &id))
 		printf("%s: tx buffer allocation failed\n",
@@ -1232,18 +1324,15 @@ static void wi_init(xsc)
 		    sc->sc_dev.dv_xname);
 	sc->wi_tx_mgmt_id = id;
 
-	/* enable interrupts */
+	/* Enable interrupts */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
 
 	splx(s);
 
-	if (running)
-		ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	timeout(wi_inquire, sc, hz * 60);
-
-	return;
 }
 
 static void wi_start(ifp)
@@ -1256,9 +1345,6 @@ static void wi_start(ifp)
 	int			id;
 
 	sc = ifp->if_softc;
-
-	if (sc->wi_gone)
-		return;
 
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
@@ -1348,9 +1434,6 @@ static int wi_mgmt_xmit(sc, data, len)
 	struct wi_80211_hdr	*hdr;
 	caddr_t			dptr;
 
-	if (sc->wi_gone)
-		return(ENODEV);
-
 	hdr = (struct wi_80211_hdr *)data;
 	dptr = data + sizeof(struct wi_80211_hdr);
 
@@ -1380,9 +1463,6 @@ static void wi_stop(sc)
 {
 	struct ifnet		*ifp;
 
-	if (sc->wi_gone)
-		return;
-
 	ifp = &sc->sc_ethercom.ec_if;
 
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
@@ -1390,9 +1470,8 @@ static void wi_stop(sc)
 
 	untimeout(wi_inquire, sc);
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-
-	return;
+	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
+	ifp->if_timer = 0;
 }
 
 static void wi_watchdog(ifp)
@@ -1451,8 +1530,8 @@ wi_detach(self, flags)
 	struct wi_softc *sc = (struct wi_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	if (ifp->if_flags & IFF_RUNNING)
-		untimeout(wi_inquire, sc);
+	untimeout(wi_inquire, sc);
+	shutdownhook_disestablish(sc->sc_sdhook);
 	wi_disable(sc);
 
 	if (sc->wi_resource & WI_RES_NET) {
