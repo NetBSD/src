@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.1 1998/03/18 15:57:29 bouyer Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.2 1998/11/12 19:54:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -32,6 +32,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ffs.h"
+#endif
 
 #if !defined(_KERNEL) || defined(FFS_EI)
 /* inlines for access to swaped datas */
