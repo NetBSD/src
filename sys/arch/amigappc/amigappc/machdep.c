@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13 2001/07/22 14:09:04 wiz Exp $ */
+/* $NetBSD: machdep.c,v 1.14 2001/08/24 04:34:25 chs Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -799,9 +799,8 @@ cpu_startup()
 				panic("cpu_startup: not enough memory for "
 					"buffer cache");
 			}
-			pmap_enter(kernel_map->pmap, curbuf,
-				VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-				VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ | VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
