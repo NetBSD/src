@@ -225,12 +225,12 @@ process again from scratch.
 
                 Run the "Extract" command once for each distribution
                 set you wish to install.  For instance, if you wish to
-                install the "kern13" distribution set, followed by the
-                "base13" distribution set, and finally the "etc13"
+                install the "kern" distribution set, followed by the
+                "base" distribution set, and finally the "etc"
                 distribution set, use the commands:
-			Extract kern13
-			Extract base13
-			Extract etc13
+			Extract kern
+			Extract base
+			Extract etc
 
 		For each extraction, it will ask you if the extraction
 		should be verbose.  If you reply affirmatively, it
@@ -285,9 +285,9 @@ process again from scratch.
 		hitting return at the prompt.
 
 		Use the "Extract" command to extract the distribution
-		set.  For instance, if you're extracting the "base13"
+		set.  For instance, if you're extracting the "base"
 		set, use the command:
-			Extract base13
+			Extract base
 		You will be asked if you wish the extraction to be
 		verbose.  If you reply affirmatively, the name of each
 		file being extracted will be printed.
@@ -336,29 +336,14 @@ process again from scratch.
 
 		If your board selects software selection of the
 		ethernet interface to use, you might have to add
-		special flags to the "ifconfig" command you use.
-		Consult the table below for the appropriate flags:
+		special "media" flags to the "ifconfig" command you
+		use to configure your board to use the appropriate
+		connector/media type, as in:
 
-		Interface Type	Connector	Flags
-		--------- ----	---------	-----
-		ed with WD/SMC*	BNC		[none necessary]
-		ed with WD/SMC*	UTP		[none necessary]
-		ed with WD/SMC*	AUI		link0
-		ed with 3c503	BNC		[none necessary]
-		ed with 3c503	AUI		link0
-		ep		BNC		[none necessary]
-		ep		AUI		link0
-		ep		UTP		link0 link1
+		ifconfig de0 10BaseT
 
-		* Older WD boards do not support software configuration,
-		  and must be configured via jumpers.  These flags
-		  will have no effect on them.
-
-		In other words, if, in the last example, the AUI port
-		of the board were being used, you would use the
-		command:
-
-		ifconfig ep0 128.32.240.167 netmask 0xffffff00 link0
+		You may determine which media are supported on a given
+		interface by typing "ifconfig <interface> -m".
 
 		If the NFS server or FTP server is not on a directly-
 		connected network, you need to set up a route to it
@@ -406,8 +391,8 @@ Completing your installation:
         Once you have finished extracting all of the distribution sets
         that you wish to install, and are back at the "#" prompt, you
         are ready to configure your system.  The configuration utility
-        expects that you have installed the "kern13", "base13" and
-        "etc13" distribution sets.  If you have not, you will not be
+        expects that you have installed the "kern", "base" and
+        "etc" distribution sets.  If you have not, you will not be
         able to run it successfully (nor will you have a functional
         system, in any case).  To configure your newly-installed
         NetBSD system, run the command "Configure".  It will ask you
