@@ -1,3 +1,5 @@
+/*	$NetBSD: pw_copy.h,v 1.2 1995/03/26 04:55:32 glass Exp $	*/
+
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: cksum.c,v 1.6 1995/03/26 05:15:17 glass Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)cksum.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: cksum.c,v 1.5 1995/01/15 06:43:52 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)cksum.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: cksum.c,v 1.6 1995/03/26 05:15:17 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/cdefs.h>
