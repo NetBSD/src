@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.14 2002/06/26 16:04:13 mjacob Exp $
+.\"	$NetBSD: scsictl.8,v 1.15 2002/06/26 18:07:21 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,12 +78,12 @@ The following commands are supported for SCSI devices:
 .Li blocksize
 parameter is provided, the device geometry will be modified to
 use the specified
-.Li blocksize.
+.Li blocksize .
 If this parameter is different form the Current or Default Mode Page 3
 parameters, the device will update Mode Page 3 at the successful
 completion of the Format.  Device geometry may change as a result of
 using a new device
-.Li blocksize.
+.Li blocksize .
 When the optional
 .Li blocksize
 parameter is specified, the Defect List on the drive will revert to
@@ -125,11 +125,15 @@ direct access devices.
 .Pp
 .Nm release
 .Pp
-Send a "RELEASE" command to the device to release a reservation on it.
+Send a
+.Dq RELEASE
+command to the device to release a reservation on it.
 .Pp
 .Nm reserve
 .Pp
-Send a "RESERVE" command to the device to place a reservation on it.
+Send a
+.Dq RESERVE
+command to the device to place a reservation on it.
 .Pp
 .Nm reset
 .Pp
@@ -147,17 +151,23 @@ ioctl.
 .Pp
 .Nm start
 .Pp
-Send a "START" command to the device.  This is useful typically only for
+Send a
+.Dq START
+command to the device.  This is useful typically only for
 disk devices.
 .Pp
 .Nm stop
 .Pp
-Send a "STOP" command to the device.  This is useful typically only for
+Send a
+.Dq STOP
+command to the device.  This is useful typically only for
 disk devices.
 .Pp
 .Nm tur
 .Pp
-Send a "TEST UNIT READY" command to the device.  This is useful for generating
+Send a
+.Dq TEST UNIT READY
+command to the device.  This is useful for generating
 current device status.
 .Sh BUS COMMANDS
 The following commands are supported for SCSI busses:
