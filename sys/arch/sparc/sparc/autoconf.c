@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.182 2002/10/27 18:39:17 chs Exp $ */
+/*	$NetBSD: autoconf.c,v 1.183 2002/11/29 08:02:05 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -160,26 +160,47 @@ matchbyname(parent, cf, aux)
 	return (0);
 }
 
+/*
+ * Get the number of CPUs in the system and the CPUs' SPARC architecture
+ * version. We need this information early in the boot process.
+ */
 int
 find_cpus()
 {
-#if defined(MULTIPROCESSOR)
-	int node, n;
+	int n;
+#if defined(SUN4M) || defined(SUN4D)
+	int node;
+#endif
 
-	/* We only consider sun4m class multi-processor machines */
-	if (!CPU_ISSUN4M)
+	/*
+	 * Set default processor architecture version
+	 *
+	 * All sun4 and sun4c platforms have v7 CPUs;
+	 * sun4m may have v7 (Cyrus CY7C601 modules) or v8 CPUs (all
+	 * other models, presumably).
+	 */
+	cpu_arch = 7;
+
+	if (!CPU_ISSUN4M && !CPU_ISSUN4D)
 		return (1);
 
 	n = 0;
+#if defined(SUN4M) || defined(SUN4D)
 	node = findroot();
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		if (strcmp(PROM_getpropstring(node, "device_type"), "cpu") == 0)
-			n++;
+		if (strcmp(PROM_getpropstring(node, "device_type"), "cpu") != 0)
+			continue;
+		if (n++ == 0)
+			cpu_arch = PROM_getpropint(node, "sparc-version", 7);
 	}
+
+	/* Switch to sparc v8 multiply/divide functions on v8 machines */
+	if (cpu_arch == 8) {
+		extern void sparc_v8_muldiv(void);
+		sparc_v8_muldiv();
+	}
+#endif /* SUN4M || SUN4D */
 	return (n);
-#else
-	return (1);
-#endif
 }
 
 /*
@@ -1333,7 +1354,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 		(void) config_found(dev, (void *)&ma, mbprint);
 	}
-#endif /* SUN4C || SUN4M */
+#endif /* SUN4C || SUN4M || SUN4D */
 }
 
 CFATTACH_DECL(mainbus, sizeof(struct device),

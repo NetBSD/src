@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.135 2002/11/28 15:29:53 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.136 2002/11/29 08:02:05 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1730,10 +1730,15 @@ getcpuinfo(sc, node)
 			mmu_vers = ANY;
 		}
 
-		/* Get sparc architecture version */
+#if 0
+		/*
+		 * Get sparc architecture version
+		 * NOTE: This is now done much earlier in autoconf.c:find_cpus()
+		 */
 		cpu_arch = (node == 0)
 			? 7
 			: PROM_getpropint(node, "sparc-version", 7);
+#endif
 	} else {
 		/*
 		 * Get CPU version/implementation from ROM. If not
