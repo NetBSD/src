@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.132 2004/03/19 13:53:28 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.132.2.1 2004/06/21 10:15:57 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.132 2004/03/19 13:53:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.132.2.1 2004/06/21 10:15:57 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1262,6 +1262,9 @@ nfs_searchdircache(vp, off, do32, hashent)
 	 */
 	if (off == 0)
 		return &dzero;
+
+	if (!np->n_dircache)
+		return NULL;
 
 	/*
 	 * We use a 32bit cookie as search key, directly reconstruct
