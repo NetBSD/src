@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.1.4.1 2001/08/30 23:43:43 nathanw Exp $ */
+/* $NetBSD: userret.h,v 1.1.4.2 2001/11/17 00:42:11 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,9 +114,9 @@ userret(struct lwp *l)
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	/* If our process is on the way out, die. */
-	if (p->p_flag & P_WEXIT)
-		lwp_exit(l);
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
