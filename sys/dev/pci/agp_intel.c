@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.6 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.7 2003/06/09 12:16:42 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.6 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.7 2003/06/09 12:16:42 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,14 +45,22 @@ __KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.6 2003/01/31 00:07:40 thorpej Exp $"
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
 
 #include <machine/bus.h>
 
 struct agp_intel_softc {
-	u_int32_t	initial_aperture; /* aperture size at startup */
-	struct agp_gatt *gatt;
+	u_int32_t		initial_aperture;
+					/* aperture size at startup */
+	struct agp_gatt		*gatt;
+	struct pci_attach_args	vga_pa;	/* child device */
+	int			chiptype;
+#define	CHIP_I845	0x0
+#define	CHIP_I840	0x1
+#define	CHIP_I443	0x2
+					/* Chip type */	
 };
 
 static u_int32_t agp_intel_get_aperture(struct agp_softc *);
@@ -74,6 +82,23 @@ struct agp_methods agp_intel_methods = {
 	agp_generic_unbind_memory,
 };
 
+static int
+agp_intel_vgamatch(struct pci_attach_args *pa)
+{
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_INTEL_82855PM_AGP:
+	case PCI_PRODUCT_INTEL_82443LX_AGP:
+	case PCI_PRODUCT_INTEL_82443BX_AGP:
+	case PCI_PRODUCT_INTEL_82443GX_AGP:
+	case PCI_PRODUCT_INTEL_82850_AGP:
+	case PCI_PRODUCT_INTEL_82845_AGP:
+	case PCI_PRODUCT_INTEL_82840_AGP:
+		return (1);
+	}
+
+	return (0);
+}
+
 int
 agp_intel_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -92,6 +117,12 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	sc->as_methods = &agp_intel_methods;
 	sc->as_chipc = isc;
 
+	if (pci_find_device(&isc->vga_pa, agp_intel_vgamatch) == 0) {
+		aprint_error(": can't find internal VGA device config space\n");
+		free(isc, M_AGP);
+		return ENOENT;
+	}
+
 	pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, &sc->as_capoff,
 	    NULL);
 
@@ -100,6 +131,22 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		free(isc, M_AGP);
 		sc->as_chipc = NULL;
 		return ENXIO;
+	}
+
+	switch (PCI_PRODUCT(isc->vga_pa.pa_id)) {
+	case PCI_PRODUCT_INTEL_82855PM_AGP:
+	case PCI_PRODUCT_INTEL_82845_AGP:
+		isc->chiptype = CHIP_I845;
+		break;
+	case PCI_PRODUCT_INTEL_82840_AGP:
+	case PCI_PRODUCT_INTEL_82850_AGP:
+		isc->chiptype = CHIP_I840;
+		break;
+	case PCI_PRODUCT_INTEL_82443LX_AGP:
+	case PCI_PRODUCT_INTEL_82443BX_AGP:
+	case PCI_PRODUCT_INTEL_82443GX_AGP:
+		isc->chiptype = CHIP_I443;
+		break;
 	}
 
 	isc->initial_aperture = AGP_GET_APERTURE(sc);
@@ -126,17 +173,42 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	    gatt->ag_physical);
 	
 	/* Enable things, clear errors etc. */
-	/* XXXfvdl get rid of the magic constants */
-	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL, 0x2280);
-	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_NBXCFG);
-	reg &= ~(1 << 10);
-	reg |=  (1 << 9);
-	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_NBXCFG, reg);
+	switch (isc->chiptype) {
+	case CHIP_I845:
+		{
+		pci_conf_write(sc->as_pc, sc->as_tag,
+			AGP_INTEL_AGPCTRL, AGPCTRL_GTLB);
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCMD,
+			AGPCMD_SBA | AGPCMD_AGPEN | AGPCMD_RATE_4X);
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_I845_AGPMISC,					AGPMISC_AAGN);
+		break;
+		}
+	case CHIP_I840:
+		{
+		pci_conf_write(sc->as_pc, sc->as_tag,
+			AGP_INTEL_AGPCTRL, AGPCTRL_GTLB);
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCMD,
+			AGPCMD_SBA | AGPCMD_AGPEN | AGPCMD_RATE_4X);
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_I840_MCHCFG,					MCHCFG_AAGN);
+		break;
+		}
+	case CHIP_I443:
+		{
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
+			AGPCTRL_AGPRSE | AGPCTRL_GTLB);
+		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_NBXCFG);
+		reg &= ~NBXCFG_APAE;
+		reg |=  NBXCFG_AAGN;
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_NBXCFG, reg);
 
-	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_STS);
-	reg &= ~0x00ff0000;
-	reg |= (7 << 16);
-	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_STS, reg);
+		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_STS);
+		reg &= ~0x00ff0000;
+		reg |= (7 << 16); /* XXX */
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_STS, reg);
+
+		break;
+		}
+	}
 
 	return 0;
 }
@@ -153,6 +225,7 @@ agp_intel_detach(struct agp_softc *sc)
 	if (error)
 		return error;
 
+	/* XXX i845/i855PM/i840/i850E */
 	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_NBXCFG);
 	reg &= ~(1 << 9);
 	printf("%s: set NBXCFG to %x\n", __FUNCTION__, reg);
@@ -170,7 +243,8 @@ agp_intel_get_aperture(struct agp_softc *sc)
 {
 	u_int32_t apsize;
 
-	apsize = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_APSIZE) & 0x1f;
+	apsize = pci_conf_read(sc->as_pc, sc->as_tag,
+			AGP_INTEL_APSIZE) & APSIZE_MASK;
 
 	/*
 	 * The size is determined by the number of low bits of
@@ -179,7 +253,7 @@ agp_intel_get_aperture(struct agp_softc *sc)
 	 * field just read forces the corresponding bit in the 27:22
 	 * to be zero. We calculate the aperture size accordingly.
 	 */
-	return (((apsize ^ 0x1f) << 22) | ((1 << 22) - 1)) + 1;
+	return (((apsize ^ APSIZE_MASK) << 22) | ((1 << 22) - 1)) + 1;
 }
 
 static int
@@ -191,12 +265,13 @@ agp_intel_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 	/*
 	 * Reverse the magic from get_aperture.
 	 */
-	apsize = ((aperture - 1) >> 22) ^ 0x1f;
+	apsize = ((aperture - 1) >> 22) ^ APSIZE_MASK;
 
 	/*
 	 * Double check for sanity.
 	 */
-	if ((((apsize ^ 0x1f) << 22) | ((1 << 22) - 1)) + 1 != aperture)
+	if ((((apsize ^ APSIZE_MASK) << 22) |
+			((1 << 22) - 1)) + 1 != aperture)
 		return EINVAL;
 
 	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_APSIZE);
@@ -233,6 +308,21 @@ agp_intel_unbind_page(struct agp_softc *sc, off_t offset)
 static void
 agp_intel_flush_tlb(struct agp_softc *sc)
 {
-	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL, 0x2200);
-	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL, 0x2280);
+	struct agp_intel_softc *isc = sc->as_chipc;
+
+	switch (isc->chiptype) {
+        case CHIP_I845:
+        case CHIP_I840:
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
+			0x0);
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
+			AGPCTRL_GTLB);
+		break;
+	case CHIP_I443:
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
+			AGPCTRL_AGPRSE);
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_AGPCTRL,
+			AGPCTRL_AGPRSE | AGPCTRL_GTLB);
+		break;
+	}
 }
