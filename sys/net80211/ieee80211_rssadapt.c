@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.4 2004/03/29 04:09:45 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.5 2004/05/06 03:03:20 dyoung Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/kernel.h>		/* for hz */
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -55,18 +56,20 @@ static	int currssadaptps = 0;		/* rate-adaptation msgs this second */
 static	int ieee80211_adaptrate = 4;	/* rate-adaptation max msgs/sec */
 
 #define RSSADAPT_DO_PRINT() \
-	((ieee80211_debug > 0) && \
+	((ieee80211_rssadapt_debug > 0) && \
 	 ppsratecheck(&lastrateadapt, &currssadaptps, ieee80211_adaptrate))
 #define	RSSADAPT_PRINTF(X) \
 	if (RSSADAPT_DO_PRINT()) \
 		printf X
+
+int ieee80211_rssadapt_debug = 0;
 
 #else
 #define	RSSADAPT_DO_PRINT() (0)
 #define	RSSADAPT_PRINTF(X)
 #endif
 
-struct ieee80211_rssadapt_expavgctl master_expavgctl = {
+static struct ieee80211_rssadapt_expavgctl master_expavgctl = {
 	rc_decay_denom : 16,
 	rc_decay_old : 15,
 	rc_thresh_denom : 8,
@@ -74,6 +77,127 @@ struct ieee80211_rssadapt_expavgctl master_expavgctl = {
 	rc_avgrssi_denom : 8,
 	rc_avgrssi_old : 4
 };
+
+#ifdef __NetBSD__
+#ifdef IEEE80211_DEBUG
+/* TBD factor with sysctl_ath_verify, sysctl_ieee80211_verify. */
+static int
+sysctl_ieee80211_rssadapt_debug(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	IEEE80211_DPRINTF(("%s: t = %d, nodenum = %d, rnodenum = %d\n",
+	    __func__, t, node.sysctl_num, rnode->sysctl_num));
+
+	if (t < 0 || t > 2)
+		return (EINVAL);
+	*(int*)rnode->sysctl_data = t;
+
+	return (0);
+}
+#endif /* IEEE80211_DEBUG */
+
+/* TBD factor with sysctl_ath_verify, sysctl_ieee80211_verify. */
+static int
+sysctl_ieee80211_rssadapt_expavgctl(SYSCTLFN_ARGS)
+{
+	struct ieee80211_rssadapt_expavgctl rc;
+	int error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	rc = *(struct ieee80211_rssadapt_expavgctl *)rnode->sysctl_data;
+	node.sysctl_data = &rc;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	IEEE80211_DPRINTF(("%s: decay = %d/%d, thresh = %d/%d, "
+	    "avgrssi = %d/%d, nodenum = %d, rnodenum = %d\n",
+	    __func__, rc.rc_decay_old, rc.rc_decay_denom,
+	    rc.rc_thresh_old, rc.rc_thresh_denom,
+	    rc.rc_avgrssi_old, rc.rc_avgrssi_denom,
+	    node.sysctl_num, rnode->sysctl_num));
+
+	if (rc.rc_decay_old < 0 ||
+	    rc.rc_decay_denom < rc.rc_decay_old)
+		return (EINVAL);
+
+	if (rc.rc_thresh_old < 0 ||
+	    rc.rc_thresh_denom < rc.rc_thresh_old)
+		return (EINVAL);
+
+	if (rc.rc_avgrssi_old < 0 ||
+	    rc.rc_avgrssi_denom < rc.rc_avgrssi_old)
+		return (EINVAL);
+
+	*(struct ieee80211_rssadapt_expavgctl *)rnode->sysctl_data = rc;
+
+	return (0);
+}
+
+/*
+ * Setup sysctl(3) MIB, net.ieee80211.*
+ *
+ * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ */
+SYSCTL_SETUP(sysctl_ieee80211_rssadapt,
+    "sysctl ieee80211 rssadapt subtree setup")
+{
+	int rc, ieee80211_node_num, rssadapt_node_num;
+	struct sysctlnode *node;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net", NULL,
+	    NULL, 0, NULL, 0, CTL_NET, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211", NULL,
+	    NULL, 0, NULL, 0, CTL_NET, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ieee80211_node_num = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "rssadapt", NULL,
+	    NULL, 0, NULL, 0, CTL_NET, ieee80211_node_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	rssadapt_node_num = node->sysctl_num;
+
+#ifdef IEEE80211_DEBUG
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "debug", NULL,
+	    sysctl_ieee80211_rssadapt_debug, 0, &ieee80211_rssadapt_debug, 0,
+	    CTL_NET, ieee80211_node_num, rssadapt_node_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+#endif /* IEEE80211_DEBUG */
+
+	/* control rate of decay for exponential averages */
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_STRUCT,
+	    "expavgctl", NULL, sysctl_ieee80211_rssadapt_expavgctl, 0,
+	    &master_expavgctl, sizeof(master_expavgctl), CTL_NET,
+	    ieee80211_node_num, rssadapt_node_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+#endif /* __NetBSD__ */
 
 int
 ieee80211_rssadapt_choose(struct ieee80211_rssadapt *ra,
@@ -117,13 +241,15 @@ ieee80211_rssadapt_choose(struct ieee80211_rssadapt *ra,
 	}
 
 out:
-	if (dvname != NULL) {
+#ifdef IEEE80211_DEBUG
+	if (ieee80211_rssadapt_debug && dvname != NULL) {
 		printf("%s: dst %s threshold[%d, %d.%d] %d < %d\n",
 		    dvname, ether_sprintf(wh->i_addr1), len,
 		    (rs->rs_rates[rateidx] & IEEE80211_RATE_VAL) / 2,
 		    (rs->rs_rates[rateidx] & IEEE80211_RATE_VAL) * 5 % 10,
 		    (*thrs)[rateidx], ra->ra_avg_rssi);
 	}
+#endif /* IEEE80211_DEBUG */
 	return rateidx;
 }
 
