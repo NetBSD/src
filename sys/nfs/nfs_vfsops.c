@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.16 1994/04/21 07:49:11 cgd Exp $
+ *	$Id: nfs_vfsops.c,v 1.17 1994/04/23 07:55:13 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -448,7 +448,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	bzero((caddr_t)nmp, sizeof *nmp);
 	mp->mnt_data = (qaddr_t)nmp;
 
-	getnewfsid(mp, (int)MOUNT_NFS);
+	getnewfsid(mp, makefstype(MOUNT_NFS));
 	nmp->nm_mountp = mp;
 	nmp->nm_rto = NFS_TIMEO;
 	nmp->nm_rtt = -1;
