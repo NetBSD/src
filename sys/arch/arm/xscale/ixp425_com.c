@@ -1,5 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $ */
-#define DEBUG
+/*	$NetBSD: ixp425_com.c,v 1.2 2003/05/23 10:14:03 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -69,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.2 2003/05/23 10:14:03 ichiro Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
