@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.1 2001/01/19 01:31:26 manu Exp $ */
+/*	$NetBSD: linux_types.h,v 1.2 2001/01/20 10:36:05 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct linux_statfs {
  */
 struct linux_stat {  /* warning: there is also a old_kernel_stat in Linux*/
 	linux_dev_t		lst_dev; 
-	linux_ino_t		lst_ino; /* expect for unused fileds, of course */
+	linux_ino_t		lst_ino;
 	linux_mode_t	lst_mode;
 	linux_nlink_t	lst_nlink;
 	linux_uid_t		lst_uid;
