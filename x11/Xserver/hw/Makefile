@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2004/01/17 03:56:25 rtr Exp $
+#	$NetBSD: Makefile,v 1.11 2004/01/18 05:35:03 rtr Exp $
 
 .include "../Makefile.common"
 
@@ -34,6 +34,18 @@ SUBDIR+=netbsd/mac68k
 
 .if ${XSERVER_XAMIGA} != "no"
 SUBDIR+=netbsd/amiga
+.endif
+
+.if ${XSERVER_XDECNETBSD} != "no"
+SUBDIR+=netbsd/dec
+.endif
+
+.if ${XSERVER_XARM32VIDC} != "no"
+SUBDIR+=netbsd/arm32vidc
+.endif
+
+.if ${XSERVER_XALPHANETBSD} != "no"
+SUBDIR+=netbsd/alpha
 .endif
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.8 2004/01/17 04:06:18 rtr Exp $
+#	$NetBSD: Makefile.common,v 1.9 2004/01/18 05:35:03 rtr Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -46,6 +46,18 @@ XSERVER_XAMIGA=		yes
 XSERVER_HAS_AFB=	yes
 .endif
 
+.if ${MACHINE} == "alpha" || ${MACHINE} == "pmax"
+XSERVER_XDECNETBSD=	yes
+.endif
+
+.if ${MACHINE} == "acorn32"
+XSERVER_XARM32VIDC=	yes
+.endif
+
+.if ${MACHINE} == "alpha"
+XSERVER_XALPHANETBSD=	yes
+.endif
+
 # Does this server need Xfont/fontbase libraries?
 XSERVER_NEEDS_XFONT?=	no
 # Does this server use cfb* libraries?
@@ -73,3 +85,9 @@ XSERVER_XAMIGA?=no
 XSERVER_XVFB?=	yes
 # Does this platform build the Xmac68k X server?
 XSERVER_XMAC68K?=	no
+# Does this platform build the XdecNetBSD server?
+XSERVER_XDECNETBSD?=	no
+# Does this platform build the Xarm32VIDC server?
+XSERVER_XARM32VIDC?=	no
+# Does this platform build the XalphaNetBSD server?
+XSERVER_XALPHANETBSD?=	no
