@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.49 1996/12/16 16:17:07 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.50 1996/12/18 02:54:43 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -317,6 +317,7 @@ aeattach(parent, self, aux)
 	sc->type_str[INTERFACE_NAME_LEN-1] = '\0';
 
 	addr = (caddr_t) na->fmt->virtual_base;
+	memsize = 0;
 
 	switch (sc->vendor) {
 	case AE_VENDOR_INTERLAN:
