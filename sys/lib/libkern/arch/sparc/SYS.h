@@ -1,3 +1,5 @@
+/*	$NetBSD: SYS.h,v 1.2 1994/10/26 06:39:53 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +38,7 @@
  *
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
- *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$Id: SYS.h,v 1.1 1994/06/30 06:52:56 deraadt Exp $
+ *	Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
  */
 
 #include <machine/asm.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: exec_var.h,v 1.2 1994/10/26 06:43:09 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/exec_var.h,v 1.1 1993/10/13 05:41:31 cgd Exp $
  */
 
 struct exec_var_addr {

@@ -1,3 +1,5 @@
+/*	$NetBSD: boot_nfs.c,v 1.6 1994/10/26 06:43:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -30,8 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.5 1993/10/16 07:57:39 cgd Exp $
  */
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -68,8 +68,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.5 1993/10/16 07:57:39 cgd Exp $ (LBL)
  */
 
 #include <sys/param.h>

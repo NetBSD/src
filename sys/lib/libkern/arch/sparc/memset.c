@@ -1,3 +1,5 @@
+/*	$NetBSD: memset.c,v 1.2 1994/10/26 06:40:00 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)memset.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$Id: memset.c,v 1.1 1994/09/15 01:46:38 deraadt Exp $";
+#ifdef notdef
+static char *sccsid = "@(#)memset.c	5.6 (Berkeley) 1/26/91";
+#endif
+static char *rcsid = "$NetBSD: memset.c,v 1.2 1994/10/26 06:40:00 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>

@@ -1,3 +1,4 @@
+/*	$NetBSD: netif.h,v 1.3 1994/10/26 06:43:15 cgd Exp $	*/
 
 #ifndef __SYS_LIBNETBOOT_NETIF_H
 #define __SYS_LIBNETBOOT_NETIF_H

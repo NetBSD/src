@@ -1,4 +1,5 @@
-/* @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/bootp.h,v 1.1 1993/10/13 05:41:28 cgd Exp $ (LBL) */
+/*	$NetBSD: bootp.h,v 1.2 1994/10/26 06:43:06 cgd Exp $	*/
+
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: DEFS.h,v 1.2 1994/10/26 06:39:51 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	From: @(#)DEFS.h	8.1 (Berkeley) 6/4/93
- *	$Id: DEFS.h,v 1.1 1994/06/30 06:52:54 deraadt Exp $
+ *	@(#)DEFS.h	8.1 (Berkeley) 6/4/93
  */
 
 #include <machine/asm.h>

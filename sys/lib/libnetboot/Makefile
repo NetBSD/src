@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1994/06/14 00:31:43 glass Exp $
+#	$NetBSD: Makefile,v 1.10 1994/10/26 06:42:58 cgd Exp $
 
 LIB=	netboot
 SRCS+=	arp.c bootinfo.c bootp.c exec.c globals.c in_cksum.c \
