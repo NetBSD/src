@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.73 2000/04/24 17:12:00 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.74 2000/05/19 17:43:55 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1558,13 +1558,15 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		while (entry->start < end && entry != &srcmap->header) {
 
 			if (copy_ok) {
-	oldoffset = (entry->start + fudge) - start;
-	elen = min(end, entry->end) - (entry->start + fudge);
-	pmap_copy(dstmap->pmap, srcmap->pmap, dstaddr + oldoffset, 
-		  elen, entry->start + fudge);
+				oldoffset = (entry->start + fudge) - start;
+				elen = min(end, entry->end) -
+				    (entry->start + fudge);
+				pmap_copy(dstmap->pmap, srcmap->pmap,
+				    dstaddr + oldoffset, elen,
+				    entry->start + fudge);
 			}
 
-      /* we advance "entry" in the following if statement */
+			/* we advance "entry" in the following if statement */
 			if (flags & UVM_EXTRACT_REMOVE) {
 				pmap_remove(srcmap->pmap, entry->start, 
 						entry->end);
