@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.11 1996/02/26 23:29:08 jonathan Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.12 1998/07/27 13:55:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -59,6 +59,6 @@ typedef _BSD_VA_LIST_	va_list;
 		(abort(), 0)))[-1]
 #endif
 
-#define	va_end(ap)	((void) 0)
+#define	va_end(ap)	
 
 #endif /* !_PMAX_STDARG_H_ */
