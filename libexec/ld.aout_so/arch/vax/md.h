@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 1998/10/12 01:33:35 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.8 1998/10/19 03:09:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,9 +92,10 @@
 #define TEXT_START(ex)		(N_TXTADDR(ex) + N_ADJUST(ex))
 #define DATA_START(ex)		(N_DATADDR(ex) + N_ADJUST(ex))
 
-#define RELOC_STATICS_THROUGH_GOT_P(r)	(1)
-#define JMPSLOT_NEEDS_RELOC		(1)
-#define JMPSLOT_NEEDS_GOT		(1)
+#define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
+#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(0)
+#define JMPSLOT_NONEXTERN_ARE_INTERMODULE	(1)
+#define JMPSLOT_NEEDS_RELOC			(0)
 
 #define md_got_reloc(r)			(0)
 
@@ -106,7 +107,8 @@ typedef int32_t	got_t;
 
 /*
  *	.word	^M<reg-mask>
- *	jmp	L^addr
+ *	jsb	L^addr
+ *	callg	(ap), L^addr
  */
 typedef struct jmpslot {
 	u_short mask;
@@ -115,9 +117,6 @@ typedef struct jmpslot {
 } jmpslot_t;
 
 #define	JMPSLOT_RELOC_MASK	0xffff
-/*
- * following defines are untested since VAX doesn't support PIC (yet?)
- */
 #define BPT	0x0003			/* Set a breakpoint */
 
 /*

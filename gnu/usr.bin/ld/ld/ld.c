@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.58 1998/09/04 09:43:29 pk Exp $	*/
+/*	$NetBSD: ld.c,v 1.59 1998/10/19 03:09:34 matt Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -2152,6 +2152,10 @@ consider_relocation(entry, dataseg)
 
 			if (!RELOC_EXTERN_P(reloc))
 				continue;
+#if !RELOC_SYMBOLICS_THROUGH_JMPSLOT
+			if (link_mode & SYMBOLIC)
+				continue;
+#endif
 
 			lsp = &entry->symbols[reloc->r_symbolnum];
 			sp = lsp->symbol;
@@ -2232,7 +2236,7 @@ consider_relocation(entry, dataseg)
 			}
 
 			if (force_alias_definition && sp->so_defined &&
-			    sp->aux == AUX_FUNC) {
+			    (sp->aux == AUX_FUNC || sp->aux == AUX_LABEL)) {
 
 				/* Call to shared library procedure */
 				alloc_rrs_jmpslot(entry, sp);
@@ -2912,15 +2916,23 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 			if (sp->alias)
 				sp = sp->alias;
 
-			if (relocatable_output)
+			if (relocatable_output) {
 				relocation = addend;
-			else if (!RELOC_EXTERN_P(r)) {
+			} else if (!RELOC_EXTERN_P(r)) {
+#if JMPSLOT_NONEXTERN_ARE_INTERMODULE
+				relocation = addend + sp->value;
+#else
 				relocation = addend +
 					data_relocation - text_relocation;
-			} else
+#endif
+#if !RELOC_SYMBOLICS_THROUGH_JMPSLOT
+			} else if (link_mode & SYMBOLIC) {
+				relocation = addend + sp->value;
+#endif
+			} else {
 				relocation = addend +
 					claim_rrs_jmpslot(entry, r, sp, addend);
-
+			}
 		} else if (RELOC_BASEREL_P(r)) {
 
 			int		   symindex = RELOC_SYMBOL(r);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 1998/09/05 13:08:39 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.4 1998/10/19 03:09:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -178,10 +178,11 @@ md_make_jmpslot(sp, offset, index)
  * and by `ld.so' after resolving the symbol.
  */
 void
-md_fix_jmpslot(sp, offset, addr)
+md_fix_jmpslot(sp, offset, addr, first)
 	jmpslot_t	*sp;
 	long		offset;
 	u_long		addr;
+	int		first;
 {
 	errx(1, "md_fix_jmpslot unimplemented");
 }
@@ -201,10 +202,9 @@ md_make_jmpreloc(rp, r, type)
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type, gotp)
+md_make_gotreloc(rp, r, type)
 	struct relocation_info	*rp, *r;
 	int			type;
-	got_t			*gotp;
 {
 	errx(1, "md_make_gotreloc unimplemented");
 }

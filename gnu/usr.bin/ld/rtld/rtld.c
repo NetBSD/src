@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.67 1998/09/12 15:03:19 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.68 1998/10/19 03:09:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -845,7 +845,7 @@ reloc_map(smp)
 
 	if (LD_PLTSZ(dp))
 		md_fix_jmpslot(LM_PLT(smp),
-				(long)LM_PLT(smp), (long)binder_entry);
+				(long)LM_PLT(smp), (long)binder_entry, 1);
 
 	for (; r < rend; r++) {
 		char	*sym;
@@ -1359,7 +1359,7 @@ binder(jsp)
 	if (src_map)
 		addr += (long)src_map->som_addr;
 
-	md_fix_jmpslot(jsp, (long)jsp, addr);
+	md_fix_jmpslot(jsp, (long)jsp, addr, 0);
 
 #if DEBUG
 xprintf(" BINDER: %s located at = %#x in %s\n", sym, addr, src_map->som_path);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.14 1998/09/05 13:08:39 pk Exp $	*/
+/*	$NetBSD: md.h,v 1.15 1998/10/19 03:09:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,8 +108,10 @@
 #define RELOC_COPY_P(r)			((r)->r_type == RELOC_COPY_DAT)
 #define RELOC_LAZY_P(r)			((r)->r_type == RELOC_JMP_SLOT)
 
-#define RELOC_STATICS_THROUGH_GOT_P(r)	(1)
-#define JMPSLOT_NEEDS_RELOC		(1)
+#define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
+#define JMPSLOT_NEEDS_RELOC			(1)
+#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(1)
+#define	JMPSLOT_NONEXTERN_IS_INTERMODULE	(0)
 
 /*
  * Define the range of usable Global Offset Table offsets

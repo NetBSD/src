@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 1998/10/12 01:33:35 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.10 1998/10/19 03:09:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,19 +141,17 @@ long		index;
 	 * On VAX a branch offset given in immediate mode is relative to
 	 * the end of the address itself.
 	 */
-	u_long fudge = -(offset + 8 - 2 /* skip mask */);
+	u_long fudge = - (offset + 9);
 
-	if (offset == 0) {
-		sp->mask = 0x0101;		/* NOP NOP */
-	} else {
-		sp->mask - 0x0000;
-	}
-	sp->insn[0] = 0x16;			/* jsb */
-	sp->insn[1] = 0xef;			/* L^(pc) */
-	sp->insn[2] = (fudge >>  0) & 0xff;
-	sp->insn[3] = (fudge >>  8) & 0xff;
-	sp->insn[4] = (fudge >> 16) & 0xff;
-	sp->insn[5] = (fudge >> 24) & 0xff;
+	sp->mask = 0x0000;			/* no registers */
+	sp->insn[0] = 0x01;			/* nop */
+	sp->insn[1] = 0x16;			/* jsb */
+	sp->insn[2] = 0xef;			/* L^(pc) */
+	sp->insn[3] = (fudge >>  0) & 0xff;
+	sp->insn[4] = (fudge >>  8) & 0xff;
+	sp->insn[5] = (fudge >> 16) & 0xff;
+	sp->insn[6] = (fudge >> 24) & 0xff;
+	sp->insn[7] = 0x00;			/* halt */
 	sp->reloc_index = index;
 }
 
@@ -165,27 +163,29 @@ long		index;
  * further RRS relocations will be necessary for such a jmpslot.
  */
 void
-md_fix_jmpslot(sp, offset, addr)
+md_fix_jmpslot(sp, offset, addr, first)
 jmpslot_t	*sp;
 long		offset;
 u_long		addr;
+int		first;
 {
 	u_long fudge = addr - (offset + 9);
 
-	if (offset == 0) {
+	if (first) {
 		sp->mask = 0x0101;		/* NOP NOP */
 		sp->insn[0] = 0x01;		/* nop */
-		sp->insn[1] = 0x17;		/* jmp */
+		sp->insn[1] = 0x17;		/* jsb */
 	} else {
-		sp->mask - 0x0000;
+		sp->mask = 0x0000;
 		sp->insn[0] = 0xfa;		/* callg */
 		sp->insn[1] = 0x6c;		/* (ap) */
 	}
 	sp->insn[2] = 0xef;			/* L^(pc) */
-	sp->insn[2] = (fudge >>  0) & 0xff;
-	sp->insn[3] = (fudge >>  8) & 0xff;
-	sp->insn[4] = (fudge >> 16) & 0xff;
-	sp->insn[5] = (fudge >> 24) & 0xff;
+	sp->insn[3] = (fudge >>  0) & 0xff;
+	sp->insn[4] = (fudge >>  8) & 0xff;
+	sp->insn[5] = (fudge >> 16) & 0xff;
+	sp->insn[6] = (fudge >> 24) & 0xff;
+	sp->insn[7] = 0x04;			/* ret */
 }
 
 /*
@@ -217,10 +217,9 @@ int			type;
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type, gotp)
+md_make_gotreloc(rp, r, type)
 struct relocation_info	*rp, *r;
 int			type;
-got_t			*gotp;
 {
 	r->r_baserel = 1;
 	if (type & RELTYPE_RELATIVE)
@@ -249,7 +248,7 @@ long	where;
 long	*savep;
 {
 	*savep = *(long *)where;
-	*(char *)where = BPT;		/* !!! fixit !!! */
+	*(char *)where = BPT;
 }
 
 #ifndef RTLD

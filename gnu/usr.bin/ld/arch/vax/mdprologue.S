@@ -1,4 +1,4 @@
-/*	$NetBSD: mdprologue.S,v 1.6 1998/08/26 15:32:02 matt Exp $	*/
+/*	$NetBSD: mdprologue.S,v 1.7 1998/10/19 03:09:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas <matt@3am-software.com>
@@ -35,17 +35,18 @@
 
 	.text
 	.globl	_binder, _binder_entry
+	.globl	_rtl
+	.type	_rtl,@function
 
 /*
  *	_rtl(int version, struct crt_ldso *crtp)
  */
 
-	.align	1
+	.align	2
 _rtl:					/* crt0 calls us here */
 	.word	0			/* no registers to save */
 	movl	8(ap),r0		/* load crtp into r0 */
 					/* setup arguments for rtld() */
-	/* movab	_binder_entry, __PROCEDURE_LINKAGE_TABLE_+4 */
 	/*
 	 * Add the 1st entry in the GOT (e.g. __DYNAMIC) to the base
 	 * address of ld.so and pushd that onto the stack.
@@ -54,7 +55,10 @@ _rtl:					/* crt0 calls us here */
 	pushl	r0			/* 2nd arg == crtp */
 	pushl	4(ap)			/* 1st arg == version */
 	calls	$3,_rtld		/* _rtld(version, crtp, DYNAMIC) */
-	ret
+	movpsl	-(sp)			/* flush the instruction cache */
+	pushab	1f			/*   by issuing an */
+	rei				/*   rei. */
+1:	ret
 
 /*
  * First call to a procedure generally comes through here for binding.
@@ -64,11 +68,21 @@ _rtl:					/* crt0 calls us here */
  * the JSB used.  Call the actual function and return.
  */
 	.align	1
+	.type	_binder_entry,@label
 _binder_entry:
 	pushr	$0x3f		/* save r0 to r5 */
-	pushl	24(sp)
+#ifdef DEBUG
+	pushl	$29
+	pushab	LC1
+	pushl	$2
+	calls	$3,_write
+#endif
+	subl3	$9, 24(sp), -(sp) /* point to beginning of jmpslot */
 	calls	$1, _binder	/* _binder(jsp) */
 	movl	r0, 24(sp)
 	popr	$0x3f		/* restore r0 to r5 */
 	callg	(ap), *(sp)+	/* return value from _binder() == actual */
 	ret
+#ifdef DEBUG
+LC1:	.asciz	"ld.so: entered _binder_entry\n"
+#endif
