@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2001/08/30 22:06:44 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2001/09/09 04:35:22 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1419,6 +1419,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 				if ((flags & PMAP_CANFAIL) == 0)
 					panic("pmap_pvo_enter: failed");
 				pmap_pvo_enter_depth--;
+				pmap_interrupts_restore(msr);
 				return ENOMEM;
 #if 0
 			}
@@ -1622,6 +1623,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct mem_region *mp;
 	u_int32_t pte_lo;
+	u_int32_t msr;
 	int error;
 	int s;
 
@@ -1646,8 +1648,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		pte_lo |= PTE_BR;
 
 	s = splvm();
+	msr = pmap_interrupts_off();
 	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool, &pmap_pvo_kunmanaged,
 	    va, pa, pte_lo, prot|PMAP_WIRED);
+	pmap_interrupts_restore(msr);
 	splx(s);
 
 	if (error != 0 && error != ENOENT)
