@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.33 2000/10/19 07:22:06 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.34 2000/10/21 13:56:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -140,7 +140,7 @@ siop_script_sync(sc, ops)
 	struct siop_softc *sc;
 	int ops;
 {
-	if ((sc->features & SF_CHIP_RAM) != 0)
+	if ((sc->features & SF_CHIP_RAM) == 0)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG, ops);
 }
 
