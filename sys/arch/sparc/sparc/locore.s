@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.24 2003/01/15 18:40:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.25 2003/01/17 15:18:54 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2474,7 +2474,7 @@ softintr_common:
 #if defined(MULTIPROCESSOR)
 	/* Grab the kernel lock for interrupt levels <= IPL_CLOCK */
 	cmp	%l3, IPL_CLOCK
-	bgu	3f
+	bgeu	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
@@ -2501,7 +2501,7 @@ softintr_common:
 
 #if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_CLOCK
-	bgu	0f
+	bgeu	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
 	 nop
@@ -2649,7 +2649,7 @@ sparc_interrupt_common:
 #if defined(MULTIPROCESSOR)
 	/* Grab the kernel lock for interrupt levels <= IPL_CLOCK */
 	cmp	%l3, IPL_CLOCK
-	bgu	3f
+	bgeu	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
@@ -2689,7 +2689,7 @@ sparc_interrupt_common:
 4:
 #if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_CLOCK
-	bgu	0f
+	bgeu	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
 	 nop
@@ -4536,13 +4536,6 @@ ENTRY(write_user_windows)
 
 
 /*
- * Masterpaddr is the p->p_addr of the last process on the processor.
- * XXX masterpaddr is almost the same as cpcb
- * XXX should delete this entirely
- */
-	.comm	_C_LABEL(masterpaddr), 4
-
-/*
  * Switch statistics (for later tweaking):
  *	nswitchdiff = p1 => p2 (i.e., chose different process)
  *	nswitchexit = number of calls to switchexit()
@@ -4632,15 +4625,54 @@ ENTRY(switchexit)
  * When no processes are on the runq, switch
  * idles here waiting for something to come ready.
  * The registers are set up as noted above.
+ *
+ * There are three entry points into the idle loop.
+ *	idle_switch:	when a switch to the CPU's idle stack is required
+ *	idle:		when already on the idle stack, scheduler lock held
+ *	idle_enter:	when already on the idle stack, scheduler lock not held
  */
+idle_switch:
+#if defined(MULTIPROCESSOR)
+	sethi	%hi(IDLE_UP), %g5
+	ld	[%g5 + %lo(IDLE_UP)], %g5
+#else
+	set	_C_LABEL(idle_u), %g5
+#endif
+	mov	%l6, %g6		! save %hi(cpcb) before changing windows
+	wr	%g0, PSR_S|PSR_PIL, %psr! change to window 0, traps off
+	wr	%g0, 2, %wim		! and make window 1 the trap window
+	mov	1, %o0
+	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = &idle_u
+	st	%o0, [%g5 + PCB_WIM]	! idle_u.pcb_wim = log2(2) = 1
+#if defined(MULTIPROCESSOR)
+	set	USPACE-CCFSZ, %o1	!
+	add	%g5, %o1, %sp		! set new %sp
+#else
+	set	_C_LABEL(idle_u) + USPACE-CCFSZ, %sp	! set new %sp
+#endif
+	mov	%g0, %i6		! paranoid
+	mov	%g0, %i7		!
+
+#ifdef DEBUG
+	mov	%g5, %o0		! %o0 = _idle_u
+	SET_SP_REDZONE(%o0, %o1)
+#endif
+	! enable traps and continue at splsched()
+	wr	%g0, PSR_S|PSR_ET|(IPL_SCHED<<8), %psr
+
+	/* now set up the locals in our new window */
+	mov	PSR_S|PSR_ET, %l1	! oldpsr = PSR_S | PSR_ET;
+	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
+	clr	%l4			! lastproc = NULL;
+	sethi	%hi(cpcb), %l6
+	sethi	%hi(curlwp), %l7
+	/* FALLTHROUGH*/
+
 idle:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	! unlock scheduler lock
 	call	_C_LABEL(sched_unlock_idle)
 	 nop
-	! flush this process's context & tlb
-	call	_C_LABEL(pmap_deactivate)	! pmap_deactive(lastproc);
-	 mov	%l4, %o0
 #endif
 
 idle_enter:
@@ -4651,12 +4683,7 @@ idle_enter:
 1:					! spin reading whichqs until nonzero
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	tst	%o3
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bnz,a	idle_leave
-#else
-	bnz,a	Lsw_scan
-#endif
-	! NB: annulled delay slot (executed when we leave the idle loop)
 	 wr	%l1, (IPL_SCHED << 8), %psr	! (void) splsched();
 
 	! Check uvm.page_idle_zero
@@ -4670,14 +4697,17 @@ idle_enter:
 	 nop
 	b,a	1b
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 idle_leave:
+	! just wrote to %psr; observe psr delay before doing a `save'
+	! or loading sched_whichqs.
+	nop; nop
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Before we leave the idle loop, detain the scheduler lock */
-	nop	! just wrote to %psr; observe psr delay before doing a `save'
 	call	_C_LABEL(sched_lock_idle)
 	 nop
-	b,a	Lsw_scan
 #endif
+	b	Lsw_scan
+	 ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
 Lsw_panic_rq:
 	sethi	%hi(1f), %o0
@@ -4746,52 +4776,28 @@ ENTRY(cpu_switchto)
 wb1:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE;	/* 6 of each: */
 	restore; restore; restore; restore; restore; restore
 
+#if defined(MULTIPROCESSOR)
+	/* flush this process's context from TLB (on SUN4M/4D) */
+	call	_C_LABEL(pmap_deactivate)	! pmap_deactive(lastproc);
+	 mov	%i0, %o0
+#endif
+
 	/* If we've been given a process to switch to, skip the rq stuff */
 	tst	%i1
 	bnz,a	Lsw_load
 	 mov	%i1, %l3	! but move into the expected register first
 
-#if defined(MULTIPROCESSOR)
-	sethi	%hi(IDLE_UP), %g5
-	ld	[%g5 + %lo(IDLE_UP)], %g5
-#else
-	set	_C_LABEL(idle_u), %g5
-#endif
-	mov	%l4, %g4		! save lastproc and %lo(cpcb)
-	mov	%l6, %g6		!  before changing windows
-	wr	%g0, PSR_S|PSR_PIL, %psr! change to window 0, traps off
-	wr	%g0, 2, %wim		! and make window 1 the trap window
-	mov	1, %o0
-	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = &idle_u
-	st	%o0, [%g5 + PCB_WIM]	! idle_u.pcb_wim = log2(2) = 1
-#if defined(MULTIPROCESSOR)
-	set	USPACE-CCFSZ, %o1	!
-	add	%g5, %o1, %sp		! set new %sp
-#else
-	set	_C_LABEL(idle_u) + USPACE-CCFSZ, %sp	! set new %sp
-#endif
-	mov	%g0, %i6		! paranoid
-	mov	%g0, %i7		!
-
-#ifdef DEBUG
-	mov	%g5, %o0		! %o0 = _idle_u
-	SET_SP_REDZONE(%o0, %o1)
-#endif
-	! enable traps and continue at splsched()
-	wr	%g0, PSR_S|PSR_ET|(IPL_SCHED<<8), %psr
-
-	/* now set up the locals in our new window */
-	mov	PSR_S|PSR_ET, %l1	! oldpsr = PSR_S | PSR_ET;
+	/* If nothing on the rq, wait after switching to idle stack */
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
-	mov	%g4, %l4		! restore lastproc
-	sethi	%hi(cpcb), %l6
-	sethi	%hi(curlwp), %l7
+	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
+	tst	%o3
+	bz	idle_switch
+	 EMPTY
 
 Lsw_scan:
-	nop; nop; nop				! paranoia
-	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
-
 	/*
+	 * Enter here with %o3 set to sched_whichqs.
+	 *
 	 * Optimized inline expansion of `which = ffs(whichqs) - 1';
 	 * branches to idle if ffs(whichqs) was 0.
 	 */
@@ -4881,12 +4887,6 @@ Lsw_load:
 	st	%o0, [%l3 + L_CPU]
 #endif
 
-	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* Done with the run queues; release the scheduler lock */
-	call	_C_LABEL(sched_unlock_idle)
-#endif
-	st	%g0, [%o0 + %lo(_WANT_RESCHED)]! delay slot
 	ld	[%l3 + L_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%l3 + 4]			! p->p_back = NULL;
 	st	%l3, [%l7 + %lo(curlwp)]	! curlwp = p;
@@ -4949,10 +4949,12 @@ Lsw_load:
 	/* finally, enable traps and continue at splsched() */
 	wr	%g2, IPL_SCHED << 8 , %psr	! psr = newpsr;
 
-#if defined(MULTIPROCESSOR)
-	call	_C_LABEL(pmap_deactivate)	! pmap_deactive(lastproc);
-	 mov	%g4, %o0
+	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/* Done with the run queues; release the scheduler lock */
+	call	_C_LABEL(sched_unlock_idle)
 #endif
+	st	%g0, [%o0 + %lo(_WANT_RESCHED)]! delay slot
 
 	/*
 	 * Now running p.  Make sure it has a context so that it
