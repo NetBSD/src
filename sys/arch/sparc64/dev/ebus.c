@@ -1,7 +1,7 @@
-/*	$NetBSD: ebus.c,v 1.28 2001/09/26 20:53:10 eeh Exp $	*/
+/*	$NetBSD: ebus.c,v 1.29 2001/10/22 08:09:46 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000 Matthew R. Green
+ * Copyright (c) 1999, 2000, 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,22 +34,18 @@
  * UltraSPARC 5 and beyond ebus support.
  *
  * note that this driver is not complete:
- *	- ebus2 dma code is completely unwritten
  *	- interrupt establish is written and appears to work
  *	- bus map code is written and appears to work
+ *	- ebus2 dma code is completely unwritten, we just punt to
+ *	  the iommu.
  */
-
-#undef DEBUG
-#define DEBUG
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
 #define EDB_CHILD	0x02
 #define	EDB_INTRMAP	0x04
 #define EDB_BUSMAP	0x08
-#define EDB_BUSDMA	0x10
-#define EDB_INTR	0x20
-int ebus_debug = 0x0;
+int ebus_debug = 0;
 #define DPRINTF(l, s)   do { if (ebus_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -77,9 +73,27 @@ int ebus_debug = 0x0;
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
-#include <sparc64/dev/ebusreg.h>
+#include <dev/ebus/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 #include <sparc64/sparc64/cache.h>
+
+struct ebus_softc {
+	struct device			sc_dev;
+
+	int				sc_node;
+
+	bus_space_tag_t			sc_memtag;	/* from pci */
+	bus_space_tag_t			sc_iotag;	/* from pci */
+	bus_space_tag_t			sc_childbustag;	/* pass to children */
+	bus_dma_tag_t			sc_dmatag;
+
+	struct ebus_ranges		*sc_range;
+	struct ebus_interrupt_map	*sc_intmap;
+	struct ebus_interrupt_map_mask	sc_intmapmask;
+
+	int				sc_nrange;	/* counters */
+	int				sc_nintmap;
+};
 
 int	ebus_match __P((struct device *, struct cfdata *, void *));
 void	ebus_attach __P((struct device *, struct device *, void *));
@@ -87,6 +101,8 @@ void	ebus_attach __P((struct device *, struct device *, void *));
 struct cfattach ebus_ca = {
 	sizeof(struct ebus_softc), ebus_match, ebus_attach
 };
+
+bus_space_tag_t ebus_alloc_bus_tag __P((struct ebus_softc *, int));
 
 int	ebus_setup_attach_args __P((struct ebus_softc *, int,
 	    struct ebus_attach_args *));
@@ -104,18 +120,6 @@ static int _ebus_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				bus_space_handle_t *));
 static void *ebus_intr_establish __P((bus_space_tag_t, int, int, int,
 				int (*) __P((void *)), void *));
-
-static int ebus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-			  bus_size_t, struct proc *, int));
-static void ebus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-static void ebus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-				  bus_size_t, int));
-int ebus_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-			   bus_dma_segment_t *, int, int *, int));
-void ebus_dmamem_free __P((bus_dma_tag_t, bus_dma_segment_t *, int));
-int ebus_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
-			 caddr_t *, int));
-void ebus_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
 
 int
 ebus_match(parent, match, aux)
@@ -177,11 +181,10 @@ ebus_attach(parent, self, aux)
 	printf("%s: %s, revision 0x%02x\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
-	sc->sc_parent = (struct psycho_softc *)parent;
 	sc->sc_memtag = pa->pa_memt;
 	sc->sc_iotag = pa->pa_iot;
 	sc->sc_childbustag = ebus_alloc_bus_tag(sc, PCI_MEMORY_BUS_SPACE);
-	sc->sc_dmatag = ebus_alloc_dma_tag(sc, pa->pa_dmat);
+	sc->sc_dmatag = pa->pa_dmat;
 
 	node = PCITAG_NODE(pa->pa_tag);
 	if (node == -1)
@@ -381,9 +384,9 @@ next_intr:;
 	}
 }
 
-
 /*
- * bus space and bus dma below here
+ * bus space support.  <sparc64/dev/psychoreg.h> has a discussion
+ * about PCI physical addresses, which also applies to ebus.
  */
 bus_space_tag_t
 ebus_alloc_bus_tag(sc, type)
@@ -407,44 +410,6 @@ ebus_alloc_bus_tag(sc, type)
 	return (bt);
 }
 
-/* XXX? */
-bus_dma_tag_t
-ebus_alloc_dma_tag(sc, pdt)
-	struct ebus_softc *sc;
-	bus_dma_tag_t pdt;
-{
-	bus_dma_tag_t dt;
-
-	dt = (bus_dma_tag_t)
-		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
-	if (dt == NULL)
-		panic("could not allocate ebus dma tag");
-
-	bzero(dt, sizeof *dt);
-	dt->_cookie = sc;
-	dt->_parent = pdt;
-#define PCOPY(x)	dt->x = pdt->x
-	PCOPY(_dmamap_create);
-	PCOPY(_dmamap_destroy);
-	dt->_dmamap_load = ebus_dmamap_load;
-	PCOPY(_dmamap_load_mbuf);
-	PCOPY(_dmamap_load_uio);
-	PCOPY(_dmamap_load_raw);
-	dt->_dmamap_unload = ebus_dmamap_unload;
-	dt->_dmamap_sync = ebus_dmamap_sync;
-	dt->_dmamem_alloc = ebus_dmamem_alloc;
-	dt->_dmamem_free = ebus_dmamem_free;
-	dt->_dmamem_map = ebus_dmamem_map;
-	dt->_dmamem_unmap = ebus_dmamem_unmap;
-	PCOPY(_dmamem_mmap);
-#undef	PCOPY
-	return (dt);
-}
-
-/*
- * bus space support.  <sparc64/dev/psychoreg.h> has a discussion
- * about PCI physical addresses, which also applies to ebus.
- */
 static int
 _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	bus_space_tag_t t;
@@ -536,7 +501,7 @@ ebus_bus_mmap(t, paddr, off, prot, flags)
 }
 
 /*
- * install an interrupt handler for a PCI device
+ * install an interrupt handler for a ebus device
  */
 void *
 ebus_intr_establish(t, pri, level, flags, handler, arg)
@@ -547,101 +512,6 @@ ebus_intr_establish(t, pri, level, flags, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
+
 	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));
-}
-
-/*
- * bus dma support
- */
-int
-ebus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-{
-	struct ebus_softc *sc = t->_cookie;
-
-	return (iommu_dvmamap_load(t, sc->sc_parent->sc_is, map, buf, buflen,
-	    p, flags));
-}
-
-void
-ebus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-{
-	struct ebus_softc *sc = t->_cookie;
-
-	iommu_dvmamap_unload(t, sc->sc_parent->sc_is, map);
-}
-
-void
-ebus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
-{
-	struct ebus_softc *sc = t->_cookie;
-
-	iommu_dvmamap_sync(t, sc->sc_parent->sc_is, map, offset, len, ops);
-	bus_dmamap_sync(t->_parent, map, offset, len, ops);
-}
-
-int
-ebus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	bus_size_t alignment;
-	bus_size_t boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-{
-	struct ebus_softc *sc = t->_cookie;
-
-	return (iommu_dvmamem_alloc(t, sc->sc_parent->sc_is, size, alignment,
-	    boundary, segs, nsegs, rsegs, flags));
-}
-
-void
-ebus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-{
-	struct ebus_softc *sc = t->_cookie;
-
-	iommu_dvmamem_free(t, sc->sc_parent->sc_is, segs, nsegs);
-}
-
-int
-ebus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
-{
-	struct ebus_softc *sc = t->_cookie;
-
-	return (iommu_dvmamem_map(t, sc->sc_parent->sc_is, segs, nsegs,
-	    size, kvap, flags));
-}
-
-void
-ebus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
-{
-	struct ebus_softc *sc = t->_cookie;
-
-	iommu_dvmamem_unmap(t, sc->sc_parent->sc_is, kva, size);
 }
