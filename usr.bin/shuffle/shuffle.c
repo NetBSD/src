@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.3 1998/09/24 12:28:40 christos Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.4 1998/09/30 18:37:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.3 1998/09/24 12:28:40 christos Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.4 1998/09/30 18:37:05 thorpej Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -256,7 +256,7 @@ main(argc, argv)
 
 	for (i = 0; i < nlines; i++) {
 		if (nflag)
-			printf("%d\n", shuffle[i]);
+			printf("%ld\n", (long)shuffle[i]);
 		else
 			printf("%s\n", lines[shuffle[i]]);
 	}
