@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.11 2003/03/24 07:40:50 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.12 2003/03/24 09:17:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.11 2003/03/24 07:40:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.12 2003/03/24 09:17:52 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 	struct mbchain *mbp;
 	struct mdchain *mdp;
 	u_int8_t wc, stime[8], sblen;
-	u_int16_t dindex, tw, tw1, swlen, bc;
+	u_int16_t dindex, tw, swlen, bc;
 	int error, maxqsz;
 
 	if (smb_smb_nomux(vcp, scred, __func__) != 0)
@@ -137,9 +137,12 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 		SMBSDEBUG("Dialect %s (%d, %d)\n", dp->d_name, dindex, wc);
 		error = EBADRPC;
 		if (dp->d_id >= SMB_DIALECT_NTLM0_12) {
+			u_int8_t tb;
+
 			if (wc != 17)
 				break;
-			md_get_uint8(mdp, &sp->sv_sm);
+			md_get_uint8(mdp, &tb);
+			sp->sv_sm = tb;
 			md_get_uint16le(mdp, &sp->sv_maxmux);
 			md_get_uint16le(mdp, &sp->sv_maxvcs);
 			md_get_uint32le(mdp, &sp->sv_maxtx);
@@ -147,7 +150,8 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 			md_get_uint32le(mdp, &sp->sv_skey);
 			md_get_uint32le(mdp, &sp->sv_caps);
 			md_get_mem(mdp, stime, 8, MB_MSYSTEM);
-			md_get_uint16le(mdp, (u_int16_t*)&sp->sv_tz);
+			md_get_uint16le(mdp, &tw);
+			sp->sv_tz = tw;
 			md_get_uint8(mdp, &sblen);
 			if (sblen && (sp->sv_sm & SMB_SM_ENCRYPT)) {
 				if (sblen != SMB_MAXCHALLENGELEN) {
@@ -173,18 +177,18 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 				SMBSDEBUG("Win95 detected\n");
 			}
 		} else if (dp->d_id > SMB_DIALECT_CORE) {
-			md_get_uint16le(mdp, &tw);
-			sp->sv_sm = tw;
+			md_get_uint16le(mdp, &sp->sv_sm);
 			md_get_uint16le(mdp, &tw);
 			sp->sv_maxtx = tw;
 			md_get_uint16le(mdp, &sp->sv_maxmux);
 			md_get_uint16le(mdp, &sp->sv_maxvcs);
-			md_get_uint16le(mdp, &tw);	/* rawmode */
+			md_get_uint16(mdp, NULL);	/* rawmode */
 			md_get_uint32le(mdp, &sp->sv_skey);
 			if (wc == 13) {		/* >= LANMAN1 */
-				md_get_uint16(mdp, &tw);		/* time */
-				md_get_uint16(mdp, &tw1);		/* date */
-				md_get_uint16le(mdp, (u_int16_t*)&sp->sv_tz);
+				md_get_uint16(mdp, NULL);		/* time */
+				md_get_uint16(mdp, NULL);		/* date */
+				md_get_uint16le(mdp, &tw);
+				sp->sv_tz = tw;
 				md_get_uint16le(mdp, &swlen);
 				if (swlen > SMB_MAXCHALLENGELEN)
 					break;
@@ -234,8 +238,6 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 {
 	struct smb_rq *rqp;
 	struct mbchain *mbp;
-/*	u_int8_t wc;
-	u_int16_t tw, tw1;*/
 	const smb_unichar *unipp;
 	smb_uniptr ntencpass = NULL;
 	char *pp, *up, *pbuf, *encpass;
