@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.13 2003/03/08 21:30:59 dsl Exp $	 */
+/*	$NetBSD: pcio.c,v 1.14 2003/04/16 14:56:55 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -39,6 +39,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
+#include <sys/bootblock.h>
 
 #include "libi386.h"
 #include "bootinfo.h"
@@ -46,6 +47,7 @@
 extern void conputc __P((int));
 extern int congetc __P((void));
 extern int coniskey __P((void));
+extern struct i386_boot_params boot_params;
 
 struct btinfo_console btinfo_console;
 
@@ -55,19 +57,17 @@ static int iodev;
 #ifdef DIRECT_SERIAL
 #include "comio_direct.h"
 
-#define cominit cominit_d
-#define computc computc_d
-#define comgetc comgetc_d
-/* comstatus() is different */
+#define cominit_x()	cominit_d(btinfo_console.addr, btinfo_console.speed)
+#define computc_x(ch)	computc_d(ch, btinfo_console.addr)
+#define comgetc_x()	comgetc_d(btinfo_console.addr)
+#define comstatus_x()	comstatus_d(btinfo_console.addr)
 
-#define SERIAL_ARG btinfo_console.addr
 #else
-extern void cominit __P((int));
-extern int computc __P((int, int));
-extern int comgetc __P((int));
-extern int comstatus __P((int));
+#define cominit_x()	cominit(iodev - CONSDEV_COM0)
+#define computc_x(ch)	computc(ch, iodev - CONSDEV_COM0)
+#define comgetc_x()	comgetc(iodev - CONSDEV_COM0)
+#define comstatus_x()	comstatus(iodev - CONSDEV_COM0)
 
-#define SERIAL_ARG (iodev - CONSDEV_COM0)
 #endif /* DIRECT_SERIAL */
 
 static int getcomaddr __P((int));
@@ -94,6 +94,12 @@ initio(dev)
 #ifdef SUPPORT_SERIAL
 	int i;
 
+#if defined(DIRECT_SERIAL) && defined(CONSPEED)
+	btinfo_console.speed = CONSPEED;
+#else
+	btinfo_console.speed = 9600;
+#endif
+
 	switch (dev) {
 	    case CONSDEV_AUTO:
 		for(i = 0; i < 3; i++) {
@@ -102,15 +108,15 @@ initio(dev)
 			if(!btinfo_console.addr)
 				break;
 			conputc('0' + i); /* to tell user what happens */
-			cominit(SERIAL_ARG);
+			cominit_x();
 #ifdef DIRECT_SERIAL
 			/* check for:
 			 *  1. successful output
 			 *  2. optionally, keypress within 7s
 			 */
-			if (	computc(':', SERIAL_ARG) &&
-				computc('-', SERIAL_ARG) &&
-				computc('(', SERIAL_ARG)
+			if (	computc_x(':') &&
+				computc_x('-') &&
+				computc_x('(')
 #ifdef COMCONS_KEYPRESS
 			   && awaitkey(7, 0)
 #endif
@@ -125,8 +131,8 @@ initio(dev)
 			 *     (status seems only useful after character output)
 			 *  3. optionally, keypress within 7s
 			 */
-			if (!(computc('@', SERIAL_ARG) & 0x80)
-			    && (comstatus(SERIAL_ARG) & 0x00b0)
+			if (!(computc_x('@') & 0x80)
+			    && (comstatus_x() & 0x00b0)
 #ifdef COMCONS_KEYPRESS
 			    && awaitkey(7, 0)
 #endif
@@ -145,7 +151,7 @@ ok:
 		btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
 		if(!btinfo_console.addr)
 			goto nocom;
-		cominit(SERIAL_ARG);
+		cominit_x();
 		break;
 	    case CONSDEV_COM0KBD:
 	    case CONSDEV_COM1KBD:
@@ -157,15 +163,15 @@ ok:
 		if(!btinfo_console.addr)
 			goto nocom;
 		conputc('0' + i); /* to tell user what happens */
-		cominit(SERIAL_ARG);
+		cominit_x();
 #ifdef DIRECT_SERIAL
 			/* check for:
 			 *  1. successful output
 			 *  2. optionally, keypress within 7s
 			 */
-			if (	computc(':', SERIAL_ARG) &&
-				computc('-', SERIAL_ARG) &&
-				computc('(', SERIAL_ARG)
+			if (	computc_x(':') &&
+				computc_x('-') &&
+				computc_x('(')
 #ifdef COMCONS_KEYPRESS
 			   && awaitkey(7, 0)
 #endif
@@ -180,8 +186,8 @@ ok:
 			 *     (status seems only useful after character output)
 			 *  3. optionally, keypress within 7s
 			 */
-			if (!(computc('@', SERIAL_ARG) & 0x80)
-			    && (comstatus(SERIAL_ARG) & 0x00b0)
+			if (!(computc_x('@') & 0x80)
+			    && (comstatus_x() & 0x00b0)
 #ifdef COMCONS_KEYPRESS
 			    && awaitkey(7, 0)
 #endif
@@ -196,11 +202,6 @@ nocom:
 	conputc('\015');
 	conputc('\n');
 	strncpy(btinfo_console.devname, iodev == CONSDEV_PC ? "pc" : "com", 16);
-#if defined(DIRECT_SERIAL) && defined(CONSPEED)
-	btinfo_console.speed = CONSPEED;
-#else
-	btinfo_console.speed = 9600;
-#endif
 #else /* !SUPPORT_SERIAL */
 	btinfo_console.devname[0] = 'p';
 	btinfo_console.devname[1] = 'c';
@@ -225,7 +226,7 @@ internal_putchar(c)
 	    case CONSDEV_COM1:
 	    case CONSDEV_COM2:
 	    case CONSDEV_COM3:
-		computc(c, SERIAL_ARG);
+		computc_x(c);
 		break;
 	}
 #endif
@@ -256,15 +257,15 @@ getchar()
 	    case CONSDEV_COM2:
 	    case CONSDEV_COM3:
 #ifdef DIRECT_SERIAL
-		c = comgetc(SERIAL_ARG);
+		c = comgetc_x();
 #else
 		do {
-			c = comgetc(SERIAL_ARG);
+			c = comgetc_x();
 		} while ((c >> 8) == 0xe0); /* catch timeout */
 #ifdef COMDEBUG
 		if (c & 0x8000) {
 			printf("com input %x, status %x\n",
-			       c, comstatus(SERIAL_ARG));
+			       c, comstatus_x());
 		}
 #endif
 		c &= 0xff;
@@ -289,9 +290,9 @@ iskey()
 	    case CONSDEV_COM2:
 	    case CONSDEV_COM3:
 #ifdef DIRECT_SERIAL
-		return(!!comstatus_d(SERIAL_ARG));
+		return(!!comstatus_x());
 #else
-		return (!!(comstatus(SERIAL_ARG) & 0x0100));
+		return (!!(comstatus_x() & 0x0100));
 #endif
 	}
 #endif /* SUPPORT_SERIAL */
