@@ -32,6 +32,6 @@
 ./usr/mdec/binstall
 ./usr/mdec/boot
 ./usr/mdec/bootxx
+./usr/mdec/installboot
 ./usr/sbin/eeprom
-./usr/sbin/installboot
 ./usr/sbin/screenblank
