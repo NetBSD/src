@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.96 2001/07/23 17:20:04 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.97 2001/08/14 11:57:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -738,7 +738,7 @@ tlp_start(ifp)
 		 * likely we'll trip the alignment test than the
 		 * more-than-one-segment test.
 		 */
-		if ((sc->sc_ntxsegs == 1 && (mtod(m0, bus_addr_t) & 3) != 0) ||
+		if ((sc->sc_ntxsegs == 1 && (mtod(m0, uintptr_t) & 3) != 0) ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
