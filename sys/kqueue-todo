@@ -1,4 +1,4 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.6 2001/09/08 21:49:16 thorpej Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.7 2001/09/09 00:03:40 thorpej Exp $
 
 items todo from bill sommerfeld/thorpej:
 	- resolve si_klist (NetBSD) vs. si_note (FreeBSD)
@@ -7,7 +7,6 @@ items todo from bill sommerfeld/thorpej:
 	- rewrite sowakeup()
 	- high-level docco overview of kqueues [c.f jlemon's various papers]
 	- kqfilter entry points for:
-		- i4b
 		- smb_trantcp
 		- arch/amiga/dev/event.c
 		- arch/arc/dev/opms.c
