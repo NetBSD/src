@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dirs.c	8.5 (Berkeley) 8/31/94";*/
-static char *rcsid = "$Id: dirs.c,v 1.11 1994/12/28 02:21:43 mycroft Exp $";
+static char *rcsid = "$Id: dirs.c,v 1.12 1995/02/20 19:43:51 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -153,7 +153,7 @@ extractdirs(genmode)
 		    "restore: %s - cannot create directory temporary\n",
 		    dirfile);
 		fprintf(stderr, "fopen: %s\n", strerror(errno));
-		done(1);
+		exit(1);
 	}
 	if (genmode != 0) {
 		(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
@@ -163,7 +163,7 @@ extractdirs(genmode)
 			    "restore: %s - cannot create modefile \n",
 			    modefile);
 			fprintf(stderr, "fopen: %s\n", strerror(errno));
-			done(1);
+			exit(1);
 		}
 	}
 	nulldir.d_ino = 0;
@@ -657,14 +657,14 @@ genliteraldir(name, ino)
 				"write error extracting inode %d, name %s\n",
 				curfile.ino, curfile.name);
 			fprintf(stderr, "read: %s\n", strerror(errno));
-			done(1);
+			exit(1);
 		}
 		if (!Nflag && write(ofile, buf, (int) size) == -1) {
 			fprintf(stderr,
 				"write error extracting inode %d, name %s\n",
 				curfile.ino, curfile.name);
 			fprintf(stderr, "write: %s\n", strerror(errno));
-			done(1);
+			exit(1);
 		}
 	}
 	(void) close(dp);
@@ -740,9 +740,8 @@ inotablookup(ino)
 /*
  * Clean up and exit
  */
-__dead void
-done(exitcode)
-	int exitcode;
+void
+cleanup()
 {
 
 	closemt();
@@ -750,5 +749,4 @@ done(exitcode)
 		(void) unlink(modefile);
 	if (dirfile[0] != '#')
 		(void) unlink(dirfile);
-	exit(exitcode);
 }

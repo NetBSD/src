@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)interactive.c	8.3 (Berkeley) 9/13/94";*/
-static char *rcsid = "$Id: interactive.c,v 1.7 1995/01/30 20:37:25 mycroft Exp $";
+static char *rcsid = "$Id: interactive.c,v 1.8 1995/02/20 19:43:53 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -771,5 +771,5 @@ onintr(signo)
 	if (command == 'i' && runshell)
 		longjmp(reset, 1);
 	if (reply("restore interrupted, continue") == FAIL)
-		done(1);
+		exit(1);
 }
