@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.29 2002/04/16 05:23:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.30 2002/10/14 16:20:39 lukem Exp $
 
 SUBDIR=		ramdisk-big ramdisk-small ramdisk-tiny \
 		ramdisk-rescuesmall ramdisk-rescuetiny \
 		.WAIT \
-		kernel-ramdisk kernel-rescue \
+		instkernel \
 		.WAIT \
 		bootfloppy bootfloppy-big bootfloppy-com bootfloppy-laptop \
 		bootfloppy-ps2 bootfloppy-small bootfloppy-tiny \
