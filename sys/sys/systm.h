@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.60 1996/10/16 11:27:25 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.61 1996/11/13 06:07:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -160,6 +160,8 @@ void	uprintf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	ttyprintf __P((struct tty *, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
+
+char	*bitmask_snprintf __P((u_long, const char *, char *, size_t));
 
 void	tablefull __P((const char *));
 
