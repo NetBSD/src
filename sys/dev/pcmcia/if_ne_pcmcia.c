@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.74 2001/06/03 04:52:28 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.75 2001/06/05 02:27:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -55,6 +55,8 @@
 
 #include <dev/ic/rtl80x9reg.h>
 #include <dev/ic/rtl80x9var.h>
+
+#include <dev/ic/dl10019var.h>
 
 int	ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -652,6 +654,13 @@ again:
 			goto again;
 		}
 
+		dsc->sc_mediachange = dl10019_mediachange;
+		dsc->sc_mediastatus = dl10019_mediastatus;
+		dsc->init_card = dl10019_init_card;
+		dsc->stop_card = dl10019_stop_card;
+		dsc->sc_media_init = dl10019_media_init;
+		dsc->sc_media_fini = dl10019_media_fini;
+
 		/* Determine if this is a DL10019 or a DL10022. */
 		type = bus_space_read_1(nsc->sc_asict, nsc->sc_asich, 0x0f);
 		if (type == 0x91 || type == 0x99) {
@@ -687,17 +696,19 @@ again:
 	/*
 	 * Check for a RealTek 8019.
 	 */
-	bus_space_write_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CR,
-	    ED_CR_PAGE_0 | ED_CR_STP);
-	if (bus_space_read_1(dsc->sc_regt, dsc->sc_regh, NERTL_RTL0_8019ID0)
-		== RTL0_8019ID0 &&
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, NERTL_RTL0_8019ID1)
-		== RTL0_8019ID1) {
-		typestr = " (RTL8019)";
-		dsc->sc_mediachange = rtl80x9_mediachange;
-		dsc->sc_mediastatus = rtl80x9_mediastatus;
-		dsc->init_card = rtl80x9_init_card;
-		dsc->sc_media_init = rtl80x9_media_init;
+	if (nsc->sc_type == 0) {
+		bus_space_write_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CR,
+		    ED_CR_PAGE_0 | ED_CR_STP);
+		if (bus_space_read_1(dsc->sc_regt, dsc->sc_regh,
+		    NERTL_RTL0_8019ID0) == RTL0_8019ID0 &&
+		    bus_space_read_1(dsc->sc_regt, dsc->sc_regh,
+		    NERTL_RTL0_8019ID1) == RTL0_8019ID1) {
+			typestr = " (RTL8019)";
+			dsc->sc_mediachange = rtl80x9_mediachange;
+			dsc->sc_mediastatus = rtl80x9_mediastatus;
+				dsc->init_card = rtl80x9_init_card;
+			dsc->sc_media_init = rtl80x9_media_init;
+		}
 	}
 
 	printf("%s: %s%s Ethernet\n", dsc->sc_dev.dv_xname, ne_dev->name,
