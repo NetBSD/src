@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1996/08/23 11:08:06 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 1996/08/23 11:11:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -394,11 +394,20 @@ identifycpu()
 {
        char	*mach, *mmu, *fpu, *cpu;
 
-	if (machineid & ATARI_TT)
-		mach = "Atari TT";
-	else if (machineid & ATARI_FALCON)
-		mach = "Atari Falcon";
-	else mach = "Atari UNKNOWN";
+	switch (machineid & ATARI_ANYMACH) {
+		case ATARI_TT:
+				mach = "Atari TT";
+				break;
+		case ATARI_FALCON:
+				mach = "Atari Falcon";
+				break;
+		case ATARI_HADES:
+				mach = "Atari Hades";
+				break;
+		default:
+				mach = "Atari UNKNOWN";
+				break;
+	}
 
 	cpu     = "m68k";
 	fputype = fpu_probe();
