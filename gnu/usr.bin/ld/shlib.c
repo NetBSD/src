@@ -1,5 +1,5 @@
 /*
- * $Id: shlib.c,v 1.2 1993/10/21 00:53:00 pk Exp $
+ * $Id: shlib.c,v 1.3 1993/10/23 00:34:26 pk Exp $
  */
 
 #include <sys/param.h>
@@ -40,15 +40,16 @@ add_search_dir(name)
 }
 
 void
-std_search_dirs()
+std_search_dirs(paths)
+char	*paths;
 {
-	char	*cp, *ld_path = getenv("LD_LIBRARY_PATH");
+	char	*cp;
 	int	i, n;
 
-	if (ld_path != NULL)
-		/* Add search paths from LD_LIBRARY_PATH */
-		while ((cp = strtok(ld_path, ":")) != NULL) {
-			ld_path = NULL;
+	if (paths != NULL)
+		/* Add search directories from `paths' */
+		while ((cp = strtok(paths, ":")) != NULL) {
+			paths = NULL;
 			add_search_dir(cp);
 		}
 
@@ -63,8 +64,6 @@ std_search_dirs()
  * Decode and leave the result in the array DEWEY.
  * Return the number of decoded entries in DEWEY.
  */
-
-#define MAXDEWEY 8
 
 int
 getdewey(dewey, cp)
