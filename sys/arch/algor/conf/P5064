@@ -1,11 +1,11 @@
-#	$NetBSD: P5064,v 1.7 2001/06/22 14:14:16 thorpej Exp $
+#	$NetBSD: P5064,v 1.8 2001/08/22 00:42:43 thorpej Exp $
 #
 # Algorithmics P-5064 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P5064-$Revision: 1.7 $"
+#ident 		"P5064-$Revision: 1.8 $"
 
 maxusers 32
 
@@ -84,6 +84,14 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	PCMCIAVERBOSE
+
+# Bitmask for enabling the PCI IDE channels in the southbridge.
+# Set bit 0 (0x01) for channel 0, bit 1 (0x02) for channel 1.
+#
+# Do this if your firmware (usually PMON) doens't enable the IDE
+# channels for you (thus causing the NetBSD `pciide' driver to
+# ignore them).
+options 	PCI_NETBSD_ENABLE_IDE=0x1
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
