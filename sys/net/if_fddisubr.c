@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.24 1998/10/13 02:34:32 kim Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.25 1998/12/10 15:51:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -261,8 +261,6 @@ fddi_output(ifp, m0, dst, rt0)
 		etype = htons(ETHERTYPE_IPX);
  		bcopy((caddr_t)&(((struct sockaddr_ipx *)dst)->sipx_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
-		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
-			return (looutput(ifp, m, dst, rt));
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
