@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/06 03:09:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2005/03/23 01:00:33 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -11,13 +11,13 @@ FILES=	README \
 	czsk cz cz_qwerty \
 	de de_CH dev dk dvorak \
 	ee el en_US es \
-	fi fr fr_CH \
+	fi fo fr fr_CH \
 	gb ge_la ge_ru group guj gur \
 	hr hr_US hu hu_US hu_qwerty \
 	ie il il_phonetic iso9995-3 inet ir is it iu \
 	jp \
-	kan keypad \
-	la level3 lo lock lt lt_std lv \
+	kan keypad ky \
+	la lat level3 lo lock lt lt_std lv \
 	ml mk mm mt mt_us \
 	nl no \
 	ogham ori \
