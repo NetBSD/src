@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.255 2004/11/10 15:11:43 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.256 2004/11/14 12:14:40 yamt Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -531,8 +531,8 @@ formating in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	PF (openbsd packet filter)
-Version:	OpenBSD 3.5
-Current Vers:	OpenBSD 3.5-current
+Version:	OpenBSD 3.6
+Current Vers:	OpenBSD 3.6-current
 Maintainer:	itojun@NetBSD.org
 Archive Site:	ftp://ftp.openbsd.org/
 Mailing List:
@@ -540,7 +540,7 @@ Responsible:	itojun@NetBSD.org
 Notes:
 kernel code is imported into src/sys/dist/pf and src/sys/net has reachover
 definition (files.pf).  userland code is imported into src/dist/pf, and
-reachover Makefiles are in src/sbin/pfctl and src/libexec/{spamd*,ftp-proxy}.
+reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	postfix
 Version:	2.1.4
