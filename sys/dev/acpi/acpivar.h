@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.8 2002/12/28 08:44:43 matt Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.9 2003/02/14 11:05:40 tshiozak Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -271,4 +271,8 @@ struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);
 /*
  * power state transition
  */
-extern ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int state);
+ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int state);
+
+ACPI_STATUS	acpi_acquire_global_lock(UINT32 *);
+void		acpi_release_global_lock(UINT32);
+int		acpi_is_global_locked(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.8 2002/10/15 20:53:37 tshiozak Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.9 2003/02/14 11:05:39 tshiozak Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.8 2002/10/15 20:53:37 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.9 2003/02/14 11:05:39 tshiozak Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,12 +207,11 @@ struct acpi_ec_softc {
 	int		sc_flags;	/* see below */
 
 	uint32_t	sc_csrvalue;	/* saved control register */
+	UINT32		sc_lockhandle;
 };
 
 #define	EC_F_LOCKED	0x01		/* EC is locked */
 #define	EC_F_PENDQUERY	0x02		/* query is pending */
-
-#define	EC_LOCK_TIMEOUT	1000		/* 1ms */
 
 #define	EC_DATA_READ(sc)						\
 	bus_space_read_1((sc)->sc_data_st, (sc)->sc_data_sh, 0)
@@ -224,32 +223,38 @@ struct acpi_ec_softc {
 #define	EC_CSR_WRITE(sc, v)						\
 	bus_space_write_1((sc)->sc_csr_st, (sc)->sc_csr_sh, 0, (v))
 
-static UINT32 glk;			/* XXX XXX XXX */
+static __inline int
+EcIsLocked(struct acpi_ec_softc *sc)
+{
+ 
+	return (acpi_is_global_locked() && (sc->sc_flags & EC_F_LOCKED));
+}
 
 static __inline ACPI_STATUS
 EcLock(struct acpi_ec_softc *sc)
 {
 	ACPI_STATUS status;
+	UINT32 handle;
 
-	status = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT, &glk);
-	if (status == AE_OK)
-		(sc)->sc_flags |= EC_F_LOCKED;
+	status = acpi_acquire_global_lock(&handle);
+	if (ACPI_SUCCESS(status)) {
+		sc->sc_flags |= EC_F_LOCKED;
+		sc->sc_lockhandle = handle;
+	}
+
 	return (status);
 }
 
 static __inline void
 EcUnlock(struct acpi_ec_softc *sc)
 {
+	UINT32 handle;
 
-	(sc)->sc_flags &= ~EC_F_LOCKED;
-	AcpiReleaseGlobalLock(glk);
-}
-
-static __inline int
-EcIsLocked(struct acpi_ec_softc *sc)
-{
-
-	return (((sc)->sc_flags & EC_F_LOCKED) != 0);
+	if (!EcIsLocked(sc))
+		return;
+	handle = sc->sc_lockhandle;
+	sc->sc_flags &= EC_F_LOCKED;
+	acpi_release_global_lock(handle);
 }
 
 typedef struct {

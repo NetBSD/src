@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.31 2003/01/13 01:24:11 fvdl Exp $	*/
+/*	$NetBSD: acpi.c,v 1.32 2003/02/14 11:05:39 tshiozak Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.31 2003/01/13 01:24:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.32 2003/02/14 11:05:39 tshiozak Exp $");
 
 #include "opt_acpi.h"
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.31 2003/01/13 01:24:11 fvdl Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -106,6 +108,15 @@ int	acpi_active;
  */
 struct acpi_softc *acpi_softc;
 
+/*
+ * Locking stuff.
+ */
+static struct simplelock acpi_slock;
+static int acpi_locked;
+
+/*
+ * Prototypes.
+ */
 void		acpi_shutdown(void *);
 ACPI_STATUS	acpi_disable(struct acpi_softc *sc);
 void		acpi_build_tree(struct acpi_softc *);
@@ -137,6 +148,9 @@ acpi_probe(void)
 	if (beenhere != 0)
 		panic("acpi_probe: ACPI has already been probed");
 	beenhere = 1;
+
+	simple_lock_init(&acpi_slock);
+	acpi_locked = 0;
 
 	/*
 	 * Start up ACPICA.
@@ -750,19 +764,11 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 		handle = ACPI_ROOT_OBJECT;
 
 	buf.Pointer = NULL;
-	buf.Length = 0;
-
-	rv = AcpiEvaluateObject(handle, path, NULL, &buf);
-	if (rv != AE_BUFFER_OVERFLOW)
-		return (rv);
-
-	buf.Pointer = AcpiOsAllocate(buf.Length);
-	if (buf.Pointer == NULL)
-		return (AE_NO_MEMORY);
+	buf.Length = ACPI_ALLOCATE_BUFFER;
 
 	rv = AcpiEvaluateObject(handle, path, NULL, &buf);
 	param = (ACPI_OBJECT *)buf.Pointer;
-	if (rv == AE_OK) {
+	if (rv == AE_OK && param) {
 		if (param->Type == ACPI_TYPE_STRING) {
 			char *ptr = param->String.Pointer;
 			size_t len;
@@ -779,7 +785,8 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 		rv = AE_TYPE;
 	}
 done:
-	AcpiOsFree(buf.Pointer);
+	if (buf.Pointer)
+		AcpiOsFree(buf.Pointer);
 	return (rv);
 }
 
@@ -798,15 +805,7 @@ acpi_eval_struct(ACPI_HANDLE handle, char *path, ACPI_BUFFER *bufp)
 		handle = ACPI_ROOT_OBJECT;
 
 	bufp->Pointer = NULL;
-	bufp->Length = 0;
-
-	rv = AcpiEvaluateObject(handle, path, NULL, bufp);
-	if (rv != AE_BUFFER_OVERFLOW)
-		return (rv);
-
-	bufp->Pointer = AcpiOsAllocate(bufp->Length);
-	if (bufp->Pointer == NULL)
-		return (AE_NO_MEMORY);
+	bufp->Length = ACPI_ALLOCATE_BUFFER;
 
 	rv = AcpiEvaluateObject(handle, path, NULL, bufp);
 
@@ -838,6 +837,76 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 
 	return ((*getit)(handle, buf));
 }
+
+
+/*
+ * acpi_acquire_global_lock:
+ *
+ *	Acquire global lock, with sleeping appropriately.
+ */
+#define ACQUIRE_WAIT 1000
+
+ACPI_STATUS
+acpi_acquire_global_lock(UINT32 *handle)
+{
+	ACPI_STATUS status;
+	UINT32 h;
+	int s;
+
+	s = splhigh();
+	simple_lock(&acpi_slock);
+	while (acpi_locked)
+		ltsleep(&acpi_slock, PVM, "acpi_lock", 0, &acpi_slock);
+	acpi_locked = 1;
+	simple_unlock(&acpi_slock);
+	splx(s);
+	status = AcpiAcquireGlobalLock(ACQUIRE_WAIT, &h);
+	if (ACPI_SUCCESS(status))
+		*handle = h;
+	else {
+		printf("acpi: cannot acquire lock. status=0x%X\n", status);
+		s = splhigh();
+		simple_lock(&acpi_slock);
+		acpi_locked = 0;
+		simple_unlock(&acpi_slock);
+		splx(s);
+	}
+
+	return (status);
+}
+
+void
+acpi_release_global_lock(UINT32 handle)
+{
+	ACPI_STATUS status;
+	int s;
+
+	if (!acpi_locked) {
+		printf("acpi: not locked.\n");
+		return;
+	}
+
+	status = AcpiReleaseGlobalLock(handle);
+	if (ACPI_FAILURE(status)) {
+		printf("acpi: AcpiReleaseGlobalLock failed. status=0x%X\n",
+		       status);
+		return;
+	}
+ 
+	s = splhigh();
+	simple_lock(&acpi_slock);
+	acpi_locked = 0;
+	simple_unlock(&acpi_slock);
+	splx(s);
+	wakeup(&acpi_slock);
+}
+
+int
+acpi_is_global_locked(void)
+{
+	return (acpi_locked);
+}
+
 
 
 /*****************************************************************************
