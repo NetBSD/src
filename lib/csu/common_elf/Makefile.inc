@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2002/11/22 06:44:58 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2002/11/26 19:27:09 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -18,10 +18,18 @@ CPPFLAGS+=	-DDSO_HANDLE
 
 .PATH:		${.CURDIR}/../common_elf
 
-OBJS+=		crt0.o gcrt0.o crti.o crtbegin.o crtend.o crtn.o
+OBJS+=		crt0.o gcrt0.o crti.o crtn.o
+.if ${MKPIC} != "no"
+COPTS+=		-fPIC
+.endif
+
+# If using an external toolchain, we expect crtbegin/crtend to be
+# supplied by that toolchain's run-time support.
+.if !defined(EXTERNAL_TOOLCHAIN)
+OBJS+=		crtbegin.o crtend.o
 .if ${MKPIC} != "no"
 OBJS+=		crtbeginS.o crtendS.o
-COPTS+=		-fPIC
+.endif
 .endif
 
 realall: ${OBJS}
@@ -38,6 +46,19 @@ gcrt0.o: crt0.c
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
+crti.o: crti.c
+	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
+crtn.o: crtn.c
+	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
+.if !defined(EXTERNAL_TOOLCHAIN)
 crtbegin.o: crtbegin.c
 	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
 	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
@@ -61,18 +82,7 @@ crtendS.o: crtend.c
 	@${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
-
-crti.o: crti.c
-	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
-	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
-
-crtn.o: crtn.c
-	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
-	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
+.endif	# ! EXTERNAL_TOOLCHAIN
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
