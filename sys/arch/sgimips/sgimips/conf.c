@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 2001/11/11 00:38:30 soren Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 2001/11/22 04:50:04 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,6 +71,17 @@ cdev_decl(wd);
 cdev_decl(zs);
 #include "com.h"
 cdev_decl(com);
+
+#include "wsdisplay.h"
+cdev_decl(wsdisplay); 
+#include "wskbd.h" 
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
+#include "wsmux.h"
+cdev_decl(wsmux);
+#include "wsfont.h"
+cdev_decl(wsfont);
 
 #include "i4b.h"
 #include "i4bctl.h"
@@ -167,6 +178,23 @@ struct cdevsw cdevsw[] =
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 42: i4b phone device */
 	cdev_notdef(),			/* 43: */
 	cdev_notdef(),			/* 44: */
+	cdev_notdef(),			/* 45: */
+	cdev_notdef(),			/* 46: */
+	cdev_notdef(),			/* 47: */
+	cdev_notdef(),			/* 48: */
+	cdev_notdef(),			/* 49: */
+	cdev_wsdisplay_init(NWSDISPLAY,
+			wsdisplay),	/* 50: frame buffers, etc. */
+	cdev_mouse_init(NWSKBD,wskbd),	/* 51: keyboards */
+	cdev_mouse_init(NWSMOUSE,
+			wsmouse),	/* 52: mice */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 53: ws multiplexor */
+	cdev__oci_init(NWSFONT,wsfont),	/* 54: wsfont pseudo-device */
+	cdev_notdef(),			/* 55: */
+	cdev_notdef(),			/* 56: */
+	cdev_notdef(),			/* 57: */
+	cdev_notdef(),			/* 58: */
+	cdev_notdef(),			/* 59: */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -233,6 +261,21 @@ static int chrtoblktbl[] =  {
 	/* 42 */	NODEV,
 	/* 43 */	NODEV,
 	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
+	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	NODEV,
+	/* 57 */	NODEV,
+	/* 58 */	NODEV,
+	/* 59 */	NODEV,
 };
 
 dev_t
