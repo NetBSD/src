@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.328 2002/06/06 02:37:07 simonb Exp $
+# $NetBSD: mi,v 1.329 2002/06/06 02:40:51 simonb Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1360,6 +1360,7 @@
 ./usr/share/man/html4/pc532		base-man-share
 ./usr/share/man/html4/pmax		base-man-share
 ./usr/share/man/html4/pmppc		base-man-share
+./usr/share/man/html4/sgimips		base-man-share
 ./usr/share/man/html4/sparc		base-man-share
 ./usr/share/man/html4/sun2		base-man-share
 ./usr/share/man/html4/sun3		base-man-share
