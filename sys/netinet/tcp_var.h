@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.86 2001/09/10 22:14:28 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.87 2001/09/11 21:03:21 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -352,8 +352,8 @@ union syn_cache_sa {
 };
 
 struct syn_cache {
-	LIST_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
-	TAILQ_ENTRY(syn_cache) sc_timeq;	/* link on timer queue */
+	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
+	struct callout sc_timer;		/* rexmt timer */
 	union {					/* cached route */
 		struct route route4;
 #ifdef INET6
@@ -373,7 +373,6 @@ struct syn_cache {
 	union syn_cache_sa sc_dst;
 	tcp_seq sc_irs;
 	tcp_seq sc_iss;
-	u_int sc_rexmt;				/* retransmit timer */
 	u_int sc_rxtcur;			/* current rxt timeout */
 	u_int sc_rxttot;			/* total time spend on queues */
 	u_short sc_rxtshift;			/* for computing backoff */
@@ -393,7 +392,7 @@ struct syn_cache {
 };
 
 struct syn_cache_head {
-	LIST_HEAD(, syn_cache) sch_bucket;	/* bucket entries */
+	TAILQ_HEAD(, syn_cache) sch_bucket;	/* bucket entries */
 	u_short sch_length;			/* # entries in bucket */
 };
 
@@ -537,7 +536,9 @@ struct	tcpstat {
 #define	TCPCTL_MSSDFLT		4	/* default seg size */
 #define	TCPCTL_SYN_CACHE_LIMIT	5	/* max size of comp. state engine */
 #define	TCPCTL_SYN_BUCKET_LIMIT	6	/* max size of hash bucket */
+#if 0	/*obsoleted*/
 #define	TCPCTL_SYN_CACHE_INTER	7	/* interval of comp. state timer */
+#endif
 #define	TCPCTL_INIT_WIN		8	/* initial window */
 #define	TCPCTL_MSS_IFMTU	9	/* mss from interface, not in_maxmtu */
 #define	TCPCTL_SACK		10	/* RFC2018 selective acknowledgement */
@@ -568,7 +569,7 @@ struct	tcpstat {
 	{ "mssdflt",	CTLTYPE_INT }, \
 	{ "syn_cache_limit", CTLTYPE_INT }, \
 	{ "syn_bucket_limit", CTLTYPE_INT }, \
-	{ "syn_cache_interval", CTLTYPE_INT },\
+	{ 0, 0 },\
 	{ "init_win", CTLTYPE_INT }, \
 	{ "mss_ifmtu", CTLTYPE_INT }, \
 	{ "sack", CTLTYPE_INT }, \
@@ -610,7 +611,6 @@ extern	int tcp_cwm_burstsize;	/* burst size allowed by CWM */
 extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
-extern	int tcp_syn_cache_interval; /* compressed state timer */
 extern	int tcp_log_refused;	/* log refused connections */
 
 extern	int tcp_rst_ppslim;
@@ -627,7 +627,7 @@ extern	u_long syn_cache_count;
 	{ 1, 0, &tcp_mssdflt },			\
 	{ 1, 0, &tcp_syn_cache_limit },		\
 	{ 1, 0, &tcp_syn_bucket_limit },	\
-	{ 1, 0, &tcp_syn_cache_interval },	\
+	{ 0 },					\
 	{ 1, 0, &tcp_init_win },		\
 	{ 1, 0, &tcp_mss_ifmtu },		\
 	{ 1, 0, &tcp_do_sack },			\
@@ -720,7 +720,7 @@ struct syn_cache *syn_cache_lookup __P((struct sockaddr *, struct sockaddr *,
 void	 syn_cache_reset __P((struct sockaddr *, struct sockaddr *,
 		struct tcphdr *));
 int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *));
-void	 syn_cache_timer __P((void));
+void	 syn_cache_timer __P((void *));
 void	 syn_cache_cleanup __P((struct tcpcb *));
 
 int	tcp_newreno __P((struct tcpcb *, struct tcphdr *));

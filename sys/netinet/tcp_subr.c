@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.118 2001/09/10 22:14:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.119 2001/09/11 21:03:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -194,7 +194,6 @@ int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
 int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
-int	tcp_syn_cache_interval = 1;	/* runs timer twice a second */
 
 int	tcp_freeq __P((struct tcpcb *));
 
