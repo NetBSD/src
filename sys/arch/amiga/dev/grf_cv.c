@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.30 2002/03/17 19:40:28 atatat Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.31 2002/08/03 00:12:54 itojun Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.30 2002/03/17 19:40:28 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.31 2002/08/03 00:12:54 itojun Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -1047,7 +1047,7 @@ cv_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	/* first read colors out of the chip, then copyout to userspace */
@@ -1085,7 +1085,7 @@ cv_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	/* first copy the colors into kernelspace */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.59 2002/03/16 20:43:50 christos Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.60 2002/08/03 00:12:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.59 2002/03/16 20:43:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.60 2002/08/03 00:12:51 itojun Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -402,10 +402,13 @@ hpux_sys_utssys(p, v, retval)
 	/* gethostname */
 	case 5:
 		/* SCARG(uap, dev) is length */
-		if (SCARG(uap, dev) > hostnamelen + 1)
-			SCARG(uap, dev) = hostnamelen + 1;
-		error = copyout((caddr_t)hostname, (caddr_t)SCARG(uap, uts),
-				SCARG(uap, dev));
+		i = SCARG(uap, dev);
+		if (i < 0) {
+			error = EINVAL;
+			break;
+		} else if (i > hostnamelen + 1)
+			i = hostnamelen + 1;
+		error = copyout((caddr_t)hostname, (caddr_t)SCARG(uap, uts), i);
 		break;
 
 	case 1:	/* ?? */
