@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.639 2004/08/02 17:58:51 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.640 2004/08/02 18:43:53 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
