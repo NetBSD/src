@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.51 1994/08/14 09:43:59 mycroft Exp $
+ *	$Id: if_ep.c,v 1.52 1994/08/17 06:04:49 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -860,6 +860,21 @@ epioctl(ifp, cmd, data)
 		    sizeof(sc->sc_addr));
 		break;
 #endif
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		/* Update our multicast list. */
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			epreset(sc);
+			error = 0;
+		}
+		break;
 	default:
 		error = EINVAL;
 	}
