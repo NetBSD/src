@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.8 2003/04/26 19:13:53 tsutsui Exp $	*/
+/*	$NetBSD: news3400.c,v 1.9 2003/05/09 11:58:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -134,12 +134,12 @@ news3400_intr(status, cause, pc, ipending)
 static void
 news3400_level0_intr()
 {
-	volatile u_char *istat1 = (void *)INTST1;
-	volatile u_char *iclr1 = (void *)INTCLR1;
+	volatile u_char *intst1 = (void *)INTST1;
+	volatile u_char *intclr1 = (void *)INTCLR1;
 	int stat;
 
-	stat = *istat1 & LEVEL0_MASK;
-	*iclr1 = stat;
+	stat = *intst1 & LEVEL0_MASK;
+	*intclr1 = stat;
 
 	hb_intr_dispatch(0);
 
@@ -155,23 +155,23 @@ news3400_level0_intr()
 static void
 news3400_level1_intr()
 {
-	volatile u_char *ien1 = (void *)INTEN1;
-	volatile u_char *istat1 = (void *)INTST1;
-	volatile u_char *iclr1 = (void *)INTCLR1;
-	int stat1, saved_ie1;
+	volatile u_char *inten1 = (void *)INTEN1;
+	volatile u_char *intst1 = (void *)INTST1;
+	volatile u_char *intclr1 = (void *)INTCLR1;
+	int stat1, saved_inten1;
 
-	saved_ie1 = *ien1;
+	saved_inten1 = *inten1;
 
-	*ien1 = 0;		/* disable BEEP, LANCE, and SCC */
+	*inten1 = 0;		/* disable BEEP, LANCE, and SCC */
 
-	stat1 = *istat1 & LEVEL1_MASK1;
-	*iclr1 = stat1;
+	stat1 = *intst1 & LEVEL1_MASK1;
+	*intclr1 = stat1;
 
-	stat1 &= saved_ie1;
+	stat1 &= saved_inten1;
 
 	hb_intr_dispatch(1);
 
-	*ien1 = saved_ie1;
+	*inten1 = saved_inten1;
 
 	if (stat1 & INTST1_SCC)
 		intrcnt[SERIAL0_INTR]++;
