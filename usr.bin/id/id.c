@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.20 2003/10/21 02:17:45 fvdl Exp $");
+__RCSID("$NetBSD: id.c,v 1.21 2004/11/19 14:18:01 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ usage()
 	(void)fprintf(stderr, "usage: id [user]\n");
 	(void)fprintf(stderr, "       id -G [-n] [user]\n");
 	(void)fprintf(stderr, "       id -g [-nr] [user]\n");
-	(void)fprintf(stderr, "       id -p\n");
+	(void)fprintf(stderr, "       id -p [user]\n");
 	(void)fprintf(stderr, "       id -u [-nr] [user]\n");
 	exit(1);
 }
