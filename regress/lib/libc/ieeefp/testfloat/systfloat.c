@@ -1,4 +1,4 @@
-/*	$NetBSD: systfloat.c,v 1.6 2002/02/21 07:38:16 itojun Exp $	*/
+/*	$NetBSD: systfloat.c,v 1.7 2004/04/15 19:01:57 matt Exp $	*/
 
 /* This is a derivative work. */
 
@@ -64,7 +64,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: systfloat.c,v 1.6 2002/02/21 07:38:16 itojun Exp $");
+__RCSID("$NetBSD: systfloat.c,v 1.7 2004/04/15 19:01:57 matt Exp $");
 #endif
 
 #include <math.h>
@@ -74,6 +74,27 @@ __RCSID("$NetBSD: systfloat.c,v 1.6 2002/02/21 07:38:16 itojun Exp $");
 #include "systfloat.h"
 #include "systflags.h"
 #include "systmodes.h"
+
+typedef union {
+    float32 f32;
+    float f;
+} union32;
+typedef union {
+    float64 f64;
+    double d;
+} union64;
+#if defined( FLOATX80 ) && defined( LONG_DOUBLE_IS_FLOATX80 )
+typedef union {
+    floatx80 fx80;
+    long double ld;
+} unionx80;
+#endif
+#if defined( FLOAT128 ) && defined( LONG_DOUBLE_IS_FLOAT128 )
+typedef union {
+    float128 f128;
+    long double ld;
+} union128;
+#endif
 
 fp_except
 syst_float_flags_clear(void)
@@ -91,19 +112,17 @@ syst_float_set_rounding_mode(fp_rnd direction)
 
 float32 syst_int32_to_float32( int32 a )
 {
-    float32 z;
+    const union32 uz = { .f = a };
 
-    *( (float *) &z ) = a;
-    return z;
+    return uz.f32;
 
 }
 
 float64 syst_int32_to_float64( int32 a )
 {
-    float64 z;
+    const union64 uz = { .d = a };
 
-    *( (double *) &z ) = a;
-    return z;
+    return uz.f64;
 
 }
 
@@ -111,10 +130,9 @@ float64 syst_int32_to_float64( int32 a )
 
 floatx80 syst_int32_to_floatx80( int32 a )
 {
-    floatx80 z;
+    const unionx80 uz = { .ld = a };
 
-    *( (long double *) &z ) = a;
-    return z;
+    return uz.fx80;
 
 }
 
@@ -124,10 +142,9 @@ floatx80 syst_int32_to_floatx80( int32 a )
 
 float128 syst_int32_to_float128( int32 a )
 {
-    float128 z;
+    const union128 uz = { .ld = a };
 
-    *( (long double *) &z ) = a;
-    return z;
+    return uz.f128;
 
 }
 
@@ -137,31 +154,25 @@ float128 syst_int32_to_float128( int32 a )
 
 float32 syst_int64_to_float32( int64 a )
 {
-    float32 z;
+    const union32 uz = { .f = a };
 
-    *( (float *) &z ) = a;
-    return z;
-
+    return uz.f32;
 }
 
 float64 syst_int64_to_float64( int64 a )
 {
-    float64 z;
+    const union64 uz = { .d = a };
 
-    *( (double *) &z ) = a;
-    return z;
-
+    return uz.f64;
 }
 
 #if defined( FLOATX80 ) && defined( LONG_DOUBLE_IS_FLOATX80 )
 
 floatx80 syst_int64_to_floatx80( int64 a )
 {
-    floatx80 z;
+    const unionx80 uz = { .ld = a };
 
-    *( (long double *) &z ) = a;
-    return z;
-
+    return uz.fx80;
 }
 
 #endif
@@ -170,11 +181,9 @@ floatx80 syst_int64_to_floatx80( int64 a )
 
 float128 syst_int64_to_float128( int64 a )
 {
-    float128 z;
+    const union128 uz = { .ld = a };
 
-    *( (long double *) &z ) = a;
-    return z;
-
+    return uz.f128;
 }
 
 #endif
@@ -183,8 +192,9 @@ float128 syst_int64_to_float128( int64 a )
 
 int32 syst_float32_to_int32_round_to_zero( float32 a )
 {
+    const union32 uz = { .f32 = a };
 
-    return *( (float *) &a );
+    return uz.f;
 
 }
 
@@ -192,19 +202,20 @@ int32 syst_float32_to_int32_round_to_zero( float32 a )
 
 int64 syst_float32_to_int64_round_to_zero( float32 a )
 {
+    const union32 uz = { .f32 = a };
 
-    return *( (float *) &a );
-
+    return uz.f;
 }
 
 #endif
 
 float64 syst_float32_to_float64( float32 a )
 {
-    float64 z;
+    const union32 ua = { .f32 = a };
+    union64 uz;
 
-    *( (double *) &z ) = *( (float *) &a );
-    return z;
+    uz.d = ua.f;
+    return uz.f64;
 
 }
 
@@ -212,11 +223,11 @@ float64 syst_float32_to_float64( float32 a )
 
 floatx80 syst_float32_to_floatx80( float32 a )
 {
-    floatx80 z;
+    const union32 ua = { .f32 = a };
+    unionx80 uz;
 
-    *( (long double *) &z ) = *( (float *) &a );
-    return z;
-
+    uz.ld = ua.f;
+    return uz.fx80;
 }
 
 #endif
@@ -225,108 +236,108 @@ floatx80 syst_float32_to_floatx80( float32 a )
 
 float128 syst_float32_to_float128( float32 a )
 {
-    float128 z;
+    const union32 ua = { .f32 = a };
+    union128 ub;
 
-    *( (long double *) &z ) = *( (float *) &a );
-    return z;
-
+    ub.ld = ua.f;
+    return ub.f128;
 }
 
 #endif
 
 float32 syst_float32_add( float32 a, float32 b )
 {
-    float32 z;
+    const union32 ua = { .f32 = a }, ub = { .f32 = b };
+    union32 uz;
 
-    *( (float *) &z ) = *( (float *) &a ) + *( (float *) &b );
-    return z;
-
+    uz.f = ua.f + ub.f;
+    return uz.f32;
 }
 
 float32 syst_float32_sub( float32 a, float32 b )
 {
-    float32 z;
+    const union32 ua = { .f32 = a }, ub = { .f32 = b };
+    union32 uz;
 
-    *( (float *) &z ) = *( (float *) &a ) - *( (float *) &b );
-    return z;
-
+    uz.f = ua.f - ub.f;
+    return uz.f32;
 }
 
 float32 syst_float32_mul( float32 a, float32 b )
 {
-    float32 z;
+    const union32 ua = { .f32 = a }, ub = { .f32 = b };
+    union32 uz;
 
-    *( (float *) &z ) = *( (float *) &a ) * *( (float *) &b );
-    return z;
-
+    uz.f = ua.f * ub.f;
+    return uz.f32;
 }
 
 float32 syst_float32_div( float32 a, float32 b )
 {
-    float32 z;
+    const union32 ua = { .f32 = a }, ub = { .f32 = b };
+    union32 uz;
 
-    *( (float *) &z ) = *( (float *) &a ) / *( (float *) &b );
-    return z;
-
+    uz.f = ua.f / ub.f;
+    return uz.f32;
 }
 
 flag syst_float32_eq( float32 a, float32 b )
 {
+    const union32 ua = { .f32 = a }, ub = { .f32 = b };
 
-    return ( *( (float *) &a ) == *( (float *) &b ) );
-
+    return ua.f == ub.f;
 }
 
 flag syst_float32_le( float32 a, float32 b )
 {
+    const union32 ua = { .f32 = a }, ub = { .f32 = b };
 
-    return ( *( (float *) &a ) <= *( (float *) &b ) );
-
+    return ua.f <= ub.f;
 }
 
 flag syst_float32_lt( float32 a, float32 b )
 {
+    const union32 ua = { .f32 = a }, ub = { .f32 = b };
 
-    return ( *( (float *) &a ) < *( (float *) &b ) );
-
+    return ua.f < ub.f;
 }
 
 int32 syst_float64_to_int32_round_to_zero( float64 a )
 {
+    const union64 uz = { .f64 = a };
 
-    return *( (double *) &a );
-
+    return uz.d;
 }
 
 #ifdef BITS64
 
 int64 syst_float64_to_int64_round_to_zero( float64 a )
 {
+    const union64 uz = { .f64 = a };
 
-    return *( (double *) &a );
-
+    return uz.d;
 }
 
 #endif
 
 float32 syst_float64_to_float32( float64 a )
 {
-    float32 z;
+    const union64 ua = { .f64 = a };
+    union32 uz;
 
-    *( (float *) &z ) = *( (double *) &a );
-    return z;
-
+    uz.f = ua.d;
+    return uz.f32;
 }
 
 #if defined( FLOATX80 ) && defined( LONG_DOUBLE_IS_FLOATX80 )
 
 floatx80 syst_float64_to_floatx80( float64 a )
 {
-    floatx80 z;
+    const union64 ua = { .f64 = a };
+    unionx80 u;
 
-    *( (long double *) &z ) = *( (double *) &a );
-    return z;
-
+    u.ld = ua.d;
+    return u.fx80;
 }
 
 #endif
@@ -335,178 +346,174 @@ floatx80 syst_float64_to_floatx80( float64 a )
 
 float128 syst_float64_to_float128( float64 a )
 {
-    float128 z;
+    const union64 ua = { .f64 = a };
+    union128 uz;
 
-    *( (long double *) &z ) = *( (double *) &a );
-    return z;
-
+    uz.ld = ua.d;
+    return uz.f128;
 }
 
 #endif
 
 float64 syst_float64_add( float64 a, float64 b )
 {
-    float64 z;
+    const union64 ua = { .f64 = a }, ub = { .f64 = b };
+    union64 uz;
 
-    *( (double *) &z ) = *( (double *) &a ) + *( (double *) &b );
-    return z;
-
+    uz.d = ua.d + ub.d;
+    return uz.f64;
 }
 
 float64 syst_float64_sub( float64 a, float64 b )
 {
-    float64 z;
+    const union64 ua = { .f64 = a }, ub = { .f64 = b };
+    union64 uz;
 
-    *( (double *) &z ) = *( (double *) &a ) - *( (double *) &b );
-    return z;
-
+    uz.d = ua.d - ub.d;
+    return uz.f64;
 }
 
 float64 syst_float64_mul( float64 a, float64 b )
 {
-    float64 z;
+    const union64 ua = { .f64 = a }, ub = { .f64 = b };
+    union64 uz;
 
-    *( (double *) &z ) = *( (double *) &a ) * *( (double *) &b );
-    return z;
-
+    uz.d = ua.d * ub.d;
+    return uz.f64;
 }
 
 float64 syst_float64_div( float64 a, float64 b )
 {
-    float64 z;
+    const union64 ua = { .f64 = a }, ub = { .f64 = b };
+    union64 uz;
 
-    *( (double *) &z ) = *( (double *) &a ) / *( (double *) &b );
-    return z;
-
+    uz.d = ua.d / ub.d;
+    return uz.f64;
 }
 
 float64 syst_float64_sqrt( float64 a )
 {
-    float64 z;
+    const union64 ua = { .f64 = a };
+    union64 uz;
 
-    *( (double *) &z ) = sqrt( *( (double *) &a ) );
-    return z;
-
+    uz.d = sqrt(ua.d);
+    return uz.f64;
 }
 
 flag syst_float64_eq( float64 a, float64 b )
 {
+    const union64 ua = { .f64 = a }, ub = { .f64 = b };
 
-    return ( *( (double *) &a ) == *( (double *) &b ) );
-
+    return ua.d == ub.d;
 }
 
 flag syst_float64_le( float64 a, float64 b )
 {
+    const union64 ua = { .f64 = a }, ub = { .f64 = b };
 
-    return ( *( (double *) &a ) <= *( (double *) &b ) );
-
+    return ua.d <= ub.d;
 }
 
 flag syst_float64_lt( float64 a, float64 b )
 {
+    const union64 ua = { .f64 = a }, ub = { .f64 = b };
 
-    return ( *( (double *) &a ) < *( (double *) &b ) );
-
+    return ua.d < ub.d;
 }
 
 #if defined( FLOATX80 ) && defined( LONG_DOUBLE_IS_FLOATX80 )
 
 int32 syst_floatx80_to_int32_round_to_zero( floatx80 a )
 {
+    const unionx80 uz = { .fx80 = a };
 
-    return *( (long double *) &a );
-
+    return uz.ld;
 }
 
 #ifdef BITS64
 
 int64 syst_floatx80_to_int64_round_to_zero( floatx80 a )
 {
+    const unionx80 uz = { .fx80 = a };
 
-    return *( (long double *) &a );
-
+    return uz.ld;
 }
 
 #endif
 
 float32 syst_floatx80_to_float32( floatx80 a )
 {
-    float32 z;
+    const unionx80 ua = { .fx80 = a };
+    union32 uz;
 
-    *( (float *) &z ) = *( (long double *) &a );
-    return z;
-
+    uz.f = ua.ld;
+    return uz.f32;
 }
 
 float64 syst_floatx80_to_float64( floatx80 a )
 {
-    float64 z;
+    const unionx80 ua = { .fx80 = a };
+    union64 uz;
 
-    *( (double *) &z ) = *( (long double *) &a );
-    return z;
-
+    uz.d = ua.ld;
+    return uz.f64;
 }
 
 floatx80 syst_floatx80_add( floatx80 a, floatx80 b )
 {
-    floatx80 z;
+    const unionx80 ua = { .fx80 = a }, ub = { .fx80 = b };
+    unionx80 uz;
 
-    *( (long double *) &z ) =
-        *( (long double *) &a ) + *( (long double *) &b );
-    return z;
-
+    uz.ld = ua.ld + ub.ld;
+    return uz.fx80;
 }
 
 floatx80 syst_floatx80_sub( floatx80 a, floatx80 b )
 {
-    floatx80 z;
+    const unionx80 ua = { .fx80 = a }, ub = { .fx80 = b };
+    unionx80 uz;
 
-    *( (long double *) &z ) =
-        *( (long double *) &a ) - *( (long double *) &b );
-    return z;
-
+    uz.ld = ua.ld - ub.ld;
+    return uz.fx80;
 }
 
 floatx80 syst_floatx80_mul( floatx80 a, floatx80 b )
 {
-    floatx80 z;
+    const unionx80 ua = { .fx80 = a }, ub = { .fx80 = b };
+    unionx80 uz;
 
-    *( (long double *) &z ) =
-        *( (long double *) &a ) * *( (long double *) &b );
-    return z;
-
+    uz.ld = ua.ld * ub.ld;
+    return uz.fx80;
 }
 
 floatx80 syst_floatx80_div( floatx80 a, floatx80 b )
 {
-    floatx80 z;
+    const unionx80 ua = { .fx80 = a }, ub = { .fx80 = b };
+    unionx80 uz;
 
-    *( (long double *) &z ) =
-        *( (long double *) &a ) / *( (long double *) &b );
-    return z;
-
+    uz.ld = ua.ld / ub.ld;
+    return uz.fx80;
 }
 
 flag syst_floatx80_eq( floatx80 a, floatx80 b )
 {
+    const unionx80 ua = { .fx80 = a }, ub = { .fx80 = b };
 
-    return ( *( (long double *) &a ) == *( (long double *) &b ) );
-
+    return ua.ld == ub.ld;
 }
 
 flag syst_floatx80_le( floatx80 a, floatx80 b )
 {
+    const unionx80 ua = { .fx80 = a }, ub = { .fx80 = b };
 
-    return ( *( (long double *) &a ) <= *( (long double *) &b ) );
-
+    return ua.ld <= ub.ld;
 }
 
 flag syst_floatx80_lt( floatx80 a, floatx80 b )
 {
+    const unionx80 ua = { .fx80 = a }, ub = { .fx80 = b };
 
-    return ( *( (long double *) &a ) < *( (long double *) &b ) );
-
+    return ua.ld < ub.ld;
 }
 
 #endif
@@ -515,100 +522,97 @@ flag syst_floatx80_lt( floatx80 a, floatx80 b )
 
 int32 syst_float128_to_int32_round_to_zero( float128 a )
 {
+    const union128 ua = { .f128 = a };
 
-    return *( (long double *) &a );
-
+    return ua.ld;
 }
 
 #ifdef BITS64
 
 int64 syst_float128_to_int64_round_to_zero( float128 a )
 {
+    const union128 ua = { .f128 = a };
 
-    return *( (long double *) &a );
-
+    return ua.ld;
 }
 
 #endif
 
 float32 syst_float128_to_float32( float128 a )
 {
-    float32 z;
+    const union128 ua = { .f128 = a };
+    union32 uz;
 
-    *( (float *) &z ) = *( (long double *) &a );
-    return z;
+    uz.f = ua.ld;
+    return uz.f32;
 
 }
 
 float64 syst_float128_to_float64( float128 a )
 {
-    float64 z;
+    const union128 ua = { .f128 = a };
+    union64 uz;
 
-    *( (double *) &z ) = *( (long double *) &a );
-    return z;
-
+    uz.d = ua.ld;
+    return uz.f64;
 }
 
 float128 syst_float128_add( float128 a, float128 b )
 {
-    float128 z;
+    const union128 ua = { .f128 = a }, ub = { .f128 = b };
+    union128 uz;
 
-    *( (long double *) &z ) =
-        *( (long double *) &a ) + *( (long double *) &b );
-    return z;
+    uz.ld = ua.ld + ub.ld;
+    return uz.f128;
 
 }
 
 float128 syst_float128_sub( float128 a, float128 b )
 {
-    float128 z;
+    const union128 ua = { .f128 = a }, ub = { .f128 = b };
+    union128 uz;
 
-    *( (long double *) &z ) =
-        *( (long double *) &a ) - *( (long double *) &b );
-    return z;
-
+    uz.ld = ua.ld - ub.ld;
+    return uz.f128;
 }
 
 float128 syst_float128_mul( float128 a, float128 b )
 {
-    float128 z;
+    const union128 ua = { .f128 = a }, ub = { .f128 = b };
+    union128 uz;
 
-    *( (long double *) &z ) =
-        *( (long double *) &a ) * *( (long double *) &b );
-    return z;
-
+    uz.ld = ua.ld * ub.ld;
+    return uz.f128;
 }
 
 float128 syst_float128_div( float128 a, float128 b )
 {
-    float128 z;
+    const union128 ua = { .f128 = a }, ub = { .f128 = b };
+    union128 uz;
 
-    *( (long double *) &z ) =
-        *( (long double *) &a ) / *( (long double *) &b );
-    return z;
-
+    uz.ld = ua.ld / ub.ld;
+    return uz.f128;
 }
 
 flag syst_float128_eq( float128 a, float128 b )
 {
+    const union128 ua = { .f128 = a }, ub = { .f128 = b };
 
-    return ( *( (long double *) &a ) == *( (long double *) &b ) );
-
+    return ua.ld == ub.ld;
 }
 
 flag syst_float128_le( float128 a, float128 b )
 {
+    const union128 ua = { .f128 = a }, ub = { .f128 = b };
 
-    return ( *( (long double *) &a ) <= *( (long double *) &b ) );
-
+    return ua.ld <= ub.ld;
 }
 
 flag syst_float128_lt( float128 a, float128 b )
 {
+    const union128 ua = { .f128 = a }, ub = { .f128 = b };
 
-    return ( *( (long double *) &a ) < *( (long double *) &b ) );
-
+    return ua.ld < ub.ld;
 }
 
 #endif
-
