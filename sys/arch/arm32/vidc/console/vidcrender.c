@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.3 2001/03/20 12:50:08 reinoud Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.4 2001/03/25 21:25:35 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -342,7 +342,7 @@ vidcrender_mode(vc, mode)
 /*
  * Find out what bit mask we need to or with the vidc20 control register
  * in order to generate the desired number of bits per pixel.
- * log_bpp is log base 2 of the number of bits per pixel.
+ * log2_bpp is log base 2 of the number of bits per pixel.
  */
 
 	bpp_mask = bpp_mask_table[mode->log2_bpp];
@@ -1567,13 +1567,31 @@ int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 			int flag, struct proc *p )
 {
 	int error;
+	int bpp, log2_bpp;
 	struct tty *tp;
 	struct winsize ws;
+	struct vidc_mode *vmode;
+
 	switch (cmd) {
 	case CONSOLE_MODE:
     		tp = find_tp(dev);
-/*		printf ( "mode ioctl called\n" );*/
-		vidcrender_mode ( vc, (struct vidc_mode *)data );
+		vmode = (struct vidc_mode *) data;
+
+		/* the interface specifies bpp instead of log2_bpp ... fix me! */
+		bpp = vmode->log2_bpp;
+
+		/* translate 24 to 32 ... since this is the correct log2 value */
+		if (bpp == 24) bpp=32;
+
+		/* translate the bpp to log2_bpp */
+		if (bpp < 1 || bpp > 32)
+			bpp = 8; /* Set 8 bpp if we get asked for something silly */
+		for (log2_bpp = 0; bpp != 1; bpp >>= 1)
+			log2_bpp++;
+                vmode->log2_bpp = log2_bpp;
+
+		/* set new mode and update structures */
+		vidcrender_mode ( vc, vmode );
     		vc->MODECHANGE ( vc );
 		ws.ws_row=vc->ychars;
 		ws.ws_col=vc->xchars;
@@ -1614,9 +1632,11 @@ int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 
 
 		inf->videomemory = videomemory;
-		inf->width = R_DATA->mode.hder;
+		inf->width  = R_DATA->mode.hder;
 		inf->height = R_DATA->mode.vder;
-		inf->bpp    = (1 << R_DATA->mode.log2_bpp);	/* XXX */
+
+		inf->bpp    = 1 << R_DATA->mode.log2_bpp;
+
 		return 0;
 	}
 	case CONSOLE_PALETTE:
