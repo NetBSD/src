@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.15 2000/12/10 01:02:04 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.16 2000/12/10 01:18:52 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.15 2000/12/10 01:02:04 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.16 2000/12/10 01:18:52 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.15 2000/12/10 01:02:04 bjh21 Exp $");
 #include <sys/ktrace.h>
 #endif
 
+void syscall(struct trapframe *);
 static void data_abort_fixup(struct trapframe *);
 static vaddr_t data_abort_address(struct trapframe *);
 static vm_prot_t data_abort_atype(struct trapframe *);
@@ -168,6 +169,14 @@ undefined_handler(struct trapframe *tf)
 
 void
 swi_handler(struct trapframe *tf)
+{
+
+	/* XXX The type of e_syscall is all wrong. */
+	(*(void (*)(struct trapframe *))(curproc->p_emul->e_syscall))(tf);
+}
+
+void
+syscall(struct trapframe *tf)
 {
 	u_quad_t sticks;
 	struct proc *p;
