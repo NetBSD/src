@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.12 2004/10/28 21:14:52 dsl Exp $	*/
+/*	$NetBSD: put.c,v 1.13 2005/02/04 16:14:55 perry Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: put.c,v 1.12 2004/10/28 21:14:52 dsl Exp $");
+__RCSID("$NetBSD: put.c,v 1.13 2005/02/04 16:14:55 perry Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -21,10 +21,10 @@ __RCSID("$NetBSD: put.c,v 1.12 2004/10/28 21:14:52 dsl Exp $");
 #include <sys/types.h>
 #include "skey.h"
 
-static unsigned int extract __P ((char *s, int start, int length));
-static void standard __P ((char *word));
-static void insert __P ((char *s, int x, int start, int length));
-static int wsrch __P ((const char *w, int low, int high));
+static unsigned int extract(char *s, int start, int length);
+static void standard(char *word);
+static void insert(char *s, int x, int start, int length);
+static int wsrch(const char *w, int low, int high);
 
 /* Dictionary for integer-word translations */
 char Wp[2048][4] = {
