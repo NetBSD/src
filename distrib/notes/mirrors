@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of January 14, 1998.
+The following sites mirror NetBSD as of January 19, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -16,6 +16,10 @@ Australia
 Brazil
 
 *   ftp://ftp.ravel.ufrj.br/pub/NetBSD
+
+Denmark
+
+*   ftp://ftp.dk.netbsd.org/pub/NetBSD
 
 Germany
 
