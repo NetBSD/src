@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 1998/07/19 20:45:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 1998/12/17 06:17:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,6 +107,13 @@
 /* XXX - Gratuitous name changes... */
 #define vm_set_page_size uvm_setpagesize
 #define kmem_alloc uvm_km_alloc
+/* XXX - Pager hacks... (explain?) */
+#define PAGER_SVA (uvm.pager_sva)
+#define PAGER_EVA (uvm.pager_eva)
+#else	/* UVM */
+extern vm_offset_t pager_sva, pager_eva;
+#define PAGER_SVA (pager_sva)
+#define PAGER_EVA (pager_eva)
 #endif	/* UVM */
 
 #include <m68k/m68k.h>
@@ -1200,7 +1207,6 @@ pv_changepte(pa, set_bits, clear_bits)
 	for (pv = *head; pv != NULL; pv = pv->pv_next) {
 		pmap = pv->pv_pmap;
 		va = pv->pv_va;
-		sme = SEGINV;	/* kill warning */
 
 #ifdef	DIAGNOSTIC
 		if (pmap == NULL)
@@ -1209,8 +1215,21 @@ pv_changepte(pa, set_bits, clear_bits)
 			panic("pv_changepte: null segmap");
 #endif
 
+		/* XXX don't write protect pager mappings */
+		if (clear_bits & PG_WRITE) {
+			if (va >= PAGER_SVA && va < PAGER_EVA) {
+#ifdef	PMAP_DEBUG
+				/* XXX - Does this actually happen? */
+				printf("pv_changepte: in pager!\n");
+				Debugger();
+#endif
+				continue;
+			}
+		}
+
 		/* Is the PTE currently accessable in some context? */
 		in_ctx = FALSE;
+		sme = SEGINV;	/* kill warning */
 		if (pmap == kernel_pmap)
 			in_ctx = TRUE;
 		else if (has_context(pmap)) {
@@ -3184,7 +3203,9 @@ pmap_protect_mmu(pmap, sva, eva)
 	pmeg_t pmegp;
 	vm_offset_t pgva, segva;
 	int pte, sme;
+#ifdef	HAVECACHE
 	int flush_by_page = 0;
+#endif
 
 	CHECK_SPL();
 
@@ -3431,7 +3452,9 @@ pmap_remove_mmu(pmap, sva, eva)
 	pmeg_t pmegp;
 	vm_offset_t pgva, segva;
 	int pte, sme;
+#ifdef	HAVECACHE
 	int flush_by_page = 0;
+#endif
 
 	CHECK_SPL();
 
