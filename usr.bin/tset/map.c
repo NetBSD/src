@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.6 1997/05/17 20:16:18 pk Exp $	*/
+/*	$NetBSD: map.c,v 1.7 1997/10/14 02:07:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,18 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: map.c,v 1.6 1997/05/17 20:16:18 pk Exp $";
+__RCSID("$NetBSD: map.c,v 1.7 1997/10/14 02:07:57 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <termios.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include "extern.h"
 
 int	baudrate __P((char *));
@@ -193,6 +194,7 @@ mapped(type)
 	MAP *mapp;
 	int match;
 
+	match = 0;
 	for (mapp = maplist; mapp; mapp = mapp->next)
 		if (mapp->porttype == NULL || !strcmp(mapp->porttype, type)) {
 			switch (mapp->conditional) {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tset.1,v 1.5 1996/11/15 05:52:48 lukem Exp $
+.\"	$NetBSD: tset.1,v 1.6 1997/10/14 02:08:02 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm tset
 .Nd terminal initialization
 .Sh SYNOPSIS
-.Nm tset
+.Nm
 .Op Fl IQrSs
 .Op Fl
 .Op Fl e Ar ch
@@ -58,9 +58,9 @@
 .Op Fl m Ar mapping
 .Op Ar terminal
 .Sh DESCRIPTION
-.Nm Tset
+.Nm
 initializes terminals.
-.Nm Tset
+.Nm
 first determines the type of terminal that you are using.
 This determination is done as follows, using the first terminal type found.
 .sp
@@ -103,7 +103,7 @@ standard error output.
 .Pp
 When invoked as
 .Nm reset ,
-.Nm tset
+.Nm
 sets cooked and echo modes, turns off cbreak and raw modes, turns on
 newline translation and resets any unset special characters to their
 default values before doing the terminal initialization described above.
@@ -235,7 +235,7 @@ environmental variable is often something generic like
 or
 .Dq unknown .
 When
-.Nm tset
+.Nm
 is used in a startup script
 .Pf ( Pa .profile
 for
@@ -252,7 +252,7 @@ option is to
 .Dq map
 from some set of conditions to a terminal type, that is, to
 tell
-.Nm tset
+.Nm
 ``If I'm on this port at a particular speed, guess that I'm on that
 kind of terminal''.
 .Pp
@@ -324,12 +324,12 @@ option argument.
 Also, to avoid problems with metacharacters, it is suggested that the entire
 .Fl m
 option argument be placed within single quote characters, and that
-.Nm csh
+.Xr csh 1
 users insert a backslash character (``\e'') before any exclamation
 marks (``!'').
 .Sh ENVIRONMENT
 The
-.Nm tset
+.Nm
 command utilizes the
 .Ev SHELL
 and
@@ -352,7 +352,7 @@ terminal capability database
 .Xr environ 7
 .Sh HISTORY
 The
-.Nm tset
+.Nm
 command appeared in
 .Bx 3.0 .
 .Sh COMPATIBILITY
@@ -364,7 +364,7 @@ The
 and
 .Fl v
 options have been deleted from the
-.Nm tset
+.Nm
 utility.
 None of them were documented in 4.3BSD and all are of limited utility at
 best.
@@ -391,7 +391,7 @@ options without arguments, although it is strongly recommended that such
 usage be fixed to explicitly specify the character.
 .Pp
 Executing
-.Nm tset
+.Nm
 as
 .Nm reset
 no longer implies the
@@ -402,11 +402,11 @@ Also, the interaction between the
 option and the
 .Ar terminal
 argument in some historic implementations of
-.Nm tset
+.Nm
 has been removed.
 .Pp
 Finally, the
-.Nm tset
+.Nm
 implementation has been completely redone (as part of the addition to the
 system of a
 .St -p1003.1-88
