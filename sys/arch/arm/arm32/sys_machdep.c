@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3 2002/01/25 19:19:25 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4 2002/03/30 06:23:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -61,7 +61,7 @@ arm32_sync_icache(p, args, retval)
 	char *args;
 	register_t *retval;
 {
-	struct arm32_sync_icache_args ua;
+	struct arm_sync_icache_args ua;
 	int error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -100,11 +100,11 @@ sys_sysarch(p, v, retval)
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
-	case ARM32_SYNC_ICACHE : 
+	case ARM_SYNC_ICACHE : 
 		error = arm32_sync_icache(p, SCARG(uap, parms), retval);
 		break;
 
-	case ARM32_DRAIN_WRITEBUF : 
+	case ARM_DRAIN_WRITEBUF : 
 		error = arm32_drain_writebuf(p, SCARG(uap, parms), retval);
 		break;
 
