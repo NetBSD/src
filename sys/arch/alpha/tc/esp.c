@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.14 1996/09/27 19:55:41 mycroft Exp $	*/
+/*	$NetBSD: esp.c,v 1.15 1996/09/27 20:21:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -646,7 +646,7 @@ esp_select(sc, ecb)
 	u_char *cmd;
 	int clen;
 
-	ESP_TRACE(("[esp_select(t%d,l%d,cmd:%x)] ", sc_link->target, sc_link->lun, *(u_char *)cmd));
+	ESP_TRACE(("[esp_select(t%d,l%d,cmd:%x)] ", sc_link->target, sc_link->lun, ecb->cmd.opcode));
 
 	/* new state ESP_SELECTING */
 	sc->sc_state = ESP_SELECTING;
