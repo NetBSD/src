@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.37 92/12/20$
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.22 1994/05/23 09:21:16 mycroft Exp $
+ *	$Id: trap.c,v 1.23 1994/05/23 09:42:17 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -907,7 +907,7 @@ syscall(code, frame)
 	opc = frame.f_pc;
 #ifdef COMPAT_HPUX
 	if (p->p_emul == EMUL_HPUX)
-		callp = hpux_sysent, numsys = nhpux_sysent;
+		callp = hpux_sysent, numsys = hpux_nsysent;
 	else
 #endif
 		callp = sysent, numsys = nsysent;
