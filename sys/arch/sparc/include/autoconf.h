@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.18 1997/04/08 20:06:26 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.19 1997/05/18 21:26:40 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,7 +132,6 @@ void	*mapdev __P((struct rom_reg *pa, int va,
 
 /* For VME and sun4/obio busses */
 void	*bus_map __P((struct rom_reg *, int, int));
-void	*bus_tmp __P((void *, int));
 void	bus_untmp __P((void));
 
 /*
