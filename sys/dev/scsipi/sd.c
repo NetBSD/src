@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.57 1995/01/30 11:34:30 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.58 1995/01/30 11:37:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -178,7 +178,7 @@ sdattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	if (scsi_start(sd->sc_link, SSS_START,
+	if (scsi_start(sd->sc_link, SSS_START|SSS_LOEJ,
 	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT) ||
 	    sd_get_parms(sd, SCSI_AUTOCONF) != 0)
 		printf(": drive offline\n");
@@ -237,7 +237,7 @@ sdopen(dev, flag, fmt)
 			goto bad3;
 
 		/* Start the pack spinning if necessary. */
-		if (error = scsi_start(sc_link, SSS_START,
+		if (error = scsi_start(sc_link, SSS_START|SSS_LOEJ,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT))
 			goto bad3;
 
