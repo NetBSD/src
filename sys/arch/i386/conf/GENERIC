@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.445 2001/12/06 16:35:09 augustss Exp $
+#	$NetBSD: GENERIC,v 1.446 2001/12/06 16:51:31 soren Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.445 $"
+#ident 		"GENERIC-$Revision: 1.446 $"
 
 maxusers	32		# estimated number of users
 
@@ -795,8 +795,9 @@ ugen*	at uhub? port ?
 
 
 # IrDA and Consumer Ir devices
+
 # Toshiba Oboe
-oboe*	at pci? dev ? function ?
+oboe* 	at pci? dev ? function ?
 irframe* at oboe?
 
 
