@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.14 2000/12/28 22:59:10 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.15 2001/01/09 08:04:53 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -392,14 +392,12 @@ find_node_intr(node, addr, intr)
 
 		/*
 		 * We must read "#interrupt-cells" for each time because
-		 * interrupt-parent may be defferent.
-		 *
-		 * XXX assume #address-cells == 1
+		 * interrupt-parent may be different.
 		 */
 		iparent = *mp++;
 		len -= 4;
 		if (OF_getprop(iparent, "#interrupt-cells", &icells, 4) != 4)
-			return -1;
+			goto nomap;
 
 		/* Found. */
 		if (match == 0) {
@@ -423,6 +421,15 @@ nomap:
 		len = OF_getprop(parent, "AAPL,interrupts", intr, 4) ;
 		if (len == 4)
 			return len;
+		/*
+		 * XXX I don't know what is the correct local address.
+		 * XXX Use the first entry for now.
+		 */
+		len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
+		if (len >= 36) {
+			addr = &map[5];
+			return find_node_intr(parent, addr, intr);
+		}
 	}
 
 	/* XXX This may be wrong... */
