@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 2001/12/08 03:55:22 gmcgarry Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.52 2001/12/08 04:09:19 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -261,9 +261,15 @@ cpu_configure()
 	LIST_INIT(&dev_data_list_hpib);
 	LIST_INIT(&dev_data_list_scsi);
 
+	/* Kick off autoconfiguration. */
 	(void)splhigh();
+
+	softintr_init();
+
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
+
+	/* Configuration is finished, turn on interrupts. */
 	(void)spl0();
 
 	intr_printlevels();

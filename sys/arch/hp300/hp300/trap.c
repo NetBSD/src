@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.92 2001/12/08 03:55:23 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.93 2001/12/08 04:09:19 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -522,17 +522,9 @@ trap(type, code, v, frame)
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-		if (ssir & SIR_NET) {
-			void netintr __P((void));
-			siroff(SIR_NET);
-			uvmexp.softs++;
-			netintr();
-		}
-		if (ssir & SIR_CLOCK) {
-			siroff(SIR_CLOCK);
-			uvmexp.softs++;
-			softclock(NULL);
-		}
+
+		softintr_dispatch();
+
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
