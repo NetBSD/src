@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:46 christos Exp $
+# $NetBSD: Makefile,v 1.3 2005/01/08 22:56:21 manu Exp $
 # Copyright 2001 Mark R V Murray
 # All rights reserved.
 #
@@ -27,6 +27,6 @@
 
 LIB=	pam_login_access
 SRCS=	pam_login_access.c login_access.c
-MAN=	pam_login_access.8
+MAN=	pam_login_access.8 login.access.5
 
 .include "${.CURDIR}/../mod.mk"
