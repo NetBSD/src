@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.34.2.1 1997/11/09 20:23:50 mellon Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -448,7 +448,8 @@ found:;
 			blkoff = MSDOSFSROOT_OFS;
 		else
 			blkoff = 0;
-	}
+	} else if (cluster == MSDOSFSROOT)
+		blkoff = diroff;
 
 	/*
 	 * Now release buf to allow deget to read the entry again.
