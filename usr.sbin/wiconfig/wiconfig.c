@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.35 2004/08/25 18:49:06 wiz Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.36 2004/08/26 20:26:08 wiz Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -38,7 +38,6 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #ifdef __FreeBSD__
@@ -70,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.35 2004/08/25 18:49:06 wiz Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.36 2004/08/26 20:26:08 wiz Exp $");
 #endif
 
 struct wi_table {
