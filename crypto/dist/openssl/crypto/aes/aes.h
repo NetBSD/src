@@ -52,7 +52,8 @@
 #ifndef HEADER_AES_H
 #define HEADER_AES_H
 
-#include <sys/types.h>
+#include <openssl/e_os2.h>
+
 
 #define AES_ENCRYPT	1
 #define AES_DECRYPT	0
@@ -61,6 +62,10 @@
    Both sizes are in bytes. */
 #define AES_MAXNR 14
 #define AES_BLOCK_SIZE 16
+
+#if defined(OPENSSL_FIPS)
+#define FIPS_AES_SIZE_T	int
+#endif
 
 #ifdef  __cplusplus
 extern "C" {
@@ -93,6 +98,15 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
 	unsigned char *ivec, int *num, const int enc);
+void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *ivec, int *num, const int enc);
+void AES_cfb8_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *ivec, int *num, const int enc);
+void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
+			    const int nbits,const AES_KEY *key,
+			    unsigned char *ivec,const int enc);
 void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
 	unsigned char *ivec, int *num);
