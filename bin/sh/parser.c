@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.49 2002/02/11 18:57:19 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.50 2002/02/12 06:39:10 ross Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.49 2002/02/11 18:57:19 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.50 2002/02/12 06:39:10 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -1006,7 +1006,7 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 				PARSESUB();		/* parse substitution */
 				break;
 			case CENDVAR:	/* '}' */
-				if (varnest > 0 && !dblquote) {
+				if (varnest > 0) {
 					varnest--;
 					USTPUTC(CTLENDVAR, out);
 				} else {
