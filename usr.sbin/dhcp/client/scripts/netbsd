@@ -1,18 +1,18 @@
 #!/bin/sh
 #
-# $NetBSD: netbsd,v 1.16 2001/06/18 19:01:52 drochner Exp $
+# $NetBSD: netbsd,v 1.17 2001/06/18 19:43:55 christos Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
 RESOLV=/etc/resolv.conf
 
 make_resolv_conf() {
-	if [ "x$new_domain_name" != x ] && \
-	   [ x"$new_domain_name_servers" != x ]; then
+	if [ \( ! -z "$new_domain_name" \) -a \
+	     \( ! -z "$new_domain_name_servers" \) ]; then
 		echo search $new_domain_name > $RESOLV
 		for nameserver in $new_domain_name_servers; do
-			echo nameserver $nameserver >> $RESOLV
-		done
+			echo nameserver $nameserver
+		done >> $RESOLV
 	fi
 }
 
