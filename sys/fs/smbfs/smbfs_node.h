@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.7 2003/02/27 09:14:25 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.8 2003/03/23 17:54:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -80,12 +80,6 @@ struct smbnode {
 #define VTOSMB(vp)	((struct smbnode *)(vp)->v_data)
 #define SMBTOV(np)	((struct vnode *)(np)->n_vnode)
 
-struct vop_getpages_args;
-struct vop_inactive_args;
-struct vop_putpages_args;
-struct vop_reclaim_args;
-struct ucred;
-struct uio;
 struct smbfattr;
 
 int  smbfs_inactive(void *);
