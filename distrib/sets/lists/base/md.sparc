@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.53 2000/09/29 18:06:25 fvdl Exp $
+# $NetBSD: md.sparc,v 1.54 2000/10/20 12:29:26 pk Exp $
 ./dev/apm
 ./sbin/edlabel
 ./sbin/ldconfig
@@ -21,11 +21,6 @@
 ./usr/lkm/umapfs.o
 ./usr/mdec/binstall
 ./usr/mdec/boot
-./usr/mdec/boot.200000
-./usr/mdec/boot.300000
-./usr/mdec/boot.3E0000
-./usr/mdec/boot.400000
-./usr/mdec/boot.700000
 ./usr/mdec/boot.net
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
