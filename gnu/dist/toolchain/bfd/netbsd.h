@@ -391,11 +391,16 @@ netbsd_translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
     sym_pointer->e_type[0] = N_UNDF | N_EXT;
   else
     {
-      (*_bfd_error_handler)
-	("%s: can not represent section `%s' in a.out object file format",
-	 bfd_get_filename (abfd), bfd_get_section_name (abfd, sec));
-      bfd_set_error (bfd_error_nonrepresentable_section);
-      return false;
+      if (aout_section_merge_with_text_p (abfd, sec))
+	sym_pointer->e_type[0] |= N_TEXT;
+      else
+	{
+          (*_bfd_error_handler)
+	    ("%s: n2 can not represent section `%s' in a.out object file format",
+	     bfd_get_filename (abfd), bfd_get_section_name (abfd, sec));
+          bfd_set_error (bfd_error_nonrepresentable_section);
+          return false;
+	}
     }
 
   /* Turn the symbol from section relative to absolute again */
