@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.23 2001/01/04 04:59:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.24 2001/01/04 06:07:45 thorpej Exp $	*/
 
 /*
  *
@@ -256,11 +256,6 @@ static struct lock pmap_main_lock;
 #endif
 
 #define COUNT(x)	/* nothing */
-
-#ifndef I386_MAXPROCS
-#define I386_MAXPROCS 0
-#define cpu_number() 0
-#endif
 
 /*
  * TLB Shootdown:

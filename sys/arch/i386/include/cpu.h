@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.15 2001/01/04 04:44:34 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.16 2001/01/04 06:07:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -140,9 +140,9 @@ extern struct cpu_info *cpu_info_list;
 #define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 
-#define I386_MAXPROCS		0x10
+#define I386_MAXPROCS		32	/* because we use a bitmask */
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
@@ -174,6 +174,8 @@ void cpu_init_idle_pcbs __P((void));
 extern void need_resched __P((struct cpu_info *));
 
 #else /* !MULTIPROCESSOR */
+
+#define	I386_MAXPROCS		1
 
 volatile u_int32_t astpending;
 
