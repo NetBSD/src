@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.9 1995/05/12 00:01:05 chopps Exp $	*/
+/*	$NetBSD: frame.h,v 1.10 1995/05/12 12:45:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,24 +42,16 @@
  *	@(#)frame.h	8.1 (Berkeley) 6/10/93
  */
 
-struct stdframe {
-	int     f_regs[16];
-	short   f_pad;
-	short   f_stackadj;
-	u_short f_sr;
-	u_int   f_pc;
-	u_short f_format:4,
-		f_vector:12;
-};
-
 struct frame {
-	int	f_regs[16];
-	short	f_pad;
-	short	f_stackadj;
-	u_short	f_sr;
-	u_int	f_pc;
-	u_short	f_format:4,
-		f_vector:12;
+	struct trapframe {
+		int	tf_regs[16];
+		short	tf_pad;
+		short	tf_stackadj;
+		u_short	tf_sr;
+		u_int	tf_pc;
+		u_short	tf_format:4,
+			tf_vector:12;
+	} F_t;
 	union F_u {
 		struct fmt2 {
 			u_int	f_iaddr;
@@ -115,12 +107,23 @@ struct frame {
 	} F_u;
 };
 
+#define	f_regs		F_t.tf_regs
+#define	f_pad		F_t.tf_pad
+#define	f_stackadj	F_t.tf_stackadj
+#define	f_sr		F_t.tf_sr
+#define	f_pc		F_t.tf_pc
+#define	f_format	F_t.tf_format
+#define	f_vector	F_t.tf_vector
 #define	f_fmt2		F_u.F_fmt2
 #define	f_fmt3		F_u.F_fmt3
 #define	f_fmt7		F_u.F_fmt7
 #define	f_fmt9		F_u.F_fmt9
 #define	f_fmtA		F_u.F_fmtA
 #define	f_fmtB		F_u.F_fmtB
+
+struct switchframe {
+	u_int	sf_pc;
+};
 
 /* common frame size */
 #define	CFSIZE		(sizeof(struct frame) - sizeof(union F_u))
