@@ -1,6 +1,0 @@
-# echo -n starting machine-specific deamons:
-if [ -x /etc/shutdown.local ]; then
-	echo -n ' poffd';		poffd "/etc/shutdown.local %"
-fi
-
-# echo '.'

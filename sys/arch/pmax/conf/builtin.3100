@@ -1,9 +1,0 @@
-########################################################################
-# Decstation 2100/3100 (aka PMAX aka KN01) configuration.              #
-# (these don't really have any options except a framebuffer.)          #
-########################################################################
-clock0	at mainbus0			# RTC
-pm0	at mainbus0			# 3100 onboard fb
-dc0	at mainbus0			# dc7083 four-port DZ device
-le0	at mainbus0			# 3100 onboard lance
-sii0	at mainbus0			# onboard scsi
