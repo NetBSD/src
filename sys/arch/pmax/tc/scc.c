@@ -1,9 +1,9 @@
-/*	$NetBSD: scc.c,v 1.35 1998/03/22 07:25:40 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.36 1998/03/22 07:56:28 jonathan Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
- * All rights reserved.
- * 
+ * All Rights Reserved.
+ *
  * Author: Chris G. Demetriou and Jonathan Stone
  *
  * Permission to use, copy, modify and distribute this software and its
@@ -11,18 +11,18 @@
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.35 1998/03/22 07:25:40 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.36 1998/03/22 07:56:28 jonathan Exp $");
 
 #ifdef alpha
 #include "opt_dec_3000_300.h"
@@ -142,7 +142,7 @@ extern void ttrstrt	__P((void *));
 /*
  * rcons glass-tty console (as used on pmax) needs lk-201 ASCII input
  * support from the tty drivers. This is ugly and broken and won't
- * compile on Alphas. 
+ * compile on Alphas.
  */
 #ifdef pmax
 #if NRASTERCONSOLE > 0
@@ -203,11 +203,11 @@ struct scc_softc {
 	int	scc_softCAR;
 
 	int scc_flags[2];
-#define  SCC_CHAN_NEEDSDELAY	0x01	/* sw must delay 1.6us between output*/
-#define  SCC_CHAN_NOMODEM	0x02	/* don't touch modem ctl lines (may
+#define SCC_CHAN_NEEDSDELAY	0x01	/* sw must delay 1.6us between output*/
+#define SCC_CHAN_NOMODEM	0x02	/* don't touch modem ctl lines (may
 					   be left floating or x-wired */
-#define  SCC_CHAN_MODEM_CROSSED	0x04	/* modem lines wired to	other channel*/
-#define  SCC_CHAN_KBDLINE	0x08	/* XXX special-case keyboard lines */
+#define SCC_CHAN_MODEM_CROSSED	0x04	/* modem lines wired to	other channel*/
+#define SCC_CHAN_KBDLINE	0x08	/* XXX special-case keyboard lines */
 	int scc_unitflags;	/* flags for both channels, e.g. */
 #define	SCC_PREFERRED_CONSOLE	0x01
 };
@@ -215,7 +215,7 @@ struct scc_softc {
 /*
  * BRG formula is:
  *				ClockFrequency
- *	BRGconstant = 	---------------------------  -  2
+ *	BRGconstant =	---------------------------  -  2
  *			2 * BaudRate * ClockDivider
  *
  * Speed selections with Pclk=7.3728Mhz, clock x16
@@ -234,7 +234,7 @@ struct speedtab sccspeedtab[] = {
 	{ 1800,		126,	},
 	{ 2400,		94,	},
 	{ 4800,		46,	},
-	{ 7200,		30,	}, 	/* non-POSIX */
+	{ 7200,		30,	},	/* non-POSIX */
 	{ 9600,		22,	},
 	{ 14400,	14,	},	/* non-POSIX */
 	{ 19200,	10,	},
@@ -258,9 +258,9 @@ struct speedtab sccspeedtab[] = {
 
 /* Definition of the driver for autoconfig. */
 static int	sccmatch  __P((struct device *parent, struct cfdata *cf,
-			       void *aux)); 
+		    void *aux));
 static void	sccattach __P((struct device *parent, struct device *self,
-			       void *aux)); 
+		    void *aux));
 
 struct cfattach scc_ca = {
 	sizeof (struct scc_softc), sccmatch, sccattach,
@@ -275,26 +275,23 @@ int		sccparam __P((struct tty *, struct termios *));
 void		sccstart __P((struct tty *));
 int		sccmctl __P((dev_t, int, int));
 static int	cold_sccparam __P((struct tty *, struct termios *,
-				   struct scc_softc *sc));
-
+		    struct scc_softc *sc));
 
 #ifdef SCC_DEBUG
 static void	rr __P((char *, scc_regmap_t *));
 #endif
-
 static void	scc_modem_intr __P((dev_t));
 static void	sccreset __P((struct scc_softc *));
 
-int		sccintr __P((void *));
+int	sccintr __P((void *));
 #ifdef alpha
 void	scc_alphaintr __P((int));
 #endif
 
-
 /*
  * console variables, for using serial console while still cold and
  * autoconfig has not attached the scc device.
- */ 
+ */
 extern  int cold;
 scc_regmap_t *scc_cons_addr = 0;
 static struct scc_softc coldcons_softc;
@@ -307,7 +304,7 @@ void scc_oconsinit __P((struct scc_softc *sc, dev_t dev));
 
 /*
  * Set up a given unit as a serial console device.
- * We need console output when cold, and before any device is configured. 
+ * We need console output when cold, and before any device is configured.
  * Should be callable when cold, to reset the chip and set parameters
  * for a remote (serial) console or kgdb line.
  * XXX
@@ -335,7 +332,7 @@ scc_consinit(dev, sccaddr)
 		/* being called from sccattach() to reset console */
 		sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	}
-	
+
 	/* Reset chip. */
 	sccreset(sc);
 	/* XXX make sure sccreset() called only once for this chip? */
@@ -693,17 +690,13 @@ sccreset(sc)
 	SCC_WRITE_REG(regs, SCC_CHANNEL_B, ZSWR_IVEC, 0xf0);
 	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, ZSWR9_VECTOR_INCL_STAT);
 
-	/*
-	 * Set softc copies of writable (write-only?) registers.
-	 */
-
 	/* receive parameters and control */
 	sc->scc_wreg[SCC_CHANNEL_A].wr3 = 0;
 	sc->scc_wreg[SCC_CHANNEL_B].wr3 = 0;
 
 	/* timing base defaults */
 	sc->scc_wreg[SCC_CHANNEL_A].wr4 = ZSWR4_CLK_X16;
-	sc->scc_wreg[SCC_CHANNEL_B].wr4 = ZSWR4_CLK_X16	;
+	sc->scc_wreg[SCC_CHANNEL_B].wr4 = ZSWR4_CLK_X16;
 
 	/* enable DTR, RTS and SS */
 #ifdef alpha
@@ -778,7 +771,7 @@ sccopen(dev, flag, mode, p)
 	(void) sccmctl(dev, DML_DTR, DMSET);
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
-	       !(tp->t_state & TS_CARR_ON)) {
+	    !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
 		    ttopen, 0);
@@ -856,7 +849,7 @@ sccwrite(dev, uio, flag)
 
 struct tty *
 scctty(dev)
-        dev_t dev;
+	dev_t dev;
 {
 	register struct scc_softc *sc;
 	register struct tty *tp;
@@ -865,7 +858,7 @@ scctty(dev)
 	if ((unit >= scc_cd.cd_ndevs) || (sc = scc_cd.cd_devs[unit]) == 0)
 		return (0);
 	tp = sc->scc_tty[SCCLINE(dev)];
-        return (tp);
+	return (tp);
 }
 
 /*ARGSUSED*/
@@ -934,6 +927,7 @@ sccioctl(dev, cmd, data, flag, p)
 }
 
 
+
 /*
  * Set line parameters --  tty t_param entry point.
  */
@@ -950,8 +944,8 @@ sccparam(tp, t)
 }
 
 
-/* 
- * Do what sccparam() (t_param entry point) does, but callable when cold. 
+/*
+ * Do what sccparam() (t_param entry point) does, but callable when cold.
  */
 static int
 cold_sccparam(tp, t, sc)
@@ -965,16 +959,16 @@ cold_sccparam(tp, t, sc)
 	register int cflag = t->c_cflag;
 	int ospeed;
 
-        /* Check arguments */
+	/* Check arguments */
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
-                return (EINVAL);
+		return (EINVAL);
 	ospeed = ttspeedtab(t->c_ospeed, sccspeedtab);
-        if (ospeed < 0)
-                return (EINVAL);
-        /* and copy to tty */
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = cflag;
+	if (ospeed < 0)
+		return (EINVAL);
+	/* and copy to tty */
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = cflag;
 
 	/*
 	 * Handle console specially.
@@ -1202,8 +1196,7 @@ sccintr(xxxsc)
 		/*
 		 * Keyboard needs special treatment.
 		 */
-		if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT)) && 
-		    raster_console()) {
+		if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT)) && raster_console()) {
 #ifdef DDB
 			if (cc == LK_DO) {
 				spl0();
@@ -1251,7 +1244,7 @@ sccintr(xxxsc)
 		(*linesw[tp->t_line].l_rint)(cc, tp);
 	    } else if ((rr2 == SCC_RR2_A_EXT_STATUS) || (rr2 == SCC_RR2_B_EXT_STATUS)) {
 		chan = (rr2 == SCC_RR2_A_EXT_STATUS) ?
-			SCC_CHANNEL_A : SCC_CHANNEL_B;
+		    SCC_CHANNEL_A : SCC_CHANNEL_B;
 		SCC_WRITE_REG(regs, chan, SCC_RR0, ZSWR0_RESET_STATUS);
 		scc_modem_intr(unit | chan);
 	    }
@@ -1325,7 +1318,7 @@ sccstart(tp)
 #ifdef DIAGNOSTIC
 		if (cc == 0)
 			panic("sccstart: No chars");
-#endif 
+#endif
 		SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
 #ifdef pmax /* Alpha handles the 1.6 msec settle time in hardware */
 		DELAY(2);
@@ -1473,7 +1466,7 @@ scc_modem_intr(dev)
 			if (!(tp->t_state & TS_CARR_ON))
 				(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 		} else if (tp->t_state & TS_CARR_ON)
-			(void)(*linesw[tp->t_line].l_modem)(tp, 0);
+		  (void)(*linesw[tp->t_line].l_modem)(tp, 0);
 	}
 #endif	/* !alpha */
 	splx(s);
@@ -1515,12 +1508,12 @@ sccGetc(dev)
 			SCC_READ_DATA(regs, line, c);
 			if (value & (ZSRR1_PE | ZSRR1_DO | ZSRR1_FE)) {
 				SCC_WRITE_REG(regs, line, SCC_WR0,
-					ZSWR0_RESET_ERRORS);
+				    ZSWR0_RESET_ERRORS);
 				SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR0,
-					ZSWR0_CLR_INTR);
+				    ZSWR0_CLR_INTR);
 			} else {
 				SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR0,
-					ZSWR0_CLR_INTR);
+				    ZSWR0_CLR_INTR);
 				splx(s);
 				return (c & 0xff);
 			}
