@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.31.2.2 1997/11/10 21:26:16 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.31.2.3 1997/11/11 01:32:04 mellon Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -130,6 +130,69 @@ adb_msa3_complete(buffer, data_area, adb_command)
 	adb_processevent(&event);
 }
 
+void 
+adb_mm_nonemp_complete(buffer, data_area, adb_command)
+	caddr_t buffer;
+	caddr_t data_area;
+	int adb_command;
+{
+	adb_event_t event;
+	ADBDataBlock adbdata;
+	int adbaddr;
+	int error;
+
+#ifdef MRG_DEBUG
+	register int i;
+
+	printf("adb: transaction completion\n");
+#endif
+
+	adbaddr = (adb_command & 0xf0) >> 4;
+	error = GetADBInfo(&adbdata, adbaddr);
+#ifdef MRG_DEBUG
+	printf("adb: GetADBInfo returned %d\n", error);
+#endif
+
+#if 0
+	printf("adb: from %d at %d (org %d) %d:", event.addr,
+		event.hand_id, event.def_addr, buffer[0]);
+	for (i = 1; i <= buffer[0]; i++)
+		printf(" %x", buffer[i]);
+	printf("\n");
+#endif
+
+	/* massage the data to look like EMP data */
+	if ( (buffer[3] & 0x04) == 0x04 )
+		buffer[1]&=0x7f;
+	else
+		buffer[1]|=0x80;
+	if ( (buffer[3] & 0x02) == 0x02 )
+		buffer[2]&=0x7f;
+	else
+		buffer[2]|=0x80;
+	if ( (buffer[3] & 0x01) == 0x01 )
+		buffer[3]=0x00;
+	else
+		buffer[3]=0x80;
+	event.addr = adbaddr;
+	event.hand_id = adbdata.devType;
+	event.def_addr = adbdata.origADBAddr;
+	event.byte_count = buffer[0];
+	memcpy(event.bytes, buffer + 1, event.byte_count);
+
+#ifdef MRG_DEBUG
+	printf("adb: from %d at %d (org %d) %d:", event.addr,
+		event.hand_id, event.def_addr, buffer[0]);
+	for (i = 1; i <= buffer[0]; i++)
+		printf(" %x", buffer[i]);
+	printf("\n");
+#endif
+
+	microtime(&event.timestamp);
+
+	adb_processevent(&event);
+}
+
 static volatile int extdms_done;
 
 /*
@@ -143,7 +206,7 @@ extdms_init(totaladbs)
 	ADBDataBlock adbdata;
 	int adbindex, adbaddr;
 	short cmd;
-	char buffer[9];
+	u_char buffer[9];
 
 	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
 		/* Get the ADB information */
@@ -265,15 +328,17 @@ adb_init()
 	ADBSetInfoBlock adbinfo;
 	int totaladbs;
 	int adbindex, adbaddr;
-	int error;
-	char buffer[9];
+	int error, cmd, devtype=0;
+	u_char buffer[9];
 
+#ifdef MRG_ADB
+	/* Even if serial console only, some models require the
+         * ADB in order to get the date/time and do soft power. */
 	if ((mac68k_machine.serial_console & 0x03)) {
 		printf("adb: using serial console\n");
 		return;
 	}
 
-#ifdef MRG_ADB
 	if (!mrg_romready()) {
 		printf("adb: no ROM ADB driver in this kernel for this machine\n");
 		return;
@@ -328,9 +393,18 @@ adb_init()
 			case ADB_ISOKBD:
 				printf("standard keyboard (ISO layout)");
 				break;
-			case ADB_EXTKBD:
-				printf("extended keyboard");
-				break;
+                        case ADB_EXTKBD:
+				extdms_done = 0;
+				cmd=(((adbaddr<<4) &0xf0) | 0x0d ); /* talk R1 */
+				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+					(Ptr)&extdms_done, cmd);
+				while (!extdms_done);
+					/* busy wait until done */
+				if (buffer[1]==0x9a && buffer[2]==0x20 )
+					printf("Mouseman (non-EMP) pseudo keyboard");
+				else
+					printf("extended keyboard");
+                                break;
 			case ADB_EXTISOKBD:
 				printf("extended keyboard (ISO layout)");
 				break;
@@ -383,7 +457,8 @@ adb_init()
 			      (Ptr)&extdms_done, (adbaddr << 4) | 0xf);
 			while (!extdms_done)
 				/* busy-wait until done */;
-			switch (buffer[2]) {
+			devtype=buffer[2];
+			switch (devtype) {
 			case ADBMS_100DPI:
 				printf("100 dpi mouse");
 				break;
@@ -404,18 +479,22 @@ adb_init()
 				      (adbaddr << 4) | 0xd);
 				while (!extdms_done)
 					/* busy-wait until done */;
-				printf("extended mouse "
-				       "<%c%c%c%c> %d-button %d dpi ",
-				       buffer[1], buffer[2],
-				       buffer[3], buffer[4],
-				       (int)buffer[8],
-				       (int)*(short *)&buffer[5]);
-				if (buffer[7] == 1)
-					printf("mouse");
-				else if (buffer[7] == 2)
-					printf("trackball");
-				else
-					printf("unknown device");
+				if (buffer[1]==0x9a && buffer[2]==0x20 )
+					printf("Mouseman (non-EMP) mouse");
+				else {
+					printf("extended mouse "
+						"<%c%c%c%c> %d-button %d dpi ",
+						buffer[1], buffer[2],
+						buffer[3], buffer[4],
+						(int)buffer[8],
+						(int)*(short *)&buffer[5]);
+					if (buffer[7] == 1)
+						printf("mouse");
+					else if (buffer[7] == 2)
+						printf("trackball");
+					else
+						printf("unknown device");
+				}
 				break;
 			default:
 				printf("relative positioning device (mouse?) (%d)", adbdata.devType);
@@ -460,6 +539,55 @@ adb_init()
 		    (buffer[0] > 0) && (buffer[2] == ADBMS_MSA3)) {
 			/* Special device handler for the A3 mouse */
 			adbinfo.siServiceRtPtr = (Ptr)adb_msa3_asmcomplete;
+		} else if ( ( adbdata.origADBAddr == ADBADDR_MAP ) &&
+			  ( adbdata.devType == ADB_EXTKBD ) &&
+			  ( buffer[1] == 0x9a ) && ( buffer[2]==0x20 ) ) {
+				/* ignore non-EMP Mouseman pseudo keyboard */
+				adbinfo.siServiceRtPtr = (Ptr)0;
+		} else if ( ( adbdata.origADBAddr == ADBADDR_REL ) &&
+			  ( devtype == ADBMS_EXTENDED ) &&
+			  ( buffer[1] == 0x9a ) && ( buffer[2]==0x20 ) ) {
+				/* Set up non-EMP Mouseman to put button
+				 * bits in 3rd byte instead of sending via
+				 * pseudo keyboard device. */
+				extdms_done = 0;
+				/* listen register 1 */
+				buffer[0]=2;
+				buffer[1]=0x00;
+				buffer[2]=0x81;
+				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
+				while (!extdms_done)
+					/* busy-wait until done */;
+				extdms_done = 0;
+				/* listen register 1 */
+				buffer[0]=2;
+				buffer[1]=0x01;
+				buffer[2]=0x81;
+				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
+				while (!extdms_done)
+					/* busy-wait until done */;
+				extdms_done = 0;
+				/* listen register 1 */
+				buffer[0]=2;
+				buffer[1]=0x02;
+				buffer[2]=0x81;
+				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
+				while (!extdms_done)
+					/* busy-wait until done */;
+				extdms_done = 0;
+				/* listen register 1 */
+				buffer[0]=2;
+				buffer[1]=0x03;
+				buffer[2]=0x38;
+				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
+				while (!extdms_done)
+					/* busy-wait until done */;
+				/* non-EMP Mouseman has special handler */
+				adbinfo.siServiceRtPtr = (Ptr)adb_mm_nonemp_asmcomplete;
 		} else {
 			/* Default completion routine */
 			adbinfo.siServiceRtPtr = (Ptr)adb_asmcomplete;
