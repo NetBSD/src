@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.96 2002/08/14 00:23:36 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.97 2003/01/20 00:05:46 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.96 2002/08/14 00:23:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.97 2003/01/20 00:05:46 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -213,14 +213,14 @@ udp_input(m, va_alist)
 	struct sockaddr_in src, dst;
 	struct ip *ip;
 	struct udphdr *uh;
-	int iphlen, proto;
+	int iphlen;
 	int len;
 	int n;
 	u_int16_t ip_len;
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
-	proto = va_arg(ap, int);
+	(void)va_arg(ap, int);		/* ignore value, advance ap */
 	va_end(ap);
 
 	udpstat.udps_ipackets++;
@@ -501,9 +501,6 @@ udp4_sendup(m, off, src, so)
 	struct mbuf *opts = NULL;
 	struct mbuf *n;
 	struct inpcb *inp = NULL;
-#ifdef INET6
-	struct in6pcb *in6p = NULL;
-#endif
 
 	if (!so)
 		return;
@@ -513,7 +510,6 @@ udp4_sendup(m, off, src, so)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		in6p = sotoin6pcb(so);
 		break;
 #endif
 	default:
@@ -619,7 +615,6 @@ udp4_realinput(src, dst, m, off)
 
 	if (IN_MULTICAST(dst4->s_addr) ||
 	    in_broadcast(*dst4, m->m_pkthdr.rcvif)) {
-		struct inpcb *last;
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
 		 * for which the local and remote addresses and ports match
@@ -656,7 +651,6 @@ udp4_realinput(src, dst, m, off)
 					continue;
 			}
 
-			last = inp;
 			udp4_sendup(m, off, (struct sockaddr *)src,
 				inp->inp_socket);
 			rcvcnt++;
@@ -725,7 +719,6 @@ udp6_realinput(af, src, dst, m, off)
 
 	if (IN6_IS_ADDR_MULTICAST(&dst6) ||
 	    (af == AF_INET && IN_MULTICAST(dst4->s_addr))) {
-		struct in6pcb *last;
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
 		 * for which the local and remote addresses and ports match
@@ -771,7 +764,6 @@ udp6_realinput(af, src, dst, m, off)
 					continue;
 			}
 
-			last = in6p;
 			udp6_sendup(m, off, (struct sockaddr *)src,
 				in6p->in6p_socket);
 			rcvcnt++;
