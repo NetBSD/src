@@ -3,7 +3,7 @@
    Memory allocation... */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * Copyright (c) 1995, 1996, 1998 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: alloc.c,v 1.1.1.2 1997/06/03 02:49:18 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: alloc.c,v 1.1.1.3 1999/02/18 21:48:49 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -57,7 +57,8 @@ VOIDPTR dmalloc (size, name)
 	VOIDPTR foo = (VOIDPTR)malloc (size);
 	if (!foo)
 		warn ("No memory for %s.", name);
-	memset (foo, 0, size);
+	else
+		memset (foo, 0, size);
 	return foo;
 }
 
