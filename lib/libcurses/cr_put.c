@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.22 2003/08/07 16:44:20 agc Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.22.2.1 2004/07/26 12:46:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.22 2003/08/07 16:44:20 agc Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.22.2.1 2004/07/26 12:46:09 tron Exp $");
 #endif
 #endif				/* not lint */
 
@@ -42,9 +42,6 @@ __RCSID("$NetBSD: cr_put.c,v 1.22 2003/08/07 16:44:20 agc Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
-
-/* the following is defined and set up in setterm.c */
-extern struct tinfo *_cursesi_genbuf;
 
 #define	HARDTABS	8
 
