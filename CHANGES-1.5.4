@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.158 2004/08/25 21:18:32 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.159 2004/08/26 03:29:49 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2645,3 +2645,8 @@ lib/libc/net/gethnamaddr.c			1.62 (via patch)
 
 	No longer query ip6.int, since e.f.f.3.ip6.arpa is ready too.
 	[itojun, ticket #156]
+
+usr.sbin/route6d/route6d.c			patch
+
+	Make route6d compile on alpha
+	[he, ticket #157]
