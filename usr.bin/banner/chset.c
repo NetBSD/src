@@ -1,4 +1,5 @@
-/*	$NetBSD: chset.c,v 1.1.1.1 1995/04/09 05:53:05 cgd Exp $ */
+/*	$NetBSD: chset.c,v 1.2 1995/04/09 06:00:26 cgd Exp $	*/
+
 /*
  *	Changes for banner(1)
  *      @(#)Copyright (c) 1995, Simon J. Gerraty.
@@ -16,6 +17,7 @@
  *      Please send copies of changes and bug-fixes to:
  *      sjg@zen.void.oz.au
  */
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,12 +50,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
-#ifndef lint
-static char rcsid[] = "$NetBSD: chset.c,v 1.1.1.1 1995/04/09 05:53:05 cgd Exp $";
+#else
+static char rcsid[] = "$NetBSD: chset.c,v 1.2 1995/04/09 06:00:26 cgd Exp $";
 #endif
+#endif /* not lint */
 
 #include "banner.h"
 

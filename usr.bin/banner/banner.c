@@ -1,4 +1,5 @@
-/*	$NetBSD: banner.c,v 1.1.1.1 1995/04/09 05:53:05 cgd Exp $ */
+/*	$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $	*/
+
 /*
  *	Changes for banner(1)
  *
@@ -17,6 +18,7 @@
  *      Please send copies of changes and bug-fixes to:
  *      sjg@zen.void.oz.au
  */
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,12 +58,13 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
+#else
+static char rcsid[] = "$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $";
+#endif
 #endif /* not lint */
 
-#ifndef lint
-static char rcsid[] = "$NetBSD: banner.c,v 1.1.1.1 1995/04/09 05:53:05 cgd Exp $";
-#endif
 #include <stdio.h>
 
 #include "banner.h"
