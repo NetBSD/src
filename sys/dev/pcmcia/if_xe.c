@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp $	*/
-/*	$NetBSD: if_xe.c,v 1.4 2000/02/02 17:09:42 thorpej Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.5 2000/03/06 21:02:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -1052,7 +1052,8 @@ void
 xe_statchg(self)
 	struct device *self;
 {
-	/* XXX Update ifp->if_baudrate */
+
+	/* Nothing to do. */
 }
 
 /*

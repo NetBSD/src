@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.32 2000/02/02 17:09:41 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.33 2000/03/06 21:02:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -424,8 +424,6 @@ vr_mii_statchg(self)
 
 	if (sc->vr_ec.ec_if.if_flags & IFF_RUNNING)
 		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
-
-	/* XXX Update ifp->if_baudrate */
 }
 
 /*
@@ -1699,7 +1697,6 @@ vr_attach(parent, self, aux)
 	ifp->if_ioctl = vr_ioctl;
 	ifp->if_start = vr_start;
 	ifp->if_watchdog = vr_watchdog;
-	ifp->if_baudrate = 10000000;
 	bcopy(sc->vr_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*
