@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.7 1998/02/06 07:51:11 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.8 1998/02/06 07:51:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ eisa_attach_hook(parent, self, eba)
 	extern int eisa_has_been_seen; 
 
 	/*
-	 * Notify others that might need to know that the ISA bus
+	 * Notify others that might need to know that the EISA bus
 	 * has now been attached.
 	 */
 	if (eisa_has_been_seen)
