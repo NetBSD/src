@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.45 2002/11/01 11:32:01 mrg Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.46 2002/11/01 15:20:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.45 2002/11/01 11:32:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.46 2002/11/01 15:20:03 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -397,7 +397,10 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	int error;
 
 	if (where == NULL) {
-		*sizep = disk_count * sizeof(sdisk);
+		if (namelen == 0)
+			*sizep = disk_count * sizeof(sdisk);
+		else
+			*sizep = disk_count * name[0];
 		return (0);
 	}
 
@@ -413,7 +416,7 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 
 	simple_lock(&disklist_slock);
 	TAILQ_FOREACH(diskp, &disklist, dk_link) {
-		if (left < sizeof(struct disk_sysctl))
+		if (left < tocopy)
 			break;
 		strncpy(sdisk.dk_name, diskp->dk_name, sizeof(sdisk.dk_name));
 		sdisk.dk_xfer = diskp->dk_rxfer + diskp->dk_wxfer;
