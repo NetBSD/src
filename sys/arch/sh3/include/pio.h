@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.1 1999/09/13 10:31:20 itojun Exp $	*/
+/*	$NetBSD: pio.h,v 1.2 2001/09/21 02:36:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995 Charles M. Hannum.  All rights reserved.
@@ -61,7 +61,7 @@ __inbc(int port)
 {
 	u_int8_t data;
 
-	data = *(volatile u_int8 *)port;
+	data = *(volatile u_int8_t *)port;
 
 	return data;
 }
