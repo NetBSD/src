@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 1997/11/21 17:14:07 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90 1997/11/21 22:13:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -230,10 +230,6 @@ struct pmap kernel_pmap_store;
 #define kernel_pmap (&kernel_pmap_store)
 static u_char kernel_segmap[NSEGMAP];
 
-/* protection conversion */
-static unsigned int protection_converter[8];
-#define pmap_pte_prot(x) protection_converter[x&7]
-
 /* statistics... */
 struct pmap_stats {
 	int	ps_enter_firstpv;	/* pv heads entered */
@@ -407,8 +403,6 @@ static void pv_init __P((void));
 
 static void pmeg_clean __P((pmeg_t pmegp));
 static void pmeg_clean_free __P((void));
-
-static void protection_init __P((void));
 
 static void pmap_common_init __P((pmap_t pmap));
 static void pmap_kernel_init __P((pmap_t pmap));
@@ -1553,22 +1547,6 @@ found:
  */
 
 void
-protection_init()
-{
-	unsigned int kp, *kpp, prot;
-
-	kpp = protection_converter;
-	for (prot = 0; prot < 8; prot++) {
-		kp = PG_INVAL;
-		if (prot & (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE))
-			kp |= PG_VALID;
-		if (prot & VM_PROT_WRITE)
-			kp |= PG_WRITE;
-		*kpp++ = kp;
-	}
-}
-
-void
 pmap_common_init(pmap)
 	pmap_t pmap;
 {
@@ -1824,8 +1802,6 @@ pmap_bootstrap(nextva)
 
 	PAGE_SIZE = NBPG;
 	vm_set_page_size();
-
-	protection_init();
 
 	/* after setting up some structures */
 
@@ -2143,7 +2119,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 	pte_proto = (pa & PMAP_SPEC) << PG_MOD_SHIFT;
 
 	/* ...now the valid and writable bits... */
-	pte_proto |= (PG_VALID | pmap_pte_prot(prot));
+	pte_proto |= PG_VALID;
+	if (prot & VM_PROT_WRITE)
+		pte_proto |= PG_WRITE;
 
 	/* ...and finally the page-frame number. */
 	pte_proto |= PA_PGNUM(pa);
@@ -2219,31 +2197,36 @@ pmap_enter_kernel(pgva, pa, prot, wired, new_pte)
 	segva = m68k_trunc_seg(pgva);
 	do_pv = TRUE;
 
+	/* Do we have a PMEG? */
 	sme = get_segmap(segva);
-	if (sme == SEGINV) {
+	if (sme != SEGINV) {
+		/* Found a PMEG in the segmap.  Cool. */
+		pmegp = pmeg_p(sme);
+#ifdef	DIAGNOSTIC
+		/* Make sure it is the right PMEG. */
+		if (sme != kernel_segmap[VA_SEGNUM(segva)])
+			panic("pmap_enter_kernel: wrong sme at VA=0x%lx", segva);
+		/* Make sure it is ours. */
+		if (pmegp->pmeg_owner != kernel_pmap)
+			panic("pmap_enter_kernel: MMU has bad pmeg 0x%x", sme);
+#endif
+	} else {
+		/* No PMEG in the segmap.  Have to allocate one. */
 		pmegp = pmeg_allocate(kernel_pmap, segva);
 		sme = pmegp->pmeg_index;
 		kernel_segmap[VA_SEGNUM(segva)] = sme;
 		set_segmap_allctx(segva, sme);
-#ifdef PMAP_DEBUG
+#ifdef	PMAP_DEBUG
+		pmeg_verify_empty(segva);
 		if (pmap_debug & PMD_SEGMAP) {
 			printf("pmap: set_segmap pmap=%p va=0x%lx sme=0x%x (ek)\n",
 				   kernel_pmap, segva, sme);
 		}
-		pmeg_verify_empty(segva);
 #endif
 		/* There are no existing mappings to deal with. */
 		old_pte = 0;
 		goto add_pte;
 	}
-
-	/* Found an existing pmeg.  Modify it... */
-	pmegp = pmeg_p(sme);
-#ifdef	DIAGNOSTIC
-	/* Make sure it is ours. */
-	if (pmegp->pmeg_owner != kernel_pmap)
-		panic("pmap_enter_kernel: MMU has bad pmeg 0x%x", sme);
-#endif
 
 	/*
 	 * We have a PMEG.  Is the VA already mapped to somewhere?
@@ -2398,10 +2381,13 @@ pmap_enter_user(pmap, pgva, pa, prot, wired, new_pte)
 	if (sme != SEGINV) {
 		/* Found a PMEG in the segmap.  Cool. */
 		pmegp = pmeg_p(sme);
-#ifdef	PMAP_DEBUG
+#ifdef	DIAGNOSTIC
 		/* Make sure it is the right PMEG. */
 		if (sme != pmap->pm_segmap[VA_SEGNUM(segva)])
 			panic("pmap_enter_user: wrong sme at VA=0x%lx", segva);
+		/* Make sure it is ours. */
+		if (pmegp->pmeg_owner != pmap)
+			panic("pmap_enter_user: MMU has bad pmeg 0x%x", sme);
 #endif
 	} else {
 		/* Not in the segmap.  Try the S/W cache. */
