@@ -1,4 +1,4 @@
-/* $NetBSD: lock_machdep.c,v 1.1.2.2 2000/02/21 18:51:00 sommerfeld Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,11 +53,13 @@
 
 #include <ddb/db_output.h>
 
+#ifdef LOCKDEBUG
+
 void
-cpu_simple_lock_init(alp)
-	__volatile struct simplelock *alp;
+__cpu_simple_lock_init(lockp)
+	__cpu_simple_lock_t *lockp;
 {
-	alp->lock_data = SIMPLELOCK_UNLOCKED;
+	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
 #if defined (DEBUG) && defined(DDB)
@@ -65,15 +67,15 @@ int spin_limit = 10000000;
 #endif
 
 void
-cpu_simple_lock(alp)
-	__volatile struct simplelock *alp;
+__cpu_simple_lock(lockp)
+	__cpu_simple_lock_t *lockp;
 {
 #if defined (DEBUG) && defined(DDB)	
 	int spincount = 0;
 #endif
 	
-	while (i386_atomic_testset_i(&alp->lock_data, SIMPLELOCK_LOCKED)
-	    == SIMPLELOCK_LOCKED) {
+	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	    == __SIMPLELOCK_LOCKED) {
 #if defined(DEBUG) && defined(DDB)
 		spincount++;
 		if (spincount == spin_limit) {
@@ -90,19 +92,21 @@ cpu_simple_lock(alp)
 }
 
 int
-cpu_simple_lock_try(alp)
-	__volatile struct simplelock *alp;
+__cpu_simple_lock_try(lockp)
+	__cpu_simple_lock_t *lockp;
 {
 
-	if (i386_atomic_testset_i(&alp->lock_data, SIMPLELOCK_LOCKED)
-	    == SIMPLELOCK_UNLOCKED)
+	if (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	    == __SIMPLELOCK_UNLOCKED)
 		return (1);
 	return (0);
 }
 
 void
-cpu_simple_unlock(alp)
-	__volatile struct simplelock *alp;
+__cpu_simple_unlock(lockp)
+	__cpu_simple_lock_t *lockp;
 {
-	alp->lock_data = SIMPLELOCK_UNLOCKED;
+	*lockp = __SIMPLELOCK_UNLOCKED;
 }
+
+#endif
