@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.8 2003/06/03 06:48:49 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.9 2003/07/01 19:15:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.8 2003/06/03 06:48:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.9 2003/07/01 19:15:49 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,7 +103,11 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
 
-	maxoutcount = req->req_in[req->req_incount];
+	/* Sanity check req->req_incount */
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[req->req_incount]))
+		return mach_msg_error(args, EINVAL);
+
+	maxoutcount = req->req_in[req->req_incount]; 
 
 	switch (req->req_selector) {
 	case DARWIN_IOHIDCREATESHMEM: {

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.h,v 1.8 2003/05/22 22:07:38 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.h,v 1.9 2003/07/01 19:15:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ struct darwin_ioframebuffer_shmem {
 #define DARWIN_IOFBSETSTARTUPDISPLAYMODE 3
 #define DARWIN_IOFBSETDISPLAYMODE 4
 #define DARWIN_IOFBGETVRAMMAPOFFSET 8
+#define DARWIN_IOFBSETCOLORCONVERTTABLE 15
 #define DARWIN_IOFBSETCLUTWITHENTRIES 16
 #define DARWIN_IOFBGETATTRIBUTE 18
 
