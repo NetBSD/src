@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.10 2000/02/01 05:02:33 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2000/05/02 16:06:49 sjg Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
 COMMONDIR=	${TOP}/fdset-common
+
+.include <bsd.kernobj.mk>
 
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/05/11 20:46:59 veego Exp $
+#	$NetBSD: Makefile,v 1.6 2000/05/02 16:06:51 sjg Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -12,7 +12,7 @@ TREE=		mtree.conf
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 
-KERNEL=		${SRCSYSDIR}/arch/mvme68k/compile/RAMDISK/netbsd
+KERNEL=		${KERNOBJDIR}/RAMDISK/netbsd
 
 MOUNT_POINT?=   /mnt
 # DEV/RDEV file system device, CDEV/RDEV vnconfig device
@@ -40,6 +40,7 @@ ${IMAGE}:	${TREE} ${LISTS} ${CBIN}
 	mount ${VND_CDEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${TREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -76,4 +77,5 @@ clean cleandir distclean:
 	-rm -f ${CLEANFILES}
 
 # Standard rules needed by the above...
+.include <bsd.kernobj.mk>
 .include <bsd.obj.mk>

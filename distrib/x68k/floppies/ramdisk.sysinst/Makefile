@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/12/24 17:02:15 minoura Exp $
+#	$NetBSD: Makefile,v 1.4 2000/05/02 16:06:57 sjg Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -34,6 +34,7 @@ all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}

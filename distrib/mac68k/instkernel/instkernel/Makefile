@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.2 1999/12/17 20:48:08 fredb Exp $
+#	$NetBSD: Makefile,v 1.3 2000/05/02 16:06:50 sjg Exp $
+
+.include "../../../Makefile.inc"
 
 RAMDISK!=cd ${.CURDIR}/../ramdisk; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
 	${MAKE} -s -f-
 
 INSTALL_KERNEL?=INSTALL
-KERNEL=${BSDSRCDIR}/sys/arch/mac68k/compile/${INSTALL_KERNEL}/netbsd
+KERNEL=${KERNOBJDIR}/${INSTALL_KERNEL}/netbsd
 
 all:
 	cp ${KERNEL} netbsd-${INSTALL_KERNEL}
@@ -25,5 +27,6 @@ release: all
 	${INSTALL} -c -o root -g wheel -m 644 netbsd-${INSTALL_KERNEL}.gz \
 		${RELEASEDIR}/installation/instkernel/	
 
+.include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
