@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.5 2001/06/29 17:22:50 toshii Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.6 2001/07/07 06:29:13 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -205,7 +205,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 	}
 
 	/* zero fill */
-	bzero(fb, sizeof(*fb));
+	memset(fb, 0, sizeof(*fb));
 
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/
