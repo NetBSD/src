@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.37.4.2 2000/10/17 19:50:29 tv Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.37.4.3 2001/02/03 20:49:30 he Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.37.4.2 2000/10/17 19:50:29 tv Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.37.4.3 2001/02/03 20:49:30 he Exp $");
 #endif
 
 
@@ -941,11 +941,11 @@ rarp_reply(ii, ep, ipaddr, hp)
 	len = sizeof(*ep) + sizeof(*ap);
 #endif
 
-	debug("%s asked; %s replied", hp->h_name,
-			    ether_ntoa((struct ether_addr *)ar_tha(ap)));
+	debug("%s asked; %s replied",
+	    ether_ntoa((struct ether_addr *)ar_tha(ap)), hp->h_name);
 	if (lflag)
-		syslog(LOG_INFO, "%s asked; %s replied", hp->h_name, 
-		    ether_ntoa((struct ether_addr *)ar_tha(ap)));
+		syslog(LOG_INFO, "%s asked; %s replied",
+		    ether_ntoa((struct ether_addr *)ar_tha(ap)), hp->h_name);
 	n = write(ii->ii_fd, (char *) ep, len);
 	if (n != len) {
 		rarperr(NONFATAL, "write: only %d of %d bytes written", n, len);
