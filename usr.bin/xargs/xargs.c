@@ -54,6 +54,7 @@ static char sccsid[] = "@(#)xargs.c	5.11 (Berkeley) 6/19/91";
 #include <limits.h>
 #include "pathnames.h"
 
+int exit_status = 0;
 int tflag;
 void err __P((const char *, ...));
 void run(), usage();
@@ -162,13 +163,13 @@ main(argc, argv)
 		case EOF:
 			/* No arguments since last exec. */
 			if (p == bbp)
-				exit(0);
+				exit(exit_status);
 
 			/* Nothing since end of last argument. */
 			if (argp == p) {
 				*xp = NULL;
 				run(av);
-				exit(0);
+				exit(exit_status);
 			}
 			goto arg1;
 		case ' ':
@@ -200,7 +201,7 @@ arg2:			*p = '\0';
 				*xp = NULL;
 				run(av);
 				if (ch == EOF)
-					exit(0);
+					exit(exit_status);
 				p = bbp;
 				xp = bxp;
 			} else
@@ -269,22 +270,45 @@ run(argv)
 		err("vfork: %s", strerror(errno));
 	case 0:
 		execvp(argv[0], argv);
+		noinvoke = (errno == ENOENT) ? 127 : 126;
 		(void)fprintf(stderr,
 		    "xargs: %s: %s.\n", argv[0], strerror(errno));
-		noinvoke = 1;
 		_exit(1);
 	}
 	pid = waitpid(pid, &status, 0);
 	if (pid == -1)
 		err("waitpid: %s", strerror(errno));
+
 	/*
 	 * If we couldn't invoke the utility or the utility didn't exit
-	 * properly, quit with 127.
-	 * Otherwise, if not specified otherwise, and the utility exits
-	 * non-zero, exit with that value.
+	 * properly, quit with 127 or 126 respectively.
 	 */
-	if (noinvoke || !WIFEXITED(status) || WIFSIGNALED(status))
-		exit(127);
+	if (noinvoke)
+		exit(noinvoke);
+
+	/*
+	 * According to POSIX, we have to exit if the utility exits with
+	 * a 255 status, or is interrupted by a signal.   xargs is allowed
+	 * to return any exit status between 1 and 125 in these cases, but
+	 * we'll use 124 and 125, the same values used by GNU xargs.
+	 */
+	if (WIFEXITED(status)) {
+		if (WEXITSTATUS (status) == 255) {
+			fprintf (stderr, "xargs: %s exited with status 255\n",
+				 argv[0]);
+			exit(124);
+		} else if (WEXITSTATUS (status) != 0) {
+			exit_status = 123;
+		}
+	} else if (WIFSTOPPED (status)) {
+		fprintf (stderr, "xargs: %s terminated by signal %d\n",
+			 argv[0], WSTOPSIG (status));
+		exit(125);
+	} else if (WIFSIGNALED (status)) {
+		fprintf (stderr, "xargs: %s terminated by signal %d\n",
+			 argv[0], WTERMSIG (status));
+		exit(125);
+	}
 }
 
 void
