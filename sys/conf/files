@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.616 2003/07/03 01:42:10 enami Exp $
+#	$NetBSD: files,v 1.617 2003/07/06 22:56:08 dyoung Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -437,6 +437,11 @@ file	dev/ic/am79c930.c		awi
 #
 device wi: arp, wlan, ifnet
 file	dev/ic/wi.c			wi
+
+# ADMtek ADM8211 802.11
+#
+device atw: arp, wlan, ifnet, smc93cx6
+file	dev/ic/atw.c			atw
 
 # 3Com Etherlink-III Ethernet controller
 #
