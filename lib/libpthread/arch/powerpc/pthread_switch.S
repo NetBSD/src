@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.9 2002/11/09 02:26:19 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.10 2003/01/14 03:36:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -53,6 +53,16 @@
  *	    pt_spin_t *lock)
  */
 
+
+/*
+ * Evil STACK_SWITCH()
+ * See comments in ../i386/pthread_switch.S.
+ */
+#define STACK_SWITCH(pt,tmp)		  \
+	lwz	tmp, PT_UC(pt)		; \
+	la	%r1, -STACKSPACE(tmp)
+
+
 /*
  * void
  * pthread__switch(pthread_t self (%r3), pthread_t next (%r4))
@@ -68,30 +78,60 @@
  * out.
  */
 ENTRY(pthread__switch)
-	stwu	%r1, -(RND_CTXSIZE + 16)(%r1)	/* alloc ucontext_t + %r1 */
+#ifdef PIC
+	mflr	%r10
+	bl	_GLOBAL_OFFSET_TABLE_@local-4
+	mflr	%r9
+	mtlr	%r10
+#endif
+	stwu	%r1, -(RND_CTXSIZE + 48)(%r1)	/* alloc stack space */
 	mflr	%r0
-	stw	%r0, (RND_CTXSIZE + 20)(%r1)	/* Save return address */
+	stw	%r31,(RND_CTXSIZE + 44)(%r1)	/* saved %r31 */
+#ifdef PIC
+	stw	%r9, (RND_CTXSIZE + 40)(%r1)
+#endif
+	stw	%r4, (RND_CTXSIZE + 32)(%r1)	/* next */
+	stw	%r3, (RND_CTXSIZE + 28)(%r1)	/* self */
+	stw	%r0, (RND_CTXSIZE + 52)(%r1)	/* Save return address */
+	addi	%r31, %r1, 16			/* %r31 = ucontext */
 	
-	/* Save pointer to saved space on stack in self->pt_uc */
-	la	%r5, 16(%r1)
-	stw	%r5, PT_UC(%r3)
+	/* Get the current context */
+	mr	%r3, %r31
+	bl	PIC_PLT(_C_LABEL(_getcontext_u))
+	lwz	%r3, (RND_CTXSIZE + 28)(%r1)
+	lwz	%r4, (RND_CTXSIZE + 32)(%r1)
+#ifdef PIC
+	lwz	%r9, (RND_CTXSIZE + 40)(%r1)
+#endif
 
-	mr	%r3, %r5			/* self->pt_uc */
-	lwz	%r4, PT_UC(%r4)			/* next->pt_uc */
-	bl	PIC_PLT(_C_LABEL(_swapcontext_u))
+	/*
+	 * Exit the context to make it continue at switch_return instead of
+	 * here.
+	 */
+#ifdef PIC
+	lwz	%r6, switch_return@got(%r9)
+#else
+	lis	%r6, switch_return@ha
+	addi	%r6, %r6, switch_return@l
+#endif
+	stw	%r6, (_REG_PC + 16)(%r1)
 
-	addi	%r1, %r1, (RND_CTXSIZE + 16)
+	STACK_SWITCH(%r4, %r7)
+
+	stw	%r31, PT_UC(%r3)
+
+2:	mr	%r3, %r7
+	b	PIC_PLT(_C_LABEL(_setcontext_u))
+	NOTREACHED
+
+switch_return:
+	lwz	%r31, (RND_CTXSIZE + 44)(%r1)
+	addi	%r1, %r1, (RND_CTXSIZE + 48)
 	lwz	%r0, 4(%r1)
 	mtlr	%r0
 	blr
 
-/*
- * Evil STACK_SWITCH()
- * See comments in ../i386/pthread_switch.S.
- */
-#define STACK_SWITCH(pt,tmp)		  \
-	lwz	tmp, PT_UC(pt)		; \
-	la	%r1, -STACKSPACE(tmp)
+
 
 pthread__switch_away:
 	STACK_SWITCH(%r4,%r6)
@@ -210,7 +250,6 @@ ENTRY(pthread__locked_switch)
 	stw	%r6, PT_SPINLOCKS(%r4)
 
 	/* Get the current context */
-	stw	%r31, PT_UC(%r3)
 	mr	%r3, %r31
 	bl	PIC_PLT(_C_LABEL(_getcontext_u))
 	lwz	%r3, (RND_CTXSIZE + 28)(%r1)
@@ -233,6 +272,8 @@ ENTRY(pthread__locked_switch)
 	stw	%r6, (_REG_PC + 16)(%r1)
 
 	STACK_SWITCH(%r4, %r7)
+
+	stw	%r31, PT_UC(%r3)
 
 	/* Check if the switcher was preempted and continued to here. */
 	lwz	%r8, PT_NEXT(%r3)
