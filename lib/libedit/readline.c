@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.21 2002/03/18 16:20:36 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.22 2002/04/09 01:57:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.21 2002/03/18 16:20:36 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.22 2002/04/09 01:57:34 thorpej Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1374,10 +1374,8 @@ static int
 _rl_qsort_string_compare(i1, i2)
 	const void *i1, *i2;
 {
-	/* LINTED const castaway */
-	const char *s1 = ((const char **)i1)[0];
-	/* LINTED const castaway */
-	const char *s2 = ((const char **)i2)[0];
+	const char *s1 = ((const char * const *)i1)[0];
+	const char *s2 = ((const char * const *)i2)[0];
 
 	return strcasecmp(s1, s2);
 }
