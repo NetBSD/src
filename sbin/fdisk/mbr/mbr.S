@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.2 1999/01/28 14:14:04 ws Exp $	*/
+/*	$NetBSD: mbr.S,v 1.3 1999/02/08 21:52:43 ws Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -103,7 +103,8 @@ invpart:
  * First determine whether we have int13-extensions.
  */
 boot:
-	movb	$0x80, %dl	% initialize drive (not done by some BIOSs)
+	addr32
+	movb	0(%esi), %dl		% get drive identifier
 	data32
 	push	%esi
 	push	%edx
