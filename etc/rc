@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.95.2.1 1997/11/13 00:04:15 mellon Exp $
+#	$NetBSD: rc,v 1.95.2.2 1997/11/28 19:52:48 mellon Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -122,6 +122,12 @@ done
 # to files now, since they will be residing in the critical file
 # systems (or, at least, better).
 swapctl -A -t noblk
+
+# Check for no swap, and warn about it unless that is desired.
+if [ "$no_swap" != YES ]; then
+	swapctl -s | grep 'no swap devices configured' > /dev/null && \
+		echo "WARNING:  no swap space configured!"
+fi
 
 # clean up left-over files
 rm -f /etc/nologin
