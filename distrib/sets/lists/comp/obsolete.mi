@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.84 2003/01/11 22:45:40 lha Exp $
+# $NetBSD: obsolete.mi,v 1.85 2003/01/28 14:43:18 jdolecek Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -468,9 +468,11 @@
 ./usr/include/g++/hvector.h
 ./usr/include/g++/ioprivate.h
 ./usr/include/g++/iostdio.h
+./usr/include/g++/iostreamP.h
 ./usr/include/g++/lbvector.h
 ./usr/include/g++/ldeque.h
 ./usr/include/g++/libc.h
+./usr/include/g++/libioP.h
 ./usr/include/g++/llist.h
 ./usr/include/g++/lmap.h
 ./usr/include/g++/lmultmap.h
