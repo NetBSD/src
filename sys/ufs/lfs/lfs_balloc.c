@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.6 1998/03/03 01:49:21 fvdl Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.7 1998/03/03 09:02:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -105,9 +105,9 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 				return(error);
 			ip->i_ffs_size = (lastblock + 1) * fs->lfs_bsize;
 #if defined(UVM)
-			uvm_vnp_setsize(vp, (u_long)ip->i_ffs_size);
+			uvm_vnp_setsize(vp, ip->i_ffs_size);
 #else
-			vnode_pager_setsize(vp, (u_long)ip->i_ffs_size);
+			vnode_pager_setsize(vp, ip->i_ffs_size);
 #endif
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			VOP_BWRITE(bp);
