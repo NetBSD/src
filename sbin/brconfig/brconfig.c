@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.4 2003/02/27 19:22:36 perseant Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.5 2003/03/19 10:34:33 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -85,6 +85,7 @@ void	cmd_fwddelay(const struct command *, int, const char *, char **);
 void	cmd_maxage(const struct command *, int, const char *, char **);
 void	cmd_priority(const struct command *, int, const char *, char **);
 void	cmd_ifpriority(const struct command *, int, const char *, char **);
+void	cmd_ifpathcost(const struct command *, int, const char *, char **);
 void	cmd_timeout(const struct command *, int, const char *, char **);
 void	cmd_stp(const struct command *, int, const char *, char **);
 void	cmd_ipf(const struct command *, int, const char *, char **);
@@ -116,6 +117,7 @@ const struct command command_table[] = {
 	{ "maxage",		1,	0,		cmd_maxage },
 	{ "priority",		1,	0,		cmd_priority },
 	{ "ifpriority",		2,	0,		cmd_ifpriority },
+	{ "ifpathcost",		2,	0,		cmd_ifpathcost },
 	{ "timeout",		1,	0,		cmd_timeout },
 	{ "stp",		1,	0,		cmd_stp },
 	{ "-stp",		1,	CMD_INVERT,	cmd_stp },
@@ -261,6 +263,7 @@ usage(void)
 		"<bridge> hellotime <time>",
 		"<bridge> priority <value>",
 		"<bridge> ifpriority <interface> <value>",
+		"<bridge> ifpathcost <interface> <value>",
 		NULL,
 	};
 	extern const char *__progname;
@@ -440,6 +443,7 @@ show_interfaces(int sock, const char *bridge, const char *prefix)
 		printf("port %u priority %u",
 		    req->ifbr_portno, req->ifbr_priority);
 		if (req->ifbr_ifsflags & IFBIF_STP) {
+			printf(" path cost %u", req->ifbr_path_cost);
 			if (req->ifbr_state <
 			    sizeof(stpstates) / sizeof(stpstates[0]))
 				printf(" %s", stpstates[req->ifbr_state]);
@@ -785,7 +789,26 @@ cmd_ifpriority(const struct command *cmd, int sock, const char *bridge,
 	strlcpy(req.ifbr_ifsname, argv[0], sizeof(req.ifbr_ifsname));
 	req.ifbr_priority = val & 0xff;
 
-	if (do_cmd(sock, bridge, BRDGSPRI, &req, sizeof(req), 1) < 0)
+	if (do_cmd(sock, bridge, BRDGSIFPRIO, &req, sizeof(req), 1) < 0)
+		err(1, "%s %s", cmd->cmd_keyword, argv[0]);
+}
+
+void
+cmd_ifpathcost(const struct command *cmd, int sock, const char *bridge,
+    char **argv)
+{
+	struct ifbreq req;
+	u_long val;
+
+	memset(&req, 0, sizeof(req));
+
+	if (get_val(argv[1], &val) < 0 || (val & ~0xff) != 0)
+		errx(1, "%s: invalid value: %s", cmd->cmd_keyword, argv[1]);
+
+	strlcpy(req.ifbr_ifsname, argv[0], sizeof(req.ifbr_ifsname));
+	req.ifbr_path_cost = val & 0xffff;
+
+	if (do_cmd(sock, bridge, BRDGSIFCOST, &req, sizeof(req), 1) < 0)
 		err(1, "%s %s", cmd->cmd_keyword, argv[0]);
 }
 

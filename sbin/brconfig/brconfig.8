@@ -1,4 +1,4 @@
-.\"	$NetBSD: brconfig.8,v 1.8 2003/03/03 06:50:18 wiz Exp $
+.\"	$NetBSD: brconfig.8,v 1.9 2003/03/19 10:34:33 bouyer Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -197,6 +197,12 @@ to
 .Ar value .
 The default is 128.
 The minimum is 0 and the maximum is 255.
+.It Cm ifpathcost Ar interface Ar value
+Set the Spanning Tree path cost of
++.Ar interface
+to
+.Ar value .
+The default is 55.  The minimum is 0 and the maximum is 65535.
 .El
 .Sh EXAMPLES
 The following then placed in the file
