@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.30 1998/12/05 19:43:53 mjacob Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.31 1999/09/30 23:04:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -602,17 +602,17 @@ ncr5380_scsi_cmd(xs)
 	int s, rv, i, flags;
 
 	sc = xs->sc_link->adapter_softc;
-	flags = xs->flags;
+	flags = xs->xs_control;
 
 	if (sc->sc_flags & NCR5380_FORCE_POLLING)
-		flags |= SCSI_POLL;
+		flags |= XS_CTL_POLL;
 
-	if (flags & SCSI_DATA_UIO)
+	if (flags & XS_CTL_DATA_UIO)
 		panic("ncr5380: scsi data uio requested");
 
 	s = splbio();
 
-	if (flags & SCSI_POLL) {
+	if (flags & XS_CTL_POLL) {
 		/* Terminate any current command. */
 		sr = sc->sc_current;
 		if (sr) {
@@ -647,14 +647,14 @@ new:
 	sr->sr_dma_hand = NULL;
 	sr->sr_dataptr = xs->data;
 	sr->sr_datalen = xs->datalen;
-	sr->sr_flags = (flags & SCSI_POLL) ? SR_IMMED : 0;
+	sr->sr_flags = (flags & XS_CTL_POLL) ? SR_IMMED : 0;
 	sr->sr_status = -1;	/* no value */
 	sc->sc_ncmds++;
 	rv = SUCCESSFULLY_QUEUED;
 
 	NCR_TRACE("scsipi_cmd: new sr=0x%x\n", (long)sr);
 
-	if (flags & SCSI_POLL) {
+	if (flags & XS_CTL_POLL) {
 		/* Force this new command to be next. */
 		sc->sc_rr = i;
 	}
@@ -670,9 +670,9 @@ new:
 				  (long) sc->sc_current);
 	}
 
-	if (flags & SCSI_POLL) {
+	if (flags & XS_CTL_POLL) {
 		/* Make sure ncr5380_sched() finished it. */
-		if ((xs->flags & ITSDONE) == 0)
+		if ((xs->xs_status & XS_STS_DONE) == 0)
 			panic("ncr5380_scsi_cmd: poll didn't finish");
 		rv = COMPLETE;
 	}
@@ -804,7 +804,7 @@ finish:
 	sc->sc_ncmds--;
 
 	/* Tell common SCSI code it is done. */
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 
 	sc->sc_state = NCR_IDLE;
@@ -989,7 +989,7 @@ next_job:
 		ncr5380_show_scsi_cmd(xs);
 	}
 #endif
-	if (xs->flags & SCSI_RESET) {
+	if (xs->xs_control & XS_CTL_RESET) {
 		NCR_TRACE("sched: cmd=reset, sr=0x%x\n", (long)sr);
 		/* Not an error, so do not set NCR_ABORTING */
 		sc->sc_msgpriq |= SEND_DEV_RESET;
@@ -997,7 +997,7 @@ next_job:
 	}
 
 #ifdef	DIAGNOSTIC
-	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) == 0) {
+	if ((xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) == 0) {
 		if (sc->sc_dataptr) {
 			printf("%s: ptr but no data in/out flags?\n",
 			    sc->sc_dev.dv_xname);
@@ -1524,7 +1524,8 @@ success:
  * DISCONNECT #
  *
  * We may send these messages in prioritized order:
- * BUS DEVICE RESET #		if SCSI_RESET & xs->flags (or in weird sits.)
+ * BUS DEVICE RESET #		if XS_CTL_RESET & xs->xs_control (or in
+ *				weird sits.)
  * MESSAGE PARITY ERROR		par. err. during MSGI
  * MESSAGE REJECT		If we get a message we don't know how to handle
  * ABORT #			send on errors
@@ -2087,7 +2088,7 @@ ncr5380_data_xfer(sc, phase)
 	}
 
 	/* Validate expected phase (data_in or data_out) */
-	expected_phase = (xs->flags & SCSI_DATA_OUT) ?
+	expected_phase = (xs->xs_control & XS_CTL_DATA_OUT) ?
 		PHASE_DATA_OUT : PHASE_DATA_IN;
 	if (phase != expected_phase) {
 		printf("%s: data phase error\n", sc->sc_dev.dv_xname);
@@ -2439,7 +2440,7 @@ ncr5380_show_scsi_cmd(xs)
 	u_char	*b = (u_char *) xs->cmd;
 	int	i  = 0;
 
-	if ( ! ( xs->flags & SCSI_RESET ) ) {
+	if ( ! ( xs->xs_control & XS_CTL_RESET ) ) {
 		printf("si(%d:%d:%d)-",
 		    xs->sc_link->scsipi_scsi.scsibus,
 		    xs->sc_link->scsipi_scsi.target,

@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.11 1999/09/11 15:34:45 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.12 1999/09/30 23:04:40 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -278,7 +278,7 @@ adw_get_ccb(sc, flags)
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 			break;
 		}
-		if ((flags & SCSI_NOSLEEP) != 0)
+		if ((flags & XS_CTL_NOSLEEP) != 0)
 			goto out;
 
 		tsleep(&sc->sc_free_ccb, PRIBIO, "adwccb", 0);
@@ -345,7 +345,7 @@ adw_start_ccbs(sc)
 		TAILQ_REMOVE(&sc->sc_waiting_ccb, ccb, chain);
 		splx(s);
 
-		if ((ccb->xs->flags & SCSI_POLL) == 0)
+		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
 			timeout(adw_timeout, ccb, (ccb->timeout * hz) / 1000);
 	}
 }
@@ -519,7 +519,7 @@ adw_scsi_cmd(xs)
 	} else {
 
 		/* Polled requests can't be queued for later. */
-		dontqueue = xs->flags & SCSI_POLL;
+		dontqueue = xs->xs_control & XS_CTL_POLL;
 
 		/*
                  * If there are jobs in the queue, run them first.
@@ -551,7 +551,7 @@ adw_scsi_cmd(xs)
          * then we can't allow it to sleep
          */
 
-	if ((ccb = adw_get_ccb(sc, xs->flags)) == NULL) {
+	if ((ccb = adw_get_ccb(sc, xs->xs_control)) == NULL) {
 		/*
                  * If we can't queue, we lose.
                  */
@@ -584,7 +584,7 @@ adw_scsi_cmd(xs)
 		/*
 	         * Usually return SUCCESSFULLY QUEUED
 	         */
-		if ((xs->flags & SCSI_POLL) == 0)
+		if ((xs->xs_control & XS_CTL_POLL) == 0)
 			return (SUCCESSFULLY_QUEUED);
 
 		/*
@@ -648,18 +648,18 @@ adw_build_req(xs, ccb)
                  * Map the DMA transfer.
                  */
 #ifdef TFS
-		if (xs->flags & SCSI_DATA_UIO) {
+		if (xs->xs_control & SCSI_DATA_UIO) {
 			error = bus_dmamap_load_uio(dmat,
 				ccb->dmamap_xfer, (struct uio *) xs->data,
-				(xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
-					BUS_DMA_WAITOK);
+				(xs->xs_control & XS_CTL_NOSLEEP) ?
+				BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		} else
 #endif				/* TFS */
 		{
 			error = bus_dmamap_load(dmat,
 			      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-				(xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
-					BUS_DMA_WAITOK);
+				(xs->xs_control & XS_CTL_NOSLEEP) ?
+				BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		}
 
 		if (error) {
@@ -679,8 +679,8 @@ adw_build_req(xs, ccb)
 		}
 		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
 				ccb->dmamap_xfer->dm_mapsize,
-			  (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
-				BUS_DMASYNC_PREWRITE);
+			  (xs->xs_control & XS_CTL_DATA_IN) ?
+			  BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Build scatter-gather list.
@@ -794,7 +794,7 @@ adw_poll(sc, xs, count)
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
 		adw_intr(sc);
-		if (xs->flags & ITSDONE)
+		if (xs->xs_status & XS_STS_DONE)
 			return (0);
 		delay(1000);	/* only happens in boot so ok */
 		count--;
@@ -893,8 +893,8 @@ adw_wide_isr_callback(sc, scsiq)
 	if (xs->datalen) {
 		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
 				ccb->dmamap_xfer->dm_mapsize,
-			 (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
-				BUS_DMASYNC_POSTWRITE);
+			 (xs->xs_control & XS_CTL_DATA_IN) ?
+			 BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
 	}
 	if ((ccb->flags & CCB_ALLOC) == 0) {
@@ -985,7 +985,7 @@ adw_wide_isr_callback(sc, scsiq)
 	}
 
 	adw_free_ccb(sc, ccb);
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 }
 

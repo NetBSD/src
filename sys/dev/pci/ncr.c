@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.83 1999/08/19 00:43:45 matt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.84 1999/09/30 23:04:42 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1518,7 +1518,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.83 1999/08/19 00:43:45 matt Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.84 1999/09/30 23:04:42 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4507,7 +4507,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	lcb_p lp;
 	tcb_p tp = &np->target[xp->sc_link->scsipi_scsi.target];
 
-	int	i, oldspl, segments, flags = xp->flags, pollmode;
+	int	i, oldspl, segments, flags = xp->xs_control, pollmode;
 	u_char	qidx, nego, idmsg, *msgptr;
 	u_long  msglen, msglen2;
 
@@ -4520,7 +4520,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	**---------------------------------------------
 	*/
 
-	if (flags & SCSI_RESET) {
+	if (flags & XS_CTL_RESET) {
 		OUTB (nc_scntl1, CRST);
 		DELAY (1000);
 		return(COMPLETE);
@@ -4536,7 +4536,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	if ((xp->sc_link->scsipi_scsi.target == np->myaddr	  ) ||
 		(xp->sc_link->scsipi_scsi.target >= MAX_TARGET) ||
 		(xp->sc_link->scsipi_scsi.lun    >= MAX_LUN   ) ||
-		(flags    & SCSI_DATA_UIO)) {
+		(flags    & XS_CTL_DATA_UIO)) {
 		xp->error = XS_DRIVER_STUFFUP;
 		return(COMPLETE);
 	};
@@ -4578,7 +4578,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	if (DEBUG_FLAGS & DEBUG_TINY) {
 		PRINT_ADDR(xp);
 		printf ("CMD=%x F=%x A=%p L=%x ", 
-			cmd->opcode, (unsigned)xp->flags, xp->data,
+			cmd->opcode, (unsigned)xp->xs_control, xp->data,
 			(unsigned)xp->datalen);
 	}
 
@@ -4590,19 +4590,10 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	**--------------------------------------------
 	*/
 
-	flags = xp->flags;
-	if (!(flags & INUSE)) {
-		printf("%s: ?INUSE?\n", ncr_name (np));
-		xp->flags |= INUSE;
-	};
-
-	if(flags & ITSDONE) {
-		printf("%s: ?ITSDONE?\n", ncr_name (np));
-		xp->flags &= ~ITSDONE;
-	};
+	flags = xp->xs_control;
 
 	if (xp->bp)
-		flags |= (SCSI_NOSLEEP); /* just to be sure */
+		flags |= (XS_CTL_ASYNC); /* just to be sure */
 
 	/*---------------------------------------------------
 	**
@@ -4846,10 +4837,10 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	if (flags & SCSI_DATA_IN) {
+	if (flags & XS_CTL_DATA_IN) {
 		cp->phys.header.savep = NCB_SCRIPT_PHYS (np, data_in);
 		cp->phys.header.goalp = cp->phys.header.savep +20 +segments*16;
-	} else if (flags & SCSI_DATA_OUT) {
+	} else if (flags & XS_CTL_DATA_OUT) {
 		cp->phys.header.savep = NCB_SCRIPT_PHYS (np, data_out);
 		cp->phys.header.goalp = cp->phys.header.savep +20 +segments*16;
 	} else {
@@ -4979,7 +4970,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	**	and reenable interrupts
 	*/
 #ifdef __NetBSD__
-	pollmode = flags & SCSI_POLL;
+	pollmode = flags & XS_CTL_POLL;
 #else
 	pollmode = flags & SCSI_NOMASK;
 #endif
@@ -5004,7 +4995,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 
 	if (DEBUG_FLAGS & DEBUG_POLL) printf("P");
 
-	for (i=xp->timeout; i && !(xp->flags & ITSDONE);i--) {
+	for (i=xp->timeout; i && !(xp->xs_status & XS_STS_DONE);i--) {
 		if ((DEBUG_FLAGS & DEBUG_POLL) && (cp->host_status))
 			printf ("%c", (cp->host_status & 0xf) + '0');
 		DELAY (1000);
@@ -5014,7 +5005,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	/*
 	**	Abort if command not done.
 	*/
-	if (!(xp->flags & ITSDONE)) {
+	if (!(xp->xs_status & XS_STS_DONE)) {
 		printf ("%s: aborting job ...\n", ncr_name (np));
 		OUTB (nc_istat, CABRT);
 		DELAY (100000);
@@ -5022,13 +5013,13 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 		ncr_exception (np);
 	};
 
-	if (!(xp->flags & ITSDONE)) {
+	if (!(xp->xs_status & XS_STS_DONE)) {
 		printf ("%s: abortion failed at %x.\n",
 			ncr_name (np), (unsigned) INL(nc_dsp));
 		ncr_init (np, "timeout", HS_TIMEOUT);
 	};
 
-	if (!(xp->flags & ITSDONE)) {
+	if (!(xp->xs_status & XS_STS_DONE)) {
 		cp-> host_status = HS_SEL_TIMEOUT;
 		ncr_complete (np, cp);
 	};
@@ -5216,7 +5207,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		tp->bytes     += xp->datalen;
 		tp->transfers ++;
 #ifndef __NetBSD__
-	} else if (xp->flags & SCSI_ERR_OK) {
+	} else if (xp->xs_control & SCSI_ERR_OK) {
 
 		/*
 		**   Not correct, but errors expected.
@@ -5274,7 +5265,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		xp->error = XS_TIMEOUT;
 	}
 
-	xp->flags |= ITSDONE;
+	xp->xs_status |= XS_STS_DONE;
 
 	/*
 	**	trace output
@@ -5310,7 +5301,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	/*
 	**	Free this ccb
 	*/
-	ncr_free_ccb (np, cp, xp->flags);
+	ncr_free_ccb (np, cp, xp->xs_control);
 
 	/*
 	**	signal completion to generic driver.
@@ -7333,7 +7324,7 @@ static	ccb_p ncr_get_ccb
 	*/
 
 	while (cp->magic) {
-		if (flags & SCSI_NOSLEEP) break;
+		if (flags & XS_CTL_NOSLEEP) break;
 		if (tsleep ((caddr_t)cp, PRIBIO|PCATCH, "ncr", 0))
 			break;
 	};

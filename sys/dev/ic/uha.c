@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.21 1998/12/09 08:47:20 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.22 1999/09/30 23:04:41 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -323,7 +323,7 @@ uha_get_mscp(sc, flags)
 			TAILQ_REMOVE(&sc->sc_free_mscp, mscp, chain);
 			break;
 		}
-		if ((flags & SCSI_NOSLEEP) != 0)
+		if ((flags & XS_CTL_NOSLEEP) != 0)
 			goto out;
 		tsleep(&sc->sc_free_mscp, PRIBIO, "uhamsc", 0);
 	}
@@ -380,7 +380,7 @@ uha_done(sc, mscp)
 	if (xs->datalen) {
 		bus_dmamap_sync(dmat, mscp->dmamap_xfer, 0,
 		    mscp->dmamap_xfer->dm_mapsize,
-		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+		    (xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, mscp->dmamap_xfer);
 	}
@@ -425,7 +425,7 @@ uha_done(sc, mscp)
 			xs->resid = 0;
 	}
 	uha_free_mscp(sc, mscp);
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 
 	/*
@@ -481,7 +481,7 @@ uha_scsi_cmd(xs)
 	}
 
 	/* Polled requests can't be queued for later. */
-	dontqueue = xs->flags & SCSI_POLL;
+	dontqueue = xs->xs_control & XS_CTL_POLL;
 
 	/*
 	 * If there are jobs in the queue, run them first.
@@ -512,7 +512,7 @@ uha_scsi_cmd(xs)
 	 * is from a buf (possibly from interrupt time)
 	 * then we can't allow it to sleep
 	 */
-	flags = xs->flags;
+	flags = xs->xs_control;
 	if ((mscp = uha_get_mscp(sc, flags)) == NULL) {
 		/*
 		 * If we can't queue, we lose.
@@ -543,7 +543,7 @@ uha_scsi_cmd(xs)
 	/*
 	 * Put all the arguments for the xfer in the mscp
 	 */
-	if (flags & SCSI_RESET) {
+	if (flags & XS_CTL_RESET) {
 		mscp->opcode = UHA_SDR;
 		mscp->ca = 0x01;
 	} else {
@@ -571,14 +571,14 @@ uha_scsi_cmd(xs)
 		if (flags & SCSI_DATA_UIO) {
 			error = bus_dmamap_load_uio(dmat,
 			    mscp->dmamap_xfer, (struct uio *)xs->data,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
 			    BUS_DMA_WAITOK);
 		} else
 #endif /*TFS */
 		{
 			error = bus_dmamap_load(dmat,
 			    mscp->dmamap_xfer, xs->data, xs->datalen, NULL,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
 			    BUS_DMA_WAITOK);
 		}
 
@@ -597,7 +597,7 @@ uha_scsi_cmd(xs)
 
 		bus_dmamap_sync(dmat, mscp->dmamap_xfer, 0,
 		    mscp->dmamap_xfer->dm_mapsize,
-		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 
 		/*
@@ -636,7 +636,7 @@ uha_scsi_cmd(xs)
 	/*
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
-	if ((flags & SCSI_POLL) == 0)
+	if ((flags & XS_CTL_POLL) == 0)
 		return (SUCCESSFULLY_QUEUED);
 
 	/*
