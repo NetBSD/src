@@ -1,5 +1,5 @@
 /* Low level Alpha interface, for GDB when running native.
-   Copyright 1993, 1995 Free Software Foundation, Inc.
+   Copyright 1993, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -15,7 +15,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+This file is based on alpha-nat.c  */
 
 #include "defs.h"
 #include "inferior.h"
@@ -30,8 +32,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <string.h>
-
-static char zerobuf[MAX_REGISTER_RAW_SIZE] = {0};
 
 /* Size of elements in jmpbuf */
 
@@ -81,160 +81,96 @@ get_longjmp_target (pc)
 	    Original upage address X is at location core_reg_sect+x+reg_addr.
  */
 
-#define	oi(name) \
-	    offsetof(struct md_coredump, md_tf.tf_regs[__CONCAT(FRAME_,name)])
-#define of(num) \
-	    offsetof(struct md_coredump, md_fpstate.fpr_regs[num])
-
-void
+static void
 fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      char *core_reg_sect;
      unsigned core_reg_size;
      int which;
      unsigned reg_addr;
 {
-  register int regno;
-  register int addr;
-  int bad_reg = -1;
-  int regoff[NUM_REGS] = {
-      oi(V0),  oi(T0),  oi(T1),  oi(T2),  oi(T3),  oi(T4),  oi(T5),  oi(T6),
-      oi(T7),  oi(S0),  oi(S1),  oi(S2),  oi(S3),  oi(S4),  oi(S5),  oi(S6),
-      oi(A0),  oi(A1),  oi(A2),  oi(A3),  oi(A4),  oi(A5),  oi(T8),  oi(T9),
-      oi(T10), oi(T11), oi(RA),  oi(T12), oi(AT),  oi(GP),  oi(SP),  -1,
-      of(0),   of(1),   of(2),   of(3),   of(4),   of(5),   of(6),   of(7),
-      of(8),   of(9),   of(10),  of(11),  of(12),  of(13),  of(14),  of(15),
-      of(16),  of(17),  of(18),  of(19),  of(20),  of(21),  of(22),  of(23),
-      of(24),  of(25),  of(26),  of(27),  of(28),  of(29),  of(30),  of(31),
-      oi(PC),  -1,
-  };
+  struct md_coredump *core_reg;
+  struct trapframe *tf;
+  struct fpreg *fs;
+  register int regnum;
 
-  for (regno = 0; regno < NUM_REGS; regno++)
-    {
-      if (CANNOT_FETCH_REGISTER (regno))
-	{
-	  supply_register (regno, zerobuf);
-	  continue;
-	}
-      addr = regoff[regno];
-      if (addr < 0 || addr >= core_reg_size)
-	{
-	  if (bad_reg < 0)
-	    bad_reg = regno;
-	}
-      else
-	{
-	  supply_register (regno, core_reg_sect + addr);
-	}
-    }
-  if (bad_reg >= 0)
-    {
-      error ("Register %s not found in core file.", reg_names[bad_reg]);
-    }
-}
+  /* Table to map a gdb regnum to an index in the trapframe regs. */
+  static int core_reg_mapping[ZERO_REGNUM] = {
+    FRAME_V0,  FRAME_T0,  FRAME_T1,  FRAME_T2,
+    FRAME_T3,  FRAME_T4,  FRAME_T5,  FRAME_T6,
+    FRAME_T7,  FRAME_S0,  FRAME_S1,  FRAME_S2,
+    FRAME_S3,  FRAME_S4,  FRAME_S5,  FRAME_S6,
+    FRAME_A0,  FRAME_A1,  FRAME_A2,  FRAME_A3,
+    FRAME_A4,  FRAME_A5,  FRAME_T8,  FRAME_T9,
+    FRAME_T10, FRAME_T11, FRAME_RA,  FRAME_T12,
+    FRAME_AT,  FRAME_GP,  FRAME_SP };
 
-register_t
-rrf_to_register(regno, reg, fpreg)
-	int regno;
-	struct reg *reg;
-	struct fpreg *fpreg;
-{
+  /* We get everything from the .reg section. */
+  if (which != 0)
+    return;
 
-	if (regno < 0)
-		abort();
-	else if (regno < FP0_REGNUM)
-		return (reg->r_regs[regno]);
-	else if (regno == PC_REGNUM)
-		return (reg->r_regs[R_ZERO]);
-	else if (regno >= FP0_REGNUM)
-		return (fpreg->fpr_regs[regno - FP0_REGNUM]);
-	else
-		abort();
+  core_reg = (struct md_coredump *)core_reg_sect;
+  tf = &core_reg->md_tf;
+  fs = &core_reg->md_fpstate;
+
+  if (core_reg_size < sizeof(*core_reg)) {
+    fprintf_unfiltered (gdb_stderr, "Couldn't read regs from core file\n");
+    return;
+  }
+
+  /* Integer registers */
+  for (regnum = 0; regnum < ZERO_REGNUM; regnum++)
+    *(long *) &registers[REGISTER_BYTE (regnum)] = tf->tf_regs[regnum];
+  *(long *) &registers[REGISTER_BYTE (ZERO_REGNUM)] = 0;
+
+  /* Floating point registers */
+  memcpy(&registers[REGISTER_BYTE (FP0_REGNUM)],
+	 &fs->fpr_regs[0], sizeof(struct fpreg));
+
+  /* Special registers (PC, VFP) */
+  *(long *) &registers[REGISTER_BYTE (PC_REGNUM)] = tf->tf_regs[FRAME_PC];
+  *(long *) &registers[REGISTER_BYTE (FP_REGNUM)] = 0;
+
+  registers_fetched ();
 }
 
 void
 fetch_inferior_registers (regno)
-	int regno;
+     int regno;
 {
-	struct reg reg;
-	struct fpreg fpreg;
-	register_t regval;
-	char *rp;
+  struct reg inferior_registers;
+  struct fpreg inferior_fp_registers;
 
-	ptrace(PT_GETREGS, inferior_pid, (PTRACE_ARG3_TYPE)&reg, 0);
-	ptrace(PT_GETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE)&fpreg, 0);
+  ptrace (PT_GETREGS, inferior_pid,
+	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers,
+	  sizeof(inferior_registers));
 
-	if (regno < 0) {
-		for (regno = 0; regno < NUM_REGS; regno++) {
-			if (CANNOT_FETCH_REGISTER (regno))
-				rp = zerobuf;
-			else {
-				regval = rrf_to_register(regno, &reg, &fpreg);
-				rp = (char *)&regval;
-			}
-			supply_register(regno, rp);
-		}
-	} else {
-		if (CANNOT_FETCH_REGISTER (regno))
-			rp = zerobuf;
-		else {
-			regval = rrf_to_register(regno, &reg, &fpreg);
-			rp = (char *)&regval;
-		}
+  ptrace (PT_GETFPREGS, inferior_pid,
+	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)], &inferior_fp_registers,
+	  sizeof(inferior_fp_registers));
 
-		supply_register(regno, rp);
-	}
-}
-
-void
-register_into_rrf(val, regno, reg, fpreg)
-	register_t val;
-	int regno;
-	struct reg *reg;
-	struct fpreg *fpreg;
-{
-
-	if (regno < 0)
-		abort();
-	else if (regno < FP0_REGNUM)
-		reg->r_regs[regno] = val;
-	else if (regno == PC_REGNUM)
-		reg->r_regs[R_ZERO] = val;
-	else if (regno >= FP0_REGNUM)
-		fpreg->fpr_regs[regno - FP0_REGNUM] = val;
-	else
-		abort();
+  registers_fetched ();
 }
 
 void
 store_inferior_registers (regno)
-	int regno;
+     int regno;
 {
-	struct reg reg;
-	struct fpreg fpreg;
-	register_t regval;
+  struct reg inferior_registers;
+  struct fpreg inferior_fp_registers;
 
-	if (regno < 0) {
-		for (regno = 0; regno < NUM_REGS; regno++) {
-			if (CANNOT_STORE_REGISTER (regno))
-				continue;
-	
-			if (REGISTER_RAW_SIZE (regno) != sizeof regval)
-				abort();
-			memcpy(&regval, &registers[REGISTER_BYTE (regno)],
-			    REGISTER_RAW_SIZE (regno));
-			register_into_rrf(regval, regno, &reg, &fpreg);
-		}
-	} else {
-		ptrace(PT_GETREGS, inferior_pid, (PTRACE_ARG3_TYPE)&reg, 0);
-		ptrace(PT_GETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE)&fpreg, 0);
-		
-		memcpy(&regval, &registers[REGISTER_BYTE (regno)],
-		    REGISTER_RAW_SIZE (regno));
-		register_into_rrf(regval, regno, &reg, &fpreg);
-	}
-	
-	ptrace(PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE)&reg, 0);
-	ptrace(PT_SETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE)&fpreg, 0);
+  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)],
+	  sizeof(inferior_registers));
+  ptrace (PT_SETREGS, inferior_pid,
+	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+
+  memcpy (&inferior_fp_registers, &registers[REGISTER_BYTE (FP0_REGNUM)],
+	  sizeof(inferior_fp_registers));
+  ptrace (PT_SETFPREGS, inferior_pid,
+	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+
+  registers_fetched ();
 }
 
 
@@ -243,7 +179,7 @@ store_inferior_registers (regno)
  * the "u" struct is NOT in the core dump file.
  */
 
-#ifdef	FETCH_KCORE_REGISTERS
+#ifdef  FETCH_KCORE_REGISTERS
 /*
  * Get registers from a kernel crash dump or live kernel.
  * Called by kcore-nbsd.c:get_kcore_registers().
@@ -251,44 +187,25 @@ store_inferior_registers (regno)
 fetch_kcore_registers (pcbp)
   struct pcb *pcbp;
 {
-  int regno;
 
-  for (regno = 0; regno < NUM_REGS; regno++)
-    {
-	switch (regno)
-	  {
-	    case SP_REGNUM:
-	      supply_register (regno, (char *)&pcbp->pcb_hw.apcb_ksp);
-	      break;
-	    case PC_REGNUM:
-	      supply_register (regno, (char *)&pcbp->pcb_context[7]);
-	      break;
-	    case S0_REGNUM:
-	    case S0_REGNUM+1:
-	    case S0_REGNUM+2:
-	    case S0_REGNUM+3:
-	    case S0_REGNUM+4:
-	    case S0_REGNUM+5:
-	    case S0_REGNUM+6:
-	      supply_register (regno,
-			       (char *)&pcbp->pcb_context[regno - S0_REGNUM]);
-	      break;
-	    default:
-	      supply_register (regno, zerobuf);
-	      break;
-	  }
-    }
+  /* First clear out any garbage. */
+  memset(registers, '\0', REGISTER_BYTES);
+
+  /* SP */
+  *(long *) &registers[REGISTER_BYTE (SP_REGNUM)] =
+    pcbp->pcb_hw.apcb_ksp;
+
+  /* S0 through S6 */
+  memcpy (&registers[REGISTER_BYTE (S0_REGNUM)],
+	  &pcbp->pcb_context[0], 7 * sizeof(long));
+
+  /* PC */
+  *(long *) &registers[REGISTER_BYTE (PC_REGNUM)] =
+    pcbp->pcb_context[7];
+
+  registers_fetched ();
 }
-#endif	/* FETCH_KCORE_REGISTERS */
-
-void
-clear_regs()
-{
-  int regno;
-
-  for (regno = 0; regno < NUM_REGS; regno++)
-    supply_register(regno, zerobuf);
-}
+#endif  /* FETCH_KCORE_REGISTERS */
 
 static struct core_fns alphanbsd_core_fns =
 {
