@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.5 2001/11/15 09:48:11 lukem Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.6 2001/11/22 20:25:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.5 2001/11/15 09:48:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.6 2001/11/22 20:25:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,16 +118,16 @@ aha_mca_attach(parent, self, aux)
 	mca_chipset_tag_t mc = ma->ma_mc;
 	bus_addr_t iobase;
 
-	apd.sc_irq=(ma->ma_pos[4] & 0x7) + 8;
-	apd.sc_drq=ma->ma_pos[5] & 0xf;
-	apd.sc_scsi_dev=(ma->ma_pos[4] & 0xe0) >> 5;
+	apd.sc_irq = (ma->ma_pos[4] & 0x7) + 8;
+	apd.sc_drq = ma->ma_pos[5] & 0xf;
+	apd.sc_scsi_dev = (ma->ma_pos[4] & 0xe0) >> 5;
 
-	printf(" slot %d irq %d: Adaptec AHA-1640 SCSI Adapter\n",
+	printf(" slot %d irq %d drq %d: Adaptec AHA-1640 SCSI Adapter\n",
 		ma->ma_slot + 1,
-		apd.sc_irq);
+		apd.sc_irq, apd.sc_drq);
 
-	iobase=((ma->ma_pos[3] & 0x03) << 8) + 0x30 +
-		((ma->ma_pos[3] & 0x40) >> 4);
+	iobase = ((ma->ma_pos[3] & 0x03) << 8) + 0x30 +
+		 ((ma->ma_pos[3] & 0x40) >> 4);
 
 	if (bus_space_map(iot, iobase, AHA_ISA_IOSIZE, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
@@ -138,10 +138,10 @@ aha_mca_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ma->ma_dmat;
 
-#ifdef notyet
-	if (apd.sc_drq != -1)
-		isa_dmacascade(mc, apd.sc_drq);
-#endif
+	/*
+	 * AHA1640 should be bus-mastering card, should not need any
+	 * assistance by MCA DMA controller for DMA transfers.
+	 */
 
 	sc->sc_ih = mca_intr_establish(mc, apd.sc_irq, IPL_BIO, aha_intr, sc);
 	if (sc->sc_ih == NULL) {
