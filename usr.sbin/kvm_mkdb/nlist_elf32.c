@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.7 1999/10/21 21:17:08 erh Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.8 1999/10/22 10:58:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_elf32.c,v 1.7 1999/10/21 21:17:08 erh Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.8 1999/10/22 10:58:00 hannken Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -64,6 +64,12 @@ __RCSID("$NetBSD: nlist_elf32.c,v 1.7 1999/10/21 21:17:08 erh Exp $");
 
 #if (defined(NLIST_ELF32) && (ELFSIZE == 32)) || \
     (defined(NLIST_ELF64) && (ELFSIZE == 64))
+
+#define CONCAT(x,y)     __CONCAT(x,y)
+#define ELFNAME(x)      CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define ELFNAME2(x,y)   CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define ELFNAMEEND(x)   CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define ELFDEFNNAME(x)  CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 typedef struct nlist NLIST;
 #define	_strx	n_un.n_strx
