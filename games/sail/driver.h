@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.h,v 1.3 1995/04/22 10:36:54 cgd Exp $	*/
+/*	$NetBSD: driver.h,v 1.4 1997/01/07 12:42:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)driver.h	8.1 (Berkeley) 5/31/93
+ *	@(#)driver.h	8.2 (Berkeley) 5/3/95
  */
 
-#include "externs.h"
+#include "extern.h"
 
 int dtab[];

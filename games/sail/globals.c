@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.4 1995/04/22 10:36:57 cgd Exp $	*/
+/*	$NetBSD: globals.c,v 1.5 1997/01/07 12:42:20 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,13 +35,13 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)globals.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: globals.c,v 1.4 1995/04/22 10:36:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: globals.c,v 1.5 1997/01/07 12:42:20 tls Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
 struct scenario scene[] = {
 	/*

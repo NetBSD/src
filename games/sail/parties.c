@@ -1,4 +1,4 @@
-/*	$NetBSD: parties.c,v 1.3 1995/04/22 10:37:04 cgd Exp $	*/
+/*	$NetBSD: parties.c,v 1.4 1997/01/07 12:42:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,13 +35,13 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)parties.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)parties.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: parties.c,v 1.3 1995/04/22 10:37:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: parties.c,v 1.4 1997/01/07 12:42:23 tls Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
 meleeing(from, to)
 struct ship *from;

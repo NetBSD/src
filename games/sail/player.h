@@ -1,4 +1,4 @@
-/*	$NetBSD: player.h,v 1.4 1995/04/22 10:37:22 cgd Exp $	*/
+/*	$NetBSD: player.h,v 1.5 1997/01/07 12:42:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -32,11 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)player.h	8.1 (Berkeley) 5/31/93
+ *	@(#)player.h	8.2 (Berkeley) 5/3/95
  */
 
 #include <curses.h>
-#include "externs.h"
+#include "extern.h"
 
 /* sizes and coordinates for the screen */
 
