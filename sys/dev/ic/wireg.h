@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.34 2002/04/18 05:24:29 onoe Exp $	*/
+/*	$NetBSD: wireg.h,v 1.35 2002/08/10 23:29:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -565,9 +565,11 @@ struct wi_ltv_pcf {
  *	(Only PRISM2; not 802.11 compliant mode, testing use only)
  * 6 == HOST AP (Only PRISM2)
  */
+#define	WI_PORTTYPE_IBSS	0x0
 #define WI_PORTTYPE_BSS		0x1
 #define WI_PORTTYPE_WDS		0x2
 #define WI_PORTTYPE_ADHOC	0x3
+#define	WI_PORTTYPE_HOSTAP	0x6
 
 /*
  * Mac addresses. (0xFC01, 0xFC08)
