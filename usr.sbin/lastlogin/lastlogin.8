@@ -1,4 +1,4 @@
-.\"	$NetBSD: lastlogin.8,v 1.5 2002/01/19 03:20:56 wiz Exp $
+.\"	$NetBSD: lastlogin.8,v 1.6 2003/08/28 15:54:41 elric Exp $
 .\"
 .\" Copyright (c) 1996 John M. Vinopal
 .\" All rights reserved.
@@ -38,6 +38,7 @@
 .Nd indicate last login time of users
 .Sh SYNOPSIS
 .Nm
+.Op Fl rt
 .Op user ...
 .Sh DESCRIPTION
 .Nm
@@ -58,6 +59,15 @@ differs from
 .Xr last 1
 in that it only prints information regarding the very last login session.
 The last login database is never turned over or deleted in standard usage.
+.Pp
+The following options are available:
+.P.
+.Bl -tag -width indent
+.It Fl r
+Reverse the order of the sort.
+.It Fl t
+Sort by last login time (most recent first.)
+.El
 .Sh FILES
 .Bl -tag -width /var/log/lastlog -compact
 .It Pa /var/log/lastlog
