@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.295 2000/01/25 08:32:01 augustss Exp $
+#	$NetBSD: GENERIC,v 1.296 2000/02/02 19:48:18 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.295 $"
+#ident 		"GENERIC-$Revision: 1.296 $"
 
 maxusers	32		# estimated number of users
 
@@ -234,9 +234,9 @@ pcmcia*	at pcic? controller ? socket ?
 pcmcia*	at tcic? controller ? socket ?
 
 # ISA PCMCIA controllers
-pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
-pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
-tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x4000
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 
 # PCI PCMCIA controllers
 pcic0	at pci? dev? function ?
