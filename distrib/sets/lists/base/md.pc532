@@ -34,4 +34,3 @@
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
 ./usr/mdec/boot
-./usr/mdec/zboot.o
