@@ -35,7 +35,7 @@
  *
  *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  *
- *	$Id: clock.c,v 1.5 1994/05/17 17:31:32 phil Exp $
+ *	$Id: clock.c,v 1.6 1994/05/20 06:44:26 phil Exp $
  */
 
 /*
@@ -63,7 +63,6 @@ startrtclock()
   WR_ADR (unsigned short, ICU_ADR + HCSV, timer);
   WR_ADR (unsigned short, ICU_ADR + HCCV, timer);
 
-  printf ("startrtclock\n");
 }
 
 /* convert 2 digit BCD number */
@@ -126,11 +125,9 @@ inittodr(base)
   unsigned int sec;
   int leap;
 
-printf ("inittodr\n");
-
   if (!have_rtc)
     {
-      time.tv_sec = 0;
+      time.tv_sec = base;
       return;
     }
 
@@ -139,11 +136,12 @@ printf ("inittodr\n");
   rw_rtc ( buffer, 0);  /* Read the rtc. */
 
   /* Check to see if it was really the rtc by checking for bad date info. */
-  if (buffer[1] > 59 || buffer[2] > 59 || buffer[3] > 23 || buffer[5] > 31
-      || buffer[6] > 12)
+  if (bcd(buffer[1]) > 59 || bcd(buffer[2]) > 59 || bcd(buffer[3]) > 23
+      || bcd(buffer[5]) > 31 || bcd(buffer[6]) > 12)
     {
+      printf ("inittodr: No clock found\n");
       have_rtc = 0;
-      time.tv_sec = 0;
+      time.tv_sec = base;
       return;
     }
 
@@ -156,6 +154,9 @@ printf ("inittodr\n");
       + bcd(buffer[1]);			/* seconds */
 
   sec -= 24*60*60; /* XXX why ??? Compensate for Jan 1, 1970??? */  
+
+  if (sec < base)
+	printf ("WARNING: clock is earlier than last shutdown time.\n");
 
   time.tv_sec = sec;
   time.tv_usec = 0;
@@ -175,7 +176,6 @@ resettodr()
  */
 enablertclock()
 {
-printf ("enablertclock()\n");
   /* Set the clock interrupt enable (CICTL) */
   WR_ADR (unsigned char, ICU_ADR +CICTL, 0x30);
   PL_zero |= SPL_CLK | SPL_SOFTCLK | SPL_NET | SPL_IMP;
@@ -198,10 +198,8 @@ DELAY(n)
 int
 cpu_initclocks()
 {
-  printf ("cpu_initclocks\n");
   startrtclock();
   enablertclock();
-  inittodr(0);
 }
 
 int
