@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifmedia.4,v 1.22 2003/04/16 13:35:17 wiz Exp $
+.\"	$NetBSD: ifmedia.4,v 1.23 2004/03/10 14:44:52 keihan Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,6 +143,8 @@ connector.  [100baseT4, 100T4]
 .It Dv IFM_1000_T
 1000BASE-T, 1Gb/s over category 5 unshielded twisted pair, RJ45 connector.
 [1000baseT, 1000T]
+.It Dv IFM_10G_LR
+10GBASE-LR, 10Gb/s over single-mode fiber optic cables.  [10GbaseLR, 10GLR]
 .El
 .Pp
 The following media option is defined for Ethernet:
