@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.61.2.1 2000/11/20 11:41:07 bouyer Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.61.2.2 2000/11/22 16:03:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -128,6 +128,7 @@
 #define	ZSTTY_RING_SIZE	2048
 #endif
 
+static struct cnm_state zstty_cnm_state;
 /*
  * Make this an option variable one can patch.
  * But be warned:  this must be a power of 2!
@@ -278,6 +279,7 @@ zstty_attach(parent, self, aux)
 	char *i, *o;
 
 	callout_init(&zst->zst_diag_ch);
+	cn_init_magic(&zstty_cnm_state);
 
 	tty_unit = zst->zst_dev.dv_unit;
 	channel = args->channel;
@@ -302,10 +304,13 @@ zstty_attach(parent, self, aux)
 	if ((zst->zst_hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
 		i = "input";
 		if ((args->hwflags & ZS_HWFLAG_USE_CONSDEV) != 0) {
+			args->consdev->cn_dev = dev;
 			cn_tab->cn_pollc = args->consdev->cn_pollc;
 			cn_tab->cn_getc = args->consdev->cn_getc;
 		}
 		cn_tab->cn_dev = dev;
+		/* Set console magic to BREAK */
+		cn_set_magic("\047\001");
 	}
 	if ((zst->zst_hwflags & ZS_HWFLAG_CONSOLE_OUTPUT) != 0) {
 		o = "output";
@@ -600,7 +605,7 @@ zsopen(dev, flags, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error)
 		goto bad;
 
@@ -635,7 +640,7 @@ zsclose(dev, flags, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return 0;
 
-	(*linesw[tp->t_line].l_close)(tp, flags);
+	(*tp->t_linesw->l_close)(tp, flags);
 	ttyclose(tp);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
@@ -662,7 +667,7 @@ zsread(dev, uio, flags)
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flags));
+	return ((*tp->t_linesw->l_read)(tp, uio, flags));
 }
 
 int
@@ -674,7 +679,7 @@ zswrite(dev, uio, flags)
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flags));
+	return ((*tp->t_linesw->l_write)(tp, uio, flags));
 }
 
 int
@@ -691,7 +696,7 @@ zsioctl(dev, cmd, data, flag, p)
 	int error;
 	int s;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -1383,6 +1388,7 @@ zstty_rxint(cs)
 			zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 		}
 
+		cn_check_magic(zst->zst_tty->t_dev, c, zstty_cnm_state);
 		put[0] = c;
 		put[1] = rr1;
 		put += 2;
@@ -1492,11 +1498,8 @@ zstty_stint(cs, force)
 	 * Check here for console break, so that we can abort
 	 * even when interrupts are locking up the machine.
 	 */
-	if (ISSET(rr0, ZSRR0_BREAK) &&
-	    ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE_INPUT)) {
-		zs_abort(cs);
-		return;
-	}
+	if (ISSET(rr0, ZSRR0_BREAK))
+		cn_check_magic(zst->zst_tty->t_dev, CNC_BREAK, zstty_cnm_state);
 
 	if (!force)
 		delta = rr0 ^ cs->cs_rr0;
@@ -1592,7 +1595,7 @@ zstty_rxsoft(zst, tp)
 	struct tty *tp;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
-	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
+	int (*rint) __P((int c, struct tty *tp)) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char rr1;
@@ -1702,7 +1705,7 @@ zstty_txsoft(zst, tp)
 		CLR(tp->t_state, TS_FLUSH);
 	else
 		ndflush(&tp->t_outq, (int)(zst->zst_tba - tp->t_outq.c_cf));
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 }
 
 integrate void
@@ -1724,14 +1727,14 @@ zstty_stsoft(zst, tp)
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
-		(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
+		(void) (*tp->t_linesw->l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
 	}
 
 	if (ISSET(delta, cs->cs_rr0_cts)) {
 		/* Block or unblock output according to flow control. */
 		if (ISSET(rr0, cs->cs_rr0_cts)) {
 			zst->zst_tx_stopped = 0;
-			(*linesw[tp->t_line].l_start)(tp);
+			(*tp->t_linesw->l_start)(tp);
 		} else {
 			zst->zst_tx_stopped = 1;
 		}

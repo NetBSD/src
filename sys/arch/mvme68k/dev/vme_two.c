@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.1.8.1 2000/11/20 20:15:20 bouyer Exp $ */
+/*	$NetBSD: vme_two.c,v 1.1.8.2 2000/11/22 16:00:51 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ vmetwo_match(parent, cf, aux)
 		return (0);
 
 	if (machineid != MVME_167 && machineid != MVME_177 &&
-	    machineid != MVME_162)
+	    machineid != MVME_162 && machineid != MVME_172)
 		return (0);
 
 	return (1);
@@ -274,7 +274,7 @@ vmetwo_attach(parent, self, aux)
 		    &sc->sc_slave[i + VME2_SLAVE_PROG_START + 2]);
 	}
 
-	if (machineid != MVME_162) {
+	if (machineid != MVME_162 && machineid != MVME_172) {
 		/*
 		 * Let the NMI handler deal with level 7 ABORT switch
 		 * interrupts

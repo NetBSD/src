@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.52.2.1 2000/11/20 18:10:36 bouyer Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.52.2.2 2000/11/22 16:06:12 bouyer Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -975,7 +975,7 @@ send:
 		}
 #ifdef INET6
 		else if (tp->t_in6pcb) {
-			ip->ip_ttl = tp->t_in6pcb->in6p_ip6.ip6_hlim;
+			ip->ip_ttl = in6_selecthlim(tp->t_in6pcb, NULL); /*XXX*/
 			ip->ip_tos = 0;	/*XXX*/
 		}
 #endif

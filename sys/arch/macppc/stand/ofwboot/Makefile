@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2000/11/20 20:13:04 bouyer Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2000/11/22 16:00:42 bouyer Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 FILES=		${PROG}.elf ${PROG}.xcf
-SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c vers.c
+SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-msoft-float
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
-CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
+CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 DBG=		-Os -mmultiple
 
 .PATH:		${S}/arch/powerpc/powerpc
@@ -27,7 +27,7 @@ FIXCOFF=	${FIXCOFFDIR}/fixcoff
 FIXCOFFTARG=	${FIXCOFF}
 
 ${FIXCOFF}:
-	(cd ${.CURDIR}/../fixcoff; make)
+	(cd ${.CURDIR}/../fixcoff; ${MAKE})
 
 .endif
 .else

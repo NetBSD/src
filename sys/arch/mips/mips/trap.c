@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113.2.1 2000/11/20 20:13:37 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.113.2.2 2000/11/22 16:00:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.2.1 2000/11/20 20:13:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.2.2 2000/11/22 16:00:47 bouyer Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -188,7 +188,7 @@ syscall(status, cause, opc)
 	u_quad_t sticks;
 	int args[8], rval[2], error;
 	size_t code, numsys, nsaved, argsiz;
-	struct sysent *callp;
+	const struct sysent *callp;
 
 	uvmexp.syscalls++;
 

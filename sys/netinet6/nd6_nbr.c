@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.8.2.1 2000/11/20 18:10:57 bouyer Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.8.2.2 2000/11/22 16:06:26 bouyer Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.36 2000/05/17 12:35:59 jinmei Exp $	*/
 
 /*
@@ -931,6 +931,7 @@ nd6_ifptomac(ifp)
 	case IFT_ARCNET:
 	case IFT_ETHER:
 	case IFT_FDDI:
+	case IFT_IEEE1394:
 		return LLADDR(ifp->if_sadl);
 		break;
 	default:

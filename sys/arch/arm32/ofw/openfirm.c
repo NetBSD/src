@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.3 1998/05/01 21:18:44 cgd Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.3.14.1 2000/11/22 16:00:01 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -170,6 +170,35 @@ OF_instance_to_package(ihandle)
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;
+}
+
+int
+OF_nextprop(handle, prop, nextprop)
+	int handle;
+	char *prop;
+	void *nextprop;
+{
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		char *prop;
+		void *nextprop;
+		int flags;
+	} args = {
+		"nextprop",
+		3,
+		1,
+	};
+
+	args.phandle = handle;
+	args.prop = prop;
+	args.nextprop = nextprop;
+
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.flags;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.2.12.1 2000/11/20 20:03:56 bouyer Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.2.12.2 2000/11/22 16:00:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -262,7 +262,7 @@ fcomopen(dev, flag, mode, p)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	return (*tp->t_linesw->l_open)(dev, tp);
 }
 
 int
@@ -277,7 +277,7 @@ fcomclose(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 #ifdef DIAGNOSTIC
 	if (sc->sc_rxbuffer[0] == NULL)
@@ -300,7 +300,7 @@ fcomread(dev, uio, flag)
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return (*linesw[tp->t_line].l_read)(tp, uio, flag);
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
@@ -312,7 +312,7 @@ fcomwrite(dev, uio, flag)
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 	
-	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
@@ -327,7 +327,7 @@ fcomioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->sc_tty;
 	int error;
 	
-	if ((error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p)) >= 0)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
 	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
 		return error;
@@ -549,7 +549,7 @@ fcom_softintr(sc)
 	(void)splx(s);
 
 	for (loop = 0; loop < len; ++loop)
-		(*linesw[tp->t_line].l_rint)(ptr[loop], tp);
+		(*tp->t_linesw->l_rint)(ptr[loop], tp);
 	softint_scheduled = 0;
 }
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.38.2.1 2000/11/20 20:32:57 bouyer Exp $    */
+/*      $NetBSD: param.h,v 1.38.2.2 2000/11/22 16:02:11 bouyer Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
 
 #define	PGSHIFT		12			/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)		/* (1 << PGSHIFT) bytes/page */
-#define	PGOFSET		(NBPG - 1)               /* byte offset into page */
+#define	PGOFSET		(NBPG - 1)		/* byte offset into page */
 
 #define	VAX_PGSHIFT	9
 #define	VAX_NBPG	(1 << VAX_PGSHIFT)

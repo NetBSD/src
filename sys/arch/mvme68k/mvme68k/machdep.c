@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59.2.1 2000/11/20 20:15:25 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59.2.2 2000/11/22 16:00:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
+#include "opt_m060sp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +83,7 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
+#include <m68k/include/cacheops.h>
 #include <dev/cons.h>
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
@@ -177,13 +179,16 @@ int	mem_cluster_cnt;
 
 /*
  * On the 68020/68030, the value of delay_divisor is roughly
- * 2048 / cpuspeed (where cpuspeed is in MHz).
+ * 8192 / cpuspeed (where cpuspeed is in MHz).
  *
- * On the 68040/68060(?), the value of delay_divisor is roughly
- * 759 / cpuspeed (where cpuspeed is in MHz).
+ * On the 68040, the value of delay_divisor is roughly
+ * 3072 / cpuspeed (where cpuspeed is in MHz).
+ *
+ * On the 68060, the value of delay_divisor is roughly
+ * 1024 / cpuspeed (where cpuspeed is in MHz).
  */
 int	cpuspeed;		/* only used for printing later */
-int	delay_divisor = 82;	/* assume some reasonable value to start */
+int	delay_divisor = 512;	/* assume some reasonable value to start */
 
 /* Machine-dependent initialization routines. */
 void	mvme68k_init __P((void));
@@ -193,9 +198,9 @@ void	mvme68k_init __P((void));
 void	mvme147_init __P((void));
 #endif
 
-#if defined(MVME162) || defined(MVME167)
+#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 #include <mvme68k/dev/pcctworeg.h>
-void	mvme167_init __P((void));
+void	mvme1xx_init __P((void));
 #endif
 
 /*
@@ -242,8 +247,14 @@ mvme68k_init()
 #ifdef MVME162
 	case MVME_162:
 #endif
-#if defined(MVME167) || defined(MVME162)
-		mvme167_init();
+#ifdef MVME177
+	case MVME_177:
+#endif
+#ifdef MVME172
+	case MVME_172:
+#endif
+#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
+		mvme1xx_init();
 		break;
 #endif
 	default:
@@ -288,7 +299,7 @@ mvme147_init()
 	bus_space_write_2(bt, bh, PCCREG_TMR1_PRELOAD, 0);
 	bus_space_write_1(bt, bh, PCCREG_TMR1_INTR_CTRL, 0);
 
-	for (delay_divisor = 140; delay_divisor > 0; delay_divisor--) {
+	for (delay_divisor = 512; delay_divisor > 0; delay_divisor--) {
 		bus_space_write_1(bt, bh, PCCREG_TMR1_CONTROL, PCC_TIMERSTART);
 		delay(10000);
 		bus_space_write_1(bt, bh, PCCREG_TMR1_CONTROL, PCC_TIMERSTOP);
@@ -304,24 +315,22 @@ mvme147_init()
 	bus_space_unmap(bt, bh, PCCREG_SIZE);
 
 	/* calculate cpuspeed */
-	cpuspeed = 2048 / delay_divisor;
+	cpuspeed = 8192 / delay_divisor;
 }
 #endif /* MVME147 */
 
-#if defined(MVME167) || defined(MVME162)
+#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 /*
- * MVME-167 and MVME-162 specific initializaion.
- *
- * XXX Still needs to be bus_spaced XXX
+ * MVME-1[67]x specific initializaion.
  */
 void
-mvme167_init()
+mvme1xx_init()
 {
 	bus_space_tag_t bt = MVME68K_INTIO_BUS_SPACE;
 	bus_space_handle_t bh;
 
 	/*
-	 * Set up the correct bus dma map sync function for the '167
+	 * Set up the correct bus dma map sync function
 	 */
 	_bus_dmamap_sync = _bus_dmamap_sync_0460;
 
@@ -333,7 +342,8 @@ mvme167_init()
 
 	bus_space_write_1(bt, bh, PCC2REG_TIMER1_ICSR, 0);
 
-	for (delay_divisor = 60; delay_divisor > 0; delay_divisor--) {
+	for (delay_divisor = (cputype == CPU_68060) ? 20 : 154;
+	    delay_divisor > 0; delay_divisor--) {
 		bus_space_write_4(bt, bh, PCC2REG_TIMER1_COUNTER, 0);
 		bus_space_write_1(bt, bh, PCC2REG_TIMER1_CONTROL,
 		    PCCTWO_TT_CTRL_CEN);
@@ -346,9 +356,9 @@ mvme167_init()
 	bus_space_unmap(bt, bh, PCC2REG_SIZE);
 
 	/* calculate cpuspeed */
-	cpuspeed = 759 / delay_divisor;
+	cpuspeed = ((cputype == CPU_68060) ? 1024 : 3072) / delay_divisor;
 }
-#endif /* MVME167 */
+#endif
 
 /*
  * Console initialization: called early on from main,
@@ -643,9 +653,10 @@ identifycpu()
 		break; }
 #endif
 
-#if defined(MVME162) || defined(MVME167) || defined(MVME177)
+#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 	case MVME_162:
 	case MVME_167:
+	case MVME_172:
 	case MVME_177: {
 		char *suffix = (char *)&boardid.suffix;
 		len = sprintf(board_str, "%x", machineid);
@@ -1073,6 +1084,17 @@ dumpsys()
 void
 initcpu()
 {
+#if defined(M68060)
+	extern caddr_t vectab[256];
+#if defined(M060SP)
+	extern u_int8_t I_CALL_TOP[];
+	extern u_int8_t FP_CALL_TOP[];
+#else
+	extern u_int8_t illinst;
+#endif
+	extern u_int8_t fpfault;
+#endif
+
 #ifdef MAPPEDCOPY
 	extern u_int mappedcopysize;
 
@@ -1084,6 +1106,31 @@ initcpu()
 	if (mappedcopysize == 0) {
 		mappedcopysize = NBPG;
 	}
+#endif
+
+#if defined(M68060)
+	if (cputype == CPU_68060) {
+#if defined(M060SP)
+		/* integer support */
+		vectab[61] = &I_CALL_TOP[128 + 0x00];
+
+		/* floating point support */
+		vectab[11] = &FP_CALL_TOP[128 + 0x30];
+		vectab[55] = &FP_CALL_TOP[128 + 0x38];
+		vectab[60] = &FP_CALL_TOP[128 + 0x40];
+
+		vectab[54] = &FP_CALL_TOP[128 + 0x00];
+		vectab[52] = &FP_CALL_TOP[128 + 0x08];
+		vectab[53] = &FP_CALL_TOP[128 + 0x10];
+		vectab[51] = &FP_CALL_TOP[128 + 0x18];
+		vectab[50] = &FP_CALL_TOP[128 + 0x20];
+		vectab[49] = &FP_CALL_TOP[128 + 0x28];
+#else
+		vectab[61] = &illinst;
+#endif
+		vectab[48] = &fpfault;
+	}
+	DCIS();
 #endif
 }
 

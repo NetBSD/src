@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_syscalls.c,v 1.58.2.1 2000/11/20 18:08:38 bouyer Exp $ */
+/* $NetBSD: sunos_syscalls.c,v 1.58.2.2 2000/11/22 16:02:57 bouyer Exp $ */
 
 /*
  * System call names.
@@ -21,7 +21,7 @@
 #include <compat/sunos/sunos_syscallargs.h>
 #endif /* _KERNEL && ! _LKM */
 
-char *sunos_syscallnames[] = {
+const char * const sunos_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */

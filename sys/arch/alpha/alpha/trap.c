@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.49.2.1 2000/11/20 19:56:38 bouyer Exp $ */
+/* $NetBSD: trap.c,v 1.49.2.2 2000/11/22 15:59:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.1 2000/11/20 19:56:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.2 2000/11/22 15:59:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +231,7 @@ printtrap(a0, a1, a2, entry, framep, isfatal, user)
 {
 	char ubuf[64];
 	const char *entryname;
+	u_long cpu_id = cpu_number();
 
 	switch (entry) {
 	case ALPHA_KENTRY_INT:
@@ -258,19 +259,22 @@ printtrap(a0, a1, a2, entry, framep, isfatal, user)
 	}
 
 	printf("\n");
-	printf("%s %s trap:\n", isfatal? "fatal" : "handled",
-	       user ? "user" : "kernel");
+	printf("CPU %lu: %s %s trap:\n", cpu_id, isfatal ? "fatal" : "handled",
+	    user ? "user" : "kernel");
 	printf("\n");
-	printf("    trap entry = 0x%lx (%s)\n", entry, entryname);
-	printf("    a0         = 0x%lx\n", a0);
-	printf("    a1         = 0x%lx\n", a1);
-	printf("    a2         = 0x%lx\n", a2);
-	printf("    pc         = 0x%lx\n", framep->tf_regs[FRAME_PC]);
-	printf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
-	printf("    curproc    = %p\n", curproc);
+	printf("CPU %lu    trap entry = 0x%lx (%s)\n", cpu_id, entry,
+	    entryname);
+	printf("CPU %lu    a0         = 0x%lx\n", cpu_id, a0);
+	printf("CPU %lu    a1         = 0x%lx\n", cpu_id, a1);
+	printf("CPU %lu    a2         = 0x%lx\n", cpu_id, a2);
+	printf("CPU %lu    pc         = 0x%lx\n", cpu_id,
+	    framep->tf_regs[FRAME_PC]);
+	printf("CPU %lu    ra         = 0x%lx\n", cpu_id,
+	    framep->tf_regs[FRAME_RA]);
+	printf("CPU %lu    curproc    = %p\n", cpu_id, curproc);
 	if (curproc != NULL)
-		printf("        pid = %d, comm = %s\n", curproc->p_pid,
-		       curproc->p_comm);
+		printf("CPU %lu        pid = %d, comm = %s\n", cpu_id,
+		    curproc->p_pid, curproc->p_comm);
 	printf("\n");
 }
 

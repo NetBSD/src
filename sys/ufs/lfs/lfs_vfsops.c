@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.39.2.2 2000/11/20 18:11:51 bouyer Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.39.2.3 2000/11/22 16:06:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -339,6 +339,7 @@ lfs_mountfs(devvp, mp, p)
 	dev_t dev;
 	int error, i, ronly, size;
 	struct ucred *cred;
+	CLEANERINFO *cip;
         SEGUSE *sup;
 
 	cred = p ? p->p_ucred : NOCRED;
@@ -477,12 +478,23 @@ lfs_mountfs(devvp, mp, p)
 	vput(vp);
 
 	/*
+	 * Initialize the ifile cleaner info with information from 
+	 * the superblock.
+	 */ 
+	LFS_CLEANERINFO(cip, fs, bp);
+	cip->clean = fs->lfs_nclean;
+	cip->dirty = fs->lfs_nseg - fs->lfs_nclean;
+	cip->avail = fs->lfs_avail;
+	cip->bfree = fs->lfs_bfree;
+	(void) VOP_BWRITE(bp); /* Ifile */
+
+	/*
 	 * Mark the current segment as ACTIVE, since we're going to 
 	 * be writing to it.
 	 */
         LFS_SEGENTRY(sup, fs, datosn(fs, fs->lfs_offset), bp); 
         sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
-        (void) VOP_BWRITE(bp); 
+        (void) VOP_BWRITE(bp); /* Ifile */
 
 	return (0);
 out:

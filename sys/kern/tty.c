@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.115.2.1 2000/11/20 18:09:12 bouyer Exp $	*/
+/*	$NetBSD: tty.c,v 1.115.2.2 2000/11/22 16:05:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -738,6 +738,7 @@ ttioctl(tp, cmd, data, flag, p)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
 	extern int nlinesw;
+	struct linesw *lp;
 	int s, error;
 
 	/* If the ioctl involves modification, hang if in the background. */
@@ -749,6 +750,7 @@ ttioctl(tp, cmd, data, flag, p)
 	case  TIOCSTART:
 	case  TIOCSETA:
 	case  TIOCSETD:
+	case  TIOCSLINED:
 	case  TIOCSETAF:
 	case  TIOCSETAW:
 #ifdef notdef
@@ -769,8 +771,7 @@ ttioctl(tp, cmd, data, flag, p)
 #endif
 		while (isbackground(curproc, tp) &&
 		    p->p_pgrp->pg_jobc && (p->p_flag & P_PPWAIT) == 0 &&
-		    !sigismember(&p->p_sigignore, SIGTTOU) &&
-		    !sigismember(&p->p_sigmask, SIGTTOU)) {
+		    !sigismasked(p, SIGTTOU)) {
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
 			error = ttysleep(tp, &lbolt, TTOPRI | PCATCH, ttybg, 0);
 			if (error)
@@ -833,7 +834,13 @@ ttioctl(tp, cmd, data, flag, p)
 		break;
 	}
 	case TIOCGETD:			/* get line discipline */
-		*(int *)data = tp->t_line;
+		*(int *)data = (tp->t_linesw) ? tp->t_linesw->l_no : 0;
+		break;
+	case TIOCGLINED:
+		if (!tp->t_linesw)
+			return (EIO);
+		strncpy((char *)data, tp->t_linesw->l_name, 
+			TTLINEDNAMELEN);
 		break;
 	case TIOCGWINSZ:		/* get window size */
 		*(struct winsize *)data = tp->t_winsize;
@@ -928,20 +935,35 @@ ttioctl(tp, cmd, data, flag, p)
 	}
 	case TIOCSETD: {		/* set line discipline */
 		int t = *(int *)data;
-		dev_t device = tp->t_dev;
 
 		if ((u_int)t >= nlinesw)
 			return (ENXIO);
-		if (t != tp->t_line) {
+		lp = linesw[t];
+		goto setldisc;
+	}
+	case TIOCSLINED: {		/* set line discipline */
+		char *name = (char *)data;
+		dev_t device;
+
+		/* Null terminate to prevent buffer overflow */
+		name[TTLINEDNAMELEN] = 0; 
+		lp = ttyldisc_lookup(name);
+
+setldisc:
+		if (lp == NULL)
+			return (ENXIO);
+
+		if (lp != tp->t_linesw) {
+			device = tp->t_dev;
 			s = spltty();
-			(*linesw[tp->t_line].l_close)(tp, flag);
-			error = (*linesw[t].l_open)(device, tp);
+			(*tp->t_linesw->l_close)(tp, flag);
+			error = (*lp->l_open)(device, tp);
 			if (error) {
-				(void)(*linesw[tp->t_line].l_open)(device, tp);
+				(void)(*tp->t_linesw->l_open)(device, tp);
 				splx(s);
 				return (error);
 			}
-			tp->t_line = t;
+			tp->t_linesw = lp;
 			splx(s);
 		}
 		break;
@@ -961,7 +983,7 @@ ttioctl(tp, cmd, data, flag, p)
 			return (EPERM);
 		if (p->p_ucred->cr_uid && !isctty(p, tp))
 			return (EACCES);
-		(*linesw[tp->t_line].l_rint)(*(u_char *)data, tp);
+		(*tp->t_linesw->l_rint)(*(u_char *)data, tp);
 		break;
 	case TIOCSTOP:			/* stop output, like ^S */
 		s = spltty();
@@ -1985,7 +2007,7 @@ ttyinfo(tp)
 		ttyprintf(tp, "%ld.%02lds ", (long int)stime.tv_sec,
 		    (long int)stime.tv_usec / 10000);
 
-#define	pgtok(a)	(((u_long) ((a) * NBPG) / 1024))
+#define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
 		/* Print percentage cpu. */
 		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
 		ttyprintf(tp, "%d%% ", tmp / 100);
@@ -2127,6 +2149,7 @@ ttysleep(tp, chan, pri, wmesg, timo)
 void
 tty_init()
 {
+	ttyldisc_init();
 
 	TAILQ_INIT(&ttylist);
 	tty_count = 0;
@@ -2189,6 +2212,8 @@ ttymalloc()
 	clalloc(&tp->t_canq, 1024, 1);
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
+	/* Set default line discipline. */
+	tp->t_linesw = linesw[0];
 	return(tp);
 }
 

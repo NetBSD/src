@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.324.2.1 2000/11/20 18:08:44 bouyer Exp $
+#	$NetBSD: files,v 1.324.2.2 2000/11/22 16:03:02 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -169,6 +169,7 @@ define	atm
 define	ether
 define	fddi
 define	hippi
+define	ieee1394
 define	token
 define	sppp
 define	wlan
@@ -195,11 +196,14 @@ file	dev/mii/mii_bitbang.c		mii_bitbang
 
 # Logical storage unit
 device	lsu: disk
-file	dev/lsu/lsu.c			lsu	needs-flag
+file	dev/lsu.c			lsu	needs-flag
 
 # Central clearing house for system monitoring.
-define	sysmon
-file	dev/sysmon/sysmon.c		sysmon	needs-flag
+define	sysmon_envsys
+define	sysmon_wdog
+file	dev/sysmon/sysmon_envsys.c	sysmon_envsys	needs-flag
+file	dev/sysmon/sysmon_wdog.c	sysmon_wdog	needs-flag
+file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_wdog
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
@@ -231,7 +235,7 @@ device	cac {unit = -1}
 file	dev/ic/cac.c			cac
 
 attach	lsu at cac with lsu_cac
-file	dev/lsu/lsu_cac.c		lsu_cac
+file	dev/ic/lsu_cac.c		lsu_cac
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi
@@ -413,7 +417,7 @@ define  i2c
 define  i2c_eeprom
 
 # National Semiconductor LM7[89]
-device  lm: sysmon
+device  lm: sysmon_envsys
 file	dev/ic/nslm7x.c		lm	needs-flag
 
 # Essential Communications Corp. HIPPI Interface
@@ -541,10 +545,10 @@ file	dev/usb/uhci.c			uhci	needs-flag
 device	ohci: usbus
 file	dev/usb/ohci.c			ohci	needs-flag
 
-# OHCI IEEE 1394 controller
-# (This needs to be here since it will have both PCI and CardBus attachments)
+# IEEE 1394 controllers
+# (These need to be here since it will have both PCI and CardBus attachments)
+device	fwlynx: fwbus
 device	fwohci: fwbus
-file	dev/ieee1394/fwohci.c		fwohci	needs-flag
 
 # legitimate pseudo-devices
 defpseudo vnd: disk
@@ -697,6 +701,7 @@ file isofs/cd9660/cd9660_rrip.c		cd9660
 file isofs/cd9660/cd9660_util.c		cd9660
 file isofs/cd9660/cd9660_vfsops.c	cd9660
 file isofs/cd9660/cd9660_vnops.c	cd9660
+file kern/cnmagic.c
 file kern/exec_aout.c			exec_aout
 file kern/exec_conf.c
 file kern/exec_ecoff.c			exec_ecoff
@@ -823,11 +828,12 @@ file net/if_arcsubr.c			arc			needs-flag
 file net/if_atmsubr.c			atm
 file net/if_ethersubr.c			ether | fddi | netatalk | token |
 					    wlan | vlan
-file net/if_faith.c			faith			needs-count
+file net/if_faith.c			faith			needs-flag
 file net/if_fddisubr.c			fddi			needs-flag
-file net/if_gif.c			gif			needs-count
+file net/if_gif.c			gif			needs-flag
 file net/if_gre.c			gre			needs-count	
 file net/if_hippisubr.c                 hippi                   needs-flag
+file net/if_ieee1394subr.c		ieee1394
 file net/if_loop.c			loop			needs-count
 file net/if_media.c
 file net/if_ppp.c			ppp			needs-count
@@ -877,6 +883,7 @@ file netccitt/pk_timer.c		ccitt
 file netccitt/pk_usrreq.c		ccitt
 file netinet/fil.c			ipfilter
 file netinet/if_arp.c			arp | netatalk		needs-flag
+file netinet/if_ieee1394arp.c		arp & ieee1394 & inet
 file netinet/if_atm.c			atm
 file netinet/igmp.c			inet
 file netinet/in.c			inet

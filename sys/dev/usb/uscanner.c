@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.9.2.2 2000/11/20 11:43:33 bouyer Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.9.2.3 2000/11/22 16:05:09 bouyer Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -85,6 +85,7 @@ static const struct scanner_id {
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U },
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_640U },
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_620U },
+	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_C310U },
 
 	/* AGFA */
 	{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCAN1212U },
@@ -197,7 +198,7 @@ d_read_t  uscannerread;
 d_write_t uscannerwrite;
 d_poll_t  uscannerpoll;
 
-#define USCANNER_CDEV_MAJOR	155
+#define USCANNER_CDEV_MAJOR	156
 
 Static struct cdevsw uscanner_cdevsw = {
 	/* open */	uscanneropen,
@@ -337,6 +338,8 @@ uscanneropen(dev, flag, mode, p)
 	if (sc->sc_state & USCANNER_OPEN)
 		return (EBUSY);
 
+	sc->sc_state |= USCANNER_OPEN;
+
 	sc->sc_bulkin_buffer = malloc(USCANNER_BUFFERSIZE, M_USBDEV, M_WAITOK);
 	sc->sc_bulkout_buffer = malloc(USCANNER_BUFFERSIZE, M_USBDEV, M_WAITOK);
 	/* No need to check buffers for NULL since we have WAITOK */
@@ -399,7 +402,7 @@ uscannerclose(dev, flag, mode, p)
 
 	uscanner_do_close(sc);
 
-	return 0;
+	return (0);
 }
 
 void
@@ -458,7 +461,7 @@ uscanner_do_read(sc, uio, flag)
 
 		err = usbd_bulk_transfer(
 			sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
-			sc->sc_state & USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
+			USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 			sc->sc_bulkin_buffer, &tn,
 			"uscannerrb");
 		if (err) {

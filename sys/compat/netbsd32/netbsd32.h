@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.9.2.1 2000/11/20 18:08:27 bouyer Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.9.2.2 2000/11/22 16:02:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -257,7 +257,7 @@ struct netbsd32_semid_ds {
 };
 
 struct netbsd32_semid_ds14 {
-	struct netbsd32_ipc_perm	sem_perm;/* operation permission struct */
+	struct netbsd32_ipc_perm14	sem_perm;/* operation permission struct */
 	netbsd32_semp_t	sem_base;	/* pointer to first semaphore in set */
 	unsigned short	sem_nsems;	/* number of sems in set */
 	netbsd32_time_t	sem_otime;		/* last operation time */

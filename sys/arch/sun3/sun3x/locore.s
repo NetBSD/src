@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.36.2.1 2000/11/20 20:28:08 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.36.2.2 2000/11/22 16:02:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -695,7 +695,7 @@ ENTRY(cpu_switch)
 	 * then take the first proc from that queue.
 	 */
 	movl	_C_LABEL(sched_whichqs),%d0
-	jeq	LIdle
+	jeq	Lidle
 Lsw1:
 	/*
 	 * Interrupts are blocked, sched_lock is held.  If

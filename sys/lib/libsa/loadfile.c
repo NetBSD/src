@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.3.2.1 2000/11/20 18:09:35 bouyer Exp $ */
+/* $NetBSD: loadfile.c,v 1.3.2.2 2000/11/22 16:05:42 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -155,8 +155,11 @@ loadfile(fname, marks, flags)
 	} else
 #endif
 #ifdef BOOT_AOUT
-	if (OKMAGIC(N_GETMAGIC(hdr.aout)) &&
-	    N_GETMID(hdr.aout) == MID_MACHINE) {
+	if (OKMAGIC(N_GETMAGIC(hdr.aout))
+#ifndef NO_MID_CHECK
+	    && N_GETMID(hdr.aout) == MID_MACHINE
+#endif
+	    ) {
 		rval = aout_exec(fd, &hdr.aout, marks, flags);
 	} else
 #endif
@@ -409,7 +412,7 @@ elf_exec(fd, elf, marks, flags)
 			BCOPY(shp, shpp, sz);
 			FREE(shp, sz);
 
-			if (first == 0)
+			if (havesyms && first == 0)
 				PROGRESS(("]"));
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.49.2.1 2000/11/20 18:09:00 bouyer Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.49.2.2 2000/11/22 16:05:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -875,6 +875,7 @@ _lkm_exec(lkmtp, cmd)
 	struct lkm_table *lkmtp;
 	int cmd;
 {
+#if 0
 	struct lkm_exec *args = lkmtp->private.lkm_exec;
 	int i;
 	int error = 0;
@@ -935,6 +936,8 @@ _lkm_exec(lkmtp, cmd)
 	}
 
 	return (error);
+#endif
+	return (0);
 }
 
 /*

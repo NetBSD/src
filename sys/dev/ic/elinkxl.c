@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.15.2.1 2000/11/20 11:40:33 bouyer Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.15.2.2 2000/11/22 16:03:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -232,7 +234,7 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    EX_NUPD * sizeof (struct ex_upd), NBPG, 0, &sc->sc_useg, 1, 
+	    EX_NUPD * sizeof (struct ex_upd), PAGE_SIZE, 0, &sc->sc_useg, 1, 
             &sc->sc_urseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate upload descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -277,7 +279,7 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    EX_NDPD * sizeof (struct ex_dpd), NBPG, 0, &sc->sc_dseg, 1, 
+	    EX_NDPD * sizeof (struct ex_dpd), PAGE_SIZE, 0, &sc->sc_dseg, 1, 
 	    &sc->sc_drseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate download descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -448,11 +450,6 @@ ex_config(sc)
 	sc->tx_succ_ok = 0;
 
 	/* TODO: set queues to 0 */
-
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
-#endif
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -1524,9 +1521,6 @@ ex_detach(sc)
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);

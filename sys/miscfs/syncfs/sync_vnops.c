@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.5.2.2 2000/11/20 18:09:50 bouyer Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.5.2.3 2000/11/22 16:05:47 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -75,12 +75,14 @@ vfs_allocate_syncvnode(mp)
 
 	vp->v_writecount = 1;
 	vp->v_type = VNON;
+
 	/*
 	 * Place the vnode onto the syncer worklist. We attempt to
 	 * scatter them about on the list so that they will go off
 	 * at evenly distributed times even if all the filesystems
 	 * are mounted at once.
 	 */
+
 	next += incr;
 	if (next == 0 || next > syncer_maxdelay) {
 		start /= 2;
@@ -106,10 +108,8 @@ vfs_deallocate_syncvnode(mp)
 	struct vnode *vp;
 
 	vp = mp->mnt_syncer;
-	mp->mnt_syncer = 0;
-	vn_syncer_remove_from_worklist(vp);
+	mp->mnt_syncer = NULL;
 	vp->v_writecount = 0;
-	vgone(vp);
 	vrele(vp);
 }
 
@@ -191,7 +191,7 @@ sync_reclaim(v)
 
 	s = splbio();
 	vp->v_mount->mnt_syncer = NULL;
-	LIST_REMOVE(vp, v_synclist);
+	vn_syncer_remove_from_worklist(vp);
 	splx(s);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.47.2.1 2000/11/20 18:11:39 bouyer Exp $	*/
+/*	$NetBSD: tty.h,v 1.47.2.2 2000/11/22 16:06:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -83,7 +83,7 @@ struct tty {
 	struct	callout t_outq_ch;	/* for ttycheckoutq() */
 	struct	callout t_rstrt_ch;	/* for delayed output start */
 	long	t_outcc;		/* Output queue statistics. */
-	u_char	t_line;			/* Interface to device drivers. */
+	struct	linesw *t_linesw;	/* Interface to device drivers. */
 	dev_t	t_dev;			/* Device. */
 	int	t_state;		/* Device and driver (TS*) state. */
 	int	t_wopen;		/* Processes waiting for open. */

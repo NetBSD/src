@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.h,v 1.5.14.1 2000/11/20 18:08:13 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_exec.h,v 1.5.14.2 2000/11/22 16:02:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -176,13 +176,21 @@ struct xiter {
 	long	xi_offset;	/* offset within segment to replicated data */
 };
 
+extern const struct emul emul_ibcs2;
+
 #define XOUT_HDR_SIZE		(sizeof(struct xexec) + sizeof(struct xext))
 
 int     exec_ibcs2_xout_makecmds __P((struct proc *, struct exec_package *));
 
 #ifdef EXEC_ELF32
+#define IBCS2_ELF_AUX_ARGSIZ	howmany(sizeof(Aux32Info) * 8, sizeof(char *))
+
 int	ibcs2_elf32_probe __P((struct proc *, struct exec_package *,
-			       Elf32_Ehdr *, char *, Elf32_Addr *));
+			       void *, char *, vaddr_t *));
 #endif
+
+/* following two are used for indication of executable type */
+#define	IBCS2_EXEC_XENIX	((void *)0x01)	/* XENIX x.out executable */
+#define	IBCS2_EXEC_OTHER	((void *)0x02)	/* something else */
 
 #endif /* !_IBCS2_EXEC_H_ */

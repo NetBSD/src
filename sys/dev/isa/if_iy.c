@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.35.2.1 2000/11/20 11:41:16 bouyer Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.35.2.2 2000/11/22 16:03:46 bouyer Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -364,10 +364,6 @@ iyattach(parent, self, aux)
 	if (eirq != ia->ia_irq)
 		printf("%s: EEPROM irq setting %d ignored\n",
 		    sc->sc_dev.dv_xname, eirq);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, 
 	    IPL_NET, iyintr, sc);

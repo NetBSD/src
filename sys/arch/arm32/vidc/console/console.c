@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.16.2.1 2000/11/20 20:04:09 bouyer Exp $	*/
+/*	$NetBSD: console.c,v 1.16.2.2 2000/11/22 16:00:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -379,7 +379,7 @@ physconopen(dev, flag, mode, p)
    
 	TP->t_winsize.ws_col = new->xchars;
 	TP->t_winsize.ws_row = new->ychars;
-	ret = ((*linesw[TP->t_line].l_open)(dev, TP));
+	ret = ((*tp->t_linesw->l_open)(dev, TP));
  
 	if ( majorhack==1 ) {
 		struct vconsole *vc_store;
@@ -475,7 +475,7 @@ physconclose(dev, flag, mode, p)
 		printf("physconclose: tp=0 dev=%04x\n", dev);
 		return(ENXIO);
 	}
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	return(0);
@@ -492,7 +492,7 @@ physconread(dev, uio, flag)
 		printf("physconread: tp=0 dev=%04x\n", dev);
 		return(ENXIO);
 	}
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -510,7 +510,7 @@ physconwrite(dev, uio, flag)
 		return(ENXIO);
 	}
 
-	return((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -661,7 +661,7 @@ physconioctl(dev, cmd, data, flag, p)
 		error = vc->IOCTL ( vc, dev, cmd, data, flag, p );
 		if ( error >=0 )
 			return error;
-		error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 		if (error >= 0)
 			return error;
 		error = ttioctl(tp, cmd, data, flag, p);
@@ -795,7 +795,7 @@ physconkbd(key)
 	}
 
 	if (key < 0x100)
-		(*linesw[tp->t_line].l_rint)(key, tp);
+		(*tp->t_linesw->l_rint)(key, tp);
 	else {
 	        switch (key) {
 		case 0x100:
@@ -827,7 +827,7 @@ physconkbd(key)
 			break;
 		}
 		while (*string != 0) {
-			(*linesw[tp->t_line].l_rint)(*string, tp);
+			(*tp->t_linesw->l_rint)(*string, tp);
 			++string;
 		}
 	}

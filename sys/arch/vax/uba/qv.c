@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.3 1999/01/01 21:43:18 ragge Exp $	*/
+/*	$NetBSD: qv.c,v 1.3.8.1 2000/11/22 16:02:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -409,7 +409,7 @@ qvopen(dev, flag)
 	 * mouse channel. For the mouse we init the ring ptr's.
 	 */
 	if( QVCHAN(unit) != QVMOUSECHAN )
-		return ((*linesw[tp->t_line].l_open)(dev, tp));
+		return ((*tp->t_linesw->l_open)(dev, tp));
 	else {
 		mouseon = 1;
 		/* set up event queue for later */
@@ -450,7 +450,7 @@ qvclose(dev, flag, mode, p)
 	 * otherwise clear the state flag, and put the keyboard into down/up.
 	 */
 	if (QVCHAN(unit) != QVMOUSECHAN) {
-		(*linesw[tp->t_line].l_close)(tp, flag);
+		(*tp->t_linesw->l_close)(tp, flag);
 		error = ttyclose(tp);
 	} else {
 		mouseon = 0;
@@ -470,7 +470,7 @@ qvread(dev, uio)
 
 	if (QVCHAN(unit) != QVMOUSECHAN) {
 		tp = &qv_tty[unit];
-		return ((*linesw[tp->t_line].l_read)(tp, uio));
+		return ((*tp->t_linesw->l_read)(tp, uio));
 	}
 	return (ENXIO);
 }
@@ -492,7 +492,7 @@ qvwrite(dev, uio)
 		return 0;
 	}
 	tp = &qv_tty[unit];
-	return ((*linesw[tp->t_line].l_write)(tp, uio));
+	return ((*tp->t_linesw->l_write)(tp, uio));
 }
 
 
@@ -606,9 +606,9 @@ qvkint(qv)
 			register char *string;
 			string = q_special[ c & 0x7f ];
 			while( *string )
-			(*linesw[tp->t_line].l_rint)(*string++, tp);
+			(*tp->t_linesw->l_rint)(*string++, tp);
 		} else
-			(*linesw[tp->t_line].l_rint)(c, tp);
+			(*tp->t_linesw->l_rint)(c, tp);
 	} else {
 		/*
 		 * Mouse channel is open put it into the event queue
@@ -683,7 +683,7 @@ qvioctl(dev, cmd, data, flag)
 		break;
 	default:					/* not ours ??  */
 		tp = &qv_tty[unit];
-		error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag);
 		if (error >= 0)
 			return (error);
 		error = ttioctl(tp, cmd, data, flag);

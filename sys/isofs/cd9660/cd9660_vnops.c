@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.55.2.1 2000/11/20 18:08:54 bouyer Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.55.2.2 2000/11/22 16:05:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -247,7 +247,7 @@ extern int doclusterread;
 
 /* XXX until cluster routines can handle block sizes less than one page */
 #define cd9660_doclusterread \
-	(doclusterread && (ISO_DEFAULT_BLOCK_SIZE >= NBPG))
+	(doclusterread && (ISO_DEFAULT_BLOCK_SIZE >= PAGE_SIZE))
 
 /*
  * Vnode op for reading.

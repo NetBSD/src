@@ -1,14 +1,14 @@
-#	$NetBSD: CARDBUS,v 1.2.2.1 2000/11/20 20:09:15 bouyer Exp $
+#	$NetBSD: CARDBUS,v 1.2.2.2 2000/11/22 16:00:15 bouyer Exp $
 #
-#	CARDBUS -- GENERIC + CardBus support.  Additionally, some
-#	things typically not found on laptops have been removed.
+#	CARDBUS: GENERIC + CardBus support.  Additionally, some
+#	things typically not found on laptops have been commented out.
 
-#	from: GENERIC,v 1.370 2000/09/20 18:22:22 thorpej Exp
+#	from: GENERIC,v 1.377 2000/11/14 19:52:05 augustss Exp
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.2.2.1 $"
+#ident		"CARDBUS-$Revision: 1.2.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -148,6 +148,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options	PNPBIOSDEBUG	# more fulsome Pnp BIOS debugging messages
+#options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -382,6 +383,12 @@ lpt2	at isa? port 0x3bc
 #viaenv* at viapm?
 
 
+# I2O devices
+#iop*	at pci? dev ? function ?	# I/O processor
+#iopsp*	at iop? tid ?			# SCSI/FC-AL ports
+#lsu*	at iop? tid ?			# block devices
+
+
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
@@ -441,6 +448,7 @@ scsibus* at aic?
 #scsibus* at bha?
 #scsibus* at dpt?
 scsibus* at esp?
+#scsibus* at iopsp?
 #scsibus* at isp?
 #scsibus* at nca?
 #scsibus* at ncr?
@@ -459,9 +467,13 @@ ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+
 # RAID controllers and devices
-#cac*	at pci? dev ? function ?	# Compaq array controller
-#ca*	at cac? unit ?			# Compaq array disk device
+#cac*	at eisa?			# Compaq EISA array controllers
+#cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+#twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+#lsu*	at cac? unit ?			# Compaq array disk devices
+#lsu*	at twe? unit ?			# 3ware array disk devices
 
 
 # IDE and related devices
@@ -692,6 +704,9 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# USB scanners
+uscanner* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

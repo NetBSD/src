@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4.2.1 2000/11/20 20:13:01 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4.2.2 2000/11/22 16:00:39 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -31,6 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_l2cr_config.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -39,6 +40,7 @@
 
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
+#include <powerpc/hid.h>
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
@@ -83,22 +85,34 @@ cpumatch(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 	int *reg = ca->ca_reg;
-	int hammerhead;
+	int q;
 
 	if (strcmp(ca->ca_name, cpu_cd.cd_name))
 		return 0;
 
+	q = OF_finddevice("/cpus");
+	if (q != -1 && q != 0) {
+		for (q = OF_child(q); q != 0; q = OF_peer(q)) {
+			uint32_t cpunum;
+			int l;
+			l = OF_getprop(q, "reg", &cpunum, sizeof(cpunum));
+			if (l == 4 && reg[0] == cpunum)
+				return 1;
+		}
+	}
 	switch (reg[0]) {
 	case 0:	/* master CPU */
 		return 1;
 	case 1:	/* secondary CPU */
-		hammerhead = OF_finddevice("/hammerhead");
-		if (hammerhead == -1)
+		q = OF_finddevice("/hammerhead");
+		if (q != -1) {
+			if (in32rb(HH_ARBCONF) & 0x02)
+				return 1;
 			return 0;
-		if (in32rb(HH_ARBCONF) & 0x02)
-			return 1;
+		}
+	default: /* impossible CPU */
+		return 0;
 	}
-	return 0;
 }
 
 #define MPC601		1
@@ -110,11 +124,6 @@ cpumatch(parent, cf, aux)
 #define MPC604ev	9
 #define MPC7400		12
 
-#define HID0_DOZE	0x00800000
-#define HID0_NAP	0x00400000
-#define HID0_SLEEP	0x00200000
-#define HID0_DPM	0x00100000	/* 1: DPM enable */
-
 void
 cpuattach(parent, self, aux)
 	struct device *parent, *self;
@@ -122,7 +131,7 @@ cpuattach(parent, self, aux)
 {
 	struct confargs *ca = aux;
 	int id = ca->ca_reg[0];
-	int hid0, pvr, vers;
+	u_int hid0, pvr, vers;
 	char model[80];
 
 	ncpus++;
@@ -157,6 +166,8 @@ cpuattach(parent, self, aux)
 		panic("cpuattach");
 	}
 
+	asm ("mfspr %0,1008" : "=r"(hid0));
+
 	/*
 	 * Configure power-saving mode.
 	 */
@@ -164,25 +175,50 @@ cpuattach(parent, self, aux)
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
-		/* Select DOZE mode. */
-		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
-		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_DOZE | HID0_DPM;
-		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
-		powersave = 1;
-		break;
 	case MPC750:
 	case MPC7400:
-		/* Select NAP mode. */
-		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
+		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM;
-		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
+		hid0 |= HID0_DOZE | HID0_DPM;
 		powersave = 1;
 		break;
+
 	default:
 		/* No power-saving mode is available. */
 	}
+
+#ifdef NAPMODE
+	switch (vers) {
+	case MPC750:
+	case MPC7400:
+		/* Select NAP mode. */
+		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
+		hid0 |= HID0_NAP;
+		break;
+	}
+#endif
+
+	switch (vers) {
+	case MPC750:
+		hid0 &= ~HID0_DBP;		/* XXX correct? */
+		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
+		break;
+	case MPC7400:
+		hid0 &= ~HID0_SPD;
+		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
+		hid0 |= HID0_EIEC;
+		break;
+	}
+
+	asm volatile ("mtspr 1008,%0" :: "r"(hid0));
+
+#if 0
+	if (1) {
+		char hidbuf[128];
+		bitmask_snprintf(hid0, HID0_BITMASK, hidbuf, sizeof hidbuf);
+		printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
+	}
+#endif
 
 	/*
 	 * Display cache configuration.

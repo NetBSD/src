@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.39.2.1 2000/11/20 20:20:16 bouyer Exp $	*/
+/*	$NetBSD: dtop.c,v 1.39.2.2 2000/11/22 16:01:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.39.2.1 2000/11/20 20:20:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.39.2.2 2000/11/22 16:01:24 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -340,7 +340,7 @@ dtopopen(dev, flag, mode, p)
 	splx(s);
 	if (error)
 		return (error);
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 
 #if (RASTERCONSOLE > 0) && defined(RCONS_BRAINDAMAGE)
 	/* handle raster console specially */
@@ -364,7 +364,7 @@ dtopclose(dev, flag, mode, p)
 
 	unit = minor(dev);
 	tp = DTOP_TTY(unit);
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	return (ttyclose(tp));
 }
 
@@ -376,7 +376,7 @@ dtopread(dev, uio, flag)
 	struct tty *tp;
 
 	tp = DTOP_TTY(minor(dev));
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -387,7 +387,7 @@ dtopwrite(dev, uio, flag)
 	struct tty *tp;
 
 	tp = DTOP_TTY(minor(dev));
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -412,7 +412,7 @@ dtopioctl(dev, cmd, data, flag, p)
 	int error;
 
 	tp = DTOP_TTY(unit);
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -943,7 +943,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 		    } else if (cp /*&& tp != NULL*/) {
 			for (; cl; cl--, cp++) {
 #if 0
-				(*linesw[tp->t_line].l_rint)(*cp, tp);
+				(*tp->t_linesw->l_rint)(*cp, tp);
 #else
 				rcons_input(0, *cp);
 #endif
@@ -1000,7 +1000,7 @@ dtop_keyboard_repeat(arg)
 			if ((cp = lk_mapchar(KEY_REPEAT, &cl)) != NULL) {
 				for (; cl; cl--, cp++) {
 #if 0
-					(*linesw[tp->t_line].l_rint)(*cp, tp);
+					(*tp->t_linesw->l_rint)(*cp, tp);
 #else
 					rcons_input(0, *cp);
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.16.12.1 2000/11/20 19:56:33 bouyer Exp $ */
+/* $NetBSD: disksubr.c,v 1.16.12.2 2000/11/22 15:59:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.12.1 2000/11/20 19:56:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.12.2 2000/11/22 15:59:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -87,7 +87,7 @@ readdisklabel(dev, strat, lp, clp)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	(*strat)(bp);  
 
 	/* if successful, locate disk label within block and validate */
@@ -114,7 +114,8 @@ readdisklabel(dev, strat, lp, clp)
 		i = 0;
 		do {
 			/* read a bad sector table */
-			bp->b_flags = B_BUSY | B_READ;
+			bp->b_flags &= ~(B_DONE);
+			bp->b_flags |= B_READ;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
 			if (lp->d_secsize > DEV_BSIZE)
 				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
@@ -143,7 +144,6 @@ readdisklabel(dev, strat, lp, clp)
 	}
 
 done:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	return (msg);
 }
@@ -225,7 +225,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_READ;           /* get current label */
+	bp->b_flags |= B_READ;           /* get current label */
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
@@ -248,7 +248,8 @@ writedisklabel(dev, strat, lp, clp)
 		dp[63] = sum;
 	}
 
-	bp->b_flags = B_WRITE;
+	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
 

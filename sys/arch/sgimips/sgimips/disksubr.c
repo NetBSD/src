@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2.2.2 2000/11/20 20:23:48 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2.2.3 2000/11/22 16:01:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -80,7 +80,7 @@ readdisklabel(dev, strat, lp, clp)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	(*strat)(bp);
 
 	/* If successful, locate disk label within block and validate. */
@@ -89,7 +89,6 @@ readdisklabel(dev, strat, lp, clp)
 		/* Save the whole block in case it has info we need. */
 		memcpy(block, bp->b_un.b_addr, sizeof(block));
 	}
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	if (error != 0)
 		return "error reading disklabel";

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2000/11/20 18:11:24 bouyer Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2000/11/22 16:06:36 bouyer Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -21,7 +21,7 @@ INCS=	acct.h ansi.h ataio.h audioio.h buf.h bswap.h callout.h cdefs.h \
 	tablet.h termios.h time.h timeb.h timepps.h times.h timex.h \
 	tprintf.h trace.h tty.h ttychars.h ttycom.h ttydefaults.h ttydev.h \
 	types.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h \
-	vadvise.h vmmeter.h vnode.h vnode_if.h wait.h
+	vadvise.h vmmeter.h vnode.h vnode_if.h wait.h wdog.h
 
 SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \

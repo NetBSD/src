@@ -1,10 +1,13 @@
-#	$NetBSD: files.ofw,v 1.9.14.1 2000/11/20 11:42:13 bouyer Exp $
+#	$NetBSD: files.ofw,v 1.9.14.2 2000/11/22 16:03:55 bouyer Exp $
 #
 # First cut on Openfirmware interface
 #
 
 define	ofbus {}
 define	of_network_dev
+
+defpseudo openfirm
+file	dev/ofw/openfirmio.c		openfirm needs-flag
 
 file	dev/ofw/ofw_subr.c		ofbus
 

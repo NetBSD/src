@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.6.2.1 2000/11/20 19:56:34 bouyer Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.6.2.2 2000/11/22 15:59:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.2.1 2000/11/20 19:56:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.2.2 2000/11/22 15:59:40 bouyer Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6.2.1 2000/11/20 19:56:34 bouyer Exp 
 #include <machine/cpuvar.h>
 #include <machine/intr.h>
 #include <machine/rpb.h>
+
+typedef void (*ipifunc_t)(void);
 
 void	alpha_ipi_halt(void);
 void	alpha_ipi_tbia(void);
@@ -83,6 +85,76 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_discard_fpu,
 	alpha_ipi_pause,
 };
+
+const char *ipinames[ALPHA_NIPIS] = {
+	"halt ipi",
+	"tbia ipi",
+	"tbiap ipi",
+	"shootdown ipi",
+	"imb ipi",
+	"ast ipi",
+	"synch fpu ipi",
+	"discard fpu ipi",
+	"pause ipi",
+};
+
+/*
+ * Initialize IPI state for a CPU.
+ *
+ * Note: the cpu_info softc pointer must be valid.
+ */
+void
+alpha_ipi_init(struct cpu_info *ci)
+{
+	struct cpu_softc *sc = ci->ci_softc;
+	int i;
+
+	evcnt_attach_dynamic(&sc->sc_evcnt_ipi, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "ipi");
+
+	for (i = 0; i < ALPHA_NIPIS; i++) {
+		evcnt_attach_dynamic(&sc->sc_evcnt_which_ipi[i],
+		    EVCNT_TYPE_INTR, NULL, sc->sc_dev.dv_xname,
+		    ipinames[i]);
+	}
+}
+
+/*
+ * Process IPIs for a CPU.
+ */
+void
+alpha_ipi_process(struct cpu_info *ci)
+{
+	struct cpu_softc *sc = ci->ci_softc;
+	u_long pending_ipis, bit;
+
+#ifdef DIAGNOSTIC
+	if (sc == NULL) {
+		/* XXX panic? */
+		printf("WARNING: no softc for ID %lu\n", ci->ci_cpuid);
+		return;
+	}
+#endif
+
+	pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0);
+
+	/*
+	 * For various reasons, it is possible to have spurious calls
+	 * to this routine, so just bail out now if there are none
+	 * pending.
+	 */
+	if (pending_ipis == 0)
+		return;
+
+	sc->sc_evcnt_ipi.ev_count++;
+
+	for (bit = 0; bit < ALPHA_NIPIS; bit++) {
+		if (pending_ipis & (1UL << bit)) {
+			sc->sc_evcnt_which_ipi[bit].ev_count++;
+			(*ipifuncs[bit])();
+		}
+	}
+}
 
 /*
  * Send an interprocessor interrupt.
@@ -112,7 +184,7 @@ alpha_broadcast_ipi(u_long ipimask)
 	u_long i, cpu_id = cpu_number();
 	u_long cpumask;
 
-	cpumask = cpus_running &= ~(1UL << cpu_id);
+	cpumask = cpus_running & ~(1UL << cpu_id);
 
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
 		if ((cpumask & (1UL << i)) == 0)

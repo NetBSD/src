@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.31.8.1 2000/11/20 18:10:26 bouyer Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.31.8.2 2000/11/22 16:06:09 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -531,6 +531,12 @@ extern	int	fr_qin __P((queue_t *, mblk_t *));
 extern	int	fr_qout __P((queue_t *, mblk_t *));
 extern	int	iplread __P((dev_t, struct uio *, cred_t *));
 # else /* SOLARIS */
+#if defined(__NetBSD__)
+extern	int	fr_check_wrapper __P((void *, struct mbuf **,
+		    struct ifnet *, int));
+extern	int	fr_check_wrapper6 __P((void *, struct mbuf **,
+		    struct ifnet *, int));
+#endif
 extern	int	fr_check __P((ip_t *, int, void *, int, mb_t **));
 extern	int	(*fr_checkp) __P((ip_t *, int, void *, int, mb_t **));
 extern	int	ipfr_fastroute __P((mb_t *, fr_info_t *, frdest_t *));

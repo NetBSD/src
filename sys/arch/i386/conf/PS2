@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.7.2.2 2000/11/20 20:09:17 bouyer Exp $
+#	$NetBSD: PS2,v 1.7.2.3 2000/11/22 16:00:17 bouyer Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -9,7 +9,7 @@
 #	 stage and should be used with extreme caution. MCA-enabled
 #	 kernels won't currently work on non-MCA machines and it's
 #	 not wise to try even try it unless you are prepared to deal
-#	 wish strange hardware failures. Please note that MCA
+#	 with strange hardware failures. Please note that MCA
 #	 support doesn't yet reach standard NetBSD quality,
 #	 should be really used only for experimentation and is provided
 #	 specially and only to make access to the code easier for people

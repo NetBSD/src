@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.9.8.1 2000/11/20 20:12:57 bouyer Exp $	*/
+/*	$NetBSD: ofb.c,v 1.9.8.2 2000/11/22 16:00:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -258,8 +258,11 @@ ofb_common_init(node, dc)
 		ri->ri_yorigin = 3;
 		ri->ri_bits = (char *)addr + ri->ri_xorigin +
 			      ri->ri_stride * ri->ri_yorigin;
-	} else
-		rasops_init(ri, height/22, (width/12) & ~7);	/* XXX 12x22 */
+	} else {
+		rasops_init(ri, 24, 80);
+		rasops_reconfig(ri, (height - 2) / ri->ri_font->fontheight,
+		    ((width - 2) / ri->ri_font->fontwidth) & ~7);
+	}
 
 	/* black on white */
 	ri->ri_devcmap[0] = 0xffffffff;			/* bg */

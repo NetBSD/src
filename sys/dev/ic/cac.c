@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.15.2.2 2000/11/20 11:40:25 bouyer Exp $	*/
+/*	$NetBSD: cac.c,v 1.15.2.3 2000/11/22 16:03:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bswap.h>
 #include <machine/bus.h>
@@ -103,7 +105,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 
         size = sizeof(struct cac_ccb) * CAC_MAX_CCBS;
 
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, 
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1, 
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
@@ -171,6 +173,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 		return (-1);
 	}
 
+	sc->sc_nunits = cinfo.num_drvs;
 	for (i = 0; i < cinfo.num_drvs; i++) {
 		caca.caca_unit = i;
 		config_found_sm(&sc->sc_dv, &caca, cac_print, cac_submatch);
@@ -401,7 +404,9 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 static void
 cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 {
+	struct device *dv;
 	const char *errdvn;
+	void *context;
 	int error;
 
 	error = 0;
@@ -436,8 +441,10 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 	}
 
 	if (ccb->ccb_context.cc_handler != NULL) {
-		(*ccb->ccb_context.cc_handler)(ccb, error);
+		dv = ccb->ccb_context.cc_dv;
+		context = ccb->ccb_context.cc_context;
 		cac_ccb_free(sc, ccb);
+		(*ccb->ccb_context.cc_handler)(dv, context, error);
 	}
 }
 

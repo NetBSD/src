@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.36.8.1 2000/11/20 18:09:53 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.36.8.2 2000/11/22 16:05:48 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -83,7 +83,8 @@ static void msdosfs_hashrem __P((struct denode *));
 void
 msdosfs_init()
 {
-	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, M_WAITOK, &dehash);
+	dehashtbl = hashinit(desiredvnodes/2, HASH_LIST, M_MSDOSFSMNT,
+	    M_WAITOK, &dehash);
 	simple_lock_init(&msdosfs_ihash_slock);
 	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
 	    "msdosnopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.13.14.1 2000/11/20 20:27:57 bouyer Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.13.14.2 2000/11/22 16:02:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -133,11 +133,11 @@ db_mach_pagemap(addr, have_addr, count, modif)
 	sme = get_segmap(va);
 	if (sme == 0xFF) pte = 0;
 	else pte = get_pte(va);
-	db_printf("0x%08x [%02x] 0x%08x", va, sme, pte);
+	db_printf("0x%08lx [%02x] 0x%08x", va, sme, pte);
 #endif /* SUN3 */
 #ifdef	_SUN3X_
 	pte = get_pte(va);
-	db_printf("0x%08x 0x%08x", va, pte);
+	db_printf("0x%08lx 0x%08x", va, pte);
 #endif /* SUN3X */
 
 	pte_print(pte);

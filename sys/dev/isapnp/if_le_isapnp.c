@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.17 1999/03/22 10:00:11 mycroft Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.17.8.1 2000/11/22 16:03:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -212,7 +214,7 @@ le_isapnp_attach(parent, self, aux)
 	/*
 	 * Allocate a DMA area for the card.
 	 */
-	if (bus_dmamem_alloc(dmat, LE_ISAPNP_MEMSIZE, NBPG, 0, &seg, 1,
+	if (bus_dmamem_alloc(dmat, LE_ISAPNP_MEMSIZE, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: couldn't allocate memory for card\n",
 		    sc->sc_dev.dv_xname);

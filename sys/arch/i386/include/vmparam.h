@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32.2.1 2000/11/20 20:09:31 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32.2.2 2000/11/22 16:00:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,6 +44,14 @@
 /*
  * Machine dependent constants for 386.
  */
+
+/*
+ * Page size on the IA-32 is not variable in the traditional sense.
+ * We override the PAGE_* definitions to compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * Virtual address space arrangement. On 386, both user and kernel
@@ -123,7 +131,7 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
-#define VM_PHYSSEG_MAX		3	/* 1 "hole" + 2 free lists */
+#define VM_PHYSSEG_MAX		5	/* 1 "hole" + 4 free lists */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 

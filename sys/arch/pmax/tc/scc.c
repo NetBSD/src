@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.52.2.1 2000/11/20 20:20:50 bouyer Exp $	*/
+/*	$NetBSD: scc.c,v 1.52.2.2 2000/11/22 16:01:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.52.2.1 2000/11/20 20:20:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.52.2.2 2000/11/22 16:01:26 bouyer Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -677,7 +677,7 @@ sccopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 
 	if (error)
 		goto bad;
@@ -702,7 +702,7 @@ sccclose(dev, flag, mode, p)
 		sc->scc_wreg[line].wr5 &= ~ZSWR5_BREAK;
 		ttyoutput(0, tp);
 	}
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	if ((tp->t_cflag & HUPCL) || tp->t_wopen ||
 	    !(tp->t_state & TS_ISOPEN))
 		(void) sccmctl(dev, 0, DMSET);
@@ -720,7 +720,7 @@ sccread(dev, uio, flag)
 
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];		/* XXX*/
 	tp = sc->scc_tty[SCCLINE(dev)];
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -734,7 +734,7 @@ sccwrite(dev, uio, flag)
 
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
 	tp = sc->scc_tty[SCCLINE(dev)];
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -767,7 +767,7 @@ sccioctl(dev, cmd, data, flag, p)
 	line = SCCLINE(dev);
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	tp = sc->scc_tty[line];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -999,8 +999,8 @@ scc_txintr(sc, chan, regs)
 				(caddr_t) tp->t_outq.c_cf);
 			dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 		}
-		if (tp->t_line)
-			(*linesw[tp->t_line].l_start)(tp);
+		if (tp->t_linesw)
+			(*tp->t_linesw->l_start)(tp);
 		else
 			sccstart(tp);
 		if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
@@ -1093,7 +1093,7 @@ scc_rxintr(sc, chan, regs, unit)
 		if (rr1 & ZSRR1_FE)
 			cc |= TTY_FE;
 	}
-	(*linesw[tp->t_line].l_rint)(cc, tp);
+	(*tp->t_linesw->l_rint)(cc, tp);
 }
 
 /*
@@ -1374,9 +1374,9 @@ scc_modem_intr(dev)
 		if (car) {
 			/* carrier present */
 			if (!(tp->t_state & TS_CARR_ON))
-				(void)(*linesw[tp->t_line].l_modem)(tp, 1);
+				(void)(*tp->t_linesw->l_modem)(tp, 1);
 		} else if (tp->t_state & TS_CARR_ON)
-		  (void)(*linesw[tp->t_line].l_modem)(tp, 0);
+		  (void)(*tp->t_linesw->l_modem)(tp, 0);
 	}
 	splx(s);
 }

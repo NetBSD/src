@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.10.2.1 2000/11/20 18:10:56 bouyer Exp $	*/
+/*	$NetBSD: nd6.c,v 1.10.2.2 2000/11/22 16:06:25 bouyer Exp $	*/
 /*	$KAME: nd6.c,v 1.75 2000/10/15 15:23:11 itojun Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_atm.h>
+#include <net/if_ieee1394.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -202,6 +203,9 @@ nd6_setmtu(ifp)
 		 break;
 	 case IFT_ATM:
 		 ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
+		 break;
+	 case IFT_IEEE1394:
+		 ndi->maxmtu = MIN(IEEE1394MTU, ifp->if_mtu);
 		 break;
 	 default:
 		 ndi->maxmtu = ifp->if_mtu;
@@ -952,11 +956,12 @@ nd6_resolve(ifp, rt, m, dst, desten)
 			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr,
 						 desten);
 			return(1);
-			break;
+		case IFT_IEEE1394:
+			bcopy(ifp->if_broadcastaddr, desten, ifp->if_addrlen);
+			return(1);
 		case IFT_ARCNET:
 			*desten = 0;
 			return(1);
-			break;
 		default:
 			return(0);
 		}
@@ -1784,6 +1789,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	case IFT_ARCNET:
 	case IFT_ETHER:
 	case IFT_FDDI:
+	case IFT_IEEE1394:
 	case IFT_GIF:		/* XXX need more cases? */
 		break;
 	default:
@@ -1968,7 +1974,9 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr,
 						 desten);
 			return(1);
-			break;
+		case IFT_IEEE1394:
+			bcopy(ifp->if_broadcastaddr, desten, ifp->if_addrlen);
+			return(1);
 		case IFT_ARCNET:
 			*desten = 0;
 			return(1);

@@ -1,4 +1,4 @@
-#	$NetBSD: VOYAGER,v 1.46.2.1 2000/11/20 20:03:55 bouyer Exp $
+#	$NetBSD: VOYAGER,v 1.46.2.2 2000/11/22 15:59:59 bouyer Exp $
 #
 #	VOYAGER - Mark's development kernel
 #
@@ -63,6 +63,10 @@ options 	NFSSERVER
 
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+#options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.14.2.1 2000/11/20 18:10:08 bouyer Exp $	*/
+/*	$NetBSD: if_types.h,v 1.14.2.2 2000/11/22 16:05:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -176,6 +176,65 @@
 #define IFT_DOCSCABLEDOWNSTREAM	   0x80 /* CATV Downstream interface */
 #define IFT_DOCSCABLEUPSTREAM	   0x81 /* CATV Upstream interface */
 #define IFT_A12MPPSWITCH	   0x82	/* Avalon Parallel Processor */
+#define IFT_TUNNEL		   0x83	/* Encapsulation interface */
+#define IFT_COFFEE		   0x84	/* coffee pot */
+#define IFT_CES			   0x85	/* Circiut Emulation Service */
+#define IFT_ATMSUBINTERFACE	   0x86	/* (x)  ATM Sub Interface */
+#define IFT_L2VLAN		   0x87	/* Layer 2 Virtual LAN using 802.1Q */
+#define IFT_L3IPVLAN		   0x88	/* Layer 3 Virtual LAN - IP Protocol */
+#define IFT_L3IPXVLAN		   0x89	/* Layer 3 Virtual LAN - IPX Prot. */
+#define IFT_DIGITALPOWERLINE	   0x8a	/* IP over Power Lines */
+#define IFT_MEDIAMAILOVERIP	   0x8b	/* (xxx)  Multimedia Mail over IP */
+#define IFT_DTM			   0x8c	/* Dynamic synchronous Transfer Mode */
+#define IFT_DCN			   0x8d	/* Data Communications Network */
+#define IFT_IPFORWARD		   0x8e	/* IP Forwarding Interface */
+#define IFT_MSDSL		   0x8f	/* Multi-rate Symmetric DSL */
+#define IFT_IEEE1394		   0x90	/* IEEE1394 High Performance SerialBus*/
+#define IFT_IFGSN		   0x91	/* HIPPI-6400 */
+#define IFT_DVBRCCMACLAYER	   0x92	/* DVB-RCC MAC Layer */
+#define IFT_DVBRCCDOWNSTREAM	   0x93	/* DVB-RCC Downstream Channel */
+#define IFT_DVBRCCUPSTREAM	   0x94	/* DVB-RCC Upstream Channel */
+#define IFT_ATMVIRTUAL		   0x95	/* ATM Virtual Interface */
+#define IFT_MPLSTUNNEL		   0x96	/* MPLS Tunnel Virtual Interface */
+#define IFT_SRP			   0x97	/* Spatial Reuse Protocol */
+#define IFT_VOICEOVERATM	   0x98	/* Voice over ATM */
+#define IFT_VOICEOVERFRAMERELAY	   0x99	/* Voice Over Frame Relay */
+#define IFT_IDSL		   0x9a	/* Digital Subscriber Loop over ISDN */
+#define IFT_COMPOSITELINK	   0x9b	/* Avici Composite Link Interface */
+#define IFT_SS7SIGLINK		   0x9c	/* SS7 Signaling Link */
+#define IFT_PROPWIRELESSP2P	   0x9d	/* Prop. P2P wireless interface */
+#define IFT_FRFORWARD		   0x9e	/* Frame forward Interface */
+#define IFT_RFC1483		   0x9f	/* Multiprotocol over ATM AAL5 */
+#define IFT_USB			   0xa0	/* USB Interface */
+#define IFT_IEEE8023ADLAG	   0xa1	/* IEEE 802.3ad Link Aggregate*/
+#define IFT_BGPPOLICYACCOUNTING	   0xa2	/* BGP Policy Accounting */
+#define IFT_FRF16MFRBUNDLE	   0xa3	/* FRF.16 Multilik Frame Relay*/
+#define IFT_H323GATEKEEPER	   0xa4	/* H323 Gatekeeper */
+#define IFT_H323PROXY		   0xa5	/* H323 Voice and Video Proxy */
+#define IFT_MPLS		   0xa6	/* MPLS */
+#define IFT_MFSIGLINK		   0xa7	/* Multi-frequency signaling link */
+#define IFT_HDSL2		   0xa8	/* High Bit-Rate DSL, 2nd gen. */
+#define IFT_SHDSL		   0xa9	/* Multirate HDSL2 */
+#define IFT_DS1FDL		   0xaa	/* Facility Data Link (4Kbps) on a DS1*/
+#define IFT_POS			   0xab	/* Packet over SONET/SDH Interface */
+#define IFT_DVBASILN		   0xac	/* DVB-ASI Input */
+#define IFT_DVBASIOUT		   0xad	/* DVB-ASI Output */
+#define IFT_PLC			   0xae	/* Power Line Communications */
+#define IFT_NFAS		   0xaf	/* Non-Facility Associated Signaling */
+#define IFT_TR008		   0xb0	/* TROO8 */
+#define IFT_GR303RDT		   0xb1	/* Remote Digital Terminal */
+#define IFT_GR303IDT		   0xb2	/* Integrated Digital Terminal */
+#define IFT_ISUP		   0xb3	/* ISUP */
+#define IFT_PROPDOCSWIRELESSMACLAYER	   0xb4	/* prop/Wireless MAC Layer */
+#define IFT_PROPDOCSWIRELESSDOWNSTREAM	   0xb5	/* prop/Wireless Downstream */
+#define IFT_PROPDOCSWIRELESSUPSTREAM	   0xb6	/* prop/Wireless Upstream */
+#define IFT_HIPERLAN2		   0xb7	/* HIPERLAN Type 2 Radio Interface */
+#define IFT_PROPBWAP2MP		   0xb8	/* PropBroadbandWirelessAccess P2MP*/
+#define IFT_SONETOVERHEADCHANNEL   0xb9	/* SONET Overhead Channel */
+#define IFT_DIGITALWRAPPEROVERHEADCHANNEL  0xba	/* Digital Wrapper Overhead */
+#define IFT_AAL2		   0xbb	/* ATM adaptation layer 2 */
+#define IFT_RADIOMAC		   0xbc	/* MAC layer over radio links */
+#define IFT_ATMRADIO		   0xbd	/* ATM over radio links */
 
 /* not based on IANA assignments - how should we treat these? */
 #define IFT_GIF		0xf0

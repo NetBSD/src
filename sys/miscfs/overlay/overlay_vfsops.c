@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.5.2.2 2000/11/20 18:09:47 bouyer Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.5.2.3 2000/11/22 16:05:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -167,8 +167,8 @@ ov_mount(mp, path, data, ndp, p)
 	nmp->ovm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->ovm_vnodeop_p = overlay_vnodeop_p;
 	simple_lock_init(&nmp->ovm_hashlock);
-	nmp->ovm_node_hashtbl = hashinit(NOVERLAYNODECACHE, M_CACHE, M_WAITOK,
-			&nmp->ovm_node_hash);
+	nmp->ovm_node_hashtbl = hashinit(NOVERLAYNODECACHE, HASH_LIST, M_CACHE,
+	    M_WAITOK, &nmp->ovm_node_hash);
 
 	/*
 	 * Fix up overlay node for root vnode

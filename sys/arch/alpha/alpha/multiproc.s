@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.4.2.1 2000/11/20 19:56:36 bouyer Exp $ */
+/* $NetBSD: multiproc.s,v 1.4.2.2 2000/11/22 15:59:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.4.2.1 2000/11/20 19:56:36 bouyer Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.4.2.2 2000/11/22 15:59:41 bouyer Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -63,7 +63,7 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 1:	LDGP(pv)
 
 	/* Write new KGP. */
-	mov	s0, a0
+	mov	gp, a0
 	call_pal PAL_OSF1_wrkgp
 
 	/* Store our CPU info in SysValue. */
@@ -87,7 +87,7 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	mov	s0, a0
 	CALL(cpu_hatch)
 
-#if 0
+#if 1
 	/* Acquire the scheduler lock, and then jump into the idle loop! */
 	CALL(sched_lock_idle)
 	mov	zero, s0		/* no outgoing proc */

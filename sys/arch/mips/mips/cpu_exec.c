@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.20.2.1 2000/11/20 20:13:32 bouyer Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.20.2.2 2000/11/22 16:00:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,8 +134,6 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 #ifdef COMPAT_ULTRIX
-extern struct emul emul_ultrix;
-
 void
 cpu_exec_ecoff_setregs(p, epp, stack)
 	struct proc *p;
@@ -147,23 +145,6 @@ cpu_exec_ecoff_setregs(p, epp, stack)
 
 	setregs(p, epp, stack);
 	f->f_regs[GP] = (register_t)execp->a.gp_value;
-}
-
-/*
- * cpu_exec_ecoff_hook():
- *	cpu-dependent ECOFF format hook for execve().
- *
- * Do any machine-dependent diddling of the exec package when doing ECOFF.
- *
- */
-int
-cpu_exec_ecoff_hook(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-
-	epp->ep_emul = &emul_ultrix;
-	return 0;
 }
 #endif
 

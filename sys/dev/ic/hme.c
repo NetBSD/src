@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.1.4.1 2000/11/20 11:40:34 bouyer Exp $	*/
+/*	$NetBSD: hme.c,v 1.1.4.2 2000/11/22 16:03:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -302,13 +302,12 @@ hme_config(sc)
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
 	}
 
+	/* claim 802.1q capability */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
+
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_sh = shutdownhook_establish(hme_shutdown, sc);
 	if (sc->sc_sh == NULL)
@@ -506,6 +505,10 @@ hme_init(sc)
 	bus_space_write_4(t, mac, HME_MACI_FCCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_EXCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_LTCNT, 0);
+	bus_space_write_4(t, mac, HME_MACI_TXSIZE,
+	    (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
+	    ETHER_VLAN_ENCAP_LEN + ETHER_MAX_LEN :
+            ETHER_MAX_LEN);
 
 	/* Load station MAC address */
 	ea = sc->sc_enaddr;
@@ -532,6 +535,10 @@ hme_init(sc)
 	bus_space_write_4(t, etx, HME_ETXI_RSIZE, sc->sc_rb.rb_ntbuf);
 
 	bus_space_write_4(t, erx, HME_ERXI_RING, sc->sc_rb.rb_rxddma);
+	bus_space_write_4(t, mac, HME_MACI_RXSIZE,
+	    (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
+	    ETHER_VLAN_ENCAP_LEN + ETHER_MAX_LEN :
+            ETHER_MAX_LEN);
 
 
 	/* step 8. Global Configuration & Interrupt Mask */
@@ -753,7 +760,9 @@ hme_read(sc, ix, len)
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
-	    len > ETHERMTU + sizeof(struct ether_header)) {
+	    len > ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
+	    ETHER_VLAN_ENCAP_LEN + ETHERMTU + sizeof(struct ether_header) :
+	    ETHERMTU + sizeof(struct ether_header))) {
 #ifdef HMEDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);

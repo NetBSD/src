@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.3.2.2 2000/11/20 20:51:32 bouyer Exp $ */
+/*	$NetBSD: apmdev.c,v 1.3.2.3 2000/11/22 16:00:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -266,26 +266,40 @@ apm_power_print(sc, pi)
 		printf("unknown\n");
 		break;
 	}
-	printf("%s: battery charge state:", sc->sc_dev.dv_xname);
-	switch (pi->battery_state) {
-	case APM_BATT_HIGH:
-		printf("high\n");
-		break;
-	case APM_BATT_LOW:
-		printf("low\n");
-		break;
-	case APM_BATT_CRITICAL:
-		printf("critical\n");
-		break;
-	case APM_BATT_CHARGING:
-		printf("charging\n");
-		break;
-	case APM_BATT_UNKNOWN:
-		printf("unknown\n");
-		break;
-	default:
-		printf("undecoded state %x\n", pi->battery_state);
-		break;
+	if (apm_major == 1 && apm_minor == 0) {
+		printf("%s: battery charge state:", sc->sc_dev.dv_xname);
+		switch (pi->battery_state) {
+		case APM_BATT_HIGH:
+			printf("high\n");
+			break;
+		case APM_BATT_LOW:
+			printf("low\n");
+			break;
+		case APM_BATT_CRITICAL:
+			printf("critical\n");
+			break;
+		case APM_BATT_CHARGING:
+			printf("charging\n");
+			break;
+		case APM_BATT_UNKNOWN:
+			printf("unknown\n");
+			break;
+		default:
+			printf("undecoded state %x\n", pi->battery_state);
+			break;
+		}
+	} else {
+		if (pi->battery_state&APM_BATT_FLAG_CHARGING)
+			printf("charging ");
+		}
+		if (pi->battery_state&APM_BATT_FLAG_UNKNOWN)
+			printf("unknown\n");
+		else if (pi->battery_state&APM_BATT_FLAG_CRITICAL)
+			printf("critical\n");
+		else if (pi->battery_state&APM_BATT_FLAG_LOW)
+			printf("low\n");
+		else if (pi->battery_state&APM_BATT_FLAG_HIGH)
+			printf("high\n");
 	}
 	if (pi->minutes_left != 0) {
 		printf("%s: estimated ", sc->sc_dev.dv_xname);

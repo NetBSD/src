@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.7.2.1 2000/11/20 20:08:03 bouyer Exp $	*/
+/*	$NetBSD: apci.c,v 1.7.2.2 2000/11/22 16:00:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ apciopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error)
 		goto bad;
 
@@ -385,7 +385,7 @@ apciclose(dev, flag, mode, p)
 	apci = sc->sc_apci;
 	tp = sc->sc_tty;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 
 	s = spltty();
 
@@ -415,7 +415,7 @@ apciread(dev, uio, flag)
 	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -427,7 +427,7 @@ apciwrite(dev, uio, flag)
 	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -452,7 +452,7 @@ apciintr(arg)
 #define	RCVBYTE() \
 	c = apci->ap_data; \
 	if ((tp->t_state & TS_ISOPEN) != 0) \
-		(*linesw[tp->t_line].l_rint)(c, tp)
+		(*tp->t_linesw->l_rint)(c, tp)
 
 	for (;;) {
 		iir = apci->ap_iir;	/* get UART status */
@@ -483,7 +483,7 @@ apciintr(arg)
 		case IIR_TXRDY:
 			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
 			if (tp->t_line)
-				(*linesw[tp->t_line].l_start)(tp);
+				(*tp->t_linesw->l_start)(tp);
 			else
 				apcistart(tp);
 			break;
@@ -525,7 +525,7 @@ apcieint(sc, stat)
 		sc->sc_perr++;
 	} else if (stat & LSR_OE)
 		sc->sc_oflow++;
-	(*linesw[tp->t_line].l_rint)(c, tp);
+	(*tp->t_linesw->l_rint)(c, tp);
 }
 
 void
@@ -539,8 +539,8 @@ apcimint(sc, stat)
 	if ((stat & MSR_DDCD) &&
 	    (sc->sc_flags & APCI_SOFTCAR) == 0) {
 		if (stat & MSR_DCD)
-			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
-		else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
+			(void)(*tp->t_linesw->l_modem)(tp, 1);
+		else if ((*tp->t_linesw->l_modem)(tp, 0) == 0)
 			apci->ap_mcr &= ~(MCR_DTR | MCR_RTS);
 	}
 
@@ -571,7 +571,7 @@ apciioctl(dev, cmd, data, flag, p)
 	struct apciregs *apci = sc->sc_apci;
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);

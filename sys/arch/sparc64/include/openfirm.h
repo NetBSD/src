@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.6 1999/01/31 09:21:19 mrg Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.6.8.1 2000/11/22 16:01:49 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,13 +46,15 @@ typedef u_int64_t cell_t;
 #define ADR2CELL(x)	(cell_t)(u_int)(int)(x)
 #endif
 
-int OF_test __P((char* service));
-int OF_test_method __P((int handle, char* method));
-int OF_getproplen __P((int handle, char* prop));
+int OF_test (char* service);
+int OF_test_method (int handle, char* method);
+int OF_getproplen (int handle, char* prop);
 
-int OF_stdin __P((void));
-int OF_stdout __P((void));
-void OF_poweroff __P((void)) __attribute__((__noreturn__));
-void OF_set_symbol_lookup __P((void (*s2v)(void *), void (*v2s)(void *)));
-void OF_sym2val __P((void *));
-void OF_val2sym __P((void *));
+int OF_stdin (void);
+int OF_stdout (void);
+void OF_set_symbol_lookup (void (*s2v)(void *), void (*v2s)(void *));
+void OF_poweroff (void) __attribute__((__noreturn__));
+void OF_sym2val (void *);
+void OF_val2sym (void *);
+void OF_interpret (char *);
+int  OF_milliseconds (void);

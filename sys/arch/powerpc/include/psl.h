@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.2.22.1 2000/11/20 20:31:11 bouyer Exp $	*/
+/*	$NetBSD: psl.h,v 1.2.22.2 2000/11/22 16:01:27 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,10 +38,11 @@
  *
  * The PowerPC 601 does not implement the following bits:
  *
- *	POW, ILE, BE, RI, LE[*]
+ *	VEC, POW, ILE, BE, RI, LE[*]
  *
  * [*] Little-endian mode on the 601 is implemented in the HID0 register.
  */
+#define	PSL_VEC		0x02000000	/* AltiVec vector unit available */
 #define	PSL_POW		0x00040000	/* power management */
 #define	PSL_ILE		0x00010000	/* interrupt endian mode (1 == le) */
 #define	PSL_EE		0x00008000	/* external interrupt enable */

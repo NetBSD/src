@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.136.2.1 2000/11/20 20:09:33 bouyer Exp $	*/
+/*	$NetBSD: pccons.c,v 1.136.2.2 2000/11/22 16:00:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -839,7 +839,7 @@ pcopen(dev, flag, mode, p)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(dev, tp));
 }
 
 int
@@ -853,7 +853,7 @@ pcclose(dev, flag, mode, p)
 
 	if (tp == NULL)
 		return (0);
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 #ifdef notyet /* XXX */
 	ttyfree(tp);
@@ -870,7 +870,7 @@ pcread(dev, uio, flag)
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -882,7 +882,7 @@ pcwrite(dev, uio, flag)
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -916,7 +916,7 @@ pcinput(arg, data)
 	cp = strans(data);
 	if (cp)
 		do
-			(*linesw[tp->t_line].l_rint)(*cp++, tp);
+			(*tp->t_linesw->l_rint)(*cp++, tp);
 		while (*cp);
 }
 #else
@@ -938,7 +938,7 @@ pcintr(arg)
 			return (1);
 		if (cp)
 			do
-				(*linesw[tp->t_line].l_rint)(*cp++, tp);
+				(*tp->t_linesw->l_rint)(*cp++, tp);
 			while (*cp);
 	} while (inb(IO_KBD + KBSTATP) & KBS_DIB);
 	return (1);
@@ -957,7 +957,7 @@ pcioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);

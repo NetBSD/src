@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.h,v 1.1.4.1 2000/11/20 20:33:03 bouyer Exp $ */
+/* $NetBSD: sgmap.h,v 1.1.4.2 2000/11/22 16:02:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@ struct vax_sgmap {
 	bus_size_t aps_sgvasize;	/* size of the sgva space */
 	bus_addr_t aps_pa;		/* Address in region */
 	unsigned int aps_flags;		/* flags */
-#define	SGMAP_KA49		0x01	/* KA49 SGMAP is weird */
 };
 
 void	vax_sgmap_init __P((bus_dma_tag_t, struct vax_sgmap *,

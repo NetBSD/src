@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46.2.1 2000/11/20 20:26:52 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.46.2.2 2000/11/22 16:01:52 bouyer Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -1896,7 +1896,6 @@ intr_setup_msg:
 	movnz	%icc, %g1, %g6;					/* Go to interrupt base */ \
 	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
 	\
-       \
 	stx	%l0, [%g6 + CC64FSZ + BIAS + TF_L + (0*8)];		/* Save local registers to trap frame */ \
 	stx	%l1, [%g6 + CC64FSZ + BIAS + TF_L + (1*8)]; \
 	stx	%l2, [%g6 + CC64FSZ + BIAS + TF_L + (2*8)]; \
@@ -8589,10 +8588,11 @@ ENTRY(probeget)
 	 lda	[%o0] %asi, %o0		!	value = *(int *)addr;
 0:
 	ldxa	[%o0] %asi, %o0		!	value = *(long *)addr;
+1:	
 #ifndef _LP64
 	SPLIT(%o0, %o1)
 #endif
-1:	membar	#Sync
+	membar	#Sync
 #ifndef _LP64
 	wrpr	%g1, 0, %pstate
 #endif

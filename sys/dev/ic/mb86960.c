@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.35.2.1 2000/11/20 11:40:43 bouyer Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.35.2.2 2000/11/22 16:03:24 bouyer Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -265,10 +265,6 @@ mb86960_config(sc, media, nmedia, defmedia)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-#if NBPFILTER > 0
-	/* If BPF is in the kernel, call the attach for it. */
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
@@ -1838,9 +1834,6 @@ mb86960_detach(sc)
 #if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);

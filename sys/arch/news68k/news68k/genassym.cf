@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6.2.2 2000/11/20 20:16:15 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.6.2.3 2000/11/22 16:01:02 bouyer Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -162,11 +162,19 @@ define	EXTIOBASE1200		EXTIOBASE1200
 define	EXTIOTOP1200		EXTIOTOP1200
 define	FC_USERD		FC_USERD
 define	FC_SUPERD		FC_SUPERD
+
+define	DC_FREEZE		DC_FREEZE
+define	DC_BE			DC_BE
+define	DC_CLR			DC_CLR
+define	IC_BE			IC_BE
+define	IC_CLR			IC_CLR
+
+define	CACHE40_ON		CACHE40_ON
+
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
-define	CACHE_CLR		CACHE_CLR
-define	IC_CLEAR		IC_CLEAR
-define	DC_CLEAR		DC_CLEAR
+define	DCIC_CLR		DCIC_CLR
+define	CACHE_BE		CACHE_BE
 
 # pte/ste bits
 define	PG_V			PG_V

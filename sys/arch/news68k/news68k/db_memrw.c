@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.3.2.2 2000/11/20 20:16:15 bouyer Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3.2.3 2000/11/22 16:01:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
 #include <machine/pte.h>
 #include <machine/db_machdep.h>
 #include <machine/cpu.h>
-#include <m68k/cacheops.h>
 
 #include <ddb/db_access.h>
 

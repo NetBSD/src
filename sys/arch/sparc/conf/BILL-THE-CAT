@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.8.2.1 2000/11/20 20:25:27 bouyer Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.8.2.2 2000/11/22 16:01:35 bouyer Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -14,7 +14,7 @@ maxusers	32
 #options 	SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
-#options 	SUN4_MMU3L	# 3-level MMU on sun4/400; (incomplete)
+#options 	SUN4_MMU3L	# 3-level MMU on sun4/400
 
 ## System options specific to the sparc machine type
 

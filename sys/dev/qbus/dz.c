@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.18.4.1 2000/11/20 11:42:49 bouyer Exp $	*/
+/*	$NetBSD: dz.c,v 1.18.4.2 2000/11/22 16:04:43 bouyer Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -206,10 +206,10 @@ dzrint(void *arg)
 				continue;
 
 			if (j == 2)	/* Second char wasn't 'D' */
-				(*linesw[tp->t_line].l_rint)(27, tp);
+				(*tp->t_linesw->l_rint)(27, tp);
 		}
 #endif
-		(*linesw[tp->t_line].l_rint)(cc, tp);
+		(*tp->t_linesw->l_rint)(cc, tp);
 	}
 }
 
@@ -270,8 +270,8 @@ dzxint(void *arg)
 		else
 			ndflush (&tp->t_outq, cl->c_cc);
 
-		if (tp->t_line)
-			(*linesw[tp->t_line].l_start)(tp);
+		if (tp->t_linesw)
+			(*tp->t_linesw->l_start)(tp);
 		else
 			dzstart(tp);
 	}
@@ -330,7 +330,7 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 	(void) splx(s);
 	if (error)
 		return (error);
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(dev, tp));
 }
 
 /*ARGSUSED*/
@@ -348,7 +348,7 @@ dzclose(dev_t dev, int flag, int mode, struct proc *p)
 
 	tp = sc->sc_dz[line].dz_tty;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 
 	/* Make sure a BREAK state is not left enabled. */
 	(void) dzmctl(sc, line, DML_BRK, DMBIC);
@@ -369,7 +369,7 @@ dzread(dev_t dev, struct uio *uio, int flag)
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
 
 	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -381,7 +381,7 @@ dzwrite(dev_t dev, struct uio *uio, int flag)
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
 
 	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 /*ARGSUSED*/
@@ -398,7 +398,7 @@ dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	sc = dz_cd.cd_devs[unit];
 	tp = sc->sc_dz[line].dz_tty;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -661,9 +661,9 @@ dzscan(void *arg)
 	
 			if ((DZ_READ_BYTE(dr_dcd) | sc->sc_dsr) & bit) {
 				if (!(tp->t_state & TS_CARR_ON))
-					(*linesw[tp->t_line].l_modem) (tp, 1);
+					(*tp->t_linesw->l_modem) (tp, 1);
 			} else if ((tp->t_state & TS_CARR_ON) &&
-			    (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
+			    (*tp->t_linesw->l_modem)(tp, 0) == 0) {
 				DZ_WRITE_BYTE(dr_tcr, 
 				    (DZ_READ_WORD(dr_tcrw) & 255) & ~bit);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.16.8.1 2000/11/20 18:09:33 bouyer Exp $	*/
+/*	$NetBSD: bootp.c,v 1.16.8.2 2000/11/22 16:05:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -84,6 +84,12 @@ static char expected_dhcpmsgtype = -1, dhcp_ok;
 struct in_addr dhcp_serverip;
 #endif
 
+/*
+ * Boot programs can patch this at run-time to change the behavior
+ * of bootp/dhcp.
+ */
+int bootp_flags;
+
 /* Fetch required bootp infomation */
 void
 bootp(sock)
@@ -130,7 +136,18 @@ bootp(sock)
 	bp->bp_vend[4] = TAG_DHCP_MSGTYPE;
 	bp->bp_vend[5] = 1;
 	bp->bp_vend[6] = DHCPDISCOVER;
-	bp->bp_vend[7] = TAG_END;
+	/*
+	 * If we are booting from PXE, we want to send the string
+	 * "PXEClient" to the DHCP server in case it only wants to
+	 * respond to PXE clients.
+	 */
+	if (bootp_flags & BOOTP_PXE) {
+		bp->bp_vend[7] = TAG_CLASSID;
+		bp->bp_vend[8] = 9;
+		bcopy("PXEClient", &bp->bp_vend[9], 9);
+		bp->bp_vend[18] = TAG_END;
+	} else
+		bp->bp_vend[7] = TAG_END;
 #else
 	bp->bp_vend[4] = TAG_END;
 #endif
@@ -167,7 +184,13 @@ bootp(sock)
 		bp->bp_vend[20] = 4;
 		leasetime = htonl(300);
 		bcopy(&leasetime, &bp->bp_vend[21], 4);
-		bp->bp_vend[25] = TAG_END;
+		if (bootp_flags & BOOTP_PXE) {
+			bp->bp_vend[25] = TAG_CLASSID;
+			bp->bp_vend[26] = 9;
+			bcopy("PXEClient", &bp->bp_vend[27], 9);
+			bp->bp_vend[36] = TAG_END;
+		}
+			bp->bp_vend[25] = TAG_END;
 
 		expected_dhcpmsgtype = DHCPACK;
 

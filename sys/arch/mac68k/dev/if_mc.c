@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.14.2.1 2000/11/20 20:12:17 bouyer Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.14.2.2 2000/11/22 16:00:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -176,9 +176,6 @@ mcsetup(sc, lladdr)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = mcwatchdog;
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	if_attach(ifp);
 	ether_ifattach(ifp, lladdr);
 

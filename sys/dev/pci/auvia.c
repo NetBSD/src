@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.7.2.2 2000/11/20 11:42:14 bouyer Exp $	*/
+/*	$NetBSD: auvia.c,v 1.7.2.3 2000/11/22 16:04:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -287,17 +289,15 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Driver works as okay on my VIA 694D Pro with auvia rev. H, even
-	 * through the bit won't get set. Earlier models probably need
-	 * the test as it is.
+	 * Print a warning if the codec doesn't support hardware variable
+	 * rate audio.
 	 */
 	if (auvia_read_codec(sc, AC97_REG_EXT_AUDIO_ID, &v)
-		|| (sc->sc_revision[0] < 'H' && !(v & AC97_CODEC_DOES_VRA))) {
+		|| !(v & AC97_CODEC_DOES_VRA)) {
 		/* XXX */
 
-		printf("%s: codec must support AC'97 2.0 Variable Rate Audio\n",
+		printf("%s: warning: codec doesn't support hardware AC'97 2.0 Variable Rate Audio\n",
 			sc->sc_dev.dv_xname);
-		return;
 	} else {
 		/* enable VRA */
 		auvia_write_codec(sc, AC97_REG_EXT_AUDIO_STAT,
@@ -700,8 +700,8 @@ auvia_malloc(void *addr, int direction, size_t size, int pool, int flags)
 		return 0;
 
 	p->size = size;
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &p->seg, 1, 
-				      &rseg, BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
+				      1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate dma, error = %d\n", 
 		       sc->sc_dev.dv_xname, error);
 		goto fail_alloc;

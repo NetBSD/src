@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.48.2.1 2000/11/20 11:41:15 bouyer Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.48.2.2 2000/11/22 16:03:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -485,10 +485,6 @@ egattach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
 	
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
-
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, egintr, sc);
 

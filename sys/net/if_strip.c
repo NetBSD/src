@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.16.14.1 2000/11/20 18:10:07 bouyer Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.16.14.2 2000/11/22 16:05:55 bouyer Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -107,6 +107,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
+#include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
 #if __NetBSD__
@@ -450,7 +451,7 @@ stripopen(dev, tp)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if (tp->t_line == STRIPDISC)
+	if (tp->t_linesw && (tp->t_linesw->l_no == STRIPDISC))
 		return (0);
 
 	for (nstrip = NSTRIP, sc = strip_softc; --nstrip >= 0; sc++) {
@@ -515,7 +516,7 @@ stripclose(tp)
 	ttywflush(tp);
 
 	s = splimp();		/* actually, max(spltty, splsoftnet) */
-	tp->t_line = 0;
+	tp->t_linesw = linesw[0]; /* default line discipline */
 	sc = (struct strip_softc *)tp->t_sc;
 	if (sc != NULL) {
 		/*

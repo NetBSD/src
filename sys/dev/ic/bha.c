@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.33.2.7 2000/11/20 11:40:23 bouyer Exp $	*/
+/*	$NetBSD: bha.c,v 1.33.2.8 2000/11/22 16:03:13 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 #undef BHADIAG
@@ -228,9 +228,11 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 			delay(50);
 		}
 		if (!i) {
+#ifdef BHADEBUG
 			if (opcode != BHA_INQUIRE_REVISION)
 				printf("%s: bha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
+#endif /* BHADEBUG */
 			goto bad;
 		}
 		*obuf++ = bus_space_read_1(iot, ioh, BHA_DATA_PORT);
@@ -1135,7 +1137,7 @@ bha_init(sc)
 	 * Allocate the mailbox and control blocks.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct bha_control),
-	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control structures, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);

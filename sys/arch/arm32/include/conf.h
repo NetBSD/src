@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.12.2.1 2000/11/20 20:03:59 bouyer Exp $	*/
+/*	$NetBSD: conf.h,v 1.12.2.2 2000/11/22 16:00:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -167,3 +167,4 @@ cdev_decl(wskbd);
 cdev_decl(wsmouse);
 cdev_decl(wsmux);
 cdev_decl(scsibus);
+cdev_decl(openfirm);

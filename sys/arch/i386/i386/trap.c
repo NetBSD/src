@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133.2.1 2000/11/20 20:09:24 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.133.2.2 2000/11/22 16:00:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,31 +128,17 @@
 #include <sys/exec_elf.h>
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_exec.h>
-extern struct emul emul_ibcs2_coff, emul_ibcs2_xout, emul_ibcs2_elf;
+extern struct emul emul_ibcs2;
 #endif
 
 #ifdef COMPAT_LINUX
 # include <sys/exec.h>
 # include <compat/linux/linux_syscall.h>
-
-# ifdef EXEC_AOUT
-extern struct emul emul_linux_aout;
-# endif
-# ifdef EXEC_ELF32
-extern struct emul emul_linux_elf32;
-# endif
-# ifdef EXEC_ELF64
-extern struct emul emul_linux_elf64;
-# endif
+extern struct emul emul_linux;
 #endif /* COMPAT_LINUX */
 
 #ifdef COMPAT_FREEBSD
-# ifdef EXEC_AOUT
-extern struct emul emul_freebsd_aout;
-# endif /* EXEC_AOUT */
-# ifdef EXEC_ELF32
-extern struct emul emul_freebsd_elf32;
-# endif /* EXEC_ELF32 */
+extern struct emul emul_freebsd;
 #endif /* COMPAT_FREEBSD */
 
 #ifdef COMPAT_AOUT
@@ -613,7 +599,7 @@ syscall(frame)
 	struct trapframe frame;
 {
 	register caddr_t params;
-	register struct sysent *callp;
+	register const struct sysent *callp;
 	register struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
@@ -639,35 +625,18 @@ syscall(frame)
 	callp = p->p_emul->e_sysent;
 
 #ifdef COMPAT_LINUX
-	linux = 0
-# ifdef EXEC_AOUT
-	    || (p->p_emul == &emul_linux_aout)
-# endif /* EXEC_AOUT */
-# ifdef EXEC_ELF32
-	    || (p->p_emul == &emul_linux_elf32)
-# endif /* EXEC_ELF32 */
-# ifdef EXEC_ELF64
-	    || (p->p_emul == &emul_linux_elf64)
-# endif /* EXEC_ELF64 */
-	    ;
+	linux = (p->p_emul == &emul_linux);
 #endif /* COMPAT_LINUX */
 
 #ifdef COMPAT_FREEBSD
-	freebsd = 0
-# ifdef EXEC_AOUT
-	    || (p->p_emul == &emul_freebsd_aout)
-# endif /* EXEC_AOUT */
-# ifdef EXEC_ELF32
-	    || (p->p_emul == &emul_freebsd_elf32)
-# endif /* EXEC_ELF32 */
-	    ;
+	freebsd = (p->p_emul == &emul_freebsd);
 #endif /* COMPAT_FREEBSD */
 
 #ifdef COMPAT_IBCS2
-	if (p->p_emul == &emul_ibcs2_coff || p->p_emul == &emul_ibcs2_elf ||
-	    p->p_emul == &emul_ibcs2_xout)
+	if (p->p_emul == &emul_ibcs2) {
 		if (IBCS2_HIGH_SYSCALL(code))
 			code = IBCS2_CVT_HIGH_SYSCALL(code);
+	}
 #endif /* COMPAT_IBCS2 */
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.81.2.1 2000/11/20 18:10:36 bouyer Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.81.2.2 2000/11/22 16:06:13 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -811,7 +811,7 @@ tcp_drop(tp, errno)
 	struct tcpcb *tp;
 	int errno;
 {
-	struct socket *so;
+	struct socket *so = NULL;
 
 #ifdef DIAGNOSTIC
 	if (tp->t_inpcb && tp->t_in6pcb)
@@ -825,7 +825,7 @@ tcp_drop(tp, errno)
 	if (tp->t_in6pcb)
 		so = tp->t_in6pcb->in6p_socket;
 #endif
-	else
+	if (!so)
 		return NULL;
 
 	if (TCPS_HAVERCVDSYN(tp->t_state)) {

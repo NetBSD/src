@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.9.2.1 2000/11/20 11:40:41 bouyer Exp $	*/
+/*	$NetBSD: lance.c,v 1.9.2.2 2000/11/22 16:03:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -278,10 +278,6 @@ lance_config(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
-
 	sc->sc_sh = shutdownhook_establish(lance_shutdown, sc);
 	if (sc->sc_sh == NULL)
 		panic("lance_config: can't establish shutdownhook");
@@ -467,6 +463,9 @@ lance_read(sc, boff, len)
 	int boff, len;
 {
 	struct mbuf *m;
+#ifdef LANCE_REVC_BUG
+	struct ether_header *eh;
+#endif
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
@@ -506,6 +505,7 @@ lance_read(sc, boff, len)
 	 * destination address (garbage will usually not match).
 	 * Of course, this precludes multicast support...
 	 */
+	eh = mtod(m, struct ether_header *);
 	if (ETHER_CMP(eh->ether_dhost, sc->sc_enaddr) &&
 	    ETHER_CMP(eh->ether_dhost, bcast_enaddr)) {
 		m_freem(m);

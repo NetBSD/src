@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxreg.h,v 1.4.2.2 2000/11/20 11:40:45 bouyer Exp $ */
+/*	$NetBSD: mk48txxreg.h,v 1.4.2.3 2000/11/22 16:03:26 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -81,5 +81,9 @@
 #define MK48T59_CLKSZ		8192
 #define MK48T59_CLKOFF		0x1ff0
 
+/* Chip attach function */
 todr_chip_handle_t mk48txx_attach(bus_space_tag_t, bus_space_handle_t,
 				  const char *, int);
+
+/* Retrieve size of the on-chip NVRAM area */
+int	mk48txx_get_nvram_size(todr_chip_handle_t, bus_size_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.5.2.2 2000/11/20 20:33:26 bouyer Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.5.2.3 2000/11/22 16:02:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -141,7 +141,7 @@ slaverun()
 {
 	struct cpu_info *ci = curcpu();
 
-	(volatile)ci->ci_flags |= CI_RUNNING;
+	((volatile struct cpu_info *)ci)->ci_flags |= CI_RUNNING;
 	printf("%s: running\n", ci->ci_dev->dv_xname);
 	for (;;)
 		;

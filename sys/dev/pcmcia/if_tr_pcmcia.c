@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.2.6.2 2000/11/20 11:42:44 bouyer Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.2.6.3 2000/11/22 16:04:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -36,6 +36,7 @@
  * o IBM Token Ring 16/4 Credit Card Adapter
  * o IBM Token Ring Auto 16/4 Credit Card Adapter
  * o IBM Turbo 16/4 Token Ring PC Card
+ * o 3Com TokenLink Velocity PC Card
  */
 
 #include "opt_inet.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.7.2.1 2000/11/20 20:09:20 bouyer Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.7.2.2 2000/11/22 16:00:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			limit = NBPD - ((vaddr_t)dst & (NBPD - 1));
 		else
 #endif
-			limit = NBPG - ((vaddr_t)dst & PGOFSET);
+			limit = PAGE_SIZE - ((vaddr_t)dst & PGOFSET);
 		if (limit > size)
 			limit = size;
 		size -= limit;

@@ -1,7 +1,7 @@
-/*	$NetBSD: pchb.c,v 1.17.12.1 2000/11/20 20:09:34 bouyer Exp $	*/
+/*	$NetBSD: pchb.c,v 1.17.12.2 2000/11/22 16:00:28 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,6 +48,10 @@
 
 #include <dev/pci/pcidevs.h>
 
+#include <arch/i386/pci/pchbvar.h>
+
+#include "rnd.h"
+
 #define PCISET_BRIDGETYPE_MASK	0x3
 #define PCISET_TYPE_COMPAT	0x1
 #define PCISET_TYPE_AUX		0x2
@@ -55,6 +59,9 @@
 #define PCISET_BUSCONFIG_REG	0x48
 #define PCISET_BRIDGE_NUMBER(reg)	(((reg) >> 8) & 0xff)
 #define PCISET_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
+
+/* XXX should be in dev/ic/i82443reg.h */
+#define	I82443BX_SDRAMC_REG	0x76
 
 /* XXX should be in dev/ic/i82424{reg.var}.h */
 #define I82424_CPU_BCTL_REG		0x53
@@ -71,7 +78,7 @@ void	pchbattach __P((struct device *, struct device *, void *));
 int	pchb_print __P((void *, const char *));
 
 struct cfattach pchb_ca = {
-	sizeof(struct device), pchbmatch, pchbattach
+	sizeof(struct pchb_softc), pchbmatch, pchbattach
 };
 
 int
@@ -95,14 +102,19 @@ pchbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+#if NRND > 0
+	struct pchb_softc *sc = (void *) self;
+#endif
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
+	int doattach;
 
 	printf("\n");
+	doattach = 0;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -113,8 +125,43 @@ pchbattach(parent, self, aux)
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_SERVERWORKS:
+		pbnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44) & 0xff;
+
+		if (pbnum == 0)
+			break;
+
+		/*
+		 * This host bridge has a second PCI bus.
+		 * Configure it.
+		 */
+		doattach = 1;
+		break;
+
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_82443BX_AGP:
+		case PCI_PRODUCT_INTEL_82443BX_NOAGP:
+			/*
+			 * BIOS BUG WORKAROUND!  The 82443BX
+			 * datasheet indicates that the only
+			 * legal setting for the "Idle/Pipeline
+			 * DRAM Leadoff Timing (IPLDT)" parameter
+			 * (bits 9:8) is 01.  Unfortunately, some
+			 * BIOSs do not set these bits properly.
+			 */
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    I82443BX_SDRAMC_REG);
+			if ((bcreg & 0x0300) != 0x0100) {
+				printf("%s: fixing Idle/Pipeline DRAM "
+				    "Leadoff Timing\n", self->dv_xname);
+				bcreg &= ~0x0300;
+				bcreg |=  0x0100;
+				pci_conf_write(pa->pa_pc, pa->pa_tag,
+				    I82443BX_SDRAMC_REG, bcreg);
+			}
+			break;
+
 		case PCI_PRODUCT_INTEL_PCI450_PB:
 			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					      PCISET_BUSCONFIG_REG);
@@ -136,14 +183,7 @@ pchbattach(parent, self, aux)
 				 * This host bridge has a second PCI bus.
 				 * Configure it.
 				 */
-				pba.pba_busname = "pci";
-				pba.pba_iot = pa->pa_iot;
-				pba.pba_memt = pa->pa_memt;
-				pba.pba_dmat = pa->pa_dmat;
-				pba.pba_bus = pbnum;
-				pba.pba_flags = pa->pa_flags;
-				pba.pba_pc = pa->pa_pc;
-				config_found(self, &pba, pchb_print);
+				doattach = 1;
 				break;
 			}
 			break;
@@ -193,24 +233,30 @@ pchbattach(parent, self, aux)
 				pbnum = (bcreg & 0x000000ff) + 1;
 				break;
 			}
-			if (pbnum != 0) {
-				pba.pba_busname = "pci";
-				pba.pba_iot = pa->pa_iot;
-				pba.pba_memt = pa->pa_memt;
-				pba.pba_dmat = pa->pa_dmat;
-				pba.pba_bus = pbnum;
-				pba.pba_flags = pci_bus_flags();
-				pba.pba_pc = pa->pa_pc;
-				config_found(self, &pba, pchb_print);
-			}
+			if (pbnum != 0)
+				doattach = 1;
 			break;
 		}
-	/*
-	 * XXX: vendor=PEQUR, device=0x0005 - host bridge with
-	 * auxiliary PCI bus (used in Compaq Proliant) should
-	 * be here, but I don't have enough information.
-	 */
+		break;
 	}
+
+	if (doattach) {
+		pba.pba_busname = "pci";
+		pba.pba_iot = pa->pa_iot;
+		pba.pba_memt = pa->pa_memt;
+		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_bus = pbnum;
+		pba.pba_flags = pa->pa_flags;
+		pba.pba_pc = pa->pa_pc;
+		config_found(self, &pba, pchb_print);
+	}
+
+#if NRND > 0
+	/*
+	 * Attach a random number generator, if there is one.
+	 */
+	pchb_attach_rnd(sc, pa);
+#endif
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.65.2.1 2000/11/20 19:56:34 bouyer Exp $ */
+/* $NetBSD: locore.s,v 1.65.2.2 2000/11/22 15:59:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65.2.1 2000/11/20 19:56:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65.2.2 2000/11/22 15:59:40 bouyer Exp $");
 
 #include "assym.h"
 
@@ -345,20 +345,6 @@ BSS(ssir, 8)
 LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	pv, 1f
 1:	LDGP(pv)
-
-#if defined(MULTIPROCESSOR)
-	/* XXX XXX XXX */
-	/*
-	 * Check the current processor ID.  If we're not the primary
-	 * CPU, then just restore registers and bail out.
-	 */
-	call_pal PAL_OSF1_whami
-	lda	t0, hwrpb
-	ldq	t0, 0(t0)
-	ldq	t1, RPB_PRIMARY_CPU_ID(t0)
-	cmpeq	t1, v0, t0
-	beq	t0, 4f				/* == 0: bail out now */
-#endif
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
@@ -772,6 +758,19 @@ LEAF(idle, 0)
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
 	stq	zero, 0(v0)			/* curproc <- NULL for stats */
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Switch to the idle PCB unless we're already running on it
+	 * (if s0 == NULL, we're already on it...)
+	 */
+	beq	s0, 1f				/* skip if s0 == NULL */
+	mov	s0, a0
+	CALL(pmap_deactivate)			/* pmap_deactivate(oldproc) */
+	GET_IDLE_PCB(a0)
+	SWITCH_CONTEXT
+	mov	zero, s0			/* no outgoing proc */
+1:
+#endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	CALL(sched_unlock_idle)			/* release sched_lock */
 #endif
@@ -884,11 +883,11 @@ cpu_switch_queuescan:
 	 * do this after we activate, then we might end up
 	 * incorrectly marking the pmap inactive!
 	 *
-	 * We don't deactivate if we came here from switch_exit
-	 * (old pmap no longer exists; vmspace has been freed).
-	 * oldproc will be NULL in this case.  We have actually
-	 * taken care of calling pmap_deactivate() in cpu_exit(),
-	 * before the vmspace went away.
+	 * Note that don't deactivate if we don't have to...
+	 * We know this if oldproc (s0) == NULL.  This is the
+	 * case if we've come from switch_exit() (pmap no longer
+	 * exists; vmspace has been freed), or if we switched to
+	 * the Idle PCB in the MULTIPROCESSOR case.
 	 */
 	beq	s0, 6f
 

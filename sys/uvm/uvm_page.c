@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.25.2.1 2000/11/20 18:12:03 bouyer Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.25.2.2 2000/11/22 16:06:56 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -619,6 +619,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 		    "segment\n");
 		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
+		printf("\tincrease VM_PHYSSEG_MAX\n");
 		return;
 	}
 

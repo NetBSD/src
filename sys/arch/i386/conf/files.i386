@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.139.2.1 2000/11/20 20:09:18 bouyer Exp $
+#	$NetBSD: files.i386,v 1.139.2.2 2000/11/22 16:00:18 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -103,6 +103,12 @@ major	{raid = 18}
 # Logical storage units
 major	{lsu = 19}
 
+#
+# Machine-independent I2O drivers
+#
+
+include "dev/i2o/files.i2o"
+
 # attribute used to bring in BIOS trampoline code for real-mode probing
 # of certain devices/BIOS features
 define bioscall
@@ -147,6 +153,7 @@ file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
+file	arch/i386/pci/pchb_rnd.c	pchb & rnd
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
@@ -389,5 +396,7 @@ include "dev/pcmcia/files.pcmcia"
 
 
 include "dev/usb/files.usb"
+
+include "dev/ieee1394/files.ieee1394"
 
 include "arch/i386/pnpbios/files.pnpbios"

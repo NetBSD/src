@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52.2.1 2000/11/20 20:28:08 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52.2.2 2000/11/22 16:02:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -519,17 +519,7 @@ cpu_reboot(howto, user_boot_string)
 	if (howto & RB_HALT) {
 	haltsys:
 		printf("Kernel halted.\n");
-#if 0
-		/*
-		 * This calls the PROM monitor "exit_to_mon" function
-		 * which appears to have problems...  SunOS uses the
-		 * "abort" function when you halt (bug work-around?)
-		 * so we might as well do the same.
-		 */
-		sunmon_halt(); /* provokes PROM monitor bug */
-#else
-		sunmon_abort();
-#endif
+		sunmon_halt();
 	}
 
 	/*

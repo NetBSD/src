@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.9.8.1 2000/11/20 20:03:54 bouyer Exp $
+#	$NetBSD: OFWGENCFG,v 1.9.8.2 2000/11/22 15:59:57 bouyer Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -20,6 +20,7 @@ options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 
 options 	CPU_SA110	# Support the SA110 core
+makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 
 # Architecture options
 

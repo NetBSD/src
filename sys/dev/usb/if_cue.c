@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.26.2.2 2000/11/20 11:43:19 bouyer Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.26.2.3 2000/11/22 16:05:02 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -704,11 +704,6 @@ USB_ATTACH(cue)
 	/* Attach the interface. */
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
-#endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->cue_dev),
 	    RND_TYPE_NET, 0);
@@ -751,9 +746,6 @@ USB_DETACH(cue)
 #if defined(__NetBSD__)
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 #endif /* __NetBSD__ */

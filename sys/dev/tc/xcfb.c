@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.11.2.2 2000/11/20 11:43:17 bouyer Exp $ */
+/* $NetBSD: xcfb.c,v 1.11.2.3 2000/11/22 16:05:01 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.11.2.2 2000/11/20 11:43:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.11.2.3 2000/11/22 16:05:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,9 @@ xcfbattach(parent, self, aux)
 	struct xcfb_softc *sc = (struct xcfb_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	int console;
+	struct hwcmap256 *cm;
+	const u_int8_t *p;
+	int console, index;
 
 	console = (ta->ta_addr == xcfb_consaddr);
 	if (console) {
@@ -306,7 +308,13 @@ xcfbattach(parent, self, aux)
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
-	memcpy(&sc->sc_cmap, rasops_cmap, sizeof(struct hwcmap256));
+	cm = &sc->sc_cmap;
+	p = rasops_cmap;
+	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
+		cm->r[index] = p[0];
+		cm->g[index] = p[1];
+		cm->b[index] = p[2];
+	}
 
 	sc->sc_csr = IMS332_BPP_8 | IMS332_CSR_A_VTG_ENABLE;
 
@@ -339,6 +347,7 @@ xcfbinit(dc)
 	struct fb_devconfig *dc;
 {
 	u_int32_t csr;
+	const u_int8_t *p;
 	int i;
 
 	csr = *(u_int32_t *)(ioasic_base + IOASIC_CSR);
@@ -369,11 +378,10 @@ xcfbinit(dc)
 		IMS332_BPP_8|IMS332_CSR_A_VTG_ENABLE);
 
 	/* build sane colormap */
-	for (i = 0; i < CMAP_SIZE; i++) {
-		const u_int8_t *p;
+	p = rasops_cmap;
+	for (i = 0; i < CMAP_SIZE; i++, p += 3) {
 		u_int32_t bgr;
 
-		p = &rasops_cmap[3 * i];
 		bgr = p[2] << 16 | p[1] << 8 | p[0];
 		ims332_write_reg(IMS332_REG_LUT_BASE + i, bgr);
 	}

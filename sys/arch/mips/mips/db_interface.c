@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.20.2.1 2000/11/20 20:13:33 bouyer Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.20.2.2 2000/11/22 16:00:44 bouyer Exp $	*/
 
 /*
  * Mach Operating System
@@ -386,9 +386,14 @@ db_kvtophys_cmd(addr, have_addr, count, modif)
 {
 	if (!have_addr)
 		return;
-	if (MIPS_KSEG2_START <= addr)
-		db_printf("0x%lx -> 0x%lx\n", addr, kvtophys(addr));
-	else
+	if (MIPS_KSEG2_START <= addr) {
+		/*
+		 * Cast the physical address -- some platforms, while
+		 * being ILP32, may be using 64-bit paddr_t's.
+		 */
+		db_printf("0x%lx -> 0x%qx\n", addr,
+		    (unsigned long long) kvtophys(addr));
+	} else
 		printf("not a kernel virtual address\n");
 }
 

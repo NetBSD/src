@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.23.2.1 2000/11/20 18:08:13 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.23.2.2 2000/11/22 16:02:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -64,10 +64,6 @@
 #include <compat/ibcs2/ibcs2_syscall.h>
 
 
-#ifdef EXEC_ELF32
-#define IBCS2_ELF_AUX_ARGSIZ	howmany(sizeof(AuxInfo) * 8, sizeof(char *))
-#endif
-
 int exec_ibcs2_coff_prep_omagic __P((struct proc *, struct exec_package *,
 				     struct coff_filehdr *, 
 				     struct coff_aouthdr *));
@@ -90,6 +86,8 @@ int coff_load_shlib __P((struct proc *, const char *, struct exec_package *));
 static int coff_find_section __P((struct proc *, struct vnode *, 
 				  struct coff_filehdr *, struct coff_scnhdr *,
 				  int));
+static void ibcs2_e_proc_exec __P((struct proc *, struct exec_package *));
+
 #ifdef EXEC_ELF32
 static int ibcs2_elf32_signature __P((struct proc *p, struct exec_package *,
 				      Elf32_Ehdr *));
@@ -97,7 +95,7 @@ static int ibcs2_elf32_signature __P((struct proc *p, struct exec_package *,
 	
 
 extern struct sysent ibcs2_sysent[];
-extern char *ibcs2_syscallnames[];
+extern const char * const ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
 
 const char ibcs2_emul_path[] = "/emul/ibcs2";
@@ -108,7 +106,7 @@ int ibcs2_debug = 1;
 int ibcs2_debug = 0;
 #endif
 
-struct emul emul_ibcs2_coff = {
+const struct emul emul_ibcs2 = {
 	"ibcs2",
 	native_to_ibcs2_errno,
 	ibcs2_sendsig,
@@ -116,45 +114,12 @@ struct emul emul_ibcs2_coff = {
 	IBCS2_SYS_MAXSYSCALL,
 	ibcs2_sysent,
 	ibcs2_syscallnames,
-	0,
-	copyargs,
-	ibcs2_setregs,
 	ibcs2_sigcode,
 	ibcs2_esigcode,
+	ibcs2_e_proc_exec,
+	NULL,
+	NULL,
 };
-
-struct emul emul_ibcs2_xout = {
-	"ibcs2",
-	native_to_ibcs2_errno,
-	ibcs2_sendsig,
-	0,
-	IBCS2_SYS_MAXSYSCALL,
-	ibcs2_sysent,
-	ibcs2_syscallnames,
-	0,
-	copyargs,
-	ibcs2_setregs,
-	ibcs2_sigcode,
-	ibcs2_esigcode,
-};
-
-#ifdef EXEC_ELF32
-struct emul emul_ibcs2_elf = {
-	"ibcs2",
-	native_to_ibcs2_errno,
-	ibcs2_sendsig,
-	0,
-	IBCS2_SYS_MAXSYSCALL,
-	ibcs2_sysent,
-	ibcs2_syscallnames,
-	IBCS2_ELF_AUX_ARGSIZ,
-	elf32_copyargs,
-	ibcs2_setregs,
-	ibcs2_sigcode,
-	ibcs2_esigcode,
-};
-#endif /* EXEC_ELF32 */
-
 
 /*
  * The SCO compiler adds the string "SCO" to the .notes section of all
@@ -216,9 +181,9 @@ int
 ibcs2_elf32_probe(p, epp, eh, itp, pos)
 	struct proc *p;
 	struct exec_package *epp;
-	Elf32_Ehdr *eh;
+	void *eh;
 	char *itp;
-	Elf32_Addr *pos;
+	vaddr_t *pos;
 {
 	const char *bp;
 	int error;
@@ -234,7 +199,6 @@ ibcs2_elf32_probe(p, epp, eh, itp, pos)
 			return error;
 		free((void *)bp, M_TEMP);
 	}
-	epp->ep_emul = &emul_ibcs2_elf;
 	*pos = ELF32_NO_ADDR;
 	return 0;
 }
@@ -285,9 +249,6 @@ exec_ibcs2_coff_makecmds(p, epp)
 	default:
 		return ENOEXEC;
 	}
-
-	if (error == 0)
-		epp->ep_emul = &emul_ibcs2_coff;
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
@@ -866,9 +827,6 @@ exec_ibcs2_xout_makecmds(p, epp)
 #endif
 		error = exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep);
 
-	if (error == 0)
-		epp->ep_emul = &emul_ibcs2_xout;
-
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
 
@@ -1012,4 +970,20 @@ exec_ibcs2_xout_setup_stack(p, epp)
 		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return 0;
+}
+
+/*
+ * This is exec process hook. Find out if this is x.out executable, if
+ * yes, set flag appropriately, so that emul code which needs to adjust
+ * behaviour accordingly can do so.
+ */ 
+static void
+ibcs2_e_proc_exec(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	if (epp->ep_es->es_check == exec_ibcs2_xout_makecmds)
+		p->p_emuldata = IBCS2_EXEC_XENIX;
+	else
+		p->p_emuldata = IBCS2_EXEC_OTHER;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.90.2.1 2000/11/20 11:41:14 bouyer Exp $
+#	$NetBSD: files.isa,v 1.90.2.2 2000/11/22 16:03:44 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -52,7 +52,12 @@ file	dev/isa/rtfps.c			rtfps
 # BOCA 6-port board (3x 16552)
 device  ioat: commulti
 attach  ioat at isa
-file    dev/isa/ioat66.c                ioat
+file    dev/isa/ioat66.c		ioat
+
+# MOXA 8-port board
+device  moxa: commulti
+attach	moxa at isa with moxa_isa
+file	dev/isa/moxa_isa.c		moxa
 
 #
 # Serial and parallel drivers
@@ -401,6 +406,14 @@ file	dev/isa/ega.c		ega	needs-flag
 device pcdisplay: wsemuldisplaydev, pcdisplayops
 attach	pcdisplay at isa
 file	dev/isa/pcdisplay.c	pcdisplay	needs-flag
+
+# Middle Digital, Inc. PC-Weasel serial console board.
+# XXX This is a little gross... this is to conditionally compile
+# support for the PC-Weasel into the `pcdisplay' driver,
+# but we can't use an `option', because options can't have
+# attributes.
+defpseudo pcweasel: sysmon_wdog
+file dev/isa/weasel.c		pcweasel	needs-flag
 
 # PC PPI + TIMER 1 (speaker interface)
 device  pcppi {}

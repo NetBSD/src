@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2.2.2 2000/11/20 20:23:48 bouyer Exp $	*/
+/*	$NetBSD: console.c,v 1.2.2.3 2000/11/22 16:01:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -158,7 +158,7 @@ arcsopen(dev, flag, mode, p)
 
 	splx(s);
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error == 0 && setuptimeout) {
 		callout_reset(&arcs_ch, 1, arcs_poll, tp);
 	}
@@ -175,7 +175,7 @@ arcsclose(dev, flag, mode, p)
 	struct tty *tp = arcs_tty[unit];
 
 	callout_stop(&arcs_ch);
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	return 0;
 }
@@ -188,7 +188,7 @@ arcsread(dev, uio, flag)
 {
 	struct tty *tp = arcs_tty[minor(dev)];
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
@@ -199,7 +199,7 @@ arcswrite(dev, uio, flag)
 {
 	struct tty *tp = arcs_tty[minor(dev)];
  
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
  
 int
@@ -214,7 +214,7 @@ arcsioctl(dev, cmd, data, flag, p)
 	struct tty *tp = arcs_tty[unit];
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -280,7 +280,7 @@ arcs_poll(v)
 
 	while (arcs_cnlookc(tp->t_dev, &c)) {
 		if (tp->t_state & TS_ISOPEN)
-			l_r = (*linesw[tp->t_line].l_rint)(c, tp);
+			l_r = (*tp->t_linesw->l_rint)(c, tp);
 	}
 	callout_reset(&arcs_ch, 1, arcs_poll, tp);
 }

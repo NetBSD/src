@@ -1,4 +1,4 @@
-/* $NetBSD: irongatevar.h,v 1.2.2.2 2000/11/20 19:57:10 bouyer Exp $ */
+/* $NetBSD: irongatevar.h,v 1.2.2.3 2000/11/22 15:59:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
-#include <alpha/pci/pci_sgmap_pte64.h>
 
 /*
  * AMD 751 chipset's configuration.

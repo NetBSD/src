@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.10.2.2 2000/11/20 20:47:38 bouyer Exp $ */
+/*	$NetBSD: txcom.c,v 1.10.2.3 2000/11/22 16:00:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -707,7 +707,7 @@ txcom_rxsoft(void *arg)
 	int code;
 	int s, end, get;
 
-	rint = linesw[tp->t_line].l_rint;
+	rint = tp->t_linesw->l_rint;
 
 	s = spltty();
 	end = sc->sc_rbput;
@@ -762,7 +762,7 @@ txcom_txsoft(void *arg)
 		ndflush(&tp->t_outq, (int)(sc->sc_tba - tp->t_outq.c_cf));
 	}
 
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 
 	splx(s);
 }
@@ -846,7 +846,7 @@ txcomopen(dev_t dev, int flag, int mode, struct proc *p)
 		DPRINTF(("txcomopen: ttyopen failed\n"));
 		goto out;
 	}
-	if ((err = (*linesw[tp->t_line].l_open)(dev, tp))) {
+	if ((err = (*tp->t_linesw->l_open)(dev, tp))) {
 		DPRINTF(("txcomopen: line dicipline open failed\n"));
 		goto out;
 	}
@@ -876,7 +876,7 @@ txcomclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return 0;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
@@ -897,7 +897,7 @@ txcomread(dev_t dev, struct uio *uio, int flag)
 	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
@@ -906,7 +906,7 @@ txcomwrite(dev_t dev, struct uio *uio, int flag)
 	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -924,7 +924,7 @@ txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct tty *tp = sc->sc_tty;
 	int s, err;
 
-	err = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	err = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (err >= 0) {
 		return err;
 	}
@@ -1110,7 +1110,7 @@ txcomparam(struct tty *tp, struct termios *t)
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
 	 * explicit request.
 	 */
-	(void) (*linesw[tp->t_line].l_modem)(tp, chip->sc_dcd);
+	(void) (*tp->t_linesw->l_modem)(tp, chip->sc_dcd);
 
 	/*
 	 * If hardware flow control is disabled, unblock any hard flow 
@@ -1136,7 +1136,7 @@ txcom_dcd_hook(void *arg, int type, long id, void *msg)
 	DPRINTF(("%s: DCD %s\n", __FUNCTION__, modem ? "ON" : "OFF"));
 		 
 	if (modem && chip->sc_dcd)	
-		(void) (*linesw[tp->t_line].l_modem)(tp, chip->sc_dcd);
+		(void) (*tp->t_linesw->l_modem)(tp, chip->sc_dcd);
 
 	return 0;
 }
@@ -1156,7 +1156,7 @@ txcom_cts_hook(void *arg, int type, long id, void *msg)
 			chip->sc_tx_stopped = 1;
 		} else {
 			chip->sc_tx_stopped = 0;
-			(*linesw[tp->t_line].l_start)(tp);
+			(*tp->t_linesw->l_start)(tp);
 		}
 	}
 

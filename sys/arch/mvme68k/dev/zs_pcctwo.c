@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcctwo.c,v 1.2.2.2 2000/11/20 20:15:20 bouyer Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.2.2.3 2000/11/22 16:00:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,8 @@ zsc_pcctwo_match(parent, cf, aux)
 {
 	struct pcctwo_attach_args *pa = aux;
 
-	if (strcmp(pa->pa_name, zsc_cd.cd_name) || machineid != MVME_162)
+	if (strcmp(pa->pa_name, zsc_cd.cd_name) ||
+	    (machineid != MVME_162 && machineid != MVME_172))
 		return (0);
 
 	pa->pa_ipl = cf->pcctwocf_ipl;
@@ -151,13 +152,13 @@ zsc_pcctwo_attach(parent, self, aux)
  ****************************************************************/
 
 /*
- * Check for SCC console.  The MVME-162 always uses unit 0 chan 0.
+ * Check for SCC console.  The MVME-1x2 always uses unit 0 chan 0.
  */
 void
 zsc_pcctwocnprobe(cp)
 	struct consdev *cp;
 {
-	if (machineid != MVME_162) {
+	if (machineid != MVME_162 && machineid != MVME_172) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}

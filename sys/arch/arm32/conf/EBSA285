@@ -1,4 +1,4 @@
-#	$NetBSD: EBSA285,v 1.7.2.1 2000/11/20 20:03:54 bouyer Exp $
+#	$NetBSD: EBSA285,v 1.7.2.2 2000/11/22 15:59:57 bouyer Exp $
 #
 #	EBSA285 -- EBSA285 Architecture Kernel
 #
@@ -29,6 +29,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
+makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 
 # Architecture options
 #options 	IOMD		# We have an IOMD
@@ -68,6 +69,10 @@ options 	NFSSERVER
 
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP

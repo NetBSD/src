@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.49.2.1 2000/11/20 20:20:16 bouyer Exp $	*/
+/*	$NetBSD: dc.c,v 1.49.2.2 2000/11/22 16:01:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.49.2.1 2000/11/20 20:20:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.49.2.2 2000/11/22 16:01:24 bouyer Exp $");
 
 /*
  * devDC7085.c --
@@ -511,7 +511,7 @@ dcopen(dev, flag, mode, p)
 	splx(s);
 	if (error)
 		return (error);
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	return (error);
 }
 
@@ -538,7 +538,7 @@ dcclose(dev, flag, mode, p)
 		ttyoutput(0, tp);
 	}
 	splx(s);
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	if ((tp->t_cflag & HUPCL) || tp->t_wopen ||
 	    !(tp->t_state & TS_ISOPEN))
 		(void) dcmctl(dev, 0, DMSET);
@@ -564,7 +564,7 @@ dcread(dev, uio, flag)
 	}
 #endif /* HW_FLOW_CONTROL */
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -577,7 +577,7 @@ dcwrite(dev, uio, flag)
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -613,7 +613,7 @@ dcioctl(dev, cmd, data, flag, p)
 	sc = dc_cd.cd_devs[unit];
 	tp = sc->dc_tty[line];
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -846,7 +846,7 @@ dcrint(sc)
 			(void) dcmctl(tp->t_dev, DML_RTS, DMBIC);
 		}
 #endif /* HWW_FLOW_CONTROL */
-		(*linesw[tp->t_line].l_rint)(cc, tp);
+		(*tp->t_linesw->l_rint)(cc, tp);
 	}
 	DELAY(10);
 }
@@ -908,8 +908,8 @@ dcxint(tp)
 		ndflush(&tp->t_outq, dp->p_mem - (caddr_t) tp->t_outq.c_cf);
 		dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	}
-	if (tp->t_line)
-		(*linesw[tp->t_line].l_start)(tp);
+	if (tp->t_linesw)
+		(*tp->t_linesw->l_start)(tp);
 	else
 		dcstart(tp);
 	if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
@@ -1137,9 +1137,9 @@ dcscan(arg)
 		if ((dcaddr->dc_msr & dsr) || (sc->dcsoftCAR & (1 << unit))) {
 			/* carrier present */
 			if (!(tp->t_state & TS_CARR_ON))
-				(void)(*linesw[tp->t_line].l_modem)(tp, 1);
+				(void)(*tp->t_linesw->l_modem)(tp, 1);
 		} else if ((tp->t_state & TS_CARR_ON) &&
-		    (*linesw[tp->t_line].l_modem)(tp, 0) == 0)
+		    (*tp->t_linesw->l_modem)(tp, 0) == 0)
 			dcaddr->dc_tcr &= ~dtr;
 #ifdef HW_FLOW_CONTROL
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.15.8.1 2000/11/20 20:25:38 bouyer Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.15.8.2 2000/11/22 16:01:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -322,7 +322,7 @@ struct nodeops {
 	 */
 	int	(*no_proplen) __P((int node, char *name));
 	int	(*no_getprop) __P((int node, char *name, void *val));
-	int	(*no_setprop) __P((int node, char *name, void *val,
+	int	(*no_setprop) __P((int node, char *name, const void *val,
 				   int len));
 	char	*(*no_nextprop) __P((int node, char *name));
 };

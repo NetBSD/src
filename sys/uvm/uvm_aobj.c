@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.26.2.1 2000/11/20 18:11:57 bouyer Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.26.2.2 2000/11/22 16:06:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -526,7 +526,7 @@ uao_create(size, flags)
 		/* allocate hash table or array depending on object size */
 		if (UAO_USES_SWHASH(aobj)) {
 			aobj->u_swhash = hashinit(UAO_SWHASH_BUCKETS(aobj),
-			    M_UVMAOBJ, mflags, &aobj->u_swhashmask);
+			    HASH_LIST, M_UVMAOBJ, mflags, &aobj->u_swhashmask);
 			if (aobj->u_swhash == NULL)
 				panic("uao_create: hashinit swhash failed");
 		} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8.8.1 2000/11/20 20:26:56 bouyer Exp $ */
+/*	$NetBSD: mem.c,v 1.8.8.2 2000/11/22 16:01:55 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,9 +92,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vaddr_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t o, v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock;
 	vm_prot_t prot;
@@ -113,6 +113,7 @@ mmrw(dev, uio, flags)
 		physlock = 1;
 	}
 	while (uio->uio_resid > 0 && error == 0) {
+		int n;
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
 			uio->uio_iov++;
@@ -121,6 +122,10 @@ mmrw(dev, uio, flags)
 				panic("mmrw");
 			continue;
 		}
+
+		/* Note how much is still to go */
+		n = uio->uio_resid;
+
 		switch (minor(dev)) {
 
 		/* minor device 0 is physical memory */
@@ -156,7 +161,7 @@ mmrw(dev, uio, flags)
 			if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
 				panic("mmrw: uio proc");
 			while (c > 0 && uio->uio_resid) {
-				register struct iovec *iov;
+				struct iovec *iov;
 				u_int cnt;
 				int d;
 
@@ -258,6 +263,10 @@ mmrw(dev, uio, flags)
 		default:
 			return (ENXIO);
 		}
+
+		/* If we didn't make any progress (i.e. EOF), we're done here */
+		if (n == uio->uio_resid)
+			break;
 	}
 	if (minor(dev) == 0) {
 unlock:
@@ -270,7 +279,7 @@ unlock:
 
 paddr_t
 mmmmap(dev, off, prot)
-        dev_t dev;
+	dev_t dev;
 	off_t off;
 	int prot;
 {

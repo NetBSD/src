@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.14.2.1 2000/11/20 11:43:30 bouyer Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.14.2.2 2000/11/22 16:05:07 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -74,6 +74,8 @@ Static struct usbd_quirk_entry {
  { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
  	0x100, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
  { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
+ { USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U,
+						    0x000, { UQ_NO_STRINGS }},
  { 0, 0, 0, { 0 } }
 };
 

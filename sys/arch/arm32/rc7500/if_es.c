@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.16.2.1 2000/11/20 20:04:06 bouyer Exp $	*/
+/*	$NetBSD: if_es.c,v 1.16.2.2 2000/11/22 16:00:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -219,10 +219,6 @@ esattach(parent, self, aux)
 
 	/* Print additional info when attached. */
 	printf(": address %s\n", ether_sprintf(myaddr));
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_ih.ih_func = esintr;
 	sc->sc_ih.ih_arg = sc;

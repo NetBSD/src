@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6.2.1 2000/11/20 20:12:21 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6.2.2 2000/11/22 16:00:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -50,20 +50,96 @@
 
 #include <uvm/uvm_extern.h>
 
-int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
-	    int, bus_space_handle_t *));
+int	bus_mem_add_mapping __P((bus_addr_t bpa, bus_size_t size, int flags,
+			    bus_space_handle_t *hp));
 
 extern struct extent *iomem_ex;
 extern int iomem_malloc_safe;
 label_t *nofault;
 
 int
-bus_space_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
+		    bus_space_handle_t *hp)
+{
+	u_long pa, endpa;
+	vaddr_t va;
+	pt_entry_t *pte;
+
+	pa = m68k_trunc_page(bpa);
+	endpa = m68k_round_page((bpa + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("bus_mem_add_mapping: overflow");
+#endif
+
+	va = uvm_km_valloc(kernel_map, endpa - pa);
+	if (va == 0)
+		return (ENOMEM);
+
+	hp->base = (u_long)(va + m68k_page_offset(bpa));
+	hp->swapped = 0;
+	hp->stride = 1;
+	hp->bsr1 = mac68k_bsr1;
+	hp->bsr2 = mac68k_bsr2;
+	hp->bsr4 = mac68k_bsr4;
+	hp->bsrs1 = mac68k_bsr1;
+	hp->bsrs2 = mac68k_bsr2;
+	hp->bsrs4 = mac68k_bsr4;
+	hp->bsrm1 = mac68k_bsrm1;
+	hp->bsrm2 = mac68k_bsrm2;
+	hp->bsrm4 = mac68k_bsrm4;
+	hp->bsrms1 = mac68k_bsrm1;
+	hp->bsrms2 = mac68k_bsrm2;
+	hp->bsrms4 = mac68k_bsrm4;
+	hp->bsrr1 = mac68k_bsrr1;
+	hp->bsrr2 = mac68k_bsrr2;
+	hp->bsrr4 = mac68k_bsrr4;
+	hp->bsrrs1 = mac68k_bsrr1;
+	hp->bsrrs2 = mac68k_bsrr2;
+	hp->bsrrs4 = mac68k_bsrr4;
+	hp->bsw1 = mac68k_bsw1;
+	hp->bsw2 = mac68k_bsw2;
+	hp->bsw4 = mac68k_bsw4;
+	hp->bsws1 = mac68k_bsw1;
+	hp->bsws2 = mac68k_bsw2;
+	hp->bsws4 = mac68k_bsw4;
+	hp->bswm1 = mac68k_bswm1;
+	hp->bswm2 = mac68k_bswm2;
+	hp->bswm4 = mac68k_bswm4;
+	hp->bswms1 = mac68k_bswm1;
+	hp->bswms2 = mac68k_bswm2;
+	hp->bswms4 = mac68k_bswm4;
+	hp->bswr1 = mac68k_bswr1;
+	hp->bswr2 = mac68k_bswr2;
+	hp->bswr4 = mac68k_bswr4;
+	hp->bswrs1 = mac68k_bswr1;
+	hp->bswrs2 = mac68k_bswr2;
+	hp->bswrs4 = mac68k_bswr4;
+	hp->bssm1 = mac68k_bssm1;
+	hp->bssm2 = mac68k_bssm2;
+	hp->bssm4 = mac68k_bssm4;
+	hp->bssr1 = mac68k_bssr1;
+	hp->bssr2 = mac68k_bssr2;
+	hp->bssr4 = mac68k_bssr4;
+
+	for (; pa < endpa; pa += NBPG, va += NBPG) {
+		pmap_enter(pmap_kernel(), va, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pte = kvtopte(va);
+		if ((flags & BUS_SPACE_MAP_CACHEABLE))
+			*pte &= ~PG_CI;
+		else
+			*pte |= PG_CI;
+		pmap_update();
+	}
+ 
+	return 0;
+}
+
+int
+bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+	      bus_space_handle_t *hp)
 {
 	paddr_t pa, endpa;
 	int error;
@@ -85,7 +161,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 		panic("bus_space_map: overflow");
 #endif
 
-	error = bus_mem_add_mapping(bpa, size, flags, bshp);
+	error = bus_mem_add_mapping(bpa, size, flags, hp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -99,13 +175,10 @@ bus_space_map(t, bpa, size, flags, bshp)
 }
 
 int
-bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags, bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+bus_space_alloc(bus_space_tag_t t,
+		bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
+		bus_size_t alignment, bus_size_t boundary, int flags,
+		bus_addr_t *bpap, bus_space_handle_t *hp)
 {
 	u_long bpa;
 	int error;
@@ -131,7 +204,7 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags, bpap, bshp)
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = bus_mem_add_mapping(bpa, size, flags, bshp);
+	error = bus_mem_add_mapping(bpa, size, flags, hp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -146,100 +219,14 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags, bpap, bshp)
 	return (error);
 }
 
-int
-bus_mem_add_mapping(bpa, size, flags, bshp)
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
-{
-	u_long pa, endpa;
-	vaddr_t va;
-	pt_entry_t *pte;
-
-	pa = m68k_trunc_page(bpa);
-	endpa = m68k_round_page((bpa + size) - 1);
-
-#ifdef DIAGNOSTIC
-	if (endpa <= pa)
-		panic("bus_mem_add_mapping: overflow");
-#endif
-
-	va = uvm_km_valloc(kernel_map, endpa - pa);
-	if (va == 0)
-		return (ENOMEM);
-
-	bshp->base = (u_long)(va + m68k_page_offset(bpa));
-	bshp->swapped = 0;
-	bshp->stride = 1;
-	bshp->bsr1 = mac68k_bsr1;
-	bshp->bsr2 = mac68k_bsr2;
-	bshp->bsr4 = mac68k_bsr4;
-	bshp->bsrs1 = mac68k_bsr1;
-	bshp->bsrs2 = mac68k_bsr2;
-	bshp->bsrs4 = mac68k_bsr4;
-	bshp->bsrm1 = mac68k_bsrm1;
-	bshp->bsrm2 = mac68k_bsrm2;
-	bshp->bsrm4 = mac68k_bsrm4;
-	bshp->bsrms1 = mac68k_bsrm1;
-	bshp->bsrms2 = mac68k_bsrm2;
-	bshp->bsrms4 = mac68k_bsrm4;
-	bshp->bsrr1 = mac68k_bsrr1;
-	bshp->bsrr2 = mac68k_bsrr2;
-	bshp->bsrr4 = mac68k_bsrr4;
-	bshp->bsrrs1 = mac68k_bsrr1;
-	bshp->bsrrs2 = mac68k_bsrr2;
-	bshp->bsrrs4 = mac68k_bsrr4;
-	bshp->bsw1 = mac68k_bsw1;
-	bshp->bsw2 = mac68k_bsw2;
-	bshp->bsw4 = mac68k_bsw4;
-	bshp->bsws1 = mac68k_bsw1;
-	bshp->bsws2 = mac68k_bsw2;
-	bshp->bsws4 = mac68k_bsw4;
-	bshp->bswm1 = mac68k_bswm1;
-	bshp->bswm2 = mac68k_bswm2;
-	bshp->bswm4 = mac68k_bswm4;
-	bshp->bswms1 = mac68k_bswm1;
-	bshp->bswms2 = mac68k_bswm2;
-	bshp->bswms4 = mac68k_bswm4;
-	bshp->bswr1 = mac68k_bswr1;
-	bshp->bswr2 = mac68k_bswr2;
-	bshp->bswr4 = mac68k_bswr4;
-	bshp->bswrs1 = mac68k_bswr1;
-	bshp->bswrs2 = mac68k_bswr2;
-	bshp->bswrs4 = mac68k_bswr4;
-	bshp->bssm1 = mac68k_bssm1;
-	bshp->bssm2 = mac68k_bssm2;
-	bshp->bssm4 = mac68k_bssm4;
-	bshp->bssr1 = mac68k_bssr1;
-	bshp->bssr2 = mac68k_bssr2;
-	bshp->bssr4 = mac68k_bssr4;
-
-	for (; pa < endpa; pa += NBPG, va += NBPG) {
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
-		pte = kvtopte(va);
-		if ((flags & BUS_SPACE_MAP_CACHEABLE))
-			*pte &= ~PG_CI;
-		else
-			*pte |= PG_CI;
-		pmap_update();
-	}
- 
-	return 0;
-}
-
 void
-bus_space_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_unmap(bus_space_tag_t t, bus_space_handle_t h, bus_size_t size)
 {
 	vaddr_t va, endva;
 	bus_addr_t bpa;
 
-	va = m68k_trunc_page(bsh.base);
-	endva = m68k_round_page((bsh.base + size) - 1);
+	va = m68k_trunc_page(h.base);
+	endva = m68k_round_page((h.base + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endva <= va)
@@ -247,7 +234,7 @@ bus_space_unmap(t, bsh, size)
 #endif
 
 	(void) pmap_extract(pmap_kernel(), va, &bpa);
-	bpa += m68k_page_offset(bsh.base);
+	bpa += m68k_page_offset(h.base);
 
 	/*
 	 * Free the kernel virtual mapping.
@@ -263,34 +250,25 @@ bus_space_unmap(t, bsh, size)
 }
 
 void    
-bus_space_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_free(bus_space_tag_t t, bus_space_handle_t h, bus_size_t size)
 {
 	/* bus_space_unmap() does all that we need to do. */
-	bus_space_unmap(t, bsh, size);
+	bus_space_unmap(t, h, size);
 }
 
 int
-bus_space_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+bus_space_subregion(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offset,
+		    bus_size_t size, bus_space_handle_t *nhp)
 {
 
-	*nbshp = bsh;
-	nbshp->base += offset;
+	*nhp = h;
+	nhp->base += offset;
 	return (0);
 }
 
 int
-mac68k_bus_space_probe(t, bsh, offset, sz)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	int sz;
+mac68k_bus_space_probe(bus_space_tag_t t, bus_space_handle_t h,
+		       bus_size_t offset, int size)
 {
 	int i;
 	label_t faultbuf;
@@ -301,19 +279,19 @@ mac68k_bus_space_probe(t, bsh, offset, sz)
 		return (0);
 	}
 
-	switch (sz) {
+	switch (size) {
 	case 1:
-		i = bus_space_read_1(t, bsh, offset);
+		i = bus_space_read_1(t, h, offset);
 		break;
 	case 2:
-		i = bus_space_read_2(t, bsh, offset);
+		i = bus_space_read_2(t, h, offset);
 		break;
 	case 4:
-		i = bus_space_read_4(t, bsh, offset);
+		i = bus_space_read_4(t, h, offset);
 		break;
 	case 8:
 	default:
-		panic("bus_space_probe: unsupported data size %d\n", sz);
+		panic("bus_space_probe: unsupported data size %d\n", size);
 		/* NOTREACHED */
 	}
 
@@ -347,7 +325,7 @@ mac68k_bus_space_handle_swapped(bus_space_tag_t t, bus_space_handle_t *h)
 
 void
 mac68k_bus_space_handle_set_stride(bus_space_tag_t t, bus_space_handle_t *h,
-	int stride)
+				   int stride)
 {
 	h->stride = stride;
 	h->bsr1 = mac68k_bsr1_gen;
@@ -388,98 +366,98 @@ mac68k_bus_space_handle_set_stride(bus_space_tag_t t, bus_space_handle_t *h,
 }
 
 u_int8_t
-mac68k_bsr1(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsr1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 {
-	return (*(volatile u_int8_t *) (bsh->base + offset));
+	return (*(volatile u_int8_t *)(h->base + offset));
 }
 
 u_int8_t
-mac68k_bsr1_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsr1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 {
-	return (*(volatile u_int8_t *) (bsh->base + offset * bsh->stride));
+	return (*(volatile u_int8_t *)(h->base + offset * h->stride));
 }
 
 u_int16_t
-mac68k_bsr2(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsr2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 {
-	return (*(volatile u_int16_t *) (bsh->base + offset));
+	return (*(volatile u_int16_t *)(h->base + offset));
 }
 
 u_int16_t
-mac68k_bsr2_swap(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsr2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 {
 	u_int16_t	v;
 
-	v = (*(volatile u_int16_t *) (bsh->base + offset));
+	v = (*(volatile u_int16_t *)(h->base + offset));
 	return bswap16(v);
 }
 
 u_int16_t
-mac68k_bsrs2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsrs2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 {
 	u_int16_t	v;
 
-	v = (*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride)) << 8;
-	v |= (*(volatile u_int8_t *) (bsh->base + offset * bsh->stride));
+	v = (*(volatile u_int8_t *)(h->base + offset++ * h->stride)) << 8;
+	v |= (*(volatile u_int8_t *)(h->base + offset * h->stride));
 	return v;
 }
 
 u_int16_t
-mac68k_bsr2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsr2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 {
 	u_int16_t	v;
 
-	v = mac68k_bsrs2_gen(t, bsh, offset);
-	if (bsh->swapped) {
+	v = mac68k_bsrs2_gen(t, h, offset);
+	if (h->swapped) {
 		bswap16(v);
 	}
 	return v;
 }
 
 u_int32_t
-mac68k_bsr4(bus_space_tag_t tag, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsr4(bus_space_tag_t tag, bus_space_handle_t *h, bus_size_t offset)
 {
-	return (*(volatile u_int32_t *) (bsh->base + offset));
+	return (*(volatile u_int32_t *)(h->base + offset));
 }
 
 u_int32_t
-mac68k_bsr4_swap(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsr4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 {
 	u_int32_t	v;
 
-	v = (*(volatile u_int32_t *) (bsh->base + offset));
+	v = (*(volatile u_int32_t *)(h->base + offset));
 	return bswap32(v);
 }
 
 u_int32_t
-mac68k_bsrs4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsrs4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 {
 	u_int32_t	v;
 
-	v = (*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride));
+	v = (*(volatile u_int8_t *)(h->base + offset++ * h->stride));
 	v <<= 8;
-	v |= (*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride));
+	v |= (*(volatile u_int8_t *)(h->base + offset++ * h->stride));
 	v <<= 8;
-	v |= (*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride));
+	v |= (*(volatile u_int8_t *)(h->base + offset++ * h->stride));
 	v <<= 8;
-	v |= (*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride));
+	v |= (*(volatile u_int8_t *)(h->base + offset++ * h->stride));
 	return v;
 }
 
 u_int32_t
-mac68k_bsr4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsr4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 {
 	u_int32_t	v;
 
-	v = mac68k_bsrs4_gen(t, bsh, offset);
-	if (bsh->swapped) {
+	v = mac68k_bsrs4_gen(t, h, offset);
+	if (h->swapped) {
 		v = bswap32(v);
 	}
 	return v;
 }
 
 void
-mac68k_bsrm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
+mac68k_bsrm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int8_t *a, size_t c)
 {
 	__asm __volatile ("
@@ -488,23 +466,23 @@ mac68k_bsrm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
 		movl	%2,d0		;
 	1:	movb	a0@,a1@+	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bsrm1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
-	     u_int8_t *a, size_t c)
+mac68k_bsrm1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int8_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_1(t,*h,o);
+		*a++ = bus_space_read_1(t, *h, offset);
 	}
 }
 
 void
-mac68k_bsrm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
+mac68k_bsrm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
@@ -513,15 +491,15 @@ mac68k_bsrm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
 		movl	%2,d0		;
 	1:	movw	a0@,a1@+	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bsrm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
-	     u_int16_t *a, size_t c)
+mac68k_bsrm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -531,32 +509,32 @@ mac68k_bsrm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
 		rolw	#8,d1		;
 		movw	d1,a1@+		;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0","d1");
 }
 
 void
-mac68k_bsrm2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
-	     u_int16_t *a, size_t c)
+mac68k_bsrm2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int16_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_2(t,*h,o);
+		*a++ = bus_space_read_2(t, *h, offset);
 	}
 }
 
 void
-mac68k_bsrms2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
-	     u_int16_t *a, size_t c)
+mac68k_bsrms2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_stream_2(t,*h,o);
+		*a++ = bus_space_read_stream_2(t, *h, offset);
 	}
 }
 
 void
-mac68k_bsrm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
+mac68k_bsrm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 	     u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
@@ -565,15 +543,15 @@ mac68k_bsrm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
 		movl	%2,d0		;
 	1:	movl	a0@,a1@+	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bsrm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
-	     u_int32_t *a, size_t c)
+mac68k_bsrm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -585,33 +563,33 @@ mac68k_bsrm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
 		rolw	#8,d1		;
 		movl	d1,a1@+		;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0","d1");
 }
 
 void
-mac68k_bsrm4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
-	     u_int32_t *a, size_t c)
+mac68k_bsrm4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int32_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_4(t,*h,o);
+		*a++ = bus_space_read_4(t, *h, offset);
 	}
 }
 
 void
-mac68k_bsrms4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
-	     u_int32_t *a, size_t c)
+mac68k_bsrms4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_stream_4(t,*h,o);
+		*a++ = bus_space_read_stream_4(t, *h, offset);
 	}
 }
 
 void
-mac68k_bsrr1(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int8_t *a, size_t c)
+mac68k_bsrr1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int8_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -619,25 +597,25 @@ mac68k_bsrr1(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movb	a0@+,a1@+	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bsrr1_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int8_t *a, size_t c)
+mac68k_bsrr1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int8_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_1(t,*h,o);
-		o++;
+		*a++ = bus_space_read_1(t, *h, offset);
+		offset++;
 	}
 }
 
 void
-mac68k_bsrr2(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bsrr2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -645,15 +623,15 @@ mac68k_bsrr2(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movw	a0@+,a1@+	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bsrr2_swap(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bsrr2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -663,35 +641,35 @@ mac68k_bsrr2_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		rolw	#8,d1		;
 		movw	d1,a1@+		;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0","d1");
 }
 
 void
-mac68k_bsrr2_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bsrr2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int16_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_2(t,*h,o);
-		o += 2;
+		*a++ = bus_space_read_2(t, *h, offset);
+		offset += 2;
 	}
 }
 
 void
-mac68k_bsrrs2_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bsrrs2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_stream_2(t,*h,o);
-		o += 2;
+		*a++ = bus_space_read_stream_2(t, *h, offset);
+		offset += 2;
 	}
 }
 
 void
-mac68k_bsrr4(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bsrr4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -699,15 +677,15 @@ mac68k_bsrr4(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movl	a0@+,a1@+	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bsrr4_swap(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bsrr4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -719,99 +697,99 @@ mac68k_bsrr4_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		rolw	#8,d1		;
 		movl	d1,a1@+		;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bsrr4_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bsrr4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int32_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_4(t,*h,o);
-		o += 4;
+		*a++ = bus_space_read_4(t, *h, offset);
+		offset += 4;
 	}
 }
 
 void
-mac68k_bsrrs4_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	     bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bsrrs4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t *a, size_t c)
 {
 	while (c--) {
-		*a++ = bus_space_read_stream_4(t,*h,o);
-		o += 4;
+		*a++ = bus_space_read_stream_4(t, *h, offset);
+		offset += 4;
 	}
 }
 
 void
-mac68k_bsw1(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
-		 u_int8_t v)
+mac68k_bsw1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	    u_int8_t v)
 {
-	(*(volatile u_int8_t *) (bsh->base + offset)) = v;
+	(*(volatile u_int8_t *)(h->base + offset)) = v;
 }
 
 void
-mac68k_bsw1_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
-		 u_int8_t v)
+mac68k_bsw1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		u_int8_t v)
 {
-	(*(volatile u_int8_t *) (bsh->base + offset * bsh->stride)) = v;
+	(*(volatile u_int8_t *)(h->base + offset * h->stride)) = v;
 }
 
 void
-mac68k_bsw2(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
-		 u_int16_t v)
+mac68k_bsw2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	    u_int16_t v)
 {
-	(*(volatile u_int16_t *) (bsh->base + offset)) = v;
+	(*(volatile u_int16_t *)(h->base + offset)) = v;
 }
 
 void
-mac68k_bsw2_swap(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
+mac68k_bsw2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		 u_int16_t v)
 {
 	v = bswap16(v);
-	(*(volatile u_int16_t *) (bsh->base + offset)) = v;
+	(*(volatile u_int16_t *)(h->base + offset)) = v;
 }
 
 void
-mac68k_bsws2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
+mac68k_bsws2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		 u_int16_t v)
 {
 	u_int8_t	v1;
 
 	v1 = (v & 0xff00) >> 8;
-	(*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride)) = v1;
-	(*(volatile u_int8_t *) (bsh->base + offset * bsh->stride)) = v & 0xff;
+	(*(volatile u_int8_t *)(h->base + offset++ * h->stride)) = v1;
+	(*(volatile u_int8_t *)(h->base + offset * h->stride)) = v & 0xff;
 }
 
 void
-mac68k_bsw2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
-		 u_int16_t v)
+mac68k_bsw2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		u_int16_t v)
 {
-	if (bsh->swapped) {
+	if (h->swapped) {
 		v = bswap16(v);
 	}
-	mac68k_bsws2_gen(t, bsh, offset, v);
+	mac68k_bsws2_gen(t, h, offset, v);
 }
 
 void
-mac68k_bsw4(bus_space_tag_t tag, bus_space_handle_t *bsh, bus_size_t offset,
-		 u_int32_t v)
+mac68k_bsw4(bus_space_tag_t tag, bus_space_handle_t *h, bus_size_t offset,
+	    u_int32_t v)
 {
-	(*(volatile u_int32_t *) (bsh->base + offset)) = v;
+	(*(volatile u_int32_t *)(h->base + offset)) = v;
 }
 
 void
-mac68k_bsw4_swap(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
+mac68k_bsw4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		 u_int32_t v)
 {
 	v = bswap32(v);
-	(*(volatile u_int32_t *) (bsh->base + offset)) = v;
+	(*(volatile u_int32_t *)(h->base + offset)) = v;
 }
 
 void
-mac68k_bsws4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
+mac68k_bsws4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		 u_int32_t v)
 {
 	u_int8_t	v1,v2,v3;
@@ -819,25 +797,25 @@ mac68k_bsws4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
 	v1 = (v & 0xff000000) >> 24;
 	v2 = (v & 0x00ff0000) >> 16;
 	v3 = (v & 0x0000ff00) >> 8;
-	(*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride)) = v1;
-	(*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride)) = v2;
-	(*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride)) = v3;
-	(*(volatile u_int8_t *) (bsh->base + offset * bsh->stride)) = v & 0xff;
+	(*(volatile u_int8_t *)(h->base + offset++ * h->stride)) = v1;
+	(*(volatile u_int8_t *)(h->base + offset++ * h->stride)) = v2;
+	(*(volatile u_int8_t *)(h->base + offset++ * h->stride)) = v3;
+	(*(volatile u_int8_t *)(h->base + offset * h->stride)) = v & 0xff;
 }
 
 void
-mac68k_bsw4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
+mac68k_bsw4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
 		 u_int32_t v)
 {
-	if (bsh->swapped) {
+	if (h->swapped) {
 		v = bswap32(v);
 	}
-	mac68k_bsws4_gen(t, bsh, offset, v);
+	mac68k_bsws4_gen(t, h, offset, v);
 }
 
 void
-mac68k_bswm1(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int8_t *a, size_t c)
+mac68k_bswm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int8_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -845,24 +823,24 @@ mac68k_bswm1(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movb	a1@+,a0@	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bswm1_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int8_t *a, size_t c)
+mac68k_bswm1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int8_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_1(t,*h,o,*a++);
+		bus_space_write_1(t, *h, offset, *a++);
 	}
 }
 
 void
-mac68k_bswm2(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bswm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -870,15 +848,15 @@ mac68k_bswm2(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movw	a1@+,a0@	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bswm2_swap(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bswm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -888,33 +866,33 @@ mac68k_bswm2_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		rolw	#8,d1		;
 		movw	d1,a0@		;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0", "d1");
 }
 
 void
-mac68k_bswm2_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bswm2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int16_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_2(t,*h,o,*a++);
+		bus_space_write_2(t, *h, offset, *a++);
 	}
 }
 
 void
-mac68k_bswms2_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bswms2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_stream_2(t,*h,o,*a++);
+		bus_space_write_stream_2(t, *h, offset, *a++);
 	}
 }
 
 void
-mac68k_bswm4(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bswm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -922,15 +900,15 @@ mac68k_bswm4(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movl	a1@+,a0@	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bswm4_swap(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bswm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -942,33 +920,33 @@ mac68k_bswm4_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		rolw	#8,d1		;
 		movl	d1,a0@		;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0", "d1");
 }
 
 void
-mac68k_bswm4_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bswm4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int32_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_4(t,*h,o,*a++);
+		bus_space_write_4(t, *h, offset, *a++);
 	}
 }
 
 void
-mac68k_bswms4_gen(bus_space_tag_t t, bus_space_handle_t *h,
-	bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bswms4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_stream_4(t,*h,o,*a++);
+		bus_space_write_stream_4(t, *h, offset, *a++);
 	}
 }
 
 void
-mac68k_bswr1(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t *a, size_t c)
+mac68k_bswr1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int8_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -976,25 +954,25 @@ mac68k_bswr1(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movb	a1@+,a0@+	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bswr1_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t *a, size_t c)
+mac68k_bswr1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int8_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_1(t,*h,o,*a++);
-		o++;
+		bus_space_write_1(t, *h, offset, *a++);
+		offset++;
 	}
 }
 
 void
-mac68k_bswr2(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bswr2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1002,15 +980,15 @@ mac68k_bswr2(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movw	a1@+,a0@+	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bswr2_swap(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bswr2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1020,35 +998,35 @@ mac68k_bswr2_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		rolw	#8,d1		;
 		movw	d1,a0@+		;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0","d1");
 }
 
 void
-mac68k_bswr2_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bswr2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int16_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_2(t,*h,o,*a++);
-		o += 2;
+		bus_space_write_2(t, *h, offset, *a++);
+		offset += 2;
 	}
 }
 
 void
-mac68k_bswrs2_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t *a, size_t c)
+mac68k_bswrs2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_stream_2(t,*h,o,*a++);
-		o += 2;
+		bus_space_write_stream_2(t, *h, offset, *a++);
+		offset += 2;
 	}
 }
 
 void
-mac68k_bswr4(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bswr4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1056,15 +1034,15 @@ mac68k_bswr4(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movl	a1@+,a0@+	;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0");
 }
 
 void
-mac68k_bswr4_swap(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bswr4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t *a, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1076,35 +1054,35 @@ mac68k_bswr4_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		rolw	#8,d1		;
 		movl	d1,a0@+		;
 		subql	#1,d0		;
-		jne	1b"				:
-							:
-		    "r" (h->base + o), "g" (a), "g" (c)	:
+		jne	1b"					:
+								:
+		    "r" (h->base + offset), "g" (a), "g" (c)	:
 		    "a0","a1","d0","d1");
 }
 
 void
-mac68k_bswr4_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bswr4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int32_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_4(t,*h,o,*a++);
-		o += 4;
+		bus_space_write_4(t, *h, offset, *a++);
+		offset += 4;
 	}
 }
 
 void
-mac68k_bswrs4_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t *a, size_t c)
+mac68k_bswrs4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t *a, size_t c)
 {
 	while (c--) {
-		bus_space_write_4(t,*h,o,*a++);
-		o += 4;
+		bus_space_write_4(t, *h, offset, *a++);
+		offset += 4;
 	}
 }
 
 void
-mac68k_bssm1(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t v, size_t c)
+mac68k_bssm1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int8_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1112,24 +1090,24 @@ mac68k_bssm1(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movb	d1,a0@		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssm1_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t v, size_t c)
+mac68k_bssm1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int8_t v, size_t c)
 {
 	while (c--) {
-		bus_space_write_1(t, *h, o, v);
+		bus_space_write_1(t, *h, offset, v);
 	}
 }
 
 void
-mac68k_bssm2(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t v, size_t c)
+mac68k_bssm2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int16_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1137,15 +1115,15 @@ mac68k_bssm2(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movw	d1,a0@		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssm2_swap(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t v, size_t c)
+mac68k_bssm2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1154,24 +1132,24 @@ mac68k_bssm2_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movw	d1,a0@		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssm2_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t v, size_t c)
+mac68k_bssm2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int16_t v, size_t c)
 {
 	while (c--) {
-		bus_space_write_2(t, *h, o, v);
+		bus_space_write_2(t, *h, offset, v);
 	}
 }
 
 void
-mac68k_bssm4(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t v, size_t c)
+mac68k_bssm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int32_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1179,15 +1157,15 @@ mac68k_bssm4(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movl	d1,a0@		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssm4_swap(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t v, size_t c)
+mac68k_bssm4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1198,24 +1176,24 @@ mac68k_bssm4_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movl	d1,a0@		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssm4_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t v, size_t c)
+mac68k_bssm4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int32_t v, size_t c)
 {
 	while (c--) {
-		bus_space_write_4(t, *h, o, v);
+		bus_space_write_4(t, *h, offset, v);
 	}
 }
 
 void
-mac68k_bssr1(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t v, size_t c)
+mac68k_bssr1(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int8_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1223,25 +1201,25 @@ mac68k_bssr1(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movb	d1,a0@+		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssr1_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int8_t v, size_t c)
+mac68k_bssr1_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int8_t v, size_t c)
 {
 	while (c--) {
-		bus_space_write_1(t,*h,o,v);
-		o++;
+		bus_space_write_1(t, *h, offset, v);
+		offset++;
 	}
 }
 
 void
-mac68k_bssr2(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t v, size_t c)
+mac68k_bssr2(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int16_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1249,15 +1227,15 @@ mac68k_bssr2(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movw	d1,a0@+		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssr2_swap(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t v, size_t c)
+mac68k_bssr2_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int16_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1266,25 +1244,25 @@ mac68k_bssr2_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movw	d1,a0@+		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssr2_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int16_t v, size_t c)
+mac68k_bssr2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int16_t v, size_t c)
 {
 	while (c--) {
-		bus_space_write_2(t,*h,o,v);
-		o += 2;
+		bus_space_write_2(t, *h, offset, v);
+		offset += 2;
 	}
 }
 
 void
-mac68k_bssr4(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t v, size_t c)
+mac68k_bssr4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+	     u_int32_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1292,15 +1270,15 @@ mac68k_bssr4(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movl	d1,a0@+		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssr4_swap(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t v, size_t c)
+mac68k_bssr4_swap(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		  u_int32_t v, size_t c)
 {
 	__asm __volatile ("
 		movl	%0,a0		;
@@ -1311,18 +1289,18 @@ mac68k_bssr4_swap(bus_space_tag_t t, bus_space_handle_t *h,
 		movl	%2,d0		;
 	1:	movl	d1,a0@+		;
 		subql	#1,d0		;
-		jne	1b"					:
-								:
-		    "r" (h->base+o), "g" ((u_long)v), "g" (c)	:
+		jne	1b"						:
+									:
+		    "r" (h->base + offset), "g" ((u_long)v), "g" (c)	:
 		    "a0","d0","d1");
 }
 
 void
-mac68k_bssr4_gen(bus_space_tag_t t, bus_space_handle_t *h,
-			   bus_size_t o, u_int32_t v, size_t c)
+mac68k_bssr4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset,
+		 u_int32_t v, size_t c)
 {
 	while (c--) {
-		bus_space_write_4(t,*h,o,v);
-		o += 4;
+		bus_space_write_4(t, *h, offset, v);
+		offset += 4;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.38.2.1 2000/11/20 18:11:37 bouyer Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.38.2.2 2000/11/22 16:06:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -165,7 +165,7 @@ struct ctlname {
 #define	KERN_MSGBUF		53	/* kernel message buffer */
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
 #define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
-#define	KERN_MAXID		56	/* number of valid kern ids */
+#define	KERN_MAXID		57	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -288,6 +288,8 @@ struct kinfo_proc {
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
 
+#define KI_NOCPU	(~(u_int64_t)0)
+
 typedef struct {
 	u_int32_t	__bits[4];
 } ki_sigset_t;
@@ -400,6 +402,7 @@ struct kinfo_proc2 {
 
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
+	u_int64_t p_cpuid;		/* LONG: cpu id */
 };
 
 /*
@@ -431,7 +434,8 @@ struct kinfo_proc2 {
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
 #define	HW_MACHINE_ARCH	10		/* string: machine architecture */
 #define	HW_ALIGNBYTES	11		/* int: ALIGNBYTES for the kernel */
-#define	HW_MAXID	12		/* number of valid hw ids */
+#define	HW_CNMAGIC	12		/* string: console magic sequence(s) */
+#define	HW_MAXID	13		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -446,6 +450,7 @@ struct kinfo_proc2 {
 	{ "diskstats", CTLTYPE_STRUCT }, \
 	{ "machine_arch", CTLTYPE_STRING }, \
 	{ "alignbytes", CTLTYPE_INT }, \
+	{ "cnmagic", CTLTYPE_STRING }, \
 }
 
 /*
@@ -629,6 +634,7 @@ int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
 int sysctl_rdstring __P((void *, size_t *, void *, const char *));
 int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
 int sysctl_rdstruct __P((void *, size_t *, void *, const void *, int));
+int sysctl_rdminstruct __P((void *, size_t *, void *, const void *, int));
 struct radix_node;
 struct walkarg;
 int sysctl_clockrate __P((void *, size_t *));

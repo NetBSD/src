@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.52.2.1 2000/11/20 18:09:11 bouyer Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.52.2.2 2000/11/22 16:05:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@
 #include <sys/sysctl.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_extern.h>
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int));
 
@@ -566,7 +568,7 @@ shminit()
 {
 	int i;
 
-	shminfo.shmmax *= NBPG;
+	shminfo.shmmax *= PAGE_SIZE;
 
 	for (i = 0; i < shminfo.shmmni; i++) {
 		shmsegs[i].shm_perm.mode = SHMSEG_FREE;

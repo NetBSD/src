@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.4 2000/11/20 11:40:47 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.5 2000/11/22 16:03:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
+#include <sys/scsiio.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -119,6 +120,8 @@ int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*
 					    struct ncr53c9x_ecb *));
 /*static*/ void ncr53c9x_dequeue	__P((struct ncr53c9x_softc *,
 					    struct ncr53c9x_ecb *));
+/*static*/ int	ncr53c9x_ioctl		__P((struct scsipi_channel *, u_long,
+					     caddr_t, int, struct proc *));
 
 void ncr53c9x_sense			__P((struct ncr53c9x_softc *,
 					    struct ncr53c9x_ecb *));
@@ -215,6 +218,7 @@ ncr53c9x_attach(sc)
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 8;
 	adapt->adapt_max_periph = 1;
+	adapt->adapt_ioctl = ncr53c9x_ioctl;
 	/* adapt_request initialized by front-end */
 	/* adapt_minphys initialized by front-end */
 
@@ -389,8 +393,8 @@ ncr53c9x_init(sc, doreset)
 		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[r];
 /* XXX - config flags per target: low bits: no reselect; high bits: no synch */
 
-		ti->flags = ((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
-				? T_NEGOTIATE : 0) |
+		ti->flags = (((sc->sc_cfflags & (1<<(r+8))) != 0)
+				? T_SYNCHOFF : 0) |
 				((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0) |
 				T_NEED_TO_RESET;
 		ti->period = sc->sc_minsync;
@@ -835,6 +839,53 @@ ncr53c9x_poll(sc, xs, count)
 		count--;
 	}
 	return (1);
+}
+
+int
+ncr53c9x_ioctl(chan, cmd, arg, flag, p)
+	struct scsipi_channel *chan;
+	u_long cmd;
+	caddr_t arg;
+	int flag;
+	struct proc *p;
+{
+	struct ncr53c9x_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	int s, error;
+
+	s = splbio();
+
+	switch (cmd) {
+	case SCBUSACCEL: {
+		struct scbusaccel_args *sp = (struct scbusaccel_args *)arg;
+		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sp->sa_target];
+
+		if (sp->sa_lun != 0)
+			break;
+
+		if ((sp->sa_flags & SC_ACCEL_SYNC) != 0) {
+			/* If this adapter can't do sync; drop it */
+			if (sc->sc_minsync == 0)
+				break;
+
+			/*
+			 * Check whether target is already clamped at
+			 * non-sync operation on user request.
+			 */
+			if ((ti->flags & T_SYNCHOFF) != 0)
+				break;
+
+			printf("%s: target %d: sync negotiation\n",
+					sc->sc_dev.dv_xname, sp->sa_target);
+			ti->flags |= T_NEGOTIATE;
+		}
+		break;
+	}
+	default:
+		error = ENOTTY;
+		break;
+	}
+	splx(s);
+	return (error);
 }
 
 
@@ -1456,7 +1507,9 @@ ncr53c9x_msgout(sc)
 			ecb = sc->sc_nexus;
 			ti = &sc->sc_tinfo[ecb->xs->xs_periph->periph_target];
 			ti->flags &= ~T_SYNCMODE;
-			ti->flags |= T_NEGOTIATE;
+			if ((ti->flags & T_SYNCHOFF) == 0)
+				/* We can re-start sync negotiation */
+				ti->flags |= T_NEGOTIATE;
 			break;
 		case SEND_PARITY_ERROR:
 			sc->sc_omess[0] = MSG_PARITY_ERROR;

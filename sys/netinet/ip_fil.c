@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.37.2.1 2000/11/20 18:10:25 bouyer Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.37.2.2 2000/11/22 16:06:08 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.37.2.1 2000/11/20 18:10:25 bouyer Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.37.2.2 2000/11/22 16:06:08 bouyer Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.15 2000/08/05 14:49:08 darrenr Exp";
@@ -245,6 +245,12 @@ int iplattach()
 # if defined(__sgi) || (defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000))
 	int error = 0;
 # endif
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000)
+	struct pfil_head *ph_inet;
+#ifdef USE_INET6
+	struct pfil_head *ph_inet6;
+#endif
+#endif
 
 	SPL_NET(s);
 	if (fr_running || (fr_checkp == fr_check)) {
@@ -264,9 +270,29 @@ int iplattach()
 		return EIO;
 
 # ifdef NETBSD_PF
+#  if __NetBSD_Version__ >= 105110000
+	ph_inet = pfil_head_get((void *)(u_long) AF_INET, DLT_RAW);
+#ifdef USE_INET6
+	ph_inet6 = pfil_head_get((void *)(u_long) AF_INET6, DLT_RAW);
+#endif
+	if (ph_inet == NULL
+#ifdef USE_INET6
+	    && ph_inet6 == NULL
+#endif
+	   )
+		return ENODEV;
+#  endif
 #  if __NetBSD_Version__ >= 104200000
-	error = pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
+#   if __NetBSD_Version__ >= 105110000
+	if (ph_inet != NULL)
+		error = pfil_add_hook((void *)fr_check_wrapper, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet);
+	else
+		error = 0;
+#   else
+	error = pfil_add_hook((void *)fr_check_wrapper, PFIL_IN|PFIL_OUT,
 			      &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
+#   endif
 	if (error) {
 #   ifdef USE_INET6
 		goto pfil_error;
@@ -281,11 +307,24 @@ int iplattach()
 	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 #  endif
 #  ifdef USE_INET6
-	error = pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
+#   if __NetBSD_Version__ >= 105110000
+	if (ph_inet6 != NULL)
+		error = pfil_add_hook((void *)fr_check_wrapper6, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet6);
+	else
+		error = 0;
+#   else
+	error = pfil_add_hook((void *)fr_check_wrapper6, PFIL_IN|PFIL_OUT,
 			      &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
+#   endif
 	if (error) {
-		pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
+#   if __NetBSD_Version__ >= 105110000
+		pfil_remove_hook((void *)fr_check_wrapper, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet);
+#   else
+		pfil_remove_hook((void *)fr_check_wrapper, PFIL_IN|PFIL_OUT,
 				 &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
+#   endif
 pfil_error:
 		appr_unload();
 		ip_natunload();
@@ -354,6 +393,14 @@ int ipldetach()
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
+# if __NetBSD_Version__ >= 105110000
+	struct pfil_head *ph_inet = pfil_head_get((void *)(u_long) AF_INET,
+	    DLT_RAW);
+#ifdef USE_INET6
+	struct pfil_head *ph_inet6 = pfil_head_get((void *)(u_long) AF_INET6,
+	    DLT_RAW);
+#endif
+# endif
 	int error = 0;
 #endif
 
@@ -388,16 +435,32 @@ int ipldetach()
 
 # ifdef NETBSD_PF
 #  if __NetBSD_Version__ >= 104200000
-	error = pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
+#   if __NetBSD_Version__ >= 105110000
+	if (ph_inet != NULL)
+		error = pfil_remove_hook((void *)fr_check_wrapper, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet);
+	else
+		error = 0;
+#   else
+	error = pfil_remove_hook((void *)fr_check_wrapper, PFIL_IN|PFIL_OUT,
 				 &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
+#   endif
 	if (error)
 		return error;
 #  else
 	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 #  endif
 #  ifdef USE_INET6
-	error = pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
+#   if __NetBSD_Version__ >= 105110000
+	if (ph_inet6 != NULL)
+		error = pfil_remove_hook((void *)fr_check_wrapper6, NULL,
+		    PFIL_IN|PFIL_OUT, ph_inet6);
+	else
+		error = 0;
+#   else
+	error = pfil_remove_hook((void *)fr_check_wrapper6, PFIL_IN|PFIL_OUT,
 				 &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
+#   endif
 	if (error)
 		return error;
 #  endif

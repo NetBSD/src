@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.12.12.1 2000/11/20 18:11:54 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.12.12.2 2000/11/22 16:06:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -685,7 +685,8 @@ long numdquot, desireddquot = DQUOTINC;
 void
 dqinit()
 {
-	dqhashtbl = hashinit(desiredvnodes, M_DQUOT, M_WAITOK, &dqhash);
+	dqhashtbl =
+	    hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &dqhash);
 	TAILQ_INIT(&dqfreelist);
 }
 

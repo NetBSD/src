@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscalls.c,v 1.23.8.1 2000/11/20 18:08:16 bouyer Exp $ */
+/* $NetBSD: ibcs2_syscalls.c,v 1.23.8.2 2000/11/22 16:02:29 bouyer Exp $ */
 
 /*
  * System call names.
@@ -20,7 +20,7 @@
 #include <compat/ibcs2/ibcs2_statfs.h>
 #endif /* _KERNEL && ! _LKM */
 
-char *ibcs2_syscallnames[] = {
+const char * const ibcs2_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_alpha,v 1.3 1998/10/07 23:48:04 erh Exp $
+#	$NetBSD: files.linux_alpha,v 1.3.12.1 2000/11/22 16:02:34 bouyer Exp $
 #
 # Config file description for alpha-dependent Linux compat code.
 
@@ -7,6 +7,6 @@ file	compat/linux/arch/alpha/linux_syscalls.c	compat_linux
 file	compat/linux/arch/alpha/linux_sysent.c		compat_linux
 file	compat/linux/arch/alpha/linux_pipe.c		compat_linux
 file	compat/linux/arch/alpha/linux_sigarray.c	compat_linux
+file	compat/linux/arch/alpha/linux_exec_alpha.c	compat_linux
 file	compat/linux/common/linux_sigaction.c		compat_linux
-# XXX olduname = osf_utsname on Linux.  Possibly not used.
 file	compat/linux/common/linux_olduname.c		compat_linux

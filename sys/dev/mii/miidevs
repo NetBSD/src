@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.8.2.1 2000/11/20 11:42:11 bouyer Exp $
+$NetBSD: miidevs,v 1.8.2.2 2000/11/22 16:03:54 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -49,18 +49,20 @@ $NetBSD: miidevs,v 1.8.2.1 2000/11/20 11:42:11 bouyer Exp $
  */
 
 oui AMD				0x00001a	Advanced Micro Devices
-oui BROADCOM			0x001018	Broadcom
+oui BROADCOM			0x001018	Broadcom Corporation
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x00207b	Level 1
+oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
 oui TI				0x080028	Texas Instruments
 oui TSC				0x00c039	TDK Semiconductor
+oui XAQTI			0x00e0ae	XaQti Corp.
 
 /* in the 79c873, AMD uses another OUI (which matches Davicom!) */
 oui xxAMD			0x00606e	Advanced Micro Devices
@@ -70,10 +72,12 @@ oui xxINTEL			0x00f800	Intel
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
+oui xxBROADCOM			0x000818	Broadcom Corporation
 oui xxICS			0x00057d	Integrated Circuit Systems
 oui xxSEEQ			0x0005be	Seeq
 oui xxSIS			0x000760	Silicon Integrated Systems
 oui xxTI			0x100014	Texas Instruments
+oui xxXAQTI			0x350700	XaQti Corp.
 
 /* Level 1 is completely different - from right to left.
 	(Two bits get lost in the third OUI byte.) */
@@ -81,6 +85,9 @@ oui xxLEVEL1			0x1e0400	Level 1
 
 /* Don't know what's going on here. */
 oui xxDAVICOM			0x006040	Davicom Semiconductor
+
+/* Contrived vendor for dcphy */
+oui xxDEC			0x040440	Digital Clone
 
 
 /*
@@ -93,11 +100,16 @@ model AMD 79c973phy		0x0036 Am79C973 internal PHY
 model AMD 79c901		0x0037 Am79C901 10 PHY
 model AMD 79c901home		0x0039 Am79C901 HomePHY
 
-/* Broadcom PHYs */
+/* Broadcom Corp. PHYs */
+model BROADCOM 3C905C		0x0017 Broadcom 3C905C internal PHY
 model BROADCOM BCM5201		0x0021 BCM5201 10/100 media interface
+model xxBROADCOM BCM5400	0x0004 BCM5400 1000baseTX PHY
 
 /* Davicom Semiconductor PHYs */
 model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface
+
+/* Contrived vendor/model for dcphy */
+model xxDEC xxDC		0x0001 DC
 
 /* Integrated Circuit Systems PHYs */
 model xxICS 1890		0x0002 ICS1890 10/100 media interface
@@ -109,6 +121,9 @@ model INTEL I82553		0x0035 i82553 10/100 media interface
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
+
+/* Myson Technology PHYs */
+model MYSON MTD972		0x0000 MTD972 10/100 media interface
 
 /* National Semiconductor PHYs */
 model NATSEMI DP83840		0x0000 DP83840 10/100 media interface
@@ -127,7 +142,11 @@ model xxSIS 900			0x0000 SiS 900 10/100 media interface
 /* Texas Instruments PHYs */
 model xxTI TLAN10T		0x0001 ThunderLAN 10baseT media interface
 model xxTI 100VGPMI		0x0002 ThunderLAN 100VG-AnyLan media interface
+model xxTI TNETE2101		0x0003 TNETE2101 media interface
 
 /* TDK Semiconductor PHYs */
 model TSC 78Q2120		0x0014 78Q2120 10/100 media interface
 model TSC 78Q2121		0x0015 78Q2121 100baseTX media interface
+
+/* XaQti Corp. PHYs */
+model XAQTI XMACII		0x0000 XaQti Corp. XMAC II gigabit interface

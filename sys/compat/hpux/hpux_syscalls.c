@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_syscalls.c,v 1.28.2.1 2000/11/20 18:08:12 bouyer Exp $ */
+/* $NetBSD: hpux_syscalls.c,v 1.28.2.2 2000/11/22 16:02:25 bouyer Exp $ */
 
 /*
  * System call names.
@@ -22,7 +22,7 @@
 #include <machine/hpux_machdep.h>
 #endif /* _KERNEL && ! _LKM */
 
-char *hpux_syscallnames[] = {
+const char * const hpux_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */

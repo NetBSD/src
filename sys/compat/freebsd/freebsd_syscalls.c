@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscalls.c,v 1.30.2.1 2000/11/20 18:08:10 bouyer Exp $ */
+/* $NetBSD: freebsd_syscalls.c,v 1.30.2.2 2000/11/22 16:02:23 bouyer Exp $ */
 
 /*
  * System call names.
@@ -24,7 +24,7 @@
 #include <machine/freebsd_machdep.h>
 #endif /* _KERNEL && ! _LKM */
 
-char *freebsd_syscallnames[] = {
+const char * const freebsd_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */

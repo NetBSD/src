@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.29.2.1 2000/11/20 20:20:18 bouyer Exp $	*/
+/*	$NetBSD: pm.c,v 1.29.2.2 2000/11/22 16:01:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.29.2.1 2000/11/20 20:20:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.29.2.2 2000/11/22 16:01:25 bouyer Exp $");
 
 
 #include <sys/param.h>
@@ -207,7 +207,7 @@ pminit(fi, base, unit)
 		fi->fi_type.fb_cmsize = 0;
 		fi->fi_type.fb_size = 0x40000;
 		fi->fi_pixelsize = (1024 / 8) * 864;
-		fi->fi_linebytes = 1024 / 8;
+		fi->fi_linebytes = 2048 / 8;
 	}
 	else {
 		fi->fi_type.fb_boardtype = PMAX_FBTYPE_PM_COLOR;

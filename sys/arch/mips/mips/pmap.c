@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72.2.1 2000/11/20 20:13:36 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72.2.2 2000/11/22 16:00:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72.2.1 2000/11/20 20:13:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72.2.2 2000/11/22 16:00:46 bouyer Exp $");
 
 /*
  *	Manages physical address maps.
@@ -218,7 +218,6 @@ void pmap_enter_pv __P((pmap_t, vaddr_t, paddr_t, u_int *));
 pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 
 #ifdef MIPS3
-void pmap_page_cache __P((paddr_t, int));
 void mips_dump_segtab __P((struct proc *));
 #endif
 
@@ -226,8 +225,6 @@ void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
 #if defined(MIPS3_L2CACHE_ABSENT)
-static void mips_flushcache_allpvh __P((paddr_t));
-
 /*
  * Flush virtual addresses associated with a given physical address
  */
@@ -236,10 +233,20 @@ mips_flushcache_allpvh(paddr_t pa)
 {
 	struct pv_entry *pv = pa_to_pvh(pa);
 
+#if defined(MIPS3_NO_PV_UNCACHED)
+	/* No current mapping.  Cache was flushed by pmap_remove_pv() */
+	if (pv->pv_pmap == NULL)
+		return;
+
+	/* Only one index is allowed at a time */
+	if (mips_indexof(pa) != mips_indexof(pv->pv_va))
+		MachFlushDCache(pv->pv_va, NBPG);
+#else
 	while (pv) {
 		MachFlushDCache(pv->pv_va, NBPG);
 		pv = pv->pv_next;
 	}
+#endif
 }
 #endif
 
@@ -1006,15 +1013,14 @@ pmap_is_page_ro(pmap, va, entry)
 	return (entry & mips_pg_ro_bit());
 }
 
-#ifdef MIPS3
+#if defined(MIPS3) && !defined(MIPS3_NO_PV_UNCACHED)
 /*
  *	pmap_page_cache:
  *
  *	Change all mappings of a page to cached/uncached.
  */
-void
-pmap_page_cache(pa, mode)
-	paddr_t pa;
+static void
+pmap_page_cache(paddr_t pa, int mode)
 {
 	pv_entry_t pv;
 	pt_entry_t *pte;
@@ -1541,8 +1547,6 @@ void
 pmap_zero_page(phys)
 	paddr_t phys;
 {
-	int *p, *end;
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
@@ -1552,31 +1556,8 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%lx) nonphys\n", phys);
 #endif
 
-	p = (int *)MIPS_PHYS_TO_KSEG0(phys);
-	end = p + PAGE_SIZE / sizeof(int);
-	/* XXX blkclr()? */
-	do {
-		p[0] = 0;
-		p[1] = 0;
-		p[2] = 0;
-		p[3] = 0;
+	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG0(phys));
 
-		p[4] = 0;
-		p[5] = 0;
-		p[6] = 0;
-		p[7] = 0;
-
-		p[8] = 0;
-		p[9] = 0;
-		p[10] = 0;
-		p[11] = 0;
-
-		p[12] = 0;
-		p[13] = 0;
-		p[14] = 0;
-		p[15] = 0;
-		p += 16;
-	} while (p != end);
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
@@ -1586,9 +1567,10 @@ pmap_zero_page(phys)
 	 * might read old stale DRAM footprint, not the just-written data.
 	 */
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
-		/*XXX FIXME Not very sophisticated */
-		/*	MachFlushCache();*/
-		MachFlushDCache(MIPS_PHYS_TO_KSEG0(phys), NBPG);
+		if (mips3_L1TwoWayCache)
+			MachHitFlushDCache(MIPS_PHYS_TO_KSEG0(phys), NBPG);
+		else
+			MachFlushDCache(phys, NBPG);
 	}
 #endif
 }
@@ -1602,8 +1584,6 @@ boolean_t
 pmap_zero_page_uncached(phys)
 	paddr_t phys;
 {
-	int *p, *end;
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page_uncached(%lx)\n", phys);
@@ -1612,32 +1592,7 @@ pmap_zero_page_uncached(phys)
 	if (! (phys < MIPS_MAX_MEM_ADDR))
 		printf("pmap_zero_page_uncached(%lx) nonphys\n", phys);
 #endif
-
-	p = (int *)MIPS_PHYS_TO_KSEG1(phys);
-	end = p + PAGE_SIZE / sizeof(int);
-	/* XXX blkclr()? */
-	do {
-		p[0] = 0;
-		p[1] = 0;
-		p[2] = 0;
-		p[3] = 0;
-
-		p[4] = 0;
-		p[5] = 0;
-		p[6] = 0;
-		p[7] = 0;
-
-		p[8] = 0;
-		p[9] = 0;
-		p[10] = 0;
-		p[11] = 0;
-
-		p[12] = 0;
-		p[13] = 0;
-		p[14] = 0;
-		p[15] = 0;
-		p += 16;
-	} while (p != end);
+	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG1(phys));
 
 	return (TRUE);
 }
@@ -1649,10 +1604,6 @@ void
 pmap_copy_page(src, dst)
 	paddr_t src, dst;
 {
-	int *s, *d, *end;
-	int tmp0, tmp1, tmp2, tmp3;
-	int tmp4, tmp5, tmp6, tmp7;
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
@@ -1684,49 +1635,10 @@ pmap_copy_page(src, dst)
 /*		mips_flushcache_allpvh(dst); */
 	}
 #endif
-	s = (int *)MIPS_PHYS_TO_KSEG0(src);
-	d = (int *)MIPS_PHYS_TO_KSEG0(dst);
-	end = s + PAGE_SIZE / sizeof(int);
-	do {
-		tmp0 = s[0];
-		tmp1 = s[1];
-		tmp2 = s[2];
-		tmp3 = s[3];
-		d[0] = tmp0;
-		d[1] = tmp1;
-		d[2] = tmp2;
-		d[3] = tmp3;
 
-		tmp4 = s[4];
-		tmp5 = s[5];
-		tmp6 = s[6];
-		tmp7 = s[7];
-		d[4] = tmp4;
-		d[5] = tmp5;
-		d[6] = tmp6;
-		d[7] = tmp7;
+	mips_pagecopy((caddr_t)MIPS_PHYS_TO_KSEG0(dst),
+		      (caddr_t)MIPS_PHYS_TO_KSEG0(src));
 
-		tmp0 = s[8];
-		tmp1 = s[9];
-		tmp2 = s[10];
-		tmp3 = s[11];
-		d[8] = tmp0;
-		d[9] = tmp1;
-		d[10] = tmp2;
-		d[11] = tmp3;
-
-		tmp4 = s[12];
-		tmp5 = s[13];
-		tmp6 = s[14];
-		tmp7 = s[15];
-		d[12] = tmp4;
-		d[13] = tmp5;
-		d[14] = tmp6;
-		d[15] = tmp7;
-
-		s += 16;
-		d += 16;
-	} while (s != end);
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
@@ -1738,9 +1650,10 @@ pmap_copy_page(src, dst)
 	 *      the destination as well?
 	 */
 	if (CPUISMIPS3) {
-		/*XXX FIXME Not very sophisticated */
-		/*	MachFlushCache();*/
-		MachFlushDCache(dst, NBPG);
+		if (mips3_L1TwoWayCache)
+			MachHitFlushDCache(MIPS_PHYS_TO_KSEG0(dst), NBPG);
+		else
+			MachFlushDCache(dst, NBPG);
 	}
 #endif
 }
@@ -1924,6 +1837,9 @@ pmap_enter_pv(pmap, va, pa, npte)
 		printf("pmap_enter: pv %p: was %lx/%p/%p\n",
 		    pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
 #endif
+#if defined(MIPS3_NO_PV_UNCACHED)
+again:
+#endif
 	if (pv->pv_pmap == NULL) {
 		/*
 		 * No entries yet, use header as the first entry
@@ -1941,23 +1857,36 @@ pmap_enter_pv(pmap, va, pa, npte)
 	} else {
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 		if (CPUISMIPS3 && !mips_L2CachePresent) {
-			if (!(pv->pv_flags & PV_UNCACHED)) {
 			/*
 			 * There is at least one other VA mapping this page.
-			 * Check if they are cache index compatible. If not
-			 * remove all mappings, flush the cache and set page
-			 * to be mapped uncached. Caching will be restored
-			 * when pages are mapped compatible again.
-			 * XXX - caching is not currently being restored, but
-			 * XXX - I haven't seen the pages uncached since
-			 * XXX - using pmap_prefer().	mhitch
+			 * Check if they are cache index compatible.
 			 */
+#if defined(MIPS3_NO_PV_UNCACHED)
+			/*
+			 * Instead of mapping uncached, which some platforms
+			 * cannot support, remove the mapping from the pmap.
+			 * When this address is touched again, the uvm will
+			 * fault it in.  Because of this, each page will only
+			 * be mapped with one index at any given time.
+			 */
+			for (npv = pv; npv; npv = npv->pv_next) {
+				if (mips_indexof(npv->pv_va) !=
+				    mips_indexof(va)) {
+					pmap_remove(npv->pv_pmap, npv->pv_va,
+						    npv->pv_va + PAGE_SIZE);
+					goto again;
+				}
+			}
+#else
+			if (!(pv->pv_flags & PV_UNCACHED)) {
 				for (npv = pv; npv; npv = npv->pv_next) {
 					/*
-					 * Check cache aliasing incompatibility
+					 * Check cache aliasing incompatibility.  If one
+					 * exists, re-map this page uncached until all
+					 * mappings have the same index again.
 					 */
-					if ((npv->pv_va & mips_CacheAliasMask)
-					    != (va & mips_CacheAliasMask)) {
+					if (mips_indexof(npv->pv_va) !=
+					    mips_indexof(va)) {
 						pmap_page_cache(pa,PV_UNCACHED);
 						MachFlushDCache(pv->pv_va, PAGE_SIZE);
 						*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
@@ -1971,6 +1900,7 @@ pmap_enter_pv(pmap, va, pa, npte)
 			else {
 				*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
 			}
+#endif
 		}
 #endif
 		/*
@@ -2104,6 +2034,7 @@ pmap_remove_pv(pmap, va, pa)
 	}
 #endif
 #ifdef MIPS3
+#if !defined(MIPS3_NO_PV_UNCACHED)
 	if (CPUISMIPS3 && pv->pv_flags & PV_UNCACHED) {
 		/*
 		 * Page is currently uncached, check if alias mapping has been
@@ -2111,12 +2042,13 @@ pmap_remove_pv(pmap, va, pa)
 		 */
 		pv = pa_to_pvh(pa);
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-			if ((pv->pv_va ^ npv->pv_va) & mips_CacheAliasMask)
+			if (mips_indexof(pv->pv_va ^ npv->pv_va))
 				break;
 		}
 		if (npv == NULL)
 			pmap_page_cache(pa, 0);
 	}
+#endif
 	if (CPUISMIPS3 && last != 0) {
 		MachFlushDCache(va, PAGE_SIZE);
 		if (mips_L2CachePresent)

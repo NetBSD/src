@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18.2.1 2000/11/20 20:19:21 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18.2.2 2000/11/22 16:01:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,6 +44,14 @@
 /*
  * Machine dependent constants for 532.
  */
+
+/*
+ * The NS32532 has 4K pages.  Override the PAGE_* definitions to
+ * be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * Virtual address space arrangement. On 532, both user and kernel

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.3.8.1 2000/11/20 18:08:26 bouyer Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.3.8.2 2000/11/22 16:02:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -44,8 +44,6 @@
 #error YOU GOTTA BE KIDDING!
 #endif
 
-#include "opt_compat_aout.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -55,10 +53,6 @@
 #include <sys/resourcevar.h>
 
 #include <compat/m68k4k/m68k4k_exec.h>
-
-#if defined(COMPAT_AOUT)
-extern struct emul emul_netbsd_aout;
-#endif
 
 int	exec_m68k4k_prep_zmagic __P((struct proc *, struct exec_package *));
 int	exec_m68k4k_prep_nmagic __P((struct proc *, struct exec_package *));
@@ -116,10 +110,6 @@ exec_m68k4k_makecmds(p, epp)
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
-#if defined(COMPAT_AOUT)
-	else
-		epp->ep_emul = &emul_netbsd_aout;
-#endif
 
 	return error;
 }

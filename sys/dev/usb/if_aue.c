@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.48.2.2 2000/11/20 11:43:19 bouyer Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.48.2.3 2000/11/22 16:05:01 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -902,11 +902,6 @@ USB_ATTACH(aue)
 	/* Attach the interface. */
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
-#endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->aue_dev),
 	    RND_TYPE_NET, 0);
@@ -952,9 +947,6 @@ USB_DETACH(aue)
 #endif
 	mii_detach(&sc->aue_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->aue_mii.mii_media, IFM_INST_ANY);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ether_ifdetach(ifp);
 #endif /* __NetBSD__ */
 

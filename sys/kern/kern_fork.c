@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.61.2.1 2000/11/20 18:09:00 bouyer Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.61.2.2 2000/11/22 16:05:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -106,9 +106,8 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval,
     struct proc **rnewprocp)
 {
-	struct proc *p2;
+	struct proc *p2, *tp;
 	uid_t uid;
-	struct proc *newproc;
 	int count, s;
 	vaddr_t uaddr;
 	static int nextpid, pidchecked = 0;
@@ -126,6 +125,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 		tablefull("proc", "increase kern.maxproc or NPROC");
 		return (EAGAIN);
 	}
+	nprocs++;
 
 	/*
 	 * Increment the count of procs running with this uid. Don't allow
@@ -135,6 +135,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (__predict_false(uid != 0 && count >
 			    p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
+		nprocs--;
 		return (EAGAIN);
 	}
 
@@ -147,6 +148,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	uaddr = uvm_km_valloc(kernel_map, USPACE);
 	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
+		nprocs--;
 		return (ENOMEM);
 	}
 
@@ -156,94 +158,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 
 	/* Allocate new proc. */
-	newproc = pool_get(&proc_pool, PR_WAITOK);
-
-	/*
-	 * BEGIN PID ALLOCATION.
-	 */
-	s = proclist_lock_write();
-
-	/*
-	 * Find an unused process ID.  We remember a range of unused IDs
-	 * ready to use (from nextpid+1 through pidchecked-1).
-	 */
-	nextpid++;
-retry:
-	/*
-	 * If the process ID prototype has wrapped around,
-	 * restart somewhat above 0, as the low-numbered procs
-	 * tend to include daemons that don't exit.
-	 */
-	if (nextpid >= PID_MAX) {
-		nextpid = 100;
-		pidchecked = 0;
-	}
-	if (nextpid >= pidchecked) {
-		const struct proclist_desc *pd;
-
-		pidchecked = PID_MAX;
-		/*
-		 * Scan the process lists to check whether this pid
-		 * is in use.  Remember the lowest pid that's greater
-		 * than nextpid, so we can avoid checking for a while.
-		 */
-		pd = proclists;
-again:
-		for (p2 = LIST_FIRST(pd->pd_list); p2 != 0;
-		     p2 = LIST_NEXT(p2, p_list)) {
-			while (p2->p_pid == nextpid ||
-			    p2->p_pgrp->pg_id == nextpid ||
-			    p2->p_session->s_sid == nextpid) {
-				nextpid++;
-				if (nextpid >= pidchecked)
-					goto retry;
-			}
-			if (p2->p_pid > nextpid && pidchecked > p2->p_pid)
-				pidchecked = p2->p_pid;
-
-			if (p2->p_pgrp->pg_id > nextpid && 
-			    pidchecked > p2->p_pgrp->pg_id)
-				pidchecked = p2->p_pgrp->pg_id;
-
-			if (p2->p_session->s_sid > nextpid &&
-			    pidchecked > p2->p_session->s_sid)
-				pidchecked = p2->p_session->s_sid;
-		}
-
-		/*
-		 * If there's another list, scan it.  If we have checked
-		 * them all, we've found one!
-		 */
-		pd++;
-		if (pd->pd_list != NULL)
-			goto again;
-	}
-
-	nprocs++;
-	p2 = newproc;
-
-	/* Record the pid we've allocated. */
-	p2->p_pid = nextpid;
-
-	/* Record the signal to be delivered to the parent on exit. */
-	p2->p_exitsig = exitsig;
-
-	/*
-	 * Put the proc on allproc before unlocking PID allocation
-	 * so that waiters won't grab it as soon as we unlock.
-	 */
-
-	p2->p_stat = SIDL;			/* protect against others */
-	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
-
-	LIST_INSERT_HEAD(&allproc, p2, p_list);
-
-	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
-
-	/*
-	 * END PID ALLOCATION.
-	 */
-	proclist_unlock_write(s);
+	p2 = pool_get(&proc_pool, PR_WAITOK);
 
 	/*
 	 * Make a proc table entry for the new process.
@@ -274,7 +189,7 @@ again:
 	/*
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
-	 * The p_stats and p_sigacts substructs are set in vm_fork.
+	 * The p_stats and p_sigacts substructs are set in uvm_fork().
 	 */
 	p2->p_flag = P_INMEM | (p1->p_flag & P_SUGID);
 	p2->p_emul = p1->p_emul;
@@ -347,6 +262,12 @@ again:
 		p2->p_sigacts = sigactsinit(p1);
 
 	/*
+	 * If emulation has process fork hook, call it now.
+	 */
+	if (p2->p_emul->e_proc_fork)
+		(*p2->p_emul->e_proc_fork)(p2, p1);
+
+	/*
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.
 	 */
@@ -361,6 +282,89 @@ again:
 	    stack, stacksize,
 	    (func != NULL) ? func : child_return,
 	    (arg != NULL) ? arg : p2);
+
+	/*
+	 * BEGIN PID ALLOCATION.
+	 */
+	s = proclist_lock_write();
+
+	/*
+	 * Find an unused process ID.  We remember a range of unused IDs
+	 * ready to use (from nextpid+1 through pidchecked-1).
+	 */
+	nextpid++;
+retry:
+	/*
+	 * If the process ID prototype has wrapped around,
+	 * restart somewhat above 0, as the low-numbered procs
+	 * tend to include daemons that don't exit.
+	 */
+	if (nextpid >= PID_MAX) {
+		nextpid = 100;
+		pidchecked = 0;
+	}
+	if (nextpid >= pidchecked) {
+		const struct proclist_desc *pd;
+
+		pidchecked = PID_MAX;
+		/*
+		 * Scan the process lists to check whether this pid
+		 * is in use.  Remember the lowest pid that's greater
+		 * than nextpid, so we can avoid checking for a while.
+		 */
+		pd = proclists;
+again:
+		LIST_FOREACH(tp, pd->pd_list, p_list) {
+			while (tp->p_pid == nextpid ||
+			    tp->p_pgrp->pg_id == nextpid ||
+			    tp->p_session->s_sid == nextpid) {
+				nextpid++;
+				if (nextpid >= pidchecked)
+					goto retry;
+			}
+			if (tp->p_pid > nextpid && pidchecked > tp->p_pid)
+				pidchecked = tp->p_pid;
+
+			if (tp->p_pgrp->pg_id > nextpid && 
+			    pidchecked > tp->p_pgrp->pg_id)
+				pidchecked = tp->p_pgrp->pg_id;
+
+			if (tp->p_session->s_sid > nextpid &&
+			    pidchecked > tp->p_session->s_sid)
+				pidchecked = tp->p_session->s_sid;
+		}
+
+		/*
+		 * If there's another list, scan it.  If we have checked
+		 * them all, we've found one!
+		 */
+		pd++;
+		if (pd->pd_list != NULL)
+			goto again;
+	}
+
+	/* Record the pid we've allocated. */
+	p2->p_pid = nextpid;
+
+	/* Record the signal to be delivered to the parent on exit. */
+	p2->p_exitsig = exitsig;
+
+	/*
+	 * Put the proc on allproc before unlocking PID allocation
+	 * so that waiters won't grab it as soon as we unlock.
+	 */
+
+	p2->p_stat = SIDL;			/* protect against others */
+	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
+
+	LIST_INSERT_HEAD(&allproc, p2, p_list);
+
+	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
+
+	/*
+	 * END PID ALLOCATION.
+	 */
+	proclist_unlock_write(s);
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
@@ -409,6 +413,12 @@ again:
 		retval[0] = p2->p_pid;
 		retval[1] = 0;
 	}
+
+#ifdef KTRACE
+	if (KTRPOINT(p2, KTR_EMUL))
+		ktremul(p2);
+#endif
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.16.2.1 2000/11/20 18:11:47 bouyer Exp $	*/
+/*	$NetBSD: lfs.h,v 1.16.2.2 2000/11/22 16:06:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -88,6 +88,36 @@
 #define MIN_FREE_SEGS	2
 #define LFS_MAX_ACTIVE	10
 #define LFS_MAXDIROP	(desiredvnodes>>2)
+
+/*
+ * #define WRITE_THRESHHOLD    ((nbuf >> 1) - 10)
+ * #define WAIT_THRESHHOLD     (nbuf - (nbuf >> 2) - 10)
+ */
+#define LFS_MAX_BUFS        ((nbuf >> 2) - 10)
+#define LFS_WAIT_BUFS       ((nbuf >> 1) - (nbuf >> 3) - 10)
+/* These are new ... is LFS taking up too much memory in its buffers? */
+#define LFS_MAX_BYTES       (((bufpages >> 2) - 10) * NBPG)
+#define LFS_WAIT_BYTES      (((bufpages >> 1) - (bufpages >> 3) - 10) * NBPG)
+#define LFS_BUFWAIT         2
+
+#define LFS_LOCK_BUF(bp) do {						\
+	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == 0) {		\
+		++locked_queue_count;       				\
+		locked_queue_bytes += bp->b_bufsize;			\
+	}								\
+	(bp)->b_flags |= B_LOCKED;					\
+} while(0)
+
+#define LFS_UNLOCK_BUF(bp) do {						\
+	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {	\
+		--locked_queue_count;       				\
+		locked_queue_bytes -= bp->b_bufsize;			\
+		if (locked_queue_count < LFS_WAIT_BUFS &&		\
+		    locked_queue_bytes < LFS_WAIT_BYTES)		\
+			wakeup(&locked_queue_count);			\
+	}								\
+	(bp)->b_flags &= ~B_LOCKED;					\
+} while(0)
 
 /* For convenience */
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
@@ -481,6 +511,17 @@ struct segsum {
 		panic("lfs: ifile read");				\
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
 }
+
+/* Synchronize the Ifile cleaner info with current avail and bfree */
+#define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {                \
+    if ((w) || (cip)->bfree != (fs)->lfs_bfree ||                \
+        (cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail) {    \
+	(cip)->bfree = (fs)->lfs_bfree;                          \
+        (cip)->avail = (fs)->lfs_avail - (fs)->lfs_ravail;       \
+	(void) VOP_BWRITE(bp); /* Ifile */                       \
+    } else                                                       \
+	brelse(bp);                                              \
+} while(0)
 
 /* Read in the block with a specific inode from the ifile. */
 #define	LFS_IENTRY(IP, F, IN, BP) {					\

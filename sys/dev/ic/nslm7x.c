@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.11.2.2 2000/11/20 11:40:50 bouyer Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.11.2.3 2000/11/22 16:03:29 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -299,13 +299,13 @@ wb_match(sc)
 	j = lm_readreg(sc, WB_VENDID) << 8;
 	lm_writereg(sc, WB_BANKSEL, 0);
 	j |= lm_readreg(sc, WB_VENDID);
-	DPRINTF(("winbond vend id %d\n", j));
+	DPRINTF(("winbond vend id 0x%x\n", j));
 	if (j != WB_VENDID_WINBOND)
 		return 0;
 	/* read device ID */
 	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	j = lm_readreg(sc, WB_BANK0_CHIPID);
-	DPRINTF(("winbond chip id %d\n", j));
+	DPRINTF(("winbond chip id 0x%x\n", j));
 	switch(j) {
 	case WB_CHIPID_83781:
 	case WB_CHIPID_83781_2:

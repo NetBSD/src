@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.14.2.2 2000/11/20 20:09:17 bouyer Exp $
+#	$NetBSD: SWINGER,v 1.14.2.3 2000/11/22 16:00:17 bouyer Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.14.2.2 $"
+#ident 		"SWINGER-$Revision: 1.14.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -738,6 +738,10 @@ midi*	at sb?			# SB1 MIDI port
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
 
+# TV cards
+
+# Brooktree 848/849/878/879 based TV cards
+bktr* at pci? dev ? function ?
 
 # Mice
 

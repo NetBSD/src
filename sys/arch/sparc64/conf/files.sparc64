@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.23.2.1 2000/11/20 20:26:41 bouyer Exp $
+#	$NetBSD: files.sparc64,v 1.23.2.2 2000/11/22 16:01:45 bouyer Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -32,6 +32,7 @@ attach pcons at mainbus
 file	arch/sparc64/dev/pcons.c		pcons needs-flag
 
 include "dev/sun/files.sun"
+include "dev/i2o/files.i2o"
 
 include "dev/sbus/files.sbus"
 attach sbus at mainbus
@@ -75,26 +76,11 @@ file	dev/clock_subr.c
 
 device power
 attach power at sbus, ebus
-file	arch/sparc64/dev/power.c			power
+file	arch/sparc64/dev/power.c		power
 
 device cpu
 attach cpu at mainbus
 file	arch/sparc64/sparc64/cpu.c
-
-device zs {channel = -1}
-attach zs at mainbus, sbus
-file	arch/sparc64/dev/zs.c			zs needs-count
-file	dev/ic/z8530sc.c			zs
-
-# siemens SAB82532; found on U5/U10/... for tty ports.
-#device sab {channel = -1}
-#attach sab at ebus
-#file	arch/sparc64/dev/sab_ebus.c		sab
-#file	dev/ic/sab82532.c			sab
-
-# "com" attachments for the kbd/mouse of the U5/U10/...
-attach com at ebus with com_ebus
-file	arch/sparc64/dev/com_ebus.c		com_ebus
 
 # XXX bogus; this is in dev/isa/files.isa.  fix me please!
 # XXX we should attach a `bpp'-style device here rather than
@@ -122,9 +108,25 @@ attach	audiocs at ebus with audiocs_ebus
 file	arch/sparc64/dev/cs4231_ebus.c		audiocs_ebus
 
 #
-# Console (zs) related stuff
+# Console related stuff
 #
 
+device zs {channel = -1}
+attach zs at mainbus, sbus
+file	arch/sparc64/dev/zs.c			zs needs-flag
+file	dev/ic/z8530sc.c			zs
+
+# siemens SAB82532; found on U5/U10/... for tty ports.
+#device sab {channel = -1}
+#attach sab at ebus
+#file	arch/sparc64/dev/sab_ebus.c		sab
+#file	dev/ic/sab82532.c			sab
+
+# "com" attachments for the kbd/mouse of the U5/U10/...
+attach com at ebus with com_ebus
+file	arch/sparc64/dev/com_ebus.c		com_ebus
+
+define zstty {}
 device zstty: tty
 attach zstty at zs
 file dev/ic/z8530tty.c			zstty needs-flag
@@ -136,24 +138,18 @@ file arch/sparc/dev/zs_kgdb.c		kgdb
 
 device kbd
 attach kbd at zs with kbd_zs
-#attach kbd at ucom with kbd_ucom
+attach kbd at zstty, com
 file dev/sun/kbd_zs.c			kbd_zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sparc64/dev/kd.c 		kbd
-#file arch/sparc64/dev/kbd_ucom.c 	kbd_ucom
+file dev/sun/sunkbd.c			kbd needs-flag
 
 device ms
 attach ms at zs with ms_zs
-#attach ms at ucom with ms_ucom
+attach ms at zstty, com
 file dev/sun/ms_zs.c			ms_zs
 file dev/sun/ms.c			ms needs-flag
-#file arch/sparc64/dev/ms_ucom.c 	ms_ucom
-
-attach kbd at com
-file dev/sun/sunkbd.c			kbd needs-flag
-
-attach ms at com
 file dev/sun/sunms.c			ms needs-flag
 
 #

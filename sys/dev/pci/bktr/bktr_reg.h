@@ -1,7 +1,7 @@
-/*	$NetBSD: bktr_reg.h,v 1.8.2.2 2000/11/20 22:35:47 bouyer Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.8.2.3 2000/11/22 16:04:32 bouyer Exp $	*/
 
 /*
- * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.38 2000/06/26 09:41:32 roger Exp
+ * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.40 2000/09/10 14:34:08 roger Exp
  *
  * Copyright (c) 1999 Roger Hardiman
  * Copyright (c) 1998 Amancio Hasty
@@ -38,13 +38,13 @@
 
 #ifdef __FreeBSD__
 #  if (__FreeBSD_version >= 310000)
-#    include <sys/bus.h>
 #    include "smbus.h"
 #  else
 #    define NSMBUS 0		/* FreeBSD before 3.1 does not have SMBUS */
 #  endif
-#else
-#  define NSMBUS 0		/* Non FreeBSD systems do not have SMBUS */
+#  if (NSMBUS > 0)
+#    define BKTR_USE_FREEBSD_SMBUS
+#  endif
 #endif
 
 #ifdef __NetBSD__
@@ -60,6 +60,10 @@
  *
  */
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(BROOKTREE_ALLOC_PAGES)
+#define BKTR_ALLOC_PAGES BROOKTREE_ALLOC_PAGES
+#endif
+
 #if defined(BROOKTREE_SYSTEM_DEFAULT)
 #define BKTR_SYSTEM_DEFAULT BROOKTREE_SYSTEM_DEFAULT
 #endif
@@ -90,10 +94,7 @@
 /*
  * Definitions for the Brooktree 848/878 video capture to pci interface.
  */
-#ifdef __NetBSD__
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcireg.h>
-#else
+#ifndef __NetBSD__
 #define PCI_VENDOR_SHIFT                        0
 #define PCI_VENDOR_MASK                         0xffff
 #define PCI_VENDOR(id) \
@@ -104,16 +105,13 @@
 #define PCI_PRODUCT(id) \
             (((id) >> PCI_PRODUCT_SHIFT) & PCI_PRODUCT_MASK)
 
-#define PCI_VENDOR_BROOKTREE    0x109e          /* Brooktree */
+/* PCI vendor ID */
+#define PCI_VENDOR_BROOKTREE    0x109e                /* Brooktree */
 /* Brooktree products */
-#define PCI_PRODUCT_BROOKTREE_BT848     0x0350          /* Bt848 Video
-							   Capture */ 
-#define PCI_PRODUCT_BROOKTREE_BT849     0x0351          /* Bt849 Video
-							   Capture */
-#define PCI_PRODUCT_BROOKTREE_BT878     0x036e          /* Bt878 Video
-							   Capture */
-#define PCI_PRODUCT_BROOKTREE_BT879     0x036f          /* Bt879 Video
-							   Capture */
+#define PCI_PRODUCT_BROOKTREE_BT848     0x0350        /* Bt848 Video Capture */
+#define PCI_PRODUCT_BROOKTREE_BT849     0x0351        /* Bt849 Video Capture */
+#define PCI_PRODUCT_BROOKTREE_BT878     0x036e        /* Bt878 Video Capture */
+#define PCI_PRODUCT_BROOKTREE_BT879     0x036f        /* Bt879 Video Capture */
 #endif
 
 #define BROOKTREE_848                   1
@@ -455,7 +453,7 @@ struct format_params {
   int vbi_num_lines, vbi_num_samples;
 };
 
-#if ((defined(__FreeBSD__)) && (NSMBUS > 0))
+#if defined(BKTR_USE_FREEBSD_SMBUS)
 struct bktr_i2c_softc {
 	device_t iicbus;
 	device_t smbus;
@@ -488,13 +486,6 @@ struct bktr_i2c_softc {
 
 
 typedef struct bktr_clip bktr_clip_t;
-
-/*
- * NetBSD >= 1.3H uses vaddr_t instead of vm_offset_t
- */
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 103080000
-typedef void *	vm_offset_t;
-#endif
 
 /*
  * BrookTree 848  info structure, one per bt848 card installed.
@@ -546,9 +537,17 @@ struct bktr_softc {
     pcici_t         tag;	/* 2.x PCI tag, for doing PCI commands */
     #endif
     #if (__FreeBSD_version >= 400000)
+    int             mem_rid;	/* 4.x resource id */
     struct resource *res_mem;	/* 4.x resource descriptor for registers */
+    int             irq_rid;	/* 4.x resource id */
     struct resource *res_irq;	/* 4.x resource descriptor for interrupt */
     void            *res_ih;	/* 4.x newbus interrupt handler cookie */
+    dev_t           bktrdev;	/* 4.x device entry for /dev/bktrN */
+    dev_t           tunerdev;	/* 4.x device entry for /dev/tunerN */
+    dev_t           vbidev;	/* 4.x device entry for /dev/vbiN */
+    dev_t           bktrdev_alias;	/* alias /dev/bktr to /dev/bktr0 */
+    dev_t           tunerdev_alias;	/* alias /dev/tuner to /dev/tuner0 */
+    dev_t           vbidev_alias;	/* alias /dev/vbi to /dev/vbi0 */
     #endif
     #if (__FreeBSD_version >= 310000)
     bus_space_tag_t	memt;	/* Bus space register access functions */
@@ -561,12 +560,25 @@ struct bktr_softc {
     char	bktr_xname[7];	/* device name and unit number */
 #endif
 
-    /* the following definitions are common over all platforms */
-    vm_offset_t bigbuf;		/* buffer that holds the captured image */
-    int		alloc_pages;	/* number of pages in bigbuf */
 
-    vm_offset_t vbidata;	/* RISC program puts VBI data from the current frame here */
-    vm_offset_t vbibuffer;	/* Circular buffer holding VBI data for the user */
+    /* The following definitions are for the contiguous memory */
+#ifdef __NetBSD__
+    vaddr_t bigbuf;          /* buffer that holds the captured image */
+    vaddr_t vbidata;         /* RISC program puts VBI data from the current frame here */
+    vaddr_t vbibuffer;       /* Circular buffer holding VBI data for the user */
+    vaddr_t dma_prog;        /* RISC prog for single and/or even field capture*/
+    vaddr_t odd_dma_prog;    /* RISC program for Odd field capture */
+#else
+    vm_offset_t bigbuf;	     /* buffer that holds the captured image */
+    vm_offset_t vbidata;     /* RISC program puts VBI data from the current frame here */
+    vm_offset_t vbibuffer;   /* Circular buffer holding VBI data for the user */
+    vm_offset_t dma_prog;    /* RISC prog for single and/or even field capture*/
+    vm_offset_t odd_dma_prog;/* RISC program for Odd field capture */
+#endif
+
+
+    /* the following definitions are common over all platforms */
+    int		alloc_pages;	/* number of pages in bigbuf */
     int         vbiinsert;      /* Position for next write into circular buffer */
     int         vbistart;       /* Position of last read from circular buffer */
     int         vbisize;        /* Number of bytes in the circular buffer */
@@ -581,8 +593,6 @@ struct bktr_softc {
 #define	METEOR_SIG_MODE_MASK	0xffff0000
 #define	METEOR_SIG_FIELD_MODE	0x00010000
 #define	METEOR_SIG_FRAME_MODE	0x00000000
-    vm_offset_t  dma_prog;
-    vm_offset_t  odd_dma_prog;
     char         dma_prog_loaded;
     struct meteor_mem *mem;	/* used to control sync. multi-frame output */
     u_long	synch_wait;	/* wait for free buffer before continuing */

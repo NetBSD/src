@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.7.2.2 2000/11/20 11:42:49 bouyer Exp $	*/
+/*	$NetBSD: if_de.c,v 1.7.2.3 2000/11/22 16:04:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -291,9 +291,7 @@ deattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = destart;
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
+
 	sc->sc_sh = shutdownhook_establish(deshutdown, sc);
 	return;
 

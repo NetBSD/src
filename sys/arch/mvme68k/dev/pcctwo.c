@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.2.8.1 2000/11/20 20:15:18 bouyer Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.2.8.2 2000/11/22 16:00:51 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ static int pcctwo_vec2icsr_1x7[] = {
 };
 #endif
 
-#ifdef MVME162
+#if defined(MVME162) || defined(MVME172)
 /*
  * Devices that live on the MCchip, attached in this order.
  */
@@ -188,8 +188,9 @@ pcctwomatch(parent, cf, args)
 	    cid == PCCTWO_CHIP_ID_PCC2)
 		return (1);
 #endif
-#ifdef MVME162
-	if (machineid == MVME_162 && cid == PCCTWO_CHIP_ID_MCCHIP)
+#if defined(MVME162) || defined(MVME172)
+	if ((machineid == MVME_162 || machineid == MVME_172) &&
+	    cid == PCCTWO_CHIP_ID_MCCHIP)
 		return (1);
 #endif
 
@@ -242,7 +243,7 @@ pcctwoattach(parent, self, args)
 		sc->sc_vec2icsr = pcctwo_vec2icsr_1x7;
 	} else
 #endif
-#ifdef MVME162
+#if defined(MVME162) || defined(MVME172)
 	if (cid == PCCTWO_CHIP_ID_MCCHIP) {
 		printf(": Memory Controller ASIC (MCchip), Rev %d\n",
 		    pcc2_reg_read(sc, PCC2REG_CHIP_REVISION));
@@ -354,7 +355,7 @@ pcctwointr_disestablish(vec)
 	isrunlink_vectored(vec + PCCTWO_VECBASE);
 }
 
-#ifdef MVME162
+#if defined(MVME162) || defined(MVME172)
 static int
 pcctwoabortintr(void *frame)
 {

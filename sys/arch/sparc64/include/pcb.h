@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2.2.1 2000/11/20 20:26:49 bouyer Exp $ */
+/*	$NetBSD: pcb.h,v 1.2.2.2 2000/11/22 16:01:50 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,7 +135,7 @@ struct pcb {
 	char	pcb_cwp;	/* %cwp when switch() was called */
 	char	pcb_pil;	/* %pil when switch() was called -- prolly not needed */
 
-	char	*lastcall;	/* DEBUG -- name of last system call */
+	const char *lastcall;	/* DEBUG -- name of last system call */
 	/* the following MUST be aligned on a 64-bit boundary */
 	struct	rwindow64 pcb_rw[PCB_MAXWIN];	/* saved windows */
 };

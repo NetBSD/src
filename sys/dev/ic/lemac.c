@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.12.2.1 2000/11/20 11:40:41 bouyer Exp $ */
+/* $NetBSD: lemac.c,v 1.12.2.2 2000/11/22 16:03:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -1036,10 +1036,6 @@ lemac_ifattach(
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dv.dv_xname,

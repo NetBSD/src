@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.58.10.1 2000/11/20 18:09:15 bouyer Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.58.10.2 2000/11/22 16:05:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -58,6 +58,8 @@
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -157,7 +159,7 @@ bufinit()
 
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
-	bufhashtbl = hashinit(nbuf, M_CACHE, M_WAITOK, &bufhash);
+	bufhashtbl = hashinit(nbuf, HASH_LIST, M_CACHE, M_WAITOK, &bufhash);
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
@@ -170,9 +172,9 @@ bufinit()
 		LIST_INIT(&bp->b_dep);
 		bp->b_data = buffers + i * MAXBSIZE;
 		if (i < residual)
-			bp->b_bufsize = (base + 1) * NBPG;
+			bp->b_bufsize = (base + 1) * PAGE_SIZE;
 		else
-			bp->b_bufsize = base * NBPG;
+			bp->b_bufsize = base * PAGE_SIZE;
 		bp->b_flags = B_INVAL;
 		dp = bp->b_bufsize ? &bufqueues[BQ_AGE] : &bufqueues[BQ_EMPTY];
 		binsheadfree(bp, dp);
@@ -739,7 +741,7 @@ allocbuf(bp, size)
 	vsize_t       desired_size;
 	int	     s;
 
-	desired_size = roundup(size, NBPG);
+	desired_size = round_page((vsize_t)size);
 	if (desired_size > MAXBSIZE)
 		panic("allocbuf: buffer larger than MAXBSIZE requested");
 
@@ -996,23 +998,23 @@ vfs_bufstats()
 	int s, i, j, count;
 	struct buf *bp;
 	struct bqueues *dp;
-	int counts[MAXBSIZE/NBPG+1];
+	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
 	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE", "EMPTY" };
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
-		for (j = 0; j <= MAXBSIZE/NBPG; j++)
+		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			counts[j] = 0;
 		s = splbio();
 		for (bp = dp->tqh_first; bp; bp = bp->b_freelist.tqe_next) {
-			counts[bp->b_bufsize/NBPG]++;
+			counts[bp->b_bufsize/PAGE_SIZE]++;
 			count++;
 		}
 		splx(s);
 		printf("%s: total-%d", bname[i], count);
-		for (j = 0; j <= MAXBSIZE/NBPG; j++)
+		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			if (counts[j] != 0)
-				printf(", %d-%d", j * NBPG, counts[j]);
+				printf(", %d-%d", j * PAGE_SIZE, counts[j]);
 		printf("\n");
 	}
 }

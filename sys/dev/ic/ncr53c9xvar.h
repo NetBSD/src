@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.18.2.2 2000/11/20 11:40:48 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.18.2.3 2000/11/22 16:03:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -140,19 +140,19 @@ struct ncr53c9x_ecb {
  * this for now.  Is there a way to reliably hook it up to sc->fordriver??
  */
 struct ncr53c9x_tinfo {
-	int	cmds;		/* #commands processed */
-	int	dconns;		/* #disconnects */
-	int	touts;		/* #timeouts */
-	int	perrs;		/* #parity errors */
-	int	senses;		/* #request sense commands sent */
-	ushort	lubusy;		/* What local units/subr. are busy? */
+	int	cmds;		/* # of commands processed */
+	int	dconns;		/* # of disconnects */
+	int	touts;		/* # of timeouts */
+	int	perrs;		/* # of parity errors */
+	int	senses;		/* # of request sense commands sent */
+	ushort	lubusy;		/* Which local units/subr. are busy? */
 	u_char  flags;
 #define T_NEED_TO_RESET	0x01	/* Should send a BUS_DEV_RESET */
 #define T_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
 #define T_BUSY		0x04	/* Target is busy, i.e. cmd in progress */
-#define T_SYNCMODE	0x08	/* sync mode has been negotiated */
-#define T_SYNCHOFF	0x10	/* .. */
-#define T_RSELECTOFF	0x20	/* .. */
+#define T_SYNCMODE	0x08	/* SYNC mode has been negotiated */
+#define T_SYNCHOFF	0x10	/* SYNC mode for is permanently off */
+#define T_RSELECTOFF	0x20	/* RE-SELECT mode is off */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char	pad[3];

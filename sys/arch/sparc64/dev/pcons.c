@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.6.2.2 2000/11/20 20:26:44 bouyer Exp $	*/
+/*	$NetBSD: pcons.c,v 1.6.2.3 2000/11/22 16:01:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -54,7 +54,6 @@
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
-#include <machine/z8530var.h>
 
 #include <dev/cons.h>
 
@@ -68,8 +67,10 @@ struct cfattach pcons_ca = {
 };
 
 extern struct cfdriver pcons_cd;
+static struct cnm_state pcons_cnm_state;
 
 static int pconsprobe __P((void));
+extern struct consdev *cn_tab;
 
 static int
 pconsmatch(parent, match, aux)
@@ -78,7 +79,6 @@ pconsmatch(parent, match, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	extern struct consdev *cn_tab;
 	extern int  prom_cngetc __P((dev_t));
 
 	/* Only attach if no other console has attached. */
@@ -98,6 +98,8 @@ pconsattach(parent, self, aux)
 	if (!pconsprobe())
 		return;
 
+	cn_init_magic(&pcons_cnm_state);
+	cn_set_magic("+++++");
 	callout_init(&sc->sc_poll_ch);
 }
 
@@ -125,6 +127,7 @@ pconsopen(dev, flag, mode, p)
 	tp->t_oproc = pconsstart;
 	tp->t_param = pconsparam;
 	tp->t_dev = dev;
+	cn_tab->cn_dev = dev;
 	if (!(tp->t_state & TS_ISOPEN)) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -143,7 +146,7 @@ pconsopen(dev, flag, mode, p)
 		callout_reset(&sc->sc_poll_ch, 1, pcons_poll, sc);
 	}
 
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	return (*tp->t_linesw->l_open)(dev, tp);
 }
 
 int
@@ -157,7 +160,7 @@ pconsclose(dev, flag, mode, p)
 
 	callout_stop(&sc->sc_poll_ch);
 	sc->of_flags &= ~OFPOLL;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	return 0;
 }
@@ -171,7 +174,7 @@ pconsread(dev, uio, flag)
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
-	return (*linesw[tp->t_line].l_read)(tp, uio, flag);
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
@@ -183,7 +186,7 @@ pconswrite(dev, uio, flag)
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
-	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
@@ -198,7 +201,7 @@ pconsioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->of_tty;
 	int error;
 	
-	if ((error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p)) >= 0)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
 	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
 		return error;
@@ -273,27 +276,11 @@ pcons_poll(aux)
 	struct pconssoftc *sc = aux;
 	struct tty *tp = sc->of_tty;
 	char ch;
-#ifdef DDB
-static int nplus = 0;
-#endif
-
 	
 	while (OF_read(stdin, &ch, 1) > 0) {
-#ifdef DDB
-		if (ch == '+') {
-			if (nplus++ > 3) {
-				extern int db_active;
-
-				if (!db_active)
-					Debugger();
-				else
-					/* Debugger is probably hozed */
-					callrom();
-			}
-		} else nplus = 0;
-#endif
+		cn_check_magic(tp->t_dev, ch, pcons_cnm_state);
 		if (tp && (tp->t_state & TS_ISOPEN))
-			(*linesw[tp->t_line].l_rint)(ch, tp);
+			(*tp->t_linesw->l_rint)(ch, tp);
 	}
 	callout_reset(&sc->sc_poll_ch, 1, pcons_poll, sc);
 }

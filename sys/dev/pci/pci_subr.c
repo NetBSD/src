@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.32.2.1 2000/11/20 11:42:30 bouyer Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.32.2.2 2000/11/22 16:04:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -205,7 +205,7 @@ struct pci_class pci_subclass_serialbus[] = {
 };
 
 struct pci_class pci_subclass_wireless[] = {
-	{ "iRDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
+	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
 	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR,	},
 	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
 	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,		},

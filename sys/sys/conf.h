@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.68.2.1 2000/11/20 18:11:27 bouyer Exp $	*/
+/*	$NetBSD: conf.h,v 1.68.2.2 2000/11/22 16:06:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -287,6 +287,7 @@ extern struct cdevsw cdevsw[];
 #define	cdev_se_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_ses_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_sysmon_init(c,n)	cdev__oci_init(c,n)
+#define	cdev_openfirm_init(c,n)	cdev__oci_init(c,n)
 
 #define	cdev_usb_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
@@ -379,6 +380,9 @@ extern	const char devioc[], devcls[];
  * Line discipline switch table
  */
 struct linesw {
+	char	*l_name;	/* Linesw name */
+	int	l_no;		/* Linesw number (compatibility) */
+
 	int	(*l_open)	__P((dev_t dev, struct tty *tp));
 	int	(*l_close)	__P((struct tty *tp, int flags));
 	int	(*l_read)	__P((struct tty *tp, struct uio *uio,
@@ -393,7 +397,21 @@ struct linesw {
 };
 
 #ifdef _KERNEL
-extern struct linesw linesw[];
+extern struct linesw **linesw;
+extern int nlinesw;
+extern void ttyldisc_init __P((void));
+int ttyldisc_add __P((struct linesw *disc, int no));
+struct linesw *ttyldisc_remove __P((char *name));
+struct linesw *ttyldisc_lookup __P((char *name));
+
+/* For those defining their own line disciplines: */
+#define	ttynodisc ((int (*) __P((dev_t, struct tty *)))enodev)
+#define	ttyerrclose ((int (*) __P((struct tty *, int flags)))enodev)
+#define	ttyerrio ((int (*) __P((struct tty *, struct uio *, int)))enodev)
+#define	ttyerrinput ((int (*) __P((int c, struct tty *)))enodev)
+#define	ttyerrstart ((int (*) __P((struct tty *)))enodev)
+
+int	nullioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
 #endif
 
 /*

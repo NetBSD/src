@@ -104,7 +104,7 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
         }
 
         /* Disable interrupts, so we don't get any spurious ones. */
-        OHCI_CSR_WRITE(&psc->psc_sc, OHCI_REG_IntEventClear, OHCI_Int_MasterEnable);
+        OHCI_CSR_WRITE(&psc->psc_sc, OHCI_REG_IntMaskClear, OHCI_Int_MasterEnable);
 
         /* Enable the device. */
         csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -128,5 +128,9 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
-	fwohci_init(&psc->psc_sc);
+	if (fwohci_init(&psc->psc_sc, pci_intr_evcnt(pa->pa_pc, ih)) != 0) {
+		pci_intr_disestablish(pa->pa_pc, psc->psc_ih);
+		bus_space_unmap(psc->psc_sc.sc_memt, psc->psc_sc.sc_memh,
+		    psc->psc_sc.sc_memsize);
+	}
 }

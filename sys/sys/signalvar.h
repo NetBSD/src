@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.22.2.1 2000/11/20 18:11:35 bouyer Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.22.2.2 2000/11/22 16:06:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -69,6 +69,7 @@ struct	sigacts {
  * get signal action for process and signal; currently only for current process
  */
 #define SIGACTION(p, sig)	(p->p_sigacts->ps_sigact[(sig)])
+#define	SIGACTION_PS(ps, sig)	(ps->ps_sigact[(sig)])
 
 /*
  * Determine signal that should be delivered to process p, the current
@@ -164,6 +165,7 @@ void	sigpending1 __P((struct proc *p, sigset_t *ss));
 int	sigsuspend1 __P((struct proc *p, const sigset_t *ss));
 int	sigaltstack1 __P((struct proc *p, \
 	    const struct sigaltstack *nss, struct sigaltstack *oss));
+int	sigismasked __P((struct proc *, int));
 
 void	signal_init __P((void));
 

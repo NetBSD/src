@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.115.2.1 2000/11/20 20:09:20 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.115.2.2 2000/11/22 16:00:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
 
-#include "sysmon.h"
+#include <dev/sysmon/sysmonconf.h>
 cdev_decl(sysmon);
 
 cdev_decl(cn);

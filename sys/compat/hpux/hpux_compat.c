@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.45.2.1 2000/11/20 18:08:11 bouyer Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.45.2.2 2000/11/22 16:02:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,7 +98,7 @@ int unimpresponse = 0;
 
 extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
-extern char *hpux_syscallnames[];
+extern const char * const hpux_syscallnames[];
 
 int	hpuxtobsdioctl __P((u_long));
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164.2.1 2000/11/20 11:42:32 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164.2.2 2000/11/22 16:04:16 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.266 2000/10/19 05:51:34 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.274 2000/11/20 06:22:13 onoe Exp 
  */
 
 /*
@@ -248,6 +248,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3D Labs",
 	    "GLINT Permedia 2",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_GAMMA,
+	    0,
+	    "3D Labs",
+	    "GLINT GAMMA",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA2V,
+	    0,
+	    "3D Labs",
+	    "GLINT Permedia 2V",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA3,
+	    0,
+	    "3D Labs",
+	    "GLINT Permedia 3",
 	},
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE,
@@ -619,7 +637,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC,
 	    0,
 	    "Alteon",
-	    "ACEnic Gigabit Ethernet",
+	    "ACEnic 1000baseSX Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC_COPPER,
+	    0,
+	    "Alteon",
+	    "ACEnic 1000baseT Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
@@ -2266,6 +2290,84 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82434LX/NX PCI, Cache and Memory Controller (PCMC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM,
+	    0,
+	    "Intel",
+	    "i960 RM PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RN,
+	    0,
+	    "Intel",
+	    "i960 RN PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452,
+	    0,
+	    "Intel",
+	    "Pro/1000",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_AGP,
+	    0,
+	    "Intel",
+	    "82815 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_GRAPH,
+	    0,
+	    "Intel",
+	    "82815 Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_GRAPH,
+	    0,
+	    "Intel",
+	    "82815 Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_AGP,
+	    0,
+	    "Intel",
+	    "82815 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_AGP,
+	    0,
+	    "Intel",
+	    "82815 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_GRAPH,
+	    0,
+	    "Intel",
+	    "82815 Graphics",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
 	    0,
 	    "Intel",
@@ -2428,6 +2530,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82439HX System Controller (TXC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB,
+	    0,
+	    "Intel",
+	    "82840 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_AGP,
+	    0,
+	    "Intel",
+	    "82840 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_PCI,
+	    0,
+	    "Intel",
+	    "82840 PCI",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
 	    0,
 	    "Intel",
@@ -2564,6 +2684,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801BA Hub-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
+	    0,
+	    "Intel",
+	    "82820 MCH (Camino)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_AGP,
+	    0,
+	    "Intel",
+	    "82820 AGP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
@@ -3262,6 +3394,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "uPD72871 IEEE 1394 OHCI Host Controller",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2070,
+	    0,
+	    "Neomagic",
+	    "MagicGraph NM2070",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128V,
+	    0,
+	    "Neomagic",
+	    "MagicGraph 128V",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128ZV,
 	    0,
 	    "Neomagic",
@@ -3286,6 +3430,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MagicMedia 256ZX VGA",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256XLP_AU,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256XL+ Audio",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU,
 	    0,
 	    "Neomagic",
@@ -3301,7 +3451,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
 	    0,
 	    "Netgear",
-	    "GA620 Gigabit Ethernet",
+	    "GA620 1000baseSX Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T,
+	    0,
+	    "Netgear",
+	    "GA620 1000baseT Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
@@ -3880,6 +4036,66 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "KS8920 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_ROSB4,
+	    0,
+	    "ServerWorks",
+	    "ROSB4 SouthBridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_XX5,
+	    0,
+	    "ServerWorks",
+	    "PCIHB5",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB20,
+	    0,
+	    "ServerWorks",
+	    "I/O Bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_XX7,
+	    0,
+	    "ServerWorks",
+	    "PCIHB7",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20HE,
+	    0,
+	    "ServerWorks",
+	    "CNB20HE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20LE,
+	    0,
+	    "ServerWorks",
+	    "CNB20LE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB30,
+	    0,
+	    "ServerWorks",
+	    "CIOB30",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_HE,
+	    0,
+	    "ServerWorks",
+	    "CMIC_HE Host",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_IDE,
+	    0,
+	    "ServerWorks",
+	    "IDE",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_USB,
+	    0,
+	    "ServerWorks",
+	    "USB",
+	},
+	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
 	    0,
 	    "Silicon Graphics",
@@ -4066,7 +4282,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CXD1947A IEEE 1394 Host Controller",
 	},
 	{
-	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD32222,
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD3222,
 	    0,
 	    "Sony",
 	    "CXD3222 OHCI IEEE 1394 Host Controller",
@@ -7366,9 +7582,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_PEQUR, 0,
+	    PCI_VENDOR_SERVERWORKS, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Pequr Technology",
+	    "ServerWorks",
 	    NULL,
 	},
 	{
