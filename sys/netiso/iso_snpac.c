@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.9 1995/06/13 07:13:34 mycroft Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.10 1995/06/13 08:12:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -93,6 +93,8 @@ extern struct	timeval time;
 extern void esis_config();
 extern int hz;
 static void snpac_fixdstandmask();
+
+LIST_HEAD(, llinfo_llc) llinfo_llc;
 
 struct sockaddr_iso blank_siso = {sizeof(blank_siso), AF_ISO};
 extern u_long iso_hashchar();
@@ -203,7 +205,7 @@ struct sockaddr *sa;
 		Bzero(lc, sizeof(*lc));
 		lc->lc_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
-		insque(lc, &llinfo_llc);
+		LIST_INSERT_HEAD(&llinfo_llc, lc, lc_list);
 		if (gate->sdl.sdl_alen == sizeof(struct esis_req) + addrlen) {
 			gate->sdl.sdl_alen -= sizeof(struct esis_req);
 			bcopy(addrlen + LLADDR(&gate->sdl),
@@ -216,7 +218,7 @@ struct sockaddr *sa;
 			iso_setmcasts(ifp, req);
 		if (lc == 0)
 			return;
-		remque(lc);
+		LIST_REMOVE(lc, lc_list);
 		Free(lc);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
@@ -596,8 +598,8 @@ snpac_age()
 
 	timeout(snpac_age, (caddr_t)0, SNPAC_AGE * hz);
 
-	for (lc = llinfo_llc.lc_next; lc != & llinfo_llc; lc = nlc) {
-		nlc = lc->lc_next;
+	for (lc = llinfo_llc.lh_first; lc != 0; lc = nlc) {
+		nlc = lc->lc_list.le_next;
 		if (lc->lc_flags & SNPA_VALID) {
 			rt = lc->lc_rt;
 			if (rt->rt_rmx.rmx_expire && rt->rt_rmx.rmx_expire < time.tv_sec)
@@ -646,7 +648,7 @@ struct ifnet	*ifp;
 {
 	register struct llinfo_llc	*lc;
 
-	for (lc = llinfo_llc.lc_next; lc != & llinfo_llc; lc = lc->lc_next) {
+	for (lc = llinfo_llc.lh_first; lc != 0; lc = lc->lc_list.le_next) {
 		if (lc->lc_rt->rt_ifp == ifp && (lc->lc_flags & SNPA_VALID))
 			snpac_free(lc);
 	}
