@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.35 2005/02/27 00:26:58 perry Exp $	*/
+/*	$NetBSD: ld.c,v 1.35.2.1 2005/04/06 11:56:55 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.35 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.35.2.1 2005/04/06 11:56:55 tron Exp $");
 
 #include "rnd.h"
 
@@ -201,7 +201,6 @@ ldbegindetach(struct ld_softc *sc, int flags)
 void
 ldenddetach(struct ld_softc *sc)
 {
-	struct buf *bp;
 	int s, bmaj, cmaj, i, mn;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
@@ -218,14 +217,10 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Kill off any queued buffers. */
 	s = splbio();
-	while ((bp = BUFQ_GET(&sc->sc_bufq)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-	}
-	bufq_free(&sc->sc_bufq);
+	bufq_drain(&sc->sc_bufq);
 	splx(s);
+
+	bufq_free(&sc->sc_bufq);
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
