@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.9 1998/02/11 23:11:18 lukem Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.9.2.1 1999/12/16 23:27:46 he Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.9 1998/02/11 23:11:18 lukem Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.9.2.1 1999/12/16 23:27:46 he Exp $");
 #endif
 #endif
 
@@ -487,7 +487,7 @@ get_prog_declaration(dec, dkind, num)
 	int     num;		/* arg number */
 {
 	token   tok;
-	char    name[10];	/* argument name */
+	char    name[255];	/* argument name */
 
 	if (dkind == DEF_PROGRAM) {
 		peek(&tok);
