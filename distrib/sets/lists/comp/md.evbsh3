@@ -1,16 +1,14 @@
-# $NetBSD: md.evbsh3,v 1.14 2001/04/15 17:14:26 kleink Exp $
+# $NetBSD: md.evbsh3,v 1.15 2002/05/02 15:42:19 wiz Exp $
 ./usr/include/evbsh3	comp-c-include
 ./usr/include/evbsh3/ansi.h	comp-c-include
 ./usr/include/evbsh3/aout_machdep.h	comp-c-include
 ./usr/include/evbsh3/asm.h	comp-c-include
-./usr/include/evbsh3/bootinfo.h	comp-c-include
 ./usr/include/evbsh3/bswap.h	comp-c-include
 ./usr/include/evbsh3/bus.h	comp-c-include
 ./usr/include/evbsh3/cdefs.h	comp-c-include
 ./usr/include/evbsh3/coff_machdep.h	comp-c-include
 ./usr/include/evbsh3/conf.h	comp-c-include
 ./usr/include/evbsh3/cpu.h	comp-c-include
-./usr/include/evbsh3/cpufunc.h	comp-c-include
 ./usr/include/evbsh3/cputypes.h	comp-c-include
 ./usr/include/evbsh3/db_machdep.h	comp-c-include
 ./usr/include/evbsh3/disklabel.h	comp-c-include
@@ -32,7 +30,6 @@
 ./usr/include/evbsh3/math.h	comp-c-include
 ./usr/include/evbsh3/param.h	comp-c-include
 ./usr/include/evbsh3/pcb.h	comp-c-include
-./usr/include/evbsh3/pio.h	comp-c-include
 ./usr/include/evbsh3/pmap.h	comp-c-include
 ./usr/include/evbsh3/proc.h	comp-c-include
 ./usr/include/evbsh3/profile.h	comp-c-include
@@ -40,9 +37,7 @@
 ./usr/include/evbsh3/pte.h	comp-c-include
 ./usr/include/evbsh3/ptrace.h	comp-c-include
 ./usr/include/evbsh3/reg.h	comp-c-include
-./usr/include/evbsh3/segments.h	comp-c-include
 ./usr/include/evbsh3/setjmp.h	comp-c-include
-./usr/include/evbsh3/shbvar.h	comp-c-include
 ./usr/include/evbsh3/signal.h	comp-c-include
 ./usr/include/evbsh3/stdarg.h	comp-c-include
 ./usr/include/evbsh3/trap.h	comp-c-include
