@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.358 2003/12/22 10:27:51 sekiya Exp $
+$NetBSD: usbdevs,v 1.359 2003/12/28 17:11:14 augustss Exp $
 
 /*
  * Copyright (c) 1998-2003 The NetBSD Foundation, Inc.
@@ -734,6 +734,7 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK202-24 USB LCD
+product FTDI SEMC_DSS20		0xfc82	SEMC DSS-20 SyncStation
 
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
@@ -1082,6 +1083,7 @@ product MINDSATWORK DW		0x0001	Digital Wallet
 /* Minolta Co., Ltd. */
 product MINOLTA S304		0x4007	Dimage S304
 product MINOLTA X		0x4009	Dimage X
+product MINOLTA XT		0x4015	Dimage Xt
 
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
