@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypinit.8,v 1.7 1999/03/07 11:58:26 mycroft Exp $
+.\"	$NetBSD: ypinit.8,v 1.8 2001/08/01 07:01:03 garbled Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 4, 1997
+.Dd July 31, 2001
 .Dt YPINIT 8
 .Os
 .Sh NAME
@@ -44,13 +44,16 @@
 .Nm ""
 .Fl c
 .Op Ar domainname
+.Op Fl l Ar server1,...,serverN
 .Nm ""
 .Fl m
 .Op Ar domainname
+.Op Fl l Ar server1,...,serverN
 .Nm ""
 .Fl s
 .Ar master_server
 .Op Ar domainname
+.Op Fl l Ar server1,...,serverN
 .Sh DESCRIPTION
 .Nm
 initialises the files and directories that are required for a
@@ -74,6 +77,10 @@ Initialises
 to contain a list of ypservers for
 .Xr ypbind 8
 to connect to.
+.It Fl l Ar server1,...,serverN
+Set the list of client servers from the command line rather than
+prompting for them interactively.  The format is a comma separated list
+of server names with no spaces.
 .It Fl m
 Create a master
 .Tn YP
