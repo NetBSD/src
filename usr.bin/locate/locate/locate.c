@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.7 1997/05/17 19:47:50 pk Exp $	*/
+/*	$NetBSD: locate.c,v 1.8 1997/10/19 04:11:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: locate.c,v 1.7 1997/05/17 19:47:50 pk Exp $";
+__RCSID("$NetBSD: locate.c,v 1.8 1997/10/19 04:11:56 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -86,6 +86,10 @@ static char rcsid[] = "$NetBSD: locate.c,v 1.7 1997/05/17 19:47:50 pk Exp $";
 #include "locate.h"
 #include "pathnames.h"
 
+void	fastfind __P((char *));
+int	main __P((int, char **));
+char   *patprep __P((char *));
+
 FILE *fp;
 
 int
@@ -107,20 +111,21 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 fastfind(pathpart)
 	char *pathpart;
 {
-	register char *p, *s;
-	register int c;
+	char *p, *s;
+	int c;
 	int count, found, globflag;
-	char *cutoff, *patend, *q, *patprep();
+	char *cutoff, *patend, *q;
 	char bigram1[NBG], bigram2[NBG], path[MAXPATHLEN];
 
 	for (c = 0, p = bigram1, s = bigram2; c < NBG; c++)
 		p[c] = getc(fp), s[c] = getc(fp);
 
 	p = pathpart;
-	globflag = index(p, '*') || index(p, '?') || index(p, '[');
+	globflag = strchr(p, '*') || strchr(p, '?') || strchr(p, '[');
 	patend = patprep(p);
 
 	found = 0;
@@ -163,14 +168,14 @@ char *
 patprep(name)
 	char *name;
 {
-	register char *endmark, *p, *subp;
+	char *endmark, *p, *subp;
 
 	subp = globfree;
 	*subp++ = '\0';
 	p = name + strlen(name) - 1;
 	/* skip trailing metacharacters (and [] ranges) */
 	for (; p >= name; p--)
-		if (index("*?", *p) == 0)
+		if (strchr("*?", *p) == 0)
 			break;
 	if (p < name)
 		p = name;
@@ -186,11 +191,11 @@ patprep(name)
 	 * if pattern has only metacharacters, check every path (force '/'
 	 * search)
 	 */
-	if ((p == name) && index("?*[]", *p) != 0)
+	if ((p == name) && strchr("?*[]", *p) != 0)
 		*subp++ = '/';
 	else {
 		for (endmark = p; p >= name; p--)
-			if (index("]*?", *p) != 0)
+			if (strchr("]*?", *p) != 0)
 				break;
 		for (++p;
 		    (p <= endmark) && subp < (globfree + sizeof(globfree));)
