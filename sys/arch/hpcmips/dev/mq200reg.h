@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200reg.h,v 1.3 2000/12/03 13:24:33 takemura Exp $	*/
+/*	$NetBSD: mq200reg.h,v 1.4 2001/01/07 07:29:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -44,8 +44,6 @@
 #define MQ200_MM		0x604000	/* memory interface unit */
 #define MQ200_IN		0x608000	/* interrupt controller	*/
 #define MQ200_GC(n)		(0x60a000+0x80*(n))
-#define MQ200_GC1		0x60a000	/* graphice controller 1*/
-#define MQ200_GC2		0x60a080	/* graphice controller 1*/
 #define MQ200_GE		0x60c000	/* graphics engine	*/
 #define MQ200_FP		0x60e000	/* flat panel controller*/
 #define MQ200_CP1		0x610000	/* color palette 1	*/
@@ -63,6 +61,13 @@
 /*
  * Memory Interface Unit
  */
+#define MQ200_MMR(n)		(MQ200_MM+(n)*4)
+#	define MQ200_MM00_ENABLE		(1<<0)
+#	define MQ200_MM00_RESET		(1<<1)
+#	define MQ200_MM00_DRAM_RESET	(1<<2)
+#	define MQ200_MM01_CLK_PLL1	(0<<0)
+#	define MQ200_MM01_CLK_BUS	(1<<0)
+#	define MQ200_MM01_CLK_PLL2	(1<<0)
 
 /*
  * Interrupt Controller
@@ -71,7 +76,9 @@
 /*
  * Graphics Controller 1/2
  */
-#define MQ200_GCR(n)		(MQ200_GC1+(n)*4)
+#define MQ200_GC1		0	/* graphice controller 1*/
+#define MQ200_GC2		1	/* graphice controller 2*/
+#define MQ200_GCR(n)		(MQ200_GC(1)+(n)*4)
 /* GC Control (GC00R and GC20R)	*/
 #define MQ200_GCCR(n)		(MQ200_GC(n)+0x00)
 #	define MQ200_GCC_ENABLE		(1<<0)
@@ -181,8 +188,8 @@
 
 /* GC Vertical Display Control (GC03R and GC23R)	*/
 #define MQ200_GCVDCR(n)		(MQ200_GC(n)+0x0c)
-#	define MQ200_GCVDC_TOTAL_MASK		0x00000fff
-#	define MQ200_GCVDC_TOTAL_SHIFT		0
+#	define MQ200_GC1VDC_TOTAL_MASK		0x00000fff
+#	define MQ200_GC1VDC_TOTAL_SHIFT		0
 	/* bits 15-12 are reserved */
 #	define MQ200_GCVDC_END_MASK		0x0fff0000
 #	define MQ200_GCVDC_END_SHIFT		16
@@ -599,3 +606,76 @@
 
 #define MQ200_PMR		(MQ200_PC+0x40)	/* power management	*/
 #define MQ200_PMCSR		(MQ200_PC+0x44)	/* control/status	*/
+
+/*
+ * Power Management
+ */
+#define MQ200_PMCR	(MQ200_PM + 0x00)
+#	define MQ200_PMC_PLL1_N		(1<<0)
+#	define MQ200_PMC_PLL2_ENABLE	(1<<2)
+#	define MQ200_PMC_PLL3_ENABLE	(1<<3)
+#	define MQ200_PMC_IMMEDIATELY	(1<<5)
+#	define MQ200_PMC_GE_ENABLE	(1<<8)
+#	define MQ200_PMC_GE_FORCE_BUSY	(1<<9)
+#	define MQ200_PMC_GE_FORCE_BUSY_LOCAL	(1<<10)
+#	define MQ200_PMC_GE_CLK_MASK	0x00001800
+#	define MQ200_PMC_GE_CLK_SHIFT	11
+#	define MQ200_PMC_GE_CLK_BUS	(0<<11)
+#	define MQ200_PMC_GE_CLK_PLL1	(1<<11)
+#	define MQ200_PMC_GE_CLK_PLL2	(2<<11)
+#	define MQ200_PMC_GE_CLK_PLL3	(3<<11)
+#	define MQ200_PMC_GE_COMMAND_RESET	(1<<13)
+#	define MQ200_PMC_GE_SOURCE_RESET	(1<<14)
+#	define MQ200_PMC_MIU_SEQ_ENABLE	(1<<15)
+#	define MQ200_PMC_D3_REFRESH	(1<<16)
+#	define MQ200_PMC_D4_REFRESH	(1<<17)
+#	define MQ200_PMC_SEQINTVL_MASK	(3<<18)
+#	define MQ200_PMC_SEQINTVL_SHIFT	18
+#	define MQ200_PMC_SEQINTVL_4		(0<<18)
+#	define MQ200_PMC_SEQINTVL_8		(0<<18)
+#	define MQ200_PMC_SEQINTVL_16	(0<<18)
+#	define MQ200_PMC_SEQINTVL_2048	(0<<18)
+#	define MQ200_PMC_FP_SEQINTVL_MASK	(3<<20)
+#	define MQ200_PMC_FP_SEQINTVL_SHIFT	20
+#	define MQ200_PMC_FP_SEQINTVL_512	(0<<20)
+#	define MQ200_PMC_FP_SEQINTVL_1024	(1<<20)
+#	define MQ200_PMC_FP_SEQINTVL_2048	(2<<20)
+#	define MQ200_PMC_FP_SEQINTVL_128K	(3<<20)
+#	define MQ200_PMC_SEQINTVL_ALL	(1<<22)
+#	define MQ200_PMC_TESTMODE	(1<<23)
+#	define MQ200_PMC_STATE_MASK	(3<<24)
+#	define MQ200_PMC_STATE_SHIFT	24
+#	define MQ200_PMC_SEQPROGRESS	(1<<26)
+#define MQ200_PMD1CR	(MQ200_PM + 0x04)
+#define MQ200_PMD2CR	(MQ200_PM + 0x08)
+
+#define MQ200_DCMISCR	(MQ200_DC + 0x00)
+#	define MQ200_DCMISC_OSC_BYPASS		(1<<0)
+#	define MQ200_DCMISC_OSC_ENABLE		(1<<1)
+#	define MQ200_DCMISC_PLL1_BYPASS		(1<<2)
+#	define MQ200_DCMISC_PLL1_ENABLE		(1<<3)
+#	define MQ200_DCMISC_SA_SLOWBUS		(1<<13)
+#	define MQ200_DCMISC_CHIP_RESET		(1<<14)
+#	define MQ200_DCMISC_MEMSTANDBY_DISABLE	(1<<15)
+#	define MQ200_DCMISC_OSCSHAPER_DISABLE	(1<<24)
+#	define MQ200_DCMISC_FASTPOWSEQ_DISABLE	(1<<25)
+#	define MQ200_DCMISC_OSCFREQ_MASK	(3<<26)
+#	define MQ200_DCMISC_OSCFREQ_12_25	(3<<26)
+
+/*
+ * Fout = Fref*(M+1)/(N+1)/(2^P)
+ * Fout: PLL output frequency
+ * Fref: reference frequency(internal oscillator or external clock)
+ */
+#define MQ200_PLL2R	(MQ200_PM + 0x18)
+#define MQ200_PLL3R	(MQ200_PM + 0x1c)
+#define MQ200_PLL_EXTCLK	(1<<0)
+#define MQ200_PLL_BYPASS	(1<<1)
+#define MQ200_PLL_P_MASK	0x00000070
+#define MQ200_PLL_P_SHIFT	4
+#define MQ200_PLL_N_MASK	0x00001f00
+#define MQ200_PLL_N_SHIFT	8
+#define MQ200_PLL_M_MASK	0x00ff0000
+#define MQ200_PLL_M_SHIFT	16
+#define MQ200_PLL_TRIM_MASK	0xf0000000
+#define MQ200_PLL_TRIM_SHIFT	28
