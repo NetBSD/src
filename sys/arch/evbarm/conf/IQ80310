@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.1 2001/09/05 04:53:39 matt Exp $
+#	$NetBSD: IQ80310,v 1.2 2001/11/07 00:33:22 thorpej Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -131,57 +131,9 @@ mainbus0	at root
 # The boot cpu
 cpu0		at mainbus?
 
-iopxs0		at mainbus?			# The 80312 itself
-obio0		at iopxs0 bank 0		# On-Board I/O devices
-
-# time-of-day device via iopxs (is there even a TOD clock? :)
-#todclock0	at obio0
-
-# PCI bus via verdi
-#pci0		at iopxs? bus 0			# primary PCI bus
-pci1		at iopxs? bus 1			# secondary PCI bus
-
-# PCI bus(es) via PPBs
-ppb*		at pci? dev ? function ?
-pci*		at ppb?
-
-# ISA bus support
-#pcib*		at pci? dev ? function ?	# ISA bridge
-#isa*		at pcib?
-
-
-# PCI IDE Controllers and Devices
-# PCI IDE controllers - see pciide(4) for supported hardware.
-# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
-# how to set up DMA modes for this chip. This may work, or may cause
-# a machine hang with some controllers.
-pciide*		 at pci? dev ? function ? flags 0x0000
-
-# IDE drives
-# Flags are used only with controllers that support DMA operations
-# and mode settings (e.g. some pciide controllers)
-# The lowest order four bits (rightmost digit) of the flags define the PIO
-# mode to use, the next set of four bits the DMA mode and the third set the
-# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
-# to use, and the last bit must be 1 for this setting to be used.
-# For DMA and UDMA, 0xf (1111) means 'disable'.
-# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
-# (0xc=1100, 0xa=1010, 0xf=1111)
-# 0x0000 means "use whatever the drive claims to support".
-wd*		at pciide? channel ? drive ? flags 0x0000	# the drives themselves
-
-# PCI network interfaces
-fxp*		at pci? dev ? function ?	# Intel PRO/100
-
-# MII/PHY support
-inphy*		at mii? phy ?			# ISC-890 PHYs
-ukphy*		at mii? phy ?			# generic unknown PHYs
-
-# OBIO Devices
-com0		at obio? instance 0		# primary com port
-com1		at obio? instance 1		# secondary com port
-clock0		at obio? instance 0		# 33.3MHz system clock via CPLD
-
+# On-board device support
+obio*		at mainbus?
+com*		at obio? addr ?		# on-board XR 16550 UARTs
 
 # Pseudo-Devices
 
