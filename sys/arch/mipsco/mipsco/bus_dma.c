@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 2001/11/14 18:15:29 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 2001/12/15 11:33:13 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -439,14 +439,14 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	bus_addr_t addr;
 	int i;
 
+#ifdef DIAGNOSTIC
 	/*
-	 * Mising PRE and POST operations is not allowed.
+	 * Mixing PRE and POST operations is not allowed.
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
 		panic("_bus_dmamap_sync: mix PRE and POST");
 
-#ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
 		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
 		      offset, map->dm_mapsize);
@@ -458,9 +458,9 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 * The R3000 cache is write-through.  Therefore, we only need
 	 * to drain the write buffer on PREWRITE.  The cache is not
 	 * coherent, however, so we need to invalidate the data cache
-	 * on PREREAD (should we do it POSTREAD instead?).
+	 * on POSTREAD.
 	 *
-	 * POSTWRITE (and POSTREAD, currently) are noops.
+	 * PREREAD and POSTWRITE are noops.
 	 */
 
 	if (ops & BUS_DMASYNC_PREWRITE) {
@@ -471,9 +471,9 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	}
 
 	/*
-	 * If we're not doing a PREREAD, nothing more to do.
+	 * If we're not doing a POSTREAD, nothing more to do.
 	 */
-	if ((ops & BUS_DMASYNC_PREREAD) == 0)
+	if ((ops & BUS_DMASYNC_POSTREAD) == 0)
 		return;
 
 	/*
