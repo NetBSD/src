@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.49 1997/07/07 20:43:25 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.50 1997/07/08 19:58:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -91,6 +91,7 @@ struct cfdriver cpu_cd = {
 static char *fsrtoname __P((int, int, int, char *));
 void cache_print __P((struct cpu_softc *));
 void cpu_spinup __P((struct cpu_softc *));
+void fpu_init __P((struct cpu_softc *));
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
 #define	IU_VERS(psr)	(((psr) >> 24) & 0xf)
@@ -164,7 +165,6 @@ cpu_attach(parent, self, aux)
 	register int node;
 	register char *fpuname;
 	struct confargs *ca = aux;
-	struct fpstate fpstate;
 	char fpbuf[40];
 
 	sc->node = node = ca->ca_ra.ra_node;
@@ -191,26 +191,17 @@ cpu_attach(parent, self, aux)
 
 	getcpuinfo(sc, node);
 
-	/*
-	 * Get the FSR and clear any exceptions.  If we do not unload
-	 * the queue here and it is left over from a previous crash, we
-	 * will panic in the first loadfpstate(), due to a sequence error,
-	 * so we need to dump the whole state anyway.
-	 *
-	 * If there is no FPU, trap.c will advance over all the stores,
-	 * so we initialize fs_fsr here.
-	 */
-	fpstate.fs_fsr = 7 << FSR_VER_SHIFT;	/* 7 is reserved for "none" */
-	savefpstate(&fpstate);
-	sc->fpuvers =
-		(fpstate.fs_fsr >> FSR_VER_SHIFT) & (FSR_VER >> FSR_VER_SHIFT);
+	fpuname = "no";
+	if (sc->master) {
+		if (sc->hotfix)
+			sc->hotfix(sc);
 
-	if (sc->fpuvers != 7) {
-		foundfpu = 1;
-		fpuname = fsrtoname(sc->cpu_impl, sc->cpu_vers,
-				    sc->fpuvers, fpbuf);
-	} else
-		fpuname = "no";
+		fpu_init(sc);
+		if (foundfpu)
+			fpuname = fsrtoname(sc->cpu_impl, sc->cpu_vers,
+					    sc->fpuvers, fpbuf);
+	}
+	/* XXX - multi-processor: take care of `cpu_model' and `foundfpu' */
 
 	sprintf(cpu_model, "%s @ %s MHz, %s FPU",
 		sc->cpu_name,
@@ -223,8 +214,6 @@ cpu_attach(parent, self, aux)
 	if (sc->master) {
 		bcopy(sc, &cpuinfo, sizeof(cpuinfo));
 		/* Enable the cache */
-		if (sc->hotfix)
-			sc->hotfix(sc);
 		sc->cache_enable();
 		return;
 	}
@@ -239,6 +228,10 @@ cpu_(sc)
 {
 	if (sc->hotfix)
 		sc->hotfix(sc);
+
+	/* Initialize FPU */
+	fpu_init(sc);
+
 	/* Enable the cache */
 	sc->cache_enable();
 }
@@ -253,6 +246,31 @@ cpu_spinup(sc)
 #endif
 }
 
+void
+fpu_init(sc)
+	struct cpu_softc *sc;
+{
+	struct fpstate fpstate;
+
+	/*
+	 * Get the FSR and clear any exceptions.  If we do not unload
+	 * the queue here and it is left over from a previous crash, we
+	 * will panic in the first loadfpstate(), due to a sequence
+	 * error, so we need to dump the whole state anyway.
+	 *
+	 * If there is no FPU, trap.c will advance over all the stores,
+	 * so we initialize fs_fsr here.
+	 */
+
+	/* 7 is reserved for "none" */
+	fpstate.fs_fsr = 7 << FSR_VER_SHIFT;
+	savefpstate(&fpstate);
+	sc->fpuvers =
+		(fpstate.fs_fsr >> FSR_VER_SHIFT) & (FSR_VER >> FSR_VER_SHIFT);
+
+	if (sc->fpuvers != 7)
+		foundfpu = 1;
+}
 
 void
 cache_print(sc)
@@ -1126,6 +1144,7 @@ static struct info fpu_types[] = {
 	{ 1, 0x0, ANY, 2, "L64802 or ACT8847" },
 	{ 1, 0x0, ANY, 3, "WTL3170/2" },
 	{ 1, 0x0, 4,   4, "on-chip" },		/* Swift */
+	{ 1, 0x0, 5,   5, "on-chip" },		/* TurboSparc */
 	{ 1, 0x0, ANY, 4, "L64804" },
 
 	/*
