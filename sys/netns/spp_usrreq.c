@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)spp_usrreq.c	8.1 (Berkeley) 6/10/93
+ *	@(#)spp_usrreq.c	8.2 (Berkeley) 1/9/95
  */
 
 #include <sys/param.h>
@@ -1267,7 +1267,7 @@ spp_usrreq(so, req, m, nam, controlp)
 	register struct sockbuf *sb;
 
 	if (req == PRU_CONTROL)
-                return (ns_control(so, (int)m, (caddr_t)nam,
+                return (ns_control(so, m, (caddr_t)nam,
 			(struct ifnet *)controlp));
 	if (nsp == NULL) {
 		if (req != PRU_ATTACH) {

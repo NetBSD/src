@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)esis.c	8.1 (Berkeley) 6/10/93
+ *	@(#)esis.c	8.3 (Berkeley) 3/20/95
  */
 
 /***********************************************************
@@ -115,6 +115,7 @@ extern char		all_es_snpa[], all_is_snpa[];
 	} else {\
 		(m) = (m)->m_next;\
 		(cp) = mtod((m), caddr_t);\
+		(m)->m_len = 0;\
 	}
 /*
  * FUNCTION:		esis_init
@@ -966,7 +967,8 @@ struct snpa_hdr	*shp;	/* subnetwork header */
 		}
 		if (mm = m_copy(m0, 0, M_COPYALL)) { /*can't block at interrupt level */
 			if (sbappendaddr(&rp->rcb_socket->so_rcv,
-							  &esis_dl, mm, (struct mbuf *)0) != 0) {
+							  (struct sockaddr *)&esis_dl, mm,
+							  (struct mbuf *)0) != 0) {
 				sorwakeup(rp->rcb_socket);
 			 } else {
 				IFDEBUG(D_ISISINPUT)
@@ -977,7 +979,8 @@ struct snpa_hdr	*shp;	/* subnetwork header */
 		}
 	}
 	if (first_rp && sbappendaddr(&first_rp->rcb_socket->so_rcv,
-							  &esis_dl, m0, (struct mbuf *)0) != 0) {
+							  (struct sockaddr *)&esis_dl, m0,
+							  (struct mbuf *)0) != 0) {
 		sorwakeup(first_rp->rcb_socket);
 		return;
 	}

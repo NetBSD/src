@@ -37,7 +37,7 @@
  *
  * from: Utah $Hdr: vn.c 1.13 94/04/02$
  *
- *	@(#)vn.c	8.6 (Berkeley) 4/1/94
+ *	@(#)vn.c	8.9 (Berkeley) 5/14/95
  */
 
 /*
@@ -159,6 +159,7 @@ vnopen(dev, flags, mode, p)
  * Note that this driver can only be used for swapping over NFS on the hp
  * since nfs_strategy on the vax cannot handle u-areas and page tables.
  */
+void
 vnstrategy(bp)
 	register struct buf *bp;
 {
@@ -412,11 +413,11 @@ vnioctl(dev, cmd, data, flag, p)
 		if (error = vn_open(&nd, FREAD|FWRITE, 0))
 			return(error);
 		if (error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p)) {
-			VOP_UNLOCK(nd.ni_vp);
+			VOP_UNLOCK(nd.ni_vp, 0, p);
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			return(error);
 		}
-		VOP_UNLOCK(nd.ni_vp);
+		VOP_UNLOCK(nd.ni_vp, 0, p);
 		vn->sc_vp = nd.ni_vp;
 		vn->sc_size = btodb(vattr.va_size);	/* note truncation */
 		if (error = vnsetcred(vn, p->p_ucred)) {
@@ -444,7 +445,7 @@ vnioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		return(ENXIO);
+		return(ENOTTY);
 	}
 	return(0);
 }

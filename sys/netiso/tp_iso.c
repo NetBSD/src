@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_iso.c	8.1 (Berkeley) 6/10/93
+ *	@(#)tp_iso.c	8.2 (Berkeley) 9/22/94
  */
 
 /***********************************************************
@@ -61,7 +61,7 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_iso.c,v 1.1.1.1 1998/03/01 02:10:24 fvdl Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/tp_iso.c,v 1.1.1.2 1998/03/01 02:13:33 fvdl Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/tp_iso.c,v $
  *
  * Here is where you find the iso-dependent code.  We've tried
@@ -95,6 +95,7 @@ SOFTWARE.
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/protosw.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>

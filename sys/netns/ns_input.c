@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ns_input.c	8.1 (Berkeley) 6/10/93
+ *	@(#)ns_input.c	8.2 (Berkeley) 9/22/94
  */
 
 #include <sys/param.h>
@@ -79,8 +79,6 @@ long	ns_pexseq;
 
 ns_init()
 {
-	extern struct timeval time;
-
 	ns_broadhost = * (union ns_host *) allones;
 	ns_broadnet = * (union ns_net *) allones;
 	nspcb.nsp_next = nspcb.nsp_prev = &nspcb;

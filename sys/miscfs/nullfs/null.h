@@ -33,9 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)null.h	8.2 (Berkeley) 1/21/94
+ *	@(#)null.h	8.3 (Berkeley) 8/20/94
  *
- * $Id: null.h,v 1.1.1.1 1998/03/01 02:09:58 fvdl Exp $
+ * $Id: null.h,v 1.1.1.2 1998/03/01 02:13:13 fvdl Exp $
  */
 
 struct null_args {
@@ -52,8 +52,7 @@ struct null_mount {
  * A cache of vnode references
  */
 struct null_node {
-	struct null_node	*null_forw;	/* Hash chain */
-	struct null_node	*null_back;
+	LIST_ENTRY(null_node)	null_hash;	/* Hash list */
 	struct vnode	        *null_lowervp;	/* VREFed once */
 	struct vnode		*null_vnode;	/* Back pointer */
 };

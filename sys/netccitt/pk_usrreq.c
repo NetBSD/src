@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pk_usrreq.c	8.1 (Berkeley) 6/10/93
+ *	@(#)pk_usrreq.c	8.2 (Berkeley) 1/9/95
  */
 
 #include <sys/param.h>
@@ -320,7 +320,7 @@ struct sockaddr_x25 pk_sockmask = {
 /*ARGSUSED*/
 pk_control (so, cmd, data, ifp)
 struct socket *so;
-int cmd;
+u_long cmd;
 caddr_t data;
 register struct ifnet *ifp;
 {
