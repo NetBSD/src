@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.3 2001/11/19 01:28:07 thorpej Exp $	*/
+/*	$NetBSD: cache.h,v 1.4 2002/11/09 19:34:40 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -145,50 +145,50 @@ struct mips_cache_ops {
 extern struct mips_cache_ops mips_cache_ops;
 
 /* PRIMARY CACHE VARIABLES */
-extern int mips_picache_size;
-extern int mips_picache_line_size;
-extern int mips_picache_ways;
-extern int mips_picache_way_size;
-extern int mips_picache_way_mask;
+extern u_int mips_picache_size;
+extern u_int mips_picache_line_size;
+extern u_int mips_picache_ways;
+extern u_int mips_picache_way_size;
+extern u_int mips_picache_way_mask;
 
-extern int mips_pdcache_size;		/* and unified */
-extern int mips_pdcache_line_size;
-extern int mips_pdcache_ways;
-extern int mips_pdcache_way_size;
-extern int mips_pdcache_way_mask;
+extern u_int mips_pdcache_size;		/* and unified */
+extern u_int mips_pdcache_line_size;
+extern u_int mips_pdcache_ways;
+extern u_int mips_pdcache_way_size;
+extern u_int mips_pdcache_way_mask;
 extern int mips_pdcache_write_through;
 
 extern int mips_pcache_unified;
 
 /* SECONDARY CACHE VARIABLES */
-extern int mips_sicache_size;
-extern int mips_sicache_line_size;
-extern int mips_sicache_ways;
-extern int mips_sicache_way_size;
-extern int mips_sicache_way_mask;
+extern u_int mips_sicache_size;
+extern u_int mips_sicache_line_size;
+extern u_int mips_sicache_ways;
+extern u_int mips_sicache_way_size;
+extern u_int mips_sicache_way_mask;
 
-extern int mips_sdcache_size;		/* and unified */
-extern int mips_sdcache_line_size;
-extern int mips_sdcache_ways;
-extern int mips_sdcache_way_size;
-extern int mips_sdcache_way_mask;
+extern u_int mips_sdcache_size;		/* and unified */
+extern u_int mips_sdcache_line_size;
+extern u_int mips_sdcache_ways;
+extern u_int mips_sdcache_way_size;
+extern u_int mips_sdcache_way_mask;
 extern int mips_sdcache_write_through;
 
 extern int mips_scache_unified;
 
 /* TERTIARY CACHE VARIABLES */
-extern int mips_tcache_size;		/* always unified */
-extern int mips_tcache_line_size;
-extern int mips_tcache_ways;
-extern int mips_tcache_way_size;
-extern int mips_tcache_way_mask;
+extern u_int mips_tcache_size;		/* always unified */
+extern u_int mips_tcache_line_size;
+extern u_int mips_tcache_ways;
+extern u_int mips_tcache_way_size;
+extern u_int mips_tcache_way_mask;
 extern int mips_tcache_write_through;
 
-extern int mips_dcache_align;
-extern int mips_dcache_align_mask;
+extern u_int mips_dcache_align;
+extern u_int mips_dcache_align_mask;
 
-extern int mips_cache_alias_mask;
-extern int mips_cache_prefer_mask;
+extern u_int mips_cache_alias_mask;
+extern u_int mips_cache_prefer_mask;
 
 /*
  * XXX XXX XXX THIS SHOULD NOT EXIST XXX XXX XXX

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.12 2002/09/27 15:36:23 provos Exp $	*/
+/*	$NetBSD: cache.c,v 1.13 2002/11/09 19:34:39 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -91,43 +91,43 @@
 #endif
 
 /* PRIMARY CACHE VARIABLES */
-int mips_picache_size;
-int mips_picache_line_size;
-int mips_picache_ways;
-int mips_picache_way_size;
-int mips_picache_way_mask;
+u_int mips_picache_size;
+u_int mips_picache_line_size;
+u_int mips_picache_ways;
+u_int mips_picache_way_size;
+u_int mips_picache_way_mask;
  
-int mips_pdcache_size;           /* and unified */
-int mips_pdcache_line_size;
-int mips_pdcache_ways;
-int mips_pdcache_way_size;
-int mips_pdcache_way_mask;
+u_int mips_pdcache_size;	/* and unified */
+u_int mips_pdcache_line_size;
+u_int mips_pdcache_ways;
+u_int mips_pdcache_way_size;
+u_int mips_pdcache_way_mask;
 int mips_pdcache_write_through;
 
 int mips_pcache_unified;
 
 /* SECONDARY CACHE VARIABLES */
-int mips_sicache_size;
-int mips_sicache_line_size; 
-int mips_sicache_ways;
-int mips_sicache_way_size;
-int mips_sicache_way_mask;
+u_int mips_sicache_size;
+u_int mips_sicache_line_size; 
+u_int mips_sicache_ways;
+u_int mips_sicache_way_size;
+u_int mips_sicache_way_mask;
 
-int mips_sdcache_size;           /* and unified */
-int mips_sdcache_line_size;
-int mips_sdcache_ways;
-int mips_sdcache_way_size;
-int mips_sdcache_way_mask;
+u_int mips_sdcache_size;	/* and unified */
+u_int mips_sdcache_line_size;
+u_int mips_sdcache_ways;
+u_int mips_sdcache_way_size;
+u_int mips_sdcache_way_mask;
 int mips_sdcache_write_through;
 
 int mips_scache_unified;
 
 /* TERTIARY CACHE VARIABLES */
-int mips_tcache_size;            /* always unified */
-int mips_tcache_line_size;
-int mips_tcache_ways;
-int mips_tcache_way_size;
-int mips_tcache_way_mask;
+u_int mips_tcache_size;		/* always unified */
+u_int mips_tcache_line_size;
+u_int mips_tcache_ways;
+u_int mips_tcache_way_size;
+u_int mips_tcache_way_mask;
 int mips_tcache_write_through;
 
 /*
@@ -139,11 +139,11 @@ int mips_tcache_write_through;
  * Whenever any code updates a data cache line size, it should
  * call mips_dcache_compute_align() to recompute these values.
  */
-int mips_dcache_align;
-int mips_dcache_align_mask;
+u_int mips_dcache_align;
+u_int mips_dcache_align_mask;
 
-int mips_cache_alias_mask;	/* for virtually-indexed caches */
-int mips_cache_prefer_mask;
+u_int mips_cache_alias_mask;	/* for virtually-indexed caches */
+u_int mips_cache_prefer_mask;
 
 struct mips_cache_ops mips_cache_ops;
 
@@ -178,7 +178,7 @@ static void mips_config_cache_modern(void);
 void
 mips_dcache_compute_align(void)
 {
-	int align;
+	u_int align;
 
 	align = mips_pdcache_line_size;
 
