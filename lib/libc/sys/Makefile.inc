@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.5 1993/08/16 02:44:19 mycroft Exp $
+#	$Id: Makefile.inc,v 1.6 1993/08/16 03:32:58 mycroft Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/${MACHINE}/sys ${.CURDIR}/sys
@@ -30,40 +30,42 @@ ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
 	statfs.o swapon.o symlink.o sync.o truncate.o umask.o unlink.o \
 	unmount.o utimes.o vadvise.o wait4.o write.o writev.o getdomainname.o \
 	setdomainname.o uname.o
+PASM=	${ASM:.o=.po}
 
 PSEUDO=	_exit.o _getlogin.o
+PPSEUDO=${PSEUDO:.o=.po}
 
 OBJS+=	${ASM} ${PSEUDO}
-POBJS+=	${ASM:.o=.po} ${PSEUDO:.o=.po}
+POBJS+=	${PASM} ${PPSEUDO}
 CLEANFILES+=${ASM} ${PSEUDO} ${POBJS} 
 
-${ASM:.o=.po}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
-	@echo creating ${.PREFIX}.po
+${PASM}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.PREFIX}.po
-	@${LD} -X -r ${.PREFIX}.po
-	@mv a.out ${.PREFIX}.po
+	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
+	@${LD} -X -r ${.TARGET}
+	@mv a.out ${.TARGET}
 
 ${ASM}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
-	@echo creating ${.PREFIX}.o
+	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.PREFIX}.o
-	@${LD} -x -r ${.PREFIX}.o
-	@mv a.out ${.PREFIX}.o
+	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
 
-${PSEUDO:.o=.po}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
-	@echo creating ${.PREFIX}.po
+${PPSEUDO}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.PREFIX}.po
-	@${LD} -X -r ${.PREFIX}.po
-	@mv a.out ${.PREFIX}.po
+	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
+	@${LD} -X -r ${.TARGET}
+	@mv a.out ${.TARGET}
 
 ${PSEUDO}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
-	@echo creating ${.PREFIX}.o
+	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.PREFIX}.o
-	@${LD} -x -r ${.PREFIX}.o
-	@mv a.out ${.PREFIX}.o
+	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
+	@${LD} -x -r ${.TARGET}
+	@mv a.out ${.TARGET}
 
 MAN2+=	accept.0 access.0 acct.0 adjtime.0 async_daemon.0 bind.0 brk.0 \
 	chdir.0 chflags.0 chmod.0 chown.0 chroot.0 close.0 connect.0 \
