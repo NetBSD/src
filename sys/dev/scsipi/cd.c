@@ -1,7 +1,7 @@
-/*	$NetBSD: cd.c,v 1.153 2001/07/18 18:25:41 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.154 2001/08/15 22:21:01 eeh Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -112,6 +112,7 @@ void	cdminphys __P((struct buf *));
 void	cdgetdefaultlabel __P((struct cd_softc *, struct disklabel *));
 void	cdgetdisklabel __P((struct cd_softc *));
 void	cddone __P((struct scsipi_xfer *));
+void	cdbounce __P((struct buf *));
 int	cd_interpret_sense __P((struct scsipi_xfer *));
 u_long	cd_size __P((struct cd_softc *, int));
 void	lba2msf __P((u_long, u_char *, u_char *, u_char *));
@@ -574,6 +575,80 @@ cdstrategy(bp)
 
 	bp->b_rawblkno = blkno;
 
+	/*
+	 * If the disklabel sector size does not match the device
+	 * sector size we may need to do some extra work.
+	 */
+	if (lp->d_secsize != cd->params.blksize) {
+
+		/*
+		 * If the xfer is not a multiple of the device block size
+		 * or it is not block aligned, we need to bounce it.
+		 */
+		if ((bp->b_bcount % cd->params.blksize) != 0 ||
+			((blkno * lp->d_secsize) % cd->params.blksize) != 0) {
+			struct buf *nbp;
+			void *bounce = NULL;
+			long count;
+
+			if ((bp->b_flags & B_READ) == 0) {
+
+				/* XXXX We don't support bouncing writes. */
+				bp->b_error = EACCES;
+				goto bad;
+			}
+			count = ((blkno * lp->d_secsize) % cd->params.blksize);
+			/* XXX Store starting offset in bp->b_rawblkno */
+			bp->b_rawblkno = count;
+
+			count += bp->b_bcount;
+			count = roundup(count, cd->params.blksize);
+
+			blkno = ((blkno * lp->d_secsize) / cd->params.blksize);
+			s = splbio();
+			nbp = pool_get(&bufpool, PR_NOWAIT);
+			splx(s);
+			if (!nbp) {
+				/* No memory -- fail the iop. */
+				bp->b_error = ENOMEM;
+				goto bad;
+			}
+			bounce = malloc(count, M_DEVBUF, M_NOWAIT);
+			if (!bounce) {
+				/* No memory -- fail the iop. */
+				s = splbio();
+				pool_put(&bufpool, nbp);
+				splx(s);
+				bp->b_error = ENOMEM;
+				goto bad;
+			}
+
+			/* Set up the IOP to the bounce buffer. */
+			nbp->b_error = 0;
+			nbp->b_proc = bp->b_proc;
+			nbp->b_vp = NULLVP;
+
+			nbp->b_bcount = count;
+			nbp->b_bufsize = count;
+			nbp->b_data = bounce;
+
+			LIST_INIT(&nbp->b_dep);
+			nbp->b_rawblkno = blkno;
+
+			/* We need to do a read-modify-write operation */
+			nbp->b_flags = bp->b_flags | B_READ | B_CALL;
+			nbp->b_iodone = cdbounce;
+
+			/* Put ptr to orig buf in b_private and use new buf */
+			nbp->b_private = bp;
+			bp = nbp;
+
+		} else {
+			/* Xfer is aligned -- just adjust the start block */
+			bp->b_rawblkno = (blkno * lp->d_secsize) /
+				cd->params.blksize;
+		}
+	}
 	s = splbio();
 
 	/*
@@ -624,7 +699,6 @@ cdstart(periph)
 	struct scsipi_periph *periph;
 {
 	struct cd_softc *cd = (void *)periph->periph_dev;
-	struct disklabel *lp = cd->sc_dk.dk_label;
 	struct buf *bp = 0;
 	struct scsipi_rw_big cmd_big;
 #if NCD_SCSIBUS > 0 
@@ -673,7 +747,7 @@ cdstart(periph)
 		 * We have a buf, now we should make a command.
 		 */
 		
-		nblks = howmany(bp->b_bcount, lp->d_secsize);
+		nblks = howmany(bp->b_bcount, cd->params.blksize);
 
 #if NCD_SCSIBUS > 0
 		/*
@@ -752,6 +826,94 @@ cddone(xs)
 		rnd_add_uint32(&cd->rnd_source, xs->bp->b_rawblkno);
 #endif
 	}
+}
+
+void
+cdbounce(bp)
+	struct buf *bp;
+{
+	struct buf *obp = (struct buf *)bp->b_private;
+
+	if (bp->b_flags & B_ERROR) {
+		/* EEK propagate the error and free the memory */
+		goto done;
+	}
+	if (obp->b_flags & B_READ) {
+		/* Copy data to the final destination and free the buf. */
+		memcpy(obp->b_data, bp->b_data+obp->b_rawblkno, 
+			obp->b_bcount);
+	} else {
+		/*
+		 * XXXX This is a CD-ROM -- READ ONLY -- why do we bother with
+		 * XXXX any of this write stuff?
+		 */
+		if (bp->b_flags & B_READ) {
+			struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
+			struct buf *nbp;
+			int s;
+
+			/* Read part of RMW complete. */
+			memcpy(bp->b_data+obp->b_rawblkno, obp->b_data,
+				obp->b_bcount);
+
+			s = splbio();
+
+			/* We need to alloc a new buf. */
+			nbp = pool_get(&bufpool, PR_NOWAIT);
+			if (!nbp) {
+				splx(s);
+				/* No buf available. */
+				bp->b_flags |= B_ERROR;
+				bp->b_error = ENOMEM;
+				bp->b_resid = bp->b_bcount;
+			}
+
+			/* Set up the IOP to the bounce buffer. */
+			nbp->b_error = 0;
+			nbp->b_proc = bp->b_proc;
+			nbp->b_vp = NULLVP;
+
+			nbp->b_bcount = bp->b_bcount;
+			nbp->b_bufsize = bp->b_bufsize;
+			nbp->b_data = bp->b_data;
+
+			LIST_INIT(&nbp->b_dep);
+			nbp->b_rawblkno = bp->b_rawblkno;
+
+			/* We need to do a read-modify-write operation */
+			nbp->b_flags = obp->b_flags | B_CALL;
+			nbp->b_iodone = cdbounce;
+
+			/* Put ptr to orig buf in b_private and use new buf */
+			nbp->b_private = obp;
+
+			/*
+			 * Place it in the queue of disk activities for this
+			 * disk.
+			 *
+			 * XXX Only do disksort() if the current operating mode
+			 * XXX does not include tagged queueing.
+			 */
+			disksort_blkno(&cd->buf_queue, nbp);
+
+			/*
+			 * Tell the device to get going on the transfer if it's
+			 * not doing anything, otherwise just wait for
+			 * completion
+			 */
+			cdstart(cd->sc_periph);
+
+			splx(s);
+			return;
+
+		}
+	}
+done:
+	obp->b_flags |= (bp->b_flags&(B_EINTR|B_ERROR));
+	obp->b_error = bp->b_error;
+	obp->b_resid = bp->b_resid;
+	free(bp->b_data, M_DEVBUF);
+	biodone(obp);
 }
 
 int cd_interpret_sense(xs)
@@ -1307,7 +1469,25 @@ cdgetdisklabel(cd)
 	struct cd_softc *cd;
 {
 	struct disklabel *lp = cd->sc_dk.dk_label;
+	char *errstring;
 
+	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
+
+	cdgetdefaultlabel(cd, lp);
+
+	/*
+	 * Call the generic disklabel extraction routine
+	 */
+	errstring = readdisklabel(MAKECDDEV(0, cd->sc_dev.dv_unit, RAW_PART),
+	    cdstrategy, lp, cd->sc_dk.dk_cpulabel);
+	if (errstring) {
+		printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);
+		goto error;
+	}
+	return;
+
+error:
+	/* Reset to default label -- should print a warning */
 	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	cdgetdefaultlabel(cd, lp);
