@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.19.2.5 1997/03/19 07:23:16 lukem Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.19.2.6 1997/05/14 17:32:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.5 1997/03/19 07:23:16 lukem Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.6 1997/05/14 17:32:44 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -273,15 +273,14 @@ int
 rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 	char  	**ahost;
 	u_short	rport;
-	const char *locuser, *remuser, *cmd;
+	const	char *locuser, *remuser, *cmd;
 	int	*fd2p;
 	char	*rshcmd;
 {
-	int             pid;
-	int             sp[2], ep[2];
-	char		*p;
-	struct passwd	*pw;
-
+	pid_t pid;
+	int sp[2], ep[2];
+	char *p;
+	struct passwd *pw;
 
 	/* What rsh/shell to use. */
 	if (rshcmd == NULL)
@@ -374,7 +373,7 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 	if (fd2p)
 		(void)close(ep[1]);
 
-	(void)wait(NULL);
+	(void)waitpid(pid, NULL, 0);
 	return (sp[0]);
 }
 
