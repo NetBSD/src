@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/12/17 13:59:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 1999/01/30 12:38:32 tv Exp $
 
 # XXX set MACHINE_GNU_ARCH for _<arch>.mk
 .include <bsd.own.mk>
@@ -47,5 +47,10 @@ afterinstall:
 cleanprog: __cleanldscripts
 __cleanldscripts:
 	rm -rf ldscripts
+
+# Make sure no generated files exist in the src tree before depend or build.
+# On a system where `.depend' is correct, this command does nothing.
+beforedepend:
+	@rm -f ${DIST}/ld/ldgram.c ${DIST}/ld/ldgram.h ${DIST}/ld/ldlex.c
 
 .include <bsd.prog.mk>
