@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.c,v 1.2 1999/11/12 18:17:36 joda Exp $ */
+/* $NetBSD: cardbus_exrom.c,v 1.3 1999/12/08 16:52:51 joda Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -118,6 +118,10 @@ cardbus_read_exrom(romt, romh, head)
 	    image_size = 1;
 	image_size <<= 9;
 	image = malloc(sizeof(*image), M_DEVBUF, M_NOWAIT);
+	if(image == NULL) {
+	    printf("%s: out of memory\n", __func__);
+	    return 1;
+	}
 	image->rom_image = rom_image;
 	image->image_size = image_size;
 	image->romt = romt;
