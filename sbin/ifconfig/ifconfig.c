@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.33 1997/04/10 19:10:17 is Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.34 1997/04/21 01:17:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.33 1997/04/10 19:10:17 is Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.34 1997/04/21 01:17:58 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ int	clearaddr, s;
 int	newaddr = 1;
 int	nsellength = 1;
 int	af;
-int	mflag, lflag;
+int	dflag, mflag, lflag, uflag;
 
 void 	notealias __P((char *, int));
 void 	notrailers __P((char *, int));
@@ -257,10 +257,14 @@ main(argc, argv)
 
 	/* Parse command-line options */
 	aflag = mflag = 0;
-	while ((ch = getopt(argc, argv, "alm")) != -1) {
+	while ((ch = getopt(argc, argv, "adlmu")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag = 1;
+			break;
+
+		case 'd':
+			dflag = 1;
 			break;
 
 		case 'l':
@@ -269,6 +273,10 @@ main(argc, argv)
 
 		case 'm':
 			mflag = 1;
+			break;
+
+		case 'u':
+			uflag = 1;
 			break;
 
 		default:
@@ -467,7 +475,7 @@ printall()
 		err(1, "SIOCGIFCONF");
 	ifr = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
-	for (i = 0, idx = 0; i < ifc.ifc_len; idx++) {
+	for (i = 0, idx = 0; i < ifc.ifc_len; ) {
 		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
 		i += sizeof(ifr->ifr_name) +
 			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
@@ -481,18 +489,24 @@ printall()
 		(void) strncpy(name, ifr->ifr_name, sizeof(ifr->ifr_name));
 		ifreq = *ifr;
 
+		if (getinfo(&ifreq) < 0)
+			continue;
+		if (dflag && (flags & IFF_UP) != 0)
+			continue;
+		if (uflag && (flags & IFF_UP) == 0)
+			continue;
+
+		idx++;
 		/*
 		 * Are we just listing the interfaces?
 		 */
 		if (lflag) {
-			if (idx)
+			if (idx > 1)
 				putchar(' ');
-			printf(name);
+			fputs(name, stdout);
 			continue;
 		}
 
-		if (getinfo(&ifreq) < 0)
-			continue;
 		if (sdl == NULL) {
 			status(NULL, 0);
 		} else {
@@ -577,7 +591,7 @@ notrailers(vname, value)
 	char *vname;
 	int value;
 {
-	printf("Note: trailers are no longer sent, but always received\n");
+	puts("Note: trailers are no longer sent, but always received");
 }
 
 /*ARGSUSED*/
@@ -1444,7 +1458,7 @@ xns_getaddr(addr, which)
 	sns->sns_len = sizeof(*sns);
 	sns->sns_addr = ns_addr(addr);
 	if (which == MASK)
-		printf("Attempt to set XNS netmask will be ineffectual\n");
+		puts("Attempt to set XNS netmask will be ineffectual");
 }
 
 #define SISO(x) ((struct sockaddr_iso *) &(x))
@@ -1522,7 +1536,7 @@ usage()
 		"\t[ mediaopt mopts ]\n",
 		"\t[ -mediaopt mopts ]\n",
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n",
-		"       ifconfig -a [ -m ] [ af ]\n",
-		"       ifconfig -l\n");
+		"       ifconfig -a [ -m ] [ -d ] [ -u ] [ af ]\n",
+		"       ifconfig -l [ -d ] [ -u ]\n");
 	exit(1);
 }
