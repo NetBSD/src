@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.18 2001/10/30 23:51:03 thorpej Exp $ */
+/* $NetBSD: loadfile_ecoff.c,v 1.1 2001/10/30 23:51:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,119 +75,86 @@
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-#ifdef _STANDALONE
-#include <lib/libsa/stand.h>
-#include <lib/libkern/libkern.h>
-#else
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <err.h>
-#endif
-
-#include <sys/param.h>
-#include <sys/exec.h>
-
-#include "loadfile.h"
-
-#ifdef BOOT_ECOFF
-#include <sys/exec_ecoff.h>
-static int coff_exec __P((int, struct ecoff_exechdr *, u_long *, int));
-#endif
-
-#ifdef BOOT_ELF
-#include <sys/exec_elf.h>
-static int elf_exec __P((int, Elf_Ehdr *, u_long *, int));
-#endif
-
-#ifdef BOOT_AOUT
-#include <sys/exec_aout.h>
-static int aout_exec __P((int, struct exec *, u_long *, int));
-#endif
-
-/*
- * Open 'filename', read in program and and return 0 if ok 1 on error.
- * Fill in marks
- */
-int
-loadfile(fname, marks, flags)
-	const char *fname;
+static int
+coff_exec(fd, coff, marks, flags)
+	int fd;
+	struct ecoff_exechdr *coff;
 	u_long *marks;
 	int flags;
 {
-	union {
-#ifdef BOOT_ECOFF
-		struct ecoff_exechdr coff;
-#endif
-#ifdef BOOT_ELF
-		Elf_Ehdr elf;
-#endif
-#ifdef BOOT_AOUT
-		struct exec aout;
-#endif
-		
-	} hdr;
-	ssize_t nr;
-	int fd, rval;
+	paddr_t offset = marks[MARK_START];
+	paddr_t minp = ~0, maxp = 0, pos;
 
-	/* Open the file. */
-	if ((fd = open(fname, 0)) < 0) {
-		WARN(("open %s", fname ? fname : "<default>"));
-		return -1;
+	/* Read in text. */
+	if (lseek(fd, ECOFF_TXTOFF(coff), SEEK_SET) == -1)  {
+		WARN(("lseek text"));
+		return 1;
 	}
 
-	/* Read the exec header. */
-	if ((nr = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
-		WARN(("read header"));
-		goto err;
+	if (coff->a.tsize != 0) {
+		if (flags & LOAD_TEXT) {
+			PROGRESS(("%lu", coff->a.tsize));
+			if (READ(fd, coff->a.text_start, coff->a.tsize) !=
+			    coff->a.tsize) {
+				return 1;
+			}
+		}
+		else {
+			if (lseek(fd, coff->a.tsize, SEEK_CUR) == -1) {
+				WARN(("read text"));
+				return 1;
+			}
+		}
+		if (flags & (COUNT_TEXT|LOAD_TEXT)) {
+			pos = coff->a.text_start;
+			if (minp > pos)
+				minp = pos;
+			pos += coff->a.tsize;
+			if (maxp < pos)
+				maxp = pos;
+		}
 	}
 
-#ifdef BOOT_ECOFF
-	if (!ECOFF_BADMAG(&hdr.coff)) {
-		rval = coff_exec(fd, &hdr.coff, marks, flags);
-	} else
-#endif
-#ifdef BOOT_ELF
-	if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0 &&
-	    hdr.elf.e_ident[EI_CLASS] == ELFCLASS) {
-		rval = elf_exec(fd, &hdr.elf, marks, flags);
-	} else
-#endif
-#ifdef BOOT_AOUT
-	if (OKMAGIC(N_GETMAGIC(hdr.aout))
-#ifndef NO_MID_CHECK
-	    && N_GETMID(hdr.aout) == MID_MACHINE
-#endif
-	    ) {
-		rval = aout_exec(fd, &hdr.aout, marks, flags);
-	} else
-#endif
-	{
-		rval = 1;
-		errno = EFTYPE;
-		WARN(("%s", fname ? fname : "<default>"));
+	/* Read in data. */
+	if (coff->a.dsize != 0) {
+		if (flags & LOAD_DATA) {
+			PROGRESS(("+%lu", coff->a.dsize));
+			if (READ(fd, coff->a.data_start, coff->a.dsize) !=
+			    coff->a.dsize) {
+				WARN(("read data"));
+				return 1;
+			}
+		}
+		if (flags & (COUNT_DATA|LOAD_DATA)) {
+			pos = coff->a.data_start;
+			if (minp > pos)
+				minp = pos;
+			pos += coff->a.dsize;
+			if (maxp < pos)
+				maxp = pos;
+		}
 	}
 
-	if (rval == 0) {
-		PROGRESS(("=0x%lx\n", marks[MARK_END] - marks[MARK_START]));
-		return fd;
+	/* Zero out bss. */
+	if (coff->a.bsize != 0) {
+		if (flags & LOAD_BSS) {
+			PROGRESS(("+%lu", coff->a.bsize));
+			BZERO(coff->a.bss_start, coff->a.bsize);
+		}
+		if (flags & (COUNT_BSS|LOAD_BSS)) {
+			pos = coff->a.bss_start;
+			if (minp > pos)
+				minp = pos;
+			pos = coff->a.bsize;
+			if (maxp < pos)
+				maxp = pos;
+		}
 	}
-err:
-	(void)close(fd);
-	return -1;
+
+	marks[MARK_START] = LOADADDR(minp);
+	marks[MARK_ENTRY] = LOADADDR(coff->a.entry);
+	marks[MARK_NSYM] = 1;	/* XXX: Kernel needs >= 0 */
+	marks[MARK_SYM] = LOADADDR(maxp);
+	marks[MARK_END] = LOADADDR(maxp);
+	return 0;
 }
-
-#ifdef BOOT_ECOFF
-#include "loadfile_ecoff.c"
-#endif
-
-#ifdef BOOT_ELF
-#include "loadfile_elf32.c"
-#endif
-
-#ifdef BOOT_AOUT
-#include "loadfile_aout.c"
-#endif
