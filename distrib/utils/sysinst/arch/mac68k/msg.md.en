@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.6 1999/07/04 09:41:04 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.7 1999/07/04 22:52:22 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -188,3 +188,30 @@ message geomdebug
 message geomdebug2
 {Calling: %s %d\n"
 }
+
+message disksetup_no_root
+{* No Disk Partition defined for Root!\n}
+
+message disksetup_multiple_roots
+{* Multiple Disk Partitions defined for Root\n}
+
+message disksetup_no_swap
+{* No Disk Partition defined for SWAP!\n}
+
+message disksetup_multiple_swaps
+{* Multiple Disk Partitions defined for SWAP\n}
+
+message disksetup_part_beginning
+{* Partition %s%c begins beyond end of disk\n}
+
+message disksetup_part_size
+{* Partition %s%c extends beyond end of disk\n}
+
+message disksetup_noerrors
+{** No errors or anomalies found in disk setup.\n}
+
+message parttable_fix_fixing
+{Fixing partition %s%c\n}
+
+message parttable_fix_fine
+{Partition %s%c is just fine!\n}

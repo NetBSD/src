@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 1999/07/04 10:45:37 cgd Exp $ */
+/*	$NetBSD: md.c,v 1.11 1999/07/04 22:52:22 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -449,38 +449,38 @@ report_errors()
     EBZB *bzb;
 
     if (!map.root_cnt) {
-	msg_printf_add ("  No Disk Partition defined for Root!\n");
+	msg_display_add(MSG_disksetup_no_root);
 	errs++;
     }
     if (map.root_cnt > 1) {
-	msg_printf_add ("  Multiple Disk Partitions defined for Root\n");
+	msg_display_add(MSG_disksetup_multiple_roots);
 	errs++;
     }
     if (!map.swap_cnt) {
-	msg_printf_add ("  No Disk Partition defined for SWAP!\n");
+	msg_display_add(MSG_disksetup_no_swap);
 	errs++;
     }
     if (map.swap_cnt > 1) {
-	msg_printf_add ("  Multiple Disk Partitions defined for SWAP\n");
+	msg_display_add(MSG_disksetup_multiple_swaps);
 	errs++;
     }
     for (i=0;i<map.usable_cnt;i++) {
 	j = map.mblk[i];
 	if (map.blk[j].pmPyPartStart > dlsize) {
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-	    msg_printf_add ("  Partition %s%c begins beyond end of disk\n",
+	    msg_display_add(MSG_disksetup_part_beginning,
 		diskdev, bzb->flags.part);
 	    errs++;
 	}
 	if ((map.blk[j].pmPyPartStart + map.blk[j].pmPartBlkCnt) > dlsize) {
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-	    msg_printf_add ("  Partition %s%c extends beyond end of disk\n",
+	    msg_display_add(MSG_disksetup_part_size,
 		diskdev, bzb->flags.part);
 	    errs++;
 	}
     }
     if (!errs)
-	msg_printf_add ("** No errors or anomalies found in disk setup.\n");
+	msg_display_add(MSG_disksetup_noerrors);
     return;
 }
 
