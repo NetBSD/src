@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.86.2.3 2003/02/10 06:04:46 jmc Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.86.2.4 2003/02/23 09:14:32 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -561,7 +561,7 @@ message distdir
 {What directory shall I use for %s? }
 
 message verboseextract
-{During the extraction process, what do you want to see as
+{During the extraction process, do you want to see the file names as
 each file is extracted?
 }
 
