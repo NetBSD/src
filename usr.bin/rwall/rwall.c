@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)wall.c	5.14 (Berkeley) 3/2/91";
-static char rcsid[] = "$Header: /cvsroot/src/usr.bin/rwall/rwall.c,v 1.1 1993/04/04 20:15:31 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/usr.bin/rwall/rwall.c,v 1.2 1993/04/26 14:43:24 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -149,7 +149,7 @@ makemsg(fname)
 
 	putc('\n', fp);
 
-	if (*fname && !(freopen(fname, "r", stdin))) {
+	if (fname && !(freopen(fname, "r", stdin))) {
 		(void)fprintf(stderr, "wall: can't read %s.\n", fname);
 		exit(1);
 	}
