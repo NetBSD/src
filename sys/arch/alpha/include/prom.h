@@ -1,7 +1,7 @@
-/*	$NetBSD: prom.h,v 1.5 1996/11/13 21:13:20 cgd Exp $	*/
+/*	$NetBSD: prom.h,v 1.6 1996/11/13 22:21:03 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
