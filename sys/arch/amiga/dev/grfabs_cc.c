@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.22 2002/01/28 09:56:57 aymeric Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.23 2002/03/13 20:33:35 jandberg Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.22 2002/01/28 09:56:57 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.23 2002/03/13 20:33:35 jandberg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,6 +369,7 @@ cc_load_mode(dmode_t *d)
 	wait_tof();
 	wait_tof();
 	custom.cop1lc = PREP_DMA_MEM(null_mode_copper_list);
+	custom.copjmp1 = 0;
 }
 /*
  * CC Mode Stuff.
