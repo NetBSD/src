@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.15 1997/06/24 00:38:46 thorpej Exp $	*/
+/*	$NetBSD: wd.c,v 1.16 1997/07/17 01:48:42 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -59,6 +59,8 @@
 #include <arm32/mainbus/mainbus.h>
 #include <arm32/mainbus/wdreg.h>
 #include <arm32/mainbus/wdvar.h>
+
+#include "locators.h"
 
 extern int wdresethack;
 
@@ -344,7 +346,8 @@ wdprobe(parent, match, aux)
 	struct wdc_attach_args *wa = aux;
 	int drive = wa->wa_drive;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
+	if (cf->cf_loc[WDCCF_DRIVE] != WDCCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[WDCCF_DRIVE] != drive)
 		return 0;
 	
 	if (wdcommandshort(wdc, drive, WDCC_RECAL) != 0 ||

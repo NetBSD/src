@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.8 1997/01/26 01:41:01 mark Exp $ */
+/* $NetBSD: mainbus.c,v 1.9 1997/07/17 01:48:38 jtk Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -52,6 +52,7 @@
 #include <machine/io.h>
 #include <machine/bus.h>
 #include <arm32/mainbus/mainbus.h>
+#include "locators.h"
 
 extern struct bus_space mainbus_bs_tag;
 
@@ -110,16 +111,16 @@ mainbusscan(parent, match)
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("eekkk, I'm stuffed");
 
-	if (cf->cf_loc[0] == -1) {
-		mb.mb_iobase = 0;
+	if (cf->cf_loc[MAINBUSCF_BASE] == MAINBUSCF_BASE_DEFAULT) {
+		mb.mb_iobase = 0;	/* XXX MAINBUSCF_BASE_DEFAULT? */
 		mb.mb_iosize = 0;
-		mb.mb_drq = -1;
-		mb.mb_irq = -1;
+		mb.mb_drq = MAINBUSCF_DACK_DEFAULT;
+		mb.mb_irq = MAINBUSCF_IRQ_DEFAULT;
 	} else {    
-		mb.mb_iobase = cf->cf_loc[0] + IO_CONF_BASE;
+		mb.mb_iobase = cf->cf_loc[MAINBUSCF_BASE] + IO_CONF_BASE;
 		mb.mb_iosize = 0;
-		mb.mb_drq = cf->cf_loc[1];
-		mb.mb_irq = cf->cf_loc[2];
+		mb.mb_drq = cf->cf_loc[MAINBUSCF_DACK];
+		mb.mb_irq = cf->cf_loc[MAINBUSCF_IRQ];
 	}
 	mb.mb_iot = &mainbus_bs_tag;
 	if ((*cf->cf_attach->ca_match)(parent, dev, &mb) > 0)

@@ -1,4 +1,4 @@
-/* $NetBSD: iic.c,v 1.7 1996/11/23 03:37:36 mark Exp $ */
+/* $NetBSD: iic.c,v 1.8 1997/07/17 01:48:37 jtk Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -59,6 +59,8 @@
 #include <machine/irqhandler.h>
 #include <machine/iic.h>
 #include <arm32/mainbus/mainbus.h>
+
+#include "locators.h"
 
 /* Local function prototypes */
 
@@ -288,7 +290,7 @@ iicsubmatch(parent, match, aux)
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("eekkk, I'm stuffed");
 
-	ib->ib_addr = cf->cf_loc[0];
+	ib->ib_addr = cf->cf_loc[IICCF_ADDR];
 
 	if (ib->ib_addr == -1)
 		return(0);
