@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.10 2003/12/09 20:12:14 ad Exp $	*/
+/*	$NetBSD: aac.c,v 1.11 2004/03/20 21:16:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.10 2003/12/09 20:12:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.11 2004/03/20 21:16:55 christos Exp $");
 
 #include "locators.h"
 
@@ -897,7 +897,7 @@ aac_sync_command(struct aac_softc *sc, u_int32_t command, u_int32_t arg0,
 
 	/* Spin waiting for the command to complete. */
 	for (i = 0; i < AAC_IMMEDIATE_TIMEOUT * 1000; i++) {
-		if (AAC_GET_ISTATUS(sc) & AAC_DB_SYNC_COMMAND);
+		if (AAC_GET_ISTATUS(sc) & AAC_DB_SYNC_COMMAND)
 			break;
 		DELAY(1000);
 	}
