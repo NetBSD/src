@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.10 1996/10/01 01:04:48 jonathan Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.11 1996/10/11 00:45:05 christos Exp $	*/
 
 /*
  * conf-glue.c:
@@ -199,7 +199,7 @@ nomatch(parent, cfdata, aux)
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
-	printf("nomatch  %s: %s: %s offset 0x%lx not yet done: %x\n",
+	kprintf("nomatch  %s: %s: %s offset 0x%lx not yet done: %x\n",
 	        parent->dv_cfdata->cf_driver->cd_name,
 	       parent->dv_xname,
 	       ca->ca_name, ca->ca_offset);
@@ -221,7 +221,7 @@ noattach(parent, self, aux)
 
 	/*XXX*/
 #ifdef DEBUG
-	printf("new attach  %s%d from %s: not yet done\n",
+	kprintf("new attach  %s%d from %s: not yet done\n",
 	       ca->ca_name, self->dv_unit,
 	       parent->dv_xname);
 #else

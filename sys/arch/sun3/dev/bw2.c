@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.6 1996/03/17 02:03:41 thorpej Exp $	*/
+/*	$NetBSD: bw2.c,v 1.7 1996/10/11 00:46:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -176,7 +176,7 @@ bw2attach(parent, self, args)
 		}
 	}
 
-	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
+	kprintf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
 	fb_attach(fb, 1);
 }
 

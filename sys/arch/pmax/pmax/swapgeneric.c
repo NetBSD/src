@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.7 1995/09/13 19:36:04 jonathan Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.8 1996/10/11 00:45:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,20 +99,20 @@ setconf()
 	if (boothowto & RB_ASKNAME) {
 		char name[128];
 retry:
-		printf("%s device? ", root_swap);
+		kprintf("%s device? ", root_swap);
 		gets(name);
 		for (gc = genericconf; gc->gc_driver; gc++)
 		    for (cp = name, gp = gc->gc_name; *cp == *gp; cp++)
 			if (*++gp == 0)
 				goto gotit;
-		printf("use one of:");
+		kprintf("use one of:");
 		for (gc = genericconf; gc->gc_driver; gc++)
-			printf(" %s%%d", gc->gc_name);
-		printf("\n");
+			kprintf(" %s%%d", gc->gc_name);
+		kprintf("\n");
 		goto retry;
 gotit:
 		if (*++cp < '0' || *cp > '9') {
-			printf("bad/missing unit number\n");
+			kprintf("bad/missing unit number\n");
 			goto retry;
 		}
 		while (*cp >= '0' && *cp <= '9')
@@ -127,14 +127,14 @@ gotit:
 				continue;
 			if (dp->sd_unit == unit &&
 			    (caddr_t) dp->sd_driver == gc->gc_driver) {
-				printf("root on %s%d%c\n",
+				kprintf("root on %s%d%c\n",
 					dp->sd_driver->d_name, unit,
 					"ab"[swaponroot]);
 				goto found;
 			}
 		}
 	}
-	printf("no suitable %s\n", root_swap);
+	kprintf("no suitable %s\n", root_swap);
 	goto retry;
 found:
 	if (boothowto & RB_MINIROOT) {

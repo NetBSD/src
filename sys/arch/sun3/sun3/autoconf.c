@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 1996/08/27 21:57:50 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 1996/10/11 00:47:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -175,14 +175,14 @@ bus_print(args, name)
 	struct confargs *ca = args;
 
 	if (name)
-		printf("%s:", name);
+		kprintf("%s:", name);
 
 	if (ca->ca_paddr != -1)
-		printf(" addr 0x%x", ca->ca_paddr);
+		kprintf(" addr 0x%x", ca->ca_paddr);
 	if (ca->ca_intpri != -1)
-		printf(" level %d", ca->ca_intpri);
+		kprintf(" level %d", ca->ca_intpri);
 	if (ca->ca_intvec != -1)
-		printf(" vector 0x%x", ca->ca_intvec);
+		kprintf(" vector 0x%x", ca->ca_intvec);
 
 	return(UNCONF);
 }
@@ -237,7 +237,7 @@ int bus_peek(bustype, paddr, sz)
 		rv = peek_word(va);
 		break;
 	default:
-		printf(" bus_peek: invalid size=%d\n", sz);
+		kprintf(" bus_peek: invalid size=%d\n", sz);
 		rv = -1;
 	}
 

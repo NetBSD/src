@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.42 1996/09/02 06:44:17 mycroft Exp $ */
+/*	$NetBSD: zs.c,v 1.43 1996/10/11 00:47:03 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -271,11 +271,11 @@ zsattach(parent, dev, aux)
 		if ((void *)addr != ra->ra_vaddr)
 			panic("zsattach");
 	if (ra->ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", ra->ra_nintr);
+		kprintf(": expected 1 interrupt, got %d\n", ra->ra_nintr);
 		return;
 	}
 	pri = ra->ra_intr[0].int_pri;
-	printf(" pri %d, softpri %d\n", pri, PIL_TTY);
+	kprintf(" pri %d, softpri %d\n", pri, PIL_TTY);
 	if (!didintr) {
 		didintr = 1;
 		prevpri = pri;
@@ -506,7 +506,7 @@ zs_checkcons(sc, unit, cs)
 	if (o) {
 		tp->t_oproc = zsstart;
 	}
-	printf("%s%c: console %s\n",
+	kprintf("%s%c: console %s\n",
 	    sc->sc_dev.dv_xname, (unit & 1) + 'a', i ? (o ? "i/o" : i) : o);
 	cs->cs_consio = 1;
 	cs->cs_brkabort = 1;
@@ -986,7 +986,7 @@ zsabort()
 #ifdef DDB
 	Debugger();
 #else
-	printf("stopping on keyboard abort\n");
+	kprintf("stopping on keyboard abort\n");
 	callrom();
 #endif
 }
@@ -1001,7 +1001,7 @@ zskgdb(unit)
 	int unit;
 {
 
-	printf("zs%d%c: kgdb interrupt\n", unit >> 1, (unit & 1) + 'a');
+	kprintf("zs%d%c: kgdb interrupt\n", unit >> 1, (unit & 1) + 'a');
 	kgdb_connect(1);
 }
 #endif
@@ -1583,7 +1583,7 @@ zs_kgdb_init()
 	 * Unit must be 0 or 1 (zs0).
 	 */
 	if ((unsigned)unit >= ZS_KBD) {
-		printf("zs_kgdb_init: bad minor dev %d\n", unit);
+		kprintf("zs_kgdb_init: bad minor dev %d\n", unit);
 		return;
 	}
 	zs = unit >> 1;
@@ -1592,7 +1592,7 @@ zs_kgdb_init()
 	unit &= 1;
 	zc = unit == 0 ? &addr->zs_chan[ZS_CHAN_A] : &addr->zs_chan[ZS_CHAN_B];
 	zs_kgdb_savedspeed = zs_getspeed(zc);
-	printf("zs_kgdb_init: attaching zs%d%c at %d baud\n",
+	kprintf("zs_kgdb_init: attaching zs%d%c at %d baud\n",
 	    zs, unit + 'a', kgdb_rate);
 	zs_reset(zc, 1, kgdb_rate);
 	kgdb_attach(zs_kgdb_getc, zs_kgdb_putc, (void *)zc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.21 1996/09/21 03:25:15 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.22 1996/10/11 00:44:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
 
 #if NCFB > 0
 #include <sys/param.h>
-#include <sys/systm.h>					/* printf() */
+#include <sys/systm.h>					/* kprintf() */
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
@@ -233,7 +233,7 @@ cfbattach(parent, self, aux)
 		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
 				  cfb_intr, fi);
 	}
-	printf("\n");
+	kprintf("\n");
 }
 
 
@@ -260,14 +260,14 @@ cfbinit(fi, cfbaddr, unit, silent)
 	else {
     		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			printf("cfb%d: no memory for cmap\n", unit);
+			kprintf("cfb%d: no memory for cmap\n", unit);
 			return (0);
 		}
 	}
 
 	/* check for no frame buffer */
 	if (badaddr(cfbaddr, 4)) {
-		printf("cfb: bad address 0x%p\n", cfbaddr);
+		kprintf("cfb: bad address 0x%p\n", cfbaddr);
 		return (0);
 	}
 
@@ -298,7 +298,7 @@ cfbinit(fi, cfbaddr, unit, silent)
 	 * "helpful"  side-effect.)
 	 */
 	if (!bt459init(fi)) {
-		printf("cfb%d: vdac init failed.\n", unit);
+		kprintf("cfb%d: vdac init failed.\n", unit);
 		return (0);
 	}
 	/*cfbInitColorMap();*/  /* done by bt459init() */
@@ -331,7 +331,7 @@ cfbinit(fi, cfbaddr, unit, silent)
 	 * Initialize the color map, the screen, and the mouse.
 	 */
 	if (tb_kbdmouseconfig(fi)) {
-		printf(" (mouse/keyboard config failed)");
+		kprintf(" (mouse/keyboard config failed)");
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.11 1996/08/27 21:57:18 cgd Exp $ */
+/*	$NetBSD: sbus.c,v 1.12 1996/10/11 00:46:53 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,8 +86,8 @@ sbus_print(args, sbus)
 	register struct confargs *ca = args;
 
 	if (sbus)
-		printf("%s at %s", ca->ca_ra.ra_name, sbus);
-	printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
+		kprintf("%s at %s", ca->ca_ra.ra_name, sbus);
+	kprintf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
 	return (UNCONF);
 }
 
@@ -127,7 +127,7 @@ sbus_attach(parent, self, aux)
 	 * address children on others
 	 */
 	if (sc->sc_dev.dv_unit > 0) {
-		printf(" unsupported\n");
+		kprintf(" unsupported\n");
 		return;
 	}
 
@@ -137,7 +137,7 @@ sbus_attach(parent, self, aux)
 	 */
 	node = ra->ra_node;
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
-	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
+	kprintf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	/*
 	 * Get the SBus burst transfer size if burst transfers are supported
@@ -262,12 +262,12 @@ sbusreset(sbus)
 	struct sbus_softc *sc = sbus_cd.cd_devs[sbus];
 	struct device *dev;
 
-	printf("reset %s:", sc->sc_dev.dv_xname);
+	kprintf("reset %s:", sc->sc_dev.dv_xname);
 	for (sd = sc->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
 		if (sd->sd_reset) {
 			dev = sd->sd_dev;
 			(*sd->sd_reset)(dev);
-			printf(" %s", dev->dv_xname);
+			kprintf(" %s", dev->dv_xname);
 		}
 	}
 }
