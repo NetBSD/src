@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253 2000/06/20 04:31:45 enami Exp $
+# $NetBSD: mi,v 1.254 2000/06/21 06:28:13 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -15,9 +15,11 @@
 ./usr/share/info/gdbint.info
 ./usr/share/info/gprof.info
 ./usr/share/info/grep.info
+./usr/share/info/heimdal.info
 ./usr/share/info/info-stnd.info
 ./usr/share/info/info.info
 ./usr/share/info/iostream.info
+./usr/share/info/kth-krb.info
 ./usr/share/info/ld.info
 ./usr/share/info/send-pr.info
 ./usr/share/info/stabs.info
@@ -146,8 +148,12 @@
 ./usr/share/man/cat1/jobs.0
 ./usr/share/man/cat1/join.0
 ./usr/share/man/cat1/jot.0
+./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kdump.0
 ./usr/share/man/cat1/kill.0
+./usr/share/man/cat1/kinit.0
+./usr/share/man/cat1/klist.0
+./usr/share/man/cat1/kpasswd.0
 ./usr/share/man/cat1/ksh.0
 ./usr/share/man/cat1/ktrace.0
 ./usr/share/man/cat1/ktruss.0
@@ -646,6 +652,7 @@
 ./usr/share/man/cat5/ipnat.0
 ./usr/share/man/cat5/ipnat.conf.0
 ./usr/share/man/cat5/ipsend.0
+./usr/share/man/cat5/krb5.conf.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/ld.so.conf.0
 ./usr/share/man/cat5/link.0
@@ -795,6 +802,8 @@
 ./usr/share/man/cat8/groupmod.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hlfsd.0
+./usr/share/man/cat8/hprop.0
+./usr/share/man/cat8/hpropd.0
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0
 ./usr/share/man/cat8/ifmcstat.0
@@ -807,6 +816,9 @@
 ./usr/share/man/cat8/ipfstat.0
 ./usr/share/man/cat8/ipmon.0
 ./usr/share/man/cat8/ipnat.0
+./usr/share/man/cat8/kdc.0
+./usr/share/man/cat8/kpasswdd.0
+./usr/share/man/cat8/ktutil.0
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/lastlogin.0
 ./usr/share/man/cat8/ldconfig.0
@@ -1163,8 +1175,12 @@
 ./usr/share/man/man1/jobs.1
 ./usr/share/man/man1/join.1
 ./usr/share/man/man1/jot.1
+./usr/share/man/man1/kdestroy.1
 ./usr/share/man/man1/kdump.1
 ./usr/share/man/man1/kill.1
+./usr/share/man/man1/kinit.1
+./usr/share/man/man1/klist.1
+./usr/share/man/man1/kpasswd.1
 ./usr/share/man/man1/ksh.1
 ./usr/share/man/man1/ktrace.1
 ./usr/share/man/man1/ktruss.1
@@ -1663,6 +1679,7 @@
 ./usr/share/man/man5/ipnat.5
 ./usr/share/man/man5/ipnat.conf.5
 ./usr/share/man/man5/ipsend.5
+./usr/share/man/man5/krb5.conf.5
 ./usr/share/man/man5/lastlog.5
 ./usr/share/man/man5/ld.so.conf.5
 ./usr/share/man/man5/link.5
@@ -1812,6 +1829,8 @@
 ./usr/share/man/man8/groupmod.8
 ./usr/share/man/man8/halt.8
 ./usr/share/man/man8/hlfsd.8
+./usr/share/man/man8/hprop.8
+./usr/share/man/man8/hpropd.8
 ./usr/share/man/man8/identd.8
 ./usr/share/man/man8/ifconfig.8
 ./usr/share/man/man8/ifmcstat.8
@@ -1824,6 +1843,9 @@
 ./usr/share/man/man8/ipfstat.8
 ./usr/share/man/man8/ipmon.8
 ./usr/share/man/man8/ipnat.8
+./usr/share/man/man8/kdc.8
+./usr/share/man/man8/kpasswdd.8
+./usr/share/man/man8/ktutil.8
 ./usr/share/man/man8/kvm_mkdb.8
 ./usr/share/man/man8/lastlogin.8
 ./usr/share/man/man8/ldconfig.8
