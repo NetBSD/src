@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.10 2004/01/02 12:25:46 itojun Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.11 2004/01/02 12:27:41 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.10 2004/01/02 12:25:46 itojun Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.11 2004/01/02 12:27:41 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -71,6 +71,8 @@ __RCSID("$NetBSD: citrus_iso2022.c,v 1.10 2004/01/02 12:25:46 itojun Exp $");
  *				0fffffff 1vvvvvvv 0xxxxxxx 0xxxxxxx
  * 94x94x94 charset (ESC $ ( F)	0fffffff 0xxxxxxx 0xxxxxxx 0xxxxxxx
  * 96x96x96 charset (ESC $ , F)	0fffffff 0xxxxxxx 0xxxxxxx 1xxxxxxx
+ * reserved for UCS4 co-existence (UCS4 is 31bit encoding thanks to mohta bit)
+ *				1xxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
  */
 
 typedef struct {
