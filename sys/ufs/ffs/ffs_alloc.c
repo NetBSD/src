@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.4 1994/10/20 04:20:55 cgd Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.5 1994/12/14 13:03:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_alloc.c	8.8 (Berkeley) 2/21/94
+ *	@(#)ffs_alloc.c	8.11 (Berkeley) 10/27/94
  */
 
 #include <sys/param.h>
@@ -308,6 +308,8 @@ nospace:
 #include <sys/sysctl.h>
 int doasyncfree = 1;
 struct ctldebug debug14 = { "doasyncfree", &doasyncfree };
+int prtrealloc = 0;
+struct ctldebug debug15 = { "prtrealloc", &prtrealloc };
 #else
 #define doasyncfree 1
 #endif
@@ -401,13 +403,22 @@ ffs_reallocblks(ap)
 	 * block pointers in the inode and indirect blocks associated
 	 * with the file.
 	 */
+#ifdef DEBUG
+	if (prtrealloc)
+		printf("realloc: ino %d, lbns %d-%d\n\told:", ip->i_number,
+		    start_lbn, end_lbn);
+#endif
 	blkno = newblk;
 	for (bap = &sbap[soff], i = 0; i < len; i++, blkno += fs->fs_frag) {
 		if (i == ssize)
 			bap = ebap;
 #ifdef DIAGNOSTIC
-		if (buflist->bs_children[i]->b_blkno != fsbtodb(fs, *bap))
+		if (dbtofsb(fs, buflist->bs_children[i]->b_blkno) != *bap)
 			panic("ffs_reallocblks: alloc mismatch");
+#endif
+#ifdef DEBUG
+		if (prtrealloc)
+			printf(" %d,", *bap);
 #endif
 		*bap++ = blkno;
 	}
@@ -443,11 +454,25 @@ ffs_reallocblks(ap)
 	/*
 	 * Last, free the old blocks and assign the new blocks to the buffers.
 	 */
+#ifdef DEBUG
+	if (prtrealloc)
+		printf("\n\tnew:");
+#endif
 	for (blkno = newblk, i = 0; i < len; i++, blkno += fs->fs_frag) {
 		ffs_blkfree(ip, dbtofsb(fs, buflist->bs_children[i]->b_blkno),
 		    fs->fs_bsize);
 		buflist->bs_children[i]->b_blkno = fsbtodb(fs, blkno);
+#ifdef DEBUG
+		if (prtrealloc)
+			printf(" %d,", blkno);
+#endif
 	}
+#ifdef DEBUG
+	if (prtrealloc) {
+		prtrealloc--;
+		printf("\n");
+	}
+#endif
 	return (0);
 
 fail:
@@ -998,9 +1023,10 @@ ffs_clusteralloc(ip, cg, bpref, len)
 	struct buf *bp;
 	int i, run, bno, bit, map;
 	u_char *mapp;
+	int32_t *lp;
 
 	fs = ip->i_fs;
-	if (fs->fs_cs(fs, cg).cs_nbfree < len)
+	if (fs->fs_maxcluster[cg] < len)
 		return (NULL);
 	if (bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)), (int)fs->fs_cgsize,
 	    NOCRED, &bp))
@@ -1012,11 +1038,25 @@ ffs_clusteralloc(ip, cg, bpref, len)
 	 * Check to see if a cluster of the needed size (or bigger) is
 	 * available in this cylinder group.
 	 */
+	lp = &cg_clustersum(cgp)[len];
 	for (i = len; i <= fs->fs_contigsumsize; i++)
-		if (cg_clustersum(cgp)[i] > 0)
+		if (*lp++ > 0)
 			break;
-	if (i > fs->fs_contigsumsize)
+	if (i > fs->fs_contigsumsize) {
+		/*
+		 * This is the first time looking for a cluster in this
+		 * cylinder group. Update the cluster summary information
+		 * to reflect the true maximum sized cluster so that
+		 * future cluster allocation requests can avoid reading
+		 * the cylinder group map only to find no clusters.
+		 */
+		lp = &cg_clustersum(cgp)[len - 1];
+		for (i = len - 1; i > 0; i--)
+			if (*lp-- > 0)
+				break;
+		fs->fs_maxcluster[cg] = i;
 		goto fail;
+	}
 	/*
 	 * Search the cluster map to find a big enough cluster.
 	 * We take the first one that we find, even if it is larger
@@ -1394,6 +1434,7 @@ ffs_clusteracct(fs, cgp, blkno, cnt)
 	int cnt;
 {
 	int32_t *sump;
+	int32_t *lp;
 	u_char *freemapp, *mapp;
 	int i, start, end, forw, back, map, bit;
 
@@ -1462,6 +1503,14 @@ ffs_clusteracct(fs, cgp, blkno, cnt)
 		sump[back] -= cnt;
 	if (forw > 0)
 		sump[forw] -= cnt;
+	/*
+	 * Update cluster summary information.
+	 */
+	lp = &sump[fs->fs_contigsumsize];
+	for (i = fs->fs_contigsumsize; i > 0; i--)
+		if (*lp-- > 0)
+			break;
+	fs->fs_maxcluster[cgp->cg_cgx] = i;
 }
 
 /*
