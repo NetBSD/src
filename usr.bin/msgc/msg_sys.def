@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.16 1999/07/04 21:30:14 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.17 1999/07/04 22:55:48 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -243,30 +243,6 @@ void msg_display_add(msg msg_no, ...)
 	va_start (ap, msg_no);
 	(void)_msg_vprintf(1, msg_string(msg_no), ap);
 	va_end (ap);
-}
-
-int msg_printf (const char *fmt, ...)
-{
-	va_list ap;
-	int  res;
-
-	msg_clear();
-
-	va_start (ap, fmt);
-	res = _msg_vprintf(1, fmt, ap);
-	va_end (ap);
-	return res;
-}
-
-int msg_printf_add (const char *fmt, ...)
-{
-	va_list ap;
-	int  res;
-
-	va_start (ap, fmt);
-	res = _msg_vprintf(1, fmt, ap);
-	va_end (ap);
-	return res;
 }
 
 
