@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.62 1999/02/03 20:25:06 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.63 1999/02/11 15:28:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -152,8 +152,8 @@ static u_char zs_init_reg[16] = {
 	ZSWR9_MASTER_IE | ZSWR9_NO_VECTOR,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	14,	/*12: BAUDLO (default=9600) */
-	0,	/*13: BAUDHI (default=9600) */
+	((PCLK/32)/9600)-2,	/*12: BAUDLO (default=9600) */
+	0,			/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE,
 };
