@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.h,v 1.2 2002/01/04 02:39:40 deberg Exp $	*/
+/*	$NetBSD: smb_dev.h,v 1.3 2003/03/23 12:17:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -106,9 +106,6 @@ struct smbioc_rq {
 	char *		ioc_rpbuf;
 	u_char		ioc_rwc;
 	u_short		ioc_rbc;
-	u_int8_t	ioc_errclass;
-	u_int16_t	ioc_serror;
-	u_int32_t	ioc_error;
 };
 
 struct smbioc_t2rq {

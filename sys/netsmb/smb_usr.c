@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.5 2003/02/25 09:12:11 jdolecek Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.6 2003/03/23 12:17:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.5 2003/02/25 09:12:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.6 2003/03/23 12:17:50 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -272,9 +272,6 @@ smb_usr_simplerequest(struct smb_share *ssp, struct smbioc_rq *dp,
 	dp->ioc_rbc = bc;
 	error = md_get_mem(mdp, dp->ioc_rpbuf + wc, bc, MB_MUSER);
 bad:
-	dp->ioc_errclass = rqp->sr_errclass;
-	dp->ioc_serror = rqp->sr_serror;
-	dp->ioc_error = rqp->sr_error;
 	smb_rq_done(rqp);
 	return error;
 
