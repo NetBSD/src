@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.1 2000/03/03 12:56:05 soda Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2000/07/27 18:43:17 mason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -99,7 +99,7 @@ do
 case $i in
 
 all)
-	sh $0 std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1
+	sh $0 std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 pty2 pty3
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 md1 ss0 ss1 uk0 uk1
 	sh $0 raid0 raid1 raid2 raid3
@@ -115,8 +115,8 @@ all)
 
 minimal)
 	sh $0 std
-	sh $0 sd0 sd1 sd2 sd3 pty0 st0 st1 ch0 cd0 cd1 ccd0 ccd1 md0
-	sh $0 wd0 wd1 fd0 fd1
+	sh $0 sd0 sd1 sd2 sd3 pty0 st0 st1 ch0 cd0 cd1
+	sh $0 ccd0 ccd1 md0 wd0 wd1 fd0 fd1
 	sh $0 tty00 tty01 ttyE0 ttyE1 wsmouse0 wskbd0 ttyEcfg
 	sh $0 ttyC0
 	;;
