@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.15 1997/09/28 03:31:13 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.16 1998/02/04 14:47:40 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.15 1997/09/28 03:31:13 lukem Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.16 1998/02/04 14:47:40 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.15 1997/09/28 03:31:13 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.16 1998/02/04 14:47:40 christos Exp $");
 #endif
 #endif
 
@@ -428,5 +428,68 @@ snprintf(va_alist)
 	rv = vsnprintf(s, n, fmt, ap);
 	va_end(ap);
 	return rv;
+}
+
+int
+strftime(buf, len, fmt, tm)
+	char *buf;
+	size_t len;
+	const char *fmt;
+	struct tm *tm;
+{
+	static char months[] = {
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	};
+
+	size_t s;
+	char *b = buf;
+
+	while (*fmt) {
+		if (len == 0)
+			return buf - b;
+		if (*fmt != '%') {
+			*buf++ = *fmt++;
+			len--;
+			continue;
+		}
+		switch (*fmt++) {
+		case '%':
+			*buf++ = '%';
+			len--;
+			if (len == 0) return buf - b;
+			/*FALLTHROUGH*/
+		case '\0':
+			*buf = '%';
+			s = 1;
+			break;
+		case 'k':
+			s = snprintf(buf, len, "%d", tm->tm_hour);
+			break;
+		case 'M':
+			s = snprintf(buf, len, "%02d", tm->tm_min);
+			break;
+		case 'S':
+			s = snprintf(buf, len, "%02d", tm->tm_sec);
+			break;
+		case 'b':
+			if (tm->tm_mon >= 12)
+				return buf - b;
+			s = snprintf(buf, len, "%s", months[tm->tm_mon]);
+			break;
+		case 'd':
+			s = snprintf(buf, len, "%s", tm->tm_mday);
+			break;
+		case 'Y':
+			s = snprintf(buf, len, "%s", 1900 + tm->tm_year);
+			break;
+		default:
+			s = snprintf(buf, len, "Unsupported format %c",
+			    fmt[-1]);
+			break;
+		}
+		buf += s;
+		len -= s;
+	}
 }
 #endif
