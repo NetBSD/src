@@ -3,9 +3,9 @@
 #	example of a configuration file for the isdn daemon
 #	---------------------------------------------------
 #
-#	$Id: isdnd.rc.sample,v 1.4 2002/04/11 09:08:19 martin Exp $
+#	$Id: isdnd.rc.sample,v 1.5 2003/10/02 21:32:56 abs Exp $
 #
-# $NetBSD: isdnd.rc.sample,v 1.4 2002/04/11 09:08:19 martin Exp $
+# $NetBSD: isdnd.rc.sample,v 1.5 2003/10/02 21:32:56 abs Exp $
 #
 #	last edit-date: [Wed Jul 19 09:59:42 2000]
 #
@@ -310,7 +310,7 @@ unitlengthsrc		= rate		# none, rate, cmdl, conf, aocd
 
 dialretries		= 3		# no of retries
 dialrandincr		= on		# increase time between dials
-recoverytime		= 25		# wait between dails
+recoverytime		= 25		# wait between dials
 
 usedown			= off		# do not use soft up/down
 downtries		= 2
