@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.18.2.2 1999/09/13 22:37:36 he Exp $	*/
+/*	$NetBSD: plist.c,v 1.18.2.3 2000/07/31 18:19:14 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.18.2.2 1999/09/13 22:37:36 he Exp $");
+__RCSID("$NetBSD: plist.c,v 1.18.2.3 2000/07/31 18:19:14 he Exp $");
 #endif
 #endif
 
@@ -366,8 +366,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 				    "this packing list is incorrect - ignoring delete request", tmp);
 			} else {
 				if (p->next &&
-				    p->next->type == PLIST_COMMENT &&
-				    strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {	/* || PLIST_MD5 - HF */
+				    p->next->type == PLIST_COMMENT && /* || PLIST_MD5 - HF */
+				    strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
 					char   *cp, buf[LegibleChecksumLen];
 
 					if ((cp = MD5File(tmp, buf)) != NULL) {
@@ -425,16 +425,21 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 
 		case PLIST_DIR_RM:
 			(void) snprintf(tmp, sizeof(tmp), "%s/%s", Where, p->name);
-			if (!isdir(tmp)) {
-				warnx("attempting to delete file `%s' as a directory\n"
+			if (fexists(tmp)) {
+			    if (!isdir(tmp)) {
+				warnx("cannot remove `%s' as a directory\n"
 				    "this packing list is incorrect - ignoring delete request", tmp);
-			} else {
+			    } else {
 				if (Verbose)
 					printf("Delete directory %s\n", tmp);
 				if (!Fake && delete_hierarchy(tmp, ign_err, FALSE)) {
 					warnx("unable to completely remove directory '%s'", tmp);
 					fail = FAIL;
 				}
+			    }
+			} else {
+			    warnx("cannot remove non-existant directory `%s'\n"
+			            "this packing list is incorrect - ignoring delete request", tmp);
 			}
 			last_file = p->name;
 			break;
@@ -456,6 +461,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 
 /*
  * Selectively delete a hierarchy
+ * Returns 1 on error, 0 else.
  */
 int
 delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
