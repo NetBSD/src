@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_devar.h,v 1.21 1997/03/26 21:04:36 thomas Exp
+ * $Id: if_devar.h,v 1.1.1.7 1997/06/06 22:38:10 mellon Exp $
  */
 
 #if !defined(_DEVAR_H)
@@ -369,7 +369,7 @@ typedef struct {
     void (*bd_media_select)(tulip_softc_t * const sc);
     void (*bd_media_poll)(tulip_softc_t * const sc, tulip_mediapoll_event_t event);
     void (*bd_media_preset)(tulip_softc_t * const sc);
-#if defined(__bsdi__)
+#if defined(__bsdi__) && _BSDI_VERSION >= 199701
     struct ifmedia_entry *bd_media_list;
     int bd_media_cnt;
     int bd_media_options_mask;
@@ -480,7 +480,7 @@ struct _tulip_softc_t {
     struct ethercom tulip_ec;
     u_int8_t tulip_enaddr[ETHER_ADDR_LEN];
 #endif
-#if !defined(tulip_ifmedia)
+#if !defined(tulip_ifmedia) && defined(IFM_ETHER)
     struct ifmedia tulip_ifmedia;
 #endif
 #if !defined(__NetBSD__)
@@ -489,9 +489,9 @@ struct _tulip_softc_t {
     tulip_regfile_t tulip_csrs;
     u_int32_t tulip_flags;
 #define	TULIP_WANTSETUP		0x00000001
-#define	TULIP_WANTHASH		0x00000002
-#define	TULIP_DOINGSETUP	0x00000004
-#define	TULIP_DEVICEPROBE	0x00000008
+#define	TULIP_WANTHASHPERFECT	0x00000002
+#define	TULIP_WANTHASHONLY	0x00000004
+#define	TULIP_DOINGSETUP	0x00000008
 #define	TULIP_PRINTMEDIA	0x00000010
 #define	TULIP_TXPROBE_ACTIVE	0x00000020
 #define	TULIP_ALLMULTI		0x00000040
@@ -500,11 +500,11 @@ struct _tulip_softc_t {
 #define	TULIP_INRESET		0x00000200
 #define	TULIP_NEEDRESET		0x00000400
 #define	TULIP_SQETEST		0x00000800
-#define	TULIP_ROMOK		0x00001000
-#define	TULIP_BASEROM		0x00002000
-#define	TULIP_SLAVEDROM		0x00004000
-#define	TULIP_SLAVEDINTR	0x00008000
-#define	TULIP_SHAREDINTR	0x00010000
+#define	TULIP_TXINTPENDING	0x00001000
+#define	TULIP_xxxxxx0		0x00002000
+#define	TULIP_xxxxxx1		0x00004000
+#define	TULIP_NEWTXTHRESH	0x00008000
+#define	TULIP_NOAUTOSENSE	0x00010000
 #define	TULIP_PRINTLINKUP	0x00020000
 #define	TULIP_LINKUP		0x00040000
 #define	TULIP_RXBUFSLOW		0x00080000
@@ -514,12 +514,15 @@ struct _tulip_softc_t {
 #define	TULIP_FASTTIMEOUTPENDING	0x00800000
 #define	TULIP_TRYNWAY		0x01000000
 #define	TULIP_DIDNWAY		0x02000000
-#define	TULIP_RXBAD		0x04000000
+#define	TULIP_RXIGNORE		0x04000000
 #define	TULIP_PROBE1STPASS	0x08000000
-    /* only 4 bits left! */
+#define	TULIP_DEVICEPROBE	0x10000000
+#define	TULIP_PROMISC		0x20000000
+#define	TULIP_HASHONLY		0x40000000
+    /* only 1 bit left! */
     u_int32_t tulip_features;	/* static bits indicating features of chip */
 #define	TULIP_HAVE_GPR		0x00000001	/* have gp register (140[A]) */
-#define	TULIP_HAVE_RXBUGGY	0x00000002	/* 21140A rx bug */
+#define	TULIP_HAVE_RXBADOVRFLW	0x00000002	/* RX corrupts on overflow */
 #define	TULIP_HAVE_POWERMGMT	0x00000004	/* Snooze/sleep modes */
 #define	TULIP_HAVE_MII		0x00000008	/* Some medium on MII */
 #define	TULIP_HAVE_SIANWAY	0x00000010	/* SIA does NWAY */
@@ -527,6 +530,13 @@ struct _tulip_softc_t {
 #define	TULIP_HAVE_SIAGP	0x00000040	/* SIA has a GP port */
 #define	TULIP_HAVE_BROKEN_HASH	0x00000080	/* Broken Multicast Hash */
 #define	TULIP_HAVE_ISVSROM	0x00000100	/* uses ISV SROM Format */
+#define	TULIP_HAVE_BASEROM	0x00000200	/* Board ROM can be cloned */
+#define	TULIP_HAVE_SLAVEDROM	0x00000400	/* Board ROM cloned */
+#define	TULIP_HAVE_SLAVEDINTR	0x00000800	/* Board slaved interrupt */
+#define	TULIP_HAVE_SHAREDINTR	0x00001000	/* Board shares interrupts */
+#define	TULIP_HAVE_OKROM	0x00002000	/* ROM was recognized */
+#define	TULIP_HAVE_NOMEDIA	0x00004000	/* did not detect any media */
+#define	TULIP_HAVE_STOREFWD	0x00008000	/* have CMD_STOREFWD */
     u_int32_t tulip_intrmask;	/* our copy of csr_intr */
     u_int32_t tulip_cmdmode;	/* our copy of csr_cmdmode */
     u_int32_t tulip_last_system_error : 3;	/* last system error (only value is TULIP_SYSTEMERROR is also set) */
@@ -588,6 +598,8 @@ struct _tulip_softc_t {
 	u_int32_t dbg_txprobes_failed[TULIP_MEDIA_MAX];
 	u_int32_t dbg_events[TULIP_MEDIAPOLL_MAX];
 	u_int32_t dbg_rxpktsperintr[TULIP_RXDESCS];
+	u_int32_t dbg_txpipe;
+	u_int32_t dbg_txpipestats[TULIP_TXDESCS];
     } tulip_dbg;
 #endif
     struct ifqueue tulip_txq;
@@ -613,7 +625,12 @@ struct _tulip_softc_t {
     tulip_desc_t tulip_txdescs[TULIP_TXDESCS];
 };
 
+#if defined(IFM_ETHER)
 #define	TULIP_DO_AUTOSENSE(sc)	(IFM_SUBTYPE((sc)->tulip_ifmedia.ifm_media) == IFM_AUTO)
+#else
+#define	TULIP_DO_AUTOSENSE(sc)	(((sc)->tulip_flags & TULIP_NOAUTOSENSE) == 0)
+#endif
+
 
 #if defined(TULIP_HDR_DATA)
 static const char * const tulip_chipdescs[] = { 
