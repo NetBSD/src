@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.7 2002/09/23 23:53:54 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.8 2004/02/27 02:55:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -190,6 +190,7 @@ struct RF_DagList_s {
 	RF_RaidAccessDesc_t *desc;	/* ptr to descriptor for this access */
 	RF_AccTraceEntry_t tracerec;	/* perf mon info for dags (not user
 					 * info) */
+	struct RF_DagList_s *next;     /* next DagList, if any */
 };
 
 /* convience macro for declaring a create dag function */

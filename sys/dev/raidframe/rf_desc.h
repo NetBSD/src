@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.9 2004/01/01 19:27:35 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.10 2004/02/27 02:55:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -77,7 +77,7 @@ struct RF_RaidAccessDesc_s {
 				 * RAID operation has gotten */
 	RF_AccessState_t *states;	/* array of states to be run */
 	int     status;		/* pass/fail status of the last operation */
-	RF_DagList_t *dagArray;	/* array of dag lists, one list per stripe */
+	RF_DagList_t *dagList;	/* list of dag lists, one list per stripe */
 	RF_AccessStripeMapHeader_t *asmap;	/* the asm for this I/O */
 	void   *bp;		/* buf pointer for this RAID acc.  ignored
 				 * outside the kernel */

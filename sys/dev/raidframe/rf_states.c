@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.25 2004/01/02 21:41:08 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.26 2004/02/27 02:55:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.25 2004/01/02 21:41:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.26 2004/02/27 02:55:18 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -440,6 +440,7 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Etimer_t timer;
 	RF_DagHeader_t *dag_h;
+	RF_DagList_t *dagList;
 	struct buf *bp;
 	int     i, selectStatus;
 
@@ -449,9 +450,13 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 	/* SelectAlgorithm returns one or more dags */
 	selectStatus = rf_SelectAlgorithm(desc, desc->flags | RF_DAG_SUPPRESS_LOCKS);
 #if RF_DEBUG_VALIDATE_DAG
-	if (rf_printDAGsDebug)
-		for (i = 0; i < desc->numStripes; i++)
-			rf_PrintDAGList(desc->dagArray[i].dags);
+	if (rf_printDAGsDebug) {
+		dagList = desc->dagList;
+		for (i = 0; i < desc->numStripes; i++) {
+			rf_PrintDAGList(dagList.dags);
+			dagList = dagList->next;
+		}
+	}
 #endif /* RF_DEBUG_VALIDATE_DAG */
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
@@ -476,13 +481,15 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 		bp->b_error = EIO;
 	} else {
 		/* bind dags to desc */
+		dagList = desc->dagList;
 		for (i = 0; i < desc->numStripes; i++) {
-			dag_h = desc->dagArray[i].dags;
+			dag_h = dagList->dags;
 			while (dag_h) {
 				dag_h->bp = (struct buf *) desc->bp;
 				dag_h->tracerec = tracerec;
 				dag_h = dag_h->next;
 			}
+			dagList = dagList->next;
 		}
 		desc->flags |= RF_DAG_DISPATCH_RETURNED;
 		desc->state++;	/* next state should be rf_State_ExecuteDAG */
@@ -492,7 +499,7 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 
 
 
-/* the access has an array of dagLists, one dagList per parity stripe.
+/* the access has an list of dagLists, one dagList per parity stripe.
  * fire the first dag in each parity stripe (dagList).
  * dags within a stripe (dagList) must be executed sequentially
  *  - this preserves atomic parity update
@@ -503,7 +510,7 @@ rf_State_ExecuteDAG(RF_RaidAccessDesc_t *desc)
 {
 	int     i;
 	RF_DagHeader_t *dag_h;
-	RF_DagList_t *dagArray = desc->dagArray;
+	RF_DagList_t *dagList;
 
 	/* next state is always rf_State_ProcessDAG important to do
 	 * this before firing the first dag (it may finish before we
@@ -512,16 +519,18 @@ rf_State_ExecuteDAG(RF_RaidAccessDesc_t *desc)
 
 	/* sweep dag array, a stripe at a time, firing the first dag
 	 * in each stripe */
+	dagList = desc->dagList;
 	for (i = 0; i < desc->numStripes; i++) {
-		RF_ASSERT(dagArray[i].numDags > 0);
-		RF_ASSERT(dagArray[i].numDagsDone == 0);
-		RF_ASSERT(dagArray[i].numDagsFired == 0);
-		RF_ETIMER_START(dagArray[i].tracerec.timer);
+		RF_ASSERT(dagList->numDags > 0);
+		RF_ASSERT(dagList->numDagsDone == 0);
+		RF_ASSERT(dagList->numDagsFired == 0);
+		RF_ETIMER_START(dagList->tracerec.timer);
 		/* fire first dag in this stripe */
-		dag_h = dagArray[i].dags;
+		dag_h = dagList->dags;
 		RF_ASSERT(dag_h);
-		dagArray[i].numDagsFired++;
-		rf_DispatchDAG(dag_h, (void (*) (void *)) rf_ContinueDagAccess, &dagArray[i]);
+		dagList->numDagsFired++;
+		rf_DispatchDAG(dag_h, (void (*) (void *)) rf_ContinueDagAccess, dagList);
+		dagList = dagList->next;
 	}
 
 	/* the DAG will always call the callback, even if there was no
@@ -542,21 +551,27 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_DagHeader_t *dag_h;
 	int     i, j, done = RF_TRUE;
-	RF_DagList_t *dagArray = desc->dagArray;
+	RF_DagList_t *dagList, *temp;
 	RF_Etimer_t timer;
 
 	/* check to see if this is the last dag */
-	for (i = 0; i < desc->numStripes; i++)
-		if (dagArray[i].numDags != dagArray[i].numDagsDone)
+	dagList = desc->dagList;
+	for (i = 0; i < desc->numStripes; i++) {
+		if (dagList->numDags != dagList->numDagsDone)
 			done = RF_FALSE;
+		dagList = dagList->next;
+	}
 
 	if (done) {
 		if (desc->status) {
 			/* a dag failed, retry */
 			RF_ETIMER_START(timer);
 			/* free all dags */
+			dagList = desc->dagList;
 			for (i = 0; i < desc->numStripes; i++) {
-				rf_FreeDAG(desc->dagArray[i].dags);
+				rf_FreeDAG(dagList->dags);
+				temp = dagList;
+				dagList = dagList->next;
 			}
 			rf_MarkFailuresInASMList(raidPtr, asmh);
 			/* back up to rf_State_CreateDAG */
@@ -572,20 +587,22 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 		/* see if any are ready to be fired.  if so, fire them */
 		/* don't fire the initial dag in a list, it's fired in
 		 * rf_State_ExecuteDAG */
+		dagList = desc->dagList;
 		for (i = 0; i < desc->numStripes; i++) {
-			if ((dagArray[i].numDagsDone < dagArray[i].numDags)
-			    && (dagArray[i].numDagsDone == dagArray[i].numDagsFired)
-			    && (dagArray[i].numDagsFired > 0)) {
-				RF_ETIMER_START(dagArray[i].tracerec.timer);
+			if ((dagList->numDagsDone < dagList->numDags)
+			    && (dagList->numDagsDone == dagList->numDagsFired)
+			    && (dagList->numDagsFired > 0)) {
+				RF_ETIMER_START(dagList->tracerec.timer);
 				/* fire next dag in this stripe */
 				/* first, skip to next dag awaiting execution */
-				dag_h = dagArray[i].dags;
-				for (j = 0; j < dagArray[i].numDagsDone; j++)
+				dag_h = dagList->dags;
+				for (j = 0; j < dagList->numDagsDone; j++)
 					dag_h = dag_h->next;
-				dagArray[i].numDagsFired++;
+				dagList->numDagsFired++;
 				rf_DispatchDAG(dag_h, (void (*) (void *)) rf_ContinueDagAccess,
-				    &dagArray[i]);
+				    dagList);
 			}
+			dagList = dagList->next;
 		}
 		return RF_TRUE;
 	}
@@ -598,6 +615,7 @@ rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_AccessStripeMap_t *asm_p;
+	RF_DagList_t *dagList;
 	RF_Etimer_t timer;
 	int i;
 
@@ -613,8 +631,10 @@ rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 
 	RF_ETIMER_START(timer);
 	/* free all dags */
+	dagList = desc->dagList;
 	for (i = 0; i < desc->numStripes; i++) {
-		rf_FreeDAG(desc->dagArray[i].dags);
+		rf_FreeDAG(dagList->dags);
+		dagList = dagList->next;
 	}
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);

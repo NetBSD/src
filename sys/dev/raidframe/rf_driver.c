@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.84 2004/01/15 20:27:27 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.85 2004/02/27 02:55:17 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.84 2004/01/15 20:27:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.85 2004/02/27 02:55:17 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -209,7 +209,6 @@ rf_UnconfigureArray()
 int 
 rf_Shutdown(RF_Raid_t *raidPtr)
 {
-
 	if (!raidPtr->valid) {
 		RF_ERRORMSG("Attempt to shut down unconfigured RAIDframe driver.  Aborting shutdown\n");
 		return (EINVAL);
@@ -288,7 +287,7 @@ int
 rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 {
 	RF_RowCol_t col;
-	int     rc;
+	int rc;
 
 	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	configureCount++;
@@ -503,8 +502,17 @@ void
 rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr = desc->raidPtr;
+	RF_DagList_t *dagList, *temp;
 
 	RF_ASSERT(desc);
+
+	/* Cleanup the dagList(s) */
+	dagList = desc->dagList;
+	while(dagList != NULL) {
+		temp = dagList;
+		dagList = dagList->next;
+		rf_FreeDAGList(temp);
+	}
 
 	rf_FreeAllocList(desc->cleanupList);
 	pool_put(&rf_rad_pool, desc);

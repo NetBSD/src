@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.24 2004/01/10 17:04:44 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.25 2004/02/27 02:55:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.24 2004/01/10 17:04:44 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.25 2004/02/27 02:55:17 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -172,6 +172,12 @@ static struct pool rf_dagh_pool;
 #define RF_DAGH_INC       16
 #define RF_DAGH_INITIAL   32
 
+static struct pool rf_daglist_pool;
+#define RF_MAX_FREE_DAGLIST 128
+#define RF_DAGLIST_INITIAL   32
+
+
+
 static void rf_ShutdownDAGs(void *);
 static void 
 rf_ShutdownDAGs(void *ignored)
@@ -188,6 +194,12 @@ rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 		  "rf_dagh_pl", NULL);
 	pool_sethiwat(&rf_dagh_pool, RF_MAX_FREE_DAGH);
 	pool_prime(&rf_dagh_pool, RF_DAGH_INITIAL);
+
+	pool_init(&rf_daglist_pool, sizeof(RF_DagList_t), 0, 0, 0,
+		  "rf_daglist_pl", NULL);
+	pool_sethiwat(&rf_daglist_pool, RF_MAX_FREE_DAGLIST);
+	pool_prime(&rf_daglist_pool, RF_DAGLIST_INITIAL);
+
 	rc = rf_ShutdownCreate(listp, rf_ShutdownDAGs, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
@@ -214,6 +226,27 @@ rf_FreeDAGHeader(RF_DagHeader_t * dh)
 {
 	pool_put(&rf_dagh_pool, dh);
 }
+
+RF_DagList_t *
+rf_AllocDAGList()
+{
+	RF_DagList_t *dagList;
+
+	dagList = pool_get(&rf_daglist_pool, PR_WAITOK);
+	memset(dagList, 0, sizeof(RF_DagList_t));
+
+	return (dagList);
+}
+
+void
+rf_FreeDAGList(RF_DagList_t *dagList)
+{
+	pool_put(&rf_daglist_pool, dagList);
+}
+
+
+
+
 /* allocates a buffer big enough to hold the data described by pda */
 void   *
 rf_AllocBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h,

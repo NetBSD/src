@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.11 2004/01/02 21:41:08 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.12 2004/02/27 02:55:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.11 2004/01/02 21:41:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.12 2004/02/27 02:55:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -82,8 +82,8 @@ InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr)
  *
  * Create a DAG to do a read or write operation.
  *
- * create an array of dagLists, one list per parity stripe.
- * return the lists in the array desc->dagArray.
+ * create a list of dagLists, one list per parity stripe.
+ * return the lists in the desc->dagList (which is a list of lists).
  *
  * Normally, each list contains one dag for the entire stripe.  In some
  * tricky cases, we break this into multiple dags, either one per stripe
@@ -123,6 +123,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	RF_AccessStripeMap_t *asmap = asm_h->stripeMap;
 	RF_AccessStripeMap_t *asm_p;
 	RF_DagHeader_t *dag_h = NULL, *tempdag_h, *lastdag_h;
+	RF_DagList_t *dagList, *dagListend;
 	int     i, j, k;
 	RF_VoidFuncPtr *stripeFuncs, normalStripeFuncs[MAXNSTRIPES];
 	RF_AccessStripeMap_t *asm_up, *asm_bp;
@@ -273,13 +274,25 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 		stripeNum = 0;
 		stripeUnitNum = 0;
 
-		/* create an array of dagLists and fill them in */
-		RF_MallocAndAdd(desc->dagArray, desc->numStripes * sizeof(RF_DagList_t), (RF_DagList_t *), desc->cleanupList);
+		/* create a list of dagLists and fill them in */
+
+		dagListend = NULL;
 
 		for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
 			/* grab dag header for this stripe */
 			dag_h = NULL;
-			desc->dagArray[i].desc = desc;
+
+			dagList = rf_AllocDAGList();
+
+			/* always tack the new dagList onto the end of the list... */
+			if (dagListend == NULL) {
+				desc->dagList = dagList;
+			} else {
+				dagListend->next = dagList;
+			}
+			dagListend = dagList;
+
+			dagList->desc = desc;
 
 			if (stripeFuncs[i] == (RF_VoidFuncPtr) NULL) {
 				/* use bailout functions for this stripe */
@@ -292,7 +305,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 							/* create a dag for
 							 * this block */
 							InitHdrNode(&tempdag_h, raidPtr);
-							desc->dagArray[i].numDags++;
+							dagList->numDags++;
 							if (dag_h == NULL) {
 								dag_h = tempdag_h;
 							} else {
@@ -309,7 +322,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 					} else {
 						/* create a dag for this unit */
 						InitHdrNode(&tempdag_h, raidPtr);
-						desc->dagArray[i].numDags++;
+						dagList->numDags++;
 						if (dag_h == NULL) {
 							dag_h = tempdag_h;
 						} else {
@@ -328,7 +341,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			} else {
 				/* Create a dag for this parity stripe */
 				InitHdrNode(&tempdag_h, raidPtr);
-				desc->dagArray[i].numDags++;
+				dagList->numDags++;
 				if (dag_h == NULL) {
 					dag_h = tempdag_h;
 				} else {
@@ -338,7 +351,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 
 				(stripeFuncs[i]) (raidPtr, asm_p, tempdag_h, bp, flags, tempdag_h->allocList);
 			}
-			desc->dagArray[i].dags = dag_h;
+			dagList->dags = dag_h;
 		}
 		RF_ASSERT(i == desc->numStripes);
 
