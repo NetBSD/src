@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.8 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: acardide.c,v 1.9 2004/08/02 19:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -311,10 +311,12 @@ acard_pci_intr(void *arg)
 			continue;
 		}
 		crv = wdcintr(wdc_cp);
-		if (crv == 0)
+		if (crv == 0) {
 			printf("%s:%d: bogus intr\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, i);
-		else if (crv == 1)
+			bus_space_write_1(sc->sc_dma_iot,
+			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
+		} else if (crv == 1)
 			rv = 1;
 		else if (rv == 0)
 			rv = crv;
