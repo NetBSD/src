@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.180 2001/01/23 02:14:01 augustss Exp $
+#	$NetBSD: Makefile,v 1.181 2001/01/28 01:39:40 nathanw Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 an.4 aria.4 atalk.4 audio.4 auich.4 auvia.4 \
@@ -71,11 +71,12 @@ MLINKS+=usb.4 uhub.4
 MLINKS+=ntwoc.4 ntwo.4
 MLINKS+=scsi.4 scsibus.4
 MLINKS+=scsi.4 atapibus.4
+MLINKS+=speaker.4 spkr.4
 MLINKS+=cardbus.4 cardslot.4
 MLINKS+=pci.4 pchb.4
 MLINKS+=pci.4 ppb.4
-MLINKS+=pcppi.4 spkr.4
 MLINKS+=pcppi.4 sysbeep.4
+MLINKS+=pcppi.4 isabeep.4
 MLINKS+=pss.4 sp.4
 MLINKS+=viaenv.4 viapm.4
 MLINKS+=tty.4 dty.4
