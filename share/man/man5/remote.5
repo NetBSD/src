@@ -1,4 +1,4 @@
-.\"	$NetBSD: remote.5,v 1.9 2000/10/05 12:35:33 ad Exp $
+.\"	$NetBSD: remote.5,v 1.10 2000/11/17 10:14:20 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,8 @@ is structured somewhat like the
 file.
 Each line in the file provides a description for a single
 .Em system .
-Fields are separated by a colon (``:'').
+Fields are separated by a colon
+.Pq Dq \&: .
 Lines ending in a \e character with an immediately following newline are
 continued on the next line.
 .Pp
@@ -61,7 +62,10 @@ After the name of the system comes the fields of the description.
 A field name followed by an `=' sign indicates a string value follows.
 A field name followed by a `#' sign indicates a following numeric value.
 .Pp
-Entries named ``tip*'' and ``cu*''
+Entries named
+.Dq tip*
+and
+.Dq cu*
 are used as default entries by
 .Xr tip 1 ,
 and the
@@ -72,19 +76,25 @@ as follows.
 When
 .Xr tip 1
 is invoked with only a phone number, it looks for an entry
-of the form ``tip300'', where 300 is the baud rate with
+of the form
+.Dq tip300 ,
+where 300 is the baud rate with
 which the connection is to be made.
 When the
 .Xr cu 1
-interface is used, entries of the form ``cu300'' are used.
+interface is used, entries of the form
+.Dq cu300
+are used.
 .Sh CAPABILITIES
 Capabilities are either strings (str), numbers (num), or boolean flags (bool).
 A string capability is specified by
-.Em capability Ns Ar = Ns Em value ;
-for example, ``dv=/dev/harris''.
+.Em "capability=value" ;
+for example,
+.Dq Li dv=/dev/harris .
 A numeric capability is specified by
-.Em capability Ns Ar # Ns Em value ;
-for example, ``xa#99''.
+.Em "capability#value" ;
+for example,
+.Dq Li xa#99 .
 A boolean capability is specified by simply listing the capability.
 .Bl -tag -width indent
 .It Cm \&at
@@ -164,8 +174,14 @@ string is sent at end-of-file.
 (str)
 The type of parity to use when sending data
 to the host.
-This may be one of ``even'', ``odd'', ``none'', ``zero'' (always
-set bit 8 to zero), ``one'' (always set bit 8 to 1).
+This may be one of
+.Sy even ,
+.Sy odd ,
+.Sy none ,
+.Sy zero
+(always set bit 8 to zero),
+.Sy one
+(always set bit 8 to one).
 The default is even parity.
 .It Cm \&pn
 (str)
