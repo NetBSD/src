@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $Id: dot.profile,v 1.1.1.1 1994/08/29 15:30:21 cgd Exp $
+#       $Id: dot.profile,v 1.1.1.1.6.1 1995/11/20 21:50:48 perry Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
@@ -46,6 +46,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# run update, so that installed software is written as it goes.
 	update
+
+	# mount the kern_fs so that we can examine the dmesg state
+	mount -t kernfs /kern /kern
 
 	# pull in the functions that people will use from the shell prompt.
 	. /.commonutils
