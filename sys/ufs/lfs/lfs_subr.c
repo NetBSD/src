@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.32 2003/02/19 12:58:53 yamt Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.33 2003/02/20 04:27:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.32 2003/02/19 12:58:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.33 2003/02/20 04:27:24 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ lfs_setup_resblks(struct lfs *fs)
 	int maxbpp;
 
 	fs->lfs_resblk = (res_t *)malloc(LFS_N_TOTAL * sizeof(res_t), M_SEGMENT,
-				          M_WAITOK);
+					  M_WAITOK);
 	for (i = 0; i < LFS_N_TOTAL; i++) {
 		fs->lfs_resblk[i].inuse = 0;
 		fs->lfs_resblk[i].p = NULL;
@@ -178,9 +178,9 @@ lfs_setup_resblks(struct lfs *fs)
 	 */
 	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
 	maxbpp = MIN(maxbpp, fs->lfs_ssize / fs->lfs_fsize + 2);
-        pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0,
+	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0,
 		LFS_N_BPP, "lfsbpppl", &pool_allocator_nointr);
-        pool_init(&fs->lfs_clpool, sizeof(struct lfs_cluster), 0, 0,
+	pool_init(&fs->lfs_clpool, sizeof(struct lfs_cluster), 0, 0,
 		LFS_N_CL, "lfsclpl", &pool_allocator_nointr);
 	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0,
 		LFS_N_SEG, "lfssegpool", &pool_allocator_nointr);
@@ -358,7 +358,7 @@ lfs_unmark_dirop(struct lfs *fs)
 		vp = ITOV(ip);
 
 		if (VOP_ISLOCKED(vp) &&
-                           vp->v_lock.lk_lockholder != curproc->p_pid) {
+			   vp->v_lock.lk_lockholder != curproc->p_pid) {
 			continue;
 		}
 		if ((VTOI(vp)->i_flag & IN_ADIROP) == 0) {
@@ -493,7 +493,7 @@ lfs_segunlock(struct lfs *fs)
 		if (ckp) {
 			fs->lfs_nactive = 0;
 			/* If we *know* everything's on disk, write both sbs */
-			/* XXX should wait for this one  */
+			/* XXX should wait for this one	 */
 			if (sync)
 				lfs_writesuper(fs, fs->lfs_sboffs[fs->lfs_activesb]);
 			lfs_writesuper(fs, fs->lfs_sboffs[1 - fs->lfs_activesb]);

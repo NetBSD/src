@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.20 2003/02/17 23:48:18 perseant Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.21 2003/02/20 04:27:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -73,7 +73,7 @@
 #ifdef DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.20 2003/02/17 23:48:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.21 2003/02/20 04:27:24 perseant Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -90,13 +90,13 @@ struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 
 int lfs_bwrite_log(struct buf *bp, char *file, int line)
 {
-        struct vop_bwrite_args a;
-        a.a_desc = VDESC(vop_bwrite);
-        a.a_bp = bp;
+	struct vop_bwrite_args a;
+	a.a_desc = VDESC(vop_bwrite);
+	a.a_bp = bp;
 
 	if (!(bp->b_flags & (B_DELWRI | B_GATHERED)))
 		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags);
-        return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
+	return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
 }
 
 void lfs_dumplog(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.64 2003/02/17 23:48:18 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.65 2003/02/20 04:27:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.64 2003/02/17 23:48:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.65 2003/02/20 04:27:24 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -165,7 +165,7 @@ lfs_update(void *v)
 	 * If we are called from vinvalbuf, and the file's blocks have
 	 * already been scheduled for writing, but the writes have not
 	 * yet completed, lfs_vflush will not be called, and vinvalbuf
-	 * will cause a panic.  So, we must wait until any pending write
+	 * will cause a panic.	So, we must wait until any pending write
 	 * for our inode completes, if we are called with UPDATE_WAIT set.
 	 */
 	s = splbio();
@@ -207,7 +207,7 @@ lfs_update(void *v)
 		}
 		--fs->lfs_diropwait;
 		return lfs_vflush(vp);
-        }
+	}
 	return 0;
 }
 
@@ -368,39 +368,39 @@ lfs_truncate(void *v)
 		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 	}
 #ifdef LFS_UBC
-        /*
-         * When truncating a regular file down to a non-block-aligned size,
-         * we must zero the part of last block which is past the new EOF.
-         * We must synchronously flush the zeroed pages to disk
-         * since the new pages will be invalidated as soon as we
-         * inform the VM system of the new, smaller size.
-         * We must do this before acquiring the GLOCK, since fetching
-         * the pages will acquire the GLOCK internally.
-         * So there is a window where another thread could see a whole
-         * zeroed page past EOF, but that's life.
-         */
+	/*
+	 * When truncating a regular file down to a non-block-aligned size,
+	 * we must zero the part of last block which is past the new EOF.
+	 * We must synchronously flush the zeroed pages to disk
+	 * since the new pages will be invalidated as soon as we
+	 * inform the VM system of the new, smaller size.
+	 * We must do this before acquiring the GLOCK, since fetching
+	 * the pages will acquire the GLOCK internally.
+	 * So there is a window where another thread could see a whole
+	 * zeroed page past EOF, but that's life.
+	 */
 
-        else { /* vp->v_type == VREG && length < osize && offset != 0 */
-                voff_t eoz;
+	else { /* vp->v_type == VREG && length < osize && offset != 0 */
+		voff_t eoz;
 
 		aflags = ap->a_flags & IO_SYNC ? B_SYNC : 0;
-                error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
 			aflags);
-                if (error) {
-                        return error;
-                }
-                size = blksize(fs, oip, lblkno(fs, length));
-                eoz = MIN(lblktosize(fs, lblkno(fs, length)) + size, osize);
-                uvm_vnp_zerorange(ovp, length, eoz - length);
-                simple_lock(&ovp->v_interlock);
-                error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
-                    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
-                if (error) {
-                        return error;
-                }
-        }
+		if (error) {
+			return error;
+		}
+		size = blksize(fs, oip, lblkno(fs, length));
+		eoz = MIN(lblktosize(fs, lblkno(fs, length)) + size, osize);
+		uvm_vnp_zerorange(ovp, length, eoz - length);
+		simple_lock(&ovp->v_interlock);
+		error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
+		    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
+		if (error) {
+			return error;
+		}
+	}
 
-        lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
 #endif
 
 	oip->i_ffs_size = length;
