@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.179 2004/06/29 03:57:36 mycroft Exp $	*/
+/*	$NetBSD: uhci.c,v 1.180 2004/07/17 20:12:03 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.179 2004/06/29 03:57:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.180 2004/07/17 20:12:03 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1963,8 +1963,6 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	/*
 	 * Step 3: Execute callback.
 	 */
-	xfer->hcpriv = ii;
-
 	DPRINTFN(1,("uhci_abort_xfer: callback\n"));
 	s = splusb();
 #ifdef DIAGNOSTIC
