@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.28 2002/09/08 01:41:12 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.58 2002/09/08 01:12:30 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.29 2003/05/15 00:23:54 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.60 2003/05/15 00:21:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -255,15 +255,13 @@ daemon_main(int argc, char **argv)
 		if (serverargc >= MAXARGV)
 			exit_stderr("too many arguments");
 
-		serverpath = malloc(strlen(argv[NUMPRG]) + 1);
+		serverpath = strdup(argv[NUMPRG]);
 		if (!serverpath)
 			exit_stderr("not enough core");
-		strcpy(serverpath, argv[NUMPRG]);
 		for (i = 0; i < serverargc; i++) {
-			serverarg[i] = malloc(strlen(argv[i + NUMARG]) + 1);
+			serverarg[i] = strdup(argv[i + NUMARG]);
 			if (!serverarg[i])
 				exit_stderr("not enough core");
-			strcpy(serverarg[i], argv[i + NUMARG]);
 		}
 		serverarg[i] = NULL;
 		/* fall throuth */
@@ -282,7 +280,7 @@ daemon_main(int argc, char **argv)
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = 0;
+	hints.ai_protocol = IPPROTO_TCP;	/* SCTP? */
 	error = getaddrinfo(NULL, service, &hints, &res);
 	if (error)
 		exit_failure("getaddrinfo: %s", gai_strerror(error));
