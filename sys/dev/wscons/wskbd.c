@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.55 2001/10/27 13:52:57 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.56 2001/11/07 13:36:43 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.55 2001/10/27 13:52:57 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.56 2001/11/07 13:36:43 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -728,9 +728,11 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (0);
 
 #if NWSMUX > 0
-	if (sc->sc_base.me_parent != NULL)
+	if (sc->sc_base.me_parent != NULL) {
 		/* Grab the keyboard out of the greedy hands of the mux. */
+		DPRINTF(("wskbdopen: detach\n"));
 		wsmux_detach_sc(&sc->sc_base);
+	}
 #endif
 
 	if (sc->sc_base.me_evp != NULL)
