@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.22 1994/12/01 15:39:17 mycroft Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.23 1995/01/09 02:46:41 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -268,10 +268,10 @@ vm_page_bootstrap(startp, endp)
  *	for the object/offset-to-page hash table headers.
  *	Each page cell is initialized and placed on the free list.
  */
-vm_offset_t
+void
 vm_page_startup(start, end)
-	register vm_offset_t	*start;
-	vm_offset_t		*end;
+	vm_offset_t	*start;
+	vm_offset_t	*end;
 {
 	register vm_page_t	m;
 	register struct pglist	*bucket;
