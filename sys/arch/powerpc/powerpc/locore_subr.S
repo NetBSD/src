@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.23 2003/10/17 22:21:38 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.24 2003/11/21 18:07:29 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -360,6 +360,8 @@ switch_common:
 	stptr	%r31,CI_CURLWP(%r7)
 	ldptr	%r4,L_ADDR(%r31)	/* put PCB addr in r4 */
 	stptr	%r4,CI_CURPCB(%r7)	/* indicate new pcb */
+	ldptr	%r3,PCB_PM(%r4)		/* save pmap pointer */
+	stptru	%r3,CI_CURPM(%r7)
 #if 0
 	li	%r3,CI_CURPCB
 #ifdef PPC_OEA64
@@ -423,8 +425,7 @@ switch_return:
 #if defined(PPC_IBM4XX)
 0:
 	GET_CPUINFO(%r3)
-	ldreg	%r3,CI_CURPCB(%r3)	/* Do we need a context? */
-	ldreg	%r3,PCB_PM(%r3)	
+	ldreg	%r3,CI_CURPM(%r3)	/* Do we need a context? */
 	ldreg	%r4,PM_CTX(%r3)
 	cmpwi	%r4,0
 #	mtspr	SPR_SPR0,4		/* Always keep the current ctx here */
