@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.3 2003/01/06 02:54:04 reinoud Exp $
+$NetBSD: version,v 1.4 2003/01/06 18:22:00 reinoud Exp $
 
 0.90:	Experimental C version
 0.91:	General cleanup
@@ -17,3 +17,5 @@ $NetBSD: version,v 1.3 2003/01/06 02:54:04 reinoud Exp $
 3.00:	acorn32 bootloader version 3 is alive
 3.01:	fixed serious non VRAM screen issues and made NC live again!
 3.02:	first small try for bootfile name fixing
+3.03:	no zeropage useage anymore
+3.04:	fixed physical memory blocks searching; it was a sorting error
