@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/13 02:30:30 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2002/04/13 08:04:42 tsutsui Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -7,6 +7,7 @@ OBJS= romcalls.o
 CFLAGS= -Os -mmemcpy -mno-abicalls -G 0 -Wall
 
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
+CPPFLAGS+= -DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+= -DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY
 CPPFLAGS+= -I. -I${S}
 
