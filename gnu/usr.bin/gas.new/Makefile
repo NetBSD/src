@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.18 2001/05/03 21:47:28 martin Exp $
+#	$NetBSD: Makefile,v 1.19 2001/08/06 15:56:07 tv Exp $
 #
 
 .include <bsd.own.mk>
 
+.if !defined(USE_NEW_TOOLCHAIN)
 # Override to make a cross assembler.
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH})
 TARGET_ARCH= ${MACHINE_ARCH}
@@ -47,4 +48,5 @@ BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
 
 .include "${.CURDIR}/arch/${TARGET_ARCH}/Makefile.inc"
 .include <bsd.info.mk>
+.endif
 .include <bsd.prog.mk>
