@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.5 1999/01/13 15:30:59 drochner Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,8 @@ struct wsdisplay_emulops;
 
 enum wsemul_resetops {
 	WSEMUL_RESET,
-	WSEMUL_SYNCFONT
+	WSEMUL_SYNCFONT,
+	WSEMUL_CLEARSCREEN
 };
 
 struct wsemul_ops {

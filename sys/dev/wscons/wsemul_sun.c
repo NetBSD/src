@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.9 1999/01/10 00:28:21 augustss Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.10 1999/01/17 15:44:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_sun.c,v 1.9 1999/01/10 00:28:21 augustss Exp $";
+    "$NetBSD: wsemul_sun.c,v 1.10 1999/01/17 15:44:57 drochner Exp $";
 
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
@@ -59,6 +59,7 @@ void	wsemul_sun_output __P((void *cookie, const u_char *data, u_int count,
 			       int));
 int	wsemul_sun_translate __P((void *cookie, keysym_t, char **));
 void	wsemul_sun_detach __P((void *cookie, u_int *crowp, u_int *ccolp));
+void	wsemul_sun_resetop __P((void *, enum wsemul_resetops));
 
 const struct wsemul_ops wsemul_sun_ops = {
 	"sun",
@@ -67,6 +68,7 @@ const struct wsemul_ops wsemul_sun_ops = {
 	wsemul_sun_output,
 	wsemul_sun_translate,
 	wsemul_sun_detach,
+	wsemul_sun_resetop
 };
 
 #define	SUN_EMUL_STATE_NORMAL	0	/* normal processing */
@@ -638,4 +640,29 @@ wsemul_sun_detach(cookie, crowp, ccolp)
 	*ccolp = edp->ccol;
 	if (edp != &wsemul_sun_console_emuldata)
 		free(edp, M_DEVBUF);
+}
+
+void
+wsemul_sun_resetop(cookie, op)
+	void *cookie;
+	enum wsemul_resetops op;
+{
+	struct wsemul_sun_emuldata *edp = cookie;
+
+	switch (op) {
+	case WSEMUL_RESET:
+		edp->state = SUN_EMUL_STATE_NORMAL;
+		edp->scrolldist = 1;
+		edp->rendflags = 0;
+		edp->curattr = edp->defattr;
+		break;
+	case WSEMUL_CLEARSCREEN:
+		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows,
+					   edp->defattr);
+		edp->ccol = edp->crow = 0;
+		(*edp->emulops->cursor)(edp->emulcookie, 1, 0, 0);
+		break;
+	default:
+		break;
+	}
 }
