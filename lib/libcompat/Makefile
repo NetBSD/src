@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1994/12/22 17:57:02 jtc Exp $
+#	$NetBSD: Makefile,v 1.15 1995/09/07 07:17:53 jtc Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -28,12 +28,7 @@ MLINKS+=stty.3 gtty.3
 # compat 4.3 sources
 # missing: ecvt.c gcvt.c sibuf.c sobuf.c strout.c
 SRCS+=	cfree.c lsearch.c regex.c rexec.c
-
-.if	(${MACHINE_ARCH} == "m68k")
-SRCS+=	insque.S remque.S
-.else
 SRCS+=	insque.c remque.c
-.endif
 
 # missing: ecvt.0
 MAN+=	insque.3 lsearch.3 re_comp.3 rexec.3
