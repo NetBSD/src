@@ -41,7 +41,7 @@
  *
  *	@(#)disk.h	5.1 (Berkeley) 7/10/92
  *
- * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.1 1993/08/13 13:20:10 glass Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.2 1994/02/01 02:51:39 deraadt Exp $ (LBL)
  */
 
 /*
@@ -101,12 +101,4 @@ struct disksort_stats {
 	long	ds_midsecond;		/* # insertions into 2nd list */
 	long	ds_endsecond;		/* # insertions at end of 2nd list */
 };
-#endif
-
-#ifdef KERNEL
-void	disksort __P((struct buf *, struct buf *));
-char	*readdisklabel __P((struct dkdevice *, int));
-int	setdisklabel __P((struct dkdevice *, struct disklabel *));
-int	writedisklabel __P((struct dkdevice *, int));
-int	diskerr __P((struct dkdevice *, struct buf *, char *, int, int));
 #endif
