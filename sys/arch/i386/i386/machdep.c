@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.9 1998/05/05 09:52:06 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262.2.10 1998/05/08 06:44:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1595,7 +1595,8 @@ init386(first_avail)
 #endif
 
 #if NBIOSCALL > 0
-	avail_start = 2*NBPG;	/* save us a page! */
+	avail_start = 3*NBPG;	/* save us a page for trampoline code and
+				 one additional PT page! */
 #else
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
@@ -1616,6 +1617,11 @@ init386(first_avail)
 	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page(first_avail);
 	avail_next = avail_start;
+#if NBIOSCALL > 0
+	/* install page 2 (reserved above) as PT page for first 4M */
+	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG, VM_PROT_ALL, TRUE);
+	bzero(vtopte(0), NBPG);  /* make sure it is clean before using */
+#endif
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
