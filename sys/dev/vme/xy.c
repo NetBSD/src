@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.46 2002/10/23 09:14:05 jdolecek Exp $	*/
+/*	$NetBSD: xy.c,v 1.47 2002/11/01 11:32:01 mrg Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46 2002/10/23 09:14:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.47 2002/11/01 11:32:01 mrg Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1841,7 +1841,8 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 			    (void)BUFQ_GET(&iorq->xy->xyq);
 			    disk_unbusy(&xycsc->reqs[lcv].xy->sc_dk,
 				(xycsc->reqs[lcv].buf->b_bcount -
-				xycsc->reqs[lcv].buf->b_resid));
+				xycsc->reqs[lcv].buf->b_resid),
+				(xycsc->reqs[lcv].buf->b_flags & B_READ));
 			    biodone(iorq->buf);
 			    iorq->mode = XY_SUB_FREE;
 			    break;
@@ -2023,7 +2024,8 @@ xyc_remove_iorq(xycsc)
 
 			(void)BUFQ_GET(&iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
-			    (bp->b_bcount - bp->b_resid));
+			    (bp->b_bcount - bp->b_resid),
+			    (bp->b_flags & B_READ));
 			iorq->mode = XY_SUB_FREE;
 			biodone(bp);
 			break;

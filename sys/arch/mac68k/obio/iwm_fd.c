@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.18 2002/10/23 09:11:30 jdolecek Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.19 2002/11/01 11:31:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -1637,7 +1637,8 @@ fdstart_Exit(fd)
 	if (DISABLED && TRACE_STRAT)
 		printf(" Next buf (bufQueue first) at %p\n",
 		    BUFQ_PEEK(&fd->bufQueue));
-	disk_unbusy(&fd->diskInfo, bp->b_bcount - bp->b_resid);
+	disk_unbusy(&fd->diskInfo, bp->b_bcount - bp->b_resid,
+	    (bp->b_flags & B_READ));
 	biodone(bp);
 	/* 
 	 * Stop motor after 10s
