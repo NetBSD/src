@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.48 2001/12/06 01:26:36 lukem Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.49 2002/01/18 18:59:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.48 2001/12/06 01:26:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.49 2002/01/18 18:59:24 fvdl Exp $");
 
 #include "opt_nfs.h"
 
@@ -210,6 +210,7 @@ loop:
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
 	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
 	if (error) {
+		VOP_UNLOCK(vp, 0);
 		vgone(vp);
 		return error;
 	}
