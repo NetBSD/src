@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.h,v 1.11 2002/02/04 13:02:06 blymn Exp $	*/
+/*	$NetBSD: menu.h,v 1.12 2002/07/29 13:03:51 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -67,6 +67,7 @@ typedef unsigned int OPTIONS;
 #define O_SHOWMATCH  (0x10)
 #define O_NONCYCLIC  (0x20)
 #define O_SELECTABLE (0x40)
+#define O_RADIO      (0x80)
 
 typedef struct __menu_str {
         char *string;
@@ -190,6 +191,7 @@ char *item_name(ITEM *);
 OPTIONS item_opts(ITEM *);
 int item_opts_off(ITEM *, OPTIONS);
 int item_opts_on(ITEM *, OPTIONS);
+int item_selected(MENU *, int **); /* return the item index of selected */
 Menu_Hook item_term(MENU *);
 char *item_userptr(ITEM *);
 int item_value(ITEM *);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: menus.3,v 1.10 2002/07/03 11:24:47 wiz Exp $
+.\"	$NetBSD: menus.3,v 1.11 2002/07/29 13:03:51 blymn Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -98,6 +98,8 @@ manual page name
 .Xr menu_item_opts 3
 .It item_opts_on
 .Xr menu_item_opts 3
+.It item_selected
+.Xr menu_item_value 3
 .It item_term
 .Xr menu_hook 3
 .It item_userptr
@@ -281,3 +283,9 @@ of it.  Since the current item is displayed using the foreground
 attribute it was deemed unnecessary to also display the mark string against
 the current item.
 .El
+.Pp
+The option O_RADIO and the function
+.Fn item_selected
+are
+.Nx
+extensions and must not be used in portable code.
