@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.57 1995/07/27 04:40:55 mycroft Exp $
+#	$NetBSD: files.i386,v 1.58 1995/10/10 01:22:31 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -135,3 +135,7 @@ include "../../../compat/ibcs2/files.ibcs2"
 # Linux Binary Compatibility (COMPAT_LINUX)
 include "../../../compat/linux/files.linux"
 file	arch/i386/i386/linux_machdep.c	compat_linux
+
+# FreeBSD Binary Compatibility (COMPAT_FREEBSD)
+include "../../../compat/freebsd/files.freebsd"
+file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
