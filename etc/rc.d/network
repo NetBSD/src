@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.16 2000/07/25 18:47:28 jdolecek Exp $
+# $NetBSD: network,v 1.17 2000/08/01 20:49:11 itojun Exp $
 #
 
 # PROVIDE: network
@@ -290,6 +290,13 @@ network_start()
 
 		esac
 
+		# wait till DAD is completed. always invoke it in case
+		# if are configured manually by ifconfig
+		#
+		dadcount=`sysctl -n net.inet6.ip6.dad_count 2>/dev/null`
+		sleep $dadcount
+		sleep 1
+
 		if checkyesno rtsol; then
 			if [ "$ip6mode" = "autohost" ]; then
 				echo 'Sending router solicitation...'
@@ -299,14 +306,13 @@ network_start()
 				warn \
 			    "ip6mode must be set to 'autohost' to use rtsol."
 			fi
-		fi
 
-		# wait till DAD is completed. always invoke it in case if are
-		# configured manually by ifconfig
-		#
-		dadcount=`sysctl -n net.inet6.ip6.dad_count 2>/dev/null`
-		sleep $dadcount
-		sleep 1
+			# wait till DAD is completed. always invoke it in case
+			# if are configured manually by ifconfig
+			#
+			sleep $dadcount
+			sleep 1
+		fi
 	fi
 
 	# XXX this must die
