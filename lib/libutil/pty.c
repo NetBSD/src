@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.24 2004/09/18 16:44:38 yamt Exp $	*/
+/*	$NetBSD: pty.c,v 1.25 2004/09/18 20:14:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.24 2004/09/18 16:44:38 yamt Exp $");
+__RCSID("$NetBSD: pty.c,v 1.25 2004/09/18 20:14:22 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: pty.c,v 1.24 2004/09/18 16:44:38 yamt Exp $");
 #define TTY_NEW_SUFFIX	"ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 int
-openpty(int *amaster, int *aslave, char *name, struct termios *termp, 
+openpty(int *amaster, int *aslave, char *name, struct termios *term,
 	struct winsize *winp)
 {
 	static char line[] = "/dev/XtyXX";
@@ -72,7 +72,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 	_DIAGASSERT(amaster != NULL);
 	_DIAGASSERT(aslave != NULL);
 	/* name may be NULL */
-	/* termp may be NULL */
+	/* term may be NULL */
 	/* winp may be NULL */
 
 	if ((master = open("/dev/ptm", O_RDWR)) != -1) {
@@ -97,68 +97,65 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 			line[5] = 'p';
 			line[9] = *cp2;
 			if ((master = open(line, O_RDWR, 0)) == -1) {
-				if (errno == ENOENT) {
-					if (cp2 - cp + 1 < sizeof(TTY_OLD_SUFFIX))
-						return (-1); /* out of ptys */
-					else
-						break;
-				}
-			} else {
-				line[5] = 't';
-				linep = line;
-				if (chown(line, getuid(), ttygid) == 0 &&
-				    chmod(line, S_IRUSR|S_IWUSR|S_IWGRP) == 0 &&
-				    revoke(line) == 0 &&
-				    (slave = open(line, O_RDWR, 0)) != -1) {
-gotit:
-					*amaster = master;
-					*aslave = slave;
-					if (name)
-						strcpy(name, linep);
-					if (termp)
-						(void) tcsetattr(slave,
-							TCSAFLUSH, termp);
-					if (winp)
-						(void) ioctl(slave, TIOCSWINSZ,
-						    winp);
-					return (0);
-				}
-				(void) close(master);
+				if (errno != ENOENT)
+					continue;	/* busy */
+				if (cp2 - cp + 1 < sizeof(TTY_OLD_SUFFIX))
+					return -1; /* out of ptys */
+				else	
+					break;	/* out of ptys in this group */
 			}
+			line[5] = 't';
+			linep = line;
+			if (chown(line, getuid(), ttygid) == 0 &&
+			    chmod(line, S_IRUSR|S_IWUSR|S_IWGRP) == 0 &&
+			    revoke(line) == 0 &&
+			    (slave = open(line, O_RDWR, 0)) != -1) {
+gotit:
+				*amaster = master;
+				*aslave = slave;
+				if (name)
+					(void)strcpy(name, linep);
+				if (term)
+					(void)tcsetattr(slave, TCSAFLUSH, term);
+				if (winp)
+					(void)ioctl(slave, TIOCSWINSZ, winp);
+				return 0;
+			}
+			(void)close(master);
 		}
 	}
 	errno = ENOENT;	/* out of ptys */
-	return (-1);
+	return -1;
 }
 
 pid_t
-forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
+forkpty(int *amaster, char *name, struct termios *term, struct winsize *winp)
 {
 	int master, slave;
 	pid_t pid;
 
 	_DIAGASSERT(amaster != NULL);
 	/* name may be NULL */
-	/* termp may be NULL */
+	/* term may be NULL */
 	/* winp may be NULL */
 
-	if (openpty(&master, &slave, name, termp, winp) == -1)
-		return (-1);
+	if (openpty(&master, &slave, name, term, winp) == -1)
+		return -1;
 	switch (pid = fork()) {
 	case -1:
-		return (-1);
+		return -1;
 	case 0:
 		/*
 		 * child
 		 */
-		(void) close(master);
+		(void)close(master);
 		login_tty(slave);
-		return (0);
+		return 0;
 	}
 	/*
 	 * parent
 	 */
 	*amaster = master;
-	(void) close(slave);
-	return (pid);
+	(void)close(slave);
+	return pid;
 }
