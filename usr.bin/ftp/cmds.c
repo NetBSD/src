@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.17 1997/01/19 20:17:37 veego Exp $	*/
+/*	$NetBSD: cmds.c,v 1.18 1997/02/01 10:44:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.17 1997/01/19 20:17:37 veego Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.18 1997/02/01 10:44:54 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -533,6 +533,7 @@ mabort(signo)
 {
 	int ointer, oconf;
 
+	alarmtimer(0);
 	printf("\n");
 	(void) fflush(stdout);
 	if (mflag && fromatty) {
@@ -954,10 +955,10 @@ lcd(argc, argv)
 		code = -1;
 		return;
 	}
-	if (getwd(buf) != NULL)
+	if (getcwd(buf, sizeof(buf)) != NULL)
 		printf("Local directory now %s\n", buf);
 	else
-		warnx("getwd: %s", buf);
+		warn("getcwd: %s", argv[1]);
 	code = 0;
 }
 
@@ -1263,10 +1264,10 @@ lpwd(argc, argv)
 {
 	char buf[MAXPATHLEN];
 
-	if (getwd(buf) != NULL)
+	if (getcwd(buf, sizeof(buf)) != NULL)
 		printf("Local directory %s\n", buf);
 	else
-		warnx("getwd: %s", buf);
+		warn("getcwd");
 	code = 0;
 }
 
@@ -1502,6 +1503,7 @@ void
 proxabort()
 {
 
+	alarmtimer(0);
 	if (!proxy) {
 		pswitch(1);
 	}
