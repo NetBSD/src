@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.19 2003/09/12 00:37:17 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.20 2003/11/09 18:56:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -183,6 +183,7 @@ struct pthread_lock_ops {
 #define PT_STATE_BLOCKED_QUEUE	4
 #define PT_STATE_ZOMBIE		5
 #define PT_STATE_DEAD		6
+#define PT_STATE_SUSPENDED	7
 
 /* Flag values */
 
@@ -194,6 +195,7 @@ struct pthread_lock_ops {
 #define PT_FLAG_SIGDEFERRED     0x0020	/* There are signals to take */
 #define PT_FLAG_SCOPE_SYSTEM	0x0040
 #define PT_FLAG_EXPLICIT_SCHED	0x0080
+#define	PT_FLAG_SUSPENDED	0x0100	/* In the suspended queue */
 
 #define PT_MAGIC	0x11110001
 #define PT_DEAD		0xDEAD0001
@@ -228,6 +230,8 @@ void	pthread__initthread(pthread_t self, pthread_t t);
 
 /* Go do something else. Don't go back on the run queue */
 void	pthread__block(pthread_t self, pthread_spin_t* queuelock);
+/* Put a thread back on the suspended queue */
+void	pthread__suspend(pthread_t self, pthread_t thread);
 /* Put a thread back on the run queue */
 void	pthread__sched(pthread_t self, pthread_t thread);
 void	pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.14 2003/07/18 22:01:47 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.15 2003/11/09 18:56:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -118,6 +118,10 @@ void	pthread_testcancel(void);
 
 int	pthread_getname_np(pthread_t, char *, size_t);
 int	pthread_setname_np(pthread_t, const char *, void *);
+
+int 	pthread_attr_setcreatesuspend_np(pthread_attr_t *);
+int	pthread_suspend_np(pthread_t);
+int	pthread_resume_np(pthread_t);
 
 struct pthread_cleanup_store {
 	void	*pad[4];

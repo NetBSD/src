@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.2 2003/09/11 21:51:57 christos Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.3 2003/11/09 18:56:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.2 2003/09/11 21:51:57 christos Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.3 2003/11/09 18:56:48 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -395,5 +395,12 @@ pthread_attr_setname_np(pthread_attr_t *attr, const char *name, void *arg)
 	}
 	p->ptap_namearg = arg;
 
+	return 0;
+}
+
+int
+pthread_attr_setcreatesuspend_np(pthread_attr_t *attr)
+{
+	attr->pta_flags |= PT_FLAG_SUSPENDED;
 	return 0;
 }

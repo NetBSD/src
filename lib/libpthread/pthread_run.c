@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.12 2003/09/16 13:51:35 cl Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.13 2003/11/09 18:56:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.12 2003/09/16 13:51:35 cl Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.13 2003/11/09 18:56:48 christos Exp $");
 
 #include <ucontext.h>
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: pthread_run.c,v 1.12 2003/09/16 13:51:35 cl Exp $");
 extern pthread_spin_t pthread__runqueue_lock;
 extern struct pthread_queue_t pthread__runqueue;
 extern struct pthread_queue_t pthread__idlequeue;
+extern struct pthread_queue_t pthread__suspqueue;
 
 extern pthread_spin_t pthread__deadqueue_lock;
 extern struct pthread_queue_t pthread__reidlequeue;
@@ -128,6 +129,22 @@ pthread__next(pthread_t self)
 	return next;
 }
 
+
+/* Put a thread on the suspended queue */
+void
+pthread__suspend(pthread_t self, pthread_t thread)
+{
+
+	SDPRINTF(("(sched %p) suspending %p\n", self, thread));
+	thread->pt_state = PT_STATE_SUSPENDED;
+	pthread__assert(thread->pt_type == PT_THREAD_NORMAL);
+	pthread__assert(thread->pt_spinlocks == 0);
+	pthread_spinlock(self, &pthread__runqueue_lock);
+	PTQ_INSERT_TAIL(&pthread__suspqueue, thread, pt_runq);
+	pthread_spinunlock(self, &pthread__runqueue_lock);
+	/* XXX flaglock? */
+	thread->pt_flags &= ~PT_FLAG_SUSPENDED;
+}
 
 /* Put a thread back on the run queue */
 void
@@ -240,7 +257,11 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			SDPRINTF(("(bulk %p) scheduling %p\n", self, qhead));
 			pthread__assert(PTQ_LAST(&pthread__runqueue, pthread_queue_t) != qhead);
 			pthread__assert(PTQ_FIRST(&pthread__runqueue) != qhead);
-			PTQ_INSERT_TAIL(&pthread__runqueue, qhead, pt_runq);
+			if (qhead->pt_flags & PT_FLAG_SUSPENDED) {
+				qhead->pt_state = PT_STATE_SUSPENDED;
+				PTQ_INSERT_TAIL(&pthread__suspqueue, qhead, pt_runq);
+			} else
+				PTQ_INSERT_TAIL(&pthread__runqueue, qhead, pt_runq);
 		} else if (qhead->pt_type == PT_THREAD_IDLE) {
 			qhead->pt_state = PT_STATE_RUNNABLE;
 			qhead->pt_flags &= ~PT_FLAG_IDLED;
