@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.61 2001/11/15 07:03:31 lukem Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.62 2002/03/22 18:41:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.61 2001/11/15 07:03:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.62 2002/03/22 18:41:40 christos Exp $");
 
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
@@ -87,6 +87,22 @@ int i386_get_mtrr __P((struct proc *, void *, register_t *));
 int i386_set_mtrr __P((struct proc *, void *, register_t *));
 
 #ifdef USER_LDT
+
+#ifdef LDT_DEBUG
+static void i386_print_ldt __P((int, const struct segment_descriptor *));
+
+static void
+i386_print_ldt(i, d)
+	int  i;
+	const struct segment_descriptor *d;
+{
+	printf("[%d] lolimit=0x%x, lobase=0x%x, type=%u, dpl=%u, p=%u, "
+	    "hilimit=0x%x, xx=%x, def32=%u, gran=%u, hibase=0x%x\n",
+	    i, d->sd_lolimit, d->sd_lobase, d->sd_type, d->sd_dpl, d->sd_p,
+	    d->sd_hilimit, d->sd_xx, d->sd_def32, d->sd_gran, d->sd_hibase);
+}
+#endif
+
 int
 i386_get_ldt(p, args, retval)
 	struct proc *p;
@@ -127,6 +143,13 @@ i386_get_ldt(p, args, retval)
 
 	lp += ua.start;
 	num = min(ua.num, nldt - ua.start);
+#ifdef LDT_DEBUG
+	{
+		int i;
+		for (i = 0; i < num; i++)
+			i386_print_ldt(i, &lp[i].sd);
+	}
+#endif
 
 	error = copyout(lp, ua.desc, num * sizeof(union descriptor));
 	if (error)
@@ -286,6 +309,13 @@ i386_set_ldt(p, args, retval)
 		}
 	}
 
+#ifdef LDT_DEBUG
+	{
+		int i;
+		for (i = 0, n = ua.start; i < ua.num; i++, n++)
+			i386_print_ldt(n, &descv[i].sd);
+	}
+#endif
 	/* Now actually replace the descriptors. */
 	for (i = 0, n = ua.start; i < ua.num; i++, n++)
 		pmap->pm_ldt[n] = descv[i];
