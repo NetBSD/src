@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertype.h,v 1.4 1997/10/03 15:53:04 christos Exp $	*/
+/*	$NetBSD: ethertype.h,v 1.5 2000/04/14 14:26:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996
@@ -72,6 +72,9 @@
 #endif
 #ifndef ETHERTYPE_AARP
 #define ETHERTYPE_AARP		0x80f3
+#endif
+#ifndef ETHERTYPE_IPV6
+#define ETHERTYPE_IPV6		0x80f3
 #endif
 #ifndef	ETHERTYPE_LOOPBACK
 #define	ETHERTYPE_LOOPBACK	0x9000
