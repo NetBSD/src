@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.1 2000/03/19 23:07:45 soren Exp $	*/
+/*	$NetBSD: gt.c,v 1.2 2000/03/31 14:51:52 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -77,12 +77,18 @@ gt_attach(parent, self, aux)
 
 	printf("\n");
 
+	/* XXX */
+	*((volatile u_int32_t *)0xb4000c00) =
+		(*((volatile u_int32_t *)0xb4000c00) & ~0x6) | 0x2;
+
 #if NPCI > 0
 	pba.pba_busname = "pci";
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED; /* XXX */
 							/* XXX mrl mrm mwai? */
 	pba.pba_bus = 0;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+		PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, gt_print);
 #endif
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2000/03/23 08:09:54 nisimura Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2000/03/31 14:51:49 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -96,6 +96,9 @@ resettodr()
 	mc_todregs regs;
 	struct clock_ymdhms dt;
 	int s;
+
+	if (cold == 1)
+		return;
 
 	s = splclock();
 	MC146818_GETTOD(NULL, &regs);
