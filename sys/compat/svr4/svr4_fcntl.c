@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.16 1997/03/18 18:57:20 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.17 1997/04/02 15:29:18 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -197,7 +197,7 @@ svr4_sys_open(p, v, retval)
 	if (error)
 		return error;
 
-	if ((SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(p) &&
+	if (!(SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(p) &&
 	    !(p->p_flag & P_CONTROLT)) {
 		struct filedesc	*fdp = p->p_fd;
 		struct file	*fp = fdp->fd_ofiles[*retval];
