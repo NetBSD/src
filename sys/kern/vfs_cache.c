@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.24 2000/04/16 21:39:57 chs Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.25 2000/04/16 21:41:49 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -416,6 +416,7 @@ cache_purge(vp)
 {
 	struct namecache *ncp;
 	struct nchashhead *ncpp;
+	static u_long nextvnodeid;
 
 	vp->v_id = ++nextvnodeid;
 	if (nextvnodeid != 0)
