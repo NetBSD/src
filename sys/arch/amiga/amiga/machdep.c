@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.23 1994/05/09 06:37:56 chopps Exp $
+ *	$Id: machdep.c,v 1.24 1994/05/11 19:02:59 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -427,7 +427,7 @@ extern char version[];
 identifycpu()
 {
         /* there's alot of XXX in here... */
-	char *mach, *mmu;
+	char *mach, *mmu, *fpu;
 
 	if (is_a4000())
 		mach = "Amiga 4000";
@@ -436,17 +436,26 @@ identifycpu()
 	else
 		mach = "Amiga 500/2000";
 
-	if (cpu040) {
+	if (machineid & AMIGA_68040) {
 		cpu_type = "m68040";
 		mmu = "/MMU";
-	} else if (mmutype == MMU_68030) {
+		fpu = "/FPU";
+	} else if (machineid & AMIGA_68030) {
 		cpu_type = "m68030";	/* XXX */
 		mmu = "/MMU";
 	} else {
 		cpu_type = "m68020";
 		mmu = " m68851 MMU";
 	}
-	sprintf(cpu_model, "%s (%s CPU%s)", mach, cpu_type, mmu);
+	if (machineid & (AMIGA_68030 | AMIGA_68020)) {
+		if (machineid & AMIGA_68882)
+			fpu = " m68882 FPU";
+		else if (machineid & AMIGA_68881)
+			fpu = " m68881 FPU";
+		else
+			fpu = " no FPU";
+	}
+	sprintf(cpu_model, "%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
 	printf("%s\n", cpu_model);
 }
 

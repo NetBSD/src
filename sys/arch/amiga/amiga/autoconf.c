@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: autoconf.c,v 1.17 1994/05/08 05:52:13 chopps Exp $
+ *	$Id: autoconf.c,v 1.18 1994/05/11 19:02:53 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,7 @@ mbattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
+	printf("\n");
 	config_found(dp, "clock", simple_devprint);
 	config_found(dp, "ser", simple_devprint);
 	config_found(dp, "par", simple_devprint);

@@ -1,5 +1,5 @@
 /*
- *	$Id: disksubr.c,v 1.7 1994/05/08 05:52:17 chopps Exp $
+ *	$Id: disksubr.c,v 1.8 1994/05/11 19:02:54 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -312,6 +312,26 @@ readdisklabel(dev, strat, lp, clp)
 		clp->pblist[clp->pbindex[i] = cindex++];
 
 	}
+	/*
+	 * bring them together. (starting at first user part)
+	 */
+	for (i = 3; i < lp->d_npartitions; i++) {
+		int j;
+		if (lp->d_partitions[i].p_size != 0)
+			continue;
+		for (j = i + 1; j < lp->d_npartitions; j++) {
+			if (lp->d_partitions[j].p_size == 0)
+				continue;
+			bcopy(&lp->d_partitions[j], &lp->d_partitions[i],
+				sizeof(struct partition));
+			bzero(&lp->d_partitions[j], sizeof(struct partition));
+			break;
+		}
+	}
+	for (i = 3; i < lp->d_npartitions; i++)
+		if (lp->d_partitions[i].p_size == 0)
+			break;
+	lp->d_npartitions = i;
 
 	/*
 	 * calulate new checksum.

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.15 1994/05/08 05:52:21 chopps Exp $
+ *	$Id: locore.s,v 1.16 1994/05/11 19:02:57 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -834,6 +834,17 @@ start:
 	movel	a0,sp@-			| pass fastmem_start
 	movel	d5,sp@-			| pass machine id
 
+	movl	#AMIGA_68030,d1		| 68030 Attn flag from exec
+	andl	d5,d1
+	jeq	Ltestfor020
+	movl	#-1,_mmutype		| assume 020 means 851
+	jra	Lsetcpu040		| skip to init.
+Ltestfor020:
+	movl	#AMIGA_68020,d1		| 68020 Attn flag from exec
+	andl	d5,d1
+	jeq	Lsetcpu040
+	movl	#1,_mmutype
+Lsetcpu040:
 	movl	#CACHE_OFF,d0		| 68020/030 cache
 	movl	#AMIGA_68040,d1
 	andl	d1,d5
@@ -855,29 +866,6 @@ Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 	moveq	#0,d0
 	movc	d0,vbr
-
-#if 1
-	| WHY THE @#$@#$@ DOESN'T THIS WORK????????
-
-	| add code to determine MMU. This should be passed from
-	| AmigaOS really...
-	movl	#0x200,d0		| data freeze bit
-	movc	d0,cacr			|   only exists on 68030
-	movc	cacr,d0			| read it back
-	tstl	d0			| zero?
-	jeq	Lis68020		| yes, we have 68020
-	| movl	#-1,_mmutype		| no, we have 68030
-	jra	Lskip
-Lis68020:
-	| movl	#1,_mmutype		| hope we have 68851...
-Lskip:
-	movl	#CACHE_OFF,d0
-	tstl	d5			| running on 68040?
-	jeq	Lcacheoff		| no
-	movl	#CACHE40_OFF,d0		| 68040 cache enable
-Lcacheoff:
-	movc	d0,cacr
-#endif
 
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space
