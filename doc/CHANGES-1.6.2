@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.231 2003/11/14 03:35:51 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.232 2003/11/14 03:38:38 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2998,3 +2998,8 @@ sys/arch/sparc64/include/psl.h			1.24
 	Lower PIL_AUD so /dev/audio will not interrupt and interfere with
 	scheduler. Fixes PR#23382.
 	[petrov, ticket #1559]
+
+xsrc/xfree/xc/config/cf/NetBSD.cf		1.57
+
+	Turn off the shared XDM greeter library for NetBSD-alpha.
+	[tron, ticket #1562]
