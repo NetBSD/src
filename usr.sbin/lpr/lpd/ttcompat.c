@@ -61,10 +61,10 @@ static int
 sttygetoflags(tp)
 	struct termios *tp;
 {
-	register tcflag_t iflag = tp->t_iflag;
-	register tcflag_t lflag = tp->t_lflag;
-	register tcflag_t oflag = tp->t_oflag;
-	register tcflag_t cflag = tp->t_cflag;
+	register tcflag_t iflag = tp->c_iflag;
+	register tcflag_t lflag = tp->c_lflag;
+	register tcflag_t oflag = tp->c_oflag;
+	register tcflag_t cflag = tp->c_cflag;
 	register int flags = 0;
 
 	if (ISSET(cflag, PARENB)) {
