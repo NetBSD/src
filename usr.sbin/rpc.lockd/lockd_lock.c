@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.14 2003/03/14 14:03:00 yamt Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.15 2003/03/14 14:08:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -90,7 +90,7 @@ struct hostlst_head hostlst_head = LIST_HEAD_INITIALIZER(hostlst_head);
 /* struct describing a lock */
 struct host {
 	LIST_ENTRY(host) hostlst;
-	char name[SM_MAXSTRLEN];
+	char name[SM_MAXSTRLEN+1];
 	int refcnt;
 };
 
@@ -191,7 +191,8 @@ getlock(lckarg, rqstp, flags)
 	}
 	memcpy(newfl->client_cookie.n_bytes, lckarg->cookie.n_bytes,
 	    lckarg->cookie.n_len);
-	strncpy(newfl->client_name, lckarg->alock.caller_name, 128);
+	strlcpy(newfl->client_name, lckarg->alock.caller_name,
+	    sizeof(newfl->client_name);
 	newfl->nsm_status = lckarg->state;
 	newfl->status = 0;
 	newfl->flags = flags;
@@ -686,7 +687,7 @@ do_mon(hostname)
 	}
 	/* not found, have to create an entry for it */
 	hp = malloc(sizeof(struct host));
-	strncpy(hp->name, hostname, SM_MAXSTRLEN);
+	strlcpy(hp->name, hostname, sizeof(hp->name));
 	hp->refcnt = 1;
 	syslog(LOG_DEBUG, "monitoring host %s",
 	    hostname);
