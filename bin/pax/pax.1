@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.31 2002/02/08 01:21:58 ross Exp $
+.\"	$NetBSD: pax.1,v 1.32 2002/04/20 23:36:48 lukem Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd January 24, 2002
+.Dd April 21, 2002
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -894,8 +894,13 @@ If the file exists in the underlying file system, its permissions and
 modification time will be used unless specifically overridden by the specfile.
 An error will be raised if the type of entry in the specfile conflicts
 with that of an existing file.
+A directory entry that is marked
+.Sq Sy optional
+will not be copied (even though its contents will be)
 .Pp
-Otherwise, it is necessary to specify at least the following parameters
+Otherwise, the entry will be
+.Sq faked-up ,
+and it is necessary to specify at least the following parameters
 in the specfile:
 .Sy type ,
 .Sy mode ,
@@ -913,6 +918,11 @@ or
 If
 .Sy time
 isn't provided, the current time will be used.
+A
+.Sq faked-up
+entry that is marked
+.Sq Sy optional
+will not be copied.
 .It Fl N Ar dbdir
 Except for lookups for the
 .Fl G
