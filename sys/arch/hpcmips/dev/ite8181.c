@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.4 2000/12/03 13:43:40 takemura Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.5 2001/01/23 08:51:48 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -279,7 +279,10 @@ ite8181_attach(sc)
 		printf("%s: WARNING: unable to establish hard power hook\n",
 			sc->sc_dev.dv_xname);
 
-	ite8181_fbinit(&sc->sc_fbconf);
+	if (ite8181_fbinit(&sc->sc_fbconf) != 0) {
+		/* just return so that hpcfb will not be attached */
+		return;
+	}
 
 	ite8181_erase_cursor(sc);
 
@@ -507,6 +510,21 @@ ite8181_fbinit(fb)
 		fb->hf_pack_width = 8;
 		fb->hf_pixels_per_pack = 4;
 		fb->hf_pixel_width = 2;
+		fb->hf_class_data_length = sizeof(struct hf_gray_tag);
+		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
+		break;
+
+	case BIFB_D4_M2L_F:
+	case BIFB_D4_M2L_Fx2:
+		fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
+		/* fall through */
+	case BIFB_D4_M2L_0:
+	case BIFB_D4_M2L_0x2:
+		fb->hf_class = HPCFB_CLASS_GRAYSCALE;
+		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
+		fb->hf_pack_width = 8;
+		fb->hf_pixels_per_pack = 2;
+		fb->hf_pixel_width = 4;
 		fb->hf_class_data_length = sizeof(struct hf_gray_tag);
 		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
 		break;
