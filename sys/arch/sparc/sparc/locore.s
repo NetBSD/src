@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.126 1999/11/05 04:49:26 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.127 2000/03/21 12:47:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2213,7 +2213,7 @@ _ENTRY(_C_LABEL(kgdb_trap_glue))
 	 mov	%sp, %l4		! %l4 = current %sp
 
 	/* copy trapframe to top of kgdb stack */
-	set	_kgdb_stack + KGDB_STACK_SIZE - 80, %l0
+	set	_C_LABEL(kgdb_stack) + KGDB_STACK_SIZE - 80, %l0
 					! %l0 = tfcopy -> end_of_kgdb_stack
 	mov	80, %l1
 1:	ldd	[%i1], %l2
