@@ -1,11 +1,11 @@
-/*	$NetBSD: strftime.c,v 1.15 2004/05/11 09:32:02 kleink Exp $	*/
+/*	$NetBSD: strftime.c,v 1.16 2004/05/12 23:03:11 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char	elsieid[] = "@(#)strftime.c	7.64";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.15 2004/05/11 09:32:02 kleink Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.16 2004/05/12 23:03:11 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -18,8 +18,15 @@ __RCSID("$NetBSD: strftime.c,v 1.15 2004/05/11 09:32:02 kleink Exp $");
 
 #include "private.h"
 
+/*
+** We don't use these extensions in strftime operation even when
+** supported by the local tzcode configuration.  A strictly
+** conforming C application may leave them in undefined state.
+*/
+
 #ifdef _LIBC
 #undef TM_ZONE
+#undef TM_GMTOFF
 #endif
 
 /*
@@ -486,6 +493,7 @@ label:
 				** determinable, so output nothing if the
 				** appropriate variables are not available.
 				*/
+#ifndef STD_INSPIRED
 				if (t->tm_isdst == 0)
 #ifdef USG_COMPAT
 					diff = -timezone;
@@ -498,6 +506,35 @@ label:
 #else /* !defined ALTZONE */
 					continue;
 #endif /* !defined ALTZONE */
+#else /* defined STD_INSPIRED */
+				{
+					struct tm tmp;
+					time_t lct, gct;
+
+					/*
+					** Get calendar time from t
+					** being treated as local.
+					*/
+					tmp = *t; /* mktime discards const */
+					lct = mktime(&tmp);
+
+					if (lct == (time_t)-1)
+						continue;
+
+					/*
+					** Get calendar time from t
+					** being treated as GMT.
+					**/
+					tmp = *t; /* mktime discards const */
+					gct = timegm(&tmp);
+
+					if (gct == (time_t)-1)
+						continue;
+
+					/* LINTED difference will fit int */
+					diff = (intmax_t)gct - (intmax_t)lct;
+				}
+#endif /* defined STD_INSPIRED */
 #endif /* !defined TM_GMTOFF */
 				if (diff < 0) {
 					sign = "-";
