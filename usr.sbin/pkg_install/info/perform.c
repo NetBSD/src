@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.58 2004/12/29 11:35:00 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.59 2005/02/10 22:52:31 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.58 2004/12/29 11:35:00 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.59 2005/02/10 22:52:31 grant Exp $");
 #endif
 #endif
 
@@ -58,7 +58,7 @@ pkg_do(char *pkg)
 			strlcpy(fname, cp, sizeof(fname));
 			isTMP = TRUE;
 		}
-	} else if (usedot && fexists(pkg) && isfile(pkg)) {
+	} else if (fexists(pkg) && isfile(pkg)) {
 		int     len;
 
 		if (*pkg != '/') {
@@ -72,10 +72,6 @@ pkg_do(char *pkg)
 			strlcpy(fname, pkg, sizeof(fname));
 		}
 		cp = fname;
-	} else if (usedot) {
-		if ((cp = fileFindByPath(pkg)) != NULL) {
-			strncpy(fname, cp, MaxPathSize);
-		}
 	}
 
 	if (cp) {
@@ -95,13 +91,6 @@ pkg_do(char *pkg)
 				}
 				strcpy(PlayPen, cp2);
 			} else {
-				if (!usedot) {
-					/* only recognise a local uninstalled package if usedot was given */
-					warnx("can't find package file '%s'", fname);
-					code = 1;
-					goto bail;
-				}
-
 				/*
 				 * Apply a crude heuristic to see how much space the package will
 				 * take up once it's unpacked.  I've noticed that most packages
@@ -161,8 +150,7 @@ pkg_do(char *pkg)
 			}
 
 			/* No match */
-			warnx("can't find package `%s' installed%s!", pkg,
-				  usedot ? " or in a file" : "");
+			warnx("can't find package `%s'", pkg);
 			return 1;
 		}
 		if (chdir(log_dir) == FAIL) {
