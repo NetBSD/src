@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.84 2004/04/28 15:25:45 briggs Exp $	*/
+/*	$NetBSD: i82557.c,v 1.85 2004/05/16 02:41:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.84 2004/04/28 15:25:45 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.85 2004/05/16 02:41:46 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -653,6 +653,14 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 			    sc->sc_dev.dv_xname, data);
 			fxp_eeprom_update_cksum(sc);
 		}
+	}
+
+	/* Receiver lock-up workaround detection. */
+	fxp_read_eeprom(sc, &data, 3, 1);
+	if ((data & 0x03) != 0x03) {
+		aprint_verbose("%s: Enabling receiver lock-up workaround\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_flags |= FXPF_RECV_WORKAROUND;
 	}
 }
 
@@ -1431,7 +1439,7 @@ fxp_tick(void *arg)
 	if (sp->rx_good) {
 		ifp->if_ipackets += le32toh(sp->rx_good);
 		sc->sc_rxidle = 0;
-	} else {
+	} else if (sc->sc_flags & FXPF_RECV_WORKAROUND) {
 		sc->sc_rxidle++;
 	}
 	ifp->if_ierrors +=
