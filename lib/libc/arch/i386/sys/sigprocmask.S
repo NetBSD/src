@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.14 2000/04/03 03:13:07 mycroft Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.15 2000/12/08 22:57:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigprocmask.S,v 1.14 2000/04/03 03:13:07 mycroft Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.15 2000/12/08 22:57:57 mycroft Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -57,8 +57,7 @@ ENTRY(sigprocmask)
 	jmp	2f
 1:	movl	(%ecx),%ecx		# fetch indirect  ...
 	movl	%ecx,8(%esp)		# to new mask arg
-2:	movl	$(SYS_compat_13_sigprocmask13),%eax
-	int	$0x80
+2:	SYSTRAP(compat_13_sigprocmask13)
 	jc	err
 	movl	12(%esp),%ecx		# fetch old mask requested
 	testl	%ecx,%ecx		# test if old mask requested
