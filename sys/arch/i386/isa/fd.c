@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.60 1994/11/04 19:01:41 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.61 1994/11/04 22:51:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -115,7 +115,7 @@ void fdcforceintr __P((void *));
 void fdcattach __P((struct device *, struct device *, void *));
 
 struct cfdriver fdccd = {
-	NULL, "fdc", fdcprobe, fdcattach, DV_DULL, sizeof(struct fdc_softc), 1
+	NULL, "fdc", fdcprobe, fdcattach, DV_DULL, sizeof(struct fdc_softc)
 };
 
 /*
@@ -332,8 +332,7 @@ fdprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
-	struct fd_softc *fd = match;
-	struct cfdata *cf = fd->sc_dev.dv_cfdata;
+	struct cfdata *cf = match;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
 	u_short iobase = fdc->sc_iobase;
