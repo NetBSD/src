@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.22 1999/06/20 01:23:34 cgd Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.23 1999/06/20 05:44:26 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -179,7 +179,7 @@ menu editfsparts, y=13, exit;
 	option "Set new allocation size", action { reask_sizemult(); };
  
 
-menu md_distcustom, x=30, y=3, exit, title "Selection toggles inclusion";
+menu md_distcustom, y=3, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };
 	option  "Compiler Tools", 	 action { toggle_getit (3); };
 	option  "Games", 		 action { toggle_getit (4); };
