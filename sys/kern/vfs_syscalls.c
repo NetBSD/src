@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.57 1995/10/07 06:28:51 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.57.2.1 1995/11/07 22:44:07 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -184,6 +184,12 @@ sys_mount(p, v, retval)
 		return (error);
 #endif
 	}
+#ifdef	COMPAT_10
+	/* Accept "ufs" as an alias for "ffs" */
+	if (!strncmp(fstypename, "ufs", MFSNAMELEN)) {
+	    strncpy( fstypename, "ffs", MFSNAMELEN);
+	}
+#endif
 	for (fsindex = 0; fsindex < nvfssw; fsindex++)
 		if (vfssw[fsindex] != NULL &&
 		    !strncmp(vfssw[fsindex]->vfs_name, fstypename, MFSNAMELEN))
