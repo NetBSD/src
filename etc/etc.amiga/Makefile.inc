@@ -1,13 +1,13 @@
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.4 1994/06/15 13:04:46 chopps Exp $
+#	$Id: Makefile.inc,v 1.4.2.1 1994/07/10 03:53:50 cgd Exp $
 
 .ifdef DESTDIR
 snap_md: netbsd-generic netbsd-a3000
 	cp ${.CURDIR}/../sys/arch/amiga/compile/GENERIC/netbsd.gz \
 	    ${DESTDIR}/snapshot/netbsd-generic.gz
-	cp ${.CURDIR}/../sys/arch/amiga/compile/A3000/netbsd \
+	cp ${.CURDIR}/../sys/arch/amiga/compile/A3000/netbsd.gz \
 	    ${DESTDIR}/snapshot/netbsd-a3000.gz
 netbsd-generic:
 	cd ${.CURDIR}/../sys/arch/amiga/conf && config.new GENERIC
