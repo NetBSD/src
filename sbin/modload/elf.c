@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.14 2002/11/07 05:55:08 thorpej Exp $	*/
+/*	$NetBSD: elf.c,v 1.15 2003/10/21 02:31:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.14 2002/11/07 05:55:08 thorpej Exp $");
+__RCSID("$NetBSD: elf.c,v 1.15 2003/10/21 02:31:08 fvdl Exp $");
 
 #include <sys/param.h>
 
@@ -344,7 +344,7 @@ elf_linkcmd(char *buf,
 	ssize_t n;
 
 	if (ldscript == NULL) {
-		if (data_offset == NULL)
+		if (data_offset == 0)
 			n = snprintf(buf, len, LINKCMD, kernel, entry, 
 				     outfile, address, object);
 		else
@@ -353,7 +353,7 @@ elf_linkcmd(char *buf,
 				     (const char *)address + data_offset,
 				     object);
 	} else {
-		if (data_offset == NULL)
+		if (data_offset == 0)
 			n = snprintf(buf, len, LINKSCRIPTCMD, ldscript, kernel,
 				     entry, outfile, address, object);
 		else
