@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.13 1996/01/06 22:15:29 mycroft Exp $	*/
+/*	$NetBSD: bios.S,v 1.14 1996/06/18 07:03:44 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -69,25 +69,26 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 ENTRY(biosread)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movb	16(%ebp), %dh
-	movw	12(%ebp), %cx
+	movb	28(%esp), %dh
+	movw	24(%esp), %cx
 	xchgb	%ch, %cl	# cylinder; the highest 2 bits of cyl is in %cl
 	rorb	$2, %cl
-	movb	20(%ebp), %al
+	movb	32(%esp), %al
 	orb	%al, %cl
 	incb	%cl		# sector; sec starts from 1, not 0
-	movb	8(%ebp), %dl	# device
-	movl	28(%ebp), %ebx	# offset
+	movb	20(%esp), %dl	# device
+	movl	40(%esp), %ebx	# offset
 				# prot_to_real will set %es to BOOTSEG
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
 	movb	$0x2, %ah	# subfunction
 	addr32
-	movb	24(%ebp), %al	# number of sectors
+	movb	36(%esp), %al	# number of sectors
 	int	$0x13
 	setc	%bl
 
@@ -97,6 +98,8 @@ ENTRY(biosread)
 	xorl	%eax, %eax
 	movb	%bl, %al	# return value in %ax
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -118,10 +121,11 @@ ENTRY(biosread)
 */
 ENTRY(putc)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movb	8(%ebp), %cl
+	movb	20(%esp), %cl
 
 	call	_C_LABEL(prot_to_real)
 
@@ -141,6 +145,8 @@ ENTRY(putc)
 	data32
 	call	_C_LABEL(real_to_prot)
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -162,8 +168,9 @@ ENTRY(putc)
 */
 ENTRY(getc)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	call	_C_LABEL(prot_to_real)
 
@@ -184,6 +191,8 @@ ENTRY(getc)
 	xorl	%eax, %eax
 	movb	%bl, %al
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -210,8 +219,9 @@ ENTRY(getc)
 */
 ENTRY(ischar)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	call	_C_LABEL(prot_to_real)
 
@@ -234,6 +244,8 @@ ENTRY(ischar)
 	xorl	%eax, %eax
 	movb	%bl, %al
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -247,10 +259,11 @@ ENTRY(ischar)
 
 ENTRY(get_diskinfo)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movb	8(%ebp), %dl		# diskinfo(drive #)
+	movb	20(%esp), %dl		# diskinfo(drive #)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
@@ -284,6 +297,8 @@ ok:
 	andb	$0x3f, %cl		# mask of cylinder gunk
 	movb	%cl, %al		# max sector (and # sectors)
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -300,10 +315,11 @@ ok:
 
 ENTRY(memsize)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movl	8(%ebp), %ebx
+	movl	20(%esp), %ebx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
@@ -326,6 +342,9 @@ xdone:
 	call	_C_LABEL(real_to_prot)
 
 	movl	%ebx, %eax
+
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -343,11 +362,12 @@ xdone:
 */
 ENTRY(usleep)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movw	8(%ebp), %dx
-	movw	10(%ebp), %cx
+	movw	20(%esp), %dx
+	movw	22(%esp), %cx
 
 	call	_C_LABEL(prot_to_real)
 
@@ -363,6 +383,8 @@ ENTRY(usleep)
 	xorl	%eax, %eax
 	movb	%bl, %al
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
