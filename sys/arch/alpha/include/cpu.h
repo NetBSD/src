@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.25 1998/09/24 23:28:18 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.26 1998/09/29 07:07:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -192,6 +192,7 @@ int	cpu_iccb_send __P((long, const char *));
 void	cpu_iccb_receive __P((void));
 void	cpu_hatch __P((struct cpu_softc *));
 void	cpu_run_spinup_queue __P((void));
+void	cpu_halt_secondary __P((unsigned long));
 void	cpu_spinup_trampoline __P((void));			/* MAGIC */
 
 #endif /* _KERNEL */
