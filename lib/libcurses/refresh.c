@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.23 2000/04/27 00:26:19 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.24 2000/04/27 22:12:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.23 2000/04/27 00:26:19 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.24 2000/04/27 22:12:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -200,8 +200,10 @@ wrefresh(WINDOW *win)
 		retval = OK;
 	if (retval == OK) {
 		retval = doupdate();
-		win->cury = max(0, curscr->cury - win->begy);
-		win->curx = max(0, curscr->curx - win->begx);
+		if (!win->flags & __LEAVEOK) {
+			win->cury = max(0, curscr->cury - win->begy);
+			win->curx = max(0, curscr->curx - win->begx);
+		}
 	}
 	curwin = 0;
 	return(retval);
