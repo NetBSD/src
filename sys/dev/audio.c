@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.6 1995/05/08 16:06:38 brezak Exp $	*/
+/*	$NetBSD: audio.c,v 1.7 1995/05/08 17:42:07 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: audio.c,v 1.6 1995/05/08 16:06:38 brezak Exp $
+ *	$Id: audio.c,v 1.7 1995/05/08 17:42:07 brezak Exp $
  */
 
 /*
@@ -1669,14 +1669,7 @@ mixer_close(dev, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	int unit = AUDIOUNIT(dev);
-	struct audio_softc *sc = audio_softc[unit];
-	struct audio_hw_if *hw = sc->hw_if;
-	int s;
-
-	DPRINTF(("mixer: close; unit %d\n", unit));
-
-	hw->close(sc->hw_hdl);
+	DPRINTF(("mixer: close; unit %d\n", AUDIOUNIT(dev)));
 	
 	return (0);
 }
