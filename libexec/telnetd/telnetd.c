@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.22 2000/08/18 03:25:52 itojun Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.23 2000/11/19 20:17:39 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.22 2000/08/18 03:25:52 itojun Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.23 2000/11/19 20:17:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -922,13 +922,12 @@ doit(who)
 #else
 	for (;;) {
 		char *lp;
-		extern char *line;
 
 		if ((lp = getpty()) == NULL)
 			fatal(net, "Out of ptys");
 
 		if ((pty = open(lp, 2)) >= 0) {
-			strcpy(line,lp);
+			(void)strlcpy(line, lp, sizeof(NULL16STR));
 			line[5] = 't';
 			break;
 		}
@@ -1239,7 +1238,7 @@ telnet(f, p, host)
 		IM = getstr("im", &cp);
 		IF = getstr("if", &cp);
 		if (HN && *HN)
-			(void) strcpy(host_name, HN);
+			(void)strlcpy(host_name, HN, sizeof(host_name));
 		if (IM == 0)
 			IM = "";
 	} else {
