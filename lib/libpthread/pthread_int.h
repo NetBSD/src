@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.16 2003/07/18 22:33:46 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.17 2003/07/21 22:21:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@ struct	__pthread_st {
 	int	pt_state;	/* running, blocked, etc. */
 	pthread_spin_t pt_statelock;	/* lock on pt_state */
 	int	pt_flags;	/* see PT_FLAG_* below */
+	pthread_spin_t pt_flaglock;	/* lock on pt_flag */
 	int	pt_cancel;	/* Deferred cancellation */
 	int	pt_spinlocks;	/* Number of spinlocks held. */
 	int	pt_blockedlwp;	/* LWP/SA number when blocked */
