@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.88 1998/06/05 20:02:18 kleink Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.89 1998/06/08 15:52:07 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -153,34 +153,12 @@ struct mount *rootfs;
 struct vnode *rootvnode;
 struct device *root_device;			/* root device */
 
-struct mount *vfs_getvfs __P((fsid_t *));
-void vattr_null __P((struct vattr *));
-int getnewvnode __P((enum vtagtype, struct mount *, int (**)(void *),
-		     struct vnode **));
+/*
+ * Local declarations.
+ */
 void insmntque __P((struct vnode *, struct mount *));
-int vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *, int,
-		   int));
-void vflushbuf __P((struct vnode *, int));
-void brelvp __P((struct buf *));
-int bdevvp __P((dev_t, struct vnode **));
-int cdevvp __P((dev_t, struct vnode **));
 int getdevvp __P((dev_t, struct vnode **, enum vtype));
-struct vnode *checkalias __P((struct vnode *, dev_t, struct mount *));
-void vput __P((struct vnode *));
-void vrele __P((struct vnode *));
-int vflush __P((struct mount *, struct vnode *, int));
 void vgoneall __P((struct vnode *));
-void vgone __P((struct vnode *));
-void vgonel __P((struct vnode *vp, struct proc *p));
-int vcount __P((struct vnode *));
-void vprint __P((char *, struct vnode *));
-int vfs_mountedon __P((struct vnode *));
-int vfs_export __P((struct mount *, struct netexport *, struct export_args *));
-struct netcred *vfs_export_lookup __P((struct mount *, struct netexport *,
-				       struct mbuf *));
-int vaccess __P((enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *));
-void vfs_unmountall __P((void));
-void vfs_shutdown __P((void));
 
 static int vfs_hang_addrlist __P((struct mount *, struct netexport *,
 				  struct export_args *));
