@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.32 2001/02/24 00:05:22 cgd Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.33 2001/04/16 22:41:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -49,6 +49,8 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+
+#include <miscfs/syncfs/syncfs.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -317,8 +319,14 @@ mfs_start(mp, flags, p)
 		 * will always return EINTR/ERESTART.
 		 */
 		if (sleepreturn != 0) {
-			if (vfs_busy(mp, LK_NOWAIT, 0) ||
-			    dounmount(mp, 0, p) != 0)
+			/*
+			 * XXX Freeze syncer.  Must do this before locking
+			 * the mount point.  See dounmount() for details.
+			 */
+			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
+				lockmgr(&syncer_lock, LK_RELEASE, NULL);
+			else if (dounmount(mp, 0, p) != 0)
 				CLRSIG(p, CURSIG(p));
 			sleepreturn = 0;
 			continue;

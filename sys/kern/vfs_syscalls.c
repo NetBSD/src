@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.164 2000/11/27 08:39:44 chs Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.165 2001/04/16 22:41:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -459,8 +459,16 @@ sys_unmount(p, v, retval)
 	}
 	vput(vp);
 
-	if (vfs_busy(mp, 0, 0))
+	/*
+	 * XXX Freeze syncer.  Must do this before locking the
+	 * mount point.  See dounmount() for details.
+	 */
+	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+
+	if (vfs_busy(mp, 0, 0)) {
+		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 		return (EBUSY);
+	}
 
 	return (dounmount(mp, SCARG(uap, flags), p));
 }
@@ -485,13 +493,21 @@ dounmount(mp, flags, p)
 	used_syncer = (mp->mnt_syncer != NULL);
 
 	/*
-	 * XXX Freeze syncer. This should really be done on a mountpoint
-	 * basis, but especially the softdep code possibly called from
-	 * the syncer doesn't exactly work on a per-mountpoint basis,
-	 * so the softdep code would become a maze of vfs_busy calls.
+	 * XXX Syncer must be frozen when we get here.  This should really
+	 * be done on a per-mountpoint basis, but especially the softdep
+	 * code possibly called from the syncer doens't exactly work on a
+	 * per-mountpoint basis, so the softdep code would become a maze
+	 * of vfs_busy() calls.
+	 *
+	 * The caller of dounmount() must acquire syncer_lock because
+	 * the syncer itself acquires locks in syncer_lock -> vfs_busy
+	 * order, and we must preserve that order to avoid deadlock.
+	 *
+	 * So, if the file system did not use the syncer, now is
+	 * the time to release the syncer_lock.
 	 */
-	if (used_syncer)
-		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+	if (used_syncer == 0)
+		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 
 	mp->mnt_flag |= MNT_UNMOUNT;
 	mp->mnt_unmounter = p;
