@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.19 1994/12/29 22:06:15 chopps Exp $	*/
+/*	$NetBSD: advnops.c,v 1.20 1995/01/18 09:17:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -72,7 +72,7 @@ adosfs_getattr(sp)
 	} */ *sp;
 {
 	struct vattr *vap;
-	struct amount *amp;
+	struct adosfsmount *amp;
 	struct anode *ap;
 	u_long fblks;
 
@@ -133,7 +133,7 @@ adosfs_read(sp)
 		struct ucred *a_cred;
 	} */ *sp;
 {
-	struct amount *amp;
+	struct adosfsmount *amp;
 	struct anode *ap;
 	struct uio *uio;
 	struct buf *bp;
@@ -546,7 +546,7 @@ adosfs_readdir(sp)
 	int error, useri, chainc, hashi, scanned, uavail;
 	struct adirent ad, *adp;
 	struct anode *pap, *ap;
-	struct amount *amp;
+	struct adosfsmount *amp;
 	struct vnode *vp;
 	struct uio *uio;
 	u_long nextbn, resid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.6 1994/12/28 08:51:59 chopps Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.7 1995/01/18 09:17:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -56,7 +56,7 @@ struct anode {
 	struct datestamp mtimev;	/* (r) volume modified */
 	struct datestamp created;	/* (r) volume created */
 	struct datestamp mtime;	/* (r/d/f) last modified */
-	struct amount *amp;	/* owner file system */
+	struct adosfsmount *amp;	/* owner file system */
 	struct vnode *vp;	/* owner vnode */
 	u_long fsize;		/* (f) size of file in bytes */
 	u_long block;		/* block num */
@@ -88,7 +88,7 @@ struct anode {
  */
 #define ANODEHASHSZ (512)
 
-struct amount {
+struct adosfsmount {
 	LIST_HEAD(anodechain, anode) anodetab[ANODEHASHSZ];
 	struct mount *mp;	/* owner mount */
 	u_long rootb;		/* root block number */
@@ -102,7 +102,7 @@ struct amount {
 	struct vnode *devvp;	/* blk device mounted on */
 	struct vnode *rootvp;	/* out root vnode */
 };
-#define VFSTOADOSFS(mp) ((struct amount *)(mp)->mnt_data)
+#define VFSTOADOSFS(mp) ((struct adosfsmount *)(mp)->mnt_data)
 
 /*
  * AmigaDOS block stuff.
@@ -125,7 +125,7 @@ long adoscksum __P((struct buf *, long));
 int adoshash __P((const char *, int, int));
 
 struct vnode *adosfs_ahashget __P((struct mount *, ino_t));
-void adosfs_ainshash __P((struct amount *, struct anode *));
+void adosfs_ainshash __P((struct adosfsmount *, struct anode *));
 void adosfs_aremhash __P((struct anode *));
 
 int adosfs_lookup __P((struct vop_lookup_args *));
