@@ -1,10 +1,10 @@
-#	@(#)Makefile	5.5 (Berkeley) 4/23/91
+#	@(#)Makefile	8.1 (Berkeley) 6/2/93
 
 PROG=	ps
-SRCS=	devname.c keyword.c nlist.c print.c ps.c
+SRCS=	fmt.c keyword.c nlist.c print.c ps.c
 CFLAGS+=-I/sys
-DPADD=	${LIBMATH} ${LIBUTIL}
-LDADD=	-lm -lutil
+DPADD=	${LIBMATH} ${LIBKVM}
+LDADD=	-lm -lkvm
 BINGRP=	kmem
 BINMODE=2555
 
