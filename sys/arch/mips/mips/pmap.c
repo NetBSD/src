@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2000/11/24 22:41:39 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 2000/12/10 19:25:44 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2000/11/24 22:41:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2000/12/10 19:25:44 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1153,19 +1153,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 			 */
 			npte = mips_pg_ropage_bit();
 		else {
-			if ((int)va < 0) {
-				/*
-				 * Don't bother to trap on kernel writes,
-				 * just record page as dirty.
-				 */
+			if (*attrs & PV_MODIFIED) {
 				npte = mips_pg_rwpage_bit();
-				*attrs |= PV_MODIFIED | PV_REFERENCED;
 			} else {
-				if (*attrs & PV_MODIFIED) {
-					npte = mips_pg_rwpage_bit();
-				} else {
-					npte = mips_pg_cwpage_bit();
-				}
+				npte = mips_pg_cwpage_bit();
 			}
 		}
 #ifdef DEBUG
