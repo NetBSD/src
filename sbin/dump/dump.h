@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.31 2001/12/22 08:05:24 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.32 2001/12/25 12:06:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -223,6 +223,7 @@ void	interrupt(int);	/* in case operator bangs on console */
  *	Exit status codes
  */
 #define	X_FINOK		0	/* normal exit */
+#define	X_STARTUP	1	/* startup error */
 #define	X_REWRITE	2	/* restart writing from the check point */
 #define	X_ABORT		3	/* abort dump; don't attempt checkpointing */
 
@@ -245,21 +246,16 @@ struct dumpdates {
 	char	dd_level;
 	time_t	dd_ddate;
 };
-struct dumptime {
-	struct	dumpdates dt_value;
-	struct	dumptime *dt_next;
-};
 
-extern struct	dumptime *dthead;	/* head of the list version */
 extern int	nddates;		/* number of records (might be zero) */
-extern int	ddates_in;		/* we have read the increment file */
 extern struct	dumpdates **ddatev;	/* the arrayfied version */
 
 void	initdumptimes(void);
 void	getdumptime(void);
 void	putdumptime(void);
 #define	ITITERATE(i, ddp) \
-	for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
+	if (ddatev != NULL) \
+		for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
 
 void	sig(int signo);
 

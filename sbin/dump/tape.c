@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.34 2001/12/23 12:54:54 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.35 2001/12/25 12:06:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.34 2001/12/23 12:54:54 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.35 2001/12/25 12:06:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,12 +269,15 @@ statussig(int notused)
 	if (blockswritten < 500)
 		return;
 	(void) time((time_t *) &tnow);
-	deltat = tstart_writing - tnow + (1.0 * (tnow - tstart_writing))
-		/ blockswritten * tapesize;
+	if (tnow <= tstart_volume)
+		return;
+	deltat = tstart_writing - tnow +
+	    (1.0 * (tnow - tstart_writing)) / blockswritten * tapesize;
 	(void)snprintf(msgbuf, sizeof(msgbuf),
 	    "%3.2f%% done at %ld KB/s, finished in %d:%02d\n",
 	    (blockswritten * 100.0) / tapesize,
-	    (long)((iswap32(spcl.c_tapea) - tapea_volume) / (tnow - tstart_volume)),
+	    (long)((iswap32(spcl.c_tapea) - tapea_volume) /
+	      (tnow - tstart_volume)),
 	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
 	write(STDERR_FILENO, msgbuf, strlen(msgbuf));
 }
@@ -432,7 +435,7 @@ close_rewind(void)
 		return;
 	if (!nogripe) {
 		msg("Change Volumes: Mount volume #%d\n", tapeno+1);
-		broadcast("CHANGE DUMP VOLUMES!\7\7\n");
+		broadcast("CHANGE DUMP VOLUMES!\a\a\n");
 	}
 	if (lflag) {
 		for (i = 0; i < 12; i++) { /* wait 2 mn */
@@ -606,6 +609,7 @@ restore_check_point:
 		 *	don't catch the interrupt
 		 */
 		signal(SIGINT, SIG_IGN);
+		signal(SIGINFO, SIG_IGN);	/* only want child's stats */
 #ifdef TDEBUG
 		msg("Tape: %d; parent process: %d child process %d\n",
 			tapeno+1, parentpid, childpid);
@@ -648,6 +652,7 @@ restore_check_point:
 		}
 		/*NOTREACHED*/
 	} else {	/* we are the child; just continue */
+		signal(SIGINFO, statussig);	/* now want child's stats */
 #ifdef TDEBUG
 		sleep(4);	/* allow time for parent's message to get out */
 		msg("Child on Tape %d has parent %d, my pid = %d\n",
@@ -796,8 +801,10 @@ killall(void)
 	int i;
 
 	for (i = 0; i < SLAVES; i++)
-		if (slaves[i].pid > 0)
+		if (slaves[i].pid > 0) {
 			(void) kill(slaves[i].pid, SIGKILL);
+			slaves[i].sent = 0;
+		}
 }
 
 /*
@@ -810,8 +817,7 @@ killall(void)
 static void
 doslave(int cmd, int slave_number)
 {
-	int nread;
-	int nextslave, size, wrote, eot_count;
+	int nread, nextslave, size, wrote, eot_count, werror;
 	sigset_t sigset;
 
 	/*
@@ -858,6 +864,7 @@ doslave(int cmd, int slave_number)
 		/* Try to write the data... */
 		eot_count = 0;
 		size = 0;
+		werror = 0;
 
 		while (eot_count < 10 && size < writesize) {
 #ifdef RDUMP
@@ -868,8 +875,10 @@ doslave(int cmd, int slave_number)
 #endif
 				wrote = write(tapefd, slp->tblock[0]+size,
 				    writesize-size);
+			werror = errno;
 #ifdef WRITEDEBUG
-			fprintf(stderr, "slave %d wrote %d\n", slave_number, wrote);
+			fprintf(stderr, "slave %d wrote %d werror %d\n",
+			    slave_number, wrote, werror);
 #endif
 			if (wrote < 0)
 				break;
@@ -885,14 +894,18 @@ doslave(int cmd, int slave_number)
 			    slave_number, size, writesize);
 #endif
 
+		/*
+		 * Handle ENOSPC as an EOT condition.
+		 */
+		if (wrote < 0 && werror == ENOSPC) {
+			wrote = 0;
+			eot_count++;
+		}
+
 		if (eot_count > 0)
 			size = 0;
 
-		/*
-		 * fixme: Pyramids running OSx return ENOSPC
-		 * at EOT on 1/2 inch drives.
-		 */
-		if (size < 0) {
+		if (wrote < 0) {
 			(void) kill(master, SIGUSR1);
 			sigemptyset(&sigset);
 			for (;;)
