@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.104 2002/11/01 12:47:56 mrg Exp $ */
+/* $NetBSD: vmstat.c,v 1.105 2002/11/18 03:17:24 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.104 2002/11/01 12:47:56 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.105 2002/11/18 03:17:24 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,9 @@ struct nlist namelist[] =
 	{ "_pool_head" },
 #define	X_UVMEXP	12
 	{ "_uvmexp" },
-#define	X_END		13
+#define	X_TIME		13
+	{ "_time" },
+#define	X_END		14
 #if defined(pc532)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
@@ -515,14 +517,15 @@ choosedrives(char **argv)
 long
 getuptime(void)
 {
-	static time_t now;
 	static struct timeval boottime;
+	struct timeval now, diff;
 	time_t uptime;
 
 	if (boottime.tv_sec == 0)
 		kread(X_BOOTTIME, &boottime, sizeof(boottime));
-	(void)time(&now);
-	uptime = now - boottime.tv_sec;
+	kread(X_TIME, &now, sizeof(now));
+	timersub(&now, &boottime, &diff);
+	uptime = diff.tv_sec;
 	if (uptime <= 0 || uptime > 60*60*24*365*10)
 		errx(1, "time makes no sense; namelist must be wrong.");
 	return (uptime);
