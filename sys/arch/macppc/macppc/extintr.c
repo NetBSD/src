@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.46 2004/12/17 05:42:30 briggs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.47 2005/01/07 06:11:20 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.46 2004/12/17 05:42:30 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.47 2005/01/07 06:11:20 briggs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -202,14 +202,14 @@ gc_read_irq()
 	uint32_t events, e;
 	uint32_t levels;
 
-	/* Get the non-level interrupts */
+	/* Get the internal interrupts */
 	events = in32rb(INT_STATE_REG_L) & ~intr_level_mask;
 
-	/* Get the enabled level interrupts */
+	/* Get the enabled external interrupts */
 	levels = in32rb(INT_LEVEL_REG_L) & in32rb(INT_ENABLE_REG_L);
 	events = events | (levels & intr_level_mask);
 
-	/* Clear any interrupts that we've read */
+	/* Clear any interrupts that we've read (and all external ints) */
 	out32rb(INT_CLEAR_REG_L, events | intr_level_mask);
 	while (events) {
 		e = 31 - cntlzw(events);
@@ -258,13 +258,7 @@ gc_reenable_irq(irq)
 		levels = in32rb(INT_LEVEL_REG_L);
 		if (levels & irqbit) {
 			vi = virq[irq];		/* map to virtual irq */
-			if (!(ci->ci_ipending & (1<<vi))) {
-				/*
-				 * It's active and not pending, go ahead
-				 * and mark it pending.
-				 */
-				ci->ci_ipending |= (1<<vi);	
-			}
+			ci->ci_ipending |= (1<<vi);	
 			out32rb(INT_CLEAR_REG_L, irqbit);
 		}
 	} else {
@@ -282,13 +276,7 @@ gc_reenable_irq(irq)
 		levels = in32rb(INT_LEVEL_REG_H);
 		if (levels & irqbit) {
 			vi = virq[irq];		/* map to virtual irq */
-			if (!(ci->ci_ipending & (1<<vi))) {
-				/*
-				 * It's active and not pending, go ahead
-				 * and mark it pending.
-				 */
-				ci->ci_ipending |= (1<<vi);	
-			}
+			ci->ci_ipending |= (1<<vi);	
 			out32rb(INT_CLEAR_REG_H, irqbit);
 		}
 	}
@@ -547,8 +535,12 @@ intr_establish(hwirq, type, level, ih_fun, ih_arg)
 	ih->ih_irq = irq;
 	*p = ih;
 
-	if (!have_openpic)
+	if (!have_openpic) {
+		uint32_t msr = mfmsr();
+		mtmsr(msr & ~PSL_EE);
 		gc_reenable_irq(hwirq);
+		mtmsr(msr);
+	}
 
 	return ih;
 }
@@ -631,9 +623,25 @@ ext_intr()
 		 * Paranoia....
 		 */
 		if (int_state == oint_state) {
-			if (spincount++ > 0x10) {
-				panic("stuck interrupt: curr %08x / last %08x",
-					int_state, oint_state);
+			if (spincount++ > 0x80) {
+				uint32_t	stuck;
+				char		*comma="";
+
+				stuck = int_state;
+				printf("Disabling stuck interrupt(s): ");
+				while (stuck) {
+					irq = 31 - cntlzw(int_state);
+					r_imen = 1 << irq;
+					is = &intrsources[irq];
+					printf("%s%d", comma, is->is_hwirq);
+					gc_disable_irq(is->is_hwirq);
+					ci->ci_ipending &= ~r_imen;
+					stuck &= ~r_imen;
+					comma = ", ";
+				}
+				printf("\n");
+				spincount = 0;
+				continue;
 			}
 		}
 		oint_state = int_state;
@@ -999,12 +1007,18 @@ openpic_init()
 void
 legacy_int_init()
 {
+	int	ohare;
+
 	out32rb(INT_ENABLE_REG_L, 0);		/* disable all intr. */
 	out32rb(INT_CLEAR_REG_L, 0xffffffff);	/* clear pending intr. */
 	intr_level_mask = INT_LEVEL_MASK_GC;
 	if (heathrow_FCR) {
 		out32rb(INT_ENABLE_REG_H, 0);
 		out32rb(INT_CLEAR_REG_H, 0xffffffff);
+		intr_level_mask = INT_LEVEL_MASK_OHARE;
+	}
+	ohare = OF_finddevice("/bandit/ohare");
+	if (ohare != -1) {
 		intr_level_mask = INT_LEVEL_MASK_OHARE;
 	}
 
