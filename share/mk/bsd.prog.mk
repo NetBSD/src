@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.49 1994/12/22 09:20:45 cgd Exp $
+#	$NetBSD: bsd.prog.mk,v 1.50 1995/04/21 20:29:42 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -136,6 +136,10 @@ lint: ${SRCS} _SUBDIRUSE
 
 .if !defined(NOMAN)
 .include <bsd.man.mk>
+.endif
+
+.if !defined(NONLS)
+.include <bsd.nls.mk>
 .endif
 
 .include <bsd.obj.mk>
