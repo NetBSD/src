@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.38 1997/10/12 14:04:37 mycroft Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.39 1997/10/19 18:16:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.38 1997/10/12 14:04:37 mycroft Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.39 1997/10/19 18:16:19 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1419,26 +1419,12 @@ void
 delete(name)
 	char *name;
 {
-	struct stat st;
 
 	LOGCMD("delete", name);
-	if (stat(name, &st) < 0) {
+	if (remove(name) < 0)
 		perror_reply(550, name);
-		return;
-	}
-	if ((st.st_mode&S_IFMT) == S_IFDIR) {
-		if (rmdir(name) < 0) {
-			perror_reply(550, name);
-			return;
-		}
-		goto done;
-	}
-	if (unlink(name) < 0) {
-		perror_reply(550, name);
-		return;
-	}
-done:
-	ack("DELE");
+	else
+		ack("DELE");
 }
 
 void
