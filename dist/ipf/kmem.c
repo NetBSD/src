@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.c,v 1.9 2002/09/19 08:08:19 martti Exp $	*/
+/*	$NetBSD: kmem.c,v 1.10 2002/09/19 08:10:41 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -47,8 +47,10 @@
 #endif
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
-static const char rcsid[] = "@(#)Id: kmem.c,v 2.2.2.15 2002/07/27 15:59:37 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: kmem.c,v 2.2.2.15 2002/07/27 15:59:37 darrenr Exp";
 #endif
 
 #ifdef	__sgi

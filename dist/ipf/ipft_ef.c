@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_ef.c,v 1.6 2002/09/19 08:08:17 martti Exp $	*/
+/*	$NetBSD: ipft_ef.c,v 1.7 2002/09/19 08:10:39 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -53,8 +53,10 @@ etherfind -n -t
 #include "ipt.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_ef.c,v 2.2.2.3 2002/06/27 14:29:17 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipft_ef.c,v 2.2.2.3 2002/06/27 14:29:17 darrenr Exp";
 #endif
 
 static	int	etherf_open __P((char *));
