@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.14 2000/01/12 08:53:01 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.15 2000/02/11 21:36:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -458,7 +458,7 @@ et_probe_card()
 	et_priv.memsz   = PCI_VGA_SIZE;
 	et_priv.regsz   = PCI_IO_SIZE;
 
-	if (found && !atari_realconfig) {
+	if (!atari_realconfig) {
 		et_loadmode(&hw_modes[0], NULL);
 		return (1);
 	}
