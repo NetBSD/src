@@ -1,4 +1,4 @@
-/*	$NetBSD: dzreg.h,v 1.2 1998/05/17 18:51:13 ragge Exp $ */
+/*	$NetBSD: dzreg.h,v 1.3 1999/05/26 01:26:17 ragge Exp $ */
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *
@@ -50,6 +50,7 @@ struct DZregs
 
 typedef struct DZregs dzregs;
 
+#if 0
 struct	dz_regs	{
 	volatile unsigned short *dr_csr;
 	volatile unsigned short *dr_rbuf;
@@ -62,6 +63,29 @@ struct	dz_regs	{
 	volatile unsigned char *dr_ring;
 	volatile unsigned char *dr_dcd;
 };
+#else
+struct	dz_regs	{
+	bus_addr_t dr_csr;
+	bus_addr_t dr_rbuf;
+#define dr_lpr	   dr_rbuf
+	bus_addr_t dr_dtr;
+	bus_addr_t dr_break;
+	bus_addr_t dr_tbuf;
+	bus_addr_t dr_tcr;
+	bus_addr_t dr_tcrw;
+	bus_addr_t dr_ring;
+	bus_addr_t dr_dcd;
+};
+#define	DZ_UBA_CSR	0
+#define	DZ_UBA_RBUF	2
+#define	DZ_UBA_DTR	5
+#define	DZ_UBA_BREAK	7
+#define	DZ_UBA_TBUF	6
+#define	DZ_UBA_TCR	4
+#define	DZ_UBA_DCD	7
+#define	DZ_UBA_RING	6
+
+#endif
 
 /* CSR bits */
 
