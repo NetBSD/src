@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.81 2003/11/02 12:01:40 jdolecek Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.82 2003/11/12 21:07:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.81 2003/11/02 12:01:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.82 2003/11/12 21:07:38 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -464,7 +464,7 @@ ktrace_common(curp, ops, facs, pid, fp)
 		/*
 		 * by process group
 		 */
-		pg = pgfind(-pid);
+		pg = pg_find(-pid, PFIND_UNLOCK_FAIL);
 		if (pg == NULL) {
 			error = ESRCH;
 			goto done;
@@ -480,7 +480,7 @@ ktrace_common(curp, ops, facs, pid, fp)
 		/*
 		 * by pid
 		 */
-		p = pfind(pid);
+		p = p_find(pid, PFIND_UNLOCK_FAIL);
 		if (p == NULL) {
 			error = ESRCH;
 			goto done;
@@ -490,6 +490,7 @@ ktrace_common(curp, ops, facs, pid, fp)
 		else
 			ret |= ktrops(curp, p, ops, facs, fp);
 	}
+	proclist_unlock_read();	/* taken by p{g}_find */
 	if (!ret)
 		error = EPERM;
 done:
@@ -674,9 +675,11 @@ ktrsetchildren(curp, top, ops, facs, fp)
 		 * otherwise do any siblings, and if done with this level,
 		 * follow back up the tree (but not past top).
 		 */
-		if (LIST_FIRST(&p->p_children) != NULL)
+		if (LIST_FIRST(&p->p_children) != NULL) {
 			p = LIST_FIRST(&p->p_children);
-		else for (;;) {
+			continue;
+		}
+		for (;;) {
 			if (p == top)
 				return (ret);
 			if (LIST_NEXT(p, p_sibling) != NULL) {
