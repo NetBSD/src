@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.135 1999/06/05 09:44:03 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.136 1999/06/05 10:42:15 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.128 1999/06/05 09:43:21 tron Exp 
+ *	NetBSD: pcidevs,v 1.129 1999/06/05 10:41:37 tron Exp 
  */
 
 /*
@@ -555,6 +555,8 @@
 /* 3Dfx Interactive producs */
 #define	PCI_PRODUCT_3DFX_VOODOO	0x0001		/* Voodoo */
 #define	PCI_PRODUCT_3DFX_VOODOO2	0x0002		/* Voodoo2 */
+#define	PCI_PRODUCT_3DFX_BANSHEE	0x0003		/* Banshee */
+#define	PCI_PRODUCT_3DFX_VOODOO3	0x0005		/* Voodoo3 */
 
 /* 3D Labs products */
 #define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* GLINT 300SX */
@@ -943,6 +945,7 @@
 #define	PCI_PRODUCT_MATROX_MILLENNIUM2_AGP	0x051f		/* MGA Millennium II 2164WA-B AG */
 #define	PCI_PRODUCT_MATROX_G200_PCI	0x0520		/* MGA G200 PCI */
 #define	PCI_PRODUCT_MATROX_G200_AGP	0x0521		/* MGA G200 AGP */
+#define	PCI_PRODUCT_MATROX_G400_AGP	0x0525		/* MGA G400 AGP */
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 #define	PCI_PRODUCT_MATROX_G100_PCI	0x1000		/* MGA G100 PCI */
 #define	PCI_PRODUCT_MATROX_G100_AGP	0x1001		/* MGA G100 AGP */

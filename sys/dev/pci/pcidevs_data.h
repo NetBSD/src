@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.133 1999/06/05 09:44:03 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.134 1999/06/05 10:42:16 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.128 1999/06/05 09:43:21 tron Exp 
+ *	NetBSD: pcidevs,v 1.129 1999/06/05 10:41:37 tron Exp 
  */
 
 /*
@@ -140,6 +140,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Dfx Interactive",
 	    "Voodoo2",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_BANSHEE,
+	    0,
+	    "3Dfx Interactive",
+	    "Banshee",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO3,
+	    0,
+	    "3Dfx Interactive",
+	    "Voodoo3",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
@@ -1730,6 +1742,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Matrox",
 	    "MGA G200 AGP",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G400_AGP,
+	    0,
+	    "Matrox",
+	    "MGA G400 AGP",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
