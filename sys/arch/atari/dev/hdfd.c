@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.3 1996/12/14 13:47:12 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.4 1996/12/18 12:35:34 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -253,7 +253,7 @@ void	fd_motor_off __P((void *arg));
 void	fd_motor_on __P((void *arg));
 int	fdcresult __P((struct fdc_softc *fdc));
 int	out_fdc __P((u_char x));
-void	fdc_ctrl_intr __P((struct clockframe *));
+void	fdc_ctrl_intr __P((struct clockframe));
 void	fdcstart __P((struct fdc_softc *fdc));
 void	fdcstatus __P((struct device *dv, int n, char *s));
 void	fdctimeout __P((void *arg));
@@ -495,7 +495,7 @@ fdattach(parent, self, aux)
  */
 void
 fdc_ctrl_intr(frame)
-	register struct clockframe *frame;
+	struct clockframe frame;
 {
 	int	s;
 
@@ -511,7 +511,7 @@ fdc_ctrl_intr(frame)
 	 */
 	fddmalen = 0;
 
-	if (!BASEPRI(frame->sr)) {
+	if (!BASEPRI(frame.cf_sr)) {
 		/*
 		 * We don't want to stay on ipl6.....
 		 */

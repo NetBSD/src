@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 1996/12/16 22:03:23 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 1996/12/18 12:35:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,7 +102,7 @@ struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL, NULL, 0
 };
 
-void statintr __P((struct clockframe *));
+void statintr __P((struct clockframe));
 
 static u_long	gettod __P((void));
 static int	twodigits __P((char *, int));
@@ -230,7 +230,7 @@ setstatclockrate(newhz)
 #ifdef STATCLOCK
 void
 statintr(frame)
-	register struct clockframe *frame;
+	struct clockframe frame;
 {
 	register int	var, r;
 
@@ -248,7 +248,7 @@ statintr(frame)
 	 */
 	MFP->mf_tcdr = clk2min + r;
 
-	statclock(frame);
+	statclock(&frame);
 }
 #endif /* STATCLOCK */
 
