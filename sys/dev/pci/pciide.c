@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.3 1998/03/04 19:19:21 cgd Exp $	*/
+/*	$NetBSD: pciide.c,v 1.4 1998/03/06 17:41:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -189,6 +189,13 @@ pciide_attach(parent, self, aux)
 	 * it'll be zero.  I.e., sc_dma_ioh_valid will only be non-zero
 	 * if the interface supports DMA and the registers could be
 	 * mapped.
+	 *
+	 * XXX Note that despite the fact that the Bus Master IDE specs
+	 * XXX say that "The bus master IDE functoin uses 16 bytes of IO
+	 * XXX space," some controllers (at least the United
+	 * XXX Microelectronics UM8886BF) place it in memory space.
+	 * XXX eventually, we should probably read the register and check
+	 * XXX which type it is.  Either that or 'quirk' certain devices.
 	 */
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
 		sc->sc_dma_ioh_valid = (pci_mapreg_map(pa,
