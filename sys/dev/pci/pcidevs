@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.442 2002/06/22 07:59:09 cjs Exp $
+$NetBSD: pcidevs,v 1.443 2002/06/22 14:33:54 fvdl Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -556,6 +556,7 @@ vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor COREGA		0x15e8	Corega
 vendor ACTIONTEC	0x1668	Action Tec Electronics, Inc.
 vendor GLOBALSUN	0x16ab	Global Sun Tech
+vendor ALTIMA		0x173b	Altima
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor SANDBURST	0x17ba	Sandburst, Inc.
 vendor HINT		0x3388	HiNT
@@ -761,6 +762,9 @@ product ALTEON ACENIC		0x0001	ACEnic 1000baseSX Gigabit Ethernet
 product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Gigabit Ethernet
 product ALTEON BCM5700		0x0003	ACEnic BCM5700 10/100/1000 Ethernet
 product ALTEON BCM5701		0x0004	ACEnic BCM5701 10/100/1000 Ethernet
+
+/* Altima products */
+product ALTIMA AC1000	0x03e8	AC1000 Gigabit Ethernet
 
 /* AMD products */
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
@@ -1925,7 +1929,7 @@ product SYMPHONY	83C553	0x0565	83C553 PCI-ISA Bridge
 /* Schneider & Koch (really SysKonnect) products */
 product	SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
 product	SCHNEIDERKOCH	SKNET_GE	0x4300	SK-NET GE
-product SCHNEIDERKOCH	ALTIMA		0x4400	SK-NET Altima Gigabit Ethernet
+product SCHNEIDERKOCH	SK_9DX1		0x4400	SK-NET SK-9DX1 Gigabit Ethernet
 /* These next two are are really subsystem IDs */
 product SCHNEIDERKOCH	SK_9D21		0x4421	SK-9D21 1000BASE-T
 product SCHNEIDERKOCH	SK_9D41		0x4441	SK-9D41 1000BASE-X
