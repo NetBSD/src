@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2002/08/19 18:58:30 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -216,7 +216,8 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
 				u_int64_t pa;
 				if (len > pdc_btlb.max_size << PGSHIFT)
 					len = pdc_btlb.max_size << PGSHIFT;
-				if (btlb_insert(kernel_pmap->pmap_space, spa,
+				if (hppa_btlb_insert(kernel_pmap->pmap_space, 
+						spa,
 						spa, &len,
 						kernel_pmap->pmap_pid |
 					    	pmap_prot(kernel_pmap,

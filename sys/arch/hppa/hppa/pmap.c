@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2002/08/11 22:29:08 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2002/08/19 18:58:26 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -1009,7 +1009,7 @@ pmap_bootstrap(vstart, vend)
 	/* Now insert all of the BTLB entries. */
 	for (btlb_i = 0; btlb_i < btlb_j; btlb_i++) {
 		btlb_entry_got = btlb_entry_size[btlb_i];
-		if (btlb_insert(kernel_pmap->pmap_space, 
+		if (hppa_btlb_insert(kernel_pmap->pmap_space, 
 				btlb_entry_start[btlb_i],
 				btlb_entry_start[btlb_i],
 				&btlb_entry_got,
