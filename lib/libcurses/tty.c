@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.17 2000/04/27 17:38:30 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.18 2000/04/27 17:50:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.17 2000/04/27 17:38:30 mycroft Exp $");
+__RCSID("$NetBSD: tty.c,v 1.18 2000/04/27 17:50:01 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -108,14 +108,14 @@ gettmode(void)
 	 * default VMIN is 4.  Majorly stupid.
 	 */
 	cbreakt = __baset;
-	cbreakt.c_lflag &= ~ICANON;
+	cbreakt.c_lflag &= ~(ECHO | ECHONL | ICANON);
 	cbreakt.c_cc[VMIN] = 1;
 	cbreakt.c_cc[VTIME] = 0;
 
 	rawt = cbreakt;
 	rawt.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | INLCR | IGNCR | ICRNL | IXON);
 	rawt.c_oflag &= ~OPOST;
-	rawt.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+	rawt.c_lflag &= ~(ISIG | IEXTEN);
 
 	/*
 	 * In general, curses should leave hardware-related settings alone.
