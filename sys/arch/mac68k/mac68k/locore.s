@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 1996/02/03 22:50:05 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.57 1996/02/11 01:20:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -820,7 +820,6 @@ start:
 
 	.globl	_initenv, _getenvvars	| in machdep.c
 	.globl	_setmachdep		| in machdep.c
-	.globl	_VIA_initialize		| in via.c
 
 	/* Initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space
@@ -835,8 +834,6 @@ start:
 	jbsr	_getenvvars		| Parse the environment buffer
 
 	jbsr	_setmachdep		| Set some machine-dep stuff
-
-	jbsr	_VIA_initialize		| Initialize the VIA(s)
 
 	jbsr	_vm_set_page_size	| Set the vm system page size, now.
 	jbsr	_consinit		| XXX Should only be if graybar on
