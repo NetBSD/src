@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.7.10.3 2005/02/27 14:41:42 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.7.10.4 2005/03/19 10:45:52 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.7.10.3 2005/02/27 14:41:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.7.10.4 2005/03/19 10:45:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -195,17 +195,17 @@ pmap_bootstrap(nextpa, firstpa)
 			protoste += (SG4_LEV2SIZE * sizeof(st_entry_t));
 		}
 		/*
-		 * Initialize the final level 1 descriptor to map the last
-		 * block of level 2 descriptors.
+		 * Initialize the level 1 descriptor correspond to
+		 * SYSMAP_VA to map the last block of level 2 descriptors.
 		 */
-		ste = &((u_int *)kstpa)[SG4_LEV1SIZE-1];
+		ste = &((u_int *)kstpa)[SYSMAP_VA >> SG4_SHIFT1];
 		pte = &((u_int *)kstpa)[kstsize*NPTEPG - SG4_LEV2SIZE];
 		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
 		/*
-		 * Now initialize the final portion of that block of
+		 * Now initialize the portion of that block of
 		 * descriptors to map Sysptmap.
 		 */
-		pte = &((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
+		pte = &pte[((SYSMAP_VA & SG4_MASK2) >> SG4_SHIFT2)];
 		epte = &pte[NPTEPG/SG4_LEV3SIZE];
 		protoste = kptmpa | SG_U | SG_RW | SG_V;
 		while (pte < epte) {
@@ -223,16 +223,19 @@ pmap_bootstrap(nextpa, firstpa)
 			protopte += PAGE_SIZE;
 		}
 		/*
-		 * Invalidate all but the last remaining entry.
+		 * Invalidate all remaining entries.
 		 */
-		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		epte = &((u_int *)kptmpa)[NPTEPG];
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
 		/*
-		 * Initialize the last one to point to Sysptmap.
+		 * Initialize the one corresponding SYSMAP_VA
+		 * to point to Sysptmap.
 		 */
-		*pte = kptmpa | PG_RW | PG_CI | PG_V;
+		pte = (u_int *)kptmpa;
+		*pte[SYSMAP_VA/(NPTEPG*PAGE_SIZE)] =
+		    kptmpa | PG_RW | PG_CI | PG_V;
 	} else
 #endif
 	{
@@ -252,18 +255,23 @@ pmap_bootstrap(nextpa, firstpa)
 			protopte += PAGE_SIZE;
 		}
 		/*
-		 * Invalidate all but the last remaining entries in both.
+		 * Invalidate all remaining entries in both.
 		 */
-		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		epte = &((u_int *)kptmpa)[NPTEPG];
 		while (pte < epte) {
 			*ste++ = SG_NV;
 			*pte++ = PG_NV;
 		}
 		/*
-		 * Initialize the last one to point to Sysptmap.
+		 * Initialize the one corresponding to SYSMAP_VA
+		 * to point to Sysptmap.
  		 */
-		*ste = kptmpa | SG_RW | SG_V;
-		*pte = kptmpa | PG_RW | PG_CI | PG_V;
+		ste = (u_int *)kstpa;
+		pte = (u_int *)kptmpa;
+		*pte[SYSMAP_VA/(NPTEPG*PAGE_SIZE)] =
+		    = kptmpa | SG_RW | SG_V;
+		*ste[SYSMAP_VA/(NPTEPG*PAGE_SIZE)] =
+		    = kptmpa | PG_RW | PG_CI | PG_V;
 	}
 
 	/*
@@ -334,8 +342,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
 	 * Immediately follows `nptpages' of static kernel page table.
 	 */
-	RELOC(Sysmap, pt_entry_t *) =
-	    (pt_entry_t *)m68k_ptob((NPTEPG - 1) * NPTEPG);
+	RELOC(Sysmap, pt_entry_t *) = (pt_entry_t *)SYSMAP_VA;
 
 	/*
 	 * Setup u-area for process 0.
