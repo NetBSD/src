@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.16 1999/05/26 19:16:34 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.17 1999/05/26 19:23:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,6 +85,10 @@ dvma_init()
 	 * Create phys_map covering the entire DVMA space,
 	 * then allocate the segment pool from that.  The
 	 * remainder will be used as the DVMA page pool.
+	 *
+	 * Note that no INTRSAFE is needed here because the
+	 * dvma_segmap manages things handled in interrupt
+	 * context.
 	 */
 	phys_map = uvm_map_create(pmap_kernel(),
 		DVMA_MAP_BASE, DVMA_MAP_END, 0);
