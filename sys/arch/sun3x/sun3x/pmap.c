@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 1997/03/02 07:59:21 jeremy Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 1997/03/06 00:04:18 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -338,8 +338,7 @@ u_int total_phys_mem;
  * Yes, it is a FIXED value so we can pre-allocate.
  */
 #define NUM_USER_PTES	(NUM_C_TABLES * MMU_C_TBL_SIZE)
-#define	NUM_KERN_PTES	\
-	(sun3x_btop(VM_MIN_KERNEL_ADDRESS - VM_MAX_KERNEL_ADDRESS))
+#define	NUM_KERN_PTES	(sun3x_btop(KERN_END - KERNBASE))
 
 /*************************** MISCELANEOUS MACROS *************************/
 #define PMAP_LOCK()	;	/* Nothing, for now */
@@ -890,6 +889,7 @@ pmap_bootstrap(nextva)
 	 */
 	pmap_bootstrap_copyprom();
 	pmap_takeover_mmu();
+	pmap_bootstrap_setprom();
 
 	/*
 	 * XXX - Todo:  Fill in the PROM's level-A table for the VA range
@@ -1038,11 +1038,31 @@ pmap_bootstrap_copyprom()
 void
 pmap_takeover_mmu()
 {
-	struct mmu_rootptr *crp;
 
-	crp = &kernel_crp;
-	loadcrp(crp);
+	loadcrp(&kernel_crp);
 }
+
+/* pmap_bootstrap_setprom()			INTERNAL
+ **
+ * Set the PROM mappings so it can see kernel space.
+ * Note that physical addresses are used here, which
+ * we can get away with because this runs with the
+ * low 1GB set for transparent translation.
+ */
+void
+pmap_bootstrap_setprom()
+{
+	mmu_long_dte_t *mon_dte;
+	extern struct mmu_rootptr mon_crp;
+	int i;
+
+	mon_dte = (mmu_long_dte_t *) mon_crp.rp_addr;
+	for (i = MMU_TIA(KERNBASE); i < MMU_TIA(KERN_END); i++) {
+		mon_dte[i].attr.raw = kernAbase[i].attr.raw;
+		mon_dte[i].addr.raw = kernAbase[i].addr.raw;
+	}
+}
+
 
 /* pmap_init			INTERFACE
  **
@@ -2613,6 +2633,11 @@ pmap_release(pmap)
 			kernel_crp.rp_addr = kernAphys;
 			loadcrp(&kernel_crp);
 		}
+#ifdef	PMAP_DEBUG /* XXX - todo! */
+		/* XXX - Now complain... */
+		printf("pmap_release: still have table\n");
+		Debugger();
+#endif
 		free_a_table(pmap->pm_a_tmgr, TRUE);
 		pmap->pm_a_tmgr = NULL;
 		pmap->pm_a_phys = kernAphys;
@@ -3751,6 +3776,7 @@ pmap_count(pmap, type)
  * XXX - It might be nice if this worked outside of the MMU
  * structures we manage.  (Could do it with ptest). -gwr
  */
+#if 0	/* XXX old version - kernel only */
 vm_offset_t
 get_pte(va)
 	vm_offset_t va;
@@ -3763,6 +3789,32 @@ get_pte(va)
 	idx = (u_long) sun3x_btop(va - KERNBASE);
 	return (kernCbase[idx].attr.raw);
 }
+#else
+extern u_long ptest_addr __P((u_long));	/* locore.s */
+
+u_long
+get_pte(va)
+	vm_offset_t va;
+{
+	u_long pte_pa;
+	mmu_short_pte_t *pte;
+
+	/* Get the physical address of the PTE */
+	pte_pa = ptest_addr(va & ~PGOFSET);
+
+	/* Convert to a virtual address... */
+	pte = (mmu_short_pte_t *) (KERNBASE + pte_pa);
+
+	/* Make sure it is in our level-C tables... */
+	if ((pte < kernCbase) ||
+		(pte >= &mmuCbase[NUM_USER_PTES]))
+		return 0;
+
+	/* ... and just return its contents. */
+	return (pte->attr.raw);
+}
+#endif
+
 
 /* set_pte			INTERNAL
  **
