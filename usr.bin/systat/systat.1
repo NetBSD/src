@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.17 1999/12/22 14:46:15 kleink Exp $
+.\"	$NetBSD: systat.1,v 1.18 2000/01/07 04:47:24 itojun Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd display system statistics on a crt
 .Sh SYNOPSIS
 .Nm
+.Op Fl n
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl w Ar wait
@@ -92,6 +93,18 @@ Extracr the name list from
 .Ar system
 instead of the default
 .Pa /netbsd .
+.It Fl n
+Do not resolve IP addresses into string hostnames
+.Pq FQDNs
+on
+.Ic netstat .
+It has the same effect as
+.Ic numbers
+subcommand in
+.Ic netstat .
+.It Fl w Ar wait
+See
+.Ar refresh-interval .
 .It Ar display
 The
 .Ar display
