@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.125 2003/09/19 21:36:02 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.126 2003/09/20 02:19:36 enami Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.125 2003/09/19 21:36:02 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.126 2003/09/20 02:19:36 enami Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -542,14 +542,8 @@ wdc_channel_attach(chp)
 		adev.adev_drv_data = &chp->ch_drive[i];
 		chp->ata_drives[i] = config_found(&chp->wdc->sc_dev,
 		    &adev, wdprint);
-		if (chp->ata_drives[i] != NULL) {
+		if (chp->ata_drives[i] != NULL)
 			wdc_probe_caps(&chp->ch_drive[i]);
-#if NATARAID > 0
-			if (chp->wdc->cap & WDC_CAPABILITY_RAID)
-				config_interrupts(chp->ata_drives[i],
-				    ata_raid_check_component);
-#endif /* NATARAID > 0 */
-		}
 	}
 
 	/*
@@ -591,6 +585,13 @@ wdc_channel_attach(chp)
 	if (chp->wdc->cap & WDC_CAPABILITY_MODE)
 		chp->wdc->set_modes(chp);
 	wdc_print_modes(chp);
+
+#if NATARAID > 0
+	if (chp->wdc->cap & WDC_CAPABILITY_RAID)
+		for (i = 0; i < 2; i++)
+			if (chp->ata_drives[i] != NULL)
+				ata_raid_check_component(chp->ata_drives[i]);
+#endif /* NATARAID > 0 */
 
 out:
 	wdc_delref(chp);
