@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.14 2004/12/25 17:24:01 jonathan Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.15 2005/01/09 12:25:25 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -94,9 +94,11 @@ struct rtk_list_data {
 	bus_dmamap_t		rtk_rx_list_map;
 	struct rtk_desc		*rtk_rx_list;
 	bus_dma_segment_t 	rtk_rx_listseg;
+	int			rtk_rx_listnseg;
 	bus_dmamap_t		rtk_tx_list_map;
 	struct rtk_desc		*rtk_tx_list;
 	bus_dma_segment_t 	rtk_tx_listseg;
+	int			rtk_tx_listnseg;
 };
 struct rtk_tx_desc {
 	SIMPLEQ_ENTRY(rtk_tx_desc) txd_q;
