@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.20 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.21 1999/08/23 22:55:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -242,6 +242,17 @@ uhid_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
+	struct uhid_softc *sc = (struct uhid_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		break;
+	}
 	return (0);
 }
 

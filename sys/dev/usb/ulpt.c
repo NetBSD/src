@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.16 1999/08/23 22:35:19 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.17 1999/08/23 22:55:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -224,6 +224,17 @@ ulpt_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
+	struct ulpt_softc *sc = (struct ulpt_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		break;
+	}
 	return (0);
 }
 
@@ -461,12 +472,12 @@ ulptioctl(dev, cmd, data, flag, p)
 		error = ENODEV;
 	}
 
-	return error;
+	return (error);
 }
 
 /* XXX This does not belong here. */
 /*
- * Print secelect parts of a IEEE 1284 device ID.
+ * Print select parts of a IEEE 1284 device ID.
  */
 void
 ieee1284_print_id(str)
