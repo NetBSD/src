@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.16 2001/11/26 00:14:19 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.17 2001/12/17 06:01:23 mhitch Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Nd install a bootstrap on an FFS filesystem partition
 .Sh SYNOPSIS
 .Nm /usr/mdec/installboot
+.Op Fl l Ar newcommandline
 .Ar bootblock
 .Ar device
 .Sh DESCRIPTION
@@ -74,16 +75,18 @@ filesystem code in
 .Dq libsa.a
 to load the kernel from the filesystem on the partition it was started from.
 The code for the boot program can be found in
-.Pa /usr/mdec/fdboot
+.Pa /usr/mdec/bootxx_fd
 .Pq floppy disk code
 or
-.Pa /usr/mdec/xxboot
+.Pa /usr/mdec/bootxx_ffs
 .Pq generic RDB disk code .
 .Pp
 The arguments are:
 .Bl -tag -width bootblock
+.It Fl l Ar newcommandline
+Specify a different commandline to replace the default.
 .It Ar bootblock
-The file containing the bootblock (normally /usr/mdec/xxboot for RDB devices).
+The file containing the bootblock (normally /usr/mdec/bootxx_ffs for RDB devices).
 .It Ar device
 The name of the character special device specifying the partition on which the
 bootstrap is to be installed.
@@ -93,7 +96,7 @@ The following command will install the
 boot program in the bootblock area on
 .Dq sd0a :
 .Bd -literal -offset indent
-installboot /usr/mdec/xxboot /dev/rsd0a
+installboot /usr/mdec/bootxx_ffs /dev/rsd0a
 .Ed
 .Sh SEE ALSO
 .Xr dd 1 ,
@@ -126,7 +129,7 @@ There is currently no easy way to edit the RDB from within
 .Nx .
 Therefore, you have to use HDTOOLBOX or a similar tool to
 set the partition to bootable, "use custom bootblocks" and the number
-of bootblocks to 16 (for xxboot) or 2 (for fdboot), at least the first
+of bootblocks to 16 (for bootxx_ffs) or 2 (for bootxx_fd), at least the first
 time you install the bootblock.
 .Pp
 As normal dd is used to install the bootblock, you can only install onto
