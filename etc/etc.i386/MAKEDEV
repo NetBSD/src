@@ -258,13 +258,12 @@ cd*|mcd*)
 	;;
 
 vnd*)
-	umask 2 ; unit=`expr $i : '...\(.*\)'`
+	unit=`expr $i : '...\(.*\)'`
 	name=vnd; blk=14; chr=41
-	mknod ${name}${unit}c	b $blk $unit
-	mknod r${name}${unit}c	c $chr $unit
-	chown root.operator ${name}${unit}c r${name}${unit}c
+	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
+	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
+	chgrp operator ${name}${unit}c r${name}${unit}c
 	chmod 640 ${name}${unit}c r${name}${unit}c
-	umask 77
 	;;
 
 lpt*)
