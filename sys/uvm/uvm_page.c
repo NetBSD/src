@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.93 2003/12/21 11:38:46 simonb Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.94 2004/01/14 11:28:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.93 2003/12/21 11:38:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.94 2004/01/14 11:28:05 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -178,10 +178,17 @@ uvm_pageinsert(pg)
 	TAILQ_INSERT_TAIL(buck, pg, hashq);
 	simple_unlock(&uvm.hashlock);
 
-	if (UVM_OBJ_IS_VTEXT(uobj)) {
-		uvmexp.execpages++;
-	} else if (UVM_OBJ_IS_VNODE(uobj)) {
-		uvmexp.filepages++;
+	if (UVM_OBJ_IS_VNODE(uobj)) {
+		if (uobj->uo_npages == 0) {
+			struct vnode *vp = (struct vnode *)uobj;
+
+			vholdl(vp);
+		}
+		if (UVM_OBJ_IS_VTEXT(uobj)) {
+			uvmexp.execpages++;
+		} else {
+			uvmexp.filepages++;
+		}
 	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
 		uvmexp.anonpages++;
 	}
@@ -211,10 +218,17 @@ uvm_pageremove(pg)
 	TAILQ_REMOVE(buck, pg, hashq);
 	simple_unlock(&uvm.hashlock);
 
-	if (UVM_OBJ_IS_VTEXT(uobj)) {
-		uvmexp.execpages--;
-	} else if (UVM_OBJ_IS_VNODE(uobj)) {
-		uvmexp.filepages--;
+	if (UVM_OBJ_IS_VNODE(uobj)) {
+		if (uobj->uo_npages == 1) {
+			struct vnode *vp = (struct vnode *)uobj;
+
+			holdrelel(vp);
+		}
+		if (UVM_OBJ_IS_VTEXT(uobj)) {
+			uvmexp.execpages--;
+		} else {
+			uvmexp.filepages--;
+		}
 	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
 		uvmexp.anonpages--;
 	}
