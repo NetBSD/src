@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.9 1994/12/22 12:22:59 cgd Exp $
+#	$NetBSD: bsd.README,v 1.10 1995/01/02 23:59:01 cgd Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -280,6 +280,8 @@ install, lint, and tags.  It has a limited number of suffixes, consistent
 with the current needs of the BSD tree.
 
 It sets/uses the following variables:
+
+LIB		The name of the library to build.
 
 LIBDIR		Target directory for libraries.
 
