@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.3 1998/07/13 19:37:28 tsubai Exp $	*/
+/*	$NetBSD: obio.c,v 1.4 1998/11/03 12:15:57 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -71,7 +71,8 @@ obio_match(parent, cf, aux)
 
 		case 0x02:	/* gc */
 		case 0x07:	/* ohare */
-		case 0x10:	/* mac-io */
+		case 0x10:	/* mac-io "Heathrow" */
+		case 0x17:	/* mac-io "Paddington" (untested) */
 			return 1;
 		}
 
@@ -105,6 +106,7 @@ obio_attach(parent, self, aux)
 		break;
 
 	case 0x10:
+	case 0x17:
 		node = OF_finddevice("/pci/mac-io");
 		break;
 
