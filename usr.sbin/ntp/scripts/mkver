@@ -3,7 +3,7 @@ PROG=${1-UNKNOWN}
 
 ConfStr="$PROG"
 
-ConfStr="$ConfStr 4.0.99g"
+ConfStr="$ConfStr 4.0.99i"
 
 case "" in
  '') ;;
