@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.8 1999/03/01 16:40:07 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.9 1999/03/19 18:25:57 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -41,7 +41,7 @@
 #include "rtldenv.h"
 #include "link.h"
 
-#define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib:/usr/local/lib"
+#define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib"
 
 #if 0
 #define SVR4_LIBDIR	"/usr/lib"
