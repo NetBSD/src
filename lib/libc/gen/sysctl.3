@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.78 2001/09/16 02:57:05 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.79 2001/10/18 09:14:29 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1047,8 +1047,20 @@ constant in IPv6 neighbor discovery specification
 If set to non-zero, kernel IPv6 stack will use loopback interface for
 local traffic.
 .It Li icmp6.nodeinfo
-The variable enables, or disables, kernel support for
-ICMPv6 node information query/reply.
+The variable enables responses to ICMPv6 node information queries.
+If you set the variable to 0, reponses will not be generated for
+ICMPv6 node information queries.
+Since node information queries can have a security impact, it is
+possible to fine tune which responses should be answered.
+Two separate bits can be set.
+.Bl -tag -width "12345"
+.It 1
+Respond to ICMPv6 FQDN queries, e.g.
+.Li ping6 -w .
+.It 2
+Respond to ICMPv6 node addresses queries, e.g.
+.Li ping6 -a .
+.El
 .It Li icmp6.errppslimit
 The variable specifies the maximum number of outgoing ICMPv6 error messages,
 per second.
