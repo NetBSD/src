@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.162 1999/09/29 15:46:52 jdolecek Exp $
+# $NetBSD: mi,v 1.163 1999/09/29 20:46:41 ad Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -100,6 +100,8 @@
 ./usr/include/dev/ic/dc21040reg.h
 ./usr/include/dev/ic/dp8390reg.h
 ./usr/include/dev/ic/dp8390var.h
+./usr/include/dev/ic/dptreg.h
+./usr/include/dev/ic/dptvar.h
 ./usr/include/dev/ic/ds.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
