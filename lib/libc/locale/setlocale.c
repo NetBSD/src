@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.27 2000/12/22 16:50:08 jdolecek Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.28 2000/12/22 22:28:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.27 2000/12/22 16:50:08 jdolecek Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.28 2000/12/22 22:28:09 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -293,9 +293,10 @@ loadlocale(category)
 			    new_categories[category],
 			    sizeof(current_categories[category]));
 			return current_categories[category];
-		} else
-			return __setlocale(LC_CTYPE, "C");
-		return NULL;
+		} else {
+			__setlocale(LC_CTYPE, "C");
+			return NULL;
+		}
 
 	case LC_COLLATE:
 	case LC_MESSAGES:
