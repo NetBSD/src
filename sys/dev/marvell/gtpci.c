@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.4 2003/03/18 15:00:00 matt Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.5 2003/03/18 19:32:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -60,6 +60,8 @@
 #include <dev/marvell/gtvar.h>
 
 static int	gtpci_error_intr(void *);
+
+static void	gtpci_bus_init(struct gtpci_chipset *);
 
 static void	gtpci_bus_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
@@ -247,16 +249,125 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-gtpci_bus_attach_hook(struct device *parent, struct device *self,
-	struct pcibus_attach_args *pba)
+gtpci_bus_init(struct gtpci_chipset *gtpc)
 {
-	pci_chipset_tag_t pc = pba->pba_pc;
-	struct gtpci_chipset *gtpc = (struct gtpci_chipset *)pc;
+	pci_chipset_tag_t pc = &gtpc->gtpc_pc;
 	pcitag_t tag;
 	pcireg_t pcidata;
 	uint32_t data, datal, datah;
 
-	if (pc->pc_parent != parent)
+	/*
+	 * We only about bus 0 device 0 function 0.
+	 */
+	tag = gtpci_make_tag(pc, 0, 0, 0);
+
+	/*
+	 * disable all BARs to start.
+	 */
+	gtpci_write(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno),
+	    0xffffffff);
+	pcidata = gtpci_conf_read(pc, tag, 0x20) & 0xfff;
+
+	/*
+	 * Enable internal arbiter
+	 */
+        data = gtpci_read(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno));
+        data |= 0x80000000;
+        gtpci_write(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno), data);
+
+	/*
+	 * Make the GT reflects reality.
+	 */
+	gtpci_conf_write(pc, tag, 0x20,
+	    GT_LowAddr_GET(gtpci_read(gtpc, GT_Internal_Decode)) | pcidata);
+
+	/*
+	 * We always enable internal memory.
+	 */
+	data = PCI_BARE_IntMemEn;
+
+	/*
+	 * Map each SCS BAR to correspond to each SDRAM decode register.
+	 */
+	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS0_Low_Decode));
+	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS0_High_Decode)) + 1;
+	pcidata = gtpci_conf_read(pc, tag, 0x10) & 0xfff;
+	if (datal < datah) {
+		pcidata |= datal;
+		datah -= datal;
+		data |= PCI_BARE_SCS0En;
+	} else {
+		datah = 0;
+	}
+	gtpci_conf_write(pc, tag, 0x10, pcidata);
+	gtpci_write(gtpc, PCI_SCS0_BAR_SIZE(gtpc->gtpc_busno), datah);
+
+	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS1_Low_Decode));
+	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS1_High_Decode)) + 1;
+	pcidata = gtpci_conf_read(pc, tag, 0x14) & 0xfff;
+	if (datal < datah) {
+		pcidata |= datal;
+		datah -= datal;
+		data |= PCI_BARE_SCS1En;
+	} else {
+		datah = 0;
+	}
+	gtpci_conf_write(pc, tag, 0x14, pcidata);
+	gtpci_write(gtpc, PCI_SCS1_BAR_SIZE(gtpc->gtpc_busno), datah);
+
+	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS2_Low_Decode));
+	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS2_High_Decode)) + 1;
+	pcidata = gtpci_conf_read(pc, tag, 0x18) & 0xfff;
+	if (datal < datah) {
+		pcidata |= datal;
+		datah -= datal;
+		data |= PCI_BARE_SCS2En;
+	} else {
+		datah = 0;
+	}
+	gtpci_conf_write(pc, tag, 0x18, pcidata);
+	gtpci_write(gtpc, PCI_SCS2_BAR_SIZE(gtpc->gtpc_busno), datah);
+
+	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS3_Low_Decode));
+	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS3_High_Decode)) + 1;
+	pcidata = gtpci_conf_read(pc, tag, 0x1c) & 0xfff;
+	if (datal < datah) {
+		pcidata |= datal;
+		datah -= datal;
+		data |= PCI_BARE_SCS3En;
+	} else {
+		datah = 0;
+	}
+	gtpci_conf_write(pc, tag, 0x1c, pcidata);
+	gtpci_write(gtpc, PCI_SCS3_BAR_SIZE(gtpc->gtpc_busno), datah);
+
+	/*
+	 * Now re-enable those BARs that are real.
+	 */
+	gtpci_write(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno),
+	    data);
+
+	/*
+	 * Enable I/O, memory, and bus master access.
+	 */
+	pcidata = gtpci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	pcidata |= PCI_COMMAND_IO_ENABLE;
+	pcidata |= PCI_COMMAND_MEM_ENABLE;
+	pcidata |= PCI_COMMAND_MASTER_ENABLE;
+	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pcidata);
+}
+
+void
+gtpci_bus_attach_hook(struct device *parent, struct device *self,
+	struct pcibus_attach_args *pba)
+{
+	struct gtpci_chipset *gtpc = (struct gtpci_chipset *) pba->pba_pc;
+	uint32_t data;
+#ifdef DEBUG
+	pcitag_t tag;
+#endif
+
+	if (gtpc->gtpc_pc.pc_parent != parent)
 		return;
 
 	data = gtpci_read(gtpc, PCI_MODE(gtpc->gtpc_busno));
@@ -279,10 +390,11 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 	}
 #endif
 
-	gtpci_config_bus(pc, gtpc->gtpc_busno);
+	gtpci_bus_init(gtpc);
+	gtpci_bus_configure(gtpc);
 	
-	tag = gtpci_make_tag(pc, 0, 0, 0);
 #if defined(DEBUG)
+	tag = gtpci_make_tag(pc, 0, 0, 0);
 	data = gtpci_read(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno));
 	aprint_normal("\n%s: BARs enabled: %#x", self->dv_xname, data);
 
@@ -403,80 +515,6 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 	aprint_normal("  remap %#010x\n",
 		gtpci_read(gtpc, PCI_CPU_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
 #endif
-	/*
-	 * Only enable the internal GT registers.
-	 */
-	gtpci_write(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno),
-	     PCI_BARE_IntMemEn|PCI_BARE_SCS0En|PCI_BARE_SCS1En|
-	     PCI_BARE_SCS2En|PCI_BARE_SCS3En);
-	pcidata = gtpci_conf_read(pc, tag, 0x20) & 0xfff;
-	gtpci_conf_write(pc, tag, 0x20,
-	    GT_LowAddr_GET(gtpci_read(gtpc, GT_Internal_Decode)) | pcidata);
-
-        data = gtpci_read(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno));
-        data |= 0x80000000;
-        gtpci_write(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno), data);
-
-	/*
-	 * Map each SCS BAR to correspond to each SDRAM decode register.
-	 */
-	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS0_Low_Decode));
-	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS0_Low_Decode)) + 1;
-	pcidata = gtpci_conf_read(pc, tag, 0x10) & 0xfff;
-	if (datal < datah) {
-		pcidata |= datal;
-		datah -= datal;
-	} else {
-		datah = 0;
-	}
-	gtpci_conf_write(pc, tag, 0x10, pcidata);
-	gtpci_write(gtpc, PCI_SCS0_BAR_SIZE(gtpc->gtpc_busno), datah);
-
-	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS1_Low_Decode));
-	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS1_Low_Decode)) + 1;
-	pcidata = gtpci_conf_read(pc, tag, 0x14) & 0xfff;
-	if (datal < datah) {
-		pcidata |= datal;
-		datah -= datal;
-	} else {
-		datah = 0;
-	}
-	gtpci_conf_write(pc, tag, 0x14, pcidata);
-	gtpci_write(gtpc, PCI_SCS1_BAR_SIZE(gtpc->gtpc_busno), datah);
-
-	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS2_Low_Decode));
-	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS2_Low_Decode)) + 1;
-	pcidata = gtpci_conf_read(pc, tag, 0x18) & 0xfff;
-	if (datal < datah) {
-		pcidata |= datal;
-		datah -= datal;
-	} else {
-		datah = 0;
-	}
-	gtpci_conf_write(pc, tag, 0x18, pcidata);
-	gtpci_write(gtpc, PCI_SCS2_BAR_SIZE(gtpc->gtpc_busno), datah);
-
-	datal = GT_LowAddr_GET(gtpci_read(gtpc, GT_SCS3_Low_Decode));
-	datah = GT_HighAddr_GET(gtpci_read(gtpc, GT_SCS3_Low_Decode)) + 1;
-	pcidata = gtpci_conf_read(pc, tag, 0x1c) & 0xfff;
-	if (datal < datah) {
-		pcidata |= datal;
-		datah -= datal;
-	} else {
-		datah = 0;
-	}
-	gtpci_conf_write(pc, tag, 0x1c, pcidata);
-	gtpci_write(gtpc, PCI_SCS3_BAR_SIZE(gtpc->gtpc_busno), datah);
-
-	/*
-	 * Enable I/O, memory, and bus master access.
-	 */
-	pcidata = gtpci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	pcidata |= PCI_COMMAND_IO_ENABLE;
-	pcidata |= PCI_COMMAND_MEM_ENABLE;
-	pcidata |= PCI_COMMAND_MASTER_ENABLE;
-	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pcidata);
-
 	data = gtpci_read(gtpc, PCI_COMMAND(gtpc->gtpc_busno));
 	if (data & (PCI_CMD_MSwapEn|PCI_CMD_SSwapEn)) {
 
