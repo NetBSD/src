@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $	*/
+/*	$NetBSD: read.c,v 1.5 1997/10/19 23:45:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $";
+__RCSID("$NetBSD: read.c,v 1.5 1997/10/19 23:45:09 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,11 +66,11 @@ static char rcsid[] = "$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $";
  */
 void
 bytes(fp, off)
-	register FILE *fp;
+	FILE *fp;
 	off_t off;
 {
-	register int ch, len, tlen;
-	register char *ep, *p, *t;
+	int ch, len, tlen;
+	char *ep, *p, *t;
 	int wrap;
 	char *sp;
 
@@ -115,7 +116,7 @@ bytes(fp, off)
 	} else {
 		if (wrap && (len = ep - p))
 			WR(p, len);
-		if (len = p - sp)
+		if ((len = p - sp) == 0)
 			WR(sp, len);
 	}
 }
@@ -132,7 +133,7 @@ bytes(fp, off)
  */
 void
 lines(fp, off)
-	register FILE *fp;
+	FILE *fp;
 	off_t off;
 {
 	struct {
@@ -140,11 +141,12 @@ lines(fp, off)
 		u_int len;
 		char *l;
 	} *lines;
-	register int ch;
-	register char *p;
+	int ch;
+	char *p;
 	int blen, cnt, recno, wrap;
 	char *sp;
 
+	p = NULL;
 	if ((lines = malloc(off * sizeof(*lines))) == NULL)
 		err(1, "%s", strerror(errno));
 
@@ -165,7 +167,7 @@ lines(fp, off)
 				    lines[recno].blen)) == NULL)
 					err(1, "%s", strerror(errno));
 			}
-			bcopy(sp, lines[recno].l, lines[recno].len = cnt);
+			memmove(lines[recno].l, sp, lines[recno].len = cnt);
 			cnt = 0;
 			p = sp;
 			if (++recno == off) {

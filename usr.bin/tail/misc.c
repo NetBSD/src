@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: misc.c,v 1.3 1994/11/23 07:42:04 jtc Exp $";
+__RCSID("$NetBSD: misc.c,v 1.4 1997/10/19 23:45:09 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
