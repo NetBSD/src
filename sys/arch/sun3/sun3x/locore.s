@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 1997/10/16 16:14:44 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 1998/01/02 20:10:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -806,9 +806,8 @@ Lswnofpsave:
 	 * Just call pmap_activate() for now.  Later on,
 	 * use the in-line version below (for speed).
 	 */
-	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
-	pea	a2@			| push pmap
-	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(pmap)
+	pea	a0@			| push proc
+	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(p)
 	addql	#4,sp
 	movl	_C_LABEL(curpcb),a1	| restore p_addr
 #else
