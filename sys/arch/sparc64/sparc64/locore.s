@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.181 2003/11/09 11:23:54 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.182 2003/11/20 08:08:52 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5469,7 +5469,6 @@ dostart:
 	 * Step 1: Save rom entry pointer
 	 */
 
-	mov	%o4, %g7	! save prom vector pointer
 	set	romp, %o5
 	STPTR	%o4, [%o5]	! It's initialized data, I hope
 
@@ -5498,28 +5497,6 @@ dostart:
 	clr	%o1
 	call	_C_LABEL(memset)
 	 sub	%o2, %o0, %o2
-
-	/*
-	 * Step 4: compute number of windows and set up tables.
-	 * We could do some of this later.
-	 *
-	 * XXX I forget: why are we doing this?
-	 */
-	rdpr	%ver, %g1
-	and	%g1, 0x0f, %g1		! want just the CWP bits
-	add	%g1, 1, %o0		! compute nwindows
-	sethi	%hi(_C_LABEL(nwindows)), %o1	! may as well tell everyone
-	st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
-
-#if 0
-	/*
-	 * Disable the DCACHE entirely for debug.
-	 */
-	ldxa	[%g0] ASI_MCCR, %o1
-	andn	%o1, MCCR_DCACHE_EN, %o1
-	stxa	%o1, [%g0] ASI_MCCR
-	membar	#Sync
-#endif
 
 	/*
 	 * Ready to run C code; finish bootstrap.
@@ -7824,9 +7801,10 @@ cpu_loadproc:
 	 */
 #if defined(MULTIPROCESSOR)
 	/*
-	 * XXXSMP
 	 * p->p_cpu = curcpu();
 	 */
+	set	CPUINFO_VA, %o0
+	STPTR	%o0, [%l3 + L_CPU]
 #endif
 	mov	LSONPROC, %o0			! l->l_stat = SONPROC
 	st	%o0, [%l3 + L_STAT]
@@ -11788,9 +11766,10 @@ _C_LABEL(intrcnt):
 	.space	16 * LNGSZ
 _C_LABEL(eintrcnt):
 
+#if !defined(MULTIPROCESSOR)
 	.comm	_C_LABEL(curlwp), PTRSZ
+#endif
 	.comm	_C_LABEL(promvec), PTRSZ
-	.comm	_C_LABEL(nwindows), 4
 
 #ifdef DEBUG
 	.comm	_C_LABEL(trapdebug), 4
