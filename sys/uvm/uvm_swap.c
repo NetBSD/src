@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.49 2001/05/09 23:20:59 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.50 2001/05/15 09:04:00 ross Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -532,7 +532,8 @@ sys_swapctl(p, v, retval)
 				count++;
 #if defined(COMPAT_13)
 				if (SCARG(uap, cmd) == SWAP_OSTATS)
-					((struct oswapent *)sep)++;
+					sep = (struct swapent *)
+					    ((struct oswapent *)sep + 1);
 				else
 #endif
 					sep++;
