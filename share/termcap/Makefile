@@ -27,9 +27,9 @@ beforeinstall:
 	else \
 		true ; \
 	fi
-	install -o ${BINOWN} -g ${BINGRP} -m 444 termcap \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 termcap \
 	     ${DESTDIR}${BINDIR}/misc
-	install -o ${BINOWN} -g ${BINGRP} -m 444 termcap.db \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 termcap.db \
 	     ${DESTDIR}${BINDIR}/misc
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/map3270 \
 	     ${DESTDIR}${BINDIR}/misc
