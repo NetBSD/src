@@ -17,7 +17,6 @@ BINGRP?=	bin
 BINOWN?=	bin
 BINMODE?=	555
 
-
 LIBCRT0?=	/usr/lib/crt0.o
 LIBC?=		/usr/lib/libc.a
 LIBCOMPAT?=	/usr/lib/libcompat.a
@@ -134,7 +133,7 @@ afterinstall:
 
 realinstall: _PROGSUBDIR
 .if defined(PROG)
-	install -c ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${PROG} ${DESTDIR}${BINDIR}
 .endif
 .if defined(HIDEGAME)

@@ -2,21 +2,16 @@
 
 PRINTER=ps
 
-# Why d'command'?
-#EQN?=		deqn -P${PRINTER}
-#TBL?=		dtbl -P${PRINTER}
-#ROFF?=		ditroff -t ${MACROS} ${PAGES} -P${PRINTER}
-
 BIB?=		bib
-EQN?=		eqn -P${PRINTER}
+EQN?=		deqn -P${PRINTER}
 GREMLIN?=	grn -P${PRINTER}
 GRIND?=		vgrind -f
 INDXBIB?=	indxbib
 PIC?=		pic -P${PRINTER}
 REFER?=		refer
-ROFF?=		ntroff -t ${MACROS} ${PAGES} -P${PRINTER}
+ROFF?=		ditroff -t ${MACROS} ${PAGES} -P${PRINTER}
 SOELIM?=	soelim
-TBL?=		tbl -P${PRINTER}
+TBL?=		dtbl -P${PRINTER}
 
 .PATH: ${.CURDIR}
 
@@ -25,12 +20,9 @@ print: paper.${PRINTER}
 	lpr -P${PRINTER} paper.${PRINTER}
 .endif
 
-.if !target(obj)
-obj:
-.endif
-
 clean cleandir:
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
+	rm -rf obj
 
 FILES?=	${SRCS}
 install:
@@ -42,7 +34,7 @@ install:
         else \
                 true ; \
         fi
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR}
 
 spell: ${SRCS}
