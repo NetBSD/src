@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: cd.c,v 1.7 1994/06/26 13:26:05 briggs Exp $
+ *      $Id: cd.c,v 1.8 1994/08/05 22:58:03 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -658,7 +658,7 @@ cdioctl(dev, cmd, addr, flag)
 		data.page.audio.port[3].channels = 0;
 		return cd_set_mode(cd, &data);
 	}
-	case CDIOCSETSTERIO: {
+	case CDIOCSETSTEREO: {
 		struct ioc_vol *arg = (struct ioc_vol *) addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
