@@ -1,581 +1,628 @@
-/* grep - print lines matching an extended regular expression
-   Copyright (C) 1988 Free Software Foundation, Inc.
-                      Written June, 1988 by Mike Haertel
-	              BMG speedups added July, 1988
-			by James A. Woods and Arthur David Olson
+/* grep.c - main driver file for grep.
+   Copyright (C) 1992 Free Software Foundation, Inc.
 
-		       NO WARRANTY
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-  BECAUSE THIS PROGRAM IS LICENSED FREE OF CHARGE, WE PROVIDE ABSOLUTELY
-NO WARRANTY, TO THE EXTENT PERMITTED BY APPLICABLE STATE LAW.  EXCEPT
-WHEN OTHERWISE STATED IN WRITING, FREE SOFTWARE FOUNDATION, INC,
-RICHARD M. STALLMAN AND/OR OTHER PARTIES PROVIDE THIS PROGRAM "AS IS"
-WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING,
-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY
-AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE PROGRAM PROVE
-DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR
-CORRECTION.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
- IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW WILL RICHARD M.
-STALLMAN, THE FREE SOFTWARE FOUNDATION, INC., AND/OR ANY OTHER PARTY
-WHO MAY MODIFY AND REDISTRIBUTE THIS PROGRAM AS PERMITTED BELOW, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY LOST PROFITS, LOST MONIES, OR
-OTHER SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
-USE OR INABILITY TO USE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR
-DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY THIRD PARTIES OR
-A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS) THIS
-PROGRAM, EVEN IF YOU HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH
-DAMAGES, OR FOR ANY CLAIM BY ANY OTHER PARTY.
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-		GENERAL PUBLIC LICENSE TO COPY
+   Written July 1992 by Mike Haertel.  */
 
-  1. You may copy and distribute verbatim copies of this source file
-as you receive it, in any medium, provided that you conspicuously and
-appropriately publish on each copy a valid copyright notice "Copyright
- (C) 1988 Free Software Foundation, Inc."; and include following the
-copyright notice a verbatim copy of the above disclaimer of warranty
-and of this License.  You may charge a distribution fee for the
-physical act of transferring a copy.
-
-  2. You may modify your copy or copies of this source file or
-any portion of it, and copy and distribute such modifications under
-the terms of Paragraph 1 above, provided that you also do the following:
-
-    a) cause the modified files to carry prominent notices stating
-    that you changed the files and the date of any change; and
-
-    b) cause the whole of any work that you distribute or publish,
-    that in whole or in part contains or is a derivative of this
-    program or any part thereof, to be licensed at no charge to all
-    third parties on terms identical to those contained in this
-    License Agreement (except that you may choose to grant more extensive
-    warranty protection to some or all third parties, at your option).
-
-    c) You may charge a distribution fee for the physical act of
-    transferring a copy, and you may at your option offer warranty
-    protection in exchange for a fee.
-
-Mere aggregation of another unrelated program with this program (or its
-derivative) on a volume of a storage or distribution medium does not bring
-the other program under the scope of these terms.
-
-  3. You may copy and distribute this program or any portion of it in
-compiled, executable or object code form under the terms of Paragraphs
-1 and 2 above provided that you do the following:
-
-    a) accompany it with the complete corresponding machine-readable
-    source code, which must be distributed under the terms of
-    Paragraphs 1 and 2 above; or,
-
-    b) accompany it with a written offer, valid for at least three
-    years, to give any third party free (except for a nominal
-    shipping charge) a complete machine-readable copy of the
-    corresponding source code, to be distributed under the terms of
-    Paragraphs 1 and 2 above; or,
-
-    c) accompany it with the information you received as to where the
-    corresponding source code may be obtained.  (This alternative is
-    allowed only for noncommercial distribution and only if you
-    received the program in object code or executable form alone.)
-
-For an executable file, complete source code means all the source code for
-all modules it contains; but, as a special exception, it need not include
-source code for modules which are standard libraries that accompany the
-operating system on which the executable file runs.
-
-  4. You may not copy, sublicense, distribute or transfer this program
-except as expressly provided under this License Agreement.  Any attempt
-otherwise to copy, sublicense, distribute or transfer this program is void and
-your rights to use the program under this License agreement shall be
-automatically terminated.  However, parties who have received computer
-software programs from you with this License Agreement will not have
-their licenses terminated so long as such parties remain in full compliance.
-
-  5. If you wish to incorporate parts of this program into other free
-programs whose distribution conditions are different, write to the Free
-Software Foundation at 675 Mass Ave, Cambridge, MA 02139.  We have not yet
-worked out a simple rule that can be stated here, but we will often permit
-this.  We will be guided by the two goals of preserving the free status of
-all derivatives our free software and of promoting the sharing and reuse of
-software.
-
-
-In other words, you are welcome to use, share and improve this program.
-You are forbidden to forbid anyone else to use, share and improve
-what you give them.   Help stamp out software-hoarding!  */
-
-#include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
-#ifdef USG
-#include <memory.h>
+
+#ifndef errno
+extern int errno;
+#endif
+
+#ifdef STDC_HEADERS
+#include <stdlib.h>
+#else
+#include <sys/types.h>
+extern char *malloc(), *realloc();
+extern void free();
+#endif
+
+#if defined(STDC_HEADERS) || defined(HAVE_STRING_H)
 #include <string.h>
+#ifdef NEED_MEMORY_H
+#include <memory.h>
+#endif
 #else
 #include <strings.h>
-#endif
-#include "dfa.h"
-#include "regex.h"
-
 #ifdef __STDC__
-/*extern getopt(int, char **, const char *);
-extern read(int, void *, int);
-extern open(const char *, int, ...);
-extern void close();*/
+extern void *memchr();
 #else
-extern char *strrchr();
+extern char *memchr();
+#endif
+#define strrchr rindex
 #endif
 
-extern char *optarg;
-extern optind, opterr;
-extern errno;
+#ifdef HAVE_UNISTD_H
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#else
+#define O_RDONLY 0
+extern int open(), read(), close();
+#endif
+
+#include "getpagesize.h"
+#include "grep.h"
+
+#undef MAX
+#define MAX(A,B) ((A) > (B) ? (A) : (B))
+
+/* Provide missing ANSI features if necessary. */
+
+#ifndef HAVE_STRERROR
+extern int sys_nerr;
 extern char *sys_errlist[];
+#define strerror(E) ((E) < sys_nerr ? sys_errlist[(E)] : "bogus error number")
+#endif
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#ifndef HAVE_MEMCHR
+#ifdef __STDC__
+#define VOID void
+#else
+#define VOID char
+#endif
+VOID *
+memchr(vp, c, n)
+     VOID *vp;
+     int c;
+     size_t n;
+{
+  unsigned char *p;
 
-/* Exit status codes. */
-#define MATCHES_FOUND 0		/* Exit 0 if no errors and matches found. */
-#define NO_MATCHES_FOUND 1	/* Exit 1 if no matches were found. */
-#define ERROR 2			/* Exit 2 if some error occurred. */
+  for (p = (unsigned char *) vp; n--; ++p)
+    if (*p == c)
+      return (VOID *) p;
+  return 0;
+}
+#endif
+    
+/* Define flags declared in grep.h. */
+char *matcher;
+int match_icase;
+int match_words;
+int match_lines;
 
-/* Error is set true if something awful happened. */
-static int error;
+/* Functions we'll use to search. */
+static void (*compile)();
+static char *(*execute)();
 
-/* The program name for error messages. */
+/* For error messages. */
 static char *prog;
+static char *filename;
+static int errseen;
 
-/* We do all our own buffering by hand for efficiency. */
-static char *buffer;		/* The buffer itself, grown as needed. */
-static bufbytes;		/* Number of bytes in the buffer. */
-static size_t bufalloc;		/* Number of bytes allocated to the buffer. */
-static bufprev;			/* Number of bytes that have been forgotten.
-				   This is used to get byte offsets from the
-				   beginning of the file. */
-static bufread;			/* Number of bytes to get with each read(). */
+/* Print a message and possibly an error string.  Remember
+   that something awful happened. */
+static void
+error(mesg, errnum)
+#ifdef __STDC__
+     const
+#endif
+     char *mesg;
+     int errnum;
+{
+  if (errnum)
+    fprintf(stderr, "%s: %s: %s\n", prog, mesg, strerror(errnum));
+  else
+    fprintf(stderr, "%s: %s\n", prog, mesg);
+  errseen = 1;
+}
+
+/* Like error(), but die horribly after printing. */
+void
+fatal(mesg, errnum)
+#ifdef __STDC__
+     const
+#endif
+     char *mesg;
+     int errnum;
+{
+  error(mesg, errnum);
+  exit(2);
+}
+
+/* Interface to handle errors and fix library lossage. */
+char *
+xmalloc(size)
+     size_t size;
+{
+  char *result;
+
+  result = malloc(size);
+  if (size && !result)
+    fatal("memory exhausted", 0);
+  return result;
+}
+
+/* Interface to handle errors and fix some library lossage. */
+char *
+xrealloc(ptr, size)
+     char *ptr;
+     size_t size;
+{
+  char *result;
+
+  if (ptr)
+    result = realloc(ptr, size);
+  else
+    result = malloc(size);
+  if (size && !result)
+    fatal("memory exhausted", 0);
+  return result;
+}
+
+#if !defined(HAVE_VALLOC)
+#define valloc malloc
+#else
+#ifdef __STDC__
+extern void *valloc(size_t);
+#else
+extern char *valloc();
+#endif
+#endif
+
+/* Hairy buffering mechanism for grep.  The intent is to keep
+   all reads aligned on a page boundary and multiples of the
+   page size. */
+
+static char *buffer;		/* Base of buffer. */
+static size_t bufsalloc;	/* Allocated size of buffer save region. */
+static size_t bufalloc;		/* Total buffer size. */
+static int bufdesc;		/* File descriptor. */
+static char *bufbeg;		/* Beginning of user-visible stuff. */
+static char *buflim;		/* Limit of user-visible stuff. */
+
+#if defined(HAVE_WORKING_MMAP)
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+
+static int bufmapped;		/* True for ordinary files. */
+static struct stat bufstat;	/* From fstat(). */
+static off_t bufoffset;		/* What read() normally remembers. */
+#endif
+
+/* Reset the buffer for a new file.  Initialize
+   on the first time through. */
+void
+reset(fd)
+     int fd;
+{
+  static int initialized;
+
+  if (!initialized)
+    {
+      initialized = 1;
+#ifndef BUFSALLOC
+      bufsalloc = MAX(8192, getpagesize());
+#else
+      bufsalloc = BUFSALLOC;
+#endif
+      bufalloc = 5 * bufsalloc;
+      /* The 1 byte of overflow is a kludge for dfaexec(), which
+	 inserts a sentinel newline at the end of the buffer
+	 being searched.  There's gotta be a better way... */
+      buffer = valloc(bufalloc + 1);
+      if (!buffer)
+	fatal("memory exhausted", 0);
+      bufbeg = buffer;
+      buflim = buffer;
+    }
+  bufdesc = fd;
+#if defined(HAVE_WORKING_MMAP)
+  if (fstat(fd, &bufstat) < 0 || !S_ISREG(bufstat.st_mode))
+    bufmapped = 0;
+  else
+    {
+      bufmapped = 1;
+      bufoffset = lseek(fd, 0, 1);
+    }
+#endif
+}
+
+/* Read new stuff into the buffer, saving the specified
+   amount of old stuff.  When we're done, 'bufbeg' points
+   to the beginning of the buffer contents, and 'buflim'
+   points just after the end.  Return count of new stuff. */
+static int
+fillbuf(save)
+     size_t save;
+{
+  char *nbuffer, *dp, *sp;
+  int cc;
+#if defined(HAVE_WORKING_MMAP)
+  caddr_t maddr;
+#endif
+  static int pagesize;
+
+  if (pagesize == 0 && (pagesize = getpagesize()) == 0)
+    abort();
+
+  if (save > bufsalloc)
+    {
+      while (save > bufsalloc)
+	bufsalloc *= 2;
+      bufalloc = 5 * bufsalloc;
+      nbuffer = valloc(bufalloc + 1);
+      if (!nbuffer)
+	fatal("memory exhausted", 0);
+    }
+  else
+    nbuffer = buffer;
+
+  sp = buflim - save;
+  dp = nbuffer + bufsalloc - save;
+  bufbeg = dp;
+  while (save--)
+    *dp++ = *sp++;
+
+  /* We may have allocated a new, larger buffer.  Since
+     there is no portable vfree(), we just have to forget
+     about the old one.  Sorry. */
+  buffer = nbuffer;
+
+#if defined(HAVE_WORKING_MMAP)
+  if (bufmapped && bufoffset % pagesize == 0
+      && bufstat.st_size - bufoffset >= bufalloc - bufsalloc)
+    {
+      maddr = buffer + bufsalloc;
+      maddr = mmap(maddr, bufalloc - bufsalloc, PROT_READ | PROT_WRITE,
+		   MAP_PRIVATE | MAP_FIXED, bufdesc, bufoffset);
+      if (maddr == (caddr_t) -1)
+	{
+	  fprintf(stderr, "%s: warning: %s: %s\n", filename,
+		  strerror(errno));
+	  goto tryread;
+	}
+#if 0
+      /* You might thing this (or MADV_WILLNEED) would help,
+	 but it doesn't, at least not on a Sun running 4.1.
+	 In fact, it actually slows us down about 30%! */
+      madvise(maddr, bufalloc - bufsalloc, MADV_SEQUENTIAL);
+#endif
+      cc = bufalloc - bufsalloc;
+      bufoffset += cc;
+    }
+  else
+    {
+    tryread:
+      /* We come here when we're not going to use mmap() any more.
+	 Note that we need to synchronize the file offset the
+	 first time through. */
+      if (bufmapped)
+	{
+	  bufmapped = 0;
+	  lseek(bufdesc, bufoffset, 0);
+	}
+      cc = read(bufdesc, buffer + bufsalloc, bufalloc - bufsalloc);
+    }
+#else
+  cc = read(bufdesc, buffer + bufsalloc, bufalloc - bufsalloc);
+#endif
+  if (cc > 0)
+    buflim = buffer + bufsalloc + cc;
+  else
+    buflim = buffer + bufsalloc;
+  return cc;
+}
+
+/* Flags controlling the style of output. */
+static int out_quiet;		/* Suppress all normal output. */
+static int out_invert;		/* Print nonmatching stuff. */
+static int out_file;		/* Print filenames. */
+static int out_line;		/* Print line numbers. */
+static int out_byte;		/* Print byte offsets. */
+static int out_before;		/* Lines of leading context. */
+static int out_after;		/* Lines of trailing context. */
+
+/* Internal variables to keep track of byte count, context, etc. */
+static size_t totalcc;		/* Total character count before bufbeg. */
+static char *lastnl;		/* Pointer after last newline counted. */
+static char *lastout;		/* Pointer after last character output;
+				   NULL if no character has been output
+				   or if it's conceptually before bufbeg. */
+static size_t totalnl;		/* Total newline count before lastnl. */
+static int pending;		/* Pending lines of output. */
 
 static void
-initialize_buffer()
+nlscan(lim)
+     char *lim;
 {
-  bufread = 8192;
-  bufalloc = bufread + bufread / 2;
-  buffer = malloc(bufalloc);
-  if (! buffer)
+  char *beg;
+
+  for (beg = lastnl; beg < lim; ++beg)
+    if (*beg == '\n')
+      ++totalnl;
+  lastnl = beg;
+}
+
+static void
+prline(beg, lim, sep)
+     char *beg;
+     char *lim;
+     char sep;
+{
+  if (out_file)
+    printf("%s%c", filename, sep);
+  if (out_line)
     {
-      fprintf(stderr, "%s: Memory exhausted (%s)\n", prog,
-	      sys_errlist[errno]);
-      exit(ERROR);
+      nlscan(beg);
+      printf("%d%c", ++totalnl, sep);
+      lastnl = lim;
+    }
+  if (out_byte)
+    printf("%lu%c", totalcc + (beg - bufbeg), sep);
+  fwrite(beg, 1, lim - beg, stdout);
+  if (ferror(stdout))
+    error("writing output", errno);
+  lastout = lim;
+}
+
+/* Print pending lines of trailing context prior to LIM. */
+static void
+prpending(lim)
+     char *lim;
+{
+  char *nl;
+
+  if (!lastout)
+    lastout = bufbeg;
+  while (pending > 0 && lastout < lim)
+    {
+      --pending;
+      if ((nl = memchr(lastout, '\n', lim - lastout)) != 0)
+	++nl;
+      else
+	nl = lim;
+      prline(lastout, nl, '-');
     }
 }
 
-/* The current input file. */
-static fd;
-static char *filename;
-static eof;
-
-/* Fill the buffer retaining the last n bytes at the beginning of the
-   newly filled buffer (for backward context).  Returns the number of new
-   bytes read from disk. */
-static
-fill_buffer_retaining(n)
-     int n;
+/* Print the lines between BEG and LIM.  Deal with context crap.
+   If NLINESP is non-null, store a count of lines between BEG and LIM. */
+static void
+prtext(beg, lim, nlinesp)
+     char *beg;
+     char *lim;
+     int *nlinesp;
 {
-  char *p, *q;
-  int i;
+  static int used;		/* avoid printing "--" before any output */
+  char *bp, *p, *nl;
+  int i, n;
 
-  /* See if we need to grow the buffer. */
-  if (bufalloc - n <= bufread)
+  if (!out_quiet && pending > 0)
+    prpending(beg);
+
+  p = beg;
+
+  if (!out_quiet)
     {
-      while (bufalloc - n <= bufread)
+      /* Deal with leading context crap. */
+
+      bp = lastout ? lastout : bufbeg;
+      for (i = 0; i < out_before; ++i)
+	if (p > bp)
+	  do
+	    --p;
+	  while (p > bp && p[-1] != '\n');
+
+      /* We only print the "--" separator if our output is
+	 discontiguous from the last output in the file. */
+      if ((out_before || out_after) && used && p != lastout)
+	puts("--");
+
+      while (p < beg)
 	{
-	  bufalloc *= 2;
-	  bufread *= 2;
+	  nl = memchr(p, '\n', beg - p);
+	  prline(p, nl + 1, '-');
+	  p = nl + 1;
 	}
-      buffer = realloc(buffer, bufalloc);
-      if (! buffer)
+    }
+
+  if (nlinesp)
+    {
+      /* Caller wants a line count. */
+      for (n = 0; p < lim; ++n)
 	{
-	  fprintf(stderr, "%s: Memory exhausted (%s)\n", prog,
-		  sys_errlist[errno]);
-	  exit(ERROR);
-	}
-    }
-
-  bufprev += bufbytes - n;
-
-  /* Shift stuff down. */
-  for (i = n, p = buffer, q = p + bufbytes - n; i--; )
-    *p++ = *q++;
-  bufbytes = n;
-
-  if (eof)
-    return 0;
-
-  /* Read in new stuff. */
-  i = read(fd, buffer + bufbytes, bufread);
-  if (i < 0)
-    {
-      fprintf(stderr, "%s: read on %s failed (%s)\n", prog,
-	      filename ? filename : "<stdin>", sys_errlist[errno]);
-      error = 1;
-    }
-
-  /* Kludge to pretend every nonempty file ends with a newline. */
-  if (i == 0 && bufbytes > 0 && buffer[bufbytes - 1] != '\n')
-    {
-      eof = i = 1;
-      buffer[bufbytes] = '\n';
-    }
-
-  bufbytes += i;
-  return i;
-}
-
-/* Various flags set according to the argument switches. */
-static trailing_context;	/* Lines of context to show after matches. */
-static leading_context;		/* Lines of context to show before matches. */
-static byte_count;		/* Precede output lines the byte count of the
-				   first character on the line. */
-static no_filenames;		/* Do not display filenames. */
-static line_numbers;		/* Precede output lines with line numbers. */
-static silent;			/* Produce no output at all.  This switch
-				   is bogus, ever hear of /dev/null? */
-static nonmatching_lines;	/* Print lines that don't match the regexp. */
-
-static bmgexec;			/* Invoke Boyer-Moore-Gosper routines */
-
-/* The compiled regular expression lives here. */
-static struct regexp reg;
-
-/* The compiled regular expression for the backtracking matcher lives here. */
-static struct re_pattern_buffer regex;
-
-/* Pointer in the buffer after the last character printed. */
-static char *printed_limit;
-
-/* True when printed_limit has been artifically advanced without printing
-   anything. */
-static int printed_limit_fake;
-
-/* Print a line at the given line number, returning the number of
-   characters actually printed.  Matching is true if the line is to
-   be considered a "matching line".  This is only meaningful if
-   surrounding context is turned on. */
-static
-print_line(p, number, matching)
-     char *p;
-     int number;
-     int matching;
-{
-  int count = 0;
-
-  if (silent)
-    {
-      do
-	++count;
-      while (*p++ != '\n');
-      printed_limit_fake = 0;
-      printed_limit = p;
-      return count;
-    }
-
-  if (filename && !no_filenames)
-    printf("%s%c", filename, matching ? ':' : '-');
-  if (byte_count)
-    printf("%d%c", p - buffer + bufprev, matching ? ':' : '-');
-  if (line_numbers)
-    printf("%d%c", number, matching ? ':' : '-');
-  do
-    {
-      ++count;
-      putchar(*p);
-    }
-  while (*p++ != '\n');
-  printed_limit_fake = 0;
-  printed_limit = p;
-  return count;
-}
-
-/* Print matching or nonmatching lines from the current file.  Returns a
-   count of matching or nonmatching lines. */
-static
-grep()
-{
-  int retain = 0;		/* Number of bytes to retain on next call
-				   to fill_buffer_retaining(). */
-  char *search_limit;		/* Pointer to the character after the last
-				   newline in the buffer. */
-  char saved_char;		/* Character after the last newline. */
-  char *resume;			/* Pointer to where to resume search. */
-  int resume_index = 0;		/* Count of characters to ignore after
-				   refilling the buffer. */
-  int line_count = 1;		/* Line number. */
-  int try_backref;		/* Set to true if we need to verify the
-				   match with a backtracking matcher. */
-  int initial_line_count;	/* Line count at beginning of last search. */
-  char *match;			/* Pointer to the first character after the
-				   string matching the regexp. */
-  int match_count = 0;		/* Count of matching lines. */
-  char *matching_line;		/* Pointer to first character of the matching
-				   line, or of the first line of context to
-				   print if context is turned on. */
-  char *real_matching_line;	/* Pointer to the first character of the
-				   real matching line. */
-  char *next_line;		/* Pointer to first character of the line
-				   following the matching line. */
-  int pending_lines = 0;	/* Lines of context left over from last match
-				   that we have to print. */
-  static first_match = 1;	/* True when nothing has been printed. */
-  int i;
-  char *tmp;
-  char *execute();
-
-  printed_limit_fake = 0;
-  
-  while (fill_buffer_retaining(retain) > 0)
-    {
-      /* Find the last newline in the buffer. */
-      search_limit = buffer + bufbytes;
-      while (search_limit > buffer && search_limit[-1] != '\n')
-	--search_limit;
-      if (search_limit == buffer)
-	{
-	  retain = bufbytes;
-	  continue;
-	}
-
-      /* Save the character after the last newline so regexecute can write
-	 its own sentinel newline. */
-      saved_char = *search_limit;
-
-      /* Search the buffer for a match. */
-      printed_limit = buffer;
-      resume = buffer + resume_index;
-      initial_line_count = line_count;
-
-      while (match = execute(&reg, resume, search_limit, 0, &line_count, &try_backref))
-	{
-	  ++match_count;
-
-	  /* Find the beginning of the matching line. */
-	  matching_line = match;
-	  while (matching_line > resume && matching_line[-1] != '\n')
-	    --matching_line;
-	  real_matching_line = matching_line;
-
-	  /* Find the beginning of the next line. */
-	  next_line = match;
-	  while (next_line < search_limit && *next_line++ != '\n')
-	    ;
-
-	  /* If a potential backreference is indicated, try it out with
-	     a backtracking matcher to make sure the line is a match. */
-	  if (try_backref && re_search(&regex, matching_line,
-				       next_line - matching_line - 1,
-				       0,
-				       next_line - matching_line - 1,
-				       NULL) < 0)
-	    {
-	      resume = next_line;
-	      if (resume == search_limit)
-		break;
-	      else
-		continue;
-	    }
-
-	  /* Print leftover lines from last time.  If nonmatching_lines is
-	     turned on, print these as if they were matching lines. */
-	  while (resume < matching_line && pending_lines)
-	    {
-	      resume += print_line(resume, initial_line_count++,
-				   nonmatching_lines);
-	      --pending_lines;
-	    }
-
-	  /* Print out the matching or nonmatching lines as necessary. */
-	  if (! nonmatching_lines)
-	    {
-	      /* Back up over leading context if necessary. */
-	      for (i = leading_context; matching_line > printed_limit
-		   && i; --i)
-		{
-		  while (matching_line > printed_limit
-			 && (--matching_line)[-1] != '\n')
-		    ;
-		  --line_count;
-		}
-
-	      /* If context is enabled, we may have to print a separator. */
-	      if ((leading_context || trailing_context) && !silent
-		  && !first_match && (printed_limit_fake || matching_line
-				      > printed_limit))
-		printf("----------\n");
-	      first_match = 0;
-
-	      /* Print the matching line and its leading context. */
-	      while (matching_line < real_matching_line)
-		matching_line += print_line(matching_line, line_count++, 0);
-	      matching_line += print_line(matching_line, line_count++, 1);
-
-	      /* If there's trailing context, leave some lines pending until
-		 next time. */
-	      pending_lines = trailing_context;
-	    }
-	  else if (matching_line > resume)
-	    {
-	      char *real_resume = resume;
-
-	      /* Back up over leading context if necessary. */
-	      for (i = leading_context; resume > printed_limit && i; --i)
-		{
-		  while (resume > printed_limit && (--resume)[-1] != '\n')
-		    ;
-		  --initial_line_count;
-		}
-
-	      /* If context is enabled, we may have to print a separator. */
-	      if ((leading_context || trailing_context) && !silent
-		  && !first_match && (printed_limit_fake || resume
-				      > printed_limit))
-		printf("----------\n");
-	      first_match = 0;
-
-	      /* Print out the presumably matching leading context. */
-	      while (resume < real_resume)
-		resume += print_line(resume, initial_line_count++, 0);
-
-	      /* Print out the nonmatching lines prior to the matching line. */
-	      while (resume < matching_line)
-		resume += print_line(resume, initial_line_count++, 1);
-
-	      /* Deal with trailing context. */
-	      if (trailing_context)
-		{
-		  print_line(matching_line, line_count, 0);
-		  pending_lines = trailing_context - 1;
-		}
-
-	      /* Count the current line. */
-	      ++line_count;
-	    }
+	  if ((nl = memchr(p, '\n', lim - p)) != 0)
+	    ++nl;
 	  else
-	    {
-	      /* The line immediately after a matching line has to be printed
-		 because it was pending. */
-	      if (pending_lines > 0)
-		{
-		  --pending_lines;
-		  print_line(matching_line, line_count, 0);
-		}
-	      ++line_count;
-	    }
-
-	  /* Resume searching at the beginning of the next line. */
-	  initial_line_count = line_count;
-	  resume = next_line;
-
-	  if (resume == search_limit)
-	    break;
+	    nl = lim;
+	  if (!out_quiet)
+	    prline(p, nl, ':');
+	  p = nl;
 	}
- 
-      /* Restore the saved character. */
-      *search_limit = saved_char;
-
-      if (! nonmatching_lines)
-	{
-	  while (resume < search_limit && pending_lines)
-	    {
-	      resume += print_line(resume, initial_line_count++, 0);
-	      --pending_lines;
-	    }
-	}
-      else if (search_limit > resume)
-	{
-	  char *initial_resume = resume;
-
-	  /* Back up over leading context if necessary. */
-	  for (i = leading_context; resume > printed_limit && i; --i)
-	    {
-	      while (resume > printed_limit && (--resume)[-1] != '\n')
-		;
-	      --initial_line_count;
-	    }
-
-	  /* If context is enabled, we may have to print a separator. */
-	  if ((leading_context || trailing_context) && !silent
-	      && !first_match && (printed_limit_fake || resume
-				  > printed_limit))
-	    printf("----------\n");
-	  first_match = 0;
-
-	  /* Print out all the nonmatching lines up to the search limit. */
-	  while (resume < initial_resume)
-	    resume += print_line(resume, initial_line_count++, 0);
-	  while (resume < search_limit)
-	    resume += print_line(resume, initial_line_count++, 1);
-
-	  pending_lines = trailing_context;
-	  resume_index = 0;
-	  retain = bufbytes - (search_limit - buffer);
-	  continue;
-	}
-      
-      /* Save the trailing end of the buffer for possible use as leading
-	 context in the future. */
-      i = leading_context;
-      tmp = search_limit;
-      while (tmp > printed_limit && i--)
-	while (tmp > printed_limit && (--tmp)[-1] != '\n')
-	  ;
-      resume_index = search_limit - tmp;
-      retain = bufbytes - (tmp - buffer);
-      if (tmp > printed_limit)
-	printed_limit_fake = 1;
+      *nlinesp = n;
     }
+  else
+    if (!out_quiet)
+      prline(beg, lim, ':');
 
-  return nonmatching_lines ? (line_count - 1) - match_count : match_count;
+  pending = out_after;
+  used = 1;
 }
-
-void
-usage_and_die()
+
+/* Scan the specified portion of the buffer, matching lines (or
+   between matching lines if OUT_INVERT is true).  Return a count of
+   lines printed. */
+static int
+grepbuf(beg, lim)
+     char *beg;
+     char *lim;
 {
-  fprintf(stderr,
-"usage: %s [-CVbchilnsvwx] [-<num>] [-AB <num>] [-f file] [-e] expr [files]\n",
-          prog);
-  exit(ERROR);
+  int nlines, n;
+  register char *p, *b;
+  char *endp;
+
+  nlines = 0;
+  p = beg;
+  while ((b = (*execute)(p, lim - p, &endp)) != 0)
+    {
+      /* Avoid matching the empty line at the end of the buffer. */
+      if (b == lim && ((b > beg && b[-1] == '\n') || b == beg))
+	break;
+      if (!out_invert)
+	{
+	  prtext(b, endp, (int *) 0);
+	  nlines += 1;
+	}
+      else if (p < b)
+	{
+	  prtext(p, b, &n);
+	  nlines += n;
+	}
+      p = endp;
+    }
+  if (out_invert && p < lim)
+    {
+      prtext(p, lim, &n);
+      nlines += n;
+    }
+  return nlines;
 }
 
-static char version[] = "GNU e?grep, version 1.5";
+/* Search a given file.  Return a count of lines printed. */
+static int
+grep(fd)
+     int fd;
+{
+  int nlines, i;
+  size_t residue, save;
+  char *beg, *lim;
 
+  reset(fd);
+
+  totalcc = 0;
+  lastout = 0;
+  totalnl = 0;
+  pending = 0;
+
+  nlines = 0;
+  residue = 0;
+  save = 0;
+
+  for (;;)
+    {
+      if (fillbuf(save) < 0)
+	{
+	  error(filename, errno);
+	  return nlines;
+	}
+      lastnl = bufbeg;
+      if (lastout)
+	lastout = bufbeg;
+      if (buflim - bufbeg == save)
+	break;
+      beg = bufbeg + save - residue;
+      for (lim = buflim; lim > beg && lim[-1] != '\n'; --lim)
+	;
+      residue = buflim - lim;
+      if (beg < lim)
+	{
+	  nlines += grepbuf(beg, lim);
+	  if (pending)
+	    prpending(lim);
+	}
+      i = 0;
+      beg = lim;
+      while (i < out_before && beg > bufbeg && beg != lastout)
+	{
+	  ++i;
+	  do
+	    --beg;
+	  while (beg > bufbeg && beg[-1] != '\n');
+	}
+      if (beg != lastout)
+	lastout = 0;
+      save = residue + lim - beg;
+      totalcc += buflim - bufbeg - save;
+      if (out_line)
+	nlscan(beg);
+    }
+  if (residue)
+    {
+      nlines += grepbuf(bufbeg + save - residue, buflim);
+      if (pending)
+	prpending(buflim);
+    }
+  return nlines;
+}
+
+static char version[] = "GNU grep version 2.0";
+
+#define USAGE \
+  "usage: %s [-[[AB] ]<num>] [-[CEFGVchilnqsvwx]] [-[ef]] <expr> [<files...>]\n"
+
+static void
+usage()
+{
+  fprintf(stderr, USAGE, prog);
+  exit(2);
+}
+
+/* Go through the matchers vector and look for the specified matcher.
+   If we find it, install it in compile and execute, and return 1.  */
+int
+setmatcher(name)
+     char *name;
+{
+  int i;
+
+  for (i = 0; matchers[i].name; ++i)
+    if (strcmp(name, matchers[i].name) == 0)
+      {
+	compile = matchers[i].compile;
+	execute = matchers[i].execute;
+	return 1;
+      }
+  return 0;
+}  
+
+int
 main(argc, argv)
      int argc;
-     char **argv;
+     char *argv[];
 {
-  int c;
-  int ignore_case = 0;		/* Compile the regexp to ignore case. */
-  char *the_regexp = 0;		/* The regular expression. */
-  int regexp_len;		/* Length of the regular expression. */
-  char *regexp_file = 0;	/* File containing parallel regexps. */
-  int count_lines = 0;		/* Display only a count of matching lines. */
-  int list_files = 0;		/* Display only the names of matching files. */
-  int whole_word = 0;		/* Insist that the regexp match a word only. */
-  int whole_line = 0;		/* Insist on matching only whole lines. */
-  int line_count = 0;		/* Count of matching lines for a file. */
-  int matches_found = 0;	/* True if matches were found. */
-  char *regex_errmesg;		/* Error message from regex routines. */
-  char translate[_NOTCHAR];	/* Translate table for case conversion
-				   (needed by the backtracking matcher). */
+  char *keys;
+  size_t keycc, oldcc, keyalloc;
+  int keyfound, count_matches, no_filenames, list_files, suppress_errors;
+  int opt, cc, desc, count, status;
+  FILE *fp;
+  extern char *optarg;
+  extern int optind;
 
-  if (prog = strrchr(argv[0], '/'))
-    ++prog;
-  else
-    prog = argv[0];
+  prog = argv[0];
+  if (prog && strrchr(prog, '/'))
+    prog = strrchr(prog, '/') + 1;
 
-  opterr = 0;
-  while ((c = getopt(argc, argv, "0123456789A:B:CVbce:f:hilnsvwx")) != EOF)
-    switch (c)
+  keys = NULL;
+  keycc = 0;
+  keyfound = 0;
+  count_matches = 0;
+  no_filenames = 0;
+  list_files = 0;
+  suppress_errors = 0;
+  matcher = NULL;
+
+  while ((opt = getopt(argc, argv, "0123456789A:B:CEFGVX:bce:f:hiLlnqsvwxy"))
+	 != EOF)
+    switch (opt)
       {
-      case '?':
-	usage_and_die();
-	break;
-
       case '0':
       case '1':
       case '2':
@@ -586,464 +633,194 @@ main(argc, argv)
       case '7':
       case '8':
       case '9':
-	trailing_context = 10 * trailing_context + c - '0';
-	leading_context = 10 * leading_context + c - '0';
+	out_before = 10 * out_before + opt - '0';
+	out_after = 10 * out_after + opt - '0';
 	break;
-
       case 'A':
-	if (! sscanf(optarg, "%d", &trailing_context)
-	    || trailing_context < 0)
-	  usage_and_die();
+	out_after = atoi(optarg);
+	if (out_after < 0)
+	  usage();
 	break;
-
       case 'B':
-	if (! sscanf(optarg, "%d", &leading_context)
-	    || leading_context < 0)
-	  usage_and_die();
+	out_before = atoi(optarg);
+	if (out_before < 0)
+	  usage();
 	break;
-
       case 'C':
-	trailing_context = leading_context = 2;
+	out_before = out_after = 2;
 	break;
-
+      case 'E':
+	if (matcher && strcmp(matcher, "egrep") != 0)
+	  fatal("you may specify only one of -E, -F, or -G", 0);
+	matcher = "posix-egrep";
+	break;
+      case 'F':
+	if (matcher && strcmp(matcher, "fgrep") != 0)
+	  fatal("you may specify only one of -E, -F, or -G", 0);;
+	matcher = "fgrep";
+	break;
+      case 'G':
+	if (matcher && strcmp(matcher, "grep") != 0)
+	  fatal("you may specify only one of -E, -F, or -G", 0);
+	matcher = "grep";
+	break;
       case 'V':
 	fprintf(stderr, "%s\n", version);
 	break;
-
+      case 'X':
+	if (matcher)
+	  fatal("matcher already specified", 0);
+	matcher = optarg;
+	break;
       case 'b':
-	byte_count = 1;
+	out_byte = 1;
 	break;
-
       case 'c':
-	count_lines = 1;
-	silent = 1;
+	out_quiet = 1;
+	count_matches = 1;
 	break;
-
       case 'e':
-	/* It doesn't make sense to mix -f and -e. */
-	if (regexp_file)
-	  usage_and_die();
-	the_regexp = optarg;
+	cc = strlen(optarg);
+	keys = xrealloc(keys, keycc + cc + 1);
+	if (keyfound)
+	  keys[keycc++] = '\n';
+	strcpy(&keys[keycc], optarg);
+	keycc += cc;
+	keyfound = 1;
 	break;
-
       case 'f':
-	/* It doesn't make sense to mix -f and -e. */
-	if (the_regexp)
-	  usage_and_die();
-	regexp_file = optarg;
+	fp = strcmp(optarg, "-") != 0 ? fopen(optarg, "r") : stdin;
+	if (!fp)
+	  fatal(optarg, errno);
+	for (keyalloc = 1; keyalloc <= keycc; keyalloc *= 2)
+	  ;
+	keys = xrealloc(keys, keyalloc);
+	oldcc = keycc;
+	if (keyfound)
+	  keys[keycc++] = '\n';
+	while (!feof(fp)
+	       && (cc = fread(keys + keycc, 1, keyalloc - keycc, fp)) > 0)
+	  {
+	    keycc += cc;
+	    if (keycc == keyalloc)
+	      keys = xrealloc(keys, keyalloc *= 2);
+	  }
+	if (fp != stdin)
+	  fclose(fp);
+	/* Nuke the final newline to avoid matching a null string. */
+	if (keycc - oldcc > 0 && keys[keycc - 1] == '\n')
+	  --keycc;
+	keyfound = 1;
 	break;
-
       case 'h':
 	no_filenames = 1;
 	break;
-
       case 'i':
-	ignore_case = 1;
-	for (c = 0; c < _NOTCHAR; ++c)
-	  if (isupper(c))
-	    translate[c] = tolower(c);
-	  else
-	    translate[c] = c;
-	regex.translate = translate;
+      case 'y':			/* For old-timers . . . */
+	match_icase = 1;
 	break;
-
+      case 'L':
+	/* Like -l, except list files that don't contain matches.
+	   Inspired by the same option in Hume's gre. */
+	out_quiet = 1;
+	list_files = -1;
+	break;
       case 'l':
+	out_quiet = 1;
 	list_files = 1;
-	silent = 1;
 	break;
-
       case 'n':
-	line_numbers = 1;
+	out_line = 1;
 	break;
-
+      case 'q':
+	out_quiet = 1;
+	break;
       case 's':
-	silent = 1;
+	suppress_errors = 1;
 	break;
-
       case 'v':
-	nonmatching_lines = 1;
+	out_invert = 1;
 	break;
-
       case 'w':
-	whole_word = 1;
+	match_words = 1;
 	break;
-
       case 'x':
-	whole_line = 1;
+	match_lines = 1;
 	break;
-
       default:
-	/* This can't happen. */
-	fprintf(stderr, "%s: getopt(3) let one by!\n", prog);
-	usage_and_die();
+	usage();
 	break;
       }
 
-  /* Set the syntax depending on whether we are EGREP or not. */
-#ifdef EGREP
-  regsyntax(RE_SYNTAX_EGREP, ignore_case);
-  re_set_syntax(RE_SYNTAX_EGREP);
-#else
-  regsyntax(RE_SYNTAX_GREP, ignore_case);
-  re_set_syntax(RE_SYNTAX_GREP);
-#endif
+  if (!keyfound)
+    if (optind < argc)
+      {
+	keys = argv[optind++];
+	keycc = strlen(keys);
+      }
+    else
+      usage();
 
-  /* Compile the regexp according to all the options. */
-  if (regexp_file)
-    {
-      FILE *fp = fopen(regexp_file, "r");
-      int len = 256;
-      int i = 0;
+  if (!matcher)
+    matcher = prog;
 
-      if (! fp)
-	{
-	  fprintf(stderr, "%s: %s: %s\n", prog, regexp_file,
-		  sys_errlist[errno]);
-	  exit(ERROR);
-	}
+  if (!setmatcher(matcher) && !setmatcher("default"))
+    abort();
 
-      the_regexp = malloc(len);
-      while ((c = getc(fp)) != EOF)
-	{
-	  the_regexp[i++] = c;
-	  if (i == len)
-	    the_regexp = realloc(the_regexp, len *= 2);
-	}
-      fclose(fp);
-      /* Nuke the concluding newline so we won't match the empty string. */
-      if (i > 0 && the_regexp[i - 1] == '\n')
-	--i;
-      regexp_len = i;
-    }
-  else if (! the_regexp)
-    {
-      if (optind >= argc)
-	usage_and_die();
-      the_regexp = argv[optind++];
-      regexp_len = strlen(the_regexp);
-    }
-  else
-    regexp_len = strlen(the_regexp);
-  
-  if (whole_word || whole_line)
-    {
-      char *n = malloc(regexp_len + 8);
-      int i = 0;
+  (*compile)(keys, keycc);
 
-      if (whole_line)
-	n[i++] = '^';
-      else
-	n[i++] = '\\', n[i++] = '<';
-#ifndef EGREP
-      n[i++] = '\\';
-#endif
-      n[i++] = '(';
-      memcpy(n + i, the_regexp, regexp_len);
-      i += regexp_len;
-#ifndef EGREP
-      n[i++] = '\\';
-#endif
-      n[i++] = ')';
-      if (whole_line)
-	n[i++] = '$';
-      else
-	n[i++] = '\\', n[i++] = '>';
-      the_regexp = n;
-      regexp_len = i;
-    }
+  if (argc - optind > 1 && !no_filenames)
+    out_file = 1;
 
-  regcompile(the_regexp, regexp_len, &reg, 1);
-  
-  if (regex_errmesg = re_compile_pattern(the_regexp, regexp_len, &regex))
-    regerror(regex_errmesg);
-  
-  /*
-    Find the longest metacharacter-free string which must occur in the
-    regexpr, before short-circuiting regexecute() with Boyer-Moore-Gosper.
-    (Conjecture:  The problem in general is NP-complete.)  If there is no
-    such string (like for many alternations), then default to full automaton
-    search.  regmust() code and heuristics [see dfa.c] courtesy
-    Arthur David Olson.
-    */
-  if (line_numbers == 0 && nonmatching_lines == 0)
-    {
-      if (reg.mustn == 0 || reg.mustn == MUST_MAX ||
-  	  strchr(reg.must, '\0') != reg.must + reg.mustn)
-	bmgexec = 0;
-      else
-	{
-	  reg.must[reg.mustn] = '\0';
-	  if (getenv("MUSTDEBUG") != NULL)
-	    (void) printf("must have: \"%s\"\n", reg.must);
-	  bmg_setup(reg.must, ignore_case);
-	  bmgexec = 1;
-	}
-    }
-  
-  if (argc - optind < 2)
-    no_filenames = 1;
+  status = 1;
 
-  initialize_buffer();
-
-  if (argc > optind)
+  if (optind < argc)
     while (optind < argc)
       {
-	bufprev = eof = 0;
-	filename = argv[optind++];
-	fd = open(filename, 0, 0);
-	if (fd < 0)
+	desc = strcmp(argv[optind], "-") ? open(argv[optind], O_RDONLY) : 0;
+	if (desc < 0)
 	  {
-	    fprintf(stderr, "%s: %s: %s\n", prog, filename,
-		    sys_errlist[errno]);
-	    error = 1;
-	    continue;
+	    if (!suppress_errors)
+	      error(argv[optind], errno);
 	  }
-	if (line_count = grep())
-	  matches_found = 1;
-	close(fd);
-	if (count_lines)
-	  if (!no_filenames)
-	    printf("%s:%d\n", filename, line_count);
-	  else
-	    printf("%d\n", line_count);
-	else if (list_files && line_count)
-	  printf("%s\n", filename);
+	else
+	  {
+	    filename = desc == 0 ? "(standard input)" : argv[optind];
+	    count = grep(desc);
+	    if (count_matches)
+	      {
+		if (out_file)
+		  printf("%s:", filename);
+		printf("%d\n", count);
+	      }
+	    if (count)
+	      {
+		status = 0;
+		if (list_files == 1)
+		  printf("%s\n", filename);
+	      }
+	    else if (list_files == -1)
+	      printf("%s\n", filename);
+	  }
+	if (desc != 0)
+	  close(desc);
+	++optind;
       }
   else
     {
-      if (line_count = grep())
-	matches_found = 1;
-      if (count_lines)
-	printf("%d\n", line_count);
-      else if (list_files && line_count)
-	printf("<stdin>\n");
-    }
-
-  if (error)
-    exit(ERROR);
-  if (matches_found)
-    exit(MATCHES_FOUND);
-  exit(NO_MATCHES_FOUND);
-}
-
-/* Needed by the regexp routines.  This could be fancier, especially when
-   dealing with parallel regexps in files. */
-void
-regerror(s)
-     const char *s;
-{
-  fprintf(stderr, "%s: %s\n", prog, s);
-  exit(ERROR);
-}
-
-/*
-   bmg_setup() and bmg_search() adapted from:
-     Boyer/Moore/Gosper-assisted 'egrep' search, with delta0 table as in
-     original paper (CACM, October, 1977).  No delta1 or delta2.  According to
-     experiment (Horspool, Soft. Prac. Exp., 1982), delta2 is of minimal
-     practical value.  However, to improve for worst case input, integrating
-     the improved Galil strategies (Apostolico/Giancarlo, Siam. J. Comput.,
-     February 1986) deserves consideration.
-
-     James A. Woods				Copyleft (C) 1986, 1988
-     NASA Ames Research Center
-*/
-
-char *
-execute(r, begin, end, newline, count, try_backref)
-  struct regexp *r;
-  char *begin;
-  char *end;
-  int newline;
-  int *count;
-  int *try_backref;
-{
-  register char *p, *s;
-  char *match;
-  char *start = begin;
-  char save;			/* regexecute() sentinel */
-  int len;
-  char *bmg_search();
-
-  if (!bmgexec)			/* full automaton search */
-    return(regexecute(r, begin, end, newline, count, try_backref));
-  else
-    {
-      len = end - begin; 
-      while ((match = bmg_search((unsigned char *) start, len)) != NULL)
+      filename = "(standard input)";
+      count = grep(0);
+      if (count_matches)
+	printf("%d\n", count);
+      if (count)
 	{
-	  p = match;		/* narrow search range to submatch line */
-	  while (p > begin && *p != '\n')
-	    p--;
-	  s = match;
-	  while (s < end && *s != '\n')
-	    s++;
-	  s++;
-
-	  save = *s;
-	  *s = '\0';
-	  match = regexecute(r, p, s, newline, count, try_backref);
-	  *s = save;
-
-	  if (match != NULL)
-	    return((char *) match);
-	  else
-	    {
-	      start = s;
-	      len = end - start;
-	    }
+	  status = 0;
+	  if (list_files == 1)
+	    printf("(standard input)\n");
 	}
-      return(NULL);
+      else if (list_files == -1)
+	printf("(standard input)\n");
     }
+
+  exit(errseen ? 2 : status);
 }
-
-#include <ctype.h>
-int		delta0[256];
-unsigned char   cmap[256];		/* (un)folded characters */
-unsigned char	pattern[5000];
-int		patlen;
-
-char *
-bmg_search(buffer, buflen)
-  unsigned char *buffer;
-  int buflen;
-{
-  register unsigned char *k, *strend, *s, *buflim;
-  register int t;
-  int j;
-
-  if (patlen > buflen)
-    return NULL;
-
-  buflim = buffer + buflen;
-  if (buflen > patlen * 4)
-    strend = buflim - patlen * 4;
-  else
-    strend = buffer;
-
-  s = buffer;
-  k = buffer + patlen - 1;
-
-  for (;;)
-    {
-      /* The dreaded inner loop, revisited. */
-      while (k < strend && (t = delta0[*k]))
-	{
-	  k += t;
-	  k += delta0[*k];
-	  k += delta0[*k];
-	}
-      while (k < buflim && delta0[*k])
-	++k;
-      if (k == buflim)
-	break;
-    
-      j = patlen - 1;
-      s = k;
-      while (--j >= 0 && cmap[*--s] == pattern[j])
-	;
-      /* 
-	delta-less shortcut for literati, but 
-	short shrift for genetic engineers.
-      */
-      if (j >= 0)
-	k++;
-      else 		/* submatch */
-	return ((char *)k);
-    }
-  return(NULL);
-}
-
-bmg_setup(pat, folded)			/* compute "boyer-moore" delta table */
-  char *pat;
-  int folded;
-{					/* ... HAKMEM lives ... */
-  int j;
-
-  patlen = strlen(pat);
-
-  if (folded) 				/* fold case while saving pattern */
-    for (j = 0; j < patlen; j++) 
-      pattern[j] = (isupper((int) pat[j]) ?
-	(char) tolower((int) pat[j]) : pat[j]);
-  else
-      memcpy(pattern, pat, patlen);
-
-  for (j = 0; j < 256; j++)
-    {
-      delta0[j] = patlen;
-      cmap[j] = (char) j;		/* could be done at compile time */
-    }
-  for (j = 0; j < patlen - 1; j++)
-    delta0[pattern[j]] = patlen - j - 1;
-  delta0[pattern[patlen - 1]] = 0;
-
-  if (folded)
-    {
-      for (j = 0; j < patlen - 1; j++)
-	if (islower((int) pattern[j]))
-	  delta0[toupper((int) pattern[j])] = patlen - j - 1;
-	if (islower((int) pattern[patlen - 1]))
-	  delta0[toupper((int) pattern[patlen - 1])] = 0;
-      for (j = 'A'; j <= 'Z'; j++)
-	cmap[j] = (char) tolower((int) j);
-    }
-}
-
-#ifdef nope
-#ifndef USG
-
-/* (groan) compatibility */
-
-char *
-strchr(s, c)
-     char *s;
-{
-  return index(s, c);
-}
-
-char *
-strrchr(s, c)
-     char *s;
-{
-  return rindex(s, c);
-}
-
-char *
-memcpy(d, s, n)
-     char *d, *s;
-{
-  return bcopy(s, d, n);
-}
-
-#else
-
-char *
-index(s, c)
-     char *s;
-{
-  return strchr(s, c);
-}
-
-char *
-bcopy(s, d, n)
-     char *s, *d;
-{
-  return memcpy(d, s, n);
-}
-
-char *
-bzero(s, n)
-     char *s;
-{
-  return memset(s, 0, n);
-}
-
-bcmp(s, t, n)
-     char *s, *t;
-{
-  return memcmp(s, t, n);
-}
-
-#endif
-#endif
