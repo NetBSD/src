@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.61 1999/10/20 16:39:11 enami Exp $	*/
+/*	$NetBSD: elink3.c,v 1.62 1999/10/30 01:35:47 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -740,6 +740,10 @@ epinit(sc)
 	/* Make sure any pending reset has completed before touching board. */
 	ep_finish_reset(iot, ioh);
 
+	/*
+	 * Cance any pending I/O.
+	 */
+	epstop(sc);
 
 	if (sc->bustype != ELINK_BUS_PCI) {
 		GO_WINDOW(0);
@@ -1857,7 +1861,6 @@ epreset(sc)
 	int s;
 
 	s = splnet();
-	epstop(sc);
 	epinit(sc);
 	splx(s);
 }
