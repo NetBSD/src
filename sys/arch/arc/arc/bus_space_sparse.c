@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.9 2003/07/15 00:04:40 lukem Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.10 2003/10/21 16:17:52 tsutsui Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.9 2003/07/15 00:04:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.10 2003/10/21 16:17:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ arc_sparse_bus_space_compose_handle(bst, addr, size, flags, bshp)
 		vaddr_t va,
 		    vaddr = uvm_km_valloc(kernel_map, (vsize_t)(end - start));
 
-		if (vaddr == NULL)
+		if (vaddr == 0)
 			panic("arc_sparse_bus_space_compose_handle: "
 			      "cannot allocate KVA 0x%llx..0x%llx",
 			      start, end);
