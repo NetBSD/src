@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.433 2003/10/19 09:10:25 wiz Exp $
+# $NetBSD: mi,v 1.434 2003/10/20 01:26:44 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1439,6 +1439,7 @@
 ./usr/share/i18n/esdb/EUC/EUC-TW.esdb		base-sysutil-share
 ./usr/share/i18n/esdb/ISO-2022			base-sysutil-share
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP.esdb	base-sysutil-share
+./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-2.esdb	base-sysutil-share
 ./usr/share/i18n/esdb/ISO-8859			base-sysutil-share
 ./usr/share/i18n/esdb/ISO-8859/ISO-8859-1.esdb	base-sysutil-share
 ./usr/share/i18n/esdb/ISO-8859/ISO-8859-10.esdb	base-sysutil-share
