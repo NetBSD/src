@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.22 1995/04/13 06:25:36 cgd Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.23 1995/04/17 05:32:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -81,7 +81,7 @@ int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 #define	rt_expire rt_rmx.rmx_expire
 
 static	void arprequest
-	    __P((struct arpcom *, u_int32_t *, u_int32_t *, u_char *));
+	    __P((struct arpcom *, u_int32_t *, u_int32_t *, u_int8_t *));
 static	void arptfree __P((struct llinfo_arp *));
 static	void arptimer __P((void *));
 static	struct llinfo_arp *arplookup __P((u_int32_t, int, int));
@@ -768,7 +768,7 @@ revarpwhoami(in, ifp)
 }
 
 
-#ifdef	DDB
+#ifdef DDB
 static void
 db_print_sa(sa)
 	struct sockaddr *sa;
@@ -841,7 +841,7 @@ db_show_radix_node(rn, w)
 	db_printf(" mask="); db_print_sa(rt_mask(rt));
 	db_printf(" gw="); db_print_sa(rt->rt_gateway);
 
-	db_printf(" ifp=0x%x ", rt->rt_ifp);
+	db_printf(" ifp=0x%lx ", rt->rt_ifp);
 	if (rt->rt_ifp)
 		db_printf("(%s%d)",
 				  rt->rt_ifp->if_name,
@@ -849,7 +849,7 @@ db_show_radix_node(rn, w)
 	else
 		db_printf("(NULL)");
 
-	db_printf(" ifa=0x%x\n", rt->rt_ifa);
+	db_printf(" ifa=0x%lx\n", rt->rt_ifa);
 	db_print_ifa(rt->rt_ifa);
 
 	db_printf(" genmask="); db_print_sa(rt->rt_genmask);
