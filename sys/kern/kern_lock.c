@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.40 2000/08/17 14:36:32 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.41 2000/08/19 19:36:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -801,7 +801,7 @@ simple_lock_init(struct simplelock *alp)
 	alp->lock_line = 0;
 	alp->unlock_file = NULL;
 	alp->unlock_line = 0;
-	alp->lock_holder = 0;
+	alp->lock_holder = LK_NOCPU;
 }
 
 void
@@ -836,6 +836,8 @@ _simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 	alp->lock_data = __SIMPLELOCK_LOCKED;
 #endif /* } */
 
+	KASSERT(alp->lock_holder == LK_NOCPU);
+
 	alp->lock_file = id;
 	alp->lock_line = l;
 	alp->lock_holder = cpu_id;
@@ -869,6 +871,7 @@ _simple_lock_held(__volatile struct simplelock *alp)
 
 	s = splhigh();
 	locked = (alp->lock_data == __SIMPLELOCK_LOCKED);
+	KASSERT(alp->lock_holder == cpu_number());
 	splx(s);
 #endif
 	return (locked);
@@ -958,6 +961,8 @@ _simple_unlock(__volatile struct simplelock *alp, const char *id, int l)
 	__cpu_simple_unlock(&alp->lock_data);
 #else
 	alp->lock_data = __SIMPLELOCK_UNLOCKED;
+	KASSERT(alp->lock_holder == cpu_number());
+	alp->lock_holder = LK_NOCPU;
 #endif /* } */
 
  out:
