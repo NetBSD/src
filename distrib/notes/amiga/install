@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.17.2.2 1999/04/27 20:59:39 perry Exp $	
+.\"	$NetBSD: install,v 1.17.2.3 2000/01/18 20:13:57 he Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -168,6 +168,14 @@ the next one sd1, etc.  Also, any Amiga internal IDE disk drives
 will be configured as "SCSI" drives, and will be configured
 before any 'real' SCSI drives (if any are present).
 .Pp
+The installer will offer you to look at the 
+.Nx
+disk label of the disks at this point. You should do this, to find out
+what partition letters the
+.Nx
+kernel assigned to the partitions you created, and as a check whether the
+disk number you are going to use is right.
+.Pp
 .Em you are now at the point of no return.
 If you confirm that
 you want to install NetBSD, your hard drive will be modified,
@@ -175,7 +183,14 @@ and perhaps its contents scrambled at the whim of the install
 program.  Type Control-C NOW if you don't want this.
 .Pp
 At this time, you will need to tell the installer which partition
-will be associated with the different filesystems.
+will be associated with the different filesystems. Normally, you'll
+want to add a partition for /usr, at least.
+.(tag Em Caveat: 
+Do not use the (r)sdNc partitions for anything! They are for access to
+the whole disk only and do
+.Em not
+correspond to any Amiga partition!
+.tag)
 .Pp
 The install program will now make the the file systems you
 specified.  There should be only one error per file system in
