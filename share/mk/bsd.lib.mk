@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.124 1998/02/18 08:14:31 jonathan Exp $
+#	$NetBSD: bsd.lib.mk,v 1.125 1998/02/23 10:09:31 jonathan Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -32,7 +32,7 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 
 # Data-driven table using make variables to control  how shared libraries
 # are built for different platforms and object formats.
-# SHLIB_TYPE:		currently either "ELF" or "a.out".
+# OBJECT_FMT:		currently either "ELF" or "a.out", from <bsd.own.mk>
 # SHLIB_SOVERSION:  	version number to be compiled into a shared library
 #                    	via -soname. Usualy ${SHLIB_MAJOR} on ELF.
 #   			NetBSD/pmax used to use ${SHLIB_MAJOR}.{SHLIB-MINOR}.
@@ -50,7 +50,6 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 
 .if (${MACHINE_ARCH} == "alpha")
 		# Alpha-specific shared library flags
-SHLIB_TYPE=ELF
 SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
 SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
 
@@ -60,7 +59,6 @@ CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
 .elif (${MACHINE_ARCH} == "mips")
 		# mips-specific shared library flags
-SHLIB_TYPE=ELF
 # Still use gnu-derived ld.so on pmax; don't have or need lib<>.so support.
 SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
@@ -79,13 +77,12 @@ AS+=	-KPIC
 
 .else
 
-# Platform-independent flags for NetBSD a.out shared libraries
-SHLIB_TYPE=a.out
+# Platform-independent flags for NetBSD a.out shared libraries (and PowerPC)
 SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
-SHLIB_SHFLAGS= -Bshareable -Bforcearchive
+SHLIB_SHFLAGS=
 SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
-SHLIB_WHOLE=
+SHLIB_WHOLE=-Bforcearchive
 SHLIB_NOWHOLE=
 CPICFLAGS?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
@@ -95,11 +92,11 @@ APICFLAGS?= -k
 .endif
 
 # Platform-independent linker flags for ELF shared libraries
-.if (${SHLIB_TYPE} == "ELF")
+.if (${OBJECT_FMT} == "ELF")
 SHLIB_WHOLE=--whole-archive
 SHLIB_NOWHOLE=--no-whole-archive
 SHLIB_SOVERSION=${SHLIB_MAJOR}
-SHLIB_SHFLAGS=-shared -soname lib${LIB}.so.${SHLIB_SOVERSION}
+SHLIB_SHFLAGS=-soname lib${LIB}.so.${SHLIB_SOVERSION}
 .endif
 
 CFLAGS+=	${COPTS}
@@ -229,7 +226,7 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-	$(LD) -x ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	$(LD) -x -Bshareable ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    ${SHLIB_LDSTARTFILE} \
 	    ${SHLIB_WHOLE} lib${LIB}_pic.a ${SHLIB_NOWHOLE} ${LDADD} \
 	    ${SHLIB_LDENDFILE}
@@ -307,7 +304,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} \
 		${.TARGET}
-.if (${SHLIB_TYPE} == "ELF")
+.if (${OBJECT_FMT} == "ELF")
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
