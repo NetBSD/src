@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.66 2003/06/11 15:45:20 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.67 2003/07/19 01:36:47 jrf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.66 2003/06/11 15:45:20 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.67 2003/07/19 01:36:47 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ static void inet_makenetandmask __P((u_int32_t, struct sockaddr_in *));
 static int inet6_makenetandmask __P((struct sockaddr_in6 *));
 #endif
 static int getaddr __P((int, char *, struct hostent **));
-static int flushroutes __P((int, char *[]));
+static int flushroutes __P((int, char *[], int));
 #ifndef SMALL
 static int prefixlen __P((char *));
 static int x25_makemask __P((void));
@@ -218,7 +218,7 @@ main(argc, argv)
 	case K_ADD:
 	case K_DELETE:
 		if (doflush)
-			(void)flushroutes(1, argv);
+			(void)flushroutes(1, argv, 0);
 		return newroute(argc, argv);
 
 	case K_SHOW:
@@ -232,8 +232,10 @@ main(argc, argv)
 
 #endif /* SMALL */
 	case K_FLUSH:
-		return flushroutes(argc, argv);
+		return flushroutes(argc, argv, 0);
 
+	case K_FLUSHALL:
+		return flushroutes(argc, argv, 1);
 	no_cmd:
 	default:
 		usage(*argv);
@@ -246,9 +248,10 @@ main(argc, argv)
  * associated with network interfaces.
  */
 static int
-flushroutes(argc, argv)
+flushroutes(argc, argv, doall)
 	int argc;
 	char *argv[];
+	int doall;
 {
 	size_t needed;
 	int mib[6], rlen, seqno;
@@ -317,7 +320,8 @@ bad:			usage(*argv);
 		rtm = (struct rt_msghdr *)next;
 		if (verbose)
 			print_rtmsg(rtm, rtm->rtm_msglen);
-		if ((rtm->rtm_flags & RTF_GATEWAY) == 0)
+		if (!(rtm->rtm_flags & (RTF_GATEWAY | RTF_STATIC |
+					RTF_LLINFO)) && !doall)
 			continue;
 		if (af) {
 			struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
