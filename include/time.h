@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.13 1997/10/04 15:00:42 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.13.2.1 1998/09/28 00:06:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -118,7 +118,6 @@ struct tm *offtime __P((const time_t *const, const long));
 time_t timelocal __P((struct tm *const));
 time_t timegm __P((struct tm *const));
 time_t timeoff __P((struct tm *const, const long));
-long gtime __P((struct tm *const));
 time_t time2posix __P((time_t));
 time_t posix2time __P((time_t));
 #endif /* neither ANSI nor POSIX */
