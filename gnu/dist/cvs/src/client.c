@@ -1,3 +1,5 @@
+/* JT thinks BeOS is worth the trouble. */
+
 /* CVS client-related stuff.
 
    This program is free software; you can redistribute it and/or modify
@@ -1119,7 +1121,7 @@ call_in_directory (pathname, func, data)
 	        strcpy (r, "/.");
 
 	    Create_Admin (".", ".", repo, (char *) NULL,
-			  (char *) NULL, 0, 1);
+			  (char *) NULL, 0, 1, 1);
 
 	    free (repo);
 	}
@@ -1256,7 +1258,7 @@ warning: server is not creating directories one at a time");
 			strcpy (r, reposdirname);
 
 		    Create_Admin (dir, dir, repo,
-				  (char *)NULL, (char *)NULL, 0, 0);
+				  (char *)NULL, (char *)NULL, 0, 0, 1);
 		    free (repo);
 
 		    b = strrchr (dir, '/');
@@ -1764,6 +1766,7 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	    }
 
 	    free (mode_string);
+	    free (scratch_entries);
 	    free (entries_line);
 
 	    /* The Mode, Mod-time, and Checksum responses should not carry
@@ -1851,7 +1854,8 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 
 		if (use_gzip)
 		{
-		    if (gunzip_and_write (fd, short_pathname, buf, size))
+		    if (gunzip_and_write (fd, short_pathname, 
+					  (unsigned char *) buf, size))
 			error (1, 0, "aborting due to compression error");
 		}
 		else if (write (fd, buf, size) != size)
@@ -2029,6 +2033,8 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 
 	    free (mode_string);
 	    free (buf);
+	    free (scratch_entries);
+	    free (entries_line);
 
 	    return;
 	}
@@ -2127,8 +2133,8 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	if (file_timestamp)
 	    free (file_timestamp);
 
-	free (scratch_entries);
     }
+    free (scratch_entries);
     free (entries_line);
 }
 
@@ -2494,7 +2500,11 @@ handle_set_checkin_prog (args, len)
 {
     char *prog;
     struct save_prog *p;
+
     read_line (&prog);
+    if (strcmp (command_name, "export") == 0)
+	return;
+
     p = (struct save_prog *) xmalloc (sizeof (struct save_prog));
     p->next = checkin_progs;
     p->dir = xstrdup (args);
@@ -2509,7 +2519,11 @@ handle_set_update_prog (args, len)
 {
     char *prog;
     struct save_prog *p;
+
     read_line (&prog);
+    if (strcmp (command_name, "export") == 0)
+	return;
+
     p = (struct save_prog *) xmalloc (sizeof (struct save_prog));
     p->next = update_progs;
     p->dir = xstrdup (args);
@@ -3598,6 +3612,8 @@ get_responses_and_close ()
 	&& waitpid (rsh_pid, (int *) 0, 0) == -1)
 	error (1, errno, "waiting for process %d", rsh_pid);
 
+    buf_free (to_server);
+    buf_free (from_server);
     server_started = 0;
 
     /* see if we need to sleep before returning to avoid time-stamp races */
@@ -3960,16 +3976,9 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
     return;
 
   rejected:
-    if (shutdown (sock, 2) < 0)
-    {
-	error (0, 0, 
-	       "authorization failed: server %s rejected access", 
-	       CVSroot_hostname);
-	error (1, 0,
-	       "shutdown() failed (server %s): %s",
-	       CVSroot_hostname,
-	       SOCK_STRERROR (SOCK_ERRNO));
-    }
+    error (0, 0,
+	"authorization failed: server %s rejected access to %s for user %s",
+	CVSroot_hostname, CVSroot_directory, CVSroot_username);
 
     error (0, 0, 
 	   "authorization failed: server %s rejected access", 
@@ -3982,6 +3991,14 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
     {
         error (0, 0,
                "used empty password; try \"cvs login\" with a real password");
+    }
+
+    if (shutdown (sock, 2) < 0)
+    {
+	error (0, 0,
+	       "shutdown() failed (server %s): %s",
+	       CVSroot_hostname,
+	       SOCK_STRERROR (SOCK_ERRNO));
     }
 
     error_exit();
@@ -4180,7 +4197,29 @@ connect_to_gserver (sock, hostinfo)
 
 	    recv_bytes (sock, cbuf, 2);
 	    need = ((cbuf[0] & 0xff) << 8) | (cbuf[1] & 0xff);
-	    assert (need <= sizeof buf);
+
+	    if (need > sizeof buf)
+	    {
+		int got;
+
+		/* This usually means that the server sent us an error
+		   message.  Read it byte by byte and print it out.
+		   FIXME: This is a terrible error handling strategy.
+		   However, even if we fix the server, we will still
+		   want to do this to work with older servers.  */
+		buf[0] = cbuf[0];
+		buf[1] = cbuf[1];
+		got = recv (sock, buf + 2, sizeof buf - 2, 0);
+		if (got < 0)
+		    error (1, 0, "recv() from server %s: %s",
+			   CVSroot_hostname, SOCK_STRERROR (SOCK_ERRNO));
+		buf[got + 2] = '\0';
+		if (buf[got + 1] == '\n')
+		    buf[got + 1] = '\0';
+		error (1, 0, "error from server %s: %s", CVSroot_hostname,
+		       buf);
+	    }
+
 	    recv_bytes (sock, buf, need);
 	    tok_in.length = need;
 	}
@@ -4214,7 +4253,7 @@ send_variable_proc (node, closure)
 void
 start_server ()
 {
-    int tofd, fromfd;
+    int tofd, fromfd, rootless;
     char *log = getenv ("CVS_CLIENT_LOG");
 
 
@@ -4393,7 +4432,8 @@ the :server: access method is not supported by this port of CVS");
 	stored_mode = NULL;
     }
 
-    if (strcmp (command_name, "init") != 0)
+    rootless = (strcmp (command_name, "init") == 0);
+    if (!rootless)
     {
 	send_to_server ("Root ", 0);
 	send_to_server (CVSroot_directory, 0);
@@ -4527,7 +4567,7 @@ the :server: access method is not supported by this port of CVS");
 	}
     }
 
-    if (cvsencrypt)
+    if (cvsencrypt && !rootless)
     {
 #ifdef ENCRYPTION
 	/* Turn on encryption before turning on compression.  We do
@@ -4574,7 +4614,7 @@ the :server: access method is not supported by this port of CVS");
 #endif /* ! ENCRYPTION */
     }
 
-    if (gzip_level)
+    if (gzip_level && !rootless)
     {
 	if (supported_request ("Gzip-stream"))
 	{
@@ -4616,7 +4656,7 @@ the :server: access method is not supported by this port of CVS");
 	}
     }
 
-    if (cvsauthenticate && ! cvsencrypt)
+    if (cvsauthenticate && ! cvsencrypt && !rootless)
     {
 	/* Turn on authentication after turning on compression, so
 	   that we can compress the authentication information.  We
@@ -4647,7 +4687,7 @@ the :server: access method is not supported by this port of CVS");
     }
 
 #ifdef FILENAMES_CASE_INSENSITIVE
-    if (supported_request ("Case"))
+    if (supported_request ("Case") && !rootless)
 	send_to_server ("Case\012", 0);
 #endif
 
@@ -5259,9 +5299,6 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
     dir_exists = isdir (cvsadm_name);
     free (cvsadm_name);
 
-    /* initialize the ignore list for this directory */
-    ignlist = getlist ();
-
     /*
      * If there is an empty directory (e.g. we are doing `cvs add' on a
      * newly-created directory), the server still needs to know about it.
@@ -5277,6 +5314,9 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
 	char *repos = Name_Repository (dir, update_dir);
 	send_a_repository (dir, repos, update_dir);
 	free (repos);
+
+	/* initialize the ignore list for this directory */
+	ignlist = getlist ();
     }
     else
     {
@@ -5299,6 +5339,29 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
     }
 
     return (dir_exists ? R_PROCESS : R_SKIP_ALL);
+}
+
+static int send_dirleave_proc PROTO ((void *, char *, int, char *, List *));
+
+/*
+ * send_dirleave_proc () is called back by the recursion code upon leaving
+ * a directory.  All it does is delete the ignore list if it hasn't already
+ * been done (by send_filesdone_proc).
+ */
+/* ARGSUSED */
+static int
+send_dirleave_proc (callerdat, dir, err, update_dir, entries)
+    void *callerdat;
+    char *dir;
+    int err;
+    char *update_dir;
+    List *entries;
+{
+
+    /* Delete the ignore list if it hasn't already been done.  */
+    if (ignlist)
+	dellist (&ignlist);
+    return err;
 }
 
 /*
@@ -5495,7 +5558,7 @@ send_files (argc, argv, local, aflag, flags)
     args.backup_modified = flags & BACKUP_MODIFIED_FILES;
     err = start_recursion
 	(send_fileproc, send_filesdoneproc,
-	 send_dirent_proc, (DIRLEAVEPROC)NULL, (void *) &args,
+	 send_dirent_proc, send_dirleave_proc, (void *) &args,
 	 argc, argv, local, W_LOCAL, aflag, 0, (char *)NULL, 0);
     if (err)
 	error_exit ();
