@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 2001/11/07 02:24:18 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 2001/11/19 19:08:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -74,8 +74,13 @@ struct {
 	bus_addr_t od_addr;
 	int od_irq;
 } obio_devices[] = {
-	{ "com",	IQ80310_UART1,		XINT3_IRQ(XINT3_UART1) },
+	/*
+	 * Order these so the first UART matched is the one at J9
+	 * and the second is the one at J10.  (This is the same
+	 * ordering RedBoot uses.)
+	 */
 	{ "com",	IQ80310_UART2,		XINT3_IRQ(XINT3_UART2) },
+	{ "com",	IQ80310_UART1,		XINT3_IRQ(XINT3_UART1) },
 
 	{ NULL,		0,			0 },
 };
