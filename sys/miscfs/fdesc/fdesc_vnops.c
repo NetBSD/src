@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.27 1995/10/09 14:20:04 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.28 1996/02/01 00:31:05 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -424,8 +424,8 @@ fdesc_getattr(ap)
 		vap->va_gid = 0;
 		vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 		vap->va_blocksize = DEV_BSIZE;
-		vap->va_atime.ts_sec = boottime.tv_sec;
-		vap->va_atime.ts_nsec = 0;
+		vap->va_atime.tv_sec = boottime.tv_sec;
+		vap->va_atime.tv_nsec = 0;
 		vap->va_mtime = vap->va_atime;
 		vap->va_ctime = vap->va_mtime;
 		vap->va_gen = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.19 1995/12/19 23:07:32 cgd Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.20 1996/02/01 00:40:13 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -212,9 +212,9 @@ nfsrv_setattr(nfsd, mrep, md, dpos, cred, nam, mrq)
 #ifdef notyet
 			fxdr_nfstime(&sp->sa_nfsatime, &va.va_atime);
 #else
-			va.va_atime.ts_sec =
+			va.va_atime.tv_sec =
 				fxdr_unsigned(int32_t, sp->sa_nfsatime.nfs_sec);
-			va.va_atime.ts_nsec = 0;
+			va.va_atime.tv_nsec = 0;
 #endif
 		}
 		if (sp->sa_nfsmtime.nfs_sec != nfs_xdrneg1)

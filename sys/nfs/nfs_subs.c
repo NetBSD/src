@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.22 1995/12/19 23:07:43 cgd Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.23 1996/02/01 00:40:44 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -732,7 +732,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 				*vpp = vp = nvp;
 			}
 		}
-		np->n_mtime = mtime.ts_sec;
+		np->n_mtime = mtime.tv_sec;
 	}
 	vap = &np->n_vattr;
 	vap->va_type = vtyp;
@@ -789,13 +789,13 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 #endif
 		if (np->n_flag & NCHG) {
 			if (np->n_flag & NACC) {
-				vaper->va_atime.ts_sec = np->n_atim.tv_sec;
-				vaper->va_atime.ts_nsec =
+				vaper->va_atime.tv_sec = np->n_atim.tv_sec;
+				vaper->va_atime.tv_nsec =
 				    np->n_atim.tv_usec * 1000;
 			}
 			if (np->n_flag & NUPD) {
-				vaper->va_mtime.ts_sec = np->n_mtim.tv_sec;
-				vaper->va_mtime.ts_nsec =
+				vaper->va_mtime.tv_sec = np->n_mtim.tv_sec;
+				vaper->va_mtime.tv_nsec =
 				    np->n_mtim.tv_usec * 1000;
 			}
 		}
@@ -850,12 +850,12 @@ nfs_getattrcache(vp, vaper)
 #endif
 	if (np->n_flag & NCHG) {
 		if (np->n_flag & NACC) {
-			vaper->va_atime.ts_sec = np->n_atim.tv_sec;
-			vaper->va_atime.ts_nsec = np->n_atim.tv_usec * 1000;
+			vaper->va_atime.tv_sec = np->n_atim.tv_sec;
+			vaper->va_atime.tv_nsec = np->n_atim.tv_usec * 1000;
 		}
 		if (np->n_flag & NUPD) {
-			vaper->va_mtime.ts_sec = np->n_mtim.tv_sec;
-			vaper->va_mtime.ts_nsec = np->n_mtim.tv_usec * 1000;
+			vaper->va_mtime.tv_sec = np->n_mtim.tv_sec;
+			vaper->va_mtime.tv_nsec = np->n_mtim.tv_usec * 1000;
 		}
 	}
 	return (0);

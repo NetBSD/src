@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.43 1995/12/01 07:26:58 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.44 1996/02/01 00:37:36 jtc Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -343,16 +343,16 @@ msdosfs_setattr(ap)
 		if (error = detrunc(dep, (u_long)vap->va_size, 0, cred, ap->a_p))
 			return (error);
 	}
-	if (vap->va_atime.ts_sec != VNOVAL || vap->va_mtime.ts_sec != VNOVAL) {
+	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (cred->cr_uid != dep->de_pmp->pm_uid &&
 		    (error = suser(cred, &ap->a_p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_p))))
 			return (error);
 		if (!(dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)
-		    && vap->va_atime.ts_sec != VNOVAL)
+		    && vap->va_atime.tv_sec != VNOVAL)
 			unix2dostime(&vap->va_atime, &dep->de_ADate, &dep->de_ATime);
-		if (vap->va_mtime.ts_sec != VNOVAL)
+		if (vap->va_mtime.tv_sec != VNOVAL)
 			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
