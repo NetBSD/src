@@ -1,4 +1,4 @@
-.\" $NetBSD: lockf.3,v 1.7 2002/10/01 16:48:35 wiz Exp $
+.\" $NetBSD: lockf.3,v 1.8 2002/10/01 16:59:47 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -184,7 +184,7 @@ Blocking on a section is interrupted by any signal.
 If successful, the
 .Fn lockf
 function returns 0.
-Otherwise, it returns -1, sets
+Otherwise, it returns \-1, sets
 .Va errno
 to indicate an error, and existing locks are not changed.
 .Sh ERRORS

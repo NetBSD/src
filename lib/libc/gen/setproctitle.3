@@ -1,4 +1,4 @@
-.\" $NetBSD: setproctitle.3,v 1.15 2002/07/10 14:37:14 yamt Exp $
+.\" $NetBSD: setproctitle.3,v 1.16 2002/10/01 16:59:47 wiz Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Christopher G. Demetriou
 .\" All rights reserved.
@@ -54,7 +54,9 @@ by
 .Va fmt .
 If
 .Va fmt
-is NULL, the colon and formatted string are omitted.
+is
+.Dv NULL ,
+the colon and formatted string are omitted.
 The length of a process title is limited to 2048 bytes.
 .Sh EXAMPLES
 Set the process title to the program name, with no further information:

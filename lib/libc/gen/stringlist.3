@@ -1,4 +1,4 @@
-.\"	$NetBSD: stringlist.3,v 1.8 2002/02/07 07:00:17 ross Exp $
+.\"	$NetBSD: stringlist.3,v 1.9 2002/10/01 16:59:47 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,13 +113,15 @@ at
 .Ar sl-\*[Gt]sl_cur ,
 extending the size of
 .Ar sl-\*[Gt]sl_str .
-Returns zero upon success, -1 upon failure.
+Returns zero upon success, \-1 upon failure.
 .It Fn sl_find
 Find
 .Ar item
 in
 .Ar sl ,
-returning NULL if it's not found.
+returning
+.Dv NULL
+if it's not found.
 .El
 .Sh SEE ALSO
 .Xr free 3 ,
