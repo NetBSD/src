@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)commands.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: commands.c,v 1.6 1994/05/08 20:42:26 mycroft Exp $";
+static char *rcsid = "$Id: commands.c,v 1.7 1994/12/24 17:50:00 cgd Exp $";
 #endif /* not lint */
 
 #if	defined(unix)
@@ -2154,7 +2154,7 @@ tn(argc, argv)
     } else {
 #endif
 	temp = inet_addr(hostp);
-	if (temp != (unsigned long) -1) {
+	if (temp != INADDR_NONE) {
 	    sin.sin_addr.s_addr = temp;
 	    sin.sin_family = AF_INET;
 	    (void) strcpy(_hostname, hostp);
@@ -2732,7 +2732,7 @@ sourceroute(arg, cpp, lenp)
 		if (!c)
 			cp2 = 0;
 
-		if ((tmp = inet_addr(cp)) != -1) {
+		if ((tmp = inet_addr(cp)) != INADDR_NONE) {
 			sin_addr.s_addr = tmp;
 		} else if (host = gethostbyname(cp)) {
 #if	defined(h_addr)

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)ring.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: ring.c,v 1.3 1994/02/25 03:00:34 cgd Exp $";
+static char *rcsid = "$Id: ring.c,v 1.4 1994/12/24 17:50:06 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -48,6 +48,10 @@ static char *rcsid = "$Id: ring.c,v 1.3 1994/02/25 03:00:34 cgd Exp $";
  */
 
 #include	<stdio.h>
+#ifndef NO_STRING_H
+#include	<string.h>
+#endif
+#include	<strings.h>
 #include	<errno.h>
 
 #ifdef	size_t
