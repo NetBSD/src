@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.8 1999/01/15 16:12:25 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.9 1999/01/23 17:04:43 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -306,16 +306,16 @@ static const keysym_t pckbd_keydesc_jp[] = {
     KC(11),  KS_0,
     KC(12),  KS_minus,          KS_equal,
     KC(13),  KS_asciicircum,    KS_asciitilde,
-    KC(26),  KS_grave,          KS_at,
+    KC(26),  KS_at,             KS_grave,
     KC(27),  KS_bracketleft,    KS_braceleft,
     KC(39),  KS_semicolon,      KS_plus,
     KC(40),  KS_colon,          KS_asterisk,
-    /* 41, Hankaku/Zenkaku, */
+    KC(41),  KS_Zenkaku_Hankaku, /* replace grave/tilde */
     KC(43),  KS_bracketright,   KS_braceright,
-    /* 112, Katakana/Hiragana, */
+    KC(112), KS_Hiragana_Katakana,
     KC(115), KS_backslash,      KS_underscore,
-    /* 121, Henkan, */
-    /* 123, Muhenkan, */
+    KC(121), KS_Henkan,
+    KC(123), KS_Muhenkan,
     KC(125), KS_backslash,      KS_bar,
 };
 
