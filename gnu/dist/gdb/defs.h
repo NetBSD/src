@@ -206,9 +206,9 @@ extern char *chill_demangle PARAMS ((const char *));
 
 extern int strcmp_iw PARAMS ((const char *, const char *));
 
-extern char *safe_strerror PARAMS ((int));
+extern const char *safe_strerror PARAMS ((int));
 
-extern char *safe_strsignal PARAMS ((int));
+extern const char *safe_strsignal PARAMS ((int));
 
 extern void init_malloc PARAMS ((void *));
 
