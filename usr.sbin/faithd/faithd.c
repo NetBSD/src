@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.13 2000/07/05 17:59:58 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.22 2000/07/05 17:58:58 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.14 2000/09/14 00:36:10 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.29 2000/09/12 05:20:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -117,6 +117,7 @@ static int map4to6 __P((struct sockaddr_in *, struct sockaddr_in6 *));
 static void sig_child __P((int));
 static void sig_terminate __P((int));
 static void start_daemon __P((void));
+static void exit_stderr __P((const char *, ...));
 #ifndef HAVE_GETIFADDRS
 static unsigned int if_maxindex __P((void));
 #endif
@@ -168,17 +169,17 @@ inetd_main(int argc, char **argv)
 
 	sockfd = socket(PF_ROUTE, SOCK_RAW, PF_UNSPEC);
 	if (sockfd < 0) {
-		exit_error("socket(PF_ROUTE): %s", ERRSTR);
+		exit_failure("socket(PF_ROUTE): %s", ERRSTR);
 		/*NOTREACHED*/
 	}
 #endif
 
 	melen = sizeof(me);
 	if (getsockname(STDIN_FILENO, (struct sockaddr *)&me, &melen) < 0)
-		exit_error("getsockname");
+		exit_failure("getsockname");
 	fromlen = sizeof(from);
 	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0)
-		exit_error("getpeername");
+		exit_failure("getpeername");
 	if (getnameinfo((struct sockaddr *)&me, melen, NULL, 0,
 	    sbuf, sizeof(sbuf), NI_NUMERICHOST) == 0)
 		service = sbuf;
@@ -193,7 +194,7 @@ inetd_main(int argc, char **argv)
 	openlog(logname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 
 	if (argc >= MAXARGV)
-		exit_failure("too many augments");
+		exit_failure("too many arguments");
 	serverarg[0] = serverpath = path;
 	for (i = 1; i < argc; i++)
 		serverarg[i] = argv[i];
@@ -202,7 +203,7 @@ inetd_main(int argc, char **argv)
 	error = setsockopt(STDIN_FILENO, SOL_SOCKET, SO_OOBINLINE, &on,
 	    sizeof(on));
 	if (error < 0)
-		exit_error("setsockopt(SO_OOBINLINE): %s", ERRSTR);
+		exit_failure("setsockopt(SO_OOBINLINE): %s", ERRSTR);
 
 	play_child(STDIN_FILENO, (struct sockaddr *)&from);
 	exit_failure("should not reach here");
@@ -238,7 +239,7 @@ daemon_main(int argc, char **argv)
 #endif
 		default:
 			usage();
-			break;
+			/*NOTREACHED*/
 		}
 	}
 	argc -= optind;
@@ -268,15 +269,12 @@ daemon_main(int argc, char **argv)
 
 	switch (argc) {
 	case 0:
-		serverpath = DEFAULT_PATH;
-		serverarg[0] = DEFAULT_NAME;
-		serverarg[1] = NULL;
-		service = DEFAULT_PORT_NAME;
-		break;
+		usage();
+		/*NOTREACHED*/
 	default:
 		serverargc = argc - NUMARG;
 		if (serverargc >= MAXARGV)
-			exit_error("too many augments");
+			exit_stderr("too many arguments");
 
 		serverpath = malloc(strlen(argv[NUMPRG]) + 1);
 		strcpy(serverpath, argv[NUMPRG]);
@@ -302,17 +300,17 @@ daemon_main(int argc, char **argv)
 	hints.ai_protocol = 0;
 	error = getaddrinfo(NULL, service, &hints, &res);
 	if (error)
-		exit_error("getaddrinfo: %s", gai_strerror(error));
+		exit_stderr("getaddrinfo: %s", gai_strerror(error));
 
 	s_wld = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (s_wld == -1)
-		exit_error("socket: %s", ERRSTR);
+		exit_stderr("socket: %s", ERRSTR);
 
 #ifdef IPV6_FAITH
 	if (res->ai_family == AF_INET6) {
 		error = setsockopt(s_wld, IPPROTO_IPV6, IPV6_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_error("setsockopt(IPV6_FAITH): %s", ERRSTR);
+			exit_stderr("setsockopt(IPV6_FAITH): %s", ERRSTR);
 	}
 #endif
 #ifdef FAITH4
@@ -320,31 +318,31 @@ daemon_main(int argc, char **argv)
 	if (res->ai_family == AF_INET) {
 		error = setsockopt(s_wld, IPPROTO_IP, IP_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_error("setsockopt(IP_FAITH): %s", ERRSTR);
+			exit_stderr("setsockopt(IP_FAITH): %s", ERRSTR);
 	}
 #endif
 #endif /* FAITH4 */
 
 	error = setsockopt(s_wld, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	if (error == -1)
-		exit_error("setsockopt(SO_REUSEADDR): %s", ERRSTR);
+		exit_stderr("setsockopt(SO_REUSEADDR): %s", ERRSTR);
 	
 	error = setsockopt(s_wld, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
 	if (error == -1)
-		exit_error("setsockopt(SO_OOBINLINE): %s", ERRSTR);
+		exit_stderr("setsockopt(SO_OOBINLINE): %s", ERRSTR);
 
 	error = bind(s_wld, (struct sockaddr *)res->ai_addr, res->ai_addrlen);
 	if (error == -1)
-		exit_error("bind: %s", ERRSTR);
+		exit_stderr("bind: %s", ERRSTR);
 
 	error = listen(s_wld, 5);
 	if (error == -1)
-		exit_error("listen: %s", ERRSTR);
+		exit_stderr("listen: %s", ERRSTR);
 
 #ifdef USE_ROUTE
 	sockfd = socket(PF_ROUTE, SOCK_RAW, PF_UNSPEC);
 	if (sockfd < 0) {
-		exit_error("socket(PF_ROUTE): %s", ERRSTR);
+		exit_stderr("socket(PF_ROUTE): %s", ERRSTR);
 		/*NOTREACHED*/
 	}
 #endif
@@ -361,7 +359,7 @@ daemon_main(int argc, char **argv)
 	syslog(LOG_INFO, "Staring faith daemon for %s port", service);
 
 	play_service(s_wld);
-	/*NOTRECHED*/
+	/* NOTREACHED */
 	exit(1);	/*pacify gcc*/
 }
 
@@ -489,7 +487,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 		if (!map6to4((struct sockaddr_in6 *)&dstaddr6,
 		    (struct sockaddr_in *)&dstaddr4)) {
 			close(s_src);
-			exit_error("map6to4 failed");
+			exit_failure("map6to4 failed");
 		}
 		syslog(LOG_INFO, "translating from v6 to v4");
 		break;
@@ -498,14 +496,14 @@ play_child(int s_src, struct sockaddr *srcaddr)
 		if (!map4to6((struct sockaddr_in *)&dstaddr6,
 		    (struct sockaddr_in6 *)&dstaddr4)) {
 			close(s_src);
-			exit_error("map4to6 failed");
+			exit_failure("map4to6 failed");
 		}
 		syslog(LOG_INFO, "translating from v4 to v6");
 		break;
 #endif
 	default:
 		close(s_src);
-		exit_error("family not supported");
+		exit_failure("family not supported");
 		/*NOTREACHED*/
 	}
 
@@ -538,14 +536,14 @@ play_child(int s_src, struct sockaddr *srcaddr)
 
 	error = setsockopt(s_dst, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
 	if (error == -1)
-		exit_error("setsockopt(SO_OOBINLINE): %s", ERRSTR);
+		exit_failure("setsockopt(SO_OOBINLINE): %s", ERRSTR);
 
 	error = setsockopt(s_src, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	if (error == -1)
-		exit_error("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
+		exit_failure("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
 	error = setsockopt(s_dst, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	if (error == -1)
-		exit_error("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
+		exit_failure("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
 
 	error = connect(s_dst, sa4, sa4->sa_len);
 	if (error == -1)
@@ -584,7 +582,7 @@ faith_prefix(struct sockaddr *dst)
 	mib[3] = IPV6CTL_FAITH_PREFIX;
 	size = sizeof(struct in6_addr);
 	if (sysctl(mib, 4, &faith_prefix, &size, NULL, 0) < 0)
-		exit_error("sysctl: %s", ERRSTR);
+		exit_failure("sysctl: %s", ERRSTR);
 
 	if (memcmp(dst, &faith_prefix,
 			sizeof(struct in6_addr) - sizeof(struct in_addr) == 0) {
@@ -651,7 +649,7 @@ map6to4(struct sockaddr_in6 *dst6, struct sockaddr_in *dst4)
 
 	if (dst4->sin_addr.s_addr == INADDR_ANY
 	 || dst4->sin_addr.s_addr == INADDR_BROADCAST
-	 || IN_MULTICAST(dst4->sin_addr.s_addr))
+	 || IN_MULTICAST(ntohl(dst4->sin_addr.s_addr)))
 		return 0;
 
 	return 1;
@@ -697,7 +695,7 @@ sig_child(int sig)
 	pid_t pid;
 
 	pid = wait3(&status, WNOHANG, (struct rusage *)0);
-	if (pid && status)
+	if (pid && WEXITSTATUS(status))
 		syslog(LOG_WARNING, "child %d exit status 0x%x", pid, status);
 }
 
@@ -712,7 +710,7 @@ static void
 start_daemon(void)
 {
 	if (daemon(0, 0) == -1)
-		exit_error("daemon: %s", ERRSTR);
+		exit_stderr("daemon: %s", ERRSTR);
 
 	if (signal(SIGCHLD, sig_child) == SIG_ERR)
 		exit_failure("signal CHLD: %s", ERRSTR);
@@ -721,8 +719,8 @@ start_daemon(void)
 		exit_failure("signal TERM: %s", ERRSTR);
 }
 
-void
-exit_error(const char *fmt, ...)
+static void
+exit_stderr(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[BUFSIZ];
@@ -730,7 +728,7 @@ exit_error(const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	fprintf(stderr, "%s\n", buf);
+	fprintf(stderr, "%s", buf);
 	exit(EXIT_FAILURE);
 }
 
@@ -979,7 +977,7 @@ update_myaddrs()
 static void
 usage()
 {
-	fprintf(stderr, "usage: %s [-dp] [service [serverpath [serverargs]]]\n",
+	fprintf(stderr, "usage: %s [-dp] service [serverpath [serverargs]]\n",
 		faithdname);
 	exit(0);
 }
