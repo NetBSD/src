@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.2 1996/03/27 22:42:24 mark Exp $ */
+/* $NetBSD: mem.c,v 1.3 1997/07/31 23:02:24 mark Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -116,7 +116,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
+		/* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
 			pmap_enter(pmap_kernel(), (vm_offset_t)memhook,
@@ -129,7 +129,7 @@ mmrw(dev, uio, flags)
 			    (vm_offset_t)memhook + NBPG);
 			continue;
 
-/* minor device 1 is kernel memory */
+		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
@@ -139,13 +139,13 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is EOF/RATHOLE */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 3 (/dev/zero) is source of nulls on read, rathole on write */
+		/* minor device 3 (/dev/zero) is source of nulls on read, rathole on write */
 		case 3:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
@@ -186,22 +186,21 @@ mmmmap(dev, off, prot)
 {
 	struct proc *p = curproc;	/* XXX */
 
-	switch (minor(dev)) {
-/* minor device 0 is physical memory */
-	case 0:
-		if (off > ctob(physmem) &&
-		    suser(p->p_ucred, &p->p_acflag) != 0)
-			return -1;
-		return arm_byte_to_page(off);
+	/*
+	 * /dev/mem is the only one that makes sense through this
+	 * interface.  For /dev/kmem any physaddr we return here
+	 * could be transient and hence incorrect or invalid at
+	 * a later time.  /dev/null just doesn't make any sense
+	 * and /dev/zero is a hack that is handled via the default
+	 * pager in mmap().
+	 */
+	if (minor(dev) != 0)
+		return (-1);
 
-/* minor device 1 is kernel memory */
-	case 1:
-		/* XXX - writability, executability checks? */
-		if (!kernacc((caddr_t)off, NBPG, B_READ))
-			return -1;
-		return arm_byte_to_page(vtophys(off));
+	/* minor device 0 is physical memory */
 
-	default:
+	if (off > ctob(physmem) &&
+	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return -1;
-	}
+	return arm_byte_to_page(off);
 }
