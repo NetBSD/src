@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2002/03/20 17:59:28 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2002/03/26 15:02:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -487,7 +487,7 @@ sendsig(catcher, sig, mask, code)
 		sp = ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
 					  p->p_sigctx.ps_sigstk.ss_size);
 	else
-		sp = (caddr_t)tf->tf_rsp;
+		sp = (caddr_t)tf->tf_rsp - 128;
 	/*
 	 * Round down the stackpointer to a multiple of 16 for
 	 * fxsave and the ABI.
