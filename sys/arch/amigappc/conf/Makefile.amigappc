@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amigappc,v 1.9 2003/01/06 13:04:59 wiz Exp $
+#	$NetBSD: Makefile.amigappc,v 1.10 2003/09/27 21:32:12 is Exp $
 
 # Makefile for NetBSD
 #
@@ -18,19 +18,19 @@
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
 MACHINE_ARCH=powerpc
-USETOOLS?=	no
+USETOOLS?=	yes
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
 
-AR?=		/usr/pkg/cross/powerpc-netbsd/bin/ar
-AS?=		/usr/pkg/cross/powerpc-netbsd/bin/as
-CC?=		/usr/pkg/cross/powerpc-netbsd/bin/cc
-CPP?=		/usr/pkg/cross/lib/gcc-lib/powerpc-netbsd/egcs-2.91.60/cpp
-LD?=		/usr/pkg/cross/powerpc-netbsd/bin/ld
-NM?=		/usr/pkg/cross/powerpc-netbsd/bin/nm
-RANLIB?=	/usr/pkg/cross/powerpc-netbsd/bin/ranlib
-SIZE?=		/usr/pkg/cross/powerpc-netbsd/bin/size
-STRIP?=		/usr/pkg/cross/powerpc-netbsd/bin/strip
+AR?=		ar
+AS?=		as
+CC?=		cc
+CPP?=		cpp
+LD?=		ld
+NM?=		nm
+RANLIB?=	ranlib
+SIZE?=		size
+STRIP?=		strip
 
 ##
 ## (1) port identification
