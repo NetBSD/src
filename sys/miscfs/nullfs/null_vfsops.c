@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.32 2001/09/15 16:12:58 chs Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.33 2001/11/07 04:15:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -81,16 +81,16 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+
 #include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/layer_extern.h>
 
 int	nullfs_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
+	    struct nameidata *, struct proc *));
 int	nullfs_unmount __P((struct mount *, int, struct proc *));
 
 #define	NNULLNODECACHE	16
@@ -106,12 +106,12 @@ nullfs_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	int error = 0;
 	struct null_args args;
 	struct vnode *lowerrootvp, *vp;
 	struct null_mount *nmp;
 	struct layer_mount *lmp;
 	size_t size;
+	int error = 0;
 
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount(mp = %p)\n", mp);
@@ -129,9 +129,9 @@ nullfs_mount(mp, path, data, ndp, p)
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
 		lmp = MOUNTTOLAYERMOUNT(mp);
-		if (args.nulla_target == 0)
+		if (args.nulla_target == NULL)
 			return (vfs_export(mp, &lmp->layerm_export,
-					&args.la.export));
+			    &args.la.export));
 		else
 			return (EOPNOTSUPP);
 	}
@@ -153,7 +153,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 * First cut at fixing up upper mount point
 	 */
 	nmp = (struct null_mount *) malloc(sizeof(struct null_mount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
+	    M_UFSMNT, M_WAITOK);		/* XXX */
 	memset((caddr_t)nmp, 0, sizeof(struct null_mount));
 
 	mp->mnt_data = (qaddr_t) nmp;
@@ -167,7 +167,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 */
 	vfs_getnewfsid(mp);
 
-	nmp->nullm_size = sizeof (struct null_node);
+	nmp->nullm_size = sizeof(struct null_node);
 	nmp->nullm_tag = VT_NULL;
 	nmp->nullm_bypass = layer_bypass;
 	nmp->nullm_alloc = layer_node_alloc;	/* the default alloc is fine */
@@ -202,8 +202,8 @@ nullfs_mount(mp, path, data, ndp, p)
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	(void) copyinstr(args.la.target, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
-	    &size);
+	(void) copyinstr(args.la.target, mp->mnt_stat.f_mntfromname,
+	    MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount: lower %s, alias at %s\n",
@@ -238,7 +238,7 @@ nullfs_unmount(mp, mntflags, p)
 	 * moment, but who knows...
 	 */
 #if 0
-	mntflushbuf(mp, 0); 
+	mntflushbuf(mp, 0);
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
@@ -249,21 +249,23 @@ nullfs_unmount(mp, mntflags, p)
 
 #ifdef NULLFS_DIAGNOSTIC
 	vprint("alias root of lower", null_rootvp);
-#endif	 
+#endif
 	/*
 	 * Release reference on underlying root vnode
 	 */
 	vrele(null_rootvp);
+
 	/*
 	 * And blow it away for future re-use
 	 */
 	vgone(null_rootvp);
+
 	/*
 	 * Finally, throw away the null_mount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
-	return 0;
+	mp->mnt_data = NULL;
+	return (0);
 }
 
 extern const struct vnodeopv_desc null_vnodeop_opv_desc;
