@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.67 2002/04/05 00:12:14 ad Exp $	*/
+/*	$NetBSD: util.c,v 1.68 2002/05/24 08:07:50 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1070,15 +1070,25 @@ set_crypt_type(void)
 	fn = strdup(target_expand("/etc/passwd.conf"));
 	rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
 
-	if (!yesno) {
+	switch (yesno) {
+	case 0:	/* MD5 */
 		pwc = fopen(fn, "w");
-
 		fprintf(pwc,
 		    "default:\n"
 		    "  localcipher = md5\n"
 		    "  ypcipher = md5\n");
-
 		fclose(pwc);
+		break;
+	case 1:	/* DES */
+		break;
+	case 2:	/* blowfish 2^7 */
+		pwc = fopen(fn, "w");
+		fprintf(pwc,
+		    "default:\n"
+		    "  localcipher = blowfish,7\n"
+		    "  ypcipher = blowfish,7\n");
+		fclose(pwc);
+		break;
 	}
 
 	free(fn);
