@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.2 (Berkeley) 6/30/90
+#	from: @(#)Makefile	5.2 (Berkeley) 6/30/90
+#	$Id: Makefile,v 1.4 1993/07/31 15:32:13 mycroft Exp $
 
 DIR=	smm/07.sendmailop
 DOC=	07.sendmailop

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.4 (Berkeley) 5/11/90
+#	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
+#	$Id: Makefile,v 1.3 1993/07/31 15:28:41 mycroft Exp $
 
 MAN4=	acc.0 ad.0 autoconf.0 cons.0 crl.0 css.0 ct.0 ddn.0 de.0 dh.0 dhu.0 \
 	dmc.0 dmf.0 dmz.0 dn.0 dz.0 ec.0 en.0 ex.0 fl.0 hdh.0 hk.0 hp.0 \

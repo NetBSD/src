@@ -1,4 +1,5 @@
-#	@(#)Makefile	6.2 (Berkeley) 6/30/90
+#	from: @(#)Makefile	6.2 (Berkeley) 6/30/90
+#	$Id: Makefile,v 1.3 1993/07/31 15:34:01 mycroft Exp $
 
 DIR=	ps1/04.pascal
 DOC=	04.pascal

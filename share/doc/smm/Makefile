@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.2.1.2 (Berkeley) 5/7/91
+#	from: @(#)Makefile	5.2.1.2 (Berkeley) 5/7/91
+#	$Id: Makefile,v 1.3 1993/07/31 15:32:55 mycroft Exp $
 
 # Missing: 03.kdebug 09.uucpimpl 12.uchanges 13.kchanges 17.security
 #	   18.password 19.porttour 21.uucpnet

@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.4.1.1 (Berkeley) 5/7/91
-#
-#	$Header: /cvsroot/src/sbin/Makefile,v 1.10 1993/07/28 00:56:43 cgd Exp $
+#	from: @(#)Makefile	5.4.1.1 (Berkeley) 5/7/91
+#	$Id: Makefile,v 1.11 1993/07/31 15:34:19 mycroft Exp $
 
 # Not ported: XNSrouted enpload
 # Missing: icheck ncheck
