@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)copy.c	7.7 (Berkeley) 5/21/91
+ *	from: @(#)copy.c	7.7 (Berkeley) 5/21/91
+ *	$Id: copy.c,v 1.2 1993/05/20 03:53:57 cgd Exp $
  */
 
 #define	BSIZE	10240

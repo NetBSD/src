@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stat.c	7.1 (Berkeley) 5/5/91
+ *	from: @(#)stat.c	7.1 (Berkeley) 5/5/91
+ *	$Id: stat.c,v 1.2 1993/05/20 03:54:05 cgd Exp $
  */
 
 #include <sys/param.h>

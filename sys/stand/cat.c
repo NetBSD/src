@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cat.c	7.5 (Berkeley) 6/28/90
+ *	from: @(#)cat.c	7.5 (Berkeley) 6/28/90
+ *	$Id: cat.c,v 1.2 1993/05/20 03:53:56 cgd Exp $
  */
 
 main()

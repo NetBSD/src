@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lockf.h	7.1 (Berkeley) 2/1/91
+ *	from: @(#)lockf.h	7.1 (Berkeley) 2/1/91
+ *	$Id: lockf.h,v 1.3 1993/05/20 03:53:25 cgd Exp $
  */
 
 #ifndef _UFS_LOCKF_H_
