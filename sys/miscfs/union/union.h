@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)union.h	8.5 (Berkeley) 5/17/94
- *	$Id: union.h,v 1.2 1994/06/15 23:07:58 mycroft Exp $
+ *	$Id: union.h,v 1.3 1994/06/17 15:21:33 mycroft Exp $
  */
 
 struct union_args {
@@ -75,6 +75,7 @@ struct union_node {
 	struct vnode	        *un_uppervp;	/* overlaying object */
 	struct vnode	        *un_lowervp;	/* underlying object */
 	struct vnode		*un_dirvp;	/* Parent dir of uppervp */
+	struct vnode		*un_pvp;	/* Parent vnode */
 	char			*un_path;	/* saved component name */
 	int			un_hash;	/* saved un_path hash value */
 	int			un_openl;	/* # of opens on lowervp */
