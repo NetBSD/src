@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.8.2.4 1993/11/14 20:31:51 mycroft Exp $
+ *	$Id: kern_kinfo.c,v 1.8.2.5 1993/11/14 20:35:48 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -42,9 +42,10 @@
 #include <sys/tty.h>
 #include <sys/buf.h>
 #include <sys/file.h>
-#include <sys/kinfo_proc.h>
 
 #include <vm/vm.h>
+
+#include <sys/kinfo_proc.h>
 
 #define snderr(e) { error = (e); goto release;}
 extern int kinfo_doproc(), kinfo_rtable(), kinfo_vnode(), kinfo_file();
