@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.22 1998/07/23 23:48:33 gwr Exp $	*/
+/*	$NetBSD: xd.c,v 1.23 1998/12/13 17:57:19 kleink Exp $	*/
 
 /*
  *
@@ -1573,7 +1573,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 int
 xdc_piodriver(xdcsc, iorqno, freeone)
 	struct xdc_softc *xdcsc;
-	char    iorqno;
+	int     iorqno;
 	int     freeone;
 
 {
