@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.10 2001/11/02 05:39:10 lukem Exp $	 */
+/* $NetBSD: pass0.c,v 1.11 2002/02/04 23:41:28 perseant Exp $	 */
 
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
@@ -336,12 +336,12 @@ check_summary(struct lfs * fs, SEGSUM * sp, daddr_t pseg_addr)
 			break;
 		}
 		while (j < howmany(sp->ss_ninos, INOPB(fs)) && *idp == daddr) {
-			bp = getddblk(daddr, fs->lfs_bsize);
+			bp = getddblk(daddr, fs->lfs_ibsize);
 			datap[datac++] = ((u_long *)(bp->b_un.b_buf))[0];
 			bp->b_flags &= ~B_INUSE;
 
 			++j;
-			daddr += btofsb(&sblock, fs->lfs_bsize);
+			daddr += btofsb(&sblock, fs->lfs_ibsize);
 			--idp;
 		}
 		if (i < sp->ss_nfinfo) {
