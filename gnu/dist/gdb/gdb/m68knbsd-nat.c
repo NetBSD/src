@@ -96,6 +96,32 @@ supply_fpregs (freg)
     supply_register (i, freg + fpregmap[i - FP0_REGNUM]);
 }
 
+static void
+fill_regs (regs)
+     char *regs;
+{
+  int i;
+
+  for (i = D0_REGNUM; i <= PC_REGNUM; i++)
+    *(int *)(regs + regmap[i - D0_REGNUM]) = *(int *) &registers[REGISTER_BYTE (i)];
+}
+
+static void
+fill_fpregs(freg)
+     char *freg;
+{
+  int i;
+  char *to;
+  char *from;
+
+  for (i = FP0_REGNUM; i <= FPI_REGNUM; i++)
+    {
+      from = (char *) &registers[REGISTER_BYTE (i)];
+      to = (char *) (freg + fpregmap[i - FP0_REGNUM]);
+      memcpy (to, from, REGISTER_RAW_SIZE (i));
+    }
+}
+
 void
 fetch_inferior_registers (int regno)
 {
@@ -249,3 +275,32 @@ _initialize_m68knbsd_nat (void)
   add_core_fns (&m68knbsd_core_fns);
   add_core_fns (&m68knbsd_elfcore_fns);
 }
+
+void
+nbsd_reg_to_internal (rgs)
+	char *rgs;
+{
+  supply_regs(rgs);
+}
+
+void
+nbsd_fpreg_to_internal (frgs)
+	char *frgs;
+{
+  supply_fpregs(frgs);
+}
+
+void
+nbsd_internal_to_reg (regs)
+	char *regs;
+{
+  fill_regs(regs);
+}
+
+void
+nbsd_internal_to_fpreg (fpregs)
+	char *fpregs;
+{
+  fill_fpregs(fpregs);
+}
+
