@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 1996/11/15 09:21:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -143,3 +143,5 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
