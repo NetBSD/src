@@ -4,8 +4,8 @@
 defopt	PCMCIAVERBOSE
 
 device	pcmcia {[function = -1], [irq = -1]}
-file	dev/pcmcia/pcmcia.c
-file	dev/pcmcia/pcmcia_cis.c
+file	dev/pcmcia/pcmcia.c			pcmcia
+file	dev/pcmcia/pcmcia_cis.c			pcmcia
 
 # device declaration in sys/conf/files
 attach	pcmcia at pcic
