@@ -1,4 +1,4 @@
-/*	$NetBSD: bcd.c,v 1.7 1997/10/10 09:54:18 lukem Exp $	*/
+/*	$NetBSD: bcd.c,v 1.8 1999/07/21 03:59:41 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: bcd.c,v 1.7 1997/10/10 09:54:18 lukem Exp $");
+__RCSID("$NetBSD: bcd.c,v 1.8 1999/07/21 03:59:41 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ __RCSID("$NetBSD: bcd.c,v 1.7 1997/10/10 09:54:18 lukem Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 u_short holes[256] = {
     0x0,	 0x0,	  0x0,	   0x0,	    0x0,     0x0,     0x0,     0x0,
@@ -135,6 +136,9 @@ main(argc, argv)
 	char **argv;
 {
 	char cardline[80];
+
+	/* revoke setgid privileges */
+	setregid(getgid(), getgid());
 
 	/*
 	 * The original bcd prompts with a "%" when reading from stdin,
