@@ -1,0 +1,84 @@
+#	$NetBSD: Makefile.buildboot,v 1.4.4.2 2002/06/13 22:01:45 bjh21 Exp $
+
+S?=	${.CURDIR}/../../../..
+
+.PATH: ${.CURDIR}/../lib
+
+SRCS=	${PROGSOURCE}
+NOMAN=# defined
+BINDIR=/usr/mdec
+BINMODE=444
+FILESDIR=/usr/mdec
+
+RISCOSTYPE ?= ff8
+
+SRCS+=		vers.c
+CLEANFILES+=	vers.c
+.PHONY: vers.c
+vers.c: ${.CURDIR}/version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
+
+CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x28000
+CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I${.CURDIR}/../lib
+CFLAGS=		-O2
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN: machine
+.NOPATH: machine
+.endif
+
+realdepend realall: machine
+CLEANFILES+= machine
+
+machine::
+	-rm -f $@
+	ln -s $S/arch/acorn26/include $@
+
+${OBJS}: machine
+
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+### find out what to use for libz
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+
+### find out what to use for libsa
+SA_AS=		library
+SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no SA_USE_LOADFILE=yes SA_USE_CREAD=yes
+CPPFLAGS+=	-DLIBSA_NO_RAW_ACCESS \
+		-DLIBSA_SINGLE_FILESYSTEM=riscos \
+		-DLIBSA_NO_FS_WRITE \
+		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET \
+		-DHEAP_VARIABLE
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+### find out what to use for libriscos
+RISCOS_AS=		library
+.include "${S}/arch/acorn26/stand/lib/Makefile.inc"
+LIBRISCOS=		${RISCOSLIB}
+
+RELOC=8000
+# -N (OMAGIC) since we don't need a gap between text and data.
+LINKFLAGS=-N
+
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS}
+	${LD} -o ${.TARGET} ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
+	    ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS} ${LIBSA}
+	${SIZE} ${.TARGET}
+
+${PROG},${RISCOSTYPE}: ${PROG}
+	${OBJCOPY} --output-target=binary ${.ALLSRC} ${.TARGET}
+
+realall: ${PROG},${RISCOSTYPE}
+
+CLEANFILES+=	${PROG},${RISCOSTYPE}
+FILES+=		${PROG},${RISCOSTYPE}
+
+.include <bsd.prog.mk>
