@@ -1,4 +1,4 @@
-.\"	$NetBSD: setlocale.3,v 1.17 2003/04/16 13:34:41 wiz Exp $
+.\"	$NetBSD: setlocale.3,v 1.18 2003/05/30 12:11:48 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"	@(#)setlocale.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd February 12, 2003
+.Dd May 30, 2003
 .Dt SETLOCALE 3
 .Os
 .Sh NAME
@@ -89,6 +89,13 @@ and so on.
 The real work is done by the
 .Fn setrunelocale
 function.
+.It Dv LC_MESSAGES
+Set a locale for message catalogs.
+This controls the selection of message catalogs by the
+.Xr catgets 3
+and
+.Xr gettext 3
+families of functions.
 .It Dv LC_MONETARY
 Set a locale for formatting monetary values;
 this affects the
@@ -344,6 +351,7 @@ following manner before using any of the locale-specific information:
 .\" .El
 .Sh SEE ALSO
 .Xr catopen 3 ,
+.Xr gettext 3 ,
 .Xr nl_langinfo 3 ,
 .Xr nls 7
 .\" .Xr strcoll 3 ,						XXX
