@@ -162,7 +162,7 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 #else
 	hbuf = NULL;
 	hp = gethostbyaddr((char *)in, sizeof(*in), AF_INET);
-	if (hp && strlen(hp->h_name) < sizeof(hbuf) - 1) {
+	if (hp) {
 	    error = 0;
 	    hbuf = mystrdup(hp->h_name);
 	} else
