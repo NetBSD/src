@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc931.c,v 1.7 2001/02/27 04:13:13 itojun Exp $	*/
+/*	$NetBSD: rfc931.c,v 1.8 2002/06/06 21:45:19 itojun Exp $	*/
 
  /*
   * rfc931() speaks a common subset of the RFC 931, AUTH, TAP, IDENT and RFC
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
 #else
-__RCSID("$NetBSD: rfc931.c,v 1.7 2001/02/27 04:13:13 itojun Exp $");
+__RCSID("$NetBSD: rfc931.c,v 1.8 2002/06/06 21:45:19 itojun Exp $");
 #endif
 #endif
 
@@ -99,7 +99,7 @@ char   *dest;
 
     /* address family must be the same */
     if (rmt_sin->sa_family != our_sin->sa_family) {
-	STRN_CPY(dest, result, STRING_LENGTH);
+	strlcpy(dest, result, STRING_LENGTH);
 	return;
     }
     switch (rmt_sin->sa_family) {
@@ -114,7 +114,7 @@ char   *dest;
 	break;
 #endif
     default:
-	STRN_CPY(dest, result, STRING_LENGTH);
+	strlcpy(dest, result, STRING_LENGTH);
 	return;
     }
     switch (our_sin->sa_family) {
@@ -127,7 +127,7 @@ char   *dest;
 	break;
 #endif
     default:
-	STRN_CPY(dest, result, STRING_LENGTH);
+	strlcpy(dest, result, STRING_LENGTH);
 	return;
     }
 
@@ -237,5 +237,5 @@ char   *dest;
 	}
 	fclose(fp);
     }
-    STRN_CPY(dest, result, STRING_LENGTH);
+    strlcpy(dest, result, STRING_LENGTH);
 }
