@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.30 1998/09/28 21:50:32 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.31 1998/09/28 22:21:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 1998/09/28 21:50:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 1998/09/28 22:21:13 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -321,9 +321,6 @@ cpu_run_spinup_queue()
 	long timeout;
 	struct pcs *pcsp, *primary_pcsp;
 	struct pcb *pcb;
-#if 0
-	int s;
-#endif
 
 	primary_pcsp = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 
@@ -408,10 +405,6 @@ cpu_run_spinup_queue()
 		/* Make sure the secondary console sees all this. */
 		alpha_mb();
 
-#if 0
-		s = prom_enter();	/* XXX XXX XXX */
-#endif
-
 		/* Send a "START" command to the secondary CPU's console. */
 		if (cpu_iccb_send(sc->sc_cpuid, "START\r\n")) {
 			printf("%s: unable to issue `START' command\n",
@@ -443,9 +436,6 @@ cpu_run_spinup_queue()
 		if (timeout == 0)
 			printf("%s: processor failed to hatch\n",
 			    sc->sc_dev.dv_xname);
-#if 0
-		prom_leave(s);		/* XXX XXX XXX */
-#endif
 	}
 }
 
