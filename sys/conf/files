@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.127 1997/07/06 12:40:30 fvdl Exp $
+#	$NetBSD: files,v 1.128 1997/07/22 23:33:33 pk Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -100,6 +100,10 @@ file	dev/ic/midway.c		en
 # NCR 53x9x or Emulex ESP SCSI Controller
 define	ncr53c9x
 file	dev/ic/ncr53c9x.c	ncr53c9x
+
+# Intel 82586 Ethernet Controller
+define	i82586
+file	dev/ic/i82586.c		i82586
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
