@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2003/08/07 16:27:44 agc Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2003/12/08 14:59:26 chs Exp $	*/
 
 /*	$OpenBSD: conf.c,v 1.15 2001/09/28 02:53:13 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.7 2003/08/07 16:27:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.8 2003/12/08 14:59:26 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,10 +51,8 @@ struct  consdev constab[] = {
 	cons_init(wscons),
 #endif
 #endif
-#if 0
 #if NCOM > 0
 	cons_init(com),
-#endif
 #endif
 	{ 0 }
 };
