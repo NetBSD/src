@@ -1,11 +1,11 @@
- 	$Id: syscalls.master,v 1.18 1994/05/07 00:39:06 cgd Exp $
+ 	$Id: syscalls.master,v 1.19 1994/05/17 00:00:46 cgd Exp $
 ;	from: @(#)syscalls.master	7.26 (Berkeley) 3/25/91
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
 
 ; Columns: number type nargs name altname/comments
 ;	number	system call number, must be in order
-;	type	one of STD, OBSOL, UNIMPL, NODEF, COMPAT
+;	type	one of STD, OBSOL, UNIMPL, NODEF, COMPAT, NCOMPAT, LIBCOMPAT
 ;	nargs	number of arguments
 ;	name	name of syscall routine
 ;	altname	name of system call if different
@@ -17,6 +17,7 @@
 ;	LIBCOMPAT included on COMPAT #ifdef, and placed in syscall.h
 ;	OBSOL	obsolete, not included in system, only specifies name
 ;	NODEF	do everything except include in syscall.h
+;	NCOMPAT	included on NetBSD COMPAT #ifdef
 ;	UNIMPL	not implemented, placeholder only
 
 ; #ifdef's, etc. may be included, and are copied to the output files.
@@ -215,9 +216,9 @@
 160	UNIMPL	0 nosys
 161	UNIMPL	0 nosys
 #endif
-162	COMPAT	2 getdomainname
-163	COMPAT	2 setdomainname
-164	COMPAT	1 uname
+162	NCOMPAT	2 getdomainname
+163	NCOMPAT	2 setdomainname
+164	NCOMPAT	1 uname
 165	STD	2 sysarch
 166	UNIMPL	0 nosys
 167	UNIMPL	0 nosys
