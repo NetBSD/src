@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.17 2001/01/16 03:38:24 augustss Exp $
+#	$NetBSD: GENERIC,v 1.18 2001/01/20 11:40:50 tsutsui Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.17 $"
+#ident		"GENERIC-$Revision: 1.18 $"
 
 maxusers	32
 
@@ -256,8 +256,15 @@ ep*	at pci? dev ? function ?	# 3Com 3c59x
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
+# ISA network interfaces
+ep*	at isa? port ? irq ?		# 3Com 3c509 Ethernet
+ne0	at isa? port 0x280 irq 9	# NE2000-compatible Ethernet
+ne1	at isa? port 0x300 irq 10
+we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+
 # ISA Plug-and-Play network intefaces
 ep*	at isapnp?			# 3Com 3c509 Ethernet
+ne*	at isapnp?			# NE2000-compatible Ethernet
 
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
