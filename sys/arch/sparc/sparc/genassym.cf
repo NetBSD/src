@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.32 2001/06/08 04:21:41 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.33 2001/12/11 03:43:22 uwe Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@ include <machine/bsd_openprom.h>
 
 include <sparc/sparc/cpuvar.h>
 
+include <sparc/sparc/msiiepreg.h>
+
 ifdef notyet
 include <sparc/dev/zsreg.h>
 include <sparc/dev/zsvar.h>
@@ -176,6 +178,12 @@ define	FS_FSR		offsetof(struct fpstate, fs_fsr)
 define	FS_QSIZE	offsetof(struct fpstate, fs_qsize)
 define	FS_QUEUE	offsetof(struct fpstate, fs_queue)
 define	FSR_QNE		FSR_QNE
+
+# microSPARC-IIep PCI controller registers
+define PCIC_PROC_IPR_REG	offsetof(struct msiiep_pcic_reg, pcic_proc_ipr)
+define PCIC_SOFT_INTR_CLEAR_REG	offsetof(struct msiiep_pcic_reg, pcic_soft_intr_clear)
+define PCIC_SOFT_INTR_SET_REG	offsetof(struct msiiep_pcic_reg, pcic_soft_intr_set)
+define PCIC_SCCR_REG		offsetof(struct msiiep_pcic_reg, pcic_sccr)
 
 # errno
 define	EFAULT		EFAULT
