@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.17 1998/02/13 17:15:53 cjs Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.18 1998/05/21 00:09:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.17 1998/02/13 17:15:53 cjs Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.18 1998/05/21 00:09:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: ftpcmd.y,v 1.17 1998/02/13 17:15:53 cjs Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 
 #include "extern.h"
@@ -507,7 +508,7 @@ cmd
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
 					    "%04d%02d%02d%02d%02d%02d",
-					    1900 + t->tm_year,
+					    TM_YEAR_BASE + t->tm_year,
 					    t->tm_mon+1, t->tm_mday,
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}
