@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.47 1997/11/21 13:25:14 bouyer Exp $
+#	$NetBSD: files.isa,v 1.48 1998/01/12 09:29:37 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -8,7 +8,7 @@
 # devices:
 #	mcd, scd, wd, wt
 
-device	isa {[port = -1], [size = 0],
+device	isa class dull {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1], [drq2 = -1]}
 attach	isa at isabus
@@ -25,17 +25,17 @@ file	dev/isa/isadma.c		isadma needs-flag
 define	commulti {[slave = -1]}
 
 # AST 4-port board
-device	ast: commulti
+device	ast class dull: commulti
 attach	ast at isa
 file	dev/isa/ast.c			ast
 
 # BOCA 8-port board
-device	boca: commulti
+device	boca class dull: commulti
 attach	boca at isa
 file	dev/isa/boca.c			boca
 
 # IBM RT PC 4-port board
-device	rtfps: commulti
+device	rtfps class dull: commulti
 attach	rtfps at isa
 file	dev/isa/rtfps.c			rtfps
 
@@ -55,7 +55,7 @@ file	dev/isa/cy_isa.c		cy_isa
 
 # PC-style parallel ports (XXX what chip?)
 # XXX chip driver should be defined elsewhere
-device	lpt
+device	lpt class dull
 file	dev/ic/lpt.c			lpt needs-flag
 
 # PC-style parallel ports: ISA bus attachment
@@ -78,7 +78,7 @@ file	dev/isa/aic_isa.c		aic_isa
 
 # Qlogic ESP406/FAS408 boards
 # ncr53c9x device declaration in sys/conf/files
-device	esp: scsi, ncr53c9x, isadma
+device	esp class dull: scsi, ncr53c9x, isadma
 attach	esp at isa with esp_isa
 file	dev/isa/esp_isa.c		esp_isa
 
@@ -88,7 +88,7 @@ attach	bha at isa with bha_isa: isadma
 file	dev/isa/bha_isa.c		bha_isa
 
 # Seagate ST0[12] ICs
-device	sea: scsi, isadma
+device	sea class dull: scsi, isadma
 attach	sea at isa
 file	dev/isa/seagate.c		sea
 
@@ -98,7 +98,7 @@ attach	uha at isa with uha_isa: isadma
 file	dev/isa/uha_isa.c		uha_isa
 
 # Western Digital WD7000 and Future Domain TMC-7000 boards
-device	wds: scsi, isadma
+device	wds class dull: scsi, isadma
 attach	wds at isa
 file	dev/isa/wds.c			wds
 
@@ -107,26 +107,26 @@ file	dev/isa/wds.c			wds
 #
 
 # Mitsumi CD-ROM controllers
-device	mcd: disk
+device	mcd class disk: disk
 attach	mcd at isa
 file	dev/isa/mcd.c			mcd needs-flag
 
 # Sony CDU-3[13]A CD-ROM drives
-device	scd: disk
+device	scd class disk: disk
 attach	scd at isa
 file	dev/isa/scd.c			scd needs-flag
 
 # ISA "wd" (ESDI/IDE/etc.) controllers
 define ata {drive=-1}
-device  wdc: atapi, isadma, ata
+device  wdc class dull: atapi, isadma, ata
 attach	wdc at isa
-device  wd: disk
+device  wd class disk: disk
 attach  wd at ata
 file    dev/isa/wdc.c           wdc needs-flag
 file    dev/isa/wd.c            wd needs-flag
 
 # Wangtek- and Archive-compatible tape controller boards
-device	wt: tape, isadma
+device	wt class tape: tape, isadma
 attach	wt at isa
 file	dev/isa/wt.c			wt needs-flag
 
@@ -137,7 +137,7 @@ file	dev/isa/wt.c			wt needs-flag
 # WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
 # MUST be first: probe is non invasive, and registers are clobbered
 # by other drivers's probe
-device	we: ether, ifnet, arp, dp8390nic
+device	we class ifnet: ether, ifnet, arp, dp8390nic
 attach	we at isa
 file	dev/isa/if_we.c			we
 
@@ -146,17 +146,17 @@ define	elink
 file	dev/isa/elink.c			elink
 
 # 3Com 3C503
-device	ec: ether, ifnet, arp, dp8390nic
+device	ec class ifnet: ether, ifnet, arp, dp8390nic
 attach	ec at isa
 file	dev/isa/if_ec.c			ec
 
 # 3Com 3C505
-device	eg: ether, ifnet, arp
+device	eg class ifnet: ether, ifnet, arp
 attach	eg at isa
 file	dev/isa/if_eg.c			eg
 
 # 3Com 3C501
-device	el: ether, ifnet, arp
+device	el class ifnet: ether, ifnet, arp
 attach	el at isa
 file	dev/isa/if_el.c			el
 
@@ -167,7 +167,7 @@ file	dev/isa/if_ep_isa.c		ep_isa
 
 # Fujitsu MB8696[05]-based boards
 # (Allied Telesis AT1700)
-device	fe: ether, ifnet, arp
+device	fe class ifnet: ether, ifnet, arp
 attach	fe at isa
 file	dev/isa/if_fe.c			fe
 
@@ -179,7 +179,7 @@ file	dev/isa/if_fe.c			fe
 
 # Intel i82595-based boards.
 # (Intel EtherExpress PRO)
-device  iy: ether, ifnet, arp
+device  iy class ifnet: ether, ifnet, arp
 attach	iy at isa
 file    dev/isa/if_iy.c			iy
 
@@ -210,7 +210,7 @@ file	dev/isa/if_sm_isa.c		sm_isa
 # Intel i82586-based boards
 # (AT&T StarLAN 10, AT&T EN100, AT&T StarLAN Fiber, 3Com 3C507)
 # MUST BE LAST ! the probe clobbers some boards (like SMC boards).
-device	ie: ether, ifnet, elink, arp
+device	ie class ifnet: ether, ifnet, elink, arp
 attach	ie at isa
 file	dev/isa/if_ie.c			ie
 
@@ -223,14 +223,14 @@ define	sbdsp
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isadma, sbdsp, mulaw, auconv
+device	sb class dull: audio, isadma, sbdsp, mulaw, auconv
 file	dev/isa/sb.c			sb needs-flag
 
 attach	sb at isa with sb_isa
 file	dev/isa/sb_isa.c		sb_isa needs-flag
 
 # ProAudio Spectrum
-device	pas: audio, isadma, sbdsp, mulaw, auconv
+device	pas class dull: audio, isadma, sbdsp, mulaw, auconv
 attach	pas at isa
 file	dev/isa/pas.c			pas needs-flag
 
@@ -244,29 +244,29 @@ file	dev/isa/ics2101.c		ics2101
 
 
 # Audio systems based on Echo Speech Corp. ESC61[45] ASICs
-device	pss {[port = -1], [size = 0],
+device	pss class dull {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1]}
 attach	pss at isa
-device	sp: audio, isadma, ad1848, auconv
+device	sp class dull: audio, isadma, ad1848, auconv
 attach	sp at pss
 file	dev/isa/pss.c			pss needs-flag
 
 # Microsoft Windows Sound System
-device	wss: audio, isadma, ad1848, auconv
+device	wss class dull: audio, isadma, ad1848, auconv
 attach	wss at isa
 file	dev/isa/wss.c			wss needs-flag
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation. 
-device	gus: audio, isadma, ics2101, ad1848, mulaw, auconv
+device	gus class dull: audio, isadma, ics2101, ad1848, mulaw, auconv
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
 
 #
 # PlanetConnect satellite receiver driver.
 #
-device satlink: isadma
+device satlink class dull: isadma
 attach satlink at isa
 file dev/isa/satlink.c			satlink	needs-flag
