@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.11 1999/09/29 13:19:16 takemura Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.12 1999/10/11 05:21:06 shin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: setjmp.S,v 1.11 1999/09/29 13:19:16 takemura Exp $")
+	ASMSTR("$NetBSD: setjmp.S,v 1.12 1999/10/11 05:21:06 shin Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -123,8 +123,8 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 	swc1	$f29, (29 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	swc1	$f30, (30 * 4 + _OFFSETOF_SC_FPREGS)(a0)
 	swc1	$f31, (31 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-#endif
 	sw	v0, ((32 * 4) + _OFFSETOF_SC_FPREGS)(a0)
+#endif
 	REG_EPILOGUE
 	move	v0, zero
 	j	ra
