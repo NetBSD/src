@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.17 2000/06/13 04:35:29 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.18 2000/08/13 23:45:22 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.40 2000/06/13 03:02:29 jinmei Exp $	*/
 
 /*
@@ -1152,7 +1152,7 @@ nd6_attach_prefix(pr)
 		if (e == 0)
 			pr->ndpr_statef_onlink = 1;
 		else {
-			log(LOG_ERR,
+			log(LOG_DEBUG,
 			    "nd6_attach_prefix: failed to add route for"
 			    " a prefix(%s/%d), errno = %d\n",
 			    ip6_sprintf(&pr->ndpr_addr), pr->ndpr_plen, e);
