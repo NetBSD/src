@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2003/11/10 08:51:51 wiz Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2003/11/30 23:58:51 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -884,6 +884,7 @@ idle_start:
 	jz	idle_loop
 idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	sti
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
 	call	_C_LABEL(sched_lock_idle)
 #endif
