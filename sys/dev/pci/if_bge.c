@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.66 2004/03/27 04:37:59 atatat Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.66.2.1 2004/04/05 20:47:05 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.66 2004/03/27 04:37:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.66.2.1 2004/04/05 20:47:05 tron Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -643,11 +643,11 @@ bge_update_all_threshes(int lvl)
 	 * Now search all the interfaces for this name/number
 	 */
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-		if (strncmp(ifp->if_xname, namebuf, namelen) != 0 ) 
+		if (strncmp(ifp->if_xname, namebuf, namelen) != 0)
 		      continue;
 		/* We got a match: update if doing auto-threshold-tuning */
 		if (bge_auto_thresh)
-			bge_set_thresh(ifp->if_softc, lvl);
+			bge_set_thresh(ifp, lvl);
 	}
 }
 
