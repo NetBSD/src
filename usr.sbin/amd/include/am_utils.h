@@ -1,4 +1,4 @@
-/*	$NetBSD: am_utils.h,v 1.8 1999/09/04 22:38:19 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.8.8.1 2000/10/17 19:50:18 tv Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -645,7 +645,7 @@ extern void nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp);
 extern void normalize_slash(char *);
 extern void ops_showamfstypes(char *buf);
 extern void ops_showfstypes(char *outbuf);
-extern void plog(int, char *,...)
+extern void plog(int, const char *,...)
      __attribute__ ((__format__ (__printf__, 2, 3)));
 extern void rem_que(qelem *);
 extern void reschedule_timeout_mp(void);
@@ -967,7 +967,7 @@ extern void print_nfs_args(const nfs_args_t *nap, u_long nfs_version);
 extern int debug_flags;		/* Debug options */
 extern int debug_option (char *opt);
 extern struct opt_tab dbg_opt[];
-extern void dplog(char *fmt, ...)
+extern void dplog(const char *fmt, ...)
      __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /**************************************************************************/
