@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 1996/02/16 22:12:13 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.30 1996/02/17 00:03:17 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
@@ -175,7 +176,7 @@ oclockmatch(parent, vcf, aux)
 	register struct confargs *ca = aux;
 
 #if defined(SUN4)
-	if (cputyp==CPU_SUN4) {
+	if (cputyp == CPU_SUN4) {
 		if (cpumod == SUN4_100 || cpumod == SUN4_200)
 			return (strcmp(oclockcd.cd_name, ca->ca_ra.ra_name) == 0);
 		return (0);
@@ -274,7 +275,7 @@ clockmatch(parent, vcf, aux)
 	register struct confargs *ca = aux;
 
 #if defined(SUN4)
-	if (cputyp==CPU_SUN4) {
+	if (cputyp == CPU_SUN4) {
 		if (cpumod == SUN4_300 || cpumod == SUN4_400)
 			return (strcmp(clockcd.cd_name,
 				       ca->ca_ra.ra_name) == 0);
@@ -365,7 +366,7 @@ timermatch(parent, vcf, aux)
 	register struct confargs *ca = aux;
 
 #if defined(SUN4)
-	if (cputyp==CPU_SUN4) {
+	if (cputyp == CPU_SUN4) {
 		if (cpumod == SUN4_300 || cpumod == SUN4_400)
 			return (strcmp("timer", ca->ca_ra.ra_name) == 0);
 		return (0);
@@ -471,12 +472,12 @@ delay(n)
 			for (lcv = 0 ; lcv < t ; lcv++)
 				;
 		}
-		return (0);
+		return;
 	}
 #endif /* SUN4 */
 
-	if (timerok==0)
-		return (0);
+	if (timerok == 0)
+		return;
 
 	if (timercd.cd_ndevs == 0)
 		panic("delay");
@@ -517,7 +518,7 @@ cpu_initclocks()
 
 		intersil_enable(i7);  /* enable clock */
 
-		return (0);
+		return;
 	}
 #endif /* SUN4 */
 
