@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.24 1994/07/18 08:05:36 chopps Exp $
+#	$Id: GENERIC,v 1.25 1994/07/31 06:41:01 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -149,25 +149,10 @@ scsibus7	at mgnsc0
 scsibus8	at wesc0
 scsibus9	at idesc0
 
-#
-# compat.
-#
-sd0	at scsibus? target 0 lun 0
-sd1	at scsibus? target 1 lun 0
-sd2	at scsibus? target 2 lun 0
-sd3	at scsibus? target 3 lun 0
-sd4	at scsibus? target 4 lun 0
-sd5	at scsibus? target 5 lun 0
-sd6	at scsibus? target 6 lun 0
-sd7	at scsibus? target ? lun 0
-
-#
-# This is nicer however many amiga setups expect sd units to refer to
-# scsi target numbers.  If this is not the case, you can remove the 
-# specific sdx lines above and each hard drive from low target to high
+# each hard drive from low target to high
 # will configure to the next available sd unit number
-
 sd*	at scsibus? target ? lun ?	# scsi disks
+
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
 
