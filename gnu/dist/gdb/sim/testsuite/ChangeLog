@@ -1,0 +1,385 @@
+2002-06-16  Andrew Cagney  <ac131313@redhat.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+2001-07-31  Ben Elliston  <bje@redhat.com>
+
+	* lib/sim-defs.exp (run_sim_test): Include a description such as
+	"assembling" or "linking" that identifies the phase a test fails
+	in, for easier analysis of failures.
+
+2000-11-01  Dave Brolley  <brolley@cygnus.com>
+
+	* lib/sim-defs.exp (run_sm_test): Correct comment. "output" and
+	"xerror" options do not use a list of machines. Clear options from
+	previous test case. Use "$cpu_option"  to identify the machine to the
+	assembler, if specified.
+
+Tue May 23 21:39:23 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+1999-09-15  Doug Evans  <devans@casey.cygnus.com>
+
+	* sim/arm/b.cgs: New testcase.
+	* sim/arm/bic.cgs: New testcase.
+	* sim/arm/bl.cgs: New testcase.
+
+Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
+
+1999-08-30  Doug Evans  <devans@casey.cygnus.com>
+
+	* lib/sim-defs.exp (run_sim_test): Rename all_machs arg to
+	requested_machs, now is list of machs to run tests for.
+	Delete locals AS,ASFLAGS,LD,LDFLAGS.  Use target_assemble
+	and target_link instead.
+
+1999-04-21  Doug Evans  <devans@casey.cygnus.com>
+
+	* sim/m32r/nop.cgs: Add missing nop insn.
+
+Mon Mar 22 13:28:56 1999  Dave Brolley  <brolley@cygnus.com>
+
+	* sim/fr30/stb.cgs: Correct for unaligned access.
+	* sim/fr30/sth.cgs: Correct for unaligned access.
+	* sim/fr30/ldub.cgs: Fix typo: lduh->ldub. Correct
+	for unaligned access.
+	* sim/fr30/and.cgs: Test unaligned access.
+
+Fri Feb  5 12:41:11 1999  Doug Evans  <devans@canuck.cygnus.com>
+
+	* lib/sim-defs.exp (sim_run): Print simulator arguments log message.
+
+1999-01-05  Doug Evans  <devans@casey.cygnus.com>
+
+	* lib/sim-defs.exp (run_sim_test): New arg all_machs.
+	* sim/fr30/allinsn.exp: Update.
+	* sim/fr30/misc.exp: Update.
+	* sim/m32r/allinsn.exp: Update.
+	* sim/m32r/misc.exp: Update.
+
+Fri Dec 18 17:19:34 1998  Dave Brolley  <brolley@cygnus.com>
+
+	* sim/fr30/ldres.cgs: New testcase.
+	* sim/fr30/copld.cgs: New testcase.
+	* sim/fr30/copst.cgs: New testcase.
+	* sim/fr30/copsv.cgs: New testcase.
+	* sim/fr30/nop.cgs: New testcase.
+	* sim/fr30/andccr.cgs: New testcase.
+	* sim/fr30/orccr.cgs: New testcase.
+	* sim/fr30/addsp.cgs: New testcase.
+	* sim/fr30/stilm.cgs: New testcase.
+	* sim/fr30/extsb.cgs: New testcase.
+	* sim/fr30/extub.cgs: New testcase.
+	* sim/fr30/extsh.cgs: New testcase.
+	* sim/fr30/extuh.cgs: New testcase.
+	* sim/fr30/enter.cgs: New testcase.
+	* sim/fr30/leave.cgs: New testcase.
+	* sim/fr30/xchb.cgs: New testcase.
+	* sim/fr30/dmovb.cgs: New testcase.
+	* sim/fr30/dmov.cgs: New testcase.
+	* sim/fr30/dmovh.cgs: New testcase.
+
+Thu Dec 17 17:18:43 1998  Dave Brolley  <brolley@cygnus.com>
+
+	* sim/fr30/testutils.inc (take_branch{_d},no_branch{_d}): New macros.
+	* sim/fr30/ret.cgs: Add tests fir ret:d.
+	* sim/fr30/inte.cgs: New testcase.
+	* sim/fr30/reti.cgs: New testcase.
+	* sim/fr30/bra.cgs: New testcase.
+	* sim/fr30/bno.cgs: New testcase.
+	* sim/fr30/beq.cgs: New testcase.
+	* sim/fr30/bne.cgs: New testcase.
+	* sim/fr30/bc.cgs: New testcase.
+	* sim/fr30/bnc.cgs: New testcase.
+	* sim/fr30/bn.cgs: New testcase.
+	* sim/fr30/bp.cgs: New testcase.
+	* sim/fr30/bv.cgs: New testcase.
+	* sim/fr30/bnv.cgs: New testcase.
+	* sim/fr30/blt.cgs: New testcase.
+	* sim/fr30/bge.cgs: New testcase.
+	* sim/fr30/ble.cgs: New testcase.
+	* sim/fr30/bgt.cgs: New testcase.
+	* sim/fr30/bls.cgs: New testcase.
+	* sim/fr30/bhi.cgs: New testcase.
+
+Tue Dec 15 17:47:13 1998  Dave Brolley  <brolley@cygnus.com>
+
+	* sim/fr30/div.cgs (int): Add signed division scenario.
+	* sim/fr30/int.cgs (int): Complete testcase.
+	* sim/fr30/testutils.inc (_start): Initialize tbr.
+	(test_s_user,test_s_system,set_i,test_i): New macros.
+
+1998-12-14  Doug Evans  <devans@casey.cygnus.com>
+
+	* lib/sim-defs.exp (run_sim_test): New option xerror, for expected
+	errors.  Translate \n sequences in expected output to newline char.
+	(slurp_options): Make parentheses optional.
+	(sim_run): Look for board_info sim,options.
+	* sim/fr30/hello.ms: Add trailing \n to expected output.
+	* sim/m32r/hello.ms: Ditto.
+	* sim/m32r/hw-trap.ms: Ditto.
+
+	* sim/m32r/trap.cgs: Properly align trap2_handler.
+
+	* sim/m32r/uread16.ms: New testcase.
+	* sim/m32r/uread32.ms: New testcase.
+	* sim/m32r/uwrite16.ms: New testcase.
+	* sim/m32r/uwrite32.ms: New testcase.
+
+1998-12-14  Dave Brolley  <brolley@cygnus.com>
+
+	* sim/fr30/call.cgs: Test ret here as well.
+	* sim/fr30/ld.cgs: Remove bogus comment.
+	* sim/fr30/testutils.inc (save_rp,restore_rp): New macros.
+	* sim/fr30/div.ms: New testcase.
+	* sim/fr30/st.cgs: New testcase.
+	* sim/fr30/sth.cgs: New testcase.
+	* sim/fr30/stb.cgs: New testcase.
+	* sim/fr30/mov.cgs: New testcase.
+	* sim/fr30/jmp.cgs: New testcase.
+	* sim/fr30/ret.cgs: New testcase.
+	* sim/fr30/int.cgs: New testcase.
+
+Thu Dec 10 18:46:25 1998  Dave Brolley  <brolley@cygnus.com>
+
+	* sim/fr30/div0s.cgs: New testcase.
+	* sim/fr30/div0u.cgs: New testcase.
+	* sim/fr30/div1.cgs: New testcase.
+	* sim/fr30/div2.cgs: New testcase.
+	* sim/fr30/div3.cgs: New testcase.
+	* sim/fr30/div4s.cgs: New testcase.
+	* sim/fr30/testutils.inc (mvi_h_dr,set_dbits,test_dbits): New Macros.
+
+Tue Dec  8 13:16:53 1998  Dave Brolley  <brolley@cygnus.com>
+
+	* sim/fr30/testutils.inc (set_s_user): Correct Mask.
+	(set_s_system): Correct Mask.
+	* sim/fr30/ld.cgs (ld): Move previously failing test back
+	into place.
+	* sim/fr30/ldm0.cgs: New testcase.
+	* sim/fr30/ldm1.cgs: New testcase.
+	* sim/fr30/stm0.cgs: New testcase.
+	* sim/fr30/stm1.cgs: New testcase.
+
+Thu Dec  3 14:20:03 1998  Dave Brolley  <brolley@cygnus.com>
+
+	* sim/fr30/ld.cgs: Implement more loads.
+	* sim/fr30/call.cgs: New testcase.
+	* sim/fr30/testutils.inc (testr_h_dr): New macro.
+	(set_s_user,set_s_system): New macros.
+
+	* sim/fr30: New Directory.
+
+Wed Nov 18 10:50:19 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* common/bits-gen.c (main): Add BYTE_ORDER so that it matches
+ 	recent sim/common/sim-basics.h changes.
+	* common/Makefile.in: Update.
+	
+Fri Oct 30 00:37:31 1998  Felix Lee  <flee@cygnus.com>
+
+	* lib/sim-defs.exp (sim_run): download target program to remote
+ 	host, if necessary.  for unix-driven win32 testing.
+
+Tue Sep 15 14:56:22 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* sim/m32r/testutils.inc (test_h_gr): Use mvaddr_h_gr.
+	* sim/m32r/rte.cgs: Test bbpc,bbpsw.
+	* sim/m32r/trap.cgs: Test bbpc,bbpsw.
+
+Fri Jul 31 17:49:13 1998  Felix Lee  <flee@cygnus.com>
+
+	* lib/sim-defs.exp (sim_run): remote_spawn, use writeto instead of
+ 	writeonly.
+
+Fri Jul 24 09:40:34 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* Makefile.in (clean,mostlyclean): Change leading spaces to a tab.
+
+Wed Jul  1 15:57:54 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* sim/m32r/hw-trap.ms: New testcase.
+
+Tue Jun 16 15:44:01 1998 Jillian Ye <jillian@cygnus.com>
+
+	* lib/sim-defs.exp: Print out timeout setting info when "-v" is used.
+
+Thu Jun 11 15:24:53 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* lib/sim-defs.exp (sim_run): Argument env_vals renamed to options,
+	which is now a list of options controlling the behaviour of sim_run.
+
+Wed Jun 10 10:53:20 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* sim/m32r/addx.cgs: Add another test.
+	* sim/m32r/jmp.cgs: Add another test.
+
+Mon Jun  8 16:08:27 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* sim/m32r/trap.cgs: Test trap 2.
+
+Mon Jun  1 18:54:22 1998  Frank Ch. Eigler  <fche@cygnus.com>
+
+	* lib/sim-defs.exp (sim_run): Add possible environment variable
+ 	list to simulator run.
+
+Thu May 28 14:59:46 1998 Jillian Ye <jillian@cygnus.com>
+
+        * Makefile.in: Take RUNTEST out of FLAG_TO_PASS
+                       so that make check can be invoked recursively.
+
+Thu May 14 11:48:35 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* config/default.exp (CC,SIM): Delete.
+
+	* lib/sim-defs.exp (sim_run): Fix handling of output redirection.
+	New arg prog_opts.  All callers updated.
+
+Fri May  8 18:10:28 1998  Jillian Ye <jillian@cygnus.com>
+
+	* Makefile.in: Made "check" the target of two
+          dependencies (test1, test2) so that test2 get a chance to 
+          run even when test1 failed if "make -k check" is used.
+
+Fri May  8 14:41:28 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* lib/sim-defs.exp (sim_version): Simplify.
+	(sim_run): Implement.
+	(run_sim_test): Use sim_run.
+	(sim_compile): New proc.
+
+Mon May  4 17:59:11 1998  Frank Ch. Eigler  <fche@cygnus.com>
+
+	* config/default.exp: Added C compiler settings.
+
+Wed Apr 22 12:26:28 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* Makefile.in (TARGET_FLAGS_TO_PASS): Delete LIBS, LDFLAGS.
+
+Tue Apr 21 10:49:03 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* lib/sim-defs.exp (run_sim_test): Don't exit early if one mach fails,
+	try all machs.
+
+	* sim/m32r/addx.cgs: Test (-1)+(-1)+1.
+
+Fri Apr 17 16:00:52 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* sim/m32r/mv[ft]achi.cgs: Fix expected result
+	(sign extension of top 8 bits).
+
+Wed Feb 25 11:01:17 1998  Doug Evans  <devans@canuck.cygnus.com>
+
+	* Makefile.in (RUNTEST): Fix path to runtest.
+
+Fri Feb 20 11:00:02 1998  Nick Clifton  <nickc@cygnus.com>
+
+	* sim/m32r/unlock.cgs: Fixed test.
+	* sim/m32r/mvfc.cgs: Fixed test.
+	* sim/m32r/remu.cgs: Fixed test.
+	* sim/m32r/bnc24.cgs: Test long BNC instruction.
+	* sim/m32r/bnc8.cgs: Test short BNC instruction.
+	* sim/m32r/ld-plus.cgs: Test LD instruction.
+	* sim/m32r/macwhi.cgs: Test MACWHI instruction.
+	* sim/m32r/macwlo.cgs: Test MACWLO instruction.
+	* sim/m32r/mulwhi.cgs: Test MULWHI instruction.
+	* sim/m32r/mulwlo.cgs: Test MULWLO instruction.
+	* sim/m32r/mvfachi.cgs: Test MVFACHI instruction.
+	* sim/m32r/mvfaclo.cgs: Test MVFACLO instruction.
+	* sim/m32r/mvtaclo.cgs: Test MVTACLO instruction.
+	* sim/m32r/addv.cgs: Test ADDV instruction.
+	* sim/m32r/addv3.cgs: Test ADDV3 instruction.
+	* sim/m32r/addx.cgs: Test ADDX instruction.
+	* sim/m32r/lock.cgs: Test LOCK instruction.
+	* sim/m32r/neg.cgs: Test NEG instruction.
+	* sim/m32r/not.cgs: Test NOT instruction.
+	* sim/m32r/unlock.cgs: Test UNLOCK instruction.
+
+Thu Feb 19 11:15:45 1998  Nick Clifton  <nickc@cygnus.com>
+
+	* sim/m32r/testutils.inc (mvaddr_h_gr): new macro to load an
+	address into a general register.
+
+	* sim/m32r/or3.cgs: Test OR3 instruction.
+	* sim/m32r/rach.cgs: Test RACH instruction.
+	* sim/m32r/rem.cgs: Test REM instruction.
+	* sim/m32r/sub.cgs: Test SUB instruction.
+	* sim/m32r/mv.cgs: Test MV instruction.
+	* sim/m32r/mul.cgs: Test MUL instruction.
+	* sim/m32r/bl24.cgs: Test long BL instruction.
+	* sim/m32r/bl8.cgs: Test short BL instruction.
+	* sim/m32r/blez.cgs: Test BLEZ instruction.
+	* sim/m32r/bltz.cgs: Test BLTZ instruction.
+	* sim/m32r/bne.cgs: Test BNE instruction.
+	* sim/m32r/bnez.cgs: Test BNEZ instruction.
+	* sim/m32r/bra24.cgs: Test long BRA instruction.
+	* sim/m32r/bra8.cgs: Test short BRA instruction.
+	* sim/m32r/jl.cgs: Test JL instruction.
+	* sim/m32r/or.cgs: Test OR instruction.
+	* sim/m32r/jmp.cgs: Test JMP instruction.
+	* sim/m32r/and.cgs: Test AND instruction.
+	* sim/m32r/and3.cgs: Test AND3 instruction.
+	* sim/m32r/beq.cgs: Test BEQ instruction.
+	* sim/m32r/beqz.cgs: Test BEQZ instruction.
+	* sim/m32r/bgez.cgs: Test BGEZ instruction.
+	* sim/m32r/bgtz.cgs: Test BGTZ instruction.
+	* sim/m32r/cmp.cgs: Test CMP instruction.
+	* sim/m32r/cmpi.cgs: Test CMPI instruction.
+	* sim/m32r/cmpu.cgs: Test CMPU instruction.
+	* sim/m32r/cmpui.cgs: Test CMPUI instruction.
+	* sim/m32r/div.cgs: Test DIV instruction.
+	* sim/m32r/divu.cgs: Test DIVU instruction.
+	* sim/m32r/cmpeq.cgs: Test CMPEQ instruction.
+	* sim/m32r/sll.cgs: Test SLL instruction.
+	* sim/m32r/sll3.cgs: Test SLL3 instruction.
+	* sim/m32r/slli.cgs: Test SLLI instruction.
+	* sim/m32r/sra.cgs: Test SRA instruction.
+	* sim/m32r/sra3.cgs: Test SRA3 instruction.
+	* sim/m32r/srai.cgs: Test SRAI instruction.
+	* sim/m32r/srl.cgs: Test SRL instruction.
+	* sim/m32r/srl3.cgs: Test SRL3 instruction.
+	* sim/m32r/srli.cgs: Test SRLI instruction.
+	* sim/m32r/xor3.cgs: Test XOR3 instruction.
+	* sim/m32r/xor.cgs: Test XOR instruction.
+
+Tue Feb 17 12:46:05 1998  Doug Evans  <devans@seba.cygnus.com>
+
+	* config/default.exp: New file.
+	* lib/sim-defs.exp: New file.
+	* sim/m32r/*: m32r dejagnu simulator testsuite.
+
+	* Makefile.in (build_alias): Define.
+	(arch): Define.
+	(RUNTEST_FOR_TARGET): Delete.
+	(RUNTEST): Fix.
+	(check): Depend on site.exp.  Run dejagnu.
+	(site.exp): New target.
+	* configure.in (arch): Define from target_cpu.
+	* configure: Regenerate.
+
+Wed Sep 17 10:21:26 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* common/bits-gen.c (gen_bit): Pass in the full name of the macro.
+	(gen_mask): Ditto.
+
+	* common/bits-tst.c (main): Add tests for LSSEXT, MSSEXT.
+	(calc): Add support for 8 bit version of macros.
+	(main): Add tests for 8 bit versions of macros.
+	(check_sext): Check SEXT of zero clears bits.
+
+	* common/bits-gen.c (main): Generate tests for 8 bit versions of
+ 	macros.
+
+Thu Sep 11 13:04:40 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* common/Make-common.in: New file, provide generic rules for
+ 	running checks.
+
+Mon Sep  1 16:43:55 1997  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* configure.in (configdirs): Test for the target directory instead
+ 	of matching on a target.
+

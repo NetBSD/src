@@ -1,0 +1,43 @@
+autogen definitions Makefile.tpl;
+
+/*
+ *    Copyright 2002 Free Software Foundation
+ *
+ * This file is part of GDB.
+ *
+ * This file is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+/* 
+ * Makefile.def
+ * use "autogen Makefile.def" (in directory with Makefile.tpl)
+ * to regenerate Makefile.in
+ */
+
+targets = { target = "all"; 
+            target_flags = '$(FLAGS_TO_PASS)'; };
+targets = { target = "install"; };
+targets = { target = "mostlyclean"; };
+targets = { target = "clean"; };
+targets = { target = "distclean"; 
+            makeline_flag = "-"; };
+targets = { target = "maintainer-clean"; 
+            makeline_flag = "-"; };
+
+subdirs = { subdir = "spu"; };
+subdirs = { subdir = "sparclite"; };
+subdirs = { subdir = "wince"; };
+
+
