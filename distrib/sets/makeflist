@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.37 2001/11/19 06:08:01 jmc Exp $
+# $NetBSD: makeflist,v 1.38 2001/11/19 20:43:33 tv Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -10,7 +10,7 @@
 : ${MAKE=make}
 machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
 arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | $MAKE -s -f-`}
-tc=${USE_NEW_TOOLCHAIN:-`printf '.include <bsd.own.mk>\nxxx:\n\techo ${USE_NEW_TOOLCHAIN}' | ${MAKE} -s -f-`}
+tc=${USE_NEW_TOOLCHAIN:-`printf '.include <bsd.own.mk>\nxxx:\n\techo ${USE_NEW_TOOLCHAIN:Dyes}' | ${MAKE} -s -f-`}
 setd=`pwd`
 nlists="base comp etc games man misc text"
 xlists="xbase xcomp xcontrib xfont xserver xmisc"
@@ -97,7 +97,7 @@ for setname in $lists; do
 			cat $setd/lists/$setname/lint.mi
 		fi
 	fi
-	if [ "$tc" = "nowarn" ]; then
+	if [ "$tc" = "yes" ]; then
 		if [ -f $setd/lists/$setname/tc.mi ]; then
 			cat $setd/lists/$setname/tc.mi
 		fi
