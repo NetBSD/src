@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.14 1999/02/18 02:24:30 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.15 1999/03/25 23:19:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,9 +104,6 @@ void	epic_tick __P((void *));
 void	epic_statchg __P((struct device *));
 int	epic_mediachange __P((struct ifnet *));
 void	epic_mediastatus __P((struct ifnet *, struct ifmediareq *));
-
-/* XXX Should be somewhere else. */
-#define	ETHER_MIN_LEN		60
 
 #define	INTMASK	(INTSTAT_FATAL_INT | INTSTAT_TXU | \
 	    INTSTAT_TXC | INTSTAT_RQE | INTSTAT_RCC)
