@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.2 2003/09/10 07:12:33 tls Exp $	*/
+/*	$NetBSD: randomid.c,v 1.3 2003/09/10 07:20:13 tls Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -88,7 +88,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.2 2003/09/10 07:12:33 tls Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.3 2003/09/10 07:20:13 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -174,13 +174,13 @@ u_int32_t randomid(struct randomid_ctx *);
  */
 
 static u_int32_t
-pmod(u_int32_t gen, u_int32_t exp, u_int32_t mod)
+pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
 {
 	u_int64_t s, t, u;
 
 	s = 1;
 	t = gen;
-	u = exp;
+	u = expo;
 
 	while (u) {
 		if (u & 1)
