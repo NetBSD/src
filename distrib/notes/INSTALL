@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.59 1998/07/07 03:40:32 ross Exp $
+	$NetBSD: INSTALL,v 1.60 1998/08/03 12:23:13 thorpej Exp $
 #define	_FOR_RELEASE 0			/* 0 == snapshot; 1 == release */
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -627,6 +627,7 @@ Steve Allen		<wormey@NetBSD.ORG>
 Lennart Augustsson	<augustss@NetBSD.ORG>
 Christoph Badura	<bad@NetBSD.ORG>
 Manuel Bouyer		<bouyer@NetBSD.ORG>
+Robert V. Baron		<rvb@NetBSD.ORG>
 John Brezak		<brezak@NetBSD.ORG>
 Allen Briggs		<briggs@NetBSD.ORG>
 Aaron Brown		<abrown@NetBSD.ORG>
@@ -636,6 +637,7 @@ Dave Burgess		<burgess@cynjut.infonet.net>
 Dave Carrel		<carrel@NetBSD.ORG>
 Bill Coldwell		<billc@NetBSD.ORG>
 Alistair Crooks		<agc@NetBSD.ORG>
+Aidan Cully		<aidan@NetBSD.ORG>
 Rob Deker		<deker@NetBSD.ORG>
 Chris G. Demetriou	<cgd@NetBSD.ORG>
 Matthias Drochner	<drochner@NetBSD.ORG>
@@ -668,14 +670,17 @@ SAITOH Masanobu		<msaitoh@NetBSD.ORG>
 Neil J. McRae		<neil@NetBSD.ORG>
 Perry Metzger		<perry@NetBSD.ORG>
 Luke Mewburn		<lukem@NetBSD.ORG>
+MINOURA Makoto		<minoura@NetBSD.ORG>
 der Mouse		<mouse@NetBSD.ORG>
 Tohru Nishimura		<nisimura@NetBSD.ORG>
+Greg Oster		<oster@NetBSD.ORG>
 Matthias Pfaller	<matthias@NetBSD.ORG>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Darren Reed		<darrenr@NetBSD.ORG>
 Curt Sampson		<cjs@NetBSD.ORG>
 Wilfredo Sanchez	<wsanchez@NetBSD.ORG>
+Ty Sarna		<tsarna@NetBSD.ORG>
 Matthias Scheler	<tron@NetBSD.ORG>
 Karl Schilke (rAT)	<rat@NetBSD.ORG>
 Tim Shepard		<shep@NetBSD.ORG>
@@ -686,11 +691,13 @@ Bill Sommerfeld		<sommerfeld@NetBSD.ORG>
 Ignatios Souvatzis	<is@NetBSD.ORG>
 Bill Studenmund		<wrstuden@NetBSD.ORG>
 Kevin Sullivan		<sullivan@NetBSD.ORG>
+Kim Suominen		<kim@NetBSD.ORG>
 Matt Thomas		<matt@NetBSD.ORG>
 Enami Tsugutomo		<enami@NetBSD.ORG>
 Todd Vierling		<tv@NetBSD.ORG>
 Paul Vixie		<vixie@NetBSD.ORG>
 Krister Walfridsson	<kristerw@NetBSD.ORG>
+Nathan Williams		<nathanw@NetBSD.ORG>
 Colin Wood		<ender@NetBSD.ORG>
 Steve Woodford		<scw@NetBSD.ORG>
 
