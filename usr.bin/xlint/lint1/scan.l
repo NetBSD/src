@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.30 2002/10/22 21:09:34 christos Exp $ */
+/* $NetBSD: scan.l,v 1.31 2002/10/22 22:50:11 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.30 2002/10/22 21:09:34 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.31 2002/10/22 22:50:11 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1350,6 +1350,8 @@ mktempsym(type_t *t)
 	sym->s_blklev = blklev;
 	sym->s_scl = AUTO;
 	sym->s_kind = FVFT;
+	sym->s_used = 1;
+	sym->s_set = 1;
 
 	if ((sym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &sym->s_link;
