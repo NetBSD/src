@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.5 1994/03/04 23:22:33 cgd Exp $
+ *	$Id: disksubr.c,v 1.6 1994/03/08 02:38:08 cgd Exp $
  */
 
 #include "param.h"
@@ -84,8 +84,8 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
-		lp->d_partitions[0].p_size = 0;
-		lp->d_partitions[0].p_offset = 0;
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
 	}
 	if (lp->d_partitions[i].p_size == 0)
 		lp->d_partitions[i].p_size = 0x1fffffff;
