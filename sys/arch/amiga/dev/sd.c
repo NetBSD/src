@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.7 1994/02/11 07:02:14 chopps Exp $
+ *	$Id: sd.c,v 1.8 1994/02/13 21:10:59 chopps Exp $
  */
 
 /*
@@ -54,29 +54,29 @@
 #endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.7 1994/02/11 07:02:14 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.8 1994/02/13 21:10:59 chopps Exp $";
 #endif
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/dkstat.h"
-#include "sys/disklabel.h"
-#include "sys/malloc.h"
-#include "sys/proc.h"
-#include "sys/reboot.h"
-#include "sys/file.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/dkstat.h>
+#include <sys/disklabel.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/file.h>
 
-#include "device.h"
-#include "scsidefs.h"
-#include "vm/vm_param.h"
-#include "vm/lock.h"
-#include "vm/vm_statistics.h"
-#include "vm/pmap.h"
-#include "vm/vm_prot.h"
+#include <amiga/dev/device.h>
+#include <amiga/dev/scsidefs.h>
+#include <vm/vm_param.h>
+#include <vm/lock.h>
+#include <vm/vm_statistics.h>
+#include <vm/pmap.h>
+#include <vm/vm_prot.h>
 
-#include "rdb.h"
+#include <amiga/dev/rdb.h>
 
 struct sd_softc;
 

@@ -42,22 +42,22 @@
  *	@(#)event.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: event.c,v 1.5 92/11/26 01:10:44 torek Exp  (LBL)
- * $Id: event.c,v 1.1 1994/01/26 21:05:41 mw Exp $
+ * $Id: event.c,v 1.2 1994/02/13 21:10:23 chopps Exp $
  */
 
 /*
  * Internal `Firm_event' interface for the keyboard and mouse drivers.
  */
 
-#include "param.h"
-#include "fcntl.h"
-#include "malloc.h"
-#include "proc.h"
-#include "systm.h"
-#include "vnode.h"
+#include <sys/param.h>
+#include <sys/fcntl.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
-#include "vuid_event.h"
-#include "event_var.h"
+#include <amiga/dev/vuid_event.h>
+#include <amiga/dev/event_var.h>
 
 /*
  * Initialize a firm_event queue.

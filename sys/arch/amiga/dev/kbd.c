@@ -31,34 +31,34 @@
  * SUCH DAMAGE.
  *
  *	kbd.c
- *	$Id: kbd.c,v 1.6 1994/02/11 07:01:55 chopps Exp $
+ *	$Id: kbd.c,v 1.7 1994/02/13 21:10:48 chopps Exp $
  */
 
 #include "ite.h"
 
 #if NITE > 0
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/proc.h"
-#include "sys/conf.h"
-#include "sys/file.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
-#include "sys/syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
-#include "device.h"
-#include "kbdreg.h"
-#include "itevar.h"
-#include "machine/cpu.h"
+#include <amiga/dev/device.h>
+#include <amiga/dev/kbdreg.h>
+#include <amiga/dev/itevar.h>
+#include <machine/cpu.h>
 
-#include "../amiga/custom.h"
-#include "../amiga/cia.h"
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/cia.h>
 
 /* for sun-like event mode, if you go thru /dev/kbd. */
-#include "event_var.h"
-#include "vuid_event.h"
+#include <amiga/dev/event_var.h>
+#include <amiga/dev/vuid_event.h>
 
 struct kbd_softc {
   int k_event_mode;  	 /* if true, collect events, else pass to ite */

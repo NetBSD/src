@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: viewioctl.h,v 1.2 1994/01/29 06:59:40 chopps Exp $
+ *	$Id: viewioctl.h,v 1.3 1994/02/13 21:11:08 chopps Exp $
  */
 
 /* The view major device is a placeholder device.  It serves
@@ -36,9 +36,6 @@
  * words the graphics system as currently built does not like to be
  * refered to by open/close/ioctl.  This device serves as
  * a interface to graphics. */
-
-#include "grf/grf_bitmap.h"
-#include "grf/grf_colormap.h"
 
 struct view_size {
     int x;

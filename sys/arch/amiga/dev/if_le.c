@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.4 1994/02/12 00:00:08 chopps Exp $
+ *	$Id: if_le.c,v 1.5 1994/02/13 21:10:39 chopps Exp $
  */
 
 #include "le.h"
@@ -47,46 +47,46 @@
  * with VAXen, SUNs, and others that handle and benefit from them.
  * This reasoning is dubious.
  */
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/mbuf.h"
-#include "sys/buf.h"
-#include "sys/protosw.h"
-#include "sys/socket.h"
-#include "sys/syslog.h"
-#include "sys/ioctl.h"
-#include "sys/errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/buf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/syslog.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
 
-#include "net/if.h"
-#include "net/netisr.h"
-#include "net/route.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #ifdef RMP
-#include "netrmp/rmp.h"
-#include "netrmp/rmp_var.h"
+#include <netrmp/rmp.h>
+#include <netrmp/rmp_var.h>
 #endif
 
-#include "../include/cpu.h"
-#include "../include/mtpr.h"
-#include "device.h"
-#include "if_lereg.h"
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
+#include <amiga/dev/device.h>
+#include <amiga/dev/if_lereg.h>
 
 #if NBPFILTER > 0
-#include "../net/bpf.h"
-#include "../net/bpfdesc.h"
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
 #if 0

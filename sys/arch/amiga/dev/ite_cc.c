@@ -1,5 +1,5 @@
 /*
- *	$Id: ite_cc.c,v 1.9 1994/02/11 07:01:49 chopps Exp $
+ *	$Id: ite_cc.c,v 1.10 1994/02/13 21:10:45 chopps Exp $
  */
 
 #include "ite.h"
@@ -8,27 +8,27 @@
 #endif
 #if NITE > 0
 
-#include "param.h"
-#include "conf.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "systm.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
 
 #include "ite.h"
-#include "itevar.h"
-#include "iteioctl.h"
-#include "machine/cpu.h"
+#include <amiga/dev/itevar.h>
+#include <amiga/dev/iteioctl.h>
+#include <machine/cpu.h>
 
-#include "../amiga/cc_types.h"
-#include "../amiga/cc_chipmem.h"
+#include <amiga/amiga/dlists.h>
+#include <amiga/amiga/cc.h>
 
-#include "grf/grf_types.h"
-#include "grf/grf_view.h"
-#include "grf/grf_bitmap.h"
-#include "viewioctl.h"
-#include "viewvar.h"
-#include "termios.h"
+#include <amiga/dev/grfabs_reg.h>
+#include <amiga/dev/viewioctl.h>
+#include <amiga/dev/viewvar.h>
+
+#include <sys/termios.h>
 
 extern unsigned char kernel_font_width, kernel_font_height, kernel_font_baseline; 
 extern short         kernel_font_boldsmear;
@@ -48,10 +48,10 @@ typedef struct ite_priv {
   /* these are precalc'ed for the putc routine so it can be faster. */
   u_int  *column_offset;			  /* array of offsets for columns */
   u_int  row_offset;				  /* the row offset */
-  u_word width;					  /* the bitmap width */
-  u_word underline;				  /* where the underline goes */
-  u_word ft_x;					  /* the font width */
-  u_word ft_y;					  /* the font height */
+  u_short width;					  /* the bitmap width */
+  u_short underline;				  /* where the underline goes */
+  u_short ft_x;					  /* the font width */
+  u_short ft_y;					  /* the font height */
   u_char *font_cell[256];			  /* the font pointer */
 } ipriv_t;
 
@@ -62,7 +62,7 @@ static void view_le32n_cursor(struct ite_softc *ip, int flag);
 static void view_le8n_putc(struct ite_softc *ip, int c, int dy, int dx, int mode);
 static void view_le8n_clear(struct ite_softc *ip, int sy, int sx, int h, int w);
 static void view_le8n_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir);
-void scroll_bitmap (bmap_t *bm, u_word x, u_word y, u_word width, u_word height, word dx, word dy, u_byte mask);
+void scroll_bitmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, short dx, short dy, u_char mask);
 
 
 /* globals */
@@ -146,7 +146,7 @@ ite_new_size (struct ite_softc *ip, struct ite_window_size *vs)
     if (cci->column_offset)
 	free_chipmem (cci->column_offset);
 
-    cci->row_ptr = alloc_chipmem (sizeof (u_byte *)*ip->rows);
+    cci->row_ptr = alloc_chipmem (sizeof (u_char *)*ip->rows);
     cci->column_offset = alloc_chipmem (sizeof (u_int)*ip->cols);
     
     if (!cci->row_ptr || !cci->column_offset) {
@@ -547,7 +547,7 @@ putc_bd (cci,p,f,co,ro,fw,fh)
     register u_int    fw;
     register u_int    fh;
 {
-    u_word ch;
+    u_short ch;
     
     while (fh--) {
 	ch = *f++;
@@ -568,7 +568,7 @@ putc_bd_in (cci,p,f,co,ro,fw,fh)
     register u_int    fw;
     register u_int    fh;
 {
-    u_word ch;
+    u_short ch;
     
     while (fh--) {
 	ch = *f++;
@@ -591,7 +591,7 @@ putc_bd_ul (cci,p,f,co,ro,fw,fh)
     register u_int    fh;
 {
     int underline = cci->underline;
-    u_word ch;
+    u_short ch;
 
     while (underline--) {
 	ch = *f++;
@@ -629,7 +629,7 @@ putc_bd_ul_in (cci,p,f,co,ro,fw,fh)
     register u_int    fh;
 {
     int underline = cci->underline;
-    u_word ch;
+    u_short ch;
     
     while (underline--) {
 	ch = *f++;
@@ -837,10 +837,10 @@ view_le8n_scroll(ip, sy, sx, count, dir)
 }
 
 void 
-scroll_bitmap (bmap_t *bm, u_word x, u_word y, u_word width, u_word height, word dx, word dy, u_byte mask)
+scroll_bitmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, short dx, short dy, u_char mask)
 {
-    u_word depth = bm->depth; 
-    u_word lwpr = bm->bytes_per_row >> 2;
+    u_short depth = bm->depth; 
+    u_short lwpr = bm->bytes_per_row >> 2;
     if (dx) {
     	/* FIX: */ panic ("delta x not supported in scroll bitmap yet.");
     } 

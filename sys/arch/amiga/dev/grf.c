@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	@(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.7 1994/02/11 07:01:36 chopps Exp $
+ *	$Id: grf.c,v 1.8 1994/02/13 21:10:24 chopps Exp $
  */
 
 /*
@@ -50,26 +50,26 @@
 #include "grf.h"
 #if NGRF > 0
 
-#include "param.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "file.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/malloc.h>
 
-#include "device.h"
-#include "grfioctl.h"
-#include "grfvar.h"
+#include <amiga/dev/device.h>
+#include <amiga/dev/grfioctl.h>
+#include <amiga/dev/grfvar.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vm/vm_pager.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pager.h>
 
-#include "miscfs/specfs/specdev.h"
-#include "vnode.h"
-#include "mman.h"
+#include <miscfs/specfs/specdev.h>
+#include <sys/vnode.h>
+#include <sys/mman.h>
 
 #include "ite.h"
 #if NITE == 0
