@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.613 2004/03/12 13:20:49 drochner Exp $
+$NetBSD: pcidevs,v 1.614 2004/03/25 14:09:46 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -835,9 +835,10 @@ product AMD PBC768_AC	0x7445	AMD768 AC97 Audio
 product AMD PBC768_MD	0x7446	AMD768 AC97 Modem
 product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
 product AMD PBC768_USB	0x7449	AMD768 USB Controller
-product AMD PCIX8131_PPB	0x7450	PCI-X Tunnel
-product AMD PCIX8131_APIC	0x7451	IO Apic
-product AMD SC8151	0x7454	AMD8151 AGP Bridge
+product AMD PCIX8131_PPB	0x7450	AMD8131 PCI-X Tunnel
+product AMD PCIX8131_APIC	0x7451	AMD8131 IO Apic
+product AMD AGP8151_DEV	0x7454	AMD8151 AGP Device
+product AMD AGP8151_PPB	0x7455	AMD8151 AGP Bridge
 product AMD PBC8111	0x7460	AMD8111 I/O Hub
 product AMD PBC8111_USB		0x7464	AMD8111 USB Host Controller
 product AMD PBC8111_LPC		0x7468	AMD8111 LPC Controller
