@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.8 2002/06/02 14:44:45 drochner Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.9 2002/07/28 17:54:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,6 +109,8 @@ integrator_bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = buf;
+		map->_dm_buftype = ARM32_BUFTYPE_LINEAR;
 		map->_dm_proc = p;
 	}
 #ifdef DEBUG_DMA
@@ -161,6 +163,8 @@ integrator_bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = m0;
+		map->_dm_buftype = ARM32_BUFTYPE_MBUF;
 		map->_dm_proc = NULL;	/* always kernel */
 	}
 #ifdef DEBUG_DMA
@@ -223,6 +227,8 @@ integrator_bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = uio;
+		map->_dm_buftype = ARM32_BUFTYPE_UIO;
 		map->_dm_proc = p;
 	}
 	return (error);
@@ -480,7 +486,6 @@ integrator_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp,
 		if (first) {
 			map->dm_segs[seg].ds_addr = LOCAL_TO_CM_ALIAS(curaddr);
 			map->dm_segs[seg].ds_len = sgsize;
-			map->dm_segs[seg]._ds_vaddr = vaddr;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
@@ -495,7 +500,6 @@ integrator_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp,
 					break;
 				map->dm_segs[seg].ds_addr = LOCAL_TO_CM_ALIAS(curaddr);
 				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg]._ds_vaddr = vaddr;
 			}
 		}
 
