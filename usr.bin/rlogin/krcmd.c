@@ -1,4 +1,4 @@
-/*	$NetBSD: krcmd.c,v 1.5 1999/02/17 06:49:31 scottr Exp $	*/
+/*	$NetBSD: krcmd.c,v 1.6 1999/06/24 22:43:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: krcmd.c,v 1.5 1999/02/17 06:49:31 scottr Exp $");
+__RCSID("$NetBSD: krcmd.c,v 1.6 1999/06/24 22:43:35 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ krcmd(ahost, rport, remuser, cmd, fd2p, realm)
 		SERVICE_NAME,
 		realm,
 		(CREDENTIALS *)  NULL,		/* credentials not used */
-		(bit_64 *) NULL,		/* key schedule not used */
+		(void *) NULL,		/* key schedule not used */
 		(MSG_DAT *) NULL,		/* MSG_DAT not used */
 		(struct sockaddr_in *) NULL,	/* local addr not used */
 		(struct sockaddr_in *) NULL,	/* foreign addr not used */
