@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bootp.c,v 1.4 1997/10/03 19:55:03 christos Exp $	*/
+/*	$NetBSD: print-bootp.c,v 1.5 1998/07/08 22:14:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: print-bootp.c,v 1.45 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-bootp.c,v 1.4 1997/10/03 19:55:03 christos Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.5 1998/07/08 22:14:10 cgd Exp $");
 #endif
 #endif
 
@@ -161,7 +161,7 @@ bootp_print(register const u_char *cp, u_int length,
 			return;
 		}
 	}
-	TCHECK2(bp->bp_sname[0], 1);		/* check first char only */
+	TCHECK2(bp->bp_file[0], 1);		/* check first char only */
 	if (*bp->bp_file) {
 		printf(" file \"");
 		if (fn_print(bp->bp_file, snapend)) {
