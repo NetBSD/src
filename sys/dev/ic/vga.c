@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.61 2002/07/07 07:34:54 junyoung Exp $ */
+/* $NetBSD: vga.c,v 1.62 2002/07/07 07:37:50 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.61 2002/07/07 07:34:54 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.62 2002/07/07 07:37:50 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.61 2002/07/07 07:34:54 junyoung Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS and WSDISPLAY_CHARFUNCS */
 #include "opt_wsdisplay_compat.h"
-#include "opt_vga.h"
 
 static struct wsdisplay_font _vga_builtinfont = {
 	"builtin",
