@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.174 1999/11/23 06:10:41 mrg Exp $
+# $NetBSD: mi,v 1.175 1999/11/25 01:23:08 simonb Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -887,7 +887,6 @@
 ./usr/share/man/cat8/tunefs.0
 ./usr/share/man/cat8/umount.0
 ./usr/share/man/cat8/unlink.0
-./usr/share/man/cat8/update.0
 ./usr/share/man/cat8/usbdevs.0
 ./usr/share/man/cat8/uucico.0
 ./usr/share/man/cat8/uucpd.0
@@ -1781,7 +1780,6 @@
 ./usr/share/man/man8/tunefs.8
 ./usr/share/man/man8/umount.8
 ./usr/share/man/man8/unlink.8
-./usr/share/man/man8/update.8
 ./usr/share/man/man8/usbdevs.8
 ./usr/share/man/man8/uucico.8
 ./usr/share/man/man8/uucpd.8
