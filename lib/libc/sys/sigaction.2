@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaction.2,v 1.36 2003/09/10 14:13:07 christos Exp $
+.\"	$NetBSD: sigaction.2,v 1.37 2003/09/10 14:27:22 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,10 +110,10 @@ must arrange to restore the previous context itself.
 .Em "struct sigaction"
 includes the following members:
 .Bd -literal -offset indent
-void 	  (*sa_sigaction)(int sig, siginfo_t *info, void *ctx)
-void      (*sa_handler)(int sig)
-sigset_t  sa_mask
-int       sa_flags
+void 	  (*sa_sigaction)(int sig, siginfo_t *info, void *ctx);
+void      (*sa_handler)(int sig);
+sigset_t  sa_mask;
+int       sa_flags;
 .Ed
 .Pp
 When a signal is delivered to a process a new signal mask is
@@ -203,19 +203,21 @@ process will be automatically waited for.
 A user can receive additional information about a caught signal by
 setting the
 .Dv SA_SIGINFO
-flag. An alternative handler that gets passed additional arguments will
+flag.
+An alternative handler that gets passed additional arguments will
 be called which is named
 .Fa sa_sigaction .
 The
 .Ar sig
-argument of this handler contains the signal number that was caught. The
+argument of this handler contains the signal number that was caught.
+The
 .Ar info
 argument contains additional signal specific information which
 is listed in
 .Xr siginfo 5 .
 The
 .Ar ctx
-argument 
+argument
 is a pointer to the
 .Xr ucontext 5
 context where the signal handler will return to.
@@ -323,8 +325,8 @@ and
 .Xr sigsuspend 2 ,
 .Xr setjmp 3 ,
 .Xr sigsetops 3 ,
-.Xr siginfo 5 ,
 .Xr tty 4 ,
+.Xr siginfo 5 ,
 .Xr signal 7
 .Sh STANDARDS
 The
