@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.35 2003/12/06 08:25:39 wiz Exp $
+.\" $NetBSD: pkg_info.1,v 1.36 2004/01/06 16:15:06 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd September 2, 2003
+.Dd January 6, 2004
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -52,10 +52,10 @@ The
 .Ar pkg-name
 may be the name of an installed package (with our without version), a
 pattern matching several installed packages (see the
-.Fl e
-switch for a description of possible patterns),
+.Sx PACKAGE WILDCARDS
+section for a description of possible patterns),
 the pathname to a
-package distribution file, a filename belonging to an installed
+binary package, a filename belonging to an installed
 package (if
 .Fl F
 is also given), or a URL to an ftp-available package.
@@ -82,66 +82,18 @@ Show the install-message file (if any) for each package.
 Show the long-description field for each package.
 .It Fl e Ar pkg-name
 This option
-allows you to test for the presence of another (perhaps
-prerequisite) package from a script.
+allows you to test for the existcnce of a given package. 
 If the package identified by
 .Ar pkg-name
-is currently installed, return 0, otherwise return 1.
-In addition, the names of any package(s) found installed are printed to
+is currently installed, return code is 0, otherwise 1.
+The names of any package(s) found installed are printed to
 stdout unless turned off using the
 .Fl q
 option.
-.Pp
-If the given
 .Ar pkg-name
-contains a
-shell meta character, it will be matched against all installed
-packages using
-.Xr fnmatch 3 .
-.Xr csh 1
-style {,} alternates have also been implemented in addition to this.
-Package version numbers can also be matched in a relational manner
-using the
-.Pa \*[Ge], \*[Le], \*[Gt]
-and
-.Pa \*[Lt]
-operators.
-For example,
-.Pa pkg_info -e 'name\*[Ge]1.3'
-will match versions 1.3 and later of the
-.Pa name
-package.
-The collating sequence of the various package version numbers is
-unusual, but strives to be consistent.
-The magic string ``alpha'' equates to
-.Pa alpha version
-and sorts before a beta version.
-The magic string ``beta'' equates to
-.Pa beta version
-and sorts before a release candidate.
-The magic string ``rc'' equates to
-.Pa release candidate
-and sorts before a release.
-For example,
-.Pa name-1.3rc3
-will sort before
-.Pa name-1.3
-and after
-.Pa name-1.2.9
-Similarly
-.Pa name-1.3alpha2
-will sort before
-.Pa name-1.3beta1
-and they both sort before
-.Pa name-1.3rc1
-In addition, alphabetic characters sort in the same place as
-their numeric counterparts, so that
-.Pa name-1.2e
-has the same sorting value as
-.Pa name-1.2.5
-The magic string ``pl'' equates to a
-.Pa patch level
-and has the same value as a dot in the dewey-decimal ordering schemes.
+can contain wildcards, see the
+.Sx PACKAGE WILDCARDS
+section below.
 .It Fl F
 Interpret any pkg-name given as filename, and translate it to a
 package name using the Package Database.
@@ -206,6 +158,74 @@ Print version number and exit.
 .It Fl v
 Turn on verbose output.
 .El
+.Sh TECHNICAL DETAILS
+Package info is either extracted from package files named on the
+command line, or from already installed package information
+in
+.Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt] .
+.Pp
+A filename can be given instead of a (installed) package name to query
+information on the package this file belongs to.
+This filename is then resolved to a package name using the Package Database.
+For this translation to take place, the
+.Fl F
+flag must be given.
+The filename must be absolute, compare the output of pkg_info
+.Fl aF .
+.Sh PACKAGE WILDCARDS
+In the places where a package name/version is expected, e.g. for the
+.Fl e
+switch, several forms can be used. Either use a package name with or
+without version, or specify a package wildcard that gets matched
+against all installed packages.
+.Pp
+Package wildcards use 
+.Xr fnmatch 3 .
+In addition,
+.Xr csh 1
+style {,} alternates have also been implemented.
+Package version numbers can also be matched in a relational manner
+using the
+.Pa \*[Ge], \*[Le], \*[Gt]
+and
+.Pa \*[Lt]
+operators.
+For example,
+.Pa pkg_info -e 'name\*[Ge]1.3'
+will match versions 1.3 and later of the
+.Pa name
+package.
+The collating sequence of the various package version numbers is
+unusual, but strives to be consistent.
+The magic string ``alpha'' equates to
+.Pa alpha version
+and sorts before a beta version.
+The magic string ``beta'' equates to
+.Pa beta version
+and sorts before a release candidate.
+The magic string ``rc'' equates to
+.Pa release candidate
+and sorts before a release.
+For example,
+.Pa name-1.3rc3
+will sort before
+.Pa name-1.3
+and after
+.Pa name-1.2.9
+Similarly
+.Pa name-1.3alpha2
+will sort before
+.Pa name-1.3beta1
+and they both sort before
+.Pa name-1.3rc1
+In addition, alphabetic characters sort in the same place as
+their numeric counterparts, so that
+.Pa name-1.2e
+has the same sorting value as
+.Pa name-1.2.5
+The magic string ``pl'' equates to a
+.Pa patch level
+and has the same value as a dot in the dewey-decimal ordering schemes.
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DBDIR
 .It Ev PKG_DBDIR
@@ -254,20 +274,6 @@ files examined, it is unlikely that these environment variables would
 ever need to be used to work around limited available space in the
 default locations.
 .El
-.Sh TECHNICAL DETAILS
-Package info is either extracted from package files named on the
-command line, or from already installed package information
-in
-.Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt] .
-.Pp
-A filename can be given instead of a (installed) package name to query
-information on the package this file belongs to.
-This filename is then resolved to a package name using the Package Database.
-For this translation to take place, the
-.Fl F
-flag must be given.
-The filename must be absolute, compare the output of pkg_info
-.Fl aF .
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_admin 1 ,
