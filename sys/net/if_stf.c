@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.17 2001/07/18 16:43:10 thorpej Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.18 2001/11/05 18:02:16 matt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -343,9 +343,7 @@ stf_getsrcifa6(ifp)
 #if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
 	for (ia = ifp->if_addrlist; ia; ia = ia->ifa_next)
 #else
-	for (ia = ifp->if_addrlist.tqh_first;
-	     ia;
-	     ia = ia->ifa_list.tqe_next)
+	TAILQ_FIRST(ia, &ifp->if_addrlist, ifa_list) {
 #endif
 	{
 		if (ia->ifa_addr == NULL)
@@ -361,9 +359,9 @@ stf_getsrcifa6(ifp)
 		INADDR_TO_IA(in, ia4);
 #else
 #ifdef __OpenBSD__
-		for (ia4 = in_ifaddr.tqh_first;
+		for (ia4 = TAILQ_FIRST(&in_ifaddr);
 		     ia4;
-		     ia4 = ia4->ia_list.tqe_next)
+		     ia4 = TAILQ_NEXT(ia4, ia_list))
 #elif defined(__FreeBSD__) && __FreeBSD__ >= 3
 		for (ia4 = TAILQ_FIRST(&in_ifaddrhead);
 		     ia4;
@@ -537,7 +535,7 @@ stf_checkaddr4(sc, in, inifp)
 	 * reject packets with broadcast
 	 */
 #if defined(__OpenBSD__) || defined(__NetBSD__)
-	for (ia4 = in_ifaddr.tqh_first; ia4; ia4 = ia4->ia_list.tqe_next)
+	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list)
 #elif defined(__FreeBSD__) && __FreeBSD__ >= 3
 	for (ia4 = TAILQ_FIRST(&in_ifaddrhead);
 	     ia4;
