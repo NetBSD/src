@@ -1,4 +1,4 @@
-/*	$NetBSD: upap.c,v 1.13 2000/09/23 22:39:39 christos Exp $	*/
+/*	$NetBSD: upap.c,v 1.14 2002/05/29 19:06:33 christos Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: upap.c,v 1.23 1999/11/20 05:11:47 paulus Exp "
+#define RCSID	"Id: upap.c,v 1.24 2001/03/08 05:11:16 paulus Exp "
 #else
-__RCSID("$NetBSD: upap.c,v 1.13 2000/09/23 22:39:39 christos Exp $");
+__RCSID("$NetBSD: upap.c,v 1.14 2002/05/29 19:06:33 christos Exp $");
 #endif
 #endif
 
@@ -49,15 +49,17 @@ static bool hide_password = 1;
  */
 static option_t pap_option_list[] = {
     { "hide-password", o_bool, &hide_password,
-      "Don't output passwords to log", 1 },
+      "Don't output passwords to log", OPT_PRIO | 1 },
     { "show-password", o_bool, &hide_password,
-      "Show password string in debug log messages", 0 },
+      "Show password string in debug log messages", OPT_PRIOSUB | 0 },
+
     { "pap-restart", o_int, &upap[0].us_timeouttime,
-      "Set retransmit timeout for PAP" },
+      "Set retransmit timeout for PAP", OPT_PRIO },
     { "pap-max-authreq", o_int, &upap[0].us_maxtransmits,
-      "Set max number of transmissions for auth-reqs" },
+      "Set max number of transmissions for auth-reqs", OPT_PRIO },
     { "pap-timeout", o_int, &upap[0].us_reqtimeout,
-      "Set time limit for peer PAP authentication" },
+      "Set time limit for peer PAP authentication", OPT_PRIO },
+
     { NULL }
 };
 

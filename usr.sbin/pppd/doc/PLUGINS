@@ -1,3 +1,4 @@
+$NetBSD: PLUGINS,v 1.2 2002/05/29 19:06:30 christos Exp $
 Starting with version 2.3.10, pppd includes support for `plugins' -
 pieces of code which can be loaded into pppd at runtime and which can
 affect its behaviour in various ways.  The idea of plugins is to
@@ -128,4 +129,4 @@ set *popts to a wordlist containing any extra options for this user
 which pppd should apply at this point.
 
 
-## $Id: PLUGINS,v 1.1.1.2 2002/05/29 18:30:16 christos Exp $ ##
+## $Id: PLUGINS,v 1.2 2002/05/29 19:06:30 christos Exp $ ##
