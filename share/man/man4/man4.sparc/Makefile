@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.17 2002/09/13 18:59:43 ad Exp $
+#	$NetBSD: Makefile,v 1.18 2002/11/28 20:06:26 martin Exp $
 # 	from: @(#)Makefile	8.2 (Berkeley) 2/16/94
 
-MAN=	audioamd.4 bwtwo.4 cgeight.4 cgfour.4 cgfourteen.4 cgsix.4 \
+MAN=	audioamd.4 bwtwo.4 bpp.4 cgeight.4 cgfour.4 cgfourteen.4 cgsix.4 \
 	cgthree.4 cgtwo.4 fd.4 intro.4 kbd.4 magma.4 mem.4 ms.4 \
 	nell.4 openprom.4 tcx.4 zx.4
 MLINKS+=mem.4 kmem.4
