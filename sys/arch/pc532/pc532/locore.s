@@ -1102,7 +1102,8 @@ do_soft_intr:
 	movqd	0, _want_softclock(pc)
 	
 no_soft:
-#if NNCR > 0
+
+#if 0  /* NNCR > 0 */
 	cmpqd	0, _ncr_needs_finish(pc)
 	beq	no_ncr
 	bsr	_ncr5380_finish	

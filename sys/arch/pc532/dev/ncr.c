@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ncr.c,v 1.1 1994/02/22 22:55:04 phil Exp $
+ * $Id: ncr.c,v 1.2 1994/02/23 07:59:03 phil Exp $
  *
  */
 
@@ -38,7 +38,7 @@
 
 /* #define PSEUDO_DMA 1 */
 
-static int pdebug=1;
+static int ncr_debug=1;
 
 #include "sys/types.h"
 #include "sys/malloc.h"
@@ -329,7 +329,8 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		return (r);
 	}
         cur_xs = xs;
-	ncr_needs_finish = 1;
+	if (xs->when_done != NULL)
+		(*xs->when_done)(xs->done_arg, xs->done_arg2);
 	return SUCCESSFULLY_QUEUED;
 
 /*
@@ -343,18 +344,6 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		}
 	} while ( ! ( xs->flags & ITSDONE ) );
 */
-}
-
-void
-ncr5380_finish ()
-{ int times = 1;
-	while (ncr_needs_finish != 0)
-		{
-printf ("finish times = %d.\n", times++);
-			ncr_needs_finish = 0;
-			if (cur_xs->when_done != NULL)
- 				(*cur_xs->when_done)(cur_xs);
-		}
 }
 
 static int
@@ -402,6 +391,7 @@ ncr5380_intr(int adapter)
 {
 	register volatile sci_padded_regmap_t *regs = ncr;
 
+printf ("ncr_intr\n");
 	SCI_CLR_INTR(regs);
 	regs->sci_mode    = 0x00;
 }
@@ -433,7 +423,6 @@ ncr5380_reset_target(int adapter, int target)
 	register volatile sci_padded_regmap_t	*regs = ncr;
 	int					dummy;
 
-printf ("ncr_reset\n");
 	scsi_select_ctlr (NCR5380);
 	regs->sci_icmd = SCI_ICMD_TEST;
 	regs->sci_icmd = SCI_ICMD_TEST | SCI_ICMD_RST;
@@ -468,7 +457,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 	if (sense) {
 		switch (sense) {
 			case 0x02:	/* Check condition */
-				printf("check cond. target %d.\n", xs->targ);
+/*				printf("check cond. target %d.\n", xs->targ); */
 				s = splbio();
 				scsi_group0(xs->adapter,
 					    xs->targ,
@@ -478,7 +467,6 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 					    0, (caddr_t) &(xs->sense),
 					    sizeof(struct scsi_sense_data));
 				splx(s);
-printf ("After scsi_group0.");
 				xs->error = XS_SENSE;
 				return HAD_ERROR;
 			case 0x08:	/* Busy */
@@ -890,7 +878,7 @@ scsi_group0(int adapter, int id, int lun, int opcode, int addr, int len,
 		    || (i-- < 0) ) { \
 			printf("ncr.c: timeout counter = %d, len = %d count=%d (count-len %d).\n", \
 				i, len,count,count-len); \
-			printf("pdebug = %d,  1=out, 2=in",pdebug); \
+			printf("ncr_debug = %d,  1=out, 2=in",ncr_debug); \
 			/*dump_regs();*/ \
 			if (poll && !(regs->sci_csr & SCI_CSR_PHASE_MATCH)) { \
 				regs->sci_icmd &= ~SCI_ICMD_DATA; \
@@ -914,7 +902,7 @@ sci_pdma_out(regs, phase, count, data)
 	register volatile u_char	*byte_data = sci_1byte_addr;
 	register int			len = count, i;
 
-pdebug=1;
+ncr_debug=1;
 
 	if (count < 128)
 		return sci_data_out(regs, phase, count, data);
@@ -962,7 +950,7 @@ sci_pdma_in(regs, phase, count, data)
 	register volatile u_char	*byte_data = sci_1byte_addr;
 	register int			len = count, i;
 
-pdebug=2;
+ncr_debug=2;
 	if (count < 128)
 		return sci_data_in(regs, phase, count, data);
 

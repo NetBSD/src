@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.3 1994/02/21 06:43:31 phil Exp $
+ *	$Id: scn.c,v 1.4 1994/02/23 07:59:05 phil Exp $
  */
 
 #include "scn.h"
@@ -408,7 +408,10 @@ struct pc532_device *dp;
 	}
 #endif
 
-	return (1);
+  /* print the device number... */
+  printf ("scn%d at mainbus0 addr 0x%x\n",  unit, line_base);
+
+  return (1);
 }
 
 /* ARGSUSED */
