@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 1996/03/31 03:38:45 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 1996/05/19 02:03:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,6 +84,8 @@
 #include <pmax/dev/ascreg.h>
 
 #include <machine/autoconf.h>
+#include <machine/locore.h>
+
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
@@ -94,6 +96,10 @@
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
+
+
+#include <mips/mips/mips_machdep.c>	/* XXX */
+
 
 #include "pm.h"
 #include "cfb.h"
@@ -110,13 +116,11 @@
 #include <pmax/dev/dcvar.h>
 
 #if NDTOP > 0
-extern int dtopKBDGetc();
+#include <pmax/dev/dtopvar.h>
 #endif
 
 
-extern int KBDGetc();
 extern void fbPutc();
-/*extern struct consdev cn_tab;*/
 
 /* Will scan from max to min, inclusive */
 static int tc_max_slot = KN02_TC_MAX;
@@ -256,7 +260,7 @@ mach_init(argc, argv, code, cv)
 	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
 
 	/* clear the BSS segment */
-	v = (caddr_t)pmax_round_page(end);
+	v = (caddr_t)mips_round_page(end);
 	bzero(edata, v - edata);
 
 	/* Initialize callv so we can do PROM output... */
@@ -271,6 +275,33 @@ mach_init(argc, argv, code, cv)
 		argc--;
 		argv++;
 	}
+
+#if 0
+	/*
+	 * Copy down exception vector code.
+	 */
+	if (MachUTLBMissEnd - MachUTLBMiss > 0x80)
+		panic("startup: UTLB code too large");
+	bcopy(MachUTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
+		MachUTLBMissEnd - MachUTLBMiss);
+	bcopy(mips_R2000_exception, (char *)MACH_GEN_EXC_VEC,
+		mips_R2000_exceptionEnd - mips_R2000_exception);
+
+	/*
+	 * Copy locore-function vector.
+	 */
+	bcopy(&R2000_locore_vec, &mips_locore_jumpvec,
+	      sizeof(mips_locore_jumpvec_t));
+
+	/*
+	 * Clear out the I and D caches.
+	 */
+	mips_r2000_ConfigCache();
+	mips_r2000_FlushCache();
+#else
+	/*XXX*/
+	r2000_vector_init();
+#endif
 
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
@@ -356,22 +387,6 @@ mach_init(argc, argv, code, cv)
 
 	/* clear pages for u areas */
 	bzero(start, v - start);
-
-	/*
-	 * Copy down exception vector code.
-	 */
-	if (MachUTLBMissEnd - MachUTLBMiss > 0x80)
-		panic("startup: UTLB code too large");
-	bcopy(MachUTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
-		MachUTLBMissEnd - MachUTLBMiss);
-	bcopy(mips_R2000_exception, (char *)MACH_GEN_EXC_VEC,
-		mips_R2000_exceptionEnd - mips_R2000_exception);
-
-	/*
-	 * Clear out the I and D caches.
-	 */
-	MachConfigCache();
-	MachFlushCache();
 
 	/*
 	 * Determine what model of computer we are running on.
@@ -1162,7 +1177,13 @@ dumpsys()
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
 	printf("dump ");
-	switch (error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	/*
+	 * XXX
+	 * All but first arguments to  dump() bogus.
+	 * What should blkno, va, size be?
+	 */
+	error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, 0, 0, 0);
+	switch (error) {
 
 	case ENXIO:
 		printf("device bad\n");
