@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_kernfs.c,v 1.16 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_kernfs.c,v 1.17 2005/02/05 15:01:09 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_kernfs.c,v 1.16 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_kernfs.c,v 1.17 2005/02/05 15:01:09 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,24 +98,19 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	main __P((int, char *[]));
-int	mount_kernfs __P((int argc, char **argv));
-static void	usage __P((void));
+int	mount_kernfs(int argc, char **argv);
+static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_kernfs(argc, argv);
 }
 #endif
 
 int
-mount_kernfs(argc, argv)
-	int argc;
-	char *argv[];
+mount_kernfs(int argc, char *argv[])
 {
 	int ch, mntflags;
 	char canon_dir[MAXPATHLEN];
@@ -149,7 +144,7 @@ mount_kernfs(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: mount_kernfs [-o options] /kern mount_point\n");

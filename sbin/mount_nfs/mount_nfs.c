@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.46 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.47 2005/02/05 15:04:56 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.46 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.47 2005/02/05 15:04:56 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,32 +202,27 @@ static struct timeval ktv;
 static NFSKERBKEYSCHED_T kerb_keysched;
 #endif
 
-static void	shownfsargs __P((const struct nfs_args *));
-static int	getnfsargs __P((char *, struct nfs_args *));
+static void	shownfsargs(const struct nfs_args *);
+static int	getnfsargs(char *, struct nfs_args *);
 #ifdef ISO
-static struct	iso_addr *iso_addr __P((const char *));
+static struct	iso_addr *iso_addr(const char *);
 #endif
-int	main __P((int, char *[]));
-int	mount_nfs __P((int argc, char **argv));
-/* void	set_rpc_maxgrouplist __P((int)); */
-static void	usage __P((void));
-static int	xdr_dir __P((XDR *, char *));
-static int	xdr_fh __P((XDR *, struct nfhret *));
+int	mount_nfs(int argc, char **argv);
+/* void	set_rpc_maxgrouplist(int); */
+static void	usage(void);
+static int	xdr_dir(XDR *, char *);
+static int	xdr_fh(XDR *, struct nfhret *);
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_nfs(argc, argv);
 }
 #endif
 
 int
-mount_nfs(argc, argv)
-	int argc;
-	char *argv[];
+mount_nfs(int argc, char *argv[])
 {
 	int c, retval;
 	struct nfs_args *nfsargsp;
@@ -649,8 +644,7 @@ mount_nfs(argc, argv)
 }
 
 static void
-shownfsargs(nfsargsp)
-	const struct nfs_args *nfsargsp;
+shownfsargs(const struct nfs_args *nfsargsp)
 {
 	char fbuf[2048];
 	char host[NI_MAXHOST], serv[NI_MAXSERV];
@@ -689,9 +683,7 @@ shownfsargs(nfsargsp)
 }
 
 static int
-getnfsargs(spec, nfsargsp)
-	char *spec;
-	struct nfs_args *nfsargsp;
+getnfsargs(char *spec, struct nfs_args *nfsargsp)
 {
 	CLIENT *clp;
 	struct addrinfo hints, *ai_nfs, *ai;
@@ -958,17 +950,13 @@ tryagain:
  * xdr routines for mount rpc's
  */
 static int
-xdr_dir(xdrsp, dirp)
-	XDR *xdrsp;
-	char *dirp;
+xdr_dir(XDR *xdrsp, char *dirp)
 {
 	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
 }
 
 static int
-xdr_fh(xdrsp, np)
-	XDR *xdrsp;
-	struct nfhret *np;
+xdr_fh(XDR *xdrsp, struct nfhret *np)
 {
 	int i;
 	long auth, authcnt, authfnd = 0;
@@ -1008,7 +996,7 @@ xdr_fh(xdrsp, np)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n%s\n",
 "[-23bcCdiKlpPqsTUX] [-a maxreadahead] [-D deadthresh]",

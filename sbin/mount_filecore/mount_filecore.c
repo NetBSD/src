@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.10 2005/01/31 05:19:19 erh Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.11 2005/02/05 14:55:44 xtraeme Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -104,24 +104,19 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	main __P((int, char *[]));
-int	mount_filecore __P((int argc, char **argv));
-static void	usage __P((void));
+int	mount_filecore(int argc, char **argv);
+static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_filecore(argc, argv);
 }
 #endif
 
 int
-mount_filecore(argc, argv)
-	int argc;
-	char **argv;
+mount_filecore(int argc, char **argv)
 {
 	struct filecore_args args;
 	int ch, mntflags, opts, useuid;
@@ -208,7 +203,7 @@ mount_filecore(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: mount_filecore [-afnR] [-g gid] [-o options] [-u uid] special node\n");

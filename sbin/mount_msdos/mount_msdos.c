@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.35 2005/01/31 05:19:19 erh Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.36 2005/02/05 15:02:20 xtraeme Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.35 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.36 2005/02/05 15:02:20 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -67,24 +67,19 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	main __P((int, char *[]));
-int	mount_msdos __P((int argc, char **argv));
-static void	usage __P((void)) __attribute__((__noreturn__));
+int	mount_msdos(int argc, char **argv);
+static void	usage(void) __attribute__((__noreturn__));
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_msdos(argc, argv);
 }
 #endif
 
 int
-mount_msdos(argc, argv)
-	int argc;
-	char **argv;
+mount_msdos(int argc, char **argv)
 {
 	struct msdosfs_args args;
 	struct stat sb;
@@ -214,7 +209,7 @@ mount_msdos(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: mount_msdos [-9Gls] [-g gid] [-M mask] [-m mask] [-o options]\n"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_overlay.c,v 1.6 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_overlay.c,v 1.7 2005/02/05 15:14:25 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_overlay.c,v 1.6 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_overlay.c,v 1.7 2005/02/05 15:14:25 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,24 +64,19 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	main __P((int, char *[]));
-int	mount_overlay __P((int argc, char **argv));
-static void	usage __P((void));
+int	mount_overlay(int argc, char **argv);
+static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_overlay(argc, argv);
 }
 #endif
 
 int
-mount_overlay(argc, argv)
-	int argc;
-	char *argv[];
+mount_overlay(int argc, char *argv[])
 {
 	struct overlay_args args;
 	int ch, mntflags;
@@ -125,7 +120,7 @@ mount_overlay(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: mount_overlay [-o options] /overlay mount_point\n");
