@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.2 1999/07/04 02:08:14 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.3 1999/07/11 05:47:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1009,7 +1009,6 @@ uvn_cluster(uobj, offset, loffset, hoffset)
 /*
  * uvn_put: flush page data to backing store.
  *
- * => prefer map unlocked (not required)
  * => object must be locked!   we will _unlock_ it before starting I/O.
  * => flags: PGO_SYNCIO -- use sync. I/O
  * => note: caller must set PG_CLEAN and pmap_clear_modify (if needed)
@@ -1021,16 +1020,17 @@ uvn_put(uobj, pps, npages, flags)
 	struct vm_page **pps;
 	int npages, flags;
 {
-	int retval, sync;
+	struct vnode *vp = (struct vnode *)uobj;
+	int error, sync;
 
 	sync = (flags & PGO_SYNCIO) ? 1 : 0;
 
 	simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	simple_unlock(&uobj->vmobjlock);
-	retval = VOP_PUTPAGES((struct vnode *)uobj, pps, npages, sync, &retval);
+	error = VOP_PUTPAGES(vp, pps, npages, sync, NULL);
 	simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 
-	return(retval);
+	return uvm_errno2vmerror(error);
 }
 
 
@@ -1051,8 +1051,9 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	vaddr_t offset;
 	struct vm_page **pps;		/* IN/OUT */
 	int *npagesp;			/* IN (OUT if PGO_LOCKED) */
-	int centeridx, advice, flags;
+	int centeridx;
 	vm_prot_t access_type;
+	int advice, flags;
 {
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
@@ -1064,7 +1065,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			     access_type, advice, flags);
 	simple_lock_assert(&uobj->vmobjlock, flags & PGO_LOCKED ?
 			   SLOCK_LOCKED : SLOCK_UNLOCKED);
-	return error ? VM_PAGER_ERROR : VM_PAGER_OK;
+	return uvm_errno2vmerror(error);
 }
 
 /*
@@ -1192,13 +1193,6 @@ uvn_asyncget(uobj, offset, npages)
 	 */
 	printf("uvn_asyncget called\n");
 	return (KERN_SUCCESS);
-}
-
-boolean_t
-uvm_vnp_uncache(vp)
-	struct vnode *vp;
-{
-	return(TRUE);
 }
 
 /*
@@ -1380,23 +1374,22 @@ uvm_vnp_zerorange(vp, off, len)
 	off_t off;
 	size_t len;
 {
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
-	off_t pagestart = trunc_page(off);
-	off_t pageend = round_page(off + len);
-	int npages = (pageend - pagestart) >> PAGE_SHIFT;
-	struct vm_page *pgs[npages];
-	char *cp;
+        void *win;
 
-	memset(pgs, 0, sizeof(pgs));
-	simple_lock(&uobj->vmobjlock);
-	uvn_findpages(uobj, (vaddr_t)pagestart, &npages, pgs, 0);
-	simple_unlock(&uobj->vmobjlock);
-	cp = (char *)uvm_pagermapin(pgs, npages, M_WAITOK);
-	memset(cp + (off - pagestart), 0, len);
-	uvm_pagermapout((vaddr_t)cp, npages);
-	simple_lock(&uobj->vmobjlock);
-	uvm_pager_dropcluster(uobj, NULL, pgs, &npages, 0, 0);
-	simple_unlock(&uobj->vmobjlock);
+        /*
+         * XXX invent kzero() and use it
+         */
+
+        while (len) {
+                vsize_t bytelen = len;
+
+                win = ubc_alloc(&vp->v_uvm.u_obj, off, &bytelen, UBC_WRITE);
+                memset(win, 0, bytelen);
+                ubc_release(win, 0);
+
+                off += bytelen;
+                len -= bytelen;
+        }
 }
 
 /*
