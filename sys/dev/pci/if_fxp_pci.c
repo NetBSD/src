@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.13 2001/05/21 21:47:54 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.14 2001/05/21 22:12:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -322,7 +322,9 @@ fxp_pci_attach(parent, self, aux)
 	 * The 82801BA Ethernet has a bug which requires us to send a
 	 * NOP before a CU_RESUME if we're in 10baseT mode.
 	 */
-	if (fpp->fpp_prodid == PCI_PRODUCT_INTEL_82801BA_LAN)
+	if (fpp->fpp_prodid == PCI_PRODUCT_INTEL_82801BA_LAN ||
+	    (fpp->fpp_prodid >= PCI_PRODUCT_INTEL_PRO_100_VE_0 &&
+	     fpp->fpp_prodid <= PCI_PRODUCT_INTEL_PRO_100_VM_2))
 		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
 
 	/* Make sure bus-mastering is enabled. */
