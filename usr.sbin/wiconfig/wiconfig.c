@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.34 2004/08/25 18:29:28 wrstuden Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.35 2004/08/25 18:49:06 wiz Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.34 2004/08/25 18:29:28 wrstuden Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.35 2004/08/25 18:49:06 wiz Exp $");
 #endif
 
 struct wi_table {
@@ -789,11 +789,9 @@ usage()
 {
 
 	fprintf(stderr,
-	    "usage: %s interface "
-	    "[-oD] [-s station name]\n"
-	    "       [-a access point density]\n"
-	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
-	    "       [-M 0|1] [-R 1|3] [-A 1|2] [-g fragmentation threshold]\n"
+	    "usage: %s interface [-Dho] [-A 1|2] [-a access point density]\n"
+	    "                [-d max data length] [-g fragmentation threshold] [-M 0|1]\n"
+	    "                [-m MAC address] [-R 1|3] [-r RTS threshold] [-s station name]\n"
 	    ,
 	    getprogname());
 	exit(1);
@@ -830,7 +828,7 @@ int main(argc, argv)
 		if (ch != 'i')
 			dumpinfo = 0;
 		/*
-		 * Lookup generic options and remeber operand if found.
+		 * Lookup generic options and remember operand if found.
 		 */
 		for (table = wi_tables; *table != NULL; table++)
 			if ((wt = wi_optlookup(*table, ch)) != NULL) {
