@@ -99,12 +99,14 @@ extern long times ();
 
 #endif /* HAVE_TIMES */
 
+#ifndef POSIX_HEADERS
 #ifndef time
 extern time_t time ();
 #endif
 #if HAVE_SYSCONF
 #ifndef sysconf
 extern long sysconf ();
+#endif
 #endif
 #endif
 

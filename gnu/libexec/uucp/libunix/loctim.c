@@ -11,8 +11,10 @@
 
 #include "system.h"
 
+#ifndef POSIX_HEADERS
 #ifndef localtime
 extern struct tm *localtime ();
+#endif
 #endif
 
 void

@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char serial_rcsid[] = "$Id: serial.c,v 1.3 1995/08/24 05:20:12 jtc Exp $";
+const char serial_rcsid[] = "$Id: serial.c,v 1.4 1998/02/04 14:33:15 christos Exp $";
 #endif
 
 #include "uudefs.h"
@@ -2255,7 +2255,7 @@ fsysdep_conn_read (qconn, zbuf, pclen, cmin, ctimeout, freport)
 	  if (errno == EINTR)
 	    {
 	      /* Log the signal.  */
-	      ulog (LOG_ERROR, (const char *) NULL);
+	      ulog (LOG_ERROR, ulognone);
 	    }
 	  if (fSalarm)
 	    {
@@ -2479,7 +2479,7 @@ fsysdep_conn_write (qconn, zwrite, cwrite)
 	    break;
 
 	  /* We were interrupted by a signal.  Log it.  */
-	  ulog (LOG_ERROR, (const char *) NULL);
+	  ulog (LOG_ERROR, ulognone);
 	}
 
       if (cdid < 0)
@@ -2665,7 +2665,7 @@ fsysdep_conn_io (qconn, zwrite, pcwrite, zread, pcread)
 	    break;
 
 	  /* We got interrupted by a signal.  Log it.  */
-	  ulog (LOG_ERROR, (const char *) NULL);
+	  ulog (LOG_ERROR, ulognone);
 	}
 
       if (cgot < 0)
@@ -2733,7 +2733,7 @@ fsysdep_conn_io (qconn, zwrite, pcwrite, zread, pcread)
 	    break;
 
 	  /* We got interrupted by a signal.  Log it.  */
-	  ulog (LOG_ERROR, (const char *) NULL);
+	  ulog (LOG_ERROR, ulognone);
 	}
 
       if (cdid < 0)
@@ -2794,7 +2794,7 @@ fsysdep_conn_io (qconn, zwrite, pcwrite, zread, pcread)
 	  if (c < 0 && errno == EINTR)
 	    {
 	      /* We got interrupted by a signal.  Log it.  */
-	      ulog (LOG_ERROR, (const char *) NULL);
+	      ulog (LOG_ERROR, ulognone);
 	    }
 	  else if (c >= 0)
 	    {
@@ -2887,7 +2887,7 @@ fsysdep_conn_io (qconn, zwrite, pcwrite, zread, pcread)
 		  if (ierr == EINTR)
 		    {
 		      /* We got interrupted by a signal.  Log it.  */
-		      ulog (LOG_ERROR, (const char *) NULL);
+		      ulog (LOG_ERROR, ulognone);
 		    }
 		  else
 		    {

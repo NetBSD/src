@@ -58,8 +58,10 @@
 #define FD_CLOEXEC 1
 #endif
 
+#ifndef POSIX_HEADERS
 #ifndef time
 extern time_t time ();
+#endif
 #endif
 
 /* Open a file to send to another system, and return the mode and

@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char log_rcsid[] = "$Id: log.c,v 1.3 1995/08/24 05:18:56 jtc Exp $";
+const char log_rcsid[] = "$Id: log.c,v 1.4 1998/02/04 14:32:55 christos Exp $";
 #endif
 
 #include <ctype.h>
@@ -125,6 +125,9 @@ static const char * const azSignal_names[INDEXSIG_COUNT] = INDEXSIG_NAMES;
 /* If not NULL, ulog calls this function before outputting anything.
    This is used to support cu.  */
 void (*pfLstart) P((void));
+
+/* Indicate no log processing should take place. */
+const char ulognone[] = "";
 
 /* If not NULL, ulog calls this function after outputting everything.
    This is used to support cu.  */
@@ -260,7 +263,7 @@ ulog (ttype, zmsg, a, b, c, d, f, g, h, i, j)
 
   /* Log any received signal.  We do it this way to avoid calling ulog
      from the signal handler.  A few routines call ulog to get this
-     message out with zmsg == NULL.  */
+     message out with zmsg == ulognone  */
   {
     static boolean fdoing_sigs;
 
@@ -386,7 +389,7 @@ ulog (ttype, zmsg, a, b, c, d, f, g, h, i, j)
 	return;
     }
 
-  if (zmsg == NULL)
+  if (zmsg == ulognone)
     return;
 
   if (pfLstart != NULL)
@@ -592,7 +595,7 @@ void
 ulog_close ()
 {
   /* Make sure we logged any signal we received.  */
-  ulog (LOG_ERROR, (const char *) NULL);
+  ulog (LOG_ERROR, ulognone);
 
   if (eLlog != NULL)
     {
