@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.341 2001/07/23 20:14:37 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.342 2001/07/25 01:45:55 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.337 2001/07/23 20:13:26 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.338 2001/07/25 01:44:59 thorpej Exp 
  */
 
 /*
@@ -824,6 +824,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "American Megatrends",
 	    "MegaRAID 3",
+	},
+	{
+	    PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021,
+	    0,
+	    "Antares Microsystems, Inc.",
+	    "Antares Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
@@ -9157,6 +9163,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIBYTE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "SiByte, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ANTARES, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Antares Microsystems, Inc.",
 	    NULL,
 	},
 	{
