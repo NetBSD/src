@@ -1,4 +1,4 @@
-.\"	$NetBSD: od.1,v 1.4 1997/10/18 13:54:31 mrg Exp $
+.\"	$NetBSD: od.1,v 1.5 1997/10/19 02:34:08 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: od.1,v 1.4 1997/10/18 13:54:31 mrg Exp $
+.\"	$NetBSD: od.1,v 1.5 1997/10/19 02:34:08 lukem Exp $
 .\"	from: @(#)od.1	8.1 (Berkeley) 6/6/93
 .\"
 .Dd %Q
@@ -41,7 +41,7 @@
 .Nm od
 .Nd octal, decimal, hex, ascii dump
 .Sh SYNOPSIS
-.Nm od
+.Nm
 .Op Fl aBbcDdeFfHhIiLlOovXx
 .Sm off
 .Oo
@@ -52,13 +52,13 @@
 .Oc
 .Ar file
 .Sh DESCRIPTION
-.Nm Od
+.Nm
 has been deprecated in favor of
 .Xr hexdump 1 .
 .Pp
 .Xr Hexdump ,
 if called as
-.Nm od ,
+.Nm "" ,
 provides compatibility for the options listed above.
 .Pp
 It does not provide compatibility for the
