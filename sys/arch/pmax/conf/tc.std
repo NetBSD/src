@@ -1,10 +1,8 @@
-#	$NetBSD: tc.std,v 1.4 1998/04/19 08:39:43 jonathan Exp $
+#	$NetBSD: tc.std,v 1.5 1998/11/27 00:09:33 simonb Exp $
 
-########################################################################
-#                                                                      #
-# DECstation Turbochannel configuration and options                    #
-#                                                                      #
-########################################################################
+#########################################################################
+# DECstation Turbochannel configuration and options			#
+#########################################################################
 
 # TurboChannel host bus adapter support
 #tcasic*	at	mainbus0	# doesnt really exist on decstations
