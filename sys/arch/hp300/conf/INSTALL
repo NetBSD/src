@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.15 2004/07/15 03:53:46 atatat Exp $
+# $NetBSD: INSTALL,v 1.16 2004/07/18 05:56:15 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -53,6 +53,7 @@ maxusers	32
 #options 	COMPAT_14	# compatibility with NetBSD 1.4
 #options 	COMPAT_15	# compatibility with NetBSD 1.5
 #options 	COMPAT_16	# compatibility with NetBSD 1.6
+#options 	COMPAT_20	# compatibility with NetBSD 2.0
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
