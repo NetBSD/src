@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_get_ioperm.2,v 1.10 2001/07/04 17:15:07 kleink Exp $
+.\"	$NetBSD: i386_get_ioperm.2,v 1.11 2001/11/10 08:12:16 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,12 +96,6 @@ points outside the process's allocated address space.
 .It Bq Er EPERM
 The caller was not the super-user, or the operation was not permitted at the current security level.
 .El
-.Sh BUGS
-The bitmap should really cover 65536 bits, but that's just too big for
-allocation in a kernel structure.  If you need access to ports beyond
-1024,
-use
-.Xr i386_iopl 2 .
 .Sh SEE ALSO
 .Xr i386_iopl 2
 .Sh REFERENCES
@@ -109,3 +103,9 @@ i386 Microprocessor Programmer's Reference Manual, Intel
 .Sh WARNING
 You can really hose your machine if you enable user-level I/O and
 write to hardware ports without care.
+.Sh BUGS
+The bitmap should really cover 65536 bits, but that's just too big for
+allocation in a kernel structure.  If you need access to ports beyond
+1024,
+use
+.Xr i386_iopl 2 .
