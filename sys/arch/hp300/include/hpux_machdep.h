@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.h,v 1.5 1997/03/16 09:14:25 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.h,v 1.6 1997/03/16 10:02:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@ void	hpux_cpu_bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
 void	hpux_cpu_uname __P((struct hpux_utsname *));
 int	hpux_cpu_sysconf_arch __P((void));
 int	hpux_to_bsd_uoff __P((int *, int *, struct proc *));
-int	hpux_dumpu __P((struct vnode *, struct ucred *));
 
 void	hpux_sendsig __P((sig_t, int, int, u_long));
 void	hpux_setregs __P((struct proc *, struct exec_package *,
