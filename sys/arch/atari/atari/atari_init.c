@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.46 1999/12/06 16:06:24 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.47 2000/02/07 14:36:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -684,6 +684,7 @@ pt_entry_t	*pt;
 u_int		ptsize;		/* Size of 'pt' in bytes	*/
 u_int		ptextra;	/* #of additional I/O pte's	*/
 {
+	extern void	bootm_init __P((vaddr_t, pt_entry_t *, u_long));
 	vaddr_t		ioaddr;
 	pt_entry_t	*pg, *epg;
 	pt_entry_t	pg_proto;
