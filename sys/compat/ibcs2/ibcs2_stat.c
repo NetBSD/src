@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.14 2000/03/30 11:27:16 augustss Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.15 2000/06/28 15:39:28 mrg Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -39,8 +39,6 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_fcntl.h>

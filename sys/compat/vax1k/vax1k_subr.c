@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_subr.c,v 1.3 2000/03/04 07:28:44 matt Exp $	*/
+/*	$NetBSD: vax1k_subr.c,v 1.4 2000/06/28 15:39:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -38,8 +38,6 @@
 #include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/mman.h>
-
-#include <vm/vm.h>
 
 #include <compat/vax1k/vax1k_exec.h>
 

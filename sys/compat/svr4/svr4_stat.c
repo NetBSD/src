@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.37 2000/04/07 07:02:11 chs Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.38 2000/06/28 15:39:36 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 #include <sys/time.h>
 #include <sys/ucred.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <sys/syscallargs.h>

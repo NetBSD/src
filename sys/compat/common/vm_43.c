@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.5 2000/06/25 13:26:22 mrg Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.6 2000/06/28 15:39:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,8 +59,6 @@
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#include <vm/vm.h>
 
 /* ARGSUSED */
 int
