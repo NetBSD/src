@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.45 2001/02/19 22:56:22 cgd Exp $	*/
+/*	$NetBSD: route.c,v 1.46 2001/07/16 17:22:07 bad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.45 2001/02/19 22:56:22 cgd Exp $");
+__RCSID("$NetBSD: route.c,v 1.46 2001/07/16 17:22:07 bad Exp $");
 #endif
 #endif /* not lint */
 
@@ -1643,17 +1643,17 @@ pmsg_addrs(cp, addrs)
 	struct sockaddr *sa;
 	int i;
 
-	if (addrs == 0)
-		return;
-	(void) printf("\nsockaddrs: ");
-	bprintf(stdout, addrs, addrnames);
-	(void) putchar('\n');
-	for (i = 1; i; i <<= 1)
-		if (i & addrs) {
-			sa = (struct sockaddr *)cp;
-			(void) printf(" %s", routename(sa));
-			ADVANCE(cp, sa);
-		}
+	if (addrs != 0) {
+		(void) printf("\nsockaddrs: ");
+		bprintf(stdout, addrs, addrnames);
+		(void) putchar('\n');
+		for (i = 1; i; i <<= 1)
+			if (i & addrs) {
+				sa = (struct sockaddr *)cp;
+				(void) printf(" %s", routename(sa));
+				ADVANCE(cp, sa);
+			}
+	}
 	(void) putchar('\n');
 	(void) fflush(stdout);
 }
