@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.6 1998/06/12 23:08:53 tv Exp $	*/
+/*	$NetBSD: ofw.c,v 1.7 1998/06/18 22:34:39 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -141,8 +141,6 @@ extern int max_processes;
 /* NOTE: These variables will be removed, well some of them */
 extern u_int spl_mask;
 extern u_int current_mask;
-extern int userret_count0;
-extern int userret_count1;
 #endif
 
 extern int ofw_handleticks;
@@ -382,8 +380,6 @@ ofw_boot(howto, bootstr)
 		printf("curproc = 0 - must have been in cpu_idle()\n");
 /*	if (curpcb)
 		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);*/
-	printf("userret_count0=%d\n", userret_count0);
-	printf("userret_count1=%d\n", userret_count1);
 
 	printf("boot: howto=%08x %08x curproc=%08x\n", howto, spl_mask, (u_int)curproc);
 
