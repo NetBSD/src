@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.43 1997/09/06 14:23:13 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.44 1997/09/12 10:27:10 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ struct gus_voice {
 
 struct gus_softc {
 	struct device sc_dev;		/* base device */
-	struct isadev sc_id;		/* ISA device */
+	struct device *sc_isa;		/* pointer to ISA parent */
 	void *sc_ih;			/* interrupt vector */
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh1;	/* handle */
@@ -746,6 +746,10 @@ done:
 	sc->sc_drq = ia->ia_drq;
 	sc->sc_recdrq = recdrq;
 
+	if ((sc->sc_drq    != -1 && !isa_drq_isfree(parent, sc->sc_drq)) ||
+	    (sc->sc_recdrq != -1 && !isa_drq_isfree(parent, sc->sc_recdrq)))
+		return 0;
+
 	ia->ia_iobase = iobase;
 	ia->ia_iosize = GUS_NPORT1;
 	return 1;
@@ -855,6 +859,8 @@ gusattach(parent, self, aux)
 	 * mixer
 	 */
 
+	sc->sc_isa = parent;
+
  	delay(500);
 
  	c = bus_space_read_1(iot, ioh3, GUS_BOARD_REV);
@@ -936,6 +942,24 @@ gusattach(parent, self, aux)
 	}
 	if (sc->sc_revision >= 0xa) {
 		gus_init_cs4231(sc);
+	} else {
+		/* Not using the CS4231, so create our DMA maps. */
+		if (sc->sc_drq != -1) {
+			if (isa_dmamap_create(sc->sc_isa, sc->sc_drq,
+			    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+				printf("%s: can't create map for drq %d\n",
+				       sc->sc_dev.dv_xname, sc->sc_drq);
+				return;
+			}
+		}
+		if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_drq) {
+			if (isa_dmamap_create(sc->sc_isa, sc->sc_recdrq,
+			    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+				printf("%s: can't create map for drq %d\n",
+				       sc->sc_dev.dv_xname, sc->sc_recdrq);
+				return;
+			}
+		}
 	}
 
  	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
