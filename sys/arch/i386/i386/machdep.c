@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.17 1993/10/30 13:16:11 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.18 1993/11/05 07:21:35 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -1125,52 +1125,6 @@ init386(first_avail)
 	proc0.p_addr->u_pcb.pcb_ptd = IdlePTD;
 }
 
-extern struct pte	*CMAP1, *CMAP2;
-extern caddr_t		CADDR1, CADDR2;
-/*
- * zero out physical memory
- * specified in relocation units (NBPG bytes)
- */
-void
-clearseg(n)
-	unsigned n;
-{
-
-	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
-	tlbflush();
-	bzero(CADDR2, NBPG);
-}
-
-/*
- * copy a page of physical memory
- * specified in relocation units (NBPG bytes)
- */
-void
-copyseg(frm, n)
-	void *frm;
-	unsigned n;
-{
-
-	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
-	tlbflush();
-	bcopy(frm, CADDR2, NBPG);
-}
-
-/*
- * copy a page of physical memory
- * specified in relocation units (NBPG bytes)
- */
-void
-physcopyseg(frm, to)
-	unsigned frm, to;
-{
-
-	*(int *)CMAP1 = PG_V | PG_KW | ctob(frm);
-	*(int *)CMAP2 = PG_V | PG_KW | ctob(to);
-	tlbflush();
-	bcopy(CADDR1, CADDR2, NBPG);
-}
-
 /*
  * insert an element into a queue 
  */
@@ -1420,8 +1374,6 @@ ptrace_setregs (struct proc *p, unsigned int *addr)
 	return 0;
 }
 
-/* XXX probably should be in pmap.c */
-
 unsigned int
 pmap_free_pages()
 {
@@ -1442,7 +1394,7 @@ pmap_next_page(addrp)
 		avail_next = hole_end;
 
 	*addrp = avail_next;
-	avail_next += PAGE_SIZE;
+	avail_next += NBPG;
 	avail_remaining--;
 	return TRUE;
 }
