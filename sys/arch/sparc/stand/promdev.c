@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.14 1995/09/26 20:07:53 chuck Exp $ */
+/*	$NetBSD: promdev.c,v 1.15 1995/10/10 20:11:33 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -474,6 +474,13 @@ getsecs()
 int
 getticks()
 {
+	if (promvec->pv_romvec_vers >= 2) {
+		char c;
+		(void)(*promvec->pv_v2devops.v2_read)
+			(*promvec->pv_v2bootargs.v2_fd0, (caddr_t)&c, 0);
+	} else {
+		(void)(*promvec->pv_nbgetchar)();
+	}
 	return *(promvec->pv_ticks);
 }
 
