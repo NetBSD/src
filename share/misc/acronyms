@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.48 1999/11/05 08:59:17 lukem Exp $
+$NetBSD: acronyms,v 1.49 1999/11/12 23:50:01 christos Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -70,6 +70,7 @@ OIC	oh, I see
 OTOH	on the other hand
 OTTOMH	off the top of my head
 PITA	pain in the ass
+POLA	principle of least astonishment
 PPL	pretty please
 RL	real life
 ROTFL	rolling on the floor laughing
