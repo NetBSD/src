@@ -1,0 +1,6 @@
+# $NetBSD: master,v 1.1.1.1 1997/12/11 13:02:08 hubertf Exp $
+#
+# Main config file, see amd(8).
+#
+-w 900
+/net		/etc/amd/net
