@@ -1,8 +1,8 @@
-#       $NetBSD: Makefile,v 1.137 2003/02/04 16:22:47 thorpej Exp $
+#       $NetBSD: Makefile,v 1.138 2003/02/10 13:08:00 drochner Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	access.9 altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
+MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	bitmask_snprintf.9 bcmp.9 bcopy.9 bzero.9 \
 	bufq.9 bus_dma.9 bus_space.9 \
 	callout.9 cardbus.9 chooseproc.9 cnmagic.9 config.9 cons.9 copy.9 \
@@ -44,7 +44,6 @@ MLINKS+=dmover.9 dmover_backend_register.9 \
 	dmover.9 dmover_done.9
 
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
-MLINKS+=access.9 kernacc.9 access.9 useracc.9
 MLINKS+=autoconf.9 config_search.9 \
 	autoconf.9 config_found_sm.9 \
 	autoconf.9 config_found.9 \
