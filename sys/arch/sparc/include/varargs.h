@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.7 1995/12/25 22:24:56 mycroft Exp $ */
+/*	$NetBSD: varargs.h,v 1.8 1995/12/26 00:19:17 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,8 @@
 #define	__va_ellipsis	...
 #endif
 
-#define	va_dcl		va_list va_alist; __va_ellipsis
+#define	va_alist	__builtin_va_alist
+#define	va_dcl		va_list __builtin_va_alist; __va_ellipsis
 
 #undef va_start
 #ifdef __GCC_NEW_VARARGS__
@@ -68,7 +69,7 @@
 	((ap) = (va_list)__builtin_saveregs())
 #else
 #define	va_start(ap) \
-	(__builtin_saveregs(), (ap) = (va_list)&va_alist)
+	(__builtin_saveregs(), (ap) = (va_list)&__builtin_va_alist)
 #endif
 
 #endif /* !_SPARC_VARARGS_H_ */
