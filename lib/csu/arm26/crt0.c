@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.1 2000/05/09 21:55:45 bjh21 Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2 2001/02/03 16:25:26 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -61,14 +61,14 @@ _start:
 	add	r2, r1, r0, lsl #2
 	add	r2, r2, #0x0004
 
-	b	" ___STRING(_C_FUNC(__start)) "
+	b	" ___STRING(_C_LABEL(__start)) "
 	.align	0
 Lps_strings:
 	.word	" ___STRING(_C_LABEL(__ps_strings)) "
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.1 2000/05/09 21:55:45 bjh21 Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.2 2001/02/03 16:25:26 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
