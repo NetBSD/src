@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.9 2000/10/11 19:28:43 thorpej Exp $	*/
+/*	$NetBSD: ex.c,v 1.10 2001/01/14 02:22:29 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -2294,7 +2294,7 @@ ex_badaddr(sp, cp, ba, nret)
 	 * underlying file, that's the real problem.
 	 */
 	if (sp->ep == NULL) {
-		ex_emsg(sp, cp->name, EXM_NOFILEYET);
+		ex_emsg(sp, cp != NULL? cp->name : NULL, EXM_NOFILEYET);
 		return;
 	}
 
