@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.53 1999/10/10 21:02:53 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.54 1999/10/10 23:22:58 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -704,3 +704,29 @@ usr.sbin/pstat/pstat.c				1.46
   Fix potential overflow of v_usecount and v_writecount (and panics
   resulting from this) by widening them to `long'.  Mostly affects
   systems where maxvnodes>=32768.
+
+lib/libntp/systime.c				1.4-1.6
+
+  Fix an LP64 bug that would cause NTP to report "previous time
+  adjustment did not complete" on NetBSD/alpha.  Fixes PR#7602.
+
+usr.sbin/xntp/xntpd/ntp_proto.c			1.6
+
+  Improve calculation of 'tick' used in the precision estimate.
+
+usr.sbin/xntp/xntpd/ntp_peer.c			1.5
+
+  Don't start all peers simultaneously if using DNS names in ntp.conf.
+
+sys/kern/kern_clock.c				1.50
+
+  If using kernel NTP PLL, initialize "fixtick" to a reasonable
+  approximation of reality if machine-dependent code doesn't.  This
+  allows a NetBSD/alpha kernel (where hz=1024) with "options NTP" to
+  synch up quite nicely (as opposed to having an frequency error of
+  ~560ppm, which is outside the capture range of the PLL).
+
+sys/arch/alpha/alpha/clock.c			1.26
+
+  Patch time_precision so we report a realistic NTP "precision"
+  value to userland.
