@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-current.mk,v 1.1 2003/09/10 17:21:39 grant Exp $
+# $NetBSD: NetBSD-current.mk,v 1.2 2004/12/06 20:05:10 jmc Exp $
 #
 # Configuration file for NetBSD-current.
 
@@ -17,6 +17,10 @@ INTFILES.cats=		netbsd.cats:cats/binary/kernel/netbsd.aout-INSTALL.gz
 # BOOTFILE.i386 is relative to CD staging root
 BOOTFILE.i386=		boot.i386
 INTFILES.i386=		boot.i386:i386/installation/floppy/boot-big.fs,link
+
+# BOOTFILE.amd64 is relative to CD staging root
+BOOTFILE.amd64=		boot.amd64
+INTFILES.amd64=		boot.amd64:amd64/installation/floppy/boot-big.fs,link
 
 # macppc has external bootblock generation tool
 EXTFILES.macppc=	macppc.ofwboot:macppc/binary/sets/base.tgz,./usr/mdec/ofwboot
