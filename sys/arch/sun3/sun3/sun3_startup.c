@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.35 1995/03/24 17:27:44 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.36 1995/03/26 19:37:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -454,8 +454,8 @@ void sun3_vm_init()
 #endif
 	load_u_area();
 
+	/* Initialize the "u-area" pages. */
 	bzero((caddr_t)UADDR, UPAGES*NBPG);
-
 	curpcb = &proc0paddr->u_pcb;
 
 	/*
@@ -743,10 +743,15 @@ unsigned int get_interrupt_reg()
 	return (unsigned int) *interrupt_reg;
 }
 
+/*
+ * Find mappings for devices that are needed before autoconfiguration.
+ * First the obio module finds and records useful PROM mappings, then
+ * the necessary drivers are given a chance to use those recorded.
+ */
 void internal_configure()
 {
-    obio_init();
-	/* now other obio devices */
+    obio_init();	/* find and record PROM mappings in OBIO space */
+	/* Drivers that use those OBIO mappings from the PROM */
 	zs_init();
 	eeprom_init();
 	isr_init();
@@ -785,4 +790,5 @@ sun3_bootstrap()
 	 * it will not cause "spurrious level 7" complaints.
 	 */
 	initialize_vector_table();
+	/* Interrupts are enabled in locore.s soon after this return. */
 }
