@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.13 1998/08/25 20:59:39 ross Exp $	*/
+/*	$NetBSD: man.c,v 1.14 1998/10/08 01:36:04 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.13 1998/08/25 20:59:39 ross Exp $");
+__RCSID("$NetBSD: man.c,v 1.14 1998/10/08 01:36:04 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,10 @@ __RCSID("$NetBSD: man.c,v 1.13 1998/08/25 20:59:39 ross Exp $");
 
 #include "config.h"
 #include "pathnames.h"
+
+#ifndef MACHINE
+#define MACHINE __ARCHITECTURE__
+#endif
 
 int f_all, f_where;
 
@@ -355,7 +359,7 @@ main(argc, argv)
 		p += len;
 		*p++ = ' ';
 	}
-	*p = '\0';
+	*--p = '\0';
 
 	/* Use system(3) in case someone's pager is "pager arg1 arg2". */
 	(void)system(cmd);
