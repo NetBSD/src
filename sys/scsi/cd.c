@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.70 1995/07/04 07:21:00 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.71 1995/07/24 06:55:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -538,13 +538,13 @@ cdstart(cd)
 	}
 }
 
-void 
+u_int 
 cdminphys(bp)
 	struct buf *bp;
 {
 	register struct cd_softc *cd = cdcd.cd_devs[CDUNIT(bp->b_dev)];
 
-	(cd->sc_link->adapter->scsi_minphys)(bp);
+	return (cd->sc_link->adapter->scsi_minphys)(bp);
 }
 
 int
