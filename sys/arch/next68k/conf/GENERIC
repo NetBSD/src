@@ -122,4 +122,5 @@ pseudo-device	ipfilter		# ip filter
 
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
+#pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	ccd		4	# concatenated disks
