@@ -1,4 +1,4 @@
-/*	$NetBSD: nrand48.c,v 1.4 1998/01/09 03:15:39 perry Exp $	*/
+/*	$NetBSD: nrand48.c,v 1.5 1998/11/15 17:13:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -24,5 +24,6 @@ long
 nrand48(unsigned short xseed[3])
 {
 	__dorand48(xseed);
-	return ((long) xseed[2] << 15) + ((long) xseed[1] >> 1);
+	return (long)((unsigned long) xseed[2] << 15) +
+	    ((unsigned long) xseed[1] >> 1);
 }
