@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.11 1995/11/22 00:25:50 pk Exp $
+	$Id: i386b-nat.c,v 1.12 1996/03/07 07:26:02 mycroft Exp $
 */
 
 #include <sys/types.h>
@@ -343,7 +343,7 @@ fetch_kcore_registers(pcb)
          * get the register values out of the sys pcb and
          * store them where `read_register' will find them.
          */
-	if (target_read_memory(pcb->pcb_tss.tss_esp+4, regs, sizeof regs, 0))
+	if (target_read_memory(pcb->pcb_tss.tss_esp+4, regs, sizeof regs))
 		error("Cannot read ebx, esi, and edi.");
 	for (i = 0, regno = 0; regno < 3; regno++)
 		supply_register(regno, (char *)&i);
