@@ -1,3 +1,5 @@
+#	$NetBSD: termcap.vt100,v 1.2 1998/01/09 18:56:48 perry Exp $
+#
 vt_keys:\
 	:Pu=\E[A!\EOA:Pd=\E[B!\EOB:Pr=\E[C!\EOC:Pl=\E[D!\EOD:\
 	:P0=\EOp!\E[3~:P1=\EOq!\E[12~:P2=\EOr!\E[20~:P3=\EOs!\E[13~:\

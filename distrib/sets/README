@@ -1,3 +1,5 @@
+#	$NetBSD: README,v 1.2 1998/01/09 18:56:50 perry Exp $
+
 From cgd@alpha.bostic.com Mon Jul 18 02:06:15 1994
 Received: from alpha.bostic.com (alpha.BOSTIC.COM [198.3.132.5]) by sun-lamp.cs.berkeley.edu (8.6.9/8.6.9) with SMTP id CAA18402 for <port-masters@sun-lamp.CS.Berkeley.EDU>; Mon, 18 Jul 1994 02:01:32 -0700
 Received: by alpha.bostic.com; id AA06610; Mon, 18 Jul 1994 05:02:11 -0400
