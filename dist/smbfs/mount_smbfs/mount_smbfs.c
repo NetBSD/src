@@ -1,4 +1,4 @@
-/* $NetBSD: mount_smbfs.c,v 1.3 2003/02/23 22:14:09 jdolecek Exp $ */
+/* $NetBSD: mount_smbfs.c,v 1.4 2003/02/23 22:31:18 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000-2002, Boris Popov
@@ -232,7 +232,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	mdata.version = SMBFS_VERSION;
-	mdata.dev = ctx->ct_fd;
+	mdata.dev_fd = ctx->ct_fd;
 	mdata.caseopt = caseopt;
 	error = mount(SMBFS_VFSNAME, mount_point, mntflags, (void*)&mdata);
 	smb_ctx_done(ctx);

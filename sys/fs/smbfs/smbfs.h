@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.3 2003/02/23 22:31:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -37,7 +37,7 @@
 #define _SMBFS_SMBFS_H_
 
 #define SMBFS_VERMAJ	1
-#define SMBFS_VERMIN	1012
+#define SMBFS_VERMIN	1013
 #define SMBFS_VERSION	(SMBFS_VERMAJ*100000 + SMBFS_VERMIN)
 #define	SMBFS_VFSNAME	"smbfs"
 
@@ -54,15 +54,14 @@
 /* Layout of the mount control block for a netware file system. */
 struct smbfs_args {
 	int		version;
-	int		dev;
+	int		dev_fd;		/* descriptor of open nsmb device */
 	u_int		flags;
-	char		mount_point[MAXPATHLEN];
-	u_char		root_path[512+1];
 	uid_t		uid;
 	gid_t 		gid;
 	mode_t 		file_mode;
 	mode_t 		dir_mode;
 	int		caseopt;
+	struct	export_args export;	/* network export information */
 };
 
 #ifdef _KERNEL
