@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.157 2004/08/22 18:47:52 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.158 2004/08/25 21:18:32 he Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2640,3 +2640,8 @@ distrib/mac68k/instkernel/ramdisk/Makefile	1.11
 	We cannot apply to newfs no disklabel device, so must 
 	write temporary disklabel. refer to i386. PR#22974
 	[fredb, ticket #152]
+
+lib/libc/net/gethnamaddr.c			1.62 (via patch)
+
+	No longer query ip6.int, since e.f.f.3.ip6.arpa is ready too.
+	[itojun, ticket #156]
