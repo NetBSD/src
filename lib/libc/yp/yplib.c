@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.20 1996/05/14 23:37:33 jtc Exp $	 */
+/*	$NetBSD: yplib.c,v 1.21 1996/05/15 05:27:53 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.20 1996/05/14 23:37:33 jtc Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.21 1996/05/15 05:27:53 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -55,122 +55,13 @@ static char rcsid[] = "$NetBSD: yplib.c,v 1.20 1996/05/14 23:37:33 jtc Exp $";
 #define YPMATCHCACHE
 
 struct dom_binding *_ypbindlist;
-static char _yp_domain[MAXHOSTNAMELEN];
+char _yp_domain[MAXHOSTNAMELEN];
 int _yplib_timeout = 10;
 
 static bool_t ypmatch_add __P((const char *, const char *, int, char *, int));
 static bool_t ypmatch_find __P((const char *, const char *, int, const char **,
 				int *));
 void _yp_unbind __P((struct dom_binding *));
-
-#ifdef YPMATCHCACHE
-int _yplib_cache = 5;
-
-static struct ypmatch_ent {
-	struct ypmatch_ent 	*next;
-	char     		*map, *key;
-	char           		*val;
-	int             	 keylen, vallen;
-	time_t          	 expire_t;
-} *ypmc;
-
-static bool_t
-ypmatch_add(map, key, keylen, val, vallen)
-	const char     *map;
-	const char     *key;
-	int             keylen;
-	char           *val;
-	int             vallen;
-{
-	struct ypmatch_ent *ep;
-	time_t t;
-
-	(void)time(&t);
-
-	for (ep = ypmc; ep; ep = ep->next)
-		if (ep->expire_t < t)
-			break;
-	if (ep == NULL) {
-		if ((ep = malloc(sizeof *ep)) == NULL)
-			return 0;
-		(void)memset(ep, 0, sizeof *ep);
-		if (ypmc)
-			ep->next = ypmc;
-		ypmc = ep;
-	}
-
-	if (ep->key) {
-		free(ep->key);
-		ep->key = NULL;
-	}
-	if (ep->val) {
-		free(ep->val);
-		ep->val = NULL;
-	}
-
-	if ((ep->key = malloc(keylen)) == NULL)
-		return 0;
-
-	if ((ep->val = malloc(vallen)) == NULL) {
-		free(ep->key);
-		ep->key = NULL;
-		return 0;
-	}
-
-	ep->keylen = keylen;
-	ep->vallen = vallen;
-
-	(void)memcpy(ep->key, key, ep->keylen);
-	(void)memcpy(ep->val, val, ep->vallen);
-
-	if (ep->map) {
-		if (strcmp(ep->map, map)) {
-			free(ep->map);
-			if ((ep->map = strdup(map)) == NULL)
-				return 0;
-		}
-	} else {
-		if ((ep->map = strdup(map)) == NULL)
-			return 0;
-	}
-
-	ep->expire_t = t + _yplib_cache;
-	return 1;
-}
-
-static bool_t
-ypmatch_find(map, key, keylen, val, vallen)
-	const char     *map;
-	const char     *key;
-	int             keylen;
-	const char    **val;
-	int            *vallen;
-{
-	struct ypmatch_ent *ep;
-	time_t          t;
-
-	if (ypmc == NULL)
-		return 0;
-
-	(void) time(&t);
-
-	for (ep = ypmc; ep; ep = ep->next) {
-		if (ep->keylen != keylen)
-			continue;
-		if (strcmp(ep->map, map))
-			continue;
-		if (memcmp(ep->key, key, keylen))
-			continue;
-		if (t > ep->expire_t)
-			continue;
-
-		*val = ep->val;
-		*vallen = ep->vallen;
-		return 1;
-	}
-	return 0;
-}
-#endif
 
 int
 _yp_dobind(dom, ypdb)
@@ -390,75 +281,6 @@ yp_unbind(dom)
 		ypbp = ypb;
 	}
 	return;
-}
-
-int
-yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
-	const char     *indomain;
-	const char     *inmap;
-	const char     *inkey;
-	int             inkeylen;
-	char          **outval;
-	int            *outvallen;
-{
-	struct dom_binding *ysd;
-	struct ypresp_val yprv;
-	struct timeval  tv;
-	struct ypreq_key yprk;
-	int             r;
-
-	*outval = NULL;
-	*outvallen = 0;
-
-again:
-	if (_yp_dobind(indomain, &ysd) != 0)
-		return YPERR_DOMAIN;
-
-#ifdef YPMATCHCACHE
-	if (!strcmp(_yp_domain, indomain) && ypmatch_find(inmap, inkey,
-			 inkeylen, &yprv.valdat.dptr, &yprv.valdat.dsize)) {
-		*outvallen = yprv.valdat.dsize;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
-			return YPERR_YPERR;
-		(void)memcpy(*outval, yprv.valdat.dptr, *outvallen);
-		(*outval)[*outvallen] = '\0';
-		return 0;
-	}
-#endif
-
-	tv.tv_sec = _yplib_timeout;
-	tv.tv_usec = 0;
-
-	yprk.domain = indomain;
-	yprk.map = inmap;
-	yprk.keydat.dptr = (char *) inkey;
-	yprk.keydat.dsize = inkeylen;
-
-	memset(&yprv, 0, sizeof yprv);
-
-	r = clnt_call(ysd->dom_client, YPPROC_MATCH,
-		      xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, tv);
-	if (r != RPC_SUCCESS) {
-		clnt_perror(ysd->dom_client, "yp_match: clnt_call");
-		ysd->dom_vers = -1;
-		goto again;
-	}
-	if (!(r = ypprot_err(yprv.status))) {
-		*outvallen = yprv.valdat.dsize;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
-			return YPERR_YPERR;
-		(void)memcpy(*outval, yprv.valdat.dptr, *outvallen);
-		(*outval)[*outvallen] = '\0';
-#ifdef YPMATCHCACHE
-		if (strcmp(_yp_domain, indomain) == 0)
-			if (!ypmatch_add(inmap, inkey, inkeylen,
-					 *outval, *outvallen))
-				r = RPC_SYSTEMERROR;
-#endif
-	}
-	xdr_free(xdr_ypresp_val, (char *) &yprv);
-	_yp_unbind(ysd);
-	return r;
 }
 
 int
