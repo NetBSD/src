@@ -1,0 +1,13 @@
+*.gmo
+Makefile
+Makefile.in
+aclocal.m4
+acinclude.m4
+configure
+config.cache
+config.h
+config.hin
+config.log
+config.status
+stamp-h.in
+stamp-h 

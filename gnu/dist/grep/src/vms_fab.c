@@ -1,8 +1,10 @@
+/*	$NetBSD: vms_fab.c,v 1.1.1.3 2003/01/26 23:15:30 wiz Exp $	*/
+
      /*
         <vms_fab>
 
         This macro sets up the file access block and name block for VMS.
-        It also does the initial parsing of the input string (resolving 
+        It also does the initial parsing of the input string (resolving
         wildcards,
         if any) and finds all files matching the input pattern.
         The address of the first matching pattern is returned.
@@ -12,9 +14,7 @@
 #include "vms_fab.h"
 
 void
-vms_fab (argp, argvp)
-	int * argp;
-	char **argvp[];
+vms_fab (int * argp, char **argvp[])
 {
   extern int optind;
   int optout;
@@ -30,14 +30,14 @@ vms_fab (argp, argvp)
   fab.fab$b_bln = FAB$C_BLN;
   fab.fab$l_fop = FAB$M_NAM;
   fab.fab$l_nam = &nam;
-  fab.fab$l_fna = &fna_buffer;
+  fab.fab$l_fna = (char *)&fna_buffer;
   fab.fab$b_fns = length_of_fna_buffer;
 
   nam.nam$b_bid = NAM$C_BID;
   nam.nam$b_bln = NAM$C_BLN;
-  nam.nam$l_esa = &expanded_name;
+  nam.nam$l_esa = (char *)&expanded_name;
   nam.nam$b_ess = NAM$C_MAXRSS;
-  nam.nam$l_rsa = &result_name;
+  nam.nam$l_rsa = (char *)&result_name;
   nam.nam$b_rss = NAM$C_MAXRSS;
 
   fab_stat = sys$parse (&fab);
@@ -62,7 +62,7 @@ vms_fab (argp, argvp)
       strcpy (arr_ptr[optout], result_name);
 
       /*
-         If we don't tack on a null character at the end of the 
+         If we don't tack on a null character at the end of the
          filename,
          we can get partial data which is still there from the last
          sys$search command.
@@ -82,7 +82,7 @@ vms_fab (argp, argvp)
   /* Return a pointer to the beginning of memory that has the expanded
      filenames.
    */
-  *argcp = optout;
+  *argp = optout;
   *argvp = arr_ptr;
 
 }

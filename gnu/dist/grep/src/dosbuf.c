@@ -1,3 +1,5 @@
+/*	$NetBSD: dosbuf.c,v 1.1.1.3 2003/01/26 23:15:29 wiz Exp $	*/
+
 /* Messy DOS-specific code for correctly treating binary, Unix text
    and DOS text files.
 
@@ -31,9 +33,7 @@ static int       inp_map_idx = 0, out_map_idx = 1;
 
 /* Guess DOS file type by looking at its contents.  */
 static inline File_type
-guess_type(buf, buflen)
-	char *buf;
-	register size_t buflen;
+guess_type (char *buf, register size_t buflen)
 {
   int crlf_seen = 0;
   register char *bp = buf;
@@ -59,9 +59,7 @@ guess_type(buf, buflen)
    Return the count of characters left in the buffer.
    Build table to map character positions when reporting byte counts.  */
 static inline int
-undossify_input(buf, buflen)
-	register char *buf;
-	size_t buflen;
+undossify_input (register char *buf, size_t buflen)
 {
   int chars_left = 0;
 
@@ -150,8 +148,7 @@ undossify_input(buf, buflen)
 
 /* Convert internal byte count into external.  */
 static inline off_t
-dossified_pos (byteno)
-	off_t byteno;
+dossified_pos (off_t byteno)
 {
   off_t pos_lo;
   off_t pos_hi;
