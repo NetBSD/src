@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.10 2004/07/07 18:03:42 he Exp $
+# 	$NetBSD: DEBUG,v 1.11 2004/07/15 03:53:51 atatat Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -38,6 +38,7 @@ options 	GPROF		# kernel profiling
 makeoptions	PROF="-pg"
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	MIIVERBOSE	# verbose PHY autoconfig messages

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2004/06/28 21:07:49 bouyer Exp $
+# $NetBSD: GENERIC,v 1.41 2004/07/15 03:53:50 atatat Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.40 $"
+#ident 		"GENERIC-$Revision: 1.41 $"
 
 maxusers	8			# estimated number of users
 
@@ -46,6 +46,7 @@ options 	LKM			# loadable kernel modules
 options 	PFIL_HOOKS		# pfil(9) packet filter hooks
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # compatibility options
 options 	COMPAT_11	# NetBSD 1.1,

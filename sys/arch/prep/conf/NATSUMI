@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.25 2003/10/18 08:30:14 lukem Exp $
+#	$NetBSD: NATSUMI,v 1.26 2004/07/15 03:53:51 atatat Exp $
 #
 #	for development
 #
@@ -35,6 +35,7 @@ options 	SHMMAXPGS=8192
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks

@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.21 2004/02/13 10:05:49 wiz Exp $
+#	$NetBSD: P6032,v 1.22 2004/07/15 03:53:45 atatat Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.21 $"
+#ident 		"P6032-$Revision: 1.22 $"
 
 maxusers 32
 
@@ -85,6 +85,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	PCMCIAVERBOSE
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
