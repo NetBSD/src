@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.165 1999/10/25 14:14:42 kleink Exp $
+# $NetBSD: mi,v 1.166 1999/11/04 01:13:31 perry Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -724,11 +724,7 @@
 ./usr/include/nlist.h
 ./usr/include/nsswitch.h
 ./usr/include/ntfs/ntfs.h
-./usr/include/ntfs/ntfs_compr.h
-./usr/include/ntfs/ntfs_ihash.h
 ./usr/include/ntfs/ntfs_inode.h
-./usr/include/ntfs/ntfs_subr.h
-./usr/include/ntfs/ntfs_vfsops.h
 ./usr/include/ntfs/ntfsmount.h
 ./usr/include/objc/NXConstStr.h
 ./usr/include/objc/Object.h
@@ -842,6 +838,7 @@
 ./usr/include/sys/dkio.h
 ./usr/include/sys/dkstat.h
 ./usr/include/sys/domain.h
+./usr/include/sys/dvdio.h
 ./usr/include/sys/endian.h
 ./usr/include/sys/errno.h
 ./usr/include/sys/exec.h
