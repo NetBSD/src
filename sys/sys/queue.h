@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.28 2001/05/12 20:18:23 chs Exp $	*/
+/*	$NetBSD: queue.h,v 1.29 2001/05/27 01:36:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -108,17 +108,21 @@ struct {								\
 #define QUEUEDEBUG_LIST_INSERT_HEAD(head, elm, field)			\
 	if ((head)->lh_first &&						\
 	    (head)->lh_first->field.le_prev != &(head)->lh_first)	\
-		panic("LIST_INSERT_HEAD %p", (head));
+		panic("LIST_INSERT_HEAD %p %s:%d", (head), __FILE__, __LINE__);
 #define QUEUEDEBUG_LIST_OP(elm, field)					\
 	if ((elm)->field.le_next &&					\
 	    (elm)->field.le_next->field.le_prev !=			\
 	    &(elm)->field.le_next)					\
-		panic("LIST_* forw %p", (elm));				\
+		panic("LIST_* forw %p %s:%d", (elm), __FILE__, __LINE__);\
 	if (*(elm)->field.le_prev != (elm))				\
-		panic("LIST_* back %p", (elm));
+		panic("LIST_* back %p %s:%d", (elm), __FILE__, __LINE__);
+#define QUEUEDEBUG_LIST_POSTREMOVE(elm, field)				\
+	(elm)->field.le_next = NULL;					\
+	(elm)->field.le_prev = NULL;
 #else
 #define QUEUEDEBUG_LIST_INSERT_HEAD(head, elm, field)
 #define QUEUEDEBUG_LIST_OP(elm, field)
+#define QUEUEDEBUG_LIST_POSTREMOVE(elm, field)
 #endif
 
 #define	LIST_INIT(head) do {						\
@@ -156,6 +160,7 @@ struct {								\
 		(elm)->field.le_next->field.le_prev = 			\
 		    (elm)->field.le_prev;				\
 	*(elm)->field.le_prev = (elm)->field.le_next;			\
+	QUEUEDEBUG_LIST_POSTREMOVE((elm), field)			\
 } while (/*CONSTCOND*/0)
 
 #define LIST_FOREACH(var, head, field)					\
@@ -314,21 +319,25 @@ struct {								\
 #define QUEUEDEBUG_TAILQ_INSERT_HEAD(head, elm, field)			\
 	if ((head)->tqh_first &&					\
 	    (head)->tqh_first->field.tqe_prev != &(head)->tqh_first)	\
-		panic("TAILQ_INSERT_HEAD %p", (head));
+		panic("TAILQ_INSERT_HEAD %p %s:%d", (head), __FILE__, __LINE__);
 #define QUEUEDEBUG_TAILQ_INSERT_TAIL(head, elm, field)			\
 	if (*(head)->tqh_last != NULL)					\
-		panic("TAILQ_INSERT_TAIL %p", (head));
+		panic("TAILQ_INSERT_TAIL %p %s:%d", (head), __FILE__, __LINE__);
 #define QUEUEDEBUG_TAILQ_OP(elm, field)					\
 	if ((elm)->field.tqe_next &&					\
 	    (elm)->field.tqe_next->field.tqe_prev !=			\
 	    &(elm)->field.tqe_next)					\
-		panic("TAILQ_* forw %p", (elm));			\
+		panic("TAILQ_* forw %p %s:%d", (elm), __FILE__, __LINE__);\
 	if (*(elm)->field.tqe_prev != (elm))				\
-		panic("TAILQ_* back %p", (elm));
+		panic("TAILQ_* back %p %s:%d", (elm), __FILE__, __LINE__);
+#define QUEUEDEBUG_TAILQ_POSTREMOVE(elm, field)				\
+	(elm)->field.tqe_next = NULL;					\
+	(elm)->field.tqe_prev = NULL;
 #else
 #define QUEUEDEBUG_TAILQ_INSERT_HEAD(head, elm, field)
 #define QUEUEDEBUG_TAILQ_INSERT_TAIL(head, elm, field)
 #define QUEUEDEBUG_TAILQ_OP(elm, field)
+#define QUEUEDEBUG_TAILQ_POSTREMOVE(elm, field)
 #endif
 
 #define	TAILQ_INIT(head) do {						\
@@ -382,6 +391,7 @@ struct {								\
 	else								\
 		(head)->tqh_last = (elm)->field.tqe_prev;		\
 	*(elm)->field.tqe_prev = (elm)->field.tqe_next;			\
+	QUEUEDEBUG_TAILQ_POSTREMOVE((elm), field);			\
 } while (/*CONSTCOND*/0)
 
 /*
