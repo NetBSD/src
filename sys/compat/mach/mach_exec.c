@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.6 2002/08/26 21:06:01 christos Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.7 2002/09/21 21:14:58 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.6 2002/08/26 21:06:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.7 2002/09/21 21:14:58 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ const struct emul emul_mach = {
 #else
 	syscall,
 #endif
+	NULL,
+	NULL,
 };
 
 /*
