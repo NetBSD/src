@@ -15,7 +15,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
  *
- *	$Id: st.c,v 1.16.2.7 1994/01/22 14:22:01 briggs Exp $
+ *	$Id: st.c,v 1.16.2.8 1994/02/01 20:39:14 mycroft Exp $
  */
 
 /*
@@ -1064,14 +1064,14 @@ stioctl(dev, cmd, arg, flag)
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
 		g->mt_density = st->density;
 		g->mt_blksiz = st->blksiz;
-		g->mt_density0 = st->modes[0].density;
-		g->mt_density1 = st->modes[1].density;
-		g->mt_density2 = st->modes[2].density;
-		g->mt_density3 = st->modes[3].density;
-		g->mt_blksiz0 = st->modes[0].blksiz;
-		g->mt_blksiz1 = st->modes[1].blksiz;
-		g->mt_blksiz2 = st->modes[2].blksiz;
-		g->mt_blksiz3 = st->modes[3].blksiz;
+		g->mt_density[0] = st->modes[0].density;
+		g->mt_density[1] = st->modes[1].density;
+		g->mt_density[2] = st->modes[2].density;
+		g->mt_density[3] = st->modes[3].density;
+		g->mt_blksiz[0] = st->modes[0].blksiz;
+		g->mt_blksiz[1] = st->modes[1].blksiz;
+		g->mt_blksiz[2] = st->modes[2].blksiz;
+		g->mt_blksiz[3] = st->modes[3].blksiz;
 		break;
 	}
 	case MTIOCTOP: {
