@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.11 1996/06/21 20:51:23 pk Exp $	*/
+/*	$NetBSD: open.c,v 1.12 1996/09/30 16:01:21 ws Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -119,6 +119,7 @@ fnd:
 	if (!error)
 		error = ENOENT;
 
+	f->f_dev->dv_close(f);
 err:
 	f->f_flags = 0;
 	errno = error;
