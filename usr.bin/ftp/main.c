@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1997/03/14 01:39:39 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1997/03/16 14:24:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.19 1997/03/14 01:39:39 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.20 1997/03/16 14:24:21 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ main(argc, argv)
 	}
 
 #ifndef SMALL
-	if (fromatty) {
+	if (editing) {
 		el = el_init(__progname, stdin, stdout); /* init editline */
 
 		hist = history_init();		/* init the builtin history */
@@ -211,6 +211,10 @@ main(argc, argv)
 
 	setttywidth(0);
 	(void)signal(SIGWINCH, setttywidth);
+#ifndef SMALL
+	if (editing)
+		el_set(el, EL_SIGNAL, 1);
+#endif /* !SMALL */
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
