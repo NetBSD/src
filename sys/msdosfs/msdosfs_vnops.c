@@ -216,11 +216,12 @@ msdosfs_getattr(vp, vap, cred, p)
 	}
 	vap->va_fileid = cn;
 	vap->va_mode = (dep->de_Attributes & ATTR_READONLY) ? 0555 : 0777;
+	vap->va_mode &= dep->de_pmp->pm_mask;
 	if (dep->de_Attributes & ATTR_DIRECTORY)
 		vap->va_mode |= S_IFDIR;
 	vap->va_nlink = 1;
-	vap->va_gid = 0;
-	vap->va_uid = 0;
+	vap->va_gid = dep->de_pmp->pm_gid;
+	vap->va_uid = dep->de_pmp->pm_uid;
 	vap->va_rdev = 0;
 	vap->va_size = dep->de_FileSize;
 	vap->va_size_rsv = 0;

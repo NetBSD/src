@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.8 1994/02/07 23:14:23 cgd Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.9 1994/04/07 07:30:23 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -50,9 +50,11 @@ msdosfs_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	struct vnode *devvp;		/* vnode for blk device to mount */
-	struct msdosfs_args args;	/* will hold data from mount request */
-	struct msdosfsmount *pmp;	/* msdosfs specific mount control block	*/
+	struct vnode *devvp;	  /* vnode for blk device to mount */
+	struct msdosfs_args args; /* will hold data from mount request */
+	struct msdosfsmount *pmp; /* msdosfs specific mount control block */
+	struct ucred *cred, *scred;
+	struct vattr va;
 	int error;
 	u_int size;
 
@@ -99,15 +101,44 @@ msdosfs_mount(mp, path, data, ndp, p)
 	}
 
 	/*
+	 * check to see that the user in owns the target directory.
+	 * Note the very XXX trick to make sure we're checking as the
+	 * real user -- were mount() executable by anyone, this wouldn't
+	 * be a problem.
+	 *
+	 * XXX there should be one consistent error out.
+	 */
+	cred = crdup(p->p_ucred);			/* XXX */
+	cred->cr_uid = p->p_cred->p_ruid;		/* XXX */
+	error = VOP_GETATTR(mp->mnt_vnodecovered, &va, cred, p);
+	if (error) {
+		crfree(cred);				/* XXX */
+		return (error);
+	}
+	if ((va.va_uid != cred->cr_uid) &&
+	    (cred->cr_uid != 0)) {
+		error = EACCES;
+		crfree(cred);				/* XXX */
+		return (error);
+        }
+
+	/* a user mounted it; we'll verify permissions when unmounting */
+	mp->mnt_flag |= MNT_USER;
+
+	/*
 	 * Now, lookup the name of the block device this mount or name
 	 * update request is to apply to.
 	 */
 	ndp->ni_nameiop = LOOKUP | FOLLOW;
 	ndp->ni_segflg = UIO_USERSPACE;
 	ndp->ni_dirp = args.fspec;
-	if (error = namei(ndp, p))
+	scred = p->p_ucred;				/* XXX */
+	error = namei(ndp, p);
+	p->p_ucred = scred;				/* XXX */
+	crfree(cred);					/* XXX */
+	if (error != 0)
 		return error;
-
+	
 	/*
 	 * Be sure they've given us a block device to treat as a
 	 * filesystem.  And, that its major number is within the bdevsw
@@ -150,7 +181,8 @@ msdosfs_mount(mp, path, data, ndp, p)
 	 * Copy in the name of the directory the filesystem is to be
 	 * mounted on. Then copy in the name of the block special file
 	 * representing the filesystem being mounted. And we clear the
-	 * remainder of the character strings to be tidy. Then, we try to
+	 * remainder of the character strings to be tidy. Set up the
+	 * user id/group id/mask as specified by the user. Then, we try to
 	 * fill in the filesystem stats structure as best we can with
 	 * whatever applies from a dos file system.
 	 */
@@ -162,6 +194,10 @@ msdosfs_mount(mp, path, data, ndp, p)
 	copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntfromname + size,
 	    MNAMELEN - size);
+	pmp->pm_mounter = p->p_cred->p_ruid;
+	pmp->pm_gid = args.gid;
+	pmp->pm_uid = args.uid;
+	pmp->pm_mask = args.mask;
 	(void) msdosfs_statfs(mp, &mp->mnt_stat, p);
 #if defined(MSDOSFSDEBUG)
 	printf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp, pmp, pmp->pm_inusemap);
@@ -432,6 +468,11 @@ msdosfs_unmount(mp, mntflags, p)
 	int error;
 	struct msdosfsmount *pmp = (struct msdosfsmount *) mp->mnt_data;
 	struct vnode *vp = pmp->pm_devvp;
+
+	/* only the mounter, or superuser can unmount */
+	if ((p->p_cred->p_ruid != pmp->pm_mounter) &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
+		return (error);
 
 	if (mntflags & MNT_FORCE) {
 		if (!msdosfsdoforce)
