@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.69 2001/08/24 06:37:03 lukem Exp $	*/
+/*	$NetBSD: print.c,v 1.70 2002/01/21 23:01:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.69 2001/08/24 06:37:03 lukem Exp $");
+__RCSID("$NetBSD: print.c,v 1.70 2002/01/21 23:01:55 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -595,14 +595,6 @@ started(k, ve, mode)
 	time_t startt;
 	struct tm *tp;
 	char buf[100], *cp;
-
-	/*
-	 * XXX: The maximum width of this field is the same as the header
-	 *      "STARTED" for locales that have 3 letter abbreviated month
-	 *      names and 2 letter am/pm descriptions.
-	 */
-	if (mode == WIDTHMODE)
-		return;
 
 	v = ve->var;
 	if (!k->p_uvalid) {
