@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.7 2000/03/04 07:27:48 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.8 2000/06/29 07:14:19 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -35,7 +35,7 @@
  */
 
 #include <sys/param.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/trap.h>
 #include <machine/psl.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21 2000/06/05 00:09:20 matt Exp $
+#	$NetBSD: genassym.cf,v 1.22 2000/06/29 07:14:24 mrg Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -40,9 +40,7 @@ include	<sys/device.h>
 
 include	<net/netisr.h>
 
-include <vm/vm.h>
 include <uvm/uvm.h>
-include <uvm/uvm_extern.h>
 
 include	<machine/mtpr.h>
 include	<machine/pcb.h>

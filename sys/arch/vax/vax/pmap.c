@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2000/06/26 14:21:06 mrg Exp $	   */
+/*	$NetBSD: pmap.c,v 1.84 2000/06/29 07:14:33 mrg Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef PMAPDEBUG
 #include <dev/cons.h>
