@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.17 2000/09/28 19:05:08 eeh Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.18 2000/11/20 20:23:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ emul_flags_translate(const struct emul_flags_xtab *tab,
 
 caddr_t
 stackgap_init(e)
-	struct emul *e;
+	const struct emul *e;
 {
 	struct proc *p = curproc;		/* XXX */
 
@@ -250,7 +250,7 @@ stackgap_alloc(sgp, sz)
 	void *n = (void *) *sgp;
 	caddr_t nsgp;
 	struct proc *p = curproc;		/* XXX */
-	struct emul *e = p->p_emul;
+	const struct emul *e = p->p_emul;
 	int sigsize = e->e_esigcode - e->e_sigcode;
 	
 	sz = ALIGN(sz);
