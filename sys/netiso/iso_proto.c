@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.10 1999/01/14 01:22:43 thorpej Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.11 1999/07/01 05:53:15 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -147,7 +147,7 @@ struct protosw  isosw[] = {
 	},
 
 	/* ISOPROTO_TP */
-	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP, PR_CONNREQUIRED | PR_WANTRCVD,
+	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP, PR_CONNREQUIRED | PR_WANTRCVD | PR_LISTEN,
 		tpclnp_input, 0, tpclnp_ctlinput, tp_ctloutput,
 		tp_usrreq,
 		tp_init, tp_fasttimo, tp_slowtimo, tp_drain,
@@ -155,7 +155,7 @@ struct protosw  isosw[] = {
 
 #ifdef TPCONS
 	/* ISOPROTO_TP */
-	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP0, PR_CONNREQUIRED | PR_WANTRCVD,
+	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP0, PR_CONNREQUIRED | PR_WANTRCVD | PR_LISTEN,
 		tpcons_input, 0, 0, tp_ctloutput,
 		tp_usrreq,
 		cons_init, 0, 0, 0,
