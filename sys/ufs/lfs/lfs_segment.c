@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.76.2.2 2002/06/02 15:31:17 tv Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.76.2.3 2002/06/20 03:51:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.76.2.2 2002/06/02 15:31:17 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.76.2.3 2002/06/20 03:51:36 lukem Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -104,11 +104,15 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.76.2.2 2002/06/02 15:31:17 tv Exp 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 extern int count_lock_queue(void);
 extern struct simplelock vnode_free_list_slock;		/* XXX */
 
+static void lfs_generic_callback(struct buf *, void (*)(struct buf *));
+static void lfs_super_aiodone(struct buf *);
+static void lfs_cluster_aiodone(struct buf *);
 static void lfs_cluster_callback(struct buf *);
 static struct buf **lookahead_pagemove(struct buf **, int, size_t *);
 
@@ -290,8 +294,9 @@ lfs_vflush(struct vnode *vp)
 	}
 
 	SET_FLUSHING(fs,vp);
-	if (fs->lfs_nactive > LFS_MAX_ACTIVE) {
-		error = lfs_segwrite(vp->v_mount, SEGM_SYNC|SEGM_CKP);
+	if (fs->lfs_nactive > LFS_MAX_ACTIVE ||
+	    (fs->lfs_sp->seg_flags & SEGM_CKP)) {
+		error = lfs_segwrite(vp->v_mount, SEGM_CKP | SEGM_SYNC);
 		CLR_FLUSHING(fs,vp);
 		lfs_segunlock(fs);
 		return error;
@@ -351,11 +356,9 @@ lfs_vflush(struct vnode *vp)
 	 * artificially incremented by lfs_seglock().
 	 */
 	if (fs->lfs_seglock > 1) {
-		s = splbio();
 		while (fs->lfs_iocount > 1)
 			(void)tsleep(&fs->lfs_iocount, PRIBIO + 1,
 				     "lfs_vflush", 0);
-		splx(s);
 	}
 	lfs_segunlock(fs);
 
@@ -692,8 +695,8 @@ lfs_segwrite(struct mount *mp, int flags)
 	 * Take the flags off of the segment so that lfs_segunlock
 	 * doesn't have to write the superblock either.
 	 */
-	if (did_ckp == 0) {
-		sp->seg_flags &= ~(SEGM_SYNC|SEGM_CKP);
+	if (do_ckp && !did_ckp) {
+		sp->seg_flags &= ~SEGM_CKP;
 		/* if (do_ckp) printf("lfs_segwrite: no checkpoint\n"); */
 	}
 
@@ -1443,11 +1446,19 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 
 	cl = (struct lfs_cluster *)malloc(sizeof(*cl), M_SEGMENT, M_WAITOK);
 	bpp = (struct buf **)malloc(n*sizeof(*bpp), M_SEGMENT, M_WAITOK);
-	memset(cl,0,sizeof(*cl));
+	memset(cl, 0, sizeof(*cl));
 	cl->fs = fs;
 	cl->bpp = bpp;
 	cl->bufcount = 0;
 	cl->bufsize = 0;
+
+	/* If this segment is being written synchronously, note that */
+	if (fs->lfs_sp->seg_flags & SEGM_SYNC) {
+		cl->flags |= LFS_CL_SYNC;
+		cl->seg = fs->lfs_sp;
+		++cl->seg->seg_iocount;
+		/* printf("+ %x => %d\n", cl->seg, cl->seg->seg_iocount); */
+	}
 
 	/* Get an empty buffer header, or maybe one with something on it */
 	s = splbio();
@@ -1791,7 +1802,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		/*
 		 * Construct the cluster.
 		 */
-		s = splbio();
 		while (fs->lfs_iocount >= LFS_THROTTLE) {
 #ifdef DEBUG_LFS
 			printf("[%d]", fs->lfs_iocount);
@@ -1841,7 +1851,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI | B_DONE);
 			cl->bpp[cl->bufcount++] = bp;
 			vp = bp->b_vp;
+			s = splbio();
 			++vp->v_numoutput;
+			splx(s);
 
 			/*
 			 * Although it cannot be freed for reuse before the
@@ -1875,6 +1887,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			 * XXX KS - Shouldn't we set *both* if both types
 			 * of blocks are present (traverse the dirty list?)
 			 */
+			s = splbio();
 			if ((i == 1 ||
 			     (i > 1 && vp && *bpp && (*bpp)->b_vp != vp)) &&
 			    (bp = LIST_FIRST(&vp->v_dirtyblkhd)) != NULL &&
@@ -1890,8 +1903,10 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				else
 					LFS_SET_UINO(ip, IN_MODIFIED);
 			}
+			splx(s);
 			wakeup(vp);
 		}
+		s = splbio();
 		++cbp->b_vp->v_numoutput;
 		splx(s);
 		/*
@@ -1967,8 +1982,8 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	vop_strategy_a.a_bp = bp;
 	s = splbio();
 	++bp->b_vp->v_numoutput;
-	++fs->lfs_iocount;
 	splx(s);
+	++fs->lfs_iocount;
 	(strategy)(&vop_strategy_a);
 }
 
@@ -2030,8 +2045,8 @@ lfs_callback(struct buf *bp)
 	lfs_freebuf(bp);
 }
 
-void
-lfs_supercallback(struct buf *bp)
+static void
+lfs_super_aiodone(struct buf *bp)
 {
 	struct lfs *fs;
 
@@ -2044,13 +2059,13 @@ lfs_supercallback(struct buf *bp)
 }
 
 static void
-lfs_cluster_callback(struct buf *bp)
+lfs_cluster_aiodone(struct buf *bp)
 {
 	struct lfs_cluster *cl;
 	struct lfs *fs;
 	struct buf *tbp;
 	struct vnode *vp;
-	int error=0;
+	int s, error=0;
 	char *cp;
 	extern int locked_queue_count;
 	extern long locked_queue_bytes;
@@ -2101,8 +2116,10 @@ lfs_cluster_callback(struct buf *bp)
 			tbp->b_flags |= B_INVAL;
 		if(!(tbp->b_flags & B_CALL)) {
 			bremfree(tbp);
+			s = splbio();
 			if(vp)
 				reassignbuf(tbp, vp);
+			splx(s);
 			tbp->b_flags |= B_ASYNC; /* for biodone */
 		}
 #ifdef DIAGNOSTIC
@@ -2112,27 +2129,7 @@ lfs_cluster_callback(struct buf *bp)
 		}
 #endif
 		if (tbp->b_flags & (B_BUSY | B_CALL)) {
-			/*
-			 * Prevent vp from being moved between hold list
-			 * and free list by giving it an extra hold,
-			 * and then inline HOLDRELE, minus the TAILQ
-			 * manipulation.
-			 *
-			 * lfs_vunref() will put the vnode back on the
-			 * appropriate free list the next time it is
-			 * called (in thread context).
-			 */
-			if (vp)
-				VHOLD(vp);
 			biodone(tbp);
-			if (vp) {
-        			simple_lock(&vp->v_interlock); 
-        			if (vp->v_holdcnt <= 0)
-                			panic("lfs_cluster_callback: "
-						"holdcnt vp %p", vp);
-        			vp->v_holdcnt--; 
-        			simple_unlock(&vp->v_interlock); 
-			}
 		}
 	}
 
@@ -2151,23 +2148,26 @@ lfs_cluster_callback(struct buf *bp)
 	bp->b_iodone = NULL;
 	bp->b_flags &= ~B_DELWRI;
 	bp->b_flags |= B_DONE;
+	s = splbio();
 	reassignbuf(bp, bp->b_vp);
+	splx(s);
 	brelse(bp);
 
-	free(cl->bpp, M_SEGMENT);
-	free(cl, M_SEGMENT);
-
+	/* Note i/o done */
+	if (cl->flags & LFS_CL_SYNC) {
+		if (--cl->seg->seg_iocount == 0) 
+			wakeup(&cl->seg->seg_iocount);
+		/* printf("- %x => %d\n", cl->seg, cl->seg->seg_iocount); */
+	}
 #ifdef DIAGNOSTIC
 	if (fs->lfs_iocount == 0)
-		panic("lfs_callback: zero iocount\n");
+		panic("lfs_cluster_aiodone: zero iocount\n");
 #endif
 	if (--fs->lfs_iocount < LFS_THROTTLE)
 		wakeup(&fs->lfs_iocount);
 #if 0
 	if (fs->lfs_iocount == 0) {
 		/*
-		 * XXX - do we really want to do this in a callback?
-		 *
 		 * Vinvalbuf can move locked buffers off the locked queue
 		 * and we have no way of knowing about this.  So, after
 		 * doing a big write, we recalculate how many buffers are
@@ -2177,6 +2177,33 @@ lfs_cluster_callback(struct buf *bp)
 		wakeup(&locked_queue_count);
 	}
 #endif
+
+	free(cl->bpp, M_SEGMENT);
+	free(cl, M_SEGMENT);
+}
+
+static void
+lfs_generic_callback(struct buf *bp, void (*aiodone)(struct buf *))
+{
+	/* reset b_iodone for when this is a single-buf i/o. */
+	bp->b_iodone = aiodone;
+
+	simple_lock(&uvm.aiodoned_lock);        /* locks uvm.aio_done */
+	TAILQ_INSERT_TAIL(&uvm.aio_done, bp, b_freelist);
+	wakeup(&uvm.aiodoned);
+	simple_unlock(&uvm.aiodoned_lock);
+}
+
+static void
+lfs_cluster_callback(struct buf *bp)
+{
+	lfs_generic_callback(bp, lfs_cluster_aiodone);
+}
+
+void
+lfs_supercallback(struct buf *bp)
+{
+	lfs_generic_callback(bp, lfs_super_aiodone);
 }
 
 /*
