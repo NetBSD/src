@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2000/03/31 14:51:49 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2000/03/31 15:00:49 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -178,7 +178,7 @@ mach_init(memsize)
 		if (memcmp("nfsroot=", bootstring + i, 8) == 0)
 			netboot = 1;
 		/*
-		 * XXX Select root device from 'dev=/dev/hd[abcd][1234]' too.
+		 * XXX Select root device from 'root=/dev/hd[abcd][1234]' too.
 		 */
 	}
 
