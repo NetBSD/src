@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.14 2000/04/26 05:36:41 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.14.4.1 2001/05/01 10:11:48 he Exp $	*/
 /*	$KAME: in_gif.c,v 1.39 2000/04/26 05:33:31 itojun Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <sys/ioctl.h>
 #endif
+#include <sys/syslog.h>
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <sys/malloc.h>
@@ -107,7 +108,7 @@ in_gif_output(ifp, family, m, rt)
 	struct mbuf	*m;
 	struct rtentry *rt;
 {
-	register struct gif_softc *sc = (struct gif_softc*)ifp;
+	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *dst = (struct sockaddr_in *)&sc->gif_ro.ro_dst;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
@@ -394,7 +395,8 @@ gif_encapcheck4(m, off, proto, arg)
 	}
 
 	/* ingress filters on outer source */
-	if ((m->m_flags & M_PKTHDR) != 0 && m->m_pkthdr.rcvif) {
+	if ((sc->gif_if.if_flags & IFF_LINK2) == 0 &&
+	    (m->m_flags & M_PKTHDR) != 0 && m->m_pkthdr.rcvif) {
 		struct sockaddr_in sin;
 		struct rtentry *rt;
 
@@ -407,10 +409,14 @@ gif_encapcheck4(m, off, proto, arg)
 #else
 		rt = rtalloc1((struct sockaddr *)&sin, 0);
 #endif
-		if (!rt)
-			return 0;
-		if (rt->rt_ifp != m->m_pkthdr.rcvif) {
-			rtfree(rt);
+		if (!rt || rt->rt_ifp != m->m_pkthdr.rcvif) {
+#if 0
+			log(LOG_WARNING, "%s: packet from 0x%x dropped "
+			    "due to ingress filter\n", if_name(&sc->gif_if),
+			    (u_int32_t)ntohl(sin.sin_addr.s_addr));
+#endif
+			if (rt)
+				rtfree(rt);
 			return 0;
 		}
 		rtfree(rt);
