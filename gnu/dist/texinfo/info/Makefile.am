@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.2 2002/09/29 19:08:10 karl Exp
+# Id: Makefile.am,v 1.3 2003/04/05 23:09:26 karl Exp
 # Makefile.am for texinfo/info.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -16,7 +16,7 @@ noinst_PROGRAMS = makedoc
 # target.  Removes the `g' in the install rule before applying any
 # user-specified name transformations.
 bin_PROGRAMS = ginfo infokey
-transform = s/ginfo/info/; @program_transform_name@
+transform = s/ginfo/info/; $(program_transform_name)
 
 localedir = $(datadir)/locale
 
@@ -24,8 +24,8 @@ localedir = $(datadir)/locale
 # Automake puts -I.. and -I$(srcdir) into DEFS by default, but
 # we need to override it, so include them ourselves.
 INCLUDES = -I. -I$(top_srcdir)/lib -I../intl -I.. -I$(srcdir)
-DEFS = -DINFODIR=\"$(infodir)\" -DLOCALEDIR=\"$(localedir)\" @DEFS@
-LDADD = ../lib/libtxi.a @TERMLIBS@ @LIBINTL@
+DEFS += -DINFODIR=\"$(infodir)\" -DLOCALEDIR=\"$(localedir)\"
+LDADD = ../lib/libtxi.a $(TERMLIBS) $(LIBINTL)
 
 # The files `doc.c' and `funs.h' are created by ./makedoc run over the source
 # files which contain DECLARE_INFO_COMMAND.  `funs.h' is a header file

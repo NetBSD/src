@@ -1,8 +1,8 @@
-/*	$NetBSD: intl-compat.c,v 1.1.1.2 2003/01/17 14:54:20 wiz Exp $	*/
+/*	$NetBSD: intl-compat.c,v 1.1.1.3 2003/07/03 14:59:12 wiz Exp $	*/
 
 /* intl-compat.c - Stub functions to call gettext functions from GNU gettext
    Library.
-   Copyright (C) 1995, 2000-2002 Software Foundation, Inc.
+   Copyright (C) 1995, 2000-2003 Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -23,8 +23,6 @@
 # include <config.h>
 #endif
 
-#define _INTL_REDIRECT_MACROS
-#include "libgnuintl.h"
 #include "gettextP.h"
 
 /* @@ end of prolog @@ */
@@ -33,7 +31,10 @@
    defined in the included GNU libintl library (with "libintl_" prefix).
    It is compiled into libintl in order to make the AM_GNU_GETTEXT test
    of gettext <= 0.11.2 work with the libintl library >= 0.11.3 which
-   has the redirections primarily in the <libintl.h> include file.  */
+   has the redirections primarily in the <libintl.h> include file.
+   It is also compiled into libgnuintl so that libgnuintl.so can be used
+   as LD_PRELOADable library on glibc systems, to provide the extra
+   features that the functions in the libc don't have (namely, logging).  */
 
 
 #undef gettext
@@ -47,6 +48,17 @@
 #undef bind_textdomain_codeset
 
 
+/* When building a DLL, we must export some functions.  Note that because
+   the functions are only defined for binary backward compatibility, we
+   don't need to use __declspec(dllimport) in any case.  */
+#if defined _MSC_VER && BUILDING_DLL
+# define DLL_EXPORTED __declspec(dllexport)
+#else
+# define DLL_EXPORTED
+#endif
+
+
+DLL_EXPORTED
 char *
 gettext (msgid)
      const char *msgid;
@@ -55,6 +67,7 @@ gettext (msgid)
 }
 
 
+DLL_EXPORTED
 char *
 dgettext (domainname, msgid)
      const char *domainname;
@@ -64,6 +77,7 @@ dgettext (domainname, msgid)
 }
 
 
+DLL_EXPORTED
 char *
 dcgettext (domainname, msgid, category)
      const char *domainname;
@@ -74,6 +88,7 @@ dcgettext (domainname, msgid, category)
 }
 
 
+DLL_EXPORTED
 char *
 ngettext (msgid1, msgid2, n)
      const char *msgid1;
@@ -84,6 +99,7 @@ ngettext (msgid1, msgid2, n)
 }
 
 
+DLL_EXPORTED
 char *
 dngettext (domainname, msgid1, msgid2, n)
      const char *domainname;
@@ -95,6 +111,7 @@ dngettext (domainname, msgid1, msgid2, n)
 }
 
 
+DLL_EXPORTED
 char *
 dcngettext (domainname, msgid1, msgid2, n, category)
      const char *domainname;
@@ -107,6 +124,7 @@ dcngettext (domainname, msgid1, msgid2, n, category)
 }
 
 
+DLL_EXPORTED
 char *
 textdomain (domainname)
      const char *domainname;
@@ -115,6 +133,7 @@ textdomain (domainname)
 }
 
 
+DLL_EXPORTED
 char *
 bindtextdomain (domainname, dirname)
      const char *domainname;
@@ -124,6 +143,7 @@ bindtextdomain (domainname, dirname)
 }
 
 
+DLL_EXPORTED
 char *
 bind_textdomain_codeset (domainname, codeset)
      const char *domainname;

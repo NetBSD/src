@@ -1,9 +1,9 @@
-/*	$NetBSD: nodemenu.c,v 1.1.1.3 2003/01/17 14:54:32 wiz Exp $	*/
+/*	$NetBSD: nodemenu.c,v 1.1.1.4 2003/07/03 14:58:56 wiz Exp $	*/
 
 /* nodemenu.c -- produce a menu of all visited nodes.
-   Id: nodemenu.c,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: nodemenu.c,v 1.3 2003/05/13 16:37:54 karl Exp
 
-   Copyright (C) 1993, 1997, 1998, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1997, 1998, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #include "info.h"
 
 /* Return a line describing the format of a node information line. */
-static char *
+static const char *
 nodemenu_format_info ()
 {
   return (_("\n\
@@ -103,7 +103,7 @@ format_node_info (node)
   if (node->filename && *(node->filename))
     {
       len = pad_to (51, line_buffer);
-      sprintf (line_buffer + len, node->filename);
+      strcpy (line_buffer + len, node->filename);
     }
 
   return xstrdup (line_buffer);

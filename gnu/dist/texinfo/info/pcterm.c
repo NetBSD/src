@@ -1,9 +1,9 @@
-/*	$NetBSD: pcterm.c,v 1.1.1.2 2003/01/17 14:54:34 wiz Exp $	*/
+/*	$NetBSD: pcterm.c,v 1.1.1.3 2003/07/03 14:58:54 wiz Exp $	*/
 
 /* pc_term.c -- How to handle the PC terminal for Info under MS-DOS/MS-Windows.
-   Id: pcterm.c,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: pcterm.c,v 1.3 2003/03/31 21:43:27 karl Exp
 
-   Copyright (C) 1998, 99 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -39,15 +39,6 @@
 
 extern int speech_friendly;	/* defined in info.c */
 
-#ifdef max
-# undef max
-#endif
-#ifdef min
-# undef min
-#endif
-#define max(x,y) ((x)>(y) ? (x) : (y))
-#define min(x,y) ((x)<(y) ? (x) : (y))
-
 /* **************************************************************** */
 /*                                                                  */
 /*                PC Terminal Output Functions                      */
@@ -79,7 +70,7 @@ pc_up_line (void)
 {
   int x, y;
   ScreenGetCursor (&y, &x);
-  ScreenSetCursor (max (y-1, 0), x);
+  ScreenSetCursor (MAX (y-1, 0), x);
 }
 
 /* Move the cursor down one line. */
@@ -88,7 +79,7 @@ pc_down_line (void)
 {
   int x, y;
   ScreenGetCursor (&y, &x);
-  ScreenSetCursor (min (screenheight-1, y+1), x);
+  ScreenSetCursor (MIN (screenheight-1, y+1), x);
 }
 
 /* Clear the entire terminal screen. */

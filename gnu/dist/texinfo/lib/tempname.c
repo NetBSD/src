@@ -1,9 +1,9 @@
-/*	$NetBSD: tempname.c,v 1.1.1.2 2003/02/13 08:50:51 wiz Exp $	*/
+/*	$NetBSD: tempname.c,v 1.1.1.3 2003/07/03 14:58:58 wiz Exp $	*/
 
 /* tempname.c - generate the name of a temporary file.
 
    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002 Free Software Foundation, Inc.
+   2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,8 +45,9 @@
 # define __GT_NOCREATE	3
 #endif
 
+#include <stddef.h>
+
 #if STDC_HEADERS || _LIBC
-# include <stddef.h>
 # include <string.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: finddomain.c,v 1.1.1.3 2003/01/17 14:54:19 wiz Exp $	*/
+/*	$NetBSD: finddomain.c,v 1.1.1.4 2003/07/03 14:59:13 wiz Exp $	*/
 
 /* Handle list of needed message catalogs
    Copyright (C) 1995-1999, 2000, 2001 Free Software Foundation, Inc.
@@ -180,8 +180,7 @@ _nl_find_domain (dirname, locale, domainname, domainbinding)
 
 
 #ifdef _LIBC
-static void __attribute__ ((unused))
-free_mem (void)
+libc_freeres_fn (free_mem)
 {
   struct loaded_l10nfile *runp = _nl_loaded_domains;
 
@@ -195,6 +194,4 @@ free_mem (void)
       free (here);
     }
 }
-
-text_set_element (__libc_subfreeres, free_mem);
 #endif

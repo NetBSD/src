@@ -1,7 +1,7 @@
-/*	$NetBSD: loadmsgcat.c,v 1.1.1.3 2003/01/17 14:54:19 wiz Exp $	*/
+/*	$NetBSD: loadmsgcat.c,v 1.1.1.4 2003/07/03 14:59:13 wiz Exp $	*/
 
 /* Load needed message catalogs.
-   Copyright (C) 1995-1999, 2000-2002 Free Software Foundation, Inc.
+   Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -36,17 +36,23 @@
 #include <sys/stat.h>
 
 #ifdef __GNUC__
+# undef  alloca
 # define alloca __builtin_alloca
 # define HAVE_ALLOCA 1
 #else
-# if defined HAVE_ALLOCA_H || defined _LIBC
-#  include <alloca.h>
+# ifdef _MSC_VER
+#  include <malloc.h>
+#  define alloca _alloca
 # else
-#  ifdef _AIX
- #pragma alloca
+#  if defined HAVE_ALLOCA_H || defined _LIBC
+#   include <alloca.h>
 #  else
-#   ifndef alloca
+#   ifdef _AIX
+ #pragma alloca
+#   else
+#    ifndef alloca
 char *alloca ();
+#    endif
 #   endif
 #  endif
 # endif
@@ -822,7 +828,7 @@ _nl_init_domain_conv (domain_file, domain, domainbinding)
 	      if (outcharset == NULL || outcharset[0] == '\0')
 		{
 # ifdef _LIBC
-		  outcharset = (*_nl_current[LC_CTYPE])->values[_NL_ITEM_INDEX (CODESET)].string;
+		  outcharset = _NL_CURRENT (LC_CTYPE, CODESET);
 # else
 #  if HAVE_ICONV
 		  extern const char *locale_charset PARAMS ((void));

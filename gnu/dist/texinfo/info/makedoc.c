@@ -1,9 +1,9 @@
-/*	$NetBSD: makedoc.c,v 1.1.1.3 2003/01/17 14:54:34 wiz Exp $	*/
+/*	$NetBSD: makedoc.c,v 1.1.1.4 2003/07/03 14:58:54 wiz Exp $	*/
 
 /* makedoc.c -- make doc.c and funs.h from input files.
-   Id: makedoc.c,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: makedoc.c,v 1.2 2003/05/13 16:16:47 karl Exp
 
-   Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002 Free Software
+   Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -145,7 +145,7 @@ main (argc, argv)
       doc_filename = NULL_DEVICE;
       key_filename = NULL_DEVICE;
     }
-  
+
   funs_stream = must_fopen (funs_filename, "w");
   doc_stream = must_fopen (doc_filename, "w");
   key_stream = must_fopen (key_filename, "w");
@@ -232,7 +232,7 @@ main (argc, argv)
 
   if (tags_only)
     maybe_dump_tags (stdout);
-  xexit (0);
+  return 0;
 }
 
 /* Dumping out the contents of an Emacs tags table. */

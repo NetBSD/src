@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.2 2003/01/12 15:19:01 karl Exp
+# Id: Makefile.am,v 1.3 2003/02/16 17:31:08 karl Exp
 # Makefile.am for texinfo/tests/makeinfo.
 #
 # This file is free software; as a special exception the author gives
@@ -16,7 +16,8 @@ TESTS = accent accentenc \
   macro-at menu-whitespace \
   no-headers \
   node-expand node-value node-whitespace \
-  top top2
+  top top2 \
+  twofiles
 
 noinst_SCRIPTS = $(TESTS)
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: node.c,v 1.1.1.3 2003/02/13 08:50:56 wiz Exp $	*/
+/*	$NetBSD: node.c,v 1.1.1.4 2003/07/03 14:58:52 wiz Exp $	*/
 
 /* node.c -- nodes for Texinfo.
-   Id: node.c,v 1.6 2003/01/18 17:16:17 karl Exp
+   Id: node.c,v 1.12 2003/05/01 00:30:07 karl Exp
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003
-   Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -597,7 +597,7 @@ cm_node ()
   filling_enabled = indented_fill = 0;
   if (!html || (html && splitting))
     current_footnote_number = 1;
-  
+
   if (verbose_mode)
     printf (_("Formatting node %s...\n"), node);
 
@@ -611,7 +611,7 @@ cm_node ()
       xml_begin_node ();
       if (!docbook)
 	{
-	  xml_insert_element (NODENAME, START);      
+	  xml_insert_element (NODENAME, START);
 	  if (macro_expansion_output_stream && !executing_string)
 	    me_execute_string (node);
 	  else
@@ -926,7 +926,7 @@ cm_node ()
           add_word ("<div class=\"node\">\n");
           /* The <p> avoids the links area running on with old Lynxen. */
           add_word_args ("<p>%s\n", splitting ? "" : "<hr>");
-          add_word_args ("%s<a name=\"", _("Node:"));
+          add_word_args ("%s%s<a name=\"", _("Node:"), "&nbsp;");
           tem = expand_node_name (node);
           add_anchor_name (tem, 0);
           add_word_args ("\">%s</a>", tem);
@@ -937,6 +937,7 @@ cm_node ()
               tem = expansion (next, 0);
 	      add_word (",\n");
 	      add_word (_("Next:"));
+              add_word ("&nbsp;");
 	      add_word ("<a rel=\"next\" accesskey=\"n\" href=\"");
 	      add_anchor_name (tem, 1);
 	      add_word_args ("\">%s</a>", tem);
@@ -947,6 +948,7 @@ cm_node ()
               tem = expansion (prev, 0);
 	      add_word (",\n");
 	      add_word (_("Previous:"));
+              add_word ("&nbsp;");
 	      add_word ("<a rel=\"previous\" accesskey=\"p\" href=\"");
 	      add_anchor_name (tem, 1);
 	      add_word_args ("\">%s</a>", tem);
@@ -957,6 +959,7 @@ cm_node ()
               tem = expansion (up, 0);
 	      add_word (",\n");
 	      add_word (_("Up:"));
+              add_word ("&nbsp;");
 	      add_word ("<a rel=\"up\" accesskey=\"u\" href=\"");
 	      add_anchor_name (tem, 1);
 	      add_word_args ("\">%s</a>", tem);
@@ -981,7 +984,7 @@ cm_node ()
       if (prev)
 	{
 	  xml_insert_element (NODEPREV, START);
-	  execute_string ("%s", prev);	    
+	  execute_string ("%s", prev);
 	  xml_insert_element (NODEPREV, END);
 	}
       if (up)
@@ -1043,6 +1046,9 @@ cm_anchor (arg)
 
   /* Parse the anchor text.  */
   anchor = get_xref_token (1);
+
+  /* Force all versions of "top" to be "Top". */
+  normalize_node_name (anchor);
 
   /* In HTML mode, need to actually produce some output.  */
   if (html)
@@ -1294,7 +1300,7 @@ validate (tag, line, label)
 /* The strings here are followed in the message by `reference to...' in
    the `validate' routine.  They are only used in messages, thus are
    translated.  */
-static char *
+static const char *
 reftype_type_string (type)
      enum reftype type;
 {
@@ -1600,7 +1606,7 @@ last_node_p (tags)
         break;
       }
   }
-  
+
   return last;
 }
 
@@ -1630,8 +1636,8 @@ split_file (filename, size)
   if (size == 0)
     size = DEFAULT_SPLIT_SIZE;
 
-  if ((stat (filename, &fileinfo) != 0) ||
-      (((long) fileinfo.st_size) < SPLIT_SIZE_THRESHOLD))
+  if ((stat (filename, &fileinfo) != 0)
+      || (((long) fileinfo.st_size) < size))
     return;
   file_size = (long) fileinfo.st_size;
 
@@ -1657,6 +1663,10 @@ split_file (filename, size)
     int which_file = 1;
     TAG_ENTRY *tags = tag_table;
     char *indirect_info = NULL;
+
+    /* Maybe we want a Local Variables section.  */
+    char *trailer = info_trailer ();
+    int trailer_len = trailer ? strlen (trailer) : 0;
 
     /* Remember the `header' of this file.  The first tag in the file is
        the bottom of the header; the top of the file is the start. */
@@ -1779,7 +1789,9 @@ split_file (filename, size)
                       || write (fd, the_header, header_size) != header_size
                       || write (fd, the_file + file_top, file_bot - file_top)
                          != (file_bot - file_top)
-                      || (close (fd)) < 0)
+                      || (trailer_len
+                          && write (fd, trailer, trailer_len) != trailer_len)
+                      || close (fd) < 0)
                     {
                       perror (split_filename);
                       if (fd != -1)
@@ -1824,7 +1836,16 @@ split_file (filename, size)
       /* Inhibit newlines. */
       paragraph_is_open = 0;
 
+      /* Write the indirect tag table.  */
       write_tag_table_indirect ();
+
+      /* preserve local variables in info output.  */
+      if (trailer)
+        {
+          insert_string (trailer);
+          free (trailer);
+        }
+
       fclose (output_stream);
       free (the_header);
       free (the_file);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dngettext.c,v 1.1.1.1 2003/01/17 14:54:20 wiz Exp $	*/
+/*	$NetBSD: dngettext.c,v 1.1.1.2 2003/07/03 14:59:13 wiz Exp $	*/
 
 /* Implementation of the dngettext(3) function.
    Copyright (C) 1995-1997, 2000, 2001, 2002 Free Software Foundation, Inc.
@@ -39,7 +39,7 @@
    prefix.  So we have to make a difference here.  */
 #ifdef _LIBC
 # define DNGETTEXT __dngettext
-# define DCNGETTEXT INTUSE(__dcngettext)
+# define DCNGETTEXT __dcngettext
 #else
 # define DNGETTEXT libintl_dngettext
 # define DCNGETTEXT libintl_dcngettext

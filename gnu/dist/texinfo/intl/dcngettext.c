@@ -1,4 +1,4 @@
-/*	$NetBSD: dcngettext.c,v 1.1.1.1 2003/01/17 14:54:20 wiz Exp $	*/
+/*	$NetBSD: dcngettext.c,v 1.1.1.2 2003/07/03 14:59:13 wiz Exp $	*/
 
 /* Implementation of the dcngettext(3) function.
    Copyright (C) 1995-1999, 2000, 2001, 2002 Free Software Foundation, Inc.
@@ -58,6 +58,5 @@ DCNGETTEXT (domainname, msgid1, msgid2, n, category)
 
 #ifdef _LIBC
 /* Alias for function name in GNU C Library.  */
-INTDEF(__dcngettext)
 weak_alias (__dcngettext, dcngettext);
 #endif

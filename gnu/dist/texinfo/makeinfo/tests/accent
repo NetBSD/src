@@ -4,7 +4,7 @@
 : ${srcdir=.}
 input=`basename $0`.txi
 
-# html
+# html.
 houtput=`basename $0`.html
 ../makeinfo --html --no-split -I$srcdir $srcdir/$input
 hexit_status=$?

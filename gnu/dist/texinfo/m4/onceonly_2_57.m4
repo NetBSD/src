@@ -1,5 +1,5 @@
-# onceonly_2_57.m4 serial 1
-dnl Copyright (C) 2002 Free Software Foundation, Inc.
+# onceonly_2_57.m4 serial 3
+dnl Copyright (C) 2002-2003 Free Software Foundation, Inc.
 dnl This file is free software, distributed under the terms of the GNU
 dnl General Public License.  As a special exception to the GNU General
 dnl Public License, this file may be distributed as part of a program
@@ -26,19 +26,24 @@ dnl DEFAULTS and INIT_PREPARE in order to check all requested headers at once,
 dnl thus reducing the size of 'configure'. Works with autoconf-2.57. The
 dnl size reduction is ca. 9%.
 
+dnl Autoconf version 2.57 or newer is recommended.
+AC_PREREQ(2.54)
+
 # AC_CHECK_HEADERS_ONCE(HEADER1 HEADER2 ...) is a once-only variant of
 # AC_CHECK_HEADERS(HEADER1 HEADER2 ...).
 AC_DEFUN([AC_CHECK_HEADERS_ONCE], [
   :
   AC_FOREACH([gl_HEADER_NAME], [$1], [
-    AC_DEFUN([gl_CHECK_HEADER_]translit(gl_HEADER_NAME,[./-], [___]), [
+    AC_DEFUN([gl_CHECK_HEADER_]m4_quote(translit(gl_HEADER_NAME,
+                                                 [./-], [___])), [
       m4_divert_text([INIT_PREPARE],
         [gl_header_list="$gl_header_list gl_HEADER_NAME"])
       gl_HEADERS_EXPANSION
-      AH_TEMPLATE(AS_TR_CPP(HAVE_[]gl_HEADER_NAME),
-        [Define to 1 if you have the <]gl_HEADER_NAME[> header file.])
+      AH_TEMPLATE(AS_TR_CPP([HAVE_]m4_defn([gl_HEADER_NAME])),
+        [Define to 1 if you have the <]m4_defn([gl_HEADER_NAME])[> header file.])
     ])
-    AC_REQUIRE([gl_CHECK_HEADER_]translit(gl_HEADER_NAME,[./-], [___]))
+    AC_REQUIRE([gl_CHECK_HEADER_]m4_quote(translit(gl_HEADER_NAME,
+                                                   [./-], [___])))
   ])
 ])
 m4_define([gl_HEADERS_EXPANSION], [
@@ -52,14 +57,14 @@ m4_define([gl_HEADERS_EXPANSION], [
 AC_DEFUN([AC_CHECK_FUNCS_ONCE], [
   :
   AC_FOREACH([gl_FUNC_NAME], [$1], [
-    AC_DEFUN([gl_CHECK_FUNC_]gl_FUNC_NAME, [
+    AC_DEFUN([gl_CHECK_FUNC_]m4_defn([gl_FUNC_NAME]), [
       m4_divert_text([INIT_PREPARE],
         [gl_func_list="$gl_func_list gl_FUNC_NAME"])
       gl_FUNCS_EXPANSION
-      AH_TEMPLATE(AS_TR_CPP(HAVE_[]gl_FUNC_NAME),
-        [Define to 1 if you have the `]gl_FUNC_NAME[' function.])
+      AH_TEMPLATE(AS_TR_CPP([HAVE_]m4_defn([gl_FUNC_NAME])),
+        [Define to 1 if you have the `]m4_defn([gl_FUNC_NAME])[' function.])
     ])
-    AC_REQUIRE([gl_CHECK_FUNC_]gl_FUNC_NAME)
+    AC_REQUIRE([gl_CHECK_FUNC_]m4_defn([gl_FUNC_NAME]))
   ])
 ])
 m4_define([gl_FUNCS_EXPANSION], [
@@ -73,9 +78,9 @@ m4_define([gl_FUNCS_EXPANSION], [
 AC_DEFUN([AC_CHECK_DECLS_ONCE], [
   :
   AC_FOREACH([gl_DECL_NAME], [$1], [
-    AC_DEFUN([gl_CHECK_DECL_]gl_DECL_NAME, [
-      AC_CHECK_DECLS(gl_DECL_NAME)
+    AC_DEFUN([gl_CHECK_DECL_]m4_defn([gl_DECL_NAME]), [
+      AC_CHECK_DECLS(m4_defn([gl_DECL_NAME]))
     ])
-    AC_REQUIRE([gl_CHECK_DECL_]gl_DECL_NAME)
+    AC_REQUIRE([gl_CHECK_DECL_]m4_defn([gl_DECL_NAME]))
   ])
 ])
