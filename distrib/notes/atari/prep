@@ -1,12 +1,12 @@
-.\"	$NetBSD: prep,v 1.10 2002/05/27 12:39:57 leo Exp $
+.\"	$NetBSD: prep,v 1.11 2002/06/29 09:46:39 lukem Exp $
 .
 .Ss2 Preparing your hard disk for the NetBSD installation.
 Note you will be modifying your HD's if you mess something up here you
-could lose everything on all the drives that you work with.  It is
-therefore advised that you:
+could lose everything on all the drives that you work with.
+It is therefore advised that you:
 .(bullet
-Write down your current configurations.  Do this
-by writing down all partition info (especially their sizes).
+Write down your current configurations.
+Do this by writing down all partition info (especially their sizes).
 .It
 .Em Back up the partitions you are keeping.
 .bullet)
@@ -16,8 +16,8 @@ If
 has to share the disk with another operating system, you can
 either take care of partitioning your harddisk before installing
 .Nx
-or delay this until the installer requests you to do it. If you decide to do
-it now, please create space for at least
+or delay this until the installer requests you to do it.
+If you decide to do it now, please create space for at least
 .Pa /
 (root), swap and
 .Pa /usr
@@ -43,32 +43,36 @@ As you might know; every hard disk has a
 .Sq root sector
 that contains information about the size of the hard disk and the partitions
 on the hard disk.
-The root sector can only contain the necessary data for four
-partitions. Nobody thought that this limitation would cause any problems.
-After all, 640 KByte should be enough.  As hard disk grew, it was necessary
-to define more than four partitions. In order to be more or less compatible
-with the old format, a new type of partition entry was defined: XGM partions.
+The root sector can only contain the necessary data for four partitions.
+Nobody thought that this limitation would cause any problems.
+After all, 640 KByte should be enough.
+As hard disk grew, it was necessary to define more than four partitions.
+In order to be more or less compatible with the old format,
+a new type of partition entry was defined: XGM partions.
 .Pp
 An XGM partition is a
 .Sq look over there
 sign: Another root sector can be
-found at the start of the XGM partition. This root sector contains the
-remaining real partitions.  And this is the big mystery: Partitions defined
+found at the start of the XGM partition.
+This root sector contains the remaining real partitions.
+And this is the big mystery: Partitions defined
 in the root sector of the hard disk are called
 .Sq "primary partitions" ,
 partitions defined in the root sector of an XGM partition are called
 .Sq "extended partitions" .
 .Pp
 The bootblock will only work if the first NBD partition is a primary
-partition. This is not a limitation of
+partition.
+This is not a limitation of
 .Nx
 but a limitation of
 .Tn TOS Ns / Ns AHDI:
 You can only boot from primary partitions.
 .Pp
 If you are creating your partitions with HDX, you'll have to be very careful
-to fulfill this rule. HDX has some very strange ideas when it comes to
-extended partitions. Fortunately, you can edit this stuff: The
+to fulfill this rule.
+HDX has some very strange ideas when it comes to extended partitions.
+Fortunately, you can edit this stuff: The
 .Dq "Edit partition scheme of the unit"
 dialog box has a button labeled
 .Dq "expert" .
@@ -77,26 +81,32 @@ Click on it
 .Em after
 you have defined the sizes of the partitions.
 .Pp
-A new dialog box appears on the screen. The left side contains two blocks of
-partitions: The upper block always contains the first four partitions, the
-lower block contains the last three partitions. If you have defined less than
+A new dialog box appears on the screen.
+The left side contains two blocks of partitions;
+the upper block always contains the first four partitions, the
+lower block contains the last three partitions.
+If you have defined less than
 7 partitions, some fields of the lower block will contain the string
 .Dq "unused" .
 Some of the partitions will be displayed in reverse video: These are the
 extended partitions.
 .Pp
-The right side contains six possible ranges for the extended partitions. It
-is not possible to define your own range, you will have to use one of the
-schemes offered by HDX. To quote from Ghostbusters: Choose and die.
+The right side contains six possible ranges for the extended partitions.
+It is not possible to define your own range, you will have to use one of the
+schemes offered by HDX.
+To quote from Ghostbusters: Choose and die.
 The default scheme used by HDX is the first scheme: Extended partitions start
-with the second partition and end with the second to last partition. If you
+with the second partition and end with the second to last partition.
+If you
 have defined 7 partitions, partitions #2 to #5 will be extended partitions,
 while partitions #1, #6 and #7 will be primary partitions.
 .Pp
 You can move the extended partition range by clicking on one of the buttons
-on the right side of the dialog box. Try to find one where your first
+on the right side of the dialog box.
+Try to find one where your first
 .Nx
-partition is a primary partition. Golden rules:
+partition is a primary partition.
+Golden rules:
 .(bullet
 If the disk contains no
 .Tn GEMDOS
@@ -108,7 +118,8 @@ handle it alone.
 If the disk contains one
 .Tn GEMDOS
 partition, make it partition #1 and
-start the extended partition range at partition #3. This allows you
+start the extended partition range at partition #3.
+This allows you
 to boot from both the
 .Tn GEMDOS
 and the
@@ -120,18 +131,20 @@ If the disk contains two
 partitions, use partitions #1 and #2
 for
 .Tn GEMDOS ,
-partition #3 for NetBSD-root. Start the extended partition
-range with partition #4.
+partition #3 for NetBSD-root.
+Start the extended partition range with partition #4.
 .It
 If your disks contains three or more
 .Tn GEMDOS
-partitions, you are in
-trouble. Try using partitions #1 and #2 as the first two
+partitions, you are in trouble.
+Try using partitions #1 and #2 as the first two
 .Tn GEMDOS
-partitions. Use partition #3 as the first
+partitions.
+Use partition #3 as the first
 .Nx
-partition. Start the
-extended partition range with partition #4. Put the other
+partition.
+Start the extended partition range with partition #4.
+Put the other
 .Nx
 extended partition range.
 .bullet)
@@ -139,10 +152,11 @@ extended partition range.
 .Ss2 Booting the installer on an existing system
 If you already have
 .Nx
-installed, it is easy. Just boot into single
-user state on your current system, or use the 
+installed, it is easy.
+Just boot into single user state on your current system, or use the
 .Ic shutdown now
-command to shutdown to single-user state. Then copy the installer using
+command to shutdown to single-user state.
+Then copy the installer using
 .Ic dd :
 .Pp
 .Dl Ic "dd if=sysinst.fs of=/dev/rsd0b"
@@ -150,9 +164,10 @@ command to shutdown to single-user state. Then copy the installer using
 where
 .Li /dev/rsd0b
 should be the device path of the swap partition your system
-is configured to use. Once the file is copied, reboot back to the booter
-and use the '-b' option to make the kernel prompt for a root device. Now
-enter the swap device as your root device to start the installer.
+is configured to use.
+Once the file is copied, reboot back to the booter
+and use the '-b' option to make the kernel prompt for a root device.
+Now enter the swap device as your root device to start the installer.
 .Pp
 .Ss2 Booting the installer on new systems.
 If your system has more than 6MB RAM, you can skip directly to the section
@@ -161,12 +176,14 @@ about
 since the amount of RAM is enough to load the installer into.
 .Pp
 For new new installations on small memory systems, things are a bit more
-complicated. The easiest way is to mark an AHDI partition as id 'SWP'. You
-can either accomplish this with HDdriver or use the 
+complicated.
+The easiest way is to mark an AHDI partition as id 'SWP'.
+You can either accomplish this with HDdriver or use the
 .Ic chg_pid.ttp
-program supplied on the bootfloppy. To use the fifth partition of your
+program supplied on the bootfloppy.
+To use the fifth partition of your
 first drive to a swap partition, do the following:
-.Pp     
+.Pp
 .Dl Ic "chg_pid -w 0 4 SWP"
 .Pp
 As you can see, both the drive and the partition numbers are zero
@@ -175,9 +192,10 @@ based.
 When a swap partition has been created, you can transfer the installer using
 the
 .Ic file2swp.ttp
-command, which is also on the bootfloppy. This program copies a (gzipped)file
-to the first AHDI partition with id 'SWP' on the designated disk.  To copy
-sysinst.fs to your first SCSI disk, use:
+command, which is also on the bootfloppy.
+This program copies a (gzipped)file
+to the first AHDI partition with id 'SWP' on the designated disk.
+To copy sysinst.fs to your first SCSI disk, use:
 .Pp
 .Dl Ic "file2swp -w -f sysinst.fs s0"
 .Pp
@@ -187,7 +205,8 @@ automatically detects a gzipped file, there is no need for a  .gz extension.
 .Ss2 Using loadbsd.ttp
 To start the installer, you first need to load a
 .Nx
-kernel.  This can be done in a couple ways, both of which currently require
+kernel.
+This can be done in a couple ways, both of which currently require
 .Tn GEMDOS .
 You need either the bootfloppy provided in the
 distribution or you can copy the
@@ -195,21 +214,22 @@ distribution or you can copy the
 program and
 kernel to a boot floppy disk (1.44 MB needed) or put them on a
 .Tn TOS
-partition.  Select the loadbsd program and it will
-ask for parameters, supply:
+partition.
+Select the loadbsd program and it will ask for parameters, supply:
 .Sq Ic "-b netbsd"
 (or whatever name
-you copied the kernel to).  You can, of course, also run it
-from the shell command-line in
+you copied the kernel to).
+You can, of course, also run it from the shell command-line in
 .Tn MiNT :
 .Pp
 .Dl Ic "loadbsd -b a:/netbsd"
 .Pp
 You should see the screen clear and some information about
-your system as the kernel configures the hardware.  Then
-you will be prompted for a root device. If you copied the installer to
-a swap partition, as explained above, you have to enter the swap partition
-as the boot device. When you used your first SCSI disk, this will be
+your system as the kernel configures the hardware.
+Then you will be prompted for a root device.
+If you copied the installer to a swap partition, as explained above,
+you have to enter the swap partition as the boot device.
+When you used your first SCSI disk, this will be
 .Ic sd0b.
 On the first IDE drive it would be
 .Ic wd0b.
@@ -219,18 +239,18 @@ remove the
 .Tn GEMDOS
 kernel boot floppy from the drive if present and insert the
 .Nx
-install floppy 1.  Now type
+install floppy 1.
+Now type
 .Sq Ic md0a
-to tell the
-kernel to load the install file system into RAMdisk. While
-the kernel is loading, it will show a
+to tell the kernel to load the install file system into RAMdisk.
+While the kernel is loading, it will show a
 .Sq \&.
-for each
-track loaded. After loading 80 tracks, it will ask you
-to insert the next floppy. At this time, insert the
+for each track loaded.
+After loading 80 tracks, it will ask you to insert the next floppy.
+At this time, insert the
 .Nx
-install floppy 2 and press any key. The kernel continues
-loading another 40 tracks before it continues to boot.
+install floppy 2 and press any key.
+The kernel continues loading another 40 tracks before it continues to boot.
 .(Note
 If you are using 1.44 MB floppies, you should select
 .Sq Ic md1a
