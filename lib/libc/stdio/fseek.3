@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.16 2000/07/26 08:57:34 kleink Exp $
+.\"	$NetBSD: fseek.3,v 1.17 2000/12/29 15:22:50 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,9 +64,9 @@
 .Ft void
 .Fn rewind "FILE *stream"
 .Ft int
-.Fn fgetpos "FILE *stream" "fpos_t *pos"
+.Fn fgetpos "FILE * restrict stream" "fpos_t * restrict pos"
 .Ft int
-.Fn fsetpos "FILE *stream" "const fpos_t *pos"
+.Fn fsetpos "FILE * restrict stream" "const fpos_t * restrict pos"
 .Sh DESCRIPTION
 The
 .Fn fseek

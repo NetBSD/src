@@ -1,4 +1,4 @@
-.\"	$NetBSD: fread.3,v 1.6 1998/02/05 18:49:21 perry Exp $
+.\"	$NetBSD: fread.3,v 1.7 2000/12/29 15:22:50 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,9 +49,9 @@
 .Sh SYNOPSIS
 .Fd #include <stdio.h>
 .Ft size_t
-.Fn fread "void *ptr" "size_t size" "size_t nmemb" "FILE *stream"
+.Fn fread "void * restrict ptr" "size_t size" "size_t nmemb" "FILE * restrict stream"
 .Ft size_t
-.Fn fwrite "const void *ptr" "size_t size" "size_t nmemb" "FILE *stream"
+.Fn fwrite "const void * restrict ptr" "size_t size" "size_t nmemb" "FILE * restrict stream"
 .Sh DESCRIPTION
 The function
 .Fn fread
