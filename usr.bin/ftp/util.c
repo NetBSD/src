@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.15 1997/10/11 12:05:15 mycroft Exp $	*/
+/*	$NetBSD: util.c,v 1.16 1997/10/14 16:31:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.15 1997/10/11 12:05:15 mycroft Exp $");
+__RCSID("$NetBSD: util.c,v 1.16 1997/10/14 16:31:26 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -799,9 +799,11 @@ void
 controlediting()
 {
 	if (editing && el == NULL && hist == NULL) {
+		HistEvent ev;
+
 		el = el_init(__progname, stdin, stdout); /* init editline */
 		hist = history_init();		/* init the builtin history */
-		history(hist, H_EVENT, 100);	/* remember 100 events */
+		history(hist, &ev, H_SETMAXSIZE, 100);/* remember 100 events */
 		el_set(el, EL_HIST, history, hist);	/* use history */
 
 		el_set(el, EL_EDITOR, "emacs");	/* default editor is emacs */
