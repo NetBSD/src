@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.1 1997/11/27 10:10:33 bouyer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.2 1997/12/05 17:37:46 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,26 +59,56 @@ disklabel:   %d cylindres, %d têtes, %d secteurs
 géom réelle: %d cylindres, %d têtes, %d secteurs
 }
 
-message biosgeom
+message nobiosgeom
 {Votre disque n'a pas de secteur de démarrage (Master Boot Record, alias MBR)
-valide. NetBSD utilise une géométrie qui est incompatible avec le BIOS.
-Ce programme lit la géométrie fictive du BIOS en
-lisant le secteur de démarrage. Les choix possibles sont :
+valide. Ce programme lit la géométrie fictive du BIOS en
+lisant le secteur de démarrage, donc la géometrie du BIOS n'a pu etre
+déterminée ici. Les choix possibles sont :
     -- Arrêter l'installation, pour pouvoir initialiser le secteur de
-	démarrage depuis un autre système d'exploitation
-    -- Entrer la géométrie fictive, et sysinst initialisera le secteur de démarrage
+	démarrage depuis un autre système d'exploitation, ou lire la géometrie
+	du BIOS dans la  configuration du BIOS.
+    -- Entrer la géométrie fictive, et sysinst initialisera le secteur de
+	démarrage
 
-ATTENTION : Entrer une nouvelle géométrie entraîne l'initialisation de votre secteur de démarrage, et la supression de d'un eventuel  programme de
+ATTENTION : Entrer une nouvelle géométrie entraîne l'initialisation de votre
+secteur de démarrage, et la supression d'un eventuel programme de
 démarrage que vous auriez pu installer.
+}
+
+message diagcyl
+{Certains vieux BIOS ou programmes de diagnostics peuvent utiliser le dernier
+cylindre pour des tests. Cela ne devrait plus etre le cas avec des systèmes
+modernes. Si vous utilisez un vieux système, ou que vous n'etes pas certains
+s'il peut faire cela, vous pouvez exlure le dernier cylindre.
+
+Si vous excluez le dernier cylindre, les géomotries du BIOS et réelles seront
+corrigées, vous n'avez pas besoin de les entrer à nouveau.
+
+Voulez-vous exclure le dernier cylindre ?
+
 }
 
 message part_head
 {Pas  Début(%s)  Taille(%s)  Type\n}
 
-message setfdiskgeom
+message setbiosgeom
 {On va vous demander la géométrie. SVP entrer les valeur que vous
 désirez. Rappelez vous que le nombre de cylindre doit être <= 1023 et que 
-le nombre de secteur doit être <=63
+le nombre de secteur doit être <=63. Si votre BIOS est configuré avec plus
+de 1024 cylindre, tronquez ce nombre à 1024 ici, NetBSD saura utiliser les
+cylindres restant.
+}
+
+message confirmbiosgeom
+{SVP vérifiez que la géometrie du BIOS ci-dessous est correcte. Le nombre de
+cylindre à pu etre tronquée à 1024. Ce n'est pas un problème du moment que les
+autres paramètres sont corrects. Seulement 1024 cuylindres peuvent etre
+specifiés dans le secteur de boot, le reste sera trouvé d'une manière
+différente par NetBSD.
+
+Si vous réentrez ces valeurs, vérifiez qu'elles sont correctes et correspondent
+à celles utilisées par d'autre systèmes sur ce disque. Des valeurs différentes
+peuvent conduire à des pertes de données.
 }
 
 message badgeom
@@ -89,7 +119,7 @@ message badgeom
 message realgeom
 { géom réelle: %d cylindres, %d têtes, %d secteurs \n}
 
-message fdiskgeom
+message biosgeom
 { géom fdisk:  %d cylindres, %d têtes, %d secteurs \n}
 
 message reentergeom
@@ -116,7 +146,7 @@ actuellement active. La table des partitions est :
 }
 
 message reeditpart
-{Il y a des partitions MBR qui se recouvrent ou bien vous n'avez pas
+{Il y a des partitions BIOS qui se recouvrent ou bien vous n'avez pas
 exactement une partition NetBSD. Vous devez éditer de nouveau la table des
 partitions.
 
@@ -124,10 +154,12 @@ Voulez vous la rééditer ?
 }
 
 message nobsdpart
-{Il n'y a pas de partition NetBSD dans la table des partitions MBR.}
+{Il n'y a pas de partition NetBSD dans la table des partitions du secteur de
+boot.}
 
 message multbsdpart
-{Il y a plusieurs partition NetBSD dans la table des partitions MBR.
+{Il y a plusieurs partition NetBSD dans la table des partitions du secteur de
+boot.
 La partition %d sera utilisée.}
 
 message dofdisk

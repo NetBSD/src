@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.3 1997/12/05 13:39:02 simonb Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.4 1997/12/05 17:37:41 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,6 +63,8 @@ menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
 		action { do_install(); };
 	option "Mise à jour de NetBSD sur disque dur",
 		action { do_upgrade(); };
+	option "Réinstaller ou installer de nouveaux composants",
+		action { do_reinstall_sets(); };
 	option "Redémarrer l'ordinateur", exit,
 		action (endwin) { run_prog("/sbin/reboot"); };
 	option "Menu utilitaire", sub menu utility;
@@ -105,7 +107,7 @@ menu scsigeom1, title "  Choisissez une option";
 			disk->geom[1] = dlhead;
 			disk->geom[2] = dlsec;
 		};
-	option "Choisissez une géométrie maison", action { scsi_fake ();}, exit;
+	option "Choisir une géométrie maison", action { scsi_fake ();}, exit;
 
 menu scsigeom2, title "  Choisissez une option";
 	display action {
@@ -118,7 +120,7 @@ menu scsigeom2, title "  Choisissez une option";
 			dlhead = disk->geom[1];
 			dlsec  = disk->geom[2];
 		};
-	option "  Choisissez une géométrie maison", action { scsi_fake ();}, exit;
+	option "  Choisir une géométrie maison", action { scsi_fake ();}, exit;
 
 menu scsi_fake, title "  Choisissez une géométrie";
 	option "Géométrie 1", action { fake_sel = 0; }, exit;
@@ -227,16 +229,33 @@ menu selfskind, title "  Selection du type de système de fichier", y=15;
 
 menu distmedium, title "  Sélection du media d'installation";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
-	option "ftp",  action { process_menu (MENU_distset);
-				got_dist = get_via_ftp(); }, exit;
-	option "nfs",  action { process_menu (MENU_distset);
-				got_dist = get_via_nfs(); }, exit;
-	option "cdrom", action { process_menu (MENU_distset);
-				 got_dist = get_via_cdrom(); }, exit; 
-	option "disquette", action { process_menu (MENU_distset);
-				  got_dist = get_via_floppy(); }, exit;
-	option "local", action { process_menu (MENU_distset);
-				got_dist = get_via_localfs(); }, exit;
+	option "ftp",  action   {
+				got_dist = get_via_ftp();
+				if (got_dist) process_menu (MENU_distset);
+				},
+				exit;
+	option "nfs",  action   {
+				got_dist = get_via_nfs();
+				if (got_dist) process_menu (MENU_distset);
+				}, exit;
+	option "cdrom", action  {
+				got_dist = get_via_cdrom();
+				if (got_dist) process_menu (MENU_distset);
+				}, exit;
+	option "disquette", action {
+				got_dist = get_via_floppy();
+				if (got_dist) process_menu (MENU_distset);
+				}, exit;
+	
+	option "systeme de fichier non-monté", action {
+				got_dist = get_via_localfs();
+				if (got_dist) process_menu (MENU_distset);
+				}, exit;
+	option "répertoire local", action {
+				got_dist = get_via_localdir();
+				if (got_dist)
+				process_menu (MENU_distset);
+				}, exit;
 	option "aucun",  action { nodist = 1; }, exit;
 
 menu distset, title " Sélection de la distribution";
@@ -281,12 +300,12 @@ menu nfssource, title "  Changer";
 	option "Continuer", exit;
 
 menu nfsbadmount, title "  Que voulez vous faire?";
-	display action
-		{ msg_display (MSG_nfsbadmount, nfs_host, nfs_dir); };
 	option "Réessayer", exit, sub menu nfssource, action
-		{ yesno = 1; };
+		{ yesno = 1; ignorerror = 0; };
 	option "Abandonner", exit, action
-		{ yesno = 0; };
+		{ yesno = 1; ignorerror = 0; };
+	option "Ignorer les erreurs, continuer quand même", exit, action
+		{ yesno = 1; ignorerror = 1; };
 
 
 menu fdremount, title " Que voulez vous faire? ";
@@ -307,13 +326,13 @@ menu cdromsource, title "  Changer";
 		{ msg_prompt (MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
 	option "Continue", exit;
 
-menu cdrombadmount, title "  What do you want to do?";
-	display action
-		{ msg_display (MSG_cdrombadmount, nfs_host, nfs_dir); };
+menu cdrombadmount, title "  Que voulez-vous faire?";
 	option "Réessayer", exit, sub menu cdromsource, action
-		{ yesno = 1; };
+		{ yesno = 1; ignorerror = 0; };
 	option "Abandonner", exit, action
-		{ yesno = 0; };
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignorer les erreurs, continuer quand même", exit, action
+		{ yesno = 1; ignorerror = 1; };
 
 menu localfssource, title "  Changer";
 	display action
@@ -327,11 +346,27 @@ menu localfssource, title "  Changer";
 	option "Continuer", exit;
 
 menu localfsbadmount, title "  Que voulez vous faire?";
-	display action
-		{ msg_display (MSG_localfsbadmount, localfs_dir, localfs_dev); };
 	option "Réessayer", exit, sub menu localfssource, action
-		{ yesno = 1; };
+		{ yesno = 1; ignorerror = 0; };
 	option "Abandonner", exit, action
-		{ yesno = 0; };
+		{ yesno = 1; ignorerror = 0; };
+	option "Ignorer les erreurs, continuer quand même", exit, action
+		{ yesno = 1; ignorerror = 1; };
 
+menu localdirsource, title "Changer";
+	display action
+		{ msg_display(MSG_localdir, localfs_dir); };
+	option "Répertoire", action
+		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); },
+		exit;
+	option "Continuer", exit;
 
+menu localdirbad, title "  Que voulez vous faire?";
+	option "Changer le chemin d'accès",  action
+		{ yesno = 1;
+			msg_prompt(MSG_localdir, localfs_dir, localfs_dir, STRSIZE);
+		}, exit;
+	option "Abandonner", exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignorer les erreurs, continuer quand même", exit, action
+		{ yesno = 1; ignorerror = 1; };
