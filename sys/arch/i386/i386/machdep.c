@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1992 Terrence R. Lambert.
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.26 1994/01/11 15:03:20 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.27 1994/01/11 17:52:05 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -47,6 +48,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -99,7 +101,7 @@ int	bufpages = 0;
 #endif
 
 int	physmem;
-int	boothowto; 
+int	boothowto;
 int	cpu_class;
 
 struct	msgbuf *msgbufp;
@@ -211,7 +213,7 @@ cpu_startup()
 				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
+	    VM_MBUF_SIZE, FALSE);
 
 	/*
 	 * Initialize callouts
@@ -410,7 +412,7 @@ sendsig(catcher, sig, mask, code)
 		fp = (struct sigframe *)(tf->tf_esp - sizeof(struct sigframe));
 	}
 
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void)grow(p, (unsigned)fp);
 
 	if (useracc((caddr_t)fp, sizeof (struct sigframe), B_WRITE) == 0) {
@@ -427,7 +429,7 @@ sendsig(catcher, sig, mask, code)
 		return;
 	}
 
-	/* 
+	/*
 	 * Build the argument list for the signal handler.
 	 */
 	fp->sf_signum = sig;
@@ -500,7 +502,7 @@ sigreturn(p, uap, retval)
 	 */
 	scp = uap->sigcntxp;
 	fp = (struct sigframe *)
-	     ((caddr_t)scp - offsetof(struct sigframe, sf_sc));
+	    ((caddr_t)scp - offsetof(struct sigframe, sf_sc));
 
 	if (useracc((caddr_t)fp, sizeof(*fp), 0) == 0)
 		return(EFAULT);
@@ -970,7 +972,7 @@ void
 init386(first_avail)
 	vm_offset_t first_avail;
 {
-	extern ssdtosd(), lgdt(), etext; 
+	extern ssdtosd(), lgdt(), etext;
 	int x, *pi;
 	unsigned biosbasemem, biosextmem;
 	struct gate_descriptor *gdp;
@@ -1055,10 +1057,8 @@ init386(first_avail)
 	 * Use BIOS values stored in RTC CMOS RAM, since probing
 	 * breaks certain 386 AT relics.
 	 */
-	biosbasemem = (nvram(NVRAM_BASEMEM_HI)<<8) |
-		      (nvram(NVRAM_BASEMEM_LO));
-	biosextmem = (nvram(NVRAM_EXTMEM_HI)<<8) |
-		     (nvram(NVRAM_EXTMEM_LO));
+	biosbasemem = (nvram(NVRAM_BASEMEM_HI)<<8) | (nvram(NVRAM_BASEMEM_LO));
+	biosextmem = (nvram(NVRAM_EXTMEM_HI)<<8) | (nvram(NVRAM_EXTMEM_LO));
 
 #ifndef BIOS_BASEMEM
 #define	BIOS_BASEMEM 640
@@ -1066,14 +1066,14 @@ init386(first_avail)
 
 	if (biosbasemem == 0 || biosbasemem > 640) {
 		printf("warning: nvram reports %dk base memory; assuming %dk\n",
-		       biosbasemem, BIOS_BASEMEM);
+		    biosbasemem, BIOS_BASEMEM);
 		biosbasemem = BIOS_BASEMEM;
 	}
 
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
 	avail_end = biosextmem ? IOM_END + biosextmem * 1024
-			       : biosbasemem * 1024;
+	    : biosbasemem * 1024;
 
 	/* number of pages of physmem addr space */
 	physmem = btoc((biosbasemem + biosextmem) * 1024);
@@ -1091,7 +1091,7 @@ init386(first_avail)
 
 	if (avail_remaining < i386_btop(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; running in degraded mode\n"
-		       "press a key to confirm\n\n");
+		    "press a key to confirm\n\n");
 		/*
 		 * People with less than 2 Meg have to press a key; this way
 		 * we see the messages and can tell them why they blow up later.
@@ -1111,7 +1111,7 @@ init386(first_avail)
 	proc0.p_addr->u_pcb.pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	_gsel_tss = GSEL(GPROC0_SEL, SEL_KPL);
 
-	((struct i386tss *)gdt_segs[GPROC0_SEL].ssd_base)->tss_ioopt = 
+	((struct i386tss *)gdt_segs[GPROC0_SEL].ssd_base)->tss_ioopt =
 		(sizeof(tss))<<16;
 
 	ltr(_gsel_tss);
@@ -1138,7 +1138,7 @@ init386(first_avail)
 }
 
 /*
- * insert an element into a queue 
+ * insert an element into a queue
  */
 #undef insque
 _insque(element, head)
@@ -1165,7 +1165,7 @@ _remque(element)
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  *
@@ -1268,7 +1268,7 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 	    execp->a_text + NBPG, /* XXX should NBPG be CLBYTES? */
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-        /* set up command for bss segment */
+	/* set up command for bss segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
