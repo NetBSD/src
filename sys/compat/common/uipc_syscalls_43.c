@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.13 2001/06/25 20:46:11 jdolecek Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.14 2001/07/07 14:44:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -155,18 +155,16 @@ compat_43_sys_recv(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct msghdr msg;
-	struct iovec aiov;
+	struct sys_recvfrom_args bra;
 
-	msg.msg_name = 0;
-	msg.msg_namelen = 0;
-	msg.msg_iov = &aiov;
-	msg.msg_iovlen = 1;
-	aiov.iov_base = SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, len);
-	msg.msg_control = 0;
-	msg.msg_flags = SCARG(uap, flags);
-	return (recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval));
+	SCARG(&bra, s) = SCARG(uap, s);
+	SCARG(&bra, buf) = SCARG(uap, buf);
+	SCARG(&bra, len) = (size_t) SCARG(uap, len);
+	SCARG(&bra, flags) = SCARG(uap, flags);
+	SCARG(&bra, from) = NULL;
+	SCARG(&bra, fromlenaddr) = NULL;
+
+	return (sys_recvfrom(p, &bra, retval));
 }
 
 int
@@ -250,18 +248,16 @@ compat_43_sys_send(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct msghdr msg;
-	struct iovec aiov;
+	struct sys_sendto_args bsa;
 
-	msg.msg_name = 0;
-	msg.msg_namelen = 0;
-	msg.msg_iov = &aiov;
-	msg.msg_iovlen = 1;
-	aiov.iov_base = SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, len);
-	msg.msg_control = 0;
-	msg.msg_flags = 0;
-	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
+	SCARG(&bsa, s)		= SCARG(uap, s);
+	SCARG(&bsa, buf)	= SCARG(uap, buf);
+	SCARG(&bsa, len)	= SCARG(uap, len);
+	SCARG(&bsa, flags)	= SCARG(uap, flags);
+	SCARG(&bsa, to)		= NULL;
+	SCARG(&bsa, tolen)	= 0;
+
+	return (sys_sendto(p, &bsa, retval));
 }
 
 int
