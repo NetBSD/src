@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.11 1998/11/26 13:34:23 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.12 1999/01/08 09:29:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -159,7 +159,6 @@ int	sr;
 		 * We're running at a too high priority now.
 		 */
 		add_sicallback((si_farg)iifun, (void*)slot, 0);
-		isa_delayed++;
 	}
 	else {
 		s = splx(iinfo_p->ipl);
@@ -192,6 +191,12 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	isa_intr_info_t *iinfo_p;
 	struct intrhand	*ihand;
 	int		slot;
+
+	/*
+	 * The Hades only supports edge triggered interrupts!
+	 */
+	if (type != IST_EDGE)
+		return NULL;
 
 	slot    = (irq <= 6) ? 0 : 1;
 	iinfo_p = &iinfo[slot];
