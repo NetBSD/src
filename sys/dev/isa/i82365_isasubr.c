@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.10 2000/02/04 08:42:47 chopps Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.11 2000/02/08 16:59:52 mycroft Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -181,10 +181,8 @@ pcic_isa_probe_interrupts(sc, h)
 	/* clear any current interrupt */
 	pcic_read(h, PCIC_CSC);
 
-	/* first disable the status irq, then enable card detect */
+	/* first disable the status irq, card detect is enabled later */
 	pcic_write(h, PCIC_CSC_INTR, 0);
-	cscintr = PCIC_CSC_INTR_CD_ENABLE;
-	pcic_write(h, PCIC_CSC_INTR, cscintr);
 
 	/* steer the interrupt to isa and disable ring and interrupt */
 	intr = pcic_read(h, PCIC_INTR);
@@ -196,6 +194,7 @@ pcic_isa_probe_interrupts(sc, h)
 
 	cd = pcic_read(h, PCIC_CARD_DETECT);
 	cd |= PCIC_CARD_DETECT_SW_INTR;
+
 	mask = 0;
 	for (i = 0; i < 16; i++) {
 		/* honor configured limitations */
@@ -214,7 +213,7 @@ pcic_isa_probe_interrupts(sc, h)
 		    pcic_isa_count_intr, h)) == NULL)
 			panic("cant get interrupt");
 
-		cscintr &= ~PCIC_CSC_INTR_IRQ_MASK;
+		cscintr = PCIC_CSC_INTR_CD_ENABLE;
 		cscintr |= (irq << PCIC_CSC_INTR_IRQ_SHIFT);
 		pcic_write(h, PCIC_CSC_INTR, cscintr);
 
@@ -233,13 +232,14 @@ pcic_isa_probe_interrupts(sc, h)
 			DPRINTF((" succeded\n"));
 			mask |= (1 << i);
 		}
+
+		pcic_write(h, PCIC_CSC_INTR, 0);
+
 		isa_intr_disestablish(ic, ih);
 	}
 	sc->intr_mask[h->chip] = mask;
-	printf("%s\n", sc->intr_mask ? "" : " none");
 
-	/* disable all status interrupts */
-	pcic_write(h, PCIC_CSC_INTR, 0);
+	printf("%s\n", sc->intr_mask ? "" : " none");
 
 	/* clear any current interrupt */
 	pcic_read(h, PCIC_CSC);
@@ -313,11 +313,10 @@ pcic_isa_config_interrupts(self)
 		printf("%s: no available irq", sc->dev.dv_xname);
 		sc->irq = IRQUNK;
 	} else if ((chipmask & ~(1 << sc->irq)) == 0 && chipuniq == 0) {
-		printf("%s: can\'t share irq with cards", sc->dev.dv_xname);
+		printf("%s: can't share irq with cards", sc->dev.dv_xname);
 		sc->irq = IRQUNK;
 	}
 	if (sc->irq != IRQUNK) {
-		printf("%s: using irq %d\n", sc->dev.dv_xname, sc->irq);
 		sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
 		    pcic_intr, sc);
 		if (sc->ih == NULL) {
@@ -327,7 +326,10 @@ pcic_isa_config_interrupts(self)
 		}
 	}
 	if (sc->irq == IRQUNK)
-		printf(", will poll for card insertion and removal\n");
+		printf("; polling for socket events\n");
+	else
+		printf("%s: using irq %d for socket events\n", sc->dev.dv_xname,
+		    sc->irq);
 
 	pcic_attach_sockets_finish(sc);
 
