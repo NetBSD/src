@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_cpu.h,v 1.3 1996/07/11 05:31:29 cgd Exp $	*/
+/*	$NetBSD: alpha_cpu.h,v 1.4 1996/07/14 04:12:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -41,6 +41,8 @@
  *	Machine Check Error Summary Register
  *	Machine Check Logout Area
  *	Virtual Memory Management
+ *	Kernel Entry Vectors
+ *	MMCSR Fault Type Codes
  *	Translation Buffer Invalidation
  *
  * and miscellaneous PALcode operations.
@@ -109,6 +111,9 @@ struct alpha_pcb {
 
 /*
  * Machine Check Error Summary Register definitions [OSF/1 PALcode Specific]
+ *
+ * The following bits are values as read.  On write, _PCE, _SCE, and
+ * _MIP are "write 1 to clear."
  */
 
 #define	ALPHA_MCES_IMP							\
@@ -206,6 +211,36 @@ struct alpha_logout_area {
 
 typedef unsigned long alpha_pt_entry_t;
 
+/*
+ * Kernel Entry Vectors.  [OSF/1 PALcode Specific]
+ */
+
+#define	ALPHA_KENTRY_INT	0
+#define	ALPHA_KENTRY_ARITH	1
+#define	ALPHA_KENTRY_MM		2
+#define	ALPHA_KENTRY_IF		3
+#define	ALPHA_KENTRY_UNA	4
+#define	ALPHA_KENTRY_SYS	5
+
+/*
+ * MMCSR Fault Type Codes.  [OSF/1 PALcode Specific]
+ */
+
+#define	ALPHA_MMCSR_INVALTRANS	0
+#define	ALPHA_MMCSR_ACCESS	1
+#define	ALPHA_MMCSR_FOR		2
+#define	ALPHA_MMCSR_FOE		3
+#define	ALPHA_MMCSR_FOW		4
+
+/*
+ * Instruction Fault Type Codes.  [OSF/1 PALcode Specific]
+ */
+
+#define	ALPHA_IF_CODE_BPT	0
+#define	ALPHA_IF_CODE_BUGCHK	1
+#define	ALPHA_IF_CODE_GENTRAP	2
+#define	ALPHA_IF_CODE_FEN	3
+#define	ALPHA_IF_CODE_OPDEC	4
 
 /*
  * Translation Buffer Invalidation definitions [OSF/1 PALcode Specific]
@@ -217,7 +252,6 @@ typedef unsigned long alpha_pt_entry_t;
 #define	TBISD(va)	alpha_pal_tbi(2, (va))		/* DTB entry for va */
 #define	TBIS(va)	alpha_pal_tbi(3, (va))		/* all for va */
 
-
 /*
  * Stubs for Alpha instructions normally inaccessible from C.
  */
@@ -228,36 +262,20 @@ void		alpha_wmb __P((void));
 /*
  * Stubs for OSF/1 PALcode operations.
  */
-void		alpha_pal_bpt __P((unsigned long, unsigned long,
-		    unsigned long));
-void		alpha_pal_bugchk __P((unsigned long, unsigned long,
-                    unsigned long));
-void		alpha_pal_callsys __P((void));
-void		alpha_pal_gentrap __P((unsigned long, unsigned long,
-                    unsigned long));
 void		alpha_pal_imb __P((void));
-unsigned long	alpha_pal_rdunique __P((void));
-void		alpha_pal_wrunique __P((unsigned long));
 void		alpha_pal_draina __P((void));
 void		alpha_pal_halt __P((void)) __attribute__((__noreturn__));
 unsigned long	alpha_pal_rdmces __P((void));
-unsigned long	alpha_pal_rdps __P((void));
 unsigned long	alpha_pal_rdusp __P((void));
-unsigned long	alpha_pal_rdval __P((void));
-void		alpha_pal_retsys __P((void));
-void		alpha_pal_rti __P((void));
-unsigned long	alpha_pal_swpctx __P((unsigned long));
 unsigned long	alpha_pal_swpipl __P((unsigned long));
+unsigned long	_alpha_pal_swpipl __P((unsigned long));	/* for profiling */
 void		alpha_pal_tbi __P((unsigned long, vm_offset_t));
 unsigned long	alpha_pal_whami __P((void));
 void		alpha_pal_wrent __P((void *, unsigned long));
 void		alpha_pal_wrfen __P((unsigned long));
-void		alpha_pal_wrkgp __P((unsigned long));
 void		alpha_pal_wrusp __P((unsigned long));
-void		alpha_pal_wrval __P((unsigned long));
 void		alpha_pal_wrvptptr __P((unsigned long));
 void		alpha_pal_wrmces __P((unsigned long));
 
-unsigned long	_alpha_pal_swpipl __P((unsigned long));	/* for profiling */
 
 #endif __ALPHA_ALPHA_CPU_H__
