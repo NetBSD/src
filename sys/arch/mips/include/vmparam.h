@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 1999/01/18 03:48:34 nisimura Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 1999/03/26 00:15:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -137,7 +137,6 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFC000)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 

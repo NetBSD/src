@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 1999/03/25 01:17:53 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.131 1999/03/26 00:15:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 1999/03/25 01:17:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 1999/03/26 00:15:05 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -590,10 +590,10 @@ cpu_startup()
 				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
 
 	/*
-	 * Finally, allocate mbuf cluster submap.
+	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
+	 * are allocated via the pool allocator, and we use KSEG to
+	 * map those pages.
 	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-			         VM_MBUF_SIZE, FALSE, FALSE, NULL);
 
 	/*
 	 * Initialize callouts
