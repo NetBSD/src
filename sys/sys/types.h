@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.57 2003/04/19 21:42:46 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.58 2003/04/28 23:16:31 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -42,6 +42,8 @@
 
 #ifndef _SYS_TYPES_H_
 #define	_SYS_TYPES_H_
+
+#include <sys/featuretest.h>
 
 /* Machine type dependent parameters. */
 #include <machine/types.h>
@@ -99,7 +101,7 @@ typedef	uint64_t	u_int64_t;
 
 #include <machine/endian.h>
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 typedef	unsigned char	u_char;
 typedef	unsigned short	u_short;
 typedef	unsigned int	u_int;
@@ -216,7 +218,7 @@ typedef intptr_t semid_t;
  * long arguments will be promoted to off_t if the program fails to
  * include that header or explicitly cast them to off_t.
  */
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #ifndef __OFF_T_SYSCALLS_DECLARED
 #define __OFF_T_SYSCALLS_DECLARED
 #ifndef _KERNEL
@@ -228,9 +230,9 @@ int	 truncate __P((const char *, off_t));
 __END_DECLS
 #endif /* !_KERNEL */
 #endif /* __OFF_T_SYSCALLS_DECLARED */
-#endif /* !defined(_POSIX_SOURCE) ... */
+#endif /* defined(_NETBSD_SOURCE) */
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /* Major, minor numbers, dev_t's. */
 #define	major(x)	((int32_t)((((x) & 0x000fff00) >>  8)))
 #define	minor(x)	((int32_t)((((x) & 0xfff00000) >> 12) | \
@@ -281,9 +283,8 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 #undef	_BSD_USECONDS_T_
 #endif
 
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500
+#if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 
 /*
  * Implementation dependent defines, hidden from user space. X/Open does not
@@ -324,7 +325,7 @@ typedef	struct fd_set {
 /*
  * Expose our internals if we are not required to hide them.
  */
-#ifndef _XOPEN_SOURCE
+#if defined(_NETBSD_SOURCE)
 
 #define NBBY __NBBY
 #define fd_mask __fd_mask
@@ -356,5 +357,5 @@ struct	tty;
 struct	uio;
 #endif
 
-#endif /* !defined(_POSIX_SOURCE) ... */
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 #endif /* !_SYS_TYPES_H_ */

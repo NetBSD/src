@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.66 2003/04/19 21:30:29 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.67 2003/04/28 23:16:30 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,6 +66,8 @@
 
 #ifndef _SYS_SOCKET_H_
 #define	_SYS_SOCKET_H_
+
+#include <sys/featuretest.h>
 
 /*
  * Definitions related to sockets: types, address families, options.
@@ -173,24 +175,24 @@ struct	linger {
 #define	AF_APPLETALK	16		/* Apple Talk */
 #define	AF_ROUTE	17		/* Internal Routing Protocol */
 #define	AF_LINK		18		/* Link layer interface */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	pseudo_AF_XTP	19		/* eXpress Transfer Protocol (no AF) */
 #endif
 #define	AF_COIP		20		/* connection-oriented IP, aka ST II */
 #define	AF_CNT		21		/* Computer Network Technology */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define pseudo_AF_RTIP	22		/* Help Identify RTIP packets */
 #endif
 #define	AF_IPX		23		/* Novell Internet Protocol */
 #define	AF_INET6	24		/* IP version 6 */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define pseudo_AF_PIP	25		/* Help Identify PIP packets */
 #endif
 #define AF_ISDN		26		/* Integrated Services Digital Network*/
 #define AF_E164		AF_ISDN		/* CCITT E.164 recommendation */
 #define AF_NATM		27		/* native ATM access */
 #define AF_ARP		28		/* (rev.) addr. res. prot. (RFC 826) */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define pseudo_AF_KEY	29		/* Internal key management protocol  */
 #define	pseudo_AF_HDRCMPLT 30		/* Used by BPF to not rewrite hdrs
 					   in interface output routine */
@@ -229,7 +231,7 @@ struct sockproto {
 #define _SS_PAD2SIZE	(_SS_MAXSIZE - 2 - \
 				_SS_PAD1SIZE - _SS_ALIGNSIZE)
 
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
+#if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 struct sockaddr_storage {
 	__uint8_t	ss_len;		/* address length */
 	sa_family_t	ss_family;	/* address family */
@@ -237,7 +239,7 @@ struct sockaddr_storage {
 	__int64_t     __ss_align;/* force desired structure storage alignment */
 	char		__ss_pad2[_SS_PAD2SIZE];
 };
-#endif /* !_XOPEN_SOURCE || ... */
+#endif /* _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 #endif /* 1 */
 
 /*
@@ -264,14 +266,14 @@ struct sockaddr_storage {
 #define	PF_APPLETALK	AF_APPLETALK
 #define	PF_ROUTE	AF_ROUTE
 #define	PF_LINK		AF_LINK
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	PF_XTP		pseudo_AF_XTP	/* really just proto family, no AF */
 #endif
 #define	PF_COIP		AF_COIP
 #define	PF_CNT		AF_CNT
 #define	PF_INET6	AF_INET6
 #define	PF_IPX		AF_IPX		/* same format as AF_NS */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define PF_RTIP		pseudo_AF_FTIP	/* same format as AF_INET */
 #define PF_PIP		pseudo_AF_PIP
 #endif
@@ -279,13 +281,13 @@ struct sockaddr_storage {
 #define PF_E164		AF_E164
 #define PF_NATM		AF_NATM
 #define PF_ARP		AF_ARP
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define PF_KEY 		pseudo_AF_KEY	/* like PF_ROUTE, only for key mgmt */
 #endif
 
 #define	PF_MAX		AF_MAX
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 
 #ifndef	gid_t
 typedef	__gid_t		gid_t;		/* group id */
@@ -314,10 +316,10 @@ struct sockcred {
  */
 #define	SOCKCREDSIZE(ngrps) \
 	(sizeof(struct sockcred) + (sizeof(gid_t) * ((ngrps) - 1)))
-#endif /* !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Definitions for network related sysctl, CTL_NET.
  *
@@ -360,9 +362,9 @@ struct sockcred {
 	{ "arp", CTLTYPE_NODE }, \
 	{ "key", CTLTYPE_NODE }, \
 }
-#endif /* !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * PF_ROUTE - Routing table
  *
@@ -384,7 +386,7 @@ struct sockcred {
 	{ 0, 0 }, \
 	{ "iflist", CTLTYPE_STRUCT }, \
 }
-#endif /* !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 /*
  * Maximum queue length specifiable by listen(2).
@@ -472,7 +474,7 @@ struct cmsghdr {
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	SCM_TIMESTAMP	0x02		/* timestamp (struct timeval) */
 #define	SCM_CREDS	0x04		/* credentials (struct sockcred) */
 #endif
@@ -484,7 +486,7 @@ struct cmsghdr {
 #define	SHUT_WR		1		/* Disallow further sends. */
 #define	SHUT_RDWR	2		/* Disallow further sends/receives. */
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * 4.3 compat sockaddr, move to compat file later
  */

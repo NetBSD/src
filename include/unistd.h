@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.91 2003/04/14 08:38:24 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.92 2003/04/28 23:16:15 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -151,8 +151,8 @@ ssize_t	 write __P((int, const void *, size_t));
 /*
  * IEEE Std 1003.2-92, adopted in X/Open Portability Guide Issue 4 and later
  */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_POSIX_C_SOURCE - 0) >= 2 || (_XOPEN_SOURCE - 0) >= 4
+#if (_POSIX_C_SOURCE - 0) >= 2 || (_XOPEN_SOURCE - 0) >= 4 || \
+    defined(_NETBSD_SOURCE)
 int	 getopt __P((int, char * const [], const char *));
 
 extern	 char *optarg;			/* getopt(3) external variables */
@@ -164,8 +164,8 @@ extern	 int optopt;
 /*
  * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
  */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
+    defined(_NETBSD_SOURCE)
 int	 setegid __P((gid_t));
 int	 seteuid __P((uid_t));
 #endif
@@ -182,10 +182,9 @@ int	 truncate __P((const char *, off_t));
  * IEEE Std 1003.1b-93,
  * also found in X/Open Portability Guide >= Issue 4 Verion 2
  */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_POSIX_C_SOURCE - 0) >= 199309L || \
+#if (_POSIX_C_SOURCE - 0) >= 199309L || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 int	 ftruncate __P((int, off_t));
 #endif
 #endif /* __OFF_T_SYSCALLS_DECLARED */
@@ -194,8 +193,8 @@ int	 ftruncate __P((int, off_t));
 /*
  * IEEE Std 1003.1b-93, adopted in X/Open CAE Specification Issue 5 Version 2
  */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500
+#if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
 int	 fdatasync __P((int));
 int	 fsync __P((int));
 #endif
@@ -204,7 +203,7 @@ int	 fsync __P((int));
 /*
  * X/Open Portability Guide, all issues
  */
-#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	 chroot __P((const char *));
 int	 nice __P((int));
 #endif
@@ -221,8 +220,7 @@ int	 rename __P((const char *, const char *)) __RENAME(__posix_rename);
 /*
  * X/Open Portability Guide >= Issue 4
  */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_XOPEN_SOURCE - 0) >= 4
+#if (_XOPEN_SOURCE - 0) >= 4 || defined(_NETBSD_SOURCE)
 __aconst char *crypt __P((const char *, const char *));
 int	 encrypt __P((char *, int));
 char	*getpass __P((const char *));
@@ -233,9 +231,8 @@ pid_t	 getsid __P((pid_t));
 /*
  * X/Open Portability Guide >= Issue 4 Version 2
  */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500
+#if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 #ifndef	intptr_t
 typedef	__intptr_t	intptr_t;
 #define	intptr_t	__intptr_t
@@ -292,14 +289,13 @@ char	*getwd __P((char *));			/* obsoleted by getcwd() */
 struct timeval;				/* select(2) XXX */
 #endif
 int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
-#endif /* (!defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)) || ... */
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
 
 /*
  * X/Open CAE Specification Issue 5 Version 2
  */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_XOPEN_SOURCE - 0) >= 500
+#if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 ssize_t	 pread __P((int, void *, size_t, off_t));
 ssize_t	 pwrite __P((int, const void *, size_t, off_t));
 #endif
@@ -308,7 +304,7 @@ ssize_t	 pwrite __P((int, const void *, size_t, off_t));
 /*
  * Implementation-defined extensions
  */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 int	 acct __P((const char *));
 int	 des_cipher __P((const char *, char *, long, int));
 int	 des_setkey __P((const char *));

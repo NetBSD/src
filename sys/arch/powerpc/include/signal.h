@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.11 2003/03/02 01:07:55 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.12 2003/04/28 23:16:22 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,10 +33,11 @@
 #ifndef	_POWERPC_SIGNAL_H_
 #define	_POWERPC_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 typedef int sig_atomic_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #include <machine/frame.h>
 
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
@@ -93,5 +94,5 @@ struct sigframe {
 	struct sigcontext sf_sc;
 };
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 #endif	/* !_POWERPC_SIGNAL_H_ */

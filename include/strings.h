@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.8 2000/01/10 16:58:38 kleink Exp $	*/
+/*	$NetBSD: strings.h,v 1.9 2003/04/28 23:16:15 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
-#ifndef	_XOPEN_SOURCE
+#if defined(_NETBSD_SOURCE)
 #include <sys/null.h>
 #endif
 
@@ -64,7 +64,7 @@ int	 strcasecmp __P((const char *, const char *));
 int	 strncasecmp __P((const char *, const char *, size_t));
 __END_DECLS
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #include <string.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.31 2002/12/07 10:27:04 pk Exp $ */
+/*	$NetBSD: types.h,v 1.32 2003/04/28 23:16:25 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 #endif
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <machine/int_types.h>
 
 #if defined(_KERNEL)
@@ -74,7 +75,7 @@ typedef unsigned long int	register64_t;
 typedef unsigned long long int	register64_t;
 #endif
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 typedef unsigned long int	vaddr_t;
 typedef vaddr_t			vsize_t;
 #ifdef SUN4U

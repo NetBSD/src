@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.5 2003/01/18 06:33:42 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.6 2003/04/28 23:16:23 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -38,10 +38,11 @@
 #ifndef _SH3_SIGNAL_H_
 #define	_SH3_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 typedef int sig_atomic_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 
 /*
  * Information pushed on stack when a signal is delivered.
@@ -134,5 +135,5 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_EXPEVT] = (sc)->sc_expevt;	\
 } while (/*CONSTCOND*/0)
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 #endif	/* !_SH3_SIGNAL_H_ */

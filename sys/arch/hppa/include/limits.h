@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.2 2002/06/23 17:07:58 perry Exp $	*/
+/*	$NetBSD: limits.h,v 1.3 2003/04/28 23:16:19 bjh21 Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
@@ -60,6 +60,8 @@
  *	@(#)limits.h	8.3 (Berkeley) 1/4/94
  */
 
+#include <sys/featuretest.h>
+
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
 
@@ -93,10 +95,11 @@
 #define	LONG_MAX	2147483647L	/* max value for a long */
 #define	LONG_MIN	(-2147483647-1)	/* min value for a long */
 
-#if !defined(_ANSI_SOURCE)
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
-#if !defined(_POSIX_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
 
 /* GCC requires that quad constants be written as expressions. */
@@ -108,12 +111,11 @@
 #define LLONG_MAX	(QUAD_MAX)	/* max value for a signed long long */
 #define LLONG_MIN	(QUAD_MIN)	/* min value for a signed long long */
 
-#endif /* !_POSIX_SOURCE */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
-#endif /* !_ANSI_SOURCE */
+#endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define LONG_BIT	32
 #define WORD_BIT	32
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.60 2003/04/12 00:17:49 dogcow Exp $	*/
+/*	$NetBSD: in.h,v 1.61 2003/04/28 23:16:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -295,7 +295,7 @@ struct ip_mreq {
 #define	IP_PORTRANGE_HIGH	1	/* same as DEFAULT (FreeBSD compat) */
 #define	IP_PORTRANGE_LOW	2	/* use privileged range */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Definitions for inet sysctl operations.
  *
@@ -409,7 +409,7 @@ struct ip_mreq {
 	{ "grettl", CTLTYPE_INT }, \
 	{ "checkinterface", CTLTYPE_INT }, \
 }
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 /* INET6 stuff */
 #define	__KAME_NETINET_IN_H_INCLUDED_

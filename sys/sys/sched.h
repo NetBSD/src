@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.16 2003/02/04 13:41:49 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.17 2003/04/28 23:16:29 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@
 #ifndef	_SYS_SCHED_H_
 #define	_SYS_SCHED_H_
 
+#include <sys/featuretest.h>
+
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -97,8 +99,7 @@ struct sched_param {
 
 /* Other nonstandard policies: */
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE) && \
-    !defined(_ANSI_SOURCE)
+#if defined(_NETBSD_SOURCE)
 
 #include <sys/time.h>
 

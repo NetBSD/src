@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.6 2003/01/17 22:11:16 thorpej Exp $ */
+/* $NetBSD: signal.h,v 1.7 2003/04/28 23:16:16 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,10 +30,11 @@
 #ifndef _ALPHA_SIGNAL_H_
 #define	_ALPHA_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 typedef long	sig_atomic_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -115,5 +116,5 @@ do {									\
 	}								\
 } while (/*CONSTCOND*/0)
 
-#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 #endif /* !_ALPHA_SIGNAL_H_*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.5 2002/05/12 22:59:50 kleink Exp $	*/
+/*	$NetBSD: endian.h,v 1.6 2003/04/28 23:16:27 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -38,6 +38,8 @@
 #ifndef _SYS_ENDIAN_H_
 #define _SYS_ENDIAN_H_
 
+#include <sys/featuretest.h>
+
 /*
  * Definitions for byte order, according to byte significance from low
  * address to high.
@@ -62,7 +64,7 @@
 #endif
 
 
-#ifndef _POSIX_SOURCE
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 /*
  *  Traditional names for byteorder.  These are defined as the numeric
  *  sequences so that third party code can "#define XXX_ENDIAN" and not

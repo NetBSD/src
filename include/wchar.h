@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.17 2003/03/11 09:21:22 tshiozak Exp $	*/
+/*	$NetBSD: wchar.h,v 1.18 2003/04/28 23:16:15 bjh21 Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -66,6 +66,7 @@
 #define _WCHAR_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <machine/ansi.h>
 #include <sys/null.h>
 
@@ -150,8 +151,8 @@ long int wcstol __P((const wchar_t * __restrict,
 	wchar_t ** __restrict, int base));
 double wcstod __P((const wchar_t * __restrict, wchar_t ** __restrict));
 
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L
+#if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
+    defined(_NETBSD_SOURCE)
 /* LONGLONG */
 long long int wcstoll __P((const wchar_t * __restrict,
 	wchar_t ** __restrict, int base));

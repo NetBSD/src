@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.7 2003/02/16 09:30:23 tron Exp $	*/
+/*	$NetBSD: event.h,v 1.8 2003/04/28 23:16:28 bjh21 Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -30,6 +30,7 @@
 #ifndef _SYS_EVENT_H_
 #define	_SYS_EVENT_H_
 
+#include <sys/featuretest.h>
 #include <sys/types.h>			/* for size_t */
 #include <sys/inttypes.h>		/* for uintptr_t */
 #include <sys/null.h>			/* for NULL */
@@ -214,7 +215,7 @@ int	seltrue_kqfilter(dev_t dev, struct knote *kn);
 struct timespec;
 
 __BEGIN_DECLS
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 int	kqueue __P((void));
 int	kevent __P((int kq, const struct kevent *changelist, size_t nchanges,
 		    struct kevent *eventlist, size_t nevents,

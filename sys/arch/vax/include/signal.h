@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.8 2003/01/18 07:10:33 thorpej Exp $   */
+/*      $NetBSD: signal.h,v 1.9 2003/04/28 23:16:25 bjh21 Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -40,10 +40,11 @@
 #ifndef _VAX_SIGNAL_H_
 #define _VAX_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 typedef int sig_atomic_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -98,5 +99,5 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_PSL] = (sc)->sc_ps;		\
 } while (/*CONSTCOND*/0)
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 #endif	/* !_VAX_SIGNAL_H_ */

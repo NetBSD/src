@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.50 2003/02/27 15:56:04 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.51 2003/04/28 23:16:14 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -189,7 +189,8 @@ __END_DECLS
 #define	FILENAME_MAX	1024	/* must be <= PATH_MAX <sys/syslimits.h> */
 
 /* System V/ANSI C; this is the wrong way to do this, do *not* use these. */
-#ifndef _ANSI_SOURCE
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #define	P_tmpdir	"/var/tmp/"
 #endif
 #define	L_tmpnam	1024	/* XXX must be == PATH_MAX */
@@ -276,7 +277,8 @@ __END_DECLS
 /*
  * IEEE Std 1003.1-90
  */
-#ifndef _ANSI_SOURCE
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #define	L_ctermid	1024	/* size for ctermid(); PATH_MAX */
 #define L_cuserid	9	/* size for cuserid(); UT_NAMESIZE + 1 */
 
@@ -295,9 +297,8 @@ __END_DECLS
 /*
  * IEEE Std 1003.1c-95, also adopted by X/Open CAE Spec Issue 5 Version 2
  */
-#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-     !defined(_XOPEN_SOURCE)) || (_POSIX_C_SOURCE - 0) >= 199506L || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT)
+#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 void	flockfile __P((FILE *));
 int	ftrylockfile __P((FILE *));
@@ -307,14 +308,13 @@ int	getchar_unlocked __P((void));
 int	putc_unlocked __P((int, FILE *));
 int	putchar_unlocked __P((int));
 __END_DECLS
-#endif /* (!_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
+#endif /* _POSIX_C_SOURCE >= 1995056 || _XOPEN_SOURCE >= 500 || ... */
 
 /*
  * Functions defined in POSIX 1003.2 and XPG2 or later.
  */
-#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-     !defined(_XOPEN_SOURCE)) || (_POSIX_C_SOURCE - 0) >= 2 || \
-    (_XOPEN_SOURCE - 0) >= 2
+#if (_POSIX_C_SOURCE - 0) >= 2 || (_XOPEN_SOURCE - 0) >= 2 || \
+    defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 int	 pclose __P((FILE *));
 FILE	*popen __P((const char *, const char *));
@@ -324,8 +324,7 @@ __END_DECLS
 /*
  * Functions defined in XPG4.2.
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 int	 getw __P((FILE *));
 int	 putw __P((int, FILE *));
@@ -344,8 +343,8 @@ __END_DECLS
 /*
  * X/Open CAE Specification Issue 5 Version 2
  */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_LARGEFILE_SOURCE)
+#if (_XOPEN_SOURCE - 0) >= 500 || defined(_LARGEFILE_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #ifndef	off_t
 typedef	__off_t		off_t;
 #define	off_t		__off_t
@@ -355,13 +354,12 @@ __BEGIN_DECLS
 int	 fseeko __P((FILE *, off_t, int));
 off_t	 ftello __P((FILE *));
 __END_DECLS
-#endif /* (!_POSIX_SOURCE && !_XOPEN_SOURCE) || ... */
+#endif /* _XOPEN_SOURCE >= 500 || _LARGEFILE_SOURCE || _NETBSD_SOURCE */
 
 /*
  * Routines that are purely local.
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 
 #define	FPARSELN_UNESCESC	0x01
 #define	FPARSELN_UNESCCONT	0x02
@@ -404,7 +402,7 @@ FILE	*funopen __P((const void *,
 __END_DECLS
 #define	fropen(cookie, fn) funopen(cookie, fn, 0, 0, 0)
 #define	fwopen(cookie, fn) funopen(cookie, 0, fn, 0, 0)
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 /*
  * Functions internal to the implementation.
@@ -459,20 +457,20 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define	getchar()	getc(stdin)
 #define	putchar(x)	putc(x, stdout)
 
-#ifndef _ANSI_SOURCE
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 #if !defined(_REENTRANT) && !defined(_PTHREADS)
 #define	fileno(p)	__sfileno(p)
 #endif /* !_REENTRANT && !_PTHREADS */
 #endif /* !_ANSI_SOURCE */
 
-#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-     !defined(_XOPEN_SOURCE)) || (_POSIX_C_SOURCE - 0) >= 199506L || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT)
+#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 #define getc_unlocked(fp)	__sgetc(fp)
 #define putc_unlocked(x, fp)	__sputc(x, fp)
 
 #define getchar_unlocked()	getc_unlocked(stdin)
 #define putchar_unlocked(x)	putc_unlocked(x, stdout)
-#endif /* (!_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
+#endif /* _POSIX_C_SOURCE >= 199506 || _XOPEN_SOURCE >= 500 || _REENTRANT... */
 
 #endif /* _STDIO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.25 2000/07/28 09:33:29 kleink Exp $	*/
+/*	$NetBSD: un.h,v 1.26 2003/04/28 23:16:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,6 +39,7 @@
 #define _SYS_UN_H_
 
 #include <sys/ansi.h>
+#include <sys/featuretest.h>
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
@@ -57,7 +58,7 @@ struct	sockaddr_un {
 /*
  * Socket options for UNIX IPC domain.
  */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	LOCAL_CREDS	0x0001		/* pass credentials to receiver */
 #endif
 
@@ -87,7 +88,7 @@ void	unp_setpeeraddr __P((struct unpcb *, struct mbuf *));
 #else /* !_KERNEL */
 
 /* actual length of an initialized sockaddr_un */
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 #endif /* !_XOPEN_SOURCE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.31 2002/08/07 23:39:24 soren Exp $	*/
+/*	$NetBSD: shm.h,v 1.32 2003/04/28 23:16:29 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -123,16 +123,16 @@ struct shmid_ds14 {
 };
 #endif /* _KERNEL */
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Some systems (e.g. HP-UX) take these as the second (cmd) arg to shmctl().
  * XXX Currently not implemented.
  */
 #define	SHM_LOCK	3	/* Lock segment in memory. */
 #define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
-#endif /* _XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Permission definitions used in shmflag arguments to shmat(2) and shmget(2).
  * Provided for source compatibility only; do not use in new code!
@@ -168,7 +168,7 @@ struct shm_sysctl_info {
 	int32_t	pad;	/* shminfo not a multiple of 64 bits */
 	struct	shmid_ds_sysctl shmids[1];
 };
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
 extern struct shminfo shminfo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.19 2003/01/18 21:28:10 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.20 2003/04/28 23:16:23 bjh21 Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -35,10 +35,11 @@
 #define	_MACHTYPES_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <powerpc/int_types.h>
 
 /* NB: This should probably be if defined(_KERNEL) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 typedef	unsigned long	paddr_t, vaddr_t;
 typedef	unsigned long	psize_t, vsize_t;
 #endif

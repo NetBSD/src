@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.6 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: poll.h,v 1.7 2003/04/28 23:16:29 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef _SYS_POLL_H_
 #define	_SYS_POLL_H_
 
+#include <sys/featuretest.h>
+
 typedef unsigned int	nfds_t;
 
 struct pollfd {
@@ -65,7 +67,7 @@ struct pollfd {
 #define	POLLHUP		0x0010
 #define	POLLNVAL	0x0020
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Infinite timeout value.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2003/03/01 04:36:39 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.8 2003/04/28 23:16:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
 #define	_ARM_TYPES_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <arm/int_types.h>
 
 #if defined(_KERNEL)
@@ -48,7 +49,7 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
 #endif
          
 /* NB: This should probably be if defined(_KERNEL) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.21 2001/04/18 01:45:18 thorpej Exp $	*/
+/*	$NetBSD: ctype.h,v 1.22 2003/04/28 23:16:12 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -76,16 +76,14 @@ int	isxdigit __P ((int));
 int	tolower __P ((int));
 int	toupper __P ((int));
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	isascii __P ((int));
 int	toascii __P ((int));
 int	_tolower __P ((int));
 int	_toupper __P ((int));
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 int	isblank __P ((int));
 #endif
 __END_DECLS
@@ -104,16 +102,14 @@ __END_DECLS
 #define	tolower(c)	((int)((_tolower_tab_ + 1)[(int)(c)]))
 #define	toupper(c)	((int)((_toupper_tab_ + 1)[(int)(c)]))
 
-#if !defined(_ANSI_SOURCE) && !defined (_POSIX_C_SOURCE) || \
-    defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	isascii(c)	((unsigned)(c) <= 0177)
 #define	toascii(c)	((c) & 0177)
 #define _tolower(c)	((c) - 'A' + 'a')
 #define _toupper(c)	((c) - 'a' + 'A')
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #if notyet
 /*
  * isblank() is implemented as C function, due to insufficient bitwidth in

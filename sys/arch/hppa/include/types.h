@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.4 2002/09/22 08:30:58 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.5 2003/04/28 23:16:19 bjh21 Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -40,7 +40,9 @@
 #ifndef	_HPPA_TYPES_H_
 #define	_HPPA_TYPES_H_
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#include <sys/featuretest.h>
+
+#if defined(_NETBSD_SOURCE)
 typedef struct label_t {
 	int	lbl_rp;
 	int	lbl_sp;

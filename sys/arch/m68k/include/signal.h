@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.11 2003/01/17 23:18:28 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.12 2003/04/28 23:16:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -38,10 +38,11 @@
 #ifndef _M68K_SIGNAL_H_
 #define _M68K_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 typedef int sig_atomic_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Get the "code" values
  */
@@ -208,5 +209,5 @@ struct sigframe {
 };
 #endif /* _KERNEL && __M68K_SIGNAL_PRIVATE */
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 #endif	/* !_M68K_SIGNAL_H_ */

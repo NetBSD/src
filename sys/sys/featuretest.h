@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.3 2001/12/20 20:07:24 thorpej Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.4 2003/04/28 23:16:28 bjh21 Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.ORG>, February 2, 1998.
@@ -10,8 +10,60 @@
  * protect each CPP macro that we want to supply.
  */
 
+/*
+ * Feature-test macros are defined by several standards, and allow an
+ * application to specify what symbols they want the system headers to
+ * expose, and hence what standard they want them to conform to.
+ * There are two classes of feature-test macros.  The first class
+ * specify complete standards, and if one of these is defined, header
+ * files will try to conform to the relevant standard.  They are:
+ *
+ * ANSI macros:
+ * _ANSI_SOURCE			ANSI C89
+ *
+ * POSIX macros:
+ * _POSIX_SOURCE == 1		IEEE Std 1003.1 (version?)
+ * _POSIX_C_SOURCE == 1		IEEE Std 1003.1-1990
+ * _POSIX_C_SOURCE == 2		IEEE Std 1003.2-1992
+ * _POSIX_C_SOURCE == 199309L	IEEE Std 1003.1b-1993
+ * _POSIX_C_SOURCE == 199506L	ISO/IEC 9945-1:1996
+ * _POSIX_C_SOURCE == 200112L	IEEE Std 1003.1-2001
+ *
+ * X/Open macros:
+ * _XOPEN_SOURCE		System Interfaces and Headers, Issue 4, Ver 2
+ * _XOPEN_SOURCE_EXTENDED == 1	XSH4.2 UNIX extensions
+ * _XOPEN_SOURCE == 500		System Interfaces and Headers, Issue 5
+ * _XOPEN_SOURCE == 600		IEEE Std 1003.1-2001, XSI option
+ *
+ * NetBSD macros:
+ * _NETBSD_SOURCE == 1		Make all NetBSD features available.
+ *
+ * If more than one of these "major" feature-test macros is defined,
+ * then the set of facilities provided (and namespace used) is the
+ * union of that specified by the relevant standards, and in case of
+ * conflict, the earlier standard in the above list has precedence (so
+ * if both _POSIX_C_SOURCE and _NETBSD_SOURCE are defined, the version
+ * of rename() that's used is the POSIX one).  If none of the "major"
+ * feature-test macros is defined, _NETBSD_SOURCE is assumed.
+ *
+ * There are also "minor" feature-test macros, which enable extra
+ * functionality in addition to some base standard.  They should be
+ * defined along with one of the "major" macros.  The "minor" macros
+ * are:
+ *
+ * _REENTRANT
+ * _ISO_C99_SOURCE
+ * _LARGEFILE_SOURCE		Large File Support
+ *		<http://ftp.sas.com/standards/large.file/x_open.20Mar96.html>
+ */
+
 #if defined(_POSIX_SOURCE) && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE	1L
+#endif
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) && !defined(_NETBSD_SOURCE)
+#define _NETBSD_SOURCE 1
 #endif
 
 #if ((_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500) && \

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.23 2000/08/09 03:23:11 tv Exp $	*/
+/*	$NetBSD: syslog.h,v 1.24 2003/04/28 23:16:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -188,7 +188,7 @@ void	openlog __P((const char *, int, int));
 int	setlogmask __P((int));
 void	syslog __P((int, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 void	vsyslog __P((int, const char *, _BSD_VA_LIST_))
     __attribute__((__format__(__printf__,2,0)));
 #endif

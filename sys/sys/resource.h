@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.20 1999/09/28 14:47:04 bouyer Exp $	*/
+/*	$NetBSD: resource.h,v 1.21 2003/04/28 23:16:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,7 @@
 #ifndef _SYS_RESOURCE_H_
 #define	_SYS_RESOURCE_H_
 
+#include <sys/featuretest.h>
 #include <sys/time.h>
 
 /*
@@ -110,7 +111,7 @@ struct rlimit {
 	rlim_t	rlim_max;		/* maximum value for rlim_cur */
 };
 
-#if !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /* Load average structure. */
 struct loadavg {
 	fixpt_t	ldavg[3];

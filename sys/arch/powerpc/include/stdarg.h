@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.12 2003/01/18 21:38:03 matt Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.13 2003/04/28 23:16:22 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -150,8 +150,8 @@ typedef _BSD_VA_LIST_	va_list;
 #endif /* __lint__ */
 
 #if !defined(_ANSI_SOURCE) &&						\
-    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) ||		\
-     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
+     defined(_NETBSD_SOURCE))
 #define va_copy(dest, src)	__va_copy(dest, src)
 #endif
 

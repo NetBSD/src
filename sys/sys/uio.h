@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.25 2003/02/01 06:23:52 thorpej Exp $	*/
+/*	$NetBSD: uio.h,v 1.26 2003/04/28 23:16:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -56,7 +56,7 @@ struct iovec {
 	size_t	 iov_len;	/* Length. */
 };
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #include <sys/ansi.h>
 
 #ifndef	off_t
@@ -87,7 +87,7 @@ struct uio {
  */
 /* Deprecated: use IOV_MAX from <limits.h> instead. */
 #define UIO_MAXIOV	1024		/* max 1K of iov's */
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
@@ -101,10 +101,10 @@ MALLOC_DECLARE(M_IOV);
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 ssize_t preadv __P((int, const struct iovec *, int, off_t));
 ssize_t pwritev __P((int, const struct iovec *, int, off_t));
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 ssize_t	readv __P((int, const struct iovec *, int));
 ssize_t	writev __P((int, const struct iovec *, int));
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.17 2000/04/16 14:43:56 mrg Exp $	*/
+/*	$NetBSD: dirent.h,v 1.18 2003/04/28 23:16:12 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@
  */
 #include <sys/dirent.h>
 
-#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	d_ino		d_fileno	/* backward compatibility */
 #endif
 
@@ -91,11 +91,11 @@ int closedir __P((DIR *));
 DIR *opendir __P((const char *));
 struct dirent *readdir __P((DIR *));
 void rewinddir __P((DIR *));
-#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 void seekdir __P((DIR *, long));
 long telldir __P((const DIR *));
-#endif /* !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#endif /* defined(_NETBSD_SOURCE) || defined(_XOPEN_SOURCE) */
+#if defined(_NETBSD_SOURCE)
 DIR *__opendir2 __P((const char *, int));
 void __seekdir __P((DIR *, long));
 int scandir __P((const char *, struct dirent ***,
@@ -103,7 +103,7 @@ int scandir __P((const char *, struct dirent ***,
 int alphasort __P((const void *, const void *));
 int getdirentries __P((int, char *, int, long *));
 int getdents __P((int, char *, size_t));
-#endif /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
+#endif /* defined(_NETBSD_SOURCE) */
 __END_DECLS
 
 #endif /* !_KERNEL */

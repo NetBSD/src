@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.7 2003/01/22 13:46:44 scw Exp $	*/
+/*	$NetBSD: signal.h,v 1.8 2003/04/28 23:16:24 bjh21 Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,14 +44,15 @@
 #ifndef _SH5_SIGNAL_H_
 #define	_SH5_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 #ifndef _LP64
 typedef long long	sig_atomic_t;
 #else
 typedef long	sig_atomic_t;
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 
 #include <machine/reg.h>
 
@@ -105,5 +106,5 @@ do {									\
 	} else								\
 		(uc)->uc_mcontext.__fpregs.__fp_scr = (sc)->sc_fpregs.r_fpscr;\
 } while (/*CONSTCOND*/0)
-#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* _NETBSD_SOURCE */
 #endif /* !_SH5_SIGNAL_H_*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.13 2000/06/02 15:53:05 simonb Exp $	*/
+/*	$NetBSD: msg.h,v 1.14 2003/04/28 23:16:29 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #ifndef _SYS_MSG_H_
 #define _SYS_MSG_H_
 
+#include <sys/featuretest.h>
 #include <sys/ipc.h>
 
 #ifdef _KERNEL
@@ -119,7 +120,7 @@ struct msqid_ds14 {
 };
 #endif
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Based on the configuration parameters described in an SVR2 (yes, two)
  * config(1m) man page.
