@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pl_7.c	5.7 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: pl_7.c,v 1.2 1993/08/01 18:51:35 mycroft Exp $";
+static char rcsid[] = "$Id: pl_7.c,v 1.3 1993/08/10 02:15:07 mycroft Exp $";
 #endif /* not lint */
 
 #include "player.h"
@@ -475,7 +475,7 @@ void
 susp()
 {
 	blockalarm();
-	tstp();
+	tstp(SIGTSTP);
 	(void) signal(SIGTSTP, susp);
 	unblockalarm();
 }
