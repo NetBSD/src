@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2000/06/01 00:49:58 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 2000/06/01 15:38:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -49,7 +49,7 @@
 #include <dev/scsipi/scsiconf.h>
 
 void configure __P((void));
-static void findroot __P((struct device **, int *));
+static void findroot __P((void));
 void mbattach __P((struct device *, struct device *, void *));
 int mbmatch __P((struct device *, struct cfdata*, void*));
 int x68k_config_found __P((struct cfdata *, struct device *,
@@ -86,7 +86,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	findroot(&booted_device, &booted_partition);
+	findroot();
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -160,23 +160,13 @@ dev_t	bootdev = 0;
 struct device *booted_device;
 
 static void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	int i, majdev, unit, part;
 	char buf[32];
 
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-	*partp = 0;
-
-	if (booted_device) {
-		*devpp = booted_device;
+	if (booted_device)
 		return;
-	}
 
 	if (boothowto & RB_ASKNAME)
 		return;		/* Don't bother looking */
@@ -189,8 +179,8 @@ findroot(devpp, partp)
 		/*
 		 * SCSI device
 		 */
-		if ((*devpp = scsi_find(bootdev)) != NULL)
-			*partp = B_X68K_SCSI_PART(bootdev);
+		if ((booted_device = scsi_find(bootdev)) != NULL)
+			booted_partition = B_X68K_SCSI_PART(bootdev);
 		return;
 	}
 	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
@@ -204,8 +194,8 @@ findroot(devpp, partp)
 
 	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
 
-	if ((*devpp = find_dev_byname(buf)) != NULL)
-		*partp = part;
+	if ((booted_device = find_dev_byname(buf)) != NULL)
+		booted_partition = part;
 }
 
 static const char *const name_netif[] = { X68K_BOOT_NETIF_STRINGS };
