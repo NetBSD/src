@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.44 2002/10/17 03:34:20 christos Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.45 2002/10/17 08:46:00 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.44 2002/10/17 03:34:20 christos Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.45 2002/10/17 08:46:00 wiz Exp $");
 #endif
 
 /*
@@ -222,7 +222,7 @@ ftp_cmd(const char *cmd, const char *expectstr)
     int rc=0;
     int len;
 
-    if (Verboase)
+    if (Verbose)
 	    fprintf(stderr, "\nftp> %s", cmd);
     
     fflush(stdout);
