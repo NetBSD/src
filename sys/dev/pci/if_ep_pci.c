@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.19 1997/03/15 18:11:58 is Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.20 1997/03/30 21:31:01 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -112,9 +112,15 @@ ep_pci_match(parent, match, aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_3COM_3C590:
+
 	case PCI_PRODUCT_3COM_3C595TX:
+	case PCI_PRODUCT_3COM_3C595T4:
+	case PCI_PRODUCT_3COM_3C595MII:
+
+	case PCI_PRODUCT_3COM_3C900TPO:
 	case PCI_PRODUCT_3COM_3C900COMBO:
 	case PCI_PRODUCT_3COM_3C905TX:
+	case PCI_PRODUCT_3COM_3C905T4:
 		break;
 	default:
 		return 0;
@@ -161,12 +167,11 @@ ep_pci_attach(parent, self, aux)
 		model = "3Com 3C595 Ethernet";
 		break;
 	case PCI_PRODUCT_3COM_3C900TPO:
-		model = "3Com 3C900 Ethernet";
-		break;
 	case PCI_PRODUCT_3COM_3C900COMBO:
 		model = "3Com 3C900 Ethernet";
 		break;
 	case PCI_PRODUCT_3COM_3C905TX:
+	case PCI_PRODUCT_3COM_3C905T4:
 		model = "3Com 3C905 Ethernet";
 		break;
 	default:
