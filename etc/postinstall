@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.30 2002/09/06 06:41:32 lukem Exp $
+# $NetBSD: postinstall,v 1.31 2002/09/06 08:58:48 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,9 +49,6 @@
 #	- support quiet/verbose mode ?
 #	- check obsolete file lists -- need to remove non obsolete files from
 #	  the sets first.
-#	- makedev and postinstall should work if run from an extracted
-#	  etc.tgz (versus from the source tree) - postinstall does work in
-#	  the former in -1-6 ?
 #
 
 #
@@ -185,7 +182,7 @@ compare_dir()
 		if [ ! -f "${fd}" ]; then
 			_error="${fd} does not exist"
 		elif ! cmp -s ${fs} ${fd} ; then
-			_error="${fd} != ${fs}"
+			_error="${fs} != ${fd}"
 		else
 			continue
 		fi
@@ -302,7 +299,6 @@ do_gid()
 
 	check_ids $1 groups "${DEST_DIR}/etc/group" \
 	    named ntpd sshd smmsp
-	return $?
 }
 
 #
@@ -315,7 +311,6 @@ do_uid()
 
 	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
 	    named ntpd sshd smmsp
-	return $?
 }
 
 
@@ -536,11 +531,22 @@ do_postfix()
 	op=$1
 	failed=0
 
-	compare_dir ${op} ${SRC_DIR}/gnu/dist/postfix/conf \
-		${DEST_DIR}/etc/postfix 555 postfix-script
+	dirsrc=${SRC_DIR}/gnu/dist/postfix/conf
+	dirshare=${DEST_DIR}/usr/share/examples/postfix
+	if [ -d "${dirsrc}" ]; then
+		pfdir=$dirsrc
+	elif [ -d "${dirshare}" ]; then
+		pfdir=$dirshare
+		msg "Checking from ${pfdir} instead of ${dirsrc}"
+	else
+		msg "Can't find source directory"
+		return 1
+	fi
+
+	compare_dir ${op} ${pfdir} ${DEST_DIR}/etc/postfix 555 postfix-script
 	failed=$(( ${failed} + $? ))
-	compare_dir ${op} ${SRC_DIR}/gnu/dist/postfix/conf \
-		${DEST_DIR}/etc/postfix 444 post-install postfix-files
+	compare_dir ${op} ${pfdir} \
+	    ${DEST_DIR}/etc/postfix 444 post-install postfix-files
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
