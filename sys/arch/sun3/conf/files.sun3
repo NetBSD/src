@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.47 1998/07/21 17:36:05 drochner Exp $
+#	$NetBSD: files.sun3,v 1.48 1998/07/23 23:45:24 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -214,13 +214,13 @@ device	xyc {drive = -1}
 attach	xyc at vme
 device	xy: disk
 attach	xy at xyc
-file	arch/sun3/dev/xy.c		xy needs-flag
+file	arch/sun3/dev/xy.c		xy | xyc needs-flag
 
 device	xdc {drive = -1}
 attach	xdc at vme
 device	xd: disk
 attach	xd at xdc
-file	arch/sun3/dev/xd.c		xd needs-flag
+file	arch/sun3/dev/xd.c		xd | xdc needs-flag
 
 
 #
