@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.11 2002/11/03 23:17:18 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.12 2002/11/04 00:01:03 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -65,7 +65,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2002/11/03 23:17:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2002/11/04 00:01:03 matt Exp $");
 
 void
 child_return(void *arg)
@@ -106,7 +106,6 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	register_t args[10];
 	int error;
 	int n;
-	int nsysent;
 
 	curcpu()->ci_ev_scalls.ev_count++;
 
@@ -115,12 +114,9 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	n = NARGREG;
 
 #ifdef COMPAT_MACH
-	if (mach_syscall_dispatch(&code, &callp, &nsysent) == 0)
+	if ((callp = mach_syscall_dispatch(code)) == NULL)
 #endif /* COMPAT_MACH */
 	{
-		callp = p->p_emul->e_sysent;
-		nsysent = p->p_emul->e_nsysent;
-
 		switch (code) {
 		case EMULNAMEU(SYS_syscall):
 			/*
@@ -140,10 +136,11 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 		default:
 			break;
 		}
+		
+		callp = p->p_emul->e_sysent +
+		    (code & (EMULNAMEU(SYS_NSYSENT)-1));
 	}
 
-	code &= (nsysent - 1);
-	callp += code;
 	argsize = callp->sy_argsize;
 
 	if (argsize > n * sizeof(register_t)) {
@@ -211,7 +208,6 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	register_t args[10];
 	int error;
 	int n;
-	int nsysent;
 
 	KERNEL_PROC_LOCK(p);
 	curcpu()->ci_ev_scalls.ev_count++;
@@ -221,12 +217,9 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	n = NARGREG;
 
 #ifdef COMPAT_MACH
-	if (mach_syscall_dispatch(&code, &callp, &nsysent) == 0)
+	if ((callp = mach_syscall_dispatch(code)) == NULL)
 #endif /* COMPAT_MACH */
 	{
-		callp = p->p_emul->e_sysent;
-		nsysent = p->p_emul->e_nsysent;
-
 		switch (code) {
 		case EMULNAMEU(SYS_syscall):
 			/*
@@ -246,10 +239,11 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		default:
 			break;
 		}
+
+		callp = p->p_emul->e_sysent +
+		    (code & (EMULNAMEU(SYS_NSYSENT)-1));
 	}
 
-	code &= (nsysent - 1);
-	callp += code;
 	argsize = callp->sy_argsize;
 
 	if (argsize > n * sizeof(register_t)) {
