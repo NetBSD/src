@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.13 2002/10/06 02:12:01 provos Exp $
+# $NetBSD: GENERIC,v 1.14 2002/10/14 18:39:38 elric Exp $
 
 #include 	"arch/sbmips/conf/std.sbmips.eb"	# big-endian mode
 include 	"arch/sbmips/conf/std.sbmips.el"	# little-endian mode
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 # The following three options are required for BCM1250 pass 1 silicon
 options 	SB1250_PASS1
@@ -133,6 +133,7 @@ brgphy*		at mii? phy ?
 
 # Disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID
 pseudo-device	md		1	# memory disk device (ramdisk)

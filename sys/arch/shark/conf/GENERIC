@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.9 2002/10/06 02:12:01 provos Exp $
+#	$NetBSD: GENERIC,v 1.10 2002/10/14 18:39:39 elric Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.9 $"
+#ident		"GENERIC-$Revision: 1.10 $"
 
 # estimated number of users
 maxusers	32
@@ -221,6 +221,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	cgd	4		# cryptographic disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
 #pseudo-device	md	1		# Ramdisk driver

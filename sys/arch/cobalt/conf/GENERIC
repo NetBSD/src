@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36 2002/10/06 02:11:56 provos Exp $
+# $NetBSD: GENERIC,v 1.37 2002/10/14 18:39:30 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.36 $"
+#ident 		"GENERIC-$Revision: 1.37 $"
 
 maxusers	32
 
@@ -237,6 +237,7 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 
 # Disk/mass storage pseudo-devices
 #pseudo-device	ccd		4		# concatenated disk devices
+#pseudo-device	cgd		4		# cryptographic disk devices
 pseudo-device	raid		8		# RAIDframe disk driver
 options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 # Options to enable various other RAIDframe RAID types.

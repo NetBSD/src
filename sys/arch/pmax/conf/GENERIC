@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.105 2002/10/06 02:12:00 provos Exp $
+# $NetBSD: GENERIC,v 1.106 2002/10/14 18:39:37 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.105 $"
+#ident		"GENERIC-$Revision: 1.106 $"
 
 maxusers	64
 
@@ -226,6 +226,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	vnd		 4	# virtual disk ick
 pseudo-device	ccd		 4	# concatenated disks
+#pseudo-device	cgd		 4	# cryptographic disk devices
 pseudo-device	raid		 8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.72 2002/10/06 03:00:03 provos Exp $
+# $NetBSD: DRACO,v 1.73 2002/10/14 18:39:25 elric Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.6 2002/10/06 02:58:21 provos Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.7 2002/10/14 18:23:30 elric Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.73 $"
 
 
 maxusers	8
@@ -311,6 +311,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.27 2002/10/06 02:11:59 provos Exp $
+# $NetBSD: GENERIC,v 1.28 2002/10/14 18:39:35 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -250,6 +250,7 @@ audio*		at sb?
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	cgd		4	# cryptographic disk devices
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter

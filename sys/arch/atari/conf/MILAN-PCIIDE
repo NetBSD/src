@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.17 2002/10/06 03:02:04 provos Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.18 2002/10/14 18:39:28 elric Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.10 2002/06/15 21:44:07 leo Exp $
-#		NetBSD: GENERIC.in,v 1.26 2002/10/06 02:58:21 provos Exp $
+#		NetBSD: GENERIC.in,v 1.27 2002/10/14 18:24:33 elric Exp $
 
 #This configuration file is for a generic Milan
 
@@ -186,6 +186,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	ccd		4	# concatenating disk driver
+#pseudo-device	cgd		4	# cryptographic disk driver
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.

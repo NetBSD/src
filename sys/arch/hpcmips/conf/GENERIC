@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.130 2002/10/06 02:11:57 provos Exp $
+# $NetBSD: GENERIC,v 1.131 2002/10/14 18:39:32 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.130 $"
+#ident 		"GENERIC-$Revision: 1.131 $"
 
 maxusers	16
 
@@ -590,6 +590,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		4	# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	cgd		4	# cryptographic disks
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 

@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.10 2002/07/22 15:10:53 wiz Exp $
+#	$NetBSD: P6032,v 1.11 2002/10/14 18:39:23 elric Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.10 $"
+#ident 		"P6032-$Revision: 1.11 $"
 
 maxusers 32
 
@@ -349,6 +349,7 @@ fd*	at	fdc? drive ?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ipfilter	1

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2002/10/06 02:11:58 provos Exp $
+# $NetBSD: GENERIC,v 1.24 2002/10/14 18:39:34 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -146,6 +146,7 @@ pseudo-device	tun		4	# Network "tunnel" device
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
 #pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
+#pseudo-device	cgd		4	# cryptographic disks
 #pseudo-device	raid		8	# RAIDframe disk driver
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1

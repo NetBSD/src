@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2002/09/18 02:43:57 lukem Exp $
+# $NetBSD: GENERIC,v 1.27 2002/10/14 18:39:30 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -131,6 +131,7 @@ pci*		at gapspci?
 rtk*		at pci? dev ? function ?	# SEGA Broadband Adapter
 ukphy*		at mii? phy ?
 
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	bridge			# simple inter-network bridging
