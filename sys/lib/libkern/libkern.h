@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.47 2002/10/24 20:53:50 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.48 2003/05/15 13:50:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -285,6 +285,8 @@ u_long	 random __P((void));
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
 int	 strcasecmp __P((const char *, const char *));
+size_t	 strlcpy __P((char *, const char *, size_t));
+size_t	 strlcat __P((char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));
 u_long	 strtoul __P((const char *, char **, int));
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */
