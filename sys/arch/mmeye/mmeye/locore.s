@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 1999/09/13 10:31:02 itojun Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 1999/09/14 11:20:54 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -41,7 +41,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_pmap_new.h"
 
 #include "assym.h"
 
@@ -232,17 +231,9 @@
  *
  * XXX 4 == sizeof pde
  */
-
-#ifdef PMAP_NEW
 	.set	_C_LABEL(PTmap), (PDSLOT_PTE << PDSHIFT)
 	.set	_C_LABEL(PTD), (_C_LABEL(PTmap) + PDSLOT_PTE * NBPG)
 	.set	_C_LABEL(PTDpde), (_C_LABEL(PTD) + PDSLOT_PTE * 4)
-#else
-	.globl	_PTmap, _PTD, _PTDpde
-	.set	_PTmap,(PTDPTDI << PDSHIFT)
-	.set	_PTD,(_PTmap + PTDPTDI * NBPG)
-	.set	_PTDpde,(_PTD + PTDPTDI * 4)
-#endif
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
@@ -250,16 +241,9 @@
  *
  * XXX 4 == sizeof pde
  */
-#ifdef PMAP_NEW
 	.set	_C_LABEL(APTmap),(PDSLOT_APTE << PDSHIFT)
 	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
 	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + PDSLOT_APTE * 4)
-#else
-	.globl	_APTmap,_APTD,_APTDpde
-	.set	_APTmap,(APTDPTDI << PDSHIFT)
-	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
-	.set	_APTDpde,(_PTD + APTDPTDI * 4)
-#endif
 
 /*
  * Initialization
