@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.20 2003/10/28 22:31:12 mycroft Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.21 2003/12/09 19:33:22 augustss Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.20 2003/10/28 22:31:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.21 2003/12/09 19:33:22 augustss Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1293,7 +1293,7 @@ bridge_start(struct ifnet *ifp)
 /*
  * bridge_forward:
  *
- *	The fowarding function of the bridge.
+ *	The forwarding function of the bridge.
  */
 void
 bridge_forward(struct bridge_softc *sc, struct mbuf *m)
