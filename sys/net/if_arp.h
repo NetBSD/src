@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.11 1997/03/25 02:30:52 jonathan Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.12 1997/09/08 02:06:30 mikel Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -96,4 +96,4 @@ struct arpreq {
 #define	ATF_PUBL	0x08	/* publish entry (respond for other host) */
 #define	ATF_USETRAILERS	0x10	/* has requested trailers */
 
-#endif _IF_ARP_H_
+#endif /* _IF_ARP_H_ */

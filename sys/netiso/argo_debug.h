@@ -1,4 +1,4 @@
-/*	$NetBSD: argo_debug.h,v 1.9 1996/10/13 02:04:12 christos Exp $	*/
+/*	$NetBSD: argo_debug.h,v 1.10 1997/09/08 02:06:31 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,11 +79,11 @@ void Dump_buf __P((caddr_t, int));
 /*
     #ifndef TPPT
     #define TPPT
-    #endif TPPT
+    #endif
 
     #ifndef TP_PERF_MEAS
     #define TP_PERF_MEAS
-    #endif TP_PERF_MEAS
+    #endif
 */
 
 unsigned char   argo_debug[128];
