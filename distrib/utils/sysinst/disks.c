@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.76 2004/03/26 19:55:13 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.77 2004/04/24 20:42:39 dbj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,6 +84,7 @@ struct disk_desc {
 static int foundffs(struct data *, size_t);
 static int mount_root(void);
 static int fsck_preen(const char *, int, const char *);
+static void fixsb(const char *, int);
 
 #ifndef DISK_NAMES
 #define DISK_NAMES "wd", "sd", "ld"
@@ -523,6 +524,8 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 		return 0;
 	if (access(prog, X_OK) != 0)
 		return 0;
+	if (!strcmp(fsname,"ffs"))
+		fixsb(disk, ptn);
 	error = run_program(0, "%s -p -q /dev/r%s%c", prog, disk, ptn);
 	free(prog);
 	if (error != 0) {
@@ -530,6 +533,43 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 		process_menu(MENU_ok, NULL);
 	}
 	return error;
+}
+
+/* This performs the same function as the etc/rc.d/fixsb script.
+ * see NetBSD pr install/25138 for details. */
+static void
+fixsb(const char *disk, int ptn)
+{
+	int fd;
+	char diskpath[MAXPATHLEN];
+	char *prog = "/sbin/fsck_ffs";
+	int error;
+	static char sblk[SBLOCKSIZE];
+	struct fs *fs = (struct fs *)sblk;
+	char *part;
+
+	asprintf(&part, "%s%c",disk,ptn+'a');
+	fd = opendisk(part, O_RDONLY, diskpath, sizeof(diskpath), 0);
+	free(part);
+	if (fd == -1)
+		return;
+	error = pread(fd, sblk, sizeof sblk, SBLOCK_UFS1);
+	close(fd);
+	if (error)
+		return;
+
+	if (fs->fs_magic != FS_UFS1_MAGIC &&
+	    fs->fs_magic != FS_UFS1_MAGIC_SWAPPED)
+		return;
+	if (fs->fs_old_flags & FS_FLAGS_UPDATED)
+		return;
+	if (fs->fs_bsize != fs->fs_maxbsize)
+		return;
+
+	if (access(prog, X_OK) != 0)
+		return;
+	run_program(0, "%s -p -q -b 16 -c 4 %s", prog, diskpath);
+	run_program(0, "%s -p -q -c 3 %s", prog, diskpath);
 }
 
 /*
