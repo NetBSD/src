@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.31 2000/11/02 00:32:52 eeh Exp $	*/
+/*	$NetBSD: ite.c,v 1.32 2001/02/01 08:59:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1055,9 +1055,9 @@ enum caller	caller;
 		 * keypad-appmode sends SS3 followed by the above
 		 * translated character
 		 */
-		(*linesw[kbd_tty->t_line].l_rint) (27, kbd_tty);
-		(*linesw[kbd_tty->t_line].l_rint) ('O', kbd_tty);
-		(*linesw[kbd_tty->t_line].l_rint) (out[cp - in], kbd_tty);
+		kbd_tty->t_linesw->l_rint(27, kbd_tty);
+		kbd_tty->t_linesw->l_rint('O', kbd_tty);
+		kbd_tty->t_linesw->l_rint(out[cp - in], kbd_tty);
 		splx(s);
 		return;
 	} else {
@@ -1087,11 +1087,11 @@ enum caller	caller;
 		 * in the default keymap
 		 */
 		for (i = *str++; i; i--)
-			(*linesw[kbd_tty->t_line].l_rint) (*str++, kbd_tty);
+			kbd_tty->t_linesw->l_rint(*str++, kbd_tty);
 		splx(s);
 		return;
 	}
-	(*linesw[kbd_tty->t_line].l_rint) (code, kbd_tty);
+	kbd_tty->t_linesw->l_rint(code, kbd_tty);
 
 	splx(s);
 	return;
@@ -1107,7 +1107,7 @@ ite_sendstr(str)
 	kbd_tty = kbd_ite->tp;
 	KDASSERT(kbd_tty);
 	while (*str)
-		(*linesw[kbd_tty->t_line].l_rint) (*str++, kbd_tty);
+		kbd_tty->t_linesw->l_rint(*str++, kbd_tty);
 }
 
 static void
