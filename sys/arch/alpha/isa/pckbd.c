@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.14 1996/12/05 01:39:30 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.15 1996/12/08 00:22:11 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -99,11 +99,7 @@ struct pckbd_softc {
 	int	sc_bellpitch;		/* last pitch programmed */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int pckbdprobe __P((struct device *, void *, void *));
-#else
 int pckbdprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void pckbdattach __P((struct device *, struct device *, void *));
 int pckbdintr __P((void *));
 
@@ -301,11 +297,7 @@ kbd_cmd(val, polling)
 int
 pckbdprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pcppi_attach_args *pa = aux;

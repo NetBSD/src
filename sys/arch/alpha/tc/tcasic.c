@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.14 1996/12/05 01:39:45 cgd Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.15 1996/12/08 00:22:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -38,11 +38,7 @@
 #include <alpha/tc/tc_conf.h>
 
 /* Definition of the driver for autoconfig. */
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	tcasicmatch(struct device *, void *, void *);
-#else
 int	tcasicmatch(struct device *, struct cfdata *, void *);
-#endif
 void	tcasicattach(struct device *, struct device *, void *);
 
 struct cfattach tcasic_ca = {
@@ -63,11 +59,7 @@ int	tcasicfound;
 int
 tcasicmatch(parent, cfdata, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *cfdata;
-#else
 	struct cfdata *cfdata;
-#endif
 	void *aux;
 {
 	struct confargs *ca = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.17 1996/12/08 00:22:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -48,11 +48,7 @@
 #include <alpha/pci/pci_2100_a50.h>
 #endif
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	apecsmatch __P((struct device *, void *, void *));
-#else
 int	apecsmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	apecsattach __P((struct device *, struct device *, void *));
 
 struct cfattach apecs_ca = {
@@ -72,11 +68,7 @@ struct apecs_config apecs_configuration;
 int
 apecsmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct confargs *ca = aux;
