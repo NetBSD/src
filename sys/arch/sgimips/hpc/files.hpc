@@ -1,4 +1,4 @@
-# $NetBSD: files.hpc,v 1.5 2003/09/25 16:35:50 lonewolf Exp $
+# $NetBSD: files.hpc,v 1.6 2003/09/27 21:11:21 he Exp $
 
 device	sq: arp, ether, ifnet
 attach	sq at hpc
@@ -20,7 +20,7 @@ file	arch/sgimips/hpc/dsclock_hpc.c
 
 device	haltwo: audiobus, auconv, mulaw
 attach	haltwo at hpc
-file	arch/sgimips/hpc/haltwo.c
+file	arch/sgimips/hpc/haltwo.c	haltwo
 
 attach	zsc at hpc with zsc_hpc
 
