@@ -35,7 +35,14 @@
 ./usr/X11R6/lib/X11/doc/README.LinkKit
 ./usr/X11R6/lib/X11/doc/VGADriver.Doc
 ./usr/X11R6/lib/X11/etc/et4000clock.c
+./usr/X11R6/lib/modules
+./usr/X11R6/lib/modules/pex5.so
+./usr/X11R6/lib/modules/xf86Elo.so
+./usr/X11R6/lib/modules/xf86Summa.so
+./usr/X11R6/lib/modules/xf86Wacom.so
+./usr/X11R6/lib/modules/xie.so
 ./usr/X11R6/bin/SuperProbe
+./usr/X11R6/bin/X
 ./usr/X11R6/bin/XF86_SVGA
 ./usr/X11R6/bin/XF86_VGA16
 ./usr/X11R6/bin/XF86_W32
