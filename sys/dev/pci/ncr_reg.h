@@ -1,8 +1,6 @@
-/*      $NetBSD: ncr_reg.h,v 1.7 1996/03/11 16:14:03 cgd Exp $      */
+/*      $NetBSD: ncr_reg.h,v 1.8 1996/03/11 23:06:04 cgd Exp $      */
 
 /**************************************************************************
-**
-**  $Id: ncr_reg.h,v 1.7 1996/03/11 16:14:03 cgd Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
