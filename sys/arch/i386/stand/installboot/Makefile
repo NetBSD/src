@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/02/17 20:03:10 thorpej Exp $
+#	$NetBSD: Makefile,v 1.24 2002/08/27 08:53:16 lukem Exp $
 
 NOMAN=	# defined
 
@@ -16,7 +16,7 @@ SRCS=	installboot.c bootblks.c getmount.c byteorder.c loadfile.c \
 CPPFLAGS+= -I${.CURDIR}/../lib/crt/bootsect
 CPPFLAGS+= -I${LIBSA} -I.
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
-LDSTATIC?=-static
+LDSTATIC=-static
 
 .BEGIN: machine
 .NOPATH: machine
