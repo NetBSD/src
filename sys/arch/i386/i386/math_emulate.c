@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.20 1998/01/24 13:19:53 mycroft Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.20.8.1 1999/04/26 16:31:47 perry Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -76,6 +76,10 @@ math_emulate(info)
 	temp_real tmp;
 	char * address;
 	u_long oldeip;
+	int override_seg, override_addrsize, override_datasize;
+	int prefix;
+
+	override_seg = override_addrsize = override_datasize = 0;
 
 	if (!USERMODE(info->tf_cs, info->tf_eflags))
 		panic("math emulator called from supervisor mode");
@@ -94,8 +98,47 @@ math_emulate(info)
 		I387.swd &= 0x7fff;
 
 	I387.fip = oldeip = info->tf_eip;
+
+	/*
+	 * Scan for instruction prefixes. More to be politically correct
+	 * than anything else. Prefixes aren't useful for the instructions
+	 * we can emulate anyway.
+	 */
+	while (1) {
+		prefix = fubyte((const void *)info->tf_eip);
+		switch (prefix) {
+		case INSPREF_LOCK:
+			math_abort(info, SIGILL);
+			break;
+		case INSPREF_REPN:
+		case INSPREF_REPE:
+			break;
+		case INSPREF_CS:
+		case INSPREF_SS:
+		case INSPREF_DS:
+		case INSPREF_ES:
+		case INSPREF_FS:
+		case INSPREF_GS:
+			override_seg = prefix;
+			break;
+		case INSPREF_OSIZE:
+			override_datasize = prefix;	
+			break;
+		case INSPREF_ASIZE:
+			override_addrsize = prefix;
+			break;
+		case -1:
+			math_abort(info,SIGSEGV);
+			break;
+		default:
+			goto done;
+		}
+		info->tf_eip++;
+	}
+
+done:
+	code = htons(fusword((u_short *) info->tf_eip)) & 0x7ff;
 	info->tf_eip += 2;
-	code = htons(fusword((u_short *) oldeip)) & 0x7ff;
 	*((u_short *) &I387.fcs) = (u_short) info->tf_cs;
 	*((u_short *) &I387.fcs + 1) = code;
 
