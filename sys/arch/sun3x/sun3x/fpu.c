@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.3 1997/03/17 19:03:30 gwr Exp $	*/
+/*	$NetBSD: fpu.c,v 1.4 1997/04/25 19:16:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * Floating Point Unit (MC68881)
+ * Floating Point Unit (MC68881/882)
  * Probe for the FPU at autoconfig time.
  */
 
@@ -105,5 +105,5 @@ fpu_probe()
 	/* This will trap if there is no FPU present. */
 	m68881_restore(&null_fpf);
 	nofault = NULL;
-	return(1);
+	return(2);	/* XXX - See the atari version. */
 }
