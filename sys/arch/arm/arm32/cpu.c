@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.29 2002/03/16 18:47:51 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.30 2002/03/24 22:02:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2002/03/16 18:47:51 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2002/03/24 22:02:58 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -86,11 +86,12 @@ cpu_attach(struct device *dv)
 	/* Get the cpu ID from coprocessor 15 */
 
 	curcpu()->ci_cpuid = cpu_id();
+	curcpu()->ci_cputype = curcpu()->ci_cpuid & CPU_ID_CPU_MASK;
+	curcpu()->ci_cpurev = curcpu()->ci_cpuid & CPU_ID_REVISION_MASK;
 
 	identify_arm_cpu(dv, curcpu());
 
-	if ((curcpu()->ci_cpuid & CPU_ID_CPU_MASK) == CPU_ID_SA110
-	    && (curcpu()->ci_cpuid & CPU_ID_REVISION_MASK) < 3) {
+	if (curcpu()->ci_cputype == CPU_ID_SA110 && curcpu()->ci_cpurev < 3) {
 		printf("%s: SA-110 with bugged STM^ instruction\n",
 		       dv->dv_xname);
 	}
