@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.19 1997/09/16 08:37:16 mrg Exp $	*/
+/*	$NetBSD: trace.c,v 1.20 1997/10/19 18:23:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.19 1997/09/16 08:37:16 mrg Exp $");
+__RCSID("$NetBSD: trace.c,v 1.20 1997/10/19 18:23:55 mycroft Exp $");
 #endif
 
 #define	RIPCMDS
@@ -340,8 +340,7 @@ set_tracefile(char *filename,
 
 		/* If the new tracefile exists, it must be a regular file.
 		 */
-		if (stat(filename, &stbuf) >= 0
-		    && (stbuf.st_mode & S_IFMT) != S_IFREG) {
+		if (stat(filename, &stbuf) >= 0 && !S_ISREG(stbuf.st_mode)) {
 			msglog("wrong type (%#x) of trace file \"%s\"",
 			       stbuf.st_mode, filename);
 			return;
