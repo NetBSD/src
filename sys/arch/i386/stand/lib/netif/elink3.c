@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.2 1997/03/15 22:19:26 perry Exp $	*/
+/*	$NetBSD: elink3.c,v 1.3 1998/02/16 11:26:36 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -40,19 +40,30 @@ extern unsigned short eth_base;
 
 extern u_char eth_myaddr[6];
 
-void EtherStop(){
+void epstop()
+{
 	/* stop card */
 	outw(BASE + EP_COMMAND, RX_DISABLE);
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS);
+
 	outw(BASE + EP_COMMAND, TX_DISABLE);
 	outw(BASE + EP_COMMAND, STOP_TRANSCEIVER);
+
 	outw(BASE + EP_COMMAND, RX_RESET);
 	outw(BASE + EP_COMMAND, TX_RESET);
+
 	outw(BASE + EP_COMMAND, C_INTR_LATCH);
 	outw(BASE + EP_COMMAND, SET_RD_0_MASK);
 	outw(BASE + EP_COMMAND, SET_INTR_MASK);
 	outw(BASE + EP_COMMAND, SET_RX_FILTER);
+}
+
+void EtherStop()
+{
+	epstop();
+	outw(BASE + EP_COMMAND, GLOBAL_RESET);
+	delay(100000);
 }
 
 /**************************************************************************
@@ -66,7 +77,7 @@ void epreset()
 			Reset 3Com 509 card
 	*************************************************************/
 
-	EtherStop();
+	epstop();
 
 	/*
 	 * initialize card
@@ -103,7 +114,7 @@ void epreset()
 
 	outw(BASE + EP_COMMAND, SET_RD_0_MASK | S_5_INTS);
 
-	outw(BASE + EP_COMMAND, SET_INTR_MASK | S_5_INTS);
+	outw(BASE + EP_COMMAND, SET_INTR_MASK);
 
 	outw(BASE + EP_COMMAND, SET_RX_FILTER | FIL_INDIVIDUAL |
 	    FIL_BRDCST);
