@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.8 1996/04/12 08:44:35 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.9 1996/04/18 08:36:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -159,7 +159,7 @@ freebsd_sendsig(catcher, sig, mask, code)
 	tf->tf_eip = (int)(((char *)PS_STRINGS) - 
 	     (freebsd_esigcode - freebsd_sigcode));
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
