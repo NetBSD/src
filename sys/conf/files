@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.370 2000/06/03 14:36:32 itojun Exp $
+#	$NetBSD: files,v 1.371 2000/06/04 16:26:12 mycroft Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -45,6 +45,7 @@ defopt	COMPAT_AOUT
 defopt	COMPAT_M68K4K
 defopt	COMPAT_VAX1K
 defopt	COMPAT_43
+defopt	COMPAT_PECOFF
 defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_14 COMPAT_NOMID
 
