@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.19 1995/05/12 23:27:23 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.20 1995/07/04 12:22:21 paulus Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -834,6 +834,14 @@ interrupt(statusReg, causeReg, pc)
 			clnlintr();
 		}
 #endif
+#include "ppp.h"
+#if NPPP > 0
+		if (netisr & (1 << NETISR_PPP)) {
+			netisr &= ~(1 << NETISR_PPP);
+			pppintr();
+		}
+#endif
+
 	}
 	if (mask & MACH_SOFT_INT_MASK_0) {
 		clearsoftclock();
