@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.7 1995/12/25 22:24:54 mycroft Exp $ */
+/*	$NetBSD: stdarg.h,v 1.8 1995/12/25 23:15:38 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,30 +76,30 @@ typedef _BSD_VA_LIST_	va_list;
  *
  * Note: We don't declare __d with type `type', since in C++ the type might
  * have a constructor.
- *
- * The extraneous casts through `void *' avoid gcc alignment warnings.
  */
-#define	__va_8byte(ap, type) ({ \
-	union { char __d[sizeof(type)]; int __i[2]; } __va_u; \
-	__va_u.__i[0] = ((int *)(void *)(ap))[0]; \
-	__va_u.__i[1] = ((int *)(void *)(ap))[1]; \
-	(ap) += 8; *(type *)(void *)__va_u.__d; })
-
-#define	__va_arg(ap, type) \
-	((type *)(ap += __va_size(type),			\
-		ap - (sizeof(type) < sizeof(long) &&		\
-		    sizeof(type) != __va_size(type) ?		\
-		    sizeof(type) : __va_size(type))))[0]
-
 #if __GNUC__ == 1
 #define	__extension__
 #endif
 
+#define	__va_8byte(ap, type) \
+	__extension__ ({						\
+		union { char __d[sizeof(type)]; int __i[2]; } __va_u;	\
+		__va_u.__i[0] = ((int *)(void *)(ap))[0];		\
+		__va_u.__i[1] = ((int *)(void *)(ap))[1];		\
+		(ap) += 8; *(type *)(va_list)__va_u.__d;		\
+	})
+
+#define	__va_arg(ap, type) \
+	(*(type *)((ap) += __va_size(type),			\
+		   (ap) - (sizeof(type) < sizeof(long) &&	\
+			   sizeof(type) != __va_size(type) ?	\
+			   sizeof(type) : __va_size(type))))
+
 #define	__RECORD_TYPE_CLASS	12
-#define va_arg(ap, type) __extension__ ({ \
-    __builtin_classify_type(*(type *)0) >= __RECORD_TYPE_CLASS ?	\
-    *__va_arg(ap, type *) : __va_size(type) == 8 ? __va_8byte(ap, type) : \
-    __va_arg(ap, type); })
+#define va_arg(ap, type) \
+	(__builtin_classify_type(*(type *)0) >= __RECORD_TYPE_CLASS ?	\
+	 *__va_arg(ap, type *) : __va_size(type) == 8 ?			\
+	 __va_8byte(ap, type) : __va_arg(ap, type))
 
 #define va_end(ap)	((void)0)
 
