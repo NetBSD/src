@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.139 2001/08/01 20:54:17 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.140 2001/09/03 18:18:25 drochner Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -842,6 +842,25 @@ i4btrc*)
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 53 $unit
 	chmod 600 i4btrc$unit
+	;;
+
+vmegen)
+	sh $0 vmegen0 vmegen1 vmegen2 vmegen3
+	;;
+
+vmegen*)
+	unit=${i#vmegen}
+	rm -f vmegen$unit
+	mknod vmegen$unit c 68 $(($unit * 16 + 0))
+	chown root:wheel vmegen$unit
+	chmod 600 vmegen$unit
+	;;
+
+wsfont)
+	rm -f wsfont
+	mknod wsfont c 81 0
+	chown root:wheel wsfont
+	chmod 600 wsfont
 	;;
 
 local)
