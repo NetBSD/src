@@ -1,4 +1,4 @@
-.\" $NetBSD: upgrade,v 1.7.2.2 1999/04/04 04:30:18 minoura Exp $	
+.\" $NetBSD: upgrade,v 1.7.2.3 1999/04/15 16:30:33 minoura Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,13 +75,10 @@ To upgrade your system, follow the following instructions:
 Boot your machine using of the boot.fs floppy, or boot with
 .Pa loadbsd.x
 utility.
-.Pp
-While booting, you will probably see several warnings.  You
-should be warned that no swap space is present, and that
-init(8) cannot find /etc/rc.  Do not be alarmed, these are
-completely normal.  When you reach the prompt asking you for a
-shell name, just hit return.  Note that once it booted, you
-may remove the floppy from the drive.
+.It
+You will be presented with a welcome message and a prompt
+asking whether you are going to "install" NetBSD or "upgrade"
+an exisiting system.  Select "upgrade" to start.
 .It
 You will be presented with some information about the upgrade
 process and a warning message, and will be asked if you wish
