@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2002/01/27 21:49:46 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2004/10/03 12:35:15 yamt Exp $
 
-SUBDIR= mkdir
+SUBDIR= mkdir getdents
 
 .include <bsd.subdir.mk>
