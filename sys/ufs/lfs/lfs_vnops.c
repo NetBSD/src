@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.103 2003/04/23 07:20:39 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.104 2003/04/27 06:47:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.103 2003/04/23 07:20:39 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.104 2003/04/27 06:47:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1651,7 +1651,7 @@ lfs_putpages(void *v)
 	do {
 		int r;
 
-		/* If no pages are dirty, we can just use genfs_getpages. */
+		/* If no pages are dirty, we can just use genfs_putpages. */
 		if ((dirty = check_dirty(fs, vp, startoffset, endoffset, blkeof,
 					 ap->a_flags, 1)) != 0)
 			break;
