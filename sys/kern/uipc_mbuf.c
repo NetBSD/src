@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.65 2003/04/09 18:38:03 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.66 2003/04/12 02:49:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.65 2003/04/09 18:38:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.66 2003/04/12 02:49:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1021,4 +1021,71 @@ m_copyback(struct mbuf *m0, int off, int len, caddr_t cp)
 	}
 out:	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
 		m->m_pkthdr.len = totlen;
+}
+
+/*
+ * Apply function f to the data in an mbuf chain starting "off" bytes from the
+ * beginning, continuing for "len" bytes.
+ */
+int
+m_apply(struct mbuf *m, int off, int len,
+    int (*f)(void *, caddr_t, unsigned int), void *arg)
+{
+	unsigned int count;
+	int rval;
+
+	KASSERT(len >= 0);
+	KASSERT(off >= 0);
+
+	while (off > 0) {
+		KASSERT(m != NULL);
+		if (off < m->m_len)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
+	}
+	while (len > 0) {
+		KASSERT(m != NULL);
+		count = min(m->m_len - off, len);
+
+		rval = (*f)(arg, mtod(m, caddr_t) + off, count);
+		if (rval)
+			return (rval);
+
+		len -= count;
+		off = 0;
+		m = m->m_next;
+	}
+
+	return (0);
+}
+
+/*
+ * Return a pointer to mbuf/offset of location in mbuf chain.
+ */
+struct mbuf *
+m_getptr(struct mbuf *m, int loc, int *off)
+{
+
+	while (loc >= 0) {
+		/* Normal end of search */
+		if (m->m_len > loc) {
+	    		*off = loc;
+	    		return (m);
+		} else {
+	    		loc -= m->m_len;
+
+	    		if (m->m_next == NULL) {
+				if (loc == 0) {
+ 					/* Point at the end of valid data */
+		    			*off = m->m_len;
+		    			return (m);
+				} else
+		  			return (NULL);
+	    		} else
+	      			m = m->m_next;
+		}
+    	}
+
+	return (NULL);
 }

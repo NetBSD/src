@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.80 2003/04/09 18:38:01 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.81 2003/04/12 02:49:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -807,12 +807,15 @@ struct	mbuf *m_free(struct mbuf *);
 struct	mbuf *m_get(int, int);
 struct	mbuf *m_getclr(int, int);
 struct	mbuf *m_gethdr(int, int);
-struct	mbuf *m_prepend(struct mbuf *,int,int);
+struct	mbuf *m_prepend(struct mbuf *,int, int);
 struct	mbuf *m_pulldown(struct mbuf *, int, int, int *);
 struct	mbuf *m_pullup(struct mbuf *, int);
 struct	mbuf *m_copyup(struct mbuf *, int, int);
-struct	mbuf *m_split(struct mbuf *,int,int);
+struct	mbuf *m_split(struct mbuf *,int, int);
+struct	mbuf *m_getptr(struct mbuf *, int, int *);
 void	m_adj(struct mbuf *, int);
+int	m_apply(struct mbuf *, int, int,
+		int (*)(void *, caddr_t, unsigned int), void *);
 void	m_cat(struct mbuf *,struct mbuf *);
 #ifdef MBUFTRACE
 void	m_claim(struct mbuf *, struct mowner *);
