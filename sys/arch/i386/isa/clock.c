@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.55 1998/10/13 15:14:13 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.56 1999/01/18 10:50:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -489,6 +489,14 @@ bintobcd(n)
 static int timeset;
 
 /*
+ * patchable to control century byte handling:
+ * 1: always update in resettodr()
+ * -1: never touch
+ * 0: try to figure out itself
+ */
+int rtc_update_century = 0;
+
+/*
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
  */
@@ -539,16 +547,17 @@ inittodr(base)
 		    century, yr);
 
 		/* Kludge to roll over century. */
-		if ((century == 19) && (tcentury == 20) && (yr == 00)) {
+		if ((century == 19) && (tcentury == 20) && (yr == 00) &&
+			rtc_update_century >= 0) {
 			printf("WARNING: Setting NVRAM century to 20\n");
 			s = splclock();
 			/* note: 0x20 = 20 in BCD. */
 			mc146818_write(NULL, NVRAM_CENTURY, 0x20); /*XXXsoftc*/
 			splx(s);
-		} else {
-			printf("WARNING: CHECK AND RESET THE DATE!\n");
 		}
-	}
+	} else if (century == 19 && rtc_update_century == 0)
+		rtc_update_century = 1; /* will update later in resettodr() */
+
 	yr = (tcentury == 20) ? yr+100 : yr;
  
 	/*
@@ -654,7 +663,8 @@ resettodr()
 
 	s = splclock();
 	rtcput(&rtclk);
-	mc146818_write(NULL, NVRAM_CENTURY, century); /* XXX softc */
+	if (rtc_update_century > 0)
+		mc146818_write(NULL, NVRAM_CENTURY, century); /* XXX softc */
 	splx(s);
 }
 
