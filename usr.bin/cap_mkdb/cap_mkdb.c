@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.8 1997/10/19 14:05:48 mrg Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.9 1998/07/28 19:27:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.8 1997/10/19 14:05:48 mrg Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.9 1998/07/28 19:27:00 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ char *capdb, *capname, buf[8 * 1024];
 HASHINFO openinfo = {
 	4096,		/* bsize */
 	16,		/* ffactor */
-	256,		/* nelem */
+	2048,		/* nelem */
 	2048 * 1024,	/* cachesize */
 	NULL,		/* hash() */
 	0		/* lorder */
