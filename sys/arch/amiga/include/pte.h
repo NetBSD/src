@@ -38,7 +38,7 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	@(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.8 1994/06/04 11:59:29 chopps Exp $
+ *	$Id: pte.h,v 1.9 1994/06/08 04:14:39 chopps Exp $
  */
 #ifndef _MACHINE_PTE_H_
 #define _MACHINE_PTE_H_
@@ -46,6 +46,14 @@
 /*
  * AMIGA hardware segment/page table entries
  */
+
+struct pte {
+	u_int pte;
+};
+
+struct ste {
+	u_int ste;
+};
 
 #define	PT_ENTRY_NULL	((u_int *) 0)
 #define	ST_ENTRY_NULL	((u_int *) 0)
