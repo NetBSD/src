@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.120 2003/07/18 08:26:05 lukem Exp $
+#	$NetBSD: bsd.README,v 1.121 2003/07/18 15:44:07 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -85,6 +85,9 @@ MKBFD		If "no", don't build libbfd, libiberty, or any of the things
 		that depend on them (binutils/gas/ld, gdb, dbsym, mdsetimage).
 		Default: yes
 
+MKCATPAGES	If "no", don't build or install the catman pages.
+		Default: yes
+
 MKCRYPTO	If "no", no cryptography support will be built into the system,
 		and also acts as MKKERBEROS=no.
 		Default: yes
@@ -97,9 +100,6 @@ MKCRYPTO_MDC2	If not "no", MDC2 support will be built into libcrypto_mdc2.a
 
 MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5.a.
 		Default: no
-
-MKCATPAGES	If "no", don't build or install the catman pages.
-		Default: yes
 
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes
@@ -119,6 +119,12 @@ MKGDB		If "no", don't build gdb.
 MKHESIOD	If "no", disables building of Hesiod infrastructure
 		(libraries and support programs).
 		Default: yes
+
+MKHOSTOBJ	If "yes", for programs intended to be run on the compile host,
+		the name, release, and architecture of the host operating
+		system will be suffixed to the name of the object directory
+		created by "make obj".
+		Default: no
 
 MKHTML		If "no", don't build or install the html man pages.
 		Default: yes
