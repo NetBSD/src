@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1998/02/25 12:19:12 drochner Exp $
+#	$NetBSD: Makefile,v 1.17 1998/12/12 15:51:49 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -55,6 +55,9 @@ USE_NETIF= pcnet_pci
 #USE_NETIF= wd80x3 #and uncomment at least one of the two following lines
 #CPPFLAGS+= -DSUPPORT_WD80X3
 #CPPFLAGS+= -DSUPPORT_SMC_ULTRA
+
+#USE_NETIF= i82557
+#CPPFLAGS+= -DPCIROM -DPCI_VID=0x8086 -DPCI_DID=0x1229 -DPCI_CLASS=0x020000
 
 .include "../lib/netif/Makefile.inc"
 
