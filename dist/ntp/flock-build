@@ -1,0 +1,31 @@
+#! /bin/sh
+
+BUILD_ARGS="$@"
+
+#  bridgeport      sparc-sun-solaris2.6
+#  bunnylou        alpha-dec-osf4.0
+#  churchy         alpha-dec-osf4.0
+#  cowbird         alpha-dec-osf4.0
+#  grundoon        sparc-sun-sunos4.1.3
+#  hepzibah        freebsd-2.2.5
+#  pogo            sparc-sun-solaris2.6
+#  porkypine       mips-dec-ultrix4.4
+#  rackety         sparc-sun-sunos4.1.3/cc
+#  snavely         hppa1.1-hp-hpux10.20
+#  whimsy          sparc-sun-solaris2.6
+
+c_d=`pwd`
+
+case "$c_d" in
+ /pogo/*) ;;
+ *) echo "This script needs to be run from /pogo/somewhere"
+    exit 1
+    ;;
+esac
+
+for i in  churchy hepzibah pogo porkypine rackety snavely
+do
+    echo $i
+    # Perhaps we should call build with --enable-parse-clocks
+    ssh $i "cd $c_d ; ./build $BUILD_ARGS" &
+done
