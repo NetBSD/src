@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.131 2002/10/23 06:15:59 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.132 2002/12/31 17:49:14 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -225,7 +225,9 @@ MLINKS+=knote.9 KNOTE.9 \
 MLINKS+=kprintf.9 printf.9 kprintf.9 sprintf.9 kprintf.9 snprintf.9 \
 	kprintf.9 vprintf.9 kprintf.9 vsprintf.9 kprintf.9 vsnprintf.9 \
 	kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \
-	kprintf.9 tprintf.9 kprintf.9 tprintf_open.9 kprintf.9 tprintf_close.9
+	kprintf.9 tprintf.9 kprintf.9 tprintf_open.9 kprintf.9 tprintf_close.9 \
+	kprintf.9 aprint_normal.9 kprintf.9 aprint_naive.9 \
+	kprintf.9 aprint_verbose.9 kprintf.9 aprint_debug.9
 MLINKS+=kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create.9 \
 	kthread.9 kthread_create1.9

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.507 2002/12/24 07:26:05 jdc Exp $
+#	$NetBSD: mi,v 1.508 2002/12/31 17:49:15 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3281,6 +3281,10 @@
 ./usr/share/man/cat9/VREF.0		comp-sys-catman
 ./usr/share/man/cat9/access.0		comp-sys-catman
 ./usr/share/man/cat9/altq.0		comp-sys-catman
+./usr/share/man/cat9/aprint_debug.0	comp-sys-catman
+./usr/share/man/cat9/aprint_naive.0	comp-sys-catman
+./usr/share/man/cat9/aprint_normal.0	comp-sys-catman
+./usr/share/man/cat9/aprint_verbose.0	comp-sys-catman
 ./usr/share/man/cat9/arc4random.0		comp-sys-catman
 ./usr/share/man/cat9/arp.0		comp-sys-catman
 ./usr/share/man/cat9/arp_ifinit.0		comp-sys-catman
@@ -6271,6 +6275,10 @@
 ./usr/share/man/man9/VREF.9		comp-sys-man
 ./usr/share/man/man9/access.9		comp-sys-man
 ./usr/share/man/man9/altq.9		comp-sys-man
+./usr/share/man/man9/aprint_debug.9	comp-sys-man
+./usr/share/man/man9/aprint_naive.9	comp-sys-man
+./usr/share/man/man9/aprint_normal.9	comp-sys-man
+./usr/share/man/man9/aprint_verbose.9	comp-sys-man
 ./usr/share/man/man9/arc4random.9		comp-sys-man
 ./usr/share/man/man9/arp.9		comp-sys-man
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man
