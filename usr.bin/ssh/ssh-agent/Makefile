@@ -1,12 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/19 20:03:25 itojun Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.3 2005/01/03 06:05:50 lukem Exp $
 
 PROG=	ssh-agent
-
 SRCS=	ssh-agent.c
 
 .include <bsd.prog.mk>
-
-LDADD+=	-lcrypto
-DPADD+=	${LIBCRYPTO}
