@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.6 1997/07/25 16:46:35 perry Exp $	*/
+/*	$NetBSD: output.c,v 1.6.4.1 2000/10/19 16:33:26 he Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: output.c,v 1.6 1997/07/25 16:46:35 perry Exp $");
+__RCSID("$NetBSD: output.c,v 1.6.4.1 2000/10/19 16:33:26 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ void free_itemsets __P((void));
 void free_shifts __P((void));
 void free_reductions __P((void));
 
+static const char line_format[] = "#line %d \"%s\"\n";
 
 void
 output()
