@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.6 2003/07/15 00:24:46 lukem Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.7 2004/01/17 21:05:40 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.6 2003/07/15 00:24:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.7 2004/01/17 21:05:40 bjh21 Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -127,10 +127,10 @@ __KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.6 2003/07/15 00:24:46 lukem Exp $");
 
 
 /* Declaration of datatypes and their associated function pointers */
-int	rpckbd_enable	__P((void *, int));
-void	rpckbd_set_leds	__P((void *, int));
-int	rpckbd_ioctl	__P((void *, u_long, caddr_t, int, struct proc *));
-int	sysbeep		__P((int, int));
+int	rpckbd_enable(void *, int);
+void	rpckbd_set_leds(void *, int);
+int	rpckbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	sysbeep(int, int);
 
 
 const struct wskbd_accessops rpckbd_accessops = {
@@ -140,9 +140,9 @@ const struct wskbd_accessops rpckbd_accessops = {
 };
 
 
-void	rpckbd_cngetc	__P((void *, u_int *, int *));
-void	rpckbd_cnpollc	__P((void *, int));
-void	rpckbd_cnbell	__P((void *, u_int, u_int, u_int));
+void	rpckbd_cngetc(void *, u_int *, int *);
+void	rpckbd_cnpollc(void *, int);
+void	rpckbd_cnbell(void *, u_int, u_int, u_int);
 
 const struct wskbd_consops rpckbd_consops = {
 	rpckbd_cngetc,
@@ -158,12 +158,12 @@ const struct wskbd_mapdata rpckbd_keymapdata = {
 
 
 /* Forward declaration of functions */
-static int	kbdcmd 			__P((struct rpckbd_softc *sc, u_char cmd, int eat_ack));
-static void	kbd_flush_input		__P((struct rpckbd_softc *sc));
-static int	rpckbd_decode		__P((struct rpckbd_softc *id, int datain, u_int *type, int *dataout));
-static int	rpckbd_led_encode	__P((int));
-static int	rpckbd_led_decode	__P((int));
-static void	rpckbd_bell		__P((int, int, int));
+static int	kbdcmd(struct rpckbd_softc *, u_char, int);
+static void	kbd_flush_input(struct rpckbd_softc *);
+static int	rpckbd_decode(struct rpckbd_softc *, int, u_int *, int *);
+static int	rpckbd_led_encode(int);
+static int	rpckbd_led_decode(int);
+static void	rpckbd_bell(int, int, int);
 
 
 struct rpckbd_softc console_kbd;
