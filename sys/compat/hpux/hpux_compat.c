@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.36 1997/10/16 18:27:40 carrel Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,6 +71,8 @@
 #include <sys/ipc.h>
 #include <sys/user.h>
 #include <sys/mman.h>
+
+#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
