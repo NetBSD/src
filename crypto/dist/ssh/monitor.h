@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.h,v 1.5 2003/07/24 15:31:53 itojun Exp $	*/
-/*	$OpenBSD: monitor.h,v 1.8 2002/09/26 11:38:43 markus Exp $	*/
+/*	$NetBSD: monitor.h,v 1.6 2005/02/13 05:57:26 christos Exp $	*/
+/*	$OpenBSD: monitor.h,v 1.13 2003/11/17 11:06:07 markus Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -50,6 +50,10 @@ enum monitor_reqtype {
 	MONITOR_REQ_RSAKEYALLOWED, MONITOR_ANS_RSAKEYALLOWED,
 	MONITOR_REQ_RSACHALLENGE, MONITOR_ANS_RSACHALLENGE,
 	MONITOR_REQ_RSARESPONSE, MONITOR_ANS_RSARESPONSE,
+	MONITOR_REQ_GSSSETUP, MONITOR_ANS_GSSSETUP,
+	MONITOR_REQ_GSSSTEP, MONITOR_ANS_GSSSTEP,
+	MONITOR_REQ_GSSUSEROK, MONITOR_ANS_GSSUSEROK,
+	MONITOR_REQ_GSSCHECKMIC, MONITOR_ANS_GSSCHECKMIC,
 	MONITOR_REQ_KRB4, MONITOR_ANS_KRB4,
 	MONITOR_REQ_KRB5, MONITOR_ANS_KRB5,
 	MONITOR_REQ_TERM
@@ -70,7 +74,7 @@ void monitor_reinit(struct monitor *);
 void monitor_sync(struct monitor *);
 
 struct Authctxt;
-struct Authctxt *monitor_child_preauth(struct monitor *);
+void monitor_child_preauth(struct Authctxt *, struct monitor *);
 void monitor_child_postauth(struct monitor *);
 
 struct mon_table;

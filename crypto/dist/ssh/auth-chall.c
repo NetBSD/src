@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-chall.c,v 1.6 2003/07/10 01:09:41 lukem Exp $	*/
+/*	$NetBSD: auth-chall.c,v 1.7 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-chall.c,v 1.8 2001/05/18 14:13:28 markus Exp $");
-__RCSID("$NetBSD: auth-chall.c,v 1.6 2003/07/10 01:09:41 lukem Exp $");
+RCSID("$OpenBSD: auth-chall.c,v 1.9 2003/11/03 09:03:37 djm Exp $");
+__RCSID("$NetBSD: auth-chall.c,v 1.7 2005/02/13 05:57:26 christos Exp $");
 
 #include "auth.h"
 #include "log.h"
@@ -70,15 +70,16 @@ int
 verify_response(Authctxt *authctxt, const char *response)
 {
 	char *resp[1];
-	int res;
+	int authenticated = 0;
 
 	if (device == NULL)
 		return 0;
 	if (authctxt->kbdintctxt == NULL)
 		return 0;
 	resp[0] = (char *)response;
-	res = device->respond(authctxt->kbdintctxt, 1, resp);
+	if (device->respond(authctxt->kbdintctxt, 1, resp) == 0)
+		authenticated = 1;
 	device->free_ctx(authctxt->kbdintctxt);
 	authctxt->kbdintctxt = NULL;
-	return res ? 0 : 1;
+	return authenticated;
 }

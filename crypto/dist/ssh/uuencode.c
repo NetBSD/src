@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.8 2003/07/10 01:09:49 lukem Exp $	*/
+/*	$NetBSD: uuencode.c,v 1.9 2005/02/13 05:57:27 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,8 +24,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: uuencode.c,v 1.16 2002/09/09 14:54:15 markus Exp $");
-__RCSID("$NetBSD: uuencode.c,v 1.8 2003/07/10 01:09:49 lukem Exp $");
+RCSID("$OpenBSD: uuencode.c,v 1.17 2003/11/10 16:23:41 jakob Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.9 2005/02/13 05:57:27 christos Exp $");
 
 #include "xmalloc.h"
 #include "uuencode.h"
@@ -33,7 +33,7 @@ __RCSID("$NetBSD: uuencode.c,v 1.8 2003/07/10 01:09:49 lukem Exp $");
 #include <resolv.h>
 
 int
-uuencode(u_char *src, u_int srclength,
+uuencode(const u_char *src, u_int srclength,
     char *target, size_t targsize)
 {
 	return __b64_ntop(src, srclength, target, targsize);

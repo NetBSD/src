@@ -1,4 +1,4 @@
-/*	$NetBSD: authfd.c,v 1.16 2003/07/10 01:09:43 lukem Exp $	*/
+/*	$NetBSD: authfd.c,v 1.17 2005/02/13 05:57:26 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,8 +36,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.58 2003/01/23 13:50:27 markus Exp $");
-__RCSID("$NetBSD: authfd.c,v 1.16 2003/07/10 01:09:43 lukem Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.64 2004/08/11 21:44:31 avsm Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.17 2005/02/13 05:57:26 christos Exp $");
 
 #include <openssl/evp.h>
 
@@ -116,7 +116,8 @@ ssh_get_authentication_socket(void)
 static int
 ssh_request_reply(AuthenticationConnection *auth, Buffer *request, Buffer *reply)
 {
-	int l, len;
+	int l;
+	u_int len;
 	char buf[1024];
 
 	/* Get the length of the message, and format it in the buffer. */
@@ -124,8 +125,8 @@ ssh_request_reply(AuthenticationConnection *auth, Buffer *request, Buffer *reply
 	PUT_32BIT(buf, len);
 
 	/* Send the length and then the packet to the agent. */
-	if (atomic_write(auth->fd, buf, 4) != 4 ||
-	    atomic_write(auth->fd, buffer_ptr(request),
+	if (atomicio(vwrite, auth->fd, buf, 4) != 4 ||
+	    atomicio(vwrite, auth->fd, buffer_ptr(request),
 	    buffer_len(request)) != buffer_len(request)) {
 		error("Error writing to authentication socket.");
 		return 0;
@@ -134,22 +135,15 @@ ssh_request_reply(AuthenticationConnection *auth, Buffer *request, Buffer *reply
 	 * Wait for response from the agent.  First read the length of the
 	 * response packet.
 	 */
-	len = 4;
-	while (len > 0) {
-		l = read(auth->fd, buf + 4 - len, len);
-		if (l == -1 && (errno == EAGAIN || errno == EINTR))
-			continue;
-		if (l <= 0) {
-			error("Error reading response length from authentication socket.");
-			return 0;
-		}
-		len -= l;
+	if (atomicio(read, auth->fd, buf, 4) != 4) {
+	    error("Error reading response length from authentication socket.");
+	    return 0;
 	}
 
 	/* Extract the length, and check it for sanity. */
 	len = GET_32BIT(buf);
 	if (len > 256 * 1024)
-		fatal("Authentication response too long: %d", len);
+		fatal("Authentication response too long: %u", len);
 
 	/* Read the rest of the response in to the buffer. */
 	buffer_clear(reply);
@@ -157,9 +151,7 @@ ssh_request_reply(AuthenticationConnection *auth, Buffer *request, Buffer *reply
 		l = len;
 		if (l > sizeof(buf))
 			l = sizeof(buf);
-		l = read(auth->fd, buf, l);
-		if (l == -1 && (errno == EAGAIN || errno == EINTR))
-			continue;
+		l = atomicio(read, auth->fd, buf, l);
 		if (l <= 0) {
 			error("Error reading response from authentication socket.");
 			return 0;
@@ -294,7 +286,7 @@ ssh_get_num_identities(AuthenticationConnection *auth, int version)
 
 	/* Get the number of entries in the response and check it for sanity. */
 	auth->howmany = buffer_get_int(&auth->identities);
-	if (auth->howmany > 1024)
+	if ((u_int)auth->howmany > 1024)
 		fatal("Too many identities in authentication reply: %d",
 		    auth->howmany);
 
@@ -591,16 +583,33 @@ ssh_remove_identity(AuthenticationConnection *auth, Key *key)
 }
 
 int
-ssh_update_card(AuthenticationConnection *auth, int add, const char *reader_id, const char *pin)
+ssh_update_card(AuthenticationConnection *auth, int add,
+    const char *reader_id, const char *pin, u_int life, u_int confirm)
 {
 	Buffer msg;
-	int type;
+	int type, constrained = (life || confirm);
+
+	if (add) {
+		type = constrained ?
+		    SSH_AGENTC_ADD_SMARTCARD_KEY_CONSTRAINED :
+		    SSH_AGENTC_ADD_SMARTCARD_KEY;
+	} else
+		type = SSH_AGENTC_REMOVE_SMARTCARD_KEY;
 
 	buffer_init(&msg);
-	buffer_put_char(&msg, add ? SSH_AGENTC_ADD_SMARTCARD_KEY :
-	    SSH_AGENTC_REMOVE_SMARTCARD_KEY);
+	buffer_put_char(&msg, type);
 	buffer_put_cstring(&msg, reader_id);
 	buffer_put_cstring(&msg, pin);
+
+	if (constrained) {
+		if (life != 0) {
+			buffer_put_char(&msg, SSH_AGENT_CONSTRAIN_LIFETIME);
+			buffer_put_int(&msg, life);
+		}
+		if (confirm != 0)
+			buffer_put_char(&msg, SSH_AGENT_CONSTRAIN_CONFIRM);
+	}
+
 	if (ssh_request_reply(auth, &msg, &msg) == 0) {
 		buffer_free(&msg);
 		return 0;

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.16 2003/07/24 15:31:52 itojun Exp $	*/
-/*	$OpenBSD: auth.h,v 1.41 2002/09/26 11:38:43 markus Exp $	*/
+/*	$NetBSD: auth.h,v 1.17 2005/02/13 05:57:26 christos Exp $	*/
+/*	$OpenBSD: auth.h,v 1.50 2004/05/23 23:59:53 dtucker Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -49,13 +49,14 @@ typedef struct KbdintDevice KbdintDevice;
 
 struct Authctxt {
 	int		 success;
-	int		 postponed;
-	int		 valid;
+	int		 postponed;	/* authentication needs another step */
+	int		 valid;		/* user exists and is allowed to login */
 	int		 attempt;
 	int		 failures;
-	char		*user;
+	int		 force_pwchange;
+	char		*user;		/* username sent by the client */
 	char		*service;
-	struct passwd	*pw;
+	struct passwd	*pw;		/* set if 'valid' */
 	char		*style;
 	void		*kbdintctxt;
 #ifdef BSD_AUTH
@@ -63,7 +64,7 @@ struct Authctxt {
 #endif
 #ifdef KRB4
 	char		*krb4_ticket_file;
-#endif
+#endif 
 #ifdef KRB5
 	krb5_context	 krb5_ctx;
 	krb5_auth_context krb5_auth_ctx;
@@ -71,7 +72,14 @@ struct Authctxt {
 	krb5_principal	 krb5_user;
 	char		*krb5_ticket_file;
 #endif
+	void		*methoddata;
 };
+/*
+ * Every authentication method has to handle authentication requests for
+ * non-existing users, or for users that are not allowed to login. In this
+ * case 'valid' is set to 0, but 'user' points to the username requested by
+ * the client.
+ */
 
 struct Authmethod {
 	char	*name;
@@ -100,9 +108,9 @@ int      auth_rhosts(struct passwd *, const char *);
 int
 auth_rhosts2(struct passwd *, const char *, const char *, const char *);
 
-int	 auth_rhosts_rsa(struct passwd *, char *, Key *);
+int	 auth_rhosts_rsa(Authctxt *, char *, Key *);
 int      auth_password(Authctxt *, const char *);
-int      auth_rsa(struct passwd *, BIGNUM *);
+int      auth_rsa(Authctxt *, BIGNUM *);
 int      auth_rsa_challenge_dialog(Key *);
 BIGNUM	*auth_rsa_generate_challenge(Key *);
 int	 auth_rsa_verify_response(Key *, BIGNUM *, u_char[]);
@@ -130,13 +138,12 @@ int     auth_afs_token(Authctxt *, const char *);
 int	auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client, krb5_data *);
 int	auth_krb5_tgt(Authctxt *authctxt, krb5_data *tgt);
 int	auth_krb5_password(Authctxt *authctxt, const char *password);
-void	krb5_cleanup_proc(void *authctxt);
+void	krb5_cleanup_proc(Authctxt *authctxt);
 #endif /* KRB5 */
 
-Authctxt *do_authentication(void);
-Authctxt *do_authentication2(void);
+void	do_authentication(Authctxt *);
+void	do_authentication2(Authctxt *);
 
-Authctxt *authctxt_new(void);
 void	auth_log(Authctxt *, int, char *, char *);
 void	userauth_finish(Authctxt *, int, char *);
 int	auth_root_allowed(char *);
@@ -157,8 +164,6 @@ struct passwd * getpwnamallow(const char *user);
 
 char	*get_challenge(Authctxt *);
 int	verify_response(Authctxt *, const char *);
-
-struct passwd * auth_get_user(void);
 
 char	*expand_filename(const char *, struct passwd *);
 char	*authorized_keys_file(struct passwd *);
@@ -182,8 +187,8 @@ void	 auth_debug_add(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 void	 auth_debug_send(void);
 void	 auth_debug_reset(void);
 
-#define AUTH_FAIL_MAX 6
-#define AUTH_FAIL_LOG (AUTH_FAIL_MAX/2)
+struct passwd *fakepw(void);
+
 #define AUTH_FAIL_MSG "Too many authentication failures for %.100s"
 
 #define SKEY_PROMPT "\nS/Key Password: "

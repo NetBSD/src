@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.7 2003/07/24 15:31:56 itojun Exp $
+.\"	$NetBSD: sshd_config.5,v 1.8 2005/02/13 05:57:27 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.15 2003/03/28 10:11:43 jmc Exp $
+.\" $OpenBSD: sshd_config.5,v 1.35 2004/06/26 09:14:40 jmc Exp $
 .Dd September 25, 1999
 .Dt SSHD_CONFIG 5
 .Os
@@ -62,10 +62,28 @@ The possible
 keywords and their meanings are as follows (note that
 keywords are case-insensitive and arguments are case-sensitive):
 .Bl -tag -width Ds
-.It Cm AFSTokenPassing
-Specifies whether an AFS token may be forwarded to the server.
-Default is
-.Dq no .
+.It Cm AcceptEnv
+Specifies what environment variables sent by the client will be copied into
+the session's
+.Xr environ 7 .
+See
+.Cm SendEnv
+in
+.Xr ssh_config 5
+for how to configure the client.
+Note that environment passing is only supported for protocol 2.
+Variables are specified by name, which may contain the wildcard characters
+.Ql \&*
+and
+.Ql \&? .
+Multiple environment variables may be separated by whitespace or spread
+across multiple
+.Cm AcceptEnv
+directives.
+Be warned that some environment variables could be used to bypass restricted
+user environments.
+For this reason, care should be taken in the use of this directive.
+The default is not to accept any environment variables.
 .It Cm AllowGroups
 This keyword can be followed by a list of group name patterns, separated
 by spaces.
@@ -78,7 +96,6 @@ can be used as
 wildcards in the patterns.
 Only group names are valid; a numerical group ID is not recognized.
 By default, login is allowed for all groups.
-.Pp
 .It Cm AllowTcpForwarding
 Specifies whether TCP forwarding is permitted.
 The default is
@@ -86,7 +103,6 @@ The default is
 Note that disabling TCP forwarding does not improve security unless
 users are also denied shell access, as they can always install their
 own forwarders.
-.Pp
 .It Cm AllowUsers
 This keyword can be followed by a list of user name patterns, separated
 by spaces.
@@ -102,7 +118,6 @@ By default, login is allowed for all users.
 If the pattern takes the form USER@HOST then USER and HOST
 are separately checked, restricting logins to particular
 users from particular hosts.
-.Pp
 .It Cm AuthorizedKeysFile
 Specifies the file that contains the public keys that can be used
 for user authentication.
@@ -125,7 +140,6 @@ The contents of the specified file are sent to the remote user before
 authentication is allowed.
 This option is only available for protocol version 2.
 By default, no banner is displayed.
-.Pp
 .It Cm ChallengeResponseAuthentication
 Specifies whether challenge response authentication is allowed.
 All authentication styles from
@@ -136,11 +150,22 @@ The default is
 .It Cm Ciphers
 Specifies the ciphers allowed for protocol version 2.
 Multiple ciphers must be comma-separated.
+The supported ciphers are
+.Dq 3des-cbc ,
+.Dq aes128-cbc ,
+.Dq aes192-cbc ,
+.Dq aes256-cbc ,
+.Dq aes128-ctr ,
+.Dq aes192-ctr ,
+.Dq aes256-ctr ,
+.Dq arcfour ,
+.Dq blowfish-cbc ,
+and
+.Dq cast128-cbc .
 The default is
-.Pp
 .Bd -literal
   ``aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour,
-    aes192-cbc,aes256-cbc''
+    aes192-cbc,aes256-cbc,aes128-ctr,aes192-ctr,aes256-ctr''
 .Ed
 .It Cm ClientAliveInterval
 Sets a timeout interval in seconds after which if no data has been received
@@ -156,18 +181,17 @@ Sets the number of client alive messages (see above) which may be
 sent without
 .Nm sshd
 receiving any messages back from the client.
-If this threshold is
-reached while client alive messages are being sent,
+If this threshold is reached while client alive messages are being sent,
 .Nm sshd
 will disconnect the client, terminating the session.
-It is important
-to note that the use of client alive messages is very different from
-.Cm KeepAlive
+It is important to note that the use of client alive messages is very
+different from
+.Cm TCPKeepAlive
 (below).
-The client alive messages are sent through the
-encrypted channel and therefore will not be spoofable.
+The client alive messages are sent through the encrypted channel
+and therefore will not be spoofable.
 The TCP keepalive option enabled by
-.Cm KeepAlive
+.Cm TCPKeepAlive
 is spoofable.
 The client alive mechanism is valuable when the client or
 server depend on knowing when a connection has become inactive.
@@ -199,7 +223,6 @@ can be used as
 wildcards in the patterns.
 Only group names are valid; a numerical group ID is not recognized.
 By default, login is allowed for all groups.
-.Pp
 .It Cm DenyUsers
 This keyword can be followed by a list of user name patterns, separated
 by spaces.
@@ -231,6 +254,17 @@ or
 .Dq no .
 The default is
 .Dq no .
+.It Cm GSSAPIAuthentication
+Specifies whether user authentication based on GSSAPI is allowed.
+The default is
+.Dq no .
+Note that this option applies to protocol version 2 only.
+.It Cm GSSAPICleanupCredentials
+Specifies whether to automatically destroy the user's credentials cache
+on logout.
+The default is
+.Dq yes .
+Note that this option applies to protocol version 2 only.
 .It Cm HostbasedAuthentication
 Specifies whether rhosts or /etc/hosts.equiv authentication together
 with successful public key client host authentication is allowed
@@ -266,7 +300,6 @@ Specifies that
 and
 .Pa .shosts
 files will not be used in
-.Cm RhostsAuthentication ,
 .Cm RhostsRSAAuthentication
 or
 .Cm HostbasedAuthentication .
@@ -288,35 +321,17 @@ or
 .Cm HostbasedAuthentication .
 The default is
 .Dq no .
-.It Cm KeepAlive
-Specifies whether the system should send TCP keepalive messages to the
-other side.
-If they are sent, death of the connection or crash of one
-of the machines will be properly noticed.
-However, this means that
-connections will die if the route is down temporarily, and some people
-find it annoying.
-On the other hand, if keepalives are not sent,
-sessions may hang indefinitely on the server, leaving
-.Dq ghost
-users and consuming server resources.
-.Pp
-The default is
-.Dq yes
-(to send keepalives), and the server will notice
-if the network goes down or the client host crashes.
-This avoids infinitely hanging sessions.
-.Pp
-To disable keepalives, the value should be set to
-.Dq no .
 .It Cm KerberosAuthentication
-Specifies whether Kerberos authentication is allowed.
-This can be in the form of a Kerberos ticket, or if
+Specifies whether the password provided by the user for
 .Cm PasswordAuthentication
-is yes, the password provided by the user will be validated through
-the Kerberos KDC.
+will be validated through the Kerberos KDC.
 To use this option, the server needs a
 Kerberos servtab which allows the verification of the KDC's identity.
+Default is
+.Dq no .
+.It Cm KerberosGetAFSToken
+If AFS is active and the user has a Kerberos 5 TGT, attempt to aquire
+an AFS token before accessing the user's home directory.
 Default is
 .Dq no .
 .It Cm KerberosOrLocalPasswd
@@ -326,11 +341,6 @@ such as
 .Pa /etc/passwd .
 Default is
 .Dq yes .
-.It Cm KerberosTgtPassing
-Specifies whether a Kerberos TGT may be forwarded to the server.
-Default is
-.Dq no ,
-as this only works when the Kerberos KDC is actually an AFS kaserver.
 .It Cm KerberosTicketCleanup
 Specifies whether to automatically destroy the user's ticket cache
 file on logout.
@@ -405,6 +415,12 @@ for data integrity protection.
 Multiple algorithms must be comma-separated.
 The default is
 .Dq hmac-md5,hmac-sha1,hmac-ripemd160,hmac-sha1-96,hmac-md5-96 .
+.It Cm MaxAuthTries
+Specifies the maximum number of authentication attempts permitted per
+connection.
+Once the number of failures reaches half this value,
+additional failures are logged.
+The default is 6.
 .It Cm MaxStartups
 Specifies the maximum number of concurrent unauthenticated connections to the
 .Nm sshd
@@ -536,17 +552,6 @@ Specifies whether public key authentication is allowed.
 The default is
 .Dq yes .
 Note that this option applies to protocol version 2 only.
-.It Cm RhostsAuthentication
-Specifies whether authentication using rhosts or /etc/hosts.equiv
-files is sufficient.
-Normally, this method should not be permitted because it is insecure.
-.Cm RhostsRSAAuthentication
-should be used
-instead, because it performs RSA-based host authentication in addition
-to normal rhosts or /etc/hosts.equiv authentication.
-The default is
-.Dq no .
-This option applies to protocol version 1 only.
 .It Cm RhostsRSAAuthentication
 Specifies whether rhosts or /etc/hosts.equiv authentication together
 with successful RSA host authentication is allowed.
@@ -587,6 +592,35 @@ Gives the facility code that is used when logging messages from
 The possible values are: DAEMON, USER, AUTH, LOCAL0, LOCAL1, LOCAL2,
 LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7.
 The default is AUTH.
+.It Cm TCPKeepAlive
+Specifies whether the system should send TCP keepalive messages to the
+other side.
+If they are sent, death of the connection or crash of one
+of the machines will be properly noticed.
+However, this means that
+connections will die if the route is down temporarily, and some people
+find it annoying.
+On the other hand, if TCP keepalives are not sent,
+sessions may hang indefinitely on the server, leaving
+.Dq ghost
+users and consuming server resources.
+.Pp
+The default is
+.Dq yes
+(to send TCP keepalive messages), and the server will notice
+if the network goes down or the client host crashes.
+This avoids infinitely hanging sessions.
+.Pp
+To disable TCP keepalive messages, the value should be set to
+.Dq no .
+.It Cm UseDNS
+Specifies whether
+.Nm sshd
+should lookup the remote host name and check that
+the resolved host name for the remote IP address maps back to the
+very same IP address.
+The default is
+.Dq yes .
 .It Cm UseLogin
 Specifies whether
 .Xr login 1
@@ -617,14 +651,6 @@ The goal of privilege separation is to prevent privilege
 escalation by containing any corruption within the unprivileged processes.
 The default is
 .Dq yes .
-.It Cm VerifyReverseMapping
-Specifies whether
-.Nm sshd
-should try to verify the remote host name and check that
-the resolved host name for the remote IP address maps back to the
-very same IP address.
-The default is
-.Dq no .
 .It Cm X11DisplayOffset
 Specifies the first display number available for
 .Nm sshd Ns 's
@@ -701,7 +727,6 @@ The default is
 .Pa /usr/X11R6/bin/xauth .
 .El
 .Ss Time Formats
-.Pp
 .Nm sshd
 command-line arguments and configuration file options that specify time
 may be expressed using a sequence of the form:
@@ -750,6 +775,8 @@ Contains configuration data for
 This file should be writable by root only, but it is recommended
 (though not necessary) that it be world-readable.
 .El
+.Sh SEE ALSO
+.Xr sshd 8
 .Sh AUTHORS
 OpenSSH is a derivative of the original and free
 ssh 1.2.12 release by Tatu Ylonen.
@@ -761,5 +788,3 @@ Markus Friedl contributed the support for SSH
 protocol versions 1.5 and 2.0.
 Niels Provos and Markus Friedl contributed support
 for privilege separation.
-.Sh SEE ALSO
-.Xr sshd 8
