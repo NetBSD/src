@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.71 2000/11/14 22:22:02 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.72 2000/11/18 15:58:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -998,10 +998,8 @@ vfs_bufstats()
 	int s, i, j, count;
 	struct buf *bp;
 	struct bqueues *dp;
-	int *counts;
+	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
 	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE", "EMPTY" };
-
-	counts = alloca((MAXBSIZE / PAGE_SIZE) + 1);
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
