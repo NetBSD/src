@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.10 1997/11/04 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.11 1998/01/12 09:23:08 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -155,10 +155,6 @@ struct scsipi_device aha_dev = {
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
-};
-
-struct cfdriver aha_cd = {
-	NULL, "aha", DV_DULL
 };
 
 #define AHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */

@@ -1,7 +1,7 @@
 #include "guspnp.h"
 #if NGUSPNP > 0
 
-/*	$NetBSD: gus_isapnp.c,v 1.5 1997/11/30 15:13:31 drochner Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.6 1998/01/12 09:27:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -117,10 +117,7 @@ struct cfattach guspnp_ca = {
 	sizeof(struct iw_softc), gus_isapnp_match, gus_isapnp_attach
 };
 
-struct cfdriver guspnp_cd = {
-        NULL, "guspnp", DV_DULL
-};
-
+extern struct cfdriver guspnp_cd;
 
 /*
  * Probe / attach routines.

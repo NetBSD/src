@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.7 1997/06/17 05:38:10 cgd Exp $	*/
+/*	$NetBSD: cy.c,v 1.8 1998/01/12 09:23:20 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -54,9 +54,7 @@ static void cy_enable_transmitter __P((struct cy_softc *, struct cy_port *));
 static void cd1400_channel_cmd __P((struct cy_softc *, struct cy_port *, int));
 static int cy_speed __P((speed_t, int *, int *));
 
-struct cfdriver cy_cd = {
-	NULL, "cy", DV_TTY
-};
+extern struct cfdriver cy_cd;
 
 static int      cy_open = 0;
 static int      cy_events = 0;

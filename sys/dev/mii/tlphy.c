@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.4 1997/11/17 09:07:32 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.5 1998/01/12 09:28:54 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -63,10 +63,6 @@ void	tlphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach tlphy_ca = {
 	sizeof(struct phy_softc), tlphymatch, tlphyattach
-};
-
-struct cfdriver tlphy_cd = {
-	NULL, "tlphy", DV_IFNET
 };
 
 int
