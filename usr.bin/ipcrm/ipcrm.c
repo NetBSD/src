@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.10 1999/08/25 05:15:39 thorpej Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.11 1999/08/26 07:18:10 hwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -171,7 +171,7 @@ main(argc, argv)
 					    IPC_TO_STR(c), (long) target_key);
 				else
 					warnx("%ss are not configured "
-					    in the running kernel",
+					    "in the running kernel",
 					    IPC_TO_STRING(c));
 			}
 			break;
