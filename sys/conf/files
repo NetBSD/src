@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.530 2002/05/21 03:05:00 augustss Exp $
+#	$NetBSD: files,v 1.530.2.1 2002/12/12 23:48:37 he Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -283,7 +283,7 @@ file	dev/ic/aic77xx.c		ahc_aic77xx
 # DPT EATA SCSI controllers
 #
 device	dpt: scsi
-file	dev/ic/dpt.c			dpt
+file	dev/ic/dpt.c			dpt			needs-flag
 
 # Compaq Smart ARRAY controllers
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.155 2002/04/18 12:54:15 wiz Exp $	*/
+/*	$NetBSD: conf.c,v 1.155.4.1 2002/12/12 23:48:38 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.155 2002/04/18 12:54:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.155.4.1 2002/12/12 23:48:38 he Exp $");
 
 #include "opt_compat_svr4.h"
 
@@ -247,6 +247,8 @@ cdev_decl(dpti);
 cdev_decl(edmca);
 #include "agp.h"
 cdev_decl(agp);
+#include "dpt.h"
+cdev_decl(dpt);
 
 #include <altq/altqconf.h>
 
@@ -358,6 +360,13 @@ struct cdevsw	cdevsw[] =
 	cdev_radio_init(NRADIO,radio),	/* 87: generic radio I/O */
 	cdev_netsmb_init(NNETSMB,nsmb_dev_),/* 88: SMB */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 89: clockctl pseudo device */
+	cdev_notdef(),			/* 90 */
+	cdev_notdef(),			/* 91 */
+	cdev_notdef(),			/* 92 */
+	cdev_notdef(),			/* 93 */
+	cdev_notdef(),			/* 94 */
+	cdev_notdef(),			/* 95 */
+	cdev__oci_init(NDPT,dpt),	/* 96: DPT/Adaptec RAID management */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -489,6 +498,13 @@ static int chrtoblktbl[] = {
 	/* 87 */	NODEV,
 	/* 88 */	NODEV,
 	/* 89 */	NODEV,
+	/* 90 */	NODEV,
+	/* 91 */	NODEV,
+	/* 92 */	NODEV,
+	/* 93 */	NODEV,
+	/* 94 */	NODEV,
+	/* 95 */	NODEV,
+	/* 96 */	NODEV,
 };
 
 /*
