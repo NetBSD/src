@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.8 2000/06/15 21:07:37 msaitoh Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.9 2000/08/30 10:13:53 abs Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran.
@@ -56,7 +56,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.8 2000/06/15 21:07:37 msaitoh Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.9 2000/08/30 10:13:53 abs Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -395,8 +395,12 @@ run(cmd, arg)
 			return (ioctl(fd, CDIOCSETMUTE));
 
 		if (sscanf(arg, "%d %d", &l, &r) != 2) {
-			warnx("invalid command arguments");
-			return (0);
+			if (sscanf(arg, "%d", &l) == 1) {
+				r = l;
+			} else {
+				warnx("invalid command arguments");
+				return (0);
+			}
 		}
 		return (setvol(l, r));
 		
