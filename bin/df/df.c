@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.42 2001/10/11 16:31:33 christos Exp $	*/
+/*	$NetBSD: df.c,v 1.42.2.1 2003/08/31 09:29:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.42 2001/10/11 16:31:33 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.42.2.1 2003/08/31 09:29:21 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ prtstat(struct statfs *sfsp, int maxwidth)
 		    maxwidth, maxwidth, "Filesystem", header,
 		    Pflag ? "Available" : "Avail");
 		if (iflag)
-			(void)printf(" iused   ifree  %%iused");
+			(void)printf("  iused    ifree  %%iused");
 		(void)printf("  Mounted on\n");
 	}
 	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
@@ -369,7 +369,7 @@ prtstat(struct statfs *sfsp, int maxwidth)
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %7ld %7ld %6s ", used, sfsp->f_ffree,
+		(void)printf(" %8ld %8ld %6s ", used, sfsp->f_ffree,
 		    inodes == 0 ? full :
 		    strpct((u_long)used, (u_long)inodes, 0));
 	} else
