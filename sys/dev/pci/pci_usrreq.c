@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.1 2001/09/13 21:49:40 thorpej Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.2 2001/09/13 22:00:58 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -117,6 +117,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 paddr_t
 pcimmap(dev_t dev, off_t offset, int prot)
 {
+#if 0
 	struct pci_softc *sc = device_lookup(&pci_cd, minor(dev));
 
 	/*
@@ -127,6 +128,10 @@ pcimmap(dev_t dev, off_t offset, int prot)
 	 * XXX Need a way to deal with linear/prefetchable/etc.
 	 */
 	return (bus_space_mmap(sc->sc_memt, offset, 0, prot, 0));
+#else
+	/* XXX Consider this further. */
+	return (-1);
+#endif
 }
 
 /*
