@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.146 1997/04/23 19:15:21 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147 1997/06/08 23:54:25 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -142,7 +142,7 @@
 #include "arp.h"
 
 /* The following is used externally (sysctl_hw) */
-char    machine[] = "mac68k";	/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 
 struct mac68k_machine_S mac68k_machine;
 

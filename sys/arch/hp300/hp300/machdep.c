@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 1997/05/05 21:15:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 1997/06/08 23:54:23 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -107,7 +107,7 @@
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "hp300";		/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;

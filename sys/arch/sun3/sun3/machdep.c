@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 1997/04/28 22:08:36 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 1997/06/08 23:54:33 veego Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -409,7 +409,7 @@ setregs(p, pack, stack, retval)
 /*
  * Info for CTL_HW
  */
-char	machine[] = "sun3";		/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 char	cpu_model[120];
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1997/03/27 21:01:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 1997/06/08 23:54:29 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,7 +100,7 @@
 extern struct consdev *cn_tab;
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = "pica";	/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 char	cpu_model[30];
 
 vm_map_t buffer_map;

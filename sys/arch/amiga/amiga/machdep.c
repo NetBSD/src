@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 1997/06/04 22:12:46 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 1997/06/08 23:54:19 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -191,9 +191,9 @@ extern  int   freebufspace;
 extern	u_int lowram;
 
 /* used in init_main.c */
-char *cpu_type = "m68k";
+char	*cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
-char machine[] = "amiga";
+char	machine[] = MACHINE;	/* from <machine/param.h> */
  
  /*
  * Console initialization: called early on from main,

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 1997/05/14 16:45:22 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 1997/06/08 23:54:35 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -412,7 +412,7 @@ setregs(p, pack, stack, retval)
 /*
  * Info for CTL_HW
  */
-char	machine[] = "sun3x";		/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 char	cpu_model[120];
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1997/04/09 19:40:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 1997/06/08 23:54:22 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -127,7 +127,7 @@ extern	u_int lowram;
 int	fputype = 0;
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "atari";
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 
  /*
  * Console initialization: called early on from main,
