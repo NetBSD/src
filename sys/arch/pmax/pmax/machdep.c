@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 1997/07/07 03:54:27 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 1997/07/28 19:40:44 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -159,7 +159,9 @@ int	physmem;		/* max supported memory, changes to actual */
 int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
 int	pmax_boardtype;		/* Mother board type */
 u_long	le_iomem;		/* 128K for lance chip via. ASIC */
+#ifdef ASC_IOASIC_BOUNCE
 u_long	asc_iomem;		/* and 7 * 8K buffers for the scsi */
+#endif
 u_long	ioasic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
 
@@ -762,7 +764,7 @@ mach_init(argc, argv, code, cv)
 		le_iomem = (maxmem << PGSHIFT);
 	}
 #endif /* NLE_IOASIC */
-#if NASC > 0
+#if (NASC > 0) && defined(ASC_IOASIC_BOUNCE)
 	/*
 	 * Ditto for the scsi chip. There is probably a way to make asc.c
 	 * do dma without these buffers, but it would require major
