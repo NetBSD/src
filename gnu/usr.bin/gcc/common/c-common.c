@@ -38,6 +38,14 @@ static void add_attribute		PROTO((enum attrs, char *,
 					       int, int, int));
 static void init_attributes		PROTO((void));
 
+/* Format kinds */
+#define F_USER	0x1		/* Format used in user-land printf/scanf */
+#define	F_KERN	0x2		/* Format used in kprintf/scanf etc. */
+#define F_SCAN	0x80000000	/* Format is scan* instead of print* */
+
+#define FORMAT_IS_SCAN(p) (((p)->format_kind & F_SCAN) == F_SCAN)
+#define FORMAT_CONTEXT(p) (((p)->format_kind & (F_USER|F_KERN)))
+
 /* Make bindings for __FUNCTION__ and __PRETTY_FUNCTION__.  */
 
 void
@@ -535,7 +543,7 @@ decl_attributes (node, attributes, prefix_attributes)
 	      = TREE_VALUE (TREE_CHAIN (TREE_CHAIN (args)));
 	    int format_num;
 	    int first_arg_num;
-	    int is_scan;
+	    int format_kind;
 	    tree argument;
 	    int arg_num;
 	
@@ -550,15 +558,21 @@ decl_attributes (node, attributes, prefix_attributes)
 		&& (!strcmp (IDENTIFIER_POINTER (format_type), "printf")
 		    || !strcmp (IDENTIFIER_POINTER (format_type),
 				"__printf__")))
-	      is_scan = 0;
+	      format_kind = F_USER;
+	    else if (TREE_CODE (format_type) == IDENTIFIER_NODE
+		     && (!strcmp (IDENTIFIER_POINTER (format_type), "kprintf")
+			 || !strcmp (IDENTIFIER_POINTER (format_type),
+				     "__kprintf__")))
+	      format_kind = F_KERN;
 	    else if (TREE_CODE (format_type) == IDENTIFIER_NODE
 		     && (!strcmp (IDENTIFIER_POINTER (format_type), "scanf")
 			 || !strcmp (IDENTIFIER_POINTER (format_type),
 				     "__scanf__")))
-	      is_scan = 1;
+	      format_kind = F_USER|F_SCAN;
 	    else
 	      {
-		error ("unrecognized format specifier for `%s'");
+		error_with_decl (decl,
+			"unrecognized format specifier for `%s'");
 		continue;
 	      }
 
@@ -625,7 +639,7 @@ decl_attributes (node, attributes, prefix_attributes)
 
 	    record_function_format (DECL_NAME (decl),
 				    DECL_ASSEMBLER_NAME (decl),
-				    is_scan, format_num, first_arg_num);
+				    format_kind, format_num, first_arg_num);
 	    break;
 	  }
 
@@ -674,8 +688,10 @@ decl_attributes (node, attributes, prefix_attributes)
 #define T_W	&wchar_type_node
 #define T_ST    &sizetype
 
+
 typedef struct {
   char *format_chars;
+  int format_kind;
   int pointer_count;
   /* Type of argument if no length modifier is used.  */
   tree *nolen;
@@ -696,32 +712,38 @@ typedef struct {
 } format_char_info;
 
 static format_char_info print_char_table[] = {
-  { "di",	0,	T_I,	T_I,	T_L,	T_LL,	T_LL,	"-wp0 +"	},
-  { "oxX",	0,	T_UI,	T_UI,	T_UL,	T_ULL,	T_ULL,	"-wp0#"		},
-  { "u",	0,	T_UI,	T_UI,	T_UL,	T_ULL,	T_ULL,	"-wp0"		},
+  { "di",	F_USER|F_KERN,	0, T_I,	T_I,	T_L,	T_LL,	T_LL,	"-wp0 +"	},
+  { "oxX",	F_USER|F_KERN,	0, T_UI,T_UI,	T_UL,	T_ULL,	T_ULL,	"-wp0#"		},
+  { "u",	F_USER|F_KERN,	0, T_UI,T_UI,	T_UL,	T_ULL,	T_ULL,	"-wp0"		},
 /* Two GNU extensions.  */
-  { "Z",	0,	T_ST,	NULL,	NULL,	NULL,	NULL,	"-wp0"		},
-  { "m",	0,	T_V,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
-  { "feEgG",	0,	T_D,	NULL,	NULL,	NULL,	T_LD,	"-wp0 +#"	},
-  { "c",	0,	T_I,	NULL,	T_W,	NULL,	NULL,	"-w"		},
-  { "C",	0,	T_W,	NULL,	NULL,	NULL,	NULL,	"-w"		},
-  { "s",	1,	T_C,	NULL,	T_W,	NULL,	NULL,	"-wp"		},
-  { "S",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
-  { "p",	1,	T_V,	NULL,	NULL,	NULL,	NULL,	"-w"		},
-  { "n",	1,	T_I,	T_S,	T_L,	T_LL,	NULL,	""		},
+  { "Z",	F_USER,		0, T_ST,NULL,	NULL,	NULL,	NULL,	"-wp0"		},
+  { "m",	F_USER,		0, T_V,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
+  { "feEgG",	F_USER,		0, T_D,	NULL,	NULL,	NULL,	T_LD,	"-wp0 +#"	},
+  { "c",	F_USER|F_KERN,	0, T_I,	NULL,	T_W,	NULL,	NULL,	"-w"		},
+  { "C",	F_USER,		0, T_W,	NULL,	NULL,	NULL,	NULL,	"-w"		},
+  { "s",	F_USER|F_KERN,	1, T_C,	NULL,	T_W,	NULL,	NULL,	"-wp"		},
+  { "S",	F_USER,		1, T_W,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
+  { "p",	F_USER|F_KERN,	1, T_V,	NULL,	NULL,	NULL,	NULL,	"-w"		},
+  { "n",	F_USER,  	1, T_I,	T_S,	T_L,	T_LL,	NULL,	""		},
+/* Kernel bitmap formatting */
+  { "b",	F_KERN, 	1, T_C,	NULL,	NULL,	NULL,	NULL,	""		},
+/* Kernel recursive format */
+  { ":",	F_KERN, 	1, T_V,	NULL,	NULL,	NULL,	NULL,	""		},
+/* Kernel debugger auto-radix printing */
+  { "nrz",	F_KERN, 	0, T_I,	T_I,	T_L,	T_LL,	T_LL,	"-wp0# +"	},
   { NULL }
 };
 
 static format_char_info scan_char_table[] = {
-  { "di",	1,	T_I,	T_S,	T_L,	T_LL,	T_LL,	"*"	},
-  { "ouxX",	1,	T_UI,	T_US,	T_UL,	T_ULL,	T_ULL,	"*"	},	
-  { "efgEG",	1,	T_F,	NULL,	T_D,	NULL,	T_LD,	"*"	},
-  { "sc",	1,	T_C,	NULL,	T_W,	NULL,	NULL,	"*a"	},
-  { "[",	1,	T_C,	NULL,	NULL,	NULL,	NULL,	"*a"	},
-  { "C",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	"*"	},
-  { "S",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	"*"	},
-  { "p",	2,	T_V,	NULL,	NULL,	NULL,	NULL,	"*"	},
-  { "n",	1,	T_I,	T_S,	T_L,	T_LL,	NULL,	""	},
+  { "di",	F_SCAN|F_USER,	1, T_I,	T_S,	T_L,	T_LL,	T_LL,	"*"	},
+  { "ouxX",	F_SCAN|F_USER,	1, T_UI,T_US,	T_UL,	T_ULL,	T_ULL,	"*"	},	
+  { "efgEG",	F_SCAN|F_USER,	1, T_F,	NULL,	T_D,	NULL,	T_LD,	"*"	},
+  { "sc",	F_SCAN|F_USER,	1, T_C,	NULL,	T_W,	NULL,	NULL,	"*a"	},
+  { "[",	F_SCAN|F_USER,	1, T_C,	NULL,	NULL,	NULL,	NULL,	"*a"	},
+  { "C",	F_SCAN|F_USER,	1, T_W,	NULL,	NULL,	NULL,	NULL,	"*"	},
+  { "S",	F_SCAN|F_USER,	1, T_W,	NULL,	NULL,	NULL,	NULL,	"*"	},
+  { "p",	F_SCAN|F_USER,	2, T_V,	NULL,	NULL,	NULL,	NULL,	"*"	},
+  { "n",	F_SCAN|F_USER,	1, T_I,	T_S,	T_L,	T_LL,	NULL,	""	},
   { NULL }
 };
 
@@ -729,7 +751,7 @@ typedef struct function_format_info {
   struct function_format_info *next;  /* next structure on the list */
   tree name;			/* identifier such as "printf" */
   tree assembler_name;		/* optional mangled identifier (for C++) */
-  int is_scan;			/* TRUE if *scanf */
+  int format_kind;		/* user/kernel/print/scan */
   int format_num;		/* number of format argument */
   int first_arg_num;		/* number of first arg (zero for varargs) */
 } function_format_info;
@@ -748,32 +770,32 @@ static void check_format_info PROTO((function_format_info *, tree));
 void
 init_function_format_info ()
 {
-  record_function_format (get_identifier ("printf"), NULL_TREE, 0, 1, 2);
-  record_function_format (get_identifier ("fprintf"), NULL_TREE, 0, 2, 3);
-  record_function_format (get_identifier ("sprintf"), NULL_TREE, 0, 2, 3);
-  record_function_format (get_identifier ("scanf"), NULL_TREE, 1, 1, 2);
-  record_function_format (get_identifier ("fscanf"), NULL_TREE, 1, 2, 3);
-  record_function_format (get_identifier ("sscanf"), NULL_TREE, 1, 2, 3);
-  record_function_format (get_identifier ("vprintf"), NULL_TREE, 0, 1, 0);
-  record_function_format (get_identifier ("vfprintf"), NULL_TREE, 0, 2, 0);
-  record_function_format (get_identifier ("vsprintf"), NULL_TREE, 0, 2, 0);
+  record_function_format (get_identifier ("printf"), NULL_TREE, F_USER, 1, 2);
+  record_function_format (get_identifier ("fprintf"), NULL_TREE, F_USER, 2, 3);
+  record_function_format (get_identifier ("sprintf"), NULL_TREE, F_USER, 2, 3);
+  record_function_format (get_identifier ("scanf"), NULL_TREE, F_SCAN|F_USER, 1, 2);
+  record_function_format (get_identifier ("fscanf"), NULL_TREE, F_SCAN|F_USER, 2, 3);
+  record_function_format (get_identifier ("sscanf"), NULL_TREE, F_SCAN|F_USER, 2, 3);
+  record_function_format (get_identifier ("vprintf"), NULL_TREE, F_USER, 1, 0);
+  record_function_format (get_identifier ("vfprintf"), NULL_TREE, F_USER, 2, 0);
+  record_function_format (get_identifier ("vsprintf"), NULL_TREE, F_USER, 2, 0);
 }
 
 /* Record information for argument format checking.  FUNCTION_IDENT is
    the identifier node for the name of the function to check (its decl
-   need not exist yet).  IS_SCAN is true for scanf-type format checking;
-   false indicates printf-style format checking.  FORMAT_NUM is the number
-   of the argument which is the format control string (starting from 1).
-   FIRST_ARG_NUM is the number of the first actual argument to check
-   against teh format string, or zero if no checking is not be done
-   (e.g. for varargs such as vfprintf).  */
+   need not exist yet).  FORMAT_KIND specifies if the it is a user or
+   kernel printing function or a user scanning function.  FORMAT_NUM
+   is the number of the argument which is the format control string
+   (starting from 1).  FIRST_ARG_NUM is the number of the first
+   actual argument to check against the format string, or zero if
+   no checking is not be done (e.g. for varargs such as vfprintf).  */
 
 void
-record_function_format (name, assembler_name, is_scan,
+record_function_format (name, assembler_name, format_kind,
 			format_num, first_arg_num)
       tree name;
       tree assembler_name;
-      int is_scan;
+      int format_kind;
       int format_num;
       int first_arg_num;
 {
@@ -796,7 +818,7 @@ record_function_format (name, assembler_name, is_scan,
       info->assembler_name = assembler_name;
     }
 
-  info->is_scan = is_scan;
+  info->format_kind = format_kind;
   info->format_num = format_num;
   info->first_arg_num = first_arg_num;
 }
@@ -928,7 +950,7 @@ check_format_info (info, params)
 	}
       flag_chars[0] = 0;
       suppressed = wide = precise = FALSE;
-      if (info->is_scan)
+      if (FORMAT_IS_SCAN(info))
 	{
 	  suppressed = *format_chars == '*';
 	  if (suppressed)
@@ -1021,6 +1043,82 @@ check_format_info (info, params)
 		    }
 		}
 	    }
+	  else if ((FORMAT_CONTEXT(info) & F_KERN) != 0)
+	    {
+	      switch (*format_chars)
+		{
+		case 'b':
+		  if (params == 0)
+		    {
+		      warning (tfaff);
+		      return;
+		    }
+		  if (info->first_arg_num != 0)
+		    {
+		      cur_param = TREE_VALUE (params);
+		      cur_type = TREE_TYPE (cur_param);
+		      params = TREE_CHAIN (params);
+		      ++arg_num;
+		      /*
+		       * `%b' takes two arguments:
+		       * an integer type (the bits), type-checked here
+		       * a string (the bit names), checked for in mainstream
+		       * code below (see `%b' entry in print_char_table[])
+		       */
+	  
+	       	      if (TREE_CODE (TYPE_MAIN_VARIANT (cur_type)) != INTEGER_TYPE)
+			{
+			  sprintf (message,
+				   "bitfield is not an integer type (arg %d)",
+				   arg_num);
+			  warning (message);
+			}
+		    }
+		  break;
+
+		case ':':
+		  if (params == 0)
+		    {
+		      warning (tfaff);
+		      return;
+		    }
+		  if (info->first_arg_num != 0)
+		    {
+		      cur_param = TREE_VALUE (params);
+		      cur_type = TREE_TYPE (cur_param);
+		      params = TREE_CHAIN (params);
+		      ++arg_num;
+		      /*
+		       * `%r' takes two arguments:
+		       * a string (the recursive format), type-checked here
+		       * a pointer (va_list of format arguments), checked for
+		       * in mainstream code below (see `%r' entry in
+		       * print_char_table[])
+		       */
+		      if (TREE_CODE (cur_type) == POINTER_TYPE)
+			{
+			  cur_type = TREE_TYPE (cur_type);
+			  if (TYPE_MAIN_VARIANT (cur_type) == char_type_node)
+			    {
+			      break;
+			    }
+			}
+		      sprintf (message,
+			       "format argument is not a string (arg %d)",
+			       arg_num);
+		      warning (message);
+		    }
+		  break;
+
+		default:
+		  while (isdigit (*format_chars))
+		    {
+		      wide = TRUE;
+		      ++format_chars;
+		    }
+		  break;
+		}
+	    }
 	  else
 	    {
 	      while (isdigit (*format_chars))
@@ -1067,13 +1165,23 @@ check_format_info (info, params)
 		}
 	    }
 	}
-      if (*format_chars == 'h' || *format_chars == 'l' || *format_chars == 'q' ||
-	  *format_chars == 'L')
+      if (*format_chars == 'h' || *format_chars == 'l')
 	length_char = *format_chars++;
+      else if (*format_chars == 'q' || *format_chars == 'L')
+	{
+	  length_char = *format_chars++;
+	  if (pedantic)
+	    pedwarn ("ANSI C does not support the `%c' length modifier",
+		     length_char);
+	}
       else
 	length_char = 0;
       if (length_char == 'l' && *format_chars == 'l')
-	length_char = 'q', format_chars++;
+	{
+	  length_char = 'q', format_chars++;
+	  if (pedantic)
+	    pedwarn ("ANSI C does not support the `ll' length modifier");
+	}
       aflag = 0;
       if (*format_chars == 'a')
 	{
@@ -1094,9 +1202,10 @@ check_format_info (info, params)
 	  continue;
 	}
       format_chars++;
-      fci = info->is_scan ? scan_char_table : print_char_table;
+      fci = FORMAT_IS_SCAN(info) ? scan_char_table : print_char_table;
       while (fci->format_chars != 0
-	     && index (fci->format_chars, format_char) == 0)
+	     && ((FORMAT_CONTEXT(fci) & FORMAT_CONTEXT(info)) == 0
+	         || index (fci->format_chars, format_char) == 0))
 	  ++fci;
       if (fci->format_chars == 0)
 	{
@@ -1129,7 +1238,7 @@ check_format_info (info, params)
 		   format_char);
 	  warning (message);
 	}
-      if (info->is_scan && format_char == '[')
+      if (FORMAT_IS_SCAN(info) && format_char == '[')
 	{
 	  /* Skip over scan set, in case it happens to have '%' in it.  */
 	  if (*format_chars == '^')

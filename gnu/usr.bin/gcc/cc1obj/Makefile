@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1995/12/01 17:59:47 phil Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 1997/05/14 05:07:39 phil Exp $
 
-PROG=           cc1obj
-
+PROG=	cc1obj
 SRCS=	objc-parse.c objc-act.c 
 
-.PATH:          $(.CURDIR)/../cc1
+CLEANFILES+=	objc-parse.c
 
-.include <../Makefile.cc1>
+.include "../Makefile.cc1"

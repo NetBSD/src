@@ -18,7 +18,10 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#define DECSTATION
+/* We settle for little endian for now */
+
+#define TARGET_ENDIAN_DEFAULT 0
+
 
 /* Look for the include files in the system-defined places.  */
 
@@ -50,7 +53,12 @@ Boston, MA 02111-1307, USA.  */
 #undef LINK_SPEC
 #define LINK_SPEC \
   "%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} \
-   %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp %{static:-Bstatic} %{assert*}"
+   %{bestGnum} %{shared} %{non_shared} \
+   %{call_shared} %{no_archive} %{exact_version} \
+   %{!shared: %{!non_shared: %{!call_shared: -non_shared}}} \
+   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so} \
+   %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp \
+   %{static:-Bstatic} %{!static:-Bdynamic} %{assert*}"
 
 /* We have atexit(3).  */
 
@@ -65,8 +73,26 @@ Boston, MA 02111-1307, USA.  */
 #define CPP_PREDEFINES "-D__ANSI_COMPAT \
 -DMIPSEL -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD -D__NetBSD__ -Dmips \
 -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
--Dunix -D_R3000 \
+-Dunix -D_R3000 -D__KPRINTF_ATTRIBUTE__ \
 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
+#endif
+
+#ifndef CC1_SPEC
+#define CC1_SPEC "\
+%{gline:%{!g:%{!g0:%{!g1:%{!g2: -g1}}}}} \
+%{mips1:-mfp32 -mgp32}%{mips2:-mfp32 -mgp32}\
+%{mips3:%{!msingle-float:%{!m4650:-mfp64}} -mgp64} \
+%{mips4:%{!msingle-float:%{!m4650:-mfp64}} -mgp64} \
+%{mfp64:%{msingle-float:%emay not use both -mfp64 and -msingle-float}} \
+%{mfp64:%{m4650:%emay not use both -mfp64 and -m4650}} \
+%{m4650:-mcpu=r4650} \
+%{G*} %{EB:-meb} %{EL:-mel} %{EB:%{EL:%emay not use both -EB and -EL}} \
+%{pic-none:   -mno-half-pic} \
+%{pic-lib:    -mhalf-pic} \
+%{pic-extern: -mhalf-pic} \
+%{pic-calls:  -mhalf-pic} \
+%{save-temps: } \
+%{!mno-abicalls:    -mabicalls}"
 #endif
 
 /* Always uses gas.  */
@@ -79,7 +105,8 @@ Boston, MA 02111-1307, USA.  */
 %{ggdb:-g} %{ggdb0:-g0} %{ggdb1:-g1} %{ggdb2:-g2} %{ggdb3:-g3} \
 %{gstabs:-g} %{gstabs0:-g0} %{gstabs1:-g1} %{gstabs2:-g2} %{gstabs3:-g3} \
 %{gstabs+:-g} %{gstabs+0:-g0} %{gstabs+1:-g1} %{gstabs+2:-g2} %{gstabs+3:-g3} \
-%{gcoff:-g} %{gcoff0:-g0} %{gcoff1:-g1} %{gcoff2:-g2} %{gcoff3:-g3}"
+%{gcoff:-g} %{gcoff0:-g0} %{gcoff1:-g1} %{gcoff2:-g2} %{gcoff3:-g3} \
+%{membedded-pic} %{fPIC:-KPIC}"
 #endif
 
 #ifndef CPP_SPEC
@@ -92,16 +119,25 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
-#define STARTFILE_SPEC ""
+
+#undef LIB_SPEC
+#define LIB_SPEC "%{p:-lprof1} %{pg:-lprof1} -lc /usr/lib/crtn.o%s"
+#define STARTFILE_SPEC \
+   "%{!shared:%{pg:gcrt1.o%s}%{!pg:%{p:mcrt1.o%s libprof1.a%s}%{!p:crt1.o%s}}}"
 
 #ifndef MACHINE_TYPE
-#define MACHINE_TYPE "NetBSD/pmax"
+#define MACHINE_TYPE "NetBSD/mips"
 #endif
 
 #define TARGET_DEFAULT MASK_GAS
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
 #define LOCAL_LABEL_PREFIX	"."
+
+/* -G is incompatible with -KPIC which is the default, so only allow objects
+   in the small data section if the user explicitly asks for it.  */
+#undef MIPS_DEFAULT_GVALUE
+#define MIPS_DEFAULT_GVALUE 0
 
 #include "mips/mips.h"
 
@@ -122,6 +158,19 @@ Boston, MA 02111-1307, USA.  */
 #define TYPE_ASM_OP	".type"
 #define SIZE_ASM_OP	".size"
 #define WEAK_ASM_OP	".weak"
+
+/* This is how to equate one symbol to another symbol.  The syntax used is
+   `SYM1=SYM2'.  Note that this is different from the way equates are done
+   with most svr4 assemblers, where the syntax is `.set SYM1,SYM2'.  */
+
+#define ASM_OUTPUT_DEF(FILE,LABEL1,LABEL2)				\
+ do {	fprintf ((FILE), "\t");						\
+	assemble_name (FILE, LABEL1);					\
+	fprintf (FILE, " = ");						\
+	assemble_name (FILE, LABEL2);					\
+	fprintf (FILE, "\n");						\
+  } while (0)
+
 
 /* The following macro defines the format used to output the second
    operand of the .type assembler directive.  Different svr4 assemblers
@@ -150,16 +199,34 @@ Boston, MA 02111-1307, USA.  */
    function's return value.  We allow for that here.  */
 
 #undef ASM_DECLARE_FUNCTION_NAME
-#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
+#define ASM_DECLARE_FUNCTION_NAME(STREAM, NAME, DECL)			\
   do {									\
-    fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
-    assemble_name (FILE, NAME);						\
-    putc (',', FILE);							\
-    fprintf (FILE, TYPE_OPERAND_FMT, "function");			\
-    putc ('\n', FILE);							\
-    ASM_DECLARE_RESULT (FILE, DECL_RESULT (DECL));			\
+    extern FILE *asm_out_text_file;                                   \
+                                                                      \
+    if (TARGET_GP_OPT)                                                \
+      {                                                               \
+      int align;                                                      \
+      STREAM = asm_out_text_file;                                     \
+      /* Output ALIGN again to the new stream. XXX  */                \
+      align = floor_log2 (FUNCTION_BOUNDARY / BITS_PER_UNIT);         \
+      if (align > 0)                                                  \
+        {                                                             \
+          if (output_bytecode)                                        \
+            BC_OUTPUT_ALIGN (STREAM, align);                          \
+          else                                                        \
+            ASM_OUTPUT_ALIGN (STREAM, align);                         \
+        }                                                             \
+      }                                                               \
+    fprintf (STREAM, "\t%s\t ", TYPE_ASM_OP);                         \
+    assemble_name (STREAM, NAME);                                     \
+    putc (',', STREAM);                                               \
+    fprintf (STREAM, TYPE_OPERAND_FMT, "function");                   \
+    putc ('\n', STREAM);                                              \
+    ASM_DECLARE_RESULT (STREAM, DECL_RESULT (DECL));                  \
+    HALF_PIC_DECLARE (NAME);                                          \
   } while (0)
 
+/* Assemble generic sections.
 /* Write the extra assembler code needed to declare an object properly.  */
 
 #undef ASM_DECLARE_OBJECT_NAME

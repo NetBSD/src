@@ -1298,7 +1298,7 @@
 	(rotatert:SI (match_operand:SI 1 "general_operand" "g")
 		     (match_operand:QI 2 "const_int_operand" "n")))]
   ""
-  "rotl $%R2,%1,%0")
+  "rotl %R2,%1,%0")
 
 (define_insn ""
   [(set (match_operand:SI 0 "general_operand" "=g")
@@ -1341,6 +1341,7 @@
     operands[0]
       = adj_offsettable_operand (operands[0], INTVAL (operands[2]) / 8);
 
+  CC_STATUS_INIT;
   if (INTVAL (operands[1]) == 8)
     return \"movb %3,%0\";
   return \"movw %3,%0\";

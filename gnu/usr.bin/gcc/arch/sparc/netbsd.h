@@ -7,7 +7,7 @@
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Dsparc -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(sparc) -Amachine(sparc)"
+#define CPP_PREDEFINES "-Dunix -Dsparc -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(sparc) -Amachine(sparc)"
 
 /* Make gcc agree with <machine/ansi.h> */
 
@@ -34,11 +34,6 @@
    continuation back on).  */
 
 #define DBX_CONTIN_CHAR '?'
-
-/* Don't use the `xsfoo;' construct in DBX output; this system
-   doesn't support it.  */
-
-#define DBX_NO_XREFS
 
 /* Don't default to pcc-struct-return, because gcc is the only compiler, and
    we want to retain compatibility with older gcc versions.  */

@@ -1,21 +1,21 @@
-#	$NetBSD: Makefile.cc1,v 1.1.1.1 1995/12/01 17:58:53 phil Exp $
+#	$NetBSD: Makefile.cc1,v 1.1.1.2 1997/05/14 05:04:54 phil Exp $
 
 NOMAN=
 
 BINDIR=	/usr/libexec
 
-XXXX!= cd $(.CURDIR)/../common; \
-	 printf "xxxx:\n\techo -I\$${.OBJDIR}\n" | ${MAKE} -r -s -f - xxxx
+COMMON!=cd $(.CURDIR)/../common; \
+	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
-	-I${.CURDIR}/../arch/$(MACHINE_ARCH) $(XXXX)
+CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
+	-I${.CURDIR}/../arch/$(MACHINE_ARCH) -I$(COMMON)
 
 YFLAGS=
 
-LIBCC1!= cd $(.CURDIR)/../common; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libcc1.a\n" | ${MAKE} -r -s -f - xxx
+LIBCC1!=cd $(.CURDIR)/../common; \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libcc1.a\n" | ${MAKE} -s -f-
 
-LDADD+=${LIBCC1} -lgnumalloc
-DPADD+= /usr/lib/libgnumalloc.a
+LDADD+=	${LIBCC1} -lgnumalloc
+DPADD+=	${LIBCC1} ${LIBGNUMALLOC}
 
 .include <bsd.prog.mk>

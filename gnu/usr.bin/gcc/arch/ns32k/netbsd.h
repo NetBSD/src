@@ -68,7 +68,7 @@ Boston, MA 02111-1307, USA.
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Dns32k -Dns32000 -Dns32532 -D__NetBSD__ -Dpc532 -D__ns32k__ -Asystem(unix) -Asystem(NetBSD) -Acpu(ns32k) -Amachine(ns32k)"
+#define CPP_PREDEFINES "-Dunix -Dns32k -Dns32000 -Dns32532 -D__NetBSD__ -Dpc532 -D__ns32k__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(ns32k) -Amachine(ns32k)"
 
 /* Make gcc agree with <machine/ansi.h> */
 
@@ -99,11 +99,6 @@ Boston, MA 02111-1307, USA.
    continuation back on).  */
 
 #define DBX_CONTIN_CHAR '?'
-
-/* Don't use the `xsfoo;' construct in DBX output; this system
-   doesn't support it.  */
-
-#define DBX_NO_XREFS
 
 /* Don't default to pcc-struct-return, because gcc is the only compiler, and
    we want to retain compatibility with older gcc versions.  */
