@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.15 2001/11/18 08:19:39 takemura Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.16 2001/11/22 14:22:30 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,24 +158,22 @@ hpcmips_system_bus_space()
 	return (__sys_bus_space_tag);
 }
 
-bus_space_tag_t
+struct bus_space_tag_hpcmips *
 hpcmips_alloc_bus_space_tag()
 {
-	bus_space_tag_t	t;
 
 	if (__bus_space_index >= MAX_BUSSPACE_TAG) {
 		panic("hpcmips_internal_alloc_bus_space_tag: tag full.");
 	}
-	t = &__bus_space[__bus_space_index++].bst;
 
-	return (t);
+	return (&__bus_space[__bus_space_index++]);
 }
 
 void
-hpcmips_init_bus_space(bus_space_tag_t tx, bus_space_tag_t basetag,
+hpcmips_init_bus_space(struct bus_space_tag_hpcmips *t,
+    struct bus_space_tag_hpcmips *basetag,
     char *name, u_int32_t base, u_int32_t size)
 {
-	struct bus_space_tag_hpcmips *t = (struct bus_space_tag_hpcmips *)tx;
 	u_int32_t pa, endpa;
 	vaddr_t va;
 
