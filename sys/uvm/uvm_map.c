@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.164.2.3 2004/05/09 09:01:32 jdc Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.164.2.3.2.1 2005/04/06 15:23:22 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.164.2.3 2004/05/09 09:01:32 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.164.2.3.2.1 2005/04/06 15:23:22 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -735,6 +735,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	vm_inherit_t inherit = UVM_INHERIT(flags);
 	int advice = UVM_ADVICE(flags);
 	int error, merged = 0, kmap = (vm_map_pmap(map) == pmap_kernel());
+	int newetype;
 	UVMHIST_FUNC("uvm_map");
 	UVMHIST_CALLED(maphist);
 
@@ -837,6 +838,17 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 		}
 	}
 
+	if (uobj)
+		newetype = UVM_ET_OBJ;
+	else
+		newetype = 0;
+
+	if (flags & UVM_FLAG_COPYONW) {
+		newetype |= UVM_ET_COPYONWRITE;
+		if ((flags & UVM_FLAG_OVERLAY) == 0)
+			newetype |= UVM_ET_NEEDSCOPY;
+	}
+
 	/*
 	 * try and insert in map by extending previous entry, if possible.
 	 * XXX: we don't try and pull back the next entry.   might be useful
@@ -846,7 +858,8 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	if (flags & UVM_FLAG_NOMERGE)
 		goto nomerge;
 
-	if (prev_entry->end == *startp &&
+	if (prev_entry->etype == newetype &&
+	    prev_entry->end == *startp &&
 	    prev_entry != &map->header &&
 	    prev_entry->object.uvm_obj == uobj) {
 
@@ -855,9 +868,6 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 		if (uobj && prev_entry->offset +
 		    (prev_entry->end - prev_entry->start) != uoffset)
-			goto forwardmerge;
-
-		if (UVM_ET_ISSUBMAP(prev_entry))
 			goto forwardmerge;
 
 		if (prev_entry->protection != prot ||
@@ -923,7 +933,8 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	}
 
 forwardmerge:
-	if (prev_entry->next->start == (*startp + size) &&
+	if (prev_entry->next->etype == newetype &&
+	    prev_entry->next->start == (*startp + size) &&
 	    prev_entry->next != &map->header &&
 	    prev_entry->next->object.uvm_obj == uobj) {
 
@@ -931,9 +942,6 @@ forwardmerge:
 			goto nomerge;
 
 		if (uobj && prev_entry->next->offset != uoffset + size)
-			goto nomerge;
-
-		if (UVM_ET_ISSUBMAP(prev_entry->next))
 			goto nomerge;
 
 		if (prev_entry->next->protection != prot ||
@@ -1103,16 +1111,8 @@ nomerge:
 		new_entry->object.uvm_obj = uobj;
 		new_entry->offset = uoffset;
 
-		if (uobj)
-			new_entry->etype = UVM_ET_OBJ;
-		else
-			new_entry->etype = 0;
+		new_entry->etype = newetype;
 
-		if (flags & UVM_FLAG_COPYONW) {
-			new_entry->etype |= UVM_ET_COPYONWRITE;
-			if ((flags & UVM_FLAG_OVERLAY) == 0)
-				new_entry->etype |= UVM_ET_NEEDSCOPY;
-		}
 		if (flags & UVM_FLAG_NOMERGE) {
 			new_entry->flags |= UVM_MAP_NOMERGE;
 		}
