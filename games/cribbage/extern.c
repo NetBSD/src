@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.5 1999/09/19 18:12:09 jsm Exp $	*/
+/*	$NetBSD: extern.c,v 1.6 2002/12/06 01:48:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.5 1999/09/19 18:12:09 jsm Exp $");
+__RCSID("$NetBSD: extern.c,v 1.6 2002/12/06 01:48:24 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ BOOLEAN	iwon		= FALSE;	/* if comp won last game */
 BOOLEAN	quiet		= FALSE;	/* if suppress random mess */
 BOOLEAN	rflag		= FALSE;	/* if all cuts random */
 
-char	expl[128];			/* explanation */
+char	explan[128];			/* explanation */
 
 int	cgames		= 0;		/* number games comp won */
 int	cscore		= 0;		/* comp score in this game */
