@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.12 1994/10/26 08:24:18 cgd Exp $	*/
+/*	$NetBSD: scn.c,v 1.13 1995/01/19 07:03:39 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -61,22 +61,25 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/types.h>
+#include <sys/device.h>
+#include <device.h>
 
 #include <dev/cons.h>
 
 #include <machine/icu.h>
 
-#include "device.h"
 #include "scnreg.h"
 
 #include "sl.h"
 
-int 	scnprobe(), scnattach(), scnintr(), scnparam();
+int 	scnprobe();
+void    scnattach();
+int     scnintr(), scnparam();
 void	scnstart();
 
-struct	pc532_driver scndriver = {
-	scnprobe, scnattach, "scn"
-};
+struct cfdriver scncd =
+      {	NULL, "scn", scnprobe, scnattach,
+	DV_TTY, sizeof(struct device), NULL, 0 };
 
 int	scnsoftCAR;
 int	scn_active;
@@ -255,12 +258,16 @@ int data_bits;			/* 5, 6, 7, or 8 */
 }
 
 
-scnprobe(dev)
-struct pc532_device *dev;
+scnprobe(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
 {
-  int unit = UNIT(dev->pd_unit);
+  int unit = cf->cf_unit;
 
-  /* Should do more ???? */
+ if (strcmp(*((char **) aux), scncd.cd_name)) {
+    return 0;
+  }
 
   if (unit >= NLINES) {
  
@@ -294,12 +301,13 @@ struct pc532_device *dev;
   }
 }
 
-int
-scnattach(dp)
-struct pc532_device *dp;
+void
+scnattach(parent, dev, aux)
+	struct device	*parent, *dev;
+	void		*aux;
 {
   struct	tty	*tp;
-  u_char	unit = UNIT(dp->pd_unit);
+  u_char	unit = dev->dv_unit;
   u_char	duart = unit >> 1;
   register struct rs232_s *rs = &line[unit];
   int	x;
@@ -307,6 +315,7 @@ struct pc532_device *dp;
   long line_base;
   long uart_base;
   long scn_first_adr;
+
 
   if (unit == 0)  DELAY(5);  /* Let the output go out.... */
 
@@ -427,9 +436,7 @@ struct pc532_device *dp;
 #endif
 
   /* print the device number... */
-  printf ("scn%d at mainbus0 addr 0x%x\n",  unit, line_base);
-
-  return (1);
+  printf (" addr 0x%x\n", line_base);
 }
 
 /* ARGSUSED */
@@ -1058,7 +1065,7 @@ scncnputc (dev_t dev, char c)
 	___lines = 0;
 	scncnputc(dev,'m');scncnputc(dev,'o');scncnputc(dev,'r');
 	scncnputc(dev,'e');scncnputc(dev,':');scncnputc(dev,' ');
-	scncngetc();
+	scncngetc(dev);
 	scncnputc(dev,'\n');
      }
   }
