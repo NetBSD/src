@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.7 1999/05/10 19:34:22 is Exp $
+.\"	$NetBSD: release.7,v 1.8 2000/09/11 21:53:31 hubertf Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -302,6 +302,31 @@ this set to locations outside the United States and Canada.)
 .It Sy installation/
 installation helper items
 .Bl -tag -width "diskimage/"
+.It Sy cdrom/
+CDROM images in ISO 9660 format, usually created with 
+.Dq make iso-image
+in 
+.Pa src/etc
+after a 
+.Dq make release 
+in both 
+.Pa src
+and
+.Pa xsrc .
+.Bl -tag -width "netbsd-ARCH.iso"
+.It Sy BSDSUM
+.It Sy CKSUM
+.It Sy MD5
+.It Sy README
+.It Sy SYSVSUM
+.It Xo
+.Sm off
+.Sy netbsd-
+.Em <machine_arch>
+.Sy .iso
+.Sm on
+.Xc
+.El
 .It Sy diskimage/
 disk images, for those platforms that provide them
 .Bl -tag -width "diskimage-rz25.gz"
