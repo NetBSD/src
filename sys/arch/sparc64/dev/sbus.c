@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.9 1999/01/10 23:32:57 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.10 1999/03/18 03:23:53 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -772,7 +772,8 @@ sbus_get_intr(sc, node, ipp, np)
 	if (getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
 		/* Change format to an `struct sbus_intr' array */
 		struct sbus_intr *ip;
-		int pri = 0;
+		/* Default to interrupt level 2 -- otherwise unused */
+		int pri = INTLEVENCODE(2);
 		ip = malloc(*np * sizeof(struct sbus_intr), M_DEVBUF, M_NOWAIT);
 		if (ip == NULL)
 			return (ENOMEM);
@@ -782,6 +783,9 @@ sbus_get_intr(sc, node, ipp, np)
 		 * space and we can easily stuff the IPL in there for a while.  
 		 */
 		getpropstringA(node, "device_type", buf);
+		if (!buf[0]) {
+			getpropstringA(node, "name", buf);
+		}
 		for (i=0; intrmap[i].in_class; i++) {
 			if (strcmp(intrmap[i].in_class, buf) == 0) {
 				pri = INTLEVENCODE(intrmap[i].in_lev);
