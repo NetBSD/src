@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.98 1998/04/23 00:38:01 explorer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.99 1998/05/04 05:54:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -552,6 +552,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNCWIDE},
 
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "Astra 1200S     ", "V2.9"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
