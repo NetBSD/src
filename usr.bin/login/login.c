@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.43 1999/06/15 14:19:53 christos Exp $       */
+/*     $NetBSD: login.c,v 1.44 1999/07/12 21:36:11 aidan Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.43 1999/06/15 14:19:53 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.44 1999/07/12 21:36:11 aidan Exp $");
 #endif /* not lint */
 
 /*
@@ -101,6 +101,10 @@ int	 klogin __P((struct passwd *, char *, char *, char *));
 void	 kdestroy __P((void));
 void	 dofork __P((void));
 #endif
+#ifdef KERBEROS5
+int	k5_read_creds __P((char*));
+int	k5_write_creds __P((void));
+#endif
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
@@ -117,6 +121,7 @@ char	*krbtkfile_env;
 #endif
 #ifdef KERBEROS5
 extern krb5_context kcontext;
+extern int	have_forward;
 #endif
 
 struct	passwd *pwd;
@@ -140,6 +145,7 @@ main(argc, argv)
 	struct timeval tp;
 	struct utmp utmp;
 	int ask, ch, cnt, fflag, hflag, pflag, sflag, quietlog, rootlogin, rval;
+	int Fflag;
 	uid_t uid, saved_uid;
 	gid_t saved_gid, saved_gids[NGROUPS_MAX];
 	int nsaved_gids;
@@ -179,10 +185,16 @@ main(argc, argv)
 		domain = strchr(localhost, '.');
 	localhost[sizeof(localhost) - 1] = '\0';
 
-	fflag = hflag = pflag = sflag = 0;
+	Fflag = fflag = hflag = pflag = sflag = 0;
+#ifdef KERBEROS5
+	have_forward = 0;
+#endif
 	uid = getuid();
-	while ((ch = getopt(argc, argv, "fh:ps")) != -1)
+	while ((ch = getopt(argc, argv, "Ffh:ps")) != -1)
 		switch (ch) {
+		case 'F':
+			Fflag = 1;
+			/* FALLTHROUGH */
 		case 'f':
 			fflag = 1;
 			break;
@@ -292,6 +304,10 @@ main(argc, argv)
 
 			if (fflag && (uid == 0 || uid == pwd->pw_uid)) {
 				/* already authenticated */
+#ifdef KERBEROS5
+				if (Fflag)
+					k5_read_creds(username);
+#endif
 				break;
 			} else if (pwd->pw_passwd[0] == '\0') {
 				/* pretend password okay */
@@ -568,6 +584,9 @@ main(argc, argv)
 		}
 	}
 
+#ifdef KERBEROS5
+	k5_write_creds();
+#endif
 	execlp(pwd->pw_shell, tbuf, 0);
 	err(1, "%s", pwd->pw_shell);
 }
