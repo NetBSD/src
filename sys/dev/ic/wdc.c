@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.143 2003/10/15 20:29:26 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.144 2003/10/22 23:59:00 briggs Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.143 2003/10/15 20:29:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.144 2003/10/22 23:59:00 briggs Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -268,8 +268,7 @@ atabus_thread(arg)
 	chp->ch_flags |= WDCF_TH_RUN;
 	splx(s);
 	atabusconfig(atabus_sc);
-	for(;;)
-	{
+	while (!(chp->ch_flags & WDCF_SHUTDOWN)) {
 		s = splbio();
 		chp->ch_flags &= ~WDCF_TH_RUN;
 		tsleep(&chp->thread, PRIBIO, "atath", 0);
@@ -313,7 +312,7 @@ atabusconfig(atabus_sc)
 	struct atabus_softc *atabus_sc;
 {
 	struct channel_softc *chp = atabus_sc->sc_chan;
-	int ctrl_flags, i, error;
+	int ctrl_flags, i, error, need_delref = 0;
 	struct ataparams params;
 	struct atabus_initq *atabus_initq = NULL;
 	u_int8_t st0, st1;
@@ -321,9 +320,9 @@ atabusconfig(atabus_sc)
 	if ((error = wdc_addref(chp)) != 0) {
 		aprint_error("%s: unable to enable controller\n",
 		    chp->wdc->sc_dev.dv_xname);
-		config_pending_decr();
-		return;
+		goto out;
 	}
+	need_delref = 1;
 
 	if (__wdcprobe(chp, 0) == 0)
 		/* If no drives, abort attach here. */
@@ -383,11 +382,20 @@ atabusconfig(atabus_sc)
 		if ((chp->ch_drive[i].drive_flags & DRIVE) == 0)
 			continue;
 
+		/* Shortcut in case we've been shutdown */
+		if (chp->ch_flags & WDCF_SHUTDOWN)
+			goto out;
+
 		/* issue an identify, to try to detect ghosts */
 		error = ata_get_params(&chp->ch_drive[i],
 		    AT_WAIT | AT_POLL, &params);
 		if (error != CMD_OK) {
 			tsleep(&atabus_sc, PRIBIO, "atacnf", mstohz(1000));
+
+			/* Shortcut in case we've been shutdown */
+			if (chp->ch_flags & WDCF_SHUTDOWN)
+				goto out;
+
 			error = ata_get_params(&chp->ch_drive[i],
 			    AT_WAIT | AT_POLL, &params);
 		}
@@ -549,7 +557,8 @@ out:
         wakeup(&atabus_initq_head);
 
 	config_pending_decr();
-	wdc_delref(chp);
+	if (need_delref)
+		wdc_delref(chp);
 }
 
 
