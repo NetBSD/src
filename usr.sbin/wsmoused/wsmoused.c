@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.9 2003/03/04 22:31:15 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.10 2003/03/05 10:51:43 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.9 2003/03/04 22:31:15 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.10 2003/03/05 10:51:43 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: wsmoused.c,v 1.9 2003/03/04 22:31:15 jmmv Exp $");
 
 static struct mouse mouse;
 static char *PidFile = NULL;
-int XConsole = -1;
+static int XConsole = -1;
 
 /*
  * Show program usage information
