@@ -1,5 +1,5 @@
 /*
- * $NetBSD: chksum.c,v 1.1.1.1 1996/11/29 23:36:30 is Exp $
+ * $NetBSD: aout2bb.h,v 1.1 1997/01/21 18:26:10 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
@@ -32,53 +32,39 @@
  *
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
+/*
+ * Relocator version definitions for aout to Amiga bootblock converter.
+ */
 
-#include "chksum.h"
+/* 
+ * All the tables are at the end of the bootblock, with logical start at the
+ * end.
+ */
 
-u_int32_t
-chksum(block, size)
-	u_int32_t *block;
-	int size;
-{
-	u_int32_t sum, lastsum;
-	int i;
+/* 
+ * The following formats are for a length of 8 kBytes only.
+ */
 
-	sum = 0;
+/*
+ * Absolute words in Motorola byte order, end of table marked by 0x0000
+ */
+#define RELVER_ABSOLUTE_WORDS	0
 
-	for (i=0; i<size; i++) {
-		lastsum = sum;
-		sum += block[i];
-		if (sum < lastsum)
-			++sum;
-	}
+/*
+ * Unsigned bytes relative to previous address to relocate; first one to 0.
+ * If the difference is >255, the logical next two bytes (in Motorola byte
+ * order) give the absolute address to relocate.
+ */
+#define RELVER_RELATIVE_BYTES	1
 
-	return sum;
-}
+/*
+ * Same as above, but with the bytes stored in forward direction beginning
+ * with the __relocation_bytes symbol
+ */
+#define RELVER_RELATIVE_BYTES_FORWARD 2
 
-#ifdef TESTSUM
-u_int32_t myblock[8192];
+/*
+ * loader can autoload
+ */
 
-int
-main(int argc, char *argb[]) {
-	int bbsize;
-	u_int32_t cks, cks1;
-
-	bbsize=atol(argb[1]);
-	bbsize *= (512 / sizeof (u_int32_t));
-
-	if (4*bbsize != read(0, myblock, sizeof(u_int32_t)*bbsize)) {
-		fprintf(stderr, "short read\n");
-		exit(1);
-	}
-	fprintf(stderr, "Cksum field = 0x%x, ", myblock[1]);
-	cks = chksum(myblock, bbsize);
-	fprintf(stderr, "cksum = 0x%x\n", cks);
-	myblock[1] += 0xFFFFFFFF - cks;
-	fprintf(stderr, "New cksum field = 0x%x, ", myblock[1]);
-	cks1 = chksum(myblock, bbsize);
-	fprintf(stderr, "cksum = 0x%x\n", cks1);
-}
-#endif
+#define RELFLAG_SELFLOADING	0x10

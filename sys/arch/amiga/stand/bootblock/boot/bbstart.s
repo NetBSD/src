@@ -1,5 +1,5 @@
 /*
- * $NetBSD: bbstart.s,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
+ * $NetBSD: bbstart.s,v 1.2 1997/01/21 18:26:10 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-#include "aout2bb/aout2bb.h"
+#include "aout2bb.h"
 
 #define LVOAllocMem	-0x0c6
 #define LVODoIO		-0x1c8

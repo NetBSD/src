@@ -1,100 +1,121 @@
-NOPROG=	installboot
+NOPROG=installboot
 MAN=installboot.8
 
-SUBDIR=aout2bb txlt
+### what we need:
 
-TXLT=txlt/txlt
+S=		${.CURDIR}/../../../..
+DIR_SA = 	${S}/lib/libsa
+DIR_KERN=	${S}/lib/libkern
+DIR_KERN_MD=	${S}/lib/libkern/arch/$(MACHINE_ARCH)
 
-OBJS = configure.o main.o
-OBJS += console.o xd.o
+.PATH:  $(DIR_SA) $(DIR_KERN) $(DIR_KERN_MD)
 
-# libsa library replacements:
-OBJS += alloc.o printf.o twiddle.o
+# prefer our assembler versions over assembler, and assembler over C:
 
-# libkern replacements:
-OBJS += bcopy.o bzero.o ashrdi3.o muldi3.o
+.SUFFIXES:
+.SUFFIXES: .out .o .po .so .s .S .c .cc .C .f .y .l .ln .m4 .sh
 
-# machine language startup code:
-OBJS += startit.o
+SRCS=installboot.sh
 
-SRCS = installboot.sh configure.c main.c console.c xd.c 
-SRCS+= twiddle.c
-SRCS+= bbstart.s libstubs.s alloc.s printf.s startit.s
-SRCS+= bcopy.s bzero.c ashrdi3.s muldi3.s
+BOOTBLOCKS= xxboot fdboot
 
-CLEANFILES = $(OBJS) $(BOOTBLOCKS) x.out xxstart.s f.out fdstart.s
+COBJS = configure.o main.o console.o xd.o twiddle.o bzero.o gets.o
+COBJS+=  lseek.o open.o read.o close.o dev.o
+COBJS+=  ufs.o
 
-S=	${.CURDIR}/../../../..
-INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
-COPTIM=	-O2 -fomit-frame-pointer -fno-function-cse -Wa,-l -m68060 -Wa,-m68030
-CFLAGS = ${COPTIM} ${INCPATH} ${DEFS}
-COPTS += -Wall -Wstrict-prototypes
+SOBJS = alloc.o ashrdi3.o bcopy.o muldi3.o printf.o startit.o
+SOBJS += strlen.o strcmp.o
+SOBJS += libstubs.o 
 
-BOOTBLOCKS=xxboot # XXX  fdboot is too large at the moment.
+OBJS=	$(SOBJS) $(COBJS)
 
-.s.o: ; $(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp -o $*.o -c $*.s
+DEFS = -DSTANDALONE -DINSECURE
 
-#libs:
+### main target: ###
 
-.include "${.CURDIR}/libsa/Makefile.inc"
-LIBSA=  ${SA_LIB}
+all: ${BOOTBLOCKS} installboot
 
-# libstubs should really be a library, but we don't care for now.
-LIBS=	${LIBSA} ${LIBKERN} libstubs.o
+### special  rules for bootblocks ###
 
-all: $(BOOTBLOCKS) installboot
+AFLAGS += -m68030 -l
+CAFLAGS += -Wa,-l -Wa,-m68030
 
-$(OBJS): txlt
+INCPATH = -I${S} -I${S}/lib/libsa -I${.CURDIR} -I${.CURDIR}/../..
+BB_COPTIM= -O2 -fomit-frame-pointer -fno-function-cse -Wa,-l -m68060 -Wa,-m68030
+BB_CFLAGS = ${BB_COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
-xxstart.s: bbstart.s
-	cpp bbstart.s > $@
-	
-fdstart.s: bbstart.s
-	cpp -DAUTOLOAD=8192 bbstart.s > $@
+.c.o:
+	$(CC) $(BB_CFLAGS) -S $< -o $*.s
+	./txlt < $*.s | $(AS) $(AFLAGS) -o $*.o
+	rm $*.s
 
-x.out: xxstart.o $(OBJS) $(LIBS)
-	$(LD) $(LDFLAGS) -r -dc -e _start -o x.out xxstart.o $(OBJS) $(LIBS)
-	size x.out
+.s.o: ; $(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp -o $@ -c $<
 
-f.out: fdstart.o $(OBJS) $(LIBS)
-	$(LD) $(LDFLAGS) -r -dc -e _start -o f.out fdstart.o $(OBJS) $(LIBS)
-	size f.out
+.S.o: ; $(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp -o $@ -c $<
 
+${COBJS}: txlt
 
-$(BOOTBLOCKS): aout2bb
+${BOOTBLOCKS}: aout2bb
+
+CLEANFILES += xxboot fdboot x.out f.out xxstart.o fdstart.o
 
 xxboot: x.out
-	rm -f $@
-	aout2bb/aout2bb x.out $@ || nm -u x.out
+	./aout2bb x.out $@ || nm -u x.out
 
 fdboot: f.out
-	rm -f $@
-	aout2bb/aout2bb -F f.out $@ || nm -u f.out
+	./aout2bb f.out $@ || nm -u f.out
 
-clean::
-	rm -f $(OBJS) fdstart.[os] xxstart.[os] f.out x.out installboot
+x.out: xxstart.o libboot.a
+	$(LD) $(LDFLAGS) -r -dc -e _start -o $@ $>
+	size $@
+	nm -u $@
+
+f.out: fdstart.o libboot.a
+	$(LD) $(LDFLAGS) -r -dc -e _start -o $@ $>
+	size $@
+	nm -u $@
+
+xxstart.o: ${.CURDIR}/bbstart.s
+	$(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp \
+		-o $@ -c $>
+
+fdstart.o: ${.CURDIR}/bbstart.s
+	$(CC) -DAUTOLOAD=8192 $(CAFLAGS) $(COPTS) -x assembler-with-cpp \
+		-o $@ -c $>
+
+libboot.a: $(OBJS)
+	ar r $@ $> && ranlib $@
+
+### install what we need: ###
 
 install: all maninstall
-	install -o $(BINOWN) -g $(BINGRP) $(BOOTBLOCKS) /usr/mdec
-	install -o $(BINOWN) -g $(BINGRP) installboot /usr/sbin
+	install -o $(BINOWN) -g $(BINGRP) installboot ${DESTDIR}/usr/sbin
+	install -o $(BINOWN) -g $(BINGRP) $(BOOTBLOCKS) ${DESTDIR}/usr/mdec
 
-ci:
-	ci -l $(SRCS) Makefile
+### start of helper programs: ###
 
-tar:
-	(cd ..; tar \
-		--exclude '*.o' --exclude RCS --exclude .depend \
-		--exclude '*.out' --exclude fdstart.s --exclude xxstart.s \
-		--exclude aout2bb/aout2bb --exclude libsa.a \
-		-czvf boot.tar.gz boot)
+HOSTED_CC=	$(CC)
+HOSTED_CFLAGS=	$(CFLAGS)
 
-test: xxtest fdtest
+HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
-xxtest: xxboot
-	dd if=$? of=/dev/rsd1e bs=8192 count=1
+CLEANFILES += txlt txlt.o aout2bb aout2bb.o chksum.o
 
-fdtest: fdboot
-	dd if=$? of=/dev/rfd0a bs=8192 count=1
+aout2bb: aout2bb.o chksum.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $>
+
+aout2bb.o: ${.CURDIR}/aout2bb.c
+	${HOSTED_C}
+
+chksum.o: ${.CURDIR}/chksum.c
+	${HOSTED_C}
+
+txlt: txlt.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $> -ll
+
+depend::
+	mkdep -a ${.CURDIR}/aout2bb.c ${.CURDIR}/chksum.c
+
+### end of helper programs ###
 
 .include <bsd.prog.mk>
-.include "Makefile.txlt"

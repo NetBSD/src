@@ -1,5 +1,5 @@
 /*
- * $NetBSD: aout2bb.h,v 1.1.1.1 1996/11/29 23:36:30 is Exp $
+ * $NetBSD: chksum.h,v 1.1 1997/01/21 18:26:13 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
@@ -32,39 +32,7 @@
  *
  */
 
-/*
- * Relocator version definitions for aout to Amiga bootblock converter.
- */
+#define CHKSUMOFFS 1
 
-/* 
- * All the tables are at the end of the bootblock, with logical start at the
- * end.
- */
+u_int32_t chksum __P((u_int32_t *, int));
 
-/* 
- * The following formats are for a length of 8 kBytes only.
- */
-
-/*
- * Absolute words in Motorola byte order, end of table marked by 0x0000
- */
-#define RELVER_ABSOLUTE_WORDS	0
-
-/*
- * Unsigned bytes relative to previous address to relocate; first one to 0.
- * If the difference is >255, the logical next two bytes (in Motorola byte
- * order) give the absolute address to relocate.
- */
-#define RELVER_RELATIVE_BYTES	1
-
-/*
- * Same as above, but with the bytes stored in forward direction beginning
- * with the __relocation_bytes symbol
- */
-#define RELVER_RELATIVE_BYTES_FORWARD 2
-
-/*
- * loader can autoload
- */
-
-#define RELFLAG_SELFLOADING	0x10

@@ -1,5 +1,5 @@
 /*
- * $NetBSD: aout2bb.c,v 1.2 1996/12/31 22:39:58 veego Exp $
+ * $NetBSD: aout2bb.c,v 1.1 1997/01/21 18:26:09 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
