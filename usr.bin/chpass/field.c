@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.9 2003/08/07 11:13:18 agc Exp $	*/
+/*	$NetBSD: field.c,v 1.10 2004/10/30 17:11:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)field.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: field.c,v 1.9 2003/08/07 11:13:18 agc Exp $");
+__RCSID("$NetBSD: field.c,v 1.10 2004/10/30 17:11:24 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ p_login(p, pw, ep)
 	if (strchr(p, '.'))
 		warnx("\'.\' is dangerous in a login name");
 	for (; *p; ++p)
-		if (isupper(*p)) {
+		if (isupper((unsigned char)*p)) {
 			warnx("upper-case letters are dangerous in a login name");
 			break;
 		}
@@ -115,7 +115,7 @@ p_uid(p, pw, ep)
 		warnx("empty uid field");
 		return (1);
 	}
-	if (!isdigit(*p)) {
+	if (!isdigit((unsigned char)*p)) {
 		warnx("illegal uid");
 		return (1);
 	}
@@ -148,7 +148,7 @@ p_gid(p, pw, ep)
 		warnx("empty gid field");
 		return (1);
 	}
-	if (!isdigit(*p)) {
+	if (!isdigit((unsigned char)*p)) {
 		if (!(gr = getgrnam(p))) {
 			warnx("unknown group %s", p);
 			return (1);
