@@ -19,7 +19,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: rmail.c,v 8.39 2000/03/17 07:32:47 gshapiro Exp";
+static char id[] = "@(#)Id: rmail.c,v 8.39.4.5 2000/07/18 05:55:29 gshapiro Exp";
 #endif /* ! lint */
 
 /*
@@ -89,9 +89,9 @@ static char id[] = "@(#)Id: rmail.c,v 8.39 2000/03/17 07:32:47 gshapiro Exp";
 # define STDIN_FILENO	0
 #endif /* ! STDIN_FILENO */
 
-#if defined(BSD4_4) || defined(linux) || SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206)
+#if defined(BSD4_4) || defined(linux) || SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206) || _AIX4 >= 40300
 # define HASSNPRINTF	1
-#endif /* defined(BSD4_4) || defined(linux) || SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206) */
+#endif /* defined(BSD4_4) || defined(linux) || SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206) || _AIX4 >= 40300 */
 
 #if defined(sun) && !defined(BSD) && !defined(SOLARIS) && !defined(__svr4__) && !defined(__SVR4)
 # define memmove(d, s, l)	(bcopy((s), (d), (l)))
@@ -158,7 +158,7 @@ main(argc, argv)
 
 	debug = 0;
 	domain = "UUCP";		/* Default "domain". */
-	while ((ch = getopt(argc, argv, "D:T")) != EOF)
+	while ((ch = getopt(argc, argv, "D:T")) != -1)
 	{
 		switch (ch)
 		{
@@ -206,7 +206,7 @@ main(argc, argv)
 			break;
 		}
 
-		if (*addrp == '\0')
+		if (addrp == NULL || *addrp == '\0')
 			err(EX_DATAERR, "corrupted From line: %s", lbuf);
 
 		/* Use the "remote from" if it exists. */

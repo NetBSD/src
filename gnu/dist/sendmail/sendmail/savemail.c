@@ -12,10 +12,11 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: savemail.c,v 8.212 2000/03/13 22:56:51 ca Exp";
+static char id[] = "@(#)Id: savemail.c,v 8.212.4.3 2000/06/13 07:16:26 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
 
 static void	errbody __P((MCI *, ENVELOPE *, char *));
 static bool	pruneroute __P((char *));
@@ -528,7 +529,21 @@ returntosender(msg, returnq, flags, e)
 	define(macid("{auth_type}", NULL), "", ee);
 	define(macid("{auth_authen}", NULL), "", ee);
 	define(macid("{auth_author}", NULL), "", ee);
+	define(macid("{auth_ssf}", NULL), "", ee);
 #endif /* SASL */
+#if STARTTLS
+	define(macid("{cert_issuer}", NULL), "", ee);
+	define(macid("{cert_subject}", NULL), "", ee);
+	define(macid("{cipher_bits}", NULL), "", ee);
+	define(macid("{cipher}", NULL), "", ee);
+	define(macid("{tls_version}", NULL), "", ee);
+	define(macid("{verify}", NULL), "", ee);
+# if _FFR_TLS_1
+	define(macid("{alg_bits}", NULL), "", ee);
+	define(macid("{cn_issuer}", NULL), "", ee);
+	define(macid("{cn_subject}", NULL), "", ee);
+# endif /* _FFR_TLS_1 */
+#endif /* STARTTLS */
 
 	ee->e_puthdr = putheader;
 	ee->e_putbody = errbody;
@@ -574,7 +589,7 @@ returntosender(msg, returnq, flags, e)
 			ee->e_nrcpts++;
 
 		if (q->q_alias == NULL)
-			addheader("To", q->q_paddr, &ee->e_header);
+			addheader("To", q->q_paddr, 0, &ee->e_header);
 	}
 
 	if (LogLevel > 5)
@@ -594,7 +609,7 @@ returntosender(msg, returnq, flags, e)
 
 	if (SendMIMEErrors)
 	{
-		addheader("MIME-Version", "1.0", &ee->e_header);
+		addheader("MIME-Version", "1.0", 0, &ee->e_header);
 
 		(void) snprintf(buf, sizeof buf, "%s.%ld/%.100s",
 				ee->e_id, curtime(), MyHostName);
@@ -606,7 +621,7 @@ returntosender(msg, returnq, flags, e)
 				"multipart/mixed; boundary=\"%s\"",
 #endif /* DSN */
 				ee->e_msgboundary);
-		addheader("Content-Type", buf, &ee->e_header);
+		addheader("Content-Type", buf, 0, &ee->e_header);
 
 		p = hvalue("Content-Transfer-Encoding", e->e_header);
 		if (p != NULL && strcasecmp(p, "binary") != 0)
@@ -615,39 +630,39 @@ returntosender(msg, returnq, flags, e)
 			p = "8bit";
 		if (p != NULL)
 			addheader("Content-Transfer-Encoding",
-				  p, &ee->e_header);
+				  p, 0, &ee->e_header);
 	}
 	if (strncmp(msg, "Warning:", 8) == 0)
 	{
-		addheader("Subject", msg, &ee->e_header);
+		addheader("Subject", msg, 0, &ee->e_header);
 		p = "warning-timeout";
 	}
 	else if (strncmp(msg, "Postmaster warning:", 19) == 0)
 	{
-		addheader("Subject", msg, &ee->e_header);
+		addheader("Subject", msg, 0, &ee->e_header);
 		p = "postmaster-warning";
 	}
 	else if (strcmp(msg, "Return receipt") == 0)
 	{
-		addheader("Subject", msg, &ee->e_header);
+		addheader("Subject", msg, 0, &ee->e_header);
 		p = "return-receipt";
 	}
 	else if (bitset(RTSF_PM_BOUNCE, flags))
 	{
 		snprintf(buf, sizeof buf,
 			 "Postmaster notify: see transcript for details");
-		addheader("Subject", buf, &ee->e_header);
+		addheader("Subject", buf, 0, &ee->e_header);
 		p = "postmaster-notification";
 	}
 	else
 	{
 		snprintf(buf, sizeof buf,
 			 "Returned mail: see transcript for details");
-		addheader("Subject", buf, &ee->e_header);
+		addheader("Subject", buf, 0, &ee->e_header);
 		p = "failure";
 	}
 	(void) snprintf(buf, sizeof buf, "auto-generated (%s)", p);
-	addheader("Auto-Submitted", buf, &ee->e_header);
+	addheader("Auto-Submitted", buf, 0, &ee->e_header);
 
 	/* fake up an address header for the from person */
 	expand("\201n", buf, sizeof buf, e);

@@ -1,16 +1,248 @@
 			SENDMAIL RELEASE NOTES
-      Id: RELEASE_NOTES,v 8.561.4.6 2000/06/07 07:39:53 gshapiro Exp
+      Id: RELEASE_NOTES,v 8.561.2.5.2.80 2000/07/19 20:40:57 gshapiro Exp
 
 
 This listing shows the version of the sendmail binary, the version
 of the sendmail configuration files, the date of release, and a
 summary of the changes in that release.
 
+8.11.0/8.11.0	2000/07/19
+	SECURITY: If sendmail is installed as a non-root set-user-ID binary
+		(not the normal case), some operating systems will still
+		keep a saved-uid of the effective-uid when sendmail tries
+		to drop all of its privileges.  If sendmail needs to drop
+		these privileges and the operating system doesn't set the
+		saved-uid as well, exit with an error.  Problem noted by
+		Kari Hurtta of the Finnish Meteorological Institute.
+	SECURITY: sendmail depends on snprintf() NUL terminating the string
+		it populates.  It is possible that some broken
+		implementations of snprintf() exist that do not do this.
+		Systems in this category should compile with
+		-DSNPRINTF_IS_BROKEN=1.  Use test/t_snprintf.c to test your
+		system and report broken implementations to
+		sendmail-bugs@sendmail.org and your OS vendor.  Problem
+		noted by Slawomir Piotrowski of TELSAT GP.
+	Support SMTP Service Extension for Secure SMTP (RFC 2487) (STARTTLS).
+		Implementation influenced by the example programs of
+		OpenSSL and the work of Lutz Jaenicke of TU Cottbus.
+	Add new STARTTLS related options CACERTPath, CACERTFile,
+		ClientCertFile, ClientKeyFile, DHParameters, RandFile,
+		ServerCertFile, and ServerKeyFile.  These are documented in
+		cf/README and doc/op/op.*.
+	New STARTTLS related macros: ${cert_issuer}, ${cert_subject},
+		${tls_version}, ${cipher}, ${cipher_bits}, ${verify},
+		${server_name}, and ${server_addr}.  These are documented
+		in cf/README and doc/op/op.*.
+	Add support for the Entropy Gathering Daemon (EGD) for better
+		random data.
+	New DontBlameSendmail option InsufficientEntropy for systems which
+		don't properly seed the PRNG for OpenSSL but want to
+		try to use STARTTLS despite the security problems.
+	Support the security layer in SMTP AUTH for mechanisms which
+		support encryption.  Based on code contributed by Tim
+		Martin of CMU.
+	Add new macro ${auth_ssf} to reflect the SMTP AUTH security
+		strength factor.
+	LDAP's -1 (single match only) flag was not honored if the -z
+		(delimiter) flag was not given.  Problem noted by ST Wong of
+		the Chinese University of Hong Kong.  Fix from Mark Adamson
+		of CMU.
+	Add more protection from accidentally tripping OpenLDAP 1.X's
+		ld_errno == LDAP_DECODING_ERROR hack on ldap_next_attribute().
+		Suggested by Kurt Zeilenga of OpenLDAP.
+	Fix the default family selection for DaemonPortOptions.  As
+		documented, unless a family is specified in a
+		DaemonPortOptions option, "inet" is the default.  It is
+		also the default if no DaemonPortOptions value is set.
+		Therefore, IPv6 users should configure additional sockets
+		by adding DaemonPortOptions settings with Family=inet6 if
+		they wish to also listen on IPv6 interfaces.  Problem noted
+		by Jun-ichiro itojun Hagino of the KAME Project.
+	Set ${if_family} when setting ${if_addr} and ${if_name} to reflect
+		the interface information for an outgoing connection.
+		Not doing so was creating a mismatch between the socket
+		family and address used in subsequent connections if the
+		M=b modifier was set in DaemonPortOptions.  Problem noted
+		by John Beck of Sun Microsystems.
+	If DaemonPortOptions modifier M=b is used, determine the socket
+		family based on the IP address.  ${if_family} is no longer
+		persistent (i.e., saved in qf files).  Patch from John Beck
+		of Sun Microsystems.
+	sendmail 8.10 and 8.11 reused the ${if_addr} and ${if_family}
+		macros for both the incoming interface address/family and
+		the outgoing interface address/family.  In order for M=b
+		modifier in DaemonPortOptions to work properly, preserve
+		the incoming information in the queue file for later
+		delivery attempts.
+	Use SMTP error code and enhanced status code from check_relay in
+		responses to commands.  Problem noted by Jeff Wasilko of
+		smoe.org.
+	Add more vigilance in checking for putc() errors on output streams
+		to protect from a bug in Solaris 2.6's putc().  Problem
+		noted by Graeme Hewson of Oracle.
+	The LDAP map -n option (return attribute names only) wasn't working.
+		Problem noted by Ajay Matia.
+	Under certain circumstances, an address could be listed as deferred
+		but would be bounced back to the sender as failed to be
+		delivered when it really should have been queued.  Problem
+		noted by Allan E Johannesen of Worcester Polytechnic Institute.
+	Prevent a segmentation fault in a child SMTP process from getting
+		the SMTP transaction out of sync.  Problem noted by Per
+		Hedeland of Ericsson.
+	Turn off RES_DEBUG if SFIO is defined unless SFIO_STDIO_COMPAT
+		is defined to avoid a core dump due to incompatibilities
+		between sfio and stdio.  Problem noted by Neil Rickert
+		of Northern Illinois University.
+	Don't log useless envelope ID on initial connection log.  Problem
+		noted by Kari Hurtta of the Finnish Meteorological Institute.
+	Convert the free disk space shown in a control socket status query
+		to kilobyte units.
+	If TryNullMXList is True and there is a temporary DNS failure
+		looking up the hostname, requeue the message for a later
+		attempt.  Problem noted by Ari Heikkinen of Pohjois-Savo
+		Polytechnic.
+	Under the proper circumstances, failed connections would be recorded
+		as "Bad file number" instead of "Connection failed" in the
+		queue file and persistent host status.  Problem noted by
+		Graeme Hewson of Oracle.
+	Avoid getting into an endless loop if a non-hoststat directory exists
+		within the hoststatus directory (e.g., lost+found).
+		Patch from Valdis Kletnieks of Virginia Tech.
+	Make sure Timeout.queuereturn=now returns a bounce message to the
+		sender.  Problem noted by Per Hedeland of Ericsson.
+	If a message data file can't be opened at delivery time, panic and
+		abort the attempt instead of delivering a message that
+		states "<<< No Message Collected >>>".
+	Fixup the GID checking code from 8.10.2 as it was overly
+		restrictive.  Problem noted by Mark G. Thomas of Mark
+		G. Thomas Consulting.
+	Preserve source port number instead of replacing it with the ident
+		port number (113).
+	Document the queue status characters in the mailq man page.
+		Suggested by Ulrich Windl of the Universitat Regensburg.
+	Process queued items in which none of the recipient addresses have
+		host portions (or there are no recipients).  Problem noted
+		by Valdis Kletnieks of Virginia Tech.
+	If a cached LDAP connection is used for multiple maps, make sure
+		only the first to open the connection is allowed to close
+		it so a later map close doesn't break the connection for
+		other maps.  Problem noted by Wolfgang Hottgenroth of UUNET.
+	Netscape's LDAP libraries do not support Kerberos V4
+		authentication.  Patch from Rainer Schoepf of the
+		University of Mainz.
+	Provide workaround for inconsistent handling of data passed
+		via callbacks to Cyrus SASL prior to version 1.5.23.
+	Mention ENHANCEDSTATUSCODES in the SMTP HELP helpfile.  Omission
+		noted by Ulrich Windl of the Universitat Regensburg.
+	Portability:
+		Add the ability to read IPv6 interface addresses into class
+			'w' under FreeBSD (and possibly others).  From Jun
+			Kuriyama of IMG SRC, Inc. and the FreeBSD Project.
+		Replace code for finding the number of CPUs on HPUX.
+		NCRUNIX MP-RAS 3.02 SO_REUSEADDR socket option does not
+			work properly causing problems if the accept()
+			fails and the socket needs to be reopened.  Patch
+			from Tom Moore of NCR.
+		NetBSD uses a .0 extension of formatted man pages.  From
+			Andrew Brown of Graffiti World Wide, Inc.
+		Return to using the IPv6 AI_DEFAULT flag instead of AI_V4MAPPED
+			for calls to getipnodebyname().  The Linux
+			implementation is broken so AI_ADDRCONFIG is stripped
+			under Linux.  From John Beck of Sun Microsystems and
+			John Kennedy of Cal State University, Chico.
+	CONFIG: Catch invalid addresses containing a ',' at the wrong place.
+		Patch from Neil Rickert of Northern Illinois University.
+	CONFIG: New variables for the new sendmail options:
+		confCACERT_PATH			CACERTPath
+		confCACERT			CACERTFile
+		confCLIENT_CERT			ClientCertFile
+		confCLIENT_KEY			ClientKeyFile
+		confDH_PARAMETERS		DHParameters
+		confRAND_FILE			RandFile
+		confSERVER_CERT			ServerCertFile
+		confSERVER_KEY			ServerKeyFile
+	CONFIG: Provide basic rulesets for TLS policy control and add new
+		tags to the access database to support these policies.  See
+		cf/README for more information.
+	CONFIG: Add TLS information to the Received: header.
+	CONFIG: Call tls_client ruleset from check_mail in case it wasn't
+		called due to a STARTTLS command.
+	CONFIG: If TLS_PERM_ERR is defined, TLS related errors are permanent
+		instead of temporary.
+	CONFIG: FEATURE(`relay_hosts_only') didn't work in combination with
+		the access map and relaying to a domain without using a To:
+		tag.  Problem noted by Mark G. Thomas of Mark G. Thomas
+		Consulting.
+	CONFIG: Set confEBINDIR to /usr/sbin to match the devtools entry in
+		OSTYPE(`linux') and OSTYPE(`mklinux').  From Tim Pierce of
+		RootsWeb.com.
+	CONFIG: Make sure FEATURE(`nullclient') doesn't use aliasing and
+		forwarding to make it as close to the old behavior as
+		possible.  Problem noted by George W. Baltz of the
+		University of Maryland.
+	CONFIG: Added OSTYPE(`darwin') for Mac OS X and Darwin users.  From
+		Wilfredo Sanchez of Apple Computer, Inc.
+	CONFIG: Changed the map names used by FEATURE(`ldap_routing') from
+		ldap_mailhost and ldap_mailroutingaddress to ldapmh and
+		ldapmra as underscores in map names cause problems if
+		underscore is in OperatorChars.  Problem noted by Bob Zeitz
+		of the University of Alberta.
+	CONFIG: Apply blacklist_recipients also to hosts in class {w}.
+		Patch from Michael Tratz of Esosoft Corporation.
+	CONFIG: Use A=TCP ... instead of A=IPC ... in SMTP mailers.
+	CONTRIB: Add link_hash.sh to create symbolic links to the hash
+		of X.509 certificates.
+	CONTRIB: passwd-to-alias.pl:  More protection from special characters;
+		treat special shells as root aliases; skip entries where the
+		GECOS full name and username match.  From Ulrich Windl of the
+		Universitat Regensburg.
+	CONTRIB: qtool.pl: Add missing last_modified_time method and fix a
+		typo.  Patch from Graeme Hewson of Oracle.
+	CONTRIB: re-mqueue.pl: Improve handling of a race between re-mqueue
+		and sendmail.  Patch from Graeme Hewson of Oracle.
+	CONTRIB: re-mqueue.pl: Don't exit(0) at end so can be called as
+		subroutine Patch from Graeme Hewson of Oracle.
+	CONTRIB: Add movemail.pl (move old mail messages between queues by
+		calling re-mqueue.pl) and movemail.conf (configuration
+		script for movemail.pl).  From Graeme Hewson of Oracle.
+	CONTRIB: Add cidrexpand (expands CIDR blocks as a preprocessor to
+		makemap).  From Derek J. Balling of Yahoo,Inc.
+	DEVTOOLS: INSTALL_RAWMAN installation option mistakenly applied any
+		extension modifications (e.g., MAN8EXT) to the installation
+		target.  Patch from James Ralston of Carnegie Mellon
+		University.
+	DEVTOOLS: Add support for SunOS 5.9.
+	DEVTOOLS: New option confLN contains the command used to create
+		links.
+	LIBSMDB: Berkeley DB 2.X and 3.X errors might be lost and not
+		reported.
+	MAIL.LOCAL: DG/UX portability.  Problem noted by Tim Boyer of
+		Denman Tire Corporation.
+	MAIL.LOCAL: Prevent a possible DoS attack when compiled with
+		-DCONTENTLENGTH.  Based on patch from 3APA3A@SECURITY.NNOV.RU.
+	MAILSTATS: Fix usage statement (-p and -o are optional).
+	MAKEMAP: Change man page layout as workaround for problem with nroff
+		and -man on Solaris 7.  Patch from Larry Williamson.
+	RMAIL: AIX 4.3 has snprintf().  Problem noted by David Hayes of
+		Black Diamond Equipment, Limited.
+	RMAIL: Prevent a segmentation fault if the incoming message does not
+		have a From line.
+	VACATION: Read all of the headers before deciding whether or not
+		to respond instead of stopping after finding recipient.
+	Added Files:
+		cf/ostype/darwin.m4
+		contrib/cidrexpand
+		contrib/link_hash.sh
+		contrib/movemail.conf
+		contrib/movemail.pl
+		devtools/OS/SunOS.5.9
+		test/t_snprintf.c
+
 8.10.2/8.10.2	2000/06/07
 	SECURITY: Work around broken Linux setuid() implementation.
 		On Linux, a normal user process has the ability to subvert
 		the setuid() call such that it is impossible for a root
-		process to drop its privileges.  Problem noted by Wojciech 
+		process to drop its privileges.  Problem noted by Wojciech
 		Purczynski of elzabsoft.pl.
 	SECURITY: Add more vigilance around set*uid(), setgid(), setgroups(),
 		initgroups(), and chroot() calls.
@@ -23,7 +255,7 @@ summary of the changes in that release.
 		AuthMechanisms to prevent information leakage.  We do not
 		recommend use of PLAIN for outgoing mail as it sends the
 		password in clear text to possibly untrusted servers.  See
-		cf/README's DefAuthInfo section for additional information.
+		cf/README's DefaultAuthInfo section for additional information.
 	Copy the ident argument for openlog() to avoid problems on some
 		OSs.  Based on patch from Rob Bajorek from Webhelp.com.
 	Avoid bogus error message when reporting an alias line as too long.
@@ -516,7 +748,7 @@ summary of the changes in that release.
 		"(user=%s)"' and a lookup is done on "*", this would be
 		equivalent to '-k "(user=*)"' -- matching ANY record with a
 		user attribute.  Instead, if the LDAP map specification
-		contains '-k "(user=%0)"' and a lookup is one on "*", this
+		contains '-k "(user=%0)"' and a lookup is done on "*", this
 		would be equivalent to '-k "(user=\2A)"' -- matching a user
 		with the name "*".
 	New LDAP map flags: "-1" requires a single match to be returned, if
@@ -1262,7 +1494,7 @@ summary of the changes in that release.
 		MAILLOCK when compiling.  Also requires linking with
 		-lmail.  Patch from Neil Rickert of Northern Illinois
 		University.
-	MAIL.LOCAL: Create a Content-Length; header if CONTENTLENGTH is
+	MAIL.LOCAL: Create a Content-Length: header if CONTENTLENGTH is
 		defined when compiling.  Automatically set for Solaris 2.3
 		and later.  Patch from Neil Rickert of Northern Illinois
 		University.
@@ -1277,15 +1509,15 @@ summary of the changes in that release.
 	MAIL.LOCAL: Support group writable mail spool files when MAILGID is
 		set to the gid to use (-DMAILGID=6) when compiling.
 		Patch from Neil Rickert of Northern Illinois University.
-	MAIL.LOCAL: When a mail message includes lines longer than 2046
-		characters (in LMTP mode), mail.local will split the
-		incoming line up into 2046-character output lines
-		(excluding the newline).  If an input line is 2047
-		characters long (excluding CR-LF) and the last character is
-		a '.', mail.local will see it as the end of input, transfer
-		it to the user mailbox and try to write an `ok' back to
-		sendmail.  If the message was much longer, both sendmail
-		and mail.local will deadlock waiting for each other to read
+	MAIL.LOCAL: When a mail message included lines longer than 2046
+		characters (in LMTP mode), mail.local split the incoming
+		line up into 2046-character output lines (excluding the
+		newline).  If an input line was 2047 characters long
+		(excluding CR-LF) and the last character was a '.',
+		mail.local saw it as the end of input, transfered it to the
+		user mailbox and tried to write an `ok' back to sendmail.
+		If the message was much longer, both sendmail and
+		mail.local would deadlock waiting for each other to read
 		what they have written.  Problem noted by Peter Jeremy of
 		Alcatel Australia Limited.
 	MAIL.LOCAL: New option -b to return a permanent error instead of a

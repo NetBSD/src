@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: praliases.c,v 8.59 2000/03/17 07:32:47 gshapiro Exp";
+static char id[] = "@(#)Id: praliases.c,v 8.59.4.10 2000/07/18 05:41:39 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sys/types.h>
@@ -32,6 +32,7 @@ static char id[] = "@(#)Id: praliases.c,v 8.59 2000/03/17 07:32:47 gshapiro Exp"
 # undef EX_OK		/* unistd.h may have another use for this */
 #endif /* EX_OK */
 #include <sysexits.h>
+
 
 #ifndef NOT_SENDMAIL
 # define NOT_SENDMAIL
@@ -55,6 +56,7 @@ BITMAP256 DontBlameSendmail;
 
 extern void	syserr __P((const char *, ...));
 
+
 int
 main(argc, argv)
 	int argc;
@@ -71,6 +73,7 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind;
 
+
 	clrbitmap(DontBlameSendmail);
 	RunAsUid = RealUid = getuid();
 	RunAsGid = RealGid = getgid();
@@ -82,12 +85,12 @@ main(argc, argv)
 		snprintf(rnamebuf, sizeof rnamebuf, "%s", pw->pw_name);
 	}
 	else
-		snprintf(rnamebuf, sizeof rnamebuf,
-			 "Unknown UID %d", (int) RealUid);
+		(void) snprintf(rnamebuf, sizeof rnamebuf, "Unknown UID %d",
+				(int) RealUid);
 	RunAsUserName = RealUserName = rnamebuf;
 
 	cfile = _PATH_SENDMAILCF;
-	while ((ch = getopt(argc, argv, "C:f:")) != EOF)
+	while ((ch = getopt(argc, argv, "C:f:")) != -1)
 	{
 		switch ((char)ch) {
 		case 'C':

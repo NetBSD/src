@@ -12,16 +12,18 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: stats.c,v 8.36 1999/12/06 21:17:02 ca Exp";
+static char id[] = "@(#)Id: stats.c,v 8.36.14.2 2000/05/25 23:33:34 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
 #include <sendmail/mailstats.h>
 
+
 static struct statistics	Stat;
 
 static bool	GotStats = FALSE;	/* set when we have stats to merge */
 
+/* See http://physics.nist.gov/cuu/Units/binary.html */
 #define ONE_K		1000		/* one thousand (twenty-four?) */
 #define KBYTES(x)	(((x) + (ONE_K - 1)) / ONE_K)
 /*
@@ -72,6 +74,8 @@ markstats(e, to, reject)
 		Stat.stat_nt[to->q_mailer->m_mno]++;
 		Stat.stat_bt[to->q_mailer->m_mno] += KBYTES(e->e_msgsize);
 	}
+
+
 	GotStats = TRUE;
 }
 /*

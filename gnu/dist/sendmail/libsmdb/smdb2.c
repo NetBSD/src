@@ -8,12 +8,13 @@
 */
 
 #ifndef lint
-static char id[] = "@(#)Id: smdb2.c,v 8.53 2000/03/17 07:32:43 gshapiro Exp";
+static char id[] = "@(#)Id: smdb2.c,v 8.53.2.1.2.1 2000/05/25 18:56:10 gshapiro Exp";
 #endif /* ! lint */
 
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 
 #include <sendmail/sendmail.h>
 #include <libsmdb/smdb.h>
@@ -137,7 +138,7 @@ db2_error_to_smdb(error)
 			break;
 
 		default:
-			result = errno;
+			result = error;
 	}
 	return result;
 }

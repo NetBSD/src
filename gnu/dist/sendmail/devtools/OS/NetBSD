@@ -1,4 +1,4 @@
-#	Id: NetBSD,v 8.9 1999/12/25 01:24:09 gshapiro Exp
+#	Id: NetBSD,v 8.9.14.1 2000/04/27 21:24:06 gshapiro Exp
 define(`confMAPDEF', `-DNEWDB -DNIS -DMAP_REGEX')
 define(`confENVDEF', ` -DNETISO')
 define(`confDEPEND_TYPE', `CC-M')
@@ -8,3 +8,8 @@ define(`confUBINOWN', `root')
 define(`confUBINGRP', `wheel')
 define(`confMANOWN', `root')
 define(`confMANGRP', `wheel')
+define(`confMAN1EXT', `0')
+define(`confMAN3EXT', `0')
+define(`confMAN4EXT', `0')
+define(`confMAN5EXT', `0')
+define(`confMAN8EXT', `0')

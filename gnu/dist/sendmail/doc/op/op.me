@@ -9,7 +9,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	Id: op.me,v 8.317 2000/04/06 21:05:27 gshapiro Exp
+.\"	Id: op.me,v 8.317.4.25 2000/07/19 18:42:01 ca Exp
 .\"
 .\" eqn op.me | pic | troff -me
 .eh 'SMM:08-%''Sendmail Installation and Operation Guide'
@@ -54,10 +54,10 @@ eric@Sendmail.COM
 .de Ve
 Version \\$2
 ..
-.Ve Revision: 8.317
+.Ve Revision: 8.317.4.25
 .rm Ve
 .sp
-For Sendmail Version 8.10
+For Sendmail Version 8.11
 .)l
 .(f
 Sendmail is a trademark of Sendmail, Inc.
@@ -106,6 +106,7 @@ RFC1985 (SMTP Service Extension for Remote Message Queue Starting),
 RFC2033 (Local Message Transmission Protocol),
 RFC2034 (SMTP Service Extension for Returning Enhanced Error Codes),
 RFC2476 (Message Submission),
+RFC2487 (SMTP Service Extension for Secure SMTP over TLS),
 and
 RFC2554 (SMTP Service Extension for Authentication).
 However, since
@@ -148,12 +149,6 @@ describes configuration that can be done at compile time.
 The appendixes give a brief
 but detailed explanation of a number of features
 not described in the rest of the paper.
-.bp
-.rs
-.sp |4i
-.ce 2
-This page intentionally left blank;
-replace it with a blank sheet for double-sided output.
 .bp 7
 .sh 1 "BASIC INSTALLATION"
 .pp
@@ -265,6 +260,7 @@ program.
 .pp
 (This section is not yet complete.
 For now, see the file devtools/README for details.)
+See sendmail/README for various compilation flags that can be set.
 .sh 3 "Tweaking the Makefile"
 .pp
 .\" .b "XXX This should all be in the Site Configuration File section."
@@ -1583,6 +1579,9 @@ and is deprecated.
 The Precedence: header can be used as a crude control of message priority.
 It tweaks the sort order in the queue
 and can be configured to change the message timeout values.
+The precedence of a message also controls how
+delivery status notifications (DSNs)
+are processed for that message.
 .sh 2 "IDENT Protocol Support"
 .pp
 .i Sendmail
@@ -2033,6 +2032,9 @@ flag
 specifies how often a sub-daemon will run the queue.
 This is typically set to between fifteen minutes
 and one hour.
+If not set,
+or set to zero,
+the queue will not be run automatically.
 RFC 1123 section 5.3.1.1 recommends that this be at least 30 minutes.
 .sh 3 "Read timeouts"
 .pp
@@ -2521,7 +2523,8 @@ Successful deliveries and alias database rebuilds.
 Messages being deferred
 (due to a host being down, etc.).
 .ip 10
-Database expansion (alias, forward, and userdb lookups).
+Database expansion (alias, forward, and userdb lookups)
+and authentication information.
 .ip 11
 NIS errors and end of job processing.
 .ip 12
@@ -2602,6 +2605,8 @@ and make
 setuid to that)
 which will fix the privacy problems
 but not the functionality issues.
+It also introduces problems on some operating systems
+if sendmail needs to give up the setuid special privileges.
 Also, this isn't a guarantee of security:
 for example,
 root occasionally sends mail,
@@ -2749,6 +2754,9 @@ Allow a
 .i :include:
 file that is in an unsafe directory to include references
 to program and files.
+.ip InsufficientEntropy
+Try to use STARTTLS even if the PRNG for OpenSSL is not properly seeded
+despite the security problems.
 .ip MapInUnsafeDirPath
 Allow maps (e.g.,
 .i hash ,
@@ -3177,6 +3185,10 @@ Macro expansions of the form
 .b $ \c
 .i x
 are performed when the configuration file is read.
+A literal
+.b $
+can be included using
+.b $$ .
 Expansions of the form
 .b $& \c
 .i x
@@ -3596,7 +3608,10 @@ this mailer can not be chosen as a mailer in ruleset 0.
 .pp
 The
 .i check_relay
-ruleset is called after a connection is accepted.
+ruleset is called after a connection is accepted by the daemon.
+It is not called when sendmail is started using the
+.b \-bs
+option.
 It is passed
 .(b
 client.host.name $| client.host.address
@@ -3727,6 +3742,31 @@ If the ruleset does resolve to the
 .q error
 mailer the AUTH= parameter is not trusted and hence
 not passed on to the next relay.
+.sh 4 "tls_client"
+.pp
+The
+.i tls_client
+ruleset is called when sendmail acts as server, after a STARTTLS command
+has been issued, and from
+.i check_mail.
+The parameter is the value of
+.b ${verify}
+and STARTTLS or MAIL, respectively.
+If the ruleset does resolve to the
+.q error
+mailer, the appropriate error code is returned to the client.
+.sh 4 "tls_server"
+.pp
+The
+.i tls_server
+ruleset is called when sendmail acts as client after a STARTTLS command
+(should) have been issued.
+The parameter is the value of
+.b ${verify} .
+If the ruleset does resolve to the
+.q error
+mailer, the connection is aborted
+(treated as non-deliverable with a permanent or temporary error).
 .sh 3 "IPC mailers"
 .pp
 Some special processing occurs
@@ -4024,10 +4064,24 @@ command if supplied.
 .ip ${auth_type}
 The mechanism used for authentication
 (only set if successful).
+.ip ${auth_ssf}
+The keylength (in bits) of the symmetric encryption algorithm
+used for the security layer of a SASL mechanism.
 .ip ${bodytype}
 The message body type
 (7BIT or 8BITMIME),
 as determined from the envelope.
+.ip ${cert_issuer}
+The DN (distinguished name) of the CA (certificate authority)
+that signed the presented certificate (the cert issuer).
+.ip ${cert_subject}
+The DN of the presented certificate (called the cert subject).
+.ip ${cipher}
+The cipher suite used for the connection, e.g., EDH-DSS-DES-CBC3-SHA,
+EDH-RSA-DES-CBC-SHA, DES-CBC-MD5, DES-CBC3-SHA.
+.ip ${cipher_bits}
+The keylength (in bits) of the symmetric encryption algorithm
+used for a TLS connection.
 .ip ${client_addr}
 The IP address of the SMTP client.
 Defined in the SMTP server only.
@@ -4168,6 +4222,26 @@ The mailer from the resolved triple of the address given for the
 .sm "SMTP RCPT"
 command.
 Defined in the SMTP server only.
+.ip ${server_addr}
+The address of the server of the current outgoing SMTP connection.
+.ip ${server_name}
+The name of the server of the current outgoing SMTP connection.
+.ip ${tls_version}
+The TLS/SSL version used for the connection, e.g., TLSv1, SSLv3, SSLv2.
+.ip ${verify}
+The result of the verification of the presented cert.
+Possible values are:
+.(b
+.ta 9n
+OK	verification succeeded.
+NO	no cert presented.
+FAIL	cert presented but could not be verified,
+	e.g., the signing CA is missing.
+NONE	STARTTLS has not been performed.
+TEMP	temporary error occurred.
+PROTOCOL some protocol error occurred.
+SOFTWARE STARTTLS handshake failed.
+.)b
 .pp
 There are three types of dates that can be used.
 The
@@ -4439,6 +4513,15 @@ reads the elements of the class
 .i c
 from the named
 .i file .
+Each element should be listed on a separate line.
+To specify an optional file, use ``-o'' between the class
+name and the file name, e.g.,
+.(b
+Fc -o /path/to/file
+.)b
+If the file can't be used,
+.i sendmail
+will not complain but silently ignore it.
 .pp
 Elements of classes can be accessed in rules using
 .b $=
@@ -5362,6 +5445,12 @@ Set the blank substitution character to
 .i c .
 Unquoted spaces in addresses are replaced by this character.
 Defaults to space (i.e., no change is made).
+.ip CACERTPath
+[no short name]
+Path to directory with certificates of CAs.
+.ip CACERTFile
+[no short name]
+File containing one CA certificate.
 .ip CheckAliases
 [n]
 Validate the RHS of aliases when rebuilding the alias database.
@@ -5387,6 +5476,10 @@ lines in the configuration file)
 and subtracted from the priority.
 Thus, messages with a higher Priority: will be favored.
 Defaults to 1800.
+.ip ClientCertFile
+[no short name]
+File containing the certificate of the client, i.e., this certificate
+is used when sendmail acts as client.
 .ip ClientPortOptions=\fIoptions\fP
 [O]
 Set client SMTP options.
@@ -5416,6 +5509,9 @@ h	use name of interface for HELO command
 If ``h'' is set, the name corresponding to the outgoing interface
 address (whether chosen via the Connection parameter or
 the default) is used for the HELO/EHLO command.
+.ip ClientKeyFile
+[no short name]
+File containing the private key belonging to the client certificate.
 .ip ColonOkInAddr
 [no short name]
 If set, colons are acceptable in e-mail addresses
@@ -5498,9 +5594,13 @@ the free disk space (in blocks) of the queue directory,
 and the load average of the machine expressed as an integer.
 If not set, no control socket will be available.
 Solaris and pre-4.4BSD kernel users should see the note in sendmail/README .
+.ip DHParameters
+File with DH parameters for STARTTLS.
+This is only required if DSA/DH is used.
 .ip DaemonPortOptions=\fIoptions\fP
 [O]
 Set server SMTP options.
+Each instance of DaemonPortOptions leads to an additional incoming socket.
 The options are
 .i key=value
 pairs.
@@ -5523,12 +5623,17 @@ The
 .i Addr ess
 mask may be a numeric address in dot notation
 or a network name.
+The 
+.i Family
+key defaults to INET (IPv4).
+IPv6 users who wish to also accept IPv6 connections
+should add additional Family=inet6 DaemonPortOptions lines.
 .i Modifier
 can be a sequence (without any delimiters)
 of the following characters:
 .(b
 .ta 1i
-a	require authentication
+a	always require authentication
 b	bind to interface through which mail has been received
 c	perform hostname canonification (.cf)
 f	require fully qualified hostname (.cf)
@@ -5537,7 +5642,7 @@ C	don't perform hostname canonification
 E	disallow ETRN (see RFC 2476)
 .)b
 That is, one way to specify a message submission agent (MSA) that
-requires authentication is:
+always requires authentication is:
 .(b
 O DaemonPortOptions=Name=MSA, Port=587, M=Ea
 .)b
@@ -5710,6 +5815,7 @@ HelpFileinUnsafeDirPath
 IncludeFileInUnsafeDirPath
 IncludeFileInUnsafeDirPathSafe
 IncludeFileIngroupWritableDirPath
+InsufficientEntropy
 LinkedAliasFileInWritableDir
 LinkedClassFileInWritableDir
 LinkedForwardFileInWritableDir
@@ -6017,7 +6123,7 @@ If set,
 .i sendmail
 will refuse connections when it has more than
 .i N
-children processing incoming mail.
+children processing incoming mail or automatic queue runs.
 This does not limit the number of outgoing connections.
 If not set, there is no limit to the number of children --
 that is, the system load averaging controls this.
@@ -6178,6 +6284,7 @@ If set,
 copies of error messages will be sent to the named
 .i postmaster .
 Only the header of the failed message is sent.
+Errors resulting from messages with a negative precedence will not be sent.
 Since most errors are user problems,
 this is probably not a good idea on large sites,
 and arguably contains all sorts of privacy violations,
@@ -6319,6 +6426,13 @@ A synonym for
 Use that form instead of the
 .q QueueTimeout
 form.
+.ip RandFile
+[no short name]
+Name of file containing random data or the name of the Unix socket
+if EGD is used.
+A (required) prefix "egd:" or "file:" specifies the type.
+STARTTLS requires this filename if the compile flag HASURANDOM is not set
+(see sendmail/README).
 .ip ResolverOptions=\fIoptions\fP
 [I]
 Set resolver options.
@@ -6482,6 +6596,13 @@ If disabled,
 will not return the DSN keyword in response to an EHLO
 and will not do Delivery Status Notification processing as described in
 RFC1891.
+.ip ServerCertFile
+[no short name]
+File containing the certificate of the server, i.e., this certificate
+is used when sendmail acts as server.
+.ip ServerKeyFile
+[no short name]
+File containing the private key belonging to the server certificate.
 .ip ServiceSwitchFile=\fIfilename\fP
 [no short name]
 If your host operating system has a service switch abstraction
@@ -7258,6 +7379,14 @@ to select the substrings in the result of the lookup.  For example,
 .(b
 -s1,3,4
 .)b
+Notes: to match a
+.b $ 
+in a string,
+\\$$
+must be used.
+If the pattern contains spaces, they must be replaced
+with the blank substitution character, unless it is
+space itself.
 .ip program
 The arguments on the
 .b K
@@ -7791,6 +7920,14 @@ Compile in support for ph lookups.
 .ip SASL
 Compile in support for SASL,
 a required component for SMTP Authentication support.
+.ip STARTTLS
+Compile in support for STARTTLS.
+.ip EGD
+Compile in support for the "Entropy Gathering Daemon"
+to provide better random data for TLS.
+.ip SFIO
+Compile in support for sfio, which is required to enable encryption,
+e.g., STARTTLS.
 .ip TCPWRAPPERS
 Compile in support for TCP Wrappers.
 .ip _PATH_SENDMAILCF
@@ -7911,6 +8048,7 @@ if your system doesn't support the Internet protocols.
 .ip NETINET6\(dg
 If set,
 support for IPv6 networking is compiled in.
+It must be separately enabled by adding DaemonPortOptions settings.
 .ip NETISO\(dg
 If set,
 support for ISO protocol networking is compiled in
@@ -8493,6 +8631,84 @@ if you wanted to generalize
 .b $]
 lookups.
 We now recommend that you create a new keyed map instead.
+.sh 2 "Certificates for STARTTLS"
+.pp
+In this section we assume that
+.i sendmail
+has been compiled with support for STARTTLS.
+When acting as a server,
+.i sendmail
+requires X.509 certificates to support STARTTLS:
+one as certificate for the server (ServerCertFile)
+at least one root CA (CACERTFile),
+i.e., a certificate that is used to sign other certificates,
+and a path to a directory which contains other CAs (CACERTPath).
+The file specified via
+CACERTFile
+can contain several certificates of CAs.
+The DNs of these certificates are sent
+to the client during the TLS handshake (as part of the
+CertificateRequest) as the list of acceptable CAs.
+An X.509 certificate is also required for authentication in client mode
+(ClientCertFile), however,
+.i sendmail
+will always use STARTTLS when offered by a server.
+The client and server certificates can be identical.
+Certificates can be obtained from a certificate authority
+or created with the help of OpenSSL.
+The required format for certificates and private keys is PEM.
+To allow for automatic startup of sendmail, private keys
+(ServerKeyFile, ClientKeyFile)
+must be stored unencrypted.
+The keys are only protected by the permissions of the file system.
+Never make a private key available to a third party.
+.sh 2 "PRNG for STARTTLS"
+.pp
+STARTTLS requires a strong pseudo random number generator (PRNG)
+to operate properly.
+Depending on the TLS library you use, it may be required to explicitly
+initialize the PRNG with random data.
+OpenSSL makes use of
+.b /dev/urandom(4)
+if available (this corresponds to the compile flag HASURANDOM).
+On systems which lack this support, a random file must be specified in the
+.i sendmail.cf
+file using the option RandFile.
+It is
+.b strongly
+advised to use the "Entropy Gathering Daemon" EGD
+from Brian Warner on those systems to provide useful random data.
+In this case,
+.i sendmail 
+must be compiled with the flag EGD, and the
+RandFile option must point to the EGD socket.
+If neither
+.b /dev/urandom(4)
+nor EGD are available, you have to make sure
+that useful random data is available all the time in RandFile.
+If the file hasn't been modified in the last 10 minutes before
+it is supposed to be used by
+.i sendmail 
+the content is considered obsolete.
+One method for generating this file is:
+.(b
+openssl rand -out /etc/mail/randfile -rand \c
+.i /path/to/file:... \c
+256
+.)b
+See the OpenSSL documentation for more information.
+In this case, the PRNG for TLS is only
+seeded with other random data if the
+.b DontBlameSendmail
+option
+.b InsufficientEntropy
+is set.
+This is most likely not sufficient for certain actions, e.g.,
+generation of (temporary) keys.
+.pp
+Please see the OpenSSL documentation or other sources
+for further information about certificates, their creation and their usage,
+the importance of a good PRNG, and other aspects of TLS.
 .sh 1 "ACKNOWLEDGEMENTS"
 .pp
 I've worked on
@@ -8901,6 +9117,11 @@ binaries to read queue files created by older versions.
 Defaults to version zero.
 Must be the first line of the file if present.
 For 8.10 the version number is 4.
+.ip A
+The information given by the AUTH= parameter of the
+.q "MAIL FROM:"
+command or $f@$j
+if sendmail has been called directly.
 .ip H
 A header definition.
 There may be any number of these lines.
@@ -9130,7 +9351,7 @@ replace it with a blank sheet for double-sided output.
 .\".sz 10
 .\"Eric Allman
 .\".sp
-.\"Version Revision: 8.317
+.\"Version Revision: 8.317.4.25
 .\".ce 0
 .bp 3
 .ce

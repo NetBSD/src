@@ -8,7 +8,7 @@
  */
 
 /*
-**  MILTER.H -- include file for mail filter library functions
+**  LIBMILTER.H -- include file for mail filter library functions
 */
 
 #ifndef _LIBMILTER_H
@@ -17,20 +17,29 @@
 # define EXTERN
 # define INIT(x)	= x
 # ifndef lint
-static char MilterlId[] = "@(#)Id: libmilter.h,v 8.3 2000/02/26 01:32:13 gshapiro Exp";
+static char MilterlId[] = "@(#)Id: libmilter.h,v 8.3.6.4 2000/06/09 07:12:13 gshapiro Exp";
 # endif /* ! lint */
 #else /* _DEFINE */
 # define EXTERN extern
 # define INIT(x)
 #endif /* _DEFINE */
 
+
+#define NOT_SENDMAIL	1
+#define _SOCK_ADDR	union bigsockaddr
+#include "sendmail.h"
+
 #include "libmilter/milter.h"
-#include "libmilter/mfapi.h"
 
 #ifndef __P
 # include "sendmail/cdefs.h"
 #endif /* ! __P */
 #include "sendmail/useful.h"
+
+# define ValidSocket(sd)	((sd) >= 0)
+
+# define thread_create(ptid,wr,arg) pthread_create(ptid, NULL, wr, arg)
+# define sthread_get_id()	pthread_self()
 
 #include <sys/time.h>
 
@@ -84,8 +93,8 @@ extern void	mi_clean_signals __P((void));
 extern struct hostent *mi_gethostbyname __P((char *, int));
 
 /* communication functions */
-extern char	*mi_rd_cmd __P((int, struct timeval *, char *, size_t *, char *));
-extern int	mi_wr_cmd __P((int, struct timeval *, int, char *, size_t));
+extern char	*mi_rd_cmd __P((socket_t, struct timeval *, char *, size_t *, char *));
+extern int	mi_wr_cmd __P((socket_t, struct timeval *, int, char *, size_t));
 extern bool	mi_sendok __P((SMFICTX_PTR, int));
 
 #endif /* !_LIBMILTER_H */

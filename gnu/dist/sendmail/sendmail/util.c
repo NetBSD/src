@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,11 +12,12 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: util.c,v 8.225.4.1 2000/05/27 19:56:01 gshapiro Exp";
+static char id[] = "@(#)Id: util.c,v 8.225.2.1.2.8 2000/07/03 18:28:56 geir Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
 #include <sysexits.h>
+
 
 static void	readtimeout __P((time_t));
 
@@ -239,7 +240,7 @@ shorten_rfc822_string(string, length)
 
 increment:
 		/* Check for sufficient space for next character */
-		if (length - (ptr - string) <= ((backslash ? 1 : 0) +
+		if (length - (ptr - string) <= (size_t) ((backslash ? 1 : 0) +
 						parencount +
 						(quoted ? 1 : 0)))
 		{
@@ -935,7 +936,8 @@ putxline(l, len, mci, pxflags)
 
 			while (l < q)
 			{
-				if (putc(*l++, mci->mci_out) == EOF)
+				if (putc((unsigned char) *l++, mci->mci_out) ==
+				    EOF)
 				{
 					dead = TRUE;
 					break;
@@ -962,7 +964,8 @@ putxline(l, len, mci, pxflags)
 			if (TrafficLogFile != NULL)
 			{
 				for (l = l_base; l < q; l++)
-					(void) putc(*l, TrafficLogFile);
+					(void) putc((unsigned char)*l,
+						    TrafficLogFile);
 				fprintf(TrafficLogFile, "!\n%05d >>>  ",
 					(int) getpid());
 			}
@@ -994,8 +997,8 @@ putxline(l, len, mci, pxflags)
 		for ( ; l < p; ++l)
 		{
 			if (TrafficLogFile != NULL)
-				(void) putc(*l, TrafficLogFile);
-			if (putc(*l, mci->mci_out) == EOF)
+				(void) putc((unsigned char)*l, TrafficLogFile);
+			if (putc((unsigned char) *l, mci->mci_out) == EOF)
 			{
 				dead = TRUE;
 				break;
@@ -1075,6 +1078,7 @@ xunlink(f)
 **	Side Effects:
 **		none.
 */
+
 
 static jmp_buf	CtxReadTimeout;
 
@@ -2268,6 +2272,8 @@ proc_list_drop(pid)
 	}
 	if (CurChildren > 0)
 		CurChildren--;
+
+
 	return type;
 }
 /*

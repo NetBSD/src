@@ -21,12 +21,14 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: main.c,v 8.485.6.2 2000/05/28 18:00:12 gshapiro Exp";
+static char id[] = "@(#)Id: main.c,v 8.485.4.19 2000/06/29 01:31:02 gshapiro Exp";
 #endif /* ! lint */
 
 #define	_DEFINE
 
 #include <sendmail.h>
+
+
 #if NETINET || NETINET6
 # include <arpa/inet.h>
 #endif /* NETINET || NETINET6 */
@@ -91,7 +93,8 @@ ERROR %%%%   Cannot have SMTP mode without QUEUE   %%%% ERROR
 #define MAXCONFIGLEVEL	9	/* highest config version level known */
 
 #if SASL
-static sasl_callback_t srvcallbacks[] = {
+static sasl_callback_t srvcallbacks[] =
+{
 	{	SASL_CB_VERIFYFILE,	&safesaslfile,	NULL	},
 	{	SASL_CB_PROXY_POLICY,	&proxy_policy,	NULL	},
 	{	SASL_CB_LIST_END,	NULL,		NULL	}
@@ -157,6 +160,7 @@ main(argc, argv, envp)
 	/* do machine-dependent initializations */
 	init_md(argc, argv);
 
+
 	/* in 4.4BSD, the table can be huge; impose a reasonable limit */
 	DtableSize = getdtsize();
 	if (DtableSize > 256)
@@ -180,11 +184,11 @@ main(argc, argv, envp)
 	errno = 0;
 
 #if LOG
-# ifdef LOG_MAIL
+#  ifdef LOG_MAIL
 	openlog("sendmail", LOG_PID, LOG_MAIL);
-# else /* LOG_MAIL */
+#  else /* LOG_MAIL */
 	openlog("sendmail", LOG_PID);
-# endif /* LOG_MAIL */
+#  endif /* LOG_MAIL */
 #endif /* LOG */
 
 	if (MissingFds != 0)
@@ -233,10 +237,10 @@ main(argc, argv, envp)
 	dp = drop_privileges(FALSE);
 	setstat(dp);
 
-#ifdef SIGUSR1
+# ifdef SIGUSR1
 	/* arrange to dump state on user-1 signal */
 	(void) setsignal(SIGUSR1, sigusr1);
-#endif /* SIGUSR1 */
+# endif /* SIGUSR1 */
 
 	/* initialize for setproctitle */
 	initsetproctitle(argc, argv, envp);
@@ -247,6 +251,7 @@ main(argc, argv, envp)
 	/*
 	**  Do a quick prescan of the argument list.
 	*/
+
 
 #if defined(__osf__) || defined(_AIX3)
 # define OPTIONS	"B:b:C:cd:e:F:f:Gh:IiL:M:mN:nO:o:p:q:R:r:sTtUV:vX:x"
@@ -295,11 +300,11 @@ main(argc, argv, envp)
 	{
 #if LOG
 		closelog();
-# ifdef LOG_MAIL
+#  ifdef LOG_MAIL
 		openlog(sysloglabel, LOG_PID, LOG_MAIL);
-# else /* LOG_MAIL */
+#  else /* LOG_MAIL */
 		openlog(sysloglabel, LOG_PID);
-# endif /* LOG_MAIL */
+#  endif /* LOG_MAIL */
 #endif /* LOG */
 	}
 
@@ -328,6 +333,7 @@ main(argc, argv, envp)
 	else
 		(void) snprintf(rnamebuf, sizeof rnamebuf, "Unknown UID %d",
 				(int) RealUid);
+
 	RealUserName = rnamebuf;
 
 	if (tTd(0, 101))
@@ -478,8 +484,17 @@ main(argc, argv, envp)
 #if NAMED_BIND
 	if (!bitset(RES_INIT, _res.options))
 		(void) res_init();
+
+	/*
+	**  hack to avoid crashes when debugging for the resolver is
+	**  turned on and sfio is used
+	*/
 	if (tTd(8, 8))
+# if !SFIO || SFIO_STDIO_COMPAT
 		_res.options |= RES_DEBUG;
+# else /* !SFIO || SFIO_STDIO_COMPAT */
+		dprintf("RES_DEBUG not available due to SFIO\n");
+# endif /* !SFIO || SFIO_STDIO_COMPAT */
 	else
 		_res.options &= ~RES_DEBUG;
 # ifdef RES_NOALIASES
@@ -719,7 +734,7 @@ main(argc, argv, envp)
 			break;
 
 		  case 'h':	/* hop count */
-			CurEnv->e_hopcount = strtol(optarg, &ep, 10);
+			CurEnv->e_hopcount = (short) strtol(optarg, &ep, 10);
 			if (*ep)
 			{
 				usrerr("Bad hop count (%s)", optarg);
@@ -1378,7 +1393,6 @@ main(argc, argv, envp)
 	setclass(macid("{persistentMacros}", NULL), "s");
 	setclass(macid("{persistentMacros}", NULL), "_");
 	setclass(macid("{persistentMacros}", NULL), "{if_addr}");
-	setclass(macid("{persistentMacros}", NULL), "{if_family}");
 	setclass(macid("{persistentMacros}", NULL), "{daemon_flags}");
 	setclass(macid("{persistentMacros}", NULL), "{client_flags}");
 
@@ -1550,6 +1564,22 @@ main(argc, argv, envp)
 	}
 
 #if SMTP
+# if STARTTLS
+	/*
+	**  basic TLS initialization
+	**  ignore result for now
+	*/
+	SSL_library_init();
+	SSL_load_error_strings();
+#  if 0
+	/* this is currently a macro for SSL_library_init */
+	SSLeay_add_ssl_algorithms();
+#  endif /* 0 */
+
+	/* initialize PRNG */
+	tls_rand_init(RandFile, 7);
+
+# endif /* STARTTLS */
 #endif /* SMTP */
 
 #if QUEUE
@@ -1560,6 +1590,12 @@ main(argc, argv, envp)
 	if (OpMode == MD_QUEUERUN && QueueIntvl == 0)
 	{
 # if SMTP
+#  if STARTTLS
+		{
+			/* init TLS for client, ignore result for now */
+			(void) initclttls();
+		}
+#  endif /* STARTTLS */
 # endif /* SMTP */
 		(void) runqueue(FALSE, Verbose);
 		finis(TRUE, ExitStat);
@@ -1638,6 +1674,10 @@ main(argc, argv, envp)
 		dropenvelope(CurEnv, TRUE);
 
 #if DAEMON
+# if STARTTLS
+		/* init TLS for server, ignore result for now */
+		(void) initsrvtls();
+# endif /* STARTTLS */
 		p_flags = getrequests(CurEnv);
 
 		/* drop privileges */
@@ -1658,8 +1698,7 @@ main(argc, argv, envp)
 	if (LogLevel > 9)
 	{
 		/* log connection information */
-		sm_syslog(LOG_INFO, CurEnv->e_id,
-			  "connect from %.100s", authinfo);
+		sm_syslog(LOG_INFO, NULL, "connect from %.100s", authinfo);
 	}
 
 #if SMTP
@@ -1734,6 +1773,10 @@ main(argc, argv, envp)
 			p_flags = (BITMAP256 *) xalloc(sizeof *p_flags);
 			clrbitmap(p_flags);
 		}
+# if STARTTLS
+		if (OpMode == MD_SMTP)
+			(void) initsrvtls();
+# endif /* STARTTLS */
 		smtp(nullserver, *p_flags, CurEnv);
 	}
 #endif /* SMTP */
@@ -2345,7 +2388,7 @@ auth_warning(e, msg, va_alist)
 		VA_START(msg);
 		vsnprintf(p, SPACELEFT(buf, p), msg, ap);
 		VA_END;
-		addheader("X-Authentication-Warning", buf, &e->e_header);
+		addheader("X-Authentication-Warning", buf, 0, &e->e_header);
 		if (LogLevel > 3)
 			sm_syslog(LOG_INFO, e->e_id,
 				  "Authentication-Warning: %.400s",
@@ -2590,6 +2633,8 @@ drop_privileges(to_real_uid)
 	}
 	if (to_real_uid || RunAsUid != 0)
 	{
+		uid_t euid = geteuid();
+
 		if (setuid(RunAsUid) < 0)
 		{
 			syserr("drop_privileges: setuid(%d) failed",
@@ -2606,6 +2651,17 @@ drop_privileges(to_real_uid)
 			*/
 
 			syserr("drop_privileges: setuid(0) succeeded (when it should not)");
+			rval = EX_OSERR;
+		}
+		else if (RunAsUid != euid && setuid(euid) == 0)
+		{
+			/*
+			**  Some operating systems will keep the saved-uid
+			**  if a non-root effective-uid calls setuid(real-uid)
+			**  making it possible to set it back again later.
+			*/
+
+			syserr("drop_privileges: Unable to drop non-root set-user-id privileges");
 			rval = EX_OSERR;
 		}
 	}

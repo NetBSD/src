@@ -11,17 +11,18 @@
  *
  */
 
+
 #include <sendmail.h>
 
 #ifndef lint
 # if QUEUE
-static char id[] = "@(#)Id: queue.c,v 8.343 2000/03/15 06:58:09 gshapiro Exp (with queueing)";
+static char id[] = "@(#)Id: queue.c,v 8.343.4.11 2000/07/14 05:55:51 gshapiro Exp (with queueing)";
 # else /* QUEUE */
-static char id[] = "@(#)Id: queue.c,v 8.343 2000/03/15 06:58:09 gshapiro Exp (without queueing)";
+static char id[] = "@(#)Id: queue.c,v 8.343.4.11 2000/07/14 05:55:51 gshapiro Exp (without queueing)";
 # endif /* QUEUE */
 #endif /* ! lint */
 
-#include <dirent.h>
+# include <dirent.h>
 
 #if QUEUE
 
@@ -82,6 +83,8 @@ static int	workcmpf4();
 **		The queue file is left locked.
 */
 
+# define TEMPQF_LETTER 'T'
+
 void
 queueup(e, announce)
 	register ENVELOPE *e;
@@ -115,34 +118,38 @@ queueup(e, announce)
 	/* if newid, just write the qf file directly (instead of tf file) */
 	if (!newid)
 	{
+		int flags;
+
+		flags = O_CREAT|O_WRONLY|O_EXCL;
+
 		/* get a locked tf file */
 		for (i = 0; i < 128; i++)
 		{
-#if _FFR_QUEUE_FILE_MODE
+			if (tfd < 0)
 			{
+#if _FFR_QUEUE_FILE_MODE
 				MODE_T oldumask;
 
 				if (bitset(S_IWGRP, QueueFileMode))
 					oldumask = umask(002);
-				tfd = open(tf, O_CREAT|O_WRONLY|O_EXCL,
-					   QueueFileMode);
+				tfd = open(tf, flags, QueueFileMode);
 				if (bitset(S_IWGRP, QueueFileMode))
 					(void) umask(oldumask);
-			}
 #else /* _FFR_QUEUE_FILE_MODE */
-			tfd = open(tf, O_CREAT|O_WRONLY|O_EXCL, FileMode);
+				tfd = open(tf, flags, FileMode);
 #endif /* _FFR_QUEUE_FILE_MODE */
 
-			if (tfd < 0)
-			{
-				if (errno != EEXIST)
-					break;
-				if (LogLevel > 0 && (i % 32) == 0)
-					sm_syslog(LOG_ALERT, e->e_id,
-						  "queueup: cannot create %s, uid=%d: %s",
-						  tf, geteuid(), errstring(errno));
+				if (tfd < 0)
+				{
+					if (errno != EEXIST)
+						break;
+					if (LogLevel > 0 && (i % 32) == 0)
+						sm_syslog(LOG_ALERT, e->e_id,
+							  "queueup: cannot create %s, uid=%d: %s",
+							  tf, geteuid(), errstring(errno));
+				}
 			}
-			else
+			if (tfd >= 0)
 			{
 				if (lockfile(tfd, tf, NULL, LOCK_EX|LOCK_NB))
 					break;
@@ -150,13 +157,17 @@ queueup(e, announce)
 					sm_syslog(LOG_ALERT, e->e_id,
 						  "queueup: cannot lock %s: %s",
 						  tf, errstring(errno));
-				(void) close(tfd);
+				if ((i % 32) == 31)
+				{
+					(void) close(tfd);
+					tfd = -1;
+				}
 			}
 
 			if ((i % 32) == 31)
 			{
 				/* save the old temp file away */
-				(void) rename(tf, queuename(e, 'T'));
+				(void) rename(tf, queuename(e, TEMPQF_LETTER));
 			}
 			else
 				(void) sleep(i % 32);
@@ -788,6 +799,7 @@ run_single_queue(queuedir, forkflag, verbose)
 		(void) releasesignal(SIGCHLD);
 		(void) setsignal(SIGCHLD, SIG_DFL);
 		(void) setsignal(SIGHUP, intsig);
+
 	}
 
 	sm_setproctitle(TRUE, CurEnv, "running queue: %s",
@@ -849,6 +861,7 @@ run_single_queue(queuedir, forkflag, verbose)
 
 	/* order the existing work requests */
 	njobs = orderq(queuedir, FALSE);
+
 
 	/* process them once at a time */
 	while (WorkQ != NULL)
@@ -1172,7 +1185,7 @@ orderq(queuedir, doall)
 		i = NEED_P | NEED_T;
 		if (QueueLimitSender != NULL)
 			i |= NEED_S;
-		if (QueueSortOrder == QSO_BYHOST || QueueLimitRecipient != NULL)
+		if (QueueLimitRecipient != NULL)
 			i |= NEED_R;
 		while (i != 0 && fgets(lbuf, sizeof lbuf, cf) != NULL)
 		{
@@ -1239,17 +1252,17 @@ orderq(queuedir, doall)
 				break;
 
 			  case 'S':
-				  check = QueueLimitSender;
-				  while (check != NULL)
-				  {
-					  if (strcontainedin(check->queue_match,
-							     &lbuf[1]))
-						  break;
-					  else
-						  check = check->queue_next;
-				  }
-				  if (check != NULL)
-					  i &= ~NEED_S;
+				check = QueueLimitSender;
+				while (check != NULL)
+				{
+					if (strcontainedin(check->queue_match,
+							   &lbuf[1]))
+						break;
+					else
+						check = check->queue_next;
+				}
+				if (check != NULL)
+					i &= ~NEED_S;
 				break;
 
 			  case 'K':
@@ -1813,7 +1826,6 @@ readqf(e)
 	struct stat st;
 	char *bp;
 	int qfver = 0;
-	int chompflags;
 	long hdrsize = 0;
 	register char *p;
 	char *orcpt = NULL;
@@ -1836,7 +1848,8 @@ readqf(e)
 			dprintf("readqf(%s): fopen failure (%s)\n",
 				qf, errstring(errno));
 		errno = save_errno;
-		if (errno != ENOENT)
+		if (errno != ENOENT
+		    )
 			syserr("readqf: no control file %s", qf);
 		return FALSE;
 	}
@@ -2021,8 +2034,7 @@ readqf(e)
 			break;
 
 		  case 'H':		/* header */
-			chompflags = 0;
-			(void) chompheader(&bp[1], &chompflags, NULL, e);
+			(void) chompheader(&bp[1], 0, NULL, e);
 			hdrsize += strlen(&bp[1]);
 			break;
 
@@ -2165,8 +2177,32 @@ readqf(e)
 			break;
 
 		  case '$':		/* define macro */
-			mid = macid(&bp[1], &ep);
-			define(mid, newstr(ep), e);
+			{
+				char *p;
+
+				mid = macid(&bp[1], &ep);
+				p = newstr(ep);
+				define(mid, p, e);
+
+				/*
+				**  HACK ALERT: Unfortunately, 8.10 and
+				**  8.11 reused the ${if_addr} and
+				**  ${if_family} macros for both the incoming
+				**  interface address/family (getrequests())
+				**  and the outgoing interface address/family
+				**  (makeconnection()).  In order for D_BINDIF
+				**  to work properly, have to preserve the
+				**  incoming information in the queue file for
+				**  later delivery attempts.  The original
+				**  information is stored in the envelope
+				**  in readqf() so it can be stored in
+				**  queueup_macros().  This should be fixed
+				**  in 8.12.
+				*/
+
+				if (strcmp(macname(mid), "if_addr") == 0)
+					e->e_if_macros[EIF_ADDR] = p;
+			}
 			break;
 
 		  case '.':		/* terminate file */
@@ -2722,6 +2758,7 @@ unlockqueue(e)
 		dprintf("unlockqueue(%s)\n",
 			e->e_id == NULL ? "NOQUEUE" : e->e_id);
 
+
 	/* if there is a lock file in the envelope, close it */
 	if (e->e_lockfp != NULL)
 		(void) fclose(e->e_lockfp);
@@ -2832,6 +2869,8 @@ setctluser(user, qfver)
 **		none.
 */
 
+# define LOSEQF_LETTER 'Q'
+
 void
 loseqfile(e, why)
 	register ENVELOPE *e;
@@ -2846,7 +2885,7 @@ loseqfile(e, why)
 	if (strlen(p) >= (SIZE_T) sizeof buf)
 		return;
 	(void) strlcpy(buf, p, sizeof buf);
-	p = queuename(e, 'Q');
+	p = queuename(e, LOSEQF_LETTER);
 	if (rename(buf, p) < 0)
 		syserr("cannot rename(%s, %s), uid=%d", buf, p, geteuid());
 	else if (LogLevel > 0)
