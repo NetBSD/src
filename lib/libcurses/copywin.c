@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.1 2000/04/18 12:23:01 blymn Exp $	*/
+/*	$NetBSD: copywin.c,v 1.2 2000/04/18 22:15:55 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,6 +30,7 @@
  */
 
 #include <ctype.h>
+#include <string.h>
 #include "curses.h"
 #include "curses_private.h"
 
