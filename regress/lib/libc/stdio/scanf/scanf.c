@@ -1,4 +1,4 @@
-/* $NetBSD: scanf.c,v 1.1 2003/05/30 12:46:06 simonb Exp $ */
+/* $NetBSD: scanf.c,v 1.2 2003/06/02 01:45:01 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -55,6 +55,15 @@ main(int argc, char **argv)
 	if (i != NUM)
 		errx(1, "want %d, got %d", NUM, i);
 	assert(i == NUM);
+
+	/*
+	 * "%x" has the same problem as "%i" in lib/21691.
+	 */
+	sscanf(STRNUM, "%x", &i);
+	if (i != NUM)
+		errx(1, "want %d, got %d", NUM, i);
+	assert(i == NUM);
+
 
 	return (0);
 }
