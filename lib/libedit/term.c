@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.34 2001/11/08 19:39:10 mycroft Exp $	*/
+/*	$NetBSD: term.c,v 1.35 2002/03/18 16:00:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,12 +36,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.34 2001/11/08 19:39:10 mycroft Exp $");
+__RCSID("$NetBSD: term.c,v 1.35 2002/03/18 16:00:59 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -50,13 +50,24 @@ __RCSID("$NetBSD: term.c,v 1.34 2001/11/08 19:39:10 mycroft Exp $");
  *	   We have to declare a static variable here, since the
  *	   termcap putchar routine does not take an argument!
  */
-#include "sys.h"
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef HAVE_TERMCAP_H
 #include <termcap.h>
+#endif
+#ifdef HAVE_CURSES_H
+#include <curses.h>
+#endif
+#ifdef HAVE_NCURSES_H
+#include <ncurses.h>
+#endif
+/* Solaris's term.h does horrid things. */
+#if (defined(HAVE_TERM_H) && !defined(SUNOS))
+#include <term.h>
+#endif
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
@@ -261,7 +272,7 @@ private void	term_setflags(EditLine *);
 private int	term_rebuffer_display(EditLine *);
 private void	term_free_display(EditLine *);
 private int	term_alloc_display(EditLine *);
-private void	term_alloc(EditLine *, const struct termcapstr *, char *);
+private void	term_alloc(EditLine *, const struct termcapstr *, const char *);
 private void	term_init_arrow(EditLine *);
 private void	term_reset_arrow(EditLine *);
 
@@ -369,7 +380,7 @@ term_end(EditLine *el)
  *	Maintain a string pool for termcap strings
  */
 private void
-term_alloc(EditLine *el, const struct termcapstr *t, char *cap)
+term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 {
 	char termbuf[TC_BUFSIZE];
 	int tlen, clen;
@@ -657,7 +668,7 @@ mc_again:
  *	Overstrike num characters
  */
 protected void
-term_overwrite(EditLine *el, char *cp, int n)
+term_overwrite(EditLine *el, const char *cp, int n)
 {
 	if (n <= 0)
 		return;		/* catch bugs */
@@ -870,7 +881,7 @@ term_clear_to_bottom(EditLine *el)
  *	Read in the terminal capabilities from the requested terminal
  */
 protected int
-term_set(EditLine *el, char *term)
+term_set(EditLine *el, const char *term)
 {
 	int i;
 	char buf[TC_BUFSIZE];
@@ -1101,7 +1112,7 @@ term_reset_arrow(EditLine *el)
  *	Set an arrow key binding
  */
 protected int
-term_set_arrow(EditLine *el, char *name, key_value_t *fun, int type)
+term_set_arrow(EditLine *el, const char *name, key_value_t *fun, int type)
 {
 	fkey_t *arrow = el->el_term.t_fkey;
 	int i;
@@ -1120,7 +1131,7 @@ term_set_arrow(EditLine *el, char *name, key_value_t *fun, int type)
  *	Clear an arrow key binding
  */
 protected int
-term_clear_arrow(EditLine *el, char *name)
+term_clear_arrow(EditLine *el, const char *name)
 {
 	fkey_t *arrow = el->el_term.t_fkey;
 	int i;
@@ -1138,7 +1149,7 @@ term_clear_arrow(EditLine *el, char *name)
  *	Print the arrow key bindings
  */
 protected void
-term_print_arrow(EditLine *el, char *name)
+term_print_arrow(EditLine *el, const char *name)
 {
 	int i;
 	fkey_t *arrow = el->el_term.t_fkey;
@@ -1235,7 +1246,7 @@ term__flush(void)
  */
 protected int
 /*ARGSUSED*/
-term_telltc(EditLine *el, int argc, char **argv)
+term_telltc(EditLine *el, int argc, const char **argv)
 {
 	const struct termcapstr *t;
 	char **ts;
@@ -1270,11 +1281,11 @@ term_telltc(EditLine *el, int argc, char **argv)
  */
 protected int
 /*ARGSUSED*/
-term_settc(EditLine *el, int argc, char **argv)
+term_settc(EditLine *el, int argc, const char **argv)
 {
 	const struct termcapstr *ts;
 	const struct termcapval *tv;
-	char *what, *how;
+	const char *what, *how;
 
 	if (argv == NULL || argv[1] == NULL || argv[2] == NULL)
 		return (-1);
@@ -1346,7 +1357,7 @@ term_settc(EditLine *el, int argc, char **argv)
  */
 protected int
 /*ARGSUSED*/
-term_echotc(EditLine *el, int argc, char **argv)
+term_echotc(EditLine *el, int argc, const char **argv)
 {
 	char *cap, *scap, *ep;
 	int arg_need, arg_cols, arg_rows;

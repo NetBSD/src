@@ -1,4 +1,4 @@
-/*	$NetBSD: map.h,v 1.6 2001/01/09 17:22:09 jdolecek Exp $	*/
+/*	$NetBSD: map.h,v 1.7 2002/03/18 16:00:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,7 +67,7 @@ typedef struct el_map_t {
 #define	MAP_EMACS	0
 #define	MAP_VI		1
 
-protected int	map_bind(EditLine *, int, char **);
+protected int	map_bind(EditLine *, int, const char **);
 protected int	map_init(EditLine *);
 protected void	map_end(EditLine *);
 protected void	map_init_vi(EditLine *);

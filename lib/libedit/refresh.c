@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.17 2001/04/13 00:53:11 lukem Exp $	*/
+/*	$NetBSD: refresh.c,v 1.18 2002/03/18 16:00:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,19 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.17 2001/04/13 00:53:11 lukem Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.18 2002/03/18 16:00:58 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * refresh.c: Lower level screen refreshing functions
  */
-#include "sys.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -62,7 +61,7 @@ private void	re_insert (EditLine *, char *, int, int, char *, int);
 private void	re_delete(EditLine *, char *, int, int, int);
 private void	re_fastputc(EditLine *, int);
 private void	re__strncopy(char *, char *, size_t);
-private void	re__copy_and_pad(char *, char *, size_t);
+private void	re__copy_and_pad(char *, const char *, size_t);
 
 #ifdef DEBUG_REFRESH
 private void	re_printstr(EditLine *, char *, char *, char *);
@@ -908,7 +907,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
  *	Copy string and pad with spaces
  */
 private void
-re__copy_and_pad(char *dst, char *src, size_t width)
+re__copy_and_pad(char *dst, const char *src, size_t width)
 {
 	int i;
 

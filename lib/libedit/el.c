@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.28 2002/02/03 23:37:19 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.29 2002/03/18 16:00:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,20 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.28 2002/02/03 23:37:19 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.29 2002/03/18 16:00:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * el.c: EditLine interface functions
  */
-#include "sys.h"
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <string.h>
@@ -180,7 +178,7 @@ el_set(EditLine *el, int op, ...)
 	case EL_ECHOTC:
 	case EL_SETTY:
 	{
-		char *argv[20];
+		const char *argv[20];
 		int i;
 
 		for (i = 1; i < 20; i++)
@@ -411,7 +409,7 @@ el_source(EditLine *el, const char *fname)
 
 	fp = NULL;
 	if (fname == NULL) {
-#if 1 /* HAVE_ISSETUGID */
+#ifdef HAVE_ISSETUGID
 		static const char elpath[] = "/.editrc";
 		char path[MAXPATHLEN];
 
@@ -490,7 +488,7 @@ el_beep(EditLine *el)
  */
 protected int
 /*ARGSUSED*/
-el_editmode(EditLine *el, int argc, char **argv)
+el_editmode(EditLine *el, int argc, const char **argv)
 {
 	const char *how;
 
