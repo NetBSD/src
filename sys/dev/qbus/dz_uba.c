@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.13 2001/11/13 07:11:24 lukem Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.14 2002/02/25 14:58:07 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.13 2001/11/13 07:11:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.14 2002/02/25 14:58:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.13 2001/11/13 07:11:24 lukem Exp $");
 
 #include <dev/qbus/ubavar.h>
 
-#include <dev/qbus/dzreg.h>
-#include <dev/qbus/dzvar.h>
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
 
 #include "ioconf.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.20 2001/05/16 05:36:56 matt Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.21 2002/02/25 14:58:09 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,8 +53,8 @@
 
 #include <arch/vax/vax/gencons.h>
 
-#include <dev/qbus/dzreg.h>
-#include <dev/qbus/dzvar.h>
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
 
 #include "ioconf.h"
 #include "dzkbd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.27 2001/02/04 20:36:33 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.28 2002/02/25 14:58:09 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,8 +46,8 @@
 
 #include <dev/cons.h>
 
-#include <dev/qbus/dzreg.h>
-#include <dev/qbus/dzvar.h>
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
 #include <dev/dec/dzkbdvar.h>
 
 #include <dev/wscons/wsdisplayvar.h>
