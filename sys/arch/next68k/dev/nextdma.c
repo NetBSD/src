@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.17 1999/08/05 01:51:00 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.18 1999/08/17 05:09:13 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -64,10 +64,6 @@ int nextdma_debug = 0;
 #define DPRINTF(x)
 #endif
 
-  /* @@@ for debugging */
-struct nextdma_config *debugernd;
-struct nextdma_config *debugexnd;
-
 void next_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
                        bus_size_t, int));
 int next_dma_continue __P((struct nextdma_config *));
@@ -104,14 +100,6 @@ nextdma_config(nd)
 		t->_dmamem_mmap = _bus_dmamem_mmap;
 
 		nd->nd_dmat = t;
-	}
-
-  /* @@@ for debugging */
-	if (nd->nd_intr == NEXT_I_ENETR_DMA) {
-		debugernd = nd;
-	}
-	if (nd->nd_intr == NEXT_I_ENETX_DMA) {
-		debugexnd = nd;
 	}
 
 	nextdma_init(nd);
@@ -166,7 +154,7 @@ nextdma_reset(nd)
 	struct nextdma_config *nd;
 {
 	int s;
-	s = spldma();									/* @@@ should this be splimp()? */
+	s = spldma();
 
 	DPRINTF(("DMA reset\n"));
 
@@ -195,7 +183,7 @@ next_dma_rotate(nd)
 	if (nd->_nd_map && 
 			nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len == 0x1234beef) {
 		next_dma_print(nd);
-		panic("DMA didn't set read length of segment");
+		panic("DMA didn't set xfer length of segment");
 	}
 #endif
 
@@ -263,18 +251,6 @@ next_dma_setup_cont_regs(nd)
 							+ 0x0) | 0x80000000);
 
 		}
-#ifdef NEXTDMA_SCSI_HACK
-		else if ((nd->nd_intr == NEXT_I_SCSI_DMA) && (nd->_nd_dmadir == DMACSR_WRITE)) {
-
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START,
-					nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
-
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP,
-					((nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr +
-							nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len)
-							+ 0x20));
-    }
-#endif
 		else {
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START,
 					nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
@@ -326,19 +302,6 @@ next_dma_setup_curr_regs(nd)
 							+ 0x0) | 0x80000000);
 
 		}
-#ifdef NEXTDMA_SCSI_HACK
-		else if ((nd->nd_intr == NEXT_I_SCSI_DMA) && (nd->_nd_dmadir == DMACSR_WRITE)) {
-			/* SCSI needs secret magic */
-
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,
-					nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT,
-					((nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
-							nd->_nd_map->dm_segs[nd->_nd_idx].ds_len)
-							+ 0x20));
-
-		}
-#endif
 		else {
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
@@ -450,27 +413,15 @@ int
 nextdma_intr(arg)
      void *arg;
 {
-  struct nextdma_config *nd = arg;
-
   /* @@@ This is bogus, we can't be certain of arg's type
-	 * unless the interrupt is for us
+	 * unless the interrupt is for us.  For now we successfully
+	 * cheat because DMA interrupts are the only things invoked
+	 * at this interrupt level.
 	 */
+  struct nextdma_config *nd = arg;
 
   if (!INTR_OCCURRED(nd->nd_intr)) return 0;
   /* Handle dma interrupts */
-
-#ifdef DIAGNOSTIC
-	if (nd->nd_intr == NEXT_I_ENETR_DMA) {
-		if (debugernd != nd) {
-			panic("DMA incorrect handling of rx nd->nd_intr");
-		}
-	}
-	if (nd->nd_intr == NEXT_I_ENETX_DMA) {
-		if (debugexnd != nd) {
-			panic("DMA incorrect handling of tx nd->nd_intr");
-		}
-	}
-#endif
 
   DPRINTF(("DMA interrupt ipl (%ld) intr(0x%b)\n",
           NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
@@ -526,12 +477,6 @@ nextdma_intr(arg)
 					next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF);
 					limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT) & ~0x80000000;
 				}
-#ifdef NEXTDMA_SCSI_HACK
-				else if ((nd->nd_intr == NEXT_I_SCSI_DMA) && (nd->_nd_dmadir == DMACSR_WRITE)) {
-					next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT) - 0x20;
-					limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT) - 0x20;
-				}
-#endif
 				else {
 					next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT);
 					limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT);
@@ -609,11 +554,6 @@ nextdma_intr(arg)
 			if (nd->nd_intr == NEXT_I_ENETX_DMA) {
 				limit &= ~0x80000000;
 			}
-#ifdef NEXTDMA_SCSI_HACK
-			else if ((nd->nd_intr == NEXT_I_SCSI_DMA) && (nd->_nd_dmadir == DMACSR_WRITE)) {
-				limit -= 0x20;
-			}
-#endif
 
 			if ((limit-next < 0) || 
 					(limit-next >= expected_limit-expected_next)) {
