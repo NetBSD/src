@@ -1,8 +1,10 @@
-#	$NetBSD: protocols,v 1.5 1997/03/18 03:49:39 sommerfe Exp $
+#	$NetBSD: protocols,v 1.6 1998/05/11 18:55:13 fair Exp $
 #
 # Internet (IP) protocols
 #
-#	from: @(#)protocols	8.1 (Berkeley) 6/9/93
+#	originally from: @(#)protocols	8.1 (Berkeley) 6/9/93
+#	see http://www.isi.edu/in-notes/iana/assignments/protocol-numbers
+#	likely to move to http://www.iana.org/ one of these days
 #
 ip	0	IP		# internet protocol, pseudo protocol number
 icmp	1	ICMP		# internet control message protocol
@@ -21,6 +23,7 @@ iso-tp4	29	ISO-TP4		# ISO Transport Protocol Class 4
 xtp	36	XTP		# Xpress Tranfer Protocol
 idpr-cmtp	39	IDPR-CMTP	# IDPR Control Message Transport
 ipv6	41	IPv6		# Internet Protocol, version 6
+rsvp	46	RSVP		# Resource ReSerVation Protocol
 esp	50	ESP		# Encapsulating Security Payload
 ah	51	AH		# Authentication Header
 icmpv6	58	ICMPV6		# Internet Control Message Protocol version 6
@@ -29,3 +32,4 @@ vmtp	81	VMTP		# Versatile Message Transport
 ospf	89	OSPFIGP		# Open Shortest Path First IGP
 ipip	94	IPIP		# Yet Another IP encapsulation
 encap	98	ENCAP		# RFC1241 encapsulation
+pim	103	PIM		# Protocol Independent Multicast
