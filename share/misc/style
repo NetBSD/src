@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.29 2005/02/01 13:43:38 christos Exp $ */
+/* $NetBSD: style,v 1.30 2005/02/02 23:33:42 christos Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.29 2005/02/01 13:43:38 christos Exp $");
+__RCSID("$NetBSD: style,v 1.30 2005/02/02 23:33:42 christos Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -328,8 +328,8 @@ function(int a1, int a2, float fl, int a4)
 	 * Don't use `!' for tests unless it's a boolean.
 	 * E.g. use "if (*p == '\0')", not "if (!*p)".
 	 *
-	 * Routines returning void * should not have their return values cast
-	 * to any pointer type.
+	 * Routines returning ``void'' should not have their return
+	 * values cast to any pointer type.
 	 *
 	 * Use err/warn(3), don't roll your own!
 	 */
