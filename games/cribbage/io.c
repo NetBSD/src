@@ -33,10 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)io.c	5.8 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: io.c,v 1.4 1993/08/01 18:55:12 mycroft Exp $";
+static char rcsid[] = "$Id: io.c,v 1.5 1993/08/10 03:41:48 mycroft Exp $";
 #endif /* not lint */
 
 # include	<curses.h>
+# include	<termios.h>
 # include	<ctype.h>
 # include	<signal.h>
 # include	<stdarg.h>
