@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.8 1999/03/25 23:23:16 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.9 1999/03/30 21:02:41 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -198,12 +198,23 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
+#endif
+
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
 #include <vm/vm.h>
@@ -217,12 +228,6 @@
 
 #include <dev/isa/cs89x0reg.h>
 #include <dev/isa/cs89x0var.h>
-
-#include "bpfilter.h"
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #ifdef SHARK
 #include <arm32/shark/sequoia.h>
@@ -479,6 +484,11 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
 #endif
 
 	/* Reset the chip */
@@ -1258,6 +1268,9 @@ cs_intr(arg)
 {
 	struct cs_softc *sc = arg;
 	u_int16_t Event;
+#if NRND > 0
+	u_int16_t rndEvent;
+#endif
 
 	/* Ignore any interrupts that happen while the chip is being reset */
 	if (sc->sc_resetting) {
@@ -1271,6 +1284,10 @@ cs_intr(arg)
 
 	if ((Event & REG_NUM_MASK) == 0)
 		return 0;	/* not ours */
+
+#if NRND > 0
+	rndEvent = Event;
+#endif
 
 	/* Process all the events in the Interrupt Status Queue */
 	while (Event != 0) {
@@ -1300,6 +1317,9 @@ cs_intr(arg)
 	}
 
 	/* have handled the interupt */
+#if NRND > 0
+	rnd_add_uint32(&sc->rnd_source, rndEvent);
+#endif
 	return 1;
 }
 
