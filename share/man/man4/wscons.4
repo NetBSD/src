@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.24 2004/07/30 15:18:44 jmmv Exp $
+.\" $NetBSD: wscons.4,v 1.25 2004/10/04 00:20:23 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,6 +55,7 @@
 .Cd options WSDISPLAY_COMPAT_SYSCONS
 .Cd options WSDISPLAY_COMPAT_USL
 .Cd options WSDISPLAY_COMPAT_RAWKBD
+.Cd options WSKBD_USONLY
 .Pp
 .Cd "wsdisplay* at ..."
 .Cd "wskbd*     at ... mux N"
@@ -269,6 +270,9 @@ application from locking the whole console system,
 a screen switch will be rolled
 back after a 5 second timeout if the application does not respond.
 This option can be used to specify in seconds a different timeout value.
+.Dq WSKBD_USONLY In order to strip down the space usage of wscons, 
+all keymaps except the US english one can be removed from the kernel
+with this option, which results in a space gain of about 10kB.
 .El
 .Sh SEE ALSO
 .Xr wsdisplay 4 ,
