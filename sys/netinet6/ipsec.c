@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.46.2.4 2002/07/20 11:35:13 gehenna Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.46.2.5 2002/08/29 00:56:52 gehenna Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.46.2.4 2002/07/20 11:35:13 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.46.2.5 2002/08/29 00:56:52 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -894,8 +894,7 @@ ipsec4_get_ulp(m, spidx, needport)
 	((struct sockaddr_in *)&spidx->dst)->sin_port = IPSEC_PORT_ANY;
 
 	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
-	/* ip_input() flips it into host endian XXX need more checking */
-	if (ip.ip_off & (IP_MF | IP_OFFMASK))
+	if (ip.ip_off & htons(IP_MF | IP_OFFMASK))
 		return;
 
 	nxt = ip.ip_p;
@@ -1667,7 +1666,7 @@ ipsec_in_reject(sp, m)
 
 	case IPSEC_POLICY_ENTRUST:
 	default:
-		panic("ipsec_hdrsiz: Invalid policy found. %d\n", sp->policy);
+		panic("ipsec_in_reject: Invalid policy found. %d\n", sp->policy);
 	}
 
 	need_auth = 0;
@@ -1746,9 +1745,9 @@ ipsec4_in_reject_so(m, so)
 	else
 		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_INBOUND, so, &error);
 
+	/* XXX should be panic ? -> No, there may be error. */
 	if (sp == NULL)
-		return 0;	/* XXX should be panic ?
-				 * -> No, there may be error. */
+		return 0;
 
 	result = ipsec_in_reject(sp, m);
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
@@ -2087,7 +2086,7 @@ ipsec4_encapsulate(m, sav)
 		ip->ip_len = htons(plen + sizeof(struct ip));
 	else {
 		ipseclog((LOG_ERR, "IPv4 ipsec: size exceeds limit: "
-			"leave ip_len as is (invalid packet)\n"));
+		    "leave ip_len as is (invalid packet)\n"));
 	}
 	ip->ip_id = htons(ip_id++);
 	bcopy(&((struct sockaddr_in *)&sav->sah->saidx.src)->sin_addr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.127.2.3 2002/07/15 10:37:01 gehenna Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.127.2.4 2002/08/29 00:56:48 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.2.3 2002/07/15 10:37:01 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.2.4 2002/08/29 00:56:48 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -761,7 +761,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 
 		th->th_sum = 0;
 		th->th_sum = in_cksum(m, hlen + tlen);
-		ip->ip_len = hlen + tlen;	/*will be flipped on output*/
+		ip->ip_len = htons(hlen + tlen);
 		ip->ip_ttl = ip_defttl;
 		break;
 	    }

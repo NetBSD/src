@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.40.8.1 2002/05/16 03:51:23 gehenna Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.40.8.2 2002/08/29 00:56:57 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.40.8.1 2002/05/16 03:51:23 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.40.8.2 2002/08/29 00:56:57 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,7 +509,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	ntmp->ntm_gid = argsp->gid;
 	ntmp->ntm_mode = argsp->mode;
 	ntmp->ntm_flag = argsp->flag;
-	mp->mnt_data = (qaddr_t)ntmp;
+	mp->mnt_data = ntmp;
 
 	/* set file name encode/decode hooks XXX utf-8 only for now */
 	ntmp->ntm_wget = ntfs_utf8_wget;
@@ -710,7 +710,7 @@ ntfs_unmount(
 	ntfs_toupper_unuse();
 
 	dprintf(("ntfs_umount: freeing memory...\n"));
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	free(ntmp->ntm_ad, M_NTFSMNT);
 	FREE(ntmp, M_NTFSMNT);

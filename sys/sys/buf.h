@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.49.2.1 2002/07/20 11:35:14 gehenna Exp $	*/
+/*	$NetBSD: buf.h,v 1.49.2.2 2002/08/29 00:56:58 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -158,13 +158,13 @@ struct bufq_state {
 	void (*bq_put)(struct bufq_state *, struct buf *);
 	struct buf *(*bq_get)(struct bufq_state *, int);
 	void *bq_private;
-	int bq_flags;			/* Flags from bufq_init() */
+	int bq_flags;			/* Flags from bufq_alloc() */
 };
 
 #ifdef _KERNEL
 
 /*
- * Flags for bufq_init.
+ * Flags for bufq_alloc.
  */
 #define BUFQ_SORT_RAWBLOCK	0x0001	/* Sort by b_rawblkno */
 #define BUFQ_SORT_CYLINDER	0x0002	/* Sort by b_cylinder, b_rawblkno */
@@ -176,7 +176,8 @@ struct bufq_state {
 #define BUFQ_SORT_MASK		0x000f
 #define BUFQ_METHOD_MASK	0x00f0
 
-void	bufq_init(struct bufq_state *, int);
+void	bufq_alloc(struct bufq_state *, int);
+void	bufq_free(struct bufq_state *);
 
 #define BUFQ_PUT(bufq, bp) \
 	(*(bufq)->bq_put)((bufq), (bp))	/* Put buffer in queue */
@@ -308,11 +309,11 @@ do {									\
 #ifdef _KERNEL
 
 extern	struct bio_ops bioops;
-extern	int nbuf;		/* The number of buffer headers */
+extern	u_int nbuf;		/* The number of buffer headers */
 extern	struct buf *buf;	/* The buffer headers. */
 extern	char *buffers;		/* The buffer contents. */
-extern	int bufpages;		/* Number of memory pages in the buffer pool. */
-extern	int nswbuf;		/* Number of swap I/O buffer headers. */
+extern	u_int bufpages;		/* Number of memory pages in the buffer pool. */
+extern	u_int nswbuf;		/* Number of swap I/O buffer headers. */
 
 extern	struct pool bufpool;	/* I/O buf pool */
 

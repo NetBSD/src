@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.98.2.2 2002/06/20 15:53:07 gehenna Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.98.2.3 2002/08/29 00:57:03 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.98.2.2 2002/06/20 15:53:07 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.98.2.3 2002/08/29 00:57:03 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -781,7 +781,7 @@ ffs_mountfs(devvp, mp, p)
 		fs->fs_avgfilesize = AVFILESIZ;
 	if (fs->fs_avgfpdir <= 0)
 		fs->fs_avgfpdir = AFPDIR;
-	mp->mnt_data = (qaddr_t)ump;
+	mp->mnt_data = ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
@@ -825,7 +825,7 @@ out:
 	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump, M_UFSMNT);
-		mp->mnt_data = (qaddr_t)0;
+		mp->mnt_data = NULL;
 	}
 	return (error);
 }
@@ -915,7 +915,7 @@ ffs_unmount(mp, mntflags, p)
 	free(fs->fs_csp, M_UFSMNT);
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }

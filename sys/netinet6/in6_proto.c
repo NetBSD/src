@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.39.4.2 2002/06/20 15:52:43 gehenna Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.39.4.3 2002/08/29 00:56:51 gehenna Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.39.4.2 2002/06/20 15:52:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.39.4.3 2002/08/29 00:56:51 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.36 2001/11/15 09:48:28 lukem Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.36.8.1 2002/08/29 00:56:54 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.36 2001/11/15 09:48:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.36.8.1 2002/08/29 00:56:54 gehenna Exp $");
 
 #include "opt_eon.h"
 
@@ -317,7 +317,7 @@ eonrtrequest(cmd, rt, info)
 		el->el_rt = rt;
 		break;
 	}
-	if (info || (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
+	if (info && (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
 		switch (gate->sa_family) {
 		case AF_LINK:
 #define SDL(x) ((struct sockaddr_dl *)x)
@@ -425,15 +425,22 @@ einval:
 send:
 	/* put an eon_hdr in the buffer, prepended by an ip header */
 	datalen = m->m_pkthdr.len + EONIPLEN;
-	MGETHDR(mh, M_DONTWAIT, MT_HEADER);
-	if (mh == (struct mbuf *) 0)
+	if (datalen > IP_MAXPACKET) {
+		error = EMSGSIZE;
 		goto flush;
+	}
+	MGETHDR(mh, M_DONTWAIT, MT_HEADER);
+	if (mh == (struct mbuf *) 0) {
+		error = ENOBUFS;
+		goto flush;
+	}
 	mh->m_next = m;
 	m = mh;
 	MH_ALIGN(m, sizeof(struct eon_iphdr));
 	m->m_len = sizeof(struct eon_iphdr);
-	ifp->if_obytes +=
-		(ei->ei_ip.ip_len = (u_short) (m->m_pkthdr.len = datalen));
+	m->m_pkthdr.len = datalen;
+	ei->ei_ip.ip_len = htons(datalen);
+	ifp->if_obytes += datalen;
 	*mtod(m, struct eon_iphdr *) = *ei;
 
 #ifdef ARGO_DEBUG
