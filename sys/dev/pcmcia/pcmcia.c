@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.66 2004/08/12 17:06:49 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.67 2004/08/12 17:07:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.66 2004/08/12 17:06:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.67 2004/08/12 17:07:52 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -533,6 +533,13 @@ pcmcia_function_enable(pf)
 				 pf->pf_mfc_iomax - pf->pf_mfc_iobase);
 	}
 
+	reg = 0;
+	if (pf->cfe->flags & PCMCIA_CFE_AUDIO)
+		reg |= PCMCIA_CCR_STATUS_AUDIO;
+	pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, reg);
+
+	pcmcia_ccr_write(pf, PCMCIA_CCR_SOCKETCOPY, 0);
+
 	reg = (pf->cfe->number & PCMCIA_CCR_OPTION_CFINDEX);
 	reg |= PCMCIA_CCR_OPTION_LEVIREQ;
 	if (pcmcia_mfc(sc)) {
@@ -543,13 +550,6 @@ pcmcia_function_enable(pf)
 
 	}
 	pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
-
-	reg = 0;
-	if (pf->cfe->flags & PCMCIA_CFE_AUDIO)
-		reg |= PCMCIA_CCR_STATUS_AUDIO;
-	pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, reg);
-
-	pcmcia_ccr_write(pf, PCMCIA_CCR_SOCKETCOPY, 0);
 
 #ifdef PCMCIADEBUG
 	if (pcmcia_debug) {
