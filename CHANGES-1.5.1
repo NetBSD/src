@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.91 2001/06/25 20:36:08 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.92 2001/07/02 14:51:38 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -5414,3 +5414,28 @@ sys/arch/atari/conf/HADES			patch
 distrib/mac68k/miniroot/Makefile.inc		patch
 
   Increase number of inodes on the miniroot file system.
+
+sys/kern/uipc_syscalls.c			1.64 via patch
+
+  Use consistent types for len.  Limit sockarg length to reasonable values.
+
+sys/dev/pci/pciide.c				1.94
+
+  Don't try to use ultra-dma on sis chips with revision 0xd0. It loses
+  immediately with a lost interrupt on udma mode 2, downgrades to mode 1
+  at which point it silently corrupts data on high disk activity.
+
+sys/arch/powerprc/powerpc/trap.c		1.48 via patch
+
+  Record any stack growth.  This fixes a serious problem with core dumps.
+  Without this change, coredumps will only contain one page of stack
+  regardless of how many pages of stack the process actually has.
+
+distrib/notes/macppc/hardware			1.16
+
+  Note support for early 2001 iMac hardware.
+
+distrib/notes/common/main			patch
+
+  Update Dd. Add "quick install notes for the impatient" for
+  macppc and sparc.
