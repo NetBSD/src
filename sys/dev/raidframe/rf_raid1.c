@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.12 2002/09/23 02:40:09 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.13 2002/09/23 03:38:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.12 2002/09/23 02:40:09 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.13 2002/09/23 03:38:51 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -280,7 +280,7 @@ rf_VerifyParityRAID1(
     RF_RaidAccessFlags_t flags)
 {
 	int     nbytes, bcount, stripeWidth, ret, i, j, nbad, *bbufs;
-	RF_DagNode_t *blockNode, *unblockNode, *wrBlock;
+	RF_DagNode_t *blockNode, *wrBlock;
 	RF_DagHeader_t *rd_dag_h, *wr_dag_h;
 	RF_AccessStripeMapHeader_t *asm_h;
 	RF_AllocListElem_t *allocList;
@@ -337,7 +337,6 @@ rf_VerifyParityRAID1(
 	if (rd_dag_h == NULL)
 		goto done;
 	blockNode = rd_dag_h->succedents[0];
-	unblockNode = blockNode->succedents[0]->succedents[0];
 
 	/*
          * Map the access to physical disk addresses (PDAs)- this will
@@ -563,7 +562,6 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 {
 	RF_ReconParityStripeStatus_t *pssPtr;
 	RF_ReconCtrl_t *reconCtrlPtr;
-	RF_RaidLayout_t *layoutPtr;
 	int     retcode, created;
 	RF_CallbackDesc_t *cb, *p;
 	RF_ReconBuffer_t *t;
@@ -574,7 +572,6 @@ rf_SubmitReconBufferRAID1(rbuf, keep_it, use_committed)
 	created = 0;
 
 	raidPtr = rbuf->raidPtr;
-	layoutPtr = &raidPtr->Layout;
 	reconCtrlPtr = raidPtr->reconControl[rbuf->row];
 
 	RF_ASSERT(rbuf);
