@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.7 2002/03/31 22:22:45 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.8 2002/05/20 06:26:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.7 2002/03/31 22:22:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8 2002/05/20 06:26:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,8 +285,8 @@ linux_fakedev(dev, raw)
 	dev_t dev;
 	int raw;
 {
-  /* XXX write me */
-  return dev;
+	/* XXX write me */
+	return dev;
 }
 
 /*
