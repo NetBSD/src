@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.2 2001/12/20 20:29:09 thorpej Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.3 2002/01/01 01:58:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -52,14 +52,8 @@ typedef _BSD_VA_LIST_	va_list;
 #define	va_start(ap, last) \
 	((ap) = (va_list)__builtin_next_arg(last))
 
-#if defined(_KERNEL) || defined(_STANDALONE)
 #define	va_arg(ap, type) \
 	((type *)(ap += sizeof(type)))[-1]
-#else
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type) < sizeof(int) ? \
-		(abort(), 0) : sizeof(type)))[-1]
-#endif
 
 #if !defined(_ANSI_SOURCE) && \
     (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
