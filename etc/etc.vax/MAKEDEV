@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.51 2002/08/09 02:39:34 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.52 2002/10/04 18:53:49 elric Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -31,6 +31,7 @@
 #	rl*	unibus rl02
 #	rb*	730 idc w/ rb80 and/or rb02
 #	ccd*	"concatenated" pseudo-disks
+#	cgd*	cryptographic pseudo-disks
 #	raid*	RAIDframe disk driver
 #	vnd*	"file" pseudo-disks
 #	rd*	HDC9224 rd disks on VS2000
@@ -93,6 +94,7 @@ case $i in
 
 all)
 	makedev std fd vnd0 ccd0 pty0 lkm random
+	makedev cgd0 cgd1 cgd2 cgd3
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev mt0 mt1 ts0 ts1 st0 st1 uk0 ss0 cd0 vt0
 	makedev ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 rd0 rd1 rd2
@@ -248,7 +250,7 @@ random)
 	chmod 644 urandom
 	;;
 
-hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*|raid*)
+hp*|hk*|up*|ra*|rl*|rb*|ccd*|cgd*|vnd*|rd*|sd*|rx*|raid*)
 	umask 2
 	case $i in
 	hp*) name=hp;	unit=${i#hp};	blk=0; chr=4;;
@@ -260,6 +262,7 @@ hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*|raid*)
 	rx*) name=rx;	unit=${i#rx};	blk=12; chr=30;;
 	rl*) name=rl;	unit=${i#rl};	blk=14; chr=32;;
 	ccd*) name=ccd;	unit=${i#ccd};	blk=17; chr=54;;
+	cgd*) name=cgd;	unit=${i#cgd};	blk=26; chr=77;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=18; chr=55;;
 	rd*) name=rd;	unit=${i#rd};	blk=19; chr=58;;
 	sd*) name=sd;	unit=${i#sd};	blk=20; chr=59;;

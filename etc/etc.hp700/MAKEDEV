@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.4 2002/08/09 02:39:21 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.5 2002/10/04 18:53:30 elric Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -51,6 +51,7 @@
 #	sd*	SCSI disks
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
+#	cgd*	cryptographic disk driver
 #	raid*	RAIDframe disk driver
 #	md*	memory pseudo-disk devices
 # Pseudo terminals:
@@ -92,6 +93,7 @@ all)
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
 	sh $0 cd0 cd1 st0 st1 st2 md0 md1
 	sh $0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
+	sh $0 cgd0 cgd1 cgd2 cgd3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1
 	sh $0 lkm random
@@ -170,9 +172,10 @@ raid*)
 # XXX fredette - need to reenable raid below, readd to case arm:
 	;;
 
-ccd*|cd*|fd*|sd*|vnd*)
+ccd*|cgd*|cd*|fd*|sd*|vnd*)
 	case $arg in
 	  ccd*) name=ccd; blk=1; chr=7;;
+	  cgd*) name=cgd; blk=8; chr=35;;
 	  cd*) name=cd; blk=6; chr=12;;
 	  fd*) name=fd; blk=7; chr=24;;
 #	  raid*) name=raid; blk=25; chr=82;;

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.39 2002/08/09 02:39:27 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.40 2002/10/04 18:53:38 elric Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,6 +45,7 @@
 #	vnd*	"file" pseudo-disks
 #	md*	memory pseudo-disk devices
 #	ccd*	contatenated disk devices
+#	cgd*	cryptographic disk devices
 #	raid*	RAIDframe disk devices
 #
 # Serial ports:
@@ -104,6 +105,7 @@ all)
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev tun0 tun1
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 lkm
+	makedev cgd0 cgd1 cgd2 cgd3
 	makedev ipl random local
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
@@ -166,9 +168,10 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-ccd*|sd*|vnd*|raid*)
+ccd*|cgd*|sd*|vnd*|raid*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=5;	chr=17;;
+	cgd*) name=cgd;	unit=${i#cgd};	blk=17;	chr=41;;
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=8;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=6;	chr=19;;
 	raid*) name=raid;	unit=${i#raid};	blk=16;	chr=37;;

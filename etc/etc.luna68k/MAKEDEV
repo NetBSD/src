@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 2002/08/09 02:39:25 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.20 2002/10/04 18:53:34 elric Exp $
 #
 ###########################################################################
 #
@@ -15,6 +15,7 @@
 # Disks:
 #	ccd*	concatenated disk driver
 #	cd*	SCSI CD-ROM
+#	cgd*	cryptographic disk driver
 #	md*	"memory disk" pseudo-disks
 #	sd*	SCSI disks
 #	vnd*	"file" pseudo-disks
@@ -114,9 +115,10 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
-ccd*|cd*|raid*|sd*|vnd*)
+ccd*|cgd*|cd*|raid*|sd*|vnd*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=5; chr=14;;
+	cgd*)	name=cgd;	unit=${i#cgd};	blk=15; chr=37;;
 	cd*)	name=cd;	unit=${i#cd};	blk=4; chr=10;;
 	raid*)	name=raid;	unit=${i#raid};	blk=14; chr=32;;
 	sd*)	name=sd;	unit=${i#sd};	blk=2; chr=8;;
