@@ -1,4 +1,4 @@
-/*	$NetBSD: tmp.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: tmp.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: tmp.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__RCSID("$NetBSD: tmp.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
 __SCCSID("@(#)tmp.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -61,32 +61,23 @@ __SCCSID("@(#)tmp.c	8.1 (Berkeley) 6/6/93");
 FILE *
 ftmp()
 {
-	static char *envtmp;
 	sigset_t set, oset;
-	static int first = 0;
-	FILE *fd;
+	FILE *fp;
+	int fd;
 	char pathb[_POSIX_PATH_MAX], *path;
 
 	path = pathb;
-	if (!first && !envtmp) {
-		envtmp = getenv("TMPDIR");
-		first = 1;
-	}
-	if (envtmp)
-		(void)snprintf(path,
-		    sizeof(pathb), "%s/%s", envtmp, _NAME_TMP);
-	else {
-		memmove(path, _PATH_SORTTMP, sizeof(_PATH_SORTTMP));
-	}
+	(void)snprintf(path, sizeof(pathb), "%s%s%s", tmpdir,
+	    (tmpdir[strlen(tmpdir)-1] != '/') ? "/" : "", _NAME_TMP);
+ 
 	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	path = mktemp(path);
-	if (!path)
-		err(2, NULL);
-	if (!(fd = fopen(path, "w+")))
-		err(2, "%s", path);
+	if ((fd = mkstemp(path)) < 0)
+		err(2, path);
+	if (!(fp = fdopen(fd, "w+")))
+		err(2, path);
 	(void)unlink(path);
 
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
-	return (fd);
-};
+	return (fp);
+}
