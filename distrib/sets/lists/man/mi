@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.473 2002/04/26 02:05:08 ad Exp $
+# $NetBSD: mi,v 1.474 2002/04/27 19:17:16 atatat Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -351,6 +351,7 @@
 ./usr/share/man/cat1/ssh-keygen.0		man-secsh-catman
 ./usr/share/man/cat1/ssh-keyscan.0		man-secsh-catman
 ./usr/share/man/cat1/ssh.0			man-secsh-catman
+./usr/share/man/cat1/stat.0			man-util-catman
 ./usr/share/man/cat1/stop.0			man-util-catman
 ./usr/share/man/cat1/stty.0			man-util-catman
 ./usr/share/man/cat1/su.0			man-util-catman
@@ -2052,6 +2053,7 @@
 ./usr/share/man/man1/ssh-keygen.1		man-secsh-man
 ./usr/share/man/man1/ssh-keyscan.1		man-secsh-man
 ./usr/share/man/man1/ssh.1			man-secsh-man
+./usr/share/man/man1/stat.1			man-util-man
 ./usr/share/man/man1/stop.1			man-util-man
 ./usr/share/man/man1/stty.1			man-util-man
 ./usr/share/man/man1/su.1			man-util-man
