@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news,v 1.1 1998/02/18 13:48:03 tsubai Exp $
+#	$NetBSD: Makefile.news,v 1.2 1998/03/03 07:38:40 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -52,7 +52,7 @@ GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80001000 -e start ${GP} -T ../../conf/kern.ldscript
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g -X -x
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
