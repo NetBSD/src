@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.7 1996/05/09 23:44:44 cgd Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.8 1996/05/19 20:36:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -147,7 +147,6 @@ exec_ecoff_prep_omagic(p, epp)
 	struct exec_package *epp;
 {
 	struct ecoff_exechdr *execp = epp->ep_hdr;
-	struct ecoff_filehdr *efp = &execp->f;
 	struct ecoff_aouthdr *eap = &execp->a;
 
 	epp->ep_taddr = ECOFF_SEGMENT_ALIGN(execp, eap->text_start);
@@ -181,7 +180,6 @@ exec_ecoff_prep_nmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct ecoff_exechdr *execp = epp->ep_hdr;
-	struct ecoff_filehdr *efp = &execp->f;
 	struct ecoff_aouthdr *eap = &execp->a;
 
 	epp->ep_taddr = ECOFF_SEGMENT_ALIGN(execp, eap->text_start);
@@ -224,7 +222,6 @@ exec_ecoff_prep_zmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct ecoff_exechdr *execp = epp->ep_hdr;
-	struct ecoff_filehdr *efp = &execp->f;
 	struct ecoff_aouthdr *eap = &execp->a;
 
 	epp->ep_taddr = ECOFF_SEGMENT_ALIGN(execp, eap->text_start);
