@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.43 2000/04/27 15:26:49 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.44 2000/06/01 14:29:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,12 +118,11 @@ struct ums_softc {
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
 #define MOUSE_FLAGS (HIO_RELATIVE)
 
-Static void ums_intr __P((usbd_xfer_handle, usbd_private_handle,
-			  usbd_status));
+Static void ums_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static int	ums_enable __P((void *));
-Static void	ums_disable __P((void *));
-Static int	ums_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+Static int	ums_enable(void *);
+Static void	ums_disable(void *);
+Static int	ums_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 const struct wsmouse_accessops ums_accessops = {
 	ums_enable,
@@ -314,9 +313,7 @@ USB_ATTACH(ums)
 }
 
 int
-ums_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+ums_activate(device_ptr_t self, enum devact act)
 {
 	struct ums_softc *sc = (struct ums_softc *)self;
 	int rv = 0;
@@ -357,10 +354,7 @@ USB_DETACH(ums)
 }
 
 void
-ums_intr(xfer, addr, status)
-	usbd_xfer_handle xfer;
-	usbd_private_handle addr;
-	usbd_status status;
+ums_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 {
 	struct ums_softc *sc = addr;
 	u_char *ibuf;
@@ -410,8 +404,7 @@ ums_intr(xfer, addr, status)
 }
 
 Static int
-ums_enable(v)
-	void *v;
+ums_enable(void *v)
 {
 	struct ums_softc *sc = v;
 
@@ -442,8 +435,7 @@ ums_enable(v)
 }
 
 Static void
-ums_disable(v)
-	void *v;
+ums_disable(void *v)
 {
 	struct ums_softc *sc = v;
 
@@ -463,12 +455,7 @@ ums_disable(v)
 }
 
 Static int
-ums_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ums_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 {
 	switch (cmd) {
