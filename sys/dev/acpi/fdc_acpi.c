@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.19 2004/04/10 11:48:11 kochi Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.20 2004/04/11 08:36:19 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.19 2004/04/10 11:48:11 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.20 2004/04/11 08:36:19 kochi Exp $");
 
 #include "rnd.h"
 
@@ -123,8 +123,8 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_node = aa->aa_node;
 
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &asc->res,
-	    &acpi_resource_parse_ops_default);
+	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
+	    &asc->res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 
