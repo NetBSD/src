@@ -29,19 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00109
- * --------------------         -----   ----------------------
- *
- * 01 Mar 93    Tor Egge		Fix bogus return value from memccpy()
- *
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)memccpy.c	5.8 (Berkeley) 5/30/91";*/
-static char rcsid[] = "$Id: memccpy.c,v 1.3 1993/08/01 18:36:34 mycroft Exp $";
+static char rcsid[] = "$Id: memccpy.c,v 1.4 1993/08/02 18:17:59 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>

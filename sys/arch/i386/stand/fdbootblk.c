@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fdbootblk.c	7.2 (Berkeley) 5/4/91
- *	$Id: fdbootblk.c,v 1.4 1993/05/22 08:02:15 cgd Exp $
+ *	$Id: fdbootblk.c,v 1.5 1993/08/02 18:17:39 mycroft Exp $
  */
 
 /*
@@ -46,14 +46,6 @@
  *	execute.
  *
  *	No attempt is made to handle disk errors.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00073
- * --------------------         -----   ----------------------
- *
- * 22 Jan 93	Frank Maclachlan        Fixed NOP's to read correct register
- *
  */
 /*#include "/sys/i386/isa/isa.h"
 #include "/sys/i386/isa/fdreg.h"*/

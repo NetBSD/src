@@ -29,13 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00005
- * --------------------         -----   ----------------------
- *
- * 20 Aug 92	Andrew Moore		Fixed core dump from uninited pointers
  */
 
 #ifndef lint
@@ -46,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)whatis.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: whatis.c,v 1.4 1993/08/01 18:11:16 mycroft Exp $";
+static char rcsid[] = "$Id: whatis.c,v 1.5 1993/08/02 18:17:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -32,18 +32,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00047
- * --------------------         -----   ----------------------
- *
- * 27 Nov 1992	Dave Rivers		Fixed fflush() to use correct flags.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)fflush.c	5.1 (Berkeley) 1/20/91";*/
-static char rcsid[] = "$Id: fflush.c,v 1.3 1993/08/01 18:38:01 mycroft Exp $";
+static char rcsid[] = "$Id: fflush.c,v 1.4 1993/08/02 18:22:38 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/errno.h>

@@ -29,19 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00035
- * --------------------         -----   ----------------------
- *
- * 27 Nov 1992	Felix Gaehtgens		Removed KLUDGELINEMODE
- *
  */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)state.c	5.10 (Berkeley) 3/22/91";*/
-static char rcsid[] = "$Id: state.c,v 1.3 1993/08/01 18:29:13 mycroft Exp $";
+static char rcsid[] = "$Id: state.c,v 1.4 1993/08/02 18:17:46 mycroft Exp $";
 #endif /* not lint */
 
 #include "telnetd.h"
