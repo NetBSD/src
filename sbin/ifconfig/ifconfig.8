@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.32.4.8 2000/12/31 17:57:36 jhawk Exp $
+.\"	$NetBSD: ifconfig.8,v 1.32.4.9 2000/12/31 20:13:57 jhawk Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -379,6 +379,46 @@ This may be used to enable an interface after an ``ifconfig down.''
 It happens automatically when setting the first address on an interface.
 If the interface was reset when previously marked down,
 the hardware will be re-initialized.
+.It Cm vlan Ar tag
+If the interface is a
+.Xr vlan 4
+pseudo-interface, set the VLAN tag to
+.Ar tag .
+This is a 16-bit number which is used to create an 802.1Q VLAN header for
+packets sent from the
+.Xr vlan 4
+interface.  Note that
+.Cm vlan
+and
+.Cm vlanif
+must be set at the same time.
+.It Cm vlanif Ar iface
+If the interface is a
+.Xr vlan 4
+pseudo-interface, associate the physical interface
+.Ar iface
+with it.  Packets transmitted through the 
+.Xr vlan 4
+interface will be diverted to the specified physical interface
+.Ar iface
+with 802.1Q VLAN encapsulation.  Packets with 802.1Q encapsulation received
+by the physical interface with the correct VLAN tag will be diverted to the 
+associated
+.Xr vlan 4
+pseudo-interface.  The VLAN interface is assigned a copy of the physical
+interface's flags and
+.Tn Ethernet
+address.
+If the
+.Xr vlan 4
+interface already has a physical interface associated with it, this command
+will fail.  To change the association to another physical interface, the
+existing association must be cleared first.
+Note that
+.Cm vlanif
+and
+.Cm vlan
+must be set at the same time.
 .It Cm vltime Ar n
 (inet6 only)
 Set valid lifetime for the address.
