@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbellvar.h,v 1.1.1.1.66.2 2004/09/18 14:42:26 skrll Exp $	*/
+/*	$NetBSD: opmbellvar.h,v 1.1.1.1.66.3 2004/09/21 13:24:09 skrll Exp $	*/
 
 /* Compatibility header: should be removed */
 

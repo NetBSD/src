@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.8.2.4 2004/09/18 14:49:02 skrll Exp $	*/
+/*	$NetBSD: cypide.c,v 1.8.2.5 2004/09/21 13:31:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.

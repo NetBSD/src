@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.h,v 1.1.20.2 2004/09/18 14:47:45 skrll Exp $	*/
+/*	$NetBSD: sir.h,v 1.1.20.3 2004/09/21 13:29:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

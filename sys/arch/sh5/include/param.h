@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3.6.2 2004/09/18 14:40:08 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.3.6.3 2004/09/21 13:21:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.

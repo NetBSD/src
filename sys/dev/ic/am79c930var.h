@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930var.h,v 1.2.36.2 2004/09/18 14:45:56 skrll Exp $ */
+/* $NetBSD: am79c930var.h,v 1.2.36.3 2004/09/21 13:27:52 skrll Exp $ */
 /* $FreeBSD$ */
 
 /*-

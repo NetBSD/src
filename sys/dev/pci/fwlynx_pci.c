@@ -1,4 +1,4 @@
-/*	$NetBSD: fwlynx_pci.c,v 1.7.2.2 2004/09/18 14:49:03 skrll Exp $	*/
+/*	$NetBSD: fwlynx_pci.c,v 1.7.2.3 2004/09/21 13:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.7.2.2 2004/09/18 14:49:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.7.2.3 2004/09/21 13:31:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.15.2.2 2004/09/18 14:47:47 skrll Exp $	*/
+/*	$NetBSD: spkr.c,v 1.15.2.3 2004/09/21 13:29:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15.2.2 2004/09/18 14:47:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15.2.3 2004/09/21 13:29:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,11 +429,11 @@ spkrattach(parent, self, aux)
 }
 
 int
-spkropen(dev, flags, mode, p)
+spkropen(dev, flags, mode, l)
     dev_t dev;
     int	flags;
     int mode;
-    struct proc *p;
+    struct lwp *l;
 {
 #ifdef SPKRDEBUG
     printf("spkropen: entering with dev = %x\n", dev);
@@ -477,11 +477,11 @@ spkrwrite(dev, uio, flags)
     }
 }
 
-int spkrclose(dev, flags, mode, p)
+int spkrclose(dev, flags, mode, l)
     dev_t	dev;
     int flags;
     int mode;
-    struct proc *p;
+    struct lwp *l;
 {
 #ifdef SPKRDEBUG
     printf("spkrclose: entering with dev = %x\n", dev);
@@ -498,12 +498,12 @@ int spkrclose(dev, flags, mode, p)
     return(0);
 }
 
-int spkrioctl(dev, cmd, data, flag, p)
+int spkrioctl(dev, cmd, data, flag, l)
     dev_t dev;
     u_long cmd;
     caddr_t data;
     int	flag;
-    struct proc *p;
+    struct lwp *l;
 {
 #ifdef SPKRDEBUG
     printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);

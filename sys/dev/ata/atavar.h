@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.26.6.4 2004/09/18 14:45:25 skrll Exp $	*/
+/*	$NetBSD: atavar.h,v 1.26.6.5 2004/09/21 13:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.h,v 1.4.2.2 2004/09/18 14:43:44 skrll Exp $	*/
+/*	$NetBSD: m68k4k_exec.h,v 1.4.2.3 2004/09/21 13:25:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,6 @@
 #define M68K4K_LDPGSZ		4096
 #define M68K4K_USRTEXT		M68K4K_LDPGSZ
 
-int	exec_m68k4k_makecmds __P((struct proc *, struct exec_package *));
+int	exec_m68k4k_makecmds __P((struct lwp *, struct exec_package *));
 
 #endif /* _M68K4K_EXEC_H_ */

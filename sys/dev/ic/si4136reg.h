@@ -1,4 +1,4 @@
-/* $NetBSD: si4136reg.h,v 1.1.4.3 2004/09/18 14:46:00 skrll Exp $ */
+/* $NetBSD: si4136reg.h,v 1.1.4.4 2004/09/21 13:28:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 David Young.  All rights reserved.

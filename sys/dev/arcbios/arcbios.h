@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.3.16.2 2004/09/18 14:45:25 skrll Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.3.16.3 2004/09/21 13:27:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

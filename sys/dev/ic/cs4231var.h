@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231var.h,v 1.3.2.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: cs4231var.h,v 1.3.2.3 2004/09/21 13:27:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700uic.h,v 1.1.14.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: cpc700uic.h,v 1.1.14.3 2004/09/21 13:27:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

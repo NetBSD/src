@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.9.2.2 2004/09/18 14:44:17 skrll Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.9.2.3 2004/09/21 13:26:13 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.9.2.2 2004/09/18 14:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.9.2.3 2004/09/21 13:26:13 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"

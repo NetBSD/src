@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.8.22.2 2004/09/18 14:45:56 skrll Exp $	*/
+/*	$NetBSD: anreg.h,v 1.8.22.3 2004/09/21 13:27:52 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.

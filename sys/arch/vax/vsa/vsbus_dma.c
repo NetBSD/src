@@ -1,4 +1,4 @@
-/* $NetBSD: vsbus_dma.c,v 1.8.26.2 2004/09/18 14:42:23 skrll Exp $ */
+/* $NetBSD: vsbus_dma.c,v 1.8.26.3 2004/09/21 13:24:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus_dma.c,v 1.8.26.2 2004/09/18 14:42:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus_dma.c,v 1.8.26.3 2004/09/21 13:24:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.6.2.3 2004/09/18 14:42:43 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.6.2.4 2004/09/21 13:24:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6.2.3 2004/09/18 14:42:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6.2.4 2004/09/21 13:24:30 skrll Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -528,7 +528,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
+		p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
 			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
@@ -866,7 +866,7 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 	int i;
 
 	iov = uio->uio_iov;
-	p = uio->uio_procp;
+	p = uio->uio_lwp->l_proc;
 	cp = buf;
 	resid = n;
 

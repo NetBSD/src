@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.4.10.2 2004/09/18 14:48:19 skrll Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.4.10.3 2004/09/21 13:30:16 skrll Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,7 +57,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.4.10.2 2004/09/18 14:48:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.4.10.3 2004/09/21 13:30:16 skrll Exp $");
 
 #include "opt_isicpnp.h"  
 #ifdef ISICPNP_SEDLBAUER

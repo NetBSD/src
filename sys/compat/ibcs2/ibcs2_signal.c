@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.18.2.2 2004/09/18 14:43:16 skrll Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.18.2.3 2004/09/21 13:25:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.18.2.2 2004/09/18 14:43:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.18.2.3 2004/09/21 13:25:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

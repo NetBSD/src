@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.1.4.4 2004/09/18 14:49:02 skrll Exp $	*/
+/*	$NetBSD: artsata.c,v 1.1.4.5 2004/09/21 13:31:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

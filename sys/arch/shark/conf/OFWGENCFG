@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.9.2.3 2004/09/18 14:40:16 skrll Exp $
+#	$NetBSD: OFWGENCFG,v 1.9.2.4 2004/09/21 13:21:48 skrll Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #

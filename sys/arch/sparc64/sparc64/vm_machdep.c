@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49.2.4 2004/09/18 14:41:18 skrll Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.49.2.5 2004/09/21 13:22:59 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49.2.4 2004/09/18 14:41:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49.2.5 2004/09/21 13:22:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.9.2.2 2004/09/18 14:40:17 skrll Exp $        */
+/*      $NetBSD: opms.c,v 1.9.2.3 2004/09/21 13:21:49 skrll Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.9.2.2 2004/09/18 14:40:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.9.2.3 2004/09/21 13:21:49 skrll Exp $");
 
 #include "opms.h"
 #if NOPMS > 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.10.2.2 2004/09/18 14:49:03 skrll Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.10.2.3 2004/09/21 13:31:02 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001

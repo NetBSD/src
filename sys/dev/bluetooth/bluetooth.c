@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.c,v 1.2.2.2 2004/09/18 14:45:26 skrll Exp $	*/
+/*	$NetBSD: bluetooth.c,v 1.2.2.3 2004/09/21 13:27:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bluetooth.c,v 1.2.2.2 2004/09/18 14:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bluetooth.c,v 1.2.2.3 2004/09/21 13:27:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.10.2.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.10.2.3 2004/09/21 13:27:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_fork.h,v 1.1.8.2 2004/09/18 14:43:15 skrll Exp $	*/
+/*	$NetBSD: freebsd_fork.h,v 1.1.8.3 2004/09/21 13:25:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

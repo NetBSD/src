@@ -1,4 +1,4 @@
-/*	$NetBSD: awivar.h,v 1.17.6.2 2004/09/18 14:45:56 skrll Exp $	*/
+/*	$NetBSD: awivar.h,v 1.17.6.3 2004/09/21 13:27:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.

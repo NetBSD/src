@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.3.2.2 2004/09/18 14:45:26 skrll Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.3.2.3 2004/09/21 13:27:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.23.16.2 2004/09/18 14:45:58 skrll Exp $ */
+/* $NetBSD: lemac.c,v 1.23.16.3 2004/09/21 13:28:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.23.16.2 2004/09/18 14:45:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.23.16.3 2004/09/21 13:28:04 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

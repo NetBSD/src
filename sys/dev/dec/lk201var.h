@@ -1,4 +1,4 @@
-/* $NetBSD: lk201var.h,v 1.3.18.2 2004/09/18 14:45:39 skrll Exp $ */
+/* $NetBSD: lk201var.h,v 1.3.18.3 2004/09/21 13:27:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1998

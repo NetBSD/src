@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930intr.s,v 1.20.6.2 2004/09/18 14:40:48 skrll Exp $	*/
+/*	$NetBSD: amd7930intr.s,v 1.20.6.3 2004/09/21 13:22:27 skrll Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.11.2.2 2004/09/18 14:44:42 skrll Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.11.2.3 2004/09/21 13:26:40 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

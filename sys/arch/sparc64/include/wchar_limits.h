@@ -1,3 +1,3 @@
-/*	$NetBSD: wchar_limits.h,v 1.1.2.3 2004/09/18 14:41:17 skrll Exp $	*/
+/*	$NetBSD: wchar_limits.h,v 1.1.2.4 2004/09/21 13:22:56 skrll Exp $	*/
 
 #include <sparc/wchar_limits.h>

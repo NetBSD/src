@@ -1,4 +1,4 @@
-/* $NetBSD: agpbusprint.c,v 1.1.2.3 2004/09/18 14:49:02 skrll Exp $ */
+/* $NetBSD: agpbusprint.c,v 1.1.2.4 2004/09/21 13:31:00 skrll Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

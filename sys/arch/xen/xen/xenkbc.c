@@ -1,4 +1,4 @@
-/* $NetBSD: xenkbc.c,v 1.3.4.3 2004/09/18 14:42:53 skrll Exp $ */
+/* $NetBSD: xenkbc.c,v 1.3.4.4 2004/09/21 13:24:45 skrll Exp $ */
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenkbc.c,v 1.3.4.3 2004/09/18 14:42:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenkbc.c,v 1.3.4.4 2004/09/21 13:24:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

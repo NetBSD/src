@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.c,v 1.2.16.2 2004/09/18 14:41:57 skrll Exp $ */
+/*	$NetBSD: xxboot.c,v 1.2.16.3 2004/09/21 13:23:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.39.2.3 2004/09/18 14:49:02 skrll Exp $	*/
+/*	$NetBSD: auich.c,v 1.39.2.4 2004/09/21 13:31:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.3 2004/09/18 14:49:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.4 2004/09/21 13:31:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

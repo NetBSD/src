@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.17.2.2 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: yds.c,v 1.17.2.3 2004/09/21 13:31:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.17.2.2 2004/09/18 14:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.17.2.3 2004/09/21 13:31:08 skrll Exp $");
 
 #include "mpu.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.65.2.3 2004/09/18 14:43:15 skrll Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.65.2.4 2004/09/21 13:25:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.65.2.3 2004/09/18 14:43:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.65.2.4 2004/09/21 13:25:10 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1110,7 +1110,7 @@ hpux_sys_getaccess(l, v, retval)
 	 */
 	if (error == 0) {
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-			SCARG(uap, path), p);
+			SCARG(uap, path), l);
 		error = namei(&nd);
 	}
 	if (error) {
@@ -1409,7 +1409,7 @@ hpux_sys_utime_6x(l, v, retval)
 	vattr.va_mtime.tv_sec = tv[1];
 	vattr.va_mtime.tv_nsec = 0;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, fname), p);
+	    SCARG(uap, fname), l);
 	if ((error = namei(&nd)))
 		return (error);
 	vp = nd.ni_vp;

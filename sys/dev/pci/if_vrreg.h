@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.10.2.2 2004/09/18 14:49:04 skrll Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.10.2.3 2004/09/21 13:31:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998

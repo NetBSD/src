@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.11.2.2 2004/09/18 14:44:28 skrll Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.11.2.3 2004/09/21 13:26:26 skrll Exp $	*/
 
 /*-     
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

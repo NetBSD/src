@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.41.2.2 2004/09/18 14:44:27 skrll Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.41.2.3 2004/09/21 13:26:24 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.2 2004/09/18 14:44:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.3 2004/09/21 13:26:24 skrll Exp $");
 
 #include "opt_ddbparam.h"
 

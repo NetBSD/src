@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.56.2.2 2004/09/18 14:45:58 skrll Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.56.2.3 2004/09/21 13:28:04 skrll Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.56.2.2 2004/09/18 14:45:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.56.2.3 2004/09/21 13:28:04 skrll Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.

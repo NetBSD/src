@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_2300.h,v 1.4.2.2 2004/09/18 14:48:30 skrll Exp $	*/
+/*	$NetBSD: asm_2300.h,v 1.4.2.3 2004/09/21 13:30:28 skrll Exp $	*/
 /* @(#)asm_2300.h 1.7 */
 /*
  * Copyright (C) 2001 Qlogic, Inc.

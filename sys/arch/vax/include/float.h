@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.5.46.2 2004/09/18 14:42:06 skrll Exp $	*/
+/*	$NetBSD: float.h,v 1.5.46.3 2004/09/21 13:23:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.

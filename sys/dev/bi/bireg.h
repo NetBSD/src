@@ -1,4 +1,4 @@
-/*	$NetBSD: bireg.h,v 1.7.24.2 2004/09/18 14:45:26 skrll Exp $	*/
+/*	$NetBSD: bireg.h,v 1.7.24.3 2004/09/21 13:27:24 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.

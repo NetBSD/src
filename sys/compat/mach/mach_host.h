@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.10.2.2 2004/09/18 14:43:46 skrll Exp $ */
+/*	$NetBSD: mach_host.h,v 1.10.2.3 2004/09/21 13:25:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.

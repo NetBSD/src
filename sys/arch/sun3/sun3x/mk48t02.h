@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48t02.h,v 1.2.50.2 2004/09/18 14:41:56 skrll Exp $ */
+/*	$NetBSD: mk48t02.h,v 1.2.50.3 2004/09/21 13:23:29 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

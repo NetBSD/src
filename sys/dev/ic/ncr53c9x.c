@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.106.2.2 2004/09/18 14:45:59 skrll Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.106.2.3 2004/09/21 13:28:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.106.2.2 2004/09/18 14:45:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.106.2.3 2004/09/21 13:28:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

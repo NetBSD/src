@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.24.6.2 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.24.6.3 2004/09/21 13:31:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.24.6.2 2004/09/18 14:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.24.6.3 2004/09/21 13:31:08 skrll Exp $");
 
 #include "ehci.h"
 

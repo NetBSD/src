@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.18.10.2 2004/09/18 14:46:00 skrll Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.18.10.3 2004/09/21 13:28:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.

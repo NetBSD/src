@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.c,v 1.2.20.2 2004/09/18 14:47:45 skrll Exp $	*/
+/*	$NetBSD: sir.c,v 1.2.20.3 2004/09/21 13:29:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sir.c,v 1.2.20.2 2004/09/18 14:47:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sir.c,v 1.2.20.3 2004/09/21 13:29:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.7.14.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.7.14.3 2004/09/21 13:27:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.

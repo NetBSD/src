@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.105.2.2 2004/09/18 14:45:56 skrll Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.105.2.3 2004/09/21 13:27:51 skrll Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.105.2.2 2004/09/18 14:45:56 skrll Exp $
+ * $Id: aic7xxx.c,v 1.105.2.3 2004/09/21 13:27:51 skrll Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.105.2.2 2004/09/18 14:45:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.105.2.3 2004/09/21 13:27:51 skrll Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>

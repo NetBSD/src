@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.11.2.2 2004/09/18 14:43:25 skrll Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.11.2.3 2004/09/21 13:25:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.11.2.2 2004/09/18 14:43:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.11.2.3 2004/09/21 13:25:13 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -124,7 +124,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -281,7 +281,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*

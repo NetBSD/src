@@ -1,4 +1,4 @@
-/*	$NetBSD: cyberreg.h,v 1.1.4.3 2004/09/18 14:49:02 skrll Exp $	*/
+/*	$NetBSD: cyberreg.h,v 1.1.4.4 2004/09/21 13:31:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: emulate.S,v 1.2.20.2 2004/09/18 14:42:13 skrll Exp $ */
+/*	$NetBSD: emulate.S,v 1.2.20.3 2004/09/21 13:23:57 skrll Exp $ */
 /*
  * Copyright (c) 1986, 1987 The Regents of the University of California.
  * All rights reserved.

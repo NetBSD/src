@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.h,v 1.5.6.2 2004/09/18 14:45:26 skrll Exp $	*/
+/*	$NetBSD: rbus.h,v 1.5.6.3 2004/09/21 13:27:26 skrll Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.

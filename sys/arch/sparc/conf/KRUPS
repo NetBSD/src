@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.15.2.2 2004/09/18 14:40:27 skrll Exp $
+# $NetBSD: KRUPS,v 1.15.2.3 2004/09/21 13:22:01 skrll Exp $
 # From: NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.15.2.2 $"
+#ident 		"KRUPS-$Revision: 1.15.2.3 $"
 
 maxusers	32
 

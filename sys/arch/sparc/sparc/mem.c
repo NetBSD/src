@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.33.2.2 2004/09/18 14:40:48 skrll Exp $ */
+/*	$NetBSD: mem.c,v 1.33.2.3 2004/09/21 13:22:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33.2.2 2004/09/18 14:40:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33.2.3 2004/09/21 13:22:35 skrll Exp $");
 
 #include "opt_sparc_arch.h"
 

@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.9.2.3 2004/09/18 14:43:05 skrll Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.9.2.4 2004/09/21 13:24:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.9.2.3 2004/09/18 14:43:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.9.2.4 2004/09/21 13:24:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -221,7 +221,7 @@ darwin_sys_load_shared_file(l, v, retval)
 		    i, evc.ev_addr, evc.ev_len));
 
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = (*evc.ev_proc)(p, &evc)) != 0) {
+		if ((error = (*evc.ev_proc)(l, &evc)) != 0) {
 			VOP_UNLOCK(vp, 0);
 			DPRINTF(("Failed\n"));
 			goto bad2;
@@ -233,7 +233,7 @@ bad2:
 	free(mapp, M_TEMP);
 bad3:
 	vrele(vp);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	SCARG(&close_cup, fd) = fd;
 	if ((error = sys_close(l, &close_cup, retval)) != 0)
 		return error;

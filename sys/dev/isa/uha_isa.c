@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.26.6.1 2004/09/18 14:47:47 skrll Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.26.6.2 2004/09/21 13:29:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.26.6.1 2004/09/18 14:47:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.26.6.2 2004/09/21 13:29:49 skrll Exp $");
 
 #include "opt_ddb.h"
 

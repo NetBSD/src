@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.3.8.2 2004/09/18 14:40:08 skrll Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.3.8.3 2004/09/21 13:21:38 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

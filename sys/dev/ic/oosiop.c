@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.1.2.2 2004/09/18 14:46:00 skrll Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.1.2.3 2004/09/21 13:28:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.1.2.2 2004/09/18 14:46:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.1.2.3 2004/09/21 13:28:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

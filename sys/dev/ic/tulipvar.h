@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.48.6.2 2004/09/18 14:46:01 skrll Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.48.6.3 2004/09/21 13:28:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.

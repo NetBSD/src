@@ -1,4 +1,4 @@
-/* $NetBSD: mach_services.c,v 1.15.2.3 2004/09/18 14:43:46 skrll Exp $ */
+/* $NetBSD: mach_services.c,v 1.15.2.4 2004/09/21 13:25:42 skrll Exp $ */
 
 /*
  * Mach services table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services.c,v 1.15.2.3 2004/09/18 14:43:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services.c,v 1.15.2.4 2004/09/21 13:25:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

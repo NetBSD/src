@@ -3,7 +3,7 @@
 |         Yasha(itohy@NetBSD.org)
 |	  minoura@NetBSD.org
 |
-| $NetBSD: boot_ustar.S,v 1.4.8.2 2004/09/18 14:42:36 skrll Exp $
+| $NetBSD: boot_ustar.S,v 1.4.8.3 2004/09/21 13:24:20 skrll Exp $
 
 | supports floppy only
 

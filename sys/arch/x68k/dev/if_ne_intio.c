@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.5.6.2 2004/09/18 14:42:25 skrll Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.5.6.3 2004/09/21 13:24:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.5.6.2 2004/09/18 14:42:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.5.6.3 2004/09/21 13:24:08 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

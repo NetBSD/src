@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.3.2.3 2004/09/18 14:42:53 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.3.2.4 2004/09/21 13:24:37 skrll Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-

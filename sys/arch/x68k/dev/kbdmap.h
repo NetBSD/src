@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.2.50.2 2004/09/18 14:42:25 skrll Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.2.50.3 2004/09/21 13:24:08 skrll Exp $	*/
 
 #include <machine/kbdmap.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_termios.c,v 1.8.2.3 2004/09/18 14:44:18 skrll Exp $	 */
+/*	$NetBSD: svr4_32_termios.c,v 1.8.2.4 2004/09/21 13:26:13 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.8.2.3 2004/09/18 14:44:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.8.2.4 2004/09/21 13:26:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -511,12 +511,11 @@ svr4_32_term_ioctl(fp, l, retval, fd, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct proc *p = l->l_proc;
 	struct termios 		bt;
 	struct svr4_32_termios	st;
 	struct svr4_termio	t;
 	int			error, new;
-	int (*ctl)(struct file *, u_long, void *, struct proc *) =
+	int (*ctl)(struct file *, u_long, void *, struct lwp *) =
 			fp->f_ops->fo_ioctl;
 
 	*retval = 0;
@@ -524,7 +523,7 @@ svr4_32_term_ioctl(fp, l, retval, fd, cmd, data)
 	switch (cmd) {
 	case SVR4_TCGETA:
 	case SVR4_TCGETS:
-		if ((error = (*ctl)(fp, TIOCGETA,  &bt, p)) != 0)
+		if ((error = (*ctl)(fp, TIOCGETA,  &bt, l)) != 0)
 			return error;
 
 		memset(&st, 0, sizeof(st));
@@ -551,7 +550,7 @@ svr4_32_term_ioctl(fp, l, retval, fd, cmd, data)
 	case SVR4_TCSETAF:
 	case SVR4_TCSETSF:
 		/* get full BSD termios so we don't lose information */
-		if ((error = (*ctl)(fp, TIOCGETA,  &bt, p)) != 0)
+		if ((error = (*ctl)(fp, TIOCGETA,  &bt, l)) != 0)
 			return error;
 
 		switch (cmd) {
@@ -602,13 +601,13 @@ svr4_32_term_ioctl(fp, l, retval, fd, cmd, data)
 		print_svr4_32_termios(&st);
 #endif /* DEBUG_SVR4 */
 
-		return (*ctl)(fp, cmd,  &bt, p);
+		return (*ctl)(fp, cmd,  &bt, l);
 
 	case SVR4_TIOCGWINSZ:
 		{
 			struct svr4_winsize ws;
 
-			error = (*ctl)(fp, TIOCGWINSZ,  &ws, p);
+			error = (*ctl)(fp, TIOCGWINSZ,  &ws, l);
 			if (error)
 				return error;
 			return copyout(&ws, data, sizeof(ws));
@@ -620,7 +619,7 @@ svr4_32_term_ioctl(fp, l, retval, fd, cmd, data)
 
 			if ((error = copyin(data, &ws, sizeof(ws))) != 0)
 				return error;
-			return (*ctl)(fp, TIOCSWINSZ,  &ws, p);
+			return (*ctl)(fp, TIOCSWINSZ,  &ws, l);
 		}
 
 	default:

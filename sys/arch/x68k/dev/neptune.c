@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.9.2.2 2004/09/18 14:42:26 skrll Exp $	*/
+/*	$NetBSD: neptune.c,v 1.9.2.3 2004/09/21 13:24:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.9.2.2 2004/09/18 14:42:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.9.2.3 2004/09/21 13:24:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

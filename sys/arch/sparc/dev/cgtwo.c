@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.45.2.2 2004/09/18 14:40:27 skrll Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.45.2.3 2004/09/21 13:22:01 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.45.2.2 2004/09/18 14:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.45.2.3 2004/09/21 13:22:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

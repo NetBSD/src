@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.11.2.2 2004/09/18 14:40:08 skrll Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.11.2.3 2004/09/21 13:21:38 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

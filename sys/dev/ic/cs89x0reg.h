@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.1.20.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.1.20.3 2004/09/21 13:27:54 skrll Exp $	*/
 
 /*
  * Copyright 1997

@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818var.h,v 1.3.4.3 2004/09/18 14:45:59 skrll Exp $	*/
+/*	$NetBSD: mc146818var.h,v 1.3.4.4 2004/09/21 13:28:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.

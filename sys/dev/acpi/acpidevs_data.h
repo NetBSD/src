@@ -1,4 +1,4 @@
-/*	$NetBSD: acpidevs_data.h,v 1.2.2.2 2004/09/18 14:44:42 skrll Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.2.2.3 2004/09/21 13:26:40 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

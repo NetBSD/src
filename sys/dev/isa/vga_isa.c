@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.15.6.1 2004/09/18 14:47:47 skrll Exp $ */
+/* $NetBSD: vga_isa.c,v 1.15.6.2 2004/09/21 13:29:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.15.6.1 2004/09/18 14:47:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.15.6.2 2004/09/21 13:29:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

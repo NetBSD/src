@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.2.4.4 2004/09/18 14:42:22 skrll Exp $ */
+/*	$NetBSD: lcspx.c,v 1.2.4.5 2004/09/21 13:24:07 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.2.4.4 2004/09/18 14:42:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.2.4.5 2004/09/21 13:24:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,7 +136,7 @@ static  u_char *qf;
 	    line * SPX_XWIDTH + dot]
 
 
-static int	lcspx_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	lcspx_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	lcspx_mmap(void *, off_t, int);
 static int	lcspx_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -360,7 +360,7 @@ lcspx_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 }
 
 int
-lcspx_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+lcspx_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct wsdisplay_fbinfo *fb = (void *)data;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xxreg.h,v 1.1.24.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: cd18xxreg.h,v 1.1.24.3 2004/09/21 13:27:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green

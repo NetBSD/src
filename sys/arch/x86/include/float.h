@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.4.2.2 2004/09/18 14:42:37 skrll Exp $	*/
+/*	$NetBSD: float.h,v 1.4.2.3 2004/09/21 13:24:30 skrll Exp $	*/
 
 #ifndef _X86_FLOAT_H_
 #define _X86_FLOAT_H_

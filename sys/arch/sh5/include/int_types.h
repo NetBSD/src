@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.2.6.2 2004/09/18 14:40:08 skrll Exp $	*/
+/*	$NetBSD: int_types.h,v 1.2.6.3 2004/09/21 13:21:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

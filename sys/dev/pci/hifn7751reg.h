@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751reg.h,v 1.3.2.2 2004/09/18 14:49:03 skrll Exp $	*/
+/*	$NetBSD: hifn7751reg.h,v 1.3.2.3 2004/09/21 13:31:02 skrll Exp $	*/
 /*	$OpenBSD: hifn7751reg.h,v 1.43 2003/06/02 15:58:41 deraadt Exp $	*/
 
 /*

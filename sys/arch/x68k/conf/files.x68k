@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.54.2.2 2004/09/18 14:42:23 skrll Exp $
+#	$NetBSD: files.x68k,v 1.54.2.3 2004/09/21 13:24:07 skrll Exp $
 #
 # new style config file for x68k architecture
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.2.12.2 2004/09/18 14:39:54 skrll Exp $	*/
+/*	$NetBSD: start.S,v 1.2.12.3 2004/09/21 13:21:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.33.6.2 2004/09/18 14:42:25 skrll Exp $	*/
+/*	$NetBSD: ite.c,v 1.33.6.3 2004/09/21 13:24:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.33.6.2 2004/09/18 14:42:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.33.6.3 2004/09/21 13:24:08 skrll Exp $");
 
 #include "ite.h"
 #if NITE > 0

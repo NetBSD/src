@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.80.2.4 2004/09/18 14:49:04 skrll Exp $	*/
+/*	$NetBSD: pci.c,v 1.80.2.5 2004/09/21 13:31:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.4 2004/09/18 14:49:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.5 2004/09/21 13:31:04 skrll Exp $");
 
 #include "opt_pci.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3.2.3 2004/09/18 14:42:43 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.3.2.4 2004/09/21 13:24:30 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3.2.3 2004/09/18 14:42:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3.2.4 2004/09/21 13:24:30 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 

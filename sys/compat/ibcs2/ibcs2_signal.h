@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.12.6.2 2004/09/18 14:43:16 skrll Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.12.6.3 2004/09/21 13:25:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram

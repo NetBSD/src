@@ -1,4 +1,4 @@
-/* $NetBSD: eisabusprint.c,v 1.1.2.3 2004/09/18 14:45:39 skrll Exp $ */
+/* $NetBSD: eisabusprint.c,v 1.1.2.4 2004/09/21 13:27:37 skrll Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

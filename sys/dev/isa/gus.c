@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.81.2.2 2004/09/18 14:47:46 skrll Exp $	*/
+/*	$NetBSD: gus.c,v 1.81.2.3 2004/09/21 13:29:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.2 2004/09/18 14:47:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.3 2004/09/21 13:29:43 skrll Exp $");
 
 #include "gus.h"
 #if NGUS > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.9.6.2 2004/09/18 14:42:27 skrll Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.9.6.3 2004/09/21 13:24:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.9.6.2 2004/09/18 14:42:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.9.6.3 2004/09/21 13:24:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

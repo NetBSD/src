@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxvar.h,v 1.1.4.3 2004/09/18 14:45:59 skrll Exp $ */
+/*	$NetBSD: mk48txxvar.h,v 1.1.4.4 2004/09/21 13:28:04 skrll Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.

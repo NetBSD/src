@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.13.2.3 2004/09/18 14:45:47 skrll Exp $	*/
+/*	$NetBSD: dpti.c,v 1.13.2.4 2004/09/21 13:27:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.13.2.3 2004/09/18 14:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.13.2.4 2004/09/21 13:27:46 skrll Exp $");
 
 #include "opt_i2o.h"
 
@@ -206,7 +206,7 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-dptiopen(dev_t dev, int flag, int mode, struct proc *p)
+dptiopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	if (securelevel > 1)
@@ -218,7 +218,7 @@ dptiopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct iop_softc *iop;
 	struct dpti_softc *sc;
@@ -281,9 +281,9 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			tsleep(&sc->sc_nactive, PRIBIO, "dptislp", 0);
 
 		if (linux)
-			rv = dpti_passthrough(sc, data, p);
+			rv = dpti_passthrough(sc, data, l->l_proc);
 		else
-			rv = dpti_passthrough(sc, *(caddr_t *)data, p);
+			rv = dpti_passthrough(sc, *(caddr_t *)data, l->l_proc);
 
 		sc->sc_nactive--;
 		wakeup_one(&sc->sc_nactive);

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.59.2.2 2004/09/18 14:45:58 skrll Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.59.2.3 2004/09/21 13:27:59 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.59.2.2 2004/09/18 14:45:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.59.2.3 2004/09/21 13:27:59 skrll Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>

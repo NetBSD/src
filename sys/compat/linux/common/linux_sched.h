@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.h,v 1.2.36.1 2004/09/18 14:43:43 skrll Exp $	*/
+/*	$NetBSD: linux_sched.h,v 1.2.36.2 2004/09/21 13:25:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

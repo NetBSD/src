@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.h,v 1.1.64.2 2004/09/18 14:42:13 skrll Exp $ */
+/*	$NetBSD: db_disasm.h,v 1.1.64.3 2004/09/21 13:23:57 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

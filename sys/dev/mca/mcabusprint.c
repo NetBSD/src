@@ -1,4 +1,4 @@
-/* $NetBSD: mcabusprint.c,v 1.1.2.3 2004/09/18 14:48:19 skrll Exp $ */
+/* $NetBSD: mcabusprint.c,v 1.1.2.4 2004/09/21 13:30:17 skrll Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

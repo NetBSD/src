@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930reg.h,v 1.3.30.2 2004/09/18 14:45:56 skrll Exp $ */
+/* $NetBSD: am79c930reg.h,v 1.3.30.3 2004/09/21 13:27:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

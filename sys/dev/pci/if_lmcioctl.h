@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcioctl.h,v 1.4.20.2 2004/09/18 14:49:03 skrll Exp $	*/
+/*	$NetBSD: if_lmcioctl.h,v 1.4.20.3 2004/09/21 13:31:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)

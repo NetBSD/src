@@ -1,7 +1,7 @@
 | file: putimage.S
 | author: Yasha(itohy@NetBSD.org)
 |
-| $NetBSD: putimage.S,v 1.1.22.2 2004/09/18 14:42:36 skrll Exp $
+| $NetBSD: putimage.S,v 1.1.22.3 2004/09/21 13:24:20 skrll Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"

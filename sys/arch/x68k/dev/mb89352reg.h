@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352reg.h,v 1.1.1.1.66.2 2004/09/18 14:42:25 skrll Exp $	*/
+/*	$NetBSD: mb89352reg.h,v 1.1.1.1.66.3 2004/09/21 13:24:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

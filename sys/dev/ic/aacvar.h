@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.1.14.3 2004/09/18 14:45:55 skrll Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.1.14.4 2004/09/21 13:27:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

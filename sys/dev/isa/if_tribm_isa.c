@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tribm_isa.c,v 1.4.16.1 2004/09/18 14:47:46 skrll Exp $	*/
+/*	$NetBSD: if_tribm_isa.c,v 1.4.16.2 2004/09/21 13:29:45 skrll Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.4.16.1 2004/09/18 14:47:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.4.16.2 2004/09/21 13:29:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

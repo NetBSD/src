@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.82.6.2 2004/09/18 14:40:27 skrll Exp $
+# 	$NetBSD: Makefile.sparc,v 1.82.6.3 2004/09/21 13:22:01 skrll Exp $
 
 # Makefile for NetBSD
 #

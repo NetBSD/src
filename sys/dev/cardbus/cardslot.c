@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.22.2.2 2004/09/18 14:45:26 skrll Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.22.2.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.22.2.2 2004/09/18 14:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.22.2.3 2004/09/21 13:27:25 skrll Exp $");
 
 #include "opt_cardslot.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.66.2.2 2004/09/18 14:42:13 skrll Exp $	*/
+/*	$NetBSD: locore.c,v 1.66.2.3 2004/09/21 13:23:58 skrll Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.66.2.2 2004/09/18 14:42:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.66.2.3 2004/09/21 13:23:58 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 

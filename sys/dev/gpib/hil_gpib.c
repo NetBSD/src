@@ -1,7 +1,7 @@
-/*	$NetBSD: hil_gpib.c,v 1.1.2.2 2004/09/18 14:45:39 skrll Exp $	*/
+/*	$NetBSD: hil_gpib.c,v 1.1.2.3 2004/09/21 13:27:37 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.1.2.2 2004/09/18 14:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.1.2.3 2004/09/21 13:27:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

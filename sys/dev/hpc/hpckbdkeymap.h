@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.20.2.2 2004/09/18 14:45:47 skrll Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.20.2.3 2004/09/21 13:27:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.

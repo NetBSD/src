@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.3.2.4 2004/09/18 14:43:05 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.3.2.5 2004/09/21 13:24:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.3.2.4 2004/09/18 14:43:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.3.2.5 2004/09/21 13:24:58 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -148,13 +148,12 @@ compat_20_sys_statfs(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct statfs12 *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statvfs *sbuf;
 	int error = 0;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -162,7 +161,7 @@ compat_20_sys_statfs(l, v, retval)
 	vrele(nd.ni_vp);
 
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
-	if ((error = dostatvfs(mp, sbuf, p, 0, 1)) != 0)
+	if ((error = dostatvfs(mp, sbuf, l, 0, 1)) != 0)
 		goto done;
 
 	error = vfs2fs(SCARG(uap, buf), sbuf);
@@ -195,11 +194,11 @@ compat_20_sys_fstatfs(l, v, retval)
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
-	if ((error = dostatvfs(mp, &sbuf, p, 0, 1)) != 0)
+	if ((error = dostatvfs(mp, &sbuf, l, 0, 1)) != 0)
 		goto out;
 	error = vfs2fs(SCARG(uap, buf), &sbuf);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -219,7 +218,6 @@ compat_20_sys_getfsstat(l, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
 	int root = 0;
-	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
 	struct statvfs sbuf;
 	struct statfs12 *sfsp;
@@ -237,7 +235,7 @@ compat_20_sys_getfsstat(l, v, retval)
 			continue;
 		}
 		if (sfsp && count < maxcount) {
-			error = dostatvfs(mp, &sbuf, p, SCARG(uap, flags), 0);
+			error = dostatvfs(mp, &sbuf, l, SCARG(uap, flags), 0);
 			if (error) {
 				simple_lock(&mountlist_slock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
@@ -258,11 +256,11 @@ compat_20_sys_getfsstat(l, v, retval)
 		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
-	if (root == 0 && p->p_cwdi->cwdi_rdir) {
+	if (root == 0 && l->l_proc->p_cwdi->cwdi_rdir) {
 		/*
 		 * fake a root entry
 		 */
-		if ((error = dostatvfs(p->p_cwdi->cwdi_rdir->v_mount, &sbuf, p,
+		if ((error = dostatvfs(l->l_proc->p_cwdi->cwdi_rdir->v_mount, &sbuf, l,
 		    SCARG(uap, flags), 1)) != 0)
 			return error;
 		if (sfsp)
@@ -308,7 +306,7 @@ compat_20_sys_fhstatfs(l, v, retval)
 		return (error);
 	mp = vp->v_mount;
 	vput(vp);
-	if ((error = VFS_STATVFS(mp, &sbuf, p)) != 0)
+	if ((error = VFS_STATVFS(mp, &sbuf, l)) != 0)
 		return (error);
 	return vfs2fs(SCARG(uap, buf), &sbuf);
 }

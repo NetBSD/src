@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.12.2.4 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: viaide.c,v 1.12.2.5 2004/09/21 13:31:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.

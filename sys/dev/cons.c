@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.48.2.3 2004/09/18 14:44:28 skrll Exp $	*/
+/*	$NetBSD: cons.c,v 1.48.2.4 2004/09/21 13:26:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.48.2.3 2004/09/18 14:44:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.48.2.4 2004/09/21 13:26:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -113,7 +113,7 @@ struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp[2];	/* vnode for underlying device. */
 
 int
-cnopen(dev_t dev, int flag, int mode, struct proc *p)
+cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	const struct cdevsw *cdev;
 	dev_t cndev;
@@ -157,11 +157,11 @@ cnopen(dev_t dev, int flag, int mode, struct proc *p)
 		/* try to get a reference on its vnode, but fail silently */
 		cdevvp(cndev, &cn_devvp[unit]);
 	}
-	return ((*cdev->d_open)(cndev, flag, mode, p));
+	return ((*cdev->d_open)(cndev, flag, mode, l));
 }
  
 int
-cnclose(dev_t dev, int flag, int mode, struct proc *p)
+cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	const struct cdevsw *cdev;
 	struct vnode *vp;
@@ -188,7 +188,7 @@ cnclose(dev_t dev, int flag, int mode, struct proc *p)
 	}
 	if (vfinddev(dev, VCHR, &vp) && vcount(vp))
 		return (0);
-	return ((*cdev->d_close)(dev, flag, mode, p));
+	return ((*cdev->d_close)(dev, flag, mode, l));
 }
  
 int
@@ -225,7 +225,7 @@ cnwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	const struct cdevsw *cdev;
 	int error;
@@ -235,7 +235,7 @@ cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	 * output from the "virtual" console.
 	 */
 	if (cmd == TIOCCONS && constty != NULL) {
-		error = suser(p->p_ucred, (u_short *) NULL);
+		error = suser(l->l_proc->p_ucred, (u_short *) NULL);
 		if (error)
 			return (error);
 		constty = NULL;
@@ -251,12 +251,12 @@ cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	cdev = cn_redirect(&dev, 0, &error);
 	if (cdev == NULL)
 		return error;
-	return ((*cdev->d_ioctl)(dev, cmd, data, flag, p));
+	return ((*cdev->d_ioctl)(dev, cmd, data, flag, l));
 }
 
 /*ARGSUSED*/
 int
-cnpoll(dev_t dev, int events, struct proc *p)
+cnpoll(dev_t dev, int events, struct lwp *l)
 {
 	const struct cdevsw *cdev;
 	int error;
@@ -269,7 +269,7 @@ cnpoll(dev_t dev, int events, struct proc *p)
 	cdev = cn_redirect(&dev, 0, &error);
 	if (cdev == NULL)
 		return error;
-	return ((*cdev->d_poll)(dev, events, p));
+	return ((*cdev->d_poll)(dev, events, l));
 }
 
 /*ARGSUSED*/

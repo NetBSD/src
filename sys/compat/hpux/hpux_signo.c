@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_signo.c,v 1.1.14.2 2004/09/18 14:43:15 skrll Exp $	*/
+/*	$NetBSD: hpux_signo.c,v 1.1.14.3 2004/09/21 13:25:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  *	@(#)hpux_sig.c	8.2 (Berkeley) 9/23/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_signo.c,v 1.1.14.2 2004/09/18 14:43:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_signo.c,v 1.1.14.3 2004/09/21 13:25:13 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

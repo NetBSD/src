@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8.42.2 2004/09/18 14:40:48 skrll Exp $ */
+/*	$NetBSD: asm.h,v 1.8.42.3 2004/09/21 13:22:27 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

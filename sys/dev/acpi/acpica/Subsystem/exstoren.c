@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.6.2.2 2004/09/18 14:44:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.6.2.3 2004/09/21 13:26:45 skrll Exp $");
 
 #define __EXSTOREN_C__
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.10.2.4 2004/09/18 14:49:03 skrll Exp $	*/
+/*	$NetBSD: hptide.c,v 1.10.2.5 2004/09/21 13:31:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.

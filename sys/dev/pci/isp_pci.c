@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.88.2.2 2004/09/18 14:49:04 skrll Exp $ */
+/* $NetBSD: isp_pci.c,v 1.88.2.3 2004/09/21 13:31:04 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.88.2.2 2004/09/18 14:49:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.88.2.3 2004/09/21 13:31:04 skrll Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>

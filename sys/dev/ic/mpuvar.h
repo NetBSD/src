@@ -1,4 +1,4 @@
-/*	$NetBSD: mpuvar.h,v 1.3.36.2 2004/09/18 14:45:59 skrll Exp $	*/
+/*	$NetBSD: mpuvar.h,v 1.3.36.3 2004/09/21 13:28:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: swreg.h,v 1.2.2.2 2004/09/18 14:40:28 skrll Exp $	*/
+/*	$NetBSD: swreg.h,v 1.2.2.3 2004/09/21 13:22:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

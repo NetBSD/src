@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.8.2.2 2004/09/18 14:40:02 skrll Exp $	*/
+/*	$NetBSD: femi.c,v 1.8.2.3 2004/09/21 13:21:37 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: femi.c,v 1.8.2.2 2004/09/18 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: femi.c,v 1.8.2.3 2004/09/21 13:21:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

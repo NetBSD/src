@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.1.2.2 2004/09/18 14:49:04 skrll Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.1.2.3 2004/09/21 13:31:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.1.2.2 2004/09/18 14:49:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.1.2.3 2004/09/21 13:31:04 skrll Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.15.6.2 2004/09/18 14:47:46 skrll Exp $ */
+/* $NetBSD: ega.c,v 1.15.6.3 2004/09/21 13:29:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.15.6.2 2004/09/18 14:47:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.15.6.3 2004/09/21 13:29:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

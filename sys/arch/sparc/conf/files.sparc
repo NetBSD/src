@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.122.6.3 2004/09/18 14:40:27 skrll Exp $
+#	$NetBSD: files.sparc,v 1.122.6.4 2004/09/21 13:22:01 skrll Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info

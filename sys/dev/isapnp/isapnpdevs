@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.53.2.2 2004/09/18 14:48:18 skrll Exp $
+$NetBSD: isapnpdevs,v 1.53.2.3 2004/09/21 13:30:16 skrll Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.

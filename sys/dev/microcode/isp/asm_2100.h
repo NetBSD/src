@@ -1,4 +1,4 @@
-/* $NetBSD: asm_2100.h,v 1.4.6.2 2004/09/18 14:48:29 skrll Exp $ */
+/* $NetBSD: asm_2100.h,v 1.4.6.3 2004/09/21 13:30:26 skrll Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
  * All rights reserved.

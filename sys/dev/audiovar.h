@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.28.2.2 2004/09/18 14:44:27 skrll Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.28.2.3 2004/09/21 13:26:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

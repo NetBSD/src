@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.14.20.2 2004/09/18 14:40:48 skrll Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.14.20.3 2004/09/21 13:22:31 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14.20.2 2004/09/18 14:40:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14.20.3 2004/09/21 13:22:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>

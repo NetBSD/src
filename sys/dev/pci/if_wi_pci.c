@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.25.2.5 2004/09/18 14:49:04 skrll Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.25.2.6 2004/09/21 13:31:04 skrll Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.25.2.5 2004/09/18 14:49:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.25.2.6 2004/09/21 13:31:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

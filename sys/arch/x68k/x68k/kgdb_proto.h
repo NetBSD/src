@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_proto.h,v 1.1.1.1.66.2 2004/09/18 14:42:37 skrll Exp $	*/
+/*	$NetBSD: kgdb_proto.h,v 1.1.1.1.66.3 2004/09/21 13:24:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

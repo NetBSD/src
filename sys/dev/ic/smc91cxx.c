@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.45.2.3 2004/09/18 14:46:00 skrll Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.45.2.4 2004/09/21 13:28:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45.2.3 2004/09/18 14:46:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45.2.4 2004/09/21 13:28:08 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"

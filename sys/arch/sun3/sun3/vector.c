@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.21.42.2 2004/09/18 14:41:48 skrll Exp $	*/
+/*	$NetBSD: vector.c,v 1.21.42.3 2004/09/21 13:23:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.21.42.2 2004/09/18 14:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.21.42.3 2004/09/21 13:23:29 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: jis_kmap.c,v 1.2.50.2 2004/09/18 14:42:37 skrll Exp $	*/
+/*	$NetBSD: jis_kmap.c,v 1.2.50.3 2004/09/21 13:24:20 skrll Exp $	*/
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: jis_kmap.c,v 1.2.50.2 2004/09/18 14:42:37 skrll Exp $");
+__RCSID("$NetBSD: jis_kmap.c,v 1.2.50.3 2004/09/21 13:24:20 skrll Exp $");
 
 #include <machine/kbdmap.h>
 

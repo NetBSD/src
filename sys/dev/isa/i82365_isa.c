@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.20.6.2 2004/09/18 14:47:46 skrll Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.20.6.3 2004/09/21 13:29:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.20.6.2 2004/09/18 14:47:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.20.6.3 2004/09/21 13:29:43 skrll Exp $");
 
 #define	PCICISADEBUG
 

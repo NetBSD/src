@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7.2.2 2004/09/18 14:40:48 skrll Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.7.2.3 2004/09/21 13:22:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7.2.2 2004/09/18 14:40:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7.2.3 2004/09/21 13:22:35 skrll Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG

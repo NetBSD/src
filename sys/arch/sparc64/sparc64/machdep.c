@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145.2.3 2004/09/18 14:41:17 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.145.2.4 2004/09/21 13:22:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.3 2004/09/18 14:41:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.4 2004/09/21 13:22:58 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -932,8 +932,8 @@ stackdump()
 
 
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	return (ENOEXEC);
@@ -1206,7 +1206,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i, j;
 	size_t len;
-	struct proc *p = uio->uio_procp;
+	struct proc *p = uio->uio_lwp->l_proc;
 	struct pmap *pm;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {

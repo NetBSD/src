@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.1.10.2 2004/09/18 14:43:31 skrll Exp $	*/
+/*	$NetBSD: linux_siginfo.h,v 1.1.10.3 2004/09/21 13:25:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.38.6.3 2004/09/18 14:45:39 skrll Exp $	*/
+/*	$NetBSD: ahb.c,v 1.38.6.4 2004/09/21 13:27:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.38.6.3 2004/09/18 14:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.38.6.4 2004/09/21 13:27:36 skrll Exp $");
 
 #include "opt_ddb.h"
 

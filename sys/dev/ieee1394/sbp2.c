@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.18.2.3 2004/09/18 14:47:45 skrll Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.18.2.4 2004/09/21 13:29:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.18.2.3 2004/09/18 14:47:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.18.2.4 2004/09/21 13:29:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -768,7 +768,7 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 					io.uio_rw = UIO_WRITE;
 				else
 					io.uio_rw = UIO_READ;
-				io.uio_procp = NULL;
+				io.uio_lwp = NULL;
 				iov.iov_base = cmd->data;
 				iov.iov_len = cmd->datalen;
 				orb->pt = sbp2_alloc_pt(&io, cmd->rw, orb);

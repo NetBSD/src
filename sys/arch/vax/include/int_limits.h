@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.2.26.2 2004/09/18 14:42:06 skrll Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.2.26.3 2004/09/21 13:23:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

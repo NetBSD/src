@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.6.2.2 2004/09/18 14:44:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.6.2.3 2004/09/21 13:26:47 skrll Exp $");
 
 #define __TBINSTAL_C__
 

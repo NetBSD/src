@@ -1,4 +1,4 @@
-/*	$NetBSD: clockioctl.h,v 1.1.1.1.66.2 2004/09/18 14:42:37 skrll Exp $	*/
+/*	$NetBSD: clockioctl.h,v 1.1.1.1.66.3 2004/09/21 13:24:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

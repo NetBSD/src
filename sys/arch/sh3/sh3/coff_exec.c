@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.19.2.3 2004/09/18 14:40:02 skrll Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.19.2.4 2004/09/21 13:21:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.19.2.3 2004/09/18 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.19.2.4 2004/09/21 13:21:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,11 +65,12 @@ static int coff_find_section(struct proc *, struct vnode *,
  */
 
 int
-exec_coff_makecmds(struct proc *p, struct exec_package *epp)
+exec_coff_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error;
 	struct coff_filehdr *fp = epp->ep_hdr;
 	struct coff_aouthdr *ap;
+	struct proc *p;
 
 	if (epp->ep_hdrvalid < COFF_HDR_SIZE)
 		return ENOEXEC;
@@ -77,6 +78,7 @@ exec_coff_makecmds(struct proc *p, struct exec_package *epp)
 	if (COFF_BADMAG(fp))
 		return ENOEXEC;
 
+	p = l->l_proc;
 	ap = (void *)((char *)epp->ep_hdr + sizeof(struct coff_filehdr));
 	switch (ap->a_magic) {
 	case COFF_OMAGIC:
@@ -371,7 +373,7 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 
 #if 0
 int
-coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
+coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 {
 	int error, siz, resid;
 	int taddr, tsize, daddr, dsize, offset;
@@ -388,7 +390,7 @@ coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
 #ifdef TODO
 	IBCS2_CHECK_ALT_EXIST(p, &sg, path);
 #endif
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("coff_load_shlib: can't find library %s\n", path));

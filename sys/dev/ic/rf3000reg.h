@@ -1,4 +1,4 @@
-/* $NetBSD: rf3000reg.h,v 1.3.2.3 2004/09/18 14:46:00 skrll Exp $ */
+/* $NetBSD: rf3000reg.h,v 1.3.2.4 2004/09/21 13:28:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 David Young.  All rights reserved.

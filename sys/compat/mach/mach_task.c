@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.25.2.3 2004/09/18 14:43:46 skrll Exp $ */
+/*	$NetBSD: mach_task.c,v 1.25.2.4 2004/09/21 13:25:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.3 2004/09/18 14:43:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.4 2004/09/21 13:25:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,7 +162,8 @@ mach_ports_lookup(args)
 	 * On Darwin, the data seems always null...
 	 */
 	uaddr = NULL;
-	if ((error = mach_ool_copyout(p, &mnp[0], 
+	uaddr = NULL;
+	if ((error = mach_ool_copyout(l, &mnp[0], 
 	    &uaddr, sizeof(mnp), MACH_OOL_TRACE)) != 0)
 		return mach_msg_error(args, error);
 
@@ -300,7 +301,7 @@ mach_task_threads(args)
 	}
 
 	/* This will free mnp */
-	if ((error = mach_ool_copyout(l->l_proc, mnp, &uaddr, 
+	if ((error = mach_ool_copyout(l, mnp, &uaddr, 
 	    size, MACH_OOL_TRACE|MACH_OOL_FREE)) != 0)
 		return mach_msg_error(args, error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpccvar.h,v 1.7.22.2 2004/09/18 14:45:57 skrll Exp $ */
+/*	$NetBSD: clmpccvar.h,v 1.7.22.3 2004/09/21 13:27:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

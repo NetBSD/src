@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.42.2.2 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.42.2.3 2004/09/21 13:31:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000

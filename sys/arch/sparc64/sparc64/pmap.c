@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141.2.2 2004/09/18 14:41:17 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.141.2.3 2004/09/21 13:22:58 skrll Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141.2.2 2004/09/18 14:41:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141.2.3 2004/09/21 13:22:58 skrll Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF

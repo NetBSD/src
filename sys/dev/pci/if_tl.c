@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.57.2.2 2004/09/18 14:49:04 skrll Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.57.2.3 2004/09/21 13:31:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57.2.2 2004/09/18 14:49:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57.2.3 2004/09/21 13:31:03 skrll Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS

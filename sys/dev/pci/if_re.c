@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re.c,v 1.4.4.4 2004/09/18 14:49:03 skrll Exp $	*/
+/*	$NetBSD: if_re.c,v 1.4.4.5 2004/09/21 13:31:03 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.

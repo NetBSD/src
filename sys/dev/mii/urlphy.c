@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.8.2.3 2004/09/18 14:48:44 skrll Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.8.2.4 2004/09/21 13:30:41 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.8.2.3 2004/09/18 14:48:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.8.2.4 2004/09/21 13:30:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

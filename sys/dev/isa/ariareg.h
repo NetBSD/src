@@ -1,4 +1,4 @@
-/*	$NetBSD: ariareg.h,v 1.2.48.2 2004/09/18 14:47:45 skrll Exp $	*/
+/*	$NetBSD: ariareg.h,v 1.2.48.3 2004/09/21 13:29:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.

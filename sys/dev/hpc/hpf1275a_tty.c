@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.1.2.3 2004/09/18 14:45:47 skrll Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.1.2.4 2004/09/21 13:27:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.1.2.3 2004/09/18 14:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.1.2.4 2004/09/21 13:27:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

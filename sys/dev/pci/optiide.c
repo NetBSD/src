@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.5.4.4 2004/09/18 14:49:04 skrll Exp $	*/
+/*	$NetBSD: optiide.c,v 1.5.4.5 2004/09/21 13:31:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

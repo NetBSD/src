@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.7.10.2 2004/09/18 14:43:02 skrll Exp $ */
+/* $NetBSD: coda.h,v 1.7.10.3 2004/09/21 13:24:45 skrll Exp $ */
 
 /*
 

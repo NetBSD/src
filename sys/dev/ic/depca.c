@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.9.2.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: depca.c,v 1.9.2.3 2004/09/21 13:27:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.9.2.2 2004/09/18 14:45:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.9.2.3 2004/09/21 13:27:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

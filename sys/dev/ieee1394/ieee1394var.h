@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.20.2.2 2004/09/18 14:47:45 skrll Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.20.2.3 2004/09/21 13:29:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ struct ieee1394_softc {
 	int (*sc1394_ir_wait)(struct device *, ieee1394_ir_tag_t,
 	    void *, char *);
 	int (*sc1394_ir_select)(struct device *, ieee1394_ir_tag_t,
-	    struct proc *);
+	    struct lwp *);
 
 	/* for isochronous transmission */
 	ieee1394_it_tag_t (*sc1394_it_open)(struct device *, int, int, int);

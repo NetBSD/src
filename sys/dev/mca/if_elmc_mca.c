@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.12.2.2 2004/09/18 14:48:19 skrll Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.12.2.3 2004/09/21 13:30:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.12.2.2 2004/09/18 14:48:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.12.2.3 2004/09/21 13:30:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.15.2.2 2004/09/18 14:46:01 skrll Exp $ */
+/* $NetBSD: vga_subr.c,v 1.15.2.3 2004/09/21 13:28:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -30,7 +30,7 @@
 #include "opt_wsdisplay_border.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.15.2.2 2004/09/18 14:46:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.15.2.3 2004/09/21 13:28:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

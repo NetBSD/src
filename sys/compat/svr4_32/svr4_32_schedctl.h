@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_schedctl.h,v 1.2.4.3 2004/09/18 14:44:17 skrll Exp $ */
+/* $NetBSD: svr4_32_schedctl.h,v 1.2.4.4 2004/09/21 13:26:13 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

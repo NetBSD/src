@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.36.2.4 2004/09/18 14:43:02 skrll Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.36.2.5 2004/09/21 13:24:46 skrll Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.36.2.4 2004/09/18 14:43:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.36.2.5 2004/09/21 13:24:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ coda_open(v)
     struct cnode *cp = VTOC(*vpp);
     int flag = ap->a_mode & (~O_EXCL);
     struct ucred *cred = ap->a_cred;
-    struct proc *p = ap->a_p;
+    struct lwp *l = ap->a_l;
 /* locals */
     int error;
     struct vnode *vp;
@@ -252,7 +252,7 @@ coda_open(v)
 	return(0);
     }
 
-    error = venus_open(vtomi((*vpp)), &cp->c_fid, flag, cred, p, &dev, &inode);
+    error = venus_open(vtomi((*vpp)), &cp->c_fid, flag, cred, l, &dev, &inode);
     if (error)
 	return (error);
     if (!error) {
@@ -262,7 +262,7 @@ coda_open(v)
 
     /* Translate the <device, inode> pair for the cache file into
        an inode pointer. */
-    error = coda_grab_vnode(dev, inode, &vp);
+    error = coda_grab_vnode(dev, inode, &vp, l);
     if (error)
 	return (error);
 
@@ -292,7 +292,7 @@ coda_open(v)
     cp->c_inode = inode;
 
     /* Open the cache file. */
-    error = VOP_OPEN(vp, flag, cred, p); 
+    error = VOP_OPEN(vp, flag, cred, l); 
     return(error);
 }
 
@@ -309,7 +309,7 @@ coda_close(v)
     struct cnode *cp = VTOC(vp);
     int flag = ap->a_fflag;
     struct ucred *cred = ap->a_cred;
-    struct proc *p = ap->a_p;
+    struct lwp *l = ap->a_l;
 /* locals */
     int error;
 
@@ -331,7 +331,7 @@ coda_close(v)
 	    vgone(cp->c_ovp);
 #else
 	    vn_lock(cp->c_ovp, LK_EXCLUSIVE | LK_RETRY);
-	    VOP_CLOSE(cp->c_ovp, flag, cred, p); /* Do errors matter here? */
+	    VOP_CLOSE(cp->c_ovp, flag, cred, l); /* Do errors matter here? */
 	    vput(cp->c_ovp);
 #endif
 	} else {
@@ -342,7 +342,7 @@ coda_close(v)
 	return ENODEV;
     } else {
 	vn_lock(cp->c_ovp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(cp->c_ovp, flag, cred, p); /* Do errors matter here? */
+	VOP_CLOSE(cp->c_ovp, flag, cred, l); /* Do errors matter here? */
 	vput(cp->c_ovp);
     }
 
@@ -352,7 +352,7 @@ coda_close(v)
     if (flag & FWRITE)                    /* file was opened for write */
 	--cp->c_owrite;
 
-    error = venus_close(vtomi(vp), &cp->c_fid, flag, cred, p);
+    error = venus_close(vtomi(vp), &cp->c_fid, flag, cred, l);
     vrele(CTOV(cp));
 
     CODADEBUG(CODA_CLOSE, myprintf(("close: result %d\n",error)); )
@@ -367,7 +367,7 @@ coda_read(v)
 
     ENTRY;
     return(coda_rdwr(ap->a_vp, ap->a_uio, UIO_READ,
-		    ap->a_ioflag, ap->a_cred, ap->a_uio->uio_procp));
+		    ap->a_ioflag, ap->a_cred, ap->a_uio->uio_lwp));
 }
 
 int
@@ -378,23 +378,24 @@ coda_write(v)
 
     ENTRY;
     return(coda_rdwr(ap->a_vp, ap->a_uio, UIO_WRITE,
-		    ap->a_ioflag, ap->a_cred, ap->a_uio->uio_procp));
+		    ap->a_ioflag, ap->a_cred, ap->a_uio->uio_lwp));
 }
 
 int
-coda_rdwr(vp, uiop, rw, ioflag, cred, p)
+coda_rdwr(vp, uiop, rw, ioflag, cred, l)
     struct vnode *vp;
     struct uio *uiop;
     enum uio_rw rw;
     int ioflag;
     struct ucred *cred;
-    struct proc *p;
+    struct lwp *l;
 { 
 /* upcall decl */
   /* NOTE: container file operation!!! */
 /* locals */
     struct cnode *cp = VTOC(vp);
     struct vnode *cfvp = cp->c_ovp;
+    struct proc *p = l->l_proc;
     int opened_internally = 0;
     int error = 0;
 
@@ -427,7 +428,7 @@ coda_rdwr(vp, uiop, rw, ioflag, cred, p)
 	 * it's completely written.
 	 */
 	if (cp->c_inode != 0 && !(p && (p->p_acflag & ACORE))) { 
-	    error = coda_grab_vnode(cp->c_device, cp->c_inode, &cfvp);
+	    error = coda_grab_vnode(cp->c_device, cp->c_inode, &cfvp, l);
 	    if (error) {
 		MARK_INT_FAIL(CODA_RDWR_STATS);
 		return(error);
@@ -442,7 +443,7 @@ coda_rdwr(vp, uiop, rw, ioflag, cred, p)
 	    opened_internally = 1;
 	    MARK_INT_GEN(CODA_OPEN_STATS);
 	    error = VOP_OPEN(vp, (rw == UIO_READ ? FREAD : FWRITE), 
-			     cred, p);
+			     cred, l);
 #ifdef	CODA_VERBOSE
 printf("coda_rdwr: Internally Opening %p\n", vp);
 #endif
@@ -472,7 +473,7 @@ printf("coda_rdwr: Internally Opening %p\n", vp);
     /* Do an internal close if necessary. */
     if (opened_internally) {
 	MARK_INT_GEN(CODA_CLOSE_STATS);
-	(void)VOP_CLOSE(vp, (rw == UIO_READ ? FREAD : FWRITE), cred, p);
+	(void)VOP_CLOSE(vp, (rw == UIO_READ ? FREAD : FWRITE), cred, l);
     }
 
     /* Invalidate cached attributes if writing. */
@@ -492,7 +493,7 @@ coda_ioctl(v)
     caddr_t data = ap->a_data;
     int flag = ap->a_fflag;
     struct ucred *cred = ap->a_cred;
-    struct proc  *p = ap->a_p;
+    struct lwp  *l = ap->a_l;
 /* locals */
     int error;
     struct vnode *tvp;
@@ -517,7 +518,8 @@ coda_ioctl(v)
     /* Should we use the name cache here? It would get it from
        lookupname sooner or later anyway, right? */
 
-    NDINIT(&ndp, LOOKUP, (iap->follow ? FOLLOW : NOFOLLOW), UIO_USERSPACE, ((caddr_t)iap->path), p);
+    NDINIT(&ndp, LOOKUP, (iap->follow ? FOLLOW : NOFOLLOW), UIO_USERSPACE,
+	   ((caddr_t)iap->path), l);
     error = namei(&ndp);
     tvp = ndp.ni_vp;
 
@@ -546,7 +548,7 @@ coda_ioctl(v)
 	vrele(tvp);
 	return(EINVAL);
     }
-    error = venus_ioctl(vtomi(tvp), &((VTOC(tvp))->c_fid), com, flag, data, cred, p);
+    error = venus_ioctl(vtomi(tvp), &((VTOC(tvp))->c_fid), com, flag, data, cred, l);
 
     if (error)
 	MARK_INT_FAIL(CODA_IOCTL_STATS);
@@ -576,7 +578,7 @@ coda_getattr(v)
     struct cnode *cp = VTOC(vp);
     struct vattr *vap = ap->a_vap;
     struct ucred *cred = ap->a_cred;
-    struct proc *p = ap->a_p;
+    struct lwp *l = ap->a_l;
 /* locals */
     int error;
 
@@ -600,7 +602,7 @@ coda_getattr(v)
 	return(0);
     }
 
-    error = venus_getattr(vtomi(vp), &cp->c_fid, cred, p, vap);
+    error = venus_getattr(vtomi(vp), &cp->c_fid, cred, l, vap);
 
     if (!error) {
 	CODADEBUG(CODA_GETATTR, myprintf(("getattr miss %s: result %d\n",
@@ -629,7 +631,7 @@ coda_setattr(v)
     struct cnode *cp = VTOC(vp);
     struct vattr *vap = ap->a_vap;
     struct ucred *cred = ap->a_cred;
-    struct proc *p = ap->a_p;
+    struct lwp *l = ap->a_l;
 /* locals */
     int error;
 
@@ -644,7 +646,7 @@ coda_setattr(v)
     if (codadebug & CODADBGMSK(CODA_SETATTR)) {
 	print_vattr(vap);
     }
-    error = venus_setattr(vtomi(vp), &cp->c_fid, vap, cred, p);
+    error = venus_setattr(vtomi(vp), &cp->c_fid, vap, cred, l);
 
     if (!error)
 	cp->c_flags &= ~C_VATTR;
@@ -663,7 +665,7 @@ coda_access(v)
     struct cnode *cp = VTOC(vp);
     int mode = ap->a_mode;
     struct ucred *cred = ap->a_cred;
-    struct proc *p = ap->a_p;
+    struct lwp *l = ap->a_l;
 /* locals */
     int error;
 
@@ -692,7 +694,7 @@ coda_access(v)
 	}
     }
 
-    error = venus_access(vtomi(vp), &cp->c_fid, mode, cred, p);
+    error = venus_access(vtomi(vp), &cp->c_fid, mode, cred, l);
 
     return(error);
 }
@@ -730,7 +732,7 @@ coda_readlink(v)
     struct cnode *cp = VTOC(vp);
     struct uio *uiop = ap->a_uio;
     struct ucred *cred = ap->a_cred;
-    struct proc *p = ap->a_uio->uio_procp;
+    struct lwp *l = ap->a_uio->uio_lwp;
 /* locals */
     int error;
     char *str;
@@ -754,7 +756,7 @@ coda_readlink(v)
 	return(error);
     }
 
-    error = venus_readlink(vtomi(vp), &cp->c_fid, cred, p, &str, &len);
+    error = venus_readlink(vtomi(vp), &cp->c_fid, cred, l, &str, &len);
 
     if (!error) {
 	uiop->uio_rw = UIO_READ;
@@ -781,7 +783,7 @@ coda_fsync(v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct ucred *cred = ap->a_cred;
-    struct proc *p = ap->a_p;
+    struct lwp *l = ap->a_l;
 /* locals */
     struct vnode *convp = cp->c_ovp;
     int error;
@@ -804,7 +806,7 @@ coda_fsync(v)
     }
 
     if (convp)
-    	VOP_FSYNC(convp, cred, MNT_WAIT, 0, 0, p);
+    	VOP_FSYNC(convp, cred, MNT_WAIT, 0, 0, l);
 
     /*
      * We can expect fsync on any vnode at all if venus is pruging it.
@@ -817,7 +819,7 @@ coda_fsync(v)
 	return(0);
     }
 
-    error = venus_fsync(vtomi(vp), &cp->c_fid, cred, p);
+    error = venus_fsync(vtomi(vp), &cp->c_fid, cred, l);
 
     CODADEBUG(CODA_FSYNC, myprintf(("in fsync result %d\n",error)); );
     return(error);
@@ -834,7 +836,7 @@ coda_inactive(v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct ucred *cred __attribute__((unused)) = NULL;
-    struct proc *p __attribute__((unused)) = curproc;
+    struct lwp *l __attribute__((unused)) = curlwp;
 /* upcall decl */
 /* locals */
 
@@ -915,7 +917,7 @@ coda_lookup(v)
      */
     struct componentname  *cnp = ap->a_cnp;
     struct ucred *cred = cnp->cn_cred;
-    struct proc *p = cnp->cn_proc;
+    struct lwp *l = cnp->cn_lwp;
 /* locals */
     struct cnode *cp;
     const char *nm = cnp->cn_nameptr;
@@ -958,7 +960,7 @@ coda_lookup(v)
     } else {
 	
 	/* The name wasn't cached, so we need to contact Venus */
-	error = venus_lookup(vtomi(dvp), &dcp->c_fid, nm, len, cred, p, &VFid, &vtype);
+	error = venus_lookup(vtomi(dvp), &dcp->c_fid, nm, len, cred, l, &VFid, &vtype);
 	
 	if (error) {
 	    MARK_INT_FAIL(CODA_LOOKUP_STATS);
@@ -1075,7 +1077,7 @@ coda_create(v)
     struct vnode **vpp = ap->a_vpp;
     struct componentname  *cnp = ap->a_cnp;
     struct ucred *cred = cnp->cn_cred;
-    struct proc *p = cnp->cn_proc;
+    struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
     struct cnode *cp;
@@ -1096,7 +1098,7 @@ coda_create(v)
 	return(EACCES);
     }
 
-    error = venus_create(vtomi(dvp), &dcp->c_fid, nm, len, exclusive, mode, va, cred, p, &VFid, &attr);
+    error = venus_create(vtomi(dvp), &dcp->c_fid, nm, len, exclusive, mode, va, cred, l, &VFid, &attr);
 
     if (!error) {
 	
@@ -1176,7 +1178,7 @@ coda_remove(v)
     struct cnode *cp = VTOC(dvp);
     struct componentname  *cnp = ap->a_cnp;
     struct ucred *cred = cnp->cn_cred;
-    struct proc *p = cnp->cn_proc;
+    struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1218,7 +1220,7 @@ coda_remove(v)
 	return(ENOENT);
     }
 
-    error = venus_remove(vtomi(dvp), &cp->c_fid, nm, len, cred, p);
+    error = venus_remove(vtomi(dvp), &cp->c_fid, nm, len, cred, l);
 
     CODADEBUG(CODA_REMOVE, myprintf(("in remove result %d\n",error)); )
 
@@ -1252,7 +1254,7 @@ coda_link(v)
     struct cnode *tdcp = VTOC(tdvp);
     struct componentname *cnp = ap->a_cnp;
     struct ucred *cred = cnp->cn_cred;
-    struct proc *p = cnp->cn_proc;
+    struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1297,7 +1299,7 @@ coda_link(v)
 	goto exit;
     }
 	
-    error = venus_link(vtomi(vp), &cp->c_fid, &tdcp->c_fid, nm, len, cred, p);
+    error = venus_link(vtomi(vp), &cp->c_fid, &tdcp->c_fid, nm, len, cred, l);
 
     /* Invalidate the parent's attr cache, the modification time has changed */
     VTOC(tdvp)->c_flags &= ~C_VATTR;
@@ -1332,7 +1334,7 @@ coda_rename(v)
     struct cnode *ndcp = VTOC(ndvp);
     struct componentname  *tcnp = ap->a_tcnp;
     struct ucred *cred = fcnp->cn_cred;
-    struct proc *p = fcnp->cn_proc;
+    struct lwp *l = fcnp->cn_lwp;
 /* true args */
     int error;
     const char *fnm = fcnp->cn_nameptr;
@@ -1346,7 +1348,7 @@ coda_rename(v)
        This could be Bad. XXX */
 #ifdef OLD_DIAGNOSTIC
     if ((fcnp->cn_cred != tcnp->cn_cred)
-	|| (fcnp->cn_proc != tcnp->cn_proc))
+	|| (fcnp->cn_lwp != tcnp->cn_lwp))
     {
 	panic("coda_rename: component names don't agree");
     }
@@ -1389,7 +1391,7 @@ coda_rename(v)
 	goto exit;
     }
 
-    error = venus_rename(vtomi(odvp), &odcp->c_fid, &ndcp->c_fid, fnm, flen, tnm, tlen, cred, p);
+    error = venus_rename(vtomi(odvp), &odcp->c_fid, &ndcp->c_fid, fnm, flen, tnm, tlen, cred, l);
 
  exit:
     CODADEBUG(CODA_RENAME, myprintf(("in rename result %d\n",error));)
@@ -1426,7 +1428,7 @@ coda_mkdir(v)
     struct vattr *va = ap->a_vap;
     struct vnode **vpp = ap->a_vpp;
     struct ucred *cred = cnp->cn_cred;
-    struct proc *p = cnp->cn_proc;
+    struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1450,7 +1452,7 @@ coda_mkdir(v)
 	return(EACCES);
     }
 
-    error = venus_mkdir(vtomi(dvp), &dcp->c_fid, nm, len, va, cred, p, &VFid, &ova);
+    error = venus_mkdir(vtomi(dvp), &dcp->c_fid, nm, len, va, cred, l, &VFid, &ova);
 
     if (!error) {
 	if (coda_find(&VFid) != NULL)
@@ -1516,7 +1518,7 @@ coda_rmdir(v)
     struct cnode *dcp = VTOC(dvp);
     struct componentname  *cnp = ap->a_cnp;
     struct ucred *cred = cnp->cn_cred;
-    struct proc *p = cnp->cn_proc;
+    struct lwp *l = cnp->cn_lwp;
 /* true args */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1548,7 +1550,7 @@ coda_rmdir(v)
     /* Invalidate the parent's attr cache, the modification time has changed */
     dcp->c_flags &= ~C_VATTR;
 
-    error = venus_rmdir(vtomi(dvp), &dcp->c_fid, nm, len, cred, p);
+    error = venus_rmdir(vtomi(dvp), &dcp->c_fid, nm, len, cred, l);
 
     CODADEBUG(CODA_RMDIR, myprintf(("in rmdir result %d\n", error)); )
 
@@ -1581,7 +1583,7 @@ coda_symlink(v)
     struct vattr *tva = ap->a_vap;
     char *path = ap->a_target;
     struct ucred *cred = cnp->cn_cred;
-    struct proc *p = cnp->cn_proc;
+    struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
     u_long saved_cn_flags;
@@ -1625,7 +1627,7 @@ coda_symlink(v)
 	goto exit;
     }
 
-    error = venus_symlink(vtomi(tdvp), &tdcp->c_fid, path, plen, nm, len, tva, cred, p);
+    error = venus_symlink(vtomi(tdvp), &tdcp->c_fid, path, plen, nm, len, tva, cred, l);
 
     /* Invalidate the parent's attr cache, the modification time has changed */
     tdcp->c_flags &= ~C_VATTR;
@@ -1675,7 +1677,7 @@ coda_readdir(v)
     int *eofflag = ap->a_eofflag;
     off_t **cookies = ap->a_cookies;
     int *ncookies = ap->a_ncookies;
-    struct proc *p = ap->a_uio->uio_procp;
+    struct lwp *l = ap->a_uio->uio_lwp;
 /* upcall decl */
 /* locals */
     int error = 0;
@@ -1698,7 +1700,7 @@ coda_readdir(v)
 	if (cp->c_ovp == NULL) {
 	    opened_internally = 1;
 	    MARK_INT_GEN(CODA_OPEN_STATS);
-	    error = VOP_OPEN(vp, FREAD, cred, p);
+	    error = VOP_OPEN(vp, FREAD, cred, l);
 #ifdef	CODA_VERBOSE
 printf("coda_readdir: Internally Opening %p\n", vp);
 #endif
@@ -1719,7 +1721,7 @@ printf("coda_readdir: Internally Opening %p\n", vp);
 	/* Do an "internal close" if necessary. */ 
 	if (opened_internally) {
 	    MARK_INT_GEN(CODA_CLOSE_STATS);
-	    (void)VOP_CLOSE(vp, FREAD, cred, p);
+	    (void)VOP_CLOSE(vp, FREAD, cred, l);
 	}
     }
 
@@ -1740,7 +1742,7 @@ coda_bmap(v)
     daddr_t bn __attribute__((unused)) = ap->a_bn;	/* fs block number */
     struct vnode **vpp = ap->a_vpp;			/* RETURN vp of device */
     daddr_t *bnp __attribute__((unused)) = ap->a_bnp;	/* RETURN device block number */
-    struct proc *p __attribute__((unused)) = curproc;
+    struct lwp *l __attribute__((unused)) = curlwp;
 /* upcall decl */
 /* locals */
 
@@ -1763,7 +1765,7 @@ coda_strategy(v)
 /* true args */
     struct vop_strategy_args *ap = v;
     struct buf *bp __attribute__((unused)) = ap->a_bp;
-    struct proc *p __attribute__((unused)) = curproc;
+    struct lwp *l __attribute__((unused)) = curlwp;
 /* upcall decl */
 /* locals */
 
@@ -1863,7 +1865,7 @@ coda_islocked(v)
 
 /* How one looks up a vnode given a device/inode pair: */
 int
-coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
+coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp, struct lwp *l)
 {
     /* This is like VFS_VGET() or igetinode()! */
     int           error;
@@ -1875,7 +1877,7 @@ coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
     }
 
     /* XXX - ensure that nonzero-return means failure */
-    error = VFS_VGET(mp,ino,vpp);
+    error = VFS_VGET(mp, ino, vpp);
     if (error) {
 	myprintf(("coda_grab_vnode: iget/vget(%d, %d) returns %p, err %d\n", 
 		  dev, ino, *vpp, error));
@@ -2011,8 +2013,8 @@ coda_getpages(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct cnode *cp = VTOC(vp);
-	struct proc *p = curproc;
-	struct ucred *cred = p->p_ucred;
+	struct lwp *l = curlwp;
+	struct ucred *cred = l->l_proc->p_ucred;
 	int error;
 
 	/* Check for control object. */
@@ -2020,13 +2022,13 @@ coda_getpages(v)
 		return(EINVAL);
 	}
 
-	error = VOP_OPEN(vp, FREAD, cred, p);
+	error = VOP_OPEN(vp, FREAD, cred, l);
 	if (error) {
 		return error;
 	}
 	ap->a_vp = cp->c_ovp;
 	error = VOCALL(ap->a_vp->v_op, VOFFSET(vop_getpages), ap);
-	(void) VOP_CLOSE(vp, FREAD, cred, p);
+	(void) VOP_CLOSE(vp, FREAD, cred, l);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.4.6.2 2004/09/18 14:40:48 skrll Exp $ */
+/*	$NetBSD: eeprom.c,v 1.4.6.3 2004/09/21 13:22:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.4.6.2 2004/09/18 14:40:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.4.6.3 2004/09/21 13:22:31 skrll Exp $");
 
 #include "opt_sparc_arch.h"
 

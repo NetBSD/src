@@ -1,4 +1,4 @@
-/*	$NetBSD: mcavar.h,v 1.3.22.3 2004/09/18 14:48:19 skrll Exp $	*/
+/*	$NetBSD: mcavar.h,v 1.3.22.4 2004/09/21 13:30:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

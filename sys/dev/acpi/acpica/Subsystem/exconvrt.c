@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.8.2.2 2004/09/18 14:44:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.8.2.3 2004/09/21 13:26:44 skrll Exp $");
 
 #define __EXCONVRT_C__
 

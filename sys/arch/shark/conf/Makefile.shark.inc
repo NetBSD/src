@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.3.2.2 2004/09/18 14:40:16 skrll Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.3.2.3 2004/09/21 13:21:48 skrll Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}

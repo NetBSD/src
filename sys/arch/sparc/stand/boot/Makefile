@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28.2.2 2004/09/18 14:41:03 skrll Exp $
+#	$NetBSD: Makefile,v 1.28.2.3 2004/09/21 13:22:40 skrll Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \

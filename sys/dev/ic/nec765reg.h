@@ -1,4 +1,4 @@
-/*	$NetBSD: nec765reg.h,v 1.5.2.2 2004/09/18 14:45:59 skrll Exp $	*/
+/*	$NetBSD: nec765reg.h,v 1.5.2.3 2004/09/21 13:28:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
