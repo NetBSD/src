@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.h,v 1.7 2003/09/14 09:48:43 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.h,v 1.8 2003/12/05 22:17:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,9 +57,6 @@ extern int darwin_iohidsystem_mux;
 	{ "ioframebuffer_screen", CTLTYPE_INT }, \
 	{ "iohidsystem_mux", CTLTYPE_INT }, \
 }
-
-int darwin_sysctl(int *, u_int, void *, 
-    size_t *, void *, size_t, struct proc *);
 
 #define DARWIN_CTL_UNSPEC	0
 #define DARWIN_CTL_KERN		1
