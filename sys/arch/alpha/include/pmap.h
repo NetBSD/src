@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.25 1999/02/04 19:48:21 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.26 1999/02/24 19:22:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,10 @@
 
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#endif
 
 #include <sys/lock.h>
 #include <sys/queue.h>
@@ -194,6 +198,11 @@ struct pv_page {
 #define _PMAP_MAY_USE_PROM_CONSOLE		/* XXX */
 #endif						/* XXX */
 #endif /* NEW_SCC_DRIVER */
+
+#if defined(MULTIPROCESSOR)
+void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t));
+void	pmap_do_tlb_shootdown __P((void));
+#endif /* MULTIPROCESSOR */
 #endif /* _LKM */
  
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
