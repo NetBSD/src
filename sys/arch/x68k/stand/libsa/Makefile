@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/11/14 23:01:15 tv Exp $
+#	$NetBSD: Makefile,v 1.9 2001/12/02 13:25:34 minoura Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -46,6 +46,9 @@ CPPFLAGS+=	-DHAVE_CHANGEDISK_HOOK
 .NOPATH: machine m68k
 CLEANFILES+= machine m68k
 .endif
+
+# only needed during build
+libinstall::
 
 .include <bsd.own.mk>
 .undef DESTDIR
