@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 1999/04/19 21:23:02 kleink Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 1999/04/28 16:16:58 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -267,7 +267,7 @@ Lisberr:
  * FP exceptions.
  */
 #include "opt_fpuemulate.h"
-_fpfline:
+ENTRY_NOPROFILE(fpfline)
 #if defined(M68040)
 	cmpl	#FPU_68040,_C_LABEL(fputype) | 64040 FPU?
 	jne	Lfp_unimp		| no, skip FPSP
@@ -286,25 +286,31 @@ Lfp_unimp:
 #ifdef FPU_EMULATE
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save registers
-	moveq	#T_FPEMULI,d0		| denote as FP emulation trap
+	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
 	jra	_ASM_LABEL(fault)	| do it
 #else
 	jra	_C_LABEL(illinst)
 #endif
 
-_fpunsupp:
+ENTRY_NOPROFILE(fpunsupp)
 #if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	_illinst		| no, treat as illinst
+	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040?
+	jne	Lfp_unsupp		| no, skip FPSP
 #ifdef FPSP
-	.globl	fpsp_unsupp
-	jmp	fpsp_unsupp		| yes, go handle it
+	jmp	_ASM_LABEL(fpsp_unsupp)	| yes, go handle it
 #else
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save registers
 	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
 	jra	fault			| do it
 #endif
+Lfp_unsupp:
+#endif
+#ifdef FPU_EMULATE
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save registers
+	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
+	jra	_ASM_LABEL(fault)	| do it
 #else
 	jra	_illinst
 #endif
