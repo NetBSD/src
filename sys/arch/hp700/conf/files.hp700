@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.5 2003/04/06 10:06:14 tsutsui Exp $
+#	$NetBSD: files.hp700,v 1.6 2003/08/31 01:55:27 chs Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -8,6 +8,9 @@
 maxpartitions 16
 
 maxusers 2 8 64
+
+# Status LEDs
+defflag 			USELEDS
 
 # 
 # "workstation console" routines
