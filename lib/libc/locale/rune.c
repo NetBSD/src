@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.12 2001/04/17 20:12:31 kleink Exp $	*/
+/*	$NetBSD: rune.c,v 1.13 2001/05/26 00:35:20 kristerw Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.12 2001/04/17 20:12:31 kleink Exp $");
+__RCSID("$NetBSD: rune.c,v 1.13 2001/05/26 00:35:20 kristerw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -342,7 +342,7 @@ _Read_CTypeAsRune(fp)
 	u_int8_t *new_ctype = NULL;
 	int16_t *new_toupper = NULL, *new_tolower = NULL;
 	/* host data */
-	char *hostdata;
+	char *hostdata = NULL;
 	size_t hostdatalen;
 	_RuneLocale *rl;
 	struct stat sb;
