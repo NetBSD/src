@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.126 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.127 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -329,7 +329,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		Serial ATA controllers.  [thorpej 20030319]
 	sparc64: Add support for PCI-CardBus bridge.  [nakayama 20030322]
 	pppoectl: Add a "-f configfile" option.  [mrg 20030322]
-	sendmail(8): 8.12.8 imported.  [atatat 20030324]
+	sendmail(8): update to 8.12.8.  [atatat 20030324]
 	vax: Add device driver for RX01/RX02 floppies (rfc/rf).
 		From Jochen Kunz. [ragge 20030323]
 	sh5: Shared libraries now supported on SH5 (but not yet enabled
