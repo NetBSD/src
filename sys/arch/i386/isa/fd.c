@@ -35,14 +35,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.18 1993/07/06 06:06:29 deraadt Exp $
+ *	$Id: fd.c,v 1.19 1993/07/16 15:44:22 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
  */
 /*
  * $Log: fd.c,v $
- * Revision 1.18  1993/07/06 06:06:29  deraadt
+ * Revision 1.19  1993/07/16 15:44:22  mycroft
+ * #include cpufunc,h so inb() and outb() are inlined.
+ *
+ * Revision 1.18  1993/07/06  06:06:29  deraadt
  * clean up code for timeout/untimeout/wakeup prototypes.
  *
  * Revision 1.17  1993/06/29  19:12:44  deraadt
@@ -98,6 +101,7 @@
 #include "ioctl.h"
 #include "buf.h"
 #include "uio.h"
+#include "machine/cpufunc.h"
 #include "i386/isa/isa.h"
 #include "i386/isa/isa_device.h"
 #include "i386/isa/fdreg.h"
