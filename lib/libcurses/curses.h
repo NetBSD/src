@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.80 2003/12/04 21:24:36 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.81 2003/12/23 23:12:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -241,31 +241,31 @@ typedef struct __screen SCREEN;
 
 extern chtype _acs_char[NUM_ACS];
 
-#define	ACS_RARROW	_acs_char['+']
-#define	ACS_LARROW	_acs_char[',']
-#define	ACS_UARROW	_acs_char['-']
-#define	ACS_DARROW	_acs_char['.']
-#define	ACS_BLOCK	_acs_char['0']
-#define	ACS_DIAMOND	_acs_char['`']
-#define	ACS_CKBOARD	_acs_char['a']
-#define	ACS_DEGREE	_acs_char['f']
-#define	ACS_PLMINUS	_acs_char['g']
-#define	ACS_BOARD	_acs_char['h']
-#define	ACS_LANTERN	_acs_char['i']
-#define	ACS_LRCORNER	_acs_char['j']
-#define	ACS_URCORNER	_acs_char['k']
-#define	ACS_ULCORNER	_acs_char['l']
-#define	ACS_LLCORNER	_acs_char['m']
-#define	ACS_PLUS	_acs_char['n']
-#define	ACS_HLINE	_acs_char['q']
-#define	ACS_S1		_acs_char['o']
-#define	ACS_S9		_acs_char['s']
-#define	ACS_LTEE	_acs_char['t']
-#define	ACS_RTEE	_acs_char['u']
-#define	ACS_BTEE	_acs_char['v']
-#define	ACS_TTEE	_acs_char['w']
-#define	ACS_VLINE	_acs_char['x']
-#define	ACS_BULLET	_acs_char['~']
+#define	ACS_RARROW	_acs_char[(unsigned char)'+']
+#define	ACS_LARROW	_acs_char[(unsigned char)',']
+#define	ACS_UARROW	_acs_char[(unsigned char)'-']
+#define	ACS_DARROW	_acs_char[(unsigned char)'.']
+#define	ACS_BLOCK	_acs_char[(unsigned char)'0']
+#define	ACS_DIAMOND	_acs_char[(unsigned char)'`']
+#define	ACS_CKBOARD	_acs_char[(unsigned char)'a']
+#define	ACS_DEGREE	_acs_char[(unsigned char)'f']
+#define	ACS_PLMINUS	_acs_char[(unsigned char)'g']
+#define	ACS_BOARD	_acs_char[(unsigned char)'h']
+#define	ACS_LANTERN	_acs_char[(unsigned char)'i']
+#define	ACS_LRCORNER	_acs_char[(unsigned char)'j']
+#define	ACS_URCORNER	_acs_char[(unsigned char)'k']
+#define	ACS_ULCORNER	_acs_char[(unsigned char)'l']
+#define	ACS_LLCORNER	_acs_char[(unsigned char)'m']
+#define	ACS_PLUS	_acs_char[(unsigned char)'n']
+#define	ACS_HLINE	_acs_char[(unsigned char)'q']
+#define	ACS_S1		_acs_char[(unsigned char)'o']
+#define	ACS_S9		_acs_char[(unsigned char)'s']
+#define	ACS_LTEE	_acs_char[(unsigned char)'t']
+#define	ACS_RTEE	_acs_char[(unsigned char)'u']
+#define	ACS_BTEE	_acs_char[(unsigned char)'v']
+#define	ACS_TTEE	_acs_char[(unsigned char)'w']
+#define	ACS_VLINE	_acs_char[(unsigned char)'x']
+#define	ACS_BULLET	_acs_char[(unsigned char)'~']
 
 /* System V compatibility */
 #define	ACS_SBBS	ACS_LRCORNER
