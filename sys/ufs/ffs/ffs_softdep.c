@@ -919,7 +919,7 @@ softdep_mount(devvp, mp, fs, cred)
 #endif
 
 #if 1
-	printf("enabling softdep\n");
+	printf("%s: enabling softupdates\n", fs->fs_fsmnt);
 #endif
 
 	mp->mnt_flag |= MNT_SOFTDEP;
