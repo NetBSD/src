@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.3 2002/04/24 21:20:08 bjh21 Exp $
+#	$NetBSD: configure.ac,v 1.4 2002/04/27 16:36:31 bjh21 Exp $
 #
 # Autoconf definition file for make.
 #
@@ -10,6 +10,7 @@ AC_PATH_PROG(BSHELL, sh)
 if test x"$BSHELL" = x; then
 	AC_MSG_ERROR([sh must be somewhere on \$PATH])
 fi
+AC_DEFINE_UNQUOTED(_PATH_BSHELL, "$BSHELL")
 # Make wants to know what directory to find sh in.
 nb_path_defshelldir=`echo $BSHELL | sed 's,/sh$,,'`
 AC_DEFINE_UNQUOTED(_PATH_DEFSHELLDIR, "$nb_path_defshelldir")
