@@ -1,4 +1,4 @@
-/*	$NetBSD: frodovar.h,v 1.1 1997/05/12 08:03:50 thorpej Exp $	*/
+/*	$NetBSD: frodovar.h,v 1.2 1997/07/17 03:16:43 jtk Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -40,8 +40,8 @@ struct frodo_attach_args {
 	int	fa_line;	/* Frodo interrupt line */
 };
 
-#define	frodocf_offset	cf_loc[0]
-#define	FRODO_UNKNOWN_OFFSET	-1
+#define	frodocf_offset		cf_loc[FRODOCF_OFFSET]
+#define	FRODO_UNKNOWN_OFFSET	FRODOCF_OFFSET_DEFAULT
 
 void	frodo_intr_establish __P((struct device *, int (*func)(void *),
 	    void *, int, int));

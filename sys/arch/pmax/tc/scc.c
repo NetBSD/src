@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.26 1997/07/07 03:54:40 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.27 1997/07/17 03:16:44 jtk Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -425,8 +425,8 @@ sccmatch(parent, cfdata, aux)
 	 * Check user-specified offset against the ioasic offset.
 	 * Allow it to be wildcarded.
 	 */
-	if (cf->cf_loc[0] != -1 &&
-	    cf->cf_loc[0] != d->iada_offset)
+	if (cf->cf_loc[IOASICCF_OFFSET] != IOASICCF_OFFSET_DEFAULT &&
+	    cf->cf_loc[IOASICCF_OFFSET] != d->iada_offset)
 		return (0);
 
 	/* Get the address, and check it for validity. */
