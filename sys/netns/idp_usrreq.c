@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.15 1998/07/05 06:49:17 jonathan Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.16 2000/02/01 22:52:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -370,6 +370,11 @@ idp_usrreq(so, req, m, nam, control, p)
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
+
+	if (req == PRU_PURGEADDR) {
+		ns_purgeaddr((struct ifaddr *)nam, (struct ifnet *)control);
+		return (0);
+	}
 
 	s = splsoftnet();
 	nsp = sotonspcb(so);

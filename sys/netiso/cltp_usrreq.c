@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.14 1997/06/24 02:26:09 thorpej Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.15 2000/02/01 22:52:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -306,6 +306,11 @@ cltp_usrreq(so, req, m, nam, control, p)
 	if (req == PRU_CONTROL)
 		return (iso_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
+
+	if (req == PRU_PURGEADDR) {
+		iso_purgeaddr((struct ifaddr *)nam, (struct ifnet *)control);
+		return (0);
+	}
 
 	s = splsoftnet();
 	isop = sotoisopcb(so);
