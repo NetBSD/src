@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 1999/01/25 23:55:10 garbled Exp $ */
+/*	$NetBSD: md.c,v 1.6 1999/03/14 14:19:06 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,19 +69,20 @@ int md_get_info()
 	}
 
 	/* Ask about disk type ... */
-	if (strncmp(disk->name, "wd", 2) == 0) {
+	if (strncmp(disk->dd_name, "wd", 2) == 0) {
 		process_menu(MENU_wdtype);
 		disktype = "ST506";
 		/* Check against disk geometry. */
-		if (disk->geom[0] != dlcyl || disk->geom[1] != dlhead
-		    || disk->geom[2] != dlsec)
+		if (disk->dd_cyl != dlcyl || disk->dd_head != dlhead
+		    || disk->dd_sec != dlsec)
 			process_menu (MENU_dlgeom);
 	} else {
 		disktype = "SCSI";
-		if (disk->geom[0]*disk->geom[1]*disk->geom[2] != disk->geom[4])
+		if (disk->dd_cyl * disk->dd_head * disk->dd_sec !=
+		    disk->dd_totsec)
 		{
-			if (disk->geom[0] != dlcyl || disk->geom[1] != dlhead
-			    || disk->geom[2] != dlsec)
+			if (disk->dd_cyl != dlcyl || disk->dd_head != dlhead
+			    || disk->dd_sec != dlsec)
 				process_menu (MENU_scsigeom1);
 			else
 				process_menu (MENU_scsigeom2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1999/01/25 23:55:10 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.13 1999/03/14 14:19:05 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,7 +106,7 @@ int	md_get_info (void)
 	struct filecore_bootblock *fcbb = (struct filecore_bootblock *)bb;
 	int offset = 0;
 
-	if (strncmp(disk->name, "wd", 2) == 0)
+	if (strncmp(disk->dd_name, "wd", 2) == 0)
 		disktype = "ST506";
 	else
 		disktype = "SCSI";
