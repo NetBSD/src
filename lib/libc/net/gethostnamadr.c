@@ -1,6 +1,6 @@
-/*
- * Copyright (c) 1985, 1988 Regents of the University of California.
- * All rights reserved.
+/*-
+ * Copyright (c) 1985, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,10 +29,31 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ * 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)gethostnamadr.c	6.45 (Berkeley) 2/24/91";
+static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$Id: gethostnamadr.c,v 1.1.1.2 1995/02/25 03:54:15 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -74,11 +95,11 @@ typedef union {
 } querybuf;
 
 typedef union {
-    long al;
+    int32_t al;
     char ac;
 } align;
 
-int h_errno;
+extern int h_errno;
 
 static struct hostent *
 getanswer(answer, anslen, iquery)
@@ -144,11 +165,11 @@ getanswer(answer, anslen, iquery)
 			break;
 		cp += n;
 		type = _getshort(cp);
- 		cp += sizeof(u_short);
+ 		cp += sizeof(u_int16_t);
 		class = _getshort(cp);
- 		cp += sizeof(u_short) + sizeof(u_long);
+ 		cp += sizeof(u_int16_t) + sizeof(u_int32_t);
 		n = _getshort(cp);
-		cp += sizeof(u_short);
+		cp += sizeof(u_int16_t);
 		if (type == T_CNAME) {
 			cp += n;
 			if (ap >= &host_aliases[MAXALIASES-1])
@@ -162,10 +183,8 @@ getanswer(answer, anslen, iquery)
 		if (iquery && type == T_PTR) {
 			if ((n = dn_expand((u_char *)answer->buf,
 			    (u_char *)eom, (u_char *)cp, (u_char *)bp,
-			    buflen)) < 0) {
-				cp += n;
-				continue;
-			}
+			    buflen)) < 0)
+				break;
 			cp += n;
 			host.h_name = bp;
 			return(&host);
@@ -198,7 +217,7 @@ getanswer(answer, anslen, iquery)
 			}
 		}
 
-		bp += sizeof(align) - ((u_long)bp % sizeof(align));
+		bp += sizeof(align) - ((u_int32_t)bp % sizeof(align));
 
 		if (bp + n >= &hostbuf[sizeof(hostbuf)]) {
 #ifdef DEBUG
@@ -228,10 +247,10 @@ getanswer(answer, anslen, iquery)
 
 struct hostent *
 gethostbyname(name)
-	char *name;
+	const char *name;
 {
 	querybuf buf;
-	register char *cp;
+	register const char *cp;
 	int n;
 	extern struct hostent *_gethtbyname();
 
@@ -247,19 +266,17 @@ gethostbyname(name)
 				/*
 				 * All-numeric, no dot at the end.
 				 * Fake up a hostent as if we'd actually
-				 * done a lookup.  What if someone types
-				 * 255.255.255.255?  The test below will
-				 * succeed spuriously... ???
+				 * done a lookup.
 				 */
-				if ((host_addr.s_addr = inet_addr(name)) == -1) {
+				if (!inet_aton(name, &host_addr)) {
 					h_errno = HOST_NOT_FOUND;
 					return((struct hostent *) NULL);
 				}
-				host.h_name = name;
+				host.h_name = (char *)name;
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
 				host.h_addrtype = AF_INET;
-				host.h_length = sizeof(u_long);
+				host.h_length = sizeof(u_int32_t);
 				h_addr_ptrs[0] = (char *)&host_addr;
 				h_addr_ptrs[1] = (char *)0;
 #if BSD >= 43 || defined(h_addr)	/* new-style hostent structure */
@@ -328,6 +345,7 @@ gethostbyaddr(addr, len, type)
 	return(hp);
 }
 
+void
 _sethtent(f)
 	int f;
 {
@@ -338,6 +356,7 @@ _sethtent(f)
 	stayopen |= f;
 }
 
+void
 _endhtent()
 {
 	if (hostf && !stayopen) {
@@ -372,8 +391,8 @@ again:
 	host.h_addr_list = host_addrs;
 #endif
 	host.h_addr = hostaddr;
-	*((u_long *)host.h_addr) = inet_addr(p);
-	host.h_length = sizeof (u_long);
+	*((u_int32_t *)host.h_addr) = inet_addr(p);
+	host.h_length = sizeof (u_int32_t);
 	host.h_addrtype = AF_INET;
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
