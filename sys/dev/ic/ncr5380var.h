@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.4 1996/01/01 22:24:38 thorpej Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.5 1996/03/01 01:42:07 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -169,10 +169,10 @@ int 	ncr5380_scsi_cmd __P((struct scsi_xfer *));
 int 	ncr5380_pio_in __P((struct ncr5380_softc *, int, int, u_char *));
 int 	ncr5380_pio_out __P((struct ncr5380_softc *, int, int, u_char *));
 
-#ifdef	DEBUG
+#ifdef	NCR5380_DEBUG
 struct ncr5380_softc *ncr5380_debug_sc;
 void ncr5380_trace __P((char *msg, long val));
 #define	NCR_TRACE(msg, val) ncr5380_trace(msg, val)
-#else
+#else	/* NCR5380_DEBUG */
 #define	NCR_TRACE(msg, val)	/* nada */
-#endif
+#endif	/* NCR5380_DEBUG */
