@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.13 2000/03/05 08:56:53 soren Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.14 2000/04/14 23:11:08 tsarna Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -437,6 +437,22 @@ static const keysym_t pckbd_keydesc_swapctrlcaps[] = {
     KC(58),  KS_Cmd1,		KS_Control_L,
 };
 
+static const keysym_t pckbd_keydesc_iopener[] = {
+/*  pos      command		normal		shifted */
+    KC(59),  KS_Cmd_Debugger,	KS_Escape,
+    KC(60),  KS_Cmd_Screen0,	KS_f1,
+    KC(61),  KS_Cmd_Screen1,	KS_f2,
+    KC(62),  KS_Cmd_Screen2,	KS_f3,
+    KC(63),  KS_Cmd_Screen3,	KS_f4,
+    KC(64),  KS_Cmd_Screen4,	KS_f5,
+    KC(65),  KS_Cmd_Screen5,	KS_f6,
+    KC(66),  KS_Cmd_Screen6,	KS_f7,
+    KC(67),  KS_Cmd_Screen7,	KS_f8,
+    KC(68),  KS_Cmd_Screen8,	KS_f9,
+    KC(87),  KS_Cmd_Screen9,	KS_f10,
+    KC(88), 			KS_f11,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -457,9 +473,12 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	pckbd_keydesc_us_dvorak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	pckbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_US | KB_IOPENER, KB_US,	pckbd_keydesc_iopener),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP, pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR, pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US | KB_DVORAK,
+		pckbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		pckbd_keydesc_swapctrlcaps),
 	{0, 0, 0, 0}
 };
