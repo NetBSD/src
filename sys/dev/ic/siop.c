@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.54 2002/04/22 09:43:44 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.55 2002/04/22 15:48:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.54 2002/04/22 09:43:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.55 2002/04/22 15:48:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1371,12 +1371,13 @@ siop_scsipi_request(chan, req, arg)
 		    siop_cmd->cmd_c.dmamap_cmd->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
+		if (xs->xs_tag_type) {
+			/* use tag_id + 1, tag 0 is reserved for untagged cmds*/
+			siop_cmd->cmd_c.tag = xs->xs_tag_id + 1;
+		} else {
+			siop_cmd->cmd_c.tag = 0;
+		}
 		siop_setuptables(&siop_cmd->cmd_c);
-		/* we want tag to start at 1 for tagged commands (0 reserved
-		 * for untagged
-		 */
-		if (siop_cmd->cmd_c.flags & CMDFL_TAG)
-			siop_cmd->cmd_c.tag++;
 		siop_table_sync(siop_cmd,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		siop_start(sc, siop_cmd);
