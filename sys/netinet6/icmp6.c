@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.17 2000/01/07 06:44:30 itohy Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.18 2000/01/16 18:06:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -206,6 +206,7 @@ icmp6_error(m, type, code, param)
 		case IPPROTO_UDP:
 		case IPPROTO_TCP:
 		case IPPROTO_ESP:
+		case IPPROTO_IPCOMP:
 		case IPPROTO_FRAGMENT:
 			/*
 			 * ICMPv6 error must not be fragmented.
