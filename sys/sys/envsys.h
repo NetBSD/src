@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.1 1999/12/15 08:16:15 garbled Exp $ */
+/* $NetBSD: envsys.h,v 1.2 1999/12/15 20:34:35 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 struct envsys_range {
 	u_int low;
 	u_int high;
-	u_int units;		/* see GTREDATA */
+	u_int units;				/* see GTREDATA */
 };
 typedef struct envsys_range envsys_range_t;
 
@@ -58,26 +58,26 @@ typedef struct envsys_range envsys_range_t;
 
 struct envsys_tre_data {
 	u_int sensor;
-	union {						/* all data is given	*/
-		u_int32_t data_us;		/* in microKelvins,		*/
-		int32_t data_s;			/* rpms, volts, amps,	*/
-	} cur, min, max, avg;		/* ohms, watts, etc		*/
-								/* see units below		*/
+	union {					/* all data is given */
+		u_int32_t data_us;		/* in microKelvins, */
+		int32_t data_s;			/* rpms, volts, amps, */
+	} cur, min, max, avg;			/* ohms, watts, etc */
+						/* see units below */
 
-	u_int32_t	warnflags;		/* warning flags		*/
-	u_int32_t	validflags;		/* sensor valid flags	*/
-	u_int		units;			/* type of sensor		*/
+	u_int32_t	warnflags;		/* warning flags */
+	u_int32_t	validflags;		/* sensor valid flags */
+	u_int		units;			/* type of sensor */
 };
 typedef struct envsys_tre_data envsys_temp_data_t;
 typedef struct envsys_tre_data envsys_rpm_data_t;
 typedef struct envsys_tre_data envsys_electrical_data_t;
 
 /* flags for warnflags */
-#define ENVSYS_WARN_OK			0x00000000	/* All is well */
-#define ENVSYS_WARN_UNDER		0x00000001	/* an under condition */
+#define ENVSYS_WARN_OK		0x00000000	/* All is well */
+#define ENVSYS_WARN_UNDER	0x00000001	/* an under condition */
 #define ENVSYS_WARN_CRITUNDER	0x00000002	/* a critical under condition */
-#define ENVSYS_WARN_OVER		0x00000004  /* an over condition */
-#define ENVSYS_WARN_CRITOVER	0x00000008  /* a critical over condition */
+#define ENVSYS_WARN_OVER	0x00000004	/* an over condition */
+#define ENVSYS_WARN_CRITOVER	0x00000008	/* a critical over condition */
 
 /* type of sensor for units */
 enum envsys_units {
@@ -86,11 +86,11 @@ enum envsys_units {
 };
 
 /* flags for validflags */
-#define ENVSYS_FVALID			0x00000001  /* sensor is valid */
-#define ENVSYS_FCURVALID		0x00000002  /* cur for this sens. is valid */
-#define ENVSYS_FMINVALID		0x00000004  /* min for this sens. is valid */
-#define ENVSYS_FMAXVALID		0x00000008  /* max for this sens. is valid */
-#define ENVSYS_FAVGVALID		0x00000010  /* avg for this sens. is valid */
+#define ENVSYS_FVALID		0x00000001	/* sensor is valid */
+#define ENVSYS_FCURVALID	0x00000002	/* cur for this sens is valid */
+#define ENVSYS_FMINVALID	0x00000004	/* min for this sens is valid */
+#define ENVSYS_FMAXVALID	0x00000008	/* max for this sens is valid */
+#define ENVSYS_FAVGVALID	0x00000010	/* avg for this sens is valid */
 
 #define ENVSYS_GTREDATA _IOWR('E', 2, envsys_temp_data_t)
 
@@ -100,7 +100,7 @@ struct envsys_basic_info {
 	u_int		sensor;			/* sensor number */
 	u_int		units;			/* type of sensor */
 	char		desc[33];		/* sensor description */
-	u_int		rpms;			/* for fans, set nominal RPM's */
+	u_int		rpms;			/* for fans, set nominal RPMs */
 	u_int32_t	validflags;		/* sensor valid flags */
 };
 typedef struct envsys_basic_info envsys_temp_info_t;
