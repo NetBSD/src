@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.7 2002/10/12 12:20:10 bjh21 Exp $	*/
+/*	$NetBSD: fusu.S,v 1.8 2002/10/13 14:24:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -38,9 +38,8 @@
 #include <machine/asm.h>
 
 #ifdef MULTIPROCESSOR
-	/* FIXME: This is bogus in the general case. */
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+.Lcpu_info:
+	.word	_C_LABEL(cpu_info)
 #else
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
@@ -52,8 +51,18 @@
  */
 
 ENTRY(fuword)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
@@ -76,8 +85,18 @@ ENTRY(fuword)
  */
 
 ENTRY(fusword)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
@@ -108,8 +127,18 @@ ENTRY(fuswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
@@ -143,8 +172,18 @@ _C_LABEL(block_userspace_access):
  */
 
 ENTRY(fubyte)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
@@ -206,8 +245,18 @@ fusupcbfaulttext:
  */
 
 ENTRY(suword)
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0, r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r1, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
@@ -236,8 +285,17 @@ ENTRY(suswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
+#ifdef MULTIPROCESSOR
+	stmfd	sp!, {r0, r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r1, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
@@ -261,8 +319,17 @@ ENTRY(suswintr)
  */
 
 ENTRY(susword)
+#ifdef MULTIPROCESSOR
+	stmfd	sp!, {r0, r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r1, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
@@ -286,8 +353,17 @@ ENTRY(susword)
  */
 
 ENTRY(subyte)
+#ifdef MULTIPROCESSOR
+	stmfd	sp!, {r0, r1, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r2, .Lcpu_info
+	ldr	r2, [r2, r0, lsl #2]
+	ldr	r2, [r2, #CI_CURPCB]
+	ldmfd	sp!, {r0, r1, r14}
+#else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
+#endif
 
 
 #ifdef DIAGNOSTIC
