@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.4 2001/10/02 23:31:55 augustss Exp $	*/
+/*	$NetBSD: auconv.c,v 1.5 2001/11/13 05:32:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.5 2001/11/13 05:32:49 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2001/07/07 17:04:02 thorpej Exp $	*/
+/*	$NetBSD: md.c,v 1.27 2001/11/13 05:32:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -44,6 +44,9 @@
  * Credit for the ideas behind the "user space memory" code goes
  * to the authors of the MFS implementation.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.27 2001/11/13 05:32:50 lukem Exp $");
 
 #include "opt_md.h"
 
