@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pmc.c,v 1.2.2.3 2002/08/13 03:11:22 simonb Exp $	*/
+/*	$NetBSD: sys_pmc.c,v 1.2.2.4 2002/12/31 02:25:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_perfctrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.2.2.3 2002/08/13 03:11:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.2.2.4 2002/12/31 02:25:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,6 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.2.2.3 2002/08/13 03:11:22 simonb Exp $
 #include <sys/pmc.h>
 #endif
 
+/*
+ * XXX We need a multiprocessor locking protocol!
+ */
+
 int
 sys_pmc_control(struct lwp *l, void *v, register_t *rv)
 {
@@ -63,6 +67,7 @@ sys_pmc_control(struct lwp *l, void *v, register_t *rv)
 		syscallarg(int) op;
 		syscallarg(void *) args;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct pmc_counter_cfg cfg;
 	void *args;
 	int ctr, operation, error=0;
@@ -132,6 +137,7 @@ sys_pmc_get_info(struct lwp *l, void *v, register_t *rv)
 		syscallarg(void *) args;
 	} */ *uap = v;
 	uint64_t val;
+	struct proc *p = l->l_proc;
 	void *args;
 	int nctrs, ctr, ctrt, request, error=0, flags=0;
 
