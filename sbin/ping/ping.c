@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.65 2002/08/01 08:56:59 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.66 2002/08/12 18:24:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.65 2002/08/01 08:56:59 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.66 2002/08/12 18:24:53 matt Exp $");
 #endif
 
 #include <stdio.h>
@@ -1014,6 +1014,24 @@ pr_pack(u_char *buf,
 			PR_PACK_SUB();
 			(void)printf("\nwrong total length %d instead of %d",
 				     tot_len, opack_ip->ip_len);
+		}
+
+		if (!dupflag) {
+			static u_int16_t last_seqno = 0xffff;
+			u_int16_t seqno = ntohs((u_int16_t)icp->icmp_seq);
+			u_int16_t gap = seqno - (last_seqno + 1);
+			if (gap > 0 && gap < 0x8000 &&
+			    (pingflags & F_VERBOSE)) {
+				(void)printf("[*** sequence gap of %u "
+				    "packets from %u ... %u ***]\n", gap,
+				    (u_int16_t) (last_seqno + 1),
+				    (u_int16_t) (seqno - 1));
+				if (pingflags & F_QUIET)
+					summary(0);
+			}
+
+			if (gap < 0x8000)
+				last_seqno = seqno;
 		}
 
 		if (pingflags & F_QUIET)
