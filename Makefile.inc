@@ -1,13 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/05/02 03:47:19 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/05/03 00:08:13 sjg Exp $
 
 .ifndef ABSTOP
 ABSTOP!= cd ${.PARSEDIR}; pwd
 
 RELTOP:= ${.PARSEDIR:S,^${.CURDIR},,}
 
-BSDSRCDIR?= ${ABSTOP}
+KERNSRCDIR:=${ABSTOP}/sys
 
-.if exists(${BSDSRCDIR}/Makefile.local.inc)
-.include "${BSDSRCDIR}/Makefile.local.inc"
+# you can set BSD{SRC,OBJ}DIR in Makefile.local.inc
+.if exists(${ABSTOP}/Makefile.local.inc)
+.include "${ABSTOP}/Makefile.local.inc"
 .endif
 .endif
