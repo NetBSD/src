@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 1997/02/02 08:20:38 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 1997/02/02 21:33:30 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1466,7 +1466,6 @@ void
 pmap_copy_page(src, dst)
 	vm_offset_t src, dst;
 {
-void copypage __P((caddr_t, caddr_t));
 	register vm_offset_t skva, dkva;
 	extern caddr_t CADDR1, CADDR2;
 
