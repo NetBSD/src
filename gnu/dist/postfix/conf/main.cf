@@ -1,9 +1,10 @@
-#	$NetBSD: main.cf,v 1.8 2004/03/27 16:31:19 heas Exp $
+#	$NetBSD: main.cf,v 1.9 2004/04/27 05:07:46 heas Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
-# of all 300+ parameters. See the sample-xxx.cf files for a full list.
-# 
-# The general format is lines with parameter = value pairs. Lines
+# of all 300+ parameters. See the postconf(5) manual page for a
+# complete list.
+#
+# The general format of each line is: parameter = value. Lines
 # that begin with whitespace continue the previous line. A value can
 # contain references to other $names or ${name}s.
 #
@@ -136,12 +137,12 @@ mail_owner = postfix
 # gateway, you should also include $mydomain.
 #
 # Do not specify the names of virtual domains - those domains are
-# specified elsewhere (see sample-virtual.cf).
+# specified elsewhere (see VIRTUAL_README).
 #
 # Do not specify the names of domains that this machine is backup MX
 # host for. Specify those names via the relay_domains settings for
 # the SMTP server, or use permit_mx_backup if you are lazy (see
-# sample-smtpd.cf).
+# STANDARD_CONFIGURATION_README).
 #
 # The local machine is always the final destination for mail addressed
 # to user@[the.net.work.address] of an interface that the mail system
@@ -153,21 +154,18 @@ mail_owner = postfix
 # a name matches a lookup key (the right-hand side is ignored).
 # Continue long lines by starting the next line with whitespace.
 #
-# DO NOT LIST RELAY DESTINATIONS IN MYDESTINATION.
-# SPECIFY RELAY DESTINATIONS IN RELAY_DOMAINS.
-#
 # See also below, section "REJECTING MAIL FOR UNKNOWN LOCAL USERS".
 #
-#mydestination = $myhostname, localhost.$mydomain
-#mydestination = $myhostname, localhost.$mydomain $mydomain
-#mydestination = $myhostname, localhost.$mydomain, $mydomain,
+#mydestination = $myhostname, localhost.$mydomain, localhost
+#mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+#mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain,
 #	mail.$mydomain, www.$mydomain, ftp.$mydomain
 
 # REJECTING MAIL FOR UNKNOWN LOCAL USERS
 #
 # The local_recipient_maps parameter specifies optional lookup tables
 # with all names or addresses of users that are local with respect
-# to $mydestination and $inet_interfaces.
+# to $mydestination, $inet_interfaces or $proxy_interfaces.
 #
 # If this parameter is defined, then the SMTP server will reject
 # mail for unknown local users. This parameter is defined by default.
@@ -189,7 +187,7 @@ mail_owner = postfix
 # - You redefine the "local_transport" setting in main.cf.
 #
 # - You use the "luser_relay", "mailbox_transport", or "fallback_transport"
-#   feature of the Postfix local delivery agent (see sample-local.cf).
+#   feature of the Postfix local delivery agent (see local(8)).
 #
 # Details are described in the LOCAL_RECIPIENT_README file.
 #
@@ -208,15 +206,14 @@ mail_owner = postfix
 
 # The unknown_local_recipient_reject_code specifies the SMTP server
 # response code when a recipient domain matches $mydestination or
-# $inet_interfaces, while $local_recipient_maps is non-empty and the
-# recipient address or address local-part is not found.
+# ${proxy,inet}_interfaces, while $local_recipient_maps is non-empty
+# and the recipient address or address local-part is not found.
 #
 # The default setting is 550 (reject mail) but it is safer to start
 # with 450 (try again later) until you are certain that your
 # local_recipient_maps settings are OK.
 #
-#unknown_local_recipient_reject_code = 550
-unknown_local_recipient_reject_code = 450
+unknown_local_recipient_reject_code = 550
 
 # TRUST AND RELAY CONTROL
 
@@ -225,7 +222,7 @@ unknown_local_recipient_reject_code = 450
 #
 # In particular, "trusted" SMTP clients are allowed to relay mail
 # through Postfix.  See the smtpd_recipient_restrictions parameter
-# in file sample-smtpd.cf.
+# in postconf(5).
 #
 # You can specify the list of "trusted" network addresses by hand
 # or you can let Postfix do it for you (which is the default).
@@ -264,8 +261,8 @@ unknown_local_recipient_reject_code = 450
 #mynetworks = hash:/etc/postfix/network_table
 
 # The relay_domains parameter restricts what destinations this system will
-# relay mail to.  See the smtpd_recipient_restrictions restriction in the
-# file sample-smtpd.cf for detailed information.
+# relay mail to.  See the smtpd_recipient_restrictions description in
+# postconf(5) for detailed information.
 #
 # By default, Postfix relays mail
 # - from "trusted" clients (IP address matches $mynetworks) to any destination,
@@ -275,7 +272,7 @@ unknown_local_recipient_reject_code = 450
 # 
 # In addition to the above, the Postfix SMTP server by default accepts mail
 # that Postfix is final destination for:
-# - destinations that match $inet_interfaces,
+# - destinations that match $inet_interfaces or $proxy_interfaces,
 # - destinations that match $mydestination
 # - destinations that match $virtual_alias_domains,
 # - destinations that match $virtual_mailbox_domains.
@@ -289,7 +286,7 @@ unknown_local_recipient_reject_code = 450
 #
 # NOTE: Postfix will not automatically forward mail for domains that
 # list this system as their primary or backup MX host. See the
-# permit_mx_backup restriction in the file sample-smtpd.cf.
+# permit_mx_backup restriction description in postconf(5).
 #
 #relay_domains = $mydestination
 
@@ -309,7 +306,8 @@ unknown_local_recipient_reject_code = 450
 # If you're connected via UUCP, see also the default_transport parameter.
 #
 #relayhost = $mydomain
-#relayhost = gateway.my.domain
+#relayhost = [gateway.my.domain]
+#relayhost = [mailserver.isp.tld]
 #relayhost = uucphost
 #relayhost = [an.ip.add.ress]
 
@@ -346,25 +344,22 @@ unknown_local_recipient_reject_code = 450
 
 # ADDRESS REWRITING
 #
-# Insert text from sample-rewrite.cf if you need to do address
-# masquerading.
-#
-# Insert text from sample-canonical.cf if you need to do address
-# rewriting, or if you need username->Firstname.Lastname mapping.
+# The ADDRESS_REWRITING_README document gives information about
+# address masquerading or other forms of address rewriting including
+# username->Firstname.Lastname mapping.
 
 # ADDRESS REDIRECTION (VIRTUAL DOMAIN)
 #
-# Insert text from sample-virtual.cf if you need virtual domain support.
+# The VIRTUAL_README document gives information about the many forms
+# of domain hosting that Postfix supports.
 
 # "USER HAS MOVED" BOUNCE MESSAGES
 #
-# Insert text from sample-relocated.cf if you need "user has moved"
-# style bounce messages. Alternatively, you can bounce recipients
-# with an SMTP server access table. See sample-smtpd.cf.
+# See the discussion in the ADDRESS_REWRITING_README document.
 
 # TRANSPORT MAP
 #
-# Insert text from sample-transport.cf if you need explicit routing.
+# See the discussion in the ADDRESS_REWRITING_README document.
 
 # ALIAS DATABASE
 #
@@ -484,8 +479,9 @@ unknown_local_recipient_reject_code = 450
 #fallback_transport =
 
 # The luser_relay parameter specifies an optional destination address
-# for unknown recipients.  By default, mail for unknown@$mydestination
-# and unknown@[$inet_interfaces] is returned as undeliverable.
+# for unknown recipients.  By default, mail for unknown@$mydestination,
+# unknown@[$inet_interfaces] or unknown@[$proxy_interfaces] is returned
+# as undeliverable.
 #
 # The following expansions are done on luser_relay: $user (recipient
 # username), $shell (recipient shell), $home (recipient home directory),
@@ -507,8 +503,8 @@ unknown_local_recipient_reject_code = 450
   
 # JUNK MAIL CONTROLS
 # 
-# The controls listed here are only a very small subset. See the file
-# sample-smtpd.cf for an elaborate list of anti-UCE controls.
+# The controls listed here are only a very small subset. The file
+# SPTMD_ACCESS_README provides an overview.
 
 # The header_checks parameter specifies an optional table with patterns
 # that each logical message header is matched against, including
@@ -518,7 +514,7 @@ unknown_local_recipient_reject_code = 450
 # headers of attached messages. With older Postfix versions, MIME and
 # attached message headers were treated as body text.
 #
-# For details, see the sample-filter.cf file.
+# For details, see "man header_checks".
 #
 #header_checks = regexp:/etc/postfix/header_checks
 
@@ -527,19 +523,13 @@ unknown_local_recipient_reject_code = 450
 # Postfix maintains per-destination logfiles with information about
 # deferred mail, so that mail can be flushed quickly with the SMTP
 # "ETRN domain.tld" command, or by executing "sendmail -qRdomain.tld".
-# 
-# By default, Postfix maintains deferred mail logfile information
-# only for destinations that Postfix is willing to relay to (as
-# specified in the relay_domains parameter). For other destinations,
-# Postfix attempts to deliver ALL queued mail after receiving the
-# SMTP "ETRN domain.tld" command, or after execution of "sendmail
-# -qRdomain.tld". This can be slow when a lot of mail is queued.
+# See the ETRN_README document for a detailed description.
 # 
 # The fast_flush_domains parameter controls what destinations are
-# eligible for this "fast ETRN/sendmail -qR" service.
+# eligible for this service. By default, they are all domains that
+# this server is willing to relay mail to.
 # 
 #fast_flush_domains = $relay_domains
-#fast_flush_domains =
 
 # SHOW SOFTWARE VERSION OR NOT
 #
@@ -629,11 +619,16 @@ mailq_path = /usr/bin/mailq
 #
 setgid_group = maildrop
 
+# html_directory: The location of the Postfix HTML documentation.
+#
+html_directory =
+
 # manpage_directory: The location of the Postfix on-line manual pages.
 #
 manpage_directory = /usr/share/man
 
 # sample_directory: The location of the Postfix sample configuration files.
+# This parameter is obsolete as of Postfix 2.1.
 #
 sample_directory = /usr/share/examples/postfix
 
