@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.57 1998/06/12 21:14:43 mjacob Exp $ */
+/* $NetBSD: pmap.c,v 1.58 1998/07/03 05:22:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 1998/06/12 21:14:43 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 1998/07/03 05:22:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -831,6 +831,12 @@ pmap_bootstrap(ptaddr, maxasn)
 	proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr =
 	    ALPHA_K0SEG_TO_PHYS((vm_offset_t)kernel_lev1map) >> PGSHIFT;
 	proc0.p_addr->u_pcb.pcb_hw.apcb_asn = pmap_kernel()->pm_asn;
+
+	/*
+	 * Mark the kernel pmap `active' on this processor.
+	 */
+	alpha_atomic_setbits_q(&pmap_kernel()->pm_cpus,
+	    (1UL << alpha_pal_whami()));
 }
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
