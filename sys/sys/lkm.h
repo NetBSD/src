@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.13 1997/05/28 02:35:33 thorpej Exp $	*/
+/*	$NetBSD: lkm.h,v 1.14 1997/05/28 02:41:41 thorpej Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -242,6 +242,7 @@ struct lkm_table {
 
 
 extern int	lkm_nofunc __P((struct lkm_table *lkmtp, int cmd));
+extern int	lkmexists __P((struct lkm_table *));
 
 /*
  * DISPATCH -- body function for use in module entry point function;
