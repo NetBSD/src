@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.62 2003/05/14 14:34:14 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.63 2003/05/14 14:41:33 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.62 2003/05/14 14:34:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.63 2003/05/14 14:41:33 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1012,15 +1012,14 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 		microtime(&tv);
 		*mp = sbcreatecontrol((caddr_t) &tv, sizeof(tv),
-			SCM_TIMESTAMP, SOL_SOCKET);
+		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
 #endif
 	if (in6p->in6p_flags & IN6P_RECVDSTADDR) {
 		*mp = sbcreatecontrol((caddr_t) &ip6->ip6_dst,
-			sizeof(struct in6_addr), IPV6_RECVDSTADDR,
-			IPPROTO_IPV6);
+		    sizeof(struct in6_addr), IPV6_RECVDSTADDR, IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
@@ -1044,15 +1043,14 @@ ip6_savecontrol(in6p, mp, ip6, m)
 					? m->m_pkthdr.rcvif->if_index
 					: 0;
 		*mp = sbcreatecontrol((caddr_t) &pi6,
-			sizeof(struct in6_pktinfo), IPV6_PKTINFO,
-			IPPROTO_IPV6);
+		    sizeof(struct in6_pktinfo), IPV6_PKTINFO, IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
 	if (in6p->in6p_flags & IN6P_HOPLIMIT) {
 		int hlim = ip6->ip6_hlim & 0xff;
-		*mp = sbcreatecontrol((caddr_t) &hlim,
-			sizeof(int), IPV6_HOPLIMIT, IPPROTO_IPV6);
+		*mp = sbcreatecontrol((caddr_t) &hlim, sizeof(int),
+		    IPV6_HOPLIMIT, IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
@@ -1099,7 +1097,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			 * But it's too painful operation...
 			 */
 			*mp = sbcreatecontrol((caddr_t)hbh, hbhlen,
-					      IPV6_HOPOPTS, IPPROTO_IPV6);
+			    IPV6_HOPOPTS, IPPROTO_IPV6);
 			if (*mp)
 				mp = &(*mp)->m_next;
 			m_freem(ext);
@@ -1168,8 +1166,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
-						      IPV6_DSTOPTS,
-						      IPPROTO_IPV6);
+				    IPV6_DSTOPTS, IPPROTO_IPV6);
 				if (*mp)
 					mp = &(*mp)->m_next;
 				break;
@@ -1179,8 +1176,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
-						      IPV6_RTHDR,
-						      IPPROTO_IPV6);
+				    IPV6_RTHDR, IPPROTO_IPV6);
 				if (*mp)
 					mp = &(*mp)->m_next;
 				break;
