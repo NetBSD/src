@@ -1,10 +1,13 @@
-/*	$NetBSD: common.c,v 1.1.1.4 2002/01/24 08:18:29 martti Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.5 2002/03/14 12:30:07 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
