@@ -15,7 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_vnops.c,v 1.1 1993/04/09 19:38:13 cgd Exp $
+ *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_vnops.c,v 1.2 1993/04/29 22:54:34 cgd Exp $
  *
  */
 
@@ -268,9 +268,12 @@ printf("pcfs_setattr(): vp %08x, vap %08x, cred %08x, p %08x\n",
 	    (vap->va_rdev != VNOVAL)  ||
 	    (vap->va_bytes != VNOVAL)  ||
 	    (vap->va_gen != VNOVAL)  ||
+#if 0
 	    (vap->va_uid != (u_short)VNOVAL)  ||
 	    (vap->va_gid != (u_short)VNOVAL)  ||
-	    (vap->va_atime.tv_sec != VNOVAL)) {
+	    (vap->va_atime.tv_sec != VNOVAL)  ||
+#endif
+	    0) {
 #if defined(PCFSDEBUG)
 printf("pcfs_setattr(): returning EINVAL\n");
 printf("    va_type %d, va_nlink %x, va_fsid %x, va_fileid %x\n",
@@ -388,11 +391,11 @@ pcfs_read(vp, uio, ioflag, cred)
 			}
 			vp->v_lastr = lbn;
 		}
-		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
 			brelse(bp);
 			return error;
 		}
+		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		error = uiomove(bp->b_un.b_addr + on, (int)n, uio);
 /*
  *  If we have read everything from this block or
@@ -421,7 +424,6 @@ pcfs_write(vp, uio, ioflag, cred)
 	struct ucred *cred;
 {
 	int n;
-	int isadir;
 	int croffset;
 	int resid;
 	int osize;
@@ -432,7 +434,6 @@ pcfs_write(vp, uio, ioflag, cred)
 	daddr_t bn;
 	struct buf *bp;
 	struct proc *p = uio->uio_procp;
-	struct vnode *thisvp;
 	struct denode *dep = VTODE(vp);
 	struct pcfsmount *pmp = dep->de_pmp;
 
@@ -447,15 +448,11 @@ printf("pcfs_write(): diroff %d, dirclust %d, startcluster %d\n",
 	case VREG:
 		if (ioflag & IO_APPEND)
 			uio->uio_offset = dep->de_FileSize;
-		isadir = 0;
-		thisvp = vp;
 		break;
 
 	case VDIR:
-		if ((ioflag & IO_SYNC) == 0)
-			panic("pcfs_write(): non-sync directory update");
-		isadir = 1;
-		thisvp = pmp->pm_devvp;
+		/* In pcfs, directory updates don't use pcfs_write */
+		panic("pcfs_write(): directory update");
 		break;
 
 	default:
@@ -463,9 +460,8 @@ printf("pcfs_write(): diroff %d, dirclust %d, startcluster %d\n",
 		break;
 	}
 
-	if (uio->uio_offset < 0) {
+	if (uio->uio_offset < 0)
 		return EINVAL;
-	}
 	if (uio->uio_resid == 0)
 		return 0;
 
@@ -480,25 +476,13 @@ printf("pcfs_write(): diroff %d, dirclust %d, startcluster %d\n",
 	}
 
 /*
- *  If attempting to write beyond the end of the root
- *  directory we stop that here because the root directory
- *  can not grow.
- */
-	if ((dep->de_Attributes & ATTR_DIRECTORY)  &&
-	    dep->de_StartCluster == PCFSROOT  &&
-	    (uio->uio_offset+uio->uio_resid) > dep->de_FileSize)
-		return ENOSPC;
-
-/*
  *  If the offset we are starting the write at is beyond the
  *  end of the file, then they've done a seek.  Unix filesystems
  *  allow files with holes in them, DOS doesn't so we must
- *  fill the hole with zeroed blocks.  We do this by calling
- *  our seek function.  This could probably be cleaned up
- *  someday.
+ *  fill the hole with zeroed blocks.
  */
 	if (uio->uio_offset > dep->de_FileSize) {
-		error = pcfs_seek(vp, (off_t)0, uio->uio_offset, cred);
+		error = pcfsextend(vp, uio->uio_offset);
 		if (error)
 			return error;
 	}
@@ -511,6 +495,8 @@ printf("pcfs_write(): diroff %d, dirclust %d, startcluster %d\n",
 
 	do {
 		bn = uio->uio_offset >> pmp->pm_cnshift;
+		croffset = uio->uio_offset & pmp->pm_crbomask;
+		n = MIN(uio->uio_resid, pmp->pm_bpcluster-croffset);
 /*
  *  If we are appending to the file and we are on a
  *  cluster boundary, then allocate a new cluster
@@ -525,23 +511,23 @@ printf("pcfs_write(): diroff %d, dirclust %d, startcluster %d\n",
  *  The block we need to write into exists,
  *  so just read it in.
  */
-			if (isadir) {
-				error = pcbmap(dep, bn, &bn, 0);
-				if (error)
+			if (n == pmp->pm_bpcluster)
+				/* We will overwrite the whole block, so 
+				 * dont read it*/
+				bp = getblk(vp, bn, pmp->pm_bpcluster);
+			else {
+				error = bread(vp, bn, pmp->pm_bpcluster, cred, &bp);
+				if (error) {
+					brelse(bp);
 					return error;
+				}
 			}
-			error = bread(thisvp, bn, pmp->pm_bpcluster, cred, &bp);
-			if (error)
-				return error;
 		}
-		croffset = uio->uio_offset & pmp->pm_crbomask;
-		n = MIN(uio->uio_resid, pmp->pm_bpcluster-croffset);
 		if (uio->uio_offset+n > dep->de_FileSize) {
 			dep->de_FileSize = uio->uio_offset + n;
-			vnode_pager_setsize(vp, dep->de_FileSize);	/* why? */
+			vnode_pager_setsize(vp, dep->de_FileSize);
 		}
-		(void) vnode_pager_uncache(vp);		/* why not? */
-		/* Should these vnode_pager_* functions be done on dir files? */
+		(void) vnode_pager_uncache(vp);
 
 /*
  *  Copy the data from user space into the buf header.
@@ -633,11 +619,7 @@ pcfs_fsync(vp, fflags, cred, waitfor, p)
 
 	if (fflags & FWRITE)
 		dep->de_flag |= DEUPD;
-/*
- *  Does this call to vflushbuf() do anything?  I can
- *  find no code anywhere that sets v_dirtyblkhd in the
- *  vnode, which vflushbuf() seems to depend upon.
- */
+
 	vflushbuf(vp, waitfor == MNT_WAIT ? B_SYNC : 0);
 	return deupdat(dep, &time, waitfor == MNT_WAIT);
 }
@@ -645,14 +627,55 @@ pcfs_fsync(vp, fflags, cred, waitfor, p)
 /*
  *  Since the dos filesystem does not allow files with
  *  holes in them we must fill the file with zeroed
- *  blocks when a seek past the end of file happens.
+ *  blocks when a write past the end of file happens.
+ */
+int
+pcfsextend(vp, newoff)
+	struct vnode *vp;
+	off_t newoff;
+{
+	int error = 0;
+	off_t foff;
+	struct buf *bp;
+	struct denode *dep = VTODE(vp);
+	struct pcfsmount *pmp = dep->de_pmp;
+
+#ifdef DIAGNOSTIC
+	if (dep->de_Attributes & ATTR_DIRECTORY)
+		/* should not happen */
+		return EISDIR;
+#endif
+
+/*
+ *  Compute the offset of the first byte after the
+ *  last block in the file.
+ *  If writing beyond the end of file then fill the
+ *  file with zeroed blocks up to the seek address.
+ */
+	foff = (dep->de_FileSize + (pmp->pm_bpcluster-1)) & ~pmp->pm_crbomask;
+	if (newoff <= foff)
+		return 0;
+
+/*
+ *  Allocate and chain together as many clusters as
+ *  are needed to get to newoff.
+ */
+	while (foff < newoff) {
+		if (error = extendfile(dep, &bp, 0))
+			return error;
+		bdwrite(bp);
+		foff += pmp->pm_bpcluster;
+		dep->de_FileSize += pmp->pm_bpcluster;
+	}
+	dep->de_FileSize = newoff;
+	dep->de_flag |= DEUPD;
+	return deupdat(dep, &time);
+}
+
+/*
+ * Seek on a file
  *
- *  It seems that nothing in the kernel calls the filesystem
- *  specific file seek functions.  And, someone on the
- *  net told me that NFS never sends announcements of
- *  seeks to the server.  So, if pcfs ever becomes
- *  NFS mountable it will have to use other means to
- *  fill in holes in what would be a sparse file.
+ * Nothing to do, so just return.
  */
 int
 pcfs_seek(vp, oldoff, newoff, cred)
@@ -661,66 +684,6 @@ pcfs_seek(vp, oldoff, newoff, cred)
 	off_t newoff;
 	struct ucred *cred;
 {
-	int error = 0;
-	off_t foff;
-	daddr_t bn;
-	u_long cluster;
-	u_long lastcluster;
-	struct buf *bp;
-	struct denode *dep = VTODE(vp);
-	struct pcfsmount *pmp = dep->de_pmp;
-
-#if defined(PCFSDEBUG)
-printf("pcfs_seek(vp %08x, oldoff %d, newoff %d, cred %08x)\n",
-	vp, oldoff, newoff, cred); 
-#endif /* defined(PCFSDEBUG) */
-
-/*
- *  Compute the offset of the first byte after the
- *  last block in the file.
- *  If seeking beyond the end of file then fill the
- *  file with zeroed blocks up to the seek address.
- */
-	foff = (dep->de_FileSize + (pmp->pm_bpcluster-1)) & ~pmp->pm_crbomask;
-#if defined(PCFSDEBUG)
-printf("seek: newoff %d > foff %d\n", newoff, foff);
-#endif /* defined(PCFSDEBUG) */
-	if (newoff > foff) {
-/*
- *  If this is the root directory and we are
- *  attempting to seek beyond the end disallow
- *  it.  DOS filesystem root directories can
- *  not grow.
- */
-		if (vp->v_flag & VROOT)
-			return EINVAL;
-/*
- *  If this is a directory and the caller is not
- *  root, then do not let them seek beyond the end
- *  of file.  If we allowed this then users could
- *  cause directories to grow.  Is this really that
- *  important?
- */
-		if (dep->de_Attributes & ATTR_DIRECTORY) {
-			if (error = suser(cred, NULL)) {
-				return error;
-			}
-		}
-/*
- *  Allocate and chain together as many clusters as
- *  are needed to get to newoff.
- */
-		while (foff < newoff) {
-			if (error = extendfile(dep, &bp, 0))
-				return error;
-			dep->de_flag |= DEUPD;
-			bdwrite(bp);
-			foff += pmp->pm_bpcluster;
-			dep->de_FileSize += pmp->pm_bpcluster;
-		} /* end while() */
-		dep->de_FileSize = newoff;
-		return deupdat(dep, &time);
-	}
 	return 0;
 }
 
@@ -897,14 +860,12 @@ printf("pcfs_rename(fndp %08x, tndp %08x, p %08x\n", fndp, tndp, p);
 		/* doscheckpath() deput()'s tddep */
 		error = doscheckpath(fdep, tddep, tndp->ni_cred);
 		tddep = NULL;
-		if (error) {
+		if (error)
 			goto bad;
-		}
 		if ((tndp->ni_nameiop & SAVESTART) == 0)
 			panic("pcfs_rename(): lost to startdir");
-		if (error = lookup(tndp, p)) {
+		if (error = lookup(tndp, p))
 			goto bad;
-		}
 		tddep = VTODE(tndp->ni_dvp);
 		tdep  = tndp->ni_vp ? VTODE(tndp->ni_vp) : NULL;
 	}
@@ -932,9 +893,8 @@ printf("pcfs_rename(fndp %08x, tndp %08x, p %08x\n", fndp, tndp, p);
 		}
 		to_dirclust = tdep->de_dirclust;
 		to_diroffset = tdep->de_diroffset;
-		if (error = removede(tndp)) {
+		if (error = removede(tndp))
 			goto bad;
-		}
 		deput(tdep);
 		tdep = NULL;
 
@@ -1001,20 +961,19 @@ printf("pcfs_rename(fndp %08x, tndp %08x, p %08x\n", fndp, tndp, p);
 			goto bad;
 		}
 		DELOCK(fddep);
-		if (error = readde(fdep, &bp, &ep)) { /* read source de */
+		error = markdeleted (pmp,
+				     fndp->ni_pcfs.pcfs_cluster,
+				     fndp->ni_pcfs.pcfs_offset);
+		if (error) {
 			DEUNLOCK(fdep);
 			DEUNLOCK(fddep);
 			goto bad;
 		}
-		ep->deName[0] = SLOT_DELETED;
-		if (error = bwrite(bp)) {
-			DEUNLOCK(fdep);
-			DEUNLOCK(fddep);
-			goto bad;
+		if (!(fdep->de_Attributes & ATTR_DIRECTORY)) {
+			fdep->de_dirclust = tndp->ni_pcfs.pcfs_cluster;
+			fdep->de_diroffset = tndp->ni_pcfs.pcfs_offset;
+			reinsert(fdep);
 		}
-		fdep->de_dirclust = tndp->ni_pcfs.pcfs_cluster;
-		fdep->de_diroffset = tndp->ni_pcfs.pcfs_offset;
-		reinsert(fdep);
 		DEUNLOCK(fddep);
 	}
 	/* fdep is still locked here */
@@ -1026,30 +985,24 @@ printf("pcfs_rename(fndp %08x, tndp %08x, p %08x\n", fndp, tndp, p);
  */
 	if (sourceisadirectory  &&  newparent) {
 		cn = fdep->de_StartCluster;
-		if (cn == PCFSROOT) {
+		if (cn == PCFSROOT)
 			/* this should never happen */
 			panic("pcfs_rename(): updating .. in root directory?\n");
-		} else {
-			bn = cntobn(pmp, cn);
-		}
-		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
-			NOCRED, &bp);
+		error = readep(pmp, cn, 1, &bp, &dotdotp);
 		if (error) {
 			/* should really panic here, fs is corrupt */
 			DEUNLOCK(fdep);
 			goto bad;
 		}
-		dotdotp = (struct direntry *)bp->b_un.b_addr + 1;
 		dotdotp->deStartCluster = tddep->de_StartCluster;
 		error = bwrite(bp);
 		DEUNLOCK(fdep);
-		if (error) {
+		if (error)
 			/* should really panic here, fs is corrupt */
 			goto bad;
-		}
-	} else {
-		DEUNLOCK(fdep);
 	}
+	else
+		DEUNLOCK(fdep);
 bad:;
 	vrele(DETOV(fdep));
 	vrele(DETOV(fddep));
@@ -1128,7 +1081,7 @@ pcfs_mkdir(ndp, vap, p)
  */
 	bn = cntobn(pmp, newcluster);
 	bp = getblk(pmp->pm_devvp, bn, pmp->pm_bpcluster); /* always succeeds */
-	bzero(bp->b_un.b_addr, pmp->pm_bpcluster);
+	clrbuf(bp);
 	bcopy(&dosdirtemplate, bp->b_un.b_addr, sizeof dosdirtemplate);
 	denp = (struct direntry *)bp->b_un.b_addr;
 	denp->deStartCluster = newcluster;
@@ -1364,11 +1317,11 @@ printf("pcfs_readdir(): vp %08x, uio %08x, cred %08x, eofflagp %08x\n",
 		if (error)
 			break;
 		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, NOCRED, &bp);
-		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
 			brelse(bp);
 			return error;
 		}
+		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 
 /*
  *  code to convert from dos directory entries to ufs directory entries
@@ -1426,12 +1379,7 @@ printf("pcfs_readdir(): vp %08x, uio %08x, cred %08x, eofflagp %08x\n",
 
 /*
  *  If our intermediate buffer is full then copy
- *  its contents to user space.  I would just
- *  use the buffer the buf header points to but,
- *  I'm afraid that when we brelse() it someone else
- *  might find it in the cache and think its contents
- *  are valid.  Maybe there is a way to invalidate
- *  the buffer before brelse()'ing it.
+ *  its contents to user space.
  */
 			if ((u_char *)crnt >= &dirbuf[sizeof dirbuf]) {
 				pushout = 0;
@@ -1468,6 +1416,7 @@ out:;
 /*
  *  I don't know why we bother setting this eofflag, getdirentries()
  *  in vfs_syscalls.c doesn't bother to look at it when we return.
+ *	But nfsrv_readdir does. 
  */
 	if (dep->de_FileSize - uio->uio_offset - bias <= 0)
 		*eofflagp = 1;
