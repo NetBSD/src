@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.22 2002/04/26 17:46:49 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.23 2002/04/28 23:57:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ void pthread_init(void)
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
 	pthread__initthread(first, first);
+	first->pt_state = PT_STATE_RUNNING;
 	sigprocmask(0, NULL, &first->pt_sigmask);
 	PTQ_INSERT_HEAD(&allqueue, first, pt_allq);
 
