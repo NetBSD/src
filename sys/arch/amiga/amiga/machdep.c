@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 1997/10/18 10:50:50 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 1997/10/18 23:18:40 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1919,9 +1919,24 @@ intrhand(sr)
 		else
 #endif
 			custom.intreq = INTF_PORTS;
+
 		break;
-    case 3: 
-      /* VBL */
+
+#ifdef DRACO
+	/* only handled here for DraCo */
+	case 6:
+		p = &isr_exter;
+		while ((q = *p) != NULL) {
+			if ((q->isr_intr)(q->isr_arg))
+				break;
+			p = &q->isr_forw;
+		}
+		*draco_intpen &= ~DRIRQ_INT6;
+		break;
+#endif
+
+	case 3: 
+	/* VBL */
 		if (ireq & INTF_BLIT)  
 			blitter_handler();
 		if (ireq & INTF_COPER)  
