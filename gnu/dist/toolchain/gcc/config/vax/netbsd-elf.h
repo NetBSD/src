@@ -39,6 +39,11 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef  TARGET_GAS
 #define TARGET_GAS	(1)
 
+#undef	TARGET_DEFAULT
+#define	TARGET_DEFAULT	0
+
+#define	TARGET_MEM_FUNCTIONS		/* include mem* calls */
+
 #if 1
 #undef  PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG

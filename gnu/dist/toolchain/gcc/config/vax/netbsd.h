@@ -1,6 +1,17 @@
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-D__vax__ -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(vax) -Amachine(vax)"
 
+#undef CC1_SPEC
+#define CC1_SPEC "\
+	%{!fno-pic: \
+		%{!mno-pic: %{!fpic: %{!fPIC:-fPIC}}} \
+		%{!mindirect: %{!no-mindirect: -mno-indirect}}} \
+	%{mno-pic: -fno-pic -mindirect} \
+	%{fno-pic: \
+		%{!mindirect: %{!no-mindirect: -mindirect}}}"
+
+#define	CC1PLUS_SPEC CC1_SPEC
+
 /* Make gcc agree with <machine/ansi.h> */
 
 #undef SIZE_TYPE
@@ -23,7 +34,7 @@
 #undef DWARF2_UNWIND_INFO
 
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT MASK_HALFPIC	/* default to half-pic mode */
+#define TARGET_DEFAULT 0
 
 /* Function CSE screws up PLT .vs. GOT usage.
  */
@@ -45,7 +56,7 @@
 #define ENCODE_SECTION_INFO(DECL)				\
 do								\
   {								\
-    if ((flag_pic | TARGET_HALFPIC))				\
+    if (flag_pic)						\
       {								\
 	rtx rtl = (TREE_CODE_CLASS (TREE_CODE (DECL)) != 'd'	\
 		   ? TREE_CST_RTL (DECL) : DECL_RTL (DECL));	\
@@ -62,13 +73,12 @@ while (0)
 
 /* Put relocations in the constant pool in the writable data section.  */
 #undef  SELECT_RTX_SECTION
-#define SELECT_RTX_SECTION(MODE,RTX)		\
-{						\
-  if ((flag_pic || TARGET_HALFPIC)		\
-      && vax_symbolic_operand ((RTX), (MODE)))	\
-    data_section ();				\
-  else						\
-    readonly_data_section ();			\
+#define SELECT_RTX_SECTION(MODE,RTX)			\
+{							\
+  if (flag_pic && vax_symbolic_operand ((RTX), (MODE)))	\
+    data_section ();					\
+  else							\
+    readonly_data_section ();				\
 }
 
 /* Use sjlj exceptions. */
