@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/08/19 10:16:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2005/01/20 16:02:32 xtraeme Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ MAN=	fsirand.8
 
 LDADD+=	-lutil
 
-WARNS=	2
+WARNS=	3
 
 .PATH:  ${NETBSDSRCDIR}/sys/ufs/ffs
 
