@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.8 1998/07/28 19:26:10 mycroft Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.9 1998/09/13 05:32:18 wrstuden Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.8 1998/07/28 19:26:10 mycroft Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.9 1998/09/13 05:32:18 wrstuden Exp $");
 #endif
 
 #include <stdlib.h>
@@ -93,6 +93,7 @@ char *pname = "crunchgen";
 
 int verbose, readcache;	/* options */
 int reading_cache;
+char *machine;
 
 /* general library routines */
 
@@ -116,6 +117,8 @@ int main(int argc, char **argv)
     extern int optind;
     extern char *optarg;
 
+    if ((machine = getenv("MACHINE")) == NULL)
+	machine = MACHINE;
     verbose = 1;
     readcache = 1;
     *outmkname = *outcfname = *execfname = '\0';
@@ -509,7 +512,7 @@ void fillin_program(prog_t *p)
 	if(is_dir(path))
 	    p->objdir = strdup(path);
 	else {
-	    (void)snprintf(path, sizeof(path), "%s/obj.%s", p->srcdir, MACHINE);
+	    (void)snprintf(path, sizeof(path), "%s/obj.%s", p->srcdir, machine);
 	    if(is_dir(path))
 		p->objdir = strdup(path);
 	    else
@@ -818,7 +821,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	    p->ident, p->name);
     fprintf(outmk, "%s.lo: %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->name, p->ident);
-    fprintf(outmk, "\tld -dc -r -o %s.lo %s_stub.o $(%s_OBJPATHS)\n", 
+    fprintf(outmk, "\t${LD} -dc -r -o %s.lo %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
     fprintf(outmk, "\tcrunchide -k _crunched_%s_stub %s.lo\n", 
 	    p->ident, p->name);
