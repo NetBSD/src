@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/09/19 03:09:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/03/24 15:04:03 atatat Exp $
 #	install these sources in /usr/share/sendmail/domain
 
 .include <bsd.own.mk>
@@ -6,10 +6,10 @@
 DIST=		${NETBSDSRCDIR}/gnu/dist
 .PATH: ${DIST}/sendmail/cf/domain
 
+.include <Makefile.inc>
+
 FILESDIR=	/usr/share/sendmail/domain
-FILES=		Berkeley.EDU.m4 CS.Berkeley.EDU.m4 EECS.Berkeley.EDU.m4 \
-		NetBSD.ORG.m4 S2K.Berkeley.EDU.m4 berkeley-only.m4 generic.m4 \
-		ihack.net.m4
+FILES=		${CF_DOMAIN_FILES} NetBSD.ORG.m4 ihack.net.m4 Makefile.inc
 
 all:
 

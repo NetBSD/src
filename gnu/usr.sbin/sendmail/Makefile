@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2001/01/09 08:52:59 enami Exp $
+#	$NetBSD: Makefile,v 1.5 2003/03/24 15:04:03 atatat Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		libsmdb libsmutil .WAIT \
-		    sendmail mailstats makemap praliases smrsh
+SUBDIR=		libsm libsmdb libsmutil .WAIT \
+		    sendmail mailstats makemap editmap praliases smrsh
 
 .if ${MKDOC} != "no"
 SUBDIR+=	doc
