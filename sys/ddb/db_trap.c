@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.5 1994/06/29 06:31:22 cgd Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.6 1994/10/09 08:19:42 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,20 +32,11 @@
 /*
  * Trap entry point to kernel debugger.
  */
-#include <sys/param.h>
-#include <sys/proc.h>
-
+#include <ddb/db_run.h>
 #include <ddb/db_command.h>
 #include <ddb/db_break.h>
 
 #include <setjmp.h>
-
-extern void		db_restart_at_pc();
-extern boolean_t	db_stop_at_pc();
-
-extern int		db_inst_count;
-extern int		db_load_count;
-extern int		db_store_count;
 
 extern jmp_buf		*db_recover;
 
@@ -60,7 +51,7 @@ db_trap(type, code)
 	bkpt = IS_BREAKPOINT_TRAP(type, code);
 	watchpt = IS_WATCHPOINT_TRAP(type, code);
 
-	if (db_stop_at_pc(&bkpt)) {
+	if (db_stop_at_pc(DDB_REGS, &bkpt)) {
 	    if (db_inst_count) {
 		db_printf("After %d instructions (%d loads, %d stores),\n",
 			  db_inst_count, db_load_count, db_store_count);
@@ -78,5 +69,5 @@ db_trap(type, code)
 	    db_command_loop();
 	}
 
-	db_restart_at_pc(watchpt);
+	db_restart_at_pc(DDB_REGS, watchpt);
 }
