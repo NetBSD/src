@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.3 2002/09/27 15:35:59 provos Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.4 2002/10/06 17:13:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -44,6 +44,8 @@
 #include <sys/systm.h>
 #include <machine/bus.h>
 #include <uvm/uvm_extern.h>
+
+#include <evbarm/ifpga/ifpgavar.h>
 
 /* Proto types for all the bus_space structure functions */
 
