@@ -1,6 +1,6 @@
-/*	$NetBSD: locore.c,v 1.29 1998/06/21 21:45:07 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.30 1998/08/10 14:31:07 ragge Exp $	*/
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,7 @@ extern struct cpu_dep ka750_calls;
 extern struct cpu_dep ka860_calls;
 extern struct cpu_dep ka820_calls;
 extern struct cpu_dep ka43_calls;
+extern struct cpu_dep ka46_calls;
 extern struct cpu_dep ka410_calls;
 extern struct cpu_dep ka630_calls;
 extern struct cpu_dep ka650_calls;
@@ -127,27 +128,34 @@ start()
 		avail_end = 0;
 		break;
 #endif
-#if VAX630 || VAX650 || VAX410 || VAX43
+#if VAX630 || VAX650 || VAX410 || VAX43 || VAX46
 	case VAX_TYP_UV2:
 	case VAX_TYP_CVAX:
 	case VAX_TYP_RIGEL:
+	case VAX_TYP_MARIAH:
 		vax_siedata = *(int *)(0x20040004);	/* SIE address */
 		vax_boardtype = (vax_cputype<<24) | ((vax_siedata>>24)&0xFF);
 
 		switch (vax_boardtype) {
-#if VAX410 || VAX43
+#if VAX410 || VAX43 || VAX46
 		case VAX_BTYP_420: /* They are very similar */
 		case VAX_BTYP_410:
 		case VAX_BTYP_43:
+		case VAX_BTYP_46:
 			vax_confdata = *(int *)(0x20020000);
 			vax_bustype = VAX_VSBUS | VAX_CPUBUS;
 #if VAX410
-			if (vax_boardtype != VAX_BTYP_43)
+			if (vax_boardtype == VAX_BTYP_410 || 
+			    vax_boardtype == VAX_BTYP_420)
 				dep_call = &ka410_calls;
 #endif
 #if VAX43
 			if (vax_boardtype == VAX_BTYP_43)
 				dep_call = &ka43_calls;
+#endif
+#if VAX46
+			if (vax_boardtype == VAX_BTYP_46)
+				dep_call = &ka46_calls;
 #endif
 			strcpy(cpu_model, (vax_confdata & 0x80 ?
 			    "MicroVAX " : "VAXstation "));
@@ -160,6 +168,11 @@ start()
 #if VAX43
 			case VAX_BTYP_43:
                         	strcat(cpu_model, "3100/m76");
+				break;
+#endif
+#if VAX46
+			case VAX_BTYP_46:
+                        	strcat(cpu_model, "4000/60");
 				break;
 #endif
 			default:

@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.10 1997/11/05 04:23:38 thorpej Exp $     */
+/*      $NetBSD: mtpr.h,v 1.11 1998/08/10 14:33:33 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,8 +34,6 @@
 
 #ifndef	_VAX_MTPR_H_
 #define	_VAX_MTPR_H_
-
-#include <machine/macros.h>
 
 /******************************************************************************
 
