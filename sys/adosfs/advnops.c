@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: advnops.c,v 1.4 1994/05/25 11:34:15 chopps Exp $
+ *	$Id: advnops.c,v 1.5 1994/06/02 23:42:50 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -280,7 +280,7 @@ adosfs_select(vp, which, fflags, ucp, p)
 	 * sure there's something to read...
 	 */
 #ifdef ADOSFS_DIAGNOSTIC
-	printf("(select [0x%x %d 0x%x 0x%x 0x%x] 1)", vp, which, fflags, ucp
+	printf("(select [0x%x %d 0x%x 0x%x 0x%x] 1)", vp, which, fflags, ucp,
 	    p);
 #endif
 	return(1);
@@ -855,7 +855,7 @@ adosfs_inactive(vp, p)
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("(inactive ");
 #endif
-	if (vp->v_usecount == 0 && 0 /* check for file gone? */)
+	if (vp->v_usecount == 0 /* && check for file gone? */)
 		vgone(vp);
 
 #ifdef ADOSFS_DIAGNOSTIC
