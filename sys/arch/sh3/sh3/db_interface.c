@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.24 2005/03/08 20:54:58 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.25 2005/03/08 21:05:47 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24 2005/03/08 20:54:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.25 2005/03/08 21:05:47 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -596,13 +596,13 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		/* stack */
 		t32 = (uint32_t *)(pcb->pcb_sf.sf_r7_bank - MAX_STACK);
 		for (i = 0; *t32++ == 0xa5a5a5a5; i++)
-			;
+			continue;
 		i = MAX_STACK - i * sizeof(int);
 
 		/* frame */
 		t8 = (uint8_t *)((vaddr_t)pcb + PAGE_SIZE - MAX_FRAME);
 		for (j = 0; *t8++ == 0x5a; j++)
-			;
+			continue;
 		j = MAX_FRAME - j;
 
 		db_printf("%-6d 0x%08x %6d (%3d%%) 0x%08lx %6d (%3d%%) %d %s\n",
