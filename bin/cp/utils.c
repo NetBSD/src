@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.8 1997/07/20 05:13:37 thorpej Exp $	*/
+/*	$NetBSD: utils.c,v 1.9 1997/10/19 12:28:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.8 1997/07/20 05:13:37 thorpej Exp $");
+__RCSID("$NetBSD: utils.c,v 1.9 1997/10/19 12:28:01 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,7 +200,7 @@ copy_link(p, exists)
 		warn("symlink: %s", link);
 		return (1);
 	}
-	return (0);
+	return (pflag ? setfile(p->fts_statp, 0) : 0);
 }
 
 int
@@ -242,14 +242,15 @@ setfile(fs, fd)
 	int fd;
 {
 	static struct timeval tv[2];
-	int rval;
+	int rval, islink;
 
 	rval = 0;
+	islink = S_ISLNK(fs->st_mode);
 	fs->st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
 
 	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
-	if (utimes(to.p_path, tv)) {
+	if (lutimes(to.p_path, tv)) {
 		warn("utimes: %s", to.p_path);
 		rval = 1;
 	}
@@ -260,31 +261,35 @@ setfile(fs, fd)
 	 * chown.  If chown fails, lose setuid/setgid bits.
 	 */
 	if (fd ? fchown(fd, fs->st_uid, fs->st_gid) :
-	    chown(to.p_path, fs->st_uid, fs->st_gid)) {
+	    lchown(to.p_path, fs->st_uid, fs->st_gid)) {
 		if (errno != EPERM) {
 			warn("chown: %s", to.p_path);
 			rval = 1;
 		}
 		fs->st_mode &= ~(S_ISUID | S_ISGID);
 	}
-	if (fd ? fchmod(fd, fs->st_mode) : chmod(to.p_path, fs->st_mode)) {
+	if (fd ? fchmod(fd, fs->st_mode) : lchmod(to.p_path, fs->st_mode)) {
 		warn("chown: %s", to.p_path);
 		rval = 1;
 	}
 
-	/*
-	 * XXX
-	 * NFS doesn't support chflags; ignore errors unless there's reason
-	 * to believe we're losing bits.  (Note, this still won't be right
-	 * if the server supports flags and we were trying to *remove* flags
-	 * on a file that we copied, i.e., that we didn't create.)
-	 */
-	errno = 0;
-	if (fd ? fchflags(fd, fs->st_flags) : chflags(to.p_path, fs->st_flags))
-		if (errno != EOPNOTSUPP || fs->st_flags != 0) {
-			warn("chflags: %s", to.p_path);
-			rval = 1;
-		}
+	if (!islink) {
+		/*
+		 * XXX
+		 * NFS doesn't support chflags; ignore errors unless
+		 * there's reason to believe we're losing bits.
+		 * (Note, this still won't be right if the server
+		 * supports flags and we were trying to *remove* flags
+		 * on a file that we copied, i.e., that we didn't create.)
+		 */
+		errno = 0;
+		if (fd ? fchflags(fd, fs->st_flags) :
+		    chflags(to.p_path, fs->st_flags))
+			if (errno != EOPNOTSUPP || fs->st_flags != 0) {
+				warn("chflags: %s", to.p_path);
+				rval = 1;
+			}
+	}
 	return (rval);
 }
 
