@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.33 2003/02/25 01:57:36 dyoung Exp $	*/
+/*	$NetBSD: if_media.h,v 1.34 2003/04/23 23:16:43 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -321,38 +321,52 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_10_T,		"10baseT/UTP" },		\
 	{ IFM_ETHER|IFM_10_T,		"UTP" },			\
 	{ IFM_ETHER|IFM_10_T,		"10UTP" },			\
+	{ IFM_ETHER|IFM_10_T,		"10BASE-T" },			\
 	{ IFM_ETHER|IFM_10_2,		"10base2" },			\
 	{ IFM_ETHER|IFM_10_2,		"10base2/BNC" },		\
 	{ IFM_ETHER|IFM_10_2,		"BNC" },			\
 	{ IFM_ETHER|IFM_10_2,		"10BNC" },			\
+	{ IFM_ETHER|IFM_10_2,		"10BASE2" },			\
 	{ IFM_ETHER|IFM_10_5,		"10base5" },			\
 	{ IFM_ETHER|IFM_10_5,		"10base5/AUI" },		\
 	{ IFM_ETHER|IFM_10_5,		"AUI" },			\
 	{ IFM_ETHER|IFM_10_5,		"10AUI" },			\
+	{ IFM_ETHER|IFM_10_5,		"10BASE5" },			\
 	{ IFM_ETHER|IFM_100_TX,		"100baseTX" },			\
 	{ IFM_ETHER|IFM_100_TX,		"100TX" },			\
+	{ IFM_ETHER|IFM_100_TX,		"100BASE-TX" },			\
 	{ IFM_ETHER|IFM_100_FX,		"100baseFX" },			\
 	{ IFM_ETHER|IFM_100_FX,		"100FX" },			\
+	{ IFM_ETHER|IFM_100_FX,		"100BASE-FX" },			\
 	{ IFM_ETHER|IFM_100_T4,		"100baseT4" },			\
 	{ IFM_ETHER|IFM_100_T4,		"100T4" },			\
+	{ IFM_ETHER|IFM_100_T4,		"100BASE-T4" },			\
 	{ IFM_ETHER|IFM_100_VG,		"100baseVG" },			\
 	{ IFM_ETHER|IFM_100_VG,		"100VG" },			\
+	{ IFM_ETHER|IFM_100_VG,		"100VG-AnyLAN" },		\
 	{ IFM_ETHER|IFM_100_T2,		"100baseT2" },			\
 	{ IFM_ETHER|IFM_100_T2,		"100T2" },			\
+	{ IFM_ETHER|IFM_100_T2,		"100BASE-T2" },			\
 	{ IFM_ETHER|IFM_1000_SX,	"1000baseSX" },			\
 	{ IFM_ETHER|IFM_1000_SX,	"1000SX" },			\
+	{ IFM_ETHER|IFM_1000_SX,	"1000BASE-SX" },		\
 	{ IFM_ETHER|IFM_10_STP,		"10baseSTP" },			\
 	{ IFM_ETHER|IFM_10_STP,		"STP" },			\
 	{ IFM_ETHER|IFM_10_STP,		"10STP" },			\
+	{ IFM_ETHER|IFM_10_STP,		"10BASE-STP" },			\
 	{ IFM_ETHER|IFM_10_FL,		"10baseFL" },			\
 	{ IFM_ETHER|IFM_10_FL,		"FL" },				\
 	{ IFM_ETHER|IFM_10_FL,		"10FL" },			\
+	{ IFM_ETHER|IFM_10_FL,		"10BASE-FL" },			\
 	{ IFM_ETHER|IFM_1000_LX,	"1000baseLX" },			\
 	{ IFM_ETHER|IFM_1000_LX,	"1000LX" },			\
+	{ IFM_ETHER|IFM_1000_LX,	"1000BASE-LX" },		\
 	{ IFM_ETHER|IFM_1000_CX,	"1000baseCX" },			\
 	{ IFM_ETHER|IFM_1000_CX,	"1000CX" },			\
+	{ IFM_ETHER|IFM_1000_CX,	"1000BASE-CX" },		\
 	{ IFM_ETHER|IFM_1000_T,		"1000baseT" },			\
 	{ IFM_ETHER|IFM_1000_T,		"1000T" },			\
+	{ IFM_ETHER|IFM_1000_T,		"1000BASE-T" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HomePNA1" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HPNA1" },			\
 									\
@@ -376,7 +390,9 @@ struct ifmedia_description {
 	 * Short-hand for common media+option combos.			\
 	 */								\
 	{ IFM_ETHER|IFM_10_T|IFM_FDX,	"10baseT-FDX" },		\
+	{ IFM_ETHER|IFM_10_T|IFM_FDX,	"10BASE-T-FDX" },		\
 	{ IFM_ETHER|IFM_100_TX|IFM_FDX,	"100baseTX-FDX" },		\
+	{ IFM_ETHER|IFM_100_TX|IFM_FDX,	"100BASE-TX-FDX" },		\
 									\
 	/*								\
 	 * IEEE 802.11							\
