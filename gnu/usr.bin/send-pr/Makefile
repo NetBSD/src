@@ -45,7 +45,7 @@ ECHON = bsd
 BINDIR=		${bindir}
 LIBDIR=		${datadir}
 NOPROG=	
-MAN1=		send-pr.0
+MAN=		send-pr.1
 
 CLEANFILES=	send-pr send-pr.1 send-pr.el install-sid
 
