@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2003/10/18 07:58:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.69 2003/10/19 00:35:26 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -9,9 +9,11 @@ SHSRCS=	alias.c cd.c echo.c error.c eval.c exec.c expand.c \
 	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
 	mystring.c options.c parser.c redir.c show.c trap.c output.c var.c \
 	test.c printf.c kill.c
-GENSRCS=arith.c arith.h arith_lex.c builtins.c builtins.h init.c nodes.c \
-	nodes.h syntax.c syntax.h token.h
+GENSRCS=arith.c arith_lex.c builtins.c init.c nodes.c syntax.c
+GENHDRS=arith.h builtins.h nodes.h syntax.h token.h
 SRCS=	${SHSRCS} ${GENSRCS}
+
+DPSRCS+=${GENHDRS}
 
 LDADD+=	-ll -ledit -ltermcap
 DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
@@ -39,38 +41,47 @@ CPPFLAGS+=-DSMALL
 	${NETBSDSRCDIR}/bin/kill
 
 CLEANFILES+= mkinit mknodes mksyntax
-CLEANFILES+= ${GENSRCS} y.tab.h
+CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
 CLEANFILES+= trace
 
 token.h: mktokens
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	${HOST_SH} ${.ALLSRC}
 
 builtins.h: builtins.c
-	[ -f ${.TARGET} ]
+	${_MKMSG} " create  ${.TARGET}"
+
 
 builtins.c: mkbuiltins shell.h builtins.def
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	${HOST_SH} ${.ALLSRC} ${.OBJDIR}
+	${_MKCMD}\
 	[ -f builtins.h ]
-	touch builtins.h
 
 init.c: mkinit ${SHSRCS}
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	./${.ALLSRC}
 
 nodes.h: nodes.c
-	[ -f ${.TARGET} ]
 
 nodes.c: mknodes nodetypes nodes.c.pat
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	./${.ALLSRC}
+	${_MKCMD}\
 	[ -f nodes.h ]
-	touch nodes.h
 
 syntax.h: syntax.c
-	[ -f ${.TARGET} ]
 
 syntax.c: mksyntax
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	./${.ALLSRC}
+	${_MKCMD}\
 	[ -f syntax.h ]
-	touch syntax.h
 
 .if ${USETOOLS} == "yes"
 COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
@@ -78,9 +89,13 @@ NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
 .endif
 
 mkinit: mkinit.c
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	${HOST_LINK.c} -o mkinit ${.IMPSRC} ${NBCOMPATLIB}
 
 mknodes: mknodes.c
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	${HOST_LINK.c} -o mknodes ${.IMPSRC} ${NBCOMPATLIB}
 
 .if	(${MACHINE_ARCH} == "powerpc") || \
@@ -91,8 +106,8 @@ TARGET_CHARFLAG?= -DTARGET_CHAR="signed char"
 .endif
 
 mksyntax: mksyntax.c
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	${HOST_LINK.c} ${TARGET_CHARFLAG} -o mksyntax ${.IMPSRC} ${NBCOMPATLIB}
 
 .include <bsd.prog.mk>
-
-${OBJS}: builtins.h nodes.h syntax.h token.h
