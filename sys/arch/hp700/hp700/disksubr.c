@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2004/07/28 09:17:31 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 2004/07/31 07:31:08 skrll Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12 2004/07/28 09:17:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.13 2004/07/31 07:31:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		return "LIF volume header I/O error";
 	}
 
-	memcpy(&osdep->lifvol, bp->b_data, sizeof(struct lifvol));
+	memcpy(&osdep->lifvol, bp->b_data, sizeof(struct hp700_lifvol));
 	if (osdep->lifvol.vol_id != HP700_LIF_VOL_ID) {
 		fsoff = 0;
 	} else {
@@ -352,7 +352,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		for (fsoff = -1,  p = &osdep->lifdir[0];
 		     fsoff < 0 && p < &osdep->lifdir[HP700_LIF_NUMDIR]; p++)
 			if (p->dir_type == HP700_LIF_DIR_FS)
-				fsoff = lifstodb(p->dir_addr);
+				fsoff = hp700_lifstodb(p->dir_addr);
 
 		/* if no suitable lifdir entry found assume 0 */
 		if (fsoff < 0)
