@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.5 1995/08/16 04:14:51 mycroft Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.6 1995/08/27 20:51:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -649,7 +649,7 @@ linux_ioctl(p, uap, retval)
 		SCARG(&ia, com) = SIOCDELMULTI;
 		break;
 	default:
-		return EINVAL;
+		return linux_machdepioctl(p, uap, retval);
 	}
 
 	return ioctl(p, &ia, retval);

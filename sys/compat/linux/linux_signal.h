@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.3 1995/08/14 02:19:08 mycroft Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.4 1995/08/27 20:51:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -90,5 +90,6 @@ struct linux_sigaction {
 #define LINUX_SA_ONESHOT	0x80000000
 
 extern int bsd_to_linux_sig[];
+extern int linux_to_bsd_sig[];
 
 #endif /* !_LINUX_SIGNAL_H */
