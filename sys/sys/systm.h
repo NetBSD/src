@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.31 1994/10/20 04:29:06 cgd Exp $	*/
+/*	$NetBSD: systm.h,v 1.32 1995/03/08 00:52:59 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -133,9 +133,9 @@ void	bcopy __P((const void *from, void *to, u_int len));
 void	ovbcopy __P((const void *from, void *to, u_int len));
 void	bzero __P((void *buf, u_int len));
 
-int	copystr __P((void *kfaddr, void *kdaddr, u_int len, u_int *done));
-int	copyinstr __P((void *udaddr, void *kaddr, u_int len, u_int *done));
-int	copyoutstr __P((void *kaddr, void *udaddr, u_int len, u_int *done));
+int	copystr __P((void *kfaddr, void *kdaddr, u_int len, u_long *done));
+int	copyinstr __P((void *udaddr, void *kaddr, u_int len, u_long *done));
+int	copyoutstr __P((void *kaddr, void *udaddr, u_int len, u_long *done));
 int	copyin __P((void *udaddr, void *kaddr, u_int len));
 int	copyout __P((void *kaddr, void *udaddr, u_int len));
 
@@ -145,10 +145,10 @@ int	fuibyte __P((void *base));
 #endif
 int	subyte __P((void *base, int byte));
 int	suibyte __P((void *base, int byte));
-int	fuword __P((void *base));
-int	fuiword __P((void *base));
-int	suword __P((void *base, int word));
-int	suiword __P((void *base, int word));
+long	fuword __P((void *base));
+long	fuiword __P((void *base));
+int	suword __P((void *base, long word));
+int	suiword __P((void *base, long word));
 
 int	hzto __P((struct timeval *tv));
 void	timeout __P((void (*func)(void *), void *arg, int ticks));
