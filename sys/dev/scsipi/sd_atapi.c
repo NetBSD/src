@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.2 1998/08/05 16:29:06 drochner Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
  * Copyright 1998
@@ -57,11 +57,7 @@
 #include <dev/scsipi/atapiconf.h>
 #include <dev/scsipi/sdvar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	sd_atapibus_match __P((struct device *, void *, void *));
-#else
 int	sd_atapibus_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	sd_atapibus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sd_atapibus_ca = {
@@ -89,11 +85,7 @@ const struct sd_ops sd_atapibus_ops = {
 int
 sd_atapibus_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct scsipibus_attach_args *sa = aux;

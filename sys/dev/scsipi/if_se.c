@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.17 1998/07/05 06:49:16 jonathan Exp $	*/
+/*	$NetBSD: if_se.c,v 1.18 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -200,11 +200,7 @@ struct se_softc {
 
 cdev_decl(se);
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int	sematch __P((struct device *, void *, void *));
-#else
 static int	sematch __P((struct device *, struct cfdata *, void *));
-#endif
 static void	seattach __P((struct device *, struct device *, void *));
 
 static void	se_ifstart __P((struct ifnet *));
@@ -280,11 +276,7 @@ ether_cmp(one, two)
 static int
 sematch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct scsipibus_attach_args *sa = aux;

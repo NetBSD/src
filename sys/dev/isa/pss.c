@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.48 1998/08/25 22:34:30 pk Exp $	*/
+/*	$NetBSD: pss.c,v 1.49 1998/08/31 22:28:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -925,48 +925,7 @@ mpuprobe(parent, match, aux)
     struct cfdata *match;
     void *aux;
 {
-#ifndef __BROKEN_INDIRECT_CONFIG
     return(0);
-#else
-    struct mpu_softc *sc = match;
-    struct pss_softc *pc = (void *) parent;
-    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-
-    /* Check if midi is enabled; if it is check the interrupt */
-    sc->sc_iobase = cf->cf_iobase;
-
-    if (cf->cf_irq == IRQUNK) {
-	int i;
-	for (i = 0; i < 16; i++) {
-	    if (pss_testirq(pc, i) != 0)
-		break;
-	}
-	if (i == 16) {
-	    printf("mpu: unable to locate free IRQ channel for MIDI\n");
-	    return 0;
-	}
-	else {
-	    cf->cf_irq = i;
-	    sc->sc_irq = i;
-	    DPRINTF(("mpu: found IRQ %d free\n", i));
-	}
-    }
-    else {
-	sc->sc_irq = cf->cf_irq;
-    
-	if (pss_testirq(pc, sc->sc_irq) == 0) {
-	    printf("pss: configured MIDI IRQ unavailable (%d)\n", sc->sc_irq);
-	    return 0;
-	}
-    }
-
-    outw(pc->sc_iobase+MIDI_CONFIG,0);
-    DPRINTF(("pss: mpu port 0x%x irq %d\n", sc->sc_iobase, sc->sc_irq));
-    pss_setaddr(sc->sc_iobase, pc->sc_iobase+MIDI_CONFIG);
-    pss_setint(sc->sc_irq, pc->sc_iobase+MIDI_CONFIG);
-
-    return 1;
-#endif
 }
 
 int
@@ -975,54 +934,7 @@ pcdprobe(parent, match, aux)
     struct cfdata *match;
     void *aux;
 {
-#ifndef __BROKEN_INDIRECT_CONFIG
     return(0);
-#else
-    struct pcd_softc *sc = match;
-    struct pss_softc *pc = (void *) parent;
-    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-    u_short val;
-    
-    sc->sc_iobase = cf->cf_iobase;
-
-    pss_setaddr(sc->sc_iobase, pc->sc_iobase+CD_CONFIG);
-
-    /* Set the correct irq polarity. */
-    val = inw(pc->sc_iobase+CD_CONFIG);
-    outw(pc->sc_iobase+CD_CONFIG, 0);
-    val &= CD_POL_MASK;
-    val |= CD_POL_BIT;	/* XXX if (pol) */
-    outw(pc->sc_iobase+CD_CONFIG, val);
-    
-    if (cf->cf_irq == IRQUNK) {
-	int i;
-	for (i = 0; i < 16; i++) {
-	    if (pss_testirq(pc, i) != 0)
-		break;
-	}
-	if (i == 16) {
-	    printf("pcd: unable to locate free IRQ channel for CD\n");
-	    return 0;
-	}
-	else {
-	    cf->cf_irq = i;
-	    sc->sc_irq = i;
-	    DPRINTF(("pcd: found IRQ %d free\n", i));
-	}
-    }
-    else {
-	sc->sc_irq = cf->cf_irq;
-
-	if (pss_testirq(pc, sc->sc_irq) == 0) {
-	    printf("pcd: configured CD IRQ unavailable (%d)\n", sc->sc_irq);
-	    return 0;
-	}
-	return 1;
-    }
-    pss_setint(sc->sc_irq, pc->sc_iobase+CD_CONFIG);
-    
-    return 1;
-#endif
 }
 #endif /* notyet */
 

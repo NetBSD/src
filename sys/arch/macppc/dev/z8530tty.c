@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.1 1998/05/15 10:15:49 tsubai Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.2 1998/08/31 22:28:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -182,11 +182,7 @@ struct zstty_softc {
 #define ISSET(t, f)	((t) & (f))
 
 /* Definition of the driver for autoconfig. */
-#ifdef	__BROKEN_INDIRECT_CONFIG
-static int	zstty_match(struct device *, void *, void *);
-#else
 static int	zstty_match(struct device *, struct cfdata *, void *);
-#endif
 static void	zstty_attach(struct device *, struct device *, void *);
 
 struct cfattach zstty_ca = {
@@ -213,26 +209,6 @@ static void zs_hwiflow __P((struct zstty_softc *));
 /*
  * zstty_match: how is this zs channel configured?
  */
-#ifdef	__BROKEN_INDIRECT_CONFIG
-int 
-zstty_match(parent, vcf, aux)
-	struct device *parent;
-	void   *vcf, *aux;
-{
-	struct cfdata *cf = vcf;
-	struct zsc_attach_args *args = aux;
-
-	/* Exact match is better than wildcard. */
-	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
-		return 2;
-
-	/* This driver accepts wildcard. */
-	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT)
-		return 1;
-
-	return 0;
-}
-#else	/* __BROKEN_INDIRECT_CONFIG */
 int 
 zstty_match(parent, cf, aux)
 	struct device *parent;
@@ -251,7 +227,6 @@ zstty_match(parent, cf, aux)
 
 	return 0;
 }
-#endif	/* __BROKEN_INDIRECT_CONFIG */
 
 void 
 zstty_attach(parent, self, aux)

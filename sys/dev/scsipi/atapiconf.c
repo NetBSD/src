@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.11 1998/08/05 16:29:04 drochner Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.12 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -52,13 +52,8 @@ struct atapibus_softc {
 	struct scsipi_link **sc_link;		/* dynamically allocated */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	atapibusmatch __P((struct device *, void *, void *));
-int	atapibussubmatch __P((struct device *, void *, void *));
-#else
 int	atapibusmatch __P((struct device *, struct cfdata *, void *));
 int	atapibussubmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	atapibusattach __P((struct device *, struct device *, void *));
 int	atapiprint __P((void *, const char *));
 
@@ -99,18 +94,11 @@ struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 };
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-atapibusmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-#else
 atapibusmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-#endif
 	struct scsipi_link *sc_link = aux;
 
 	if (sc_link == NULL)
@@ -121,19 +109,11 @@ atapibusmatch(parent, cf, aux)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-atapibussubmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct cfdata *cf = match;
-#else
 atapibussubmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-#endif
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_link *sc_link = sa->sa_sc_link;
 

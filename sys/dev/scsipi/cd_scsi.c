@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.13 1998/08/17 00:49:01 mycroft Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.14 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,11 +77,7 @@
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/cdvar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	cd_scsibus_match __P((struct device *, void *, void *));
-#else
 int	cd_scsibus_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	cd_scsibus_attach __P((struct device *, struct device *, void *));
 int	cd_scsibus_get_mode __P((struct cd_softc *,
 	    struct scsi_cd_mode_data *, int, int, int));
@@ -122,11 +118,7 @@ const struct cd_ops cd_scsibus_ops = {
 int
 cd_scsibus_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct scsipibus_attach_args *sa = aux;

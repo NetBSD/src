@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.25 1998/06/09 18:46:12 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.26 1998/08/31 22:28:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,12 +98,7 @@ struct cfdata {
 #define	FSTATE_FOUND	1	/* has been found */
 #define	FSTATE_STAR	2	/* duplicable */
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-typedef int (*cfmatch_t) __P((struct device *, void *, void *));
-typedef void (*cfscan_t) __P((struct device *, void *));
-#else
 typedef int (*cfmatch_t) __P((struct device *, struct cfdata *, void *));
-#endif
 
 /*
  * `configuration' attachment and driver (what the machine-independent
@@ -131,12 +126,8 @@ struct cfdriver {
 	void	**cd_devs;		/* devices found */
 	char	*cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
-#ifdef __BROKEN_INDIRECT_CONFIG
-	int	cd_indirect;		/* indirectly configure subdevices */
-#else
 	/* XXX TEMPORARY */
 	void	*cd_lossage_prevention;	/* keep 'cd_ndevs' from being initted */
-#endif
 	int	cd_ndevs;		/* size of cd_devs array */
 };
 
@@ -165,23 +156,13 @@ extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
 
 void config_init __P((void));
-#ifdef __BROKEN_INDIRECT_CONFIG
-void *config_search __P((cfmatch_t, struct device *, void *));
-void *config_rootsearch __P((cfmatch_t, char *, void *));
-#else /* __BROKEN_INDIRECT_CONFIG */
 struct cfdata *config_search __P((cfmatch_t, struct device *, void *));
 struct cfdata *config_rootsearch __P((cfmatch_t, char *, void *));
-#endif /* __BROKEN_INDIRECT_CONFIG */
 struct device *config_found_sm __P((struct device *, void *, cfprint_t,
     cfmatch_t));
 struct device *config_rootfound __P((char *, void *));
-#ifdef __BROKEN_INDIRECT_CONFIG
-void config_scan __P((cfscan_t, struct device *));
-struct device *config_attach __P((struct device *, void *, void *, cfprint_t));
-#else /* __BROKEN_INDIRECT_CONFIG */
 struct device *config_attach __P((struct device *, struct cfdata *, void *,
     cfprint_t));
-#endif /* __BROKEN_INDIRECT_CONFIG */
 void config_defer __P((struct device *, void (*)(struct device *)));
 #if defined(__alpha__) || defined(hp300) || defined(__i386__)
 void device_register __P((struct device *, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.101 1998/08/17 00:49:04 mycroft Exp $ */
+/*	$NetBSD: st.c,v 1.102 1998/08/31 22:28:07 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -315,11 +315,7 @@ struct st_softc {
 };
 
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	stmatch __P((struct device *, void *, void *));
-#else
 int	stmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	stattach __P((struct device *, struct device *, void *));
 void	st_identify_drive __P((struct st_softc *,
 	    struct scsipi_inquiry_pattern *));
@@ -398,11 +394,7 @@ struct scsipi_inquiry_pattern st_patterns[] = {
 int
 stmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct scsipibus_attach_args *sa = aux;

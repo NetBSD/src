@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.3 1998/07/05 06:49:02 jonathan Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.4 1998/08/31 22:28:04 cgd Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -4953,11 +4953,7 @@ struct cfdriver decd = {
 static int
 tulip_pci_probe(
     struct device *parent,
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match,
-#else
     struct cfdata *match,
-#endif
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
