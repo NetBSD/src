@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.144 2001/09/03 23:03:29 wiz Exp $
+.\"	$NetBSD: options.4,v 1.145 2001/09/04 04:20:30 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -751,6 +751,10 @@ the kernel is booted in the 'ask-for-root' mode.
 Do not inline the VOP_*() calls in the kernel.
 On i386 GENERIC, this saves 36k of kernel text.  Useful
 for install media kernels, small memory systems and embedded systems.
+.It Cd options HZ=integer
+On ports that support it, set the system clock frequency (see
+.Xr hz 9 )
+to the supplied value. Handle with care.
 .It Cd options NTP
 Turns on in-kernel precision timekeeping support used by software
 implementing
