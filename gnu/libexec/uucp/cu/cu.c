@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char cu_rcsid[] = "$Id: cu.c,v 1.8 2003/01/21 22:47:20 is Exp $";
+const char cu_rcsid[] = "$Id: cu.c,v 1.9 2004/11/05 20:37:28 dsl Exp $";
 #endif
 
 #include "cu.h"
@@ -1050,7 +1050,7 @@ fcudo_cmd (puuconf, qconn, bcmd)
   switch (bcmd)
     {
     default:
-      if (! isprint (*zCuvar_escape))
+      if (! isprint ((unsigned char)*zCuvar_escape))
 	sprintf (abescape, "\\%03o", BUCHAR (*zCuvar_escape));
       else
 	{
@@ -1148,7 +1148,7 @@ fcudo_cmd (puuconf, qconn, bcmd)
       return TRUE;
 
     case '?':
-      if (! isprint (*zCuvar_escape))
+      if (! isprint ((unsigned char)*zCuvar_escape))
 	sprintf (abescape, "\\%03o", BUCHAR (*zCuvar_escape));
       else
 	{
@@ -1285,7 +1285,7 @@ icuunrecogvar (puuconf, argc, argv, pvar, pinfo)
 {
   char abescape[5];
 
-  if (! isprint (*zCuvar_escape))
+  if (! isprint ((unsigned char)*zCuvar_escape))
     sprintf (abescape, "\\%03o", BUCHAR (*zCuvar_escape));
   else
     {
@@ -1339,7 +1339,7 @@ uculist_vars ()
 	      {
 		int cchar;
 
-		if (! isprint (*z))
+		if (! isprint ((unsigned char)*z))
 		  {
 		    sprintf (abchar, "\\%03o", BUCHAR (*z));
 		    cchar = 4;
@@ -1452,7 +1452,7 @@ icuunrecogfn (puuconf, argc, argv, pvar, pinfo)
 {
   char abescape[5];
 
-  if (! isprint (*zCuvar_escape))
+  if (! isprint ((unsigned char)*zCuvar_escape))
     sprintf (abescape, "\\%03o", BUCHAR (*zCuvar_escape));
   else
     {
@@ -2086,7 +2086,7 @@ fcusend_buf (qconn, zbufarg, cbufarg)
       fnl = FALSE;
       for (i = 0, zget = zbuf; i < csend; i++, zget++)
 	{
-	  if (isprint (*zget)
+	  if (isprint ((unsigned char)*zget)
 	      || *zget == '\t')
 	    *zput++ = *zget;
 	  else if (*zget == '\n')
@@ -2138,7 +2138,7 @@ fcusend_buf (qconn, zbufarg, cbufarg)
 		}
 	      else
 		{
-		  if (! fCuvar_echocheck || ! isprint (*zget))
+		  if (! fCuvar_echocheck || ! isprint ((unsigned char)*zget))
 		    continue;
 		  bwant = *zget;
 		}
