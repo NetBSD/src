@@ -1,3 +1,5 @@
+/* $NetBSD: elf2aout.c,v 1.2 1996/09/29 22:01:44 jonathan Exp $ */
+
 /*
  * Copyright (c) 1995
  *	Ted Lemon (hereinafter referred to as the author)

@@ -1,3 +1,5 @@
+/* $NetBSD: elf2ecoff.c,v 1.2 1996/09/29 22:01:45 jonathan Exp $ */
+
 /*
  * Copyright (c) 1995
  *	Ted Lemon (hereinafter referred to as the author)
@@ -65,8 +67,7 @@ main (int argc, char **argv, char **envp)
   int strtabix, symtabix;
   int i, pad;
   struct sect text, data, bss;
-  struct ecoff_filehdr efh;
-  struct ecoff_aouthdr eah;
+  struct ecoff_exechdr ep;
   struct ecoff_scnhdr esecs [3];
   int infile, outfile;
   unsigned long cur_vma = ULONG_MAX;
@@ -191,49 +192,50 @@ main (int argc, char **argv, char **envp)
     text.len = data.vaddr - text.vaddr;
 
   /* We now have enough information to cons up an a.out header... */
-  eah.ea_magic = ECOFF_OMAGIC;
-  eah.ea_vstamp = 200;
-  eah.ea_tsize = text.len;
-  eah.ea_dsize = data.len;
-  eah.ea_bsize = bss.len;
-  eah.ea_entry = ex.entry;
-  eah.ea_text_start = text.vaddr;
-  eah.ea_data_start = data.vaddr;
-  eah.ea_bss_start = bss.vaddr;
-  eah.ea_gprmask = 0xf3fffffe;
-  bzero (&eah.ea_cprmask, sizeof eah.ea_cprmask);
-  eah.ea_gp_value = 0; /* unused. */
+  ep.a.magic = ECOFF_OMAGIC;
+  ep.a.vstamp = 200;
+  ep.a.tsize = text.len;
+  ep.a.dsize = data.len;
+  ep.a.bsize = bss.len;
+  ep.a.entry = ex.entry;
+  ep.a.text_start = text.vaddr;
+  ep.a.data_start = data.vaddr;
+  ep.a.bss_start = bss.vaddr;
+  ep.a.gprmask = 0xf3fffffe;
+  bzero (&ep.a.cprmask, sizeof ep.a.cprmask);
+  ep.a.gp_value = 0; /* unused. */
 
-  efh.ef_magic = ECOFF_MAGIC_MIPSEL;
-  efh.ef_nsecs = 3;
-  efh.ef_timestamp = 0;	/* bogus */
-  efh.ef_symptr = 0;
-  efh.ef_syms = 0;
-  efh.ef_opthdr = sizeof eah;
-  efh.ef_flags = 0x100f; /* Stripped, not sharable. */
+  ep.f.f_magic = ECOFF_MAGIC_MIPSEL;
+  ep.f.f_nscns = 3;
+  ep.f.f_timdat = 0;	/* bogus */
+  ep.f.f_symptr = 0;
+  ep.f.f_nsyms = 0;
+  ep.f.f_opthdr = sizeof ep.a;
+  ep.f.f_flags = 0x100f; /* Stripped, not sharable. */
 
-  strcpy (esecs [0].es_name, ".text");
-  strcpy (esecs [1].es_name, ".data");
-  strcpy (esecs [2].es_name, ".bss");
-  esecs [0].es_physaddr = esecs [0].es_virtaddr = eah.ea_text_start;
-  esecs [1].es_physaddr = esecs [1].es_virtaddr = eah.ea_data_start;
-  esecs [2].es_physaddr = esecs [2].es_virtaddr = eah.ea_bss_start;
-  esecs [0].es_size = eah.ea_tsize;
-  esecs [1].es_size = eah.ea_dsize;
-  esecs [2].es_size = eah.ea_bsize;
-  esecs [0].es_raw_offset = ECOFF_TXTOFF (&efh, &eah);
-  esecs [1].es_raw_offset = ECOFF_DATOFF (&efh, &eah);
-  esecs [2].es_raw_offset = esecs [1].es_raw_offset +
-	  ECOFF_ROUND (esecs [1].es_size, ECOFF_SEGMENT_ALIGNMENT (&eah));
-  esecs [0].es_reloc_offset = esecs [1].es_reloc_offset
-	  = esecs [2].es_reloc_offset = 0;
-  esecs [0].es_line_offset = esecs [1].es_line_offset
-	  = esecs [2].es_line_offset = 0;
-  esecs [0].es_nreloc = esecs [1].es_nreloc = esecs [2].es_nreloc = 0;
-  esecs [0].es_nline = esecs [1].es_nline = esecs [2].es_nline = 0;
-  esecs [0].es_flags = 0x20;
-  esecs [1].es_flags = 0x40;
-  esecs [2].es_flags = 0x82;
+  strcpy (esecs [0].s_name, ".text");
+  strcpy (esecs [1].s_name, ".data");
+  strcpy (esecs [2].s_name, ".bss");
+  esecs [0].s_paddr = esecs [0].s_vaddr = ep.a.text_start;
+  esecs [1].s_paddr = esecs [1].s_vaddr = ep.a.data_start;
+  esecs [2].s_paddr = esecs [2].s_vaddr = ep.a.bss_start;
+  esecs [0].s_size = ep.a.tsize;
+  esecs [1].s_size = ep.a.dsize;
+  esecs [2].s_size = ep.a.bsize;
+
+  esecs [0].s_scnptr = ECOFF_TXTOFF (&ep);
+  esecs [1].s_scnptr = ECOFF_DATOFF (&ep);
+  esecs [2].s_scnptr = esecs [1].s_scnptr +
+	  ECOFF_ROUND (esecs [1].s_size, ECOFF_SEGMENT_ALIGNMENT (&ep));
+  esecs [0].s_relptr = esecs [1].s_relptr
+	  = esecs [2].s_relptr = 0;
+  esecs [0].s_lnnoptr = esecs [1].s_lnnoptr
+	  = esecs [2].s_lnnoptr = 0;
+  esecs [0].s_nreloc = esecs [1].s_nreloc = esecs [2].s_nreloc = 0;
+  esecs [0].s_nlnno = esecs [1].s_nlnno = esecs [2].s_nlnno = 0;
+  esecs [0].s_flags = 0x20;
+  esecs [1].s_flags = 0x40;
+  esecs [2].s_flags = 0x82;
 
   /* Make the output file... */
   if ((outfile = open (argv [2], O_WRONLY | O_CREAT, 0777)) < 0)
@@ -243,25 +245,25 @@ main (int argc, char **argv, char **envp)
     }
 
   /* Write the headers... */
-  i = write (outfile, &efh, sizeof efh);
-  if (i != sizeof efh)
+  i = write (outfile, &ep.f, sizeof ep.f);
+  if (i != sizeof ep.f)
     {
-      perror ("efh: write");
+      perror ("ep.f: write");
       exit (1);
 
   for (i = 0; i < 6; i++)
     {
       printf ("Section %d: %s phys %x  size %x  file offset %x\n",
-	      i, esecs [i].es_name, esecs [i].es_physaddr,
-	      esecs [i].es_size, esecs [i].es_raw_offset);
+	      i, esecs [i].s_name, esecs [i].s_paddr,
+	      esecs [i].s_size, esecs [i].s_scnptr);
     }
     }
   fprintf (stderr, "wrote %d byte file header.\n", i);
 
-  i = write (outfile, &eah, sizeof eah);
-  if (i != sizeof eah)
+  i = write (outfile, &ep.a, sizeof ep.a);
+  if (i != sizeof ep.a)
     {
-      perror ("eah: write");
+      perror ("ep.a: write");
       exit (1);
     }
   fprintf (stderr, "wrote %d byte a.out header.\n", i);
@@ -274,7 +276,7 @@ main (int argc, char **argv, char **envp)
     }
   fprintf (stderr, "wrote %d bytes of section headers.\n", i);
 
-  if (pad = ((sizeof efh + sizeof eah + sizeof esecs) & 15))
+  if (pad = ((sizeof ep.f + sizeof ep.a + sizeof esecs) & 15))
     {
       pad = 16 - pad;
       i = write (outfile, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0", pad);
