@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.31 2002/10/09 12:06:17 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.32 2002/10/11 02:32:23 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.31 2002/10/09 12:06:17 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.32 2002/10/11 02:32:23 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -764,6 +764,9 @@ ac97_attach(host_if)
 				printf("%s: Ignore these capabilities.\n",
 				       sc_dev->dv_xname);
 			}
+			/* restore the default value */
+			ac97_write(as, AC97_REG_PCM_FRONT_DAC_RATE,
+				   AC97_SINGLE_RATE);
 		}
 	}
 
