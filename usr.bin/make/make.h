@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.44 2002/06/15 18:24:57 wiz Exp $	*/
+/*	$NetBSD: make.h,v 1.45 2003/03/14 05:19:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -335,6 +335,9 @@ extern Boolean	jobServer;	/* a jobServer already exists */
 
 extern Boolean	parseWarnFatal;	/* TRUE if makefile parsing warnings are
 				 * treated as errors */
+
+extern Boolean	varNoExportEnv;	/* TRUE if we should not export variables
+				 * set on the command line to the env. */
 
 extern GNode    *DEFAULT;    	/* .DEFAULT rule */
 
