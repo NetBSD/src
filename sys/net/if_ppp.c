@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.15 1994/07/03 06:44:03 deraadt Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.16 1994/07/18 23:45:33 paulus Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -1037,14 +1037,23 @@ pppgetm(sc)
     for (;; mp = &m->m_next) {
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0) {
-	    m_freem(sc->sc_m);
-	    sc->sc_m = NULL;
+	    if (sc->sc_m != NULL) {
+		m_freem(sc->sc_m);
+		sc->sc_m = NULL;
+	    }
 	    splx(s);
 	    printf("ppp%d: can't allocate mbuf\n", sc->sc_if.if_unit);
 	    return (0);
 	}
 	*mp = m;
 	MCLGET(m, M_DONTWAIT);
+	if ((m->m_flags & M_EXT) == 0) {
+	    m_freem(sc->sc_m);
+	    sc->sc_m = NULL;
+	    splx(s);
+	    printf("ppp%d: can't allocate mbuf cluster\n", sc->sc_if.if_unit);
+	    return (0);
+	}
 	if ((len -= M_DATASIZE(m)) <= 0) {
 	    splx(s);
 	    return (1);
