@@ -33,14 +33,13 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)log.c	5.10 (Berkeley) 1/10/93";*/
-static char rcsid[] = "$Id: log.c,v 1.4 1993/08/14 19:21:15 mycroft Exp $";
+static char rcsid[] = "$Id: log.h,v 1.1 1993/08/14 19:21:39 mycroft Exp $";
 #endif /* not lint */
 
 #include <math.h>
 #include <errno.h>
 
 #include "mathimpl.h"
-#include "log.h"
 
 /* Table-driven natural logarithm.
  *
@@ -77,74 +76,17 @@ static char rcsid[] = "$Id: log.c,v 1.4 1993/08/14 19:21:15 mycroft Exp $";
  *	+Inf	return +Inf
 */
 
-double
-#ifdef _ANSI_SOURCE
-log(double x)
+#if defined(vax) || defined(tahoe)
+#define _IEEE		0
+#define TRUNC(x)	x = (double) (float) (x)
 #else
-log(x) double x;
+#define _IEEE		1
+#define endian		(((*(int *) &one)) ? 1 : 0)
+#define TRUNC(x)	*(((int *) &x) + endian) &= 0xf8000000
+#define infnan(x)	0.0
 #endif
-{
-	int m, j;
-	double F, f, g, q, u, u2, v, zero = 0.0, one = 1.0;
-	double logb(), ldexp();
-	volatile double u1;
 
-	/* Catch special cases */
-	if (x <= 0)
-		if (_IEEE && x == zero)	/* log(0) = -Inf */
-			return (-one/zero);
-		else if (_IEEE)		/* log(neg) = NaN */
-			return (zero/zero);
-		else if (x == zero)	/* NOT REACHED IF _IEEE */
-			return (infnan(-ERANGE));
-		else
-			return (infnan(EDOM));
-	else if (!finite(x))
-		if (_IEEE)		/* x = NaN, Inf */
-			return (x+x);
-		else
-			return (infnan(ERANGE));
-	
-	/* Argument reduction: 1 <= g < 2; x/2^m = g;	*/
-	/* y = F*(1 + f/F) for |f| <= 2^-8		*/
+#define N 128
 
-	m = logb(x);
-	g = ldexp(x, -m);
-	if (_IEEE && m == -1022) {
-		j = logb(g), m += j;
-		g = ldexp(g, -j);
-	}
-	j = N*(g-1) + .5;
-	F = (1.0/N) * j + 1;	/* F*128 is an integer in [128, 512] */
-	f = g - F;
-
-	/* Approximate expansion for log(1+f/F) ~= u + q */
-	g = 1/(2*F+f);
-	u = 2*f*g;
-	v = u*u;
-	q = u*v*(__log_A1 + v*(__log_A2 + v*(__log_A3 + v*__log_A4)));
-
-    /* case 1: u1 = u rounded to 2^-43 absolute.  Since u < 2^-8,
-     * 	       u1 has at most 35 bits, and F*u1 is exact, as F has < 8 bits.
-     *         It also adds exactly to |m*log2_hi + log_F_head[j] | < 750
-    */
-	if (m | j)
-		u1 = u + 513, u1 -= 513;
-
-    /* case 2:	|1-x| < 1/256. The m- and j- dependent terms are zero;
-     * 		u1 = u to 24 bits.
-    */
-	else
-		u1 = u, TRUNC(u1);
-	u2 = (2.0*(f - F*u1) - u1*f) * g;
-			/* u1 + u2 = 2f/(2F+f) to extra precision.	*/
-
-	/* log(x) = log(2^m*F*(1+f/F)) =				*/
-	/* (m*log2_hi+__logF_head[j]+u1) + (m*log2_lo+__logF_tail[j]+q);*/
-	/* (exact) + (tiny)						*/
-
-	u1 += m*__logF_head[N] + __logF_head[j];	/* exact */
-	u2 = (u2 + __logF_tail[j]) + q;			/* tiny */
-	u2 += __logF_tail[N]*m;
-	return (u1 + u2);
-}
+extern double __log_A1, __log_A2, __log_A3, __log_A4,
+	      __logF_head[], __logF_tail[];
