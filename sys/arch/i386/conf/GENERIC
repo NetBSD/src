@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.237 1999/06/18 20:27:59 augustss Exp $
+#	$NetBSD: GENERIC,v 1.238 1999/07/03 12:09:52 tron Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -235,8 +235,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 #options 	NORWEGIAN_KBD
 
 # wscons
-pckbc0	at isa?			# pc keyboard controller
-pckbd*	at pckbc?		# PC keyboard
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
 # "opms" should not be enabled together with "pms" or "pmsi"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
 #pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
@@ -246,7 +246,7 @@ vga*		at pci?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
-wskbd*	at pckbd? console ?
+wskbd* 		at pckbd? console ?
 #wsmouse*	at pms?
 #wsmouse*	at pmsi?
 
