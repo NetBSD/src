@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.8 1999/09/18 00:23:38 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.9 1999/09/21 14:25:46 hubertf Exp $
 #
 ###########################################################################
 #
@@ -34,7 +34,6 @@
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
 #		fd* (unimp.) and ch*
-#
 #	std	standard devices
 #	fd	file descriptor device nodes
 #	local	configuration specific devices
@@ -73,7 +72,7 @@
 #	tun*	network tunnel driver
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
-#	ipl	ip filter
+#	ipl	IP filter
 #	random	Random number generator
 #	scsibus* SCSI busses
 #	ss*	SCSI scanner
