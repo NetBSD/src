@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.31 2003/10/21 02:20:22 fvdl Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.32 2004/03/21 10:02:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ cvt_time(time_t t, char *buf, size_t buflen)
 #define TIME		16
 
 char	*core = NULL, *namelist = NULL;
-int	display = SHMINFO | MSGINFO | SEMINFO;
+int	display = 0;
 int	option = 0;
 
 int
@@ -166,25 +166,25 @@ main(int argc, char *argv[])
 	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != -1)
 		switch (i) {
 		case 'M':
-			display = SHMTOTAL;
+			display |= SHMTOTAL;
 			break;
 		case 'm':
-			display = SHMINFO;
+			display |= SHMINFO;
 			break;
 		case 'Q':
-			display = MSGTOTAL;
+			display |= MSGTOTAL;
 			break;
 		case 'q':
-			display = MSGINFO;
+			display |= MSGINFO;
 			break;
 		case 'S':
-			display = SEMTOTAL;
+			display |= SEMTOTAL;
 			break;
 		case 's':
-			display = SEMINFO;
+			display |= SEMINFO;
 			break;
 		case 'T':
-			display = SHMTOTAL | MSGTOTAL | SEMTOTAL;
+			display |= SHMTOTAL | MSGTOTAL | SEMTOTAL;
 			break;
 		case 'a':
 			option |= BIGGEST | CREATOR | OUTSTANDING | PID | TIME;
@@ -216,6 +216,9 @@ main(int argc, char *argv[])
 
 	if (argc - optind > 0)
 		usage();
+
+        if (display == 0)
+		display = SHMINFO | MSGINFO | SEMINFO;
 
 	if (core == NULL) {
 		if (display & (MSGINFO | MSGTOTAL))

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipcs.1,v 1.13 2003/02/25 10:35:44 wiz Exp $
+.\"	$NetBSD: ipcs.1,v 1.14 2004/03/21 10:02:12 simonb Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 17, 2002
+.Dd March 21, 2004
 .Dt IPCS 1
 .Os
 .Sh NAME
@@ -118,6 +118,12 @@ Display system information about semaphores.
 .It Fl T
 Display system information about shared memory, message queues
 and semaphores.
+(This is shorthand for specifying the
+.Fl M ,
+.Fl Q ,
+and
+.Fl S
+options.)
 .El
 .Pp
 If none of the
@@ -126,8 +132,9 @@ If none of the
 .Fl Q ,
 .Fl q ,
 .Fl S ,
+.Fl s ,
 or
-.Fl s
+.Fl T
 options are specified, information about all active IPC facilities is
 listed.
 .Sh RESTRICTIONS
