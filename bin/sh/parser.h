@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.16 2003/08/07 09:05:37 agc Exp $	*/
+/*	$NetBSD: parser.h,v 1.17 2004/06/26 22:09:49 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,8 @@
 #define	CTLARI	'\206'		/* arithmetic expression */
 #define	CTLENDARI '\207'
 #define	CTLQUOTEMARK '\210'
-#define	CTL_LAST '\210'		/* last 'special' character */
+#define	CTLQUOTEEND '\211'	/* only inside ${...} */
+#define	CTL_LAST '\211'		/* last 'special' character */
 
 /* variable substitution byte (follows CTLVAR) */
 #define VSTYPE	0x0f		/* type of variable substitution */
