@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.75 2003/07/06 16:19:18 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.76 2003/08/24 16:32:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.75 2003/07/06 16:19:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.76 2003/08/24 16:32:50 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,7 +688,7 @@ sys_mprotect(l, v, retval)
 {
 	struct sys_mprotect_args /* {
 		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
+		syscallarg(size_t) len;
 		syscallarg(int) prot;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
@@ -712,10 +712,8 @@ sys_mprotect(l, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vsize_t)round_page(size);
+	size = round_page(size);
 
-	if ((int)size < 0)
-		return (EINVAL);
 	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
 				FALSE);
 	return error;
