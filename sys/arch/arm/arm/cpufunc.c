@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.27 2002/01/25 19:19:24 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.28 2002/01/25 21:33:26 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -519,7 +519,7 @@ struct cpu_functions xscale_cpufuncs = {
 
 	xscale_cache_purgeD,		/* dcache_wbinv_all	*/
 	xscale_cache_purgeD_rng,	/* dcache_wbinv_range	*/
-/*XXX*/	xscale_cache_purgeD_rng,	/* dcache_inv_range	*/
+	xscale_cache_flushD_rng,	/* dcache_inv_range	*/
 	xscale_cache_cleanD_rng,	/* dcache_wb_range	*/
 
 	xscale_cache_purgeID,		/* idcache_wbinv_all	*/
@@ -703,6 +703,8 @@ set_cpufuncs()
 #endif	/* CPU_SA110 */
 #ifdef CPU_XSCALE
 	if (cputype == CPU_ID_I80200) {
+		int rev = cpufunc_id() & CPU_ID_REVISION_MASK;
+
 		i80200_intr_init();
 
 		/*
@@ -737,6 +739,17 @@ set_cpufuncs()
 
 		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = xscale_cpufuncs;
+
+		/*
+		 * i80200 errata: Step-A0 and A1 have a bug where
+		 * D$ dirty bits are not cleared on "invalidate by
+		 * address".
+		 *
+		 * Workaround: Clean cache line before invalidating.
+		 */
+		if (rev == 0 || rev == 1)
+			cpufuncs.cf_dcache_inv_range = xscale_cache_purgeD_rng;
+
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype();
 		return 0;
