@@ -207,6 +207,13 @@ int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
 /* Extra functions from Mark Murray <mark@grondar.za> */
 void des_cblock_print_file(const_des_cblock *cb, FILE *fp);
 
+/* The following functions are not in the normal unix build or the
+ * SSLeay build.  When using the SSLeay build, use RAND_seed()
+ * and RAND_bytes() instead. */
+int des_new_random_key(des_cblock *key);
+void des_init_random_number_generator(des_cblock *key);
+void des_set_random_generator_seed(des_cblock *key);
+
 /* The following definitions provide compatibility with the MIT Kerberos
  * library. The des_key_schedule structure is not binary compatible. */
 
@@ -241,10 +248,6 @@ void des_cblock_print_file(const_des_cblock *cb, FILE *fp);
 typedef des_key_schedule bit_64;
 #define des_fixup_key_parity des_set_odd_parity
 #define des_check_key_parity check_parity
-
-void des_set_random_generator_seed(des_cblock *seed);
-int des_new_random_key(des_cblock *key);
-void des_init_random_number_generator(des_cblock *seed);
 
 #ifdef  __cplusplus
 }
