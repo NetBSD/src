@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5 1996/09/10 22:47:38 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.6 1996/10/27 08:52:05 oki Exp $
 
 #
 #	GENERIC
@@ -6,6 +6,9 @@
 
 # architecture type and name of kernel; REQUIRED
 machine		x68k m68k
+
+options		EXEC_SCRIPT		# Support #!
+options		EXEC_AOUT		# a.out format executables
 
 # different CPU types; you must have at least the correct one; REQUIRED
 options		M68030

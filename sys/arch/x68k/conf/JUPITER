@@ -1,4 +1,4 @@
-#	$NetBSD: JUPITER,v 1.2 1996/08/26 23:41:29 mrg Exp $
+#	$NetBSD: JUPITER,v 1.3 1996/10/27 08:52:06 oki Exp $
 
 #
 #	JUPITER
@@ -6,6 +6,9 @@
 
 # architecture type and name of kernel; REQUIRED
 machine	x68k m68k
+
+options		EXEC_SCRIPT		# Support #!
+options		EXEC_AOUT		# a.out format executables
 
 # different CPU types; you must have at least the correct one; REQUIRED
 options		M68030
