@@ -1,0 +1,113 @@
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.1 2001/09/30 21:45:43 he Exp $
+
+A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
+
+File						Revision(s)
+----						--------
+
+sys/sys/param.h					patch
+sys/conf/osrelease.sh				patch
+share/tmac/doc-common				patch
+
+  Mark this with 1.5.3_ALPHA.
+
+etc/etc.pmax/Makefile.inc			1.7
+
+  Use ${KERNOBJDIR} to locate kernel build directory.
+
+sys/dev/usb/umass.c				patch
+
+  Minor coding fix in preprocessor directive.  Fixes PR#13763.
+
+usr.bin/last/last.1				1.8
+
+  Include ``-T'' in the synopsis.
+
+sys/dev/pci/viaenv.c				1.4
+
+  Use PWAIT for the lock, not 0.
+
+sys/ufs/ffs/ffs_inode.c				patch
+
+  Make one call to uvm_vnp_uncache() conditional.  Fixes a panic
+  when removing an mmap'ing to an unlinked, closed file.
+
+sys/compat/vax1k/files.vax1k			1.2
+sys/compat/vax1k/vax1k_exec.c			1.3-1.4
+sys/compat/vax1k/vax1k_subr.c			delete
+
+  Once again make BSD 4.3 binaries run on the vax.
+
+usr.sbin/lpr/common_source/displayq.c		1.21
+
+  Fix buffer overflow reading from queue file.  Also increase the
+  size of buffers for file names.
+
+sys/arch/sun3/sun3/disksubr.c			patch
+
+  Make sure that an unlabeled device gets at least RAW_PART in the
+  default in-core disklabel, so that applying a new disklabel can
+  work.
+
+share/man/man9/microtime.9			1.5
+
+  Spelling fixes.
+
+share/man/man4/ddb.4				1.51 via patch
+
+  Document fromconsole and DDB_FROMCONSOLE.
+
+sys/ddb/db_variables.c				1.21
+
+  Fix which variable is tweaked for ``fromconsole''.
+
+etc/rc.d/swap1					1.6
+
+  Check for and obey no_swap.
+
+gnu/dist/gcc/combine.c				1.4-1.5
+
+  Fix some optimization bugs related to comparison.
+
+gnu/dist/gcc/rtl.h				1.2
+gnu/dist/gcc/jump.c				1.2-1.3
+gnu/dist/gcc/rtlanal.c				1.2
+
+  Fix an optimization bug related to reordering of instructions.
+
+gnu/dist/gas/config/tc-sh.c			1.2-1.3
+gnu/dist/gas/config/tc-sh.h			1.3
+
+  Fix a range check for 12-bit PC relative access.
+  Also fix a big-endian/little-endian bug.
+
+gnu/dist/gcc/config/sh/sh.h			1.4-1.5
+
+  Fix REGISTER_MOVE_CONST calculation bug.
+  Fix GO_IF_LEGITIMATE_ADDRESS bug.
+
+gnu/dist/gcc/config/sh/sh.c			1.5-1.7
+
+  Fix output_ieee_ccmpeq() bug.
+  Print true register for SUBREG cases.
+  Fix prepare_scc_operand bug.
+
+gnu/dist/gcc/config/sh/sh.md			1.5-1.7
+
+  Fix expand_block_mode() bug.
+  Fix insv bug (big-endian mode only).
+  Fix misunderstanding whether a register is used in an insn.
+
+share/mk/bsd.own.mk				1.157
+
+  NetBSD/sh3 does not yet support dynamic linking.
+
+sys/arch/sh3/dev/sci.c				1.11,1.15
+sys/arch/sh3/dev/scif.c				1.14,1.18
+
+  Fix \n conversion from \n\r to \r\n, and some cleanup.
+
+gnu/dist/bfd/coff-sh.c				1.2
+gnu/dist/bfd/elf32-sh.c				1.4
+
+  Fix 32-bit immediate reloc bug.
