@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.54 2004/05/08 15:03:32 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.55 2004/06/01 19:32:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.54 2004/05/08 15:03:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.55 2004/06/01 19:32:30 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -613,11 +613,6 @@ wdc_ata_bio_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive,
 		    xfer->c_bcount, xfer->c_skip);
-		/* if we were using DMA, flag a DMA error */
-		if (xfer->c_flags & C_DMA) {
-			ata_dmaerr(drvp,
-			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
-		}
 		ata_bio->error = TIMEOUT;
 		wdc_ata_bio_done(chp, xfer);
 		return 1;
@@ -661,9 +656,10 @@ wdc_ata_bio_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 				drv_err = WDC_ATA_ERR;
 			}
 		}
+		if (ata_bio->r_error & WDCE_CRC)
+			ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 		if (drv_err != WDC_ATA_ERR)
 			goto end;
-		ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 	}
 
 	/* if we had an error, end */
@@ -805,14 +801,6 @@ wdc_ata_err(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	if (chp->ch_status & WDCS_ERR) {
 		ata_bio->error = ERROR;
 		ata_bio->r_error = chp->ch_error;
-		if (drvp->drive_flags & DRIVE_UDMA &&
-		    (ata_bio->r_error & WDCE_CRC)) {
-			/*
-			 * Record the CRC error, to avoid downgrading to
-			 * multiword DMA
-			 */
-			drvp->drive_flags |= DRIVE_DMAERR;
-		}
 		if (ata_bio->r_error & (WDCE_BBK | WDCE_UNC | WDCE_IDNF |
 		    WDCE_ABRT | WDCE_TK0NF | WDCE_AMNF))
 			return WDC_ATA_ERR;
