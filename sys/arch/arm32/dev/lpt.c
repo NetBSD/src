@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.8 1996/06/03 22:36:23 mark Exp $ */
+/* $NetBSD: lpt.c,v 1.9 1996/06/13 21:51:53 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -873,8 +873,8 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMTU:
         	if ((error = suser(p->p_ucred, &p->p_acflag)))
             		return(error);
-		if (ifp->if_mtu != ifr->ifr_metric) {
-		        ifp->if_mtu = ifr->ifr_metric;
+		if (ifp->if_mtu != ifr->ifr_mtu) {
+		        ifp->if_mtu = ifr->ifr_mtu;
 			if (sc->sc_ifbuf) {
 				s = splimp();
 				free(sc->sc_ifbuf, M_DEVBUF);
@@ -884,10 +884,6 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				splx(s);
 			}
 		}
-		break;
-
-        case SIOCGIFMTU:
-	        ifr->ifr_metric = ifp->if_mtu;
 		break;
 
 	default:
