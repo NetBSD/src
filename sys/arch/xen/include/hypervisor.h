@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.9.2.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.9.2.2 2004/12/17 10:34:15 bouyer Exp $	*/
 
 /*
  * 
@@ -52,8 +52,6 @@ struct xen_npx_attach_args {
 #define	s32 int32_t
 #define	s64 int64_t
 
-/* include the hypervisor interface */
-#include <sys/systm.h>
 #include <machine/xen-public/xen.h>
 #include <machine/xen-public/dom0_ops.h>
 #include <machine/xen-public/event_channel.h>
@@ -84,6 +82,7 @@ extern union start_info_union start_info_union;
 
 
 /* hypervisor.c */
+struct intrframe;
 void do_hypervisor_callback(struct intrframe *regs);
 void hypervisor_notify_via_evtchn(unsigned int);
 void hypervisor_enable_irq(unsigned int);
@@ -411,9 +410,11 @@ HYPERVISOR_update_va_mapping(unsigned long page_nr, unsigned long new_val,
           "1" (page_nr), "2" (new_val), "3" (flags)
 	: "memory" );
 
+#ifdef notdef
     if (__predict_false(ret < 0))
         panic("Failed update VA mapping: %08lx, %08lx, %08lx",
               page_nr, new_val, flags);
+#endif
 
     return ret;
 }
