@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.16 1994/12/15 04:34:06 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.17 1994/12/17 20:14:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -457,20 +457,26 @@ zscnprobe_b(struct consdev *cn)
 	return (zscnprobe(cn, 1));
 }
 
+/* Called by kdcninit() or below. */
+void
+zs_set_conschan(unit, ab)
+	int unit, ab;
+{
+	volatile struct zsdevice *addr;
+
+	addr = zsaddr[unit];
+	zs_conschan = ((ab == 0) ?
+				   &addr->zs_chan[CHAN_A] :
+				   &addr->zs_chan[CHAN_B] );
+}
+
 /* Attach as console.  Also set zs_conschan */
 int
 zscninit(struct consdev *cn)
 {
-	int unit;
-	volatile struct zsdevice *addr;
-
-	unit = minor(cn->cn_dev) & 1;
-	addr = zsaddr[0];
-	zs_conschan = ((unit == 0) ?
-				   &addr->zs_chan[CHAN_A] :
-				   &addr->zs_chan[CHAN_B] );
-
-	mon_printf("console on zs0 (tty%c)\n", unit + 'a');
+	int ab = minor(cn->cn_dev) & 1;
+	zs_set_conschan(0, ab);
+	mon_printf("console on zs0 (tty%c)\n", 'a' + ab);
 }
 
 
@@ -498,6 +504,11 @@ zscngetc(dev)
 	ZS_DELAY();
 
 	splx(s);
+
+	/*
+	 * This is used by the kd driver to read scan codes,
+	 * so don't translate '\r' ==> '\n' here...
+	 */
 	return (c);
 }
 
