@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.10 1999/03/27 17:58:20 eeh Exp $
+# 	$NetBSD: NONPLUS,v 1.10.2.1 2000/07/05 19:20:04 he Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -165,7 +165,7 @@ options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 options 	ISO,TPIP	# OSI networking
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	NTP		# Network Time Protocol in-kernel support
