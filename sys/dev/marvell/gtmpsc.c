@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.3 2003/03/17 16:42:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -116,7 +116,7 @@ STATIC void gtmpscstart(struct tty *);
 STATIC int  gtmpscparam(struct tty *, struct termios *);
 STATIC int  gtmpsc_probe(void);
 STATIC int  gtmpsc_intr(void *);
-STATIC int  gtmpsc_softintr(void *);
+STATIC void gtmpsc_softintr(void *);
 
 STATIC void gtmpsc_common_putn(struct gtmpsc_softc *);
 STATIC void gtmpsc_common_putc(unsigned int, unsigned char);
@@ -131,7 +131,8 @@ STATIC void gtmpsc_mem_printf(const char *, ...);
 STATIC void gtmpsc_txdesc_init(gtmpsc_poll_sdma_t *, gtmpsc_poll_sdma_t *);
 STATIC void gtmpsc_rxdesc_init(gtmpsc_poll_sdma_t *, gtmpsc_poll_sdma_t *);
 STATIC unsigned int gtmpsc_get_causes(void);
-STATIC void gtmpsc_hackinit(struct gtmpsc_softc *);
+STATIC void gtmpsc_hackinit(struct gtmpsc_softc *, bus_space_tag_t,
+	bus_space_handle_t, int);
 STATIC void gtmpscinit_stop(struct gtmpsc_softc *, int);
 STATIC void gtmpscinit_start(struct gtmpsc_softc *, int);
 #if 0
@@ -184,7 +185,6 @@ struct consdev consdev_gtmpsc = {
 
 STATIC int gtmpsc_nattached = 0;
 STATIC void *gtmpsc_sdma_ih = NULL;
-STATIC void *gtmpsc_soft_ih = NULL;
 
 gtmpsc_softc_t *gtmpsc_scp[GTMPSC_NCHAN] = { 0 };
 
@@ -256,59 +256,34 @@ gtmpsc_cache_invalidate(void *p)
 
 #endif	/* SDMA_COHERENT */
 
-
-extern vaddr_t gtbase;
-
-#define GT_READ(d,a) \
-	gtmpsc_reg_read(gtbase, (a))
-#define GT_WRITE(d,a,v) \
-	gtmpsc_reg_write(gtbase,(a),(v))
+#define GT_READ(sc,o) \
+	bus_space_read_4((sc)->gtmpsc_memt, (sc)->gtmpsc_memh, (o))
+#define GT_WRITE(sc,o,v) \
+	bus_space_write_4((sc)->gtmpsc_memt, (sc)->gtmpsc_memh, (o), (v))
 
 
-#define SDMA_IMASK_ENABLE(bit)  ({ \
+#define SDMA_IMASK_ENABLE(sc, bit)  do { \
 	unsigned int    r; \
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_ICAUSE, ~(bit)); \
+	GT_WRITE(sc, SDMA_ICAUSE, ~(bit)); \
 	if (gt_reva_gtmpsc_bug) \
 		r = sdma_imask; \
 	else \
-		r = GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_IMASK); \
+		r = GT_READ(sc, SDMA_IMASK); \
 	r |= (bit); \
 	sdma_imask = r; \
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_IMASK, r); \
-})
+	GT_WRITE(sc, SDMA_IMASK, r); \
+} while (/*CONSTCOND*/ 0)
 
-#define SDMA_IMASK_DISABLE(bit)  ({ \
+#define SDMA_IMASK_DISABLE(sc, bit)  do { \
 	unsigned int    r; \
 	if (gt_reva_gtmpsc_bug) \
 		r = sdma_imask; \
 	else \
-		r = GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_IMASK); \
+		r = GT_READ(sc, SDMA_IMASK); \
 	r &= ~(bit); \
 	sdma_imask = r; \
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_IMASK, r); \
-})
-
-static volatile inline unsigned int
-gtmpsc_reg_read(unsigned int p, unsigned int off)
-{
-	unsigned int rv;
-
-	__asm __volatile("lwbrx %0,%1,%2; eieio;"
-		: "=r"(rv) : "b"(off), "r"(p));
-	DPRINTF(("READ 0x%x 0x%x\n", off, rv));
-
-	return rv;
-}
-
-static volatile inline void
-gtmpsc_reg_write(unsigned int p, unsigned int off, unsigned int v)
-{
-	__asm __volatile("stwbrx %0,%1,%2; eieio;"
-		:: "r"(v), "b"(off), "r"(p));
-	DPRINTF(("WRITE 0x%x 0x%x\n", off, v));
-}
-
-
+	GT_WRITE(sc, SDMA_IMASK, r); \
+} while (/*CONSTCOND*/ 0)
 
 static volatile inline unsigned int 
 desc_read(unsigned int *ip)
@@ -428,24 +403,17 @@ gtmpsc_loadchannelregs(struct gtmpsc_softc *sc)
 	unit = sc->gtmpsc_unit;
 	brg_bcr = unit ? BRG_BCR1 : BRG_BCR0;
 
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, brg_bcr, sc->gtmpsc_brg_bcr);
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_U_CHRN(unit, 3), sc->gtmpsc_chr3);
+	GT_WRITE(sc, brg_bcr, sc->gtmpsc_brg_bcr);
+	GT_WRITE(sc, GTMPSC_U_CHRN(unit, 3), sc->gtmpsc_chr3);
 }
 
 STATIC int
 gtmpscmatch(struct device *parent, struct cfdata *self, void *aux)
 {
+	struct gt_softc *gt = (struct gt_softc *) parent;
 	struct gt_attach_args *ga = aux;
 
-	if (gtmpsc_nattached >= GTMPSC_NCHAN) {
-		return 0;
-	}
-
-	if (strcmp(ga->ga_name, gtmpsc_cd.cd_name) != 0) {
-		return 0;
-	}
-
-	return 1;
+	return GT_MPSCOK(gt, ga, &gtmpsc_cd);
 }
 
 STATIC void
@@ -463,13 +431,13 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	int s;
 
 	DPRINTF(("mpscattach\n"));
-	if (ga->ga_unit >= GTMPSC_NCHAN)
-		return;
+
+	GT_MPSCFOUND(gt, ga);
 
 	s = splhigh();
 
-	sc->gtmpsc_gt = gt;
 	sc->gtmpsc_memt = ga->ga_memt;
+	sc->gtmpsc_memh = ga->ga_memh;
 	sc->gtmpsc_dmat = ga->ga_dmat;
 	sc->gtmpsc_unit = ga->ga_unit;
 
@@ -487,7 +455,7 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 		&kva, BUS_DMA_NOWAIT);
 #else
 	err = bus_dmamem_map(sc->gtmpsc_dmat, sc->gtmpsc_dma_segs, 1, NBPG,
-		&kva, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+		&kva, BUS_DMA_NOWAIT|BUS_DMA_NOCACHE);
 #endif
 	if (err) {
 		PRINTF(("mpscattach: bus_dmamem_map error 0x%x\n", err));
@@ -514,35 +482,27 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	tp->t_param = gtmpscparam;
 	tty_attach(tp);
 
-	gtmpsc_nattached++;
 	gtmpscinit(sc);
 
 	gtmpsc_scp[sc->gtmpsc_unit] = sc;
 
-	if (gtmpsc_nattached == 1) {
-		void *ih;
-
-		KASSERT(gtmpsc_sdma_ih == NULL);
-		ih = intr_establish(IRQ_SDMA, IST_LEVEL, IPL_SERIAL,
+	if (gtmpsc_sdma_ih == NULL) {
+		gtmpsc_sdma_ih = intr_establish(IRQ_SDMA, IST_LEVEL, IPL_SERIAL,
 			gtmpsc_intr, &sc);
-		if (ih == NULL)
+		if (gtmpsc_sdma_ih == NULL)
 			panic("mpscattach: cannot intr_establish IRQ_SDMA");
-		gtmpsc_sdma_ih = ih;
-
-		KASSERT(gtmpsc_soft_ih == NULL);
-		ih = intr_establish(SIR_SERIAL, IST_SOFT, IPL_SOFTSERIAL,
-			gtmpsc_softintr, NULL);
-		if (ih == NULL)
-			panic("mpscattach: cannot intr_establish SIR_SERIAL");
-		gtmpsc_soft_ih = ih;
 	}
-	printf(" irqs %d, %d", IRQ_SDMA, SIR_SERIAL);
+
+	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, gtmpsc_softintr, sc);
+	if (sc->sc_si == NULL)
+		panic("mpscattach: cannot softintr_establish IPL_SOFTSERIAL");
+	printf(" irq %s", intr_string(IRQ_SDMA));
 
 	shutdownhook_establish(gtmpsc_shutdownhook, sc);
 
 #ifdef DDB
 	if (sc->gtmpsc_unit == 0)
-		SDMA_IMASK_ENABLE(SDMA_INTR_RXBUF(sc->gtmpsc_unit));
+		SDMA_IMASK_ENABLE(sc, SDMA_INTR_RXBUF(sc->gtmpsc_unit));
 #endif	/* DDB */
 
 	printf("%s\n", (gt_reva_gtmpsc_bug) ? " [Rev A. bug]" : "");
@@ -566,7 +526,7 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 		kgdb_attach(gtmpsc_kgdb_getc, gtmpsc_kgdb_putc, NULL);
 		kgdb_dev = 123; /* unneeded, only to satisfy some tests */
 		gtmpsc_kgdb_attached = 1;
-		SDMA_IMASK_ENABLE(SDMA_INTR_RXBUF(sc->gtmpsc_unit));
+		SDMA_IMASK_ENABLE(sc, SDMA_INTR_RXBUF(sc->gtmpsc_unit));
 		kgdb_connect(1);
 	}
 #endif /* KGDB */
@@ -587,7 +547,7 @@ gtmpscshutdown(struct gtmpsc_softc *sc)
 	s = splserial();
 	/* Fake carrier off */
 	(void) (*tp->t_linesw->l_modem)(tp, 0);
-	SDMA_IMASK_DISABLE(SDMA_INTR_RXBUF(sc->gtmpsc_unit));
+	SDMA_IMASK_DISABLE(sc, SDMA_INTR_RXBUF(sc->gtmpsc_unit));
 	splx(s);
 }
 
@@ -626,7 +586,7 @@ gtmpscopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		tp->t_dev = dev;
 		s2 = splserial();
-		SDMA_IMASK_ENABLE(SDMA_INTR_RXBUF(unit));
+		SDMA_IMASK_ENABLE(sc, SDMA_INTR_RXBUF(unit));
 		splx(s2);
 		t.c_ispeed = 0;
 #if 0
@@ -796,7 +756,7 @@ gtmpscstart(struct tty *tp)
 	sc->sc_tba = tba;
 	sc->sc_tbc = tbc;
 	sc->cnt_tx_from_ldisc += tbc;
-	SDMA_IMASK_ENABLE(SDMA_INTR_TXBUF(unit));
+	SDMA_IMASK_ENABLE(sc, SDMA_INTR_TXBUF(unit));
 	tp->t_state |= TS_BUSY;
 	sc->sc_tx_busy = 1;
 	gtmpsc_common_putn(sc);
@@ -944,13 +904,13 @@ gtmpsc_intr(void *arg)
 		if (gt_reva_gtmpsc_bug)
 			r = cause & sdma_imask;
 		else {
-			r = GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_ICAUSE);
-			r &= GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_IMASK);
+			r = GT_READ(sc, SDMA_ICAUSE);
+			r &= GT_READ(sc, SDMA_IMASK);
 		}
 		r &= SDMA_INTR_RXBUF(unit);
 		if (r == 0)
 			goto skip_kgdb;
-		GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_ICAUSE, ~r);
+		GT_WRITE(sc, SDMA_ICAUSE, ~r);
 		spurious = 0;
 		gtmpsc_kgdb_poll(sc);
 	}
@@ -963,13 +923,13 @@ skip_kgdb:
 		if (gt_reva_gtmpsc_bug)
 			r = cause & sdma_imask;
 		else {
-			r = GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_ICAUSE);
-			r &= GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_IMASK);
+			r = GT_READ(sc, SDMA_ICAUSE);
+			r &= GT_READ(sc, SDMA_IMASK);
 		}
 		r &= SDMA_U_INTR_MASK(unit);
 		if (r == 0)
 			continue;
-		GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_ICAUSE, ~r);
+		GT_WRITE(sc, SDMA_ICAUSE, ~r);
 		spurious = 0;
 		if (r & SDMA_INTR_RXBUF(unit)) {
 #ifdef KGDB
@@ -998,8 +958,8 @@ skip_kgdb:
 			if (sc->sc_tbc == 0 && sc->sc_tx_busy) {
 				sc->sc_tx_busy = 0;
 				sc->sc_tx_done = 1;
-				setsoftserial();
-				SDMA_IMASK_DISABLE(SDMA_INTR_TXBUF(unit));
+				softintr_schedule(sc->sc_si);
+				SDMA_IMASK_DISABLE(sc, SDMA_INTR_TXBUF(unit));
 			}
 		}
 	}
@@ -1007,25 +967,20 @@ skip_kgdb:
 	/* return !spurious; */
 }
 
-STATIC int
-gtmpsc_softintr(void *unused)
+STATIC void
+gtmpsc_softintr(void *arg)
 {
-	unsigned int            unit;
-	struct gtmpsc_softc       *sc;
+	struct gtmpsc_softc	*sc = arg;
 	struct tty              *tp;
 	int                     (*rint)(int, struct tty *);
 	int                     jobs;
 	int                     s;
 
-	for (unit = 0; unit < GTMPSC_NCHAN; ++unit) {
-		sc = gtmpsc_cd.cd_devs[unit];
-		if (sc == 0)
-			continue;
-		tp = sc->gtmpsc_tty;
-		rint = tp->t_linesw->l_rint;
-		do {
-		    jobs = 0;
-		    if (sc->gtmpsc_rxfifo_navail < GTMPSC_RXFIFOSZ) {
+	tp = sc->gtmpsc_tty;
+	rint = tp->t_linesw->l_rint;
+	do {
+		jobs = 0;
+		if (sc->gtmpsc_rxfifo_navail < GTMPSC_RXFIFOSZ) {
 			s = spltty();
 			rint(sc->gtmpsc_rxfifo[sc->gtmpsc_rxfifo_getix++],
 								tp);
@@ -1036,8 +991,8 @@ gtmpsc_softintr(void *unused)
 			jobs += atomic_add(&sc->gtmpsc_rxfifo_navail, 1) + 1
 								< GTMPSC_RXFIFOSZ;
 			splx(s);
-		    }
-		    if (sc->sc_tx_done) {
+		}
+		if (sc->sc_tx_done) {
 			++jobs;
 			sc->sc_tx_done = 0;
 			s = spltty();
@@ -1048,10 +1003,8 @@ gtmpsc_softintr(void *unused)
 			    ndflush(&tp->t_outq, (int)(sc->sc_tba - tp->t_outq.c_cf));
 			(*tp->t_linesw->l_start)(tp);
 			splx(s);
-		    }
-		} while (jobs);
-	}
-	return 1;
+		}
+	} while (jobs);
 }
 
 /*
@@ -1075,7 +1028,8 @@ gtmpsccnprobe(struct consdev *cd)
  * gtmpsc_hackinit - hacks required to supprt GTMPSC console
  */
 STATIC void
-gtmpsc_hackinit(struct gtmpsc_softc *sc)
+gtmpsc_hackinit(struct gtmpsc_softc *sc, bus_space_tag_t memt,
+	bus_space_handle_t memh, int unit)
 {
 	gtmpsc_poll_sdma_t *vmps;
 	gtmpsc_poll_sdma_t *pmps;
@@ -1083,6 +1037,9 @@ gtmpsc_hackinit(struct gtmpsc_softc *sc)
 	DPRINTF(("hackinit\n"));
 
 	bzero(sc, sizeof(struct gtmpsc_softc));
+	sc->gtmpsc_memt = memt;
+	sc->gtmpsc_memh = memh;
+	sc->gtmpsc_unit = unit;
 	gtmpsc_scp[sc->gtmpsc_unit] = sc;
 
 	vmps = (gtmpsc_poll_sdma_t *)gtmpsc_fake_dmapage;	/* KVA */
@@ -1164,14 +1121,14 @@ gtmpscinit_stop(struct gtmpsc_softc *sc, int once)
 	 * stop GTMPSC unit
 	 */
 	r = sc->gtmpsc_chr2 | GTMPSC_CHR2_RXABORT|GTMPSC_CHR2_TXABORT;
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_U_CHRN(unit, 2), r);
+	GT_WRITE(sc, GTMPSC_U_CHRN(unit, 2), r);
 
 	DELAY(GTMPSC_RESET_DELAY);
 
 	/*
 	 * abort SDMA TX, RX for GTMPSC unit
 	 */
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_U_SDCM(unit),
+	GT_WRITE(sc, SDMA_U_SDCM(unit),
 		SDMA_SDCM_AR|SDMA_SDCM_AT);
 
 	if (once == 0) {
@@ -1181,8 +1138,8 @@ gtmpscinit_stop(struct gtmpsc_softc *sc, int once)
 		 * are unreadable.
 		 * (They always yield -1).
 		 */
-		GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_IMASK, 0);
-		r = GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_IMASK);
+		GT_WRITE(sc, SDMA_IMASK, 0);
+		r = GT_READ(sc, SDMA_IMASK);
 		gt_reva_gtmpsc_bug = r == ~0;
 		sdma_imask = 0;
 	}
@@ -1191,11 +1148,11 @@ gtmpscinit_stop(struct gtmpsc_softc *sc, int once)
 	 */
 	if (gt_reva_gtmpsc_bug) {
 		/* Sync up with the device first */
-		r = GT_READ(sc->gtmpsc_dev.dv_parent, GTMPSC_U_CHRN(unit, 2));
+		r = GT_READ(sc, GTMPSC_U_CHRN(unit, 2));
 		DELAY(GTMPSC_RESET_DELAY);
 	} else
 		for (;;) {
-			r = GT_READ(sc->gtmpsc_dev.dv_parent,
+			r = GT_READ(sc,
 							GTMPSC_U_CHRN(unit, 2));
 			if (! (r & GTMPSC_CHR2_RXABORT))
 				break;
@@ -1205,7 +1162,7 @@ gtmpscinit_stop(struct gtmpsc_softc *sc, int once)
 	 * poll for SDMA RX abort completion
 	 */
 	for (;;) {
-		r = GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_U_SDCM(unit));
+		r = GT_READ(sc, SDMA_U_SDCM(unit));
 		if (! (r & SDMA_SDCM_AR))
 			break;
 	}
@@ -1240,26 +1197,26 @@ gtmpscinit_start(struct gtmpsc_softc *sc, int once)
 	 */
 	r = desc_read(
 		&sc->gtmpsc_poll_sdmapage->tx[GTMPSC_NTXDESC-1].txdesc.sdma_next);
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_U_SCTDP(unit), r);   /* current */
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_U_SFTDP(unit), r);   /* first   */
+	GT_WRITE(sc, SDMA_U_SCTDP(unit), r);   /* current */
+	GT_WRITE(sc, SDMA_U_SFTDP(unit), r);   /* first   */
 	/*
 	 * set SDMA unit port RX descriptor pointer
 	 * "next" pointer of last descriptor is start of ring
 	 */
 	r = desc_read(
 		&sc->gtmpsc_poll_sdmapage->rx[GTMPSC_NRXDESC-1].rxdesc.sdma_next);
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_U_SCRDP(unit), r);   /* current */
+	GT_WRITE(sc, SDMA_U_SCRDP(unit), r);   /* current */
 
 	/*
 	 * initialize SDMA unit Configuration Register
 	 */
 	r = SDMA_SDC_BSZ_8x64|SDMA_SDC_SFM|SDMA_SDC_RFT;
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_U_SDC(unit), r);
+	GT_WRITE(sc, SDMA_U_SDC(unit), r);
 
 	/*
 	 * enable SDMA receive
 	 */
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_U_SDCM(unit), SDMA_SDCM_ERD);
+	GT_WRITE(sc, SDMA_U_SDCM(unit), SDMA_SDCM_ERD);
 
 	if (once++ == 0) {
 		/*
@@ -1267,7 +1224,7 @@ gtmpscinit_start(struct gtmpsc_softc *sc, int once)
 		 *	MR0 --> Serial Port 0
 		 *	MR1 --> Serial Port 1
 		 */
-		GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_MRR, GTMPSC_MRR_RES);
+		GT_WRITE(sc, GTMPSC_MRR, GTMPSC_MRR_RES);
 	
 		/*
 		 * RX and TX Clock Routing:
@@ -1275,8 +1232,8 @@ gtmpscinit_start(struct gtmpsc_softc *sc, int once)
 		 *      CRR1 --> BRG1
 		 */
 		r = GTMPSC_CRR_BRG0 | (GTMPSC_CRR_BRG1 << GTMPSC_CRR1_SHIFT);
-		GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_RCRR, r);
-		GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_TCRR, r);
+		GT_WRITE(sc, GTMPSC_RCRR, r);
+		GT_WRITE(sc, GTMPSC_TCRR, r);
 	}
 	sc->gtmpsc_brg_bcr =
 	  BRG_BCR_EN | BRG_BCR_CLKS_TCLK | compute_cdv(GT_MPSC_DEFAULT_BAUD_RATE);
@@ -1286,7 +1243,7 @@ gtmpscinit_start(struct gtmpsc_softc *sc, int once)
 	/*
 	 * set MPSC Protocol configuration register for GTMPSC unit
 	 */
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_U_MPCR(unit), GTMPSC_MPCR_CL_8);
+	GT_WRITE(sc, GTMPSC_U_MPCR(unit), GTMPSC_MPCR_CL_8);
 
 	/*
 	 * set MPSC LO and HI port config registers for GTMPSC unit
@@ -1295,26 +1252,26 @@ gtmpscinit_start(struct gtmpsc_softc *sc, int once)
 	   |GTMPSC_MMCR_LO_ET
 	   |GTMPSC_MMCR_LO_ER
 	   |GTMPSC_MMCR_LO_NLM;
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_U_MMCR_LO(unit), r);
+	GT_WRITE(sc, GTMPSC_U_MMCR_LO(unit), r);
 
 	r =
 	    GTMPSC_MMCR_HI_TCDV_DEFAULT
 	   |GTMPSC_MMCR_HI_RDW
 	   |GTMPSC_MMCR_HI_RCDV_DEFAULT;
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_U_MMCR_HI(unit), r);
+	GT_WRITE(sc, GTMPSC_U_MMCR_HI(unit), r);
 
 	/*
 	 * tell MPSC receive the Enter Hunt
 	 */
 	r = sc->gtmpsc_chr2 | GTMPSC_CHR2_EH;
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_U_CHRN(unit, 2), r);
+	GT_WRITE(sc, GTMPSC_U_CHRN(unit, 2), r);
 
 	/*
 	 * clear any pending SDMA interrupts for this unit
 	 */
-	r = GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_ICAUSE);
+	r = GT_READ(sc, SDMA_ICAUSE);
 	r &= ~SDMA_U_INTR_MASK(unit);
-	GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_ICAUSE, r);	/* ??? */
+	GT_WRITE(sc, SDMA_ICAUSE, r);	/* ??? */
 
 	DPRINTF(("gtmpscinit: OK\n"));
 }
@@ -1342,6 +1299,8 @@ gtmpsccninit(struct consdev *cd)
 {
 	struct gtmpsc_softc *sc;
 	unsigned int unit;
+	extern struct powerpc_bus_space gt_mem_bs_tag;
+	extern bus_space_handle_t gt_memh;
 	int s;
 
 	unit = GTMPSCUNIT(cd->cn_dev);
@@ -1355,7 +1314,7 @@ gtmpsccninit(struct consdev *cd)
 		unsigned int i;
 
 		sc = &gtmpsc_fake_softc;
-		gtmpsc_hackinit(sc);
+		gtmpsc_hackinit(sc, &gt_mem_bs_tag, gt_memh, unit);
 		gtmpscinit(sc);
 		gtmpsccninit_done = 1;
 		cp = gtmpsc_earlybuf;
@@ -1372,7 +1331,7 @@ gtmpsccninit(struct consdev *cd)
 		sc = gtmpsc_scp[unit];
 
 		gtmpsc_txflush(gtmpsc_scp[sc->gtmpsc_unit]);
-		SDMA_IMASK_DISABLE(SDMA_INTR_RXBUF(sc->gtmpsc_unit)
+		SDMA_IMASK_DISABLE(sc, SDMA_INTR_RXBUF(sc->gtmpsc_unit)
 			| SDMA_INTR_TXBUF(sc->gtmpsc_unit));
 
 		gtmpscinit_stop(sc, 1);
@@ -1432,6 +1391,28 @@ gtmpsccnputc(dev_t dev, int c)
 void
 gtmpsccnpollc(dev_t dev, int on)
 {
+}
+
+int
+gtmpsccnattach(bus_space_tag_t memt, bus_space_handle_t memh, int unit,
+	int speed, tcflag_t tcflag)
+{
+	struct gtmpsc_softc *sc = &gtmpsc_fake_softc;
+	unsigned char *cp;
+	unsigned char c;
+	unsigned int i;
+
+	gtmpsc_hackinit(sc, memt, memh, unit);
+	gtmpscinit(sc);
+	gtmpsccninit_done = 1;
+	cp = gtmpsc_earlybuf;
+	for (i=0; i < sizeof(gtmpsc_earlybuf); i++) {
+		c = *cp++;
+		if (c == 0)
+			break;
+		gtmpsc_common_putc(0, c);
+	}
+	return 0;
 }
 
 /*
@@ -1541,7 +1522,7 @@ gtmpsc_common_getc(unsigned int unit)
 		csr = desc_read(csrp);
 		if (csr & SDMA_CSR_RX_OWN) {
 			r = sc->gtmpsc_chr2 | GTMPSC_CHR2_CRD;
-			GT_WRITE(sc->gtmpsc_dev.dv_parent,
+			GT_WRITE(sc,
 				GTMPSC_U_CHRN(unit, 2), r);
 			do {
 
@@ -1568,7 +1549,7 @@ gtmpsc_common_getc(unsigned int unit)
 		GTMPSC_CACHE_FLUSH(csrp);
 #ifdef KGDB
 		if (unit == comkgdbport && gt_reva_gtmpsc_bug)
-			GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_ICAUSE,
+			GT_WRITE(sc, SDMA_ICAUSE,
 						~SDMA_INTR_RXBUF(unit));
 #endif
 	}
@@ -1636,10 +1617,10 @@ gtmpsc_common_putn(struct gtmpsc_softc *sc)
 		/*
 		 * now kick some SDMA
 		 */
-		sdcm = GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_U_SDCM(unit));
+		sdcm = GT_READ(sc, SDMA_U_SDCM(unit));
 
 		if ((sdcm & SDMA_SDCM_TXD) == 0) {
-			GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_U_SDCM(unit),
+			GT_WRITE(sc, SDMA_U_SDCM(unit),
 							       SDMA_SDCM_TXD);
 		}
 	}
@@ -1691,10 +1672,10 @@ gtmpsc_common_putc(unsigned int unit, unsigned char c)
 	/*
 	 * now kick some SDMA
 	 */
-	sdcm = GT_READ(sc->gtmpsc_dev.dv_parent, SDMA_U_SDCM(unit));
+	sdcm = GT_READ(sc, SDMA_U_SDCM(unit));
 
 	if ((sdcm & SDMA_SDCM_TXD) == 0) {
-		GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_U_SDCM(unit),
+		GT_WRITE(sc, SDMA_U_SDCM(unit),
 						       SDMA_SDCM_TXD);
 	}
 }
@@ -1743,19 +1724,20 @@ gtmpsc_poll(void *arg)
 #ifdef DDB
 #ifdef MPSC_CONSOLE
 	if (stat) {
+#if 0
 		struct consdev *ocd = cn_tab;
 		if (ocd->cn_init != gtmpsccninit) {
 			cn_tab = &constab[0];
 			Debugger();
 			cn_tab = ocd;
-		} else {
+		} else
+#endif
 			Debugger();
-		}
 	}
 #endif
 #endif
 	if (kick)
-		setsoftserial();
+		softintr_schedule(sc->sc_si);
 }
 
 #ifdef KGDB
@@ -1886,17 +1868,17 @@ gtmpsccnhalt(dev_t dev)
 		/*
 		 * stop MPSC unit RX 
 		 */
-		r = GT_READ(sc->gtmpsc_dev.dv_parent, GTMPSC_U_CHRN(unit, 2));
+		r = GT_READ(sc, GTMPSC_U_CHRN(unit, 2));
 		r &= ~GTMPSC_CHR2_EH;
 		r |= GTMPSC_CHR2_RXABORT;
-		GT_WRITE(sc->gtmpsc_dev.dv_parent, GTMPSC_U_CHRN(unit, 2), r);
+		GT_WRITE(sc, GTMPSC_U_CHRN(unit, 2), r);
 
 		DELAY(GTMPSC_RESET_DELAY);
 
 		/*
 		 * abort SDMA RX for MPSC unit
 		 */
-		GT_WRITE(sc->gtmpsc_dev.dv_parent, SDMA_U_SDCM(unit),
+		GT_WRITE(sc, SDMA_U_SDCM(unit),
 			SDMA_SDCM_AR);
 	}
 }
