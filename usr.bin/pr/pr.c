@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.5 1997/10/19 12:42:10 lukem Exp $	*/
+/*	$NetBSD: pr.c,v 1.6 1998/04/02 10:42:51 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.5 1997/10/19 12:42:10 lukem Exp $");
+__RCSID("$NetBSD: pr.c,v 1.6 1998/04/02 10:42:51 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: pr.c,v 1.5 1997/10/19 12:42:10 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "pr.h"
