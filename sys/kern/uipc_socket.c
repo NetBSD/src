@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.103 2004/05/25 04:30:32 atatat Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.104 2004/07/01 12:42:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.103 2004/05/25 04:30:32 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.104 2004/07/01 12:42:57 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1478,14 +1478,14 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		case SO_RCVTIMEO:
 		    {
 			struct timeval *tv;
-			short val;
+			int val;
 
 			if (m == NULL || m->m_len < sizeof(*tv)) {
 				error = EINVAL;
 				goto bad;
 			}
 			tv = mtod(m, struct timeval *);
-			if (tv->tv_sec > (SHRT_MAX - tv->tv_usec / tick) / hz) {
+			if (tv->tv_sec > (INT_MAX - tv->tv_usec / tick) / hz) {
 				error = EDOM;
 				goto bad;
 			}
