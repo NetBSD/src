@@ -65,7 +65,7 @@
  */
 /*-
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.4 1994/02/03 21:46:51 briggs Exp $
+ *	$Id: conf.c,v 1.5 1994/06/26 13:12:41 briggs Exp $
  */
 /*
    ALICE
@@ -77,12 +77,13 @@
             3) did I put the new devices in the right places?
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/conf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
+#include <sys/vnode.h>
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
@@ -342,7 +343,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_notdef(),			/* 7: was cs80 cartridge tape */
-	cdev_disk_init(NSD,sd),		/* 8: scsi disk */
+	cdev_notdef(),			/* 8: was scsi disk */
 	cdev_notdef(),			/* 9: was hpib disk */
 	cdev_grf_init(1,grf),		/* 10: was frame buffer */
 	cdev_notdef(),			/* 11: was printer/plotter interface */
@@ -374,3 +375,77 @@ int	mem_no = 2; 	/* major device number of memory special file */
  * provided as a character (raw) device.
  */
 dev_t	swapdev = makedev(3, 0);
+
+iszerodev(dev)
+	dev_t	dev;
+{
+	return 0;
+}
+
+/*
+ * return true is memory device (kmem or mem)
+ */
+int
+iskmemdev(dev)
+	dev_t	dev;
+{
+	if (major(dev) == mem_no && minor(dev) < 2)
+		return (1);
+	return (0);
+}
+
+/*
+ * return true is a disk
+ */
+int
+isdisk(dev, type)
+	dev_t	dev;
+	int	type;
+{
+	switch (major(dev)) {
+		case 4: /* SCSI disk */
+		case 6: /* SCSI CD-ROM */
+		/* Floppy blk device will go here */
+			if (type == VBLK)
+				return (1);
+			break;
+		case 13: /* SCSI disk */
+		case 15: /* SCSI CD-ROM */
+		/* Floppy chr device will go here */
+			if (type == VCHR)
+				return (1);
+			break;
+		default:;
+	}
+	return (0);
+}
+
+static int chrtoblktab[] = {
+	/* CHR*/	/* BLK*/	/* CHR*/	/* BLK*/
+	/*  0 */	NODEV,		/*  1 */	NODEV,
+	/*  2 */	NODEV,		/*  3 */	3,
+	/*  4 */	NODEV,		/*  5 */	NODEV,
+	/*  6 */	NODEV,		/*  7 */	NODEV,
+	/*  8 */	NODEV,		/*  9 */	NODEV,
+	/* 10 */	NODEV,		/* 11 */	NODEV,
+	/* 12 */	NODEV,		/* 13 */	4,
+	/* 14 */	5,		/* 15 */	6,
+	/* 16 */	NODEV,		/* 17 */	NODEV,
+	/* 18 */	NODEV,		/* 19 */	NODEV,
+	/* 20 */	NODEV,		/* 21 */	NODEV,
+	/* 22 */	NODEV,
+};
+
+dev_t
+chrtoblk(dev)
+	dev_t	dev;
+{
+	int	blkmaj;
+
+	if (major(dev) >= nchrdev)
+		return NODEV;
+	blkmaj = chrtoblktab[major(dev)];
+	if (blkmaj == NODEV)
+		return NODEV;
+	return (makedev(blkmaj, minor(dev)));
+}
