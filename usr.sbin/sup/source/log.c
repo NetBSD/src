@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.3.4.1 1999/04/12 21:27:09 pk Exp $	*/
+/*	$NetBSD: log.c,v 1.3.4.2 2000/10/19 17:02:52 he Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -88,7 +88,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR,buf);
+		syslog (LOG_ERR, "%s", buf);
 		closelog ();
 		exit (retval);
 	}
@@ -118,7 +118,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR,buf);
+		syslog (LOG_ERR, "%s", buf);
 		return;
 	}
 	fprintf (stderr,"SUP: %s\n",buf);
@@ -148,7 +148,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_INFO,buf);
+		syslog (LOG_INFO, "%s", buf);
 		return;
 	}
 	printf ("%s\n",buf);
