@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.478.2.7 2002/12/26 07:52:07 tron Exp $
+# $NetBSD: mi,v 1.478.2.8 2003/02/10 06:05:57 jmc Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -292,6 +292,7 @@
 ./usr/share/man/cat1/pr.0			man-util-catman
 ./usr/share/man/cat1/printenv.0			man-util-catman
 ./usr/share/man/cat1/printf.0			man-util-catman
+./usr/share/man/cat1/progress.0			man-util-catman
 ./usr/share/man/cat1/ps.0			man-util-catman
 ./usr/share/man/cat1/pushd.0			man-util-catman
 ./usr/share/man/cat1/pwd.0			man-util-catman
@@ -1999,6 +2000,7 @@
 ./usr/share/man/man1/pr.1			man-util-man
 ./usr/share/man/man1/printenv.1			man-util-man
 ./usr/share/man/man1/printf.1			man-util-man
+./usr/share/man/man1/progress.1			man-util-man
 ./usr/share/man/man1/ps.1			man-util-man
 ./usr/share/man/man1/pushd.1			man-util-man
 ./usr/share/man/man1/pwd.1			man-util-man
