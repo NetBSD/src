@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.99 2001/02/19 22:56:20 cgd Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.100 2001/02/20 15:35:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.99 2001/02/19 22:56:20 cgd Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.100 2001/02/20 15:35:21 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -939,11 +939,8 @@ settunnel(src, dst)
 	const char *src, *dst;
 {
 	struct addrinfo hints, *srcres, *dstres;
-	struct ifaliasreq addreq;
 	int ecode;
-#ifdef INET6
-	struct in6_aliasreq in6_addreq; 
-#endif
+	struct if_laddrreq req;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = afp->af_af;
@@ -960,36 +957,16 @@ settunnel(src, dst)
 		errx(1,
 		    "source and destination address families do not match");
 
-	switch (srcres->ai_addr->sa_family) {
-	case AF_INET:
-		memset(&addreq, 0, sizeof(addreq));
-		strncpy(addreq.ifra_name, name, IFNAMSIZ);
-		memcpy(&addreq.ifra_addr, srcres->ai_addr,
-		    srcres->ai_addr->sa_len);
-		memcpy(&addreq.ifra_dstaddr, dstres->ai_addr,
-		    dstres->ai_addr->sa_len);
+	if (srcres->ai_addrlen > sizeof(req.addr) ||
+	    dstres->ai_addrlen > sizeof(req.dstaddr))
+		errx(1, "invalid sockaddr");
 
-		if (ioctl(s, SIOCSIFPHYADDR, &addreq) < 0)
-			warn("SIOCSIFPHYADDR");
-		break;
-
-#ifdef INET6
-	case AF_INET6:
-		memset(&in6_addreq, 0, sizeof(in6_addreq));
-		strncpy(in6_addreq.ifra_name, name, IFNAMSIZ);
-		memcpy(&in6_addreq.ifra_addr, srcres->ai_addr,
-		    srcres->ai_addr->sa_len);
-		memcpy(&in6_addreq.ifra_dstaddr, dstres->ai_addr,
-		    dstres->ai_addr->sa_len);
-
-		if (ioctl(s, SIOCSIFPHYADDR_IN6, &in6_addreq) < 0)
-			warn("SIOCSIFPHYADDR_IN6");
-		break;
-#endif /* INET6 */
-
-	default:
-		warn("address family not supported");
-	}
+	memset(&req, 0, sizeof(req));
+	strncpy(req.iflr_name, name, sizeof(req.iflr_name));
+	memcpy(&req.addr, srcres->ai_addr, srcres->ai_addrlen);
+	memcpy(&req.dstaddr, dstres->ai_addr, dstres->ai_addrlen);
+	if (ioctl(s, SIOCSLIFPHYADDR, &req) < 0)
+		warn("SIOCSLIFPHYADDR");
 
 	freeaddrinfo(srcres);
 	freeaddrinfo(dstres);
@@ -1964,79 +1941,39 @@ tunnel_status()
 {
 	char psrcaddr[NI_MAXHOST];
 	char pdstaddr[NI_MAXHOST];
-	u_long srccmd, dstcmd;
-	struct ifreq *ifrp;
 	const char *ver = "";
 #ifdef NI_WITHSCOPEID
 	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
 #else
 	const int niflag = NI_NUMERICHOST;
 #endif
-#ifdef INET6
-	struct in6_ifreq in6_ifr;
-	int s6;
-#endif /* INET6 */
+	struct if_laddrreq req;
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
-#ifdef INET6
-	memset(&in6_ifr, 0, sizeof(in6_ifr));
-	strncpy(in6_ifr.ifr_name, name, IFNAMSIZ);
-	s6 = socket(AF_INET6, SOCK_DGRAM, 0);
-	if (s6 < 0) {
-		srccmd = SIOCGIFPSRCADDR;
-		dstcmd = SIOCGIFPDSTADDR;
-		ifrp = &ifr;
-	} else {
-		close(s6);
-		srccmd = SIOCGIFPSRCADDR_IN6;
-		dstcmd = SIOCGIFPDSTADDR_IN6;
-		ifrp = (struct ifreq *)&in6_ifr;
-	}
- try_again:
-#else /* INET6 */
-	srccmd = SIOCGIFPSRCADDR;
-	dstcmd = SIOCGIFPDSTADDR;
-	ifrp = &ifr;
-#endif /* INET6 */
-
-	if (ioctl(s, srccmd, (caddr_t)ifrp) < 0) {
-#ifdef INET6
-		if (srccmd == SIOCGIFPSRCADDR_IN6) {
-			/*
-			 * Driver probably doesn't support IPv6
-			 * src/dst addrs.  Use the sockaddr versions.
-			 */
-			srccmd = SIOCGIFPSRCADDR;
-			dstcmd = SIOCGIFPDSTADDR;
-			ifrp = &ifr;
-			goto try_again;
-		}
-#endif
+	memset(&req, 0, sizeof(req));
+	strncpy(req.iflr_name, name, IFNAMSIZ);
+	if (ioctl(s, SIOCGLIFPHYADDR, (caddr_t)&req) < 0)
 		return;
-	}
 #ifdef INET6
-	if (ifrp->ifr_addr.sa_family == AF_INET6)
-		in6_fillscopeid((struct sockaddr_in6 *)&ifrp->ifr_addr);
+	if (req.addr.ss_family == AF_INET6)
+		in6_fillscopeid((struct sockaddr_in6 *)&req.addr);
 #endif
-	getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
+	getnameinfo((struct sockaddr *)&req.addr, req.addr.ss_len,
 	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag);
 #ifdef INET6
-	if (ifrp->ifr_addr.sa_family == AF_INET6)
+	if (req.addr.ss_family == AF_INET6)
 		ver = "6";
 #endif
 
-	if (ioctl(s, dstcmd, (caddr_t)ifrp) < 0)
-		return;
 #ifdef INET6
-	if (ifrp->ifr_addr.sa_family == AF_INET6)
-		in6_fillscopeid((struct sockaddr_in6 *)&ifrp->ifr_addr);
+	if (req.dstaddr.ss_family == AF_INET6)
+		in6_fillscopeid((struct sockaddr_in6 *)&req.dstaddr);
 #endif
-	getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
+	getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
 	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag);
 
-	printf("\ttunnel inet%s %s --> %s\n", ver,
-	    psrcaddr, pdstaddr);
+	printf("\ttunnel inet%s %s --> %s\n", ver, psrcaddr, pdstaddr);
 }
 
 void
