@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.33 1997/07/30 15:37:48 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.34 1997/10/23 11:26:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -128,6 +128,15 @@ u_long	st_pool_size = ST_POOL_SIZE * NBPG;	/* Patchable	*/
 u_long	st_pool_virt, st_pool_phys;
 
 /*
+ * Are we relocating the kernel to TT-Ram if possible? It is faster, but
+ * it is also reported not to work on all TT's. So the default is NO.
+ */
+#ifndef	RELOC_KERNEL
+#define	RELOC_KERNEL	0
+#endif
+int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
+
+/*
  * this is the C-level entry function, it's called from locore.s.
  * Preconditions:
  *	Interrupts are disabled
@@ -196,9 +205,10 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	else end_loaded = (u_int)esym;
 
 	/*
-	 * If we have enough fast-memory to put the kernel in, do it!
+	 * If we have enough fast-memory to put the kernel in and the
+	 * RELOC_KERNEL option is set, do it!
 	 */
-	if(ttphysize >= end_loaded)
+	if((reloc_kernel != 0) && (ttphysize >= end_loaded))
 		kbase = ttphystart;
 	else kbase = 0;
 
