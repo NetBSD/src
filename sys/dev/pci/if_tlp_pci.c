@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.17 1999/09/26 05:03:58 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.18 1999/09/28 23:12:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -92,6 +92,9 @@
  */
 #define	TULIP_PCI_IOBA		0x10	/* i/o mapped base */
 #define	TULIP_PCI_MMBA		0x14	/* memory mapped base */
+#define	TULIP_PCI_CFDA		0x40	/* configuration driver area */
+
+#define	CFDA_SLEEP		0x80000000	/* sleep mode */
 
 struct tulip_pci_softc {
 	struct tulip_softc sc_tulip;	/* real Tulip softc */
@@ -128,26 +131,27 @@ const struct tulip_pci_product {
 	u_int32_t	tpp_vendor;	/* PCI vendor ID */
 	u_int32_t	tpp_product;	/* PCI product ID */
 	tulip_chip_t	tpp_chip;	/* base Tulip chip type */
+	int		tpp_pmreg;	/* power management register offset */
 } tlp_pci_products[] = {
 #ifdef TLP_MATCH_21040
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21040,
-	  TULIP_CHIP_21040 },
+	  TULIP_CHIP_21040,		0 },
 #endif
 #ifdef TLP_MATCH_21041
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21041,
-	  TULIP_CHIP_21041 },
+	  TULIP_CHIP_21041,		0 },
 #endif
 #ifdef TLP_MATCH_21140
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21140,
-	  TULIP_CHIP_21140 },
+	  TULIP_CHIP_21140,		0 },
 #endif
 #ifdef TLP_MATCH_21142
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
-	  TULIP_CHIP_21142 },
+	  TULIP_CHIP_21142,		0 },
 #endif
 
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C168,
-	  TULIP_CHIP_82C168 },
+	  TULIP_CHIP_82C168,		0 },
 
 #if 0
 	/*
@@ -155,37 +159,35 @@ const struct tulip_pci_product {
 	 * 128-bit multicast hash table.
 	 */
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C115,
-	  TULIP_CHIP_82C115 },
+	  TULIP_CHIP_82C115,		0 },
 #endif
 
-#if 0
 	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX98713,
-	  TULIP_CHIP_MX98713 },
+	  TULIP_CHIP_MX98713,		0 },
 	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX987x5,
-	  TULIP_CHIP_MX98715 },
+	  TULIP_CHIP_MX98715,		0x48 },
 
 	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100TX,
-	  TULIP_CHIP_MX98713 },
-#endif
+	  TULIP_CHIP_MX98713,		0 },
 
 	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C840F,
-	  TULIP_CHIP_WB89C840F },
+	  TULIP_CHIP_WB89C840F,		0 },
 	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100ATX,
-	  TULIP_CHIP_WB89C840F },
+	  TULIP_CHIP_WB89C840F,		0 },
 
 #if 0
 	{ PCI_VENDOR_DAVICOM,		PCI_PRODUCT_DAVICOM_DM9102,
-	  TULIP_CHIP_DM9102 },
+	  TULIP_CHIP_DM9102,		0 },
 
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
-	  TULIP_CHIP_AL981 },
+	  TULIP_CHIP_AL981,		0 },
 
 	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
-	  TULIP_CHIP_AX88140 },
+	  TULIP_CHIP_AX88140,		0 },
 #endif
 
 	{ 0,				0,
-	  TULIP_CHIP_INVALID },
+	  TULIP_CHIP_INVALID,		0 },
 };
 
 struct tlp_pci_quirks {
@@ -338,33 +340,13 @@ tlp_pci_attach(parent, self, aux)
 	const struct tulip_pci_product *tpp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val;
+	pcireg_t reg;
 
 	sc->sc_devno = pa->pa_device;
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
 	LIST_INIT(&psc->sc_intrslaves);
-
-	/*
-	 * Map the device.
-	 */
-	ioh_valid = (pci_mapreg_map(pa, TULIP_PCI_IOBA,
-	    PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL) == 0);
-	memh_valid = (pci_mapreg_map(pa, TULIP_PCI_MMBA,
-	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL) == 0);
-
-	if (memh_valid) {
-		sc->sc_st = memt;
-		sc->sc_sh = memh;
-	} else if (ioh_valid) {
-		sc->sc_st = iot;
-		sc->sc_sh = ioh;
-	} else {
-		printf(": unable to map device registers\n");
-		return;
-	}
 
 	tpp = tlp_pci_lookup(pa);
 	if (tpp == NULL) {
@@ -445,6 +427,73 @@ tlp_pci_attach(parent, self, aux)
 
 	default:
 		/* Nothing. */
+	}
+
+	/*
+	 * Check to see if the device is in power-save mode, and
+	 * being it out if necessary.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_21140:
+	case TULIP_CHIP_21140A:
+	case TULIP_CHIP_MX98713A:
+	case TULIP_CHIP_MX98715:
+	case TULIP_CHIP_MX98725:
+		/*
+		 * Clear the "sleep mode" bit in the CFDA register.
+		 */
+		reg = pci_conf_read(pc, pa->pa_tag, TULIP_PCI_CFDA);
+		if (reg & CFDA_SLEEP)
+			pci_conf_write(pc, pa->pa_tag, TULIP_PCI_CFDA,
+			    reg & ~CFDA_SLEEP);
+		break;
+
+	default:
+		/* Nothing. */
+	}
+
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, 0, 0)) {
+		if (tpp->tpp_pmreg == 0) {
+			printf("%s: don't know location of PMCSR for this "
+			    "chip\n", sc->sc_dev.dv_xname);
+			return;
+		}
+		reg = pci_conf_read(pc, pa->pa_tag, tpp->tpp_pmreg) & 0x3;
+		if (reg == 3) {
+			/*
+			 * The card has lost all configuration data in
+			 * this state, so punt.
+			 */
+			printf("%s: unable to wake up from power state D3\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		if (reg != 0) {
+			printf("%s: waking up from power state D%d\n",
+			    sc->sc_dev.dv_xname, reg);
+			pci_conf_write(pc, pa->pa_tag, tpp->tpp_pmreg, 0);
+		}
+	}
+
+	/*
+	 * Map the device.
+	 */
+	ioh_valid = (pci_mapreg_map(pa, TULIP_PCI_IOBA,
+	    PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL) == 0);
+	memh_valid = (pci_mapreg_map(pa, TULIP_PCI_MMBA,
+	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &memt, &memh, NULL, NULL) == 0);
+
+	if (memh_valid) {
+		sc->sc_st = memt;
+		sc->sc_sh = memh;
+	} else if (ioh_valid) {
+		sc->sc_st = iot;
+		sc->sc_sh = ioh;
+	} else {
+		printf(": unable to map device registers\n");
+		return;
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -643,6 +692,29 @@ tlp_pci_attach(parent, self, aux)
 		 * select MII vs. internal NWAY automatically.
 		 */
 		sc->sc_mediasw = &tlp_pnic_mediasw;
+		break;
+
+	case TULIP_CHIP_MX98713:
+	case TULIP_CHIP_MX98713A:
+	case TULIP_CHIP_MX98715:
+	case TULIP_CHIP_MX98725:
+		/*
+		 * Happily, Macronix chips use the ISV SROM format!
+		 * Wow, a clone that's actually Tulip-like!
+		 */
+		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
+			/*
+			 * Not ISV SROM; can't cope right now.
+			 */
+			goto cant_cope;
+		} else {
+			/*
+			 * We start out with the 2114x ISV media switch.
+			 * When we search for quirks, we may change to
+			 * a different switch.
+			 */
+			sc->sc_mediasw = &tlp_2114x_isv_mediasw;
+		}
 		break;
 
 	case TULIP_CHIP_WB89C840F:
