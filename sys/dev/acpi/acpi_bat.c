@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.9 2002/12/30 04:52:13 jmcneill Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.10 2002/12/30 06:20:02 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.9 2002/12/30 04:52:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.10 2002/12/30 06:20:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,8 +257,10 @@ acpibat_get_status(void *arg)
 		printf("bat: expected PACKAGE, got %d\n", p1->Type);
 		return;
 	}
-	if (p1->Package.Count < 4)
+	if (p1->Package.Count < 4) {
 		printf("bat: expected 4 elts, got %d\n", p1->Package.Count);
+		return;
+	}
 	p2 = p1->Package.Elements;
 
 	sc->sc_status = p2[0].Integer.Value;
