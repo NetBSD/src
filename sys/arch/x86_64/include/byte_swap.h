@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.1 2001/06/19 00:20:10 fvdl Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.2 2001/11/02 05:23:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,19 +43,24 @@
 #ifndef _X86_64_BYTE_SWAP_H_
 #define	_X86_64_BYTE_SWAP_H_
 
-#define	__byte_swap_long_variable(x) __extension__ \
-({ register in_addr_t __x = (x); \
-   __asm ("bswap %1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
 
-#define	__byte_swap_word_variable(x) __extension__ \
-({ register in_port_t __x = (x); \
-   __asm ("rorw $8, %w1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
+static __inline u_int32_t __byte_swap_long_variable(u_int32_t);
+static __inline u_int16_t __byte_swap_word_variable(u_int16_t);
+
+static __inline u_int32_t
+__byte_swap_long_variable(u_int32_t x)
+{
+	__asm __volatile ( "bswap %1" : "=r" (x) : "0" (x));
+	return x;
+}
+
+static __inline u_int16_t
+__byte_swap_word_variable(u_int16_t x)
+{
+	__asm __volatile ("rorw $8, %w1" : "=r" (x) : "0" (x)); 
+	return x;
+}
+
 
 #ifdef __OPTIMIZE__
 
