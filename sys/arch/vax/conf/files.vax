@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.83 2001/04/28 09:38:03 ragge Exp $
+#       $NetBSD: files.vax,v 1.84 2001/05/01 13:21:27 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -17,7 +17,7 @@ device	mem
 device	mba { drive = -1 }
 
 defopt	opt_cputype.h	VAX780 VAX750 VAX730
-        VAX8200 VAX8800 VAX8600
+        VAX8200 VAX8800 VAX8600 VAX610
 	VAX6200 VAX6300 VAX6400 VAX6500 VAX6600
 	VAX410 VAX43 VAX46 VAX48 VAX49 VAX53
 	VAX630 VAX640 VAX650 VAX660 VAX670 VAX680
@@ -146,11 +146,6 @@ file	arch/vax/vax/xmi_mainbus.c	xmi_mainbus
 # VAX CPUs at XMI, do not belong in MI code.
 attach	cpu at xmi with cpu_xmi
 attach	mem at xmi with mem_xmi
-
-# TS11 at UBA
-device	ts: tape
-attach	ts at uba
-file	arch/vax/uba/ts.c		ts needs-flag
 
 attach	dz at vsbus with dz_vsbus
 file	arch/vax/vsa/dz_vsbus.c		dz_vsbus | smg
@@ -352,6 +347,7 @@ file	arch/vax/vax/ka46.c		vax46
 file	arch/vax/vax/ka48.c		vax48
 file	arch/vax/vax/ka49.c		vax49
 file	arch/vax/vax/ka53.c		vax53
+file	arch/vax/vax/ka610.c		vax610
 file	arch/vax/vax/ka630.c		vax630
 file	arch/vax/vax/ka650.c		vax650
 file	arch/vax/vax/ka660.c		vax660
