@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 1999/03/30 20:59:52 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 1999/04/11 04:04:06 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2062,7 +2062,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	
 		/* Allocate a page table */
 		for (;;) {
-			m = uvm_pagealloc(NULL, 0, NULL);
+			m = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 			if (m != NULL)
 				break;
 			
