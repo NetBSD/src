@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.36 2002/01/31 17:56:35 uch Exp $	*/
+/*	$NetBSD: vr.c,v 1.37 2002/02/10 14:38:57 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -198,13 +198,55 @@ static struct vr_com_platdep {
 	},
 #endif
 #if NCOM_VRIP > 0
+#ifdef VR4102
+	{
+		&platid_mask_CPU_MIPS_VR_4102,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4102_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4102 */
+#ifdef VR4111
+	{
+		&platid_mask_CPU_MIPS_VR_4111,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4102_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4111 */
+#ifdef VR4121
+	{
+		&platid_mask_CPU_MIPS_VR_4121,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4102_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4121 */
+#ifdef VR4122
+	{
+		&platid_mask_CPU_MIPS_VR_4122,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4122_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4122 */
+#ifdef VR4131
+	{
+		&platid_mask_CPU_MIPS_VR_4122,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4122_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4131 */
+#ifdef SINGLE_VRIP_BASE
 	{
 		&platid_wild,
 		com_vrip_cndb_attach,	/* attach proc */
 		VRIP_SIU_ADDR,		/* base address */
 		VRCOM_FREQ,		/* frequency */
 	},
-#else
+#endif /* SINGLE_VRIP_BASE */
+#else /* NCOM_VRIP > 0 */
 	/* dummy */
 	{
 		&platid_wild,
@@ -212,7 +254,7 @@ static struct vr_com_platdep {
 		0,			/* base address */
 		0,			/* frequency */
 	},
-#endif
+#endif /* NCOM_VRIP > 0 */
 };
 #endif /* NCOM > 0 */
 
