@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.44 2001/11/13 06:24:54 lukem Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.45 2002/02/10 06:37:45 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.44 2001/11/13 06:24:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.45 2002/02/10 06:37:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2201,27 +2201,29 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 			}
 			break;
 		case AUDIO_ENCODING_ULAW:
-			if (!(flags & HAS_MULAW)) {
-				if (mode == AUMODE_PLAY &&
-				    (flags & HAS_16)) {
+			if (flags & HAS_MULAW)
+				break;
+			if (flags & HAS_8U) {
+				if (mode == AUMODE_PLAY)
+					swcode = mulaw_to_ulinear8;
+				else
+					swcode = ulinear8_to_mulaw;
+				enc = AUDIO_ENCODING_ULINEAR_LE;
+			} else if (flags & HAS_8) {
+				if (mode == AUMODE_PLAY)
+					swcode = mulaw_to_slinear8;
+				else
+					swcode = slinear8_to_mulaw;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			} else if (flags & HAS_16) {
+				if (mode == AUMODE_PLAY)
 					swcode = mulaw_to_slinear16_le;
-					factor = 2;
-					enc = AUDIO_ENCODING_SLINEAR_LE;
-				} else if (flags & HAS_8U) {
-					if (mode == AUMODE_PLAY)
-						swcode = mulaw_to_ulinear8;
-					else
-						swcode = ulinear8_to_mulaw;
-					enc = AUDIO_ENCODING_ULINEAR_LE;
-				} else if (flags & HAS_8) {
-					if (mode == AUMODE_PLAY)
-						swcode = mulaw_to_slinear8;
-					else
-						swcode = slinear8_to_mulaw;
-					enc = AUDIO_ENCODING_SLINEAR_LE;
-				} else
-					return (EINVAL);
-			}
+				else
+					swcode = slinear16_to_mulaw_le;
+				factor = 2;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			} else
+				return (EINVAL);
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (!(flags & HAS_ALAW)) {
