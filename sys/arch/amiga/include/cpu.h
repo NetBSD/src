@@ -38,7 +38,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.9 1994/04/10 02:28:17 chopps Exp $
+ *	$Id: cpu.h,v 1.10 1994/05/04 07:35:54 chopps Exp $
  */
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
@@ -96,7 +96,7 @@ typedef struct intrframe {
  * interrupt.  On hp300, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= SOWEUPC; aston(); }
+#define	profile_tick(p, framep)	{ (p)->p_flag |= P_OWEUPC; aston(); }
 
 /*
  * Notify the current process (p) that it has a signal pending,
