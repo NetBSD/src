@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139.2.1 2001/06/11 20:40:19 he Exp $	*/
+/*	$NetBSD: trap.c,v 1.139.2.2 2001/06/17 22:29:37 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -252,7 +252,9 @@ trap(frame)
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
 	extern char fusubail[],
-		    resume_iret[], resume_pop_ds[], resume_pop_es[];
+		    resume_iret[], resume_pop_ds[], resume_pop_es[],
+		    resume_pop_fs[], resume_pop_gs[];
+		    
 	struct trapframe *vframe;
 	int resume;
 
@@ -364,6 +366,20 @@ trap(frame)
 			vframe = (void *)((int)&frame.tf_esp -
 			    offsetof(struct trapframe, tf_es));
 			resume = (int)resume_pop_es;
+			break;
+		case 0x0f:	/* 0x0f prefix */
+			switch (*(u_char *)(frame.tf_eip+1)) {
+			case 0xa1:		/* popl %fs */
+				vframe = (void *)((int)&frame.tf_esp - 
+				    offsetof(struct trapframe, tf_fs));
+				resume = (int)resume_pop_fs;
+				break;
+			case 0xa9:		/* popl %gs */
+				vframe = (void *)((int)&frame.tf_esp -
+				    offsetof(struct trapframe, tf_gs));
+				resume = (int)resume_pop_gs;
+				break;
+			}
 			break;
 		default:
 			goto we_re_toast;
