@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.5 2002/09/20 15:47:19 mycroft Exp $	*/
+/*	$NetBSD: playit.c,v 1.6 2003/02/26 07:14:44 jdc Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.5 2002/09/20 15:47:19 mycroft Exp $");
+__RCSID("$NetBSD: playit.c,v 1.6 2003/02/26 07:14:44 jdc Exp $");
 #endif /* not lint */
 
 # include	<sys/file.h>
@@ -82,7 +82,7 @@ playit()
 {
 	int		ch;
 	int		y, x;
-	long		version;
+	u_int32_t	version;
 
 	if (read(Socket, (char *) &version, LONGLEN) != LONGLEN) {
 		bad_con();
@@ -617,7 +617,7 @@ redraw_screen()
 void
 do_message()
 {
-	long	version;
+	u_int32_t	version;
 
 	if (read(Socket, (char *) &version, LONGLEN) != LONGLEN) {
 		bad_con();

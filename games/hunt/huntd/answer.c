@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.4 2002/09/20 20:54:16 mycroft Exp $	*/
+/*	$NetBSD: answer.c,v 1.5 2003/02/26 07:14:45 jdc Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.4 2002/09/20 20:54:16 mycroft Exp $");
+__RCSID("$NetBSD: answer.c,v 1.5 2003/02/26 07:14:45 jdc Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>
@@ -32,11 +32,11 @@ answer()
 	static int		enter_status;
 	static int		socklen;
 	static u_long		machine;
-	static u_long		uid;
+	static u_int32_t	uid;
 	static SOCKET		sockstruct;
 	char			*cp1, *cp2;
 	int			flags;
-	long			version;
+	u_int32_t		version;
 	int			i;
 
 # ifdef INTERNET
