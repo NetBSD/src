@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2003/12/10 13:24:59 drochner Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/15 12:20:26 yamt Exp $
 
-SUBDIR+= mmap stack_exec
+SUBDIR+= mmap stack_exec loan1
 
 .include <bsd.subdir.mk>
