@@ -1,6 +1,8 @@
-/*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+/*	$NetBSD: colrm.c,v 1.3 1995/03/26 09:04:02 glass Exp $	*/
+
+/*-
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,96 +34,111 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)colrm.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: colrm.c,v 1.2 1993/08/01 18:17:28 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)colrm.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: colrm.c,v 1.3 1995/03/26 09:04:02 glass Exp $";
+#endif
 #endif /* not lint */
 
+#include <sys/types.h>
+
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
-/*
-COLRM removes unwanted columns from a file
-	Jeff Schriebman  UC Berkeley 11-74
-*/
+#include <stdlib.h>
+#include <string.h>
 
+#define	TAB	8
 
-main(argc,argv)
-char **argv;
+void check __P((FILE *));
+void usage __P((void));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	register c, ct, first, last;
+	register u_long column, start, stop;
+	register int ch;
+	char *p;
 
-	first = 0;
-	last = 0;
-	if (argc > 1)
-		first = getn(*++argv);
-	if (argc > 2)
-		last = getn(*++argv);
-
-start:
-	ct = 0;
-loop1:
-	c = getc(stdin);
-	if (feof(stdin))
-		goto fin;
-	if (c == '\t')
-		ct = (ct + 8) & ~7;
-	else if (c == '\b')
-		ct = ct ? ct - 1 : 0;
-	else
-		ct++;
-	if (c == '\n') {
-		putc(c, stdout);
-		goto start;
-	}
-	if (!first || ct < first) {
-		putc(c, stdout);
-		goto loop1;
-	}
-
-/* Loop getting rid of characters */
-	while (!last || ct < last) {
-		c = getc(stdin);
-		if (feof(stdin))
-			goto fin;
-		if (c == '\n') {
-			putc(c, stdout);
-			goto start;
+	while ((ch = getopt(argc, argv, "")) != EOF)
+		switch(ch) {
+		case '?':
+		default:
+			usage();
 		}
-		if (c == '\t')
-			ct = (ct + 8) & ~7;
-		else if (c == '\b')
-			ct = ct ? ct - 1 : 0;
-		else
-			ct++;
+	argc -= optind;
+	argv += optind;
+
+	start = stop = 0;
+	switch(argc) {
+	case 2:
+		stop = strtol(argv[1], &p, 10);
+		if (stop <= 0 || *p)
+			errx(1, "illegal column -- %s", argv[1]);
+		/* FALLTHROUGH */
+	case 1:
+		start = strtol(argv[0], &p, 10);
+		if (start <= 0 || *p)
+			errx(1, "illegal column -- %s", argv[0]);
+		break;
+	case 0:
+		break;
+	default:
+		usage();
 	}
 
-/* Output last of the line */
-	for (;;) {
-		c = getc(stdin);
-		if (feof(stdin))
+	if (stop && start > stop)
+		err(1, "illegal start and stop columns");
+
+	for (column = 0;;) {
+		switch (ch = getchar()) {
+		case EOF:
+			check(stdin);
 			break;
-		putc(c, stdout);
-		if (c == '\n')
-			goto start;
+		case '\b':
+			if (column)
+				--column;
+			break;
+		case '\n':
+			column = 0;
+			break;
+		case '\t':
+			column = (column + TAB) & ~(TAB - 1);
+			break;
+		default:
+			++column;
+			break;
+		}
+
+		if ((!start || column < start || stop && column > stop) &&
+		    putchar(ch) == EOF)
+			check(stdout);
 	}
-fin:
-	fflush(stdout);
-	exit(0);
 }
 
-getn(ap)
-char *ap;
+void
+check(stream)
+	FILE *stream;
 {
-	register int n,c;
-	register char *p;
+	if (feof(stream))
+		exit(0);
+	if (ferror(stream))
+		err(1, "%s", stream == stdin ? "stdin" : "stdout");
+}
 
-	p = ap;
-	n = 0;
-	while ((c = *p++) >= '0' && c <= '9')
-		n = n*10 + c - '0';
-	return(n);
+void
+usage()
+{
+	(void)fprintf(stderr, "usage: colrm [start [stop]]\n");
+	exit(1);
 }
