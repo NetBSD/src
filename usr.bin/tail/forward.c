@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.19 2002/06/14 00:47:41 wiz Exp $	*/
+/*	$NetBSD: forward.c,v 1.20 2002/09/18 19:14:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.19 2002/06/14 00:47:41 wiz Exp $");
+__RCSID("$NetBSD: forward.c,v 1.20 2002/09/18 19:14:58 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,7 +86,7 @@ void
 forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 {
 	int ch;
-	struct timeval second;
+	struct timespec second;
 	int dostat = 0;
 	struct stat statbuf;
 	off_t lastsize = 0;
@@ -194,8 +194,8 @@ forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 		 * eight system calls, use select() instead.
 		 */
 		second.tv_sec = 1;
-		second.tv_usec = 0;
-		if (select(0, NULL, NULL, NULL, &second) == -1)
+		second.tv_nsec = 0;
+		if (nanosleep(&second, NULL) == -1)
 			err(1, "select: %s", strerror(errno));
 		clearerr(fp);
 
