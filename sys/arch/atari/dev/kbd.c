@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.14 1996/12/20 12:49:41 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.15 1997/01/10 21:24:26 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -56,9 +56,12 @@
 #include <atari/dev/ym2149reg.h>
 #include <atari/dev/kbdreg.h>
 #include <atari/dev/kbdvar.h>
+#include <atari/dev/kbdmap.h>
 #include <atari/dev/msvar.h>
 
 #include "mouse.h"
+
+u_char			kbd_modifier;	/* Modifier mask		*/
 
 static u_char		kbd_ring[KBD_RING_SIZE];
 static volatile u_int	kbd_rbput = 0;	/* 'put' index			*/
@@ -80,6 +83,7 @@ void	kbdintr __P((int));
 static void kbdsoft __P((void *, void *));
 static void kbdattach __P((struct device *, struct device *, void *));
 static int  kbdmatch __P((struct device *, struct cfdata *, void *));
+static int  kbd_do_modifier __P((u_char));
 static int  kbd_write_poll __P((u_char *, int));
 static void kbd_pkg_start __P((struct kbd_softc *, u_char));
 
@@ -152,11 +156,6 @@ void	*auxp;
 
 	printf("\n");
 }
-
-/* definitions for atari keyboard encoding. */
-#define KEY_CODE(c)	((u_char)(c) & 0x7f)
-#define KEY_UP(c)	((u_char)(c) & 0x80)
-#define	IS_KEY(c)	((u_char)(c) < 0xf6)
 
 void
 kbdenable()
@@ -368,10 +367,13 @@ void	*junk1, *junk2;
 			/*
 			 * If this is a package header, init pkg. handling.
 			 */
-			if (!IS_KEY(code)) {
+			if (!KBD_IS_KEY(code)) {
 				kbd_pkg_start(k, code);
 				continue;
 			}
+			if (kbd_do_modifier(code) && !k->k_event_mode)
+				continue;
+			
 			/*
 			 * if not in event mode, deliver straight to ite to
 			 * process key stroke
@@ -397,9 +399,9 @@ void	*junk1, *junk2;
 				splx(s);
 				continue;
 			}
-			fe->id             = KEY_CODE(code);
-			fe->value          = KEY_UP(code) ? VKEY_UP : VKEY_DOWN;
-			fe->time           = time;
+			fe->id    = KBD_SCANCODE(code);
+			fe->value = KBD_RELEASED(code) ? VKEY_UP : VKEY_DOWN;
+			fe->time  = time;
 			k->k_events.ev_put = put;
 			EV_WAKEUP(&k->k_events);
 			splx(s);
@@ -445,10 +447,11 @@ kbdgetcn()
 			code = KBD->ac_da;	/* Silently ignore errors */
 			continue;
 		}
-		break;
+		code = KBD->ac_da;
+		if (!kbd_do_modifier(code))
+			break;
 	}
 
-	code = KBD->ac_da;
 	if (ints_active) {
 		MFP->mf_iprb &= ~IB_AINT;
 		MFP->mf_imrb |=  IB_AINT;
@@ -569,3 +572,44 @@ u_char		 msg_start;
 			break;
 	}
 }
+
+/*
+ * Modifier processing
+ */
+static int
+kbd_do_modifier(code)
+u_char	code;
+{
+	u_char	up, mask;
+
+	up   = KBD_RELEASED(code);
+	mask = 0;
+
+	switch(KBD_SCANCODE(code)) {
+		case KBD_LEFT_SHIFT:
+			mask = KBD_MOD_LSHIFT;
+			break;
+		case KBD_RIGHT_SHIFT:
+			mask = KBD_MOD_RSHIFT;
+			break;
+		case KBD_CTRL:
+			mask = KBD_MOD_CTRL;
+			break;
+		case KBD_ALT:
+			mask = KBD_MOD_ALT;
+			break;
+		case KBD_CAPS_LOCK:
+			/* CAPSLOCK is a toggle */
+			if(!up)
+				kbd_modifier ^= KBD_MOD_CAPS;
+			return 1;
+	}
+	if(mask) {
+		if(up)
+			kbd_modifier &= ~mask;
+		else
+			kbd_modifier |= mask;
+		return 1;
+	}
+	return 0;
+}	
