@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.6 2002/05/08 21:22:20 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.7 2002/05/08 21:43:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -258,9 +258,8 @@ struct wm_softc {
 	int	sc_txsnext;		/* next free Tx job */
 	int	sc_txsdirty;		/* dirty Tx jobs */
 
-	uint32_t sc_txctx_tcmd;		/* cached Tx cksum cmd */
-	uint32_t sc_txctx_ipcs;		/* cached Tx IP cksum start */
-	uint32_t sc_txctx_tucs;		/* cached Tx TCP/UDP cksum start */
+	uint32_t sc_txctx_ipcs;		/* cached Tx IP cksum ctx */
+	uint32_t sc_txctx_tucs;		/* cached Tx TCP/UDP cksum ctx */
 
 	bus_addr_t sc_rdt_reg;		/* offset of RDT register */
 
@@ -951,7 +950,7 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 {
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct livengood_tcpip_ctxdesc *t;
-	uint32_t fields = 0, tcmd = 0, ipcs, tucs;
+	uint32_t fields = 0, ipcs, tucs;
 	struct ip *ip;
 	int offset, iphl;
 
@@ -975,7 +974,6 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 	if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
 		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
-		tcmd |= htole32(WTX_TCPIP_CMD_IP);
 		fields |= htole32(WTX_IXSM);
 		ipcs = htole32(WTX_TCPIP_IPCSS(offset) |
 		    WTX_TCPIP_IPCSO(offsetof(struct ip, ip_sum)) |
@@ -987,7 +985,6 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
-		tcmd |= htole32(WTX_TCPIP_CMD_TCP);
 		fields |= htole32(WTX_TXSM);
 		tucs = htole32(WTX_TCPIP_TUCSS(offset) |
 		    WTX_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
@@ -996,16 +993,14 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		tucs = 0;
 
 	if (sc->sc_txctx_ipcs == ipcs &&
-	    sc->sc_txctx_tucs == tucs &&
-	    sc->sc_txctx_tcmd == tcmd) {
+	    sc->sc_txctx_tucs == tucs) {
 		/* Cached context is fine. */
 		WM_EVCNT_INCR(&sc->sc_ev_txctx_hit);
 	} else {
 		/* Fill in the context descriptor. */
 #ifdef WM_EVENT_COUNTERS
 		if (sc->sc_txctx_ipcs == 0xffffffff &&
-		    sc->sc_txctx_tucs == 0xffffffff &&
-		    sc->sc_txctx_tcmd == 0xffffffff)
+		    sc->sc_txctx_tucs == 0xffffffff)
 			WM_EVCNT_INCR(&sc->sc_ev_txctx_init);
 		else
 			WM_EVCNT_INCR(&sc->sc_ev_txctx_miss);
@@ -1015,13 +1010,12 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		t->tcpip_ipcs = ipcs;
 		t->tcpip_tucs = tucs;
 		t->tcpip_cmdlen =
-		    htole32(WTX_CMD_DEXT | WTX_DTYP_C) | tcmd;
+		    htole32(WTX_CMD_DEXT | WTX_DTYP_C);
 		t->tcpip_seg = 0;
 		WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
 		sc->sc_txctx_ipcs = ipcs;
 		sc->sc_txctx_tucs = tucs;
-		sc->sc_txctx_tcmd = tcmd;
 
 		sc->sc_txnext = WM_NEXTTX(sc->sc_txnext);
 		txs->txs_ndesc++;
@@ -1221,7 +1215,7 @@ wm_start(struct ifnet *ifp)
 		 * delay the interrupt.
 		 */
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
-		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RPS);
+		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RS);
 		if (sc->sc_txwin < (WM_NTXDESC * 2 / 3))
 			sc->sc_txdescs[lasttx].wtx_cmdlen |=
 			    htole32(WTX_CMD_IDE);
@@ -1855,7 +1849,6 @@ wm_init(struct ifnet *ifp)
 	sc->sc_txnext = 0;
 	sc->sc_txwin = 0;
 
-	sc->sc_txctx_tcmd = 0xffffffff;
 	sc->sc_txctx_ipcs = 0xffffffff;
 	sc->sc_txctx_tucs = 0xffffffff;
 
