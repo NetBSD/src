@@ -35,7 +35,7 @@
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .\"
-.\" $Id: dhcpd.conf.5,v 1.8 2003/02/18 17:08:44 drochner Exp $
+.\" $Id: dhcpd.conf.5,v 1.9 2003/03/31 17:27:57 perry Exp $
 .\"
 .TH dhcpd.conf 5
 .SH NAME
@@ -897,7 +897,7 @@ class "jr-cable-modems" {
 }
 
 class "dv-dsl-modems" {
-  match if opton dhcp-vendor-identifier = "dvdsl";
+  match if option dhcp-vendor-identifier = "dvdsl";
   spawn with option agent.circuit-id;
   lease limit 16;
 }
@@ -1442,7 +1442,7 @@ An unknown client is simply a client that has no host declaration.
 The use of this option is now \fIdeprecated\fR.  If you are trying to
 restrict access on your network to known clients, you should use \fBdeny
 unknown clients;\fR inside of your address pool, as described under the
-heading ALLOW AND DENY WITHIN POOL DECLARAIONS.
+heading ALLOW AND DENY WITHIN POOL DECLARATIONS.
 .PP
 .B The
 .I bootp
@@ -1816,7 +1816,7 @@ statement
 The \fIdynamic-bootp-lease-cutoff\fR statement sets the ending time
 for all leases assigned dynamically to BOOTP clients.  Because BOOTP
 clients do not have any way of renewing leases, and don't know that
-their leases could expire, by default dhcpd assignes infinite leases
+their leases could expire, by default dhcpd assigns infinite leases
 to all BOOTP clients.  However, it may make sense in some situations
 to set a cutoff date for all BOOTP leases - for example, the end of a
 school term, or the time at night when a facility is closed and all
