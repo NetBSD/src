@@ -1,0 +1,12 @@
+.\"	$NetBSD: hardware,v 1.1 2002/05/18 17:31:43 pooka Exp $
+.
+.Nx*M
+is aimed to run on MIPS-based computers manufactured by SGI.
+.Ss2 Supported machines
+.(bullet -compact
+Indy
+.It
+Indigo2
+.bullet)
+There is some initial support for the SGI O2, but it is known to currently
+have various problems.
