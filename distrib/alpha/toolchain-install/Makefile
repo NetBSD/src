@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 1998/12/10 05:15:43 ross Exp $
+# $NetBSD: Makefile,v 1.5 2000/08/30 23:51:49 jhawk Exp $
 #
 # XXX this is evil
 
@@ -13,10 +13,10 @@ depend:
 all: MADE
 MADE:
 	cd $(TC_SRC_DIR) ; configure
-	cd $(TC_SRC_DIR) ; make BISON="yacc"
+	cd $(TC_SRC_DIR) ; ${MAKE} BISON="yacc"
 	touch MADE
 clean cleandir distclean::
-	cd $(TC_SRC_DIR) ; make -k distclean
+	cd $(TC_SRC_DIR) ; ${MAKE} -k distclean
 	rm -f MADE
 install:
 	NETBSDSRCDIR=${SRC_DIR}				\

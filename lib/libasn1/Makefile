@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2000/08/03 03:53:37 assar Exp $
+# $NetBSD: Makefile,v 1.4 2000/08/30 23:51:52 jhawk Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1
 
@@ -7,7 +7,7 @@ MKLINT= no
 
 LIB=	asn1
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && make print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${MAKE} print-objdir
 
 asn1_err.h asn1_err.c: asn1_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/asn1/asn1_err.et

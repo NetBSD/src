@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/05/19 21:19:20 is Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/08/30 23:51:54 jhawk Exp $
 
 BINDIR=		/usr/mdec
 
@@ -15,7 +15,7 @@ AOUT2BBOBJDIR=	${AOUT2BBDIR}
 AOUT2BB=	${AOUT2BBOBJDIR}/aout2bb
 
 ${AOUT2BB}:
-	@cd ${AOUT2BBDIR} && make depend && make
+	@cd ${AOUT2BBDIR} && ${MAKE} depend && ${MAKE}
 
 ### Figure out what to use for txlt
 TXLTDIR=	${.CURDIR}/../txlt
@@ -30,4 +30,4 @@ TXLTOBJDIR=	${TXLTDIR}
 TXLT=		${TXLTOBJDIR}/txlt
 
 ${TXLT}:
-	@cd ${TXLTDIR} && make depend && make
+	@cd ${TXLTDIR} && ${MAKE} depend && ${MAKE}

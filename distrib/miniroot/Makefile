@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2000/08/29 11:41:24 leo Exp $
+#	$NetBSD: Makefile,v 1.35 2000/08/30 23:51:50 jhawk Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -70,7 +70,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 .ifndef RELEASEDIR
 release:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/06/12 13:35:51 veego Exp $
+#	$NetBSD: Makefile,v 1.7 2000/08/30 23:51:55 jhawk Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -22,7 +22,7 @@ ptests: i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11
 ntests: n1 n2 n3 n4 n5 n6 n7
 
 0:
-	@(cd ..; make ipftest; )
+	@(cd ..; ${MAKE} ipftest; )
 
 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f14:
 	@/bin/sh ${.CURDIR}/dotest $@ ${.CURDIR}/../../../../dist/ipf/test

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/05/02 16:06:51 sjg Exp $
+#	$NetBSD: Makefile,v 1.7 2000/08/30 23:51:50 jhawk Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -63,7 +63,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 # This is listed in rd_bin.conf but is built here.
 ${CBIN} : libhack.o

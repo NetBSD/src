@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/05/18 02:12:45 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2000/08/30 23:51:52 jhawk Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -61,7 +61,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c

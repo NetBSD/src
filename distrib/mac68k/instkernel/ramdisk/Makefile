@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/06/11 11:06:24 fredb Exp $
+#	$NetBSD: Makefile,v 1.7 2000/08/30 23:51:50 jhawk Exp $
 
 .ifndef NOTESOBJDIR
 NOTESOBJDIR!=cd ${.CURDIR}/../../../notes/mac68k; ${MAKE} ${MAKEFLAGS} -V .OBJDIR
@@ -53,7 +53,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \

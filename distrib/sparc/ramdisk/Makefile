@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2000/05/02 16:06:54 sjg Exp $
+#	$NetBSD: Makefile,v 1.19 2000/08/30 23:51:51 jhawk Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -55,7 +55,7 @@ ${CBIN}.conf: ${LISTS}
 	awk -f ${MINIROOT}/makeconf.awk CBIN=${CBIN} ${.CURDIR}/${LISTS} > ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 # This is listed in ramdiskbin.conf but is built here.
 ${CBIN}: libhack.o
