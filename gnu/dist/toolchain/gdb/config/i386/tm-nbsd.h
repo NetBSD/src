@@ -24,7 +24,7 @@
 #define HAVE_I387_REGS
 
 #include "i386/tm-i386.h"
-#include "tm-nbsd.h"
+#include <tm-nbsd.h>
 
 extern use_struct_convention_fn i386nbsd_use_struct_convention;
 #define USE_STRUCT_CONVENTION(gcc_p, type) \
