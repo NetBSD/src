@@ -1,4 +1,7 @@
-#! /bin/sh
+#!/bin/sh
+#
+# $NetBSD: rtclocaltime,v 1.2 2004/04/25 16:52:19 schmonz Exp $
+#
 
 # PROVIDE: rtclocaltime
 # REQUIRE: mountcritremote
