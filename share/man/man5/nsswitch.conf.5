@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.4 1999/01/15 23:06:36 lukem Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.5 1999/01/16 14:16:42 lukem Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -47,7 +47,8 @@ file specifies how the
 The configuration file controls how a process looks up various databases
 containing information regarding hosts, users (passwords), groups,
 netgroups, etc.
-Each database comes from a source (such as local files, DNS, and NIS),
+Each database comes from a source (such as local files, DNS, and
+.Tn NIS ),
 and the order to look up the sources is specified in
 .Nm nsswitch.conf .
 .Pp
@@ -164,11 +165,13 @@ In historical multi-source implementations, the
 and
 .Sq -
 characters are used to signify the importing of user password and
-group information from NIS.
+group information from
+.Tn NIS .
 Although
 .Nm
 provides alternative methods of accessing distributed sources such as
-NIS, specifying a sole source of
+.Tn NIS ,
+specifying a sole source of
 .Dq compat
 will provide the historical behaviour.
 .Pp
@@ -211,7 +214,9 @@ resides in
 .Sh EXAMPLES
 To lookup hosts in
 .Pa /etc/hosts
-and then from the DNS, and lookup user information from NIS then files, use:
+and then from the DNS, and lookup user information from
+.Tn NIS
+then files, use:
 .Bl -column "passwd:" -offset indent
 .It hosts:	files dns
 .It passwd:	nis [notfound=return] files
