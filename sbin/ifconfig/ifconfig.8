@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.63 2003/02/25 10:34:58 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.64 2003/04/12 01:08:28 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd September 25, 2002
+.Dd April 11, 2003
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -49,6 +49,8 @@
 .Op Ar parameters
 .Nm
 .Op Fl mL
+.Op Fl v
+.Op Fl z
 .Ar interface
 .Op Ar protocol_family
 .Nm
@@ -58,6 +60,8 @@
 .Op Fl d
 .Op Fl u
 .Op Fl s
+.Op Fl v
+.Op Fl z
 .Op Ar protocol_family
 .Nm
 .Fl l
@@ -607,6 +611,17 @@ flag may be used to list all of the interface cloners available on
 the system, with no additional information.
 Use of this flag is
 mutually exclusive with all other flags and commands.
+.Pp
+The
+.Fl v
+flag prints statistics on packets sent and received on the given
+interface.
+The
+.Fl z
+flag is identical to the
+.Fl v
+flag except that it zeros the interface input and output statistics
+after printing them. 
 .Pp
 Only the super-user may modify the configuration of a network interface.
 .Sh DIAGNOSTICS
