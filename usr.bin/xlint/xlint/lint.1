@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.17 2001/05/24 11:58:09 lukem Exp $
+.\" $NetBSD: lint.1,v 1.18 2001/05/24 12:12:04 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -241,7 +241,9 @@ Don't print warnings for some extensions of
 .Xr gcc 1
 to the C language. Currently these are nonconstant initializers in
 automatic aggregate initializations, arithmetic on pointer to void,
-trailing commas in enum declarations,
+trailing commas in enum declarations, C++ -style
+.Dq //
+comments,
 zero sized structures, subscripting of non-lvalue arrays, prototypes
 overriding old style function declarations and long long
 integer types.

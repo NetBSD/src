@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.17 2001/05/24 11:56:36 lukem Exp $ */
+/* $NetBSD: scan.l,v 1.18 2001/05/24 12:10:39 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.17 2001/05/24 11:56:36 lukem Exp $");
+__RCSID("$NetBSD: scan.l,v 1.18 2001/05/24 12:10:39 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -79,6 +79,7 @@ static	int	wccon __P((void));
 static	int	getescc __P((int));
 static	void	directive __P((void));
 static	void	comment __P((void));
+static	void	slashslashcomment __P((void));
 static	int	string __P((void));
 static	int	wcstrg __P((void));
 
@@ -154,6 +155,7 @@ EX	([eE][+-]?[0-9]+)
 \n				incline();
 \t|" "|\f|\v			;
 "/*"				comment();
+"//"				slashslashcomment();
 .				badchar(yytext[0]);
 
 %%
@@ -1137,6 +1139,22 @@ comment()
 		if (lc == '*' && c == '/')
 			eoc = 1;
 	}
+}
+
+/*
+ * Handle // style comments
+ */
+static void
+slashslashcomment()
+{
+	int c;
+
+	if (sflag < 2 && !gflag)
+		/* // comments only support in C99 */
+		(void)gnuism(312, tflag ? "traditional" : "ANSI");
+
+	while ((c = inpc()) != EOF && c != '\n')
+		continue;
 }
 
 /*
