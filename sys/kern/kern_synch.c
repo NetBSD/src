@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.10 2002/01/08 00:32:35 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.11 2002/03/22 23:25:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.10 2002/01/08 00:32:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.11 2002/03/22 23:25:47 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -488,6 +488,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	/* handy breakpoint location after process "wakes" */
 	__asm(".globl bpendtsleep ; bpendtsleep:");
 #endif
+	p->p_nrlwps++;
 
 	SCHED_ASSERT_UNLOCKED();
 	splx(s);
@@ -496,7 +497,6 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	KDASSERT(l->l_cpu != NULL);
 	KDASSERT(l->l_cpu == curcpu());
 	l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
-	p->p_nrlwps++;
 
 	l->l_flag &= ~L_SINTR;
 	if (l->l_flag & L_TIMEOUT) {
