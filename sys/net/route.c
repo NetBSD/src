@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.31 2000/02/02 18:02:08 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.32 2000/03/10 14:47:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -531,6 +531,7 @@ rt_setgate(rt0, dst, gate)
 		R_Malloc(new, caddr_t, dlen + glen);
 		if (new == 0)
 			return 1;
+		Bzero(new, dlen + glen);
 		rt->rt_nodes->rn_key = new;
 	} else {
 		new = rt->rt_nodes->rn_key;
@@ -695,6 +696,7 @@ rt_timer_queue_create(timeout)
 	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
 	if (rtq == NULL)
 		return (NULL);		
+	Bzero(rtq, sizeof *rtq);
 
 	rtq->rtq_timeout = timeout;
 	TAILQ_INIT(&rtq->rtq_head);
@@ -779,6 +781,7 @@ rt_timer_add(rt, func, queue)
 	r = pool_get(&rttimer_pool, PR_NOWAIT);
 	if (r == NULL)
 		return (ENOBUFS);
+	Bzero(r, sizeof(*r));
 
 	r->rtt_rt = rt;
 	r->rtt_time = current_time;
