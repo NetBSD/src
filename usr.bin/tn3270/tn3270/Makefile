@@ -1,14 +1,10 @@
-#	$Id: Makefile,v 1.6 1993/08/02 17:55:57 mycroft Exp $
+#	$Id: Makefile,v 1.7 1993/10/07 02:21:27 cgd Exp $
 
 .include <../../Makefile.inc>
 
 CFLAGS += -I${.CURDIR} -I.
-LDADD += -lcurses -ltermcap -ltelnet
-DPADD += ${LIBCURSES} /usr/lib/libtermcap.a /usr/lib/libtelnet.a
-.ifndef EXPORTABLE_SYSTEM
-DPADD+= ${LIBCRYPT}
-LDADD+= -lcrypt
-.endif
+LDADD += -lcurses -ltermcap -ltelnet -lcrypt
+DPADD += ${LIBCURSES} ${LIBTERMCAP} /usr/lib/libtelnet.a ${LIBCRYPT}
 
 MAN1 = tn3270.0
 
