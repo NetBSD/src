@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wwopen.c	3.29 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: wwopen.c,v 1.2 1993/08/01 18:02:43 mycroft Exp $";
+static char rcsid[] = "$Id: wwopen.c,v 1.3 1994/12/30 02:46:06 mycroft Exp $";
 #endif /* not lint */
 
 #include "ww.h"
@@ -114,6 +114,8 @@ wwopen(flags, nrow, ncol, row, col, nline)
 		}
 		w->ww_obe = w->ww_ob + 512;
 		w->ww_obp = w->ww_obq = w->ww_ob;
+		if (w->ww_pty >= wwdtablesize)
+			wwdtablesize = w->ww_pty + 1;
 	}
 
 	w->ww_win = wwalloc(w->ww_w.t, w->ww_w.l,
