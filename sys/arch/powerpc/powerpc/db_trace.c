@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.17 2002/01/03 22:15:06 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.18 2002/02/22 18:50:45 kleink Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -215,6 +215,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			case EXC_ALI: trapstr = "ALI"; break;
 			case EXC_BPT: trapstr = "BPT"; break;
 			case EXC_TRC: trapstr = "TRC"; break;
+			case EXC_RUNMODETRC: trapstr = "RUNMODETRC"; break;
 			case EXC_PERF: trapstr = "PERF"; break;
 			case EXC_SMI: trapstr = "SMI"; break;
 			case EXC_RST: trapstr = "RST"; break;
