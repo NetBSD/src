@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rpcbind,v 1.1 2000/06/02 22:54:12 fvdl Exp $
+# $NetBSD: rpcbind,v 1.2 2000/06/03 00:17:17 fvdl Exp $
 #
 
 # PROVIDE: rpcbind
@@ -11,5 +11,6 @@
 
 name="rpcbind"
 command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
 
 run_rc_command "$1"
