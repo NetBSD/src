@@ -1,4 +1,5 @@
 /*	$OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.2 2000/01/09 17:21:38 joda Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -60,6 +61,9 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -126,7 +130,11 @@ int xedebug = XEDEBUG_DEF;
 #define DPRINTF(cat, x) (void)0
 #endif	/* XEDEBUG */
 
+#ifdef __NetBSD__
+int	xe_pcmcia_match __P((struct device *, struct cfdata *, void *));
+#else
 int	xe_pcmcia_match __P((struct device *, void *, void *));
+#endif
 void	xe_pcmcia_attach __P((struct device *, struct device *, void *));
 int	xe_pcmcia_detach __P((struct device *, int));
 int	xe_pcmcia_activate __P((struct device *, enum devact));
@@ -139,7 +147,12 @@ struct xe_softc {
 	struct	device sc_dev;			/* Generic device info */
 	u_int32_t	sc_flags;		/* Misc. flags */
 	void	*sc_ih;				/* Interrupt handler */
+#ifdef __NetBSD__
+	struct ethercom sc_ec;			/* ethernet common */
+	u_int8_t sc_enaddr[6];			/* storage for MAC address */
+#else
 	struct	arpcom sc_arpcom;		/* Ethernet common part */
+#endif
 	struct	ifmedia sc_media;		/* Media control */
 	struct	mii_data sc_mii;		/* MII media information */
 	int	sc_all_mcasts;			/* Receive all multicasts */
@@ -168,14 +181,21 @@ struct xe_pcmcia_softc {
 	struct	pcmcia_function *sc_pf;		/* PCMCIA function */
 };
 
+#ifdef __OpenBSD__
 /* Autoconfig definition of driver back-end */
 struct cfdriver xe_cd = {
 	NULL, "xe", DV_IFNET
 };
+#endif
 
 struct cfattach xe_pcmcia_ca = {
 	sizeof (struct xe_pcmcia_softc), xe_pcmcia_match, xe_pcmcia_attach,
-	xe_pcmcia_detach, xe_pcmcia_activate
+#ifdef __NetBSD__
+	NULL,
+#else
+	xe_pcmcia_detach, 
+#endif
+	xe_pcmcia_activate
 };
 
 void	xe_cycle_power __P((struct xe_softc *));
@@ -203,10 +223,26 @@ void	xe_watchdog __P((struct ifnet *));
 void	xe_reg_dump __P((struct xe_softc *));
 #endif	/* XEDEBUG */
 
+#ifdef __NetBSD__
+#define SC2IFNET(SC) (&(SC)->sc_ec.ec_if)
+#define SC2ENADDR(SC) ((SC)->sc_enaddr)
+#define bus_space_read_raw_multi_2 bus_space_read_multi_2 /* XXX */
+#define bus_space_write_raw_multi_2 bus_space_write_multi_2 /* XXX */
+#define ac_multicnt ec_multicnt /* XXX */
+#else
+#define SC2IFNET(SC) (&(SC)->sc_arpcom.ac_if)
+#define SC2ENADDR(SC) ((SC)->sc_arpcom.ac_enaddr)
+#endif
+
 int
 xe_pcmcia_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __NetBSD__
+	struct cfdata *match;
+#else
+	void *match;
+#endif
+	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
 	
@@ -370,9 +406,9 @@ xe_pcmcia_attach(parent, self, aux)
 	 */
 	if (xe_pcmcia_funce_enaddr(parent, myla))
 		enaddr = myla;
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = SC2IFNET(sc);
 	if (enaddr)
-		bcopy(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+		bcopy(enaddr, SC2ENADDR(sc), ETHER_ADDR_LEN);
 	else {
 		printf(", unable to get ethernet address\n");
 		goto bad;
@@ -394,7 +430,7 @@ xe_pcmcia_attach(parent, self, aux)
 		goto bad;
 	}
 
-	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s\n", ether_sprintf(SC2ENADDR(sc)));
 
 	/* Reset and initialize the card. */
 	xe_full_reset(sc);
@@ -408,7 +444,11 @@ xe_pcmcia_attach(parent, self, aux)
 	    xe_mediastatus);
 	DPRINTF(XED_MII | XED_CONFIG,
 	    ("bmsr %x\n", xe_mdi_read(&sc->sc_dev, 0, 1)));
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	mii_phy_probe(self, &sc->sc_mii, 0xffffffff
+#ifdef __NetBSD__
+		      ,MII_PHY_ANY, MII_OFFSET_ANY
+#endif
+		      );
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL)
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO, 0,
 		    NULL);
@@ -418,10 +458,14 @@ xe_pcmcia_attach(parent, self, aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp
+#ifdef __NetBSD__
+		       , sc->sc_enaddr
+#endif
+		);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
+	bpfattach(&SC2IFNET(sc)->if_bpf, ifp, DLT_EN10MB, 
+		  sizeof(struct ether_header));
 #endif	/* NBPFILTER > 0 */
 
 	/*
@@ -454,6 +498,7 @@ bad:
 	free(cfe, M_DEVBUF);
 }
 
+#ifndef __NetBSD__
 int
 xe_pcmcia_detach(dev, flags)
 	struct device *dev;
@@ -461,7 +506,7 @@ xe_pcmcia_detach(dev, flags)
 {
 	struct xe_pcmcia_softc *psc = (struct xe_pcmcia_softc *)dev;
 	struct xe_softc *sc = &psc->sc_xe;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = SC2IFNET(sc);
 	struct mii_softc *msc;
 	int rv = 0;
 
@@ -479,6 +524,7 @@ xe_pcmcia_detach(dev, flags)
 
 	return (rv);
 }
+#endif
 
 int
 xe_pcmcia_activate(dev, act)
@@ -649,7 +695,7 @@ xe_intr(arg)
 	void *arg;
 {
 	struct xe_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = SC2IFNET(sc);
 	u_int8_t esr, rsr, isr, rx_status, savedpage;
 	u_int16_t tx_status, recvcount = 0, tempint;
 
@@ -769,7 +815,7 @@ xe_get(sc)
 {
 	u_int8_t rsr;
 	struct mbuf *top, **mp, *m;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = SC2IFNET(sc);
 	u_int16_t pktlen, len, recvcount = 0;
 	u_int8_t *data;
 	struct ether_header *eh;
@@ -852,8 +898,12 @@ xe_get(sc)
 		bpf_mtap(ifp->if_bpf, top);
 #endif
 	
+#ifdef __NetBSD__
+	(*ifp->if_input)(ifp, top);
+#else
 	m_adj(top, sizeof(struct ether_header));
 	ether_input(ifp, eh, top);
+#endif
 	return (recvcount);
 }
 
@@ -1052,7 +1102,7 @@ xe_watchdog(ifp)
 	struct xe_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++SC2IFNET(sc)->if_oerrors;
 
 	xe_reset(sc);
 }
@@ -1074,14 +1124,14 @@ xe_stop(sc)
 	DELAY(40000);
 	
 	/* Cancel watchdog timer. */
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	SC2IFNET(sc)->if_timer = 0;
 }
 
 void
 xe_init(sc)
 	struct xe_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = SC2IFNET(sc);
 	int s;
 
 	DPRINTF(XED_CONFIG, ("xe_init\n"));
@@ -1282,9 +1332,15 @@ xe_ioctl(ifp, command, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		sc->sc_all_mcasts = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
+#ifdef __NetBSD__
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ec) :
+		    ether_delmulti(ifr, &sc->sc_ec);
+#else
 		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
+#endif
 
 		if (error == ENETRESET) {
 			/*
@@ -1325,16 +1381,20 @@ xe_set_address(sc)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	bus_addr_t offset = sc->sc_offset;
+#ifdef __NetBSD__
+	struct ethercom *arp = &sc->sc_ec;
+#else
 	struct arpcom *arp = &sc->sc_arpcom;
+#endif
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = SC2IFNET(sc);
 	int i, page, pos, num;
 
 	PAGE(sc, 0x50);
 	for (i = 0; i < 6; i++) {
 		bus_space_write_1(bst, bsh, offset + IA + i,
-		    sc->sc_arpcom.ac_enaddr[(sc->sc_flags & XEF_MOHAWK) ?
+		    SC2ENADDR(sc)[(sc->sc_flags & XEF_MOHAWK) ?
 		    5 - i : i]);
 	}
 		
