@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 1995/03/28 18:19:22 jtc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 1995/04/10 12:42:18 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -95,11 +95,11 @@ typedef struct pmap {
 #define PMAP_ATTR_REF	0x02	/* page has been referenced */
 
 #ifdef	KERNEL
-extern	char *pmap_attributes;		/* reference and modify bits */
-extern	struct pmap kernel_pmap_store;
-extern  pmap_t kernel_pmap;
+char *pmap_attributes;		/* reference and modify bits */
+struct pmap kernel_pmap_store;
+
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
-#define pmap_kernel() kernel_pmap
+#define pmap_kernel()		(&kernel_pmap_store)
 #endif	/* _KERNEL */
 
 #endif	/* _PMAP_MACHINE_ */
