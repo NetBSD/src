@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 1995/02/12 19:19:04 chopps Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 1995/02/20 00:53:42 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -703,7 +703,7 @@ long
 a3gettod()
 {
 	struct rtclock3000 *rt;
-	int i, year, month, day, hour, min, sec;
+	int i, year, month, day, wday, hour, min, sec;
 	u_long tmp;
 
 	rt = clockaddr;
@@ -715,6 +715,7 @@ a3gettod()
 	sec   = rt->second1 * 10 + rt->second2;
 	min   = rt->minute1 * 10 + rt->minute2;
 	hour  = rt->hour1   * 10 + rt->hour2;
+	wday  = rt->weekday;
 	day   = rt->day1    * 10 + rt->day2;
 	month = rt->month1  * 10 + rt->month2;
 	year  = rt->year1   * 10 + rt->year2   + 1900;
@@ -723,6 +724,8 @@ a3gettod()
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
 
 	if (range_test(hour, 0, 23))
+		return(0);
+	if (range_test(wday, 0, 6))
 		return(0);
 	if (range_test(day, 1, 31))
 		return(0);
@@ -756,6 +759,7 @@ a3settod(tim)
 	u_char sec1, sec2;
 	u_char min1, min2;
 	u_char hour1, hour2;
+/*	u_char wday; */
 	u_char day1, day2;
 	u_char mon1, mon2;
 	u_char year1, year2;
@@ -766,9 +770,8 @@ a3settod(tim)
 	 * there seem to be problems with the bitfield addressing
 	 * currently used..
 	 */
-return(0);
-#if not_yet
-	if (rt)
+
+	if (! rt)
 		return 0;
 
 	/* prepare values to be written to clock */
@@ -809,23 +812,23 @@ return(0);
 	day1 = day / 10;
 	day2 = day % 10;
 
-	rt->control1 = CONTROL1_HOLD_CLOCK;
+	rt->control1 = A3CONTROL1_HOLD_CLOCK;
 	rt->second1 = sec1;
 	rt->second2 = sec2;
 	rt->minute1 = min1;
 	rt->minute2 = min2;
 	rt->hour1   = hour1;
 	rt->hour2   = hour2;
+/*	rt->weekday = wday; */
 	rt->day1    = day1;
 	rt->day2    = day2;
 	rt->month1  = mon1;
 	rt->month2  = mon2;
 	rt->year1   = year1;
 	rt->year2   = year2;
-	rt->control2 = CONTROL1_FREE_CLOCK;
+	rt->control1 = A3CONTROL1_FREE_CLOCK;
 
 	return 1;
-#endif
 }
 
 long
@@ -920,8 +923,6 @@ a2settod(tim)
 	 *
 	 * XXX Check out the above where we (hour1 & 3)
 	 */
-return(0);
-#if not_yet
 	if (! rt)
 		return 0;
 
@@ -966,7 +967,7 @@ return(0);
 	/* 
 	 * XXXX spin wait as with reading???
 	 */
-	rt->control1 = A2CONTROL1_HOLD_CLOCK;
+	rt->control1 |= A2CONTROL1_HOLD;
 	rt->second1 = sec1;
 	rt->second2 = sec2;
 	rt->minute1 = min1;
@@ -979,8 +980,7 @@ return(0);
 	rt->month2  = mon2;
 	rt->year1   = year1;
 	rt->year2   = year2;
-	rt->control2 = CONTROL1_FREE_CLOCK;
+	rt->control2 &= ~A2CONTROL1_HOLD;
 
   return 1;
-#endif
 }
