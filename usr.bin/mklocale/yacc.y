@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.14 2003/03/10 09:37:04 tshiozak Exp $	*/
+/*	$NetBSD: yacc.y,v 1.15 2003/03/10 20:41:30 tshiozak Exp $	*/
 
 %{
 /*-
@@ -47,7 +47,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.14 2003/03/10 09:37:04 tshiozak Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.15 2003/03/10 20:41:30 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,27 +55,14 @@ __RCSID("$NetBSD: yacc.y,v 1.14 2003/03/10 09:37:04 tshiozak Exp $");
 #include <netinet/in.h>	/* Needed by <arpa/inet.h> on NetBSD 1.5. */
 #include <arpa/inet.h>	/* Needed for htonl on POSIX systems. */
 
-#if defined(__FreeBSD__)
-#define _DONT_USE_CTYPE_INLINE_
-#endif
-#include <ctype.h>
 #include <err.h>
-#if !defined(__FreeBSD__)
-#define _BSD_RUNE_T_    int
-#define _BSD_CT_RUNE_T_ rune_t
-#ifndef UINT32_C
-/* assumes sizeof(unsigned int)>=4 */
-#define UINT32_C(c) ((uint32_t)(c##U))
-#endif
-#include "rune.h"
-#else
-#include <rune.h>
-#endif
+#include "locale/runetype.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "ldef.h"
 
