@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.28 2003/03/31 02:16:37 perry Exp $
+.\"	$NetBSD: systat.1,v 1.29 2003/06/27 09:38:58 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -153,7 +153,7 @@ the lower window and the refresh interval.
 .It Ic \&^Z
 Stop
 .Nm  .
-.It Ic ? , Ic h
+.It Ic \&? , Ic h
 Print the names of the available displays on the command line.
 .It Ic \&:
 Move the cursor to the command line and interpret the input
@@ -470,7 +470,7 @@ These commands are used to select a set of drives to report on,
 should your system have more drives configured than can normally
 be displayed on the screen.
 .Pp
-.Bl -tag -width Tx -compact
+.Bl -tag -width Ar -compact
 .It Cm ignore Op Ar drives
 Do not display information about the drives indicated.s
 Multiple drives may be specified, separated by spaces.
