@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.8 1999/02/18 10:24:16 jonathan Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.9 1999/03/02 09:24:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.8 1999/02/18 10:24:16 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.9 1999/03/02 09:24:17 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -408,6 +408,13 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 			intrcnt[SERIAL1_INTR]++;
 		}
 	
+		if ((intr & IOASIC_INTR_LANCE) &&
+		    tc_slot_info[KMIN_LANCE_SLOT].intr) {
+			(*(tc_slot_info[KMIN_LANCE_SLOT].intr))
+			  (tc_slot_info[KMIN_LANCE_SLOT].sc);
+			intrcnt[LANCE_INTR]++;
+		}
+
 		if ((intr & IOASIC_INTR_SCSI) &&
 		    tc_slot_info[KMIN_SCSI_SLOT].intr) {
 			(*(tc_slot_info[KMIN_SCSI_SLOT].intr))
@@ -415,13 +422,6 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 			intrcnt[SCSI_INTR]++;
 		}
 
-		if ((intr & IOASIC_INTR_LANCE) &&
-		    tc_slot_info[KMIN_LANCE_SLOT].intr) {
-			(*(tc_slot_info[KMIN_LANCE_SLOT].intr))
-			  (tc_slot_info[KMIN_LANCE_SLOT].sc);
-			intrcnt[LANCE_INTR]++;
-		}
-		
 		if (user_warned && ((intr & KMIN_INTR_PSWARN) == 0)) {
 			printf("%s\n", "Power supply ok now.");
 			user_warned = 0;
