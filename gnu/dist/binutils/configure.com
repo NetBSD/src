@@ -32,7 +32,7 @@ $ create []config.h
 /* Do we need to use the b modifier when opening binary files?  */
 /* #undef USE_BINARY_FOPEN */
 /* Define if you have the sbrk function.  */
-#define HAVE_SBRK 1
+/* #undef HAVE_SBRK 1 */
 /* Define if you have the utimes function.  */
 #define HAVE_UTIMES 1
 /* Define if you have the <fcntl.h> header file.  */

@@ -175,10 +175,13 @@ const struct m68k_opcode m68k_opcodes[] =
 {"jle",		one(0067400),	one(0177400), "Bg", m68000up | mcf5200 },
 
 {"bchg",	one(0000500),	one(0170700), "Dd$s", m68000up | mcf5200 },
-{"bchg",	one(0004100),	one(0177700), "#b$s", m68000up | mcf5200 },
+{"bchg",	one(0004100),	one(0177700), "#b$s", m68000up },
+{"bchg",	one(0004100),	one(0177700), "#bqs", mcf5200 },
 
-{"bclr",	one(0000600),	one(0170700), "Dd$s", m68000up | mcf5200 },
-{"bclr",	one(0004200),	one(0177700), "#b$s", m68000up | mcf5200 },
+{"bclr",	one(0000600),	one(0170700), "Dd$s", m68000up },
+{"bclr",	one(0000600),	one(0170700), "Ddvs", mcf5200 },
+{"bclr",	one(0004200),	one(0177700), "#b$s", m68000up },
+{"bclr",	one(0004200),	one(0177700), "#bqs", mcf5200 },
 
 {"bfchg",	two(0165300, 0), two(0177700, 0170000),	"?sO2O3",   m68020up },
 {"bfclr",	two(0166300, 0), two(0177700, 0170000),	"?sO2O3",   m68020up },
@@ -197,15 +200,18 @@ const struct m68k_opcode m68k_opcodes[] =
 {"bral",	one(0060377),	one(0177777), "BL", m68020up | cpu32 },
 {"bras",	one(0060000),	one(0177400), "BB", m68000up | mcf5200 },
 
-{"bset",	one(0000700),	one(0170700), "Dd$s", m68000up | mcf5200 },
-{"bset",	one(0004300),	one(0177700), "#b$s", m68000up | mcf5200 },
+{"bset",	one(0000700),	one(0170700), "Dd$s", m68000up },
+{"bset",	one(0000700),	one(0170700), "Ddvs", mcf5200 },
+{"bset",	one(0004300),	one(0177700), "#b$s", m68000up },
+{"bset",	one(0004300),	one(0177700), "#bqs", mcf5200 },
 
 {"bsrw",	one(0060400),	one(0177777), "BW", m68000up | mcf5200 },
 {"bsrl",	one(0060777),	one(0177777), "BL", m68020up | cpu32 },
 {"bsrs",	one(0060400),	one(0177400), "BB", m68000up | mcf5200 },
 
-{"btst",	one(0000400),	one(0170700), "Dd@s", m68000up | mcf5200 },
-{"btst",	one(0004000),	one(0177700), "#b@s", m68000up | mcf5200 },
+{"btst",	one(0000400),	one(0170700), "Dd;b", m68000up | mcf5200 },
+{"btst",	one(0004000),	one(0177700), "#b@s", m68000up },
+{"btst",	one(0004000),	one(0177700), "#bqs", mcf5200 },
 
 {"callm",	one(0003300),		one(0177700), "#b!s", m68020 },
 
@@ -1191,7 +1197,7 @@ const struct m68k_opcode m68k_opcodes[] =
 {"ftwotoxx",	two(0xF000, 0x4811), two(0xF1C0, 0xFC7F), "Ii;xF7", mfloat },
 {"ftwotoxx",	two(0xF000, 0x0011), two(0xF1C0, 0xE07F), "IiFt",   mfloat },
 
-{"halt",	one(0045310),	one(0177777), "",     mcf5200 },
+{"halt",	one(0045310),	one(0177777), "",     m68060 | mcf5200 },
 
 {"illegal",	one(0045374),	one(0177777), "",     m68000up },
 
@@ -1207,7 +1213,7 @@ const struct m68k_opcode m68k_opcodes[] =
 
 {"lea",		one(0040700),	one(0170700), "!sAd", m68000up | mcf5200 },
 
-{"lpstop",	two(0174000,0000700), two(0177777,0177777), "", cpu32|m68060 },
+{"lpstop",	two(0174000,0000700),two(0177777,0177777),"#w", cpu32|m68060 },
 
 {"linkw",	one(0047120),	one(0177770), "As#w", m68000up | mcf5200 },
 {"linkl",	one(0044010),	one(0177770), "As#l", m68020up | cpu32 },
@@ -1299,10 +1305,10 @@ const struct m68k_opcode m68k_opcodes[] =
 {"movew",	one(0041300),	one(0177770), "CsDs", mcf5200 },
 {"movew",	one(0042300),	one(0177700), ";wCd", m68000up },
 {"movew",	one(0042300),	one(0177700), "DsCd", mcf5200 },
-{"movew",	one(0042300),	one(0177700), "#wCd", mcf5200 },
+{"movew",	one(0042374),	one(0177700), "#wCd", mcf5200 },
 {"movew",	one(0043300),	one(0177700), ";wSd", m68000up },
 {"movew",	one(0043300),	one(0177700), "DsSd", mcf5200 },
-{"movew",	one(0043300),	one(0177700), "#wSd", mcf5200 },
+{"movew",	one(0043374),	one(0177700), "#wSd", mcf5200 },
 
 {"movel",	one(0070000),	one(0170400), "MsDd", m68000up | mcf5200 },
 {"movel",	one(0020000),	one(0170000), "*l%d", m68000up },
@@ -1620,7 +1626,7 @@ const struct m68k_opcode m68k_opcodes[] =
 {"ptrapwsl",	two(0xf07b, 0x0008),	two(0xffff, 0xffff), "#l", m68851 },
 {"ptrapws",	two(0xf07c, 0x0008),	two(0xffff, 0xffff), "",   m68851 },
 
-{"pulse",	one(0045314),		one(0177777), "", mcf5200 },
+{"pulse",	one(0045314),		one(0177777), "", m68060 | mcf5200 },
 
 {"pvalid",	two(0xf000, 0x2800),	two(0xffc0, 0xffff), "Vs&s", m68851 },
 {"pvalid",	two(0xf000, 0x2c00),	two(0xffc0, 0xfff8), "A3&s", m68851 },
@@ -1760,7 +1766,7 @@ const struct m68k_opcode m68k_opcodes[] =
 
 #define TBL1(name,signed,round,size)					\
   {name, two(0174000, (signed<<11)|(!round<<10)|(size<<6)|0000400),	\
-     two(0177700,0107777), "`sD1", cpu32 },				\
+     two(0177700,0107777), "!sD1", cpu32 },				\
   {name, two(0174000, (signed<<11)|(!round<<10)|(size<<6)),		\
      two(0177770,0107770), "DsD3D1", cpu32 }
 #define TBL(name1, name2, name3, s, r) \
@@ -1825,11 +1831,11 @@ TBL("tblunb", "tblunw", "tblunl", 0, 0),
 
 {"trapv",	one(0047166),	one(0177777), "", m68000up },
 
-{"tstb",	one(0045000),	one(0177700), ";b", m68020up | mcf5200 },
+{"tstb",	one(0045000),	one(0177700), ";b", m68020up|cpu32|mcf5200 },
 {"tstb",	one(0045000),	one(0177700), "@b", m68000up },
-{"tstw",	one(0045100),	one(0177700), "*w", m68020up | mcf5200 },
+{"tstw",	one(0045100),	one(0177700), "*w", m68020up|cpu32|mcf5200 },
 {"tstw",	one(0045100),	one(0177700), "@w", m68000up },
-{"tstl",	one(0045200),	one(0177700), "*l", m68020up | mcf5200 },
+{"tstl",	one(0045200),	one(0177700), "*l", m68020up|cpu32|mcf5200 },
 {"tstl",	one(0045200),	one(0177700), "@l", m68000up },
 
 {"unlk",	one(0047130),	one(0177770), "As", m68000up | mcf5200 },

@@ -1,5 +1,5 @@
-This is Info file as.info, produced by Makeinfo-1.64 from the input
-file ./as.texinfo.
+This is Info file as.info, produced by Makeinfo version 1.68 from the
+input file as.texinfo.
 
 START-INFO-DIR-ENTRY
 * As: (as).                     The GNU assembler.
@@ -7,7 +7,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the GNU Assembler "as".
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 1997 Free Software
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software
 Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -22,6 +22,325 @@ permission notice identical to this one.
    Permission is granted to copy and distribute translations of this
 manual into another language, under the above conditions for modified
 versions.
+
+
+File: as.info,  Node: H8/300 Opcodes,  Prev: H8/300 Directives,  Up: H8/300-Dependent
+
+Opcodes
+-------
+
+   For detailed information on the H8/300 machine instruction set, see
+`H8/300 Series Programming Manual' (Hitachi ADE-602-025).  For
+information specific to the H8/300H, see `H8/300H Series Programming
+Manual' (Hitachi).
+
+   `as' implements all the standard H8/300 opcodes.  No additional
+pseudo-instructions are needed on this family.
+
+   The following table summarizes the H8/300 opcodes, and their
+arguments.  Entries marked `*' are opcodes used only on the H8/300H.
+
+              Legend:
+                 Rs   source register
+                 Rd   destination register
+                 abs  absolute address
+                 imm  immediate data
+              disp:N  N-bit displacement from a register
+             pcrel:N  N-bit displacement relative to program counter
+     
+        add.b #imm,rd              *  andc #imm,ccr
+        add.b rs,rd                   band #imm,rd
+        add.w rs,rd                   band #imm,@rd
+     *  add.w #imm,rd                 band #imm,@abs:8
+     *  add.l rs,rd                   bra  pcrel:8
+     *  add.l #imm,rd              *  bra  pcrel:16
+        adds #imm,rd                  bt   pcrel:8
+        addx #imm,rd               *  bt   pcrel:16
+        addx rs,rd                    brn  pcrel:8
+        and.b #imm,rd              *  brn  pcrel:16
+        and.b rs,rd                   bf   pcrel:8
+     *  and.w rs,rd                *  bf   pcrel:16
+     *  and.w #imm,rd                 bhi  pcrel:8
+     *  and.l #imm,rd              *  bhi  pcrel:16
+     *  and.l rs,rd                   bls  pcrel:8
+     
+     *  bls  pcrel:16                 bld  #imm,rd
+        bcc  pcrel:8                  bld  #imm,@rd
+     *  bcc  pcrel:16                 bld  #imm,@abs:8
+        bhs  pcrel:8                  bnot #imm,rd
+     *  bhs  pcrel:16                 bnot #imm,@rd
+        bcs  pcrel:8                  bnot #imm,@abs:8
+     *  bcs  pcrel:16                 bnot rs,rd
+        blo  pcrel:8                  bnot rs,@rd
+     *  blo  pcrel:16                 bnot rs,@abs:8
+        bne  pcrel:8                  bor  #imm,rd
+     *  bne  pcrel:16                 bor  #imm,@rd
+        beq  pcrel:8                  bor  #imm,@abs:8
+     *  beq  pcrel:16                 bset #imm,rd
+        bvc  pcrel:8                  bset #imm,@rd
+     *  bvc  pcrel:16                 bset #imm,@abs:8
+        bvs  pcrel:8                  bset rs,rd
+     *  bvs  pcrel:16                 bset rs,@rd
+        bpl  pcrel:8                  bset rs,@abs:8
+     *  bpl  pcrel:16                 bsr  pcrel:8
+        bmi  pcrel:8                  bsr  pcrel:16
+     *  bmi  pcrel:16                 bst  #imm,rd
+        bge  pcrel:8                  bst  #imm,@rd
+     *  bge  pcrel:16                 bst  #imm,@abs:8
+        blt  pcrel:8                  btst #imm,rd
+     *  blt  pcrel:16                 btst #imm,@rd
+        bgt  pcrel:8                  btst #imm,@abs:8
+     *  bgt  pcrel:16                 btst rs,rd
+        ble  pcrel:8                  btst rs,@rd
+     *  ble  pcrel:16                 btst rs,@abs:8
+        bclr #imm,rd                  bxor #imm,rd
+        bclr #imm,@rd                 bxor #imm,@rd
+        bclr #imm,@abs:8              bxor #imm,@abs:8
+        bclr rs,rd                    cmp.b #imm,rd
+        bclr rs,@rd                   cmp.b rs,rd
+        bclr rs,@abs:8                cmp.w rs,rd
+        biand #imm,rd                 cmp.w rs,rd
+        biand #imm,@rd             *  cmp.w #imm,rd
+        biand #imm,@abs:8          *  cmp.l #imm,rd
+        bild #imm,rd               *  cmp.l rs,rd
+        bild #imm,@rd                 daa  rs
+        bild #imm,@abs:8              das  rs
+        bior #imm,rd                  dec.b rs
+        bior #imm,@rd              *  dec.w #imm,rd
+        bior #imm,@abs:8           *  dec.l #imm,rd
+        bist #imm,rd                  divxu.b rs,rd
+        bist #imm,@rd              *  divxu.w rs,rd
+        bist #imm,@abs:8           *  divxs.b rs,rd
+        bixor #imm,rd              *  divxs.w rs,rd
+        bixor #imm,@rd                eepmov
+        bixor #imm,@abs:8          *  eepmovw
+     
+     *  exts.w rd                     mov.w rs,@abs:16
+     *  exts.l rd                  *  mov.l #imm,rd
+     *  extu.w rd                  *  mov.l rs,rd
+     *  extu.l rd                  *  mov.l @rs,rd
+        inc  rs                    *  mov.l @(disp:16,rs),rd
+     *  inc.w #imm,rd              *  mov.l @(disp:24,rs),rd
+     *  inc.l #imm,rd              *  mov.l @rs+,rd
+        jmp  @rs                   *  mov.l @abs:16,rd
+        jmp  abs                   *  mov.l @abs:24,rd
+        jmp  @@abs:8               *  mov.l rs,@rd
+        jsr  @rs                   *  mov.l rs,@(disp:16,rd)
+        jsr  abs                   *  mov.l rs,@(disp:24,rd)
+        jsr  @@abs:8               *  mov.l rs,@-rd
+        ldc  #imm,ccr              *  mov.l rs,@abs:16
+        ldc  rs,ccr                *  mov.l rs,@abs:24
+     *  ldc  @abs:16,ccr              movfpe @abs:16,rd
+     *  ldc  @abs:24,ccr              movtpe rs,@abs:16
+     *  ldc  @(disp:16,rs),ccr        mulxu.b rs,rd
+     *  ldc  @(disp:24,rs),ccr     *  mulxu.w rs,rd
+     *  ldc  @rs+,ccr              *  mulxs.b rs,rd
+     *  ldc  @rs,ccr               *  mulxs.w rs,rd
+     *  mov.b @(disp:24,rs),rd        neg.b rs
+     *  mov.b rs,@(disp:24,rd)     *  neg.w rs
+        mov.b @abs:16,rd           *  neg.l rs
+        mov.b rs,rd                   nop
+        mov.b @abs:8,rd               not.b rs
+        mov.b rs,@abs:8            *  not.w rs
+        mov.b rs,rd                *  not.l rs
+        mov.b #imm,rd                 or.b #imm,rd
+        mov.b @rs,rd                  or.b rs,rd
+        mov.b @(disp:16,rs),rd     *  or.w #imm,rd
+        mov.b @rs+,rd              *  or.w rs,rd
+        mov.b @abs:8,rd            *  or.l #imm,rd
+        mov.b rs,@rd               *  or.l rs,rd
+        mov.b rs,@(disp:16,rd)        orc  #imm,ccr
+        mov.b rs,@-rd                 pop.w rs
+        mov.b rs,@abs:8            *  pop.l rs
+        mov.w rs,@rd                  push.w rs
+     *  mov.w @(disp:24,rs),rd     *  push.l rs
+     *  mov.w rs,@(disp:24,rd)        rotl.b rs
+     *  mov.w @abs:24,rd           *  rotl.w rs
+     *  mov.w rs,@abs:24           *  rotl.l rs
+        mov.w rs,rd                   rotr.b rs
+        mov.w #imm,rd              *  rotr.w rs
+        mov.w @rs,rd               *  rotr.l rs
+        mov.w @(disp:16,rs),rd        rotxl.b rs
+        mov.w @rs+,rd              *  rotxl.w rs
+        mov.w @abs:16,rd           *  rotxl.l rs
+        mov.w rs,@(disp:16,rd)        rotxr.b rs
+        mov.w rs,@-rd              *  rotxr.w rs
+     
+     *  rotxr.l rs                 *  stc  ccr,@(disp:24,rd)
+        bpt                        *  stc  ccr,@-rd
+        rte                        *  stc  ccr,@abs:16
+        rts                        *  stc  ccr,@abs:24
+        shal.b rs                     sub.b rs,rd
+     *  shal.w rs                     sub.w rs,rd
+     *  shal.l rs                  *  sub.w #imm,rd
+        shar.b rs                  *  sub.l rs,rd
+     *  shar.w rs                  *  sub.l #imm,rd
+     *  shar.l rs                     subs #imm,rd
+        shll.b rs                     subx #imm,rd
+     *  shll.w rs                     subx rs,rd
+     *  shll.l rs                  *  trapa #imm
+        shlr.b rs                     xor  #imm,rd
+     *  shlr.w rs                     xor  rs,rd
+     *  shlr.l rs                  *  xor.w #imm,rd
+        sleep                      *  xor.w rs,rd
+        stc  ccr,rd                *  xor.l #imm,rd
+     *  stc  ccr,@rs               *  xor.l rs,rd
+     *  stc  ccr,@(disp:16,rd)        xorc #imm,ccr
+
+   Four H8/300 instructions (`add', `cmp', `mov', `sub') are defined
+with variants using the suffixes `.b', `.w', and `.l' to specify the
+size of a memory operand.  `as' supports these suffixes, but does not
+require them; since one of the operands is always a register, `as' can
+deduce the correct size.
+
+   For example, since `r0' refers to a 16-bit register,
+     mov    r0,@foo
+is equivalent to
+     mov.w  r0,@foo
+
+   If you use the size suffixes, `as' issues a warning when the suffix
+and the register size do not match.
+
+
+File: as.info,  Node: H8/500-Dependent,  Next: HPPA-Dependent,  Prev: H8/300-Dependent,  Up: Machine Dependencies
+
+H8/500 Dependent Features
+=========================
+
+* Menu:
+
+* H8/500 Options::              Options
+* H8/500 Syntax::               Syntax
+* H8/500 Floating Point::       Floating Point
+* H8/500 Directives::           H8/500 Machine Directives
+* H8/500 Opcodes::              Opcodes
+
+
+File: as.info,  Node: H8/500 Options,  Next: H8/500 Syntax,  Up: H8/500-Dependent
+
+Options
+-------
+
+   `as' has no additional command-line options for the Hitachi H8/500
+family.
+
+
+File: as.info,  Node: H8/500 Syntax,  Next: H8/500 Floating Point,  Prev: H8/500 Options,  Up: H8/500-Dependent
+
+Syntax
+------
+
+* Menu:
+
+* H8/500-Chars::                Special Characters
+* H8/500-Regs::                 Register Names
+* H8/500-Addressing::           Addressing Modes
+
+
+File: as.info,  Node: H8/500-Chars,  Next: H8/500-Regs,  Up: H8/500 Syntax
+
+Special Characters
+..................
+
+   `!' is the line comment character.
+
+   `;' can be used instead of a newline to separate statements.
+
+   Since `$' has no special meaning, you may use it in symbol names.
+
+
+File: as.info,  Node: H8/500-Regs,  Next: H8/500-Addressing,  Prev: H8/500-Chars,  Up: H8/500 Syntax
+
+Register Names
+..............
+
+   You can use the predefined symbols `r0', `r1', `r2', `r3', `r4',
+`r5', `r6', and `r7' to refer to the H8/500 registers.
+
+   The H8/500 also has these control registers:
+
+`cp'
+     code pointer
+
+`dp'
+     data pointer
+
+`bp'
+     base pointer
+
+`tp'
+     stack top pointer
+
+`ep'
+     extra pointer
+
+`sr'
+     status register
+
+`ccr'
+     condition code register
+
+   All registers are 16 bits long.  To represent 32 bit numbers, use two
+adjacent registers; for distant memory addresses, use one of the segment
+pointers (`cp' for the program counter; `dp' for `r0'-`r3'; `ep' for
+`r4' and `r5'; and `tp' for `r6' and `r7'.
+
+
+File: as.info,  Node: H8/500-Addressing,  Prev: H8/500-Regs,  Up: H8/500 Syntax
+
+Addressing Modes
+................
+
+   as understands the following addressing modes for the H8/500:
+`RN'
+     Register direct
+
+`@RN'
+     Register indirect
+
+`@(d:8, RN)'
+     Register indirect with 8 bit signed displacement
+
+`@(d:16, RN)'
+     Register indirect with 16 bit signed displacement
+
+`@-RN'
+     Register indirect with pre-decrement
+
+`@RN+'
+     Register indirect with post-increment
+
+`@AA:8'
+     8 bit absolute address
+
+`@AA:16'
+     16 bit absolute address
+
+`#XX:8'
+     8 bit immediate
+
+`#XX:16'
+     16 bit immediate
+
+
+File: as.info,  Node: H8/500 Floating Point,  Next: H8/500 Directives,  Prev: H8/500 Syntax,  Up: H8/500-Dependent
+
+Floating Point
+--------------
+
+   The H8/500 family has no hardware floating point, but the `.float'
+directive generates IEEE floating-point numbers for compatibility with
+other development tools.
+
+
+File: as.info,  Node: H8/500 Directives,  Next: H8/500 Opcodes,  Prev: H8/500 Floating Point,  Up: H8/500-Dependent
+
+H8/500 Machine Directives
+-------------------------
+
+   `as' has no machine-dependent directives for the H8/500.  However,
+on this platform the `.int' and `.word' directives generate 16-bit
+numbers.
 
 
 File: as.info,  Node: H8/500 Opcodes,  Prev: H8/500 Directives,  Up: H8/500-Dependent
@@ -707,15 +1026,6 @@ these data types into memory.
    Register to register operations do not require opcode suffixes, so
 that `fst %st, %st(1)' is equivalent to `fstl %st, %st(1)'.
 
-   Since the 80387 automatically synchronizes with the 80386 `fwait'
-instructions are almost never needed (this is not the case for the
-80286/80287 and 8086/8087 combinations).  Therefore, `as' suppresses
-the `fwait' instruction whenever it is implicitly selected by one of
-the `fn...' instructions.  For example, `fsave' and `fnsave' are
-treated identically.  In general, all the `fn...' instructions are made
-equivalent to `f...' instructions.  If `fwait' is desired it must be
-explicitly coded.
-
 
 File: as.info,  Node: i386-16bit,  Next: i386-Notes,  Prev: i386-Float,  Up: i386-Dependent
 
@@ -960,245 +1270,4 @@ the most appropriate form of subroutine call: `call', `bal', or
 `.leafproc' or `.sysproc' directive defining the operand--then `as'
 translates the `callj'; if not, it simply emits the `callj', leaving it
 for the linker to resolve.
-
-
-File: as.info,  Node: Compare-and-branch-i960,  Prev: callj-i960,  Up: Opcodes for i960
-
-Compare-and-Branch
-..................
-
-   The 960 architectures provide combined Compare-and-Branch
-instructions that permit you to store the branch target in the lower 13
-bits of the instruction word itself.  However, if you specify a branch
-target far enough away that its address won't fit in 13 bits, the
-assembler can either issue an error, or convert your Compare-and-Branch
-instruction into separate instructions to do the compare and the branch.
-
-   Whether `as' gives an error or expands the instruction depends on
-two choices you can make: whether you use the `-no-relax' option, and
-whether you use a "Compare and Branch" instruction or a "Compare and
-Jump" instruction.  The "Jump" instructions are *always* expanded if
-necessary; the "Branch" instructions are expanded when necessary
-*unless* you specify `-no-relax'--in which case `as' gives an error
-instead.
-
-   These are the Compare-and-Branch instructions, their "Jump" variants,
-and the instruction pairs they may expand into:
-
-             Compare and
-          Branch      Jump       Expanded to
-          ------    ------       ------------
-             bbc                 chkbit; bno
-             bbs                 chkbit; bo
-          cmpibe    cmpije       cmpi; be
-          cmpibg    cmpijg       cmpi; bg
-         cmpibge   cmpijge       cmpi; bge
-          cmpibl    cmpijl       cmpi; bl
-         cmpible   cmpijle       cmpi; ble
-         cmpibno   cmpijno       cmpi; bno
-         cmpibne   cmpijne       cmpi; bne
-          cmpibo    cmpijo       cmpi; bo
-          cmpobe    cmpoje       cmpo; be
-          cmpobg    cmpojg       cmpo; bg
-         cmpobge   cmpojge       cmpo; bge
-          cmpobl    cmpojl       cmpo; bl
-         cmpoble   cmpojle       cmpo; ble
-         cmpobne   cmpojne       cmpo; bne
-
-
-File: as.info,  Node: M68K-Dependent,  Next: MIPS-Dependent,  Prev: i960-Dependent,  Up: Machine Dependencies
-
-M680x0 Dependent Features
-=========================
-
-* Menu:
-
-* M68K-Opts::                   M680x0 Options
-* M68K-Syntax::                 Syntax
-* M68K-Moto-Syntax::            Motorola Syntax
-* M68K-Float::                  Floating Point
-* M68K-Directives::             680x0 Machine Directives
-* M68K-opcodes::                Opcodes
-
-
-File: as.info,  Node: M68K-Opts,  Next: M68K-Syntax,  Up: M68K-Dependent
-
-M680x0 Options
---------------
-
-   The Motorola 680x0 version of `as' has a few machine dependent
-options.
-
-   You can use the `-l' option to shorten the size of references to
-undefined symbols.  If you do not use the `-l' option, references to
-undefined symbols are wide enough for a full `long' (32 bits).  (Since
-`as' cannot know where these symbols end up, `as' can only allocate
-space for the linker to fill in later.  Since `as' does not know how
-far away these symbols are, it allocates as much space as it can.)  If
-you use this option, the references are only one word wide (16 bits).
-This may be useful if you want the object file to be as small as
-possible, and you know that the relevant symbols are always less than
-17 bits away.
-
-   For some configurations, especially those where the compiler normally
-does not prepend an underscore to the names of user variables, the
-assembler requires a `%' before any use of a register name.  This is
-intended to let the assembler distinguish between C variables and
-functions named `a0' through `a7', and so on.  The `%' is always
-accepted, but is not required for certain configurations, notably
-`sun3'.  The `--register-prefix-optional' option may be used to permit
-omitting the `%' even for configurations for which it is normally
-required.  If this is done, it will generally be impossible to refer to
-C variables and functions with the same names as register names.
-
-   Normally the character `|' is treated as a comment character, which
-means that it can not be used in expressions.  The `--bitwise-or'
-option turns `|' into a normal character.  In this mode, you must
-either use C style comments, or start comments with a `#' character at
-the beginning of a line.
-
-   If you use an addressing mode with a base register without specifying
-the size, `as' will normally use the full 32 bit value.  For example,
-the addressing mode `%a0@(%d0)' is equivalent to `%a0@(%d0:l)'.  You
-may use the `--base-size-default-16' option to tell `as' to default to
-using the 16 bit value.  In this case, `%a0@(%d0)' is equivalent to
-`%a0@(%d0:w)'.  You may use the `--base-size-default-32' option to
-restore the default behaviour.
-
-   If you use an addressing mode with a displacement, and the value of
-the displacement is not known, `as' will normally assume that the value
-is 32 bits.  For example, if the symbol `disp' has not been defined,
-`as' will assemble the addressing mode `%a0@(disp,%d0)' as though
-`disp' is a 32 bit value.  You may use the `--disp-size-default-16'
-option to tell `as' to instead assume that the displacement is 16 bits.
-In this case, `as' will assemble `%a0@(disp,%d0)' as though `disp' is
-a 16 bit value.  You may use the `--disp-size-default-32' option to
-restore the default behaviour.
-
-   `as' can assemble code for several different members of the Motorola
-680x0 family.  The default depends upon how `as' was configured when it
-was built; normally, the default is to assemble code for the 68020
-microprocessor.  The following options may be used to change the
-default.  These options control which instructions and addressing modes
-are permitted.  The members of the 680x0 family are very similar.  For
-detailed information about the differences, see the Motorola manuals.
-
-`-m68000'
-`-m68008'
-`-m68302'
-     Assemble for the 68000.  `-m68008' and `-m68302' are synonyms for
-     `-m68000', since the chips are the same from the point of view of
-     the assembler.
-
-`-m68010'
-     Assemble for the 68010.
-
-`-m68020'
-     Assemble for the 68020.  This is normally the default.
-
-`-m68030'
-     Assemble for the 68030.
-
-`-m68040'
-     Assemble for the 68040.
-
-`-m68060'
-     Assemble for the 68060.
-
-`-mcpu32'
-`-m68331'
-`-m68332'
-`-m68333'
-`-m68340'
-`-m68360'
-     Assemble for the CPU32 family of chips.
-
-`-m5200'
-     Assemble for the ColdFire family of chips.
-
-`-m68881'
-`-m68882'
-     Assemble 68881 floating point instructions.  This is the default
-     for the 68020, 68030, and the CPU32.  The 68040 and 68060 always
-     support floating point instructions.
-
-`-mno-68881'
-     Do not assemble 68881 floating point instructions.  This is the
-     default for 68000 and the 68010.  The 68040 and 68060 always
-     support floating point instructions, even if this option is used.
-
-`-m68851'
-     Assemble 68851 MMU instructions.  This is the default for the
-     68020, 68030, and 68060.  The 68040 accepts a somewhat different
-     set of MMU instructions; `-m68851' and `-m68040' should not be used
-     together.
-
-`-mno-68851'
-     Do not assemble 68851 MMU instructions.  This is the default for
-     the 68000, 68010, and the CPU32.  The 68040 accepts a somewhat
-     different set of MMU instructions.
-
-
-File: as.info,  Node: M68K-Syntax,  Next: M68K-Moto-Syntax,  Prev: M68K-Opts,  Up: M68K-Dependent
-
-Syntax
-------
-
-   This syntax for the Motorola 680x0 was developed at MIT.
-
-   The 680x0 version of `as' uses instructions names and syntax
-compatible with the Sun assembler.  Intervening periods are ignored;
-for example, `movl' is equivalent to `mov.l'.
-
-   In the following table APC stands for any of the address registers
-(`%a0' through `%a7'), the program counter (`%pc'), the zero-address
-relative to the program counter (`%zpc'), a suppressed address register
-(`%za0' through `%za7'), or it may be omitted entirely.  The use of
-SIZE means one of `w' or `l', and it may be omitted, along with the
-leading colon, unless a scale is also specified.  The use of SCALE
-means one of `1', `2', `4', or `8', and it may always be omitted along
-with the leading colon.
-
-   The following addressing modes are understood:
-"Immediate"
-     `#NUMBER'
-
-"Data Register"
-     `%d0' through `%d7'
-
-"Address Register"
-     `%a0' through `%a7'
-     `%a7' is also known as `%sp', i.e. the Stack Pointer.  `%a6' is
-     also known as `%fp', the Frame Pointer.
-
-"Address Register Indirect"
-     `%a0@' through `%a7@'
-
-"Address Register Postincrement"
-     `%a0@+' through `%a7@+'
-
-"Address Register Predecrement"
-     `%a0@-' through `%a7@-'
-
-"Indirect Plus Offset"
-     `APC@(NUMBER)'
-
-"Index"
-     `APC@(NUMBER,REGISTER:SIZE:SCALE)'
-
-     The NUMBER may be omitted.
-
-"Postindex"
-     `APC@(NUMBER)@(ONUMBER,REGISTER:SIZE:SCALE)'
-
-     The ONUMBER or the REGISTER, but not both, may be omitted.
-
-"Preindex"
-     `APC@(NUMBER,REGISTER:SIZE:SCALE)@(ONUMBER)'
-
-     The NUMBER may be omitted.  Omitting the REGISTER produces the
-     Postindex addressing mode.
-
-"Absolute"
-     `SYMBOL', or `DIGITS', optionally followed by `:b', `:w', or `:l'.
 

@@ -1,5 +1,5 @@
 /* Print mips instructions for GDB, the GNU debugger, or for objdump.
-   Copyright 1989, 91, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright 1989, 91-97, 1998 Free Software Foundation, Inc.
    Contributed by Nobuyuki Hikichi(hikichi@sra.co.jp).
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -175,6 +175,7 @@ print_insn_arg (d, l, pc, info)
 			     (l >> OP_SH_FS) & OP_MASK_FS);
       break;
 
+
     case 'T':
     case 'W':
       (*info->fprintf_func) (info->stream, "$f%d",
@@ -211,6 +212,12 @@ print_insn_arg (d, l, pc, info)
 			     (l >> OP_SH_CCC) & OP_MASK_CCC);
       break;
 
+    case 'P':
+      (*info->fprintf_func) (info->stream, "%d",
+			     (l >> OP_SH_PERFREG) & OP_MASK_PERFREG);
+      break;
+
+
     default:
       (*info->fprintf_func) (info->stream,
 			     "# internal error, undefined modifier(%c)", *d);
@@ -230,6 +237,7 @@ _print_insn_mips (memaddr, word, info)
      struct disassemble_info *info;
 {
   register const struct mips_opcode *op;
+  int target_processor, mips_isa;
   static boolean init = 0;
   static const struct mips_opcode *mips_hash[OP_MASK_OP + 1];
 
@@ -255,6 +263,71 @@ _print_insn_mips (memaddr, word, info)
       init = 1;
     }
 
+  switch (info->mach)
+    {
+      case bfd_mach_mips3000:
+	target_processor = 3000;
+	mips_isa = 1;
+	break;
+      case bfd_mach_mips3900:
+	target_processor = 3900;
+	mips_isa = 1;
+	break;
+      case bfd_mach_mips4000:
+	target_processor = 4000;
+	mips_isa = 3;
+	break;
+      case bfd_mach_mips4010:
+	target_processor = 4010;
+	mips_isa = 2;
+	break;
+      case bfd_mach_mips4100:
+	target_processor = 4100;
+	mips_isa = 3;
+	break;
+      case bfd_mach_mips4300:
+	target_processor = 4300;
+	mips_isa = 3;
+	break;
+      case bfd_mach_mips4400:
+	target_processor = 4400;
+	mips_isa = 3;
+	break;
+      case bfd_mach_mips4600:
+	target_processor = 4600;
+	mips_isa = 3;
+	break;
+      case bfd_mach_mips4650:
+	target_processor = 4650;
+	mips_isa = 3;
+	break;
+      case bfd_mach_mips5000:
+	target_processor = 5000;
+	mips_isa = 4;
+	break;
+      case bfd_mach_mips6000:
+	target_processor = 6000;
+	mips_isa = 2;
+	break;
+      case bfd_mach_mips8000:
+	target_processor = 8000;
+	mips_isa = 4;
+	break;
+      case bfd_mach_mips10000:
+	target_processor = 10000;
+	mips_isa = 4;
+	break;
+      case bfd_mach_mips16:
+	target_processor = 16;
+	mips_isa = 3;
+	break;
+      default:
+	target_processor = 3000;
+	mips_isa = 3;
+	break;
+
+    }
+
   info->bytes_per_chunk = 4;
   info->display_endian = info->endian;
 
@@ -266,15 +339,38 @@ _print_insn_mips (memaddr, word, info)
 	  if (op->pinfo != INSN_MACRO && (word & op->mask) == op->match)
 	    {
 	      register const char *d;
+	      int insn_isa;
+
+	      if ((op->membership & INSN_ISA) == INSN_ISA1)
+		insn_isa = 1;
+	      else if ((op->membership & INSN_ISA) == INSN_ISA2)
+		insn_isa = 2;
+	      else if ((op->membership & INSN_ISA) == INSN_ISA3)
+		insn_isa = 3;
+	      else if ((op->membership & INSN_ISA) == INSN_ISA4)
+		insn_isa = 4;
+	      else
+		insn_isa = 15;
+
+	      if (insn_isa > mips_isa
+		  && (target_processor == 4650
+		      && op->membership & INSN_4650) == 0
+		  && (target_processor == 4010
+		      && op->membership & INSN_4010) == 0
+		  && (target_processor == 4100
+		      && op->membership & INSN_4100) == 0
+		  && (target_processor == 3900
+		      && op->membership & INSN_3900) == 0)
+		continue;
 
 	      (*info->fprintf_func) (info->stream, "%s", op->name);
 
 	      d = op->args;
 	      if (d != NULL && *d != '\0')
 		{
-		  (*info->fprintf_func) (info->stream, "\t");
+		    (*info->fprintf_func) (info->stream, "\t");
 		  for (; *d != '\0'; d++)
-		    print_insn_arg (d, word, memaddr, info);
+		      print_insn_arg (d, word, memaddr, info);
 		}
 
 	      return 4;
@@ -297,8 +393,8 @@ print_insn_big_mips (memaddr, info)
 
   if (info->mach == 16
       || (info->flavour == bfd_target_elf_flavour
-	  && info->symbol != NULL
-	  && (((elf_symbol_type *) info->symbol)->internal_elf_sym.st_other
+	  && info->symbols != NULL
+	  && ((*(elf_symbol_type **) info->symbols)->internal_elf_sym.st_other
 	      == STO_MIPS16)))
     return print_insn_mips16 (memaddr, info);
 
@@ -321,10 +417,11 @@ print_insn_little_mips (memaddr, info)
   bfd_byte buffer[4];
   int status;
 
+
   if (info->mach == 16
       || (info->flavour == bfd_target_elf_flavour
-	  && info->symbol != NULL
-	  && (((elf_symbol_type *) info->symbol)->internal_elf_sym.st_other
+	  && info->symbols != NULL
+	  && ((*(elf_symbol_type **) info->symbols)->internal_elf_sym.st_other
 	      == STO_MIPS16)))
     return print_insn_mips16 (memaddr, info);
 
@@ -351,7 +448,7 @@ print_insn_mips16 (memaddr, info)
   int length;
   int insn;
   boolean use_extend;
-  int extend;
+  int extend = 0;
   const struct mips_opcode *op, *opend;
 
   info->bytes_per_chunk = 2;

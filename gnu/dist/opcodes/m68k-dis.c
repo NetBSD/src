@@ -1,5 +1,5 @@
 /* Print Motorola 68k instructions.
-   Copyright 1986, 87, 89, 91, 92, 93, 94, 95, 96, 1997
+   Copyright 1986, 87, 89, 91, 92, 93, 94, 95, 96, 97, 1998
    Free Software Foundation, Inc.
 
 This file is free software; you can redistribute it and/or modify
@@ -171,6 +171,7 @@ print_insn_m68k (memaddr, info)
   register const char *d;
   register unsigned long bestmask;
   const struct m68k_opcode *best = 0;
+  unsigned int arch_mask;
   struct private priv;
   bfd_byte *buffer = priv.the_buffer;
   fprintf_ftype save_printer = info->fprintf_func;
@@ -219,6 +220,37 @@ print_insn_m68k (memaddr, info)
     /* Error return.  */
     return -1;
 
+  switch (info->mach)
+    {
+    default:
+    case 0:
+      arch_mask = (unsigned int) -1;
+      break;
+    case bfd_mach_m68000:
+      arch_mask = m68000;
+      break;
+    case bfd_mach_m68008:
+      arch_mask = m68008;
+      break;
+    case bfd_mach_m68010:
+      arch_mask = m68010;
+      break;
+    case bfd_mach_m68020:
+      arch_mask = m68020;
+      break;
+    case bfd_mach_m68030:
+      arch_mask = m68030;
+      break;
+    case bfd_mach_m68040:
+      arch_mask = m68040;
+      break;
+    case bfd_mach_m68060:
+      arch_mask = m68060;
+      break;
+    }
+
+  arch_mask |= m68881 | m68851;
+
   bestmask = 0;
   FETCH_DATA (info, buffer + 2);
   major_opcode = (buffer[0] >> 4) & 15;
@@ -236,7 +268,8 @@ print_insn_m68k (memaddr, info)
 	      (FETCH_DATA (info, buffer + 4)
 	       && ((0xff & buffer[2] & (match >> 8)) == (0xff & (opcode >> 8)))
 	       && ((0xff & buffer[3] & match) == (0xff & opcode)))
-	      ))
+	      )
+	  && (opc->arch & arch_mask) != 0)
 	{
 	  /* Don't use for printout the variants of divul and divsl
 	     that have the same register number in two places.
@@ -324,12 +357,29 @@ print_insn_m68k (memaddr, info)
 	  break;
 	}
     }
-  /* Some opcodes like pflusha and lpstop are exceptions; they take no
-     arguments but are two words long.  Recognize them by looking at
-     the lower 16 bits of the mask.  */
+
+  /* pflusha is an exceptions.  It takes no arguments but is two words
+     long.  Recognize it by looking at the lower 16 bits of the mask.  */
   if (p - buffer < 4 && (best->match & 0xFFFF) != 0)
     p = buffer + 4;
-  
+
+  /* lpstop is another exception.  It takes a one word argument but is
+     three words long.  */
+  if (p - buffer < 6
+      && (best->match & 0xffff) == 0xffff
+      && best->args[0] == '#'
+      && best->args[1] == 'w')
+    {
+      /* Copy the one word argument into the usual location for a one
+	 word argument, to simplify printing it.  We can get away with
+	 this because we know exactly what the second word is, and we
+	 aren't going to print anything based on it.  */
+      p = buffer + 6;
+      FETCH_DATA (info, p);
+      buffer[2] = buffer[4];
+      buffer[3] = buffer[5];
+    }
+
   FETCH_DATA (info, p);
   
   d = best->args;
@@ -640,10 +690,15 @@ print_insn_arg (d, buffer, p0, addr, info)
     case '?':
     case '/':
     case '&':
-    case '`':
     case '|':
     case '<':
     case '>':
+    case 'm':
+    case 'n':
+    case 'o':
+    case 'p':
+    case 'q':
+    case 'v':
 
       if (place == 'd')
 	{
@@ -702,7 +757,9 @@ print_insn_arg (d, buffer, p0, addr, info)
 
 	    case 2:
 	      val = NEXTWORD (p);
+	      (*info->fprintf_func) (info->stream, "%%pc@(");
 	      (*info->print_address_func) (addr + val, info);
+	      (*info->fprintf_func) (info->stream, ")");
 	      break;
 
 	    case 3:

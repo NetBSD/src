@@ -1,5 +1,5 @@
-This is Info file ld.info, produced by Makeinfo-1.64 from the input
-file ./ld.texinfo.
+This is Info file ld.info, produced by Makeinfo version 1.68 from the
+input file ./ld.texinfo.
 
 START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
@@ -7,7 +7,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the GNU linker LD.
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 1997 Free Software
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software
 Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
@@ -43,7 +43,7 @@ expressions.
    * Assignment may only be used at the root of an expression; `a=b+3;'
      is allowed, but `a+b=3;' is an error.
 
-   * You must place a trailing semicolon (";") at the end of an
+   * You must place a trailing semicolon ("<;>") at the end of an
      assignment statement.
 
    Assignment statements may appear:
@@ -225,8 +225,9 @@ File: ld.info,  Node: Semicolons,  Prev: Arithmetic Functions,  Up: Expressions
 Semicolons
 ----------
 
-   Semicolons (";") are required in the following places.  In all other
-places they can appear for aesthetic reasons but are otherwise ignored.
+   Semicolons ("<;>") are required in the following places.  In all
+other places they can appear for aesthetic reasons but are otherwise
+ignored.
 
 `Assignment'
      Semicolons must appear at the end of assignment expressions.
@@ -269,11 +270,36 @@ The syntax is:
      section names.  Use distinct names to specify multiple regions.
 
 `(ATTR)'
-     is an optional list of attributes, permitted for compatibility
-     with the AT&T linker but not used by `ld' beyond checking that the
-     attribute list is valid.  Valid attribute lists must be made up of
-     the characters "`LIRWX'".  If you omit the attribute list, you may
-     omit the parentheses around it as well.
+     is an optional list of attributes that specify whether to use a
+     particular memory to place sections that are not listed in the
+     linker script.  Valid attribute lists must be made up of the
+     characters "`ALIRWX'" that match section attributes.  If you omit
+     the attribute list, you may omit the parentheses around it as
+     well.  The attributes currently supported are:
+
+    ``Letter''
+          `Section Attribute'
+
+    ``R''
+          Read-only sections.
+
+    ``W''
+          Read/write sections.
+
+    ``X''
+          Sections containing executable code.
+
+    ``A''
+          Allocated sections.
+
+    ``I''
+          Initialized sections.
+
+    ``L''
+          Same as `I'.
+
+    ``!''
+          Invert the sense of any of the following attributes.
 
 `ORIGIN'
      is the start address of the region in physical memory.  It is an
@@ -287,12 +313,15 @@ The syntax is:
 
    For example, to specify that memory has two regions available for
 allocation--one starting at 0 for 256 kilobytes, and the other starting
-at `0x40000000' for four megabytes:
+at `0x40000000' for four megabytes.  The `rom' memory region will get
+all sections without an explicit memory register that are either
+read-only or contain code, while the `ram' memory region will get the
+sections.
 
      MEMORY
        {
-       rom : ORIGIN = 0, LENGTH = 256K
-       ram : org = 0x40000000, l = 4M
+       rom (rx)  : ORIGIN = 0, LENGTH = 256K
+       ram (!rx) : org = 0x40000000, l = 4M
        }
 
    Once you have defined a region of memory named MEM, you can direct
@@ -362,9 +391,10 @@ form of a section definition is
 
 SECNAME is the name of the output section, and CONTENTS a specification
 of what goes there--for example, a list of input files or sections of
-input files (*note Section Placement::.).  As you might assume, the
-whitespace shown is optional.  You do need the colon `:' and the braces
-`{}', however.
+input files (*note Section Placement::.).  The whitespace around
+SECNAME is required, so that the section name is unambiguous.  The
+other whitespace shown is optional.  You do need the colon `:' and the
+braces `{}', however.
 
    SECNAME must meet the constraints of your output format.  In formats
 which only support a limited number of sections, such as `a.out', the
@@ -424,8 +454,8 @@ whitespace.
 `FILENAME( SECTION SECTION ... )'
      You can name one or more sections from your input files, for
      insertion in the current output section.  If you wish to specify a
-     list of input-file sections inside the parentheses, you may
-     separate the section names by either commas or whitespace.
+     list of input-file sections inside the parentheses, separate the
+     section names with whitespace.
 
 `* (SECTION)'
 `* (SECTION, SECTION, ...)'
@@ -629,10 +659,14 @@ statements we've just described.
 `SHORT(EXPRESSION)'
 `LONG(EXPRESSION)'
 `QUAD(EXPRESSION)'
+`SQUAD(EXPRESSION)'
      By including one of these four statements in a section definition,
-     you can explicitly place one, two, four, or eight bytes
-     (respectively) at the current address of that section.  `QUAD' is
-     only supported when using a 64 bit host or target.
+     you can explicitly place one, two, four, eight unsigned, or eight
+     signed bytes (respectively) at the current address of that
+     section.  When using a 64 bit host or target, `QUAD' and `SQUAD'
+     are the same.  When both host and target are 32 bits, `QUAD' uses
+     an unsigned 32 bit value, and `SQUAD' sign extends the value.
+     Both will use the correct endianness when writing out the value.
 
      Multiple-byte quantities are represented in whatever byte order is
      appropriate for the output file format (*note BFD::.).
@@ -641,7 +675,7 @@ statements we've just described.
      Specify the "fill pattern" for the current section.  Any otherwise
      unspecified regions of memory within the section (for example,
      regions you skip over by assigning a new value to the location
-     counter `.') are filled with the two least significant bytes from
+     counter `.')  are filled with the two least significant bytes from
      the EXPRESSION argument.  A `FILL' statement covers memory
      locations *after* the point it occurs in the section definition; by
      including more than one `FILL' statement, you can have different
@@ -689,10 +723,13 @@ elements--START, `BLOCK(ALIGN)', `(NOLOAD)', `AT ( LDADR )', `>REGION',
      expression.
 
 `(NOLOAD)'
-     Use `(NOLOAD)' to prevent a section from being loaded into memory
-     each time it is accessed.  For example, in the script sample
-     below, the `ROM' segment is addressed at memory location `0' and
-     does not need to be loaded into each object file:
+     The `(NOLOAD)' directive will mark a section to not be loaded at
+     run time.  The linker will process the section normally, but will
+     mark it so that a program loader will not load it into memory.
+     For example, in the script sample below, the `ROM' section is
+     addressed at memory location `0' and does not need to be loaded
+     when the program is run.  The contents of the `ROM' section will
+     appear in the linker output file as usual.
 
           SECTIONS {
             ROM  0  (NOLOAD)  : { ... }

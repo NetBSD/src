@@ -538,7 +538,7 @@ static void pa_ip PARAMS ((char *));
 static void fix_new_hppa PARAMS ((fragS *, int, int, symbolS *,
 				  long, expressionS *, int,
 				  bfd_reloc_code_real_type,
-				  enum hppa_reloc_field_selector_type,
+				  enum hppa_reloc_field_selector_type_alt,
 				  int, long, int *));
 static int is_end_of_statement PARAMS ((void));
 static int reg_name_search PARAMS ((char *));
@@ -2632,6 +2632,9 @@ tc_gen_reloc (section, fixp)
 			       fixp->fx_subsy != NULL,
 			       fixp->fx_addsy->bsym);
 
+  if (codes == NULL)
+    abort ();
+
   for (n_relocs = 0; codes[n_relocs]; n_relocs++)
     ;
 
@@ -3044,16 +3047,27 @@ md_apply_fix (fixP, valp)
 
 	/* Handle some of the opcodes with the 'W' operand type.  */
 	case 17:
-	  CHECK_FIELD (new_val, 262143, -262144, 0);
+	  {
+	    int distance = *valp;
 
-	  /* Mask off 17 bits to be changed.  */
-	  bfd_put_32 (stdoutput,
-		      bfd_get_32 (stdoutput, buf) & 0xffe0e002,
-		      buf);
-	  sign_unext ((new_val - 8) >> 2, 17, &resulti);
-	  dis_assemble_17 (resulti, &w1, &w2, &w);
-	  result = ((w2 << 2) | (w1 << 16) | w);
-	  break;
+	    CHECK_FIELD (new_val, 262143, -262144, 0);
+
+	    /* If this is an absolute branch (ie no link) with an out of
+	       range target, then we want to complain.  */
+	    if (fixP->fx_r_type == R_HPPA_PCREL_CALL
+		&& (distance > 262143 || distance < -262144)
+		&& (bfd_get_32 (stdoutput, buf) & 0xffe00000) == 0xe8000000)
+	      CHECK_FIELD (distance, 262143, -262144, 0);
+
+	    /* Mask off 17 bits to be changed.  */
+	    bfd_put_32 (stdoutput,
+			bfd_get_32 (stdoutput, buf) & 0xffe0e002,
+			buf);
+	    sign_unext ((new_val - 8) >> 2, 17, &resulti);
+	    dis_assemble_17 (resulti, &w1, &w2, &w);
+	    result = ((w2 << 2) | (w1 << 16) | w);
+	    break;
+	  }
 
 	case 32:
 	  result = 0;
@@ -6414,6 +6428,10 @@ hppa_fix_adjustable (fixp)
   if (fixp->fx_addsy && fixp->fx_addsy->bsym->flags & BSF_GLOBAL)
     return 0;
 
+  /* Reject absolute calls (jumps).  */
+  if (hppa_fix->fx_r_type == R_HPPA_ABS_CALL)
+    return 0;
+
   /* Reject reductions of function symbols.  */
   if (fixp->fx_addsy == 0
       || (fixp->fx_addsy->bsym->flags & BSF_FUNCTION) == 0)
@@ -6464,6 +6482,8 @@ hppa_force_relocation (fixp)
       && (distance > 262143 || distance < -262144))
     return 1;
 
+  if (fixp->fx_r_type == R_HPPA_ABS_CALL)
+    return 1;
 #undef arg_reloc_stub_needed
 
   /* No need (yet) to force another relocations to be emitted.  */

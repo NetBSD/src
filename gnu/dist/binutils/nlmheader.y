@@ -1,5 +1,5 @@
 %{/* nlmheader.y - parse NLM header specification keywords.
-     Copyright (C) 1993 Free Software Foundation, Inc.
+     Copyright (C) 1993, 94, 95, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -121,7 +121,7 @@ static char *xstrdup PARAMS ((const char *));
 %token EXPORT FLAG_ON FLAG_OFF FULLMAP HELP IMPORT INPUT MAP MESSAGES
 %token MODULE MULTIPLE OS_DOMAIN OUTPUT PSEUDOPREEMPTION REENTRANT
 %token SCREENNAME SHARELIB STACK START SYNCHRONIZE
-%token THREADNAME TYPE VERBOSE VERSION XDCDATA
+%token THREADNAME TYPE VERBOSE VERSIONK XDCDATA
 
 /* Arguments.  */
 
@@ -367,7 +367,7 @@ command:
 	  {
 	    verbose = true;
 	  }
-	| VERSION STRING STRING STRING
+	| VERSIONK STRING STRING STRING
 	  {
 	    long val;
 
@@ -391,7 +391,7 @@ command:
 	    free ($3);
 	    free ($4);
 	  }
-	| VERSION STRING STRING
+	| VERSIONK STRING STRING
 	  {
 	    long val;
 
@@ -623,7 +623,7 @@ struct keyword_tokens_struct keyword_tokens[] =
   { "THREADNAME", THREADNAME },
   { "TYPE", TYPE },
   { "VERBOSE", VERBOSE },
-  { "VERSION", VERSION },
+  { "VERSION", VERSIONK },
   { "XDCDATA", XDCDATA }
 };
 
@@ -773,7 +773,7 @@ tail_recurse:
 	}
       else
 	{
-	  int i;
+	  unsigned int i;
 
 	  for (i = 0; i < KEYWORD_COUNT; i++)
 	    {

@@ -1,5 +1,5 @@
 /* Disassemble MN10300 instructions.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -66,7 +66,8 @@ print_insn_mn10300 (memaddr, info)
       || (insn & 0xfc) == 0xd0
       || (insn & 0xfc) == 0xd4
       || (insn & 0xfc) == 0xd8
-      || (insn & 0xf0) == 0xe0)
+      || (insn & 0xf0) == 0xe0
+      || (insn & 0xff) == 0xff)
     {
       consume = 1;
     }
@@ -236,7 +237,7 @@ disassemble (memaddr, info, insn, size)
 	mysize = 7;
 	
       if ((op->mask & insn) == op->opcode
-	  && size == mysize)
+	  && size == (unsigned int) mysize)
 	{
 	  const unsigned char *opindex_ptr;
 	  unsigned int nocomma;

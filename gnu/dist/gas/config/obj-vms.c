@@ -533,7 +533,7 @@ obj_crawl_symbol_chain (headers)
   symbolPP = &symbol_rootP;	/* -> last symbol chain link. */
   while ((symbolP = *symbolPP) != NULL)
     {
-      resolve_symbol_value (symbolP);
+      resolve_symbol_value (symbolP, 1);
 
      /* OK, here is how we decide which symbols go out into the
 	brave new symtab.  Symbols that do are:
@@ -3166,7 +3166,7 @@ Write_VMS_MHD_Records ()
       cp = "GNU AS  V";
       while (*cp)
 	PUT_CHAR (*cp++);
-      cp = GAS_VERSION;
+      cp = VERSION;
     }
   while (*cp >= ' ')
     PUT_CHAR (*cp++);

@@ -45,11 +45,6 @@ struct expressionS;
 #define MAX_RELOC_EXPANSION 3
 #define LOCAL_LABELS_FB 1
 
-/* We don't want to define LOCAL_LABELS_DOLLAR, because $0 is really a
-   reference to a register, not a label.  */
-#undef LOCAL_LABELS_DOLLAR
-#define LOCAL_LABELS_DOLLAR 0
-
 /* Maximum symbol offset that can be encoded in a BFD_RELOC_MIPS_GPREL
    relocation: */
 #define MAX_GPREL_OFFSET (0x7FF4)

@@ -1,5 +1,5 @@
 /* MIPS-specific support for 64-bit ELF
-   Copyright 1996 Free Software Foundation, Inc.
+   Copyright 1996, 1997 Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -1230,7 +1230,7 @@ mips_elf64_swap_reloca_in (abfd, src, dst)
   dst->r_type3 = bfd_h_get_8 (abfd, (bfd_byte *) src->r_type3);
   dst->r_type2 = bfd_h_get_8 (abfd, (bfd_byte *) src->r_type2);
   dst->r_type = bfd_h_get_8 (abfd, (bfd_byte *) src->r_type);
-  dst->r_addend = bfd_h_get_64 (abfd, (bfd_byte *) src->r_addend);
+  dst->r_addend = bfd_h_get_signed_64 (abfd, (bfd_byte *) src->r_addend);
 }
 
 #if 0
@@ -1269,7 +1269,7 @@ mips_elf64_swap_reloca_out (abfd, src, dst)
   bfd_h_put_8 (abfd, src->r_type3, (bfd_byte *) dst->r_type3);
   bfd_h_put_8 (abfd, src->r_type2, (bfd_byte *) dst->r_type2);
   bfd_h_put_8 (abfd, src->r_type, (bfd_byte *) dst->r_type);
-  bfd_h_put_64 (abfd, src->r_offset, (bfd_byte *) dst->r_offset);
+  bfd_h_put_64 (abfd, src->r_addend, (bfd_byte *) dst->r_addend);
 }
 
 /* A mapping from BFD reloc types to MIPS ELF reloc types.  */
