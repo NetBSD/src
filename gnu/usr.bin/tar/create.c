@@ -819,7 +819,8 @@ dump_file (p, curdev, toplevel)
 	  strcpy (namebuf + len, d->d_name);
 	  if (f_exclude && check_exclude (namebuf))
 	    continue;
-	  dump_file (namebuf, our_device, 0);
+	  if (!f_norecurse)
+	    dump_file (namebuf, our_device, 0);
 	}
 
       closedir (dirp);
