@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.410 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.411 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -170,6 +170,8 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[thorpej 20050102]
 	restore(8): Stop asking stupid questions (restore owner/mode of . ?).
 		Rather, do it only on a full restore.  [fredb 20050108]
+	scsictl(8): Add defects command to read defect data from direct
+		access devices (disks).  [ginsbach 20050107]
 	tap(4): virtual Ethernet device [cube 20050108]
 	shark: Switch to wscons. [tsutsui 20050109]
 	/rescue: Add: cgdconfig chroot less more scp slogin ssh vi
@@ -180,5 +182,5 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		visible changes at this moment.  [kent 20050111]
 	auixp(4): Add driver for the audio part of the ATI IXP series of
 		chipsets. [reinoud 20050112]
-	seq(1): Add BSD licensed version this Plan 9 and GNU/Linux command,
+	seq(1): Add BSD licensed version of this Plan 9 and GNU/Linux command,
 		which prints sequences of numbers.  [ginsbach 20050120]
