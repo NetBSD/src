@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/02/01 06:01:21 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3 2000/02/11 15:36:26 hubertf Exp $
 
 BINDIR=	/usr/mdec
 BINMODE=444
@@ -19,7 +19,7 @@ LDFLAGS+= -e _start -N
 
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
-	${STRIP} ${PROG}.tmp
+	${STRIPPROG} ${PROG}.tmp
 	objcopy -O binary ${PROG}.tmp ${PROG}
 	rm -f ${PROG}.tmp
 
