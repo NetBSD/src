@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.62 2001/10/26 05:56:11 lukem Exp $	*/
+/*	$NetBSD: pstat.c,v 1.63 2002/02/21 10:58:00 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.62 2001/10/26 05:56:11 lukem Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.63 2002/02/21 10:58:00 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -347,7 +347,7 @@ void
 vnode_header()
 {
 
-	(void)printf("ADDR     TYP VFLAG  USE HOLD TAG");
+	(void)printf("ADDR     TYP VFLAG  USE HOLD TAG NPAGE");
 }
 
 void
@@ -396,6 +396,8 @@ vnode_print(avnode, vp)
 		*fp++ = 'S';
 	if (flag & VISTTY)
 		*fp++ = 'I';
+	if (flag & VEXECMAP)
+		*fp++ = 'E';
 	if (flag & VXLOCK)
 		*fp++ = 'L';
 	if (flag & VXWANT)
@@ -413,9 +415,9 @@ vnode_print(avnode, vp)
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';
-	(void)printf("%8lx %s %5s %4ld %4ld %3d",
+	(void)printf("%8lx %s %5s %4ld %4ld %3d %5d",
 	    (long)avnode, type, flags, (long)vp->v_usecount,
-	    (long)vp->v_holdcnt, vp->v_tag);
+	    (long)vp->v_holdcnt, vp->v_tag, vp->v_uobj.uo_npages);
 }
 
 void
@@ -451,6 +453,8 @@ ufs_getflags(vp, ip, flags)
 		*flags++ = 'c';
 	if (flag & IN_ADIROP)
 		*flags++ = 'a';
+	if (flag & IN_SPACECOUNTED)
+		*flags++ = 's';
 	if (flag == 0)
 		*flags++ = '-';
 	*flags = '\0';

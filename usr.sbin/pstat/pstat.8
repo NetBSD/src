@@ -1,4 +1,4 @@
-.\"	$NetBSD: pstat.8,v 1.28 2002/02/08 01:38:55 ross Exp $
+.\"	$NetBSD: pstat.8,v 1.29 2002/02/21 10:58:00 enami Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -256,6 +256,8 @@ VTEXT pure text prototype.
 VSYSTEM vnode being used by kernel.
 .It I
 VISTTY vnode is a tty.
+.It E
+VEXECMAP vnode has PROT_EXEC mappings.
 .It L
 VXLOCK locked to change underlying type.
 .It W
@@ -276,6 +278,10 @@ VONWORKLST vnode is on syncer work-list.
 The number of references to this vnode.
 .It HOLD
 The number of I/O buffers held by this vnode.
+.It TAG
+The type of underlying data.
+.It NPAGE
+The number of pages in this vnode.
 .It FILEID
 The vnode fileid.
 In the case of
@@ -310,6 +316,8 @@ exclusive lock applied
 is being cleaned (LFS)
 .It a
 directory operation in progress (LFS)
+.It s
+blocks to be freed in free count
 .El
 .It "For nfs:"
 .Bl -tag -width indent -compact
