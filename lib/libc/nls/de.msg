@@ -165,6 +165,10 @@ $ EIDRM
 82 Identifizierung entfernt
 $ ENOMSG
 83 Keine Nachricht vom gewünschten Typ
+$ EOVERFLOW
+84 Wert zu groß, um in Datentyp zu speichern
+$ EILSEQ
+85 Illegale Byte-Sequenz
 $set 2
 $ SIGHUP
 1 Verbindungsende
