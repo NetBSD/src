@@ -1,7 +1,7 @@
-/*	$NetBSD: route6d.h,v 1.2 1999/07/04 14:45:54 itojun Exp $	*/
+/*	$NetBSD: route6d.h,v 1.3 1999/09/03 04:04:22 itojun Exp $	*/
 
 /*
- * KAME Header: /cvsroot/hydrangea-freebsd/kit/src/route6d/Attic/route6d.h,v 1.1.2.4.4.1.4.1.4.2 1999/06/17 13:00:41 itojun Exp
+ * KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.h,v 1.1.1.1 1999/08/08 23:31:35 itojun Exp
  */
 
 /*
