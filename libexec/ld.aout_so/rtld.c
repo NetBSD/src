@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.82 2001/09/20 20:55:29 wiz Exp $	*/
+/*	$NetBSD: rtld.c,v 1.83 2002/05/26 00:02:07 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,15 +46,11 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <a.out.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "shlib.h"
 #include "ld.h"
@@ -1911,21 +1907,12 @@ __dlexit()
 }
 
 void
-#if __STDC__
 xprintf(char *fmt, ...)
-#else
-xprintf(fmt, va_alist)
-char	*fmt;
-#endif
 {
 	char buf[256];
 	va_list	ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
+	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	(void)write(1, buf, strlen(buf));
 	va_end(ap);
