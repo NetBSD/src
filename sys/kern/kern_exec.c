@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.172 2003/08/29 13:29:32 enami Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.173 2003/09/10 16:43:35 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.172 2003/08/29 13:29:32 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.173 2003/09/10 16:43:35 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -120,8 +120,6 @@ struct execsw_entry {
 };
 #endif /* LKM */
 
-/* NetBSD emul struct */
-extern char	sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
 #endif
@@ -131,8 +129,12 @@ void syscall_intern(struct proc *);
 void syscall(void);
 #endif
 
+#if !defined(__HAVE_SIGINFO) || defined(COMPAT_16)
+extern char	sigcode[], esigcode[];
 struct uvm_object *emul_netbsd_object;
+#endif
 
+/* NetBSD emul struct */
 const struct emul emul_netbsd = {
 	"netbsd",
 	NULL,		/* emulation path */
@@ -150,9 +152,15 @@ const struct emul emul_netbsd = {
 #endif
 	sendsig,
 	trapsignal,
+#if !defined(__HAVE_SIGINFO) || defined(COMPAT_16)
 	sigcode,
 	esigcode,
 	&emul_netbsd_object,
+#else
+	NULL,
+	NULL,
+	NULL,
+#endif
 	setregs,
 	NULL,
 	NULL,
