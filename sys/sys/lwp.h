@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.8 2001/11/17 00:44:07 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.9 2001/11/27 03:17:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ struct	lwp {
 
 	void	*l_private;	/* svr4-style lwp-private data */
 
+	int	l_locks;       	/* DEBUG: lockmgr count of held locks */
 
 	struct	user *l_addr;	/* Kernel virtual addr of u-area (PROC ONLY). */
 	struct	mdlwp l_md;	/* Any machine-dependent fields. */
