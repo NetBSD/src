@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1995/03/21 09:07:02 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1997/07/20 20:32:12 christos Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -25,6 +25,7 @@
 # 		regex routines and must define NET2_REGEX.
 # 		Pax may not compile if this not (un)defined properly.
 
+WARNS=	1
 PROG=   pax
 SRCS=	ar_io.c ar_subs.c buf_subs.c cache.c cpio.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\
