@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 2001/07/15 03:08:33 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 2001/07/15 17:31:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,8 +50,8 @@ _rtld_start:
 	bl	_rtld			/* call the shared loader */
 	mov	r3, r0			/* save entry point */
 
-	ldr	r2, [sp, #4]		/* r2 = cleanup */
-	ldr	r1, [sp]		/* r1 = obj_main */
+	ldr	r2, [sp, #0]		/* r2 = cleanup */
+	ldr	r1, [sp, #4]		/* r1 = obj_main */
 	add	sp, sp, #8		/* restore stack */
 	mov	r0, r4			/* restore ps_strings */
 	mov	pc, r3			/* jump to the entry point */
