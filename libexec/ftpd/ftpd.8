@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.12 1997/04/29 04:00:39 cjs Exp $
+.\"	$NetBSD: ftpd.8,v 1.13 1997/05/23 22:09:51 cjs Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,10 @@ Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
 .Op Fl dl
+.Op Fl a Ar anondir
 .Op Fl T Ar maxtimeout
 .Op Fl t Ar timeout
+.Op Fl u Ar umask
 .Sh DESCRIPTION
 .Nm
 is the
@@ -59,6 +61,9 @@ service specification; see
 .Pp
 Available options:
 .Bl -tag -width Ds
+.It Fl a
+Define the directory to which we chroot for anonymous logins.
+Default is the home directory for the ftp user.
 .It Fl d
 Debugging information is written to the syslog using LOG_FTP.
 .It Fl l
@@ -80,6 +85,8 @@ The default limit is 2 hours.
 The inactivity timeout period is set to
 .Ar timeout
 seconds (the default is 15 minutes).
+.It Fl u      
+Sets the default umask.  Must be in octal form, e.g. "002"
 .El
 .Pp
 The file
