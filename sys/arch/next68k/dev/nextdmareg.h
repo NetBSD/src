@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmareg.h,v 1.3 1998/12/27 09:03:15 dbj Exp $	*/
+/*	$NetBSD: nextdmareg.h,v 1.4 1999/03/14 10:31:05 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -37,7 +37,12 @@
 
 /* from nextdev/dma.h */
 
+#if 0
 #define	DMA_BEGINALIGNMENT	4		/* initial buffer must be on long */
+#else
+/* But to make cache handling easier, we put it on a cache line anyway. */
+#define	DMA_BEGINALIGNMENT 16
+#endif
 #define	DMA_ENDALIGNMENT	16		/* DMA must end on quad longword */
 
 #define	DMA_ALIGN(type, addr)	\

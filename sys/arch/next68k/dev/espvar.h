@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.10 1999/03/02 12:11:24 dbj Exp $	*/
+/*	$NetBSD: espvar.h,v 1.11 1999/03/14 10:31:05 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,8 +48,10 @@ struct esp_softc {
 	size_t  sc_dmasize;						/* saved argument to esp_dma_setup */
 	int sc_datain;								/* saved argument to esp_dma_setup */
 
-#define ESP_LOADED_MAIN (0x01)
-#define ESP_LOADED_TAIL (0x02)
+#define ESP_LOADED_MAIN   (0x01)
+#define ESP_LOADED_TAIL   (0x02)
+#define ESP_UNLOADED_MAIN (0x10)
+#define ESP_UNLOADED_TAIL (0x20)
 
 	int sc_loaded;								/* used by continue callback to remember
 																 * which dmamaps are already loaded.
@@ -69,7 +71,7 @@ struct esp_softc {
 	 * buffer into a "tail" buffer that we can control more carefully.
 	 * We then chain this extra buffer onto the end.
 	 */
-#define ESP_DMA_OVERRUN 3*DMA_ENDALIGNMENT
+#define ESP_DMA_OVERRUN 0x30 /* 3*DMA_ENDALIGNMENT */
 #define ESP_DMA_MAXTAIL 128
 #define ESP_DMA_TAILBUFSIZE (ESP_DMA_MAXTAIL+2*DMA_ENDALIGNMENT+ESP_DMA_OVERRUN)
 	bus_dmamap_t  sc_tail_dmamap;

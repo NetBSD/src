@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.14 1999/03/04 14:18:26 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.15 1999/03/14 10:31:05 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -75,8 +75,6 @@ void next_dma_rotate __P((struct nextdma_config *));
 
 void next_dma_setup_cont_regs __P((struct nextdma_config *));
 void next_dma_setup_curr_regs __P((struct nextdma_config *));
-
-void next_dma_print __P((struct nextdma_config *));
 
 void
 nextdma_config(nd)
@@ -198,12 +196,20 @@ next_dmamap_sync(t, map, offset, len, ops)
 	 * @@@ should probably be fixed to use offset and len args.
 	 * should also optimize this to work on pages for larger regions?
 	 */
+
 	if ((ops & BUS_DMASYNC_PREWRITE) ||
 			(ops & BUS_DMASYNC_PREREAD)) {
 		int i;
 		for(i=0;i<map->dm_nsegs;i++) {
 			bus_addr_t p = map->dm_segs[i].ds_addr;
 			bus_addr_t e = p+map->dm_segs[i].ds_len;
+#ifdef DIAGNOSTIC
+			if ((p % 16) || (e % 16)) {
+				panic("unaligned address in next_dmamap_sync while flushing.\n"
+						"address=0x%08x, length=0x%08x, ops=0x%x",
+						p,e,ops);
+			}
+#endif
 			while(p<e) {
 				DCFL(p);								/* flush */
 				p += 16;								/* cache line length */
@@ -217,6 +223,16 @@ next_dmamap_sync(t, map, offset, len, ops)
 		for(i=0;i<map->dm_nsegs;i++) {
 			bus_addr_t p = map->dm_segs[i].ds_addr;
 			bus_addr_t e = p+map->dm_segs[i].ds_len;
+#ifdef DIAGNOSTIC
+			/* We don't check the end address for alignment since if the
+			 * dma operation stops short, the end address may be modified.
+			 */
+			if (p % 16) {
+				panic("unaligned address in next_dmamap_sync while purging.\n"
+						"address=0x%08x, length=0x%08x, ops=0x%x",
+						p,e,ops);
+			}
+#endif
 			while(p<e) {
 				DCPL(p);								/* purge */
 				p += 16;								/* cache line length */
@@ -294,7 +310,21 @@ next_dma_setup_cont_regs(nd)
 					((nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr +
 							nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len)
 							+ 0x0) | 0x80000000);
-		} else {
+
+		}
+#ifdef NEXTDMA_SCSI_HACK
+		else if ((nd->nd_intr == NEXT_I_SCSI_DMA) && (nd->_nd_dmadir == DMACSR_WRITE)) {
+
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START,
+					nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
+
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP,
+					((nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr +
+							nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len)
+							+ 0x20));
+    }
+#endif
+		else {
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START,
 					nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP,
@@ -331,10 +361,11 @@ next_dma_setup_curr_regs(nd)
 {
 	DPRINTF(("DMA next_dma_setup_curr_regs()\n"));
 
-	if (nd->nd_intr == NEXT_I_ENETX_DMA) {
-			/* Ethernet transmit needs secret magic */
 
-		if (nd->_nd_map) {
+	if (nd->_nd_map) {
+
+		if (nd->nd_intr == NEXT_I_ENETX_DMA) {
+			/* Ethernet transmit needs secret magic */
 
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
@@ -342,36 +373,33 @@ next_dma_setup_curr_regs(nd)
 					((nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
 							nd->_nd_map->dm_segs[nd->_nd_idx].ds_len)
 							+ 0x0) | 0x80000000);
-		} else {
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,0xdeadbeef);
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 0xdeadbeef);
 
 		}
+#ifdef NEXTDMA_SCSI_HACK
+		else if ((nd->nd_intr == NEXT_I_SCSI_DMA) && (nd->_nd_dmadir == DMACSR_WRITE)) {
+			/* SCSI needs secret magic */
 
-#if 1 /* See comment in next_dma_setup_cont_regs() above */
-		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 
-				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF));
-		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT,
-				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT));
-#else
-		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 0xfeedbeef);
-		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT, 0xfeedbeef);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,
+					nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT,
+					((nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
+							nd->_nd_map->dm_segs[nd->_nd_idx].ds_len)
+							+ 0x20));
+
+		}
 #endif
-		
-	} else {
-
-		if (nd->_nd_map) {
-
+		else {
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT,
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_len);
-		} else {
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF, 0xdeadbeef);
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 0xdeadbeef);
-
 		}
+
+	} else {
+		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,0xdeadbeef);
+		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 0xdeadbeef);
+	}
 
 #if 1  /* See comment in next_dma_setup_cont_regs() above */
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 
@@ -382,8 +410,6 @@ next_dma_setup_curr_regs(nd)
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 0xfeedbeef);
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT, 0xfeedbeef);
 #endif
-
-	}
 
 }
 
@@ -544,7 +570,14 @@ nextdma_intr(arg)
 				if (nd->nd_intr == NEXT_I_ENETX_DMA) {
 					next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF);
 					limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT) & ~0x80000000;
-				} else {
+				}
+#ifdef NEXTDMA_SCSI_HACK
+				else if ((nd->nd_intr == NEXT_I_SCSI_DMA) && (nd->_nd_dmadir == DMACSR_WRITE)) {
+					next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT) - 0x20;
+					limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT) - 0x20;
+				}
+#endif
+				else {
 					next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT);
 					limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT);
 				}
@@ -621,6 +654,11 @@ nextdma_intr(arg)
 			if (nd->nd_intr == NEXT_I_ENETX_DMA) {
 				limit &= ~0x80000000;
 			}
+#ifdef NEXTDMA_SCSI_HACK
+			else if ((nd->nd_intr == NEXT_I_SCSI_DMA) && (nd->_nd_dmadir == DMACSR_WRITE)) {
+				limit -= 0x20;
+			}
+#endif
 			
 			if ((limit-next < 0) || 
 					(limit-next >= expected_limit-expected_next)) {
