@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.22 1996/07/22 11:14:52 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.23 1996/08/09 18:18:05 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -70,6 +70,8 @@ static struct aconfdata aconftab[] = {
 	{ "es",		1053,	10 },
 	/* University of Lowell */
 	{ "grful",	1030,	0 },
+	/* DMI */
+	{ "grfrs",	2129,	1 },	/* Resolver graphics board */
 	/* Macrosystems */
 	{ "grfrt",	18260,	6 },
 	{ "grfrh",	18260,	16},	/* Retina BLT Z3 */
