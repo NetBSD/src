@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2001/09/10 02:20:20 reinoud Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 2002/01/25 20:57:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -761,6 +761,7 @@ struct arm32_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+	struct proc	*_dm_proc;	/* proc that owns the mapping */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 
