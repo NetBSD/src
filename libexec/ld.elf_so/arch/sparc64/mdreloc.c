@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.27 2002/09/25 22:25:11 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.28 2002/09/25 22:29:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -541,7 +541,9 @@ _rtld_bind(obj, reloff)
 	if (rela->r_addend) {
 		Elf_Addr *ptr = (Elf_Addr *)where;
 		/*
-		 * This entry is >32768.  Just replace the pointer.
+		 * This entry is >=32768.  The relocations points to a
+		 * PC-relative pointer to the bind_0 stub at the top of the
+		 * PLT section.  Update it to point to the target function.
 		 */
 		ptr[0] += value - (Elf_Addr)obj->pltgot;
 
