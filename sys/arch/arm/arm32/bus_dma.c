@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 2001/09/12 09:41:50 rearnsha Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 2001/11/23 19:21:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -57,8 +57,9 @@
 #include <machine/bus.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/psl.h>
+
+#include <arm/cpufunc.h>
 
 int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.2 2001/09/05 16:17:35 matt Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.3 2001/11/23 19:21:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -43,8 +43,10 @@
 #include <sys/time.h>
 #include <sys/device.h>
 
-#include <machine/cpufunc.h>
 #include <machine/intr.h>
+
+#include <arm/cpufunc.h>
+
 #include <arm/footbridge/dc21285reg.h>
 #include <arm/footbridge/footbridgevar.h>
 
