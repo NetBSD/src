@@ -33,8 +33,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.12 1993/11/14 05:19:26 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.13 1993/12/05 11:20:45 mycroft Exp $
  */
+
+#ifdef DDB
+#define STATIC
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,46 +63,22 @@
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
  */
-
-#ifdef	__GNUC__
-
 #define	fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
 #define	fnclex()		__asm("fnclex")
 #define	fninit()		__asm("fninit")
 #define	fnsave(addr)		__asm("fnsave %0" : "=m" (*addr) : "0" (*addr))
 #define	fnstcw(addr)		__asm("fnstcw %0" : "=m" (*addr) : "0" (*addr))
 #define	fnstsw(addr)		__asm("fnstsw %0" : "=m" (*addr) : "0" (*addr))
-/* XXXX */
-#define	fp_divide_by_0()	__asm("fldz; fld1; fdiv %st,%st(1) #; fwait")
+#define	fp_divide_by_0()	__asm("fldz; fld1; fdiv %st,%st(1); fwait")
 #define	frstor(addr)		__asm("frstor %0" : : "m" (*addr))
 #define	fwait()			__asm("fwait")
 #define	read_eflags()		({u_long ef; \
 				  __asm("pushf; popl %0" : "=a" (ef)); \
-				  ef; })
+				  ef;})
 #define	start_emulating()	__asm("smsw %%ax; orb %0,%%al; lmsw %%ax" \
 				      : : "n" (CR0_TS) : "ax")
 #define	stop_emulating()	__asm("clts")
 #define	write_eflags(ef)	__asm("pushl %0; popf" : : "a" ((u_long) ef))
-
-#else	/* not __GNUC__ */
-
-void	fldcw		__P((caddr_t addr));
-void	fnclex		__P((void));
-void	fninit		__P((void));
-void	fnsave		__P((caddr_t addr));
-void	fnstcw		__P((caddr_t addr));
-void	fnstsw		__P((caddr_t addr));
-void	fp_divide_by_0	__P((void));
-void	frstor		__P((caddr_t addr));
-void	fwait		__P((void));
-u_long	read_eflags	__P((void));
-void	start_emulating	__P((void));
-void	stop_emulating	__P((void));
-void	write_eflags	__P((u_long ef));
-
-#endif	/* __GNUC__ */
-
-typedef u_char bool_t;
 
 extern	struct gate_descriptor idt[];
 
@@ -113,32 +93,54 @@ struct	npx_softc {
 	struct	intrhand sc_ih;
 };
 
-static int npxprobe __P((struct device *, struct cfdata *, void *));
-static void npxforceintr __P((void *));
-static void npxattach __P((struct device *, struct device *, void *));
+STATIC int npxprobe __P((struct device *, struct cfdata *, void *));
+STATIC void npxforceintr __P((void *));
+STATIC void npxattach __P((struct device *, struct device *, void *));
 int npxintr __P((void *));
 
 struct	cfdriver npxcd =
 { NULL, "npx", npxprobe, npxattach, DV_DULL, sizeof(struct npx_softc) };
 
 struct	proc *npxproc;
-static	int floating_point = 0;
+STATIC	int floating_point = 0;
 
 enum	npxtype {
 	NONE,
 	INTERRUPT,
 	TRAP,
 };
-static	enum npxtype npxtype = NONE;
-static	u_short npxaddr;
+STATIC	enum npxtype npxtype = NONE;
+STATIC	u_short npxaddr;
 
-static	volatile u_int		npx_traps_while_probing;
+STATIC	volatile int npx_traps_while_probing,
+		     npx_intrs_while_probing;
 
 /*
- * Special interrupt handlers.  We need a special exception 16 handler.
+ * Special interrupt handlers during probe.  This code is disgusting.
  */
+void probeintr(void);
+__asm
+("
+	.text
+_probeintr:
+	ss
+	incl	_npx_intrs_while_probing
+	pushl	%eax
+	pushl	%edx
+	movb	$0x65,%al
+	outb	%al,$0xa0
+	movb	$0x62,%al
+	outb	%al,$0x20
+	movb	$0,%al
+	movw	_npxaddr,%dx
+	outb	%al,%dx
+	popl	%edx
+	popl	%eax
+	iret
+");
+
 void probetrap(void);
-asm
+__asm
 ("
 	.text
 _probetrap:
@@ -154,7 +156,7 @@ _probetrap:
  * to tell npxattach() what to do.  Modify device struct if npx doesn't
  * need to use interrupts.  Return 1 if device exists.
  */
-static int
+STATIC int
 npxprobe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -162,7 +164,6 @@ npxprobe(parent, cf, aux)
 {
 	struct	isa_attach_args *ia = aux;
 	u_short	iobase = ia->ia_iobase;
-	u_short	irq = ia->ia_irq;
 	int	control, status;
 
 #ifdef DIAGNOSTIC
@@ -172,7 +173,8 @@ npxprobe(parent, cf, aux)
 
 	if (iobase == IOBASEUNK)
 		return 0;
-	ia->ia_iosize = 16;
+
+	npxaddr = iobase;
 
 	/*
 	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
@@ -204,9 +206,7 @@ npxprobe(parent, cf, aux)
 
 	/*
 	 * Finish resetting the coprocessor, if any.  If there is an error
-	 * pending, then we may get a bogus IRQ13, but probeintr() will handle
-	 * it OK.  Bogus halts have never been observed, but we enabled
-	 * IRQ13 and cleared the BUSY# latch early to handle them anyway.
+	 * pending, then we may get a bogus IRQ13, but it will be ignored.
 	 */
 	fninit();
 	delay(1000);		/* wait for any IRQ13 (fwait might hang) */
@@ -223,43 +223,46 @@ npxprobe(parent, cf, aux)
 		control = 0x5a5a;	
 		fnstcw(&control);
 		if ((control & 0x1f3f) == 0x033f) {
-			if (irq == IRQUNK) {
+			if (ia->ia_irq == IRQUNK) {
 				u_long	save_eflags;
-				struct	gate_descriptor save_idt_npxtrap;
+				struct	gate_descriptor save_idt_npxtrap,
+							save_idt_npxintr;
 
 				save_eflags = read_eflags();
+				printf("imask %x cpl %x eflags %x\n",
+					imask, cpl, save_eflags);
 				save_idt_npxtrap = idt[16];
 				setidt(16, probetrap, SDT_SYS386TGT, SEL_KPL);
-				irq = isa_discoverintr(npxforceintr, &control);
+				save_idt_npxintr = idt[13 + ICU_OFFSET];
+				setidt(13 + ICU_OFFSET, probeintr,
+					SDT_SYS386TGT, SEL_KPL);
+				npxforceintr(&control);
+				idt[13 + ICU_OFFSET] = save_idt_npxintr;
 				idt[16] = save_idt_npxtrap;
 				write_eflags(save_eflags);
-				if (irq != IRQNONE)
-					outb(iobase + 0, 0);	/* clear BUSY# latch */
-				if (npx_traps_while_probing != 0)
-					irq = IRQNONE;
-				else if (irq == IRQNONE)
+
+				if (npx_traps_while_probing)
+					ia->ia_irq = IRQNONE;
+				else if (npx_intrs_while_probing)
+					ia->ia_irq = IRQ13;
+				else
 					return 0;
-				ia->ia_irq = irq;
 			}
 
-			if (irq == IRQNONE) {
+			if (ia->ia_irq == IRQNONE) {
 				/*
 				 * Good, exception 16 works.
 				 */
 				npxtype = TRAP;
-				return 1;
 			} else {
 				/*
 				 * Bad, we are stuck with IRQ13.
 				 */
 				npxtype = INTERRUPT;
-				return 1;
 			}
 
-			/*
-			 * Worse, even IRQ13 is broken.  Use emulator.
-			 */
-			printf("npx%d: error reporting broken\n", cf->cf_unit);
+			ia->ia_iosize = 16;
+			return 1;
 		}
 	}
 
@@ -269,7 +272,7 @@ npxprobe(parent, cf, aux)
 	return 0;
 }
 
-static void
+STATIC void
 npxforceintr(aux)
 	void *aux;
 {
@@ -282,13 +285,17 @@ npxforceintr(aux)
 	*control &= ~(1 << 2);	/* enable divide by 0 trap */
 	fldcw(control);
 	npx_traps_while_probing = 0;
+	npx_intrs_while_probing = 0;
+#ifdef DDB
+	__asm(".globl bpnpxforceintr; bpnpxforceintr:");
+#endif
 	fp_divide_by_0();
 }
 
 /*
  * Attach routine - announce which it is, and wire into system
  */
-static void
+STATIC void
 npxattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -297,7 +304,6 @@ npxattach(parent, self, aux)
 	struct	isa_attach_args *ia = aux;
 	extern	int floating_point;
 
-	npxaddr = ia->ia_iobase;
 	floating_point = 1;
 	if (npxtype == TRAP)
 		printf(": using exception 16\n");
