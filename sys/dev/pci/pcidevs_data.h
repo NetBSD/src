@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.307 2001/03/02 06:53:54 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.308 2001/03/02 17:33:00 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.303 2001/03/02 06:51:07 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.304 2001/03/02 17:32:01 thorpej Exp 
  */
 
 /*
@@ -3416,6 +3416,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Mylex",
 	    "DAC960 RAID (v5 interface)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID,
+	    0,
+	    "Mylex",
+	    "AcceleRAID (i960)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID,
+	    0,
+	    "Mylex",
+	    "eXtremeRAID (StrongARM)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_352,
+	    0,
+	    "Mylex",
+	    "AcceleRAID 352",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_170,
+	    0,
+	    "Mylex",
+	    "AcceleRAID 170",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_160,
+	    0,
+	    "Mylex",
+	    "AcceleRAID 160",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_2000,
+	    0,
+	    "Mylex",
+	    "eXtremeRAID 2000",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_3000,
+	    0,
+	    "Mylex",
+	    "eXtremeRAID 3000",
 	},
 	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,

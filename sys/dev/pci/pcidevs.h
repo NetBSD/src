@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.309 2001/03/02 06:53:54 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.310 2001/03/02 17:32:59 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.303 2001/03/02 06:51:07 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.304 2001/03/02 17:32:01 thorpej Exp 
  */
 
 /*
@@ -1323,6 +1323,15 @@
 #define	PCI_PRODUCT_MYLEX_RAID_V3	0x0002		/* DAC960 RAID (v3 interface) */
 #define	PCI_PRODUCT_MYLEX_RAID_V4	0x0010		/* DAC960 RAID (v4 interface) */
 #define	PCI_PRODUCT_MYLEX_RAID_V5	0x0020		/* DAC960 RAID (v5 interface) */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID	0x0050		/* AcceleRAID (i960) */
+#define	PCI_PRODUCT_MYLEX_EXTREMERAID	0xba56		/* eXtremeRAID (StrongARM) */
+
+/* Mylex subsystem IDs */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID_352	0x0050		/* AcceleRAID 352 */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID_170	0x0052		/* AcceleRAID 170 */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID_160	0x0054		/* AcceleRAID 160 */
+#define	PCI_PRODUCT_MYLEX_EXTREMERAID_2000	0x0040		/* eXtremeRAID 2000 */
+#define	PCI_PRODUCT_MYLEX_EXTREMERAID_3000	0x0030		/* eXtremeRAID 3000 */
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
