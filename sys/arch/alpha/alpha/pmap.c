@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 1995/06/28 02:45:15 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 1995/08/03 00:52:24 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -448,7 +448,6 @@ pmap_unmap_prom()
 	/* XXX save old pte so that we can remap prom if necessary */
 	rom_ptep = &Lev1map[0];					/* XXX */
 	rom_pte = *rom_ptep & ~PG_ASM;				/* XXX */
-	printf("WARNING: console printf twiddles mappings!\n");	/* XXX */
 
 	/* Mark all mappings before VM_MIN_KERNEL_ADDRESS as invalid. */
 	bzero(Lev1map, kvtol1pte(VM_MIN_KERNEL_ADDRESS) * sizeof Lev1map[0]);
