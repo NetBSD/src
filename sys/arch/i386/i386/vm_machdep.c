@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.89 2000/05/28 05:49:01 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.89.2.1 2000/08/16 23:18:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -135,19 +135,15 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * Preset these so that gdt_compact() doesn't get confused if called
 	 * during the allocations below.
 	 *
-	 * Note: pcb_ldt_sel is handled in the pmap_activate() call below.
+	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
+	 * we run the new process.
 	 */
-	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
-
-	/*
-	 * Activate the addres space.  Note this will refresh pcb_ldt_sel.
-	 */
-	pmap_activate(p2);
+	p2->p_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
-	tss_alloc(pcb);
+	tss_alloc(p2);
 
 	/*
 	 * Copy the trapframe.
@@ -222,7 +218,7 @@ cpu_wait(p)
 {
 
 	/* Nuke the TSS. */
-	tss_free(&p->p_addr->u_pcb);
+	tss_free(p);
 }
 
 /*
