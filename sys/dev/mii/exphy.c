@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.1 1998/08/12 08:46:20 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.2 1998/08/12 20:46:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ exphy_service(self, mii, cmd)
 	 * We can't isolate the 3Com PHY, so it has to be the only one!
 	 */
 	if (IFM_INST(mii->mii_media.ifm_media) != sc->sc_mii.mii_inst)
-		panic("exphy_serivce: can't isolate 3Com PHY");
+		panic("exphy_service: can't isolate 3Com PHY");
 
 
 	switch (cmd) {
@@ -329,9 +329,11 @@ exphy_auto(sc)
 			return;
 		delay(1000);
 	}
+#if 0
 	if ((bmsr & BMSR_ACOMP) == 0)
 		printf("%s: autonegotiation failed to complete\n",
 		    sc->sc_mii.mii_dev.dv_xname);
+#endif
 }
 
 void
