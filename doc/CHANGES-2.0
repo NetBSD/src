@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.51 2004/04/07 05:04:06 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.52 2004/04/07 05:04:55 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -550,3 +550,8 @@ share/termcap/termcap.src			1.90
 
 	Add termcap entry for Olivetti M10 and compatibles. PR#17739
 	[jdc, ticket #80]
+
+sbin/sysctl/sysctl.c				1.87
+
+	Add -d flag to usage message(s).
+	[atatat, ticket #81]
