@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.230 2003/04/18 14:54:57 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.231 2003/04/26 21:59:43 fvdl Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -488,7 +488,7 @@
 ./usr/share/man/cat8/sun3
 ./usr/share/man/cat8/vax
 ./usr/share/man/cat8/x68k
-./usr/share/man/cat8/x86_64
+./usr/share/man/cat8/amd64
 ./usr/share/man/cat9
 ./usr/share/man/cat9/acorn26
 ./usr/share/man/cat9/alpha
@@ -584,7 +584,7 @@
 ./usr/share/man/man8/sun3
 ./usr/share/man/man8/vax
 ./usr/share/man/man8/x68k
-./usr/share/man/man8/x86_64
+./usr/share/man/man8/amd64
 ./usr/share/man/man9
 ./usr/share/man/man9/acorn26
 ./usr/share/man/man9/alpha
@@ -680,7 +680,7 @@
 ./usr/share/man/html8/sun3
 ./usr/share/man/html8/vax
 ./usr/share/man/html8/x68k
-./usr/share/man/html8/x86_64
+./usr/share/man/html8/amd64
 ./usr/share/man/html9
 ./usr/share/man/html9/acorn26
 ./usr/share/man/html9/alpha
