@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.44 1998/03/24 03:10:02 kml Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.45 1998/03/28 19:39:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -604,9 +604,6 @@ tcp_mss_to_advertise(tp)
 	 * In order to avoid defeating path MTU discovery on the peer,
 	 * we advertise the max MTU of all attached networks as our MSS,
 	 * per RFC 1191, section 3.1.
-	 *
-	 * XXX Should we allow room for the timestamp option if
-	 * XXX rfc1323 is enabled?
 	 */
 	mss = in_maxmtu - sizeof(struct tcpiphdr);
 
