@@ -42,13 +42,14 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.6 1994/06/13 21:58:54 mycroft Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.7 1994/12/23 16:39:28 cgd Exp $";
 #endif /* not lint */
 
 /*
  * Disk quota editor.
  */
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/wait.h>
@@ -59,6 +60,7 @@ static char *rcsid = "$Id: edquota.c,v 1.6 1994/06/13 21:58:54 mycroft Exp $";
 #include <grp.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "pathnames.h"
