@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.4 2002/12/23 00:22:05 kanaoka Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.5 2003/07/02 11:45:08 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.4 2002/12/23 00:22:05 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.5 2003/07/02 11:45:08 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -274,10 +274,66 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 	return (AE_OK);
 }
 
+/* get PCI bus# from root bridge recursively */
+static int
+get_bus_number(
+    ACPI_HANDLE        rhandle,
+    ACPI_HANDLE        chandle,
+    ACPI_PCI_ID        **PciId)
+{
+	ACPI_HANDLE handle;
+	ACPI_STATUS rv;
+	ACPI_OBJECT_TYPE type;
+	ACPI_PCI_ID *id;
+	int v;
+	int bus;
+
+	id = *PciId;
+
+	rv = AcpiGetParent(chandle, &handle);
+	if (ACPI_FAILURE(rv))
+		return (0);
+
+	/*
+	 * When handle == rhandle, we have valid PciId->Bus
+	 * which was obtained from _BBN in evrgnini.c
+	 * so we don't have to reevaluate _BBN.
+	 */
+	if (handle != rhandle) {
+		bus = get_bus_number(rhandle, handle, PciId);
+
+		rv = AcpiGetType(handle, &type);
+		if (ACPI_FAILURE(rv) || type != ACPI_TYPE_DEVICE)
+			return (bus);
+
+		rv = acpi_eval_integer(handle, METHOD_NAME__ADR, &v);
+
+		if (ACPI_FAILURE(rv))
+			return (bus);
+
+		id->Bus = bus;
+		id->Device = ACPI_HIWORD((ACPI_INTEGER)v);
+		id->Function = ACPI_LOWORD((ACPI_INTEGER)v);
+
+		/* read HDR_TYPE register */
+		rv = AcpiOsReadPciConfiguration(id, 0x0e, &v, 8);
+		if (ACPI_SUCCESS(rv) &&
+			/* mask multifunction bit & check bridge type */
+			((v & 0x7f) == 1 || (v & 0x7f) == 2)) {
+			/* read SECONDARY_BUS register */
+			rv = AcpiOsReadPciConfiguration(id, 0x19, &v, 8);
+			if (ACPI_SUCCESS(rv))
+				id->Bus = v;
+		}
+	}
+
+	return (id->Bus);
+}
+
 /*
  * AcpiOsDerivePciId:
  *
- *     Interim function needed for PCI IRQ routing.
+ * Derive correct PCI bus# by traversing bridges
  */
 void
 AcpiOsDerivePciId(
@@ -285,5 +341,5 @@ AcpiOsDerivePciId(
     ACPI_HANDLE        chandle,
     ACPI_PCI_ID        **PciId)
 {
-       /* XXX TBD */
+	(*PciId)->Bus = get_bus_number(rhandle, chandle, PciId);
 }
