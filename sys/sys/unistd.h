@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.23 2003/01/20 22:11:15 jdolecek Exp $	*/
+/*	$NetBSD: unistd.h,v 1.24 2003/01/31 11:54:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -97,6 +97,8 @@
 #define	_POSIX_SPIN_LOCKS	200112L
 				/* reader/writer locks */
 #define	_POSIX_READER_WRITER_LOCKS	200112L
+				/* XPG4.2 shared memory */
+#define	_XOPEN_SHM		0
 
 /* access function */
 #define	F_OK		0	/* test for existence of file */
