@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.61 1999/08/03 20:19:16 wrstuden Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.62 1999/12/08 18:53:56 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -264,7 +264,7 @@ sys_fcntl(p, v, retval)
 		tmp = FFLAGS((long)SCARG(uap, arg)) & FCNTLFLAGS;
 		error = (*fp->f_ops->fo_fcntl)(fp, F_SETFL, (caddr_t)&tmp, p);
 		if (error)
-			return (error);
+			goto out;
 		fp->f_flag &= ~FCNTLFLAGS;
 		fp->f_flag |= tmp;
 		tmp = fp->f_flag & FNONBLOCK;
