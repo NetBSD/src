@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.177 2001/05/01 05:33:12 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.178 2001/05/01 05:53:29 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2001/05/01 05:33:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2001/05/01 05:53:29 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1623,7 +1623,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t isactive;
 	boolean_t wired;
 	long cpu_id = cpu_number();
-	int error;
+	int error = 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1682,7 +1682,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			error = pmap_lev1map_create(pmap, cpu_id);
 			if (error) {
 				if (flags & PMAP_CANFAIL)
-					return (error);
+					goto out;
 				panic("pmap_enter: unable to create lev1map");
 			}
 		}
@@ -1700,7 +1700,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			if (error) {
 				pmap_l1pt_delref(pmap, l1pte, cpu_id);
 				if (flags & PMAP_CANFAIL)
-					return (error);
+					goto out;
 				panic("pmap_enter: unable to create L2 PT "
 				    "page");
 			}
@@ -1724,7 +1724,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			if (error) {
 				pmap_l2pt_delref(pmap, l1pte, l2pte, cpu_id);
 				if (flags & PMAP_CANFAIL)
-					return (error);
+					goto out;
 				panic("pmap_enter: unable to create L3 PT "
 				    "page");
 			}
@@ -1829,7 +1829,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if (error) {
 			pmap_l3pt_delref(pmap, va, pte, cpu_id);
 			if (flags & PMAP_CANFAIL)
-				return (error);
+				goto out;
 			panic("pmap_enter: unable to enter mapping in PV "
 			    "table");
 		}
@@ -1907,10 +1907,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (needisync)
 		PMAP_SYNC_ISTREAM(pmap);
 
+out:
 	PMAP_UNLOCK(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 	
-	return 0;
+	return error;
 }
 
 /*
