@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.53 1998/10/23 23:03:02 is Exp $	*/
+/*	$NetBSD: conf.c,v 1.54 1998/10/24 11:09:29 is Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -103,6 +103,7 @@ dev_decl(filedesc,open);
 #include "rnd.h"
 #include "scsibus.h"
 
+#ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
 #define cdev_i4bctl_init(c,n) { \
       dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -149,6 +150,7 @@ cdev_decl(i4bctl);
 cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
+#endif	/* __I4B_IS_INTEGRATED */
 
 struct cdevsw	cdevsw[] =
 {
