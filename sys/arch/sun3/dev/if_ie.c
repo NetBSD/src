@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.28 1998/10/01 20:05:09 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.29 1999/03/25 23:13:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -166,10 +166,6 @@
 #define	IED_ENQ		0x20
 #define	IED_XMIT	0x40
 #define	IED_ALL		0x7f
-
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 #ifdef	IEDEBUG
 #define	inline	/* not */

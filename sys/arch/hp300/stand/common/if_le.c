@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 1997/12/26 22:37:05 scottr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 1999/03/25 23:12:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -50,10 +50,6 @@
 #ifdef LE_DEBUG
 int le_debug = 0;
 #endif
-
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 int le_probe();
 int le_match();

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.20 1998/08/08 23:58:40 mycroft Exp $ */
+/* $NetBSD: if_eb.c,v 1.21 1999/03/25 23:11:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -96,10 +96,6 @@
 #include <arm32/podulebus/if_ebreg.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/podules.h>
-
-#define ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN	1514
-#define ETHER_ADDR_LEN	6
 
 #ifndef EB_TIMEOUT
 #define EB_TIMEOUT	60
@@ -1045,7 +1041,7 @@ ebtxpacket(sc)
 
 	len = max(len, ETHER_MIN_LEN);
 	
-	if (len > ETHER_MAX_LEN)
+	if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN))
 		log(LOG_WARNING, "ea: oversize packet = %d bytes\n", len);
 
 /* Ok we now have a packet len bytes long in our packet buffer */
@@ -1280,7 +1276,7 @@ ebgetpackets(sc)
 
 /* Is the packet too big ? - this will probably be trapped above as a receive error */
 
-		if (len > ETHER_MAX_LEN) {
+		if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 			++ifp->if_ierrors;
 			printf("rx packet size error len=%d\n", len);
 			sc->sc_config2 |= EB_CFG2_OUTPUT;
