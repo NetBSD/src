@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.293 2004/11/14 11:26:43 yamt Exp $
+#	$NetBSD: Makefile,v 1.294 2004/11/14 20:28:28 yamt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -319,6 +319,7 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV ttys
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail configinstall
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.sbin/pf configinstall
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix configinstall
 .if (${MKCRYPTO} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/ssh configinstall
