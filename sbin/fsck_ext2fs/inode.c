@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.9 2003/01/24 21:55:07 fvdl Exp $	*/
+/*	$NetBSD: inode.c,v 1.10 2003/07/13 08:22:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.9 2003/01/24 21:55:07 fvdl Exp $");
+__RCSID("$NetBSD: inode.c,v 1.10 2003/07/13 08:22:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,8 +104,8 @@ ckinode(dp, idesc)
 		if (*ap == 0) {
 			if (idesc->id_type == DATA && ndb > 0) {
 				/* An empty block in a directory XXX */
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
+				getpathname(pathbuf, sizeof(pathbuf),
+				    idesc->id_number, idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
@@ -140,8 +140,8 @@ ckinode(dp, idesc)
 		} else {
 			if (idesc->id_type == DATA && remsize > 0) {
 				/* An empty block in a directory XXX */
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
+				getpathname(pathbuf, sizeof(pathbuf),
+				    idesc->id_number, idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
@@ -224,8 +224,8 @@ iblock(idesc, ilevel, isize)
 		} else {
 			if (idesc->id_type == DATA && isize > 0) {
 				/* An empty block in a directory XXX */
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
+				getpathname(pathbuf, sizeof(pathbuf),
+				    idesc->id_number, idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {

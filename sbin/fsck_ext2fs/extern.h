@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1998/07/26 20:27:20 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 2003/07/13 08:22:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -51,7 +51,7 @@ void	freeblk __P((daddr_t));
 void	freeino __P((ino_t));
 void	freeinodebuf __P((void));
 int	ftypeok __P((struct ext2fs_dinode *));
-void	getpathname __P((char *, ino_t, ino_t));
+void	getpathname __P((char *, size_t, ino_t, ino_t));
 void	inocleanup __P((void));
 void	inodirty __P((void));
 int	linkup __P((ino_t, ino_t));
