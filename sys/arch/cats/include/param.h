@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2001/06/08 22:23:02 chris Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2001/06/12 17:38:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -32,18 +32,18 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_PARAM_H_
-#define	_ARM32_PARAM_H_
+#ifndef	_CATS_PARAM_H_
+#define	_CATS_PARAM_H_
 
 /*
  * Machine dependent constants for ARM6+ processors
  */
 
-#define	_MACHINE	arm32
-#define	MACHINE		"arm32"
-#define	_MACHINE_ARCH	arm32
-#define	MACHINE_ARCH	"arm32"
+#define	_MACHINE	cats
+#define	MACHINE		"cats"
+#define	_MACHINE_ARCH	arm
+#define	MACHINE_ARCH	"arm"
 
 #include <arm/arm32/param.h>
 
-#endif	/* _ARM32_PARAM_H_ */
+#endif	/* _CATS_PARAM_H_ */
