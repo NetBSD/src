@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.3 2001/04/13 23:29:58 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.4 2001/04/21 15:47:32 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,6 +42,8 @@
  * Created      : 21/07/95
  */
 
+#ifndef _ARM_PSL_H_
+#define _ARM_PSL_H_
 #include <machine/intr.h>
 
 /*
@@ -104,4 +106,5 @@ extern u_int spl_smasks[_SPL_LEVELS];
 #endif /* _LOCORE */
 #endif /* _KERNEL */
 
+#endif /* _ARM_PSL_H_ */
 /* End of psl.h */
