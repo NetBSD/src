@@ -333,7 +333,7 @@ allow_untrusted_routing = no
 # network address, and reject service if it is listed below any of
 # the following domains.
 #
-#maps_rbl_domains = blackholes.mail-abuse.org dialups.mail-abuse.org
+#maps_rbl_domains = blackholes.mail-abuse.org relays.mail-abuse.org
 maps_rbl_domains = blackholes.mail-abuse.org
 
 # The relay_domains parameter restricts what client hostname domains

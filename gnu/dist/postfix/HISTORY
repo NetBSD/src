@@ -5024,3 +5024,42 @@ Apologies for any names omitted.
 	a 4xx temporary error code when, for example, an LDAP or
 	mysql server was unavailable. Remotely based on a fix by
 	Robert Kiessling @ de.easynet.net. File: smtpd/smtpd_check.c.
+
+20010501
+
+	Bugfix: The SMTP server's 550 in reply to DATA should be
+	a 554 response.  And it wasn't Sendmail. Claus Assman.
+
+	Bugfix: the INSTALL.sh test for non-interactive upgrade
+	broke rooted installations that specify settings via the
+	environment.  Simon Mudd.
+
+	Bugfix: mailq output is now really flushed one message at
+	a time. File: sendmail/sendmail.c.
+
+20010507
+
+	Bugfix: with soft_bounce=yes, the SMTP server would log
+	5xx replies even though it would send 4xx replies to the
+	client (Phil Howard, ipal.net). File: smtpd/smtpd_check.c.
+
+20010523
+
+	Bugfix: postsuper's temporary file detection logic needed
+	fixing.
+
+	Bugfix: memory leak in the LDAP client module. Alain
+	Thivillon, France Teaser - Groupe Firstream.
+
+20010525
+
+	Bugfix: the SMTP and LMTP clients claimed that a queue file
+	needed to be delivered again (even when all recipients were
+	erased from the queue file) when no QUIT or RSET reply was
+	received (by default, this does not happen with SMTP mail
+	because the SMTP client does not wait for QUIT replies and
+	does not send RSET to deliver mail).  As a result of the
+	same bug the LMTP client followed a dangling pointer when
+	sending QUIT after process idle timeout while the LMTP
+	server had disconnected.  Files:  smtp/smtp_proto.c,
+	lmtp/lmtp_proto.c.

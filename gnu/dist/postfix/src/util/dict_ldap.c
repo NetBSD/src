@@ -584,6 +584,8 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
 	ldap_msgfree(res);
     if (filter_buf != 0)
 	vstring_free(filter_buf);
+    if (escaped_name != 0) 
+	vstring_free(escaped_name);
 
     /*
      * If we had an error, return nothing, Otherwise, return the result, if

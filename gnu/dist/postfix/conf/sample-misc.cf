@@ -165,7 +165,11 @@ max_idle = 100s
 max_use = 100
 
 # The mydestination parameter specifies the list of domains that this
-# machine considers itself the final destination for.
+# machine considers itself the final destination for. That includes
+# Sendmail-style virtual domains hosted on this machine.
+#
+# Do not include Postfix-style virtual domains - those domains are
+# specified elsewhere (see sample-virtual.cf, and sample-transport.cf).
 #
 # The default is $myhostname + localhost.$mydomain.  On a mail domain
 # gateway, you should also include $mydomain. Do not specify the

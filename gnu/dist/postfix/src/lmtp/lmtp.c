@@ -420,6 +420,13 @@ static int deliver_message(DELIVER_REQUEST *request, char **unused_argv)
     result = state->status;
     lmtp_chat_reset(state);
 
+    /*
+     * XXX State persists until idle timeout, but these fields will be
+     * dangling pointers. Nuke them.
+     */
+    state->request = 0;
+    state->src = 0;
+
     return (result);
 }
 

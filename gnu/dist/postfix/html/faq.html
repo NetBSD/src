@@ -1261,7 +1261,7 @@ Question:
 
 My Postfix server is too slow. When I telnet to the SMTP port
 (<tt>telnet hostname 25</tt>), the response comes after 40 seconds.
-On the other hand, when I telnet to the the POP port (<tt>telnet
+On the other hand, when I telnet to the POP port (<tt>telnet
 hostname 110</tt>) the response comes with no delay.
 
 </blockquote>
@@ -1366,8 +1366,9 @@ record, and that this one PTR record needs a matching A record.
 Some people read the RFCs such that one IP address can have multiple
 PTR records, but that makes PTR records even less useful than they
 already are. And in any case, having multiple names per IP address
-would only worsen the problem of finding out the "official name"
-of a machine's IP address.
+only worsens the problem of finding out the SMTP client hostname.
+
+<hr>
 
 <a name="open_relay"><h3>Help! Postfix is an open relay</h3>
 
@@ -1614,7 +1615,7 @@ The implementation uses two lookup tables. One table defines what
 users are restricted in where they can send mail, and the other
 table defines what destinations are local. It is left as an exercise
 for the reader to change this into a scheme where only some users
-have permission to send send mail to off-site destinations, and
+have permission to send mail to off-site destinations, and
 where most users are restricted.
 
 <p>
@@ -2180,7 +2181,7 @@ types Postfix supports, use the command <b>postconf -m</b>.
 <p>
 
 <li>Execute the command <b>postmap /etc/postfix/virtual</b> whenever
-you edit the the <b>virtual</b> table.
+you edit the <b>virtual</b> table.
 
 <p>
 
