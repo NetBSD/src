@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.46 2000/12/30 05:38:50 sato Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.47 2001/01/03 23:00:24 enami Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.46 2000/12/30 05:38:50 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.47 2001/01/03 23:00:24 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -690,12 +690,11 @@ wsdisplayopen(dev, flag, mode, p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit, newopen, error;
+	int newopen, error;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	if (unit >= wsdisplay_cd.cd_ndevs ||	/* make sure it was attached */
-	    (sc = wsdisplay_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
+	if (sc == NULL)			/* make sure it was attached */
 		return (ENXIO);
 
 	if (ISWSDISPLAYCTL(dev))
@@ -753,11 +752,9 @@ wsdisplayclose(dev, flag, mode, p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
@@ -812,11 +809,9 @@ wsdisplayread(dev, uio, flag)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
@@ -838,11 +833,9 @@ wsdisplaywrite(dev, uio, flag)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
@@ -861,11 +854,9 @@ wsdisplaytty(dev)
 	dev_t dev;
 {
 	struct wsdisplay_softc *sc;
-	int unit;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYCTL(dev))
 		panic("wsdisplaytty() on ctl device");
@@ -885,11 +876,10 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
-	int unit, error;
+	int error;
 	struct wsscreen *scr;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 #ifdef WSDISPLAY_COMPAT_USL
 	error = wsdisplay_usl_ioctl1(sc, cmd, data, flag, p);
@@ -1139,7 +1129,8 @@ wsdisplaymmap(dev, offset, prot)
 	off_t offset;
 	int prot;
 {
-	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];
+	struct wsdisplay_softc *sc =
+	    device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 	struct wsscreen *scr;
 
 	if (ISWSDISPLAYCTL(dev))
@@ -1160,7 +1151,8 @@ wsdisplaypoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];
+	struct wsdisplay_softc *sc =
+	    device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 	struct wsscreen *scr;
 
 	if (ISWSDISPLAYCTL(dev))
@@ -1188,7 +1180,7 @@ wsdisplaystart(tp)
 		splx(s);
 		return;
 	}
-	sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(tp->t_dev)];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(tp->t_dev));
 	scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)];
 	if (scr->scr_hold_screen) {
 		tp->t_state |= TS_TIMEOUT;
@@ -1788,10 +1780,8 @@ wsdisplay_pollc(dev, on)
 	int on;
 {
 	struct wsdisplay_softc *sc;
-	int unit;
 
-	unit = WSDISPLAYUNIT(dev);
-	sc = wsdisplay_cd.cd_devs[unit];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	wsdisplay_cons_pollmode = on;
 
