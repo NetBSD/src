@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.5 2001/07/31 02:07:14 ad Exp $	*/
+/*	$NetBSD: mly.c,v 1.6 2001/08/01 20:54:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -2346,6 +2346,11 @@ mly_user_command(struct mly_softc *mly, struct mly_user_command *uc)
 	 * Handle data size/direction.
 	 */
 	if ((mc->mc_length = abs(uc->DataTransferLength)) != 0) {
+		if (mc->mc_length > MAXPHYS) {
+			rv = EINVAL;
+			goto out;
+		}
+
 		mc->mc_data = malloc(mc->mc_length, M_DEVBUF, M_WAITOK);
 		if (mc->mc_data == NULL) {
 			rv = ENOMEM;
