@@ -372,7 +372,8 @@ sloutput(ifp, m, dst)
 		m_freem(m);
 		return (ENETDOWN);	/* sort of */
 	}
-	if ((sc->sc_ttyp->t_state & TS_CARR_ON) == 0) {
+	if ((sc->sc_ttyp->t_state & TS_CARR_ON) == 0 &&
+	    (sc->sc_ttyp->t_cflag & CLOCAL) == 0) {
 		m_freem(m);
 		return (EHOSTUNREACH);
 	}
@@ -401,6 +402,8 @@ sloutput(ifp, m, dst)
 	sc->sc_if.if_lastchange = time;
 	if (sc->sc_ttyp->t_outq.c_cc == 0)
 		slstart(sc->sc_ttyp);
+	else
+		(*sc->sc_ttyp->t_oproc)(sc->sc_ttyp);	/* XXX */
 	splx(s);
 	return (0);
 }
