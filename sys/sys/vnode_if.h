@@ -1,3 +1,5 @@
+/*	$NetBSD: vnode_if.h,v 1.9 1998/01/09 06:43:27 thorpej Exp $	*/
+
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
@@ -5,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.12 1997/10/10 02:07:00 fvdl Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.14 1998/01/08 01:06:50 thorpej Exp 
+ *	NetBSD: vnode_if.sh,v 1.15 1998/01/09 06:40:43 thorpej Exp 
  */
 
 /*
