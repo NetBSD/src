@@ -1,4 +1,4 @@
-/* $NetBSD: linux_errno.h,v 1.2 2001/09/02 06:51:15 manu Exp $ */
+/* $NetBSD: linux_errno.h,v 1.2.26.1 2004/06/22 08:53:16 tron Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  * Linux/mips returns negative errors to userland  
  * The libc makes the errno positive.
  */
-#define LINUX_SCERR_SIGN -
+#define LINUX_SCERR_SIGN +
 
 /* Use common/linux_errno.h for #1-35 */
 
