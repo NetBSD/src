@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.2 1998/11/13 13:47:56 drochner Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.3 1999/01/15 17:55:52 explorer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -420,6 +420,13 @@ int rf_State_LastState(RF_RaidAccessDesc_t *desc)
 #else
     RF_DKU_END_IO(((RF_Raid_t *)desc->raidPtr)->raidid);
 #endif /* DKUSAGE > 0 */
+
+    /*
+     * If this is not an async request, wake up the caller
+     */
+    if (desc->async_flag == 0)
+    	wakeup(desc->bp);
+
     /*     printf("Calling biodone on 0x%x\n",desc->bp); */
     biodone(desc->bp); 			/* access came through ioctl */
   }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.6 1999/01/14 22:49:05 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.7 1999/01/15 17:55:52 explorer Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1479,6 +1479,7 @@ int rf_DoAccessKernel(raidPtr, bp, flags, cbFunc, cbArg)
 	daddr_t blocknum;	
 	int unit;
 	struct raid_softc *rs;
+	int do_async;
 
 	/* XXX The dev_t used here should be for /dev/[r]raid* !!! */
 
@@ -1540,17 +1541,32 @@ int rf_DoAccessKernel(raidPtr, bp, flags, cbFunc, cbArg)
 	}
 	db1_printf(("Calling DoAccess..\n"));
 
+	/*
+	 * XXX For now, all writes are sync
+	 */
+	do_async = 1;
+	if ((bp->b_flags & B_READ) == 0)
+		do_async = 0;
+
 	/* don't ever condition on bp->b_flags & B_WRITE.  
 	   always condition on B_READ instead */
 	retcode = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ? 
 			      RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
-			      0, raid_addr, num_blocks, bp->b_un.b_addr, 
+			      do_async, raid_addr, num_blocks,
+			      bp->b_un.b_addr, 
 			      bp, NULL, NULL, RF_DAG_NONBLOCKING_IO|flags, 
 			      NULL, cbFunc, cbArg);
 #if 0
 	db1_printf(("After call to DoAccess: 0x%x 0x%x %d\n",bp,
 	       bp->b_data,(int)bp->b_resid));
 #endif
+
+	/*
+	 * If we requested sync I/O, sleep here.
+	 */
+	if ((retcode == 0) && (do_async == 0))
+		tsleep(bp, PRIBIO, "raidsyncio", 0);
+
 	return(retcode);
 }
 

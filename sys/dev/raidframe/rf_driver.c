@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.2 1998/11/13 13:45:15 drochner Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.3 1999/01/15 17:55:52 explorer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -1419,9 +1419,10 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 
   RF_ETIMER_START(desc->tracerec.tot_timer);
 
+  desc->async_flag = async_flag;
+
 #ifdef SIMULATE
   /* simulator uses paramDesc to continue dag from test function */
-  desc->async_flag=async_flag;
 
   *paramDesc=desc;
   
