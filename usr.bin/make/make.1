@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.79 2003/05/23 18:15:17 wiz Exp $
+.\"	$NetBSD: make.1,v 1.80 2003/06/26 18:21:45 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -300,13 +300,13 @@ is interrupted.
 .El
 .Pp
 Targets and sources may contain the shell wildcard values
-.Ql ? ,
+.Ql \&? ,
 .Ql * ,
 .Ql []
 and
 .Ql {} .
 The values
-.Ql ? ,
+.Ql \&? ,
 .Ql *
 and
 .Ql []
@@ -426,7 +426,7 @@ The name of the target; also known as
 .Pp
 The shorter forms
 .Ql Va @ ,
-.Ql Va ? ,
+.Ql Va \&? ,
 .Ql Va \&\*[Lt] ,
 .Ql Va \&\*[Gt] ,
 and
@@ -601,7 +601,7 @@ Select only those words that match
 .Ar pattern .
 The standard shell wildcard characters
 .Pf ( Ql * ,
-.Ql ? ,
+.Ql \&? ,
 and
 .Ql Op )
 may
@@ -721,7 +721,7 @@ Replaces each word in the variable with its last component.
 .It Cm u
 Remove adjacent duplicate words (like
 .Xr uniq 1 ) .
-.It Cm ? Ar true_string Cm : Ar false_string
+.It Cm \&? Ar true_string Cm : Ar false_string
 If the variable evaluates to true, return as its value the
 .Ar true_string ,
 otherwise return the
@@ -747,7 +747,7 @@ is the substring of
 to be replaced in
 .Ar new_string .
 .It Cm @ Ar temp Cm @ Xo
-.No Ar string Cm @
+.Ar string Cm @
 .Xc
 This is the loop expansion mechanism from the OSF Development
 Environment (ODE) make.
@@ -785,7 +785,7 @@ The path of the node which has the same name as the variable
 is the value.
 If no such node exists or its path is null, then the
 name of the variable is used.
-.It Cm ! Ar cmd Cm !
+.It Cm \&! Ar cmd Cm \&!
 The output of running
 .Ar cmd
 is the value.
@@ -902,7 +902,7 @@ Test the value of a variable.
 Test the target being built.
 .It Xo
 .Ic .ifnmake
-.Oo \&! Oc Ar target
+.Oo \&! Ns Oc Ar target
 .Op Ar operator target ...
 .Xc
 Test the target being built.
@@ -910,7 +910,7 @@ Test the target being built.
 Reverse the sense of the last conditional.
 .It Xo
 .Ic .elif
-.Oo \&! Oc Ar expression
+.Oo \&! Ns Oc Ar expression
 .Op Ar operator expression ...
 .Xc
 A combination of
@@ -1068,10 +1068,8 @@ The syntax of a for loop is:
 .Ic in
 .Ar expression
 .Xc
-.It Xo
-\*[Lt]make-rules\*[Gt]
-.Ic \&.endfor
-.Xc
+.It Aq make-rules
+.It Ic \&.endfor
 .El
 .Pp
 After the for
