@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/12/30 04:08:28 minoura Exp $
+#	$NetBSD: Makefile,v 1.15 2002/04/28 11:29:29 isaki Exp $
 
 TOP=		${.CURDIR}/..
 COMMONDIR=	${TOP}/ramdisk-common
@@ -21,7 +21,7 @@ RAMDISKBPI=	4096
 passwd:
 	-/bin/mkdir ${.OBJDIR}/etc
 	/bin/cp -pf ${.CURDIR}/../../../../etc/master.passwd ${.OBJDIR}/etc
-	pwd_mkdb -p -d ${.OBJDIR} ${.OBJDIR}/etc/master.passwd
+	${PWD_MKDB} -p -d ${.OBJDIR} ${.OBJDIR}/etc/master.passwd
 	/bin/cp -pf ${.OBJDIR}/etc/passwd ${.OBJDIR}
 
 includes:
