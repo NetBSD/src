@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.29 1997/08/30 06:53:57 mycroft Exp $	*/
+/*	$NetBSD: pci.c,v 1.30 1998/01/12 09:40:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -51,10 +51,6 @@ void pciattach __P((struct device *, struct device *, void *));
 
 struct cfattach pci_ca = {
 	sizeof(struct device), pcimatch, pciattach
-};
-
-struct cfdriver pci_cd = {
-	NULL, "pci", DV_DULL
 };
 
 int	pciprint __P((void *, const char *));

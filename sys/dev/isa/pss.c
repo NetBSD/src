@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.37 1997/10/19 07:42:32 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -265,16 +265,8 @@ struct cfattach pss_ca = {
 	sizeof(struct pss_softc), pssprobe, pssattach
 };
 
-struct cfdriver pss_cd = {
-	NULL, "pss", DV_DULL, 1
-};
-
 struct cfattach sp_ca = {
 	sizeof(struct ad1848_softc), spprobe, spattach
-};
-
-struct cfdriver sp_cd = {
-	NULL, "sp", DV_DULL
 };
 
 #ifdef notyet
@@ -282,16 +274,8 @@ struct cfattach mpu_ca = {
 	sizeof(struct mpu_softc), mpuprobe, mpuattach
 };
 
-struct cfdriver mpu_cd = {
-	NULL, "mpu", DV_DULL
-};
-
 struct cfattach pcd_ca = {
 	sizeof(struct pcd_softc), pcdprobe, pcdattach
-};
-
-struct cfdriver pcd_cd = {
-	NULL, "pcd", DV_DULL
 };
 #endif
 

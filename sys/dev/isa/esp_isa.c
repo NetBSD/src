@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.6 1997/10/20 18:43:09 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.7 1998/01/12 09:43:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -166,10 +166,6 @@ void	esp_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach esp_isa_ca = {
 	sizeof(struct esp_softc), esp_isa_match, esp_isa_attach
-};
-
-struct cfdriver esp_cd = {
-	NULL, "esp", DV_DULL
 };
 
 struct scsipi_adapter esp_switch = {

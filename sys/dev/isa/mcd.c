@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.58 1997/11/11 22:43:51 fvdl Exp $	*/
+/*	$NetBSD: mcd.c,v 1.59 1998/01/12 09:43:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -185,9 +185,7 @@ struct cfattach mcd_ca = {
 	sizeof(struct mcd_softc), mcdprobe, mcdattach
 };
 
-struct cfdriver mcd_cd = {
-	NULL, "mcd", DV_DISK
-};
+extern struct cfdriver mcd_cd;
 
 void	mcdgetdefaultlabel __P((struct mcd_softc *, struct disklabel *));
 void	mcdgetdisklabel __P((struct mcd_softc *));

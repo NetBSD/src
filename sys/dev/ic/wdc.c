@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.10 1998/01/07 08:47:54 mikel Exp $ */
+/*	$NetBSD: wdc.c,v 1.11 1998/01/12 09:43:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -91,10 +91,6 @@ int	wdcintr		__P((void *));
 
 struct cfattach wdc_ca = {
 	sizeof(struct wdc_softc), wdcprobe, wdcattach
-};
-
-struct cfdriver wdc_cd = {
-	NULL, "wdc", DV_DULL
 };
 
 void	wdcstart	__P((struct wdc_softc *));

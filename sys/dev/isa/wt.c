@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.41 1997/10/20 18:43:22 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.42 1998/01/12 09:43:53 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -181,9 +181,7 @@ struct cfattach wt_ca = {
 	sizeof(struct wt_softc), wtprobe, wtattach
 };
 
-struct cfdriver wt_cd = {
-	NULL, "wt", DV_TAPE
-};
+extern struct cfdriver wt_cd;
 
 /*
  * Probe for the presence of the device.
