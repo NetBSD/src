@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.5 1995/02/28 01:13:56 jtc Exp $	*/
+/*	$NetBSD: usleep.c,v 1.6 1995/03/21 13:50:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)usleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: usleep.c,v 1.5 1995/02/28 01:13:56 jtc Exp $";
+static char rcsid[] = "$NetBSD: usleep.c,v 1.6 1995/03/21 13:50:32 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,60 +46,61 @@ static char rcsid[] = "$NetBSD: usleep.c,v 1.5 1995/02/28 01:13:56 jtc Exp $";
 #include <unistd.h>
 
 #define	TICK	10000		/* system clock resolution in microseconds */
-#define	USPS	1000000		/* number of microseconds in a second */
-
-#define	setvec(vec, a) \
-	vec.sv_handler = a; vec.sv_mask = vec.sv_onstack = 0
-
-static int ringring;
 
 void
 usleep(useconds)
 	unsigned int useconds;
 {
-	register struct itimerval *itp;
 	struct itimerval itv, oitv;
-	struct sigvec vec, ovec;
-	long omask;
+	struct sigaction act, oact;
+	sigset_t set, oset;
 	static void sleephandler();
 
-	itp = &itv;
 	if (!useconds)
 		return;
-	timerclear(&itp->it_interval);
-	timerclear(&itp->it_value);
-	if (setitimer(ITIMER_REAL, itp, &oitv) < 0)
-		return;
-	itp->it_value.tv_sec = useconds / USPS;
-	itp->it_value.tv_usec = useconds % USPS;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGALRM);
+	sigprocmask(SIG_BLOCK, &set, &oset);
+
+	act.sa_handler = sleephandler;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	sigaction(SIGALRM, &act, &oact);
+
+	timerclear(&itv.it_interval);
+	itv.it_value.tv_sec = useconds / 1000000;
+	itv.it_value.tv_usec = useconds % 1000000;
+	setitimer(ITIMER_REAL, &itv, &oitv);
+
 	if (timerisset(&oitv.it_value)) {
-		if (timercmp(&oitv.it_value, &itp->it_value, >)) {
-			oitv.it_value.tv_sec -= itp->it_value.tv_sec;
-			oitv.it_value.tv_usec -= itp->it_value.tv_usec;
-			if (oitv.it_value.tv_usec < 0) {
-				oitv.it_value.tv_usec += USPS;
-				oitv.it_value.tv_sec--;
-			}
+		if (timercmp(&oitv.it_value, &itv.it_value, >)) {
+			timersub(&oitv.it_value, &itv.it_value, &oitv.it_value);
 		} else {
-			itp->it_value = oitv.it_value;
+			itv.it_value = oitv.it_value;
+			/*
+			 * This is a hack, but we must have time to return
+			 * from the setitimer after the alarm or else it'll
+			 * be restarted.  And, anyway, sleep never did
+			 * anything more than this before.
+			 */
 			oitv.it_value.tv_sec = 0;
 			oitv.it_value.tv_usec = 2 * TICK;
+
+			setitimer(ITIMER_REAL, &itv, NULL);
 		}
 	}
-	setvec(vec, sleephandler);
-	(void) sigvec(SIGALRM, &vec, &ovec);
-	omask = sigblock(sigmask(SIGALRM));
-	ringring = 0;
-	(void) setitimer(ITIMER_REAL, itp, (struct itimerval *)0);
-	while (!ringring)
-		sigpause(omask &~ sigmask(SIGALRM));
-	(void) sigvec(SIGALRM, &ovec, (struct sigvec *)0);
-	(void) sigsetmask(omask);
-	(void) setitimer(ITIMER_REAL, &oitv, (struct itimerval *)0);
+
+	(void) sigsuspend(&oset);
+
+	sigaction(SIGALRM, &oact, NULL);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
+
+	(void) setitimer(ITIMER_REAL, &oitv, &itv);
 }
 
 static void
 sleephandler()
 {
-	ringring = 1;
+
 }
