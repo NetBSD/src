@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.13 2001/01/06 02:11:18 christos Exp $	*/
+/*	$NetBSD: optimize.c,v 1.14 2002/08/12 02:39:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: optimize.c,v 1.60 96/09/26 23:28:14 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: optimize.c,v 1.13 2001/01/06 02:11:18 christos Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.14 2002/08/12 02:39:22 itojun Exp $");
 #endif
 #endif
 
@@ -1920,7 +1920,7 @@ convert_code_r(p)
 
 	/* generate offset[] for convenience  */
 	if (slen) {
-		offset = (struct slist **)calloc(sizeof(struct slist *), slen);
+		offset = (struct slist **)calloc(slen, sizeof(struct slist *));
 		if (!offset) {
 			bpf_error("not enough core");
 			/*NOTREACHED*/
