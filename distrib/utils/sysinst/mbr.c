@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.39 2003/06/13 11:57:29 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.40 2003/06/13 22:27:03 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,7 +106,7 @@ struct part_id {
 int dosptyp_nbsd = MBR_PTYPE_NETBSD;
 
 static int get_mapping(struct mbr_partition *, int, int *, int *, int *,
-			    long *);
+			    unsigned long *);
 static void convert_mbr_chs(int, int, int, u_int8_t *, u_int8_t *,
 				 u_int8_t *, u_int32_t);
 
@@ -557,58 +557,72 @@ convert_mbr_chs(int cyl, int head, int sec,
  * is not present, or a match could not be made with a NetBSD
  * device.
  */
+
+#define MAXCYL		1023    /* Possibly 1024 */
+#define MAXHEAD		255     /* Possibly 256 */
+#define MAXSECTOR	63
+
 int
 guess_biosgeom_from_mbr(mbr_sector_t *mbr, int *cyl, int *head, int *sec)
 {
 	struct mbr_partition *parts = &mbr->mbr_parts[0];
-	int cylinders = -1, heads = -1, sectors = -1, i, j;
+	int xcylinders, xheads, xsectors, i, j;
 	int c1, h1, s1, c2, h2, s2;
-	long a1, a2;
-	quad_t num, denom;
+	unsigned long a1, a2;
+	uint64_t num, denom;
 
-	*cyl = *head = *sec = -1;
+	/*
+	 * The physical parameters may be invalid as bios geometry.
+	 * If we cannot determine the actual bios geometry, we are
+	 * better off picking a likely 'faked' geometry than leaving
+	 * the invalid physical one.
+	 */
+
+	xcylinders = dlcyl;
+	xheads = dlhead;
+	xsectors = dlsec;
+	if (xcylinders > MAXCYL || xheads > MAXHEAD || xsectors > MAXSECTOR) {
+		xsectors = MAXSECTOR;
+		xheads = MAXHEAD;
+		xcylinders = disk->dd_totsec / (MAXSECTOR * MAXHEAD);
+		if (xcylinders > MAXCYL)
+			xcylinders = MAXCYL;
+	}
+	*cyl = xcylinders;
+	*head = xheads;
+	*sec = xsectors;
+
+	xheads = -1;
 
 	/* Try to deduce the number of heads from two different mappings. */
-	for (i = 0; i < NMBRPART * 2; i++) {
+	for (i = 0; i < NMBRPART * 2 - 1; i++) {
 		if (get_mapping(parts, i, &c1, &h1, &s1, &a1) < 0)
 			continue;
-		for (j = 0; j < 8; j++) {
+		for (j = i + 1; j < NMBRPART * 2; j++) {
 			if (get_mapping(parts, j, &c2, &h2, &s2, &a2) < 0)
 				continue;
-			num = (quad_t)h1*(a2-s2) - (quad_t)h2*(a1-s1);
-			denom = (quad_t)c2*(a1-s1) - (quad_t)c1*(a2-s2);
+			a1 -= s1;
+			a2 -= s2;
+			num = (uint64_t)h1 * a2 - (quad_t)h2 * a1;
+			denom = (uint64_t)c2 * a1 - (quad_t)c1 * a2;
 			if (denom != 0 && num % denom == 0) {
-				heads = (int)(num / denom);
+				xheads = (int)(num / denom);
+				xsectors = a1 / (c1 * xheads + h1);
 				break;
 			}
 		}
-		if (heads != -1)	
+		if (xheads != -1)	
 			break;
 	}
 
-	if (heads == -1)
-		return -1;
-
-	/* Now figure out the number of sectors from a single mapping. */
-	for (i = 0; i < NMBRPART * 2; i++) {
-		if (get_mapping(parts, i, &c1, &h1, &s1, &a1) < 0)
-			continue;
-		num = a1 - s1;
-		denom = c1 * heads + h1;
-		if (denom != 0 && num % denom == 0) {
-			sectors = (int)(num / denom);
-			break;
-		}
-	}
-
-	if (sectors == -1)
+	if (xheads == -1)
 		return -1;
 
 	/*
 	 * Estimate the number of cylinders.
 	 * XXX relies on get_disks having been called.
 	 */
-	cylinders = disk->dd_totsec / heads / sectors;
+	xcylinders = disk->dd_totsec / xheads / xsectors;
 
 	/* Now verify consistency with each of the partition table entries.
 	 * Be willing to shove cylinders up a little bit to make things work,
@@ -616,23 +630,25 @@ guess_biosgeom_from_mbr(mbr_sector_t *mbr, int *cyl, int *head, int *sec)
 	for (i = 0; i < NMBRPART * 2; i++) {
 		if (get_mapping(parts, i, &c1, &h1, &s1, &a1) < 0)
 			continue;
-		if (sectors * (c1 * heads + h1) + s1 != a1)
+		if (xsectors * (c1 * xheads + h1) + s1 != a1)
 			return -1;
-		if (c1 >= cylinders)
-			cylinders = c1 + 1;
+		if (c1 >= xcylinders)
+			xcylinders = c1 + 1;
 	}
 
-	/* Everything checks out.  Reset the geometry to use for further
-	 * calculations. */
-	*cyl = cylinders;
-	*head = heads;
-	*sec = sectors;
+	/*
+	 * Everything checks out.  Reset the geometry to use for further
+	 * calculations.
+	 */
+	*cyl = MIN(xcylinders, MAXCYL);
+	*head = xheads;
+	*sec = xsectors;
 	return 0;
 }
 
 static int
 get_mapping(mbr_partition_t *parts, int i,
-	    int *cylinder, int *head, int *sector, long *absolute)
+	    int *cylinder, int *head, int *sector, unsigned long *absolute)
 {
 	struct mbr_partition *apart = &parts[i / 2];
 
@@ -642,13 +658,19 @@ get_mapping(mbr_partition_t *parts, int i,
 		*cylinder = MBR_PCYL(apart->mbrp_scyl, apart->mbrp_ssect);
 		*head = apart->mbrp_shd;
 		*sector = MBR_PSECT(apart->mbrp_ssect) - 1;
-		*absolute = apart->mbrp_start;
+		*absolute = le32toh(apart->mbrp_start);
 	} else {
 		*cylinder = MBR_PCYL(apart->mbrp_ecyl, apart->mbrp_esect);
 		*head = apart->mbrp_ehd;
 		*sector = MBR_PSECT(apart->mbrp_esect) - 1;
-		*absolute = apart->mbrp_start + apart->mbrp_size - 1;
+		*absolute = le32toh(apart->mbrp_start)
+			+ le32toh(apart->mbrp_size) - 1;
 	}
+	/* Sanity check the data against max values */
+	if ((((*cylinder * MAXHEAD) + *head) * MAXSECTOR + *sector) < *absolute)
+		/* cannot be a CHS mapping */
+		return -1;
+
 	return 0;
 }
 

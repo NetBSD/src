@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.86 2003/06/12 12:41:55 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.87 2003/06/13 22:27:07 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,9 +63,8 @@
 
 mbr_sector_t mbr;
 int mbr_len;
-struct disklist *disklist = NULL;
 struct nativedisk_info *nativedisk;
-struct biosdisk_info *biosdisk = NULL;
+static struct biosdisk_info *biosdisk = NULL;
 int netbsd_mbr_installed = 0;
 
 /* prototypes */
@@ -388,15 +387,15 @@ int
 md_bios_info(dev)
 	char *dev;
 {
-	int mib[2], i;
+	static struct disklist *disklist = NULL;
+	static int mib[2] = {CTL_MACHDEP, CPU_DISKINFO};
+	int i;
 	size_t len;
 	struct biosdisk_info *bip;
 	struct nativedisk_info *nip = NULL, *nat;
 	int cyl, head, sec;
 
 	if (disklist == NULL) {
-		mib[0] = CTL_MACHDEP;
-		mib[1] = CPU_DISKINFO;
 		if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0)
 			goto nogeom;
 		disklist = malloc(len);
@@ -419,30 +418,47 @@ md_bios_info(dev)
 	if (nip == NULL || nip->ni_nmatches == 0) {
 nogeom:
 		msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-		if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0) {
+		if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
 			msg_display_add(MSG_biosguess, cyl, head, sec);
-			set_bios_geom(cyl, head, sec);
-		} else
-			set_bios_geom(dlcyl, dlhead, dlsec);
 		biosdisk = NULL;
-	} else if (nip->ni_nmatches == 1) {
-		bip = &disklist->dl_biosdisks[nip->ni_biosmatches[0]];
-		msg_display(MSG_onebiosmatch);
-		msg_table_add(MSG_onebiosmatch_header);
-		msg_table_add(MSG_onebiosmatch_row, bip->bi_dev - 0x80,
-		    bip->bi_cyl, bip->bi_head, bip->bi_sec);
-		msg_display_add(MSG_biosgeom_advise);
-		process_menu(MENU_biosonematch, NULL);
 	} else {
-		msg_display(MSG_biosmultmatch);
-		msg_table_add(MSG_biosmultmatch_header);
-		for (i = 0; i < nip->ni_nmatches; i++) {
-			bip = &disklist->dl_biosdisks[nip->ni_biosmatches[i]];
-			msg_table_add(MSG_biosmultmatch_row, i,
-			    bip->bi_dev - 0x80, bip->bi_cyl, bip->bi_head,
-			    bip->bi_sec);
+		guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec);
+		if (nip->ni_nmatches == 1) {
+			bip = &disklist->dl_biosdisks[nip->ni_biosmatches[0]];
+			msg_display(MSG_onebiosmatch);
+			msg_table_add(MSG_onebiosmatch_header);
+			msg_table_add(MSG_onebiosmatch_row, bip->bi_dev,
+			    bip->bi_cyl, bip->bi_head, bip->bi_sec,
+			    (unsigned)bip->bi_lbasecs,
+			    (unsigned)(bip->bi_lbasecs / (1000000000 / 512)));
+			msg_display_add(MSG_biosgeom_advise);
+			biosdisk = bip;
+			process_menu(MENU_biosonematch, &biosdisk);
+		} else {
+			msg_display(MSG_biosmultmatch);
+			msg_table_add(MSG_biosmultmatch_header);
+			for (i = 0; i < nip->ni_nmatches; i++) {
+				bip = &disklist->dl_biosdisks[
+							nip->ni_biosmatches[i]];
+				msg_table_add(MSG_biosmultmatch_row, i,
+				    bip->bi_dev, bip->bi_cyl, bip->bi_head,
+				    bip->bi_sec, (unsigned)bip->bi_lbasecs,
+				    (unsigned)bip->bi_lbasecs/(1000000000/512));
+			}
+			process_menu(MENU_biosmultmatch, &i);
+			if (i == -1)
+				biosdisk = NULL;
+			else
+				biosdisk = &disklist->dl_biosdisks[
+							nip->ni_biosmatches[i]];
 		}
-		process_menu(MENU_biosmultmatch, NULL);
+	}
+	if (biosdisk == NULL)
+		set_bios_geom(cyl, head, sec);
+	else {
+		bcyl = biosdisk->bi_cyl;
+		bhead = biosdisk->bi_head;
+		bsec = biosdisk->bi_sec;
 	}
 	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13))
 		bsize = dlsize;

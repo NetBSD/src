@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.2 2003/06/12 10:51:38 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.3 2003/06/13 22:27:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,12 +77,21 @@ message part_row_end
 { %s\n}
 
 message setbiosgeom
-{Zostaniesz poproszony o podanie geometrii. Podaj wartosci jakie chcesz.
+{
+Zostaniesz poproszony o podanie geometrii. Podaj wartosci jakie chcesz.
 Ilosc cylindrow powinna byc <= 1024 a ilosc sektorow <= 63. Jesli twoj
 BIOS jest ustawiony aby obslugiwac > 1024 cylindry po prostu zmniejsz
 tutaj ta ilosc do 1024; NetBSD rozpozna reszte cylindrow.
 
 }
+
+message nobiosgeom
+{Sysinst nie mogl automatycznie rozpoznac geometrii dysku z BIOS.
+Fizyczna geometria to %d cylindrow %d sektorow %d glowic\n}
+
+message biosguess
+{Uzywajac informacji z dysku, najlepsze parametry geometrii dysku z BIOS to
+%d cylindrow %d sektorow %d glowic\n}
 
 .if 0
 message confirmbiosgeom

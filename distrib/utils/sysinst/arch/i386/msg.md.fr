@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.27 2003/06/12 12:41:56 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.28 2003/06/13 22:27:08 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,13 +91,13 @@ message onebiosmatch
 
 }
 
-message onebiosmatch_header
-{BIOS # cylinders  heads   sectors
------- ---------- ------- -------
+message onebiosmatch_header	/* XXX translate */
+{BIOS # cylinders heads sectors total sectors  GB
+------ --------- ----- ------- ------------- ---
 }
 
-message onebiosmatch_row
-{%-6x %-10d %-7d %-10d\n}
+message onebiosmatch_row	/* XXX adjust for length of titles above */
+{%#6x %9d %5d %7d %13u %3u\n}
 
 message This_is_the_correct_geometry
 {C'est le bon géométrie}
@@ -111,10 +111,13 @@ message biosmultmatch
 
 }
 
-message biosmultmatch_header
-{   BIOS # cylinders  heads   sectors
-   ------ ---------- ------- -------
+message biosmultmatch_header	/* XXX translate */
+{   BIOS # cylinders heads sectors total sectors  GB
+   ------ --------- ----- ------- ------------- ---
 }
+
+message biosmultmatch_row	/* XXX adjust for length of titles above */
+{%-1d: %#6x %9d %5d %7d %13u %3u\n}
 
 message biosgeom_advise /* XXX translate */
 {
@@ -122,9 +125,6 @@ Note: since sysinst was able to uniquely match the disk you chose with a disk
 known to the BIOS, the values displayed above are very likely correct, and
 should not be changed. Only change them if they are very obviously wrong.
 }
-
-message biosmultmatch_row
-{%-1d: %-6x %-10d %-7d %d\n}
 
 message pickdisk
 {Choisissez un disque: }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.3 2003/06/12 10:51:37 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.4 2003/06/13 22:27:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,13 +77,22 @@ message part_row_end
 { %s\n}
 
 message setbiosgeom
-{You will be prompted for the geometry.  Please enter the values you
+{
+You will be prompted for the geometry.  Please enter the values you
 want.  The number of cylinders should be <= 1024 and the number of sectors
 should be <= 63. If you have the BIOS set up to use > 1024 cylinders just
 truncate that number to 1024 here; NetBSD will know about the rest of the
 cylinders.
 
 }
+
+message nobiosgeom
+{Sysinst could not automatically determine the BIOS geometry of the disk.
+The physical geometry is %d cylinders %d sectors %d heads\n}
+
+message biosguess
+{Using the information already on the disk, my best guess for the BIOS
+geometry is %d cylinders %d sectors %d heads\n}
 
 .if 0
 message confirmbiosgeom

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.30 2003/06/13 11:57:31 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.31 2003/06/13 22:27:07 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,9 +57,6 @@ extern mbr_sector_t mbr;
 mbr_sector_t mbr;
 #endif
 int mbr_present, mbr_len;
-struct disklist *disklist = NULL;
-struct nativedisk_info *nativedisk;
-struct biosdisk_info *biosdisk = NULL;
 int netbsd_mbr_installed = 0;
 
 static void md_upgrade_mbrtype (void);
@@ -209,12 +206,9 @@ md_bios_info(char *dev)
 	int cyl, head, sec;
 
 	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0) {
+	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
 		msg_display_add(MSG_biosguess, cyl, head, sec);
-		set_bios_geom(cyl, head, sec);
-	} else
-		set_bios_geom(dlcyl, dlhead, dlsec);
-	biosdisk = NULL;
+	set_bios_geom(cyl, head, sec);
 	bsize = bcyl * bhead * bsec;
 	bcylsize = bhead * bsec;
 	return 0;

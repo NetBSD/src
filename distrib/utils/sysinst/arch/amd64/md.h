@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 2003/06/12 12:41:55 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.9 2003/06/13 22:27:04 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -94,10 +94,6 @@ EXTERN char *boottype INIT("");
  * On x86_64, that is  msdos.
  */
 EXTERN	char *fdtype INIT("msdos");
-
-extern struct disklist *disklist;
-extern struct nativedisk_info *nativedisk;
-extern struct biosdisk_info *biosdisk;
 
 #define _PATH_MBR	DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE
 #define _PATH_BOOTSEL	DEFAULT_BOOTDIR "/" DEFAULT_BOOTSELCODE

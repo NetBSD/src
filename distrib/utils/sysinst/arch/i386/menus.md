@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.5 2003/06/12 10:51:41 dsl Exp $	*/
+/*	$NetBSD: menus.md,v 1.6 2003/06/13 22:27:08 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,44 +51,23 @@ menu getboottype, title MSG_Bootblocks_selection;
 	    {boottype = "serial115200";};
 
 menu biosonematch;
-	option MSG_This_is_the_correct_geometry, exit, action {
-		extern struct disklist *disklist;
-		extern struct nativedisk_info *nativedisk;
-		struct biosdisk_info *bip;
-		extern struct biosdisk_info *biosdisk;
-
-		bip = &disklist->dl_biosdisks[nativedisk->ni_biosmatches[0]];
-		bcyl = bip->bi_cyl;
-		bhead = bip->bi_head;
-		bsec = bip->bi_sec;
-		biosdisk = bip;
-	};
-	option MSG_Set_the_geometry_by_hand, exit, action {
-		set_bios_geom(dlcyl, dlhead, dlsec);
-		biosdisk = NULL;
-	};
+	option MSG_This_is_the_correct_geometry, exit, action { };
+	option MSG_Set_the_geometry_by_hand, exit, action
+	    {*(void **)arg = NULL;};
 
 menu biosmultmatch;
 	option MSG_Use_one_of_these_disks, exit, action {
-		extern struct disklist *disklist;
-		extern struct nativedisk_info *nativedisk;
-		struct biosdisk_info *bip;
-		extern struct biosdisk_info *biosdisk;
 		int sel;
-		char res[80];
+		char res[4];
 
 		do {
 			strcpy(res, "0");
-			msg_prompt(MSG_pickdisk, res, res, 80);
+			msg_prompt_win(MSG_pickdisk, -1, -1, 0, 0,
+					res, res, sizeof res);
 			sel = atoi(res);
-		} while (sel < 0 || sel >= nativedisk->ni_nmatches);
-		bip = &disklist->dl_biosdisks[nativedisk->ni_biosmatches[0]];
-		bcyl = bip->bi_cyl;
-		bhead = bip->bi_head;
-		bsec = bip->bi_sec;
-		biosdisk = bip;
+		} while (sel < 0 || sel >= *(int *)arg);
+		*(int *)arg = sel;
 	};
 	option MSG_Set_the_geometry_by_hand, exit, action {
-		set_bios_geom(dlcyl, dlhead, dlsec);
-		biosdisk = NULL;
+		*(int *)arg = -1;
 	};

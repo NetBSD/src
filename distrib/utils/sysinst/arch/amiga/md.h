@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.9 2003/06/11 21:35:38 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.10 2003/06/13 22:27:05 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,11 +89,6 @@
  */
 EXTERN	char *fdtype INIT("ados");
 
-extern struct disklist *disklist;
-extern struct nativedisk_info *nativedisk;
-
-#define SCAN_ENTER      0x1c
-#define SCAN_F1         0x3b
  
 /*
  *  prototypes for MD code.
