@@ -32,11 +32,11 @@
  *
  *	@(#)types.h	7.5 (Berkeley) 3/9/91
  *
- *	$Id: types.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	types.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_MACHINE_TYPES_H_
+#define	_MACHINE_TYPES_H_
 
 typedef struct _physadr {
 	int r[1];

@@ -31,11 +31,11 @@
  *      Modified for NetBSD by Phil Nelson
  *	Hardware trap vectors for ns532.
  *
- *	$Id: trap.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	trap.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
-#ifndef _NS532_TRAP_H_
-#define _NS532_TRAP_H_
+#ifndef _MACHINE_TRAP_H_
+#define _MACHINE_TRAP_H_
 
 #define T_NVI		0	/* non-vectored interrupt */
 #define T_NMI		1	/* non-maskable interrupt */
@@ -88,4 +88,4 @@
 #define   TEX_PTE2	0x02	   /* Second level PTE invalid */
 #define   TEX_PROT	0x03	   /* Protection violation */
 
-#endif _NS532_TRAP_H_
+#endif

@@ -35,8 +35,11 @@
  *
  *	@(#)pcb.h	5.10 (Berkeley) 5/12/91
  *
- *	$Id: pcb.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	pcb.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
+
+#ifndef _MACHINE_PCB_H_
+#define _MACHINE_PCB_H_
 
 /*
  * PC 532 process control block
@@ -80,4 +83,6 @@ struct pcb {
 
 #ifdef KERNEL
 struct pcb *curpcb;		/* our current running pcb */
+#endif
+
 #endif

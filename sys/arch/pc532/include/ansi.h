@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ansi.h	7.1 (Berkeley) 3/9/91
- *	$Id: ansi.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	ansi.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
-#ifndef	_ANSI_H_
-#define	_ANSI_H_
+#ifndef	_MACHINE_ANSI_H_
+#define	_MACHINE_ANSI_H_
 
 /*
  * Types which are fundamental to the implementation and may appear in

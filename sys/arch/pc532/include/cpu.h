@@ -38,6 +38,8 @@
  *	cpu.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 /*
  * Definitions unique to ns532 cpu support.
  *
@@ -107,3 +109,4 @@ typedef struct intrframe clockframe;
 int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
 
+#endif

@@ -35,7 +35,7 @@
  *
  *	@(#)reg.h	5.5 (Berkeley) 1/18/91
  *
- *	$Id: reg.h,v 1.2 1993/09/13 07:25:44 phil Exp $
+ *	reg.h,v 1.2 1993/09/13 07:25:44 phil Exp
  */
 
 /* Modified for the pc532... 2/1/93 by Phil Nelson

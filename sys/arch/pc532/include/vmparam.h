@@ -35,9 +35,11 @@
  *
  *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  *
- *	$Id: vmparam.h,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	vmparam.h,v 1.1.1.1 1993/09/09 23:53:47 phil Exp
  */
 
+#ifndef _MACHINE_VMPARAM_H_
+#define _MACHINE_VMPARAM_H_
 
 /*
  * Machine dependent constants for 532.
@@ -223,3 +225,4 @@
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
 
+#endif

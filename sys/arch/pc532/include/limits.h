@@ -32,8 +32,11 @@
  *
  *	@(#)limits.h	7.2 (Berkeley) 6/28/90
  *
- *	$Id: limits.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	limits.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
+
+#ifndef _MACHINE_LIMITS_H_
+#define _MACHINE_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	1		/* no multibyte characters */
@@ -56,3 +59,9 @@
 #define	ULONG_MAX	0xffffffff	/* max value for an unsigned long */
 #define	LONG_MAX	0x7fffffff	/* max value for a long */
 #define	LONG_MIN	0x80000000	/* min value for a long */
+
+#define UQUAD_MAX	0xffffffffffffffffLL	/* max value, unsigned quad */
+#define QUAD_MAX	0x7fffffffffffffffLL	/* max value, quad */
+#define QUAD_MIN	0x8000000000000000LL	/* min value, quad */
+
+#endif

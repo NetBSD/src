@@ -38,6 +38,9 @@
  *	psl.h,v 1.1.1.1 1993/09/09 23:53:47 phil Exp
  */
 
+#ifndef _MACHINE_PSL_H_
+#define _MACHINE_PSL_H_
+
 /*
  * 32532 processor status longword.
  */
@@ -63,3 +66,4 @@
 /* The PSR versions ... */
 #define PSR_USR PSL_USER
  
+#endif
