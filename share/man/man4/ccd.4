@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.26 2003/10/13 15:36:33 agc Exp $
+.\"	$NetBSD: ccd.4,v 1.27 2004/03/05 15:10:18 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 9, 1995
+.Dd March 5, 2004
 .Dt CCD 4
 .Os
 .Sh NAME
@@ -120,12 +120,12 @@ If a
 is interleaved correctly, a
 .Dq striping
 effect is achieved, which can increase performance.
-The optimum interleave factor is typically the size of a track,
-see
-.Dq sectors/track
-value in
-.Xr disklabel 8
-output.
+.\" The optimum interleave factor is typically the size of a track,
+.\" see
+.\" .Dq sectors/track
+.\" value in
+.\" .Xr disklabel 8
+.\" output.
 Since the interleave factor is expressed in units of
 .Dv DEV_BSIZE ,
 one must account for sector sizes other than
