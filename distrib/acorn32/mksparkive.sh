@@ -124,7 +124,7 @@ makearchive()
 		fi
 		if [ -d "$file" ]
 		then
-			temp=`mktemp -t $0` || exit 1
+			temp=`mktemp -t $progname` || exit 1
 			(
 				cd "$file"
 				makearchive `ls -A` >$temp
@@ -143,9 +143,10 @@ makearchive()
 
 if [ $# -eq 0 ]
 then
-	name=`basename $0`
-	echo "Usage: $name filename"
+	echo "Usage: $progname filename"
 	echo "$name: Outputs an uncompressed sparkive to stdout."
 fi
+
+progname=`basename $0`
 
 makearchive "$@"
