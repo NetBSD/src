@@ -22,13 +22,14 @@ ifelse(defn(`_ARG_'), `', `errprint(`Feature "nullclient" requires argument')',
 #
 
 divert(0)
-VERSIONID(`Id: nullclient.m4,v 8.21 1999/08/06 01:48:57 gshapiro Exp')
+VERSIONID(`Id: nullclient.m4,v 8.21.16.1 2000/05/26 18:08:41 gshapiro Exp')
 divert(-1)
 
 undefine(`ALIAS_FILE')
 define(`MAIL_HUB', _NULL_CLIENT_)
 define(`SMART_HOST', _NULL_CLIENT_)
 define(`confFORWARD_PATH', `')
+define(`_DEF_LOCAL_MAILER_FLAGS', `lsDFM5q')
 MASQUERADE_AS(_NULL_CLIENT_)
 FEATURE(`allmasquerade')
 FEATURE(`masquerade_envelope')

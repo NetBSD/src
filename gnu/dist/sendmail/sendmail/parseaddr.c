@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: parseaddr.c,v 8.234 2000/03/17 07:32:48 gshapiro Exp";
+static char id[] = "@(#)Id: parseaddr.c,v 8.234.4.1 2000/05/25 18:56:16 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -1154,7 +1154,7 @@ rewrite(pvp, ruleset, reclevel, e)
 					/* save the remainder of the input */
 					for (xpvp = pvp; *xpvp != NULL; xpvp++)
 						trsize += sizeof *xpvp;
-					if (trsize > pvpb1_size)
+					if ((size_t) trsize > pvpb1_size)
 					{
 						if (pvpb1 != NULL)
 							free(pvpb1);

@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: main.c,v 8.34 2000/02/11 02:43:45 gshapiro Exp";
+static char id[] = "@(#)Id: main.c,v 8.34.4.5 2000/07/14 06:16:57 msk Exp";
 #endif /* ! lint */
 
 #if _FFR_MILTER
@@ -17,6 +17,7 @@ static char id[] = "@(#)Id: main.c,v 8.34 2000/02/11 02:43:45 gshapiro Exp";
 #include "libmilter.h"
 #include <fcntl.h>
 #include <sys/stat.h>
+
 
 static smfiDesc_ptr smfi = NULL;
 
@@ -51,6 +52,18 @@ smfi_register(smfilter)
 	if (smfi->xxfi_name == NULL)
 		return MI_FAILURE;
 	(void) strlcpy(smfi->xxfi_name, smfilter.xxfi_name, len);
+
+	/* compare milter version with hard coded version */
+	if (smfi->xxfi_version != SMFI_VERSION)
+	{
+		/* hard failure for now! */
+		smi_log(SMI_LOG_ERR,
+			"%s: smfi_register: version mismatch application: %d != milter: %d",
+			smfi->xxfi_name, smfi->xxfi_version,
+			(int) SMFI_VERSION);
+		return MI_FAILURE;
+	}
+
 	return MI_SUCCESS;
 }
 
@@ -98,7 +111,7 @@ smfi_main()
 	{
 		smi_log(SMI_LOG_FATAL, "%s: missing connection information",
 			smfi->xxfi_name);
-		exit(EX_DATAERR);
+		return MI_FAILURE;
 	}
 
 	(void) atexit(mi_clean_signals);
@@ -107,13 +120,13 @@ smfi_main()
 		smi_log(SMI_LOG_FATAL,
 			"%s: Couldn't start signal thread",
 			smfi->xxfi_name);
-		exit(EX_OSERR);
+		return MI_FAILURE;
 	}
 
 	/* Startup the listener */
 	if (mi_listener(conn, dbg, smfi, timeout) != MI_SUCCESS)
-		return(MI_FAILURE);
+		return MI_FAILURE;
 
-	return(MI_SUCCESS);
+	return MI_SUCCESS;
 }
 #endif /* _FFR_MILTER */

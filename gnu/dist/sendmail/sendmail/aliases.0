@@ -61,7 +61,7 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-                   Date: 2000/02/26 01:12:21                 1
+                   Date: 2000/07/18 07:23:02                 1
 
 
 
@@ -82,7 +82,7 @@ ALIASES(5)                                             ALIASES(5)
        aliases file is changed for the change to take effect.
 
 SSEEEE AALLSSOO
-       newaliases(1), dbopen(3), dbm(3), sendmail(8)
+       newaliases(1), dbm(3), dbopen(3), db_open(3), sendmail(8)
 
        _S_E_N_D_M_A_I_L _I_n_s_t_a_l_l_a_t_i_o_n _a_n_d _O_p_e_r_a_t_i_o_n _G_u_i_d_e_.
 
@@ -127,6 +127,6 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2000/02/26 01:12:21                 2
+                   Date: 2000/07/18 07:23:02                 2
 
 
