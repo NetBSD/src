@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgsnd.2,v 1.7 1999/03/22 19:45:06 garbled Exp $	
+.\"	$NetBSD: msgsnd.2,v 1.8 1999/08/25 20:30:05 thorpej Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -36,8 +36,6 @@
 .Nm msgsnd
 .Nd send a message to a message queue
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/ipc.h>
 .Fd #include <sys/msg.h>
 .Ft int
 .Fn msgsnd "int msqid" "const void *msgp" "size_t msgsz" "int msgflg"
@@ -47,11 +45,17 @@ The
 function sends a message from the message queue specified in
 .Fa msqid .
 .Fa msgp
-points to a structure containing the message. This structure should
-consist of the following members:
+points to a user-defined structure containing the message.  This structure
+must contain a first field of type
+.Sy long
+that will indicate the user-defined type of the message.  The remaining
+fields will contain the contents of the message.  The following is
+an example of what this user-defined structure might look like:
 .Bd -literal
+struct mymsg {
     long mtype;    /* message type */
     char mtext[1]; /* body of message */
+};
 .Ed
 .Pp
 .Va mtype
@@ -100,10 +104,6 @@ set to
 After a successful call, the data structure associated with the message
 queue is updated in the following way:
 .Bl -bullet
-.It
-.Va msg_cbytes
-is incremented by
-.Fa msgsz .
 .It
 .Va msg_qnum
 is incremented by 1.
@@ -155,12 +155,11 @@ The system call was interrupted by the delivery of a signal.
 .Xr msgctl 2 ,
 .Xr msgget 2 ,
 .Xr msgrcv 2
-.Sh BUGS
-.Nx
-does not define the
-.Er EIDRM
-error value, which should be used
-in the case of a removed message queue.
+.Sh STANDARDS
+The
+.Nm
+system call conforms to
+.St -xsh5 .
 .Sh HISTORY
 Message queues appeared in the first release of
 .At V .
