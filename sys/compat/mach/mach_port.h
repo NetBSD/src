@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.19 2003/02/05 23:58:10 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.20 2003/02/09 22:13:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -267,11 +267,19 @@ struct mach_port {
 	    mach_message) mp_msglist;
 	struct lock mp_msglock;		/* Lock for the queue */
 	int mp_refcount;		/* Reference count */
-	int mp_flags;
+	int mp_flags;			/* Flags, see below */
+	int mp_datatype;		/* Type of field mp_data, see below */
+	void *mp_data;			/* Data attached to the port */
 };
 
 /* mp_flags for struct mach_port */
 #define MACH_MP_INKERNEL	0x1	/* Receiver is inside the kernel */
+#define MACH_MP_DATA_ALLOCATED	0x2	/* mp_data was malloc'ed */
+
+/* mp_datatype for struct mach_port */
+#define	MACH_MP_NONE		0x0	/* No data */
+#define MACH_MP_DEVICE		0x1	/* struct device */
+#define MACH_MP_DEVICE_ITERATOR	0x2	/* struct mach_device_iterator */
 
 void mach_port_init(void);
 struct mach_port *mach_port_get(void);
