@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 2003/05/11 15:19:19 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 2003/05/27 16:46:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ trap(frame)
 		printf("trap %d code %lx eip %lx cs %lx rflags %lx cr2 %lx "
 		       "cpl %x\n",
 		    type, frame.tf_err, frame.tf_rip, frame.tf_cs,
-		    frame.tf_rflags, rcr2(), cpl);
+		    frame.tf_rflags, rcr2(), curcpu()->ci_ilevel);
 		printf("curlwp %p\n", curlwp);
 		if (curlwp)
 			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
