@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.67 1998/10/09 08:01:33 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.68 1998/10/12 12:28:26 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -691,7 +691,7 @@ timerattach_obio(parent, self, aux)
 			for (n = 0; n < ncpu; n++) {
 				if ((cpi = cpus[n]) == NULL)
 					continue;
-				if (cpi->mid == i + 8)
+				if ((i == 0 && ncpu == 1) || cpi->mid == i + 8)
 					/* We got a corresponding MID */
 					break;
 				cpi = NULL;
