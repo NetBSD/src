@@ -1,4 +1,4 @@
-.\"	$Id: swapinfo.1,v 1.2 1993/08/02 17:57:16 mycroft Exp $	-*- nroff -*-
+.\"	$Id: swapinfo.1,v 1.3 1993/11/18 03:16:32 cgd Exp $	-*- nroff -*-
 .Dd February 23, 1993
 .Dt SWAPINFO 1
 .Sh NAME
@@ -7,6 +7,8 @@
 .Sh SYNOPSIS
 .Nm swapinfo
 .Op Fl k
+.Op Fl m
+.Op Fl n
 .Sh DESCRIPTION
 .Nm Swapinfo
 displays statistics about the amount of free swap space on all of the 
@@ -19,6 +21,10 @@ By default, all sizes are reported in 512-byte block counts.
 The
 .Fl k
 option causes the numbers to be reported in kilobyte counts.
+.It Fl m
+Show the contents of the system swap map.
+.It Fl n
+Do not print swap device statistics.
 .El
 .Sh STATISTICS
 Statistics are reported for all swap partitions configured into the kernel.
@@ -34,14 +40,22 @@ reports the percentage of space used.
 .Pp
 If more than one partition is configured into the system, totals for all
 of the statistics will be reported in the final line of the report.
-.Sh "BUGS AND CAVEATS"
-The information reported by
-.Nm swapinfo
-is stored in the kernel in a linked list.  Since we are merely reading
-this list out of kernel memory, it is entirely possible that the list could
-change as we try to read it.  Suspicious and unrepeatable values are probably
-incorrect.
 .Pp
+When printing the contents of the system swap map,
+.Nm swapinfo
+prints the number of swap map entries as well as information for each
+entry which is currently in use.  The swap map entry number is reported
+in the
+.Ar Entry
+column.  The
+.Ar Size
+column is the size of that block in the swap map, and the
+.Ar Start
+and
+.Ar End
+columns are the start and end of the entry, respectively.  All values
+are printed in units of blocks.
+.Sh "BUGS AND CAVEATS"
 Statistics are reported for all swap partitions compiled into the kernel,
 regardless of whether those partitions are being used.
 .Sh AUTHOR
