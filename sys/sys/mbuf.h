@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.41 1999/01/24 01:08:22 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.42 1999/02/27 18:20:37 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -471,12 +471,14 @@ do {									\
 
 /*
  * Mbuf statistics.
+ * For statistics related to mbuf and cluster allocations, see also the
+ * pool headers (mbpool and mclpool).
  */
 struct mbstat {
-	u_long	m_mbufs;	/* mbufs obtained from page pool */
-	u_long	m_clusters;	/* clusters obtained from page pool */
-	u_long	m_spare;	/* spare field */
-	u_long	m_clfree;	/* free clusters */
+	u_long	_m_spare;	/* formerly m_mbufs */
+	u_long	_m_spare1;	/* formerly m_clusters */
+	u_long	_m_spare2;	/* spare field */
+	u_long	_m_spare3;	/* formely m_clfree - free clusters */
 	u_long	m_drops;	/* times failed to find space */
 	u_long	m_wait;		/* times waited for space */
 	u_long	m_drain;	/* times drained protocols for space */
