@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.53 2002/09/10 22:32:09 joda Exp $
+# $NetBSD: obsolete.mi,v 1.54 2002/09/12 17:18:48 joda Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -21,8 +21,10 @@
 /usr/include/compat
 /usr/include/gssapi/rpc
 /usr/include/ss
+/usr/lib/libkrb5.so.18.0
 /usr/lib/libntp.so.0
 /usr/lib/libntp.so.0.0
+/usr/lib/libroken.so.12.2
 /usr/lib/runemodule
 /usr/lib/runemodule/libUTF2.a
 /usr/lib/runemodule/libUTF2.so
