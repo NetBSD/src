@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2001/05/19 17:53:30 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.19 2001/11/14 23:01:14 tv Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -38,6 +38,8 @@ SRCS+= biospci.c bios_pci.S isapnp.c isadma.c
 SRCS+= biosmca.S
 .endif
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

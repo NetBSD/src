@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/07/26 22:11:08 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2001/11/14 23:01:14 tv Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -14,6 +14,8 @@ CPPFLAGS= -I$S/lib/libsa ${RISCOSCPPFLAGS} ${RISCOSMISCCPPFLAGS}
 SRCS=	srt1.c devopen.c
 SRCS+=	riscoscalls.S riscoscons.c riscoserrors.c riscosfile.c
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/12/05 21:54:33 scw Exp $
+#	$NetBSD: Makefile,v 1.13 2001/11/14 23:01:14 tv Exp $
 
 LIB=bug
 
@@ -26,4 +26,6 @@ bugstart.o: bugstart.s
 
 all realall: lib${LIB}.a bugstart.o
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>

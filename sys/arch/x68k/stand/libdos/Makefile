@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/11 08:14:43 itohy Exp $
+#	$NetBSD: Makefile,v 1.5 2001/11/14 23:01:15 tv Exp $
 
 LIB=	dos
 
@@ -63,4 +63,6 @@ dos_strerror.S: ${.CURDIR}/dos_errno.h ${MAKESTRERR}
 # only needed during build
 libinstall::
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>
