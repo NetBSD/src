@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcvar.h,v 1.1 2000/04/23 16:47:45 thorpej Exp $	*/
+/*	$NetBSD: fdcvar.h,v 1.2 2003/01/08 23:51:11 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,6 +139,10 @@ struct fdc_softc {
 	enum fdc_state sc_state;
 	int sc_errors;			/* number of retries so far */
 	u_char sc_status[7];		/* copy of registers */
+
+	int sc_known;			/* direct configuration if non-zero */
+	int sc_present;			/* bitmap of available fds */
+	const struct fd_type *sc_knownfds[4];	/* drive info known fds */
 };
 
 int	out_fdc __P((bus_space_tag_t iot, bus_space_handle_t ioh, u_char x));
