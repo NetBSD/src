@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.67 2003/05/15 13:13:22 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.68 2003/05/15 18:53:35 wiz Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -70,6 +70,7 @@
 ./usr/share/man/cat4/hp300/le.0
 ./usr/share/man/cat4/hp300/rb.0
 ./usr/share/man/cat4/hp300/tc.0
+./usr/share/man/cat4/i386/busmouse.0
 ./usr/share/man/cat4/i386/com.0
 ./usr/share/man/cat4/i386/ie.0
 ./usr/share/man/cat4/i386/joy.0
@@ -238,6 +239,7 @@
 ./usr/share/man/man4/hp300/le.4
 ./usr/share/man/man4/hp300/rb.4
 ./usr/share/man/man4/hp300/tc.4
+./usr/share/man/man4/i386/busmouse.4
 ./usr/share/man/man4/i386/com.4
 ./usr/share/man/man4/i386/ie.4
 ./usr/share/man/man4/i386/joy.4
