@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.72 2002/03/08 20:48:46 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.73 2002/05/12 23:06:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.72 2002/03/08 20:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.73 2002/05/12 23:06:29 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1162,7 +1162,6 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	struct ufsmount *ump;
 	struct lfs *fs;
 	int error, flags, ronly, s;
-	extern int lfs_allclean_wakeup;
 
 	flags = 0;
 	if (mntflags & MNT_FORCE)
