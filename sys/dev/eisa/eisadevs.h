@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.8 1996/05/20 00:52:53 thorpej Exp 
+ *	NetBSD: eisadevs,v 1.9 1996/07/25 20:22:16 thorpej Exp 
  */
 
 /*
@@ -63,6 +63,14 @@
 #define	EISA_PRODUCT_DEC3002	"Digital Equipment DEFEA FDDI Controller"
 #define	EISA_PRODUCT_DEC3003	"Digital Equipment DEFEA FDDI Controller"
 #define	EISA_PRODUCT_DEC3004	"Digital Equipment DEFEA FDDI Controller"
+
+/* FORE Systems products */
+#define	EISA_PRODUCT_FSI2001	"FORE Systems ESA-200 ATM"
+#define	EISA_PRODUCT_FSI2002	"FORE Systems ESA-200A ATM"
+#define	EISA_PRODUCT_FSI2003	"FORE Systems ESA-200E ATM"
+
+/* Intel products */
+#define	EISA_PRODUCT_INT1010	"Intel EtherExpress 32 Flash Ethernet"
 
 /* 3Com products */
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"

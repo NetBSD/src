@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.8 1996/05/20 00:52:53 thorpej Exp 
+ *	NetBSD: eisadevs,v 1.9 1996/07/25 20:22:16 thorpej Exp 
  */
 
 /*
@@ -119,6 +119,26 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "FSI2001",
+	    EISA_PRODUCT_FSI2001,
+	},
+	{
+	    0,
+	    "FSI2002",
+	    EISA_PRODUCT_FSI2002,
+	},
+	{
+	    0,
+	    "FSI2003",
+	    EISA_PRODUCT_FSI2003,
+	},
+	{
+	    0,
+	    "INT1010",
+	    EISA_PRODUCT_INT1010,
+	},
+	{
+	    0,
 	    "TCM5091",
 	    EISA_PRODUCT_TCM5091,
 	},
@@ -156,6 +176,16 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "DEC",
 	    "Digital Equipment",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "FSI",
+	    "FORE Systems",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "INT",
+	    "Intel",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
