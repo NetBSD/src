@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.12 2001/06/11 09:36:44 sato Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.13 2001/07/17 01:41:38 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -520,7 +520,7 @@ ite8181_fbinit(fb)
 	    bootinfo->fb_line_bytes == 0 ||
 	    bootinfo->fb_width == 0 ||
 	    bootinfo->fb_height == 0) {
-		printf("no frame buffer infomation.\n");
+		printf("no frame buffer information.\n");
 		return (-1);
 	}
 

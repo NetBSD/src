@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2001/05/12 10:08:59 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.58 2001/07/17 01:41:39 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -1201,7 +1201,7 @@ BOOL BootKernel(int directboot)
 			bi.fb_type = reverse_fb_type(bi.fb_type);
 		}
 		/* 
-		* Set system infomation
+		* Set system information
 		*/
 		platid.dw.dw0 = bi.platid_cpu;
 		platid.dw.dw1 = bi.platid_machine;
