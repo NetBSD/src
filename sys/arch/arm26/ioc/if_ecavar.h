@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecavar.h,v 1.1 2001/09/10 23:41:49 bjh21 Exp $	*/
+/*	$NetBSD: if_ecavar.h,v 1.2 2001/09/15 17:27:25 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -56,6 +56,7 @@ struct eca_softc {
 	struct mbuf	*sc_rcvmbuf;
 	void		*sc_rx_soft;
 	struct eca_rxstate sc_rxstate;
+	u_int8_t	sc_sr2;
 	struct mbuf	*sc_txmbuf;
 	void		*sc_tx_soft;
 	struct eca_txstate sc_txstate;
