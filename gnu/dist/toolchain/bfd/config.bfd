@@ -79,6 +79,10 @@ case "${targ}" in
   alpha*-*-*)
     targ_defvec=ecoffalpha_little_vec
     ;;
+  sparc64-*-netbsd*)
+    targ_defvec=bfd_elf64_sparc_vec
+    targ_selvecs="bfd_elf32_sparc_vec sunos_big_vec"
+    ;;
 #endif /* BFD64 */
 
   arc-*-elf*)
