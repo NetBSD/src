@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wicfg.c,v 1.3 2000/07/06 17:22:25 onoe Exp $	*/
+/*	$NetBSD: awi_wicfg.c,v 1.4 2001/05/06 03:26:38 ichiro Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #include <dev/ic/awireg.h>
 #include <dev/ic/awivar.h>
 
-#include <dev/pcmcia/if_wi_ieee.h>	/* XXX */
+#include <dev/ic/wi_ieee.h>	/* XXX */
 #endif
 #ifdef __FreeBSD__
 #include <dev/awi/am79c930reg.h>
