@@ -1,10 +1,10 @@
 #!/bin/sh
-# $NetBSD: script,v 1.1 2001/04/25 03:43:36 garbled Exp $
+# $NetBSD: script,v 1.2 2001/08/01 08:04:26 garbled Exp $
 
 if [ -z "$1" ]; then
-	ypinit -c
+	ypinit -c -l $2
 else
-	ypinit -c $1
+	ypinit -c -l $2 $1
 fi
 if [ "$?" = "0" ]; then
 	echo "YP/NIS Client initialization complete"
