@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_dma.c,v 1.14 2001/01/03 19:16:00 thorpej Exp $ */
+/* $NetBSD: apecs_dma.c,v 1.15 2001/07/19 18:39:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.14 2001/01/03 19:16:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.15 2001/07/19 18:39:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,9 @@ void	apecs_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
  */
 #define	APECS_SGMAP_MAPPED_BASE	(8*1024*1024)
 #define	APECS_SGMAP_MAPPED_SIZE	(8*1024*1024)
+
+/* APECS has a 256-byte out-bound DMA prefetch threshold. */
+#define	APECS_SGMAP_PFTHRESH	256
 
 /*
  * Macro to flush APECS scatter/gather TLB.
@@ -138,6 +141,7 @@ apecs_dma_init(acp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &acp->ac_sgmap;
+	t->_pfthresh = APECS_SGMAP_PFTHRESH;
 	t->_get_tag = apecs_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
