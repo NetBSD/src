@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147 2000/09/16 05:07:06 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.148 2000/09/21 20:59:58 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2000/09/16 05:07:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148 2000/09/21 20:59:58 jeffs Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -350,8 +350,10 @@ trap(status, cause, vaddr, opc, frame)
 		sticks = p->p_sticks;
 	}
 
-	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
-		_splset((status & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV)) {
+		if (type != T_BREAK)
+			_splset((status & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	}
 
 	switch (type) {
 	default:
