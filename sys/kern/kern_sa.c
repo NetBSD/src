@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.51 2004/05/18 11:59:11 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.52 2004/07/06 12:23:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.51 2004/05/18 11:59:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.52 2004/07/06 12:23:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,7 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		sa->sa_nstacks = 0;
 		SLIST_INIT(&sa->sa_vps);
 		p->p_sa = sa;
+		KASSERT(l->l_savp == NULL);
 	}
 	if (l->l_savp == NULL) {
 		l->l_savp = sa_newsavp(p->p_sa);
@@ -240,9 +241,11 @@ sa_release(struct proc *p)
 	struct sadata *sa;
 	struct sastack *sast, *next;
 	struct sadata_vp *vp;
+	struct lwp *l;
 
 	sa = p->p_sa;
 	KDASSERT(sa != NULL);
+	KASSERT(p->p_nlwps <= 1);
 
 	for (sast = SPLAY_MIN(sasttree, &sa->sa_stackstree); sast != NULL;
 	     sast = next) {
@@ -258,6 +261,11 @@ sa_release(struct proc *p)
 	}
 	pool_put(&sadata_pool, sa);
 	p->p_sa = NULL;
+	l = LIST_FIRST(&p->p_lwps);
+	if (l) {
+		KASSERT(LIST_NEXT(l, l_sibling) == NULL);
+		l->l_savp = NULL;
+	}
 }
 
 
