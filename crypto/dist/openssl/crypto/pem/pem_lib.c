@@ -140,9 +140,9 @@ void PEM_proc_type(char *buf, int type)
 	else
 		str="BAD-TYPE";
 		
-	strcat(buf,"Proc-Type: 4,");
-	strcat(buf,str);
-	strcat(buf,"\n");
+	strlcat(buf, "Proc-Type: 4,", PEM_BUFSIZE);
+	strlcat(buf, str, PEM_BUFSIZE);
+	strlcat(buf, "\n", PEM_BUFSIZE);
 	}
 
 void PEM_dek_info(char *buf, const char *type, int len, char *str)
@@ -151,9 +151,9 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str)
 	long i;
 	int j;
 
-	strcat(buf,"DEK-Info: ");
-	strcat(buf,type);
-	strcat(buf,",");
+	strlcat(buf, "DEK-Info: ", PEM_BUFSIZE);
+	strlcat(buf, type, PEM_BUFSIZE);
+	strlcat(buf, ",", PEM_BUFSIZE);
 	j=strlen(buf);
 	for (i=0; i<len; i++)
 		{
