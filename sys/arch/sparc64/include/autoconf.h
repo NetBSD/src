@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.19 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.20 2004/03/19 15:22:43 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -132,9 +132,6 @@ long	prom_getproplen __P((int node, char *name));
 int	prom_getprop __P((int, char *, size_t, int *, void *));
 char	*prom_getpropstring __P((int node, char *name));
 int	prom_getpropint __P((int node, char *name, int deflt));
-
-/* Frequently used options node */
-extern int optionsnode;
 
 	/* new interfaces: */
 char	*prom_getpropstringA __P((int, char *, char *, size_t));
