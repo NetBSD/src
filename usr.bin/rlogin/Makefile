@@ -2,7 +2,6 @@
 
 PROG=	rlogin
 SRCS=	rlogin.c
-CFLAGS+=-DDES
 BINOWN=	root
 BINMODE=4555
 
