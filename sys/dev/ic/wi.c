@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.126 2003/05/17 16:46:03 christos Exp $	*/
+/*	$NetBSD: wi.c,v 1.127 2003/05/20 01:29:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.126 2003/05/17 16:46:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.127 2003/05/20 01:29:35 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -222,8 +222,11 @@ wi_attach(struct wi_softc *sc)
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	CSR_WRITE_2(sc, WI_EVENT_ACK, ~0);
 
+	sc->sc_invalid = 0;
+
 	/* Reset the NIC. */
 	if (wi_reset(sc) != 0) {
+		sc->sc_invalid = 1;
 		splx(s);
 		return 1;
 	}
@@ -414,16 +417,14 @@ wi_detach(struct wi_softc *sc)
 
 	s = splnet();
 
+	sc->sc_invalid = 1;
+	wi_stop(ifp, 1);
+
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
-	if (sc->sc_enabled) {
-		if (sc->sc_disable)
-			(*sc->sc_disable)(sc);
-		sc->sc_enabled = 0;
-	}
 	splx(s);
 	return 0;
 }
@@ -717,26 +718,18 @@ wi_stop(struct ifnet *ifp, int disable)
 	struct wi_softc	*sc = ifp->if_softc;
 	int s;
 
+	if (!sc->sc_enabled)
+		return;
+
 	s = splnet();
 
 	DPRINTF(("wi_stop: disable %d\n", disable));
-	/* Writing registers of a detached wi provokes an
-	 * MCHK on PowerPC, but disabling keeps wi from writing
-	 * registers, so disable before doing anything else.
-	 */
-	if (sc->sc_attached)
-		ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
-	if (sc->sc_enabled) {
+
+	ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
+	if (!sc->sc_invalid) {
 		CSR_WRITE_2(sc, WI_INT_EN, 0);
 		wi_cmd(sc, WI_CMD_DISABLE | sc->sc_portnum, 0, 0, 0);
-		if (disable) {
-			if (sc->sc_disable)
-				(*sc->sc_disable)(sc);
-			sc->sc_enabled = 0;
-		}
 	}
-	if (!sc->sc_attached)
-		ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
 
 	sc->sc_tx_timer = 0;
 	sc->sc_scan_timer = 0;
@@ -746,6 +739,11 @@ wi_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
 	ifp->if_timer = 0;
 
+	if (disable) {
+		if (sc->sc_disable)
+			(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
+	}
 	splx(s);
 }
 
@@ -760,7 +758,7 @@ wi_start(struct ifnet *ifp)
 	struct wi_frame frmhdr;
 	int cur, fid, off;
 
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (!sc->sc_enabled || sc->sc_invalid)
 		return;
 	if (sc->sc_flags & WI_FLAGS_OUTRANGE)
 		return;
