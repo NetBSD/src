@@ -1,3 +1,4 @@
+/* NetBSD $Id: namei.h,v 1.5 1994/06/27 19:31:41 cgd Exp $ */
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)namei.h	8.2 (Berkeley) 1/4/94
- *	$Id: namei.h,v 1.4 1994/06/08 11:38:48 mycroft Exp $
+ *	@(#)namei.h	8.2 (Berkeley) 1/4/94
  */
 
 #ifndef _SYS_NAMEI_H_

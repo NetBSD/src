@@ -1,3 +1,4 @@
+/* NetBSD $Id: mbuf.h,v 1.8 1994/06/27 19:31:32 cgd Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mbuf.h	8.3 (Berkeley) 1/21/94
- *	$Id: mbuf.h,v 1.7 1994/05/13 06:12:05 mycroft Exp $
+ *	@(#)mbuf.h	8.3 (Berkeley) 1/21/94
  */
 
 #ifndef M_WAITOK

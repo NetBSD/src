@@ -1,3 +1,4 @@
+/* NetBSD $Id: msg.h,v 1.3 1994/06/27 19:31:37 cgd Exp $ */
 /*
  * SVID compatible msg.h file
  *
@@ -15,8 +16,6 @@
  * but requiring it would be too onerous.
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
- *
- *	$Id: msg.h,v 1.2 1994/02/09 20:54:47 mycroft Exp $
  */
 
 #ifndef _SYS_MSG_H_

@@ -1,3 +1,4 @@
+/* NetBSD $Id: uio.h,v 1.6 1994/06/27 19:32:36 cgd Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)uio.h	8.5 (Berkeley) 2/22/94
- *	$Id: uio.h,v 1.5 1994/05/21 03:52:17 cgd Exp $
+ *	@(#)uio.h	8.5 (Berkeley) 2/22/94
  */
 
 #ifndef _SYS_UIO_H_

@@ -1,3 +1,4 @@
+/* NetBSD $Id: exec_ecoff.h,v 1.4 1994/06/27 19:31:07 cgd Exp $ */
 /*
  * Copyright (c) 1994 Adam Glass
  * All rights reserved.
@@ -26,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: exec_ecoff.h,v 1.3 1994/05/28 20:21:33 glass Exp $
  */
 
 #ifndef	_SYS_EXEC_ECOFF_H_

@@ -1,3 +1,4 @@
+/* NetBSD $Id: disk.h,v 1.6 1994/06/27 19:30:56 cgd Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +42,7 @@
  *
  * from: Header: disk.h,v 1.5 92/11/19 04:33:03 torek Exp  (LBL)
  *
- *	from: @(#)disk.h	8.1 (Berkeley) 6/2/93
- *	$Id: disk.h,v 1.5 1994/05/21 04:07:16 cgd Exp $
+ *	@(#)disk.h	8.1 (Berkeley) 6/2/93
  */
 
 /*

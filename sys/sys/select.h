@@ -1,3 +1,4 @@
+/* NetBSD $Id: select.h,v 1.8 1994/06/27 19:31:56 cgd Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)select.h	8.2 (Berkeley) 1/4/94
- *	$Id: select.h,v 1.7 1994/05/19 06:39:46 cgd Exp $
+ *	@(#)select.h	8.2 (Berkeley) 1/4/94
  */
 
 #ifndef _SYS_SELECT_H_

@@ -1,3 +1,4 @@
+/* NetBSD $Id: vcmd.h,v 1.5 1994/06/27 19:32:46 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vcmd.h	8.1 (Berkeley) 6/2/93
- *	$Id: vcmd.h,v 1.4 1994/05/21 03:52:19 cgd Exp $
+ *	@(#)vcmd.h	8.1 (Berkeley) 6/2/93
  */
 
 #include <sys/ioctl.h>

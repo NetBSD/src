@@ -1,3 +1,4 @@
+/* NetBSD $Id: msgbuf.h,v 1.6 1994/06/27 19:31:38 cgd Exp $ */
 /*
  * Copyright (c) 1981, 1984, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)msgbuf.h	8.1 (Berkeley) 6/2/93
- *	$Id: msgbuf.h,v 1.5 1994/05/21 03:52:02 cgd Exp $
+ *	@(#)msgbuf.h	8.1 (Berkeley) 6/2/93
  */
 
 #define	MSG_BSIZE	(4096 - 3 * sizeof(long))

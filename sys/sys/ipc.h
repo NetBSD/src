@@ -1,3 +1,4 @@
+/* NetBSD $Id: ipc.h,v 1.10 1994/06/27 19:31:22 cgd Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -40,8 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ipc.h	8.3 (Berkeley) 1/21/94
- *	$Id: ipc.h,v 1.9 1994/06/27 04:39:53 jtc Exp $
+ *	@(#)ipc.h	8.3 (Berkeley) 1/21/94
  */
 
 /*

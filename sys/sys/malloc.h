@@ -1,3 +1,4 @@
+/* NetBSD $Id: malloc.h,v 1.18 1994/06/27 19:31:29 cgd Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)malloc.h	8.3 (Berkeley) 1/12/94
- *	$Id: malloc.h,v 1.17 1994/05/19 03:45:17 cgd Exp $
+ *	@(#)malloc.h	8.3 (Berkeley) 1/12/94
  */
 
 #ifndef _SYS_MALLOC_H_

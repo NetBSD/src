@@ -1,3 +1,4 @@
+/* NetBSD $Id: sockio.h,v 1.2 1994/06/27 19:32:07 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sockio.h	8.1 (Berkeley) 3/28/94
- *	$Id: sockio.h,v 1.1 1994/05/21 05:19:58 cgd Exp $
+ *	@(#)sockio.h	8.1 (Berkeley) 3/28/94
  */
 
 #ifndef	_SYS_SOCKIO_H_

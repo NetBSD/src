@@ -1,3 +1,4 @@
+/* NetBSD $Id: signalvar.h,v 1.10 1994/06/27 19:32:02 cgd Exp $ */
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)signalvar.h	8.3 (Berkeley) 1/4/94
- *	$Id: signalvar.h,v 1.9 1994/05/07 00:45:51 cgd Exp $
+ *	@(#)signalvar.h	8.3 (Berkeley) 1/4/94
  */
 
 #ifndef	_SYS_SIGNALVAR_H_		/* tmp for user.h */

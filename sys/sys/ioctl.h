@@ -1,3 +1,4 @@
+/* NetBSD $Id: ioctl.h,v 1.15 1994/06/27 19:31:19 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ioctl.h	8.6 (Berkeley) 3/28/94
- *	$Id: ioctl.h,v 1.14 1994/05/21 05:19:46 cgd Exp $
+ *	@(#)ioctl.h	8.6 (Berkeley) 3/28/94
  */
 
 #ifndef	_SYS_IOCTL_H_

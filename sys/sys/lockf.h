@@ -1,3 +1,4 @@
+/* NetBSD $Id: lockf.h,v 1.4 1994/06/27 19:31:27 cgd Exp $ */
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lockf.h	8.1 (Berkeley) 6/11/93
- *	$Id: lockf.h,v 1.3 1994/05/19 03:44:45 mycroft Exp $
+ *	@(#)lockf.h	8.1 (Berkeley) 6/11/93
  */
 
 /*

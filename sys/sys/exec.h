@@ -1,3 +1,4 @@
+/* NetBSD $Id: exec.h,v 1.40 1994/06/27 19:31:05 cgd Exp $ */
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
  * Copyright (c) 1993 Theo de Raadt
@@ -37,8 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)exec.h	8.3 (Berkeley) 1/21/94
- *	$Id: exec.h,v 1.39 1994/06/22 03:43:09 glass Exp $
+ *	@(#)exec.h	8.3 (Berkeley) 1/21/94
  */
 
 /*

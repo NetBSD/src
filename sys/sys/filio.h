@@ -1,3 +1,4 @@
+/* NetBSD $Id: filio.h,v 1.4 1994/06/27 19:31:14 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)filio.h	8.1 (Berkeley) 3/28/94
- *	$Id: filio.h,v 1.3 1994/05/21 03:51:58 cgd Exp $
+ *	@(#)filio.h	8.1 (Berkeley) 3/28/94
  */
 
 #ifndef	_SYS_FILIO_H_

@@ -1,3 +1,4 @@
+/* NetBSD $Id: vnode.h,v 1.23 1994/06/27 19:32:50 cgd Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vnode.h	8.7 (Berkeley) 2/4/94
- *	$Id: vnode.h,v 1.22 1994/06/08 11:38:54 mycroft Exp $
+ *	@(#)vnode.h	8.7 (Berkeley) 2/4/94
  */
 
 #include <sys/queue.h>

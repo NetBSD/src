@@ -1,3 +1,4 @@
+/* NetBSD $Id: chio.h,v 1.5 1994/06/27 19:30:48 cgd Exp $ */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mtio.h	7.6 (Berkeley) 2/5/91
- *	$Id: chio.h,v 1.4 1994/02/01 20:29:52 mycroft Exp $
+ *	@(#)mtio.h	7.6 (Berkeley) 2/5/91
  */
 
 /* This is a "converted" mtio.h from 386BSD 

@@ -1,3 +1,4 @@
+/* NetBSD $Id: wait.h,v 1.6 1994/06/27 19:32:52 cgd Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)wait.h	8.1 (Berkeley) 6/2/93
- *	$Id: wait.h,v 1.5 1994/05/21 03:52:24 cgd Exp $
+ *	@(#)wait.h	8.1 (Berkeley) 6/2/93
  */
 
 /*

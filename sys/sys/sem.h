@@ -1,9 +1,8 @@
+/* NetBSD $Id: sem.h,v 1.4 1994/06/27 19:31:57 cgd Exp $ */
 /*
  * SVID compatible sem.h file
  *
  * Author:  Daniel Boulet
- *
- *	$Id: sem.h,v 1.3 1994/02/09 20:54:49 mycroft Exp $
  */
 
 #ifndef _SYS_SEM_H_

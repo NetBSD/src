@@ -1,3 +1,4 @@
+/* NetBSD $Id: mount.h,v 1.32 1994/06/27 19:31:35 cgd Exp $ */
 /*
  * Copyright (c) 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mount.h	8.13 (Berkeley) 3/27/94
- *	$Id: mount.h,v 1.31 1994/06/08 11:38:45 mycroft Exp $
+ *	@(#)mount.h	8.13 (Berkeley) 3/27/94
  */
 
 #ifndef KERNEL

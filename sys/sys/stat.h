@@ -1,3 +1,4 @@
+/* NetBSD $Id: stat.h,v 1.11 1994/06/27 19:32:08 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)stat.h	8.6 (Berkeley) 3/8/94
- *	$Id: stat.h,v 1.10 1994/06/14 04:24:04 jtc Exp $
+ *	@(#)stat.h	8.6 (Berkeley) 3/8/94
  */
 
 #ifndef _SYS_STAT_H_

@@ -1,3 +1,4 @@
+/* NetBSD $Id: lkm.h,v 1.6 1994/06/27 19:31:26 cgd Exp $ */
 /*
  * Header file used by loadable kernel modules and loadable kernel module
  * utilities.
@@ -33,8 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: lkm.h,v 1.5 1994/06/08 11:38:41 mycroft Exp $
  */
 
 #ifndef _SYS_LKM_H_

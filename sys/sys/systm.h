@@ -1,3 +1,4 @@
+/* NetBSD $Id: systm.h,v 1.29 1994/06/27 19:32:15 cgd Exp $ */
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)systm.h	8.4 (Berkeley) 2/23/94
- *	$Id: systm.h,v 1.28 1994/05/12 10:30:46 mycroft Exp $
+ *	@(#)systm.h	8.4 (Berkeley) 2/23/94
  */
 
 /*

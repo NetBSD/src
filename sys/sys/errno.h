@@ -1,3 +1,4 @@
+/* NetBSD $Id: errno.h,v 1.7 1994/06/27 19:31:03 cgd Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)errno.h	8.5 (Berkeley) 1/21/94
- *	$Id: errno.h,v 1.6 1994/05/19 03:38:41 mycroft Exp $
+ *	@(#)errno.h	8.5 (Berkeley) 1/21/94
  */
 
 #ifndef KERNEL

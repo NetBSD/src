@@ -1,3 +1,4 @@
+/* NetBSD $Id: clist.h,v 1.5 1994/06/27 19:30:49 cgd Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clist.h	8.1 (Berkeley) 6/4/93
- *	$Id: clist.h,v 1.4 1994/05/21 03:51:52 cgd Exp $
+ *	@(#)clist.h	8.1 (Berkeley) 6/4/93
  */
 
 struct cblock {

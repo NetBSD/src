@@ -1,3 +1,4 @@
+/* NetBSD $Id: utsname.h,v 1.5 1994/06/27 19:32:42 cgd Exp $ */
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)utsname.h	8.1 (Berkeley) 1/4/94
- *	$Id: utsname.h,v 1.4 1994/05/16 03:19:33 cgd Exp $
+ *	@(#)utsname.h	8.1 (Berkeley) 1/4/94
  */
 
 #ifndef	_SYS_UTSNAME_H

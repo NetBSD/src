@@ -1,3 +1,4 @@
+/* NetBSD $Id: dkstat.h,v 1.5 1994/06/27 19:31:00 cgd Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dkstat.h	8.2 (Berkeley) 1/21/94
- *	$Id: dkstat.h,v 1.4 1994/05/04 09:23:45 cgd Exp $
+ *	@(#)dkstat.h	8.2 (Berkeley) 1/21/94
  */
 
 #define	CP_USER		0

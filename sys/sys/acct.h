@@ -1,3 +1,4 @@
+/* NetBSD $Id: acct.h,v 1.9 1994/06/27 19:30:38 cgd Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)acct.h	8.2 (Berkeley) 1/21/94
- *	$Id: acct.h,v 1.8 1994/05/21 03:51:50 cgd Exp $
+ *	@(#)acct.h	8.2 (Berkeley) 1/21/94
  */
 
 /*
