@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.7 1994/03/03 12:23:26 deraadt Exp $
+ * $Id: autoconf.c,v 1.8 1994/03/20 09:01:09 pk Exp $
  */
 
 #include <sys/param.h>
@@ -151,6 +151,11 @@ bootstrap()
 #ifdef KGDB
 	zs_kgdb_init();			/* XXX */
 #endif
+#ifdef DDB
+	db_machine_init();
+	ddb_init();
+#endif
+
 	/*
 	 * On SS1s, promvec->pv_v0bootargs->ba_argv[1] contains the flags
 	 * that were given after the boot command.  On SS2s, pv_v0bootargs
