@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.60 1997/10/19 01:37:53 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.61 1997/10/30 22:47:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -135,6 +135,7 @@ struct mount {
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
+#define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
 
 /*
  * exported mount flags.
@@ -156,8 +157,10 @@ struct mount {
 
 /*
  * Mask of flags that are visible to statfs()
+ * Since f_flags in struct statfs is short, this mask overflows on
+ * most architecture.  XXX.
  */
-#define	MNT_VISFLAGMASK	0x0400ffff
+#define	MNT_VISFLAGMASK	0x2400ffff
 
 /*
  * filesystem control flags.
