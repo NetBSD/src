@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1997/06/11 11:21:46 bouyer Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 1998/07/26 20:27:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -68,7 +68,7 @@ void	pinode __P((ino_t));
 void	propagate __P((void));
 int	reply __P((char *));
 void	resetinodebuf __P((void));
-int	setup __P((char *));
+int	setup __P((const char *));
 struct	ext2fs_dinode * getnextinode __P((ino_t));
 void	catch __P((int));
 void	catchquit __P((int));
