@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.14 1995/03/20 00:40:10 mycroft Exp $	*/
+/*	$NetBSD: inode.c,v 1.15 1995/06/07 17:16:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$NetBSD: inode.c,v 1.14 1995/03/20 00:40:10 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inode.c,v 1.15 1995/06/07 17:16:10 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -469,7 +469,7 @@ pinode(ino)
 	if (preen)
 		printf("%s: ", cdevname);
 	printf("SIZE=%qu ", dp->di_size);
-	p = ctime(&dp->di_mtime.ts_sec);
+	p = ctime(&dp->di_mtime);
 	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
 }
 
@@ -540,7 +540,7 @@ allocino(request, type)
 		return (0);
 	}
 	dp->di_mode = type;
-	(void)time(&dp->di_atime.ts_sec);
+	(void)time(&dp->di_atime);
 	dp->di_mtime = dp->di_ctime = dp->di_atime;
 	dp->di_size = sblock.fs_fsize;
 	dp->di_blocks = btodb(sblock.fs_fsize);
