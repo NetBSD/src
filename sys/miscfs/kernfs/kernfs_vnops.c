@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.58 1998/03/08 14:04:14 mrg Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.59 1998/08/03 14:19:59 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -745,6 +745,9 @@ kernfs_pathconf(v)
 		return (0);
 	case _PC_VDISABLE:
 		*ap->a_retval = _POSIX_VDISABLE;
+		return (0);
+	case _PC_SYNC_IO:
+		*ap->a_retval = 1;
 		return (0);
 	default:
 		return (EINVAL);

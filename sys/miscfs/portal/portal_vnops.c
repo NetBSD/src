@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.29 1998/07/18 05:04:38 lukem Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.30 1998/08/03 14:20:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -668,6 +668,9 @@ portal_pathconf(v)
 		return (0);
 	case _PC_VDISABLE:
 		*ap->a_retval = _POSIX_VDISABLE;
+		return (0);
+	case _PC_SYNC_IO:
+		*ap->a_retval = 1;
 		return (0);
 	default:
 		return (EINVAL);
