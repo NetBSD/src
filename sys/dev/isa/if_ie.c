@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.40 1995/07/23 20:37:08 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.41 1995/07/23 22:02:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -243,7 +243,7 @@ struct ie_softc {
 	volatile struct ie_recv_buf_desc *rbuffs[NRXBUF];
 	volatile char *cbuffs[NRXBUF];
 
-	int xmit_free;
+	int xmit_busy;
 	int xchead, xctail;
 	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
 	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
@@ -740,11 +740,11 @@ ietint(sc)
 	}
 
 	/* Done with the buffer. */
-	sc->xmit_free++;
+	sc->xmit_busy--;
 	sc->xctail = (sc->xctail + 1) % NTXBUF;
 
 	/* Start the next packet, if any, transmitting. */
-	if (sc->xmit_free < NTXBUF)
+	if (sc->xmit_busy > 0)
 		iexmit(sc);
 
 	iestart(ifp);
@@ -1217,21 +1217,30 @@ iestart(ifp)
 	u_char *buffer;
 	u_short len;
 
-	if ((ifp->if_flags & IFF_OACTIVE) != 0)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	for (;;) {
-		if (sc->xmit_free == 0) {
+		if (sc->xmit_busy == NTXBUF) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
-		if (!m)
+		IF_DEQUEUE(&ifp->if_snd, m0);
+		if (m0 == 0) {
+			ifp->if_flags &= ~IFF_OACTIVE;
 			break;
+		}
 
-		len = 0;
-		buffer = sc->xmit_cbuffs[sc->xchead];
+		/* We need to use m->m_pkthdr.len, so require the header */
+		if ((m0->m_flags & M_PKTHDR) == 0)
+			panic("iestart: no header mbuf");
+
+#if NBPFILTER > 0
+		/* Tap off here if there is a BPF listener. */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m0);
+#endif
 
 #ifdef IEDEBUG
 		if (sc->sc_debug & IED_ENQ)
@@ -1239,23 +1248,22 @@ iestart(ifp)
 			    sc->xchead);
 #endif
 
-		for (m0 = m; m && (len + m->m_len) < IE_TBUF_SIZE;
-		     m = m->m_next) {
+		buffer = sc->xmit_cbuffs[sc->xchead];
+		for (m = m0; m != 0; m = m->m_next) {
 			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
-			len += m->m_len;
 		}
+		len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
 
 		m_freem(m0);
-		len = max(len, ETHER_MIN_LEN);
 		sc->xmit_buffs[sc->xchead]->ie_xmit_flags = len;
 
 		/* Start the first packet transmitting. */
-		if (sc->xmit_free == NTXBUF)
+		if (sc->xmit_busy == 0)
 			iexmit(sc);
 
 		sc->xchead = (sc->xchead + 1) % NTXBUF;
-		sc->xmit_free--;
+		sc->xmit_busy++;
 	}
 }
 
@@ -1619,7 +1627,7 @@ iememinit(ptr, sc)
 	sc->xchead = sc->xctail = 0;
 
 	/* Clear transmit-busy flag and set number of free transmit buffers. */
-	sc->xmit_free = NTXBUF;
+	sc->xmit_busy = 0;
 }
 
 /*
