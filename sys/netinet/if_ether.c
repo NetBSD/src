@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	7.13 (Berkeley) 10/31/90
- *	$Id: if_ether.c,v 1.9 1994/04/18 06:18:16 glass Exp $
+ *	$Id: if_ether.c,v 1.10 1994/04/18 23:25:57 mycroft Exp $
  */
 
 /*
@@ -273,6 +273,11 @@ arpresolve(ac, m, destip, desten, usetrailers)
 	arpwhohas(ac, destip);		/* ask again */
 	splx(s);
 	return (0);
+}
+
+void
+arpintr()
+{
 }
 
 /*
