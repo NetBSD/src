@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.2 2000/02/22 05:01:40 jun Exp $
+.\"	$NetBSD: hardware,v 1.3 2000/02/25 17:27:05 jun Exp $
 A H/PC machine contains a keyboard and a touch screen and
 generally has 8MB or more of RAM.  The port supports the HPC
 form factor, as well as the H/PC Pro and PsPC (Palmsized PC)
@@ -20,16 +20,21 @@ The following WindowsCE hardware is supported:
 .	It Em supported machines:
 .	br
 .	Bl -bullet -compact 
+.		section CASIO
+.			item (CASSIOPEIA for DoCoMo)
+.			item (CASSIOPEIA E-55)
 .		section Everex
 .			item FreeStyle A-15
 .			item FreeStyle A-20
 .		section Fujitsu
 .			item INTERTOP CX300
 .		section NEC
+.			item MobileGear MC-CS12
+.			item MobileGear MC-CS13
 .			item MobileGearII MC-R300
 .			item MobileGearII MC-R320
 .			item MobileGearII MC-R330
-.			item MobileGearII for DoCoMo
+.			item MobileGearII for DoCoMo (TypeI/II)
 .			item MobileGearII MC/R430
 .			item MobileGearII MC-R500
 .			item MobileGearII MC-R510
