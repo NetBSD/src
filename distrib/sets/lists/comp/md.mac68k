@@ -72,3 +72,4 @@
 ./usr/include/machine/scsi_5380.h
 ./usr/include/machine/viareg.h
 ./usr/include/machine/z8530var.h
+./usr/include/objc/list.h

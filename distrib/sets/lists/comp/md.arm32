@@ -110,6 +110,7 @@
 ./usr/include/g++/stddef
 ./usr/include/g++/tempbuf.cc
 ./usr/include/g++/tree.cc
+./usr/include/objc/list.h
 ./usr/lib/c++rt0.o
 ./usr/lib/libarm32.a
 ./usr/lib/libarm32_p.a

@@ -1,4 +1,3 @@
-./usr/lib/libamu.so
 ./usr/lib/libbfd.so
 ./usr/lib/libc.so
 ./usr/lib/libcrypt.so
@@ -13,6 +12,7 @@
 ./usr/lib/libposix.so
 ./usr/lib/libresolv.so
 ./usr/lib/libskey.so
+./usr/lib/libstdc++.so
 ./usr/lib/libtelnet.so
 ./usr/lib/libtermcap.so
 ./usr/lib/libtermlib.so

@@ -1,3 +1,5 @@
+./usr/bin/f77
+./usr/bin/g77
 ./usr/include/alpha
 ./usr/include/alpha/_G_config.h
 ./usr/include/alpha/alpha_cpu.h
@@ -98,9 +100,21 @@
 ./usr/include/g++/stl_vector.h
 ./usr/include/g++/strstream
 ./usr/include/g++/type_traits.h
+./usr/include/objc/objc-list.h
+./usr/include/objc/thr.h
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
+./usr/lib/libcc1.so.1
+./usr/lib/libcc1.so.1.1
+./usr/lib/libg2c.a
+./usr/lib/libg2c.so
+./usr/lib/libg2c_p.a
+./usr/lib/libg2c_pic.a
+./usr/lib/libobjc.so
+./usr/lib/libobjc_p.a
+./usr/lib/libobjc_pic.a
+./usr/libexec/f771
 ./usr/share/man/cat5/ranlib.0
 ./usr/share/man/man5/ranlib.5

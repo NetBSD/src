@@ -116,6 +116,7 @@
 ./usr/include/i386/varargs.h
 ./usr/include/i386/vm86.h
 ./usr/include/i386/vmparam.h
+./usr/include/objc/list.h
 ./usr/lib/c++rt0.o
 ./usr/lib/libi386.a
 ./usr/lib/libi386_p.a

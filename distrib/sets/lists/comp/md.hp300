@@ -62,4 +62,5 @@
 ./usr/include/machine/autoconf.h
 ./usr/include/machine/hpux_machdep.h
 ./usr/include/machine/intr.h
+./usr/include/objc/list.h
 ./usr/lib/c++rt0.o
