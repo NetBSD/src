@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.66 2000/01/18 17:19:33 jlam Exp $
+$NetBSD: pcmciadevs,v 1.67 2000/01/23 23:55:45 chopps Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ vendor LUCENT			0x0156	Lucent Technologies
 vendor AIRONET			0x015f	Aironet Wireless Communications
 vendor COMPAQ2			0x0183	Compaq
 vendor DAYNA			0x0194	Dayna Corporation
-vendor WEBGEAR			0x01a6	WebGear
+vendor RAYTHEON			0x01a6	Raytheon
 vendor BAY			0x01eb  Bay Networks
 vendor IODATA			0x01bf	I-O DATA
 vendor LASAT			0x3401	Lasat Communications A/S
@@ -191,8 +191,8 @@ product AIRONET PC4800		0x0005 Aironet PC4800 Wireless LAN Adapter
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650 Wireless LAN
 
-/* WebGear */
-product WEBGEAR WLAN		0x0000 WLAN Adapter
+/* Raylink/WebGear */
+product RAYTHEON WLAN		0x0000 WLAN Adapter
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
