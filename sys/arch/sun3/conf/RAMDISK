@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.11 1997/05/07 02:15:03 lukem Exp $
+#	$NetBSD: RAMDISK,v 1.12 1997/11/17 01:58:33 lukem Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -25,6 +25,9 @@ maxusers	2
 makeoptions DEBUG="-g"			# debugging symbols for gdb
 options 	KGDB
 options 	KGDBDEV=0x0C01
+
+# Other debugging options
+#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
