@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.27 2000/03/01 23:40:26 thorpej Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.28 2000/03/10 11:08:49 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -370,6 +370,7 @@ cb_chipset(pci_id, flagp)
 	return ycp->yc_chiptype;
 }
 
+#if notyet
 static void
 pccbb_shutdown(void *arg)
 {
@@ -387,6 +388,7 @@ pccbb_shutdown(void *arg)
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, command);
 
 }
+#endif
 
 void
 pccbbattach(parent, self, aux)
@@ -505,7 +507,9 @@ pccbbattach(parent, self, aux)
 
 	sc->sc_pcmcia_flags = flags;   /* set PCMCIA facility */
 
+#if notyet
 	shutdownhook_establish(pccbb_shutdown, sc);
+#endif
 
 #if __NetBSD_Version__ > 103060000
 	config_defer(self, pccbb_pci_callback);
@@ -591,6 +595,11 @@ pccbb_pci_callback(self)
 	bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT,
 	    bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT));
 
+
+	/* clear data structure for child device interrupt handlers */
+	sc->sc_pil = NULL;
+	sc->sc_pil_intr_enable = 1;
+
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, sc->sc_intrtag, sc->sc_intrpin,
 	    sc->sc_intrline, &ih)) {
@@ -632,7 +641,6 @@ pccbb_pci_callback(self)
 		cba.cba_iot = sc->sc_iot;
 		cba.cba_memt = sc->sc_memt;
 		cba.cba_dmat = sc->sc_dmat;
-		cba.cba_function = 0;
 		cba.cba_bus = (busreg >> 8) & 0x0ff;
 		cba.cba_cc = (void *)sc;
 		cba.cba_cf = &pccbb_funcs;
@@ -953,11 +961,16 @@ pccbbintr(arg)
 	sockevent = bus_space_read_4(memt, memh, CB_SOCKET_EVENT);
 	if (0 == sockevent) {
 		/* This intr is not for me: it may be for my child devices. */
-		return pccbbintr_function(sc);
-	} else {
-		/* reset bit */
-		bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent);
+		if (sc->sc_pil_intr_enable) {
+			return pccbbintr_function(sc);
+		} else {
+			return 0;
+		}
 	}
+
+	/* reset bit */
+	bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent);
+
 	sockstate = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 
 	if (sockevent & CB_SOCKET_EVENT_CD) {
@@ -3149,6 +3162,17 @@ pccbb_powerhook(why, arg)
 
 	DPRINTF(("%s: power: why %d\n", sc->sc_dev.dv_xname, why));
 
+	if (why == PWR_SUSPEND || why == PWR_STANDBY) {
+		DPRINTF(("%s: power: why %d stopping intr\n", sc->sc_dev.dv_xname, why));
+		if (sc->sc_pil_intr_enable) {
+			(void)pccbbintr_function(sc);
+		}
+		sc->sc_pil_intr_enable = 0;
+
+		/* ToDo: deactivate or suspend child devices */
+		
+	}
+
 	if (why == PWR_RESUME) {
 		/* CSC Interrupt: Card detect interrupt on */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
@@ -3164,7 +3188,14 @@ pccbb_powerhook(why, arg)
 		 * XXX: the code can't cope with card swap (remove then insert).
 		 * how can we detect such situation?
 		 */
-		if (why == PWR_RESUME)
+		if (why == PWR_RESUME) {
 			(void)pccbbintr(sc);
+		}
+
+		sc->sc_pil_intr_enable = 1;
+		DPRINTF(("%s: power: RESUME enabling intr\n", sc->sc_dev.dv_xname));
+
+		/* ToDo: activate or wakeup child devices */
+
 	}
 }
