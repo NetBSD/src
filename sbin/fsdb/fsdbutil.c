@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.14 2004/01/03 19:57:42 dbj Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.15 2005/01/19 20:19:04 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.14 2004/01/03 19:57:42 dbj Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.15 2005/01/19 20:19:04 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,9 +64,7 @@ __RCSID("$NetBSD: fsdbutil.c,v 1.14 2004/01/03 19:57:42 dbj Exp $");
 #include "fsck.h"
 
 char  **
-crack(line, argc)
-	char   *line;
-	int    *argc;
+crack(char *line, int *argc)
 {
 	static char *argv[8];
 	int     i;
@@ -84,10 +82,7 @@ crack(line, argc)
 }
 
 int
-argcount(cmdp, argc, argv)
-	struct cmdtable *cmdp;
-	int     argc;
-	char   *argv[];
+argcount(struct cmdtable *cmdp, int argc, char *argv[])
 {
 	if (cmdp->minargc == cmdp->maxargc)
 		warnx("command `%s' takes %u arguments", cmdp->cmd,
@@ -101,10 +96,7 @@ argcount(cmdp, argc, argv)
 }
 
 void
-printstat(cp, inum, dp)
-	const char *cp;
-	ino_t   inum;
-	union dinode *dp;
+printstat(const char *cp, ino_t inum, union dinode *dp)
 {
 	struct group *grp;
 	struct passwd *pw;
@@ -190,7 +182,7 @@ printstat(cp, inum, dp)
 }
 
 int
-checkactive()
+checkactive(void)
 {
 	if (!curinode) {
 		warnx("no current inode");
@@ -200,7 +192,7 @@ checkactive()
 }
 
 int
-checkactivedir()
+checkactivedir(void)
 {
 	if (!curinode) {
 		warnx("no current inode");
@@ -214,7 +206,7 @@ checkactivedir()
 }
 
 int
-printactive()
+printactive(void)
 {
 	uint16_t mode;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.h,v 1.8 2003/04/02 10:39:29 fvdl Exp $	*/
+/*	$NetBSD: fsdb.h,v 1.9 2005/01/19 20:19:04 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern void rwerror __P((char *mesg, daddr_t blk));
+extern void rwerror(char *mesg, daddr_t blk);
 
 extern long dev_bsize;
 extern long secsize;
@@ -51,14 +51,14 @@ struct cmdtable {
 	const char *helptxt;
 	unsigned int minargc;
 	unsigned int maxargc;
-	int (*handler) __P((int argc, char *argv[]));
+	int (*handler)(int argc, char *argv[]);
 };
 extern union dinode *curinode;
 extern ino_t curinum;
 
-char **crack __P((char *, int *));
-int argcount __P((struct cmdtable *, int, char *[]));
-void printstat __P((const char *, ino_t, union dinode *));
-int checkactive __P((void));
-int checkactivedir __P((void));
-int printactive __P((void));
+char **crack(char *, int *);
+int argcount(struct cmdtable *, int, char *[]);
+void printstat(const char *, ino_t, union dinode *);
+int checkactive(void);
+int checkactivedir(void);
+int printactive(void);

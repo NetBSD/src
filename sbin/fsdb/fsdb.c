@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.29 2004/09/17 12:18:55 yamt Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.30 2005/01/19 20:19:04 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.29 2004/09/17 12:18:55 yamt Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.30 2005/01/19 20:19:04 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,37 +68,36 @@ __RCSID("$NetBSD: fsdb.c,v 1.29 2004/09/17 12:18:55 yamt Exp $");
 #include "fsck.h"
 #include "extern.h"
 
-int main __P((int, char *[]));
-static void usage __P((void));
-static int cmdloop __P((void));
-static char *prompt __P((EditLine *));
-static int scannames __P((struct inodesc *));
-static int dolookup __P((char *));
-static int chinumfunc __P((struct inodesc *));
-static int chnamefunc __P((struct inodesc *));
-static int dotime __P((char *, int32_t *, int32_t *));
-static void print_blks32 __P((int32_t *buf, int size, uint64_t *blknum));
-static void print_blks64 __P((int64_t *buf, int size, uint64_t *blknum));
-static void print_indirblks32 __P((uint32_t blk, int ind_level,
-    uint64_t *blknum));
-static void print_indirblks64 __P((uint64_t blk, int ind_level,
-    uint64_t *blknum));
-static int compare_blk32 __P((uint32_t *, uint32_t));
-static int compare_blk64 __P((uint64_t *, uint64_t));
-static int founddatablk __P((uint64_t));
-static int find_blks32 __P((uint32_t *buf, int size, uint32_t *blknum));
-static int find_blks64 __P((uint64_t *buf, int size, uint64_t *blknum));
-static int find_indirblks32 __P((uint32_t blk, int ind_level,
-						uint32_t *blknum));
-static int find_indirblks64 __P((uint64_t blk, int ind_level,
-						uint64_t *blknum));
+static void usage(void);
+static int cmdloop(void);
+static char *prompt(EditLine *);
+static int scannames(struct inodesc *);
+static int dolookup(char *);
+static int chinumfunc(struct inodesc *);
+static int chnamefunc(struct inodesc *);
+static int dotime(char *, int32_t *, int32_t *);
+static void print_blks32(int32_t *buf, int size, uint64_t *blknum);
+static void print_blks64(int64_t *buf, int size, uint64_t *blknum);
+static void print_indirblks32(uint32_t blk, int ind_level,
+    uint64_t *blknum);
+static void print_indirblks64(uint64_t blk, int ind_level,
+    uint64_t *blknum);
+static int compare_blk32(uint32_t *, uint32_t);
+static int compare_blk64(uint64_t *, uint64_t);
+static int founddatablk(uint64_t);
+static int find_blks32(uint32_t *buf, int size, uint32_t *blknum);
+static int find_blks64(uint64_t *buf, int size, uint64_t *blknum);
+static int find_indirblks32(uint32_t blk, int ind_level,
+						uint32_t *blknum);
+static int find_indirblks64(uint64_t blk, int ind_level,
+						uint64_t *blknum);
 
 int     returntosingle = 0;
 union dinode *curinode;
 ino_t   curinum;
 
 static void
-usage()
+usage(void)
 {
 	errx(1, "usage: %s [-dFn] -f <fsname>", getprogname());
 }
@@ -109,9 +108,7 @@ usage()
  * the file system.
  */
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
 	int     ch, rval;
 	char   *fsys = NULL;
@@ -229,9 +226,7 @@ static struct cmdtable cmds[] = {
 };
 
 static int
-helpfn(argc, argv)
-	int     argc;
-	char   *argv[];
+helpfn(int argc, char *argv[])
 {
 	struct cmdtable *cmdtp;
 
@@ -245,8 +240,7 @@ helpfn(argc, argv)
 }
 
 static char *
-prompt(el)
-	EditLine *el;
+prompt(EditLine *el)
 {
 	static char pstring[64];
 	snprintf(pstring, sizeof(pstring), "fsdb (inum: %d)> ", curinum);
@@ -255,7 +249,7 @@ prompt(el)
 
 
 static int
-cmdloop()
+cmdloop(void)
 {
 	char   *line;
 	const char *elline;
@@ -435,8 +429,7 @@ static const char *typename[] = {
 static int slot;
 
 static int
-scannames(idesc)
-	struct inodesc *idesc;
+scannames(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
@@ -618,9 +611,7 @@ end:
 }
 
 static int
-compare_blk32(wantedblk, curblk)
-	uint32_t *wantedblk;
-	uint32_t curblk;
+compare_blk32(uint32_t *wantedblk, uint32_t curblk)
 {
 	int i;
 	for (i = 0; i < wantedblksize; i++) {
@@ -633,9 +624,7 @@ compare_blk32(wantedblk, curblk)
 }
 
 static int
-compare_blk64(wantedblk, curblk)
-	uint64_t *wantedblk;
-	uint64_t curblk;
+compare_blk64(uint64_t *wantedblk, uint64_t curblk)
 {
 	int i;
 	for (i = 0; i < wantedblksize; i++) {
@@ -648,8 +637,7 @@ compare_blk64(wantedblk, curblk)
 }
 
 static int
-founddatablk(blk)
-	uint64_t blk;
+founddatablk(uint64_t blk)
 {
 	printf("%llu: data block of inode %d\n",
 	    (unsigned long long)fsbtodb(sblock, blk), curinum);
@@ -660,11 +648,7 @@ founddatablk(blk)
 }
 
 static int
-find_blks32(buf, size, wantedblk)
-	uint32_t *buf;
-	int size;
-	uint32_t *wantedblk;
-	
+find_blks32(uint32_t *buf, int size, uint32_t *wantedblk)
 {
 	int blk;
 	for(blk = 0; blk < size; blk++) {
@@ -679,10 +663,7 @@ find_blks32(buf, size, wantedblk)
 }
 
 static int
-find_indirblks32(blk, ind_level, wantedblk)
-	uint32_t blk;
-	int ind_level;
-	uint32_t *wantedblk;
+find_indirblks32(uint32_t blk, int ind_level, uint32_t *wantedblk)
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(uint32_t))
 	uint32_t idblk[MAXNINDIR];
@@ -713,11 +694,7 @@ find_indirblks32(blk, ind_level, wantedblk)
 
 
 static int
-find_blks64(buf, size, wantedblk)
-	uint64_t *buf;
-	int size;
-	uint64_t *wantedblk;
-	
+find_blks64(uint64_t *buf, int size, uint64_t *wantedblk)
 {
 	int blk;
 	for(blk = 0; blk < size; blk++) {
@@ -732,10 +709,7 @@ find_blks64(buf, size, wantedblk)
 }
 
 static int
-find_indirblks64(blk, ind_level, wantedblk)
-	uint64_t blk;
-	int ind_level;
-	uint64_t *wantedblk;
+find_indirblks64(uint64_t blk, int ind_level, uint64_t *wantedblk)
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(uint64_t))
 	uint64_t idblk[MAXNINDIR];
@@ -768,10 +742,7 @@ find_indirblks64(blk, ind_level, wantedblk)
 #define CHARS_PER_LINES 70
 
 static void
-print_blks32(buf, size, blknum)
-	int32_t *buf;
-	int size;
-	uint64_t *blknum;
+print_blks32(int32_t *buf, int size, uint64_t *blknum)
 {
 	int chars;
 	char prbuf[CHARS_PER_LINES+1];
@@ -795,10 +766,7 @@ print_blks32(buf, size, blknum)
 }
 
 static void
-print_blks64(buf, size, blknum)
-	int64_t *buf;
-	int size;
-	uint64_t *blknum;
+print_blks64(int64_t *buf, int size, uint64_t *blknum)
 {
 	int chars;
 	char prbuf[CHARS_PER_LINES+1];
@@ -825,10 +793,7 @@ print_blks64(buf, size, blknum)
 #undef CHARS_PER_LINES
 
 static void
-print_indirblks32(blk,ind_level, blknum)
-	uint32_t blk;
-	int ind_level;
-	uint64_t *blknum;
+print_indirblks32(uint32_t blk, int ind_level, uint64_t *blknum)
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(int32_t))
 	const int ptrperblk_shift = sblock->fs_bshift - 2;
@@ -856,10 +821,7 @@ print_indirblks32(blk,ind_level, blknum)
 }
 
 static void
-print_indirblks64(blk,ind_level, blknum)
-	uint64_t blk;
-	int ind_level;
-	uint64_t *blknum;
+print_indirblks64(uint64_t blk, int ind_level, uint64_t *blknum)
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(int64_t))
 	const int ptrperblk_shift = sblock->fs_bshift - 3;
@@ -887,8 +849,7 @@ print_indirblks64(blk,ind_level, blknum)
 }
 
 static int
-dolookup(name)
-	char   *name;
+dolookup(char *name)
 {
 	struct inodesc idesc;
 
@@ -978,8 +939,7 @@ CMDFUNCSTART(rm)
 static long slotcount, desired;
 
 static int
-chinumfunc(idesc)
-	struct inodesc *idesc;
+chinumfunc(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
@@ -1021,8 +981,7 @@ CMDFUNCSTART(chinum)
 }
 
 static int
-chnamefunc(idesc)
-	struct inodesc *idesc;
+chnamefunc(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 	struct direct testdir;
@@ -1282,9 +1241,7 @@ CMDFUNCSTART(chgroup)
 }
 
 static int
-dotime(name, rsec, rnsec)
-	char   *name;
-	int32_t *rsec, *rnsec;
+dotime(char *name, int32_t *rsec, int32_t *rnsec)
 {
 	char   *p, *val;
 	struct tm t;
