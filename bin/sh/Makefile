@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 1998/03/30 10:07:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.40 1998/03/30 12:06:48 veego Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -37,10 +37,10 @@ init.c: mkinit ${SHSRCS}
 	./${.ALLSRC}
 
 nodes.c nodes.h: mknodes nodetypes nodes.c.pat
-	$./{.ALLSRC}
+	./${.ALLSRC}
 
 syntax.c syntax.h: mksyntax
-	$./{.ALLSRC}
+	./${.ALLSRC}
 
 .include <bsd.prog.mk>
 
