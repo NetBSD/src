@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.41 2001/04/15 03:31:37 david Exp $
+$NetBSD: isapnpdevs,v 1.42 2001/07/27 02:12:19 thorpej Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ devcompat	com	PNP0501		0	Generic 16550A
 /*
  * ep
  */
+devlogic	ep	TCM5051		0	3Com 3c515
 devlogic	ep	TCM5090		0	3Com 3c509B
 devlogic	ep	TCM5091		0	3Com 3c509B-1
 devlogic	ep	TCM5094		0	3Com 3c509B-4
