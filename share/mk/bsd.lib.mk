@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.225 2003/07/27 14:49:22 mrg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.226 2003/07/28 00:51:47 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -208,7 +208,7 @@ FFLAGS+=	${FOPTS}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
 .else
 	@echo ${COMPILE.cc:Q} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.cc} -${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} pg ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
