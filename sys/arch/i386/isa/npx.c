@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.78 2001/08/02 22:04:29 thorpej Exp $	*/
+/*	$NetBSD: npx.c,v 1.79 2001/08/03 01:11:49 thorpej Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -364,6 +364,7 @@ npxintr(void *arg)
 	if (i386_use_fxsave) {
 		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.en_sw;
 		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
+		addr->sv_xmm.sv_ex_mxcsr = addr->sv_xmm.sv_env.en_mxcsr;
 	} else {
 		addr->sv_87.sv_ex_sw = addr->sv_87.sv_env.en_sw;
 		addr->sv_87.sv_ex_tw = addr->sv_87.sv_env.en_tw;
