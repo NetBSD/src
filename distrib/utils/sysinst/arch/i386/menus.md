@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.3 2003/06/10 17:47:19 dsl Exp $	*/
+/*	$NetBSD: menus.md,v 1.4 2003/06/11 21:35:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,27 +106,6 @@ menu cyl1024;
 
 		c1024_resp = 3;
 	};
-
-menu md_distcustom, x=26, y=5, exit, title MSG_Selection_toggles_inclusion;
-	display action { show_cur_distsets (); };
-	option MSG_Kernel_GENERIC,		action { toggle_getit (0); };
-	option MSG_Kernel_GENERIC_TINY,		action { toggle_getit (1); };
-	option MSG_Kernel_GENERIC_LAPTOP,	action { toggle_getit (2); };
-	option MSG_Kernel_GENERIC_DIAGNOSTIC,	action { toggle_getit (3); };
-	option MSG_Kernel_GENERIC_PS2TINY,	action { toggle_getit (4); };
-	option MSG_Base,			action { toggle_getit (5); };
-	option MSG_System_etc,			action { toggle_getit (6); };
-	option MSG_Compiler_Tools,		action { toggle_getit (7); };
-	option MSG_Games,			action { toggle_getit (8); };
-	option MSG_Online_Manual_Pages,		action { toggle_getit (9); };
-	option MSG_Miscellaneous,		action { toggle_getit (10); };
-	option MSG_Text_Processing_Tools,	action { toggle_getit (11); };
-	option MSG_X11_base_and_clients,	action { toggle_getit (12); };
-	option MSG_X11_fonts,			action { toggle_getit (13); };
-	option MSG_X11_servers,			action { toggle_getit (14); };
-	option MSG_X_contrib_clients,		action { toggle_getit (15); };
-	option MSG_X11_programming,		action { toggle_getit (16); };
-	option MSG_X11_Misc,			action { toggle_getit (17); };
 
 menu biosonematch;
 	option MSG_This_is_the_correct_geometry, exit, action {

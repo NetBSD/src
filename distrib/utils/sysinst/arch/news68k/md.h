@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.13 2003/05/30 11:56:27 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.14 2003/06/11 21:35:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,29 +61,11 @@
  * Default filesets to fetch and install during installation
  * or upgrade.
  */
-EXTERN distinfo dist_list[]
-#ifdef MAIN
-= {
-    {"kern-GENERIC",		1, "Kernel       : "},
-    {"kern-GENERIC_TINY",	0, "Kernel       : "},
-    {"base",			1, "Base         : "},
-    {"etc",			1, "System (/etc): "},
-    {"comp",			1, "Compiler     : "},
-    {"games",			1, "Games        : "},
-    {"man",			1, "Manuals      : "},
-    {"misc",			1, "Miscellaneous: "},
-    {"text",			1, "Text tools   : "},
+#define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_2_NAME	"kern-GENERIC_TINY"
 
-    {"xbase",			1, "X11 clients  : "},
-    {"xfont",			0, "X11 fonts    : "},
-    {"xserver",			0, "X11 servers  : "},
-    {"xcontrib",		1, "X11 contrib  : "},
-    {"xcomp",			1, "X programming: "},
-    {"xmisc",			1, "X11 Misc.    : "},
-    { NULL,			0, NULL }
-}
-#endif
-;
+#define MD_SETS_SELECTED (SET_KERNEL_1 | SET_SYSTEM | \
+			(SET_X11 & ~SET_X11_FONTS & ~SET_X11_SERVERS))
 
 /*
  * Machine-specific command to write a new label to a disk.
