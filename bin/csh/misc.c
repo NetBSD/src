@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: misc.c,v 1.7 1996/10/31 23:50:54 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -398,6 +398,19 @@ strip(cp)
 	return (cp);
     while ((*dp++ &= TRIM) != '\0')
 	continue;
+    return (cp);
+}
+
+Char   *
+quote(cp)
+    Char   *cp;
+{
+    register Char *dp = cp;
+
+    if (!cp)
+	return (cp);
+    while (*dp != '\0')
+	*dp++ |= QUOTE;
     return (cp);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
+/*	$NetBSD: csh.c,v 1.15 1996/10/31 23:50:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $";
+static char rcsid[] = "$NetBSD: csh.c,v 1.15 1996/10/31 23:50:53 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ main(argc, argv)
     set(STRstatus, Strsave(STR0));
 
     if ((tcp = getenv("HOME")) != NULL)
-	cp = SAVE(tcp);
+	cp = quote(SAVE(tcp));
     else
 	cp = NULL;
 
@@ -249,15 +249,15 @@ main(argc, argv)
      */
     if ((tcp = getenv("LOGNAME")) != NULL ||
 	(tcp = getenv("USER")) != NULL)
-	set(STRuser, SAVE(tcp));
+	set(STRuser, quote(SAVE(tcp)));
     if ((tcp = getenv("TERM")) != NULL)
-	set(STRterm, SAVE(tcp));
+	set(STRterm, quote(SAVE(tcp)));
 
     /*
      * Re-initialize path if set in environment
      */
     if ((tcp = getenv("PATH")) == NULL)
-	set1(STRpath, defaultpath(), &shvhed);
+	setq(STRpath, defaultpath(), &shvhed);
     else
 	importpath(SAVE(tcp));
 
