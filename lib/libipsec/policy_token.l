@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_token.l,v 1.8 2003/07/22 03:32:17 itojun Exp $	*/
+/*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/lib/libipsec/policy_token.l,v 1.2.2.3 2004/02/14 22:28:29 bms Exp $	*/
 /*	$KAME: policy_token.l,v 1.13 2003/05/09 05:19:55 sakane Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ entrust		{ yylval.num = IPSEC_POLICY_ENTRUST; return(ACTION); }
 esp		{ yylval.num = IPPROTO_ESP; return(PROTOCOL); }
 ah		{ yylval.num = IPPROTO_AH; return(PROTOCOL); }
 ipcomp		{ yylval.num = IPPROTO_IPCOMP; return(PROTOCOL); }
+tcp		{ yylval.num = IPPROTO_TCP; return(PROTOCOL); }
 
 transport	{ yylval.num = IPSEC_MODE_TRANSPORT; return(MODE); }
 tunnel		{ yylval.num = IPSEC_MODE_TUNNEL; return(MODE); }

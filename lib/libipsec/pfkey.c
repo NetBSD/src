@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.20 2004/02/24 15:12:51 wiz Exp $	*/
+/*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/lib/libipsec/pfkey.c,v 1.1.2.3 2004/02/14 22:28:29 bms Exp $	*/
 /*	$KAME: pfkey.c,v 1.46 2003/08/26 03:37:06 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey.c,v 1.20 2004/02/24 15:12:51 wiz Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.21 2004/04/25 22:25:05 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,12 +80,13 @@ static caddr_t pfkey_setsadbxsa2 __P((caddr_t, caddr_t, u_int32_t, u_int32_t));
 /*
  * make and search supported algorithm structure.
  */
-static struct sadb_supported *ipsec_supported[] = { NULL, NULL, NULL, };
+static struct sadb_supported *ipsec_supported[] = { NULL, NULL, NULL, NULL };
 
 static int supported_map[] = {
 	SADB_SATYPE_AH,
 	SADB_SATYPE_ESP,
 	SADB_X_SATYPE_IPCOMP,
+	SADB_X_SATYPE_TCPSIGNATURE
 };
 
 static int
@@ -1170,6 +1171,16 @@ pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
 			return -1;
 		}
 		break;
+	case SADB_X_SATYPE_TCPSIGNATURE:
+		if (e_type != SADB_EALG_NONE) {
+			__ipsec_errcode = EIPSEC_INVAL_ALGS;
+			return -1;
+		}
+		if (a_type != SADB_X_AALG_TCP_MD5) {
+			__ipsec_errcode = EIPSEC_INVAL_ALGS;
+			return -1;
+		}
+		break;
 	default:
 		__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 		return -1;
@@ -1380,6 +1391,7 @@ pfkey_send_x3(so, type, satype)
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
 		case SADB_X_SATYPE_IPCOMP:
+		case SADB_X_SATYPE_TCPSIGNATURE:
 			break;
 		default:
 			__ipsec_errcode = EIPSEC_INVAL_SATYPE;
@@ -1842,6 +1854,7 @@ pfkey_check(mhp)
 	case SADB_SATYPE_ESP:
 	case SADB_SATYPE_AH:
 	case SADB_X_SATYPE_IPCOMP:
+	case SADB_X_SATYPE_TCPSIGNATURE:
 		switch (msg->sadb_msg_type) {
 		case SADB_X_SPDADD:
 		case SADB_X_SPDDELETE:
