@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.64 1999/07/02 15:28:49 simonb Exp $	*/
+/*	$NetBSD: kvm.c,v 1.65 2000/05/26 02:42:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.64 1999/07/02 15:28:49 simonb Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.65 2000/05/26 02:42:21 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -235,7 +235,9 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->vmfd = -1;
 	kd->swfd = -1;
 	kd->nlfd = -1;
+	kd->alive = KVM_ALIVE_DEAD;
 	kd->procbase = 0;
+	kd->procbase2 = 0;
 	kd->nbpg = getpagesize();
 	kd->swapspc = 0;
 	kd->argspc = 0;
@@ -247,6 +249,11 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->cpu_dsize = 0;
 	kd->cpu_data = 0;
 	kd->dump_off = 0;
+
+	if (flag & KVM_NO_FILES) {
+		kd->alive = KVM_ALIVE_SYSCTL;
+		return(kd);
+	}
 
 	/*
 	 * Call the MD open hook.  This sets:
@@ -297,6 +304,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
 		}
+		kd->alive = KVM_ALIVE_FILES;
 		if ((kd->swfd = open(sf, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", sf);
 			goto failed;
@@ -688,6 +696,8 @@ kvm_close(kd)
 		free((void *)kd->kcore_hdr);
 	if (kd->procbase != 0)
 		free((void *)kd->procbase);
+	if (kd->procbase2 != 0)
+		free((void *)kd->procbase2);
 	if (kd->swapspc != 0)
 		free((void *)kd->swapspc);
 	if (kd->argspc != 0)
@@ -860,7 +870,7 @@ kvm_read(kd, kva, buf, len)
 	int cc;
 	void *cp;
 
-	if (ISALIVE(kd)) {
+	if (ISKMEM(kd)) {
 		/*
 		 * We're using /dev/kmem.  Just read straight from the
 		 * device and let the active kernel do the address translation.
@@ -873,6 +883,10 @@ kvm_read(kd, kva, buf, len)
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short read");
 		return (cc);
+	} else if (ISSYSCTL(kd)) {
+		_kvm_err(kd, kd->program, "kvm_open called with KVM_NO_FILES, "
+		    "can't use kvm_read");
+		return (-1);
 	} else {
 		if ((kd->kcore_hdr == NULL) || (kd->cpu_data == NULL)) {
 			_kvm_err(kd, kd->program, "no valid dump header");
@@ -921,7 +935,7 @@ kvm_write(kd, kva, buf, len)
 {
 	int cc;
 
-	if (ISALIVE(kd)) {
+	if (ISKMEM(kd)) {
 		/*
 		 * Just like kvm_read, only we write.
 		 */
@@ -933,6 +947,10 @@ kvm_write(kd, kva, buf, len)
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short write");
 		return (cc);
+	} else if (ISSYSCTL(kd)) {
+		_kvm_err(kd, kd->program, "kvm_open called with KVM_NO_FILES, "
+		    "can't use kvm_write");
+		return (-1);
 	} else {
 		_kvm_err(kd, kd->program,
 		    "kvm_write not implemented for dead kernels");
