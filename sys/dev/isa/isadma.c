@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.34 1998/06/09 00:00:21 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.35 1998/06/09 01:04:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,6 +84,15 @@ _isa_dmaunmask(ids, chan)
 {
 	int ochan = chan & 3;
 
+	ISA_DMA_MASK_CLR(ids, chan);
+
+	/*
+	 * If DMA is frozen, don't unmask it now.  It will be
+	 * unmasked when DMA is thawed again.
+	 */
+	if (ids->ids_frozen)
+		return;
+
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0)
 		bus_space_write_1(ids->ids_bst, ids->ids_dma1h,
@@ -99,6 +108,14 @@ _isa_dmamask(ids, chan)
 	int chan;
 {
 	int ochan = chan & 3;
+
+	ISA_DMA_MASK_SET(ids, chan);
+
+	/*
+	 * XXX Should we avoid masking the channel if DMA is
+	 * XXX frozen?  It seems like what we're doing should
+	 * XXX be safe, and we do need to reset FFC...
+	 */
 
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
@@ -156,6 +173,11 @@ _isa_dmainit(ids, bst, dmat, dev)
 		if (bus_space_map(ids->ids_bst, IO_DMAPG, 0xf, 0,
 		    &ids->ids_dmapgh))
 			panic("_isa_dmainit: unable to map DMA page registers");
+
+		/*
+		 * All 8 DMA channels start out "masked".
+		 */
+		ids->ids_masked = 0xff;
 
 		ids->ids_initialized = 1;
 	}
@@ -505,6 +527,50 @@ _isa_dmadone(ids, chan)
 
 	bus_dmamap_unload(ids->ids_dmat, dmam);
 	ids->ids_dmareads &= ~(1 << chan);
+}
+
+void
+_isa_dmafreeze(ids)
+	struct isa_dma_state *ids;
+{
+	int s;
+
+	s = splhigh();
+
+	if (ids->ids_frozen == 0) {
+		bus_space_write_1(ids->ids_bst, ids->ids_dma1h,
+		    DMA1_MASK, 0x0f);
+		bus_space_write_1(ids->ids_bst, ids->ids_dma2h,
+		    DMA2_MASK, 0x0f);
+	}
+
+	ids->ids_frozen++;
+	if (ids->ids_frozen < 1)
+		panic("_isa_dmafreeze: overflow");
+
+	splx(s);
+}
+
+void
+_isa_dmathaw(ids)
+	struct isa_dma_state *ids;
+{
+	int s;
+
+	s = splhigh();
+
+	ids->ids_frozen--;
+	if (ids->ids_frozen < 0)
+		panic("_isa_dmathaw: underflow");
+
+	if (ids->ids_frozen == 0) {
+		bus_space_write_1(ids->ids_bst, ids->ids_dma1h,
+		    DMA1_MASK, ids->ids_masked & 0x0f);
+		bus_space_write_1(ids->ids_bst, ids->ids_dma2h,
+		    DMA2_MASK, (ids->ids_masked >> 4) & 0x0f);
+	}
+
+	splx(s);
 }
 
 int
