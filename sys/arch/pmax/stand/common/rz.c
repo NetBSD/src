@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.16 2000/03/30 14:45:11 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.16.4.1 2000/09/13 04:31:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,9 @@
 #include "common.h"
 #include "rz.h"
 
+#define	RF_PROTECTED_SECTORS	64	/* XXX refer to <.../rf_optnames.h> */
+
+
 struct	rz_softc {
 	int	sc_fd;			/* PROM file id */
 	int	sc_ctlr;		/* controller number */
@@ -71,7 +74,7 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	int s;
 	long offset;
 
-	offset = bn * DEV_BSIZE;
+	offset = bn;
 
 	/*
 	 * Partial-block transfers not handled.
@@ -81,7 +84,15 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 		return (EINVAL);
 	}
 
-	offset += pp->p_offset * DEV_BSIZE;
+	offset += pp->p_offset;
+
+	if (pp->p_fstype == FS_RAID)
+		offset += RF_PROTECTED_SECTORS;
+
+	/*
+	 * Convert from blocks to bytes.
+	 */
+	offset *= DEV_BSIZE;
 
 	if (callv == &callvec) {
 		/* No REX on this machine */
