@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.6 1997/10/03 19:54:13 christos Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.7 1997/11/02 14:25:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] =
     "@(#) Header: addrtoname.c,v 1.61 97/06/15 13:20:18 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: addrtoname.c,v 1.6 1997/10/03 19:54:13 christos Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.7 1997/11/02 14:25:23 lukem Exp $");
 #endif
 #endif
 
@@ -424,7 +424,7 @@ etheraddr_string(register const u_char *ep)
 		return (tp->e_name);
 #ifdef HAVE_ETHER_NTOHOST
 	if (!nflag) {
-		char buf[128];
+		char buf[MAXHOSTNAMELEN + 1];
 		if (ether_ntohost(buf, (struct ether_addr *)ep) == 0) {
 			tp->e_name = savestr(buf);
 			return (tp->e_name);
@@ -722,7 +722,7 @@ init_etherarray(void)
 	register struct etherlist *el;
 	register struct enamemem *tp;
 #ifdef HAVE_ETHER_NTOHOST
-	char name[256];
+	char name[MAXHOSTNAMELEN + 1];
 #else
 	register struct pcap_etherent *ep;
 	register FILE *fp;
