@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.6.5 2002/06/23 17:52:13 jdolecek Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.6.6 2002/09/22 13:57:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.6.5 2002/06/23 17:52:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.6.6 2002/09/22 13:57:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,6 +227,7 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
+	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
