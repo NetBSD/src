@@ -1,7 +1,7 @@
 PROG=	mount_miscfs
-NOMAN=	mount_miscfs.0
-LINKS=	${BINDIR}/mount_miscfs ${BINDIR}/mount_devfs \
-	${BINDIR}/mount_miscfs ${BINDIR}/mount_fdesc \
+MAN8=	mount_kernfs.0 mount_fdesc.0
+
+LINKS=	${BINDIR}/mount_miscfs ${BINDIR}/mount_fdesc \
 	${BINDIR}/mount_miscfs ${BINDIR}/mount_kernfs
 
 .include <bsd.prog.mk>
