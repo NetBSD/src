@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.3 1998/08/26 12:07:21 tsubai Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.4 1998/09/11 17:37:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -333,6 +333,8 @@ LEAF(splx)
 	nop					# 3 ins to disable
 	j	ra
 	nop
+	.globl	_C_LABEL(splx_end)
+_C_LABEL(splx_end):
 END(splx)
 
 /*
