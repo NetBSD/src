@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.3 2001/11/10 22:54:54 wdk Exp $	*/
+/*	$NetBSD: sbic.c,v 1.4 2001/11/18 05:14:38 thorpej Exp $	*/
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
@@ -258,6 +258,9 @@ sbic_reset(dev)
 	WAIT_CIP(dev);
 
 	s = splbio();
+
+	if (dev->sc_reset != NULL)
+		(*dev->sc_reset)(dev);
 
 	my_id = dev->sc_channel.chan_id & SBIC_ID_MASK;
 	if (dev->sc_clkfreq < 110)

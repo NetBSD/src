@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.2 2001/11/10 07:32:43 wdk Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.3 2001/11/18 05:14:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -90,6 +90,7 @@ int     wdsc_dmasetup   __P((struct sbic_softc *, caddr_t *,size_t *,
 				int, size_t *));
 int     wdsc_dmago      __P((struct sbic_softc *));
 void    wdsc_dmastop    __P((struct sbic_softc *));
+void	wdsc_reset	__P((struct sbic_softc *));
 int     wdsc_dmaintr    __P((void *));
 int     wdsc_scsiintr   __P((void *));
 
@@ -149,6 +150,7 @@ wdsc_attach(pdp, dp, auxp)
 	sc->sc_dmasetup = wdsc_dmasetup;
 	sc->sc_dmago    = wdsc_dmago;
 	sc->sc_dmastop  = wdsc_dmastop;
+	sc->sc_reset	= wdsc_reset;
 
 	sc->sc_adapter.adapt_request = sbic_scsi_request;
 	sc->sc_adapter.adapt_minphys = minphys;
@@ -265,6 +267,19 @@ wdsc_dmastop(dev)
 	if (wsc->sc_flags & WDSC_DMA_MAPLOADED)
 		bus_dmamap_unload(wsc->sc_dmat, wsc->sc_dmamap);
 	wsc->sc_flags &= ~(WDSC_DMA_ACTIVE | WDSC_DMA_MAPLOADED);
+}
+
+/*
+ * Reset the controller.
+ */
+void
+wdsc_reset(dev)
+	struct sbic_softc *dev;
+{
+	struct wdsc_softc *wsc = (void *)dev;
+	struct hpc_dma_softc *dsc = &wsc->sc_hpcdma;
+
+	hpcdma_reset(dsc);
 }
 
 /*
