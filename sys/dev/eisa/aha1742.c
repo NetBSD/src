@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.33 1994/07/27 01:50:57 mycroft Exp $
+ *      $Id: aha1742.c,v 1.34 1994/07/27 13:14:14 mycroft Exp $
  */
 
 /*
@@ -286,8 +286,8 @@ struct ahb_softc {
 	struct ecb *immed_ecb;	/* an outstanding immediete command */
 	int numecbs;
 	u_short iobase;
-	int irq;
-	int our_id;		/* our scsi id */
+	u_short ahb_int;
+	int ahb_scsi_dev;		/* our scsi id */
 };
 
 void ahb_send_mbox __P((struct ahb_softc *, int, int, struct ecb *));
@@ -498,20 +498,20 @@ ahbprobe1(ahb, ia)
 
 	/*
 	 * Try initialise a unit at this location
-	 * sets up dma and bus speed, loads ahb->irq
+	 * sets up dma and bus speed, loads ahb->ahb_int
 	 */
 	if (ahb_find(ahb) != 0)
 		return 0;
 
 	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != (1 << ahb->irq)) {
+		if (ia->ia_irq != ahb->ahb_int) {
 			printf("ahb%d: irq mismatch; kernel configured %d != board configured %d\n",
 				ahb->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
-				ahb->irq);
+				ffs(ahb->ahb_int) - 1);
 			return 0;
 		}
 	} else
-		ia->ia_irq = (1 << ahb->irq);
+		ia->ia_irq = ahb->ahb_int;
 
 	ia->ia_drq = DRQUNK;
 	ia->ia_msize = 0;
@@ -542,7 +542,7 @@ ahbattach(parent, self, aux)
 	 * fill in the prototype scsi_link.
 	 */
 	ahb->sc_link.adapter_softc = ahb;
-	ahb->sc_link.adapter_targ = ahb->our_id;
+	ahb->sc_link.adapter_targ = ahb->ahb_scsi_dev;
 	ahb->sc_link.adapter = &ahb_switch;
 	ahb->sc_link.device = &ahb_dev;
 
@@ -919,22 +919,22 @@ ahb_find(ahb)
 	intdef = inb(port + INTDEF);
 	switch (intdef & 0x07) {
 	case INT9:
-		ahb->irq = 9;
+		ahb->ahb_int = IRQ9;
 		break;
 	case INT10:
-		ahb->irq = 10;
+		ahb->ahb_int = IRQ10;
 		break;
 	case INT11:
-		ahb->irq = 11;
+		ahb->ahb_int = IRQ11;
 		break;
 	case INT12:
-		ahb->irq = 12;
+		ahb->ahb_int = IRQ12;
 		break;
 	case INT14:
-		ahb->irq = 14;
+		ahb->ahb_int = IRQ14;
 		break;
 	case INT15:
-		ahb->irq = 15;
+		ahb->ahb_int = IRQ15;
 		break;
 	default:
 		printf("illegal int setting %x\n", intdef);
@@ -944,7 +944,7 @@ ahb_find(ahb)
 	outb(port + INTDEF, (intdef | INTEN));	/* make sure we can interrupt */
 
 	/* who are we on the scsi bus? */
-	ahb->our_id = (inb(port + SCSIDEF) & HSCSIID);
+	ahb->ahb_scsi_dev = (inb(port + SCSIDEF) & HSCSIID);
 
 	/*
 	 * Note that we are going and return (to probe)
