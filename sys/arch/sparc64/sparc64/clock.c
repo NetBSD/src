@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.1.1.2.2 1998/08/02 00:06:49 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.1.1.1.2.3 1998/08/09 05:46:35 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -514,14 +514,6 @@ clockintr(cap)
 #if	NKBD	> 0
 	extern int cnrom __P((void));
 	extern int rom_console_input;
-#endif
-#ifdef NOTDEF_DEBUG
-	static int deadman = 0;
-
-	if (deadman++ > 100) {
-		deadman = 0;
-		Debugger();
-	}
 #endif
 
 	/*

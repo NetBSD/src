@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2.2.3 1998/08/08 03:06:44 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.2.4 1998/08/09 05:46:35 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -129,10 +129,6 @@ typedef	struct pmap *pmap_t;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
-void pmap_clear_modify __P((paddr_t pa));
-void pmap_clear_reference __P((paddr_t pa));
-int pmap_is_modified __P((paddr_t pa));
-int pmap_is_referenced __P((paddr_t pa));
 int pmap_count_res __P((pmap_t pmap));
 /* int pmap_change_wiring __P((pmap_t pm, vaddr_t va, boolean_t wired)); */
 #define pmap_resident_count(pm)		pmap_count_res((pm))

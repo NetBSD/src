@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.4.2.1 1998/08/08 03:06:42 eeh Exp $
+# 	$NetBSD: NONPLUS,v 1.4.2.2 1998/08/09 05:46:35 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -36,6 +36,7 @@ options 	UVM		# UVM VM
 options		UVM_PAGE_TRKOWN
 options		UVMHIST
 #options		UVMHIST_PRINT
+#options 	PMAP_NEW	# new pmap interface; requires UVM
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
