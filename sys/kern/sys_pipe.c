@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.50 2004/02/24 20:57:26 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.51 2004/02/26 08:15:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.50 2004/02/24 20:57:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.51 2004/02/26 08:15:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,7 +376,8 @@ pipelock(pipe, catch)
 		 * interruptable at the start of pipe_read/pipe_write to be
 		 * beneficial.
 		 */
-		(void) tsleep(&lbolt, PRIBIO, "rstrtpipelock", hz);
+		(void) ltsleep(&lbolt, PRIBIO, "rstrtpipelock", hz,
+		    &pipe->pipe_slock);
 	}
 	return (error);
 }
