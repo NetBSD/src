@@ -1,4 +1,4 @@
-/*	$NetBSD: wssvar.h,v 1.2 1998/06/09 00:05:47 thorpej Exp $	*/
+/*	$NetBSD: wssvar.h,v 1.3 1998/06/30 16:54:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -42,17 +42,18 @@
 #define WSS_LINE_IN_LVL		1
 #define WSS_DAC_LVL		2
 #define WSS_REC_LVL		3
-#define WSS_MON_LVL		4
+#define WSS_MONITOR_LVL		4
 #define WSS_MIC_IN_MUTE		5
 #define WSS_LINE_IN_MUTE	6
 #define WSS_DAC_MUTE		7
+#define WSS_MONITOR_MUTE	8
 
-#define WSS_RECORD_SOURCE	8
+#define WSS_RECORD_SOURCE	9
 
 /* Classes */
-#define WSS_INPUT_CLASS		9
-#define WSS_RECORD_CLASS	10
-#define WSS_MONITOR_CLASS	11
+#define WSS_INPUT_CLASS		10
+#define WSS_RECORD_CLASS	11
+#define WSS_MONITOR_CLASS	12
 
 struct wss_softc {
 	struct	device sc_dev;		/* base device */
