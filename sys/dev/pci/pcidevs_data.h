@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.548 2003/07/06 22:56:10 dyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.549 2003/07/12 06:00:38 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.548 2003/07/06 17:11:32 simonb Exp 
+ *	NetBSD: pcidevs,v 1.550 2003/07/12 05:59:50 hubertf Exp 
  */
 
 /*
@@ -8258,6 +8258,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba",
 	    "ToPIC97 CardBus-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_SMCARD,
+	    0,
+	    "Toshiba",
+	    "Smart Media Controller",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_SDCARD,
+	    0,
+	    "Toshiba",
+	    "Secure Digital Card Controller Type-A",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC100,
