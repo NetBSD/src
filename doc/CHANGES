@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.296 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.297 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -10,3 +10,4 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 Changes from NetBSD 2.0 to NetBSD 2.1:
 	which(1): Removed.  Use the shell built-ins ``which'' or ``type'',
 		depending on your shell, instead.  [martin 20040401]
+	heimdal: import version 0.6.1 [lha 20040402]
