@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.3 2002/02/26 16:09:15 kleink Exp $	*/
+/*	$NetBSD: platform.h,v 1.4 2002/05/02 14:48:27 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ int platform_generic_match(struct platform *);
 void pci_intr_nofixup(int, int, int *);
 void cpu_setup_unknown(struct device *);
 void reset_unknown(void);
+void reset_prep_generic(void);
 
 /* IBM */
 extern struct plattab plattab_ibm;
@@ -73,7 +74,6 @@ extern struct platform platform_ibm_6050;
 extern struct platform platform_ibm_7248;
 
 void cpu_setup_ibm_generic(struct device *);
-void reset_ibm_generic(void);
 
 void pci_intr_fixup_ibm_6050(int, int, int *);
 void pci_intr_fixup_ibm_7248(int, int, int *);

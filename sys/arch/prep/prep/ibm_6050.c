@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6050.c,v 1.3 2002/02/26 00:30:11 kleink Exp $	*/
+/*	$NetBSD: ibm_6050.c,v 1.4 2002/05/02 14:48:27 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct platform platform_ibm_6050 = {
 	pci_intr_fixup_ibm_6050,		/* pci_intr_fixup */
 	ext_intr_ivr,				/* ext_intr */
 	cpu_setup_ibm_generic,			/* cpu_setup */
-	reset_ibm_generic,			/* reset */
+	reset_prep_generic,			/* reset */
 };
 
 void
