@@ -1,5 +1,5 @@
 /*
- *	$Id: disksubr.c,v 1.8 1994/05/11 19:02:54 chopps Exp $
+ *	$Id: disksubr.c,v 1.9 1994/05/16 05:08:26 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -39,6 +39,13 @@ u_long rdbchksum __P((void *));
 struct adostype getadostype __P((u_long));
 struct rdbmap *getrdbmap __P((dev_t, void (*)(), struct disklabel *,
     struct cpu_disklabel *));
+
+/* XXX unknown function but needed for /sys/scsi to link */
+int
+dk_establish()
+{
+	return(-1);
+}
 
 /*
  * Attempt to read a disk label from a device
