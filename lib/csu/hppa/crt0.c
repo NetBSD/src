@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.5 2004/04/30 08:11:37 skrll Exp $	*/
+/*	$NetBSD: crt0.c,v 1.6 2004/05/17 10:44:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Matt Fredette
@@ -38,8 +38,6 @@
 
 #include "common.h"
 
-int	__global __asm ("$global$") = 0;
-
 static void ___start __P((struct ps_strings *,
     void (*cleanup) __P((void)), const Obj_Entry *, int)) 
 #ifdef __GNUC__
@@ -56,9 +54,12 @@ __asm("\n"
 "	.type	__start,@function	\n"
 "_start:				\n"
 "__start:				\n"
-"	.import	$global$, data		\n"
-"	ldil	L%$global$, %r27	\n"
-"	ldo	R%$global$(%r27), %r27	\n"
+"	.import	_GLOBAL_OFFSET_TABLE_	\n"
+"\n"
+"	bl      L$lpc, %r27		\n"
+"	depi    0, 31, 2, %r27		\n"
+"L$lpc:	addil   L'_GLOBAL_OFFSET_TABLE_ - ($PIC_pcrel$0 - 8), %r27	\n"
+"	ldo     R'_GLOBAL_OFFSET_TABLE_ - ($PIC_pcrel$0 - 12)(%r1),%r27	\n"
 "	copy	%r27, %r19		\n"
 "	b	___start		\n"
 "	copy	%r27, %arg3		\n");
@@ -152,7 +153,7 @@ ___start(ps_strings, cleanup, obj, dp)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.5 2004/04/30 08:11:37 skrll Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.6 2004/05/17 10:44:22 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
