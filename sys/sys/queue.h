@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.27 2001/05/11 05:13:57 lukem Exp $	*/
+/*	$NetBSD: queue.h,v 1.28 2001/05/12 20:18:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -126,7 +126,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define LIST_INSERT_AFTER(listelm, elm, field) do {			\
-	QUEUEDEBUG_LIST_OP((listelm), (field))				\
+	QUEUEDEBUG_LIST_OP((listelm), field)				\
 	if (((elm)->field.le_next = (listelm)->field.le_next) != NULL)	\
 		(listelm)->field.le_next->field.le_prev =		\
 		    &(elm)->field.le_next;				\
@@ -135,7 +135,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define	LIST_INSERT_BEFORE(listelm, elm, field) do {			\
-	QUEUEDEBUG_LIST_OP((listelm), (field))				\
+	QUEUEDEBUG_LIST_OP((listelm), field)				\
 	(elm)->field.le_prev = (listelm)->field.le_prev;		\
 	(elm)->field.le_next = (listelm);				\
 	*(listelm)->field.le_prev = (elm);				\
@@ -143,7 +143,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define LIST_INSERT_HEAD(head, elm, field) do {				\
-	QUEUEDEBUG_LIST_INSERT_HEAD((head), (elm), (field))		\
+	QUEUEDEBUG_LIST_INSERT_HEAD((head), (elm), field)		\
 	if (((elm)->field.le_next = (head)->lh_first) != NULL)		\
 		(head)->lh_first->field.le_prev = &(elm)->field.le_next;\
 	(head)->lh_first = (elm);					\
@@ -151,7 +151,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define LIST_REMOVE(elm, field) do {					\
-	QUEUEDEBUG_LIST_OP((elm), (field))				\
+	QUEUEDEBUG_LIST_OP((elm), field)				\
 	if ((elm)->field.le_next != NULL)				\
 		(elm)->field.le_next->field.le_prev = 			\
 		    (elm)->field.le_prev;				\
@@ -337,7 +337,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define TAILQ_INSERT_HEAD(head, elm, field) do {			\
-	QUEUEDEBUG_TAILQ_INSERT_HEAD((head), (elm), (field))		\
+	QUEUEDEBUG_TAILQ_INSERT_HEAD((head), (elm), field)		\
 	if (((elm)->field.tqe_next = (head)->tqh_first) != NULL)	\
 		(head)->tqh_first->field.tqe_prev =			\
 		    &(elm)->field.tqe_next;				\
@@ -348,7 +348,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define TAILQ_INSERT_TAIL(head, elm, field) do {			\
-	QUEUEDEBUG_TAILQ_INSERT_TAIL((head), (elm), (field))		\
+	QUEUEDEBUG_TAILQ_INSERT_TAIL((head), (elm), field)		\
 	(elm)->field.tqe_next = NULL;					\
 	(elm)->field.tqe_prev = (head)->tqh_last;			\
 	*(head)->tqh_last = (elm);					\
@@ -356,7 +356,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define TAILQ_INSERT_AFTER(head, listelm, elm, field) do {		\
-	QUEUEDEBUG_TAILQ_OP((listelm), (field))				\
+	QUEUEDEBUG_TAILQ_OP((listelm), field)				\
 	if (((elm)->field.tqe_next = (listelm)->field.tqe_next) != NULL)\
 		(elm)->field.tqe_next->field.tqe_prev = 		\
 		    &(elm)->field.tqe_next;				\
@@ -367,7 +367,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define	TAILQ_INSERT_BEFORE(listelm, elm, field) do {			\
-	QUEUEDEBUG_TAILQ_OP((listelm), (field))				\
+	QUEUEDEBUG_TAILQ_OP((listelm), field)				\
 	(elm)->field.tqe_prev = (listelm)->field.tqe_prev;		\
 	(elm)->field.tqe_next = (listelm);				\
 	*(listelm)->field.tqe_prev = (elm);				\
@@ -375,7 +375,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define TAILQ_REMOVE(head, elm, field) do {				\
-	QUEUEDEBUG_TAILQ_OP((elm), (field))				\
+	QUEUEDEBUG_TAILQ_OP((elm), field)				\
 	if (((elm)->field.tqe_next) != NULL)				\
 		(elm)->field.tqe_next->field.tqe_prev = 		\
 		    (elm)->field.tqe_prev;				\
