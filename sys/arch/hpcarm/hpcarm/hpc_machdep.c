@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.70 2003/09/16 08:18:22 agc Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.71 2004/08/06 15:10:19 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.70 2003/09/16 08:18:22 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.71 2004/08/06 15:10:19 rearnsha Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -212,7 +212,6 @@ void dumppages(char *, int);
 #endif
 
 u_int initarm(int, char **, struct bootinfo *);
-extern int db_trapper(u_int, u_int, trapframe_t *, int);
 extern void dump_spl_masks	__P((void));
 extern void dumpsys	__P((void));
 
