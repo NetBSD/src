@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_cpu.h,v 1.2 1996/07/11 03:44:50 cgd Exp $	*/
+/*	$NetBSD: alpha_cpu.h,v 1.3 1996/07/11 05:31:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -67,17 +67,24 @@ struct alpha_pcb {
 #define	ALPHA_PCB_FLAGS_PME	0x4000000000000000
 
 /*
- * Interrupt/Exception/Syscall Stack Frame
+ * Interrupt/Exception/Syscall "Hardware" (really PALcode)
+ * Stack Frame definitions
+ *
+ * These are quadword offsets from the sp on kernel entry, i.e.
+ * to get to the value in question you access (sp + (offset * 8)).
+ *
+ * On syscall entry, A0-A2 aren't written to memory but space
+ * _is_ reserved for them.
  */
 
-struct alpha_frame {
-	unsigned long	af_ps;		/* processor status */
-	unsigned long	af_pc;		/* program counter */
-	unsigned long	af_gp;		/* GP */
-	unsigned long	af_a0;		/* A0 */
-	unsigned long	af_a1;		/* A1 */
-	unsigned long	af_a2;		/* A2 */
-};
+#define	ALPHA_HWFRAME_PS	0	/* processor status register */
+#define	ALPHA_HWFRAME_PC	1	/* program counter */
+#define	ALPHA_HWFRAME_GP	2	/* global pointer */
+#define	ALPHA_HWFRAME_A0	3	/* a0 */
+#define	ALPHA_HWFRAME_A1	4	/* a1 */
+#define	ALPHA_HWFRAME_A2	5	/* a2 */
+
+#define	ALPHA_HWFRAME_SIZE	6	/* 6 8-byte words */
 
 /*
  * Processor Status Register [OSF/1 PALcode Specific]
