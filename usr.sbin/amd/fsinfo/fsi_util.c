@@ -35,7 +35,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: fsi_util.c,v 1.1.1.2 1997/07/24 21:23:14 christos Exp $
+ * $Id: fsi_util.c,v 1.1.1.3 1997/09/26 16:07:55 christos Exp $
  *
  */
 
@@ -203,7 +203,7 @@ static void
 make_banner(FILE *fp)
 {
   time_t t = time((time_t *) 0);
-  char *ctime(), *cp = ctime(&t);
+  char *cp = ctime(&t);
 
   fprintf(fp,
 	  "\

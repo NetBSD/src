@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: map.c,v 1.1.1.3 1997/09/22 21:11:55 christos Exp $
+ * $Id: map.c,v 1.1.1.4 1997/09/26 16:06:50 christos Exp $
  *
  */
 
@@ -100,6 +100,10 @@ static nfsfattr gen_fattr =
   {0, 0},			/* mtime */
   {0, 0},			/* ctime */
 };
+
+/* forward declarations */
+void remove_am(am_node *mp);
+void exported_ap_free(am_node *mp);
 
 
 /*
@@ -984,7 +988,7 @@ unmount_mp(am_node *mp)
 
 
 void
-timeout_mp(void)
+timeout_mp(voidp v)
 {
   int i;
   time_t t = NEVER;

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_nis.c,v 1.1.1.3 1997/09/22 21:11:52 christos Exp $
+ * $Id: info_nis.c,v 1.1.1.4 1997/09/26 16:06:43 christos Exp $
  *
  */
 
@@ -57,10 +57,21 @@
  */
 static int has_yp_order = FALSE;
 
+/* forward declarations */
+int nis_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *));
+int nis_search(mnt_map *m, char *map, char *key, char **val, time_t *tp);
+int nis_init(mnt_map *m, char *map, time_t *tp);
+int nis_mtime(mnt_map *m, char *map, time_t *tp);
+
+/* typedefs */
+typedef void (*nis_callback_fxn_t)(mnt_map *, char *, char *);
+/* do not change this. different OSs require a different prototype */
+typedef int (*ypall_callback_fxn_t)();
+
 struct nis_callback_data {
   mnt_map *ncd_m;
   char *ncd_map;
-  void (*ncd_fn) ();
+  nis_callback_fxn_t ncd_fn;
 };
 
 
@@ -139,11 +150,11 @@ callback(int status, char *key, int kl, char *val, int vl, char *data)
 
 
 int
-nis_reload(mnt_map *m, char *map, void (*fn) (int, char *, int, char *, int, char *))
+nis_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
 {
-  struct ypall_callback cbinfo;
   int error;
   struct nis_callback_data data;
+  struct ypall_callback cbinfo;
 
   if (!gopt.nis_domain) {
     error = determine_nis_domain();
@@ -154,8 +165,7 @@ nis_reload(mnt_map *m, char *map, void (*fn) (int, char *, int, char *, int, cha
   data.ncd_map = map;
   data.ncd_fn = fn;
   cbinfo.data = (voidp) &data;
-  cbinfo.foreach = (int (*)()) callback;
-
+  cbinfo.foreach = (ypall_callback_fxn_t) callback;
 
   /*
    * If you are using NIS and your yp_all function is "broken", you have to

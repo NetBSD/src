@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mapc.c,v 1.1.1.3 1997/09/22 21:11:58 christos Exp $
+ * $Id: mapc.c,v 1.1.1.4 1997/09/26 16:06:52 christos Exp $
  *
  */
 
@@ -135,8 +135,9 @@ qelem map_list_head = {&map_list_head, &map_list_head};
  */
 
 /* forward definitions */
-static void mapc_sync(mnt_map *);
 static const char *get_full_path(const char *map, const char *path, const char *type);
+static int mapc_meta_search(mnt_map *, char *, char **, int);
+static void mapc_sync(mnt_map *);
 
 /* ROOT MAP */
 static int root_init(mnt_map *, char *, time_t *);
@@ -601,8 +602,10 @@ mapc_find(char *map, char *opt, const char *maptype)
  * Free a map.
  */
 void
-mapc_free(mnt_map *m)
+mapc_free(voidp v)
 {
+  mnt_map *m = v;
+
   /*
    * Decrement the reference count.
    * If the reference count hits zero
@@ -621,7 +624,7 @@ mapc_free(mnt_map *m)
  * Search the map for the key.  Put a safe (malloc'ed) copy in *pval or
  * return an error code
  */
-int
+static int
 mapc_meta_search(mnt_map *m, char *key, char **pval, int recurse)
 {
   int error = 0;

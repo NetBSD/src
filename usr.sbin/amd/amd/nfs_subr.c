@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_subr.c,v 1.1.1.3 1997/09/22 21:12:05 christos Exp $
+ * $Id: nfs_subr.c,v 1.1.1.4 1997/09/26 16:07:01 christos Exp $
  *
  */
 
@@ -228,7 +228,7 @@ quick_reply(am_node *mp, int error)
 {
   SVCXPRT *transp = mp->am_transp;
   nfsdiropres res;
-  bool_t (*xdr_result)() = xdr_diropres;
+  xdrproc_t xdr_result = (xdrproc_t) xdr_diropres;
 
   /*
    * If there's a transp structure then we can reply to the client's

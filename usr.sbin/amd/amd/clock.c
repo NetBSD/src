@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: clock.c,v 1.1.1.2 1997/07/24 21:20:39 christos Exp $
+ * $Id: clock.c,v 1.1.1.3 1997/09/26 16:06:34 christos Exp $
  *
  */
 
@@ -59,11 +59,13 @@
 #include <am_defs.h>
 #include <amd.h>
 
+int timeout(u_int secs, void (*fn) (voidp), voidp closure);
+void reschedule_timeouts(time_t now, time_t then);
 
 typedef struct callout callout;
 struct callout {
   callout *c_next;		/* List of callouts */
-  void (*c_fn) ();		/* Function to call */
+  void (*c_fn) (voidp);		/* Function to call */
   voidp c_closure;		/* Closure to pass to call */
   time_t c_time;		/* Time of call */
   int c_id;			/* Unique identifier */
@@ -122,7 +124,7 @@ free_callout(callout *cp)
  * (*fn)(closure) will be called at clocktime() + secs
  */
 int
-timeout(u_int secs, void (*fn) (), voidp closure)
+timeout(u_int secs, void (*fn) (voidp), voidp closure)
 {
   callout *cp, *cp2;
   time_t t = clocktime() + secs;
@@ -225,7 +227,7 @@ softclock(void)
        * function will call timeout()
        * and try to allocate a callout
        */
-      void (*fn) () = cp->c_fn;
+      void (*fn) (voidp) = cp->c_fn;
       voidp closure = cp->c_closure;
 
       callouts.c_next = cp->c_next;

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_passwd.c,v 1.1.1.3 1997/09/22 21:11:53 christos Exp $
+ * $Id: info_passwd.c,v 1.1.1.4 1997/09/26 16:06:45 christos Exp $
  *
  */
 
@@ -55,6 +55,10 @@
 #include <amd.h>
 
 #define	PASSWD_MAP	"/etc/passwd"
+
+/* forward declarations */
+int passwd_init(mnt_map *m, char *map, time_t *tp);
+int passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp);
 
 
 /*
