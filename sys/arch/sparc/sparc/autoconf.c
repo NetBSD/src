@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.131 2000/01/12 15:53:29 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.132 2000/01/14 15:25:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1639,6 +1639,7 @@ instance_match(dev, aux, bp)
 			return (1);
 
 		}
+		break;
 	default:
 		break;
 	}
