@@ -12,7 +12,7 @@
  * operation though.
  * 
  * from: $Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
- * $Id: if_tun.h,v 1.2 1993/12/13 05:06:35 deraadt Exp $
+ * $Id: if_tun.h,v 1.3 1993/12/13 14:27:01 deraadt Exp $
  */
 
 #ifndef _NET_IF_TUN_H_
@@ -39,7 +39,7 @@ struct tun_softc {
 };
 
 /* Maximum packet size */
-#define	TUNMTU		0x1000
+#define	TUNMTU		1500
 
 /* ioctl's for get/set debug */
 #define	TUNSDEBUG	_IOW('t', 90, int)
