@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.50 2000/02/18 05:19:25 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.51 2000/03/02 07:41:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -401,10 +401,14 @@ struct cmsghdr {
 
 /*
  * Alignment requirement for CMSG struct manipulation.
- * This is different from ALIGN() defined in ARCH/include/param.h.
- * XXX think again carefully about architecture dependencies.
+ * This basically behaves the same as ALIGN() ARCH/include/param.h.
+ * We declare it separately for two reasons:
+ * (1) avoid dependency between machine/param.h, and (2) to sync with kernel's
+ * idea of ALIGNBYTES at runtime.
+ * without (2), we can't guarantee binary compatibility in case of future
+ * changes in ALIGNBYTES.
  */
-#define CMSG_ALIGN(n)	(((n) + (sizeof(long) - 1)) & ~(sizeof(long) - 1))
+#define CMSG_ALIGN(n)	(((n) + __cmsg_alignbytes()) & ~__cmsg_alignbytes())
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
@@ -454,6 +458,8 @@ struct omsghdr {
 	int	msg_accrightslen;
 };
 #endif
+
+int	__cmsg_alignbytes __P((void));
 
 #ifndef	_KERNEL
 

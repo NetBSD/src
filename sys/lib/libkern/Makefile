@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 1999/05/07 14:49:52 drochner Exp $
+#	$NetBSD: Makefile,v 1.54 2000/03/02 07:41:51 itojun Exp $
 
 LIB=	kern
 MKPIC=	no
@@ -23,7 +23,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 .endif
 
 # Other stuff
-SRCS+=	inet_addr.c intoa.c md5c.c sha1.c pmatch.c
+SRCS+=	__cmsg_alignbytes.c inet_addr.c intoa.c md5c.c sha1.c pmatch.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
