@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.8.5 2002/08/02 21:02:29 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.17.8.6 2002/10/05 07:53:06 gmcgarry Exp $
 
 #-
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	P_FLAG			offsetof(struct proc, p_flag)
+define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
 # lwp fields and values
@@ -180,6 +181,9 @@ define	PCB_CMAP2		offsetof(struct pcb, pcb_cmap2)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB		sizeof(struct pcb)
+
+# frame offsets
+define	TF_PC			offsetof(struct frame, f_pc)
  
 # exception frame offset/sizes
 define	FR_SP			offsetof(struct frame, f_regs[15])
@@ -216,6 +220,12 @@ define	CPU_68020		CPU_68020
 define	CPU_68030		CPU_68030
 define	CPU_68040		CPU_68040
 define	CPU_68060		CPU_68060
+
+# values for fputype
+define	FPU_68881		FPU_68881
+define	FPU_68882		FPU_68882
+define	FPU_68040		FPU_68040
+define	FPU_68060		FPU_68060
 
 ifdef _ATARIHW_
 # AD_SCU definition needs this...
