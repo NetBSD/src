@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.186 2003/09/11 11:34:46 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.187 2003/09/16 08:27:33 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.185 2003/09/11 11:34:18 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.186 2003/09/16 08:26:37 onoe Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -309,6 +309,9 @@
 #define	PCMCIA_CIS_FUJITSU_LA501	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_FUJITSU_LA501	0x2000
 #define	PCMCIA_STR_FUJITSU_LA501	"Fujitsu Towa LA501 Ethernet"
+#define	PCMCIA_CIS_FUJITSU_WL110	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FUJITSU_WL110	0x2003
+#define	PCMCIA_STR_FUJITSU_WL110	"PEGA-WL110 Wireless LAN"
 
 /* IBM Products */
 #define	PCMCIA_CIS_IBM_MICRODRIVE	{ NULL, NULL, NULL, NULL }
