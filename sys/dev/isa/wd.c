@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.113 1994/11/22 09:33:59 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.114 1994/11/22 09:36:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1674,10 +1674,11 @@ wderror(dev, bp, msg)
 	struct wd_softc *wd = dev;
 	struct wdc_softc *wdc = dev;
 
-	if (bp)
+	if (bp) {
 		diskerr(bp, "wd", msg, LOG_PRINTF, wd->sc_skip,
 		    &wd->sc_dk.dk_label);
-	else
+		printf("\n");
+	} else
 		printf("%s: %s: status %b error %b\n", wdc->sc_dev.dv_xname,
 		    msg, wdc->sc_status, WDCS_BITS, wdc->sc_error, WDERR_BITS);
 }
