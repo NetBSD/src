@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdmatch.c,v 1.7 2002/06/06 21:28:50 itojun Exp $	*/
+/*	$NetBSD: tcpdmatch.c,v 1.8 2002/06/07 00:00:19 itojun Exp $	*/
 
  /*
   * tcpdmatch - explain what tcpd would do in a specific case
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdmatch.c 1.5 96/02/11 17:01:36";
 #else
-__RCSID("$NetBSD: tcpdmatch.c,v 1.7 2002/06/06 21:28:50 itojun Exp $");
+__RCSID("$NetBSD: tcpdmatch.c,v 1.8 2002/06/07 00:00:19 itojun Exp $");
 #endif
 #endif
 
@@ -218,7 +218,8 @@ char  **argv;
 	freeaddrinfo(res0);
 	exit(0);
     }
-    freeaddrinfo(res0);
+    if (res0)
+	freeaddrinfo(res0);
 
     /*
      * Perhaps they are testing special client hostname patterns that aren't
