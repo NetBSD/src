@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: kcorelow.c,v 1.4 1995/07/08 01:55:54 cgd Exp $
+	$Id: kcorelow.c,v 1.5 1996/05/05 19:58:01 pk Exp $
 */
 
 #ifdef KERNEL_DEBUG
@@ -180,7 +180,7 @@ kcore_open (filename, from_tty)
 
 	old_chain = make_cleanup (free, filename);
 
-	core_kd = kvm_open (NULL, filename, NULL,
+	core_kd = kvm_open (bfd_get_filename(exec_bfd), filename, NULL,
 			    write_files? O_RDWR: O_RDONLY, 0);
 	if (core_kd == NULL)
 		perror_with_name (filename);
