@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194 2001/08/24 15:33:16 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.195 2001/08/26 05:16:52 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2001/08/24 15:33:16 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195 2001/08/26 05:16:52 mhitch Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -656,7 +656,7 @@ memsize_scan(first)
 	 * mem cluster array.
 	 */
 	mem_clusters[0].start = 0;		/* XXX is this correct? */
-	mem_clusters[0].size  = ctob(physmem);
+	mem_clusters[0].size  = ctob(mem);
 	mem_cluster_cnt = 1;
 
 	/* clear any memory error conditions possibly caused by probe */
