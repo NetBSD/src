@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.3 1996/03/25 00:18:09 mycroft Exp $	*/
+/*	$NetBSD: bt.c,v 1.4 1996/03/25 07:11:15 mycroft Exp $	*/
 
 #define BTDIAG
 #define integrate
@@ -1096,11 +1096,9 @@ bt_scsi_cmd(xs)
 	struct bt_ccb *ccb;
 	struct bt_scat_gath *sg;
 	int seg;		/* scatter gather seg being worked on */
-	int thiskv;
-	u_long thisphys, nextphys;
+	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
 	struct iovec *iovp;
-	struct bt_mbx_out *mbo;
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("bt_scsi_cmd\n"));
