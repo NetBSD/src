@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.24 2003/08/11 16:48:05 pk Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.25 2003/08/11 16:54:10 pk Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.24 2003/08/11 16:48:05 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.25 2003/08/11 16:54:10 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -501,6 +501,9 @@ anon_pagein(anon)
 		 */
 
 		return FALSE;
+
+	default:
+		return TRUE;
 	}
 
 	/*
@@ -524,6 +527,11 @@ anon_pagein(anon)
 	if (pg->wire_count == 0)
 		uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
+
+	if (pg->flags & PG_WANTED) {
+		wakeup(pg);
+		pg->flags &= ~(PG_WANTED);
+	}
 
 	/*
 	 * unlock the anon and we're done.
