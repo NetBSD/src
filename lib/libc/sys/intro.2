@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.2,v 1.35 2003/08/07 16:44:00 agc Exp $
+.\"	$NetBSD: intro.2,v 1.36 2003/11/25 15:33:58 kleink Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)intro.2	8.5 (Berkeley) 2/27/95
 .\"
-.Dd May 28, 2003
+.Dd November 25, 2003
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -643,7 +643,7 @@ or
 as part of
 file names because of the special meaning attached to these characters
 by the shell.
-.It  Path Name
+.It  Pathname
 A path name is a
 .Tn NUL Ns -terminated
 character string starting with an
@@ -660,7 +660,7 @@ If a path name begins with a slash, the path search begins at the
 directory.
 Otherwise, the search begins from the current working directory.
 A slash by itself names the root directory.
-An empty pathname refers to the current directory.
+An empty string is not a valid pathname.
 .It  Directory
 A directory is a special type of file that contains entries
 that are references to other files.
