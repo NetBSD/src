@@ -1,14 +1,15 @@
-#	$NetBSD: Makefile,v 1.6.2.2 1997/09/22 06:31:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6.2.3 1997/10/14 09:10:44 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
-PROG= biosboot
+BASE= biosboot
+PROG= ${BASE}.sym
 NOMAN=
 NEWVERSWHAT=	"BIOS Boot"
 
 SRCS= main.c devopen.c conf.c
 
-CLEANFILES+= ${BSSTART} ${PROG}.sym ${PROG}.list
+CLEANFILES+= ${BSSTART}
 
 CPPFLAGS+= -DCOMPAT_OLDBOOT
 #CPPFLAGS+= -DSUPPORT_SERIAL
@@ -28,13 +29,6 @@ CFLAGS+= -Wall
 # XXX should go into library
 SRCS+= ls.c
 .PATH: ${.CURDIR}/../libsa
-
-${PROG}: ${PROG}.sym
-	@# do nothing
-
-proginstall::
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${PROG}.sym ${DESTDIR}${BINDIR}
 
 SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no

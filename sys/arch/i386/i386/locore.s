@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.167.2.2 1997/09/22 06:31:02 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.167.2.3 1997/10/14 09:09:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -89,9 +89,17 @@
 #define	NOP	pushl %eax ; inb $0x84,%al ; inb $0x84,%al ; popl %eax
 #endif
 
-/* Disallow the old name for BIOSEXTMEM */
+/* Disallow old names for REALBASEMEM */
+#ifdef BIOSBASEMEM
+#error BIOSBASEMEM option deprecated; use REALBASEMEM only if memory size reported by latest boot block is incorrect
+#endif
+
+/* Disallow old names for REALEXTMEM */
 #ifdef EXTMEM_SIZE
-#error EXTMEM_SIZE option deprecated; use BIOSEXTMEM instead
+#error EXTMEM_SIZE option deprecated; use REALEXTMEM only if memory size reported by latest boot block is incorrect
+#endif
+#ifdef BIOSEXTMEM
+#error BIOSEXTMEM option deprecated; use REALEXTMEM only if memory size reported by latest boot block is incorrect
 #endif
 
 /*
@@ -164,15 +172,15 @@ _esym:		.long	0	# ptr to end of syms
 _atdevbase:	.long	0	# location of start of iomem in virtual
 _proc0paddr:	.long	0
 _PTDpaddr:	.long	0	# paddr of PTD, for libkvm
-#ifndef BIOSBASEMEM
+#ifndef REALBASEMEM
 _biosbasemem:	.long	0	# base memory reported by BIOS
 #else
-_biosbasemem:	.long	BIOSBASEMEM
+_biosbasemem:	.long	REALBASEMEM
 #endif
-#ifndef BIOSEXTMEM
+#ifndef REALEXTMEM
 _biosextmem:	.long	0	# extended memory reported by BIOS
 #else
-_biosextmem:	.long	BIOSEXTMEM
+_biosextmem:	.long	REALEXTMEM
 #endif
 	
 	.space 512

@@ -1,14 +1,15 @@
-#	$NetBSD: Makefile,v 1.9.2.3 1997/09/22 06:31:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9.2.4 1997/10/14 09:10:54 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
-PROG= netboot
+BASE= netboot
+PROG= ${BASE}.rom
 NOMAN=
 NEWVERSWHAT=	"Network Boot"
 
 SRCS= main.c devopen.c conf.c dev_net.c
 
-CLEANFILES+= ${ROMSTART} ${PROG}.bin ${PROG}.rom ${PROG}.sym ${PROG}.list
+CLEANFILES+= ${ROMSTART} ${BASE}.bin ${BASE}.sym
 
 #CPPFLAGS+= -DCOMPAT_OLDBOOT
 #CPPFLAGS+= -DDEBUG
@@ -28,13 +29,6 @@ CFLAGS+= -Wall
 #SRCS+= tftp.c
 SRCS+= nfs.c
 CPPFLAGS+= -I${.CURDIR}/../libsa
-
-${PROG}: ${PROG}.rom
-	@# do nothing
-
-proginstall::
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${PROG}.rom ${DESTDIR}${BINDIR}
 
 #ROM_SIZE= 16384
 ROM_SIZE= 32768
@@ -61,7 +55,7 @@ SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
 SAMISCCPPFLAGS+= -DNFS_NOSYMLINK -DUDP_NO_CKSUM
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 #I386MISCCPPFLAGS+= -DDISK_DEBUG
-#I386MISCCPPFLAGS+= -DSUPPORT_SERIAL
+#I386MISCCPPFLAGS+= -DSUPPORT_SERIAL -DDIRECT_SERIAL -DCOMCONS_KEYPRESS
 I386MISCMAKEFLAGS= I386_INCLUDE_DISK=no I386_INCLUDE_BUS=yes
 
 .include "../Makefile.booters"

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.44.2.2 1997/09/01 20:09:59 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.44.2.3 1997/10/14 09:09:26 thorpej Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -12,12 +12,16 @@ options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
-#options 	VM86		# Virtual 8086 emulation
+#options 	VM86		# virtual 8086 emulation
+options 	USER_LDT	# user-settable LDT; used by WINE
 
-# Some BIOSes don't get the size of extended memory right.  If you
-# have a broken BIOS, uncomment the following and set the value
-# properly for your system.
-#options 	BIOSEXTMEM=...	# size of extended memory
+# The following options override the memory sizes passed in from the boot
+# block.  Use them *only* if the boot block is unable to determine the correct
+# values.  Note that the BIOS may *correctly* report less that 640k of base
+# memory if the extended BIOS data area is located at the top of base memory
+# (as is the case on most recent systems).
+#options 	REALBASEMEM=...	# size of base memory
+#options 	REALEXTMEM=...	# size of extended memory
 
 #options 	DUMMY_NOPS	# speed hack; recommended
 options 	XSERVER,UCONSOLE
@@ -55,7 +59,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 
 options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
-options 	USER_LDT	# user-settable LDT; used by WINE
 options 	LKM		# loadable kernel modules
 
 #file-system	FFS		# UFS

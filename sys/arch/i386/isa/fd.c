@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.108.2.1 1997/09/16 03:48:42 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.108.2.2 1997/10/14 09:10:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -57,6 +57,8 @@
  *  dufault@hda.com (Peter Dufault)
  */
 
+#include "rnd.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -73,6 +75,9 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -177,7 +182,7 @@ struct fd_type fd_types[] = {
 	{ 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS,0xf6,1, "1.2MB"    }, /* 1.2 MB AT-diskettes */
 	{  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS,0xf6,1, "360KB/AT" }, /* 360kB in 1.2MB drive */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS,0xf6,1, "360KB/PC" }, /* 360kB PC diskettes */
-	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5" 720kB diskette */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5 inch 720kB diskette */
 	{  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS,0xf6,1, "720KB/x"  }, /* 720kB in 1.2MB drive */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
 };
@@ -210,6 +215,10 @@ struct fd_softc {
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct buf sc_q;	/* head of buf chain */
+
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
 };
 
 /* floppy driver configuration */
@@ -499,6 +508,10 @@ fdattach(parent, self, aux)
 
 	/* Needed to power off if the motor is on when we halt. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
+
+#if NRND > 0
+	rnd_attach_source(&fd->rnd_source, fd->sc_dev.dv_xname, RND_TYPE_DISK);
+#endif
 }
 
 /*
@@ -656,6 +669,10 @@ fdfinish(fd, bp)
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
+
+#if NRND > 0
+	rnd_add_uint32(&fd->rnd_source, bp->b_blkno);
+#endif
 
 	biodone(bp);
 	/* turn off motor 5s from now */

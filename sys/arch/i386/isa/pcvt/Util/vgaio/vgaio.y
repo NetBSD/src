@@ -1,5 +1,6 @@
 /* Hello emacs, this should be edited in -*- Fundamental -*- mode */
 %{
+/*	$NetBSD: vgaio.y,v 1.3.14.1 1997/10/14 09:10:35 thorpej Exp $	*/
 /*
  * Copyright (c) 1994,1995 Joerg Wunsch
  *
@@ -33,8 +34,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ident "$Header: /cvsroot/src/sys/arch/i386/isa/pcvt/Util/vgaio/Attic/vgaio.y,v 1.3 1995/10/07 21:46:03 jtc Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
