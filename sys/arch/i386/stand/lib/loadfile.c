@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.2 1999/01/28 22:45:07 christos Exp $ */
+/* $NetBSD: loadfile.c,v 1.3 1999/01/29 18:44:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef INSTALLBOOT
+#ifdef _STANDALONE
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 #else
@@ -108,7 +108,7 @@ static int aout_exec __P((int, struct exec *, u_long *, int));
 
 /*
  * Open 'filename', read in program and and return 0 if ok 1 on error.
- * Fill in entryp and endp.
+ * Fill in marks
  */
 int
 loadfile(fname, marks, flags)
@@ -181,57 +181,81 @@ coff_exec(fd, coff, marks, flags)
 	u_long *marks;
 	int flags;
 {
-	paddr_t ffp_save = marks[MARK_START];
+	paddr_t offset = marks[MARK_START];
+	paddr_t minp = ~0, maxp = 0, pos;
 
 	/* Read in text. */
 	if (lseek(fd, ECOFF_TXTOFF(coff), SEEK_SET) == -1)  {
 		WARN(("lseek text"));
-		return (1);
+		return 1;
 	}
-	if (flags & LOAD_TEXT) {
-		PROGRESS(("%lu", coff->a.tsize));
-		if (READ(fd, coff->a.text_start, ffp_save, coff->a.tsize) !=
-		    coff->a.tsize) {
-			WARN(("read text"));
-			return (1);
+
+	if (coff->a.tsize != 0) {
+		if (flags & LOAD_TEXT) {
+			PROGRESS(("%lu", coff->a.tsize));
+			if (READ(fd, coff->a.text_start, coff->a.tsize) !=
+			    coff->a.tsize) {
+				return 1;
+			}
 		}
-	}
-	else {
-		if (lseek(fd, coff->a.tsize, SEEK_CUR) == -1) {
-			WARN(("read text"));
-			return (1);
+		else {
+			if (lseek(fd, coff->a.tsize, SEEK_CUR) == -1) {
+				WARN(("read text"));
+				return 1;
+			}
+		}
+		if (flags & (COUNT_TEXT|LOAD_TEXT)) {
+			pos = coff->a.text_start;
+			if (minp > pos)
+				minp = pos;
+			pos += coff->a.tsize;
+			if (maxp < pos)
+				maxp = pos;
 		}
 	}
 
 	/* Read in data. */
-	if (coff->a.dsize != 0 && (flags & LOAD_DATA)) {
-		PROGRESS(("+%lu", coff->a.dsize));
-		if (READ(fd, coff->a.data_start, ffp_save, coff->a.dsize) !=
-		    coff->a.dsize) {
-			WARN(("read data"));
-			return (1);
+	if (coff->a.dsize != 0) {
+		if (flags & LOAD_DATA) {
+			PROGRESS(("+%lu", coff->a.dsize));
+			if (READ(fd, coff->a.data_start, coff->a.dsize) !=
+			    coff->a.dsize) {
+				WARN(("read data"));
+				return 1;
+			}
+		}
+		if (flags & (COUNT_DATA|LOAD_DATA)) {
+			pos = coff->a.data_start;
+			if (minp > pos)
+				minp = pos;
+			pos += coff->a.dsize;
+			if (maxp < pos)
+				maxp = pos;
 		}
 	}
 
 	/* Zero out bss. */
-	if (coff->a.bsize != 0 && (flags & LOAD_BSS)) {
-		PROGRESS(("+%lu", coff->a.bsize));
-		BZERO(coff->a.bss_start, ffp_save, coff->a.bsize);
+	if (coff->a.bsize != 0) {
+		if (flags & LOAD_BSS) {
+			PROGRESS(("+%lu", coff->a.bsize));
+			BZERO(coff->a.bss_start, coff->a.bsize);
+		}
+		if (flags & (COUNT_BSS|LOAD_BSS)) {
+			pos = coff->a.bss_start;
+			if (minp > pos)
+				minp = pos;
+			pos = coff->a.bsize;
+			if (maxp < pos)
+				maxp = pos;
+		}
 	}
 
-#ifndef INSTALLBOOT
-	ffp_save = coff->a.text_start + coff->a.tsize;
-	if (ffp_save < coff->a.data_start + coff->a.dsize)
-		ffp_save = coff->a.data_start + coff->a.dsize;
-	if (ffp_save < coff->a.bss_start + coff->a.bsize)
-		ffp_save = coff->a.bss_start + coff->a.bsize;
-#endif
-
-	marks[MARK_START] = LOADADDR(coff->a.entry);
+	marks[MARK_START] = LOADADDR(minp);
+	marks[MARK_ENTRY] = LOADADDR(coff->a.entry);
 	marks[MARK_NSYM] = 1;	/* XXX: Kernel needs >= 0 */
-	marks[MARK_SYM] = LOADADDR(ffp_save);
-	marks[MARK_END] = LOADADDR(ffp_save);
-	return (0);
+	marks[MARK_SYM] = LOADADDR(maxp);
+	marks[MARK_END] = LOADADDR(maxp);
+	return 0;
 }
 #endif /* BOOT_ECOFF */
 
@@ -247,69 +271,88 @@ elf_exec(fd, elf, marks, flags)
 	Elf_Off off;
 	int i;
 	size_t sz;
-	int first = 1;
+	int first;
 	int havesyms;
-	paddr_t ffp_save = marks[MARK_START], shp_save;
-	vaddr_t elf_save;
+	paddr_t minp = ~0, maxp = 0, pos;
+	paddr_t offset = marks[MARK_START], shpp, elfp;
 
-	for (i = 0; i < elf->e_phnum; i++) {
+	for (first = 1, i = 0; i < elf->e_phnum; i++) {
 		Elf_Phdr phdr;
 		if (lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET)
 		    == -1)  {
 			WARN(("lseek phdr"));
-			return (1);
+			return 1;
 		}
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
 			WARN(("read phdr"));
-			return (1);
+			return 1;
 		}
 		if (phdr.p_type != Elf_pt_load ||
 		    (phdr.p_flags & (Elf_pf_w|Elf_pf_x)) == 0)
 			continue;
 
-		/* Read in segment. */
-		PROGRESS(("%s%lu", first ? "" : "+", (u_long)phdr.p_filesz));
-		if (lseek(fd, phdr.p_offset, SEEK_SET) == -1)  {
-		    WARN(("lseek text"));
-		    return (1);
-		}
-		/* XXX: Assume text comes before data! */
-		if ((first && (flags & LOAD_TEXT)) ||
-		    (!first && (flags & LOAD_DATA))) {
-			if (READ(fd, phdr.p_vaddr, ffp_save, phdr.p_filesz) !=
+#define IS_TEXT(p)	(p.p_type & Elf_pf_x)
+#define IS_DATA(p)	(p.p_type & Elf_pf_w)
+#define IS_BSS(p)	(p.p_filesz < p.p_memsz)
+		/*
+		 * XXX: Assume first address is lowest
+		 */
+		if ((IS_TEXT(phdr) && (flags & LOAD_TEXT)) ||
+		    (IS_DATA(phdr) && (flags & LOAD_DATA))) {
+
+			/* Read in segment. */
+			PROGRESS(("%s%lu", first ? "" : "+",
+			    (u_long)phdr.p_filesz));
+
+			if (lseek(fd, phdr.p_offset, SEEK_SET) == -1)  {
+				WARN(("lseek text"));
+				return 1;
+			}
+			if (READ(fd, phdr.p_vaddr, phdr.p_filesz) !=
 			    phdr.p_filesz) {
 				WARN(("read text"));
-				return (1);
+				return 1;
 			}
-		}
+			first = 0;
 
-#ifndef INSTALLBOOT
-		if (first || ffp_save < phdr.p_vaddr + phdr.p_memsz)
-			ffp_save = phdr.p_vaddr + phdr.p_memsz;
-#endif
+		}
+		if ((IS_TEXT(phdr) && (flags & (LOAD_TEXT|COUNT_TEXT))) ||
+		    (IS_DATA(phdr) && (flags & (LOAD_DATA|COUNT_TEXT)))) {
+			pos = phdr.p_vaddr;
+			if (minp > pos)
+				minp = pos;
+			pos += phdr.p_filesz;
+			if (maxp < pos)
+				maxp = pos;
+		}
 
 		/* Zero out bss. */
-		if (phdr.p_filesz < phdr.p_memsz && (flags & LOAD_BSS)) {
+		if (IS_BSS(phdr) && (flags & LOAD_BSS)) {
 			PROGRESS(("+%lu",
 			    (u_long)(phdr.p_memsz - phdr.p_filesz)));
-			BZERO((phdr.p_vaddr + phdr.p_filesz), ffp_save,
+			BZERO((phdr.p_vaddr + phdr.p_filesz),
 			    phdr.p_memsz - phdr.p_filesz);
 		}
-		first = 0;
+		if (IS_BSS(phdr) && (flags & (LOAD_BSS|COUNT_BSS))) {
+			pos += phdr.p_memsz - phdr.p_filesz;
+			if (maxp < pos)
+				maxp = pos;
+		}
 	}
+
 	/*
 	 * Copy the ELF and section headers.
 	 */
-	ffp_save = roundup(ffp_save, sizeof(long));
-	if (flags & LOAD_HDR) {
-		elf_save = ffp_save;
-		ffp_save += sizeof(Elf_Ehdr);
+	maxp = roundup(maxp, sizeof(long));
+	if (flags & (LOAD_HDR|COUNT_HDR)) {
+		elfp = maxp;
+		maxp += sizeof(Elf_Ehdr);
 	}
 
-	if (flags & LOAD_SYM) {
+	if (flags & (LOAD_SYM|COUNT_SYM)) {
 		if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
 			WARN(("lseek section headers"));
-			return (1);
+			return 1;
 		}
 		sz = elf->e_shnum * sizeof(Elf_Shdr);
 
@@ -317,11 +360,11 @@ elf_exec(fd, elf, marks, flags)
 
 		if (read(fd, shp, sz) != sz) {
 			WARN(("read section headers"));
-			return (1);
+			return 1;
 		}
 
-		shp_save = ffp_save;
-		ffp_save += roundup(sz, sizeof(long));
+		shpp = maxp;
+		maxp += roundup(sz, sizeof(long));
 
 		/*
 		 * Now load the symbol sections themselves.  Make sure the
@@ -337,54 +380,56 @@ elf_exec(fd, elf, marks, flags)
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
 			if (shp[i].sh_type == Elf_sht_symtab ||
 			    shp[i].sh_type == Elf_sht_strtab) {
-				PROGRESS(("%s%ld", first ? " [" : "+",
-				    (u_long)shp[i].sh_size));
-				if (havesyms) {
+				if (havesyms && (flags & LOAD_SYM)) {
+					PROGRESS(("%s%ld", first ? " [" : "+",
+					    (u_long)shp[i].sh_size));
 					if (lseek(fd, shp[i].sh_offset,
-					    SEEK_SET)
-						== -1) {
+					    SEEK_SET) == -1) {
 						WARN(("lseek symbols"));
 						FREE(shp, sz);
-						return (1);
+						return 1;
 					}
-					if (READ(fd, ffp_save, ffp_save, 
-					    shp[i].sh_size) != shp[i].sh_size) {
+					if (READ(fd, maxp, shp[i].sh_size) !=
+					    shp[i].sh_size) {
 						WARN(("read symbols"));
 						FREE(shp, sz);
-						return (1);
+						return 1;
 					}
 				}
-				ffp_save += roundup(shp[i].sh_size,
+				maxp += roundup(shp[i].sh_size,
 				    sizeof(long));
 				shp[i].sh_offset = off;
 				off += roundup(shp[i].sh_size, sizeof(long));
 				first = 0;
 			}
 		}
-		BCOPY(shp, shp_save, shp_save, sz);
-		FREE(shp, sz);
+		if (flags & LOAD_SYM) {
+			BCOPY(shp, shpp, sz);
+			FREE(shp, sz);
 
-		if (first == 0)
-			PROGRESS(("]"));
+			if (first == 0)
+				PROGRESS(("]"));
+		}
 	}
 
 	/*
 	 * Frob the copied ELF header to give information relative
-	 * to elf_save.
+	 * to elfp.
 	 */
 	if (flags & LOAD_HDR) {
 		elf->e_phoff = 0;
 		elf->e_shoff = sizeof(Elf_Ehdr);
 		elf->e_phentsize = 0;
 		elf->e_phnum = 0;
-		BCOPY(elf, elf_save, elf_save, sizeof(*elf));
+		BCOPY(elf, elfp, sizeof(*elf));
 	}
 
-	marks[MARK_START] = LOADADDR(elf->e_entry);
+	marks[MARK_START] = LOADADDR(minp);
+	marks[MARK_ENTRY] = LOADADDR(elf->e_entry);
 	marks[MARK_NSYM] = 1;	/* XXX: Kernel needs >= 0 */
-	marks[MARK_SYM] = LOADADDR(elf_save);
-	marks[MARK_END] = LOADADDR(ffp_save);
-	return (0);
+	marks[MARK_SYM] = LOADADDR(elfp);
+	marks[MARK_END] = LOADADDR(maxp);
+	return 0;
 }
 #endif /* BOOT_ELF */
 
@@ -397,13 +442,12 @@ aout_exec(fd, x, marks, flags)
 	int flags;
 {
 	u_long entry = x->a_entry;
-	paddr_t ffp_save, aout_save = 0;
+	paddr_t aoutp = 0;
+	paddr_t minp, maxp;
 	int cc;
+	paddr_t offset = marks[MARK_START];
 
-	if (marks[MARK_START] == 0)
-		ffp_save = ALIGNENTRY(entry);
-	else
-		ffp_save = marks[MARK_START];
+	minp = maxp = ALIGNENTRY(entry);
 		
 	if (lseek(fd, sizeof(*x), SEEK_SET) == -1)  {
 		WARN(("lseek text"));
@@ -415,28 +459,31 @@ aout_exec(fd, x, marks, flags)
 	 * The kernel may use this to verify that the
 	 * symbols were loaded by this boot program.
 	 */
-	if (flags & LOAD_HDR) {
-		BCOPY(x, ffp_save, ffp_save, sizeof(*x));
-		ffp_save += sizeof(*x);
-	}
+	if (flags & LOAD_HDR)
+		BCOPY(x, maxp, sizeof(*x));
+	if (flags & (LOAD_HDR|COUNT_HDR))
+		maxp += sizeof(*x);
+
+
 	/*
 	 * Read in the text segment.
 	 */
 	if (flags & LOAD_TEXT) {
 		PROGRESS(("%ld", x->a_text));
 
-		if (READ(fd, ffp_save, ffp_save, x->a_text - sizeof(*x)) !=
+		if (READ(fd, maxp, x->a_text - sizeof(*x)) !=
 		    x->a_text - sizeof(*x)) {
 			WARN(("read text"));
 			return 1;
 		}
-		ffp_save += x->a_text - sizeof(*x);
 	} else {
 		if (lseek(fd, x->a_text - sizeof(*x), SEEK_CUR) == -1) {
 			WARN(("seek text"));
-			return (1);
+			return 1;
 		}
 	}
+	if (flags & (LOAD_TEXT|COUNT_TEXT))
+		maxp += x->a_text - sizeof(*x);
 
 	/*
 	 * Read in the data segment.
@@ -444,12 +491,19 @@ aout_exec(fd, x, marks, flags)
 	if (flags & LOAD_DATA) {
 		PROGRESS(("+%ld", x->a_data));
 
-		if (READ(fd, ffp_save, ffp_save, x->a_data) != x->a_data) {
+		if (READ(fd, maxp, x->a_data) != x->a_data) {
 			WARN(("read data"));
 			return 1;
 		}
-		ffp_save += x->a_data;
 	}
+	else {
+		if (lseek(fd, x->a_data, SEEK_CUR) == -1) {
+			WARN(("seek data"));
+			return 1;
+		}
+	}
+	if (flags & (LOAD_DATA|COUNT_DATA))
+		maxp += x->a_data;
 
 	/*
 	 * Zero out the BSS section.
@@ -458,58 +512,82 @@ aout_exec(fd, x, marks, flags)
 	if (flags & LOAD_BSS) {
 		PROGRESS(("+%ld", x->a_bss));
 
-		BZERO(ffp_save, ffp_save, x->a_bss);
-		ffp_save += x->a_bss;
+		BZERO(maxp, x->a_bss);
 	}
+
+	if (flags & (LOAD_BSS|COUNT_BSS))
+		maxp += x->a_bss;
 
 	/*
 	 * Read in the symbol table and strings.
 	 * (Always set the symtab size word.)
 	 */
-	if (flags & LOAD_SYM) {
-		BCOPY(&x->a_syms, ffp_save, ffp_save, sizeof(x->a_syms));
-		ffp_save += sizeof(x->a_syms);
-		aout_save = ffp_save;
+	if (flags & LOAD_SYM)
+		BCOPY(&x->a_syms, maxp, sizeof(x->a_syms));
 
-		if (x->a_syms > 0) {
-			/* Symbol table and string table length word. */
+	if (flags & (LOAD_SYM|COUNT_SYM)) {
+		maxp += sizeof(x->a_syms);
+		aoutp = maxp;
+	}
 
+	if (x->a_syms > 0) {
+		/* Symbol table and string table length word. */
+
+		if (flags & LOAD_SYM) {
 			PROGRESS(("+[%ld", x->a_syms));
 
-			if (READ(fd, ffp_save, ffp_save, x->a_syms) !=
+			if (READ(fd, maxp, x->a_syms) !=
 			    x->a_syms) {
 				WARN(("read symbols"));
 				return 1;
 			}
-			ffp_save += x->a_syms;
-
-			read(fd, &cc, sizeof(cc));
-
-			BCOPY(&cc, ffp_save, ffp_save, sizeof(cc));
-			ffp_save += sizeof(cc);
-
-			/* String table.  Length word includes itself. */
-
-			PROGRESS(("+%d]", cc));
-
-			cc -= sizeof(int);
-			if (cc <= 0) {
-				WARN(("symbol table too short"));
+		} else  {
+			if (lseek(fd, x->a_syms, SEEK_CUR) == -1) {
+				WARN(("seek symbols"));
 				return 1;
 			}
-			if (READ(fd, ffp_save, ffp_save, cc) != cc) {
+		}
+		if (flags & (LOAD_SYM|COUNT_SYM))
+			maxp += x->a_syms;
+
+		read(fd, &cc, sizeof(cc));
+
+		if (flags & LOAD_SYM) {
+			BCOPY(&cc, maxp, sizeof(cc));
+
+			/* String table. Length word includes itself. */
+
+			PROGRESS(("+%d]", cc));
+		}
+		if (flags & (LOAD_SYM|COUNT_SYM))
+			maxp += sizeof(cc);
+
+		cc -= sizeof(int);
+		if (cc <= 0) {
+			WARN(("symbol table too short"));
+			return 1;
+		}
+
+		if (flags & LOAD_SYM) {
+			if (READ(fd, maxp, cc) != cc) {
 				WARN(("read strings"));
 				return 1;
 			}
-			ffp_save += cc;
+		} else {
+			if (lseek(fd, cc, SEEK_CUR) == -1) {
+				WARN(("seek strings"));
+				return 1;
+			}
 		}
+		if (flags & (LOAD_SYM|COUNT_SYM))
+			maxp += cc;
 	}
 
-	marks[MARK_START] = LOADADDR(entry);
+	marks[MARK_START] = LOADADDR(minp);
+	marks[MARK_ENTRY] = LOADADDR(entry);
 	marks[MARK_NSYM] = x->a_syms;
-	marks[MARK_SYM] = LOADADDR(aout_save);
-	marks[MARK_END] = LOADADDR(ffp_save);
-
+	marks[MARK_SYM] = LOADADDR(aoutp);
+	marks[MARK_END] = LOADADDR(maxp);
 	return 0;
 }
 #endif /* BOOT_AOUT */

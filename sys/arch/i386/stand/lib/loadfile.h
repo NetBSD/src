@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.2 1999/01/28 22:45:07 christos Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.3 1999/01/29 18:44:09 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,37 +44,45 @@
  * Array indices in the u_long position array
  */
 #define MARK_START	0
-#define	MARK_NSYM	1
-#define MARK_SYM	2
-#define	MARK_END	3
-#define	MARK_MAX	4
+#define MARK_ENTRY	1
+#define	MARK_NSYM	2
+#define MARK_SYM	3
+#define	MARK_END	4
+#define	MARK_MAX	5
 
 /*
  * Bit flags for sections to load
  */
-#define	LOAD_TEXT	0x01
-#define	LOAD_DATA	0x02
-#define	LOAD_BSS	0x04
-#define	LOAD_SYM	0x08
-#define	LOAD_HDR	0x10
-#define LOAD_ALL	0x1f
+#define	LOAD_TEXT	0x0001
+#define	LOAD_DATA	0x0002
+#define	LOAD_BSS	0x0004
+#define	LOAD_SYM	0x0008
+#define	LOAD_HDR	0x0010
+#define LOAD_ALL	0x001f
+
+#define	COUNT_TEXT	0x0100
+#define	COUNT_DATA	0x0200
+#define	COUNT_BSS	0x0400
+#define	COUNT_SYM	0x0800
+#define	COUNT_HDR	0x1000
+#define COUNT_ALL	0x1f00
 
 int loadfile __P((const char *, u_long *, int));
 
-#ifndef INSTALLBOOT
+#ifdef _STANDALONE
 
-#define LOADADDR(a)		((u_long)(a) & 0x00ffffff)
+#define LOADADDR(a)		((((u_long)(a)) & 0x00ffffff) + offset)
 #define ALIGNENTRY(a)		((u_long)(a) & 0x00100000)
-#define READ(f, b, v, c)	pread((f), (void *)LOADADDR(b), (c))
-#define BCOPY(s, d, v, c)	vpbcopy((s), (void *)LOADADDR(d), (c))
-#define BZERO(d, v, c)		pbzero((void *)LOADADDR(d), (c))
+#define READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		vpbcopy((s), (void *)LOADADDR(d), (c))
+#define BZERO(d, c)		pbzero((void *)LOADADDR(d), (c))
 #define	WARN(a)			(void)(printf a, \
 				    printf((errno ? ": %s\n" : "\n"), \
 				    strerror(errno)))
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define FREE(a, b)		free(a, b)
-#define OKMAGIC(a)		((a) == NMAGIC)
+#define OKMAGIC(a)		((a) == ZMAGIC)
 
 void vpbcopy __P((const void *, void *, size_t));
 void pbzero __P((void *, size_t));
@@ -82,11 +90,11 @@ ssize_t pread __P((int, void *, size_t));
 
 #else
 
-#define LOADADDR(a)		((u_long)(a))
+#define LOADADDR(a)		(((u_long)(a)) + offset)
 #define ALIGNENTRY(a)		((u_long)(a))
-#define READ(f, b, v, c)	vread((u_long)(f), (b), &(v), (c))
-#define BCOPY(s, d, v, c)	vcopy((u_long)(s), (d), &(v), (c))
-#define BZERO(d, v, c)		vzero((u_long)(d), &(v), (c))
+#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
 #define WARN(a)			warn a
 #define PROGRESS(a)		/* nothing */
 #define ALLOC(a)		malloc(a)
