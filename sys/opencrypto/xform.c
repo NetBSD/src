@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.6 2003/08/26 14:24:35 thorpej Exp $ */
+/*	$NetBSD: xform.c,v 1.7 2003/08/26 16:37:38 thorpej Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.6 2003/08/26 14:24:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.7 2003/08/26 16:37:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,12 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.6 2003/08/26 14:24:35 thorpej Exp $");
 #include <machine/cpu.h>
 
 #include <crypto/blowfish/blowfish.h>
+#include <crypto/cast128/cast128.h>
 #include <crypto/des/des.h>
 #include <crypto/rijndael/rijndael.h>
 #include <crypto/ripemd160/rmd160.h>
 
 #include <opencrypto/blf.h>
-#include <opencrypto/cast.h>
 #include <opencrypto/deflate.h>
 #include <opencrypto/skipjack.h>
 
@@ -438,13 +438,13 @@ blf_zerokey(u_int8_t **sched)
 static void
 cast5_encrypt(caddr_t key, u_int8_t *blk)
 {
-	cast_encrypt((cast_key *) key, blk, blk);
+	cast128_encrypt((cast128_key *) key, blk, blk);
 }
 
 static void
 cast5_decrypt(caddr_t key, u_int8_t *blk)
 {
-	cast_decrypt((cast_key *) key, blk, blk);
+	cast128_decrypt((cast128_key *) key, blk, blk);
 }
 
 static int
@@ -452,11 +452,11 @@ cast5_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
 	int err;
 
-	MALLOC(*sched, u_int8_t *, sizeof(cast_key), M_CRYPTO_DATA,
+	MALLOC(*sched, u_int8_t *, sizeof(cast128_key), M_CRYPTO_DATA,
 	       M_NOWAIT);
 	if (*sched != NULL) {
-		bzero(*sched, sizeof(cast_key));
-		cast_setkey((cast_key *)*sched, key, len);
+		bzero(*sched, sizeof(cast128_key));
+		cast128_setkey((cast128_key *)*sched, key, len);
 		err = 0;
 	} else
 		err = ENOMEM;
@@ -466,7 +466,7 @@ cast5_setkey(u_int8_t **sched, u_int8_t *key, int len)
 static void
 cast5_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, sizeof(cast_key));
+	bzero(*sched, sizeof(cast128_key));
 	FREE(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }

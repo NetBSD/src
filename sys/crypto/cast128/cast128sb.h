@@ -1,4 +1,4 @@
-/*	$NetBSD: castsb.h,v 1.1 2003/07/25 21:12:42 jonathan Exp $ */
+/*	$NetBSD: cast128sb.h,v 1.1 2003/08/26 16:37:37 thorpej Exp $	*/
 /*      $OpenBSD: castsb.h,v 1.1 2000/02/28 23:13:04 deraadt Exp $       */
 
 /*
@@ -543,4 +543,3 @@ static const u_int32_t cast_sbox8[256] = {
 	0x04F19130, 0xBA6E4EC0, 0x99265164, 0x1EE7230D,
 	0x50B2AD80, 0xEAEE6801, 0x8DB2A283, 0xEA8BF59E
 };
-
