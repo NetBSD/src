@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.8 1996/04/25 18:54:45 is Exp $	*/
+/*	$NetBSD: aha.c,v 1.9 1996/04/29 20:28:40 christos Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -694,11 +694,10 @@ aha_start_ccbs(sc)
 	int iobase = sc->sc_iobase;
 	struct aha_mbx_out *wmbo;	/* Mail Box Out pointer */
 	struct aha_ccb *ccb;
-	int i;
 
 	wmbo = wmbx->tmbo;
 
-	while (ccb = sc->sc_waiting_ccb.tqh_first) {
+	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
 		if (sc->sc_mbofull >= AHA_MBX_SIZE) {
 			aha_collect_mbo(sc);
 			if (sc->sc_mbofull >= AHA_MBX_SIZE) {
@@ -1116,7 +1115,9 @@ aha_scsi_cmd(xs)
 	int seg;		/* scatter gather seg being worked on */
 	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
+#ifdef TFS
 	struct iovec *iovp;
+#endif
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("aha_scsi_cmd\n"));
