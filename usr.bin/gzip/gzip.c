@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.2 2004/03/31 09:19:16 grant Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.3 2004/04/01 02:43:11 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.2 2004/03/31 09:19:16 grant Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.3 2004/04/01 02:43:11 jmc Exp $");
 #endif /* not lint */
 
 /*
@@ -566,19 +566,17 @@ file_compress(char *file)
 				goto lose;
 			}
 		}
-#endif
 		if (stat(file, &isb) == 0) {
-			if (isb.st_nlink > 1) {
+			if (isb.st_nlink > 1 && fflag == 0) {
 				maybe_warnx("%s has %d other link%s -- "
-					    "skipping", file, isb.st_nlink-1,
+					    "skipping", file, isb.st_nlink - 1,
 					    isb.st_nlink == 1 ? "" : "s");
 				goto lose;
 			}
-#ifndef SMALL
 			if (nflag == 0)
 				mtime = (u_int32_t)isb.st_mtime;
-#endif
 		}
+#endif
 	}
 	in = fopen(file, "r");
 	if (in == 0)
@@ -748,7 +746,7 @@ close_it:
 #endif
 		if (stat(file, &isb) == 0) {
 #ifndef SMALL
-			if (isb.st_nlink > 1 && lflag == 0) {
+			if (isb.st_nlink > 1 && lflag == 0 && fflag == 0) {
 				maybe_warnx("%s has %d other links -- skipping",
 				    file, isb.st_nlink - 1);
 				goto lose;
