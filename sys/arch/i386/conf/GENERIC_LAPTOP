@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.4 2000/10/23 09:31:49 fvdl Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.5 2000/11/20 02:00:46 soren Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -329,7 +329,7 @@ pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? dev ? function ?	# Modems and serial cards
+com*	at cardbus? dev ? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
