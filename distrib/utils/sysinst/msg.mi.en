@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.62 2000/06/18 23:50:03 cyber Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.63 2000/08/07 15:56:34 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,7 @@
 /* MI Message catalog -- english, machine independent */
 
 message usage
-{usage: sysinst [-r release]
+{usage: sysinst [-r release] [-f definition-file]
 }
 
 message newline {\n}
