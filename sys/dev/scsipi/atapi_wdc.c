@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.55 2002/09/27 15:37:33 provos Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.56 2003/09/07 22:11:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.55 2002/09/27 15:37:33 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.56 2003/09/07 22:11:22 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -277,6 +277,7 @@ wdc_atapi_probe_device(sc, target)
 		periph->periph_switch = &atapi_probe_periphsw;
 		periph->periph_target = target;
 		periph->periph_lun = 0;
+		periph->periph_quirks = PQUIRK_ONLYBIG;
 
 #ifdef SCSIPI_DEBUG
 		if (SCSIPI_DEBUG_TYPE == SCSIPI_BUSTYPE_ATAPI &&

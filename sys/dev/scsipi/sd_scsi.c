@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.30 2003/09/05 08:12:09 mycroft Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.31 2003/09/07 22:11:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.30 2003/09/05 08:12:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.31 2003/09/07 22:11:24 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -623,21 +623,19 @@ sd_scsibus_setcache(sd, bits)
 
 	if (big) {
 		_lto2b(0, scsipi_sense.header.big.data_length);
-		error = scsipi_mode_select_big(sd->sc_periph, byte2|SMS_PF,
+		return (scsipi_mode_select_big(sd->sc_periph, byte2|SMS_PF,
 		    (void *)&scsipi_sense, sizeof(scsipi_sense.header.big) +
 		    sizeof(struct scsipi_mode_page_header) +
 		    pages->caching_params.pg_length,
 		    /* XS_CTL_SILENT | */ XS_CTL_DATA_ONSTACK,
-		    SDRETRIES, 10000);
+		    SDRETRIES, 10000));
 	} else {
 		scsipi_sense.header.small.data_length = 0;
-		error = scsipi_mode_select(sd->sc_periph, byte2|SMS_PF,
+		return (scsipi_mode_select(sd->sc_periph, byte2|SMS_PF,
 		    (void *)&scsipi_sense, sizeof(scsipi_sense.header.small) +
 		    sizeof(struct scsipi_mode_page_header) +
 		    pages->caching_params.pg_length,
 		    /* XS_CTL_SILENT | */ XS_CTL_DATA_ONSTACK,
-		    SDRETRIES, 10000);
+		    SDRETRIES, 10000));
 	}
-
-	return (error);
 }
