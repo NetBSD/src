@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.144 2000/05/01 05:29:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.145 2000/05/02 06:41:44 sjg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -39,6 +39,9 @@
 #	into a release(7) format in RELEASEDIR. Any port-dependent
 #	stuff for this target is found in etc.${MACHINE}/Makefile.inc.
 #    release: a synonym for `snapshot'
+
+# do this before bsd.own.mk so we get correct BSDSRCDIR
+.include "../Makefile.inc"
 
 # For NO_SENDMAIL and INSTPRIV and CRYPTOPATH
 .include <bsd.own.mk>
@@ -255,11 +258,7 @@ snap_pre:
 	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${RELEASEDIR}/${dir}
 .endfor
 
-# the regular expression does a basename(1) on .CURDIR so that we don't
-# have to keep looking up .. at compile time.
-KERNSRCDIR?=	${.CURDIR:C/[^\/]+$//}sys
-KERNOBJDIR?=	${KERNSRCDIR}/arch/${MACHINE}/compile
-KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
+.include <bsd.kernobj.mk>
 
 # This target builds the GENERIC kernel (which must exist for all
 # ports) and puts it in binary/sets/kern.tgz, and also builds any
@@ -276,6 +275,8 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 #
 .if !target(snap_kern)
 snap_kern:
+.ifndef KERNELS_DONE
+	mkdir -p ${KERNOBJDIR}
 .for configfile in GENERIC ${EXTRA_KERNELS} ${BUILD_KERNELS}
 	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
@@ -294,6 +295,7 @@ snap_kern:
 		gzip -c -9 < $${kernel} > \
 			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile}.gz ; }
 .endfor # EXTRA_KERNELS
+.endif # KERNELS_DONE
 .endif # no target(snap_kern)
 
 .endif # RELEASEDIR check
