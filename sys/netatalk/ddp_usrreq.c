@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.1 1997/04/02 21:31:11 christos Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.2 1997/04/29 13:44:47 christos Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -58,7 +58,7 @@ struct ddpcb   *ddp_ports[ATPORT_LAST];
 struct ddpcb   *ddpcb = NULL;
 struct at_ifaddrhead at_ifaddr;		/* Here as inited in this file */
 u_long ddp_sendspace = DDP_MAXSZ;	/* Max ddp size + 1 (ddp_type) */
-u_long ddp_recvspace = 10 * (587 + sizeof(struct sockaddr_at));
+u_long ddp_recvspace = 25 * (587 + sizeof(struct sockaddr_at));
 
 /* ARGSUSED */
 int
