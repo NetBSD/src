@@ -1,8 +1,8 @@
-#	Id: SunOS.5.8,v 8.6 1999/10/27 03:02:03 gshapiro Exp
+#	Id: SunOS.5.8,v 8.6.16.1 2000/08/07 17:51:34 gshapiro Exp
 define(`confCC', `gcc')
 define(`confBEFORE', `sysexits.h')
 define(`confMAPDEF', `-DNDBM -DNIS -DNISPLUS -DMAP_REGEX -DLDAPMAP')
-define(`confENVDEF', `-DSOLARIS=20800')
+define(`confENVDEF', `-DSOLARIS=20800 -DNETINET6')
 define(`confLIBS', `-lsocket -lnsl -lldap')
 define(`confMTLDOPTS', `-lpthread')
 define(`confMBINDIR', `/usr/lib')
