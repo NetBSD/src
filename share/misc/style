@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.13 2000/03/10 12:01:15 lukem Exp $ */
+/* $NetBSD: style,v 1.14 2000/03/10 12:46:30 lukem Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.13 2000/03/10 12:01:15 lukem Exp $");
+__RCSID("$NetBSD: style,v 1.14 2000/03/10 12:46:30 lukem Exp $");
 #endif /* !__lint */
 
 /*
@@ -336,8 +336,13 @@ dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 	int *rargc, char **rargv[])
 {	/* Insert an empty line if the function has no local variables. */
 
-	stmt;
-	/* ... */
+	if (stat(p, sb) < 0)
+		err(1, "Unable to stat %s", p);
+
+	/*
+	 * To printf 64 bit quantities, use %ll and cast to (long long).
+	 */
+	printf("The size of %s is %lld\n", p, (long long)sb->st_size);
 }
 
 /*
