@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.85 2004/08/16 15:40:35 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.86 2004/08/16 15:46:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.85 2004/08/16 15:40:35 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.86 2004/08/16 15:46:37 mycroft Exp $");
 
 #define	PCICDEBUG
 
@@ -892,13 +892,13 @@ pcic_deactivate_card(h)
 	/* call the MI deactivate function */
 	pcmcia_card_deactivate(h->pcmcia);
 
-	/* power down the socket */
-	pcic_write(h, PCIC_PWRCTL, 0);
-
 	/* reset the socket */
 	intr = pcic_read(h, PCIC_INTR);
 	intr &= PCIC_INTR_ENABLE;
 	pcic_write(h, PCIC_INTR, intr);
+
+	/* power down the socket */
+	pcic_write(h, PCIC_PWRCTL, 0);
 }
 
 int 
@@ -1442,8 +1442,7 @@ pcic_chip_socket_enable(pch)
 
 	/* disable interrupts; assert RESET */
 	intr = pcic_read(h, PCIC_INTR);
-	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
-	intr &= ~PCIC_INTR_RESET;
+	intr &= PCIC_INTR_ENABLE;
 	pcic_write(h, PCIC_INTR, intr);
 
 	/* zero out the address windows */
@@ -1543,8 +1542,7 @@ pcic_chip_socket_disable(pch)
 
 	/* disable interrupts; assert RESET */
 	intr = pcic_read(h, PCIC_INTR);
-	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
-	intr &= ~PCIC_INTR_RESET;
+	intr &= PCIC_INTR_ENABLE;
 	pcic_write(h, PCIC_INTR, intr);
 
 	/* zero out the address windows */
