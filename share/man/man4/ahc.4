@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.17 2001/06/12 14:54:19 wiz Exp $
+.\"	$NetBSD: ahc.4,v 1.18 2001/08/04 07:59:03 tsutsui Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -99,7 +99,7 @@ Adaptec SCSI controller cards:
 .Tn 284X,
 .Tn 2910,
 .Tn 2915,
-.Tn 2920,
+.Tn 2920C,
 .Tn 2930C,
 .Tn 2930U2,
 .Tn 2940,
@@ -288,8 +288,14 @@ PCI Fast SCSI adapter (no SCSI BIOS)
 .Tn Adaptec AHA-2915
 PCI Fast SCSI adapter (no SCSI BIOS)
 .It
-.Tn Adaptec AHA-2920
+.Tn Adaptec AHA-2920C
 PCI Fast SCSI adapter
+.Bl -item -offset indent
+.It
+Note:
+Adaptec AHA-2920/A which use the Future Domain's chips are not supported
+by this driver.
+.El
 .It
 .Tn Adaptec AHA-2930C
 PCI Ultra SCSI adapter
