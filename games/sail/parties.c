@@ -1,4 +1,4 @@
-/*	$NetBSD: parties.c,v 1.4 1997/01/07 12:42:23 tls Exp $	*/
+/*	$NetBSD: parties.c,v 1.5 1997/10/13 19:44:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,22 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parties.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: parties.c,v 1.4 1997/01/07 12:42:23 tls Exp $";
+__RCSID("$NetBSD: parties.c,v 1.5 1997/10/13 19:44:47 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+int
 meleeing(from, to)
 struct ship *from;
-register struct ship *to;
+struct ship *to;
 {
-	register struct BP *p = from->file->OBP;
-	register struct BP *q = p + NBP;
+	struct BP *p = from->file->OBP;
+	struct BP *q = p + NBP;
 
 	for (; p < q; p++)
 		if (p->turnsent && p->toship == to)
@@ -56,12 +58,13 @@ register struct ship *to;
 	return 0;
 }
 
+int
 boarding(from, isdefense)
-register struct ship *from;
+struct ship *from;
 char isdefense;
 {
-	register struct BP *p = isdefense ? from->file->DBP : from->file->OBP;
-	register struct BP *q = p + NBP;
+	struct BP *p = isdefense ? from->file->DBP : from->file->OBP;
+	struct BP *q = p + NBP;
 
 	for (; p < q; p++)
 		if (p->turnsent)
@@ -69,12 +72,13 @@ char isdefense;
 	return 0;
 }
 
+void
 unboard(ship, to, isdefense)
-register struct ship *ship, *to;
-register char isdefense;
+struct ship *ship, *to;
+char isdefense;
 {
-	register struct BP *p = isdefense ? ship->file->DBP : ship->file->OBP;
-	register n;
+	struct BP *p = isdefense ? ship->file->DBP : ship->file->OBP;
+	int n;
 
 	for (n = 0; n < NBP; p++, n++)
 		if (p->turnsent && (p->toship == to || isdefense || ship == to))

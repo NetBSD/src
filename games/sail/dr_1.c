@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.4 1995/04/24 12:25:10 cgd Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.5 1997/10/13 19:43:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,22 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dr_1.c,v 1.4 1995/04/24 12:25:10 cgd Exp $";
+__RCSID("$NetBSD: dr_1.c,v 1.5 1997/10/13 19:43:14 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "driver.h"
+#include <stdlib.h>
 
+void
 unfoul()
 {
-	register struct ship *sp;
+	struct ship *sp;
 	struct ship *to;
-	register int nat;
-	register i;
+	int nat;
+	int i;
 
 	foreachship(sp) {
 		if (sp->file->captain[0])
@@ -65,10 +68,11 @@ unfoul()
 	}
 }
 
+void
 boardcomp()
 {
 	int crew[3];
-	register struct ship *sp, *sq;
+	struct ship *sp, *sq;
 
 	foreachship(sp) {
 		if (*sp->file->captain)
@@ -129,6 +133,7 @@ boardcomp()
 	}
 }
 
+int
 fightitout(from, to, key)
 struct ship *from, *to;
 int key;
@@ -162,7 +167,7 @@ int key;
 	fromstrength = menfrom * fromcap->specs->qual;
 	strengthto = mento * tocap->specs->qual;
 	for (count = 0;
-	     (fromstrength < strengthto * 3 && strengthto < fromstrength * 3
+	     ((fromstrength < strengthto * 3 && strengthto < fromstrength * 3)
 	      || fromstrength == -1) && count < 4;
 	     count++) {
 		index = fromstrength/10;
@@ -230,10 +235,11 @@ int key;
 	return 0;
 }
 
+void
 resolve()
 {
 	int thwart;
-	register struct ship *sp, *sq;
+	struct ship *sp, *sq;
 
 	foreachship(sp) {
 		if (sp->file->dir == 0)
@@ -260,10 +266,11 @@ resolve()
 	}
 }
 
+void
 compcombat()
 {
-	register n;
-	register struct ship *sp;
+	int n;
+	struct ship *sp;
 	struct ship *closest;
 	int crew[3], men = 0, target, temp;
 	int r, guns, ready, load, car;
@@ -389,6 +396,7 @@ compcombat()
 	}
 }
 
+int
 next()
 {
 	if (++turn % 55 == 0)
@@ -397,8 +405,8 @@ next()
 		else
 			people = 0;
 	if (people <= 0 || windspeed == 7) {
-		register struct ship *s;
-		struct ship *bestship;
+		struct ship *s;
+		struct ship *bestship = NULL;
 		float net, best = 0.0;
 		foreachship(s) {
 			if (*s->file->captain)
@@ -419,7 +427,7 @@ next()
 				sizeof bestship->file->captain);
 			bestship->file->captain
 				[sizeof bestship->file->captain - 1] = 0;
-			log(bestship);
+			logger(bestship);
 		}
 		return -1;
 	}
