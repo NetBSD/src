@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.28 2004/07/23 10:15:13 mycroft Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.29 2004/07/30 04:29:52 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.28 2004/07/23 10:15:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.29 2004/07/30 04:29:52 dyoung Exp $");
 #endif
 
 /*
@@ -942,11 +942,10 @@ sysctl_ieee80211_verify(SYSCTLFN_ARGS)
 			return (EINVAL);
 		t = roundup(t, IEEE80211_INACT_WAIT) / IEEE80211_INACT_WAIT;
 #ifdef IEEE80211_DEBUG
-	} else if (node.sysctl_num == ieee80211_debug_nodenum) {
-		if (t < 0 || t > 2)
-			return (EINVAL);
-#endif /* IEEE80211_DEBUG */
+	} else if (node.sysctl_num != ieee80211_debug_nodenum)
+#else /* IEEE80211_DEBUG */
 	} else
+#endif /* IEEE80211_DEBUG */
 		return (EINVAL);
 
 	*(int*)rnode->sysctl_data = t;
