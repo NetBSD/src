@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.158 2002/01/13 10:39:33 aymeric Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.159 2002/01/17 09:56:44 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.156 2001/12/29 15:00:45 pooka Exp 
+ *	NetBSD: pcmciadevs,v 1.157 2002/01/13 10:38:47 aymeric Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -335,6 +335,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "EMTAC Technology Corporation",
 	    "EMTAC A2424i 11Mbps WLAN Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_ERICSSON, PCMCIA_PRODUCT_ERICSSON_WIRELESSLAN,
+	    PCMCIA_CIS_ERICSSON_WIRELESSLAN,
+	    0,
+	    "Ericsson",
+	    "DSSS Wireless LAN PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_FARALLON, PCMCIA_PRODUCT_FARALLON_SKYLINE,
@@ -1587,6 +1594,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Aironet Wireless Communications",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ERICSSON,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Ericsson",
 	    NULL,
 	},
 	{

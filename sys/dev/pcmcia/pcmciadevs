@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.157 2002/01/13 10:38:47 aymeric Exp $
+$NetBSD: pcmciadevs,v 1.158 2002/01/17 09:56:43 joda Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -69,6 +69,7 @@ vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL2			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent Technologies
 vendor AIRONET			0x015f	Aironet Wireless Communications
+vendor ERICSSON			0x016b	Ericsson
 vendor PSION			0x016c	Psion
 vendor COMPAQ2			0x0183	Compaq
 vendor KINGSTON			0x0186	Kingston
@@ -183,6 +184,9 @@ product ELSA XI800_IEEE		0x0004 XI800 CF Wireless LAN
 
 /* EMTAC */
 product EMTAC WLAN		0x0002	EMTAC A2424i 11Mbps WLAN Card
+
+/* Ericsson */
+product ERICSSON WIRELESSLAN	0x0001	DSSS Wireless LAN PC Card
 
 /* Farallon */
 product FARALLON SKYLINE	0x0a01 SkyLINE Wireless

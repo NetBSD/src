@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.15 2001/12/04 18:46:30 christos Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.16 2002/01/17 09:56:44 joda Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.15 2001/12/04 18:46:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.16 2002/01/17 09:56:44 joda Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,6 +222,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT,
 	  PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT,
 	  PCMCIA_STR_SIMPLETECH_SPECTRUM24_ALT },
+
+	{ PCMCIA_VENDOR_ERICSSON,
+	  PCMCIA_PRODUCT_ERICSSON_WIRELESSLAN,
+	  PCMCIA_CIS_ERICSSON_WIRELESSLAN,
+	  PCMCIA_STR_ERICSSON_WIRELESSLAN },
 
 	{ 0,
 	  0,

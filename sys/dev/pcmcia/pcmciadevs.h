@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.157 2002/01/13 10:39:33 aymeric Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.158 2002/01/17 09:56:44 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.156 2001/12/29 15:00:45 pooka Exp 
+ *	NetBSD: pcmciadevs,v 1.157 2002/01/13 10:38:47 aymeric Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -76,6 +76,7 @@
 #define	PCMCIA_VENDOR_SYMBOL2	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
+#define	PCMCIA_VENDOR_ERICSSON	0x016b	/* Ericsson */
 #define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
@@ -268,6 +269,11 @@
 #define	PCMCIA_CIS_EMTAC_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_EMTAC_WLAN	0x0002
 #define	PCMCIA_STR_EMTAC_WLAN	"EMTAC A2424i 11Mbps WLAN Card"
+
+/* Ericsson */
+#define	PCMCIA_CIS_ERICSSON_WIRELESSLAN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ERICSSON_WIRELESSLAN	0x0001
+#define	PCMCIA_STR_ERICSSON_WIRELESSLAN	"DSSS Wireless LAN PC Card"
 
 /* Farallon */
 #define	PCMCIA_CIS_FARALLON_SKYLINE	{ NULL, NULL, NULL, NULL }
