@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.10 1998/01/09 06:58:04 thorpej Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.11 1998/01/18 04:02:55 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.7 1997/10/14 22:22:08 mark Exp 
+ *	NetBSD: podules,v 1.8 1998/01/18 04:01:42 mark Exp 
  */
 
 /*
@@ -83,12 +83,15 @@ static struct podule_description podules_atomwide[] = {
 };
 
 static struct podule_description podules_atomwide2[] = {
-	{ PODULE_ATOMWIDE2_SERIAL,	"serial interface" },
+	{ PODULE_ATOMWIDE2_SERIAL,	"multiport serial interface" },
 	{ 0x0000, NULL }
 };
 
 static struct podule_description podules_lingenuity[] = {
 	{ PODULE_LINGENUITY_SCSI,	"16 bit SCSI interface" },
+	{ PODULE_LINGENUITY_SCSISHARE,	"16 bit SCSIShare interface" },
+	{ PODULE_LINGENUITY_SCSI8,	"8 bit SCSI interface" },
+	{ PODULE_LINGENUITY_SCSI8SHARE,	"8 bit SCSIShare interface" },
 	{ 0x0000, NULL }
 };
 
@@ -164,6 +167,15 @@ static struct podule_description podules_ant[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_castle[] = {
+	{ PODULE_CASTLE_SCSI16,	"8 or 16 bit SCSI2 interface" },
+	{ PODULE_CASTLE_SCSI16SHARE,	"8 or 16 bit SCSI2Share interface" },
+	{ PODULE_CASTLE_ETHERSCSI,	"8 or 16 bit SCSI2 interface, possibly with Ethernet" },
+	{ PODULE_CASTLE_ETHERSCSISHARE,	"8 or 16 bit SCSI2Share interface, possibly with Ethernet" },
+	{ PODULE_CASTLE_SCSI32,	"32 bit SCSI2 + DMA interface" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_alsystems[] = {
 	{ PODULE_ALSYSTEMS_SCSI,	"SCSI II host adapter" },
 	{ 0x0000, NULL }
@@ -208,6 +220,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_ICUBED, 		"I-Cubed", 	podules_icubed },
 	{ MANUFACTURER_BRINI, 		"Brini", 	podules_brini },
 	{ MANUFACTURER_ANT, 		"ANT", 	podules_ant },
+	{ MANUFACTURER_CASTLE, 		"Castle Technology", 	podules_castle },
 	{ MANUFACTURER_ALSYSTEMS, 	"Alsystems", 	podules_alsystems },
 	{ MANUFACTURER_SIMTEC, 		"Simtec Electronics", 	podules_simtec },
 	{ MANUFACTURER_YES, 		"Yellowstone Educational Solutions", 	podules_yes },
