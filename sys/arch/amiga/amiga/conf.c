@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39 1996/12/20 17:16:49 veego Exp $	*/
+/*	$NetBSD: conf.c,v 1.40 1997/01/05 20:39:01 veego Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -137,6 +137,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 37: SCSI scanner */
 	cdev_ch_init(NCH,ch),		/* 38: SCSI autochanger */
 	cdev_uk_init(NUK,uk),		/* 39: SCSI unknown */
+	cdev_ipl_init(1,ipl),		/* 40: ip-filter device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -239,6 +240,7 @@ static int chrtoblktab[] = {
  	/* 37 */	NODEV,
  	/* 38 */	NODEV,
  	/* 39 */	NODEV,
+ 	/* 40 */	NODEV,
 };
 
 /*
