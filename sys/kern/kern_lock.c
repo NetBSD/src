@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.4 1997/10/09 12:49:44 mycroft Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.5 1998/02/07 02:14:04 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -458,8 +458,11 @@ void
 simple_lock_init(alp)
 	struct simplelock *alp;
 {
-
 	alp->lock_data = 0;
+	alp->lock_file = NULL;
+	alp->lock_line = 0;
+	alp->unlock_file = NULL;
+	alp->unlock_line = 0;
 }
 
 void
@@ -468,25 +471,31 @@ _simple_lock(alp, id, l)
 	const char *id;
 	int l;
 {
-
 	if (simplelockrecurse)
 		return;
 	if (alp->lock_data == 1) {
+		printf("simple_lock: lock held\n");
+		printf("currently at: %s:%d\n", id, l);
+		printf("last locked: %s:%d\n",
+		       alp->lock_file, alp->lock_line);
+		printf("last unlocked: %s:%d\n",
+		       alp->unlock_file, alp->unlock_line);
 		if (lockpausetime == -1)
-			panic("%s:%d: simple_lock: lock held", id, l);
-		printf("%s:%d: simple_lock: lock held\n", id, l);
+			panic("simple_lock: lock held");
 		if (lockpausetime == 1) {
 #ifdef BACKTRACE
 			BACKTRACE(curproc);
 #endif
 		} else if (lockpausetime > 1) {
-			printf("%s:%d: simple_lock: lock held...", id, l);
+			printf("simple_lock: lock held, pausing...");
 			tsleep(&lockpausetime, PCATCH | PPAUSE, "slock",
 			    lockpausetime * hz);
 			printf(" continuing\n");
 		}
 	}
 	alp->lock_data = 1;
+	alp->lock_file = id;
+	alp->lock_line = l;
 	if (curproc)
 		curproc->p_simple_locks++;
 }
@@ -503,6 +512,8 @@ _simple_lock_try(alp, id, l)
 	if (simplelockrecurse)
 		return (1);
 	alp->lock_data = 1;
+	alp->lock_file = id;
+	alp->lock_line = l;
 	if (curproc)
 		curproc->p_simple_locks++;
 	return (1);
@@ -518,21 +529,28 @@ _simple_unlock(alp, id, l)
 	if (simplelockrecurse)
 		return;
 	if (alp->lock_data == 0) {
+		printf("simple_unlock: lock not held\n");
+		printf("currently at: %s:%d\n", id, l);
+		printf("last locked: %s:%d\n",
+		       alp->lock_file, alp->lock_line);
+		printf("last unlocked: %s:%d\n",
+		       alp->unlock_file, alp->unlock_line);
 		if (lockpausetime == -1)
-			panic("%s:%d: simple_unlock: lock not held", id, l);
-		printf("%s:%d: simple_unlock: lock not held\n", id, l);
+			panic("simple_unlock: lock not held");
 		if (lockpausetime == 1) {
 #ifdef BACKTRACE
 			BACKTRACE(curproc);
 #endif
 		} else if (lockpausetime > 1) {
-			printf("%s:%d: simple_unlock: lock not held...", id, l);
+			printf("simple_unlock: lock not held, pausing...");
 			tsleep(&lockpausetime, PCATCH | PPAUSE, "sunlock",
 			    lockpausetime * hz);
 			printf(" continuing\n");
 		}
 	}
 	alp->lock_data = 0;
+	alp->unlock_file = id;
+	alp->unlock_line = l;
 	if (curproc)
 		curproc->p_simple_locks--;
 }
