@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.tmpl,v 1.5 1999/04/02 15:46:35 minoura Exp $
+#	$NetBSD: upgrade.tmpl,v 1.6 1999/04/15 15:21:41 minoura Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -144,6 +144,32 @@ case "$resp" in
 		;;
 esac
 
+if [ `cat /kern/physmem` -le 1024 ]; then # less than 4megs
+	echo	""
+	echo	"You have to increase the virtual memory by activating"
+	echo	"the swap device especially if you are going to retrieve"
+	echo	"the distribution sets via network."
+	echo	""
+	echo -n	"Enable swapping? (yes/no)"
+	getresp "y"
+	case $resp in
+		n*)
+			echo	""
+			echo	"Good, swapping is not enabled."
+			;;
+		*)
+			echo	""
+			echo	"Here we go..."
+			swapctl -a /dev/${drivename}b
+			;;
+	esac
+	echo	""
+	echo	"Note that you have to use the SMALL kernel named"
+	echo	"netbsd.SMALL in x68k/binary/kernel/ directory instead of"
+	echo	"the standard kernel which is included the kern.tgz."
+	echo	""
+fi
+
 if [ $upgradefs = YES ]; then
 	echo	""
 	echo	"your file systems will be upgraded while they are checked"
@@ -241,31 +267,6 @@ echo	""
 echo	"Mounting remaining partitions..."
 chroot /mnt mount -at ffs > /dev/null 2>&1
 echo	"Done."
-
-if [ `cat /kern/physmem` -lt 1536 ]; then # less than 6megs
-	echo	""
-	echo	"You have to increase the virtual memory by activating"
-	echo	"the swap device you have just configured"
-	echo	"especially if you are going to retrieve the distribution sets"
-	echo	"via network."
-	echo -n	"Enable swapping? (yes/no)"
-	getresp "y"
-	case $resp in
-		n*)
-			echo	""
-			echo	"OK, swapping is not enabled."
-			;;
-		*)
-			echo	""
-			echo	"Here we go..."
-			swapctl -a /dev/${drivename}b
-			;;
-	esac
-	echo	""
-	echo	"Note that you have to use the SMALL kernel named"
-	echo	"netbsd.SMALL in x68k/binary/kernel/ directory instead of"
-	echo	"the standard kernel which is included the kern.tgz."
-fi
 
 echo    ""
 echo    ""
