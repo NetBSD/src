@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.h,v 1.9 1997/09/26 19:52:49 christos Exp $	*/
+/*	$NetBSD: ipcp.h,v 1.10 1998/08/06 20:13:14 kleink Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -28,10 +28,10 @@
 #define CI_COMPRESSTYPE	2	/* Compression Type */
 #define	CI_ADDR		3
 
-#define CI_MS_WINS1	128	/* Primary WINS value */
 #define CI_MS_DNS1	129	/* Primary DNS value */
-#define CI_MS_WINS2	130	/* Secondary WINS value */
+#define CI_MS_WINS1	130	/* Primary WINS value */
 #define CI_MS_DNS2	131	/* Secondary DNS value */
+#define CI_MS_WINS2	132	/* Secondary WINS value */
 
 #define MAX_STATES 16		/* from slcompress.h */
 
