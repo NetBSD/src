@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.c,v 1.17 1994/10/26 02:01:44 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.16 1994/05/29 01:44:28 chopps Exp $
  */
 
 #include <sys/param.h>

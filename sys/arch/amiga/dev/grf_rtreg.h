@@ -1,6 +1,4 @@
-/*
- *	$Id: grf_rtreg.h,v 1.4 1994/05/08 05:53:08 chopps Exp $
- */
+/*	$NetBSD: grf_rtreg.h,v 1.5 1994/10/26 02:03:19 cgd Exp $	*/
 
 #ifndef _GRF_RTREG_H
 #define _GRF_RTREG_H

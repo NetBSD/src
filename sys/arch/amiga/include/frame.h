@@ -1,6 +1,5 @@
-/*
- *	$Id: frame.h,v 1.6 1994/04/10 02:28:25 chopps Exp $
- */
+/*	$NetBSD: frame.h,v 1.7 1994/10/26 02:06:15 cgd Exp $	*/
+
 #ifndef _MACHINE_FRAME_H_
 #define _MACHINE_FRAME_H_
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: siopreg.h,v 1.5 1994/10/26 02:04:58 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)siopreg.h	7.3 (Berkeley) 2/5/91
- *	$Id: siopreg.h,v 1.4 1994/05/12 05:57:24 chopps Exp $
  */
 
 /*

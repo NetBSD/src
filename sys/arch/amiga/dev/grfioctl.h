@@ -1,3 +1,5 @@
+/*	$NetBSD: grfioctl.h,v 1.7 1994/10/26 02:03:32 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +40,6 @@
  * from: Utah $Hdr: grfioctl.h 1.1 90/07/09$
  *
  *	@(#)grfioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: grfioctl.h,v 1.6 1994/02/11 07:01:44 chopps Exp $
  */
 
 

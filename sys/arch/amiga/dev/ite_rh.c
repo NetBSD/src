@@ -1,6 +1,4 @@
-/*
- *	$Id: ite_rh.c,v 1.2 1994/06/15 19:06:18 chopps Exp $
- */
+/*	$NetBSD: ite_rh.c,v 1.3 1994/10/26 02:04:00 cgd Exp $	*/
 
 #include "grfrh.h"
 #if NGRFRH > 0

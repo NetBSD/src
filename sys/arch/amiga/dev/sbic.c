@@ -1,3 +1,5 @@
+/*	$NetBSD: sbic.c,v 1.6 1994/10/26 02:04:37 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +37,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: sbic.c,v 1.5 1994/06/20 02:23:12 chopps Exp $
  */
 
 /*

@@ -1,6 +1,4 @@
-/*
- *	$Id: disksubr.c,v 1.14 1994/07/06 20:51:14 chopps Exp $
- */
+/*	$NetBSD: disksubr.c,v 1.15 1994/10/26 02:01:49 cgd Exp $	*/
 
 #include <sys/param.h>
 #include <sys/buf.h>

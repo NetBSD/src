@@ -1,3 +1,5 @@
+/*	$NetBSD: cia.h,v 1.7 1994/10/26 02:01:42 cgd Exp $	*/
+
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -23,11 +25,11 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
-/* This is a rewrite (retype) of the Amiga's CIA chip register map, based
+
+/*
+ * This is a rewrite (retype) of the Amiga's CIA chip register map, based
  * on the Hardware Reference Manual.  It is NOT based on the Amiga's
  *  hardware/cia.h.  
- *
- *	$Id: cia.h,v 1.6 1994/06/04 11:58:42 chopps Exp $
  */
 
 #ifndef _AMIGA_CIA_

@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap.c,v 1.18 1994/10/26 02:02:04 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +37,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.17 1994/06/20 02:30:17 chopps Exp $
  */
 
 /*

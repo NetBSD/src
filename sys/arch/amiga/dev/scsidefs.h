@@ -1,3 +1,5 @@
+/*	$NetBSD: scsidefs.h,v 1.4 1994/10/26 02:04:49 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsidefs.h	7.3 (Berkeley) 2/5/91
- *	$Id: scsidefs.h,v 1.3 1994/02/13 21:10:57 chopps Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: event.c,v 1.3 1994/10/26 02:02:58 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,7 @@
  *
  *	@(#)event.c	8.1 (Berkeley) 6/11/93
  *
- * from: Header: event.c,v 1.5 92/11/26 01:10:44 torek Exp  (LBL)
- * $Id: event.c,v 1.2 1994/02/13 21:10:23 chopps Exp $
+ * Header: event.c,v 1.5 92/11/26 01:10:44 torek Exp  (LBL)
  */
 
 /*

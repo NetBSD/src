@@ -1,3 +1,5 @@
+/*	$NetBSD: ztwobusvar.h,v 1.3 1994/10/26 02:05:22 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: ztwobusvar.h,v 1.2 1994/06/04 11:59:20 chopps Exp $
  */
 #ifndef _ZTWOBUSVAR_H_
 #define _ZTWOBUSVAR_H_

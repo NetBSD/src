@@ -1,3 +1,5 @@
+/*	$NetBSD: siopvar.h,v 1.5 1994/10/26 02:05:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)siopvar.h	7.1 (Berkeley) 5/8/90
- *	$Id: siopvar.h,v 1.4 1994/06/14 00:59:17 chopps Exp $
  */
 #ifndef _SIOPVAR_H_
 #define _SIOPVAR_H_

@@ -1,6 +1,4 @@
-/*
- *	$Id: loadkmap.c,v 1.3 1994/05/11 19:09:29 chopps Exp $
- */
+/*	$NetBSD: loadkmap.c,v 1.4 1994/10/26 02:07:09 cgd Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
