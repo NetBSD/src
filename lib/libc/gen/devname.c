@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.11 2003/10/13 07:41:22 agc Exp $	*/
+/*	$NetBSD: devname.c,v 1.12 2004/11/11 03:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,20 +74,23 @@
 #if 0
 static char sccsid[] = "@(#)devname.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: devname.c,v 1.11 2003/10/13 07:41:22 agc Exp $");
+__RCSID("$NetBSD: devname.c,v 1.12 2004/11/11 03:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
+#include <sys/param.h>
 
 #include <db.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <err.h>
+#include <sys/stat.h>
 
 #ifdef __weak_alias
 __weak_alias(devname,_devname)
@@ -104,6 +107,31 @@ typedef struct devc {
 	char name[NAME_MAX];	/* device name */
 } DEVC;
 
+static mode_t getptsmajor(void);
+
+static mode_t
+getptsmajor(void)
+{
+	DIR *dirp = opendir(_PATH_DEV_PTS);
+	struct dirent *dp;
+	struct stat st;
+	char buf[MAXPATHLEN];
+
+	while ((dp = readdir(dirp)) != NULL) {
+		if (dp->d_name[0] == '.')
+			continue;
+		(void)snprintf(buf, sizeof(buf), "%s%s", _PATH_DEV_PTS,
+		    dp->d_name);
+		if (stat(buf, &st) == -1)
+			continue;
+		(void)closedir(dirp);
+		return major(st.st_rdev);
+	}
+	(void)closedir(dirp);
+	return (mode_t)~0;
+}
+
+
 char *
 devname(dev, type)
 	dev_t dev;
@@ -118,6 +146,8 @@ devname(dev, type)
 	DBT data, key;
 	DEVC *ptr, **pptr;
 	static DEVC **devtb = NULL;
+	static mode_t pts = 0;
+
 
 	if (!db && !failure &&
 	    !(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
@@ -168,9 +198,19 @@ devname(dev, type)
 	} else {
 		if (ptr == NULL)
 			return (NULL);
+		ptr->valid = INVALID;
+		if (type == S_IFCHR) {
+			if (pts == 0)
+				pts = getptsmajor();
+			if (pts != (mode_t)~0 && major(dev) == pts) {
+				(void)snprintf(ptr->name, sizeof(ptr->name),
+				    "%s%d", _PATH_DEV_PTS +
+				    sizeof(_PATH_DEV) - 1, minor(dev));
+				ptr->valid = VALID;
+			}
+		}
 		ptr->dev = dev;
 		ptr->type = type;
-		ptr->valid = INVALID;
 		return (NULL);
 	}
 }
