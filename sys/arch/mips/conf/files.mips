@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.46 2003/03/08 04:43:25 rafal Exp $
+#	$NetBSD: files.mips,v 1.47 2003/10/05 11:10:25 tsutsui Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -13,6 +13,7 @@ defflag	opt_cputype.h		NOFPU
 					# ENABLE_MIPS_R3NKK
 defflag	opt_mips_cache.h		MIPS3_L2CACHE_ABSENT
 					MIPS3_NO_PV_UNCACHED
+					ENABLE_MIPS4_CACHE_R10K
 
 file	arch/mips/mips/locore_mips1.S		mips1
 file	arch/mips/mips/locore_mips3.S		mips3 | mips4 | mips32 | mips64
@@ -47,6 +48,7 @@ file	arch/mips/mips/cache_r4k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k_subr.S		mips3 | mips4
 file	arch/mips/mips/cache_r5900.c		mips3 & mips3_5900
+file	arch/mips/mips/cache_r10k.c	(mips3|mips4) & enable_mips4_cache_r10k
 file	arch/mips/mips/cache_mipsNN.c		mips32 | mips64
 
 file	arch/mips/mips/in_cksum.c		inet
