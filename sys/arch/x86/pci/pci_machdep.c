@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2003/09/06 17:44:40 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 2003/10/16 22:56:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7 2003/09/06 17:44:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2003/10/16 22:56:29 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -553,7 +553,8 @@ pci_intr_map(pa, ihp)
 #if NIOAPIC > 0
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
-		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
+		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp,
+		    (void *)(intptr_t)dev) == 0) {
 			*ihp |= line;
 			return 0;
 		}
@@ -594,12 +595,12 @@ pci_intr_map(pa, ihp)
 	}
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
-		if (intr_find_mpmapping(mp_isa_bus, line, ihp) == 0) {
+		if (intr_find_mpmapping(mp_isa_bus, line, ihp, NULL) == 0) {
 			*ihp |= line;
 			return 0;
 		}
 #if NEISA > 0
-		if (intr_find_mpmapping(mp_eisa_bus, line, ihp) == 0) {
+		if (intr_find_mpmapping(mp_eisa_bus, line, ihp, NULL) == 0) {
 			*ihp |= line;
 			return 0;
 		}
