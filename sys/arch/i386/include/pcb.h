@@ -34,8 +34,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pcb.h	5.10 (Berkeley) 5/12/91
- *	$Id: pcb.h,v 1.5 1993/06/02 04:28:37 cgd Exp $
+ *	$Id: pcb.h,v 1.6 1993/06/27 04:50:12 andrew Exp $
  */
+
+#ifndef _I386_PCB_H_
+#define _I386_PCB_H_
 
 /*
  * Intel 386 process control block
@@ -77,3 +80,5 @@ struct pcb {
 #ifdef KERNEL
 struct pcb *curpcb;		/* our current running pcb */
 #endif
+
+#endif /* _I386_PCB_H_ */
