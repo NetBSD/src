@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.38 2003/07/02 13:47:57 simonb Exp $	*/
+/*	$NetBSD: iostat.c,v 1.39 2003/08/04 01:05:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.38 2003/07/02 13:47:57 simonb Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.39 2003/08/04 01:05:44 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,9 @@ static void cpustats(void);
 static void disk_stats(double);
 static void disk_stats2(double);
 static void disk_statsx(double);
-static void header(int);
+static void sig_header(int);
+static volatile int do_header;
+static void header(void);
 static void usage(void);
 static void display(void);
 static int selectdrives(int, char *[]);
@@ -213,12 +215,14 @@ main(int argc, char *argv[])
 	tv.tv_nsec = 0;
 
 	/* print a new header on sigcont */
-	(void)signal(SIGCONT, header);
+	(void)signal(SIGCONT, sig_header);
 
 	for (hdrcnt = 1;;) {
-		if ((hdrcnt -= lines) <= 0) {
-			header(0);
-			hdrcnt = winlines - 4;
+		if (do_header || ((hdrcnt -= lines) <= 0)) {
+			do_header = 0;
+			header();
+			if ((hdrcnt -= lines) <= 0)
+				hdrcnt = winlines - 4;
 		}
 
 		if (!ISSET(todo, SHOW_TOTALS))
@@ -234,7 +238,13 @@ main(int argc, char *argv[])
 }
 
 static void
-header(int signo)
+sig_header(int signo)
+{
+	do_header = 1;
+}
+
+static void
+header()
 {
 	int i;
 
@@ -509,7 +519,8 @@ selectdrives(int argc, char *argv[])
 		 * Pick up to defdrives (or all if -x is given) drives
 		 * if none specified.
 		 */
-		maxdrives = ISSET(todo, SHOW_STATS_X) ? dk_ndrive : defdrives;
+		maxdrives = (ISSET(todo, SHOW_STATS_X) ||
+			     dk_ndrive < defdrives) ? dk_ndrive : defdrives;
 		for (i = 0; i < maxdrives; i++) {
 			cur.dk_select[i] = 1;
 			++ndrives;
