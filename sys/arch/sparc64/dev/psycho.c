@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.20 2000/07/07 12:53:30 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.21 2000/07/09 20:57:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -93,7 +93,7 @@ static int psycho_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 static int _psycho_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				bus_size_t, int, vaddr_t,
 				bus_space_handle_t *));
-static void *psycho_intr_establish __P((bus_space_tag_t, int, int,
+static void *psycho_intr_establish __P((bus_space_tag_t, int, int, int,
 				int (*) __P((void *)), void *));
 
 static int psycho_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
@@ -903,8 +903,9 @@ psycho_intr_map(tag, pin, line, ihp)
  * install an interrupt handler for a PCI device
  */
 void *
-psycho_intr_establish(t, level, flags, handler, arg)
+psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int ihandle;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
@@ -914,7 +915,7 @@ psycho_intr_establish(t, level, flags, handler, arg)
 	struct psycho_softc *sc = pp->pp_sc;
 	struct intrhand *ih;
 	int ino;
-	long vec = level; 
+	long vec = ihandle; 
 
 #ifdef NOT_DEBUG
 	if (!ppbm)
@@ -925,7 +926,7 @@ psycho_intr_establish(t, level, flags, handler, arg)
 	if (ih == NULL)
 		return (NULL);
 
-	DPRINTF(PDB_INTR, ("\npsycho_intr_establish: level %x", level));
+	DPRINTF(PDB_INTR, ("\npsycho_intr_establish: ihandle %x", ihandle));
 	ino = INTINO(vec);
 	DPRINTF(PDB_INTR, (" ino %x", ino));
 	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
@@ -991,7 +992,14 @@ psycho_intr_establish(t, level, flags, handler, arg)
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	ih->ih_number = ino | 0x7c0;
-	ih->ih_pil = pci_ino_to_ipl_table[ino];
+	/*
+	 * If a `device class' level is specified, use it,
+	 * else get the PIL from a built-in table.
+	 */
+	if (level != IPL_NONE)
+		ih->ih_pil = level;
+	else
+		ih->ih_pil = pci_ino_to_ipl_table[ino];
 
 	DPRINTF(PDB_INTR, (
 	    "; installing handler %p arg %p with ino %u pil %u\n",

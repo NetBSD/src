@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2000/07/07 02:50:20 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.76 2000/07/09 20:57:51 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1446,7 +1446,7 @@ static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 static int	sparc_bus_mmap __P((bus_space_tag_t, bus_type_t,
 				    bus_addr_t, int, bus_space_handle_t *));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
-						   int (*) __P((void *)),
+						   int, int (*) __P((void *)),
 						   void *));
 static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					bus_size_t, bus_size_t, int));
@@ -1589,8 +1589,9 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 
 
 void *
-sparc_mainbus_intr_establish(t, level, flags, handler, arg)
+sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int	pil;
 	int	level;
 	int	flags;
 	int	(*handler)__P((void *));
@@ -1605,7 +1606,7 @@ sparc_mainbus_intr_establish(t, level, flags, handler, arg)
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(level, ih);
+	intr_establish(pil, ih);
 	return (ih);
 }
 
