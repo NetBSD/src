@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23 1998/02/27 09:17:18 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -85,8 +85,6 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 
-#include <mac68k/mac68k/dpme.h>	/* MF the structure of a mac partition entry */
-
 #define	b_cylin	b_resid
 
 #define NUM_PARTS_PROBED 32
@@ -98,15 +96,15 @@
 #define SCRATCH_PART 5
 
 static int getFreeLabelEntry __P((struct disklabel *));
-static int whichType __P((struct partmapentry *));
-static void fixPartTable __P((struct partmapentry *, long, char *, int *));
-static void setRoot __P((struct partmapentry *, struct disklabel *, int));
-static void setSwap __P((struct partmapentry *, struct disklabel *, int));
-static void setUfs __P((struct partmapentry *, struct disklabel *, int));
-static void setHfs __P((struct partmapentry *, struct disklabel *, int));
-static void setScratch __P((struct partmapentry *, struct disklabel *, int));
+static int whichType __P((struct part_map_entry *));
+static void fixPartTable __P((struct part_map_entry *, long, char *, int *));
+static void setRoot __P((struct part_map_entry *, struct disklabel *, int));
+static void setSwap __P((struct part_map_entry *, struct disklabel *, int));
+static void setUfs __P((struct part_map_entry *, struct disklabel *, int));
+static void setHfs __P((struct part_map_entry *, struct disklabel *, int));
+static void setScratch __P((struct part_map_entry *, struct disklabel *, int));
 static int getNamedType
-__P((struct partmapentry *, int, struct disklabel *, int, int, int *));
+__P((struct part_map_entry *, int, struct disklabel *, int, int, int *));
 static char *read_mac_label __P((dev_t, void (*)(struct buf *),
 		register struct disklabel *, struct cpu_disklabel *));
 
@@ -134,24 +132,24 @@ getFreeLabelEntry(lp)
  */
 static int 
 whichType(part)
-	struct partmapentry *part;
+	struct part_map_entry *part;
 {
 	struct blockzeroblock *bzb;
 
 	if (part->pmPartType[0] == '\0')
 		return 0;
 
-	if (strcmp(PART_DRIVER_TYPE, (char *)part->pmPartType) == 0)
+	if (strcmp(PART_TYPE_DRIVER, (char *)part->pmPartType) == 0)
 		return 0;
-	if (strcmp(PART_DRIVER43_TYPE, (char *)part->pmPartType) == 0)
+	if (strcmp(PART_TYPE_DRIVER43, (char *)part->pmPartType) == 0)
 		return 0;
-	if (strcmp(PART_DRIVERATA_TYPE, (char *)part->pmPartType) == 0)
+	if (strcmp(PART_TYPE_DRIVERATA, (char *)part->pmPartType) == 0)
 		return 0;
-	if (strcmp(PART_FWB_COMPONENT_TYPE, (char *)part->pmPartType) == 0)
+	if (strcmp(PART_TYPE_FWB_COMPONENT, (char *)part->pmPartType) == 0)
 		return 0;
-	if (strcmp(PART_PARTMAP_TYPE, (char *)part->pmPartType) == 0)
+	if (strcmp(PART_TYPE_PARTMAP, (char *)part->pmPartType) == 0)
 		return 0;
-	if (strcmp(PART_UNIX_TYPE, (char *)part->pmPartType) == 0) {
+	if (strcmp(PART_TYPE_UNIX, (char *)part->pmPartType) == 0) {
 		/* unix part, swap, root, usr */
 		bzb = (struct blockzeroblock *)(&part->pmBootArgs);
 		if (bzb->bzbMagic != BZB_MAGIC)
@@ -168,7 +166,7 @@ whichType(part)
 
 		return SCRATCH_PART;
 	}
-	if (strcmp(PART_MAC_TYPE, (char *)part->pmPartType) == 0)
+	if (strcmp(PART_TYPE_MAC, (char *)part->pmPartType) == 0)
 		return HFS_PART;
 /*
 	if (strcmp(PART_SCRATCH, (char *)part->pmPartType) == 0)
@@ -184,19 +182,19 @@ whichType(part)
  */
 static void
 fixPartTable(partTable, size, base, num)
-	struct partmapentry *partTable;
+	struct part_map_entry *partTable;
 	long size;
 	char *base;
 	int *num;
 {
 	int i = 0;
-	struct partmapentry *pmap;
+	struct part_map_entry *pmap;
 	char *s;
 
 	for (i = 0; i < NUM_PARTS_PROBED; i++) {
-		pmap = (struct partmapentry *)((i * size) + base);
+		pmap = (struct part_map_entry *)((i * size) + base);
 
-		if (pmap->pmSig != DPME_MAGIC) { /* this is not valid */
+		if (pmap->pmSig != PART_ENTRY_MAGIC) { /* this is not valid */
 			pmap->pmPartType[0] = '\0';
 			break;
 		}
@@ -216,7 +214,7 @@ fixPartTable(partTable, size, base, num)
 
 static void 
 setRoot(part, lp, slot)
-	struct partmapentry *part;
+	struct part_map_entry *part;
 	struct disklabel *lp;
 	int slot;
 {
@@ -236,7 +234,7 @@ setRoot(part, lp, slot)
 
 static void 
 setSwap(part, lp, slot)
-	struct partmapentry *part;
+	struct part_map_entry *part;
 	struct disklabel *lp;
 	int slot;
 {
@@ -256,7 +254,7 @@ setSwap(part, lp, slot)
 
 static void 
 setUfs(part, lp, slot)
-	struct partmapentry *part;
+	struct part_map_entry *part;
 	struct disklabel *lp;
 	int slot;
 {
@@ -276,7 +274,7 @@ setUfs(part, lp, slot)
 
 static void 
 setHfs(part, lp, slot)
-	struct partmapentry *part;
+	struct part_map_entry *part;
 	struct disklabel *lp;
 	int slot;
 {
@@ -296,7 +294,7 @@ setHfs(part, lp, slot)
 
 static void 
 setScratch(part, lp, slot)
-	struct partmapentry *part;
+	struct part_map_entry *part;
 	struct disklabel *lp;
 	int slot;
 {
@@ -317,7 +315,7 @@ setScratch(part, lp, slot)
 
 static int 
 getNamedType(part, num_parts, lp, type, alt, maxslot)
-	struct partmapentry *part;
+	struct part_map_entry *part;
 	int num_parts;
 	struct disklabel *lp;
 	int type, alt;
@@ -394,7 +392,7 @@ read_mac_label(dev, strat, lp, osdep)
 	struct buf *bp;
 	char *msg = NULL;
 	int i = 0, num_parts = 0, maxslot = 0;
-	struct partmapentry pmap[NUM_PARTS_PROBED];
+	struct part_map_entry pmap[NUM_PARTS_PROBED];
 
 	bp = geteblk((int) lp->d_secsize * NUM_PARTS_PROBED);
 	bp->b_dev = dev;
