@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.48 2000/10/05 01:06:06 cgd Exp $ */
+/* $NetBSD: locore.h,v 1.49 2000/10/05 02:36:45 cgd Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -78,7 +78,6 @@ void	mips3_TBIAP(int);
 void	mips3_TBIS(vaddr_t);
 int	mips3_TLBUpdate(u_int, u_int);
 void	mips3_TLBRead(int, struct tlb *);
-void	mips3_SetWIRED(int);
 void	mips3_wbflush(void);
 void	mips3_proc_trampoline(void);
 void	mips3_cpu_switch_resume(void);
@@ -88,12 +87,17 @@ void	mips3_FlushDCache_2way(vaddr_t addr, vaddr_t len);
 void	mips3_HitFlushDCache_2way(vaddr_t, int);
 void	mips3_FlushICache_2way(vaddr_t addr, vaddr_t len);
 
-u_int32_t mips3_read_config(void);
-u_int32_t mips3_cycle_count(void);
-u_int32_t mips3_write_count(u_int32_t);
-u_int32_t mips3_read_compare(void);
-void	mips3_write_config(u_int32_t);
-void	mips3_write_compare(u_int32_t);
+u_int32_t mips3_cp0_compare_read(void);
+void	mips3_cp0_compare_write(u_int32_t);
+
+u_int32_t mips3_cp0_config_read(void);
+void	mips3_cp0_count_write(u_int32_t);
+
+u_int32_t mips3_cp0_count_read(void);
+void	mips3_cp0_config_write(u_int32_t);
+
+u_int32_t mips3_cp0_wired_read(void);
+void	mips3_cp0_wired_write(u_int32_t);
 
 u_int64_t mips3_ld(u_int64_t *);
 void	mips3_sd(u_int64_t *, u_int64_t);
