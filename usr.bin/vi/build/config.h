@@ -8,7 +8,7 @@
 /* #undef HAVE_DOPRNT */
 
 /* Define if you have a working `mmap' system call.  */
-#define HAVE_MMAP 1
+/* #define HAVE_MMAP 1 */
 
 /* Define if your struct stat has st_blksize.  */
 #define HAVE_ST_BLKSIZE 1
