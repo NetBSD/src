@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 1999/06/27 18:35:31 augustss Exp $
+#	$NetBSD: Makefile,v 1.92 1999/07/01 10:55:53 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	ahb.4 ahc.4 aria.4 atalk.4 audio.4 bha.4 bpf.4 ccd.4 cd.4 ch.4 \
@@ -29,6 +29,9 @@ MAN+=	ex.4
 
 # machine-independent VME devices
 MAN+=	si.4
+
+# IPv6/IPsec
+MAN+=	gif.4 ipsec.4 inet6.4
 
 MLINKS+=bha.4 bt.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
