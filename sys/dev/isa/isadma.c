@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.21 1996/10/13 01:37:54 christos Exp $	*/
+/*	$NetBSD: isadma.c,v 1.22 1997/03/21 00:00:21 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,12 +58,12 @@ isa_dmacascade(chan)
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
 		outb(DMA1_MODE, chan | DMA37MD_CASCADE);
-		outb(DMA1_SMSK, chan);
+		outb(DMA1_SMSK, chan | DMA37SM_CLEAR);
 	} else {
 		chan &= 3;
 
 		outb(DMA2_MODE, chan | DMA37MD_CASCADE);
-		outb(DMA2_SMSK, chan);
+		outb(DMA2_SMSK, chan | DMA37SM_CLEAR);
 	}
 }
 
@@ -170,10 +170,64 @@ isa_dmaabort(chan)
 	bounced[chan] = 0;
 
 	/* mask channel */
-	if ((chan & 4) == 0)
-		outb(DMA1_SMSK, DMA37SM_SET | chan);
-	else
-		outb(DMA2_SMSK, DMA37SM_SET | (chan & 3));
+	if ((chan & 4) == 0) {
+		outb(DMA1_SMSK, chan | DMA37SM_SET);
+	} else {
+		chan &= 3;
+
+		outb(DMA2_SMSK, chan | DMA37SM_SET);
+	}
+}
+
+vm_size_t
+isa_dmacount(chan)
+	int chan;
+{
+	int waport;
+	vm_size_t nbytes;
+
+#ifdef ISADMA_DEBUG
+	if (chan < 0 || chan > 7)
+		panic("isa_dmafinished: impossible request");
+#endif
+
+	/* check that the terminal count was reached */
+	if ((chan & 4) == 0) {
+		/* mask channel */
+		outb(DMA1_SMSK, chan | DMA37SM_SET);
+		outb(DMA1_FFC, 0);
+
+		if (!isa_dmafinished(chan)) {
+			/* read count */
+			waport = DMA1_CHN(chan);
+			nbytes = inb(waport + 1) + 1;
+			nbytes += inb(waport + 1) << 8;
+		} else
+			nbytes = 0;
+
+		/* unmask channel */
+		outb(DMA1_SMSK, chan | DMA37SM_CLEAR);
+	} else {
+		chan &= 3;
+
+		/* mask channel */
+		outb(DMA2_SMSK, chan | DMA37SM_SET);
+		outb(DMA2_FFC, 0);
+
+		if (!isa_dmafinished(chan | 4)) {
+			/* read count */
+			waport = DMA2_CHN(chan);
+			nbytes = inb(waport + 2) + 1;
+			nbytes += inb(waport + 2) << 8;
+			nbytes <<= 1;
+		} else
+			nbytes = 0;
+
+		/* unmask channel */
+		outb(DMA2_SMSK, chan | DMA37SM_CLEAR);
+	}
+
+	return (nbytes);
 }
 
 int
@@ -212,10 +266,13 @@ isa_dmadone(flags, addr, nbytes, chan)
 		printf("isa_dmadone: channel %d not finished\n", chan);
 
 	/* mask channel */
-	if ((chan & 4) == 0)
-		outb(DMA1_SMSK, DMA37SM_SET | chan);
-	else
-		outb(DMA2_SMSK, DMA37SM_SET | (chan & 3));
+	if ((chan & 4) == 0) {
+		outb(DMA1_SMSK, chan | DMA37SM_SET);
+	} else {
+		chan &= 3;
+
+		outb(DMA2_SMSK, chan | DMA37SM_SET);
+	}
 
 	/* copy bounce buffer on read */
 	if (bounced[chan]) {
