@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/18 05:59:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1997/10/25 10:12:02 lukem Exp $
 
 LIB=		bib
 SRCS=		common.cc index.cc linear.cc search.cc map.c
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 
 NOMAN=		noman
 NOPROFILE=	noprofile

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/18 05:59:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/25 10:12:17 lukem Exp $
 
 PROG=		lookbib
 SRCS=		lookbib.cc
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBBIB) $(LIBGROFF) -lm
 DPADD+=		$(LIBBIB) $(LIBGROFF) $(LIBM)
 

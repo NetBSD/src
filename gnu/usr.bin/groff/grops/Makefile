@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/18 05:58:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1997/10/25 10:11:49 lukem Exp $
 
 PROG=		grops
 SRCS=		ps.cc psrm.cc
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBDRIVER) $(LIBGROFF) -lm
 DPADD+=		$(LIBDRIVER) $(LIBGROFF) $(LIBM)
 

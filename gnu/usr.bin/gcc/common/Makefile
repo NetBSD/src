@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/05/31 21:21:29 cjs Exp $
+#	$NetBSD: Makefile,v 1.13 1997/10/25 10:11:01 lukem Exp $
 
 LIB=	cc1
 
@@ -9,7 +9,7 @@ NOPROFILE=
 COMMON!=cd $(.CURDIR)/../common; \
 	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch \
+CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) -I$(COMMON)
 
 MD= ${.CURDIR}/../arch/${MACHINE_ARCH}/${MACHINE_ARCH}.md

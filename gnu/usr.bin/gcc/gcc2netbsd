@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.28 1997/10/24 21:25:46 is Exp $
+#	$NetBSD: gcc2netbsd,v 1.29 1997/10/25 10:10:55 lukem Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -492,7 +492,7 @@ BINDIR=	/usr/libexec
 COMMON!=cd $(.CURDIR)/../common; \
 	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
-CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
+CPPFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) -I$(COMMON)
 
 YFLAGS=
@@ -513,7 +513,7 @@ NOPROFILE=
 COMMON!=cd $(.CURDIR)/../common; \
 	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch \
+CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) -I$(COMMON)
 
 MD= ${.CURDIR}/../arch/${MACHINE_ARCH}/${MACHINE_ARCH}.md
@@ -561,7 +561,7 @@ libinstall::
 PROG=           gcc
 %% srcs cc
 BINDIR=		/usr/bin
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
+CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) \
 	-DMD_EXEC_PREFIX=\"/usr/libexec/\" \
 	-DMD_STARTFILE_PREFIX=\"/usr/lib/\"
@@ -629,7 +629,7 @@ CLEANFILES+=	objc-parse.c
 PROG=	cpp
 BINDIR=	/usr/libexec
 %% srcs cpp
-CFLAGS+=-I. -I$(.CURDIR) -I$(.CURDIR)/../common -I$(.CURDIR)/../arch \
+CPPFLAGS+=-I. -I$(.CURDIR) -I$(.CURDIR)/../common -I$(.CURDIR)/../arch \
 	-I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
 	-DGCC_INCLUDE_DIR=\"\" \
 	-DTOOL_INCLUDE_DIR=\"\" \
@@ -667,7 +667,7 @@ MLINKS=	cpp.1 cccp.1 cpp.1 gcpp.1
 PROG=	g++
 %% srcs g++
 BINDIR=	/usr/bin
-CFLAGS+=-I$(.CURDIR) -I$(.CURDIR)/../common \
+CPPFLAGS+=-I$(.CURDIR) -I$(.CURDIR)/../common \
 	-I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
 	-DGCC_NAME=\"/usr/bin/cc\"
 LDADD+=	-lgnumalloc
@@ -689,7 +689,7 @@ LIB=	gcc
 NOPROFILE=
 NOPIC=
 
-CFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
+CPPFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/${MACHINE_ARCH}
 
 #LIB1OBJS= _mulsi3.o _udivsi3.o _divsi3.o _umodsi3.o _modsi3.o _lshrsi3.o \
@@ -747,9 +747,9 @@ NOPIC=
 
 .SUFFIXES: .o .m
 
-.m.o: ;	${CC} -c ${CFLAGS} -o ${.TARGET} ${.IMPSRC}
+.m.o: ;	${CC} -c ${CFLAGS} ${CPPFLAGS} -o ${.TARGET} ${.IMPSRC}
 
-CFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
+CPPFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/${MACHINE_ARCH}
 
 

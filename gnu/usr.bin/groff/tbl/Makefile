@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/18 05:59:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/25 10:12:27 lukem Exp $
 
 PROG=		tbl
 SRCS=		main.cc table.cc
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)
 

@@ -1,3 +1,3 @@
-#	$Id: Makefile.inc,v 1.2 1993/08/02 17:49:12 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1997/10/25 10:10:19 lukem Exp $
 
 BINDIR?=	/usr/bin

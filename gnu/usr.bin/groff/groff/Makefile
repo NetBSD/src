@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/18 05:58:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/25 10:11:41 lukem Exp $
 
 PROG=		groff
 SRCS=		groff.cc pipeline.c
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)
 

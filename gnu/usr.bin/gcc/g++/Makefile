@@ -1,5 +1,5 @@
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: Makefile,v 1.6 1997/06/23 13:25:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/25 10:11:07 lukem Exp $
 
 .if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
@@ -11,7 +11,7 @@
 PROG=	g++
 SRCS=	g++.c obstack.c version.c 
 BINDIR=	/usr/bin
-CFLAGS+=-I$(.CURDIR) -I$(.CURDIR)/../common \
+CPPFLAGS+=-I$(.CURDIR) -I$(.CURDIR)/../common \
 	-I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
 	-DGCC_NAME=\"/usr/bin/cc\"
 LDADD+=	-lgnumalloc
