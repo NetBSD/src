@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.85 2003/04/16 20:42:34 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.86 2003/06/29 18:41:47 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.85 2003/04/16 20:42:34 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.86 2003/06/29 18:41:47 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,6 +724,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	 */
 	RELOC(protorp[1], u_int) = RELOC(Sysseg_pa, u_int);
 
+	RELOC(start_c_fphystart, u_int) = fphystart;
+	RELOC(start_c_pstart, u_int) = pstart;
+
 	/*
 	 * copy over the kernel (and all now initialized variables)
 	 * to fastram.  DONT use bcopy(), this beast is much larger
@@ -787,9 +790,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		(RELOC(protorp[0], u_int)) = 0x80000202;
 		asm volatile ("pmove %0@,%%srp":: "a" (&RELOC(protorp, u_int)));
 	}
-
-	RELOC(start_c_fphystart, u_int) = fphystart;
-	RELOC(start_c_pstart, u_int) = pstart;
 }
 
 void
