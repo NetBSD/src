@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.129 2000/12/16 16:09:24 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.130 2000/12/18 15:55:30 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -2371,7 +2371,7 @@ uhci_device_isoc_abort(usbd_xfer_handle xfer)
 	for (i = 0; i < nframes; i++) {
 		std = stds[n];
 		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));
-		len = UHCI_TD_GET_MAXLEN(std->td.td_token);
+		len = UHCI_TD_GET_MAXLEN(le32toh(std->td.td_token));
 		if (len > maxlen)
 			maxlen = len;
 		if (++n >= UHCI_VFRAMELIST_COUNT)
