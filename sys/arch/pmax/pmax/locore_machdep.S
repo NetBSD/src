@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.14 2000/07/24 15:07:02 ad Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.15 2000/07/26 11:42:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,6 @@
 #include <mips/cpuregs.h>	/* XXX - misnomer? */
 
 #include "sii.h"
-#include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
 #include "opt_dec_5400.h"
 
