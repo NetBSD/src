@@ -1,8 +1,5 @@
-#	$NetBSD: files.hpcsh,v 1.4 2001/02/06 16:45:21 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.5 2001/02/07 15:29:21 uch Exp $
 #
-# new style config file for sh3 architecture
-#
-# maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
 
 maxusers 2 16 64
@@ -10,6 +7,7 @@ maxusers 2 16 64
 file	arch/hpcsh/hpcsh/conf.c
 file	arch/hpcsh/hpcsh/machdep.c
 file	arch/hpcsh/hpcsh/autoconf.c
+file	arch/hpcsh/hpcsh/bus_space.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
 
 #
@@ -22,20 +20,20 @@ include "arch/hpc/conf/files.hpc"
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{st = 5}
-major	{cd = 6}
+major	{sd = 3}
+major	{st = 4}
+major	{cd = 5}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 0}
+major	{wd = 1}
 
 # Memory Disk for install floppy
 file arch/hpcsh/hpcsh/md_root.c			memory_disk_hooks
-major	{md = 17}
+major	{md = 6}
 
 #
 # System bus types
@@ -59,11 +57,3 @@ include "dev/wsfont/files.wsfont"
 # Workstation Console
 #
 include "dev/wscons/files.wscons"
-
-
-defopt	opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
-defopt  opt_led_addr.h	LED_ADDR
-defopt	opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
-			BSC_WCR3_VAL BSC_MCR_VAL BSC_SDMR2_VAL BSC_SDMR3_VAL
-			BSC_RTCSR_VAL BSC_RTCNT_VAL BSC_RTCOR_VAL BSC_RFCR_VAL
-			BSC_PCR_VAL FRQCR_VAL PFC_SCPCR_VAL

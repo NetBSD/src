@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2001/02/06 16:45:21 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2001/02/07 15:29:21 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,30 +36,18 @@
 
 #include <machine/shbvar.h>
 
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+static int mainbus_match(struct device *, struct cfdata *, void *);
+static void mainbus_attach(struct device *, struct device *, void *);
+static int mainbus_print(void *, const char *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-int	mainbus_print __P((void *, const char *));
-
-union mainbus_attach_args {
+struct mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct shbus_attach_args mba_sba;
-#ifdef	TODO
-	struct pcibus_attach_args mba_pba;
-	struct eisabus_attach_args mba_eba;
-	struct isabus_attach_args mba_iba;
-#endif
 };
-
-/*
- * This is set when the ISA bus is attached.  If it's not set by the
- * time it's checked below, then mainbus attempts to attach an ISA.
- */
-int	isa_has_been_seen;
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -74,15 +62,10 @@ mainbus_match(parent, cf, aux)
 	return 1;
 }
 
-/*
- * Attach the mainbus.
- */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	union mainbus_attach_args mba;
+	struct mainbus_attach_args mba;
 
 	printf("\n");
 
@@ -94,17 +77,12 @@ mainbus_attach(parent, self, aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
-	union mainbus_attach_args *mba = aux;
+	struct mainbus_attach_args *mba = aux;
 
 	if (pnp)
 		printf("%s at %s", mba->mba_busname, pnp);
-#ifdef	TODO
-	if (!strcmp(mba->mba_busname, "pci"))
-		printf(" bus %d", mba->mba_pba.pba_bus);
-#endif
+
 	return (UNCONF);
 }
