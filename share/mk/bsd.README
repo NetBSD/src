@@ -212,6 +212,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 
 			LIBC		/lib/libc.a
 			LIBCOMPAT	/usr/lib/libcompat.a
+			LIBCRYPT	/usr/lib/libcrypt.a
 			LIBCURSES	/usr/lib/libcurses.a
 			LIBDBM		/usr/lib/libdbm.a
 			LIBDES		/usr/lib/libdes.a
