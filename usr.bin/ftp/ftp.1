@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.88 2002/10/02 15:56:27 wiz Exp $
+.\" 	$NetBSD: ftp.1,v 1.89 2003/01/20 03:20:42 toddpw Exp $
 .\"
 .\" Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2031,6 +2031,14 @@ If a macro named
 .Ic init
 is defined, it is automatically executed as the last step in the
 auto-login process.
+For example,
+.Bd -literal -offset indent
+default
+macdef init
+epsv4 off
+.Ed
+.Pp
+followed by a blank line.
 .El
 .Sh COMMAND LINE EDITING
 .Nm
@@ -2236,6 +2244,21 @@ proxying is not to be used.
 Each entry may have an optional trailing ":port", which restricts
 the matching to connections to that port.
 .El
+.Sh EXTENDED PASSIVE MODE AND FIREWALLS
+Some firewall configurations do not allow
+.Nm
+to use extended passive mode.
+If you find that even a simple
+.Ic ls
+appears to hang after printing a message such as this:
+.Pp
+.Dl 229 Entering Extended Passive Mode (|||58551|)
+.Pp
+then you will need to disable extended passive mode with
+.Ic epsv4 off .
+See the above section
+.Sx The .netrc File
+for an example of how to make this automatic.
 .Sh SEE ALSO
 .Xr getservbyname 3 ,
 .Xr editrc 5 ,
