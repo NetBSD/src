@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.22 2000/01/10 15:17:31 pk Exp $	
+.\"	$NetBSD: install,v 1.23 2000/03/13 22:37:14 soren Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -190,7 +190,7 @@ For example:
 .Dl server:/export/exec/sun4.netbsd  /usr  nfs  rw 0 0
 .El
 .Pp
-Now you must populate the the `/dev' directory for your client. If yoarserver
+Now you must populate the `/dev' directory for your client. If yoarserver
 runs SunOS 4.x, you can simply change your working directory to
 .Ar root Ns Pa /dev
 and run the MAKEDEV script:
