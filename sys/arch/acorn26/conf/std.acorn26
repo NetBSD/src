@@ -1,0 +1,6 @@
+# $NetBSD: std.acorn26,v 1.1.8.2 2002/03/24 15:46:52 bjh21 Exp $
+
+# Standard NetBSD/acorn26 options
+
+machine acorn26 arm
+
