@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.19 2002/02/07 23:53:01 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.20 2002/02/08 03:41:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -183,14 +183,24 @@ void	consinit(void);
 #include <dev/ic/comvar.h>
 #endif
 
+/*
+ * Define the default console speed for the board.  This is generally
+ * what the firmware provided with the board defaults to.
+ */
 #ifndef CONSPEED
-#define CONSPEED B115200	/* What RedBoot uses */
-#endif
-#ifndef CONMODE
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
+#if defined(IOP310_TEAMASA_NPWR)
+#define CONSPEED B19200
+#else /* Default to stock IQ80310 */
+#define CONSPEED B115200
+#endif /* list of IQ80310-based designs */
+#endif /* ! CONSPEED */
+
 #ifndef CONUNIT
 #define	CONUNIT	0
+#endif
+
+#ifndef CONMODE
+#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 
 int comcnspeed = CONSPEED;
