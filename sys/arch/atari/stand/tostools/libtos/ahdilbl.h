@@ -1,4 +1,4 @@
-/*	$NetBSD: ahdilbl.h,v 1.1 2002/02/24 20:51:07 leo Exp $	*/
+/*	$NetBSD: ahdilbl.h,v 1.2 2002/03/22 21:27:59 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -135,4 +135,7 @@ typedef struct {
 } ptable_t;
 
 EXTERN u_int ahdi_getparts PROTO((disk_t *, ptable_t *, u_int, u_int));
+
+struct disklabel;
+EXTERN int   bsd_getlabel  PROTO((disk_t *, struct disklabel *, u_int));
 #endif /* AHDILABEL_H */
