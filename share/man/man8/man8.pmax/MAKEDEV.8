@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.8 2001/06/26 02:28:51 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.9 2001/08/26 13:30:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,18 +97,12 @@ digits when calling
 .Bl -tag -width 01
 .It Tapes:
 . Bl -tag -width 0123456789 -compact
-. It Ar tz#
-SCSI tapes, DEC TK50 cartridge tape, see
-.Xr \&tz 4
 . It Ar st#
 MI SCSI tape drives, see
 .Xr \&st 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
-. It Ar rz#
-SCSI disks, see
-.Xr \&rz 4
 . It Ar ccd#
 Concatenated disk driver, see
 .Xr \&ccd 4
