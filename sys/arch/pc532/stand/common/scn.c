@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.2 2003/12/06 13:09:01 simonb Exp $	*/
+/*	$NetBSD: scn.c,v 1.3 2003/12/06 14:02:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994 Philip L. Budne.
@@ -41,6 +41,8 @@
 #include <sys/types.h>
 #include <dev/cons.h>
 
+#include <pc532/stand/common/consdefs.h>
+
 #define	DUART	0x28000000
 
 /* registers */
@@ -57,6 +59,7 @@
 
 u_char * volatile scncnaddr = (u_char *) DUART + 8 * SCNCNUNIT;
 
+void
 scnprobe(struct consdev *cp)
 {
 
@@ -64,13 +67,15 @@ scnprobe(struct consdev *cp)
 	cp->cn_pri = CN_NORMAL;		/* XXX remote? */
 }
 
+void
 scninit(struct consdev *cp)
 {
 
 	/* leave things the way the PROM set them */
 }
 
-scngetchar(struct consdev *cp)
+int
+scngetchar(dev_t dev)
 {
 
 	if ((scncnaddr[SCN_STAT] & STAT_RXRDY) == 0)
@@ -78,7 +83,8 @@ scngetchar(struct consdev *cp)
 	return(scncnaddr[SCN_DATA]);
 }
 
-scnputchar(struct consdev *cp, int c)
+void
+scnputchar(dev_t dev, int c)
 {
 	int timo;
 	short stat;
