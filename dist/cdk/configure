@@ -588,9 +588,6 @@ else
 		system_name="`(hostname) 2>/dev/null`"
 	fi
 fi
-test -n "$system_name" && cat >> confdefs.h <<EOF
-#define SYSTEM_NAME "$system_name"
-EOF
 
 if eval "test \"`echo '$''{'cf_cv_system_name'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
