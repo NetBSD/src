@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.30 2001/01/11 01:33:35 lukem Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.31 2002/03/02 12:25:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.30 2001/01/11 01:33:35 lukem Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.31 2002/03/02 12:25:23 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -633,7 +633,9 @@ getnfsargs(spec, nfsargsp)
 			hints.ai_flags = 0;
 			if (getnameinfo(ai->ai_addr, ai->ai_addrlen, host,
 			    sizeof host, serv, sizeof serv, 0) != 0) {
-				warnx("can't reverse resolve net address");
+				warnx("can't reverse resolve net address for "
+				    "host \"%s\": %s", hostp,
+				    gai_strerror(ecode));
 				return (0);
 			}
 			hostp = host;
@@ -641,7 +643,7 @@ getnfsargs(spec, nfsargsp)
 	} else {
 		hints.ai_flags = 0;
 		if ((ecode = getaddrinfo(hostp, "nfs", &hints, &ai_nfs)) != 0) {
-			warnx("can't get net id for host/nfs: %s",
+			warnx("can't get net id for host \"%s\": %s", hostp,
 			    gai_strerror(ecode));
 			return (0);
 		}
