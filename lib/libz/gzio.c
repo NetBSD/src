@@ -1,4 +1,4 @@
-/* $NetBSD: gzio.c,v 1.20 2004/01/29 13:08:19 mrg Exp $ */
+/* $NetBSD: gzio.c,v 1.20.2.1 2004/05/06 05:41:24 jmc Exp $ */
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -7,10 +7,10 @@
  * Compile this file with -DNO_DEFLATE to avoid the compression code.
  */
 
-/* @(#) $Id: gzio.c,v 1.20 2004/01/29 13:08:19 mrg Exp $ */
+/* @(#) $Id: gzio.c,v 1.20.2.1 2004/05/06 05:41:24 jmc Exp $ */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gzio.c,v 1.20 2004/01/29 13:08:19 mrg Exp $");
+__RCSID("$NetBSD: gzio.c,v 1.20.2.1 2004/05/06 05:41:24 jmc Exp $");
 
 #include <stdio.h>
 
@@ -58,8 +58,7 @@ typedef struct gz_stream {
 } gz_stream;
 
 
-local gzFile gz_open      __P((const char *path, const char *mode, int  fd,
-			       u_int32_t mtime, const char *name));
+local gzFile gz_open      __P((const char *path, const char *mode, int  fd));
 local int do_flush        __P((gzFile file, int flush));
 local int    get_byte     __P((gz_stream *s));
 local void   check_header __P((gz_stream *s));
@@ -76,12 +75,10 @@ local uLong  getLong      __P((gz_stream *s));
    can be checked to distinguish the two cases (if errno is zero, the
    zlib error is Z_MEM_ERROR).
 */
-local gzFile gz_open (path, mode, fd, mtime, name)
+local gzFile gz_open (path, mode, fd)
     const char *path;
     const char *mode;
     int  fd;
-    u_int32_t mtime;
-    const char *name;
 {
     int err;
     int level = Z_DEFAULT_COMPRESSION; /* compression level */
@@ -170,23 +167,13 @@ local gzFile gz_open (path, mode, fd, mtime, name)
         /* Write a very simple .gz header:
          */
         fprintf(s->file, "%c%c%c%c%c%c%c%c%c%c", gz_magic[0], gz_magic[1],
-             Z_DEFLATED, name ? ORIG_NAME : 0,
-	     mtime & 0xff,
-	     (mtime >> 8) & 0xff,
-	     (mtime >> 16) & 0xff,
-	     (mtime >> 24) & 0xff,
-	     0 /*xflags*/, OS_CODE);
+             Z_DEFLATED, 0 /*flags*/, 0,0,0,0 /*time*/, 0 /*xflags*/, OS_CODE);
 	s->startpos = 10L;
 	/* We use 10L instead of ftell(s->file) to because ftell causes an
          * fflush on some systems. This version of the library doesn't use
          * startpos anyway in write mode, so this initialization is not
          * necessary.
          */
-	if (name) {
-	    size_t len = strlen(name) + 1;
-	    fwrite(name, len, 1, s->file);
-	    s->startpos += len;
-	}
     } else {
 	check_header(s); /* skip the .gz header */
 	s->startpos = (ftell(s->file) - s->stream.avail_in);
@@ -196,44 +183,13 @@ local gzFile gz_open (path, mode, fd, mtime, name)
 }
 
 /* ===========================================================================
-     Opens a gzip (.gz) file for reading or writing, with name and mtime
-     information stored.
-*/
-gzFile ZEXPORT gzopenfull (path, mode, name, mtime)
-    const char *path;
-    const char *mode;
-    const char *name;
-    u_int32_t mtime;
-{
-    return gz_open (path, mode, -1, mtime, name);
-}
-
-/* ===========================================================================
      Opens a gzip (.gz) file for reading or writing.
 */
 gzFile ZEXPORT gzopen (path, mode)
     const char *path;
     const char *mode;
 {
-    return gz_open (path, mode, -1, 0, NULL);
-}
-
-/* ===========================================================================
-     Associate a gzFile with the file descriptor fd. fd is not dup'ed here
-   to mimic the behavio(u)r of fdopen, setting file name / mtime.
-*/
-gzFile ZEXPORT gzdopenfull (fd, mode, name, mtime)
-    int fd;
-    const char *mode;
-    const char *name;
-    u_int32_t mtime;
-{
-    char fname[20];
-
-    if (fd < 0) return (gzFile)Z_NULL;
-    sprintf(fname, "<fd:%d>", fd); /* for debugging */
-
-    return gz_open (fname, mode, fd, mtime, name);
+    return gz_open (path, mode, -1);
 }
 
 /* ===========================================================================
@@ -244,7 +200,12 @@ gzFile ZEXPORT gzdopen (fd, mode)
     int fd;
     const char *mode;
 {
-    return gzdopenfull (fd, mode, NULL, 0);
+    char name[20];
+
+    if (fd < 0) return (gzFile)Z_NULL;
+    sprintf(name, "<fd:%d>", fd); /* for debugging */
+
+    return gz_open (name, mode, fd);
 }
 
 /* ===========================================================================
