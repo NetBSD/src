@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.25.2.3 2001/05/01 12:27:49 he Exp $	*/
+/*	$NetBSD: xy.c,v 1.25.2.4 2001/05/15 21:08:14 he Exp $	*/
 
 /*
  *
@@ -912,8 +912,10 @@ xyioctl(dev, command, addr, flag, p)
 	struct xd_iocmd *xio;
 	int     error, s, unit;
 #ifdef __HAVE_OLD_DISKLABEL
-	struct disklabel newlabel, *lp;
+	struct disklabel newlabel;
 #endif
+	struct disklabel *lp;
+
 	unit = DISKUNIT(dev);
 
 	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
