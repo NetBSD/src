@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.74 2000/03/28 02:53:18 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.75 2000/03/28 02:58:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.74 2000/03/28 02:53:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.75 2000/03/28 02:58:49 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -307,7 +307,7 @@ mips3_vector_init()
 #endif
 #ifdef arc		/* XXX */
 	{
-		extern void machine_ConfigCache __P((void));
+		void machine_ConfigCache __P((void));
 
 		machine_ConfigCache();
 	}
