@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.1 2002/02/10 01:58:12 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.2 2002/04/03 23:33:35 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -265,27 +265,7 @@ initarm(ofw_handle)
          * 	    irq, fiq
 	 * OFW retains:  reset
          */
-	{
-		int our_vecnums[] = {1, 2, 3, 4, 5, 6, 7};
-		unsigned int *vectors = (unsigned int *)0;
-		extern unsigned int page0[];
-		int i;
-
-		for (i = 0; i < (sizeof(our_vecnums) / sizeof(int)); i++) {
-			int vecnum = our_vecnums[i];
-
-			/* Copy both the instruction and the data word
-			 * for the vector.
-			 * The latter is needed to support branching
-			 * arbitrarily far.
-			 */
-			vectors[vecnum] = page0[vecnum];
-			vectors[vecnum + 8] = page0[vecnum + 8];
-		}
-
-		/* Sync the first 16 words of memory */
-		cpu_icache_sync_range(0, 64);
-	}
+	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL & ~ARM_VEC_RESET);
 
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;

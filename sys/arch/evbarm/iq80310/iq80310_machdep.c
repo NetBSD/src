@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.35 2002/03/25 04:51:20 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.36 2002/04/03 23:33:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -332,7 +332,6 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	extern char page0[], page0_end[];
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
 	paddr_t memstart;
@@ -642,11 +641,8 @@ initarm(void *arg)
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
-	/*
-	 * Map the system page in the kernel page table for the bottom 1Meg
-	 * of the virtual memory map.
-	 */
-	pmap_map_entry(l1pagetable, 0x00000000, systempage.pv_pa,
+	/* Map the vector page. */
+	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/*
@@ -748,11 +744,7 @@ initarm(void *arg)
 	printf("bootstrap done.\n");
 #endif
 
-	/* Right, set up the vectors at the bottom of page 0 */
-	memcpy((char *)0x00000000, page0, page0_end - page0);
-
-	/* We have modified a text page so sync the icache */
-	cpu_icache_sync_all();
+	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
