@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.2 2001/04/20 16:09:48 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.3 2001/06/09 10:29:16 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -67,8 +67,8 @@
 #include <machine/undefined.h>
 
 #include <machine/netwinder_boot.h>
-#include <arm32/footbridge/dc21285mem.h>
-#include <arm32/footbridge/dc21285reg.h>
+#include <arm/footbridge/dc21285mem.h>
+#include <arm/footbridge/dc21285reg.h>
 
 #include "opt_ipkdb.h"
 

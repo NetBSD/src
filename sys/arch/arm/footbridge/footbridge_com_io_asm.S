@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com_io_asm.S,v 1.1 1998/09/06 02:20:35 mark Exp $	*/
+/*	$NetBSD: footbridge_com_io_asm.S,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

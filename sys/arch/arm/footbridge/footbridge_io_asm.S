@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io_asm.S,v 1.4 2000/06/24 09:42:47 mark Exp $	*/
+/*	$NetBSD: footbridge_io_asm.S,v 1.1 2001/06/09 10:29:13 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
