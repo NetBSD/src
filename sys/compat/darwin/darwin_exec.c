@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.24 2003/11/18 01:40:18 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.25 2003/11/20 22:05:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.24 2003/11/18 01:40:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.25 2003/11/20 22:05:25 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -257,15 +257,20 @@ darwin_e_proc_fork(p, parent)
 	/* Use parent's vmspace because our vmspace may not be setup yet */
 	darwin_e_proc_init(p, parent->p_vmspace);
 
-	/* Setup the mach_emuldata part of darwin_emuldata */
-	mach_e_proc_fork(p, parent);
+	/* 
+	 * Setup the mach_emuldata part of darwin_emuldata 
+	 * The null third argument asks to not re-allocate 
+	 * p->p_emuldata again.
+	 */
+	mach_e_proc_fork1(p, parent, 0);
 
 	ded1 = p->p_emuldata;
 	ded2 = parent->p_emuldata;
 
-	ed1 = (char *)((u_long)ded1 + sizeof(struct mach_emuldata));
-	ed2 = (char *)((u_long)ded2 + sizeof(struct mach_emuldata));
+	ed1 = (char *)ded1 + sizeof(struct mach_emuldata);;
+	ed2 = (char *)ded2 + sizeof(struct mach_emuldata);;
 	len = sizeof(struct darwin_emuldata) - sizeof(struct mach_emuldata);
+
 	(void)memcpy(ed1, ed2, len);
 
 	if ((ded2->ded_fakepid == 1) && (darwin_init_pid != 0)) {
