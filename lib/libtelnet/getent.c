@@ -33,12 +33,19 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)getent.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: getent.c,v 1.3 1994/02/25 02:53:01 cgd Exp $";
+static char *rcsid = "$Id: getent.c,v 1.4 1995/06/05 19:47:00 pk Exp $";
 #endif /* not lint */
+
+#include <stdlib.h>
+#include "misc-proto.h"
 
 static char *area;
 
+int getent __P((char *, char *));
+char *getstr __P((char *, char **));
+
 /*ARGSUSED*/
+int
 getent(cp, name)
 char *cp, *name;
 {
