@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.151 2003/01/07 10:57:18 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.152 2003/01/07 13:12:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,6 +61,9 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#ifdef DEBUG
+#include <sys/kernel.h>		/* for `cold' */
+#endif
 
 #include <uvm/uvm.h>
 
