@@ -1,4 +1,4 @@
-.\"	$NetBSD: phantasia.6,v 1.7 2002/09/26 16:29:26 wiz Exp $
+.\"	$NetBSD: phantasia.6,v 1.8 2002/09/26 16:33:53 wiz Exp $
 .\"
 .Dd April 1, 2001
 .Dt PHANTASIA 6
@@ -58,7 +58,7 @@ Characters are only placed on the scoreboard when they die.
 .Sh AUTHOR
 Edward Estes, AT\*[Am]T Information Systems, Skokie, IL
 .Sh PARTICULARS
-.Ss "Normal Play"
+.Ss Normal Play
 A number of the player's more important statistics are almost always
 displayed on the screen, with maximums (where applicable) in
 parentheses.
@@ -134,7 +134,7 @@ These are described elsewhere.
 In general, a control-L will force the redrawing of the screen.
 .Pp
 Other things which may happen are more or less self-explanatory.
-.Ss "Fighting Monsters"
+.Ss Fighting Monsters
 A player has several options while fighting monsters.
 They are as follows:
 .Bl -tag -width skirmish -offset indent
@@ -177,7 +177,7 @@ Otherwise, nothing happens, and the chance to
 .Ic luckout
 is lost.
 .El
-.Ss "Character Statistics"
+.Ss Character Statistics
 .Bl -tag -width quickness -offset indent
 .It Em strength
 determines how much damage a character can inflict.
@@ -215,7 +215,7 @@ As
 .Em age
 increases, many personal statistics degenerate.
 .El
-.Ss "Character Types"
+.Ss Character Types
 Character statistics are rolled randomly from the above list, according
 to character type.
 The types are as follows:
@@ -316,7 +316,7 @@ carry, how long until
 can overcome the player, and how much
 .Em poison
 the player can withstand.
-.Ss "Spells"
+.Ss Spells
 During the course of the game, the player may exercise his/her
 magic powers.
 These cases are described below.
@@ -490,7 +490,7 @@ or
 .Em council of the wise .
 Allows the player to pick which monster to fight.
 .El
-.Ss "Monsters"
+.Ss Monsters
 Monsters get bigger as one moves farther from the origin (0,0).
 Rings of distance 125 from the origin determine the size.
 A monster's
@@ -633,7 +633,7 @@ while in battle.
 .It Em Wraith
 may make a player blind.
 .El
-.Ss "Treasures"
+.Ss Treasures
 The various treasure types are as follows:
 .Bl -tag -width "type twelve/thirteen"
 .It Type zero
@@ -831,7 +831,7 @@ A cursed treasure knocks
 .Em energy level
 very low, and adds 0.25
 .Em poison .
-.Ss "Rings"
+.Ss Rings
 .Em Rings
 are only carried by
 .Em nazguls
@@ -880,7 +880,7 @@ It is usually not a good idea to pick one up.
 The only way to get rid of a
 .Em ring
 is to have a monster steal it.
-.Ss "King"
+.Ss King
 A player may become
 .Em king
 by finding a
@@ -953,7 +953,7 @@ The
 may also
 .Ic teleport
 anywhere for free by using the origin as a starting place.
-.Ss "Council of the Wise, Valar"
+.Ss Council of the Wise, Valar
 A player automatically becomes a member of the
 .Em council of the wise
 upon reaching level 3000.
@@ -1029,7 +1029,7 @@ encounters are based upon his/her size.
 Only one valar may exist at a time.
 The current valar is replaced when another player finds the grail.
 The valar is then bumped back to the council of the wise.
-.Ss "Wizard"
+.Ss Wizard
 The
 .Em wizard
 is usually the owner of the game, and the one who maintains
@@ -1071,7 +1071,7 @@ A
 character's statistics also progress at the maximum possible rate, selected
 from the other character types.
 .El
-.Ss "Special Places"
+.Ss Special Places
 Certain regions of the playing grid have different names.
 In general, this is only to give the player some idea of
 his/her present location.
@@ -1103,7 +1103,7 @@ This place is where the
 resides.
 It is associated with no particular coordinate on the playing grid.
 .El
-.Ss "Miscellaneous"
+.Ss Miscellaneous
 Once a player reaches
 .Em level
 5, the game will start to time out waiting for input.
@@ -1159,7 +1159,7 @@ goes away in random time.
 Players with
 .Em crowns
 are identified with a '*' before their character type.
-.Ss "Inter-terminal Battle"
+.Ss Inter-terminal Battle
 When two player's coordinates correspond, they may engage in battle.
 In general, the player with the highest
 .Em quickness
