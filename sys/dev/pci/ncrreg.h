@@ -1,4 +1,4 @@
-/*      $NetBSD: ncrreg.h,v 1.14 1997/09/23 02:27:46 perry Exp $      */
+/*      $NetBSD: ncrreg.h,v 1.15 1999/12/05 18:25:19 thorpej Exp $      */
 
 /**************************************************************************
 **
@@ -292,6 +292,13 @@ struct ncr_reg {
 #endif
 
 typedef U_INT32 ncrcmd;
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define	SCR_BO(x)	(((x) >> 24) | (((x) >> 8) & 0xff00) | \
+			 ((x) << 24) | (((x) & 0xff00) << 8))
+#else
+#define	SCR_BO(x)	(x)
+#endif
 
 /*-----------------------------------------------------------
 **
