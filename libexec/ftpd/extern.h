@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.31 2000/07/23 14:40:48 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.32 2000/09/15 14:55:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -214,7 +214,9 @@ union sockunion {
 		u_short si_port;
 	} su_si;
 	struct sockaddr_in  su_sin;
+#ifdef INET6
 	struct sockaddr_in6 su_sin6;
+#endif
 };
 #define su_len		su_si.si_len
 #define su_family	su_si.si_family
