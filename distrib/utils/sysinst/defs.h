@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.53 2000/06/18 23:50:02 cyber Exp $	*/
+/*	$NetBSD: defs.h,v 1.54 2000/07/24 10:52:28 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -219,7 +219,7 @@ EXTERN char dist_postfix[STRSIZE] INIT(".tgz");
 EXTERN char command[STRSIZE];
 
 /* Access to network information */
-EXTERN char net_devices [STRSIZE] INIT("");
+EXTERN char net_devices[STRSIZE] INIT("");
 EXTERN char net_dev[STRSIZE] INIT("");
 EXTERN char net_domain[STRSIZE] INIT("");
 EXTERN char net_host[STRSIZE] INIT("");
@@ -228,6 +228,11 @@ EXTERN char net_mask[STRSIZE] INIT("");
 EXTERN char net_namesvr[STRSIZE] INIT("");
 EXTERN char net_defroute[STRSIZE] INIT("");
 EXTERN char net_media[STRSIZE] INIT("");
+EXTERN int net_dhcpconf INIT(0);
+#define DHCPCONF_IPADDR		0x01
+#define DHCPCONF_NAMESVR	0x02
+#define DHCPCONF_HOST		0x04
+#define DHCPCONF_DOMAIN		0x08
 #ifdef INET6
 EXTERN char net_ip6[STRSIZE] INIT("");
 EXTERN char net_namesvr6[STRSIZE] INIT("");
