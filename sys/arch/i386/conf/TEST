@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.27 1993/11/29 01:03:44 mycroft Exp $
+#	$Id: TEST,v 1.28 1993/11/29 04:59:26 mycroft Exp $
 #
 
 # standard options
@@ -118,7 +118,7 @@ scsibus* at scsi?
 sd* at scsibus? target ? lun ?		# SCSI disks
 st* at scsibus? target ? lun ?		# SCSI tapes
 cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
-#ch* at scsibus? target ? lun ?		# SCSI autochangers
+ch* at scsibus? target ? lun ?		# SCSI autochangers
 
 #ethernet
 ed0 at isa? port 0x300 irq 9			# Novell NE1000, NE2000
