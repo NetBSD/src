@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.22 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.23 2004/08/19 17:56:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_PCI_PCIIDEVAR_H_
+#define	_DEV_PCI_PCIIDEVAR_H_
 
 /*
  * PCI IDE driver exported software structures.
@@ -227,3 +230,5 @@ void	pciide_map_compat_intr __P(( struct pci_attach_args *,
 	    struct pciide_channel *, int));
 int	pciide_compat_intr __P((void *));
 int	pciide_pci_intr __P((void *));
+
+#endif /* _DEV_PCI_PCIIDEVAR_H_ */
