@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.10 1999/04/24 08:01:02 simonb Exp $	*/
+/*	$NetBSD: bt478.c,v 1.11 1999/09/05 11:34:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,14 +58,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/select.h>
 
 #include <machine/bus.h>			/*  wbflush() */
 
 #include <mips/cpuregs.h>
-#include <machine/pmioctl.h>
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
