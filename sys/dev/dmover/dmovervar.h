@@ -1,4 +1,4 @@
-/*	$NetBSD: dmovervar.h,v 1.4 2003/06/12 17:20:43 thorpej Exp $	*/
+/*	$NetBSD: dmovervar.h,v 1.5 2003/06/14 19:03:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -164,7 +164,7 @@ struct dmover_request {
 
 	/* Input buffer. */
 	dmover_buffer_type dreq_inbuf_type;
-	dmover_buffer dreq_inbuf;
+	dmover_buffer *dreq_inbuf;
 };
 
 /* dreq_flags */
