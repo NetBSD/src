@@ -1,4 +1,4 @@
-# $NetBSD: JISX0208@1990%UCS.src,v 1.2 2003/07/12 16:11:10 tshiozak Exp $
+# $NetBSD: JISX0208@1990%UCS.src,v 1.3 2003/08/18 15:28:25 tshiozak Exp $
 
 TYPE		ROWCOL
 NAME		JISX0208/UCS
@@ -84,6 +84,12 @@ BEGIN_MAP
 #	Any comments or problems, contact <John_Jenkins@taligent.com>
 #
 #
+# NetBSD specific modification:
+#	2003-08-18 : change the conversion for reverse solidus (0x2140).
+#			Unicode Inc.'s table converts it to U+005C,
+#			but this may conflict in the case of compound encoding,
+#			e.g. EUC-JP.  Instead, we use U+FF3C.
+#
 0x2121 = 0x3000
 0x2122 = 0x3001
 0x2123 = 0x3002
@@ -115,7 +121,7 @@ BEGIN_MAP
 0x213D = 0x2015
 0x213E = 0x2010
 0x213F = 0xFF0F
-0x2140 = 0x005C
+0x2140 = 0xFF3C
 0x2141 = 0x301C
 0x2142 = 0x2016
 0x2143 = 0xFF5C
