@@ -1,3 +1,7 @@
+.\"	$NetBSD: man.template,v 1.2 1997/03/25 07:20:00 mikel Exp $
+.\"
+.\" Copyright notice
+.\"
 .TH NAME SECTION local
 .SH NAME
 .SH SYNOPSIS
@@ -6,3 +10,5 @@
 .SH SEE ALSO
 .SH DIAGNOSTICS
 .SH BUGS
+.\" New manpages should use mdoc(7) instead of man(7).
+.\" See mdoc.template, mdoc(7), and mdoc.samples(7).
