@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.79 1999/03/14 10:34:18 mycroft Exp $
+#	$NetBSD: TRINITY,v 1.80 1999/03/27 07:04:37 explorer Exp $
 #	From: GENERIC,v 1.220 1999/02/16 17:46:17 abs Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -627,7 +627,7 @@ pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 
-# rnd is EXPERIMENTAL at this point.
+# rnd works; RND_COM does not on port i386 yet.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
