@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.h,v 1.4 1999/01/14 21:54:10 he Exp $	*/
+/*	$NetBSD: prune.h,v 1.1 2002/10/01 03:31:09 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file

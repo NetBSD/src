@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.8 2002/07/14 16:30:42 wiz Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.1 2002/10/01 03:31:06 itojun Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
