@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.50 1998/04/07 05:09:19 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.51 1998/04/13 21:18:19 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2160,7 +2160,8 @@ syn_cache_add(so, m, optp, optlen, oi)
 	sc->sc_irs = ti->ti_seq;
 	sc->sc_iss = tcp_new_iss(sc, sizeof(struct syn_cache), 0);
 	sc->sc_peermaxseg = oi->maxseg;
-	sc->sc_ourmaxseg = tcp_mss_to_advertise(tp);
+	sc->sc_ourmaxseg = tcp_mss_to_advertise(m->m_flags & M_PKTHDR ?
+						m->m_pkthdr.rcvif : NULL);
 	if (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP))
 		sc->sc_flags |= SCF_TIMESTAMP;
 	if ((tb.t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
