@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.1.2.2 2001/11/12 02:08:02 shin Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.1.2.3 2001/11/13 00:37:48 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -128,8 +128,8 @@ do {									\
 		"cache %1, 0x280(%0); cache %1, 0x2a0(%0);	\n\t"	\
 		"cache %1, 0x2c0(%0); cache %1, 0x2e0(%0);	\n\t"	\
 		"cache %1, 0x300(%0); cache %1, 0x320(%0);	\n\t"	\
-		"cache %1, 0x240(%0); cache %1, 0x260(%0);	\n\t"	\
-		"cache %1, 0x280(%0); cache %1, 0x3a0(%0);	\n\t"	\
+		"cache %1, 0x340(%0); cache %1, 0x360(%0);	\n\t"	\
+		"cache %1, 0x380(%0); cache %1, 0x3a0(%0);	\n\t"	\
 		"cache %1, 0x3c0(%0); cache %1, 0x3e0(%0);	\n\t"	\
 		".set reorder"						\
 	    :								\
