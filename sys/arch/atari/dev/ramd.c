@@ -1,4 +1,4 @@
-/*	$NetBSD: ramd.c,v 1.3 1995/07/12 21:41:03 leo Exp $	*/
+/*	$NetBSD: ramd.c,v 1.4 1995/07/24 07:33:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -143,7 +143,6 @@ char	*pnp;
 }
 
 static int  loaddisk __P((struct  ramd_info *, struct proc *));
-static void rdminphys __P((struct buf *));
 static int  ramd_norm_read __P((struct read_info *));
 static int  cpy_uncompressed __P((caddr_t, int, struct read_info *));
 static int  rd_compressed __P((caddr_t, int, struct read_info *));
@@ -228,14 +227,6 @@ dev_t	dev;
    return(-1);
 }
 
-/* XXX: Limit to 64k. */
-static void
-rdminphys(bp)
-struct buf *bp;
-{
-	bp->b_bcount = min(bp->b_bcount, (64 * 1024));
-}
-
 void
 rdstrategy(bp)
 struct buf *bp;
@@ -280,7 +271,7 @@ rdread(dev, uio)
 dev_t		dev;
 struct uio	*uio;
 {
-   return (physio(rdstrategy, (struct buf *)NULL, dev, B_READ, rdminphys, uio));
+   return (physio(rdstrategy, (struct buf *)NULL, dev, B_READ, minphys, uio));
 }
 
 int
@@ -288,7 +279,7 @@ rdwrite(dev, uio)
 dev_t		dev;
 struct uio	*uio;
 {
-   return(physio(rdstrategy, (struct buf *)NULL, dev, B_WRITE, rdminphys, uio));
+   return(physio(rdstrategy, (struct buf *)NULL, dev, B_WRITE, minphys, uio));
 }
 
 static int

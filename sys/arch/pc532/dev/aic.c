@@ -1,4 +1,4 @@
-/*	$NetBSD: aic.c,v 1.2 1994/10/26 08:24:07 cgd Exp $	*/
+/*	$NetBSD: aic.c,v 1.3 1995/07/24 07:36:39 cgd Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -70,7 +70,7 @@
 int aicprobe(struct pc532_device *);
 int aicattach(struct pc532_device *);
 int aic_scsi_cmd(struct scsi_xfer *);
-void aicminphys(struct buf *);
+u_int aicminphys(struct buf *);
 long int aic_adapter_info(int);
 
 struct scsidevs *
@@ -106,10 +106,12 @@ int aicattach(struct pc532_device *dvp)
 	return(r);
 }
 
-void aicminphys(struct buf *bp)
+u_int aicminphys(struct buf *bp)
 {
 	if(bp->b_bcount > ((AIC_NSEG - 1) * NBPG))
 		bp->b_bcount = ((AIC_NSEG - 1) * NBPG);
+
+	return (minphys(bp);
 }
 
 long int aic_adapter_info(int unit)

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.16 1995/07/04 14:38:34 briggs Exp $	*/
+/*	$NetBSD: scsi.c,v 1.17 1995/07/24 07:35:12 cgd Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -121,7 +121,7 @@ static volatile long *sci_4byte_addr = (long *) 0x6000;
 static volatile u_char *sci_1byte_addr = (u_char *) 0x12000;
 
 static unsigned int ncr5380_adapter_info(struct ncr5380_softc * ncr5380);
-static void ncr5380_minphys(struct buf * bp);
+static u_int ncr5380_minphys(struct buf * bp);
 static int ncr5380_scsi_cmd(struct scsi_xfer * xs);
 
 static int ncr5380_show_scsi_cmd(struct scsi_xfer * xs);
@@ -229,13 +229,14 @@ ncrattach(parent, dev, aux)
 }
 
 #define MIN_PHYS	65536	/* BARF!!!! */
-static void
+static u_int
 ncr5380_minphys(struct buf * bp)
 {
 	if (bp->b_bcount > MIN_PHYS) {
 		printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount = %x.\n", MIN_PHYS);
 		bp->b_bcount = MIN_PHYS;
 	}
+	return (minphys(bp));
 }
 #undef MIN_PHYS
 

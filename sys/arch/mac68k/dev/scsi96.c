@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.10 1995/07/04 14:38:49 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.11 1995/07/24 07:35:33 cgd Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -79,7 +79,7 @@ struct ncr53c96_softc {
 }
 
 static unsigned int ncr53c96_adapter_info(struct ncr53c96_softc * ncr53c96);
-static void ncr53c96_minphys(struct buf * bp);
+static u_int ncr53c96_minphys(struct buf * bp);
 static int ncr53c96_scsi_cmd(struct scsi_xfer * xs);
 
 static int ncr53c96_show_scsi_cmd(struct scsi_xfer * xs);
@@ -173,7 +173,7 @@ ncr96attach(parent, dev, aux)
 }
 
 #define MIN_PHYS	65536	/* BARF!!!! */
-static void
+static u_int
 ncr53c96_minphys(struct buf * bp)
 {
 	if (bp->b_bcount > MIN_PHYS) {
@@ -181,6 +181,7 @@ ncr53c96_minphys(struct buf * bp)
 		    "= %x.\n", MIN_PHYS);
 		bp->b_bcount = MIN_PHYS;
 	}
+	return (minphys(bp));
 }
 #undef MIN_PHYS
 

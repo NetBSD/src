@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.21 1995/07/13 12:45:22 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.22 1995/07/24 07:37:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -66,7 +66,6 @@ int esp_debug = ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS; /**/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
-/*static*/ void	esp_minphys	__P((struct buf *));
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ int	espprint	__P((void *, char *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
@@ -94,7 +93,7 @@ struct cfdriver espcd = {
 
 struct scsi_adapter esp_switch = {
 	esp_scsi_cmd,
-	esp_minphys,
+	minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
 };
@@ -609,21 +608,6 @@ esp_scsi_cmd(xs)
 	ESP_MISC(("SUCCESSFULLY_QUEUED"));
 	return SUCCESSFULLY_QUEUED;
 
-}
-
-/*
- * Adjust transfer size in buffer structure
- *
- * We have no max transfer size, since the DMA driver will break it
- * down into watever is needed. However, we may end up allocating
- * a chunk of DVMA space which is limited in size, so do the transfer
- * in MAXPHYS chunks.
- */
-void 
-esp_minphys(bp)
-	struct buf *bp;
-{
-	bp->b_bcount = min(MAXPHYS, bp->b_bcount);
 }
 
 /*
