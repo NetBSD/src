@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.124 2003/10/14 03:38:49 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.125 2003/10/14 06:36:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.124 2003/10/14 03:38:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.125 2003/10/14 06:36:48 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -965,7 +965,7 @@ sendorfree:
 		error = ENOBUFS;
 	splx(s);
 	if (error) {
-		for (; m; m = m0) {
+		for (m = m0; m; m = m0) {
 			m0 = m->m_nextpkt;
 			m->m_nextpkt = NULL;
 			m_freem(m);
