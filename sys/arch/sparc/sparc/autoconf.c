@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1995/06/26 22:59:54 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.30 1995/07/13 12:03:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1359,12 +1359,6 @@ getstr(cp, size)
 	register char *lp;
 	register int c;
 	register int len;
-	int saveecho;
-
-#if defined(SUN4)
-	saveecho = *(oldpvec->echo);
-	*(oldpvec->echo) = 0;
-#endif
 
 	lp = cp;
 	len = 0;
@@ -1375,9 +1369,6 @@ getstr(cp, size)
 		case '\r':
 			printf("\n");
 			*lp++ = '\0';
-#if defined(SUN4)
-			*(oldpvec->echo) = saveecho;
-#endif
 			return (len);
 		case '\b':
 		case '\177':
