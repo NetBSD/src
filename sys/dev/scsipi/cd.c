@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.41 1994/11/20 22:36:43 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.42 1994/11/21 10:39:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -110,7 +110,7 @@ struct cfdriver cdcd = {
 void cdgetdisklabel __P((struct cd_data *));
 int cd_get_parms __P((struct cd_data *, int));
 void cdstrategy __P((struct buf *));
-void cdstart __P((int));
+void cdstart __P((struct cd_data *));
 
 struct dkdriver cddkdriver = { cdstrategy };
 
@@ -147,7 +147,7 @@ cdattach(parent, self, aux)
 	 */
 	cd->sc_link = sc_link;
 	sc_link->device = &cd_switch;
-	sc_link->dev_unit = cd->sc_dev.dv_unit;
+	sc_link->device_softc = cd;
 
 	cd->sc_dk.dk_driver = &cddkdriver;
 #if !defined(i386) || defined(NEWCONFIG)
@@ -386,12 +386,9 @@ void
 cdstrategy(bp)
 	struct buf *bp;
 {
+	struct cd_data *cd = cdcd.cd_devs[CDUNIT(bp->b_dev)];
 	int opri;
-	struct cd_data *cd;
-	int unit;
 
-	unit = CDUNIT(bp->b_dev);
-	cd = cdcd.cd_devs[unit];
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdstrategy "));
 	SC_DEBUG(cd->sc_link, SDEV_DB1,
 	    ("%d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
@@ -444,7 +441,7 @@ cdstrategy(bp)
 	 * Tell the device to get going on the transfer if it's
 	 * not doing anything, otherwise just wait for completion
 	 */
-	cdstart(unit);
+	cdstart(cd);
 
 	splx(opri);
 	return;
@@ -476,10 +473,9 @@ done:
  * cdstart() is called at splbio from cdstrategy and scsi_done
  */
 void 
-cdstart(unit)
-	int unit;
+cdstart(cd)
+	register struct cd_data *cd;
 {
-	register struct cd_data *cd = cdcd.cd_devs[unit];
 	register struct scsi_link *sc_link = cd->sc_link;
 	struct buf *bp = 0;
 	struct buf *dp;
