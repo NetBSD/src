@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.4 2001/01/12 16:19:18 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.5 2002/11/05 07:41:36 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -489,4 +489,18 @@ pmap_bootstrap(nextpa, firstpa)
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vaddr_t) = va;
 	}
+}
+
+void
+pmap_init_md(void)
+{
+	vaddr_t addr;
+
+	addr = (vaddr_t) intiobase;
+	if (uvm_map(kernel_map, &addr,
+	    intiotop_phys - intiobase_phys,
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+	    UVM_INH_NONE, UVM_ADV_RANDOM, UVM_FLAG_FIXED)) != 0)
+		panic("pmap_init_md: uvm_map failed");
 }
