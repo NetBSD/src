@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.10 1998/08/10 03:11:07 perry Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.11 1998/11/27 05:09:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -38,6 +38,7 @@
    only support the ECOFF object file format. */
 
 #include <sys/types.h>
+#include <err.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/exec.h>
@@ -317,24 +318,32 @@ usage:
 		fprintf(stderr, "Unable to create %s: %s\n", argv[2], strerror(errno));
 		exit(1);
 	}
+	/* Truncate file... */
+	if (ftruncate(outfile, 0)) {
+		warn("ftruncate %s", argv[2]);
+	}
 	/* Write the headers... */
 	safewrite(outfile, &ep.f, sizeof(ep.f), "ep.f: write: %s\n");
-	fprintf(stderr, "wrote %d byte file header.\n", sizeof(ep.f));
+	if (debug)
+		fprintf(stderr, "wrote %d byte file header.\n", sizeof(ep.f));
 
 	safewrite(outfile, &ep.a, sizeof(ep.a), "ep.a: write: %s\n");
-	fprintf(stderr, "wrote %d byte a.out header.\n", sizeof(ep.a));
+	if (debug)
+		fprintf(stderr, "wrote %d byte a.out header.\n", sizeof(ep.a));
 
 	safewrite(outfile, &esecs, sizeof(esecs[0]) * nsecs,
 	    "esecs: write: %s\n");
-	fprintf(stderr, "wrote %d bytes of section headers.\n",
-	    sizeof(esecs[0]) * nsecs);
+	if (debug)
+		fprintf(stderr, "wrote %d bytes of section headers.\n",
+		    sizeof(esecs[0]) * nsecs);
 
 
 	pad = ((sizeof ep.f + sizeof ep.a + sizeof esecs) & 15);
 	if (pad) {
 		pad = 16 - pad;
 		pad16(outfile, pad, "ipad: write: %s\n");
-		fprintf(stderr, "wrote %d byte pad.\n", pad);
+		if (debug)
+			fprintf(stderr, "wrote %d byte pad.\n", pad);
 	}
 	/* Copy the loadable sections.   Zero-fill any gaps less than 64k;
 	 * complain about any zero-filling, and die if we're asked to
@@ -351,7 +360,8 @@ usage:
 					    gap);
 					exit(1);
 				}
-				fprintf(stderr, "Warning: %ld byte intersegment gap.\n", gap);
+				if (debug)
+					fprintf(stderr, "Warning: %ld byte intersegment gap.\n", gap);
 				memset(obuf, 0, sizeof obuf);
 				while (gap) {
 					int     count = write(outfile, obuf, (gap > sizeof obuf
@@ -364,7 +374,8 @@ usage:
 					gap -= count;
 				}
 			}
-			fprintf(stderr, "writing %d bytes...\n", ph[i].p_filesz);
+			if (debug)
+				fprintf(stderr, "writing %d bytes...\n", ph[i].p_filesz);
 			copy(outfile, infile, ph[i].p_offset, ph[i].p_filesz);
 			cur_vma = ph[i].p_vaddr + ph[i].p_filesz;
 		}
