@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.103 1998/10/16 22:39:17 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.104 1998/10/19 11:56:43 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -195,6 +195,9 @@ _kgdb_stack:
  * Initially this is the special one.
  */
 _cpcb = CPUINFO_VA + CPUINFO_CURPCB
+
+/* _curproc points to the current process that has the CPU */
+_curproc = CPUINFO_VA + CPUINFO_CURPROC
 
 /*
  * _cputyp is the current cpu type, used to distinguish between
@@ -6256,6 +6259,5 @@ _eintrcnt:
 
 	.comm	_nwindows, 4
 	.comm	_promvec, 4
-	.comm	_curproc, 4
 	.comm	_qs, 32 * 8
 	.comm	_whichqs, 4
