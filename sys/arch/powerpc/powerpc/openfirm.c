@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.4 1999/01/10 10:24:16 tsubai Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.5 2000/11/14 21:22:44 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -196,6 +196,36 @@ OF_getprop(handle, prop, buf, buflen)
 	if (args.size > 0)
 		ofbcopy(OF_buf, buf, args.size);
 	return args.size;
+}
+
+int
+OF_nextprop(handle, prop, nextprop)
+	int handle;
+	char *prop;
+	char *nextprop;
+{
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		char *prop;
+		char *buf;
+		int flag;
+	} args = {
+		"nextprop",
+		3,
+		1,
+	};
+
+	ofw_stack();
+	args.phandle = handle;
+	args.prop = prop;
+	args.buf = OF_buf;
+	if (openfirmware(&args) == -1)
+		return -1;
+	strncpy(nextprop, OF_buf, 32);
+	return args.flag;
 }
 
 int
