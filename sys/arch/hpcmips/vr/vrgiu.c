@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.23 2001/05/09 12:00:58 shin Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.24 2001/05/18 01:41:39 enami Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -248,8 +248,12 @@ vrgiu_dump_iosetting(sc)
 	u_int32_t m;
 	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
 	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
+#ifdef ONLY_VR4122
+	useupdn = termupdn = 0;
+#else
 	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
 	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
+#endif
 	for (m = 0x80000000; m; m >>=1)
 		printf ("%c" , (useupdn&m) ?
 			((termupdn&m) ? 'U' : 'D') :
@@ -266,8 +270,12 @@ vrgiu_diff_iosetting()
 
 	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
 	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
+#ifdef ONLY_VR4122
+	useupdn = termupdn = 0;
+#else
 	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
 	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
+#endif
 	if (oiosel != iosel || ointen != inten ||
 	    ouseupdn != useupdn || otermupdn != termupdn) {
 		for (m = 0x80000000; m; m >>=1)
