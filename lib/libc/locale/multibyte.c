@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.11 2001/06/21 19:37:06 yamt Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.12 2001/06/22 00:01:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.11 2001/06/21 19:37:06 yamt Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.12 2001/06/22 00:01:47 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,9 +117,9 @@ _mbstate_fixup(ps)
 
 	_DIAGASSERT(ps != NULL);
 
-	/*LINTED disgusting const castaway can pointer cast */
+	/*LINTED*/
 	rl = *(_RuneLocale **)ps;
-	if (!rl) {
+	if (!rl) { /* XXX assuming null pointer is represented as zero */
 		/*
 		 * perhaps ps is just zero'd.
 		 */
