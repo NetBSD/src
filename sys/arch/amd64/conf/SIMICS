@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.3 2003/10/08 11:02:18 bouyer Exp $
+#	$NetBSD: SIMICS,v 1.4 2003/10/08 11:55:43 bouyer Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -336,7 +336,18 @@ wskbd* 		at pckbd? console ?
 # PCMCIA IDE controllers
 #wdc* 	at pcmcia? function ?
 
-pciide* 	at pci? dev ? function ? flags 0x0000
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at pci? dev ? function ?	# Acard IDE controllers
+aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
+cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* at pci? dev ? function ?	# Cypress IDE controllers
+hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* at pci? dev ? function ?	# Opti IDE controllers
+piixide* at pci? dev ? function ?	# Intel IDE controllers
+pdcide* at pci? dev ? function ?	# Promise IDE controllers
+siside* at pci? dev ? function ?	# SiS IDE controllers
+slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ST506, ESDI, and ISA IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -347,6 +358,17 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA bus support
 atabus* at pciide? channel ?
+atabus* at acardide? channel ?
+atabus* at aceride? channel ? 
+atabus* at cmdide? channel ? 
+atabus* at cypide? channel ?
+atabus* at hptide? channel ?
+atabus* at optiide? channel ?
+atabus* at piixide? channel ?
+atabus* at pdcide? channel ?
+atabus* at siside? channel ?
+atabus* at slide? channel ?
+atabus* at viaide? channel ?
 atabus* at wdc? channel ?
 
 # IDE drives
