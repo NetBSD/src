@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.39 2000/08/02 22:47:44 nathanw Exp $ */
+/*	$NetBSD: db_interface.c,v 1.40 2000/08/07 18:46:30 tv Exp $ */
 
 /*
  * Mach Operating System
@@ -816,11 +816,14 @@ db_dump_buf(addr, have_addr, count, modif)
 	char *modif;
 {
 	struct buf *buf;
-	char * flagnames = "\20\034VFLUSH\033XXX\032WRITEINPROG\031WRITE\030WANTED"
+	static const char flagnames[] =
+		"\20\034VFLUSH\033XXX\032WRITEINPROG\031WRITE\030WANTED"
 		"\027UAREA\026TAPE\025READ\024RAW\023PHYS\022PAGIN\021PAGET"
 		"\020NOCACHE\017LOCKED\016INVAL\015GATHERED\014ERROR\013EINTR"
 		"\012DONE\011DIRTY\010DELWRI\007CALL\006CACHE\005BUSY\004BAD"
 		"\003ASYNC\002NEEDCOMMIT\001AGE";
+
+	char sbuf[sizeof(flagnames) + 8];
 
 	if (!have_addr) {
 		db_printf("No buf address\n");
@@ -830,7 +833,8 @@ db_dump_buf(addr, have_addr, count, modif)
 	db_printf("buf %p:\nhash:%p vnbufs:%p freelist:%p actq next:%p\n",
 		  buf, buf->b_hash, buf->b_vnbufs, buf->b_freelist,
 		  BUFQ_NEXT(buf));
-	db_printf("flags:%x => %b\n", buf->b_flags, buf->b_flags, flagnames);
+	bitmask_snprintf(buf->b_flags, flagnames, sbuf, sizeof(sbuf));
+	db_printf("flags:%x => %s\n", buf->b_flags, sbuf);
 	db_printf("error:%x bufsiz:%x bcount:%x resid:%x dev:%x un.addr:%x\n",
 		  buf->b_error, buf->b_bufsize, buf->b_bcount, buf->b_resid,
 		  buf->b_dev, buf->b_data);
