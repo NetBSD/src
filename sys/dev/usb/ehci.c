@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.19 2001/11/21 13:04:50 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.20 2001/11/21 13:42:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.19 2001/11/21 13:04:50 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.20 2001/11/21 13:42:19 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ ehci_intr1(ehci_softc_t *sc)
 	if (eintrs & EHCI_STS_IAA) {
 		DPRINTF(("ehci_intr1: door bell\n"));
 		wakeup(&sc->sc_async_head);
-		eintrs &= ~EHCI_STS_INT;
+		eintrs &= ~EHCI_STS_IAA;
 	}
 	if (eintrs & (EHCI_STS_INT | EHCI_STS_ERRINT)) {
 		DPRINTF(("ehci_intr1: INT/ERRINT\n"));
