@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.19 1999/02/17 02:37:39 mycroft Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.20 1999/09/09 10:24:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -131,6 +131,9 @@ struct audio_softc {
 
 	struct	au_mixer_ports sc_inports, sc_outports;
 	int	sc_monitor_port;
+
+	int	sc_refcnt;
+	u_char	sc_dying;
 
 #ifdef AUDIO_INTR_TIME
 	u_long	sc_pfirstintr;	/* first time we saw a play interrupt */

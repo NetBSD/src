@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.11 1999/02/26 01:18:09 nathanw Exp $	*/
+/*	$NetBSD: midi.c,v 1.12 1999/09/09 10:24:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -734,7 +734,7 @@ midi_getinfo(dev, mi)
 
 int	audioprint __P((void *, const char *));
 
-void
+struct device *
 midi_attach_mi(mhwp, hdlp, dev)
 	struct midi_hw_if *mhwp;
 	void *hdlp;
@@ -745,13 +745,13 @@ midi_attach_mi(mhwp, hdlp, dev)
 #ifdef DIAGNOSTIC
 	if (mhwp == NULL) {
 		printf("midi_attach_mi: NULL\n");
-		return;
+		return (0);
 	}
 #endif
 	arg.type = AUDIODEV_TYPE_MIDI;
 	arg.hwif = mhwp;
 	arg.hdl = hdlp;
-	(void)config_found(dev, &arg, audioprint);
+	return (config_found(dev, &arg, audioprint));
 }
 
 #endif /* NMIDI > 0 || NMIDIBUS > 0 */
