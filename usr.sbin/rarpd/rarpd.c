@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.23 1998/03/23 08:44:07 fair Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.24 1998/04/15 15:06:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.23 1998/03/23 08:44:07 fair Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.24 1998/04/15 15:06:06 mrg Exp $");
 #endif
 
 
@@ -100,7 +100,8 @@ int	main __P((int, char **));
 void	rarp_loop __P((void));
 int	rarp_open __P((char *));
 void	rarp_process __P((struct if_info *, u_char *));
-void	rarp_reply __P((struct if_info *, struct ether_header *, u_long));
+void	rarp_reply __P((struct if_info *, struct ether_header *, u_long,
+			struct hostent *));
 void	rarperr __P((int, const char *,...));
 
 #if defined(__NetBSD__)
@@ -121,6 +122,7 @@ int	rarp_bootable __P((u_long));
 int     aflag = 0;		/* listen on "all" interfaces  */
 int     dflag = 0;		/* print debugging messages */
 int     fflag = 0;		/* don't fork */
+int	lflag = 0;		/* log all replies */
 
 int
 main(argc, argv)
@@ -136,7 +138,7 @@ main(argc, argv)
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "adf")) != -1) {
+	while ((op = getopt(argc, argv, "adfl")) != -1) {
 		switch (op) {
 		case 'a':
 			++aflag;
@@ -148,6 +150,10 @@ main(argc, argv)
 
 		case 'f':
 			++fflag;
+			break;
+
+		case 'l':
+			++lflag;
 			break;
 
 		default:
@@ -487,7 +493,7 @@ rarp_loop()
 			fd = ii->ii_fd;
 			if (!FD_ISSET(fd, &listeners))
 				continue;
-	again:
+		again:
 			cc = read(fd, (char *) buf, bufsize);
 			/* Don't choke when we get ptraced */
 			if (cc < 0 && errno == EINTR)
@@ -628,7 +634,7 @@ rarp_process(ii, pkt)
 #ifdef REQUIRE_TFTPBOOT
 	if (rarp_bootable(htonl(target_ipaddr)))
 #endif
-		rarp_reply(ii, ep, target_ipaddr);
+		rarp_reply(ii, ep, target_ipaddr, hp);
 #ifdef REQUIRE_TFTPBOOT
 	else
 		debug("%08X not bootable", htonl(target_ipaddr));
@@ -791,10 +797,11 @@ update_arptab(ep, ipaddr)
  * ARP request.
  */
 void
-rarp_reply(ii, ep, ipaddr)
+rarp_reply(ii, ep, ipaddr, hp)
 	struct if_info *ii;
 	struct ether_header *ep;
 	u_long  ipaddr;
+	struct hostent *hp;
 {
 	int     n;
 #ifdef __NetBSD__
@@ -849,6 +856,9 @@ rarp_reply(ii, ep, ipaddr)
 	len = sizeof(*ep) + sizeof(*ap);
 #endif
 
+	if (lflag)
+		syslog(LOG_INFO, "%s asked; %s replied", hp->h_name, 
+		    ether_ntoa((struct ether_addr *)ar_tha(ap)));
 	n = write(ii->ii_fd, (char *) ep, len);
 	if (n != len) {
 		rarperr(NONFATAL, "write: only %d of %d bytes written", n, len);
