@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.3 1997/10/14 09:54:40 mark Exp $	*/
+/*	$NetBSD: spl.S,v 1.4 1998/03/28 00:14:51 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -101,6 +101,15 @@ ENTRY(lowerspl)
 	ldmfd	sp!, {r0, pc}		/* Exit */
 
 
+/*
+ * For the sake of efficiency we will try and avoid making the dosoftints()
+ * call unless necessary.
+ * I am sure there are better optimisations ...
+ */
+
+Lsoft_interrupts:
+	.word	_soft_interrupts
+
 ENTRY(splx)
 	mov	r3, r0			/* Save the new value */
 	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
@@ -110,13 +119,17 @@ ENTRY(splx)
 
 	str	r3, [r1]		/* Store the new spl mask */
 
+	stmfd	sp!, {r0, r4, lr}	/* Preserve registers */
+
 	ldr	r2, Lspl_masks		/* Get the spl mask */
-	ldr	r2, [r2, r3, lsl #2]
+	ldr	r4, [r2, r3, lsl #2]	/* Use r4 so available later */
 
 	ldr	r1, Lspl_mask		/* Store in the current spl mask */
-	str	r2, [r1]
+	str	r4, [r1]
 
-	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_irq_setmasks		/* Update the actual masks */
-	bl	_dosoftints		/* Process any pending softints */
-	ldmfd	sp!, {r0, pc}		/* Exit */
+	ldr	r0, Lsoft_interrupts	/* Get the pending soft ints */
+	ldr	r0, [r0]
+	ands	r0, r0, r4		/* any soft ints to deliver ? */
+	blne	_dosoftints		/* Process any pending soft ints */
+	ldmfd	sp!, {r0, r4, pc}	/* Exit */
