@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 2001/02/23 21:23:47 reinoud Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 2001/03/06 22:29:13 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -177,6 +177,7 @@ int	set_cpufuncs		__P((void));
 #define ARCHITECTURE_NOT_SUPPORTED	2	/* not known */
 
 void	cpufunc_nullop		__P((void));
+int	cpufunc_null_fixup	__P((void *));
 u_int	cpufunc_id		__P((void));
 u_int	cpufunc_control		__P((u_int clear, u_int bic));
 void	cpufunc_domains		__P((u_int domains));
@@ -193,13 +194,11 @@ void	arm67_context_switch	__P((void));
 
 #ifdef CPU_ARM6
 int	arm6_dataabt_fixup	__P((void *arg));
-int	arm6_prefetchabt_fixup	__P((void *arg));
 void	arm6_setup		__P((char *string));
 #endif	/* CPU_ARM6 */
 
 #ifdef CPU_ARM7
 int	arm7_dataabt_fixup	__P((void *arg));
-int	arm7_prefetchabt_fixup	__P((void *arg));
 void	arm7_setup		__P((char *string));
 #endif	/* CPU_ARM7 */
 
@@ -220,9 +219,6 @@ void	arm8_cache_cleanD_rng	__P((u_int start, u_int end));
 void	arm8_cache_purgeID_rng	__P((u_int start, u_int end));
 void	arm8_cache_purgeD_rng	__P((u_int start, u_int end));
 void	arm8_cache_syncI_rng	__P((u_int start, u_int end));
-
-int	arm8_dataabt_fixup	__P((void *arg));
-int	arm8_prefetchabt_fixup	__P((void *arg));
 
 void	arm8_context_switch	__P((void));
 
@@ -261,9 +257,6 @@ void	sa110_cache_cleanD_rng	__P((u_int start, u_int end));
 void	sa110_cache_purgeID_rng	__P((u_int start, u_int end));
 void	sa110_cache_purgeD_rng	__P((u_int start, u_int end));
 void	sa110_cache_syncI_rng	__P((u_int start, u_int end));
-
-int	sa110_dataabt_fixup	__P((void *arg));
-int	sa110_prefetchabt_fixup	__P((void *arg));
 
 void	sa110_context_switch	__P((void));
 

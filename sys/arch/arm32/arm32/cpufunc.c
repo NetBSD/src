@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.15 2001/03/04 23:13:29 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.16 2001/03/06 22:29:13 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -115,7 +115,7 @@ struct cpu_functions arm6_cpufuncs = {
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
 	arm6_dataabt_fixup,		/* dataabt_fixup	*/
-	arm6_prefetchabt_fixup,		/* prefetchabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	arm67_context_switch,		/* context_switch	*/
 
@@ -185,7 +185,7 @@ struct cpu_functions arm7_cpufuncs = {
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
 	arm7_dataabt_fixup,		/* dataabt_fixup	*/
-	arm7_prefetchabt_fixup,		/* prefetchabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	arm67_context_switch,		/* context_switch	*/
 
@@ -254,8 +254,8 @@ struct cpu_functions arm8_cpufuncs = {
 	(void *)arm8_cache_purgeID,	/* cache_purgeD_rng	*/
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
-	arm8_dataabt_fixup,		/* dataabt_fixup	*/
-	arm8_prefetchabt_fixup,		/* prefetchabt_fixup	*/
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	arm8_context_switch,		/* context_switch	*/
 
@@ -323,8 +323,8 @@ struct cpu_functions sa110_cpufuncs = {
 	sa110_cache_purgeD_rng,		/* cache_purgeD_rng	*/
 	sa110_cache_syncI_rng,		/* cache_syncI_rng	*/
 
-	sa110_dataabt_fixup,		/* dataabt_fixup	*/
-	sa110_prefetchabt_fixup,	/* prefetchabt_fixup	*/
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	sa110_context_switch,		/* context_switch	*/
 
@@ -404,6 +404,17 @@ set_cpufuncs()
 #if defined(DEBUG_FAULT_CORRECTION) && !defined(PMAP_DEBUG)
 #error PMAP_DEBUG must be defined to use DEBUG_FAULT_CORRECTION
 #endif
+
+/*
+ * Null abort fixup routine.
+ * For use when no fixup is required.
+ */
+int
+cpufunc_null_fixup(arg)
+	void *arg;
+{
+	return(ABORT_FIXUP_OK);
+}
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 #ifdef DEBUG_FAULT_CORRECTION
@@ -702,18 +713,6 @@ arm6_dataabt_fixup(arg)
 
 	return(ABORT_FIXUP_OK);
 }
-
-/*
- * ARM6 prefetch abort fixup
- *
- * Nothing required
- */
-int
-arm6_prefetchabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
 #endif	/* CPU_ARM6 */
 
 #ifdef CPU_ARM7
@@ -1000,73 +999,7 @@ arm7_dataabt_fixup(arg)
 
 	return(ABORT_FIXUP_OK);
 }
-
-/*
- * ARM7 prefetch abort fixup
- *
- * Nothing required
- */
-int
-arm7_prefetchabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
 #endif	/* CPU_ARM7 */
-
-#ifdef CPU_ARM8
-/*
- * ARM8 data abort fixup
- *
- * Nothing required
- */
-int
-arm8_dataabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
-
-/*
- * ARM8 prefetch abort fixup
- *
- * Nothing required
- */
-int
-arm8_prefetchabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
-#endif	/* CPU_ARM8 */
-
-
-#ifdef CPU_SA110
-/*
- * SA110 data abort fixup
- *
- * Nothing required
- */
-int
-sa110_dataabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
-
-/*
- * SA110 prefetch abort fixup
- *
- * Nothing required
- */
-int
-sa110_prefetchabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
-
-#endif	/* CPU_SA110 */
 
 /*
  * CPU Setup code
