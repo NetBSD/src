@@ -43,7 +43,7 @@ char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)disklabel.c	1.2 (Symmetric) 11/28/85";*/
 /*static char sccsid[] = "from: @(#)disklabel.c	5.20 (Berkeley) 2/9/91";*/
-static char rcsid[] = "$Id: disklabel.c,v 1.9 1993/12/02 04:57:27 mycroft Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.10 1993/12/06 09:37:30 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,13 +68,13 @@ static char rcsid[] = "$Id: disklabel.c,v 1.9 1993/12/02 04:57:27 mycroft Exp $"
  * The bootstrap source must leave space at the proper offset
  * for the label on such machines.
  *
- * On 386BSD, the disklabel may either be at the start of the disk, or, at
+ * On NetBSD/i386, the disklabel may either be at the start of the disk, or, at
  * the start of an MS/DOS partition. In this way, it can be used either
  * in concert with other operating systems sharing a disk, or with the
- * disk dedicated to 386BSD. In shared mode, the DOS disk geometry must be
+ * disk dedicated to NetBSD. In shared mode, the DOS disk geometry must be
  * identical to that which disklabel uses, and the disklabel must solely
  * describe the space within the partition selected. Otherwise, the disk
- * must be dedicated to 386BSD. -wfj
+ * must be dedicated to NetBSD. -wfj
  */
 
 #if defined(vax)
@@ -82,8 +82,8 @@ static char rcsid[] = "$Id: disklabel.c,v 1.9 1993/12/02 04:57:27 mycroft Exp $"
 #endif
 
 #if defined(i386)
-/* with 386BSD, 'c' maps the portion of the disk given over to 386BSD,
-   and 'd' maps the entire drive, ignoring any partition tables */
+/* with NetBSD/i386, 'c' maps the portion of the disk given over to NetBSD,
+   and 'd' maps the entire drive, ignoring any partition tables (XXX) */
 #define RAWPARTITION	'd'
 #endif
 
@@ -132,8 +132,8 @@ int	rflag;
 int	debug;
 #endif
 
-#ifdef __386BSD__
-struct dos_partition *dosdp;	/* 386BSD DOS partition, if found */
+#ifdef i386
+struct dos_partition *dosdp;	/* i386 DOS partition, if found */
 struct dos_partition *readmbr(int);
 #endif
 
@@ -209,10 +209,10 @@ main(argc, argv)
 	if (f < 0)
 		Perror(specname);
 
-#ifdef	__386BSD__
+#ifdef	i386
 	/*
 	 * Check for presence of DOS partition table in
-	 * master boot record. Return pointer to 386BSD
+	 * master boot record. Return pointer to NetBSD/i386
 	 * partition, if present. If no valid partition table,
 	 * return 0. If valid partition table present, but no
 	 * partition to use, return a pointer to a non-386bsd
@@ -362,7 +362,7 @@ writelabel(f, boot, lp)
 {
 	register int i;
 	int flag;
-#ifdef	__386BSD__
+#ifdef i386
 	off_t lbl_off; struct partition *pp = &lp->d_partitions[2];
 #endif
 
@@ -372,9 +372,9 @@ writelabel(f, boot, lp)
 	lp->d_checksum = dkcksum(lp);
 	if (rflag) {
 
-#ifdef	__386BSD__
+#ifdef i386
 		/*
-		 * If 386BSD DOS partition is missing, or if 
+		 * If NetBSD/i386 DOS partition is missing, or if 
 		 * the label to be written is not within partition,
 		 * prompt first. Need to allow this in case operator
 		 * wants to convert the drive for dedicated use.
@@ -489,7 +489,7 @@ l_perror(s)
 	}
 }
 
-#ifdef __386BSD__
+#ifdef i386
 /*
  * Fetch DOS partition table from disk.
  */
@@ -510,7 +510,7 @@ readmbr(f)
 
 	/*
 	 * Don't (yet) know disk geometry (BIOS), use
-	 * partition table to find 386BSD partition, and obtain
+	 * partition table to find NetBSD/i386 partition, and obtain
 	 * disklabel from there.
 	 */
 	dp = dos_partitions;
@@ -549,7 +549,7 @@ readlabel(f)
 	register struct disklabel *lp;
 
 	if (rflag) {
-#ifdef __386BSD__
+#ifdef i386
 		off_t sectoffset;
 
 		if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD)
@@ -1185,7 +1185,7 @@ checklabel(lp)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
-#ifdef __386BSD__notyet
+#ifdef i386__notyet
 	if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD
 		&& lp->d_secperunit > dosdp->dp_start + dosdp->dp_size) {
 		fprintf(stderr, "exceeds DOS partition size\n");
