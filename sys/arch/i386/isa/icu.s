@@ -36,13 +36,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.11 1993/10/18 09:05:20 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.12 1993/10/18 09:10:05 mycroft Exp $
  */
 
 /*
  * AT/386
  * Vector interrupt control section
  */
+
+#include <net/netisr.h>
 
 /*
  * All spl levels include ASTMASK; this forces ipl to be non-zero when
