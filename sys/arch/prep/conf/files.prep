@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.34 2002/05/02 15:17:57 nonaka Exp $
+#	$NetBSD: files.prep,v 1.35 2002/05/16 12:12:30 kleink Exp $
 #
 # prep-specific configuration info
 #
@@ -32,7 +32,7 @@ file	arch/prep/prep/disksubr.c		disk
 file	arch/prep/prep/extintr.c
 file	arch/prep/prep/machdep.c
 file	arch/prep/prep/procfs_machdep.c		procfs
-file	arch/prep/prep/residual.c		redisual_data_dump
+file	arch/prep/prep/residual.c		residual_data_dump
 
 file	arch/powerpc/powerpc/bus_dma.c
 
