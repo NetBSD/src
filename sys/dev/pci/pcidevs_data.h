@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.589 2003/11/26 18:47:16 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.590 2003/11/28 06:00:16 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.593 2003/11/26 18:44:16 matt Exp 
+ *	NetBSD: pcidevs,v 1.594 2003/11/28 05:59:41 cube Exp 
  */
 
 /*
@@ -200,6 +200,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c905CX-TX 10/100 Ethernet with mngmt",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C910SOHOB,
+	    0,
+	    "3Com",
+	    "3c910 OfficeConnect 10/100B Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C980SRV,
