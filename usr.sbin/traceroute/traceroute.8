@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Van Jacobson.
@@ -32,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)traceroute.8	5.4 (Berkeley) 3/16/91
+.\"     @(#)traceroute.8	8.2 (Berkeley) 6/1/94
 .\"
-.Dd March 16, 1991
+.Dd June 1, 1994
 .Dt TRACEROUTE 8
 .Os BSD 4.3
 .Sh NAME
@@ -122,6 +122,7 @@ force the source address to be something other than the IP address
 of the interface the probe packet is sent on.  If the IP address
 is not one of this machine's interface addresses, an error is
 returned and nothing is sent.
+.ne 1i
 .It Fl t Ar tos
 Set the
 .Em type-of-service
