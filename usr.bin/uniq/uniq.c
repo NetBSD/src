@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.9 1998/12/19 23:23:49 christos Exp $	*/
+/*	$NetBSD: uniq.c,v 1.10 2003/07/14 09:29:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: uniq.c,v 1.9 1998/12/19 23:23:49 christos Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.10 2003/07/14 09:29:21 itojun Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -220,7 +220,6 @@ void
 obsolete(argv)
 	char *argv[];
 {
-	int len;
 	char *ap, *p, *start;
 
 	while ((ap = *++argv) != NULL) {
@@ -236,12 +235,10 @@ obsolete(argv)
 		 * Digit signifies an old-style option.  Malloc space for dash,
 		 * new option and argument.
 		 */
-		len = strlen(ap);
-		if ((start = p = malloc(len + 3)) == NULL)
+		asprintf(&p, "-%c%s", ap[0] == '+' ? 's' : 'f', ap + 1);
+		if (!p)
 			err(1, "malloc");
-		*p++ = '-';
-		*p++ = ap[0] == '+' ? 's' : 'f';
-		(void)strcpy(p, ap + 1);
+		start = p;
 		*argv = start;
 	}
 }
