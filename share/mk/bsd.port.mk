@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.26 1997/12/21 01:59:44 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.27 1997/12/27 03:24:10 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1852,13 +1852,13 @@ PLIST_SRC=	${PKGDIR}/PLIST
       exists(${PKGDIR}/PLIST-md.shared) && \
       exists(${PKGDIR}/PLIST-md.static)
 PLIST_SRC=	${PKGDIR}/PLIST-mi
-.if ${MACHINE_ARCH} == "powerpc" ||  ${MACHINE_ARCH} == "pmax" ||  ${MACHINE_ARCH} == "alpha"
+.if ${MACHINE_ARCH} == "powerpc" ||  ${MACHINE_ARCH} == "mips" ||  ${MACHINE_ARCH} == "alpha"
 # XXX this is mostly for perl; alpha can be removed once perl knows
 #     how to do dynamic loading - hubertf
 PLIST_SRC+=	${PKGDIR}/PLIST-md.static
 .else
 PLIST_SRC+=	${PKGDIR}/PLIST-md.shared
-.endif  # powerpc || pmax || alpha
+.endif  # powerpc || mips || alpha
 .else   # no PLIST at all
 PLIST_SRC=
 .endif  # ${PKGDIR}/PLIST
