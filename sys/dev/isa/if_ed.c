@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.106.4.2 1997/02/21 19:41:14 is Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.106.4.3 1997/02/27 19:17:28 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -31,7 +31,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 
 #include <net/if_ether.h>
 

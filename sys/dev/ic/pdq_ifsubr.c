@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.5.6.3 1997/02/20 17:45:51 is Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.5.6.4 1997/02/27 19:17:26 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -52,7 +52,10 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
+
+#if !defined(__NetBSD__)
 #include <net/route.h>
+#endif
 
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
