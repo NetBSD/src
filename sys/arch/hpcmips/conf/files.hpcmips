@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.51 2001/02/22 18:37:57 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.52 2001/02/26 09:34:22 sato Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -86,7 +86,7 @@ include "dev/isa/files.isa"
 #
 #  Vr41x1 integrated peripherals
 #
-device vrip { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [intr=-1], [pwctl=-1] }
+device vrip { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [intr=-1], [pwctl=-1], [platform = -1] }
 attach vrip at mainbus
 file arch/hpcmips/vr/vrip.c		vrip needs-flag
 
@@ -158,6 +158,10 @@ device ite8181video: hpcfbif
 attach ite8181video at vrip with ite8181video_vrip
 file arch/hpcmips/vr/ite8181_vrip.c		ite8181video_vrip
 file arch/hpcmips/dev/ite8181.c			ite8181video
+
+device vrc4172pwm
+attach vrc4172pwm at vrip
+file arch/hpcmips/vr/vrc4172pwm.c		vrc4172pwm needs-flag
 
 #
 #	TOSHIBA TX3912/3922
