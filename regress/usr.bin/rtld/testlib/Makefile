@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.5 2003/07/26 15:25:52 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2003/09/02 06:36:23 mrg Exp $
 
 .include <bsd.own.mk>
 # XXX
-.if ${USE_TOOLS_TOOLCHAIN} == "yes"
+.if ${HAVE_GCC3} == "no"
 
 NOPROFILE=	yes
 
