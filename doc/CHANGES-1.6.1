@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.14 2002/11/01 08:43:41 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.15 2002/11/01 11:46:13 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -509,4 +509,55 @@ sys/ufs/mfs/mfs_vfsops.c			1.42
 	Force MFS mounts to be "sync".
 	Fixes PR#17128 and PR#17321.
 	[tron, ticket #941]
+
+sys/net/if.c					1.105
+sys/net/if.h					1.76
+sys/sys/sockio.h				1.19
+
+	Add SIOCGIFDATA and SIOCZIFDATA ioctl's to get interface data.  (the Z
+	variant also zeroes the counters after copying them).  In ifunit, add
+	support for dealing all numeric ifname by treating them as an ifindex
+	which is used to look up the interface.
+	[martin, ticket #32]
+
+sys/arch/acorn26/podulebus/if_eh.c		1.3
+sys/arch/acorn26/podulebus/podulebusreg.h	1.2
+sys/arch/acorn32/podulebus/amps.c		1.3
+sys/arch/acorn32/podulebus/asc.c		1.6
+sys/arch/acorn32/podulebus/cosc.c		1.4
+sys/arch/acorn32/podulebus/csa.c		1.3
+sys/arch/acorn32/podulebus/csc.c		1.3
+sys/arch/acorn32/podulebus/icside.c		1.3
+sys/arch/acorn32/podulebus/if_ie.c		1.6
+sys/arch/acorn32/podulebus/if_ne_pbus.c		1.5
+sys/arch/acorn32/podulebus/podulebus.c		1.9
+sys/arch/acorn32/podulebus/rapide.c		1.3
+sys/arch/acorn32/podulebus/simide.c		1.3
+sys/dev/podulebus/acemidi.c			1.4
+sys/dev/podulebus/if_ea.c			1.6
+sys/dev/podulebus/if_eb.c			1.4
+sys/dev/podulebus/if_ei.c			1.5
+sys/dev/podulebus/oak.c				1.9
+sys/dev/podulebus/podule_data.h			1.8
+sys/dev/podulebus/podulebus.h			1.6
+sys/dev/podulebus/podulelist2h.awk		1.2
+sys/dev/podulebus/podules			1.10
+sys/dev/podulebus/podules.h			1.8
+
+	Substantial overhaul of podule IDs.  Unlike on PCI or USB, podule IDs
+	are assigned by RISCOS Ltd (and were assigned by Acorn) to be unique
+	across all manufacturers.  This means that associating each one with
+	a manufacturer (and checking the manufacturer when attaching) is
+	bogus. Thus, we don't do that any more.
+
+	This should have the pleasant side-effect of getting APDL IDE
+	interfaces working, since they're just ICS ones with a different
+	manufacturer ID.
+	[chris, ticket #120]
+
+usr.sbin/greconfig/greconfig.c			1.7
+
+	Avoid a NULL pointer access if passed bogus parameters.
+	Unify exit codes to EXIST_SUCCESS/EXIT_FAILURE.
+	[martin, ticket #225]
 
