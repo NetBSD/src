@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.8 2003/04/17 17:02:48 wiz Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.9 2003/06/27 13:02:27 wiz Exp $
 .\" Converted to mdoc by Thomas Klausner <wiz@netbsd.org>
 .\"
 .Dd April 17, 2003
@@ -383,7 +383,7 @@ Using UDP has its shortcomings.
 Since UDP-based RPC messages can only hold up to 8 Kbytes of encoded
 data, this transport cannot be used for procedures that take
 large arguments or return huge results.
-.In Ft clnt_control
+.It Fn clnt_control
 A macro used to change or retrieve various information
 about a client object.
 .Fa req
