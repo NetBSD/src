@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.16 2000/03/22 00:58:16 cgd Exp $
+# $NetBSD: BABYLON,v 1.17 2000/07/12 20:27:25 thorpej Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -172,8 +172,10 @@ de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 #isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-ncr0	at	pci0 dev 7 function 0		# NCR 53c8xx SCSI
-ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#ncr0	at	pci0 dev 7 function 0		# NCR 53c8xx SCSI
+#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+siop0	at	pci? dev 7 function ?		# Symbios 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 #ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
@@ -229,8 +231,10 @@ scsibus* at	ahc? channel ?
 #scsibus* at	asc?
 #scsibus* at	bha?
 #scsibus* at	isp?
-scsibus0 at	ncr0
-scsibus* at	ncr?
+#scsibus0 at	ncr0
+#scsibus* at	ncr?
+scsibus0 at	siop0
+scsibus* at	siop?
 #scsibus* at	uha?
 
 # SCSI devices

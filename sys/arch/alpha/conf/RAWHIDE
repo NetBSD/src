@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.9 2000/05/23 02:04:30 thorpej Exp $
+# $NetBSD: RAWHIDE,v 1.10 2000/07/12 20:27:25 thorpej Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -61,7 +61,8 @@ esh*	at	pci? dev ? function ?		# Essential HIPPI card
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
-ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
@@ -78,7 +79,9 @@ fd*	at	fdc? drive ?			# floppy drives
 scsibus* at	ahc?
 scsibus* at	bha?
 scsibus* at	isp?
-scsibus* at	ncr?
+#scsibus* at	ncr?
+scsibus* at	siop?
+
 cd*	at	scsibus? target ? lun ?
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
