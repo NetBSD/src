@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.96 2003/01/28 18:32:31 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.97 2003/01/29 01:43:48 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3467,3 +3467,11 @@ sys/net/if_spppvar.h				1.6-1.7
 
 	(Moved tags for RC1 on these files)
 
+sys/dev/qbus/if_qe.c				1.56-1.57
+
+	Redo previous in a better way:
+	 Allocate a static buffer, which is added at the end of short packets
+	 to pad the buffer to ETHER_MIN_LEN - ETHER_CRC_LEN.
+	[bouyer, ticket #1093]
+
+	(Moved tags for RC1 on this file)
