@@ -1,4 +1,4 @@
-/*	$NetBSD: logout.c,v 1.13 2002/07/27 23:49:23 christos Exp $	*/
+/*	$NetBSD: logout.c,v 1.14 2002/09/27 20:42:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,13 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logout.c,v 1.13 2002/07/27 23:49:23 christos Exp $");
+__RCSID("$NetBSD: logout.c,v 1.14 2002/09/27 20:42:48 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/wait.h>
 
 #include <assert.h>
 #include <fcntl.h>
@@ -54,7 +53,6 @@ __RCSID("$NetBSD: logout.c,v 1.13 2002/07/27 23:49:23 christos Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
-#include <utmpx.h>
 
 int
 logout(const char *line)
@@ -79,24 +77,4 @@ logout(const char *line)
 	}
 	(void)close(fd);
 	return(rval);
-}
-
-int
-logoutx(const char *line, int status, int type)
-{
-	struct utmpx *utp, ut;
-	(void)strlcpy(ut.ut_line, line, sizeof(ut.ut_line));
-	if ((utp = getutxline(&ut)) == NULL) {
-		endutxent();
-		return 0;
-	}
-	utp->ut_type = type;
-	if (WIFEXITED(status))
-		utp->ut_exit.e_exit = (uint16_t)WEXITSTATUS(status);
-	if (WIFSIGNALED(status))
-		utp->ut_exit.e_termination = (uint16_t)WTERMSIG(status);
-	(void)gettimeofday(&utp->ut_tv, NULL);
-	(void)pututxline(utp);
-	endutxent();
-	return 1;
 }
