@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.9 2000/07/31 13:16:34 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.10 2000/09/01 12:11:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,9 +40,6 @@
  * Driver for Compaq array controllers.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.9 2000/07/31 13:16:34 ad Exp $");
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -60,21 +57,36 @@ __KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.9 2000/07/31 13:16:34 ad Exp $");
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
 
-static void	cac_ccb_done __P((struct cac_softc *, struct cac_ccb *));
-static int	cac_print __P((void *, const char *));
-static int	cac_submatch __P((struct device *, struct cfdata *, void *));
-static void	cac_ccb_poll __P((struct cac_softc *, struct cac_ccb *, int));
-static void	cac_shutdown __P((void *));
+static struct	cac_ccb *cac_ccb_alloc(struct cac_softc *, int);
+static void	cac_ccb_done(struct cac_softc *, struct cac_ccb *);
+static void	cac_ccb_free(struct cac_softc *, struct cac_ccb *);
+static void	cac_ccb_poll(struct cac_softc *, struct cac_ccb *, int);
+static int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
+static int	cac_print(void *, const char *);
+static void	cac_shutdown(void *);
+static int	cac_submatch(struct device *, struct cfdata *, void *);
 
-static void *cac_sdh;				/* shutdown hook */
+static struct	cac_ccb *cac_l0_completed(struct cac_softc *);
+static int	cac_l0_fifo_full(struct cac_softc *);
+static void	cac_l0_intr_enable(struct cac_softc *, int);
+static int	cac_l0_intr_pending(struct cac_softc *);
+static void	cac_l0_submit(struct cac_softc *, struct cac_ccb *);
+
+static void	*cac_sdh;	/* shutdown hook */
+
+struct cac_linkage cac_l0 = {
+	cac_l0_completed,
+	cac_l0_fifo_full,
+	cac_l0_intr_enable,
+	cac_l0_intr_pending,
+	cac_l0_submit
+};
 
 /*
  * Initialise our interface to the controller.
  */
 int
-cac_init(sc, intrstr)
-	struct cac_softc *sc;
-	const char *intrstr;
+cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 {
 	struct cac_controller_info cinfo;
 	struct cac_attach_args caca;
@@ -82,9 +94,9 @@ cac_init(sc, intrstr)
 	bus_dma_segment_t seg;
 	struct cac_ccb *ccb;
 	
-	printf("Compaq %s\n", sc->sc_typestr);
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dv.dv_xname, intrstr);
+		printf("%s: interrupting at %s\n", sc->sc_dv.dv_xname,
+		    intrstr);
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
@@ -99,7 +111,8 @@ cac_init(sc, intrstr)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size, 
-	    (caddr_t *)&sc->sc_ccbs, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    (caddr_t *)&sc->sc_ccbs,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return (-1);
@@ -128,10 +141,10 @@ cac_init(sc, intrstr)
 		error = bus_dmamap_create(sc->sc_dmat, CAC_MAX_XFER, 
 		    CAC_SG_SIZE, CAC_MAX_XFER, 0, 
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->ccb_dmamap_xfer);
-	
+
 		if (error) {
 			printf("%s: can't create ccb dmamap (%d)\n", 
-			   sc->sc_dv.dv_xname, error);
+			    sc->sc_dv.dv_xname, error);
 			break;
 		}
 
@@ -140,6 +153,16 @@ cac_init(sc, intrstr)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_chain);
 	}
 	
+	/* Start firmware background tasks, if needed. */
+	if (startfw) {
+		if (cac_cmd(sc, CAC_CMD_START_FIRMWARE, &cinfo, sizeof(cinfo),
+		    0, 0, CAC_CCB_DATA_IN, NULL)) {
+			printf("%s: CAC_CMD_START_FIRMWARE failed\n",
+			    sc->sc_dv.dv_xname);
+			return (-1);
+		}
+	}
+
 	if (cac_cmd(sc, CAC_CMD_GET_CTRL_INFO, &cinfo, sizeof(cinfo), 0, 0, 
 	    CAC_CCB_DATA_IN, NULL)) {
 		printf("%s: CAC_CMD_GET_CTRL_INFO failed\n", 
@@ -152,20 +175,19 @@ cac_init(sc, intrstr)
 		config_found_sm(&sc->sc_dv, &caca, cac_print, cac_submatch);
 	}
 
-	/* Set shutdownhook before we start any device activity. */
+	/* Set our `shutdownhook' before we start any device activity. */
 	if (cac_sdh == NULL)
 		cac_sdh = shutdownhook_establish(cac_shutdown, NULL);
-
-	sc->sc_cl->cl_intr_enable(sc, CAC_INT_ENABLE);
+		
+	(*sc->sc_cl->cl_intr_enable)(sc, CAC_INTR_ENABLE);
 	return (0);
 }
 
 /*
- * Shutdown the controller.
+ * Shut down all `cac' controllers.
  */
 static void
-cac_shutdown(cookie)
-	void *cookie;
+cac_shutdown(void *cookie)
 {
 	extern struct cfdriver cac_cd;
 	struct cac_softc *sc;
@@ -177,7 +199,7 @@ cac_shutdown(cookie)
 	for (i = 0; i < cac_cd.cd_ndevs; i++) {
 		if ((sc = device_lookup(&cac_cd, i)) == NULL)
 			continue; 
-		/* XXX documentation on this is a bit fuzzy. */
+		/* XXX Documentation on this is a bit fuzzy. */
 		memset(buf, 0, sizeof (buf));
 		buf[0] = 1;
 		cac_cmd(sc, CAC_CMD_FLUSH_CACHE, buf, sizeof(buf), 0, 0, 
@@ -189,31 +211,26 @@ cac_shutdown(cookie)
 }	
 
 /*
- * Print attach message for a subdevice.
+ * Print autoconfiguration message for a sub-device.
  */
 static int
-cac_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+cac_print(void *aux, const char *pnp)
 {
 	struct cac_attach_args *caca;
 
 	caca = (struct cac_attach_args *)aux;
 
-	if (pnp)
+	if (pnp != NULL)
 		printf("block device at %s", pnp);
 	printf(" unit %d", caca->caca_unit);
 	return (UNCONF);
 }
 
 /*
- * Match a subdevice.
+ * Match a sub-device.
  */
 static int
-cac_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cac_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cac_attach_args *caca;
 
@@ -231,31 +248,25 @@ cac_submatch(parent, cf, aux)
  * dequeue any waiting CCBs.
  */
 int
-cac_intr(xxx_sc)
-	void *xxx_sc;
+cac_intr(void *cookie)
 {
 	struct cac_softc *sc;
 	struct cac_ccb *ccb;
-	paddr_t completed;
-	int off;
 
-	sc = (struct cac_softc *)xxx_sc;
+	sc = (struct cac_softc *)cookie;
 
-	if (!sc->sc_cl->cl_intr_pending(sc))
+	if (!(*sc->sc_cl->cl_intr_pending)(sc)) {
+#ifdef DEBUG
+		printf("%s: spurious intr\n", sc->sc_dv.dv_xname);
+#endif
 		return (0);
+	}	
 
-	while ((completed = sc->sc_cl->cl_completed(sc)) != 0) {
-		off = (completed & ~3) - sc->sc_ccbs_paddr;
-		ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
-
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, off,
-		    sizeof(struct cac_ccb), 
-		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-
+	while ((ccb = (*sc->sc_cl->cl_completed)(sc)) != NULL) {
 		cac_ccb_done(sc, ccb);
+		cac_ccb_start(sc, NULL);
 	}
 
-	cac_ccb_start(sc, NULL);
 	return (1);
 }
 
@@ -263,15 +274,8 @@ cac_intr(xxx_sc)
  * Execute a [polled] command.
  */
 int
-cac_cmd(sc, command, data, datasize, drive, blkno, flags, context)
-	struct cac_softc *sc;
-	int command;
-	void *data;
-	int datasize;
-	int drive;
-	int blkno;
-	int flags;
-	struct cac_context *context;
+cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
+	int drive, int blkno, int flags, struct cac_context *context)
 {
 	struct cac_ccb *ccb;
 	struct cac_sgb *sgb;
@@ -285,9 +289,9 @@ cac_cmd(sc, command, data, datasize, drive, blkno, flags, context)
 	}
 
 	if ((flags & (CAC_CCB_DATA_IN | CAC_CCB_DATA_OUT)) != 0) {
-		bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap_xfer, (void *)data, 
-		    datasize, NULL, BUS_DMA_NOWAIT);
-	
+		bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap_xfer,
+		    (void *)data, datasize, NULL, BUS_DMA_NOWAIT);
+
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap_xfer, 0, datasize,
 		    (flags & CAC_CCB_DATA_IN) != 0 ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
@@ -322,10 +326,13 @@ cac_cmd(sc, command, data, datasize, drive, blkno, flags, context)
 	if (context == NULL) {
 		memset(&ccb->ccb_context, 0, sizeof(struct cac_context));
 		s = splbio();
-		if (cac_ccb_start(sc, ccb)) {
+
+		/* Synchronous commands musn't wait. */
+		if ((*sc->sc_cl->cl_fifo_full)(sc)) {
 			cac_ccb_free(sc, ccb);
 			rv = -1;
 		} else {
+			(*sc->sc_cl->cl_submit)(sc, ccb);
 			cac_ccb_poll(sc, ccb, 2000);
 			cac_ccb_free(sc, ccb);
 			rv = 0;
@@ -341,24 +348,18 @@ cac_cmd(sc, command, data, datasize, drive, blkno, flags, context)
 }
 
 /*
- * Wait for the specified CCB to complete. Must be called at splbio.
+ * Wait for the specified CCB to complete.  Must be called at splbio.
  */
 static void
-cac_ccb_poll(sc, ccb, timo)
-	struct cac_softc *sc;
-	struct cac_ccb *ccb;
-	int timo;
+cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 {
-	struct cac_ccb *ccb_done;
-	paddr_t completed;
-	int off;
+	struct cac_ccb *ccb;
 	
-	ccb_done = NULL;
 	timo *= 10;
 
-	for (;;) {
-		for (completed = 0; timo != 0; timo--) {
-			if ((completed = sc->sc_cl->cl_completed(sc)) != 0)
+	do {
+		for (; timo != 0; timo--) {
+			if ((ccb = (*sc->sc_cl->cl_completed)(sc)) != NULL)
 				break;
 			DELAY(100);
 		}
@@ -366,40 +367,29 @@ cac_ccb_poll(sc, ccb, timo)
 		if (timo == 0)
 			panic("%s: cac_ccb_poll: timeout", sc->sc_dv.dv_xname);
 
-		off = (completed & ~3) - sc->sc_ccbs_paddr;
-		ccb_done = (struct cac_ccb *)(sc->sc_ccbs + off);
-
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, off,
-		    sizeof(struct cac_ccb),
-		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-
-		cac_ccb_done(sc, ccb_done);
-		if (ccb_done == ccb)
-			break;
-	}
+		cac_ccb_done(sc, ccb);
+	} while (ccb != wantccb);
 }
 
 /*
  * Enqueue the specifed command (if any) and attempt to start all enqueued 
- * commands. Must be called at splbio.
+ * commands.  Must be called at splbio.
  */
-int
-cac_ccb_start(sc, ccb)
-	struct cac_softc *sc;
-	struct cac_ccb *ccb;
+static int
+cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 {
-	
+
 	if (ccb != NULL)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_queue, ccb, ccb_chain);
 
 	while ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL) {
-		if (sc->sc_cl->cl_fifo_full(sc))
+		if ((*sc->sc_cl->cl_fifo_full)(sc))
 			return (-1);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb, ccb_chain);
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
-		    (caddr_t)ccb - sc->sc_ccbs, sizeof(struct cac_ccb),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-		sc->sc_cl->cl_submit(sc, ccb->ccb_paddr);
+#ifdef DIAGNOSTIC
+		ccb->ccb_flags |= CAC_CCB_ACTIVE;
+#endif
+		(*sc->sc_cl->cl_submit)(sc, ccb);
 	}
 	
 	return (0);
@@ -409,13 +399,18 @@ cac_ccb_start(sc, ccb)
  * Process a finished CCB.
  */
 static void
-cac_ccb_done(sc, ccb)
-	struct cac_softc *sc;
-	struct cac_ccb *ccb;
+cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 {
+	const char *errdvn;
 	int error;
 
 	error = 0;
+
+#ifdef DIAGNOSTIC
+	if ((ccb->ccb_flags & CAC_CCB_ACTIVE) == 0)
+		panic("cac_ccb_done: CCB not active");
+	ccb->ccb_flags &= ~CAC_CCB_ACTIVE;
+#endif
 
 	if ((ccb->ccb_flags & (CAC_CCB_DATA_IN | CAC_CCB_DATA_OUT)) != 0) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap_xfer, 0,
@@ -424,28 +419,33 @@ cac_ccb_done(sc, ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap_xfer);
 	}
 
+	if (ccb->ccb_context.cc_dv != NULL)
+		errdvn = ccb->ccb_context.cc_dv->dv_xname;
+	else
+		errdvn = sc->sc_dv.dv_xname;
+
 	if ((ccb->ccb_req.error & CAC_RET_SOFT_ERROR) != 0)
-		printf("%s: soft error\n", sc->sc_dv.dv_xname);
+		printf("%s: soft error; corrected\n", errdvn);
 	if ((ccb->ccb_req.error & CAC_RET_HARD_ERROR) != 0) {
 		error = 1;
-		printf("%s: hard error\n", sc->sc_dv.dv_xname);
+		printf("%s: hard error\n", errdvn);
 	}
 	if ((ccb->ccb_req.error & CAC_RET_CMD_REJECTED) != 0) {
 		error = 1;
-		printf("%s: invalid request\n", sc->sc_dv.dv_xname);
+		printf("%s: invalid request\n", errdvn);
 	}
 
-	if (ccb->ccb_context.cc_handler != NULL)
-		ccb->ccb_context.cc_handler(ccb, error);
+	if (ccb->ccb_context.cc_handler != NULL) {
+		(*ccb->ccb_context.cc_handler)(ccb, error);
+		cac_ccb_free(sc, ccb);
+	}
 }
 
 /*
- * Get a free CCB.
+ * Allocate a CCB.
  */
 struct cac_ccb *
-cac_ccb_alloc(sc, nosleep)
-	struct cac_softc *sc;
-	int nosleep;
+cac_ccb_alloc(struct cac_softc *sc, int nosleep)
 {
 	struct cac_ccb *ccb;
 	int s;
@@ -472,19 +472,15 @@ cac_ccb_alloc(sc, nosleep)
  * Put a CCB onto the freelist.
  */
 void
-cac_ccb_free(sc, ccb)
-	struct cac_softc *sc;
-	struct cac_ccb *ccb;
+cac_ccb_free(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 	int s;
 
 	s = splbio();
 	ccb->ccb_flags = 0;
 	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_chain);
-
-	/* Wake anybody waiting for a free ccb */
 	if (SIMPLEQ_NEXT(ccb, ccb_chain) == NULL)
-		wakeup(&sc->sc_ccb_free);
+		wakeup_one(&sc->sc_ccb_free);
 	splx(s);
 }
 
@@ -492,11 +488,60 @@ cac_ccb_free(sc, ccb)
  * Adjust the size of a transfer.
  */
 void
-cac_minphys(bp)
-	struct buf *bp;
+cac_minphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > CAC_MAX_XFER)
 		bp->b_bcount = CAC_MAX_XFER;
 	minphys(bp);
+}
+
+/*
+ * Board specific linkage shared between multiple bus types.
+ */
+
+static int
+cac_l0_fifo_full(struct cac_softc *sc)
+{
+
+	return (cac_inl(sc, CAC_REG_CMD_FIFO) == 0);
+}
+
+static void
+cac_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
+{
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, (caddr_t)ccb - sc->sc_ccbs,
+	    sizeof(struct cac_ccb), BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	cac_outl(sc, CAC_REG_CMD_FIFO, ccb->ccb_paddr);
+}
+
+static struct cac_ccb *
+cac_l0_completed(struct cac_softc *sc)
+{
+	struct cac_ccb *ccb;
+	paddr_t off;
+
+	off = (cac_inl(sc, CAC_REG_DONE_FIFO) & ~3) - sc->sc_ccbs_paddr;
+	ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, off, sizeof(struct cac_ccb),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	return (ccb);
+}
+
+static int
+cac_l0_intr_pending(struct cac_softc *sc)
+{
+
+	return (cac_inl(sc, CAC_REG_INTR_PENDING));
+}
+
+static void
+cac_l0_intr_enable(struct cac_softc *sc, int state)
+{
+
+	cac_outl(sc, CAC_REG_INTR_MASK,
+	    state ? CAC_INTR_ENABLE : CAC_INTR_DISABLE);
 }
