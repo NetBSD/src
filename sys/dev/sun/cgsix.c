@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.4 2000/11/05 22:59:27 chs Exp $ */
+/*	$NetBSD: cgsix.c,v 1.5 2001/01/10 13:26:52 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,6 +159,26 @@ int cgsix_use_rasterconsole = 1;
  * Magic values for blitter
  */
 
+/* Values for the mode register */
+#define CG6_MODE	(						\
+	  0x00200000 /* GX_BLIT_SRC */					\
+	| 0x00020000 /* GX_MODE_COLOR8 */				\
+	| 0x00008000 /* GX_DRAW_RENDER */				\
+	| 0x00002000 /* GX_BWRITE0_ENABLE */				\
+	| 0x00001000 /* GX_BWRITE1_DISABLE */				\
+	| 0x00000200 /* GX_BREAD_0 */					\
+	| 0x00000080 /* GX_BDISP_0 */					\
+)
+#define CG6_MODE_MASK	(						\
+	  0x00300000 /* GX_BLIT_ALL */					\
+	| 0x00060000 /* GX_MODE_ALL */					\
+	| 0x00018000 /* GX_DRAW_ALL */					\
+	| 0x00006000 /* GX_BWRITE0_ALL */				\
+	| 0x00001800 /* GX_BWRITE1_ALL */				\
+	| 0x00000600 /* GX_BREAD_ALL */					\
+	| 0x00000180 /* GX_BDISP_ALL */					\
+)
+
 /* Value for the alu register for screen-to-screen copies */
 #define CG6_ALU_COPY	(						\
 	  0x80000000 /* GX_PLANE_ONES (ignore planemask register) */	\
@@ -223,6 +243,23 @@ int cgsix_use_rasterconsole = 1;
 	while ((fbc)->fbc_s & 0x10000000)				\
 		/*EMPTY*/;						\
 } while (0)
+
+static void cg6_ras_init(struct cgsix_softc *);
+static void cg6_ras_copyrows(void *, int, int, int);
+static void cg6_ras_copycols(void *, int, int, int, int);
+static void cg6_ras_erasecols(void *, int, int, int, long int);
+static void cg6_ras_eraserows(void *, int, int, long int);
+static void cg6_ras_do_cursor(struct rasops_info *);
+
+static void
+cg6_ras_init(struct cgsix_softc *sc)
+{
+	volatile struct cg6_fbc *fbc = sc->sc_fbc;
+
+	CG6_DRAIN(fbc);
+	fbc->fbc_mode &= ~CG6_MODE_MASK;
+	fbc->fbc_mode |= CG6_MODE;
+}
 
 static void
 cg6_ras_copyrows(void *cookie, int src, int dst, int n)
@@ -478,6 +515,7 @@ cg6attach(sc, name, isconsole)
 			sc->sc_fb.fb_rinfo.ri_ops.erasecols = cg6_ras_erasecols;
 			sc->sc_fb.fb_rinfo.ri_ops.eraserows = cg6_ras_eraserows;
 			sc->sc_fb.fb_rinfo.ri_do_cursor = cg6_ras_do_cursor;
+			cg6_ras_init(sc);
 		}
 #endif
 	}
