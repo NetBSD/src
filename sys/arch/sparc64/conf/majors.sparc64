@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.11 2003/08/08 16:40:31 rafal Exp $
+#	$NetBSD: majors.sparc64,v 1.12 2003/08/08 17:03:14 rafal Exp $
 #
 # Device majors for sparc64
 #
@@ -12,6 +12,7 @@ device-major	mem		char 3
 device-major	ses		char 4			ses
 
 device-major	swap		char 7   block 4
+# sparc: device-major	xy	char 9   block 3	xy
 
 device-major	zstty		char 12			zstty
 device-major	ms		char 13			ms | sunms
@@ -31,9 +32,14 @@ device-major	bwtwo		char 27			bwtwo
 
 device-major	kbd		char 29			kbd | sunkbd
 
+# sparc: device-major	cgtwo	char 31			cgtwo
+
 device-major	com		char 36			com
 device-major	lpt		char 37			lpt
 
+# sparc: device-major	cgfour	char 39			cgfour
+
+# sparc: device-major	xd	char 42  block 10	xd
 device-major	svr4_net	char 43			compat_svr4
 
 device-major	vcoda		char 47			vcoda
@@ -46,11 +52,13 @@ device-major	ss		char 59			ss
 device-major	uk		char 60			uk
 device-major	md		char 61  block 5	md
 
+# sparc: device-major	cgeight	char 64			cgeight
+
 device-major	cgsix		char 67			cgsix
 
 device-major	audio		char 69			audio
 device-major	openprom	char 70
-
+# sparc: device-major	tctrl	char 71			tctrl
 device-major	isdn		char 72			isdn
 device-major	isdnctl		char 73			isdnctl
 device-major	isdnbchan	char 74			isdnbchan
@@ -73,6 +81,8 @@ device-major	wsmux		char 93			wsmux
 device-major	wsfont		char 94			wsfont
 
 device-major	cgfourteen	char 99			cgfourteen
+# sparc: device-major	mtty	char 100		mtty
+# sparc: device-major	mbpp	char 101		mbpp
 
 device-major	bpf		char 105		bpfilter
 
