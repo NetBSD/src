@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.16 2000/02/23 02:01:55 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.17 2000/02/24 01:22:32 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -414,6 +414,7 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 	int numFailuresThisRow;
 	int force;
 	RF_AutoConfig_t *ac;
+	int parity_good;
 
 #if DEBUG
 	printf("Starting autoconfiguration of RAID set...\n");
@@ -425,6 +426,9 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 		goto fail;
 
 	disks = raidPtr->Disks;
+
+	/* assume the parity will be fine.. */
+	parity_good = RF_RAID_CLEAN;
 
 	for (r = 0; r < raidPtr->numRow; r++) {
 		numFailuresThisRow = 0;
@@ -490,6 +494,17 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 
 				bs = diskPtr->blockSize;
 				min_numblks = diskPtr->numBlocks;
+
+				/* this gets done multiple times, but that's
+				   fine -- the serial number will be the same
+				   for all components, guaranteed */
+				raidPtr->serial_number = 
+					ac->clabel->serial_number;
+
+				if (ac->clabel->clean != RF_RAID_CLEAN) {
+					parity_good = RF_RAID_DIRTY;
+				}
+
 			} else {
 				/* Didn't find it!! Component must be dead */
 				disks[r][c].status = rf_ds_failed;
@@ -503,6 +518,8 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 			raidPtr->status[r] = rf_rs_degraded;
 	}
 
+	/* note the state of the parity, if any */
+	raidPtr->parity_good = parity_good;
 	raidPtr->sectorsPerDisk = min_numblks;
 	raidPtr->logBytesPerSector = ffs(bs) - 1;
 	raidPtr->bytesPerSector = bs;
