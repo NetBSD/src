@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.3 2001/04/24 19:27:59 uch Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.4 2001/05/08 18:51:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 int WINAPI
 WinMain(HINSTANCE instance, HINSTANCE prev_instance,
-	LPTSTR cmd_line, int window_show)
+    LPTSTR cmd_line, int window_show)
 {
 	HpcMenuInterface::Instance();	// Menu System
 	HpcBootApp *app = 0;		// Application body.
@@ -128,7 +128,7 @@ hpcboot(void *arg)
 	{
 		if (!f._file->open(f.args.mfsName)) {
 			error_message =
-				TEXT("couldn't open file system image.\n");
+			    TEXT("couldn't open file system image.\n");
 			goto failed;
 		}
 		sz = f._file->size();
@@ -170,7 +170,7 @@ hpcboot(void *arg)
 	menu.progress();
 	if (!f._loader->load()) {
 		error_message =
-			TEXT("couldn't load kernel image to memory.\n");
+		    TEXT("couldn't load kernel image to memory.\n");
 		goto failed;
 	}
 	menu.progress();
@@ -194,7 +194,7 @@ hpcboot(void *arg)
 	// jump to kernel entry.
 	if (HPC_PREFERENCE.pause_before_boot) {
 		if (MessageBox(menu._root->_window, TEXT("Push OK to boot."),
-			       TEXT("Last chance..."), MB_YESNO) != IDYES)
+		    TEXT("Last chance..."), MB_YESNO) != IDYES)
 			goto failed;
 	}
 
@@ -206,7 +206,7 @@ hpcboot(void *arg)
 		error_message = TEXT("can't jump to kernel.\n");
 	f._file->close();
 	MessageBox(menu._root->_window, error_message,
-		   TEXT("BOOT FAILED"), 0);
+	    TEXT("BOOT FAILED"), 0);
 }
 
 //
@@ -221,7 +221,7 @@ HpcBootApp::run(void)
 		// cancel auto-boot.
 		if (HPC_PREFERENCE.auto_boot > 0 && _root &&
 		    (msg.message == WM_KEYDOWN ||
-		     msg.message == WM_LBUTTONDOWN)) {
+			msg.message == WM_LBUTTONDOWN)) {
 			_root->disableTimer();
 		}
 		if (!_root->isDialogMessage(msg)) {
@@ -240,7 +240,7 @@ HpcBootApp::registerClass(WNDPROC proc)
 
 	memset(&wc, 0, sizeof(WNDCLASS));
 	wc_name		= reinterpret_cast <TCHAR *>
-		(LoadString(_instance, IDS_HPCMENU, 0, 0));
+	    (LoadString(_instance, IDS_HPCMENU, 0, 0));
 	wc.lpfnWndProc	= proc;
 	wc.hInstance	= _instance;
 	wc.hIcon	= LoadIcon(_instance, MAKEINTRESOURCE(IDI_ICON));

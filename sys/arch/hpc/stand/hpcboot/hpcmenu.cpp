@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.6 2001/04/24 19:27:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.7 2001/05/08 18:51:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ HpcMenuInterface::dir(int i)
 	}
 
 	TCHAR *s = reinterpret_cast <TCHAR *>
-		(LoadString(_root->_app._instance, res, 0, 0));
+	    (LoadString(_root->_app._instance, res, 0, 0));
   
 	return s;
 }
@@ -153,7 +153,7 @@ HpcMenuInterface::load()
 	TCHAR filename[MAX_PATH];
 	wsprintf(filename, TEXT("\\%s\\hpcboot.cnf"), path);
 	HANDLE file = CreateFile(filename, GENERIC_READ, 0, 0, OPEN_EXISTING,
-				 FILE_ATTRIBUTE_NORMAL, 0);
+	    FILE_ATTRIBUTE_NORMAL, 0);
 	if (file == INVALID_HANDLE_VALUE)
 		return FALSE;
   
@@ -184,8 +184,7 @@ HpcMenuInterface::save()
 		TCHAR filename[MAX_PATH];
 		wsprintf(filename, TEXT("\\%s\\hpcboot.cnf"), path);
 		HANDLE file = CreateFile(filename, GENERIC_WRITE, 0, 0,
-					 CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-					 0);
+		    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 		DWORD cnt;
 		WriteFile(file, &_pref, _pref._size, &cnt, 0);
 		CloseHandle(file);
@@ -202,7 +201,7 @@ HpcMenuInterface::setup_kernel_args(vaddr_t v, paddr_t p)
 	int argc = 0;
 	kaddr_t *argv = reinterpret_cast <kaddr_t *>(v);
 	char *loc = reinterpret_cast <char *>
-		(v + sizeof(char **) * MAX_KERNEL_ARGS);
+	    (v + sizeof(char **) * MAX_KERNEL_ARGS);
 	paddr_t locp = p + sizeof(char **) * MAX_KERNEL_ARGS;
 	size_t len;
 	TCHAR *w;
@@ -307,9 +306,9 @@ HpcMenuInterface::boot()
 		for (; tab->cpu; tab++) {
 			if (tab->cpu == cpu && tab->machine == machine) {
 				MessageBox(_root->_window,
-					   tab->cause ? tab->cause :
-					   L"not supported yet.",
-					   TEXT("BOOT FAILED"), 0);
+				    tab->cause ? tab->cause :
+				    L"not supported yet.",
+				    TEXT("BOOT FAILED"), 0);
 				return;
 			}
 		}

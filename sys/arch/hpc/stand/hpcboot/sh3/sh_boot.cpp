@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_boot.cpp,v 1.2 2001/04/24 19:28:01 uch Exp $	*/
+/*	$NetBSD: sh_boot.cpp,v 1.3 2001/05/08 18:51:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ SHBoot::create()
 		break;
 	case MEMORY_MANAGER_LOCKPAGES:
 		_mem = new MemoryManager_LockPages(lock_pages, unlock_pages,
-						   _cons, PAGE_SIZE);
+		    _cons, PAGE_SIZE);
 		break;
 	}
 	_mem->setDebug() = args.memorymanagerDebug;
