@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.16 2004/07/23 05:19:41 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.17 2004/07/23 05:54:02 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.16 2004/07/23 05:19:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.17 2004/07/23 05:54:02 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -630,16 +630,14 @@ ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
  * desirable to process a Rx packet using its sender's node-record
  * instead of the BSS record, when that is possible.
  *
- * - AP mode: it is desirable to keep a node-record for every
- *   authenticated/associated station *in the BSS*. For future use,
- *   we also track neighboring APs, since they might belong to the
- *   same ESSID.
+ *  - AP mode: keep a node-record for every authenticated/associated
+ *    station *in the BSS*. For future use, we also track neighboring
+ *    APs, since they might belong to the same ESSID.
  *
- * - IBSS mode: it is desirable to keep a node-record for every
- *   station *in the BSS*.
+ * - IBSS mode: keep a node-record for every station *in the BSS*.
  *
- * - monitor mode: it is desirable to keep a node-record for every
- *   sender, regardless of BSS.
+ * - monitor mode: keep a node-record for every sender, regardless
+ *   of BSS.
  *
  * - STA mode: the only available node-record is the BSS record,
  *   ic->ic_bss.
