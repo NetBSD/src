@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.103 2002/12/11 18:09:07 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.104 2002/12/12 20:41:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.103 2002/12/11 18:09:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.104 2002/12/12 20:41:45 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -415,7 +415,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * tend to include daemons that don't exit.
 	 */
 	if (nextpid >= PID_MAX) {
-		nextpid = 500;
+		nextpid = PID_SKIP;
 		pidchecked = 0;
 	}
 	if (nextpid >= pidchecked) {
