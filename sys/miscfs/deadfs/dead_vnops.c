@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.15 1996/02/13 13:02:40 mycroft Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,8 +47,8 @@
 /*
  * Prototypes for dead operations on vnodes.
  */
-int	dead_badop __P((void *)),
-	dead_ebadf __P((void *));
+int	dead_badop	__P((void *));
+int	dead_ebadf	__P((void *));
 
 int	dead_lookup	__P((void *));
 #define dead_create	dead_badop

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.38 1996/02/12 15:01:44 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.39 1996/02/13 13:12:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -98,6 +98,7 @@ static pid_t atopid __P((const char *, u_int));
  * Prototypes for procfs vnode ops
  */
 int	procfs_badop	__P((void *));
+
 int	procfs_lookup	__P((void *));
 #define	procfs_create	procfs_badop
 #define	procfs_mknod	procfs_badop

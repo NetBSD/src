@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.11 1996/02/09 22:40:58 christos Exp $	*/
+/*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,8 +82,8 @@ struct	flock;
 struct	buf;
 struct	uio;
 
-int	spec_badop __P((void *)),
-	spec_ebadf __P((void *));
+int	spec_badop	__P((void *));
+int	spec_ebadf	__P((void *));
 
 int	spec_lookup	__P((void *));
 #define	spec_create	spec_badop
