@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.42 1998/10/10 02:00:53 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.43 1998/10/18 17:15:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -146,12 +146,12 @@ cdev_decl(tun);
 #include "ipfilter.h"
 #include "rnd.h"
 
-#ifdef notyet		/* XXX XXX XXX */
+#if 0	/* XXX XXX XXX */
 #include "scsibus.h"
-cdev_decl(scsibus);
 #else
 #define	NSCSIBUS	0
 #endif
+cdev_decl(scsibus);
 
 struct cdevsw	cdevsw[] =
 {
