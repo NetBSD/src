@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.2 1994/06/29 06:47:30 cgd Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.3 1994/10/20 04:21:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -705,7 +705,7 @@ dqget(vp, id, ump, type, dqp)
 	/*
 	 * Check the cache first.
 	 */
-	dpp = &dqhashtbl[((((int)(dqvp)) >> 8) + id) & dqhash];
+	dpp = &dqhashtbl[((((long)(dqvp)) >> 8) + id) & dqhash];
 	for (dq = *dpp; dq; dq = dq->dq_forw) {
 		if (dq->dq_id != id ||
 		    dq->dq_ump->um_quotas[dq->dq_type] != dqvp)

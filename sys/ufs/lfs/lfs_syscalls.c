@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.4 1994/08/21 03:15:35 cgd Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.5 1994/10/20 04:21:11 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -36,12 +36,15 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+
+#include <sys/syscallargs.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -79,16 +82,15 @@ struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
  *  0 on success
  * -1/errno is return on error.
  */
-struct lfs_markv_args {
-	fsid_t *fsidp;			/* file system */
-	struct block_info *blkiov;	/* block array */
-	int blkcnt;			/* count of block array entries */
-};
 int
 lfs_markv(p, uap, retval)
 	struct proc *p;
-	struct lfs_markv_args *uap;
-	int *retval;
+	struct lfs_markv_args /* {
+		syscallarg(fsid_t *) fsidp;
+		syscallarg(struct block_info *) blkiov;
+		syscallarg(int) blkcnt;
+	} */ *uap;
+	register_t *retval;
 {
 	struct segment *sp;
 	BLOCK_INFO *blkp;
@@ -108,14 +110,14 @@ lfs_markv(p, uap, retval)
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
 
-	if (error = copyin(uap->fsidp, &fsid, sizeof(fsid_t)))
+	if (error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t)))
 		return (error);
 	if ((mntp = getvfs(&fsid)) == NULL)
 		return (EINVAL);
 
-	cnt = uap->blkcnt;
+	cnt = SCARG(uap, blkcnt);
 	start = malloc(cnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
-	if (error = copyin(uap->blkiov, start, cnt * sizeof(BLOCK_INFO)))
+	if (error = copyin(SCARG(uap, blkiov), start, cnt * sizeof(BLOCK_INFO)))
 		goto err1;
 
 	/* Mark blocks/inodes dirty.  */
@@ -256,16 +258,15 @@ err1:
  *  0 on success
  * -1/errno is return on error.
  */
-struct lfs_bmapv_args {
-	fsid_t *fsidp;			/* file system */
-	struct block_info *blkiov;	/* block array */
-	int blkcnt;			/* count of block array entries */
-};
 int
 lfs_bmapv(p, uap, retval)
 	struct proc *p;
-	struct lfs_bmapv_args *uap;
-	int *retval;
+	struct lfs_bmapv_args /* {
+		syscallarg(fsid_t *) fsidp;
+		syscallarg(struct block_info *) blkiov;
+		syscallarg(int) blkcnt;
+	} */ *uap;
+	register_t *retval;
 {
 	BLOCK_INFO *blkp;
 	struct mount *mntp;
@@ -278,14 +279,15 @@ lfs_bmapv(p, uap, retval)
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
 
-	if (error = copyin(uap->fsidp, &fsid, sizeof(fsid_t)))
+	if (error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t)))
 		return (error);
 	if ((mntp = getvfs(&fsid)) == NULL)
 		return (EINVAL);
 
-	cnt = uap->blkcnt;
+	cnt = SCARG(uap, blkcnt);
 	start = blkp = malloc(cnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
-	if (error = copyin(uap->blkiov, blkp, cnt * sizeof(BLOCK_INFO))) {
+	if (error = copyin(SCARG(uap, blkiov), blkp,
+	    cnt * sizeof(BLOCK_INFO))) {
 		free(blkp, M_SEGMENT);
 		return (error);
 	}
@@ -303,7 +305,7 @@ lfs_bmapv(p, uap, retval)
 		}
 		blkp->bi_daddr = daddr;
         }
-	copyout(start, uap->blkiov, cnt * sizeof(BLOCK_INFO));
+	copyout(start, SCARG(uap, blkiov), cnt * sizeof(BLOCK_INFO));
 	free(start, M_SEGMENT);
 	return (0);
 }
@@ -316,15 +318,14 @@ lfs_bmapv(p, uap, retval)
  *  0 on success
  * -1/errno is return on error.
  */
-struct lfs_segclean_args {
-	fsid_t *fsidp;		/* file system */
-	u_long segment;		/* segment number */
-}; 
 int
 lfs_segclean(p, uap, retval)
 	struct proc *p;
-	struct lfs_segclean_args *uap;
-	int *retval;
+	struct lfs_segclean_args /* {
+		syscallarg(fsid_t *) fsidp;
+		syscallarg(u_long) segment;
+	} */ *uap;
+	register_t *retval;
 {
 	CLEANERINFO *cip;
 	SEGUSE *sup;
@@ -337,17 +338,17 @@ lfs_segclean(p, uap, retval)
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
 
-	if (error = copyin(uap->fsidp, &fsid, sizeof(fsid_t)))
+	if (error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t)))
 		return (error);
 	if ((mntp = getvfs(&fsid)) == NULL)
 		return (EINVAL);
 
 	fs = VFSTOUFS(mntp)->um_lfs;
 
-	if (datosn(fs, fs->lfs_curseg) == uap->segment)
+	if (datosn(fs, fs->lfs_curseg) == SCARG(uap, segment))
 		return (EBUSY);
 
-	LFS_SEGENTRY(sup, fs, uap->segment, bp);
+	LFS_SEGENTRY(sup, fs, SCARG(uap, segment), bp);
 	if (sup->su_flags & SEGUSE_ACTIVE) {
 		brelse(bp);
 		return (EBUSY);
@@ -377,15 +378,14 @@ lfs_segclean(p, uap, retval)
  *  1 on timeout
  * -1/errno is return on error.
  */
-struct lfs_segwait_args {
-	fsid_t *fsidp;		/* file system */
-	struct timeval *tv;	/* timeout */
-};
 int
 lfs_segwait(p, uap, retval)
 	struct proc *p;
-	struct lfs_segwait_args *uap;
-	int *retval;
+	struct lfs_segwait_args /* {
+		syscallarg(fsid_t *) fsidp;
+		syscallarg(struct timeval *) tv;
+	} */ *uap;
+	register_t *retval;
 {
 	extern int lfs_allclean_wakeup;
 	struct mount *mntp;
@@ -399,7 +399,7 @@ lfs_segwait(p, uap, retval)
 		return (error);
 }
 #ifdef WHEN_QUADS_WORK
-	if (error = copyin(uap->fsidp, &fsid, sizeof(fsid_t)))
+	if (error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t)))
 		return (error);
 	if (fsid == (fsid_t)-1)
 		addr = &lfs_allclean_wakeup;
@@ -409,7 +409,7 @@ lfs_segwait(p, uap, retval)
 		addr = &VFSTOUFS(mntp)->um_lfs->lfs_nextseg;
 	}
 #else
-	if (error = copyin(uap->fsidp, &fsid, sizeof(fsid_t)))
+	if (error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t)))
 		return (error);
 	if ((mntp = getvfs(&fsid)) == NULL)
 		addr = &lfs_allclean_wakeup;
@@ -417,8 +417,9 @@ lfs_segwait(p, uap, retval)
 		addr = &VFSTOUFS(mntp)->um_lfs->lfs_nextseg;
 #endif
 
-	if (uap->tv) {
-		if (error = copyin(uap->tv, &atv, sizeof(struct timeval)))
+	if (SCARG(uap, tv)) {
+		if (error =
+		    copyin(SCARG(uap, tv), &atv, sizeof(struct timeval)))
 			return (error);
 		if (itimerfix(&atv))
 			return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.3 1994/07/04 21:06:07 mycroft Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.4 1994/10/20 04:20:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -61,7 +61,7 @@ static ino_t	ffs_dirpref __P((struct fs *));
 static daddr_t	ffs_fragextend __P((struct inode *, int, long, int, int));
 static void	ffs_fserr __P((struct fs *, u_int, char *));
 static u_long	ffs_hashalloc
-		    __P((struct inode *, int, long, int, u_long (*)()));
+		    __P((struct inode *, int, long, int, u_int32_t (*)()));
 static ino_t	ffs_nodealloccg __P((struct inode *, int, daddr_t, int));
 static daddr_t	ffs_mapsearch __P((struct fs *, struct cg *, daddr_t, int));
 
@@ -121,7 +121,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	else
 		cg = dtog(fs, bpref);
 	bno = (daddr_t)ffs_hashalloc(ip, cg, (long)bpref, size,
-	    (u_long (*)())ffs_alloccg);
+	    (u_int32_t (*)())ffs_alloccg);
 	if (bno > 0) {
 		ip->i_blocks += btodb(size);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -258,7 +258,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		/* NOTREACHED */
 	}
 	bno = (daddr_t)ffs_hashalloc(ip, cg, (long)bpref, request,
-	    (u_long (*)())ffs_alloccg);
+	    (u_int32_t (*)())ffs_alloccg);
 	if (bno > 0) {
 		bp->b_blkno = fsbtodb(fs, bno);
 		(void) vnode_pager_uncache(ITOV(ip));
@@ -392,7 +392,7 @@ ffs_reallocblks(ap)
 	 * Search the block map looking for an allocation of the desired size.
 	 */
 	if ((newblk = (daddr_t)ffs_hashalloc(ip, dtog(fs, pref), (long)pref,
-	    len, (u_long (*)())ffs_clusteralloc)) == 0)
+	    len, (u_int32_t (*)())ffs_clusteralloc)) == 0)
 		goto fail;
 	/*
 	 * We have found a new contiguous block.
@@ -664,7 +664,7 @@ ffs_hashalloc(ip, cg, pref, size, allocator)
 	int cg;
 	long pref;
 	int size;	/* size for data blocks, mode for inodes */
-	u_long (*allocator)();
+	u_int32_t (*allocator)();
 {
 	register struct fs *fs;
 	long result;
@@ -1393,7 +1393,7 @@ ffs_clusteracct(fs, cgp, blkno, cnt)
 	daddr_t blkno;
 	int cnt;
 {
-	long *sump;
+	int32_t *sump;
 	u_char *freemapp, *mapp;
 	int i, start, end, forw, back, map, bit;
 
