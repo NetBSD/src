@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.2 2001/04/06 14:52:56 fredette Exp $	*/
+/*	$NetBSD: control.h,v 1.3 2001/06/14 16:36:46 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
  * to use that index with.  I'm not sure which I like better.
  */
 
+#include <sun68k/sun68k/control.h>
+
 #define PGMAP_BASE       0x00000000
 #define SEGMAP_BASE      0x00000005
 #define SCONTEXT_REG     0x00000006
@@ -64,26 +66,3 @@
 
 #define CONTEXT_NUM 0x8
 #define CONTEXT_MASK 0x7
-
-#if defined(_KERNEL) || defined(_STANDALONE)
-
-/* ctrlsp.S */
-int   get_control_byte __P((vm_offset_t));
-void  set_control_byte __P((vm_offset_t, int));
-u_int get_control_word __P((vm_offset_t));
-void  set_control_word __P((vm_offset_t, u_int));
-
-/* control.c */
-int  get_context __P((void));
-void set_context __P((int));
-
-int  get_segmap __P((vm_offset_t));
-void set_segmap __P((vm_offset_t, int));
-
-#if 0
-/* Moved to pte.h (now a common interface). */
-int  get_pte __P((vm_offset_t));
-void set_pte __P((vm_offset_t, int));
-#endif
-
-#endif	/* _KERNEL | _STANDALONE */
