@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.104 1999/01/23 15:35:21 drochner Exp $
+#	$NetBSD: SUN_LAMP,v 1.105 1999/07/05 09:14:10 fvdl Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -47,8 +47,6 @@ options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 #options 	COMPAT_SVR4	# binary compatibility with SVR4
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
-
-#options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 options 	LKM		# loadable kernel modules
 options 	INSECURE
