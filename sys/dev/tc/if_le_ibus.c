@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.1 1996/05/20 02:25:08 jonathan Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.2 1996/05/20 03:43:15 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -81,9 +81,8 @@ le_pmax_attach(parent, self, aux)
 {
 	register struct le_softc *lesc = (void *)self;
 	register struct am7990_softc *sc = &lesc->sc_am7990;
-	struct tc_attach_args *d = aux;
 	register u_char *cp;
-	register struct confargs *ca;
+	register struct confargs *ca = aux;
 
 	/*
 	 * It's on the baseboard, with a dedicated interrupt line.
@@ -99,7 +98,7 @@ le_pmax_attach(parent, self, aux)
 	sc->sc_zerobuf = le_dec_zerobuf_gap2;
 
 	dec_le_common_attach(sc, cp);
-	/*c->sc_cookie = (void *)ca->ca_slotpri;*/ /*XXX more thought */
+	/* XXX more thought about ca->slotpri */
 	kn01_intr_establish(parent, (void*)ca->ca_slotpri, TC_IPL_NET,
 			  am7990_intr, sc);
 }
