@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.12 2001/05/30 12:28:40 mrg Exp $	*/
+/*	$NetBSD: vidc.h,v 1.13 2001/07/09 21:46:19 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -201,11 +201,7 @@ struct vidc_state {
 	int dctl;
 };
 
-#ifdef CPU_ARM7500
-#define	VIDC_FREF	32000000
-#else
-#define VIDC_FREF	24000000
-#endif	/* CPU_ARM7500 */
+extern int vidc_fref;		/* reference frequency of detected VIDC */
 
 #ifdef _KERNEL
 extern int  vidc_write		__P((u_int /*reg*/, int /*value*/));
