@@ -1,4 +1,4 @@
-#	$NetBSD: SULACO,v 1.7 2000/09/24 15:59:37 jdolecek Exp $
+#	$NetBSD: SULACO,v 1.8 2001/07/08 16:32:23 abs Exp $
 #
 # sulaco.nas.nasa.gov - thorpej's DECstation 5000/200
 #
@@ -70,16 +70,16 @@ options 	INET			# Internet protocol suite
 options 	INET6			# IPv6
 options 	IPSEC			# IP security
 options 	IPSEC_ESP		# IP security ESP
-#options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
 #options 	GATEWAY			# IP packet forwarding
 #options 	MROUTING		# Multicast routing support
 #options 	ISO			# OSI networking
 #options 	TPIP			# TPIP
 #options 	EON			# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC		# X.25
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-# 4.3BSD compatibility.  Should be optional, but necessary for now.
-options 	COMPAT_43
+options 	COMPAT_43	# 4.3BSD compatibility.  Should be optional
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Binary compatibility with previous versions of NetBSD.
 #options 	COMPAT_09

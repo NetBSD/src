@@ -1,4 +1,4 @@
-# $NetBSD: YEAH-BABY,v 1.5 2000/09/24 15:59:27 jdolecek Exp $
+# $NetBSD: YEAH-BABY,v 1.6 2001/07/08 16:32:12 abs Exp $
 #
 # yeah-baby.shagadelic.org -- thorpej's Alphastation 200 file server
 # and wireless network gateway
@@ -74,11 +74,11 @@ options 	GATEWAY		# packet forwarding and more mbuf space
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NMBCLUSTERS=1024 # higher mbuf cluster limit
 
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
-#options 	TCP_COMPAT_42
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options 	COMPAT_43

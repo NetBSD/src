@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.8 2001/06/10 11:07:37 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.9 2001/07/08 16:32:24 abs Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	32
 
@@ -24,7 +24,6 @@ options 	DDB
 options 	KTRACE
 options 	NEWPMAP
 
-options 	TCP_COMPAT_42
 options 	COMPAT_43
 options 	COMPAT_09
 options 	COMPAT_10
@@ -33,6 +32,7 @@ options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX   # Linux binary compatibility (experimental)
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	MSGBUFSIZE=65536
 file-system 	FFS
@@ -52,6 +52,7 @@ file-system 	UNION
 options 	SOFTDEP         # FFS soft updates support.
 
 options 	INET
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options		NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 

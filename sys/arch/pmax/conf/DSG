@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.24 2000/09/24 15:59:36 jdolecek Exp $
+# 	$NetBSD: DSG,v 1.25 2001/07/08 16:32:23 abs Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -59,16 +59,17 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 
 # Networking options
 options 	INET		# Internet protocols
-options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# Multicast routing support
 #options 	ISO		# OSI networking
 #options 	TPIP
 #options 	EON
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# Netbsd 1.2 reboot()
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Raster console options
 options		FONT_BOLD8x16		# Font for fb devices

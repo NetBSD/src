@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.23 2001/06/30 11:00:34 darcy Exp $
+#	$NetBSD: GENERIC,v 1.24 2001/07/08 16:32:20 abs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	16		# estimated number of users
 
@@ -48,6 +48,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables
@@ -98,11 +99,9 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

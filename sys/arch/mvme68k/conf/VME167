@@ -1,4 +1,4 @@
-#	$NetBSD: VME167,v 1.11 2001/06/10 14:40:48 scw Exp $
+#	$NetBSD: VME167,v 1.12 2001/07/08 16:32:21 abs Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -30,16 +30,17 @@ file-system 	CD9660
 
 # Networking options
 options 	INET
-#options 	TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 #options        GATEWAY         # IP packet forwarding
 #options        ISO             # OSI networking
 #options        TPIP
 #options        EON
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_14, COMPAT_13, COMPAT_12
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs
