@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.13 1998/04/29 02:41:41 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.14 1998/06/05 02:13:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -106,6 +106,13 @@ extern void dec_kn300_init __P((void));
 #define	dec_kn300_init		platform_not_configured
 #endif
 
+#include "opt_dec_550.h"
+#ifdef DEC_550
+extern void dec_550_init __P((void));
+#else
+#define	dec_550_init		platform_not_configured
+#endif
+
 struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /*  0: ??? */
 	cpu_notsupp("ST_ADU"),			     /*  1: ST_ADU */
@@ -137,7 +144,7 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("ST_DEC_1000A"),		     /* 27: ST_DEC_1000A */
 	cpu_notsupp("ST_DEC_ALPHAVME_224"),	   /* 28: ST_DEC_ALPHAVME_224 */
 	cpu_notsupp("???"),			     /* 29: ??? */
-	cpu_notsupp("ST_DEC_550"),		     /* 30: ST_DEC_550 */
+	cpu_init(dec_550_init,"ST_DEC_550"),	     /* 30: ST_DEC_550 */
 	cpu_notsupp("???"),			     /* 31: ??? */
 	cpu_notsupp("ST_DEC_EV56_PBP"),		     /* 32: ST_DEC_EV56_PBP */
 	cpu_notsupp("ST_DEC_ALPHAVME_320"),	   /* 33: ST_DEC_ALPHAVME_320 */
