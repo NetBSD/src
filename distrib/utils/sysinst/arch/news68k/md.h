@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.15 2003/06/13 11:57:32 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.16 2003/06/14 12:58:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,8 +78,3 @@
  */
 EXTERN char *fdtype INIT("msdos");
 
-/*
- * for a.out -> ELF upgrade
- */
-#define LIB_COUNT	0
-#define LIB_MOVE	1

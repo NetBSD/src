@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 2003/06/13 22:27:06 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.15 2003/06/14 12:58:48 dsl Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -58,7 +58,7 @@ int
 md_get_info(void)
 {
 
-	read_mbr(diskdev, &mbr, sizeof mbr);
+	read_mbr(diskdev, &mbr);
 	md_bios_info(diskdev);
 	return edit_mbr(&mbr);
 }
@@ -69,7 +69,7 @@ md_pre_disklabel(void)
 	printf ("%s", msg_string (MSG_dofdisk));
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
