@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.36 1998/01/04 00:44:20 lukem Exp $
+.\"	$NetBSD: options.4,v 1.37 1998/01/12 15:45:23 drochner Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -450,6 +450,22 @@ filesystem. Without this option, the superuser or owner of the file can
 set and clear them. With this option, only the superuser can set them, and
 they can't be cleared if the securelevel is greater than 0. See also
 .Xr chflags 1 .
+.It Cd options NFS_BOOT_BOOTP
+Enable use of the BOOTP protocol (RFC 951, 1048) to get configuration
+information if NFS is used to mount the root file system. See
+.Xr diskless 8
+for details.
+.It Cd options NFS_BOOT_DHCP
+Same as
+.Dq NFS_BOOT_BOOTP
+, but use the DHCP extensions to the
+BOOTP protocol (RFC 1541).
+.It Cd options NFS_BOOT_BOOTPARAM
+Enable use of the BOOTPARAM protocol, consisting of RARP and
+BOOTPARAM RPC, to get configuration information if NFS
+is used to mount the root file system. See
+.Xr diskless 8
+for details.
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
