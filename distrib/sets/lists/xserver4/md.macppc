@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.3 2002/09/01 15:38:56 mycroft Exp $
+# $NetBSD: md.macppc,v 1.4 2003/03/03 13:08:39 soren Exp $
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/pcitweak
 ./usr/X11R6/bin/xf86cfg
@@ -56,9 +56,6 @@
 ./usr/X11R6/lib/modules/drivers/ati_drv.o
 ./usr/X11R6/lib/modules/drivers/atimisc_drv.o
 ./usr/X11R6/lib/modules/drivers/chips_drv.o
-./usr/X11R6/lib/modules/drivers/cirrus_alpine.o
-./usr/X11R6/lib/modules/drivers/cirrus_drv.o
-./usr/X11R6/lib/modules/drivers/cirrus_laguna.o
 ./usr/X11R6/lib/modules/drivers/fbdev_drv.o
 ./usr/X11R6/lib/modules/drivers/glint_drv.o
 ./usr/X11R6/lib/modules/drivers/mga_drv.o
@@ -129,7 +126,6 @@
 ./usr/X11R6/man/cat1/xf86cfg.0
 ./usr/X11R6/man/cat4
 ./usr/X11R6/man/cat4/chips.0
-./usr/X11R6/man/cat4/cirrus.0
 ./usr/X11R6/man/cat4/citron.0
 ./usr/X11R6/man/cat4/dmc.0
 ./usr/X11R6/man/cat4/dynapro.0
