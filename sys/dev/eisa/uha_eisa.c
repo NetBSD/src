@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.13 1998/08/15 10:10:49 mycroft Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.14 1999/09/30 23:04:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ u24_start_mbox(sc, mscp)
 		bus_space_write_1(iot, ioh, U24_OGMCMD, 0x01);
 	bus_space_write_1(iot, ioh, U24_LINT, U24_OGMFULL);
 
-	if ((mscp->xs->flags & SCSI_POLL) == 0)
+	if ((mscp->xs->xs_control & XS_CTL_POLL) == 0)
 		timeout(uha_timeout, mscp, (mscp->timeout * hz) / 1000);
 }
 
@@ -281,7 +281,7 @@ u24_poll(sc, xs, count)
 		 */
 		if (bus_space_read_1(iot, ioh, U24_SINT) & U24_SDIP)
 			u24_intr(sc);
-		if (xs->flags & ITSDONE)
+		if (xs->xs_status & XS_STS_DONE)
 			return (0);
 		delay(1000);
 		count--;
