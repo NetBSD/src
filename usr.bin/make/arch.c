@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.35 2002/06/15 18:24:55 wiz Exp $	*/
+/*	$NetBSD: arch.c,v 1.36 2003/06/02 21:49:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: arch.c,v 1.35 2002/06/15 18:24:55 wiz Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.36 2003/06/02 21:49:00 matt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.35 2002/06/15 18:24:55 wiz Exp $");
+__RCSID("$NetBSD: arch.c,v 1.36 2003/06/02 21:49:00 matt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1213,8 +1213,8 @@ Arch_LibOODate(GNode *gn)
 	oodate = TRUE;
     } else if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
-    } else if ((gn->cmtime == 0) || (gn->mtime > now) ||
-	       (gn->mtime < gn->cmtime)) {
+    } else if ((!Lst_IsEmpty(gn->children) && gn->cmtime == 0) ||
+	       (gn->mtime > now) || (gn->mtime < gn->cmtime)) {
 	oodate = TRUE;
     } else {
 #ifdef RANLIBMAG
