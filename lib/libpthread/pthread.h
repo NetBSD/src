@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.16 2002/11/01 17:06:32 thorpej Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.17 2002/11/03 12:26:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -156,7 +156,8 @@ __END_DECLS
 #define PTHREAD_CANCEL_ENABLE		0
 #define PTHREAD_CANCEL_DISABLE		1
 
-/* POSIX 1003.1-2001, section 2.5.9.3: "The symbolic constant
+/*
+ * POSIX 1003.1-2001, section 2.5.9.3: "The symbolic constant
  * PTHREAD_CANCELED expands to a constant expression of type (void *)
  * whose value matches no pointer to an object in memory nor the value
  * NULL."
