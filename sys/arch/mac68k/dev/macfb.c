@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.1.2.10 1999/12/24 10:07:48 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.1.2.11 2000/02/12 02:48:06 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -48,10 +48,6 @@
 #include <mac68k/dev/grfvar.h>
 #include <mac68k/dev/macfbvar.h>
 #include <dev/wscons/wsconsio.h>
-
-#ifdef WSDISPLAY_COMPAT_ITE
-#include <machine/iteioctl.h>
-#endif /* WSDISPLAY_COMPAT_ITE */
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
@@ -280,15 +276,6 @@ macfb_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SVIDEO:
 		/* NONE of these operations are supported. */
 		return ENOTTY;
-
-#ifdef WSDISPLAY_COMPAT_ITE
-	case ITEIOC_GETBELL:
-	case ITEIOC_SETBELL:
-	case ITEIOC_RINGBELL:
-		/* NONE of these operations are supported. */
-		return ENOTTY;
-
-#endif /* WSDISPLAY_COMPAT_ITE */
 	}
 
 	return -1;
