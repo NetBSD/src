@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rip.c,v 1.3 1995/03/06 19:11:28 mycroft Exp $	*/
+/*	$NetBSD: print-rip.c,v 1.4 1995/06/20 23:38:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994
@@ -49,20 +49,18 @@ static char rcsid[] =
 static void
 rip_entry_print(register const struct netinfo *ni)
 {
-	if (ntohs(ni->rip_dst.sa_family) != AF_INET) {
+	if (ntohs(ni->rip_family) != AF_INET) {
 		register int i;
 
-		printf(" [family %d:", ntohs(ni->rip_dst.sa_family));
-		for (i = 0; i < 14; i += 2)
-			printf(" %02x%02x", (u_char)ni->rip_dst.sa_data[i],
-				(u_char)ni->rip_dst.sa_data[i+1]);
+		printf(" [family %d:", ntohs(ni->rip_family));
+		printf(" %04x", ni->rip_dst);
 		printf("]");
 	} else {
-		register struct sockaddr_in *sin =
-				(struct sockaddr_in *)&ni->rip_dst;
-		printf(" %s", ipaddr_string(&sin->sin_addr));
-		if (sin->sin_port)
-			printf(" [port %d]", sin->sin_port);
+		struct sockaddr_in sin;
+		sin.sin_addr.s_addr = ni->rip_dst;
+		printf(" %s", ipaddr_string(&sin.sin_addr));
+		if (ni->rip_tag)
+			printf(" [port %d]", ni->rip_tag);
 	}
 	printf("(%d)", ntohl(ni->rip_metric));
 }
@@ -114,6 +112,6 @@ rip_print(const u_char *dat, int length)
 		printf(" rip-%d ?? %d", rp->rip_cmd, length);
 		break;
 	}
-	if (rp->rip_vers != RIPVERSION)
+	if (rp->rip_vers != RIP_VERSION_1)
 		printf(" [vers %d]", rp->rip_vers);
 }
