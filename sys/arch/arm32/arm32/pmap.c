@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 1998/08/28 02:46:51 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 1998/08/29 03:14:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -732,7 +732,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 #endif	/* MACHINE_NEW_NONCONTIG */
 
 	virtual_start = KERNEL_VM_BASE;
-	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE;
+	virtual_end = virtual_start + KERNEL_VM_SIZE - 1;
 
 	ALLOC_PAGE_HOOK(page_hook0, NBPG);
 	ALLOC_PAGE_HOOK(page_hook1, NBPG);
@@ -1094,7 +1094,6 @@ pmap_allocpagedir(pmap)
 	vm_offset_t pa;
 	struct l1pt *pt;
 	pt_entry_t *pte;
-	int loop;
 
 	PDEBUG(0, printf("pmap_allocpagedir(%p)\n", pmap));
 
@@ -1172,35 +1171,6 @@ pmap_allocpagedir(pmap)
 	    + ((PD_SIZE - KERNEL_PD_SIZE) >> 2)),
 	    (void *)pmap->pm_vptpt + ((PD_SIZE - KERNEL_PD_SIZE) >> 2),
 	    (KERNEL_PD_SIZE >> 2));
-
-	/*
-	 * Now we get nasty. We need to map the page
-	 * directory to a standard address in the memory
-	 * map. This means we can easily find the active
-	 * page directory. This is needed by pmap_pte to
-	 * hook in an alternate pmap's page tables.
-	 * This means that a page table is needed in each
-	 * process to map this memory as the kernel
-	 * tables cannot be used as they are shared.
-	 * The HACK is to borrow some of the space in
-	 * the page table that maps all the pmap page
-	 * tables.
-	 * Mapping a 16KB page directory into that means
-	 * that a 16MB chunk of the memory map will no
-	 * longer be mappable. Eventually a chuck of
-	 * user space (at the top end) could be reserved
-	 * for this but for the moment the 16MB block at
-	 * 0xf5000000 is not allocated and so has become
-	 * reserved for this processes.
-	 */
-
-	/* XXX Must really clean this up - mark */
-
-	for (loop = 0; loop < 4; ++loop) {
-		*((pt_entry_t *)(pmap->pm_vptpt +
-		    (CURRENT_PAGEDIR_HOLE >> PDSHIFT) + (loop * 4))) =
-		    L2_PTE_NC_NB(pa + (loop * 0x1000), AP_KRW);
-	}
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
@@ -2625,15 +2595,14 @@ pmap_change_wiring(pmap, va, wired)
  * entry is returned.
  *
  * The way this works is that that the kernel page tables are mapped
- * into the memory map at 0xf3c00000 to 0xf3fffffff. This allows
- * page tables to be located quickly.
+ * into the memory map at ALT_PAGE_TBLS_BASE to ALT_PAGE_TBLS_BASE+4MB.
+ * This allows page tables to be located quickly.
  */
 pt_entry_t *
 pmap_pte(pmap, va)
 	pmap_t pmap;
 	vm_offset_t va;
 {
-	pd_entry_t *pde;
 	pt_entry_t *ptp;
 	pt_entry_t *result;
 
@@ -2654,22 +2623,56 @@ pmap_pte(pmap, va)
 
 	PDEBUG(10, printf("pmap pagetable = P%08lx current = P%08x\n",
 	    pmap->pm_pptpt, (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
-	    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2))+0xefc)) & PG_FRAME)));
+	    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2)) +
+	    (PROCESS_PAGE_TBLS_BASE >> PDSHIFT))) & PG_FRAME)));
 
+	/*
+	 * If the pmap is the kernel pmap or the pmap is the active one
+	 * then we can just return a pointer to entry relative to
+	 * PROCESS_PAGE_TBLS_BASE.
+	 * Otherwise we need to map the page tables to an alternative
+	 * address and reference them there.
+	 */
 	if (pmap == kernel_pmap || pmap->pm_pptpt
 	    == (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
-	    + ((PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)) & ~3)+0xefc)) & PG_FRAME)) {
+	    + ((PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2)) &
+	    ~3) + (PROCESS_PAGE_TBLS_BASE >> PDSHIFT))) & PG_FRAME)) {
 		ptp = (pt_entry_t *)PROCESS_PAGE_TBLS_BASE;
 	} else {
-		pde = (pd_entry_t *)CURRENT_PAGEDIR_BASE;          
+		struct proc *p = curproc;
+
+		/* If we don't have a valid curproc use proc0 */
+		/* Perhaps we should just use kernel_pmap instead */
+		if (p == NULL)
+			p = &proc0;
+#ifdef DIAGNOSTIC
+		/*
+		 * The pmap should always be valid for the process so
+		 * panic if it is not.
+		 */
+		if (!p->p_vmspace || !p->p_vmspace->vm_map.pmap)
+			panic("pmap_pte: problem\n");
+		/*
+		 * The pmap for the current process should be mapped. If it
+		 * is not then we have a problem.
+		 */
+		if (p->p_vmspace->vm_map.pmap->pm_pptpt !=
+		    (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
+		    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2)) +
+		    (PROCESS_PAGE_TBLS_BASE >> PDSHIFT))) & PG_FRAME)) {
+			printf("pmap pagetable = P%08lx current = P%08x ",
+			    pmap->pm_pptpt, (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
+			    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2)) +
+			    (PROCESS_PAGE_TBLS_BASE >> PDSHIFT))) &
+			    PG_FRAME));
+			printf("pptpt=%lx\n", p->p_vmspace->vm_map.pmap->pm_pptpt);
+			panic("pmap_pte: current and pmap mismatch\n");
+		}
+#endif
+
 		ptp = (pt_entry_t *)ALT_PAGE_TBLS_BASE;
-		pde[(ALT_PAGE_TBLS_BASE >> 20) + 0] = L1_PTE(pmap->pm_pptpt + 0x000);
-		pde[(ALT_PAGE_TBLS_BASE >> 20) + 1] = L1_PTE(pmap->pm_pptpt + 0x400);
-		pde[(ALT_PAGE_TBLS_BASE >> 20) + 2] = L1_PTE(pmap->pm_pptpt + 0x800);
-		pde[(ALT_PAGE_TBLS_BASE >> 20) + 3] = L1_PTE(pmap->pm_pptpt + 0xc00);
-		*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE + ((PROCESS_PAGE_TBLS_BASE
-		    >> (PGSHIFT-2)) & ~3) + (ALT_PAGE_TBLS_BASE >> 20))) =
-		    L2_PTE_NC_NB(pmap->pm_pptpt, AP_KRW);
+		pmap_map_in_l1(p->p_vmspace->vm_map.pmap, ALT_PAGE_TBLS_BASE,
+		    pmap->pm_pptpt);
 		cpu_tlb_flushD();
 	}
 	PDEBUG(10, printf("page tables base = %p offset=%lx\n", ptp,
