@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.10 2001/11/07 19:53:19 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.11 2001/12/20 01:20:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.10 2001/11/07 19:53:19 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.11 2001/12/20 01:20:25 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -132,6 +132,11 @@ eca_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	eco_ifattach(ifp, myaddr);
 
+	sc->sc_fiqhandler.fh_func = eca_fiqhandler;
+	sc->sc_fiqhandler.fh_size = eca_efiqhandler - eca_fiqhandler;
+	sc->sc_fiqhandler.fh_flags = 0;
+	sc->sc_fiqhandler.fh_regs = &sc->sc_fiqstate.efs_rx_fiqregs;
+
 	printf("\n");
 }
 
@@ -148,8 +153,8 @@ eca_init(struct ifnet *ifp)
 		return err;
 
 	/* Claim the FIQ early, in case we don't get it. */
-	if (fiq_claim(eca_fiqhandler, eca_efiqhandler - eca_fiqhandler))
-		return EBUSY;
+	if ((err = fiq_claim(&sc->sc_fiqhandler)) != 0)
+		return err;
 
 	if (sc->sc_rcvmbuf == NULL) {
 		err = eca_init_rxbuf(sc, M_WAIT);
@@ -219,7 +224,7 @@ eca_txframe(struct ifnet *ifp, struct mbuf *m)
 	struct eca_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct fiq_regs fr;
+	struct fiqregs fr;
 
 	ioc_fiq_setmask(0);
 	/* Start flag-filling while we work out what to do next. */
@@ -228,10 +233,10 @@ eca_txframe(struct ifnet *ifp, struct mbuf *m)
 	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_tx;
 	sc->sc_transmitting = 1;
 	sc->sc_txmbuf = m;
-	fr.r8_fiq = (register_t)sc->sc_ioh.a1;
-	fr.r9_fiq = (register_t)sc->sc_txmbuf->m_data;
-	fr.r10_fiq = (register_t)sc->sc_txmbuf->m_len;
-	fr.r11_fiq = (register_t)&sc->sc_fiqstate;
+	fr.fr_r8 = (register_t)sc->sc_ioh.a1;
+	fr.fr_r9 = (register_t)sc->sc_txmbuf->m_data;
+	fr.fr_r10 = (register_t)sc->sc_txmbuf->m_len;
+	fr.fr_r11 = (register_t)&sc->sc_fiqstate;
 	fiq_setregs(&fr);
 	sc->sc_fiqstate.efs_tx_curmbuf = sc->sc_txmbuf;
 	fiq_downgrade_handler = eca_tx_downgrade;
@@ -351,13 +356,13 @@ void
 eca_init_rx_soft(struct eca_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	struct fiq_regs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
+	struct fiqregs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
 
 	memset(fr, 0, sizeof(*fr));
-	fr->r8_fiq = (register_t)sc->sc_ioh.a1;
-	fr->r9_fiq = (register_t)sc->sc_rcvmbuf->m_data;
-	fr->r10_fiq = (register_t)ECO_ADDR_LEN;
-	fr->r11_fiq = (register_t)&sc->sc_fiqstate;
+	fr->fr_r8 = (register_t)sc->sc_ioh.a1;
+	fr->fr_r9 = (register_t)sc->sc_rcvmbuf->m_data;
+	fr->fr_r10 = (register_t)ECO_ADDR_LEN;
+	fr->fr_r11 = (register_t)&sc->sc_fiqstate;
 	sc->sc_fiqstate.efs_rx_curmbuf = sc->sc_rcvmbuf;
 	sc->sc_fiqstate.efs_rx_flags = 0;
 	sc->sc_fiqstate.efs_rx_myaddr = LLADDR(ifp->if_sadl)[0];
@@ -375,7 +380,7 @@ eca_init_rx_hard(struct eca_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct fiq_regs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
+	struct fiqregs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
 
 	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_rx;
 	sc->sc_transmitting = 0;
@@ -417,7 +422,7 @@ eca_stop(struct ifnet *ifp, int disable)
 	ioc_fiq_setmask(0);
 	fiq_downgrade_handler = NULL;
 	eca_fiqowner = NULL;
-	fiq_release();
+	fiq_release(&sc->sc_fiqhandler);
 	if (sc->sc_rcvmbuf != NULL) {
 		m_freem(sc->sc_rcvmbuf);
 		sc->sc_rcvmbuf = NULL;
@@ -449,7 +454,7 @@ eca_gotframe(void *arg)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct fiq_regs fr;
+	struct fiqregs fr;
 	int sr2;
 	struct mbuf *m, *mtail, *n, *reply;
 
@@ -469,7 +474,7 @@ eca_gotframe(void *arg)
 		if (eca_init_rxbuf(sc, M_DONTWAIT) == 0) {
 			ifp->if_ipackets++; /* XXX packet vs frame? */
 			/* Trim the tail of the mbuf chain. */
-			mtail->m_len = (caddr_t)(fr.r9_fiq) - mtail->m_data;
+			mtail->m_len = (caddr_t)(fr.fr_r9) - mtail->m_data;
 			m_freem(mtail->m_next);
 			mtail->m_next = NULL;
 			/* Set up the header of the chain. */
@@ -488,7 +493,7 @@ eca_gotframe(void *arg)
 		mtail = sc->sc_fiqstate.efs_rx_curmbuf;
 		log(LOG_ERR, "%s: Rx overrun (state = %d, len = %ld)\n",
 		    sc->sc_dev.dv_xname, sc->sc_ec.ec_state,
-		    (caddr_t)(fr.r9_fiq) - mtail->m_data);
+		    (caddr_t)(fr.fr_r9) - mtail->m_data);
 		ifp->if_ierrors++;
 
 		/* Discard the rest of the frame. */

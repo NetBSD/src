@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.h,v 1.3 2001/09/10 23:17:49 bjh21 Exp $	*/
+/*	$NetBSD: fiq.h,v 1.4 2001/12/20 01:20:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -45,20 +45,6 @@
 #define FIQ_FDDRQ	IOC_FIQ_FH0	/* Floppy disc data request */
 #define FIQ_SINTR	IOC_FIQ_C4	/* Serial line interrupt */
 
-struct fiq_regs {
-	register_t	r8_fiq;
-	register_t	r9_fiq;
-	register_t	r10_fiq;
-	register_t	r11_fiq;
-	register_t	r12_fiq;
-	register_t	r13_fiq;
-};
-
-extern int fiq_claim(void *, size_t);
-extern void fiq_release(void);
-extern void fiq_installhandler(void *, size_t);
-extern void fiq_setregs(const struct fiq_regs *);
-extern void fiq_getregs(struct fiq_regs *);
 extern void (*fiq_downgrade_handler)(void);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.h,v 1.2 1998/05/01 21:18:40 cgd Exp $	*/
+/*	$NetBSD: shark_fiq.h,v 1.1 2001/12/20 01:20:27 thorpej Exp $	*/
 
 /*
  * Copyright 1997
