@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/02/27 03:28:30 tv Exp $
+#	$NetBSD: Makefile,v 1.13 1999/03/19 22:54:40 thorpej Exp $
 
 OBJS+=		c++rt0.o
 
@@ -7,4 +7,4 @@ c++rt0.o: c++rt0.c
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-.include "${.CURDIR}/../Makefile.csu.aout"
+.include "${.CURDIR}/../common_aout/Makefile.inc"
