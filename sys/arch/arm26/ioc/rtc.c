@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.5 2000/11/26 18:12:36 bjh21 Exp $	*/
+/*	$NetBSD: rtc.c,v 1.6 2001/08/26 12:24:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rtc.c,v 1.5 2000/11/26 18:12:36 bjh21 Exp $");
+__RCSID("$NetBSD: rtc.c,v 1.6 2001/08/26 12:24:25 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -53,7 +53,11 @@ __RCSID("$NetBSD: rtc.c,v 1.5 2000/11/26 18:12:36 bjh21 Exp $");
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+
+#include <machine/machdep.h>
+
 #include <dev/clock_subr.h>
+
 #include <arm26/ioc/iic.h>
 #include <arm26/ioc/pcf8583reg.h>
 
@@ -72,13 +76,13 @@ static int rtc_gettime(todr_chip_handle_t, struct timeval *);
 static int rtc_settime(todr_chip_handle_t, struct timeval *);
 static int rtc_getcal(todr_chip_handle_t, int *);
 static int rtc_setcal(todr_chip_handle_t, int);
-static int cmos_read(struct device *, int);
-static int cmos_write(struct device *, int, int);
 
 #define RTC_ADDR_YEAR     	0xc0
 #define RTC_ADDR_CENT     	0xc1
 
 extern struct cfdriver rtc_cd;
+
+struct rtc_softc *the_rtc;
 
 /* device and attach structures */
 
@@ -168,23 +172,28 @@ rtcattach(parent, self, aux)
 	sc->sc_ct.todr_gettime = rtc_gettime;
 	sc->sc_ct.todr_getcal = rtc_getcal;
 	sc->sc_ct.todr_setcal = rtc_setcal;
+	if (the_rtc == NULL)
+		the_rtc = sc;
  out:
 	printf("\n");
 }
 
 /* Read a byte from CMOS RAM */
 
-static int
-cmos_read(struct device *self, int location)
+int
+cmos_read(int location)
 {
 	u_char buff;
-	struct rtc_softc *sc = (struct rtc_softc *)self;
+	struct rtc_softc *sc = the_rtc;
 
+	KASSERT(sc != NULL);
 	buff = location;
 
-	if (iic_control(self->dv_parent, sc->sc_addr | IIC_WRITE, &buff, 1))
+	if (iic_control(sc->sc_dev.dv_parent, sc->sc_addr | IIC_WRITE,
+	    &buff, 1))
 		return(-1);
-	if (iic_control(self->dv_parent, sc->sc_addr | IIC_READ, &buff, 1))
+	if (iic_control(sc->sc_dev.dv_parent, sc->sc_addr | IIC_READ,
+	    &buff, 1))
 		return(-1);
 
 	return(buff);
@@ -193,16 +202,18 @@ cmos_read(struct device *self, int location)
 
 /* Write a byte to CMOS RAM */
 
-static int
-cmos_write(struct device *self, int location, int value)
+int
+cmos_write(int location, int value)
 {
 	u_char buff[2];
-	struct rtc_softc *sc = (struct rtc_softc *)self;
+	struct rtc_softc *sc = the_rtc;
 
+	KASSERT(sc != NULL);
 	buff[0] = location;
 	buff[1] = value;
 
-	if (iic_control(self->dv_parent, sc->sc_addr | IIC_WRITE, buff, 2))
+	if (iic_control(sc->sc_dev.dv_parent, sc->sc_addr | IIC_WRITE,
+	    buff, 2))
 		return(-1);
 
 	return(0);
@@ -232,9 +243,9 @@ rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 			sc->sc_addr | IIC_WRITE, buff, 7))
 		return EIO;
 
-	if (cmos_write(&sc->sc_dev, RTC_ADDR_YEAR, ymdhms.dt_year % 100))
+	if (cmos_write(RTC_ADDR_YEAR, ymdhms.dt_year % 100))
 		return EIO;
-	if (cmos_write(&sc->sc_dev, RTC_ADDR_CENT, ymdhms.dt_year / 100))
+	if (cmos_write(RTC_ADDR_CENT, ymdhms.dt_year / 100))
 		return EIO;
 	return 0;
 }
@@ -247,13 +258,13 @@ inittodr(time_t base)
 	struct timeval todrtime;
 
 	check = 0;
-	if (rtc_cd.cd_ndevs == 0 || rtc_cd.cd_devs[0] == NULL) {
+	if (the_rtc == NULL) {
 		printf("inittodr: rtc0 not present");
 		time.tv_sec = base;
 		time.tv_usec = 0;
 		check = 1;
 	} else {
-		chip = &((struct rtc_softc *)(rtc_cd.cd_devs[0]))->sc_ct;
+		chip = &the_rtc->sc_ct;
 		if (todr_gettime(chip, &todrtime) != 0) {
 			printf("inittodr: Error reading clock");
 			time.tv_sec = base;
@@ -311,11 +322,11 @@ rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	ymdhms.dt_mon = FROMBCD(buff[PCF8583_REG_WKDYMON] &
 				PCF8583_MON_MASK);
 
-	byte = cmos_read(&sc->sc_dev, RTC_ADDR_YEAR);
+	byte = cmos_read(RTC_ADDR_YEAR);
 	if (byte == -1)
 		return EIO;
 	ymdhms.dt_year = byte;
-	byte = cmos_read(&sc->sc_dev, RTC_ADDR_CENT);
+	byte = cmos_read(RTC_ADDR_CENT);
 	if (byte == -1)
 		return EIO;
 	ymdhms.dt_year += 100 * byte;
@@ -348,163 +359,5 @@ rtc_setcal(todr_chip_handle_t handle, int v)
 
 	return EOPNOTSUPP;
 }
-
-
-#if 0
-int
-rtcopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	struct rtc_softc *sc;
-	int unit = minor(dev);
-    
-	if (unit >= rtc_cd.cd_ndevs)
-		return(ENXIO);
-
-	sc = rtc_cd.cd_devs[unit];
-    
-	if (!sc) return(ENXIO);
-
-	if (sc->sc_flags & RTC_BROKEN) return(ENXIO);
-	if (sc->sc_flags & RTC_OPEN) return(EBUSY);
-
-	sc->sc_flags |= RTC_OPEN;
-
-	return(0);
-}
-
-
-int
-rtcclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	int unit = minor(dev);
-	struct rtc_softc *sc = rtc_cd.cd_devs[unit];
-    
-	sc->sc_flags &= ~RTC_OPEN;
-
-	return(0);
-}
-
-
-int
-rtcread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
-{
-	rtc_t rtc;
-	int s;
-	char buffer[32];
-	int length;
-
-	s = splclock();
-	if (rtc_read(NULL, &rtc) == 0) {
-		(void)splx(s);
-		return(ENXIO);
-	}
-
-	(void)splx(s);
-
-	sprintf(buffer, "%02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
-	    rtc.rtc_hour, rtc.rtc_min, rtc.rtc_sec, rtc.rtc_centi,
-	    rtc.rtc_micro, rtc.rtc_day, rtc.rtc_mon, rtc.rtc_cen,
-	    rtc.rtc_year);
-
-	if (uio->uio_offset > strlen(buffer))
-		return 0;
-
-	length = strlen(buffer) - uio->uio_offset;
-	if (length > uio->uio_resid)
-		length = uio->uio_resid;
-
-	return(uiomove((caddr_t)buffer, length, uio));
-}
-
-
-static int
-twodigits(buffer, pos)
-	char *buffer;
-	int pos;
-{
-	int result = 0;
-
-	if (buffer[pos] >= '0' && buffer[pos] <= '9')
-		result = (buffer[pos] - '0') * 10;
-	if (buffer[pos+1] >= '0' && buffer[pos+1] <= '9')
-		result += (buffer[pos+1] - '0');
-	return(result);
-}
-
-int
-rtcwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
-{
-	rtc_t rtc;
-	int s;
-	char buffer[25];
-	int length;
-	int error;
-
-	/*
-	 * We require atomic updates!
-	 */
-	length = uio->uio_resid;
-	if (uio->uio_offset || (length != sizeof(buffer)
-	  && length != sizeof(buffer - 1)))
-		return(EINVAL);
-	
-	if ((error = uiomove((caddr_t)buffer, sizeof(buffer), uio)))
-		return(error);
-
-	if (length == sizeof(buffer) && buffer[sizeof(buffer) - 1] != '\n')
-		return(EINVAL);
-
-	printf("rtcwrite: %s\n", buffer);
-
-	rtc.rtc_micro = 0;
-	rtc.rtc_centi = twodigits(buffer, 9);
-	rtc.rtc_sec   = twodigits(buffer, 6);
-	rtc.rtc_min   = twodigits(buffer, 3);
-	rtc.rtc_hour  = twodigits(buffer, 0);
-	rtc.rtc_day   = twodigits(buffer, 14);
-	rtc.rtc_mon   = twodigits(buffer, 17);
-	rtc.rtc_year  = twodigits(buffer, 22); 
-	rtc.rtc_cen   = twodigits(buffer, 20); 
-
-	s = splclock();
-	rtc_write(NULL, &rtc);
-	(void)splx(s);
-
-	return(0);
-}
-
-
-int
-rtcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	int cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-/*	struct rtc_softc *sc = rtc_cd.cd_devs[minor(dev)];*/
-
-/*	switch (cmd) {
-	case RTCIOC_READ:
-		return(0);
-	}*/
-
-	return(EINVAL);
-}
-#endif
 
 /* End of rtc.c */
