@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.21 1995/11/06 19:58:01 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.22 1995/12/08 19:13:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -1093,6 +1093,8 @@ ccdioctl(dev, cmd, data, flag, p)
 		/*
 		 * Free ccd_softc information and clear entry.
 		 */
+
+		/* Close the components and free their pathnames. */
 		for (i = 0; i < cs->sc_nccdisks; ++i) {
 			/*
 			 * XXX: this close could potentially fail and
@@ -1107,8 +1109,13 @@ ccdioctl(dev, cmd, data, flag, p)
 			(void)vn_close(cs->sc_cinfo[i].ci_vp, FREAD|FWRITE,
 			    p->p_ucred, p);
 			free(cs->sc_cinfo[i].ci_path, M_DEVBUF);
-			free(cs->sc_itable[i].ii_index, M_DEVBUF);
 		}
+
+		/* Free interleave index. */
+		for (i = 0; cs->sc_itable[i].ii_ndisk; ++i)
+			free(cs->sc_itable[i].ii_index, M_DEVBUF);
+
+		/* Free component info and interleave table. */
 		free(cs->sc_cinfo, M_DEVBUF);
 		free(cs->sc_itable, M_DEVBUF);
 		cs->sc_flags &= ~CCDF_INITED;
