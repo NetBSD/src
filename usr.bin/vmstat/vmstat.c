@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.64 2000/06/04 02:25:40 perry Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.65 2000/06/04 08:07:36 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.64 2000/06/04 02:25:40 perry Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.65 2000/06/04 08:07:36 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,35 +119,33 @@ __RCSID("$NetBSD: vmstat.c,v 1.64 2000/06/04 02:25:40 perry Exp $");
 #include <uvm/uvm_stat.h>
 
 struct nlist namelist[] = {
-#define	X_CPTIME	0
-	{ "_cp_time" },
-#define	X_BOOTTIME	1
+#define	X_BOOTTIME	0
 	{ "_boottime" },
-#define X_HZ		2
+#define X_HZ		1
 	{ "_hz" },
-#define X_STATHZ	3
+#define X_STATHZ	2
 	{ "_stathz" },
-#define X_NCHSTATS	4
+#define X_NCHSTATS	3
 	{ "_nchstats" },
-#define	X_INTRNAMES	5
+#define	X_INTRNAMES	4
 	{ "_intrnames" },
-#define	X_EINTRNAMES	6
+#define	X_EINTRNAMES	5
 	{ "_eintrnames" },
-#define	X_INTRCNT	7
+#define	X_INTRCNT	6
 	{ "_intrcnt" },
-#define	X_EINTRCNT	8
+#define	X_EINTRCNT	7
 	{ "_eintrcnt" },
-#define	X_KMEMSTAT	9
+#define	X_KMEMSTAT	8
 	{ "_kmemstats" },
-#define	X_KMEMBUCKETS	10
+#define	X_KMEMBUCKETS	9
 	{ "_bucket" },
-#define X_ALLEVENTS	11
+#define X_ALLEVENTS	10
 	{ "_allevents" },
-#define X_POOLHEAD	12
+#define X_POOLHEAD	11
 	{ "_pool_head" },
-#define	X_UVMEXP	13
+#define	X_UVMEXP	12
 	{ "_uvmexp" },
-#define X_END		14
+#define X_END		13
 #if defined(pc532)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
