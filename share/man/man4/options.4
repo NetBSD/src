@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.60 1998/09/22 22:53:06 perry Exp $
+.\"	$NetBSD: options.4,v 1.61 1998/09/28 17:14:31 rvb Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -486,6 +486,21 @@ by mounting a local writable file system on top of the read-only file system.
 See
 .Xr mount_union 8
 for details.
+.It Cd file-system CODA
+.Em [EXPERIMENTAL]
+Includes code for the Coda file system.
+Coda is a distributed file system like NFS and AFS.  It is
+freely available, like NFS, but it functions much like AFS in being a
+"stateful" file system.  Both Coda and AFS cache files on your local
+machine to improve performance.  Then Coda goes a step further than AFS
+by letting you access the cached files when there is no available
+network, viz. disconnected laptops and network outages.  In Coda, both
+the client and server are outside the kernel which makes them easier
+to experiment with.  Coda is available for several UNIX and non-UNIX
+platforms.
+See http://www.coda.cs.cmu.edu for more details.
+NOTE: You also need to enable the pseudo-device, vcoda, for the Coda
+filesystem to work.
 .El
 .Ss File System Options
 .Bl -ohang
