@@ -1,8 +1,8 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.2 2003/01/02 23:37:59 thorpej Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.3 2003/07/30 18:25:50 bsh Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2003 Fujitsu Component Limited
+ * Copyright (c) 2002, 2003 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,21 +87,38 @@ extern volatile uint32_t *s3c2xx0_intr_mask_reg;
 
 extern __volatile int current_spl_level;
 extern __volatile int intr_mask;
+extern __volatile int global_intr_mask;
 extern __volatile int softint_pending;
 extern int s3c2xx0_imask[];
 extern int s3c2xx0_ilevel[];
 
-void s3c2xx0_do_pending(void);
+void s3c2xx0_do_pending(int);
 void s3c2xx0_update_intr_masks( int, int );
-void s3c2xx0_mask_interrupts(int);
-void s3c2xx0_unmask_interrupts(int);
+
+static __inline void
+s3c2xx0_mask_interrupts(int mask)
+{
+	int save = disable_interrupts(I32_bit);
+	global_intr_mask |= mask;
+	*s3c2xx0_intr_mask_reg = intr_mask & ~global_intr_mask;
+	restore_interrupts(save);
+}
+
+static __inline void
+s3c2xx0_unmask_interrupts(int mask)
+{
+	int save = disable_interrupts(I32_bit);
+	global_intr_mask &= ~mask;
+	*s3c2xx0_intr_mask_reg = intr_mask & ~global_intr_mask;
+	restore_interrupts(save);
+}
 
 static __inline void
 s3c2xx0_setipl(int new)
 {
 	current_spl_level = new;
 	intr_mask = s3c2xx0_imask[current_spl_level];
-	*s3c2xx0_intr_mask_reg = intr_mask;
+	*s3c2xx0_intr_mask_reg = intr_mask & ~global_intr_mask;
 }
 
 
@@ -116,7 +133,7 @@ s3c2xx0_splx(int new)
 
 	/* If there are software interrupts to process, do it. */
 	if (softint_pending & intr_mask)
-		s3c2xx0_do_pending();
+		s3c2xx0_do_pending(0);
 }
 
 
@@ -152,7 +169,7 @@ s3c2xx0_setsoftintr(int si)
 
 	/* Process unmasked pending soft interrupts. */
 	if ( softint_pending & intr_mask )
-		s3c2xx0_do_pending();
+		s3c2xx0_do_pending(0);
 }
 
 
