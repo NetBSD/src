@@ -1,4 +1,4 @@
-/*	$KAME: gssapi.h,v 1.4 2001/01/29 23:18:52 thorpej Exp $	*/
+/*	$KAME: gssapi.h,v 1.5 2002/05/07 18:13:25 sakane Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -36,7 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __FreeBSD__
+#include "/usr/include/gssapi.h"
+#else
 #include <gssapi/gssapi.h>
+#endif
 
 #define GSSAPI_DEF_NAME         "ike"
 

@@ -1,7 +1,7 @@
-/*	$KAME: plog.h,v 1.10 2002/05/07 08:56:19 sakane Exp $	*/
+/*	$KAME: arc4random.h,v 1.1 2002/06/04 05:23:26 itojun Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * Copyright (C) 2000 WIDE Project.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -29,40 +29,4 @@
  * SUCH DAMAGE.
  */
 
-#define LC_DEFAULT_LOGF	"/var/log/racoon.log"
-
-#ifdef HAVE_STDARG_H
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#include <syslog.h>
-
-/*
- * INFO: begin negotiation, SA establishment/deletion/expiration.
- * NOTIFY: just notifiable.
- * WARNING: not error strictly.
- * ERROR: system call error. also invalid parameter/format.
- * DEBUG1: debugging informatioin.
- * DEBUG2: too more verbose. e.g. parsing config.
- */
-#define LLV_INFO	1
-#define LLV_NOTIFY	2
-#define LLV_WARNING	3
-#define LLV_ERROR	4
-#define LLV_DEBUG	5
-#define LLV_DEBUG2	6
- 
-#define LLV_BASE	4	/* always logging less than this value. */
-
-extern char *pname;
-extern u_int32_t loglevel;
-extern int f_foreground;
-
-struct sockaddr;
-extern void plog __P((int, const char *, struct sockaddr *, const char *, ...));
-extern void plogv __P((int, const char *, struct sockaddr *,
-	const char *, va_list));
-extern void plogdump __P((int, void *, size_t));
-extern void ploginit __P((void));
-extern void plogset __P((char *));
+extern u_int32_t arc4random __P((void));

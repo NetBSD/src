@@ -1,4 +1,4 @@
-/*	$KAME: plog.h,v 1.10 2002/05/07 08:56:19 sakane Exp $	*/
+/*	$KAME: cftoken_proto.h,v 1.1 2002/09/27 05:55:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,40 +29,13 @@
  * SUCH DAMAGE.
  */
 
-#define LC_DEFAULT_LOGF	"/var/log/racoon.log"
+extern int yyerrorcount;
 
-#ifdef HAVE_STDARG_H
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#include <syslog.h>
+extern int yylex __P((void));
+extern void yyerror __P((char *, ...));
+extern void yywarn __P((char *, ...));
 
-/*
- * INFO: begin negotiation, SA establishment/deletion/expiration.
- * NOTIFY: just notifiable.
- * WARNING: not error strictly.
- * ERROR: system call error. also invalid parameter/format.
- * DEBUG1: debugging informatioin.
- * DEBUG2: too more verbose. e.g. parsing config.
- */
-#define LLV_INFO	1
-#define LLV_NOTIFY	2
-#define LLV_WARNING	3
-#define LLV_ERROR	4
-#define LLV_DEBUG	5
-#define LLV_DEBUG2	6
- 
-#define LLV_BASE	4	/* always logging less than this value. */
-
-extern char *pname;
-extern u_int32_t loglevel;
-extern int f_foreground;
-
-struct sockaddr;
-extern void plog __P((int, const char *, struct sockaddr *, const char *, ...));
-extern void plogv __P((int, const char *, struct sockaddr *,
-	const char *, va_list));
-extern void plogdump __P((int, void *, size_t));
-extern void ploginit __P((void));
-extern void plogset __P((char *));
+extern int yycf_switch_buffer __P((char *));
+extern int yycf_set_buffer __P((char *));
+extern void yycf_init_buffer __P((void));
+extern void yycf_clean_buffer __P((void));

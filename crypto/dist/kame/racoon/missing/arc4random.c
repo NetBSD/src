@@ -1,7 +1,7 @@
-/*	$KAME: plog.h,v 1.10 2002/05/07 08:56:19 sakane Exp $	*/
+/*	$KAME: arc4random.c,v 1.1 2002/06/04 05:20:27 itojun Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * Copyright (C) 2000 WIDE Project.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -28,41 +28,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#define LC_DEFAULT_LOGF	"/var/log/racoon.log"
-
-#ifdef HAVE_STDARG_H
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#include <syslog.h>
-
 /*
- * INFO: begin negotiation, SA establishment/deletion/expiration.
- * NOTIFY: just notifiable.
- * WARNING: not error strictly.
- * ERROR: system call error. also invalid parameter/format.
- * DEBUG1: debugging informatioin.
- * DEBUG2: too more verbose. e.g. parsing config.
+ * a stub function to make random() to return good random numbers.
  */
-#define LLV_INFO	1
-#define LLV_NOTIFY	2
-#define LLV_WARNING	3
-#define LLV_ERROR	4
-#define LLV_DEBUG	5
-#define LLV_DEBUG2	6
- 
-#define LLV_BASE	4	/* always logging less than this value. */
 
-extern char *pname;
-extern u_int32_t loglevel;
-extern int f_foreground;
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/uio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <err.h>
 
-struct sockaddr;
-extern void plog __P((int, const char *, struct sockaddr *, const char *, ...));
-extern void plogv __P((int, const char *, struct sockaddr *,
-	const char *, va_list));
-extern void plogdump __P((int, void *, size_t));
-extern void ploginit __P((void));
-extern void plogset __P((char *));
+#include "arc4random.h"
+
+static int fd = -1;
+
+static void
+arc4random_init()
+{
+
+	fd = open("/dev/urandom", O_RDONLY, 0600);
+	if (fd < 0) {
+		err(1, "/dev/urandom");
+		/*NOTREACHED*/
+	}
+}
+
+u_int32_t
+arc4random()
+{
+	u_int32_t v;
+
+	if (fd < 0)
+		arc4random_init();
+	read(fd, &v, sizeof(v));
+	return v;
+}

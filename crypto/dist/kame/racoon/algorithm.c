@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.c,v 1.23 2002/04/25 09:48:32 sakane Exp $	*/
+/*	$KAME: algorithm.c,v 1.25 2002/06/10 20:01:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -60,15 +60,15 @@ static struct hash_algorithm oakley_hashdef[] = {
 { "sha2_256",	algtype_sha2_256,	OAKLEY_ATTR_HASH_ALG_SHA2_256,
 		eay_sha2_256_init,	eay_sha2_256_update,
 		eay_sha2_256_final,	eay_sha2_256_hashlen,
-		eay_sha1_one, },
+		eay_sha2_256_one, },
 { "sha2_384",	algtype_sha2_384,	OAKLEY_ATTR_HASH_ALG_SHA2_384,
 		eay_sha2_384_init,	eay_sha2_384_update,
 		eay_sha2_384_final,	eay_sha2_384_hashlen,
-		eay_sha1_one, },
+		eay_sha2_384_one, },
 { "sha2_512",	algtype_sha2_512,	OAKLEY_ATTR_HASH_ALG_SHA2_512,
 		eay_sha2_512_init,	eay_sha2_512_update,
 		eay_sha2_512_final,	eay_sha2_512_hashlen,
-		eay_sha1_one, },
+		eay_sha2_512_one, },
 };
 
 static struct hmac_algorithm oakley_hmacdef[] = {
@@ -363,7 +363,7 @@ alg_oakley_hmacdef_one(doi, key, buf)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __FUNCTION__,
+	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __func__,
 		f->name, buf->l, timedelta(&start, &end));
 #endif
 
@@ -462,7 +462,7 @@ alg_oakley_encdef_decrypt(doi, buf, key, iv)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __FUNCTION__,
+	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __func__,
 		f->name, key->l << 3, buf->l, timedelta(&start, &end));
 #endif
 	return res;
@@ -491,7 +491,7 @@ alg_oakley_encdef_encrypt(doi, buf, key, iv)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __FUNCTION__,
+	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __func__,
 		f->name, key->l << 3, buf->l, timedelta(&start, &end));
 #endif
 	return res;

@@ -1,4 +1,4 @@
-#	$KAME: Makefile.in,v 1.36 2001/11/16 04:34:55 sakane Exp $
+#	$KAME: Makefile.in,v 1.39 2002/09/27 06:04:59 itojun Exp $
 
 @SET_MAKE@
 srcdir=	@srcdir@
@@ -7,7 +7,7 @@ CC=	@CC@
 LDFLAGS=@LDFLAGS@
 CPPFLAGS=	@CPPFLAGS@
 OPTFLAG=@OPTFLAG@
-CFLAGS=	@CFLAGS@ $(CPPFLAGS) @DEFS@ $(CPPFLAGS) $(OPTFLAG) -DIPSEC -I. -I$(srcdir) -Dss_family=__ss_family -Dss_len=__ss_len -DSYSCONFDIR=\"${sysconfdir}\"
+CFLAGS=	@CFLAGS@ $(CPPFLAGS) @DEFS@ $(CPPFLAGS) $(OPTFLAG) -DIPSEC -I. -I$(srcdir) -DSYSCONFDIR=\"${sysconfdir}\"
 CFLAGS+=-DYY_NO_UNPUT
 CFLAGS+=-I${srcdir}/../libipsec
 LIBS=	@LIBS@
@@ -22,7 +22,7 @@ INSTALL=@INSTALL@
 
 PROG=	racoon racoonctl eaytest
 #PROG+=	pfkey
-OBJS=	main.o session.o isakmp.o handler.o random.o \
+OBJS=	main.o session.o isakmp.o handler.o \
 	isakmp_ident.o isakmp_agg.o isakmp_base.o \
 	isakmp_quick.o isakmp_inf.o isakmp_newg.o \
 	gssapi.o dnssec.o getcertsbyname.o \
@@ -73,6 +73,8 @@ rijndael-alg-fst.o: $(srcdir)/missing/crypto/rijndael/$*.c
 	$(CC) $(CFLAGS) -c $(srcdir)/missing/crypto/rijndael/$*.c
 sha2.o: $(srcdir)/missing/crypto/sha2/$*.c
 	$(CC) $(CFLAGS) -c $(srcdir)/missing/crypto/sha2/$*.c
+arc4random.o: $(srcdir)/missing/$*.c
+	$(CC) $(CFLAGS) -c $(srcdir)/missing/$*.c
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
@@ -95,7 +97,7 @@ install:
 	done
 
 clean:
-	-rm -f $(PROG) *.o *.core y.tab.h
+	-rm -f $(PROG) *.o *.core y.tab.h cftoken.c cfparse.c cftoken.h cfparse.h
 
 distclean: clean
 	-rm -f Makefile config.cache config.status config.log

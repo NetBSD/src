@@ -1,4 +1,4 @@
-/*	$KAME: logger.c,v 1.8 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: logger.c,v 1.9 2002/09/03 14:37:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -77,8 +77,8 @@ log_open(siz, fname)
 
 	p->tbuf = (time_t *)racoon_malloc(sizeof(time_t *) * siz);
 	if (p->tbuf == NULL) {
-		racoon_free(p);
 		racoon_free(p->buf);
+		racoon_free(p);
 		return NULL;
 	}
 	memset(p->tbuf, 0, sizeof(time_t *) * siz);

@@ -1,4 +1,4 @@
-/*	$KAME: misc.h,v 1.12 2001/08/16 14:37:29 itojun Exp $	*/
+/*	$KAME: misc.h,v 1.13 2002/06/10 19:58:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,8 +31,8 @@
 
 #define BIT2STR(b) bit2str(b, sizeof(b)<<3)
 
-#ifdef HAVE_FUNCTION_MACRO
-#define LOCATION        debug_location(__FILE__, __LINE__, __FUNCTION__)
+#ifdef HAVE_FUNC_MACRO
+#define LOCATION        debug_location(__FILE__, __LINE__, __func__)
 #else
 #define LOCATION        debug_location(__FILE__, __LINE__, NULL)
 #endif

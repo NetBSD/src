@@ -1,4 +1,4 @@
-/*	$KAME: kmpstat.c,v 1.29 2001/08/02 12:16:05 itojun Exp $	*/
+/*	$KAME: kmpstat.c,v 1.30 2002/08/31 07:53:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -720,7 +720,7 @@ get_comindexes(family, ac, av)
 	memcpy(&ci->dst, dst, dst->sa_len);
 
 	if (p_name)
-		
+		racoon_free(p_name);
 	return buf;
 
    bad:
@@ -728,9 +728,9 @@ get_comindexes(family, ac, av)
 		racoon_free(p_name);
 	if (p_port)
 		racoon_free(p_port);
-	if (p_prefs);
+	if (p_prefs)
 		racoon_free(p_prefs);
-	if (p_prefd);
+	if (p_prefd)
 		racoon_free(p_prefd);
 	return NULL;
 }

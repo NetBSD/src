@@ -1,4 +1,4 @@
-# $KAME: racoon.conf.sample,v 1.27 2001/09/05 22:46:39 sakane Exp $
+# $KAME: racoon.conf.sample,v 1.28 2002/10/18 14:33:28 itojun Exp $
 
 # "path" affects "include" directive.  "path" must be specified before any
 # "include" directive with relative file path.
@@ -21,7 +21,7 @@ path pre_shared_key "/usr/local/v6/etc/psk.txt" ;
 remote anonymous
 {
 	#exchange_mode main,aggressive,base;
-	exchange_mode aggressive,main,base;
+	exchange_mode main,base;
 
 	#my_identifier fqdn "server.kame.net";
 	#certificate_type x509 "foo@kame.net.cert" "foo@kame.net.priv" ;
