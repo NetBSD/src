@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.6 2003/01/03 04:36:26 takemura Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.1 2004/05/28 17:52:06 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,14 +28,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.6 2003/01/03 04:36:26 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.1 2004/05/28 17:52:06 tsarna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/hpc/tpcalibvar.h>
+#include <dev/wscons/tpcalibvar.h>
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
