@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.18 2002/03/05 21:29:30 wiz Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.19 2002/03/29 15:07:52 ross Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.18 2002/03/05 21:29:30 wiz Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.19 2002/03/29 15:07:52 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,7 @@ printhead(int mesg)
 	if (mp->m_flag & MBOX)
 		dispc = 'M';
 	parse(headline, &hl, pbuf);
-	snprintf(wcount, LINESIZE, "%3ld/%-5ld", mp->m_lines, mp->m_size);
+	snprintf(wcount, LINESIZE, "%3ld/%-5ld", mp->m_blines, mp->m_size);
 	subjlen = screenwidth - 50 - strlen(wcount);
 	name = value("show-rcpt") != NULL ?
 		skin(hfield("to", mp)) : nameof(mp, 0);
@@ -317,7 +317,7 @@ type1(int *msgvec, int doign, int page)
 		nlines = 0;
 		if (!page) {
 			for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++)
-				nlines += message[*ip - 1].m_lines;
+				nlines += message[*ip - 1].m_blines;
 		}
 		if (page || nlines > (*cp ? atoi(cp) : realscreenheight)) {
 			cp = value("PAGER");
