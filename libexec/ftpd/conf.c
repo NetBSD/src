@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.47 2002/05/30 00:24:47 enami Exp $	*/
+/*	$NetBSD: conf.c,v 1.48 2002/06/18 09:59:47 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.47 2002/05/30 00:24:47 enami Exp $");
+__RCSID("$NetBSD: conf.c,v 1.48 2002/06/18 09:59:47 aidan Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -211,6 +211,18 @@ parse_conf(const char *findclass)
 		REASSIGN(curclass.x, arg); \
 	} while (0)
 
+#define CONF_LL(x) \
+	do { \
+		if (! (none || EMPTYSTR(arg))) { \
+			llval = strsuftoll(arg); \
+			if (llval == -1) { \
+				syslog(LOG_WARNING, \
+				    "%s line %d: invalid " #x " %s", \
+				    infile, (int)line, arg); \
+			} else \
+				curclass.x = llval; \
+		} \
+	} while(0)
 
 		if (0)  {
 			/* no-op */
@@ -366,16 +378,7 @@ parse_conf(const char *findclass)
 
 		} else if (strcasecmp(word, "maxfilesize") == 0) {
 			curclass.maxfilesize = DEFAULT_MAXFILESIZE;
-			if (none || EMPTYSTR(arg))
-				continue;
-			llval = strsuftoll(arg);
-			if (llval == -1) {
-				syslog(LOG_WARNING,
-				    "%s line %d: invalid maxfilesize %s",
-				    infile, (int)line, arg);
-				continue;
-			}
-			curclass.maxfilesize = llval;
+			CONF_LL(maxfilesize);
 
 		} else if (strcasecmp(word, "maxtimeout") == 0) {
 			curclass.maxtimeout = DEFAULT_MAXTIMEOUT;
@@ -405,68 +408,23 @@ parse_conf(const char *findclass)
 
 		} else if (strcasecmp(word, "mmapsize") == 0) {
 			curclass.mmapsize = 0;
-			if (none || EMPTYSTR(arg))
-				continue;
-			llval = strsuftoll(arg);
-			if (llval == -1) {
-				syslog(LOG_WARNING,
-				    "%s line %d: invalid mmapsize %s",
-				    infile, (int)line, arg);
-				continue;
-			}
-			curclass.mmapsize = llval;
+			CONF_LL(mmapsize);
 
 		} else if (strcasecmp(word, "readsize") == 0) {
 			curclass.readsize = 0;
-			if (none || EMPTYSTR(arg))
-				continue;
-			llval = strsuftoll(arg);
-			if (llval == -1) {
-				syslog(LOG_WARNING,
-				    "%s line %d: invalid readsize %s",
-				    infile, (int)line, arg);
-				continue;
-			}
-			curclass.readsize = llval;
+			CONF_LL(readsize);
 
 		} else if (strcasecmp(word, "writesize") == 0) {
 			curclass.writesize = 0;
-			if (none || EMPTYSTR(arg))
-				continue;
-			llval = strsuftoll(arg);
-			if (llval == -1) {
-				syslog(LOG_WARNING,
-				    "%s line %d: invalid writesize %s",
-				    infile, (int)line, arg);
-				continue;
-			}
-			curclass.writesize = llval;
+			CONF_LL(writesize);
 
 		} else if (strcasecmp(word, "sendbufsize") == 0) {
 			curclass.sendbufsize = 0;
-			if (none || EMPTYSTR(arg))
-				continue;
-			llval = strsuftoll(arg);
-			if (llval == -1) {
-				syslog(LOG_WARNING,
-				    "%s line %d: invalid sendbufsize %s",
-				    infile, (int)line, arg);
-				continue;
-			}
-			curclass.sendbufsize = llval;
+			CONF_LL(sendbufsize);
 
 		} else if (strcasecmp(word, "sendlowat") == 0) {
 			curclass.sendlowat = 0;
-			if (none || EMPTYSTR(arg))
-				continue;
-			llval = strsuftoll(arg);
-			if (llval == -1) {
-				syslog(LOG_WARNING,
-				    "%s line %d: invalid sendlowat %s",
-				    infile, (int)line, arg);
-				continue;
-			}
-			curclass.sendlowat = llval;
+			CONF_LL(sendlowat);
 
 		} else if (strcasecmp(word, "modify") == 0) {
 			CONF_FLAG(modify);
