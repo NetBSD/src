@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1 1996/11/28 02:49:01 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2 1997/04/13 22:48:27 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,7 +69,8 @@ pchbmatch(parent, match, aux)
 	/*
 	 * Match all known PCI host chipsets.
 	 */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_PCMC:
 		case PCI_PRODUCT_INTEL_82437:
@@ -79,11 +80,16 @@ pchbmatch(parent, match, aux)
 		case PCI_PRODUCT_INTEL_82450KX:
 			return (1);
 		}
-	}
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_UMC) {
+		break;
+	case PCI_VENDOR_UMC:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_UMC_UM8881F:
+			return (1);
+		}
+		break;
+	case PCI_VENDOR_ACC:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_ACC_2188:
 			return (1);
 		}
 	}
