@@ -86,7 +86,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.9 1993/12/07 18:54:32 jtc Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.10 1993/12/21 18:59:11 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef i386
@@ -1196,28 +1196,22 @@ strtod
 	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
 	sign = nz0 = nz = 0;
 	rv = 0.;
-	for(s = s00;;s++) switch(*s) {
-		case '-':
-			sign = 1;
-			/* no break */
-		case '+':
-			if (*++s)
-				goto break2;
-			/* no break */
-		case 0:
-			s = s00;
-			goto ret;
-		case '\t':
-		case '\n':
-		case '\v':
-		case '\f':
-		case '\r':
-		case ' ':
-			continue;
-		default:
-			goto break2;
-		}
- break2:
+
+	for(s = s00; isspace(*s); s++)
+		;
+
+	if (*s == '-') {
+		sign = 1;
+		s++;
+	} else if (*s == '+') {
+		s++;
+	}
+
+	if (*s == '\0') {
+		s = s00;
+		goto ret;
+	}
+
 	if (*s == '0') {
 		nz0 = 1;
 		while(*++s == '0') ;
