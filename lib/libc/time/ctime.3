@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.20 2000/07/10 12:39:39 kleink Exp $
+.\"	$NetBSD: ctime.3,v 1.21 2001/01/25 20:55:51 jdolecek Exp $
 .TH CTIME 3
 .SH NAME
 asctime, asctime_r, ctime, ctime_r, difftime, gmtime, gmtime_r, localtime, localtime_r, mktime \- convert date and time to ASCII
@@ -16,7 +16,7 @@ Standard C Library (libc, -lc)
 .B double difftime(time_t time1, time_t time0);
 .PP
 .B char *asctime(const struct tm *tm);
-.B char *asctime_r(const struct tm *, char *buf);
+.B char *asctime_r(const struct tm *tm, char *buf);
 .PP
 .B struct tm *localtime(const time_t *clock);
 .B struct tm *localtime_r(const time_t *clock, struct tm *result);
