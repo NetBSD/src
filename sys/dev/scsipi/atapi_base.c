@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.1.2.1 1997/07/01 16:46:56 bouyer Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.1.2.2 1997/07/01 23:19:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -71,7 +71,8 @@ atapi_interpret_sense(xs)
 	 * it wants us to continue with normal error processing.
 	 */
 	if (sc_link->device->err_handler) {
-		SC_DEBUG(sc_link, SDEV_DB2, ("calling private err_handler()\n"));
+		SC_DEBUG(sc_link, SDEV_DB2,
+		    ("calling private err_handler()\n"));
 		error = (*sc_link->device->err_handler) (xs);
 		if (error != -1)
 			return error;		/* error >= 0  better ? */
@@ -137,7 +138,8 @@ atapi_interpret_sense(xs)
 	}
 
 	if (!key) {
-		if (xs->sense.atapi_sense & 0x01) { /* Illegal length indication */
+		if (xs->sense.atapi_sense & 0x01) {
+			/* Illegal length indication */
 			msg = "ATA illegal length indication";
 			error = EIO;
 		}
@@ -156,7 +158,8 @@ atapi_interpret_sense(xs)
 	} else {
 		if (error) {
 			sc_link->sc_print_addr(sc_link);
-			printf("unknown error code %d\n", xs->sense.atapi_sense);
+			printf("unknown error code %d\n",
+			    xs->sense.atapi_sense);
 		}
 	}
 
@@ -213,8 +216,8 @@ atapi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 		panic("atapi_scsipi_cmd: buffer without nosleep");
 #endif
 
-	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
-	    retries, timeout, bp, flags)) == NULL)
+	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr,
+	    datalen, retries, timeout, bp, flags)) == NULL)
 		return ENOMEM;
 
 	xs->cmdlen = (sc_link->scsipi_atapi.cap & ACAP_LEN) ? 16 : 12;
