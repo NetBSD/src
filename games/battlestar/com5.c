@@ -1,4 +1,4 @@
-/*	$NetBSD: com5.c,v 1.7 1998/08/28 00:44:31 hubertf Exp $	*/
+/*	$NetBSD: com5.c,v 1.8 1998/08/29 19:58:12 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com5.c,v 1.7 1998/08/28 00:44:31 hubertf Exp $");
+__RCSID("$NetBSD: com5.c,v 1.8 1998/08/29 19:58:12 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -259,10 +259,19 @@ give()
 		person = wordvalue[wordnumber];
 		last2 = wordnumber;
 	}
-	if (last1 == 0) {
-		puts("You didn't say what to give.");
-		return (0);
-	}
+	/* Setting wordnumber to last1 - 1 looks wrong if last1 is 0, e.g.,
+	 * plain `give'.  However, detecting this case is liable to detect
+	 * `give foo' as well, which would give a confusing error.  We
+	 * need to make sure the -1 value can cause no problems if it arises.
+	 * If in the below we get to the drop("Given") then drop will look
+	 * at word 0 for an object to give, and fail, which is OK; then
+	 * result will be -1 and we get to the end, where wordnumber gets
+	 * set to something more sensible.  If we get to "I don't think
+	 * that is possible" then again wordnumber is set to something
+	 * sensible.  The wordnumber we leave with still isn't right if
+	 * you include words the game doesn't know in your command, but
+	 * that's no worse than what other commands than give do in
+	 * the same place.  */
 	wordnumber = last1 - 1;
 	if (person && testbit(location[position].objects, person))
 		if (person == NORMGOD && godready < 2 && !(obj == RING || obj == BRACELET))
@@ -271,6 +280,7 @@ give()
 			result = drop("Given");
 	else {
 		puts("I don't think that is possible.");
+		wordnumber = max(last1, last2) + 1;
 		return (0);
 	}
 	if (result != -1 && (testbit(location[position].objects, obj) || obj == AMULET || obj == MEDALION || obj == TALISMAN)) {
@@ -335,6 +345,6 @@ give()
 			break;
 		}
 	}
-	wordnumber = max(last1, last2);
+	wordnumber = max(last1, last2) + 1;
 	return (firstnumber);
 }
