@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.5 2000/03/07 19:27:11 jdolecek Exp $
+.\"	$NetBSD: scsictl.8,v 1.6 2000/07/08 10:28:17 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -125,7 +125,8 @@ When scanning the scsi bus, information about newly recognized devices
 is printed to console. No information is printed for already probed
 devices.
 .Sh FILES
-/dev/scsibus* - for commands operating on SCSI busses
+.Pa /dev/scsibus*
+- for commands operating on SCSI busses
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr cd 4 ,
