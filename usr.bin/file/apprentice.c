@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.25 2001/07/22 22:56:50 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.26 2001/09/09 10:46:36 pooka Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -30,6 +30,9 @@
 #include "file.h"
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -44,9 +47,9 @@
 #include <sys/cdefs.h>
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: apprentice.c,v 1.42 2001/07/22 21:04:15 christos Exp ")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.44 2001/08/01 14:03:19 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.25 2001/07/22 22:56:50 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.26 2001/09/09 10:46:36 pooka Exp $");
 #endif
 #endif	/* lint */
 
