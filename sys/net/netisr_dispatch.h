@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.7 2001/04/14 13:54:38 augustss Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.7.4.1 2001/10/11 00:02:34 fvdl Exp $ */
 
 /*
  * netisr_dispatch: This file is included by the 
@@ -56,7 +56,4 @@
 #endif
 #if NPPP > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 	DONETISR(NETISR_PPP,pppnetisr);
-#endif
-#if NBRIDGE > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
-	DONETISR(NETISR_BRIDGE,bridgenetisr);
 #endif

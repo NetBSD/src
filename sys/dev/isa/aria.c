@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.8.6.1 2001/10/01 12:45:46 fvdl Exp $	*/
+/*	$NetBSD: aria.c,v 1.8.6.2 2001/10/11 00:02:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -228,6 +228,9 @@ struct audio_hw_if aria_hw_if = {
 	NULL,
 	NULL,
 	aria_get_props,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*

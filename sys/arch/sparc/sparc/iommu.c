@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.54.4.1 2001/10/01 12:42:09 fvdl Exp $ */
+/*	$NetBSD: iommu.c,v 1.54.4.2 2001/10/11 00:01:52 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -259,8 +259,7 @@ iommu_attach(parent, self, aux)
 	/* Map the pages */
 	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
 		va += NBPG;
 	}
 	pmap_update(pmap_kernel());
@@ -838,8 +837,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			panic("iommu_dmamem_map: size botch");
 
 		addr = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(va, addr | cbit, VM_PROT_READ | VM_PROT_WRITE);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;

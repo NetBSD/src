@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.1.8.1 2001/10/01 12:46:17 fvdl Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.1.8.2 2001/10/11 00:02:26 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ cgthreeattach_sbus(parent, self, args)
 	name = PROM_getpropstring(node, "model");
 
 	if (sa->sa_npromvaddrs != 0)
-		fb->fb_pixels = (caddr_t)sa->sa_promvaddrs[0];
+		fb->fb_pixels = (caddr_t)(u_long)sa->sa_promvaddrs[0];
 	if (isconsole && fb->fb_pixels == NULL) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,

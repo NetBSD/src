@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.49 2001/07/18 20:39:53 thorpej Exp $	*/
+/*	$NetBSD: pas.c,v 1.49.2.1 2001/10/11 00:02:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -146,6 +146,7 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_get_props,
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,
+	0,
 };
 
 /* The Address Translation code is used to convert I/O register addresses to

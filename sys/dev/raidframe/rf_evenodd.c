@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.5 2001/07/18 06:45:33 thorpej Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.5.2.1 2001/10/11 00:02:19 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,8 @@
 
 #if RF_INCLUDE_EVENODD > 0
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagffrd.h"
@@ -48,7 +49,6 @@
 #include "rf_etimer.h"
 #include "rf_general.h"
 #include "rf_evenodd.h"
-#include "rf_configure.h"
 #include "rf_parityscan.h"
 #include "rf_utils.h"
 #include "rf_map.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.32.2.1 2001/10/01 12:48:34 fvdl Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.32.2.2 2001/10/11 00:02:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -205,6 +205,7 @@ WRITE(void *v)
 	int ubc_alloc_flags;
 	void *win;
 	vsize_t bytelen;
+	boolean_t async;
 	boolean_t usepc = FALSE;
 
 	cred = ap->a_cred;
@@ -260,6 +261,7 @@ WRITE(void *v)
 		return (EFBIG);
 	}
 
+	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	resid = uio->uio_resid;
 	osize = ip->i_ffs_size;
 	bsize = fs->fs_bsize;
@@ -352,7 +354,7 @@ WRITE(void *v)
 		 * XXXUBC simplistic async flushing.
 		 */
 
-		if (oldoff >> 16 != uio->uio_offset >> 16) {
+		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
 			simple_lock(&vp->v_uobj.vmobjlock);
 			error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
 			    (oldoff >> 16) << 16, (uio->uio_offset >> 16) << 16,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_hist.h,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+/*	$NetBSD: rf_hist.h,v 1.3.24.1 2001/10/11 00:02:19 fvdl Exp $	*/
 /*
  * rf_hist.h
  *
@@ -34,7 +34,7 @@
 #ifndef _RF__RF_HIST_H_
 #define _RF__RF_HIST_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 #define RF_HIST_RESOLUTION   5
 #define RF_HIST_MIN_VAL      0

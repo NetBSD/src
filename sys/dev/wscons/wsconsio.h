@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.41.2.1 2001/10/01 12:46:41 fvdl Exp $ */
+/* $NetBSD: wsconsio.h,v 1.41.2.2 2001/10/11 00:02:31 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -87,6 +87,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_HPC_BTN	8	/* HPC/PsPC buttons */
 #define		WSKBD_TYPE_ARCHIMEDES	9	/* Archimedes keyboard */
 #define		WSKBD_TYPE_RISCPC	10	/* RiscPC keyboard, resembling AT codes */
+#define		WSKBD_TYPE_ADB		11	/* ADB */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.67 2001/07/27 21:19:09 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.67.2.1 2001/10/11 00:02:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

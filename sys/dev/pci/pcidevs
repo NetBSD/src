@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.355.2.1 2001/10/01 12:45:58 fvdl Exp $
+$NetBSD: pcidevs,v 1.355.2.2 2001/10/11 00:02:11 fvdl Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1165,7 +1165,7 @@ product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
-product IBM 405GP	0x0156	IBM 405GP PCI Bridge
+product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
@@ -1561,9 +1561,10 @@ product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
 
 /* Realtek (Creative Labs?) products */
-product	REALTEK	RT8029	0x8029	8029 Ethernet
-product REALTEK	RT8129	0x8129	8129 10/100 Ethernet
-product REALTEK RT8139	0x8139	8139 10/100 Ethernet
+product	REALTEK	RT8029		0x8029	8029 Ethernet
+product REALTEK	RT8129		0x8129	8129 10/100 Ethernet
+product REALTEK RT8139B		0x8138	8139B 10/100 Ethernet
+product REALTEK RT8139		0x8139	8139 10/100 Ethernet
 
 /* RICOH products */
 product RICOH Rx5C465	0x0465 5C465 PCI-CardBus bridge

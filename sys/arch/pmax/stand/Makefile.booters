@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.30.2.1 2001/10/01 12:41:39 fvdl Exp $
+# $NetBSD: Makefile.booters,v 1.30.2.2 2001/10/11 00:01:49 fvdl Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -21,10 +21,12 @@ BINMODE?=	444
 .PATH:		${.CURDIR}/../common
 AFLAGS+=	-D_LOCORE -D_KERNEL
 # -I${.CURDIR}/../.. done by Makefile.inc
-CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -D_NO_PROM_DEFINES -I${.OBJDIR} -I${S}
+CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -D_NO_PROM_DEFINES \
+		-I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
 CFLAGS=		-Os -g -mmemcpy -mno-abicalls -G 128
-LDBUG=		-T $S/arch/mips/conf/stand.ldscript.le
+OFORMAT=	--oformat elf32-littlemips
+LDBUG=		-T $S/arch/mips/conf/stand.ldscript
 
 NETBSD_VERS!=	sh ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
@@ -103,8 +105,8 @@ vers.c: ${.CURDIR}/version
 	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "pmax"
 
 ${PROG}: machine mips pmax ${OBJS} ${LIBS}
-	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
-	    -e start -o ${PROG} ${OBJS} ${LIBS}
+	${LD} ${OFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
+	    ${LDBUG} -e start -o ${PROG} ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}
 .if defined(CHECKSIZE_CMD)
 	@${CHECKSIZE_CMD} ${PROG} ${PRIMARY_MAX_LOAD} ${PRIMARY_MAX_TOTAL} || \

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_memchunk.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
+/*	$NetBSD: rf_memchunk.h,v 1.3.24.1 2001/10/11 00:02:20 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #ifndef _RF__RF_MEMCHUNK_H_
 #define _RF__RF_MEMCHUNK_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 struct RF_ChunkDesc_s {
 	int     size;

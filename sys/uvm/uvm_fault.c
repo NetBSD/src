@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.67.4.1 2001/10/01 12:48:39 fvdl Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.67.4.2 2001/10/11 00:02:36 fvdl Exp $	*/
 
 /*
  *
@@ -720,7 +720,7 @@ ReFault:
 	 * now and then forget about them (for the rest of the fault).
 	 */
 
-	if (ufi.entry->advice == MADV_SEQUENTIAL) {
+	if (ufi.entry->advice == MADV_SEQUENTIAL && nback != 0) {
 
 		UVMHIST_LOG(maphist, "  MADV_SEQUENTIAL: flushing backpages",
 		    0,0,0,0);

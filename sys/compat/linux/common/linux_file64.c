@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.2.8.1 2001/10/01 12:43:46 fvdl Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2.8.2 2001/10/11 00:01:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.

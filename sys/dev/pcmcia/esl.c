@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.3.2.2 2001/10/01 12:46:07 fvdl Exp $	*/
+/*	$NetBSD: esl.c,v 1.3.2.3 2001/10/11 00:02:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -131,7 +131,8 @@ struct audio_hw_if esl_hw_if = {
 	NULL,
 	esl_get_props,
 	esl_trigger_output,
-	NULL
+	NULL,
+	NULL,
 };
 
 static char *eslmodel[] = {

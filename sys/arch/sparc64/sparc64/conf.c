@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17.4.1 2001/10/01 12:42:31 fvdl Exp $ */
+/*	$NetBSD: conf.c,v 1.17.4.2 2001/10/11 00:01:56 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,6 +88,8 @@
 #include "com.h"
 #include "bpp.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
+#include "siosixteen.h"
+cdev_decl(cdtty);
 
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 #include "bwtwo.h"
@@ -276,6 +278,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
 	cdev_tty_init(NPCONS,pcons),	/* 122: PROM console */
 	cdev_pci_init(NPCI,pci),	/* 123: PCI bus access device */
+	cdev_tty_init(NCLCD,cdtty),	/* 124: Cirrus-Logic CD18xx */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

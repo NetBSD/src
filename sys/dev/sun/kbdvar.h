@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.7 2000/09/21 23:40:47 eeh Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.7.6.1 2001/10/11 00:02:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,6 +77,7 @@
  */
 struct zs_chanstate;
 struct ucom_softc;
+struct vnode;
 
 struct kbd_softc {
 	struct	device k_dev;		/* required first: base device */
@@ -96,9 +97,12 @@ struct kbd_softc {
 	 * by the lower level driver and used as a back door
 	 * when opening and closing the internal device.
 	 */
-	int	(*k_deviopen)	__P((struct device *, int));
-	int	(*k_deviclose)	__P((struct device *, int));
+	int	(*k_deviopen)	__P((struct device *, int, struct vnode *));
+	int	(*k_deviclose)	__P((struct device *, int, struct vnode *));
 	void	(*k_write_data) __P((struct kbd_softc *, int));
+
+	dev_t	k_rdev;
+	struct vnode *k_devvp;
 
 	/* Flags to communicate with kbd_softint() */
 	volatile int k_intr_flags;
@@ -160,8 +164,8 @@ struct kbd_softc {
 void	kbd_input_raw __P((struct kbd_softc *k, int));
 void	kbd_output(struct kbd_softc *k, int c);
 void	kbd_start_tx(struct kbd_softc *k);
-int	kbd_cc_open __P((struct cons_channel *));
-int	kbd_cc_close __P((struct cons_channel *));
+int	kbd_cc_open __P((struct cons_channel *, struct vnode *));
+int	kbd_cc_close __P((struct cons_channel *, struct vnode *));
 
 /*
  * kbd console input channel interface.
@@ -172,9 +176,9 @@ struct cons_channel {
 	void	*cc_dev;			/* Lower device private data */
 	struct callout	cc_callout;
 	int	(*cc_iopen)			/* Open lower device */
-			__P((struct cons_channel *));
+			__P((struct cons_channel *, struct vnode *));
 	int	(*cc_iclose)			/* Close lower device */
-			__P((struct cons_channel *));
+			__P((struct cons_channel *, struct vnode *));
 
 	/* Provided by upper driver */
 	void	(*cc_upstream)__P((int));	/* Send a character upstream */

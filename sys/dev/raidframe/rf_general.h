@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.8 2001/09/01 23:50:44 thorpej Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.8.2.1 2001/10/11 00:02:19 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,6 +30,8 @@
  * rf_general.h -- some general-use definitions
  */
 
+/* #define NOASSERT */
+
 #ifndef _RF__RF_GENERAL_H_
 #define _RF__RF_GENERAL_H_
 
@@ -39,9 +41,7 @@
 
 /* error reporting and handling */
 
-#ifdef _KERNEL
 #include<sys/systm.h>		/* printf, sprintf, and friends */
-#endif
 
 #define RF_ERRORMSG(s)            printf((s))
 #define RF_ERRORMSG1(s,a)         printf((s),(a))
@@ -55,16 +55,12 @@ extern char rf_panicbuf[];
 #define RF_PANIC() {rf_print_panic_message(__LINE__,__FILE__); panic(rf_panicbuf);}
 
 #ifdef RAID_DIAGNOSTIC
-#ifdef _KERNEL
 #define RF_ASSERT(_x_) { \
   if (!(_x_)) { \
     rf_print_assert_panic_message(__LINE__, __FILE__, #_x_); \
     panic(rf_panicbuf); \
   } \
 }
-#else /* _KERNEL */
-#define RF_ASSERT(x) {/*noop*/}
-#endif /* _KERNEL */
 #else /* RAID_DIAGNOSTIC */
 #define RF_ASSERT(x) {/*noop*/}
 #endif /* RAID_DIAGNOSTIC */

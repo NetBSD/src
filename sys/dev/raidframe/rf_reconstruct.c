@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.29.2.1 2001/09/07 04:45:30 thorpej Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.29.2.2 2001/10/11 00:02:24 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,6 @@
  *
  ************************************************************/
 
-#include "rf_types.h"
 #include <sys/time.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
@@ -44,7 +43,7 @@
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-
+#include <dev/raidframe/raidframevar.h>
 
 #include "rf_raid.h"
 #include "rf_reconutil.h"

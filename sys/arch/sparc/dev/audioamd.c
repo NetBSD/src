@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.6 2000/07/09 20:57:45 pk Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.6.4.1 2001/10/11 00:01:51 fvdl Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -182,6 +182,9 @@ struct audio_hw_if sa_hw_if = {
 	0,
         0,
 	am7930_get_props,
+	0,
+	0,
+        0,
 };
 
 struct audio_device audioamd_device = {

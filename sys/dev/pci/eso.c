@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.21 2001/07/19 17:19:40 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.21.2.1 2001/10/11 00:02:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -139,7 +139,8 @@ static struct audio_hw_if eso_hw_if = {
 	eso_mappage,
 	eso_get_props,
 	eso_trigger_output,
-	eso_trigger_input
+	eso_trigger_input,
+	NULL,			/* dev_ioctl */
 };
 
 static const char * const eso_rev2model[] = {

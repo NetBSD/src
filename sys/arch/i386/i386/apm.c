@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.63.2.2 2001/10/01 12:39:41 fvdl Exp $ */
+/*	$NetBSD: apm.c,v 1.63.2.3 2001/10/11 00:01:45 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #define	APMDEBUG_PROBE		0x10
 #define	APMDEBUG_ATTACH		0x40
 #define	APMDEBUG_DEVICE		0x20
-#define	APMDEBUG_ANOM		0x40
+#define	APMDEBUG_ANOM		0x80
 
 #ifdef APMDEBUG_VALUE
 int	apmdebug = APMDEBUG_VALUE;

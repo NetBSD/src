@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51.2.1 2001/10/01 12:42:30 fvdl Exp $ */
+/*	$NetBSD: autoconf.c,v 1.51.2.2 2001/10/11 00:01:55 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -910,18 +910,6 @@ node_has_property(node, prop)	/* returns 1 if node has given property */
 }
 
 #ifdef RASTERCONSOLE
-/* Pass a string to the FORTH PROM to be interpreted */
-void
-rominterpret(s)
-	register char *s;
-{
-
-	if (promvec->pv_romvec_vers < 2)
-		promvec->pv_fortheval.v0_eval(strlen(s), s);
-	else
-		promvec->pv_fortheval.v2_eval(s);
-}
-
 /*
  * Try to figure out where the PROM stores the cursor row & column
  * variables.  Returns nonzero on error.
@@ -930,26 +918,20 @@ int
 romgetcursoraddr(rowp, colp)
 	register int **rowp, **colp;
 {
-	char buf[100];
+	cell_t row = NULL, col = NULL;
 
+	OF_interpret("stdout @ is my-self addr line# addr column# ", 0, 2,
+		&col, &row);
 	/*
-	 * line# and column# are global in older proms (rom vector < 2)
-	 * and in some newer proms.  They are local in version 2.9.  The
-	 * correct cutoff point is unknown, as yet; we use 2.9 here.
+	 * We are running on a 64-bit machine, so these things point to
+	 * 64-bit values.  To convert them to pointers to integers, add
+	 * 4 to the address.
 	 */
-	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
-		sprintf(buf,
-		    "' line# >body >user %lx ! ' column# >body >user %lx !",
-		    (u_long)rowp, (u_long)colp);
-	else
-		sprintf(buf,
-		    "stdout @ is my-self addr line# %lx ! addr column# %lx !",
-		    (u_long)rowp, (u_long)colp);
-	*rowp = *colp = NULL;
-	rominterpret(buf);
-	return (*rowp == NULL || *colp == NULL);
+	*rowp = (int *)(row+4);
+	*colp = (int *)(col+4);
+	return (row == NULL || col == NULL);
 }
-#endif
+#endif /* RASTERCONSOLE */
 
 void
 callrom()
