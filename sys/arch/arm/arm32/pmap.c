@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2002/02/20 00:10:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 2002/02/20 02:32:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2002/02/20 00:10:17 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2002/02/20 02:32:57 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3738,4 +3738,25 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	pde[va >> PDSHIFT] = L1_SEC(pa & PD_MASK,
 	    cache == PTE_CACHE ? pte_cache_mode : 0);
+}
+
+/*
+ * pmap_map_entry:
+ *
+ *	Create a single page mapping.
+ */
+void
+pmap_map_entry(vaddr_t l2pt, vaddr_t va, paddr_t pa, int prot, int cache)
+{
+	pt_entry_t *pte = (pt_entry_t *) l2pt;
+	pt_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
+	pt_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
+
+	KASSERT(((va | pa) & PGOFSET) == 0);
+
+#ifdef cats	/* XXXJRT */
+	pte[(va >> PGSHIFT) & 0x7ff] = L2_SPTE(pa & PG_FRAME, ap, fl);
+#else
+	pte[(va >> PGSHIFT) & 0x3ff] = L2_SPTE(pa & PG_FRAME, ap, fl);
+#endif
 }
