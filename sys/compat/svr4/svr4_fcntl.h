@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.h,v 1.7 1998/10/04 16:20:16 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.h,v 1.8 1999/01/23 23:38:02 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -49,12 +49,15 @@
 #define	SVR4_O_NDELAY		0x0004
 #define	SVR4_O_APPEND		0x0008
 #define	SVR4_O_SYNC		0x0010
+#define	SVR4_O_DSYNC		0x0040
 #define	SVR4_O_NONBLOCK		0x0080
 #define	SVR4_O_CREAT		0x0100
 #define	SVR4_O_TRUNC		0x0200
 #define	SVR4_O_EXCL		0x0400
 #define	SVR4_O_NOCTTY		0x0800
 #define	SVR4_O_PRIV		0x1000
+#define	SVR4_O_LARGEFILE	0x2000
+#define	SVR4_O_RSYNC		0x8000
 
 
 #define	SVR4_FD_CLOEXEC		1

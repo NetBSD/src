@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.29 1998/10/04 16:19:50 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.30 1999/01/23 23:38:02 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -102,9 +102,11 @@ svr4_to_bsd_flags(l)
 	r |= (l & SVR4_O_RDONLY) ? O_RDONLY : 0;
 	r |= (l & SVR4_O_WRONLY) ? O_WRONLY : 0;
 	r |= (l & SVR4_O_RDWR) ? O_RDWR : 0;
-	r |= (l & SVR4_O_NDELAY) ? O_NONBLOCK : 0;
+	r |= (l & SVR4_O_NDELAY) ? O_NDELAY : 0;
 	r |= (l & SVR4_O_APPEND) ? O_APPEND : 0;
 	r |= (l & SVR4_O_SYNC) ? O_FSYNC : 0;
+	r |= (l & SVR4_O_RSYNC) ? O_RSYNC : 0;
+	r |= (l & SVR4_O_DSYNC) ? O_DSYNC : 0;
 	r |= (l & SVR4_O_NONBLOCK) ? O_NONBLOCK : 0;
 	r |= (l & SVR4_O_PRIV) ? O_EXLOCK : 0;
 	r |= (l & SVR4_O_CREAT) ? O_CREAT : 0;
@@ -123,9 +125,11 @@ bsd_to_svr4_flags(l)
 	r |= (l & O_RDONLY) ? SVR4_O_RDONLY : 0;
 	r |= (l & O_WRONLY) ? SVR4_O_WRONLY : 0;
 	r |= (l & O_RDWR) ? SVR4_O_RDWR : 0;
-	r |= (l & O_NDELAY) ? SVR4_O_NONBLOCK : 0;
+	r |= (l & O_NDELAY) ? SVR4_O_NDELAY : 0;
 	r |= (l & O_APPEND) ? SVR4_O_APPEND : 0;
 	r |= (l & O_FSYNC) ? SVR4_O_SYNC : 0;
+	r |= (l & O_RSYNC) ? SVR4_O_RSYNC : 0;
+	r |= (l & O_DSYNC) ? SVR4_O_DSYNC : 0;
 	r |= (l & O_NONBLOCK) ? SVR4_O_NONBLOCK : 0;
 	r |= (l & O_EXLOCK) ? SVR4_O_PRIV : 0;
 	r |= (l & O_CREAT) ? SVR4_O_CREAT : 0;
