@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.11 2001/11/26 23:31:00 fredette Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.12 2002/01/07 21:47:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.11 2001/11/26 23:31:00 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.12 2002/01/07 21:47:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,14 +364,17 @@ ef_match(parent, cf, aux)
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot = ia->ia_iot;
 
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	if (ef_isa_buses_inited == 0) {
 		LIST_INIT(&ef_isa_buses);
 		ef_isa_buses_inited = 1;
 	}
 
 	/*
-	* Probe this bus if we haven't done so already.
-	*/
+	 * Probe this bus if we haven't done so already.
+	 */
 	for (bus = ef_isa_buses.lh_first; bus != NULL;
 	     bus = bus->isa_link.le_next) {
 		if (bus->isa_bus == parent)
@@ -453,20 +456,27 @@ ef_match(parent, cf, aux)
 		}
 	}
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
 	for (idx = 0; idx < MAXCARDS_PER_ISABUS; idx++) {
 		if (bus->isa_cards[idx].available != 1)
 			continue;
 
-		if (ia->ia_iobase != IOBASEUNK &&
-		    ia->ia_iobase != bus->isa_cards[idx].iobase)
+		if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+		    ia->ia_io[0].ir_addr != bus->isa_cards[idx].iobase)
 			continue;
 
-		if (ia->ia_maddr != MADDRUNK &&
-		    ia->ia_maddr != bus->isa_cards[idx].maddr)
+		if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+		    ia->ia_iomem[0].ir_addr != bus->isa_cards[idx].maddr)
 			continue;
 
-		if (ia->ia_irq != IRQUNK &&
-		    ia->ia_irq != bus->isa_cards[idx].irq)
+		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		    ia->ia_irq[0].ir_irq != bus->isa_cards[idx].irq)
 			continue;
 
 		break;
@@ -476,11 +486,20 @@ ef_match(parent, cf, aux)
 		return (0);
 
 	bus->isa_cards[idx].available++;
-	ia->ia_iobase = bus->isa_cards[idx].iobase;
-	ia->ia_irq    = bus->isa_cards[idx].irq;
-	ia->ia_iosize = EF_IOSIZE;
-	ia->ia_maddr  = bus->isa_cards[idx].maddr;
-	ia->ia_msize  = bus->isa_cards[idx].msize;
+
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_addr = bus->isa_cards[idx].iobase;
+	ia->ia_io[0].ir_size = EF_IOSIZE;
+
+	ia->ia_niomem = 1;
+	ia->ia_iomem[0].ir_addr = bus->isa_cards[idx].maddr;
+	ia->ia_iomem[0].ir_size = bus->isa_cards[idx].msize;
+
+	ia->ia_nirq = 1;
+	ia->ia_irq[0].ir_irq = bus->isa_cards[idx].irq;
+
+	ia->ia_ndrq = 0;
+
 	return (1);
 }
 
@@ -556,32 +575,32 @@ ef_attach(parent, self, aux)
 	}
 
 	/* Map i/o space. */
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase,
-			  ia->ia_iosize, 0, &ioh) != 0) {
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
+			  ia->ia_io[0].ir_size, 0, &ioh) != 0) {
 
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
-			  sc->sc_dev.dv_xname, ia->ia_iobase,
-			  ia->ia_iobase + ia->ia_iosize - 1));
+			  sc->sc_dev.dv_xname, ia->ia_io[0].ir_addr,
+			  ia->ia_io[0].ir_addr + ia->ia_io[0].ir_size - 1));
 		return;
 	}
 
 	esc->sc_regt = ia->ia_iot;
 	esc->sc_regh = ioh;
 
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr,
-			  ia->ia_msize, 0, &memh) != 0) {
+	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
+			  ia->ia_iomem[0].ir_size, 0, &memh) != 0) {
 
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
 			sc->sc_dev.dv_xname, ia->ia_maddr,
 			ia->ia_maddr + ia->ia_msize - 1));
-		bus_space_unmap(ia->ia_iot, ioh, ia->ia_iosize);
+		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
 		return;
 	}
 
 	sc->bt = ia->ia_memt;
 	sc->bh = memh;
 
-	sc->sc_msize = ia->ia_msize;
+	sc->sc_msize = ia->ia_iomem[0].ir_size;
 	sc->sc_maddr = (void *)memh;
 	sc->sc_iobase = (char *)sc->sc_maddr + sc->sc_msize - (1 << 24);
 
@@ -611,8 +630,8 @@ ef_attach(parent, self, aux)
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: can't talk to i82586!\n",
 			sc->sc_dev.dv_xname));
-		bus_space_unmap(ia->ia_iot, ioh, ia->ia_iosize);
-		bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
+		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
+		bus_space_unmap(ia->ia_memt, memh, ia->ia_iomem[0].ir_size);
 		return;
 	}
 
@@ -658,8 +677,8 @@ ef_attach(parent, self, aux)
 	/* Clear the interrupt latch just in case. */
 	bus_space_write_1(esc->sc_regt, esc->sc_regh, EF_ICTRL, 1);
 
-	esc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-					IPL_NET, i82586_intr, sc);
+	esc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, i82586_intr, sc);
 	if (esc->sc_ih == NULL) {
 		DPRINTF(("\n%s: can't establish interrupt\n",
 			sc->sc_dev.dv_xname));
