@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.6 2003/02/21 21:46:45 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.7 2003/02/24 09:18:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
