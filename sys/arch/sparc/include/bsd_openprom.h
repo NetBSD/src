@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.18 2002/08/23 01:08:45 thorpej Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.19 2003/01/16 14:43:07 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -351,5 +351,35 @@ struct nodeops {
 
 /* Frequently used options node */
 extern int optionsnode;
+
+/*
+ *  OBP Module mailbox messages for multi processor machines.
+ *
+ *	00..7F	: power-on self test
+ *	80..8F	: active in boot prom (at the "ok" prompt)
+ *	90..EF	: idle in boot prom
+ *	F0	: active in application
+ *	F1..FA	: reserved for future use
+ *
+ *	FB	: pv_v3cpustop(node) was called for this CPU,
+ *		  respond by calling pv_v3cpustop(0).
+ *
+ *	FC	: pv_v3cpuidle(node) was called for this CPU,
+ *		  respond by calling pv_v3cpuidle(0).
+ *
+ *	FD	: One processor hit a BREAKPOINT, call pv_v3cpuidle(0).
+ *		  [According to SunOS4 header; but what breakpoint?]
+ *
+ *	FE	: One processor got a WATCHDOG RESET, call pv_v3cpustop(0).
+ *		  [According to SunOS4 header; never seen this, although
+ *		   I've had plenty of watchdogs already]
+ *
+ *	FF	: This processor is not available.
+ */
+
+#define OPENPROM_MBX_STOP	0xfb
+#define OPENPROM_MBX_ABORT	0xfc
+#define OPENPROM_MBX_BPT	0xfd
+#define OPENPROM_MBX_WD		0xfe
 
 #endif /* _BSD_OPENPROM_H_ */
