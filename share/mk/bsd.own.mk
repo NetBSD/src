@@ -1,5 +1,5 @@
 #	from: @(#)bsd.own.mk	0.1 (RGrimes) 4/4/93
-#	$Id: bsd.own.mk,v 1.5 1993/08/15 21:36:10 mycroft Exp $
+#	$Id: bsd.own.mk,v 1.6 1993/10/04 19:52:53 cgd Exp $
 
 BINGRP?=	bin
 BINOWN?=	bin
@@ -29,3 +29,9 @@ STRIP?=		-s
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
 # in environments where it's not possible to keep /sys publicly readable)
 #SYS_INCLUDE= 	symlinks
+
+# don't try to generate PIC versions of libraries on machines
+# which don't support PIC.
+.if (${MACHINE} != "i386") && (${MACHINE} != "sparc")
+NOPIC=
+.endif
