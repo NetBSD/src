@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsncmp.c,v 1.2 2000/12/21 05:12:19 itojun Exp $	*/
+/*	$NetBSD: wcsncat.c,v 1.1 2000/12/23 23:14:36 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,26 +25,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wcsncmp.c,v 1.1 1999/12/29 21:47:45 tshiozak Exp
+ *	citrus Id: wcsncat.c,v 1.1 1999/12/29 21:47:45 tshiozak Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsncmp.c,v 1.2 2000/12/21 05:12:19 itojun Exp $");
+__RCSID("$NetBSD: wcsncat.c,v 1.1 2000/12/23 23:14:36 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
-int
-wcsncmp(s1, s2, n)
-	const wchar_t *s1;
+wchar_t *
+wcsncat(s1, s2, n)
+	wchar_t *s1;
 	const wchar_t *s2;
 	size_t n;
 {
-	while (n && *s1 == *s2 && *s1) {
-		s1++;
-		s2++;
+	wchar_t *p;
+	wchar_t *q;
+	const wchar_t *r;
+
+	p = s1;
+	while (*p)
+		p++;
+	q = p;
+	r = s2;
+	while (*r && n) {
+		*q++ = *r++;
 		n--;
 	}
-	return *s1 - *s2;
+	*q = '\0';
+	return s1;
 }

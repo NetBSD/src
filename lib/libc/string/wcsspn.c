@@ -1,4 +1,4 @@
-/*	$NetBSD: wcspbrk.c,v 1.2 2000/12/21 05:12:19 itojun Exp $	*/
+/*	$NetBSD: wcsspn.c,v 1.1 2000/12/23 23:14:37 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,18 +25,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wcspbrk.c,v 1.2 2000/12/21 05:07:25 itojun Exp
+ *	citrus Id: wcsspn.c,v 1.1 1999/12/29 21:47:45 tshiozak Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcspbrk.c,v 1.2 2000/12/21 05:12:19 itojun Exp $");
+__RCSID("$NetBSD: wcsspn.c,v 1.1 2000/12/23 23:14:37 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
-wchar_t *
-wcspbrk(s, set)
+size_t
+wcsspn(s, set)
 	const wchar_t *s;
 	const wchar_t *set;
 {
@@ -47,13 +47,14 @@ wcspbrk(s, set)
 	while (*p) {
 		q = set;
 		while (*q) {
-			if (*p == *q) {
-				/* LINTED interface specification */
-				return (wchar_t *)p;
-			}
-			q++;
+			if (*p == *q)
+				break;
 		}
+		if (!*q)
+			goto done;
 		p++;
 	}
-	return NULL;
+
+done:
+	return (p - s);
 }
