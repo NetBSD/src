@@ -1,4 +1,4 @@
-/*	$NetBSD: superiovar.h,v 1.2 2002/08/26 11:04:45 scw Exp $	*/
+/*	$NetBSD: superiovar.h,v 1.3 2002/08/30 10:57:06 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -59,6 +59,8 @@ struct superio_attach_args {
 	bus_space_tag_t saa_bust;
 	bus_addr_t saa_offset;
 	int saa_irq;
+
+	bus_addr_t _saa_base;
 };
 
 #endif /* _EVBSH5_SUPERIOVAR_H */

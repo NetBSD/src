@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.3 2002/08/29 18:11:07 scw Exp $	*/
+/*	$NetBSD: superio.c,v 1.4 2002/08/30 10:57:05 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -188,8 +188,6 @@ static struct superio_devs superio_devs[] = {
 
 #define SUPERIO_NDEVS	(sizeof(superio_devs) / sizeof(struct superio_devs))
 
-#define	BH_IS_LAN_DEV(bh)	(((bus_addr_t)bh) >= SYSFPGA_OFFSET_LAN)
-
 /*ARGSUSED*/
 static int
 superiomatch(struct device *parent, struct cfdata *cf, void *args)
@@ -303,9 +301,10 @@ superioattach(struct device *parent, struct device *self, void *args)
 	 * Attach the onboard network interface
 	 */
 	saa.saa_name = "sm";
-	saa.saa_offset = SUPERIOCF_OFFSET_DEFAULT;
+	saa.saa_offset = sa->sa_offset;
+	saa._saa_base = sa->sa_offset;
 	saa.saa_irq = SUPERIOCF_IRQ_DEFAULT;
-	saa.saa_bust = &superio_bus_space_tag;
+	saa.saa_bust = sc->sc_bust;
 	config_found_sm(self, &saa, superioprint, superiosubmatch);
 #endif
 }
@@ -320,8 +319,7 @@ superioprint(void *arg, const char *cp)
 
 #if NSM_SUPERIO > 0
 	if (strcmp(saa->saa_name, "isa") != 0) {
-		if (saa->saa_offset != SUPERIOCF_OFFSET_DEFAULT)
-			printf(" offset 0x%x", saa->saa_offset);
+		printf(" offset 0x%x", saa->saa_offset - saa->_saa_base);
 		if (saa->saa_irq != SUPERIOCF_IRQ_DEFAULT)
 			printf(" irq %d", saa->saa_irq);
 	}
@@ -388,19 +386,14 @@ superio_bs_map(void *arg, bus_addr_t addr, bus_size_t size,
 	struct superio_softc *sc = arg;
 	int rv;
 
-	if (addr < SYSFPGA_OFFSET_LAN) {
-		addr *= 4;
-		size *= 4;
+	addr *= 4;
+	size *= 4;
 
-		if (sc->sc_isaext) {
-			rv = extent_alloc_region(sc->sc_isaext,
-			    addr, size, EX_NOWAIT);
-			if (rv != 0)
-				return (rv);
-		}
-	} else
-	if (addr > (SYSFPGA_OFFSET_LAN + SMC_IOSIZE))
-		return (EINVAL);
+	if (sc->sc_isaext) {
+		rv = extent_alloc_region(sc->sc_isaext, addr, size, EX_NOWAIT);
+		if (rv != 0)
+			return (rv);
+	}
 
 	*hp = (bus_space_handle_t) addr;
 
@@ -414,8 +407,7 @@ superio_bs_unmap(void *arg, bus_space_handle_t bh, bus_size_t size)
 	struct superio_softc *sc = arg;
 	bus_addr_t addr = (bus_addr_t)bh;
 
-	if (sc->sc_isaext && addr < SYSFPGA_OFFSET_LAN)
-		extent_free(sc->sc_isaext, addr, size * 4, EX_NOWAIT);
+	extent_free(sc->sc_isaext, addr, size * 4, EX_NOWAIT);
 }
 
 /*ARGSUSED*/
@@ -438,23 +430,10 @@ static u_int8_t
 superio_bs_read_1(void *arg, bus_space_handle_t bh, bus_size_t off)
 {
 	struct superio_softc *sc = arg;
-	u_int8_t rv;
 
-	if (!BH_IS_LAN_DEV(bh)) {
-		off = (bus_size_t)bh + (off * 4);
+	off = (bus_size_t)bh + (off * 4);
 
-		rv = (u_int8_t)bus_space_read_4(sc->sc_bust, sc->sc_bush, off);
-	} else {
-#if BYTE_ORDER == BIG_ENDIAN
-		off = (bus_size_t)bh + (off ^ 0x3);
-#else
-		off += (bus_size_t)bh;
-#endif
-
-		rv = bus_space_read_1(sc->sc_bust, sc->sc_bush, off);
-	}
-
-	return (rv);
+	return ((u_int8_t)bus_space_read_4(sc->sc_bust, sc->sc_bush, off));
 }
 
 static u_int16_t
@@ -464,21 +443,12 @@ superio_bs_read_2(void *arg, bus_space_handle_t bh, bus_size_t off)
 	u_int32_t reg;
 	u_int16_t rv;
 
-	if (!BH_IS_LAN_DEV(bh)) {
-		off = (bus_size_t)bh + (off * 4);
+	off = (bus_size_t)bh + (off * 4);
 
-		reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off);
-		rv = reg & 0xff;
-		reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off + 4);
-		rv |= (reg & 0xff) << 8;
-	} else {
-#if BYTE_ORDER == BIG_ENDIAN
-		off = (bus_size_t)bh + (off ^ 0x2);
-#else
-		off += (bus_size_t)bh;
-#endif
-		rv = bus_space_read_2(sc->sc_bust, sc->sc_bush, off);
-	}
+	reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off);
+	rv = reg & 0xff;
+	reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off + 4);
+	rv |= (reg & 0xff) << 8;
 
 	return (rv);
 }
@@ -489,20 +459,9 @@ superio_bs_write_1(void *arg, bus_space_handle_t bh, bus_size_t off,
 {
 	struct superio_softc *sc = arg;
 
-	if (!BH_IS_LAN_DEV(bh)) {
-		off = (bus_size_t)bh + (off * 4);
+	off = (bus_size_t)bh + (off * 4);
 
-		bus_space_write_4(sc->sc_bust, sc->sc_bush, off,
-		    (u_int32_t)val & 0xff);
-	} else {
-#if BYTE_ORDER == BIG_ENDIAN
-		off = (bus_size_t)bh + (off ^ 0x3);
-#else
-		off += (bus_size_t)bh;
-#endif
-
-		bus_space_write_1(sc->sc_bust, sc->sc_bush, off, val);
-	}
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, off, (u_int32_t)val & 0xff);
 }
 
 static void
@@ -511,21 +470,12 @@ superio_bs_write_2(void *arg, bus_space_handle_t bh, bus_size_t off,
 {
 	struct superio_softc *sc = arg;
 
-	if (!BH_IS_LAN_DEV(bh)) {
-		off = (bus_size_t)bh + (off * 4);
+	off = (bus_size_t)bh + (off * 4);
 
-		bus_space_write_4(sc->sc_bust, sc->sc_bush, off,
-		    (u_int32_t)val & 0xff);
-		bus_space_write_4(sc->sc_bust, sc->sc_bush, off + 4,
-		    (u_int32_t)(val >> 8) & 0xff);
-	} else {
-#if BYTE_ORDER == BIG_ENDIAN
-		off = (bus_size_t)bh + (off ^ 0x2);
-#else
-		off += (bus_size_t)bh;
-#endif
-		bus_space_write_2(sc->sc_bust, sc->sc_bush, off, val);
-	}
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, off,
+	    (u_int32_t)val & 0xff);
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, off + 4,
+	    (u_int32_t)(val >> 8) & 0xff);
 }
 
 static u_int16_t
@@ -535,18 +485,12 @@ superio_bs_read_stream_2(void *arg, bus_space_handle_t bh, bus_size_t off)
 	u_int32_t reg;
 	u_int16_t rv;
 
-	if (!BH_IS_LAN_DEV(bh)) {
-		off = (bus_size_t)bh + (off * 4);
+	off = (bus_size_t)bh + (off * 4);
 
-		reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off);
-		rv = reg & 0xff;
-		reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off + 4);
-		rv = (rv << 8) | (reg & 0xff);
-	} else {
-		off += (bus_size_t)bh;
-
-		rv = bus_space_read_stream_2(sc->sc_bust, sc->sc_bush, off);
-	}
+	reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off);
+	rv = reg & 0xff;
+	reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off + 4);
+	rv = (rv << 8) | (reg & 0xff);
 
 	return (rv);
 }
@@ -557,18 +501,12 @@ superio_bs_write_stream_2(void *arg, bus_space_handle_t bh, bus_size_t off,
 {
 	struct superio_softc *sc = arg;
 
-	if (!BH_IS_LAN_DEV(bh)) {
-		off = (bus_size_t)bh + (off * 4);
+	off = (bus_size_t)bh + (off * 4);
 
-		bus_space_write_4(sc->sc_bust, sc->sc_bush, off,
-		    (u_int32_t)(val >> 8) & 0xff);
-		bus_space_write_4(sc->sc_bust, sc->sc_bush, off + 4,
-		    (u_int32_t)val & 0xff);
-	} else {
-		off += (bus_size_t)bh;
-
-		bus_space_write_stream_2(sc->sc_bust, sc->sc_bush, off, val);
-	}
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, off,
+	    (u_int32_t)(val >> 8) & 0xff);
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, off + 4,
+	    (u_int32_t)val & 0xff);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_superio.c,v 1.1 2002/08/26 11:04:45 scw Exp $	*/
+/*	$NetBSD: if_sm_superio.c,v 1.2 2002/08/30 10:57:06 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.1 2002/08/26 11:04:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.2 2002/08/30 10:57:06 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ sm_superio_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (cf->cf_loc[SUPERIOCF_IRQ] == SUPERIOCF_IRQ_DEFAULT)
 		return (0);
 
-	saa->saa_offset = cf->cf_loc[SUPERIOCF_OFFSET];
+	saa->saa_offset += cf->cf_loc[SUPERIOCF_OFFSET];
 	saa->saa_irq = cf->cf_loc[SUPERIOCF_IRQ];
 
 	/* Map the device. */
