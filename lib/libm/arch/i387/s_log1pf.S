@@ -12,7 +12,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_log1pf.S,v 1.8 2003/09/10 16:45:43 wennmach Exp $")
+RCSID("$NetBSD: s_log1pf.S,v 1.9 2003/09/14 21:26:14 fvdl Exp $")
 
 /*
  * The log1pf() function is provided to compute an accurate value of
@@ -51,7 +51,7 @@ ENTRY(log1pf)
 	XMM_ONE_ARG_FLOAT_PROLOGUE
 	flds	ARG_FLOAT_ONE
 	fabs
-	fldl	BOUND
+	FLDL_VAR(BOUND)
 	fcompp
 	fnstsw %ax
 	andb $69,%ah
