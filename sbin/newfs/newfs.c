@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.44 2001/07/30 07:45:08 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.45 2001/08/08 07:34:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.44 2001/07/30 07:45:08 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.45 2001/08/08 07:34:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -416,20 +416,29 @@ main(int argc, char *argv[])
 
 			if (Zflag) {	/* pre-zero the file */
 				char	*buf;
-				int	i;
+				int	bufsize, i;
+				off_t	bufrem;
+				struct statfs sfs;
 
-				if ((buf = calloc(1, sectorsize)) == NULL)
+				if (fstatfs(fso, &sfs) == -1) {
+					warn("can't fstatfs `%s'", special);
+					bufsize = 8192;
+				} else
+					bufsize = sfs.f_iosize;
+
+				if ((buf = calloc(1, bufsize)) == NULL)
 					err(1, "can't malloc buffer of %d",
-					sectorsize);
+					bufsize);
+				bufrem = fssize * sectorsize;
 				printf(
-		    "Creating file system image in `%s', size %lld bytes.\n",
-				    special, (long long)(fssize * sectorsize));
-				for (i = 0; i < fssize; i++) {
-					if (write(fso, buf, sectorsize) !=
-					    sectorsize)
-						err(1,
-						    "writing image sector %d",
-						    i);
+    "Creating file system image in `%s', size %lld bytes, in %d byte chunks.\n",
+				    special, (long long)bufrem, bufsize);
+				while (bufrem > 0) {
+					i = write(fso, buf,
+					    MIN(bufsize, bufrem));
+					if (i == -1)
+						err(1, "writing image");
+					bufrem -= i;
 				}
 			}
 
