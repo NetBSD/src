@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.20 1998/02/02 21:07:52 perry Exp $	*/
+/*	$NetBSD: stdio.h,v 1.21 1998/02/14 20:33:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,6 +46,7 @@
 #endif
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #include <machine/ansi.h>
 #ifdef	_BSD_SIZE_T_
@@ -241,7 +242,6 @@ int	 putc __P((int, FILE *));
 int	 putchar __P((int));
 int	 puts __P((const char *));
 int	 remove __P((const char *));
-int	 rename  __P((const char *, const char *));
 void	 rewind __P((FILE *));
 int	 scanf __P((const char *, ...));
 void	 setbuf __P((FILE *, char *));
@@ -254,6 +254,12 @@ int	 ungetc __P((int, FILE *));
 int	 vfprintf __P((FILE *, const char *, _BSD_VA_LIST_));
 int	 vprintf __P((const char *, _BSD_VA_LIST_));
 int	 vsprintf __P((char *, const char *, _BSD_VA_LIST_));
+
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+int	 rename  __P((const char *, const char *)) __RENAME(__posix_rename);
+#else
+int	 rename  __P((const char *, const char *));
+#endif
 __END_DECLS
 
 /*
