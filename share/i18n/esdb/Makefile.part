@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.part,v 1.1 2003/06/27 08:40:50 tshiozak Exp $
+# $NetBSD: Makefile.part,v 1.2 2003/10/19 14:08:52 lukem Exp $
 
 .for code in ${CODE}  # XXX: immediately expand ${CODE}
 
@@ -20,11 +20,15 @@ FILESDIR_$i?=	${BINDIR}/${SUBDIR_${code}}
 # esdb.dir
 #
 esdb.dir.${code}: ${PARTFILE_${code}}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	echo "# ${code}" > $@
 .for i in ${${code}_PART}
+	${_MKCMD}\
 	printf "%-32s%s\n" "${code}${SEP_${code}}$i" \
 		"${SUBDIR_${code}}/${code}${SEP_${code}}${i:S/:/@/}.esdb" >> $@
 .endfor
+	${_MKCMD}\
 	echo >> $@
 SRC_esdb.dir+=	esdb.dir.${code}
 CLEANFILES+=	esdb.dir.${code}
@@ -38,12 +42,16 @@ ${code}_$i_aliases!= \
 		${ALIASFILE_${code}}
 .endfor
 esdb.alias.${code}: ${PARTFILE_${code}} ${ALIASFILE_${code}}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	echo "# ${code}" > $@
 .for i in ${${code}_PART:S/:/@/}
 .for j in ${${code}_$i_aliases}
+	${_MKCMD}\
 	printf "%-32s%s\n" "$j" "${code}${SEP_${code}}${i:S/@/:/}" >> $@
 .endfor
 .endfor
+	${_MKCMD}\
 	echo >> $@
 SRC_esdb.alias+=esdb.alias.${code}
 CLEANFILES+=	esdb.alias.${code}

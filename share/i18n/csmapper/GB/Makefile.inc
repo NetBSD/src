@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2003/06/27 08:40:31 tshiozak Exp $
+# $NetBSD: Makefile.inc,v 1.2 2003/10/19 14:08:50 lukem Exp $
 
 .PATH: ${.CURDIR}/GB
 
@@ -9,14 +9,14 @@ MAPS_GB=		GB2312%UCS.mps \
 			UCS%GB2312.mps
 
 mapper.dir.GB: ${.CURDIR}/GB/mapper.dir.GB.src
-	echo "# GB" > $@
-	cat $> >> $@
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(echo "# GB" ; cat ${.ALLSRC} ; echo ) > ${.TARGET}
 
 charset.pivot.GB: ${.CURDIR}/GB/charset.pivot.GB.src
-	echo "# GB" > $@
-	cat $> >> $@
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(echo "# GB" ; cat ${.ALLSRC} ; echo ) > ${.TARGET}
 
 FILES+= ${MAPS_GB}
 CLEANFILES+= ${MAPS_GB}
