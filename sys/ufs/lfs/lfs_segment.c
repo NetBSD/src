@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.94 2003/01/25 23:00:09 kleink Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.95 2003/01/27 21:45:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.94 2003/01/25 23:00:09 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.95 2003/01/27 21:45:52 kleink Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -650,7 +650,7 @@ lfs_segwrite(struct mount *mp, int flags)
 					++warned;
 					printf("bp=%p, lbn %" PRId64 ", "
 						"flags 0x%lx\n",
-						bp, (long long)bp->b_lblkno,
+						bp, bp->b_lblkno,
 						bp->b_flags);
 				}
 			}
@@ -1191,7 +1191,7 @@ lfs_updatemeta(struct segment *sp)
 		if (sbp->b_blkno == sbp->b_lblkno) {
 			printf("lfs_updatemeta: ino %d blk %" PRId64
 			       " has same lbn and daddr\n",
-			       VTOI(vp)->i_number, (long long)off);
+			       VTOI(vp)->i_number, off);
 		}
 
 		/*
@@ -1248,7 +1248,7 @@ lfs_updatemeta(struct segment *sp)
 			ap = &a[num - 1];
 			if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED, &bp))
 				panic("lfs_updatemeta: bread bno %" PRId64,
-				      (long long)ap->in_lbn);
+				      ap->in_lbn);
 
 			/* XXX ondisk32 */
 			ooff = ((int32_t *)bp->b_data)[ap->in_off];
@@ -1294,7 +1294,7 @@ lfs_updatemeta(struct segment *sp)
 				       dtosn(fs, daddr),
 				       osize - sup->su_nbytes);
 				printf("lfs_updatemeta: ino %d, lbn %" PRId64
-				       ", addr = 0x%llx\n",
+				       ", addr = 0x%" PRIx64 "\n",
 				       VTOI(sp->vp)->i_number, lbn, daddr);
 				printf("lfs_updatemeta: ndupino=%d\n", ndupino);
 				panic("lfs_updatemeta: negative bytes");
@@ -1768,7 +1768,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				panic("lfs_writeseg: copyin failed [1]: "
 				      "ino %d blk %" PRId64,
 				      VTOI((*bpp)->b_vp)->i_number,
-				      (long long)(*bpp)->b_lblkno);
+				      (*bpp)->b_lblkno);
 		} else
 			memcpy(dp, (*bpp)->b_data, el_size);
 		dp += el_size;
