@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.5 2000/05/12 20:08:04 is Exp $
+# $NetBSD: makeas.sh,v 1.6 2000/05/16 19:05:37 is Exp $
 
 # Copyright (c) 1999, 2000 Ignatios Souvatzis
 # All rights reserved.
@@ -77,11 +77,11 @@ echo -n " " ${THESRC} >> $FILELIST
 
 ENTRY($NAME)
 #ifdef __SVR4_ABI__
-	jbra _ASM_LABEL(___060FPLSP$OFFS)
+	jbra _C_LABEL(__fplsp060_$OFFS)
 #else
 	movel %sp@(8),%sp@-
 	movel %sp@(8),%sp@-
-	jbsr _ASM_LABEL(___060FPLSP$OFFS)
+	jbsr _C_LABEL(__fplsp060_$OFFS)
 	fmoved %fp0,%sp@
 	movel %sp@+,%d0
 	movel %sp@+,%d1
@@ -110,10 +110,10 @@ echo -n " " ${THESRC} >> $FILELIST
 
 ENTRY($NAME)
 #ifdef __SVR4_ABI__
-	jbra _ASM_LABEL(___060FPLSP$OFFS)
+	jbra _C_LABEL(__fplsp060_$OFFS)
 #else
 	movel %sp@(4),%sp@-
-	jbsr _ASM_LABEL(___060FPLSP$OFFS)
+	jbsr _C_LABEL(__fplsp060_$OFFS)
 	fmoves %fp0,%sp@
 	movel %sp@+,%d0
 	rts
