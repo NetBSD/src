@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.85 2003/02/20 11:03:34 grant Exp $	*/
+/*	$NetBSD: util.c,v 1.86 2003/02/20 12:02:56 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -556,7 +556,7 @@ extract_dist()
 
 /*
  * Do pre-extract cleanup for set 'name':
- * open a file named '/dist/<name>_obsolete file', which contain a list of
+ * open a file named '/etc/obsolete/<name>', which contain a list of
  * files to kill from the target. For each file, test if it is present on
  * the target. Then display the list of files which will be removed,
  * ask user for confirmation, and process.
@@ -576,6 +576,7 @@ cleanup_dist(name)
 {
 	char file_path[MAXPATHLEN];
 	char file_name[MAXPATHLEN];
+	char *file_prefix;
 	FILE *list_file;
 	struct filelist *head = NULL;
 	struct filelist *current;
@@ -584,7 +585,7 @@ cleanup_dist(name)
 	int retval = 1;
 	int needok = 0;
 
-	snprintf(file_path, MAXPATHLEN, "/dist/%s_obsolete", name);
+	snprintf(file_path, MAXPATHLEN, "/etc/obsolete/%s", name);
 	list_file = fopen(file_path, "r");
 	if (list_file == NULL) {
 		saved_errno = errno;
@@ -597,14 +598,12 @@ cleanup_dist(name)
 		process_menu(MENU_ok);
 		return 0;
 	}
+	file_prefix = target_prefix();
 	while (fgets(file_name, MAXPATHLEN, list_file)) {
-		/* ignore lines that don't begin with '/' */
-		if (file_name[0] != '/')
-			continue;
 		/* Remove trailing \n if any */
 		if (file_name[strlen(file_name)-1] == '\n')
 			file_name[strlen(file_name)-1] = '\0';
-		snprintf(file_path, MAXPATHLEN, "%s%s", target_prefix(),
+		snprintf(file_path, MAXPATHLEN, "%s/%s", file_prefix,
 		    file_name);
 		if (lstat(file_path, &st) != 0) {
 			saved_errno = errno;
