@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.20 1997/07/13 20:15:34 christos Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.21 1997/08/29 05:31:11 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.20 1997/07/13 20:15:34 christos Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.21 1997/08/29 05:31:11 phil Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -685,7 +685,7 @@ number:			if ((dprec = prec) >= 0)
 					ox[0] = *cp++;
 					ox[1] = '.';
 					PRINT(ox, 2);
-					if (_double || (flags & ALT) == 0) {
+					if (_double) {
 						PRINT(cp, ndig-1);
 					} else	/* 0.[0..] */
 						/* __dtoa irregularity */
