@@ -83,7 +83,7 @@
 
 /* Define if GSS_C_NT_HOSTBASED_SERVICE is defined in the gssapi.h
    header file.  Only relevant when using GSSAPI.  */
-/* #undef HAVE_GSS_C_NT_HOSTBASED_SERVICE */
+#define HAVE_GSS_C_NT_HOSTBASED_SERVICE 1
 
 /* Define if you want CVS to be able to be a remote repository client.  */
 #define CLIENT_SUPPORT 1
@@ -158,7 +158,7 @@
 #define HAVE_INITGROUPS 1
 
 /* Define if you have the krb_get_err_text function.  */
-/* #undef HAVE_KRB_GET_ERR_TEXT */
+#define HAVE_KRB_GET_ERR_TEXT 1
 
 /* Define if you have the memmove function.  */
 #define HAVE_MEMMOVE 1
@@ -242,7 +242,7 @@
 /* #undef HAVE_GSSAPI_H */
 
 /* Define if you have the <gssapi/gssapi.h> header file.  */
-/* #undef HAVE_GSSAPI_GSSAPI_H */
+#define HAVE_GSSAPI_GSSAPI_H 1
 
 /* Define if you have the <gssapi/gssapi_generic.h> header file.  */
 /* #undef HAVE_GSSAPI_GSSAPI_GENERIC_H */
@@ -251,7 +251,7 @@
 /* #undef HAVE_IO_H */
 
 /* Define if you have the <krb5.h> header file.  */
-/* #undef HAVE_KRB5_H */
+#define HAVE_KRB5_H 1
 
 /* Define if you have the <limits.h> header file.  */
 #define HAVE_LIMITS_H 1

@@ -5804,7 +5804,8 @@ error %s getpeername or getsockname failed\n", strerror (errno));
 #endif
 
     status = krb_recvauth (KOPT_DO_MUTUAL, STDIN_FILENO, &ticket, "rcmd",
-			   instance, &peer, &laddr, &auth, "", sched,
+			   instance, (struct sockaddr_in *)&peer,
+			   (struct sockaddr_in *)&laddr, &auth, "", sched,
 			   version);
     if (status != KSUCCESS)
     {

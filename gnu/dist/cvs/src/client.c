@@ -16,13 +16,6 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#ifdef HAVE_KERBEROS
-# error kerberos is not supported with the IPv6 patch
-#endif
-#ifdef HAVE_GSSAPI
-# error gssapi is not supported with the IPv6 patch
-#endif
-
 #include <assert.h>
 #include "cvs.h"
 #include "getline.h"
@@ -101,7 +94,7 @@ static Key_schedule sched;
 /* This is needed for GSSAPI encryption.  */
 static gss_ctx_id_t gcontext;
 
-static int connect_to_gserver PROTO((int, struct hostent *));
+static int connect_to_gserver PROTO((int, const char *));
 
 #endif /* HAVE_GSSAPI */
 
@@ -3824,7 +3817,7 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
     if (do_gssapi)
     {
 #ifdef HAVE_GSSAPI
-	if (! connect_to_gserver (sock, hostinfo))
+	if (! connect_to_gserver (sock, res0->ai_canonname))
 	    goto rejected;
 #else
 	error (1, 0, "This client does not support GSSAPI authentication");
@@ -4081,7 +4074,8 @@ start_tcp_server (tofdp, fromfdp)
 
 	/* We don't care about the checksum, and pass it as zero.  */
 	status = krb_sendauth (KOPT_DO_MUTUAL, s, &ticket, "rcmd",
-			       hname, realm, (unsigned long) 0, &msg_data,
+			       hname, (char *)realm, (unsigned long) 0,
+			       &msg_data,
 			       &cred, sched, &laddr, &sin, "KCVSV1.0");
 	if (status != KSUCCESS)
 	    error (1, 0, "kerberos authentication failed: %s",
@@ -4128,9 +4122,9 @@ recv_bytes (sock, buf, need)
 /* Connect to the server using GSSAPI authentication.  */
 
 static int
-connect_to_gserver (sock, hostinfo)
+connect_to_gserver (sock, hostname)
      int sock;
-     struct hostent *hostinfo;
+     const char *hostname;
 {
     char *str;
     char buf[1024];
@@ -4143,7 +4137,7 @@ connect_to_gserver (sock, hostinfo)
     if (send (sock, str, strlen (str), 0) < 0)
 	error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
 
-    sprintf (buf, "cvs@%s", hostinfo->h_name);
+    sprintf (buf, "cvs@%s", hostname);
     tok_in.length = strlen (buf);
     tok_in.value = buf;
     gss_import_name (&stat_min, &tok_in, GSS_C_NT_HOSTBASED_SERVICE,
