@@ -1,4 +1,4 @@
-/*	$NetBSD: riscosfile.h,v 1.1 2002/12/28 23:57:39 reinoud Exp $	*/
+/*	$NetBSD: riscosfile.h,v 1.2 2003/08/21 23:17:41 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int riscos_open(char *, struct open_file *);
+int riscos_open(const char *, struct open_file *);
 int riscos_read(struct open_file *, void *, size_t, size_t *);
 int riscos_close(struct open_file *);
 int riscos_write(struct open_file *, void *, size_t, size_t *);
