@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: inet.c,v 1.12 1995/06/12 03:03:10 mycroft Exp $";
+static char *rcsid = "$Id: inet.c,v 1.13 1995/06/19 00:13:05 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,8 @@ protopr(off, name)
 	char *name;
 {
 	struct inpcbtable table;
-	register struct inpcb *next, **prev;
+	register struct inpcb *head, *next, *prev;
+	struct inpcb inpcb;
 	int istcp;
 	static int first = 1;
 
@@ -97,15 +98,19 @@ protopr(off, name)
 		return;
 	istcp = strcmp(name, "tcp") == 0;
 	kread(off, (char *)&table, sizeof table);
-	prev = &((struct inpcbtable *)off)->inpt_list.lh_first;
-	while (inpcb.inp_list.le_next != 0) {
-		next = inpcb.inp_list.le_next;
+	prev = head =
+	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
+	next = table.inpt_queue.cqh_first;
+
+	while (next != head) {
 		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
-		if (inpcb.inp_list.le_prev != prev) {
+		if (inpcb.inp_queue.cqe_prev != prev) {
 			printf("???\n");
 			break;
 		}
-		prev = &next->inp_list.le_next;
+		prev = next;
+		next = inpcb.inp_queue.cqe_next;
+
 		if (!aflag &&
 		    inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
 			continue;
@@ -132,7 +137,7 @@ protopr(off, name)
 			if (istcp)
 				printf("%8x ", inpcb.inp_ppcb);
 			else
-				printf("%8x ", next);
+				printf("%8x ", prev);
 		printf("%-5.5s %6d %6d ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
 		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name);
