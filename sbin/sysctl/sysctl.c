@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.96 2004/12/17 05:03:03 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.97 2005/03/15 13:59:35 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.96 2004/12/17 05:03:03 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.97 2005/03/15 13:59:35 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,7 @@ static const struct handlespec {
 	{ { CTL_KERN, KERN_PROC2 },	printother,	NULL,	"ps" },
 	{ { CTL_KERN, KERN_PROC_ARGS },	printother,	NULL,	"ps" },
 	{ { CTL_KERN, KERN_FILE },	printother,	NULL,	"pstat" },
+	{ { CTL_KERN, KERN_FILE2 },	printother,	NULL,	"pstat" },
 	{ { CTL_KERN, KERN_NTPTIME },	printother,	NULL,
 	  "ntpdc -c kerninfo" },
 	{ { CTL_KERN, KERN_MSGBUF },	printother,	NULL,	"dmesg" },
@@ -1523,6 +1524,7 @@ sysctlerror(int soft)
 		case ENOENT:
 		case ENOPROTOOPT:
 		case ENOTDIR:
+		case EINVAL:
 		case EOPNOTSUPP:
 		case EPROTONOSUPPORT:
 			if (Aflag || req)
