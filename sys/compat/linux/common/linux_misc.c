@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.122 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.122.2.1 2004/08/11 19:55:46 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.122 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.122.2.1 2004/08/11 19:55:46 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -625,7 +625,7 @@ linux_sys_mprotect(l, v, retval)
 #endif
 	if (!uvm_map_lookup_entry(map, start, &entry) || entry->start > start) {
 		vm_map_unlock(map);
-		return EFAULT;
+		return ENOMEM;
 	}
 	vm_map_unlock(map);
 	return uvm_map_protect(map, start, end, prot, FALSE);
