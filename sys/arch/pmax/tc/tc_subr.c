@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.17 1998/03/25 06:22:21 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.18 1998/03/30 04:45:50 mrg Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.17 1998/03/25 06:22:21 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.18 1998/03/30 04:45:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>			/* printf() */
@@ -52,7 +52,6 @@ static int tc_consprobeslot __P((tc_addr_t slotaddr));
  */
 
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/trap.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/kn02.h>
