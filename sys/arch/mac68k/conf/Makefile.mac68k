@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.21 1995/06/25 13:53:21 briggs Exp $
+#	$NetBSD: Makefile.mac68k,v 1.22 1995/06/25 14:02:09 briggs Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -88,7 +88,7 @@ NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o conf.o \
-		${FPSP} ${LIBKERN} $(LIBCOMPAT}
+		${FPSP} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
 SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X || true; \
