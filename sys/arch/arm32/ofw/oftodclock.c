@@ -1,4 +1,4 @@
-/*	$NetBSD: oftodclock.c,v 1.3 1998/05/01 21:18:43 cgd Exp $	*/
+/*	$NetBSD: oftodclock.c,v 1.4 1998/07/07 00:48:12 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -68,8 +68,8 @@ get-time  ( -- s m h d m y )
 	day: 1-31
 	month: 1-12
 	year: e.g. 1997
-
 */
+
 #define OFRTC_SEC 0
 #define OFRTC_MIN 1
 #define OFRTC_HR  2
@@ -95,15 +95,17 @@ yeartoday(year)
 static int timeset = 0;
 
 static void
-setthetime(time_t thetime, int warning)
+setthetime(thetime, warning)
+	time_t thetime;
+	int warning;
 {
-  timeset = 1;
-  time.tv_sec = thetime;
-  time.tv_usec = 0;
 
-  if (warning)
-    printf("WARNING: CHECK AND RESET THE DATE!\n");
+	timeset = 1;
+	time.tv_sec = thetime;
+	time.tv_usec = 0;
 
+	if (warning)
+		printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
 static int ofrtc_phandle;
@@ -111,56 +113,54 @@ static int ofrtc_ihandle = 0;
 static int ofrtcinited = 0;
 
 static void
-ofrtcinit()
+ofrtcinit(void)
 {
-  char buf[256];
-  int  l;
-  int  chosen;
+	char buf[256];
+	int  l;
+	int  chosen;
 
-  if (ofrtcinited) return;
+	if (ofrtcinited) return;
 
-  if ((ofrtc_phandle = OF_finddevice("/rtc")) == -1)
-    panic("OFW RTC: no package");
+	if ((ofrtc_phandle = OF_finddevice("/rtc")) == -1)
+		panic("OFW RTC: no package");
 
-  if ((l = OF_getprop(ofrtc_phandle, "device_type", buf, sizeof buf - 1)) < 0)
-    panic("OFW RTC: no device type");
+	if ((l = OF_getprop(ofrtc_phandle, "device_type", buf, sizeof buf - 1)) < 0)
+		panic("OFW RTC: no device type");
 
-  if ((l >= sizeof buf) || strcmp(buf, "rtc"))
-    panic("OFW RTC: bad device type");
+	if ((l >= sizeof buf) || strcmp(buf, "rtc"))
+		panic("OFW RTC: bad device type");
 
-  if ((chosen = OF_finddevice("/chosen")) == -1 ||
-      OF_getprop(chosen, "clock", &ofrtc_ihandle, sizeof(int)) < 0) {
-    ofrtc_ihandle = 0;
-    return;
-  }
+	if ((chosen = OF_finddevice("/chosen")) == -1 ||
+ 	    OF_getprop(chosen, "clock", &ofrtc_ihandle, sizeof(int)) < 0) {
+		ofrtc_ihandle = 0;
+		return;
+	}
 
-  ofrtc_ihandle = of_decode_int((unsigned char *)&ofrtc_ihandle);
+	ofrtc_ihandle = of_decode_int((unsigned char *)&ofrtc_ihandle);
 
-  ofrtcinited = 1;
+	ofrtcinited = 1;
 }
 
 static int
-ofrtcstatus()
+ofrtcstatus(void)
 {
-  char status[256];
-  int  l;
+	char status[256];
+	int  l;
 
-  if ((ofrtc_ihandle == 0) ||
-      (l = OF_getprop(ofrtc_phandle, "status", 
-		      status, sizeof status - 1)) < 0) {
-    printf("OFW RTC: old firmware does not support RTC\n");
-    return 0;
-  }
+	if ((ofrtc_ihandle == 0) || (l = OF_getprop(ofrtc_phandle, "status", 
+	    status, sizeof status - 1)) < 0) {
+		printf("OFW RTC: old firmware does not support RTC\n");
+		return 0;
+	}
 
-  status[sizeof status - 1] = 0; /* always null terminate */
+	status[sizeof status - 1] = 0; /* always null terminate */
 
-  if (strcmp(status, "okay")) { /* something is wrong */
-    printf("RTC: %s\n", status);
-    return 0;
-  }
+	if (strcmp(status, "okay")) { /* something is wrong */
+		printf("RTC: %s\n", status);
+		return 0;
+	}
 
-  return 1; /* all systems are go */
-
+	return 1; /* all systems are go */
 }
 
 /*
@@ -194,16 +194,15 @@ inittodr(base)
 	ofrtcinit();
 
 	if (!ofrtcstatus()) {
-	  setthetime(base, 1);
-	  return;
+		setthetime(base, 1);
+		return;
 	}
 
 	if (OF_call_method("get-time", ofrtc_ihandle, 0, 6,
-			   date, date + 1, date + 2, 
-			   date + 3, date + 4, date + 5)) {
-	  printf("OFW RTC: get-time failed\n");
-	  setthetime(base, 1);
-	  return;
+	    date, date + 1, date + 2, date + 3, date + 4, date + 5)) {
+		printf("OFW RTC: get-time failed\n");
+		setthetime(base, 1);
+		return;
 	}
 	  
 	n  = date[OFRTC_SEC];
@@ -225,13 +224,13 @@ inittodr(base)
 	n += rtc_offset * 60;
 
 	if (base < n - 5*SECYR)
-	  printf("WARNING: file system time much less than clock time\n");
+		printf("WARNING: file system time much less than clock time\n");
 
 	else if (base > n + 5*SECYR) {
-	  printf("WARNING: clock time much less than file system time\n");
-	  printf("WARNING: using file system time\n");
-	  setthetime(base, 1);
-	  return;
+		printf("WARNING: clock time much less than file system time\n");
+		printf("WARNING: using file system time\n");
+		setthetime(base, 1);
+		return;
 	}
 
 	setthetime(n, 0);
@@ -241,7 +240,7 @@ inittodr(base)
  * Reset the clock.
  */
 void
-resettodr()
+resettodr(void)
 {
 	time_t n;
 	int diff, i, j;
@@ -280,6 +279,6 @@ resettodr()
 	dom = ++n;
 
 	if (OF_call_method("set-time", ofrtc_ihandle, 6, 0,
-			   sec, min, hr, dom, mon, yr))
-	  printf("OFW RTC: set-time failed\n");
+	     sec, min, hr, dom, mon, yr))
+		printf("OFW RTC: set-time failed\n");
 }
