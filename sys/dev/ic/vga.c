@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.15 1999/03/22 18:24:23 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.16 1999/04/01 11:52:42 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -48,6 +48,8 @@
 #include <dev/wscons/unicode.h>
 
 #include <dev/ic/pcdisplay.h>
+
+#include "opt_wsdisplay_compat.h" /* for WSCONS_SUPPORT_PCVTFONTS */
 
 static struct vgafont {
 	char name[16];
@@ -762,6 +764,12 @@ vga_load_font(v, cookie, data)
 		return (EINVAL); /* XXX 1 byte per line */
 	if (data->firstchar != 0 || data->numchars != 256)
 		return (EINVAL);
+#ifndef WSCONS_SUPPORT_PCVTFONTS
+	if (data->encoding == WSDISPLAY_FONTENC_PCVT) {
+		printf("vga: pcvt font support not built in, see vga(4)\n");
+		return (EINVAL);
+	}
+#endif
 
 	for (slot = 0; slot < 8; slot++)
 		if (!vc->vc_fonts[slot])
@@ -1030,7 +1038,9 @@ _vga_mapchar(id, font, uni, index)
 		return (vga_pcvt_mapchar(uni, index));
 #endif
 	default:
+#ifdef VGAFONTDEBUG
 		printf("_vga_mapchar: encoding=%d\n", font->encoding);
+#endif
 		*index = ' ';
 		return (0);
 	}
