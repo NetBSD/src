@@ -39,7 +39,7 @@
  */
 
 /* $Heimdal: roken.h.in,v 1.169 2002/08/26 21:43:38 assar Exp $ 
-   $NetBSD: roken.h,v 1.8 2002/09/20 21:48:59 mycroft Exp $ */
+   $NetBSD: roken.h,v 1.9 2003/01/26 22:19:36 elric Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,7 +77,7 @@
 
 #define ROKEN_LIB_FUNCTION
 
-#include <roken-common.h>
+#include <krb5/roken-common.h>
 
 ROKEN_CPP_START
 
