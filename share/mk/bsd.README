@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.144 2004/01/07 12:06:34 lukem Exp $
+#	$NetBSD: bsd.README,v 1.145 2004/02/06 22:13:58 jwise Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -1116,6 +1116,8 @@ INSTALL		install(1) command.  [install]
 LEX		Lexical analyzer.  [lex]
 
 LFLAGS		Options to ${LEX}.  []
+
+LPREFIX		Symbol prefix for ${LEX} (see -P option in lex(1)) [yy]
 
 LD		Linker.  [ld]
 
