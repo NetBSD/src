@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 2000/09/11 22:37:34 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.32 2000/09/28 15:47:27 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -85,9 +85,7 @@ pagemove(from, to, size)
 
 	if (size & PGOFSET || (long)from & PGOFSET || (long)to & PGOFSET)
 		panic("pagemove 1");
-#if 1
-	cache_flush((caddr_t)from, size);
-#endif
+
 	while (size > 0) {
 		if (pmap_extract(pmap_kernel(), (vaddr_t)from, &pa) == FALSE)
 			panic("pagemove 2");
@@ -100,9 +98,6 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-#if 1
-	cache_flush((caddr_t)to, size);
-#endif
 }
 
 /*
