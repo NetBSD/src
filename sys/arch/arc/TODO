@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.14 2000/08/08 21:17:15 soda Exp $
+$NetBSD: TODO,v 1.15 2001/06/13 15:41:53 soda Exp $
 
 To do list (not in any particular order).
 
@@ -9,10 +9,10 @@ To do list (not in any particular order).
 	and MIPS3_TLB_WIRED_UPAGES changes.	
 
 	"vm_page_zero_enable = FALSE" makes this problem disappeared.
+	(vm_page_zero_enable = FALSE by default on all archs w/ UBC, now)
 
 	currently, page zero in the idle loop is also disabled on
-	untested platforms like ESCstation rPC44/Tyne, SNI, Algorithmics
-	for safety.
+	untested platforms like DESKstation rPC44/Tyne and SNI for safety.
 
     o	XXX sudden hang up in a few minutes or dozens of minutes.
 	2000 Mar 17 -current is OK. Mar 29 is NG.
@@ -31,27 +31,28 @@ To do list (not in any particular order).
 
     o	NEC RISCstation 2200 support
 
-	-   framebuffer?
+	-   VXL framebuffer
+	-   VGA framebuffer or character generator
+	-   oosiop
 
-	-   interrupt handling?
-
-    o	repair DeskStation support
+    o	repair DESKstation support
 
 	-   requires bounce buffer bus_dma for Tyne
+		XXX - too small bounce buffer size
 
-	-   set up rPC44 wired TLB entries explicitly
+    o	Olivetti M700 support
 
-   o	repair Algor support
+    o	NEC Express 5800/230 R10000 version support
 
-	-   pci/pbcpcibus.c:vtophysaddr(): pbc_version < V96X_VREV_C0 case
+    o	SNI RM200PCI support
 
-   o	sysinst
+    o	sysinst
 
-   o	install notes
+    o	install notes
 
-   o	www: diskless HOW-TO port-arc specific part.
+    o	www: diskless HOW-TO port-arc specific part.
 
-   o	Xserver
+    o	Xserver
 
 	-   VXL		magnum, some RISCserver 2200
 	-   vga/S3	pica, Image RISCstation - OpenBSD's?
@@ -59,29 +60,18 @@ To do list (not in any particular order).
 	-   vga/???	DESKstation Tyne, rPC44
 	-   TGA		RISCserver 2250
 
-   o	X clients
+    o	X clients
 	probably pmax binary is good enough.
 
-    o	source code structure is quite obsolete,
-	general clean up is needed as nisimura-san suggested.
-	especially:
+    o	remove inb/outb
 
- 	-   introduce struct platform and remove ugly ``switch (cputype)''
-	    in many places.
+    o	remove UADDR
 
-	-   redesign interrupt handler framework to be flexible for
-	    possible variations; must be sane and useful for R4030/R4230
-	    'local' devices and any combinations with ISA/EISA/PCI
+    o	redesign interrupt handler framework.
+	i/o bus devices should have sane IPL, but currently doesn't.
 
-	-   remove inb/outb
-
-	-   try to interporate HZ; may be possible for R4030/R4230 system
-	    or 'hardclock() by R4000' system.  Clock resolution of 100Hz
-	    without any interporation is substandard
-
-	-   remove UADDR
-
-    o	overblocking on interrupt handler, and related problems
+	also, current MIPS interrupt handler has overblocking and
+	other problems as follows:
 
 	-   SR_INT_IE should be enabled before calling hardclock().
 	    Since this is not done currently, spllowersoftclock()
@@ -104,8 +94,8 @@ To do list (not in any particular order).
 		-> slightly overblocking
 
 	-   `netisr' handling in netintr() implies potential race condition.
-	    `netisr' access should be protected by splnet().
-	    currently this is not real problem due to above overblocking.
+	    The access to `netisr' should be protected by splnet().
+	    Currently this is not real problem due to above overblocking.
 
 	    `ssir' handling on many mips ports has same problem.
 	    It should be protected by splnet() or splserial() or splhigh()
@@ -115,12 +105,14 @@ To do list (not in any particular order).
 	    or something. (i.e. priority level which setsoft() will be called)
 	    Probably, it is better to split `ssir' variable for each
 	    priority level.
-	    also, _clearsoftintr() should be called before `ssir' access.
+	    Also, _clearsoftintr() should be called before `ssir' access.
 	    currently this is not real problem due to above overblocking.
 
 	-   INT_MASK_REAL_DEV should be removed
 
 	-   make CLKF_INTR() work.
+
+	-   generic software interrupt
 
 	-   major rework, possibly by software emulated spl.
 		splserial()/splsoftserial()
@@ -138,15 +130,11 @@ To do list (not in any particular order).
 
     o	allocate PICA_TL_BASE and SONICBUF dynamically
 
-    o	merge new wscons
-
     o	fix mem_clusters[] usage.
 
     o	test and merge soren's clean up about proc0.p_addr.
 
     o	parse ARC BIOS configuration information and use it
-
-    o	omit __BROKEN_CONFIG_UNIT_USAGE
 
     o	omit __SWAP_BROKEN in <mips/types.h>
 
@@ -154,24 +142,30 @@ To do list (not in any particular order).
 
     o	increase MAXPHYS to 64KB
 
+    o	wscons / VXL framebuffer
+
+    o	wscons / VGA framebuffer (merge bjy's driver)
+
+    o	wscons / VGA character generator (fix initialization on RISCserver)
+
     o	asc.c scsi clock/NCR53CF94 handling clean up
 
     o	if_sn.c
-
-	-   ether address handling clean up
 
 	-   bus_dma'fy
 	-   bus_space'fy
 	-   split frontend and backend
 	-   make this MI, and share with mac68k, newsmips/apbus
 
-    o	com_lbus.c clock handling clean up
+    o	com_jazzio.c
 
-    o	intrcnt[] name cleanup
+	-   clock handling clean up (obtain from ARC firmware)
+	-   fifo disabling may be only needed on some Magnum?
 
-    o	implement NCR 53c700(?) driver for NEC RISCserver 2200,
-	RISCstation 2200 and RISCstation 2250.
-	based on MI siop driver?
+    o	intrcnt[] name cleanup, use evcnt
+
+    o	oosiop (NCR 53c700 driver) by Urata-san
+	for NEC RISCserver 2200, RISCstation 2200 and RISCstation 2250.
 
     o	audio driver
 
@@ -187,12 +181,10 @@ To do list (not in any particular order).
 	-   make pccons MI, and share it with i386,
 	    or simply eliminate pccons
 
-	-   LKM
-
-    o	ARC boot device name -> NetBSD root device conversion
+    o	LKM support on MIPS
 
     o	and missing MI devices
-		ses?, lkm, vcoda, ...
+		ses?, vcoda, ...
 
     o	bus_dmamap_sync: Hit_Invalidate and Hit_Write_Back cache operation
 
