@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.3.2.3 2002/03/22 20:42:24 nathanw Exp $ */
+/* $NetBSD: softfloat.c,v 1.3.2.4 2002/04/03 02:29:30 petrov Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.3.2.3 2002/03/22 20:42:24 nathanw Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.3.2.4 2002/04/03 02:29:30 petrov Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -204,7 +204,7 @@ static int64 roundAndPackInt64( flag zSign, bits64 absZ0, bits64 absZ1 )
     return z;
 
 }
-
+#endif
 /*
 -------------------------------------------------------------------------------
 Returns the fraction bits of the single-precision floating-point value `a'.
