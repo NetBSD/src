@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.56 2003/10/15 22:16:35 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.57 2003/10/15 22:55:34 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.56 2003/10/15 22:16:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.57 2003/10/15 22:55:34 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -668,8 +668,6 @@ add_m6if(mifcp)
 		ifr.ifr_addr.sin6_family = AF_INET6;
 		ifr.ifr_addr.sin6_addr = in6addr_any;
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
-		if (error == ENETRESET)
-			error = 0;
 		splx(s);
 		if (error)
 			return error;
