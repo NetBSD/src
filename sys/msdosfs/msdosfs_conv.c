@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.26 1999/01/07 15:03:36 leo Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.27 1999/03/28 11:05:43 tron Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -357,7 +357,7 @@ dos2unixfn(dn, un, lower)
 	u_char *un;
 	int lower;
 {
-	int i;
+	int i, j;
 	int thislong = 1;
 	u_char c;
 
@@ -372,18 +372,22 @@ dos2unixfn(dn, un, lower)
 	else
 		c = dos2unix[*dn];
 	*un++ = lower ? u2l[c] : c;
-	dn++;
 
 	/*
-	 * Copy the name portion into the unix filename string.
+	 * Copy the rest into the unix filename string, ignoring
+	 * trailing blanks.
 	 */
-	for (i = 1; i < 8 && *dn != ' '; i++) {
-		c = dos2unix[*dn++];
+
+	for (j=7; (j >= 0) && (dn[j] == ' '); j--)
+		;
+
+	for (i = 1; i <= j; i++) {
+		c = dos2unix[dn[i]];
 		*un++ = lower ? u2l[c] : c;
 		thislong++;
 	}
-	dn += 8 - i;
-
+	dn += 8;
+	
 	/*
 	 * Now, if there is an extension then put in a period and copy in
 	 * the extension.
@@ -424,6 +428,7 @@ unix2dosfn(un, dn, unlen, gen)
 	int conv = 1;
 	const u_char *cp, *dp, *dp1;
 	u_char gentext[6], *wcp;
+	int shortlen;
 
 	/*
 	 * Fill the dos filename string with blanks. These are DOS's pad
@@ -503,11 +508,17 @@ unix2dosfn(un, dn, unlen, gen)
 		dp++;
 	}
 
+	shortlen = (dp - un) <= 8;
+
 	/*
 	 * Now convert the rest of the name
 	 */
 	for (i = j = 0; un < dp && j < 8; i++, j++, un++) {
-		if (*un != (dn[j] = unix2dos[*un])
+		if ((*un == ' ') && shortlen)
+			dn[j] = ' ';
+		else
+			dn[j] = unix2dos[*un];
+		if ((*un != dn[j])
 		    && conv != 3)
 			conv = 2;
 		if (!dn[j]) {
