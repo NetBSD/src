@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.32 2000/07/18 15:59:25 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.33 2000/07/19 07:22:53 enami Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.32 2000/07/18 15:59:25 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.33 2000/07/19 07:22:53 enami Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -216,30 +216,34 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	char *line, *q, **ap, *argv[10];
 	struct passwd *pw;
 	struct group *gr;
-	int nf, lineno, i;
+	int nf, lineno, i, rv;
 
-	memset(log, 0, sizeof (*log));
-	
+	rv = -1;
+	line = NULL;
+
 	/* Place the white-space separated fields into an array. */
-	if ((line = fparseln(fd, NULL, _lineno, NULL, 0)) == NULL)
-		return (-1);
-	lineno = (int)*_lineno;
+	do {
+		if (line != NULL)
+			free(line);
+		if ((line = fparseln(fd, NULL, _lineno, NULL, 0)) == NULL)
+			return (rv);
+		lineno = (int)*_lineno;
 
-	for (ap = argv, nf = 0; (*ap = strsep(&line, " \t")) != NULL;)
-		if (**ap != '\0') {
-			if (++nf == sizeof (argv) / sizeof (argv[0])) {
-				warnx("config line %d: too many fields", 
-				    lineno);
-				return (-1);
+		for (ap = argv, nf = 0; (*ap = strsep(&line, " \t")) != NULL;)
+			if (**ap != '\0') {
+				if (++nf == sizeof (argv) / sizeof (argv[0])) {
+					warnx("config line %d: "
+					    "too many fields", lineno);
+					goto bad;
+				}
+				ap++;
 			}
-			ap++;
-		}
+	} while (nf == 0);
 		
-	if (nf == 0)
-		return (0);
-
 	if (nf < 6)
 		errx(EXIT_FAILURE, "config line %d: too few fields", lineno);
+	
+	memset(log, 0, sizeof (*log));
 	
 	/* logfile_name */
 	ap = argv;
@@ -252,7 +256,7 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	if (strchr(*ap, ':') != NULL || strchr(*ap, '.') != NULL) {
 		if (parse_userspec(*ap++, &pw, &gr)) {
 			warnx("config line %d: unknown user/group", lineno);
-			return (-1);
+			goto bad;
 		}
 		
 		/*
@@ -278,14 +282,14 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	/* mode */
 	if (sscanf(*ap++, "%o", &i) != 1) {
 		warnx("config line %d: bad permissions", lineno);
-		return (-1);
+		goto bad;
 	}
 	log->mode = (mode_t)i;
 
 	/* count */
 	if (sscanf(*ap++, "%d", &log->numhist) != 1) {
 		warnx("config line %d: bad log count", lineno);
-		return (-1);
+		goto bad;
 	}
 
 	/* size */
@@ -293,13 +297,13 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 		log->maxsize = (int)strtol(*ap, &q, 0);
 		if (*q != '\0') {
 			warnx("config line %d: bad log size", lineno);
-			return (-1);
+			goto bad;
 		}
 	} else if (**ap == '*')
 		log->maxsize = (size_t)-1;
 	else {
 		warnx("config line %d: bad log size", lineno);
-		return (-1);
+		goto bad;
 	}
 	ap++;
 
@@ -320,16 +324,16 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 			log->trimat = parse_iso8601(q + 1);
 			if (log->trimat == (time_t)-1) {
 				warnx("config line %d: bad trim time", lineno);
-				return (-1);
+				goto bad;
 			}
 		} else if (*q == '$') {
 			if ((log->trimat = parse_dwm(q + 1)) == (time_t)-1) {
 				warnx("config line %d: bad trim time", lineno);
-				return (-1);
+				goto bad;
 			}
 		} else if (log->maxage == -1) {
 			warnx("config line %d: bad log age", lineno);
-			return (-1);
+			goto bad;
 		}
 	}
 	
@@ -356,7 +360,7 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 			break;
 		default:
 			warnx("config line %d: bad flags", lineno);
-			return (-1);
+			goto bad;
 		}
 	}
 
@@ -369,11 +373,15 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	/* sigtype */
 	if (*ap != NULL && (log->signum = getsig(*ap++)) < 0) {
 		warnx("config line %d: bad signal type", lineno);
-		return (-1);
+		goto bad;
 	} else
 		log->signum = SIGHUP;
-	
-	return (0);
+
+	rv = 0;
+
+bad:
+	free(line);
+	return (rv);
 }
 
 /* 
@@ -388,13 +396,6 @@ log_examine(struct conf_entry *log, int force)
 	int age, trim;
 	char tmp[MAXPATHLEN], *reason;
 	time_t now;
-
-	/*
-	 * XXX We get here for comment/blank lines.  I'm assuming this is
-	 * intentional behaviour on the part of fparseln(). [ad]
-	 */
-	if (log->logfile[0] == '\0')
-		return;
 
 	now = time(NULL);
 
