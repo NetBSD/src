@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.25 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.26 1999/07/06 07:12:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -191,6 +191,13 @@ usbd_status
 usbd_close_pipe(pipe)
 	usbd_pipe_handle pipe;
 {
+#ifdef DIAGNOSTIC
+	if (pipe == 0) {
+		printf("usbd_close_pipe: pipe==NULL\n");
+		return (USBD_NORMAL_COMPLETION);
+	}
+#endif
+
 	if (--pipe->refcnt != 0)
 		return (USBD_NORMAL_COMPLETION);
 	if (SIMPLEQ_FIRST(&pipe->queue) != 0)
@@ -359,6 +366,12 @@ usbd_abort_pipe(pipe)
 	usbd_status r;
 	int s;
 
+#ifdef DIAGNOSTIC
+	if (pipe == 0) {
+		printf("usbd_close_pipe: pipe==NULL\n");
+		return (USBD_NORMAL_COMPLETION);
+	}
+#endif
 	s = splusb();
 	r = usbd_ar_pipe(pipe);
 	splx(s);
