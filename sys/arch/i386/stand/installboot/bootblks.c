@@ -1,4 +1,4 @@
-/* $NetBSD: bootblks.c,v 1.1 1997/06/13 22:15:02 drochner Exp $ */
+/* $NetBSD: bootblks.c,v 1.2 1997/07/21 18:04:35 drochner Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,16 +37,19 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <err.h>
 
 #include "installboot.h"
 
 static char bootblkpath[MAXPATHLEN];
+static char backuppath[MAXPATHLEN];
+static char backupext[] = ".bak";
+static int havebackup;
 
 ino_t
-createfileondev(diskdev, bootblkname, nowrite, bp, size)
+createfileondev(diskdev, bootblkname, bp, size)
 	char *diskdev, *bootblkname;
-        int nowrite;
 	char *bp;
 	int size;
 {
@@ -60,10 +63,23 @@ createfileondev(diskdev, bootblkname, nowrite, bp, size)
 
 	/*
 	 * create file in fs root for bootloader data
-	 * don't overwrite existing file if "nowrite"
+	 * try to rename existing file before
 	 */
+	havebackup = 0;
 	sprintf(bootblkpath, "%s/%s", mntpoint, bootblkname);
-	fd = open(bootblkpath, O_RDWR | O_CREAT | (nowrite ? O_EXCL : 0), 0444);
+	sprintf(backuppath, "%s%s", bootblkpath, backupext);
+	if(rename(bootblkpath, backuppath) == -1) {
+		if(errno != ENOENT) {
+			warn("rename old %s", bootblkpath);
+			goto out;
+		}
+	} else {
+		if(verbose)
+			fprintf(stderr, "renamed %s -> %s\n",
+				bootblkpath, backuppath);
+		havebackup = 1;
+	}
+	fd = open(bootblkpath, O_RDWR | O_CREAT | O_EXCL, 0444);
 	if (fd < 0) {
 		warn("open %s", bootblkpath);
 		goto out;
@@ -91,21 +107,40 @@ out:
 		if (!allok)
 			unlink(bootblkpath);
 	}
+        if(!allok && havebackup)
+		rename(backuppath, bootblkpath);
 	cleanupmount(mntpoint);
 	return (allok ? statbuf.st_ino : (ino_t) - 1);
 }
 
 void 
-cleanupfileondev(diskdev, bootblkname)
+cleanupfileondev(diskdev, bootblkname, recover)
 	char *diskdev, *bootblkname;
 {
 	char *mntpoint;
+
+	/* save some work if nothing to do */
+	if(!(recover || havebackup))
+		return;
 
 	if ((mntpoint = getmountpoint(diskdev)) == NULL)
 		return;
 
 	sprintf(bootblkpath, "%s/%s", mntpoint, bootblkname);
-	unlink(bootblkpath);
+	sprintf(backuppath, "%s%s", bootblkpath, backupext);
+
+	if(recover) {
+		unlink(bootblkpath);
+		if(havebackup) {
+			fprintf(stderr, "renaming %s -> %s\n",
+				backuppath, bootblkpath);
+			rename(backuppath, bootblkpath);
+		}
+	} else if(havebackup) {
+		if(verbose)
+			fprintf(stderr, "deleting %s\n", backuppath);
+		unlink(backuppath);
+	}
 
 	cleanupmount(mntpoint);
 }
