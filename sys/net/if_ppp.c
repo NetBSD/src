@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.12 1994/06/14 03:09:23 paulus Exp $ */
+/* $Id: if_ppp.c,v 1.13 1994/06/20 00:35:39 paulus Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -144,7 +144,6 @@ void	pppstart __P((struct tty *tp));
 static int	pppasyncstart __P((struct ppp_softc *));
 static u_short	pppfcs __P((u_short fcs, u_char *cp, int len));
 static int	pppgetm __P((struct ppp_softc *sc));
-static struct	mbuf *ppp_btom __P((struct ppp_softc *sc));
 static void	pppdumpm __P((struct mbuf *m0, int pktlen));
 static void	pppdumpb __P((u_char *b, int l));
 static void	ppplogchar __P((struct ppp_softc *, int));
@@ -425,7 +424,9 @@ pppwrite(tp, uio, flag)
 	}
 	if (uio->uio_resid >= MCLBYTES / 2)
 	    MCLGET(m, M_DONTWAIT);
-	len = min(M_TRAILINGSPACE(m), uio->uio_resid);
+	len = M_TRAILINGSPACE(m);
+	if (len > uio->uio_resid)
+	    len = uio->uio_resid;
 	if (error = uiomove(mtod(m, u_char *), len, uio)) {
 	    m_freem(m0);
 	    return (error);
@@ -742,7 +743,7 @@ ppp_dequeue(sc)
     struct ppp_softc *sc;
 {
     int s;
-    struct mbuf *m;
+    struct mbuf *m, *mp;
     u_char *cp;
     int address, control, protocol;
 
@@ -763,48 +764,45 @@ ppp_dequeue(sc)
     control = cp[1];
     protocol = (cp[2] << 8) + cp[3];
 
+    switch (protocol) {
 #ifdef VJC
-    /*
-     * If the packet is a TCP/IP packet, see if we can compress it.
-     */
-    if (protocol == PPP_IP && sc->sc_flags & SC_COMP_TCP) {
-	struct ip *ip;
-	int type;
-	struct mbuf *mp;
+    case PPP_IP:
+	/*
+	 * If the packet is a TCP/IP packet, see if we can compress it.
+	 */
+	if (sc->sc_flags & SC_COMP_TCP) {
+	    struct ip *ip;
+	    int type;
 
-	mp = m;
-	ip = (struct ip *) (cp + PPP_HDRLEN);
-	if (mp->m_len <= PPP_HDRLEN) {
-	    mp = mp->m_next;
-	    ip = mtod(mp, struct ip *);
-	}
-	/* this code assumes the IP/TCP header is in one non-shared mbuf */
-	if (ip->ip_p == IPPROTO_TCP) {
-	    type = sl_compress_tcp(mp, ip, &sc->sc_comp,
-				   !(sc->sc_flags & SC_NO_TCP_CCID));
-	    switch (type) {
-	    case TYPE_UNCOMPRESSED_TCP:
-		protocol = PPP_VJC_UNCOMP;
-		break;
-	    case TYPE_COMPRESSED_TCP:
-		protocol = PPP_VJC_COMP;
-		cp = mtod(m, u_char *);
-		cp[0] = address;	/* header has moved */
-		cp[1] = control;
-		cp[2] = 0;
-		break;
+	    mp = m;
+	    ip = (struct ip *) (cp + PPP_HDRLEN);
+	    if (mp->m_len <= PPP_HDRLEN) {
+		mp = mp->m_next;
+		if (mp == NULL)
+		    break;
+		ip = mtod(mp, struct ip *);
 	    }
-	    cp[3] = protocol;	/* update protocol in PPP header */
+	    /* this code assumes the IP/TCP header is in one non-shared mbuf */
+	    if (ip->ip_p == IPPROTO_TCP) {
+		type = sl_compress_tcp(mp, ip, &sc->sc_comp,
+				       !(sc->sc_flags & SC_NO_TCP_CCID));
+		switch (type) {
+		case TYPE_UNCOMPRESSED_TCP:
+		    protocol = PPP_VJC_UNCOMP;
+		    break;
+		case TYPE_COMPRESSED_TCP:
+		    protocol = PPP_VJC_COMP;
+		    cp = mtod(m, u_char *);
+		    cp[0] = address;	/* header has moved */
+		    cp[1] = control;
+		    cp[2] = 0;
+		    break;
+		}
+		cp[3] = protocol;	/* update protocol in PPP header */
+	    }
 	}
-    }
 #endif	/* VJC */
-
-#ifdef BSD_COMP
-    if (protocol < PPP_COMP && (sc->sc_flags & SC_BSD_COMP)) {
-	slen = m_totallen(m0);
-	clen = pf_bsd_comp(sc->sc_bsd_db, cbuf, proto, m0, slen);
     }
-#endif	/* BSD_COMP */
 
     /*
      * Compress the address/control and protocol, if possible.
@@ -921,27 +919,8 @@ pppstart(tp)
 			break;
 		n = cp - start;
 		if (n) {
-#ifndef	RB_LEN
 		    /* NetBSD (0.9 or later), 4.3-Reno or similar. */
 		    ndone = n - b_to_q(start, n, &tp->t_outq);
-#else
-#ifdef	NetBSD
-		    /* NetBSD with 2-byte ring buffer entries */
-		    ndone = rb_cwrite(&tp->t_out, start, n);
-#else
-		    /* 386BSD, FreeBSD */
-		    int cc, nleft;
-		    for (nleft = n; nleft > 0; nleft -= cc) {
-			if ((cc = RB_CONTIGPUT(&tp->t_out)) == 0)
-			    break;
-			cc = min (cc, nleft);
-			bcopy((char *)start + n - nleft, tp->t_out.rb_tl, cc);
-			tp->t_out.rb_tl = RB_ROLLOVER(&tp->t_out,
-						      tp->t_out.rb_tl + cc);
-		    }
-		    ndone = n - nleft;
-#endif	/* NetBSD */
-#endif	/* RB_LEN */
 		    len -= ndone;
 		    start += ndone;
 		    sc->sc_bytessent += ndone;
@@ -1072,60 +1051,11 @@ pppgetm(sc)
 }
 
 /*
- * Copy mbuf chain.  Would like to use m_copy(), but we need a real copy
- * of the data, not just copies of pointers to the data.
- */
-static struct mbuf *
-ppp_btom(sc)
-    struct ppp_softc *sc;
-{
-    register struct mbuf *m, **mp;
-    struct mbuf *top = sc->sc_m;
-
-    /*
-     * First check current mbuf.  If we have more than a small mbuf,
-     * return the whole cluster and set beginning of buffer to the
-     * next mbuf.
-     * Else, copy the current bytes into a small mbuf, attach the new
-     * mbuf to the end of the chain and set beginning of buffer to the
-     * current mbuf.
-     */
-
-    if (sc->sc_mc->m_len > MHLEN) {
-	sc->sc_m = sc->sc_mc->m_next;
-	sc->sc_mc->m_next = NULL;
-    }
-    else {
-	/* rather than waste a whole cluster on <= MHLEN bytes,
-	   alloc a small mbuf and copy to it */
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-	    return (NULL);
-
-	bcopy(mtod(sc->sc_mc, caddr_t), mtod(m, caddr_t), sc->sc_mc->m_len);
-	m->m_len = sc->sc_mc->m_len;
-	for (mp = &top; *mp != sc->sc_mc; mp = &(*mp)->m_next)
-	    ;
-	*mp = m;
-	sc->sc_m = sc->sc_mc;
-    }
-
-    /*
-     * Try to allocate enough extra mbufs to handle the next packet.
-     */
-    if (pppgetm(sc) == 0) {
-	m_freem(top);
-	if (pppgetm(sc) == 0)
-	    sc->sc_if.if_flags &= ~IFF_UP;
-	return (NULL);
-    }
-
-    return (top);
-}
-
-/*
  * PPP packet input routine.
- * The caller has checked and removed the FCS.
+ * The caller has checked and removed the FCS and has inserted
+ * the address/control bytes and the protocol high byte if they
+ * were omitted.  The data in the first mbuf should start HDROFF
+ * bytes from the beginning of the mbuf data storage area.
  * The return value is 1 if the packet was put on sc->sc_inq,
  * 0 otherwise.
  */
@@ -1133,20 +1063,26 @@ ppp_btom(sc)
 			 TYPE_UNCOMPRESSED_TCP)
 
 int
-ppppktin(sc, m, ilen)
+ppppktin(sc, m)
     struct ppp_softc *sc;
     struct mbuf *m;
-    int ilen;
 {
     struct ifqueue *inq;
-    int s, xlen, proto, rv;
-    struct ppp_header hdr;
+    int s, ilen, xlen, proto, rv;
+    u_char *cp, adrs, ctrl;
+    struct mbuf *mp;
 
     sc->sc_if.if_ipackets++;
     rv = 0;
 
-    hdr = *mtod(m, struct ppp_header *);
-    proto = ntohs(hdr.ph_protocol);
+    cp = mtod(m, u_char *);
+    adrs = cp[0];
+    ctrl = cp[1];
+    proto = (cp[2] << 8) + cp[3];
+
+    ilen = 0;
+    for (mp = m; mp != NULL; mp = mp->m_next)
+	ilen += mp->m_len;
 
 #ifdef VJC
     /*
@@ -1186,15 +1122,28 @@ ppppktin(sc, m, ilen)
 	proto = PPP_IP;
 
 	/* put the ppp header back in place */
-	hdr.ph_protocol = htons(PPP_IP);
-	*mtod(m, struct ppp_header *) = hdr;
+	if (cp != mtod(m, u_char *)) {
+	    cp = mtod(m, u_char *);
+	    cp[0] = adrs;
+	    cp[1] = ctrl;
+	    cp[2] = 0;
+	}
+	cp[3] = PPP_IP;
     }
 #endif /* VJC */
 
-    /* get this packet as an mbuf chain */
-    if ((m = ppp_btom(sc)) == NULL) {
-	sc->sc_if.if_ierrors++;
-	return 0;
+    /*
+     * If the packet will fit in a header mbuf, don't waste a
+     * whole cluster on it.
+     */
+    if (ilen <= MHLEN) {
+	MGETHDR(mp, M_DONTWAIT, MT_DATA);
+	if (mp != NULL) {
+	    m_copydata(m, 0, ilen, mtod(mp, caddr_t));
+	    m_freem(m);
+	    m = mp;
+	    m->m_len = ilen;
+	}
     }
     m->m_pkthdr.len = ilen;
     m->m_pkthdr.rcvif = &sc->sc_if;
@@ -1349,18 +1298,25 @@ pppinput(c, tp)
 	}
 	sc->sc_mc->m_len--;
 
+	/* excise this mbuf chain */
 	m = sc->sc_m;
+	sc->sc_m = sc->sc_mc->m_next;
+	sc->sc_mc->m_next = NULL;
 
 	if (sc->sc_flags & SC_LOG_INPKT) {
 	    printf("ppp%d: got %d bytes\n", sc->sc_if.if_unit, ilen);
 	    pppdumpm(m, ilen);
 	}
 
-	if (ppppktin(sc, m, ilen)) {
+	if (ppppktin(sc, m)) {
 	    /* Put a placeholder byte in canq for ttselect()/ttnread(). */
 	    putc(0, &tp->t_canq);
 	    ttwakeup(tp);
 	}
+
+	if (!pppgetm(sc))
+	    sc->sc_if.if_flags &= ~IFF_UP;
+
 	return;
     }
 
@@ -1529,7 +1485,8 @@ pppdumpm(m0, pktlen)
 	u_char *rptr = (u_char *)m->m_data;
 
 	if (pktlen > 0) {
-	    l = min(l, pktlen);
+	    if (l > pktlen)
+		l = pktlen;
 	    pktlen -= l;
 	}
 	while (l--) {
