@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: scanc.S,v 1.1 1994/02/24 00:41:04 mycroft Exp $
+ *	$Id: scanc.S,v 1.2 1994/02/24 01:32:14 mycroft Exp $
  */
 
 #include "DEFS.h"
@@ -35,21 +35,21 @@ ENTRY(scanc)
 	movl	4(%esp),%ecx
 	testl	%ecx,%ecx
 	jz	3f
-	pushl	%ebx
 	pushl	%esi
+	pushl	%edi
 	movl	16(%esp),%esi
-	movl	20(%esp),%ebx
+	movl	20(%esp),%edi
 	movb	24(%esp),%dl
+	xorl	%eax,%eax
 	cld
 1:
 	lodsb
-	xlatb
-	andb	%dl,%al
+	testb	%dl,(%eax,%edi)
 	jnz	2f
 	loop	1b
 2:
+	popl	%edi
 	popl	%esi
-	popl	%ebx
 3:
 	movl	%ecx,%eax
 	ret
