@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1996/10/02 16:19:51 ws Exp $
+#	$NetBSD: Makefile,v 1.14 1997/01/16 04:06:17 cgd Exp $
 
 LIB=	sa
 
@@ -15,7 +15,7 @@ CFLAGS+=$(EXTRACFLAGS)
 
 # stand routines
 SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
-	memcpy.c printf.c strerror.c
+	memcmp.c memcpy.c printf.c strerror.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
