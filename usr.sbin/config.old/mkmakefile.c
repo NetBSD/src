@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.26 1995/04/28 08:16:00 cgd Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.27 1995/05/08 19:30:31 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -227,7 +227,7 @@ makefile()
 read_files()
 {
 	register struct file_list *fl;
-	char fname[32];
+	char fname[48];
 
 	ftab = 0;
 	(void) strcpy(fname, "../../../conf/files.oldconf");
