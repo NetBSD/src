@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_usrreq.c	7.15 (Berkeley) 6/28/90
- *	$Id: tcp_usrreq.c,v 1.7 1994/01/08 23:26:42 mycroft Exp $
+ *	$Id: tcp_usrreq.c,v 1.8 1994/01/10 23:27:45 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -223,16 +223,9 @@ tcp_usrreq(so, req, m, nam, control)
 	 * done at higher levels; just return the address
 	 * of the peer, storing through addr.
 	 */
-	case PRU_ACCEPT: {
-		struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
-
-		nam->m_len = sizeof (struct sockaddr_in);
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_port = inp->inp_fport;
-		sin->sin_addr = inp->inp_faddr;
+	case PRU_ACCEPT:
+		in_setpeeraddr(inp, nam);
 		break;
-		}
 
 	/*
 	 * Mark the connection as being incapable of further output.
