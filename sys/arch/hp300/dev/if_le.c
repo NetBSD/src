@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.13 1994/07/06 01:36:23 mycroft Exp $
+ *	$Id: if_le.c,v 1.14 1994/07/07 01:31:00 mycroft Exp $
  */
 
 #include "le.h"
@@ -1044,3 +1044,5 @@ lesetladrf(ac, af)
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 }
+
+#endif /* NLE > 0 */
