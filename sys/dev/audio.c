@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.40 1997/04/19 21:25:43 pk Exp $	*/
+/*	$NetBSD: audio.c,v 1.41 1997/04/29 21:01:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -81,8 +81,8 @@
 #include <sys/conf.h>
 #include <sys/audioio.h>
 
-#include <dev/audiovar.h>
 #include <dev/audio_if.h>
+#include <dev/audiovar.h>
 
 #ifdef AUDIO_DEBUG
 #include <machine/stdarg.h>
@@ -139,10 +139,10 @@ void	audiostartp __P((struct audio_softc *));
 void	audio_rint __P((void *));
 void	audio_pint __P((void *));
 void	audio_rpint __P((void *));
-int	audio_check_format __P((u_int *, u_int *));
+int	audio_check_params __P((struct audio_params *));
 
 int	audio_calc_blksize __P((struct audio_softc *));
-void	audio_fill_silence __P((int, u_char *, int));
+void	audio_fill_silence __P((struct audio_params *, u_char *, int));
 int	audio_silence_copyout __P((struct audio_softc *, int, struct uio *));
 void	audio_alloc_auzero __P((struct audio_softc *, int));
 
@@ -156,6 +156,9 @@ static __inline int audio_sleep __P((int *, char *));
 static __inline void audio_wakeup __P((int *));
 int	audio_drain __P((struct audio_softc *));
 void	audio_clear __P((struct audio_softc *));
+
+/* The default audio mode: 8 kHz mono ulaw */
+static struct audio_params audio_default = { 8000, AUDIO_ENCODING_ULAW, 8, 1 };
 
 #ifdef AUDIO_DEBUG
 void
@@ -207,15 +210,9 @@ audio_hardware_attach(hwp, hdlp)
 	/* XXX too paranoid? */
 	if (hwp->open == 0 ||
 	    hwp->close == 0 ||
-	    hwp->set_in_sr == 0 ||
-	    hwp->get_in_sr == 0 ||
-	    hwp->set_out_sr == 0 ||
-	    hwp->get_out_sr == 0 ||
-	    hwp->set_format == 0 ||
-	    hwp->get_encoding == 0 ||
-	    hwp->get_precision == 0 ||
-	    hwp->set_channels == 0 ||
-	    hwp->get_channels == 0 ||
+	    hwp->query_encoding == 0 ||
+	    hwp->set_in_params == 0 ||
+	    hwp->set_out_params == 0 ||
 	    hwp->round_blocksize == 0 ||
 	    hwp->set_out_port == 0 ||
 	    hwp->get_out_port == 0 ||
@@ -253,7 +250,8 @@ audio_hardware_attach(hwp, hdlp)
 	/*
 	 * Set default softc params
 	 */
-	sc->sc_pencoding = sc->sc_rencoding = AUDIO_ENCODING_LINEAR;
+	sc->sc_pparams = audio_default;
+	sc->sc_rparams = audio_default;
 
 	/*
 	 * Return the audio unit number
@@ -537,12 +535,15 @@ audio_open(dev, flags, ifmt, p)
 	 */
 	if (ISDEVAUDIO(dev)) {
 		/* /dev/audio */
-		hw->set_format(sc->hw_hdl, AUDIO_ENCODING_ULAW, 8);
-		hw->set_in_sr(sc->hw_hdl, 8000);
-		hw->set_out_sr(sc->hw_hdl, 8000);
-		hw->set_channels(sc->hw_hdl, 1);
-
-		sc->sc_pencoding = sc->sc_rencoding = AUDIO_ENCODING_ULAW;
+		sc->sc_rparams = audio_default;
+		sc->sc_pparams = audio_default;
+		/** XXX should we abort on error? */
+		error = hw->set_in_params(sc->hw_hdl, &sc->sc_rparams);
+		if (error)
+			return (error);
+		error = hw->set_out_params(sc->hw_hdl, &sc->sc_pparams);
+		if (error)
+			return (error);
 	}
 
 	/*
@@ -551,15 +552,16 @@ audio_open(dev, flags, ifmt, p)
 	 * us these values.
 	 */
 #ifdef DIAGNOSTIC
-	if (hw->get_precision(sc->hw_hdl) == 0)
-	    panic("audio_open: hardware driver returned 0 for get_precision");
+	if (sc->rparams.precision == 0 || sc->sc_pparams.precision == 0) {
+		printf("audio_open: 0 precision\n");
+		return EINVAL;
+	}
 #endif
-	sc->sc_50ms = 50 * hw->get_out_sr(sc->hw_hdl) / 1000;
 
 	sc->sc_blksize = audio_calc_blksize(sc);
 	audio_alloc_auzero(sc, sc->sc_blksize);
-	sc->sc_smpl_in_blk = sc->sc_blksize / 
-	    (hw->get_precision(sc->hw_hdl) / NBBY);
+	sc->sc_smpl_in_blk = sc->sc_blksize / (sc->sc_pparams.precision / NBBY);
+	sc->sc_50ms = 50 * sc->sc_pparams.sample_rate / 1000;
 	audio_initbufs(sc);
 
 	sc->sc_backlog = audio_backlog;
@@ -783,7 +785,8 @@ audio_read(dev, uio, ioflag)
 		}
 		hp = cb->hp;
 		if (hw->sw_decode)
-			hw->sw_decode(sc->hw_hdl, sc->sc_rencoding, hp, blocksize);
+			hw->sw_decode(sc->hw_hdl, sc->sc_rparams.encoding,
+				      hp, blocksize);
 		error = uiomove(hp, blocksize, uio);
 		if (error)
 			break;
@@ -823,11 +826,11 @@ audio_calc_blksize(sc)
 	struct audio_hw_if *hw = sc->hw_if;
     	int bs;
 	
-	bs =  hw->get_out_sr(sc->hw_hdl) * audio_blk_ms / 1000;
+	bs = sc->sc_pparams.sample_rate * audio_blk_ms / 1000;
 	if (bs == 0)
 		bs = 1;
-	bs *= hw->get_channels(sc->hw_hdl);
-	bs *= hw->get_precision(sc->hw_hdl) / NBBY;
+	bs *= sc->sc_pparams.channels;
+	bs *= sc->sc_pparams.precision / NBBY;
 	if (bs > AU_RING_SIZE/2)
 		bs = AU_RING_SIZE/2;
 	bs =  hw->round_blocksize(sc->hw_hdl, bs);
@@ -838,15 +841,15 @@ audio_calc_blksize(sc)
 }
 
 void
-audio_fill_silence(encoding, p, n)
-	int encoding;
+audio_fill_silence(params, p, n)
+	struct audio_params *params;
         u_char *p;
         int n;
 {
 	u_int auzero;
 	u_char *q;
     
-	switch (encoding) {
+	switch (params->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	    	auzero = 0x7f; 
 		break;
@@ -877,7 +880,7 @@ audio_silence_copyout(sc, n, uio)
 	u_char zerobuf[NSILENCE];
 	int k;
 
-	audio_fill_silence(sc->sc_rencoding, zerobuf, NSILENCE);
+	audio_fill_silence(&sc->sc_rparams, zerobuf, NSILENCE);
 
         while (n > 0 && uio->uio_resid) {
                 iov = uio->uio_iov;
@@ -923,9 +926,10 @@ audio_alloc_auzero(sc, bs)
 		panic("audio_alloc_auzero: malloc auzero_block failed");
 	}
 #endif
-	audio_fill_silence(sc->sc_pencoding, sc->auzero_block, bs);
+	audio_fill_silence(&sc->sc_pparams, sc->auzero_block, bs);
 	if (hw->sw_encode)
-		hw->sw_encode(sc->hw_hdl, sc->sc_pencoding, sc->auzero_block, bs);
+		hw->sw_encode(sc->hw_hdl, sc->sc_pparams.encoding,
+			      sc->auzero_block, bs);
 }
 
     
@@ -975,7 +979,7 @@ audio_write(dev, uio, ioflag)
 				if (error == 0) {
 					if (hw->sw_encode)
 						hw->sw_encode(sc->hw_hdl,
-						    sc->sc_pencoding, cb->otp,
+						    sc->sc_pparams.encoding, cb->otp,
 						    cc);
 					cb->fill -= cc;
 					cb->otp += cc;
@@ -1017,7 +1021,7 @@ audio_write(dev, uio, ioflag)
 			cb->nblk = sc->sc_backlog;
 			cb->tp = cb->hp + sc->sc_backlog * blocksize;
 			splx(s);
-			audio_fill_silence(sc->sc_pencoding, cb->hp, sc->sc_backlog * blocksize);
+			audio_fill_silence(&sc->sc_pparams, cb->hp, sc->sc_backlog * blocksize);
 		}
 #endif
 		/* Calculate sample number of first sample in block we write */
@@ -1056,7 +1060,7 @@ audio_write(dev, uio, ioflag)
 				cc = blocksize - cc;
 				cb->fill = cc;
 				cb->otp = tp;
-				audio_fill_silence(sc->sc_pencoding, tp, cc);
+				audio_fill_silence(&sc->sc_pparams, tp, cc);
 				DPRINTF(("audio_write: auzero 0x%x %d 0x%x\n",
 				         tp, cc, *tp));
 				tp += cc;
@@ -1075,8 +1079,8 @@ audio_write(dev, uio, ioflag)
 		}		    
 
 		if (hw->sw_encode)
-			hw->sw_encode(sc->hw_hdl, sc->sc_pencoding, cb->tp,
-			    blocksize);
+			hw->sw_encode(sc->hw_hdl, sc->sc_pparams.encoding, 
+				      cb->tp, blocksize);
 
 		/* wrap the ring buffer if at end */
 		s = splaudio();
@@ -1349,14 +1353,14 @@ audio_pint(v)
 		if (cb->cb_pause) {
 		    cb->cb_pdrops++;
 #ifdef AUDIO_DEBUG
-		    if (audiodebug > 1)
+		    if (audiodebug > 2)
 			Dprintf("audio_pint: paused %d\n", cb->cb_pdrops);
 #endif
 		    goto psilence;
 		}
 		else {
 #ifdef AUDIO_DEBUG
-		    if (audiodebug > 1)
+		    if (audiodebug > 2)
 		    	Dprintf("audio_pint: hp=0x%x cc=%d\n", hp, cc);
 #endif
 		    error = hw->start_output(sc->hw_hdl, hp, cc,
@@ -1379,7 +1383,7 @@ audio_pint(v)
 	else {
 		cb->cb_drops++;
 #ifdef AUDIO_DEBUG
-		if (audiodebug > 1)
+		if (audiodebug > 2)
 		    Dprintf("audio_pint: drops=%d auzero %d 0x%x\n", cb->cb_drops, cc, *(int *)sc->auzero_block);
 #endif
  psilence:
@@ -1394,8 +1398,9 @@ audio_pint(v)
 	}
 
 #ifdef AUDIO_DEBUG
-	DPRINTF(("audio_pint: mode=%d pause=%d nblk=%d lowat=%d\n",
-		sc->sc_mode, cb->cb_pause, cb->nblk, sc->sc_lowat));
+	if (audiodebug > 1)
+		Dprintf("audio_pint: mode=%d pause=%d nblk=%d lowat=%d\n",
+			sc->sc_mode, cb->cb_pause, cb->nblk, sc->sc_lowat);
 #endif
 	if ((sc->sc_mode & AUMODE_PLAY) && !cb->cb_pause) {
 		if (cb->nblk <= sc->sc_lowat) {
@@ -1446,7 +1451,7 @@ audio_rint(v)
 			tp = cb->bp;
 	    	if (++cb->nblk < cb->maxblk) {
 #ifdef AUDIO_DEBUG
-		    	if (audiodebug > 1)
+		    	if (audiodebug > 2)
 				Dprintf("audio_rint: tp=%p cc=%d\n", tp, cc);
 #endif
 			error = hw->start_input(sc->hw_hdl, tp, cc,
@@ -1479,32 +1484,32 @@ audio_rint(v)
 }
 
 int
-audio_check_format(encodingp, precisionp)
-	u_int *encodingp, *precisionp;
+audio_check_params(p)
+	struct audio_params *p;
 {
 
-	if (*encodingp == AUDIO_ENCODING_LINEAR)
-		switch (*precisionp) {
+	if (p->encoding == AUDIO_ENCODING_LINEAR)
+		switch (p->precision) {
 		case 8:
-			*encodingp = AUDIO_ENCODING_PCM8;
+			p->encoding = AUDIO_ENCODING_PCM8;
 			return (0);
 		case 16:
-			*encodingp = AUDIO_ENCODING_PCM16;
+			p->encoding = AUDIO_ENCODING_PCM16;
 			return (0);
 		default:
 			return (EINVAL);
 		}
 
-	switch (*encodingp) {
+	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_ALAW:
 	case AUDIO_ENCODING_PCM8:
 	case AUDIO_ENCODING_ADPCM:
-		if (*precisionp != 8)
+		if (p->precision != 8)
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_PCM16:
-		if (*precisionp != 16)
+		if (p->precision != 16)
 			return (EINVAL);
 		break;
 	default:
@@ -1520,99 +1525,74 @@ audiosetinfo(sc, ai)
 	struct audio_info *ai;
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
-	int cleared = 0, init = 0;
-	int bsize, error = 0;
+	int cleared = 0;
+	int s, bsize, error = 0;
 	struct audio_hw_if *hw = sc->hw_if;
 	mixer_ctrl_t ct;
-	int s;
+	struct audio_params pp, rp;
+	int np, nr;
 	
 	if (hw == 0)		/* HW has not attached */
 		return(ENXIO);
 
+	pp = sc->sc_pparams;
+	rp = sc->sc_rparams;
+	nr = np = 0;
 	if (p->sample_rate != ~0) {
-		if (!cleared)
-			audio_clear(sc);
-		cleared = 1;
-
-		error = hw->set_out_sr(sc->hw_hdl, p->sample_rate);
-		if (error)
-			return(error);
-
-		sc->sc_50ms = 50 * hw->get_out_sr(sc->hw_hdl) / 1000;
-		init = 1;
+		pp.sample_rate = p->sample_rate;
+		np++;
 	}
 	if (r->sample_rate != ~0) {
-		if (!cleared)
-			audio_clear(sc);
-		cleared = 1;
-
-		error = hw->set_in_sr(sc->hw_hdl, r->sample_rate);
-		if (error)
-			return(error);
-
-		sc->sc_50ms = 50 * hw->get_in_sr(sc->hw_hdl) / 1000;
-		init = 1;
+		rp.sample_rate = r->sample_rate;
+		nr++;
 	}
-	if (p->encoding != ~0 || p->precision != ~0) {
-		if (!cleared)
-			audio_clear(sc);
-		cleared = 1;
-
-		if (p->encoding == ~0)
-			p->encoding = hw->get_encoding(sc->hw_hdl);
-		if (p->precision == ~0)
-			p->precision = hw->get_precision(sc->hw_hdl);
-		error = audio_check_format(&p->encoding, &p->precision);
-		if (error)
-			return(error);
-		error = hw->set_format(sc->hw_hdl, p->encoding, p->precision);
-		if (error)
-			return(error);
-
-		sc->sc_pencoding = p->encoding;
-		init = 1;
+	if (p->encoding != ~0) {
+		pp.encoding = p->encoding;
+		np++;
 	}	
-	if (r->encoding != ~0 || r->precision != ~0) {
-		if (!cleared)
-			audio_clear(sc);
-		cleared = 1;
-
-		if (r->encoding == ~0)
-			r->encoding = hw->get_encoding(sc->hw_hdl);
-		if (r->precision == ~0)
-			r->precision = hw->get_precision(sc->hw_hdl);
-		error = audio_check_format(&r->encoding, &r->precision);
-		if (error)
-			return(error);
-		error = hw->set_format(sc->hw_hdl, r->encoding, r->precision);
-		if (error)
-			return(error);
-
-		sc->sc_rencoding = r->encoding;
-		init = 1;
+	if (r->encoding != ~0) {
+		rp.encoding = r->encoding;
+		nr++;
+	}
+	if (p->precision != ~0) {
+		pp.precision = p->precision;
+		np++;
+	}
+	if (r->precision != ~0) {
+		rp.precision = r->precision;
+		nr++;
 	}
 	if (p->channels != ~0) {
-		if (!cleared)
-			audio_clear(sc);
-		cleared = 1;
-
-		error = hw->set_channels(sc->hw_hdl, p->channels);
-		if (error)
-			return(error);
-
-		init = 1;
+		pp.channels = p->channels;
+		np++;
 	}
 	if (r->channels != ~0) {
+		rp.channels = r->channels;
+		nr++;
+	}
+	if (nr && (error = audio_check_params(&rp)))
+		return error;
+	if (np && (error = audio_check_params(&pp)))
+		return error;
+	if (nr) {
+		audio_clear(sc);
+		error = hw->set_in_params(sc->hw_hdl, &rp);
+		if (error)
+			return (error);
+		sc->sc_rparams = rp;
+		sc->sc_blksize = audio_calc_blksize(sc);
+	}
+	if (np) {
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
-
-		error = hw->set_channels(sc->hw_hdl, r->channels);
+		error = hw->set_out_params(sc->hw_hdl, &pp);
 		if (error)
-			return(error);
-
-		init = 1;
+			return (error);
+		sc->sc_pparams = pp;
+		sc->sc_blksize = audio_calc_blksize(sc);
 	}
+
 	if (p->port != ~0) {
 		if (!cleared)
 			audio_clear(sc);
@@ -1684,16 +1664,12 @@ audiosetinfo(sc, ai)
 			bsize = AU_RING_SIZE;
 
 		sc->sc_blksize = bsize;
-		init = 1;
-	} else if (init) {
-		/* Block size calculated from other parameter changes. */
-		sc->sc_blksize = audio_calc_blksize(sc);
 	}
 
-	if (init) {
+	if (np || nr || ai->blocksize != ~0) {
 		audio_alloc_auzero(sc, sc->sc_blksize);
-		sc->sc_smpl_in_blk = sc->sc_blksize / 
-		    (hw->get_precision(sc->hw_hdl) / NBBY);
+		sc->sc_smpl_in_blk = sc->sc_blksize / (sc->sc_pparams.precision / NBBY);
+		sc->sc_50ms = 50 * sc->sc_pparams.sample_rate / 1000;
 		audio_initbufs(sc);
 	}
 
@@ -1756,12 +1732,14 @@ audiogetinfo(sc, ai)
 	if (hw == 0)		/* HW has not attached */
 		return(ENXIO);
 	
-	p->sample_rate = hw->get_out_sr(sc->hw_hdl);
-	r->sample_rate = hw->get_in_sr(sc->hw_hdl);
-	p->channels = r->channels = hw->get_channels(sc->hw_hdl);
-	p->precision = r->precision = hw->get_precision(sc->hw_hdl);
-	p->encoding = hw->get_encoding(sc->hw_hdl);
-	r->encoding = hw->get_encoding(sc->hw_hdl);
+	p->sample_rate = sc->sc_pparams.sample_rate;
+	r->sample_rate = sc->sc_rparams.sample_rate;
+	p->channels = sc->sc_pparams.channels;
+	r->channels = sc->sc_rparams.channels;
+	p->precision = sc->sc_pparams.precision;
+	r->precision = sc->sc_rparams.precision;
+	p->encoding = sc->sc_pparams.encoding;
+	r->encoding = sc->sc_rparams.encoding;
 
 	r->port = hw->get_in_port(sc->hw_hdl);
 	p->port = hw->get_out_port(sc->hw_hdl);

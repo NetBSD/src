@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.24 1997/04/06 00:54:25 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.25 1997/04/29 21:01:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -234,16 +234,9 @@ struct audio_hw_if pss_audio_if = {
 	spopen,
 	ad1848_close,
 	NULL,
-	ad1848_set_in_sr,
-	ad1848_get_in_sr,
-	ad1848_set_out_sr,
-	ad1848_get_out_sr,
 	ad1848_query_encoding,
-	ad1848_set_format,
-	ad1848_get_encoding,
-	ad1848_get_precision,
-	ad1848_set_channels,
-	ad1848_get_channels,
+	ad1848_set_out_params,
+	ad1848_set_in_params,
 	ad1848_round_blocksize,
 	pss_set_out_port,
 	pss_get_out_port,
