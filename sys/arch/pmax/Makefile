@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/11 08:42:09 mycroft Exp $
-
-NOOBJ=
+#	$NetBSD: Makefile,v 1.8 1997/10/11 08:44:48 mycroft Exp $
 
 # Makefile for pmax tags file and boot blocks
 
