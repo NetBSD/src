@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.84 1998/10/13 21:08:48 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.85 1998/10/14 14:22:18 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -392,7 +392,7 @@ extern void cpu_hatch __P((void));
 	pmap_alloc_cpu(cpi);
 
 	cpu_hatched = 0;
-	cpu_hatchstack = malloc(USPACE,M_TEMP, M_NOWAIT);
+	cpu_hatchstack = cpi->idle_u;
 	cpu_hatch_sc = sc;
 
 	/*
@@ -416,13 +416,11 @@ extern void cpu_hatch __P((void));
 	for (n = 10000; n != 0; n--) {
 		cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
 		if (cpu_hatched != 0) {
-#ifdef DEBUG
-			printf("[CPU hatched]\n");
-#endif
-			break;
+			return;
 		}
 		delay(100);
 	}
+	printf("CPU did not spin up\n");
 #endif
 	return;
 }
