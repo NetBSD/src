@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.72 2003/01/27 21:08:09 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.73 2003/03/30 07:38:42 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -325,6 +325,10 @@ extern int	 COLOR_PAIRS;		/* Max colour pairs on the screen. */
 #define	addch(ch)			waddch(stdscr, ch)
 #define	addnstr(s, n)			waddnstr(stdscr, s, n)
 #define	addstr(s)			waddnstr(stdscr, s, -1)
+#define attr_get(a, p, o)		wattr_get(stdscr, a, p, o)
+#define attr_off(a, o)			wattr_off(stdscr, a, o)
+#define attr_on(a, o)			wattr_on(stdscr, a, o)
+#define attr_set(a, p, o)		wattr_set(stdscr, a, p, o)
 #define	attroff(attr)			wattroff(stdscr, attr)
 #define	attron(attr)			wattron(stdscr, attr)
 #define	attrset(attr)			wattrset(stdscr, attr)
@@ -335,6 +339,7 @@ extern int	 COLOR_PAIRS;		/* Max colour pairs on the screen. */
 #define	clear()				wclear(stdscr)
 #define	clrtobot()			wclrtobot(stdscr)
 #define	clrtoeol()			wclrtoeol(stdscr)
+#define color_set(c, o)			wcolor_set(stdscr, c, o)
 #define	delch()				wdelch(stdscr)
 #define	deleteln()			wdeleteln(stdscr)
 #define	erase()				werase(stdscr)
@@ -412,6 +417,10 @@ int	 addbytes(const char *, int);
 int	 addch(chtype);
 int	 addnstr(const char *, int);
 int	 addstr(const char *);
+int	 attr_get(attr_t *, short *, void *);
+int	 attr_off(attr_t, void *);
+int	 attr_on(attr_t, void *);
+int	 attr_set(attr_t, short, void *);
 int	 attroff(int);
 int	 attron(int);
 int	 attrset(int);
@@ -422,6 +431,7 @@ int	 border(chtype, chtype, chtype, chtype,
 int	 clear(void);
 int	 clrtobot(void);
 int	 clrtoeol(void);
+int	 color_set(short, void *);
 int	 delch(void);
 int	 deleteln(void);
 int	 erase(void);
@@ -609,6 +619,10 @@ int	 vwscanw(WINDOW *, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__(__scanf__, 2, 0)));
 int	 waddch(WINDOW *, chtype);
 int	 waddnstr(WINDOW *, const char *, int);
+int	 wattr_get(WINDOW *, attr_t *, short *, void *);
+int	 wattr_off(WINDOW *, attr_t, void *);
+int	 wattr_on(WINDOW *, attr_t, void *);
+int	 wattr_set(WINDOW *, attr_t, short, void *);
 int	 wattroff(WINDOW *, int);
 int	 wattron(WINDOW *, int);
 int	 wattrset(WINDOW *, int);
@@ -619,6 +633,7 @@ int	 wborder(WINDOW *, chtype, chtype, chtype, chtype, chtype, chtype,
 int	 wclear(WINDOW *);
 int	 wclrtobot(WINDOW *);
 int	 wclrtoeol(WINDOW *);
+int	 wcolor_set(WINDOW *, short, void *);
 int	 wdelch(WINDOW *);
 int	 wdeleteln(WINDOW *);
 int	 werase(WINDOW *);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_attributes.3,v 1.2 2002/10/21 14:17:54 wiz Exp $
+.\"	$NetBSD: curses_attributes.3,v 1.3 2003/03/30 07:38:42 jdc Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 13, 2002
+.Dd March 26, 2003
 .Dt CURSES_ATTRIBUTES 3
 .Os
 .Sh NAME
@@ -39,33 +39,63 @@
 .Nm wattron ,
 .Nm wattroff ,
 .Nm wattrset ,
-.Nm getattrs
+.Nm getattrs ,
+.Nm attr_on ,
+.Nm attr_off ,
+.Nm attr_set ,
+.Nm color_set ,
+.Nm attr_get ,
+.Nm wattr_on ,
+.Nm wattr_off ,
+.Nm wattr_set ,
+.Nm wcolor_set ,
+.Nm wattr_get
 .Nd curses general attribute manipulation routines
 .Sh LIBRARY
 .Lb libcurses
 .Sh SYNOPSIS
 .Fd #include \*[Lt]curses.h\*[Gt]
 .Ft int
-.Fn attron int
+.Fn attron "int attr"
 .Ft int
-.Fn attroff int
+.Fn attroff "int attr"
 .Ft int
-.Fn attrset int
+.Fn attrset "int attr"
 .Ft int
-.Fn wattron int
+.Fn wattron "WINDOW * win" "int attr"
 .Ft int
-.Fn wattroff int
+.Fn wattroff "WINDOW * win" "int attr"
 .Ft int
-.Fn wattrset int
+.Fn wattrset "WINDOW * win" "int attr"
 .Ft chtype
 .Fn getattrs "WINDOW *win"
+.Ft int
+.Fn attr_on "attr_t attr" "void *opt"
+.Ft int
+.Fn attr_off "attr_t attr" "void *opt"
+.Ft int
+.Fn attr_set "attr_t attr" "short pair" "void *opt"
+.Ft int
+.Fn color_set "short pair" "void *opt"
+.Ft int
+.Fn attr_get "attr_t *attr" "short *pair" "void *opt"
+.Ft int
+.Fn wattr_on "WINDOW *win" "attr_t attr" "void *opt"
+.Ft int
+.Fn wattr_off "WINDOW *win" "attr_t attr" "void *opt"
+.Ft int
+.Fn wattr_set "WINDOW *win" "attr_t attr" "short pair" "void *opt"
+.Ft int
+.Fn wcolor_set "WINDOW *win" "short pair" "void *opt"
+.Ft int
+.Fn wattr_get "WINDOW *win" "attr_t *attr" "short *pair" "void *opt"
 .Sh DESCRIPTION
 These functions manipulate attributes on
 .Dv stdscr
 or on the specified window.
 The attributes that can be manipulated are:
 .Pp
-.Bl -tag -width "A_ALTCHARSET" -compact -offset indent
+.Bl -tag -width "COLOR_PAIR(n)" -compact -offset indent
 .It A_NORMAL
 no special attributes are applied
 .It A_STANDOUT
@@ -86,19 +116,24 @@ characters are added as blanks
 characters are protected from modification
 .It A_ALTCHARSET
 characters are displayed using the alternate character set (ACS)
+.It COLOR_PAIR(n)
+characters are displayed using color pair n.
 .El
-along with color.
 .Pp
-The function
+The functions
 .Fn attron
-turns on the attributes specified in
+and
+.Fn attr_on
+turn on the attributes specified in
 .Fa attr
 on
 .Dv stdscr .
 .Pp
-The function
+The functions
 .Fn attroff
-turns off the attributes specified in
+and
+.Fn attr_off
+turn off the attributes specified in
 .Fa attr
 on
 .Dv stdscr .
@@ -121,16 +156,42 @@ For example,
 .Fn attron "A_REVERSE | A_BOLD"
 will turn on both inverse video and higher intensity.
 .Pp
+The function
+.Fn attr_set
+sets the attributes of
+.Dv stdscr
+to those specified in
+.Fa attr
+and
+.Fa pair ,
+turning off any others.  Note that a color pair specified in
+.Fa pair
+will override any color pair specified in
+.Fa attr .
+.Pp
+The function
+.Fn color_set
+sets the color pair attribute to the pair specified in
+.Fa pair .
+.Pp
 The functions
 .Fn wattron ,
-.Fn wattroff
+.Fn wattr_on ,
+.Fn wattroff ,
+.Fn wattr_on ,
+.Fn wattrset ,
+.Fn wattr_set
 and
-.Fn wattrset
+.Fn wcolor_set
 are equivalent to
 .Fn attron ,
+.Fn attr_on ,
 .Fn attroff
-and
+.Fn attr_off ,
 .Fn attrset ,
+.Fn attr_set
+and
+.Fn color_set
 respectively, excepting that the character is added to the window specified by
 .Fa win .
 .Pp
@@ -138,6 +199,30 @@ The function
 .Fn getattrs
 returns the attributes that are currently applied to window specified by
 .Fa win .
+.Pp
+The function
+.Fn attr_get
+sets
+.Fa attr
+to the attributes and
+.Fa pair
+to the color pair currently applied to
+.Dv stdscr .
+Either of
+.Fa attr
+and
+.Fa pair
+can be
+.Dv NULL ,
+if the relevant value is of no interest.
+.Pp
+The function
+.Fn wattr_get
+is equivalent to
+.Fn attr_get ,
+excepting that the attributes and color pair currently applied to
+.Fa win
+are set.
 .Sh RETURN VALUES
 These functions return OK on success and ERR on failure.
 .Sh SEE ALSO
@@ -148,6 +233,11 @@ These functions return OK on success and ERR on failure.
 .Xr curses_insertch 3 ,
 .Xr curses_standout 3 ,
 .Xr curses_underscore 3
+.Sh NOTES
+The
+.Fa opt
+argument is not currently used but is reserved for a future version of the
+specification.
 .Sh STANDARDS
 The
 .Nx

@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.11 2003/02/17 11:07:19 dsl Exp $	*/
+/*	$NetBSD: attributes.c,v 1.12 2003/03/30 07:38:42 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,22 +38,78 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.11 2003/02/17 11:07:19 dsl Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.12 2003/03/30 07:38:42 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
+void __wcolor_set(WINDOW *, attr_t);
+
 #ifndef _CURSES_USE_MACROS
+/*
+ * attr_get --
+ *	Get attributes and color pair from stdscr
+ */
+/* ARGSUSED */
+int
+attr_get(attr_t *attr, short *pair, void *opt)
+{
+	return wattr_get(stdscr, attr, pair, opt);
+}
+
+/*
+ * attr_on --
+ *	Test and set attributes on stdscr
+ */
+/* ARGSUSED */
+int
+attr_on(attr_t attr, void *opt)
+{
+	return wattr_on(stdscr, attr, opt);
+}
+
+/*
+ * attr_off --
+ *	Test and unset attributes on stdscr
+ */
+/* ARGSUSED */
+int
+attr_off(attr_t attr, void *opt)
+{
+	return wattr_off(stdscr, attr, opt);
+}
+
+/*
+ * attr_set --
+ *	Set attributes and color pair on stdscr
+ */
+/* ARGSUSED */
+int
+attr_set(attr_t attr, short pair, void *opt)
+{
+	return wattr_set(stdscr, attr, pair, opt);
+}
+
+/*
+ * color_set --
+ *	Set color pair on stdscr
+ */
+/* ARGSUSED */
+int
+color_set(short pair, void *opt)
+{
+	return wcolor_set(stdscr, pair, opt);
+}
+
 /*
  * attron --
  *	Test and set attributes on stdscr
  */
-
 int
 attron(int attr)
 {
-	return wattron(stdscr, attr);
+	return wattr_on(stdscr, (attr_t) attr, NULL);
 }
 
 /*
@@ -63,7 +119,7 @@ attron(int attr)
 int
 attroff(int attr)
 {
-	return wattroff(stdscr, attr);
+	return wattr_off(stdscr, (attr_t) attr, NULL);
 }
 
 /*
@@ -76,15 +132,130 @@ attrset(int attr)
 {
 	return wattrset(stdscr, attr);
 }
+#endif	/* _CURSES_USE_MACROS */
 
+/*
+ * wattr_get --
+ *	Get attributes and colour pair from window
+ *	Note that attributes also includes colour.
+ */
+/* ARGSUSED */
+int
+wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opt)
+{
+#ifdef DEBUG
+	__CTRACE ("wattr_get: win %p\n", win);
 #endif
+	if (attr != NULL)
+		*attr = win->wattr;
+	if (pair != NULL)
+		*pair = PAIR_NUMBER(win->wattr);
+	return OK;
+}
+
+/*
+ * wattr_on --
+ *	Test and set attributes on stdscr
+ *
+ *	Modes are blinking, bold (extra bright), dim (half-bright),
+ *	blanking (invisible), protected and reverse video
+ */
+/* ARGSUSED */
+int
+wattr_on(WINDOW *win, attr_t attr, void *opt)
+{
+#ifdef DEBUG
+	__CTRACE ("wattr_on: win %p, attr %08x\n", win, attr);
+#endif
+	/* If can enter modes, set the relevent attribute bits. */
+	if (__tc_me != NULL) {
+		if (attr & __BLINK && __tc_mb != NULL)
+			win->wattr |= __BLINK;
+		if (attr & __BOLD && __tc_md != NULL)
+			win->wattr |= __BOLD;
+		if (attr & __DIM && __tc_mh != NULL)
+			win->wattr |= __DIM;
+		if (attr & __BLANK && __tc_mk != NULL)
+			win->wattr |= __BLANK;
+		if (attr & __PROTECT && __tc_mp != NULL)
+			win->wattr |= __PROTECT;
+		if (attr & __REVERSE && __tc_mr != NULL)
+			win->wattr |= __REVERSE;
+	}
+	if (attr & __STANDOUT)
+		wstandout(win);
+	if (attr & __UNDERSCORE)
+		wunderscore(win);
+	if ((attr_t) attr & __COLOR)
+		__wcolor_set(win, (attr_t) attr);
+	return OK;
+}
+
+/*
+ * wattr_off --
+ *	Test and unset attributes on stdscr
+ *
+ *	Note that the 'me' sequence unsets all attributes.  We handle
+ *	which attributes should really be set in refresh.c:makech().
+ */
+/* ARGSUSED */
+int
+wattr_off(WINDOW *win, attr_t attr, void *opt)
+{
+#ifdef DEBUG
+	__CTRACE ("wattr_off: win %p, attr %08x\n", win, attr);
+#endif
+	/* If can do exit modes, unset the relevent attribute bits. */
+	if (__tc_me != NULL) {
+		if (attr & __BLINK)
+			win->wattr &= ~__BLINK;
+		if (attr & __BOLD)
+			win->wattr &= ~__BOLD;
+		if (attr & __DIM)
+			win->wattr &= ~__DIM;
+		if (attr & __BLANK)
+			win->wattr &= ~__BLANK;
+		if (attr & __PROTECT)
+			win->wattr &= ~__PROTECT;
+		if (attr & __REVERSE)
+			win->wattr &= ~__REVERSE;
+	}
+	if (attr & __STANDOUT)
+		wstandend(win);
+	if (attr & __UNDERSCORE)
+		wunderend(win);
+	if ((attr_t) attr & __COLOR) {
+		if (__tc_Co != NULL)
+			win->wattr &= ~__COLOR;
+	}
+	return OK;
+}
+
+/*
+ * wattr_set --
+ *	Set attributes and color pair on stdscr
+ */
+/* ARGSUSED */
+int
+wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
+{
+#ifdef DEBUG
+	__CTRACE ("wattr_set: win %p, attr %08x, pair %d\n", win, attr, pair);
+#endif
+	wattr_on(win, attr, NULL);
+	wattr_off(win, (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR),
+	    NULL);
+	/*
+         * This overwrites any colour setting from the attributes
+	 * and is compatible with ncurses.
+	 */
+	__wcolor_set(win, (attr_t) COLOR_PAIR(pair));
+	return OK;
+}
 
 /*
  * wattron --
  *	Test and set attributes.
- *
- *	Modes are blinking, bold (extra bright), dim (half-bright),
- *	blanking (invisible), protected and reverse video
  */
 
 int
@@ -93,41 +264,12 @@ wattron(WINDOW *win, int attr)
 #ifdef DEBUG
 	__CTRACE ("wattron: win %p, attr %08x\n", win, attr);
 #endif
-	/* If can enter modes, set the relevent attribute bits. */
-	if (__tc_me != NULL) {
-		if ((attr_t) attr & __BLINK && __tc_mb != NULL)
-			win->wattr |= __BLINK;
-		if ((attr_t) attr & __BOLD && __tc_md != NULL)
-			win->wattr |= __BOLD;
-		if ((attr_t) attr & __DIM && __tc_mh != NULL)
-			win->wattr |= __DIM;
-		if ((attr_t) attr & __BLANK && __tc_mk != NULL)
-			win->wattr |= __BLANK;
-		if ((attr_t) attr & __PROTECT && __tc_mp != NULL)
-			win->wattr |= __PROTECT;
-		if ((attr_t) attr & __REVERSE && __tc_mr != NULL)
-			win->wattr |= __REVERSE;
-	}
-	if ((attr_t) attr & __STANDOUT)
-		wstandout(win);
-	if ((attr_t) attr & __UNDERSCORE)
-		wunderscore(win);
-	if ((attr_t) attr & __COLOR) {
-		/* If another color pair is set, turn that off first. */
-		win->wattr &= ~__COLOR;
-		/* If can do color video, set the color pair bits. */
-		if (__tc_Co != NULL)
-			win->wattr |= attr & __COLOR;
-	}
-	return (OK);
+	return wattr_on(win, (attr_t) attr, NULL);
 }
 
 /*
  * wattroff --
  *	Test and unset attributes.
- *
- *	Note that the 'me' sequence unsets all attributes.  We handle
- *	which attributes should really be set in refresh.c:makech().
  */
 int
 wattroff(WINDOW *win, int attr)
@@ -135,30 +277,7 @@ wattroff(WINDOW *win, int attr)
 #ifdef DEBUG
 	__CTRACE ("wattroff: win %p, attr %08x\n", win, attr);
 #endif
-	/* If can do exit modes, unset the relevent attribute bits. */
-	if (__tc_me != NULL) {
-		if ((attr_t) attr & __BLINK)
-			win->wattr &= ~__BLINK;
-		if ((attr_t) attr & __BOLD)
-			win->wattr &= ~__BOLD;
-		if ((attr_t) attr & __DIM)
-			win->wattr &= ~__DIM;
-		if ((attr_t) attr & __BLANK)
-			win->wattr &= ~__BLANK;
-		if ((attr_t) attr & __PROTECT)
-			win->wattr &= ~__PROTECT;
-		if ((attr_t) attr & __REVERSE)
-			win->wattr &= ~__REVERSE;
-	}
-	if ((attr_t) attr & __STANDOUT)
-		wstandend(win);
-	if ((attr_t) attr & __UNDERSCORE)
-		wunderend(win);
-	if ((attr_t) attr & __COLOR) {
-		if (__tc_Co != NULL)
-			win->wattr &= ~__COLOR;
-	}
-	return (OK);
+	return wattr_off(win, (attr_t) attr, NULL);
 }
 
 /*
@@ -172,9 +291,26 @@ wattrset(WINDOW *win, int attr)
 #ifdef DEBUG
 	__CTRACE ("wattrset: win %p, attr %08x\n", win, attr);
 #endif
-	wattron(win, attr);
-	wattroff(win, (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR));
-	return (OK);
+	wattr_on(win, (attr_t) attr, NULL);
+	wattr_off(win,
+	    (attr_t) (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR),
+	    NULL);
+	return OK;
+}
+
+/*
+ * wcolor_set --
+ *	Set color pair on window
+ */
+/* ARGSUSED */
+int
+wcolor_set(WINDOW *win, short pair, void *opt)
+{
+#ifdef DEBUG
+	__CTRACE ("wolor_set: win %p, pair %%d\n", win, pair);
+#endif
+	__wcolor_set(win, (attr_t) COLOR_PAIR(pair));
+	return OK;
 }
 
 /*
@@ -188,4 +324,18 @@ getattrs(WINDOW *win)
 	__CTRACE ("getattrs: win %p\n", win);
 #endif
 	return((chtype) win->wattr);
+}
+
+/*
+ * __wcolor_set --
+ * Set color attribute on window
+ */
+void
+__wcolor_set(WINDOW *win, attr_t attr)
+{
+	/* If another color pair is set, turn that off first. */
+	win->wattr &= ~__COLOR;
+	/* If can do color video, set the color pair bits. */
+	if (__tc_Co != NULL && attr & __COLOR)
+		win->wattr |= attr & __COLOR;
 }
