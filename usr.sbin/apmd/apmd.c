@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.11 1999/06/06 03:17:23 thorpej Exp $	*/
+/*	$NetBSD: apmd.c,v 1.12 1999/09/04 18:38:28 soren Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -458,7 +458,7 @@ main(int argc, char *argv[])
 		case APM_POWER_CHANGE:
 		{
 		    struct apm_power_info pinfo;
-		    power_status(ctl_fd, 1, &pinfo);
+		    power_status(ctl_fd, 0, &pinfo);
 		    do_ac_state(pinfo.ac_state);
 		    break;
 		}
