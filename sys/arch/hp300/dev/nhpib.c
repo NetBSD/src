@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.27 2003/05/24 06:21:22 gmcgarry Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.28 2003/07/05 16:57:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.27 2003/05/24 06:21:22 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.28 2003/07/05 16:57:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,15 +209,15 @@ nhpib_intio_attach(parent, self, aux)
 {
 	struct nhpib_softc *sc = (struct nhpib_softc *)self;
 	struct intio_attach_args *ia = aux;
+	bus_space_tag_t bst = ia->ia_bst;
 	const char *desc = "internal HP-IB";
 
-	sc->sc_bst = ia->ia_bst;
-	if (bus_space_map(ia->ia_bst, ia->ia_iobase, INTIO_DEVSIZE, 0,
-	    &sc->sc_bsh)) {
+	if (bus_space_map(bst, ia->ia_iobase, INTIO_DEVSIZE, 0, &sc->sc_bsh)) {
 		printf(": can't map registers\n");
 		return;
 	}
 
+	sc->sc_bst = bst;
 	sc->sc_myaddr = HPIBA_BA;
 	sc->sc_type = HPIBA;
 
@@ -234,15 +234,15 @@ nhpib_dio_attach(parent, self, aux)
 {
 	struct nhpib_softc *sc = (struct nhpib_softc *)self;
 	struct dio_attach_args *da = aux;
+	bus_space_tag_t bst = da->da_bst;
 	const char *desc = DIO_DEVICE_DESC_NHPIB;
 
-	sc->sc_bst = da->da_bst;
-	if (bus_space_map(sc->sc_bst, da->da_addr, da->da_size, 0,
-	    &sc->sc_bsh)) {
+	if (bus_space_map(bst, da->da_addr, da->da_size, 0, &sc->sc_bsh)) {
 		printf(": can't map registers\n");
 		return;
 	}
 
+	sc->sc_bst = bst;
 	/* read address off switches */
 	sc->sc_myaddr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, 5);
 	sc->sc_type = HPIBB;
