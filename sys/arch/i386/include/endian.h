@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.23 1998/08/15 05:10:24 mycroft Exp $	*/
+/*	$NetBSD: endian.h,v 1.24 1998/12/16 11:11:02 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,14 +115,14 @@ __END_DECLS
 #endif
 
 #if defined(_KERNEL) && !defined(_LKM) && !defined(I386_CPU)
-#define	__byte_swap_long_variable(x) \
+#define	__byte_swap_long_variable(x) __extension__ \
 ({ register in_addr_t __x = (x); \
    __asm ("bswap %1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
 #else
-#define	__byte_swap_long_variable(x) \
+#define	__byte_swap_long_variable(x) __extension__ \
 ({ register in_addr_t __x = (x); \
    __asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
 	: "=r" (__x) \
@@ -130,7 +130,7 @@ __END_DECLS
    __x; })
 #endif	/* _KERNEL && ... */
 
-#define	__byte_swap_word_variable(x) \
+#define	__byte_swap_word_variable(x) __extension__ \
 ({ register in_port_t __x = (x); \
    __asm ("rorw $8, %w1" \
 	: "=r" (__x) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.11 1998/11/07 17:22:58 ragge Exp $	*/
+/*	$NetBSD: endian.h,v 1.12 1998/12/16 11:11:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -70,22 +70,22 @@ __END_DECLS
 
 #ifdef	__GNUC__
 
-#define	__byte_swap_long_variable(x)		\
-({ register u_int32_t __y, __x = (x);		\
-						\
-	__asm ("rotl	$-8, %1, %0;   		\
-		insv	%0, $16, $8, %0;	\
-		rotl	$8, %1, r1; 		\
-		movb	r1, %0"			\
-		: "&=r" (__y)			\
-		: "r" (__x)			\
-		: "r1", "cc" );			\
+#define	__byte_swap_long_variable(x) __extension__	\
+({ register u_int32_t __y, __x = (x);			\
+							\
+	__asm ("rotl	$-8, %1, %0;   			\
+		insv	%0, $16, $8, %0;		\
+		rotl	$8, %1, r1; 			\
+		movb	r1, %0"				\
+		: "&=r" (__y)				\
+		: "r" (__x)				\
+		: "r1", "cc" );				\
 	__y; })
 
-#define __byte_swap_word_variable(x)		\
-({ register u_int16_t __x = (x);		\
-						\
-	(u_int16_t)(__x << 8 | __x >> 8);	\
+#define __byte_swap_word_variable(x) __extension__	\
+({ register u_int16_t __x = (x);			\
+							\
+	(u_int16_t)(__x << 8 | __x >> 8);		\
 })
 
 #define __byte_swap_long(x)     __byte_swap_long_variable(x)
