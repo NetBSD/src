@@ -1,6 +1,4 @@
-# $NetBSD: shl.elf,v 1.6 2004/01/08 05:12:32 rtr Exp $
-./usr/X11R6/lib/X11/locale/lib
-./usr/X11R6/lib/X11/locale/lib/common
+# $NetBSD: shl.elf,v 1.7 2004/01/13 06:14:14 lukem Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2
