@@ -42,7 +42,7 @@
  *	@(#)vm_machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vm_machdep.c,v 1.10 92/11/26 03:05:11 torek Exp  (LBL)
- * $Id: vm_machdep.c,v 1.3 1994/05/19 07:13:10 deraadt Exp $
+ * $Id: vm_machdep.c,v 1.4 1994/05/19 08:25:08 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -266,7 +266,6 @@ cpu_exit(p)
 	/* NOTREACHED */
 }
 
-#ifdef notdef
 /*
  * cpu_coredump is called to write a core dump header.
  * (should this be defined elsewhere?  machdep.c?)
@@ -287,4 +286,3 @@ cpu_coredump(p, vp, cred)
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)up, ctob(UPAGES), (off_t)0,
 	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p));
 }
-#endif
