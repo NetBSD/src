@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.2 2004/11/13 15:19:58 he Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.1 2004/10/01 15:26:00 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.2 2004/11/13 15:19:58 he Exp $");
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -390,8 +390,8 @@ int dlen;
 
 	for (i = 0; (i < 5) && (i < dlen); i++) {
 		c = rptr[i];
-		if (isalpha(c)) {
-			cmd[i] = toupper(c);
+		if (isalpha((unsigned char)c)) {
+			cmd[i] = toupper((unsigned char)c);
 		} else {
 			cmd[i] = c;
 		}
@@ -488,7 +488,7 @@ int dlen;
 	 * Skip the PASV reply + space
 	 */
 	s = f->ftps_rptr + PASV_REPLEN;
-	while (*s && !isdigit(*s))
+	while (*s && !isdigit((unsigned char)*s))
 		s++;
 	/*
 	 * Pick out the address components, two at a time.
@@ -741,7 +741,9 @@ int dlen;
 
 	if (*rptr == ' ')
 		goto server_cmd_ok;
-	if (!isdigit(*rptr) || !isdigit(*(rptr + 1)) || !isdigit(*(rptr + 2)))
+	if (!isdigit((unsigned char)*rptr) || 
+	    !isdigit((unsigned char)*(rptr + 1)) ||
+	    !isdigit((unsigned char)*(rptr + 2)))
 		return 0;
 	if (ftp->ftp_passok == FTPXY_GO) {
 		if (!strncmp(rptr, "227 ", 4))
@@ -809,20 +811,20 @@ size_t len;
 	c = *s++;
 	i--;
 
-	if (isalpha(c)) {
-		cmd[0] = toupper(c);
+	if (isalpha((unsigned char)c)) {
+		cmd[0] = toupper((unsigned char)c);
 		c = *s++;
 		i--;
-		if (isalpha(c)) {
-			cmd[1] = toupper(c);
+		if (isalpha((unsigned char)c)) {
+			cmd[1] = toupper((unsigned char)c);
 			c = *s++;
 			i--;
-			if (isalpha(c)) {
-				cmd[2] = toupper(c);
+			if (isalpha((unsigned char)c)) {
+				cmd[2] = toupper((unsigned char)c);
 				c = *s++;
 				i--;
-				if (isalpha(c)) {
-					cmd[3] = toupper(c);
+				if (isalpha((unsigned char)c)) {
+					cmd[3] = toupper((unsigned char)c);
 					c = *s++;
 					i--;
 					if ((c != ' ') && (c != '\r'))
@@ -879,15 +881,15 @@ size_t len;
 	if (c == ' ')
 		goto search_eol;
 
-	if (isdigit(c)) {
+	if (isdigit((unsigned char)c)) {
 		cmd = (c - '0') * 100;
 		c = *s++;
 		i--;
-		if (isdigit(c)) {
+		if (isdigit((unsigned char)c)) {
 			cmd += (c - '0') * 10;
 			c = *s++;
 			i--;
-			if (isdigit(c)) {
+			if (isdigit((unsigned char)c)) {
 				cmd += (c - '0');
 				c = *s++;
 				i--;
@@ -1289,7 +1291,7 @@ char **ptr;
 	register char *s = *ptr, c;
 	register u_char i = 0, j = 0;
 
-	while (((c = *s++) != '\0') && isdigit(c)) {
+	while (((c = *s++) != '\0') && isdigit((unsigned char)c)) {
 		i *= 10;
 		i += c - '0';
 	}
@@ -1297,7 +1299,7 @@ char **ptr;
 		*ptr = NULL;
 		return 0;
 	}
-	while (((c = *s++) != '\0') && isdigit(c)) {
+	while (((c = *s++) != '\0') && isdigit((unsigned char)c)) {
 		j *= 10;
 		j += c - '0';
 	}
@@ -1333,14 +1335,14 @@ int dlen;
 	 * Skip the EPSV command + space
 	 */
 	s = f->ftps_rptr + 33;
-	while (*s && !isdigit(*s))
+	while (*s && !isdigit((unsigned char)*s))
 		s++;
 
 	/*
 	 * As per RFC 2428, there are no addres components in the EPSV
 	 * response.  So we'll go straight to getting the port.
 	 */
-	while (*s && isdigit(*s)) {
+	while (*s && isdigit((unsigned char)*s)) {
 		ap *= 10;
 		ap += *s++ - '0';
 	}
