@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Some output-actions in ns32k.md need these.  */
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "insn-flags.h"
 #include "output.h"
 #include "insn-attr.h"
+#include "tree.h"
 #include "expr.h"
 #include "flags.h"
 
@@ -667,6 +668,112 @@ symbolic_reference_mentioned_p (op)
 	}
       else if (fmt[i] == 'e' && symbolic_reference_mentioned_p (XEXP (op, i)))
 	return 1;
+    }
+
+  return 0;
+}
+
+/* Return nonzero if IDENTIFIER with arguments ARGS is a valid machine specific
+   attribute for DECL.  The attributes in ATTRIBUTES have previously been
+   assigned to DECL.  */
+
+int
+ns32k_valid_decl_attribute_p (decl, attributes, identifier, args)
+     tree decl;
+     tree attributes;
+     tree identifier;
+     tree args;
+{
+  return 0;
+}
+
+/* Return nonzero if IDENTIFIER with arguments ARGS is a valid machine specific
+   attribute for TYPE.  The attributes in ATTRIBUTES have previously been
+   assigned to TYPE.  */
+
+int
+ns32k_valid_type_attribute_p (type, attributes, identifier, args)
+     tree type;
+     tree attributes;
+     tree identifier;
+     tree args;
+{
+  if (TREE_CODE (type) != FUNCTION_TYPE
+      && TREE_CODE (type) != FIELD_DECL
+      && TREE_CODE (type) != TYPE_DECL)
+    return 0;
+
+  /* Stdcall attribute says callee is responsible for popping arguments
+     if they are not variable.  */
+  if (is_attribute_p ("stdcall", identifier))
+    return (args == NULL_TREE);
+
+  /* Cdecl attribute says the callee is a normal C declaration */
+  if (is_attribute_p ("cdecl", identifier))
+    return (args == NULL_TREE);
+
+  return 0;
+}
+
+/* Return 0 if the attributes for two types are incompatible, 1 if they
+   are compatible, and 2 if they are nearly compatible (which causes a
+   warning to be generated).  */
+
+int
+ns32k_comp_type_attributes (type1, type2)
+     tree type1;
+     tree type2;
+{
+  return 1;
+}
+
+
+/* Value is the number of bytes of arguments automatically
+   popped when returning from a subroutine call.
+   FUNDECL is the declaration node of the function (as a tree),
+   FUNTYPE is the data type of the function (as a tree),
+   or for a library call it is an identifier node for the subroutine name.
+   SIZE is the number of bytes of arguments passed on the stack.
+
+   On the ns32k, the RET insn may be used to pop them if the number
+     of args is fixed, but if the number is variable then the caller
+     must pop them all.  RET can't be used for library calls now
+     because the library is compiled with the Unix compiler.
+   Use of RET is a selectable option, since it is incompatible with
+   standard Unix calling sequences.  If the option is not selected,
+   the caller must always pop the args.
+
+   The attribute stdcall is equivalent to RET on a per module basis.  */
+
+int
+ns32k_return_pops_args (fundecl, funtype, size)
+     tree fundecl;
+     tree funtype;
+     int size;
+{
+  int rtd = TARGET_RTD;
+
+#if 0
+  if (TREE_CODE (funtype) == IDENTIFIER_NODE)
+    return 0;
+#else
+  if (TREE_CODE (funtype) == IDENTIFIER_NODE)
+    return rtd ? size : 0;
+#endif
+
+  /* Cdecl functions override -mrtd, and never pop the stack */
+  if (lookup_attribute ("cdecl", TYPE_ATTRIBUTES (funtype)))
+    return 0;
+
+  /* Stdcall functions will pop the stack if not variable args */
+  if (lookup_attribute ("stdcall", TYPE_ATTRIBUTES (funtype)))
+    rtd = 1;
+
+  if (rtd)
+    {
+      if (TYPE_ARG_TYPES (funtype) == NULL_TREE
+	  || (TREE_VALUE (tree_last (TYPE_ARG_TYPES (funtype))) == void_type_node))
+	return size;
     }
 
   return 0;
