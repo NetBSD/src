@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.11 2002/03/21 00:16:15 eeh Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.11.2.1 2002/03/26 17:24:58 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.11 2002/03/21 00:16:15 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.11.2.1 2002/03/26 17:24:58 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,12 @@ __KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.11 2002/03/21 00:16:15 eeh Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/properties.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
+#include <machine/openfirm.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -111,13 +113,9 @@ void	*dmabus_intr_establish __P((
 
 static	bus_space_tag_t dma_alloc_bustag __P((struct dma_softc *sc));
 
-struct cfattach dma_sbus_ca = {
-	sizeof(struct dma_softc), dmamatch_sbus, dmaattach_sbus
-};
-
-struct cfattach ledma_ca = {
-	sizeof(struct dma_softc), dmamatch_sbus, dmaattach_sbus
-};
+DEV_CFA_DECL(dma_sbus_ca, sizeof(struct dma_softc), 
+	dmamatch_sbus, dmaattach_sbus);
+DEV_CFA_DECL(ledma_ca, sizeof(struct dma_softc), dmamatch_sbus, dmaattach_sbus);
 
 int
 dmaprint_sbus(aux, busname)
@@ -140,10 +138,20 @@ dmamatch_sbus(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct sbus_attach_args *sa = aux;
+	struct device *dev = (struct device *)aux;
+	char name[30];
+	char cdname[30];
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
-		strcmp("espdma", sa->sa_name) == 0);
+	if (dev_getprop(dev, "name", name, sizeof(name), NULL, 0) == -1)
+		return (0);
+
+	if (strcmp("espdma", name) == 0) return (1);
+
+	if (dev_getprop(dev, "cd-name", cdname, sizeof(cdname), NULL, 0) == -1)
+		return (0);
+
+	if (strcmp(cdname, name) == 0) return (1);
+	return (0);
 }
 
 void
@@ -151,27 +159,41 @@ dmaattach_sbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct sbus_attach_args *sa = aux;
-	struct dma_softc *dsc = (void *)self;
+	struct dma_softc *dsc = (struct dma_softc *)DEV_PRIVATE(self);
 	struct lsi64854_softc *sc = &dsc->sc_lsi64854;
+	struct sbus_reg reg[2];
 	bus_space_tag_t sbt;
 	int sbusburst, burst;
+	int promaddr[2], npromaddr, nreg;
 	int node;
 
-	node = sa->sa_node;
+	if (dev_getprop(self, "node", &node, sizeof(node), NULL, 0) != 
+		sizeof(node)) 
+		panic("dmaattach_sbus: no \"node\" property");
 
-	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_dmatag = sa->sa_dmatag;
+	dev_getprop(parent, "bus-tag", &sc->sc_bustag, sizeof(sc->sc_bustag),
+		NULL, 1);
+	dev_getprop(parent, "dma-tag", &sc->sc_dmatag, sizeof(sc->sc_dmatag),
+		NULL, 1);
+
+	npromaddr = dev_getprop(self, "address", &promaddr,
+		sizeof(promaddr), NULL, 0);
+	if (npromaddr > 0)
+		npromaddr /= sizeof(promaddr[0]);
+
+	nreg = dev_getprop(self, "reg", &reg, sizeof(reg), NULL, 0);
+	if (nreg > 0) nreg /= sizeof(reg[0]);
 
 	/* Map registers */
-	if (sa->sa_npromvaddrs) {
-		sbus_promaddr_to_handle(sa->sa_bustag,
-			sa->sa_promvaddrs[0], &sc->sc_regs);
+	if (npromaddr > 0) {
+		sbus_promaddr_to_handle(sc->sc_bustag, promaddr[0],
+			&sc->sc_regs);
 	} else {
-		if (sbus_bus_map(sa->sa_bustag,
-			sa->sa_slot, sa->sa_offset, sa->sa_size,
+		if (sbus_bus_map(sc->sc_bustag, reg[0].sbr_slot,
+			reg[0].sbr_offset, reg[0].sbr_size,
 			0, &sc->sc_regs) != 0) {
-			printf("%s: cannot map registers\n", self->dv_xname);
+			printf("%s: cannot map dma registers\n",
+				self->dv_xname);
 			return;
 		}
 	}
@@ -181,11 +203,14 @@ dmaattach_sbus(parent, self, aux)
 	 * controller registers. This is needed on the Sun4m; do
 	 * others need it too?
 	 */
-	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
-	if (sbusburst == 0)
+	if (dev_getprop(parent, "burst-sizes", &sbusburst, sizeof(sbusburst), 
+		NULL, 0) == -1)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = PROM_getpropint(node,"burst-sizes", -1);
+	if (dev_getprop(self, "burst-sizes", &burst, sizeof(burst), 
+		NULL, 0) == -1)
+		burst = -1;
+
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;
@@ -195,8 +220,8 @@ dmaattach_sbus(parent, self, aux)
 	sc->sc_burst = (burst & SBUS_BURST_32) ? 32 :
 		       (burst & SBUS_BURST_16) ? 16 : 0;
 
-	if (sc->sc_dev.dv_cfdata->cf_attach == &ledma_ca) {
-		char *cabletype;
+	if (self->dv_cfdata->cf_attach == &ledma_ca) {
+		char cabletype[10];
 		u_int32_t csr;
 		/*
 		 * Check to see which cable type is currently active and
@@ -205,7 +230,8 @@ dmaattach_sbus(parent, self, aux)
 		 * the "cable-selection" property; default to TP and then
 		 * the user can change it via a "media" option to ifconfig.
 		 */
-		cabletype = PROM_getpropstring(node, "cable-selection");
+		dev_getprop(self, "cable-selection", cabletype,
+			sizeof(cabletype), NULL, 0);
 		csr = L64854_GCSR(sc);
 		if (strcmp(cabletype, "tpe") == 0) {
 			csr |= E_TP_AUI;
@@ -222,16 +248,28 @@ dmaattach_sbus(parent, self, aux)
 		sc->sc_channel = L64854_CHANNEL_SCSI;
 	}
 
-	sbus_establish(&dsc->sc_sd, &sc->sc_dev);
+	sbus_establish(&dsc->sc_sd, self);
 	sbt = dma_alloc_bustag(dsc);
+	dev_setprop(self, "bus-tag", &sbt, sizeof(sbt),	
+		PROP_ARRAY|sizeof(sbt), 0);
 	lsi64854_attach(sc);
 
 	/* Attach children */
-	for (node = firstchild(sa->sa_node); node; node = nextsibling(node)) {
+	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sa;
-		sbus_setup_attach_args((struct sbus_softc *)parent,
-				       sbt, sc->sc_dmatag, node, &sa);
-		(void) config_found(&sc->sc_dev, (void *)&sa, dmaprint_sbus);
+		struct device *child;
+
+		if ((child = sbus_setup_attach_args(parent, sbt, sc->sc_dmatag,
+			node, &sa)) == 0)  {
+			char name[32];
+
+			OF_getprop(node, "name", name, sizeof(name));
+			name[sizeof(name) -1] = 0;
+			printf("dma_attach: %s: incomplete\n", name);
+			continue;
+		}
+		(void) config_found_sad(self, (void *)&sa, dmaprint_sbus,
+			NULL, child);
 		sbus_destroy_attach_args(&sa);
 	}
 }
