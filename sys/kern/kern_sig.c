@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.132 2003/02/07 09:02:14 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.133 2003/02/07 21:43:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.132 2003/02/07 09:02:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.133 2003/02/07 21:43:18 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -973,7 +973,6 @@ psignal1(struct proc *p, int signum,
 				l = proc_unstop(p);
 				if (l)
 					goto runfast;
-				/* XXX should this be possible? */
 				goto out;
 			}
 			
@@ -996,16 +995,8 @@ psignal1(struct proc *p, int signum,
 					sigdelset(&p->p_sigctx.ps_siglist, 
 					signum);
 				l = proc_unstop(p);
-				/*
-				 * XXX see note in proc_unstop(). SIGKILL
-				 * XXX and SIGCONT have conflicting needs.
-				 */
-				if (l && (l->l_stat == LSSLEEP))
-					l = NULL;
 				if (l && (action == SIG_CATCH))
 					goto runfast;
-				if (l)
-					goto run;
 				goto out;
 			}
 
@@ -1019,14 +1010,15 @@ psignal1(struct proc *p, int signum,
 			}
 
 			/*
-			 * If process is sleeping interruptibly, then
-			 * simulate a wakeup so that when it is
-			 * continued, it will be made runnable and can
-			 * look at the signal.  But don't make the
-			 * process runnable, leave it stopped.  
+			 * If a lwp is sleeping interruptibly, then
+			 * wake it up; it will run until the kernel
+			 * boundary, where it will stop in issignal(),
+			 * since p->p_stat is still SSTOP. When the
+			 * process is continued, it will be made
+			 * runnable and can look at the signal.
 			 */
 			if (l)
-				unsleep(l);
+				goto run;
 			goto out;
 		} else {
 			/* Else what? */
@@ -1364,11 +1356,20 @@ proc_stop(struct proc *p)
 	sched_wakeup((caddr_t)p->p_pptr);
 }
 
+/*
+ * Given a process in state SSTOP, set the state back to SACTIVE and 
+ * move LSSTOP'd LWPs to LSSLEEP or make them runnable.
+ *
+ * If no LWPs ended up runnable (and therefore able to take a signal),
+ * return a LWP that is sleeping interruptably. The caller can wake
+ * that LWP up to take a signal.
+ */
 struct lwp *
 proc_unstop(p)
 	struct proc *p;
 {
 	struct lwp *l, *lr = NULL;
+	int cantake = 0;
 
 	SCHED_ASSERT_LOCKED();
 
@@ -1378,28 +1379,26 @@ proc_unstop(p)
 	 */
 
 	p->p_stat = SACTIVE;
-	/*
-	 * For the benefit of SIGKILL, return the idle LWP if there's
-	 * nothing better (and if there is an idle LWP, there
-	 * shouldn't be anything better.
-	 * XXX This is bad for SIGCONT; SIGSTOP/SIGCONT shouldn't
-	 * XXX noticably affect the state of a process, idling or
-	 * XXX not. We work around this in the SIGCONT handling in
-	 * XXX psignal().
-	 */
-	if (p->p_flag & P_SA)
+	if (p->p_flag & P_SA) {
 		lr = p->p_sa->sa_idle; /* OK if this is NULL. */
+		cantake = 1;
+	}
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		if (l->l_stat == LSRUN)
+			cantake = 1;
 		if (l->l_stat != LSSTOP)
 			continue;
 
-		if (l->l_wchan == NULL) {
-			if (lr == NULL)
-				lr = l;
-			else if (l != lr)
-				setrunnable(l);
-		} else
+		if (l->l_wchan != NULL) {
 			l->l_stat = LSSLEEP;
+			if ((cantake == 0) && (l->l_flag & L_SINTR)) {
+				lr = l;
+				cantake = 1;
+			}
+		} else {
+			setrunnable(l);
+			cantake = 1;
+		}
 	}
 
 	return lr;
