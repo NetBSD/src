@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)cmd2.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: cmd2.c,v 1.3 1994/06/29 05:09:09 deraadt Exp $";
+static char rcsid[] = "$Id: cmd2.c,v 1.4 1994/12/28 13:16:12 mycroft Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -346,7 +346,7 @@ delm(msgvec)
  * Undelete the indicated messages.
  */
 int
-undelete(msgvec)
+undeletecmd(msgvec)
 	int *msgvec;
 {
 	register struct message *mp;
