@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.22 2000/08/21 02:06:34 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.23 2000/08/22 19:46:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -231,6 +231,7 @@ static __inline int splhigh()
 }
 
 #define	splsched()	splhigh()
+#define	spllock()	splhigh()
 
 /* splx does not have a return value */
 static __inline void splx(newipl)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2000/08/21 02:06:34 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2000/08/22 19:46:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -94,6 +94,7 @@ extern u_int32_t 	clockmask;
 #define splsoftnet()    _splraise(MIPS_SOFT_INT_MASK_1)
 
 #define	splsched()	splhigh()
+#define	spllock()	splhigh()
 #define spllpt()	spltty()
 
 extern unsigned int	intrcnt[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2000/08/21 02:06:32 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2000/08/22 19:46:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ spllower(ncpl)
 #define	splimp()	splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	splsched()	splhigh()
+#define	spllock()	splhigh()
 #define	spl0()		spllower(0)
 #define	splx(x)		spllower(x)
 

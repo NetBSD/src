@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 1999/11/06 23:05:40 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.18 2000/08/22 19:46:29 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -78,6 +78,7 @@ extern unsigned short mac68k_ipls[];
 #define	splsched()	_splraise(mac68k_ipls[MAC68K_IPL_SCHED])
 #define	splserial()	_splraise(mac68k_ipls[MAC68K_IPL_SERIAL])
 #define	splhigh()	spl7()
+#define	spllock()	spl7()
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())

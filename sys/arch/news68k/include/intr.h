@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2000/02/16 15:32:03 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2000/08/22 19:46:30 thorpej Exp $	*/
 
 /*
  *
@@ -62,6 +62,7 @@
 #define	splvm()		spl6()
 #define	splhigh()	spl7()
 #define	splsched()	spl7()
+#define	spllock()	spl7()
 
 /*
  * simulated software interrupt register

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.14 1999/08/05 18:08:09 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.15 2000/08/22 19:46:27 thorpej Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
 #define _MACHINE_PSL_H_
@@ -41,12 +41,14 @@ extern u_int16_t	amiga_serialspl;
 #define splvm()		splraise6()
 #define splhigh()	spl7()
 #define splsched()	spl7()
+#define spllock()	spl7()
 #else
 #define splclock()	splraise4()
 #define splstatclock()	splraise4()
 #define splvm()		splraise4()
 #define splhigh()	splraise4()
 #define splsched()	splraise4()
+#define spllock()	splraise4()
 #endif
 
 #define splx(s)		_spl(s)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2000/08/21 02:06:32 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2000/08/22 19:46:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -79,6 +79,7 @@ void	_clrsoftintr __P((int));
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 
 #define	splsched()	splhigh()
+#define	spllock()	splhigh()
 
 struct splvec {
 	int	splbio;

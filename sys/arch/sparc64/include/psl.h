@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.14 2000/08/21 02:06:34 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.15 2000/08/22 19:46:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -405,6 +405,7 @@ SPLHOLD(splstatclock, 14)
 SPLHOLD(splhigh, 15)
 
 #define	splsched()	splhigh()
+#define	spllock()	splhigh()
 
 /* splx does not have a return value */
 #ifdef SPLDEBUG
