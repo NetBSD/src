@@ -1,4 +1,4 @@
-# $Id: files.pmax.oldconf,v 1.2 1994/01/14 05:00:07 deraadt Exp $
+# $Id: files.pmax.oldconf,v 1.3 1994/01/14 21:19:27 deraadt Exp $
 arch/pmax/pmax/autoconf.c		standard
 arch/pmax/pmax/clock.c			standard
 arch/pmax/pmax/conf.c			standard
@@ -12,7 +12,6 @@ arch/pmax/pmax/pmap.c			standard
 arch/pmax/pmax/sys_machdep.c		standard
 arch/pmax/pmax/trap.c			standard
 arch/pmax/pmax/vm_machdep.c		standard
-arch/pmax/stand/libsa/callvec.c		standard
 arch/pmax/dev/fb.c			standard
 arch/pmax/dev/scsi.c			standard
 arch/pmax/dev/asc.c			optional asc device-driver
