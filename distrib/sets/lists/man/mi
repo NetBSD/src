@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.592 2003/07/05 06:28:00 jdolecek Exp $
+# $NetBSD: mi,v 1.593 2003/07/09 09:35:42 dsl Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1466,7 +1466,6 @@
 ./usr/share/man/cat8/i386/boot.0		man-sys-catman
 ./usr/share/man/cat8/i386/boot_console.0	man-sys-catman
 ./usr/share/man/cat8/i386/dosboot.0		man-sys-catman
-./usr/share/man/cat8/i386/installboot.0		man-sysutil-catman
 ./usr/share/man/cat8/i386/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/i386/pxeboot.0		man-sys-catman
 ./usr/share/man/cat8/i386/w95boot.0		man-sys-catman
