@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.17 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.18 2003/12/29 04:56:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.17 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.18 2003/12/29 04:56:26 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -180,7 +180,7 @@ static RF_LockTableEntry_t *
 rf_MakeLockTable()
 {
 	RF_LockTableEntry_t *lockTable;
-	int     i, rc;
+	int     i;
 
 	RF_Malloc(lockTable, 
 		  ((int) rf_lockTableSize) * sizeof(RF_LockTableEntry_t), 
@@ -188,12 +188,7 @@ rf_MakeLockTable()
 	if (lockTable == NULL)
 		return (NULL);
 	for (i = 0; i < rf_lockTableSize; i++) {
-		rc = rf_mutex_init(&lockTable[i].mutex);
-		if (rc) {
-			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-			/* XXX clean up other mutexes */
-			return (NULL);
-		}
+		rf_mutex_init(&lockTable[i].mutex);
 	}
 	return (lockTable);
 }

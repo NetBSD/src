@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.167 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.168 2003/12/29 04:56:26 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.167 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.168 2003/12/29 04:56:26 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -367,10 +367,7 @@ raidattach(num)
 	pool_init(&raidframe_cbufpool, sizeof(struct raidbuf), 0,
 	    0, 0, "raidpl", NULL);
 
-	rc = rf_mutex_init(&rf_sparet_wait_mutex);
-	if (rc) {
-		RF_PANIC();
-	}
+	rf_mutex_init(&rf_sparet_wait_mutex);
 
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
 
