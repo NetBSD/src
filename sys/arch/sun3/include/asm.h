@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -77,17 +78,3 @@
 #define	ASMSTR		.asciz
 
 #endif /* !_MACHINE_ASM_H_ */
-
-#ifdef  nodef
-#ifdef PROF
-#define	ENTRY(name) \
-	.globl _/**/name; _/**/name: link a6,#0; jbsr mcount; unlk a6
-#define ALTENTRY(name, rname) \
-	ENTRY(name); jra rname+12
-#else
-#define	ENTRY(name) \
-	.globl _/**/name; _/**/name:
-#define ALTENTRY(name, rname) \
-	.globl _/**/name; _/**/name:
-#endif
-#endif
