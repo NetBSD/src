@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 1997/08/31 21:22:45 pk Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.2 1997/09/27 18:04:47 pk Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -106,12 +106,10 @@
 #if defined(SUN4M)
 #define getpte4m(va) \
 	lda(((vm_offset_t)va & 0xFFFFF000) | ASI_SRMMUFP_L3, ASI_SRMMUFP)
-void	setpte4m __P((vm_offset_t, int));
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
 #define	getpte4(va)		lda(va, ASI_PTE)
-#define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
 #endif
 
 static __inline void kgdb_copy __P((char *, char *, int));
