@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.7 1994/11/04 03:12:23 mycroft Exp $	*/
+/*	$NetBSD: device.h,v 1.8 1994/11/04 06:40:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,6 +94,7 @@ struct cfdata {
 #define	FSTATE_STAR	2	/* duplicable */
 
 typedef int (*cfmatch_t) __P((struct device *, void *, void *));
+typedef void (*cfscan_t) __P((struct device *, void *));
 
 /*
  * `configuration' driver (what the machine-independent autoconf uses).
@@ -113,18 +114,6 @@ struct cfdriver {
 	int	cd_indirect;		/* indirectly configure subdevices */
 	int	cd_ndevs;		/* size of cd_devs array */
 };
-
-/*
- * Structure used to record the state of a config_found() or a
- * config_rootfound() loop.
- */
-struct matchinfo {
-	cfmatch_t fn;
-	struct	device *parent;
-	void	*match, *aux;
-	int	indirect, pri;
-};
-void config_mapply __P((struct matchinfo *, struct cfdata *));
 
 /*
  * Configuration printing functions, and their return codes.  The second
@@ -152,6 +141,7 @@ void *config_search __P((cfmatch_t, struct device *, void *));
 void *config_rootsearch __P((cfmatch_t, char *, void *));
 int config_found __P((struct device *, void *, cfprint_t));
 int config_rootfound __P((char *, void *));
+void config_scan __P((cfscan_t, struct device *));
 void config_attach __P((struct device *, void *, void *, cfprint_t));
 void evcnt_attach __P((struct device *, const char *, struct evcnt *));
 
