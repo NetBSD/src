@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.99 2001/11/12 23:49:34 lukem Exp $	*/
+/*	$NetBSD: if.c,v 1.100 2001/11/27 17:32:57 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.99 2001/11/12 23:49:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.100 2001/11/27 17:32:57 augustss Exp $");
 
 #include "opt_inet.h"
 
@@ -609,6 +609,8 @@ do { \
 	splx(s);
 }
 
+#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
+    defined(ISO) || defined(CCITT) || defined(NATM)
 static void
 if_detach_queues(ifp, q)
 	struct ifnet *ifp;
@@ -643,6 +645,7 @@ if_detach_queues(ifp, q)
 		IF_DROP(q);
 	}
 }
+#endif /* defined(INET) || ... */
 
 /*
  * Callback for a radix tree walk to delete all references to an
