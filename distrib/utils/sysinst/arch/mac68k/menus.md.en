@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.5 1999/06/20 06:08:20 cgd Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.6 1999/07/04 22:31:39 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -326,7 +326,7 @@ menu editfsparts, y=13, exit;
 	option "Change h", action { editpart = H;}, sub menu edfspart;
 	option "Set new allocation size", action { reask_sizemult(); };
 
-menu md_distcustom, y=3, exit, title "Selection toggles inclusion";
+menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };
 	option	"Kernel",		 action { toggle_getit (0); };
 	option  "Kernel (SBC)",		 action { toggle_getit (1); };
