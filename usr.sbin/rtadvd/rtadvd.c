@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.12 2001/02/04 06:19:41 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.13 2002/01/11 04:20:56 itojun Exp $	*/
 /*	$KAME: rtadvd.c,v 1.50 2001/02/04 06:15:15 itojun Exp $	*/
 
 /*
@@ -235,10 +235,11 @@ main(argc, argv)
 		fprintf(stderr, "fatal: inet_pton failed\n");
 		exit(1);
 	}
-	sock_open();
 
 	if (!fflag)
 		daemon(1, 0);
+
+	sock_open();
 
 	/* record the current PID */
 	pid = getpid();
