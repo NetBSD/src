@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_mkdb.8,v 1.11 1999/09/24 20:08:08 msaitoh Exp $
+.\"	$NetBSD: kvm_mkdb.8,v 1.12 2003/05/03 10:03:55 ragge Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@ creates a database,
 .Pa /var/db/kvm.db ,
 containing information about the specified file.
 If no file is specified,
-.Pa /netbsd
+.Pa /dev/ksyms
 is used by default.
 The database will only be recreated if its contents
 do not already describe the running kernel.
@@ -78,3 +78,5 @@ The
 .Nm
 utility first appeared in
 .Bx 4.4 .
+.Sh BUGS
+The database is not updated when kernel modules are loaded.
