@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.12 1993/10/29 04:33:36 mycroft Exp $
+#	$Id: TEST,v 1.13 1993/10/29 20:38:46 mycroft Exp $
 #
 
 # standard options
@@ -87,7 +87,7 @@ lms1 at isa? port 0x238
 
 #non-scsi floppy controllers
 fdc0 at isa? port 0x3f0 drq 2
-#fdc1 at isa? port 0x370 drq ?
+fdc1 at isa? port 0x370 drq 3
 fd* at fdc? drive ?
 
 #non-scsi tape drives
