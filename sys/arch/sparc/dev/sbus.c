@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.28 1998/08/30 21:26:46 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.29 1998/09/05 22:15:51 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ sbus_attach_mainbus(parent, self, aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	sbus_attach(sc, "sbus", node, ma->ma_bp, NULL);
+	sbus_attach_common(sc, "sbus", node, ma->ma_bp, NULL);
 }
 
 void
@@ -315,7 +315,7 @@ sbus_attach_iommu(parent, self, aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	sbus_attach(sc, "sbus", node, ia->iom_bp, NULL);
+	sbus_attach_common(sc, "sbus", node, ia->iom_bp, NULL);
 }
 
 void
@@ -341,11 +341,11 @@ sbus_attach_xbox(parent, self, aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	sbus_attach(sc, "sbus", node, xa->xa_bp, NULL);
+	sbus_attach_common(sc, "sbus", node, xa->xa_bp, NULL);
 }
 
 void
-sbus_attach(sc, busname, busnode, bp, specials)
+sbus_attach_common(sc, busname, busnode, bp, specials)
 	struct sbus_softc *sc;
 	char *busname;
 	int busnode;
