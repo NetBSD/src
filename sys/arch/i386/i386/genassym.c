@@ -37,6 +37,8 @@
  *	genassym.c,v 1.7 1993/08/03 06:33:55 mycroft Exp
  */
 
+#define KERNEL
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
