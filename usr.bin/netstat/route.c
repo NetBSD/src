@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.23 1997/10/19 05:50:10 lukem Exp $	*/
+/*	$NetBSD: route.c,v 1.24 1997/10/20 10:32:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.23 1997/10/19 05:50:10 lukem Exp $");
+__RCSID("$NetBSD: route.c,v 1.24 1997/10/20 10:32:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -731,7 +731,7 @@ ns_print(sa)
 	else
 		*cport = 0;
 
-	sprintf(mybuf,"%xH.%s%s", ntohl(net.long_e), host, cport);
+	sprintf(mybuf, "%xH.%s%s", (int)ntohl(net.long_e), host, cport);
 	upHex(mybuf);
 	return(mybuf);
 }
