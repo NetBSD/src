@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.44 2003/11/17 22:57:52 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.45 2003/11/25 10:05:17 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.44 2003/11/17 22:57:52 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.45 2003/11/25 10:05:17 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,11 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 		SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 	}
 
-	if (SLIST_EMPTY(&sa->sa_stackslist) && (sa->sa_wokenq_head != NULL))
+	/*
+	 * Check if there are any pending upcalls we didn't make
+	 * because there were not enough stacks.
+	 */
+	if (sa->sa_wokenq_head != NULL)
 		l->l_flag |= L_SA_UPCALL; 
 
 	SA_LWP_STATE_UNLOCK(l, f);
