@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12 2003/04/28 23:16:22 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.13 2003/09/25 18:42:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,9 @@
 #ifndef	_POWERPC_SIGNAL_H_
 #define	_POWERPC_SIGNAL_H_
 
+#define __HAVE_SIGINFO
+
+#ifndef _LOCORE
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
@@ -48,6 +51,9 @@ struct sigcontext13 {
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
+/*
+ * struct sigcontext introduced in NetBSD 1.4
+ */
 struct sigcontext {
 	int sc_onstack;			/* saved onstack flag */
 	int __sc_mask13;		/* saved signal mask (old style) */
@@ -55,6 +61,7 @@ struct sigcontext {
 	sigset_t sc_mask;		/* saved signal mask (new style) */
 };
 
+#ifndef __HAVE_SIGINFO
 /*
  * The following macros are used to convert from a ucontext to sigcontext,
  * and vice-versa.  This is for building a sigcontext to deliver to old-style
@@ -89,10 +96,12 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_MQ] = (sc)->sc_frame.mq;		\
 	(uc)->uc_mcontext.__vrf.__vrsave  = (sc)->sc_frame.vrsave;	\
 } while (/*CONSTCOND*/0)
+#endif /* !__HAVE_SIGINFO */
 
-struct sigframe {
-	struct sigcontext sf_sc;
-};
+#ifdef _KERNEL
+void	sendsig_sigcontext(int, sigset_t *, u_long);
+#endif
 
 #endif	/* _NETBSD_SOURCE */
+#endif	/* !_LOCORE */
 #endif	/* !_POWERPC_SIGNAL_H_ */

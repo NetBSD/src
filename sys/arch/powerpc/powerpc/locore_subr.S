@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.20 2003/08/27 20:20:08 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.21 2003/09/25 18:42:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -443,7 +443,7 @@ switch_return:
  */
 	ldreg	%r31,CFRAME_R31(%r1)	/* restore saved registers */
 	ldreg	%r30,CFRAME_R30(%r1)
-#if 0
+#if 1
 	addi	%r1,%r1,CALLFRAMELEN
 #else
 	ldreg	%r1,CFRAME_SP(%r1)	/* pop stack frmae */
