@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.16 1997/11/26 03:09:53 tv Exp $
+#	$NetBSD: MAKEDEV,v 1.17 1997/11/28 00:55:10 jonathan Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -227,10 +227,10 @@ mouse)
 #
 pm*|cfb*|xcfb*|mfb*)
 	case $i in
-	pm*)	name=pm;	unit=$i{#pm};	chr=8;;
-	cfb*)	name=cfb;	unit=$i{#cfb};	chr=13;;
-	xcfb*)	name=xcfb;	unit=$i{#xcfb};	chr=14;;
-	mfb*)	name=mfb;	unit=$i{#mfb};	chr=18;;
+	pm*)	name=pm;	unit=${i#pm};	chr=8;;
+	cfb*)	name=cfb;	unit=${i#cfb};	chr=13;;
+	xcfb*)	name=xcfb;	unit=${i#xcfb};	chr=14;;
+	mfb*)	name=mfb;	unit=${i#mfb};	chr=18;;
 	esac
 	case $unit in
 	0)
