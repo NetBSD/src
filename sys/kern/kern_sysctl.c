@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.122 2002/12/16 18:15:18 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.123 2003/01/18 10:06:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.122 2002/12/16 18:15:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.123 2003/01/18 10:06:31 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.122 2002/12/16 18:15:18 jdolecek E
 #include <sys/proc.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/tty.h>
 #include <sys/unistd.h>
@@ -115,12 +116,14 @@ static int sysctl_sysvipc(int *, u_int, void *, size_t *);
 #endif
 static int sysctl_msgbuf(void *, size_t *);
 static int sysctl_doeproc(int *, u_int, void *, size_t *);
+static int sysctl_dolwp(int *, u_int, void *, size_t *);
 static int sysctl_dotkstat(int *, u_int, void *, size_t *, void *);
 #ifdef MULTIPROCESSOR
 static int sysctl_docptime(void *, size_t *, void *);
 static int sysctl_ncpus(void);
 #endif
 static void fill_kproc2(struct proc *, struct kinfo_proc2 *);
+static void fill_lwp(struct lwp *, struct kinfo_lwp *);
 static int sysctl_procargs(int *, u_int, void *, size_t *, struct proc *);
 #if NPTY > 0
 static int sysctl_pty(void *, size_t *, void *, size_t);
@@ -142,7 +145,7 @@ sysctl_init(void)
 }
 
 int
-sys___sysctl(struct proc *p, void *v, register_t *retval)
+sys___sysctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sysctl_args /* {
 		syscallarg(int *) name;
@@ -152,6 +155,7 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 		syscallarg(void *) new;
 		syscallarg(size_t) newlen;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
 	size_t savelen = 0, oldlen = 0;
 	sysctlfn *fn;
@@ -341,6 +345,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	switch (name[0]) {
 	case KERN_PROC:
 	case KERN_PROC2:
+	case KERN_LWP:
 	case KERN_PROF:
 	case KERN_MBUF:
 	case KERN_PROC_ARGS:
@@ -435,6 +440,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_PROC:
 	case KERN_PROC2:
 		return (sysctl_doeproc(name, namelen, oldp, oldlenp));
+	case KERN_LWP:
+		return (sysctl_dolwp(name, namelen, oldp, oldlenp));
 	case KERN_PROC_ARGS:
 		return (sysctl_procargs(name + 1, namelen - 1,
 		    oldp, oldlenp, p));
@@ -1636,6 +1643,67 @@ again:
 	return (error);
 }
 
+
+/*
+ * try over estimating by 5 LWPs
+ */
+#define KERN_LWPSLOP	(5 * sizeof(struct kinfo_lwp))
+
+static int
+sysctl_dolwp(int *name, u_int namelen, void *vwhere, size_t *sizep)
+{
+	struct kinfo_lwp klwp;
+	struct proc *p;
+	struct lwp *l;
+	char *where, *dp;
+	int type, pid, elem_size, elem_count;
+	int buflen, needed, error;
+
+	dp = where = vwhere;
+	buflen = where != NULL ? *sizep : 0;
+	error = needed = 0;
+	type = name[0];
+
+	if (namelen != 4)
+		return (EINVAL);
+	pid = name[1];
+	elem_size = name[2];
+	elem_count = name[3];
+
+	p = pfind(pid);
+	if (p == NULL)
+		return (ESRCH);
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		if (buflen >= elem_size && elem_count > 0) {
+			fill_lwp(l, &klwp);
+			/*
+			 * Copy out elem_size, but not larger than
+			 * the size of a struct kinfo_proc2.
+			 */
+			error = copyout(&klwp, dp,
+			    min(sizeof(klwp), elem_size));
+			if (error)
+				goto cleanup;
+			dp += elem_size;
+			buflen -= elem_size;
+			elem_count--;
+		}
+		needed += elem_size;
+	}
+
+	if (where != NULL) {
+		*sizep = dp - where;
+		if (needed > *sizep)
+			return (ENOMEM);
+	} else {
+		needed += KERN_PROCSLOP;
+		*sizep = needed;
+	}
+	return (0);
+ cleanup:
+	return (error);
+}
+
 /*
  * Fill in an eproc structure for the specified process.
  */
@@ -1643,6 +1711,7 @@ void
 fill_eproc(struct proc *p, struct eproc *ep)
 {
 	struct tty *tp;
+	struct lwp *l;
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_session;
@@ -1661,6 +1730,12 @@ fill_eproc(struct proc *p, struct eproc *ep)
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
+
+		/* Pick a "representative" LWP */
+		l = proc_representative_lwp(p);
+		
+		if (l->l_wmesg)
+			strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
@@ -1676,8 +1751,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 		ep->e_tsess = tp->t_session;
 	} else
 		ep->e_tdev = NODEV;
-	if (p->p_wmesg)
-		strncpy(ep->e_wmesg, p->p_wmesg, WMESGLEN);
+
 	ep->e_xsize = ep->e_xrssize = 0;
 	ep->e_xccount = ep->e_xswrss = 0;
 	ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
@@ -1693,14 +1767,10 @@ static void
 fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 {
 	struct tty *tp;
-
+	struct lwp *l;
 	memset(ki, 0, sizeof(*ki));
 
-	ki->p_forw = PTRTOINT64(p->p_forw);
-	ki->p_back = PTRTOINT64(p->p_back);
 	ki->p_paddr = PTRTOINT64(p);
-
-	ki->p_addr = PTRTOINT64(p->p_addr);
 	ki->p_fd = PTRTOINT64(p->p_fd);
 	ki->p_cwdi = PTRTOINT64(p->p_cwdi);
 	ki->p_stats = PTRTOINT64(p->p_stats);
@@ -1748,13 +1818,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_rtime_usec = p->p_rtime.tv_usec;
 	ki->p_cpticks = p->p_cpticks;
 	ki->p_pctcpu = p->p_pctcpu;
-	ki->p_swtime = p->p_swtime;
-	ki->p_slptime = p->p_slptime;
-	if (p->p_stat == SONPROC) {
-		KDASSERT(p->p_cpu != NULL);
-		ki->p_schedflags = p->p_cpu->ci_schedstate.spc_flags;
-	} else
-		ki->p_schedflags = 0;
 
 	ki->p_uticks = p->p_uticks;
 	ki->p_sticks = p->p_sticks;
@@ -1763,16 +1826,14 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_tracep = PTRTOINT64(p->p_tracep);
 	ki->p_traceflag = p->p_traceflag;
 
-	ki->p_holdcnt = p->p_holdcnt;
 
 	memcpy(&ki->p_siglist, &p->p_sigctx.ps_siglist, sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigmask, &p->p_sigctx.ps_sigmask, sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigignore, &p->p_sigctx.ps_sigignore,sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigcatch, &p->p_sigctx.ps_sigcatch, sizeof(ki_sigset_t));
 
-	ki->p_stat = p->p_stat;
-	ki->p_priority = p->p_priority;
-	ki->p_usrpri = p->p_usrpri;
+	ki->p_stat = p->p_stat; /* Will likely be overridden by LWP status */
+	ki->p_realstat = p->p_stat;
 	ki->p_nice = p->p_nice;
 
 	ki->p_xstat = p->p_xstat;
@@ -1781,17 +1842,18 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	strncpy(ki->p_comm, p->p_comm,
 	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
 
-	if (p->p_wmesg)
-		strncpy(ki->p_wmesg, p->p_wmesg, sizeof(ki->p_wmesg));
-	ki->p_wchan = PTRTOINT64(p->p_wchan);
-
 	strncpy(ki->p_login, p->p_session->s_login, sizeof(ki->p_login));
+
+	ki->p_nlwps = p->p_nlwps;
+	ki->p_nrlwps = p->p_nrlwps;
+	ki->p_realflag = p->p_flag;
 
 	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
 		ki->p_vm_rssize = 0;
 		ki->p_vm_tsize = 0;
 		ki->p_vm_dsize = 0;
 		ki->p_vm_ssize = 0;
+		l = NULL;
 	} else {
 		struct vmspace *vm = p->p_vmspace;
 
@@ -1799,6 +1861,28 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_vm_tsize = vm->vm_tsize;
 		ki->p_vm_dsize = vm->vm_dsize;
 		ki->p_vm_ssize = vm->vm_ssize;
+
+		/* Pick a "representative" LWP */
+		l = proc_representative_lwp(p);
+		ki->p_forw = PTRTOINT64(l->l_forw);
+		ki->p_back = PTRTOINT64(l->l_back);
+		ki->p_addr = PTRTOINT64(l->l_addr);
+		ki->p_stat = l->l_stat;
+		ki->p_flag |= l->l_flag;
+		ki->p_swtime = l->l_swtime;
+		ki->p_slptime = l->l_slptime;
+		if (l->l_stat == LSONPROC) {
+			KDASSERT(l->l_cpu != NULL);
+			ki->p_schedflags = l->l_cpu->ci_schedstate.spc_flags;
+		} else
+			ki->p_schedflags = 0;
+		ki->p_holdcnt = l->l_holdcnt;
+		ki->p_priority = l->l_priority;
+		ki->p_usrpri = l->l_usrpri;
+		if (l->l_wmesg)
+			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
+		ki->p_wchan = PTRTOINT64(l->l_wchan);
+
 	}
 
 	if (p->p_session->s_ttyvp)
@@ -1807,7 +1891,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_eflag |= EPROC_SLEADER;
 
 	/* XXX Is this double check necessary? */
-	if ((p->p_flag & P_INMEM) == 0 || P_ZOMBIE(p)) {
+	if (P_ZOMBIE(p)) {
 		ki->p_uvalid = 0;
 	} else {
 		ki->p_uvalid = 1;
@@ -1841,11 +1925,47 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		    p->p_stats->p_cru.ru_stime.tv_usec;
 	}
 #ifdef MULTIPROCESSOR
-	if (p->p_cpu != NULL)
-		ki->p_cpuid = p->p_cpu->ci_cpuid;
+	if (l && l->l_cpu != NULL)
+		ki->p_cpuid = l->l_cpu->ci_cpuid;
 	else
 #endif
 		ki->p_cpuid = KI_NOCPU;
+
+}
+
+/*
+ * Fill in a kinfo_lwp structure for the specified lwp.
+ */
+static void
+fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
+{
+	kl->l_forw = PTRTOINT64(l->l_forw);
+	kl->l_back = PTRTOINT64(l->l_back);
+	kl->l_laddr = PTRTOINT64(l);
+	kl->l_addr = PTRTOINT64(l->l_addr);
+	kl->l_stat = l->l_stat;
+	kl->l_lid = l->l_lid;
+	kl->l_flag = l->l_flag;
+
+	kl->l_swtime = l->l_swtime;
+	kl->l_slptime = l->l_slptime;
+	if (l->l_stat == LSONPROC) {
+		KDASSERT(l->l_cpu != NULL);
+		kl->l_schedflags = l->l_cpu->ci_schedstate.spc_flags;
+	} else
+		kl->l_schedflags = 0;
+	kl->l_holdcnt = l->l_holdcnt;
+	kl->l_priority = l->l_priority;
+	kl->l_usrpri = l->l_usrpri;
+	if (l->l_wmesg)
+		strncpy(kl->l_wmesg, l->l_wmesg, sizeof(kl->l_wmesg));
+	kl->l_wchan = PTRTOINT64(l->l_wchan);
+#ifdef MULTIPROCESSOR
+	if (l->l_cpu != NULL)
+		kl->l_cpuid = l->l_cpu->ci_cpuid;
+	else
+#endif
+		kl->l_cpuid = KI_NOCPU;
 }
 
 int
@@ -1915,6 +2035,7 @@ sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
 		return (EFAULT);
+
 	p->p_vmspace->vm_refcnt++;	/* XXX */
 
 	/*
