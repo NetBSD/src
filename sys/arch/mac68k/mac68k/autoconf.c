@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1994/10/26 08:46:54 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1994/11/27 19:59:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,12 +109,15 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	cold;		    /* if 1, still working on cold-start */
+int	cold;		    /* if 1 (locore.s), still working on cold-start */
 
 #ifdef DEBUG
 int	acdebug = 0;
@@ -252,10 +255,54 @@ struct	device *bootdv = NULL;
 #define	PARTITIONMASK	0x7
 #define	UNITSHIFT	3
 
+/*
+ * Map a SCSI bus, target, lun to a device number.
+ * This could be tape, disk, CD.  The calling routine, though,
+ * assumes DISK.  It would be nice to allow CD, too...
+ */
 static int
-target_to_unit(u_long target)
+target_to_unit(u_long bus, u_long target, u_long lun)
 {
-	return sd_target_to_unit(target);
+	int			targ;
+	struct scsibus_data	*scsi;
+	struct scsi_link	*sc_link;
+	struct device		*sc_dev;
+extern	struct cfdriver		scsibuscd;
+
+	if (target < 0 || target > 7 || lun < 0 || lun > 7) {
+		printf("scsi target to unit, target (%d) or lun (%d)"
+			" out of range.\n", target, lun);
+		return -1;
+	}
+
+	if (bus == -1) {
+		for (bus = 0 ; bus < scsibuscd.cd_ndevs ; bus++) {
+			if (scsibuscd.cd_devs[bus]) {
+				scsi = (struct scsibus_data *)
+						scsibuscd.cd_devs[bus];
+				if (scsi->sc_link[target][lun]) {
+					sc_link = scsi->sc_link[target][lun];
+					sc_dev = (struct device *)
+							sc_link->device_softc;
+					return sc_dev->dv_unit;
+				}
+			}
+		}
+		return -1;
+	}
+	if (bus < 0 || bus >= scsibuscd.cd_ndevs) {
+		printf("scsi target to unit, bus (%d) out of range.\n", bus);
+		return -1;
+	}
+	if (scsibuscd.cd_devs[bus]) {
+		scsi = (struct scsibus_data *) scsibuscd.cd_devs[bus];
+		if (scsi->sc_link[target][lun]) {
+			sc_link = scsi->sc_link[target][lun];
+			sc_dev = (struct device *) sc_link->device_softc;
+			return sc_dev->dv_unit;
+		}
+	}
+	return -1;
 }
 
 /* swiped from sparc/sparc/autoconf.c */
@@ -288,7 +335,7 @@ findbootdev()
 	unit = B_UNIT(bootdev);
 
 	bootdev &= ~(B_UNITMASK << B_UNITSHIFT);
-	unit = target_to_unit(unit);
+	unit = target_to_unit(-1, unit, 0);
 	bootdev |= (unit << B_UNITSHIFT);
 
 	for (dv = alldevs ; dv ; dv = dv->dv_next) {
