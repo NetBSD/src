@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)udp_usrreq.c	7.20 (Berkeley) 4/20/91
- *	$Id: udp_usrreq.c,v 1.7 1994/01/08 23:17:18 mycroft Exp $
+ *	$Id: udp_usrreq.c,v 1.8 1994/01/08 23:19:48 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -54,24 +54,10 @@
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
-struct	inpcb *udp_last_inpcb = &udb;
-
-static void	udp_detach __P((struct inpcb *));
-static void	udp_notify __P((struct inpcb *, int));
-static struct mbuf *
-        	udp_saveopt __P((caddr_t, int, int));
-
 /*
  * UDP protocol implementation.
  * Per RFC 768, August, 1980.
  */
-void
-udp_init()
-{
-
-	udb.inp_next = udb.inp_prev = &udb;
-}
-
 #ifndef	COMPAT_42
 int	udpcksum = 1;
 #else
@@ -80,6 +66,19 @@ int	udpcksum = 0;		/* XXX */
 int	udp_ttl = UDP_TTL;
 
 struct	sockaddr_in udp_in = { sizeof(udp_in), AF_INET };
+struct	inpcb *udp_last_inpcb = &udb;
+
+static void	udp_detach __P((struct inpcb *));
+static void	udp_notify __P((struct inpcb *, int));
+static struct mbuf *
+        	udp_saveopt __P((caddr_t, int, int));
+
+void
+udp_init()
+{
+
+	udb.inp_next = udb.inp_prev = &udb;
+}
 
 void
 udp_input(m, iphlen)
