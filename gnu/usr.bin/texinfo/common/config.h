@@ -92,6 +92,7 @@
 /* #undef HAVE_GETTEXT */
 
 /* Define to 1 if you have the `gettimeofday' function. */
+/* WIZ: #undef HAVE_GETTIMEOFDAY */
 #define HAVE_GETTIMEOFDAY 1
 
 /* Define to 1 if you have the `getuid' function. */
@@ -173,6 +174,9 @@
 /* Define to 1 if you have the `setvbuf' function. */
 #define HAVE_SETVBUF 1
 
+/* Define to 1 if you have the `sigaction' function. */
+#define HAVE_SIGACTION 1
+
 /* Define to 1 if you have the `sigprocmask' function. */
 #define HAVE_SIGPROCMASK 1
 
@@ -238,6 +242,9 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
+/* Define to 1 if you have the <sys/stream.h> header file. */
+/* #undef HAVE_SYS_STREAM_H */
+
 /* Define to 1 if you have the <sys/time.h> header file. */
 #define HAVE_SYS_TIME_H 1
 
@@ -262,10 +269,13 @@
 /* Define to 1 if you have the `tsearch' function. */
 #define HAVE_TSEARCH 1
 
+/* Define if you have the 'uintmax_t' type in <stdint.h> or <inttypes.h>. */
+#define HAVE_UINTMAX_T 1
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Define if you have the unsigned long long type. */
+/* Define if you have the 'unsigned long long' type. */
 #define HAVE_UNSIGNED_LONG_LONG 1
 
 /* Define to 1 if you have the `vprintf' function. */
@@ -299,13 +309,13 @@
 #define PACKAGE_NAME "GNU Texinfo"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "GNU Texinfo 4.3"
+#define PACKAGE_STRING "GNU Texinfo 4.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "texinfo"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.3"
+#define PACKAGE_VERSION "4.5"
 
 /* Define if <inttypes.h> exists and defines unusable PRI* macros. */
 /* #undef PRI_MACROS_BROKEN */
@@ -331,7 +341,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "4.3"
+#define VERSION "4.5"
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
@@ -359,6 +369,6 @@
 /* Define to `unsigned' if <sys/types.h> does not define. */
 /* #undef size_t */
 
-/* Define to unsigned long or unsigned long long if <inttypes.h> and
-   <stdint.h> don't define. */
+/* Define to unsigned long or unsigned long long if <stdint.h> and
+   <inttypes.h> don't define. */
 /* #undef uintmax_t */
