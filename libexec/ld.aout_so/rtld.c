@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.32 1995/06/04 21:56:33 pk Exp $
+ *	$Id: rtld.c,v 1.33 1995/06/04 23:21:35 pk Exp $
  */
 
 #include <sys/param.h>
@@ -154,6 +154,8 @@ struct rt_symbol	*rt_symbol_head;
 
 static char		*ld_library_path;
 static int		no_intern_search;
+static int		ld_suppress_warnings;
+static int		ld_warn_non_pure_code;
 
 static void		*__dlopen __P((char *, int));
 static int		__dlclose __P((void *));
@@ -264,6 +266,9 @@ struct _dynamic		*dp;
 	add_search_path(ld_library_path);
 	if (getenv("LD_NOSTD_PATH") == NULL)
 		std_search_path();
+
+	ld_suppress_warnings = getenv("LD_SUPPRESS_WARNINGS") != NULL;
+	ld_warn_non_pure_code = getenv("LD_WARN_NON_PURE_CODE") != NULL;
 
 	no_intern_search = careful || getenv("LD_NO_INTERN_SEARCH") != 0;
 
@@ -567,8 +572,7 @@ caddr_t			addr;
 	else
 		sym = "";
 
-	if (getenv("LD_SUPPRESS_WARNINGS") == NULL &&
-	    getenv("LD_WARN_NON_PURE_CODE") != NULL)
+	if (ld_warn_non_pure_code && !ld_suppress_warnings)
 		warnx("warning: non pure code in %s at %x (%s)",
 				smp->som_path, r->r_address, sym);
 
@@ -1160,7 +1164,7 @@ lose:
 	realminor = -1;
 	cp = (char *)findshlib(name, &major, &realminor, 0);
 	if (cp) {
-		if (realminor < minor && getenv("LD_SUPPRESS_WARNINGS") == NULL)
+		if (realminor < minor && !ld_suppress_warnings)
 			warnx("warning: lib%s.so.%d.%d: "
 			      "minor version >= %d expected, using it anyway",
 			      name, major, realminor, minor);
