@@ -1,4 +1,4 @@
-.\"	$NetBSD: esp.4,v 1.7 2000/03/20 18:28:28 augustss Exp $
+.\"	$NetBSD: esp.4,v 1.8 2001/09/19 00:49:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Eric S. Hvozda <hvozda@netcom.com>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: esp.4,v 1.7 2000/03/20 18:28:28 augustss Exp $
+.\"	$NetBSD: esp.4,v 1.8 2001/09/19 00:49:58 wiz Exp $
 .\"
 .Dd June 18, 1998
 .Dt ESP 4
@@ -106,11 +106,11 @@ for use in
 files:
 .Pp
 .Bl -tag -compact -width "bits 8-15:"
-.It bits 0-7:
+.It bits 0-7 :
 disable disconnect/reselect for the corresponding
 .Tn SCSI
 target
-.It bits 8-15:
+.It bits 8-15 :
 disable synchronous negotiation for
 .Tn SCSI
 target
@@ -125,17 +125,13 @@ Note that
 .Tn SCSI
 tape drives should be allowed to perform disconnect/reselect or performance
 will suffer.
-.\" .Sh BUGS
-.\" Neither
-.\" .Tn DMA
-.\" or synchronous data transfers are currently supported.
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr scsi 4 ,
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr intro 4 ,
 .Xr le 4 ,
 .Xr pcmcia 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr ss 4 ,
 .Xr st 4 ,
@@ -144,3 +140,7 @@ will suffer.
 .Pa http://www.qlc.com/
 .br
 .Pa http://www.sun.com/
+.\" .Sh BUGS
+.\" Neither
+.\" .Tn DMA
+.\" or synchronous data transfers are currently supported.

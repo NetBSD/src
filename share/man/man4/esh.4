@@ -1,4 +1,4 @@
-.\"	$NetBSD: esh.4,v 1.8 2001/09/11 22:52:52 wiz Exp $
+.\"	$NetBSD: esh.4,v 1.9 2001/09/19 00:49:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,20 +75,19 @@ command:
 .Bd -unfilled -offset indent
 route add -interface 129.99.154.101 -llinfo -link esh0:3.0.0.65
 .Ed
-.Pp
 .\" .Sh OPTIONS
 .Sh MEDIA SELECTION
 Media selection is not yet supported for this device.
 .\" .Sh DIAGNOSTICS
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pci 4 ,
+.Xr eshconfig 8 ,
+.Xr ifconfig 8 ,
+.Xr route 8
 .Sh BUGS
 The card must be tuned for proper and efficient DMA operation.
 The appropriate values vary based on the system.
 The
 .Xr eshconfig 8
 program is used for this.
-.Sh SEE ALSO
-.Xr eshconfig 8 ,
-.Xr ifconfig 8 ,
-.Xr intro 4 ,
-.Xr route 8 ,
-.Xr pci 4
