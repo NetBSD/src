@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.8 2002/04/12 08:10:56 gmcgarry Exp $
+#	$NetBSD: INTEGRATOR,v 1.9 2002/04/16 11:49:54 wiz Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -206,8 +206,6 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 #wskbd*		at pckbd? console ?
 #pms*		at pckbc?
 #wsmouse*	at pms? mux 0
-#pmsi*		at pckbc?
-#wsmouse*	at pmsi? mux 0
 
 #vga*		at pci? dev ? function ?
 #wsdisplay*	at vga? console ?

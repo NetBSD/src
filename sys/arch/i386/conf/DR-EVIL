@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.40 2002/04/12 08:11:01 gmcgarry Exp $
+#	$NetBSD: DR-EVIL,v 1.41 2002/04/16 11:49:55 wiz Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -309,9 +309,8 @@ pcmcia*		at cardslot?
 # wscons
 pckbc*	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
+# "opms" should not be enabled together with "pms"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 vga*		at pci?
@@ -320,7 +319,6 @@ wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ? mux 1
 wsmouse*	at pms? mux 0
-#wsmouse*	at pmsi? mux 0
 
 pcppi0		at isa?
 sysbeep0	at pcppi?

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21 2002/04/12 08:11:11 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.22 2002/04/16 11:49:55 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -209,8 +209,6 @@ pckbd*		at pckbc?
 wskbd*		at pckbd? console ?
 pms*		at pckbc?
 wsmouse*	at pms? mux 0
-pmsi*		at pckbc?
-wsmouse*	at pmsi? mux 0
 
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
