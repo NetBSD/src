@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.20 1996/03/17 02:03:32 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.21 1996/03/17 06:08:12 cgd Exp $
 
 #
 # sun3-specific configuration info
@@ -120,7 +120,7 @@ attach bwtwo at obmem
 file arch/sun3/dev/bw2.c		bwtwo needs-flag
 
 device cgtwo: sunfb
-attach bwtwo at vmes
+attach cgtwo at vmes
 file arch/sun3/dev/cg2.c		cgtwo needs-flag
 
 device cgfour: sunfb
@@ -169,7 +169,7 @@ define zsevent
 file dev/sun/event.c			zsevent
 
 device kbd: zsevent
-attach kdb at zsc
+attach kbd at zsc
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sun3/dev/kd.c 		kbd
