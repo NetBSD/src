@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 1997/02/19 23:38:46 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 1997/03/05 22:22:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,6 +53,8 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <m68k/asm_single.h>
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/mon.h>
@@ -65,11 +67,11 @@
 #include "mostek48t02.h"
 
 #define	CLOCK_PRI	5
+#define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
 
 void _isr_clock __P((void));	/* in locore.s */
 void clock_intr __P((struct clockframe));
 
-/* Note: this is used by locore.s:__isr_clock */
 static volatile void *clock_va;
 
 static int  clock_match __P((struct device *, struct cfdata *, void *args));
@@ -82,6 +84,23 @@ struct cfattach clock_ca = {
 struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
+
+
+/*
+ * This is called very early (by obio_init()) but after
+ * intreg_init() has found the PROM mapping for the
+ * interrupt register and cleared it.
+ */
+void
+clock_init()
+{
+	/* Yes, use the EEPROM address.  It is the same H/W device. */
+	clock_va = obio_find_mapping(OBIO_EEPROM, sizeof(struct clockreg));
+	if (!clock_va) {
+		mon_printf("clock_init\n");
+		sunmon_abort();
+	}
+}
 
 /*
  * XXX  Need to determine which type of clock we have!
@@ -133,73 +152,73 @@ clock_attach(parent, self, args)
  * Set and/or clear the desired clock bits in the interrupt
  * register.  We have to be extremely careful that we do it
  * in such a manner that we don't get ourselves lost.
+ * XXX:  Watch out!  It's really easy to break this!
  */
 void
-set_clk_mode(on, off, enable)
+set_clk_mode(on, off, enable_clk)
 	u_char on, off;
-	int enable;
+	int enable_clk;
 {
 	register u_char interreg;
-	register int s;
 
-	/* If we don't have this, we must not have touched it! */
+	/*
+	 * If we have not yet mapped the register,
+	 * then we do not want to do any of this...
+	 */
 	if (!interrupt_reg)
 		return;
 
-	s = getsr();
-	if ((s & PSL_IPL) < PSL_IPL7)
-		panic("set_clk_mode: ipl");
+#ifdef	DIAGNOSTIC
+	/* Assertion: were are at splhigh! */
+	if ((getsr() & PSL_IPL) < PSL_IPL7)
+		panic("set_clk_mode: bad ipl");
+#endif
 
 	/*
 	 * make sure that we are only playing w/
 	 * clock interrupt register bits
 	 */
-	on &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
-	off &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+	on  &= IREG_CLK_BITS;
+	off &= IREG_CLK_BITS;
+
+	/* First, turn off the "master" enable bit. */
+	single_inst_bclr_b(*interrupt_reg, IREG_ALL_ENAB);
 
 	/*
-	 * Get a copy of current interrupt register,
-	 * turning off any undesired bits (aka `off')
+	 * Save the current interrupt register clock bits,
+	 * and turn off/on the requested bits in the copy.
 	 */
-	interreg = *interrupt_reg & ~(off | IREG_ALL_ENAB);
-	*interrupt_reg &= ~IREG_ALL_ENAB;
+	interreg = *interrupt_reg & IREG_CLK_BITS;
+	interreg &= ~off;
+	interreg |= on;
 
-	/*
-	 * Next we turns off the CLK5 and CLK7 bits to clear
-	 * the flip-flops, then we disable clock interrupts.
-	 * Now we can read the clock's interrupt register
-	 * to clear any pending signals there.
-	 */
-	*interrupt_reg &= ~(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+	/* Clear the CLK5 and CLK7 bits to clear the flip-flops. */
+	single_inst_bclr_b(*interrupt_reg, IREG_CLK_BITS);
 
-	/* XXX - hit the clock? */
-
-	/*
-	 * Now we set all the desired bits
-	 * in the interrupt register, then
-	 * we turn the clock back on and
-	 * finally we can enable all interrupts.
-	 */
-	*interrupt_reg |= (interreg | on);		/* enable flip-flops */
-
-	/* XXX - hit the clock? */
-
-	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
-}
-
-/* Called very early by internal_configure. */
-void clock_init()
-{
-	/* XXX - Yes, use the EEPROM address.  Same H/W device. */
-	clock_va = obio_find_mapping(OBIO_EEPROM, sizeof(struct clockreg));
-
-	if (!clock_va || !interrupt_reg) {
-		mon_printf("clock_init\n");
-		sunmon_abort();
+#ifdef	SUN3_470
+	if (intersil_va) {
+		/*
+		 * Then disable clock interrupts, and read the clock's
+		 * interrupt register to clear any pending signals there.
+		 */
+		intersil_clock->clk_cmd_reg =
+			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+		intersil_clear();
 	}
+#endif	/* SUN3_470 */
 
-	/* Turn off clock interrupts until cpu_initclocks() */
-	/* intreg_init() already cleared the interrupt register. */
+	/* Set the requested bits in the interrupt register. */
+	single_inst_bset_b(*interrupt_reg, interreg);
+
+#ifdef	SUN3_470
+	/* Turn the clock back on (maybe) */
+	if (intersil_va && enable_clk)
+		intersil_clock->clk_cmd_reg =
+			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+#endif	/* SUN3_470 */
+
+	/* Finally, turn the "master" enable back on. */
+	single_inst_bset_b(*interrupt_reg, IREG_ALL_ENAB);
 }
 
 /*
@@ -212,21 +231,14 @@ cpu_initclocks(void)
 {
 	int s;
 
-	if (!clock_va)
-		panic("cpu_initclocks");
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
 	isr_add_custom(5, (void*)_isr_clock);
 
-	/* Set the clock to interrupt 100 time per second. */
-	/* XXX - Hard wired? */
+	/* Now enable the clock at level 5 in the interrupt reg. */
+	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
 
-	*interrupt_reg |= IREG_CLOCK_ENAB_5;	/* enable clock */
-
-	/* XXX enable the clock? */
-
-	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
 	splx(s);
 }
 
@@ -243,21 +255,26 @@ setstatclockrate(newhz)
 
 /*
  * This is is called by the "custom" interrupt handler.
+ * Note that we can get ZS interrupts while this runs,
+ * and zshard may touch the interrupt_reg, so we must
+ * be careful to use the single_inst_* macros to modify
+ * the interrupt register atomically.
  */
 void
 clock_intr(cf)
 	struct clockframe cf;
 {
-	/* volatile struct clockreg *clk = clock_va; */
 
-#if 1	/* XXX - Needed? */
 	/* Pulse the clock intr. enable low. */
-	*interrupt_reg &= ~IREG_CLOCK_ENAB_5;
-	*interrupt_reg |=  IREG_CLOCK_ENAB_5;
-#endif
+	single_inst_bclr_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
+	single_inst_bset_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
 
+	/* Call common clock interrupt handler. */
 	hardclock(&cf);
+
+	/* No LED frobbing on the 3/80 */
 }
+
 
 /*
  * Return the best possible estimate of the time in the timeval
