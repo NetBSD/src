@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.132 2004/11/11 21:24:40 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.133 2004/12/15 08:35:17 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,7 +89,7 @@ before this procedure!  This procedure will do the following things:
 	a) Partition your disk 
 	b) Create new BSD file systems 
 	c) Load and install distribution sets
-	d) Some initial system configuraton
+	d) Some initial system configuration
 
 (After you enter the partition information but before your disk is
 changed, you will have the opportunity to quit this procedure.)
