@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_order.c,v 1.1 1996/05/14 23:37:32 jtc Exp $	 */
+/*	$NetBSD: yp_order.c,v 1.2 1996/05/18 19:01:31 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,14 +32,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_order.c,v 1.1 1996/05/14 23:37:32 jtc Exp $";
+static char rcsid[] = "$NetBSD: yp_order.c,v 1.2 1996/05/18 19:01:31 jtc Exp $";
 #endif
 
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-extern int _yplib_timeout;
+extern struct timeval _yplib_timeout;
 
 int
 yp_order(indomain, inmap, outorder)
@@ -50,15 +50,20 @@ yp_order(indomain, inmap, outorder)
 	struct dom_binding *ysd;
 	struct ypresp_order ypro;
 	struct ypreq_nokey yprnk;
-	struct timeval  tv;
 	int             r;
+
+	if (indomain == NULL || *indomain == '\0'
+	    || strlen(indomain) > YPMAXDOMAIN)
+		return YPERR_BADARGS;
+	if (inmap == NULL || *inmap == '\0'
+	    || strlen(inmap) > YPMAXMAP)
+		return YPERR_BADARGS;
+	if (outorder == NULL)
+		return YPERR_BADARGS;
 
 again:
 	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
-
-	tv.tv_sec = _yplib_timeout;
-	tv.tv_usec = 0;
 
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
@@ -66,7 +71,8 @@ again:
 	(void)memset(&ypro, 0, sizeof ypro);
 
 	r = clnt_call(ysd->dom_client, YPPROC_ORDER,
-		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, tv);
+		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, 
+		      _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 	        clnt_perror(ysd->dom_client, "yp_order: clnt_call");
 	        if (r == RPC_PROCUNAVAIL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.1 1996/05/15 05:27:52 jtc Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.2 1996/05/18 19:01:27 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_match.c,v 1.1 1996/05/15 05:27:52 jtc Exp $";
+static char rcsid[] = "$NetBSD: yp_match.c,v 1.2 1996/05/18 19:01:27 jtc Exp $";
 #endif
 
 #include <stdlib.h>
@@ -43,8 +43,8 @@ static char rcsid[] = "$NetBSD: yp_match.c,v 1.1 1996/05/15 05:27:52 jtc Exp $";
 
 #define YPMATCHCACHE
 
+extern struct timeval _yplib_timeout;
 extern char _yp_domain[];
-extern int _yplib_timeout;
 
 #ifdef YPMATCHCACHE
 int _yplib_cache = 5;
@@ -166,9 +166,18 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 {
 	struct dom_binding *ysd;
 	struct ypresp_val yprv;
-	struct timeval  tv;
 	struct ypreq_key yprk;
 	int             r;
+
+
+	if (indomain == NULL || *indomain == '\0'
+	    || strlen(indomain) > YPMAXDOMAIN)
+		return YPERR_BADARGS;
+	if (inmap == NULL || *inmap == '\0'
+	    || strlen(inmap) > YPMAXMAP)
+		return YPERR_BADARGS;
+	if (inkey == NULL || inkeylen == 0)
+		return YPERR_BADARGS;
 
 	*outval = NULL;
 	*outvallen = 0;
@@ -189,9 +198,6 @@ again:
 	}
 #endif
 
-	tv.tv_sec = _yplib_timeout;
-	tv.tv_usec = 0;
-
 	yprk.domain = indomain;
 	yprk.map = inmap;
 	yprk.keydat.dptr = (char *) inkey;
@@ -200,7 +206,8 @@ again:
 	memset(&yprv, 0, sizeof yprv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MATCH,
-		      xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, tv);
+		      xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, 
+		      _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_match: clnt_call");
 		ysd->dom_vers = -1;
