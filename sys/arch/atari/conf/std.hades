@@ -1,4 +1,4 @@
-#	$NetBSD: std.atari,v 1.20 2001/04/05 12:21:30 leo Exp $
+#	$NetBSD: std.hades,v 1.1 2001/04/05 12:21:30 leo Exp $
 #
 # standard atari information
 #
@@ -14,5 +14,5 @@ mainbus0	at root
 clock0		at mainbus0		# system clock
 kbd0		at mainbus0		# standard keyboard
 fdc0		at mainbus0		# floppy controller
-fd0		at fdc0 unit 0		# builtin floppy drive
-fd1		at fdc0 unit 1		# external floppy drive
+hdfd0		at fdc0 unit 0		# builtin Hades-type floppy drive
+hdfd1		at fdc0 unit 1		# external Hades-type floppy drive
