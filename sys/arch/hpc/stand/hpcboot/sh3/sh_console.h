@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.h,v 1.7 2002/02/04 17:38:27 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.h,v 1.8 2002/02/11 17:08:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -39,44 +39,36 @@
 #ifndef _HPCBOOT_SH_CONSOLE_H_
 #define _HPCBOOT_SH_CONSOLE_H_
 
-#include <hpcboot.h>
 #include <console.h>
-#include <memory.h>
-#include <sh3/sh3.h>
 
 class SHConsole : public SerialConsole {
 private:
 	typedef SerialConsole super;
 
-public:
 	typedef void (*print_func_t)(const char *);
+	print_func_t _print;	// SHConsole native method folder.
+
+public:
+	enum consoleSelect { VIDEO, SERIAL };
 	struct console_info {
 		u_int32_t cpu, machine;
 		print_func_t print;
 		int16_t serial_console;
 		int16_t video_console;
 	};
-	static struct console_info _console_info[];
-	enum consoleSelect { VIDEO, SERIAL };
-	static struct console_info *selectBootConsole(Console &,
+	static const struct console_info _console_info[];
+	static const struct console_info *selectBootConsole(Console &,
 	    enum consoleSelect);
+
+public:
+	SHConsole(void);	//XXX
+	virtual ~SHConsole();
+	virtual BOOL init(void);
+	virtual void print(const TCHAR *fmt, ...);
+
 	static void SCIPrint(const char *);
 	static void SCIFPrint(const char *);
 	static void HD64461COMPrint(const char *);
 	static void HD64465COMPrint(const char *);
-
-private:
-	static SHConsole *_instance;
-	int _kmode;
-	print_func_t _print;
-
-	SHConsole(void);
-
-public:
-	virtual ~SHConsole();
-	static SHConsole *Instance(void);
-
-	virtual BOOL init(void);
-	virtual void print(const TCHAR *fmt, ...);
 };
 #endif //_HPCBOOT_SH_CONSOLE_H_
