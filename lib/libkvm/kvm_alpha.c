@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_alpha.c,v 1.8 1997/11/02 08:35:08 ross Exp $	*/
+/*	$NetBSD: kvm_alpha.c,v 1.9 1998/02/14 01:00:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -159,15 +159,25 @@ _kvm_pa2off(kd, pa)
 	kvm_t *kd;
 	u_long pa;
 {
-	off_t off;
 	cpu_kcore_hdr_t *cpu_kh;
+	phys_ram_seg_t *ramsegs;
+	off_t off;
+	int i;
 
 	cpu_kh = kd->cpu_data;
+	ramsegs = (phys_ram_seg_t *)((char *)cpu_kh + ALIGN(sizeof *cpu_kh));
 
 	off = 0;
-	pa -= cpu_kh->core_seg.start;
+	for (i = 0; i < cpu_kh->nmemsegs; i++) {
+		if (pa >= ramsegs[i].start &&
+		    (pa - ramsegs[i].start) < ramsegs[i].size) {
+			off += (pa - ramsegs[i].start);
+			break;
+		}
+		off += ramsegs[i].size;
+	}
 
-	return (kd->dump_off + off + pa);
+	return (kd->dump_off + off);
 }
 
 /*
