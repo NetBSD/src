@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.130 2004/12/11 09:31:42 sketch Exp $	*/
+/*	$NetBSD: tulip.c,v 1.131 2005/01/30 17:27:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.130 2004/12/11 09:31:42 sketch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.131 2005/01/30 17:27:38 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -1303,7 +1303,7 @@ tlp_rxintr(sc)
 		 * No errors; receive the packet.  Note the Tulip
 		 * includes the CRC with every packet.
 		 */
-		len = TDSTAT_Rx_LENGTH(rxstat);
+		len = TDSTAT_Rx_LENGTH(rxstat) - ETHER_CRC_LEN;
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
@@ -1359,7 +1359,6 @@ tlp_rxintr(sc)
 
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -1378,10 +1377,9 @@ tlp_rxintr(sc)
 		if (__predict_false((sc->sc_flags & TULIPF_VPC) != 0)) {
 			uint16_t etype = ntohs(eh->ether_type);
 
-			if (len > ETHER_MAX_FRAME(ifp, etype,
-						  M_HASFCS))
+			if (len > ETHER_MAX_FRAME(ifp, etype, 0))
 				m->m_pkthdr.len = m->m_len = len =
-				    ETHER_MAX_FRAME(ifp, etype, M_HASFCS);
+				    ETHER_MAX_FRAME(ifp, etype, 0);
 		}
 
 #if NBPFILTER > 0
