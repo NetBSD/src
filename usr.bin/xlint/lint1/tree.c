@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.29 2002/10/22 00:25:29 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.30 2002/10/22 13:31:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.29 2002/10/22 00:25:29 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.30 2002/10/22 13:31:34 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -301,8 +301,27 @@ getnnode(sym_t *sym, int ntok)
 			 */
 			sym->s_type = incref(sym->s_type, FUNC);
 		} else {
-			/* %s undefined */
-			error(99, sym->s_name);
+			if (!blklev) {
+				/* %s undefined */
+				error(99, sym->s_name);
+			} else {
+				int fixtype;
+				if (strcmp(sym->s_name, "__FUNCTION__") == 0) {
+					gnuism(316);
+					fixtype = 1;
+				} else if (strcmp(sym->s_name, "__func__") == 0) {
+					if (!Sflag)
+						warning(317);
+					fixtype = 1;
+				} else {
+					error(99, sym->s_name);
+					fixtype = 0;
+				}
+				if (fixtype) {
+					sym->s_type = incref(gettyp(CHAR), PTR);
+					sym->s_type->t_const = 1;
+				}
+			}
 		}
 	}
 
