@@ -9,8 +9,8 @@
 # the sendmail distribution.
 #
 #
-#	Id: README,v 8.355.2.14 2003/03/27 21:39:29 ca Exp
-#	$NetBSD: README,v 1.11 2003/06/01 14:07:04 atatat Exp $
+#	Id: README,v 8.355.2.16 2004/01/08 21:54:55 ca Exp
+#	$NetBSD: README,v 1.12 2004/03/25 19:14:31 atatat Exp $
 #
 
 This directory contains the source files for sendmail(TM).
@@ -126,7 +126,7 @@ MAP_REGEX	Regular Expression support.  You will need to use an
 		the Free Software Foundation.
 DNSMAP		DNS map support.  Requires NAMED_BIND.
 PH_MAP		PH map support.  You will need the libphclient library from
-		the nph package (http://www-dev.cso.uiuc.edu/ph/nph/).
+		the nph package (http://www-dev.cites.uiuc.edu/ph/nph/).
 MAP_NSD		nsd map support (IRIX 6.5 and later).
 
 >>>  NOTE WELL for NEWDB support: If you want to get ndbm support, for
@@ -562,6 +562,11 @@ MATCHGECOS	Permit fuzzy matching of user names against the full
 MIME8TO7	If non-zero, include 8 to 7 bit MIME conversions.  This
 		also controls advertisement of 8BITMIME in the ESMTP
 		startup dialogue.
+MIME7TO8_OLD	If 0 then use an algorithm for MIME 7-bit quoted-printable
+		or base64 encoding to 8-bit text that has been introduced
+		in 8.12.3.  There are some examples where that code fails,
+		but the old code works.  If you have an example of improper
+		7 to 8 bit conversion please send it to sendmail-bugs.
 MIME7TO8	If non-zero, include 7 to 8 bit MIME conversions.
 HES_GETMAILHOST	Define this to 1 if you are using Hesiod with the
 		hes_getmailhost() routine.  This is included with the MIT
@@ -1641,7 +1646,7 @@ OpenSSL
 
 PH
 	PH support is provided by Mark Roth <roth@uiuc.edu>.  The map is
-	described at http://www-dev.cso.uiuc.edu/sendmail/ .
+	described at http://www-dev.cites.uiuc.edu/sendmail/ .
 
 	NOTE: The "spacedname" pseudo-field which was used by earlier
 	versions of the PH map code is no longer supported!  See the URL
@@ -1798,4 +1803,4 @@ util.c		Some general purpose routines used by sendmail.
 version.c	The version number and information about this
 		version of sendmail.
 
-(Version Revision: 8.355.2.14, last update Date: 2003/03/27 21:39:29 )
+(Version Revision: 8.355.2.16, last update Date: 2004/01/08 21:54:55 )

@@ -1,4 +1,4 @@
-/* $NetBSD: cdefs.h,v 1.3 2003/06/01 14:06:58 atatat Exp $ */
+/* $NetBSD: cdefs.h,v 1.4 2004/03/25 19:14:30 atatat Exp $ */
 /*
  * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -7,7 +7,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: cdefs.h,v 1.15 2002/01/16 18:30:11 ca Exp
+ *	Id: cdefs.h,v 1.15.2.1 2003/12/05 22:44:17 ca Exp
  */
 
 /*
@@ -68,11 +68,14 @@
 #  if __GNUC__ >= 2
 #   if __GNUC__ == 2 && __GNUC_MINOR__ < 5
 #    define SM_DEAD(proto) volatile proto
+#    define SM_DEAD_D volatile
 #   else /* __GNUC__ == 2 && __GNUC_MINOR__ < 5 */
 #    define SM_DEAD(proto) proto __attribute__((__noreturn__))
+#    define SM_DEAD_D
 #   endif /* __GNUC__ == 2 && __GNUC_MINOR__ < 5 */
 #  else /* __GNUC__ >= 2 */
 #   define SM_DEAD(proto) proto
+#   define SM_DEAD_D
 #  endif /* __GNUC__ >= 2 */
 # endif /* SM_DEAD */
 

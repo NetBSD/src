@@ -1,7 +1,7 @@
-/* $NetBSD: smrsh.c,v 1.11 2003/06/01 14:07:10 atatat Exp $ */
+/* $NetBSD: smrsh.c,v 1.12 2004/03/25 19:14:31 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: smrsh.c,v 1.11 2003/06/01 14:07:10 atatat Exp $");
+__RCSID("$NetBSD: smrsh.c,v 1.12 2004/03/25 19:14:31 atatat Exp $");
 #endif
 
 /*
@@ -26,7 +26,7 @@ SM_IDSTR(copyright,
      Copyright (c) 1993\n\
 	The Regents of the University of California.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)Id: smrsh.c,v 8.58.2.2 2002/09/24 21:40:05 ca Exp")
+SM_IDSTR(id, "@(#)Id: smrsh.c,v 8.58.2.5 2003/12/15 17:09:39 ca Exp")
 
 /*
 **  SMRSH -- sendmail restricted shell
@@ -124,8 +124,9 @@ addcmd(s, cmd, len)
 	if (s == NULL || *s == '\0')
 		return;
 
+	/* enough space for s (len) and CMDDIR + "/" and '\0'? */
 	if (sizeof newcmdbuf - strlen(newcmdbuf) <=
-	    len + (cmd ? (strlen(CMDDIR) + 1) : 0))
+	    len + 1 + (cmd ? (strlen(CMDDIR) + 1) : 0))
 	{
 		(void)sm_io_fprintf(smioerr, SM_TIME_DEFAULT,
 				    "%s: command too long: %s\n", prg, par);
@@ -136,7 +137,7 @@ addcmd(s, cmd, len)
 	}
 	if (cmd)
 		(void) sm_strlcat2(newcmdbuf, CMDDIR, "/", sizeof newcmdbuf);
-	(void) sm_strlcat(newcmdbuf, s, sizeof newcmdbuf);
+	(void) strncat(newcmdbuf, s, len);
 }
 
 int
@@ -429,7 +430,8 @@ main(argc, argv)
 #ifdef DEBUG
 	(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "%s\n", newcmdbuf);
 #endif /* DEBUG */
-	(void) execle("/bin/sh", "/bin/sh", "-c", newcmdbuf, NULL, newenv);
+	(void) execle("/bin/sh", "/bin/sh", "-c", newcmdbuf,
+		      (char *)NULL, newenv);
 	save_errno = errno;
 #ifndef DEBUG
 	syslog(LOG_CRIT, "Cannot exec /bin/sh: %s", sm_errstring(errno));

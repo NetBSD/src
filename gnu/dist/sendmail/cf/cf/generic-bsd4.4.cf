@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983, 1995 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -16,8 +16,8 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by ca@wiz.smi.sendmail.com on Sat Mar 29 06:04:50 PST 2003
-##### in /extra/home/ca/sm-8.12.9/OpenSource/sendmail-8.12.9/cf/cf
+##### built by ca@wiz.smi.sendmail.com on Sun Jan 18 09:54:45 PST 2004
+##### in /extra/home/ca/sm-8.12.11/OpenSource/sendmail-8.12.11/cf/cf
 ##### using ../ as configuration include directory
 #####
 ######################################################################
@@ -27,7 +27,7 @@
 ######################################################################
 ######################################################################
 
-#####  Id: cfhead.m4,v 8.108.2.2 2003/03/11 21:24:20 ca Exp  #####
+#####  Id: cfhead.m4,v 8.108.2.6 2003/12/05 02:26:47 ca Exp  #####
 #####  Id: cf.m4,v 8.32 1999/02/07 07:26:14 gshapiro Exp  #####
 #####  Id: generic-bsd4.4.mc,v 8.10 1999/02/07 07:26:02 gshapiro Exp  #####
 
@@ -41,7 +41,7 @@
 
 
 
-#####  Id: proto.m4,v 8.649.2.17 2003/03/28 17:20:53 ca Exp  #####
+#####  Id: proto.m4,v 8.649.2.30 2004/01/11 17:54:06 ca Exp  #####
 
 # level 10 config file format
 V10/Berkeley
@@ -71,6 +71,7 @@ Fw/etc/mail/local-host-names
 # ... define this only if sendmail cannot automatically determine your domain
 #Dj$w.Foo.COM
 
+# host/domain names ending with a token in class P are canonical
 CP.
 
 # "Smart" relay host (may be null)
@@ -121,7 +122,7 @@ DnMAILER-DAEMON
 CPREDIRECT
 
 # Configuration version number
-DZ8.12.9
+DZ8.12.11
 
 
 ###############
@@ -839,7 +840,8 @@ R< $+ > $+		$@ $>MailerToTriple < $1 > $2 < @ $1 >
 SMailerToTriple=95
 R< > $*				$@ $1			strip off null relay
 R< error : $-.$-.$- : $+ > $* 	$#error $@ $1.$2.$3 $: $4
-R< error : $- $+ > $*		$#error $@ $(dequote $1 $) $: $2
+R< error : $- : $+ > $*		$#error $@ $(dequote $1 $) $: $2
+R< error : $+ > $*		$#error $: $1
 R< local : $* > $*		$>CanonLocal < $1 > $2
 R< $~[ : $+ @ $+ > $*<$*>$*	$# $1 $@ $3 $: $2<@$3>	use literal user
 R< $~[ : $+ > $*		$# $1 $@ $2 $: $3	try qualified mailer
@@ -1148,7 +1150,7 @@ R$*			$: $&{auth_type} $| $1
 R$@ $| $*		$#error $@ 5.7.1 $: "550 not authenticated"
 R$* $| $&{auth_authen}		$@ identical
 R$* $| <$&{auth_authen}>	$@ identical
-R$* $| $*		$: $1 $| $>"Local_trust_auth" $1
+R$* $| $*		$: $1 $| $>"Local_trust_auth" $2
 R$* $| $#$*		$#$2
 R$*			$#error $@ 5.7.1 $: "550 " $&{auth_authen} " not allowed to act as " $&{auth_author}
 
