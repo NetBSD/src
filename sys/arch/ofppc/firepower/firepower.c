@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.7 2003/01/01 01:57:51 thorpej Exp $	*/
+/*	$NetBSD: firepower.c,v 1.8 2003/02/03 17:09:58 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -92,19 +92,19 @@ firepower_init(void)
 	 *
 	 * XXX This is actually a lot larger than 256M.
 	 */
-	mpc6xx_iobat_add(0x80000000, BAT_BL_256M);
+	oea_iobat_add(0x80000000, BAT_BL_256M);
 
 	/*
 	 * Map VA==PA the region that includes PCI Memory.
 	 *
 	 * XXX This is actually a lot larger than 256M.
 	 */
-	mpc6xx_iobat_add(0xc0000000, BAT_BL_256M);
+	oea_iobat_add(0xc0000000, BAT_BL_256M);
 
 	/*
 	 * Map VA==PA the region that includes the System registers.
 	 */
-	mpc6xx_iobat_add(0xf0000000, BAT_BL_256M);
+	oea_iobat_add(0xf0000000, BAT_BL_256M);
 
 	firepower_intr_init();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.4 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.1 2003/02/03 17:10:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

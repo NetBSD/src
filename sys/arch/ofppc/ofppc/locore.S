@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30 2003/02/03 05:15:52 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.31 2003/02/03 17:09:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -141,7 +141,7 @@ __start:
 /*
  * Pull in common OFW code.
  */
-#include <powerpc/mpc6xx/ofw_subr.S>
+#include <powerpc/oea/ofw_subr.S>
 
 /*
  * Pull in common switch / setfault code.

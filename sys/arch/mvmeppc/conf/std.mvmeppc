@@ -1,11 +1,11 @@
-#	$NetBSD: std.mvmeppc,v 1.5 2003/02/02 20:43:20 matt Exp $
+#	$NetBSD: std.mvmeppc,v 1.6 2003/02/03 17:09:57 matt Exp $
 #
 # standard, required NetBSD/mvmeppc 'options'
 
 machine		mvmeppc powerpc
 
-options 	PPC_MPC6XX	# Support Motorola PPC60x CPUs
-makeoptions	PPCDIR="mpc6xx"	# Tell Makefile.powerpc what dir to use
+options 	PPC_OEA		# Support Motorola PPC60x CPUs
+makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts

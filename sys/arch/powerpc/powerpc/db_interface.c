@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.27 2003/02/02 20:43:24 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.28 2003/02/03 17:10:11 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -72,7 +72,7 @@ ddb_trap_glue(frame)
 #ifdef PPC_IBM4XX
 	if ((frame->srr1 & PSL_PR) == 0)
 		return kdb_trap(frame->exc, frame);
-#else /* PPC_MPC6XX */
+#else /* PPC_OEA */
 	if ((frame->srr1 & PSL_PR) == 0 &&
 	    (frame->exc == EXC_TRC || frame->exc == EXC_RUNMODETRC ||
 	     (frame->exc == EXC_PGM && (frame->srr1 & 0x20000)) ||
@@ -118,7 +118,7 @@ kdb_trap(type, v)
 	DDB_REGS->ctr = frame->ctr;
 	DDB_REGS->cr = frame->cr;
 	DDB_REGS->xer = frame->xer;
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	DDB_REGS->mq = frame->tf_xtra[TF_MQ];
 #endif
 #ifdef PPC_IBM4XX
@@ -157,7 +157,7 @@ kdb_trap(type, v)
 	frame->ctr = DDB_REGS->ctr;
 	frame->cr = DDB_REGS->cr;
 	frame->xer = DDB_REGS->xer;
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	frame->tf_xtra[TF_MQ] = DDB_REGS->mq;
 #endif
 #ifdef PPC_IBM4XX
