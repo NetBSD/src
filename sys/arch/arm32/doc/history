@@ -1,3 +1,5 @@
+#	$NetBSD: history,v 1.4 1998/01/05 20:51:37 perry Exp $
+
 3135	- fixed mode selection on boot
 	- page up/down, insert and delete now generate the correct codes in
 	  the console

@@ -5,6 +5,7 @@
 #
 #	usage: writeboot <boot_file> <boot_device(raw)>
 #
+#	$NetBSD: writefdboot,v 1.2 1998/01/05 20:52:24 perry Exp $
 
 case "$#" in
  2)	;;

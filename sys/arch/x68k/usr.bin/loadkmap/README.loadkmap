@@ -1,3 +1,5 @@
+#	$NetBSD: README.loadkmap,v 1.2 1998/01/05 20:52:27 perry Exp $
+
 loadkmap - キーマップの読み込み
 
 ITE で使用するキーマップを読み込み再設定するコマンドです.
