@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.10 2000/05/31 03:18:02 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.18 2000/05/31 03:06:07 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.10.2.1 2000/06/29 07:08:05 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.19 2000/06/29 01:17:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -664,7 +664,7 @@ exit_failure(const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	syslog(LOG_ERR, buf);
+	syslog(LOG_ERR, "%s", buf);
 	exit(EXIT_FAILURE);
 }
 
@@ -677,7 +677,7 @@ exit_success(const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	syslog(LOG_INFO, buf);
+	syslog(LOG_INFO, "%s", buf);
 	exit(EXIT_SUCCESS);
 }
 
