@@ -1,4 +1,4 @@
- 	$Id: syscalls.master,v 1.20 1994/06/08 11:28:45 mycroft Exp $
+ 	$Id: syscalls.master,v 1.21 1994/06/14 05:18:03 cgd Exp $
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
@@ -121,7 +121,7 @@
 86	STD	2 getitimer
 87	COMPAT	2 gethostname
 88	COMPAT	2 sethostname
-89	STD	0 getdtablesize
+89	COMPAT	0 getdtablesize
 90	STD	2 dup2
 91	UNIMPL	2 getdopt
 92	STD	3 fcntl
