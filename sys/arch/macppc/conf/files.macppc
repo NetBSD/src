@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.44 2001/06/24 17:38:28 wiz Exp $
+#	$NetBSD: files.macppc,v 1.45 2001/08/03 12:58:38 tsubai Exp $
 #
 # macppc-specific configuration info
 
@@ -38,8 +38,8 @@ include "compat/ossaudio/files.ossaudio"
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S        compat_linux
-file arch/powerpc/powerpc/linux_trap.c        compat_linux
+file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
+file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # RAIDframe
