@@ -20,18 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
 USA.  */
 
 /* Check for our machine type (part of magic number). */
+/* If other MID values, define MACHTYPE_OK in xxxnetbsd.c */
 #ifndef MACHTYPE_OK
 #define MACHTYPE_OK(m) ((m) == DEFAULT_MID || (m) == M_UNKNOWN)
-#endif
-
-/* Check for our machine type (part of magic number). */
-#ifndef MACHTYPE_OK
-#ifdef ADDITIONAL_MID
-#define MACHTYPE_OK(m) ((m) == DEFAULT_MID || (m) == ADDITIONAL_MID || \
-			(m) == M_UNKNOWN)
-#else
-#define MACHTYPE_OK(m) ((m) == DEFAULT_MID || (m) == M_UNKNOWN)
-#endif
 #endif
 
 /* This is the normal load address for executables. */
