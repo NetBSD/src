@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.150 2004/12/04 23:03:33 peter Exp $	*/
+/*	$NetBSD: if.c,v 1.151 2005/01/09 12:18:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.150 2004/12/04 23:03:33 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.151 2005/01/09 12:18:46 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1346,12 +1346,6 @@ ifioctl(so, cmd, data, p)
 	struct ifdatareq *ifdr;
 	int s, error = 0;
 	short oif_flags;
-	int prived_error;
-
-	if (p)
-		prived_error = suser(p->p_ucred, &p->p_acflag);
-	else
-		prived_error = 0;
 
 	switch (cmd) {
 
@@ -1366,8 +1360,11 @@ ifioctl(so, cmd, data, p)
 	switch (cmd) {
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
-		if (prived_error)
-			return (prived_error);
+		if (p) {
+			error = suser(p->p_ucred, &p->p_acflag);
+			if (error)
+				return error;
+		}
 		return ((cmd == SIOCIFCREATE) ?
 			if_clone_create(ifr->ifr_name) :
 			if_clone_destroy(ifr->ifr_name));
@@ -1379,6 +1376,35 @@ ifioctl(so, cmd, data, p)
 	ifp = ifunit(ifr->ifr_name);
 	if (ifp == 0)
 		return (ENXIO);
+
+	switch (cmd) {
+	case SIOCSIFFLAGS:
+	case SIOCSIFCAP:
+	case SIOCSIFMETRIC:
+	case SIOCZIFDATA:
+	case SIOCSIFMTU:
+	case SIOCSIFPHYADDR:
+	case SIOCDIFPHYADDR:
+#ifdef INET6
+	case SIOCSIFPHYADDR_IN6:
+#endif
+	case SIOCSLIFPHYADDR:
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+	case SIOCSIFMEDIA:
+	case SIOCSDRVSPEC:  
+	case SIOCS80211NWID:
+	case SIOCS80211NWKEY:
+	case SIOCS80211POWER:
+	case SIOCS80211BSSID:
+	case SIOCS80211CHANNEL:
+		if (p) {
+			error = suser(p->p_ucred, &p->p_acflag);
+			if (error)
+				return error;
+		}
+	}
+
 	oif_flags = ifp->if_flags;
 	switch (cmd) {
 
@@ -1399,8 +1425,6 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFFLAGS:
-		if (prived_error != 0)
-			return (prived_error);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
 			s = splnet();
 			if_down(ifp);
@@ -1423,8 +1447,6 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFCAP:
-		if (prived_error != 0)
-			return (prived_error);
 		if ((ifcr->ifcr_capenable & ~ifp->if_capabilities) != 0)
 			return (EINVAL);
 		if (ifp->if_ioctl == NULL)
@@ -1481,8 +1503,6 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFMETRIC:
-		if (prived_error != 0)
-			return (prived_error);
 		ifp->if_metric = ifr->ifr_metric;
 		break;
 
@@ -1491,8 +1511,6 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCZIFDATA:
-		if (prived_error != 0)
-			return (prived_error);
 		ifdr->ifdr_data = ifp->if_data;
 		/*
 		 * Assumes that the volatile counters that can be
@@ -1506,8 +1524,6 @@ ifioctl(so, cmd, data, p)
 	{
 		u_long oldmtu = ifp->if_mtu;
 
-		if (prived_error)
-			return (prived_error);
 		if (ifp->if_ioctl == NULL)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
@@ -1531,9 +1547,6 @@ ifioctl(so, cmd, data, p)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
-		if (prived_error != 0)
-			return (prived_error);
-		/* FALLTHROUGH */
 	case SIOCGIFPSRCADDR:
 	case SIOCGIFPDSTADDR:
 	case SIOCGLIFPHYADDR:
@@ -1549,10 +1562,6 @@ ifioctl(so, cmd, data, p)
 	case SIOCS80211POWER:
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
-		/* XXX:  need to pass proc pointer through to driver... */
-		if (prived_error != 0)
-			return (prived_error);
-	/* FALLTHROUGH */
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
