@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61.2.1 1999/07/12 19:24:42 perry Exp $	   */
+/*	$NetBSD: pmap.c,v 1.61.2.2 2000/01/31 19:22:56 he Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -624,9 +624,15 @@ if (startpmapdebug)
 			paddr_t phys;
 			struct vm_page *pg;
 
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("pmap_ptefault"); /* XXX */
+			for (;;) {
+				pg = uvm_pagealloc(NULL, 0, NULL, 0);
+				if (pg != NULL)
+					break;
+				if (pmap == pmap_kernel())
+					panic("pmap_enter: no free pages");
+				else
+					uvm_wait("pmap_enter");
+			}
 			phys = VM_PAGE_TO_PHYS(pg);
 			bzero((caddr_t)(phys|KERNBASE), NBPG);
 			pmap_kenter_pa(ptaddr, phys,
