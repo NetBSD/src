@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.1 2001/07/17 06:45:46 matt Exp $ */
+/* $NetBSD: dot_init.h,v 1.2 2003/12/22 21:05:01 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -47,20 +47,26 @@
 #define	INIT_FALLTHRU()	init_fallthru()
 #define	FINI_FALLTHRU()	fini_fallthru()
 
-#define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
-		__asm (					\
-		".section "#sect",\"ax\",@progbits	\n"\
-		"	.align	1			\n"\
-		#entry_pt":				\n"\
-		"	.word 0				\n"\
-		"	/* fall thru */			\n"\
-		".previous")
+#define	MD_SECTION_PROLOGUE(sect, entry_pt)			\
+		__asm (						\
+		"	.section "#sect",\"ax\",@progbits\n"	\
+		"	.align	1\n"				\
+		#entry_pt":\n"					\
+		"	.word 0\n"				\
+			/* fall thru */				\
+		"	.previous")
 
-#define	MD_SECTION_EPILOGUE(sect)			\
-		__asm (					\
-		".section "#sect",\"ax\",@progbits	\n"\
-		"ret					\n"\
-		".previous")
+#define	MD_SECTION_EPILOGUE(sect)				\
+		__asm (						\
+		"	.section "#sect",\"ax\",@progbits\n"	\
+		"	ret\n"					\
+		"	.previous")
+
+#define	MD_CALL_STATIC_FUNCTION(sect, func)			\
+		__asm (						\
+		"	.section "#sect",\"ax\",@progbits\n"	\
+		"	calls	$0,"#func"\n"			\
+		"	.previous");
 
 #define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, init_fallthru)
 #define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, fini_fallthru)
