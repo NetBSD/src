@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.13 1998/08/21 19:13:29 is Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.14 1998/11/19 21:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -113,6 +113,7 @@ struct	sbic_softc {
 	u_char	target;			/* Currently active target */
 	u_char  lun;
 	struct	scsipi_link sc_link;	/* proto for sub devices */
+	struct	scsipi_adapter sc_adapter;
 	sbic_regmap_t	sc_sbic;	/* the two SBIC pointers */
 	volatile void 	*sc_cregs;	/* driver specific regs */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.14 1998/10/10 00:28:32 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.15 1998/11/19 21:50:02 thorpej Exp $	*/
 
 #define USE_VMAPBUF
 
@@ -255,12 +255,6 @@ void si_dma_start __P((struct ncr5380_softc *));
 void si_dma_eop __P((struct ncr5380_softc *));
 void si_dma_stop __P((struct ncr5380_softc *));
 
-static struct scsipi_adapter	si_ops = {
-	ncr5380_scsi_cmd,		/* scsipi_cmd()		*/
-	si_minphys,			/* scsipi_minphys()	*/
-	NULL,				/* scsipi_ioctl()	*/
-};
-
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
 static struct scsipi_device si_dev = {
@@ -400,13 +394,20 @@ si_attach(parent, self, aux)
 	sc->sc_dsize = ca->ca_dsize;
 	sc->sc_dflags = 4;	/* XXX */
 	sc->sc_xflags = ca->ca_dflag;	/* should/will be renamed */
+
+	/*
+	 * Fill in the adapter.
+	 */
+	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
 	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.scsipi_scsi.adapter_target = ca->ca_idval;
-	ncr_sc->sc_link.adapter = &si_ops;
+	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
 	ncr_sc->sc_link.device = &si_dev;
 	ncr_sc->sc_link.type = BUS_SCSI;
 

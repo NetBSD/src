@@ -1,4 +1,4 @@
-/*	$NetBSD: uhavar.h,v 1.9 1998/08/15 10:51:18 mycroft Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.10 1998/11/19 21:53:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ struct uha_softc {
 	TAILQ_HEAD(, uha_mscp) sc_free_mscp;
 	int sc_nummscps;
 	struct scsipi_link sc_link;
+	struct scsipi_adapter sc_adapter;
 
 	LIST_HEAD(, scsipi_xfer) sc_queue;
 	struct scsipi_xfer *sc_queuelast;

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.6 1998/10/10 00:28:39 thorpej Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.7 1998/11/19 21:49:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -143,11 +143,6 @@ struct cfattach si_sebuf_ca = {
 };
 
 static void	se_minphys __P((struct buf *));
-static struct scsipi_adapter	se_ops = {
-	ncr5380_scsi_cmd,		/* scsipi_cmd()		*/
-	se_minphys,			/* scsipi_minphys()	*/
-	NULL,				/* scsipi_ioctl()	*/
-};
 
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
@@ -260,12 +255,18 @@ se_attach(parent, self, args)
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
 	/*
+	 * Fill in the adapter.
+	 */
+	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+	ncr_sc->sc_adapter.scsipi_minphys = se_minphys;
+
+	/*
 	 * Fill in the prototype scsi_link.
 	 */
 	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &se_ops;
+	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
 	ncr_sc->sc_link.device = &se_dev;
 	ncr_sc->sc_link.type = BUS_SCSI;
 

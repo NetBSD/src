@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.23 1998/10/10 00:28:38 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.24 1998/11/19 21:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -82,12 +82,6 @@ int asc_scsicmd __P((struct scsipi_xfer *xs));
 int asc_intr	__P((void *arg));
 void asc_minphys __P((struct buf *bp));
 
-struct scsipi_adapter asc_scsiswitch = {
-	asc_scsicmd,
-	asc_minphys,
-	NULL,		/* scsipi_ioctl */
-};
-
 struct scsipi_device asc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
@@ -167,11 +161,14 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_dmamask = 0;
 	sbic->sc_sbicp = (sbic_regmap_p) (sc->sc_podule->mod_base + ASC_SBIC);
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
-	
+
+	sbic->sc_adapter.scsipi_cmd = asc_scsicmd;
+	sbic->sc_adapter.scsipi_minphys = asc_minphys;
+
 	sbic->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sbic->sc_link.adapter_softc = sbic;
 	sbic->sc_link.scsipi_scsi.adapter_target = 7;
-	sbic->sc_link.adapter = &asc_scsiswitch;
+	sbic->sc_link.adapter = &sbic->sc_adapter;
 	sbic->sc_link.device = &asc_scsidev;
 	sbic->sc_link.openings = 1;	/* was 2 */
 	sbic->sc_link.scsipi_scsi.max_target = 7;

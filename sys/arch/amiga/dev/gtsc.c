@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.25 1998/10/10 00:28:36 thorpej Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.26 1998/11/19 21:44:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -65,12 +65,6 @@ int gtsc_dmago __P((struct sbic_softc *, char *, int, int));
 #ifdef DEBUG
 void gtsc_dump __P((void));
 #endif
-
-struct scsipi_adapter gtsc_scsiswitch = {
-	sbic_scsicmd,
-	sbic_minphys,
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device gtsc_scsidev = {
 	NULL,		/* use default error handler */
@@ -185,10 +179,13 @@ gtscattach(pdp, dp, auxp)
 	    ((gap->flags & GVP_14MHZ) ? 143 : 72);
 	printf("sc_clkfreg: %ld.%ldMhz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);
 
+	sc->sc_adapter.scsipi_cmd = sbic_scsicmd;
+	sc->sc_adapter.scsipi_minphys = sbic_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &gtsc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &gtsc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

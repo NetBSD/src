@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.9 1998/10/10 00:28:39 thorpej Exp $	*/
+/*	$NetBSD: mha.c,v 1.10 1998/11/19 21:50:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -254,12 +254,6 @@ struct cfattach mha_ca = {
 
 extern struct cfdriver mha_cd;
 
-struct scsipi_adapter mha_switch = {
-	mha_scsi_cmd,
-	mha_minphys,
-	NULL,			/* scsipi_ioctl */
-};
-
 struct scsipi_device mha_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
@@ -332,12 +326,18 @@ mhaattach(parent, self, aux)
 	sc->sc_phase  = BUSFREE_PHASE;
 
 	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = mha_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = mha_minphys;
+
+	/*
 	 * Fill in the prototype scsi_link
 	 */
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_id;
-	sc->sc_link.adapter = &mha_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &mha_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

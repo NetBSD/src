@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.12 1997/08/27 11:23:42 bouyer Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.13 1998/11/19 21:45:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -159,6 +159,7 @@
 struct	ncr_softc {
 	struct	device		sc_dev;
 	struct	scsipi_link	sc_link;
+	struct	scsipi_adapter	sc_adapter;
 
 	/*
 	 * Some (pre-SCSI2) devices don't support select with ATN.

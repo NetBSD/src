@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.7 1998/11/14 21:48:22 mhitch Exp $	*/
+/*	$NetBSD: cbsc.c,v 1.8 1998/11/19 21:44:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -68,12 +68,6 @@ int	cbscmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach cbsc_ca = {
 	sizeof(struct cbsc_softc), cbscmatch, cbscattach
-};
-
-struct scsipi_adapter cbsc_switch = {
-	ncr53c9x_scsi_cmd,
-	minphys,		/* no max at this level; handled by DMA code */
-	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device cbsc_dev = {
@@ -247,7 +241,9 @@ cbscattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	ncr53c9x_attach(sc, &cbsc_switch, &cbsc_dev);
+	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys; 
+	ncr53c9x_attach(sc, &cbsc_dev);
 }
 
 /*

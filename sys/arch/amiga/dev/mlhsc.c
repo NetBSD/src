@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.19 1998/10/10 00:28:37 thorpej Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.20 1998/11/19 21:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -55,12 +55,6 @@ int mlhsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
 int mlhsc_dma_xfer_out __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
-
-struct scsipi_adapter mlhsc_scsiswitch = {
-	sci_scsicmd,
-	sci_minphys,
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device mlhsc_scsidev = {
 	NULL,		/* use default error handler */
@@ -138,10 +132,13 @@ mlhscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
+	sc->sc_link.scsipi_cmd = sci_scsicmd;
+	sc->sc_link.scsipi_minphys = sci_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &mlhsc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &mlhsc_scsidev;
 	sc->sc_link.openings = 1;
 	sc->sc_link.scsipi_scsi.max_target = 7;

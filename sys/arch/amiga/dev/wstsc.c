@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.21 1998/10/10 00:28:37 thorpej Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.22 1998/11/19 21:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -60,12 +60,6 @@ int wstsc_dma_xfer_in2 __P((struct sci_softc *dev, int len,
 int wstsc_dma_xfer_out2 __P((struct sci_softc *dev, int len,
     register u_short *buf, int phase));
 int wstsc_intr __P((void *));
-
-struct scsipi_adapter wstsc_scsiswitch = {
-	sci_scsicmd,
-	sci_minphys,
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device wstsc_scsidev = {
 	NULL,		/* use default error handler */
@@ -163,10 +157,13 @@ wstscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
+	sc->sc_adapter.scsipi_cmd = sci_scsicmd;
+	sc->sc_adapter.scsipi_minphys = sci_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &wstsc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &wstsc_scsidev;
 	sc->sc_link.openings = 1;
 	sc->sc_link.scsipi_scsi.max_target = 7;

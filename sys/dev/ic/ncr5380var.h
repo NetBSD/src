@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.12 1998/10/26 04:42:47 scottr Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.13 1998/11/19 21:53:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -107,6 +107,7 @@ struct sci_req {
 struct ncr5380_softc {
 	struct device		sc_dev;
 	struct scsipi_link	sc_link;
+	struct scsipi_adapter	sc_adapter;
 
 #ifdef NCR5380_USE_BUS_SPACE
 	/* Pointers to bus_space */

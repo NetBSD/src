@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.8 1998/10/10 00:28:31 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.9 1998/11/19 21:47:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -135,12 +135,6 @@ void esp_dmacb_shutdown __P((void *arg));
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch_intio, espattach_intio
-};
-
-struct scsipi_adapter esp_switch = {
-	ncr53c9x_scsi_cmd,
-	minphys,		/* no max at this level; handled by DMA code */
-	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device esp_dev = {
@@ -354,7 +348,9 @@ espattach_intio(parent, self, aux)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
+	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys; 
+	ncr53c9x_attach(sc, &esp_dev);
 }
 
 /*

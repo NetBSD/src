@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.19 1998/10/10 00:28:33 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.20 1998/11/19 21:52:59 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -114,12 +114,6 @@ void aha_timeout __P((void *arg));
 int aha_create_ccbs __P((struct aha_softc *, struct aha_ccb *, int));
 void aha_enqueue __P((struct aha_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *aha_dequeue __P((struct aha_softc *));
-
-struct scsipi_adapter aha_switch = {
-	aha_scsi_cmd,		/* scsipi_cmd */
-	ahaminphys,		/* scsipi_minphys */
-	NULL,			/* scsipi_ioctl */
-};
 
 /* the below structure is so we have a default dev struct for out link struct */
 struct scsipi_device aha_dev = {
@@ -316,12 +310,18 @@ aha_attach(sc, apd)
 	LIST_INIT(&sc->sc_queue);
 
 	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = aha_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = ahaminphys;
+
+	/*
 	 * fill in the prototype scsipi_link.
 	 */
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = apd->sc_scsi_dev;
-	sc->sc_link.adapter = &aha_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

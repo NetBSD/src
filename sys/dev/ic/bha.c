@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.26 1998/10/10 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #undef BHADIAG
@@ -112,12 +112,6 @@ void bha_timeout __P((void *arg));
 int bha_create_ccbs __P((struct bha_softc *, struct bha_ccb *, int));
 void bha_enqueue __P((struct bha_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *bha_dequeue __P((struct bha_softc *));
-
-struct scsipi_adapter bha_switch = {
-	bha_scsi_cmd,		/* scsipi_ioctl */
-	bhaminphys,		/* scsipi_minphys */
-	NULL,			/* scsipi_ioctl */
-};
 
 /* the below structure is so we have a default dev struct for out link struct */
 struct scsipi_device bha_dev = {
@@ -318,12 +312,18 @@ bha_attach(sc, bpd)
 {
 
 	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = bha_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = bhaminphys;
+
+	/*
 	 * fill in the prototype scsipi_link.
 	 */
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = bpd->sc_scsi_dev;
-	sc->sc_link.adapter = &bha_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &bha_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.scsipi_scsi.max_target = bpd->sc_iswide ? 15 : 7;

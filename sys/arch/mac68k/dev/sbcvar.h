@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcvar.h,v 1.5 1998/07/04 22:18:27 jonathan Exp $	*/
+/*	$NetBSD: sbcvar.h,v 1.6 1998/11/19 21:46:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -85,7 +85,6 @@ struct sbc_softc {
 extern int	sbc_debug;
 extern int	sbc_link_flags;
 extern int	sbc_options;
-extern struct scsipi_adapter sbc_ops;
 extern struct scsipi_device sbc_dev;
 
 int	sbc_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));

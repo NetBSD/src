@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.7 1998/10/10 00:28:31 thorpej Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.8 1998/11/19 21:47:21 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -54,12 +54,6 @@ extern paddr_t kvtophys __P((vaddr_t));
 
 static int sc_disconnect = IDT_DISCON;
 
-struct scsipi_adapter cxd1185_switch = {
-	sc_scsi_cmd,
-	minphys,
-	NULL,		/* scsipi_ioctl */
-};
-
 struct scsipi_device cxd1185_dev = {
 	NULL,
 	NULL,
@@ -95,10 +89,13 @@ cxd1185_attach(parent, self, aux)
 	else
 		sc->scsi_1185AQ = 0;
 
+	sc->sc_adapter.scsipi_cmd = sc_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &cxd1185_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &cxd1185_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

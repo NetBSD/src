@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.8 1998/10/10 00:28:38 thorpej Exp $	*/
+/*	$NetBSD: cosc.c,v 1.9 1998/11/19 21:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -62,12 +62,6 @@
 void coscattach	__P((struct device *, struct device *, void *));
 int coscmatch	__P((struct device *, struct cfdata *, void *));
 int cosc_scsicmd	__P((struct scsipi_xfer *));
-
-struct scsipi_adapter cosc_scsiswitch = {
-	cosc_scsicmd,		/* Eventually call esc_scsicmd directly */
-	esc_minphys,
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device cosc_scsidev = {
 	NULL,		/* use default error handler */
@@ -255,10 +249,13 @@ coscattach(pdp, dp, auxp)
 
 	escinitialize((struct esc_softc *)sc);
 
+	sc->sc_softc.sc_adapter.scsipi_cmd = cosc_scsicmd;
+	sc->sc_softc.sc_adapter.scsipi_minphys = esc_minphys;
+
 	sc->sc_softc.sc_link.scsipi_scsi.channel	    = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_softc.sc_link.adapter_softc  = sc;
 	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
-	sc->sc_softc.sc_link.adapter	    = &cosc_scsiswitch;
+	sc->sc_softc.sc_link.adapter	    = &sc->sc_softc.sc_adapter;
 	sc->sc_softc.sc_link.device	    = &cosc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
 	sc->sc_softc.sc_link.scsipi_scsi.max_target     = 7;

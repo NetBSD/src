@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.15 1997/08/27 11:23:22 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.16 1998/11/19 21:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -131,6 +131,7 @@ struct	siop_softc {
 	u_char	sc_sstat1;
 	u_long	sc_intcode;
 	struct	scsipi_link sc_link;	/* proto for sub devices */
+	struct	scsipi_adapter sc_adapter;
 	u_long	sc_scriptspa;		/* physical address of scripts */
 	siop_regmap_p	sc_siopp;	/* the SIOP */
 	u_long	sc_active;		/* number of active I/O's */

@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.3 1998/10/10 00:28:33 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.4 1998/11/19 21:52:59 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -94,14 +94,6 @@ static void adw_watchdog __P((void *));
 
 
 /******************************************************************************/
-
-
-struct scsipi_adapter adw_switch =
-{
-	adw_scsi_cmd,		/* called to start/enqueue a SCSI command */
-	adwminphys,		/* to limit the transfer to max device can do */
-	NULL,			/* scsipi_ioctl */
-};
 
 
 /* the below structure is so we have a default dev struct for out link struct */
@@ -460,6 +452,11 @@ adw_attach(sc)
 		break;
 	}
 
+	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = adw_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = adwminphys;
 
 	/*
          * fill in the prototype scsipi_link.
@@ -467,7 +464,7 @@ adw_attach(sc)
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = sc->chip_scsi_id;
-	sc->sc_link.adapter = &adw_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &adw_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.scsipi_scsi.max_target = ADW_MAX_TID;

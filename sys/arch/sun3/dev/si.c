@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.40 1998/10/10 00:28:39 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.41 1998/11/19 21:49:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -118,12 +118,6 @@ int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
 static void	si_minphys __P((struct buf *));
 
-static struct scsipi_adapter	si_ops = {
-	ncr5380_scsi_cmd,		/* scsipi_cmd()		*/
-	si_minphys,			/* scsipi_minphys()	*/
-	NULL,				/* scsipi_ioctl()	*/
-};
-
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
 static struct scsipi_device si_dev = {
@@ -168,12 +162,18 @@ si_attach(sc)
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
 	/*
+	 * Fill in the adapter.
+	 */
+	ncr_sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+
+	/*
 	 * Fill in the prototype scsi_link.
 	 */
 	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_link.adapter = &si_ops;
+	ncr_sc->sc_link.adapter = &ncr_sc->sc_adapter;
 	ncr_sc->sc_link.device = &si_dev;
 	ncr_sc->sc_link.type = BUS_SCSI;
 

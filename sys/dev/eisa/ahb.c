@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.24 1998/10/10 00:28:28 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.25 1998/11/19 21:50:47 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -112,6 +112,7 @@ struct ahb_softc {
 	struct ahb_ecb *sc_immed_ecb;	/* an outstanding immediete command */
 	int sc_numecbs;
 	struct scsipi_link sc_link;
+	struct scsipi_adapter sc_adapter;
 
 	LIST_HEAD(, scsipi_xfer) sc_queue;
 	struct scsipi_xfer *sc_queuelast;
@@ -146,12 +147,6 @@ struct scsipi_xfer *ahb_dequeue __P((struct ahb_softc *));
 
 integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 integrate int ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
-
-struct scsipi_adapter ahb_switch = {
-	ahb_scsi_cmd,		/* scsipi_cmd */
-	ahbminphys,		/* scsipi_minphys */
-	NULL,			/* scsipi_ioctl */
-};
 
 /* the below structure is so we have a default dev struct for our link struct */
 struct scsipi_device ahb_dev = {
@@ -254,12 +249,18 @@ ahbattach(parent, self, aux)
 	}
 
 	/*
+	 * Fill in the adapter switch.
+	 */
+	sc->sc_adapter.scsipi_cmd = ahb_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = ahbminphys;
+
+	/*
 	 * fill in the prototype scsipi_link.
 	 */
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = apd.sc_scsi_dev;
-	sc->sc_link.adapter = &ahb_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &ahb_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.scsipi_scsi.max_target = 7;

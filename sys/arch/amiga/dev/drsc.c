@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.13 1998/10/10 00:28:36 thorpej Exp $	*/
+/*	$NetBSD: drsc.c,v 1.14 1998/11/19 21:44:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -59,12 +59,6 @@ int drsc_dmaintr __P((struct siop_softc *));
 void drsc_dump __P((void));
 #endif
 
-struct scsipi_adapter drsc_scsiswitch = {
-	siop_scsicmd,
-	siop_minphys,
-	NULL,		/* scsipi_ioctl */
-};
-
 struct scsipi_device drsc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
@@ -122,10 +116,13 @@ drscattach(pdp, dp, auxp)
 
 	alloc_sicallback();
 
+	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
+	sc->sc_adapter.scsipi_minphys = siop_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &drsc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &drsc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
