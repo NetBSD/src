@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.1.1.1 2004/05/20 17:18:55 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.2 2004/05/20 17:41:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -542,7 +542,7 @@ res_setoptions(res_state statp, const char *options, const char *source)
 				goto skip;
 			cp += sizeof("nibble:") - 1;
 			i = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix) - 1);
-			strncpy(ext->nsuffix, cp, i);
+			strncpy(ext->nsuffix, cp, (size_t)i);
 			ext->nsuffix[i] = '\0';
 		}
 		else if (!strncmp(cp, "nibble2:", sizeof("nibble2:") - 1)) {
@@ -550,7 +550,7 @@ res_setoptions(res_state statp, const char *options, const char *source)
 				goto skip;
 			cp += sizeof("nibble2:") - 1;
 			i = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix2) - 1);
-			strncpy(ext->nsuffix2, cp, i);
+			strncpy(ext->nsuffix2, cp, (size_t)i);
 			ext->nsuffix2[i] = '\0';
 		}
 		else if (!strncmp(cp, "v6revmode:", sizeof("v6revmode:") - 1)) {
