@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.15 2002/10/02 16:51:28 thorpej Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.16 2002/12/23 01:58:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.15 2002/10/02 16:51:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.16 2002/12/23 01:58:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ rtk_pci_attach(parent, self, aux)
 			    PCI_PRODUCT_DELTA_8139);
 
 			/* Reset the power state. */
-			printf("%s: chip is is in D%d power mode "
+			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
 			    command & RTK_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
