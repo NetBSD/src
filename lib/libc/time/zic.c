@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.9 1997/07/13 20:26:56 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.10 1997/10/17 14:26:43 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 #if 0
 static char	elsieid[] = "@(#)zic.c	7.87";
 #else
-__RCSID("$NetBSD: zic.c,v 1.9 1997/07/13 20:26:56 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.10 1997/10/17 14:26:43 lukem Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -88,6 +88,7 @@ extern int	link P((const char * fromname, const char * toname));
 extern char *	optarg;
 extern int	optind;
 
+static int	atcomp P((const void *, const void *));
 static void	addtt P((time_t starttime, int type));
 static int	addtype P((long gmtoff, const char * abbr, int isdst,
 				int ttisstd, int ttisgmt));
@@ -117,6 +118,7 @@ static int	inzsub P((char ** fields, int nfields, int iscont));
 static int	itsabbr P((const char * abbr, const char * word));
 static int	itsdir P((const char * name));
 static int	lowerit P((int c));
+int		main P((int, char **));
 static char *	memcheck P((char * tocheck));
 static int	mkdirs P((char * filename));
 static void	newabbr P((const char * abbr));
@@ -132,6 +134,7 @@ static void	rulesub P((struct rule * rp,
 static void	setboundaries P((void));
 static time_t	tadd P((time_t t1, long t2));
 static void	usage P((void));
+static void	warning P((const char * const));
 static void	writezone P((const char * name));
 static int	yearistype P((int year, const char * type));
 
@@ -1375,8 +1378,8 @@ FILE * const	fp;
 
 static int
 atcomp(avp, bvp)
-void *	avp;
-void *	bvp;
+const void *	avp;
+const void *	bvp;
 {
 	if (((struct attype *) avp)->at < ((struct attype *) bvp)->at)
 		return -1;
