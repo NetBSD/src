@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.4 2000/12/07 08:40:06 scw Exp $
+#	$NetBSD: VME177,v 1.5 2001/04/30 09:05:59 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -62,7 +62,7 @@ memc*		at pcctwo? ipl 6
 clock0		at pcctwo? ipl 5
 clmpcc0		at pcctwo? ipl 4
 ie0		at pcctwo? ipl 3
-ncrsc0		at pcctwo? ipl 2
+osiop0		at pcctwo? ipl 2
 lpt0		at pcctwo? ipl 1
 
 # VMEbus Support
@@ -73,7 +73,7 @@ vme0 		at vmetwo0
 #foo0 		at vme0 addr 0x10001000 am 0x0d irq 3 vect 0x80
 
 # SCSI Bus Support
-scsibus*	at ncrsc?
+scsibus*	at osiop?
 
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
