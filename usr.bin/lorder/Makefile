@@ -4,12 +4,9 @@ MAN1=	lorder.0
 
 all lorder:
 
-clean depend lint tags:
+clean cleandir depend lint tags:
 
-cleandir:
-	rm -f ${MAN1}
-
-install: maninstall
+install:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${.CURDIR}/lorder.sh ${DESTDIR}/${BINDIR}/lorder
 
