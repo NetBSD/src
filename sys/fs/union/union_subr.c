@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.1 2003/03/16 08:26:52 jdolecek Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.2 2003/03/17 09:11:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.1 2003/03/16 08:26:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.2 2003/03/17 09:11:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,9 @@ union_init()
 void
 union_done()
 {
-	/* Nothing */
+	
+	/* Make sure to unset the readdir hook. */
+	vn_union_readdir_hook = NULL;
 }
 
 static int
@@ -1152,4 +1154,46 @@ union_diruncache(un)
 		free(un->un_dircache, M_TEMP);
 		un->un_dircache = 0;
 	}
+}
+
+/*
+ * This hook is called from vn_readdir() to switch to lower directory
+ * entry after the upper directory is read.
+ */
+int
+union_readdirhook(struct vnode **vpp, struct file *fp, struct proc *p)
+{
+	struct vnode *vp = *vpp, *lvp;
+	struct vattr va;
+	int error;
+
+	if (vp->v_op != union_vnodeop_p)
+		return (0);
+
+	if ((lvp = union_dircache(vp, p)) == NULLVP)
+		return (0);
+
+	/*
+	 * If the directory is opaque,
+	 * then don't show lower entries
+	 */
+	error = VOP_GETATTR(vp, &va, fp->f_cred, p);
+	if (error || (va.va_flags & OPAQUE)) {
+		vput(lvp);
+		return (error);
+	}
+		
+	error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
+	if (error) {
+		vput(lvp);
+		return (error);
+	}
+	VOP_UNLOCK(lvp, 0);
+	fp->f_data = (caddr_t) lvp;
+	fp->f_offset = 0;
+	error = vn_close(vp, FREAD, fp->f_cred, p);
+	if (error)
+		return (error);
+	*vpp = lvp;
+	return (0);
 }

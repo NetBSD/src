@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.1 2003/03/16 08:26:51 jdolecek Exp $	*/
+/*	$NetBSD: union.h,v 1.2 2003/03/17 09:11:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -122,6 +122,7 @@ extern struct vnode *union_lowervp __P((struct vnode *));
 extern void union_newlower __P((struct union_node *, struct vnode *));
 extern void union_newupper __P((struct union_node *, struct vnode *));
 extern void union_newsize __P((struct vnode *, off_t, off_t));
+int union_readdirhook(struct vnode **, struct file *, struct proc *);
 
 #define	MOUNTTOUNIONMOUNT(mp) ((struct union_mount *)((mp)->mnt_data))
 #define	VTOUNION(vp) ((struct union_node *)(vp)->v_data)
