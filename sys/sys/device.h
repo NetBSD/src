@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.38 2000/06/01 00:03:10 matt Exp $	*/
+/* $NetBSD: device.h,v 1.39 2000/06/02 01:31:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,7 @@ struct cfdata {
 #define	FSTATE_FOUND	1	/* has been found */
 #define	FSTATE_STAR	2	/* duplicable */
 
-typedef int (*cfmatch_t) __P((struct device *, struct cfdata *, void *));
+typedef int (*cfmatch_t)(struct device *, struct cfdata *, void *);
 
 /*
  * `configuration' attachment and driver (what the machine-independent
@@ -131,9 +131,9 @@ typedef int (*cfmatch_t) __P((struct device *, struct cfdata *, void *));
 struct cfattach {
 	size_t	  ca_devsize;		/* size of dev data (for malloc) */
 	cfmatch_t ca_match;		/* returns a match level */
-	void	(*ca_attach) __P((struct device *, struct device *, void *));
-	int	(*ca_detach) __P((struct device *, int));
-	int	(*ca_activate) __P((struct device *, enum devact));
+	void	(*ca_attach)(struct device *, struct device *, void *);
+	int	(*ca_detach)(struct device *, int);
+	int	(*ca_activate)(struct device *, enum devact);
 };
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -153,7 +153,7 @@ struct cfdriver {
  * of the parent device.  The return value is ignored if the device was
  * configured, so most functions can return UNCONF unconditionally.
  */
-typedef int (*cfprint_t) __P((void *, const char *));
+typedef int (*cfprint_t)(void *, const char *);
 #define	QUIET	0		/* print nothing */
 #define	UNCONF	1		/* print " not configured\n" */
 #define	UNSUPP	2		/* print " not supported\n" */
@@ -162,7 +162,7 @@ typedef int (*cfprint_t) __P((void *, const char *));
  * Pseudo-device attach information (function + number of pseudo-devs).
  */
 struct pdevinit {
-	void	(*pdev_attach) __P((int));
+	void	(*pdev_attach)(int);
 	int	pdev_count;
 };
 
@@ -174,26 +174,25 @@ extern struct device *booted_device;	/* the device we booted from */
 
 extern __volatile int config_pending; 	/* semaphore for mountroot */
 
-void configure __P((void));
-struct cfdata *config_search __P((cfmatch_t, struct device *, void *));
-struct cfdata *config_rootsearch __P((cfmatch_t, char *, void *));
-struct device *config_found_sm __P((struct device *, void *, cfprint_t,
-    cfmatch_t));
-struct device *config_rootfound __P((char *, void *));
-struct device *config_attach __P((struct device *, struct cfdata *, void *,
-    cfprint_t));
-int config_detach __P((struct device *, int));
-int config_activate __P((struct device *));
-int config_deactivate __P((struct device *));
-void config_defer __P((struct device *, void (*)(struct device *)));
-void config_interrupts __P((struct device *, void (*)(struct device *)));
-void config_pending_incr __P((void));
-void config_pending_decr __P((void));
+void configure(void);
+struct cfdata *config_search(cfmatch_t, struct device *, void *);
+struct cfdata *config_rootsearch(cfmatch_t, char *, void *);
+struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
+struct device *config_rootfound(char *, void *);
+struct device *config_attach(struct device *, struct cfdata *, void *,
+    cfprint_t);
+int config_detach(struct device *, int);
+int config_activate(struct device *);
+int config_deactivate(struct device *);
+void config_defer(struct device *, void (*)(struct device *));
+void config_interrupts(struct device *, void (*)(struct device *));
+void config_pending_incr(void);
+void config_pending_decr(void);
 #ifdef __HAVE_DEVICE_REGISTER
-void device_register __P((struct device *, void *));
+void device_register(struct device *, void *);
 #endif
-void evcnt_attach __P((struct device *, const char *, struct evcnt *));
-void evcnt_detach __P((struct evcnt *));
+void evcnt_attach(struct device *, const char *, struct evcnt *);
+void evcnt_detach(struct evcnt *);
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)

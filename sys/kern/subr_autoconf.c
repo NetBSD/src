@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.50 2000/03/28 17:30:10 augustss Exp $	*/
+/* $NetBSD: subr_autoconf.c,v 1.51 2000/06/02 01:31:54 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,10 @@
  *	@(#)subr_autoconf.c	8.3 (Berkeley) 5/17/94
  */
 
+#include <sys/cdefs.h>
+
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.51 2000/06/02 01:31:54 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -76,13 +80,13 @@ struct matchinfo {
 	int	pri;
 };
 
-static char *number __P((char *, int));
-static void mapply __P((struct matchinfo *, struct cfdata *));
+static char *number(char *, int);
+static void mapply(struct matchinfo *, struct cfdata *);
 
 struct deferred_config {
 	TAILQ_ENTRY(deferred_config) dc_queue;
 	struct device *dc_dev;
-	void (*dc_func) __P((struct device *));
+	void (*dc_func)(struct device *);
 };
 
 TAILQ_HEAD(deferred_config_head, deferred_config);
@@ -90,8 +94,8 @@ TAILQ_HEAD(deferred_config_head, deferred_config);
 struct deferred_config_head deferred_config_queue;
 struct deferred_config_head interrupt_config_queue;
 
-static void config_process_deferred __P((struct deferred_config_head *,
-	struct device *));
+static void config_process_deferred(struct deferred_config_head *,
+	struct device *);
 
 struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
@@ -102,7 +106,7 @@ __volatile int config_pending;		/* semaphore for mountroot */
  * Configure the system's hardware.
  */
 void
-configure()
+configure(void)
 {
 
 	TAILQ_INIT(&deferred_config_queue);
@@ -138,9 +142,7 @@ configure()
  * a few times and we want to keep the code small.
  */
 static void
-mapply(m, cf)
-	struct matchinfo *m;
-	struct cfdata *cf;
+mapply(struct matchinfo *m, struct cfdata *cf)
 {
 	int pri;
 
@@ -171,10 +173,7 @@ mapply(m, cf)
  * can be ignored).
  */
 struct cfdata *
-config_search(fn, parent, aux)
-	cfmatch_t fn;
-	struct device *parent;
-	void *aux;
+config_search(cfmatch_t fn, struct device *parent, void *aux)
 {
 	struct cfdata *cf;
 	short *p;
@@ -204,10 +203,7 @@ config_search(fn, parent, aux)
  * This is much like config_search, but there is no parent.
  */
 struct cfdata *
-config_rootsearch(fn, rootname, aux)
-	cfmatch_t fn;
-	char *rootname;
-	void *aux;
+config_rootsearch(cfmatch_t fn, char *rootname, void *aux)
 {
 	struct cfdata *cf;
 	short *p;
@@ -242,11 +238,8 @@ static char *msgs[3] = { "", " not configured\n", " unsupported\n" };
  * not configured, call the given `print' function and return 0.
  */
 struct device *
-config_found_sm(parent, aux, print, submatch)
-	struct device *parent;
-	void *aux;
-	cfprint_t print;
-	cfmatch_t submatch;
+config_found_sm(struct device *parent, void *aux, cfprint_t print,
+    cfmatch_t submatch)
 {
 	struct cfdata *cf;
 
@@ -261,9 +254,7 @@ config_found_sm(parent, aux, print, submatch)
  * As above, but for root devices.
  */
 struct device *
-config_rootfound(rootname, aux)
-	char *rootname;
-	void *aux;
+config_rootfound(char *rootname, void *aux)
 {
 	struct cfdata *cf;
 
@@ -275,9 +266,7 @@ config_rootfound(rootname, aux)
 
 /* just like sprintf(buf, "%d") except that it works from the end */
 static char *
-number(ep, n)
-	char *ep;
-	int n;
+number(char *ep, int n)
 {
 
 	*--ep = 0;
@@ -293,11 +282,8 @@ number(ep, n)
  * Attach a found device.  Allocates memory for device variables.
  */
 struct device *
-config_attach(parent, cf, aux, print)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-	cfprint_t print;
+config_attach(struct device *parent, struct cfdata *cf, void *aux,
+	cfprint_t print)
 {
 	struct device *dev;
 	struct cfdriver *cd;
@@ -427,9 +413,7 @@ config_attach(parent, cf, aux, print)
  * open to run and unwind their stacks.
  */
 int
-config_detach(dev, flags)
-	struct device *dev;
-	int flags;
+config_detach(struct device *dev, int flags)
 {
 	struct cfdata *cf;
 	struct cfattach *ca;
@@ -550,8 +534,7 @@ config_detach(dev, flags)
 }
 
 int
-config_activate(dev)
-	struct device *dev;
+config_activate(struct device *dev)
 {
 	struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -569,8 +552,7 @@ config_activate(dev)
 }
 
 int
-config_deactivate(dev)
-	struct device *dev;
+config_deactivate(struct device *dev)
 {
 	struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -592,9 +574,7 @@ config_deactivate(dev)
  * of its parent's devices have been attached.
  */
 void
-config_defer(dev, func)
-	struct device *dev;
-	void (*func) __P((struct device *));
+config_defer(struct device *dev, void (*func)(struct device *))
 {
 	struct deferred_config *dc;
 
@@ -624,9 +604,7 @@ config_defer(dev, func)
  * are enabled.
  */
 void
-config_interrupts(dev, func)
-	struct device *dev;
-	void (*func) __P((struct device *));
+config_interrupts(struct device *dev, void (*func)(struct device *))
 {
 	struct deferred_config *dc;
 
@@ -660,9 +638,8 @@ config_interrupts(dev, func)
  * Process a deferred configuration queue.
  */
 static void
-config_process_deferred(queue, parent)
-	struct deferred_config_head *queue;
-	struct device *parent;
+config_process_deferred(struct deferred_config_head *queue,
+    struct device *parent)
 {
 	struct deferred_config *dc, *ndc;
 
@@ -681,14 +658,14 @@ config_process_deferred(queue, parent)
  * Manipulate the config_pending semaphore.
  */
 void
-config_pending_incr()
+config_pending_incr(void)
 {
 
 	config_pending++;
 }
 
 void
-config_pending_decr()
+config_pending_decr(void)
 {
 
 #ifdef DIAGNOSTIC
@@ -706,10 +683,7 @@ config_pending_decr()
  * device instance variables.
  */
 void
-evcnt_attach(dev, name, ev)
-	struct device *dev;
-	const char *name;
-	struct evcnt *ev;
+evcnt_attach(struct device *dev, const char *name, struct evcnt *ev)
 {
 
 #ifdef DIAGNOSTIC
@@ -727,8 +701,7 @@ evcnt_attach(dev, name, ev)
  * Detach an event.
  */
 void
-evcnt_detach(ev)
-	struct evcnt *ev;
+evcnt_detach(struct evcnt *ev)
 {
 
 	TAILQ_REMOVE(&allevents, ev, ev_list);
