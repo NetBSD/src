@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.432 2001/10/17 18:41:20 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.433 2001/11/03 17:08:56 tsutsui Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.432 $"
+#ident 		"GENERIC-$Revision: 1.433 $"
 
 maxusers	32		# estimated number of users
 
@@ -419,6 +419,7 @@ isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
+trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 # EISA SCSI controllers
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
@@ -477,6 +478,7 @@ scsibus* at mly?
 scsibus* at pcscp?
 scsibus* at sea?
 scsibus* at siop?
+scsibus* at trm?
 scsibus* at uha?
 scsibus* at wds?
 
