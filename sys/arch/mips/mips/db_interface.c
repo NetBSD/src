@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 1998/07/04 22:18:30 jonathan Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.6 1998/10/28 04:28:32 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -361,10 +361,10 @@ inst_call(inst)
 	InstFmt i;
 	i.word = inst;
 
-	if (i.JType.op == OP_SPECIAL)
+	if (i.JType.op == OP_SPECIAL) {
 		if (i.RType.func == OP_JR || i.RType.func == OP_JAL)
 			rv = 1;
-	else if (i.JType.op == OP_JAL)
+	} else if (i.JType.op == OP_JAL)
 		rv = 1;
 
 #ifdef DEBUG_DDB
