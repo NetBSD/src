@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.17 2001/07/05 16:45:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -65,6 +65,13 @@ pcdisplay_cursor_init(scr, existing)
 		bus_space_write_2(memt, memh, off, scr->cursortmp ^ 0x7700);
 	} else
 		scr->cursortmp = 0;
+#else
+	/*
+	 * Firmware might not have initialized the cursor shape.  Make
+	 * sure there's something we can see.
+	 */
+	pcdisplay_6845_write(scr->hdl, curstart, 0x0b);
+	pcdisplay_6845_write(scr->hdl, curend, 0x10);
 #endif
 	scr->cursoron = 1;
 }
