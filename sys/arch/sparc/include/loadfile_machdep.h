@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.3.4.1 2002/01/10 19:48:52 thorpej Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.3.4.2 2002/09/06 08:40:58 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define COUNT_KERNEL	COUNT_ALL
 
 #ifdef _STANDALONE
-#define LOADADDR(a)		(((u_long)(a) & 0x0fffffff) + offset)
+#define LOADADDR(a)		(((u_long)(a) & 0x0fffffff) + (u_long)offset)
 #define ALIGNENTRY(a)		((u_long)(a))
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
@@ -53,7 +53,7 @@
 #define FREE(a, b)		free(a, b)
 #define OKMAGIC(a)		((a) == OMAGIC)
 #else
-#define LOADADDR(a)		(((u_long)(a)) + offset)
+#define LOADADDR(a)		(((u_long)(a)) + (u_long)offset)
 #define ALIGNENTRY(a)		((u_long)(a))
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))

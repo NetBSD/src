@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.21.2.4 2002/06/23 17:50:43 jdolecek Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.21.2.5 2002/09/06 08:49:10 jdolecek Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.21.2.4 2002/06/23 17:50:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.21.2.5 2002/09/06 08:49:10 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -170,7 +170,7 @@ in_gif_output(ifp, family, m)
 	iphdr.ip_p = proto;
 	/* version will be set in ip_output() */
 	iphdr.ip_ttl = ip_gif_ttl;
-	iphdr.ip_len = m->m_pkthdr.len + sizeof(struct ip);
+	iphdr.ip_len = htons(m->m_pkthdr.len + sizeof(struct ip));
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &iphdr.ip_tos, &tos);
 	else
@@ -187,6 +187,7 @@ in_gif_output(ifp, family, m)
 	if (dst->sin_family != sin_dst->sin_family ||
 	    dst->sin_addr.s_addr != sin_dst->sin_addr.s_addr) {
 		/* cache route doesn't match */
+		bzero(dst, sizeof(*dst));
 		dst->sin_family = sin_dst->sin_family;
 		dst->sin_len = sizeof(struct sockaddr_in);
 		dst->sin_addr = sin_dst->sin_addr;

@@ -1,10 +1,11 @@
-/*	$NetBSD: autoconf.h,v 1.1.2.1 2002/03/16 16:00:20 jdolecek Exp $	*/
+/*	$NetBSD: bluetooth.c,v 1.1.4.2 2002/09/06 08:43:58 jdolecek Exp $	*/
 
 /*
- * Copyright 2001-2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Written by Eduardo Horvath and Simon Burge for Wasabi Systems, Inc.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (lennart@augustsson.net).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,16 +17,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Wasabi Systems, Inc.
- * 4. The name of Wasabi Systems, Inc. may not be used to endorse
- *    or promote products derived from this software without specific prior
- *    written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -35,14 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
 
-struct mainbus_attach_args {
-	const char *mb_name;
-	u_long mb_addr;
-	int mb_irq;
-	bus_space_tag_t mb_bt;		/* Bus space tag */
-	bus_dma_tag_t mb_dmat;		/* DMA tag */
-};
+#include <dev/bluetooth/bluetooth.h>
 
-void *mapiodev(paddr_t, psize_t);
+int
+bt_print(void *aux, const char *pnp)
+{
+	/*struct bt_attach_args *bt = aux;*/
+
+	if (pnp != NULL)
+		printf("bthci at %s", pnp);
+
+	return (UNCONF);
+}

@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.2.2.2 2002/06/23 17:43:11 jdolecek Exp $
+#	$NetBSD: files.walnut,v 1.2.2.3 2002/09/06 08:42:29 jdolecek Exp $
 #
 # walnut-specific configuration info
 
@@ -7,7 +7,7 @@ maxpartitions 16
 
 maxusers 2 8 64
 
-include "arch/powerpc/fpu/files.fpu"
+include "arch/powerpc/conf/files.ibm4xx"
 
 file	arch/walnut/walnut/autoconf.c
 file	arch/walnut/walnut/bus_dma.c
@@ -45,34 +45,20 @@ include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
-# System bus
-define	mainbus {[addr=-1], [irq=-1]}
-device	mainbus : mainbus
-attach	mainbus at root
-file	arch/walnut/walnut/mainbus.c		mainbus
-
-device	cpu
-attach	cpu at mainbus
-file	arch/powerpc/ibm4xx/cpu.c
-
-# On-chip com device(s)
-attach	com at mainbus with com_mainbus
-file	arch/powerpc/ibm4xx/dev/com_mainbus.c	com_mainbus
-
-# On-chip ethernet device(s)
-device	emac: ether, ifnet, arp, mii
-attach	emac at mainbus
-file	arch/powerpc/ibm4xx/dev/if_emac.c	emac
-
 # PCI bus support
 include	"dev/pci/files.pci"
 
 # On-chip PCI bridge
 device	pchb : pcibus
-attach	pchb at mainbus
+attach	pchb at plb
 file	arch/walnut/pci/pchb.c			pchb
 
 file	arch/walnut/pci/pci_machdep.c		pci
+
+# Off-chip peripheral bus
+device	pbus {[addr=-1], [irq=-1]}
+attach	pbus at plb
+file	arch/walnut/dev/pbus.c			pbus
 
 define	todservice {}
 
@@ -81,12 +67,12 @@ attach	todclock at todservice
 file	arch/walnut/dev/todclock.c		todclock	needs-count
 
 device	dsrtc: todservice
-attach	dsrtc at mainbus
+attach	dsrtc at pbus
 file	arch/walnut/dev/ds1743.c		dsrtc
 
 include "dev/pckbc/files.pckbc"
-attach	pckbc at mainbus with pckbc_mainbus
-file	arch/walnut/dev/pckbc_mainbus.c		pckbc_mainbus
+attach	pckbc at pbus with pckbc_pbus
+file	arch/walnut/dev/pckbc_pbus.c		pckbc_pbus
 
 #
 # Machine-independent CardBus drivers

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.76.2.3 2002/06/23 17:49:42 jdolecek Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.76.2.4 2002/09/06 08:48:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.76.2.3 2002/06/23 17:49:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.76.2.4 2002/09/06 08:48:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,7 @@ bufinit()
 {
 	struct buf *bp;
 	struct bqueues *dp;
-	int i;
-	int base, residual;
+	u_int i, base, residual;
 
 	/*
 	 * Initialize the buffer pool.  This pool is used for buffers
@@ -442,18 +441,6 @@ bawrite(bp)
 }
 
 /*
- * Ordered block write; asynchronous, but I/O will occur in order queued.
- */
-void
-bowrite(bp)
-	struct buf *bp;
-{
-
-	SET(bp->b_flags, B_ASYNC | B_ORDERED);
-	VOP_BWRITE(bp);
-}
-
-/*
  * Same as first half of bdwrite, mark buffer dirty, but do not release it.
  */
 void
@@ -581,7 +568,7 @@ brelse(bp)
 
 already_queued:
 	/* Unlock the buffer. */
-	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE|B_ORDERED);
+	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE);
 	SET(bp->b_flags, B_CACHE);
 
 	/* Allow disk interrupts. */

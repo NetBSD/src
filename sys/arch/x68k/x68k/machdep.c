@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99.2.4 2002/06/23 17:43:25 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99.2.5 2002/09/06 08:42:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,9 +222,8 @@ consinit()
 void
 cpu_startup()
 {
-	unsigned i;
 	caddr_t v;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -344,7 +343,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.

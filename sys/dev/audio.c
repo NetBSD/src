@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.137.2.6 2002/06/23 17:44:57 jdolecek Exp $	*/
+/*	$NetBSD: audio.c,v 1.137.2.7 2002/09/06 08:43:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137.2.6 2002/06/23 17:44:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137.2.7 2002/09/06 08:43:44 jdolecek Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -289,12 +289,12 @@ audioattach(struct device *parent, struct device *self, void *aux)
 
 	iclass = oclass = -1;
 	sc->sc_inports.index = -1;
-	sc->sc_inports.master = 0;
+	sc->sc_inports.master = -1;
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
 	sc->sc_inports.allports = 0;
 	sc->sc_outports.index = -1;
-	sc->sc_outports.master = 0;
+	sc->sc_outports.master = -1;
 	sc->sc_outports.nports = 0;
 	sc->sc_outports.isenum = 0;
 	sc->sc_outports.allports = 0;
@@ -1292,13 +1292,12 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 			 * The format of data in sc_rconvbuffer is
 			 * [sample_rate, hw_encoding, hw_precision, channels]
 			 */
-			used -= cc;
 			outp += cc;
 			if (outp >= cb->end)
 				outp -= cb->end - cb->start;
 			s = splaudio();
 			cb->outp = outp;
-			cb->used = used;
+			cb->used -= cc;
 			cb->copying = 0;
 			splx(s);
 

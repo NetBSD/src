@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.39.4.2 2002/03/16 15:59:47 jdolecek Exp $ */
+/*	$NetBSD: sbus.c,v 1.39.4.3 2002/09/06 08:40:51 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,29 +92,19 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <sparc/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/xboxvar.h>
 
 #include <sparc/sparc/iommuvar.h>
-#include <machine/autoconf.h>
-
 
 void sbusreset __P((int));
 
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
-			      struct sbus_intr **, int *));
-static paddr_t sbus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
-				  int, int));
-static int _sbus_bus_map __P((
-		bus_space_tag_t,
-		bus_addr_t,		/*coded slot+offset*/
-		bus_size_t,		/*size*/
-		int,			/*flags*/
-		vaddr_t,		/*preferred virtual address */
-		bus_space_handle_t *));
+			      struct openprom_intr **, int *));
 static void *sbus_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*Sbus interrupt level*/
@@ -151,7 +141,7 @@ extern struct cfdriver sbus_cd;
 struct sbus_softc *sbus_sc;
 
 /* If the PROM does not provide the `ranges' property, we make up our own */
-struct sbus_range sbus_translations[] = {
+struct openprom_range sbus_translations[] = {
 	/* Assume a maximum of 4 Sbus slots, all mapped to on-board io space */
 	{ 0, 0, PMAP_OBIO, SBUS_ADDR(0,0), 1 << 25 },
 	{ 1, 0, PMAP_OBIO, SBUS_ADDR(1,0), 1 << 25 },
@@ -204,7 +194,7 @@ sbus_print(args, busname)
 		printf("%s at %s", sa->sa_name, busname);
 	printf(" slot %d offset 0x%x", sa->sa_slot, sa->sa_offset);
 	for (i = 0; i < sa->sa_nintr; i++) {
-		u_int32_t level = sa->sa_intr[i].sbi_pri;
+		u_int32_t level = sa->sa_intr[i].oi_pri;
 		struct sbus_softc *sc =
 			(struct sbus_softc *) sa->sa_bustag->cookie;
 
@@ -332,9 +322,9 @@ sbus_attach_iommu(parent, self, aux)
 		panic("%s: no Sbus registers", self->dv_xname);
 
 	if (bus_space_map(ia->iom_bustag,
-			  BUS_ADDR(ia->iom_reg[0].ior_iospace,
-				   ia->iom_reg[0].ior_pa),
-			  (bus_size_t)ia->iom_reg[0].ior_size,
+			  BUS_ADDR(ia->iom_reg[0].oa_space,
+				   ia->iom_reg[0].oa_base),
+			  (bus_size_t)ia->iom_reg[0].oa_size,
 			  BUS_SPACE_MAP_LINEAR,
 			  &sc->sc_bh) != 0) {
 		panic("%s: can't map sbusbusreg", self->dv_xname);
@@ -416,14 +406,14 @@ sbus_attach_common(sc, busname, busnode, specials)
 	 * Collect address translations from the OBP.
 	 */
 	error = PROM_getprop(busnode, "ranges", sizeof(struct rom_range),
-			&sc->sc_nrange, (void **)&sc->sc_range);
+			&sbt->nranges, (void **) &sbt->ranges);
 	switch (error) {
 	case 0:
 		break;
 	case ENOENT:
 		/* Fall back to our own `range' construction */
-		sc->sc_range = sbus_translations;
-		sc->sc_nrange =
+		sbt->ranges = sbus_translations;
+		sbt->nranges =
 			sizeof(sbus_translations)/sizeof(sbus_translations[0]);
 		break;
 	default:
@@ -494,7 +484,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_node = node;
 	sa->sa_frequency = sc->sc_clockfreq;
 
-	error = PROM_getprop(node, "reg", sizeof(struct sbus_reg),
+	error = PROM_getprop(node, "reg", sizeof(struct openprom_addr),
 			&sa->sa_nreg, (void **)&sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
@@ -506,10 +496,10 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	}
 	for (n = 0; n < sa->sa_nreg; n++) {
 		/* Convert to relative addressing, if necessary */
-		u_int32_t base = sa->sa_reg[n].sbr_offset;
+		u_int32_t base = sa->sa_reg[n].oa_base;
 		if (SBUS_ABS(base)) {
-			sa->sa_reg[n].sbr_slot = SBUS_ABS_TO_SLOT(base);
-			sa->sa_reg[n].sbr_offset = SBUS_ABS_TO_OFFSET(base);
+			sa->sa_reg[n].oa_space = SBUS_ABS_TO_SLOT(base);
+			sa->sa_reg[n].oa_base = SBUS_ABS_TO_OFFSET(base);
 		}
 	}
 
@@ -541,63 +531,6 @@ sbus_destroy_attach_args(sa)
 		free(sa->sa_promvaddrs, M_DEVBUF);
 
 	bzero(sa, sizeof(struct sbus_attach_args));/*DEBUG*/
-}
-
-
-int
-_sbus_bus_map(t, ba, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	bus_size_t size;
-	int	flags;
-	vaddr_t va;
-	bus_space_handle_t *hp;
-{
-	struct sbus_softc *sc = t->cookie;
-	int slot = BUS_ADDR_IOSPACE(ba);
-	int i;
-
-	for (i = 0; i < sc->sc_nrange; i++) {
-		struct sbus_range *rp = &sc->sc_range[i];
-
-		if (rp->cspace != slot)
-			continue;
-
-		/* We've found the connection to the parent bus */
-		return (bus_space_map2(sc->sc_bustag,
-				BUS_ADDR(rp->pspace,
-					 rp->poffset + BUS_ADDR_PADDR(ba)),
-				size, flags, va, hp));
-	}
-
-	return (EINVAL);
-}
-
-static paddr_t
-sbus_bus_mmap(t, ba, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	off_t off;
-	int prot;
-	int flags;
-{
-	struct sbus_softc *sc = t->cookie;
-	int slot = BUS_ADDR_IOSPACE(ba);
-	int i;
-
-	for (i = 0; i < sc->sc_nrange; i++) {
-		struct sbus_range *rp = &sc->sc_range[i];
-
-		if (rp->cspace != slot)
-			continue;
-
-		return (bus_space_mmap(sc->sc_bustag,
-				BUS_ADDR(rp->pspace,
-					 rp->poffset + BUS_ADDR_PADDR(ba)),
-				off, prot, flags));
-	}
-
-	return (-1);
 }
 
 bus_addr_t
@@ -676,7 +609,7 @@ int
 sbus_get_intr(sc, node, ipp, np)
 	struct sbus_softc *sc;
 	int node;
-	struct sbus_intr **ipp;
+	struct openprom_intr **ipp;
 	int *np;
 {
 	int error, n;
@@ -685,17 +618,19 @@ sbus_get_intr(sc, node, ipp, np)
 	/*
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
-	if (PROM_getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
-		/* Change format to an `struct sbus_intr' array */
-		struct sbus_intr *ip;
-		ip = malloc(*np * sizeof(struct sbus_intr), M_DEVBUF, M_NOWAIT);
+	if (PROM_getprop(node, "interrupts", sizeof(int), np,
+			 (void **)&ipl) == 0) {
+		/* Change format to an `struct openprom_intr' array */
+		struct openprom_intr *ip;
+		ip = malloc(*np * sizeof(struct openprom_intr), M_DEVBUF,
+		    M_NOWAIT);
 		if (ip == NULL) {
 			free(ipl, M_DEVBUF);
 			return (ENOMEM);
 		}
 		for (n = 0; n < *np; n++) {
-			ip[n].sbi_pri = ipl[n];
-			ip[n].sbi_vec = 0;
+			ip[n].oi_pri = ipl[n];
+			ip[n].oi_vec = 0;
 		}
 		free(ipl, M_DEVBUF);
 		*ipp = ip;
@@ -706,13 +641,13 @@ sbus_get_intr(sc, node, ipp, np)
 	 * Fall back on `intr' property.
 	 */
 	*ipp = NULL;
-	error = PROM_getprop(node, "intr", sizeof(struct sbus_intr),
+	error = PROM_getprop(node, "intr", sizeof(struct openprom_intr),
 			np, (void **)ipp);
 	switch (error) {
 	case 0:
 		for (n = *np; n-- > 0;) {
-			(*ipp)[n].sbi_pri &= 0xf;
-			(*ipp)[n].sbi_pri |= SBUS_INTR_COMPAT;
+			(*ipp)[n].oi_pri &= 0xf;
+			(*ipp)[n].oi_pri |= SBUS_INTR_COMPAT;
 		}
 		break;
 	case ENOENT:
@@ -778,8 +713,8 @@ sbus_alloc_bustag(sc)
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
-	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_mmap = sbus_bus_mmap;
+	sbt->sparc_bus_map = sc->sc_bustag->sparc_bus_map;
+	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.48.2.7 2002/06/23 17:48:47 jdolecek Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.48.2.8 2002/09/06 08:46:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.7 2002/06/23 17:48:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.48.2.8 2002/09/06 08:46:24 jdolecek Exp $");
 
 #include "opt_scsi.h"
 
@@ -1689,7 +1689,7 @@ scsipi_request_sense(xs)
 	case EIO:
 		 /* request sense coudn't be performed */
 		/*
-		 * XXX this isn't quite rigth but we don't have anything
+		 * XXX this isn't quite right but we don't have anything
 		 * better for now
 		 */
 		xs->error = XS_DRIVER_STUFFUP;

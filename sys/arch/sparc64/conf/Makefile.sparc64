@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.37.2.3 2002/06/23 17:42:03 jdolecek Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.37.2.4 2002/09/06 08:41:22 jdolecek Exp $
 
 #=========================================================================
 #
@@ -117,6 +117,16 @@ machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
 ##
 ## (7) misc settings
 ##
+
+# define .MAIN _before_ the make() check, so that implicit target
+# would be defined
+.MAIN: all
+
+.if make(depend) || make(all) || make(dependall)
+.BEGIN:
+	@rm -f sparc && \
+		ln -s $S/arch/sparc/include sparc
+.endif
 
 ##
 ## (8) config(8) generated machinery

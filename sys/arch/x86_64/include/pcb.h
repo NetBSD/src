@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1.2.1 2002/06/23 17:43:29 jdolecek Exp $	*/
+/*	$NetBSD: pcb.h,v 1.1.2.2 2002/09/06 08:42:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,10 @@
 
 #define	NIOPORTS	1024		/* # of ports we allow to be mapped */
 
+/*
+ * Please note that the pcb_savefpu field in struct below must be
+ * on a 16-byte boundary.
+ */
 struct pcb {
 	/*
 	 * XXXfvdl
@@ -105,8 +109,8 @@ struct pcb {
 	u_int64_t pcb_rbp;
 	u_int64_t pcb_usersp;
 	u_int64_t pcb_ldt_sel;
-	int	pcb_cr0;		/* saved image of CR0 */
 	struct	savefpu pcb_savefpu;	/* floating point state */
+	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_flags;
 #define	PCB_USER_LDT	0x01		/* has user-set LDT */
 	caddr_t	pcb_onfault;		/* copyin/out fault recovery */

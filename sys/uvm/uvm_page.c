@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.65.2.4 2002/06/23 17:52:18 jdolecek Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.65.2.5 2002/09/06 08:50:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.65.2.4 2002/06/23 17:52:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.65.2.5 2002/09/06 08:50:25 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -172,6 +172,10 @@ uvm_pageinsert(pg)
 	TAILQ_INSERT_TAIL(buck, pg, hashq);
 	simple_unlock(&uvm.hashlock);
 
+	if (UVM_OBJ_IS_AOBJ(uobj)) {
+		uvmexp.anonpages++;
+	}
+
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
 	pg->flags |= PG_TABLED;
 	uobj->uo_npages++;
@@ -201,6 +205,8 @@ uvm_pageremove(pg)
 		uvmexp.execpages--;
 	} else if (UVM_OBJ_IS_VNODE(uobj)) {
 		uvmexp.filepages--;
+	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
+		uvmexp.anonpages--;
 	}
 
 	/* object should be locked */
@@ -865,6 +871,11 @@ uvm_page_recolor(int newncolors)
 
 	if (newncolors <= uvmexp.ncolors)
 		return;
+
+	if (uvm.page_init_done == FALSE) {
+		uvmexp.ncolors = newncolors;
+		return;
+	}
 
 	bucketcount = newncolors * VM_NFREELIST;
 	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket),

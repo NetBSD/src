@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17.2.3 2002/06/23 17:42:15 jdolecek Exp $ */
+/*	$NetBSD: conf.c,v 1.17.2.4 2002/09/06 08:41:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
 /* XXX KEEP THIS FILE IN SYNC WITH THE arch/sparc/sparc/conf.c VERSION */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +85,7 @@
 #define NSUNMS 0
 #endif
 #include "zstty.h"
+#include "sab.h"
 #include "pcons.h"
 #include "com.h"
 #include "bpp.h"
@@ -234,7 +236,7 @@ struct cdevsw	cdevsw[] =
 	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 74: isdn raw b-channel access */
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 75: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 76: isdn phone device */
-	cdev_notdef(),			/* 77 */
+	cdev_tty_init(NSABTTY,sab),	/* 77: sab82532 serial ports */
 	cdev_notdef(),			/* 78 */
 	cdev_notdef(),			/* 79 */
 	cdev_notdef(),			/* 80 */
@@ -283,6 +285,11 @@ struct cdevsw	cdevsw[] =
 	cdev_pci_init(NPCI,pci),	/* 123: PCI bus access device */
 	cdev_tty_init(NCLCD,cdtty),	/* 124: Cirrus-Logic CD18xx */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 125 clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 126: system call tracing */
+#else
+	cdev_notdef(),			/* 126: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

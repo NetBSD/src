@@ -3,7 +3,7 @@
  *
  * Module Name: hwregs - Read/write access functions for the various ACPI
  *                       control and status registers.
- *              $Revision: 1.2.2.3 $
+ *              $Revision: 1.2.2.4 $
  *
  ******************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.2.2.3 2002/06/23 17:45:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.2.2.4 2002/09/06 08:43:53 jdolecek Exp $");
 
 #define __HWREGS_C__
 
@@ -278,7 +278,8 @@ AcpiGetSleepTypeData (
     else if ((ACPI_GET_OBJECT_TYPE (ObjDesc->Package.Elements[0]) != ACPI_TYPE_INTEGER) ||
              (ACPI_GET_OBJECT_TYPE (ObjDesc->Package.Elements[1]) != ACPI_TYPE_INTEGER))
     {
-        ACPI_REPORT_ERROR (("Sleep State package elements are not both Integers (%s, %s)\n",
+        ACPI_REPORT_ERROR (("Sleep State package elements are not both Integers\n"));
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Sleep State package elements are not both Integers (%s, %s)\n",
             AcpiUtGetObjectTypeName (ObjDesc->Package.Elements[0]),
             AcpiUtGetObjectTypeName (ObjDesc->Package.Elements[1])));
         Status = AE_AML_OPERAND_TYPE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.51.4.3 2002/03/16 16:01:40 jdolecek Exp $	*/
+/*	$NetBSD: usb.h,v 1.51.4.4 2002/09/06 08:47:10 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ typedef u_int8_t uDWord[4];
 		     (w)[2] = (u_int8_t)((v) >> 16), \
 		     (w)[3] = (u_int8_t)((v) >> 24))
 #else
-/* 
+/*
  * On little-endian machines that can handle unanliged accesses
  * (e.g. i386) these macros can be replaced by the following.
  */
@@ -389,15 +389,18 @@ typedef struct {
 } UPACKED usb_port_status_t;
 
 /* Device class codes */
-#define UDCLASS_AUDIO		0x00
+#define UDCLASS_IN_INTERFACE	0x00
 #define UDCLASS_COMM		0x02
-#define UDCLASS_HID		0x00
 #define UDCLASS_HUB		0x09
-#define  UDSUBCLASS_HUB		0
-#define  UDPROTO_FSHUB		0
-#define  UDPROTO_HSHUBSTT	1
-#define  UDPROTO_HSHUBMTT	2
-#define UDCLASS_MASS		0x00
+#define  UDSUBCLASS_HUB		0x00
+#define  UDPROTO_FSHUB		0x00
+#define  UDPROTO_HSHUBSTT	0x01
+#define  UDPROTO_HSHUBMTT	0x02
+#define UDCLASS_DIAGNOSTIC	0xdc
+#define UDCLASS_WIRELESS	0xe0
+#define  UDSUBCLASS_RF		0x01
+#define   UDPROTO_BLUETOOTH	0x01
+#define UDCLASS_VENDOR		0xff
 
 /* Interface class codes */
 #define UICLASS_UNSPEC		0x00
@@ -422,6 +425,8 @@ typedef struct {
 #define  UIPROTO_BOOT_KEYBOARD	1
 
 #define UICLASS_PHYSICAL	0x05
+
+#define UICLASS_IMAGE		0x06
 
 #define UICLASS_PRINTER		0x07
 #define  UISUBCLASS_PRINTER	1
@@ -455,7 +460,7 @@ typedef struct {
 #define   UIPROTO_DATA_Q921M		0x50    /* Management for Q921 */
 #define   UIPROTO_DATA_Q921		0x51    /* Data for Q921 */
 #define   UIPROTO_DATA_Q921TM		0x52    /* TEI multiplexer for Q921 */
-#define   UIPROTO_DATA_V42BIS		0x90    /* Data compression */  
+#define   UIPROTO_DATA_V42BIS		0x90    /* Data compression */
 #define   UIPROTO_DATA_Q931		0x91    /* Euro-ISDN */
 #define   UIPROTO_DATA_V120		0x92    /* V.24 rate adaption */
 #define   UIPROTO_DATA_CAPI		0x93    /* CAPI 2.0 commands */
@@ -463,7 +468,17 @@ typedef struct {
 #define   UIPROTO_DATA_PUF		0xfe    /* see Prot. Unit Func. Desc.*/
 #define   UIPROTO_DATA_VENDOR		0xff    /* Vendor specific */
 
-#define UICLASS_FIRM_UPD	0x0c
+#define UICLASS_SMARTCARD	0x0b
+
+/*#define UICLASS_FIRM_UPD	0x0c*/
+
+#define UICLASS_SECURITY	0x0d
+
+#define UICLASS_DIAGNOSTIC	0xdc
+
+#define UICLASS_WIRELESS	0xe0
+#define  UISUBCLASS_RF			0x01
+#define   UIPROTO_BLUETOOTH		0x01
 
 #define UICLASS_APPL_SPEC	0xfe
 #define  UISUBCLASS_FIRMWARE_DOWNLOAD	1
@@ -475,8 +490,8 @@ typedef struct {
 
 #define USB_HUB_MAX_DEPTH 5
 
-/* 
- * Minimum time a device needs to be powered down to go through 
+/*
+ * Minimum time a device needs to be powered down to go through
  * a power cycle.  XXX Are these time in the spec?
  */
 #define USB_POWER_DOWN_TIME	200 /* ms */
@@ -633,7 +648,7 @@ struct usb_event {
 		struct {
 			usb_event_cookie_t	ue_cookie;
 			char			ue_devname[16];
-		} ue_driver;			
+		} ue_driver;
 	} u;
 };
 

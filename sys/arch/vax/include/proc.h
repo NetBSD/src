@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2 1994/10/26 08:02:21 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.2.46.1 2002/09/06 08:42:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -47,3 +47,9 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_AST		0x0001	/* async trap pending */
+
+/* kernel stack params */
+#define	KSTACK_LOWEST_ADDR(p)	\
+	((caddr_t)(p)->p_addr + (REDZONEADDR + VAX_NBPG))
+#define	KSTACK_SIZE	\
+	(USPACE - (REDZONEADDR + VAX_NBPG))

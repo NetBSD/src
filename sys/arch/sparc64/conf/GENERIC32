@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.16.2.6 2002/06/23 17:42:02 jdolecek Exp $
+# 	$NetBSD: GENERIC32,v 1.16.2.7 2002/09/06 08:41:21 jdolecek Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16.2.6 $"
+#ident 		"GENERIC-$Revision: 1.16.2.7 $"
 
 maxusers	64
 
@@ -243,8 +243,8 @@ ms0	at zstty?
 ##	Part of NS PC87332VLJ Super I/O controller: kbd/mouse (`se'; com)
 
 ## The SAB82532 controller has two serial ports
-#sab*	at ebus?				# ttya/ttyb
-#sabtty*	at sab? channel ?
+sab*	at ebus?				# ttya/ttyb
+sabtty*	at sab? channel ?
 
 ## Part of a PC87332VLJ
 com*	at ebus?				# `com' driver for `su'
@@ -268,19 +268,10 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 dma*	at sbus? slot ? offset ?		# SBus
 esp*	at dma? flags 0x0000			# SBus
 
-## FAS supported by esp driver
 esp*	at sbus? slot ? offset ?
-
-scsibus* at esp?
-
-## Qlogic ISP SBus or PCI SCSI Card
 isp*	at sbus? slot ? offset ?
-isp*	at pci?
-scsibus* at isp?
-
-## GLM support
-siop*	at pci?					# 53C875 "glm" compatible
-scsibus* at siop?
+isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+siop*	at pci? 			# 53C875 "glm" compatible
 
 # PCI SCSI controllers
 # 	UT marks untested.
@@ -520,6 +511,7 @@ autri*		at pci? dev ? function ?	# Blade 100 'sound'
 
 audio*		at audiocs?
 audio*		at autri?
+audio*		at uaudio?
 
 #midi*		at autri?
 
@@ -553,3 +545,5 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.86.2.2 2002/01/10 19:59:47 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.86.2.3 2002/09/06 08:47:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,9 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.86.2.2 2002/01/10 19:59:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.86.2.3 2002/09/06 08:47:48 jdolecek Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -92,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.86.2.2 2002/01/10 19:59:47 thorpej E
 #include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/ras.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -100,10 +102,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.86.2.2 2002/01/10 19:59:47 thorpej E
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
 #include <sys/signalvar.h>
+#include <sys/systrace.h>
 
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
 
 int	nprocs = 1;		/* process 0 */
 
@@ -251,133 +255,6 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2 = pool_get(&proc_pool, PR_WAITOK);
 
 	/*
-	 * Make a proc table entry for the new process.
-	 * Start by zeroing the section of proc that is zero-initialized,
-	 * then copy the section that is copied directly from the parent.
-	 */
-	memset(&p2->p_startzero, 0,
-	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
-	memcpy(&p2->p_startcopy, &p1->p_startcopy,
-	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
-
-#if !defined(MULTIPROCESSOR)
-	/*
-	 * In the single-processor case, all processes will always run
-	 * on the same CPU.  So, initialize the child's CPU to the parent's
-	 * now.  In the multiprocessor case, the child's CPU will be
-	 * initialized in the low-level context switch code when the
-	 * process runs.
-	 */
-	p2->p_cpu = p1->p_cpu;
-#else
-	/*
-	 * zero child's cpu pointer so we don't get trash.
-	 */
-	p2->p_cpu = NULL;
-#endif /* ! MULTIPROCESSOR */
-
-	/*
-	 * Duplicate sub-structures as needed.
-	 * Increase reference counts on shared objects.
-	 * The p_stats and p_sigacts substructs are set in uvm_fork().
-	 */
-	p2->p_flag = P_INMEM | (p1->p_flag & P_SUGID);
-	p2->p_emul = p1->p_emul;
-	p2->p_execsw = p1->p_execsw;
-
-	if (p1->p_flag & P_PROFIL)
-		startprofclock(p2);
-	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);
-	memcpy(p2->p_cred, p1->p_cred, sizeof(*p2->p_cred));
-	p2->p_cred->p_refcnt = 1;
-	crhold(p1->p_ucred);
-
-	/* bump references to the text vnode (for procfs) */
-	p2->p_textvp = p1->p_textvp;
-	if (p2->p_textvp)
-		VREF(p2->p_textvp);
-
-	if (flags & FORK_SHAREFILES)
-		fdshare(p1, p2);
-	else
-		p2->p_fd = fdcopy(p1);
-
-	if (flags & FORK_SHARECWD)
-		cwdshare(p1, p2);
-	else
-		p2->p_cwdi = cwdinit(p1);
-
-	/*
-	 * If p_limit is still copy-on-write, bump refcnt,
-	 * otherwise get a copy that won't be modified.
-	 * (If PL_SHAREMOD is clear, the structure is shared
-	 * copy-on-write.)
-	 */
-	if (p1->p_limit->p_lflags & PL_SHAREMOD)
-		p2->p_limit = limcopy(p1->p_limit);
-	else {
-		p2->p_limit = p1->p_limit;
-		p2->p_limit->p_refcnt++;
-	}
-
-	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
-		p2->p_flag |= P_CONTROLT;
-	if (flags & FORK_PPWAIT)
-		p2->p_flag |= P_PPWAIT;
-	LIST_INSERT_AFTER(p1, p2, p_pglist);
-	p2->p_pptr = p1;
-	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
-	LIST_INIT(&p2->p_children);
-
-	callout_init(&p2->p_realit_ch);
-	callout_init(&p2->p_tsleep_ch);
-
-#ifdef KTRACE
-	/*
-	 * Copy traceflag and tracefile if enabled.
-	 * If not inherited, these were zeroed above.
-	 */
-	if (p1->p_traceflag & KTRFAC_INHERIT) {
-		p2->p_traceflag = p1->p_traceflag;
-		if ((p2->p_tracep = p1->p_tracep) != NULL)
-			ktradref(p2);
-	}
-#endif
-
-#ifdef __HAVE_SYSCALL_INTERN
-	(*p2->p_emul->e_syscall_intern)(p2);
-#endif
-
-	scheduler_fork_hook(p1, p2);
-
-	/*
-	 * Create signal actions for the child process.
-	 */
-	sigactsinit(p2, p1, flags & FORK_SHARESIGS);
-
-	/*
-	 * If emulation has process fork hook, call it now.
-	 */
-	if (p2->p_emul->e_proc_fork)
-		(*p2->p_emul->e_proc_fork)(p2, p1);
-
-	/*
-	 * This begins the section where we must prevent the parent
-	 * from being swapped.
-	 */
-	PHOLD(p1);
-
-	/*
-	 * Finish creating the child process.  It will return through a
-	 * different path later.
-	 */
-	p2->p_addr = (struct user *)uaddr;
-	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE,
-	    stack, stacksize,
-	    (func != NULL) ? func : child_return,
-	    (arg != NULL) ? arg : p2);
-
-	/*
 	 * BEGIN PID ALLOCATION.
 	 */
 	s = proclist_lock_write();
@@ -437,18 +314,14 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 			goto again;
 	}
 
-	/* Record the pid we've allocated. */
-	p2->p_pid = nextpid;
-
-	/* Record the signal to be delivered to the parent on exit. */
-	p2->p_exitsig = exitsig;
-
 	/*
 	 * Put the proc on allproc before unlocking PID allocation
 	 * so that waiters won't grab it as soon as we unlock.
 	 */
 
 	p2->p_stat = SIDL;			/* protect against others */
+	p2->p_pid = nextpid;
+	p2->p_exitsig = exitsig;		/* signal for parent on exit */
 	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
 
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
@@ -459,6 +332,148 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * END PID ALLOCATION.
 	 */
 	proclist_unlock_write(s);
+
+	/*
+	 * Make a proc table entry for the new process.
+	 * Start by zeroing the section of proc that is zero-initialized,
+	 * then copy the section that is copied directly from the parent.
+	 */
+	memset(&p2->p_startzero, 0,
+	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
+	memcpy(&p2->p_startcopy, &p1->p_startcopy,
+	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
+
+#if !defined(MULTIPROCESSOR)
+	/*
+	 * In the single-processor case, all processes will always run
+	 * on the same CPU.  So, initialize the child's CPU to the parent's
+	 * now.  In the multiprocessor case, the child's CPU will be
+	 * initialized in the low-level context switch code when the
+	 * process runs.
+	 */
+	p2->p_cpu = p1->p_cpu;
+#else
+	/*
+	 * zero child's cpu pointer so we don't get trash.
+	 */
+	p2->p_cpu = NULL;
+#endif /* ! MULTIPROCESSOR */
+
+	/*
+	 * Duplicate sub-structures as needed.
+	 * Increase reference counts on shared objects.
+	 * The p_stats and p_sigacts substructs are set in uvm_fork().
+	 */
+	p2->p_flag = P_INMEM | (p1->p_flag & P_SUGID);
+	p2->p_emul = p1->p_emul;
+	p2->p_execsw = p1->p_execsw;
+
+	if (p1->p_flag & P_PROFIL)
+		startprofclock(p2);
+	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);
+	memcpy(p2->p_cred, p1->p_cred, sizeof(*p2->p_cred));
+	p2->p_cred->p_refcnt = 1;
+	crhold(p1->p_ucred);
+
+	LIST_INIT(&p2->p_raslist);
+	p2->p_nras = 0;
+	simple_lock_init(&p2->p_raslock);
+#if defined(__HAVE_RAS)
+	ras_fork(p1, p2);
+#endif
+
+	/* bump references to the text vnode (for procfs) */
+	p2->p_textvp = p1->p_textvp;
+	if (p2->p_textvp)
+		VREF(p2->p_textvp);
+
+	if (flags & FORK_SHAREFILES)
+		fdshare(p1, p2);
+	else if (flags & FORK_CLEANFILES)
+		p2->p_fd = fdinit(p1);
+	else
+		p2->p_fd = fdcopy(p1);
+
+	if (flags & FORK_SHARECWD)
+		cwdshare(p1, p2);
+	else
+		p2->p_cwdi = cwdinit(p1);
+
+	/*
+	 * If p_limit is still copy-on-write, bump refcnt,
+	 * otherwise get a copy that won't be modified.
+	 * (If PL_SHAREMOD is clear, the structure is shared
+	 * copy-on-write.)
+	 */
+	if (p1->p_limit->p_lflags & PL_SHAREMOD)
+		p2->p_limit = limcopy(p1->p_limit);
+	else {
+		p2->p_limit = p1->p_limit;
+		p2->p_limit->p_refcnt++;
+	}
+
+	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
+		p2->p_flag |= P_CONTROLT;
+	if (flags & FORK_PPWAIT)
+		p2->p_flag |= P_PPWAIT;
+	LIST_INSERT_AFTER(p1, p2, p_pglist);
+	p2->p_pptr = (flags & FORK_NOWAIT) ? initproc : p1;
+	LIST_INSERT_HEAD(&p2->p_pptr->p_children, p2, p_sibling);
+	LIST_INIT(&p2->p_children);
+
+	callout_init(&p2->p_realit_ch);
+	callout_init(&p2->p_tsleep_ch);
+
+#ifdef KTRACE
+	/*
+	 * Copy traceflag and tracefile if enabled.
+	 * If not inherited, these were zeroed above.
+	 */
+	if (p1->p_traceflag & KTRFAC_INHERIT) {
+		p2->p_traceflag = p1->p_traceflag;
+		if ((p2->p_tracep = p1->p_tracep) != NULL)
+			ktradref(p2);
+	}
+#endif
+#ifdef SYSTRACE
+	/* Tell systrace what's happening. */
+	if (ISSET(p1->p_flag, P_SYSTRACE))
+		systrace_sys_fork(p1, p2);
+#endif
+
+
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p2->p_emul->e_syscall_intern)(p2);
+#endif
+
+	scheduler_fork_hook(p1, p2);
+
+	/*
+	 * Create signal actions for the child process.
+	 */
+	sigactsinit(p2, p1, flags & FORK_SHARESIGS);
+
+	/*
+	 * If emulation has process fork hook, call it now.
+	 */
+	if (p2->p_emul->e_proc_fork)
+		(*p2->p_emul->e_proc_fork)(p2, p1);
+
+	/*
+	 * This begins the section where we must prevent the parent
+	 * from being swapped.
+	 */
+	PHOLD(p1);
+
+	/*
+	 * Finish creating the child process.  It will return through a
+	 * different path later.
+	 */
+	p2->p_addr = (struct user *)uaddr;
+	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE,
+	    stack, stacksize,
+	    (func != NULL) ? func : child_return,
+	    (arg != NULL) ? arg : p2);
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.

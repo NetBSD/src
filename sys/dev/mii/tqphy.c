@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.14.2.3 2002/06/23 17:47:28 jdolecek Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.14.2.4 2002/09/06 08:45:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,13 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.14.2.3 2002/06/23 17:47:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.14.2.4 2002/09/06 08:45:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

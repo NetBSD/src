@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.10.2.4 2002/06/23 17:44:53 jdolecek Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.10.2.5 2002/09/06 08:43:38 jdolecek Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -27,6 +27,8 @@ MKDEP?=		mkdep
 STRIP?=		strip
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
+CSCOPE?=	cscope
+MKID?=		mkid
 .MAKEOVERRIDES+=USETOOLS	# make sure proper value is propagated
 
 ##
@@ -138,7 +140,7 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${LIBCOMPAT} ${LIBKERN}
-SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ}
+SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
 SYSTEM_LD_HEAD?=	@rm -f $@
 SYSTEM_LD?=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
@@ -185,7 +187,7 @@ ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
 
 .if !target(vers.o)
 newvers: vers.o
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 .endif
@@ -200,7 +202,8 @@ uipc_proto.o vfs_conf.o: Makefile
 assym.h machdep.o: Makefile
 
 ##
-## (7) misc targets: install, clean(dir), depend(all), lint, links, tags
+## (7) misc targets: install, clean(dir), depend(all), lint, links, tags,
+##                   cscope, mkid
 ##
 ## Any ports that have other stuff to be cleaned up should fill in
 ## EXTRA_CLEAN.  Some ports may want different settings for
@@ -279,6 +282,53 @@ install-kernel-${MACHINE_NAME}:
 .if !target(tags)
 tags:
 	@echo "see $S/kern/Makefile for tags"
+.endif
+
+EXTRA_CLEAN+= cscope.out
+.if !target(cscope.out)
+cscope.out: Makefile depend
+	@echo Building cscope.out source database
+	@echo ${SRCS} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
+	lib/kern/.depend lib/compat/.depend | tr ' ' '\n' | \
+	sed "s|^../../||" | sort -u` \
+	| ${CSCOPE} -k -i - -b `echo ${INCLUDES} | sed s/-nostdinc//`
+#	cscope doesn't write cscope.out if it's uptodate, so ensure
+#	make doesn't keep calling cscope when not needed.
+	@touch cscope.out
+.endif
+
+.if !target(cscope)
+cscope: cscope.out
+	@${CSCOPE} -d
+.endif
+
+EXTRA_CLEAN+= ID
+.if !target(mkid)
+.PHONY: mkid
+mkid: ID
+
+ID: Makefile depend
+	@echo Building mkid database
+	@${MKID} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/kern/.depend \
+	lib/compat/.depend | tr ' ' '\n' | sed "s|^../../||" | sort -u` \
+	`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' .depend | tr ' ' '\n' \
+	| sort -u`
+
+.endif
+
+.include "${S}/gdbscripts/Makefile.inc"
+
+EXTRA_CLEAN+= .gdbinit
+.gdbinit: Makefile ${S}/gdbscripts/Makefile.inc
+	@echo building GDB initialization file
+	rm -f .gdbinit
+.for __gdbinit in ${SYS_GDBINIT}
+	echo "source ${S}/gdbscripts/${__gdbinit}" >> .gdbinit
+.endfor
+.if defined(GDBINIT) && !empty(GDBINIT)
+.for __gdbinit in ${GDBINIT}
+	echo "source ${__gdbinit}" >> .gdbinit
+.endfor
 .endif
 
 ##

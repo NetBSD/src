@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.133.2.4 2002/06/23 17:51:58 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.133.2.5 2002/09/06 08:50:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -45,6 +45,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
+#include "opt_kstack.h"
 #endif
 
 #if defined(_KERNEL)
@@ -88,6 +89,7 @@ struct pgrp {
  */
 struct exec_package;
 struct ps_strings;
+struct ras;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -102,7 +104,7 @@ struct emul {
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
-	void		(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
+	void		(*e_sendsig) __P((int, sigset_t *, u_long));
 	void		(*e_trapsignal) __P((struct proc *, int, u_long));
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
@@ -174,12 +176,16 @@ struct proc {
 	LIST_ENTRY(proc) p_sibling;	/* List of sibling processes */
 	LIST_HEAD(, proc) p_children;	/* Pointer to list of children */
 
+	LIST_HEAD(, ras) p_raslist;	/* Pointer to RAS queue */
+	u_int p_nras;			/* number of RASs */
+	struct simplelock p_raslock;	/* Lock for RAS queue */
+
 /*
  * The following fields are all zeroed upon creation in fork.
  */
-#define	p_startzero	p_oppid
+#define	p_startzero	p_opptr
 
-	pid_t		p_oppid;	/* Save parent pid during ptrace. XXX */
+	struct proc	*p_opptr;	/* Save parent during ptrace. */
 	int		p_dupfd;	/* Sideways return value from filedescopen. XXX */
 
 	/* Scheduling */
@@ -201,6 +207,7 @@ struct proc {
 
 	int		p_traceflag;	/* Kernel trace points */
 	struct file	*p_tracep;	/* Trace to file */
+	void		*p_systrace;	/* Back pointer to systrace */
 
 	struct vnode	*p_textvp;	/* Vnode of executable */
 
@@ -298,7 +305,8 @@ struct proc {
 #define	P_32		0x040000 /* 32-bit process (used on 64-bit kernels) */
 #define	P_BIGLOCK	0x080000 /* Process needs kernel "big lock" to run */
 #define	P_INEXEC	0x100000 /* Process is exec'ing and cannot be traced */
-
+#define	P_SYSTRACE	0x200000 /* Process system call tracing active */
+#define	P_CHTRACED	0x400000 /* Child has been traced & reparented */
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -365,6 +373,8 @@ do {									\
 #define	FORK_SHARECWD	0x04		/* Share cdir/rdir/cmask */
 #define	FORK_SHAREFILES	0x08		/* Share file descriptors */
 #define	FORK_SHARESIGS	0x10		/* Share signal actions */
+#define	FORK_NOWAIT	0x20		/* Make init the parent of the child */
+#define	FORK_CLEANFILES	0x40		/* Start with a clean descriptor set */
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
@@ -472,6 +482,24 @@ void	p_sugid(struct proc*);
 
 #if defined(MULTIPROCESSOR)
 void	proc_trampoline_mp(void);	/* XXX */
+#endif
+
+#ifdef KSTACK_CHECK_MAGIC
+void kstack_setup_magic(const struct proc *);
+void kstack_check_magic(const struct proc *);
+#endif
+
+/*
+ * kernel stack paramaters
+ * XXX require sizeof(struct user)
+ */
+/* the lowest address of kernel stack */
+#ifndef KSTACK_LOWEST_ADDR
+#define	KSTACK_LOWEST_ADDR(p)	((caddr_t)ALIGN((p)->p_addr + 1))
+#endif
+/* size of kernel stack */
+#ifndef KSTACK_SIZE
+#define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif
 
 #endif	/* _KERNEL */

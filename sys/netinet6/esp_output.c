@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.10.6.2 2002/06/23 17:51:07 jdolecek Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.10.6.3 2002/09/06 08:49:27 jdolecek Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.10.6.2 2002/06/23 17:51:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.10.6.3 2002/09/06 08:49:27 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -123,7 +123,8 @@ esp_hdrsiz(isr)
 	 */
 	if (sav->flags & SADB_X_EXT_OLD) {
 		/* RFC 1827 */
-		hdrsiz = sizeof(struct esp) + ivlen + 9;
+		hdrsiz = sizeof(struct esp) + ivlen +
+		    esp_max_padbound() - 1 + 2;
 	} else {
 		/* RFC 2406 */
 		aalgo = ah_algorithm_lookup(sav->alg_auth);
@@ -131,7 +132,8 @@ esp_hdrsiz(isr)
 			authlen = (aalgo->sumsiz)(sav);
 		else
 			authlen = 0;
-		hdrsiz = sizeof(struct newesp) + ivlen + 9 + authlen;
+		hdrsiz = sizeof(struct newesp) + ivlen +
+		    esp_max_padbound() - 1 + 2 + authlen;
 	}
 
 	return hdrsiz;
@@ -141,11 +143,13 @@ esp_hdrsiz(isr)
 	 * ASSUMING:
 	 *	sizeof(struct newesp) > sizeof(struct esp).
 	 *	esp_max_ivlen() = max ivlen for CBC mode
-	 *	9 = (maximum padding length without random padding length)
-	 *	   + (Pad Length field) + (Next Header field).
-	 *	16 = maximum ICV we support.
+	 *	esp_max_padbound - 1 =
+	 *	   maximum padding length without random padding length
+	 *	2 = (Pad Length field) + (Next Header field).
+	 *	AH_MAXSUMSIZE = maximum ICV we support.
 	 */
-	return sizeof(struct newesp) + esp_max_ivlen() + 9 + 16;
+	return sizeof(struct newesp) + esp_max_ivlen() +
+	    esp_max_padbound() - 1 + 2 + AH_MAXSUMSIZE;
 }
 
 /*

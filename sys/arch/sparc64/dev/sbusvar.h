@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.7.16.1 2002/06/23 17:42:09 jdolecek Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.7.16.2 2002/09/06 08:41:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct sbus_softc {
 	bus_dma_tag_t		sc_dmatag;
 	int			sc_clockfreq;	/* clock frequency (in Hz) */
 	struct sbusdev		*sc_sbdev;	/* list of all children */
-	struct sbus_range	*sc_range;
+	struct openprom_range	*sc_range;
 	int			sc_nrange;
 	int			sc_burst;	/* burst transfer sizes supported */
 	int			*sc_intr2ipl;	/* Interrupt level translation */
@@ -121,6 +121,8 @@ struct sbus_softc {
 	struct sysioreg		*sc_sysio;	/* SBUS control registers */
 	int			sc_ign;		/* Interrupt group number for this sysio */
 	struct iommu_state	sc_is;		/* IOMMU state, see iommureg.h */
+	struct strbuf_ctl	sc_sb;		/* Streaming buffer control */
+	int64_t			sc_flush;	/* Streaming buffer flush */
 };
 
 #endif /* _SBUS_VAR_SPARC64_H_ */

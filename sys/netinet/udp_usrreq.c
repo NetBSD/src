@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.80.2.3 2002/06/23 17:51:04 jdolecek Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.80.2.4 2002/09/06 08:49:23 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.80.2.3 2002/06/23 17:51:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.80.2.4 2002/09/06 08:49:23 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -216,6 +216,7 @@ udp_input(m, va_alist)
 	int iphlen, proto;
 	int len;
 	int n;
+	u_int16_t ip_len;
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
@@ -262,6 +263,7 @@ udp_input(m, va_alist)
 		return;
 	}
 #endif
+	KASSERT(UDP_HDR_ALIGNED_P(uh));
 
 	/* destination port of 0 is illegal, based on RFC768. */
 	if (uh->uh_dport == 0)
@@ -271,13 +273,14 @@ udp_input(m, va_alist)
 	 * Make mbuf data length reflect UDP length.
 	 * If not enough data to reflect UDP length, drop.
 	 */
+	ip_len = ntohs(ip->ip_len);
 	len = ntohs((u_int16_t)uh->uh_ulen);
-	if (ip->ip_len != iphlen + len) {
-		if (ip->ip_len < iphlen + len || len < sizeof(struct udphdr)) {
+	if (ip_len != iphlen + len) {
+		if (ip_len < iphlen + len || len < sizeof(struct udphdr)) {
 			udpstat.udps_badlen++;
 			goto bad;
 		}
-		m_adj(m, iphlen + len - ip->ip_len);
+		m_adj(m, iphlen + len - ip_len);
 	}
 
 	/*
@@ -418,6 +421,7 @@ udp6_input(mp, offp, proto)
 		return IPPROTO_DONE;
 	}
 #endif
+	KASSERT(UDP_HDR_ALIGNED_P(uh));
 	ulen = ntohs((u_short)uh->uh_ulen);
 	/*
 	 * RFC2675 section 4: jumbograms will have 0 in the UDP header field,
@@ -890,7 +894,7 @@ udp_output(m, va_alist)
 	 * Compute the packet length of the IP header, and
 	 * punt if the length looks bogus.
 	 */
-	if ((len + sizeof(struct udpiphdr)) > IP_MAXPACKET) {
+	if (len + sizeof(struct udpiphdr) > IP_MAXPACKET) {
 		error = EMSGSIZE;
 		goto release;
 	}
@@ -922,7 +926,7 @@ udp_output(m, va_alist)
 		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 	} else
 		ui->ui_sum = 0;
-	((struct ip *)ui)->ip_len = sizeof (struct udpiphdr) + len;
+	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
 	udpstat.udps_opackets++;

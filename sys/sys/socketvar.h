@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.49.2.3 2002/06/23 17:52:00 jdolecek Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.49.2.4 2002/09/06 08:50:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -93,6 +93,9 @@ struct socket {
 		u_long	sb_mbmax;	/* max chars of mbufs to use */
 		long	sb_lowat;	/* low water mark */
 		struct mbuf *sb_mb;	/* the mbuf chain */
+		struct mbuf *sb_mbtail;	/* the last mbuf in the chain */
+		struct mbuf *sb_lastrecord;/* first mbuf of last record in
+					      socket buffer */
 		struct selinfo sb_sel;	/* process selecting read/write */
 		short	sb_flags;	/* flags, see below */
 		short	sb_timeo;	/* timeout for read/write */
@@ -126,6 +129,14 @@ struct socket {
 	uid_t		so_uid;		/* who opened the socket */
 	struct mbuf	*so_pendfree;	/* loaned-page mbufs w/ frees pending */
 };
+
+#define	SB_EMPTY_FIXUP(sb)						\
+do {									\
+	if ((sb)->sb_mb == NULL) {					\
+		(sb)->sb_mbtail = NULL;					\
+		(sb)->sb_lastrecord = NULL;				\
+	}								\
+} while (/*CONSTCOND*/0)
 
 /*
  * Socket state bits.
@@ -270,6 +281,7 @@ int	uipc_usrreq(struct socket *, int , struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct proc *);
 int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void	sbappend(struct sockbuf *sb, struct mbuf *m);
+void	sbappendstream(struct sockbuf *sb, struct mbuf *m);
 int	sbappendaddr(struct sockbuf *sb, struct sockaddr *asa,
 	    struct mbuf *m0, struct mbuf *control);
 int	sbappendcontrol(struct sockbuf *sb, struct mbuf *m0,
@@ -323,6 +335,17 @@ int	sockargs(struct mbuf **, const void *, size_t, int);
 
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
 int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *);
+
+#ifdef SOCKBUF_DEBUG
+void	sblastrecordchk(struct sockbuf *, const char *);
+#define	SBLASTRECORDCHK(sb, where)	sblastrecordchk((sb), (where))
+
+void	sblastmbufchk(struct sockbuf *, const char *);
+#define	SBLASTMBUFCHK(sb, where)	sblastmbufchk((sb), (where))
+#else
+#define	SBLASTRECORDCHK(sb, where)	/* nothing */
+#define	SBLASTMBUFCHK(sb, where)	/* nothing */
+#endif /* SOCKBUF_DEBUG */
 
 #endif /* _KERNEL */
 

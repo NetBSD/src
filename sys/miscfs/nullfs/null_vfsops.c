@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.30.2.2 2002/01/10 20:01:38 thorpej Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.30.2.3 2002/09/06 08:48:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.30.2.2 2002/01/10 20:01:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.30.2.3 2002/09/06 08:48:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	    M_UFSMNT, M_WAITOK);		/* XXX */
 	memset((caddr_t)nmp, 0, sizeof(struct null_mount));
 
-	mp->mnt_data = (qaddr_t) nmp;
+	mp->mnt_data = nmp;
 	nmp->nullm_vfs = lowerrootvp->v_mount;
 	if (nmp->nullm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;

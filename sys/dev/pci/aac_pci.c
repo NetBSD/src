@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.2.8.2 2002/06/23 17:47:32 jdolecek Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.2.8.3 2002/09/06 08:45:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.2.8.2 2002/06/23 17:47:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.2.8.3 2002/09/06 08:45:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,33 @@ struct aac_ident {
 		PCI_PRODUCT_DELL_PERC_3DI_2,
 		PCI_VENDOR_DELL,
 		PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
+		AAC_HWIF_I960RX,
+		0,
+		"Dell PERC 3/Di"
+	},
+        {
+		PCI_VENDOR_DELL,
+		PCI_PRODUCT_DELL_PERC_3DI_3,
+		PCI_VENDOR_DELL,
+		PCI_PRODUCT_DELL_PERC_3DI_3_SUB,
+		AAC_HWIF_I960RX,
+		0,
+		"Dell PERC 3/Di"
+	},
+	{
+		PCI_VENDOR_DELL,
+		PCI_PRODUCT_DELL_PERC_3DI_3,
+		PCI_VENDOR_DELL,
+		PCI_PRODUCT_DELL_PERC_3DI_3_SUB2,
+		AAC_HWIF_I960RX,
+		0,
+		"Dell PERC 3/Di"
+	},
+	{
+		PCI_VENDOR_DELL,
+		PCI_PRODUCT_DELL_PERC_3DI_3,
+		PCI_VENDOR_DELL,
+		PCI_PRODUCT_DELL_PERC_3DI_3_SUB3,
 		AAC_HWIF_I960RX,
 		0,
 		"Dell PERC 3/Di"

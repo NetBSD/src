@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.151.2.5 2002/06/23 17:48:43 jdolecek Exp $	*/
+/*	$NetBSD: cd.c,v 1.151.2.6 2002/09/06 08:46:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.151.2.5 2002/06/23 17:48:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.151.2.6 2002/09/06 08:46:20 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -162,7 +162,7 @@ cdattach(parent, cd, periph, ops)
 {
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
 
-	BUFQ_INIT(&cd->buf_queue);
+	bufq_alloc(&cd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -242,13 +242,14 @@ cddetach(self, flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	while ((bp = BUFQ_FIRST(&cd->buf_queue)) != NULL) {
-		BUFQ_REMOVE(&cd->buf_queue, bp);
+	while ((bp = BUFQ_GET(&cd->buf_queue)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
+
+	bufq_free(&cd->buf_queue);
 
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(cd->sc_periph);
@@ -670,7 +671,7 @@ cdstrategy(bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	disksort_blkno(&cd->buf_queue, bp);
+	BUFQ_PUT(&cd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -739,9 +740,8 @@ cdstart(periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_FIRST(&cd->buf_queue)) == NULL)
+		if ((bp = BUFQ_GET(&cd->buf_queue)) == NULL)
 			return;
-		BUFQ_REMOVE(&cd->buf_queue, bp);
 
 		/*
 		 * If the device has become invalid, abort all the
@@ -802,15 +802,11 @@ cdstart(periph)
 		/*
 		 * Figure out what flags to use.
 		 */
-		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC;
+		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_SIMPLE_TAG;
 		if (bp->b_flags & B_READ)
 			flags |= XS_CTL_DATA_IN;
 		else
 			flags |= XS_CTL_DATA_OUT;
-		if (bp->b_flags & B_ORDERED)
-			flags |= XS_CTL_ORDERED_TAG;
-		else
-			flags |= XS_CTL_SIMPLE_TAG;
 
 		/*
 		 * Call the routine that chats with the adapter.
@@ -907,7 +903,7 @@ cdbounce(bp)
 			 * XXX Only do disksort() if the current operating mode
 			 * XXX does not include tagged queueing.
 			 */
-			disksort_blkno(&cd->buf_queue, nbp);
+			BUFQ_PUT(&cd->buf_queue, nbp);
 
 			/*
 			 * Tell the device to get going on the transfer if it's

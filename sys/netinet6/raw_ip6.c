@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.33.2.3 2002/06/23 17:51:23 jdolecek Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.33.2.4 2002/09/06 08:49:39 jdolecek Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.33.2.3 2002/06/23 17:51:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.33.2.4 2002/09/06 08:49:39 jdolecek Exp $");
 
 #include "opt_ipsec.h"
 
@@ -601,7 +601,6 @@ rip6_usrreq(so, req, m, nam, control, p)
 	struct in6pcb *in6p = sotoin6pcb(so);
 	int s;
 	int error = 0;
-/*	extern	struct socket *ip6_mrouter; */ /* xxx */
 	int priv;
 
 	priv = 0;

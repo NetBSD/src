@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.33.2.4 2002/06/23 17:46:40 jdolecek Exp $ */
+/* $NetBSD: ispmbox.h,v 1.33.2.5 2002/09/06 08:44:25 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -679,6 +679,7 @@ typedef struct isp_icb {
 #define	ICBXOPT_RIO_32BIT	2
 #define	ICBXOPT_RIO_16BIT_IOCB	3
 #define	ICBXOPT_RIO_32BIT_IOCB	4
+#define	ICBXOPT_ZIO		5
 
 #define	ICBZOPT_ENA_RDXFR_RDY	0x01
 #define	ICBZOPT_ENA_OOF		(1 << 6) /* out of order frame handling */
@@ -834,6 +835,7 @@ typedef struct {
 
 #define	FC4_IP		5 /* ISO/EEC 8802-2 LLC/SNAP "Out of Order Delivery" */
 #define	FC4_SCSI	8 /* SCSI-3 via Fivre Channel Protocol (FCP) */
+#define	FC4_FC_SVC	0x20	/* Fibre Channel Services */
 
 #define	SNS_GA_NXT	0x100
 #define	SNS_GPN_ID	0x112

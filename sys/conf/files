@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.451.2.8 2002/06/23 17:44:53 jdolecek Exp $
+#	$NetBSD: files,v 1.451.2.9 2002/09/06 08:43:39 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -8,6 +8,7 @@
 defflag				INSECURE
 defflag				KMEMSTATS
 defflag				KTRACE
+defflag				SYSTRACE
 defparam			MAXUPRC
 defparam			RTC_OFFSET
 defparam			DEFCORENAME
@@ -15,7 +16,7 @@ defflag				UCONSOLE
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
-defflag				SOSEND_LOAN
+defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
 
 defflag				MULTIPROCESSOR
 
@@ -138,12 +139,17 @@ defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME
 				KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
 defflag				LOCKDEBUG
 defflag				SYSCALL_DEBUG
+defflag	opt_kstack.h		KSTACK_CHECK_MAGIC
 
 # memory (ram) disk options
 #
 defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
+
+# Support for hardware performance monitoring counters
+#
+defflag	opt_perfctrs.h		PERFCTRS
 
 # device classes
 #
@@ -162,6 +168,7 @@ define	scsi		{[channel = -1]}
 define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
 define	irbus		{ }
+define	btbus		{ }
 define	radiodev	{ }
 
 # audio device attributes
@@ -187,6 +194,11 @@ attach	irframe at irbus
 # Consumer Ir driver
 device	cir
 attach	cir at irbus
+
+# Bluetooth host controller driver
+define	bthcidrv
+device	bthci { } : bthcidrv
+attach	bthci at btbus
 
 # raster operations attributes
 #
@@ -253,6 +265,11 @@ include "dev/mii/files.mii"
 # RAIDframe
 #
 include "dev/raidframe/files.raidframe"
+
+#
+# Hardware-assisted data mover API
+#
+include "dev/dmover/files.dmover"
 
 #
 # "Chipset" drivers.  These are the bus-independent routines which
@@ -408,8 +425,10 @@ file	dev/ic/am79c930.c		awi
 
 # Lucent & Intersil WaveLan IEEE (802.11)
 #
-device wi: arp, wlan, ifnet
+#device wi: arp, wlan, ifnet
+device wi: arp, ifnet
 file	dev/ic/wi.c			wi
+file	dev/ic/wi_hostap.c		wi
 
 # 3Com Etherlink-III Ethernet controller
 #
@@ -763,6 +782,8 @@ file	dev/ic/pcdisplay_subr.c	pcdisplayops
 file	dev/ic/pcdisplay_chars.c	pcdisplayops
 # VGA graphics
 #
+defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
+defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
 device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c			vga			needs-flag
 file	dev/ic/vga_subr.c		vga
@@ -805,6 +826,11 @@ file	dev/usb/ohci.c			ohci			needs-flag
 #
 device	ehci: usbus
 file	dev/usb/ehci.c			ehci			needs-flag
+
+# SL811HS/T USB controller
+defflag	opt_slhci.h	SLHCI_DEBUG	
+device	slhci: usbus
+file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # radio devices, attaches to radio hardware driver
 device	radio
@@ -919,6 +945,10 @@ defpseudo isdn:		isdndev, tty
 defpseudo irip:		isdndev, ifnet
 defpseudo ippp:		isdndev, sppp, ifnet
 
+# KTTCP network throughput testing pseudo-device
+defpseudo kttcp
+file	dev/kttcp.c			kttcp		needs-flag
+
 #
 # File systems
 #
@@ -974,6 +1004,8 @@ file	ddb/db_write_cmd.c		ddb
 file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio | midi | midibus	needs-flag
+file	dev/bluetooth/bluetooth.c	bthcidrv
+file	dev/bluetooth/bthci.c		bthcidrv		needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/clockctl.c			clockctl		needs-flag
 file	dev/i2c/i2c_bus.c		i2c
@@ -1018,6 +1050,7 @@ file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
+file	kern/kern_systrace.c		systrace
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_malloc.c
@@ -1026,6 +1059,7 @@ file	kern/kern_ntptime.c
 file	kern/kern_physio.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
+file	kern/kern_ras.c
 file	kern/kern_resource.c
 file	kern/kern_sig.c
 file	kern/kern_subr.c
@@ -1047,6 +1081,7 @@ file	kern/subr_userconf.c		userconf
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
 file	kern/sys_pipe.c			!pipe_socketpair
+file	kern/sys_pmc.c
 file	kern/sys_process.c
 file	kern/sys_socket.c
 file	kern/syscalls.c			syscall_debug
@@ -1155,7 +1190,6 @@ file	netccitt/pk_timer.c		ccitt
 file	netccitt/pk_usrreq.c		ccitt
 file	netinet/fil.c			ipfilter
 file	netinet/if_arp.c		arp | netatalk		needs-flag
-file	netinet/if_ieee1394arp.c	arp & ieee1394 & inet
 file	netinet/if_atm.c		atm
 file	netinet/igmp.c			inet
 file	netinet/in.c			inet

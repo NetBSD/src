@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.16.2.2 2002/01/10 20:02:14 thorpej Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.16.2.3 2002/09/06 08:48:59 jdolecek Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.16.2.2 2002/01/10 20:02:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.16.2.3 2002/09/06 08:48:59 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -366,13 +366,16 @@ stf_output(ifp, m, dst, rt)
 	ia6 = stf_getsrcifa6(ifp);
 	if (ia6 == NULL) {
 		m_freem(m);
+		ifp->if_oerrors++;
 		return ENETDOWN;
 	}
 
 	if (m->m_len < sizeof(*ip6)) {
 		m = m_pullup(m, sizeof(*ip6));
-		if (!m)
+		if (m == NULL) {
+			ifp->if_oerrors++;
 			return ENOBUFS;
+		}
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
 	tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
@@ -387,6 +390,7 @@ stf_output(ifp, m, dst, rt)
 		in4 = GET_V4(&dst6->sin6_addr);
 	else {
 		m_freem(m);
+		ifp->if_oerrors++;
 		return ENETUNREACH;
 	}
 
@@ -417,8 +421,10 @@ stf_output(ifp, m, dst, rt)
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	if (m && m->m_len < sizeof(struct ip))
 		m = m_pullup(m, sizeof(struct ip));
-	if (m == NULL)
+	if (m == NULL) {
+		ifp->if_oerrors++;
 		return ENOBUFS;
+	}
 	ip = mtod(m, struct ip *);
 
 	memset(ip, 0, sizeof(*ip));
@@ -428,7 +434,7 @@ stf_output(ifp, m, dst, rt)
 	bcopy(in4, &ip->ip_dst, sizeof(ip->ip_dst));
 	ip->ip_p = IPPROTO_IPV6;
 	ip->ip_ttl = ip_gif_ttl;	/*XXX*/
-	ip->ip_len = m->m_pkthdr.len;	/*host order*/
+	ip->ip_len = htons(m->m_pkthdr.len);
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &ip->ip_tos, &tos);
 	else
@@ -451,10 +457,12 @@ stf_output(ifp, m, dst, rt)
 		rtalloc(&sc->sc_ro);
 		if (sc->sc_ro.ro_rt == NULL) {
 			m_freem(m);
+			ifp->if_oerrors++;
 			return ENETUNREACH;
 		}
 	}
 
+	ifp->if_opackets++;
 	return ip_output(m, NULL, &sc->sc_ro, 0, NULL);
 }
 
@@ -476,6 +484,15 @@ stf_checkaddr4(sc, in, inifp)
 	case 0: case 127: case 255:
 		return -1;
 	}
+
+	/*
+	 * reject packets with private address range:
+	 * 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+	 */
+	if ((ntohl(in->s_addr) & 0xff000000) >> 24 == 10 ||
+	    (ntohl(in->s_addr) & 0xfff00000) >> 16 == 172 * 256 + 16 ||
+	    (ntohl(in->s_addr) & 0xffff0000) >> 16 == 192 * 256 + 168)
+		return -1;
 
 	/*
 	 * reject packets with broadcast

@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.23.2.4 2002/06/23 17:47:23 jdolecek Exp $	*/
+/*	$NetBSD: inphy.c,v 1.23.2.5 2002/09/06 08:45:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,13 +72,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.23.2.4 2002/06/23 17:47:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.23.2.5 2002/09/06 08:45:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

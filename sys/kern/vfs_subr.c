@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.155.2.8 2002/06/23 17:49:42 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.155.2.9 2002/09/06 08:48:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.155.2.8 2002/06/23 17:49:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.155.2.9 2002/09/06 08:48:20 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2150,7 +2150,8 @@ vfs_hang_addrlist(mp, nep, argp)
 		if (enp->netc_exflags != argp->ex_flags ||
 		    enp->netc_anon.cr_uid != argp->ex_anon.cr_uid ||
 		    enp->netc_anon.cr_gid != argp->ex_anon.cr_gid ||
-		    enp->netc_anon.cr_ngroups != argp->ex_anon.cr_ngroups ||
+		    enp->netc_anon.cr_ngroups !=
+		    			(uint32_t) argp->ex_anon.cr_ngroups ||
 		    memcmp(&enp->netc_anon.cr_groups, &argp->ex_anon.cr_groups,
 			enp->netc_anon.cr_ngroups))
 				error = EPERM;

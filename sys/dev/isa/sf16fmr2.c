@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.4.4.2 2002/01/10 19:55:44 thorpej Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.4.4.3 2002/09/06 08:44:52 jdolecek Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -168,6 +168,7 @@ sf2r_attach(struct device *parent, struct device *self, void *aux)
 	struct isa_attach_args *ia = aux;
 
 	sc->tea.iot = ia->ia_iot;
+	sc->tea.flags = 0;
 	sc->mute = 0;
 	sc->vol = 0;
 	sc->freq = MIN_FM_FREQ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.65.2.3 2002/06/23 17:52:02 jdolecek Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.65.2.4 2002/09/06 08:50:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -180,7 +180,11 @@ struct ctlname {
 #define	KERN_SBMAX		58	/* int: max socket buffer size */
 #define	KERN_TKSTAT		59	/* tty in/out counters */
 #define	KERN_MONOTONIC_CLOCK	60	/* int: POSIX monotonic clock */
-#define	KERN_MAXID		61	/* number of valid kern ids */
+#define	KERN_URND		61	/* int: random integer from urandom */
+#ifndef _KERNEL
+#define	KERN_ARND		KERN_URND	/* compat w/ openbsd */
+#endif
+#define	KERN_MAXID		62	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -244,6 +248,7 @@ struct ctlname {
 	{ "sbmax", CTLTYPE_INT }, \
 	{ "tkstat", CTLTYPE_NODE }, \
 	{ "monotonic_clock", CTLTYPE_INT }, \
+	{ "urandom", CTLTYPE_INT }, \
 }
 
 /*
@@ -682,11 +687,11 @@ int sysctl_int(void *, size_t *, void *, size_t, int *);
 int sysctl_rdint(void *, size_t *, void *, int);
 int sysctl_quad(void *, size_t *, void *, size_t, quad_t *);
 int sysctl_rdquad(void *, size_t *, void *, quad_t);
-int sysctl_string(void *, size_t *, void *, size_t, char *, int);
+int sysctl_string(void *, size_t *, void *, size_t, char *, size_t);
 int sysctl_rdstring(void *, size_t *, void *, const char *);
-int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
-int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
-int sysctl_rdminstruct(void *, size_t *, void *, const void *, int);
+int sysctl_struct(void *, size_t *, void *, size_t, void *, size_t);
+int sysctl_rdstruct(void *, size_t *, void *, const void *, size_t);
+int sysctl_rdminstruct(void *, size_t *, void *, const void *, size_t);
 int sysctl_clockrate(void *, size_t *);
 int sysctl_disknames(void *, size_t *);
 int sysctl_diskstats(int *, u_int, void *, size_t *);

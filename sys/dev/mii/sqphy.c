@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.23.2.3 2002/06/23 17:47:27 jdolecek Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.23.2.4 2002/09/06 08:45:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,13 +72,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.23.2.3 2002/06/23 17:47:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.23.2.4 2002/09/06 08:45:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 
@@ -101,9 +100,14 @@ struct cfattach sqphy_ca = {
 
 int	sqphy_service(struct mii_softc *, struct mii_data *, int);
 void	sqphy_status(struct mii_softc *);
+void	sqphy_84220_reset(struct mii_softc *);
 
 const struct mii_phy_funcs sqphy_funcs = {
 	sqphy_service, sqphy_status, mii_phy_reset,
+};
+
+const struct mii_phy_funcs sqphy_84220_funcs = {
+	sqphy_service, sqphy_status, sqphy_84220_reset,
 };
 
 const struct mii_phydesc sqphys[] = {
@@ -112,6 +116,9 @@ const struct mii_phydesc sqphys[] = {
 
 	{ MII_OUI_SEEQ,			MII_MODEL_SEEQ_80225,
 	  MII_STR_SEEQ_80225 },
+
+	{ MII_OUI_SEEQ,			MII_MODEL_SEEQ_84220,
+	  MII_STR_SEEQ_84220 },
 
 	{ 0,				0,
 	  NULL },
@@ -141,10 +148,20 @@ sqphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_funcs = &sqphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
+
+	switch (MII_MODEL(ma->mii_id2)) {
+	case MII_MODEL_SEEQ_84220:
+		sc->mii_funcs = &sqphy_84220_funcs;
+		printf("%s: using Seeq 84220 isolate/reset hack\n",
+		    sc->mii_dev.dv_xname);
+		break;
+
+	default:
+		sc->mii_funcs = &sqphy_funcs;
+	}
 
 	PHY_RESET(sc);
 
@@ -265,4 +282,30 @@ sqphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_FDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+sqphy_84220_reset(struct mii_softc *sc)
+{
+	int reg;
+
+	mii_phy_reset(sc);
+
+	/*
+	 * This PHY sometimes insists on coming out of reset isolated,
+	 * even when the MDA[0-3] pins are pulled high (to indicate
+	 * PHY address 0), contrary to the device's datasheet.
+	 *
+	 * Morever, simply clearing BMCR_ISO here isn't enough; the
+	 * change won't stick until about 30mS *after* the PHY has
+	 * been reset.
+	 *
+	 * This sucks.
+	 */
+	if ((sc->mii_inst == 0 || (sc->mii_flags & MIIF_NOISOLATE)) &&
+	    ((reg = PHY_READ(sc, MII_BMCR)) & BMCR_ISO) != 0) {
+
+		delay(30000);
+		PHY_WRITE(sc, MII_BMCR, reg & ~BMCR_ISO);
+	}
 }

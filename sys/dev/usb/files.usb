@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.30.2.3 2002/06/23 17:49:02 jdolecek Exp $
+#	$NetBSD: files.usb,v 1.30.2.4 2002/09/06 08:46:39 jdolecek Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -103,11 +103,21 @@ device	uirda: irbus
 attach	uirda at uhub
 file	dev/usb/uirda.c			uirda
 
-
 # SigmaTel IrDA bridge
 device	ustir: irbus, irdasir
 attach	ustir at uhub
 file	dev/usb/ustir.c			ustir
+
+
+# Bluetooth bridges
+device	ubt: btbus
+attach	ubt at uhub
+file	dev/usb/ubt.c			ubt
+
+# BCM2033 firmware download
+device	ubtbcmfw
+attach	ubtbcmfw at uhub
+file	dev/usb/ubtbcmfw.c		ubtbcmfw		needs-flag
 
 
 # Misc

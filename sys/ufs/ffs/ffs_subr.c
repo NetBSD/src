@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.15.10.4 2002/06/23 17:52:08 jdolecek Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.15.10.5 2002/09/06 08:50:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__KERNEL_RCSID)
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.15.10.4 2002/06/23 17:52:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.15.10.5 2002/09/06 08:50:12 jdolecek Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -174,7 +174,7 @@ ffs_checkoverlap(bp, ip)
 		vprint("Disk overlap", vp);
 		printf("\tstart %d, end %d overlap start %d, end %ld\n",
 		    start, last, ep->b_blkno,
-		    ep->b_blkno + btodb(ep->b_bcount) - 1);
+		    (long) ep->b_blkno + btodb(ep->b_bcount) - 1);
 		panic("Disk buffer overlap");
 	}
 }

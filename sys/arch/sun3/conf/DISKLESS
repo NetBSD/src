@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.33.2.3 2002/06/23 17:42:34 jdolecek Exp $
+# $NetBSD: DISKLESS,v 1.33.2.4 2002/09/06 08:42:01 jdolecek Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -146,3 +146,4 @@ pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	ipfilter		# ip filter
 
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem

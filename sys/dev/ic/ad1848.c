@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.10.4.3 2002/06/23 17:46:08 jdolecek Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.10.4.4 2002/09/06 08:44:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.10.4.3 2002/06/23 17:46:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.10.4.4 2002/09/06 08:44:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,6 +464,7 @@ const struct ad1848_mixerinfo {
   { CS_LEFT_LINE_CONTROL, CS_RIGHT_LINE_CONTROL, LINE_INPUT_ATTEN_BITS,
     LINE_INPUT_ATTEN_MASK },
   { CS_MONO_IO_CONTROL, 0, MONO_INPUT_ATTEN_BITS, MONO_INPUT_ATTEN_MASK },
+  { CS_MONO_IO_CONTROL, 0, 0, 0 },
   { SP_DIGITAL_MIX, 0, OUTPUT_ATTEN_BITS, MIX_ATTEN_MASK }
 };
 
@@ -490,7 +491,10 @@ ad1848_mute_channel(sc, device, mute)
 				ad1848_mute_wave_output(sc, WAVE_UNMUTE1, 0);
 			ad_write(sc, mixer_channel_info[device].left_reg,
 				 reg & ~DIGITAL_MIX1_ENABLE);
-		} else
+		} else if (device == AD1848_OUT_CHANNEL)
+			ad_write(sc, mixer_channel_info[device].left_reg,
+				 reg | MONO_OUTPUT_MUTE);
+		else
 			ad_write(sc, mixer_channel_info[device].left_reg,
 				 reg | 0x80);
 	} else if (!(sc->mute[device] & MUTE_LEFT)) {
@@ -499,7 +503,10 @@ ad1848_mute_channel(sc, device, mute)
 				 reg | DIGITAL_MIX1_ENABLE);
 			if (sc->open_mode & FREAD)
 				ad1848_mute_wave_output(sc, WAVE_UNMUTE1, 1);
-		} else
+		} else if (device == AD1848_OUT_CHANNEL)
+			ad_write(sc, mixer_channel_info[device].left_reg,
+				 reg & ~MONO_OUTPUT_MUTE);
+		else
 			ad_write(sc, mixer_channel_info[device].left_reg,
 				 reg & ~0x80);
 	}

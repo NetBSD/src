@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.1.6.2 2002/06/23 17:51:23 jdolecek Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.1.6.3 2002/09/06 08:49:40 jdolecek Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.1.6.2 2002/06/23 17:51:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.1.6.3 2002/09/06 08:49:40 jdolecek Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_inet.h"
@@ -269,7 +269,7 @@ udp6_output(in6p, m, addr6, control, p)
 			goto release;
 		}
 		if (in6p->in6p_lport == 0 &&
-		    (error = in6_pcbsetport(laddr, in6p)) != 0)
+		    (error = in6_pcbsetport(laddr, in6p, p)) != 0)
 			goto release;
 	} else {
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
@@ -382,11 +382,9 @@ udp6_output(in6p, m, addr6, control, p)
 		if (udp6->uh_sum == 0)
 			udp6->uh_sum = 0xffff;
 
-		ip->ip_len = hlen + plen;
+		ip->ip_len = htons(hlen + plen);
 		ip->ip_ttl = in6_selecthlim(in6p, NULL); /* XXX */
 		ip->ip_tos = 0;	/* XXX */
-
-		ip->ip_len = hlen + plen; /* XXX */
 
 		udpstat.udps_opackets++;
 #ifdef IPSEC

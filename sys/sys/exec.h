@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.79.2.3 2002/06/23 17:51:55 jdolecek Exp $	*/
+/*	$NetBSD: exec.h,v 1.79.2.4 2002/09/06 08:49:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -100,8 +100,8 @@ struct execsw {
 	int	es_prio;		/* entry priority */
 	int	es_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
-	int	(*es_copyargs) __P((struct exec_package *, struct ps_strings *,
-				    char **, void *));
+	int	(*es_copyargs) __P((struct proc *, struct exec_package *,
+			struct ps_strings *, char **, void *));
 					/* Set registers before execution */
 	void	(*es_setregs) __P((struct proc *, struct exec_package *,
 				   u_long));
@@ -184,8 +184,8 @@ int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_readvn		__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
-int	copyargs		__P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int	copyargs		__P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 void	setregs			__P((struct proc *, struct exec_package *,
 				     u_long));
 int	check_exec		__P((struct proc *, struct exec_package *));

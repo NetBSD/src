@@ -1,11 +1,11 @@
-/*	$NetBSD: if_ieee1394arp.h,v 1.2 2001/01/17 04:05:44 itojun Exp $	*/
+/*	$NetBSD: slhci_intio_var.h,v 1.1.6.2 2002/09/06 08:42:42 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Atsushi Onoe.
+ * by Tetsuya Isaki.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,20 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NETINET_IF_IEEE1394ARP_H_
-#define _NETINET_IF_IEEE1394ARP_H_
+/*
+ * USB part of Nereid Ethernet/USB/Memory board
+ */
 
-struct ieee1394_arp {
-	struct arphdr	iar_arp;
-	struct ieee1394_hwaddr	iar_sha;
-	u_int32_t	iar_sip;
-	u_int32_t	iar_tip;
+#define SLHCI_INTIO_ADDR1	(0xece380)
+#define SLHCI_INTIO_ADDR2	(0xeceb80)
+#define SLHCI_INTIO_INTR1	(0xfb)
+#define SLHCI_INTIO_INTR2	(0xfa)
+
+#define NEREID_ADDR_OFFSET	(0xece3f0 - 0xece380)	/* Nereid control port */
+#define NEREID_CTRL		(0)
+#define NEREID_CTRL_RESET	(0x01)
+#define NEREID_CTRL_POWER	(0x02)
+#define NEREID_CTRL_INTR	(0x04)
+#define NEREID_CTRL_DIPSW	(0x08)
+
+struct slhci_intio_softc {
+	struct slhci_softc sc_sc;
+
+	bus_space_handle_t sc_nch;	/* Nereid control port handle */
 };
-
-void ieee1394arp_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
-int  ieee1394arpresolve(struct ifnet *, struct rtentry *, struct mbuf *,
-	struct sockaddr *, struct ieee1394_hwaddr *);
-void in_ieee1394arpinput(struct mbuf *);
-void ieee1394arp_ifinit(struct ifnet *, struct ifaddr *);
-
-#endif /* _NETINET_IF_IEEE1394ARP_H_ */

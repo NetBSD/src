@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104.2.5 2002/06/23 17:43:08 jdolecek Exp $	   */
+/*	$NetBSD: pmap.c,v 1.104.2.6 2002/09/06 08:42:24 jdolecek Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,7 +67,7 @@
 #include "qd.h"
 void	qdearly(void);
 
-#define ISTACK_SIZE NBPG
+#define ISTACK_SIZE (NBPG*2)
 vaddr_t istack;
 /* 
  * This code uses bitfield operators for most page table entries.  
@@ -160,7 +160,7 @@ calc_kvmsize(vsize_t usrptsize)
 {
 	extern int bufcache;
 	vsize_t kvmsize;
-	int n, s, bp, bc;
+	u_int n, s, bp, bc;
 
 	/* All physical memory */
 	kvmsize = avail_end;
@@ -180,7 +180,7 @@ calc_kvmsize(vsize_t usrptsize)
 
 	/* allocated buffer space etc... This is a hack */
 	n = nbuf; s = nswbuf; bp = bufpages; bc = bufcache;
-	kvmsize += (int)allocsys(NULL, NULL);
+	kvmsize += (u_int)allocsys(NULL, NULL);
 	/* Buffer space */
 	kvmsize += (MAXBSIZE * nbuf);
 	nbuf = n; nswbuf = s; bufpages = bp; bufcache = bc;

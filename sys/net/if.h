@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.73.2.2 2002/06/23 17:50:21 jdolecek Exp $	*/
+/*	$NetBSD: if.h,v 1.73.2.3 2002/09/06 08:48:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #if !defined(_XOPEN_SOURCE)
 
+#include <sys/socket.h>
 #include <sys/queue.h>
 #include <net/dlt.h>
 #include <net/pfil.h>
@@ -273,7 +274,6 @@ struct ifnet {				/* and the entries */
 	struct ifaltq if_snd;		/* output queue (includes altq) */
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
-	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
 	struct pfil_head if_pfil;	/* filtering point */
@@ -429,20 +429,6 @@ struct ifaddr {
 	int	ifa_metric;		/* cost of going out this interface */
 };
 #define	IFA_ROUTE	RTF_UP /* 0x01 *//* route installed */
-
-/*
- * The prefix structure contains information about one prefix
- * of an interface.  They are maintained by the different address families,
- * are allocated and attached when an prefix or an address is set,
- * and are linked together so all prfefixes for an interface can be located.
- */
-struct ifprefix {
-	struct	sockaddr *ifpr_prefix;	/* prefix of interface */
-	struct	ifnet *ifpr_ifp;	/* back-pointer to interface */
-	struct ifprefix *ifpr_next;
-	u_char	ifpr_plen;		/* prefix length in bits */
-	u_char	ifpr_type;		/* protocol dependent prefix type */
-};
 
 /*
  * Message format for use in obtaining information about interfaces
@@ -742,7 +728,7 @@ extern struct ifnet **ifindex2ifnet;
 #if 0
 struct ifnet loif[];
 #endif
-extern int if_index;
+extern u_int if_index;
 
 char	*ether_sprintf __P((const u_char *));
 

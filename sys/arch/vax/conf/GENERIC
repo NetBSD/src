@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89.2.4 2002/06/23 17:42:59 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.89.2.5 2002/09/06 08:42:15 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89.2.4 $"
+#ident 		"GENERIC-$Revision: 1.89.2.5 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -276,3 +276,4 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	leds			# control the leds on vaxstations.
+pseudo-device	clockctl		# user control of clock subsystem

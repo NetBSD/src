@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.44.2.6 2002/06/23 17:51:39 jdolecek Exp $	*/
-/*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.44.2.7 2002/09/06 08:49:42 jdolecek Exp $	*/
+/*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.44.2.6 2002/06/23 17:51:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.44.2.7 2002/09/06 08:49:42 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -227,7 +227,7 @@ do {\
 #define KEY_CHKSASTATE(head, sav, name) \
 do { \
 	if ((head) != (sav)) {						\
-		ipseclog((LOG_DEBUG, "%s: state mismatched (TREE=%d SA=%d)\n", \
+		ipseclog((LOG_DEBUG, "%s: state mismatched (TREE=%u SA=%u)\n", \
 			(name), (head), (sav)));			\
 		continue;						\
 	}								\
@@ -236,7 +236,7 @@ do { \
 #define KEY_CHKSPDIR(head, sp, name) \
 do { \
 	if ((head) != (sp)) {						\
-		ipseclog((LOG_DEBUG, "%s: direction mismatched (TREE=%d SP=%d), " \
+		ipseclog((LOG_DEBUG, "%s: direction mismatched (TREE=%u SP=%u), " \
 			"anyway continue.\n",				\
 			(name), (head), (sp)));				\
 	}								\
@@ -1107,7 +1107,7 @@ key_msg2sp(xpl0, len, error)
 				if (xisr->sadb_x_ipsecrequest_reqid
 						> IPSEC_MANUAL_REQID_MAX) {
 					ipseclog((LOG_DEBUG,
-					    "key_msg2sp: reqid=%d range "
+					    "key_msg2sp: reqid=%u range "
 					    "violation, updated by kernel.\n",
 					    xisr->sadb_x_ipsecrequest_reqid));
 					xisr->sadb_x_ipsecrequest_reqid = 0;
@@ -1722,8 +1722,7 @@ key_spddelete2(so, m, mhp)
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
 		ipseclog((LOG_DEBUG, "key_spddelete2: invalid message is passed.\n"));
-		key_senderror(so, m, EINVAL);
-		return 0;
+		return key_senderror(so, m, EINVAL);
 	}
 
 	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
@@ -1731,7 +1730,7 @@ key_spddelete2(so, m, mhp)
 	/* Is there SP in SPD ? */
 	if ((sp = key_getspbyid(id)) == NULL) {
 		ipseclog((LOG_DEBUG, "key_spddelete2: no SP found id:%u.\n", id));
-		key_senderror(so, m, EINVAL);
+		return key_senderror(so, m, EINVAL);
 	}
 
 	key_sp_dead(sp);
@@ -2579,7 +2578,7 @@ key_getsavbyspi(sah, spi)
 			/* sanity check */
 			if (sav->state != state) {
 				ipseclog((LOG_DEBUG, "key_getsavbyspi: "
-				    "invalid sav->state (queue: %d SA: %d)\n",
+				    "invalid sav->state (queue: %u SA: %u)\n",
 				    state, sav->state));
 				continue;
 			}
@@ -4114,7 +4113,7 @@ key_timehandler(arg)
 			if (sav->state != SADB_SASTATE_DEAD) {
 				ipseclog((LOG_DEBUG, "key_timehandler: "
 					"invalid sav->state "
-					"(queue: %d SA: %d): "
+					"(queue: %u SA: %u): "
 					"kill it anyway\n",
 					SADB_SASTATE_DEAD, sav->state));
 			}
@@ -5134,7 +5133,7 @@ key_delete_all(so, m, mhp, proto)
 				if (sav->state != state) {
 					ipseclog((LOG_DEBUG, "key_delete_all: "
 					       "invalid sav->state "
-					       "(queue: %d SA: %d)\n",
+					       "(queue: %u SA: %u)\n",
 					       state, sav->state));
 					continue;
 				}
@@ -5272,9 +5271,9 @@ key_getcomb_setlifetime(comb)
 	comb->sadb_comb_soft_bytes = 0;
 	comb->sadb_comb_hard_bytes = 0;
 	comb->sadb_comb_hard_addtime = 86400;	/* 1 day */
-	comb->sadb_comb_soft_addtime = comb->sadb_comb_soft_addtime * 80 / 100;
+	comb->sadb_comb_soft_addtime = comb->sadb_comb_hard_addtime * 80 / 100;
 	comb->sadb_comb_soft_usetime = 28800;	/* 8 hours */
-	comb->sadb_comb_hard_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
+	comb->sadb_comb_soft_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
 }
 
 #ifdef IPSEC_ESP

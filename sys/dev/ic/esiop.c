@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.16.6.2 2002/06/23 17:46:22 jdolecek Exp $	*/
+/*	$NetBSD: esiop.c,v 1.16.6.3 2002/09/06 08:44:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.16.6.2 2002/06/23 17:46:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.16.6.3 2002/09/06 08:44:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,7 +825,7 @@ scintr:
 				if (esiop_cmd->cmd_tables->msg_out[0] & 0x80) {
 					/*
 					 * message was part of a identify +
-					 * something else. Identify shoudl't
+					 * something else. Identify shouldn't
 					 * have been rejected.
 					 */
 					msg =

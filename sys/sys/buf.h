@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.47.2.2 2002/06/23 17:51:53 jdolecek Exp $	*/
+/*	$NetBSD: buf.h,v 1.47.2.3 2002/09/06 08:49:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -90,59 +90,41 @@
  */   
 LIST_HEAD(workhead, worklist);
 
+#ifdef _KERNEL
+
 /*
  * Device driver buffer queue.
  */
-struct buf_queue {
-	TAILQ_HEAD(bufq_head, buf) bq_head; /* actual list of buffers */
-	struct buf *bq_barrier;		    /* last B_ORDERED request */
+struct bufq_state {
+	void (*bq_put)(struct bufq_state *, struct buf *);
+	struct buf *(*bq_get)(struct bufq_state *, int);
+	void *bq_private;
+	int bq_flags;			/* Flags from bufq_alloc() */
 };
 
-#ifdef _KERNEL
-#define	BUFQ_FIRST(bufq)	TAILQ_FIRST(&(bufq)->bq_head)
-#define	BUFQ_NEXT(bp)		TAILQ_NEXT((bp), b_actq)
+/*
+ * Flags for bufq_alloc.
+ */
+#define BUFQ_SORT_RAWBLOCK	0x0001	/* Sort by b_rawblkno */
+#define BUFQ_SORT_CYLINDER	0x0002	/* Sort by b_cylinder, b_rawblkno */
 
-#define	BUFQ_INIT(bufq)							\
-do {									\
-	TAILQ_INIT(&(bufq)->bq_head);					\
-	(bufq)->bq_barrier = NULL;					\
-} while (/*CONSTCOND*/0)
+#define BUFQ_FCFS		0x0010	/* First-come first-serve */
+#define BUFQ_DISKSORT		0x0020	/* Min seek sort */
+#define BUFQ_READ_PRIO		0x0030	/* Min seek and read priority */
 
-#define	BUFQ_INSERT_HEAD(bufq, bp)					\
-do {									\
-	TAILQ_INSERT_HEAD(&(bufq)->bq_head, (bp), b_actq);		\
-	if (((bp)->b_flags & B_ORDERED) != 0 &&				\
-	    (bufq)->bq_barrier == NULL)					\
-		(bufq)->bq_barrier = (bp);				\
-} while (/*CONSTCOND*/0)
+#define BUFQ_SORT_MASK		0x000f
+#define BUFQ_METHOD_MASK	0x00f0
 
-#define	BUFQ_INSERT_TAIL(bufq, bp)					\
-do {									\
-	TAILQ_INSERT_TAIL(&(bufq)->bq_head, (bp), b_actq);		\
-	if (((bp)->b_flags & B_ORDERED) != 0)				\
-		(bufq)->bq_barrier = (bp);				\
-} while (/*CONSTCOND*/0)
+void	bufq_alloc(struct bufq_state *, int);
+void	bufq_free(struct bufq_state *);
 
-#define	BUFQ_INSERT_AFTER(bufq, lbp, bp)				\
-do {									\
-	KASSERT((bufq)->bq_barrier == NULL);				\
-	KASSERT(((bp)->b_flags & B_ORDERED) == 0);			\
-	TAILQ_INSERT_AFTER(&(bufq)->bq_head, (lbp), (bp), b_actq);	\
-} while (/*CONSTCOND*/0)
+#define BUFQ_PUT(bufq, bp) \
+	(*(bufq)->bq_put)((bufq), (bp))	/* Put buffer in queue */
+#define BUFQ_GET(bufq) \
+	(*(bufq)->bq_get)((bufq), 1)	/* Get and remove buffer from queue */
+#define BUFQ_PEEK(bufq) \
+	(*(bufq)->bq_get)((bufq), 0)	/* Get buffer from queue */
 
-#define	BUFQ_INSERT_BEFORE(bufq, lbp, bp)				\
-do {									\
-	KASSERT((bufq)->bq_barrier == NULL);				\
-	KASSERT(((bp)->b_flags & B_ORDERED) == 0);			\
-	TAILQ_INSERT_BEFORE((lbp), (bp), b_actq);			\
-} while (/*CONSTCOND*/0)
-
-#define	BUFQ_REMOVE(bufq, bp)						\
-do {									\
-	if ((bufq)->bq_barrier == (bp))					\
-		(bufq)->bq_barrier = TAILQ_PREV((bp), bufq_head, b_actq); \
-	TAILQ_REMOVE(&(bufq)->bq_head, (bp), b_actq);			\
-} while (/*CONSTCOND*/0)
 #endif /* _KERNEL */
 
 /*
@@ -225,7 +207,6 @@ struct buf {
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_NOCACHE	0x00008000	/* Do not cache block after use. */
-#define	B_ORDERED	0x00010000	/* ordered I/O request */
 #define	B_CACHE		0x00020000	/* Bread found us in the cache. */
 #define	B_PHYS		0x00040000	/* I/O to user memory. */
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
@@ -266,18 +247,17 @@ do {									\
 #ifdef _KERNEL
 
 extern	struct bio_ops bioops;
-extern	int nbuf;		/* The number of buffer headers */
+extern	u_int nbuf;		/* The number of buffer headers */
 extern	struct buf *buf;	/* The buffer headers. */
 extern	char *buffers;		/* The buffer contents. */
-extern	int bufpages;		/* Number of memory pages in the buffer pool. */
-extern	int nswbuf;		/* Number of swap I/O buffer headers. */
+extern	u_int bufpages;		/* Number of memory pages in the buffer pool. */
+extern	u_int nswbuf;		/* Number of swap I/O buffer headers. */
 
 extern	struct pool bufpool;	/* I/O buf pool */
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
 void	bawrite __P((struct buf *));
-void	bowrite __P((struct buf *));
 void	bdirty __P((struct buf *));
 void	bdwrite __P((struct buf *));
 void	biodone __P((struct buf *));

@@ -1,4 +1,4 @@
-/* $NetBSD: awireg.h,v 1.4.2.1 2002/01/10 19:54:15 thorpej Exp $ */
+/* $NetBSD: awireg.h,v 1.4.2.2 2002/09/06 08:44:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -258,7 +258,9 @@
 #define AWI_DRV_RXLED			0x40
 #define AWI_DRV_TXLED			0x80
 
-#define AWI_VBM			0x500	/* Virtual Bit Map */
+#define AWI_VBM_OFFSET		0x500	/* Virtual Bit Map */
+#define AWI_VBM_LENGTH		0x501
+#define AWI_VBM_BITMAP		0x502
 
 #define AWI_BUFFERS		0x600	/* Buffers */
 #define	AWI_BUFFERS_END		0x6000
@@ -410,6 +412,8 @@ struct awi_mib_mgt {
 	u_int8_t	aDTIM_Period;
 	u_int8_t	aATIM_Window[2];
 	u_int8_t	Wep_Required;
+#define	AWI_WEP_ON			0x10
+#define	AWI_WEP_OFF			0x00
 	u_int8_t	_Reserved1;
 	u_int8_t	aBeacon_Period[2];
 	u_int8_t	aPassive_Scan_Duration[2];

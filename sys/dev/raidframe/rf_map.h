@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.h,v 1.3.22.1 2002/01/10 19:57:50 thorpej Exp $	*/
+/*	$NetBSD: rf_map.h,v 1.3.22.2 2002/09/06 08:46:04 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -45,10 +45,6 @@ rf_MapAccess(RF_Raid_t * raidPtr,
 void 
 rf_MarkFailuresInASMList(RF_Raid_t * raidPtr,
     RF_AccessStripeMapHeader_t * asm_h);
-
-RF_AccessStripeMap_t *rf_DuplicateASM(RF_AccessStripeMap_t * asmap);
-
-RF_PhysDiskAddr_t *rf_DuplicatePDA(RF_PhysDiskAddr_t * pda);
 
 int     rf_ConfigureMapModule(RF_ShutdownList_t ** listp);
 

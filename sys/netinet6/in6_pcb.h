@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.17.2.2 2002/06/23 17:51:13 jdolecek Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.17.2.3 2002/09/06 08:49:30 jdolecek Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ void	in6_setsockaddr __P((struct in6pcb *, struct mbuf *));
 
 /* in in6_src.c */
 int	in6_selecthlim __P((struct in6pcb *, struct ifnet *));
-int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *));
+int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *, struct proc *));
 
 extern struct rtentry *
 	in6_pcbrtentry __P((struct in6pcb *));

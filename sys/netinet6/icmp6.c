@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.66.2.3 2002/06/23 17:51:08 jdolecek Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.66.2.4 2002/09/06 08:49:28 jdolecek Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.66.2.3 2002/06/23 17:51:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.66.2.4 2002/09/06 08:49:28 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -469,6 +469,7 @@ icmp6_input(mp, offp, proto)
 		return IPPROTO_DONE;
 	}
 #endif
+	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
 	code = icmp6->icmp6_code;
 
 	if ((sum = in6_cksum(m, IPPROTO_ICMPV6, off, icmp6len)) != 0) {
@@ -1623,9 +1624,10 @@ ni6_nametodns(name, namelen, old)
 			while (i > 0) {
 				if (!isalnum(*p) && *p != '-')
 					goto fail;
-				if (isupper(*p))
-					*cp++ = tolower(*p++);
-				else
+				if (isupper(*p)) {
+					*cp++ = tolower(*p);
+					p++;
+				} else
 					*cp++ = *p++;
 				i--;
 			}
@@ -2275,7 +2277,7 @@ icmp6_redirect_input(m, off)
 	struct in6_addr reddst6;
 	union nd_opts ndopts;
 
-	if (!m || !ifp)
+	if (!ifp)
 		return;
 
 	/* XXX if we are router, we don't update route by icmp6 redirect */

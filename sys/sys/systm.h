@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.136.2.3 2002/06/23 17:52:04 jdolecek Exp $	*/
+/*	$NetBSD: systm.h,v 1.136.2.4 2002/09/06 08:50:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -178,7 +178,7 @@ enum hashtype {
 	HASH_TAILQ
 };
 
-void	*hashinit __P((int, enum hashtype, int, int, u_long *));
+void	*hashinit __P((u_int, enum hashtype, int, int, u_long *));
 void	hashdone __P((void *, int));
 int	seltrue __P((dev_t, int, struct proc *));
 int	sys_nosys __P((struct proc *, void *, register_t *));
@@ -224,6 +224,9 @@ int	copyoutstr __P((const void *, void *, size_t, size_t *));
 int	copyin __P((const void *, void *, size_t));
 int	copyout __P((const void *, void *, size_t));
 
+int	copyin_proc __P((struct proc *, const void *, void *, size_t));
+int	copyout_proc __P((struct proc *, const void *, void *, size_t));
+
 int	subyte __P((void *, int));
 int	suibyte __P((void *, int));
 int	susword __P((void *, short));
@@ -262,6 +265,7 @@ void	cpu_initclocks __P((void));
 
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));
+void	proftick __P((struct clockframe *));
 void	setstatclockrate __P((int));
 
 /*
@@ -312,7 +316,13 @@ void	*exithook_establish __P((void (*)(struct proc *, void *), void *));
 void	exithook_disestablish __P((void *));
 void	doexithooks __P((struct proc *));
 
-int	uiomove __P((void *, int, struct uio *));
+/*
+ * kernel syscall tracing/debugging hooks.
+ */
+int	trace_enter __P((struct proc *, register_t, void *, register_t []));
+void	trace_exit __P((struct proc *, register_t, void *, register_t [], int));
+
+int	uiomove __P((void *, size_t, struct uio *));
 
 #ifdef _KERNEL
 caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.98.2.4 2002/06/23 17:46:56 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.98.2.5 2002/09/06 08:44:40 jdolecek Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.98.2.4 2002/06/23 17:46:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.98.2.5 2002/09/06 08:44:40 jdolecek Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -847,7 +847,7 @@ __wdcwait_reset(chp, drv_mask)
 		}
 		delay(WDCDELAY);
 	}
-	/* Reset timed out. Maybe it's because drv_mask was not rigth */
+	/* Reset timed out. Maybe it's because drv_mask was not right */
 	if (st0 & WDCS_BSY)
 		drv_mask &= ~0x01;
 	if (st1 & WDCS_BSY)
@@ -1063,7 +1063,7 @@ wdc_probe_caps(drvp)
 		 * XXX some drives report something wrong here (they claim to
 		 * support PIO mode 8 !). As mode is coded on 3 bits in
 		 * SET FEATURE, limit it to 7 (so limit i to 4).
-		 * If higther mode than 7 is found, abort.
+		 * If higher mode than 7 is found, abort.
 		 */
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_piomode_supp & (1 << i)) == 0)
@@ -1148,6 +1148,8 @@ wdc_probe_caps(drvp)
 						printf(" (Ultra/66)");
 					else if (i == 5)
 						printf(" (Ultra/100)");
+					else if (i == 6)
+						printf(" (Ultra/133)");
 					sep = ",";
 					printed = 1;
 				}

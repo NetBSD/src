@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.27.2.4 2002/06/23 17:48:55 jdolecek Exp $ */
+/* $NetBSD: cfb.c,v 1.27.2.5 2002/09/06 08:46:32 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.27.2.4 2002/06/23 17:48:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.27.2.5 2002/09/06 08:46:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,7 +453,7 @@ cfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = ri;	 /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
@@ -494,7 +494,7 @@ cfb_cnattach(addr)
 	ri = &cfb_console_ri;
 	ri->ri_hw = (void *)addr;
 	cfb_common_init(ri);
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&cfb_stdscreen, ri, 0, 0, defattr);
 	cfb_consaddr = addr;
 	return(0);
@@ -672,7 +672,7 @@ get_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||
@@ -694,7 +694,7 @@ set_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_READ) ||

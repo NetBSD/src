@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1.2.4 2002/06/23 17:43:13 jdolecek Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.1.2.5 2002/09/06 08:42:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _GALAXY_BUS_DMA_PRIVATE
+#define _IBM4XX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -63,7 +63,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 		   bus_size_t maxsegsz, bus_size_t boundary, int flags,
 		   bus_dmamap_t *dmamp)
 {
-	struct galaxy_bus_dmamap *map;
+	struct ibm4xx_bus_dmamap *map;
 	void *mapstore;
 	size_t mapsize;
 
@@ -79,14 +79,14 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
 	 * the (nsegments - 1).
 	 */
-	mapsize = sizeof(struct galaxy_bus_dmamap) +
+	mapsize = sizeof(struct ibm4xx_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	if ((mapstore = malloc(mapsize, M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
 	memset(mapstore, 0, mapsize);
-	map = (struct galaxy_bus_dmamap *)mapstore;
+	map = (struct ibm4xx_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
@@ -633,7 +633,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 /*
  * "generic" DMA struct, nothing special.
  */
-struct galaxy_bus_dma_tag galaxy_default_bus_dma_tag = {
+struct ibm4xx_bus_dma_tag ibm4xx_default_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create, 
 	_bus_dmamap_destroy,

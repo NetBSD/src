@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.2.4.4 2002/06/23 17:47:21 jdolecek Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.2.4.5 2002/09/06 08:44:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,13 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.2.4.4 2002/06/23 17:47:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.2.4.5 2002/09/06 08:44:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 

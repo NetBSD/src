@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.57.2.4 2002/06/23 17:49:23 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.57.2.5 2002/09/06 08:47:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.57.2.4 2002/06/23 17:49:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.57.2.5 2002/09/06 08:47:38 jdolecek Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -389,8 +389,8 @@ const struct execsw execsw_builtin[] = {
 	  { ELF32NAME2(svr4,probe) },
 	  &emul_svr4,
 	  EXECSW_PRIO_ANY,
-	  SVR4_AUX_ARGSIZ,
-	  svr4_copyargs,
+	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  elf32_copyargs,
 	  NULL,
 	  coredump_elf32 },
 #endif
@@ -455,8 +455,8 @@ const struct execsw execsw_builtin[] = {
 	  { ELF64NAME2(svr4,probe) },
 	  &emul_svr4,
 	  EXECSW_PRIO_ANY,
-	  SVR4_AUX_ARGSIZ64,
-	  svr4_copyargs64,
+	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
+	  elf64_copyargs,
 	  NULL,
 	  coredump_elf64 },
 #endif

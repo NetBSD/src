@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.127.2.5 2002/06/23 17:50:59 jdolecek Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.127.2.6 2002/09/06 08:49:18 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.127.2.5 2002/06/23 17:50:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.127.2.6 2002/09/06 08:49:18 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -276,6 +276,17 @@ do {									\
 	NTOHS((th)->th_urp);						\
 } while (0)
 
+/*
+ * ... and reverse the above.
+ */
+#define	TCP_FIELDS_TO_NET(th)						\
+do {									\
+	HTONL((th)->th_seq);						\
+	HTONL((th)->th_ack);						\
+	HTONS((th)->th_win);						\
+	HTONS((th)->th_urp);						\
+} while (0)
+
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
 
@@ -316,6 +327,14 @@ extern struct evcnt tcp_reass_fragdup;
 #define	TCP_REASS_COUNTER_INCR(ev)	/* nothing */
 
 #endif /* TCP_REASS_COUNTERS */
+
+#ifdef INET
+static void tcp4_log_refused __P((const struct ip *, const struct tcphdr *));
+#endif
+#ifdef INET6
+static void tcp6_log_refused
+    __P((const struct ip6_hdr *, const struct tcphdr *));
+#endif
 
 int
 tcp_reass(tp, th, m, tlen)
@@ -656,7 +675,7 @@ present:
 	if (so->so_state & SS_CANTRCVMORE)
 		m_freem(q->ipqe_m);
 	else
-		sbappend(&so->so_rcv, q->ipqe_m);
+		sbappendstream(&so->so_rcv, q->ipqe_m);
 	pool_put(&ipqent_pool, q);
 	sorwakeup(so);
 	return (pkt_flags);
@@ -690,6 +709,54 @@ tcp6_input(mp, offp, proto)
 
 	tcp_input(m, *offp, proto);
 	return IPPROTO_DONE;
+}
+#endif
+
+#ifdef INET
+static void
+tcp4_log_refused(ip, th)
+	const struct ip *ip;
+	const struct tcphdr *th;
+{
+	char src[4*sizeof "123"];
+	char dst[4*sizeof "123"];
+
+	if (ip) {
+		strcpy(src, inet_ntoa(ip->ip_src));
+		strcpy(dst, inet_ntoa(ip->ip_dst));
+	}
+	else {
+		strcpy(src, "(unknown)");
+		strcpy(dst, "(unknown)");
+	}
+	log(LOG_INFO,
+	    "Connection attempt to TCP %s:%d from %s:%d\n",
+	    dst, ntohs(th->th_dport),
+	    src, ntohs(th->th_sport));
+}
+#endif
+
+#ifdef INET6
+static void
+tcp6_log_refused(ip6, th)
+	const struct ip6_hdr *ip6;
+	const struct tcphdr *th;
+{
+	char src[INET6_ADDRSTRLEN];
+	char dst[INET6_ADDRSTRLEN];
+
+	if (ip6) {
+		strcpy(src, ip6_sprintf(&ip6->ip6_src));
+		strcpy(dst, ip6_sprintf(&ip6->ip6_dst));
+	}
+	else {
+		strcpy(src, "(unknown v6)");
+		strcpy(dst, "(unknown v6)");
+	}
+	log(LOG_INFO,
+	    "Connection attempt to TCP [%s]:%d from [%s]:%d\n",
+	    dst, ntohs(th->th_dport),
+	    src, ntohs(th->th_sport));
 }
 #endif
 
@@ -797,7 +864,7 @@ tcp_input(m, va_alist)
 		}
 #endif
 		/* We do the checksum after PCB lookup... */
-		len = ip->ip_len;
+		len = ntohs(ip->ip_len);
 		tlen = len - toff;
 		break;
 #endif
@@ -865,6 +932,8 @@ tcp_input(m, va_alist)
 		return;
 	}
 
+	KASSERT(TCP_HDR_ALIGNED_P(th));
+
 	/*
 	 * Check that TCP offset makes sense,
 	 * pull out TCP options and adjust length.		XXX
@@ -915,6 +984,7 @@ tcp_input(m, va_alist)
 		 * (as they're before toff) and we don't need to update those.
 		 */
 #endif
+		KASSERT(TCP_HDR_ALIGNED_P(th));
 		optlen = off - sizeof (struct tcphdr);
 		optp = ((caddr_t)th) + sizeof(struct tcphdr);
 		/*
@@ -982,21 +1052,7 @@ findpcb:
 		{
 			++tcpstat.tcps_noport;
 			if (tcp_log_refused && (tiflags & TH_SYN)) {
-				char src[4*sizeof "123"];
-				char dst[4*sizeof "123"];
-
-				if (ip) {
-					strcpy(src, inet_ntoa(ip->ip_src));
-					strcpy(dst, inet_ntoa(ip->ip_dst));
-				}
-				else {
-					strcpy(src, "(unknown)");
-					strcpy(dst, "(unknown)");
-				}
-				log(LOG_INFO,
-				    "Connection attempt to TCP %s:%d from %s:%d\n",
-				    dst, ntohs(th->th_dport),
-				    src, ntohs(th->th_sport));
+				tcp4_log_refused(ip, th);
 			}
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
@@ -1035,21 +1091,7 @@ findpcb:
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
 			if (tcp_log_refused && (tiflags & TH_SYN)) {
-				char src[INET6_ADDRSTRLEN];
-				char dst[INET6_ADDRSTRLEN];
-
-				if (ip6) {
-					strcpy(src, ip6_sprintf(&ip6->ip6_src));
-					strcpy(dst, ip6_sprintf(&ip6->ip6_dst));
-				}
-				else {
-					strcpy(src, "(unknown v6)");
-					strcpy(dst, "(unknown v6)");
-				}
-				log(LOG_INFO,
-				    "Connection attempt to TCP [%s]:%d from [%s]:%d\n",
-				    dst, ntohs(th->th_dport),
-				    src, ntohs(th->th_sport));
+				tcp6_log_refused(ip6, th);
 			}
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
@@ -1326,6 +1368,53 @@ findpcb:
 				 * Received a SYN.
 				 */
 
+#ifdef INET6
+				/*
+				 * If deprecated address is forbidden, we do
+				 * not accept SYN to deprecated interface
+				 * address to prevent any new inbound
+				 * connection from getting established.
+				 * When we do not accept SYN, we send a TCP
+				 * RST, with deprecated source address (instead
+				 * of dropping it).  We compromise it as it is
+				 * much better for peer to send a RST, and
+				 * RST will be the final packet for the
+				 * exchange.
+				 *
+				 * If we do not forbid deprecated addresses, we
+				 * accept the SYN packet.  RFC2462 does not
+				 * suggest dropping SYN in this case.
+				 * If we decipher RFC2462 5.5.4, it says like
+				 * this:
+				 * 1. use of deprecated addr with existing
+				 *    communication is okay - "SHOULD continue
+				 *    to be used"
+				 * 2. use of it with new communication:
+				 *   (2a) "SHOULD NOT be used if alternate
+				 *        address with sufficient scope is
+				 *        available"
+				 *   (2b) nothing mentioned otherwise. 
+				 * Here we fall into (2b) case as we have no
+				 * choice in our source address selection - we
+				 * must obey the peer.
+				 *
+				 * The wording in RFC2462 is confusing, and
+				 * there are multiple description text for
+				 * deprecated address handling - worse, they
+				 * are not exactly the same.  I believe 5.5.4
+				 * is the best one, so we follow 5.5.4.
+				 */
+				if (af == AF_INET6 && !ip6_use_deprecated) {
+					struct in6_ifaddr *ia6;
+					if ((ia6 = in6ifa_ifpwithaddr(m->m_pkthdr.rcvif,
+					    &ip6->ip6_dst)) &&
+					    (ia6->ia6_flags & IN6_IFF_DEPRECATED)) {
+						tp = NULL;
+						goto dropwithreset;
+					}
+				}
+#endif
+
 				/*
 				 * LISTEN socket received a SYN
 				 * from itself?  This can't possibly
@@ -1493,7 +1582,7 @@ after_listen:
 			 * to socket buffer.
 			 */
 			m_adj(m, toff + off);
-			sbappend(&so->so_rcv, m);
+			sbappendstream(&so->so_rcv, m);
 			sorwakeup(so);
 			TCP_SETUP_ACK(tp, th);
 			if (tp->t_flags & TF_ACKNOW)
@@ -1750,12 +1839,20 @@ after_listen:
 			 * while in TIME_WAIT, drop the old connection
 			 * and start over if the sequence numbers
 			 * are above the previous ones.
+			 *
+			 * NOTE: We will checksum the packet again, and
+			 * so we need to put the header fields back into
+			 * network order!
+			 * XXX This kind of sucks, but we don't expect
+			 * XXX this to happen very often, so maybe it
+			 * XXX doesn't matter so much.
 			 */
 			if (tiflags & TH_SYN &&
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
 				iss = tcp_new_iss(tp, tp->snd_nxt);
 				tp = tcp_close(tp);
+				TCP_FIELDS_TO_NET(th);
 				goto findpcb;
 			}
 			/*
@@ -2232,7 +2329,7 @@ dodata:							/* XXX */
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
 			m_adj(m, hdroptlen);
-			sbappend(&(so)->so_rcv, m);
+			sbappendstream(&(so)->so_rcv, m);
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);
@@ -3238,6 +3335,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #endif
 	else
 		tp = NULL;
+	tp->t_flags = sototcpcb(oso)->t_flags & TF_NODELAY;
 	if (sc->sc_request_r_scale != 15) {
 		tp->requested_s_scale = sc->sc_requested_s_scale;
 		tp->request_r_scale = sc->sc_request_r_scale;
@@ -3714,7 +3812,7 @@ syn_cache_respond(sc, m)
 	switch (sc->sc_src.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
-		ip->ip_len = tlen;
+		ip->ip_len = htons(tlen);
 		ip->ip_ttl = ip_defttl;
 		/* XXX tos? */
 		break;

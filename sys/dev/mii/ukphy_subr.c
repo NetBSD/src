@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.3.8.2 2002/01/10 19:56:19 thorpej Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.3.8.3 2002/09/06 08:45:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.3.8.2 2002/01/10 19:56:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.3.8.3 2002/09/06 08:45:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.158.2.5 2002/06/23 17:48:46 jdolecek Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.158.2.6 2002/09/06 08:46:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.158.2.5 2002/06/23 17:48:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.158.2.6 2002/09/06 08:46:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,6 +444,9 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-561  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "SONY    ", "CD-ROM CDU-76S", ""},
+				PQUIRK_NOLUNS|PQUIRK_NOSYNC|PQUIRK_NOWIDE},
+	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8003A", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8012 ", ""},     PQUIRK_NOLUNS},
@@ -496,6 +499,10 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "HITACHI", "DK515C",            "CP16"}, PQUIRK_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
 	 "HITACHI", "DK515C",            "CP15"}, PQUIRK_NOSTARTUNIT},
+	{{T_DIRECT, T_FIXED,
+	/* improperly report DT-only sync mode */
+	 "HITACHI", "DX32DJ-72ME",	 ""},
+				PQUIRK_CAP_SYNC|PQUIRK_CAP_WIDE16},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP",  "1548-15MZ1077801",  "HZ2P"}, PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,

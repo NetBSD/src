@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.12.2.3 2002/06/23 17:48:22 jdolecek Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.12.2.4 2002/09/06 08:45:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.12.2.3 2002/06/23 17:48:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.12.2.4 2002/09/06 08:45:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,17 +284,7 @@ void pcmcia_check_cis_quirks(sc)
 					}
 					printf("\n");
 				}
-
-				SIMPLEQ_FOREACH(pf, &sc->card.pf_head,
-				    pf_list) {
-					SIMPLEQ_FOREACH(cfe, &pf->cfe_head,
-					    cfe_list) {
-						free(cfe, M_DEVBUF);
-					}
-					free(pf, M_DEVBUF);
-				}
-
-				SIMPLEQ_INIT(&sc->card.pf_head);
+				pcmcia_free_pf(&sc->card.pf_head);
 				wiped = 1;
 			}
 

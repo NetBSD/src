@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.29.2.2 2002/03/16 16:01:53 jdolecek Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.29.2.3 2002/09/06 08:48:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.29.2.2 2002/03/16 16:01:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.29.2.3 2002/09/06 08:48:19 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -113,7 +113,8 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	struct namecache *ncp;
 	struct nchashhead *ncpp;
 	struct vnode *vp;
-	int vpid, error;
+	u_long vpid;
+	int error;
 
 	if (!doingcache) {
 		cnp->cn_flags &= ~MAKEENTRY;
@@ -423,8 +424,7 @@ nchreinit(void)
 	struct namecache *ncp;
 	struct nchashhead *oldhash1, *hash1;
 	struct ncvhashhead *oldhash2, *hash2;
-	u_long oldmask1, oldmask2, mask1, mask2;
-	int i;
+	u_long i, oldmask1, oldmask2, mask1, mask2;
 
 	hash1 = hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &mask1);
 	hash2 =

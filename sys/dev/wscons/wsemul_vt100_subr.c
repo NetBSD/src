@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.8.4.1 2002/01/10 19:59:17 thorpej Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.8.4.2 2002/09/06 08:47:32 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.8.4.1 2002/01/10 19:59:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.8.4.2 2002/09/06 08:47:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -633,8 +633,8 @@ vt100_selectattribute(struct wsemul_vt100_emuldata *edp,
 		printf("colors ignored (impossible)\n");
 #endif
 	}
-	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
-					    flags & WSATTR_WSCOLORS, bkgdattr);
+	error = (*edp->emulops->allocattr)(edp->emulcookie, fgcol, bgcol,
+					   flags & WSATTR_WSCOLORS, bkgdattr);
 	if (error)
 		return (error);
 
@@ -685,8 +685,8 @@ vt100_selectattribute(struct wsemul_vt100_emuldata *edp,
 #endif
 		}
 	}
-	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
-					    flags, attr);
+	error = (*edp->emulops->allocattr)(edp->emulcookie, fgcol, bgcol,
+					   flags, attr);
 	if (error)
 		return (error);
 

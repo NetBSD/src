@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.102.2.4 2002/06/23 17:49:04 jdolecek Exp $	*/
+/*	$NetBSD: ohci.c,v 1.102.2.5 2002/09/06 08:46:45 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.102.2.4 2002/06/23 17:49:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.102.2.5 2002/09/06 08:46:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1990,10 +1990,8 @@ ohci_open(usbd_pipe_handle pipe)
 		opipe->sed = sed;
 		if (xfertype == UE_ISOCHRONOUS) {
 			sitd = ohci_alloc_sitd(sc);
-			if (sitd == NULL) {
-				ohci_free_sitd(sc, sitd);
+			if (sitd == NULL)
 				goto bad1;
-			}
 			opipe->tail.itd = sitd;
 			tdphys = sitd->physaddr;
 			fmt = OHCI_ED_FORMAT_ISO;
@@ -2003,10 +2001,8 @@ ohci_open(usbd_pipe_handle pipe)
 				fmt |= OHCI_ED_DIR_OUT;
 		} else {
 			std = ohci_alloc_std(sc);
-			if (std == NULL) {
-				ohci_free_std(sc, std);
+			if (std == NULL)
 				goto bad1;
-			}
 			opipe->tail.td = std;
 			tdphys = std->physaddr;
 			fmt = OHCI_ED_FORMAT_GEN | OHCI_ED_DIR_TD;

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.1.2.1 2002/06/23 17:43:30 jdolecek Exp $	*/
+/*	$NetBSD: signal.h,v 1.1.2.2 2002/09/06 08:42:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -57,9 +57,9 @@ typedef int sig_atomic_t;
  */
 struct sigcontext {
 	int		sc_gs;
-	int		sc_fs;	/* unused */
-	int		sc_es;	/* unused */
-	int		sc_ds;	/* unused */
+	int		sc_fs;
+	int		sc_es;
+	int		sc_ds;
 	u_int64_t	sc_r8;
 	u_int64_t	sc_r9;
 	u_int64_t	sc_r10;

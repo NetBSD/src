@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.132.2.7 2002/06/23 17:47:38 jdolecek Exp $
+#	$NetBSD: files.pci,v 1.132.2.8 2002/09/06 08:45:12 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -174,9 +174,9 @@ attach	trm at pci
 file	dev/pci/trm.c			trm
 
 # Guillemot Maxi Radio FM 2000 Radio Card
-device	mr: radiodev
-attach	mr at pci
-file	dev/pci/maxiradio.c		mr
+device	gtp: radiodev, tea5757
+attach	gtp at pci
+file	dev/pci/gtp.c			gtp
 
 # MediaForte SoundForte SF64-PCR Radio card
 #device	sf4r: radiodev, tea5757
@@ -463,6 +463,11 @@ attach	skge at skgec
 device	wm: ether, ifnet, arp, mii, mii_bitbang
 attach	wm at pci
 file	dev/pci/if_wm.c			wm
+
+# Broadcom 570x Gigabit Ethernet
+device	bge: ether, ifnet, arp, mii, mii_bitbang
+attach	bge at pci
+file	dev/pci/if_bge.c		bge
 
 # Realtek 8129/8139 Ethernet controllers
 attach	rtk at pci with rtk_pci

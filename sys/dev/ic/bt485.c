@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.4.2.2 2002/01/10 19:54:18 thorpej Exp $ */
+/* $NetBSD: bt485.c,v 1.4.2.3 2002/09/06 08:44:12 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.4.2.2 2002/01/10 19:54:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.4.2.3 2002/09/06 08:44:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ bt485_set_cmap(rc, cmapp)
 	u_int count, index;
 	int s;
 
-	if (cmapp->index >= 256 || (cmapp->index + cmapp->count) > 256)
+	if (cmapp->index >= 256 || cmapp->count > 256 - cmapp->index)
 		return (EINVAL);
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
@@ -295,10 +295,10 @@ bt485_get_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct bt485data *data = (struct bt485data *)rc;
-	int error, count, index;
+	u_int count, index;
+	int error;
 
-	if ((u_int)cmapp->index >= 256 ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > 256)
+	if (cmapp->index >= 256 || cmapp->count > 256 - cmapp->index )
 		return (EINVAL);
 
 	count = cmapp->count;

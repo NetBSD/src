@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.7.4.1 2002/03/16 16:01:36 jdolecek Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.7.4.2 2002/09/06 08:46:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ typedef struct {
 	uByte		bmAttributes;
 	uWord		wMaxPacketSize;
 	uByte		bInterval;
-	/* 
+	/*
 	 * The following two entries are only used by the Audio Class.
 	 * And according to the specs the Audio Class is the only one
 	 * allowed to extend the endpoint descriptor.

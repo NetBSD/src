@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.42.2.2 2002/03/16 16:01:38 jdolecek Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.42.2.3 2002/09/06 08:47:00 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.42.2.2 2002/03/16 16:01:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.42.2.3 2002/09/06 08:47:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ USB_MATCH(ulpt)
 {
 	USB_MATCH_START(ulpt, uaa);
 	usb_interface_descriptor_t *id;
-	
+
 	DPRINTFN(10,("ulpt_match\n"));
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
@@ -204,14 +204,14 @@ USB_ATTACH(ulpt)
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t epcount;
 	int i, altno;
-	
+
 	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
 	usbd_devinfo(dev, 0, devinfo);
 	USB_ATTACH_SETUP;
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
 	       devinfo, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
 
-	/* XXX 
+	/* XXX
 	 * Stepping through the alternate settings needs to be abstracted out.
 	 */
 	cdesc = usbd_get_config_descriptor(dev);
@@ -276,18 +276,19 @@ USB_ATTACH(ulpt)
 		}
 	}
 	if (sc->sc_out == -1) {
-		printf("%s: could not find bulk endpoint\n",
+		printf("%s: could not find bulk out endpoint\n",
 		    USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
-	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
-	       sc->sc_in >= 0 ? "bi" : "uni");
 
 	if (usbd_get_quirks(dev)->uq_flags & UQ_BROKEN_BIDIR) {
 		/* This device doesn't handle reading properly. */
 		sc->sc_in = -1;
 	}
+
+	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
+	       sc->sc_in >= 0 ? "bi" : "uni");
 
 	DPRINTFN(10, ("ulpt_attach: bulk=%d\n", sc->sc_out));
 
@@ -667,7 +668,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 		if (error)
 			break;
 		DPRINTFN(1, ("ulptwrite: transfer %d bytes\n", n));
-		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY, 
+		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY,
 			  USBD_NO_TIMEOUT, bufp, &n, "ulptwr");
 		if (err) {
 			DPRINTF(("ulptwrite: error=%d\n", err));

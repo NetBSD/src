@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.2.2 2002/06/23 17:43:09 jdolecek Exp $     */
+/*	$NetBSD: trap.c,v 1.66.2.3 2002/09/06 08:42:26 jdolecek Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,6 +34,7 @@
 		
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
@@ -60,6 +61,9 @@
 #include <kern/syscalls.c>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 #ifdef TRAPDEBUG
@@ -340,7 +344,6 @@ syscall(struct trapframe *frame)
 	struct trapframe *exptr;
 	struct proc *p = curproc;
 
-
 #ifdef TRAPDEBUG
 if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
 	       syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
@@ -371,19 +374,13 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	KERNEL_PROC_LOCK(p);
 	if (callp->sy_narg) {
 		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
-		if (err) {
-#ifdef KTRACE
-			if (KTRPOINT(p, KTR_SYSCALL))
-				ktrsyscall(p, frame->code,
-				    callp->sy_argsize, args);
-#endif
+		if (err)
 			goto bad;
-		}
 	}
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, frame->code, callp->sy_argsize, args);
-#endif
+
+	if ((err = trace_enter(p, frame->code, args, rval)) != 0)
+		goto bad;
+
 	err = (*callp->sy_call)(curproc, args, rval);
 	KERNEL_PROC_UNLOCK(p);
 	exptr = curproc->p_addr->u_pcb.framep;
@@ -416,15 +413,9 @@ bad:
 		break;
 	}
 
-	userret(p, frame, oticks);
+	trace_exit(p, frame->code, args, rval, err);
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, frame->code, err, rval[0]);
-		KERNEL_PROC_UNLOCK(p);
-	}
-#endif
+	userret(p, frame, oticks);
 }
 
 void

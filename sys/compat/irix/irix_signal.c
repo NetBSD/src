@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.3.4.4 2002/06/23 17:43:55 jdolecek Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.3.4.5 2002/09/06 08:43:07 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.4.4 2002/06/23 17:43:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.4.5 2002/09/06 08:43:07 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -175,8 +175,7 @@ irix_to_native_sigset(sss, bss)
 }
 
 void
-irix_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+irix_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -186,6 +185,7 @@ irix_sendsig(catcher, sig, mask, code)
 	struct frame *f;
 	int onstack;
 	int error;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct irix_sigframe sf;
  
 	f = (struct frame *)p->p_md.md_regs;
@@ -604,7 +604,8 @@ irix_sys_sginap(p, v, retval)
 	if (rticks != 0)
 		microtime(&tvb);
 
-	if ((tsleep(&dontcare, PCATCH, 0, rticks) != 0) && (rticks != 0)) {
+	if ((tsleep(&dontcare, PZERO|PCATCH, 0, rticks) != 0) &&
+	    (rticks != 0)) {
 		microtime(&tve);
 		timersub(&tve, &tvb, &tvd);
 		delta = ((tvd.tv_sec * 1000000) + tvd.tv_usec); /* XXX */
@@ -801,11 +802,10 @@ loop:
 			 * parent a SIGCHLD.  The rest of the cleanup will be
 			 * done when the old parent waits on the child.
 			 */
-			if ((q->p_flag & P_TRACED) &&
-			    q->p_oppid != q->p_pptr->p_pid) {
-				t = pfind(q->p_oppid);
+			if ((q->p_flag & P_TRACED) && q->p_opptr != q->p_pptr){
+				t = q->p_opptr;
 				proc_reparent(q, t ? t : initproc);
-				q->p_oppid = 0;
+				q->p_opptr = NULL;
 				q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 				psignal(q->p_pptr, SIGCHLD);
 				wakeup((caddr_t)q->p_pptr);
@@ -935,8 +935,10 @@ irix_sys_sigaction(p, v, retval)
 	} */ *uap = v;
 	int signum;
 	struct svr4_sys_sigaction_args cup;
-	void *sigtramp;
 	struct irix_emuldata *ied;
+#ifdef DEBUG_IRIX
+	void *sigtramp;
+#endif
 
 	/* 
 	 * On IRIX, the sigaction() system call has a fourth argument, which 

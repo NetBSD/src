@@ -151,8 +151,7 @@ extern int sigdebug;
 #endif
 
 void
-netbsd32_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+netbsd32_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -162,6 +161,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	register struct trapframe64 *tf;
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sparc32_sigframe sf;
 	extern char netbsd32_sigcode[], netbsd32_esigcode[];
 #define	szsigcode	(netbsd32_esigcode - netbsd32_sigcode)
@@ -844,4 +844,23 @@ netbsd32_md_ioctl(fp, com, data32, p)
 	if (memp)
 		free(memp, M_IOCTLOPS);
 	return (error);
+}
+
+
+int
+netbsd32_sysarch(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(netbsd32_voidp) parms;
+	} */ *uap = v;
+
+	switch (SCARG(uap, op)) {
+	default:
+		printf("(%s) netbsd32_sysarch(%d)\n", MACHINE, SCARG(uap, op));
+		return EINVAL;
+	}
 }
