@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.3 1997/06/08 04:55:15 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.4 1997/10/20 23:29:34 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -135,7 +135,7 @@ int write_lease (lease)
 	}
 	if (lease -> client_hostname) {
 		errno = 0;
-		fprintf (db_file, "\n\tclient-hostname %s;",
+		fprintf (db_file, "\n\tclient-hostname \"%s\";",
 			 lease -> client_hostname);
 		if (errno) {
 			++errors;
@@ -143,7 +143,7 @@ int write_lease (lease)
 	}
 	if (lease -> hostname) {
 		errno = 0;
-		fprintf (db_file, "\n\thostname %s;",
+		fprintf (db_file, "\n\thostname \"%s\";",
 			 lease -> client_hostname);
 		if (errno) {
 			++errors;

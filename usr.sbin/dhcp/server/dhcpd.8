@@ -51,6 +51,9 @@ dhcpd - Dynamic Host Configuration Protocol Server
 .B -d
 ]
 [
+.B -q
+]
+[
 .B -cf
 .I config-file
 ]
@@ -178,6 +181,12 @@ flag.   Because of the importance of using the same lease database at
 all times when running dhcpd in production, these options should be
 used \fBonly\fR for testing lease files or database files in a
 non-production environment.
+.PP
+When starting dhcpd up from a system startup script (e.g., /etc/rc),
+it may not be desirable to print out the entire copyright message on
+startup.   To avoid printing this message, the
+.B -q
+flag may be specified.
 .SH CONFIGURATION
 The syntax of the dhcpd.conf(5) file is discussed seperately.   This
 section should be used as an overview of the configuration process,

@@ -54,7 +54,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: raw.c,v 1.1.1.1 1997/03/29 21:52:17 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: raw.c,v 1.1.1.2 1997/10/20 23:28:48 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -78,8 +78,9 @@ void if_register_send (info)
 	memset (name.sin_zero, 0, sizeof (name.sin_zero));
 
 	/* List addresses on which we're listening. */
-	note ("Sending on %s, port %d",
-	      piaddr (info -> address), htons (local_port));
+        if (!quiet_interface_discovery)
+		note ("Sending on %s, port %d",
+		      piaddr (info -> address), htons (local_port));
 	if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
 		error ("Can't create dhcp socket: %m");
 
@@ -95,10 +96,11 @@ void if_register_send (info)
 		error ("Can't set IP_HDRINCL flag: %m");
 
 	info -> wfdesc = sock;
-	note ("Sending on   Raw/%s/%s",
-	      info -> name,
-	      (info -> shared_network ?
-	       info -> shared_network -> name : "unattached"));
+        if (!quiet_interface_discovery)
+		note ("Sending on   Raw/%s/%s",
+		      info -> name,
+		      (info -> shared_network ?
+		       info -> shared_network -> name : "unattached"));
 }
 
 size_t send_packet (interface, packet, raw, len, from, to, hto)

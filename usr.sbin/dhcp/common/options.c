@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.1.1.2 1997/06/03 02:49:30 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.1.1.3 1997/10/20 23:28:42 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -155,12 +155,13 @@ void parse_option_buffer (packet, buffer, length)
    three seperate buffers if needed.  This allows us to cons up a set
    of vendor options using the same routine. */
 
-int cons_options (inpacket, outpacket, options, overload, terminate)
+int cons_options (inpacket, outpacket, options, overload, terminate, bootpp)
 	struct packet *inpacket;
 	struct dhcp_packet *outpacket;
 	struct tree_cache **options;
 	int overload;	/* Overload flags that may be set. */
 	int terminate;
+	int bootpp;
 {
 	unsigned char priority_list [300];
 	int priority_len;
@@ -171,10 +172,10 @@ int cons_options (inpacket, outpacket, options, overload, terminate)
 	int length;
 
 	/* If the client has provided a maximum DHCP message size,
-	   use that.   Otherwise, we use the default MTU size (576 bytes). */
-	/* XXX Maybe it would be safe to assume that we can send a packet
-	   to the client that's as big as the one it sent us, even if it
-	   didn't specify a large MTU. */
+	   use that; otherwise, if it's BOOTP, only 64 bytes; otherwise
+	   use up to the minimum IP MTU size (576 bytes). */
+	/* XXX if a BOOTP client specifies a max message size, we will
+	   honor it. */
 	if (inpacket && inpacket -> options [DHO_DHCP_MAX_MESSAGE_SIZE].data) {
 		main_buffer_size =
 			(getUShort (inpacket -> options
@@ -183,7 +184,9 @@ int cons_options (inpacket, outpacket, options, overload, terminate)
 		/* Enforce a minimum packet size... */
 		if (main_buffer_size < (576 - DHCP_FIXED_LEN))
 			main_buffer_size = 576 - DHCP_FIXED_LEN;
-	} else
+	} else if (bootpp)
+		main_buffer_size = 64;
+	else
 		main_buffer_size = 576 - DHCP_FIXED_LEN;
 
 	/* Preload the option priority list with mandatory options. */

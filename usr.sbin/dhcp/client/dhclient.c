@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.1.1.2 1997/06/03 02:49:13 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.1.1.3 1997/10/20 23:28:15 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -69,6 +69,8 @@ struct tree_cache *global_options [256];
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = _PATH_DHCLIENT_DB;
 char *path_dhclient_pid = _PATH_DHCLIENT_PID;
+
+int interfaces_requested = 0;
 
 int log_perror = 1;
 
@@ -89,6 +91,7 @@ u_int16_t local_port;
 u_int16_t remote_port;
 int log_priority;
 int no_daemon;
+int save_scripts;
 
 static void usage PROTO ((void));
 
@@ -121,6 +124,8 @@ int main (argc, argv, envp)
 			       ntohs (local_port));
 		} else if (!strcmp (argv [i], "-d")) {
 			no_daemon = 1;
+		} else if (!strcmp (argv [i], "-D")) {
+			save_scripts = 1;
  		} else if (argv [i][0] == '-') {
  		    usage ();
  		} else {
@@ -134,6 +139,7 @@ int main (argc, argv, envp)
  		    strcpy (tmp -> name, argv [i]);
  		    tmp -> next = interfaces;
  		    tmp -> flags = INTERFACE_REQUESTED;
+		    interfaces_requested = 1;
  		    interfaces = tmp;
  		}
 	}
@@ -197,7 +203,9 @@ int main (argc, argv, envp)
 	   are relevant should be running, so now we once again call
 	   discover_interfaces(), and this time ask it to actually set
 	   up the interfaces. */
-	discover_interfaces (DISCOVER_RUNNING);
+	discover_interfaces (interfaces_requested
+			     ? DISCOVER_REQUESTED
+			     : DISCOVER_RUNNING);
 
 	/* Make up a seed for the random number generator from current
 	   time plus the sum of the last four bytes of each
@@ -222,6 +230,9 @@ int main (argc, argv, envp)
 
 	/* Set up the bootp packet handler... */
 	bootp_packet_handler = do_packet;
+
+	/* Start listening on the sysconf socket... */
+	sysconf_startup (status_message);
 
 	/* Start dispatching packets and timeouts... */
 	dispatch ();
@@ -291,8 +302,10 @@ void state_reboot (ipp)
 	ip -> client -> first_sending = cur_time;
 	ip -> client -> interval = ip -> client -> config -> initial_interval;
 
-	/* Add an immediate timeout to cause the first DHCPDISCOVER packet
-	   to go out. */
+	/* Zap the medium list... */
+	ip -> client -> medium = (struct string_list *)0;
+
+	/* Send out the first DHCPREQUEST packet. */
 	send_request (ip);
 }
 
@@ -484,11 +497,11 @@ void dhcpack (packet)
 void bind_lease (ip)
 	struct interface_info *ip;
 {
-	/* Write out the new lease. */
-	write_client_lease (ip, ip -> client -> new);
-
 	/* Remember the medium. */
 	ip -> client -> new -> medium = ip -> client -> medium;
+
+	/* Write out the new lease. */
+	write_client_lease (ip, ip -> client -> new);
 
 	/* Run the client script with the new parameters. */
 	script_init (ip, (ip -> client -> state == S_REQUESTING
@@ -659,6 +672,7 @@ void dhcpoffer (packet)
 
 	note ("%s from %s", name, piaddr (packet -> client_addr));
 
+
 	/* If this lease doesn't supply the minimum required parameters,
 	   blow it off. */
 	for (i = 0; ip -> client -> config -> required_options [i]; i++) {
@@ -777,7 +791,7 @@ struct client_lease *packet_to_lease (packet)
 		if (packet -> options [i].len) {
 			lease -> options [i].data =
 				(unsigned char *)
-					malloc (packet -> options [i].len);
+					malloc (packet -> options [i].len + 1);
 			if (!lease -> options [i].data) {
 				warn ("dhcpoffer: no memory for option %d\n",
 				      i);
@@ -789,6 +803,8 @@ struct client_lease *packet_to_lease (packet)
 					packet -> options [i].len);
 				lease -> options [i].len =
 					packet -> options [i].len;
+				lease -> options [i].data
+					[lease -> options [i].len] = 0;
 			}
 		}
 	}
@@ -1114,10 +1130,26 @@ void send_request (ipp)
 	if ((ip -> client -> state == S_REBOOTING ||
 	     ip -> client -> state == S_REQUESTING) &&
 	    interval > ip -> client -> config -> reboot_timeout) {
+	cancel:
 		ip -> client -> state = S_INIT;
 		cancel_timeout (send_request, ip);
 		state_init (ip);
 		return;
+	}
+
+	/* If we're in the reboot state, make sure the media is set up
+	   correctly. */
+	if (ip -> client -> state == S_REBOOTING &&
+	    !ip -> client -> medium &&
+	    ip -> client -> active -> medium ) {
+		script_init (ip, "MEDIUM", ip -> client -> active -> medium);
+
+		/* If the medium we chose won't fly, go to INIT state. */
+		if (script_go (ip))
+			goto cancel;
+
+		/* Record the medium. */
+		ip -> client -> medium = ip -> client -> active -> medium;
 	}
 
 	/* If the lease has expired, relinquish the address and go back
@@ -1327,7 +1359,7 @@ void make_discover (ip, lease)
 	/* Set up the option buffer... */
 	ip -> client -> packet_length =
 		cons_options ((struct packet *)0, &ip -> client -> packet,
-			      options, 0, 0);
+			      options, 0, 0, 0);
 	if (ip -> client -> packet_length < BOOTP_MIN_LEN)
 		ip -> client -> packet_length = BOOTP_MIN_LEN;
 
@@ -1434,7 +1466,7 @@ void make_request (ip, lease)
 	/* Set up the option buffer... */
 	ip -> client -> packet_length =
 		cons_options ((struct packet *)0, &ip -> client -> packet,
-			      options, 0, 0);
+			      options, 0, 0, 0);
 	if (ip -> client -> packet_length < BOOTP_MIN_LEN)
 		ip -> client -> packet_length = BOOTP_MIN_LEN;
 
@@ -1533,7 +1565,7 @@ void make_decline (ip, lease)
 	/* Set up the option buffer... */
 	ip -> client -> packet_length =
 		cons_options ((struct packet *)0, &ip -> client -> packet,
-			      options, 0, 0);
+			      options, 0, 0, 0);
 	if (ip -> client -> packet_length < BOOTP_MIN_LEN)
 		ip -> client -> packet_length = BOOTP_MIN_LEN;
 
@@ -1599,7 +1631,7 @@ void make_release (ip, lease)
 	/* Set up the option buffer... */
 	ip -> client -> packet_length =
 		cons_options ((struct packet *)0, &ip -> client -> packet,
-			      options, 0, 0);
+			      options, 0, 0, 0);
 	if (ip -> client -> packet_length < BOOTP_MIN_LEN)
 		ip -> client -> packet_length = BOOTP_MIN_LEN;
 
@@ -1755,10 +1787,21 @@ void script_init (ip, reason, medium)
 	char *reason;
 	struct string_list *medium;
 {
-	strcpy (scriptName, "/tmp/dcsXXXXXX");
-	mktemp (scriptName);
+	int fd;
+#ifndef HAVE_MKSTEMP
 
-	scriptFile = fopen (scriptName, "w");
+	do {
+#endif
+		strcpy (scriptName, "/tmp/dcsXXXXXX");
+#ifdef HAVE_MKSTEMP
+		fd = mkstemp (scriptName);
+#else
+		mktemp (scriptName);
+		fd = creat (scriptName, 0600);
+	} while (fd < 0);
+#endif
+
+	scriptFile = fdopen (fd, "w");
 	if (!scriptFile)
 		error ("can't write script file: %m");
 	fprintf (scriptFile, "#!/bin/sh\n\n");
@@ -1896,7 +1939,8 @@ int script_go (ip)
 	fclose (scriptFile);
 	chmod (scriptName, 0700);
 	rval = system (scriptName);	
-	/* unlink (scriptName); */
+	if (!save_scripts)
+		unlink (scriptName);
 	return rval;
 }
 
@@ -1925,8 +1969,10 @@ void go_daemon ()
 	int pid;
 
 	/* Don't become a daemon if the user requested otherwise. */
-	if (no_daemon)
+	if (no_daemon) {
+		write_client_pid_file ();
 		return;
+	}
 
 	/* Only do it once. */
 	if (state)
@@ -1943,5 +1989,70 @@ void go_daemon ()
 		exit (0);
 	/* Become session leader and get pid... */
 	pid = setsid ();
+
+	write_client_pid_file ();
 }
 
+void write_client_pid_file ()
+{
+	FILE *pf;
+	int pfdesc;
+
+	pfdesc = open (path_dhclient_pid, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+
+	if (pfdesc < 0) {
+		warn ("Can't create %s: %m", path_dhclient_pid);
+		return;
+	}
+
+	pf = fdopen (pfdesc, "w");
+	if (!pf)
+		warn ("Can't fdopen %s: %m", path_dhclient_pid);
+	else {
+		fprintf (pf, "%d\n", getpid ());
+		fclose (pf);
+	}
+}
+
+void status_message (header, data)
+	struct sysconf_header *header;
+	void *data;
+{
+	switch (header -> type) {
+	      case NETWORK_LOCATION_CHANGED:
+		client_location_changed ();
+		break;
+
+	      default:
+		break;
+	}
+}
+
+void client_location_changed ()
+{
+	struct interface_info *ip;
+
+	for (ip = interfaces; ip; ip = ip -> next) {
+		switch (ip -> client -> state) {
+		      case S_SELECTING:
+			cancel_timeout (send_discover, ip);
+			break;
+
+		      case S_BOUND:
+			cancel_timeout (state_bound, ip);
+			break;
+
+		      case S_REBOOTING:
+		      case S_REQUESTING:
+		      case S_RENEWING:
+			cancel_timeout (send_request, ip);
+			break;
+
+		      case S_INIT:
+		      case S_REBINDING:
+			break;
+		}
+		ip -> client -> state = S_INIT;
+		state_reboot (ip);
+	}
+}

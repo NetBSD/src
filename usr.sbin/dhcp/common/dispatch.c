@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1.1.3 1997/06/03 02:49:23 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.1.1.4 1997/10/20 23:28:30 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -58,6 +58,7 @@ void (*bootp_packet_handler) PROTO ((struct interface_info *,
 				     struct iaddr, struct hardware *));
 
 static void got_one PROTO ((struct protocol *));
+int quiet_interface_discovery;
 
 /* Use the SIOCGIFCONF ioctl to get a list of all the attached interfaces.
    For each interface that's of type INET and not the loopback interface,
@@ -100,9 +101,12 @@ void discover_interfaces (state)
 
 	/* If we already have a list of interfaces, and we're running as
 	   a DHCP server, the interfaces were requested. */
-	if (interfaces &&
-	    (state == DISCOVER_SERVER || state == DISCOVER_RELAY))
+	if (interfaces && (state == DISCOVER_SERVER ||
+			   state == DISCOVER_RELAY ||
+			   state == DISCOVER_REQUESTED))
 		ir = 0;
+	else if (state == DISCOVER_UNCONFIGURED)
+		ir = INTERFACE_REQUESTED | INTERFACE_AUTOMATIC;
 	else
 		ir = INTERFACE_REQUESTED;
 
@@ -112,10 +116,11 @@ void discover_interfaces (state)
 	for (i = 0; i < ic.ifc_len;) {
 		struct ifreq *ifp = (struct ifreq *)((caddr_t)ic.ifc_req + i);
 #ifdef HAVE_SA_LEN
-		i += (sizeof ifp -> ifr_name) + ifp -> ifr_addr.sa_len;
-#else
-		i += sizeof *ifp;
+		if (ifp -> ifr_addr.sa_len)
+			i += (sizeof ifp -> ifr_name) + ifp -> ifr_addr.sa_len;
+		else
 #endif
+			i += sizeof *ifp;
 
 #ifdef ALIAS_NAMES_PERMUTED
 		if ((s = strrchr (ifp -> ifr_name, ':'))) {
@@ -306,6 +311,10 @@ void discover_interfaces (state)
 	last = (struct interface_info *)0;
 	for (tmp = interfaces; tmp; tmp = next) {
 		next = tmp -> next;
+		if ((tmp -> flags & INTERFACE_AUTOMATIC) &&
+		    state == DISCOVER_REQUESTED)
+			tmp -> flags &= ~(INTERFACE_AUTOMATIC |
+					  INTERFACE_REQUESTED);
 		if (!tmp -> ifp || !(tmp -> flags & INTERFACE_REQUESTED)) {
 			if ((tmp -> flags & INTERFACE_REQUESTED) != ir)
 				error ("%s: not found", tmp -> name);
@@ -456,8 +465,12 @@ void dispatch ()
 		GET_TIME (&cur_time);
 
 		/* Not likely to be transitory... */
-		if (count < 0)
-			error ("poll: %m");
+		if (count < 0) {
+			if (errno == EAGAIN || ERRNO == EINTR)
+				continue;
+			else
+				error ("poll: %m");
+		}
 
 		i = 0;
 		for (l = protocols; l; l = l -> next) {
@@ -703,4 +716,22 @@ void add_protocol (name, fd, handler, local)
 
 	p -> next = protocols;
 	protocols = p;
+}
+
+void remove_protocol (proto)
+	struct protocol *proto;
+{
+	struct protocol *p, *next, *prev;
+
+	prev = (struct protocol *)0;
+	for (p = protocols; p; p = next) {
+		next = p -> next;
+		if (p == proto) {
+			if (prev)
+				prev -> next = p -> next;
+			else
+				protocols = p -> next;
+			free (p);
+		}
+	}
 }

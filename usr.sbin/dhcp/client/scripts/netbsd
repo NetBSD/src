@@ -51,6 +51,11 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
     for router in $old_routers; do
       route delete default $router >/dev/null 2>&1
     done
+    set $old_static_routes
+    while [ $# -gt 1 ]; do
+      route delete $1 $2
+      shift; shift
+    done
     arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p' |sh
   fi
   if [ x$old_ip_address = x ] || [ x$old_ip_address != x$new_ip_address ] || \
@@ -60,6 +65,11 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
     route add $new_ip_address 127.1 >/dev/null 2>&1
     for router in $new_routers; do
       route add default $router >/dev/null 2>&1
+    done
+    set $new_static_routes
+    while [ $# -gt 1 ]; do
+      route add $1 $2
+      shift; shift
     done
   fi
   if [ x$new_ip_address != x$alias_ip_address ] && [ x$alias_ip_address != x ];
@@ -84,6 +94,11 @@ if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ]; then
     route delete $old_ip_address 127.1 >/dev/null 2>&1
     for router in $old_routers; do
       route delete default $router >/dev/null 2>&1
+    done
+    set $old_static_routes
+    while [ $# -gt 1 ]; do
+      route delete $1 $2
+      shift; shift
     done
     arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p' \
 						|sh >/dev/null 2>&1
@@ -114,19 +129,29 @@ if [ x$reason = xTIMEOUT ]; then
     for router in $new_routers; do
       route add default $router >/dev/null 2>&1
     done
+    set $new_static_routes
+    while [ $# -gt 1 ]; do
+      route add $0 $1
+      shift; shift
+    done
     echo search $new_domain_name >/etc/resolv.conf.std
     for nameserver in $new_domain_name_servers; do
       echo nameserver $nameserver >>/etc/resolv.conf.std
     done
     if [ -f /etc/resolv.conf ]; then
       rm -f /etc/resolv.conf
-      ln /etc/resolv.conf.std /etc/resolv.conf
     fi
+    mv /etc/resolv.conf.std /etc/resolv.conf
     exit 0
   fi
   ifconfig $interface inet -alias $new_ip_address $medium
   for router in $old_routers; do
     route delete default $router >/dev/null 2>&1
+  done
+  set $old_static_routes
+  while [ $# -gt 1 ]; do
+    route delete $1 $2
+    shift; shift
   done
   arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p' \
 							|sh >/dev/null 2>&1

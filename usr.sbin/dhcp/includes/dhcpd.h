@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #else
@@ -65,6 +66,7 @@
 #include "tree.h"
 #include "hash.h"
 #include "inet.h"
+#include "sysconf.h"
 
 struct option_data {
 	int len;
@@ -177,6 +179,7 @@ struct lease_state {
 #define DISCOVER_SERVER		1
 #define DISCOVER_UNCONFIGURED	2
 #define DISCOVER_RELAY		3
+#define DISCOVER_REQUESTED	4
 
 /* Group of declarations that share common parameters. */
 struct group {
@@ -356,6 +359,7 @@ struct interface_info {
 	struct ifreq *ifp;		/* Pointer to ifreq struct. */
 	u_int32_t flags;		/* Control flags... */
 #define INTERFACE_REQUESTED 1
+#define INTERFACE_AUTOMATIC 2
 
 	/* Only used by DHCP client code. */
 	struct client_state *client;
@@ -445,7 +449,7 @@ typedef unsigned char option_mask [16];
 void parse_options PROTO ((struct packet *));
 void parse_option_buffer PROTO ((struct packet *, unsigned char *, int));
 int cons_options PROTO ((struct packet *, struct dhcp_packet *,
-			  struct tree_cache **, int, int));
+			  struct tree_cache **, int, int, int));
 int store_options PROTO ((unsigned char *, int, struct tree_cache **,
 			   unsigned char *, int, int, int, int));
 char *pretty_print_option PROTO ((unsigned int,
@@ -724,6 +728,7 @@ ssize_t send_packet PROTO ((struct interface_info *,
 /* dispatch.c */
 extern struct interface_info *interfaces, *dummy_interfaces;
 extern struct protocol *protocols;
+extern int quiet_interface_discovery;
 extern void (*bootp_packet_handler) PROTO ((struct interface_info *,
 				     unsigned char *, int, unsigned short,
 				     struct iaddr, struct hardware *));
@@ -739,6 +744,8 @@ void add_fast_timeout PROTO ((UTIME, void (*) PROTO ((void *)), void *));
 void cancel_timeout PROTO ((void (*) PROTO ((void *)), void *));
 void add_protocol PROTO ((char *, int,
 			  void (*) PROTO ((struct protocol *)), void *));
+
+void remove_protocol PROTO ((struct protocol *));
 
 /* hash.c */
 struct hash_table *new_hash PROTO ((void));
@@ -776,6 +783,7 @@ char *piaddr PROTO ((struct iaddr));
 extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
 extern char *path_dhclient_pid;
+extern int interfaces_requested;
 
 extern struct client_config top_level_config;
 
@@ -816,6 +824,9 @@ int script_go PROTO ((struct interface_info *));
 
 struct client_lease *packet_to_lease PROTO ((struct packet *));
 void go_daemon PROTO ((void));
+void write_client_pid_file PROTO ((void));
+void status_message PROTO ((struct sysconf_header *, void *));
+void client_location_changed PROTO ((void));
 
 /* db.c */
 int write_lease PROTO ((struct lease *));
@@ -922,3 +933,8 @@ struct sockaddr_in *pick_name_server PROTO ((void));
 #ifdef NEED_INET_ATON
 int inet_aton PROTO ((char *, struct in_addr *));
 #endif
+
+/* sysconf.c */
+void sysconf_startup PROTO ((void (*) (struct sysconf_header *, void *)));
+void sysconf_restart PROTO ((void *));
+void sysconf_message PROTO ((struct protocol *proto));
