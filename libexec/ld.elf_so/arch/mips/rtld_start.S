@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2002/09/12 17:18:40 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.7 2002/09/24 21:57:20 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -76,14 +76,14 @@ _rtld_bind_start:
 	move	v1,gp			# save old GP
 	add	t9,8			# modify T9 to point at .cpload
 	.cpload	t9
-	subu	sp,40			# save arguments and sp value in stack
-	.cprestore 32
-	sw	t7,36(sp)
-	sw	a0,12(sp)
-	sw	a1,16(sp)
-	sw	a2,20(sp)
-	sw	a3,24(sp)
-	sw	s0,28(sp)
+	subu	sp,44			# save arguments and sp value in stack
+	.cprestore 36
+	sw	t7,40(sp)
+	sw	a0,16(sp)
+	sw	a1,20(sp)
+	sw	a2,24(sp)
+	sw	a3,28(sp)
+	sw	s0,32(sp)
 	move	s0,sp
 	move	a0,t8			# symbol index
 	move	a1,t7			# old RA
@@ -92,13 +92,13 @@ _rtld_bind_start:
 	jal	_C_LABEL(_rtld_bind_mips)
 	nop
 	move	sp,s0
-	lw	ra,36(sp)
-	lw	a0,12(sp)
-	lw	a1,16(sp)
-	lw	a2,20(sp)
-	lw	a3,24(sp)
-	lw	s0,28(sp)
-	addu	sp,40
+	lw	ra,40(sp)
+	lw	a0,16(sp)
+	lw	a1,20(sp)
+	lw	a2,24(sp)
+	lw	a3,28(sp)
+	lw	s0,32(sp)
+	addu	sp,44
 	move	t9,v0
 	jr	t9
 	nop
