@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.13 2002/02/02 02:13:28 wiz Exp $
+.\"	$NetBSD: ypbind.8,v 1.14 2002/02/08 01:38:58 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ that particular domain and which port the server is using.  This information
 is stored in the directory
 .Pa /var/yp/binding
 in a file named with the convention
-.Pa <domain>.version ,
+.Pa \*[Lt]domain\*[Gt].version ,
 where
 .Aq domain
 is the relevant domain.
@@ -75,7 +75,7 @@ option,
 steps through the list of
 .Tn YP
 servers specified in
-.Pa /var/yp/binding/<domain>.ypservers
+.Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
 and contacts each in turn attempting to bind to that server.
 It is strongly recommended that these hosts are in the local
 hosts file, and that hosts are looked up in local files before
@@ -88,7 +88,7 @@ If
 is started with the
 .Fl broadcast
 option, or if
-.Pa /var/yp/binding/<domain>.ypservers
+.Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
 does not exist,
 .Nm
 broadcasts to find a process willing to serve maps for the
@@ -135,10 +135,10 @@ and
 .Fl ypsetme ,
 options are inherently insecure and should be avoided.
 .Sh FILES
-.Pa /var/yp/binding/<domain>.version
-- binding file for <domain>.
-.Pa /var/yp/binding/<domain>.ypservers
-- explicit list of servers to bind to for <domain>.
+.Pa /var/yp/binding/\*[Lt]domain\*[Gt].version
+- binding file for \*[Lt]domain\*[Gt].
+.Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
+- explicit list of servers to bind to for \*[Lt]domain\*[Gt].
 .Sh DIAGNOSTICS
 Messages are send to syslog daemon using facility LOG_DAEMON.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.15 2002/01/25 12:05:00 ragge Exp $
+.\"	$NetBSD: crunchgen.1,v 1.16 2002/02/08 01:36:21 ross Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -78,7 +78,7 @@ hiding all unnecessary symbols.
 After
 .Nm
 is run, the crunched binary can be built by running ``make -f
-<conf-name>.mk''.  The component programs' object files must already
+\*[Lt]conf-name\*[Gt].mk''.  The component programs' object files must already
 be built.  A ``objs'' target, included in the output makefile, will
 run make in each component program's source dir to build the object
 files for the user.  This is not done automatically since in release
@@ -90,11 +90,11 @@ The options are as follows:
 .It Fl c Ar c-file-name
 Set output C file name to
 .Ar c-file-name .
-The default name is ``<conf-name>.c''.
+The default name is ``\*[Lt]conf-name\*[Gt].c''.
 .It Fl e Ar exec-file-name
 Set crunched binary executable file name to
 .Ar exec-file-name .
-The default name is ``<conf-name>''.
+The default name is ``\*[Lt]conf-name\*[Gt]''.
 .It Fl d Ar build-options
 Set the DBG variable in the generated makefile to
 .Ar build-options .
@@ -104,7 +104,7 @@ Flush cache.  Forces the recalculation of cached parameters.
 .It Fl m Ar makefile-name
 Set output Makefile name to
 .Ar makefile-name .
-The default name is ``<conf-name>.mk''.
+The default name is ``\*[Lt]conf-name\*[Gt].mk''.
 .It Fl o
 Use existing object files. Rather than rebuilding object files via reach-over
 makefiles, instead search for and use existing object files.
@@ -139,7 +139,7 @@ commands are as follows:
 A list of source trees in which the source directories of the
 component programs can be found.  These dirs are searched using the
 .Bx
-``<source-dir>/<progname>/'' convention.  Multiple
+``\*[Lt]source-dir\*[Gt]/\*[Lt]progname\*[Gt]/'' convention.  Multiple
 .Em srcdirs
 lines can be specified.  The directories are searched in the order
 they are given.

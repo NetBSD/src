@@ -1,4 +1,4 @@
-.\"	$NetBSD: mset.1,v 1.9 2001/04/05 11:46:29 wiz Exp $
+.\"	$NetBSD: mset.1,v 1.10 2002/02/08 01:36:35 ross Exp $
 .\"
 .\" Copyright (c) 1986, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mset.1	4.6 (Berkeley) 7/27/91
-.\"	$NetBSD: mset.1,v 1.9 2001/04/05 11:46:29 wiz Exp $
+.\"	$NetBSD: mset.1,v 1.10 2002/02/08 01:36:35 ross Exp $
 .\"
 .Dd July 27, 1991
 .Dt MSET 1
@@ -162,7 +162,7 @@ To set these variables, place the following command in your
 .Pa .login
 file:
 .Bd -literal -offset indent
-mset -shell > tmp ; source tmp ; /bin/rm tmp
+mset -shell \*[Gt] tmp ; source tmp ; /bin/rm tmp
 .Ed
 .It Ar keyboardname
 When searching for the

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hesinfo.1,v 1.3 2001/12/01 16:43:15 wiz Exp $
+.\"	$NetBSD: hesinfo.1,v 1.4 2002/02/08 01:36:24 ross Exp $
 .\"
 .\" from: #Id: hesinfo.1,v 1.9 1996/11/07 01:57:12 ghudson Exp #
 .\"
@@ -53,7 +53,7 @@ These values will be resolved by accessing the
 database.
 
 .TP
-.B \<username>
+.B \\*[Lt]username\*[Gt]
 the 8-character-or-less string used to identify users or classes
 (e.g. joeuser, root, 1.00, etc).
 Used with the
@@ -65,51 +65,51 @@ and
 
 
 .TP
-.B \<uid>
+.B \\*[Lt]uid\*[Gt]
 the id number assigned to a user.
 
 .TP
-.B \<groupid>
+.B \\*[Lt]groupid\*[Gt]
 the id number assigned to a group.
 
 .TP
-.B \<groupname>
+.B \\*[Lt]groupname\*[Gt]
 a name identifying a unique group.
 
 .TP
-.B \<file-system-name>
+.B \\*[Lt]file-system-name\*[Gt]
 the name of an athena file system.
 
 .TP
-.B \<rvd server>:<pack>
+.B \\*[Lt]rvd server\*[Gt]:\*[Lt]pack\*[Gt]
 the name of an rvd's server and pack  separated by a colon.
 
 .TP
-.B \<nfs server>:<partition>
+.B \\*[Lt]nfs server\*[Gt]:\*[Lt]partition\*[Gt]
 the name of an nfs server and its partition separated by a colon.
 
 .TP
-.B \<workstation-name>
+.B \\*[Lt]workstation-name\*[Gt]
 the machine name of an Athena workstation (e.g. E40-343-3).
 
 .TP
-.B \<service-name>
+.B \\*[Lt]service-name\*[Gt]
 name of an Athena service (e.g. Zephyr).
 
 .TP
-.B \<service-type>
+.B \\*[Lt]service-type\*[Gt]
 name of Unix service (valid entries are defined in /etc/services).
 
 .TP
-.B \<printer-name>
+.B \\*[Lt]printer-name\*[Gt]
 name of a printer.
 
 .TP
-.B \<printer-cluster-name>
+.B \\*[Lt]printer-cluster-name\*[Gt]
 name of an Athena print cluster.
 
 .TP
-.B \<foo>
+.B \\*[Lt]foo\*[Gt]
 some
 .B hesinfo
 calls (e.g.
@@ -135,14 +135,14 @@ argument to
 returns string suitable for inclusion in
 .I /etc/passwd,
 searching with
-.B <username>.
+.B \*[Lt]username\*[Gt].
 
 .TP
 .B \ pobox
 returns information on the pobox assigned to the user specified by
 .I HesiodName,
 searching with
-.B <username>.
+.B \*[Lt]username\*[Gt].
 
 
 .TP
@@ -150,27 +150,27 @@ searching with
 returns string suitable for inclusion in
 .I /etc/passwd,
 searching with
-.B <uid>.
+.B \*[Lt]uid\*[Gt].
 
 .TP
 .B \ gid
 returns string suitable for inclusion in
 .I /etc/group,
 searching with
-.B <groupid>.
+.B \*[Lt]groupid\*[Gt].
 
 .TP
 .B \ group
 returns string suitable for inclusion in
 .I /etc/group,
 searching with
-.B <groupname>.
+.B \*[Lt]groupname\*[Gt].
 
 .TP
 .B \ grplist
 returns subgroups included in superset
 defined by
-.B <groupname>.
+.B \*[Lt]groupname\*[Gt].
 
 .TP
 .B \ filsys
@@ -178,13 +178,13 @@ returns file system type, export point, server, mount mode, and import point
 for the following valid
 .I HesiodNames
 (see above)
-.B - <file system name>, <username>, <rvd server>:<pack>,
-.B and <nfs server>:<partition>
+.B - \*[Lt]file system name\*[Gt], \*[Lt]username\*[Gt], \*[Lt]rvd server\*[Gt]:\*[Lt]pack\*[Gt],
+.B and \*[Lt]nfs server\*[Gt]:\*[Lt]partition\*[Gt]
 
 .TP
 .B \ cluster
 returns information about the local cluster the workstation, specified by
-.B <workstation name>.
+.B \*[Lt]workstation name\*[Gt].
 Included is information about the local file and print servers.  This
 information is accesses by
 .B clusterinfo
@@ -193,17 +193,17 @@ at boot time.
 .TP
 .B \ sloc
 returns network name of service host for
-.B <service-name>.
+.B \*[Lt]service-name\*[Gt].
 
 .TP
 .B \ service
 returns Internet protocol type and protocol service port for
-.B <service-type>.
+.B \*[Lt]service-type\*[Gt].
 
 .TP
 .B \ pcap
 returns a valid entry for /etc/printcap for
-.B <printer-name>.
+.B \*[Lt]printer-name\*[Gt].
 
 .TP
 .B \ prcluserlist
@@ -212,7 +212,7 @@ returns a list of print clusters.
 .TP
 .B \ prcluster
 returns a list of printers in a cluster specified by
-.B <printer-cluster-name>.
+.B \*[Lt]printer-cluster-name\*[Gt].
 
 .SH FILES
 /etc/hesiod.conf
