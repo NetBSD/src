@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.21 2000/11/20 14:09:36 tron Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.22 2001/08/18 19:29:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.21 2000/11/20 14:09:36 tron Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.22 2001/08/18 19:29:32 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,58 +60,81 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.21 2000/11/20 14:09:36 tron Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#define	INSECURE	1
-#define	SECURE		2
+#define	MAX_CACHESIZE	8*1024*1024
+#define	MIN_CACHESIZE	2*1024*1024
+
 #define	PERM_INSECURE	(S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 #define	PERM_SECURE	(S_IRUSR | S_IWUSR)
 
-/* pull this out of the C library. */
+/* Pull this out of the C library. */
 extern const char __yp_token[];
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
 	32,		/* ffactor */
 	256,		/* nelem */
-	2048 * 1024,	/* cachesize */
+	0,		/* cachesize */
 	NULL,		/* hash() */
 	0		/* lorder */
 };
 
-static enum { FILE_INSECURE, FILE_SECURE, FILE_ORIG } clean;
-static char *pname;				/* password file name */
-static char prefix[MAXPATHLEN];
-static char oldpwdfile[MAX(MAXPATHLEN, LINE_MAX * 2)];
-static char pwd_db_tmp[MAX(MAXPATHLEN, LINE_MAX * 2)];
-static char pwd_Sdb_tmp[MAX(MAXPATHLEN, LINE_MAX * 2)];
-static int lorder = BYTE_ORDER;
+#define	FILE_INSECURE	0x01
+#define	FILE_SECURE	0x02
+#define	FILE_ORIG	0x04
 
-void	cleanup(void);
+static char	*pname;				/* password file name */
+static char	prefix[MAXPATHLEN];
+static char	oldpwdfile[MAX(MAXPATHLEN, LINE_MAX * 2)];
+static char	pwd_db_tmp[MAX(MAXPATHLEN, LINE_MAX * 2)];
+static char	pwd_Sdb_tmp[MAX(MAXPATHLEN, LINE_MAX * 2)];
+static int 	lorder = BYTE_ORDER;
+static int	clean;
+
+void	bailout(void);
+void	cp(const char *, const char *, mode_t);
+int	deldbent(DB *, const char *, int, void *);
 void	error(const char *);
-void	wr_error(const char *);
-int	main(int, char **);
+int	getdbent(DB *, const char *, int, void *, struct passwd **);
+void	inconsistancy(void);
 void	install(const char *, const char *);
+int	main(int, char **);
+void	putdbents(DB *, struct passwd *, const char *, int, const char *, int,
+		  int, int);
+void	putyptoken(DB *, const char *);
 void	rm(const char *);
 int	scan(FILE *, struct passwd *, int *, int *);
 void	usage(void);
-void	putdbent(DB *, struct passwd *, const char *, int, const char *, int);
-void	putyptoken(DB *dp, const char *fn);
+void	wr_error(const char *);
 
 int
 main(int argc, char *argv[])
 {
+	int ch, makeold, tfd, lineno, found, rv, hasyp, secureonly;
+	struct passwd pwd, *tpwd;
+	char *username;
 	DB *dp, *edp;
 	FILE *fp, *oldfp;
 	sigset_t set;
-	int ch, makeold, tfd, hasyp, flags, lineno;
-	struct passwd pwd;
+	int dbflg, uid_dbflg, newuser, olduid, flags;
+	char buf[MAXPATHLEN];
+	struct stat st;
+	u_int cachesize;
 
-	hasyp = 0;
-	oldfp = NULL;
 	prefix[0] = '\0';
 	makeold = 0;
-	
-	while ((ch = getopt(argc, argv, "d:pvBL")) != -1)
-		switch(ch) {
+	oldfp = NULL;
+	username = NULL;
+	hasyp = 0;
+	secureonly = 0;
+
+	while ((ch = getopt(argc, argv, "BLd:psu:v")) != -1)
+		switch (ch) {
+		case 'B':			/* big-endian output */
+			lorder = BIG_ENDIAN;
+			break;
+		case 'L':			/* little-endian output */
+			lorder = LITTLE_ENDIAN;
+			break;
 		case 'd':			/* set prefix */
 			strncpy(prefix, optarg, sizeof(prefix));
 			prefix[sizeof(prefix)-1] = '\0';
@@ -119,13 +142,13 @@ main(int argc, char *argv[])
 		case 'p':			/* create V7 "file.orig" */
 			makeold = 1;
 			break;
+		case 's':			/* modify secure db only */
+			secureonly = 1;
+			break;
+		case 'u':			/* modify one user only */
+			username = optarg;
+			break;
 		case 'v':			/* backward compatible */
-			break;
-		case 'B':			/* big-endian output */
-			lorder = BIG_ENDIAN;
-			break;
-		case 'L':			/* little-endian output */
-			lorder = LITTLE_ENDIAN;
 			break;
 		case '?':
 		default:
@@ -136,6 +159,11 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		usage();
+	if (username != NULL)
+		if (username[0] == '+' || username[0] == '-')
+			usage();
+	if (secureonly)
+		makeold = 0;
 
 	/*
 	 * This could be changed to allow the user to interrupt.
@@ -152,6 +180,11 @@ main(int argc, char *argv[])
 	/* We don't care what the user wants. */
 	(void)umask(0);
 
+	if (username == NULL)
+		flags = O_RDWR | O_CREAT | O_EXCL;
+	else
+		flags = O_RDWR;
+
 	pname = *argv;
 	/* Open the original password file */
 	if ((fp = fopen(pname, "r")) == NULL)
@@ -159,14 +192,43 @@ main(int argc, char *argv[])
 
 	openinfo.lorder = lorder;
 
+	if (fstat(fileno(fp), &st) == -1)
+		error(pname);
+
+	/* Tweak openinfo values for large passwd files. */
+	cachesize = st.st_size * 20;
+	if (cachesize > MAX_CACHESIZE)
+		cachesize = MAX_CACHESIZE;
+	else if (cachesize < MIN_CACHESIZE)
+		cachesize = MIN_CACHESIZE;
+	openinfo.cachesize = cachesize;
+
 	/* Open the temporary insecure password database. */
-	(void)snprintf(pwd_db_tmp, sizeof(pwd_db_tmp), "%s%s.tmp", prefix,
-	    _PATH_MP_DB);
-	dp = dbopen(pwd_db_tmp, O_RDWR | O_CREAT | O_EXCL, PERM_INSECURE,
-	    DB_HASH, &openinfo);
-	if (dp == NULL)
-		error(pwd_db_tmp);
-	clean = FILE_INSECURE;
+	if (!secureonly) {
+		(void)snprintf(pwd_db_tmp, sizeof(pwd_db_tmp), "%s%s.tmp",
+		    prefix, _PATH_MP_DB);
+		if (username != NULL) {
+			snprintf(buf, sizeof(buf), "%s" _PATH_MP_DB, prefix);
+			cp(buf, pwd_db_tmp, PERM_INSECURE);
+		}
+		dp = dbopen(pwd_db_tmp, flags, PERM_INSECURE, DB_HASH,
+		    &openinfo);
+		if (dp == NULL)
+			error(pwd_db_tmp);
+		clean |= FILE_INSECURE;
+	}
+
+	/* Open the temporary encrypted password database. */
+	(void)snprintf(pwd_Sdb_tmp, sizeof(pwd_Sdb_tmp), "%s%s.tmp", prefix,
+		_PATH_SMP_DB);
+	if (username != NULL) {
+		snprintf(buf, sizeof(buf), "%s" _PATH_SMP_DB, prefix);
+		cp(buf, pwd_Sdb_tmp, PERM_SECURE);
+	}
+	edp = dbopen(pwd_Sdb_tmp, flags, PERM_SECURE, DB_HASH, &openinfo);
+	if (!edp)
+		error(pwd_Sdb_tmp);
+	clean |= FILE_SECURE;
 
 	/*
 	 * Open file for old password file.  Minor trickiness -- don't want to
@@ -181,9 +243,29 @@ main(int argc, char *argv[])
 		if ((tfd = open(oldpwdfile, O_WRONLY | O_CREAT | O_EXCL,
 		    PERM_INSECURE)) < 0)
 			error(oldpwdfile);
+		clean |= FILE_ORIG;
 		if ((oldfp = fdopen(tfd, "w")) == NULL)
 			error(oldpwdfile);
-		clean = FILE_ORIG;
+	}
+
+	if (username != NULL) {
+		uid_dbflg = 0;
+		dbflg = 0;
+		found = 0;
+
+		/*
+		 * Determine if this is a new entry.
+		 */
+		if (getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYNAME, username, &tpwd))
+			newuser = 1;
+		else {
+			newuser = 0;
+			olduid = tpwd->pw_uid;
+		}
+
+	} else {
+		uid_dbflg = R_NOOVERWRITE;
+		dbflg = R_NOOVERWRITE;
 	}
 
 	/*
@@ -192,27 +274,9 @@ main(int argc, char *argv[])
 	 * things up.
 	 */
 	for (lineno = 0; scan(fp, &pwd, &flags, &lineno);) {
-		/* look like YP? */
-		if (pwd.pw_name[0] == '+' || pwd.pw_name[0] == '-')
-			hasyp++;
-
 		/*
-		 * Warn about potentially unsafe uid/gid overrides.
+		 * Create original format password file entry.
 		 */
-		if (pwd.pw_name[0] == '+') {
-			if ((flags & _PASSWORD_NOUID) == 0 && pwd.pw_uid == 0)
-				warnx(
-				"line %d: superuser override in YP inclusion",
-				    lineno);
-			if ((flags & _PASSWORD_NOGID) == 0 && pwd.pw_gid == 0)
-				warnx(
-				    "line %d: wheel override in YP inclusion",
-				    lineno);
-		}
-
-		putdbent(dp, &pwd, "*", flags, pwd_db_tmp, lineno);
-
-		/* Create original format password file entry */
 		if (makeold) {
 			(void)fprintf(oldfp, "%s:*:%d:%d:%s:%s:%s\n",
 			    pwd.pw_name, pwd.pw_uid, pwd.pw_gid, pwd.pw_gecos,
@@ -220,58 +284,147 @@ main(int argc, char *argv[])
 			if (ferror(oldfp))
 				wr_error(oldpwdfile);
 		}
+
+		if (username == NULL) {
+			/* Look like YP? */
+			if (pwd.pw_name[0] == '+' || pwd.pw_name[0] == '-')
+				hasyp++;
+
+			/* Warn about potentially unsafe uid/gid overrides. */
+			if (pwd.pw_name[0] == '+') {
+				if ((flags & _PASSWORD_NOUID) == 0 &&
+				    pwd.pw_uid == 0)
+					warnx("line %d: superuser override "
+					    "in YP inclusion", lineno);
+				if ((flags & _PASSWORD_NOGID) == 0 &&
+				    pwd.pw_gid == 0)
+					warnx("line %d: wheel override "
+					    "in YP inclusion", lineno);
+			}
+
+			/* Write the database entry out. */
+			if (!secureonly)
+				putdbents(dp, &pwd, "*", flags, pwd_db_tmp,
+				    lineno, dbflg, uid_dbflg);
+			continue;
+		} else if (strcmp(username, pwd.pw_name) != 0)
+			continue;
+
+		if (found) {
+			warnx("user `%s' listed twice in password file",
+			    username);
+			bailout();
+		}
+
+		/*
+		 * Ensure that the text file and database agree on
+		 * which line the record is from.
+		 */
+		rv = getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYNUM, &lineno, &tpwd);
+		if (newuser) {
+			if (rv == 0)
+				inconsistancy();
+		} else if (rv == -1 ||
+			strcmp(username, tpwd->pw_name) != 0)
+			inconsistancy();
+		else if (olduid != pwd.pw_uid) {
+			/*
+			 * If we're changing UID, remove the BYUID
+			 * record for the old UID only if it has the
+			 * same username.
+			 */
+			if (!getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYUID, &olduid,
+			    &tpwd)) {
+				if (strcmp(username, tpwd->pw_name) == 0) {
+					if (!secureonly)
+						deldbent(dp, pwd_db_tmp,
+						    _PW_KEYBYUID, &olduid);
+					deldbent(edp, pwd_Sdb_tmp,
+					    _PW_KEYBYUID, &olduid);
+				}
+			} else
+				inconsistancy();
+		}
+
+		/*
+		 * If there's an existing BYUID record for the new UID and
+		 * the username doesn't match then be sure not to overwrite
+		 * it.
+		 */
+		if (!getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYUID, &pwd.pw_uid,
+		    &tpwd))
+			if (strcmp(username, tpwd->pw_name) != 0)
+				uid_dbflg = R_NOOVERWRITE;
+
+		/* Write the database entries out */
+		if (!secureonly)
+			putdbents(dp, &pwd, "*", flags, pwd_db_tmp, lineno,
+			    dbflg, uid_dbflg);
+		putdbents(edp, &pwd, pwd.pw_passwd, flags, pwd_Sdb_tmp,
+		    lineno, dbflg, uid_dbflg);
+
+		found = 1;
+		if (!makeold)
+			break;
 	}
 
-	/* Store YP token, if needed. */
-	if (hasyp)
-		putyptoken(dp, pwd_db_tmp);
+	if (!secureonly) {
+		/* Store YP token if needed. */
+		if (hasyp)
+			putyptoken(dp, pwd_db_tmp);
 
-	if ((dp->close)(dp) < 0)
-		wr_error(pwd_db_tmp);
+		/* Close the insecure database. */
+		if ((*dp->close)(dp) < 0)
+			wr_error(pwd_db_tmp);
+	}
+
+	/*
+	 * If rebuilding the databases, we re-parse the text file and write
+	 * the secure entries out in a separate pass.
+	 */
+	if (username == NULL) {
+		rewind(fp);
+		for (lineno = 0; scan(fp, &pwd, &flags, &lineno);)
+			putdbents(edp, &pwd, pwd.pw_passwd, flags, pwd_Sdb_tmp,
+			    lineno, dbflg, uid_dbflg);
+
+		/* Store YP token if needed. */
+		if (hasyp)
+			putyptoken(edp, pwd_Sdb_tmp);
+	} else if (!found) {
+		warnx("user `%s' not found in password file", username);
+		bailout();
+	}
+
+	/* Close the secure database. */
+	if ((*edp->close)(edp) < 0)
+		wr_error(pwd_Sdb_tmp);
+
+	/* Install as the real password files. */
+	if (!secureonly)
+		install(pwd_db_tmp, _PATH_MP_DB);
+	install(pwd_Sdb_tmp, _PATH_SMP_DB);
+
+	/* Install the V7 password file. */
 	if (makeold) {
 		if (fflush(oldfp) == EOF)
 			wr_error(oldpwdfile);
 		if (fclose(oldfp) == EOF)
 			wr_error(oldpwdfile);
+		install(oldpwdfile, _PATH_PASSWD);
 	}
-
-	/* Open the temporary encrypted password database. */
-	(void)snprintf(pwd_Sdb_tmp, sizeof(pwd_Sdb_tmp), "%s%s.tmp", prefix,
-		_PATH_SMP_DB);
-	edp = dbopen(pwd_Sdb_tmp, O_RDWR | O_CREAT | O_EXCL, PERM_SECURE,
-	   DB_HASH, &openinfo);
-	if (!edp)
-		error(pwd_Sdb_tmp);
-	clean = FILE_SECURE;
-
-	rewind(fp);
-	for (lineno = 0; scan(fp, &pwd, &flags, &lineno);)
-		putdbent(edp, &pwd, pwd.pw_passwd, flags, pwd_Sdb_tmp,
-		    lineno);
-
-	/* Store YP token, if needed. */
-	if (hasyp)
-		putyptoken(edp, pwd_Sdb_tmp);
-
-	if ((edp->close)(edp) < 0)
-		wr_error(_PATH_SMP_DB);
 
 	/* Set master.passwd permissions, in case caller forgot. */
 	(void)fchmod(fileno(fp), S_IRUSR|S_IWUSR);
 	if (fclose(fp) == EOF)
 		wr_error(pname);
 
-	/* Install as the real password files. */
-	install(pwd_db_tmp, _PATH_MP_DB);
-	install(pwd_Sdb_tmp, _PATH_SMP_DB);
-	if (makeold)
-		install(oldpwdfile, _PATH_PASSWD);
-
 	/*
-	 * Move the master password LAST -- chpass(1), passwd(1) and vipw(8)
-	 * all use flock(2) on it to block other incarnations of themselves.
-	 * The rename means that everything is unlocked, as the original
-	 * file can no longer be accessed.
+	 * Move the temporary master password file LAST -- chpass(1),
+	 * passwd(1), vipw(8) and friends all use its existance to block
+	 * other incarnations of themselves.  The rename means that
+	 * everything is unlocked, as the original file can no longer be
+	 * accessed.
 	 */
 	install(pname, _PATH_MASTERPASSWD);
 	exit(EXIT_SUCCESS);
@@ -329,6 +482,42 @@ install(const char *from, const char *to)
 }
 
 void
+rm(const char *victim)
+{
+
+	if (unlink(victim) < 0)
+		warn("unlink(%s)", victim);
+}
+
+void                    
+cp(const char *from, const char *to, mode_t mode)              
+{               
+	static char buf[MAXBSIZE];
+	int from_fd, rcount, to_fd, wcount, sverrno;
+
+	if ((from_fd = open(from, O_RDONLY, 0)) < 0)
+		error(from);
+	if ((to_fd = open(to, O_WRONLY | O_CREAT | O_EXCL, mode)) < 0)
+		error(to);
+	while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
+		wcount = write(to_fd, buf, rcount);
+		if (rcount != wcount || wcount == -1) {
+			sverrno = errno;
+			(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
+			errno = sverrno;
+			error(buf);
+		}
+	}
+
+	if (rcount < 0) {
+		sverrno = errno;
+		(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
+		errno = sverrno;
+		error(buf);
+	}
+}
+
+void
 wr_error(const char *str)
 {
 	char errbuf[BUFSIZ];
@@ -348,38 +537,30 @@ error(const char *str)
 {
 
 	warn("%s", str);
-	cleanup();
-#ifdef think_about_this_a_while_longer
-	fprintf(stderr, "NOTE: possible inconsistencies between "
-	    "text files and databases\n"
-	    "re-run pwd_mkdb when you have fixed the problem.\n");
-#endif
-	exit(EXIT_FAILURE);
+	bailout();
 }
 
 void
-rm(const char *victim)
+inconsistancy(void)
 {
 
-	if (unlink(victim) < 0)
-		warn("unlink(%s)", victim);
+	warnx("text files and databases are inconsistent");
+	warnx("re-build the databases without -u");
+	bailout();
 }
 
 void
-cleanup(void)
+bailout(void)
 {
 
-	switch(clean) {
-	case FILE_ORIG:
+	if ((clean & FILE_ORIG) != 0)
 		rm(oldpwdfile);
-		/* FALLTHROUGH */
-	case FILE_SECURE:
+	if ((clean & FILE_SECURE) != 0)
 		rm(pwd_Sdb_tmp);
-		/* FALLTHROUGH */
-	case FILE_INSECURE:
+	if ((clean & FILE_INSECURE) != 0)
 		rm(pwd_db_tmp);
-		/* FALLTHROUGH */
-	}
+
+	exit(EXIT_FAILURE);
 }
 
 /*
@@ -398,8 +579,8 @@ cleanup(void)
 #define	COMPACT(e)	for (t = e; (*p++ = *t++) != '\0';)
 
 void
-putdbent(DB *dp, struct passwd *pw, const char *passwd, int flags,
-	 const char *fn, int lineno)
+putdbents(DB *dp, struct passwd *pw, const char *passwd, int flags,
+	  const char *fn, int lineno, int dbflg, int uid_dbflg)
 {
 	struct passwd pwd;
 	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024], *p;
@@ -447,9 +628,9 @@ putdbent(DB *dp, struct passwd *pw, const char *passwd, int flags,
 	len = strlen(pwd.pw_name);
 	memmove(tbuf + 1, pwd.pw_name, len);
 	key.size = len + 1;
-	if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
+	if ((*dp->put)(dp, &key, &data, dbflg) == -1)
 		wr_error(fn);
-		
+
 	/* Store insecure by number. */
 	tbuf[0] = _PW_KEYBYNUM;
 	x = lineno;
@@ -457,15 +638,126 @@ putdbent(DB *dp, struct passwd *pw, const char *passwd, int flags,
 		M_32_SWAP(x);
 	memmove(tbuf + 1, &x, sizeof(x));
 	key.size = sizeof(x) + 1;
-	if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
+	if ((*dp->put)(dp, &key, &data, dbflg) == -1)
 		wr_error(fn);
 
 	/* Store insecure by uid. */
 	tbuf[0] = _PW_KEYBYUID;
 	memmove(tbuf + 1, &pwd.pw_uid, sizeof(pwd.pw_uid));
 	key.size = sizeof(pwd.pw_uid) + 1;
-	if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
+	if ((*dp->put)(dp, &key, &data, uid_dbflg) == -1)
 		wr_error(fn);
+}
+
+int
+deldbent(DB *dp, const char *fn, int type, void *keyp)
+{
+	char tbuf[1024];
+	DBT key;
+	u_int32_t x;
+	int len, rv;
+
+	key.data = (u_char *)tbuf;
+
+	switch (tbuf[0] = type) {
+	case _PW_KEYBYNAME:
+		len = strlen((char *)keyp);
+		memcpy(tbuf + 1, keyp, len);
+		key.size = len + 1;
+		break;
+
+	case _PW_KEYBYNUM:
+	case _PW_KEYBYUID:
+		x = *(int *)keyp;
+		if (lorder != BYTE_ORDER)
+			M_32_SWAP(x);
+		memmove(tbuf + 1, &x, sizeof(x));
+		key.size = sizeof(x) + 1;
+		break;
+	}
+
+	if ((rv = (*dp->del)(dp, &key, 0)) == -1)
+		wr_error(fn);
+	return (rv);
+}
+
+int
+getdbent(DB *dp, const char *fn, int type, void *keyp, struct passwd **tpwd)
+{
+	static char buf[MAX(MAXPATHLEN, LINE_MAX * 2)];
+	static struct passwd pwd;
+	char tbuf[1024], *p;
+	DBT key, data;
+	u_int32_t x;
+	int len, rv;
+
+	data.data = (u_char *)buf;
+	data.size = sizeof(buf);
+	key.data = (u_char *)tbuf;
+
+	switch (tbuf[0] = type) {
+	case _PW_KEYBYNAME:
+		len = strlen((char *)keyp);
+		memcpy(tbuf + 1, keyp, len);
+		key.size = len + 1;
+		break;
+
+	case _PW_KEYBYNUM:
+	case _PW_KEYBYUID:
+		x = *(int *)keyp;
+		if (lorder != BYTE_ORDER)
+			M_32_SWAP(x);
+		memmove(tbuf + 1, &x, sizeof(x));
+		key.size = sizeof(x) + 1;
+		break;
+	}
+
+	if ((rv = (*dp->get)(dp, &key, &data, 0)) == 1)
+		return (rv);
+	if (rv == -1)
+		error(pwd_Sdb_tmp);
+
+	p = (char *)data.data;
+
+	pwd.pw_name = p;
+	while (*p++ != '\0')
+		;
+	pwd.pw_passwd = p;
+	while (*p++ != '\0')
+		;
+
+	memcpy(&pwd.pw_uid, p, sizeof(pwd.pw_uid));
+	p += sizeof(pwd.pw_uid);
+	memcpy(&pwd.pw_gid, p, sizeof(pwd.pw_gid));
+	p += sizeof(pwd.pw_gid);
+	memcpy(&pwd.pw_change, p, sizeof(pwd.pw_change));
+	p += sizeof(pwd.pw_change);
+
+	pwd.pw_class = p;
+	while (*p++ != '\0')
+		;
+	pwd.pw_gecos = p;
+	while (*p++ != '\0')
+		;
+	pwd.pw_dir = p;
+	while (*p++ != '\0')
+		;
+	pwd.pw_shell = p;
+	while (*p++ != '\0')
+		;
+
+	memcpy(&pwd.pw_expire, p, sizeof(pwd.pw_expire));
+	p += sizeof(pwd.pw_expire);
+
+	if (lorder != BYTE_ORDER) {
+		M_32_SWAP(pwd.pw_uid);
+		M_32_SWAP(pwd.pw_gid);
+		M_32_SWAP(pwd.pw_change);
+		M_32_SWAP(pwd.pw_expire);
+	}
+
+	*tpwd = &pwd;
+	return (0);
 }
 
 void
@@ -478,7 +770,7 @@ putyptoken(DB *dp, const char *fn)
 	data.data = (u_char *)NULL;
 	data.size = 0;
 
-	if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
+	if ((*dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
 		wr_error(fn);
 }
 
@@ -486,6 +778,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: pwd_mkdb [-pBL] [-d directory] file\n");
+	(void)fprintf(stderr,
+	    "usage: pwd_mkdb [-BLps] [-d directory] [-u user] file\n");
 	exit(EXIT_FAILURE);
 }
