@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.5 1999/07/30 10:35:37 itojun Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.6 1999/09/10 02:05:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -147,9 +147,9 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 		return EINVAL;
 	}
 	if ((sa->flags & SADB_X_EXT_RAWCPI) == 0)
-		cpi = ntohl(sa->spi) & 0xffff;
-	else
 		cpi = sa->alg_enc;
+	else
+		cpi = ntohl(sa->spi) & 0xffff;
 	algo = &ipcomp_algorithms[sa->alg_enc];	/*XXX*/
 
 	/* compute original payload length */
