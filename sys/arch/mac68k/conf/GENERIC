@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.38 1996/08/05 01:52:13 scottr Exp $
+#	$NetBSD: GENERIC,v 1.39 1996/08/26 23:40:27 mrg Exp $
 #
 # GENERIC
 
@@ -60,6 +60,8 @@ options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
 options		COMPAT_10
+options 	COMPAT_11
+options 	COMPAT_12
 options		MACHINE_NONCONTIG
 
 config		netbsd	swap generic

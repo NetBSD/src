@@ -2,7 +2,7 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: NEWCONF,v 1.7 1996/05/29 06:01:13 mhitch Exp $
+# 	$NetBSD: NEWCONF,v 1.8 1996/08/26 23:40:55 mrg Exp $
 #
 include		"std.pmax"
 
@@ -40,6 +40,8 @@ options		DEVPAGER		# device pager (mapped devices)
 #options	DIAGNOSTIC		# extra kernel debugging checks
 options		DEBUG			# extra kernel debugging support
 options		"COMPAT_43"		# compatibility with 4.3BSD binaries
+options 	COMPAT_11
+options 	COMPAT_12
 options		KTRACE			# system call tracing support
 options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 #options	KGDB			# support for kernel gdb

@@ -1,4 +1,4 @@
-#	$NetBSD: KLONDIKE,v 1.4 1996/04/04 06:36:03 phil Exp $
+#	$NetBSD: KLONDIKE,v 1.5 1996/08/26 23:40:37 mrg Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -22,6 +22,8 @@ options		FIFO			# fifos; recommended
 
 # compatibility options
 options		COMPAT_43		# 4.3 system calls
+options 	COMPAT_11
+options 	COMPAT_12
 
 # file system options
 #options	QUOTA			# file system quotas

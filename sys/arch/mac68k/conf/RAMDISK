@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.6 1996/08/05 01:52:16 scottr Exp $
+#	$NetBSD: RAMDISK,v 1.7 1996/08/26 23:40:31 mrg Exp $
 
 # RAMDISK
 # Support Root/swap on ramdisk
@@ -37,6 +37,8 @@ options		FPSP
 options		FPU_EMULATE
 options		COMPAT_09
 options		COMPAT_10
+options 	COMPAT_11
+options 	COMPAT_12
 options		MACHINE_NONCONTIG
 
 config		netbsd	root on rd0a swap on rd0b
