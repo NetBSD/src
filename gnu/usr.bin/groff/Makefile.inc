@@ -1,3 +1,5 @@
+# $NetBSD: Makefile.inc,v 1.3 2003/06/30 18:47:40 wiz Exp $
+
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
 BINDIR?=	/usr/bin
