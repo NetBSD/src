@@ -1,7 +1,7 @@
-/*	$NetBSD: iq80310var.h,v 1.2.4.2 2002/01/08 00:24:28 nathanw Exp $	*/
+/*	$NetBSD: iq80310var.h,v 1.2.4.3 2002/02/28 04:09:15 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -38,7 +38,42 @@
 #ifndef _IQ80310_IQ80310VAR_H_
 #define	_IQ80310_IQ80310VAR_H_
 
+#include "opt_iop310.h"
+
+/*
+ * If no IOP310 board type options are specified, default to IQ80310.
+ * Otherwise, make sure only one board type option is specified.
+ */
+#if (defined(IOP310_TEAMASA_NPWR)) > 1
+#error May not define more than one IOP310 board type
+#endif
+
+#include <sys/queue.h>
 #include <dev/pci/pcivar.h>
+
+/*
+ * We currently support 8 interrupt sources.
+ */
+#define	NIRQ		8
+
+struct intrhand {
+	TAILQ_ENTRY(intrhand) ih_list;	/* link on intrq list */
+	int (*ih_func)(void *);		/* handler */
+	void *ih_arg;			/* arg for handler */
+	int ih_ipl;			/* IPL_* */
+	int ih_irq;			/* IRQ number */
+};
+
+#define	IRQNAMESIZE	sizeof("iq80310 irq 8")
+
+struct intrq {
+	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
+	struct evcnt iq_ev;		/* event counter */
+	int iq_mask;			/* IRQs to mask while handling */
+	int iq_levels;			/* IPL_*'s this IRQ has */
+	int iq_ist;			/* share type */
+	char iq_name[IRQNAMESIZE];	/* interrupt name */
+};
 
 /*
  * XINT3 bits 0-4 are "IRQ 0-4".  XINT0 bits 0-2 are "IRQ 5-7".
@@ -53,6 +88,7 @@ void	iq80310_7seg_snake(void);
 
 void	iq80310_pci_init(pci_chipset_tag_t, void *);
 
+void	iq80310_intr_init(void);
 void	*iq80310_intr_establish(int, int, int (*)(void *), void *);
 void	iq80310_intr_disestablish(void *);
 

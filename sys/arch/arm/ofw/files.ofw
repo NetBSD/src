@@ -1,0 +1,3 @@
+#	$NetBSD: files.ofw,v 1.1.2.2 2002/02/28 04:07:41 nathanw Exp $
+
+file	arch/arm/ofw/openfirm.c

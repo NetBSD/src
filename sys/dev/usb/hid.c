@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.16.4.3 2002/01/11 23:39:35 nathanw Exp $	*/
+/*	$NetBSD: hid.c,v 1.16.4.4 2002/02/28 04:14:28 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.16.4.3 2002/01/11 23:39:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.16.4.4 2002/02/28 04:14:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,7 @@ hid_start_parse(void *d, int len, enum hid_kind kind)
 {
 	struct hid_data *s;
 
-	s = malloc(sizeof *s, M_TEMP, M_WAITOK);
-	memset(s, 0, sizeof *s);
+	s = malloc(sizeof *s, M_TEMP, M_WAITOK|M_ZERO);
 	s->start = s->p = d;
 	s->end = (char *)d + len;
 	s->kind = kind;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18.6.2 2002/01/11 23:38:36 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.18.6.3 2002/02/28 04:10:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund

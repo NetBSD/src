@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.h,v 1.2.4.1 2002/01/11 23:38:56 nathanw Exp $	*/
+/*	$NetBSD: bicons.h,v 1.2.4.2 2002/02/28 04:13:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001

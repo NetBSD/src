@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.c,v 1.2.2.3 2002/01/11 23:38:24 nathanw Exp $	*/
+/*	$NetBSD: bus_space_notimpl.c,v 1.2.2.4 2002/02/28 04:09:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin. All rights reserved.

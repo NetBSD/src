@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.73.2.4 2001/12/08 04:22:18 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.73.2.5 2002/02/28 04:06:11 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.4 2001/12/08 04:22:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.5 2002/02/28 04:06:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,8 +274,8 @@ cpu_swapout(struct lwp *l)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to have valid page table pages
- * and size must be a multiple of CLSIZE.
+ * Both addresses are assumed to have valid page table pages.
+ * and size must be a multiple of NBPG.
  *
  * Note that since all kernel page table pages are pre-allocated
  * and mapped in, we can use the Virtual Page Table.

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.7.2.2 2002/01/08 00:28:07 nathanw Exp $
+# $NetBSD: Makefile.sun2,v 1.7.2.3 2002/02/28 04:12:20 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -17,7 +17,6 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
-MACHINE_ARCH=m68000
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
@@ -33,9 +32,7 @@ GENASSYM=	${SUN2}/sun2/genassym.cf
 ##
 # Override CPP defaults entirely, so cross-compilation works.
 # Keep -nostdinc before all -I flags, similar for -undef ...
-XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000 -D__ELF__ -D__SVR4_ABI__
-DEFINES=	-Dsun2
-CPPFLAGS+=	${XDEFS} ${DEFINES}
+CPPFLAGS+=	-Dsun2
 CFLAGS+=	-msoft-float -fno-defer-pop
 APPFLAGS=	-x assembler-with-cpp -P -traditional ${CPPFLAGS} -D_LOCORE
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.2.4.2 2002/01/11 23:38:41 nathanw Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.2.4.3 2002/02/28 04:11:21 nathanw Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford

@@ -1,7 +1,7 @@
-/*	$NetBSD: file_ufs.cpp,v 1.1 2001/02/09 18:34:39 uch Exp $	*/
+/*	$NetBSD: file_ufs.cpp,v 1.1.10.1 2002/02/28 04:09:44 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,7 +62,7 @@ UfsFile::UfsFile(Console *&cons)
 	_f->f_dev = devsw;
 	_debug = TRUE;
 
-	DPRINTF((TEXT("File: UFS\n")));
+	DPRINTF((TEXT("FileManager: UFS\n")));
 }
 
 UfsFile::~UfsFile(void)

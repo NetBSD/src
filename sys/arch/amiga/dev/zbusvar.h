@@ -1,4 +1,4 @@
-/*	$NetBSD: zbusvar.h,v 1.3 2000/09/20 19:05:53 is Exp $	*/
+/*	$NetBSD: zbusvar.h,v 1.3.8.1 2002/02/28 04:07:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -50,7 +50,7 @@ u_int		ZBUSAVAIL;	/* bytes of Zorro bus I/O space left */
 #define ZTWOROMTOP	(0x00F80000)
 #define NZTWOROMPG	btoc(ZTWOROMTOP-ZTWOROMBASE)
 
-/* 
+/*
  * maps a ztwo and/or A3000 builtin address into the mapped kva address
  */
 #if defined(__m68k__)

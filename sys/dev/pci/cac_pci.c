@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.10.2.1 2001/11/14 19:15:08 nathanw Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.10.2.2 2002/02/28 04:13:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.10.2.1 2001/11/14 19:15:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.10.2.2 2002/02/28 04:13:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,21 +58,21 @@ __KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.10.2.1 2001/11/14 19:15:08 nathanw Exp
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
 
-static void	cac_pci_attach(struct device *, struct device *, void *);
-static struct	cac_pci_type *cac_pci_findtype(struct pci_attach_args *);
-static int	cac_pci_match(struct device *, struct cfdata *, void *);
+void	cac_pci_attach(struct device *, struct device *, void *);
+const struct	cac_pci_type *cac_pci_findtype(struct pci_attach_args *);
+int	cac_pci_match(struct device *, struct cfdata *, void *);
 
-static struct	cac_ccb *cac_pci_l0_completed(struct cac_softc *);
-static int	cac_pci_l0_fifo_full(struct cac_softc *);
-static void	cac_pci_l0_intr_enable(struct cac_softc *, int);
-static int	cac_pci_l0_intr_pending(struct cac_softc *);
-static void	cac_pci_l0_submit(struct cac_softc *, struct cac_ccb *);
+struct	cac_ccb *cac_pci_l0_completed(struct cac_softc *);
+int	cac_pci_l0_fifo_full(struct cac_softc *);
+void	cac_pci_l0_intr_enable(struct cac_softc *, int);
+int	cac_pci_l0_intr_pending(struct cac_softc *);
+void	cac_pci_l0_submit(struct cac_softc *, struct cac_ccb *);
 
 struct cfattach cac_pci_ca = {
 	sizeof(struct cac_softc), cac_pci_match, cac_pci_attach
 };
 
-static struct cac_linkage cac_pci_l0 = {
+static const struct cac_linkage cac_pci_l0 = {
 	cac_pci_l0_completed,
 	cac_pci_l0_fifo_full,
 	cac_pci_l0_intr_enable,
@@ -85,9 +85,9 @@ static struct cac_linkage cac_pci_l0 = {
 struct cac_pci_type {
 	int	ct_subsysid;
 	int	ct_flags;
-	struct	cac_linkage *ct_linkage;
-	char	*ct_typestr;
-} static cac_pci_type[] = {
+	const struct	cac_linkage *ct_linkage;
+	const char	*ct_typestr;
+} static const cac_pci_type[] = {
 	{ 0x40300e11,	0, 		&cac_l0,	"SMART-2/P" },
 	{ 0x40310e11,	0, 		&cac_l0, 	"SMART-2SL" },
 	{ 0x40320e11,	0, 		&cac_l0,	"Smart Array 3200" },
@@ -103,17 +103,17 @@ struct cac_pci_type {
 struct cac_pci_product {
 	u_short	cp_vendor;
 	u_short	cp_product;
-} static cac_pci_product[] = {
+} static const cac_pci_product[] = {
 	{ PCI_VENDOR_COMPAQ,	PCI_PRODUCT_COMPAQ_SMART2P },
 	{ PCI_VENDOR_DEC,	PCI_PRODUCT_DEC_CPQ42XX },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_1510 },
 };
 
-static struct cac_pci_type *
+const struct cac_pci_type *
 cac_pci_findtype(struct pci_attach_args *pa)
 {
-	struct cac_pci_type *ct;
-	struct cac_pci_product *cp;
+	const struct cac_pci_type *ct;
+	const struct cac_pci_product *cp;
 	pcireg_t subsysid;
 	int i;
 
@@ -144,18 +144,18 @@ cac_pci_findtype(struct pci_attach_args *pa)
 	return (ct);
 }
 
-static int
+int
 cac_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (cac_pci_findtype(aux) != NULL);
 }
 
-static void
+void
 cac_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
-	struct cac_pci_type *ct;
+	const struct cac_pci_type *ct;
 	struct cac_softc *sc;
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
@@ -227,11 +227,11 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": Compaq %s\n", ct->ct_typestr);
 
 	/* Now attach to the bus-independent code. */
-	sc->sc_cl = ct->ct_linkage;
+	memcpy(&sc->sc_cl, ct->ct_linkage, sizeof(sc->sc_cl));
 	cac_init(sc, intrstr, (ct->ct_flags & CT_STARTFW) != 0);
 }
 
-static void
+void
 cac_pci_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
@@ -240,16 +240,21 @@ cac_pci_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 	cac_outl(sc, CAC_42REG_CMD_FIFO, ccb->ccb_paddr);
 }
 
-static struct cac_ccb *
+struct cac_ccb *
 cac_pci_l0_completed(struct cac_softc *sc)
 {
 	struct cac_ccb *ccb;
 	u_int32_t off;
 
 	if ((off = cac_inl(sc, CAC_42REG_DONE_FIFO)) == 0xffffffffU)
-		return (0);
+		return (NULL);
 
 	cac_outl(sc, CAC_42REG_DONE_FIFO, 0);	
+
+	if ((off & 3) != 0)
+		printf("%s: failed command list returned: %lx\n",
+		    sc->sc_dv.dv_xname, (long)off);
+
 	off = (off & ~3) - sc->sc_ccbs_paddr;
 	ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
 
@@ -259,21 +264,21 @@ cac_pci_l0_completed(struct cac_softc *sc)
 	return (ccb);
 }
 
-static int
+int
 cac_pci_l0_intr_pending(struct cac_softc *sc)
 {
 
 	return ((cac_inl(sc, CAC_42REG_STATUS) & CAC_42_EXTINT) != 0);
 }
 
-static void
+void
 cac_pci_l0_intr_enable(struct cac_softc *sc, int state)
 {
 
 	cac_outl(sc, CAC_42REG_INTR_MASK, (state ? 0 : 8));	/* XXX */
 }
 
-static int
+int
 cac_pci_l0_fifo_full(struct cac_softc *sc)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_reg.h,v 1.2.6.2 2002/01/11 23:38:06 nathanw Exp $	*/
+/*	$NetBSD: sa11x0_reg.h,v 1.2.6.3 2002/02/28 04:07:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.

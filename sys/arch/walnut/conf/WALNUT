@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.5.6.2 2002/01/08 00:28:33 nathanw Exp $
+#	$NetBSD: WALNUT,v 1.5.6.3 2002/02/28 04:12:34 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -31,6 +31,8 @@ options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 #options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -101,7 +103,6 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 options 	NMBCLUSTERS=1024
-options 	NEW_PIPE
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -170,7 +171,7 @@ pciide*	at pci? dev ? function ?
 #cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

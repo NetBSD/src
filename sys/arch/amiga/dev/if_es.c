@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.26 2000/11/15 01:02:12 thorpej Exp $	*/
+/*	$NetBSD: if_es.c,v 1.26.8.1 2002/02/28 04:06:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -36,6 +36,9 @@
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_ns.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.26.8.1 2002/02/28 04:06:46 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -112,31 +115,28 @@ int	estxint2 = 0;	/* IST_TX active after IST_TX_EMPTY */
 int	estxint3 = 0;	/* IST_TX interrupt processed */
 int	estxint4 = 0;	/* ~TEMPTY counts */
 int	estxint5 = 0;	/* IST_TX_EMPTY interrupts */
-void	es_dump_smcregs __P((char *, union smcregs *));
+void	es_dump_smcregs(char *, union smcregs *);
 #endif
 
-int esintr __P((void *));
-void esstart __P((struct ifnet *));
-void eswatchdog __P((struct ifnet *));
-int esioctl __P((struct ifnet *, u_long, caddr_t));
-void esrint __P((struct es_softc *));
-void estint __P((struct es_softc *));
-void esinit __P((struct es_softc *));
-void esreset __P((struct es_softc *));
-void esstop __P((struct es_softc *));
+int esintr(void *);
+void esstart(struct ifnet *);
+void eswatchdog(struct ifnet *);
+int esioctl(struct ifnet *, u_long, caddr_t);
+void esrint(struct es_softc *);
+void estint(struct es_softc *);
+void esinit(struct es_softc *);
+void esreset(struct es_softc *);
+void esstop(struct es_softc *);
 
-int esmatch __P((struct device *, struct cfdata *, void *));
-void esattach __P((struct device *, struct device *, void *));
+int esmatch(struct device *, struct cfdata *, void *);
+void esattach(struct device *, struct device *, void *);
 
 struct cfattach es_ca = {
 	sizeof(struct es_softc), esmatch, esattach
 };
 
 int
-esmatch(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+esmatch(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	struct zbus_args *zap = aux;
 
@@ -153,9 +153,7 @@ esmatch(parent, cfp, aux)
  * to accept packets.
  */
 void
-esattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+esattach(struct device *parent, struct device *self, void *aux)
 {
 	struct es_softc *sc = (void *)self;
 	struct zbus_args *zap = aux;
@@ -206,9 +204,7 @@ esattach(parent, self, aux)
 
 #ifdef ESDEBUG
 void
-es_dump_smcregs(where, smc)
-	char *where;
-	union smcregs *smc;
+es_dump_smcregs(char *where, union smcregs *smc)
 {
 	u_short cur_bank = smc->b0.bsr & BSR_MASK;
 
@@ -236,14 +232,12 @@ es_dump_smcregs(where, smc)
 #endif
 
 void
-esstop(sc)
-	struct es_softc* sc;
+esstop(struct es_softc *sc)
 {
 }
 
 void
-esinit(sc)
-	struct es_softc *sc;
+esinit(struct es_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	union smcregs *smc = sc->sc_base;
@@ -291,8 +285,7 @@ esinit(sc)
 }
 
 int
-esintr(arg)
-	void *arg;
+esintr(void *arg)
 {
 	struct es_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -519,8 +512,7 @@ zzzz:
 }
 
 void
-esrint(sc)
-	struct es_softc *sc;
+esrint(struct es_softc *sc)
 {
 	union smcregs *smc = sc->sc_base;
 	u_short len;
@@ -721,16 +713,14 @@ esrint(sc)
 }
 
 void
-estint(sc)
-	struct es_softc *sc;
+estint(struct es_softc *sc)
 {
 
 	esstart(&sc->sc_ethercom.ec_if);
 }
 
 void
-esstart(ifp)
-	struct ifnet *ifp;
+esstart(struct ifnet *ifp)
 {
 	struct es_softc *sc = ifp->if_softc;
 	union smcregs *smc = sc->sc_base;
@@ -936,10 +926,7 @@ esstart(ifp)
 }
 
 int
-esioctl(ifp, command, data)
-	register struct ifnet *ifp;
-	u_long command;
-	caddr_t data;
+esioctl(register struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct es_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1042,8 +1029,7 @@ esioctl(ifp, command, data)
 }
 
 void
-esreset(sc)
-	struct es_softc *sc;
+esreset(struct es_softc *sc)
 {
 	int s;
 
@@ -1054,8 +1040,7 @@ esreset(sc)
 }
 
 void
-eswatchdog(ifp)
-	struct ifnet *ifp;
+eswatchdog(struct ifnet *ifp)
 {
 	struct es_softc *sc = ifp->if_softc;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.6.4.2 2001/11/14 19:16:52 nathanw Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.6.4.3 2002/02/28 04:14:51 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -276,6 +276,9 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	int first;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp = NULL;
+
+	/* some ports dont use the offset */
+	offset = offset;
 
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: psm_intelli.c,v 1.8.4.1 2001/11/14 19:15:35 nathanw Exp $ */
+/* $NetBSD: psm_intelli.c,v 1.8.4.2 2002/02/28 04:14:13 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm_intelli.c,v 1.8.4.1 2001/11/14 19:15:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm_intelli.c,v 1.8.4.2 2002/02/28 04:14:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,9 @@ struct pmsi_softc {		/* driver status information */
 	int sc_kbcslot;
 
 	int sc_enabled;		/* input enabled? */
+#ifndef PMSI_DISABLE_POWERHOOK
+	void *sc_powerhook;	/* cookie from power hook */
+#endif /* !PMSI_DISABLE_POWERHOOK */
 	int inputstate;
 	u_int buttons, oldbuttons;	/* mouse button status */
 	signed char dx, dy;
@@ -62,9 +65,15 @@ struct cfattach pmsi_ca = {
 	sizeof(struct pmsi_softc), pmsiprobe, pmsiattach,
 };
 
+static void	do_enable __P((struct pmsi_softc *));
+static void	do_disable __P((struct pmsi_softc *));
+
 int	pmsi_enable __P((void *));
 int	pmsi_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 void	pmsi_disable __P((void *));
+#ifndef PMSI_DISABLE_POWERHOOK
+void	pmsi_power __P((int, void *));
+#endif /* !PMSI_DISABLE_POWERHOOK */
 
 const struct wsmouse_accessops pmsi_accessops = {
 	pmsi_enable,
@@ -209,20 +218,20 @@ pmsiattach(parent, self, aux)
 	if (res)
 		printf("pmsiattach: disable error\n");
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+
+#ifndef PMSI_DISABLE_POWERHOOK
+	sc->sc_powerhook = powerhook_establish(pmsi_power, sc);
+#endif /* !PMSI_DISABLE_POWERHOOK */
 }
 
-int
-pmsi_enable(v)
-	void *v;
+
+static void
+do_enable(sc)
+	struct pmsi_softc *sc;
 {
-	struct pmsi_softc *sc = v;
 	u_char cmd[1];
 	int res;
 
-	if (sc->sc_enabled)
-		return EBUSY;
-
-	sc->sc_enabled = 1;
 	sc->inputstate = 0;
 	sc->oldbuttons = 0;
 
@@ -233,14 +242,40 @@ pmsi_enable(v)
 	if (res)
 		printf("pmsi_enable: command error\n");
 
-	return 0;
+#ifndef PMSI_DISABLE_POWERHOOK
+	if (sc->sc_powerhook == NULL)
+		return;
+#endif /* !PMSI_DISABLE_POWERHOOK */
+
+	if ((res = pmsi_setintellimode(sc->sc_kbctag, sc->sc_kbcslot))) {
+#ifdef DEBUG
+		printf("pmsi_enable: intellimode -> %d\n", res);
+#endif
+	}
+
+	return;
 }
 
-void
-pmsi_disable(v)
+int
+pmsi_enable(v)
 	void *v;
 {
 	struct pmsi_softc *sc = v;
+
+	if (sc->sc_enabled)
+		return EBUSY;
+
+	sc->sc_enabled = 1;
+
+	do_enable(sc);
+
+	return 0;
+}
+
+static void
+do_disable(sc)
+	struct pmsi_softc *sc;
+{
 	u_char cmd[1];
 	int res;
 
@@ -250,6 +285,15 @@ pmsi_disable(v)
 		printf("pmsi_disable: command error\n");
 
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+}
+
+void
+pmsi_disable(v)
+	void *v;
+{
+	struct pmsi_softc *sc = v;
+
+	do_disable(sc);
 
 	sc->sc_enabled = 0;
 }
@@ -354,3 +398,32 @@ int data;
 
 	return;
 }
+
+#ifndef PMSI_DISABLE_POWERHOOK
+void
+pmsi_power(why, v)
+	int why;
+	void *v;
+{
+	struct pmsi_softc *sc = v;
+
+	if (sc == NULL)
+		return;		/* XXX */
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		if (sc->sc_enabled)
+			do_disable(sc);
+		break;
+	case PWR_RESUME:
+		if (sc->sc_enabled)
+			do_enable(sc);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+}
+#endif /* !PMSI_DISABLE_POWERHOOK */

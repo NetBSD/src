@@ -1,7 +1,7 @@
-/*	$NetBSD: ymvar.h,v 1.6 2000/03/23 07:01:36 thorpej Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.6.6.1 2002/02/28 04:13:49 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -127,7 +127,6 @@
 #endif
 
 /* XXX should be in <sys/audioio.h> */
-#define AudioNmode		"mode"
 #define AudioNdesktop		"desktop"
 #define AudioNlaptop		"laptop"
 #define AudioNsubnote		"subnote"
@@ -170,9 +169,21 @@ struct ym_softc {
 	/* 3D encehamcement */
 	u_int8_t sc_eqmode;
 	struct ad1848_volume sc_treble, sc_bass, sc_wide;
-#define YM_EQ_OFF(v)	\
-	((v)->left < (AUDIO_MAX_GAIN + 1) / (SA3_3D_BITS + 1) &&	\
-	(v)->right < (AUDIO_MAX_GAIN + 1) / (SA3_3D_BITS + 1))
+	/*
+	 * The equalizer of OPL3-SA3 is ``flat'' if it is turned off.
+	 * For compatibility with other drivers, however, make it flat
+	 * if it is set at center (or smaller).
+	 */
+#define YM_EQ_REDUCE_BIT	1	/* use only 128 values from 256 */
+#define YM_EQ_FLAT_OFFSET	128	/* center */
+#define YM_EQ_EXPAND_VALUE(v)	\
+    ((v) < YM_EQ_FLAT_OFFSET? 0 : ((v) - YM_EQ_FLAT_OFFSET) << YM_EQ_REDUCE_BIT)
+
+#define YM_3D_ON_MIN	((AUDIO_MAX_GAIN + 1) / (SA3_3D_BITS + 1))
+#define YM_EQ_ON_MIN	((YM_3D_ON_MIN >> YM_EQ_REDUCE_BIT) + YM_EQ_FLAT_OFFSET)
+
+#define YM_EQ_OFF(v)	((v)->left < YM_EQ_ON_MIN && (v)->right < YM_EQ_ON_MIN)
+#define YM_WIDE_OFF(v)	((v)->left < YM_3D_ON_MIN && (v)->right < YM_3D_ON_MIN)
 
 	struct device *sc_audiodev;
 
@@ -226,8 +237,9 @@ struct ym_softc {
 #define YM_XS_CD	1
 #define YM_XS_LINE	2
 #define YM_XS_SPEAKER	4
+#define YM_XS_MIC	8
 
-#if YM_CD_MUTE + 1 != YM_LINE_MUTE || YM_CD_MUTE + 2 != YM_SPEAKER_MUTE
+#if YM_CD_MUTE + 1 != YM_LINE_MUTE || YM_CD_MUTE + 2 != YM_SPEAKER_MUTE || YM_CD_MUTE + 3 != YM_MIC_MUTE
  #error YM_CD_MUTE, YM_LINE_MUTE and YM_SPEAKER_MUTE should be contiguous
 #endif
 #define YM_MIXER_TO_XS(m)	(1 << ((m) - YM_CD_MUTE))

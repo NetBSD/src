@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.3.2.4 2002/01/08 00:31:02 nathanw Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.3.2.5 2002/02/28 04:13:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.3.2.4 2002/01/08 00:31:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.3.2.5 2002/02/28 04:13:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -320,7 +320,7 @@ emuxki_scinit(struct emuxki_softc *sc)
 		return (err);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_HCFG,
-		EMU_HCFG_AUDIOENABLE |
+		EMU_HCFG_AUDIOENABLE | EMU_HCFG_JOYENABLE |
 		EMU_HCFG_LOCKTANKCACHE_MASK | EMU_HCFG_AUTOMUTE);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_INTE,
 		bus_space_read_4(sc->sc_iot, sc->sc_ioh, EMU_INTE) |
@@ -1351,19 +1351,6 @@ emuxki_voice_set_audioparms(struct emuxki_voice *voice, u_int8_t stereo,
 {
 	int             error;
 
-	/*
-	 * Audio driver tried to set recording AND playing params even if
-	 * device opened in play or record only mode ==>
-	 * modified emuxki_set_params.
-	 * Stays here for now just in case ...
-	 */
-	if (voice == NULL) {
-#ifdef EMUXKI_DEBUG
-		printf("warning: tried to set unallocated voice params !!\n");
-#endif
-		return (0);
-	}
-
 	if (voice->stereo == stereo && voice->b16 == b16 &&
 	    voice->sample_rate == srate)
 		return (0);
@@ -1595,8 +1582,10 @@ emuxki_open(void *addr, int flags)
 	if (flags & AUOPEN_WRITE) {
 		sc->pvoice = emuxki_voice_new(sc, EMU_VOICE_USE_PLAY);
 		if (sc->pvoice == NULL) {
-			if (flags & AUOPEN_READ)
+			if (sc->rvoice) {
 				emuxki_voice_delete(sc->rvoice);
+				sc->rvoice = NULL;
+			}
 			return (EBUSY);
 		}
 	}
@@ -1614,12 +1603,14 @@ emuxki_close(void *addr)
 #endif
 
 	/* No multiple voice support for now */
-	if (sc->rvoice != NULL)
+	if (sc->rvoice != NULL) {
 		emuxki_voice_delete(sc->rvoice);
-	sc->rvoice = NULL;
-	if (sc->pvoice != NULL)
+		sc->rvoice = NULL;
+	}
+	if (sc->pvoice != NULL) {
 		emuxki_voice_delete(sc->pvoice);
-	sc->pvoice = NULL;
+		sc->pvoice = NULL;
+	}
 }
 
 static int
@@ -1766,17 +1757,27 @@ emuxki_set_params(void *addr, int setmode, int usemode,
 	struct emuxki_softc *sc = addr;
 	int             mode, error;
 	struct audio_params *p;
+	struct emuxki_voice *v;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((usemode & setmode & mode) == 0)
 			continue;
 
-		p = (mode == AUMODE_PLAY) ? play : rec;
+		if (mode == AUMODE_PLAY) {
+			p = play;
+			v = sc->pvoice;
+		} else {
+			p = rec;
+			v = sc->rvoice;
+		}
+
+		if (v == NULL) {
+			continue;
+		}
 
 		/* No multiple voice support for now */
-		if ((error = emuxki_set_vparms((mode == AUMODE_PLAY) ?
-						sc->pvoice : sc->rvoice, p)))
+		if ((error = emuxki_set_vparms(v, p)))
 			return (error);
 	}
 

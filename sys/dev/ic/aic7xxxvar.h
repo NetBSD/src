@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.26.2.2 2001/08/24 00:09:14 nathanw Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.26.2.3 2002/02/28 04:13:20 nathanw Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -353,7 +353,7 @@ struct tmode_tstate {
 	u_int16_t		 ultraenb;	/* Using ultra sync rate  */
 	u_int16_t	 	 discenable;	/* Disconnection allowed  */
 	u_int16_t		 tagenable;	/* Tagged Queuing allowed */
-	u_int16_t		 tagdisable;	/* TQ explicity disallowed */
+	u_int16_t		 tagdisable;	/* TQ explicitly disallowed */
 };
 
 #define AHC_TARGET_WILDCARD -1
@@ -522,6 +522,8 @@ struct ahc_softc {
 	u_int8_t		inited_targets[16];
 	u_int8_t		inited_channels[2];
 
+	struct device		*child;
+
 	/*
 	 * SCBs that have been send to the controller
 	 */
@@ -659,6 +661,8 @@ void	ahc_free(struct ahc_softc *);
 int	ahc_probe_scbs(struct ahc_softc *);
 int	ahc_init(struct ahc_softc *);
 int	ahc_attach(struct ahc_softc *);
+int	ahc_detach(struct ahc_softc *, int);
+int	ahc_activate(struct device *, enum devact);
 int	ahc_intr(void *arg);
 
 /*

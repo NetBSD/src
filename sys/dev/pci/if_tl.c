@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.39.2.3 2001/11/14 19:15:19 nathanw Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.39.2.4 2002/02/28 04:14:02 nathanw Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.39.2.3 2001/11/14 19:15:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.39.2.4 2002/02/28 04:14:02 nathanw Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -612,16 +612,14 @@ static int tl_init(ifp)
 
 	/* Pre-allocate receivers mbuf, make the lists */
 	sc->Rx_list = malloc(sizeof(struct Rx_list) * TL_NBUF, M_DEVBUF,
-	    M_NOWAIT);
+	    M_NOWAIT|M_ZERO);
 	sc->Tx_list = malloc(sizeof(struct Tx_list) * TL_NBUF, M_DEVBUF,
-	    M_NOWAIT);
+	    M_NOWAIT|M_ZERO);
 	if (sc->Rx_list == NULL || sc->Tx_list == NULL) {
 		errstring = "out of memory for lists";
 		error = ENOMEM;
 		goto bad;
 	}
-	memset(sc->Rx_list, 0, sizeof(struct Rx_list) * TL_NBUF);
-	memset(sc->Tx_list, 0, sizeof(struct Tx_list) * TL_NBUF);
 	error = bus_dmamap_create(sc->tl_dmatag,
 	    sizeof(struct tl_Rx_list) * TL_NBUF, 1,
 	    sizeof(struct tl_Rx_list) * TL_NBUF, 0, BUS_DMA_WAITOK,

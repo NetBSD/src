@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.7 1996/04/21 21:07:00 veego Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.7.48.1 2002/02/28 04:06:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,11 +36,15 @@
  */
 
 #ifndef NOBADSECT
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.7.48.1 2002/02/28 04:06:21 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/dkbad.h>
 
-int isbad __P((struct dkbad *, int, int, int));
+int isbad(struct dkbad *, int, int, int);
 
 /*
  * Search the bad sector table looking for

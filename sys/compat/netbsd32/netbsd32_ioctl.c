@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.8.2.4 2002/01/11 23:38:49 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.8.2.5 2002/02/28 04:12:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.8.2.4 2002/01/11 23:38:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.8.2.5 2002/02/28 04:12:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bonitoreg.h,v 1.3.8.2 2002/01/11 23:38:38 nathanw Exp $	*/
+/*	$NetBSD: bonitoreg.h,v 1.3.8.3 2002/02/28 04:10:42 nathanw Exp $	*/
 
 /*
  * Bonito Register Map 

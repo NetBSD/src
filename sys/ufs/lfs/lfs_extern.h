@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.24.2.3 2002/01/08 00:34:52 nathanw Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.24.2.4 2002/02/28 04:15:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -219,6 +219,7 @@ int lfs_rmdir	(void *);
 int lfs_link	(void *);
 int lfs_rename	(void *);
 int lfs_getattr	(void *);
+int lfs_setattr	(void *);
 int lfs_close	(void *);
 int lfs_inactive(void *);
 int lfs_reclaim	(void *);

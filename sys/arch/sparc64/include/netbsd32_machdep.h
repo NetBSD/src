@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.6.8.3 2002/01/11 23:38:45 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.6.8.4 2002/02/28 04:12:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green

@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.11.2.3 2002/01/11 23:39:10 nathanw Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.11.2.4 2002/02/28 04:13:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.11.2.3 2002/01/11 23:39:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.11.2.4 2002/02/28 04:13:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

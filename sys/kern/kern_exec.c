@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.7 2002/01/11 23:39:38 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.8 2002/02/28 04:14:44 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.7 2002/01/11 23:39:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.8 2002/02/28 04:14:44 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -729,6 +729,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
  freehdr:
+	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 #endif
@@ -737,6 +738,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	return error;
 
  exec_abort:
+	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 #endif

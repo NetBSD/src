@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.11 2002/01/11 23:38:53 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.12 2002/02/28 04:13:02 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -12,7 +12,7 @@ defparam			MAXUPRC
 defparam			RTC_OFFSET
 defparam			DEFCORENAME
 defflag				UCONSOLE
-defflag				NEW_PIPE
+defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag				MULTIPROCESSOR
 
@@ -374,6 +374,7 @@ defflag	opt_isp.h		ISP_DISABLE_1020_SUPPORT
 				ISP_DISABLE_2100_SUPPORT
 				ISP_DISABLE_2200_SUPPORT
 				ISP_DISABLE_FW ISP_TARGET_MODE
+				ISP_FW_CRASH_DUMP
 defparam opt_isp.h		ISP_LOGDEFAULT
 device	isp: scsi
 file	dev/ic/isp.c			isp
@@ -815,6 +816,11 @@ file	dev/usb/ehci.c			ehci			needs-flag
 device	radio
 attach	radio at radiodev
 
+#
+# IEEE 1212 routines
+define	ieee1212
+file	dev/std/ieee1212.c		ieee1212
+
 # IEEE 1394 controllers
 # (These need to be here since it will have both PCI and CardBus attachments)
 #
@@ -950,6 +956,7 @@ file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/ccd.c			ccd			needs-flag
+file	dev/clockctl.c			clockctl		needs-flag
 file	dev/i2c/i2c_bus.c		i2c
 file	dev/i2c/i2c_eeprom.c		i2c_eeprom
 file	dev/ir/cir.c			cir			needs-flag
@@ -960,6 +967,7 @@ file	dev/ir/sir.c			irdasir
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
+file	dev/mm.c
 file	dev/mulaw.c			mulaw
 file	dev/radio.c			radio			needs-flag
 file	dev/raidframe/rf_acctrace.c		raid		needs-flag
@@ -1099,7 +1107,7 @@ file	kern/subr_rmap.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
-file	kern/sys_pipe.c			new_pipe
+file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_process.c
 file	kern/sys_socket.c
 file	kern/syscalls.c			syscall_debug
@@ -1484,4 +1492,7 @@ file	netisdn/i4b_i4bdrv.c		i4b			needs-flag
 file	netisdn/i4b_l4.c		isdn			needs-flag
 file	netisdn/i4b_l4mgmt.c		isdn			needs-flag
 file	netisdn/i4b_l4timer.c		isdn			needs-flag
-file	dev/clockctl.c			clockctl		needs-flag
+
+# Game adapter (joystick)
+device	joy
+file	dev/ic/joy.c			joy needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.5.8.1 2001/10/08 20:10:53 nathanw Exp $	*/
+/*	$NetBSD: auconv.h,v 1.5.8.2 2002/02/28 04:13:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,3 +51,8 @@ extern void linear8_to_linear16_le(void *, u_char *, int);
 extern void linear8_to_linear16_be(void *, u_char *, int);
 extern void linear16_to_linear8_le(void *, u_char *, int);
 extern void linear16_to_linear8_be(void *, u_char *, int);
+/* Byte expansion/contraction with sign change */
+extern void ulinear8_to_slinear16_le(void *, u_char *, int);
+extern void ulinear8_to_slinear16_be(void *, u_char *, int);
+extern void slinear16_to_ulinear8_le(void *, u_char *, int);
+extern void slinear16_to_ulinear8_be(void *, u_char *, int);

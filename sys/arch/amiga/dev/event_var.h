@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.3 1996/10/11 21:12:46 mhitch Exp $	*/
+/*	$NetBSD: event_var.h,v 1.3.46.1 2002/02/28 04:06:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,10 +77,10 @@ struct evvar {
 		psignal((ev)->ev_io, SIGIO); \
 }
 
-void	ev_init __P((struct evvar *));
-void	ev_fini __P((struct evvar *));
-int	ev_read __P((struct evvar *, struct uio *, int));
-int	ev_poll __P((struct evvar *, int, struct proc *));
+void	ev_init(struct evvar *);
+void	ev_fini(struct evvar *);
+int	ev_read(struct evvar *, struct uio *, int);
+int	ev_poll(struct evvar *, int, struct proc *);
 
 /*
  * PEVENT is set just above PSOCK, which is just above TTIPRI, on the

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.5 2002/01/08 00:31:24 nathanw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.6 2002/02/28 04:14:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.5 2002/01/08 00:31:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.6 2002/02/28 04:14:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,11 @@ static const struct ne2000dev {
 #define	NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
 #define	NE2000DVF_AX88190	0x0002		/* chip is ASIX AX88190 */
 } ne2000devs[] = {
+    { PCMCIA_STR_EDIMAX_EP4000A,
+      PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4000A,
+      PCMCIA_CIS_EDIMAX_EP4000A,
+      0, -1, { 0x00, 0xa0, 0x0c } },
+
     { PCMCIA_STR_SYNERGY21_S21810,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_SYNERGY21_S21810,
@@ -208,6 +213,12 @@ static const struct ne2000dev {
       PCMCIA_CIS_IBM_INFOMOVER,
       0, 0x0ff0, { 0x00, 0x06, 0x29 } },
 
+    /* NEC 9801N_J12 */
+    { PCMCIA_STR_IBM_INFOMOVER,
+      PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
+      PCMCIA_CIS_IBM_INFOMOVER,
+      0, 0x0ff0, { 0x00, 0x00, 0x4c } },
+
     { PCMCIA_STR_LINKSYS_ECARD_1, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
       PCMCIA_CIS_LINKSYS_ECARD_1, 
@@ -228,6 +239,11 @@ static const struct ne2000dev {
      * match with this.  FNW-3700T won't match above entries due to
      * MAC address check.
      */
+    { PCMCIA_STR_LANTECH_FASTNETTX,
+      PCMCIA_VENDOR_LANTECH, PCMCIA_PRODUCT_LANTECH_FASTNETTX,
+      PCMCIA_CIS_LANTECH_FASTNETTX,
+      0, -1, { 0x00, 0x04, 0x1c }, NE2000DVF_AX88190 },
+
     { PCMCIA_STR_PLANEX_FNW3700T, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_PLANEX_FNW3700T, 
@@ -237,6 +253,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
       0, -1, { 0x00, 0x80, 0xc8 }, NE2000DVF_DL10019 },
+
+    { PCMCIA_STR_LINKSYS_ETHERFAST,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
+      PCMCIA_CIS_LINKSYS_ETHERFAST,
+      0, -1, { 0x00, 0x40, 0x05 }, NE2000DVF_DL10019 },
 
     { PCMCIA_STR_LINKSYS_ETHERFAST,
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,

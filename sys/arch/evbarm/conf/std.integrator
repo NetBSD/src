@@ -1,4 +1,4 @@
-#	$NetBSD: std.integrator,v 1.2.4.2 2002/01/08 00:24:11 nathanw Exp $
+#	$NetBSD: std.integrator,v 1.2.4.3 2002/02/28 04:09:08 nathanw Exp $
 #
 # standard NetBSD/netwinder options
 
@@ -13,6 +13,8 @@ options 	EXEC_ELF32
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
+
+options		__OLD_INTERRUPT_CODE	# XXX for now
 
 makeoptions	LOADADDRESS="0xa0100000"
 makeoptions	LINKENTRY="-e 0x10000"

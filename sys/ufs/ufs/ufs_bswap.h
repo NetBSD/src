@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.6.6.2 2001/08/24 00:13:31 nathanw Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.6.6.3 2002/02/28 04:15:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.

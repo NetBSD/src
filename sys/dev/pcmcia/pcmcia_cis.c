@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.21.2.6 2002/01/08 00:31:27 nathanw Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.21.2.7 2002/02/28 04:14:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.21.2.6 2002/01/08 00:31:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.21.2.7 2002/02/28 04:14:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -855,8 +855,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		}
 		if (state->pf == NULL) {
 			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
-			    M_NOWAIT);
-			memset(state->pf, 0, sizeof(*state->pf));
+			    M_NOWAIT|M_ZERO);
 			state->pf->number = state->count++;
 			state->pf->last_config_index = -1;
 			SIMPLEQ_INIT(&state->pf->cfe_head);
@@ -903,8 +902,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			}
 			if (state->pf == NULL) {
 				state->pf = malloc(sizeof(*state->pf),
-				    M_DEVBUF, M_NOWAIT);
-				memset(state->pf, 0, sizeof(*state->pf));
+				    M_DEVBUF, M_NOWAIT|M_ZERO);
 				state->pf->number = state->count++;
 				state->pf->last_config_index = -1;
 				SIMPLEQ_INIT(&state->pf->cfe_head);

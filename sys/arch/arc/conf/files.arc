@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.33.6.2 2002/01/08 00:23:05 nathanw Exp $
+#	$NetBSD: files.arc,v 1.33.6.3 2002/02/28 04:07:13 nathanw Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -251,9 +251,7 @@ attach	com at jazzio with com_jazzio
 file	arch/arc/jazz/com_jazzio.c	com & com_jazzio
 
 # Game adapter (joystick)
-device	joy
-attach	joy at isa
-file	arch/arc/isa/joy.c		joy needs-flag
+file	arch/arc/isa/joy_timer.c	joy
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.17.4.2 2002/01/11 23:38:35 nathanw Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.17.4.3 2002/02/28 04:10:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

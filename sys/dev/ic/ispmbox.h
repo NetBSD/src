@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.31.2.6 2002/01/11 23:39:00 nathanw Exp $ */
+/* $NetBSD: ispmbox.h,v 1.31.2.7 2002/02/28 04:13:26 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -79,7 +79,7 @@
 					/*   c */
 					/*   d */
 #define MBOX_CHECK_FIRMWARE		0x000e
-					/*   f */
+#define	MBOX_READ_RAM_WORD_EXTENDED	0x000f
 #define MBOX_INIT_REQ_QUEUE		0x0010
 #define MBOX_INIT_RES_QUEUE		0x0011
 #define MBOX_EXECUTE_IOCB		0x0012
@@ -135,8 +135,10 @@
 #define	MBOX_EXEC_BIOS_IOCB		0x0042
 #define	MBOX_SET_FW_FEATURES		0x004a
 #define	MBOX_GET_FW_FEATURES		0x004b
-#define		FW_FEATURE_LVD_NOTIFY	0x2
 #define		FW_FEATURE_FAST_POST	0x1
+#define		FW_FEATURE_LVD_NOTIFY	0x2
+#define		FW_FEATURE_RIO_32BIT	0x4
+#define		FW_FEATURE_RIO_16BIT	0x8
 
 #define	MBOX_ENABLE_TARGET_MODE		0x0055
 #define		ENABLE_TARGET_FLAG	0x8000

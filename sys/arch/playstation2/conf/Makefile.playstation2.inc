@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.playstation2.inc,v 1.1.4.2 2002/01/11 23:38:40 nathanw Exp $
+#	$NetBSD: Makefile.playstation2.inc,v 1.1.4.3 2002/02/28 04:11:19 nathanw Exp $
 
 EETOOLDIR	=	/usr/pkg/cross-ps2
 TARGET	=	mipsEEel-netbsd

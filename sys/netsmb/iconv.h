@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.h,v 1.1.4.1 2002/01/11 23:39:47 nathanw Exp $	*/
+/*	$NetBSD: iconv.h,v 1.1.4.2 2002/02/28 04:15:18 nathanw Exp $	*/
 
 /* Public domain */
 

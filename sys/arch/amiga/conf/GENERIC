@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.162.6.2 2002/01/08 00:22:57 nathanw Exp $
+# $NetBSD: GENERIC,v 1.162.6.3 2002/02/28 04:06:28 nathanw Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.162.6.2 $"
+#ident 		"GENERIC-$Revision: 1.162.6.3 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -155,8 +155,10 @@ options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 #endif
+
+options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
+options 	COMPAT_AOUT_M68K # actually make some system calls work.
 
 #ifndef INSTALL_CONFIGURATION
 #
@@ -180,13 +182,13 @@ options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 options 	UCONSOLE	# anyone can redirect a virtual console
 #endif
-
-#options 	INSECURE	# allow, among other insecure stuff, LKM
-				# loading in multi-user mode.
-options 	SCSIVERBOSE	# Verbose SCSI errors
-
+#options 	INSECURE	# disable kernel security levels
+options 	SCSIVERBOSE	# human readable SCSI error messages
 #ifndef INSTALL_CONFIGURATION
 options 	NTP		# NTP phase/frequency locked loop
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#else
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #endif
 
 #
@@ -208,7 +210,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	NKPTADD=4	# set this for 4 additional KPT pages
 #options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
 				# per 16 MB (1<<24 bytes) of RAM
-				# define and decrease this, or define and
+				# uncomment and decrease this, or uncomment and
 				# increase NKPTADD if you get "out of PT pages"
 				# panics.
 
@@ -261,12 +263,14 @@ options 	GRF_SUPER72	# AGA Super-72
 #options 	RH_HARDWARECURSOR
 
 #ifdef AMIGA_CONFIGURATION
-# wscons aware interface to amiga custom chips. Text-only console.
+# wscons aware interface to amiga custom chips.
 # If you enable it enable also wskbd.
 #
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
-#options 	WSEMUL_VT100
+#options	WSEMUL_VT100
+#options	FONT_BOLD8x16
+#options	FONT_VT220L8x10
 #endif
 
 #ifdef AMIGA_CONFIGURATION
@@ -351,8 +355,10 @@ fdc0		at mainbus0		# Amiga FDC
 fd*		at fdc0 unit ?		# floppy disks on the later
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
+#ifndef INSTALL_CONFIGURATION
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
+#endif
 #endif
 
 #ifdef DRACO_CONFIGURATION
@@ -370,6 +376,7 @@ lpt0		at drsupio? port ?	# DraCo parallel
 # Zorro-II, Zorro-III, DraCo Direct-Bus devices (sans graphics)
 #
 
+#ifndef INSTALL_CONFIGURATION
 #ifndef DRACO_CONFIGURATION
 # Alas, Melody-Z2 dont configure in the DraCo bus.
 melody* 	at zbus0		# Melody MPEG audio decoder
@@ -378,6 +385,10 @@ audio*		at melody?
 
 repulse*	at zbus0		# ALiENDESiGN Repulse
 audio*		at repulse?
+
+toccata*	at zbus0		# MacroSystem GmbH Toccata
+audio*		at toccata?
+#endif
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
@@ -499,8 +510,16 @@ pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

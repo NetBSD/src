@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.15.2.1 2001/10/08 20:11:46 nathanw Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.15.2.2 2002/02/28 04:14:52 nathanw Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -110,7 +110,7 @@ typedef struct ustar_struct {
 } ustar_t;
 
 /*
- * We buffer one even cylindar of data...it's actually only really one
+ * We buffer one even cylinder of data...it's actually only really one
  * cyl on a 1.44M floppy, but on other devices it's fast enough with any
  * kind of block buffering, so we optimize for the slowest device.
  */
@@ -336,7 +336,7 @@ read512block(f, vda, block)
 	 * 	do disk swap
 	 * get physical disk address
 	 * round down to cylinder boundary
-	 * read cylindar
+	 * read cylinder
 	 * set window (in vda space) and try again
 	 * [ there is an implicit assumption that windowbase always identifies
 	 *    the current volume, even if initwindow == 0. This way, a

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.3.4.3 2002/01/11 23:38:06 nathanw Exp $	*/
+/*	$NetBSD: i80312.c,v 1.3.4.4 2002/02/28 04:07:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,6 +76,8 @@ i80312_attach(struct i80312_softc *sc)
 	struct pcibus_attach_args pba;
 	uint32_t atucr;
 	pcireg_t preg;
+
+	i80312_softc = sc;
 
 	/*
 	 * Slice off some useful subregion handles.

@@ -1,25 +1,16 @@
-#	$NetBSD: files.cats,v 1.10.6.2 2002/01/08 00:23:49 nathanw Exp $
+#	$NetBSD: files.cats,v 1.10.6.3 2002/02/28 04:08:40 nathanw Exp $
 #
-# First try for arm-specific configuration info
+# CATS-specific configuration info
 #
 
 maxpartitions	8
 maxusers 2 8 64
-
-# COMPAT_OLD_OFW for SHARKs
-defflag	COMPAT_OLD_OFW
 
 # Maintain Interrupt statistics
 defflag	IRQSTATS
 
 # X server support in console drivers
 defflag	XSERVER
-
-# Bootloader options (COMPAT... to be dropped ASAP)
-#defflag	COMPAT_OLD_BOOTLOADER
-
-# Architectures and core logic
-defflag	NETWINDER
 
 define todservice {}
 
@@ -42,21 +33,16 @@ major	{wd = 16}
 #
 device	todclock
 attach	todclock at todservice
-file	arch/arm32/dev/todclock.c		todclock	needs-count
+file	arch/arm/footbridge/todclock.c			todclock	needs-count
 
 # ISA DMA glue
-file	arch/arm32/isa/isadma_machdep.c		isadma
+file	arch/arm/footbridge/isa/isadma_machdep.c	isadma
 
-# XXX ISA joystick driver
-device	joy
-file	arch/arm32/isa/joy.c			joy needs-flag
-attach	joy at isa with joy_isa
-file	arch/arm32/isa/joy_isa.c		joy_isa
-attach	joy at isapnp with joy_isapnp
-file	arch/arm32/isa/joy_isapnp.c		joy_isapnp
+# Game adapter (joystick)
+file	arch/arm/footbridge/isa/joy_timer.c		joy
 
 # Memory disk driver
-file	arch/arm32/dev/md_hooks.c				md & memory_disk_hooks
+file	dev/md_root.c				md & memory_disk_hooks
 major	{md = 18}
 
 # RAIDframe
@@ -86,22 +72,22 @@ file	arch/arm/arm32/intr.c
 file	arch/arm/arm32/spl.S
 
 # ISA Plug 'n Play autoconfiguration glue.
-file	arch/arm32/isa/isapnp_machdep.c		isapnp
+file	arch/arm/footbridge/isa/isapnp_machdep.c	isapnp
 
 # ISA support.
-file	arch/arm32/isa/isa_io.c				isa
-file	arch/arm32/isa/isa_io_asm.S			isa
+file	arch/arm/footbridge/isa/isa_io.c		isa
+file	arch/arm/footbridge/isa/isa_io_asm.S		isa
 
 # CATS boards have an EBSA285 based core with an ISA bus
 file	arch/cats/isa/isa_machdep.c			isa
 
 device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
-file	arch/arm32/isa/sysbeep_isa.c			sysbeep_isa
+file	arch/arm/footbridge/isa/sysbeep_isa.c		sysbeep_isa
 
 device dsrtc: todservice
 attach dsrtc at isa
-file	arch/arm32/isa/dsrtc.c				dsrtc
+file	arch/arm/footbridge/isa/dsrtc.c			dsrtc
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
 
@@ -117,7 +103,7 @@ include "dev/mii/files.mii"
 
 device	pcib: isabus
 attach	pcib at pci
-file	arch/arm32/pci/pcib.c			pcib
+file	arch/cats/pci/pcib.c			pcib
 
 # XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
 # XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
@@ -127,7 +113,7 @@ file	arch/arm32/pci/pcib.c			pcib
 attach	lpt at puc with lpt_puc
 file	dev/pci/lpt_puc.c	lpt_puc
 
-file	arch/arm32/pci/pciide_machdep.c	pciide
+file	arch/cats/pci/pciide_machdep.c	pciide
 
 # Include USB stuff
 include "dev/usb/files.usb"

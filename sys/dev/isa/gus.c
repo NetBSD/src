@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.70.2.4 2002/01/11 23:39:05 nathanw Exp $	*/
+/*	$NetBSD: gus.c,v 1.70.2.5 2002/02/28 04:13:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.70.2.4 2002/01/11 23:39:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.70.2.5 2002/02/28 04:13:40 nathanw Exp $");
 
 #include "gus.h"
 #if NGUS > 0

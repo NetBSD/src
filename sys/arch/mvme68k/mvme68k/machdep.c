@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86.4.3 2001/12/02 12:30:33 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86.4.4 2002/02/28 04:10:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -206,7 +206,7 @@ void	mvme147_init __P((void));
 #endif
 
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
-#include <mvme68k/dev/pcctworeg.h>
+#include <dev/mvme/pcctworeg.h>
 void	mvme1xx_init __P((void));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.18.2.4 2002/01/11 23:39:41 nathanw Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.18.2.5 2002/02/28 04:14:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: null_vnops.c,v 1.18.2.4 2002/01/11 23:39:41 nathanw Exp $
+ *	$Id: null_vnops.c,v 1.18.2.5 2002/02/28 04:14:56 nathanw Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -207,7 +207,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.18.2.4 2002/01/11 23:39:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.18.2.5 2002/02/28 04:14:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

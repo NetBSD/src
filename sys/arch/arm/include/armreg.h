@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.8.6.2 2002/01/08 00:23:11 nathanw Exp $	*/
+/*	$NetBSD: armreg.h,v 1.8.6.3 2002/02/28 04:07:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -146,6 +146,8 @@
 /* Next three nybbles are part number */
 #define CPU_ID_PARTNO_MASK	0x0000fff0
 
+#define CPU_ID_XSCALE_COREREV_MASK	0x0000e000
+
 /* And finally, the revision number. */
 #define CPU_ID_REVISION_MASK	0x0000000f
 
@@ -185,6 +187,8 @@
 #define CPU_ID_SA1100		0x4401a110
 #define CPU_ID_SA1110		0x6901b110
 #define CPU_ID_I80200		0x69052000 /* XScale core */
+#define CPU_ID_PXA250		0x69052100
+#define CPU_ID_PXA210		0x69052120
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.30.8.2 2001/08/24 00:08:35 nathanw Exp $	*/
+/*	$NetBSD: segments.h,v 1.30.8.3 2002/02/28 04:10:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -213,7 +213,19 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	NRSVIDT	32		/* reserved entries for cpu exceptions */
 
 /*
- * Entries in the Global Descriptor Table (GDT)
+ * Entries in the Global Descriptor Table (GDT).
+ *
+ * NB: If you change GBIOSCODE/GBIOSDATA, you *must* rebuild arch/i386/
+ * bioscall/biostramp.inc, as that relies on GBIOSCODE/GBIOSDATA and a
+ * normal kernel build does not rebuild it (it's merely included whole-
+ * sale from i386/bioscall.s)
+ * 
+ * Also, note that the GEXTBIOSDATA_SEL selector is special, as it maps 
+ * to the value 0x0040 (when created as a KPL global selector).  Some 
+ * BIOSes reference the extended BIOS data area at segment 0040 in a non
+ * relocatable fashion (even when in protected mode); mapping the zero page
+ * via the GEXTBIOSDATA_SEL allows these buggy BIOSes to continue to work
+ * under NetBSD.
  */
 #define	GNULL_SEL	0	/* Null descriptor */
 #define	GCODE_SEL	1	/* Kernel code descriptor */
@@ -221,20 +233,19 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	GLDT_SEL	3	/* Default LDT descriptor */
 #define	GUCODE_SEL	4	/* User code descriptor */
 #define	GUDATA_SEL	5	/* User data descriptor */
-#define	GAPM32CODE_SEL	6
-#ifndef COMPAT_MACH
-#define	GAPM16CODE_SEL	7
-#else
+/* reserved for GCPU_SEL	6	per-CPU segment */
 #define	GMACHCALLS_SEL	7	/* Darwin (mach trap) system call gate */
-#endif
-#define	GAPMDATA_SEL	8
-#define	GBIOSCODE_SEL	9
-#define	GBIOSDATA_SEL	10
-#define GPNPBIOSCODE_SEL 11
-#define GPNPBIOSDATA_SEL 12
-#define GPNPBIOSSCRATCH_SEL 13
-#define GPNPBIOSTRAMP_SEL 14
-#define	NGDT		15
+#define	GEXTBIOSDATA_SEL 8	/* magic to catch BIOS refs to EBDA */
+#define	GAPM32CODE_SEL	9	/* 3 APM segments must be consecutive */
+#define	GAPM16CODE_SEL	10	/* and in the specified order: code32 */
+#define	GAPMDATA_SEL	11	/* code16 and then data per APM spec */
+#define	GBIOSCODE_SEL	12
+#define	GBIOSDATA_SEL	13
+#define GPNPBIOSCODE_SEL 14
+#define GPNPBIOSDATA_SEL 15
+#define GPNPBIOSSCRATCH_SEL 16
+#define GPNPBIOSTRAMP_SEL 17
+#define	NGDT		18
 
 /*
  * Entries in the Local Descriptor Table (LDT)

@@ -1,9 +1,9 @@
-/*	$NetBSD: i8042reg.h,v 1.7 1998/01/18 14:41:37 drochner Exp $	*/
+/*	$NetBSD: i8042reg.h,v 1.7.26.1 2002/02/28 04:13:22 nathanw Exp $	*/
 
 #define	KBSTATP		4	/* kbd controller status port (I) */
 #define	 KBS_DIB	0x01	/* kbd data in buffer */
 #define	 KBS_IBF	0x02	/* kbd input buffer low */
-#define	 KBS_WARM	0x04	/* kbd input buffer low */
+#define	 KBS_WARM	0x04	/* kbd system flag */
 #define	 KBS_OCMD	0x08	/* kbd output buffer has command */
 #define	 KBS_NOSEC	0x10	/* kbd security lock not engaged */
 #define	 KBS_TERR	0x20	/* kbd transmission error */

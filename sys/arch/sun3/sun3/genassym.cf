@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.10.1 2001/11/18 19:39:00 scw Exp $
+#	$NetBSD: genassym.cf,v 1.1.10.2 2002/02/28 04:12:24 nathanw Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -76,10 +76,6 @@ include <m68k/saframe.h>
 # XXX: for copy.s
 define	M68020			1
 
-# bus error stuff
-define	BUSERR_REG			BUSERR_REG
-define	BUSERR_MMU			BUSERR_MMU
-
 # 68k isms
 define	PSL_LOWIPL			PSL_LOWIPL
 define	PSL_HIGHIPL			PSL_HIGHIPL
@@ -90,6 +86,11 @@ define	FC_CONTROL			FC_CONTROL
 define	FC_SUPERD			FC_SUPERD
 define	FC_USERD			FC_USERD
 define	IC_CLEAR			IC_CLEAR
+
+ifndef _LKM
+# bus error stuff
+define	BUSERR_REG			BUSERR_REG
+define	BUSERR_MMU			BUSERR_MMU
 
 # sun3 control space isms
 define	CONTEXT_REG			CONTEXT_REG
@@ -109,6 +110,7 @@ define	KERNBASE			KERNBASE
 define	USPACE				USPACE
 define	NBPG				NBPG
 define	NBSG				NBSG
+endif
 
 # system calls
 define	SYS_exit			SYS_exit
@@ -146,9 +148,11 @@ define	LSONPROC		LSONPROC
 
 # XXX: HP-UX trace bit?
 
+ifndef _LKM
 # VM/pmap structure fields
 define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
 define	PM_CTXNUM		offsetof(struct pmap, pm_ctxnum)
+endif
 
 # pcb offsets
 define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)

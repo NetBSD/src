@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.9 2002/01/09 02:59:24 nathanw Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.10 2002/02/28 04:14:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.9 2002/01/09 02:59:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.10 2002/02/28 04:14:55 nathanw Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1005,6 +1005,7 @@ genfs_putpages(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uvm_object *uobj = &vp->v_uobj;
+	struct simplelock *slock = &uobj->vmobjlock;
 	off_t startoff = ap->a_offlo;
 	off_t endoff = ap->a_offhi;
 	off_t off;
@@ -1013,7 +1014,7 @@ genfs_putpages(v)
 	int i, s, error, npages, nback;
 	int freeflag;
 	struct vm_page *pgs[n], *pg, *nextpg, *tpg, curmp, endmp;
-	boolean_t wasclean, by_list, needs_clean;
+	boolean_t wasclean, by_list, needs_clean, yield;
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
@@ -1029,7 +1030,7 @@ genfs_putpages(v)
 			vp->v_flag &= ~VONWORKLST;
 			LIST_REMOVE(vp, v_synclist);
 		}
-		simple_unlock(&uobj->vmobjlock);
+		simple_unlock(slock);
 		return 0;
 	}
 
@@ -1103,17 +1104,9 @@ genfs_putpages(v)
 		 * wait for it to become unbusy.
 		 */
 
-		if (flags & PGO_FREE) {
-			pmap_page_protect(pg, VM_PROT_NONE);
-		}
-		if (flags & PGO_CLEANIT) {
-			needs_clean = pmap_clear_modify(pg) ||
-				(pg->flags & PG_CLEAN) == 0;
-			pg->flags |= PG_CLEAN;
-		} else {
-			needs_clean = FALSE;
-		}
-		if (needs_clean && pg->flags & PG_BUSY) {
+		yield = curproc->p_cpu->ci_schedstate.spc_flags &
+		    SPCF_SHOULDYIELD;
+		if (pg->flags & PG_BUSY || yield) {
 			KASSERT(curproc != uvm.pagedaemon_proc);
 			UVMHIST_LOG(ubchist, "busy %p", pg,0,0,0);
 			if (by_list) {
@@ -1121,11 +1114,15 @@ genfs_putpages(v)
 				UVMHIST_LOG(ubchist, "curmp next %p",
 					    TAILQ_NEXT(&curmp, listq), 0,0,0);
 			}
-			pg->flags |= PG_WANTED;
-			pg->flags &= ~PG_CLEAN;
-			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
-			    "genput", 0);
-			simple_lock(&uobj->vmobjlock);
+			if (yield) {
+				simple_unlock(slock);
+				preempt(NULL);
+				simple_lock(slock);
+			} else {
+				pg->flags |= PG_WANTED;
+				UVM_UNLOCK_AND_WAIT(pg, slock, 0, "genput", 0);
+				simple_lock(slock);
+			}
 			if (by_list) {
 				UVMHIST_LOG(ubchist, "after next %p",
 					    TAILQ_NEXT(&curmp, listq), 0,0,0);
@@ -1135,6 +1132,22 @@ genfs_putpages(v)
 				pg = uvm_pagelookup(uobj, off);
 			}
 			continue;
+		}
+
+		/*
+		 * if we're freeing, remove all mappings of the page now.
+		 * if we're cleaning, check if the page is needs to be cleaned.
+		 */
+
+		if (flags & PGO_FREE) {
+			pmap_page_protect(pg, VM_PROT_NONE);
+		}
+		if (flags & PGO_CLEANIT) {
+			needs_clean = pmap_clear_modify(pg) ||
+				(pg->flags & PG_CLEAN) == 0;
+			pg->flags |= PG_CLEAN;
+		} else {
+			needs_clean = FALSE;
 		}
 
 		/*
@@ -1161,8 +1174,14 @@ genfs_putpages(v)
 			if (nback) {
 				memmove(&pgs[0], &pgs[npages - nback],
 				    nback * sizeof(pgs[0]));
+				if (npages - nback < nback)
+					memset(&pgs[nback], 0,
+					    (npages - nback) * sizeof(pgs[0]));
+				else
+					memset(&pgs[npages - nback], 0,
+					    nback * sizeof(pgs[0]));
+				n -= nback;
 			}
-			n -= nback;
 
 			/*
 			 * then plug in our page of interest.
@@ -1228,9 +1247,9 @@ genfs_putpages(v)
 				TAILQ_INSERT_AFTER(&uobj->memq, pg, &curmp,
 				    listq);
 			}
-			simple_unlock(&uobj->vmobjlock);
+			simple_unlock(slock);
 			error = GOP_WRITE(vp, pgs, npages, flags);
-			simple_lock(&uobj->vmobjlock);
+			simple_lock(slock);
 			if (by_list) {
 				pg = TAILQ_NEXT(&curmp, listq);
 				TAILQ_REMOVE(&uobj->memq, &curmp, listq);
@@ -1267,7 +1286,7 @@ genfs_putpages(v)
 				pg = TAILQ_NEXT(pg, listq);
 			}
 		} else {
-			off += PAGE_SIZE;
+			off += npages << PAGE_SHIFT;
 			if (off < endoff) {
 				pg = uvm_pagelookup(uobj, off);
 			}
@@ -1295,9 +1314,9 @@ genfs_putpages(v)
 		s = splbio();
 		while (vp->v_numoutput != 0) {
 			vp->v_flag |= VBWAIT;
-			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput, &uobj->vmobjlock,
-					    FALSE, "genput2",0);
-			simple_lock(&uobj->vmobjlock);
+			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput, slock, FALSE,
+			    "genput2", 0);
+			simple_lock(slock);
 		}
 		splx(s);
 	}

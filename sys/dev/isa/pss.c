@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.54.20.5 2002/01/11 23:39:11 nathanw Exp $	*/
+/*	$NetBSD: pss.c,v 1.54.20.6 2002/02/28 04:13:46 nathanw Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.54.20.5 2002/01/11 23:39:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.54.20.6 2002/02/28 04:13:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

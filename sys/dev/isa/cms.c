@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.1.8.3 2002/01/11 23:39:04 nathanw Exp $ */
+/* $NetBSD: cms.c,v 1.1.8.4 2002/02/28 04:13:39 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.1.8.3 2002/01/11 23:39:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.1.8.4 2002/02/28 04:13:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.47.2.2 2002/01/08 00:24:39 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.47.2.3 2002/02/28 04:09:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -148,6 +148,9 @@ cdev_decl(tun);
 #endif
 cdev_decl(scsibus);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -192,6 +195,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 39: wscons mice */
 	cdev_notdef(),			/* 40: wscons multiplexor */
 	cdev_notdef(),			/* 41: wsfont pseudo-device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 42: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -275,6 +279,7 @@ static int chrtoblktbl[] = {
 	/* 39 */	NODEV,
 	/* 40 */	NODEV,
 	/* 41 */	NODEV,
+	/* 42 */	NODEV,
 };
 
 /*

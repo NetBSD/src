@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.15.2.3 2001/11/14 19:15:15 nathanw Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.15.2.4 2002/02/28 04:13:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.15.2.3 2001/11/14 19:15:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.15.2.4 2002/02/28 04:13:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ const struct ex_pci_product {
 	/* XXX Internal PHY? */
 	{ PCI_PRODUCT_3COM_3C980SRV,	EX_CONF_90XB,
 	  "3c980 Server Adapter 10/100 Ethernet" },
-	{ PCI_PRODUCT_3COM_3C980CTXM,	EX_CONF_90XB,
+	{ PCI_PRODUCT_3COM_3C980CTXM,	EX_CONF_90XB|EX_CONF_MII,
 	  "3c980C-TXM 10/100 Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C905CTX,	EX_CONF_90XB|EX_CONF_MII,

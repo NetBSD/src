@@ -1,13 +1,13 @@
-/* 
- * $NetBSD: drcustom.h,v 1.4 1999/09/25 21:47:04 is Exp $
- * 
+/*
+ * $NetBSD: drcustom.h,v 1.4.20.1 2002/02/28 04:06:21 nathanw Exp $
+ *
  * Motherboard addresses for the DraCo.
  *
  */
 
 #ifndef _DRACO_HARDWARE
 #define _DRACO_HARDWARE
- 
+
 /*
  * CIA-B is available only in very early models.
  * CIA-A is available only up to revision 3.

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_ccreg.h,v 1.7 1997/09/19 03:27:13 mhitch Exp $	*/
+/*	$NetBSD: grfabs_ccreg.h,v 1.7.34.1 2002/02/28 04:06:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -188,7 +188,7 @@ enum quad_frame_numbers {
 #define QUAD1_ID 0x00f1
 #define QUAD2_ID 0x0f01
 #define QUAD3_ID 0x0ff1
-	
+
 #define HALF_2024_LINE (512>>3)
 #define DIGITAL_RED 0x0800
 #define DIGITAL_GREEN 0x0080

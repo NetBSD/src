@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.7 2002/01/04 22:38:54 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.8 2002/02/28 04:12:17 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1305,7 +1305,9 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 			paddr_t pa;
 			long incr;
 
-			incr = min(buflen, NBPG);
+			incr = NBPG - (vaddr&PGOFSET);
+			incr = min(buflen, incr);
+
 			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
 			buflen -= incr;
 			vaddr += incr;
@@ -1332,6 +1334,46 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 		}
 	}
 
+#ifdef DEBUG
+	{
+		size_t mbuflen, sglen;
+		int j;
+		int retval;
+
+		mbuflen = 0;
+		for (m = (struct mbuf *)map->_dm_source; m; m = m->m_next)
+			mbuflen += (long)m->m_len;
+		sglen = 0;
+		for (j = 0; j < i; j++)
+			sglen += segs[j].ds_len;
+		if (sglen != mbuflen) {
+			printf("load_mbuf: sglen %ld != mbuflen %lx\n",
+				sglen, mbuflen);
+			Debugger();
+		}
+		if (sglen != len) {
+			printf("load_mbuf: sglen %ld != len %lx\n",
+				sglen, len);
+			Debugger();
+		}
+		retval = bus_dmamap_load_raw(t, map, segs, i,
+			(bus_size_t)len, flags);
+		if (map->dm_mapsize != len) {
+			printf("load_mbuf: mapsize %ld != len %lx\n",
+				map->dm_mapsize, len);
+			Debugger();
+		}
+		sglen = 0;
+		for (j = 0; j < map->dm_nsegs; j++)
+			sglen += map->dm_segs[j].ds_len;
+		if (sglen != len) {
+			printf("load_mbuf: dmamap sglen %ld != len %lx\n",
+				sglen, len);
+			Debugger();
+		}
+		return (retval);
+	}
+#endif
 	return (bus_dmamap_load_raw(t, map, segs, i,
 			    (bus_size_t)len, flags));
 #else
@@ -1392,7 +1434,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		PHOLD(p);
 		if (__predict_false(uvm_vslock(p, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
-			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ)
+			    VM_PROT_WRITE : VM_PROT_READ)
 			    != 0)) {
 				goto after_vsunlock;
 			}
@@ -1765,8 +1807,6 @@ static paddr_t	sparc_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int)
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
 						   int, int (*) __P((void *)),
 						   void *));
-static void     sparc_bus_barrier __P((bus_space_tag_t, bus_space_handle_t,
-				       bus_size_t, bus_size_t, int));
 static int	sparc_bus_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
 				     bus_size_t, bus_size_t, bus_size_t, int,
 				     bus_addr_t *, bus_space_handle_t *));
@@ -1959,31 +1999,6 @@ sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
 	return (ih);
 }
 
-void
-sparc_bus_barrier(t, h, offset, size, flags)
-	bus_space_tag_t	t;
-	bus_space_handle_t h;
-	bus_size_t	offset;
-	bus_size_t	size;
-	int		flags;
-{
-	/* 
-	 * We have lots of alternatives depending on whether we're
-	 * synchronizing loads with loads, loads with stores, stores
-	 * with loads, or stores with stores.  The only ones that seem
-	 * generic are #Sync and #MemIssue.  I'll use #Sync for safety.
-	 */
-	if (flags == (BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE))
-		__asm("membar #Sync" : );
-	else if (flags == BUS_SPACE_BARRIER_READ)
-		__asm("membar #Sync" : );
-	else if (flags == BUS_SPACE_BARRIER_WRITE)
-		__asm("membar #Sync" : );
-	else
-		printf("sparc_bus_barrier: unknown flags\n");
-	return;
-}
-
 int
 sparc_bus_alloc(t, rs, re, s, a, b, f, ap, hp)
 	bus_space_tag_t t;
@@ -2017,7 +2032,6 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
 	sparc_bus_subregion,		/* bus_space_subregion */
-	sparc_bus_barrier,		/* bus_space_barrier */
 	sparc_bus_mmap,			/* bus_space_mmap */
 	sparc_mainbus_intr_establish	/* bus_intr_establish */
 };

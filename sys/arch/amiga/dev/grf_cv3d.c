@@ -1,8 +1,8 @@
-/*	$NetBSD: grf_cv3d.c,v 1.7 1999/03/25 23:20:00 is Exp $	*/
+/*	$NetBSD: grf_cv3d.c,v 1.7.26.1 2002/02/28 04:06:39 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
- * All rights reserved. 
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,6 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.7.26.1 2002/02/28 04:06:39 nathanw Exp $");
+
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
 
@@ -86,35 +90,35 @@ Note: IO Regbase is needed fo wakeup of the board otherwise use
 #include <amiga/dev/grf_cv3dreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int	grfcv3dmatch  __P((struct device *, struct cfdata *, void *));
-void	grfcv3dattach __P((struct device *, struct device *, void *));
-int	grfcv3dprint  __P((void *, const char *));
+int	grfcv3dmatch(struct device *, struct cfdata *, void *);
+void	grfcv3dattach(struct device *, struct device *, void *);
+int	grfcv3dprint(void *, const char *);
 
-static int cv3d_has_4mb __P((volatile caddr_t));
-static unsigned short cv3d_compute_clock __P((unsigned long));
-void	cv3d_boardinit __P((struct grf_softc *));
-int	cv3d_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-int	cv3d_setvmode __P((struct grf_softc *, unsigned int));
-int	cv3d_blank __P((struct grf_softc *, int *));
-int	cv3d_mode __P((register struct grf_softc *, u_long, void *, u_long, int));
-int	cv3d_ioctl __P((register struct grf_softc *gp, u_long cmd, void *data));
-int	cv3d_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
-int	cv3d_getcmap __P((struct grf_softc *, struct grf_colormap *));
-int	cv3d_putcmap __P((struct grf_softc *, struct grf_colormap *));
-int	cv3d_toggle __P((struct grf_softc *));
-int	cv3d_mondefok __P((struct grfvideo_mode *));
-int	cv3d_load_mon __P((struct grf_softc *, struct grfcv3dtext_mode *));
-void	cv3d_inittextmode __P((struct grf_softc *));
-static	__inline void cv3dscreen __P((int, volatile caddr_t));
-static	__inline void cv3d_gfx_on_off __P((int, volatile caddr_t));
+static int cv3d_has_4mb(volatile caddr_t);
+static unsigned short cv3d_compute_clock(unsigned long);
+void	cv3d_boardinit(struct grf_softc *);
+int	cv3d_getvmode(struct grf_softc *, struct grfvideo_mode *);
+int	cv3d_setvmode(struct grf_softc *, unsigned int);
+int	cv3d_blank(struct grf_softc *, int *);
+int	cv3d_mode(register struct grf_softc *, u_long, void *, u_long, int);
+int	cv3d_ioctl(register struct grf_softc *gp, u_long cmd, void *data);
+int	cv3d_setmonitor(struct grf_softc *, struct grfvideo_mode *);
+int	cv3d_getcmap(struct grf_softc *, struct grf_colormap *);
+int	cv3d_putcmap(struct grf_softc *, struct grf_colormap *);
+int	cv3d_toggle(struct grf_softc *);
+int	cv3d_mondefok(struct grfvideo_mode *);
+int	cv3d_load_mon(struct grf_softc *, struct grfcv3dtext_mode *);
+void	cv3d_inittextmode(struct grf_softc *);
+static	__inline void cv3dscreen(int, volatile caddr_t);
+static	__inline void cv3d_gfx_on_off(int, volatile caddr_t);
 
 #ifdef CV3D_HARDWARE_CURSOR
-int	cv3d_getspritepos __P((struct grf_softc *, struct grf_position *));
-int	cv3d_setspritepos __P((struct grf_softc *, struct grf_position *));
-int	cv3d_getspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
-void	cv3d_setup_hwc __P((struct grf_softc *));
-int	cv3d_setspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
-int	cv3d_getspritemax  __P((struct grf_softc *,struct grf_position *));
+int	cv3d_getspritepos(struct grf_softc *, struct grf_position *);
+int	cv3d_setspritepos(struct grf_softc *, struct grf_position *);
+int	cv3d_getspriteinfo(struct grf_softc *,struct grf_spriteinfo *);
+void	cv3d_setup_hwc(struct grf_softc *);
+int	cv3d_setspriteinfo(struct grf_softc *,struct grf_spriteinfo *);
+int	cv3d_getspritemax(struct grf_softc *,struct grf_position *);
 #endif	/* CV3D_HARDWARE_CURSOR */
 
 /* Graphics display definitions.
@@ -275,8 +279,7 @@ static struct cfdata *cfdata;
  * Return 0 for 2MB, 1 for 4MB
  */
 static int
-cv3d_has_4mb(fb)
-	volatile caddr_t fb;
+cv3d_has_4mb(volatile caddr_t fb)
 {
 #if 0	/* XXX */
 	volatile unsigned long *testfbw, *testfbr;
@@ -305,10 +308,7 @@ cv3d_has_4mb(fb)
 }
 
 int
-grfcv3dmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+grfcv3dmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 #ifdef CV3DCONSOLE
 	static int cv3dcons_unit = -1;
@@ -353,9 +353,7 @@ grfcv3dmatch(pdp, cfp, auxp)
 }
 
 void
-grfcv3dattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+grfcv3dattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	static struct grf_softc congrf;
 	struct zbus_args *zap;
@@ -366,9 +364,9 @@ grfcv3dattach(pdp, dp, auxp)
 
 	printf("\n");
 
-	/* 
+	/*
 	 * This function is called twice, once on console init (dp == NULL)
-	 * and once on "normal" grf7 init. 
+	 * and once on "normal" grf7 init.
 	 */
 
 	if (dp == NULL) /* console init */
@@ -439,9 +437,7 @@ grfcv3dattach(pdp, dp, auxp)
 }
 
 int
-grfcv3dprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+grfcv3dprint(void *auxp, const char *pnp)
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);
@@ -461,8 +457,7 @@ grfcv3dprint(auxp, pnp)
  */
 
 static unsigned short
-cv3d_compute_clock(freq)
-	unsigned long freq;
+cv3d_compute_clock(unsigned long freq)
 {
 	static unsigned char *mnr, *save;	/* M, N + R vals */
 	unsigned long work_freq, r;
@@ -504,8 +499,7 @@ cv3d_compute_clock(freq)
 
 
 void
-cv3d_boardinit(gp)
-	struct grf_softc *gp;
+cv3d_boardinit(struct grf_softc *gp)
 {
 	volatile caddr_t ba, special;
 	unsigned char test;
@@ -557,7 +551,7 @@ cv3d_boardinit(gp)
 
 	WSeq(ba, SEQ_ID_MEMORY_MODE, 0x02);	/* Complete mem access */
 	WSeq(ba, SEQ_ID_MMIO_SELECT, 0x00);
-	
+
 	test = RSeq(ba, SEQ_ID_BUS_REQ_CNTL);	/* Bus Request */
 
 	/* enable 4MB fast Page Mode */
@@ -743,9 +737,7 @@ cv3d_boardinit(gp)
 
 
 int
-cv3d_getvmode(gp, vm)
-	struct grf_softc *gp;
-	struct grfvideo_mode *vm;
+cv3d_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm)
 {
 	struct grfvideo_mode *gv;
 
@@ -781,9 +773,7 @@ cv3d_getvmode(gp, vm)
 
 
 int
-cv3d_setvmode(gp, mode)
-	struct grf_softc *gp;
-	unsigned mode;
+cv3d_setvmode(struct grf_softc *gp, unsigned mode)
 {
 
 	if (!mode || (mode > monitor_def_max) ||
@@ -797,9 +787,7 @@ cv3d_setvmode(gp, mode)
 
 
 int
-cv3d_blank(gp, on)
-	struct grf_softc *gp;
-	int *on;
+cv3d_blank(struct grf_softc *gp, int *on)
 {
 	volatile caddr_t ba;
 
@@ -814,12 +802,8 @@ cv3d_blank(gp, on)
  * Return a UNIX error number or 0 for success.
  */
 int
-cv3d_mode(gp, cmd, arg, a2, a3)
-	register struct grf_softc *gp;
-	u_long cmd;
-	void *arg;
-	u_long a2;
-	int a3;
+cv3d_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2,
+          int a3)
 {
 	int error;
 
@@ -867,10 +851,7 @@ cv3d_mode(gp, cmd, arg, a2, a3)
 
 
 int
-cv3d_ioctl (gp, cmd, data)
-	register struct grf_softc *gp;
-	u_long cmd;
-	void *data;
+cv3d_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 {
 	switch (cmd) {
 #ifdef CV3D_HARDWARE_CURSOR
@@ -920,9 +901,7 @@ cv3d_ioctl (gp, cmd, data)
 
 
 int
-cv3d_setmonitor(gp, gv)
-	struct grf_softc *gp;
-	struct grfvideo_mode *gv;
+cv3d_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 {
 	struct grfvideo_mode *md;
 
@@ -972,9 +951,7 @@ cv3d_setmonitor(gp, gv)
 
 
 int
-cv3d_getcmap(gfp, cmap)
-	struct grf_softc *gfp;
-	struct grf_colormap *cmap;
+cv3d_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
 	volatile caddr_t ba;
 	u_char red[256], green[256], blue[256], *rp, *gp, *bp;
@@ -1012,9 +989,7 @@ cv3d_getcmap(gfp, cmap)
 
 
 int
-cv3d_putcmap(gfp, cmap)
-	struct grf_softc *gfp;
-	struct grf_colormap *cmap;
+cv3d_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
 	volatile caddr_t ba;
 	u_char red[256], green[256], blue[256], *rp, *gp, *bp;
@@ -1051,8 +1026,7 @@ cv3d_putcmap(gfp, cmap)
 
 
 int
-cv3d_toggle(gp)
-	struct grf_softc *gp;
+cv3d_toggle(struct grf_softc *gp)
 {
 	volatile caddr_t ba;
 
@@ -1074,8 +1048,7 @@ cv3d_toggle(gp)
 
 
 int
-cv3d_mondefok(gv)
-	struct grfvideo_mode *gv;
+cv3d_mondefok(struct grfvideo_mode *gv)
 {
 	unsigned long maxpix;
 
@@ -1139,9 +1112,7 @@ cv3d_mondefok(gv)
 
 
 int
-cv3d_load_mon(gp, md)
-	struct grf_softc *gp;
-	struct grfcv3dtext_mode *md;
+cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
@@ -1512,8 +1483,7 @@ cv3d_load_mon(gp, md)
 
 
 void
-cv3d_inittextmode(gp)
-	struct grf_softc *gp;
+cv3d_inittextmode(struct grf_softc *gp)
 {
 	struct grfcv3dtext_mode *tm = (struct grfcv3dtext_mode *)gp->g_data;
 	volatile caddr_t ba, fb;
@@ -1581,9 +1551,7 @@ cv3d_inittextmode(gp)
  * ba = boardaddr
  */
 static __inline void
-cv3dscreen(toggle, ba)
-	int toggle;
-	volatile caddr_t ba;
+cv3dscreen(int toggle, volatile caddr_t ba)
 {
 	*((short *)(ba)) = (toggle & 1);
 }
@@ -1592,9 +1560,7 @@ cv3dscreen(toggle, ba)
 /* 0 = on, 1= off */
 /* ba= registerbase */
 static __inline void
-cv3d_gfx_on_off(toggle, ba)
-	int toggle;
-	volatile caddr_t ba;
+cv3d_gfx_on_off(int toggle, volatile caddr_t ba)
 {
 	int r;
 
@@ -1619,9 +1585,7 @@ static char cv_cursor_on = 0;
 /* Hardware Cursor handling routines */
 
 int
-cv3d_getspritepos(gp, pos)
-	struct grf_softc *gp;
-	struct grf_position *pos;
+cv3d_getspritepos(struct grf_softc *gp, struct grf_position *pos)
 {
 	int hi,lo;
 	volatile caddr_t ba = gp->g_regkva;
@@ -1638,9 +1602,7 @@ cv3d_getspritepos(gp, pos)
 
 
 int
-cv3d_setspritepos(gp, pos)
-	struct grf_softc *gp;
-	struct grf_position *pos;
+cv3d_setspritepos(struct grf_softc *gp, struct grf_position *pos)
 {
 	volatile caddr_t ba = gp->g_regkva;
 	short x, y;
@@ -1684,14 +1646,13 @@ cv3d_setspritepos(gp, pos)
 }
 
 static __inline short
-M2I(short val) {
+M2I(short val)
+{
 	return ( ((val & 0xff00) >> 8) | ((val & 0xff) << 8));
 }
 
 int
-cv3d_getspriteinfo(gp, info)
-	struct grf_softc *gp;
-	struct grf_spriteinfo *info;
+cv3d_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
 	volatile caddr_t ba, fb;
 
@@ -1739,8 +1700,7 @@ cv3d_getspriteinfo(gp, info)
 
 
 void
-cv3d_setup_hwc(gp)
-	struct grf_softc *gp;
+cv3d_setup_hwc(struct grf_softc *gp)
 {
 	volatile caddr_t ba = gp->g_regkva;
 	volatile caddr_t hwc;
@@ -1819,9 +1779,7 @@ cv3d_setup_hwc(gp)
 
 
 int
-cv3d_setspriteinfo (gp, info)
-	struct grf_softc *gp;
-	struct grf_spriteinfo *info;
+cv3d_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
 	volatile caddr_t ba, fb;
 	int depth = gp->g_display.gd_planes;
@@ -2065,9 +2023,7 @@ cv3d_setspriteinfo (gp, info)
 
 
 int
-cv3d_getspritemax (gp, pos)
-	struct grf_softc *gp;
-	struct grf_position *pos;
+cv3d_getspritemax(struct grf_softc *gp, struct grf_position *pos)
 {
 
 	pos->x = 64;

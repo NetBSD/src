@@ -1,27 +1,27 @@
-/*	$NetBSD: db_access.h,v 1.8 1999/04/12 20:38:20 pk Exp $	*/
+/*	$NetBSD: db_access.h,v 1.8.14.1 2002/02/28 04:13:04 nathanw Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -32,8 +32,8 @@
 /*
  * Data access functions for debugger.
  */
-db_expr_t db_get_value __P((db_addr_t, size_t, boolean_t));
-void db_put_value __P((db_addr_t, size_t, db_expr_t));
+db_expr_t	db_get_value(db_addr_t, size_t, boolean_t);
+void		db_put_value(db_addr_t, size_t, db_expr_t);
 
-void db_read_bytes __P((db_addr_t, size_t, char *));
-void db_write_bytes __P((db_addr_t, size_t, char *));
+void		db_read_bytes(db_addr_t, size_t, char *);
+void		db_write_bytes(db_addr_t, size_t, char *);

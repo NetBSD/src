@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.3.2.4 2001/11/14 19:14:09 nathanw Exp $	*/
+/*	$NetBSD: iopl.c,v 1.3.2.5 2002/02/28 04:13:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.3.2.4 2001/11/14 19:14:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.3.2.5 2002/02/28 04:13:18 nathanw Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -523,8 +523,7 @@ iopl_tx_alloc(struct iopl_softc *sc, int count)
 #endif
 
 	size = count * sizeof(*tx);
-	sc->sc_tx = malloc(size, M_DEVBUF, M_NOWAIT);
-	memset(sc->sc_tx, 0, size);
+	sc->sc_tx = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 
 	for (i = 0, tx = sc->sc_tx; i < count; i++, tx++) {
 		rv = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
@@ -580,8 +579,7 @@ iopl_rx_alloc(struct iopl_softc *sc, int count)
 #endif
 
 	size = count * sizeof(*rx);
-	sc->sc_rx = malloc(size, M_DEVBUF, M_NOWAIT);
-	memset(sc->sc_rx, 0, size);
+	sc->sc_rx = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 
 	for (i = 0, rx = sc->sc_rx; i < count; i++, rx++) {
 		state = 0;
@@ -1776,9 +1774,8 @@ iopl_filter_ether(struct iopl_softc *sc)
 		goto allmulti;
 
 	size = sizeof(*tbl) * sc->sc_mcast_max;
-	if ((tbl = malloc(size, M_DEVBUF, M_WAITOK)) == NULL)
+	if ((tbl = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO)) == NULL)
 		goto allmulti;
-	memset(tbl, 0, size);
 
 	ETHER_FIRST_MULTI(step, ec, enm)
 	for (i = 0; enm != NULL; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.5 1996/04/21 21:11:25 veego Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.5.48.1 2002/02/28 04:06:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.5.48.1 2002/02/28 04:06:43 nathanw Exp $");
+
 /*
  *  amiga abstract graphics driver.
  */
@@ -49,7 +52,7 @@ monitor_t *cc_init_monitor (void);
 
 /* and here. */
 monitor_t *(*init_monitor[])(void) = {
-    cc_init_monitor, 
+    cc_init_monitor,
     NULL
 };
 
@@ -60,13 +63,12 @@ struct vbl_node grf_vbl_node;
 #define ABS(type, val) \
     (type) (((int)(val) < 0) ? -(val) : (val))
 
-void grf_vbl_function __P((void *data));
-dmode_t *get_best_display_mode __P((u_long, u_long, u_char));
+void grf_vbl_function(void *data);
+dmode_t *get_best_display_mode(u_long, u_long, u_char);
 
 
 void
-grf_vbl_function(data)
-	void *data;
+grf_vbl_function(void *data)
 {
 	monitor_t *m;
 
@@ -74,7 +76,7 @@ grf_vbl_function(data)
 		return;
 
 	for (m = monitors->lh_first; m != NULL; m = m->link.le_next) {
-		if (m->vbl_handler) 
+		if (m->vbl_handler)
 			m->vbl_handler(m);
 	}
 }
@@ -85,16 +87,16 @@ grf_vbl_function(data)
  */
 
 int
-grfcc_probe()
+grfcc_probe(void)
 {
 	int i = 0;
-	
+
 	grf_vbl_node.function = grf_vbl_function;
-    
+
 	if (NULL == monitors) {
 		LIST_INIT(&instance_monitors);
 		monitors = &instance_monitors;
-    
+
 		while (init_monitor[i]) {
 			init_monitor[i] ();
 			i++;
@@ -109,15 +111,13 @@ grfcc_probe()
 }
 
 dmode_t *
-get_best_display_mode(width, height, depth)
-	u_long width, height;
-	u_char depth;
+get_best_display_mode(u_long width, u_long height, u_char depth)
 {
 	monitor_t *m;
 	dmode_t *d, *save;
 	dimen_t dim;
 	long dx, dy, ct, dt = 0;
- 
+
 	save = NULL;
 	for (m = monitors->lh_first; m != NULL; m = m->link.le_next) {
 		dim.width = width;
@@ -132,7 +132,7 @@ get_best_display_mode(width, height, depth)
 				save = d;
 				dt = ct;
 			}
-		}	
+		}
 	}
 	return(save);
 }
@@ -143,41 +143,31 @@ get_best_display_mode(width, height, depth)
  */
 
 dmode_t *
-grf_get_next_mode(m, d)
-	monitor_t *m;
-	dmode_t *d;
+grf_get_next_mode(monitor_t *m, dmode_t *d)
 {
 	return(m->get_next_mode(d));
 }
 
 dmode_t *
-grf_get_current_mode(m)
-	monitor_t *m;
+grf_get_current_mode(monitor_t *m)
 {
 	return(m->get_current_mode());
 }
 
 dmode_t *
-grf_get_best_mode(m, size, depth)
-	monitor_t *m;
-	dimen_t *size;
-	u_char depth;
+grf_get_best_mode(monitor_t *m, dimen_t *size, u_char depth)
 {
 	return(m->get_best_mode(size, depth));
 }
 
 bmap_t *
-grf_alloc_bitmap(m, w, h, d, f)
-	monitor_t *m;
-	u_short w, h, d, f;
+grf_alloc_bitmap(monitor_t *m, u_short w, u_short h, u_short d, u_short f)
 {
 	return(m->alloc_bitmap(w, h, d, f));
 }
 
 void
-grf_free_bitmap(m, bm)
-	monitor_t *m;
-	bmap_t *bm;
+grf_free_bitmap(monitor_t *m, bmap_t *bm)
 {
 	m->free_bitmap(bm);
 }
@@ -187,15 +177,13 @@ grf_free_bitmap(m, bm)
  */
 
 view_t *
-grf_get_current_view(d)
-	dmode_t *d;
+grf_get_current_view(dmode_t *d)
 {
 	return(d->get_current_view(d));
 }
 
 monitor_t *
-grf_get_monitor(d)
-	dmode_t *d;
+grf_get_monitor(dmode_t *d)
 {
 	return(d->get_monitor(d));
 }
@@ -205,58 +193,47 @@ grf_get_monitor(d)
  */
 
 void
-grf_display_view(v)
-	view_t *v;
+grf_display_view(view_t *v)
 {
 	v->display_view(v);
 }
 
 view_t *
-grf_alloc_view(d, dim, depth)
-	dmode_t *d;
-	dimen_t *dim;
-	u_char depth;
+grf_alloc_view(dmode_t *d, dimen_t *dim, u_char depth)
 {
 	if (!d)
 		d = get_best_display_mode(dim->width, dim->height, depth);
-	if (d) 
+	if (d)
 		return(d->alloc_view(d, dim, depth));
 	return(NULL);
 }
 
 void
-grf_remove_view(v)
-	view_t *v;
+grf_remove_view(view_t *v)
 {
 	v->remove_view(v);
 }
 
 void
-grf_free_view(v)
-	view_t *v;
+grf_free_view(view_t *v)
 {
 	v->free_view(v);
 }
 
 dmode_t *
-grf_get_display_mode(v)
-	view_t *v;
+grf_get_display_mode(view_t *v)
 {
 	return(v->get_display_mode(v));
 }
 
 int
-grf_get_colormap(v, cm)
-	view_t *v;
-	colormap_t *cm;
+grf_get_colormap(view_t *v, colormap_t *cm)
 {
 	return(v->get_colormap(v, cm));
 }
 
 int
-grf_use_colormap(v, cm)
-	view_t *v;
-	colormap_t *cm;
+grf_use_colormap(view_t *v, colormap_t *cm)
 {
 	return(v->use_colormap(v, cm));
 }

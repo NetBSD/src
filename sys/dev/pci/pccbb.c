@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61.2.8 2002/01/11 23:39:21 nathanw Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.9 2002/02/28 04:14:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.8 2002/01/11 23:39:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.9 2002/02/28 04:14:04 nathanw Exp $");
 
 /*
 #define CBB_DEBUG

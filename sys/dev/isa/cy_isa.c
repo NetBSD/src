@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.12.2.2 2002/01/11 23:39:04 nathanw Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.12.2.3 2002/02/28 04:13:39 nathanw Exp $	*/
 
 /*
  * cy.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.12.2.2 2002/01/11 23:39:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.12.2.3 2002/02/28 04:13:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.3.8.2 2001/11/14 19:14:00 nathanw Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.3.8.3 2002/02/28 04:13:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.3.8.2 2001/11/14 19:14:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.3.8.3 2002/02/28 04:13:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,13 +83,16 @@ struct ahc_cardbus_softc {
 
 	int	sc_cbenable;		/* what CardBus access type to enable */
 	int	sc_csr;			/* CSR bits */
+	bus_size_t sc_size;
 };
 
 int	ahc_cardbus_match __P((struct device *, struct cfdata *, void *));
 void	ahc_cardbus_attach __P((struct device *, struct device *, void *));
+int	ahc_cardbus_detach __P((struct device *, int));
 
 struct cfattach ahc_cardbus_ca = {
 	sizeof(struct ahc_cardbus_softc), ahc_cardbus_match, ahc_cardbus_attach,
+	ahc_cardbus_detach, ahc_activate
 };
 
 int
@@ -139,11 +142,11 @@ ahc_cardbus_attach(parent, self, aux)
 	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
 	if (Cardbus_mapreg_map(csc->sc_ct, AHC_CARDBUS_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &bst, &bsh, NULL, NULL) == 0) {
+	    &bst, &bsh, NULL, &csc->sc_size) == 0) {
 		csc->sc_cbenable = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 	} else if (Cardbus_mapreg_map(csc->sc_ct, AHC_CARDBUS_IOBA,
-	    PCI_MAPREG_TYPE_IO, 0, &bst, &bsh, NULL, NULL) == 0) {
+	    PCI_MAPREG_TYPE_IO, 0, &bst, &bsh, NULL, &csc->sc_size) == 0) {
 		csc->sc_cbenable = CARDBUS_IO_ENABLE;
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
@@ -172,6 +175,9 @@ ahc_cardbus_attach(parent, self, aux)
 		reg |= (0x20 << PCI_LATTIMER_SHIFT);
 		cardbus_conf_write(cc, cf, ca->ca_tag, PCI_BHLC_REG, reg);
 	}
+
+	ahc->tag = bst;
+	ahc->bsh = bsh;
 
 	/*
 	 * ADP-1480 is always an AIC-7860.
@@ -267,4 +273,37 @@ ahc_cardbus_attach(parent, self, aux)
 	}
 
 	ahc_attach(ahc);
+}
+
+int
+ahc_cardbus_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct ahc_cardbus_softc *csc = (void*)self;
+	struct ahc_softc *ahc = &csc->sc_ahc;
+
+	int rv;
+
+	rv = ahc_detach(ahc, flags);
+	if (rv)
+		return rv;
+
+	if (ahc->ih) {
+		cardbus_intr_disestablish(csc->sc_ct->ct_cc,
+					  csc->sc_ct->ct_cf, ahc->ih);
+		ahc->ih = 0;
+	}
+
+	if (csc->sc_cbenable) {
+		if (csc->sc_cbenable == CARDBUS_MEM_ENABLE)
+			Cardbus_mapreg_unmap(csc->sc_ct, AHC_CARDBUS_MMBA,
+				ahc->tag, ahc->bsh, csc->sc_size);
+		else if (csc->sc_cbenable == CARDBUS_IO_ENABLE)
+			Cardbus_mapreg_unmap(csc->sc_ct, AHC_CARDBUS_IOBA,
+				ahc->tag, ahc->bsh, csc->sc_size);
+	csc->sc_cbenable = 0;
+	}
+
+	return (0);
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.120.2.8 2002/01/08 00:31:28 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.120.2.9 2002/02/28 04:14:15 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.156 2001/12/29 15:00:45 pooka Exp 
+ *	NetBSD: pcmciadevs,v 1.162 2002/01/31 14:27:29 is Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -76,6 +76,7 @@
 #define	PCMCIA_VENDOR_SYMBOL2	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
+#define	PCMCIA_VENDOR_ERICSSON	0x016b	/* Ericsson */
 #define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
@@ -89,6 +90,7 @@
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
+#define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
@@ -96,6 +98,7 @@
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_ARCHOS	0x5241	/* Archos */
 #define	PCMCIA_VENDOR_DUAL	0x890f	/* Dual */
+#define	PCMCIA_VENDOR_EDIMAX	0x890f	/* Edimax Technology Inc. */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
 #define	PCMCIA_VENDOR_ZONET	0x8a01	/* Zonet Technology Inc. */
@@ -107,7 +110,6 @@
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 #define	PCMCIA_VENDOR_RATOC	0xc015	/* RATOC System Inc. */
 #define	PCMCIA_VENDOR_EMTAC	0xc250	/* EMTAC Technology Corporation */
-#define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_ELSA	0xd601	/* Elsa */
 
 /*
@@ -247,6 +249,11 @@
 #define	PCMCIA_PRODUCT_DUAL_NE2000	0x0100
 #define	PCMCIA_STR_DUAL_NE2000	"Dual NE2000"
 
+/* Edimax Products */
+#define	PCMCIA_CIS_EDIMAX_EP4000A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_EDIMAX_EP4000A	0x0100
+#define	PCMCIA_STR_EDIMAX_EP4000A	"Edimax EP4000A"
+
 /* ELSA Products */
 #define	PCMCIA_CIS_ELSA_MC2_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ELSA_MC2_IEEE	0x0001
@@ -262,6 +269,11 @@
 #define	PCMCIA_CIS_EMTAC_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_EMTAC_WLAN	0x0002
 #define	PCMCIA_STR_EMTAC_WLAN	"EMTAC A2424i 11Mbps WLAN Card"
+
+/* Ericsson */
+#define	PCMCIA_CIS_ERICSSON_WIRELESSLAN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ERICSSON_WIRELESSLAN	0x0001
+#define	PCMCIA_STR_ERICSSON_WIRELESSLAN	"DSSS Wireless LAN PC Card"
 
 /* Farallon */
 #define	PCMCIA_CIS_FARALLON_SKYLINE	{ NULL, NULL, NULL, NULL }
@@ -633,6 +645,7 @@
 #define	PCMCIA_VENDOR_GEMTEK	-1	/* Gem Tek */
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
+#define	PCMCIA_VENDOR_LANTECH	-1	/* Lantech Computer Company */
 #define	PCMCIA_VENDOR_NAKAGAWAMETAL	-1	/* NAKAGAWA METAL */
 #define	PCMCIA_VENDOR_NDC	-1	/* NDC */
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
@@ -727,6 +740,9 @@
 #define	PCMCIA_CIS_IODATA_PCLAT	{ "I-O DATA", "PCLA", "ETHERNET", NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLAT	-1
 #define	PCMCIA_STR_IODATA_PCLAT	"IO-DATA PCLA/T"
+#define	PCMCIA_CIS_LANTECH_FASTNETTX	{ "ASIX", "AX88190", NULL, NULL }
+#define	PCMCIA_PRODUCT_LANTECH_FASTNETTX	-1
+#define	PCMCIA_STR_LANTECH_FASTNETTX	"Lantech Fastnet/TX"
 #define	PCMCIA_CIS_LINKSYS_ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_2	-1
 #define	PCMCIA_STR_LINKSYS_ECARD_2	"Linksys E-Card"

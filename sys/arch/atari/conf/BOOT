@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOT,v 1.39.8.2 2002/01/08 00:23:33 nathanw Exp $
+# $NetBSD: BOOT,v 1.39.8.3 2002/02/28 04:08:23 nathanw Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.10 2001/11/20 11:29:41 lukem Exp $
+#		NetBSD: GENERIC.in,v 1.14 2002/01/27 13:23:13 jdolecek Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -65,6 +65,8 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 options 	COMPAT_AOUT_M68K # Compatibility to a.out executables
 options 	EXEC_AOUT	# a.out format executables
 
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
 #These options enable verbose messages for several subsystems.
 #Warning, these may compile large string tables into the kernel!
 
@@ -89,6 +91,7 @@ config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
@@ -111,7 +114,7 @@ nvr0		at mainbus0	# nvram driver
 wdc0		at mainbus0	# IDE-bus
 wd*		at wdc? channel ? drive ?
 
- # ATAPI bus support
+ #ATAPI bus support
 atapibus* at wdc? channel ?
 
 #ATAPI devices

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.15.6.2 2001/11/14 19:13:42 nathanw Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.15.6.3 2002/02/28 04:13:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.15.6.2 2001/11/14 19:13:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.15.6.3 2002/02/28 04:13:11 nathanw Exp $");
 
 #include "sequencer.h"
 
@@ -1102,9 +1102,8 @@ midiseq_open(unit, flags)
 		return (0);
 	sc = midi_cd.cd_devs[unit];
 	sc->seqopen = 1;
-	md = malloc(sizeof *md, M_DEVBUF, M_WAITOK);
+	md = malloc(sizeof *md, M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->seq_md = md;
-	memset(md, 0, sizeof *md);
 	md->msc = sc;
 	midi_getinfo(makedev(0, unit), &mi);
 	md->unit = unit;

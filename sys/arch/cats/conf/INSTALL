@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7.2.2 2002/01/08 00:23:48 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.7.2.3 2002/02/28 04:08:39 nathanw Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -120,6 +120,7 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options 	PMAP_STATIC_L1S=128
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
@@ -239,7 +240,7 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 # PCI network interfaces
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
-#ep*	at pci? dev ? function ?	# 3C590 ethernet cards
+ep*	at pci? dev ? function ?	# 3C590 ethernet cards
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
@@ -261,7 +262,7 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 #iophy*	at mii? phy ?			# Intel 82553 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

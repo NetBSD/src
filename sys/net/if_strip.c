@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.35.2.4 2001/11/14 19:17:26 nathanw Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.35.2.5 2002/02/28 04:15:03 nathanw Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.4 2001/11/14 19:17:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.5 2002/02/28 04:15:03 nathanw Exp $");
 
 #include "strip.h"
 
@@ -117,9 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.4 2001/11/14 19:17:26 nathanw Ex
 #include <sys/syslog.h>
 
 #include <machine/cpu.h>
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1594,8 +1592,8 @@ strip_watchdog(ifp)
 
 /*
  * The following bytestuffing and run-length encoding/decoding
- * fucntions are  taken, with permission from Stuart Cheshire,
- * from  the MosquitonNet strip  driver for Linux.
+ * functions are taken, with permission from Stuart Cheshire,
+ * from the MosquitonNet strip driver for Linux.
  * XXX Linux style left intact, to ease folding in updates from
  * the Mosquitonet group.
  */

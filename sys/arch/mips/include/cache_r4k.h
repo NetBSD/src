@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.2.2.2 2002/02/01 04:57:44 gmcgarry Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.2.2.3 2002/02/28 04:10:42 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -263,6 +263,7 @@ void	r5k_pdcache_wbinv_all_16(void);
 void	r5k_pdcache_wbinv_all_32(void);
 void	r4600v1_pdcache_wbinv_range_32(vaddr_t, vsize_t);
 void	r4600v2_pdcache_wbinv_range_32(vaddr_t, vsize_t);
+void	vr4131v1_pdcache_wbinv_range_16(vaddr_t, vsize_t);
 void	r5k_pdcache_wbinv_range_16(vaddr_t, vsize_t);
 void	r5k_pdcache_wbinv_range_32(vaddr_t, vsize_t);
 void	r5k_pdcache_wbinv_range_index_16(vaddr_t, vsize_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.1.4.4 2002/01/08 00:25:23 nathanw Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.1.4.5 2002/02/28 04:10:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.1.4.4 2002/01/08 00:25:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.1.4.5 2002/02/28 04:10:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,12 +64,86 @@ __KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.1.4.4 2002/01/08 00:25:23 nathanw E
 
 #include <compat/linux/common/linux_exec.h>
 
+#define LINUX_T_DIVIDE			0
+#define LINUX_T_DEBUG			1
+#define LINUX_T_NMI			2
+#define LINUX_T_INT3			3
+#define LINUX_T_OVERFLOW		4
+#define LINUX_T_BOUNDS			5
+#define LINUX_T_INVALID_OP		6
+#define LINUX_T_DEVICE_NOT_AVAIL	7
+#define LINUX_T_DOUBLE_FAULT		8
+#define LINUX_T_COPROC_SEG_OVERRUN	9
+#define LINUX_T_INVALID_TSS		10
+#define LINUX_T_SEG_NOT_PRESENT	11
+#define LINUX_T_STACK_SEG_FAULT		12
+#define LINUX_T_GENERAL_PROT_FAULT	13
+#define LINUX_T_PAGE_FAULT		14
+#define LINUX_T_SPURIOUS_INTERRUPT	15
+#define LINUX_T_COPROC_ERROR		16
+#define LINUX_T_ALIGN_CHECK		17
+#define LINUX_T_MACHINE_CHECK		18	/* XXX */
+#define LINUX_T_SIMD_COPROC_ERROR	19	/* XXX */
+
+/* Note 255 is bogus */
+static int trapno_to_x86_vec[] = {
+ 	LINUX_T_INVALID_OP,		/*  0 T_PRIVINFLT */
+ 	LINUX_T_INT3,			/*  1 T_BPTFLT */
+ 	LINUX_T_COPROC_ERROR,		/*  2 T_ARITHTRAP */
+ 	LINUX_T_SPURIOUS_INTERRUPT,	/*  3 T_ASTFLT XXX: ??? */
+ 	LINUX_T_GENERAL_PROT_FAULT,	/*  4 T_PROTFLT */
+ 	LINUX_T_DEBUG,			/*  5 T_TRCTRAP */
+ 	LINUX_T_PAGE_FAULT,		/*  6 T_PAGEFLT */
+ 	LINUX_T_ALIGN_CHECK,		/*  7 T_ALIGNFLT */
+ 	LINUX_T_DIVIDE,			/*  8 T_DIVIDE */
+ 	LINUX_T_NMI,			/*  9 T_NMI */
+ 	LINUX_T_OVERFLOW,		/* 10 T_OFLOW */
+ 	LINUX_T_BOUNDS,			/* 11 T_BOUND */
+ 	LINUX_T_DEVICE_NOT_AVAIL,	/* 12 T_DNA */
+ 	LINUX_T_DOUBLE_FAULT,		/* 13 T_DOUBLEFLT */
+ 	LINUX_T_COPROC_SEG_OVERRUN,	/* 14 T_FPOPFLT */
+ 	LINUX_T_INVALID_TSS,		/* 15 T_TSSFLT */
+ 	LINUX_T_SEG_NOT_PRESENT,	/* 16 T_SEGNPFLT */
+ 	LINUX_T_STACK_SEG_FAULT,	/* 17 T_STKFLT */
+ 	LINUX_T_MACHINE_CHECK		/* 18 T_RESERVED XXX: ??? */
+};
+
+/* For the nmi and reserved below linux does not post a signal. */
+static int linux_x86_vec_to_sig[] = {
+	SIGFPE,				/*  0 LINUX_T_DIVIDE */
+	SIGTRAP,			/*  1 LINUX_T_DEBUG */
+/*nmi*/	SIGSEGV,			/*  2 LINUX_T_NMI */
+	SIGTRAP,			/*  3 LINUX_T_INT3 */
+ 	SIGSEGV,			/*  4 LINUX_T_OVERFLOW */
+	SIGSEGV,			/*  5 LINUX_T_BOUNDS */
+	SIGILL,				/*  6 LINUX_T_INVALIDOP */
+	SIGSEGV,			/*  7 LINUX_T_DEVICE_NOT_AVAIL */
+ 	SIGSEGV,			/*  8 LINUX_T_DOUBLE_FAULT */
+	SIGFPE,				/*  9 LINUX_T_COPROC_SEG_OVERRUN */
+	SIGSEGV,			/* 10 LINUX_T_INVALID_TSS */
+	SIGBUS,				/* 11 LINUX_T_SEG_NOT_PRESENT */
+ 	SIGBUS,				/* 12 LINUX_T_STACK_SEG_FAULT */
+	SIGSEGV,			/* 13 LINUX_T_GENERAL_PROT_FAULT */
+	SIGSEGV,			/* 14 LINUX_T_PAGE_FAULT */
+/*resv*/SIGSEGV,			/* 15 LINUX_T_SPURIOUS_INTERRUPT */
+ 	SIGFPE,				/* 16 LINUX_T_COPROC_ERROR */
+	SIGSEGV,			/* 17 LINUX_T_ALIGN_CHECK */
+	SIGSEGV				/* 18 LINUX_T_MACHINE_CHECK */
+};
+
 void
-linux_trapsignal(struct lwp *l, int signo, u_long type) {
-	switch (type) {
-	case T_PROTFLT:
-		trapsignal(l, SIGSEGV, type);
-		return;
+linux_trapsignal(struct lwp *l, int signo, u_long type)
+{
+	switch (signo) {
+	case SIGILL:
+	case SIGTRAP:
+	case SIGIOT:
+	case SIGBUS:
+	case SIGFPE:
+	case SIGSEGV:
+		type = trapno_to_x86_vec[type];
+		signo = linux_x86_vec_to_sig[type];
+		/*FALLTHROUGH*/
 	default:
 		trapsignal(l, signo, type);
 		return;

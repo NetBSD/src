@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.2.2.3 2002/02/01 04:57:44 gmcgarry Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.2.2.4 2002/02/28 04:10:44 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -261,6 +261,28 @@ r4600v2_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 	}
 
 	mips_cp0_status_write(ostatus);
+}
+
+void
+vr4131v1_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_line16(va + size);
+
+	va = trunc_line16(va);
+
+	while ((eva - va) >= (32 * 16)) {
+		cache_r4k_op_32lines_16(va,
+		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
+		cache_r4k_op_32lines_16(va,
+		    CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
+		va += (32 * 16);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
+		va += 16;
+	}
 }
 
 void

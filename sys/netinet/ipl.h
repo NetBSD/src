@@ -1,19 +1,17 @@
-/*	$NetBSD: ipl.h,v 1.9.4.1 2001/04/09 01:58:30 nathanw Exp $	*/
+/*	$NetBSD: ipl.h,v 1.9.4.2 2002/02/28 04:15:12 nathanw Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2002 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ipl.h	1.21 6/5/96
- * Id: ipl.h,v 2.15.2.17 2001/01/14 13:47:15 darrenr Exp
+ * Id: ipl.h,v 2.15.2.29 2002/01/15 14:36:51 darrenr Exp
  */
 
 #ifndef	__IPL_H__
 #define	__IPL_H__
 
-#define	IPL_VERSION	"IP Filter: v3.4.16"
+#define	IPL_VERSION	"IP Filter: v3.4.23"
 
 #endif

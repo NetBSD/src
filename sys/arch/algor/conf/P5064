@@ -1,11 +1,11 @@
-#	$NetBSD: P5064,v 1.8.6.2 2002/01/08 00:22:50 nathanw Exp $
+#	$NetBSD: P5064,v 1.8.6.3 2002/02/28 04:06:06 nathanw Exp $
 #
 # Algorithmics P-5064 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P5064-$Revision: 1.8.6.2 $"
+#ident 		"P5064-$Revision: 1.8.6.3 $"
 
 maxusers 32
 
@@ -84,6 +84,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	PCMCIAVERBOSE
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Bitmask for enabling the PCI IDE channels in the southbridge.
 # Set bit 0 (0x01) for channel 0, bit 1 (0x02) for channel 1.
@@ -176,7 +177,7 @@ options 	TLP_MATCH_21142
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?		# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?		# Integrated Circuit Systems ICS189x
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
 #lxtphy*	at mii? phy ?		# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs

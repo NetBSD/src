@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.5.26.1 2001/04/09 01:53:36 nathanw Exp $	*/
+/*	$NetBSD: conf.h,v 1.5.26.2 2002/02/28 04:10:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,11 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/conf.h>
+#define DEV_IO		14	/* iopl for compat_10 */
 
-#define	mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
+#include <sys/conf.h>
 
 bdev_decl(fd);
 cdev_decl(fd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.79.2.3 2002/01/08 00:32:21 nathanw Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.79.2.4 2002/02/28 04:14:36 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.79.2.3 2002/01/08 00:32:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.79.2.4 2002/02/28 04:14:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,7 +821,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		    repeat, SIMPLEQ_FIRST(&pipe->queue)));
 
 	/* Count completed transfers. */
-	++pipe->device->bus->stats.requests
+	++pipe->device->bus->stats.uds_requests
 		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
 
 	xfer->done = 1;
@@ -925,20 +925,22 @@ usbd_start_next(usbd_pipe_handle pipe)
 usbd_status
 usbd_do_request(usbd_device_handle dev, usb_device_request_t *req, void *data)
 {
-	return (usbd_do_request_flags(dev, req, data, 0, 0));
+	return (usbd_do_request_flags(dev, req, data, NULL, 0,
+				      USBD_DEFAULT_TIMEOUT));
 }
 
 usbd_status
 usbd_do_request_flags(usbd_device_handle dev, usb_device_request_t *req,
-		      void *data, u_int16_t flags, int *actlen)
+		      void *data, u_int16_t flags, int *actlen, u_int32_t timo)
 {
 	return (usbd_do_request_flags_pipe(dev, dev->default_pipe, req, 
-					   data, flags, actlen));
+					   data, flags, actlen, timo));
 }
 
 usbd_status
 usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
-	usb_device_request_t *req, void *data, u_int16_t flags, int *actlen)
+	usb_device_request_t *req, void *data, u_int16_t flags, int *actlen,
+	u_int32_t timeout)
 {
 	usbd_xfer_handle xfer;
 	usbd_status err;
@@ -957,7 +959,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 	xfer = usbd_alloc_xfer(dev);
 	if (xfer == NULL)
 		return (USBD_NOMEM);
-	usbd_setup_default_xfer(xfer, dev, 0, USBD_DEFAULT_TIMEOUT, req,
+	usbd_setup_default_xfer(xfer, dev, 0, timeout, req,
 				data, UGETW(req->wLength), flags, 0);
 	xfer->pipe = pipe;
 	err = usbd_sync_transfer(xfer);
@@ -1135,7 +1137,7 @@ usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
 		if (tbl->ud_vendor == vendor &&
 		    (tproduct == product || tproduct == USB_PRODUCT_ANY))
 			return (tbl);
-		tbl = (struct usb_devno *)((char *)tbl + sz);
+		tbl = (const struct usb_devno *)((const char *)tbl + sz);
 	}
 	return (NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.2.2 2002/01/08 00:27:35 nathanw Exp $ */
+/*	$NetBSD: rtc.c,v 1.1.2.3 2002/02/28 04:12:02 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -48,8 +48,8 @@
 #include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>
 
-#include <sparc/dev/ebusreg.h>
-#include <sparc/dev/ebusvar.h>
+#include <dev/ebus/ebusreg.h>
+#include <dev/ebus/ebusvar.h>
 
 struct rtc_ebus_softc {
 	struct device		sc_dev;
@@ -131,11 +131,8 @@ rtcattach_ebus(parent, self, aux)
 	todr_chip_handle_t handle;
 
 	sc->sc_bt = ea->ea_bustag;
-	if (ebus_bus_map(sc->sc_bt,
-			 BUS_ADDR(ea->ea_reg[0].bar, ea->ea_reg[0].offset),
-			 ea->ea_reg[0].size,
-			 BUS_SPACE_MAP_LINEAR, 0,
-			 &sc->sc_bh) != 0)
+	if (ebus_bus_map(sc->sc_bt, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
+			 ea->ea_reg[0].size, 0, 0, &sc->sc_bh) != 0)
 	{
 		printf(": can't map registers\n", self->dv_xname);
 		return;

@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.4.8.2 2002/01/08 00:24:50 nathanw Exp $	*/
+/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.4.8.3 2002/02/28 04:09:45 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -114,6 +114,8 @@ FrameBufferInfo::_table[] =
 	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI_PERSONA_HPW230JC    ,        8,      640,      240,      640, 0xb2000000 },
 	// SH7709A (P2 address)
 	{ PLATID_CPU_SH_3_7709A  , PLATID_MACH_HP_JORNADA                  ,       16,      640,      240,     1280, 0xb2000000 },
+	// SH7750 (P2 address)
+	{ PLATID_CPU_SH_4_7750   , PLATID_MACH_HITACHI_PERSONA_HPW650PA    ,       16,      640,      480,     1280, 0xb204b000 },
 #endif // SHx
 #ifdef ARM
 	// SA-1100 (can't determine frame buffer address)
@@ -138,7 +140,6 @@ HpcMenuInterface::_unsupported[] =
 #ifdef MIPS
 #endif // MIPS
 #ifdef SHx
-	{ PLATID_CPU_SH_4_7750   , PLATID_MACH_HITACHI_PERSONA_HPW650PA    , L"SH4 CPU not supported yet." },
 	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_CASIO_CASSIOPEIAA_A55V      , L"unknown Companion Chip FM-7403" },
 #endif // SHx
 	{ 0, 0, 0 } // TERMINATOR

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.9.8.3 2002/01/11 23:39:15 nathanw Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.9.8.4 2002/02/28 04:13:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.9.8.3 2002/01/11 23:39:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.9.8.4 2002/02/28 04:13:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

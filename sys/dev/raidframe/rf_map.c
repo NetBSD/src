@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.5.2.4 2002/01/11 23:39:30 nathanw Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.5.2.5 2002/02/28 04:14:17 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.5.2.4 2002/01/11 23:39:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.5.2.5 2002/02/28 04:14:17 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

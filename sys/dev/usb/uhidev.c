@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.3.2.2 2002/01/08 00:32:10 nathanw Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.3.2.3 2002/02/28 04:14:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ USB_ATTACH(uhidev)
 		printf("%s: %d report ids\n", USBDEVNAME(sc->sc_dev), nrepid);
 	nrepid++;
 	sc->sc_subdevs = malloc(nrepid * sizeof(device_ptr_t),
-				M_USBDEV, M_NOWAIT);
+				M_USBDEV, M_NOWAIT | M_ZERO);
 	if (sc->sc_subdevs == NULL) {
 		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
@@ -218,15 +218,15 @@ USB_ATTACH(uhidev)
 		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
 		    hid_report_size(desc, size, hid_output, repid) == 0 &&
 		    hid_report_size(desc, size, hid_feature, repid) == 0) {
-			sc->sc_subdevs[repid] = NULL;
+			;	/* already NULL in sc->sc_subdevs[repid] */
 		} else {
 			uha.reportid = repid;
 			dev = (struct uhidev *)config_found_sm(self, &uha,
 			                           uhidevprint, uhidevsubmatch);
 			sc->sc_subdevs[repid] = dev;
-			dev->sc_in_rep_size = repsizes[repid];
-#ifdef DIAGNOSTIC
 			if (dev != NULL) {
+				dev->sc_in_rep_size = repsizes[repid];
+#ifdef DIAGNOSTIC
 				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
 					 repid, dev));
 				if (dev->sc_intr == NULL) {
@@ -234,8 +234,8 @@ USB_ATTACH(uhidev)
 					       USBDEVNAME(sc->sc_dev));
 					USB_ATTACH_ERROR_RETURN;
 				}
-			}
 #endif
+			}
 		}
 	}
 

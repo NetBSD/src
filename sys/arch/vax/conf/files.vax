@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.87.6.2 2002/01/08 00:28:30 nathanw Exp $
+#	$NetBSD: files.vax,v 1.87.6.3 2002/02/28 04:12:29 nathanw Exp $
 #
 # new style config file for vax architecture
 #
@@ -99,7 +99,7 @@ include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 
 # Memory Disk for install floppy
-file arch/vax/vax/md_root.c		memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major	{md = 23}
 
 # RAIDframe
@@ -151,6 +151,14 @@ attach	mem at xmi with mem_xmi
 attach	dz at vsbus with dz_vsbus
 file	arch/vax/vsa/dz_vsbus.c		dz_vsbus | smg
 
+device	lkkbd: wskbddev
+attach	lkkbd at dz with dzkbd
+file	dev/dec/dzkbd.c			dzkbd needs-flag
+
+device	lkms: wsmousedev
+attach	lkms at dz with dzms
+file	dev/dec/dzms.c			dzms needs-flag
+
 # RD-type disks at VS2000's onboard MFM-controller
 device	hdc { drive = -1 }
 attach	hdc at vsbus
@@ -189,14 +197,6 @@ file	arch/vax/if/if_le_vsbus.c	le_vsbus
 device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
 file	arch/vax/vsa/asc_vsbus.c	asc_vsbus
-
-device	lkkbd: wskbddev
-attach	lkkbd at dz with dzkbd
-file	dev/dec/dzkbd.c			dzkbd needs-flag
-
-device	lkms: wsmousedev
-attach	lkms at dz with dzms
-file	dev/dec/dzms.c			dzms needs-flag
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
@@ -350,12 +350,10 @@ file	arch/vax/vax/ka650.c		vax650  | vaxany
 file	arch/vax/vax/ka660.c		vax660  | vaxany
 file	arch/vax/vax/ka670.c		vax670  | vaxany
 file	arch/vax/vax/ka680.c		vax680  | vaxany
-file	arch/vax/vax/emulate.s		!no_insn_emulate
-file	arch/vax/vax/unimpl_emul.s	!no_insn_emulate
+file	arch/vax/vax/emulate.S		!no_insn_emulate
+file	arch/vax/vax/unimpl_emul.S	!no_insn_emulate
 file	arch/vax/vax/scb.c
 file	arch/vax/vax/conf.c
-file	arch/vax/vax/urem.s
-file	arch/vax/vax/udiv.s
 file	arch/vax/vax/trap.c
 file	arch/vax/vax/bus_dma.c
 file	arch/vax/vax/bus_mem.c

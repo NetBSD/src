@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2.4.2 2001/09/21 22:35:17 nathanw Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.2.4.3 2002/02/28 04:12:53 nathanw Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -115,11 +115,13 @@ typedef struct {
 } LinuxAux32Info;
 #define LinuxAuxInfo LinuxAux32Info
 
+/* NetBSD/powerpc doesn't use e_syscall, so use the default. */
+#define LINUX_SYSCALL_FUNCTION syscall
+
 #ifdef _KERNEL
 __BEGIN_DECLS
 int linux_elf32_copyargs __P((struct exec_package *,
     struct ps_strings *, char **, void *)); 
 __END_DECLS
 #endif /* _KERNEL */
-
 #endif /* !_POWERPC_LINUX_EXEC_H */

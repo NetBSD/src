@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14.8.1 2002/01/08 00:28:55 nathanw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14.8.2 2002/02/28 04:12:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -53,7 +53,7 @@ static void parttbl_consistency_check(struct disklabel *,
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines

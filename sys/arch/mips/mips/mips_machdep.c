@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.8 2002/01/08 00:26:23 nathanw Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.9 2002/02/28 04:10:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.8 2002/01/08 00:26:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.9 2002/02/28 04:10:45 nathanw Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -130,10 +130,6 @@ int	default_pg_mask = 0x00001800;
 #endif
 
 #ifdef MIPS1
-#ifdef ENABLE_MIPS_TX3900
-int	r3900_icache_direct;
-#endif
-
 /*
  * MIPS-I locore function vector
  */

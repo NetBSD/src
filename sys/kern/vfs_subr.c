@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.9 2002/01/08 00:32:43 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.10 2002/02/28 04:14:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.9 2002/01/08 00:32:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.10 2002/02/28 04:14:48 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1571,6 +1571,7 @@ vclean(vp, flags, p)
 			simple_unlock(&vp->v_interlock);
 	}
 
+	KASSERT(vp->v_uobj.uo_npages == 0);
 	cache_purge(vp);
 
 	/*

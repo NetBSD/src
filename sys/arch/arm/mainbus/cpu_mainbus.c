@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.1.12.3 2002/01/11 23:38:05 nathanw Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.1.12.4 2002/02/28 04:07:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.2.2.4 2002/01/08 00:34:27 nathanw Exp $ 
+ *	$Id: i4b_l4.c,v 1.2.2.5 2002/02/28 04:15:15 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.2.2.4 2002/01/08 00:34:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.2.2.5 2002/02/28 04:15:15 nathanw Exp $");
 
 #include "i4b.h"
 #include "i4bipr.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.2.2.4 2002/01/08 00:34:27 nathanw Exp $
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l4.h>
 
@@ -440,6 +441,7 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
 		ctrl_desc[cd->bri].bch_state[cd->channelid] = BCH_ST_FREE;
+		i4b_l2_channel_set_state(cd->bri, cd->channelid, BCH_ST_FREE);
 	}
 	else
 	{

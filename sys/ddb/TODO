@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.7.2.2 2002/01/11 23:38:54 nathanw Exp $
+$NetBSD: TODO,v 1.7.2.3 2002/02/28 04:13:04 nathanw Exp $
 
 In rough order.
 
@@ -31,7 +31,7 @@ done	"set" should display the old value as "write" does.
 4.	Note only some radixes are supported.
 
 5.	Allow a mechanism for DDB to not fail under X (on the i386).
-	Probably just skip DDB in such cases. 
+	Probably just skip DDB in such cases.
 
 6.	Enable DDB in GENERIC on all architectures not starved for
 	space.
@@ -79,7 +79,7 @@ done	Numbers starting with [a-f] should work, but symbols
 	and ] in kadb (but not in adb):
 	     [           Like :e in adb(1), but requires only  one  keys-
 			 troke and no RETURN character.
-	
+
 	     ]           Like :s in adb(1), but requires only  one  keys-
 			 troke and no RETURN character.
 	Does this make people queasy?

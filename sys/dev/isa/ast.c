@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.46.6.2 2002/01/11 23:39:04 nathanw Exp $	*/
+/*	$NetBSD: ast.c,v 1.46.6.3 2002/02/28 04:13:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.46.6.2 2002/01/11 23:39:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.46.6.3 2002/02/28 04:13:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

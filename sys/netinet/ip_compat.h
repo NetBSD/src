@@ -1,14 +1,12 @@
-/*	$NetBSD: ip_compat.h,v 1.21.2.2 2001/06/21 20:08:32 nathanw Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.21.2.3 2002/02/28 04:15:06 nathanw Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.26.2.9 2001/01/14 14:58:01 darrenr Exp
+ * Id: ip_compat.h,v 2.26.2.34 2002/01/08 14:18:13 darrenr Exp
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -29,10 +27,20 @@
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
-#if SOLARIS2 >= 8
-# ifndef	USE_INET6
-#  define	USE_INET6
+#if SOLARIS
+# if !defined(SOLARIS2)
+#  define	SOLARIS2	3	/* Pick an old version */
 # endif
+# if SOLARIS2 >= 8
+#  ifndef	USE_INET6
+#   define	USE_INET6
+#  endif
+# else
+#  undef	USE_INET6
+# endif
+#endif
+#if defined(sun) && !(defined(__svr4__) || defined(__SVR4))
+# undef	USE_INET6
 #endif
 
 #if defined(_KERNEL) || defined(KERNEL) || defined(__KERNEL__)
@@ -77,12 +85,18 @@ struct  ether_addr {
 # endif
 #endif
 
+#ifdef __sgi
+# include	<sys/debug.h>
+#endif
+
 #ifdef	linux
 # include <sys/sysmacros.h>
 #endif
 #if	SOLARIS
 # define	MTYPE(m)	((m)->b_datap->db_type)
-# include	<sys/isa_defs.h>
+# if SOLARIS2 >= 4
+#  include	<sys/isa_defs.h>
+# endif
 # include	<sys/ioccom.h>
 # include	<sys/sysmacros.h>
 # include	<sys/kmem.h>
@@ -121,10 +135,36 @@ struct  ether_addr {
 #   define	V4_PART_OF_V6(v6)	v6.s6_addr32[3]
 #  endif
 # endif
-#else
+
+typedef	struct	qif	{
+	struct	qif	*qf_next;
+	ill_t	*qf_ill;
+	kmutex_t	qf_lock;
+	void	*qf_iptr;
+	void	*qf_optr;
+	queue_t	*qf_in;
+	queue_t	*qf_out;
+	struct	qinit	*qf_wqinfo;
+	struct	qinit	*qf_rqinfo;
+	struct	qinit	qf_wqinit;
+	struct	qinit	qf_rqinit;
+	mblk_t	*qf_m;	/* These three fields are for passing data up from */
+	queue_t	*qf_q;	/* fr_qin and fr_qout to the packet processing. */
+	size_t	qf_off;
+	size_t	qf_len;	/* this field is used for in ipfr_fastroute */
+	char	qf_name[8];
+	/*
+	 * in case the ILL has disappeared...
+	 */
+	size_t	qf_hl;	/* header length */
+	int	qf_sap;
+	size_t	qf_incnt;
+	size_t	qf_outcnt;
+} qif_t;
+#else /* SOLARIS */
 # if !defined(__sgi)
 typedef	 int	minor_t;
-#endif
+# endif
 #endif /* SOLARIS */
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
 
@@ -153,8 +193,7 @@ typedef	 int	minor_t;
     defined(__sgi)
 typedef u_int32_t       u_32_t;
 # if defined(_KERNEL) && !defined(IPFILTER_LKM)
-#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 104110000) && \
-      !defined(_LKM)
+#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 104110000)
 #   include "opt_inet.h"
 #  endif
 #  if defined(__FreeBSD_version) && (__FreeBSD_version >= 400000) && \
@@ -188,6 +227,7 @@ typedef unsigned int	u_32_t;
 #  endif
 typedef	struct ip6_hdr	ip6_t;
 # endif
+# include <netinet/icmp6.h>
 union	i6addr	{
 	u_32_t	i6[4];
 	struct	in_addr	in4;
@@ -203,6 +243,18 @@ union	i6addr	{
 #define	IP6CMP(a,b)	bcmp((char *)&(a), (char *)&(b), sizeof(a))
 #define	IP6EQ(a,b)	(bcmp((char *)&(a), (char *)&(b), sizeof(a)) == 0)
 #define	IP6NEQ(a,b)	(bcmp((char *)&(a), (char *)&(b), sizeof(a)) != 0)
+#define	IP6_ISZERO(a)	((((union i6addr *)(a))->i6[0] | \
+			  ((union i6addr *)(a))->i6[1] | \
+			  ((union i6addr *)(a))->i6[2] | \
+			  ((union i6addr *)(a))->i6[3]) == 0)
+#define	IP6_NOTZERO(a)	((((union i6addr *)(a))->i6[0] | \
+			  ((union i6addr *)(a))->i6[1] | \
+			  ((union i6addr *)(a))->i6[2] | \
+			  ((union i6addr *)(a))->i6[3]) != 0)
+
+#ifndef	MAX
+#define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
+#endif
 
 /*
  * Security Options for Intenet Protocol (IPSO) as defined in RFC 1108.
@@ -263,10 +315,26 @@ union	i6addr	{
 
 #if defined(__FreeBSD__) && (defined(KERNEL) || defined(_KERNEL))
 # ifdef IPFILTER_LKM
-#  include <osreldate.h>
+#  ifndef __FreeBSD_cc_version
+#   include <osreldate.h>
+#  else
+#   if __FreeBSD_cc_version < 430000
+#    include <osreldate.h>
+#   else
+#    include <sys/param.h>
+#   endif
+#  endif
 #  define       ACTUALLY_LKM_NOT_KERNEL
 # else
-#  include <sys/osreldate.h>
+#  ifndef __FreeBSD_cc_version
+#   include <sys/osreldate.h>
+#  else
+#   if __FreeBSD_cc_version < 430000
+#    include <sys/osreldate.h>
+#   else
+#    include <sys/param.h>
+#   endif
+#  endif
 # endif
 # if __FreeBSD__ < 3
 #  include <machine/spl.h>
@@ -324,6 +392,7 @@ typedef struct {
 #   define	ATOMIC_DEC32(x)		atomic_add_32((uint32_t*)&(x), -1)
 #   define	ATOMIC_DEC16(x)		atomic_add_16((uint16_t*)&(x), -1)
 #  else
+#   define	IRE_CACHE		IRE_ROUTE
 #   define	ATOMIC_INC(x)		{ mutex_enter(&ipf_rw); (x)++; \
 					  mutex_exit(&ipf_rw); }
 #   define	ATOMIC_DEC(x)		{ mutex_enter(&ipf_rw); (x)--; \
@@ -361,6 +430,7 @@ typedef struct {
 #  define	IWCOPYPTR	iwcopyptr
 #  define	FREE_MB_T(m)	freemsg(m)
 #  define	SPL_NET(x)	;
+#  define	SPL_IMP(x)	;
 #  undef	SPL_X
 #  define	SPL_X(x)	;
 #  ifdef sparc
@@ -372,29 +442,6 @@ typedef struct {
 #  define	KMALLOC(a,b)	(a) = (b)kmem_alloc(sizeof(*(a)), KM_NOSLEEP)
 #  define	KMALLOCS(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
 #  define	GET_MINOR(x)	getminor(x)
-typedef	struct	qif	{
-	struct	qif	*qf_next;
-	ill_t	*qf_ill;
-	kmutex_t	qf_lock;
-	void	*qf_iptr;
-	void	*qf_optr;
-	queue_t	*qf_in;
-	queue_t	*qf_out;
-	struct	qinit	*qf_wqinfo;
-	struct	qinit	*qf_rqinfo;
-	struct	qinit	qf_wqinit;
-	struct	qinit	qf_rqinit;
-	mblk_t	*qf_m;	/* These three fields are for passing data up from */
-	queue_t	*qf_q;	/* fr_qin and fr_qout to the packet processing. */
-	size_t	qf_off;
-	size_t	qf_len;	/* this field is used for in ipfr_fastroute */
-	char	qf_name[8];
-	/*
-	 * in case the ILL has disappeared...
-	 */
-	size_t	qf_hl;	/* header length */
-	int	qf_sap;
-} qif_t;
 extern	ill_t	*get_unit __P((char *, int));
 #  define	GETUNIT(n, v)	get_unit(n, v)
 #  define	IFNAME(x)	((ill_t *)x)->ill_name
@@ -450,7 +497,9 @@ extern	ill_t	*get_unit __P((char *, int));
         (defined(OpenBSD) && (OpenBSD >= 199603))
 #    define	IFNAME(x)	((struct ifnet *)x)->if_xname
 #   else
-#    define	IFNAME(x)	((struct ifnet *)x)->if_name
+#    define	USE_GETIFNAME	1
+#    define	IFNAME(x)	get_ifname((struct ifnet *)x)
+extern	char	*get_ifname __P((struct ifnet *));
 #   endif
 #  endif
 # endif /* sun */
@@ -483,18 +532,22 @@ extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 #  define	GET_MINOR(x)	minor(x)
 # endif
 # if (BSD >= 199306) || defined(__FreeBSD__)
-#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105010000)
-#   include <uvm/uvm_extern.h>
-#  else
+#  if (defined(__NetBSD_Version__) && (__NetBSD_Version__ < 105180000)) || \
+       defined(__FreeBSD__) || defined(__OpenBSD__) || defined(_BSDI_VERSION)
 #   include <vm/vm.h>
-#   if !defined(__FreeBSD__) || (defined (__FreeBSD__) && __FreeBSD__>=3)
+#  endif
+#  if !defined(__FreeBSD__) || (defined (__FreeBSD__) && __FreeBSD__>=3)
+#   if (defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105180000)) || \
+       (defined(OpenBSD) && (OpenBSD >= 200111))
+#    include <uvm/uvm_extern.h>
+#   else
 #    include <vm/vm_extern.h>
-#    include <sys/proc.h>
 extern	vm_map_t	kmem_map;
-#   else /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
-#    include <vm/vm_kern.h>
-#   endif /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
-#  endif /* __NetBSD_Version__) && (__NetBSD_Version__ >= 105010000) */
+#   endif
+#   include <sys/proc.h>
+#  else /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
+#   include <vm/vm_kern.h>
+#  endif /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
 #  ifdef	M_PFIL
 #   define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), M_PFIL, M_NOWAIT)
 #   define	KMALLOCS(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)
@@ -510,15 +563,17 @@ extern	vm_map_t	kmem_map;
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
 #  define	WAKEUP(id)	wakeup(id)
 # endif /* BSD */
-# if defined(NetBSD) && NetBSD <= 1991011 && NetBSD >= 199407
+# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199407)) || \
+     (defined(OpenBSD) && (OpenBSD >= 200006))
 #  define	SPL_NET(x)	x = splsoftnet()
 #  define	SPL_X(x)	(void) splx(x)
 # else
 #  if !SOLARIS && !defined(linux)
+#   define	SPL_IMP(x)	x = splimp()
 #   define	SPL_NET(x)	x = splnet()
 #   define	SPL_X(x)	(void) splx(x)
 #  endif
-# endif /* NetBSD && NetBSD <= 1991011 && NetBSD >= 199407 */
+# endif /* NetBSD && (NetBSD <= 1991011) && (NetBSD >= 199407) */
 # define	PANIC(x,y)	if (x) panic y
 #else /* KERNEL */
 # define	SLEEP(x,y)	;
@@ -536,17 +591,20 @@ extern	vm_map_t	kmem_map;
 # define	RWLOCK_EXIT(x)	;
 # define	MUTEX_EXIT(x)	;
 # define	SPL_NET(x)	;
+# define	SPL_IMP(x)	;
 # undef		SPL_X
 # define	SPL_X(x)	;
 # define	KMALLOC(a,b)	(a) = (b)malloc(sizeof(*a))
 # define	KMALLOCS(a,b,c)	(a) = (b)malloc(c)
 # define	KFREE(x)	free(x)
 # define	KFREES(x,s)	free(x)
+# define	FREE_MB_T(x)	;
 # define	GETUNIT(x, v)	get_unit(x,v)
 # define	IRCOPY(a,b,c)	(bcopy((a), (b), (c)), 0)
 # define	IWCOPY(a,b,c)	(bcopy((a), (b), (c)), 0)
 # define	IRCOPYPTR	ircopyptr
 # define	IWCOPYPTR	iwcopyptr
+# define	IFNAME(x)	get_ifname((struct ifnet *)x)
 #endif /* KERNEL */
 
 #if SOLARIS
@@ -576,7 +634,6 @@ typedef struct mbuf mb_t;
 # endif
 #endif /* SOLARIS */
 
-#if defined(linux) || defined(__sgi)
 /*
  * These #ifdef's are here mainly for linux, but who knows, they may
  * not be in other places or maybe one day linux will grow up and some
@@ -585,35 +642,152 @@ typedef struct mbuf mb_t;
 #ifndef	ICMP_MINLEN
 # define	ICMP_MINLEN	8
 #endif
+#ifndef	ICMP_ECHOREPLY
+# define	ICMP_ECHOREPLY	0
+#endif
 #ifndef	ICMP_UNREACH
-# define	ICMP_UNREACH	ICMP_DEST_UNREACH
+# define	ICMP_UNREACH	3
+#endif
+#ifndef	ICMP_UNREACH_NET
+# define	ICMP_UNREACH_NET	0
+#endif
+#ifndef	ICMP_UNREACH_HOST
+# define	ICMP_UNREACH_HOST	1
+#endif
+#ifndef	ICMP_UNREACH_PROTOCOL
+# define	ICMP_UNREACH_PROTOCOL	2
+#endif
+#ifndef	ICMP_UNREACH_PORT
+# define	ICMP_UNREACH_PORT	3
+#endif
+#ifndef	ICMP_UNREACH_NEEDFRAG
+# define	ICMP_UNREACH_NEEDFRAG	4
+#endif
+#ifndef	ICMP_UNREACH_SRCFAIL
+# define	ICMP_UNREACH_SRCFAIL	5
+#endif
+#ifndef	ICMP_UNREACH_NET_UNKNOWN
+# define	ICMP_UNREACH_NET_UNKNOWN	6
+#endif
+#ifndef	ICMP_UNREACH_HOST_UNKNOWN
+# define	ICMP_UNREACH_HOST_UNKNOWN	7
+#endif
+#ifndef	ICMP_UNREACH_ISOLATED
+# define	ICMP_UNREACH_ISOLATED	8
+#endif
+#ifndef	ICMP_UNREACH_NET_PROHIB
+# define	ICMP_UNREACH_NET_PROHIB	9
+#endif
+#ifndef	ICMP_UNREACH_HOST_PROHIB
+# define	ICMP_UNREACH_HOST_PROHIB	10
+#endif
+#ifndef	ICMP_UNREACH_TOSNET
+# define	ICMP_UNREACH_TOSNET	11
+#endif
+#ifndef	ICMP_UNREACH_TOSHOST
+# define	ICMP_UNREACH_TOSHOST	12
+#endif
+#ifndef	ICMP_UNREACH_ADMIN_PROHIBIT
+# define	ICMP_UNREACH_ADMIN_PROHIBIT	13
+#endif
+#ifndef	ICMP_UNREACH_HOST_PRECEDENCE
+# define	ICMP_UNREACH_HOST_PRECEDENCE	14
+#endif
+#ifndef	ICMP_UNREACH_PRECEDENCE_CUTOFF
+# define	ICMP_UNREACH_PRECEDENCE_CUTOFF	15
 #endif
 #ifndef	ICMP_SOURCEQUENCH
-# define	ICMP_SOURCEQUENCH	ICMP_SOURCE_QUENCH
+# define	ICMP_SOURCEQUENCH	4
+#endif
+#ifndef	ICMP_REDIRECT_NET
+# define	ICMP_REDIRECT_NET	0
+#endif
+#ifndef	ICMP_REDIRECT_HOST
+# define	ICMP_REDIRECT_HOST	1
+#endif
+#ifndef	ICMP_REDIRECT_TOSNET
+# define	ICMP_REDIRECT_TOSNET	2
+#endif
+#ifndef	ICMP_REDIRECT_TOSHOST
+# define	ICMP_REDIRECT_TOSHOST	3
+#endif
+#ifndef	ICMP_ALTHOSTADDR
+# define	ICMP_ALTHOSTADDR	6
 #endif
 #ifndef	ICMP_TIMXCEED
-# define	ICMP_TIMXCEED	ICMP_TIME_EXCEEDED
+# define	ICMP_TIMXCEED	11
+#endif
+#ifndef	ICMP_TIMXCEED_INTRANS
+# define	ICMP_TIMXCEED_INTRANS	0
+#endif
+#ifndef	ICMP_TIMXCEED_REASS
+# define		ICMP_TIMXCEED_REASS	1
 #endif
 #ifndef	ICMP_PARAMPROB
-# define	ICMP_PARAMPROB	ICMP_PARAMETERPROB
+# define	ICMP_PARAMPROB	12
+#endif
+#ifndef	ICMP_PARAMPROB_ERRATPTR
+# define	ICMP_PARAMPROB_ERRATPTR	0
+#endif
+#ifndef	ICMP_PARAMPROB_OPTABSENT
+# define	ICMP_PARAMPROB_OPTABSENT	1
+#endif
+#ifndef	ICMP_PARAMPROB_LENGTH
+# define	ICMP_PARAMPROB_LENGTH	2
 #endif
 #ifndef ICMP_TSTAMP
-# define	ICMP_TSTAMP	ICMP_TIMESTAMP
+# define	ICMP_TSTAMP	13
 #endif
 #ifndef ICMP_TSTAMPREPLY
-# define	ICMP_TSTAMPREPLY	ICMP_TIMESTAMPREPLY
+# define	ICMP_TSTAMPREPLY	14
 #endif
 #ifndef ICMP_IREQ
-# define	ICMP_IREQ	ICMP_INFO_REQUEST
+# define	ICMP_IREQ	15
 #endif
 #ifndef ICMP_IREQREPLY
-# define	ICMP_IREQREPLY	ICMP_INFO_REPLY
+# define	ICMP_IREQREPLY	16
 #endif
 #ifndef	ICMP_MASKREQ
-# define	ICMP_MASKREQ	ICMP_ADDRESS
+# define	ICMP_MASKREQ	17
 #endif
 #ifndef ICMP_MASKREPLY
-# define	ICMP_MASKREPLY	ICMP_ADDRESSREPLY
+# define	ICMP_MASKREPLY	18
+#endif
+#ifndef	ICMP_TRACEROUTE
+# define	ICMP_TRACEROUTE	30
+#endif
+#ifndef	ICMP_DATACONVERR
+# define	ICMP_DATACONVERR	31
+#endif
+#ifndef	ICMP_MOBILE_REDIRECT
+# define	ICMP_MOBILE_REDIRECT	32
+#endif
+#ifndef	ICMP_IPV6_WHEREAREYOU
+# define	ICMP_IPV6_WHEREAREYOU	33
+#endif
+#ifndef	ICMP_IPV6_IAMHERE
+# define	ICMP_IPV6_IAMHERE	34
+#endif
+#ifndef	ICMP_MOBILE_REGREQUEST
+# define	ICMP_MOBILE_REGREQUEST	35
+#endif
+#ifndef	ICMP_MOBILE_REGREPLY
+# define	ICMP_MOBILE_REGREPLY	36
+#endif
+#ifndef	ICMP_SKIP
+# define	ICMP_SKIP	39
+#endif
+#ifndef	ICMP_PHOTURIS
+# define	ICMP_PHOTURIS	40
+#endif
+#ifndef	ICMP_PHOTURIS_UNKNOWN_INDEX
+# define	ICMP_PHOTURIS_UNKNOWN_INDEX	1
+#endif
+#ifndef	ICMP_PHOTURIS_AUTH_FAILED
+# define	ICMP_PHOTURIS_AUTH_FAILED	2
+#endif
+#ifndef	ICMP_PHOTURIS_DECRYPT_FAILED
+# define	ICMP_PHOTURIS_DECRYPT_FAILED	3
 #endif
 #ifndef	IPVERSION
 # define	IPVERSION	4
@@ -702,7 +876,15 @@ typedef struct mbuf mb_t;
 #ifndef IPOPT_OLEN
 # define	IPOPT_OLEN	1
 #endif
-#endif /* linux || __sgi */
+#ifndef	IPPROTO_GRE
+# define	IPPROTO_GRE	47	/* GRE encaps RFC 1701 */
+#endif
+#ifndef	IPPROTO_ESP
+# define	IPPROTO_ESP	50
+#endif
+#ifndef	IPPROTO_ICMPV6
+# define	IPPROTO_ICMPV6	58
+#endif
 
 #ifdef	linux
 #include <linux/in_systm.h>
@@ -752,7 +934,7 @@ typedef	struct	{
 	__u32	th_seq;
 	__u32	th_ack;
 # if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
-    defined(__vax__)
+    defined(vax)
 	__u8	th_res:4;
 	__u8	th_off:4;
 #else
@@ -774,7 +956,7 @@ typedef	struct	{
 
 typedef	struct	{
 # if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
-    defined(__vax__)
+    defined(vax)
 	__u8	ip_hl:4;
 	__u8	ip_v:4;
 # else
@@ -878,6 +1060,7 @@ typedef	struct	uio	{
 #  include <linux/netdevice.h>
 #  define	SPL_X(x)
 #  define	SPL_NET(x)
+#  define	SPL_IMP(x)
  
 #  define	bcmp(a,b,c)	memcmp(a,b,c)
 #  define	bcopy(a,b,c)	memcpy(b,a,c)
@@ -973,6 +1156,10 @@ struct	ether_addr	{
 #define	A_A	&
 #endif
 
+#if (BSD >= 199306) && !defined(m_act)
+# define	m_act	m_nextpkt
+#endif
+
 #ifndef	ICMP_ROUTERADVERT
 # define	ICMP_ROUTERADVERT	9
 #endif
@@ -992,8 +1179,169 @@ struct	ether_addr	{
 #define	ICMPERR_IPICMPHLEN	(20 + 8)
 #define	ICMPERR_MINPKTLEN	(20 + 8 + 20)
 #define	ICMPERR_MAXPKTLEN	(20 + 8 + 20 + 8)
+#define	ICMP6_MINLEN		8
 #define	ICMP6ERR_MINPKTLEN	(40 + 8)
 #define	ICMP6ERR_IPICMPHLEN	(40 + 8 + 40)
+
+#ifndef	ICMP6_DST_UNREACH
+# define	ICMP6_DST_UNREACH	1
+#endif
+#ifndef	ICMP6_PACKET_TOO_BIG
+# define	ICMP6_PACKET_TOO_BIG	2
+#endif
+#ifndef	ICMP6_TIME_EXCEEDED
+# define	ICMP6_TIME_EXCEEDED	3
+#endif
+#ifndef	ICMP6_PARAM_PROB
+# define	ICMP6_PARAM_PROB	4
+#endif
+
+#ifndef	ICMP6_ECHO_REQUEST
+# define	ICMP6_ECHO_REQUEST	128
+#endif
+#ifndef	ICMP6_ECHO_REPLY
+# define	ICMP6_ECHO_REPLY	129
+#endif
+#ifndef	ICMP6_MEMBERSHIP_QUERY
+# define	ICMP6_MEMBERSHIP_QUERY	130
+#endif
+#ifndef	MLD6_LISTENER_QUERY
+# define	MLD6_LISTENER_QUERY	130
+#endif
+#ifndef	ICMP6_MEMBERSHIP_REPORT
+# define	ICMP6_MEMBERSHIP_REPORT	131
+#endif
+#ifndef	MLD6_LISTENER_REPORT
+# define	MLD6_LISTENER_REPORT	131
+#endif
+#ifndef	ICMP6_MEMBERSHIP_REDUCTION
+# define	ICMP6_MEMBERSHIP_REDUCTION	132
+#endif
+#ifndef	MLD6_LISTENER_DONE
+# define	MLD6_LISTENER_DONE	132
+#endif
+#ifndef	ND_ROUTER_SOLICIT
+# define	ND_ROUTER_SOLICIT	133
+#endif
+#ifndef	ND_ROUTER_ADVERT
+# define	ND_ROUTER_ADVERT	134
+#endif
+#ifndef	ND_NEIGHBOR_SOLICIT
+# define	ND_NEIGHBOR_SOLICIT	135
+#endif
+#ifndef	ND_NEIGHBOR_ADVERT
+# define	ND_NEIGHBOR_ADVERT	136
+#endif
+#ifndef	ND_REDIRECT
+# define	ND_REDIRECT	137
+#endif
+#ifndef	ICMP6_ROUTER_RENUMBERING
+# define	ICMP6_ROUTER_RENUMBERING	138
+#endif
+#ifndef	ICMP6_WRUREQUEST
+# define	ICMP6_WRUREQUEST	139
+#endif
+#ifndef	ICMP6_WRUREPLY
+# define	ICMP6_WRUREPLY		140
+#endif
+#ifndef	ICMP6_FQDN_QUERY
+# define	ICMP6_FQDN_QUERY	139
+#endif
+#ifndef	ICMP6_FQDN_REPLY
+# define	ICMP6_FQDN_REPLY	140
+#endif
+#ifndef	ICMP6_NI_QUERY
+# define	ICMP6_NI_QUERY		139
+#endif
+#ifndef	ICMP6_NI_REPLY
+# define	ICMP6_NI_REPLY		140
+#endif
+#ifndef	MLD6_MTRACE_RESP
+# define	MLD6_MTRACE_RESP	200
+#endif
+#ifndef	MLD6_MTRACE
+# define	MLD6_MTRACE		201
+#endif
+#ifndef	ICMP6_HADISCOV_REQUEST
+# define	ICMP6_HADISCOV_REQUEST	202
+#endif
+#ifndef	ICMP6_HADISCOV_REPLY
+# define	ICMP6_HADISCOV_REPLY	203
+#endif
+#ifndef	ICMP6_MOBILEPREFIX_SOLICIT
+# define	ICMP6_MOBILEPREFIX_SOLICIT	204
+#endif
+#ifndef	ICMP6_MOBILEPREFIX_ADVERT
+# define	ICMP6_MOBILEPREFIX_ADVERT	205
+#endif
+#ifndef	ICMP6_MAXTYPE
+# define	ICMP6_MAXTYPE		205
+#endif
+
+#ifndef	ICMP6_DST_UNREACH_NOROUTE
+# define	ICMP6_DST_UNREACH_NOROUTE	0
+#endif
+#ifndef	ICMP6_DST_UNREACH_ADMIN
+# define	ICMP6_DST_UNREACH_ADMIN		1
+#endif
+#ifndef	ICMP6_DST_UNREACH_NOTNEIGHBOR
+# define	ICMP6_DST_UNREACH_NOTNEIGHBOR	2
+#endif
+#ifndef	ICMP6_DST_UNREACH_BEYONDSCOPE
+# define	ICMP6_DST_UNREACH_BEYONDSCOPE	2
+#endif
+#ifndef	ICMP6_DST_UNREACH_ADDR
+# define	ICMP6_DST_UNREACH_ADDR		3
+#endif
+#ifndef	ICMP6_DST_UNREACH_NOPORT
+# define	ICMP6_DST_UNREACH_NOPORT	4
+#endif
+#ifndef	ICMP6_TIME_EXCEED_TRANSIT
+# define	ICMP6_TIME_EXCEED_TRANSIT	0
+#endif
+#ifndef	ICMP6_TIME_EXCEED_REASSEMBLY
+# define	ICMP6_TIME_EXCEED_REASSEMBLY	1
+#endif
+
+#ifndef	ICMP6_NI_SUCCESS
+# define	ICMP6_NI_SUCCESS	0
+#endif
+#ifndef	ICMP6_NI_REFUSED
+# define	ICMP6_NI_REFUSED	1
+#endif
+#ifndef	ICMP6_NI_UNKNOWN
+# define	ICMP6_NI_UNKNOWN	2
+#endif
+
+#ifndef	ICMP6_ROUTER_RENUMBERING_COMMAND
+# define	ICMP6_ROUTER_RENUMBERING_COMMAND	0
+#endif
+#ifndef	ICMP6_ROUTER_RENUMBERING_RESULT
+# define	ICMP6_ROUTER_RENUMBERING_RESULT	1
+#endif
+#ifndef	ICMP6_ROUTER_RENUMBERING_SEQNUM_RESET
+# define	ICMP6_ROUTER_RENUMBERING_SEQNUM_RESET	255
+#endif
+
+#ifndef	ICMP6_PARAMPROB_HEADER
+# define	ICMP6_PARAMPROB_HEADER	0
+#endif
+#ifndef	ICMP6_PARAMPROB_NEXTHEADER
+# define	ICMP6_PARAMPROB_NEXTHEADER	1
+#endif
+#ifndef	ICMP6_PARAMPROB_OPTION
+# define	ICMP6_PARAMPROB_OPTION	2
+#endif
+
+#ifndef	ICMP6_NI_SUBJ_IPV6
+# define	ICMP6_NI_SUBJ_IPV6	0
+#endif
+#ifndef	ICMP6_NI_SUBJ_FQDN
+# define	ICMP6_NI_SUBJ_FQDN	1
+#endif
+#ifndef	ICMP6_NI_SUBJ_IPV4
+# define	ICMP6_NI_SUBJ_IPV4	2
+#endif
 
 /*
  * ECN is a new addition to TCP - RFC 2481

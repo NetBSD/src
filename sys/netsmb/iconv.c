@@ -1,9 +1,9 @@
-/*	$NetBSD: iconv.c,v 1.1.4.2 2002/01/11 23:39:47 nathanw Exp $	*/
+/*	$NetBSD: iconv.c,v 1.1.4.3 2002/02/28 04:15:18 nathanw Exp $	*/
 
 /* Public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.1.4.2 2002/01/11 23:39:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.1.4.3 2002/02/28 04:15:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

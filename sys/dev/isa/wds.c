@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.41.2.5 2002/01/11 23:39:15 nathanw Exp $	*/
+/*	$NetBSD: wds.c,v 1.41.2.6 2002/02/28 04:13:48 nathanw Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.5 2002/01/11 23:39:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.6 2002/02/28 04:13:48 nathanw Exp $");
 
 #include "opt_ddb.h"
 

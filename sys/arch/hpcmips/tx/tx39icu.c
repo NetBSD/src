@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.14.4.2 2002/01/11 23:38:25 nathanw Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.14.4.3 2002/02/28 04:10:02 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -39,9 +39,8 @@
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 
-#include "opt_tx39_debug.h"
 #include "opt_use_poll.h"
-#include "opt_tx39icudebug.h"
+#include "opt_tx39icu_debug.h"
 #include "opt_tx39_watchdogtimer.h"
 
 #include <sys/param.h>
@@ -62,7 +61,7 @@
 #include <machine/cpu.h>
 #include <dev/dec/clockvar.h>
 
-#undef TX39ICUDEBUG_PRINT_PENDING_INTERRUPT /* For explorer. good luck! */
+#undef TX39ICU_DEBUG_PRINT_PENDING_INTERRUPT /* For explorer. good luck! */
 
 #if defined(VR41XX) && defined(TX39XX)
 #define	TX_INTR	tx_intr
@@ -71,11 +70,12 @@
 #endif
 void TX_INTR(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
-#ifdef TX39ICUDEBUG
-#define	DPRINTF(arg) printf arg
-#else
-#define	DPRINTF(arg)
+#ifdef	TX39ICU_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	tx39icu_debug
 #endif
+#include <machine/debug.h>
+
 u_int32_t tx39intrvec;
 
 /*
@@ -262,10 +262,10 @@ tx39icu_attach(struct device *parent, struct device *self, void *aux)
 	regs[7] = tx_conf_read(tc, TX39_INTRSTATUS7_REG);
 	regs[8] = tx_conf_read(tc, TX39_INTRSTATUS8_REG);
 #endif
-#ifdef TX39ICUDEBUG
+#ifdef TX39ICU_DEBUG
 	printf("\t[Windows CE setting]\n");
 	tx39_intr_dump(sc);
-#endif /* TX39ICUDEBUG */
+#endif /* TX39ICU_DEBUG */
 
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
@@ -353,17 +353,15 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 	regs[8] = tx_conf_read(tc, TX39_INTRSTATUS8_REG);
 #endif
 
-#ifdef TX39ICUDEBUG
+#ifdef TX39ICU_DEBUG
 	if (!(ipending & MIPS_INT_MASK_4) && !(ipending & MIPS_INT_MASK_2)) {
-		bitdisp(ipending);
+		dbg_bit_print(ipending);
 		panic("bogus HwInt");
 	}
-#ifdef TX39_DEBUG
-	if (tx39debugflag) {
+	if (tx39icu_debug > 1) {
 		tx39_intr_dump(sc);
 	}
-#endif
-#endif /* TX39ICUDEBUG */
+#endif /* TX39ICU_DEBUG */
 
 	/* IRQHIGH */
 	if (ipending & MIPS_INT_MASK_4) {
@@ -389,23 +387,22 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 			for (j = 0 ; j < 32; j++) {
 				if ((reg & (1 << j)) &&
 				    sc->sc_le_fun[i][j]) {
-#ifdef TX39_DEBUG
-					tx39intrvec = (i << 16) | j;
-					if (tx39debugflag) {
-						DPRINTF(("IRQLOW %d:%d\n", 
-						    i, j));
+#ifdef TX39ICU_DEBUG
+					if (tx39icu_debug > 1) {
+						tx39intrvec = (i << 16) | j;
+						DPRINTF("IRQLOW %d:%d\n", i, j);
 					}
-#endif /* TX39_DEBUG */
+#endif /* TX39ICU_DEBUG */
 					(*sc->sc_le_fun[i][j])
 					    (sc->sc_le_arg[i][j]);
 
 				}
 			}
-#ifdef TX39ICUDEBUG_PRINT_PENDING_INTERRUPT
+#ifdef TX39ICU_DEBUG_PRINT_PENDING_INTERRUPT
 			pend &= ~reg;
 			if (pend) {
 				printf("%d pending:", i);
-				__bitdisp(pend, 0, 31, 0, 1);
+				__dbg_bit_print(pend, 0, 31, 0, 1);
 			}
 #endif
 
@@ -483,14 +480,14 @@ tx39_irqhigh_intr(u_int32_t ipending, u_int32_t pc, u_int32_t status,
 				ofs = TX39_INTRSTATUS_REG(set);
 				/* Clear interrupt */
 				tx_conf_write(tc, ofs, he_mask);
-#ifdef TX39_DEBUG
-				tx39intrvec = (set << 16) | 
-				    (ffs(he_mask) - 1);
-				if (tx39debugflag) {
-					DPRINTF(("IRQHIGH: %d:%d\n", 
-					    set, ffs(he_mask) - 1));
+#ifdef TX39ICU_DEBUG
+				if (tx39icu_debug > 1) {
+					tx39intrvec = (set << 16) | 
+					    (ffs(he_mask) - 1);
+					DPRINTF("IRQHIGH: %d:%d\n", 
+					    set, ffs(he_mask) - 1);
 				}
-#endif /* TX39_DEBUG */
+#endif /* TX39ICU_DEBUG */
 				/* Dispatch handler */
 				(*he->he_fun)(he->he_arg);
 			}
@@ -580,12 +577,12 @@ tx_intr_establish(tx_chipset_tag_t tc, int line, int mode, int level,
 
 	sc->sc_le_fun[set][bit] = ih_fun;
 	sc->sc_le_arg[set][bit] = ih_arg;
-	DPRINTF(("tx_intr_establish: %d:%d", set, bit));
+	DPRINTF("tx_intr_establish: %d:%d", set, bit);
 
 	if ((highpri = tx39_irqhigh(set, bit))) {
 		tx39_irqhigh_establish(tc, set, bit, highpri, 
 		    ih_fun, ih_arg);
-		DPRINTF(("(high)\n"));
+		DPRINTF("(high)\n");
 	} else {
 		/* Set mask for acknowledge. */
 		sc->sc_le_mask[set] |= (1 << bit);
@@ -594,7 +591,7 @@ tx_intr_establish(tx_chipset_tag_t tc, int line, int mode, int level,
 		reg = tx_conf_read(tc, ofs);
 		reg |= (1 << bit);
 		tx_conf_write(tc, ofs, reg);
-		DPRINTF(("(low)\n"));
+		DPRINTF("(low)\n");
 	}
 	
 	return ((void *)line);
@@ -610,11 +607,11 @@ tx_intr_disestablish(tx_chipset_tag_t tc, void *arg)
 	sc = tc->tc_intrt;
 
 	tx39_intr_decode((int)arg, &set, &bit);
-	DPRINTF(("tx_intr_disestablish: %d:%d", set, bit));
+	DPRINTF("tx_intr_disestablish: %d:%d", set, bit);
 
 	if ((highpri = tx39_irqhigh(set, bit))) {
 		tx39_irqhigh_disestablish(tc, set, bit, highpri);
-		DPRINTF(("(high)\n"));
+		DPRINTF("(high)\n");
 	} else {
 		sc->sc_le_fun[set][bit] = 0;
 		sc->sc_le_arg[set][bit] = 0;
@@ -623,7 +620,7 @@ tx_intr_disestablish(tx_chipset_tag_t tc, void *arg)
 		reg = tx_conf_read(tc, ofs);
 		reg &= ~(1 << bit);
 		tx_conf_write(tc, ofs, reg);
-		DPRINTF(("(low)\n"));
+		DPRINTF("(low)\n");
 	}
 }
 
@@ -764,13 +761,13 @@ tx39_intr_dump(struct tx39icu_softc *sc)
 			}
 		}
 		sprintf(msg, "%d high", i);
-		__bitdisp(reg, 32, 0, msg, 1);
+		__dbg_bit_print(reg, sizeof(reg), 0, 0, msg, 1);
 		sprintf(msg, "%d status", i);
-		__bitdisp(sc->sc_regs[i], 0, 31, msg, 1);
+		__dbg_bit_print(sc->sc_regs[i], sizeof(reg), 0, 0, msg, 1);
 		ofs = TX39_INTRENABLE_REG(i);
 		reg = tx_conf_read(tc, ofs);
 		sprintf(msg, "%d enable", i);
-		__bitdisp(reg, 0, 31, msg, 1);
+		__dbg_bit_print(reg, sizeof(reg), 0, 0, msg, 1);
 	}
 	reg = sc->sc_regs[0];
 	printf("<%s><%s> vector=%2d\t\t[6 status]\n",
@@ -778,6 +775,6 @@ tx39_intr_dump(struct tx39icu_softc *sc)
 	    reg & TX39_INTRSTATUS6_IRQLOW ? "LO" : "--",
 	    TX39_INTRSTATUS6_INTVECT(reg));
 	reg = tx_conf_read(tc, TX39_INTRENABLE6_REG);
-	__bitdisp(reg, 0, 18, "6 enable", 1);
+	__dbg_bit_print(reg, sizeof(reg), 0, 18, "6 enable", 1);
 
 }

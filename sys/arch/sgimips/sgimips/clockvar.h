@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1.10.2 2002/01/08 00:27:31 nathanw Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.1.10.3 2002/02/28 04:11:36 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -35,3 +35,14 @@ struct clockfns {
 void clockattach(struct device *, const struct clockfns *);
 
 #define IRIX_CLOCK_BASE 1940
+
+/*
+ * If year < 1985, store (year - 1970), else (year - 1940). This
+ * matches IRIX semantics.
+ */
+#define TO_IRIX_YEAR(a)	((a) < 1985) ? ((a) - (30 + IRIX_CLOCK_BASE))	\
+    : ((a) - IRIX_CLOCK_BASE)
+
+/* RTC base on IRIX is 1940, offsets < 45 are from 1970 */
+#define FROM_IRIX_YEAR(a) ((a) < 45) ? ((a) + 30 + IRIX_CLOCK_BASE)	\
+    : ((a) + IRIX_CLOCK_BASE)

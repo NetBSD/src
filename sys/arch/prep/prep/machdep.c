@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27.4.3 2002/01/08 00:27:18 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.4.4 2002/02/28 04:11:31 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,6 +76,11 @@
 #include <machine/gtenvar.h>
 #endif
 
+/* Implied by gten support. */
+#if (NGTEN > 0)
+#include <dev/pci/pcivar.h>
+#endif
+
 #include "vga.h"
 #if (NVGA > 0)
 #include <dev/ic/mc6845reg.h>
@@ -132,7 +137,7 @@ extern struct user *proc0paddr;
 
 struct bat battable[16];
 
-paddr_t prep_intr_reg;			/* PReP interrupt vector register */
+vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
@@ -268,12 +273,12 @@ initppc(startkernel, endkernel, args, btinfo)
 	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA I/O 256 MB area */
-	battable[1].batl = BATL(PREP_BUS_SPACE_IO, BAT_I, BAT_PP_RW);
-	battable[1].batu = BATU(PREP_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
+	battable[8].batl = BATL(PREP_BUS_SPACE_IO, BAT_I, BAT_PP_RW);
+	battable[8].batu = BATU(PREP_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA MEMORY 256 MB area */
-	battable[2].batl = BATL(PREP_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
-	battable[2].batu = BATU(PREP_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
+	battable[12].batl = BATL(PREP_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
+	battable[12].batu = BATU(PREP_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers
@@ -284,9 +289,9 @@ initppc(startkernel, endkernel, args, btinfo)
 	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(battable[1].batl), "r"(battable[1].batu));
+		      :: "r"(battable[8].batl), "r"(battable[8].batu));
 	asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-		      :: "r"(battable[2].batl), "r"(battable[2].batu));
+		      :: "r"(battable[12].batl), "r"(battable[12].batu));
 
 	asm volatile ("sync; isync");
 	/*
@@ -516,7 +521,8 @@ cpu_startup()
 	 * allocater isn't using direct-mapped pool pages.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbcluters & mclsize, 0, FALSE, NULL);
+				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
+				 FALSE, NULL);
 #endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
@@ -535,7 +541,7 @@ cpu_startup()
 	{
 		int msr;
 
-		splhigh();
+		splraise(-1);
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
@@ -577,6 +583,9 @@ consinit()
 {
 	struct btinfo_console *consinfo;
 	static int initted = 0;
+#if (NGTEN > 0)
+	struct prep_pci_chipset pc;
+#endif
 
 	if (initted)
 		return;
@@ -600,7 +609,10 @@ consinit()
 #if (NVGA > 0) || (NGTEN > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NGTEN > 0)
-		if (!gten_cnattach(&prep_mem_space_tag))
+		(*platform->pci_get_chipset_tag)(&pc);
+#endif
+#if (NGTEN > 0)
+		if (!gten_cnattach(&pc, &prep_mem_space_tag))
 			goto dokbd;
 #endif
 #if (NVGA > 0)
@@ -615,7 +627,7 @@ dokbd:
 #endif
 		return;
 	}
-#endif /* PC | VGA */
+#endif /* VGA | GTEN */
 
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
@@ -774,8 +786,7 @@ mapiodev(pa, len)
 		return NULL;
 
 	for (; len > 0; len -= NBPG) {
-		pmap_enter(pmap_kernel(), taddr, faddr,
-			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE);
 		faddr += NBPG;
 		taddr += NBPG;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.15.6.3 2002/01/11 23:39:52 nathanw Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.15.6.4 2002/02/28 04:15:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.15.6.3 2002/01/11 23:39:52 nathanw Exp $");
+#if defined(__KERNEL_RCSID)
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.15.6.4 2002/02/28 04:15:27 nathanw Exp $");
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/param.h>
 

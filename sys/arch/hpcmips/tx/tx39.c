@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.27.4.2 2002/01/11 23:38:25 nathanw Exp $ */
+/*	$NetBSD: tx39.c,v 1.27.4.3 2002/02/28 04:10:00 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
-#include "opt_tx39_debug.h"
 #include "m38813c.h"
 #include "tc5165buf.h"
 
@@ -50,13 +49,12 @@
 #include <machine/locore.h>   /* cpu_id */
 #include <machine/bootinfo.h> /* bootinfo */
 #include <machine/sysconf.h>  /* platform */
+#include <machine/vmparam.h>  /* mem_cluster */
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
 #include <machine/bus.h>
-
-#include <hpcmips/hpcmips/machdep.h> /* cpu_name, mem_cluster */
 
 #include <hpcmips/tx/tx39biureg.h>
 #include <hpcmips/tx/tx39reg.h>
@@ -81,10 +79,6 @@
 #endif
 
 struct tx_chipset_tag tx_chipset;
-
-#ifdef TX39_DEBUG
-u_int32_t tx39debugflag;
-#endif
 
 void	tx_init(void);
 #if defined(VR41XX) && defined(TX39XX)
@@ -335,15 +329,4 @@ tx_conf_register_video(tx_chipset_tag_t t, void *videot)
 
 	KASSERT(t == &tx_chipset);
 	tx_chipset.tc_videot = videot;
-}
-
-int
-__is_set_print(u_int32_t reg, int mask, char *name)
-{
-	const char onoff[2] = "_x";
-	int ret = reg & mask ? 1 : 0;
-
-	printf("%s[%c] ", name, onoff[ret]);
-
-	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.11.2.4 2001/11/14 19:13:39 nathanw Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.11.2.5 2002/02/28 04:13:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.11.2.4 2001/11/14 19:13:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.11.2.5 2002/02/28 04:13:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,11 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.11.2.4 2001/11/14 19:13:39 nathanw Exp 
 #include <ddb/db_extern.h>
 
 void
-db_kill_proc(addr, haddr, count, modif)
-	db_expr_t addr;
-	int haddr;
-	db_expr_t count;
-	char *modif;
+db_kill_proc(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	struct proc *p;
 	db_expr_t pid, sig;
@@ -78,7 +74,7 @@ db_kill_proc(addr, haddr, count, modif)
 	/* What pid? */
 	if (!db_expression(&pid)) {
 		db_error("pid?\n");
-	    /*NOTREACHED*/
+		/*NOTREACHED*/
 	}
 	/* What sig? */
 	t = db_read_token();
@@ -92,24 +88,20 @@ db_kill_proc(addr, haddr, count, modif)
 		sig = 15;
 	}
 	if (db_read_token() != tEOL) {
-	    db_error("?\n");
-	    /*NOTREACHED*/
+		db_error("?\n");
+		/*NOTREACHED*/
 	}
 
 	p = pfind((pid_t)pid);
 	if (p == NULL) {
 		db_error("no such proc\n");
-	    /*NOTREACHED*/
+		/*NOTREACHED*/
 	}
 	psignal(p, (int)sig);
 }
 
 void
-db_show_all_procs(addr, haddr, count, modif)
-	db_expr_t addr;
-	int haddr;
-	db_expr_t count;
-	char *modif;
+db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	int i;
 
@@ -118,7 +110,7 @@ db_show_all_procs(addr, haddr, count, modif)
 	struct lwp *l, *cl;
 	struct timeval tv[2];
 	const struct proclist_desc *pd;
-    
+
 	if (modif[0] == 0)
 		modif[0] = 'n';			/* default == normal mode */
 
@@ -131,9 +123,8 @@ db_show_all_procs(addr, haddr, count, modif)
 		db_printf("\t/w == show process wait/emul info\n");
 		return;
 	}
-	
-	switch (*mode) {
 
+	switch (*mode) {
 	case 'a':
 		db_printf(" PID       %10s %18s %18s %18s\n",
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
@@ -222,14 +213,8 @@ db_show_all_procs(addr, haddr, count, modif)
 }
 
 void
-db_show_callout(addr, haddr, count, modif)
-	db_expr_t addr; 
-	int haddr; 
-	db_expr_t count;
-	char *modif;
+db_show_callout(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
-	extern struct callout_queue *callwheel;
-	extern int callwheelsize;
 	uint64_t hint;
 	int i;
 
@@ -259,11 +244,7 @@ db_show_callout(addr, haddr, count, modif)
 }
 
 void
-db_dmesg(addr, haddr, count, modif)
-	db_expr_t addr; 
-	int haddr; 
-	db_expr_t count;
-	char *modif;
+db_dmesg(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	struct kern_msgbuf *mbp;
 	int ch, newl, skip, i;

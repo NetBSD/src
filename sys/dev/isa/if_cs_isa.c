@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.3.2.3 2002/01/11 23:39:06 nathanw Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.3.2.4 2002/02/28 04:13:41 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.3.2.3 2002/01/11 23:39:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.3.2.4 2002/02/28 04:13:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

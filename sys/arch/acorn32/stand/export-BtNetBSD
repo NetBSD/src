@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# $NetBSD: export-BtNetBSD,v 1.1.4.2 2002/02/28 04:05:59 nathanw Exp $
+#
+# creates all binary files from the uue files from the source tree
+# to be run in the directory next to the directory BtNetBSD
+#
+
+
+# remember our current directory
+export CURDIR=${PWD}
+
+# first make sure no old BtNetBSD is around
+rm -rf /tmp/BtNetBSD
+
+# copy contents to /tmp/BtNetBSD
+cp -R BtNetBSD /tmp/BtNetBSD
+chmod -R a+r /tmp/BtNetBSD
+cd /tmp/BtNetBSD
+
+find . -name CVS -type d -exec rm -rf {} \;
+
+cd pling.BtNetBSD
+
+uudecode < Banner,uue && rm Banner,uue
+
+uudecode < MemFix,uue && rm MemFix,uue
+
+uudecode < pling.Sprites,uue && rm pling.Sprites,uue
+
+uudecode < pling.Sprites22,uue && rm pling.Sprites22,uue
+
+cd native
+uudecode < unixfs_res,uue && rm unixfs_res,uue
+
+cd ../src/Banner
+uudecode < sprite,uue && rm sprite,uue
+
+cd ../../..
+
+# unixfs is copied into the !BtNetBSD dir at install time
+cp -R pling.BtNetBSD/native unixfs
+
+mv pling.BtNetBSD \!BtNetBSD
+
+# back to /tmp again
+cd ..
+
+# make the tar file
+rm -f ${CURDIR}/BtNetBSD.tar ${CURDIR}/BtNetBSD.zip
+tar cf ${CURDIR}/BtNetBSD.tar BtNetBSD
+zip -r ${CURDIR}/BtNetBSD.zip BtNetBSD
+rm -rf BtNetBSD
+
+
+# back to our origional directory (nessisary?)
+cd ${CURDIR}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.5.8.1 2002/01/08 00:27:36 nathanw Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.5.8.2 2002/02/28 04:12:03 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -307,6 +307,14 @@ fpu_explode(fe, fp, type, reg)
 				((type == FTYPE_DBL) ? 'd' :
 					((type == FTYPE_EXT) ? 'q' : '?')))), 
 		reg));
+#ifdef DEBUG
+	if (fpe_debug & FPE_REG) {
+		if (type == FTYPE_INT) printf("%d ", s);
+#ifdef SUN4U
+		if (type == FTYPE_LNG) printf("%ld ", l);
+#endif /* SUN4U */
+	}
+#endif /* DEBUG */
 	DUMPFPN(FPE_REG, fp);
 	DPRINTF(FPE_REG, ("\n"));
 }

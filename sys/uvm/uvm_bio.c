@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.7.2.8 2002/01/08 00:35:00 nathanw Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.7.2.9 2002/02/28 04:15:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.7.2.8 2002/01/08 00:35:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.7.2.9 2002/02/28 04:15:30 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -229,6 +229,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	vaddr_t va, eva, ubc_offset, slot_offset;
 	int i, error, npages;
 	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT], *pg;
+	vm_prot_t prot;
 	UVMHIST_FUNC("ubc_fault");  UVMHIST_CALLED(ubchist);
 
 	/*
@@ -246,7 +247,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	ubc_offset = va - (vaddr_t)ubc_object.kva;
 
 	UVMHIST_LOG(ubchist, "va 0x%lx ubc_offset 0x%lx at %d",
-	    va, ubc_offset, access_type,0);
+	    va, ubc_offset, access_type, 0);
 
 	umap = &ubc_object.umap[ubc_offset >> ubc_winshift];
 	KASSERT(umap->refcount != 0);
@@ -275,7 +276,8 @@ again:
 	flags |= PGO_PASTEOF;
 	error = VOP_GETPAGES(vp, umap->offset + slot_offset, pgs, &npages, 0,
 	    access_type, 0, flags);
-	UVMHIST_LOG(ubchist, "getpages error %d npages %d", error, npages,0,0);
+	UVMHIST_LOG(ubchist, "getpages error %d npages %d", error, npages, 0,
+	    0);
 
 	if (error == EAGAIN) {
 		tsleep(&lbolt, PVM, "ubc_fault", 0);
@@ -288,11 +290,23 @@ again:
 	va = ufi->orig_rvaddr;
 	eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
-	UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0,0);
+	/*
+	 * for virtually-indexed, virtually-tagged caches we should avoid
+	 * creating writable mappings when we don't absolutely need them,
+	 * since the "compatible alias" trick doesn't work on such caches.
+	 * otherwise, we can always map the pages writable.
+	 */
+
+#ifdef PMAP_CACHE_VIVT
+	prot = VM_PROT_READ | access_type;
+#else
+	prot = VM_PROT_READ | VM_PROT_WRITE;
+#endif
+	UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0, 0);
 	simple_lock(&uobj->vmobjlock);
 	uvm_lock_pageq();
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
-		UVMHIST_LOG(ubchist, "pgs[%d] = %p", i, pgs[i],0,0);
+		UVMHIST_LOG(ubchist, "pgs[%d] = %p", i, pgs[i], 0, 0);
 		pg = pgs[i];
 
 		if (pg == NULL || pg == PGO_DONTCARE) {
@@ -309,7 +323,8 @@ again:
 		KASSERT(access_type == VM_PROT_READ ||
 		    (pg->flags & PG_RDONLY) == 0);
 		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE, access_type);
+		    (pg->flags & PG_RDONLY) ? prot & ~VM_PROT_WRITE : prot,
+		    access_type);
 		uvm_pageactivate(pg);
 		pg->flags &= ~(PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
@@ -438,7 +453,7 @@ again:
 		simple_lock(&uobj->vmobjlock);
 		error = VOP_GETPAGES(vp, trunc_page(offset), pgs, &npages, 0,
 		    VM_PROT_READ|VM_PROT_WRITE, 0, gpflags);
-		UVMHIST_LOG(ubchist, "faultbusy getpages %d", error,0,0,0);
+		UVMHIST_LOG(ubchist, "faultbusy getpages %d", error, 0, 0, 0);
 		if (error) {
 			goto out;
 		}
@@ -470,7 +485,7 @@ ubc_release(va, flags)
 	boolean_t unmapped;
 	UVMHIST_FUNC("ubc_release"); UVMHIST_CALLED(ubchist);
 
-	UVMHIST_LOG(ubchist, "va %p", va,0,0,0);
+	UVMHIST_LOG(ubchist, "va %p", va, 0, 0, 0);
 	umap = &ubc_object.umap[((char *)va - ubc_object.kva) >> ubc_winshift];
 	umapva = UBC_UMAP_ADDR(umap);
 	uobj = umap->uobj;
@@ -544,7 +559,7 @@ ubc_release(va, flags)
 			    inactive);
 		}
 	}
-	UVMHIST_LOG(ubchist, "umap %p refs %d", umap, umap->refcount,0,0);
+	UVMHIST_LOG(ubchist, "umap %p refs %d", umap, umap->refcount, 0, 0);
 	simple_unlock(&ubc_object.uobj.vmobjlock);
 }
 
@@ -563,7 +578,7 @@ ubc_flush(uobj, start, end)
 	UVMHIST_FUNC("ubc_flush");  UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "uobj %p start 0x%lx end 0x%lx",
-		    uobj, start, end,0);
+		    uobj, start, end, 0);
 
 	simple_lock(&ubc_object.uobj.vmobjlock);
 	for (umap = ubc_object.umap;

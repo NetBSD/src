@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.1.4.2 2002/01/08 00:22:46 nathanw Exp $	*/
+/*	$NetBSD: asc.c,v 1.1.4.3 2002/02/28 04:05:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -72,8 +72,10 @@
 
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
+
+__RCSID("$NetBSD: asc.c,v 1.1.4.3 2002/02/28 04:05:57 nathanw Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -115,6 +117,8 @@ void asc_scsi_request	(struct scsipi_channel *,
 			 scsipi_adapter_req_t, void *);
 int  asc_intr		(void *);
 void asc_minphys	(struct buf *);
+
+void asc_dump		(void);
 
 #ifdef DEBUG
 int	asc_dmadebug = 0;
@@ -304,14 +308,6 @@ void
 asc_dmafinish (void *dma_h, bus_dma_tag_t dma_t, struct sbic_acb *acb)
 {
 	printf("asc_dmafinish\n");
-}
-
-int
-asc_dmaintr(dev)
-	struct sbic_softc *dev;
-{
-	panic("asc_dmaintr");
-	return 0;
 }
 
 void

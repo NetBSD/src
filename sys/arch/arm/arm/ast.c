@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.2.2.3 2002/01/11 23:37:58 nathanw Exp $	*/
+/*	$NetBSD: ast.c,v 1.2.2.4 2002/02/28 04:07:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe

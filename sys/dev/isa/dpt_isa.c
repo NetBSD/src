@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.4.4.3 2002/01/11 23:39:05 nathanw Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.4.4.4 2002/02/28 04:13:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.4.4.3 2002/01/11 23:39:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.4.4.4 2002/02/28 04:13:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_tables.c,v 1.3.2.1 2001/11/14 19:18:56 nathanw Exp $	*/
+/*	$NetBSD: ffs_tables.c,v 1.3.2.2 2002/02/28 04:15:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_tables.c,v 1.3.2.1 2001/11/14 19:18:56 nathanw Exp $");
+#if defined(__KERNEL_RCSID)
+__KERNEL_RCSID(0, "$NetBSD: ffs_tables.c,v 1.3.2.2 2002/02/28 04:15:28 nathanw Exp $");
+#endif
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/param.h>
 

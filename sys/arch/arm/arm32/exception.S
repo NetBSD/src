@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.1.8.2 2002/01/08 00:23:08 nathanw Exp $	*/
+/*	$NetBSD: exception.S,v 1.1.8.3 2002/02/28 04:07:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -127,14 +127,9 @@ Lreset_panicmsg:
 ASENTRY_NP(swi_entry)
 	PUSHFRAME
 
- 	sub	r0, lr, #0x00000004	/* Get the address of the SWI */
-	ldr	r4, [r0]		/* Get the instruction */
-
-	bic	r1, r4, #0xff000000	/* Extract the comment field */
-
 	mov	r0, sp			/* Pass the frame to any function */
 
-	bl	_C_LABEL(syscall)	/* It's a syscall ! */
+	bl	_C_LABEL(swi_handler)	/* It's a SWI ! */
 
 	ldr	r5, Lastpending		/* Get address of astpending */
 	mrs     r4, cpsr_all		/* Get CPSR */

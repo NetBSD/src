@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.6.2.4 2002/01/11 23:37:59 nathanw Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.6.2.5 2002/02/28 04:07:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -99,17 +99,11 @@ int kernel_debug = 0;
 
 struct user *proc0paddr;
 
+/* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
 
 
 /* Prototypes */
-
-void map_section	__P((vaddr_t pt, vaddr_t va, paddr_t pa,
-			     int cacheable));
-void map_pagetable	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-void map_entry		__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-void map_entry_nc	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
-void map_entry_ro	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
 
 u_long strtoul			__P((const char *s, char **ptr, int base));
 void data_abort_handler		__P((trapframe_t *frame));
@@ -155,152 +149,6 @@ bootsync(void)
 
 	vfs_shutdown();
 }
-
-/*
- * A few functions that are used to help construct the page tables
- * during the bootstrap process.
- */
-
-void
-map_section(pagetable, va, pa, cacheable)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-	int cacheable;
-{
-#ifdef	DIAGNOSTIC
-	if (((va | pa) & (L1_SEC_SIZE - 1)) != 0)
-		panic("initarm: Cannot allocate 1MB section on non 1MB boundry\n");
-#endif	/* DIAGNOSTIC */
-
-	if (cacheable)
-		((u_int *)pagetable)[(va >> PDSHIFT)] =
-		    L1_SEC((pa & PD_MASK), pte_cache_mode);
-	else
-		((u_int *)pagetable)[(va >> PDSHIFT)] =
-		    L1_SEC((pa & PD_MASK), 0);
-}
-
-
-void
-map_pagetable(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-#ifdef	DIAGNOSTIC
-	if ((pa & 0xc00) != 0)
-		panic("pagetables should be group allocated on pageboundry");
-#endif	/* DIAGNOSTIC */
-
-	((u_int *)pagetable)[(va >> PDSHIFT) + 0] =
-	     L1_PTE((pa & PG_FRAME) + 0x000);
-	((u_int *)pagetable)[(va >> PDSHIFT) + 1] =
-	     L1_PTE((pa & PG_FRAME) + 0x400);
-	((u_int *)pagetable)[(va >> PDSHIFT) + 2] =
-	     L1_PTE((pa & PG_FRAME) + 0x800);
-	((u_int *)pagetable)[(va >> PDSHIFT) + 3] =
-	     L1_PTE((pa & PG_FRAME) + 0xc00);
-}
-
-vsize_t
-map_chunk(pd, pt, va, pa, size, acc, flg)
-	vaddr_t pd;
-	vaddr_t pt;
-	vaddr_t va;
-	paddr_t pa;
-	vsize_t size;
-	u_int acc;
-	u_int flg;
-{
-	pd_entry_t *l1pt = (pd_entry_t *)pd;
-	pt_entry_t *l2pt = (pt_entry_t *)pt;
-	vsize_t remain;
-	u_int loop;
-
-	remain = (size + (NBPG - 1)) & ~(NBPG - 1);
-#ifdef VERBOSE_INIT_ARM
-	printf("map_chunk: pa=%lx va=%lx sz=%lx rem=%lx acc=%x flg=%x\n",
-	    pa, va, size, remain, acc, flg);
-	printf("map_chunk: ");
-#endif
-	size = remain;
-
-	while (remain > 0) {
-		/* Can we do a section mapping ? */
-		if (l1pt && !((pa | va) & (L1_SEC_SIZE - 1))
-		    && remain >= L1_SEC_SIZE) {
-#ifdef VERBOSE_INIT_ARM
-			printf("S");
-#endif
-			l1pt[(va >> PDSHIFT)] = L1_SECPTE(pa, acc, flg);
-			va += L1_SEC_SIZE;
-			pa += L1_SEC_SIZE;
-			remain -= L1_SEC_SIZE;
-		} else
-		/* Can we do a large page mapping ? */
-		if (!((pa | va) & (L2_LPAGE_SIZE - 1))
-		    && (remain >= L2_LPAGE_SIZE)) {
-#ifdef VERBOSE_INIT_ARM
-			printf("L");
-#endif
-			for (loop = 0; loop < 16; ++loop)
-				l2pt[((va >> PGSHIFT) & 0x3f0) + loop] =
-				    L2_LPTE(pa, acc, flg);
-			va += L2_LPAGE_SIZE;
-			pa += L2_LPAGE_SIZE;
-			remain -= L2_LPAGE_SIZE;
-		} else
-		/* All we can do is a small page mapping */
-		{
-#ifdef VERBOSE_INIT_ARM
-			printf("P");
-#endif
-			l2pt[((va >> PGSHIFT) & 0x3ff)] = L2_SPTE(pa, acc, flg);
-			va += NBPG;
-			pa += NBPG;
-			remain -= NBPG;
-		}
-	}
-#ifdef VERBOSE_INIT_ARM
-	printf("\n");
-#endif
-	return(size);
-}
-
-
-void
-map_entry(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KRW);
-}
-
-
-void
-map_entry_nc(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
-}
-
-
-void
-map_entry_ro(pagetable, va, pa)
-	vaddr_t pagetable;
-	vaddr_t va;
-	paddr_t pa;
-{
-	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KR);
-}
-
 
 /*
  * void cpu_startup(void)

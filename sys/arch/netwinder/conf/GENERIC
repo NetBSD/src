@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8.6.2 2002/01/08 00:26:39 nathanw Exp $
+# $NetBSD: GENERIC,v 1.8.6.3 2002/02/28 04:11:12 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -132,6 +132,7 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 
@@ -198,7 +199,7 @@ tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 options 	TLP_MATCH_21142
 
 # MII/PHY support
-icsphy*		at mii? phy ?			# ISC-890 PHYs
+icsphy*		at mii? phy ?			# ISC-189x PHYs
 ukphy*		at mii? phy ?			# generic unknown PHYs
 
 # WSCONS Support

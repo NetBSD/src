@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.31.4.3 2002/01/11 23:38:26 nathanw Exp $	*/
+/*	$NetBSD: vr.c,v 1.31.4.4 2002/02/28 04:10:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -53,16 +53,14 @@
 
 #include <dev/hpc/hpckbdvar.h>
 
-#include <hpcmips/hpcmips/machdep.h>	/* cpu_name, mem_cluster */
-
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vr_asm.h>
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
 
-#include "vrip.h"
-#if NVRIP > 0
+#include "vrip_common.h"
+#if NVRIP_COMMON > 0
 #include <hpcmips/vr/vripvar.h>
 #endif
 
@@ -200,13 +198,55 @@ static struct vr_com_platdep {
 	},
 #endif
 #if NCOM_VRIP > 0
+#ifdef VR4102
+	{
+		&platid_mask_CPU_MIPS_VR_4102,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4102_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4102 */
+#ifdef VR4111
+	{
+		&platid_mask_CPU_MIPS_VR_4111,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4102_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4111 */
+#ifdef VR4121
+	{
+		&platid_mask_CPU_MIPS_VR_4121,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4102_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4121 */
+#ifdef VR4122
+	{
+		&platid_mask_CPU_MIPS_VR_4122,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4122_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4122 */
+#ifdef VR4131
+	{
+		&platid_mask_CPU_MIPS_VR_4122,
+		com_vrip_cndb_attach,	/* attach proc */
+		VR4122_SIU_ADDR,	/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#endif /* VR4131 */
+#ifdef SINGLE_VRIP_BASE
 	{
 		&platid_wild,
 		com_vrip_cndb_attach,	/* attach proc */
 		VRIP_SIU_ADDR,		/* base address */
 		VRCOM_FREQ,		/* frequency */
 	},
-#else
+#endif /* SINGLE_VRIP_BASE */
+#else /* NCOM_VRIP > 0 */
 	/* dummy */
 	{
 		&platid_wild,
@@ -214,9 +254,46 @@ static struct vr_com_platdep {
 		0,			/* base address */
 		0,			/* frequency */
 	},
-#endif
+#endif /* NCOM_VRIP > 0 */
 };
 #endif /* NCOM > 0 */
+
+#if NVRKIU > 0
+/*
+ * machine dependent keyboard info
+ */
+static struct vr_kiu_platdep {
+	platid_mask_t *platidmask;
+	int addr;
+} platdep_kiu_table[] = {
+#ifdef VR4102
+	{
+		&platid_mask_CPU_MIPS_VR_4102,
+		VR4102_KIU_ADDR,	/* base address */
+	},
+#endif /* VR4102 */
+#ifdef VR4111
+	{
+		&platid_mask_CPU_MIPS_VR_4111,
+		VR4102_KIU_ADDR,	/* base address */
+	},
+#endif /* VR4111 */
+#ifdef VR4121
+	{
+		&platid_mask_CPU_MIPS_VR_4121,
+		VR4102_KIU_ADDR,	/* base address */
+	},
+#endif /* VR4121 */
+	{
+		&platid_wild,
+#ifdef SINGLE_VRIP_BASE
+		VRIP_KIU_ADDR,		/* base address */
+#else
+		VRIP_NO_ADDR,		/* base address */
+#endif /* SINGLE_VRIP_BASE */
+	},
+};
+#endif /* NVRKIU > 0 */
 
 void
 vr_init()
@@ -341,6 +418,9 @@ vr_cons_init()
 #if NCOM > 0
 	static struct vr_com_platdep *com_info;
 #endif
+#if NVRKIU > 0
+	static struct vr_kiu_platdep *kiu_info;
+#endif
 
 #if NCOM > 0
 	com_info = platid_search(&platid, platdep_com_table,
@@ -379,14 +459,19 @@ vr_cons_init()
  find_keyboard:
 #endif /* NHPCFB > 0 */
 
-#if NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR
-	if (vrkiu_cnattach(iot, VRIP_KIU_ADDR)) {
-		printf("%s(%d): can't init vrkiu as console",
-		       __FILE__, __LINE__);
-	} else {
-		return;
+#if NVRKIU > 0
+	kiu_info = platid_search(&platid, platdep_kiu_table,
+	    sizeof(platdep_kiu_table)/sizeof(*platdep_kiu_table),
+	    sizeof(*platdep_kiu_table));
+	if (kiu_info->addr != VRIP_NO_ADDR) {
+		if (vrkiu_cnattach(iot, kiu_info->addr)) {
+			printf("%s(%d): can't init vrkiu as console",
+			    __FILE__, __LINE__);
+		} else {
+			return;
+		}
 	}
-#endif /* NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR */
+#endif /* NVRKIU > 0 */
 }
 
 void
@@ -411,7 +496,7 @@ vr_reboot(int howto, char *bootstr)
 	 * halt
 	 */
 	if (howto & RB_HALT) {
-#if NVRIP > 0
+#if NVRIP_COMMON > 0
 		_spllower(~MIPS_INT_MASK_0);
 		vrip_intr_suspend();
 #else
@@ -425,7 +510,7 @@ vr_reboot(int howto, char *bootstr)
 		__asm("nop");
 		__asm("nop");
 		__asm(".set reorder");
-#if NVRIP > 0
+#if NVRIP_COMMON > 0
 		vrip_intr_resume();
 #endif
 	}

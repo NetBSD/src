@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.2.6.4 2001/10/22 20:41:13 nathanw Exp $ */
+/*	$NetBSD: linux_types.h,v 1.2.6.5 2002/02/28 04:12:53 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -155,7 +155,8 @@ struct stat32 {
 struct linux_stat64 {
 	unsigned long	lst_dev;   
 	unsigned long	lst_pad0[3];
-	linux_ino_t	lst_ino;
+	unsigned long long lst_ino;
+#define lst_ino64 lst_ino
 	linux_mode_t	lst_mode;
 	linux_nlink_t	lst_nlink;
 	linux_uid_t	lst_uid;

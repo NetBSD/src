@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.1.2.2 2002/01/08 00:27:34 nathanw Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.1.2.3 2002/02/28 04:12:01 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@
 
 #include <dev/pci/pcireg.h>	/* XXX: for PCI_INTERRUPT_PIN */
 
-#include <sparc/dev/ebusreg.h>
-#include <sparc/dev/ebusvar.h>
+#include <dev/ebus/ebusreg.h>
+#include <dev/ebus/ebusvar.h>
 
 #include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
@@ -81,11 +81,8 @@ com_ebus_match(parent, cf, aux)
 		return (0);
 
 	match = 0;
-	if (ebus_bus_map(ea->ea_bustag,
-			 EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
-			 ea->ea_reg[0].size,
-			 BUS_SPACE_MAP_LINEAR, 0,
-			 &ioh) == 0)
+	if (ebus_bus_map(ea->ea_bustag, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
+			 ea->ea_reg[0].size, 0, 0, &ioh) == 0)
 	{
 		match = comprobe1(ea->ea_bustag, ioh);
 		bus_space_unmap(ea->ea_bustag, ioh, ea->ea_reg[0].size);

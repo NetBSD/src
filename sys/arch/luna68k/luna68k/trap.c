@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.18.4.3 2001/11/25 10:36:02 scw Exp $ */
+/* $NetBSD: trap.c,v 1.18.4.4 2002/02/28 04:10:33 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18.4.3 2001/11/25 10:36:02 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18.4.4 2002/02/28 04:10:33 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -532,7 +532,7 @@ trap(type, code, v, frame)
 			map = vm ? &vm->vm_map : kernel_map;
 
 		if (WRFAULT(code))
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 

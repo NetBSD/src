@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2000/07/19 00:58:24 matt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.15.8.1 2002/02/28 04:12:26 nathanw Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -216,9 +216,9 @@ asm("
 " EIDSPTCH ":
 
 " CMN_IDSPTCH ":
-	movl	(sp)+,r0
-	pushl	4(r0)
-	calls	$1,*(r0)
+	movl	(%sp)+,%r0
+	pushl	4(%r0)
+	calls	$1,*(%r0)
 	popr	$0x3f
 	rei
 ");

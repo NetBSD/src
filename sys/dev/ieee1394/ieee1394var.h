@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.4.2.2 2001/08/24 00:09:42 nathanw Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.4.2.3 2002/02/28 04:13:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,11 +50,12 @@ struct ieee1394_abuf {
 	struct ieee1394_softc *ab_req;		/* requestor */
 	struct ieee1394_softc *ab_resp;		/* response */
 	u_int32_t *ab_data;
-	u_int64_t ab_csr;
+	struct uio *ab_uio;
+	u_int64_t ab_addr;
 	u_int8_t ab_tcode;
 	u_int8_t ab_tlabel;
-	u_int16_t ab_length; 
-	u_int16_t ab_retlen;			/* length returned from read. */
+	u_int32_t ab_length; 
+	u_int32_t ab_retlen;			/* length returned from read. */
 	u_int32_t ab_retries;
 	void (*ab_cb)(struct ieee1394_abuf *, int);
 	void *ab_cbarg;
@@ -75,6 +76,7 @@ struct ieee1394_attach_args {
 	int (*read)(struct ieee1394_abuf *);
 	int (*write)(struct ieee1394_abuf *);
 	int (*inreg)(struct ieee1394_abuf *, int);
+	int (*unreg)(struct ieee1394_abuf *, int);
 };    
 
 struct ieee1394_softc {

@@ -9,3 +9,6 @@
 #define CONFIG_HOOK_DEFINE_NICKNAME
 #include <machine/config_hook.h>
 #undef CONFIG_HOOK_DEFINE_NICKNAME
+#define VRIPUNIT_DEFINE_UNIT_NICKNAME
+#include <hpcmips/vr/vripunit.h>
+#undef VRIPUNIT_DEFINE_UNIT_NICKNAME

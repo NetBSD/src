@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.5 1996/10/11 21:12:43 mhitch Exp $	*/
+/*	$NetBSD: event.c,v 1.5.46.1 2002/02/28 04:06:36 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,9 @@
  * Header: event.c,v 1.5 92/11/26 01:10:44 torek Exp  (LBL)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.5.46.1 2002/02/28 04:06:36 nathanw Exp $");
+
 /*
  * Internal `Firm_event' interface for the keyboard and mouse drivers.
  */
@@ -66,8 +69,7 @@
  * Initialize a firm_event queue.
  */
 void
-ev_init(ev)
-	register struct evvar *ev;
+ev_init(register struct evvar *ev)
 {
 
 	ev->ev_get = ev->ev_put = 0;
@@ -80,8 +82,7 @@ ev_init(ev)
  * Tear down a firm_event queue.
  */
 void
-ev_fini(ev)
-	register struct evvar *ev;
+ev_fini(register struct evvar *ev)
 {
 
 	free(ev->ev_q, M_DEVBUF);
@@ -92,10 +93,7 @@ ev_fini(ev)
  * (User cannot write an event queue.)
  */
 int
-ev_read(ev, uio, flags)
-	register struct evvar *ev;
-	struct uio *uio;
-	int flags;
+ev_read(register struct evvar *ev, struct uio *uio, int flags)
 {
 	int s, n, cnt, error;
 
@@ -149,10 +147,7 @@ ev_read(ev, uio, flags)
 }
 
 int
-ev_poll(ev, events, p)
-	register struct evvar *ev;
-	int events;
-	struct proc *p;
+ev_poll(register struct evvar *ev, int events, struct proc *p)
 {
 	int s = splev();
 	int revents = 0;

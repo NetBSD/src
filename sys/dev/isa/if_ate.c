@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.24.4.5 2002/01/11 23:39:06 nathanw Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.24.4.6 2002/02/28 04:13:41 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.24.4.5 2002/01/11 23:39:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.24.4.6 2002/02/28 04:13:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

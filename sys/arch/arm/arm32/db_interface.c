@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8.2.4 2002/01/11 23:38:00 nathanw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8.2.5 2002/02/28 04:07:21 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -62,10 +62,7 @@ int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
 int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
 u_int db_fetch_reg __P((int, db_regs_t *));
 
-static int db_validate_address __P((vm_offset_t));
-static void db_write_text __P((unsigned char *, int));
-int db_trapper __P((u_int, u_int, trapframe_t	*, int));
-
+int db_trapper __P((u_int, u_int, trapframe_t *, int));
 
 const struct db_variable db_regs[] = {
 	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
@@ -98,31 +95,28 @@ extern label_t	*db_recover;
 
 int	db_active = 0;
 
-int db_access_und_sp(vp, valp, rw)
-	const struct db_variable *vp;
-	db_expr_t *valp;
-	int rw;
+int
+db_access_und_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
+
 	if (rw == DB_VAR_GET)
 		*valp = get_stackptr(PSR_UND32_MODE);
 	return(0);
 }
 
-int db_access_abt_sp(vp, valp, rw)
-	const struct db_variable *vp;
-	db_expr_t *valp;
-	int rw;
+int
+db_access_abt_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
+
 	if (rw == DB_VAR_GET)
 		*valp = get_stackptr(PSR_ABT32_MODE);
 	return(0);
 }
 
-int db_access_irq_sp(vp, valp, rw)
-	const struct db_variable *vp;
-	db_expr_t *valp;
-	int rw;
+int
+db_access_irq_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
+
 	if (rw == DB_VAR_GET)
 		*valp = get_stackptr(PSR_IRQ32_MODE);
 	return(0);
@@ -132,9 +126,7 @@ int db_access_irq_sp(vp, valp, rw)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, regs)
-	int type;
-	db_regs_t *regs;
+kdb_trap(int type, db_regs_t *regs)
 {
 	int s;
 
@@ -169,37 +161,17 @@ kdb_trap(type, regs)
 
 
 static int
-db_validate_address(addr)
-	vm_offset_t addr;
+db_validate_address(vaddr_t addr)
 {
-	pt_entry_t *ptep;
-	pd_entry_t *pdep;
 	struct proc *p = curproc == NULL ? NULL : curproc->l_proc;
+	struct pmap *pmap;
 
-	/*
-	 * If we have a valid pmap for curproc, use it's page directory
-	 * otherwise use the kernel pmap's page directory.
-	 */
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap)
-		pdep = pmap_kernel()->pm_pdir;
+		pmap = pmap_kernel();
 	else
-		pdep = p->p_vmspace->vm_map.pmap->pm_pdir;
+		pmap = p->p_vmspace->vm_map.pmap;
 
-	/* Make sure the address we are reading is valid */
-	switch ((pdep[(addr >> 20) + 0] & L1_MASK)) {
-	case L1_SECTION:
-		break;
-	case L1_PAGE:
-		/* Check the L2 page table for validity */
-		ptep = vtopte(addr);
-		if ((*ptep & L2_MASK) != L2_INVAL)
-			break;
-		/* FALLTHROUGH */
-	default:
-		return 1;
-	}
-
-	return 0;
+	return (pmap_extract(pmap, addr, NULL) == FALSE);
 }
 
 /*
@@ -214,7 +186,8 @@ db_read_bytes(addr, size, data)
 	char	*src;
 
 	src = (char *)addr;
-	while (--size >= 0) {
+
+	while (size-- > 0) {
 		if (db_validate_address((u_int)src)) {
 			db_printf("address %p is invalid\n", src);
 			return;
@@ -224,70 +197,117 @@ db_read_bytes(addr, size, data)
 }
 
 static void
-db_write_text(dst, ch)
-	unsigned char *dst;
-	int ch;
+db_write_text(vaddr_t addr, size_t size, char *data)
 {        
-	pt_entry_t *ptep, pteo;
-	vm_offset_t va;
+	struct pmap *pmap = pmap_kernel();
+	pd_entry_t *pde, oldpde, tmppde;
+	pt_entry_t *pte, oldpte, tmppte;
+	vaddr_t pgva;
+	size_t limit, savesize;
+	char *dst;
 
-	va = (unsigned long)dst & (~PGOFSET);
-	ptep = vtopte(va);
-
-	if (db_validate_address((u_int)dst)) {
-		db_printf(" address %p not a valid page\n", dst);
+	if ((savesize = size) == 0)
 		return;
-	}
 
-	pteo = *ptep;
-	*ptep = pteo | PT_AP(AP_KRW);
-	cpu_tlb_flushD_SE(va);
+	dst = (char *) addr;
 
-	*dst = (unsigned char)ch;
+	do {
+		/* Get the PDE of the current VA. */
+		pde = pmap_pde(pmap, (vaddr_t) dst);
+		switch ((oldpde = *pde) & L1_MASK) {
+		case L1_SECTION:
+			pgva = (vaddr_t)dst & ~(L1_SEC_SIZE - 1);
+			limit = L1_SEC_SIZE -
+			    ((vaddr_t)dst & (L1_SEC_SIZE - 1));
 
-	/* make sure the caches and memory are in sync */
-	cpu_cache_syncI_rng((u_int)dst, 4);
+			tmppde = oldpde | (AP_KRW << AP_SECTION_SHIFT);
+			*pde = tmppde;
+			break;
 
-	*ptep = pteo;
-	cpu_tlb_flushD_SE(va);
+		case L1_PAGE:
+			pgva = (vaddr_t)dst & ~PGOFSET;
+			limit = NBPG - ((vaddr_t)dst & PGOFSET);
+
+			pte = vtopte(pgva);
+			oldpte = *pte;
+			tmppte = oldpte | PT_AP(AP_KRW);
+			*pte = tmppte;
+			break;
+
+		default:
+			printf(" address 0x%08lx not a valid page\n",
+			    (vaddr_t) dst);
+			return;
+		}
+		cpu_tlb_flushD_SE(pgva);
+		cpu_cpwait();
+
+		if (limit > size)
+			limit = size;
+		size -= limit;
+
+		/*
+		 * Page is now writable.  Do as much access as we
+		 * can in this page.
+		 */
+		for (; limit > 0; limit--)
+			*dst++ = *data++;
+
+		/*
+		 * Restore old mapping permissions.
+		 */
+		switch (oldpde & L1_MASK) {
+		case L1_SECTION:
+			*pde = oldpde;
+			break;
+
+		case L1_PAGE:
+			*pte = oldpte;
+			break;
+		}
+		cpu_tlb_flushD_SE(pgva);
+		cpu_cpwait();
+	} while (size != 0);
+
+	/* Sync the I-cache. */
+	cpu_icache_sync_range(addr, savesize);
 }
 
 /*
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	size_t	size;
-	char	*data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
-	extern char	etext[];
-	char	*dst;
-	int	loop;
+	extern char etext[];
+	char *dst;
+	size_t loop;
+
+	/* If any part is in kernel text, use db_write_text() */
+	if (addr >= KERNEL_TEXT_BASE && addr < (vaddr_t) etext) {
+		db_write_text(addr, size, data);
+		return;
+	}
 
 	dst = (char *)addr;
 	loop = size;
-	while (--loop >= 0) {
-		if ((dst >= (char *)KERNEL_TEXT_BASE) && (dst < etext))
-			db_write_text(dst, *data);
-		else {
-			if (db_validate_address((u_int)dst)) {
-				db_printf("address %p is invalid\n", dst);
-				return;
-			}
-			*dst = *data;
+	while (loop-- > 0) {
+		if (db_validate_address((u_int)dst)) {
+			db_printf("address %p is invalid\n", dst);
+			return;
 		}
-		dst++, data++;
+		*dst++ = *data++;
 	}
 	/* make sure the caches and memory are in sync */
-	cpu_cache_syncI_rng(addr, size);
+	cpu_icache_sync_range(addr, size);
 
 	/* In case the current page tables have been modified ... */
 	cpu_tlb_flushID();
+	cpu_cpwait();
 }
 
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 	asm(".word	0xe7ffffff");
 }
@@ -302,12 +322,9 @@ const struct db_command db_machine_command_table[] = {
 };
 
 int
-db_trapper(addr, inst, frame, fault_code)
-	u_int		addr;
-	u_int		inst;
-	trapframe_t	*frame;
-	int		fault_code;
+db_trapper(u_int addr, u_int inst, trapframe_t *frame, int fault_code)
 {
+
 	if (fault_code == 0) {
 		if ((inst & ~INSN_COND_MASK) == (BKPT_INST & ~INSN_COND_MASK))
 			kdb_trap(T_BREAKPOINT, frame);
@@ -324,7 +341,7 @@ extern u_int end;
 static struct undefined_handler db_uh;
 
 void
-db_machine_init()
+db_machine_init(void)
 {
 #ifndef __ELF__
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
@@ -359,9 +376,7 @@ db_machine_init()
 }
 
 u_int
-db_fetch_reg(reg, db_regs)
-	int reg;
-	db_regs_t *db_regs;
+db_fetch_reg(int reg, db_regs_t *db_regs)
 {
 
 	switch (reg) {
@@ -403,10 +418,7 @@ db_fetch_reg(reg, db_regs)
 }
 
 u_int
-branch_taken(insn, pc, db_regs)
-	u_int insn;
-	u_int pc;
-	db_regs_t *db_regs;
+branch_taken(u_int insn, u_int pc, db_regs_t *db_regs)
 {
 	u_int addr, nregs;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.12.2.3 2002/01/08 00:33:42 nathanw Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.12.2.4 2002/02/28 04:14:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.12.2.3 2002/01/08 00:33:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.12.2.4 2002/02/28 04:14:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ procfs_doregs(curp, l, pfs, uio)
 	int kl;
 
 	if ((error = procfs_checkioperm(curp, l->l_proc)) != 0)
-		return (EPERM);
+		return error;
 
 	kl = sizeof(r);
 	kv = (char *) &r;

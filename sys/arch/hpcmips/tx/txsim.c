@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.5.8.2 2002/01/11 23:38:25 nathanw Exp $ */
+/*	$NetBSD: txsim.c,v 1.5.8.3 2002/02/28 04:10:03 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 /*
  * TX System Internal Module.
  */
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

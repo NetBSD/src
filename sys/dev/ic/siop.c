@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.40.2.5 2001/11/14 19:14:36 nathanw Exp $	*/
+/*	$NetBSD: siop.c,v 1.40.2.6 2002/02/28 04:13:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.40.2.5 2001/11/14 19:14:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.40.2.6 2002/02/28 04:13:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1244,7 +1244,8 @@ siop_scsipi_request(chan, req, arg)
 		}
 		if (sc->targets[target]->siop_lun[lun] == NULL) {
 			sc->targets[target]->siop_lun[lun] =
-			    malloc(sizeof(struct siop_lun), M_DEVBUF, M_NOWAIT);
+			    malloc(sizeof(struct siop_lun), M_DEVBUF,
+			    M_NOWAIT|M_ZERO);
 			if (sc->targets[target]->siop_lun[lun] == NULL) {
 				printf("%s: can't alloc siop_lun for "
 				    "target %d lun %d\n",
@@ -1254,8 +1255,6 @@ siop_scsipi_request(chan, req, arg)
 				splx(s);
 				return;
 			}
-			memset(sc->targets[target]->siop_lun[lun], 0,
-			    sizeof(struct siop_lun));
 		}
 		siop_cmd->siop_target = sc->targets[target];
 		siop_cmd->xs = xs;
@@ -1534,23 +1533,21 @@ siop_morecbd(sc)
 	u_int32_t *scr;
 
 	/* allocate a new list head */
-	newcbd = malloc(sizeof(struct siop_cbd), M_DEVBUF, M_NOWAIT);
+	newcbd = malloc(sizeof(struct siop_cbd), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (newcbd == NULL) {
 		printf("%s: can't allocate memory for command descriptors "
 		    "head\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	memset(newcbd, 0, sizeof(struct siop_cbd));
 
 	/* allocate cmd list */
-	newcbd->cmds =
-	    malloc(sizeof(struct siop_cmd) * SIOP_NCMDPB, M_DEVBUF, M_NOWAIT);
+	newcbd->cmds = malloc(sizeof(struct siop_cmd) * SIOP_NCMDPB,
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (newcbd->cmds == NULL) {
 		printf("%s: can't allocate memory for command descriptors\n",
 		    sc->sc_dev.dv_xname);
 		goto bad3;
 	}
-	memset(newcbd->cmds, 0, sizeof(struct siop_cmd) * SIOP_NCMDPB);
 	error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0, &seg,
 	    1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
@@ -1692,10 +1689,9 @@ siop_get_lunsw(sc)
 		TAILQ_REMOVE(&sc->lunsw_list, lunsw, next);
 		return lunsw;
 	}
-	lunsw = malloc(sizeof(struct siop_lunsw), M_DEVBUF, M_NOWAIT);
+	lunsw = malloc(sizeof(struct siop_lunsw), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (lunsw == NULL)
 		return NULL;
-	memset(lunsw, 0, sizeof(struct siop_lunsw));
 #ifdef SIOP_DEBUG
 	printf("allocating lunsw at offset %d\n", sc->script_free_lo);
 #endif

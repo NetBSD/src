@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.89.2.5 2002/01/11 23:39:51 nathanw Exp $	*/
+/*	$NetBSD: vnode.h,v 1.89.2.6 2002/02/28 04:15:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

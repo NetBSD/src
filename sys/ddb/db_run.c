@@ -1,27 +1,27 @@
-/*	$NetBSD: db_run.c,v 1.20.6.1 2001/11/14 19:13:39 nathanw Exp $	*/
+/*	$NetBSD: db_run.c,v 1.20.6.2 2002/02/28 04:13:08 nathanw Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1993-1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.20.6.1 2001/11/14 19:13:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.20.6.2 2002/02/28 04:13:08 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -47,9 +47,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.20.6.1 2001/11/14 19:13:39 nathanw Exp 
 #include <ddb/db_access.h>
 #include <ddb/db_break.h>
 
+int	db_inst_count;
+int	db_load_count;
+int	db_store_count;
+
 #ifdef	SOFTWARE_SSTEP
-static void	db_set_temp_breakpoint __P((db_breakpoint_t, db_addr_t));
-static void	db_delete_temp_breakpoint __P((db_breakpoint_t));
+static void	db_set_temp_breakpoint(db_breakpoint_t, db_addr_t);
+static void	db_delete_temp_breakpoint(db_breakpoint_t);
 static struct	db_breakpoint	db_not_taken_bkpt;
 static struct	db_breakpoint	db_taken_bkpt;
 #endif
@@ -61,7 +65,7 @@ static struct	db_breakpoint	db_taken_bkpt;
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-int	db_run_mode;
+static int	db_run_mode;
 #define	STEP_NONE	0
 #define	STEP_ONCE	1
 #define	STEP_RETURN	2
@@ -70,14 +74,12 @@ int	db_run_mode;
 #define STEP_INVISIBLE	5
 #define	STEP_COUNT	6
 
-boolean_t	db_sstep_print;
-int		db_loop_count;
-int		db_call_depth;
+static boolean_t	db_sstep_print;
+static int		db_loop_count;
+static int		db_call_depth;
 
 boolean_t
-db_stop_at_pc(regs, is_breakpoint)
-	db_regs_t *regs;
-	boolean_t	*is_breakpoint;
+db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
 {
 	db_addr_t	pc;
 	db_breakpoint_t bkpt;
@@ -113,11 +115,11 @@ db_stop_at_pc(regs, is_breakpoint)
 	 */
 	bkpt = db_find_breakpoint_here(pc);
 	if (bkpt) {
-	    if (--bkpt->count == 0) {
-		bkpt->count = bkpt->init_count;
-		*is_breakpoint = TRUE;
-		return (TRUE);	/* stop here */
-	    }
+		if (--bkpt->count == 0) {
+			bkpt->count = bkpt->init_count;
+			*is_breakpoint = TRUE;
+			return (TRUE);	/* stop here */
+		}
 	} else if (*is_breakpoint) {
 #ifdef PC_ADVANCE
 		PC_ADVANCE(regs);
@@ -125,149 +127,140 @@ db_stop_at_pc(regs, is_breakpoint)
 		PC_REGS(regs) += BKPT_SIZE;
 #endif
 	}
-		
+
 	*is_breakpoint = FALSE;
 
 	if (db_run_mode == STEP_INVISIBLE) {
-	    db_run_mode = STEP_CONTINUE;
-	    return (FALSE);	/* continue */
+		db_run_mode = STEP_CONTINUE;
+		return (FALSE);	/* continue */
 	}
 	if (db_run_mode == STEP_COUNT) {
-	    return (FALSE); /* continue */
+		return (FALSE); /* continue */
 	}
 	if (db_run_mode == STEP_ONCE) {
-	    if (--db_loop_count > 0) {
-		if (db_sstep_print) {
-		    db_printf("\t\t");
-		    db_print_loc_and_inst(pc);
-		    db_printf("\n");
+		if (--db_loop_count > 0) {
+			if (db_sstep_print) {
+				db_printf("\t\t");
+				db_print_loc_and_inst(pc);
+				db_printf("\n");
+			}
+			return (FALSE);	/* continue */
 		}
-		return (FALSE);	/* continue */
-	    }
 	}
 	if (db_run_mode == STEP_RETURN) {
-	    db_expr_t ins = db_get_value(pc, sizeof(int), FALSE);
+		db_expr_t ins = db_get_value(pc, sizeof(int), FALSE);
 
-	    /* continue until matching return */
+		/* continue until matching return */
 
-	    if (!inst_trap_return(ins) &&
-		(!inst_return(ins) || --db_call_depth != 0)) {
-		if (db_sstep_print) {
-		    if (inst_call(ins) || inst_return(ins)) {
-			int i;
+		if (!inst_trap_return(ins) &&
+		    (!inst_return(ins) || --db_call_depth != 0)) {
+			if (db_sstep_print) {
+				if (inst_call(ins) || inst_return(ins)) {
+					int i;
 
-			db_printf("[after %6d]     ", db_inst_count);
-			for (i = db_call_depth; --i > 0; )
-			    db_printf("  ");
-			db_print_loc_and_inst(pc);
-			db_printf("\n");
-		    }
+					db_printf("[after %6d]     ",
+					    db_inst_count);
+					for (i = db_call_depth; --i > 0; )
+						db_printf("  ");
+					db_print_loc_and_inst(pc);
+					db_printf("\n");
+				}
+			}
+			if (inst_call(ins))
+				db_call_depth++;
+			return (FALSE);	/* continue */
 		}
-		if (inst_call(ins))
-		    db_call_depth++;
-		return (FALSE);	/* continue */
-	    }
 	}
 	if (db_run_mode == STEP_CALLT) {
-	    db_expr_t ins = db_get_value(pc, sizeof(int), FALSE);
+		db_expr_t ins = db_get_value(pc, sizeof(int), FALSE);
 
-	    /* continue until call or return */
+		/* continue until call or return */
 
-	    if (!inst_call(ins) &&
-		!inst_return(ins) &&
-		!inst_trap_return(ins)) {
-		return (FALSE);	/* continue */
-	    }
+		if (!inst_call(ins) &&
+		    !inst_return(ins) &&
+		    !inst_trap_return(ins)) {
+			return (FALSE);	/* continue */
+		}
 	}
 	db_run_mode = STEP_NONE;
 	return (TRUE);
 }
 
 void
-db_restart_at_pc(regs, watchpt)
-	db_regs_t *regs;
-	boolean_t watchpt;
+db_restart_at_pc(db_regs_t *regs, boolean_t watchpt)
 {
 	db_addr_t pc = PC_REGS(regs);
+#ifdef SOFTWARE_SSTEP
+	db_addr_t brpc;
+#endif
 
 	if ((db_run_mode == STEP_COUNT) ||
 	    (db_run_mode == STEP_RETURN) ||
 	    (db_run_mode == STEP_CALLT)) {
-	    db_expr_t		ins;
+		db_expr_t		ins;
 
-	    /*
-	     * We are about to execute this instruction,
-	     * so count it now.
-	     */
-	    ins = db_get_value(pc, sizeof(int), FALSE);
-	    db_inst_count++;
-	    db_load_count += inst_load(ins);
-	    db_store_count += inst_store(ins);
+		/*
+		 * We are about to execute this instruction,
+		 * so count it now.
+		 */
+		ins = db_get_value(pc, sizeof(int), FALSE);
+		db_inst_count++;
+		db_load_count += inst_load(ins);
+		db_store_count += inst_store(ins);
 
 #ifdef SOFTWARE_SSTEP
-	    /*
-	     * Account for instructions in delay slots.
-	     */
-	    {
-		db_addr_t brpc;
-
+		/*
+		 * Account for instructions in delay slots.
+		 */
 		brpc = next_instr_address(pc, TRUE);
 		if ((brpc != pc) &&
 		    (inst_branch(ins) || inst_call(ins) || inst_return(ins))) {
-		    ins = db_get_value(brpc, sizeof(int), FALSE);
-		    db_inst_count++;
-		    db_load_count += inst_load(ins);
-		    db_store_count += inst_store(ins);
+			ins = db_get_value(brpc, sizeof(int), FALSE);
+			db_inst_count++;
+			db_load_count += inst_load(ins);
+			db_store_count += inst_store(ins);
 		}
-	    }
 #endif
 	}
 
 	if (db_run_mode == STEP_CONTINUE) {
-	    if (watchpt || db_find_breakpoint_here(pc)) {
-		/*
-		 * Step over breakpoint/watchpoint.
-		 */
-		db_run_mode = STEP_INVISIBLE;
-		db_set_single_step(regs);
-	    } else {
-		db_set_breakpoints();
-		db_set_watchpoints();
-	    }
+		if (watchpt || db_find_breakpoint_here(pc)) {
+			/*
+			 * Step over breakpoint/watchpoint.
+			 */
+			db_run_mode = STEP_INVISIBLE;
+			db_set_single_step(regs);
+		} else {
+			db_set_breakpoints();
+			db_set_watchpoints();
+		}
 	} else {
-	    db_set_single_step(regs);
+		db_set_single_step(regs);
 	}
 }
 
 void
-db_single_step(regs)
-	db_regs_t *regs;
+db_single_step(db_regs_t *regs)
 {
+
 	if (db_run_mode == STEP_CONTINUE) {
-	    db_run_mode = STEP_INVISIBLE;
-	    db_set_single_step(regs);
+		db_run_mode = STEP_INVISIBLE;
+		db_set_single_step(regs);
 	}
 }
-
-
-extern int	db_cmd_loop_done;
 
 /* single-step */
 /*ARGSUSED*/
 void
-db_single_step_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_single_step_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	boolean_t	print = FALSE;
+	boolean_t print = FALSE;
 
 	if (count == -1)
-	    count = 1;
+		count = 1;
 
 	if (modif[0] == 'p')
-	    print = TRUE;
+		print = TRUE;
 
 	db_run_mode = STEP_ONCE;
 	db_loop_count = count;
@@ -282,16 +275,13 @@ db_single_step_cmd(addr, have_addr, count, modif)
 /* trace and print until call/return */
 /*ARGSUSED*/
 void
-db_trace_until_call_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_trace_until_call_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif)
 {
-	boolean_t	print = FALSE;
+	boolean_t print = FALSE;
 
 	if (modif[0] == 'p')
-	    print = TRUE;
+		print = TRUE;
 
 	db_run_mode = STEP_CALLT;
 	db_sstep_print = print;
@@ -304,16 +294,13 @@ db_trace_until_call_cmd(addr, have_addr, count, modif)
 
 /*ARGSUSED*/
 void
-db_trace_until_matching_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_trace_until_matching_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif)
 {
-	boolean_t	print = FALSE;
+	boolean_t print = FALSE;
 
 	if (modif[0] == 'p')
-	    print = TRUE;
+		print = TRUE;
 
 	db_run_mode = STEP_RETURN;
 	db_call_depth = 1;
@@ -328,16 +315,13 @@ db_trace_until_matching_cmd(addr, have_addr, count, modif)
 /* continue */
 /*ARGSUSED*/
 void
-db_continue_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
+
 	if (modif[0] == 'c')
-	    db_run_mode = STEP_COUNT;
+		db_run_mode = STEP_COUNT;
 	else
-	    db_run_mode = STEP_CONTINUE;
+		db_run_mode = STEP_CONTINUE;
 	db_inst_count = 0;
 	db_load_count = 0;
 	db_store_count = 0;
@@ -377,7 +361,7 @@ db_continue_cmd(addr, have_addr, count, modif)
  *	If one of these addresses does not already have a breakpoint,
  *	we allocate a breakpoint and save it here.
  *	These breakpoints are deleted on return.
- */			
+ */
 
 #if !defined(DDB)
 /* XXX - don't check for existing breakpoints in KGDB-only case */
@@ -385,8 +369,7 @@ db_continue_cmd(addr, have_addr, count, modif)
 #endif
 
 void
-db_set_single_step(regs)
-	db_regs_t *regs;
+db_set_single_step(db_regs_t *regs)
 {
 	db_addr_t pc = PC_REGS(regs), brpc = pc;
 	boolean_t unconditional;
@@ -439,8 +422,7 @@ db_set_single_step(regs)
 }
 
 void
-db_clear_single_step(regs)
-	db_regs_t *regs;
+db_clear_single_step(db_regs_t *regs)
 {
 
 	if (db_taken_bkpt.address != 0)
@@ -451,9 +433,7 @@ db_clear_single_step(regs)
 }
 
 void
-db_set_temp_breakpoint(bkpt, addr)
-	db_breakpoint_t	bkpt;
-	db_addr_t	addr;
+db_set_temp_breakpoint(db_breakpoint_t bkpt, db_addr_t addr)
 {
 
 	bkpt->map = NULL;
@@ -467,11 +447,10 @@ db_set_temp_breakpoint(bkpt, addr)
 }
 
 void
-db_delete_temp_breakpoint(bkpt)
-	db_breakpoint_t	bkpt;
+db_delete_temp_breakpoint(db_breakpoint_t bkpt)
 {
+
 	db_put_value(bkpt->address, BKPT_SIZE, bkpt->bkpt_inst);
 	bkpt->address = 0;
 }
-
 #endif /* SOFTWARE_SSTEP */

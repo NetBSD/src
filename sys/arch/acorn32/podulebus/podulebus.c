@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.1.4.2 2002/01/08 00:22:47 nathanw Exp $ */
+/* $NetBSD: podulebus.c,v 1.1.4.3 2002/02/28 04:05:58 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -42,6 +42,9 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: podulebus.c,v 1.1.4.3 2002/02/28 04:05:58 nathanw Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
@@ -69,9 +72,13 @@ extern struct bus_space podulebus_bs_tag;
 
 /* Declare prototypes */
 
-void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t, int cacheable));
 u_int poduleread __P((u_int, int));
-
+int podulebusmatch(struct device *, struct cfdata *, void *);
+void podulebusattach(struct device *, struct device *, void *);
+int podulebusprint(void *, const char *);
+int podulebussubmatch(struct device *, struct cfdata *, void *);
+void podulechunkdirectory(podule_t *);
+void podulescan(struct device *);
 
 /*
  * int podulebusmatch(struct device *parent, void *match, void *aux)
@@ -119,23 +126,22 @@ podulebusprint(aux, name)
 
 
 int
-podulebussubmatch(parent, match, aux)
+podulebussubmatch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct podule_attach_args *pa = aux;
 
 	/* Return priority 0 or 1 for wildcarded podule */
 
 	if (cf->cf_loc[PODULEBUSCF_SLOT] == PODULEBUSCF_SLOT_DEFAULT)
-		return((*cf->cf_attach->ca_match)(parent, match, aux));
+		return((*cf->cf_attach->ca_match)(parent, cf, aux));
 
 	/* Return higher priority if we match the specific podule */
 
 	else if (cf->cf_loc[PODULEBUSCF_SLOT] == pa->pa_podule_number)
-		return((*cf->cf_attach->ca_match)(parent, match, aux) * 8);
+		return((*cf->cf_attach->ca_match)(parent, cf, aux) * 8);
 
 	/* Fail */
 	return(0);
@@ -436,8 +442,9 @@ podulebusattach(parent, self, aux)
 
 	/* Map the FAST and SYNC simple podules */
 
-	map_section((vm_offset_t)pmap_kernel()->pm_pdir,
-	    SYNC_PODULE_BASE & 0xfff00000, SYNC_PODULE_HW_BASE & 0xfff00000, 0);
+	pmap_map_section((vm_offset_t)pmap_kernel()->pm_pdir,
+	    SYNC_PODULE_BASE & 0xfff00000, SYNC_PODULE_HW_BASE & 0xfff00000,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	cpu_tlb_flushD();
 
 	/* Now map the EASI space */
@@ -447,8 +454,9 @@ podulebusattach(parent, self, aux)
         
 		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE);
 		    loop1 += L1_SEC_SIZE)
-		map_section((vm_offset_t)pmap_kernel()->pm_pdir, EASI_BASE + loop1,
-		    EASI_HW_BASE + loop1, 0);
+		pmap_map_section((vm_offset_t)pmap_kernel()->pm_pdir,
+		    EASI_BASE + loop1, EASI_HW_BASE + loop1,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	}
 	cpu_tlb_flushD();
 
@@ -612,16 +620,6 @@ podloader_callloader(struct podulebus_attach_args *pa, u_int r0, u_int r1)
 {
 
 	panic("podloader_callloader");
-}
-
-void
-podloader_read_region(struct podulebus_attach_args *pa, u_int src,
-    u_int8_t *dest, size_t length)
-{
-
-	while (length--)
-		*dest++ = podloader_readbyte(pa, src++);
-	podloader_reset(pa);
 }
 
 /* End of podulebus.c */

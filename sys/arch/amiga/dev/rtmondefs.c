@@ -1,4 +1,7 @@
-/*	$NetBSD: rtmondefs.c,v 1.2 1994/10/26 02:04:33 cgd Exp $	*/
+/*	$NetBSD: rtmondefs.c,v 1.2.50.1 2002/02/28 04:06:57 nathanw Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtmondefs.c,v 1.2.50.1 2002/02/28 04:06:57 nathanw Exp $");
 
 static struct MonDef monitor_defs[] = {
   /*       FQ, FLG,   MW,   MH

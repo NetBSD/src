@@ -1,16 +1,13 @@
-/*	$NetBSD: ip_state.h,v 1.17.2.1 2001/04/09 01:58:29 nathanw Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.17.2.2 2002/02/28 04:15:12 nathanw Exp $	*/
 
 /*
- * Copyright (C) 1995-2000 by Darren Reed.
+ * Copyright (C) 1995-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.13.2.2 2000/08/23 11:01:31 darrenr Exp
+ * Id: ip_state.h,v 2.13.2.9 2002/01/01 15:12:12 darrenr Exp
  */
-
 #ifndef _NETINET_IP_STATE_H_
 #define _NETINET_IP_STATE_H_
 
@@ -20,8 +17,12 @@
 # define	SIOCDELST	_IOW(r, 61, struct ipstate *)
 #endif
 
-#define	IPSTATE_SIZE	5737
-#define	IPSTATE_MAX	4013	/* Maximum number of states held */
+#ifndef	IPSTATE_SIZE
+# define	IPSTATE_SIZE	5737
+#endif
+#ifndef	IPSTATE_MAX
+# define	IPSTATE_MAX	4013	/* Maximum number of states held */
+#endif
 
 #define	PAIRS(s1,d1,s2,d2)	((((s1) == (s2)) && ((d1) == (d2))) ||\
 				 (((s1) == (d2)) && ((d1) == (s2))))
@@ -58,11 +59,13 @@ typedef struct ipstate {
 	struct	ipstate	**is_pnext;
 	struct	ipstate	*is_hnext;
 	struct	ipstate	**is_phnext;
+	struct	ipstate	**is_me;
 	u_long	is_age;
+	u_int	is_frage[2];	/* age from filter rule, forward & reverse */
 	u_int	is_pass;
 	U_QUAD_T	is_pkts;
 	U_QUAD_T	is_bytes;
-	void	*is_ifp[2];
+	void	*is_ifp[4];
 	frentry_t	*is_rule;
 	union	i6addr	is_src;
 	union	i6addr	is_dst;
@@ -81,7 +84,7 @@ typedef struct ipstate {
 		tcpstate_t	is_ts;
 		udpstate_t	is_us;
 	} is_ps;
-	char	is_ifname[2][IFNAMSIZ];
+	char	is_ifname[4][IFNAMSIZ];
 #if SOLARIS || defined(__sgi)
 	kmutex_t	is_lock;
 #endif
@@ -104,7 +107,7 @@ typedef struct ipstate {
 #define	is_dport	is_tcp.ts_dport
 #define	is_state	is_tcp.ts_state
 #define	is_ifpin	is_ifp[0]
-#define	is_ifpout	is_ifp[1]
+#define	is_ifpout	is_ifp[2]
 
 #define	TH_OPENING	(TH_SYN|TH_ACK)
 /*
@@ -178,12 +181,15 @@ extern	u_long	fr_tcptimeout;
 extern	u_long	fr_tcpclosed;
 extern	u_long	fr_tcphalfclosed;
 extern	u_long	fr_udptimeout;
+extern	u_long	fr_udpacktimeout;
 extern	u_long	fr_icmptimeout;
+extern	u_long	fr_icmpacktimeout;
+extern	ipstate_t	*ips_list;
 extern	int	fr_state_lock;
 extern	int	fr_stateinit __P((void));
 extern	int	fr_tcpstate __P((ipstate_t *, fr_info_t *, ip_t *, tcphdr_t *));
-extern	ipstate_t	*fr_addstate __P((ip_t *, fr_info_t *, u_int));
-extern	frentry_t	*fr_checkstate __P((ip_t *, fr_info_t *));
+extern	ipstate_t *fr_addstate __P((ip_t *, fr_info_t *, ipstate_t **, u_int));
+extern	frentry_t *fr_checkstate __P((ip_t *, fr_info_t *));
 extern	void	ip_statesync __P((void *));
 extern	void	fr_timeoutstate __P((void));
 extern	void	fr_tcp_age __P((u_long *, u_char *, fr_info_t *, int));

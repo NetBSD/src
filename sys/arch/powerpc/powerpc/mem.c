@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12.4.3 2002/01/08 00:27:12 nathanw Exp $ */
+/*	$NetBSD: mem.c,v 1.12.4.4 2002/02/28 04:11:27 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,29 +52,26 @@
 #include <sys/lwp.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
-/* These should be defined in a header somewhere */
-int mmopen __P((dev_t, int, int));
-int mmclose __P((dev_t, int, int));
-int mmrw __P((dev_t, struct uio *, int));
-paddr_t mmmmap __P((dev_t, off_t, int));
-
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 	return 0;
 }
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return 0;
@@ -104,28 +101,24 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
-		case 0:
+		case DEV_MEM:
 			v = uio->uio_offset;
 			c = uio->uio_resid;
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-/* minor device 1 is kernel memory */
-		case 1:
+		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 
-/* minor device 2 is EOF/RATHOLE */
-		case 2:
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
-		case 12:
+		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
 				return (0);
@@ -154,7 +147,7 @@ mmmmap(dev, off, prot)
 {
 	struct proc *p = curproc->l_proc;
 
-	if (minor(dev) != 0)
+	if (minor(dev) != DEV_MEM)
 		return (-1);
 
 	if (atop(off) >= physmem && suser(p->p_ucred, &p->p_acflag) != 0)

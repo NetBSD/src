@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.4.2.4 2002/01/08 00:32:01 nathanw Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.4.2.5 2002/02/28 04:14:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.4.2.4 2002/01/08 00:32:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.4.2.5 2002/02/28 04:14:27 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,7 @@ pxg_attach(struct device *parent, struct device *self, void *aux)
 		if (stic_consinfo.si_slotbase == NULL)
 			si = &stic_consinfo;
 		else {
-			si = malloc(sizeof(*si), M_DEVBUF, M_NOWAIT);
-			memset(si, 0, sizeof(*si));
+			si = malloc(sizeof(*si), M_DEVBUF, M_NOWAIT|M_ZERO);
 		}
 		si->si_slotbase = ta->ta_addr;
 		pxg_init(si);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.107.2.9 2002/01/11 23:39:26 nathanw Exp $	*/
+/*	$NetBSD: pciide.c,v 1.107.2.10 2002/02/28 04:14:08 nathanw Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.107.2.9 2002/01/11 23:39:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.107.2.10 2002/02/28 04:14:08 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -283,6 +283,16 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82801BAM_IDE,
 	  0,
 	  "Intel 82801BAM IDE Controller (ICH2)",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801CA_IDE_1,
+	  0,
+	  "Intel 82201CA IDE Controller",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801CA_IDE_2,
+	  0,
+	  "Intel 82201CA IDE Controller",
 	  piix_chip_map,
 	},
 	{ 0,
@@ -1474,6 +1484,8 @@ piix_chip_map(sc, pa)
 		case PCI_PRODUCT_INTEL_82801AB_IDE:
 		case PCI_PRODUCT_INTEL_82801BA_IDE:
 		case PCI_PRODUCT_INTEL_82801BAM_IDE:
+		case PCI_PRODUCT_INTEL_82801CA_IDE_1:
+		case PCI_PRODUCT_INTEL_82801CA_IDE_2:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 		}
 	}
@@ -1485,6 +1497,8 @@ piix_chip_map(sc, pa)
 		break;
 	case PCI_PRODUCT_INTEL_82801BA_IDE:
 	case PCI_PRODUCT_INTEL_82801BAM_IDE:
+	case PCI_PRODUCT_INTEL_82801CA_IDE_1:
+	case PCI_PRODUCT_INTEL_82801CA_IDE_2:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
@@ -1512,7 +1526,9 @@ piix_chip_map(sc, pa)
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE_1 ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE_2) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -1564,7 +1580,9 @@ piix_chip_map(sc, pa)
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE_1 ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE_2) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -1725,11 +1743,15 @@ piix3_4_setup_channel(chp)
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE_1 ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE_2) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE_1 ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE_2) {
 			/* setup Ultra/100 */
 			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
@@ -3397,7 +3419,8 @@ hpt_pci_intr(arg)
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
-		if((dmastat & IDEDMA_CTL_INTR) == 0)
+		if((dmastat & ( IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
+		    IDEDMA_CTL_INTR)
 			continue;
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->wdc_channel;

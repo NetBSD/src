@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23 2000/06/29 08:11:27 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.23.8.1 2002/02/28 04:10:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,10 +56,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
-
 extern paddr_t avail_end;
 void *zeropage;
 
@@ -108,8 +104,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
-		case 0:
+		case DEV_MEM:
 			v = uio->uio_offset;
 			c = iov->iov_len;
 			/*
@@ -121,8 +116,7 @@ mmrw(dev, uio, flags)
 			error = uiomove((void *)v, c, uio);
 			continue;
 
-/* minor device 1 is kernel memory */
-		case 1:
+		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			if (v < MIPS_KSEG0_START)
@@ -136,14 +130,12 @@ mmrw(dev, uio, flags)
 			error = uiomove((void *)v, c, uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
-		case 2:
+		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
-		case 12:
+		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
 				break;

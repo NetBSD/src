@@ -1,0 +1,11 @@
+#	$NetBSD: std.mvmeppc,v 1.1.2.2 2002/02/28 04:10:56 nathanw Exp $
+#
+# standard, required NetBSD/mvmeppc 'options'
+
+machine		mvmeppc powerpc
+
+options 	PPC_MPC6XX	# Support Motorola PPC60x CPUs
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	TEXTADDR=0x4000

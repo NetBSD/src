@@ -1,12 +1,6 @@
-#	$NetBSD: Makefile,v 1.4.16.1 2002/01/08 00:25:47 nathanw Exp $
+#	$NetBSD: Makefile,v 1.4.16.2 2002/02/28 04:10:25 nathanw Exp $
 
-PROG= genprom
+HOSTPROG= genprom
 NOMAN=	# defined
 
-CFLAGS+= -Wall
-
-.include <bsd.prog.mk>
-
-#to be used from netboot's Makefile
-rom: ${PROG} ${BINFILE}
-	./${PROG} ${ROM_SIZE} <${BINFILE} >${ROMFILE} || (rm ${ROMFILE}; false)
+.include <bsd.hostprog.mk>

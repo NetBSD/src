@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.13.2.4 2002/01/11 23:39:46 nathanw Exp $	*/
+/*	$NetBSD: mld6.c,v 1.13.2.5 2002/02/28 04:15:14 nathanw Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.13.2.4 2002/01/11 23:39:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.13.2.5 2002/02/28 04:15:14 nathanw Exp $");
 
 #include "opt_inet.h"
 

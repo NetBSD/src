@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.40.2.3 2002/01/08 00:30:36 nathanw Exp $
+$NetBSD: isapnpdevs,v 1.40.2.4 2002/02/28 04:13:50 nathanw Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ devlogic	com	MOT0000		0	Motorola ModemSurfr
 devlogic	com	SMM00C1		0	Leopard 56k PnP
 devlogic	com	SUP1650		0	Supra 336i Sp Intl
 devlogic	com	SUP2480		0	SupraExpress 56i Sp V.90
+devlogic	com	SUP2720		0	DIAMOND SupraExpress 56I SP V.90
 devlogic	com	GVC0505		0	GVC 56k Faxmodem
 devlogic	com	IOD0081		0	I-O DATA IFML-560
 devcompat	com	PNP0500		0	Generic 8250/16450

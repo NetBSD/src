@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.22.10.1 2002/01/08 00:27:42 nathanw Exp $ */
+/*	$NetBSD: cache.h,v 1.22.10.2 2002/02/28 04:12:05 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -75,6 +75,8 @@ enum vactype { VAC_UNKNOWN, VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
  *			ct_tid:14,	(cache tag ID)
  *			:2;		(unused; must be zero)
  *	};
+ *
+ * (The SS2 has 16 MMU contexts, which makes `ct_cid' one bit wider.)
  *
  * The SPARCstation 1 cache sees virtual addresses as:
  *
@@ -166,6 +168,7 @@ void	sun4_vcache_flush_context __P((void));	/* flush current context */
 void	sun4_vcache_flush_region __P((int));	/* flush region in cur ctx */
 void	sun4_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
 void	sun4_vcache_flush_page __P((int va));	/* flush page in cur ctx */
+void	sun4_vcache_flush_page_hw __P((int va));/* flush page in cur ctx */
 void	sun4_cache_flush __P((caddr_t, u_int));/* flush region */
 
 void	srmmu_vcache_flush_context __P((void));	/* flush current context */

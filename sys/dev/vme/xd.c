@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.35.2.4 2001/11/14 19:16:25 nathanw Exp $	*/
+/*	$NetBSD: xd.c,v 1.35.2.5 2002/02/28 04:14:37 nathanw Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.35.2.4 2001/11/14 19:16:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.35.2.5 2002/02/28 04:14:37 nathanw Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -579,10 +579,10 @@ xdcattach(parent, self, aux)
 	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
 
 	xdc->reqs = (struct xd_iorq *)
-	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq), M_DEVBUF, M_NOWAIT);
+	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq),
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (xdc->reqs == NULL)
 		panic("xdc malloc");
-	bzero(xdc->reqs, XDC_MAXIOPB * sizeof(struct xd_iorq));
 
 	/* init free list, iorq to iopb pointers, and non-zero fields in the
 	 * iopb which never change. */

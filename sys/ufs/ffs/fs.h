@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.13.2.4 2002/01/11 23:39:52 nathanw Exp $	*/
+/*	$NetBSD: fs.h,v 1.13.2.5 2002/02/28 04:15:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

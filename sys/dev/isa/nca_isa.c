@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.6.8.3 2002/01/11 23:39:10 nathanw Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.6.8.4 2002/02/28 04:13:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.6.8.3 2002/01/11 23:39:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.6.8.4 2002/02/28 04:13:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

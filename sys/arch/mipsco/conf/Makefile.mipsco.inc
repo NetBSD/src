@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mipsco.inc,v 1.2.8.2 2002/01/11 23:38:40 nathanw Exp $
+#	$NetBSD: Makefile.mipsco.inc,v 1.2.8.3 2002/02/28 04:10:47 nathanw Exp $
 
 # build ECOFF image that can be booted directly from firmware
 LD_ECOFF=	${LD} -N -Ttext ${TEXTADDR} -e start ${GP} \

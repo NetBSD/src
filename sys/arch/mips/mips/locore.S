@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.6 2002/01/11 23:38:39 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.7 2002/02/28 04:10:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,27 +119,6 @@ _C_LABEL(kernel_text):
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)
 #endif
-
-#ifdef ENABLE_MIPS_TX3900
-	/*
-	 * TX3922 write-through D-cache mode.
-	 * for TX3912, no meaning. (no write-back mode)
-	 */
-	mfc0	t0, R3900_COP_0_CONFIG
-	li	t1, 0xffffdfff
-	and	t0, t0, t1
-	mtc0	t0, R3900_COP_0_CONFIG
-	COP0_SYNC
-#ifdef R3900_CACHE_DISABLE
-	li	t0, ~(R3900_CONFIG_ICE|R3900_CONFIG_DCE)
-	mfc0	t1, R3900_COP_0_CONFIG
-	and	t1, t0, t1
-	nop
-	mtc0	t1, R3900_COP_0_CONFIG
-	COP0_SYNC
-	nop
-#endif /* R3900_CACHE_DISABLE */
-#endif /* ENABLE_MIPS_TX3900 */
 
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	li	t0, 0				# Disable interrupts and

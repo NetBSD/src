@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.1.4.3 2001/11/14 19:14:03 nathanw Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.1.4.4 2002/02/28 04:13:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.1.4.3 2001/11/14 19:14:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.1.4.4 2002/02/28 04:13:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.1.4.3 2001/11/14 19:14:03 nathanw Exp $"
 
 #include <machine/bus.h> 
 
-#include <dev/qbus/dzreg.h>
-#include <dev/qbus/dzvar.h>
-
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
 #include <dev/dec/dzkbdvar.h>
 #include <dev/dec/lk201reg.h>
 #include <dev/dec/lk201var.h>

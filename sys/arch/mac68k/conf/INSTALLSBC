@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.2.4.2 2002/01/08 00:25:57 nathanw Exp $
+#	$NetBSD: INSTALLSBC,v 1.2.4.3 2002/02/28 04:10:35 nathanw Exp $
 #
 # INSTALLSBC
 
@@ -28,6 +28,8 @@ options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options - XXX remove these at some point
 options 	DIAGNOSTIC	# cheap kernel consistency checks

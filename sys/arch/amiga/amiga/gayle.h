@@ -1,4 +1,6 @@
-/*	$NetBSD: gayle.h,v 1.1 2000/01/23 20:53:18 aymeric Exp $	*/
+/*	$NetBSD: gayle.h,v 1.1.14.1 2002/02/28 04:06:22 nathanw Exp $	*/
+#ifndef AMIGA_GAYLE_H_
+#define AMIGA_GAYLE_H_
 
 #include <sys/types.h>
 
@@ -51,4 +53,6 @@ struct gayle_struct {
 extern struct gayle_struct *gayle_base_virtual_address;
 #define gayle (*gayle_base_virtual_address)
 
-void gayle_init __P((void));
+void gayle_init(void);
+
+#endif /* AMIGA_GAYLE_H_ */

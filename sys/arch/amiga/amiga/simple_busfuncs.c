@@ -1,4 +1,4 @@
-/* $NetBSD: simple_busfuncs.c,v 1.2 2000/01/23 21:02:18 aymeric Exp $ */
+/* $NetBSD: simple_busfuncs.c,v 1.2.14.1 2002/02/28 04:06:26 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,9 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.2.14.1 2002/02/28 04:06:26 nathanw Exp $");
+
 /*
  * Do NOT use this standalone.
- * Instead define the stride (linear, not logarithmic!) in the enclosing 
+ * Instead define the stride (linear, not logarithmic!) in the enclosing
  * file (AMIGA_SIMPLE_BUS_STRIDE), then include this one.
  * If you want to use it only to provide the functions without creating the
  * method array, also define AMIGA_SIMPLE_BUS_NO_ARRAY
@@ -56,13 +59,13 @@ Error AMIGA_SIMPLE_BUS_STRIDE not defined in __FILE__, line __LINE__ .
 
 /* function declarations */
 
-int oabs(bsm_)__P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	bus_space_handle_t *));
+int oabs(bsm_)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	bus_space_handle_t *);
 
-int oabs(bsms_)__P((bus_space_handle_t, bus_size_t, bus_size_t, 
-	bus_space_handle_t *));
+int oabs(bsms_)(bus_space_handle_t, bus_size_t, bus_size_t,
+	bus_space_handle_t *);
 
-void oabs(bsu_)__P((bus_space_handle_t, bus_size_t));
+void oabs(bsu_)(bus_space_handle_t, bus_size_t);
 
 bsr (oabs(bsr1_), u_int8_t);
 bsw (oabs(bsw1_), u_int8_t);
@@ -141,7 +144,7 @@ oabs(bsrm1_)(handle, offset, pointer, count)
 	volatile u_int8_t *p;
 
 	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*pointer++ = *p;
 		--count;
@@ -158,7 +161,7 @@ oabs(bswm1_)(handle, offset, pointer, count)
 	volatile u_int8_t *p;
 
 	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*p = *pointer++;
 		--count;
@@ -175,7 +178,7 @@ oabs(bsrr1_)(handle, offset, pointer, count)
 	volatile u_int8_t *p;
 
 	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*pointer++ = *p;
 		p += AMIGA_SIMPLE_BUS_STRIDE;
@@ -193,7 +196,7 @@ oabs(bswr1_)(handle, offset, pointer, count)
 	volatile u_int8_t *p;
 
 	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*p = *pointer++;
 		p += AMIGA_SIMPLE_BUS_STRIDE;
@@ -211,7 +214,7 @@ oabs(bssr1_)(handle, offset, value, count)
 	volatile u_int8_t *p;
 
 	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*p = value;
 		p += AMIGA_SIMPLE_BUS_STRIDE;
@@ -229,7 +232,7 @@ oabs(bscr1_)(handlefrom, from, handleto, to, count)
 
 	p = (volatile u_int8_t *)(handlefrom + from * AMIGA_SIMPLE_BUS_STRIDE);
 	q = (volatile u_int8_t *)(handleto   +   to * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*q = *p;
 		p += AMIGA_SIMPLE_BUS_STRIDE;
@@ -285,7 +288,7 @@ oabs(bsrm2_)(handle, offset, pointer, count)
 	volatile u_int16_t *p;
 
 	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*pointer++ = *p;
 		--count;
@@ -302,7 +305,7 @@ oabs(bswm2_)(handle, offset, pointer, count)
 	volatile u_int16_t *p;
 
 	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*p = *pointer++;
 		--count;
@@ -319,7 +322,7 @@ oabs(bsrr2_)(handle, offset, pointer, count)
 	volatile u_int8_t *p;
 
 	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*pointer++ = *(volatile u_int16_t *)p;
 		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int16_t);
@@ -337,7 +340,7 @@ oabs(bswr2_)(handle, offset, pointer, count)
 	volatile u_int8_t *p;
 
 	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*(volatile u_int16_t *)p = *pointer++;
 		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int16_t);
@@ -355,7 +358,7 @@ oabs(bssr2_)(handle, offset, value, count)
 	volatile u_int8_t *p;
 
 	p = (volatile u_int8_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*(volatile u_int16_t *)p = (unsigned)value;
 		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int16_t);
@@ -373,7 +376,7 @@ oabs(bscr2_)(handlefrom, from, handleto, to, count)
 
 	p = (volatile u_int8_t *)(handlefrom + from * AMIGA_SIMPLE_BUS_STRIDE);
 	q = (volatile u_int8_t *)(handleto   +   to * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*(volatile u_int16_t *)q = *(volatile u_int16_t *)p;
 		p += AMIGA_SIMPLE_BUS_STRIDE * sizeof(u_int16_t);
@@ -394,7 +397,7 @@ const struct amiga_bus_space_methods oabs(amiga_bus_stride_) = {
 	oabs(bsu_),
 	0,
 	0,
-	
+
 	oabs(bsr1_),
 	oabs(bsw1_),
 	oabs(bsrm1_),

@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.26.6.5 2002/01/08 00:25:10 nathanw Exp $
+#	$NetBSD: DR-EVIL,v 1.26.6.6 2002/02/28 04:10:12 nathanw Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -66,6 +66,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -608,7 +610,7 @@ rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 # MII/PHY support
 #dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 #iophy*	at mii? phy ?			# Intel 82553 PHYs
 #lxtphy* at mii? phy ?			# Level One LXT-970 PHYs

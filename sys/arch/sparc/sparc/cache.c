@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.57.6.2 2002/01/08 00:27:41 nathanw Exp $ */
+/*	$NetBSD: cache.c,v 1.57.6.3 2002/02/28 04:12:05 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -430,14 +430,32 @@ sun4_vcache_flush_page(va)
 
 	cachestats.cs_npgflush++;
 	p = (char *)va;
-	if (CACHEINFO.c_hwflush)
-		sta(p, ASI_HWFLUSHPG, 0);
-	else {
-		ls = CACHEINFO.c_linesize;
-		i = NBPG >> CACHEINFO.c_l2linesize;
-		for (; --i >= 0; p += ls)
-			sta(p, ASI_FLUSHPG, 0);
-	}
+	ls = CACHEINFO.c_linesize;
+	i = NBPG >> CACHEINFO.c_l2linesize;
+	for (; --i >= 0; p += ls)
+		sta(p, ASI_FLUSHPG, 0);
+}
+
+/*
+ * Flush the given virtual page from the cache.
+ * (va is the actual address, and must be aligned on a page boundary.)
+ * This version uses hardware-assisted flush operation and just needs
+ * one write into ASI_HWFLUSHPG space to flush all cache lines.
+ */
+void
+sun4_vcache_flush_page_hw(va)
+	int va;
+{
+	char *p;
+
+#ifdef DEBUG
+	if (va & PGOFSET)
+		panic("cache_flush_page: asked to flush misaligned va 0x%x",va);
+#endif
+
+	cachestats.cs_npgflush++;
+	p = (char *)va;
+	sta(p, ASI_HWFLUSHPG, 0);
 }
 
 /*

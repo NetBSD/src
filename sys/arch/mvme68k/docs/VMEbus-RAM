@@ -1,0 +1,88 @@
+	$NetBSD: VMEbus-RAM,v 1.1.4.2 2002/02/28 04:10:52 nathanw Exp $
+
+NetBSD/mvme68k: VMEbus RAM card configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+NetBSD-mvme68k can be configured to support additional RAM boards
+accessed over the VMEbus.
+
+This file describes where to configure your VMEbus RAM and how to
+point the kernel in the direction of it.
+
+The MVME147 board has a fairly primitive VMEbus controller chip. The
+mapping of cpu address to VMEbus address is hardwired and so dictates
+what can be seen where by the 68030. From the cpu's perspective, A24
+space spans 0x00000000 to 0x00ffffff. However, onboard RAM also spans
+this space. With 8Mb of onboard RAM, only the top 8Mb of VMEbus A24
+space can be seen. With 16Mb onboard, there is no easy way to get at
+A24 space at all!
+
+The other MVME boards have a more sophisticated VMEbus controller
+which can remap segments of VMEbus address space anywhere in the CPU's
+address space. This document will assume the remap is `transparent',
+ie. no translation is taking place. The same restriction as MVME147
+applies to these boards in that, without translation, a region of
+VMEbus address space is masked by onboard RAM. The size of this region
+depends entirely on the size of onboard RAM.
+
+The best place for VMEbus RAM cards is somewhere in A32D32 VMEbus address
+space. Obviously, if your VMEbus RAM card doesn't respond to that space
+then you'll have to locate it elsewhere. Typically, you may find it
+responds to A24D16 only, in which case the CPU-relative address you need
+to specify below will be in the 16MB region starting at 0xZZZZZZZZ.
+
+For A32D32, choose an address which is resonably close to the end of the
+MVME board's RAM. That is, if you have 32MB of onboard RAM, set the
+VMEbus RAM board to appear at A32:02000000.
+
+This starting address needs to be written to the MVME board's NVRAM at
+address 0xfffe0764 for MVME147, and 0xff, as follows:
+
+	147Bug> mm fffe0764 ;L
+	FFFE0764 00000000? 01000000   <cr>	<--- you type 01000000
+	FFFE0768 00000000? .          <cr>
+	147Bug>
+
+Next, you need to configure the end address of VMEbus RAM. Assuming
+your RAM card is 8Mb in size, this would be 0x017fffff. You need to
+write this value to NVRAM address 0xfffe0768, as follows:
+
+	147Bug> mm fffe0768 ;L
+	FFFE0768 00000000? 017fffff   <cr>	<--- you type 017fffff
+	FFFE076c 00000000? .          <cr>
+	147Bug>
+
+You could obviously combine the above two steps.
+
+If you have more than one VMEbus RAM card, you must configure them so
+that they appear physically contiguous in A32 address space. So, to add
+another 8Mb card in addition to the card above, it should be jumpered
+to start at 0x01800000. In this case, you would change NVRAM location
+0xfffe0768 to be 0x01ffffff.
+
+If NVRAM location 0xfffe0764 is zero, the kernel assumes you only have
+onboard RAM and will not attempt to use any VMEbus RAM.
+
+
+Some extra notes on VMEbus RAM cards
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+So... You've got your nice shiny VMEbus RAM card up and running with
+NetBSD, and you're wondering why your system runs slower than it did
+with less RAM!
+
+The simple answer is "Motorola got it wrong". (Or at least that's my
+opinion. If anyone can cure the following, let me know!)
+
+In their infinite wisdom, the designers of the MVME147 decided that
+they would disable the 68030's cache on *any* access to the VMEbus.
+The upshot is that the cache only works for onboard RAM, not VMEbus
+RAM, hence your system runs slower. As far as I can see, the only
+way to cure this is to physically cut a trace on the circuit board
+and use the MMU to control caching on a page-by-page basis...
+
+Anyhow, hopefully the above instructions have finally put to rest
+the most asked question about the mvme68k port.
+
+Cheers,
+Steve Woodford: scw@netbsd.org

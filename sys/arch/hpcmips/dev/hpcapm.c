@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.8.4.2 2002/01/08 00:24:59 nathanw Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.8.4.3 2002/02/28 04:09:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -41,8 +41,8 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
-#include "vrip.h"
-#if NVRIP > 0
+#include "vrip_common.h"
+#if NVRIP_COMMON > 0
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vr_asm.h>
 #endif
@@ -338,7 +338,7 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 				 CONFIG_HOOK_PMEVENT_HARDPOWER,
 				 (void *)PWR_STANDBY);
 		sc->power_state = APM_SYS_STANDBY;
-#if NVRIP > 0
+#if NVRIP_COMMON > 0
 		if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
 			/*
 			 * disable all interrupts except PIU interrupt
@@ -378,7 +378,7 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 				 CONFIG_HOOK_PMEVENT_HARDPOWER,
 				 (void *)PWR_SUSPEND);
 		sc->power_state = APM_SYS_SUSPEND;
-#if NVRIP > 0
+#if NVRIP_COMMON > 0
 		if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
 			/*
 			 * disable all interrupts except PIU interrupt
@@ -404,9 +404,11 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 			vrip_intr_resume();
 			delay(1000); /* 1msec */
 		}
-#endif /* NVRIP > 0 */
+#endif /* NVRIP_COMMON > 0 */
 #ifdef TX39XX
-		tx39power_suspend_cpu();
+		if (platid_match(&platid, &platid_mask_CPU_MIPS_TX)) {
+			tx39power_suspend_cpu();
+		}
 #endif
 		config_hook_call(CONFIG_HOOK_PMEVENT, 
 				 CONFIG_HOOK_PMEVENT_HARDPOWER,

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.1.4.1 2001/06/21 19:59:40 nathanw Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.1.4.2 2002/02/28 04:12:53 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define _POWERPC_LINUX_MACHDEP_H
 
 #include <compat/linux/common/linux_signal.h>
+
 /* 
  * From Linux's include/asm-ppc/ptrace.h 
  * Needed for sigcontext 
@@ -162,13 +163,6 @@ struct linux_rt_sigframe
 	struct linux_ucontext luc;
 };
 
-#ifdef _KERNEL
-__BEGIN_DECLS				
-void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
-dev_t linux_fakedev __P((dev_t));
-__END_DECLS
-#endif /* _KERNEL */
-
 /*
  * Major device numbers of VT device on both Linux and NetBSD. Used in
  * ugly patch to fake device numbers.
@@ -239,5 +233,6 @@ __BEGIN_DECLS /* XXX from NetBSD/i386. Not arch dependent? */
 void linux_syscall_intern __P((struct proc *));
 __END_DECLS
 #endif /* !_KERNEL */
+
 
 #endif /* _POWERPC_LINUX_MACHDEP_H */

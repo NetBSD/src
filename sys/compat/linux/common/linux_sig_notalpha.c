@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.22.6.3 2001/12/06 09:32:55 wdk Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.22.6.4 2002/02/28 04:12:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.22.6.3 2001/12/06 09:32:55 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.22.6.4 2002/02/28 04:12:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ linux_sys_siggetmask(l, v, retval)
 	error = sigprocmask1(p, SIG_SETMASK, 0, &bss);
 	if (error)
 		return (error);
-	native_to_linux_old_sigset(&bss, &lss);
+	native_to_linux_old_sigset(&lss, &bss);
 	return (0);
 }
 
@@ -140,11 +140,11 @@ linux_sys_sigsetmask(l, v, retval)
 	int error;
 
 	nlss = SCARG(uap, mask);
-	linux_old_to_native_sigset(&nlss, &nbss);
+	linux_old_to_native_sigset(&nbss, &nlss);
 	error = sigprocmask1(p, SIG_SETMASK, &nbss, &obss);
 	if (error)
 		return (error);
-	native_to_linux_old_sigset(&obss, &olss);
+	native_to_linux_old_sigset(&olss, &obss);
 	*retval = olss;
 	return (0);
 }

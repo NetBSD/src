@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.14.2.2 2002/01/11 23:38:29 nathanw Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.14.2.3 2002/02/28 04:10:20 nathanw Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.14.2.2 2002/01/11 23:38:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.14.2.3 2002/02/28 04:10:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

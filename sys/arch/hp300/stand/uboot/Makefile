@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.2 2002/01/08 00:24:48 nathanw Exp $
+#	$NetBSD: Makefile,v 1.5.2.3 2002/02/28 04:09:32 nathanw Exp $
 
 PROGAOUT=	uboot
 PROGSOURCE=	uboot.c tgets.c
@@ -9,9 +9,9 @@ CPPFLAGS+=	-DSUPPORT_ETHERNET -DSUPPORT_TAPE -DSUPPORT_DISK
 .include "../Makefile.buildboot"
 
 install:
-	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} ${INSTPRIV} \
+	${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 \
 	    ${DESTDIR}${BINDIR}/rbootd
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${INSTPRIV} \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    uboot.lif ${DESTDIR}${BINDIR}/uboot.lif
 	rm -f ${DESTDIR}${BINDIR}/rdboot
 	ln ${DESTDIR}${BINDIR}/uboot.lif ${DESTDIR}${BINDIR}/rdboot

@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.22.4.2 2002/01/08 00:22:51 nathanw Exp $ */
+/* $NetBSD: disksubr.c,v 1.22.4.3 2002/02/28 04:06:08 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22.4.2 2002/01/08 00:22:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22.4.3 2002/02/28 04:06:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ extern struct device *bootdv;
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.

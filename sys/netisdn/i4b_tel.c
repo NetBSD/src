@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.2.2.3 2001/11/14 19:18:21 nathanw Exp $
+ *	$Id: i4b_tel.c,v 1.2.2.4 2002/02/28 04:15:16 nathanw Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.2.2.3 2001/11/14 19:18:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.2.2.4 2002/02/28 04:15:16 nathanw Exp $");
 
 #include "i4btel.h"
 
@@ -567,9 +567,9 @@ i4btelread(dev_t dev, struct uio *uio, int ioflag)
 	if(func == FUNCTEL)
 	{
 		s = splnet();
-		while(IF_QEMPTY(sc->isdn_linktab->rx_queue) &&
-			(sc->devstate & ST_ISOPEN)          &&
-			(sc->devstate & ST_CONNECTED))		
+		while((sc->devstate & ST_ISOPEN)          &&
+		      (sc->devstate & ST_CONNECTED) &&
+		      IF_QEMPTY(sc->isdn_linktab->rx_queue))		
 		{
 			sc->devstate |= ST_RDWAITDATA;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86.2.6 2002/01/08 00:33:51 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.7 2002/02/28 04:14:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.6 2002/01/08 00:33:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.7 2002/02/28 04:14:59 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -257,7 +257,7 @@ if_nulldrain(ifp)
 	/* Nothing. */
 }
 
-int if_index = 0;
+int if_index = 1;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 
@@ -355,13 +355,45 @@ void
 if_attach(ifp)
 	struct ifnet *ifp;
 {
-	static size_t if_indexlim = 8;
+	static size_t if_indexlim = 0;
+	int indexlim = 0;
 
-	if (if_index == 0)
+	if (if_indexlim == 0) {
 		TAILQ_INIT(&ifnet);
+		if_indexlim = 8;
+	}
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
-	ifp->if_index = ++if_index;
+	ifp->if_index = if_index;
+	if (ifindex2ifnet == 0)
+		if_index++;
+	else
+		while (ifindex2ifnet[ifp->if_index] != NULL) {
+			++if_index;
+			if (if_index == 0)
+				if_index = 1;
+			/*
+			 * If we hit USHRT_MAX, we skip back to 0 since
+			 * there are a number of places where the value
+			 * of if_index or if_index itself is compared
+			 * to to or stored in an unsigned short.  By
+			 * jumping back, we won't botch those assignments
+			 * or comparisons.
+			 */
+			else if (if_index == USHRT_MAX) {
+				/*
+				 * However, if we have to jump back to
+				 * zero *twice* without finding an empty
+				 * slot in ifindex2ifnet[], then there
+				 * there are too many (>65535) interfaces.
+				 */
+				if (indexlim++)
+					panic("too many interfaces");
+				else
+					if_index = 1;
+			}
+			ifp->if_index = if_index;
+		}
 
 	/*
 	 * We have some arrays that should be indexed by if_index.

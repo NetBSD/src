@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.c,v 1.10 1997/09/06 12:41:10 veego Exp $	*/
+/*	$NetBSD: kbdmap.c,v 1.10.36.1 2002/02/28 04:06:51 nathanw Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -29,9 +29,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.10.36.1 2002/02/28 04:06:51 nathanw Exp $");
+
 #include <amiga/dev/kbdmap.h>
 
-/* define a default keymap. This can be changed by keyboard ioctl's 
+/* define a default keymap. This can be changed by keyboard ioctl's
    (later at least..) */
 
 /* mode shortcuts: */
@@ -97,7 +101,7 @@ struct kbdmap ascii_kbdmap = {
 	   {	K, '5'	},
 	   {	K, '6'	},
 	   {	0, 0	},	/* 0x30 */
-	   {	C, 'z'	},	
+	   {	C, 'z'	},
 	   {	C, 'x'	},
 	   {	C, 'c'	},
 	   {	C, 'v'	},
@@ -197,7 +201,7 @@ struct kbdmap ascii_kbdmap = {
 	   {	K, '5'	},
 	   {	K, '6'	},
 	   {	0, 0	},	/* 0x30 */
-	   {	C, 'Z'	},	
+	   {	C, 'Z'	},
 	   {	C, 'X'	},
 	   {	C, 'C'	},
 	   {	C, 'V'	},
@@ -298,7 +302,7 @@ struct kbdmap ascii_kbdmap = {
 	   {	K, '5'	},
 	   {	K, '6'	},
 	   {	0, 0	},	/* 0x30 */
-	   {	0, '±'	},	
+	   {	0, '±'	},
 	   {	0, '×'	},
 	   {	C, 'ç'	},
 	   {	0, 'ª'	},
@@ -398,7 +402,7 @@ struct kbdmap ascii_kbdmap = {
 	   {	K, '5'	},
 	   {	K, '6'	},
 	   {	0, 0	},	/* 0x30 */
-	   {	0, '±'	},	
+	   {	0, '±'	},
 	   {	0, '×'	},
 	   {	C, 'ç'	},
 	   {	0, 'ª'	},
@@ -447,14 +451,14 @@ struct kbdmap ascii_kbdmap = {
 	   {	S, 0x42	}	/* HELP */
 	},
 
-	{	   
+	{
 	  /* string table. If there's a better way to get the offsets into the
 	     above table, please tell me..
-	     
+
 	     NOTE: save yourself and others a lot of grief by *not* using
 	           CSI == 0x9b, using the two-character sequence gives
 	           much less trouble, especially in GNU-Emacs.. */
-	  
+
 	  3, ESC, '[', 'A',		/* 0x00: CRSR UP */
 	  3, ESC, '[', 'B',		/* 0x04: CRSR DOWN */
 	  3, ESC, '[', 'C',		/* 0x08: CRSR RIGHT */
@@ -493,16 +497,16 @@ struct kbdmap ascii_kbdmap = {
 unsigned char acctable[KBD_NUM_ACC][64] = {
   {	"@ÀBCDÈFGHÌJKLMNÒPQRSTÙVWXYZ[\\]^_"
 	"`àbcdèfghìjklmnòpqrstùvwxyz{|}~\177"},	/* KBD_ACC_GRAVE */
-	
+
   {	"@ÁBCDÉFGHÍJKLMNÓPQRSTÚVWXYZ[\\]^_"
 	"`ábcdéfghíjklmnópqrstúvwxyz{|}~\177"},	/* KBD_ACC_ACUTE */
-	
+
   {	"@ÂBCDÊFGHÎJKLMNÔPQRSTÛVWXYZ[\\]^_"
 	"`âbcdêfghîjklmnôpqrstûvwxyz{|}~\177"},	/* KBD_ACC_CIRC */
 
   {	"@ÃBCDEFGHIJKLMÑÕPQRSTUVWXYZ[\\]^_"
 	"`ãbcdefghijklmñÕpqrstuvwxyz{|}~\177"},	/* KBD_ACC_TILDE */
-	
+
   {	"@ÄBCDËFGHÏJKLMNÖPQRSTÜVWXYZ[\\]^_"
 	"`äbcdëfghïjklmnöpqrstüvwxyz{|}~\177"},	/* KBD_ACC_DIER */
 };

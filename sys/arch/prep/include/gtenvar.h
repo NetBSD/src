@@ -1,4 +1,4 @@
-/*	$NetBSD: gtenvar.h,v 1.3 2001/01/18 17:48:02 tv Exp $	*/
+/*	$NetBSD: gtenvar.h,v 1.3.8.1 2002/02/28 04:11:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,6 @@ struct gten_softc {
 	u_char gt_cmap_blue[256];
 };
 
-int     gten_cnattach(bus_space_tag_t);
+int     gten_cnattach(pci_chipset_tag_t, bus_space_tag_t);
 
 #endif /* _MACHINE_GTENVAR_H_ */

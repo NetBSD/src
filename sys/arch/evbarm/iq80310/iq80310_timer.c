@@ -1,7 +1,7 @@
-/*	$NetBSD: iq80310_timer.c,v 1.3.4.2 2002/01/08 00:24:28 nathanw Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.3.4.3 2002/02/28 04:09:15 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -58,6 +58,16 @@
 #include <evbarm/iq80310/iq80310var.h>
 #include <evbarm/iq80310/obiovar.h>
 
+/*
+ * Some IQ80310-based designs have fewer bits in the timer counter.
+ * Deal with them here.
+ */
+#if defined(IOP310_TEAMASA_NPWR)
+#define	COUNTER_MASK		((1U << 20) - 1)
+#else /* Default to stock IQ80310 */
+#define COUNTER_MASK		((1U << 23) - 1)
+#endif /* list of IQ80310-based designs */
+
 #define	COUNTS_PER_SEC		33000000	/* 33MHz */
 #define	COUNTS_PER_USEC		(COUNTS_PER_SEC / 1000000)
 
@@ -113,6 +123,8 @@ timer_read(void)
 static __inline void
 timer_write(uint32_t x)
 {
+
+	KASSERT((x & COUNTER_MASK) == x);
 
 	CPLD_WRITE(IQ80310_TIMER_LA0, x & 0xff);
 	CPLD_WRITE(IQ80310_TIMER_LA1, (x >> 8) & 0xff);

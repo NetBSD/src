@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.2.3 2002/01/11 23:37:54 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.4 2002/02/28 04:06:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

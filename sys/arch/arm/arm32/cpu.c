@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9.2.2 2002/01/08 00:23:08 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.2.3 2002/02/28 04:07:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -68,11 +68,11 @@ volatile int undefined_test;	/* Used for FPA test */
 extern int cpuctrl;		/* cpu control register value */
 
 /* Prototypes */
-void identify_master_cpu __P((struct device *dv, int cpu_number));
-void identify_arm_cpu	__P((struct device *dv, int cpu_number));
-void identify_arm_fpu	__P((struct device *dv, int cpu_number));
-int fpa_test __P((u_int, u_int, trapframe_t *, int));
-int fpa_handler __P((u_int, u_int, trapframe_t *, int));
+void identify_master_cpu(struct device *dv, int cpu_number);
+void identify_arm_cpu(struct device *dv, int cpu_number);
+void identify_arm_fpu(struct device *dv, int cpu_number);
+int fpa_test(u_int, u_int, trapframe_t *, int);
+int fpa_handler(u_int, u_int, trapframe_t *, int);
 
 /*
  * void cpusattach(struct device *parent, struct device *dev, void *aux)
@@ -81,9 +81,9 @@ int fpa_handler __P((u_int, u_int, trapframe_t *, int));
  */
   
 void
-cpu_attach(dv)
-	struct device *dv;
+cpu_attach(struct device *dv)
 {
+
 	identify_master_cpu(dv, CPU_MASTER);
 }
 
@@ -95,11 +95,7 @@ cpu_attach(dv)
  */
 
 int
-fpa_test(address, instruction, frame, fault_code)
-	u_int address;
-	u_int instruction;
-	trapframe_t *frame;
-	int fault_code;
+fpa_test(u_int address, u_int instruction, trapframe_t *frame, int fault_code)
 {
 
 	frame->tf_pc += INSN_SIZE;
@@ -114,15 +110,15 @@ fpa_test(address, instruction, frame, fault_code)
  */
 
 int
-fpa_handler(address, instruction, frame, fault_code)
-	u_int address;
-	u_int instruction;
-	trapframe_t *frame;
-	int fault_code;
+fpa_handler(u_int address, u_int instruction, trapframe_t *frame,
+    int fault_code)
 {
 	u_int fpsr;
     
-	__asm __volatile("stmfd sp!, {r0}; .word 0xee300110; mov %0, r0; ldmfd sp!, {r0}" : "=r" (fpsr));
+	__asm __volatile("stmfd sp!, {r0};"
+	    "rfs r0;"
+	    "mov %0, r0;"
+	    "ldmfd sp!, {r0}" : "=r" (fpsr));
 
 	printf("FPA exception: fpsr = %08x\n", fpsr);
 
@@ -136,9 +132,7 @@ fpa_handler(address, instruction, frame, fault_code)
  */
  
 void
-identify_master_cpu(dv, cpu_number)
-	struct device *dv;
-	int cpu_number;
+identify_master_cpu(struct device *dv, int cpu_number)
 {
 	u_int fpsr;
 	void *uh;
@@ -166,16 +160,16 @@ identify_master_cpu(dv, cpu_number)
 		printf(" clock:%s", (clock & 1) ? " dynamic" : "");
 		printf("%s", (clock & 2) ? " sync" : "");
 		switch ((clock >> 2) & 3) {
-		case 0 :
+		case 0:
 			fclk = "bus clock";
 			break;
-		case 1 :
+		case 1:
 			fclk = "ref clock";
 			break;
-		case 3 :
+		case 3:
 			fclk = "pll";
 			break;
-		default :
+		default:
 			fclk = "illegal";
 			break;
 		}
@@ -201,18 +195,21 @@ identify_master_cpu(dv, cpu_number)
 
 	undefined_test = 0;
 
-	__asm __volatile("stmfd sp!, {r0}; .word 0xee300110; mov %0, r0; ldmfd sp!, {r0}" : "=r" (fpsr));
+	__asm __volatile("stmfd sp!, {r0};"
+	    "rfs r0;"
+	    "mov %0, r0;"
+	    "ldmfd sp!, {r0}" : "=r" (fpsr));
 
 	remove_coproc_handler(uh);
 
 	if (undefined_test == 0) {
 		cpus[cpu_number].fpu_type = (fpsr >> 24);
 	        switch (fpsr >> 24) {
-		case 0x81 :
+		case 0x81:
 			cpus[cpu_number].fpu_class = FPU_CLASS_FPA;
 			break;
 
-		default :
+		default:
 			cpus[cpu_number].fpu_class = FPU_CLASS_FPU;
 			break;
 		}
@@ -249,40 +246,110 @@ identify_master_cpu(dv, cpu_number)
 	identify_arm_fpu(dv, cpu_number);
 }
 
+static const char *generic_steppings[16] = {
+	"rev 0",	"rev 1",	"rev 2",	"rev 3",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *sa110_steppings[16] = {
+	"rev 0",	"step J",	"step K",	"step S",
+	"step T",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *sa1100_steppings[16] = {
+	"rev 0",	"step B",	"step C",	"rev 3",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"step D",	"step E",	"rev 10"	"step G",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *sa1110_steppings[16] = {
+	"step A-0",	"rev 1",	"rev 2",	"rev 3",
+	"step B-0",	"step B-1",	"step B-2",	"step B-3",
+	"step B-4",	"step B-5",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *i80200_steppings[16] = {
+	"step A-0",	"step A-1",	"step B-0",	"step C-0",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
 struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
 	const char	*cpu_name;
+	const char	**cpu_steppings;
 };
 
 const struct cpuidtab cpuids[] = {
-	{ CPU_ID_ARM2,		CPU_CLASS_ARM2,		"ARM2" },
-	{ CPU_ID_ARM250,	CPU_CLASS_ARM2AS,	"ARM250" },
-	{ CPU_ID_ARM3,		CPU_CLASS_ARM3,		"ARM3" },
-	{ CPU_ID_ARM600,	CPU_CLASS_ARM6,		"ARM600" },
-	{ CPU_ID_ARM610,	CPU_CLASS_ARM6,		"ARM610" },
-	{ CPU_ID_ARM620,	CPU_CLASS_ARM6,		"ARM620" },
-	{ CPU_ID_ARM700,	CPU_CLASS_ARM7,		"ARM700" },
-	{ CPU_ID_ARM710,	CPU_CLASS_ARM7,		"ARM710" },
-	{ CPU_ID_ARM7500,	CPU_CLASS_ARM7,		"ARM7500" },
-	{ CPU_ID_ARM710A,	CPU_CLASS_ARM7,		"ARM710a" },
-	{ CPU_ID_ARM7500FE,	CPU_CLASS_ARM7,		"ARM7500FE" },
-	{ CPU_ID_ARM710T,	CPU_CLASS_ARM7TDMI,	"ARM710T" },
-	{ CPU_ID_ARM720T,	CPU_CLASS_ARM7TDMI,	"ARM720T" },
-	{ CPU_ID_ARM740T8K,	CPU_CLASS_ARM7TDMI, "ARM740T (8 KB cache)" },
-	{ CPU_ID_ARM740T4K,	CPU_CLASS_ARM7TDMI, "ARM740T (4 KB cache)" },
-	{ CPU_ID_ARM810,	CPU_CLASS_ARM8,		"ARM810" },
-	{ CPU_ID_ARM920T,	CPU_CLASS_ARM9TDMI,	"ARM920T" },
-	{ CPU_ID_ARM922T,	CPU_CLASS_ARM9TDMI,	"ARM922T" },
-	{ CPU_ID_ARM940T,	CPU_CLASS_ARM9TDMI,	"ARM940T" },
-	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S" },
-	{ CPU_ID_ARM966ES,	CPU_CLASS_ARM9ES,	"ARM966E-S" },
-	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S" },
-	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110" },
-	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100" },
-	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110" },
-	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200" },
-	{ 0, CPU_CLASS_NONE, NULL }
+	{ CPU_ID_ARM2,		CPU_CLASS_ARM2,		"ARM2",
+	  generic_steppings },
+	{ CPU_ID_ARM250,	CPU_CLASS_ARM2AS,	"ARM250",
+	  generic_steppings },
+
+	{ CPU_ID_ARM3,		CPU_CLASS_ARM3,		"ARM3",
+	  generic_steppings },
+
+	{ CPU_ID_ARM600,	CPU_CLASS_ARM6,		"ARM600",
+	  generic_steppings },
+	{ CPU_ID_ARM610,	CPU_CLASS_ARM6,		"ARM610",
+	  generic_steppings },
+	{ CPU_ID_ARM620,	CPU_CLASS_ARM6,		"ARM620",
+	  generic_steppings },
+
+	{ CPU_ID_ARM700,	CPU_CLASS_ARM7,		"ARM700",
+	  generic_steppings },
+	{ CPU_ID_ARM710,	CPU_CLASS_ARM7,		"ARM710",
+	  generic_steppings },
+	{ CPU_ID_ARM7500,	CPU_CLASS_ARM7,		"ARM7500",
+	  generic_steppings },
+	{ CPU_ID_ARM710A,	CPU_CLASS_ARM7,		"ARM710a",
+	  generic_steppings },
+	{ CPU_ID_ARM7500FE,	CPU_CLASS_ARM7,		"ARM7500FE",
+	  generic_steppings },
+	{ CPU_ID_ARM710T,	CPU_CLASS_ARM7TDMI,	"ARM710T",
+	  generic_steppings },
+	{ CPU_ID_ARM720T,	CPU_CLASS_ARM7TDMI,	"ARM720T",
+	  generic_steppings },
+	{ CPU_ID_ARM740T8K,	CPU_CLASS_ARM7TDMI, "ARM740T (8 KB cache)",
+	  generic_steppings },
+	{ CPU_ID_ARM740T4K,	CPU_CLASS_ARM7TDMI, "ARM740T (4 KB cache)",
+	  generic_steppings },
+
+	{ CPU_ID_ARM810,	CPU_CLASS_ARM8,		"ARM810",
+	  generic_steppings },
+
+	{ CPU_ID_ARM920T,	CPU_CLASS_ARM9TDMI,	"ARM920T",
+	  generic_steppings },
+	{ CPU_ID_ARM922T,	CPU_CLASS_ARM9TDMI,	"ARM922T",
+	  generic_steppings },
+	{ CPU_ID_ARM940T,	CPU_CLASS_ARM9TDMI,	"ARM940T",
+	  generic_steppings },
+	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S",
+	  generic_steppings },
+	{ CPU_ID_ARM966ES,	CPU_CLASS_ARM9ES,	"ARM966E-S",
+	  generic_steppings },
+	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S",
+	  generic_steppings },
+
+	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110",
+	  sa110_steppings },
+	{ CPU_ID_SA1100,	CPU_CLASS_SA1,		"SA-1100",
+	  sa1100_steppings },
+	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110",
+	  sa1110_steppings },
+
+	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200",
+	  i80200_steppings },
+
+	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
 
 struct cpu_classtab {
@@ -331,9 +398,7 @@ static const char *wtnames[] = {
 };
 
 void
-identify_arm_cpu(dv, cpu_number)
-	struct device *dv;
-	int cpu_number;
+identify_arm_cpu(struct device *dv, int cpu_number)
 {
 	cpu_t *cpu;
 	u_int cpuid;
@@ -350,8 +415,10 @@ identify_arm_cpu(dv, cpu_number)
 	for (i = 0; cpuids[i].cpuid != 0; i++)
 		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
 			cpu->cpu_class = cpuids[i].cpu_class;
-			sprintf(cpu->cpu_model, "%s rev %d (%s core)",
-			    cpuids[i].cpu_name, cpuid & CPU_ID_REVISION_MASK,
+			sprintf(cpu->cpu_model, "%s %s (%s core)",
+			    cpuids[i].cpu_name,
+			    cpuids[i].cpu_steppings[cpuid &
+						    CPU_ID_REVISION_MASK],
 			    cpu_classes[cpu->cpu_class].class_name);
 			break;
 		}
@@ -475,9 +542,7 @@ identify_arm_cpu(dv, cpu_number)
  */
 
 void
-identify_arm_fpu(dv, cpu_number)
-	struct device *dv;
-	int cpu_number;
+identify_arm_fpu(struct device *dv, int cpu_number)
 {
 	cpu_t *cpu;
 

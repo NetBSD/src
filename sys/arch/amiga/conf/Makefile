@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/01/25 22:34:20 is Exp $
+#	$NetBSD: Makefile,v 1.7.8.1 2002/02/28 04:06:29 nathanw Exp $
 
 #
 # Use this file to regenerate AMIGA and DRACO out of the GENERIC template.
@@ -17,6 +17,7 @@ AMIGA: GENERIC
 	@echo -n '# Created from: ' >> $@
 	@sed -e '1s/$$NetBSD/NetBSD/' GENERIC |\
 		cpp -undef -P -DAMIGA_CONFIGURATION 2>/dev/null |\
+		sed -e 's/\([ 	][ 	]*\)\#\([^ ]\)/\1# \2/' |\
 		awk '{if (NF>1)count=0;else count++;if(count<=1)print}' >> $@
 
 DRACO: GENERIC
@@ -30,6 +31,7 @@ DRACO: GENERIC
 	@echo -n '# Created from: ' >> $@
 	@sed -e '1s/$$NetBSD/NetBSD/' GENERIC |\
 		cpp -undef -P -DDRACO_CONFIGURATION 2>/dev/null |\
+		sed -e 's/\([ 	][ 	]*\)\#\([^ ]\)/\1# \2/' |\
 		awk '{if (NF>1)count=0;else count++;if(count<=1)print}' >> $@
 
 INSTALL: GENERIC
@@ -46,6 +48,7 @@ INSTALL: GENERIC
 		cpp -undef -P \
 			-DAMIGA_CONFIGURATION -DDRACO_CONFIGURATION \
 			-DINSTALL_CONFIGURATION 2>/dev/null |\
+		sed -e 's/\([ 	][ 	]*\)\#\([^ ]\)/\1# \2/' |\
 		awk '{if (NF>1)count=0;else count++;if(count<=1)print}' >> $@
 
 AMIGA DRACO INSTALL: GENERIC Makefile

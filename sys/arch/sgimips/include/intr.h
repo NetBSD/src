@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9.8.2 2002/01/08 00:27:30 nathanw Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.8.3 2002/02/28 04:11:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -86,8 +86,6 @@
 	splx(s);				\
 } while (0)
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-
 #define softintr_schedule(arg)						\
 do {									\
 	struct sgimips_intrhand *__ih = (arg);				\
@@ -98,16 +96,6 @@ do {									\
 extern struct sgimips_intrhand *softnet_intrhand;
 
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
-
-#else /* ! __HAVE_GENERIC_SOFT_INTERRUPTS */
-
-#define SIR_NET		0x01
-#define SIR_SERIAL	0x02
-
-#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
-#define setsoftnet()	setsoft(SIR_NET)
-#define setsoftserial()	setsoft(SIR_SERIAL)
-#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 #define NINTR	32
 
@@ -168,7 +156,6 @@ void *			softintr_establish(int, void (*)(void *), void *);
 void			softintr_disestablish(void *);
 void			softintr_init(void);
 void			softintr_dispatch(void);
-
 
 #endif /* _LOCORE */
 #endif /* !_KERNEL */

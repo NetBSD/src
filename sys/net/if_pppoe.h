@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.1.2.3 2002/01/11 23:39:44 nathanw Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.1.2.4 2002/02/28 04:15:01 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.

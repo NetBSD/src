@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.3.4.2 2002/01/08 00:27:10 nathanw Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.3.4.3 2002/02/28 04:11:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -42,6 +42,7 @@
 
 #include <uvm/uvm_extern.h>
 #include <powerpc/mpc6xx/hid.h>
+#include <powerpc/mpc6xx/hid_601.h>
 #include <powerpc/spr.h>
 
 static void cpu_config_l2cr(int);
@@ -93,6 +94,7 @@ cpu_attach_common(struct device *self, int id)
 	case 0:
 		/* load my cpu_number to PIR */
 		switch (vers) {
+		case MPC601:
 		case MPC604:
 		case MPC604ev:
 		case MPC7400:
@@ -174,9 +176,18 @@ cpu_attach_common(struct device *self, int id)
 #if 1
 	{
 		char hidbuf[128];
-		bitmask_snprintf(hid0,
-		     vers == MPC7450 ? HID0_7450_BITMASK : HID0_BITMASK,
-		     hidbuf, sizeof hidbuf);
+		char *bitmask;
+		switch (vers) {
+		case MPC601:
+			bitmask = HID0_601_BITMASK;
+			break;
+		case MPC7450:
+			bitmask = HID0_7450_BITMASK;
+			break;
+		default:
+			bitmask = HID0_BITMASK;
+		}
+		bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
 		printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
 	}
 #endif

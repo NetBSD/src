@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50.4.7 2002/02/23 22:52:53 gmcgarry Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.4.8 2002/02/28 04:10:18 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.7 2002/02/23 22:52:53 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.8 2002/02/28 04:10:18 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -479,13 +479,17 @@ svr4_sys_sysarch(l, v, retval)
 				return error;
 			}
 
+#ifdef DEBUG
 			printf("s=%x, b=%x, l=%x, a1=%x a2=%x\n",
 			       ssd.selector, ssd.base, ssd.limit,
 			       ssd.access1, ssd.access2);
+#endif
 
 			/* We can only set ldt's for now. */
 			if (!ISLDT(ssd.selector)) {
+#ifdef DEBUG
 				printf("Not an ldt\n");
+#endif
 				return EPERM;
 			}
 
@@ -513,18 +517,14 @@ svr4_sys_sysarch(l, v, retval)
 			sap = stackgap_alloc(&sg,
 					     sizeof(struct i386_set_ldt_args));
 
-			if ((error = copyout(&sa, sap, sizeof(sa))) != 0) {
-				printf("Cannot copyout args\n");
+			if ((error = copyout(&sa, sap, sizeof(sa))) != 0)
 				return error;
-			}
 
 			SCARG(&ua, op) = I386_SET_LDT;
 			SCARG(&ua, parms) = (char *) sap;
 
-			if ((error = copyout(&bsd, sa.desc, sizeof(bsd))) != 0) {
-				printf("Cannot copyout desc\n");
+			if ((error = copyout(&bsd, sa.desc, sizeof(bsd))) != 0)
 				return error;
-			}
 
 			return sys_sysarch(l, &ua, retval);
 		}

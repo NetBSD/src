@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.4 2002/01/08 00:22:56 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.5 2002/02/28 04:06:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,9 @@
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.5 2002/02/28 04:06:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,20 +110,20 @@
 #include "ser.h"
 
 /* prototypes */
-void identifycpu __P((void));
-vm_offset_t reserve_dumppages __P((vm_offset_t));
-void dumpsys __P((void));
-void initcpu __P((void));
-void straytrap __P((int, u_short));
-static void netintr __P((void));
-static void call_sicallbacks __P((void));
-static void _softintr_callit __P((void *, void *));
-void intrhand __P((int));
+void identifycpu(void);
+vm_offset_t reserve_dumppages(vm_offset_t);
+void dumpsys(void);
+void initcpu(void);
+void straytrap(int, u_short);
+static void netintr(void);
+static void call_sicallbacks(void);
+static void _softintr_callit(void *, void *);
+void intrhand(int);
 #if NSER > 0
-void ser_outintr __P((void));
+void ser_outintr(void);
 #endif
 #if NFD > 0
-void fdintr __P((int));
+void fdintr(int);
 #endif
 
 volatile unsigned int interrupt_depth = 0;
@@ -130,7 +133,7 @@ volatile unsigned int interrupt_depth = 0;
  */
 u_int16_t amiga_serialspl = PSL_S|PSL_IPL4;
 
-struct vm_map *exec_map = NULL;  
+struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -140,7 +143,7 @@ paddr_t msgbufpa;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
- * extender "register" for software interrupts. Moved here 
+ * extender "register" for software interrupts. Moved here
  * from locore.s, since softints are no longer dealt with
  * in locore.s.
  */
@@ -160,7 +163,7 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
- 
+
 /*
  * current open serial device speed;  used by some SCSI drivers to reduce
  * DMA transfer lengths.
@@ -294,7 +297,7 @@ cpu_startup()
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL) 
+			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
@@ -332,14 +335,14 @@ cpu_startup()
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
-	
+
 	/*
 	 * display memory configuration passed from loadbsd
 	 */
 	if (memlist->m_nseg > 0 && memlist->m_nseg < 16)
 		for (i = 0; i < memlist->m_nseg; i++)
 			printf("memory segment %d at %08x size %08x\n", i,
-			    memlist->m_seg[i].ms_start, 
+			    memlist->m_seg[i].ms_start,
 			    memlist->m_seg[i].ms_size);
 
 #ifdef DEBUG_KERNEL_START
@@ -353,7 +356,7 @@ cpu_startup()
 #ifdef DEBUG_KERNEL_START
 	printf("survived initcpu...\n");
 #endif
-	
+
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
@@ -374,7 +377,7 @@ setregs(l, pack, stack)
 	u_long stack;
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	
+
 	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[D0] = 0;
@@ -413,7 +416,7 @@ char cpu_model[120];
 int m68060_pcr_init = 0x21;	/* make this patchable */
 #endif
 
- 
+
 void
 identifycpu()
 {
@@ -431,7 +434,7 @@ identifycpu()
 	if (is_draco()) {
 		sprintf(machbuf, "DraCo rev.%d", is_draco());
 		mach = machbuf;
-	} else 
+	} else
 #endif
 	if (is_a4000())
 		mach = "Amiga 4000";
@@ -460,7 +463,7 @@ identifycpu()
 			fpu = "/FPU";
 			fputype = FPU_68040; /* XXX */
 		}
-	} else 
+	} else
 #endif
 	if (machineid & AMIGA_68040) {
 		cpu_type = "m68040";
@@ -683,7 +686,7 @@ dumpsys()
 	unsigned bytes, i, n, seg;
 	int     maddr, psize;
 	daddr_t blkno;
-	int     (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int     (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int     error = 0;
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
@@ -826,7 +829,7 @@ microtime(tvp)
 void
 initcpu()
 {
-	typedef void trapfun __P((void));
+	typedef void trapfun(void);
 
 	/* XXX should init '40 vecs here, too */
 #if defined(M68060) || defined(M68040) || defined(DRACO) || defined(FPU_EMULATE)
@@ -865,7 +868,7 @@ initcpu()
 #ifdef M68060
 	if (machineid & AMIGA_68060) {
 		if (machineid & AMIGA_FPU40 && m68060_pcr_init & 2) {
-			/* 
+			/*
 			 * in this case, we're about to switch the FPU off;
 			 * do a FNOP to avoid stray FP traps later
 			 */
@@ -873,7 +876,7 @@ initcpu()
 			/* ... and mark FPU as absent for identifyfpu() */
 			machineid &= ~(AMIGA_FPU40|AMIGA_68882|AMIGA_68881);
 		}
-		asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : : 
+		asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
 			"d"(m68060_pcr_init):"d0" );
 
 		/* bus/addrerr vectors */
@@ -909,7 +912,7 @@ initcpu()
 #endif
 
 /*
- * Vector initialization for special motherboards 
+ * Vector initialization for special motherboards
  */
 #ifdef M68040
 #ifdef M68060
@@ -930,7 +933,7 @@ initcpu()
 #endif
 
 /*
- * Vector initialization for special motherboards 
+ * Vector initialization for special motherboards
  */
 
 #ifdef DRACO
@@ -1023,7 +1026,7 @@ netintr()
 /*
  * this is a handy package to have asynchronously executed
  * function calls executed at very low interrupt priority.
- * Example for use is keyboard repeat, where the repeat 
+ * Example for use is keyboard repeat, where the repeat
  * handler running at splclock() triggers such a (hardware
  * aided) software interrupt.
  * Note: the installed functions are currently called in a
@@ -1032,7 +1035,7 @@ netintr()
  */
 struct si_callback {
 	struct si_callback *next;
-	void (*function) __P((void *rock1, void *rock2));
+	void (*function)(void *rock1, void *rock2);
 	void *rock1, *rock2;
 };
 static struct si_callback *si_callbacks;
@@ -1061,7 +1064,7 @@ _softintr_callit(rock1, rock2)
 void *
 softintr_establish(ipl, func, arg)
 	int ipl;
-	void func __P((void *));
+	void func(void *);
 	void *arg;
 {
 	struct si_callback *si;
@@ -1090,7 +1093,7 @@ softintr_disestablish(hook)
 	 * this will be automatically repaired once we rewirte the soft
 	 * interupt functions.
 	 */
-	 
+
 	free(hook, M_TEMP);
 }
 
@@ -1124,7 +1127,7 @@ softintr_schedule(vsi)
 
 void
 add_sicallback (function, rock1, rock2)
-	void (*function) __P((void *rock1, void *rock2));
+	void (*function)(void *rock1, void *rock2);
 	void *rock1, *rock2;
 {
 	struct si_callback *si;
@@ -1170,7 +1173,7 @@ add_sicallback (function, rock1, rock2)
 
 void
 rem_sicallback(function)
-	void (*function) __P((void *rock1, void *rock2));
+	void (*function)(void *rock1, void *rock2);
 {
 	struct si_callback *si, *psi, *nsi;
 	int s;
@@ -1202,7 +1205,7 @@ call_sicallbacks()
 	struct si_callback *si;
 	int s;
 	void *rock1, *rock2;
-	void (*function) __P((void *, void *));
+	void (*function)(void *, void *);
 
 	do {
 		s = splhigh ();
@@ -1281,9 +1284,9 @@ add_isr(isr)
 			default:
 				break;
 		}
-	else 
+	else
 #endif
-		custom.intena = isr->isr_ipl == 2 ? 
+		custom.intena = isr->isr_ipl == 2 ?
 		    INTF_SETCLR | INTF_PORTS :
 		    INTF_SETCLR | INTF_EXTER;
 }
@@ -1355,7 +1358,7 @@ remove_isr(isr)
 			}
 		} else
 #endif
-			custom.intena = isr->isr_ipl == 6 ? 
+			custom.intena = isr->isr_ipl == 6 ?
 			    INTF_EXTER : INTF_PORTS;
 	}
 }
@@ -1407,7 +1410,7 @@ intrhand(sr)
 			/*
 			 * first clear the softint-bit
 			 * then process all classes of softints.
-			 * this order is dicated by the nature of 
+			 * this order is dicated by the nature of
 			 * software interrupts.  The other order
 			 * allows software interrupts to be missed.
 			 * Also copy and clear ssir to prevent
@@ -1466,13 +1469,13 @@ intrhand(sr)
 		break;
 #endif
 
-	case 3: 
+	case 3:
 	/* VBL */
-		if (ireq & INTF_BLIT)  
+		if (ireq & INTF_BLIT)
 			blitter_handler();
-		if (ireq & INTF_COPER)  
+		if (ireq & INTF_COPER)
 			copper_handler();
-		if (ireq & INTF_VERTB) 
+		if (ireq & INTF_VERTB)
 			vbl_handler();
 		break;
 #ifdef DRACO
@@ -1526,7 +1529,7 @@ intrhand(sr)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
-void candbtimer __P((void));
+void candbtimer(void);
 struct callout candbtimer_ch = CALLOUT_INITIALIZER;
 
 void
@@ -1622,7 +1625,7 @@ int _spllkm6() {
 
 int _spllkm7() {
 	return spl7();
-}; 
+};
 
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.5.8.1 2001/08/24 00:08:41 nathanw Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.5.8.2 2002/02/28 04:10:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -118,7 +118,7 @@ static struct btinfo_netif bi_netif;
 #endif
 
 #define ex_waitcmd() \
-	while (CSR_READ_2(ELINK_STATUS) & S_COMMAND_IN_PROGRESS);
+	while (CSR_READ_2(ELINK_STATUS) & COMMAND_IN_PROGRESS);
 
 void ex_reset __P((void));
 u_int16_t ex_read_eeprom __P((int));
@@ -130,7 +130,7 @@ void
 ex_reset()
 {
 	CSR_WRITE_2(ELINK_COMMAND, GLOBAL_RESET);
-	delay(1000);
+	delay(100000);
 	ex_waitcmd();
 }
 
@@ -388,7 +388,7 @@ EtherStop()
 	CSR_WRITE_2(ELINK_COMMAND, RX_DISABLE);
 	CSR_WRITE_2(ELINK_COMMAND, TX_DISABLE);
         CSR_WRITE_2(ELINK_COMMAND, STOP_TRANSCEIVER);
-	CSR_WRITE_2(ELINK_COMMAND, C_INTR_LATCH);
+	CSR_WRITE_2(ELINK_COMMAND, INTR_LATCH);
 }
 
 int

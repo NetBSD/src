@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.5.8.2 2002/01/08 00:25:05 nathanw Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.5.8.3 2002/02/28 04:10:03 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "opt_tx39_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

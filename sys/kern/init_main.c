@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.8 2002/01/08 00:32:30 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.9 2002/02/28 04:14:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,14 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.8 2002/01/08 00:32:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.9 2002/02/28 04:14:43 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
-#include "opt_new_pipe.h"
+#include "opt_pipe.h"
 #include "opt_syscall_debug.h"
 
 #include "rnd.h"
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.8 2002/01/08 00:32:30 nathanw 
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
 #endif
 
@@ -518,7 +518,7 @@ main(void)
 	/* Initialize exec structures */
 	exec_init(1);
 
-#ifdef NEW_PIPE
+#ifndef PIPE_SOCKETPAIR
 	/* Initialize pipe structures */
 	pipe_init();
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.15.2.2 2002/01/08 00:23:04 nathanw Exp $
+#	$NetBSD: M403,v 1.15.2.3 2002/02/28 04:07:12 nathanw Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -23,6 +23,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# cheap kernel consistency checks

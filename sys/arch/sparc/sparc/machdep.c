@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.5 2002/01/08 00:27:47 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.6 2002/02/28 04:12:07 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -474,6 +474,18 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	switch (name[0]) {
 	case CPU_BOOTED_KERNEL:
 		cp = prom_getbootfile();
+		if (cp == NULL)
+			return (ENOENT);
+		if (*cp == '\0')
+			cp = "netbsd";
+		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+	case CPU_BOOTED_DEVICE:
+		cp = prom_getbootpath();
+		if (cp == NULL || cp[0] == '\0')
+			return (ENOENT);
+		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+	case CPU_BOOT_ARGS:
+		cp = prom_getbootargs();
 		if (cp == NULL || cp[0] == '\0')
 			return (ENOENT);
 		return (sysctl_rdstring(oldp, oldlenp, newp, cp));

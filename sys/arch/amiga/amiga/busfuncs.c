@@ -1,4 +1,4 @@
-/*	$NetBSD: busfuncs.c,v 1.6 1999/02/16 23:34:12 is Exp $	*/
+/*	$NetBSD: busfuncs.c,v 1.6.26.1 2002/02/28 04:06:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: busfuncs.c,v 1.6.26.1 2002/02/28 04:06:18 nathanw Exp $");
 
 /*
  * Amiga bus access methods for data widths > 1
@@ -115,8 +118,8 @@ const struct amiga_bus_space_methods amiga_interleaved_wordaccess_methods = {
 /*
  * Contiguous methods
  * Be sure to only create word accesses.
- * For busses that _need_ split byte accesses, use the interleaved functions. 
- */ 
+ * For busses that _need_ split byte accesses, use the interleaved functions.
+ */
 
 u_int16_t
 amiga_contiguous_read_2(t, h, o)

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.40.2.7 2002/01/11 21:20:39 nathanw Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.40.2.8 2002/02/28 04:15:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -770,6 +770,20 @@ struct netbsd_elfcore_procinfo {
 #define ELF_NO_ADDR	ELF64_NO_ADDR
 #elif defined(ELFSIZE) && (ELFSIZE == 32)
 #define ELF_NO_ADDR	ELF32_NO_ADDR
+#endif
+
+#ifndef ELF32_EHDR_FLAGS_OK
+#define	ELF32_EHDR_FLAGS_OK(eh)	1
+#endif
+
+#ifndef ELF64_EHDR_FLAGS_OK
+#define	ELF64_EHDR_FLAGS_OK(eh)	1
+#endif
+
+#if defined(ELFSIZE) && (ELFSIZE == 64)
+#define	ELF_EHDR_FLAGS_OK(eh)	ELF64_EHDR_FLAGS_OK(eh)
+#else
+#define	ELF_EHDR_FLAGS_OK(eh)	ELF32_EHDR_FLAGS_OK(eh)
 #endif
 
 #if defined(ELFSIZE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.6 1996/08/27 21:54:26 cgd Exp $	*/
+/*	$NetBSD: device.h,v 1.6.46.1 2002/02/28 04:06:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,16 +32,15 @@
 #ifndef _AMIGA_DEVICE_H_
 #define _AMIGA_DEVICE_H_
 
-/* 
+/*
  * devices that need to configure before console use this
- * *and know it* (i.e. everything is really tight certain params won't be 
+ * *and know it* (i.e. everything is really tight certain params won't be
  * passed in some cases and the devices will deal with it)
  */
-void config_console __P((void));
-int amiga_config_found __P((struct cfdata *, struct device *,
-    void *, cfprint_t ));
-int simple_devprint __P((void *, const char *));
-int matchname __P((char *, char *));
+void config_console(void);
+int amiga_config_found(struct cfdata *, struct device *, void *, cfprint_t );
+int simple_devprint(void *, const char *);
+int matchname(char *, char *);
 /*
  * false when initing for the console.
  */

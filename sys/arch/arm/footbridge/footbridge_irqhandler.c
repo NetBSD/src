@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.2.6.2 2002/01/11 23:38:03 nathanw Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.2.6.3 2002/02/28 04:07:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

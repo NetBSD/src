@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.4.2.2 2002/01/08 00:24:26 nathanw Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.4.2.3 2002/02/28 04:09:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -89,6 +89,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
+#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 #include <arm/undefined.h>
 
 #include <evbarm/integrator/integrator_boot.h>
@@ -156,23 +157,13 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
-pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
+pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
 
 /* Prototypes */
 
 void consinit		__P((void));
-
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
-			     int cacheable));
-void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
-			     vm_offset_t pa, vm_size_t size, u_int acc,
-			     u_int flg));
 
 void process_kernel_args	__P((char *));
 void data_abort_handler		__P((trapframe_t *frame));
@@ -326,18 +317,23 @@ struct l1_sec_map {
 	vm_offset_t	va;
 	vm_offset_t	pa;
 	vm_size_t	size;
-	int		flags;
+	vm_prot_t	prot;
+	int		cache;
 } l1_sec_table[] = {
 #if NPLCOM > 0 && defined(PLCONSOLE)
-	{ UART0_BOOT_BASE, IFPGA_IO_BASE + IFPGA_UART0, 1024 * 1024, 0},
-	{ UART1_BOOT_BASE, IFPGA_IO_BASE + IFPGA_UART1, 1024 * 1024, 0},
+	{ UART0_BOOT_BASE, IFPGA_IO_BASE + IFPGA_UART0, 1024 * 1024,
+	  VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE },
+	{ UART1_BOOT_BASE, IFPGA_IO_BASE + IFPGA_UART1, 1024 * 1024,
+	  VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE },
 #endif
 #if NPCI > 0
-	{ IFPGA_PCI_IO_VBASE, IFPGA_PCI_IO_BASE, IFPGA_PCI_IO_VSIZE, 0},
-	{ IFPGA_PCI_CONF_VBASE, IFPGA_PCI_CONF_BASE, IFPGA_PCI_CONF_VSIZE, 0},
+	{ IFPGA_PCI_IO_VBASE, IFPGA_PCI_IO_BASE, IFPGA_PCI_IO_VSIZE,
+	  VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE },
+	{ IFPGA_PCI_CONF_VBASE, IFPGA_PCI_CONF_BASE, IFPGA_PCI_CONF_VSIZE,
+	  VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE },
 #endif
 
-	{ 0, 0, 0, 0 }
+	{ 0, 0, 0, 0, 0 }
 };
 
 /*
@@ -361,7 +357,6 @@ initarm(bootinfo)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	u_int l2pagetable;
 	extern char page0[], page0_end[];
 	extern int etext asm ("_etext");
 	extern int end asm ("_end");
@@ -565,8 +560,11 @@ initarm(bootinfo)
 		    && kernel_l1pt.pv_pa == 0) {
 			valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
 		} else {
-			alloc_pages(kernel_pt_table[loop1], PT_SIZE / NBPG);
+			alloc_pages(kernel_pt_table[loop1].pv_pa,
+			    PT_SIZE / NBPG);
 			++loop1;
+			kernel_pt_table[loop1].pv_va =
+			    kernel_pt_table[loop1].pv_pa;
 		}
 	}
 
@@ -616,22 +614,21 @@ initarm(bootinfo)
 	l1pagetable = kernel_l1pt.pv_pa;
 
 	/* Map the L2 pages tables in the L1 page table */
-	map_pagetable(l1pagetable, 0x00000000,
-	    kernel_pt_table[KERNEL_PT_SYS]);
-	map_pagetable(l1pagetable, KERNEL_BASE,
-	    kernel_pt_table[KERNEL_PT_KERNEL]);
+	pmap_link_l2pt(l1pagetable, 0x00000000,
+	    &kernel_pt_table[KERNEL_PT_SYS]);
+	pmap_link_l2pt(l1pagetable, KERNEL_BASE,
+	    &kernel_pt_table[KERNEL_PT_KERNEL]);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
-		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
-		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-	map_pagetable(l1pagetable, PROCESS_PAGE_TBLS_BASE,
-	    kernel_ptpt.pv_pa);
+		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
+		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE,
+	    &kernel_ptpt);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
-	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
 
 	{
 		u_int logical;
@@ -642,20 +639,22 @@ initarm(bootinfo)
 		 */
 		textsize = textsize & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-		/* logical  = map_chunk(l1pagetable, l2pagetable, KERNEL_BASE,
-		    physical_start, KERNEL_TEXT_BASE - KERNEL_BASE,
-		    AP_KRW, PT_CACHEABLE); */
-		logical = map_chunk(l1pagetable, l2pagetable,
+		/* logical = pmap_map_chunk(l1pagetable,
+		    KERNEL_BASE, physical_start, KERNEL_TEXT_BASE - KERNEL_BASE,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE); */
+		logical = pmap_map_chunk(l1pagetable,
 		    KERNEL_TEXT_BASE, physical_start, textsize,
-		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(l1pagetable, l2pagetable,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable,
 		    KERNEL_TEXT_BASE + logical, physical_start + logical,
-		    totalsize - textsize, AP_KRW, PT_CACHEABLE);
+		    totalsize - textsize, VM_PROT_READ|VM_PROT_WRITE,
+		    PTE_CACHE);
 #if 0
-		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
+		logical += pmap_map_chunk(l1pagetable,
+		    KERNEL_BASE + logical,
 		    physical_start + logical, kernexec->a_syms + sizeof(int)
 		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int)),
-		    AP_KRW, PT_CACHEABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
 	}
 
@@ -665,52 +664,63 @@ initarm(bootinfo)
 
 	/* Map the boot arguments page */
 #if 0
-	map_entry_ro(l2pagetable, intbootinfo.bt_vargp, intbootinfo.bt_pargp);
+	pmap_map_entry(l1pagetable, intbootinfo.bt_vargp,
+	    intbootinfo.bt_pargp, VM_PROT_READ, PTE_CACHE);
 #endif
 
 	/* Map the stack pages */
-	map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, AP_KRW, 0);
+	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
+	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
+	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
+	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
+	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+
+	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
-	map_entry_nc(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa);
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
 	 * Map entries in the page table used to map PTE's
 	 * Basically every kernel page table gets mapped here
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
-	l2pagetable = kernel_ptpt.pv_pa;
-	map_entry_nc(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_KERNEL]);
-	map_entry_nc(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
-	    kernel_ptpt.pv_pa);
-	map_entry_nc(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_SYS]);
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
+	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
+	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
-		map_entry_nc(l2pagetable, ((KERNEL_VM_BASE +
+		pmap_map_entry(l1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
-		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
 	 * Map the system page in the kernel page table for the bottom 1Meg
 	 * of the virtual memory map.
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_SYS];
 #if 1
 	/* MULTI-ICE requires that page 0 is NC/NB so that it can download
 	   the cache-clean code there.  */
-	map_entry_nc(l2pagetable, 0x00000000, systempage.pv_pa);
+	pmap_map_entry(l1pagetable, 0x00000000, systempage.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 #else
-	map_entry_nc(l2pagetable, 0x00000000, systempage.pv_pa);
+	pmap_map_entry(l1pagetable, 0x00000000, systempage.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 #endif
 	/* Map the core memory needed before autoconfig */
 	loop = 0;
@@ -723,9 +733,11 @@ initarm(bootinfo)
 		    l1_sec_table[loop].va);
 #endif
 		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_SEC_SIZE)
-			map_section(l1pagetable, l1_sec_table[loop].va + sz,
+			pmap_map_section(l1pagetable,
+			    l1_sec_table[loop].va + sz,
 			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].flags);
+			    l1_sec_table[loop].prot,
+			    l1_sec_table[loop].cache);
 		++loop;
 	}
 
@@ -769,7 +781,7 @@ initarm(bootinfo)
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI();
+	cpu_icache_sync_all();
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.111.2.5 2002/01/11 22:09:05 nathanw Exp $
+#	$NetBSD: files.isa,v 1.111.2.6 2002/02/28 04:13:40 nathanw Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -467,6 +467,10 @@ file	dev/isa/isic_isa_tel_s0163.c	isic_isa
 file	dev/isa/isic_isa_avm_a1.c	isic_isa
 file	dev/isa/isic_isa_usr_sti.c	isic_isa
 file	dev/isa/isic_isa_itk_ix1.c	isic_isa
+
+# Game adapter (joystick)
+attach	joy at isa with joy_isa
+file	dev/isa/joy_isa.c		joy_isa
 
 #
 # ISA Plug 'n Play autoconfiguration glue.
