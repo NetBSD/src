@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.17 1999/06/27 10:00:36 tron Exp $	*/
+/*	$NetBSD: lock.c,v 1.18 2000/04/14 06:11:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.17 1999/06/27 10:00:36 tron Exp $");
+__RCSID("$NetBSD: lock.c,v 1.18 2000/04/14 06:11:08 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -96,7 +96,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
 	struct passwd *pw;
 	struct timeval timval;
 	struct itimerval ntimer, otimer;

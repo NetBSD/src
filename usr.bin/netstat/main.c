@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2000/02/26 09:55:24 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2000/04/14 06:11:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 2000/02/26 09:55:24 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2000/04/14 06:11:09 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -305,8 +305,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	struct protoent *p;
 	struct protox *tp;	/* for printing cblocks & stats */
 	int ch;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2000/02/08 12:43:25 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2000/04/14 06:11:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.51 2000/02/08 12:43:25 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.52 2000/04/14 06:11:09 simonb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.51 2000/02/08 12:43:25 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 2000/04/14 06:11:09 simonb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -167,8 +167,6 @@ MainParseArgs(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
 	char *p;
 	int c;
 	int forceJobs = 0;

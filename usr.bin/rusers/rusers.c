@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.16 1998/07/03 18:35:35 hubertf Exp $	*/
+/*	$NetBSD: rusers.c,v 1.17 2000/04/14 06:11:10 simonb Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.16 1998/07/03 18:35:35 hubertf Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.17 2000/04/14 06:11:10 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -243,7 +243,6 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-	extern int optind;
 	
 	while ((ch = getopt(argc, argv, "al")) != -1)
 		switch (ch) {

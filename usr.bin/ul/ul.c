@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.8 1999/10/04 23:32:54 lukem Exp $	*/
+/*	$NetBSD: ul.c,v 1.9 2000/04/14 06:11:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.8 1999/10/04 23:32:54 lukem Exp $");
+__RCSID("$NetBSD: ul.c,v 1.9 2000/04/14 06:11:10 simonb Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -105,8 +105,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
 	int c;
 	char *termtype;
 	FILE *f;

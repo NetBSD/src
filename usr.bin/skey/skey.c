@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.8 1999/02/02 12:36:09 christos Exp $	*/
+/*	$NetBSD: skey.c,v 1.9 2000/04/14 06:11:10 simonb Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skey.c,v 1.8 1999/02/02 12:36:09 christos Exp $");
+__RCSID("$NetBSD: skey.c,v 1.9 2000/04/14 06:11:10 simonb Exp $");
 #endif
 
 #include <sys/cdefs.h>
@@ -44,8 +44,6 @@ main(argc, argv)
 {
 	int     n, cnt, i, pass = 0;
 	char    passwd[256], key[8], buf[33], *seed, *slash;
-	extern int optind;
-	extern char *optarg;
 
 	cnt = 1;
 

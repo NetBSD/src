@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.10 1997/07/18 07:05:36 thorpej Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.11 2000/04/14 06:11:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypmatch.c,v 1.10 1997/07/18 07:05:36 thorpej Exp $");
+__RCSID("$NetBSD: ypmatch.c,v 1.11 2000/04/14 06:11:11 simonb Exp $");
 #endif
 
 #include <sys/param.h>
@@ -76,8 +76,6 @@ main(argc, argv)
 {
 	char *domainname;
 	char *inkey, *inmap, *outbuf;
-	extern char *optarg;
-	extern int optind;
 	int outbuflen, key, notrans;
 	int c, r, i;
 	int rval;

@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-__RCSID("$NetBSD: env.c,v 1.12 1999/11/02 10:56:32 lukem Exp $");
+__RCSID("$NetBSD: env.c,v 1.13 2000/04/14 06:11:07 simonb Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -59,7 +59,6 @@ main(argc, argv)
 	char **argv;
 {
 	extern char **environ;
-	extern int optind;
 	char **ep, *p;
 	char *cleanenv[1];
 	int ch;

@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.12 1998/12/19 17:38:39 christos Exp $	*/
+/*	$NetBSD: last.c,v 1.13 2000/04/14 06:11:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.12 1998/12/19 17:38:39 christos Exp $");
+__RCSID("$NetBSD: last.c,v 1.13 2000/04/14 06:11:08 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,8 +103,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
-	extern char *optarg;
 	int ch;
 	char *p;
 
