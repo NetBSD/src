@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.21 2002/10/17 00:42:02 christos Exp $	*/
+/*	$NetBSD: pax.c,v 1.22 2002/10/20 00:40:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.21 2002/10/17 00:42:02 christos Exp $");
+__RCSID("$NetBSD: pax.c,v 1.22 2002/10/20 00:40:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ char	*dirptr;		/* destination dir in a copy */
 char	*ltmfrmt;		/* -v locale time format (if any) */
 char	*argv0;			/* root of argv[0] */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
-FILE	*listf = stderr;	/* file pointer to print file list to */
+FILE	*listf;			/* file pointer to print file list to */
 char	*tempfile;		/* tempfile to use for mkstemp(3) */
 char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
 int	forcelocal;		/* force local operation even if the name 
@@ -243,6 +243,8 @@ main(int argc, char **argv)
 {
 	char *tmpdir;
 	size_t tdlen;
+
+	listf = stderr;
 
 	/*
 	 * Keep a reference to cwd, so we can always come back home.
