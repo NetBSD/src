@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.182 2000/01/19 06:10:11 mycroft Exp $
+# $NetBSD: mi,v 1.183 2000/01/20 19:26:44 wrstuden Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -536,6 +536,8 @@
 ./usr/include/miscfs/kernfs/kernfs.h
 ./usr/include/miscfs/nullfs
 ./usr/include/miscfs/nullfs/null.h
+./usr/include/miscfs/overlay
+./usr/include/miscfs/overlay/overlay.h
 ./usr/include/miscfs/portal
 ./usr/include/miscfs/portal/portal.h
 ./usr/include/miscfs/procfs
