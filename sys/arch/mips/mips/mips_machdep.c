@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.69 2000/03/24 18:15:41 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.70 2000/03/27 02:55:16 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.69 2000/03/24 18:15:41 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.70 2000/03/27 02:55:16 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -117,11 +117,7 @@ struct	pcb  *curpcb;
 caddr_t	msgbufaddr;
 
 #ifdef MIPS3_4100			/* VR4100 core */
-#ifdef MIPS_16K_PAGE			/* enable kernel support for 16k pages  */
-int	default_pg_mask = 0x00007800;
-#else
 int	default_pg_mask = 0x00001800;
-#endif
 #endif
 
 #ifdef MIPS1
