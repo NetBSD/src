@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2001/01/22 08:23:58 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 2001/03/07 00:47:22 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -386,7 +386,7 @@ inittodr(base)
 	}
 
 	/* offset 20 years */
-	time.tv_sec = new - 631152000;
+	time.tv_sec = new + rtc_offset * 60 - 631152000;
 #else
 #ifdef SH4
 #define	FROMBCD2(x)	((((x) & 0xf000) >> 12) * 1000 + \
